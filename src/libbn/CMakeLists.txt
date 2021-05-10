@@ -30,7 +30,6 @@ set(LIBBN_SOURCES
   tabdata.c
   ulp.c
   vers.c
-  vert_tree.c
   wavelet.c
   )
 

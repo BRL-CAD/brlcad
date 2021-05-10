@@ -19,7 +19,7 @@
  */
 /** @addtogroup vtree */
 /** @{ */
-/** @file libbn/vert_tree.c
+/** @file libbg/vert_tree.c
  *
  * @brief
  * Routines to manage a binary search tree of vertices.
@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "bu/exit.h"
 #include "bu/malloc.h"
-#include "bn/vert_tree.h"
+#include "bg/vert_tree.h"
 
 
 #define VERT_BLOCK 512 /**< @brief number of vertices to malloc per call when building the array */
@@ -79,12 +79,12 @@ union vert_tree {
 #define VERT_NODE	'n'
 
 
-struct bn_vert_tree *
-bn_vert_tree_create(void)
+struct bg_vert_tree *
+bg_vert_tree_create(void)
 {
-    struct bn_vert_tree *tree;
+    struct bg_vert_tree *tree;
 
-    BU_ALLOC(tree, struct bn_vert_tree);
+    BU_ALLOC(tree, struct bg_vert_tree);
     tree->magic = BN_VERT_TREE_MAGIC;
     tree->tree_type = BN_VERT_TREE_TYPE_VERTS;
     tree->the_tree = (union vert_tree *)NULL;
@@ -95,12 +95,12 @@ bn_vert_tree_create(void)
     return tree;
 }
 
-struct bn_vert_tree *
-bn_vert_tree_create_w_norms(void)
+struct bg_vert_tree *
+bg_vert_tree_create_w_norms(void)
 {
-    struct bn_vert_tree *tree;
+    struct bg_vert_tree *tree;
 
-    BU_ALLOC(tree, struct bn_vert_tree);
+    BU_ALLOC(tree, struct bg_vert_tree);
     tree->magic = BN_VERT_TREE_MAGIC;
     tree->tree_type = BN_VERT_TREE_TYPE_VERTS_AND_NORMS;
     tree->the_tree = (union vert_tree *)NULL;
@@ -128,7 +128,7 @@ clean_vert_tree_recurse( union vert_tree *ptr )
 }
 
 void
-bn_vert_tree_clean( struct bn_vert_tree *tree )
+bg_vert_tree_clean( struct bg_vert_tree *tree )
 {
     BN_CK_VERT_TREE( tree );
 
@@ -155,7 +155,7 @@ free_vert_tree_recurse( union vert_tree *ptr )
 }
 
 void
-bn_vert_tree_destroy( struct bn_vert_tree *tree )
+bg_vert_tree_destroy( struct bg_vert_tree *tree )
 {
     union vert_tree *ptr;
 
@@ -181,7 +181,7 @@ bn_vert_tree_destroy( struct bn_vert_tree *tree )
 }
 
 size_t
-bn_vert_tree_add( struct bn_vert_tree *tree, double x, double y, double z, fastf_t local_tol_sq )
+bg_vert_tree_add( struct bg_vert_tree *tree, double x, double y, double z, fastf_t local_tol_sq )
 {
     union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
     vect_t diff = VINIT_ZERO;
@@ -190,7 +190,7 @@ bn_vert_tree_add( struct bn_vert_tree *tree, double x, double y, double z, fastf
     BN_CK_VERT_TREE( tree );
 
     if ( tree->tree_type != BN_VERT_TREE_TYPE_VERTS ) {
-	bu_bomb( "Error: bn_vert_tree_add() called for a tree containing vertices and normals\n" );
+	bu_bomb( "Error: bg_vert_tree_add() called for a tree containing vertices and normals\n" );
     }
 
     VSET( vertex, x, y, z );
@@ -282,12 +282,12 @@ bn_vert_tree_add( struct bn_vert_tree *tree, double x, double y, double z, fastf
 	prev = ptr;
 	if ( vertex[prev->vnode.coord] >= prev->vnode.cut_val ) {
 	    if ( prev->vnode.higher ) {
-		bu_bomb("higher vertex node already exists in bn_vert_tree_add()?\n");
+		bu_bomb("higher vertex node already exists in bg_vert_tree_add()?\n");
 	    }
 	    prev->vnode.higher = new_leaf;
 	} else {
 	    if ( prev->vnode.lower ) {
-		bu_bomb("lower vertex node already exists in bn_vert_tree_add()?\n");
+		bu_bomb("lower vertex node already exists in bg_vert_tree_add()?\n");
 	    }
 	    prev->vnode.lower = new_leaf;
 	}
@@ -300,7 +300,7 @@ bn_vert_tree_add( struct bn_vert_tree *tree, double x, double y, double z, fastf
 }
 
 size_t
-bn_vert_tree_add_w_norm( struct bn_vert_tree *tree, double x, double y, double z, double nx, double ny, double nz, fastf_t local_tol_sq )
+bg_vert_tree_add_w_norm( struct bg_vert_tree *tree, double x, double y, double z, double nx, double ny, double nz, fastf_t local_tol_sq )
 {
     union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
     fastf_t diff[6];
@@ -310,7 +310,7 @@ bn_vert_tree_add_w_norm( struct bn_vert_tree *tree, double x, double y, double z
     BN_CK_VERT_TREE( tree );
 
     if ( tree->tree_type != BN_VERT_TREE_TYPE_VERTS_AND_NORMS ) {
-	bu_bomb( "Error: bn_vert_tree_add_w_norm() called for a tree containing just vertices\n" );
+	bu_bomb( "Error: bg_vert_tree_add_w_norm() called for a tree containing just vertices\n" );
     }
 
     VSET( vertex, x, y, z );
@@ -418,12 +418,12 @@ bn_vert_tree_add_w_norm( struct bn_vert_tree *tree, double x, double y, double z
 	prev = ptr;
 	if ( vertex[prev->vnode.coord] >= prev->vnode.cut_val ) {
 	    if ( prev->vnode.higher ) {
-		bu_bomb("higher vertex node already exists in bn_vert_tree_add_w_norm()?\n");
+		bu_bomb("higher vertex node already exists in bg_vert_tree_add_w_norm()?\n");
 	    }
 	    prev->vnode.higher = new_leaf;
 	} else {
 	    if ( prev->vnode.lower ) {
-		bu_bomb("lower vertex node already exists in bn_vert_tree_add_w_norm()?\n");
+		bu_bomb("lower vertex node already exists in bg_vert_tree_add_w_norm()?\n");
 	    }
 	    prev->vnode.lower = new_leaf;
 	}

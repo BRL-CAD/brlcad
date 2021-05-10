@@ -80,6 +80,7 @@ set(LIBBG_SOURCES
   tri_tri.c
   trimesh.cpp
   trimesh_isect.cpp
+  vert_tree.c
   util.c
   )
 

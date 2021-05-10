@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bn_vert_tree
+/** @addtogroup bg_vert_tree
  *
  * @brief
  * Vertex tree support
@@ -41,8 +41,8 @@
 
 #include "vmath.h"
 
-#include "bn/defines.h"
 #include "bu/magic.h"
+#include "bg/defines.h"
 
 __BEGIN_DECLS
 
@@ -50,7 +50,7 @@ __BEGIN_DECLS
  * packaging structure
  * holds all the required info for a single vertex tree
  */
-struct bn_vert_tree {
+struct bg_vert_tree {
     uint32_t magic;
     int tree_type;		/**< @brief vertices or vertices with normals */
     union vert_tree *the_tree;	/**< @brief the actual vertex tree */
@@ -71,7 +71,7 @@ struct bn_vert_tree {
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct bn_vert_tree *bn_vert_tree_create(void);
+BG_EXPORT extern struct bg_vert_tree *bg_vert_tree_create(void);
 
 /**
  *@brief
@@ -79,13 +79,13 @@ BN_EXPORT extern struct bn_vert_tree *bn_vert_tree_create(void);
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct bn_vert_tree *bn_vert_tree_create_w_norms(void);
+BG_EXPORT extern struct bg_vert_tree *bg_vert_tree_create_w_norms(void);
 
 /**
  *@brief
  *	Routine to free a vertex tree and all associated dynamic memory
  */
-BN_EXPORT extern void bn_vert_tree_destroy(struct bn_vert_tree *tree);
+BG_EXPORT extern void bg_vert_tree_destroy(struct bg_vert_tree *tree);
 
 /**
  *@brief
@@ -93,7 +93,7 @@ BN_EXPORT extern void bn_vert_tree_destroy(struct bn_vert_tree *tree);
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex is stored
  */
-BN_EXPORT extern size_t bn_vert_tree_add(struct bn_vert_tree *tree,
+BG_EXPORT extern size_t bg_vert_tree_add(struct bg_vert_tree *tree,
 					 double x,
 					 double y,
 					 double z,
@@ -105,7 +105,7 @@ BN_EXPORT extern size_t bn_vert_tree_add(struct bn_vert_tree *tree,
  *	The array is re-alloc'd if needed.
  *	Returns index into the array of vertices where this vertex and normal is stored
  */
-BN_EXPORT extern size_t bn_vert_tree_add_w_norm(struct bn_vert_tree *tree,
+BG_EXPORT extern size_t bg_vert_tree_add_w_norm(struct bg_vert_tree *tree,
 						double x,
 						double y,
 						double z,
@@ -119,7 +119,7 @@ BN_EXPORT extern size_t bn_vert_tree_add_w_norm(struct bn_vert_tree *tree,
  *	Routine to free the binary search tree and reset the current number of vertices.
  *	The vertex array is left untouched, for re-use later.
  */
-BN_EXPORT extern void bn_vert_tree_clean(struct bn_vert_tree *tree);
+BG_EXPORT extern void bg_vert_tree_clean(struct bg_vert_tree *tree);
 
 
 __END_DECLS

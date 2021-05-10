@@ -33,7 +33,7 @@ generic_filter(ProDimension *UNUSED(dim), ProAppData UNUSED(data)) {
  * only checks for triangles with duplicate vertices
  */
 extern "C" int
-bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3, struct bn_vert_tree *tree)
+bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3, struct bg_vert_tree *tree)
 {
     double dist;
     double coord;
@@ -493,8 +493,8 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     wchar_t wname[CREO_NAME_MAX];
     char pname[CREO_NAME_MAX];
 
-    struct bn_vert_tree *vert_tree = NULL;
-    struct bn_vert_tree *norm_tree = NULL;
+    struct bg_vert_tree *vert_tree = NULL;
+    struct bg_vert_tree *norm_tree = NULL;
     std::vector<int> faces;
     std::vector<int> face_normals;
 
@@ -522,8 +522,8 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	curr_error = cinfo->max_error - (i * cinfo->error_increment);
 	curr_angle = cinfo->min_angle_cntrl + (i * cinfo->angle_increment);
 
-	vert_tree = bn_vert_tree_create();
-	norm_tree = bn_vert_tree_create();
+	vert_tree = bg_vert_tree_create();
+	norm_tree = bg_vert_tree_create();
 
 	//creo_log(cinfo, MSG_OK, "\tTessellating %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
 
@@ -547,8 +547,8 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	    tess = NULL;
 
 	    /* Free trees */
-	    bn_vert_tree_destroy(vert_tree);
-	    bn_vert_tree_destroy(norm_tree);
+	    bg_vert_tree_destroy(vert_tree);
+	    bg_vert_tree_destroy(norm_tree);
 
 	    status = PRO_TK_NOT_EXIST;
 	    goto tess_cleanup;
@@ -559,13 +559,13 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 	    for (int j=0; j < tess[surfno].n_facets; j++ ) {
 		/* grab the triangle */
 		vert_no = tess[surfno].facets[j][0];
-		v1 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		v1 = bg_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
 		vert_no = tess[surfno].facets[j][1];
-		v2 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		v2 = bg_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
 		vert_no = tess[surfno].facets[j][2];
-		v3 = bn_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
+		v3 = bg_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
 			tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq );
 
 		if (bad_triangle(cinfo, v1, v2, v3, vert_tree)) continue;
@@ -578,15 +578,15 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 		if (cinfo->get_normals) {
 		    vert_no = tess[surfno].facets[j][0];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n1 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n1 = bg_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[j][1];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n2 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n2 = bg_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
 		    vert_no = tess[surfno].facets[j][2];
 		    VUNITIZE( tess[surfno].normals[vert_no] );
-		    n3 = bn_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
+		    n3 = bg_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
 			    tess[surfno].normals[vert_no][2], cinfo->local_tol_sq );
 
 		    face_normals.push_back(n1);
@@ -607,8 +607,8 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 		tess = NULL;
 
 		/* Free trees */
-		bn_vert_tree_destroy(vert_tree);
-		bn_vert_tree_destroy(norm_tree);
+		bg_vert_tree_destroy(vert_tree);
+		bg_vert_tree_destroy(norm_tree);
 
 		creo_log(cinfo, MSG_DEBUG, "%s tessellation using error - %g, angle - %g failed solidity test, trying next level...\n", pname, curr_error, curr_angle);
 
@@ -661,8 +661,8 @@ tess_cleanup:
     tess = NULL;
 
     /* Free trees */
-    bn_vert_tree_destroy(vert_tree);
-    bn_vert_tree_destroy(norm_tree);
+    bg_vert_tree_destroy(vert_tree);
+    bg_vert_tree_destroy(norm_tree);
 
     return status;
 }

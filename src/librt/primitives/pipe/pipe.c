@@ -3216,7 +3216,7 @@ tesselate_pipe_bend(
 {
     struct vertex **new_outer_loop = NULL;
     struct vertex **new_inner_loop = NULL;
-    struct bn_vert_tree *vertex_tree = NULL;
+    struct bg_vert_tree *vertex_tree = NULL;
     struct vertex **vertex_array = NULL;
     fastf_t bend_radius;
     fastf_t bend_angle;
@@ -3242,7 +3242,7 @@ tesselate_pipe_bend(
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
     BG_CK_TESS_TOL(ttol);
-    vertex_tree = bn_vert_tree_create();
+    vertex_tree = bg_vert_tree_create();
 
     VMOVE(r1, start_r1);
     VMOVE(r2, start_r2);
@@ -3292,7 +3292,7 @@ tesselate_pipe_bend(
     for (i = 0 ; i < arc_segs ; i++) {
 	struct vertex *v = (*outer_loop)[i];
 	struct vertex_g *vg = v->vg_p;
-	j = bn_vert_tree_add( vertex_tree,vg->coord[X], vg->coord[Y], vg->coord[Z], tol->dist_sq);
+	j = bg_vert_tree_add( vertex_tree,vg->coord[X], vg->coord[Y], vg->coord[Z], tol->dist_sq);
 	vertex_array[j] = v;
     }
 
@@ -3329,7 +3329,7 @@ tesselate_pipe_bend(
 	    }
 
 	    VJOIN2(pt, center, x, r1, y, r2);
-	    k = bn_vert_tree_add( vertex_tree,pt[X], pt[Y], pt[Z], tol->dist_sq);
+	    k = bg_vert_tree_add( vertex_tree,pt[X], pt[Y], pt[Z], tol->dist_sq);
 
 	    verts[0] = &(*outer_loop)[j];
 	    verts[1] = &(*outer_loop)[i];
@@ -3399,7 +3399,7 @@ tesselate_pipe_bend(
 	    y = ynew;
 
 	    VJOIN2(pt, center, x, r1, y, r2);
-	    k = bn_vert_tree_add( vertex_tree,pt[X], pt[Y], pt[Z], tol->dist_sq);
+	    k = bg_vert_tree_add( vertex_tree,pt[X], pt[Y], pt[Z], tol->dist_sq);
 
 	    verts[1] = verts[2];
 	    verts[2] = &new_outer_loop[j];
@@ -3469,7 +3469,7 @@ tesselate_pipe_bend(
     }
 
     /* release resources, sanity */
-    bn_vert_tree_destroy(vertex_tree);
+    bg_vert_tree_destroy(vertex_tree);
     bu_free((char *)vertex_array, "vertex array in pipe.c");
     vertex_tree = NULL;
     vertex_array = NULL;

@@ -1638,3 +1638,7 @@ s/BN_CLASSIFY/BG_CLASSIFY/g
         plane.h moved from libbn to libbg [7.32]
 s/(#[[:space:]]*include[[:space:]]+["<])bn\/plot3\.h/\1bview\/plot3.h/g
         moved plot3.h header [7.32]
+s/(#[[:space:]]*include[[:space:]]+["<])bn\/vert_tree\.h/\1bg\/vert_tree.h/g
+        moved vert_tree.h header [7.32]
+s/bn_vert_tree/bg_vert_tree/g
+        moved vert_tree to libbg [7.32]

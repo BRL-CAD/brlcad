@@ -59,7 +59,7 @@
 #include "bn/sobol.h"
 #include "bn/str.h"
 #include "bn/tabdata.h"
-#include "bn/vert_tree.h"
+#include "bg/vert_tree.h"
 #include "bn/vectfont.h"
 
 #endif /* BN_H */
