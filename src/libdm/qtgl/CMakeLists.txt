@@ -1,6 +1,6 @@
 set(QTGL_SRCS
   dm-qtgl.cpp
-  if_qtgl.cpp
+  fb-qtgl.cpp
   )
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
@@ -17,7 +17,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
     )
 
   set_property(SOURCE dm-qtgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE if_qtgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE fb-qtgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 
   add_definitions(-DDM_PLUGIN)
 
@@ -42,7 +42,7 @@ CMAKEFILES(
   CMakeLists.txt
   ${QTGL_SRCS}
   dm-qtgl.h
-  fb_qtgl.h
+  fb-qtgl.h
   )
 
 # Local Variables:

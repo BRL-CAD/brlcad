@@ -1,4 +1,4 @@
-/*                     I F _ Q T G L . C P P
+/*                     F B - Q T G L . C P P
  * BRL-CAD
  *
  * Copyright (c) 1989-2021 United States Government as represented by
@@ -19,12 +19,35 @@
  */
 /** @addtogroup libstruct fb */
 /** @{ */
-/** @file if_qtgl.cpp
+/** @file fb-qtgl.cpp
  *
  * An OpenGL framebuffer using Qt.
  *
- * TODO - study https://stackoverflow.com/a/23230099
+ * TODO:  I think the way to go about this is probably going to be to have the
+ * fb ALWAYS be an internal fb in a dm.  If we don't get the open existing
+ * call, we'll create a dm, store the dm pointer internally, and use that dm's
+ * fb.  That way all the implementation logic is the same for both modes and
+ * it's just the open and close for fb itself that will need to do more.  That
+ * was one of the motivations for libqtcad - so the Qt dm display widget can
+ * be re-used for scenarios like this one.
  *
+ * Unless it proves impractical for some reason, go with the ISST approach of
+ * using and displaying a texture.  The only practical scenario I know of where
+ * that was a problem during the osgl work was a default VirtualBox Windows
+ * environment where there wasn't any OpenGL support higher than 1.2, and if
+ * swrast can handle the isst approach we can use that to guarantee at least
+ * some form of working functionality (however slow) even in that scenario.
+ *
+ * Initially colormap is probably going to be a no-op - I need some practical
+ * examples where we need that to figure out how to use it.
+ *
+ * Not going to worry about shared memory, lingering mode, etc. (again, unless
+ * we turn out to need one of them for application support.)
+ *
+ * If it proves practical we should switch ogl/wgl to common functions like we
+ * did for the dm, but the implementation logic looks more convoluted and I'm
+ * not sure yet how practical that will prove (particularly since we're not
+ * looking to reproduce all the extra modes defined by ogl.)
  */
 /** @} */
 
@@ -33,7 +56,7 @@
 
 #include "bu/app.h"
 
-#include "./fb_qtgl.h"
+#include "./fb-qtgl.h"
 extern "C" {
 #include "../include/private.h"
 }

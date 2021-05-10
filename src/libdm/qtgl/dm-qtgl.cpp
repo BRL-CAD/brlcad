@@ -48,7 +48,7 @@ extern "C" {
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"
 }
-#include "./fb_qtgl.h"
+#include "./fb-qtgl.h"
 #include "./dm-qtgl.h"
 
 #include "../include/private.h"
