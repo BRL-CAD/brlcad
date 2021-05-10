@@ -58,7 +58,7 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct bview_scene_obj *sp;
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
     FILE *fp_r;
     FILE *fp_w;
     int rpid;
@@ -199,29 +199,29 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+	    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
 		int i;
 		int nused = vp->nused;
 		int *cmd = vp->cmd;
 		point_t *pt = vp->pt;
 		for (i = 0; i < nused; i++, cmd++, pt++) {
 		    switch (*cmd) {
-			case BN_VLIST_POLY_START:
-			case BN_VLIST_POLY_VERTNORM:
-			case BN_VLIST_TRI_START:
-			case BN_VLIST_TRI_VERTNORM:
+			case BV_VLIST_POLY_START:
+			case BV_VLIST_POLY_VERTNORM:
+			case BV_VLIST_TRI_START:
+			case BV_VLIST_TRI_VERTNORM:
 			    continue;
-			case BN_VLIST_POLY_MOVE:
-			case BN_VLIST_LINE_MOVE:
-			case BN_VLIST_TRI_MOVE:
+			case BV_VLIST_POLY_MOVE:
+			case BV_VLIST_LINE_MOVE:
+			case BV_VLIST_TRI_MOVE:
 			    /* Move, not draw */
 			    MAT4X3VEC(last, view_state->vs_gvp->gv_rotation, *pt);
 			    continue;
-			case BN_VLIST_POLY_DRAW:
-			case BN_VLIST_POLY_END:
-			case BN_VLIST_LINE_DRAW:
-			case BN_VLIST_TRI_DRAW:
-			case BN_VLIST_TRI_END:
+			case BV_VLIST_POLY_DRAW:
+			case BV_VLIST_POLY_END:
+			case BV_VLIST_LINE_DRAW:
+			case BV_VLIST_TRI_DRAW:
+			case BV_VLIST_TRI_END:
 			    /* draw.  */
 			    MAT4X3VEC(fin, view_state->vs_gvp->gv_rotation, *pt);
 			    break;

@@ -27,7 +27,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bn/mat.h"
-#include "bn/vlist.h"
+#include "bview/vlist.h"
 #include "bview/defines.h"
 #include "bview/util.h"
 

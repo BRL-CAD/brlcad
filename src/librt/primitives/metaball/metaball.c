@@ -632,12 +632,12 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
     rt_ell_16pnts(bottom, *center, b, c);
     rt_ell_16pnts(middle, *center, a, c);
 
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
 }
 
 

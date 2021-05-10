@@ -688,13 +688,13 @@ solid_set_color_info(
 }
 
 static void
-solid_append_vlist(struct bview_scene_obj *sp, struct bn_vlist *vlist)
+solid_append_vlist(struct bview_scene_obj *sp, struct bv_vlist *vlist)
 {
     if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) {
 	sp->s_vlen = 0;
     }
 
-    sp->s_vlen += bn_vlist_cmd_cnt(vlist);
+    sp->s_vlen += bv_vlist_cmd_cnt(vlist);
     BU_LIST_APPEND_LIST(&(sp->s_vlist), &(vlist->l));
 }
 
@@ -707,7 +707,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	return;
     struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
 
-    solid_append_vlist(sp, (struct bn_vlist *)vhead);
+    solid_append_vlist(sp, (struct bv_vlist *)vhead);
 
     bview_scene_obj_bound(sp);
 
@@ -774,7 +774,7 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
     }
 
     /* add plot to solid */
-    solid_append_vlist(sp, (struct bn_vlist *)&vhead);
+    solid_append_vlist(sp, (struct bv_vlist *)&vhead);
 
     return 0;
 }
@@ -873,7 +873,7 @@ append_solid_to_display_list(
          */
         int plot_status;
         struct bu_list vhead;
-        struct bn_vlist *vp;
+        struct bv_vlist *vp;
 
         BU_LIST_INIT(&vhead);
 
@@ -886,11 +886,11 @@ append_solid_to_display_list(
             return TREE_NULL;
         }
 
-        solid_append_vlist(sp, (struct bn_vlist *)&vhead);
+        solid_append_vlist(sp, (struct bv_vlist *)&vhead);
 
         bview_scene_obj_bound(sp);
 
-        while (BU_LIST_WHILE(vp, bn_vlist, &(sp->s_vlist))) {
+        while (BU_LIST_WHILE(vp, bv_vlist, &(sp->s_vlist))) {
             BU_LIST_DEQUEUE(&vp->l);
             bu_free(vp, "solid vp");
         }
@@ -984,11 +984,11 @@ append_solid_to_display_list(
 }
 
 static void
-solid_copy_vlist(struct bview_scene_obj *sp, struct bn_vlist *vlist)
+solid_copy_vlist(struct bview_scene_obj *sp, struct bv_vlist *vlist)
 {
     BU_LIST_INIT(&(sp->s_vlist));
     rt_vlist_copy(&(sp->s_vlist), (struct bu_list *)vlist);
-    sp->s_vlen = bn_vlist_cmd_cnt((struct bn_vlist *)(&(sp->s_vlist)));
+    sp->s_vlen = bv_vlist_cmd_cnt((struct bv_vlist *)(&(sp->s_vlist)));
 }
 
 int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy,
@@ -1028,9 +1028,9 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
 
     if (copy) {
-	solid_copy_vlist(sp, (struct bn_vlist *)vhead);
+	solid_copy_vlist(sp, (struct bv_vlist *)vhead);
     } else {
-	solid_append_vlist(sp, (struct bn_vlist *)vhead);
+	solid_append_vlist(sp, (struct bv_vlist *)vhead);
 	BU_LIST_INIT(vhead);
     }
     bview_scene_obj_bound(sp);
@@ -1259,7 +1259,7 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct bview_scene_obj *sp;
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
     static vect_t clipmin, clipmax;
     static vect_t last;         /* last drawn point */
     static vect_t fin;
@@ -1294,7 +1294,7 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
                         pl_linmod(fp, "solid");
                     Dashing = sp->s_soldash;
                 }
-                bn_vlist_to_uplot(fp, &(sp->s_vlist));
+                bv_vlist_to_uplot(fp, &(sp->s_vlist));
             }
 
             gdlp = next_gdlp;
@@ -1340,29 +1340,29 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
                     pl_linmod(fp, "solid");
                 Dashing = sp->s_soldash;
             }
-            for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+            for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
                 int i;
                 int nused = vp->nused;
                 int *cmd = vp->cmd;
                 point_t *pt = vp->pt;
                 for (i = 0; i < nused; i++, cmd++, pt++) {
                     switch (*cmd) {
-                        case BN_VLIST_POLY_START:
-                        case BN_VLIST_POLY_VERTNORM:
-                        case BN_VLIST_TRI_START:
-                        case BN_VLIST_TRI_VERTNORM:
+                        case BV_VLIST_POLY_START:
+                        case BV_VLIST_POLY_VERTNORM:
+                        case BV_VLIST_TRI_START:
+                        case BV_VLIST_TRI_VERTNORM:
                             continue;
-                        case BN_VLIST_POLY_MOVE:
-                        case BN_VLIST_LINE_MOVE:
-                        case BN_VLIST_TRI_MOVE:
+                        case BV_VLIST_POLY_MOVE:
+                        case BV_VLIST_LINE_MOVE:
+                        case BV_VLIST_TRI_MOVE:
                             /* Move, not draw */
                             MAT4X3PNT(last, model2view, *pt);
                             continue;
-                        case BN_VLIST_LINE_DRAW:
-                        case BN_VLIST_POLY_DRAW:
-                        case BN_VLIST_POLY_END:
-                        case BN_VLIST_TRI_DRAW:
-                        case BN_VLIST_TRI_END:
+                        case BV_VLIST_LINE_DRAW:
+                        case BV_VLIST_POLY_DRAW:
+                        case BV_VLIST_POLY_END:
+                        case BV_VLIST_TRI_DRAW:
+                        case BV_VLIST_TRI_END:
                             /* draw */
                             MAT4X3PNT(fin, model2view, *pt);
                             VMOVE(start, last);
@@ -1503,11 +1503,11 @@ draw_png_solid(fastf_t perspective, unsigned char **image, struct bview_scene_ob
     static vect_t last;
     point_t clipmin = {-1.0, -1.0, -MAX_FASTF};
     point_t clipmax = {1.0, 1.0, MAX_FASTF};
-    struct bn_vlist *tvp;
+    struct bv_vlist *tvp;
     point_t *pt_prev=NULL;
     fastf_t dist_prev=1.0;
     fastf_t dist;
-    struct bn_vlist *vp = (struct bn_vlist *)&sp->s_vlist;
+    struct bv_vlist *vp = (struct bv_vlist *)&sp->s_vlist;
     fastf_t delta;
     struct coord coord1;
     struct coord coord2;
@@ -1522,7 +1522,7 @@ draw_png_solid(fastf_t perspective, unsigned char **image, struct bview_scene_ob
     if (delta < SQRT_SMALL_FASTF)
         delta = SQRT_SMALL_FASTF;
 
-    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
         int i;
         int nused = tvp->nused;
         int *cmd = tvp->cmd;
@@ -1530,14 +1530,14 @@ draw_png_solid(fastf_t perspective, unsigned char **image, struct bview_scene_ob
         for (i = 0; i < nused; i++, cmd++, pt++) {
             static vect_t start, fin;
             switch (*cmd) {
-                case BN_VLIST_POLY_START:
-                case BN_VLIST_POLY_VERTNORM:
-                case BN_VLIST_TRI_START:
-                case BN_VLIST_TRI_VERTNORM:
+                case BV_VLIST_POLY_START:
+                case BV_VLIST_POLY_VERTNORM:
+                case BV_VLIST_TRI_START:
+                case BV_VLIST_TRI_VERTNORM:
                     continue;
-                case BN_VLIST_POLY_MOVE:
-                case BN_VLIST_LINE_MOVE:
-                case BN_VLIST_TRI_MOVE:
+                case BV_VLIST_POLY_MOVE:
+                case BV_VLIST_LINE_MOVE:
+                case BV_VLIST_TRI_MOVE:
                     /* Move, not draw */
                     if (perspective > 0) {
                         /* cannot apply perspective transformation to
@@ -1556,11 +1556,11 @@ draw_png_solid(fastf_t perspective, unsigned char **image, struct bview_scene_ob
                     } else
                         MAT4X3PNT(last, psmat, *pt);
                     continue;
-                case BN_VLIST_POLY_DRAW:
-                case BN_VLIST_POLY_END:
-                case BN_VLIST_LINE_DRAW:
-                case BN_VLIST_TRI_DRAW:
-                case BN_VLIST_TRI_END:
+                case BV_VLIST_POLY_DRAW:
+                case BV_VLIST_POLY_END:
+                case BV_VLIST_LINE_DRAW:
+                case BV_VLIST_TRI_DRAW:
+                case BV_VLIST_TRI_END:
                     /* draw */
                     if (perspective > 0) {
                         /* cannot apply perspective transformation to
@@ -1724,11 +1724,11 @@ ps_draw_solid(fastf_t perspective, FILE *fp, struct bview_scene_obj *sp, matp_t 
     static vect_t last;
     point_t clipmin = {-1.0, -1.0, -MAX_FASTF};
     point_t clipmax = {1.0, 1.0, MAX_FASTF};
-    struct bn_vlist *tvp;
+    struct bv_vlist *tvp;
     point_t *pt_prev=NULL;
     fastf_t dist_prev=1.0;
     fastf_t dist;
-    struct bn_vlist *vp = (struct bn_vlist *)&sp->s_vlist;
+    struct bv_vlist *vp = (struct bv_vlist *)&sp->s_vlist;
     fastf_t delta;
 
     fprintf(fp, "%f %f %f setrgbcolor\n",
@@ -1746,7 +1746,7 @@ ps_draw_solid(fastf_t perspective, FILE *fp, struct bview_scene_obj *sp, matp_t 
     if (delta < SQRT_SMALL_FASTF)
         delta = SQRT_SMALL_FASTF;
 
-    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
         size_t i;
         size_t nused = tvp->nused;
         int *cmd = tvp->cmd;
@@ -1754,14 +1754,14 @@ ps_draw_solid(fastf_t perspective, FILE *fp, struct bview_scene_obj *sp, matp_t 
         for (i = 0; i < nused; i++, cmd++, pt++) {
             static vect_t start, fin;
             switch (*cmd) {
-                case BN_VLIST_POLY_START:
-                case BN_VLIST_POLY_VERTNORM:
-                case BN_VLIST_TRI_START:
-                case BN_VLIST_TRI_VERTNORM:
+                case BV_VLIST_POLY_START:
+                case BV_VLIST_POLY_VERTNORM:
+                case BV_VLIST_TRI_START:
+                case BV_VLIST_TRI_VERTNORM:
                     continue;
-                case BN_VLIST_POLY_MOVE:
-                case BN_VLIST_LINE_MOVE:
-                case BN_VLIST_TRI_MOVE:
+                case BV_VLIST_POLY_MOVE:
+                case BV_VLIST_LINE_MOVE:
+                case BV_VLIST_TRI_MOVE:
                     /* Move, not draw */
                     if (perspective > 0) {
                         /* cannot apply perspective transformation to
@@ -1780,11 +1780,11 @@ ps_draw_solid(fastf_t perspective, FILE *fp, struct bview_scene_obj *sp, matp_t 
                     } else
                         MAT4X3PNT(last, psmat, *pt);
                     continue;
-                case BN_VLIST_POLY_DRAW:
-                case BN_VLIST_POLY_END:
-                case BN_VLIST_LINE_DRAW:
-                case BN_VLIST_TRI_DRAW:
-               case BN_VLIST_TRI_END:
+                case BV_VLIST_POLY_DRAW:
+                case BV_VLIST_POLY_END:
+                case BV_VLIST_LINE_DRAW:
+                case BV_VLIST_TRI_DRAW:
+               case BV_VLIST_TRI_END:
                     /* draw */
                     if (perspective > 0) {
                         /* cannot apply perspective transformation to
@@ -1930,7 +1930,7 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct bview_scene_obj *sp;
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
 
     if (!vlcmds) {
 	/*
@@ -1992,13 +1992,13 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 		    /* Print the actual vector list */
 		    nvlist = 0;
 		    npts = 0;
-		    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+		    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
 			int i;
 			int nused = vp->nused;
 			int *cmd = vp->cmd;
 			point_t *pt = vp->pt;
 
-			BN_CK_VLIST(vp);
+			BV_CK_VLIST(vp);
 			nvlist++;
 			npts += nused;
 
@@ -2007,13 +2007,13 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
 			for (i = 0; i < nused; i++, cmd++, pt++) {
 			    bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
-				    bn_vlist_get_cmd_description(*cmd),
+				    bv_vlist_get_cmd_description(*cmd),
 				    V3ARGS(*pt));
 			}
 		    }
 
 		    bu_vls_printf(vls, "  %zu vlist structures, %zu pts\n", nvlist, npts);
-		    bu_vls_printf(vls, "  %zu pts (via bn_ck_vlist)\n", bn_ck_vlist(&(sp->s_vlist)));
+		    bu_vls_printf(vls, "  %zu pts (via bv_ck_vlist)\n", bv_ck_vlist(&(sp->s_vlist)));
 		}
 
 	    gdlp = next_gdlp;
@@ -2039,13 +2039,13 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 			sp->s_color[2]);
 
 		/* Print the actual vector list */
-		for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+		for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
 		    int i;
 		    int nused = vp->nused;
 		    int *cmd = vp->cmd;
 		    point_t *pt = vp->pt;
 
-		    BN_CK_VLIST(vp);
+		    BV_CK_VLIST(vp);
 
 		    for (i = 0; i < nused; i++, cmd++, pt++)
 			bu_vls_printf(vls, "%d %g %g %g\n", *cmd, V3ARGS(*pt));
@@ -2161,12 +2161,12 @@ dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx,
 	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
 
 	    point_t vmin, vmax;
-	    struct bn_vlist *vp;
+	    struct bv_vlist *vp;
 
 	    vmax[X] = vmax[Y] = vmax[Z] = -INFINITY;
 	    vmin[X] = vmin[Y] = vmin[Z] =  INFINITY;
 
-	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+	    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
 		int j;
 		int nused = vp->nused;
 		int *cmd = vp->cmd;
@@ -2174,22 +2174,22 @@ dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx,
 		point_t vpt;
 		for (j = 0; j < nused; j++, cmd++, pt++) {
 		    switch (*cmd) {
-			case BN_VLIST_POLY_START:
-			case BN_VLIST_POLY_VERTNORM:
-			case BN_VLIST_TRI_START:
-			case BN_VLIST_TRI_VERTNORM:
-			case BN_VLIST_POINT_SIZE:
-			case BN_VLIST_LINE_WIDTH:
+			case BV_VLIST_POLY_START:
+			case BV_VLIST_POLY_VERTNORM:
+			case BV_VLIST_TRI_START:
+			case BV_VLIST_TRI_VERTNORM:
+			case BV_VLIST_POINT_SIZE:
+			case BV_VLIST_LINE_WIDTH:
 			    /* attribute, not location */
 			    break;
-			case BN_VLIST_LINE_MOVE:
-			case BN_VLIST_LINE_DRAW:
-			case BN_VLIST_POLY_MOVE:
-			case BN_VLIST_POLY_DRAW:
-			case BN_VLIST_POLY_END:
-			case BN_VLIST_TRI_MOVE:
-			case BN_VLIST_TRI_DRAW:
-			case BN_VLIST_TRI_END:
+			case BV_VLIST_LINE_MOVE:
+			case BV_VLIST_LINE_DRAW:
+			case BV_VLIST_POLY_MOVE:
+			case BV_VLIST_POLY_DRAW:
+			case BV_VLIST_POLY_END:
+			case BV_VLIST_TRI_MOVE:
+			case BV_VLIST_TRI_DRAW:
+			case BV_VLIST_TRI_END:
 			    MAT4X3PNT(vpt, model2view, *pt);
 			    V_MIN(vmin[X], vpt[X]);
 			    V_MAX(vmax[X], vpt[X]);
@@ -2283,9 +2283,9 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
 		continue;
 	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
 
-	    struct bn_vlist *vp;
+	    struct bv_vlist *vp;
 
-	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+	    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
 		int j;
 		int nused = vp->nused;
 		int *cmd = vp->cmd;
@@ -2293,20 +2293,20 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
 		point_t vpt;
 		for (j = 0; j < nused; j++, cmd++, pt++) {
 		    switch (*cmd) {
-			case BN_VLIST_POLY_START:
-			case BN_VLIST_POLY_VERTNORM:
-			case BN_VLIST_TRI_START:
-			case BN_VLIST_TRI_VERTNORM:
+			case BV_VLIST_POLY_START:
+			case BV_VLIST_POLY_VERTNORM:
+			case BV_VLIST_TRI_START:
+			case BV_VLIST_TRI_VERTNORM:
 			    /* Has normal vector, not location */
 			    break;
-			case BN_VLIST_LINE_MOVE:
-			case BN_VLIST_LINE_DRAW:
-			case BN_VLIST_POLY_MOVE:
-			case BN_VLIST_POLY_DRAW:
-			case BN_VLIST_POLY_END:
-			case BN_VLIST_TRI_MOVE:
-			case BN_VLIST_TRI_DRAW:
-			case BN_VLIST_TRI_END:
+			case BV_VLIST_LINE_MOVE:
+			case BV_VLIST_LINE_DRAW:
+			case BV_VLIST_POLY_MOVE:
+			case BV_VLIST_POLY_DRAW:
+			case BV_VLIST_POLY_END:
+			case BV_VLIST_TRI_MOVE:
+			case BV_VLIST_TRI_DRAW:
+			case BV_VLIST_TRI_END:
 			    MAT4X3PNT(vpt, model2view, *pt);
 
 			    if (rflag) {

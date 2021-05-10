@@ -155,7 +155,7 @@ struct _ged_client_data {
     struct ged *gedp;
     struct display_list *gdlp;
     int fastpath_count;			/* statistics */
-    struct bn_vlblock *draw_edge_uses_vbp;
+    struct bv_vlblock *draw_edge_uses_vbp;
     struct bview_scene_obj *free_scene_obj;
 
 
@@ -255,7 +255,7 @@ GED_EXPORT void dl_set_transparency(struct ged *gedp, struct directory **dpp, do
 
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
-				       struct bn_vlblock *vbp,
+				       struct bv_vlblock *vbp,
 				       const char *name,
 				       int copy);
 GED_EXPORT extern int _ged_drawtrees(struct ged *gedp,

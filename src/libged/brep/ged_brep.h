@@ -81,7 +81,7 @@ struct _ged_brep_info {
     struct ged *gedp = NULL;
     struct rt_db_internal intern;
     struct directory *dp = NULL;
-    struct bn_vlblock *vbp = NULL;
+    struct bv_vlblock *vbp = NULL;
     struct bu_color *color = NULL;
     int verbosity;
     int plotres;
@@ -109,21 +109,21 @@ GED_EXPORT extern int brep_intersect_point_curve(struct rt_db_internal *intern1,
 GED_EXPORT extern int brep_intersect_point_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 GED_EXPORT extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 GED_EXPORT extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
-GED_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
+GED_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bv_vlblock *vbp);
 
 GED_EXPORT extern int ged_dplot_core(struct ged *gedp, int argc, const char *argv[]);
 
 using namespace brlcad;
 void
-plotface(const ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d, const int red, const int green, const int blue);
+plotface(const ON_BrepFace &face, struct bv_vlblock *vbp, int plotres, bool dim3d, const int red, const int green, const int blue);
 void
-plotsurface(const ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red, const int green, const int blue);
+plotsurface(const ON_Surface &surf, struct bv_vlblock *vbp, int isocurveres, int gridres, const int red, const int green, const int blue);
 void
-plotcurve(const ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red, const int green, const int blue);
+plotcurve(const ON_Curve &curve, struct bv_vlblock *vbp, int plotres, const int red, const int green, const int blue);
 void
-plotcurveonsurface(const ON_Curve *curve, const ON_Surface *surface, struct bn_vlblock *vbp, int plotres, const int red, const int green, const int blue);
+plotcurveonsurface(const ON_Curve *curve, const ON_Surface *surface, struct bv_vlblock *vbp, int plotres, const int red, const int green, const int blue);
 void
-plotpoint(const ON_3dPoint &point, struct bn_vlblock *vbp, const int red, const int green, const int blue);
+plotpoint(const ON_3dPoint &point, struct bv_vlblock *vbp, const int red, const int green, const int blue);
 
 __END_DECLS
 

@@ -1281,14 +1281,14 @@ shoot_and_plot(point_t start_pt,
 	    bu_log("\t\tDRAW (%g %g %g)", V3ARGS(pt));
 #endif
 
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
 	    VJOIN1(pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir);
 
 #ifdef debug
 	    bu_log("<->(%g %g %g)\n", V3ARGS(pt));
 #endif
 
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
 	}
 
     }

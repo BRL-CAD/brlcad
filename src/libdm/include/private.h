@@ -196,8 +196,8 @@ __END_DECLS
     HIDDEN int _dmtype##_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y); \
     HIDDEN int _dmtype##_drawPoint3D(struct dm *dmp, point_t point); \
     HIDDEN int _dmtype##_drawPoints3D(struct dm *dmp, int npoints, point_t *points); \
-    HIDDEN int _dmtype##_drawVList(struct dm *dmp, struct bn_vlist *vp); \
-    HIDDEN int _dmtype##_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data); \
+    HIDDEN int _dmtype##_drawVList(struct dm *dmp, struct bv_vlist *vp); \
+    HIDDEN int _dmtype##_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data); \
     HIDDEN int _dmtype##_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency); \
     HIDDEN int _dmtype##_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b); \
     HIDDEN int _dmtype##_setLineAttr(struct dm *dmp, int width, int style); \

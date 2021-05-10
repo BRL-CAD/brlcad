@@ -510,7 +510,7 @@ int cmd_killtree(
     const char *argv[]);
 
 /* dodraw.c */
-void cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
+void cvt_vlblock_to_solids(struct bv_vlblock *vbp, const char *name, int copy);
 int drawtrees(int argc, const char *argv[], int kind);
 int replot_modified_solid(struct bview_scene_obj *sp, struct rt_db_internal *ip, const mat_t mat);
 int replot_original_solid(struct bview_scene_obj *sp);

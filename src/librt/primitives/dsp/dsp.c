@@ -3149,11 +3149,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
 #define MOVE(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
-	RT_ADD_VLIST(vhead, m_pt, BN_VLIST_LINE_MOVE)
+	RT_ADD_VLIST(vhead, m_pt, BV_VLIST_LINE_MOVE)
 
 #define DRAW(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
-	RT_ADD_VLIST(vhead, m_pt, BN_VLIST_LINE_DRAW)
+	RT_ADD_VLIST(vhead, m_pt, BV_VLIST_LINE_DRAW)
 
 
     /* Draw the Bottom */

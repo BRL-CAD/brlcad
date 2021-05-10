@@ -39,7 +39,7 @@ public:
     explicit DisplayManager(BRLCADDisplay *display);
 
     // most of the methods below correspond to a method with a similar name from libdm
-    void drawVList(bn_vlist *vp);
+    void drawVList(bv_vlist *vp);
     void setFGColor(float r, float g, float b, float transparency);
     void setLineAttr(int width, int style);
     void setLineStyle(int style);

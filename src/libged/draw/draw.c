@@ -959,8 +959,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		if (dgcdp.draw_edge_uses) {
 		    _ged_cvt_vlblock_to_solids(gedp, dgcdp.draw_edge_uses_vbp, "_EDGEUSES_", 0);
-		    bn_vlblock_free(dgcdp.draw_edge_uses_vbp);
-		    dgcdp.draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
+		    bv_vlblock_free(dgcdp.draw_edge_uses_vbp);
+		    dgcdp.draw_edge_uses_vbp = (struct bv_vlblock *)NULL;
 		}
 
 		/* Destroy NMG */

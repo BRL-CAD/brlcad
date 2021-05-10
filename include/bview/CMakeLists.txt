@@ -6,6 +6,7 @@ set(bview_headers
   polygons.h
   tcl_data.h
   util.h
+  vlist.h
   )
 BRLCAD_MANAGE_FILES(bview_headers ${INCLUDE_DIR}/brlcad/bview)
 

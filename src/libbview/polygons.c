@@ -31,7 +31,7 @@
 #include "bu/str.h"
 #include "bn/mat.h"
 #include "bn/tol.h"
-#include "bn/vlist.h"
+#include "bview/vlist.h"
 #include "bg/polygon.h"
 #include "bview/defines.h"
 #include "bview/util.h"
@@ -56,23 +56,23 @@ bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c, int 
 	return;
 
     if (do_pnt) {
-	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BN_VLIST_POINT_DRAW);
+	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BV_VLIST_POINT_DRAW);
 	return;
     }
 
-    BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BV_VLIST_LINE_MOVE);
     for (size_t i = 0; i < c->num_points; i++) {
-	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[i], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[i], BV_VLIST_LINE_DRAW);
     }
     if (!c->open)
-	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BV_VLIST_LINE_DRAW);
 
     if (curr_c && curr_i >= 0) {
 	point_t psize;
 	VSET(psize, 10, 0, 0);
-	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[curr_i], BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, psize, BN_VLIST_POINT_SIZE);
-	BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[curr_i], BN_VLIST_POINT_DRAW);
+	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[curr_i], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, psize, BV_VLIST_POINT_SIZE);
+	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[curr_i], BV_VLIST_POINT_DRAW);
     }
 }
 
@@ -88,7 +88,7 @@ bview_fill_polygon(struct bview_scene_obj *s)
 	struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
 	if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
 	    fobj = s_c;
-	    BN_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
+	    BV_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
 	    break;
 	}
     }
@@ -131,10 +131,10 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 	return;
 
     // free old s->s_vlist
-    BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+    BV_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
-	BN_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
+	BV_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
 	// TODO - free bview_scene_obj itself (ptbls, etc.)
     }
 

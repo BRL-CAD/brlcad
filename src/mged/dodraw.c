@@ -51,7 +51,7 @@
           BU_LIST_INIT( &((p)->s_vlist) ); }
 
 void
-cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
+cvt_vlblock_to_solids(struct bv_vlblock *vbp, const char *name, int copy)
 {
     size_t i;
     char shortname[32];
@@ -96,7 +96,7 @@ mged_bound_solid(struct bview_scene_obj *sp)
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
-    cmd = bn_vlist_bbox(&sp->s_vlist, &bmin, &bmax, &length);
+    cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, &length);
     if (cmd) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", cmd);

@@ -298,16 +298,16 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     for (unsigned int j = 0; j < bot->num_faces; j++) {
 	if (vert_edge_status[bot->faces[j*3+0]] &&  vert_edge_status[bot->faces[j*3+1]]) {
-	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_DRAW);
 	}
         if (vert_edge_status[bot->faces[j*3+1]] &&  vert_edge_status[bot->faces[j*3+2]]) {
-	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+1]*3]), BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_DRAW);
 	}
 	if (vert_edge_status[bot->faces[j*3+2]] &&  vert_edge_status[bot->faces[j*3+0]]) {
-	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+2]*3]), BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, &(bot->vertices[bot->faces[j*3+0]*3]), BV_VLIST_LINE_DRAW);
 	}
     }
 

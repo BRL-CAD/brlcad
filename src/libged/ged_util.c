@@ -1099,7 +1099,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 }
 
 void
-_ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, const char *name, int copy)
+_ged_cvt_vlblock_to_solids(struct ged *gedp, struct bv_vlblock *vbp, const char *name, int copy)
 {
     size_t i;
     char shortname[32] = {0};

@@ -408,10 +408,10 @@ tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  */
 
 HIDDEN int
-tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
+tk_drawVList(struct dm *dmp, struct bv_vlist *vp)
 {
     static vect_t spnt, lpnt, pnt;
-    struct bn_vlist *tvp;
+    struct bv_vlist *tvp;
     XSegment segbuf[1024];		/* XDrawSegments list */
     XSegment *segp;			/* current segment */
     int nseg;		        /* number of segments */
@@ -441,7 +441,7 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     nseg = 0;
     segp = segbuf;
-    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
 	int i;
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
@@ -454,24 +454,24 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	/* Integerize and let the X server do the clipping */
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_VERTNORM:
-		case BN_VLIST_TRI_START:
-		case BN_VLIST_TRI_VERTNORM:
+		case BV_VLIST_POLY_START:
+		case BV_VLIST_POLY_VERTNORM:
+		case BV_VLIST_TRI_START:
+		case BV_VLIST_TRI_VERTNORM:
 		    continue;
-		case BN_VLIST_MODEL_MAT:
+		case BV_VLIST_MODEL_MAT:
 		    privars->xmat = &(privars->mod_mat[0]);
 		    continue;
-		case BN_VLIST_DISPLAY_MAT:
+		case BV_VLIST_DISPLAY_MAT:
 		    MAT4X3PNT(tlate, privars->mod_mat, *pt);
 		    privars->disp_mat[3] = tlate[0];
 		    privars->disp_mat[7] = tlate[1];
 		    privars->disp_mat[11] = tlate[2];
 		    privars->xmat = &(privars->disp_mat[0]);
 		    continue;
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_TRI_MOVE:
+		case BV_VLIST_POLY_MOVE:
+		case BV_VLIST_LINE_MOVE:
+		case BV_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->i->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -500,11 +500,11 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    lpnt[1] *= 2047 * dmp->i->dm_aspect;
 		    lpnt[2] *= 2047;
 		    continue;
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_TRI_DRAW:
-		case BN_VLIST_TRI_END:
+		case BV_VLIST_POLY_DRAW:
+		case BV_VLIST_POLY_END:
+		case BV_VLIST_LINE_DRAW:
+		case BV_VLIST_TRI_DRAW:
+		case BV_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->i->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -660,12 +660,12 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 int
-tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+tk_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
 {
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
     if (!callback_function) {
 	if (data) {
-	    vp = (struct bn_vlist *)data;
+	    vp = (struct bv_vlist *)data;
 	    tk_drawVList(dmp, vp);
 	}
     } else {

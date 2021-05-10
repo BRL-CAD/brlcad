@@ -68,7 +68,7 @@ __BEGIN_DECLS
 #define bneg(x, y)	NEGY, brt(x, y)
 #define dneg(x, y)	NEGY, drk(x, y)
 
-int *tp_getchar(const unsigned char *c);
+BN_EXPORT extern int *tp_getchar(const unsigned char *c);
 
 /*
  *  Once-only setup routine

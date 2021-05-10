@@ -135,12 +135,12 @@ _fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
 	struct bu_list vhead;
 	BU_LIST_INIT(&(vhead));
 	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, v) >= 0) {
-	    if (bn_vlist_bbox(&vhead, bmin, bmax, NULL)) {
-		BN_FREE_VLIST(&v->gv_vlfree, &vhead);
+	    if (bv_vlist_bbox(&vhead, bmin, bmax, NULL)) {
+		BV_FREE_VLIST(&v->gv_vlfree, &vhead);
 		rt_db_free_internal(&dbintern);
 		return -1;
 	    }
-	    BN_FREE_VLIST(&v->gv_vlfree, &vhead);
+	    BV_FREE_VLIST(&v->gv_vlfree, &vhead);
 	    bbret = 0;
 	}
     }
@@ -327,7 +327,7 @@ _ged_update_db_path(struct bview_scene_obj *s)
     }
 
     // Clear out existing vlist, if any...
-    BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+    BV_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
 
     // Get the new geometry
     _scene_obj_geom(s);

@@ -846,10 +846,10 @@ plot_node(const vdsNode *node, void *udata)
 
     while (t != NULL) {
 	vdsUpdateTriProxies(t);
-	RT_ADD_VLIST(vhead, t->proxies[2]->coord, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, t->proxies[0]->coord, BN_VLIST_LINE_DRAW);
-	RT_ADD_VLIST(vhead, t->proxies[1]->coord, BN_VLIST_LINE_DRAW);
-	RT_ADD_VLIST(vhead, t->proxies[2]->coord, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, t->proxies[2]->coord, BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, t->proxies[0]->coord, BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, t->proxies[1]->coord, BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, t->proxies[2]->coord, BV_VLIST_LINE_DRAW);
 	t = t->next;
     }
 }
@@ -897,10 +897,10 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 /* TODO - duplicated from brep_debug.cpp - probably should refactor into proper
  * internal API (maybe even libbn, if that makes sense) ... */
 #define BOT_BBOX_ARB_FACE(valp, a, b, c, d)             \
-    RT_ADD_VLIST(vhead, valp[a], BN_VLIST_LINE_MOVE);   \
-    RT_ADD_VLIST(vhead, valp[b], BN_VLIST_LINE_DRAW);   \
-    RT_ADD_VLIST(vhead, valp[c], BN_VLIST_LINE_DRAW);   \
-    RT_ADD_VLIST(vhead, valp[d], BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, valp[a], BV_VLIST_LINE_MOVE);   \
+    RT_ADD_VLIST(vhead, valp[b], BV_VLIST_LINE_DRAW);   \
+    RT_ADD_VLIST(vhead, valp[c], BV_VLIST_LINE_DRAW);   \
+    RT_ADD_VLIST(vhead, valp[d], BV_VLIST_LINE_DRAW);
 
 #define BOT_BB_PLOT_VLIST(_min, _max) {             \
             fastf_t pt[8][3];                       \
@@ -937,10 +937,10 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
 		continue; /* sanity */
 
-	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BV_VLIST_LINE_DRAW);
 	}
     } else {
 	/* too big - just draw the bbox */
@@ -984,7 +984,7 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	VSUB2(ac, aa, cc);
 	VCROSS(norm, ab, ac);
 	VUNITIZE(norm);
-	RT_ADD_VLIST(vhead, norm, BN_VLIST_TRI_START);
+	RT_ADD_VLIST(vhead, norm, BV_VLIST_TRI_START);
 
 	if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
 	    (bot_ip->bot_flags & RT_BOT_USE_NORMALS)) {
@@ -993,18 +993,18 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	    VMOVE(na, &bot_ip->normals[bot_ip->face_normals[i*3+0]*3]);
 	    VMOVE(nb, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3]);
 	    VMOVE(nc, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3]);
-	    RT_ADD_VLIST(vhead, na, BN_VLIST_TRI_VERTNORM);
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_MOVE);
-	    RT_ADD_VLIST(vhead, nb, BN_VLIST_TRI_VERTNORM);
-	    RT_ADD_VLIST(vhead, bb, BN_VLIST_TRI_DRAW);
-	    RT_ADD_VLIST(vhead, nc, BN_VLIST_TRI_VERTNORM);
-	    RT_ADD_VLIST(vhead, cc, BN_VLIST_TRI_DRAW);
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_END);
+	    RT_ADD_VLIST(vhead, na, BV_VLIST_TRI_VERTNORM);
+	    RT_ADD_VLIST(vhead, aa, BV_VLIST_TRI_MOVE);
+	    RT_ADD_VLIST(vhead, nb, BV_VLIST_TRI_VERTNORM);
+	    RT_ADD_VLIST(vhead, bb, BV_VLIST_TRI_DRAW);
+	    RT_ADD_VLIST(vhead, nc, BV_VLIST_TRI_VERTNORM);
+	    RT_ADD_VLIST(vhead, cc, BV_VLIST_TRI_DRAW);
+	    RT_ADD_VLIST(vhead, aa, BV_VLIST_TRI_END);
 	} else {
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_MOVE);
-	    RT_ADD_VLIST(vhead, bb, BN_VLIST_TRI_DRAW);
-	    RT_ADD_VLIST(vhead, cc, BN_VLIST_TRI_DRAW);
-	    RT_ADD_VLIST(vhead, aa, BN_VLIST_TRI_END);
+	    RT_ADD_VLIST(vhead, aa, BV_VLIST_TRI_MOVE);
+	    RT_ADD_VLIST(vhead, bb, BV_VLIST_TRI_DRAW);
+	    RT_ADD_VLIST(vhead, cc, BV_VLIST_TRI_DRAW);
+	    RT_ADD_VLIST(vhead, aa, BV_VLIST_TRI_END);
 	}
     }
 

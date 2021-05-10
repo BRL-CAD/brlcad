@@ -30,11 +30,10 @@
 #include "vmath.h"
 #include "bn/mat.h"
 #include "bn/vectfont.h"
-#include "bn/vlist.h"
-
+#include "bview/vlist.h"
 
 void
-bn_vlist_3string(struct bu_list *vhead,
+bv_vlist_3string(struct bu_list *vhead,
 		 struct bu_list *free_hd, /* source of free vlists */
 		 const char *string,    /* string of chars to be plotted */
 		 const vect_t origin,	/* lower left corner of 1st char */
@@ -74,7 +73,7 @@ bn_vlist_3string(struct bu_list *vhead,
 
 	VSET( temp, offset, 0, 0 );
 	MAT4X3PNT( loc, mat, temp );
-	BN_ADD_VLIST(free_hd, vhead, loc, BN_VLIST_LINE_MOVE );
+	BV_ADD_VLIST(free_hd, vhead, loc, BV_VLIST_LINE_MOVE );
 
 	for ( p = tp_getchar(cp); ((stroke= *p)) != VFONT_LAST; p++ )  {
 	    int	draw;
@@ -97,9 +96,9 @@ bn_vlist_3string(struct bu_list *vhead,
 		  (ysign * (stroke%11)) * 0.1 * scale, 0 );
 	    MAT4X3PNT( loc, mat, temp );
 	    if ( draw )  {
-		BN_ADD_VLIST( free_hd, vhead, loc, BN_VLIST_LINE_DRAW );
+		BV_ADD_VLIST( free_hd, vhead, loc, BV_VLIST_LINE_DRAW );
 	    } else {
-		BN_ADD_VLIST( free_hd, vhead, loc, BN_VLIST_LINE_MOVE );
+		BV_ADD_VLIST( free_hd, vhead, loc, BV_VLIST_LINE_MOVE );
 	    }
 	}
     }
@@ -107,7 +106,7 @@ bn_vlist_3string(struct bu_list *vhead,
 
 
 void
-bn_vlist_2string(struct bu_list *vhead,
+bv_vlist_2string(struct bu_list *vhead,
 		 struct bu_list *free_hd,
 		 const char *string,
 		 double x,
@@ -120,7 +119,7 @@ bn_vlist_2string(struct bu_list *vhead,
 
     bn_mat_angles( mat, 0.0, 0.0, theta );
     VSET( p, x, y, 0 );
-    bn_vlist_3string( vhead, free_hd, string, p, mat, scale );
+    bv_vlist_3string( vhead, free_hd, string, p, mat, scale );
 }
 
 /*

@@ -220,7 +220,7 @@ brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_intern
 
 
 int
-brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp)
+brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bv_vlblock *vbp)
 {
     RT_CK_DB_INTERNAL(intern1);
     RT_CK_DB_INTERNAL(intern2);

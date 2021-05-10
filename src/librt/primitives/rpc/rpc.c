@@ -756,12 +756,12 @@ rpc_plot_parabolic_curve(
     VMOVE(Bu, rpc->rpc_Bunit);
 
     VJOIN2(p, t, rscale * pts->p[Y], Ru, -pts->p[Z], Bu);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	VJOIN2(p, t, rscale * node->p[Y], Ru, -node->p[Z], Bu);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
 	node = node->next;
     }
@@ -828,17 +828,17 @@ rpc_plot_curve_connections(
 
 	/* connect faces on one side of the curve */
 	VJOIN2(pt, rpc->rpc_V, z, Zu, -y, Yu);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
 
 	VADD2(pt, pt, rpc->rpc_H);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
 
 	/* connect the faces on the other side */
 	VJOIN2(pt, rpc->rpc_V, z, Zu, y, Yu);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
 
 	VADD2(pt, pt, rpc->rpc_H);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
     }
 }
 
@@ -910,19 +910,19 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     /* plot rectangular face */
     VADD2(p, rpc->rpc_V, rpc_R);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
 
     VADD2(p, p, rpc->rpc_H);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -2.0, rpc_R);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -1.0, rpc->rpc_H);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, 2.0, rpc_R);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
     return 0;
 }
@@ -1011,21 +1011,21 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     /* Draw the front */
     RT_ADD_VLIST(vhead, &front[(n-1)*ELEMENTS_PER_VECT],
-		 BN_VLIST_LINE_MOVE);
+		 BV_VLIST_LINE_MOVE);
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &front[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &front[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw the back */
-    RT_ADD_VLIST(vhead, &back[(n-1)*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &back[(n-1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &back[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &back[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &front[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, &back[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &front[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, &back[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     bu_free((char *)front, "fastf_t");

@@ -1764,14 +1764,14 @@ poly2tri_CDT(struct bu_list *vhead,
 		    }
 		}
 		//tri one
-		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_START);
-		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_VERTNORM);
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_MOVE);
-		BN_ADD_VLIST(vlfree, vhead, nv[1], BN_VLIST_TRI_VERTNORM);
-		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_TRI_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, nv[2], BN_VLIST_TRI_VERTNORM);
-		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_TRI_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_END);
+		BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_START);
+		BV_ADD_VLIST(vlfree, vhead, nv[0], BV_VLIST_TRI_VERTNORM);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, nv[1], BV_VLIST_TRI_VERTNORM);
+		BV_ADD_VLIST(vlfree, vhead, pt[1], BV_VLIST_TRI_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, nv[2], BV_VLIST_TRI_VERTNORM);
+		BV_ADD_VLIST(vlfree, vhead, pt[2], BV_VLIST_TRI_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_TRI_END);
 	    }
 	} else if (plottype == 1) { // tris 3d wire
 	    ON_3dPoint pnt[3] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};;
@@ -1798,10 +1798,10 @@ poly2tri_CDT(struct bu_list *vhead,
 		    }
 		}
 		//tri one
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_LINE_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_LINE_DRAW);
-		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, pt[1], BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[2], BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt[0], BV_VLIST_LINE_DRAW);
 
 	    }
 	} else if (plottype == 2) { // tris 2d
@@ -1825,8 +1825,8 @@ poly2tri_CDT(struct bu_list *vhead,
 		    pt2[0] = p->x;
 		    pt2[1] = p->y;
 		    pt2[2] = 0.0;
-		    BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
-		    BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 		}
 	    }
 	}
@@ -1852,8 +1852,8 @@ poly2tri_CDT(struct bu_list *vhead,
 		pt2[0] = p->x;
 		pt2[1] = p->y;
 		pt2[2] = 0.0;
-		BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
 	    }
 	}
     } else if (plottype == 4) {
@@ -1866,7 +1866,7 @@ poly2tri_CDT(struct bu_list *vhead,
 	    pt[0] = p->x;
 	    pt[1] = p->y;
 	    pt[2] = 0.0;
-	    BN_ADD_VLIST(vlfree, vhead, pt, BN_VLIST_POINT_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_POINT_DRAW);
 	}
     }
 
@@ -1925,12 +1925,12 @@ int
 brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
                       const struct bg_tess_tol *ttol, const struct bn_tol *tol,
                       const ON_Brep *brep, struct bu_list *p_vhead,
-                      struct bn_vlblock *vbp, struct bu_list *vlfree,
+                      struct bv_vlblock *vbp, struct bu_list *vlfree,
 		      int index, int plottype, int num_points)
 {
     struct bu_list *vhead = p_vhead;
     if (!vhead) {
-	vhead = bn_vlblock_find(vbp, YELLOW);
+	vhead = bv_vlblock_find(vbp, YELLOW);
     }
     bool watertight = true;
     ON_wString wstr;

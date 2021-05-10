@@ -49,7 +49,7 @@ struct _ged_bot_info {
     struct ged *gedp = NULL;
     struct rt_db_internal *intern = NULL;
     struct directory *dp = NULL;
-    struct bn_vlblock *vbp = NULL;
+    struct bv_vlblock *vbp = NULL;
     struct bu_color *color = NULL;
     int verbosity;
     int visualize;

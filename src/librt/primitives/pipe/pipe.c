@@ -1960,10 +1960,10 @@ draw_pipe_parallel_circle_connections(
     radian = 0.0;
     for (i = 0; i < num_lines; ++i) {
 	ellipse_point_at_radian(pt, start->center, start_a, start_b, radian);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
 
 	ellipse_point_at_radian(pt, end->center, end_a, end_b, radian);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
 
 	radian += radian_step;
     }
@@ -2047,12 +2047,12 @@ draw_pipe_arc(
     radian_step = radians_from_start_to_end / num_segments;
 
     ellipse_point_at_radian(pt, arc_circle.center, axis_a, axis_b, 0.0);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
 
     radian = radian_step;
     for (i = 0; i < num_segments; ++i) {
 	ellipse_point_at_radian(pt, arc_circle.center, axis_a, axis_b, radian);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
 
 	radian += radian_step;
     }

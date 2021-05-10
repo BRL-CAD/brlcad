@@ -421,19 +421,19 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     VADD2(y_1, cent, ybase);
     VSUB2(y_2, cent, ybase);
 
-    RT_ADD_VLIST(vhead, x_1, BN_VLIST_LINE_MOVE);	/* the cross */
-    RT_ADD_VLIST(vhead, x_2, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, y_1, BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, y_2, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, x_2, BN_VLIST_LINE_DRAW);	/* the box */
-    RT_ADD_VLIST(vhead, y_1, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, x_1, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, y_2, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_1, BV_VLIST_LINE_MOVE);	/* the cross */
+    RT_ADD_VLIST(vhead, x_2, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, y_1, BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, y_2, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_2, BV_VLIST_LINE_DRAW);	/* the box */
+    RT_ADD_VLIST(vhead, y_1, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_1, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, y_2, BV_VLIST_LINE_DRAW);
 
     VSCALE(tip, hip->eqn, 500);
     VADD2(tip, cent, tip);
-    RT_ADD_VLIST(vhead, cent, BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, cent, BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, tip, BV_VLIST_LINE_DRAW);
     return 0;
 }
 

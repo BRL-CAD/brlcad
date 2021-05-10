@@ -1211,17 +1211,17 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* Draw lengthwise (around outside rim) */
     for (w = 0; w < nw; w++) {
 	len = nlen-1;
-	RT_ADD_VLIST(vhead, TOR_PTA(w, len), BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, TOR_PTA(w, len), BV_VLIST_LINE_MOVE);
 	for (len = 0; len < nlen; len++) {
-	    RT_ADD_VLIST(vhead, TOR_PTA(w, len), BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, TOR_PTA(w, len), BV_VLIST_LINE_DRAW);
 	}
     }
     /* Draw around the "width" (1 cross section) */
     for (len = 0; len < nlen; len++) {
 	w = nw-1;
-	RT_ADD_VLIST(vhead, TOR_PTA(w, len), BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, TOR_PTA(w, len), BV_VLIST_LINE_MOVE);
 	for (w = 0; w < nw; w++) {
-	    RT_ADD_VLIST(vhead, TOR_PTA(w, len), BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, TOR_PTA(w, len), BV_VLIST_LINE_DRAW);
 	}
     }
 

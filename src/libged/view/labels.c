@@ -124,7 +124,7 @@ _label_cmd_create(void *bs, int argc, const char **argv)
     BU_GET(s, struct bview_scene_obj);
     s->s_v = gedp->ged_gvp;
     BU_LIST_INIT(&(s->s_vlist));
-    BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
     VSET(s->s_color, 255, 255, 0);
 
     struct bview_label *l;

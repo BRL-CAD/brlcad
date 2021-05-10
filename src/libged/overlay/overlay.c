@@ -159,7 +159,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (!write_fb) {
-	struct bn_vlblock*vbp;
+	struct bv_vlblock*vbp;
 	FILE *fp = fopen(argv[0], "rb");
 
 	/* If we don't have an exact filename match, see if we got a pattern -
@@ -182,7 +182,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);
 		fclose(fp);
 		if (ret < 0) {
-		    bn_vlblock_free(vbp);
+		    bv_vlblock_free(vbp);
 		    bu_argv_free(count, files);
 		    return GED_ERROR;
 		}
@@ -194,13 +194,13 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);
 	    fclose(fp);
 	    if (ret < 0) {
-		bn_vlblock_free(vbp);
+		bv_vlblock_free(vbp);
 		return GED_ERROR;
 	    }
 	}
 
 	_ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
-	bn_vlblock_free(vbp);
+	bv_vlblock_free(vbp);
 
 	return GED_OK;
 

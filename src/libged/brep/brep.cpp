@@ -1426,8 +1426,8 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
-    bn_vlblock_free(gb.vbp);
-    gb.vbp = (struct bn_vlblock *)NULL;
+    bv_vlblock_free(gb.vbp);
+    gb.vbp = (struct bv_vlblock *)NULL;
     rt_db_free_internal(&gb.intern);
     return GED_ERROR;
 }

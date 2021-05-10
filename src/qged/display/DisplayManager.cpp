@@ -46,9 +46,9 @@ DisplayManager::DisplayManager(BRLCADDisplay *display) : display(display) {
     glLineStipple(1, 0xCF33);
 }
 
-void DisplayManager::drawVList(bn_vlist *vp) {
+void DisplayManager::drawVList(bv_vlist *vp) {
 
-    struct bn_vlist *tvp;
+    struct bv_vlist *tvp;
     int first = 1;
     int mflag = 1;
     GLfloat originalPointSize, originalLineWidth;
@@ -62,7 +62,7 @@ void DisplayManager::drawVList(bn_vlist *vp) {
 
     /* Viewing region is from -1.0 to +1.0 */
 
-    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
         int i;
         int nused = tvp->nused;
         int *cmd = tvp->cmd;
@@ -73,7 +73,7 @@ void DisplayManager::drawVList(bn_vlist *vp) {
             VMOVE(glpt, *pt);
 
             switch (*cmd) {
-                case BN_VLIST_LINE_MOVE:
+                case BV_VLIST_LINE_MOVE:
                     /* Move, start line */
                     if (first == 0)
                         glEnd();
@@ -93,7 +93,7 @@ void DisplayManager::drawVList(bn_vlist *vp) {
                     glBegin(GL_LINE_STRIP);
                     glVertex3dv(glpt);
                     break;
-                case BN_VLIST_MODEL_MAT:
+                case BV_VLIST_MODEL_MAT:
                     if (first == 0) {
                         glEnd();
                         first = 1;
@@ -102,7 +102,7 @@ void DisplayManager::drawVList(bn_vlist *vp) {
                     glMatrixMode(GL_MODELVIEW);
                     glPopMatrix();
                     break;
-                case BN_VLIST_DISPLAY_MAT:
+                case BV_VLIST_DISPLAY_MAT:
                     glMatrixMode(GL_MODELVIEW);
                     glGetDoublev(GL_MODELVIEW_MATRIX, m);
 
@@ -117,8 +117,8 @@ void DisplayManager::drawVList(bn_vlist *vp) {
                              2. * 3.78 / display->getH(),
                              1.);
                     break;
-                case BN_VLIST_POLY_START:
-                case BN_VLIST_TRI_START:
+                case BV_VLIST_POLY_START:
+                case BV_VLIST_TRI_START:
                     /* Start poly marker & normal */
 
                     if (dmLight && mflag) {
@@ -146,7 +146,7 @@ void DisplayManager::drawVList(bn_vlist *vp) {
                             glEnable(GL_BLEND);
                     }
 
-                    if (*cmd == BN_VLIST_POLY_START) {
+                    if (*cmd == BV_VLIST_POLY_START) {
                         if (first == 0)
                             glEnd();
 
@@ -160,42 +160,42 @@ void DisplayManager::drawVList(bn_vlist *vp) {
                     first = 0;
 
                     break;
-                case BN_VLIST_LINE_DRAW:
-                case BN_VLIST_POLY_MOVE:
-                case BN_VLIST_POLY_DRAW:
-                case BN_VLIST_TRI_MOVE:
-                case BN_VLIST_TRI_DRAW:
+                case BV_VLIST_LINE_DRAW:
+                case BV_VLIST_POLY_MOVE:
+                case BV_VLIST_POLY_DRAW:
+                case BV_VLIST_TRI_MOVE:
+                case BV_VLIST_TRI_DRAW:
                     glVertex3dv(glpt);
 
                     break;
-                case BN_VLIST_POLY_END:
+                case BV_VLIST_POLY_END:
                     /* Draw, End Polygon */
                     glVertex3dv(glpt);
                     glEnd();
                     first = 1;
                     break;
-                case BN_VLIST_TRI_END:
+                case BV_VLIST_TRI_END:
                     break;
-                case BN_VLIST_POLY_VERTNORM:
-                case BN_VLIST_TRI_VERTNORM:
+                case BV_VLIST_POLY_VERTNORM:
+                case BV_VLIST_TRI_VERTNORM:
                     /* Set per-vertex normal.  Given before vert. */
                     glNormal3dv(glpt);
                     break;
-                case BN_VLIST_POINT_DRAW:
+                case BV_VLIST_POINT_DRAW:
                     if (first == 0)
                         glEnd();
                     first = 0;
                     glBegin(GL_POINTS);
                     glVertex3dv(glpt);
                     break;
-                case BN_VLIST_LINE_WIDTH: {
+                case BV_VLIST_LINE_WIDTH: {
                     GLfloat lineWidth = (GLfloat) (*pt)[0];
                     if (lineWidth > 0.0) {
                         glLineWidth(lineWidth);
                     }
                     break;
                 }
-                case BN_VLIST_POINT_SIZE: {
+                case BV_VLIST_POINT_SIZE: {
                     GLfloat pointSize = (GLfloat) (*pt)[0];
                     if (pointSize > 0.0) {
                         glPointSize(pointSize);

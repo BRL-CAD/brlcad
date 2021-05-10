@@ -1166,69 +1166,69 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     rt_hrt_24pts(top4_right_lobe, highest_point_right, xdir4_right, ydir4_right);
     rt_hrt_24pts(top5_upper_cusp, upper_cusp, upper_cusp_xdir, upper_cusp_xdir);
 
-    RT_ADD_VLIST(vhead, &top[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top01[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top01[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top01[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top01[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top02[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top02[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top02[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top02[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top1[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top1[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top1[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top1[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top1_left_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top1_left_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top1_left_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top1_left_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top1_right_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top1_right_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top1_right_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top1_right_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top2_left_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top2_left_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top2_left_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top2_left_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top2_right_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top2_right_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top2_right_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top2_right_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top3_left_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top3_left_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top3_left_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top3_left_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top3_right_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top3_right_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top3_right_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top3_right_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top4_left_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top4_left_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top4_left_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top4_left_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top4_right_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top4_right_lobe[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top4_right_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top4_right_lobe[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &top5_upper_cusp[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top5_upper_cusp[23*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &top5_upper_cusp[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top5_upper_cusp[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /*
@@ -1240,52 +1240,52 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     for (k = 1; k < 24; k++) {
 	RT_ADD_VLIST(vhead,
 	             &top01[k*ELEMENTS_PER_VECT],
-	             BN_VLIST_LINE_MOVE);
+	             BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 		     &top02[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
         RT_ADD_VLIST(vhead,
 		     &top02[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_MOVE);
+		     BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 		     &top1[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
 	RT_ADD_VLIST(vhead,
 		     &top1_left_lobe[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_MOVE);
+		     BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 	             &top2_left_lobe[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
 	RT_ADD_VLIST(vhead,
 	             &top1_right_lobe[k*ELEMENTS_PER_VECT],
-	             BN_VLIST_LINE_MOVE);
+	             BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 	             &top2_right_lobe[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
 	RT_ADD_VLIST(vhead,
 		     &top2_left_lobe[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_MOVE);
+		     BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 		     &top3_left_lobe[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
 	RT_ADD_VLIST(vhead,
 		     &top2_right_lobe[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_MOVE);
+		     BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 	             &top3_right_lobe[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
 	RT_ADD_VLIST(vhead,
 	             &top3_left_lobe[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_MOVE);
+		     BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 		     &top4_left_lobe[k*ELEMENTS_PER_VECT],
-	             BN_VLIST_LINE_DRAW);
+	             BV_VLIST_LINE_DRAW);
 	RT_ADD_VLIST(vhead,
 	             &top3_right_lobe[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_MOVE);
+		     BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 		     &top4_right_lobe[k*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
     }
 
     mag_h = MAGNITUDE(hip->zdir);
@@ -1438,11 +1438,11 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     /* Draw the top (largest) ellipse in the XY plane */
     RT_ADD_VLIST(vhead,
 		 &ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
-		 BN_VLIST_LINE_MOVE);
+		 BV_VLIST_LINE_MOVE);
     for (i = 0; i < nseg; i++) {
 	RT_ADD_VLIST(vhead,
 		     &ellipses[nell-1][i*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
     }
 
     /* Connect ellipses skipping the top (largest) ellipse which is at index nell - 1 */
@@ -1455,11 +1455,11 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 	/* Draw the current ellipse */
 	RT_ADD_VLIST(vhead,
 		     &ellipses[ellipse_below][(nseg-1)*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_MOVE);
+		     BV_VLIST_LINE_MOVE);
 	for (j = 0; j < nseg; j++) {
 	    RT_ADD_VLIST(vhead,
 			 &ellipses[ellipse_below][j*ELEMENTS_PER_VECT],
-			 BN_VLIST_LINE_DRAW);
+			 BV_VLIST_LINE_DRAW);
 	}
 
     /*
@@ -1475,10 +1475,10 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
 	    jj = j;
 	RT_ADD_VLIST(vhead,
 		     &ellipses[ellipse_below][j*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_MOVE);
+		     BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 		     &ellipses[ellipse_above][jj*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
 	}
     }
 
@@ -1486,10 +1486,10 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tes
     VADD2(Work, hip->v, lower_cusp);
     for (i = 0; i < nseg; i++) {
 	/* Draw connector */
-	RT_ADD_VLIST(vhead, Work, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, Work, BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 		     &ellipses[0][i*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
     }
 
     /* free memory */

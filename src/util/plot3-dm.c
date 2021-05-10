@@ -76,7 +76,7 @@ struct plot_list{
     int pl_draw;
     int pl_edit;
     struct bu_vls pl_name;
-    struct bn_vlblock *pl_vbp;
+    struct bv_vlblock *pl_vbp;
 };
 
 
@@ -181,7 +181,7 @@ refresh() {
 		    rgb = plp->pl_vbp->rgb[i];
 		    dm_set_fg(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0, (fastf_t)0.0);
 		}
-		dm_draw_vlist(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
+		dm_draw_vlist(dmp, (struct bv_vlist *)&plp->pl_vbp->head[i]);
 	    }
     }
 
@@ -490,7 +490,7 @@ static void
 size_reset()
 {
     size_t i;
-    struct bn_vlist *tvp;
+    struct bv_vlist *tvp;
     vect_t min, max;
     vect_t center;
     vect_t radial;
@@ -500,13 +500,13 @@ size_reset()
     VSETALL(max, -INFINITY);
 
     for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
-	struct bn_vlblock *vbp;
+	struct bv_vlblock *vbp;
 
 	vbp = plp->pl_vbp;
 	for (i=0; i < vbp->nused; i++) {
-	    struct bn_vlist *vp = (struct bn_vlist *)&vbp->head[i];
+	    struct bv_vlist *vp = (struct bv_vlist *)&vbp->head[i];
 
-	    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
 		int j;
 		int nused = tvp->nused;
 		int *cmd = tvp->cmd;
@@ -514,19 +514,19 @@ size_reset()
 
 		for (j = 0; j < nused; j++, cmd++, pt++) {
 		    switch (*cmd) {
-			case BN_VLIST_POLY_START:
-			case BN_VLIST_POLY_VERTNORM:
-			case BN_VLIST_TRI_START:
-			case BN_VLIST_TRI_VERTNORM:
+			case BV_VLIST_POLY_START:
+			case BV_VLIST_POLY_VERTNORM:
+			case BV_VLIST_TRI_START:
+			case BV_VLIST_TRI_VERTNORM:
 			    break;
-			case BN_VLIST_LINE_MOVE:
-			case BN_VLIST_LINE_DRAW:
-			case BN_VLIST_POLY_MOVE:
-			case BN_VLIST_POLY_DRAW:
-			case BN_VLIST_POLY_END:
-			case BN_VLIST_TRI_MOVE:
-			case BN_VLIST_TRI_DRAW:
-			case BN_VLIST_TRI_END:
+			case BV_VLIST_LINE_MOVE:
+			case BV_VLIST_LINE_DRAW:
+			case BV_VLIST_POLY_MOVE:
+			case BV_VLIST_POLY_DRAW:
+			case BV_VLIST_POLY_END:
+			case BV_VLIST_TRI_MOVE:
+			case BV_VLIST_TRI_DRAW:
+			case BV_VLIST_TRI_END:
 			    VMIN(min, *pt);
 			    VMAX(max, *pt);
 			    break;
@@ -607,7 +607,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
 	    /* found object with same name */
 	    if (BU_STR_EQUAL(bu_vls_addr(&plp->pl_name), bnp)) {
-		bn_vlblock_free(plp->pl_vbp);
+		bv_vlblock_free(plp->pl_vbp);
 		goto up_to_vl;
 	    }
 	}
@@ -734,7 +734,7 @@ cmd_closepl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
 	    if (BU_STR_EQUAL(argv[i], bu_vls_addr(&plp->pl_name))) {
 		BU_LIST_DEQUEUE(&plp->l);
 		bu_vls_free(&plp->pl_name);
-		bn_vlblock_free(plp->pl_vbp);
+		bv_vlblock_free(plp->pl_vbp);
 		bu_free((void *)plp, "cmd_closepl");
 		break;
 	    }

@@ -81,22 +81,22 @@ dm_draw_arrow(struct dm *dmp, point_t A, point_t B, fastf_t tip_length, fastf_t 
 void
 dm_add_arrows(struct dm *dmp, struct bview_scene_obj *s)
 {
-    struct bn_vlist *vp = (struct bn_vlist *)&s->s_vlist;
-    struct bn_vlist *tvp;
+    struct bv_vlist *vp = (struct bv_vlist *)&s->s_vlist;
+    struct bv_vlist *tvp;
     point_t A, B;
     int pcnt = 0;
     if (!s->s_arrow)
 	return;
     if (NEAR_ZERO(s->s_os.s_arrow_tip_length, SMALL_FASTF) || NEAR_ZERO(s->s_os.s_arrow_tip_width, SMALL_FASTF))
        return;
-    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
 	for (int i = 0; i < nused; i++, cmd++, pt++) {
 	    pcnt++;
 	    switch (*cmd) {
-		case BN_VLIST_LINE_MOVE:
+		case BV_VLIST_LINE_MOVE:
 		    if (pcnt > 1) {
 			// We have a move and more than one point - add an arrow
 			// to the A -> B segment at B
@@ -104,7 +104,7 @@ dm_add_arrows(struct dm *dmp, struct bview_scene_obj *s)
 		    }
 		    VMOVE(B,*pt);
 		    break;
-		case BN_VLIST_LINE_DRAW:
+		case BV_VLIST_LINE_DRAW:
 		    VMOVE(A,B);
 		    VMOVE(B,*pt);
 		    break;
@@ -572,9 +572,9 @@ dm_draw_scene_obj(struct dm *dmp, struct bview_scene_obj *s)
 	dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
 
 	if (s->s_os.s_dmode == 4) {
-	    dm_draw_vlist_hidden_line(dmp, (struct bn_vlist *)&s->s_vlist);
+	    dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&s->s_vlist);
 	} else {
-	    dm_draw_vlist(dmp, (struct bn_vlist *)&s->s_vlist);
+	    dm_draw_vlist(dmp, (struct bv_vlist *)&s->s_vlist);
 	}
 
 	dm_add_arrows(dmp, s);

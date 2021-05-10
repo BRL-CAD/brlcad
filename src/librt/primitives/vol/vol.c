@@ -1237,21 +1237,21 @@ rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *m
 
     VELMUL(s, vip->cellsize, a);
     MAT4X3PNT(arot, mat, s);
-    RT_ADD_VLIST(vhead, arot, BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, arot, BV_VLIST_LINE_MOVE);
 
     VELMUL(s, vip->cellsize, b);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
 
     VELMUL(s, vip->cellsize, c);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
 
     VELMUL(s, vip->cellsize, d);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
 
-    RT_ADD_VLIST(vhead, arot, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, arot, BV_VLIST_LINE_DRAW);
 }
 
 

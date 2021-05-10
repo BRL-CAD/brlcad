@@ -101,7 +101,7 @@ qray_free(struct ged_drawable *gdp)
 
 void
 qray_data_to_vlist(struct ged *gedp,
-		   struct bn_vlblock *vbp,
+		   struct bv_vlblock *vbp,
 		   struct qray_dataList *headp,
 		   vect_t dir,
 		   int do_overlaps)
@@ -114,17 +114,17 @@ qray_data_to_vlist(struct ged *gedp,
 
     for (BU_LIST_FOR(ndlp, qray_dataList, &headp->l)) {
 	if (do_overlaps)
-	    vhead = bn_vlblock_find(vbp,
+	    vhead = bv_vlblock_find(vbp,
 				    gedp->ged_gdp->gd_qray_overlap_color.r,
 				    gedp->ged_gdp->gd_qray_overlap_color.g,
 				    gedp->ged_gdp->gd_qray_overlap_color.b);
 	else if (i % 2)
-	    vhead = bn_vlblock_find(vbp,
+	    vhead = bv_vlblock_find(vbp,
 				    gedp->ged_gdp->gd_qray_odd_color.r,
 				    gedp->ged_gdp->gd_qray_odd_color.g,
 				    gedp->ged_gdp->gd_qray_odd_color.b);
 	else
-	    vhead = bn_vlblock_find(vbp,
+	    vhead = bv_vlblock_find(vbp,
 				    gedp->ged_gdp->gd_qray_even_color.r,
 				    gedp->ged_gdp->gd_qray_even_color.g,
 				    gedp->ged_gdp->gd_qray_even_color.b);
@@ -133,16 +133,16 @@ qray_data_to_vlist(struct ged *gedp,
 	VJOIN1(out_pt, in_pt, ndlp->los, dir);
 	VSCALE(in_pt, in_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 	VSCALE(out_pt, out_pt, gedp->ged_wdbp->dbip->dbi_local2base);
-	RT_ADD_VLIST(vhead, in_pt, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, out_pt, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, in_pt, BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, out_pt, BV_VLIST_LINE_DRAW);
 
 	if (!do_overlaps && i > 1 && !VNEAR_EQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
-	    vhead = bn_vlblock_find(vbp,
+	    vhead = bv_vlblock_find(vbp,
 				    gedp->ged_gdp->gd_qray_void_color.r,
 				    gedp->ged_gdp->gd_qray_void_color.g,
 				    gedp->ged_gdp->gd_qray_void_color.b);
-	    RT_ADD_VLIST(vhead, last_out_pt, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, in_pt, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, last_out_pt, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, in_pt, BV_VLIST_LINE_DRAW);
 	}
 
 	VMOVE(last_out_pt, out_pt);

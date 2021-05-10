@@ -1624,7 +1624,7 @@ nmg_ed(int arg)
 	    nmg_pr_fu_around_eu(es_eu, &mged_tol);
 	    {
 		struct model *m;
-		struct bn_vlblock*vbp;
+		struct bv_vlblock*vbp;
 		long *tab;
 
 		m = nmg_find_model(&es_eu->l.magic);
@@ -1639,7 +1639,7 @@ nmg_ed(int arg)
 		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &RTG.rtg_vlfree, &mged_tol);
 		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
 
-		    bn_vlblock_free(vbp);
+		    bv_vlblock_free(vbp);
 		    bu_free((void *)tab, "nmg_ed tab[]");
 		}
 		view_state->vs_flag = 1;

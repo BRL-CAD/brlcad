@@ -56,7 +56,7 @@ struct analyze_command_table {
 };
 
 struct analyze_command_state {
-    struct bn_vlblock *vbp;
+    struct bv_vlblock *vbp;
     int draw_pipe;
 };
 

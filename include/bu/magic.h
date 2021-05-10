@@ -83,8 +83,8 @@ __BEGIN_DECLS
 #define BN_TOL_MAGIC			0x98c734bb /**< ??4? */
 #define BN_UNIF_MAGIC			0x00be7460 /**< ??t` => 12481632 */
 #define BN_VERT_TREE_MAGIC		0x56455254 /**< VERT */
-#define BN_VLBLOCK_MAGIC		0x981bd112 /**< ???? */
-#define BN_VLIST_MAGIC			0x98237474 /**< ?\#tt */
+#define BV_VLBLOCK_MAGIC		0x981bd112 /**< ???? */
+#define BV_VLIST_MAGIC			0x98237474 /**< ?\#tt */
 
 /* libbg */
 #define BG_TESS_TOL_MAGIC		0xb9090dab /**< ???? */

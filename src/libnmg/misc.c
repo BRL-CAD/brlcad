@@ -7263,7 +7263,7 @@ nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn
 void
 nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
 {
-    const struct bn_vlist *vp;
+    const struct bv_vlist *vp;
     struct edgeuse *eu;
     struct vertex *v1, *v2;
     point_t pt1 = VINIT_ZERO;
@@ -7275,27 +7275,27 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
     v1 = (struct vertex *)NULL;
     v2 = (struct vertex *)NULL;
 
-    vp = BU_LIST_FIRST(bn_vlist, vhead);
+    vp = BU_LIST_FIRST(bv_vlist, vhead);
     if (vp->nused < 2)
 	return;
 
-    for (BU_LIST_FOR (vp, bn_vlist, vhead)) {
+    for (BU_LIST_FOR (vp, bv_vlist, vhead)) {
 	register int i;
 	register int nused = vp->nused;
 	vect_t edge_vec;
 
 	for (i  = 0; i < nused; i++) {
 	    switch (vp->cmd[i]) {
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_TRI_MOVE:
+		case BV_VLIST_LINE_MOVE:
+		case BV_VLIST_POLY_MOVE:
+		case BV_VLIST_TRI_MOVE:
 		    v1 = (struct vertex *)NULL;
 		    v2 = (struct vertex *)NULL;
 		    VMOVE(pt2, vp->pt[i]);
 		    break;
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_TRI_DRAW:
+		case BV_VLIST_LINE_DRAW:
+		case BV_VLIST_POLY_DRAW:
+		case BV_VLIST_TRI_DRAW:
 		    VSUB2(edge_vec, pt2, vp->pt[i]);
 		    if (VNEAR_ZERO(edge_vec, SMALL_FASTF))
 			break;
@@ -7311,10 +7311,10 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
 			nmg_vertex_gv(v1, pt1);
 		    nmg_edge_g(eu);
 		    break;
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_TRI_START:
-		case BN_VLIST_TRI_END:
+		case BV_VLIST_POLY_START:
+		case BV_VLIST_POLY_END:
+		case BV_VLIST_TRI_START:
+		case BV_VLIST_TRI_END:
 		    break;
 	    }
 	}
@@ -9970,26 +9970,26 @@ nmg_vlist_to_eu(struct bu_list *vlist, struct shell *s)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
     struct edgeuse *eu;
     struct vertex *v=NULL;
     struct vertex *polyStartV=NULL;
 
-    for (BU_LIST_FOR (vp, bn_vlist, vlist)) {
+    for (BU_LIST_FOR (vp, bv_vlist, vlist)) {
 	register int i;
 	register int nused = vp->nused;
 	register int *cmd = vp->cmd;
 	register point_t *pt = vp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_POLY_MOVE:
+		case BV_VLIST_LINE_MOVE:
+		case BV_VLIST_POLY_MOVE:
 		    VMOVE(pt2, *pt);
 		    v = NULL;
 		    polyStartV = NULL;
 		    break;
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_POLY_DRAW:
+		case BV_VLIST_LINE_DRAW:
+		case BV_VLIST_POLY_DRAW:
 		    VMOVE(pt1, pt2);
 		    VMOVE(pt2, *pt);
 		    eu = nmg_me(v, NULL, s);
@@ -10000,11 +10000,11 @@ nmg_vlist_to_eu(struct bu_list *vlist, struct shell *s)
 		    v = eu->eumate_p->vu_p->v_p;
 		    if (polyStartV == NULL) polyStartV = eu->vu_p->v_p;
 		    break;
-		case BN_VLIST_POLY_END:
+		case BV_VLIST_POLY_END:
 		    if (v != NULL &&  polyStartV != NULL)
 			nmg_me(v, polyStartV, s);
 		    break;
-		case BN_VLIST_POLY_START:
+		case BV_VLIST_POLY_START:
 		    polyStartV = NULL;
 		    v = NULL;
 		    break;

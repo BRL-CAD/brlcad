@@ -507,8 +507,8 @@ bot_cleanup:
 	BU_PUT(gb.intern, struct rt_db_internal);
     }
     if (gb.visualize) {
-	bn_vlblock_free(gb.vbp);
-	gb.vbp = (struct bn_vlblock *)NULL;
+	bv_vlblock_free(gb.vbp);
+	gb.vbp = (struct bv_vlblock *)NULL;
     }
     if (color) {
 	BU_PUT(color, struct bu_color);

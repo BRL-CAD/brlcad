@@ -816,14 +816,14 @@ ehy_plot_hyperbola(
 
     z = pts->p[Z];
     VJOIN2(p, ehy_V, ehy_hyperbola_y(mag_H, c, r, -z), Ru, -z, Hu);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	z = node->p[Z];
 	VJOIN2(p, ehy_V, ehy_hyperbola_y(mag_H, c, r, -z), Ru, -z, Hu);
 
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
 	node = node->next;
     }
@@ -1125,11 +1125,11 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* Draw the top ellipse */
     RT_ADD_VLIST(vhead,
 		 &ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
-		 BN_VLIST_LINE_MOVE);
+		 BV_VLIST_LINE_MOVE);
     for (i = 0; i < nseg; i++) {
 	RT_ADD_VLIST(vhead,
 		     &ellipses[nell-1][i*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
     }
 
     /* connect ellipses */
@@ -1145,11 +1145,11 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	/* Draw the current ellipse */
 	RT_ADD_VLIST(vhead,
 		     &ellipses[bottom][(nseg-1)*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_MOVE);
+		     BV_VLIST_LINE_MOVE);
 	for (j = 0; j < nseg; j++) {
 	    RT_ADD_VLIST(vhead,
 			 &ellipses[bottom][j*ELEMENTS_PER_VECT],
-			 BN_VLIST_LINE_DRAW);
+			 BV_VLIST_LINE_DRAW);
 	}
 
 	/* make connections between ellipses */
@@ -1160,20 +1160,20 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		jj = j;
 	    RT_ADD_VLIST(vhead,
 			 &ellipses[bottom][j*ELEMENTS_PER_VECT],
-			 BN_VLIST_LINE_MOVE);
+			 BV_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead,
 			 &ellipses[top][jj*ELEMENTS_PER_VECT],
-			 BN_VLIST_LINE_DRAW);
+			 BV_VLIST_LINE_DRAW);
 	}
     }
 
     VADD2(Work, xip->ehy_V, xip->ehy_H);
     for (i = 0; i < nseg; i++) {
 	/* Draw connector */
-	RT_ADD_VLIST(vhead, Work, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, Work, BV_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead,
 		     &ellipses[0][i*ELEMENTS_PER_VECT],
-		     BN_VLIST_LINE_DRAW);
+		     BV_VLIST_LINE_DRAW);
     }
 
     /* free mem */

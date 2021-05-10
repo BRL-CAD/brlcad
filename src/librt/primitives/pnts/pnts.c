@@ -916,20 +916,20 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
 	    /* draw first horizontal segment for this point */
 	    VSET(a, point->v[X] - hCoord, point->v[Y], point->v[Z]);
 	    VSET(b, point->v[X] + hCoord, point->v[Y], point->v[Z]);
-	    RT_ADD_VLIST(vhead, a, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, b, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, a, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, b, BV_VLIST_LINE_DRAW);
 
 	    /* draw perpendicular horizontal segment */
 	    VSET(a, point->v[X], point->v[Y] - hCoord, point->v[Z]);
 	    VSET(b, point->v[X], point->v[Y] + hCoord, point->v[Z]);
-	    RT_ADD_VLIST(vhead, a, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, b, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, a, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, b, BV_VLIST_LINE_DRAW);
 
 	    /* draw vertical segment */
 	    VSET(a, point->v[X], point->v[Y], point->v[Z] - vCoord);
 	    VSET(b, point->v[X], point->v[Y], point->v[Z] + vCoord);
-	    RT_ADD_VLIST(vhead, a, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, b, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, a, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, b, BV_VLIST_LINE_DRAW);
 	}
     }
 

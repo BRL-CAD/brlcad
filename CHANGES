@@ -1570,3 +1570,17 @@ s/(#[[:space:]]*include[[:space:]]+["<])bn\/clip\.h/\1bg\/clip.h/g
 s/bn_ray_vclip/bg_ray_vclip/g
 s/bn_lseg_clip/bg_lseg_clip/g
         functions moved and renamed [7.32]
+s/(#[[:space:]]*include[[:space:]]+["<])bn\/vlist\.h/\1bview\/vlist.h/g
+        moved vlist.h header [7.32]
+s/bn_vlist/bv_vlist/g
+s/bn_vlblock/bv_vlblock/g
+s/BN_VLIST/BV_VLIST/g
+s/BN_ADD_VLIST/BV_ADD_VLIST/g
+s/BN_FREE_VLIST/BV_FREE_VLIST/g
+s/bn_plot_vlblock/bv_plot_vlblock/g
+s/BN_CK_VLBLOCK/BV_CK_VLBLOCK/g
+s/BN_CK_VLIST/BV_CK_VLIST/g
+s/BN_VLBLOCK_MAGIC/BV_VLBLOCK_MAGIC/g
+s/bn_ck_vlist/bv_ck_vlist/g
+s/BN_GET_VLIST/BV_GET_VLIST/g
+        bn_vlist relocated to libbview [7.32]

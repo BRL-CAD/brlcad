@@ -1331,21 +1331,21 @@ rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat
     BU_CK_LIST_HEAD(vhead);
     VSET(s, x_1, y_1, 0.0);
     MAT4X3PNT(srot, mat, s);
-    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, srot, BV_VLIST_LINE_MOVE);
 
     VSET(p, x_1, y_1, t);
     MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
 
     VSET(p, x_2, y_2, t);
     MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
 
     p[Z] = 0;
     MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
 
-    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, srot, BV_VLIST_LINE_DRAW);
 }
 
 

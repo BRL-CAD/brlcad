@@ -1110,9 +1110,9 @@ shoot_and_plot(point_t start_pt,
 
 	    dgcdp->nvectors++;
 	    VJOIN1(pt, rp.r_pt, seg->seg_in.hit_dist, rp.r_dir);
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
 	    VJOIN1(pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir);
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
 	}
 
     }

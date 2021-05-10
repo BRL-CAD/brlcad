@@ -70,7 +70,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     int i;
-    struct bn_vlblock*vbp;
+    struct bv_vlblock*vbp;
     struct directory *dp;
     mat_t mat;
     fastf_t scale;
@@ -115,7 +115,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     cvt_vlblock_to_solids(vbp, "_LABELVERT_", 0);
 
-    bn_vlblock_free(vbp);
+    bv_vlblock_free(vbp);
     update_views = 1;
     dm_set_dirty(DMP, 1);
     return TCL_OK;
@@ -185,7 +185,7 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     int i;
-    struct bn_vlblock *vbp;
+    struct bv_vlblock *vbp;
     mat_t mat;
     fastf_t scale;
     struct model* m;
@@ -259,7 +259,7 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     cvt_vlblock_to_solids(vbp, "_LABELFACE_", 0);
 
-    bn_vlblock_free(vbp);
+    bv_vlblock_free(vbp);
     update_views = 1;
     dm_set_dirty(DMP, 1);
     return TCL_OK;

@@ -1157,9 +1157,9 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		    _nirt_diff_add_seg(nss, &gseg);
 		}
 		/* vlist segment for gap */
-		vhead = bn_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
-		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BN_VLIST_LINE_DRAW);
+		vhead = bv_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_DRAW);
 		nss->i->b_segs = true;
 		s->type = NIRT_PARTITION_SEG;
 	    }
@@ -1224,12 +1224,12 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	/* vlist segment for hit */
 	if (ev_odd % 2) {
-	    vhead = bn_vlblock_find(nss->i->segs, nss->i->hit_odd_color->buc_rgb[RED], nss->i->hit_odd_color->buc_rgb[GRN], nss->i->hit_odd_color->buc_rgb[BLU]);
+	    vhead = bv_vlblock_find(nss->i->segs, nss->i->hit_odd_color->buc_rgb[RED], nss->i->hit_odd_color->buc_rgb[GRN], nss->i->hit_odd_color->buc_rgb[BLU]);
 	} else {
-	    vhead = bn_vlblock_find(nss->i->segs, nss->i->hit_even_color->buc_rgb[RED], nss->i->hit_even_color->buc_rgb[GRN], nss->i->hit_even_color->buc_rgb[BLU]);
+	    vhead = bv_vlblock_find(nss->i->segs, nss->i->hit_even_color->buc_rgb[RED], nss->i->hit_even_color->buc_rgb[GRN], nss->i->hit_even_color->buc_rgb[BLU]);
 	}
-	BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->in, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->out, BV_VLIST_LINE_DRAW);
 	nss->i->b_segs = true;
 
 	/* done with hit portion - if diff, stash */
@@ -1269,9 +1269,9 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	    /* vlist segment for overlap */
 	    if (nss->i->plot_overlaps) {
-		vhead = bn_vlblock_find(nss->i->segs, nss->i->overlap_color->buc_rgb[RED], nss->i->overlap_color->buc_rgb[GRN], nss->i->overlap_color->buc_rgb[BLU]);
-		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_in, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_out, BN_VLIST_LINE_DRAW);
+		vhead = bv_vlblock_find(nss->i->segs, nss->i->overlap_color->buc_rgb[RED], nss->i->overlap_color->buc_rgb[GRN], nss->i->overlap_color->buc_rgb[BLU]);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_in, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->ov_out, BV_VLIST_LINE_DRAW);
 		nss->i->b_segs = true;
 	    }
 
@@ -2621,7 +2621,7 @@ nirt_init(struct nirt_state *ns)
     bu_vls_init(n->err);
     n->err_accumulate = 0;
     BU_LIST_INIT(&(n->s_vlist));
-    n->segs = bn_vlblock_init(&(n->s_vlist), 32);
+    n->segs = bv_vlblock_init(&(n->s_vlist), 32);
     n->plot_overlaps = 1;
     n->ret = 0;
 
@@ -2791,8 +2791,8 @@ nirt_destroy(struct nirt_state *ns)
     bu_vls_free(ns->i->err);
     bu_vls_free(ns->i->msg);
     bu_vls_free(ns->i->out);
-    bn_vlist_cleanup(&(ns->i->s_vlist));
-    bn_vlblock_free(ns->i->segs);
+    bv_vlist_cleanup(&(ns->i->s_vlist));
+    bv_vlblock_free(ns->i->segs);
 
     if (ns->i->rtip != RTI_NULL) rt_free_rti(ns->i->rtip);
     if (ns->i->rtip_air != RTI_NULL) rt_free_rti(ns->i->rtip_air);

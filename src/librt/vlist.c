@@ -33,32 +33,32 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "bn/plot3.h"
-#include "bn/vlist.h"
+#include "bview/vlist.h"
 
 
-struct bn_vlblock *
+struct bv_vlblock *
 rt_vlblock_init(void)
 {
-    return bn_vlblock_init(&RTG.rtg_vlfree, 32);
+    return bv_vlblock_init(&RTG.rtg_vlfree, 32);
 }
 
 void
 rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 {
-    bn_vlist_copy(&RTG.rtg_vlfree, dest, src);
+    bv_vlist_copy(&RTG.rtg_vlfree, dest, src);
 }
 
 
 void
 rt_vlist_cleanup(void)
 {
-    bn_vlist_cleanup(&RTG.rtg_vlfree);
+    bv_vlist_cleanup(&RTG.rtg_vlfree);
 }
 
 void
 rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char *buf)
 {
-    bn_vlist_import(&RTG.rtg_vlfree, hp, namevls, buf);
+    bv_vlist_import(&RTG.rtg_vlfree, hp, namevls, buf);
 }
 
 #define TBAD	0 /* no such command */
@@ -250,7 +250,7 @@ rt_uplot_get_text_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *ar
 
 int
 rt_process_uplot_value(register struct bu_list **vhead,
-		       struct bn_vlblock *vbp,
+		       struct bv_vlblock *vbp,
 		       FILE *fp,
 		       register int c,
 		       double char_size,
@@ -303,14 +303,14 @@ rt_process_uplot_value(register struct bu_list **vhead,
 	case 'o':
 	    /* 2-D move */
 	    arg[Z] = 0;
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BV_VLIST_LINE_MOVE);
 	    VMOVE(lpnt, arg);
 	    moved = 1;
 	    break;
 	case 'M':
 	case 'O':
 	    /* 3-D move */
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BV_VLIST_LINE_MOVE);
 	    VMOVE(lpnt, arg);
 	    moved = 1;
 	    break;
@@ -322,13 +322,13 @@ rt_process_uplot_value(register struct bu_list **vhead,
 	     * move/draw.
 	     */
 	    if (!moved) {
-		BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, lpnt, BN_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, lpnt, BV_VLIST_LINE_MOVE);
 		moved = 1;
 	    }
 
 	    /* 2-D draw */
 	    arg[Z] = 0;
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BV_VLIST_LINE_DRAW);
 	    VMOVE(lpnt, arg);
 	    break;
 	case 'N':
@@ -339,12 +339,12 @@ rt_process_uplot_value(register struct bu_list **vhead,
 	     * move/draw.
 	     */
 	    if (!moved) {
-		BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, lpnt, BN_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, lpnt, BV_VLIST_LINE_MOVE);
 		moved = 1;
 	    }
 
 	    /* 3-D draw */
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BV_VLIST_LINE_DRAW);
 	    VMOVE(lpnt, arg);
 	    break;
 	case 'l':
@@ -352,33 +352,33 @@ rt_process_uplot_value(register struct bu_list **vhead,
 	    /* 2-D line */
 	    VSET(a, arg[0], arg[1], 0.0);
 	    VSET(b, arg[2], arg[3], 0.0);
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, a, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, b, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, a, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, b, BV_VLIST_LINE_DRAW);
 	    break;
 	case 'L':
 	case 'V':
 	    /* 3-D line */
 	    VSET(a, arg[0], arg[1], arg[2]);
 	    VSET(b, arg[3], arg[4], arg[5]);
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, a, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, b, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, a, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, b, BV_VLIST_LINE_DRAW);
 	    break;
 	case 'p':
 	case 'x':
 	    /* 2-D point */
 	    arg[Z] = 0;
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BV_VLIST_LINE_DRAW);
 	    break;
 	case 'P':
 	case 'X':
 	    /* 3-D point */
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_MOVE);
-	    BN_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vbp->free_vlist_hd, *vhead, arg, BV_VLIST_LINE_DRAW);
 	    break;
 	case 'C':
 	    /* Color */
-	    *vhead = bn_vlblock_find(vbp,
+	    *vhead = bv_vlblock_find(vbp,
 				     carg[0], carg[1], carg[2]);
 	    moved = 0;
 	    break;
@@ -386,14 +386,14 @@ rt_process_uplot_value(register struct bu_list **vhead,
 	    /* Text string */
 	    MAT_IDN(mat);
 	    if (BU_LIST_NON_EMPTY(*vhead)) {
-		struct bn_vlist *vlp;
+		struct bv_vlist *vlp;
 		/* Use coordinates of last op */
-		vlp = BU_LIST_LAST(bn_vlist, *vhead);
+		vlp = BU_LIST_LAST(bv_vlist, *vhead);
 		VMOVE(last_pos, vlp->pt[vlp->nused-1]);
 	    } else {
 		VSETALL(last_pos, 0);
 	    }
-	    bn_vlist_3string(*vhead, vbp->free_vlist_hd, carg, last_pos, mat, char_size);
+	    bv_vlist_3string(*vhead, vbp->free_vlist_hd, carg, last_pos, mat, char_size);
 	    break;
     }
 
@@ -402,12 +402,12 @@ rt_process_uplot_value(register struct bu_list **vhead,
 
 
 int
-rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, int mode)
+rt_uplot_to_vlist(struct bv_vlblock *vbp, register FILE *fp, double char_size, int mode)
 {
     struct bu_list *vhead;
     register int c;
 
-    vhead = bn_vlblock_find(vbp, 0xFF, 0xFF, 0x00);	/* Yellow */
+    vhead = bv_vlblock_find(vbp, 0xFF, 0xFF, 0x00);	/* Yellow */
 
     while (!feof(fp) && (c=getc(fp)) != EOF) {
 	int ret;
@@ -427,15 +427,15 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
 }
 
 void
-rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, double sz, double mm2local)
+rt_label_vlist_verts(struct bv_vlblock *vbp, struct bu_list *src, fastf_t *mat, double sz, double mm2local)
 {
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
     struct bu_list *vhead;
     char label[256];
 
-    vhead = bn_vlblock_find(vbp, 255, 255, 255);	/* white */
+    vhead = bv_vlblock_find(vbp, 255, 255, 255);	/* white */
 
-    for (BU_LIST_FOR(vp, bn_vlist, src)) {
+    for (BU_LIST_FOR(vp, bv_vlist, src)) {
 	register int i;
 	register int nused = vp->nused;
 	register int *cmd = vp->cmd;
@@ -444,13 +444,13 @@ rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, 
 	    /* XXX Skip polygon markers? */
 	    sprintf(label, " %g, %g, %g",
 		    (*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local);
-	    bn_vlist_3string(vhead, vbp->free_vlist_hd, label, (*pt), mat, sz);
+	    bv_vlist_3string(vhead, vbp->free_vlist_hd, label, (*pt), mat, sz);
 	}
     }
 }
 
 void
-rt_label_vlist_faces(struct bn_vlblock* vbp, struct bu_list* f_list,
+rt_label_vlist_faces(struct bv_vlblock* vbp, struct bu_list* f_list,
 		     fastf_t *mat, double sz, double UNUSED(mm2local) )
 {
     struct bu_list* vhead;
@@ -458,7 +458,7 @@ rt_label_vlist_faces(struct bn_vlblock* vbp, struct bu_list* f_list,
     char label[256];
     point_t avg_pt;
 
-    vhead = bn_vlblock_find(vbp, 255, 255, 255);    /* white */
+    vhead = bv_vlblock_find(vbp, 255, 255, 255);    /* white */
 
     for( BU_LIST_FOR(curr_f, face, f_list) ) {
 	avg_pt[0] = (curr_f->min_pt[0] + curr_f->max_pt[0]) / 2;
@@ -466,7 +466,7 @@ rt_label_vlist_faces(struct bn_vlblock* vbp, struct bu_list* f_list,
 	avg_pt[2] = (curr_f->min_pt[2] + curr_f->max_pt[2]) / 2;
 
 	sprintf(label, " %d", (int)curr_f->index );
-	bn_vlist_3string(vhead, vbp->free_vlist_hd, label, avg_pt, mat, sz);
+	bv_vlist_3string(vhead, vbp->free_vlist_hd, label, avg_pt, mat, sz);
     }
 }
 

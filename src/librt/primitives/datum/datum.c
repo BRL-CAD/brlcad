@@ -158,7 +158,7 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 
     /* make sure plotted points are an odd selectable number of pixels with a center pixel, 5x5 */
     point_size[X] = 5.0;
-    RT_ADD_VLIST(vhead, point_size, BN_VLIST_POINT_SIZE);
+    RT_ADD_VLIST(vhead, point_size, BV_VLIST_POINT_SIZE);
 
     while (datum_ip) {
 	if (!ZERO(datum_ip->w)) {
@@ -169,8 +169,8 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VMOVE(up, datum_ip->dir);
 	    VUNITIZE(up);
 	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
-	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);
-	    RT_ADD_VLIST(vhead, tip, BN_VLIST_POINT_DRAW);
+	    RT_ADD_VLIST(vhead, datum_ip->pnt, BV_VLIST_POINT_DRAW);
+	    RT_ADD_VLIST(vhead, tip, BV_VLIST_POINT_DRAW);
 
 	    VSUB2(up, tip, datum_ip->pnt);
 	    VUNITIZE(up);
@@ -184,8 +184,8 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VSCALE(nright, nright, MAGNITUDE(datum_ip->dir));
 
 	    /* line to normal point */
-	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, datum_ip->pnt, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, tip, BV_VLIST_LINE_DRAW);
 
 	    /* draw the box */
 	    VJOIN2(ul, datum_ip->pnt, datum_ip->w, left, datum_ip->w, right);
@@ -193,11 +193,11 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VJOIN2(ur, datum_ip->pnt, datum_ip->w, left, datum_ip->w, nright);
 	    VJOIN2(lr, datum_ip->pnt, datum_ip->w, nleft, datum_ip->w, nright);
 
-	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ur, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ul, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, ll, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, lr, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ur, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ul, BV_VLIST_LINE_DRAW);
 
 	} else if (MAGNITUDE(datum_ip->dir) > 0.0 && ZERO(datum_ip->w)) {
 	    vect_t left, right, nleft, nright, dir;
@@ -211,8 +211,8 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    /* draw main segment minus a smidgen for an arrowhead */
 	    VSCALE(line_seg, datum_ip->dir, 1.0 - arrowhead_percentage);
 	    VADD2(endpt, datum_ip->pnt, line_seg);
-	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, endpt, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, datum_ip->pnt, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, endpt, BV_VLIST_LINE_DRAW);
 
 	    /* calculate arrowhead points */
 	    VMOVE(dir, datum_ip->dir);
@@ -232,22 +232,22 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	    VJOIN2(lr, endpt, 1, nleft, 1, nright);
 
 	    /* draw arrowhead */
-	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ur, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ul, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, tip, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, lr, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ll, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, tip, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ur, BV_VLIST_LINE_DRAW);
 
 
-	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ur, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ul, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, ll, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, lr, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ur, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ul, BV_VLIST_LINE_DRAW);
 
 	} else {
-	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);
+	    RT_ADD_VLIST(vhead, datum_ip->pnt, BV_VLIST_POINT_DRAW);
 	}
 	datum_ip = datum_ip->next;
     }

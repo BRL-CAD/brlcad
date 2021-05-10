@@ -197,7 +197,7 @@ struct nirt_state_impl {
     struct bu_vls *err;
     int err_accumulate;
     struct bu_list s_vlist; /* used by the segs vlblock */
-    struct bn_vlblock *segs;
+    struct bv_vlblock *segs;
     int plot_overlaps;
     //TODO - int segs_accumulate;
     int ret;  // return code to be returned by nirt_exec after execution

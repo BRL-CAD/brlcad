@@ -136,8 +136,8 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
 	    for (size_t k = 0; k < BU_PTBL_LEN(&s->children); k++) {
 		struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, k);
-		struct bn_vlist *tvp;
-		for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s_c->s_vlist))->l)) {
+		struct bv_vlist *tvp;
+		for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s_c->s_vlist))->l)) {
 		    int nused = tvp->nused;
 		    int *cmd = tvp->cmd;
 		    point_t *pt = tvp->pt;
@@ -174,8 +174,8 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
 	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
 	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);
-	    struct bn_vlist *tvp;
-	    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)(&s_c->s_vlist))->l)) {
+	    struct bv_vlist *tvp;
+	    for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s_c->s_vlist))->l)) {
 		int k;
 		int nused = tvp->nused;
 		int *cmd = tvp->cmd;

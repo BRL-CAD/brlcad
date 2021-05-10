@@ -1095,7 +1095,7 @@ HIDDEN int
 dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
 
     if (!dmop || !dmop->interp)
 	return BRLCAD_ERROR;
@@ -1121,7 +1121,7 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    BN_CK_VLIST(vp);
+    BV_CK_VLIST(vp);
 
     return dm_draw_vlist(dmop->dmo_dmp, vp);
 }
@@ -1138,7 +1138,7 @@ dmo_drawSolid(struct dm_obj *dmop,
 		       (unsigned char)sp->s_color[0],
 		       (unsigned char)sp->s_color[1],
 		       (unsigned char)sp->s_color[2], 0, sp->s_os.transparency);
-    dm_draw_vlist(dmop->dmo_dmp, (struct bn_vlist *)&sp->s_vlist);
+    dm_draw_vlist(dmop->dmo_dmp, (struct bv_vlist *)&sp->s_vlist);
 }
 
 

@@ -604,14 +604,14 @@ dm_free_dlists(struct dm *dmp, unsigned int list, int range)
 }
 
 int
-dm_draw_vlist(struct dm *dmp, struct bn_vlist *vp)
+dm_draw_vlist(struct dm *dmp, struct bv_vlist *vp)
 {
     if (UNLIKELY(!dmp)) return 0;
     return dmp->i->dm_drawVList(dmp, vp);
 }
 
 int
-dm_draw_vlist_hidden_line(struct dm *dmp, struct bn_vlist *vp)
+dm_draw_vlist_hidden_line(struct dm *dmp, struct bv_vlist *vp)
 {
     if (UNLIKELY(!dmp)) return 0;
     return dmp->i->dm_drawVListHiddenLine(dmp, vp);
@@ -702,7 +702,7 @@ dm_draw_points_3d(struct dm *dmp, int npoints, point_t *points)
     return dmp->i->dm_drawPoints3D(dmp, npoints, points);
 }
 int
-dm_draw(struct dm *dmp, struct bn_vlist *(*callback)(void *), void **data)
+dm_draw(struct dm *dmp, struct bv_vlist *(*callback)(void *), void **data)
 {
     if (UNLIKELY(!dmp)) return 0;
     return dmp->i->dm_draw(dmp, callback, data);
@@ -963,12 +963,12 @@ dm_drawSolid(struct dm *dmp,
 	ndrawn++;
     } else {
 	if (sp->s_os.s_dmode == 4) {
-	    if (dm_draw_vlist_hidden_line(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
+	    if (dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&sp->s_vlist) == BRLCAD_OK) {
 	    	sp->s_flag = UP;
 		ndrawn++;
 	    }
 	} else {
-	    if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
+	    if (dm_draw_vlist(dmp, (struct bv_vlist *)&sp->s_vlist) == BRLCAD_OK) {
 		sp->s_flag = UP;
 		ndrawn++;
 	    }
@@ -1046,7 +1046,7 @@ dm_draw_display_list(struct dm *dmp,
 		    ndrawn++;
 		} else {
 		    /* draw in immediate mode */
-		    if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
+		    if (dm_draw_vlist(dmp, (struct bv_vlist *)&sp->s_vlist) == BRLCAD_OK) {
 			sp->s_flag = UP;
 			ndrawn++;
 		    }

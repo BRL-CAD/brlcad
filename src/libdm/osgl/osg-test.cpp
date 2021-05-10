@@ -100,7 +100,7 @@ add_vlist_to_geom(osg::Geometry *geom, struct bu_list *plot_segments)
     std::vector<int>startIndexes;
     std::vector<int>stopIndexes;
     osg::Vec3Array *vertArray = (osg::Vec3Array *)geom->getVertexArray();
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
 
     if (!vertArray) {
 	osg::ref_ptr<osg::Vec3Array> new_vertArray = new osg::Vec3Array();
@@ -111,7 +111,7 @@ add_vlist_to_geom(osg::Geometry *geom, struct bu_list *plot_segments)
 
     geom->setUseDisplayList(true);
 
-    for (BU_LIST_FOR(vp, bn_vlist, plot_segments))
+    for (BU_LIST_FOR(vp, bv_vlist, plot_segments))
     {
 	int j;
 	int nused = vp->nused;
@@ -122,10 +122,10 @@ add_vlist_to_geom(osg::Geometry *geom, struct bu_list *plot_segments)
 	{
 	    switch (*cmd)
 	    {
-		case BN_VLIST_POLY_START:
+		case BV_VLIST_POLY_START:
 		    break;
-		case BN_VLIST_POLY_MOVE:  // fallthrough
-		case BN_VLIST_LINE_MOVE:
+		case BV_VLIST_POLY_MOVE:  // fallthrough
+		case BV_VLIST_LINE_MOVE:
 		    if (startIndexes.size() > 0)
 		    {
 			// finish off the last linestrip
@@ -138,13 +138,13 @@ add_vlist_to_geom(osg::Geometry *geom, struct bu_list *plot_segments)
 		    vertArray->push_back(osg::Vec3((float)((*pt)[X]), (float)((*pt)[Y]),(float)(*pt)[Z]));
 
 		    break;
-		case BN_VLIST_POLY_DRAW: // fallthrough
-		case BN_VLIST_POLY_END: // fallthrough
-		case BN_VLIST_LINE_DRAW:
+		case BV_VLIST_POLY_DRAW: // fallthrough
+		case BV_VLIST_POLY_END: // fallthrough
+		case BV_VLIST_LINE_DRAW:
 		    // continue existing linestrip
 		    vertArray->push_back(osg::Vec3((float)((*pt)[X]), (float)((*pt)[Y]),(float)(*pt)[Z]));
 		    break;
-		case BN_VLIST_POINT_DRAW:
+		case BV_VLIST_POINT_DRAW:
 		    break;
 	    }
 	}

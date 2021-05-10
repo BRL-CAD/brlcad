@@ -36,7 +36,7 @@
 
 #include "../ged_private.h"
 
-static struct bn_vlblock *preview_vbp;
+static struct bv_vlblock *preview_vbp;
 static double preview_delay;
 static int preview_mode;
 static int preview_desiredframe;
@@ -104,9 +104,9 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 
     /* Record eye path as a polyline.  Move, then draws */
     if (BU_LIST_IS_EMPTY(vhead)) {
-	RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
     } else {
-	RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, _ged_eye_model, BV_VLIST_LINE_DRAW);
     }
 
     /* First step:  put eye at view center (view 0, 0, 0) */
@@ -122,10 +122,10 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     VSET(yv, 0.0, 0.05, 0.0);
     MAT4X3PNT(xm, _ged_current_gedp->ged_gvp->gv_view2model, xv);
     MAT4X3PNT(ym, _ged_current_gedp->ged_gvp->gv_view2model, yv);
-    RT_ADD_VLIST(vhead, xm, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, ym, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, xm, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, ym, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
 
     /* Second step:  put eye at view 0, 0, 1.
      * For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
@@ -431,8 +431,8 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
 
     if (preview_vbp) {
-	bn_vlblock_free(preview_vbp);
-	preview_vbp = (struct bn_vlblock *)NULL;
+	bv_vlblock_free(preview_vbp);
+	preview_vbp = (struct bv_vlblock *)NULL;
     }
     db_free_anim(gedp->ged_wdbp->dbip);	/* Forget any anim commands */
 

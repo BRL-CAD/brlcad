@@ -791,7 +791,7 @@ rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     config.points_per_section = ell_ellipse_points(eip, point_spacing);
 
     if (config.points_per_section < 4) {
-	RT_ADD_VLIST(vhead, eip->v, BN_VLIST_POINT_DRAW);
+	RT_ADD_VLIST(vhead, eip->v, BV_VLIST_POINT_DRAW);
 	return 0;
     }
 
@@ -835,19 +835,19 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     rt_ell_16pnts(bottom, eip->v, eip->b, eip->c);
     rt_ell_16pnts(middle, eip->v, eip->a, eip->c);
 
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     return 0;

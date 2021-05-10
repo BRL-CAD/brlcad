@@ -81,7 +81,7 @@ _line_cmd_create(void *bs, int argc, const char **argv)
     s->s_v = gedp->ged_gvp;
     BU_LIST_INIT(&(s->s_vlist));
 
-    BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
 
     bu_vls_init(&s->s_uuid);
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
@@ -130,7 +130,7 @@ _line_cmd_append(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    BN_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_DRAW);
 
     return GED_OK;
 }

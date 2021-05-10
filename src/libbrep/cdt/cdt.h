@@ -50,7 +50,7 @@
 #include "bn/plane.h"
 #include "bn/plot3.h"
 #include "bn/tol.h"
-#include "bn/vlist.h"
+#include "bview/vlist.h"
 #include "bg/polygon.h"
 #include "bg/trimesh.h"
 #include "brep/defines.h"

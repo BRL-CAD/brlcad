@@ -17,13 +17,17 @@ BRLCAD_LIB_INCLUDE_DIRS(bview BVIEW_INCLUDE_DIRS BVIEW_LOCAL_INCLUDE_DIRS)
 set(LIBBVIEW_SRCS
   adc.c
   diff.c
+  font.c
   hash.c
   polygons.c
   snap.c
   util.c
+  vlist.c
   )
 BRLCAD_ADDLIB(libbview "${LIBBVIEW_SRCS}" "libbg;libbn;libbu")
 set_target_properties(libbview PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+add_subdirectory(tests)
 
 set(libbview_ignore_files
   CMakeLists.txt

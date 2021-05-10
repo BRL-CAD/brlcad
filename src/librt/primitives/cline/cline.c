@@ -455,21 +455,21 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     rt_ell_16pnts(top, top_pt, a, b);
 
     /* Draw the top */
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw the bottom */
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i = 0; i < 16; i += 4) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
@@ -484,21 +484,21 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
 	rt_ell_16pnts(top, top_pt, a, b);
 
 	/* Draw the top */
-	RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
 	for (i = 0; i < 16; i++) {
-	    RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
 	}
 
 	/* Draw the bottom */
-	RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
 	for (i = 0; i < 16; i++) {
-	    RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
 	}
 
 	/* Draw connections */
 	for (i = 0; i < 16; i += 4) {
-	    RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
 	}
 
     }

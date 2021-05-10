@@ -735,17 +735,17 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	register fastf_t *v1;
 
 	v1 = arip->curves[i];
-	RT_ADD_VLIST(vhead, v1, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, v1, BV_VLIST_LINE_MOVE);
 	v1 += ELEMENTS_PER_VECT;
 	for (j = 1; j <= arip->pts_per_curve; j++, v1 += ELEMENTS_PER_VECT)
-	    RT_ADD_VLIST(vhead, v1, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, v1, BV_VLIST_LINE_DRAW);
     }
 
     /* Connect the Ith points on each curve, to make a mesh.  */
     for (i = 0; i < arip->pts_per_curve; i++) {
-	RT_ADD_VLIST(vhead, &arip->curves[0][i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, &arip->curves[0][i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
 	for (j = 1; j < arip->ncurves; j++)
-	    RT_ADD_VLIST(vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     return 0;

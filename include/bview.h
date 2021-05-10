@@ -43,6 +43,7 @@
 #include "./bview/adc.h"
 #include "./bview/polygons.h"
 #include "./bview/util.h"
+#include "./bview/vlist.h"
 
 #endif /* BVIEW_H */
 

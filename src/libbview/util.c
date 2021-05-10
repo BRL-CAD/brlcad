@@ -31,7 +31,7 @@
 #include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bn/mat.h"
-#include "bn/vlist.h"
+#include "bview/vlist.h"
 #include "bview/defines.h"
 #include "bview/util.h"
 
@@ -468,7 +468,7 @@ bview_scene_obj_free(struct bview_scene_obj *s, struct bview_scene_obj *free_sce
 
     // free vlist
     if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
-	BN_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+	BV_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
     }
 
     bview_scene_obj_init(s, free_scene_obj);
@@ -482,7 +482,7 @@ bview_scene_obj_bound(struct bview_scene_obj *sp)
     int cmd;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
-    cmd = bn_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL);
+    cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL);
     if (cmd) {
 	bu_log("unknown vlist op %d\n", cmd);
     }

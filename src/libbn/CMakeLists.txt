@@ -14,7 +14,6 @@ BRLCAD_LIB_INCLUDE_DIRS(bn BN_INCLUDE_DIRS BN_LOCAL_INCLUDE_DIRS)
 set(LIBBN_SOURCES
   anim.c
   complex.c
-  font.c
   globals.c
   mat.c
   msr.c
@@ -42,7 +41,6 @@ set(LIBBN_SOURCES
   ulp.c
   vers.c
   vert_tree.c
-  vlist.c
   wavelet.c
   )
 

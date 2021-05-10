@@ -1138,16 +1138,16 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     /* draw ellipses */
     for (i = 0; i < nells; i++) {
-	RT_ADD_VLIST(vhead, ETO_PTA(i, npts-1), BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, ETO_PTA(i, npts-1), BV_VLIST_LINE_MOVE);
 	for (j = 0; j < npts; j++)
-	    RT_ADD_VLIST(vhead, ETO_PTA(i, j), BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ETO_PTA(i, j), BV_VLIST_LINE_DRAW);
     }
 
     /* draw connecting circles */
     for (i = 0; i < npts; i++) {
-	RT_ADD_VLIST(vhead, ETO_PTA(nells-1, i), BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, ETO_PTA(nells-1, i), BV_VLIST_LINE_MOVE);
 	for (j = 0; j < nells; j++)
-	    RT_ADD_VLIST(vhead, ETO_PTA(j, i), BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ETO_PTA(j, i), BV_VLIST_LINE_DRAW);
     }
 
     bu_free((char *)eto_ells, "ells[]");

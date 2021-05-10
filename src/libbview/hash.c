@@ -29,7 +29,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bn/mat.h"
-#include "bn/vlist.h"
+#include "bview/vlist.h"
 #include "bview/defines.h"
 #include "bview/util.h"
 #define XXH_STATIC_LINKING_ONLY
@@ -315,11 +315,11 @@ bview_scene_obj_hash(XXH64_state_t *state, struct bview_scene_obj *s)
     XXH64_update(state, &s->s_size, sizeof(fastf_t));
     XXH64_update(state, &s->s_csize, sizeof(fastf_t));
     XXH64_update(state, &s->s_center, sizeof(vect_t));
-    struct bn_vlist *tvp;
-    for (BU_LIST_FOR(tvp, bn_vlist, &((struct bn_vlist *)&s->s_vlist)->l)) {
+    struct bv_vlist *tvp;
+    for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)&s->s_vlist)->l)) {
 	XXH64_update(state, &tvp->nused, sizeof(size_t));
-	XXH64_update(state, &tvp->cmd, sizeof(int[BN_VLIST_CHUNK]));
-	XXH64_update(state, &tvp->pt, sizeof(point_t[BN_VLIST_CHUNK]));
+	XXH64_update(state, &tvp->cmd, sizeof(int[BV_VLIST_CHUNK]));
+	XXH64_update(state, &tvp->pt, sizeof(point_t[BV_VLIST_CHUNK]));
     }
     XXH64_update(state, &s->s_vlen, sizeof(int));
     XXH64_update(state, &s->s_flag, sizeof(char));

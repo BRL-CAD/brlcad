@@ -502,10 +502,10 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 
 	pp = &pgp->poly[p];
 	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)],
-		     BN_VLIST_LINE_MOVE);
+		     BV_VLIST_LINE_MOVE);
 	for (i=0; i < pp->npts; i++) {
 	    RT_ADD_VLIST(vhead, &pp->verts[3*i],
-			 BN_VLIST_LINE_DRAW);
+			 BV_VLIST_LINE_DRAW);
 	}
     }
     return 0;		/* OK */
@@ -538,13 +538,13 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 	VSUB2(bb, &pp->verts[3*(0)], &pp->verts[3*(2)]);
 	VCROSS(norm, aa, bb);
 	VUNITIZE(norm);
-	RT_ADD_VLIST(vhead, norm, BN_VLIST_POLY_START);
+	RT_ADD_VLIST(vhead, norm, BV_VLIST_POLY_START);
 
-	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BN_VLIST_POLY_MOVE);
+	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BV_VLIST_POLY_MOVE);
 	for (i=0; i < pp->npts-1; i++) {
-	    RT_ADD_VLIST(vhead, &pp->verts[3*i], BN_VLIST_POLY_DRAW);
+	    RT_ADD_VLIST(vhead, &pp->verts[3*i], BV_VLIST_POLY_DRAW);
 	}
-	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BN_VLIST_POLY_END);
+	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BV_VLIST_POLY_END);
     }
     return 0;		/* OK */
 }

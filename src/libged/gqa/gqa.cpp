@@ -166,7 +166,7 @@ struct cstate {
 
 
 struct ged_gqa_plot {
-    struct bn_vlblock *vbp;
+    struct bv_vlblock *vbp;
     struct bu_list *vhead;
 } ged_gqa_plot;
 
@@ -803,8 +803,8 @@ _gqa_overlap(struct application *ap,
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	bu_semaphore_acquire(state->sem_worker);
-	BN_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ihit, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ohit, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ihit, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ohit, BV_VLIST_LINE_DRAW);
 	bu_semaphore_release(state->sem_worker);
     }
 
@@ -2341,7 +2341,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	ged_gqa_plot.vbp = rt_vlblock_init();
-	ged_gqa_plot.vhead = bn_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
+	ged_gqa_plot.vhead = bv_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 
     rtip = rt_new_rti(gedp->ged_wdbp->dbip);
@@ -2500,7 +2500,7 @@ aborted:
 	aborted = 0; /* reset flag */
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
-	bn_vlblock_free(ged_gqa_plot.vbp);
+	bv_vlblock_free(ged_gqa_plot.vbp);
 
     /* Clear out the lists */
     while (BU_LIST_WHILE (rp, region_pair, &overlapList.l)) {

@@ -86,10 +86,10 @@ bu_identify_magic(register uint32_t magic)
 	    return "bn_unif";
 	case BN_VERT_TREE_MAGIC:
 	    return "bn_vert_tree";
-	case BN_VLBLOCK_MAGIC:
-	    return "bn_vlblock";
-	case BN_VLIST_MAGIC:
-	    return "bn_vlist";
+	case BV_VLBLOCK_MAGIC:
+	    return "bv_vlblock";
+	case BV_VLIST_MAGIC:
+	    return "bv_vlist";
 
 	    /*
 	     * Primitives

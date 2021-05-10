@@ -22,7 +22,6 @@ set(bn_headers
   vectfont.h
   version.h
   vert_tree.h
-  vlist.h
   wavelet.h
   )
 BRLCAD_MANAGE_FILES(bn_headers ${INCLUDE_DIR}/brlcad/bn)

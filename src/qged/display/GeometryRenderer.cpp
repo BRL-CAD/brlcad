@@ -132,7 +132,7 @@ tree *GeometryRenderer::drawSolid(db_tree_state *tsp, const db_full_path *UNUSED
     }
 
     displayManager->setLineStyle(tsp->ts_sofar & (TS_SOFAR_MINUS | TS_SOFAR_INTER));
-    displayManager->drawVList(reinterpret_cast<bn_vlist *>(&vhead));
+    displayManager->drawVList(reinterpret_cast<bv_vlist *>(&vhead));
 
     if (!geometryRenderer->immediateMode) {
         displayManager->endDList();     // end display list --------------

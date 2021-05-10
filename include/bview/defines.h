@@ -397,8 +397,8 @@ struct bview {
     // view (labels, polygons, etc.)
     struct bu_ptbl                      *gv_view_objs;
 
-    // Available bn_vlist entities to recycle before allocating new.
-    struct bu_list      gv_vlfree;     /**< @brief  head of bn_vlist freelist */
+    // Available bv_vlist entities to recycle before allocating new.
+    struct bu_list      gv_vlfree;     /**< @brief  head of bv_vlist freelist */
 
     // Not yet implemented - mechanism for defining a set of selected view
     // objects

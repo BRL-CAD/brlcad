@@ -65,7 +65,7 @@ CMAKEFILES(
   junk.c
 )
 
-BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "libbg;libbn;libbu;${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "libbg;libbview;libbn;libbu;${STDCXX_LIBRARIES}")
 
 add_subdirectory(tests)
 

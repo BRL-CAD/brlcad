@@ -469,12 +469,12 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 		if (next_k != 0) continue;
 
 		if (point_count <= 0) {
-		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+		    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
 		    VMOVE(a, pt);
 		} else if (point_count == 1) {
 		    VSUB2(dist, pt, a);
 		    if (MAGSQ(dist) < tol->dist_sq) continue;
-		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+		    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
 		    VMOVE(b, pt);
 		} else {
 		    VSUB2(dist, pt, a);
@@ -487,7 +487,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 		    VPRINT(" a", a);
 		    VPRINT(" b", b);
 		    VPRINT("pt", pt);
-		    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);	/* draw it */
+		    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);	/* draw it */
 		}
 		point_count++;
 	    }

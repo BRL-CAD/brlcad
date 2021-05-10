@@ -78,7 +78,7 @@
 #include "bu/ptbl.h"
 #include "bn/plane.h"
 #include "bn/tol.h"
-#include "bn/vlist.h"
+#include "bview/vlist.h"
 #include "vmath.h"
 
 
@@ -2167,18 +2167,18 @@ NMG_EXPORT extern void nmg_pl_r(FILE *fp,
 NMG_EXPORT extern void nmg_pl_m(FILE *fp,
 				const struct model *m,
 				struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_vlblock_v(struct bn_vlblock *vbp,
+NMG_EXPORT extern void nmg_vlblock_v(struct bv_vlblock *vbp,
 				     const struct vertex *v,
 				     long *tab,
 				     struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_vlblock_e(struct bn_vlblock *vbp,
+NMG_EXPORT extern void nmg_vlblock_e(struct bv_vlblock *vbp,
 				     const struct edge *e,
 				     long *tab,
 				     int red,
 				     int green,
 				     int blue,
 				     struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_vlblock_eu(struct bn_vlblock *vbp,
+NMG_EXPORT extern void nmg_vlblock_eu(struct bv_vlblock *vbp,
 				      const struct edgeuse *eu,
 				      long *tab,
 				      int red,
@@ -2195,13 +2195,13 @@ NMG_EXPORT extern void nmg_vlblock_euleft(struct bu_list                 *vh,
 					  double                         len,
 					  struct bu_list 	        *vlfree,
 					  const struct bn_tol            *tol);
-NMG_EXPORT extern void nmg_vlblock_around_eu(struct bn_vlblock           *vbp,
+NMG_EXPORT extern void nmg_vlblock_around_eu(struct bv_vlblock           *vbp,
 					     const struct edgeuse        *arg_eu,
 					     long                        *tab,
 					     int                 fancy,
 					     struct bu_list *vlfree,
 					     const struct bn_tol *tol);
-NMG_EXPORT extern void nmg_vlblock_lu(struct bn_vlblock *vbp,
+NMG_EXPORT extern void nmg_vlblock_lu(struct bv_vlblock *vbp,
 				      const struct loopuse *lu,
 				      long *tab,
 				      int red,
@@ -2209,24 +2209,24 @@ NMG_EXPORT extern void nmg_vlblock_lu(struct bn_vlblock *vbp,
 				      int blue,
 				      int fancy,
 				      struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_vlblock_fu(struct bn_vlblock *vbp,
+NMG_EXPORT extern void nmg_vlblock_fu(struct bv_vlblock *vbp,
 				      const struct faceuse *fu,
 				      long *tab, int fancy, struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_vlblock_s(struct bn_vlblock *vbp,
+NMG_EXPORT extern void nmg_vlblock_s(struct bv_vlblock *vbp,
 				     const struct shell *s,
 				     int fancy,
 				     struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_vlblock_r(struct bn_vlblock *vbp,
+NMG_EXPORT extern void nmg_vlblock_r(struct bv_vlblock *vbp,
 				     const struct nmgregion *r,
 				     int fancy,
 				     struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_vlblock_m(struct bn_vlblock *vbp,
+NMG_EXPORT extern void nmg_vlblock_m(struct bv_vlblock *vbp,
 				     const struct model *m,
 				     int fancy,
 				     struct bu_list *vlfree);
 
 /* visualization helper routines */
-NMG_EXPORT extern void nmg_pl_edges_in_2_shells(struct bn_vlblock        *vbp,
+NMG_EXPORT extern void nmg_pl_edges_in_2_shells(struct bv_vlblock        *vbp,
 						long                     *b,
 						const struct edgeuse     *eu,
 						int                      fancy,

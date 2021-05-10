@@ -35,7 +35,7 @@
 
 struct rt_i;
 struct bu_list;
-struct bn_vlist;
+struct bv_vlist;
 struct db_tree_state;
 struct db_full_path;
 struct rt_db_internal;
