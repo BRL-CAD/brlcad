@@ -100,7 +100,7 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
     plane_t p;
 
     /* solve the plane */
-    bn_make_plane_3pnts(p, a, b, c, tol);
+    bg_make_plane_3pnts(p, a, b, c, tol);
 
     return soup_add_face_precomputed(s, a, b, c, p, OUTSIDE);
 }
@@ -125,7 +125,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 	    if (isv[i] == 0) {
 		fastf_t dist;
 
-		switch (bn_isect_pnt_lseg(&dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol)) {
+		switch (bg_isect_pnt_lseg(&dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol)) {
 		    case -2: case -1: continue;
 		    case 1: isv[i] = VERT_INT|j; break;
 		    case 2: isv[i] = VERT_INT|(j==2?0:j+1); break;

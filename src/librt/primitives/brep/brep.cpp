@@ -2651,7 +2651,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 		scv->j = j;
 		scv->sqdist_to_start = DIST_PNT_PNT_SQ(query->start, cv);
 		scv->sqdist_to_line =
-		    bn_distsq_line3_pnt3(query->start, query->dir, cv);
+		    bg_distsq_line3_pnt3(query->start, query->dir, cv);
 
 		selectable.push_back(scv);
 

@@ -208,7 +208,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
     else
 	tmp = cosa + 1.0;
 
-    (void)bn_distsq_line3_line3(dist, cline->V, cline->height,
+    (void)bg_distsq_line3_line3(dist, cline->V, cline->height,
 				rp->r_pt, rp->r_dir, pt1, pt2);
 
     if (NEAR_ZERO(tmp, RT_DOT_TOL)) {

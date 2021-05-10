@@ -335,8 +335,8 @@ rt_nurb_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     /* Note: the equation of the plane in BRL-CAD is
      * Ax + By + Cz = D represented by [A B C D]
      */
-    bn_make_plane_3pnts(plane1, p1, p3, p2, tol);
-    bn_make_plane_3pnts(plane2, p1, p2, p4, tol);
+    bg_make_plane_3pnts(plane1, p1, p3, p2, tol);
+    bg_make_plane_3pnts(plane2, p1, p2, p4, tol);
 
     /* make sure that the hit_list is zero */
 

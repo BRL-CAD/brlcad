@@ -47,7 +47,7 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"
 
@@ -237,7 +237,7 @@ nmg_class_pnt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeus
      * Some compilers don't get that fastf_t * and point_t are related
      * So we have to pass the whole bloody mess for the point arguments.
      */
-    code = bn_dist_pnt3_lseg3(&dist, pca, eu->vu_p->v_p->vg_p->coord,
+    code = bg_dist_pnt3_lseg3(&dist, pca, eu->vu_p->v_p->vg_p->coord,
 			      eu->eumate_p->vu_p->v_p->vg_p->coord,
 			      pt, tol);
     if (code <= 0)
@@ -723,7 +723,7 @@ nmg_class_pnt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_on
     region_diameter = MAGNITUDE(region_diagonal);
 
     nmg_model_bb(m_min_pt, m_max_pt, m);
-    model_bb_max_width = bn_dist_pnt3_pnt3(m_min_pt, m_max_pt);
+    model_bb_max_width = bg_dist_pnt3_pnt3(m_min_pt, m_max_pt);
 
     /* Choose an unlikely direction */
     tries = 0;

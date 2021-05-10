@@ -1226,8 +1226,8 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
 	 */
 	for (v = - M_PI_2; v < M_PI_2 - side_length; v += side_length, idx++) {
 	    area +=
-		bn_dist_pnt3_pnt3(row1[idx], row1[idx + 1]) *
-		bn_dist_pnt3_pnt3(row1[idx], row2[idx]);
+		bg_dist_pnt3_pnt3(row1[idx], row1[idx + 1]) *
+		bg_dist_pnt3_pnt3(row1[idx], row2[idx]);
 	}
 
 	memcpy(row1, row2, row_length);

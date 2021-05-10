@@ -31,7 +31,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn/mat.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bg/defines.h"
 #include "bg/polygon.h"
 
@@ -165,7 +165,7 @@ bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, matp_t m
 
 		    V2SUB2(dirB, polyB_2d.p_contour[j].pc_point[endB], polyB_2d.p_contour[j].pc_point[beginB]);
 
-		    if (bn_isect_lseg2_lseg2(distvec,
+		    if (bg_isect_lseg2_lseg2(distvec,
 					     polyA_2d.p_contour[i].pc_point[beginA], dirA,
 					     polyB_2d.p_contour[j].pc_point[beginB], dirB,
 					     tol) == 1) {

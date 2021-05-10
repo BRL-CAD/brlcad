@@ -110,7 +110,7 @@ rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 
 		next_k = 0;
 
-		if (bn_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
+		if (bg_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
 		for (m = 0; m < aip->neqn; m++) {
@@ -193,7 +193,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 		next_k = 0;
 
-		if (bn_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
+		if (bg_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
 		for (m = 0; m < aip->neqn; m++) {
@@ -455,7 +455,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 		next_k = 0;
 
 		if (k == i || k == j) continue;
-		if (bn_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
+		if (bg_make_pnt_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
 		for (m = 0; m < aip->neqn; m++) {
@@ -624,7 +624,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	    for (k = j + 1; k < aip->neqn; k++) {
 		int keep_point = 1;
 
-		if (bn_make_pnt_3planes(pts[point_count].pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]))
+		if (bg_make_pnt_3planes(pts[point_count].pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]))
 		    continue;
 
 		for (l = 0; l < aip->neqn; l++) {

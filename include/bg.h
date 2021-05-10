@@ -54,6 +54,7 @@
 #include "bg/clip.h"
 #include "bg/lseg.h"
 #include "bg/obr.h"
+#include "bg/plane.h"
 #include "bg/polygon.h"
 #include "bg/tri_pt.h"
 #include "bg/tri_ray.h"

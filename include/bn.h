@@ -61,7 +61,6 @@
 #include "bn/tabdata.h"
 #include "bn/vert_tree.h"
 #include "bn/vectfont.h"
-#include "bn/plane.h"
 
 #endif /* BN_H */
 

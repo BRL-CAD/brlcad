@@ -1797,7 +1797,7 @@ nmg_ed(int arg)
 			NMG_CK_VERTEX(v2);
 			VSUB2(edge2, eu2->eumate_p->vu_p->v_p->vg_p->coord, v2->vg_p->coord);
 
-			if ((ret_val = bn_isect_lseg3_lseg3(dist, v1->vg_p->coord, edge1,
+			if ((ret_val = bg_isect_lseg3_lseg3(dist, v1->vg_p->coord, edge1,
 							    v2->vg_p->coord, edge2, &mged_tol)) > (-1))
 			{
 			    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
@@ -1972,7 +1972,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		for (i=0; i<arbn->neqn; i++) {
 		    for (j=i+1; j<arbn->neqn; j++) {
 			for (k=j+1; k<arbn->neqn; k++) {
-			    if (!bn_make_pnt_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
+			    if (!bg_make_pnt_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
 				size_t l;
 
 				good_vert = 1;
@@ -5532,7 +5532,7 @@ sedit(void)
 			MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, view_z_dir);
 
 			/* intersect line through new_pt with plane of loop */
-			if (bn_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
+			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
 			    /* line does not intersect plane, don't do an esplit */
 			    Tcl_AppendResult(INTERP, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
 			    mged_print_result(TCL_ERROR);
@@ -5685,7 +5685,7 @@ sedit(void)
 			MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, view_z_dir);
 
 			/* intersect line through new_pt with plane of loop */
-			if (bn_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
+			if (bg_isect_line3_plane(&dist, new_pt, view_dir, pl, &mged_tol) < 1) {
 			    /* line does not intersect plane, don't do an esplit */
 			    Tcl_AppendResult(INTERP, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
 			    mged_print_result(TCL_ERROR);
@@ -5735,7 +5735,7 @@ sedit(void)
 
 		VSUB2(extrude_vec, to_pt, lu_keypoint);
 
-		if (bn_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &mged_tol) < 1) {
+		if (bg_isect_line3_plane(&dist, to_pt, extrude_vec, lu_pl, &mged_tol) < 1) {
 		    Tcl_AppendResult(INTERP, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
 		    return;
@@ -6612,7 +6612,7 @@ sedit(void)
 		for (BU_LIST_FOR(ps, wdb_metaball_pnt, &metaball->metaball_ctrl_head)) {
 		    fastf_t dist;
 
-		    dist = bn_dist_line3_pnt3(new_pt, dir, ps->coord);
+		    dist = bg_dist_line3_pnt3(new_pt, dir, ps->coord);
 		    if (dist < min_dist) {
 			min_dist = dist;
 			nearest = ps;
@@ -7017,7 +7017,7 @@ sedit_mouse(const vect_t mousevec)
 		    VMOVE(pt2, &bot->vertices[v2*3]);
 		    VMOVE(pt3, &bot->vertices[v3*3]);
 
-		    if (bn_does_ray_isect_tri(start_pt, dir, pt1, pt2, pt3, tmp)) {
+		    if (bg_does_ray_isect_tri(start_pt, dir, pt1, pt2, pt3, tmp)) {
 			hits++;
 			bu_vls_printf(&vls, " { %d %d %d }", v1, v2, v3);
 		    }

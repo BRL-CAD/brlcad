@@ -40,6 +40,7 @@
 #include "vmath.h"
 #include "bn/plot3.h"
 #include "bn.h"
+#include "bg/plane.h"
 
 #define UPPER_CASE(c)	((c)-32)
 #define COPY(n) {size_t ret; ret = fread(cbuf, 1, n, fp); if (ret < n) perror("fread"); ret = fwrite(cbuf, 1, n, stdout); if (ret < n) perror("fwrite");}
@@ -132,7 +133,7 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 	    /* re-bound the space() rpp with a tighter one
 	     * after rotating & scaling it.
 	     */
-	    bn_rotate_bbox(space_min, space_max, rmat, min, max);
+	    bg_rotate_bbox(space_min, space_max, rmat, min, max);
 	}
 	space_set = 1;
     } else {

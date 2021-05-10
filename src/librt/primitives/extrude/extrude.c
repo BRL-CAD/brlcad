@@ -940,7 +940,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		lsg = (struct line_seg *)lng;
 		VSUB2(tmp, extr->verts[lsg->end], extr->verts[lsg->start]);
 		VMOVE(tmp2, extr->verts[lsg->start]);
-		code = bn_isect_line2_line2(dist, ray_start, ray_dir, tmp2, tmp, &extr_tol);
+		code = bg_isect_line2_line2(dist, ray_start, ray_dir, tmp2, tmp, &extr_tol);
 
 		if (code < 1)
 		    continue;
@@ -1717,7 +1717,7 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 	    case CURVE_LSEG_MAGIC:
 		lsg = (struct line_seg *)lng;
 		V2SUB2(d1, ip->verts[lsg->end], ip->verts[lsg->start]);
-		code = bn_isect_line2_lseg2(dist, pta, dir, ip->verts[lsg->start], d1, tol);
+		code = bg_isect_line2_lseg2(dist, pta, dir, ip->verts[lsg->start], d1, tol);
 		if (code < 0)
 		    break;
 		if (code == 0) {

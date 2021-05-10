@@ -995,7 +995,7 @@ nmg_vlblock_euleft(struct bu_list *vh, const struct edgeuse *eu, const fastf_t *
     BV_ADD_VLIST(vlfree, vh, center, BV_VLIST_LINE_MOVE);
     BV_ADD_VLIST(vlfree, vh, tip, BV_VLIST_LINE_DRAW);
 
-    ang = bn_angle_measure(left, xvec, yvec) * RAD2DEG;
+    ang = bg_angle_measure(left, xvec, yvec) * RAD2DEG;
     sprintf(str, "%g", ang);
 
     /* char_scale is based on length of eu */

@@ -552,11 +552,11 @@ rt_joint_find_selections(
      * the view plane that intersects the location)
      */
     BN_TOL_INIT(&tol);
-    (void)bn_dist_pnt3_line3(dist, qline_pt, qstart, qdir, jip->location, &tol);
+    (void)bg_dist_pnt3_line3(dist, qline_pt, qstart, qdir, jip->location, &tol);
     VJOIN1(joint_selection->start, qline_pt, -1.0, jip->location);
 
 #if 0
-    ret = bn_distsq_line3_line3(dist, qstart, qdir, jip->location,
+    ret = bg_distsq_line3_line3(dist, qstart, qdir, jip->location,
 	    jip->vector1, qline_pt, joint_v1pt);
     dist_sq1 = dist[2];
 
@@ -569,7 +569,7 @@ rt_joint_find_selections(
 	fastf_t distsq_to_loc;
 	fastf_t max_vdist;
 
-	ret = bn_distsq_line3_line3(dist, qstart, qdir, jip->location,
+	ret = bg_distsq_line3_line3(dist, qstart, qdir, jip->location,
 		jip->vector2, qline_pt, joint_v2pt);
 	dist_sq2 = dist[2];
 

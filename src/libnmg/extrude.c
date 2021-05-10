@@ -34,7 +34,7 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "nmg.h"
 
 /**
@@ -533,7 +533,7 @@ nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct 
 		VSUB2(v2, eu2->eumate_p->vu_p->v_p->vg_p->coord ,
 		      eu2->vu_p->v_p->vg_p->coord);
 
-		if (bn_isect_lseg3_lseg3(dist, eu1->vu_p->v_p->vg_p->coord, v1 ,
+		if (bg_isect_lseg3_lseg3(dist, eu1->vu_p->v_p->vg_p->coord, v1 ,
 					 eu2->vu_p->v_p->vg_p->coord, v2, tol) >= 0) {
 		    struct edgeuse *new_eu;
 
@@ -734,7 +734,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 		     * dist[1] is different depending on if the result is '0'
 		     * or '1'. Presently this function is not called.
 		     */
-		    if (bn_isect_lseg3_lseg3(dist, eu1->vu_p->v_p->vg_p->coord, v1 ,
+		    if (bg_isect_lseg3_lseg3(dist, eu1->vu_p->v_p->vg_p->coord, v1 ,
 					     eu2->vu_p->v_p->vg_p->coord, v2, tol) >= 0) {
 			point_t pt = VINIT_ZERO;
 			struct edgeuse *new_eu;

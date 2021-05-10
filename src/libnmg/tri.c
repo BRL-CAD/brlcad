@@ -36,7 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bn/mat.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"
 
@@ -464,7 +464,7 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
     VSUB2(bc, c->coord, b->coord);
 
     /* find angle about normal in "pv" direction from a->b to b->c */
-    angle = bn_angle_measure(bc, ab, pv);
+    angle = bg_angle_measure(bc, ab, pv);
 
     if (nmg_debug & NMG_DEBUG_TRI)
 	bu_log("\tangle == %g tol angle: %g\n", angle, tol->perp);
@@ -1454,7 +1454,7 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 		non_consec_edgeuse_vert_count++;
 	    }
 	    if (edgeuse_vert_count > 1) {
-		bn_dist_pnt3_pnt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+		bg_dist_pnt3_pnt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
 		pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
 	    }
 	    prev_v_p = curr_v_p;
@@ -1462,7 +1462,7 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 	}
 
 	if (curr_v_p && first_v_p) {
-	    bn_dist_pnt3_pnt3(first_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+	    bg_dist_pnt3_pnt3(first_v_p->vg_p->coord,curr_v_p->vg_p->coord);
 	    if (curr_eu->e_p->is_real) {
 		/* set last segment if is_real to cyan */
 		pl_color(plotfp, 0, 255, 255);
@@ -1541,9 +1541,9 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
 	return 0; /* no isect */
     }
 
-    dp0p1 = bn_dist_pnt3_pnt3(p0, p1);
-    dp0p2 = bn_dist_pnt3_pnt3(p0, p2);
-    dp1p2 = bn_dist_pnt3_pnt3(p1, p2);
+    dp0p1 = bg_dist_pnt3_pnt3(p0, p1);
+    dp0p2 = bg_dist_pnt3_pnt3(p0, p2);
+    dp1p2 = bg_dist_pnt3_pnt3(p1, p2);
 
     if (!degen_p0p1 && (dp0p1 < tol->dist)) {
 	degen_p0p1 = 2;
@@ -1555,9 +1555,9 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
 	degen_p1p2 = 2;
     }
 
-    dpp0 = bn_dist_pnt3_pnt3(p, p0);
-    dpp1 = bn_dist_pnt3_pnt3(p, p1);
-    dpp2 = bn_dist_pnt3_pnt3(p, p2);
+    dpp0 = bg_dist_pnt3_pnt3(p, p0);
+    dpp1 = bg_dist_pnt3_pnt3(p, p1);
+    dpp2 = bg_dist_pnt3_pnt3(p, p2);
 
     if (dpp0 < tol->dist || dpp1 < tol->dist || dpp2 < tol->dist) {
 	return 3; /* isect vertex (non-shared, vertex not fused) */
@@ -1565,7 +1565,7 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
 
     para_p0_p1__p0_p = para_p0_p2__p0_p = para_p1_p2__p1_p = 0;
     /* test p against edge p0->p1 */
-    if (!degen_p0p1 && bn_lseg3_lseg3_parallel(p0, p1, p0, p, tol)) {
+    if (!degen_p0p1 && bg_lseg3_lseg3_parallel(p0, p1, p0, p, tol)) {
 	/* p might be on edge p0->p1 */
 	para_p0_p1__p0_p = 1;
 	if (NEAR_EQUAL(dpp0 + dpp1, dp0p1, tol->dist)) {
@@ -1574,7 +1574,7 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
 	}
     }
     /* test p against edge p0->p2 */
-    if (!degen_p0p2 && bn_lseg3_lseg3_parallel(p0, p2, p0, p, tol)) {
+    if (!degen_p0p2 && bg_lseg3_lseg3_parallel(p0, p2, p0, p, tol)) {
 	/* p might be on edge p0->p2 */
 	para_p0_p2__p0_p = 1;
 	if (NEAR_EQUAL(dpp0 + dpp2, dp0p2, tol->dist)) {
@@ -1583,7 +1583,7 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
 	}
     }
     /* test p against edge p1->p2 */
-    if (!degen_p1p2 && bn_lseg3_lseg3_parallel(p1, p2, p1, p, tol)) {
+    if (!degen_p1p2 && bg_lseg3_lseg3_parallel(p1, p2, p1, p, tol)) {
 	/* p might be on edge p1->p2 */
 	para_p1_p2__p1_p = 1;
 	if (NEAR_EQUAL(dpp1 + dpp2, dp1p2, tol->dist)) {
@@ -1714,7 +1714,7 @@ nmg_isect_potcut_fu(struct edgeuse *eu1, struct edgeuse *eu2, struct faceuse *fu
 	    VMOVE(q2, eu->eumate_p->vu_p->v_p->vg_p->coord);
 	    VSUB2(qdir, q2, q1);
 
-	    status = bn_isect_lseg3_lseg3(dist, p1, pdir, q1, qdir, tol);
+	    status = bg_isect_lseg3_lseg3(dist, p1, pdir, q1, qdir, tol);
 
 	    if (status == 0) {  /* colinear and overlapping */
 		/* Hit because, can only skip if hit on end point only
@@ -1737,7 +1737,7 @@ nmg_isect_potcut_fu(struct edgeuse *eu1, struct edgeuse *eu2, struct faceuse *fu
 		     != (vu2->v_p == eu->vu_p->v_p)) ||
 		    ((NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
 		     != (vu1->v_p == eu->vu_p->v_p))) {
-		    bu_bomb("nmg_isect_lseg3_eu(): logic error possibly in 'bn_isect_lseg3_lseg3'\n");
+		    bu_bomb("nmg_isect_lseg3_eu(): logic error possibly in 'bg_isect_lseg3_lseg3'\n");
 		}
 
 		/* True when either (p1 = q1) or (p2 = q1) or
@@ -2532,7 +2532,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfre
 		/* true when the vertex tested would not belong to
 		 * the resulting triangle
 		 */
-		status = bn_isect_pnt_lseg(&dist, prev->vu_p->v_p->vg_p->coord,
+		status = bg_isect_pnt_lseg(&dist, prev->vu_p->v_p->vg_p->coord,
 					  next->vu_p->v_p->vg_p->coord,
 					  eu->vu_p->v_p->vg_p->coord, tol);
 		if (status == 3) {
@@ -2907,7 +2907,7 @@ nmg_classify_pnt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loo
 	    bu_log("\nnmg_classify_pnt_loop_new(): END ==========================================\n\n");
 	    return NMG_CLASS_AonBshared;
 	} else {
-	    if (bn_pnt3_pnt3_equal(eu1->vu_p->v_p->vg_p->coord, line1_pt1_v_ptr->vg_p->coord, tol)) {
+	    if (bg_pnt3_pnt3_equal(eu1->vu_p->v_p->vg_p->coord, line1_pt1_v_ptr->vg_p->coord, tol)) {
 		bu_bomb("nmg_classify_pnt_loop_new(): found unfused vertex\n");
 	    }
 	}
@@ -2919,7 +2919,7 @@ nmg_classify_pnt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loo
 	NMG_CK_EDGEUSE(eu1);
 	if (eu1->eumate_p->vu_p->v_p->vg_p == eu1->vu_p->v_p->vg_p) {
 	    bu_bomb("nmg_classify_pnt_loop_new(): zero length edge\n");
-	} else if (bn_pnt3_pnt3_equal(eu1->eumate_p->vu_p->v_p->vg_p->coord, eu1->vu_p->v_p->vg_p->coord, tol)) {
+	} else if (bg_pnt3_pnt3_equal(eu1->eumate_p->vu_p->v_p->vg_p->coord, eu1->vu_p->v_p->vg_p->coord, tol)) {
 	    bu_bomb("nmg_classify_pnt_loop_new(): found unfused vertex, zero length edge\n");
 	}
 
@@ -2937,7 +2937,7 @@ nmg_classify_pnt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loo
 		line2_pt2 = eu2->eumate_p->vu_p->v_p->vg_p->coord;
 		VSUB2(line2_dir, line2_pt2, line2_pt1);
 
-		status = bn_isect_line3_line3(&line1_dist, &line2_dist,
+		status = bg_isect_line3_line3(&line1_dist, &line2_dist,
 					      line1_pt1, line1_dir, line2_pt1, line2_dir, tol);
 
 		if ( status == 1 ) {
@@ -2961,7 +2961,7 @@ nmg_classify_pnt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loo
 			    VSUB2(x_dir, line2_pt1, line1_pt1);
 			    VCROSS(y_dir, N, x_dir);
 			    VSUB2(vec1, line2_pt2, line1_pt1);
-			    angle1 = bn_angle_measure(vec1, x_dir, y_dir);
+			    angle1 = bg_angle_measure(vec1, x_dir, y_dir);
 			    on_vertex = 1;
 			}
 
@@ -2970,7 +2970,7 @@ nmg_classify_pnt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loo
 			    VSUB2(x_dir, line2_pt2, line1_pt1);
 			    VCROSS(y_dir, N, x_dir);
 			    VSUB2(vec1, line2_pt1, line1_pt1);
-			    angle1 = bn_angle_measure(vec1, x_dir, y_dir);
+			    angle1 = bg_angle_measure(vec1, x_dir, y_dir);
 			    on_vertex = 1;
 			}
 

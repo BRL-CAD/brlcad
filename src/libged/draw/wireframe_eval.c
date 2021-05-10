@@ -1259,7 +1259,7 @@ Eplot(union E_tree *eptr,
 
 		    NMG_GET_FU_PLANE(pl2, fu2);
 
-		    if (bn_coplanar(pl1, pl2, tol)) {
+		    if (bg_coplanar(pl1, pl2, tol)) {
 			continue;
 		    }
 
@@ -1276,7 +1276,7 @@ Eplot(union E_tree *eptr,
 
 			    /* find intersection of this edge with fu2 */
 
-			    if (bn_isect_line3_plane(&dist, vg1a->coord,
+			    if (bg_isect_line3_plane(&dist, vg1a->coord,
 						     dir, pl2,
 						     tol) < 1)
 				continue;
@@ -1304,7 +1304,7 @@ Eplot(union E_tree *eptr,
 
 			    /* find intersection of this edge with fu1 */
 
-			    if (bn_isect_line3_plane(&dist, vg2a->coord,
+			    if (bg_isect_line3_plane(&dist, vg2a->coord,
 						     dir, pl1,
 						     tol) < 1)
 				continue;
@@ -1649,7 +1649,7 @@ fix_halfs(struct bigE_data *dgcdp)
 
 	    NMG_GET_FU_PLANE(pl, fu);
 
-	    if (bn_coplanar(pl, haf_pl, tol) > 0)
+	    if (bg_coplanar(pl, haf_pl, tol) > 0)
 		continue;
 
 	    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -1665,7 +1665,7 @@ fix_halfs(struct bigE_data *dgcdp)
 
 		VSUB2(dir, v2g->coord, v1g->coord);
 
-		if (bn_isect_line3_plane(&dist, v1g->coord, dir, haf_pl, tol) < 1)
+		if (bg_isect_line3_plane(&dist, v1g->coord, dir, haf_pl, tol) < 1)
 		    continue;
 
 		if (dist < 0.0 || dist >=1.0)

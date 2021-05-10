@@ -122,7 +122,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 	}
 
 	/* find plane eqn for this face */
-	if (bn_make_plane_3pnts(face.plane_eqn, arb->pt[a], arb->pt[b], arb->pt[c], &gedp->ged_wdbp->wdb_tol) < 0) {
+	if (bg_make_plane_3pnts(face.plane_eqn, arb->pt[a], arb->pt[b], arb->pt[c], &gedp->ged_wdbp->wdb_tol) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
 			  a+1, b+1, c+1, d+1);
 	    /* this row has 1 special fields */
@@ -135,7 +135,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 	ADD_PT(face, arb->pt[c]);
 	ADD_PT(face, arb->pt[d]);
 
-	/* The plane equations returned by bn_make_plane_3pnts above do
+	/* The plane equations returned by bg_make_plane_3pnts above do
 	 * not necessarily point outward. Use the reference center
 	 * point for the arb and reverse direction for any errant planes.
 	 * This corrects the output rotation, fallback angles so that

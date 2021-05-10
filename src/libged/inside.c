@@ -191,7 +191,7 @@ arbin(struct ged *gedp,
 	fastf_t dist0, dist1;
 
 	/* calculate the four possible intersect points */
-	if (bn_make_pnt_3planes(pt[0], planes[1], planes[2], planes[3])) {
+	if (bg_make_pnt_3planes(pt[0], planes[1], planes[2], planes[3])) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 0:\n");
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
@@ -199,7 +199,7 @@ arbin(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
 	    return GED_ERROR;
 	}
-	if (bn_make_pnt_3planes(pt[1], planes[2], planes[3], planes[4])) {
+	if (bg_make_pnt_3planes(pt[1], planes[2], planes[3], planes[4])) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 1:\n");
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[2]));
@@ -207,7 +207,7 @@ arbin(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
 	    return GED_ERROR;
 	}
-	if (bn_make_pnt_3planes(pt[2], planes[3], planes[4], planes[1])) {
+	if (bg_make_pnt_3planes(pt[2], planes[3], planes[4], planes[1])) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 2:\n");
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
@@ -215,7 +215,7 @@ arbin(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
 	    return GED_ERROR;
 	}
-	if (bn_make_pnt_3planes(pt[3], planes[4], planes[1], planes[2])) {
+	if (bg_make_pnt_3planes(pt[3], planes[4], planes[1], planes[2])) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 3:\n");
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
@@ -224,7 +224,7 @@ arbin(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
-	if (bn_pnt3_pnt3_equal(pt[0], pt[1], &gedp->ged_wdbp->wdb_tol)) {
+	if (bg_pnt3_pnt3_equal(pt[0], pt[1], &gedp->ged_wdbp->wdb_tol)) {
 	    /* if any two of the calculates intersection points are equal,
 	     * then all four must be equal
 	     */
@@ -300,7 +300,7 @@ arbin(struct ged *gedp,
 		    continue;
 
 		NMG_GET_FU_PLANE(pl, fu);
-		if (bn_coplanar(planes[i], pl, &gedp->ged_wdbp->wdb_tol) > 0) {
+		if (bg_coplanar(planes[i], pl, &gedp->ged_wdbp->wdb_tol) > 0) {
 		    /* found the NMG face geometry that matches arb face i */
 		    found = 1;
 		    fg = fu->f_p->g.plane_p;

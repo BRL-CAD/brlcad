@@ -46,7 +46,7 @@
 #include "bu/sort.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/plot3.h"
 
 struct bvh_build_node {

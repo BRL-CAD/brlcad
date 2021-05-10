@@ -34,7 +34,7 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"
 
@@ -49,7 +49,7 @@ struct ve_dist {
     fastf_t dist;	/* distance squared from point to edge */
     struct vertex *v1;
     struct vertex *v2;
-    int status;	/* return code from bn_dist_pnt3_lseg3 */
+    int status;	/* return code from bg_dist_pnt3_lseg3 */
 };
 #define NMG_VE_DIST_MAGIC 0x102938
 #define NMG_CK_VED(_p) NMG_CKMAG(_p, NMG_VE_DIST_MAGIC, "vertex/edge_dist")
@@ -118,7 +118,7 @@ int nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const st
  *	4	PCA is within tolerance of B. *dist = |P-B|**2.
  *	5	P is "above/below" lseg AB.  *dist=|PCA-P|**2.
  *
- * This routine was formerly called bn_dist_pnt_lseg().
+ * This routine was formerly called bg_dist_pnt_lseg().
  * This is a special version that returns the square of the distance
  * and does not actually calculate PCA.
  *
@@ -860,7 +860,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei, struct
     tmp_tol.perp = 1e-6;
     tmp_tol.para = 1 - tmp_tol.perp;
 
-    (void)bn_dist_pnt3_lseg3(&dist, pca, ei->eu_p->vu_p->v_p->vg_p->coord,
+    (void)bg_dist_pnt3_lseg3(&dist, pca, ei->eu_p->vu_p->v_p->vg_p->coord,
 			    ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord, fpi->pt, &tmp_tol);
 
     pl_color(fp, 255, 255, 50);

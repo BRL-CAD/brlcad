@@ -1344,7 +1344,7 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 	NMG_CK_VERTEX(b);
 	NMG_CK_VERTEX_G(b->vg_p);
     } while ((b == a
-	      || bn_pnt3_pnt3_equal(a->vg_p->coord, b->vg_p->coord, tol))
+	      || bg_pnt3_pnt3_equal(a->vg_p->coord, b->vg_p->coord, tol))
 	     && eu_next->vu_p != eu->vu_p);
 
     eu_final = eu_next;
@@ -1360,16 +1360,16 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 	NMG_CK_VERTEX(c);
 	NMG_CK_VERTEX_G(c->vg_p);
 	both_equal = (c == b) ||
-	    bn_pnt3_pnt3_equal(a->vg_p->coord, c->vg_p->coord, tol) ||
-	    bn_pnt3_pnt3_equal(b->vg_p->coord, c->vg_p->coord, tol);
+	    bg_pnt3_pnt3_equal(a->vg_p->coord, c->vg_p->coord, tol) ||
+	    bg_pnt3_pnt3_equal(b->vg_p->coord, c->vg_p->coord, tol);
     } while ((both_equal
-	      || bn_3pnts_collinear(a->vg_p->coord, b->vg_p->coord,
+	      || bg_3pnts_collinear(a->vg_p->coord, b->vg_p->coord,
 				   c->vg_p->coord, tol))
 	     && eu_next->vu_p != eu->vu_p);
 
-    if (bn_make_plane_3pnts(plane,
+    if (bg_make_plane_3pnts(plane,
 			 a->vg_p->coord, b->vg_p->coord, c->vg_p->coord, tol) < 0) {
-	bu_log("nmg_fu_planeeqn(): bn_make_plane_3pnts failed on (%g, %g, %g) (%g, %g, %g) (%g, %g, %g)\n",
+	bu_log("nmg_fu_planeeqn(): bg_make_plane_3pnts failed on (%g, %g, %g) (%g, %g, %g) (%g, %g, %g)\n",
 	       V3ARGS(a->vg_p->coord),
 	       V3ARGS(b->vg_p->coord),
 	       V3ARGS(c->vg_p->coord));
@@ -1377,7 +1377,7 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 	return -1;
     }
     if (VNEAR_ZERO(plane, SMALL_FASTF)) {
-	bu_log("nmg_fu_planeeqn():  Bad plane equation from bn_make_plane_3pnts\n");
+	bu_log("nmg_fu_planeeqn():  Bad plane equation from bg_make_plane_3pnts\n");
 	HPRINT("plane", plane);
 	return -1;
     }

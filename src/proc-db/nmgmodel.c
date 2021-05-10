@@ -225,7 +225,7 @@ make_3manifold_bits(struct bn_tol *tol)
     /* this face isn't strictly convex, so we have to make the plane
      * equation the old-fashioned way.
      */
-    bn_make_plane_3pnts(plane,
+    bg_make_plane_3pnts(plane,
 		     vertl[7]->vg_p->coord,
 		     vertl[17]->vg_p->coord,
 		     vertl[12]->vg_p->coord,

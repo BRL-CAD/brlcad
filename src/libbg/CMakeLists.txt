@@ -7,7 +7,12 @@ set(BG_INCLUDE_DIRS
   ${POLY2TRI_INCLUDE_DIRS}
   ${SPSR_INCLUDE_DIR}
   )
-BRLCAD_LIB_INCLUDE_DIRS(bg BG_INCLUDE_DIRS "")
+
+set(BG_LOCAL_INCLUDE_DIRS
+  ${BRLCAD_SOURCE_DIR}/src/other/Eigen
+  )
+
+BRLCAD_LIB_INCLUDE_DIRS(bg BG_INCLUDE_DIRS BG_LOCAL_INCLUDE_DIRS)
 
 set(SPSR_srcs
   spsr/Allocator.h
@@ -60,6 +65,7 @@ set(LIBBG_SOURCES
   lseg_lseg.c
   lseg_pt.c
   obr.c
+  plane.cpp
   polygon.c
   polygon_fill.cpp
   polygon_op.cpp

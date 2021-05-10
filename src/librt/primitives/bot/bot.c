@@ -1116,8 +1116,8 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    corners[2] = &verts[bot_ip->faces[i*3+2]];
 	}
 
-	if (!bn_3pnts_distinct(pt[0], pt[1], pt[2], tol)
-	    || bn_3pnts_collinear(pt[0], pt[1], pt[2], tol))
+	if (!bg_3pnts_distinct(pt[0], pt[1], pt[2], tol)
+	    || bg_3pnts_collinear(pt[0], pt[1], pt[2], tol))
 	    continue;
 
 	if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
@@ -2113,7 +2113,7 @@ rt_bot_find_e_nearest_pt2(
 	p1[Z] = 0.0;
 	p2[Z] = 0.0;
 
-	ret = bn_dist_pnt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
+	ret = bg_dist_pnt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
 
 	if (ret < 3 || tmp_dist < dist) {
 	    switch (ret) {
@@ -3328,7 +3328,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
     for (i = 0; i < bot->num_vertices; i++) {
 	j = i + 1;
 	while (j < bot->num_vertices) {
-	    if (bn_pnt3_pnt3_equal(&bot->vertices[i*3], &bot->vertices[j*3], tol)) {
+	    if (bg_pnt3_pnt3_equal(&bot->vertices[i*3], &bot->vertices[j*3], tol)) {
 		count++;
 
 		/* update bot */
@@ -4902,7 +4902,7 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
 	    /* bot->normals array already exists, use those instead */
 	    VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
-	} else if (UNLIKELY(bn_make_plane_3pnts(face.plane_eqn, (&bot->vertices[(a) * ELEMENTS_PER_POINT]), (&bot->vertices[(b) * ELEMENTS_PER_POINT]), (&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
+	} else if (UNLIKELY(bg_make_plane_3pnts(face.plane_eqn, (&bot->vertices[(a) * ELEMENTS_PER_POINT]), (&bot->vertices[(b) * ELEMENTS_PER_POINT]), (&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
 	    continue;
 	}
 
@@ -4957,7 +4957,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    }
 	}
 
-	whole_bot_overall_area += bn_area_of_triangle((const fastf_t *)&pt[0], (const fastf_t *)&pt[1], (const fastf_t *)&pt[2]);
+	whole_bot_overall_area += bg_area_of_triangle((const fastf_t *)&pt[0], (const fastf_t *)&pt[1], (const fastf_t *)&pt[2]);
     }
 
     switch (bot_ip->mode) {
@@ -5014,7 +5014,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    if (a_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
 
-		edge_length = bn_dist_pnt3_pnt3(whole_bot_vertices[a][0], whole_bot_vertices[a][1]);
+		edge_length = bg_dist_pnt3_pnt3(whole_bot_vertices[a][0], whole_bot_vertices[a][1]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
 
@@ -5022,14 +5022,14 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    if (b_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
 
-		edge_length = bn_dist_pnt3_pnt3(whole_bot_vertices[a][1], whole_bot_vertices[a][2]);
+		edge_length = bg_dist_pnt3_pnt3(whole_bot_vertices[a][1], whole_bot_vertices[a][2]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
 	    }
 	    if (c_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
 
-		edge_length = bn_dist_pnt3_pnt3(whole_bot_vertices[a][2], whole_bot_vertices[a][0]);
+		edge_length = bg_dist_pnt3_pnt3(whole_bot_vertices[a][2], whole_bot_vertices[a][0]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
 	    }

@@ -19,26 +19,26 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bn_plane
+/** @addtogroup bg_plane
  *
  * @brief
  * Plane structures (from src/librt/plane.h) and plane/line/point calculations
  *
- * TODO - this API needs to be migrated to libbg as a geometry related API, and
- * perhaps simplified.  A lot of the closest point calculations, for example,
- * should probably just concern themselves with the calculation itself and
- * leave any tolerance based questions to a separate step.
+ * TODO - this API may need to be simplified.  A lot of the closest point
+ * calculations, for example, should probably just concern themselves with the
+ * calculation itself and leave any tolerance based questions to a separate
+ * step.
  */
 /** @{ */
 /* @file plane.h */
 
-#ifndef BN_PLANE_H
-#define BN_PLANE_H
+#ifndef BG_PLANE_H
+#define BG_PLANE_H
 
 #include "common.h"
 #include "vmath.h"
-#include "bn/defines.h"
 #include "bn/tol.h"
+#include "bg/defines.h"
 
 __BEGIN_DECLS
 
@@ -117,7 +117,7 @@ typedef struct tri_float_specific tri_specific_float;
  * dist[1]), setting the two partials equal to 0, and solving the two
  * simultaneous equations
  */
-BN_EXPORT extern int bn_distsq_line3_line3(fastf_t dist[3],
+BG_EXPORT extern int bg_distsq_line3_line3(fastf_t dist[3],
 					   point_t P,
 					   vect_t d,
 					   point_t Q,
@@ -150,7 +150,7 @@ BN_EXPORT extern int bn_distsq_line3_line3(fastf_t dist[3],
  * TODO: For efficiency, a version of this routine that provides the
  * distance squared would be faster.
  */
-BN_EXPORT extern int bn_dist_pnt3_line3(fastf_t *dist,
+BG_EXPORT extern int bg_dist_pnt3_line3(fastf_t *dist,
 					point_t pca,
 					const point_t a,
 					const point_t p,
@@ -178,7 +178,7 @@ BN_EXPORT extern int bn_dist_pnt3_line3(fastf_t *dist,
  * Direction vector, d, must be unit length.
  *
  */
-BN_EXPORT extern int bn_dist_line3_lseg3(fastf_t *dist,
+BG_EXPORT extern int bg_dist_line3_lseg3(fastf_t *dist,
 					 const fastf_t *p,
 					 const fastf_t *d,
 					 const fastf_t *a,
@@ -199,12 +199,12 @@ BN_EXPORT extern int bn_dist_line3_lseg3(fastf_t *dist,
  * direction to the point of closest approach for that line.  Similar
  * for the second line.  d1 and d2 must be unit direction vectors.
  *
- * XXX How is this different from bn_isect_line3_line3() ?
+ * XXX How is this different from bg_isect_line3_line3() ?
  * XXX Why are the calling sequences just slightly different?
  * XXX Can we pick the better one, and get rid of the other one?
  * XXX If not, can we document how they differ?
  */
-BN_EXPORT extern int bn_dist_line3_line3(fastf_t dist[2],
+BG_EXPORT extern int bg_dist_line3_line3(fastf_t dist[2],
 					 const point_t p1,
 					 const point_t p2,
 					 const vect_t d1,
@@ -242,7 +242,7 @@ BN_EXPORT extern int bn_dist_line3_line3(fastf_t dist[2],
  * XXX For efficiency, a version of this routine that provides the
  * XXX distance squared would be faster.
  */
-BN_EXPORT extern int bn_dist_pnt3_lseg3(fastf_t *dist,
+BG_EXPORT extern int bg_dist_pnt3_lseg3(fastf_t *dist,
 					point_t pca,
 					const point_t a,
 					const point_t b,
@@ -285,7 +285,7 @@ BN_EXPORT extern int bn_dist_pnt3_lseg3(fastf_t *dist,
  * This function is a test version of "bn_distsq_pnt3_lseg3".
  *
  */
-BN_EXPORT extern int bn_distsq_pnt3_lseg3_v2(fastf_t *distsq,
+BG_EXPORT extern int bg_distsq_pnt3_lseg3_v2(fastf_t *distsq,
 					     const fastf_t *a,
 					     const fastf_t *b,
 					     const fastf_t *p,
@@ -301,7 +301,7 @@ BN_EXPORT extern int bn_distsq_pnt3_lseg3_v2(fastf_t *distsq,
  * @return 1	If 3 points are collinear
  * @return 0	If they are not
  */
-BN_EXPORT extern int bn_3pnts_collinear(point_t a,
+BG_EXPORT extern int bg_3pnts_collinear(point_t a,
 				       point_t b,
 				       point_t c,
 				       const struct bn_tol *tol);
@@ -310,7 +310,7 @@ BN_EXPORT extern int bn_3pnts_collinear(point_t a,
  * @return 1	if the two points are equal, within the tolerance
  * @return 0	if the two points are not "the same"
  */
-BN_EXPORT extern int bn_pnt3_pnt3_equal(const point_t a,
+BG_EXPORT extern int bg_pnt3_pnt3_equal(const point_t a,
 					const point_t b,
 					const struct bn_tol *tol);
 
@@ -340,9 +340,9 @@ BN_EXPORT extern int bn_pnt3_pnt3_equal(const point_t a,
  * @return 5	P is "above/below" lseg AB.  *dist=|PCA-P|**2, pca=computed.
  *
  *
- * Patterned after bn_dist_pnt3_lseg3().
+ * Patterned after bg_dist_pnt3_lseg3().
  */
-BN_EXPORT extern int bn_dist_pnt2_lseg2(fastf_t *dist_sq,
+BG_EXPORT extern int bg_dist_pnt2_lseg2(fastf_t *dist_sq,
 					fastf_t pca[2],
 					const point_t a,
 					const point_t b,
@@ -388,12 +388,12 @@ BN_EXPORT extern int bn_dist_pnt2_lseg2(fastf_t *dist_sq,
  * @param qdir	direction-2
  * @param tol	tolerance values
  */
-BN_EXPORT extern int bn_isect_lseg3_lseg3(fastf_t *dist,
+BG_EXPORT extern int bg_isect_lseg3_lseg3(fastf_t *dist,
 					  const point_t p, const vect_t pdir,
 					  const point_t q, const vect_t qdir,
 					  const struct bn_tol *tol);
 
-BN_EXPORT extern int bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
+BG_EXPORT extern int bg_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
 					     const point_t sg2pt1, const point_t sg2pt2,
 					     const struct bn_tol *tol);
 
@@ -438,7 +438,7 @@ BN_EXPORT extern int bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t
  *		occurs before point p0 on line segment p0->p1 then pdist will be
  *		negative. The same occurs for the distance to point q1.
  */
-BN_EXPORT extern int bn_isect_line3_line3(fastf_t *s, fastf_t *t,
+BG_EXPORT extern int bg_isect_line3_line3(fastf_t *s, fastf_t *t,
 					  const point_t p0,
 					  const vect_t u,
 					  const point_t q0,
@@ -455,7 +455,7 @@ BN_EXPORT extern int bn_isect_line3_line3(fastf_t *s, fastf_t *t,
  *
  * The direction vectors do not need to be unit length.
  */
-BN_EXPORT extern int bn_2line3_colinear(const point_t p1,
+BG_EXPORT extern int bg_2line3_colinear(const point_t p1,
 					const vect_t d1,
 					const point_t p2,
 					const vect_t d2,
@@ -488,7 +488,7 @@ BN_EXPORT extern int bn_2line3_colinear(const point_t p1,
  dist = distance from A to P'
  @endverbatim
 */
-BN_EXPORT extern int bn_isect_pnt2_lseg2(fastf_t *dist,
+BG_EXPORT extern int bg_isect_pnt2_lseg2(fastf_t *dist,
 					 const point_t a,
 					 const point_t b,
 					 const point_t p,
@@ -530,7 +530,7 @@ BN_EXPORT extern int bn_isect_pnt2_lseg2(fastf_t *dist,
  * @param c	direction of second line
  * @param tol	tolerance values
  */
-BN_EXPORT extern int bn_isect_line2_lseg2(fastf_t *dist,
+BG_EXPORT extern int bg_isect_line2_lseg2(fastf_t *dist,
 					  const point_t p,
 					  const vect_t d,
 					  const point_t a,
@@ -567,7 +567,7 @@ BN_EXPORT extern int bn_isect_line2_lseg2(fastf_t *dist,
  * @param qdir	direction2
  * @param tol	tolerance values
  */
-BN_EXPORT extern int bn_isect_lseg2_lseg2(fastf_t *dist,
+BG_EXPORT extern int bg_isect_lseg2_lseg2(fastf_t *dist,
 					  const point_t p,
 					  const vect_t pdir,
 					  const point_t q,
@@ -614,7 +614,7 @@ BN_EXPORT extern int bn_isect_lseg2_lseg2(fastf_t *dist,
  * intersection can turn up in surprising places.  (e.g. when
  * det=1e-15 and det1=5.5e-17, t=0.5)
  */
-BN_EXPORT extern int bn_isect_line2_line2(fastf_t *dist,
+BG_EXPORT extern int bg_isect_line2_line2(fastf_t *dist,
 					  const point_t p,
 					  const vect_t d,
 					  const point_t a,
@@ -625,7 +625,7 @@ BN_EXPORT extern int bn_isect_line2_line2(fastf_t *dist,
  * @brief
  * Returns distance between two points.
  */
-BN_EXPORT extern double bn_dist_pnt3_pnt3(const point_t a,
+BG_EXPORT extern double bg_dist_pnt3_pnt3(const point_t a,
 					  const point_t b);
 
 /**
@@ -636,7 +636,7 @@ BN_EXPORT extern double bn_dist_pnt3_pnt3(const point_t a,
  * @return 1 If all three points are distinct
  * @return 0 If two or more points are closer together than dist_tol_sq
  */
-BN_EXPORT extern int bn_3pnts_distinct(const point_t a,
+BG_EXPORT extern int bg_3pnts_distinct(const point_t a,
 				      const point_t b,
 				      const point_t c,
 				      const struct bn_tol *tol);
@@ -649,7 +649,7 @@ BN_EXPORT extern int bn_3pnts_distinct(const point_t a,
  * @return 1 If all the points are distinct
  * @return 0 If two or more points are closer together than dist_tol_sq
  */
-BN_EXPORT extern int bn_npnts_distinct(const int npts,
+BG_EXPORT extern int bg_npnts_distinct(const int npts,
 				      const point_t *pts,
 				      const struct bn_tol *tol);
 
@@ -695,7 +695,7 @@ BN_EXPORT extern int bn_npnts_distinct(const int npts,
  * @param[in]	c	point 3
  * @param[in]	tol	Tolerance values for doing calculation
  */
-BN_EXPORT extern int bn_make_plane_3pnts(plane_t plane,
+BG_EXPORT extern int bg_make_plane_3pnts(plane_t plane,
 					const point_t a,
 					const point_t b,
 					const point_t c,
@@ -729,7 +729,7 @@ BN_EXPORT extern int bn_make_plane_3pnts(plane_t plane,
  * @param	c	plane 3
  */
 
-BN_EXPORT extern int bn_make_pnt_3planes(point_t pt,
+BG_EXPORT extern int bg_make_pnt_3planes(point_t pt,
 					 const plane_t a,
 					 const plane_t b,
 					 const plane_t c);
@@ -752,7 +752,7 @@ BN_EXPORT extern int bn_make_pnt_3planes(point_t pt,
  * @param[in]	plane	equation of plane
  * @param[in]	tol	tolerance values
  */
-BN_EXPORT extern int bn_isect_line3_plane(fastf_t *dist,
+BG_EXPORT extern int bg_isect_line3_plane(fastf_t *dist,
 					  const point_t pt,
 					  const vect_t dir,
 					  const plane_t plane,
@@ -781,13 +781,13 @@ BN_EXPORT extern int bn_isect_line3_plane(fastf_t *dist,
  * @param[in]	rpp_min	minimum point of model RPP
  * @param[in]	tol	tolerance values
  */
-BN_EXPORT extern int bn_isect_2planes(point_t pt,
+BG_EXPORT extern int bg_isect_2planes(point_t pt,
 				      vect_t dir,
 				      const plane_t a,
 				      const plane_t b,
 				      const vect_t rpp_min,
 				      const struct bn_tol *tol);
-BN_EXPORT extern int bn_isect_2lines(fastf_t *t,
+BG_EXPORT extern int bg_isect_2lines(fastf_t *t,
 				     fastf_t *u,
 				     const point_t p,
 				     const vect_t d,
@@ -823,10 +823,10 @@ BN_EXPORT extern int bn_isect_2lines(fastf_t *t,
  * passed in A or B are used instead of solving P + t * D, to prevent
  * numeric error from creeping into the position of the endpoints.
  *
- * XXX should probably be called bn_isect_line3_lseg3()
+ * XXX should probably be called bg_isect_line3_lseg3()
  * XXX should probably be changed to return dist[2]
  */
-BN_EXPORT extern int bn_isect_line_lseg(fastf_t *t, const point_t p,
+BG_EXPORT extern int bg_isect_line_lseg(fastf_t *t, const point_t p,
 					const vect_t d,
 					const point_t a,
 					const point_t b,
@@ -846,7 +846,7 @@ BN_EXPORT extern int bn_isect_line_lseg(fastf_t *t, const point_t p,
  * Return -
  * Distance
  */
-BN_EXPORT extern double bn_dist_line3_pnt3(const point_t pt,
+BG_EXPORT extern double bg_dist_line3_pnt3(const point_t pt,
 					   const vect_t dir,
 					   const point_t a);
 
@@ -860,7 +860,7 @@ BN_EXPORT extern double bn_dist_line3_pnt3(const point_t pt,
  * Return -
  * Distance squared
  */
-BN_EXPORT extern double bn_distsq_line3_pnt3(const point_t pt,
+BG_EXPORT extern double bg_distsq_line3_pnt3(const point_t pt,
 					     const vect_t dir,
 					     const point_t a);
 
@@ -873,7 +873,7 @@ BN_EXPORT extern double bn_distsq_line3_pnt3(const point_t pt,
  *
  * @return Distance
  */
-BN_EXPORT extern double bn_dist_line_origin(const point_t pt,
+BG_EXPORT extern double bg_dist_line_origin(const point_t pt,
 					    const vect_t dir);
 
 /**
@@ -885,7 +885,7 @@ BN_EXPORT extern double bn_dist_line_origin(const point_t pt,
  *
  * @return Distance
  */
-BN_EXPORT extern double bn_dist_line2_point2(const point_t pt,
+BG_EXPORT extern double bg_dist_line2_point2(const point_t pt,
 					     const vect_t dir,
 					     const point_t a);
 
@@ -900,7 +900,7 @@ BN_EXPORT extern double bn_dist_line2_point2(const point_t pt,
  * @return
  * Distance squared
  */
-BN_EXPORT extern double bn_distsq_line2_point2(const point_t pt,
+BG_EXPORT extern double bg_distsq_line2_point2(const point_t pt,
 					       const vect_t dir,
 					       const point_t a);
 
@@ -908,7 +908,7 @@ BN_EXPORT extern double bn_distsq_line2_point2(const point_t pt,
  *@brief
  * Returns the area of a triangle. Algorithm by Jon Leech 3/24/89.
  */
-BN_EXPORT extern double bn_area_of_triangle(const point_t a,
+BG_EXPORT extern double bg_area_of_triangle(const point_t a,
 					    const point_t b,
 					    const point_t c);
 
@@ -944,13 +944,13 @@ BN_EXPORT extern double bn_area_of_triangle(const point_t a,
  * @param tol	tolerance values
  * @param[out] dist	parametric distance from A to P' (in terms of A to B)
  */
-BN_EXPORT extern int bn_isect_pnt_lseg(fastf_t *dist,
+BG_EXPORT extern int bg_isect_pnt_lseg(fastf_t *dist,
 				       const point_t a,
 				       const point_t b,
 				       const point_t p,
 				       const struct bn_tol *tol);
 
-BN_EXPORT extern double bn_dist_pnt_lseg(point_t pca,
+BG_EXPORT extern double bg_dist_pnt_lseg(point_t pca,
 					 const point_t a,
 					 const point_t b,
 					 const point_t p,
@@ -963,7 +963,7 @@ BN_EXPORT extern double bn_dist_pnt_lseg(point_t pca,
  * and min/max'ed.  This is not minimal, but does fully contain any
  * internal object, using an axis-aligned RPP.
  */
-BN_EXPORT extern void bn_rotate_bbox(point_t omin,
+BG_EXPORT extern void bg_rotate_bbox(point_t omin,
 				     point_t omax,
 				     const mat_t mat,
 				     const point_t imin,
@@ -973,7 +973,7 @@ BN_EXPORT extern void bn_rotate_bbox(point_t omin,
  *@brief
  * Transform a plane equation by the given 4x4 matrix.
  */
-BN_EXPORT extern void bn_rotate_plane(plane_t oplane,
+BG_EXPORT extern void bg_rotate_plane(plane_t oplane,
 				      const mat_t mat,
 				      const plane_t iplane);
 
@@ -988,7 +988,7 @@ BN_EXPORT extern void bn_rotate_plane(plane_t oplane,
  * @return 1	coplanar, same normal direction
  * @return 2	coplanar, opposite normal direction
  */
-BN_EXPORT extern int bn_coplanar(const plane_t a,
+BG_EXPORT extern int bg_coplanar(const plane_t a,
 				 const plane_t b,
 				 const struct bn_tol *tol);
 
@@ -1018,9 +1018,9 @@ BN_EXPORT extern int bn_coplanar(const plane_t a,
  * @return vec == -x_dir returns pi,
  * @return vec == -y_dir returns 3*pi/2.
  *
- * In all cases, the returned value is between 0 and bn_twopi.
+ * In all cases, the returned value is between 0 and bg_twopi.
  */
-BN_EXPORT extern double bn_angle_measure(vect_t vec,
+BG_EXPORT extern double bg_angle_measure(vect_t vec,
 					 const vect_t x_dir,
 					 const vect_t y_dir);
 
@@ -1031,7 +1031,7 @@ BN_EXPORT extern double bn_angle_measure(vect_t vec,
  * the line, then t is the distance of the perpendicular projection of
  * point X onto the line.
  */
-BN_EXPORT extern double bn_dist_pnt3_along_line3(const point_t p,
+BG_EXPORT extern double bg_dist_pnt3_along_line3(const point_t p,
 						 const vect_t d,
 						 const point_t x);
 
@@ -1042,7 +1042,7 @@ BN_EXPORT extern double bn_dist_pnt3_along_line3(const point_t p,
  * the line, then t is the distance of the perpendicular projection of
  * point X onto the line.
  */
-BN_EXPORT extern double bn_dist_pnt2_along_line2(const point_t p,
+BG_EXPORT extern double bg_dist_pnt2_along_line2(const point_t p,
 						 const vect_t d,
 						 const point_t x);
 
@@ -1051,7 +1051,7 @@ BN_EXPORT extern double bn_dist_pnt2_along_line2(const point_t p,
  * @return 1	if left <= mid <= right
  * @return 0	if mid is not in the range.
  */
-BN_EXPORT extern int bn_between(double left,
+BG_EXPORT extern int bg_between(double left,
 				double mid,
 				double right,
 				const struct bn_tol *tol);
@@ -1060,7 +1060,7 @@ BN_EXPORT extern int bn_between(double left,
  * @return 0	No intersection
  * @return 1	Intersection, 'inter' has intersect point.
  */
-BN_EXPORT extern int bn_does_ray_isect_tri(const point_t pt,
+BG_EXPORT extern int bg_does_ray_isect_tri(const point_t pt,
 					   const vect_t dir,
 					   const point_t V,
 					   const point_t A,
@@ -1072,19 +1072,19 @@ BN_EXPORT extern int bn_does_ray_isect_tri(const point_t pt,
  * Classify a halfspace, specified by its plane equation, against a
  * bounding RPP.
  *
- * @return BN_CLASSIFY_INSIDE
- * @return BN_CLASSIFY_OVERLAPPING
- * @return BN_CLASSIFY_OUTSIDE
+ * @return BG_CLASSIFY_INSIDE
+ * @return BG_CLASSIFY_OVERLAPPING
+ * @return BG_CLASSIFY_OUTSIDE
  */
-BN_EXPORT extern int bn_hlf_class(const plane_t half_eqn,
+BG_EXPORT extern int bg_hlf_class(const plane_t half_eqn,
 				  const vect_t min, const vect_t max,
 				  const struct bn_tol *tol);
 
 
-#define BN_CLASSIFY_UNIMPLEMENTED 0x0000
-#define BN_CLASSIFY_INSIDE        0x0001
-#define BN_CLASSIFY_OVERLAPPING   0x0002
-#define BN_CLASSIFY_OUTSIDE       0x0003
+#define BG_CLASSIFY_UNIMPLEMENTED 0x0000
+#define BG_CLASSIFY_INSIDE        0x0001
+#define BG_CLASSIFY_OVERLAPPING   0x0002
+#define BG_CLASSIFY_OUTSIDE       0x0003
 
 
 /**
@@ -1108,14 +1108,14 @@ BN_EXPORT extern int bn_hlf_class(const plane_t half_eqn,
  * [pt] = [inverse][hpq].
  *
  * There is likely a more economical solution rather than matrix
- * inversion, but bn_mat_inv was handy at the time.
+ * inversion, but bg_mat_inv was handy at the time.
  *
  * Checks if these planes form a singular matrix and returns.
  *
  * @return 0 - all is well
  * @return 1 - planes form a singular matrix (no solution)
  */
-BN_EXPORT extern int bn_isect_planes(point_t pt,
+BG_EXPORT extern int bg_isect_planes(point_t pt,
 				     const plane_t planes[],
 				     const size_t pl_count);
 
@@ -1124,7 +1124,7 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
  * @brief
  * Given an origin and a normal, create a plane_t.
  */
-BN_EXPORT extern int bn_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml);
+BG_EXPORT extern int bg_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml);
 
 /**
  * @brief
@@ -1135,25 +1135,25 @@ BN_EXPORT extern int bn_plane_pt_nrml(plane_t *p, point_t pt, vect_t nrml);
  *
  * Returns a center point and a normal direction for the plane
  */
-BN_EXPORT extern int bn_fit_plane(point_t *c, vect_t *n, int npnts, point_t *pnts);
+BG_EXPORT extern int bg_fit_plane(point_t *c, vect_t *n, int npnts, point_t *pnts);
 
 /**
  * @brief
  * Find the closest U,V point on the plane p to 3d point pt.
  */
-BN_EXPORT extern int bn_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt);
+BG_EXPORT extern int bg_plane_closest_pt(fastf_t *u, fastf_t *v, plane_t p, point_t pt);
 
 /**
  * @brief
  * Return the 3D point on the plane at parametric coordinates u, v.
  */
-BN_EXPORT extern int bn_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v);
+BG_EXPORT extern int bg_plane_pt_at(point_t *pt, plane_t p, fastf_t u, fastf_t v);
 
 
 
 __END_DECLS
 
-#endif  /* BN_PLANE_H */
+#endif  /* BG_PLANE_H */
 /** @} */
 /*
  * Local Variables:

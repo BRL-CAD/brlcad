@@ -1,4 +1,4 @@
-/*                       B N T E S T E R . C
+/*                       B G T E S T E R . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2021 United States Government as represented by
@@ -35,13 +35,14 @@
 #include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
+#include "bg.h"
 
 /**
  * TODO - break this up into the more standard function-per-exec paradigm...
  * would make a good introductory student task.
  */
 
-#define USAGE "Usage: bntester [-l test_case_line_number] [-f function_number] -i input_file [-o output_file]\n"
+#define USAGE "Usage: bgtester [-l test_case_line_number] [-f function_number] -i input_file [-o output_file]\n"
 
 int
 parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt_str, unsigned long line_num, FILE *stream)
@@ -299,7 +300,7 @@ main(int argc, char **argv)
 
     /* all output after this point is sent to stream */
 
-    fprintf(stream, "Command line parameters: bntester ");
+    fprintf(stream, "Command line parameters: bgtester ");
     for (argv_idx = 1 ; argv_idx < argc ; argv_idx++) {
 	fprintf(stream, "%s ", argv[argv_idx]);
     }
@@ -376,7 +377,7 @@ main(int argc, char **argv)
 		}
 
 		/* This logic restricts processing of the test case(s) to
-		 * only those specified by the bntester input parameters.
+		 * only those specified by the bgtester input parameters.
 		 */
 		process_test_case = 0;
 		if (valid_function_number && process_single_test_case && (test_case_line_num == line_num)) {
@@ -392,7 +393,7 @@ main(int argc, char **argv)
 		     * function to be tested.
 		     */
 		    switch (u[0]) {
-			case 1: /* function 'bn_distsq_line3_pnt3' */
+			case 1: /* function 'bg_distsq_line3_pnt3' */
 			    bu_strlcpy(dt_fmt, "dddddddddd", sizeof(dt_fmt)); /* defines parameter data types */
 			    if (parse_case(buf_p, i, l, d, u, dt_fmt, line_num, stream)) {
 				/* Parse failed, skipping test case */
@@ -401,7 +402,7 @@ main(int argc, char **argv)
 				double result;
 				if (!BU_SETJUMP) {
 				    /* try */
-				    result = bn_distsq_line3_pnt3(&d[0], &d[3], &d[6]);
+				    result = bg_distsq_line3_pnt3(&d[0], &d[3], &d[6]);
 				    if (!NEAR_EQUAL(result, d[9], VUNITIZE_TOL)) {
 					ret = 1;
 					failed_cnt++;
@@ -419,7 +420,7 @@ main(int argc, char **argv)
 				} BU_UNSETJUMP;
 			    }
 			    break;
-			case 2: /* function 'bn_2line3_colinear' */
+			case 2: /* function 'bg_2line3_colinear' */
 			    bu_strlcpy(dt_fmt, "ddddddddddddduddddi", sizeof(dt_fmt));
 			    if (parse_case(buf_p, i, l, d, u, dt_fmt, line_num, stream)) {
 				/* Parse failed, skipping test case */
@@ -433,7 +434,7 @@ main(int argc, char **argv)
 				    tol.dist_sq = d[14];
 				    tol.perp = d[15];
 				    tol.para = d[16];
-				    result = bn_2line3_colinear(&d[0], &d[3], &d[6], &d[9], d[12], &tol);
+				    result = bg_2line3_colinear(&d[0], &d[3], &d[6], &d[9], d[12], &tol);
 				    if (result != i[0]) {
 					ret = 1;
 					failed_cnt++;
@@ -451,7 +452,7 @@ main(int argc, char **argv)
 				} BU_UNSETJUMP;
 			    }
 			    break;
-			case 3: /* function 'bn_isect_line3_line3' */
+			case 3: /* function 'bg_isect_line3_line3' */
 			    bu_strlcpy(dt_fmt, "dddddddddddddduddddi", sizeof(dt_fmt));
 			    if (parse_case(buf_p, i, l, d, u, dt_fmt, line_num, stream)) {
 				/* Parse failed, skipping test case */
@@ -470,7 +471,7 @@ main(int argc, char **argv)
 				    tol.dist_sq = d[15];
 				    tol.perp = d[16];
 				    tol.para = d[17];
-				    result = bn_isect_line3_line3(&t_out, &u_out, &d[2], &d[5], &d[8], &d[11], &tol);
+				    result = bg_isect_line3_line3(&t_out, &u_out, &d[2], &d[5], &d[8], &d[11], &tol);
 				    if (result != i[0]) {
 					ret = 1;
 					failed_cnt++;
@@ -517,7 +518,7 @@ main(int argc, char **argv)
 				} BU_UNSETJUMP;
 			    }
 			    break;
-			case 4: /* function 'bn_isect_lseg3_lseg3' */
+			case 4: /* function 'bg_isect_lseg3_lseg3' */
 			    bu_strlcpy(dt_fmt, "dddddddddddddduddddi", sizeof(dt_fmt));
 			    if (parse_case(buf_p, i, l, d, u, dt_fmt, line_num, stream)) {
 				/* Parse failed, skipping test case */
@@ -535,7 +536,7 @@ main(int argc, char **argv)
 				    tol.dist_sq = d[15];
 				    tol.perp = d[16];
 				    tol.para = d[17];
-				    result = bn_isect_lseg3_lseg3(&dist[0], &d[2], &d[5], &d[8], &d[11], &tol);
+				    result = bg_isect_lseg3_lseg3(&dist[0], &d[2], &d[5], &d[8], &d[11], &tol);
 				    if (result != i[0]) {
 					ret = 1;
 					failed_cnt++;

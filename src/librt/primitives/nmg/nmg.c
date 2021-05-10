@@ -2630,7 +2630,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    VMOVE(min, scanmin); /* convert double to fastf_t */
 	    bu_cv_ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
 	    VMOVE(max, scanmax); /* convert double to fastf_t */
-	    bn_rotate_bbox(r->min_pt, r->max_pt, mat, min, max);
+	    bg_rotate_bbox(r->min_pt, r->max_pt, mat, min, max);
 	}
 	    return 0;
 	case NMG_KIND_SHELL: {
@@ -2666,7 +2666,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    VMOVE(min, scanmin); /* convert double to fastf_t */
 	    bu_cv_ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
 	    VMOVE(max, scanmax); /* convert double to fastf_t */
-	    bn_rotate_bbox(sa->min_pt, sa->max_pt, mat, min, max);
+	    bg_rotate_bbox(sa->min_pt, sa->max_pt, mat, min, max);
 	}
 	    return 0;
 	case NMG_KIND_FACEUSE: {
@@ -2717,7 +2717,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    INDEXL_HD(d, fg, f_hd, fg->f_hd);
 	    bu_cv_ntohd((unsigned char *)scan, d->N, ELEMENTS_PER_PLANE);
 	    HMOVE(plane, scan); /* convert double to fastf_t */
-	    bn_rotate_plane(fg->N, mat, plane);
+	    bg_rotate_plane(fg->N, mat, plane);
 	}
 	    return 0;
 	case NMG_KIND_FACE_G_SNURB: {
@@ -2809,7 +2809,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    VMOVE(min, scanmin); /* convert double to fastf_t */
 	    bu_cv_ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
 	    VMOVE(max, scanmax); /* convert double to fastf_t */
-	    bn_rotate_bbox(lg->min_pt, lg->max_pt, mat, min, max);
+	    bg_rotate_bbox(lg->min_pt, lg->max_pt, mat, min, max);
 	}
 	    return 0;
 	case NMG_KIND_EDGEUSE: {

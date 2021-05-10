@@ -32,12 +32,218 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# To minimize the number of build targets and binaries that are created, we
+# combine most (not all) of the unit tests into a single program.
+
+set(bg_test_srcs
+  plane_dist.c
+  plane_isect.c
+  plane_pt.c
+  )
+
+# Generate and assemble the necessary per-test-type source code
+set(BG_TEST_SRC_INCLUDES)
+set(BG_TEST_SRC_SWITCHES)
+set(BG_TEST_LIST)
+foreach(srcfile ${bg_test_srcs})
+  get_filename_component(NAME_ROOT ${srcfile} NAME_WE)
+  set(BG_TEST_SRC_INCLUDES "${BG_TEST_SRC_INCLUDES}\n#include \"libbg/tests/${srcfile}\"")
+  set(BG_TEST_SRC_SWITCHES "${BG_TEST_SRC_SWITCHES}\n   if (BU_STR_EQUAL(av[0], \"${NAME_ROOT}\")) return ${NAME_ROOT}_main(ac,av);")
+  set(BG_TEST_LIST "${BG_TEST_LIST}\\n  ${NAME_ROOT}")
+endforeach(srcfile ${bg_test_srcs})
+
+# Generate bg_test.c file and build it
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../..)
+configure_file(bg_test.c.in "${CMAKE_CURRENT_BINARY_DIR}/bg_test.c" @ONLY)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/bg_test.c")
+BRLCAD_ADDEXEC(bg_test "${CMAKE_CURRENT_BINARY_DIR}/bg_test.c" libbg TEST)
+
+# TODO - convert this into the scheme used by other tests below
+BRLCAD_ADDEXEC(bgtester bgtester.c "libbu;libbn;libbg" TEST)
+
+
 
 #  ************ obr.c tests *************
 
 BRLCAD_ADDEXEC(bg_obr obr.c "libbg;libbn;libbu" TEST)
 
 #BRLCAD_ADD_TEST(NAME bg_obr_simple			COMMAND bg_obr) # Default points
+
+#
+#  ************ plane.c tests *************
+
+# For COMMAND bg_test plane_pt, the input format is as follows:
+#
+# COMMAND bg_test plane_pt <function number> <args>
+
+# For function #1 (bg_3pts_collinear), the <args> format is as follows:
+#
+# P0 P1 P2 <expected result>
+#
+# where P0-P2 are the points in question. An individual point is three
+# integer or floating point numbers separated by commas.
+
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_false_1        COMMAND bg_test plane_pt 1  0,0,0 1,1,1 6,3,8 0)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_false_2        COMMAND bg_test plane_pt 1 0,0,0 6,3,8 1,1,1 0)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_false_3        COMMAND bg_test plane_pt 1 1,1,1 0,0,0 6,3,8 0)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_false_4        COMMAND bg_test plane_pt 1 1,1,1 6,3,8 0,0,0 0)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_false_5        COMMAND bg_test plane_pt 1 6,3,8 1,1,1 0,0,0  0)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_false_6        COMMAND bg_test plane_pt 1 6,3,8 0,0,0 1,1,1 0)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_same           COMMAND bg_test plane_pt 1 5.3,8.1,9.6 5.3,8.1,9.6 5.3,8.1,9.6 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_partial_same_1 COMMAND bg_test plane_pt 1 6,2,4 6,2,4 9.3,8.1,4.6 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_partial_same_2 COMMAND bg_test plane_pt 1 9.3,8.1,4.6 6,2,4 6,2,4 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_partial_same_3 COMMAND bg_test plane_pt 1 6,2,4 9.3,8.1,4.6 6,2,4 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_true_1         COMMAND bg_test plane_pt 1 1.8,4.6,2.2 5.4,13.8,6.6 16.2,41.4,19.8 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_true_2         COMMAND bg_test plane_pt 1 1.8,4.6,2.2 16.2,41.4,19.8 5.4,13.8,6.6 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_true_3         COMMAND bg_test plane_pt 1 5.4,13.8,6.6 1.8,4.6,2.2 16.2,41.4,19.8 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_true_4         COMMAND bg_test plane_pt 1 5.4,13.8,6.6 16.2,41.4,19.8 1.8,4.6,2.2 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_true_5         COMMAND bg_test plane_pt 1 16.2,41.4,19.8 1.8,4.6,2.2 5.4,13.8,6.6 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_collinear_true_6         COMMAND bg_test plane_pt 1 16.2,41.4,19.8 5.4,13.8,6.6 1.8,4.6,2.2 1)
+
+# For function #2 (bg_3pts_distinct), the <args> format is as follows:
+#
+#  P0 P1 P2 <expected result>
+#
+# where P0-P2 are the points in question. An individual point
+# is three integer or floating point numbers separated by commas.
+
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_distinct_false_all       COMMAND bg_test plane_pt 2 5.3,8.6,9.1 5.3,8.6,9.1 5.3,8.6,9.1 0)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_distinct_false_1         COMMAND bg_test plane_pt 2 5.3,8.6,9.1 5.3,8.6,9.1 8.7,4.1,9.3 0)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_distinct_false_2         COMMAND bg_test plane_pt 2 5.3,8.6,9.1 8.7,4.1,9.3 5.3,8.6,9.1 0)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_distinct_false_3         COMMAND bg_test plane_pt 2 8.7,4.1,9.3 5.3,8.6,9.1 5.3,8.6,9.1 0)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_distinct_true_1          COMMAND bg_test plane_pt 2 8.7,4.1,9.3 7.5,9.2,4.1 5.3,8.6,9.1 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_distinct_true_2          COMMAND bg_test plane_pt 2 8.7,4.1,9.3 5.3,8.6,9.1 7.5,9.2,4.1 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_distinct_true_3          COMMAND bg_test plane_pt 2 5.3,8.6,9.1 8.7,4.1,9.3 7.5,9.2,4.1 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_distinct_true_4          COMMAND bg_test plane_pt 2 5.3,8.6,9.1 7.5,9.2,4.1 8.7,4.1,9.3 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_distinct_true_5          COMMAND bg_test plane_pt 2 7.5,9.2,4.1 8.7,4.1,9.3 5.3,8.6,9.1 1)
+BRLCAD_ADD_TEST(NAME bg_plane_3pts_distinct_true_6          COMMAND bg_test plane_pt 2 7.5,9.2,4.1 5.3,8.6,9.1 8.7,4.1,9.3 1)
+
+# For function #3 (bg_distsq_line3_pt3), the <args> format is as follows:
+#
+#  PT DIR A <expected result>
+#
+# Where PT and DIR define the parametric line in question and A is the
+# point in question.
+
+BRLCAD_ADD_TEST(NAME bg_plane_distsq_line3_pt3_1            COMMAND bg_test plane_pt 3 0,0,0 1,1,1 0,0,0 0)
+BRLCAD_ADD_TEST(NAME bg_plane_distsq_line3_pt3_2            COMMAND bg_test plane_pt 3 -1,-1,-1 1,1,1 0,0,0 0)
+BRLCAD_ADD_TEST(NAME bg_plane_distsq_line3_pt3_3            COMMAND bg_test plane_pt 3 0,0,0 1,1,1 0,5,0 16.666666)
+BRLCAD_ADD_TEST(NAME bg_plane_distsq_line3_pt3_4            COMMAND bg_test plane_pt 3 5,6,4 9,3,8 -5,2,4 48.441558)
+
+# For function #4 (bg_distsq_pt3_lseg3_v2), the <args> format is as follows:
+#
+#  A B P <expected return> <expected distance>
+#
+# Where A and B are the endpoints of the line segment, and P is the
+# point in question.
+
+BRLCAD_ADD_TEST(NAME bg_plane_distsq_pt3_lseg3_v2_case0_1   COMMAND bg_test plane_pt 4 -5,-5,-5 5,5,5 0,0,0 0 0)
+BRLCAD_ADD_TEST(NAME bg_plane_distsq_pt3_lseg3_v2_case1_1   COMMAND bg_test plane_pt 4 -5,-5,-5 5,5,5 -5,-5,-5 1 0)
+BRLCAD_ADD_TEST(NAME bg_plane_distsq_pt3_lseg3_v2_case2_1   COMMAND bg_test plane_pt 4 -5,-5,-5 5,5,5 5,5,5 2 0)
+BRLCAD_ADD_TEST(NAME bg_plane_distsq_pt3_lseg3_v2_case3_1   COMMAND bg_test plane_pt 4 -5,-5,-5 5,5,5 -10,-5,-10 3 50)
+BRLCAD_ADD_TEST(NAME bg_plane_distsq_pt3_lseg3_v2_case4_1   COMMAND bg_test plane_pt 4 -5,-5,-5 5,5,5 5,10,10 4 50)
+BRLCAD_ADD_TEST(NAME bg_plane_distsq_pt3_lseg3_v2_case5_1   COMMAND bg_test plane_pt 4 -5,-5,-5 5,5,5 0,-5,-5 5 16.666666)
+
+# For function #5 (bg_mk_plane_3pts), the <args> format is as follows:
+#
+#  A B C <expected return
+#
+# Where A, B, and C are the points in question. This test function
+# does not currently support checking the resultant plane.
+
+BRLCAD_ADD_TEST(NAME bg_plane_mk_plane_3pts_fail_same        COMMAND bg_test plane_pt 5 0,0,0 0,0,0 0,0,0 -1)
+BRLCAD_ADD_TEST(NAME bg_plane_mk_plane_3pts_fail_collinear_1 COMMAND bg_test plane_pt 5 0,0,0 5,8,2 0,0,0 -1)
+BRLCAD_ADD_TEST(NAME bg_plane_mk_plane_3pts_fail_collinear_2 COMMAND bg_test plane_pt 5 5,8,2 0,0,0 0,0,0 -1)
+BRLCAD_ADD_TEST(NAME bg_plane_mk_plane_3pts_fail_collinear_3 COMMAND bg_test plane_pt 5 -10,-10,-10 0,0,0 5,5,5 -1)
+BRLCAD_ADD_TEST(NAME bg_plane_mk_plane_3pts_succeed          COMMAND bg_test plane_pt 5 -10,-10,-10 7,3,8 19,4,2 0)
+
+# For function #5 (bg_mk_plane_3pts), the <args> format is as follows:
+#
+#  A,B,C,D Px,Py,Pz
+#
+#  A-D are plane equation parameters, and P is the test point.
+BRLCAD_ADD_TEST(NAME bg_plane_pt_project  COMMAND bg_test plane_pt 6 1,2,3,4 5.345220032350307,-3.124899935299395,-4.687349902949093)
+
+# For COMMAND bg_test plane_dist, the input format is as follows:
+#
+# COMMAND bg_test plane_dist <function number> <args>
+
+# For function #1 (bg_dist_pt3_line3), the <args> format is as follows:
+#
+# Ax,Ay,Az DIRx,DIRy,DIRz Px,Py,Pz expected_return expected_dist PCAx,PCAy,PCAz
+#
+# where A and DIR define the line segment, and P is the point in
+# question. An individual point is three integer or floating point
+# numbers separated by commas.
+
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_line3_case0_1   COMMAND bg_test plane_dist 2 -5,-5,-5 1,1,1 -5,-5,-5 0 0 -5,-5,-5)
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_line3_case1_1   COMMAND bg_test plane_dist 2 -5,-5,-5 1,1,1 0,0,0 1 0.5 0,0,0)
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_line3_case2_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 0,-5,-5 2 4.08248 -3.33333,-3.33333,-3.33333)
+
+# For function #2 (bg_dist_pt3_lseg3), the <args> format is as follows:
+#
+# Ax,Ay,Az Bx,By,Bz Px,Py,Pz expected_return expected_dist PCAx,PCAy,PCAz
+#
+# where A and B define the line segment, and P is the point in
+# question. An individual point is three integer or floating point
+# numbers separated by commas.
+
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_lseg3_case0_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 0,0,0 0 0.5 0,0,0)
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_lseg3_case1_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 -5,-5,-5 1 0 -5,-5,-5)
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_lseg3_case2_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 5,5,5 2 0 5,5,5)
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_lseg3_case3_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 -10,-5,-10 3 7.07107 -5,-5,-5)
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_lseg3_case4_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 5,10,10 4 7.07107 5,5,5)
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_lseg3_case5_1   COMMAND bg_test plane_dist 2 -5,-5,-5 5,5,5 0,-5,-5 5 4.08248 -3.33333,-3.33333,-3.33333)
+
+# For function #3 (bg_dist_pt3_pt3), the <args> format is as follows:
+#
+# Ax,Ay,Az Bx,By,Bz expected_return
+#
+# where A and B are the points in question. An individual point is
+# three integer or floating point numbers separated by commas.
+
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_pt3_same   COMMAND bg_test plane_dist 3 0,0,0 0,0,0 0)
+BRLCAD_ADD_TEST(NAME bg_plane_dist_pt3_pt3_1      COMMAND bg_test plane_dist 3 0,0,0 1,1,1 1.732051)
+
+# For COMMAND bg_test plane_isect, the input format is as follows:
+#
+# COMMAND bg_test plane_isect <function number> <args>
+
+# For function #1 (bg_isect_line_lseg), the <args> format is as follows:
+#
+# Px,Py,Pz Dx,Dy,Dz Ax,Ay,Az Bx,By,Bz expected_return expected_t
+#
+# where P and D define the parametric line, and A and B define the
+# line segment. An individual point is three integer or floating point
+# numbers separated by commas.
+
+BRLCAD_ADD_TEST(NAME bg_plane_isect_line_lseg_case-4_1   COMMAND bg_test plane_isect 1 -5,-5,-5 1,1,1 0,0,0 0,0,0 -4 0)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_line_lseg_case-3_1   COMMAND bg_test plane_isect 1 -5,-5,-5 1,1,1 0,0,1 0,0,5 -3 8.660)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_line_lseg_case-2_1   COMMAND bg_test plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,-1 -2 8.660)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_line_lseg_case-1_1   COMMAND bg_test plane_isect 1 -5,-5,-5 1,1,1 -5,-5,-6 0,0,-1 -1 0)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_line_lseg_case0_1    COMMAND bg_test plane_isect 1 -5,-5,-5 1,1,1 1,1,1 5,5,5 0 10.392)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_line_lseg_case1_1    COMMAND bg_test plane_isect 1 -5,-5,-5 1,1,1 0,0,0 0,0,5 1 8.660)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_line_lseg_case2_1    COMMAND bg_test plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,0 2 8.660)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_line_lseg_case3_1    COMMAND bg_test plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,5 3 8.660)
+
+# For function #2 (bg_isect_lseg3_lseg3), the <args> format is as follows:
+#
+# Px,Py,Pz PDIRx,PDIRy,PDIRz Qx,Qy,Qz QDIRx,QDIRy,QDIRz expected_return expected_dist_0 expected_dist_1
+#
+# Where P and PDIR define the first segment, and Q and QDIR define the
+# second. expected_dist_0 and expected_dist_1 are the expected values
+# of the two components of the dist[] array output by the function. An
+# individual point is three integer or floating point numbers
+# separated by commas.
+
+BRLCAD_ADD_TEST(NAME bg_plane_isect_lseg3_lseg3_case-3_1   COMMAND bg_test plane_isect 2 0,0,0 0,1,1 0,0,1 0,-1,1 -3 0.5 -0.5)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_lseg3_lseg3_case-3_2   COMMAND bg_test plane_isect 2 0,0,0 0,1,1 0,1,0 0,-0.25,0.25 -3 0.5 2)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_lseg3_lseg3_case-2_1   COMMAND bg_test plane_isect 2 0,0,0 0,1,1 1,1,1 0,1,1 -2 0 0)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_lseg3_lseg3_case-1_1   COMMAND bg_test plane_isect 2 -5,-5,-5 3,3,3 0,0,0 -1,-1,-1 -1 1.666667 1.333333)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_lseg3_lseg3_case0_1    COMMAND bg_test plane_isect 2 -5,-5,-5 3,3,3 0,0,0 -2,-2,-2 0 1.666667 1)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_lseg3_lseg3_case0_2    COMMAND bg_test plane_isect 2 -5,-5,-5 3,3,3 0,0,0 -3,-3,-3 0 1.666667 0.666667)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_lseg3_lseg3_case0_3    COMMAND bg_test plane_isect 2 -5,-5,-5 5,5,5 -4,-4,-4 2,2,2 0 0.2 0.6)
+BRLCAD_ADD_TEST(NAME bg_plane_isect_lseg3_lseg3_case1_1    COMMAND bg_test plane_isect 2 0,0,0 0,1,1 0,1,0 0,-1,1 1 0.5 0.5)
 
 
 #  ************ polygon.c tests ***********

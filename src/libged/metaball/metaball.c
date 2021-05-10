@@ -77,7 +77,7 @@ find_metaball_pnt_nearest_pnt(const struct bu_list *metaball_hd, const point_t m
     for (BU_LIST_FOR(mbpp, wdb_metaball_pnt, metaball_hd)) {
 	fastf_t dist;
 
-	dist = bn_dist_line3_pnt3(model_pt, dir, mbpp->coord);
+	dist = bg_dist_line3_pnt3(model_pt, dir, mbpp->coord);
 	if (dist < min_dist) {
 	    min_dist = dist;
 	    nearest = mbpp;

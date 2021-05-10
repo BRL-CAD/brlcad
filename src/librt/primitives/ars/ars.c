@@ -474,7 +474,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if (VNEAR_EQUAL(ARS_PT(0, -2), ARS_PT(0, -1), tol->dist))
 		continue;
 
-	    code = bn_dist_pnt3_lseg3(&dist, pca, ARS_PT(0, -2), ARS_PT(0, -1), ARS_PT(0, 0), tol);
+	    code = bg_dist_pnt3_lseg3(&dist, pca, ARS_PT(0, -2), ARS_PT(0, -1), ARS_PT(0, 0), tol);
 
 	    if (code < 2) {
 		bu_log("ARS curve backtracks on itself!!!\n");
@@ -532,8 +532,8 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    /*
 	     * First triangular face
 	     */
-	    if (bn_3pnts_distinct(ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), tol)
-		&& !bn_3pnts_collinear(ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), tol))
+	    if (bg_3pnts_distinct(ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), tol)
+		&& !bg_3pnts_collinear(ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), tol))
 	    {
 		/* Locate these points, if previously mentioned */
 		FIND_IJ(0, 0);
@@ -563,8 +563,8 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    /*
 	     * Second triangular face
 	     */
-	    if (bn_3pnts_distinct(ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), tol)
-		&& !bn_3pnts_collinear(ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), tol))
+	    if (bg_3pnts_distinct(ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), tol)
+		&& !bg_3pnts_collinear(ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), tol))
 	    {
 		/* Locate these points, if previously mentioned */
 		FIND_IJ(1, 0);

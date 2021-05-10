@@ -5,6 +5,7 @@ set(bg_headers
   defines.h
   lseg.h
   obr.h
+  plane.h
   polygon.h
   polygon_types.h
   spsr.h

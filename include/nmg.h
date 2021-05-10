@@ -76,7 +76,7 @@
 #include "bu/log.h"
 #include "bu/magic.h"
 #include "bu/ptbl.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/tol.h"
 #include "bview/vlist.h"
 #include "vmath.h"

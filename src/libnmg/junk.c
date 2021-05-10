@@ -145,7 +145,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 	/* XXX should check for vertex-loop */
 	eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
-	if (bn_make_plane_3pnts(plane, eu->vu_p->v_p->vg_p->coord,
+	if (bg_make_plane_3pnts(plane, eu->vu_p->v_p->vg_p->coord,
 			     BU_LIST_PNEXT(edgeuse, eu)->vu_p->v_p->vg_p->coord,
 			     BU_LIST_PLAST(edgeuse, eu)->vu_p->v_p->vg_p->coord,
 			     tol)) {

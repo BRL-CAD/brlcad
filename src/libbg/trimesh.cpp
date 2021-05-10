@@ -29,7 +29,7 @@
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bg/trimesh.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 
 #define TRIMESH_EDGE_EQUAL(e1, e2) ((e1).va == (e2).va && (e1).vb == (e2).vb)
 
@@ -724,7 +724,7 @@ distance_point_to_edge(int UNUSED(num_vertices), fastf_t *vertices, int point, i
     tol.perp = SMALL_FASTF;
     tol.para = 1 - SMALL_FASTF;
 
-    rc = bn_dist_pnt3_lseg3(&dist, pca, edge_pts[0], edge_pts[1], pt, &tol);
+    rc = bg_dist_pnt3_lseg3(&dist, pca, edge_pts[0], edge_pts[1], pt, &tol);
 
     return rc ? dist : 0.0;
 }

@@ -356,7 +356,7 @@ get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Po
     VSETALL(pca_to_pole_vect, 0);
 
     /* find the points of closest approach
-     * There are six distinct return values from bn_dist_pnt3_lseg3():
+     * There are six distinct return values from bg_dist_pnt3_lseg3():
      *
      *    Value	Condition
      *    	-----------------------------------------------------------------
@@ -369,7 +369,7 @@ get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Po
      *	4	P is to the "right" of point B.  *dist=|P-B|, pca=B.
      *	5	P is "above/below" lseg AB.  *dist=|PCA-P|, pca=computed.
      */
-    code = bn_dist_pnt3_lseg3(&distA, pcaA, vu->v_p->vg_p->coord, pointA,
+    code = bg_dist_pnt3_lseg3(&distA, pcaA, vu->v_p->vg_p->coord, pointA,
 			     Pole_prj_pt, rd->tol);
     if (code < 3) {
 	/* Point is on line */
@@ -379,7 +379,7 @@ get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Po
     }
 
     status = code << 4;
-    code = bn_dist_pnt3_lseg3(&distB, pcaB, vu->v_p->vg_p->coord, pointB,
+    code = bg_dist_pnt3_lseg3(&distB, pcaB, vu->v_p->vg_p->coord, pointB,
 			     Pole_prj_pt, rd->tol);
     if (code < 3) {
 	/* Point is on line */
@@ -1057,7 +1057,7 @@ isect_ray_vertexuse(struct nmg_ray_data *rd, struct vertexuse *vu_p)
     }
 
     /* intersect ray with vertex */
-    ray_vu_dist = bn_dist_line3_pnt3(rd->rp->r_pt, rd->rp->r_dir,
+    ray_vu_dist = bg_dist_line3_pnt3(rd->rp->r_pt, rd->rp->r_dir,
 				    vu_p->v_p->vg_p->coord);
 
     if (ray_vu_dist > rd->tol->dist) {
@@ -1426,7 +1426,7 @@ isect_ray_lseg(struct nmg_ray_data *rd, struct edgeuse *eu_p, struct bu_list *vl
     VMOVE(r_dir_unit, rd->rp->r_dir);
     VUNITIZE(r_dir_unit);
 
-    status = bn_isect_line_lseg(&dist_along_ray,
+    status = bg_isect_line_lseg(&dist_along_ray,
 				rd->rp->r_pt, rd->rp->r_dir,
 				eu_p->vu_p->v_p->vg_p->coord,
 				eu_p->eumate_p->vu_p->v_p->vg_p->coord,
@@ -1434,7 +1434,7 @@ isect_ray_lseg(struct nmg_ray_data *rd, struct edgeuse *eu_p, struct bu_list *vl
 
     switch (status) {
 	case -4 :
-	    /* Zero length edge.  The routine bn_isect_line_lseg()
+	    /* Zero length edge.  The routine bg_isect_line_lseg()
 	     * can't help us.  Intersect the ray with each vertex.  If
 	     * either vertex is hit, then record that the edge has
 	     * sub-elements which where hit.  Otherwise, record the
@@ -1876,7 +1876,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 	    VUNITIZE(pl);
 	    pl[W] = VDOT(pl, ctl_pt[0]);
 	    hp = (struct nmg_nurb_uv_hit *)NULL;
-	    if (bn_isect_line3_plane(&dist,  rd->rp->r_pt,  rd->rp->r_dir, pl, rd->tol) <= 0) {
+	    if (bg_isect_line3_plane(&dist,  rd->rp->r_pt,  rd->rp->r_dir, pl, rd->tol) <= 0) {
 		if (nmg_debug & NMG_DEBUG_RT_ISECT)
 		    bu_log("\tNo intersection\n");
 
@@ -2102,7 +2102,7 @@ isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_l
 	bu_log("\tDIST_PNT_PLANE(%16.10e) %p %p\n",
 	       new_dist, (void *)plane_pt, (void *)norm);
 
-	bn_isect_line3_plane(&new_dist, plane_pt, rd->rp->r_dir,
+	bg_isect_line3_plane(&new_dist, plane_pt, rd->rp->r_dir,
 			     norm, rd->tol);
 
 	bu_log("Normal %16.10e %16.10e %16.10e %16.10e)\n",
@@ -2253,7 +2253,7 @@ isect_ray_faceuse(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_list 
 	fgp = fu_p->f_p->g.plane_p;
 	NMG_CK_FACE_G_PLANE(fgp);
 
-	code = bn_isect_line3_plane(&dist, rd->rp->r_pt, rd->rp->r_dir, fgp->N, rd->tol);
+	code = bg_isect_line3_plane(&dist, rd->rp->r_pt, rd->rp->r_dir, fgp->N, rd->tol);
 	if (code < 1) {
 	    NMG_GET_HITMISS(myhit);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);

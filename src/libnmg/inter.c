@@ -62,7 +62,7 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bn/mat.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"
 
@@ -131,13 +131,13 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
 		       V3ARGS(eu->vu_p->v_p->vg_p->coord),
 		       V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
 
-	    code = bn_dist_pnt3_lseg3(&dist, pca,
+	    code = bg_dist_pnt3_lseg3(&dist, pca,
 				     eu->vu_p->v_p->vg_p->coord,
 				     eu->eumate_p->vu_p->v_p->vg_p->coord,
 				     v->vg_p->coord, tol);
 
 	    if (nmg_debug & NMG_DEBUG_POLYSECT)
-		bu_log("bn_dist_pnt3_lseg3 returns %d, dist=%f\n", code, dist);
+		bu_log("bg_dist_pnt3_lseg3 returns %d, dist=%f\n", code, dist);
 
 	    if (code > 2)
 		continue;
@@ -700,7 +700,7 @@ nmg_isect_vert2p_face2p(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
 		continue;
 	    }
 	    /* Use 3D comparisons for uniformity */
-	    if (bn_pnt3_pnt3_equal(pt, vu2->v_p->vg_p->coord, &is->tol)) {
+	    if (bg_pnt3_pnt3_equal(pt, vu2->v_p->vg_p->coord, &is->tol)) {
 		/* Fuse the two verts together */
 		nmg_jv(vu1->v_p, vu2->v_p);
 		if (is->l1) nmg_enlist_vu(is, vu1, vu2, MAX_FASTF);
@@ -837,9 +837,9 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
     }
 
     /* Double check for bad behavior */
-    if (bn_pnt3_pnt3_equal(hit_pt, v1->vg_p->coord, &is->tol))
+    if (bg_pnt3_pnt3_equal(hit_pt, v1->vg_p->coord, &is->tol))
 	bu_bomb("nmg_break_3edge_at_plane() hit_pt equal to v1\n");
-    if (bn_pnt3_pnt3_equal(hit_pt, v1mate->vg_p->coord, &is->tol))
+    if (bg_pnt3_pnt3_equal(hit_pt, v1mate->vg_p->coord, &is->tol))
 	bu_bomb("nmg_break_3edge_at_plane() hit_pt equal to v1mate\n");
 
     {
@@ -859,10 +859,10 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	t2.dist = is->tol.dist * 4;
 	t2.dist_sq = t2.dist * t2.dist;
 	dist = DIST_PNT_PNT(hit_pt, v1->vg_p->coord);
-	if (bn_pnt3_pnt3_equal(hit_pt, v1->vg_p->coord, &t2))
+	if (bg_pnt3_pnt3_equal(hit_pt, v1->vg_p->coord, &t2))
 	    bu_log("NOTICE: nmg_break_3edge_at_plane() hit_pt nearly equal to v1 %g*tol\n", dist/is->tol.dist);
 	dist = DIST_PNT_PNT(hit_pt, v1mate->vg_p->coord);
-	if (bn_pnt3_pnt3_equal(hit_pt, v1mate->vg_p->coord, &t2))
+	if (bg_pnt3_pnt3_equal(hit_pt, v1mate->vg_p->coord, &t2))
 	    bu_log("NOTICE: nmg_break_3edge_at_plane() hit_pt nearly equal to v1mate %g*tol\n", dist/is->tol.dist);
     }
 
@@ -1033,7 +1033,7 @@ nmg_break_eu_on_v(struct edgeuse *eu1, struct vertex *v2, struct faceuse *fu, st
     nmg_get_2d_vertex(p, v2, is, &fu->l.magic);
 
     dist = -INFINITY;
-    code = bn_isect_pnt2_lseg2(&dist, a, b, p, &(is->tol));
+    code = bg_isect_pnt2_lseg2(&dist, a, b, p, &(is->tol));
 
     switch (code) {
 	case -2:
@@ -1090,7 +1090,7 @@ nmg_break_eg_on_v(const struct edge_g_lseg *eg, struct vertex *v, const struct b
 
     VMOVE(dir, eg->e_dir);
     VUNITIZE(dir);
-    vdist = bn_dist_pnt3_along_line3(eg->e_pt, dir, v->vg_p->coord);
+    vdist = bg_dist_pnt3_along_line3(eg->e_pt, dir, v->vg_p->coord);
 
     /* This has to be a table, because nmg_ebreaker() will
      * change the list on the fly, otherwise.
@@ -1113,19 +1113,19 @@ nmg_break_eg_on_v(const struct edge_g_lseg *eg, struct vertex *v, const struct b
 	va = (*eup)->vu_p->v_p;
 	vb = (*eup)->eumate_p->vu_p->v_p;
 	if (v == va || v == vb) continue;
-	if (bn_pnt3_pnt3_equal(v->vg_p->coord, va->vg_p->coord, tol)) {
+	if (bg_pnt3_pnt3_equal(v->vg_p->coord, va->vg_p->coord, tol)) {
 	    nmg_jv(v, va);
 	    continue;
 	}
-	if (bn_pnt3_pnt3_equal(v->vg_p->coord, vb->vg_p->coord, tol)) {
+	if (bg_pnt3_pnt3_equal(v->vg_p->coord, vb->vg_p->coord, tol)) {
 	    nmg_jv(v, vb);
 	    continue;
 	}
-	a = bn_dist_pnt3_along_line3(eg->e_pt, dir, va->vg_p->coord);
-	b = bn_dist_pnt3_along_line3(eg->e_pt, dir, vb->vg_p->coord);
+	a = bg_dist_pnt3_along_line3(eg->e_pt, dir, va->vg_p->coord);
+	b = bg_dist_pnt3_along_line3(eg->e_pt, dir, vb->vg_p->coord);
 	if (NEAR_EQUAL(a, vdist, tol->dist)) continue;
 	if (NEAR_EQUAL(b, vdist, tol->dist)) continue;
-	if (!bn_between(a, vdist, b, tol)) continue;
+	if (!bg_between(a, vdist, b, tol)) continue;
 	new_eu = nmg_ebreaker(v, *eup, tol);
 	if (nmg_debug & NMG_DEBUG_POLYSECT) {
 	    bu_log("nmg_break_eg_on_v(eg=%p, v=%p) new_eu=%p\n",
@@ -1368,11 +1368,11 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
      * violates the strategy assumptions of the face-cutter.
      */
     /* To pick up ALL intersection points, the source edge is a line */
-    status = bn_isect_line2_lseg2(dist, eu1_start, eu1_dir,
+    status = bg_isect_line2_lseg2(dist, eu1_start, eu1_dir,
 				  eu2_start, eu2_dir, &is->tol);
 
     if (nmg_debug & NMG_DEBUG_POLYSECT) {
-	bu_log("\tbn_isect_line2_lseg2()=%d, dist: %g, %g\n",
+	bu_log("\tbg_isect_line2_lseg2()=%d, dist: %g, %g\n",
 	       status, dist[0], dist[1]);
     }
 
@@ -1713,15 +1713,15 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	PLPRINT("\t", n2);
     }
 
-    status = bn_isect_line3_plane(&dist, start_pt, edge_vect,
+    status = bg_isect_line3_plane(&dist, start_pt, edge_vect,
 				  n2, &is->tol);
 
     if (nmg_debug & NMG_DEBUG_POLYSECT) {
 	if (status >= 0)
-	    bu_log("\tHit. bn_isect_line3_plane=%d, dist=%g (%e)\n",
+	    bu_log("\tHit. bg_isect_line3_plane=%d, dist=%g (%e)\n",
 		   status, dist, dist);
 	else
-	    bu_log("\tMiss. Boring status of bn_isect_line3_plane: %d\n",
+	    bu_log("\tMiss. Boring status of bg_isect_line3_plane: %d\n",
 		   status);
     }
     if (status == 0) {
@@ -1855,7 +1855,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
     /* Check hit_pt against face/face intersection line */
     {
 	fastf_t ff_dist;
-	ff_dist = bn_dist_line3_pnt3(is->pt, is->dir, hit_pt);
+	ff_dist = bg_dist_line3_pnt3(is->pt, is->dir, hit_pt);
 	if (ff_dist > is->tol.dist) {
 	    bu_log("WARNING nmg_isect_wireedge3p_face3p() hit_pt off f/f line %g*tol (%e, tol=%e)\n",
 		   ff_dist/is->tol.dist,
@@ -1906,7 +1906,7 @@ out:
     if (vu1_final && vu2_final) {
 	if (vu1_final->v_p != vu2_final->v_p) bu_bomb("nmg_isect_wireedge3p_face3p() vertex mis-match\n");
 
-	dist = bn_dist_line3_pnt3(is->pt, is->dir,
+	dist = bg_dist_line3_pnt3(is->pt, is->dir,
 				 vu1_final->v_p->vg_p->coord);
 	if (dist > 100*is->tol.dist) {
 	    bu_log("ERROR nmg_isect_wireedge3p_face3p() vu1=%p point off line by %g > 100*dist_tol (%g)\n",
@@ -2543,7 +2543,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	    vg2b = eu2->eumate_p->vu_p->v_p->vg_p;
 	    VSUB2(vt2_3d, vg2b->coord, vg2a->coord);
 
-	    code = bn_isect_lseg3_lseg3(dist, vg1a->coord, vt1_3d,
+	    code = bg_isect_lseg3_lseg3(dist, vg1a->coord, vt1_3d,
 					vg2a->coord, vt2_3d, &is->tol);
 
 	    if (code < 0)
@@ -2556,7 +2556,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		 * p0 is the start of eu1 and p1 is the end of eu1.
 		 * The same is done for eu2 with line q0->q1.
 		 * When eu1 and eu2 are collinear, the value of dist[0]
-		 * returned from function 'bn_isect_lseg3_lseg3' is the
+		 * returned from function 'bg_isect_lseg3_lseg3' is the
 		 * scaled distance from p0->q0 and dist[1] is the scaled
 		 * distance from p0->q1.
 		 */
@@ -2978,11 +2978,11 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
     dist[0] = dist[1] = 0;	/* for clean prints, below */
 
     /* Intersect the line with the edge, in 2D */
-    status = bn_isect_line2_lseg2(dist, is->pt2d, is->dir2d,
+    status = bg_isect_line2_lseg2(dist, is->pt2d, is->dir2d,
 				  eu1_start, eu1_dir, &is->tol);
 
     if (nmg_debug & NMG_DEBUG_POLYSECT) {
-	bu_log("\tbn_isect_line2_lseg2()=%d, dist: %g, %g\n",
+	bu_log("\tbg_isect_line2_lseg2()=%d, dist: %g, %g\n",
 	       status, dist[0], dist[1]);
     }
 
@@ -3011,14 +3011,14 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
     if (status == 1 || ZERO(dist[1])) {
 	if (nmg_debug & NMG_DEBUG_POLYSECT)
 	    bu_log("\t\tintersect point is vu1a\n");
-	if (!bn_pnt3_pnt3_equal(hit_pt, vu1a->v_p->vg_p->coord, &(is->tol)))
+	if (!bg_pnt3_pnt3_equal(hit_pt, vu1a->v_p->vg_p->coord, &(is->tol)))
 	    bu_bomb("vu1a does not match calculated point\n");
 	nmg_enlist_vu(is, vu1a, 0, MAX_FASTF);
 	ret = 0;
     } else if (status == 2 || ZERO(dist[1] - 1.0)) {
 	if (nmg_debug & NMG_DEBUG_POLYSECT)
 	    bu_log("\t\tintersect point is vu1b\n");
-	if (!bn_pnt3_pnt3_equal(hit_pt, vu1b->v_p->vg_p->coord, &(is->tol)))
+	if (!bg_pnt3_pnt3_equal(hit_pt, vu1b->v_p->vg_p->coord, &(is->tol)))
 	    bu_bomb("vu1b does not match calculated point\n");
 	nmg_enlist_vu(is, vu1b, 0, MAX_FASTF);
 	ret = 0;
@@ -3042,16 +3042,16 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
 	    VPRINT("hit_pt", hit_pt);
 	    VPRINT(" vu1b", vu1b->v_p->vg_p->coord);
 	    /* XXX Perform a (not-so) quick check */
-	    code = bn_isect_pnt_lseg(&distance, vu1a->v_p->vg_p->coord,
+	    code = bg_isect_pnt_lseg(&distance, vu1a->v_p->vg_p->coord,
 				    vu1b->v_p->vg_p->coord,
 				    hit_pt, &(is->tol));
-	    bu_log("\tbn_isect_pnt_lseg() dist=%g, ret=%d\n", distance, code);
+	    bu_log("\tbg_isect_pnt_lseg() dist=%g, ret=%d\n", distance, code);
 	    if (code < 0) bu_bomb("3D point not on 3D lseg\n");
 
 	    /* Ensure that the 3D hit_pt is between the end pts */
-	    if (!bn_between(vu1a->v_p->vg_p->coord[X], hit_pt[X], vu1b->v_p->vg_p->coord[X], &(is->tol)) ||
-		!bn_between(vu1a->v_p->vg_p->coord[Y], hit_pt[Y], vu1b->v_p->vg_p->coord[Y], &(is->tol)) ||
-		!bn_between(vu1a->v_p->vg_p->coord[Z], hit_pt[Z], vu1b->v_p->vg_p->coord[Z], &(is->tol))) {
+	    if (!bg_between(vu1a->v_p->vg_p->coord[X], hit_pt[X], vu1b->v_p->vg_p->coord[X], &(is->tol)) ||
+		!bg_between(vu1a->v_p->vg_p->coord[Y], hit_pt[Y], vu1b->v_p->vg_p->coord[Y], &(is->tol)) ||
+		!bg_between(vu1a->v_p->vg_p->coord[Z], hit_pt[Z], vu1b->v_p->vg_p->coord[Z], &(is->tol))) {
 		VPRINT("vu1a", vu1a->v_p->vg_p->coord);
 		VPRINT("hitp", hit_pt);
 		VPRINT("vu1b", vu1b->v_p->vg_p->coord);
@@ -3108,7 +3108,7 @@ nmg_isect_line2_vertex2(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
 	bu_log("nmg_isect_line2_vertex2(vu=%p)\n", (void *)vu1);
 
     /* Needs to be a 3D comparison */
-    if (bn_distsq_line3_pnt3(is->pt, is->dir, vu1->v_p->vg_p->coord) > is->tol.dist_sq)
+    if (bg_distsq_line3_pnt3(is->pt, is->dir, vu1->v_p->vg_p->coord) > is->tol.dist_sq)
 	return;
 
     if (nmg_debug & NMG_DEBUG_POLYSECT)
@@ -3313,23 +3313,23 @@ nmg_repair_v_near_v(struct vertex *hit_v, struct vertex *v, const struct edge_g_
     VPRINT("v ", v->vg_p->coord);
     VPRINT("hit", hit_v->vg_p->coord);
     bu_log("dist v-hit=%g, equal=%d\n",
-	   bn_dist_pnt3_pnt3(v->vg_p->coord, hit_v->vg_p->coord),
-	   bn_pnt3_pnt3_equal(v->vg_p->coord, hit_v->vg_p->coord, tol)
+	   bg_dist_pnt3_pnt3(v->vg_p->coord, hit_v->vg_p->coord),
+	   bg_pnt3_pnt3_equal(v->vg_p->coord, hit_v->vg_p->coord, tol)
 	);
     if (eg1) {
-	if (bn_2line3_colinear(eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir, 1e5, tol))
+	if (bg_2line3_colinear(eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir, 1e5, tol))
 	    bu_bomb("ERROR: nmg_repair_v_near_v() eg1 and eg2 are collinear!\n");
 	bu_log("eg1: line/ vu dist=%g, hit dist=%g\n",
-	       bn_dist_line3_pnt3(eg1->e_pt, eg1->e_dir, v->vg_p->coord),
-	       bn_dist_line3_pnt3(eg1->e_pt, eg1->e_dir, hit_v->vg_p->coord));
+	       bg_dist_line3_pnt3(eg1->e_pt, eg1->e_dir, v->vg_p->coord),
+	       bg_dist_line3_pnt3(eg1->e_pt, eg1->e_dir, hit_v->vg_p->coord));
 	bu_log("eg2: line/ vu dist=%g, hit dist=%g\n",
-	       bn_dist_line3_pnt3(eg2->e_pt, eg2->e_dir, v->vg_p->coord),
-	       bn_dist_line3_pnt3(eg2->e_pt, eg2->e_dir, hit_v->vg_p->coord));
+	       bg_dist_line3_pnt3(eg2->e_pt, eg2->e_dir, v->vg_p->coord),
+	       bg_dist_line3_pnt3(eg2->e_pt, eg2->e_dir, hit_v->vg_p->coord));
 	nmg_pr_eg(&eg1->l.magic, 0);
 	nmg_pr_eg(&eg2->l.magic, 0);
     }
 
-    if (bn_dist_pnt3_pnt3(v->vg_p->coord,
+    if (bg_dist_pnt3_pnt3(v->vg_p->coord,
 			hit_v->vg_p->coord) < 10 * tol->dist) {
 	struct edgeuse *eu0;
 	bu_log("NOTICE: The intersection of two lines has resulted in 2 different intersect points\n");
@@ -3398,7 +3398,7 @@ nmg_search_v_eg(const struct edgeuse *eu, int second, const struct edge_g_lseg *
     if (eu->g.lseg_p != eg1) bu_bomb("nmg_search_v_eg() eu not on eg1\n");
 
     /* vu lies on eg1 by topology.  Check this assertion. */
-    if (bn_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir, v->vg_p->coord) > tol->dist_sq) {
+    if (bg_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir, v->vg_p->coord) > tol->dist_sq) {
 	VPRINT("v", v->vg_p->coord);
 	nmg_pr_eu(eu, (char *)NULL);
 	nmg_pr_eg(&eg1->l.magic, 0);
@@ -3514,7 +3514,7 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
 	return 0;
 
     /* check if it is on intersection line */
-    if (bn_distsq_line3_pnt3(is->pt, is->dir, vg->coord) > is->tol.dist_sq)
+    if (bg_distsq_line3_pnt3(is->pt, is->dir, vg->coord) > is->tol.dist_sq)
 	return 0;
 
     /* check if it is within fu's */
@@ -3564,7 +3564,7 @@ nmg_isect_eu_verts(struct edgeuse *eu, struct vertex_g *vg1, struct vertex_g *vg
 	    continue;
 	}
 
-	code = bn_dist_pnt3_lseg3(&dist, pca, vg1->coord,
+	code = bg_dist_pnt3_lseg3(&dist, pca, vg1->coord,
 				 vg2->coord, v->vg_p->coord, tol);
 
 	if (code)
@@ -3614,7 +3614,7 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
 
     VSUB2(dir2, vg2b->coord, vg2a->coord);
 
-    code = bn_isect_lseg3_lseg3(dist, vg1a->coord, dir1, vg2a->coord, dir2, tol);
+    code = bg_isect_lseg3_lseg3(dist, vg1a->coord, dir1, vg2a->coord, dir2, tol);
 
     if (code < 0) {
 	if (nmg_debug & NMG_DEBUG_POLYSECT)
@@ -3749,7 +3749,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 
     NMG_GET_FU_PLANE(pl, fu);
     /* check if edge line intersects plane of fu */
-    if (bn_isect_line3_plane(&dist, vg1->coord, dir, pl, &is->tol) < 1) {
+    if (bg_isect_line3_plane(&dist, vg1->coord, dir, pl, &is->tol) < 1) {
 	if (UNLIKELY(nmg_debug & NMG_DEBUG_POLYSECT))
 	    bu_log("\tnmg_isec_eu_fu: no intersection\n");
 	return;
@@ -3843,10 +3843,10 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	}
 
 	/* check if hit_point is within tolerance of an end of eu */
-	if (bn_pnt3_pnt3_equal(hit_pt, vg1->coord, &is->tol)) {
+	if (bg_pnt3_pnt3_equal(hit_pt, vg1->coord, &is->tol)) {
 	    v = eu->vu_p->v_p;
 	    VMOVE(hit_pt, vg1->coord);
-	} else if (bn_pnt3_pnt3_equal(hit_pt, vg2->coord, &is->tol)) {
+	} else if (bg_pnt3_pnt3_equal(hit_pt, vg2->coord, &is->tol)) {
 	    v = eu->eumate_p->vu_p->v_p;
 	    VMOVE(hit_pt, vg2->coord);
 	}
@@ -4181,7 +4181,7 @@ re_tabulate:
 
 		vg = eu1->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		(void)bn_dist_pnt3_line3(&distance, pca, is->pt, is->dir, vg->coord, &(is->tol));
+		(void)bg_dist_pnt3_line3(&distance, pca, is->pt, is->dir, vg->coord, &(is->tol));
 		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
@@ -4197,7 +4197,7 @@ re_tabulate:
 		eu_end = BU_LIST_PNEXT_CIRC(edgeuse, &eu1->l);
 		vg = eu_end->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		code = bn_dist_pnt3_line3(&distance, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
+		code = bg_dist_pnt3_line3(&distance, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
 		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
@@ -4221,7 +4221,7 @@ re_tabulate:
 
 		vg = eu2->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		code = bn_dist_pnt3_line3(&distance, pca, is->pt, is->dir, vg->coord, &(is->tol));
+		code = bg_dist_pnt3_line3(&distance, pca, is->pt, is->dir, vg->coord, &(is->tol));
 		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
@@ -4237,7 +4237,7 @@ re_tabulate:
 		eu_end = BU_LIST_PNEXT_CIRC(edgeuse, &eu2->l);
 		vg = eu_end->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		code = bn_dist_pnt3_line3(&distance, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
+		code = bg_dist_pnt3_line3(&distance, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
 		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
@@ -4265,7 +4265,7 @@ re_tabulate:
 
 	/* Calculate 2D geometric intersection, but don't look at answer yet */
 	dist[0] = dist[1] = -INFINITY;
-	code = bn_isect_line2_line2(dist, is->pt2d, is->dir2d,
+	code = bg_isect_line2_line2(dist, is->pt2d, is->dir2d,
 				    eg_pt2d, eg_dir2d, &(is->tol));
 
 	/* Do this check before topology search */
@@ -4283,7 +4283,7 @@ re_tabulate:
 	}
 
 	/* Double check */
-	if (is->on_eg && bn_2line3_colinear(
+	if (is->on_eg && bg_2line3_colinear(
 		(*eg1)->e_pt, (*eg1)->e_dir,
 		is->on_eg->e_pt, is->on_eg->e_dir, 1e5, &(is->tol))) {
 	fixup:
@@ -4409,14 +4409,14 @@ re_tabulate:
 	    nmg_pr_eg(&(*eg1)->l.magic, 0);
 	    nmg_pr_eg(&is->on_eg->l.magic, 0);
 	    bu_log(" dist to eg1=%e, dist to on_eg=%e\n",
-		   bn_dist_line3_pnt3((*eg1)->e_pt, (*eg1)->e_dir, hit_v->vg_p->coord),
-		   bn_dist_line3_pnt3(is->on_eg->e_pt, is->on_eg->e_dir, hit_v->vg_p->coord));
+		   bg_dist_line3_pnt3((*eg1)->e_pt, (*eg1)->e_dir, hit_v->vg_p->coord),
+		   bg_dist_line3_pnt3(is->on_eg->e_pt, is->on_eg->e_dir, hit_v->vg_p->coord));
 	    VPRINT("is->pt2d ", is->pt2d);
 	    VPRINT("is->dir2d", is->dir2d);
 	    VPRINT("eg_pt2d ", eg_pt2d);
 	    VPRINT("eg_dir2d ", eg_dir2d);
 	    bu_log(" 3d line isect, code=%d\n",
-		   bn_isect_line3_line3(&dist[0], &dist[1],
+		   bg_isect_line3_line3(&dist[0], &dist[1],
 					is->pt, is->dir,
 					(*eg1)->e_pt,
 					(*eg1)->e_dir,
@@ -4533,7 +4533,7 @@ re_tabulate:
 	     * -vs- the line segment.  This is 3D, for consistency
 	     * with comparisons elsewhere.
 	     */
-	    tmp_dist_sq = bn_distsq_line3_pnt3(is->pt, is->dir, vu1a->v_p->vg_p->coord);
+	    tmp_dist_sq = bg_distsq_line3_pnt3(is->pt, is->dir, vu1a->v_p->vg_p->coord);
 	    if (nmg_debug & NMG_DEBUG_POLYSECT) {
 		bu_log("\tvu1a is sqrt(%g) from the intersect line\n", tmp_dist_sq);
 	    }
@@ -4548,9 +4548,9 @@ re_tabulate:
 		}
 		if (hit_v == vu1a->v_p) goto hit_a;
 
-		/* Fall through to bn_isect_pnt2_lseg2() */
+		/* Fall through to bg_isect_pnt2_lseg2() */
 	    }
-	    tmp_dist_sq = bn_distsq_line3_pnt3(is->pt, is->dir, vu1b->v_p->vg_p->coord);
+	    tmp_dist_sq = bg_distsq_line3_pnt3(is->pt, is->dir, vu1b->v_p->vg_p->coord);
 	    if (nmg_debug & NMG_DEBUG_POLYSECT) {
 		bu_log("\tvu1b is sqrt(%g) from the intersect line\n", tmp_dist_sq);
 	    }
@@ -4565,16 +4565,16 @@ re_tabulate:
 		}
 		if (hit_v == vu1b->v_p) goto hit_b;
 
-		/* Fall through to bn_isect_pnt2_lseg2() */
+		/* Fall through to bg_isect_pnt2_lseg2() */
 	    }
 
 	    /* Third, a geometry check of the HITPT -vs- the line segment */
 	    nmg_get_2d_vertex(eu1_pt2d, vu1a->v_p, is, &fu1->l.magic);
 	    nmg_get_2d_vertex(eu1_end2d, vu1b->v_p, is, &fu1->l.magic);
 	    ldist = 0;
-	    code = bn_isect_pnt2_lseg2(&ldist, eu1_pt2d, eu1_end2d, hit2d, &(is->tol));
+	    code = bg_isect_pnt2_lseg2(&ldist, eu1_pt2d, eu1_end2d, hit2d, &(is->tol));
 	    if (nmg_debug & NMG_DEBUG_POLYSECT) {
-		bu_log("\tbn_isect_pnt2_lseg2() returned %d, ldist=%g\n", code, ldist);
+		bu_log("\tbg_isect_pnt2_lseg2() returned %d, ldist=%g\n", code, ldist);
 	    }
 	    switch (code) {
 		case -2:
@@ -4669,7 +4669,7 @@ re_tabulate:
 	NMG_CK_VERTEXUSE(vu1);
 
 	/* Needs to be a 3D comparison */
-	if (bn_distsq_line3_pnt3(is->pt, is->dir,
+	if (bg_distsq_line3_pnt3(is->pt, is->dir,
 				vu1->v_p->vg_p->coord) > is->tol.dist_sq)
 	    continue;
 
@@ -4750,9 +4750,9 @@ nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *UNUSED(pt), const fa
     /* XXX: this does not take pt+dir into account, a bug? */
 
     /* Ensure that vertices on edge are within tol of line */
-    if (bn_distsq_line3_pnt3(eg->e_pt, eg->e_dir,
+    if (bg_distsq_line3_pnt3(eg->e_pt, eg->e_dir,
 			    eu->vu_p->v_p->vg_p->coord) > tol->dist_sq) return 0;
-    if (bn_distsq_line3_pnt3(eg->e_pt, eg->e_dir,
+    if (bg_distsq_line3_pnt3(eg->e_pt, eg->e_dir,
 			    eu->eumate_p->vu_p->v_p->vg_p->coord) > tol->dist_sq) return 0;
 
 
@@ -5476,7 +5476,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 		NMG_CK_EDGEUSE(eu1);
 
 		VSUB2(dir2, eu1->eumate_p->vu_p->v_p->vg_p->coord, eu1->vu_p->v_p->vg_p->coord);
-		code = bn_isect_lseg3_lseg3(dists, is->pt, dir,
+		code = bg_isect_lseg3_lseg3(dists, is->pt, dir,
 					    eu1->vu_p->v_p->vg_p->coord, dir2, &is->tol);
 		if (code < 0)
 		    continue;
@@ -5697,7 +5697,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     VMOVE(tmp_pl, bs->dir);
     tmp_pl[W] = VDOT(tmp_pl, min_pt);
 
-    if (bn_make_pnt_3planes(bs->pt, tmp_pl, pl1, pl2))
+    if (bg_make_pnt_3planes(bs->pt, tmp_pl, pl1, pl2))
 	return 0;
 
     VCROSS(left, pl1, bs->dir);
@@ -5720,7 +5720,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 
 	v = (struct vertex *)BU_PTBL_GET(&verts, i);
 
-	code = bn_dist_pnt3_line3(&dist, pca, bs->pt, bs->dir, v->vg_p->coord, tol);
+	code = bg_dist_pnt3_line3(&dist, pca, bs->pt, bs->dir, v->vg_p->coord, tol);
 
 	if (code == 0 || code == 1) {
 	    on_line++;
@@ -5776,7 +5776,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 
 	v = (struct vertex *)BU_PTBL_GET(&verts, i);
 
-	code = bn_dist_pnt3_line3(&dist, pca, bs->pt, bs->dir, v->vg_p->coord, tol);
+	code = bg_dist_pnt3_line3(&dist, pca, bs->pt, bs->dir, v->vg_p->coord, tol);
 
 	if (code == 0 || code == 1) {
 	    on_line++;
@@ -6090,7 +6090,7 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 
     dist[0] = dist[1] = 0.0;	/* for clean prints, below */
 
-    status = bn_isect_lseg3_lseg3(dist,
+    status = bg_isect_lseg3_lseg3(dist,
 				  vu1a->v_p->vg_p->coord, eu1_dir,
 				  vu2a->v_p->vg_p->coord, eu2_dir, &is->tol);
 
@@ -6185,7 +6185,7 @@ nmg_isect_vertex3_edge3p(struct nmg_inter_struct *is, struct vertexuse *vu1, str
     NMG_CK_VERTEXUSE(vu1);
     NMG_CK_EDGEUSE(eu2);
 
-    code = bn_isect_pnt_lseg(&dist, eu2->vu_p->v_p->vg_p->coord,
+    code = bg_isect_pnt_lseg(&dist, eu2->vu_p->v_p->vg_p->coord,
 			    eu2->vu_p->v_p->vg_p->coord,
 			    vu1->v_p->vg_p->coord, &is->tol);
 
@@ -6899,7 +6899,7 @@ nmg_isect_2faceuse(point_t pt,
     }
 
     /* Intersection of the 3 planes defines ray start point */
-    if (bn_make_pnt_3planes(pt, pl, f1_pl, f2_pl) < 0) {
+    if (bg_make_pnt_3planes(pt, pl, f1_pl, f2_pl) < 0) {
 	return -3;	/* FAIL -- no intersection */
     }
 

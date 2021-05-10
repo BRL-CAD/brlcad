@@ -515,7 +515,7 @@ make_bounding_rpp(FILE *outfp, fastf_t *v2mod)
 
     /* Now rotate the viewing cube and obtain new minimum and maximum. */
 
-    bn_rotate_bbox(new_min, new_max, v2mod, v_min, v_max);
+    bg_rotate_bbox(new_min, new_max, v2mod, v_min, v_max);
 
     /* Now issue the space command */
 

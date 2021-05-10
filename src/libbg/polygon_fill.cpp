@@ -30,7 +30,7 @@
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bu/vls.h"
-#include "bn/plane.h" /* bn_fit_plane */
+#include "bg/plane.h" /* bg_fit_plane */
 #include "bg/polygon.h"
 
 /* Note - line_slope encodes the fill line slope as a vector.  Doing it as a
@@ -48,10 +48,10 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     point_t pcenter;
     vect_t  pnorm;
     plane_t pl;
-    if (bn_fit_plane(&pcenter, &pnorm, poly->contour[0].num_points, poly->contour[0].point)) {
+    if (bg_fit_plane(&pcenter, &pnorm, poly->contour[0].num_points, poly->contour[0].point)) {
 	return NULL;
     }
-    bn_plane_pt_nrml(&pl, pcenter, pnorm);
+    bg_plane_pt_nrml(&pl, pcenter, pnorm);
 
     /* Project poly onto the fit plane. While we're at it, build the 2D AABB */
     vect2d_t b2d_min = {MAX_FASTF, MAX_FASTF};
@@ -66,7 +66,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	poly_2d.contour[i].point = (point_t *)bu_calloc(poly->contour[i].num_points, sizeof(point_t), "pc_point");
 	for (size_t j = 0; j < poly->contour[i].num_points; ++j) {
 	    vect2d_t p2d;
-	    bn_plane_closest_pt(&p2d[0], &p2d[1], pl, poly->contour[i].point[j]);
+	    bg_plane_closest_pt(&p2d[0], &p2d[1], pl, poly->contour[i].point[j]);
 	    VSET(poly_2d.contour[i].point[j], p2d[0], p2d[1], 0);
 	    // bounding box
 	    V2MINMAX(b2d_min, b2d_max, p2d);
@@ -160,7 +160,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     }
 #endif
 
-    /* Use bn_plane_pt_at to produce the final 3d fill line polygon */
+    /* Use bg_plane_pt_at to produce the final 3d fill line polygon */
     struct bg_polygon *poly_fill;
     BU_GET(poly_fill, struct bg_polygon);
     poly_fill->num_contours = fpoly->num_contours;
@@ -172,7 +172,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	poly_fill->contour[i].num_points = fpoly->contour[i].num_points;
 	poly_fill->contour[i].point = (point_t *)bu_calloc(fpoly->contour[i].num_points, sizeof(point_t), "f_point");
 	for (size_t j = 0; j < fpoly->contour[i].num_points; ++j) {
-	    bn_plane_pt_at(&poly_fill->contour[i].point[j], pl, fpoly->contour[i].point[j][0], fpoly->contour[i].point[j][1]);
+	    bg_plane_pt_at(&poly_fill->contour[i].point[j], pl, fpoly->contour[i].point[j][0], fpoly->contour[i].point[j][1]);
 	}
     }
 

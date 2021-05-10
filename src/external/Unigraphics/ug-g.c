@@ -588,7 +588,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	while ( BU_LIST_NOT_HEAD( &next->l, &pt_head.l ) ) {
 
 	    /* check for collinearity */
-	    if ( bn_3pnts_collinear( prev->pt, pt->pt, next->pt, &tol ) ) {
+	    if ( bg_3pnts_collinear( prev->pt, pt->pt, next->pt, &tol ) ) {
 		/* remove middle point */
 		BU_LIST_DEQUEUE( &pt->l );
 		bu_free( (char *)pt, "pt_list" );
@@ -620,7 +620,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	    VSCALE( tmp_pt, tmp_pt, units_conv );
 	    MAT4X3PNT( this_pt, curr_xform, tmp_pt );
 
-	    if ( bn_3pnts_collinear( cur->pt, this_pt, next->pt, &tol ) ) {
+	    if ( bg_3pnts_collinear( cur->pt, this_pt, next->pt, &tol ) ) {
 		continue;
 	    }
 
@@ -1722,7 +1722,7 @@ get_thru_faces_length( tag_t feat_tag,
 	pl[W] = bb[i+3];
 	DO_INDENT;
 	bu_log( "\tChecking plane (%g %g %g %g)\n", V4ARGS( pl ) );
-	ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
+	ret = bg_isect_line3_plane( &dist, base, dir, pl, &tol );
 	DO_INDENT;
 	bu_log( "ret = %d, dist = %g\n", ret, dist );
 	/* 1 - exit, 2 - entrance, else miss */
@@ -1737,7 +1737,7 @@ get_thru_faces_length( tag_t feat_tag,
 	pl[W] = -bb[i];
 	DO_INDENT;
 	bu_log( "\tChecking plane (%g %g %g %g)\n", V4ARGS( pl ) );
-	ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
+	ret = bg_isect_line3_plane( &dist, base, dir, pl, &tol );
 	DO_INDENT;
 	bu_log( "ret = %d, dist = %g\n", ret, dist );
 	/* 1 - exit, 2 - entrance, else miss */
@@ -1770,7 +1770,7 @@ get_thru_faces_length( tag_t feat_tag,
 
 	    pl[i] = 1.0;
 	    pl[W] = bb[i+3];
-	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
+	    ret = bg_isect_line3_plane( &dist, base, dir, pl, &tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {
 		V_MIN(min_exit, dist);
@@ -1781,7 +1781,7 @@ get_thru_faces_length( tag_t feat_tag,
 	    VSETALLN( pl, 0.0, 4 );
 	    pl[i] = -1.0;
 	    pl[W] = -bb[i];
-	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
+	    ret = bg_isect_line3_plane( &dist, base, dir, pl, &tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {
 		V_MIN(min_exit, dist);

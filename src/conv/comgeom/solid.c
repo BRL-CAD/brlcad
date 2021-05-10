@@ -867,7 +867,7 @@ read_arbn(char *name)
 	    } else {
 		VMOVE(c, &input_points[((s)-1)*3]);
 	    }
-	    if (bn_make_plane_3pnts(eqn[cur_eq], a, b, c, &tol) < 0) {
+	    if (bg_make_plane_3pnts(eqn[cur_eq], a, b, c, &tol) < 0) {
 		printf("arbn degenerate plane\n");
 		VPRINT("a", a);
 		VPRINT("b", b);
@@ -995,7 +995,7 @@ read_arbn(char *name)
 	    for (k = j + 1; k < nface; k++) {
 		point_t pt;
 
-		if (bn_make_pnt_3planes(pt, eqn[i], eqn[j], eqn[k]) < 0) continue;
+		if (bg_make_pnt_3planes(pt, eqn[i], eqn[j], eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
 		for (m = 0; m < nface; m++) {

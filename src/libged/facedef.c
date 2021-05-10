@@ -104,7 +104,7 @@ get_3pts(struct ged *gedp, fastf_t *plane, const char *argv[], const struct bn_t
     for (i=0; i<3; i++)
 	c[i] = atof(argv[6+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
-    if (bn_make_plane_3pnts(plane, a, b, c, tol) < 0) {
+    if (bg_make_plane_3pnts(plane, a, b, c, tol) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "facedef: not a plane\n");
 	return -1;		/* failure */
     }

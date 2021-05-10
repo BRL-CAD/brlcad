@@ -20,7 +20,6 @@ set(LIBBN_SOURCES
   mt19937ar.c
   multipoly.c
   noise.c
-  plane.cpp
   plot3.c
   poly.c
   qmath.c

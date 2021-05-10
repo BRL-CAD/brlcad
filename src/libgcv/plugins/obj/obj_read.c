@@ -708,7 +708,7 @@ test_face(struct ga_t *ga,
 		 */
 		VSCALE(tmp_v_o, tmp_v_o, conv_factor);
 		VSCALE(tmp_v_i, tmp_v_i, conv_factor);
-		if (bn_pnt3_pnt3_equal(tmp_v_o, tmp_v_i, tol)) {
+		if (bg_pnt3_pnt3_equal(tmp_v_o, tmp_v_i, tol)) {
 		    distance_between_vertices = DIST_PNT_PNT(tmp_v_o, tmp_v_i);
 		    degenerate_face = 3;
 		    if (gfi->grouping_type != GRP_NONE) {
@@ -1943,7 +1943,7 @@ populate_fuse_map(struct ga_t *ga,
 		    VMOVE(tmp_v2, ga->vert_list[unique_index_list[idx2]]);
 		    VSCALE(tmp_v2, tmp_v2, conv_factor);
 		    if ((compare_type == FUSE_EQUAL) ? VEQUAL(tmp_v1, tmp_v2) :
-			bn_pnt3_pnt3_equal(tmp_v1, tmp_v2, tol)) {
+			bg_pnt3_pnt3_equal(tmp_v1, tmp_v2, tol)) {
 			if (ga->gcv_options->debug_mode) {
 			    distance_between_vertices = DIST_PNT_PNT(tmp_v1, tmp_v2);
 			    bu_log("found equal i1=(%zu)vi1=(%zu)v1=(%f)(%f)(%f), i2=(%zu)vi2=(%zu)v2=(%f)(%f)(%f), dist = (%lu mm)\n",

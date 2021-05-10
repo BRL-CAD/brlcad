@@ -764,7 +764,7 @@ prj_render(struct application *ap, const struct partition *pp, struct shadework 
 	/* project corner points into plane of hit point */
 	for (i = 0; i < CORNER_PTS; i++) {
 	    dist = 0.0;
-	    status = bn_isect_line3_plane(
+	    status = bg_isect_line3_plane(
 		&dist,
 		r_pe.corner[i].r_pt,
 		r_pe.corner[i].r_dir,

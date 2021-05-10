@@ -106,7 +106,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		for (i = 0; i < arbn->neqn; i++) {
 		    for (j = i + 1; j < arbn->neqn; j++) {
 			for (k = j + 1; k < arbn->neqn; k++) {
-			    if (!bn_make_pnt_3planes(mpt, arbn->eqn[i],
+			    if (!bg_make_pnt_3planes(mpt, arbn->eqn[i],
 						    arbn->eqn[j],
 						    arbn->eqn[k])) {
 				size_t l;

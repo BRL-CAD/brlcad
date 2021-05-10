@@ -49,7 +49,7 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bu/sort.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/plot3.h"
 #include "nmg.h"
 
@@ -248,7 +248,7 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 	    fastf_t dist;
 
 	    NMG_CK_VERTEXUSE(vu[i]);
-	    dist = bn_dist_line3_pnt3(pt, dir, vu[i]->v_p->vg_p->coord);
+	    dist = bg_dist_line3_pnt3(pt, dir, vu[i]->v_p->vg_p->coord);
 	    if (dist > dist_tol) {
 		bu_log("WARNING ptbl_vsort() vu=%p point off line by %e %g*tol, tol=%e\n",
 		       (void *)vu[i], dist,
@@ -489,7 +489,7 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
     /* in==0 "prev" is really next, so this is departing vec */
     VSUB2(vec, prev_eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 
-    ang = bn_angle_measure(vec, x_dir, y_dir);
+    ang = bg_angle_measure(vec, x_dir, y_dir);
     if (nmg_debug&NMG_DEBUG_VU_SORT)
 	bu_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*RAD2DEG);
 
@@ -771,8 +771,8 @@ nmg_assess_vu(struct nmg_ray_state *rs, int pos)
 
 	    /* See how far off the line they are */
 	    bu_log("vu dist=%e, next dist=%e, tol=%e\n",
-		   bn_dist_line3_pnt3(rs->pt, rs->dir, this_eu->vu_p->v_p->vg_p->coord),
-		   bn_dist_line3_pnt3(rs->pt, rs->dir, prev->vu_p->v_p->vg_p->coord),
+		   bg_dist_line3_pnt3(rs->pt, rs->dir, this_eu->vu_p->v_p->vg_p->coord),
+		   bg_dist_line3_pnt3(rs->pt, rs->dir, prev->vu_p->v_p->vg_p->coord),
 		   rs->tol->dist);
 	    bu_bomb("nmg_assess_vu() ON/ON edgeuse ends on different vertices.\n");
 	}

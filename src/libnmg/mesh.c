@@ -35,7 +35,7 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "nmg.h"
 
 /* TODO - do we need this? */
@@ -214,7 +214,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 
     if (eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p) bu_bomb("nmg_radial_join_eu(): 0 length edge (topology)\n");
 
-    if (bn_pnt3_pnt3_equal(eu1->vu_p->v_p->vg_p->coord,
+    if (bg_pnt3_pnt3_equal(eu1->vu_p->v_p->vg_p->coord,
 			 eu1->eumate_p->vu_p->v_p->vg_p->coord, tol))
     {
 	bu_log("vertices should have been fused:\n");

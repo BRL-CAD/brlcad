@@ -37,7 +37,7 @@ draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2)
     if (!dmp)
 	return BRLCAD_ERROR;
 
-    if (bn_pnt3_pnt3_equal(pt1, pt2, NULL)) {
+    if (bg_pnt3_pnt3_equal(pt1, pt2, NULL)) {
 	/* nothing to do for a singular point */
 	return BRLCAD_OK;
     }

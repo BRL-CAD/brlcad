@@ -1198,16 +1198,16 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
 
     if (arbp == (struct arb_specific *)0) {
 	bu_log("arb(%s): no faces\n", stp->st_name);
-	return BN_CLASSIFY_UNIMPLEMENTED;
+	return BG_CLASSIFY_UNIMPLEMENTED;
     }
 
     for (i = 0; i < arbp->arb_nmfaces; i++) {
-	if (bn_hlf_class(arbp->arb_face[i].peqn, min, max, tol) == BN_CLASSIFY_OUTSIDE)
-	    return BN_CLASSIFY_OUTSIDE;
+	if (bg_hlf_class(arbp->arb_face[i].peqn, min, max, tol) == BG_CLASSIFY_OUTSIDE)
+	    return BG_CLASSIFY_OUTSIDE;
     }
 
-    /* FIXME: We need to test for BN_CLASSIFY_INSIDE vs. BN_CLASSIFY_OVERLAPPING! */
-    return BN_CLASSIFY_UNIMPLEMENTED; /* let the caller assume the worst */
+    /* FIXME: We need to test for BG_CLASSIFY_INSIDE vs. BG_CLASSIFY_OVERLAPPING! */
+    return BG_CLASSIFY_UNIMPLEMENTED; /* let the caller assume the worst */
 }
 
 /**
@@ -1877,7 +1877,7 @@ rt_arb_3face_intersect(
     i2 = rt_arb_planes[j][loc+1];
     i3 = rt_arb_planes[j][loc+2];
 
-    return bn_make_pnt_3planes(point, planes[i1], planes[i2], planes[i3]);
+    return bg_make_pnt_3planes(point, planes[i1], planes[i2], planes[i3]);
 }
 
 
@@ -1914,7 +1914,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 	p2 = arb_faces[type][i*4+1];
 	p3 = arb_faces[type][i*4+2];
 
-	if (bn_make_plane_3pnts(planes[i],
+	if (bg_make_plane_3pnts(planes[i],
 			     arb->pt[p1],
 			     arb->pt[p2],
 			     arb->pt[p3],
@@ -1951,8 +1951,8 @@ rt_arb_move_edge(struct bu_vls *error_msg_ret,
 {
     fastf_t t1, t2;
 
-    if (bn_isect_line3_plane(&t1, thru, dir, planes[bp1], tol) < 0 ||
-	bn_isect_line3_plane(&t2, thru, dir, planes[bp2], tol) < 0) {
+    if (bg_isect_line3_plane(&t1, thru, dir, planes[bp1], tol) < 0 ||
+	bg_isect_line3_plane(&t2, thru, dir, planes[bp2], tol) < 0) {
 	bu_vls_printf(error_msg_ret, "edge (direction) parallel to face normal\n");
 	return 1;
     }
@@ -2152,7 +2152,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    p2 = *edptr++;
 	    p3 = *edptr++;
 
-	    if (bn_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
+	    if (bg_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
 				 arb->pt[p3], tol))
 		goto err;
 
@@ -2174,7 +2174,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    p2 = *iptr++;
 	    p3 = *iptr++;
 
-	    if (bn_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
+	    if (bg_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
 				 arb->pt[p3], tol))
 		goto err;
 	}
@@ -2200,7 +2200,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
      * recalculate plane 2 = 456
      */
     if (arb_type == ARB7 && edit_class == RT_ARB_EDIT_POINT) {
-	if (bn_make_plane_3pnts(planes[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
+	if (bg_make_plane_3pnts(planes[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
 	    goto err;
     }
 
@@ -2271,7 +2271,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     type = rt_arb_std_type(ip, &tol) - 4;
 
-    /* tol struct needed for bn_make_plane_3pnts,
+    /* tol struct needed for bg_make_plane_3pnts,
      * can't be passed to the function since it
      * must fit into the rt_functab interface */
     tmp_tol.magic = BN_TOL_MAGIC;
@@ -2288,7 +2288,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	c = arb_faces[type][i*4+2];
 
 	/* create a plane from a, b, c */
-	if (bn_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
+	if (bg_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
 	    continue;
 	}
 
@@ -2317,7 +2317,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
-    /* tol struct needed for bn_make_plane_3pnts,
+    /* tol struct needed for bg_make_plane_3pnts,
      * can't be passed to the function since it
      * must fit into the rt_functab interface */
     tmp_tol.magic = BN_TOL_MAGIC;
@@ -2333,7 +2333,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	d = farb4[i][3];
 
 	/* create a plane from a, b, c */
-	if (bn_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
+	if (bg_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
 	    continue;
 	}
 
@@ -2450,7 +2450,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 	p1[Z] = 0.0;
 
 	if (edge_list[i][0] == edge_list[i][1]) {
-	    tmp_dist = bn_dist_pnt3_pnt3(pt2, p1);
+	    tmp_dist = bg_dist_pnt3_pnt3(pt2, p1);
 
 	    if (tmp_dist < ptol) {
 		*vert1 = edge_list[i][0] + 1;
@@ -2464,7 +2464,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 	} else {
 	    MAT4X3PNT(p2, mat, aip->pt[edge_list[i][1]]);
 	    p2[Z] = 0.0;
-	    ret = bn_dist_pnt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
+	    ret = bg_dist_pnt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
 	}
 
 	if (ret < 3 || tmp_dist < dist) {

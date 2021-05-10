@@ -24,7 +24,7 @@
 
 #include "bu/malloc.h"
 #include "bu/sort.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/plot3.h"
 #include "bn/tol.h"
 #include "bg/polygon.h"
@@ -72,7 +72,7 @@ bg_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
 	return 1;
     BN_TOL_INIT(&tol);
     tol.dist_sq = BN_TOL_DIST * BN_TOL_DIST;
-    if (bn_make_plane_3pnts(plane_eqn, pts[0], pts[1], pts[2], &tol) == -1)
+    if (bg_make_plane_3pnts(plane_eqn, pts[0], pts[1], pts[2], &tol) == -1)
 	return 1;
 
     switch (npts) {
@@ -181,7 +181,7 @@ bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const p
 	    for (k = j + 1; k < neqs; k++) {
 		point_t pt;
 		int keep_point = 1;
-		if (bn_make_pnt_3planes(pt, eqs[i], eqs[j], eqs[k]) < 0)
+		if (bg_make_pnt_3planes(pt, eqs[i], eqs[j], eqs[k]) < 0)
 		    continue;
 		/* discard pt if it is outside the polyhedron */
 		for (l = 0; l < neqs; l++) {

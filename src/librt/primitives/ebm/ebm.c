@@ -1116,7 +1116,7 @@ rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* Find bounding RPP of rotated local RPP */
     VSETALL(v1, 0);
     VSET(localspace, eip->xdim, eip->ydim, eip->tallness);
-    bn_rotate_bbox((*min), (*max), eip->mat, v1, localspace);
+    bg_rotate_bbox((*min), (*max), eip->mat, v1, localspace);
     return 0;
 }
 

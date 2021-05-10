@@ -40,7 +40,7 @@
 #include "bu/debug.h"
 #include "bu/malloc.h"
 #include "bn/mat.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "nmg.h"
 
 /************************************************************************
@@ -400,7 +400,7 @@ nmg_measure_fu_angle(const struct edgeuse *eu, const fastf_t *xvec, const fastf_
     if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC) return -M_PI;
     if (nmg_find_eu_leftvec(left, eu) < 0) return -M_PI;
 
-    return bn_angle_measure(left, xvec, yvec);
+    return bg_angle_measure(left, xvec, yvec);
 }
 
 
@@ -1171,7 +1171,7 @@ nmg_find_e_pt2_handler(uint32_t *lp, void *state, int UNUSED(unused))
     MAT4X3PNT(a2, sp->mat, va->vg_p->coord);
     MAT4X3PNT(b2, sp->mat, vb->vg_p->coord);
 
-    code = bn_dist_pnt2_lseg2(&dist_sq, pca, a2, b2, sp->pt2, sp->tol);
+    code = bg_dist_pnt2_lseg2(&dist_sq, pca, a2, b2, sp->pt2, sp->tol);
 
     if (code == 0) dist_sq = 0;
 
@@ -1569,7 +1569,7 @@ nmg_find_pnt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_
 	if (!vg) {
 	    return (struct vertexuse *)NULL;
 	}
-	if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
+	if (bg_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 	    return vu;
 	}
 	return (struct vertexuse *)NULL;
@@ -1583,7 +1583,7 @@ nmg_find_pnt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_
 	if (!vg) {
 	    continue;
 	}
-	if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
+	if (bg_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 	    return eu->vu_p;
 	}
     }
@@ -1679,7 +1679,7 @@ nmg_find_pnt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_
 	vg = v->vg_p;
 
 	if (vg) {
-	    if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
+	    if (bg_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 		return v;
 	    }
 	}
@@ -1692,7 +1692,7 @@ nmg_find_pnt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_
 	vg = v->vg_p;
 
 	if (vg) {
-	    if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
+	    if (bg_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 		return v;
 	    }
 	}
@@ -2333,10 +2333,10 @@ nmg_line_handler(uint32_t *longp, void *state, int UNUSED(unused))
 	0.9 * MAGNITUDE(eu->g.lseg_p->e_dir) * MAGNITUDE(sp->dir))
 	return;
 
-    if (bn_distsq_line3_pnt3(sp->pt, sp->dir, eu->vu_p->v_p->vg_p->coord)
+    if (bg_distsq_line3_pnt3(sp->pt, sp->dir, eu->vu_p->v_p->vg_p->coord)
 	> sp->tol.dist_sq)
 	return;
-    if (bn_distsq_line3_pnt3(sp->pt, sp->dir, eu->eumate_p->vu_p->v_p->vg_p->coord)
+    if (bg_distsq_line3_pnt3(sp->pt, sp->dir, eu->eumate_p->vu_p->v_p->vg_p->coord)
 	> sp->tol.dist_sq)
 	return;
 
@@ -2493,11 +2493,11 @@ nmg_2edgeuse_g_coincident(const struct edgeuse *eu1, const struct edgeuse *eu2, 
     }
 
     /* Ensure that vertices on edge 2 are within tol of e1 */
-    if (bn_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir,
+    if (bg_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir,
 			    eu2->vu_p->v_p->vg_p->coord) > tol->dist_sq) {
 	return 0;
     }
-    if (bn_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir,
+    if (bg_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir,
 			    eu2->eumate_p->vu_p->v_p->vg_p->coord) > tol->dist_sq) {
 	return 0;
     }

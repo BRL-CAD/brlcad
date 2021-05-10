@@ -57,7 +57,7 @@
 
 #include "bu/malloc.h"
 #include "bn/tol.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bg/chull.h"
 #include "bg/obr.h"
 #include "./bg_private.h"
@@ -146,7 +146,7 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
 	V2MOVE(curr_pnt, pnts[i]);
 	VSET(curr_pnt_3D, curr_pnt[0], curr_pnt[1], 0.0);
 	/* If we're off the line, it's 2D. */
-	if (bn_dist_pnt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2)
+	if (bg_dist_pnt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2)
 	    return 2;
     }
     /* If we've got a line, make sure p1 and p2 are the extreme points */

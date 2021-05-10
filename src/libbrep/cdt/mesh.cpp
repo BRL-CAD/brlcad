@@ -40,7 +40,7 @@
 #include "bu/vls.h"
 #include "bn/mat.h" /* bn_vec_perp */
 #include "bn/plot3.h"
-#include "bn/plane.h" /* bn_fit_plane */
+#include "bg/plane.h" /* bg_fit_plane */
 #include "bg/polygon.h"
 #include "bg/tri_pt.h"
 #include "bg/trimesh.h"
@@ -2271,7 +2271,7 @@ cdt_mesh_t::uedge_polygon(uedge_t &ue)
 	fpnts[tpind][Z] = p->z;
 	tpind++;
     }
-    if (bn_fit_plane(&pcenter, &pnorm, t_pts.size(), fpnts)) {
+    if (bg_fit_plane(&pcenter, &pnorm, t_pts.size(), fpnts)) {
 	std::cout << "fitting plane failed!\n";
 	bu_free(fpnts, "fitting points");
 	return NULL;
@@ -4687,7 +4687,7 @@ cdt_mesh_t::best_fit_plane_reproject(cpolygon_t *polygon)
 	    vpnts[pnts_ind][Z] = p->z;
 	    pnts_ind++;
 	}
-	if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, vpnts)) {
+	if (bg_fit_plane(&pcenter, &pnorm, pnts_ind, vpnts)) {
 	    return false;
 	}
 	bu_free(vpnts, "fitting points");
@@ -4771,7 +4771,7 @@ cdt_mesh_t::best_fit_plane(std::set<triangle_t> &ts)
 	vpnts[pnts_ind][Z] = p->z;
 	pnts_ind++;
     }
-    if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, vpnts)) {
+    if (bg_fit_plane(&pcenter, &pnorm, pnts_ind, vpnts)) {
 	ON_Plane null_fit_plane(ON_3dPoint::UnsetPoint, ON_3dVector::UnsetVector);
 	return null_fit_plane;
     }

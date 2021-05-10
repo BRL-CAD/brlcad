@@ -955,7 +955,7 @@ rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* Find bounding RPP of rotated local RPP */
     VSETALL(v1, 0);
     VSET(localspace, vip->xdim*vip->cellsize[0], vip->ydim*vip->cellsize[1], vip->zdim*vip->cellsize[2]);/* type conversion */
-    bn_rotate_bbox((*min), (*max), vip->mat, v1, localspace);
+    bg_rotate_bbox((*min), (*max), vip->mat, v1, localspace);
     return 0;
 }
 

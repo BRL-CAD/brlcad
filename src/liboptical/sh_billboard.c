@@ -540,7 +540,7 @@ bbd_render(struct application *ap, const struct partition *pp, struct shadework 
 	/* find out if the ray hits the plane */
 	id[i].index = i;
 	id[i].bi = bi;
-	id[i].status = bn_isect_line3_plane(&id[i].dist,
+	id[i].status = bg_isect_line3_plane(&id[i].dist,
 					    ap->a_ray.r_pt, ap->a_ray.r_dir,
 					    bi->img_plane, &ap->a_rt_i->rti_tol);
 	i++;

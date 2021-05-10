@@ -66,7 +66,7 @@ bn_hdivide(fastf_t *o, const mat_t i)
 }
 
 static int
-tclcad_bn_dist_pnt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+tclcad_bg_dist_pnt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     point_t ptA, ptB, pca;
@@ -79,26 +79,26 @@ tclcad_bn_dist_pnt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int
 
     if (argc != 4) {
 	bu_vls_printf(&result,
-		"Usage: bn_dist_pnt2_lseg2 pntA pntB pnt (%d args specified)", argc-1);
+		"Usage: bg_dist_pnt2_lseg2 pntA pntB pnt (%d args specified)", argc-1);
 	goto error;
     }
 
     if (bn_decode_vect(ptA, argv[1]) < 2) {
-	bu_vls_printf(&result, "bn_dist_pnt2_lseg2 no pntA: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_dist_pnt2_lseg2 no pntA: %s\n", argv[0]);
 	goto error;
     }
 
     if (bn_decode_vect(ptB, argv[2]) < 2) {
-	bu_vls_printf(&result, "bn_dist_pnt2_lseg2 no pntB: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_dist_pnt2_lseg2 no pntB: %s\n", argv[0]);
 	goto error;
     }
 
     if (bn_decode_vect(pt, argv[3]) < 2) {
-	bu_vls_printf(&result, "bn_dist_pnt2_lseg2 no pnt: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_dist_pnt2_lseg2 no pnt: %s\n", argv[0]);
 	goto error;
     }
 
-    ret = bn_dist_pnt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
+    ret = bg_dist_pnt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
     switch (ret) {
 	case 0:
 	case 1:
@@ -123,7 +123,7 @@ error:
 } 
 
 static int
-tclcad_bn_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+tclcad_bg_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     fastf_t dist[2];
@@ -138,32 +138,32 @@ tclcad_bn_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, i
 
     if (argc != 5) {
 	bu_vls_printf(&result,
-		"Usage: bn_isect_line2_line2 pt dir pt dir (%d args specified)",
+		"Usage: bg_isect_line2_line2 pt dir pt dir (%d args specified)",
 		argc-1);
 	goto error;
     }
 
-    /* i = bn_isect_line2_line2 {0 0} {1 0} {1 1} {0 -1} */
+    /* i = bg_isect_line2_line2 {0 0} {1 0} {1 1} {0 -1} */
 
     if (bn_decode_vect(pt, argv[1]) < 2) {
-	bu_vls_printf(&result, "bn_isect_line2_line2 no pt: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_isect_line2_line2 no pt: %s\n", argv[0]);
 	goto error;
     }
     if (bn_decode_vect(dir, argv[2]) < 2) {
-	bu_vls_printf(&result, "bn_isect_line2_line2 no dir: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_isect_line2_line2 no dir: %s\n", argv[0]);
 	goto error;
     }
     if (bn_decode_vect(a, argv[3]) < 2) {
-	bu_vls_printf(&result, "bn_isect_line2_line2 no a pt: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_isect_line2_line2 no a pt: %s\n", argv[0]);
 	goto error;
     }
     if (bn_decode_vect(c, argv[4]) < 2) {
-	bu_vls_printf(&result, "bn_isect_line2_line2 no c dir: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_isect_line2_line2 no c dir: %s\n", argv[0]);
 	goto error;
     }
-    i = bn_isect_line2_line2(dist, pt, dir, a, c, &tol);
+    i = bg_isect_line2_line2(dist, pt, dir, a, c, &tol);
     if (i != 1) {
-	bu_vls_printf(&result, "bn_isect_line2_line2 no intersection: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_isect_line2_line2 no intersection: %s\n", argv[0]);
 	goto error;
     }
 
@@ -181,7 +181,7 @@ error:
 }
 
 static int
-tclcad_bn_isect_line3_line3(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+tclcad_bg_isect_line3_line3(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
 
@@ -194,30 +194,30 @@ tclcad_bn_isect_line3_line3(ClientData UNUSED(clientData), Tcl_Interp *interp, i
     };
     if (argc != 5) {
 	bu_vls_printf(&result,
-		"Usage: bn_isect_line3_line3 pt dir pt dir (%d args specified)",
+		"Usage: bg_isect_line3_line3 pt dir pt dir (%d args specified)",
 		argc-1);
 	goto error;
     }
 
     if (bn_decode_vect(pt, argv[1]) < 3) {
-	bu_vls_printf(&result, "bn_isect_line3_line3 no pt: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_isect_line3_line3 no pt: %s\n", argv[0]);
 	goto error;
     }
     if (bn_decode_vect(dir, argv[2]) < 3) {
-	bu_vls_printf(&result, "bn_isect_line3_line3 no dir: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_isect_line3_line3 no dir: %s\n", argv[0]);
 	goto error;
     }
     if (bn_decode_vect(a, argv[3]) < 3) {
-	bu_vls_printf(&result, "bn_isect_line3_line3 no a pt: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_isect_line3_line3 no a pt: %s\n", argv[0]);
 	goto error;
     }
     if (bn_decode_vect(c, argv[4]) < 3) {
-	bu_vls_printf(&result, "bn_isect_line3_line3 no c dir: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_isect_line3_line3 no c dir: %s\n", argv[0]);
 	goto error;
     }
-    i = bn_isect_line3_line3(&t, &u, pt, dir, a, c, &tol);
+    i = bg_isect_line3_line3(&t, &u, pt, dir, a, c, &tol);
     if (i != 1) {
-	bu_vls_printf(&result, "bn_isect_line3_line3 no intersection: %s\n", argv[0]);
+	bu_vls_printf(&result, "bg_isect_line3_line3 no intersection: %s\n", argv[0]);
 	goto error;
     }
 
@@ -1052,9 +1052,9 @@ static struct math_func_link {
     int (*func)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 } math_funcs[] = {
     /* FIXME: migrate these all to libged */
-    {"bn_dist_pnt2_lseg2",	 BN_FUNC_TCL_CAST(tclcad_bn_dist_pnt2_lseg2) },
-    {"bn_isect_line2_line2",	 BN_FUNC_TCL_CAST(tclcad_bn_isect_line2_line2) },
-    {"bn_isect_line3_line3",	 BN_FUNC_TCL_CAST(tclcad_bn_isect_line3_line3) },
+    {"bg_dist_pnt2_lseg2",	 BN_FUNC_TCL_CAST(tclcad_bg_dist_pnt2_lseg2) },
+    {"bg_isect_line2_line2",	 BN_FUNC_TCL_CAST(tclcad_bg_isect_line2_line2) },
+    {"bg_isect_line3_line3",	 BN_FUNC_TCL_CAST(tclcad_bg_isect_line3_line3) },
     {"mat_inv",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_inv) },
     {"mat_trn",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_trn) },
     {"matXvec",                  BN_FUNC_TCL_CAST(tclcad_bn_matXvec) },

@@ -147,7 +147,7 @@ nmg_region_v_unique(struct nmgregion *r1, struct bu_list *vlfree, const struct b
 	    vj = (struct vertex *)BU_PTBL_GET(&t, j);
 	    NMG_CK_VERTEX(vj);
 	    if (!vj->vg_p) continue;
-	    if (!bn_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
+	    if (!bg_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
 		continue;
 	    /* They are the same */
 	    bu_log("nmg_region_v_unique():  2 verts are the same, within tolerance\n");
@@ -284,7 +284,7 @@ nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_to
 	    if (!vj) continue;
 	    NMG_CK_VERTEX(vj);
 	    if (!vj->vg_p) continue;
-	    if (!bn_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
+	    if (!bg_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
 		continue;
 	    /* They are the same, fuse vj into vi */
 	    nmg_jv(vi, vj);
@@ -867,7 +867,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 
 	    nmg_eval_linear_trim_curve(snrb, uvw, xyz);
 
-	    if (bn_dist_pnt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
+	    if (bg_dist_pnt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
 		coincident = 0;
 		break;
 	    }
@@ -891,7 +891,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 
 	nmg_eval_trim_curve(cnrb, snrb, t, xyz);
 
-	if (bn_dist_pnt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
+	if (bg_dist_pnt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
 	    coincident = 0;
 	    break;
 	}
@@ -1753,17 +1753,17 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, struct bu_list *vlfre
 	va = eu->vu_p->v_p;
 	vb = eu->eumate_p->vu_p->v_p;
 
-	if (va == v || bn_pnt3_pnt3_equal(va->vg_p->coord, v->vg_p->coord, tol)) {
+	if (va == v || bg_pnt3_pnt3_equal(va->vg_p->coord, v->vg_p->coord, tol)) {
 	    continue;
 	}
-	if (vb == v || bn_pnt3_pnt3_equal(vb->vg_p->coord, v->vg_p->coord, tol)) {
+	if (vb == v || bg_pnt3_pnt3_equal(vb->vg_p->coord, v->vg_p->coord, tol)) {
 	    continue;
 	}
-	if (UNLIKELY(va == vb || bn_pnt3_pnt3_equal(va->vg_p->coord, vb->vg_p->coord, tol))) {
+	if (UNLIKELY(va == vb || bg_pnt3_pnt3_equal(va->vg_p->coord, vb->vg_p->coord, tol))) {
 	    bu_bomb("nmg_break_all_es_on_v(): found zero length edgeuse");
 	}
 
-	code = bn_isect_pnt_lseg(&dist, va->vg_p->coord, vb->vg_p->coord,
+	code = bg_isect_pnt_lseg(&dist, va->vg_p->coord, vb->vg_p->coord,
 				v->vg_p->coord, tol);
 
 	if (code < 1) continue;	/* missed */
@@ -1855,7 +1855,7 @@ nmg_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct b
 		    continue;
 		}
 
-		code = bn_isect_pnt_lseg(&dist,
+		code = bg_isect_pnt_lseg(&dist,
 					va->vg_p->coord,
 					vb->vg_p->coord,
 					v->vg_p->coord, tol);
@@ -3218,7 +3218,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 
     if (eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p) bu_bomb("nmg_radial_join_eu_NEW(): 0 length edge (topology)\n");
 
-    if (bn_pnt3_pnt3_equal(eu1->vu_p->v_p->vg_p->coord,
+    if (bg_pnt3_pnt3_equal(eu1->vu_p->v_p->vg_p->coord,
 			 eu1->eumate_p->vu_p->v_p->vg_p->coord, tol))
 	bu_bomb("nmg_radial_join_eu_NEW(): 0 length edge (geometry)\n");
 

@@ -1941,7 +1941,7 @@ intersectLines(const ON_Line &l1, const ON_Line &l2, ON_3dPoint &out)
     VMOVE(l2_dir, d);
 
     fastf_t l1_dist, l2_dist;
-    int i = bn_isect_line3_line3(&l1_dist, &l2_dist, l1_from, l1_dir,
+    int i = bg_isect_line3_line3(&l1_dist, &l2_dist, l1_from, l1_dir,
 				 l2_from, l2_dir, &tol);
     if (i == 1) {
 	ON_3dVector l1_unit_dir = l1.Direction();

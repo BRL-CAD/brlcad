@@ -321,7 +321,7 @@ find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t model_pt,
     for (BU_LIST_FOR(ps, wdb_pipe_pnt, pipe_hd)) {
 	fastf_t dist;
 
-	dist = bn_dist_line3_pnt3(model_pt, dir, ps->pp_coord);
+	dist = bg_dist_line3_pnt3(model_pt, dir, ps->pp_coord);
 	if (dist < min_dist) {
 	    min_dist = dist;
 	    nearest = ps;

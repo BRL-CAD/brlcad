@@ -32,7 +32,7 @@
 
 
 static int
-test_bn_3pnts_collinear(int argc, char **argv)
+test_bg_3pnts_collinear(int argc, char **argv)
 {
     int expected_result = 0;
     int actual_result = 0;
@@ -50,7 +50,7 @@ test_bn_3pnts_collinear(int argc, char **argv)
     sscanf(argv[4], "%lf,%lf,%lf", &p2[X], &p2[Y], &p2[Z]);
     sscanf(argv[5], "%d", &expected_result);
 
-    actual_result = bn_3pnts_collinear(p0, p1, p2, &tol);
+    actual_result = bg_3pnts_collinear(p0, p1, p2, &tol);
 
     bu_log("result: %d\n", actual_result);
 
@@ -59,7 +59,7 @@ test_bn_3pnts_collinear(int argc, char **argv)
 
 
 static int
-test_bn_3pnts_distinct(int argc, char **argv)
+test_bg_3pnts_distinct(int argc, char **argv)
 {
     int expected_result = 0;
     int actual_result = 0;
@@ -77,7 +77,7 @@ test_bn_3pnts_distinct(int argc, char **argv)
     sscanf(argv[4], "%lf,%lf,%lf", &p2[X], &p2[Y], &p2[Z]);
     sscanf(argv[5], "%d", &expected_result);
 
-    actual_result = bn_3pnts_distinct(p0, p1, p2, &tol);
+    actual_result = bg_3pnts_distinct(p0, p1, p2, &tol);
 
     bu_log("result: %d\n", actual_result);
 
@@ -86,7 +86,7 @@ test_bn_3pnts_distinct(int argc, char **argv)
 
 
 static int
-test_bn_distsq_line3_pnt3(int argc, char **argv)
+test_bg_distsq_line3_pnt3(int argc, char **argv)
 {
     float expected_result = 0;
     float actual_result = 0;
@@ -103,7 +103,7 @@ test_bn_distsq_line3_pnt3(int argc, char **argv)
     sscanf(argv[4], "%lf,%lf,%lf", &a[X], &a[Y], &a[Z]);
     sscanf(argv[5], "%f", &expected_result);
 
-    actual_result = bn_distsq_line3_pnt3(pt, dir, a);
+    actual_result = bg_distsq_line3_pnt3(pt, dir, a);
 
     bu_log("result: %f\n", actual_result);
 
@@ -112,7 +112,7 @@ test_bn_distsq_line3_pnt3(int argc, char **argv)
 
 
 static int
-test_bn_distsq_pnt3_lseg3_v2(int argc, char **argv)
+test_bg_distsq_pnt3_lseg3_v2(int argc, char **argv)
 {
     int expected_return = 0;
     fastf_t expected_dist = 0;
@@ -133,7 +133,7 @@ test_bn_distsq_pnt3_lseg3_v2(int argc, char **argv)
     sscanf(argv[5], "%d", &expected_return);
     sscanf(argv[6], "%lf", &expected_dist);
 
-    actual_return = bn_distsq_pnt3_lseg3_v2(&actual_dist, a, b, p, &tol);
+    actual_return = bg_distsq_pnt3_lseg3_v2(&actual_dist, a, b, p, &tol);
 
     bu_log("return: %d\n", actual_return);
     bu_log("dist: %f\n", actual_dist);
@@ -147,7 +147,7 @@ test_bn_distsq_pnt3_lseg3_v2(int argc, char **argv)
 
 
 static int
-test_bn_make_plane_3pnts(int argc, char **argv)
+test_bg_make_plane_3pnts(int argc, char **argv)
 {
     int expected_return = 0;
     int actual_return = 0;
@@ -166,7 +166,7 @@ test_bn_make_plane_3pnts(int argc, char **argv)
     sscanf(argv[4], "%lf,%lf,%lf", &c[X], &c[Y], &c[Z]);
     sscanf(argv[5], "%d", &expected_return);
 
-    actual_return = bn_make_plane_3pnts(plane, a, b, c, &tol);
+    actual_return = bg_make_plane_3pnts(plane, a, b, c, &tol);
 
     bu_log("return: %d\n", actual_return);
 
@@ -174,7 +174,7 @@ test_bn_make_plane_3pnts(int argc, char **argv)
 }
 
 static int
-test_bn_plane_closest_pt(int argc, char **argv)
+test_bg_plane_closest_pt(int argc, char **argv)
 {
     point_t p = VINIT_ZERO;
     plane_t plane = HINIT_ZERO;
@@ -191,11 +191,11 @@ test_bn_plane_closest_pt(int argc, char **argv)
 
     fastf_t u, v;
     point_t npt;
-    if (bn_plane_closest_pt(&u, &v, plane, p)) {
+    if (bg_plane_closest_pt(&u, &v, plane, p)) {
 	bu_log("closest pt calculation failed\n");
 	return -1;
     }
-    if (bn_plane_pt_at(&npt, plane, u, v)) {
+    if (bg_plane_pt_at(&npt, plane, u, v)) {
 	bu_log("pt at u,v calculation failed\n");
 	return -1;
     }
@@ -226,17 +226,17 @@ plane_pt_main(int argc, char *argv[])
 
     switch (function_num) {
 	case 1:
-	    return test_bn_3pnts_collinear(argc, argv);
+	    return test_bg_3pnts_collinear(argc, argv);
 	case 2:
-	    return test_bn_3pnts_distinct(argc, argv);
+	    return test_bg_3pnts_distinct(argc, argv);
 	case 3:
-	    return test_bn_distsq_line3_pnt3(argc, argv);
+	    return test_bg_distsq_line3_pnt3(argc, argv);
 	case 4:
-	    return test_bn_distsq_pnt3_lseg3_v2(argc, argv);
+	    return test_bg_distsq_pnt3_lseg3_v2(argc, argv);
 	case 5:
-	    return test_bn_make_plane_3pnts(argc, argv);
+	    return test_bg_make_plane_3pnts(argc, argv);
 	case 6:
-	    return test_bn_plane_closest_pt(argc, argv);
+	    return test_bg_plane_closest_pt(argc, argv);
     }
     return 1;
 }

@@ -221,7 +221,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     submodel->rtip = sub_rtip;
 
     /* Propagate submodel bounding box back upwards, rotated&scaled. */
-    bn_rotate_bbox(stp->st_min, stp->st_max,
+    bg_rotate_bbox(stp->st_min, stp->st_max,
 		   submodel->subm2m,
 		   sub_rtip->mdl_min, sub_rtip->mdl_max);
 

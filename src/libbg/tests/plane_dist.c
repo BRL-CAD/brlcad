@@ -32,7 +32,7 @@
 
 
 static int
-test_bn_dist_pnt3_line3(int argc, char **argv)
+test_bg_dist_pnt3_line3(int argc, char **argv)
 {
     int expected_return = 0;
     int actual_return = 0;
@@ -56,7 +56,7 @@ test_bn_dist_pnt3_line3(int argc, char **argv)
     sscanf(argv[6], "%lf", &expected_dist);
     sscanf(argv[7], "%lf,%lf,%lf", &expected_pca[X], &expected_pca[Y], &expected_pca[Z]);
 
-    actual_return = bn_dist_pnt3_line3(&actual_dist, actual_pca, a, p, dir, &tol);
+    actual_return = bg_dist_pnt3_line3(&actual_dist, actual_pca, a, p, dir, &tol);
 
     bu_log("return: %d\n", actual_return);
     bu_log("dist: %lf\n", actual_dist);
@@ -71,7 +71,7 @@ test_bn_dist_pnt3_line3(int argc, char **argv)
 
 
 static int
-test_bn_dist_pnt3_lseg3(int argc, char **argv)
+test_bg_dist_pnt3_lseg3(int argc, char **argv)
 {
     int expected_return = 0;
     int actual_return = 0;
@@ -95,7 +95,7 @@ test_bn_dist_pnt3_lseg3(int argc, char **argv)
     sscanf(argv[6], "%lf", &expected_dist);
     sscanf(argv[7], "%lf,%lf,%lf", &expected_pca[X], &expected_pca[Y], &expected_pca[Z]);
 
-    actual_return = bn_dist_pnt3_lseg3(&actual_dist, actual_pca, a, b, p, &tol);
+    actual_return = bg_dist_pnt3_lseg3(&actual_dist, actual_pca, a, b, p, &tol);
 
     bu_log("return: %d\n", actual_return);
     bu_log("dist: %lf\n", actual_dist);
@@ -110,7 +110,7 @@ test_bn_dist_pnt3_lseg3(int argc, char **argv)
 
 
 static int
-test_bn_dist_pnt3_pnt3(int argc, char **argv)
+test_bg_dist_pnt3_pnt3(int argc, char **argv)
 {
     double expected_return = 0;
     double actual_return = 0;
@@ -125,7 +125,7 @@ test_bn_dist_pnt3_pnt3(int argc, char **argv)
     sscanf(argv[3], "%lf,%lf,%lf", &b[X], &b[Y], &b[Z]);
     sscanf(argv[4], "%lf", &expected_return);
 
-    actual_return = bn_dist_pnt3_pnt3(a, b);
+    actual_return = bg_dist_pnt3_pnt3(a, b);
 
     bu_log("return: %.30lf\n", actual_return);
     bu_log("er: %.30lf\n", expected_return);
@@ -151,11 +151,11 @@ plane_dist_main(int argc, char *argv[])
 
     switch (function_num) {
 	case 1:
-	    return test_bn_dist_pnt3_line3(argc, argv);
+	    return test_bg_dist_pnt3_line3(argc, argv);
 	case 2:
-	    return test_bn_dist_pnt3_lseg3(argc, argv);
+	    return test_bg_dist_pnt3_lseg3(argc, argv);
 	case 3:
-	    return test_bn_dist_pnt3_pnt3(argc, argv);
+	    return test_bg_dist_pnt3_pnt3(argc, argv);
     }
     return 1;
 }

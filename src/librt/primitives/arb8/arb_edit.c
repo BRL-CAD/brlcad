@@ -70,8 +70,8 @@ mv_edge(struct rt_arb_internal *arb,
 {
     fastf_t t1, t2;
 
-    if (bn_isect_line3_plane(&t1, thru, dir, peqn[bp1], tol) < 0 ||
-	bn_isect_line3_plane(&t2, thru, dir, peqn[bp2], tol) < 0) {
+    if (bg_isect_line3_plane(&t1, thru, dir, peqn[bp1], tol) < 0 ||
+	bg_isect_line3_plane(&t2, thru, dir, peqn[bp2], tol) < 0) {
 	return 1;
     }
 
@@ -147,7 +147,7 @@ arb_extrude(struct rt_arb_internal *arb,
     }
 
     /* find plane containing this face */
-    if (bn_make_plane_3pnts(peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
+    if (bg_make_plane_3pnts(peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
 			 larb.pt[pt[2]], tol)) {
 	return 1;
     }
@@ -673,7 +673,7 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
 	    p1 = *edptr++;
 	    p2 = *edptr++;
 	    p3 = *edptr++;
-	    if (bn_make_plane_3pnts(peqn[newp], arb->pt[p1], arb->pt[p2],
+	    if (bg_make_plane_3pnts(peqn[newp], arb->pt[p1], arb->pt[p2],
 				 arb->pt[p3], tol))
 		goto err;
 
@@ -692,7 +692,7 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
 	    p1 = *iptr++;
 	    p2 = *iptr++;
 	    p3 = *iptr++;
-	    if (bn_make_plane_3pnts(peqn[newp], arb->pt[p1], arb->pt[p2],
+	    if (bg_make_plane_3pnts(peqn[newp], arb->pt[p1], arb->pt[p2],
 				 arb->pt[p3], tol))
 		goto err;
 	}
@@ -714,7 +714,7 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
      * 2 = 456
      */
     if (type == ARB7 && pflag) {
-	if (bn_make_plane_3pnts(peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
+	if (bg_make_plane_3pnts(peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
 	    goto err;
     }
 

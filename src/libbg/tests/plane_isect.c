@@ -32,7 +32,7 @@
 
 
 static int
-test_bn_isect_line_lseg(int argc, char **argv)
+test_bg_isect_line_lseg(int argc, char **argv)
 {
     int expected_return = 0;
     int actual_return = 0;
@@ -55,7 +55,7 @@ test_bn_isect_line_lseg(int argc, char **argv)
     sscanf(argv[6], "%d", &expected_return);
     sscanf(argv[7], "%lf", &expected_t);
 
-    actual_return = bn_isect_line_lseg(&actual_t, p, d, a, b, &tol);
+    actual_return = bg_isect_line_lseg(&actual_t, p, d, a, b, &tol);
 
     bu_log("return: %d\n", actual_return);
     bu_log("t: %f\n", actual_t);
@@ -66,7 +66,7 @@ test_bn_isect_line_lseg(int argc, char **argv)
 
 
 static int
-test_bn_isect_lseg3_lseg3(int argc, char **argv)
+test_bg_isect_lseg3_lseg3(int argc, char **argv)
 {
     int expected_return = 0;
     int actual_return = 0;
@@ -90,7 +90,7 @@ test_bn_isect_lseg3_lseg3(int argc, char **argv)
     sscanf(argv[7], "%lf", &expected_dist[0]);
     sscanf(argv[8], "%lf", &expected_dist[1]);
 
-    actual_return = bn_isect_lseg3_lseg3(actual_dist, p, pdir, q, qdir, &tol);
+    actual_return = bg_isect_lseg3_lseg3(actual_dist, p, pdir, q, qdir, &tol);
 
     bu_log("return: %d\n", actual_return);
     bu_log("dist[0]: %f\n", actual_dist[0]);
@@ -117,9 +117,9 @@ plane_isect_main(int argc, char *argv[])
 
     switch (function_num) {
 	case 1:
-	    return test_bn_isect_line_lseg(argc, argv);
+	    return test_bg_isect_line_lseg(argc, argv);
 	case 2:
-	    return test_bn_isect_lseg3_lseg3(argc, argv);
+	    return test_bg_isect_lseg3_lseg3(argc, argv);
     }
     return 1;
 }
