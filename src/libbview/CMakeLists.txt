@@ -19,6 +19,15 @@ set(LIBBVIEW_SRCS
   diff.c
   font.c
   hash.c
+  plot3.c
+  tig/axis.c
+  tig/list.c
+  tig/marker.c
+  tig/scale.c
+  tig/symbol.c
+  tig/tplot.c
+  tig/vectfont.c
+  tig/vector.c
   util.c
   vlist.c
   )

@@ -33,7 +33,7 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 
 static const char usage[] = "Usage: plot3line2 x1 y1 x2 y2 [r g b]\n";

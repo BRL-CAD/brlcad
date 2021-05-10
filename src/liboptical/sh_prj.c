@@ -41,7 +41,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 
 #define prj_MAGIC 0x70726a00	/* "prj" */

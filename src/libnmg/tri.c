@@ -37,7 +37,7 @@
 #include "bu/parallel.h"
 #include "bn/mat.h"
 #include "bg/plane.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 #include "nmg.h"
 
 

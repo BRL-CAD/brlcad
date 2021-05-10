@@ -36,7 +36,7 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"

@@ -46,7 +46,7 @@
 #include "../null/dm-Null.h"
 
 #include "bview/defines.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 #include "../include/private.h"
 

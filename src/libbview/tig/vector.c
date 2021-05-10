@@ -30,8 +30,8 @@
 
 #include "vmath.h"
 #include "bn/mat.h"
-#include "bn/plot3.h"
-#include "bn/tig.h"
+#include "bview/plot3.h"
+#include "bview/tig.h"
 
 /**
  *@brief

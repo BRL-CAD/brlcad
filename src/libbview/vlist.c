@@ -31,7 +31,7 @@
 #include "bu/list.h"
 #include "bu/log.h"
 #include "bu/str.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 #include "bview/vlist.h"
 
 size_t

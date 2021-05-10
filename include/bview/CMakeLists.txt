@@ -3,7 +3,9 @@ set(bview_headers
   defines.h
   events.h
   faceplate.h
+  plot3.h
   tcl_data.h
+  tig.h
   util.h
   vlist.h
   )

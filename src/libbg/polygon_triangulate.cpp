@@ -53,7 +53,7 @@
 #include "poly2tri/poly2tri.h"
 
 #include "bu/malloc.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 #include "bg/polygon.h"
 
 

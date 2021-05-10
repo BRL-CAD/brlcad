@@ -1636,3 +1636,5 @@ s/bn_plane_closest_pt/bg_plane_closest_pt/g
 s/bn_plane_pt_at/bg_plane_pt_at/g
 s/BN_CLASSIFY/BG_CLASSIFY/g
         plane.h moved from libbn to libbg [7.32]
+s/(#[[:space:]]*include[[:space:]]+["<])bn\/plot3\.h/\1bview\/plot3.h/g
+        moved plot3.h header [7.32]

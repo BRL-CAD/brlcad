@@ -48,7 +48,7 @@
 #include "bu/time.h"
 #include "bn/mat.h"
 #include "bg/plane.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 #include "bn/tol.h"
 #include "bview/vlist.h"
 #include "bg/polygon.h"

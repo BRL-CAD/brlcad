@@ -28,7 +28,7 @@
 #include "vmath.h"
 
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 
 #define V3PT_DEPARTING_RPP(_step, _lo, _hi, _pt)			\

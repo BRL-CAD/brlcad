@@ -29,8 +29,8 @@
 /** @{ */
 /** @file tig.h */
 
-#ifndef BN_TIG_H
-#define BN_TIG_H
+#ifndef BVIEW_TIG_H
+#define BVIEW_TIG_H
 
 #include "common.h"
 
@@ -38,8 +38,8 @@
 #include "bu/defines.h"
 #include "bu/color.h"
 #include "bu/file.h"
-#include "bn/defines.h"
-#include "bn/plot3.h"
+#include "bview/defines.h"
+#include "bview/plot3.h"
 
 __BEGIN_DECLS
 
@@ -50,7 +50,7 @@ __BEGIN_DECLS
  * connect them with line segments.  For markers, use tp_mlist(),
  * below.  This "C" interface expects arrays of INTs.
  */
-BN_EXPORT extern void tp_i2list(FILE *fp,
+BVIEW_EXPORT extern void tp_i2list(FILE *fp,
 				int *x,
 				int *y,
 				int npoints);
@@ -65,11 +65,11 @@ BN_EXPORT extern void tp_i2list(FILE *fp,
  *
  * Originally written in August 04, 1978
  */
-BN_EXPORT extern void tp_2list(FILE *fp,
+BVIEW_EXPORT extern void tp_2list(FILE *fp,
 			       double *x,
 			       double *y,
 			       int npoints);
-BN_EXPORT extern void BU_FORTRAN(f2list, F2LIST)(FILE **fpp,
+BVIEW_EXPORT extern void BU_FORTRAN(f2list, F2LIST)(FILE **fpp,
 						 float *x,
 						 float *y,
 						 int *n);
@@ -80,12 +80,12 @@ BN_EXPORT extern void BU_FORTRAN(f2list, F2LIST)(FILE **fpp,
  *
  * Originally written in August 04, 1978
  */
-BN_EXPORT extern void tp_3list(FILE *fp,
+BVIEW_EXPORT extern void tp_3list(FILE *fp,
 			       double *x,
 			       double *y,
 			       double *z,
 			       int npoints);
-BN_EXPORT extern void BU_FORTRAN(f3list, F3LIST)(FILE **fpp,
+BVIEW_EXPORT extern void BU_FORTRAN(f3list, F3LIST)(FILE **fpp,
 						 float *x,
 						 float *y,
 						 float *z,
@@ -111,7 +111,7 @@ BN_EXPORT extern void BU_FORTRAN(f3list, F3LIST)(FILE **fpp,
  *@li	2	Draw connecting lines only.
  *@li	3	Draw line and marks
  */
-BN_EXPORT extern void tp_2mlist(FILE *fp,
+BVIEW_EXPORT extern void tp_2mlist(FILE *fp,
 				double *x,
 				double *y,
 				int npoints,
@@ -123,7 +123,7 @@ BN_EXPORT extern void tp_2mlist(FILE *fp,
 /**
  * This FORTRAN interface expects arrays of REALs (single precision).
  */
-BN_EXPORT extern void BU_FORTRAN(f2mlst, F2MLST)(FILE **fp,
+BVIEW_EXPORT extern void BU_FORTRAN(f2mlst, F2MLST)(FILE **fp,
 						 float *x,
 						 float *y,
 						 int *np,
@@ -131,43 +131,43 @@ BN_EXPORT extern void BU_FORTRAN(f2mlst, F2MLST)(FILE **fp,
 						 int *mark,
 						 int *interval,
 						 float *size);
-BN_EXPORT extern void tp_2marker(FILE *fp,
+BVIEW_EXPORT extern void tp_2marker(FILE *fp,
 				 int c,
 				 double x,
 				 double y,
 				 double scale);
-BN_EXPORT extern void BU_FORTRAN(f2mark, F2MARK)(FILE **fp,
+BVIEW_EXPORT extern void BU_FORTRAN(f2mark, F2MARK)(FILE **fp,
 						 int *c,
 						 float *x,
 						 float *y,
 						 float *scale);
-BN_EXPORT extern void tp_3marker(FILE *fp,
+BVIEW_EXPORT extern void tp_3marker(FILE *fp,
 				 int c,
 				 double x,
 				 double y,
 				 double z,
 				 double scale);
-BN_EXPORT extern void BU_FORTRAN(f3mark, F3MARK)(FILE **fp,
+BVIEW_EXPORT extern void BU_FORTRAN(f3mark, F3MARK)(FILE **fp,
 						 int *c,
 						 float *x,
 						 float *y,
 						 float *z,
 						 float *scale);
-BN_EXPORT extern void tp_2number(FILE *fp,
+BVIEW_EXPORT extern void tp_2number(FILE *fp,
 				 double input,
 				 int x,
 				 int y,
 				 int cscale,
 				 double theta,
 				 int digits);
-BN_EXPORT extern void BU_FORTRAN(f2numb, F2NUMB)(FILE **fp,
+BVIEW_EXPORT extern void BU_FORTRAN(f2numb, F2NUMB)(FILE **fp,
 						 float *input,
 						 int *x,
 						 int *y,
 						 float *cscale,
 						 float *theta,
 						 int *digits);
-BN_EXPORT extern void tp_scale(int idata[],
+BVIEW_EXPORT extern void tp_scale(int idata[],
 			       int elements,
 			       int mode,
 			       int length,
@@ -175,26 +175,26 @@ BN_EXPORT extern void tp_scale(int idata[],
 			       double *min,
 			       double *dx);
 
-BN_EXPORT extern void BU_FORTRAN(fscale, FSCALE)(int idata[],
+BVIEW_EXPORT extern void BU_FORTRAN(fscale, FSCALE)(int idata[],
 						 int *elements,
 						 char *mode,
 						 int *length,
 						 int odata[],
 						 double *min,
 						 double *dx);
-BN_EXPORT extern void tp_2symbol(FILE *fp,
+BVIEW_EXPORT extern void tp_2symbol(FILE *fp,
 				 char *string,
 				 double x,
 				 double y,
 				 double scale,
 				 double theta);
-BN_EXPORT extern void BU_FORTRAN(f2symb, F2SYMB)(FILE **fp,
+BVIEW_EXPORT extern void BU_FORTRAN(f2symb, F2SYMB)(FILE **fp,
 						 char *string,
 						 float *x,
 						 float *y,
 						 float *scale,
 						 float *theta);
-BN_EXPORT extern void tp_plot(FILE *fp,
+BVIEW_EXPORT extern void tp_plot(FILE *fp,
 			      int xp,
 			      int yp,
 			      int xl,
@@ -205,7 +205,7 @@ BN_EXPORT extern void tp_plot(FILE *fp,
 			      float y[],
 			      int n,
 			      double cscale);
-BN_EXPORT extern void BU_FORTRAN(fplot, FPLOT)(FILE **fp,
+BVIEW_EXPORT extern void BU_FORTRAN(fplot, FPLOT)(FILE **fp,
 					       int *xp,
 					       int *yp,
 					       int *xl,
@@ -216,18 +216,18 @@ BN_EXPORT extern void BU_FORTRAN(fplot, FPLOT)(FILE **fp,
 					       float *y,
 					       int *n,
 					       float *cscale);
-BN_EXPORT extern void tp_ftoa(float x, char *s);
-BN_EXPORT extern void tp_fixsc(float *x,
+BVIEW_EXPORT extern void tp_ftoa(float x, char *s);
+BVIEW_EXPORT extern void tp_fixsc(float *x,
 			       int npts,
 			       float size,
 			       float *xs,
 			       float *xmin,
 			       float *xmax,
 			       float *dx);
-BN_EXPORT extern void tp_sep(float x,
+BVIEW_EXPORT extern void tp_sep(float x,
 			     float *coef,
 			     int *ex);
-BN_EXPORT extern double tp_ipow(double x,
+BVIEW_EXPORT extern double tp_ipow(double x,
 				int n);
 
 
@@ -245,7 +245,7 @@ BN_EXPORT extern double tp_ipow(double x,
  *
  * Originally written on August 01, 1978
  */
-BN_EXPORT extern void tp_3axis(FILE *fp,
+BVIEW_EXPORT extern void tp_3axis(FILE *fp,
 			       char *string,
 			       point_t origin,
 			       mat_t rot,
@@ -256,7 +256,7 @@ BN_EXPORT extern void tp_3axis(FILE *fp,
 			       double label_incr,
 			       double tick_separation,
 			       double char_width);
-BN_EXPORT extern void BU_FORTRAN(f3axis, F3AXIS)(FILE **fp,
+BVIEW_EXPORT extern void BU_FORTRAN(f3axis, F3AXIS)(FILE **fp,
 						 char *string,
 						 float *x,
 						 float *y,
@@ -269,17 +269,17 @@ BN_EXPORT extern void BU_FORTRAN(f3axis, F3AXIS)(FILE **fp,
 						 float *label_incr,
 						 float *tick_separation,
 						 float *char_width);
-BN_EXPORT extern void tp_3symbol(FILE *fp,
+BVIEW_EXPORT extern void tp_3symbol(FILE *fp,
 				 char *string,
 				 point_t origin,
 				 mat_t rot,
 				 double scale);
-BN_EXPORT extern void tp_3vector(FILE *plotfp,
+BVIEW_EXPORT extern void tp_3vector(FILE *plotfp,
 				 point_t from,
 				 point_t to,
 				 double fromheadfract,
 				 double toheadfract);
-BN_EXPORT extern void BU_FORTRAN(f3vect, F3VECT)(FILE **fp,
+BVIEW_EXPORT extern void BU_FORTRAN(f3vect, F3VECT)(FILE **fp,
 						 float *fx,
 						 float *fy,
 						 float *fz,
@@ -291,7 +291,7 @@ BN_EXPORT extern void BU_FORTRAN(f3vect, F3VECT)(FILE **fp,
 
 __END_DECLS
 
-#endif /* BN_TIG_H */
+#endif /* BVIEW_TIG_H */
 
 /** @} */
 /*

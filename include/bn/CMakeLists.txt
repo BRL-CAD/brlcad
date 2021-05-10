@@ -7,7 +7,6 @@ set(bn_headers
   msr.h
   multipoly.h
   noise.h
-  plot3.h
   poly.h
   qmath.h
   rand.h
@@ -16,7 +15,6 @@ set(bn_headers
   tabdata.h
   sobol.h
   str.h
-  tig.h
   tol.h
   vectfont.h
   version.h

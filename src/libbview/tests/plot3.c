@@ -28,7 +28,7 @@
 #include "vmath.h"
 #include "bu/file.h"
 #include "bu/opt.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 int
 main(int argc, const char *argv[])

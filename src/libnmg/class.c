@@ -48,7 +48,7 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bg/plane.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 #include "nmg.h"
 
 #define MAX_DIR_TRYS 10

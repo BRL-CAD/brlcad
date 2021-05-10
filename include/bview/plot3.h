@@ -39,8 +39,8 @@
 /** @{ */
 /** @file plot3.h */
 
-#ifndef BN_PLOT3_H
-#define BN_PLOT3_H
+#ifndef BVIEW_PLOT3_H
+#define BVIEW_PLOT3_H
 
 #include "common.h"
 
@@ -48,7 +48,7 @@
 #include "bu/defines.h"
 #include "bu/color.h"
 #include "bu/file.h"
-#include "bn/defines.h"
+#include "bview/defines.h"
 
 __BEGIN_DECLS
 
@@ -60,44 +60,44 @@ __BEGIN_DECLS
 #define PL_OUTPUT_MODE_TEXT 1
 
 
-BN_EXPORT extern int pl_getOutputMode(void);
-BN_EXPORT extern void pl_setOutputMode(int mode);
-BN_EXPORT extern void pl_point(FILE *plotfp,
+BVIEW_EXPORT extern int pl_getOutputMode(void);
+BVIEW_EXPORT extern void pl_setOutputMode(int mode);
+BVIEW_EXPORT extern void pl_point(FILE *plotfp,
 			       int x,
 			       int y);
-BN_EXPORT extern void pl_line(FILE *plotfp,
+BVIEW_EXPORT extern void pl_line(FILE *plotfp,
 			      int fx,
 			      int fy,
 			      int tx,
 			      int ty);
-BN_EXPORT extern void pl_linmod(FILE *plotfp,
+BVIEW_EXPORT extern void pl_linmod(FILE *plotfp,
 				const char *s);
-BN_EXPORT extern void pl_move(FILE *plotfp,
+BVIEW_EXPORT extern void pl_move(FILE *plotfp,
 			      int x,
 			      int y);
-BN_EXPORT extern void pl_cont(FILE *plotfp,
+BVIEW_EXPORT extern void pl_cont(FILE *plotfp,
 			      int x,
 			      int y);
-BN_EXPORT extern void pl_label(FILE *plotfp,
+BVIEW_EXPORT extern void pl_label(FILE *plotfp,
 			       const char *s);
-BN_EXPORT extern void pl_space(FILE *plotfp,
+BVIEW_EXPORT extern void pl_space(FILE *plotfp,
 			       int x_1,
 			       int y_1,
 			       int x_2,
 			       int y_2);
-BN_EXPORT extern void pl_erase(FILE *plotfp);
-BN_EXPORT extern void pl_circle(FILE *plotfp,
+BVIEW_EXPORT extern void pl_erase(FILE *plotfp);
+BVIEW_EXPORT extern void pl_circle(FILE *plotfp,
 				int x,
 				int y,
 				int r);
-BN_EXPORT extern void pl_arc(FILE *plotfp,
+BVIEW_EXPORT extern void pl_arc(FILE *plotfp,
 			     int xc,
 			     int yc,
 			     int x_1,
 			     int y_1,
 			     int x_2,
 			     int y_2);
-BN_EXPORT extern void pl_box(FILE *plotfp,
+BVIEW_EXPORT extern void pl_box(FILE *plotfp,
 			     int x_1,
 			     int y_1,
 			     int x_2,
@@ -106,40 +106,40 @@ BN_EXPORT extern void pl_box(FILE *plotfp,
 /*
  * BRL extensions to the UNIX-plot file format.
  */
-BN_EXPORT extern void pl_color(FILE *plotfp,
+BVIEW_EXPORT extern void pl_color(FILE *plotfp,
 			       int r,
 			       int g,
 			       int b);
-BN_EXPORT extern void pl_color_buc(FILE *plotfp,
+BVIEW_EXPORT extern void pl_color_buc(FILE *plotfp,
 			       struct bu_color *c);
-BN_EXPORT extern void pl_flush(FILE *plotfp);
-BN_EXPORT extern void pl_3space(FILE *plotfp,
+BVIEW_EXPORT extern void pl_flush(FILE *plotfp);
+BVIEW_EXPORT extern void pl_3space(FILE *plotfp,
 				int x_1,
 				int y_1,
 				int z_1,
 				int x_2,
 				int y_2,
 				int z_2);
-BN_EXPORT extern void pl_3point(FILE *plotfp,
+BVIEW_EXPORT extern void pl_3point(FILE *plotfp,
 				int x,
 				int y,
 				int z);
-BN_EXPORT extern void pl_3move(FILE *plotfp,
+BVIEW_EXPORT extern void pl_3move(FILE *plotfp,
 			       int x,
 			       int y,
 			       int z);
-BN_EXPORT extern void pl_3cont(FILE *plotfp,
+BVIEW_EXPORT extern void pl_3cont(FILE *plotfp,
 			       int x,
 			       int y,
 			       int z);
-BN_EXPORT extern void pl_3line(FILE *plotfp,
+BVIEW_EXPORT extern void pl_3line(FILE *plotfp,
 			       int x_1,
 			       int y_1,
 			       int z_1,
 			       int x_2,
 			       int y_2,
 			       int z_2);
-BN_EXPORT extern void pl_3box(FILE *plotfp,
+BVIEW_EXPORT extern void pl_3box(FILE *plotfp,
 			      int x_1,
 			      int y_1,
 			      int z_1,
@@ -148,37 +148,37 @@ BN_EXPORT extern void pl_3box(FILE *plotfp,
 			      int z_2);
 
 /* Double floating point versions */
-BN_EXPORT extern void pd_point(FILE *plotfp,
+BVIEW_EXPORT extern void pd_point(FILE *plotfp,
 			       double x,
 			       double y);
-BN_EXPORT extern void pd_line(FILE *plotfp,
+BVIEW_EXPORT extern void pd_line(FILE *plotfp,
 			      double fx,
 			      double fy,
 			      double tx,
 			      double ty);
-BN_EXPORT extern void pd_move(FILE *plotfp,
+BVIEW_EXPORT extern void pd_move(FILE *plotfp,
 			      double x,
 			      double y);
-BN_EXPORT extern void pd_cont(FILE *plotfp,
+BVIEW_EXPORT extern void pd_cont(FILE *plotfp,
 			      double x,
 			      double y);
-BN_EXPORT extern void pd_space(FILE *plotfp,
+BVIEW_EXPORT extern void pd_space(FILE *plotfp,
 			       double x_1,
 			       double y_1,
 			       double x_2,
 			       double y_2);
-BN_EXPORT extern void pd_circle(FILE *plotfp,
+BVIEW_EXPORT extern void pd_circle(FILE *plotfp,
 				double x,
 				double y,
 				double r);
-BN_EXPORT extern void pd_arc(FILE *plotfp,
+BVIEW_EXPORT extern void pd_arc(FILE *plotfp,
 			     double xc,
 			     double yc,
 			     double x_1,
 			     double y_1,
 			     double x_2,
 			     double y_2);
-BN_EXPORT extern void pd_box(FILE *plotfp,
+BVIEW_EXPORT extern void pd_box(FILE *plotfp,
 			     double x_1,
 			     double y_1,
 			     double x_2,
@@ -186,66 +186,66 @@ BN_EXPORT extern void pd_box(FILE *plotfp,
 
 /* Double 3-D both in vector and enumerated versions */
 #ifdef VMATH_H
-BN_EXPORT extern void pdv_3space(FILE *plotfp,
+BVIEW_EXPORT extern void pdv_3space(FILE *plotfp,
 				 const vect_t min,
 				 const vect_t max);
-BN_EXPORT extern void pdv_3point(FILE *plotfp,
+BVIEW_EXPORT extern void pdv_3point(FILE *plotfp,
 				 const vect_t pt);
-BN_EXPORT extern void pdv_3move(FILE *plotfp,
+BVIEW_EXPORT extern void pdv_3move(FILE *plotfp,
 				const vect_t pt);
-BN_EXPORT extern void pdv_3cont(FILE *plotfp,
+BVIEW_EXPORT extern void pdv_3cont(FILE *plotfp,
 				const vect_t pt);
-BN_EXPORT extern void pdv_3line(FILE *plotfp,
+BVIEW_EXPORT extern void pdv_3line(FILE *plotfp,
 				const vect_t a,
 				const vect_t b);
-BN_EXPORT extern void pdv_3box(FILE *plotfp,
+BVIEW_EXPORT extern void pdv_3box(FILE *plotfp,
 			       const vect_t a,
 			       const vect_t b);
 #endif /* VMATH_H */
-BN_EXPORT extern void pd_3space(FILE *plotfp,
+BVIEW_EXPORT extern void pd_3space(FILE *plotfp,
 				double x_1,
 				double y_1,
 				double z_1,
 				double x_2,
 				double y_2,
 				double z_2);
-BN_EXPORT extern void pd_3point(FILE *plotfp,
+BVIEW_EXPORT extern void pd_3point(FILE *plotfp,
 				double x,
 				double y,
 				double z);
-BN_EXPORT extern void pd_3move(FILE *plotfp,
+BVIEW_EXPORT extern void pd_3move(FILE *plotfp,
 			       double x,
 			       double y,
 			       double z);
-BN_EXPORT extern void pd_3cont(FILE *plotfp,
+BVIEW_EXPORT extern void pd_3cont(FILE *plotfp,
 			       double x,
 			       double y,
 			       double z);
-BN_EXPORT extern void pd_3line(FILE *plotfp,
+BVIEW_EXPORT extern void pd_3line(FILE *plotfp,
 			       double x_1,
 			       double y_1,
 			       double z_1,
 			       double x_2,
 			       double y_2,
 			       double z_2);
-BN_EXPORT extern void pd_3box(FILE *plotfp,
+BVIEW_EXPORT extern void pd_3box(FILE *plotfp,
 			      double x_1,
 			      double y_1,
 			      double z_1,
 			      double x_2,
 			      double y_2,
 			      double z_2);
-BN_EXPORT extern void pdv_3ray(FILE *fp,
+BVIEW_EXPORT extern void pdv_3ray(FILE *fp,
 			       const point_t pt,
 			       const vect_t dir,
 			       double t);
 
 
-BN_EXPORT extern int plot3_invalid(FILE *fp, int mode);
+BVIEW_EXPORT extern int plot3_invalid(FILE *fp, int mode);
 
 __END_DECLS
 
-#endif /* BN_PLOT3_H */
+#endif /* BVIEW_PLOT3_H */
 
 /** @} */
 /*

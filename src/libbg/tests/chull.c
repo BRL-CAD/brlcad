@@ -27,7 +27,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 HIDDEN
 void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)

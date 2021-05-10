@@ -37,7 +37,7 @@
 #include "raytrace.h"
 #include "optical.h"
 #include "optical/light.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 
 

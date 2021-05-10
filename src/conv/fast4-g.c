@@ -45,7 +45,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 
 /* NOTE: there should be no space after comma */

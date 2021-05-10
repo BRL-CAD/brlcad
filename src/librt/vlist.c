@@ -32,7 +32,7 @@
 
 #include "bn.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 #include "bview/vlist.h"
 
 

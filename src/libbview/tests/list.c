@@ -25,10 +25,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bn.h"
 #include "bu.h"
-#include "bn/plot3.h"
-#include "bn/tig.h"
+#include "bn.h"
+#include "bview/plot3.h"
+#include "bview/tig.h"
 
 #define BUFFER_SIZE 2000
 #define MAX_POINTS 30

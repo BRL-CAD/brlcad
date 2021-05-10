@@ -4,7 +4,6 @@
 
 set(bn_test_srcs
   complex.c
-  list.c
   mat.c
   poly_add.c
   poly_multiply.c
@@ -39,30 +38,6 @@ VALIDATE_STYLE("${bn_test_srcs}" bn_test)
 
 # WIP - needs to become real test
 BRLCAD_ADDEXEC(bn_randsph randsph.c "libbu;libbn" TEST)
-
-# This test program is being kept separate because the plot3 logic really
-# should move, and when it does it will be easier to move the test if it
-# is not tied into the bn_test target
-BRLCAD_ADDEXEC(bn_plot3 plot3.c "libbu;libbn" TEST)
-
-#
-#  ************ list.c tests *************
-#
-# Format is:
-#  COMMAND bn_test list  <2 or 3 (the dimension)>  X0,Y0[,Z0] X1,Y1[,Z1] Xn,Yn[,Zn]
-BRLCAD_ADD_TEST(NAME bn_list_2d_null                COMMAND bn_test list  2) # NULL list of points
-BRLCAD_ADD_TEST(NAME bn_list_2d_1                   COMMAND bn_test list  2  0,0)
-BRLCAD_ADD_TEST(NAME bn_list_2d_2                   COMMAND bn_test list  2  0,0 1.64,1)
-BRLCAD_ADD_TEST(NAME bn_list_2d_3                   COMMAND bn_test list  2  3,7 1,-5)
-BRLCAD_ADD_TEST(NAME bn_list_2d_4                   COMMAND bn_test list  2  3,7 1,-5.321 67,0 0,100)
-
-
-BRLCAD_ADD_TEST(NAME bn_list_3d_null                COMMAND bn_test list  3) # NULL list of points
-BRLCAD_ADD_TEST(NAME bn_list_3d_1                   COMMAND bn_test list  3  0,0,0)
-BRLCAD_ADD_TEST(NAME bn_list_3d_2                   COMMAND bn_test list  3  0,0,3 1.64,1,4)
-BRLCAD_ADD_TEST(NAME bn_list_3d_3                   COMMAND bn_test list  3  3,7,8 1,-5,8)
-BRLCAD_ADD_TEST(NAME bn_list_3d_4                   COMMAND bn_test list  3  3,7,8 1,-5.321,3 67,0,67 0,100,23)
-
 
 #
 #  *********** poly.c tests *************
@@ -947,22 +922,12 @@ BRLCAD_ADD_TEST(NAME bn_quat_log_0 COMMAND bn_test qmath 10 1,0,0,0 1.571,0,0,0)
 BRLCAD_ADD_TEST(NAME bn_quat_log_1 COMMAND bn_test qmath 10 0.5,0.5,0.5,0.5 0.605,0.605,0.605,0)
 BRLCAD_ADD_TEST(NAME bn_quat_log_2 COMMAND bn_test qmath 10 0.548,0.365,0.730,0.183 0.773,0.515,1.030,0)
 
-#
-#  *************** plot3.c ***************
-#
-#  Tests to detect validity/invalidity of plot3 files
-#
-BRLCAD_ADD_TEST(NAME bn_plot3_valid COMMAND bn_plot3 -b "${CMAKE_CURRENT_SOURCE_DIR}/valid.plot3")
-BRLCAD_ADD_TEST(NAME bn_plot3_invalid COMMAND bn_plot3 -i -b "${CMAKE_CURRENT_SOURCE_DIR}/invalid.plot3")
-
 CMAKEFILES(
   CMakeLists.txt
   bntester.dat
   bn_test.c.in
   poly_cubic_roots.c
   poly_quartic_roots.c
-  valid.plot3
-  invalid.plot3
   )
 
 # Local Variables:

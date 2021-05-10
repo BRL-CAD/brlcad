@@ -39,7 +39,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bn/mat.h" /* bn_vec_perp */
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 #include "bg/plane.h" /* bg_fit_plane */
 #include "bg/polygon.h"
 #include "bg/tri_pt.h"

@@ -20,7 +20,6 @@ set(LIBBN_SOURCES
   mt19937ar.c
   multipoly.c
   noise.c
-  plot3.c
   poly.c
   qmath.c
   rand.c
@@ -29,14 +28,6 @@ set(LIBBN_SOURCES
   sphmap.c
   str.c
   tabdata.c
-  tig/axis.c
-  tig/list.c
-  tig/marker.c
-  tig/scale.c
-  tig/symbol.c
-  tig/tplot.c
-  tig/vectfont.c
-  tig/vector.c
   ulp.c
   vers.c
   vert_tree.c

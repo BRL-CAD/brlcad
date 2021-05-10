@@ -40,7 +40,7 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 #include "nmg.h"
 
 

@@ -51,8 +51,8 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
-#include "bn/plot3.h"
-#include "bn/tig.h"
+#include "bview/plot3.h"
+#include "bview/tig.h"
 #include "bn/vectfont.h"
 
 #define NUM_SYMBOLS	8

@@ -86,7 +86,7 @@
 #include "bu/process.h"
 #include "bu/exit.h"
 #include "dm.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 #define COMMA ','
 

@@ -38,7 +38,7 @@
 #include "bu/file.h"
 #include "bu/cv.h"
 #include "vmath.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 #include "bn.h"
 #include "bg/plane.h"
 

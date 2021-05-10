@@ -42,7 +42,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 #include "./ext.h"
 

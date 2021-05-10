@@ -61,7 +61,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/db4.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 /* private header */
 #include "./dsp.h"

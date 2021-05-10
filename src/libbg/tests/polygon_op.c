@@ -33,7 +33,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 static int
 _bg_polygon_diff(struct bg_polygon *p1, struct bg_polygon *p2)

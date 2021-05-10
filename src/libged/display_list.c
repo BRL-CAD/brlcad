@@ -31,7 +31,7 @@
 #include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bu/color.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 #include "bg/clip.h"
 
 #include "ged.h"

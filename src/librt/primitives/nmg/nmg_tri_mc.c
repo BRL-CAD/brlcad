@@ -76,7 +76,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 #define MAX_INTERSECTS 1024
 

@@ -31,7 +31,7 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 #include "bu/app.h"
 #include "bu/log.h"

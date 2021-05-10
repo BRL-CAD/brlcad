@@ -47,7 +47,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "bg/plane.h"
-#include "bn/plot3.h"
+#include "bview/plot3.h"
 
 struct bvh_build_node {
     fastf_t bounds[6];
