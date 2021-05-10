@@ -37,29 +37,29 @@
 __BEGIN_DECLS
 
 /* Set default values for a bv. */
-BV_EXPORT extern void bv_init(struct bv *v);
+BV_EXPORT extern void bv_init(struct bview *v);
 
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
-BV_EXPORT extern void bv_sync(struct bv *dest, struct bv *src);
+BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
 
 /* Copy settings (potentially) common to the view and scene objects */
 BV_EXPORT extern void bv_settings_sync(struct bv_settings *dest, struct bv_settings *src);
 
 /* Sync values within the bv, perform callbacks if any are defined */
-BV_EXPORT extern void bv_update(struct bv *gvp);
+BV_EXPORT extern void bv_update(struct bview *gvp);
 
 /* Update objects in the selection set (if any) and their children */
-BV_EXPORT extern int bv_update_selected(struct bv *gvp);
+BV_EXPORT extern int bv_update_selected(struct bview *gvp);
 
 /* Return 1 if the visible contents differ
  * Return 2 if visible content is the same but settings differ
  * Return 3 if content is the same but user data, dmp or callbacks differ
  * Return -1 if one or more of the views is NULL
  * Else return 0 */
-BV_EXPORT extern int bv_differ(struct bv *v1, struct bv *v2);
+BV_EXPORT extern int bv_differ(struct bview *v1, struct bview *v2);
 
 /* Return a hash of the contents of the bv container.  Returns 0 on failure. */
-BV_EXPORT extern unsigned long long bv_hash(struct bv *v);
+BV_EXPORT extern unsigned long long bv_hash(struct bview *v);
 
 /* Return a hash of the contents of a display list.  Returns 0 on failure. */
 BV_EXPORT extern unsigned long long bv_dl_hash(struct display_list *dl);
@@ -79,7 +79,7 @@ BV_EXPORT extern unsigned long long bv_dl_hash(struct display_list *dl);
 
 /* Update a view in response to X,Y coordinate changes as generated
  * by a graphical interface's mouse motion. */
-BV_EXPORT extern int bv_adjust(struct bv *v, int dx, int dy, point_t keypoint, int mode, unsigned long long flags);
+BV_EXPORT extern int bv_adjust(struct bview *v, int dx, int dy, point_t keypoint, int mode, unsigned long long flags);
 
 /* Beginning extraction of the core of libtclcad view object manipulation
  * logic.  The following functions will initially be pretty straightforward
@@ -88,7 +88,7 @@ BV_EXPORT extern int bv_adjust(struct bv *v, int dx, int dy, point_t keypoint, i
 
 /* Return -1 if width and/or height are unset (and hence a meaningful
  * calculation is impossible), else 0. */
-BV_EXPORT extern int bv_screen_to_view(struct bv *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
+BV_EXPORT extern int bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
 
 /* Initialize a scene object to standard default settings */
 BV_EXPORT extern void bv_scene_obj_init(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj);

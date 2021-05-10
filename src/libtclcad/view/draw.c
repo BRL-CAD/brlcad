@@ -68,7 +68,7 @@ key_matches_paths(struct bu_hash_tbl *t, void *udata)
 }
 
 static void
-go_draw_solid(struct bv *gdvp, struct bv_scene_obj *sp)
+go_draw_solid(struct bview *gdvp, struct bv_scene_obj *sp)
 {
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     struct ged *gedp = tvd->gedp;
@@ -120,7 +120,7 @@ go_draw_solid(struct bv *gdvp, struct bv_scene_obj *sp)
 
 /* Draw all display lists */
 static int
-go_draw_dlist(struct bv *gdvp)
+go_draw_dlist(struct bview *gdvp)
 {
     register struct display_list *gdlp;
     register struct display_list *next_gdlp;
@@ -199,7 +199,7 @@ go_draw_dlist(struct bv *gdvp)
 }
 
 void
-go_draw(struct bv *gdvp)
+go_draw(struct bview *gdvp)
 {
     (void)dm_loadmatrix((struct dm *)gdvp->dmp, gdvp->gv_model2view, 0);
 

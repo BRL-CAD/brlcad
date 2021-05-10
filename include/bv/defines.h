@@ -178,7 +178,7 @@ struct bv_settings {
 #define BV_AXES           0x10
 #define BV_POLYGONS       0x20
 
-struct bv;
+struct bview;
 
 struct bv_scene_obj  {
     struct bu_list l;
@@ -195,7 +195,7 @@ struct bv_scene_obj  {
      * the necessary view context for editing. If the object needs to retain
      * knowledge of its original/creation view, it should save that info
      * internally in its s_i_data container. */
-    struct bv *s_v;
+    struct bview *s_v;
 
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data, as well as
      * manage any custom data specific to this object */
@@ -314,7 +314,7 @@ struct bv_scene_group {
     struct bv_scene_obj *g;
 };
 
-struct bv {
+struct bview {
     uint32_t	  magic;             /**< @brief magic number */
     struct bu_vls gv_name;
 

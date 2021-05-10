@@ -73,7 +73,7 @@ __BEGIN_DECLS
 #define GED_NULL ((struct ged *)0)
 #define GED_DISPLAY_LIST_NULL ((struct display_list *)0)
 #define GED_DRAWABLE_NULL ((struct ged_drawable *)0)
-#define GED_VIEW_NULL ((struct bv *)0)
+#define GED_VIEW_NULL ((struct bview *)0)
 
 #define GED_RESULT_NULL ((void *)0)
 
@@ -196,7 +196,7 @@ struct ged {
     // The full set of bvs associated with this ged object
     struct bu_ptbl              ged_views;
     /* The current view */
-    struct bv		*ged_gvp;
+    struct bview		*ged_gvp;
 
     void                        *u_data; /**< @brief User data associated with this ged instance */
 

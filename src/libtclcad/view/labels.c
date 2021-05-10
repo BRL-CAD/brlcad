@@ -36,7 +36,7 @@
 int
 go_data_labels(Tcl_Interp *interp,
 	       struct ged *gedp,
-	       struct bv *gdvp,
+	       struct bview *gdvp,
 	       int argc,
 	       const char *argv[],
 	       const char *usage)
@@ -79,7 +79,7 @@ to_data_labels(struct ged *gedp,
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
-    struct bv *gdvp;
+    struct bview *gdvp;
     int ret;
 
     /* initialize result */
@@ -115,7 +115,7 @@ to_data_labels(struct ged *gedp,
 int
 to_data_labels_func(Tcl_Interp *interp,
 		    struct ged *gedp,
-		    struct bv *gdvp,
+		    struct bview *gdvp,
 		    int argc,
 		    const char *argv[])
 {

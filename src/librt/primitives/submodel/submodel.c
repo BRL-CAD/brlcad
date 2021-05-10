@@ -667,7 +667,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
  * which by definition, is all one color.
  */
 int
-rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bv *UNUSED(info))
+rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info))
 {
     struct rt_submodel_internal *sip;
     struct db_tree_state state;

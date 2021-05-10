@@ -224,7 +224,7 @@ struct _view_state {
     int		vs_rc;
     int		vs_flag;
 
-    struct bv	*vs_gvp;
+    struct bview *vs_gvp;
     fastf_t	vs_i_Viewscale;
     mat_t	vs_model2objview;
     mat_t	vs_objview2model;

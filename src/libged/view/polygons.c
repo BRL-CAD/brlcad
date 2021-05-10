@@ -588,7 +588,7 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
     }
 
     // Look up the polygon to check for overlaps
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     struct bv_scene_obj *s2 = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
         struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
@@ -792,7 +792,7 @@ end:
     /* Construct an appropriate bv from the sketch's
      * 3D info so we can snap to it. autoview, then dir.
      * TODO - this needs improvement... */
-    struct bv *v = &p->v;
+    struct bview *v = &p->v;
     bv_init(v);
     vect_t center = VINIT_ZERO;
     vect_t min, max;
@@ -1062,7 +1062,7 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     }
 
     // Look up the polygon to check for overlaps
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     struct bv_scene_obj *s2 = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
         struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);

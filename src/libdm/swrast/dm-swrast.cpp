@@ -215,7 +215,7 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 	return DM_NULL;
     }
     privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
-    privars->v = (struct bv *)ctx;
+    privars->v = (struct bview *)ctx;
     // Note - for Qt, dealing with GL_RGB data display was something of a pain.  This backend
     // was switched to RGBA to make it easier to display the output
     privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 16, 0, 0, NULL);

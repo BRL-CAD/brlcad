@@ -197,7 +197,7 @@ rt_grp_free(struct soltab *stp)
  *
  */
 int
-rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_grip_internal *gip;
     vect_t xbase, ybase;	/* perpendiculars to normal */

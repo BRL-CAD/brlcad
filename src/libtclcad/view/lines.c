@@ -37,7 +37,7 @@
 int
 go_data_lines(Tcl_Interp *UNUSED(interp),
 	      struct ged *gedp,
-	      struct bv *gdvp,
+	      struct bview *gdvp,
 	      int argc,
 	      const char *argv[],
 	      const char *usage)
@@ -65,7 +65,7 @@ go_data_lines(Tcl_Interp *UNUSED(interp),
     }
 
 
-    struct bv *btmp = gedp->ged_gvp;
+    struct bview *btmp = gedp->ged_gvp;
     gedp->ged_gvp = gdvp;
 
     ret = ged_view_data_lines(gedp, argc, argv);
@@ -88,7 +88,7 @@ to_data_lines(struct ged *gedp,
 	      const char *usage,
 	      int UNUSED(maxargs))
 {
-    struct bv *gdvp;
+    struct bview *gdvp;
     int ret;
 
     /* initialize result */
@@ -115,7 +115,7 @@ to_data_lines(struct ged *gedp,
     argv[1] = argv[0];
     argv[0] = "view";
 
-    struct bv *btmp = gedp->ged_gvp;
+    struct bview *btmp = gedp->ged_gvp;
     gedp->ged_gvp = gdvp;
 
     ret = ged_view_func(gedp, argc, argv);

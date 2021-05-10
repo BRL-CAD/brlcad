@@ -965,7 +965,7 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
 
 
 int
-rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_part_internal *pip;
     point_t tail;
@@ -1878,7 +1878,7 @@ rt_part_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 void
-rt_part_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
+rt_part_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
     if (!labels || !ip)
 	return;

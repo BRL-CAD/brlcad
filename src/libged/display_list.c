@@ -738,7 +738,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 }
 
 static fastf_t
-draw_solid_wireframe(struct bv_scene_obj *sp, struct bv *gvp, struct db_i *dbip,
+draw_solid_wireframe(struct bv_scene_obj *sp, struct bview *gvp, struct db_i *dbip,
        	const struct bn_tol *tol, const struct bg_tess_tol *ttol)
 {
     int ret;
@@ -781,7 +781,7 @@ draw_solid_wireframe(struct bv_scene_obj *sp, struct bv *gvp, struct db_i *dbip,
 
 
 int
-redraw_solid(struct bv_scene_obj *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bv *gvp)
+redraw_solid(struct bv_scene_obj *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp)
 {
     if (sp->s_os.s_dmode == _GED_WIREFRAME) {
 	/* replot wireframe */
@@ -799,7 +799,7 @@ dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
 {
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct db_tree_state *tsp = &gedp->ged_wdbp->wdb_initial_tree_state;
-    struct bv *gvp = gedp->ged_gvp;
+    struct bview *gvp = gedp->ged_gvp;
     int ret = 0;
     struct bv_scene_obj *sp;
     for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {

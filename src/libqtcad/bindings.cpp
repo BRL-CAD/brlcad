@@ -30,7 +30,7 @@ extern "C" {
 
 #include "bindings.h"
 
-int CADkeyPressEvent(struct bv *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyEvent *UNUSED(k))
+int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyEvent *UNUSED(k))
 {
 
     if (!v)
@@ -57,7 +57,7 @@ int CADkeyPressEvent(struct bv *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyE
 
 }
 
-int CADmousePressEvent(struct bv *v, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e)
+int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e)
 {
 
     if (!v)
@@ -98,7 +98,7 @@ int CADmousePressEvent(struct bv *v, int UNUSED(x_prev), int UNUSED(y_prev), QMo
 
 }
 
-int CADmouseMoveEvent(struct bv *v, int x_prev, int y_prev, QMouseEvent *e)
+int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
 {
 
     if (!v)
@@ -160,7 +160,7 @@ int CADmouseMoveEvent(struct bv *v, int x_prev, int y_prev, QMouseEvent *e)
 
 }
 
-int CADwheelEvent(struct bv *v, QWheelEvent *e)
+int CADwheelEvent(struct bview *v, QWheelEvent *e)
 {
 
     if (!v)

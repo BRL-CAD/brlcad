@@ -1907,7 +1907,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 int
 cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
-    struct bv *gvp = NULL;
+    struct bview *gvp = NULL;
 
     if (GEDP)
 	gvp = GEDP->ged_gvp;

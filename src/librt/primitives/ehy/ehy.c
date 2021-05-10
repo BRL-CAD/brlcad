@@ -864,7 +864,7 @@ ehy_ellipse_points(
 
 
 int
-rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bv *v, fastf_t s_size)
+rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
 {
     vect_t ehy_H, Hu, Au, Bu;
     fastf_t mag_H, z, z_step, c, r1, r2;
@@ -946,7 +946,7 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
 
 int
-rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     fastf_t c, dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_prev, theta_new;
@@ -2050,7 +2050,7 @@ rt_ehy_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 void
-rt_ehy_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
+rt_ehy_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
     if (!labels || !ip)
 	return;

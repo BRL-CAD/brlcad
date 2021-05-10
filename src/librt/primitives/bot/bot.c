@@ -856,7 +856,7 @@ plot_node(const vdsNode *node, void *udata)
 
 
 int
-rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bv *v, fastf_t UNUSED(s_size))
+rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t UNUSED(s_size))
 {
     double d1, d2, d3;
     point_t min;
@@ -919,7 +919,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
         }
 
 int
-rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct bv *info)
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct bview *info)
 {
     struct rt_bot_internal *bot_ip;
     size_t i;

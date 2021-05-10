@@ -72,9 +72,9 @@ extern int Ged_Init(Tcl_Interp *interp);
 extern int Rt_Init(Tcl_Interp *interp);
 
 /* Fb functions */
-extern int to_close_fbs(struct bv *gdvp);
+extern int to_close_fbs(struct bview *gdvp);
 extern void to_fbs_callback();
-extern int to_open_fbs(struct bv *gdvp, Tcl_Interp *interp);
+extern int to_open_fbs(struct bview *gdvp, Tcl_Interp *interp);
 extern int to_set_fb_mode(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
@@ -230,7 +230,7 @@ extern int to_mouse_poly_circ(struct ged *gedp,
                              int maxargs);
 extern int to_mouse_poly_circ_func(Tcl_Interp *interp,
                                   struct ged *gedp,
-                                  struct bv *gdvp,
+                                  struct bview *gdvp,
                                   int argc,
                                   const char *argv[],
                                   const char *usage);
@@ -242,7 +242,7 @@ extern int to_mouse_poly_cont(struct ged *gedp,
                              int maxargs);
 extern int to_mouse_poly_cont_func(Tcl_Interp *interp,
                                   struct ged *gedp,
-                                  struct bv *gdvp,
+                                  struct bview *gdvp,
                                   int argc,
                                   const char *argv[],
                                   const char *usage);
@@ -254,7 +254,7 @@ extern int to_mouse_poly_ell(struct ged *gedp,
                             int maxargs);
 extern int to_mouse_poly_ell_func(Tcl_Interp *interp,
                                  struct ged *gedp,
-                                 struct bv *gdvp,
+                                 struct bview *gdvp,
                                  int argc,
                                  const char *argv[],
                                  const char *usage);
@@ -266,7 +266,7 @@ extern int to_mouse_poly_rect(struct ged *gedp,
                              int maxargs);
 extern int to_mouse_poly_rect_func(Tcl_Interp *interp,
                                   struct ged *gedp,
-                                  struct bv *gdvp,
+                                  struct bview *gdvp,
                                   int argc,
                                   const char *argv[],
                                   const char *usage);
@@ -334,7 +334,7 @@ extern int to_mouse_trans(struct ged *gedp,
 /* Tclcad polygon routines */
 extern int to_data_polygons_func(Tcl_Interp *interp,
                                  struct ged *gedp,
-                                 struct bv *gdvp,
+                                 struct bview *gdvp,
                                  int argc,
                                  const char *argv[]);
 extern int to_data_polygons(struct ged *gedp,
@@ -352,7 +352,7 @@ extern int to_poly_circ_mode(struct ged *gedp,
 			     int maxargs);
 extern int to_poly_circ_mode_func(Tcl_Interp *interp,
 				  struct ged *gedp,
-				  struct bv *gdvp,
+				  struct bview *gdvp,
 				  int argc,
 				  const char *argv[],
 				  const char *usage);
@@ -368,7 +368,7 @@ extern int to_poly_cont_build_end(struct ged *gedp,
 				  ged_func_ptr func,
 				  const char *usage,
 				  int maxargs);
-extern int to_poly_cont_build_end_func(struct bv *gdvp,
+extern int to_poly_cont_build_end_func(struct bview *gdvp,
 				       int argc,
 				       const char *argv[]);
 extern int to_poly_ell_mode(struct ged *gedp,
@@ -379,7 +379,7 @@ extern int to_poly_ell_mode(struct ged *gedp,
 			    int maxargs);
 extern int to_poly_ell_mode_func(Tcl_Interp *interp,
 				 struct ged *gedp,
-				 struct bv *gdvp,
+				 struct bview *gdvp,
 				 int argc,
 				 const char *argv[],
 				 const char *usage);
@@ -391,7 +391,7 @@ extern int to_poly_rect_mode(struct ged *gedp,
 			     int maxargs);
 extern int to_poly_rect_mode_func(Tcl_Interp *interp,
 				  struct ged *gedp,
-				  struct bv *gdvp,
+				  struct bview *gdvp,
 				  int argc,
 				  const char *argv[],
 				  const char *usage);

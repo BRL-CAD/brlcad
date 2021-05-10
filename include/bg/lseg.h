@@ -58,16 +58,16 @@ bg_distsq_lseg3_lseg3(point_t *c1, point_t *c2,
  * bv structures. */
 
 /* Snap sample 2D point to lines active in the view */
-BG_EXPORT extern int bv_snap_lines_2d(struct bv *v, fastf_t *fx, fastf_t *fy);
+BG_EXPORT extern int bv_snap_lines_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
 
 /* Snap sample 2D point to grid active in the view */
-BG_EXPORT extern int bv_snap_grid_2d(struct bv *v, fastf_t *fx, fastf_t *fy);
+BG_EXPORT extern int bv_snap_grid_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
 
 /* Snap sample 3D point to lines active in the view */
-BG_EXPORT extern int bv_snap_lines_3d(point_t *out_pt, struct bv *v, point_t *p);
+BG_EXPORT extern int bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p);
 
 
-BG_EXPORT extern void bv_view_center_linesnap(struct bv *v);
+BG_EXPORT extern void bv_view_center_linesnap(struct bview *v);
 
 
 

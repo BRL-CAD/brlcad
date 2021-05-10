@@ -64,7 +64,7 @@ extern "C" {
 extern struct dm dm_swrast;
 
 struct swrast_vars {
-    struct bv *v;
+    struct bview *v;
     OSMesaContext ctx;
     void *os_b;
     struct FONScontext *fs;

@@ -385,7 +385,7 @@ bv_dl_hash(struct display_list *dl)
 
 
 unsigned long long
-bv_hash(struct bv *v)
+bv_hash(struct bview *v)
 {
     if (!v)
 	return 0;

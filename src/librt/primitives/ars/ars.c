@@ -716,7 +716,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 
 int
-rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register size_t i;
     register size_t j;
@@ -965,7 +965,7 @@ rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 void
-rt_ars_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
+rt_ars_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
     if (!labels || !ip)
 	return;

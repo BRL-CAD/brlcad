@@ -34,7 +34,7 @@
 #include "../view/view.h"
 
 void
-go_refresh_draw(struct ged *gedp, struct bv *gdvp, int restore_zbuffer)
+go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 {
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
@@ -120,7 +120,7 @@ go_refresh_draw(struct ged *gedp, struct bv *gdvp, int restore_zbuffer)
 }
 
 void
-go_refresh(struct ged *gedp, struct bv *gdvp)
+go_refresh(struct ged *gedp, struct bview *gdvp)
 {
     int restore_zbuffer = 0;
 
@@ -137,7 +137,7 @@ go_refresh(struct ged *gedp, struct bv *gdvp)
 }
 
 void
-to_refresh_view(struct bv *gdvp)
+to_refresh_view(struct bview *gdvp)
 {
 
     if (current_top == NULL)
@@ -154,10 +154,10 @@ to_refresh_view(struct bv *gdvp)
 void
 to_refresh_all_views(struct tclcad_obj *top)
 {
-    struct bv *gdvp;
+    struct bview *gdvp;
 
     for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views); i++) {
-	gdvp = (struct bv *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
+	gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
 	to_refresh_view(gdvp);
     }
 }
@@ -247,7 +247,7 @@ int
 to_handle_refresh(struct ged *gedp,
 		  const char *name)
 {
-    struct bv *gdvp;
+    struct bview *gdvp;
 
     gdvp = ged_find_view(gedp, name);
     if (!gdvp) {
@@ -264,7 +264,7 @@ to_handle_refresh(struct ged *gedp,
 void
 to_refresh_handler(void *clientdata)
 {
-    struct bv *gdvp = (struct bv *)clientdata;
+    struct bview *gdvp = (struct bview *)clientdata;
 
     /* Possibly do more here */
 

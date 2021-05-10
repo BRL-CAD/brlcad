@@ -366,7 +366,7 @@ new_edit_mats(void)
 
 
 void
-mged_view_callback(struct bv *gvp,
+mged_view_callback(struct bview *gvp,
 		   void *clientData)
 {
     struct _view_state *vsp = (struct _view_state *)clientData;

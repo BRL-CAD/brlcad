@@ -1350,7 +1350,7 @@ rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat
 
 
 int
-rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register struct rt_ebm_internal *eip;
     size_t x, y;

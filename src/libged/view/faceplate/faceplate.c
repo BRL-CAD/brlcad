@@ -83,7 +83,7 @@ _fp_cmd_center_dot(void *ds, int argc, const char **argv)
 
     struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
     struct ged *gedp = gd->gedp;
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
 
     if (!argc) {
 	if (gd->verbosity) {
@@ -143,7 +143,7 @@ _fp_cmd_fps(void *ds, int argc, const char **argv)
 
     struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
     struct ged *gedp = gd->gedp;
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
 
     if (!argc) {
 	if (gd->verbosity) {
@@ -187,7 +187,7 @@ _fp_cmd_scale(void *ds, int argc, const char **argv)
 
     struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
     struct ged *gedp = gd->gedp;
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
 
     if (!argc) {
 	if (gd->verbosity) {
@@ -247,7 +247,7 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 
     struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
     struct ged *gedp = gd->gedp;
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
 
     if (!argc) {
 	if (gd->verbosity) {

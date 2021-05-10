@@ -833,7 +833,7 @@ ant_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 
 
 int
-rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_annot_internal *annot_ip;
     int ret;

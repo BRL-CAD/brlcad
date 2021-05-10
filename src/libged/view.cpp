@@ -35,7 +35,7 @@ extern "C" int
 ged_view_update(struct ged *gedp)
 {
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     struct bu_ptbl *sg = v->gv_db_grps;
     std::set<struct bv_scene_group *> regen;
     std::set<struct bv_scene_group *>::iterator r_it;

@@ -136,12 +136,12 @@ _ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
     return GED_OK;
 }
 
-struct bv *
+struct bview *
 ged_find_view(struct ged *gedp, const char *key)
 {
-    struct bv *gdvp = NULL;
+    struct bview *gdvp = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	gdvp = (struct bv *)BU_PTBL_GET(&gedp->ged_views, i);
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), key))
 	    break;
 	gdvp = NULL;

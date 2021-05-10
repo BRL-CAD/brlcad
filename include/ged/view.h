@@ -150,7 +150,7 @@ GED_EXPORT extern struct bg_polygon *ged_import_polygon(struct ged *gedp, const 
 GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polygon *polyB);
 GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
 
-GED_EXPORT extern struct bv * ged_find_view(struct ged *gedp, const char *key);
+GED_EXPORT extern struct bview * ged_find_view(struct ged *gedp, const char *key);
 
 __END_DECLS
 

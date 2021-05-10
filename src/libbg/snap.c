@@ -155,7 +155,7 @@ _find_close_isect(struct bv_cp_info *s, point_t *p)
 }
 
 static double
-line_tol_sq(struct bv *v, struct bv_data_line_state *gdlsp)
+line_tol_sq(struct bview *v, struct bv_data_line_state *gdlsp)
 {
     if (!v || !gdlsp)
 	return 100*100;
@@ -176,7 +176,7 @@ line_tol_sq(struct bv *v, struct bv_data_line_state *gdlsp)
 }
 
 int
-bv_snap_lines_3d(point_t *out_pt, struct bv *v, point_t *p)
+bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
 {
     struct bv_cp_info cpinfo = BV_CP_INFO_INIT;
 
@@ -210,7 +210,7 @@ bv_snap_lines_3d(point_t *out_pt, struct bv *v, point_t *p)
 }
 
 int
-bv_snap_lines_2d(struct bv *v, fastf_t *vx, fastf_t *vy)
+bv_snap_lines_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
 {
     if (!v || !vx || !vy) return 0;
 
@@ -232,7 +232,7 @@ bv_snap_lines_2d(struct bv *v, fastf_t *vx, fastf_t *vy)
 }
 
 void
-bv_view_center_linesnap(struct bv *v)
+bv_view_center_linesnap(struct bview *v)
 {
     point_t view_pt;
     point_t model_pt;
@@ -246,7 +246,7 @@ bv_view_center_linesnap(struct bv *v)
 }
 
 int
-bv_snap_grid_2d(struct bv *v, fastf_t *vx, fastf_t *vy)
+bv_snap_grid_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
 {
     int nh, nv;		/* whole grid units */
     point_t view_pt;

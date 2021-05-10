@@ -34,10 +34,10 @@
 __BEGIN_DECLS
 
 /* defined in adc.c */
-GED_EXPORT extern void ged_calc_adc_pos(struct bv *gvp);
-GED_EXPORT extern void ged_calc_adc_a1(struct bv *gvp);
-GED_EXPORT extern void ged_calc_adc_a2(struct bv *gvp);
-GED_EXPORT extern void ged_calc_adc_dst(struct bv *gvp);
+GED_EXPORT extern void ged_calc_adc_pos(struct bview *gvp);
+GED_EXPORT extern void ged_calc_adc_a1(struct bview *gvp);
+GED_EXPORT extern void ged_calc_adc_a2(struct bview *gvp);
+GED_EXPORT extern void ged_calc_adc_dst(struct bview *gvp);
 /**
  * Angle distance cursor.
  */

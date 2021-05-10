@@ -428,7 +428,7 @@ rt_cline_free(register struct soltab *stp)
 
 
 int
-rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_cline_internal *cline_ip;
     fastf_t top[16*3];
@@ -1132,7 +1132,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
 }
 
 void
-rt_cline_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
+rt_cline_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
     if (!labels || !ip)
 	return;

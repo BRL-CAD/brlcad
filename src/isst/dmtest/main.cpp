@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 
     // If we have a GED structure, connect the wires
     if (app.gedp) {
-	BU_GET(app.gedp->ged_gvp, struct bv);
+	BU_GET(app.gedp->ged_gvp, struct bview);
 	bv_init(app.gedp->ged_gvp);
 	bu_ptbl_ins_unique(&app.gedp->ged_views, (long int *)app.gedp->ged_gvp);
 	if (app.w->canvas) {

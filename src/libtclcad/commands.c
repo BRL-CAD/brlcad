@@ -132,7 +132,7 @@ HIDDEN int to_data_move(struct ged *gedp,
 	const char *usage,
 	int maxargs);
 HIDDEN int to_data_move_func(struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage);
@@ -143,7 +143,7 @@ HIDDEN int to_data_move_object_mode(struct ged *gedp,
 	const char *usage,
 	int maxargs);
 HIDDEN int to_data_move_object_mode_func(struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage);
@@ -154,7 +154,7 @@ HIDDEN int to_data_move_point_mode(struct ged *gedp,
 	const char *usage,
 	int maxargs);
 HIDDEN int to_data_move_point_mode_func(struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage);
@@ -166,7 +166,7 @@ HIDDEN int to_data_pick(struct ged *gedp,
 	int maxargs);
 HIDDEN int
 to_data_pick_func(struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage);
@@ -1104,9 +1104,9 @@ to_deleteProc(ClientData clientData)
     if (top->to_gedp) {
 
 	// Clean up the libtclcad view data.
-	struct bv *gdvp = NULL;
+	struct bview *gdvp = NULL;
 	for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views); i++) {
-	    gdvp = (struct bv *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
+	    gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
 
 	    // There is a top level command created in the Tcl interp that is the name
 	    // of the dm.  Clear that command.
@@ -1346,7 +1346,7 @@ to_bg(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -1416,7 +1416,7 @@ to_bounds(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -1480,7 +1480,7 @@ to_configure(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -1548,7 +1548,7 @@ to_constrain_rmode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -1613,7 +1613,7 @@ to_constrain_tmode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -1779,7 +1779,7 @@ to_copy(struct ged *gedp,
 int
 go_data_move(Tcl_Interp *UNUSED(interp),
 	struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage)
@@ -1833,7 +1833,7 @@ to_data_move(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -1847,7 +1847,7 @@ to_data_move(struct ged *gedp,
 
 HIDDEN int
 to_data_move_func(struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage)
@@ -2182,7 +2182,7 @@ bad:
 int
 go_data_move_object_mode(Tcl_Interp *UNUSED(interp),
 	struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage)
@@ -2233,7 +2233,7 @@ to_data_move_object_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -2247,7 +2247,7 @@ to_data_move_object_mode(struct ged *gedp,
 
 HIDDEN int
 to_data_move_object_mode_func(struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int UNUSED(argc),
 	const char *argv[],
 	const char *usage)
@@ -2274,7 +2274,7 @@ to_data_move_object_mode_func(struct ged *gedp,
 int
 go_data_move_point_mode(Tcl_Interp *UNUSED(interp),
 	struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage)
@@ -2325,7 +2325,7 @@ to_data_move_point_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -2339,7 +2339,7 @@ to_data_move_point_mode(struct ged *gedp,
 
 HIDDEN int
 to_data_move_point_mode_func(struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int UNUSED(argc),
 	const char *argv[],
 	const char *usage)
@@ -2365,7 +2365,7 @@ to_data_move_point_mode_func(struct ged *gedp,
 
 int
 go_data_pick(struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage)
@@ -2416,7 +2416,7 @@ to_data_pick(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -2430,7 +2430,7 @@ to_data_pick(struct ged *gedp,
 
 HIDDEN int
 to_data_pick_func(struct ged *gedp,
-	struct bv *gdvp,
+	struct bview *gdvp,
 	int argc,
 	const char *argv[],
 	const char *usage)
@@ -2812,7 +2812,7 @@ to_data_vZ(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -2837,7 +2837,7 @@ to_data_vZ(struct ged *gedp,
 
 
 HIDDEN void
-to_init_default_bindings(struct bv *gdvp)
+to_init_default_bindings(struct bview *gdvp)
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
 
@@ -3150,7 +3150,7 @@ to_dplot(struct ged *gedp,
     struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
     struct bu_vls result_copy = BU_VLS_INIT_ZERO;
-    struct bv *gdvp;
+    struct bview *gdvp;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
     const char *who_av[3] = {"who", "b", NULL};
     int first = 1;
@@ -3184,7 +3184,7 @@ to_dplot(struct ged *gedp,
 	bu_vls_trunc(gedp->ged_result_str, 0);
 
 	for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-	    gdvp = (struct bv *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	    gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	    if (to_is_viewable(gdvp)) {
 		gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
 		gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
@@ -3256,7 +3256,7 @@ to_dplot(struct ged *gedp,
     }
 
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-	gdvp = (struct bv *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (to_is_viewable(gdvp)) {
 	    gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
 	    gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
@@ -3299,7 +3299,7 @@ to_fontsize(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -3456,7 +3456,7 @@ to_init_view_bindings(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -3490,7 +3490,7 @@ to_delete_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -3558,7 +3558,7 @@ to_hide_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -3581,7 +3581,7 @@ to_hide_view(struct ged *gedp,
 
 struct redraw_edited_path_data {
     struct ged *gedp;
-    struct bv *gdvp;
+    struct bview *gdvp;
     int *need_refresh;
 };
 
@@ -3697,7 +3697,7 @@ to_idle_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -3805,7 +3805,7 @@ to_light(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -3842,7 +3842,7 @@ to_list_views(struct ged *gedp,
 	const char *UNUSED(usage),
 	int UNUSED(maxargs))
 {
-    struct bv *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3853,7 +3853,7 @@ to_list_views(struct ged *gedp,
     }
 
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-	gdvp = (struct bv *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	bu_vls_printf(gedp->ged_result_str, "%s ", bu_vls_addr(&gdvp->gv_name));
     }
 
@@ -3886,10 +3886,10 @@ to_lod(struct ged *gedp,
 	const char *UNUSED(usage),
 	int UNUSED(maxargs))
 {
-    struct bv *gdvp;
+    struct bview *gdvp;
 
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-	gdvp = (struct bv *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	gedp->ged_gvp = gdvp;
 	(*func)(gedp, argc, (const char **)argv);
     }
@@ -3965,7 +3965,7 @@ to_edit_motion_delta_callback(struct ged *gedp,
 	return GED_HELP;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4056,7 +4056,7 @@ to_move_arb_edge_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4115,7 +4115,7 @@ to_move_arb_face_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4230,7 +4230,7 @@ to_bot_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4290,7 +4290,7 @@ to_bot_move_pnts_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4352,7 +4352,7 @@ to_metaball_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4411,7 +4411,7 @@ to_pipe_move_pnt_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4482,7 +4482,7 @@ to_new_view(struct ged *gedp,
 	const char *usage,
 	int UNUSED(maxargs))
 {
-    struct bv *new_gdvp;
+    struct bview *new_gdvp;
     HIDDEN const int name_index = 1;
     const char *type = NULL;
     struct bu_vls event_vls = BU_VLS_INIT_ZERO;
@@ -4533,7 +4533,7 @@ to_new_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    BU_ALLOC(new_gdvp, struct bv);
+    BU_ALLOC(new_gdvp, struct bview);
     BU_GET(new_gdvp->callbacks, struct bu_ptbl);
     bu_ptbl_init(new_gdvp->callbacks, 8, "bv callbacks");
 
@@ -4657,7 +4657,7 @@ to_orotate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4715,7 +4715,7 @@ to_oscale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4774,7 +4774,7 @@ to_otranslate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4827,7 +4827,7 @@ to_paint_rect_area(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4876,7 +4876,7 @@ to_pix(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -4961,7 +4961,7 @@ to_png(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5064,7 +5064,7 @@ to_rect_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5149,7 +5149,7 @@ to_rotate_arb_face_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5209,7 +5209,7 @@ to_rotate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5372,7 +5372,7 @@ to_protate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5431,7 +5431,7 @@ to_pscale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5490,7 +5490,7 @@ to_ptranslate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5549,7 +5549,7 @@ to_data_scale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5606,7 +5606,7 @@ to_scale_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5664,7 +5664,7 @@ to_screen2model(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5715,7 +5715,7 @@ to_screen2view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5760,7 +5760,7 @@ to_set_coord(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5811,7 +5811,7 @@ to_snap_view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5940,7 +5940,7 @@ to_translate_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -5994,7 +5994,7 @@ to_transparency(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -6041,7 +6041,7 @@ to_view_callback(struct ged *gedp,
 	return GED_HELP;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -6089,7 +6089,7 @@ to_view_win_size(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -6154,7 +6154,7 @@ to_view2screen(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -6199,7 +6199,7 @@ to_vmake(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -6272,7 +6272,7 @@ to_vslew(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -6359,7 +6359,7 @@ to_zbuffer(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -6414,7 +6414,7 @@ to_zclip(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    struct bv *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
@@ -6450,13 +6450,13 @@ to_zclip(struct ged *gedp,
 HIDDEN void
 to_create_vlist_callback_solid(struct bv_scene_obj *sp)
 {
-    struct bv *gdvp;
+    struct bview *gdvp;
     int first = 1;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
 
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-	gdvp = (struct bv *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (tgd->go_dmv.dlist_on && to_is_viewable(gdvp)) {
 
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
@@ -6501,11 +6501,11 @@ to_create_vlist_callback(struct display_list *gdlp)
 HIDDEN void
 to_destroy_vlist_callback(unsigned int dlist, int range)
 {
-    struct bv *gdvp;
+    struct bview *gdvp;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
 
     for (size_t i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-	gdvp = (struct bv *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (tgd->go_dmv.dlist_on && to_is_viewable(gdvp)) {
 	    (void)dm_make_current((struct dm *)gdvp->dmp);
 	    (void)dm_free_dlists((struct dm *)gdvp->dmp, dlist, range);

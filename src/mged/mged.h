@@ -225,7 +225,7 @@ extern struct directory **dir_getspace();
 extern void ellipse();
 
 /* mged.c */
-extern void mged_view_callback(struct bv *gvp, void *clientData);
+extern void mged_view_callback(struct bview *gvp, void *clientData);
 
 /* buttons.c */
 extern void button(int bnum);

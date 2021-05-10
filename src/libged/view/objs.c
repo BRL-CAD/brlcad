@@ -271,7 +271,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     if (argc) {
 	int x, y;
 	if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&x) != 1 || x < 0) {
@@ -355,7 +355,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	list_view = 1;
 
     // If we're not wanting help and we have no subcommand, list defined view objects
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
 	if (list_db) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {

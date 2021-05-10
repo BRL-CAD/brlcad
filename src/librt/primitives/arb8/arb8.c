@@ -1171,7 +1171,7 @@ rt_arb_free(register struct soltab *stp)
  * be.
  */
 int
-rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     point_t *pts;
     struct rt_arb_internal *aip;
@@ -2525,7 +2525,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 }
 
 void
-rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
+rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
     int i;
 

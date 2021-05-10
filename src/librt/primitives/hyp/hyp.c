@@ -631,7 +631,7 @@ rt_hyp_free(struct soltab *stp)
 
 
 int
-rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
@@ -1432,7 +1432,7 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 }
 
 void
-rt_hyp_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
+rt_hyp_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
     if (!labels || !ip)
 	return;

@@ -97,8 +97,8 @@ main(int argc, const char **argv)
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
     /* Need a view for commands that expect a view */
-    struct bv *gsh_view;
-    BU_GET(gsh_view, struct bv);
+    struct bview *gsh_view;
+    BU_GET(gsh_view, struct bview);
     bv_init(gsh_view);
 
     /* See if we've been told to pre-load a specific .g file. */
@@ -279,7 +279,7 @@ main(int argc, const char **argv)
 	    // The command ran, see if the display needs updating
 	    if (gedp->ged_dmp) {
 		struct dm *dmp = (struct dm *)gedp->ged_dmp;
-		struct bv *v = gedp->ged_gvp;
+		struct bview *v = gedp->ged_gvp;
 		unsigned long long dhash = dm_hash(dmp);
 		unsigned long long vhash = bv_hash(gedp->ged_gvp);
 		unsigned long long lhash = dl_name_hash(gedp);

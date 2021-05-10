@@ -325,7 +325,7 @@ struct bv_polygon {
 
     /* We stash the view state on creation, so we know how to return
      * to it for future 2D alterations */
-    struct bv v;
+    struct bview v;
 
     /* Actual polygon info */
     struct bg_polygon   polygon;
@@ -336,7 +336,7 @@ struct bv_polygon {
 //
 //  v->gv_width  = dm_get_width((struct dm *)v->dmp);
 //  v->gv_height = dm_get_height((struct dm *)v->dmp);
-BG_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bv *v, int type, int x, int y, struct bv_scene_obj *free_scene_obj);
+BG_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int type, int x, int y, struct bv_scene_obj *free_scene_obj);
 BG_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s);
 
 

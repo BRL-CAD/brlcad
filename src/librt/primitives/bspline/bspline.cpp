@@ -91,7 +91,7 @@ struct nurb_hit {
     extern void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     extern void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
     extern void rt_brep_free(struct soltab *stp);
-    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bv *UNUSED(info));
+    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info));
 
 #endif /* CONVERT_TO_BREP */
 
@@ -556,7 +556,7 @@ rt_nurb_free(struct soltab *stp)
 
 
 int
-rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bv *UNUSED(info))
+rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info))
 {
     struct rt_nurb_internal *sip;
 
@@ -1435,7 +1435,7 @@ rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 }
 
 extern "C" void
-rt_nurb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
+rt_nurb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
     if (!labels || !ip)
 	return;

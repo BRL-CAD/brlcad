@@ -587,7 +587,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     if (_dgcdp != (struct _ged_client_data *)0) {
 	dgcdp = *_dgcdp;            /* struct copy */
     } else {
-	struct bv *gvp;
+	struct bview *gvp;
 
 	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
 	dgcdp.gedp = gedp;

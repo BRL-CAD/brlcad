@@ -39,7 +39,7 @@ RT_EXPORT extern int rt_pg_plot(struct bu_list          *vhead,
 				struct rt_db_internal   *ip,
 				const struct bg_tess_tol *ttol,
 				const struct bn_tol     *tol,
-				const struct bv *info);
+				const struct bview *info);
 RT_EXPORT extern int rt_pg_plot_poly(struct bu_list             *vhead,
 				     struct rt_db_internal      *ip,
 				     const struct bg_tess_tol   *ttol,

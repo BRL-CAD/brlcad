@@ -36,7 +36,7 @@
  * during view initialization, the shaders regression test fails.
  */
 void
-_ged_mat_aet(struct bv *gvp)
+_ged_mat_aet(struct bview *gvp)
 {
     mat_t tmat;
     fastf_t twist;

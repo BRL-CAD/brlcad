@@ -299,7 +299,7 @@ dm_draw_lines(struct dm *dmp, struct bv_data_line_state *gdlsp)
 
 
 void
-dm_draw_faceplate(struct bv *v, double base2local, double local2base)
+dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 {
     /* Center dot */
     if (v->gv_center_dot.gos_draw) {
@@ -590,7 +590,7 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s)
 }
 
 void
-dm_draw_viewobjs(struct rt_wdb *wdbp, struct bv *v, struct dm_view_data *vd, double base2local, double local2base)
+dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, double base2local, double local2base)
 {
     struct dm *dmp = (struct dm *)v->dmp;
     int width = dm_get_width(dmp);
@@ -670,7 +670,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bv *v, struct dm_view_data *vd, dou
 }
 
 void
-dm_draw_objs(struct bv *v, double base2local, double local2base)
+dm_draw_objs(struct bview *v, double base2local, double local2base)
 {
     struct dm *dmp = (struct dm *)v->dmp;
 

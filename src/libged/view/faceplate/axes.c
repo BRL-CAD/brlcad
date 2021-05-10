@@ -686,7 +686,7 @@ _fp_cmd_model_axes(void *bs, int argc, const char **argv)
     int help = 0;
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
 
     const char *usage_string = "view faceplate model_axes subcmd [args]";
     const char *purpose_string = "manipulate view axes";
@@ -744,7 +744,7 @@ _fp_cmd_view_axes(void *bs, int argc, const char **argv)
     int help = 0;
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
 
     const char *usage_string = "view faceplate view_axes subcmd [args]";
     const char *purpose_string = "manipulate view axes";

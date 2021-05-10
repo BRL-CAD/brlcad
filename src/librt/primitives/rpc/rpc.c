@@ -862,7 +862,7 @@ rpc_curve_points(
 }
 
 int
-rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bv *v, fastf_t s_size)
+rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     point_t p;
     vect_t rpc_R;
@@ -928,7 +928,7 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 }
 
 int
-rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_rpc_internal *xip;
     fastf_t *front;
@@ -1705,7 +1705,7 @@ rpc_is_valid(struct rt_rpc_internal *rpc)
 }
 
 void
-rt_rpc_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
+rt_rpc_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
     if (!labels || !ip)
 	return;

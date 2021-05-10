@@ -147,7 +147,7 @@ DM_MainWindow::run_cmd(const QString &command)
 		bu_vls_sprintf(&msg, "Could not open %s as a .g file\n", av[1]) ;
 		console->printString(bu_vls_cstr(&msg));
 	    } else {
-		BU_GET((*gedpp)->ged_gvp, struct bv);
+		BU_GET((*gedpp)->ged_gvp, struct bview);
 		bv_init((*gedpp)->ged_gvp);
 		bu_ptbl_ins_unique(&(*gedpp)->ged_views, (long int *)(*gedpp)->ged_gvp);
 

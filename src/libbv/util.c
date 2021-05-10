@@ -36,7 +36,7 @@
 #include "bv/util.h"
 
 void
-bv_init(struct bv *gvp)
+bv_init(struct bview *gvp)
 {
     if (!gvp)
 	return;
@@ -163,7 +163,7 @@ bv_init(struct bv *gvp)
 // TODO - investigate saveview/loadview logic, see if anything
 // makes sense to move here
 void
-bv_sync(struct bv *dest, struct bv *src)
+bv_sync(struct bview *dest, struct bview *src)
 {
     if (!src || !dest)
 	return;
@@ -196,7 +196,7 @@ bv_sync(struct bv *dest, struct bv *src)
 }
 
 void
-bv_update(struct bv *gvp)
+bv_update(struct bview *gvp)
 {
     vect_t work, work1;
     vect_t temp, temp1;
@@ -268,7 +268,7 @@ bv_settings_sync(struct bv_settings *dest, struct bv_settings *src)
 }
 
 int
-bv_update_selected(struct bv *gvp)
+bv_update_selected(struct bview *gvp)
 {
     int ret = 0;
     if (!gvp)
@@ -286,7 +286,7 @@ bv_update_selected(struct bv *gvp)
 
 // TODO - support constraints
 int
-_bv_rot(struct bv *v, int dx, int dy, point_t keypoint, unsigned long long UNUSED(flags))
+_bv_rot(struct bview *v, int dx, int dy, point_t keypoint, unsigned long long UNUSED(flags))
 {
     if (!v)
 	return 0;
@@ -321,7 +321,7 @@ _bv_rot(struct bv *v, int dx, int dy, point_t keypoint, unsigned long long UNUSE
 }
 
 int
-_bv_trans(struct bv *v, int dx, int dy, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
+_bv_trans(struct bview *v, int dx, int dy, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
 {
     if (!v)
 	return 0;
@@ -346,7 +346,7 @@ _bv_trans(struct bv *v, int dx, int dy, point_t UNUSED(keypoint), unsigned long 
 }
 
 int
-_bv_scale(struct bv *v, int sensitivity, int factor, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
+_bv_scale(struct bview *v, int sensitivity, int factor, point_t UNUSED(keypoint), unsigned long long UNUSED(flags))
 {
     double f = (double)factor/(double)sensitivity;
 
@@ -368,7 +368,7 @@ _bv_scale(struct bv *v, int sensitivity, int factor, point_t UNUSED(keypoint), u
 }
 
 int
-bv_adjust(struct bv *v, int dx, int dy, point_t keypoint, int UNUSED(mode), unsigned long long flags)
+bv_adjust(struct bview *v, int dx, int dy, point_t keypoint, int UNUSED(mode), unsigned long long flags)
 {
     if (flags == BV_IDLE)
 	return 0;
@@ -388,7 +388,7 @@ bv_adjust(struct bv *v, int dx, int dy, point_t keypoint, int UNUSED(mode), unsi
 
 
 int
-bv_screen_to_view(struct bv *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y)
+bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y)
 {
     if (!v)
 	return -1;

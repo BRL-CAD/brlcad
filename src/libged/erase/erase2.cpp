@@ -260,7 +260,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[object(s)]";
     const char *cmdName = argv[0];
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

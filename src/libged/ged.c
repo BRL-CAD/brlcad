@@ -166,9 +166,9 @@ ged_free(struct ged *gedp)
 
     // Note - it is the caller's responsibility to have freed any data
     // associated with the ged or its views in the u_data pointers.
-    struct bv *gdvp;
+    struct bview *gdvp;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	gdvp = (struct bv *)BU_PTBL_GET(&gedp->ged_views, i);
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
 	bu_vls_free(&gdvp->gv_name);
 	if (gdvp->callbacks) {
 	    bu_ptbl_free(gdvp->callbacks);

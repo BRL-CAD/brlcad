@@ -192,7 +192,7 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 }
 
 struct bv_scene_obj *
-bv_create_polygon(struct bv *v, int type, int x, int y, struct bv_scene_obj *free_scene_obj)
+bv_create_polygon(struct bview *v, int type, int x, int y, struct bv_scene_obj *free_scene_obj)
 {
     struct bv_scene_obj *s;
     GET_BV_SCENE_OBJ(s, &free_scene_obj->l);
@@ -289,7 +289,7 @@ bv_append_polygon_pt(struct bv_scene_obj *s)
 
     fastf_t fx, fy;
 
-    struct bv *v = s->s_v;
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
@@ -328,7 +328,7 @@ bv_select_polygon_pt(struct bv_scene_obj *s)
 
     fastf_t fx, fy;
 
-    struct bv *v = s->s_v;
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
@@ -399,7 +399,7 @@ bv_move_polygon_pt(struct bv_scene_obj *s)
 
     fastf_t fx, fy;
 
-    struct bv *v = s->s_v;
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
@@ -444,7 +444,7 @@ bv_update_polygon_circle(struct bv_scene_obj *s)
     point_t v_pt;
     vect_t vdiff;
 
-    struct bv *v = s->s_v;
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
@@ -515,7 +515,7 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s)
 
     fastf_t fx, fy;
 
-    struct bv *v = s->s_v;
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
@@ -602,7 +602,7 @@ bv_update_polygon_rectangle(struct bv_scene_obj *s)
 
     fastf_t fx, fy;
 
-    struct bv *v = s->s_v;
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
@@ -642,7 +642,7 @@ bv_update_polygon_square(struct bv_scene_obj *s)
     fastf_t fx, fy;
 
      // Use the polygon's view context
-    struct bv *v = s->s_v;
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 

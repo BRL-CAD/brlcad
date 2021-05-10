@@ -1987,7 +1987,7 @@ tgc_connecting_lines(
 
 
 int
-rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bv *v, fastf_t s_size)
+rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
 {
     int points_per_ellipse, connecting_lines;
     struct rt_tgc_internal *tip;
@@ -2091,7 +2091,7 @@ rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
 
 int
-rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
+rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_tgc_internal *tip;
     register int i;
@@ -3441,7 +3441,7 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 void
-rt_tgc_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
+rt_tgc_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
 {
     if (!labels || !ip)
 	return;

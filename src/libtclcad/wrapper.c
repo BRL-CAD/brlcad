@@ -41,7 +41,7 @@ to_autoview_func(struct ged *gedp,
     char *av[2];
     int aflag = 0;
     int rflag = 0;
-    struct bv *gdvp;
+    struct bview *gdvp;
 
     av[0] = "who";
     av[1] = (char *)0;
@@ -62,7 +62,7 @@ to_autoview_func(struct ged *gedp,
 	aflag = 1;
 
     for (i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-	gdvp = (struct bv *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
 	if (to_is_viewable(gdvp)) {
 	    gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
 	    gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
@@ -248,7 +248,7 @@ to_view_func_common(struct ged *gedp,
     int ret;
     int ac;
     char **av;
-    struct bv *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -368,7 +368,7 @@ to_dm_func(struct ged *gedp,
     int ret;
     int ac;
     char **av;
-    struct bv *gdvp;
+    struct bview *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);

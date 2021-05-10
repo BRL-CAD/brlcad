@@ -399,7 +399,7 @@ _bv_settings_differ(struct bv_settings *v1, struct bv_settings *v2)
     return 0;
 }
 int
-bv_differ(struct bv *v1, struct bv *v2)
+bv_differ(struct bview *v1, struct bview *v2)
 {
     /* First, do sanity checks */
     if (!v1 && !v2)

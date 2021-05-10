@@ -113,7 +113,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     }
 
     struct ged *gedp = gd->gedp;
-    struct bv *gvp;
+    struct bview *gvp;
     int print_help = 0;
     static const char *usage = "view lod enabled [0|1]\n"
 			       "view lod redraw_on_zoom [0|1]>\n"
@@ -270,7 +270,7 @@ _view_cmd_selections(void *bs, int argc, const char **argv)
 
     argc--; argv++;
 
-    struct bv *v = gd->gedp->ged_gvp;
+    struct bview *v = gd->gedp->ged_gvp;
     if (!v) {
 	bu_vls_printf(gd->gedp->ged_result_str, "no current view selected\n");
 	return GED_ERROR;
@@ -333,7 +333,7 @@ _view_cmd_width(void *ds, int argc, const char **argv)
 
     struct _ged_view_info *gd = (struct _ged_view_info *)ds;
     struct ged *gedp = gd->gedp;
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     bu_vls_printf(gd->gedp->ged_result_str, "%d\n", v->gv_width);
     return GED_OK;
 }
@@ -351,7 +351,7 @@ _view_cmd_height(void *ds, int argc, const char **argv)
 
     struct _ged_view_info *gd = (struct _ged_view_info *)ds;
     struct ged *gedp = gd->gedp;
-    struct bv *v = gedp->ged_gvp;
+    struct bview *v = gedp->ged_gvp;
     bu_vls_printf(gd->gedp->ged_result_str, "%d\n", v->gv_height);
     return GED_OK;
 }

@@ -108,7 +108,7 @@ _fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
 	const struct bn_tol *tol,
 	mat_t *s_mat,
 	struct resource *res,
-	struct bv *v
+	struct bview *v
 	)
 {
     VSET(*bmin, INFINITY, INFINITY, INFINITY);
@@ -362,7 +362,7 @@ _ged_free_draw_data(struct bv_scene_obj *s)
 struct draw_data_t {
     struct db_i *dbip;
     struct bv_scene_group *g;
-    struct bv *v;
+    struct bview *v;
     struct bv_settings *vs;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
@@ -981,7 +981,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     if (blank_slate && gedp->ged_gvp->adaptive_plot && !no_autoview) {
 	// We've checked the paths for bounding info - now set up the
 	// view
-	struct bv *v = gedp->ged_gvp;
+	struct bview *v = gedp->ged_gvp;
 	point_t center = VINIT_ZERO;
 	point_t radial;
 	if (bounds_data.have_bbox) {

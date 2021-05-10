@@ -37,7 +37,7 @@
 int
 ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct bv *gvp;
+    struct bview *gvp;
     int printUsage = 0;
     static const char *usage = "lod (on|off|enabled)\n"
 			       "lod scale (points|curves) <factor>\n"
