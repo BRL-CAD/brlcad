@@ -95,7 +95,7 @@ if (BRLCAD_ENABLE_OPENVDB)
   set_property(SOURCE bot_remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
 endif (BRLCAD_ENABLE_OPENVDB)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libbview;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libbv;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)

@@ -108,9 +108,9 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_ptbl *so = gedp->ged_gvp->gv_db_grps;
     vect_t minus, plus;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(so, i);
+	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
 	if (bu_list_len(&g->g->s_vlist)) {
-	    bview_scene_obj_bound(g->g);
+	    bv_scene_obj_bound(g->g);
 	    is_empty = 0;
 	    minus[X] = g->g->s_center[X] - g->g->s_size;
 	    minus[Y] = g->g->s_center[Y] - g->g->s_size;
@@ -122,8 +122,8 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	    VMAX(max, plus);
 	}
 	for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g->children, j);
-	    bview_scene_obj_bound(s);
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->g->children, j);
+	    bv_scene_obj_bound(s);
 	    is_empty = 0;
 	    minus[X] = s->s_center[X] - s->s_size;
 	    minus[Y] = s->s_center[Y] - s->s_size;
@@ -135,7 +135,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	    VMAX(max, plus);
 
 	    for (size_t k = 0; k < BU_PTBL_LEN(&s->children); k++) {
-		struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, k);
+		struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, k);
 		struct bv_vlist *tvp;
 		for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s_c->s_vlist))->l)) {
 		    int nused = tvp->nused;
@@ -154,14 +154,14 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     // or labels, unless the flag to consider all objects is set.
     so = gedp->ged_gvp->gv_view_objs;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(so, i);
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
 	if (!all_view_objs) {
-	    if (!(s->s_type_flags & BVIEW_DBOBJ_BASED) &&
-		    !(s->s_type_flags & BVIEW_POLYGONS) &&
-		    !(s->s_type_flags & BVIEW_LABELS))
+	    if (!(s->s_type_flags & BV_DBOBJ_BASED) &&
+		    !(s->s_type_flags & BV_POLYGONS) &&
+		    !(s->s_type_flags & BV_LABELS))
 		continue;
 	}
-	bview_scene_obj_bound(s);
+	bv_scene_obj_bound(s);
 	is_empty = 0;
 	minus[X] = s->s_center[X] - s->s_size;
 	minus[Y] = s->s_center[Y] - s->s_size;
@@ -173,7 +173,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	VMAX(max, plus);
 
 	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
-	    struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, j);
+	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, j);
 	    struct bv_vlist *tvp;
 	    for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s_c->s_vlist))->l)) {
 		int k;
@@ -210,7 +210,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_gvp->gv_size = factor * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return GED_OK;
 }

@@ -61,7 +61,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "rt/db4.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 
 /* private header */
 #include "./dsp.h"
@@ -3097,7 +3097,7 @@ rt_dsp_free(register struct soltab *stp)
 
 
 int
-rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
 {
     struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;

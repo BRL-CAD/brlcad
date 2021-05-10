@@ -24,7 +24,7 @@
  */
 
 #include "bu/getopt.h"
-#include "bview/util.h"
+#include "bv/util.h"
 #include "ged.h"
 
 
@@ -210,7 +210,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
 	e_argv[2] = NULL;
 
 	(void)ged_draw(gedp, 2, e_argv);
-	bview_update(gedp->ged_gvp);
+	bv_update(gedp->ged_gvp);
     }
 
     return GED_OK;

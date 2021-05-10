@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bg/plane.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "nmg.h"
 
 /* vertex/edge distance

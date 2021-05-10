@@ -1020,7 +1020,7 @@ tor_ellipse_points(
 }
 
 int
-rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
+rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bv *v, fastf_t s_size)
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
     fastf_t mag_a, mag_b, mag_h;
@@ -1114,7 +1114,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
  * ti.a, ti.b perpendicular, to CENTER of torus (for top, bottom)
  */
 int
-rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
 {
     fastf_t alpha;
     fastf_t beta;
@@ -1769,7 +1769,7 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 void
-rt_tor_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_tor_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
 {
     if (!labels || !ip)
 	return;
@@ -1778,19 +1778,19 @@ rt_tor_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     RT_TOR_CK_MAGIC(tor);
 
     // Set up the containers
-    struct bview_label *l[4];
+    struct bv_label *l[4];
     for (int i = 0; i < 4; i++) {
-	struct bview_scene_obj *s;
-	struct bview_label *la;
-	BU_GET(s, struct bview_scene_obj);
-	BU_GET(la, struct bview_label);
+	struct bv_scene_obj *s;
+	struct bv_label *la;
+	BU_GET(s, struct bv_scene_obj);
+	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-	s->s_type_flags |= BVIEW_LABELS;
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;

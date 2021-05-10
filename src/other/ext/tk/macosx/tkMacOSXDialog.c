@@ -764,8 +764,8 @@ Tk_GetOpenFileObjCmd(
 	[label setDrawsBackground:NO];
 	[popupButton addItemsWithTitles:filterInfo.fileTypeLabels];
 	[popupButton setAction:@selector(selectFormat:)];
-	[accessoryView addSubview:label];
-	[accessoryView addSubview:popupButton];
+	[accessoryView addSubv:label];
+	[accessoryView addSubv:popupButton];
 	if (filterInfo.preselectFilter) {
 
 	    /*
@@ -1052,8 +1052,8 @@ Tk_GetSaveFileObjCmd(
 	[popupButton selectItemAtIndex:filterInfo.fileTypeIndex];
 	[popupButton setAction:@selector(saveFormat:)];
 
-	[accessoryView addSubview:label];
-	[accessoryView addSubview:popupButton];
+	[accessoryView addSubv:label];
+	[accessoryView addSubv:popupButton];
 
 	[savepanel setAccessoryView:accessoryView];
 

@@ -50,7 +50,7 @@
 #include "bn/msr.h"
 #include "bn/noise.h"
 #include "bn/poly.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "bn/multipoly.h"
 #include "bn/qmath.h"
 #include "bn/rand.h"
@@ -60,7 +60,7 @@
 #include "bn/str.h"
 #include "bn/tabdata.h"
 #include "bg/vert_tree.h"
-#include "bview/vectfont.h"
+#include "bv/vectfont.h"
 
 #endif /* BN_H */
 

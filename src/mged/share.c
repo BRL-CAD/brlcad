@@ -209,7 +209,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	    break;
 	case 'g':
 	case 'G':
-	    SHARE_RESOURCE(uflag, bview_grid_state, dm_grid_state, rc, dlp1, dlp2, vls, "share: grid_state");
+	    SHARE_RESOURCE(uflag, bv_grid_state, dm_grid_state, rc, dlp1, dlp2, vls, "share: grid_state");
 	    break;
 	case 'm':
 	case 'M':
@@ -393,7 +393,7 @@ usurp_all_resources(struct mged_dm *dlp1, struct mged_dm *dlp2)
     dlp2->dm_rubber_band = (struct _rubber_band *)NULL;
     dlp2->dm_mged_variables = (struct _mged_variables *)NULL;
     dlp2->dm_color_scheme = (struct _color_scheme *)NULL;
-    dlp2->dm_grid_state = (struct bview_grid_state *)NULL;
+    dlp2->dm_grid_state = (struct bv_grid_state *)NULL;
     dlp2->dm_axes_state = (struct _axes_state *)NULL;
 
     /* it doesn't make sense to save display list info */

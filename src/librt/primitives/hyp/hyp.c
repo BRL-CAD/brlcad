@@ -631,7 +631,7 @@ rt_hyp_free(struct soltab *stp)
 
 
 int
-rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
 {
     int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
@@ -1432,7 +1432,7 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 }
 
 void
-rt_hyp_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_hyp_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
 {
     if (!labels || !ip)
 	return;
@@ -1441,19 +1441,19 @@ rt_hyp_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     RT_HYP_CK_MAGIC(hyp);
 
     // Set up the containers
-    struct bview_label *l[4];
+    struct bv_label *l[4];
     for (int i = 0; i < 4; i++) {
-	struct bview_scene_obj *s;
-	struct bview_label *la;
-	BU_GET(s, struct bview_scene_obj);
-	BU_GET(la, struct bview_label);
+	struct bv_scene_obj *s;
+	struct bv_label *la;
+	BU_GET(s, struct bv_scene_obj);
+	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-	s->s_type_flags |= BVIEW_LABELS;
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;

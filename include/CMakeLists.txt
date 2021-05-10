@@ -3,7 +3,7 @@ add_subdirectory(bu)
 add_subdirectory(bn)
 add_subdirectory(bg)
 add_subdirectory(brep)
-add_subdirectory(bview)
+add_subdirectory(bv)
 add_subdirectory(dm)
 add_subdirectory(gcv)
 add_subdirectory(ged)
@@ -26,7 +26,7 @@ set(public_hdrs
   brlcad.i
   bsocket.h
   bu.h
-  bview.h
+  bv.h
   common.h
   dm.h
   fft.h

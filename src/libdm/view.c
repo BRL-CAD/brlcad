@@ -23,8 +23,8 @@
 #include "bu/time.h"
 #include "bu/units.h"
 #include "bu/vls.h"
-#include "bview/defines.h"
-#include "bview/util.h"
+#include "bv/defines.h"
+#include "bv/util.h"
 #include "dm.h"
 
 void
@@ -79,7 +79,7 @@ dm_draw_arrow(struct dm *dmp, point_t A, point_t B, fastf_t tip_length, fastf_t 
 
 // Draw an arrow head for each MOVE+LAST_DRAW paring
 void
-dm_add_arrows(struct dm *dmp, struct bview_scene_obj *s)
+dm_add_arrows(struct dm *dmp, struct bv_scene_obj *s)
 {
     struct bv_vlist *vp = (struct bv_vlist *)&s->s_vlist;
     struct bv_vlist *tvp;
@@ -121,7 +121,7 @@ dm_add_arrows(struct dm *dmp, struct bview_scene_obj *s)
 }
 
 void
-dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
+dm_draw_arrows(struct dm *dmp, struct bv_data_arrow_state *gdasp, fastf_t sf)
 {
     register int i;
     int saveLineWidth;
@@ -231,7 +231,7 @@ dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
 				   (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].num_points, \
 				   (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point, 1); \
 	    \
-	    if (_mode != BVIEW_POLY_CONTOUR_MODE || _i != _last_poly || (_gdpsp)->gdps_cflag == 0) { \
+	    if (_mode != BV_POLY_CONTOUR_MODE || _i != _last_poly || (_gdpsp)->gdps_cflag == 0) { \
 		(void)dm_draw_line_3d((_dmp),				\
 				      (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point[_last], \
 				      (_gdpsp)->gdps_polygons.polygon[_i].contour[_j].point[0]); \
@@ -240,7 +240,7 @@ dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
 
 
 void
-dm_draw_polys(struct dm *dmp, bview_data_polygon_state *gdpsp, int mode)
+dm_draw_polys(struct dm *dmp, bv_data_polygon_state *gdpsp, int mode)
 {
     register size_t i, last_poly;
     int saveLineWidth;
@@ -268,7 +268,7 @@ dm_draw_polys(struct dm *dmp, bview_data_polygon_state *gdpsp, int mode)
 }
 
 void
-dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp)
+dm_draw_lines(struct dm *dmp, struct bv_data_line_state *gdlsp)
 {
     int saveLineWidth;
     int saveLineStyle;
@@ -299,7 +299,7 @@ dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp)
 
 
 void
-dm_draw_faceplate(struct bview *v, double base2local, double local2base)
+dm_draw_faceplate(struct bv *v, double base2local, double local2base)
 {
     /* Center dot */
     if (v->gv_center_dot.gos_draw) {
@@ -417,9 +417,9 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 }
 
 void
-dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
+dm_draw_label(struct dm *dmp, struct bv_scene_obj *s)
 {
-    struct bview_label *l = (struct bview_label *)s->s_i_data;
+    struct bv_label *l = (struct bv_label *)s->s_i_data;
 
     /* set color */
     (void)dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 1, 1.0);
@@ -453,7 +453,7 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
 	bu_log("bmid: %f,%f\n", bmid[0], bmid[1]);
 
 	vect2d_t anchor = V2INIT_ZERO;
-	if (l->anchor == BVIEW_ANCHOR_AUTO) {
+	if (l->anchor == BV_ANCHOR_AUTO) {
 	    fastf_t xvals[3];
 	    fastf_t yvals[3];
 	    xvals[0] = bmin[0];
@@ -466,7 +466,7 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
 	    for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
 		    point_t t3d, tpt;
-		    if (bview_screen_to_view(s->s_v, &t3d[0], &t3d[1], (int)xvals[i], (int)yvals[j]) < 0) {
+		    if (bv_screen_to_view(s->s_v, &t3d[0], &t3d[1], (int)xvals[i], (int)yvals[j]) < 0) {
 			return;
 		    }
 		    t3d[2] = 0;
@@ -480,31 +480,31 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
 	    }
 	} else {
 	    switch (l->anchor) {
-		case BVIEW_ANCHOR_BOTTOM_LEFT:
+		case BV_ANCHOR_BOTTOM_LEFT:
 		    V2SET(anchor, bmin[0], bmin[1]);
 		    break;
-		case BVIEW_ANCHOR_BOTTOM_CENTER:
+		case BV_ANCHOR_BOTTOM_CENTER:
 		    V2SET(anchor, bmid[0], bmin[1]);
 		    break;
-		case BVIEW_ANCHOR_BOTTOM_RIGHT:
+		case BV_ANCHOR_BOTTOM_RIGHT:
 		    V2SET(anchor, bmax[0], bmin[1]);
 		    break;
-		case BVIEW_ANCHOR_MIDDLE_LEFT:
+		case BV_ANCHOR_MIDDLE_LEFT:
 		    V2SET(anchor, bmin[0], bmid[1]);
 		    break;
-		case BVIEW_ANCHOR_MIDDLE_CENTER:
+		case BV_ANCHOR_MIDDLE_CENTER:
 		    V2SET(anchor, bmid[0], bmid[1]);
 		    break;
-		case BVIEW_ANCHOR_MIDDLE_RIGHT:
+		case BV_ANCHOR_MIDDLE_RIGHT:
 		    V2SET(anchor, bmax[0], bmid[1]);
 		    break;
-		case BVIEW_ANCHOR_TOP_LEFT:
+		case BV_ANCHOR_TOP_LEFT:
 		    V2SET(anchor, bmin[0], bmax[1]);
 		    break;
-		case BVIEW_ANCHOR_TOP_CENTER:
+		case BV_ANCHOR_TOP_CENTER:
 		    V2SET(anchor, bmid[0], bmax[1]);
 		    break;
-		case BVIEW_ANCHOR_TOP_RIGHT:
+		case BV_ANCHOR_TOP_RIGHT:
 		    V2SET(anchor, bmax[0], bmax[1]);
 		    break;
 		default:
@@ -512,7 +512,7 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
 		    return;
 	    }
 	}
-	bview_screen_to_view(s->s_v, &l3d[0], &l3d[1], (int)anchor[0], (int)anchor[1]);
+	bv_screen_to_view(s->s_v, &l3d[0], &l3d[1], (int)anchor[0], (int)anchor[1]);
 	MAT4X3PNT(mpt, s->s_v->gv_view2model, l3d);
     } else {
 	VMOVE(mpt, l->p);
@@ -526,7 +526,7 @@ dm_draw_label(struct dm *dmp, struct bview_scene_obj *s)
 }
 
 void
-dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
+dm_draw_labels(struct dm *dmp, struct bv_data_label_state *gdlsp, matp_t m2vmat)
 {
     /* set color */
     (void)dm_set_fg(dmp,
@@ -545,14 +545,14 @@ dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vm
 }
 
 void
-dm_draw_scene_obj(struct dm *dmp, struct bview_scene_obj *s)
+dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s)
 {
     if (s->s_flag == DOWN)
 	return;
 
     // If this is a database object, it may have a view dependent
     // update to do.
-    if (s->s_type_flags & BVIEW_DBOBJ_BASED) {
+    if (s->s_type_flags & BV_DBOBJ_BASED) {
 	if (s->s_update_callback)
 	    (*s->s_update_callback)(s);
     }
@@ -561,7 +561,7 @@ dm_draw_scene_obj(struct dm *dmp, struct bview_scene_obj *s)
     // always be the desired behavior - might need interior and exterior
     // children tables to provide some control
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	dm_draw_scene_obj(dmp, s_c);
     }
 
@@ -580,17 +580,17 @@ dm_draw_scene_obj(struct dm *dmp, struct bview_scene_obj *s)
 	dm_add_arrows(dmp, s);
     }
 
-    if (s->s_type_flags & BVIEW_AXES) {
+    if (s->s_type_flags & BV_AXES) {
 	dm_draw_scene_axes(dmp, s);
     }
 
-    if (s->s_type_flags & BVIEW_LABELS) {
+    if (s->s_type_flags & BV_LABELS) {
 	dm_draw_label(dmp, s);
     }
 }
 
 void
-dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, double base2local, double local2base)
+dm_draw_viewobjs(struct rt_wdb *wdbp, struct bv *v, struct dm_view_data *vd, double base2local, double local2base)
 {
     struct dm *dmp = (struct dm *)v->dmp;
     int width = dm_get_width(dmp);
@@ -623,21 +623,21 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 #if 0
     // Update selections (if any)
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_selected, i);
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_selected, i);
 	// TODO - set illum flag or otherwise visually indicate what is selected
     }
 #endif
 
     // Draw geometry view objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
-	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
 	bu_log("Draw %s\n", bu_vls_cstr(&g->g->s_name));
 	dm_draw_scene_obj(dmp, g->g);
     }
 
     // Draw view-only objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	dm_draw_scene_obj(dmp, s);
     }
 
@@ -670,28 +670,28 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 }
 
 void
-dm_draw_objs(struct bview *v, double base2local, double local2base)
+dm_draw_objs(struct bv *v, double base2local, double local2base)
 {
     struct dm *dmp = (struct dm *)v->dmp;
 
 #if 0
     // Update selections (if any)
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_selected, i);
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_selected, i);
 	// TODO - set illum flag or otherwise visually indicate what is selected
     }
 #endif
 
     // Draw geometry view objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
-	struct bview_scene_group *g = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
 	bu_log("Draw %s\n", bu_vls_cstr(&g->g->s_name));
 	dm_draw_scene_obj(dmp, g->g);
     }
 
     // Draw view-only objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	dm_draw_scene_obj(dmp, s);
     }
 

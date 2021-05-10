@@ -33,9 +33,9 @@
 #include "bu/list.h"
 #include "bu/process.h"
 #include "bu/vls.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include "rt/search.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 
 __BEGIN_DECLS
 
@@ -73,7 +73,7 @@ __BEGIN_DECLS
 #define GED_NULL ((struct ged *)0)
 #define GED_DISPLAY_LIST_NULL ((struct display_list *)0)
 #define GED_DRAWABLE_NULL ((struct ged_drawable *)0)
-#define GED_VIEW_NULL ((struct bview *)0)
+#define GED_VIEW_NULL ((struct bv *)0)
 
 #define GED_RESULT_NULL ((void *)0)
 
@@ -86,7 +86,7 @@ typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 /* Callback related definitions */
 typedef void (*ged_io_func_t)(void *, int);
 typedef void (*ged_refresh_func_t)(void *);
-typedef void (*ged_create_vlist_solid_func_t)(struct bview_scene_obj *);
+typedef void (*ged_create_vlist_solid_func_t)(struct bv_scene_obj *);
 typedef void (*ged_create_vlist_display_list_func_t)(struct display_list *);
 typedef void (*ged_destroy_vlist_func_t)(unsigned int, int);
 struct ged_callback_state;
@@ -193,17 +193,17 @@ struct ged {
     struct bu_vls               go_name;
     struct rt_wdb		*ged_wdbp;
 
-    // The full set of bviews associated with this ged object
+    // The full set of bvs associated with this ged object
     struct bu_ptbl              ged_views;
     /* The current view */
-    struct bview		*ged_gvp;
+    struct bv		*ged_gvp;
 
     void                        *u_data; /**< @brief User data associated with this ged instance */
 
     /** for catching log messages */
     struct bu_vls		*ged_log;
 
-    struct bview_scene_obj                *free_scene_obj;  /* For now this is a struct bview_scene_obj, but longer term that may not always be true */
+    struct bv_scene_obj                *free_scene_obj;  /* For now this is a struct bv_scene_obj, but longer term that may not always be true */
     struct bu_ptbl              free_solids; /**< @brief  solid structures available for reuse */
 
     /* @todo: add support for returning an array of objects, not just a
@@ -257,7 +257,7 @@ struct ged {
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
-    void			(*ged_create_vlist_scene_obj_callback)(struct bview_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
+    void			(*ged_create_vlist_scene_obj_callback)(struct bv_scene_obj *);	/**< @brief  function to call after creating a vlist to create display list for solid */
     void			(*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
@@ -282,7 +282,7 @@ struct ged {
     // gdv_callback, gdv_edit_motion_delta_callback, go_more_args_callback, go_rt_end_callback
     //
     // fbserv_obj: fbs_callback
-    // bview.h gv_callback (only used by MGED?)
+    // bv.h gv_callback (only used by MGED?)
     // db_search_callback_t
 
     void *ged_ctx; /* Temporary - do not rely on when designing new functionality */

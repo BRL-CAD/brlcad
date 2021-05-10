@@ -99,20 +99,20 @@ DM_EXPORT extern fastf_t dm_wrap(fastf_t f);
 
 /* adc.c */
 DM_EXPORT extern void dm_draw_adc(struct dm *dmp,
-				  struct bview_adc_state *adcp, mat_t view2model, mat_t model2view);
+				  struct bv_adc_state *adcp, mat_t view2model, mat_t model2view);
 
 /* axes.c */
 DM_EXPORT extern void dm_draw_data_axes(struct dm *dmp,
 					fastf_t viewSize,
-					struct bview_data_axes_state *bndasp);
+					struct bv_data_axes_state *bndasp);
 
-DM_EXPORT extern void dm_draw_scene_axes(struct dm *dmp, struct bview_scene_obj *s);
+DM_EXPORT extern void dm_draw_scene_axes(struct dm *dmp, struct bv_scene_obj *s);
 
 
 DM_EXPORT extern void dm_draw_hud_axes(struct dm *dmp,
 				   fastf_t viewSize,
 				   const mat_t rmat,
-				   struct bview_axes *bnasp);
+				   struct bv_axes *bnasp);
 
 /* clip.c */
 DM_EXPORT extern int clip(fastf_t *,
@@ -126,7 +126,7 @@ DM_EXPORT extern int vclip(fastf_t *,
 
 /* grid.c */
 DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
-				   struct bview_grid_state *ggsp,
+				   struct bv_grid_state *ggsp,
 				   fastf_t scale,
 				   mat_t model2view,
 				   fastf_t base2local);
@@ -144,7 +144,7 @@ DM_EXPORT extern int dm_draw_prim_labels(struct dm *dmp,
 
 /* rect.c */
 DM_EXPORT extern void dm_draw_rect(struct dm *dmp,
-				   struct bview_interactive_rect_state *grsp);
+				   struct bv_interactive_rect_state *grsp);
 
 /* scale.c */
 DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
@@ -487,7 +487,7 @@ typedef struct fb_internal FBIO;
 #define MSG_FBWINDOW    7               /**< @brief OLD */
 #define MSG_FBZOOM      8               /**< @brief OLD */
 #define MSG_FBSCURSOR   9               /**< @brief OLD */
-#define MSG_FBVIEW      10              /**< @brief NEW */
+#define MSG_FBV      10              /**< @brief NEW */
 #define MSG_FBGETVIEW   11              /**< @brief NEW */
 #define MSG_FBRMAP      12
 #define MSG_FBWMAP      13

@@ -859,7 +859,7 @@ Tk_MacOSXIsAppInFront(void)
  * events.
  *
  * Earlier versions of Mac Tk used subclasses of NSView, e.g. NSButton, as the
- * basis for Tk widgets.  These would then appear as subviews of the
+ * basis for Tk widgets.  These would then appear as subvs of the
  * TKContentView.  To prevent the AppKit from redrawing and corrupting the Tk
  * Widgets it was necessary to use Apple private API calls.  In order to avoid
  * using private API calls, the NSView-based widgets have been replaced with

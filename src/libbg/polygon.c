@@ -25,7 +25,7 @@
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bg/plane.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "bn/tol.h"
 #include "bg/polygon.h"
 

@@ -31,7 +31,7 @@
 #include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bu/color.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "bg/clip.h"
 
 #include "ged.h"
@@ -41,31 +41,31 @@
 
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
-#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+#define GET_BV_SCENE_OBJ(p, fp) { \
         if (BU_LIST_IS_EMPTY(fp)) { \
-            BU_ALLOC((p), struct bview_scene_obj); \
-	    struct ged_bview_data *bdata; \
-	    BU_GET(bdata, struct ged_bview_data); \
+            BU_ALLOC((p), struct bv_scene_obj); \
+	    struct ged_bv_data *bdata; \
+	    BU_GET(bdata, struct ged_bv_data); \
 	    db_full_path_init(&bdata->s_fullpath); \
 	    (p)->s_u_data = (void *)bdata; \
         } else { \
-            p = BU_LIST_NEXT(bview_scene_obj, fp); \
+            p = BU_LIST_NEXT(bv_scene_obj, fp); \
             BU_LIST_DEQUEUE(&((p)->l)); \
 	    if ((p)->s_u_data) { \
-		struct ged_bview_data *bdata = (struct ged_bview_data *)(p)->s_u_data; \
+		struct ged_bv_data *bdata = (struct ged_bv_data *)(p)->s_u_data; \
 		bdata->s_fullpath.fp_len = 0; \
 	    } \
         } \
         BU_LIST_INIT( &((p)->s_vlist) ); }
 
-#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
+#define FREE_BV_SCENE_OBJ(p, fp) { \
         BU_LIST_APPEND(fp, &((p)->l)); \
         RT_FREE_VLIST(&((p)->s_vlist)); }
 
 
 /* defined in draw_calc.cpp */
 extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);
-extern void createDListSolid(struct bview_scene_obj *sp);
+extern void createDListSolid(struct bv_scene_obj *sp);
 
 struct display_list *
 dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip,
@@ -130,7 +130,7 @@ end:
 
 
 void
-headsolid_split(struct bu_list *hdlp, struct db_i *dbip, struct bview_scene_obj *sp, int newlen)
+headsolid_split(struct bu_list *hdlp, struct db_i *dbip, struct bv_scene_obj *sp, int newlen)
 {
     int savelen;
     struct display_list *new_gdlp;
@@ -138,7 +138,7 @@ headsolid_split(struct bu_list *hdlp, struct db_i *dbip, struct bview_scene_obj 
 
     if (!sp->s_u_data)
 	return;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     savelen = bdata->s_fullpath.fp_len;
     bdata->s_fullpath.fp_len = newlen;
@@ -157,23 +157,23 @@ headsolid_split(struct bu_list *hdlp, struct db_i *dbip, struct bview_scene_obj 
 int
 headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path)
 {
-    struct bview_scene_obj *sp;
-    struct bview_scene_obj *nsp;
+    struct bv_scene_obj *sp;
+    struct bv_scene_obj *nsp;
     int newlen = path->fp_len + 1;
 
     if (BU_LIST_IS_EMPTY(&gdlp->dl_head_scene_obj)) return 0;
 
     if (newlen < 3) {
-	while (BU_LIST_WHILE(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	while (BU_LIST_WHILE(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    headsolid_split(hdlp, dbip, sp, newlen);
 	}
     } else {
-	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
 	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
-	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+	    nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	    if (db_full_path_match_top(path, &bdata->s_fullpath)) {
 		    headsolid_split(hdlp, dbip, sp, newlen);
 		}
@@ -194,7 +194,7 @@ dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     vect_t minus, plus;
     int is_empty = 1;
 
@@ -206,10 +206,10 @@ dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag)
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	    /* Skip pseudo-solids unless pflag is set */
 		if (!pflag &&
 		    bdata->s_fullpath.fp_names != (struct directory **)0 &&
@@ -244,11 +244,11 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct bview_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct display_list *last_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     struct directory *dp;
     struct db_full_path subpath;
     int found_subpath;
@@ -267,17 +267,17 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 	    if (gedp->ged_destroy_vlist_callback != GED_DESTROY_VLIST_FUNC_NULL) {
 
 		/* We can't assume the display lists are contiguous */
-		for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-		    ged_destroy_vlist_cb(gedp, BU_LIST_FIRST(bview_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist, 1);
+		for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+		    ged_destroy_vlist_cb(gedp, BU_LIST_FIRST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist, 1);
 		}
 	    }
 
 	    /* Free up the solids list associated with this display list */
-	    while (BU_LIST_WHILE(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    while (BU_LIST_WHILE(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		if (sp) {
 		    if (!sp->s_u_data)
 			continue;
-		    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 		    dp = FIRST_SOLID(bdata);
 		    RT_CK_DIR(dp);
 		    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
@@ -285,7 +285,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 		    }
 
 		    BU_LIST_DEQUEUE(&sp->l);
-		    FREE_BVIEW_SCENE_OBJ(sp, &free_scene_obj->l);
+		    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
 		}
 	    }
 
@@ -296,21 +296,21 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 	    break;
 	} else if (found_subpath) {
 	    int need_split = 0;
-	    struct bview_scene_obj *nsp;
+	    struct bv_scene_obj *nsp;
 
-	    sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	    sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
 	    while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 		if (!sp->s_u_data)
 		    continue;
-		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
-		nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+		nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 
 		if (db_full_path_match_top(&subpath, &bdata->s_fullpath)) {
 			ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
 
 			BU_LIST_DEQUEUE(&sp->l);
-			FREE_BVIEW_SCENE_OBJ(sp, &free_scene_obj->l);
+			FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
 			need_split = 1;
 		    }
 
@@ -350,20 +350,20 @@ eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 			      struct db_full_path *subpath,
 			      const int skip_first)
 {
-    struct bview_scene_obj *sp;
-    struct bview_scene_obj *nsp;
-    struct bview_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *sp;
+    struct bv_scene_obj *nsp;
+    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
 
-    sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+    sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
     while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 	if (!sp->s_u_data)
 	    continue;
-	struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
-	nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
+	nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	if (db_full_path_subset(&bdata->s_fullpath, subpath, skip_first)) {
 		ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
 		BU_LIST_DEQUEUE(&sp->l);
-		FREE_BVIEW_SCENE_OBJ(sp, &free_scene_obj->l);
+		FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
 	    }
 	sp = nsp;
     }
@@ -440,20 +440,20 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct bview_scene_obj *free_scene_obj = gedp->free_scene_obj;
-    struct bview_scene_obj *sp;
-    struct bview_scene_obj *nsp;
+    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *sp;
+    struct bv_scene_obj *nsp;
     struct db_full_path dup_path;
 
     db_full_path_init(&dup_path);
 
-    sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+    sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
     while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
 	if (!sp->s_u_data)
 	    continue;
-	struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
-	nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	if (db_full_path_subset(&bdata->s_fullpath, subpath, skip_first)) {
 	    int ret;
 	    int full_len = bdata->s_fullpath.fp_len;
@@ -464,7 +464,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 	    db_dup_full_path(&dup_path, &bdata->s_fullpath);
 	    bdata->s_fullpath.fp_len = full_len;
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_BVIEW_SCENE_OBJ(sp, &free_scene_obj->l);
+	    FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
 
@@ -544,24 +544,24 @@ void
 _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 {
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct bview_scene_obj *free_scene_obj = gedp->free_scene_obj;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *sp;
     struct directory *dp;
 
     if (gedp->ged_destroy_vlist_callback != GED_DESTROY_VLIST_FUNC_NULL) {
 
 	/* We can't assume the display lists are contiguous */
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
-	    ged_destroy_vlist_cb(gedp, BU_LIST_FIRST(bview_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist, 1);
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    ged_destroy_vlist_cb(gedp, BU_LIST_FIRST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist, 1);
 	}
     }
 
     /* Free up the solids list associated with this display list */
-    while (BU_LIST_WHILE(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+    while (BU_LIST_WHILE(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	if (sp) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	    dp = FIRST_SOLID(bdata);
 		RT_CK_DIR(dp);
 		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
@@ -569,7 +569,7 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 		}
 
 		BU_LIST_DEQUEUE(&sp->l);
-		FREE_BVIEW_SCENE_OBJ(sp, &free_scene_obj->l);
+		FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
 	    }
 	}
 
@@ -581,7 +581,7 @@ _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 
 
 static void
-color_soltab(struct bview_scene_obj *sp)
+color_soltab(struct bv_scene_obj *sp)
 {
     const struct mater *mp;
 
@@ -635,13 +635,13 @@ dl_color_soltab(struct bu_list *hdlp)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
 
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    color_soltab(sp);
 	}
 
@@ -656,7 +656,7 @@ dl_color_soltab(struct bu_list *hdlp)
  *    */
 static void
 solid_set_color_info(
-	struct bview_scene_obj *sp,
+	struct bv_scene_obj *sp,
 	unsigned char *wireframe_color_override,
 	struct db_tree_state *tsp)
 {
@@ -688,7 +688,7 @@ solid_set_color_info(
 }
 
 static void
-solid_append_vlist(struct bview_scene_obj *sp, struct bv_vlist *vlist)
+solid_append_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
 {
     if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) {
 	sp->s_vlen = 0;
@@ -701,15 +701,15 @@ solid_append_vlist(struct bview_scene_obj *sp, struct bv_vlist *vlist)
 void
 dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
 {
-    struct bview_scene_obj *sp;
-    GET_BVIEW_SCENE_OBJ(sp, &dgcdp->free_scene_obj->l);
+    struct bv_scene_obj *sp;
+    GET_BV_SCENE_OBJ(sp, &dgcdp->free_scene_obj->l);
     if (!sp->s_u_data)
 	return;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     solid_append_vlist(sp, (struct bv_vlist *)vhead);
 
-    bview_scene_obj_bound(sp);
+    bv_scene_obj_bound(sp);
 
     db_dup_full_path(&bdata->s_fullpath, pathp);
 
@@ -738,7 +738,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 }
 
 static fastf_t
-draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i *dbip,
+draw_solid_wireframe(struct bv_scene_obj *sp, struct bv *gvp, struct db_i *dbip,
        	const struct bn_tol *tol, const struct bg_tess_tol *ttol)
 {
     int ret;
@@ -749,7 +749,7 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
     BU_LIST_INIT(&vhead);
     if (!sp->s_u_data)
 	return -1;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&bdata->s_fullpath),
 	    dbip, sp->s_mat, &rt_uniresource);
@@ -781,7 +781,7 @@ draw_solid_wireframe(struct bview_scene_obj *sp, struct bview *gvp, struct db_i 
 
 
 int
-redraw_solid(struct bview_scene_obj *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp)
+redraw_solid(struct bv_scene_obj *sp, struct db_i *dbip, struct db_tree_state *tsp, struct bv *gvp)
 {
     if (sp->s_os.s_dmode == _GED_WIREFRAME) {
 	/* replot wireframe */
@@ -799,10 +799,10 @@ dl_redraw(struct display_list *gdlp, struct ged *gedp, int skip_subtractions)
 {
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct db_tree_state *tsp = &gedp->ged_wdbp->wdb_initial_tree_state;
-    struct bview *gvp = gedp->ged_gvp;
+    struct bv *gvp = gedp->ged_gvp;
     int ret = 0;
-    struct bview_scene_obj *sp;
-    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+    struct bv_scene_obj *sp;
+    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	if (!skip_subtractions || (skip_subtractions && !sp->s_soldash)) {
 	    ret += redraw_solid(sp, dbip, tsp, gvp);
 	}
@@ -819,9 +819,9 @@ append_solid_to_display_list(
         void *client_data)
 {
     point_t min, max;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     union tree *curtree;
-    struct ged_solid_data *bview_data = (struct ged_solid_data *)client_data;
+    struct ged_solid_data *bv_data = (struct ged_solid_data *)client_data;
 
     RT_CK_DB_INTERNAL(ip);
     BG_CK_TESS_TOL(tsp->ts_ttol);
@@ -831,7 +831,7 @@ append_solid_to_display_list(
     VSETALL(min, INFINITY);
     VSETALL(max, -INFINITY);
 
-    if (!bview_data) {
+    if (!bv_data) {
         return TREE_NULL;
     }
 
@@ -844,10 +844,10 @@ append_solid_to_display_list(
     }
 
     /* create solid */
-    GET_BVIEW_SCENE_OBJ(sp, &(((struct bview_scene_obj *)bview_data->free_scene_obj)->l));
+    GET_BV_SCENE_OBJ(sp, &(((struct bv_scene_obj *)bv_data->free_scene_obj)->l));
     if (!sp->s_u_data)
 	return TREE_NULL;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     sp->s_size = 0;
     VSETALL(sp->s_center, 0.0);
@@ -888,7 +888,7 @@ append_solid_to_display_list(
 
         solid_append_vlist(sp, (struct bv_vlist *)&vhead);
 
-        bview_scene_obj_bound(sp);
+        bv_scene_obj_bound(sp);
 
         while (BU_LIST_WHILE(vp, bv_vlist, &(sp->s_vlist))) {
             BU_LIST_DEQUEUE(&vp->l);
@@ -901,7 +901,7 @@ append_solid_to_display_list(
     sp->s_flag = DOWN;
     sp->s_iflag = DOWN;
 
-    if (bview_data->draw_solid_lines_only) {
+    if (bv_data->draw_solid_lines_only) {
         sp->s_soldash = 0;
     } else {
         sp->s_soldash = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
@@ -924,8 +924,8 @@ append_solid_to_display_list(
         tsp->ts_mater.ma_color[GRN] = 128;
         tsp->ts_mater.ma_color[BLU] = 128;
 
-        if (bview_data->wireframe_color_override) {
-            solid_set_color_info(sp, (unsigned char *)&(bview_data->wireframe_color), tsp);
+        if (bv_data->wireframe_color_override) {
+            solid_set_color_info(sp, (unsigned char *)&(bv_data->wireframe_color), tsp);
         } else {
             solid_set_color_info(sp, NULL, tsp);
         }
@@ -935,11 +935,11 @@ append_solid_to_display_list(
         tsp->ts_mater.ma_color[BLU] = mater_color[BLU];
 
     } else {
-        if (bview_data->wireframe_color_override) {
+        if (bv_data->wireframe_color_override) {
 	    unsigned char wire_color[3];
-	    wire_color[RED] = (unsigned char)bview_data->wireframe_color[RED];
-	    wire_color[GRN] = (unsigned char)bview_data->wireframe_color[GRN];
-	    wire_color[BLU] = (unsigned char)bview_data->wireframe_color[BLU];
+	    wire_color[RED] = (unsigned char)bv_data->wireframe_color[RED];
+	    wire_color[GRN] = (unsigned char)bv_data->wireframe_color[GRN];
+	    wire_color[BLU] = (unsigned char)bv_data->wireframe_color[BLU];
             solid_set_color_info(sp, wire_color, tsp);
         } else {
 	    const char *attr_color = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR));
@@ -966,13 +966,13 @@ append_solid_to_display_list(
     }
 
     sp->s_dlist = 0;
-    sp->s_os.transparency = bview_data->transparency;
-    sp->s_os.s_dmode = bview_data->dmode;
+    sp->s_os.transparency = bv_data->transparency;
+    sp->s_os.s_dmode = bv_data->dmode;
     MAT_COPY(sp->s_mat, tsp->ts_mat);
 
     /* append solid to display list */
     bu_semaphore_acquire(RT_SEM_MODEL);
-    BU_LIST_APPEND(bview_data->gdlp->dl_head_scene_obj.back, &sp->l);
+    BU_LIST_APPEND(bv_data->gdlp->dl_head_scene_obj.back, &sp->l);
     bu_semaphore_release(RT_SEM_MODEL);
 
     /* indicate success by returning something other than TREE_NULL */
@@ -984,7 +984,7 @@ append_solid_to_display_list(
 }
 
 static void
-solid_copy_vlist(struct bview_scene_obj *sp, struct bv_vlist *vlist)
+solid_copy_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
 {
     BU_LIST_INIT(&(sp->s_vlist));
     rt_vlist_copy(&(sp->s_vlist), (struct bu_list *)vlist);
@@ -996,9 +996,9 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct bview_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
     struct directory *dp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     struct display_list *gdlp;
     unsigned char type='0';
 
@@ -1019,10 +1019,10 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     }
 
     /* Obtain a fresh solid structure, and fill it in */
-    GET_BVIEW_SCENE_OBJ(sp, &free_scene_obj->l);
+    GET_BV_SCENE_OBJ(sp, &free_scene_obj->l);
     if (!sp->s_u_data)
 	return -1;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     /* Need to enter phony name in directory structure */
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
@@ -1033,7 +1033,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 	solid_append_vlist(sp, (struct bv_vlist *)vhead);
 	BU_LIST_INIT(vhead);
     }
-    bview_scene_obj_bound(sp);
+    bv_scene_obj_bound(sp);
 
     /* set path information -- this is a top level node */
     db_add_node_to_full_path(&bdata->s_fullpath, dp);
@@ -1073,13 +1073,13 @@ int
 dl_set_illum(struct display_list *gdlp, const char *obj, int illum)
 {
     int found = 0;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
 
-    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	size_t i;
 	if (!sp->s_u_data)
 	    continue;
-	struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 	for (i = 0; i < bdata->s_fullpath.fp_len; ++i) {
 	    if (*obj == *DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep &&
@@ -1100,13 +1100,13 @@ dl_set_iflag(struct bu_list *hdlp, int iflag)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     /* calculate the bounding for of all solids being displayed */
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    sp->s_iflag = iflag;
 	}
 
@@ -1119,13 +1119,13 @@ dl_set_flag(struct bu_list *hdlp, int flag)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     /* calculate the bounding for of all solids being displayed */
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    sp->s_flag = flag;
 	}
 
@@ -1138,13 +1138,13 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     /* calculate the bounding for of all solids being displayed */
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    sp->s_old.s_wflag = wflag;
 	}
 
@@ -1153,11 +1153,11 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
 }
 
 void
-dl_zap(struct ged *gedp, struct bview_scene_obj *free_scene_obj)
+dl_zap(struct ged *gedp, struct bv_scene_obj *free_scene_obj)
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct bview_scene_obj *sp = NULL;
+    struct bv_scene_obj *sp = NULL;
     struct display_list *gdlp = NULL;
     struct bu_ptbl dls = BU_PTBL_INIT_ZERO;
     struct directory *dp = RT_DIR_NULL;
@@ -1166,14 +1166,14 @@ dl_zap(struct ged *gedp, struct bview_scene_obj *free_scene_obj)
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
 
 	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj))
-	    ged_destroy_vlist_cb(gedp, BU_LIST_FIRST(bview_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist,
-		    BU_LIST_LAST(bview_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist -
-		    BU_LIST_FIRST(bview_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist + 1);
+	    ged_destroy_vlist_cb(gedp, BU_LIST_FIRST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist,
+		    BU_LIST_LAST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist -
+		    BU_LIST_FIRST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist + 1);
 
-	while (BU_LIST_WHILE(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	while (BU_LIST_WHILE(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	    dp = FIRST_SOLID(bdata);
 		RT_CK_DIR(dp);
 		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
@@ -1183,7 +1183,7 @@ dl_zap(struct ged *gedp, struct bview_scene_obj *free_scene_obj)
 		}
 
 		BU_LIST_DEQUEUE(&sp->l);
-		FREE_BVIEW_SCENE_OBJ(sp, &free_scene_obj->l);
+		FREE_BV_SCENE_OBJ(sp, &free_scene_obj->l);
 	    }
 
 	BU_LIST_DEQUEUE(&gdlp->l);
@@ -1207,17 +1207,17 @@ dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int bot
     size_t i;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     struct directory **tmp_dpp;
 
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 	    for (i = 0, tmp_dpp = dpp;
 		    i < bdata->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
@@ -1258,7 +1258,7 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     struct bv_vlist *vp;
     static vect_t clipmin, clipmax;
     static vect_t last;         /* last drawn point */
@@ -1281,7 +1281,7 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
         while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
             next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-            for (BU_LIST_FOR(sp, bview_scene_obj,&gdlp->dl_head_scene_obj)) {
+            for (BU_LIST_FOR(sp, bv_scene_obj,&gdlp->dl_head_scene_obj)) {
                 /* Could check for differences from last color */
                 pl_color(fp,
                          sp->s_color[0],
@@ -1332,7 +1332,7 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
         next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-        for (BU_LIST_FOR(sp, bview_scene_obj,&gdlp->dl_head_scene_obj)) {
+        for (BU_LIST_FOR(sp, bv_scene_obj,&gdlp->dl_head_scene_obj)) {
             if (Dashing != sp->s_soldash) {
                 if (sp->s_soldash)
                     pl_linmod(fp, "dotdashed");
@@ -1498,7 +1498,7 @@ draw_stroke(unsigned char **image, struct coord *coord1, struct coord *coord2, u
 
 
 static void
-draw_png_solid(fastf_t perspective, unsigned char **image, struct bview_scene_obj *sp, matp_t psmat, size_t size, size_t half_size)
+draw_png_solid(fastf_t perspective, unsigned char **image, struct bv_scene_obj *sp, matp_t psmat, size_t size, size_t half_size)
 {
     static vect_t last;
     point_t clipmin = {-1.0, -1.0, -MAX_FASTF};
@@ -1632,7 +1632,7 @@ dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_p
     mat_t newmat;
     matp_t mat;
     mat_t perspective_mat;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
 
     mat = model2view;
 
@@ -1661,7 +1661,7 @@ dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_p
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
         next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-        for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
             draw_png_solid(perspective, image, sp, mat, size, half_size);
         }
 
@@ -1719,7 +1719,7 @@ NEWPG\n\
 }
 
 static void
-ps_draw_solid(fastf_t perspective, FILE *fp, struct bview_scene_obj *sp, matp_t psmat)
+ps_draw_solid(fastf_t perspective, FILE *fp, struct bv_scene_obj *sp, matp_t psmat)
 {
     static vect_t last;
     point_t clipmin = {-1.0, -1.0, -MAX_FASTF};
@@ -1856,7 +1856,7 @@ ps_draw_body(struct bu_list *hdlp, FILE *fp, mat_t model2view, fastf_t perspecti
     mat_t newmat;
     matp_t mat;
     mat_t perspective_mat;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
 
     mat = model2view;
 
@@ -1885,7 +1885,7 @@ ps_draw_body(struct bu_list *hdlp, FILE *fp, mat_t model2view, fastf_t perspecti
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
         next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-        for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
             ps_draw_solid(perspective, fp, sp, mat);
         }
 
@@ -1929,7 +1929,7 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     struct bv_vlist *vp;
 
     if (!vlcmds) {
@@ -1947,10 +1947,10 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		if (!sp->s_u_data)
 		    continue;
-		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 		if (lvl <= -2) {
 		    /* print only leaves */
@@ -2032,7 +2032,7 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 	while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		bu_vls_printf(vls, "-1 %d %d %d\n",
 			sp->s_color[0],
 			sp->s_color[1],
@@ -2064,16 +2064,16 @@ dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag_val)
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     size_t i;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
 
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
         next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-        for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 	    for (i = 0; i < bdata->s_fullpath.fp_len; i++) {
                 DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags &= flag_val;
@@ -2090,16 +2090,16 @@ dl_write_animate(struct bu_list *hdlp, FILE *fp)
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     size_t i;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
 
     gdlp = BU_LIST_NEXT(display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
         next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-        for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+        for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 	    for (i = 0; i < bdata->s_fullpath.fp_len; i++) {
                 if (!(DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_flags & RT_DIR_USED)) {
@@ -2123,7 +2123,7 @@ dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx,
 {
    struct display_list *gdlp = NULL;
     struct display_list *next_gdlp = NULL;
-    struct bview_scene_obj *sp = NULL;
+    struct bv_scene_obj *sp = NULL;
     fastf_t vr = 0.0;
     fastf_t vmin_x = 0.0;
     fastf_t vmin_y = 0.0;
@@ -2155,10 +2155,10 @@ dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx,
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
         next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 	    point_t vmin, vmax;
 	    struct bv_vlist *vp;
@@ -2246,7 +2246,7 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
 {
     struct display_list *gdlp = NULL;
     struct display_list *next_gdlp = NULL;
-    struct bview_scene_obj *sp = NULL;
+    struct bv_scene_obj *sp = NULL;
     fastf_t vr = 0.0;
     fastf_t vmin_x = 0.0;
     fastf_t vmin_y = 0.0;
@@ -2278,10 +2278,10 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
         next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 	    struct bv_vlist *vp;
 
@@ -2360,7 +2360,7 @@ dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparenc
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     size_t i;
     struct directory **tmp_dpp;
 
@@ -2368,10 +2368,10 @@ dl_set_transparency(struct ged *gedp, struct directory **dpp, double transparenc
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
         next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 	    for (i = 0, tmp_dpp = dpp;
 		    i < bdata->s_fullpath.fp_len && *tmp_dpp != RT_DIR_NULL;
@@ -2412,14 +2412,14 @@ dl_name_hash(struct ged *gedp)
     struct display_list *next_gdlp;
     gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	struct bview_scene_obj *sp;
-	struct bview_scene_obj *nsp;
+	struct bv_scene_obj *sp;
+	struct bv_scene_obj *nsp;
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
 	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
-	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	    if (sp->s_u_data) {
-		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
 		    struct directory *dp = bdata->s_fullpath.fp_names[i];
 		    XXH64_update(state, dp->d_namep, strlen(dp->d_namep));
@@ -2449,12 +2449,12 @@ dl_update(struct ged *gedp)
     struct display_list *next_gdlp;
     gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	struct bview_scene_obj *sp;
-	struct bview_scene_obj *nsp;
+	struct bv_scene_obj *sp;
+	struct bv_scene_obj *nsp;
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
 	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
-	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	    // TODO - this core logic should probably become the default
 	    // solid object s_update_callback function's standard viewing mode
 	    // routine (when interactively editing primitives a.l.a. MGED's
@@ -2464,7 +2464,7 @@ dl_update(struct ged *gedp)
 	    // a command changed something).
 	    if (sp->s_u_data) {
 		int changed = 0;
-		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
 		    struct directory *dp = bdata->s_fullpath.fp_names[i];
 		    if (dp->edit_flag) {
@@ -2493,14 +2493,14 @@ dl_update(struct ged *gedp)
     // Updating done - clear all edit flags
     gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	struct bview_scene_obj *sp;
-	struct bview_scene_obj *nsp;
+	struct bv_scene_obj *sp;
+	struct bv_scene_obj *nsp;
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-	sp = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);
+	sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
 	while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
-	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	    if (sp->s_u_data) {
-		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 		for (size_t i = 0; i < bdata->s_fullpath.fp_len; i++) {
 		    struct directory *dp = bdata->s_fullpath.fp_names[i];
 		    dp->edit_flag = 0;

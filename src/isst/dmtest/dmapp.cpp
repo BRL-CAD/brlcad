@@ -67,7 +67,7 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    // TODO - need to add hashing to check the dm variables as well (i.e. if lighting
 	    // was turned on/off by the dm command...)
 	    prev_dhash = dm_hash((struct dm *)gedp->ged_dmp);
-	    prev_vhash = bview_hash(gedp->ged_gvp);
+	    prev_vhash = bv_hash(gedp->ged_gvp);
 
 	    // Clear the edit flags ahead of the ged_exec call, so we can tell if
 	    // any geometry changed.
@@ -115,7 +115,7 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    if (prev_dhash != dm_hash((struct dm *)gedp->ged_dmp)) {
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
-	    if (prev_vhash != bview_hash(gedp->ged_gvp)) {
+	    if (prev_vhash != bv_hash(gedp->ged_gvp)) {
 		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
 	    }
 

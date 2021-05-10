@@ -33,18 +33,18 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+#define GET_BV_SCENE_OBJ(p, fp) { \
           if (BU_LIST_IS_EMPTY(fp)) { \
-              BU_ALLOC((p), struct bview_scene_obj); \
-              struct ged_bview_data *bdata; \
-              BU_GET(bdata, struct ged_bview_data); \
+              BU_ALLOC((p), struct bv_scene_obj); \
+              struct ged_bv_data *bdata; \
+              BU_GET(bdata, struct ged_bv_data); \
               db_full_path_init(&bdata->s_fullpath); \
               (p)->s_u_data = (void *)bdata; \
           } else { \
-              p = BU_LIST_NEXT(bview_scene_obj, fp); \
+              p = BU_LIST_NEXT(bv_scene_obj, fp); \
               BU_LIST_DEQUEUE(&((p)->l)); \
               if ((p)->s_u_data) { \
-                  struct ged_bview_data *bdata = (struct ged_bview_data *)(p)->s_u_data; \
+                  struct ged_bv_data *bdata = (struct ged_bv_data *)(p)->s_u_data; \
                   bdata->s_fullpath.fp_len = 0; \
               } \
           } \
@@ -88,7 +88,7 @@ cvt_vlblock_to_solids(struct bv_vlblock *vbp, const char *name, int copy)
  * Also finds s_vlen;
  */
 static void
-mged_bound_solid(struct bview_scene_obj *sp)
+mged_bound_solid(struct bv_scene_obj *sp)
 {
     point_t bmin, bmax;
     size_t length = 0;
@@ -122,14 +122,14 @@ mged_bound_solid(struct bview_scene_obj *sp)
  * This routine must be prepared to run in parallel.
  */
 void
-drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct bview_scene_obj *existing_sp)
+drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct bv_scene_obj *existing_sp)
 {
     struct display_list *gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
 
     if (!existing_sp) {
 	/* Handling a new solid */
-	GET_BVIEW_SCENE_OBJ(sp, &GEDP->free_scene_obj->l);
+	GET_BV_SCENE_OBJ(sp, &GEDP->free_scene_obj->l);
 	BU_LIST_APPEND(&GEDP->free_scene_obj->l, &((sp)->l) );
 	sp->s_dlist = 0;
     } else {
@@ -168,7 +168,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	sp->s_soldash = dashflag;
 	sp->s_old.s_Eflag = 0;	/* This is a solid */
 	if (sp->s_u_data) {
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	    db_dup_full_path(&bdata->s_fullpath, pathp);
 	}
 	if (tsp)
@@ -203,7 +203,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
  * 0 OK
  */
 int
-replot_original_solid(struct bview_scene_obj *sp)
+replot_original_solid(struct bv_scene_obj *sp)
 {
     struct rt_db_internal intern;
     struct directory *dp;
@@ -214,7 +214,7 @@ replot_original_solid(struct bview_scene_obj *sp)
 
     if (!sp->s_u_data)
 	return 0;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
     dp = LAST_SOLID(bdata);
     if (sp->s_old.s_Eflag) {
 	Tcl_AppendResult(INTERP, "replot_original_solid(", dp->d_namep,
@@ -250,7 +250,7 @@ replot_original_solid(struct bview_scene_obj *sp)
  */
 int
 replot_modified_solid(
-    struct bview_scene_obj *sp,
+    struct bv_scene_obj *sp,
     struct rt_db_internal *ip,
     const mat_t mat)
 {
@@ -282,7 +282,7 @@ replot_modified_solid(
     if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
 	if (!sp->s_u_data)
 	    return -1;
-	struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	Tcl_AppendResult(INTERP, LAST_SOLID(bdata)->d_namep,
 			 ": re-plot failure\n", (char *)NULL);
 	return -1;
@@ -301,12 +301,12 @@ replot_modified_solid(
 void
 add_solid_path_to_result(
     Tcl_Interp *interp,
-    struct bview_scene_obj *sp)
+    struct bv_scene_obj *sp)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     if (!sp->s_u_data)
 	return;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
     db_path_to_vls(&str, &bdata->s_fullpath);
     Tcl_AppendResult(interp, bu_vls_addr(&str), " ", NULL);
     bu_vls_free(&str);

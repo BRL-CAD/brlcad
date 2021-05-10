@@ -36,7 +36,7 @@
  * during view initialization, the shaders regression test fails.
  */
 void
-_ged_mat_aet(struct bview *gvp)
+_ged_mat_aet(struct bv *gvp)
 {
     mat_t tmat;
     fastf_t twist;
@@ -115,7 +115,7 @@ _ged_do_rot(struct ged *gedp,
 
     /* pure rotation */
     bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -128,7 +128,7 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
 
     MAT4X3PNT(model_center, gedp->ged_gvp->gv_view2model, svec);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -163,7 +163,7 @@ _ged_do_tra(struct ged *gedp,
 
     VSUB2(nvc, vc, delta);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -183,16 +183,16 @@ ged_dl_hash(struct display_list *dl)
 
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
 
     gdlp = BU_LIST_NEXT(display_list, (struct bu_list *)dl);
     while (BU_LIST_NOT_HEAD(gdlp, dl)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	    XXH64_update(state, &bdata->s_fullpath.fp_len, sizeof(size_t));
 	    XXH64_update(state, &bdata->s_fullpath.fp_maxlen, sizeof(size_t));
 	    for (size_t i = 0; i < DB_FULL_PATH_LEN(&bdata->s_fullpath); i++) {

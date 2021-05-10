@@ -24,13 +24,13 @@
  */
 
 extern "C" {
-#include "bview/defines.h"
-#include "bview/util.h"
+#include "bv/defines.h"
+#include "bv/util.h"
 }
 
 #include "bindings.h"
 
-int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyEvent *UNUSED(k))
+int CADkeyPressEvent(struct bv *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyEvent *UNUSED(k))
 {
 
     if (!v)
@@ -57,7 +57,7 @@ int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QK
 
 }
 
-int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e)
+int CADmousePressEvent(struct bv *v, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e)
 {
 
     if (!v)
@@ -76,16 +76,16 @@ int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), 
 
     int dx = 1000;
     int dy = 0;
-    unsigned long long view_flags = BVIEW_IDLE;
+    unsigned long long view_flags = BV_IDLE;
 
     if (e->buttons().testFlag(Qt::LeftButton)) {
 	bu_log("Press Left\n");
-	view_flags = BVIEW_SCALE;
+	view_flags = BV_SCALE;
 	dy = -100;
     }
     if (e->buttons().testFlag(Qt::RightButton)) {
 	bu_log("Press Right\n");
-	view_flags = BVIEW_SCALE;
+	view_flags = BV_SCALE;
 	dy = 100;
     }
     if (e->buttons().testFlag(Qt::MiddleButton)) {
@@ -94,17 +94,17 @@ int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), 
 
     point_t center;
     MAT_DELTAS_GET_NEG(center, v->gv_center);
-    return bview_adjust(v, dx, dy, center, 0, view_flags);
+    return bv_adjust(v, dx, dy, center, 0, view_flags);
 
 }
 
-int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
+int CADmouseMoveEvent(struct bv *v, int x_prev, int y_prev, QMouseEvent *e)
 {
 
     if (!v)
 	return 0;
 
-    unsigned long long view_flags = BVIEW_IDLE;
+    unsigned long long view_flags = BV_IDLE;
 
     if (x_prev == -INT_MAX) {
 	x_prev = e->x();
@@ -117,17 +117,17 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
 
 	if (e->modifiers().testFlag(Qt::ControlModifier)) {
 	    bu_log("Ctrl+Left\n");
-	    view_flags = BVIEW_ROT;
+	    view_flags = BV_ROT;
 	}
 
 	if (e->modifiers().testFlag(Qt::ShiftModifier)) {
 	    bu_log("Shift+Left\n");
-	    view_flags = BVIEW_TRANS;
+	    view_flags = BV_TRANS;
 	}
 
 	if (e->modifiers().testFlag(Qt::ShiftModifier) && e->modifiers().testFlag(Qt::ControlModifier)) {
 	    bu_log("Ctrl+Shift+Left\n");
-	    view_flags = BVIEW_SCALE;
+	    view_flags = BV_SCALE;
 	}
     }
 
@@ -142,7 +142,7 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
     int dx = e->x() - x_prev;
     int dy = e->y() - y_prev;
 
-    if (view_flags == BVIEW_SCALE) {
+    if (view_flags == BV_SCALE) {
 	int mdelta = (abs(dx) > abs(dy)) ? dx : -dy;
 	double f = (double)mdelta/(double)v->gv_height;
 	dy = (int)(2 * f * 1000);
@@ -152,15 +152,15 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
     // TODO - the key point and the mode/flags are all hardcoded
     // right now, but eventually for shift grips they will need to
     // respond to the various mod keys.  The intent is to set flags
-    // based on which mod keys are set to allow bview_adjust to
+    // based on which mod keys are set to allow bv_adjust to
     // do the correct math.
     point_t center;
     MAT_DELTAS_GET_NEG(center, v->gv_center);
-    return bview_adjust(v, dx, dy, center, 0, view_flags);
+    return bv_adjust(v, dx, dy, center, 0, view_flags);
 
 }
 
-int CADwheelEvent(struct bview *v, QWheelEvent *e)
+int CADwheelEvent(struct bv *v, QWheelEvent *e)
 {
 
     if (!v)
@@ -172,7 +172,7 @@ int CADwheelEvent(struct bview *v, QWheelEvent *e)
     int dy = (incr > 0) ? 20 : -20;
 
     point_t origin = VINIT_ZERO;
-    return bview_adjust(v, dx, dy, origin, 0, BVIEW_SCALE);
+    return bv_adjust(v, dx, dy, origin, 0, BV_SCALE);
 
 }
 

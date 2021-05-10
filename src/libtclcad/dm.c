@@ -368,7 +368,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     int lineWidth;
     int posOnly;
     int tripleColor;
-    struct bview_axes bnas;
+    struct bv_axes bnas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -383,7 +383,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    memset(&bnas, 0, sizeof(struct bview_axes));
+    memset(&bnas, 0, sizeof(struct bv_axes));
 
     if (dmo_parseAxesArgs(argc, argv, &viewSize, rmat, axesPos, &axesSize,
 			  axesColor, labelColor, &lineWidth,
@@ -584,7 +584,7 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
     fastf_t axesSize;
     int axesColor[3];
     int lineWidth;
-    struct bview_data_axes_state bndas;
+    struct bv_data_axes_state bndas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -614,7 +614,7 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    memset(&bndas, 0, sizeof(struct bview_data_axes_state));
+    memset(&bndas, 0, sizeof(struct bv_data_axes_state));
     VMOVE(bndas.points[0], modelAxesPos);
     bndas.size = axesSize;
     VMOVE(bndas.color, axesColor);
@@ -810,7 +810,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     int tickColor[3];
     int majorTickColor[3];
     int tickThreshold;
-    struct bview_axes bnas;
+    struct bv_axes bnas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -842,7 +842,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 
     MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
 
-    memset(&bnas, 0, sizeof(struct bview_axes));
+    memset(&bnas, 0, sizeof(struct bv_axes));
     VMOVE(bnas.axes_pos, viewAxesPos);
     bnas.axes_size = axesSize;
     VMOVE(bnas.axes_color, axesColor);
@@ -1129,7 +1129,7 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 
 HIDDEN void
 dmo_drawSolid(struct dm_obj *dmop,
-	      struct bview_scene_obj *sp)
+	      struct bv_scene_obj *sp)
 {
     if (sp->s_iflag == UP)
 	dm_set_fg(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_os.transparency);
@@ -1234,7 +1234,7 @@ HIDDEN int
 dmo_drawSList(struct dm_obj *dmop,
 	      struct bu_list *hsp)
 {
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     int linestyle = -1;
 
     if (!dmop)
@@ -1242,7 +1242,7 @@ dmo_drawSList(struct dm_obj *dmop,
 
     if (dmop->dmo_dmp->i->dm_transparency) {
 	/* First, draw opaque stuff */
-	for (BU_LIST_FOR(sp, bview_scene_obj, hsp)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, hsp)) {
 	    if (sp->s_os.transparency < 1.0)
 		continue;
 
@@ -1258,7 +1258,7 @@ dmo_drawSList(struct dm_obj *dmop,
 	dm_set_depth_mask(dmop->dmo_dmp, 0);
 
 	/* Second, draw transparent stuff */
-	for (BU_LIST_FOR(sp, bview_scene_obj, hsp)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, hsp)) {
 	    /* already drawn above */
 	    if (ZERO(sp->s_os.transparency - 1.0))
 		continue;
@@ -1275,7 +1275,7 @@ dmo_drawSList(struct dm_obj *dmop,
 	dm_set_depth_mask(dmop->dmo_dmp, 1);
     } else {
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, hsp)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, hsp)) {
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
 		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->i->dm_lineWidth, linestyle);

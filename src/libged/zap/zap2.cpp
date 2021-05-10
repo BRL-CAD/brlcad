@@ -30,11 +30,11 @@
 
 #include "../ged_private.h"
 
-#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+#define GET_BV_SCENE_OBJ(p, fp) { \
     if (BU_LIST_IS_EMPTY(fp)) { \
-	BU_ALLOC((p), struct bview_scene_obj); \
+	BU_ALLOC((p), struct bv_scene_obj); \
     } else { \
-	p = BU_LIST_NEXT(bview_scene_obj, fp); \
+	p = BU_LIST_NEXT(bv_scene_obj, fp); \
 	BU_LIST_DEQUEUE(&((p)->l)); \
     } \
     BU_LIST_INIT( &((p)->s_vlist) ); }
@@ -64,9 +64,9 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
     if (argc == 1 && sg) {
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
-	    bview_scene_obj_free(cg->g, gedp->free_scene_obj);
-	    BU_PUT(cg, struct bview_scene_group);
+	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+	    bv_scene_obj_free(cg->g, gedp->free_scene_obj);
+	    BU_PUT(cg, struct bv_scene_group);
 	}
 	bu_ptbl_reset(sg);
     }
@@ -74,9 +74,9 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     /* If -v specified, view objects are to be cleared */
     if (argc == 2 && BU_STR_EQUAL(argv[1], "-v")) {
 	for (long i = (long)BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs) - 1; i >= 0; i--) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
 	    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
-	    bview_scene_obj_free(s, gedp->free_scene_obj);
+	    bv_scene_obj_free(s, gedp->free_scene_obj);
 	}
     }
 

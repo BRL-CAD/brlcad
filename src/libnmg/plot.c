@@ -49,8 +49,8 @@
 
 #include "vmath.h"
 #include "bu/malloc.h"
-#include "bview/plot3.h"
-#include "bview/vlist.h"
+#include "bv/plot3.h"
+#include "bv/vlist.h"
 #include "nmg.h"
 
 #define US_DELAY 10 /* Additional delay between frames */

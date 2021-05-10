@@ -395,7 +395,7 @@ _ged_cm_end(const int argc, const char **argv)
      */
     MAT_COPY(_ged_current_gedp->ged_gvp->gv_rotation, _ged_viewrot);
     MAT_DELTAS_VEC_NEG(_ged_current_gedp->ged_gvp->gv_center, _ged_eye_model);
-    bview_update(_ged_current_gedp->ged_gvp);
+    bv_update(_ged_current_gedp->ged_gvp);
 
     bu_vls_printf(&eye, "%lf %lf %lf", V3ARGS(_ged_eye_model));
     bu_argv_from_string(eye_argv+1, 4, bu_vls_addr(&eye));

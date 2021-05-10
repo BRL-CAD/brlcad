@@ -944,7 +944,7 @@ rhc_curve_points(
 
 
 int
-rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
+rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bv *v, fastf_t s_size)
 {
     point_t p;
     vect_t rhc_R;
@@ -1012,7 +1012,7 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
 
 int
-rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
 {
     int i, n;
     fastf_t b, c, *back, *front, rh;
@@ -1926,7 +1926,7 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 void
-rt_rhc_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_rhc_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
 {
     if (!labels || !ip)
 	return;
@@ -1935,19 +1935,19 @@ rt_rhc_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     RT_RHC_CK_MAGIC(rhc);
 
     // Set up the containers
-    struct bview_label *l[5];
+    struct bv_label *l[5];
     for (int i = 0; i < 5; i++) {
-	struct bview_scene_obj *s;
-	struct bview_label *la;
-	BU_GET(s, struct bview_scene_obj);
-	BU_GET(la, struct bview_label);
+	struct bv_scene_obj *s;
+	struct bv_label *la;
+	BU_GET(s, struct bv_scene_obj);
+	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-	s->s_type_flags |= BVIEW_LABELS;
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;

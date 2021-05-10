@@ -1171,7 +1171,7 @@ rt_arb_free(register struct soltab *stp)
  * be.
  */
 int
-rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
 {
     point_t *pts;
     struct rt_arb_internal *aip;
@@ -2525,7 +2525,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 }
 
 void
-rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
 {
     int i;
 
@@ -2539,19 +2539,19 @@ rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     int arbType = rt_arb_std_type(ip, &arb_tol);
 
     // Set up the containers
-    struct bview_label *l[8];
+    struct bv_label *l[8];
     for (i = 0; i < arbType; i++) {
-	struct bview_scene_obj *s;
-	struct bview_label *la;
-	BU_GET(s, struct bview_scene_obj);
-	BU_GET(la, struct bview_label);
+	struct bv_scene_obj *s;
+	struct bv_label *la;
+	BU_GET(s, struct bv_scene_obj);
+	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-	s->s_type_flags |= BVIEW_LABELS;
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;

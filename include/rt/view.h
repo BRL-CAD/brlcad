@@ -30,7 +30,7 @@
 #include "bu/hash.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS
@@ -39,7 +39,7 @@ __BEGIN_DECLS
  * NOTE: Normally, librt doesn't have a concept of a "display" of the geometry.
  * However for at least the plotting routines, view information is sometimes
  * needed to produce more intelligent output.  In those situations, the
- * application will generally pass in a bview structure.
+ * application will generally pass in a bv structure.
  */
 
 /**

@@ -32,8 +32,8 @@
 
 #include "bn.h"
 #include "raytrace.h"
-#include "bview/plot3.h"
-#include "bview/vlist.h"
+#include "bv/plot3.h"
+#include "bv/vlist.h"
 
 
 struct bv_vlblock *

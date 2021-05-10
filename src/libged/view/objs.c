@@ -33,16 +33,16 @@
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bview.h"
+#include "bv.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
 
-#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+#define GET_BV_SCENE_OBJ(p, fp) { \
     if (BU_LIST_IS_EMPTY(fp)) { \
-	BU_ALLOC((p), struct bview_scene_obj); \
+	BU_ALLOC((p), struct bv_scene_obj); \
     } else { \
-	p = BU_LIST_NEXT(bview_scene_obj, fp); \
+	p = BU_LIST_NEXT(bv_scene_obj, fp); \
 	BU_LIST_DEQUEUE(&((p)->l)); \
     } \
     BU_LIST_INIT( &((p)->s_vlist) ); }
@@ -62,7 +62,7 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!gd->s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
 	return GED_ERROR;
@@ -105,17 +105,17 @@ _objs_cmd_delete(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY)) {
+    if (!(s->s_type_flags & BV_VIEWONLY)) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s is associated with a database object - use 'erase' cmd to clear\n", gd->vobj);
 	return GED_ERROR;
     }
     bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
-    bview_scene_obj_free(s, gedp->free_scene_obj);
+    bv_scene_obj_free(s, gedp->free_scene_obj);
 
     return GED_OK;
 }
@@ -135,7 +135,7 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!gd->s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
 	return GED_ERROR;
@@ -171,7 +171,7 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!gd->s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
 	return GED_ERROR;
@@ -235,7 +235,7 @@ _objs_cmd_lcnt(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!gd->s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
 	return GED_ERROR;
@@ -259,7 +259,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!gd->s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
 	return GED_ERROR;
@@ -271,7 +271,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    struct bview *v = gedp->ged_gvp;
+    struct bv *v = gedp->ged_gvp;
     if (argc) {
 	int x, y;
 	if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&x) != 1 || x < 0) {
@@ -355,16 +355,16 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	list_view = 1;
 
     // If we're not wanting help and we have no subcommand, list defined view objects
-    struct bview *v = gedp->ged_gvp;
+    struct bv *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
 	if (list_db) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
-		struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
 		if (bu_list_len(&cg->g->s_vlist)) {
 		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->g->s_name));
 		} else {
 		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-			struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
 			bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
 		    }
 		}
@@ -372,7 +372,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	}
 	if (list_view) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-		struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	    }
 	}
@@ -392,7 +392,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     // View-only objects come first, unless we're explicitly excluding them by only specifying -G
     if (list_view) {
 	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	    if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
 		gd->s = s;
 		break;
@@ -402,7 +402,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 
     if (!gd->s) {
 	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
-	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
 	    if (bu_list_len(&cg->g->s_vlist)) {
 		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&cg->g->s_name))) {
 		    gd->s = cg->g;
@@ -410,7 +410,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 		}
 	    } else {
 		for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-		    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
 		    if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_name))) {
 			gd->s = s;
 			break;

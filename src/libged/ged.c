@@ -44,14 +44,14 @@
 #include "bn.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 
-#include "bview/defines.h"
+#include "bv/defines.h"
 
 #include "./ged_private.h"
 #include "./qray.h"
 
-#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
+#define FREE_BV_SCENE_OBJ(p, fp) { \
     BU_LIST_APPEND(fp, &((p)->l)); \
     RT_FREE_VLIST(&((p)->s_vlist)); }
 
@@ -155,7 +155,7 @@ free_object_selections(struct bu_hash_tbl *t)
 void
 ged_free(struct ged *gedp)
 {
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
 
     if (gedp == GED_NULL)
 	return;
@@ -166,15 +166,15 @@ ged_free(struct ged *gedp)
 
     // Note - it is the caller's responsibility to have freed any data
     // associated with the ged or its views in the u_data pointers.
-    struct bview *gdvp;
+    struct bv *gdvp;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	gdvp = (struct bv *)BU_PTBL_GET(&gedp->ged_views, i);
 	bu_vls_free(&gdvp->gv_name);
 	if (gdvp->callbacks) {
 	    bu_ptbl_free(gdvp->callbacks);
 	    BU_PUT(gdvp->callbacks, struct bu_ptbl);
 	}
-	bu_free((void *)gdvp, "bview");
+	bu_free((void *)gdvp, "bv");
     }
     bu_ptbl_free(&gedp->ged_views);
     gedp->ged_gvp = NULL;
@@ -190,13 +190,13 @@ ged_free(struct ged *gedp)
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
-	    // TODO - FREE_BVIEW_SCENE_OBJ macro is stashing on the free_scene_obj list, not
+	    // TODO - FREE_BV_SCENE_OBJ macro is stashing on the free_scene_obj list, not
 	    // BU_PUT-ing the solid objects themselves - is that what we expect
 	    // when doing ged_free?  I.e., is ownership of the free solid list
 	    // with the struct ged or with the application as a whole?  We're
 	    // BU_PUT-ing gedp->free_scene_obj - above why just that one?
 #if 0
-	    struct bview_scene_obj *sp = (struct bview_scene_obj *)BU_PTBL_GET(&gedp->free_solids, i);
+	    struct bv_scene_obj *sp = (struct bv_scene_obj *)BU_PTBL_GET(&gedp->free_solids, i);
 	    RT_FREE_VLIST(&(sp->s_vlist));
 #endif
 	}
@@ -227,16 +227,16 @@ ged_free(struct ged *gedp)
 
     // TODO - replace free_scene_obj with free_solids ptbl
     {
-	struct bview_scene_obj *nsp;
-	sp = BU_LIST_NEXT(bview_scene_obj, &gedp->free_scene_obj->l);
+	struct bv_scene_obj *nsp;
+	sp = BU_LIST_NEXT(bv_scene_obj, &gedp->free_scene_obj->l);
 	while (BU_LIST_NOT_HEAD(sp, &gedp->free_scene_obj->l)) {
-	    nsp = BU_LIST_PNEXT(bview_scene_obj, sp);
+	    nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	    BU_LIST_DEQUEUE(&((sp)->l));
-	    FREE_BVIEW_SCENE_OBJ(sp, &gedp->free_scene_obj->l);
+	    FREE_BV_SCENE_OBJ(sp, &gedp->free_scene_obj->l);
 	    sp = nsp;
 	}
     }
-    BU_PUT(gedp->free_scene_obj, struct bview_scene_obj);
+    BU_PUT(gedp->free_scene_obj, struct bv_scene_obj);
 
     free_object_selections(gedp->ged_selections);
     bu_hash_destroy(gedp->ged_selections);
@@ -283,15 +283,15 @@ ged_init(struct ged *gedp)
     gedp->ged_selections = bu_hash_create(32);
 
     /* init the solid list */
-    struct bview_scene_obj *free_scene_obj;
-    BU_GET(free_scene_obj, struct bview_scene_obj);
+    struct bv_scene_obj *free_scene_obj;
+    BU_GET(free_scene_obj, struct bv_scene_obj);
     BU_LIST_INIT(&free_scene_obj->l);
     gedp->free_scene_obj = free_scene_obj;
 
     /* TODO: If we're init-ing the list here, does that mean the gedp has
      * ownership of all solid objects created and stored here, and should we
      * then free them when ged_free is called? (don't appear to be currently,
-     * just calling FREE_BVIEW_SCENE_OBJ which doesn't de-allocate... */
+     * just calling FREE_BV_SCENE_OBJ which doesn't de-allocate... */
     BU_PTBL_INIT(&gedp->free_solids);
 
     /* Initialize callbacks */
@@ -487,7 +487,7 @@ ged_output_handler_cb(struct ged *gedp, char *str)
 }
 
 void
-ged_create_vlist_solid_cb(struct ged *gedp, struct bview_scene_obj *s)
+ged_create_vlist_solid_cb(struct ged *gedp, struct bv_scene_obj *s)
 {
     if (gedp->ged_create_vlist_scene_obj_callback != GED_CREATE_VLIST_SOLID_FUNC_NULL) {
 	gedp->ged_cbs->ged_create_vlist_scene_obj_callback_cnt++;

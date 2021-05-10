@@ -36,7 +36,7 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/ptbl.h"

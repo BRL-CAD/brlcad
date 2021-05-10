@@ -84,7 +84,7 @@ rect_vls_print(struct ged *gedp)
  * position and dimensions in normalized view coordinates.
  */
 static void
-rect_image2view(struct bview_interactive_rect_state *grsp)
+rect_image2view(struct bv_interactive_rect_state *grsp)
 {
     grsp->x = (grsp->pos[X] / (fastf_t)grsp->cdim[X] - 0.5) * 2.0;
     grsp->y = ((0.5 - (grsp->cdim[Y] - grsp->pos[Y]) / (fastf_t)grsp->cdim[Y]) / grsp->aspect * 2.0);
@@ -97,7 +97,7 @@ rect_image2view(struct bview_interactive_rect_state *grsp)
  * Adjust the rubber band rectangle to have the same aspect ratio as the window.
  */
 static void
-rect_adjust_for_zoom(struct bview_interactive_rect_state *grsp)
+rect_adjust_for_zoom(struct bv_interactive_rect_state *grsp)
 {
     fastf_t width, height;
 
@@ -268,7 +268,7 @@ rect_zoom(struct ged *gedp)
     /* set the new model center */
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_model_center);
     gedp->ged_gvp->gv_scale *= sf;
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return GED_OK;
 }

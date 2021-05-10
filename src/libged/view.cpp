@@ -35,20 +35,20 @@ extern "C" int
 ged_view_update(struct ged *gedp)
 {
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct bview *v = gedp->ged_gvp;
+    struct bv *v = gedp->ged_gvp;
     struct bu_ptbl *sg = v->gv_db_grps;
-    std::set<struct bview_scene_group *> regen;
-    std::set<struct bview_scene_group *>::iterator r_it;
+    std::set<struct bv_scene_group *> regen;
+    std::set<struct bv_scene_group *>::iterator r_it;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	// When checking a scene group, there are two things to confirm:
 	// 1.  All dp pointers in all paths are valid
 	// 2.  No edit flags have been set.
 	// If either of these things is not true, the group must be
 	// regenerated.
-	struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
+	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	int invalid = 0;
 	for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-	    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
 	    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
 	    for (size_t fp_i = 0; fp_i < ud->fp.fp_len; fp_i++) {
 		struct directory *dp = db_lookup(dbip, ud->fp.fp_names[fp_i]->d_namep, LOOKUP_QUIET);
@@ -73,7 +73,7 @@ ged_view_update(struct ged *gedp)
     }
 
     for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
-	struct bview_scene_group *cg = *r_it;
+	struct bv_scene_group *cg = *r_it;
 	struct bu_vls opath = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->g->s_name));
 	const char *av[4];

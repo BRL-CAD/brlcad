@@ -112,7 +112,7 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     /* First step:  put eye at view center (view 0, 0, 0) */
     MAT_COPY(_ged_current_gedp->ged_gvp->gv_rotation, _ged_viewrot);
     MAT_DELTAS_VEC_NEG(_ged_current_gedp->ged_gvp->gv_center, _ged_eye_model);
-    bview_update(_ged_current_gedp->ged_gvp);
+    bv_update(_ged_current_gedp->ged_gvp);
 
     /*
      * Compute camera orientation notch to right (+X) and up (+Y)
@@ -133,7 +133,7 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
     MAT4X3PNT(new_cent, _ged_current_gedp->ged_gvp->gv_view2model, xlate);
     MAT_DELTAS_VEC_NEG(_ged_current_gedp->ged_gvp->gv_center, new_cent);
-    bview_update(_ged_current_gedp->ged_gvp);
+    bv_update(_ged_current_gedp->ged_gvp);
 
     /* If new treewalk is needed, get new objects into view. */
     if (preview_tree_walk_needed) {

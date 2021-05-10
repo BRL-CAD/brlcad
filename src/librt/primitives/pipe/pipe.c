@@ -2307,7 +2307,7 @@ draw_pipe_end_adaptive(
 
 
 int
-rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bview *v, fastf_t s_size)
+rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct bv *v, fastf_t s_size)
 {
     struct rt_pipe_internal *pipeobj;
     struct pipe_segment *cur_seg;
@@ -2354,7 +2354,7 @@ rt_pipe_plot(
     struct rt_db_internal *ip,
     const struct bg_tess_tol *UNUSED(ttol),
     const struct bn_tol *UNUSED(tol),
-    const struct bview *UNUSED(info))
+    const struct bv *UNUSED(info))
 {
     struct rt_pipe_internal *pip;
     struct pipe_segment *cur_seg;

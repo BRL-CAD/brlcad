@@ -46,7 +46,7 @@
 #include "../ged_private.h"
 
 struct bigE_data {
-    struct bview_scene_obj *s;
+    struct bv_scene_obj *s;
 
     struct db_i *dbip;
     struct db_full_path *fp;
@@ -1793,7 +1793,7 @@ fix_halfs(struct bigE_data *dgcdp)
 
 
 int
-draw_m3(struct bview_scene_obj *s)
+draw_m3(struct bv_scene_obj *s)
 {
 
     struct bigE_data dgcdp;

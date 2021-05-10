@@ -47,7 +47,7 @@
 
 #include "raytrace.h"
 
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include "dm.h"
 
 #include "../ged_private.h"
@@ -1082,7 +1082,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
 
 static void
-write_data_arrows(struct bview_data_arrow_state *gdasp, FILE *fp, int sflag)
+write_data_arrows(struct bv_data_arrow_state *gdasp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1157,7 +1157,7 @@ write_data_arrows(struct bview_data_arrow_state *gdasp, FILE *fp, int sflag)
 
 
 static void
-write_data_axes(struct bview_data_axes_state *bndasp, FILE *fp, int sflag)
+write_data_axes(struct bv_data_axes_state *bndasp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1234,7 +1234,7 @@ write_data_axes(struct bview_data_axes_state *bndasp, FILE *fp, int sflag)
 
 
 static void
-write_data_lines(struct bview_data_line_state *gdlsp, FILE *fp, int sflag)
+write_data_lines(struct bv_data_line_state *gdlsp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1349,16 +1349,16 @@ dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file
     MAT_IDN(mat);
 
     for (BU_LIST_FOR(gdlp, display_list, hdlp)) {
-	struct bview_scene_obj *sp;
+	struct bv_scene_obj *sp;
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		struct directory *dp;
 		struct rt_db_internal intern;
 		struct rt_bot_internal *bot;
 
 		if (!sp->s_u_data)
 		    continue;
-		struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 		dp = bdata->s_fullpath.fp_names[bdata->s_fullpath.fp_len-1];
 

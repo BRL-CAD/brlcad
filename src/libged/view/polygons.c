@@ -33,7 +33,7 @@
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bview.h"
+#include "bv.h"
 #include "bg/polygon.h"
 #include "rt/geom.h"
 
@@ -55,7 +55,7 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (s) {
 	bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
 	return GED_ERROR;
@@ -75,23 +75,23 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    int type = BVIEW_POLYGON_GENERAL;
+    int type = BV_POLYGON_GENERAL;
     if (argc == 3) {
 	if (BU_STR_EQUAL(argv[2], "circ") || BU_STR_EQUAL(argv[2], "circle"))
-	    type = BVIEW_POLYGON_CIRCLE;
+	    type = BV_POLYGON_CIRCLE;
 	if (BU_STR_EQUAL(argv[2], "ell") || BU_STR_EQUAL(argv[2], "ellipse"))
-	    type = BVIEW_POLYGON_ELLIPSE;
+	    type = BV_POLYGON_ELLIPSE;
 	if (BU_STR_EQUAL(argv[2], "rect") || BU_STR_EQUAL(argv[2], "rectangle"))
-	    type = BVIEW_POLYGON_RECTANGLE;
+	    type = BV_POLYGON_RECTANGLE;
 	if (BU_STR_EQUAL(argv[2], "sq") || BU_STR_EQUAL(argv[2], "square"))
-	    type = BVIEW_POLYGON_SQUARE;
-	if (type == BVIEW_POLYGON_GENERAL) {
+	    type = BV_POLYGON_SQUARE;
+	if (type == BV_POLYGON_GENERAL) {
 	    bu_vls_printf(gedp->ged_result_str, "Unknown polygon type %s\n", argv[2]);
 	    return GED_ERROR;
 	}
     }
 
-    s = bview_create_polygon(gedp->ged_gvp, type, x, y, gedp->free_scene_obj);
+    s = bv_create_polygon(gedp->ged_gvp, type, x, y, gedp->free_scene_obj);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return GED_ERROR;
@@ -118,19 +118,19 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
-    if (p->type != BVIEW_POLYGON_GENERAL) {
+    if (p->type != BV_POLYGON_GENERAL) {
 	bu_vls_printf(gedp->ged_result_str, "Point selection is only supported for general polygons - specified object defines a constrained shape\n");
 	return GED_ERROR;
     }
@@ -168,7 +168,7 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
 
     s->s_v->gv_mouse_x = x;
     s->s_v->gv_mouse_y = y;
-    bview_update_polygon(s);
+    bv_update_polygon(s);
 
     return GED_OK;
 }
@@ -189,18 +189,18 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL) {
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    if (p->type != BV_POLYGON_GENERAL) {
 	bu_vls_printf(gedp->ged_result_str, "Point appending is only supported for general polygons - specified object defines a constrained shape\n");
 	return GED_ERROR;
     }
@@ -237,7 +237,7 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
 
     s->s_v->gv_mouse_x = x;
     s->s_v->gv_mouse_y = y;
-    bview_update_polygon(s);
+    bv_update_polygon(s);
 
     return GED_OK;
 }
@@ -257,18 +257,18 @@ _poly_cmd_move(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL) {
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    if (p->type != BV_POLYGON_GENERAL) {
 	bu_vls_printf(gedp->ged_result_str, "Individual point movement is only supported for general polygons - specified object defines a constrained shape.  Use \"update\" to adjust constrained shapes.\n");
 	return GED_ERROR;
     }
@@ -293,7 +293,7 @@ _poly_cmd_move(void *bs, int argc, const char **argv)
 
     s->s_v->gv_mouse_x = x;
     s->s_v->gv_mouse_y = y;
-    bview_update_polygon(s);
+    bv_update_polygon(s);
 
     return GED_OK;
 }
@@ -313,24 +313,24 @@ _poly_cmd_clear(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     p->sflag = 0;
     p->mflag = 0;
     p->aflag = 0;
     p->curr_contour_i = 0;
     p->curr_point_i = -1;
 
-    bview_update_polygon(s);
+    bv_update_polygon(s);
 
     return GED_OK;
 }
@@ -350,18 +350,18 @@ _poly_cmd_close(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL) {
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    if (p->type != BV_POLYGON_GENERAL) {
 	return GED_OK;
     }
 
@@ -390,7 +390,7 @@ _poly_cmd_close(void *bs, int argc, const char **argv)
     p->mflag = 0;
     p->aflag = 0;
 
-    bview_update_polygon(s);
+    bv_update_polygon(s);
 
     return GED_OK;
 }
@@ -410,18 +410,18 @@ _poly_cmd_open(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL) {
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    if (p->type != BV_POLYGON_GENERAL) {
 	bu_vls_printf(gedp->ged_result_str, "Constrained polygon shapes are always closed.\n");
 	return GED_ERROR;
     }
@@ -451,7 +451,7 @@ _poly_cmd_open(void *bs, int argc, const char **argv)
     p->mflag = 0;
     p->aflag = 0;
 
-    bview_update_polygon(s);
+    bv_update_polygon(s);
 
     return GED_OK;
 }
@@ -471,20 +471,20 @@ _poly_cmd_viewsnap(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
 
     // Set view info
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    bview_sync(gedp->ged_gvp, &p->v);
-    bview_update(gedp->ged_gvp);
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    bv_sync(gedp->ged_gvp, &p->v);
+    bv_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -504,21 +504,21 @@ _poly_cmd_to_curr_view(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
 
     // Set view info
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    bview_sync(&p->v, gedp->ged_gvp);
-    bview_update_polygon(s);
-    bview_update(gedp->ged_gvp);
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    bv_sync(&p->v, gedp->ged_gvp);
+    bv_update_polygon(s);
+    bv_update(gedp->ged_gvp);
 
     return GED_OK;
 }
@@ -538,17 +538,17 @@ _poly_cmd_area(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     double area = bg_find_polygon_area(&p->polygon, CLIPPER_MAX,
 	                               p->v.gv_model2view, p->v.gv_scale);
@@ -572,12 +572,12 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
@@ -588,10 +588,10 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
     }
 
     // Look up the polygon to check for overlaps
-    struct bview *v = gedp->ged_gvp;
-    struct bview_scene_obj *s2 = NULL;
+    struct bv *v = gedp->ged_gvp;
+    struct bv_scene_obj *s2 = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-        struct bview_scene_obj *stest = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+        struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
         if (BU_STR_EQUAL(argv[0], bu_vls_cstr(&stest->s_uuid))) {
             s2 = stest;
             break;
@@ -601,15 +601,15 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", argv[0]);
 	return GED_ERROR;
     }
-    if (!(s2->s_type_flags & BVIEW_VIEWONLY) || !(s2->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s2->s_type_flags & BV_VIEWONLY) || !(s2->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a view polygon.\n", argv[0]);
 	return GED_ERROR;
     }
 
     // Have two polygons.  Check for overlaps, using the origin view of the
     // obj1 polygon.
-    struct bview_polygon *polyA = (struct bview_polygon *)s->s_i_data;
-    struct bview_polygon *polyB = (struct bview_polygon *)s2->s_i_data;
+    struct bv_polygon *polyA = (struct bv_polygon *)s->s_i_data;
+    struct bv_polygon *polyB = (struct bv_polygon *)s2->s_i_data;
 
     int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &gedp->ged_wdbp->wdb_tol, polyA->v.gv_scale);
 
@@ -645,7 +645,7 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (s) {
 	bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
 	return GED_ERROR;
@@ -677,14 +677,14 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
     }
 
     // Have a sketch - create an empty polygon
-    s = bview_create_polygon(gedp->ged_gvp, BVIEW_POLYGON_GENERAL, 0, 0, gedp->free_scene_obj);
+    s = bv_create_polygon(gedp->ged_gvp, BV_POLYGON_GENERAL, 0, 0, gedp->free_scene_obj);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return GED_ERROR;
     }
     bu_vls_init(&s->s_uuid);
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     bg_polygon_free(&p->polygon);
 
     /* Start translating the sketch info into a polygon */
@@ -789,11 +789,11 @@ end:
 	++j;
     }
 
-    /* Construct an appropriate bview from the sketch's
+    /* Construct an appropriate bv from the sketch's
      * 3D info so we can snap to it. autoview, then dir.
      * TODO - this needs improvement... */
-    struct bview *v = &p->v;
-    bview_init(v);
+    struct bv *v = &p->v;
+    bv_init(v);
     vect_t center = VINIT_ZERO;
     vect_t min, max;
     VSETALL(min, -dmax);
@@ -810,20 +810,20 @@ end:
     V_MAX(v->gv_scale, radial[Z]);
     v->gv_size = 2.0 * v->gv_scale;
     v->gv_isize = 1.0 / v->gv_size;
-    bview_update(v);
+    bv_update(v);
 
     vect_t snorm;
     VCROSS(snorm, sketch_ip->u_vec, sketch_ip->v_vec);
     AZEL_FROM_V3DIR(p->v.gv_aet[0], p->v.gv_aet[1], snorm);
     _ged_mat_aet(&p->v);
-    bview_update(&p->v);
+    bv_update(&p->v);
 
     /* Clean up */
     bu_free((void *)all_segment_nodes, "all_segment_nodes");
     rt_db_free_internal(&intern);
 
     /* Have new polygon, now update view object vlist */
-    bview_update_polygon(s);
+    bv_update_polygon(s);
 
     /* Done - add to scene objects */
     bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)s);
@@ -846,12 +846,12 @@ _poly_cmd_export(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
@@ -872,7 +872,7 @@ _poly_cmd_export(void *bs, int argc, const char **argv)
     point_t vorigin;
     mat_t invRot;
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     for (size_t j = 0; j < p->polygon.num_contours; ++j)
 	num_verts += p->polygon.contour[j].num_points;
 
@@ -969,20 +969,20 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
 
     if (argc == 1 && BU_STR_EQUAL(argv[0], "0")) {
-	struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+	struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 	p->fill_flag = 0;
-	bview_update_polygon(s);
+	bv_update_polygon(s);
 	return GED_OK;
     }
 
@@ -1005,11 +1005,11 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     p->fill_flag = 1;
     V2MOVE(p->fill_dir, vdir);
     p->fill_delta = vdelta;
-    bview_update_polygon(s);
+    bv_update_polygon(s);
 
     return GED_OK;
 }
@@ -1029,12 +1029,12 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
 	return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_VIEWONLY) || !(s->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
 	return GED_ERROR;
     }
@@ -1062,10 +1062,10 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     }
 
     // Look up the polygon to check for overlaps
-    struct bview *v = gedp->ged_gvp;
-    struct bview_scene_obj *s2 = NULL;
+    struct bv *v = gedp->ged_gvp;
+    struct bv_scene_obj *s2 = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-        struct bview_scene_obj *stest = (struct bview_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+        struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
         if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_uuid))) {
             s2 = stest;
             break;
@@ -1075,15 +1075,15 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", argv[0]);
 	return GED_ERROR;
     }
-    if (!(s2->s_type_flags & BVIEW_VIEWONLY) || !(s2->s_type_flags & BVIEW_POLYGONS)) {
+    if (!(s2->s_type_flags & BV_VIEWONLY) || !(s2->s_type_flags & BV_POLYGONS)) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a view polygon.\n", argv[0]);
 	return GED_ERROR;
     }
 
     // Have two polygons.  Check for overlaps, using the origin view of the
     // obj1 polygon.
-    struct bview_polygon *polyA = (struct bview_polygon *)s->s_i_data;
-    struct bview_polygon *polyB = (struct bview_polygon *)s2->s_i_data;
+    struct bv_polygon *polyA = (struct bv_polygon *)s->s_i_data;
+    struct bv_polygon *polyB = (struct bv_polygon *)s2->s_i_data;
 
     struct bg_polygon *cp = bg_clip_polygon(op, &polyA->polygon, &polyB->polygon, CLIPPER_MAX, polyA->v.gv_model2view, polyA->v.gv_view2model);
 
@@ -1096,10 +1096,10 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     polyA->polygon.contour = cp->contour;
 
     // clipper results are always general polygons
-    polyA->type = BVIEW_POLYGON_GENERAL;
+    polyA->type = BV_POLYGON_GENERAL;
 
     BU_PUT(cp, struct bg_polygon);
-    bview_update_polygon(s);
+    bv_update_polygon(s);
 
     return GED_OK;
 }

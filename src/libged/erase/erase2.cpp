@@ -36,11 +36,11 @@
 #include "../alphanum.h"
 #include "../ged_private.h"
 
-#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+#define GET_BV_SCENE_OBJ(p, fp) { \
     if (BU_LIST_IS_EMPTY(fp)) { \
-	BU_ALLOC((p), struct bview_scene_obj); \
+	BU_ALLOC((p), struct bv_scene_obj); \
     } else { \
-	p = BU_LIST_NEXT(bview_scene_obj, fp); \
+	p = BU_LIST_NEXT(bv_scene_obj, fp); \
 	BU_LIST_DEQUEUE(&((p)->l)); \
     } \
     BU_LIST_INIT( &((p)->s_vlist) ); }
@@ -67,7 +67,7 @@ struct dfp_cmp {
 
 /* Return 1 if we did a split, 0 otherwise */
 int
-path_add_children(std::set<struct bview_scene_group *> *ngrps, struct db_i *dbip, struct db_full_path *gfp, struct db_full_path *fp, struct bview_scene_obj *free_scene_obj)
+path_add_children(std::set<struct bv_scene_group *> *ngrps, struct db_i *dbip, struct db_full_path *gfp, struct db_full_path *fp, struct bv_scene_obj *free_scene_obj)
 {
     // Get the list of immediate children from gfp:
     struct directory **children = NULL;
@@ -110,9 +110,9 @@ path_add_children(std::set<struct bview_scene_group *> *ngrps, struct db_i *dbip
 		path_add_children(ngrps, dbip, gfp, fp, free_scene_obj);
 	} else {
 	    struct bu_vls pvls = BU_VLS_INIT_ZERO;
-	    struct bview_scene_group *g;
-	    BU_GET(g, struct bview_scene_group);
-	    GET_BVIEW_SCENE_OBJ(g->g, &free_scene_obj->l);
+	    struct bv_scene_group *g;
+	    BU_GET(g, struct bv_scene_group);
+	    GET_BV_SCENE_OBJ(g->g, &free_scene_obj->l);
 	    BU_LIST_INIT(&(g->g->s_vlist));
 	    BU_PTBL_INIT(&g->g->children);
 	    bu_vls_trunc(&pvls, 0);
@@ -135,7 +135,7 @@ path_add_children(std::set<struct bview_scene_group *> *ngrps, struct db_i *dbip
 }
 
 void
-new_scene_grps(std::set<struct bview_scene_group *> *all, struct db_i *dbip, struct bview_scene_group *cg, std::set<std::string> &spaths, struct bview_scene_obj *free_scene_obj)
+new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct bv_scene_group *cg, std::set<std::string> &spaths, struct bv_scene_obj *free_scene_obj)
 {
     std::set<struct db_full_path *, dfp_cmp> sfp;
     std::set<std::string>::iterator s_it;
@@ -156,29 +156,29 @@ new_scene_grps(std::set<struct bview_scene_group *> *all, struct db_i *dbip, str
 
     // Remove the children of cg from it's ptbl for later processing so we
     // don't have to special case freeing cg->g
-    std::set<struct bview_scene_obj *> sobjs;
+    std::set<struct bv_scene_obj *> sobjs;
     for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-	struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
 	sobjs.insert(s);
     }
     bu_ptbl_reset(&cg->g->children);
 
     // Seed our group set with the top level group
-    std::set<struct bview_scene_group *> ngrps;
+    std::set<struct bv_scene_group *> ngrps;
     ngrps.insert(cg);
 
     // Now, work our way through sfp.  For each sfp path, split everything
     // in ngrps that matches it.
-    std::set<struct bview_scene_group *>::iterator g_it;
+    std::set<struct bv_scene_group *>::iterator g_it;
     while (sfp.size()) {
 	struct db_full_path *fp = *sfp.begin();
 	sfp.erase(sfp.begin());
 
-	std::set<struct bview_scene_group *> gclear;
-	std::set<struct bview_scene_group *> next_grps;
+	std::set<struct bv_scene_group *> gclear;
+	std::set<struct bv_scene_group *> next_grps;
 
 	for (g_it = ngrps.begin(); g_it != ngrps.end(); g_it++) {
-	    struct bview_scene_group *ng = *g_it;
+	    struct bv_scene_group *ng = *g_it;
 	    struct db_full_path *gfp = NULL;
 	    BU_GET(gfp, struct db_full_path);
 	    db_full_path_init(gfp);
@@ -199,10 +199,10 @@ new_scene_grps(std::set<struct bview_scene_group *> *all, struct db_i *dbip, str
 
 	// Free up the replaced groups
 	for (g_it = gclear.begin(); g_it != gclear.end(); g_it++) {
-	    struct bview_scene_group *ng = *g_it;
+	    struct bv_scene_group *ng = *g_it;
 	    ngrps.erase(ng);
-	    bview_scene_obj_free(ng->g, free_scene_obj);
-	    BU_PUT(ng, struct bview_scene_group);
+	    bv_scene_obj_free(ng->g, free_scene_obj);
+	    BU_PUT(ng, struct bv_scene_group);
 	}
 
 	// Populate ngrps for the next round
@@ -214,13 +214,13 @@ new_scene_grps(std::set<struct bview_scene_group *> *all, struct db_i *dbip, str
 
     // All paths processed - ngrps should now contain the final set of groups to
     // add to the view.  Assign the solids
-    std::set<struct bview_scene_obj *>::iterator sg_it;
+    std::set<struct bv_scene_obj *>::iterator sg_it;
     for (sg_it = sobjs.begin(); sg_it != sobjs.end(); sg_it++) {
-	struct bview_scene_obj *sobj = *sg_it;
+	struct bv_scene_obj *sobj = *sg_it;
 	struct draw_update_data_t *ud = (struct draw_update_data_t *)sobj->s_i_data;
 	// Find the correct group
 	for (g_it = ngrps.begin(); g_it != ngrps.end(); g_it++) {
-	    struct bview_scene_group *ng = *g_it;
+	    struct bv_scene_group *ng = *g_it;
 	    struct db_full_path *gfp = NULL;
 	    BU_GET(gfp, struct db_full_path);
 	    db_full_path_init(gfp);
@@ -239,15 +239,15 @@ new_scene_grps(std::set<struct bview_scene_group *> *all, struct db_i *dbip, str
 
     // Put the new groups in the view group set
     for (g_it = ngrps.begin(); g_it != ngrps.end(); g_it++) {
-	struct bview_scene_group *ng = *g_it;
+	struct bv_scene_group *ng = *g_it;
 	all->insert(ng);
     }
 }
 
 static int
 alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
-    struct bview_scene_group *ga = *(struct bview_scene_group **)a;
-    struct bview_scene_group *gb = *(struct bview_scene_group **)b;
+    struct bv_scene_group *ga = *(struct bv_scene_group **)a;
+    struct bv_scene_group *gb = *(struct bv_scene_group **)b;
     return alphanum_impl(bu_vls_cstr(&ga->g->s_name), bu_vls_cstr(&gb->g->s_name), NULL);
 }
 
@@ -260,7 +260,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[object(s)]";
     const char *cmdName = argv[0];
-    struct bview *v = gedp->ged_gvp;
+    struct bv *v = gedp->ged_gvp;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -297,19 +297,19 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     // bu_vls_strncmp function, and prepend a "/" character in the case whare a
     // user supplies a name without the path prefix.
     //
-    struct bview_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
     struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
-    std::set<struct bview_scene_group *> all;
+    std::set<struct bv_scene_group *> all;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
+	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	all.insert(cg);
     }
     bu_ptbl_reset(sg);
 
-    std::set<struct bview_scene_group *> clear;
-    std::set<struct bview_scene_group *>::iterator c_it;
-    std::map<struct bview_scene_group *, std::set<std::string>> split;
-    std::map<struct bview_scene_group *, std::set<std::string>>::iterator g_it;
+    std::set<struct bv_scene_group *> clear;
+    std::set<struct bv_scene_group *>::iterator c_it;
+    std::map<struct bv_scene_group *, std::set<std::string>> split;
+    std::map<struct bv_scene_group *, std::set<std::string>>::iterator g_it;
     struct bu_vls upath = BU_VLS_INIT_ZERO;
     for (int i = 0; i < argc; ++i) {
 	bu_vls_sprintf(&upath, "%s", argv[i]);
@@ -317,7 +317,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_prepend(&upath, "/");
 	}
 	for (c_it = all.begin(); c_it != all.end(); c_it++) {
-	    struct bview_scene_group *cg = *c_it;
+	    struct bv_scene_group *cg = *c_it;
 	    if (bu_vls_strlen(&upath) > bu_vls_strlen(&cg->g->s_name)) {
 		if (bu_vls_strncmp(&upath, &cg->g->s_name, bu_vls_strlen(&cg->g->s_name)) == 0) {
 		    // The hard case - upath matches all of sname.  We're
@@ -351,10 +351,10 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 
     // Do the straight-up removals
     for (c_it = clear.begin(); c_it != clear.end(); c_it++) {
-	struct bview_scene_group *cg = *c_it;
+	struct bv_scene_group *cg = *c_it;
 	all.erase(cg);
-	bview_scene_obj_free(cg->g, free_scene_obj);
-	BU_PUT(cg, struct bview_scene_group);
+	bv_scene_obj_free(cg->g, free_scene_obj);
+	BU_PUT(cg, struct bv_scene_group);
     }
 
     // Now, the splits.
@@ -364,9 +364,9 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     // will at that point be an invalid scene group but will be a suitable
     // input for the next stage.)
     for (g_it = split.begin(); g_it != split.end(); g_it++) {
-	struct bview_scene_group *cg = &(*g_it->first);
-	std::set<struct bview_scene_obj *> sclear;
-	std::set<struct bview_scene_obj *>::iterator s_it;
+	struct bv_scene_group *cg = &(*g_it->first);
+	std::set<struct bv_scene_obj *> sclear;
+	std::set<struct bv_scene_obj *>::iterator s_it;
 	std::set<std::string>::iterator st_it;
 	for (st_it = g_it->second.begin(); st_it != g_it->second.end(); st_it++) {
 	    bu_vls_sprintf(&upath, "%s", st_it->c_str());
@@ -377,7 +377,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	    // is a full subset of upath).  These objects are removed.
 	    if (bu_vls_strncmp(&upath, &cg->g->s_name, bu_vls_strlen(&cg->g->s_name)) == 0) {
 		for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-		    struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
 		    // For the solids in cg, any that are below upath in the hierarchy
 		    // (that is, upath is a full subset of s_name) are being erased.
 		    if (bu_vls_strncmp(&upath, &s->s_name, bu_vls_strlen(&upath)) == 0) {
@@ -388,15 +388,15 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
-	    struct bview_scene_obj *s = *s_it;
+	    struct bv_scene_obj *s = *s_it;
 	    bu_ptbl_rm(&cg->g->children, (long *)s);
-	    bview_scene_obj_free(s, free_scene_obj);
+	    bv_scene_obj_free(s, free_scene_obj);
 	}
     }
 
     // Now, generate the new scene groups and assign the still-active solids to them.
    for (g_it = split.begin(); g_it != split.end(); g_it++) {
-	struct bview_scene_group *cg = g_it->first;
+	struct bv_scene_group *cg = g_it->first;
 	std::set<std::string> &spaths = g_it->second;
 	all.erase(cg);
 	new_scene_grps(&all, dbip, cg, spaths, free_scene_obj);
@@ -404,12 +404,12 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 
    // Repopulate the gv_db_grps tbl with the final results
    for (c_it = all.begin(); c_it != all.end(); c_it++) {
-       struct bview_scene_group *ng = *c_it;
+       struct bv_scene_group *ng = *c_it;
        bu_ptbl_ins(v->gv_db_grps, (long *)ng);
    }
 
    // Sort
-   bu_sort(BU_PTBL_BASEADDR(v->gv_db_grps), BU_PTBL_LEN(v->gv_db_grps), sizeof(struct bview_scene_group *), alphanum_cmp, NULL);
+   bu_sort(BU_PTBL_BASEADDR(v->gv_db_grps), BU_PTBL_LEN(v->gv_db_grps), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
 
    return GED_OK;
 }

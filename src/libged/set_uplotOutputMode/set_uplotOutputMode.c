@@ -26,7 +26,7 @@
 #include "common.h"
 #include <string.h>
 #include "ged.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 
 /*
  * Set/get the unix plot output mode

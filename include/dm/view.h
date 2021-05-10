@@ -33,13 +33,13 @@
 
 #include "bu/hash.h"
 #include "bu/vls.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include "dm/defines.h"
 
 /* TODO - needed for dm_draw_labels, which cracks the database
  * objects to generate label info.  Need to think about how to
  * better handle this... - ideally should be a callback of some
- * sort on a bview scene object... */
+ * sort on a bv scene object... */
 #include "rt/wdb.h"
 
 #ifndef DM_VIEW_H
@@ -62,11 +62,11 @@ struct dm_view_data {
     int                 refresh_on;
 };
 
-DM_EXPORT extern void dm_draw_faceplate(struct bview *v, double base2local, double local2base);
-DM_EXPORT extern void dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *d, double base2local, double local2base);
+DM_EXPORT extern void dm_draw_faceplate(struct bv *v, double base2local, double local2base);
+DM_EXPORT extern void dm_draw_viewobjs(struct rt_wdb *wdbp, struct bv *v, struct dm_view_data *d, double base2local, double local2base);
 
 /* Stripped down form of dm_draw_viewobjs that does just what's needed for the new setup */
-DM_EXPORT extern void dm_draw_objs(struct bview *v, double base2local, double local2base);
+DM_EXPORT extern void dm_draw_objs(struct bv *v, double base2local, double local2base);
 
 __END_DECLS
 

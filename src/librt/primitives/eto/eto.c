@@ -906,7 +906,7 @@ eto_ellipse_points(
 }
 
 int
-rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bview *v, fastf_t s_size)
+rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bn_tol *tol, const struct bv *v, fastf_t s_size)
 {
     struct rt_eto_internal *eto;
     fastf_t radian, radian_step;
@@ -1047,7 +1047,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
  * eto_rd Semiminor axis length (scalar) of eto cross section
  */
 int
-rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
 {
     fastf_t a, b;	/* axis lengths of ellipse */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1653,7 +1653,7 @@ eto_is_valid(struct rt_eto_internal *eto)
 }
 
 void
-rt_eto_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_eto_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
 {
     if (!labels || !ip)
 	return;
@@ -1662,19 +1662,19 @@ rt_eto_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     RT_ETO_CK_MAGIC(eto);
 
     // Set up the containers
-    struct bview_label *l[4];
+    struct bv_label *l[4];
     for (int i = 0; i < 4; i++) {
-	struct bview_scene_obj *s;
-	struct bview_label *la;
-	BU_GET(s, struct bview_scene_obj);
-	BU_GET(la, struct bview_label);
+	struct bv_scene_obj *s;
+	struct bv_label *la;
+	BU_GET(s, struct bv_scene_obj);
+	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-	s->s_type_flags |= BVIEW_LABELS;
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;

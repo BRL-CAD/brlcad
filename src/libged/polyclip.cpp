@@ -30,11 +30,11 @@
 
 #include "bu/sort.h"
 #include "bg/polygon.h"
-#include "bview/util.h"
+#include "bv/util.h"
 #include "ged.h"
 
 int
-ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
+ged_export_polygon(struct ged *gedp, bv_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
 {
     size_t j, k, n;
     size_t num_verts = 0;

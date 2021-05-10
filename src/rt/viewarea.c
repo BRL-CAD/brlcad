@@ -37,7 +37,7 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 
 #include "./rtuif.h"
 #include "./ext.h"

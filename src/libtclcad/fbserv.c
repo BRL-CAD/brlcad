@@ -725,14 +725,14 @@ fbs_rfbzoom(struct pkg_conn *pcp, char *buf)
 
 
 void
-fbs_rfbview(struct pkg_conn *pcp, char *buf)
+fbs_rfbv(struct pkg_conn *pcp, char *buf)
 {
     int ret;
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1];
 
     if (!buf) {
-	bu_log("fbs_rfbview: null buffer\n");
+	bu_log("fbs_rfbv: null buffer\n");
 	return;
     }
 
@@ -910,7 +910,7 @@ new_client_handler(ClientData clientData,
 	{ MSG_FBSCURSOR, fbs_rfbscursor, "Screen Cursor", NULL }, /*OLD*/
 	{ MSG_FBWINDOW, fbs_rfbwindow, "Window", NULL },  /*OLD*/
 	{ MSG_FBZOOM, fbs_rfbzoom, "Zoom", NULL },  /*OLD*/
-	{ MSG_FBVIEW, fbs_rfbview, "View", NULL },  /*NEW*/
+	{ MSG_FBV, fbs_rfbv, "View", NULL },  /*NEW*/
 	{ MSG_FBGETVIEW, fbs_rfbgetview, "Get View", NULL },  /*NEW*/
 	{ MSG_FBRMAP, fbs_rfbrmap, "R Map", NULL },
 	{ MSG_FBWMAP, fbs_rfbwmap, "W Map", NULL },
@@ -956,7 +956,7 @@ new_client_handler(ClientData clientData,
 	{ MSG_FBSCURSOR, fbs_rfbscursor, "Screen Cursor", NULL }, /*OLD*/
 	{ MSG_FBWINDOW, fbs_rfbwindow, "Window", NULL },  /*OLD*/
 	{ MSG_FBZOOM, fbs_rfbzoom, "Zoom", NULL },  /*OLD*/
-	{ MSG_FBVIEW, fbs_rfbview, "View", NULL },  /*NEW*/
+	{ MSG_FBV, fbs_rfbv, "View", NULL },  /*NEW*/
 	{ MSG_FBGETVIEW, fbs_rfbgetview, "Get View", NULL },  /*NEW*/
 	{ MSG_FBRMAP, fbs_rfbrmap, "R Map", NULL },
 	{ MSG_FBWMAP, fbs_rfbwmap, "W Map", NULL },

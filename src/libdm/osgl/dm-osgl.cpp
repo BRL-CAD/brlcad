@@ -73,7 +73,7 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 
 #include "./fb_osgl.h"
 #include "./dm-osgl.h"
@@ -1470,7 +1470,7 @@ osgl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 int
 osgl_draw_data_axes(struct dm *dmp,
                   fastf_t sf,
-                  struct bview_data_axes_state *bndasp)
+                  struct bv_data_axes_state *bndasp)
 {
     int npoints = bndasp->num_points * 6;
     if (npoints < 1)
@@ -2262,7 +2262,7 @@ osgl_genDLists(struct dm *dmp, size_t range)
 HIDDEN int
 osgl_draw_obj(struct dm *dmp, struct display_list *obj)
 {
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     FOR_ALL_SOLIDS(sp, &obj->dl_head_scene_obj) {
 	if (sp->s_dlist == 0)
 	    sp->s_dlist = dm_gen_dlists(dmp, 1);

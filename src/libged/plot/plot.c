@@ -31,7 +31,7 @@
 #include <string.h>
 
 #include "bn.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 
 #include "../ged_private.h"
 

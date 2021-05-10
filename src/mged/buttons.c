@@ -531,7 +531,7 @@ ill_common(void) {
     }
 
     illum_gdlp = gdlp;
-    illump = BU_LIST_NEXT(bview_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
+    illump = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);/* any valid solid would do */
     illump->s_iflag = UP;
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */

@@ -102,7 +102,7 @@ ged_lookat_core(struct ged *gedp, int argc, const char *argv[])
     VJOIN1(new_center, eye, -gedp->ged_gvp->gv_scale, dir);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_center);
 
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return GED_OK;
 }

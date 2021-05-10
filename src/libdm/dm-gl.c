@@ -33,7 +33,7 @@
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include "dm.h"
 #include "./dm-gl.h"
 #include "./include/private.h"
@@ -829,7 +829,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 
 int gl_draw_data_axes(struct dm *dmp,
                   fastf_t sf,
-                  struct bview_data_axes_state *bndasp)
+                  struct bv_data_axes_state *bndasp)
 {
     int npoints = bndasp->num_points * 6;
     if (npoints < 1)
@@ -1448,8 +1448,8 @@ int gl_genDLists(struct dm *dmp, size_t range)
 
 int gl_draw_obj(struct dm *dmp, struct display_list *obj)
 {
-    struct bview_scene_obj *sp;
-    for (BU_LIST_FOR(sp, bview_scene_obj, &obj->dl_head_scene_obj)) {
+    struct bv_scene_obj *sp;
+    for (BU_LIST_FOR(sp, bv_scene_obj, &obj->dl_head_scene_obj)) {
 	if (sp->s_dlist == 0)
 	    sp->s_dlist = dm_gen_dlists(dmp, 1);
 

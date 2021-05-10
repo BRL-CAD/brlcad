@@ -248,7 +248,7 @@ createDLists(struct bu_list *hdlp)
  * display manager that has already created the display list)
  */
 void
-createDListSolid(struct bview_scene_obj *sp)
+createDListSolid(struct bv_scene_obj *sp)
 {
     struct mged_dm *save_dlp;
 
@@ -294,8 +294,8 @@ createDListSolid(struct bview_scene_obj *sp)
 void
 createDListAll(struct display_list *gdlp)
 {
-    struct bview_scene_obj *sp;
-    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+    struct bv_scene_obj *sp;
+    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	createDListSolid(sp);
     }
 }

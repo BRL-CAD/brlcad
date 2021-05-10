@@ -38,7 +38,7 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"

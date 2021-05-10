@@ -35,7 +35,7 @@ extern "C" {
 }
 
 #include "bu.h"
-#include "bview.h"
+#include "bv.h"
 #include "dm.h"
 #include "ged.h"
 
@@ -97,9 +97,9 @@ main(int argc, const char **argv)
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
     /* Need a view for commands that expect a view */
-    struct bview *gsh_view;
-    BU_GET(gsh_view, struct bview);
-    bview_init(gsh_view);
+    struct bv *gsh_view;
+    BU_GET(gsh_view, struct bv);
+    bv_init(gsh_view);
 
     /* See if we've been told to pre-load a specific .g file. */
     if (argc) {
@@ -204,7 +204,7 @@ main(int argc, const char **argv)
 	 * of the view info */
 	if (gedp->ged_dmp) {
 	    prev_dhash = (gedp->ged_dmp) ? dm_hash((struct dm *)gedp->ged_dmp) : 0;
-	    prev_vhash = bview_hash(gedp->ged_gvp);
+	    prev_vhash = bv_hash(gedp->ged_gvp);
 	    prev_lhash = dl_name_hash(gedp);
 	    prev_ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 	}
@@ -279,9 +279,9 @@ main(int argc, const char **argv)
 	    // The command ran, see if the display needs updating
 	    if (gedp->ged_dmp) {
 		struct dm *dmp = (struct dm *)gedp->ged_dmp;
-		struct bview *v = gedp->ged_gvp;
+		struct bv *v = gedp->ged_gvp;
 		unsigned long long dhash = dm_hash(dmp);
-		unsigned long long vhash = bview_hash(gedp->ged_gvp);
+		unsigned long long vhash = bv_hash(gedp->ged_gvp);
 		unsigned long long lhash = dl_name_hash(gedp);
 		unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 		unsigned long long lhash_edit = lhash;
@@ -332,7 +332,7 @@ main(int argc, const char **argv)
     }
 
 done:
-    BU_PUT(gsh_view, struct bview);
+    BU_PUT(gsh_view, struct bv);
     bu_dlclose(libged);
     if (gedp) ged_close(gedp);
     linenoiseHistoryFree();

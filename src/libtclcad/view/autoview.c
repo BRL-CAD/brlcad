@@ -34,7 +34,7 @@
 #include "../view/view.h"
 
 void
-to_autoview_view(struct bview *gdvp, const char *scale)
+to_autoview_view(struct bv *gdvp, const char *scale)
 {
     int ret;
     const char *av[3];
@@ -67,7 +67,7 @@ to_autoview(struct ged *gedp,
 	    const char *usage,
 	    int UNUSED(maxargs))
 {
-    struct bview *gdvp;
+    struct bv *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -95,10 +95,10 @@ to_autoview(struct ged *gedp,
 void
 to_autoview_all_views(struct tclcad_obj *top)
 {
-    struct bview *gdvp;
+    struct bv *gdvp;
 
     for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
+	gdvp = (struct bv *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
 	to_autoview_view(gdvp, NULL);
     }
 }

@@ -33,7 +33,7 @@
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bview.h"
+#include "bv.h"
 
 #include "../../ged_private.h"
 #include "../ged_view.h"
@@ -41,7 +41,7 @@
 
 struct _ged_fp_axes_info {
     struct _ged_view_info *gd;
-    struct bview_axes *a;
+    struct bv_axes *a;
 };
 
 int
@@ -60,7 +60,7 @@ _fp_axes_cmd_size(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
      if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%f\n", a->axes_size);
 	return GED_OK;
@@ -98,7 +98,7 @@ _fp_axes_cmd_linewidth(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->line_width);
 	return GED_OK;
@@ -141,7 +141,7 @@ _fp_axes_cmd_pos_only(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->pos_only);
 	return GED_OK;
@@ -182,7 +182,7 @@ _fp_axes_cmd_fp_axes_color(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->axes_color[0], a->axes_color[1], a->axes_color[2]);
 	return GED_OK;
@@ -223,7 +223,7 @@ _fp_axes_cmd_label(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->label_flag);
 	return GED_OK;
@@ -263,7 +263,7 @@ _fp_axes_cmd_label_color(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->label_color[0], a->label_color[1], a->label_color[2]);
 	return GED_OK;
@@ -305,7 +305,7 @@ _fp_axes_cmd_triple_color(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->triple_color);
 	return GED_OK;
@@ -345,7 +345,7 @@ _fp_axes_cmd_tick(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_enabled);
 	return GED_OK;
@@ -385,7 +385,7 @@ _fp_axes_cmd_tick_length(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_length);
 	return GED_OK;
@@ -428,7 +428,7 @@ _fp_axes_cmd_tick_major_length(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_major_length);
 	return GED_OK;
@@ -471,7 +471,7 @@ _fp_axes_cmd_tick_interval(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%f\n", a->tick_interval);
 	return GED_OK;
@@ -509,7 +509,7 @@ _fp_axes_cmd_ticks_per_major(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->ticks_per_major);
 	return GED_OK;
@@ -552,7 +552,7 @@ _fp_axes_cmd_tick_threshold(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_threshold);
 	return GED_OK;
@@ -595,7 +595,7 @@ _fp_axes_cmd_tick_color(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->tick_color[0], a->tick_color[1], a->tick_color[2]);
 	return GED_OK;
@@ -637,7 +637,7 @@ _fp_axes_cmd_tick_major_color(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_axes *a = ainfo->a;
+    struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->tick_major_color[0], a->tick_major_color[1], a->tick_major_color[2]);
 	return GED_OK;
@@ -686,7 +686,7 @@ _fp_cmd_model_axes(void *bs, int argc, const char **argv)
     int help = 0;
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    struct bview *v = gedp->ged_gvp;
+    struct bv *v = gedp->ged_gvp;
 
     const char *usage_string = "view faceplate model_axes subcmd [args]";
     const char *purpose_string = "manipulate view axes";
@@ -744,7 +744,7 @@ _fp_cmd_view_axes(void *bs, int argc, const char **argv)
     int help = 0;
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    struct bview *v = gedp->ged_gvp;
+    struct bv *v = gedp->ged_gvp;
 
     const char *usage_string = "view faceplate view_axes subcmd [args]";
     const char *purpose_string = "manipulate view axes";

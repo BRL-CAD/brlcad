@@ -39,7 +39,7 @@ extern "C" {
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"
@@ -215,7 +215,7 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 	return DM_NULL;
     }
     privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
-    privars->v = (struct bview *)ctx;
+    privars->v = (struct bv *)ctx;
     // Note - for Qt, dealing with GL_RGB data display was something of a pain.  This backend
     // was switched to RGBA to make it easier to display the output
     privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 16, 0, 0, NULL);

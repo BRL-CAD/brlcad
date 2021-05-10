@@ -642,7 +642,7 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
 
 
 int
-rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
 {
     struct rt_metaball_internal *mb;
     struct wdb_metaball_pnt *mbpt;

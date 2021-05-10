@@ -63,7 +63,7 @@
 
 struct view_dlines_state {
     struct ged *gedp;
-    struct bview_data_line_state *gdlsp;
+    struct bv_data_line_state *gdlsp;
 };
 
 static int
@@ -71,7 +71,7 @@ _view_dlines_cmd_draw(void *bs, int argc, const char **argv)
 {
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
-    struct bview_data_line_state *gdlsp = vs->gdlsp;
+    struct bv_data_line_state *gdlsp = vs->gdlsp;
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_draw);
 	return GED_OK;
@@ -120,7 +120,7 @@ _view_dlines_cmd_color(void *bs, int argc, const char **argv)
 {
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
-    struct bview_data_line_state *gdlsp = vs->gdlsp;
+    struct bv_data_line_state *gdlsp = vs->gdlsp;
 
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdlsp->gdls_color));
@@ -157,7 +157,7 @@ _view_dlines_cmd_line_width(void *bs, int argc, const char **argv)
 {
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
-    struct bview_data_line_state *gdlsp = vs->gdlsp;
+    struct bv_data_line_state *gdlsp = vs->gdlsp;
 
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_line_width);
@@ -185,7 +185,7 @@ _view_dlines_cmd_points(void *bs, int argc, const char **argv)
 {
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
-    struct bview_data_line_state *gdlsp = vs->gdlsp;
+    struct bv_data_line_state *gdlsp = vs->gdlsp;
     int i;
 
     if (argc == 1) {

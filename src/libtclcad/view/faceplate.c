@@ -42,7 +42,7 @@ to_faceplate(struct ged *gedp,
 	     int UNUSED(maxargs))
 {
     int i;
-    struct bview *gdvp;
+    struct bv *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);

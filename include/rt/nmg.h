@@ -27,7 +27,7 @@
 #include "bu/list.h"
 #include "bu/ptbl.h"
 #include "bn/tol.h"
-#include "bview/vlist.h"
+#include "bv/vlist.h"
 #include "bg/defines.h"
 #include "rt/geom.h"
 #include "rt/hit.h"

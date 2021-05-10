@@ -225,8 +225,8 @@ extern "C" int LLVMFuzzerTestOneInput(const int8_t *data, size_t size) {
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
     /* Need a view for commands that expect a view */
-    struct bview *gvp;
-    BU_GET(gvp, struct bview);
+    struct bv *gvp;
+    BU_GET(gvp, struct bv);
     ged_view_init(gvp);
     g.ged_gvp = gvp;
 

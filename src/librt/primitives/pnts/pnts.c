@@ -37,7 +37,7 @@
 #include "vmath.h"
 
 
-extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *);
+extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bv *);
 
 
 HIDDEN unsigned char *
@@ -866,7 +866,7 @@ rt_pnts_print(register const struct soltab *stp)
  * Plot pnts collection as axes or spheres.
  */
 int
-rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info))
+rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bv *UNUSED(info))
 {
     struct rt_pnts_internal *pnts;
     struct bu_list *head;

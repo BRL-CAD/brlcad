@@ -32,13 +32,13 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include "./include/private.h"
 
 void
 dm_draw_data_axes(struct dm *dmp,
 		  fastf_t sf,
-		  struct bview_data_axes_state *bndasp)
+		  struct bv_data_axes_state *bndasp)
 {
 
     if (dmp->i->dm_draw_data_axes) {
@@ -101,12 +101,12 @@ dm_draw_data_axes(struct dm *dmp,
 }
 
 void
-dm_draw_scene_axes(struct dm *dmp,  struct bview_scene_obj *s)
+dm_draw_scene_axes(struct dm *dmp,  struct bv_scene_obj *s)
 {
-    if (!(s->s_type_flags & BVIEW_AXES))
+    if (!(s->s_type_flags & BV_AXES))
 	return;
 
-    struct bview_axes *bndasp = (struct bview_axes *)s->s_i_data;
+    struct bv_axes *bndasp = (struct bv_axes *)s->s_i_data;
     fastf_t halfAxesSize;		/* half the length of an axis */
     point_t ptA, ptB;
     /* Save the line attributes */
@@ -145,7 +145,7 @@ void
 dm_draw_hud_axes(struct dm		        *dmp,
 	     fastf_t			viewSize, /* in mm */
 	     const mat_t		rmat,       /* view rotation matrix */
-	     struct bview_axes	 	*bnasp)
+	     struct bv_axes	 	*bnasp)
 {
     fastf_t halfAxesSize;		/* half the length of an axis */
     fastf_t xlx, xly;			/* X axis label position */

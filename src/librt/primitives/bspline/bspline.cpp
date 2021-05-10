@@ -91,7 +91,7 @@ struct nurb_hit {
     extern void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     extern void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
     extern void rt_brep_free(struct soltab *stp);
-    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info));
+    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bv *UNUSED(info));
 
 #endif /* CONVERT_TO_BREP */
 
@@ -556,7 +556,7 @@ rt_nurb_free(struct soltab *stp)
 
 
 int
-rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info))
+rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bv *UNUSED(info))
 {
     struct rt_nurb_internal *sip;
 
@@ -1435,7 +1435,7 @@ rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 }
 
 extern "C" void
-rt_nurb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_nurb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
 {
     if (!labels || !ip)
 	return;
@@ -1444,19 +1444,19 @@ rt_nurb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct b
     RT_NURB_CK_MAGIC(nurb);
 
     // Set up the containers
-    struct bview_label *l[5];
+    struct bv_label *l[5];
     for (int i = 0; i < 5; i++) {
-	struct bview_scene_obj *s;
-	struct bview_label *la;
-	BU_GET(s, struct bview_scene_obj);
-	BU_GET(la, struct bview_label);
+	struct bv_scene_obj *s;
+	struct bv_label *la;
+	BU_GET(s, struct bv_scene_obj);
+	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-	s->s_type_flags |= BVIEW_LABELS;
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;

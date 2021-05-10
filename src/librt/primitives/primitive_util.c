@@ -102,7 +102,7 @@ primitive_get_absolute_tolerance(
 fastf_t
 primitive_diagonal_samples(
 	struct rt_db_internal *ip,
-	const struct bview *v,
+	const struct bv *v,
 	const struct bn_tol *tol,
 	fastf_t s_size)
 {

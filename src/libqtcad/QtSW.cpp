@@ -51,7 +51,7 @@ QtSW::QtSW(QWidget *parent)
 QtSW::~QtSW()
 {
     dm_close(dmp);
-    BU_PUT(v, struct bview);
+    BU_PUT(v, struct bv);
 }
 
 void QtSW::paintEvent(QPaintEvent *e)
@@ -157,7 +157,7 @@ void QtSW::keyPressEvent(QKeyEvent *k) {
 	return;
     }
 
-    // Let bview know what the current view width and height are, in
+    // Let bv know what the current view width and height are, in
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
@@ -177,7 +177,7 @@ void QtSW::mousePressEvent(QMouseEvent *e) {
 	return;
     }
 
-    // Let bview know what the current view width and height are, in
+    // Let bv know what the current view width and height are, in
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
@@ -199,7 +199,7 @@ void QtSW::mouseMoveEvent(QMouseEvent *e)
 	return;
     }
 
-    // Let bview know what the current view width and height are, in
+    // Let bv know what the current view width and height are, in
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();
@@ -223,7 +223,7 @@ void QtSW::wheelEvent(QWheelEvent *e) {
 	return;
     }
 
-    // Let bview know what the current view width and height are, in
+    // Let bv know what the current view width and height are, in
     // case the dx/dy mouse translations need that information
     v->gv_width = width();
     v->gv_height = height();

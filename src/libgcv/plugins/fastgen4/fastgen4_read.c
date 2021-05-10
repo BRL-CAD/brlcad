@@ -43,7 +43,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "gcv/api.h"
 
 

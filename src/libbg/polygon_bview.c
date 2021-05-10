@@ -19,7 +19,7 @@
  */
 /** @file polygons.c
  *
- * Utility functions for working with polygons in a bview context.
+ * Utility functions for working with polygons in a bv context.
  *
  */
 
@@ -31,26 +31,26 @@
 #include "bu/str.h"
 #include "bn/mat.h"
 #include "bn/tol.h"
-#include "bview/vlist.h"
-#include "bview/defines.h"
-#include "bview/util.h"
+#include "bv/vlist.h"
+#include "bv/defines.h"
+#include "bv/util.h"
 #include "bg/lseg.h"
 #include "bg/polygon.h"
 
-#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+#define GET_BV_SCENE_OBJ(p, fp) { \
     if (BU_LIST_IS_EMPTY(fp)) { \
-       BU_ALLOC((p), struct bview_scene_obj); \
+       BU_ALLOC((p), struct bv_scene_obj); \
     } else { \
-       p = BU_LIST_NEXT(bview_scene_obj, fp); \
+       p = BU_LIST_NEXT(bv_scene_obj, fp); \
        BU_LIST_DEQUEUE(&((p)->l)); \
     } \
     BU_LIST_INIT( &((p)->s_vlist) ); }
 
-#define FREE_BVIEW_SCENE_OBJ(p, fp) { \
+#define FREE_BV_SCENE_OBJ(p, fp) { \
     BU_LIST_APPEND(fp, &((p)->l)); }
 
 void
-bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c, int curr_c, int curr_i, int do_pnt)
+bv_polygon_contour(struct bv_scene_obj *s, struct bg_poly_contour *c, int curr_c, int curr_i, int do_pnt)
 {
     if (!s || !c || !s->s_v)
 	return;
@@ -77,15 +77,15 @@ bview_polygon_contour(struct bview_scene_obj *s, struct bg_poly_contour *c, int 
 }
 
 void
-bview_fill_polygon(struct bview_scene_obj *s)
+bv_fill_polygon(struct bv_scene_obj *s)
 {
     if (!s)
 	return;
 
     // free old fill, if present
-    struct bview_scene_obj *fobj = NULL;
+    struct bv_scene_obj *fobj = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
 	    fobj = s_c;
 	    BV_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
@@ -93,7 +93,7 @@ bview_fill_polygon(struct bview_scene_obj *s)
 	}
     }
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     if (p->fill_delta < BN_TOL_DIST) {
 	return;
@@ -105,7 +105,7 @@ bview_fill_polygon(struct bview_scene_obj *s)
 
     // Got fill, create lines
     if (!fobj) {
-	GET_BVIEW_SCENE_OBJ(fobj, &s->free_scene_obj->l);
+	GET_BV_SCENE_OBJ(fobj, &s->free_scene_obj->l);
 	fobj->free_scene_obj = s->free_scene_obj;
 	BU_LIST_INIT(&(fobj->s_vlist));
 	bu_vls_init(&fobj->s_uuid);
@@ -120,12 +120,12 @@ bview_fill_polygon(struct bview_scene_obj *s)
 	bu_ptbl_ins(&s->children, (long *)fobj);
     }
     for (size_t i = 0; i < fill->num_contours; i++) {
-	bview_polygon_contour(fobj, &fill->contour[i], 0, -1, 0);
+	bv_polygon_contour(fobj, &fill->contour[i], 0, -1, 0);
     }
 }
 
 void
-bview_polygon_vlist(struct bview_scene_obj *s)
+bv_polygon_vlist(struct bv_scene_obj *s)
 {
     if (!s)
 	return;
@@ -133,13 +133,13 @@ bview_polygon_vlist(struct bview_scene_obj *s)
     // free old s->s_vlist
     BV_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	BV_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
-	// TODO - free bview_scene_obj itself (ptbls, etc.)
+	// TODO - free bv_scene_obj itself (ptbls, etc.)
     }
 
 
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     int type = p->type;
 
     BU_LIST_INIT(&(s->s_vlist));
@@ -151,24 +151,24 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 	int do_pnt = 0;
 	if (pcnt == 1)
 	    do_pnt = 1;
-	if (type == BVIEW_POLYGON_CIRCLE && pcnt == 3)
+	if (type == BV_POLYGON_CIRCLE && pcnt == 3)
 	    do_pnt = 1;
-	if (type == BVIEW_POLYGON_ELLIPSE && pcnt == 4)
+	if (type == BV_POLYGON_ELLIPSE && pcnt == 4)
 	    do_pnt = 1;
-	if (type == BVIEW_POLYGON_RECTANGLE) {
+	if (type == BV_POLYGON_RECTANGLE) {
 	    if (NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[1]), SMALL_FASTF) &&
 		NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[2]), SMALL_FASTF))
 	    do_pnt = 1;
 	}
-	if (type == BVIEW_POLYGON_SQUARE) {
+	if (type == BV_POLYGON_SQUARE) {
 	    if (NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[1]), SMALL_FASTF) &&
 		NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[2]), SMALL_FASTF))
 	    do_pnt = 1;
 	}
 
 	if (p->polygon.hole[i]) {
-	    struct bview_scene_obj *s_c;
-	    GET_BVIEW_SCENE_OBJ(s_c, &s->free_scene_obj->l);
+	    struct bv_scene_obj *s_c;
+	    GET_BV_SCENE_OBJ(s_c, &s->free_scene_obj->l);
 	    s_c->free_scene_obj = s->free_scene_obj;
 	    BU_LIST_INIT(&(s_c->s_vlist));
 	    BU_VLS_INIT(&(s_c->s_uuid));
@@ -177,47 +177,47 @@ bview_polygon_vlist(struct bview_scene_obj *s)
 	    s_c->s_color[1] = s->s_color[1];
 	    s_c->s_color[2] = s->s_color[2];
 	    s_c->s_v = s->s_v;
-	    bview_polygon_contour(s_c, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i, do_pnt);
+	    bv_polygon_contour(s_c, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i, do_pnt);
 	    bu_ptbl_ins(&s->children, (long *)s_c);
 	    continue;
 	}
 
-	bview_polygon_contour(s, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i, do_pnt);
+	bv_polygon_contour(s, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i, do_pnt);
     }
 
     if (p->fill_flag) {
-	bview_fill_polygon(s);
+	bv_fill_polygon(s);
     }
 
 }
 
-struct bview_scene_obj *
-bview_create_polygon(struct bview *v, int type, int x, int y, struct bview_scene_obj *free_scene_obj)
+struct bv_scene_obj *
+bv_create_polygon(struct bv *v, int type, int x, int y, struct bv_scene_obj *free_scene_obj)
 {
-    struct bview_scene_obj *s;
-    GET_BVIEW_SCENE_OBJ(s, &free_scene_obj->l);
+    struct bv_scene_obj *s;
+    GET_BV_SCENE_OBJ(s, &free_scene_obj->l);
     s->free_scene_obj = free_scene_obj;
     s->s_v = v;
-    s->s_type_flags |= BVIEW_VIEWONLY;
-    s->s_type_flags |= BVIEW_POLYGONS;
+    s->s_type_flags |= BV_VIEWONLY;
+    s->s_type_flags |= BV_POLYGONS;
     BU_LIST_INIT(&(s->s_vlist));
     BU_PTBL_INIT(&s->children);
 
-    struct bview_polygon *p;
-    BU_GET(p, struct bview_polygon);
+    struct bv_polygon *p;
+    BU_GET(p, struct bv_polygon);
     p->type = type;
     p->curr_contour_i = -1;
     p->curr_point_i = -1;
 
     // Save the current view for later processing
-    bview_sync(&p->v, s->s_v);
+    bv_sync(&p->v, s->s_v);
 
     s->s_os.s_line_width = 1;
     s->s_color[0] = 255;
     s->s_color[1] = 255;
     s->s_color[2] = 0;
     s->s_i_data = (void *)p;
-    s->s_update_callback = &bview_update_polygon;
+    s->s_update_callback = &bv_update_polygon;
 
     // Let the view know these are now the previous x,y points
     v->gv_prevMouseX = x;
@@ -225,17 +225,17 @@ bview_create_polygon(struct bview *v, int type, int x, int y, struct bview_scene
 
     // If snapping is active, handle it
     fastf_t fx, fy;
-    if (bview_screen_to_view(v, &fx, &fy, x, y) < 0) {
-	BU_PUT(p, struct bview_polygon);
-	BU_PUT(s, struct bview_scene_obj);
+    if (bv_screen_to_view(v, &fx, &fy, x, y) < 0) {
+	BU_PUT(p, struct bv_polygon);
+	BU_PUT(s, struct bv_scene_obj);
 	return NULL;
     }
     int snapped = 0;
     if (v->gv_snap_lines) {
-	snapped = bview_snap_lines_2d(v, &fx, &fy);
+	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
     if (!snapped && v->gv_grid.snap) {
-	bview_snap_grid_2d(v, &fx, &fy);
+	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     point_t v_pt, m_pt;
@@ -244,13 +244,13 @@ bview_create_polygon(struct bview *v, int type, int x, int y, struct bview_scene
     VMOVE(p->prev_point, v_pt);
 
     int pcnt = 1;
-    if (type == BVIEW_POLYGON_CIRCLE)
+    if (type == BV_POLYGON_CIRCLE)
 	pcnt = 3;
-    if (type == BVIEW_POLYGON_ELLIPSE)
+    if (type == BV_POLYGON_ELLIPSE)
 	pcnt = 4;
-    if (type == BVIEW_POLYGON_RECTANGLE)
+    if (type == BV_POLYGON_RECTANGLE)
 	pcnt = 4;
-    if (type == BVIEW_POLYGON_SQUARE)
+    if (type == BV_POLYGON_SQUARE)
 	pcnt = 4;
 
     p->polygon.num_contours = 1;
@@ -265,11 +265,11 @@ bview_create_polygon(struct bview *v, int type, int x, int y, struct bview_scene
     }
 
     // Only the general polygon isn't closed out of the gate
-    if (type == BVIEW_POLYGON_GENERAL)
+    if (type == BV_POLYGON_GENERAL)
 	p->polygon.contour[0].open = 1;
 
     /* Have new polygon, now update view object vlist */
-    bview_polygon_vlist(s);
+    bv_polygon_vlist(s);
 
     /* updated */
     s->s_changed++;
@@ -278,10 +278,10 @@ bview_create_polygon(struct bview *v, int type, int x, int y, struct bview_scene
 }
 
 int
-bview_append_polygon_pt(struct bview_scene_obj *s)
+bv_append_polygon_pt(struct bv_scene_obj *s)
 {
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL)
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    if (p->type != BV_POLYGON_GENERAL)
 	return -1;
 
     if (p->curr_contour_i < 0)
@@ -289,16 +289,16 @@ bview_append_polygon_pt(struct bview_scene_obj *s)
 
     fastf_t fx, fy;
 
-    struct bview *v = s->s_v;
-    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+    struct bv *v = s->s_v;
+    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {
-	snapped = bview_snap_lines_2d(v, &fx, &fy);
+	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
     if (!snapped && v->gv_grid.snap) {
-	bview_snap_grid_2d(v, &fx, &fy);
+	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     point_t v_pt;
@@ -311,7 +311,7 @@ bview_append_polygon_pt(struct bview_scene_obj *s)
     MAT4X3PNT(c->point[c->num_points-1], p->v.gv_view2model, v_pt);
 
     /* Have new polygon, now update view object vlist */
-    bview_polygon_vlist(s);
+    bv_polygon_vlist(s);
 
     /* Updated */
     s->s_changed++;
@@ -320,24 +320,24 @@ bview_append_polygon_pt(struct bview_scene_obj *s)
 }
 
 int
-bview_select_polygon_pt(struct bview_scene_obj *s)
+bv_select_polygon_pt(struct bv_scene_obj *s)
 {
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL)
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    if (p->type != BV_POLYGON_GENERAL)
 	return -1;
 
     fastf_t fx, fy;
 
-    struct bview *v = s->s_v;
-    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+    struct bv *v = s->s_v;
+    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {
-	snapped = bview_snap_lines_2d(v, &fx, &fy);
+	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
     if (!snapped && v->gv_grid.snap) {
-	bview_snap_grid_2d(v, &fx, &fy);
+	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     point_t v_pt, m_pt;
@@ -378,7 +378,7 @@ bview_select_polygon_pt(struct bview_scene_obj *s)
     p->curr_contour_i = closest_contour;
 
     /* Have new polygon, now update view object vlist */
-    bview_polygon_vlist(s);
+    bv_polygon_vlist(s);
 
     /* Updated */
     s->s_changed++;
@@ -387,10 +387,10 @@ bview_select_polygon_pt(struct bview_scene_obj *s)
 }
 
 int
-bview_move_polygon_pt(struct bview_scene_obj *s)
+bv_move_polygon_pt(struct bv_scene_obj *s)
 {
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL)
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    if (p->type != BV_POLYGON_GENERAL)
 	return -1;
 
     // Need to have a point selected before we can move
@@ -399,16 +399,16 @@ bview_move_polygon_pt(struct bview_scene_obj *s)
 
     fastf_t fx, fy;
 
-    struct bview *v = s->s_v;
-    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+    struct bv *v = s->s_v;
+    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {
-	snapped = bview_snap_lines_2d(v, &fx, &fy);
+	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
     if (!snapped && v->gv_grid.snap) {
-	bview_snap_grid_2d(v, &fx, &fy);
+	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     point_t v_pt, m_pt;
@@ -420,7 +420,7 @@ bview_move_polygon_pt(struct bview_scene_obj *s)
     VMOVE(c->point[p->curr_point_i], m_pt);
 
     /* Have new polygon, now update view object vlist */
-    bview_polygon_vlist(s);
+    bv_polygon_vlist(s);
 
     /* Updated */
     s->s_changed++;
@@ -433,9 +433,9 @@ bview_move_polygon_pt(struct bview_scene_obj *s)
  * all the pieces needed to seed a circle at an XY point. */
 
 int
-bview_update_polygon_circle(struct bview_scene_obj *s)
+bv_update_polygon_circle(struct bv_scene_obj *s)
 {
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     fastf_t curr_fx, curr_fy;
     fastf_t fx, fy;
@@ -444,16 +444,16 @@ bview_update_polygon_circle(struct bview_scene_obj *s)
     point_t v_pt;
     vect_t vdiff;
 
-    struct bview *v = s->s_v;
-    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+    struct bv *v = s->s_v;
+    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {
-	snapped = bview_snap_lines_2d(v, &fx, &fy);
+	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
     if (!snapped && v->gv_grid.snap) {
-	bview_snap_grid_2d(v, &fx, &fy);
+	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     VSET(v_pt, fx, fy, v->gv_data_vZ);
@@ -500,7 +500,7 @@ bview_update_polygon_circle(struct bview_scene_obj *s)
     p->polygon.contour = gp.contour;
 
     /* Have new polygon, now update view object vlist */
-    bview_polygon_vlist(s);
+    bv_polygon_vlist(s);
 
     /* Updated */
     s->s_changed++;
@@ -509,22 +509,22 @@ bview_update_polygon_circle(struct bview_scene_obj *s)
 }
 
 int
-bview_update_polygon_ellipse(struct bview_scene_obj *s)
+bv_update_polygon_ellipse(struct bv_scene_obj *s)
 {
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     fastf_t fx, fy;
 
-    struct bview *v = s->s_v;
-    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+    struct bv *v = s->s_v;
+    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {
-	snapped = bview_snap_lines_2d(v, &fx, &fy);
+	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
     if (!snapped && v->gv_grid.snap) {
-	bview_snap_grid_2d(v, &fx, &fy);
+	bv_snap_grid_2d(v, &fx, &fy);
     }
 
 
@@ -587,7 +587,7 @@ bview_update_polygon_ellipse(struct bview_scene_obj *s)
     p->polygon.contour = gp.contour;
 
     /* Have new polygon, now update view object vlist */
-    bview_polygon_vlist(s);
+    bv_polygon_vlist(s);
 
     /* Updated */
     s->s_changed++;
@@ -596,22 +596,22 @@ bview_update_polygon_ellipse(struct bview_scene_obj *s)
 }
 
 int
-bview_update_polygon_rectangle(struct bview_scene_obj *s)
+bv_update_polygon_rectangle(struct bv_scene_obj *s)
 {
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     fastf_t fx, fy;
 
-    struct bview *v = s->s_v;
-    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+    struct bv *v = s->s_v;
+    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {
-	snapped = bview_snap_lines_2d(v, &fx, &fy);
+	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
     if (!snapped && v->gv_grid.snap) {
-	bview_snap_grid_2d(v, &fx, &fy);
+	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     // Use the polygon's view context for actually adjusting the points
@@ -626,7 +626,7 @@ bview_update_polygon_rectangle(struct bview_scene_obj *s)
     p->polygon.contour[0].open = 0;
 
     /* Polygon updated, now update view object vlist */
-    bview_polygon_vlist(s);
+    bv_polygon_vlist(s);
 
     /* Updated */
     s->s_changed++;
@@ -635,23 +635,23 @@ bview_update_polygon_rectangle(struct bview_scene_obj *s)
 }
 
 int
-bview_update_polygon_square(struct bview_scene_obj *s)
+bv_update_polygon_square(struct bv_scene_obj *s)
 {
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     fastf_t fx, fy;
 
      // Use the polygon's view context
-    struct bview *v = s->s_v;
-    if (bview_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+    struct bv *v = s->s_v;
+    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
     int snapped = 0;
     if (v->gv_snap_lines) {
-	snapped = bview_snap_lines_2d(v, &fx, &fy);
+	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
     if (!snapped && v->gv_grid.snap) {
-	bview_snap_grid_2d(v, &fx, &fy);
+	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     fastf_t dx = fx - p->prev_point[X];
@@ -681,7 +681,7 @@ bview_update_polygon_square(struct bview_scene_obj *s)
     p->polygon.contour[0].open = 0;
 
     /* Polygon updated, now update view object vlist */
-    bview_polygon_vlist(s);
+    bv_polygon_vlist(s);
 
     /* Updated */
     s->s_changed++;
@@ -690,26 +690,26 @@ bview_update_polygon_square(struct bview_scene_obj *s)
 }
 
 int
-bview_update_general_polygon(struct bview_scene_obj *s)
+bv_update_general_polygon(struct bv_scene_obj *s)
 {
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type != BVIEW_POLYGON_GENERAL)
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    if (p->type != BV_POLYGON_GENERAL)
 	return 0;
 
     if (p->aflag) {
-	return bview_append_polygon_pt(s);
+	return bv_append_polygon_pt(s);
     }
 
     if (p->sflag) {
-	return bview_select_polygon_pt(s);
+	return bv_select_polygon_pt(s);
     }
 
     if (p->mflag) {
-	return bview_move_polygon_pt(s);
+	return bv_move_polygon_pt(s);
     }
 
     /* Polygon updated, now update view object vlist */
-    bview_polygon_vlist(s);
+    bv_polygon_vlist(s);
 
     /* Updated */
     s->s_changed++;
@@ -718,20 +718,20 @@ bview_update_general_polygon(struct bview_scene_obj *s)
 }
 
 int
-bview_update_polygon(struct bview_scene_obj *s)
+bv_update_polygon(struct bv_scene_obj *s)
 {
-    struct bview_polygon *p = (struct bview_polygon *)s->s_i_data;
-    if (p->type == BVIEW_POLYGON_CIRCLE)
-	return bview_update_polygon_circle(s);
-    if (p->type == BVIEW_POLYGON_ELLIPSE)
-	return bview_update_polygon_ellipse(s);
-    if (p->type == BVIEW_POLYGON_RECTANGLE)
-	return bview_update_polygon_rectangle(s);
-    if (p->type == BVIEW_POLYGON_SQUARE)
-	return bview_update_polygon_square(s);
-    if (p->type != BVIEW_POLYGON_GENERAL)
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    if (p->type == BV_POLYGON_CIRCLE)
+	return bv_update_polygon_circle(s);
+    if (p->type == BV_POLYGON_ELLIPSE)
+	return bv_update_polygon_ellipse(s);
+    if (p->type == BV_POLYGON_RECTANGLE)
+	return bv_update_polygon_rectangle(s);
+    if (p->type == BV_POLYGON_SQUARE)
+	return bv_update_polygon_square(s);
+    if (p->type != BV_POLYGON_GENERAL)
 	return 0;
-    return bview_update_general_polygon(s);
+    return bv_update_general_polygon(s);
 }
 
 /*

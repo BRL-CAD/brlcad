@@ -36,7 +36,7 @@
 
 extern "C" {
 #include "bu/ptbl.h"
-#include "bview.h"
+#include "bv.h"
 #include "dm.h"
 }
 
@@ -53,7 +53,7 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 
 	void save_image();
 
-	struct bview *v = NULL;
+	struct bv *v = NULL;
 	struct dm *dmp = NULL;
 	struct bu_ptbl *dm_set = NULL;
 	struct dm **dm_current = NULL;

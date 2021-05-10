@@ -68,8 +68,8 @@ __BEGIN_DECLS
 #define TCLCAD_PROTATE_MODE 12
 #define TCLCAD_PSCALE_MODE 13
 #define TCLCAD_PTRANSLATE_MODE 14
-// TCLCAD_POLY_CIRCLE_MODE replaced by BVIEW_POLY_CIRCLE_MODE
-// TCLCAD_POLY_CONTOUR_MODE replaced by BVIEW_POLY_CONTOUR_MODE
+// TCLCAD_POLY_CIRCLE_MODE replaced by BV_POLY_CIRCLE_MODE
+// TCLCAD_POLY_CONTOUR_MODE replaced by BV_POLY_CONTOUR_MODE
 #define TCLCAD_POLY_ELLIPSE_MODE 17
 #define TCLCAD_POLY_RECTANGLE_MODE 18
 #define TCLCAD_POLY_SQUARE_MODE 19
@@ -346,107 +346,107 @@ TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *
 								    int argc,
 								    const char *argv[]);
 TCLCAD_EXPORT extern void go_refresh(struct ged *gedp,
-				     struct bview *gdvp);
+				     struct bv *gdvp);
 TCLCAD_EXPORT extern void go_refresh_draw(struct ged *gedp,
-					  struct bview *gdvp,
+					  struct bv *gdvp,
 					  int restore_zbuffer);
 TCLCAD_EXPORT extern int go_view_axes(struct ged *gedp,
-				      struct bview *gdvp,
+				      struct bv *gdvp,
 				      int argc,
 				      const char *argv[],
 				      const char *usage);
 TCLCAD_EXPORT extern int go_data_labels(Tcl_Interp *interp,
 					struct ged *gedp,
-					struct bview *gdvp,
+					struct bv *gdvp,
 					int argc,
 					const char *argv[],
 					const char *usage);
 TCLCAD_EXPORT extern int go_data_arrows(Tcl_Interp *interp,
 					struct ged *gedp,
-					struct bview *gdvp,
+					struct bv *gdvp,
 					int argc,
 					const char *argv[],
 					const char *usage);
 TCLCAD_EXPORT extern int go_data_pick(struct ged *gedp,
-				      struct bview *gdvp,
+				      struct bv *gdvp,
 				      int argc,
 				      const char *argv[],
 				      const char *usage);
 TCLCAD_EXPORT extern int go_data_axes(Tcl_Interp *interp,
 				      struct ged *gedp,
-				      struct bview *gdvp,
+				      struct bv *gdvp,
 				      int argc,
 				      const char *argv[],
 				      const char *usage);
 TCLCAD_EXPORT extern int go_data_lines(Tcl_Interp *interp,
 				       struct ged *gedp,
-				       struct bview *gdvp,
+				       struct bv *gdvp,
 				       int argc,
 				       const char *argv[],
 				       const char *usage);
 TCLCAD_EXPORT extern int go_data_move(Tcl_Interp *interp,
 				      struct ged *gedp,
-				      struct bview *gdvp,
+				      struct bv *gdvp,
 				      int argc,
 				      const char *argv[],
 				      const char *usage);
 TCLCAD_EXPORT extern int go_data_move_object_mode(Tcl_Interp *interp,
 						  struct ged *gedp,
-						  struct bview *gdvp,
+						  struct bv *gdvp,
 						  int argc,
 						  const char *argv[],
 						  const char *usage);
 TCLCAD_EXPORT extern int go_data_move_point_mode(Tcl_Interp *interp,
 						 struct ged *gedp,
-						 struct bview *gdvp,
+						 struct bv *gdvp,
 						 int argc,
 						 const char *argv[],
 						 const char *usage);
 TCLCAD_EXPORT extern int go_data_polygons(Tcl_Interp *interp,
 					  struct ged *gedp,
-					  struct bview *gdvp,
+					  struct bv *gdvp,
 					  int argc,
 					  const char *argv[],
 					  const char *usage);
 TCLCAD_EXPORT extern int go_mouse_poly_circ(Tcl_Interp *interp,
 					    struct ged *gedp,
-					    struct bview *gdvp,
+					    struct bv *gdvp,
 					    int argc,
 					    const char *argv[],
 					    const char *usage);
 TCLCAD_EXPORT extern int go_mouse_poly_cont(Tcl_Interp *interp,
 					    struct ged *gedp,
-					    struct bview *gdvp,
+					    struct bv *gdvp,
 					    int argc,
 					    const char *argv[],
 					    const char *usage);
 TCLCAD_EXPORT extern int go_mouse_poly_ell(Tcl_Interp *interp,
 					   struct ged *gedp,
-					   struct bview *gdvp,
+					   struct bv *gdvp,
 					   int argc,
 					   const char *argv[],
 					   const char *usage);
 TCLCAD_EXPORT extern int go_mouse_poly_rect(Tcl_Interp *interp,
 					    struct ged *gedp,
-					    struct bview *gdvp,
+					    struct bv *gdvp,
 					    int argc,
 					    const char *argv[],
 					    const char *usage);
 TCLCAD_EXPORT extern int go_poly_circ_mode(Tcl_Interp *interp,
 					   struct ged *gedp,
-					   struct bview *gdvp,
+					   struct bv *gdvp,
 					   int argc,
 					   const char *argv[],
 					   const char *usage);
 TCLCAD_EXPORT extern int go_poly_ell_mode(Tcl_Interp *interp,
 					  struct ged *gedp,
-					  struct bview *gdvp,
+					  struct bv *gdvp,
 					  int argc,
 					  const char *argv[],
 					  const char *usage);
 TCLCAD_EXPORT extern int go_poly_rect_mode(Tcl_Interp *interp,
 					   struct ged *gedp,
-					   struct bview *gdvp,
+					   struct bv *gdvp,
 					   int argc,
 					   const char *argv[],
 					   const char *usage);
@@ -455,13 +455,13 @@ TCLCAD_EXPORT extern int go_run_tclscript(Tcl_Interp *interp,
 					  struct bu_vls *result_str);
 TCLCAD_EXPORT extern int go_poly_cont_build(Tcl_Interp *interp,
 					    struct ged *gedp,
-					    struct bview *gdvp,
+					    struct bv *gdvp,
 					    int argc,
 					    const char *argv[],
 					    const char *usage);
 TCLCAD_EXPORT extern int go_poly_cont_build_end(Tcl_Interp *UNUSED(interp),
 						struct ged *gedp,
-						struct bview *gdvp,
+						struct bv *gdvp,
 						int argc,
 						const char *argv[],
 						const char *usage);

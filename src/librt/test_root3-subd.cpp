@@ -31,7 +31,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "bu/app.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "opennurbs.h"
 
 

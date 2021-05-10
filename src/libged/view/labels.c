@@ -33,7 +33,7 @@
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bview.h"
+#include "bv.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
@@ -53,7 +53,7 @@ _label_cmd_create(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (s) {
         bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
         return GED_ERROR;
@@ -80,7 +80,7 @@ _label_cmd_create(void *bs, int argc, const char **argv)
 	}
     } else {
 	fastf_t fx, fy;
-	if (bview_screen_to_view(gedp->ged_gvp, &fx, &fy, (int)p[0], (int)p[1]) < 0) {
+	if (bv_screen_to_view(gedp->ged_gvp, &fx, &fy, (int)p[0], (int)p[1]) < 0) {
 	    return GED_ERROR;
 	}
 	p[0] = fx;
@@ -121,14 +121,14 @@ _label_cmd_create(void *bs, int argc, const char **argv)
 	}
     }
 
-    BU_GET(s, struct bview_scene_obj);
+    BU_GET(s, struct bv_scene_obj);
     s->s_v = gedp->ged_gvp;
     BU_LIST_INIT(&(s->s_vlist));
     BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
     VSET(s->s_color, 255, 255, 0);
 
-    struct bview_label *l;
-    BU_GET(l, struct bview_label);
+    struct bv_label *l;
+    BU_GET(l, struct bv_label);
     BU_VLS_INIT(&l->label);
     bu_vls_sprintf(&l->label, "%s", argv[0]);
     VMOVE(l->p, p);
@@ -138,8 +138,8 @@ _label_cmd_create(void *bs, int argc, const char **argv)
     }
     s->s_i_data = (void *)l;
 
-    s->s_type_flags |= BVIEW_VIEWONLY;
-    s->s_type_flags |= BVIEW_LABELS;
+    s->s_type_flags |= BV_VIEWONLY;
+    s->s_type_flags |= BV_LABELS;
 
     bu_vls_init(&s->s_uuid);
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);

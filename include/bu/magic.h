@@ -210,7 +210,7 @@ __BEGIN_DECLS
 /* misc */
 
 #define ANIMATE_MAGIC			0x414e4963 /**< ANIc */
-#define BVIEW_MAGIC			0x62766965 /**< bvie */
+#define BV_MAGIC			0x62766965 /**< bvie */
 #define CURVE_BEZIER_MAGIC		0x62657a69 /**< bezi */
 #define CURVE_CARC_MAGIC		0x63617263 /**< carc */
 #define CURVE_LSEG_MAGIC		0x6c736567 /**< lseg */

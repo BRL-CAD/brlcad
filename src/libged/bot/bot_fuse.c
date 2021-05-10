@@ -32,7 +32,7 @@
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "rt/geom.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 
 #include "../ged_private.h"
 

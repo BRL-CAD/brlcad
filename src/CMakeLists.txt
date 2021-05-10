@@ -22,6 +22,7 @@ endif(MSVC)
 set(level_1_dirs
   libbu
   libbn
+  libbv
   libbg
   libnmg
   libbrep
@@ -34,7 +35,6 @@ set(level_1_dirs
 # programs.
 
 set(level_2_dirs
-  libbview
   libpkg
   libgcv
   libanalyze

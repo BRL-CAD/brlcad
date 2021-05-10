@@ -86,7 +86,7 @@ ged_ypr_core(struct ged *gedp, int argc, const char *argv[])
     anim_dy_p_r2mat(mat, V3ARGS(ypr));
     anim_v_permute(mat);
     bn_mat_trn(gedp->ged_gvp->gv_rotation, mat);
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return GED_OK;
 }

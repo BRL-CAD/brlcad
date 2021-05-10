@@ -45,7 +45,7 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "analyze.h"
 
 #include "../ged_private.h"

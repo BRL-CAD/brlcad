@@ -37,7 +37,7 @@ extern int to_data_arrows(struct ged *gedp,
 			  int maxargs);
 extern int to_data_arrows_func(Tcl_Interp *interp,
 			       struct ged *gedp,
-			       struct bview *gdvp,
+			       struct bv *gdvp,
 			       int argc,
 			       const char *argv[]);
 
@@ -48,7 +48,7 @@ extern int to_autoview(struct ged *gedp,
 		       ged_func_ptr func,
 		       const char *usage,
 		       int maxargs);
-extern void to_autoview_view(struct bview *gdvp, const char *scale);
+extern void to_autoview_view(struct bv *gdvp, const char *scale);
 extern void to_autoview_all_views(struct tclcad_obj *top);
 extern int to_autoview_func(struct ged *gedp,
 			    int argc,
@@ -60,8 +60,8 @@ extern int to_autoview_func(struct ged *gedp,
 
 /* Axes */
 extern int to_axes(struct ged *gedp,
-		   struct bview *gdvp,
-		   struct bview_axes *gasp,
+		   struct bv *gdvp,
+		   struct bv_axes *gasp,
 		   int argc,
 		   const char *argv[],
 		   const char *usage);
@@ -73,7 +73,7 @@ extern int to_data_axes(struct ged *gedp,
 			int maxargs);
 extern int to_data_axes_func(Tcl_Interp *interp,
 			     struct ged *gedp,
-			     struct bview *gdvp,
+			     struct bv *gdvp,
 			     int argc,
 			     const char *argv[]);
 extern int to_model_axes(struct ged *gedp,
@@ -90,7 +90,7 @@ extern int to_view_axes(struct ged *gedp,
 			int maxargs);
 
 /* Draw */
-extern void go_draw(struct bview *gdvp);
+extern void go_draw(struct bv *gdvp);
 extern int to_edit_redraw(struct ged *gedp, int argc, const char *argv[]);
 extern int to_redraw(struct ged *gedp,
 		     int argc,
@@ -123,7 +123,7 @@ extern int to_data_labels(struct ged *gedp,
 			  int maxargs);
 extern int to_data_labels_func(Tcl_Interp *interp,
 			       struct ged *gedp,
-			       struct bview *gdvp,
+			       struct bv *gdvp,
 			       int argc,
 			       const char *argv[]);
 extern int to_prim_label(struct ged *gedp,
@@ -164,10 +164,10 @@ extern int to_refresh_on(struct ged *gedp,
 			 const char *usage,
 			 int maxargs);
 extern void to_refresh_all_views(struct tclcad_obj *top);
-extern void to_refresh_view(struct bview *gdvp);
+extern void to_refresh_view(struct bv *gdvp);
 
 /* Util */
-extern int to_is_viewable(struct bview *gdvp);
+extern int to_is_viewable(struct bv *gdvp);
 
 /*
  * Local Variables:

@@ -43,17 +43,17 @@
 #include "../alphanum.h"
 #include "../ged_private.h"
 
-#define GET_BVIEW_SCENE_OBJ(p, fp) { \
+#define GET_BV_SCENE_OBJ(p, fp) { \
         if (BU_LIST_IS_EMPTY(fp)) { \
-            BU_ALLOC((p), struct bview_scene_obj); \
+            BU_ALLOC((p), struct bv_scene_obj); \
         } else { \
-            p = BU_LIST_NEXT(bview_scene_obj, fp); \
+            p = BU_LIST_NEXT(bv_scene_obj, fp); \
             BU_LIST_DEQUEUE(&((p)->l)); \
         } \
         BU_LIST_INIT( &((p)->s_vlist) ); }
 
 static int
-_prim_tess(struct bview_scene_obj *s, struct rt_db_internal *ip)
+_prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_full_path *fp = &d->fp;
@@ -84,7 +84,7 @@ _prim_tess(struct bview_scene_obj *s, struct rt_db_internal *ip)
 
 /* Wrapper to handle adaptive vs non-adaptive wireframes */
 static void
-_wireframe_plot(struct bview_scene_obj *s, struct rt_db_internal *ip)
+_wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     const struct bn_tol *tol = d->tol;
@@ -98,7 +98,7 @@ _wireframe_plot(struct bview_scene_obj *s, struct rt_db_internal *ip)
 }
 
 
-extern "C" int draw_m3(struct bview_scene_obj *s);
+extern "C" int draw_m3(struct bv_scene_obj *s);
 
 static int
 _fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
@@ -108,7 +108,7 @@ _fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
 	const struct bn_tol *tol,
 	mat_t *s_mat,
 	struct resource *res,
-	struct bview *v
+	struct bv *v
 	)
 {
     VSET(*bmin, INFINITY, INFINITY, INFINITY);
@@ -156,7 +156,7 @@ _fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
 }
 
 static void
-_scene_obj_geom(struct bview_scene_obj *s)
+_scene_obj_geom(struct bv_scene_obj *s)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_i *dbip = d->dbip;
@@ -168,7 +168,7 @@ _scene_obj_geom(struct bview_scene_obj *s)
      * its solids */
     if (s->s_os.s_dmode == 3) {
 	draw_m3(s);
-	bview_scene_obj_bound(s);
+	bv_scene_obj_bound(s);
 	return;
     }
 
@@ -251,7 +251,7 @@ _scene_obj_geom(struct bview_scene_obj *s)
 geom_done:
 
     // Update s_size and s_center
-    bview_scene_obj_bound(s);
+    bv_scene_obj_bound(s);
 
     // Store current view info, in case of adaptive plotting
     s->adaptive_wireframe = s->s_v->adaptive_plot;
@@ -275,7 +275,7 @@ geom_done:
 // are made, the subtrees should be redrawn to properly repopulate the scene
 // objects.
 static int
-_ged_update_db_path(struct bview_scene_obj *s)
+_ged_update_db_path(struct bv_scene_obj *s)
 {
     /* Validate */
     if (!s)
@@ -321,7 +321,7 @@ _ged_update_db_path(struct bview_scene_obj *s)
     // Process children - right now we have no view dependent child
     // drawing, but in principle we could...
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-        struct bview_scene_obj *s_c = (struct bview_scene_obj *)BU_PTBL_GET(&s->children, i);
+        struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	if (s_c->s_update_callback)
 	    (*s_c->s_update_callback)(s_c);
     }
@@ -342,7 +342,7 @@ _ged_update_db_path(struct bview_scene_obj *s)
 }
 
 static void
-_ged_free_draw_data(struct bview_scene_obj *s)
+_ged_free_draw_data(struct bv_scene_obj *s)
 {
     /* Validate */
     if (!s)
@@ -361,12 +361,12 @@ _ged_free_draw_data(struct bview_scene_obj *s)
 /* Data for tree walk */
 struct draw_data_t {
     struct db_i *dbip;
-    struct bview_scene_group *g;
-    struct bview *v;
-    struct bview_settings *vs;
+    struct bv_scene_group *g;
+    struct bv *v;
+    struct bv_settings *vs;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
-    struct bview_scene_obj *free_scene_obj;
+    struct bv_scene_obj *free_scene_obj;
     struct bu_color c;
     int color_inherit;
     int bool_op;
@@ -561,7 +561,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 {
     struct directory *dp;
     struct draw_data_t *dd= (struct draw_data_t *)client_data;
-    struct bview_scene_obj *free_scene_obj = dd->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = dd->free_scene_obj;
     RT_CK_FULL_PATH(path);
     RT_CK_DBI(dd->dbip);
 
@@ -602,16 +602,16 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// find it) we create it instead.
 
 	// Have database object, make scene object
-	struct bview_scene_obj *s;
-	GET_BVIEW_SCENE_OBJ(s, &free_scene_obj->l);
-	bview_scene_obj_init(s, free_scene_obj);
+	struct bv_scene_obj *s;
+	GET_BV_SCENE_OBJ(s, &free_scene_obj->l);
+	bv_scene_obj_init(s, free_scene_obj);
 	db_path_to_vls(&s->s_name, path);
 	db_path_to_vls(&s->s_uuid, path);
 	// TODO - append hash of matrix and op to uuid to make it properly unique...
 	s->s_v = dd->v;
 	MAT_COPY(s->s_mat, *curr_mat);
-	bview_settings_sync(&s->s_os, &dd->g->g->s_os);
-	s->s_type_flags = BVIEW_DBOBJ_BASED;
+	bv_settings_sync(&s->s_os, &dd->g->g->s_os);
+	s->s_type_flags = BV_DBOBJ_BASED;
 	s->s_changed++;
 	if (!s->s_os.draw_solid_lines_only) {
 	    s->s_soldash = (dd->bool_op == 4) ? 1 : 0;
@@ -693,7 +693,7 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 static int
 draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
 {
-    struct bview_settings *vs = (struct bview_settings *)data;
+    struct bv_settings *vs = (struct bv_settings *)data;
     struct bu_color c;
     int ret = bu_opt_color(msg, argc, argv, (void *)&c);
     if (ret == 1 || ret == 3) {
@@ -706,8 +706,8 @@ draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
 
 static int
 alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
-    struct bview_scene_group *ga = *(struct bview_scene_group **)a;
-    struct bview_scene_group *gb = *(struct bview_scene_group **)b;
+    struct bv_scene_group *ga = *(struct bv_scene_group **)a;
+    struct bv_scene_group *gb = *(struct bv_scene_group **)b;
     return alphanum_impl(bu_vls_cstr(&ga->g->s_name), bu_vls_cstr(&gb->g->s_name), NULL);
 }
 
@@ -734,7 +734,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    struct bview_settings vs = BVIEW_SETTINGS_INIT;
+    struct bv_settings vs = BV_SETTINGS_INIT;
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
     struct bu_opt_desc d[16];
@@ -764,7 +764,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Option defaults come from the current view, but may be overridden for
      * the purposes of the current draw command by command line options. */
-    bview_settings_sync(&vs, &gedp->ged_gvp->gvs);
+    bv_settings_sync(&vs, &gedp->ged_gvp->gvs);
 
     /* Process command line args into vs with bu_opt */
     int opt_ret = bu_opt_parse(NULL, argc, argv, d);
@@ -804,7 +804,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // Abbreviations for convenience
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
-    struct bview_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
 
 
     // If we have no active groups and no view objects, we are drawing into a
@@ -863,9 +863,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // proposed new path impacts them.  If we need to set up for adaptive
     // plotting, do initial bounds calculations to pave the way for an
     // initial view setup.
-    std::map<struct db_full_path *, struct bview_scene_group *> fp_g;
+    std::map<struct db_full_path *, struct bv_scene_group *> fp_g;
     for (f_it = fps.begin(); f_it != fps.end(); f_it++) {
-	struct bview_scene_group *g = NULL;
+	struct bv_scene_group *g = NULL;
 	struct db_full_path *fp = *f_it;
 
 	// Get the "seed" matrix from the path - everything we draw at or below
@@ -883,10 +883,10 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	// Check all the current groups against the candidate.
-	std::set<struct bview_scene_group *> clear;
-	std::set<struct bview_scene_group *>::iterator g_it;
+	std::set<struct bv_scene_group *> clear;
+	std::set<struct bv_scene_group *>::iterator g_it;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-	    struct bview_scene_group *cg = (struct bview_scene_group *)BU_PTBL_GET(sg, i);
+	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    // If we already know we're clearing this one, don't check
 	    // again
 	    if (clear.find(cg) != clear.end()) {
@@ -927,10 +927,10 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	if (g) {
 	    // remove children that match fp - we will be adding new versions to g to update it,
 	    // rather than creating a new one.
-	    std::set<struct bview_scene_obj *> sclear;
-	    std::set<struct bview_scene_obj *>::iterator s_it;
+	    std::set<struct bv_scene_obj *> sclear;
+	    std::set<struct bv_scene_obj *>::iterator s_it;
 	    for (size_t i = 0; i < BU_PTBL_LEN(&g->g->children); i++) {
-		struct bview_scene_obj *s = (struct bview_scene_obj *)BU_PTBL_GET(&g->g->children, i);
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->g->children, i);
 		struct db_full_path gfp;
 		db_full_path_init(&gfp);
 		db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
@@ -939,18 +939,18 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 		}
 	    }
 	    for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
-		struct bview_scene_obj *s = *s_it;
+		struct bv_scene_obj *s = *s_it;
 		bu_ptbl_rm(&g->g->children, (long *)s);
-		bview_scene_obj_free(s, free_scene_obj);
+		bv_scene_obj_free(s, free_scene_obj);
 	    }
 	} else {
 	    // Create new group
-	    BU_GET(g, struct bview_scene_group);
-	    GET_BVIEW_SCENE_OBJ(g->g, &free_scene_obj->l);
-	    bview_scene_obj_init(g->g, free_scene_obj);
+	    BU_GET(g, struct bv_scene_group);
+	    GET_BV_SCENE_OBJ(g->g, &free_scene_obj->l);
+	    bv_scene_obj_init(g->g, free_scene_obj);
 	    db_path_to_vls(&g->g->s_name, fp);
 	    db_path_to_vls(&g->g->s_uuid, fp);
-	    bview_settings_sync(&g->g->s_os, &vs);
+	    bv_settings_sync(&g->g->s_os, &vs);
 	    bu_ptbl_ins(gedp->ged_gvp->gv_db_grps, (long *)g);
 
 	    // If we're a blank slate, we're adaptive, and autoview isn't off
@@ -970,10 +970,10 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	if (clear.size()) {
 	    // Clear anything superseded by the new path
 	    for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
-		struct bview_scene_group *cg = *g_it;
+		struct bv_scene_group *cg = *g_it;
 		bu_ptbl_rm(gedp->ged_gvp->gv_db_grps, (long *)cg);
-		bview_scene_obj_free(cg->g, free_scene_obj);
-		BU_PUT(cg, struct bview_scene_group);
+		bv_scene_obj_free(cg->g, free_scene_obj);
+		BU_PUT(cg, struct bv_scene_group);
 	    }
 	}
     }
@@ -981,7 +981,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     if (blank_slate && gedp->ged_gvp->adaptive_plot && !no_autoview) {
 	// We've checked the paths for bounding info - now set up the
 	// view
-	struct bview *v = gedp->ged_gvp;
+	struct bv *v = gedp->ged_gvp;
 	point_t center = VINIT_ZERO;
 	point_t radial;
 	if (bounds_data.have_bbox) {
@@ -1002,7 +1002,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	V_MAX(v->gv_scale, radial[Y]);
 	V_MAX(v->gv_scale, radial[Z]);
 	v->gv_isize = 1.0 / v->gv_size;
-	bview_update(v);
+	bv_update(v);
     }
 
     // Initial setup is done, we now have the set of paths to walk to do the
@@ -1011,10 +1011,10 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     //
     // This stage is where the vector lists or triangles that constitute the view
     // information are actually created.
-    std::map<struct db_full_path *, struct bview_scene_group *>::iterator fpg_it;
+    std::map<struct db_full_path *, struct bv_scene_group *>::iterator fpg_it;
     for (fpg_it = fp_g.begin(); fpg_it != fp_g.end(); fpg_it++) {
 	struct db_full_path *fp = fpg_it->first;
-	struct bview_scene_group *g = fpg_it->second;
+	struct bv_scene_group *g = fpg_it->second;
 
 	// Seed initial matrix from the path
 	mat_t mat;
@@ -1097,7 +1097,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Sort
-    bu_sort(BU_PTBL_BASEADDR(gedp->ged_gvp->gv_db_grps), BU_PTBL_LEN(gedp->ged_gvp->gv_db_grps), sizeof(struct bview_scene_group *), alphanum_cmp, NULL);
+    bu_sort(BU_PTBL_BASEADDR(gedp->ged_gvp->gv_db_grps), BU_PTBL_LEN(gedp->ged_gvp->gv_db_grps), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
 
 
     // If we're starting from scratch and we're not being told to leave the

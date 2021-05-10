@@ -178,7 +178,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 
     if (use_grid) {
 	// Grid operates on view space points
-	bview_snap_grid_2d(gedp->ged_gvp, &view_pt_2d[X], &view_pt_2d[Y]);
+	bv_snap_grid_2d(gedp->ged_gvp, &view_pt_2d[X], &view_pt_2d[Y]);
     }
 
     if (use_lines) {
@@ -187,7 +187,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	// It's OK if we have no lines close enough to snap to -
 	// in that case just pass back the view pt.  If we do
 	// have a snap, update the output
-	if (bview_snap_lines_3d(&out_pt, gedp->ged_gvp, &view_pt) == GED_OK) {
+	if (bv_snap_lines_3d(&out_pt, gedp->ged_gvp, &view_pt) == GED_OK) {
 	    MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, out_pt);
 	    V2SET(view_pt_2d, vp[0], vp[1]);
 	    VMOVE(view_pt, out_pt);

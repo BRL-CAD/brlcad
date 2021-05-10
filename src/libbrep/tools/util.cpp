@@ -33,7 +33,7 @@
 #include "bu/malloc.h"
 #include "bn/mat.h" /* bn_vec_perp */
 #include "bn/tol.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "brep/defines.h"
 #include "brep/util.h"
 

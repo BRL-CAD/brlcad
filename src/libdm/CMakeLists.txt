@@ -56,7 +56,7 @@ set(LIBDM_SRCS
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 set_property(SOURCE dm_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libicv;libbview;libbn;libbg;libbu;libpkg;${PNG_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libicv;libbv;libbn;libbg;libbu;libpkg;${PNG_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (TARGET profont_ProFont_ttf_cp)
   add_dependencies(libdm profont_ProFont_ttf_cp)

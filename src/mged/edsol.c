@@ -2544,7 +2544,7 @@ init_sedit(void)
     /* Read solid description into es_int */
     if (!illump->s_u_data)
 	return;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "init_sedit(",
@@ -2667,7 +2667,7 @@ replot_editing_solid(void)
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     mat_t mat;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     struct directory *illdp;
 
     if (!illump) {
@@ -2675,16 +2675,16 @@ replot_editing_solid(void)
     }
     if (!illump->s_u_data)
 	return;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     illdp = LAST_SOLID(bdata);
 
     gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (sp->s_u_data) {
-		bdata = (struct ged_bview_data *)sp->s_u_data;
+		bdata = (struct ged_bv_data *)sp->s_u_data;
 		if (LAST_SOLID(bdata) == illdp) {
 		    (void)db_path_to_mat(DBIP, &bdata->s_fullpath, mat, bdata->s_fullpath.fp_len-1, &rt_uniresource);
 		    (void)replot_modified_solid(sp, &es_int, mat);
@@ -7401,7 +7401,7 @@ init_oedit_guts(void)
     /* Not an evaluated region - just a regular path ending in a solid */
     if (!illump->s_u_data)
 	return;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "init_oedit(",
@@ -7489,7 +7489,7 @@ oedit_apply(int continue_editing)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     /* matrices used to accept editing done from a depth
      * >= 2 from the top of the illuminated path
      */
@@ -7500,7 +7500,7 @@ oedit_apply(int continue_editing)
 
     if (!illump || !illump->s_u_data)
 	return;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
     switch (ipathpos) {
 	case 0:
@@ -7544,7 +7544,7 @@ oedit_apply(int continue_editing)
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (sp->s_iflag == DOWN)
 		continue;
 	    (void)replot_original_solid(sp);
@@ -7564,7 +7564,7 @@ oedit_accept(void)
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
 
     if (DBIP == DBI_NULL)
 	return;
@@ -7576,7 +7576,7 @@ oedit_accept(void)
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		if (sp->s_iflag == DOWN)
 		    continue;
 		(void)replot_original_solid(sp);
@@ -7702,7 +7702,7 @@ sedit_apply(int accept_flag)
     /* write editing changes out to disc */
     if (!illump->s_u_data)
 	return TCL_ERROR;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     dp = LAST_SOLID(bdata);
     if (!dp) {
 	/* sanity check, unexpected error */
@@ -7822,19 +7822,19 @@ sedit_reject(void)
     {
 	struct display_list *gdlp;
 	struct display_list *next_gdlp;
-	struct bview_scene_obj *sp;
+	struct bv_scene_obj *sp;
 	if (!illump->s_u_data)
 	    return;
-	struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		if (!sp->s_u_data)
 		    continue;
-		struct ged_bview_data *bdatas = (struct ged_bview_data *)sp->s_u_data;
+		struct ged_bv_data *bdatas = (struct ged_bv_data *)sp->s_u_data;
 		if (LAST_SOLID(bdatas) == LAST_SOLID(bdata))
 		    (void)replot_original_solid(sp);
 	    }
@@ -8930,7 +8930,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     if (illump || !illump->s_u_data)
 	return TCL_ERROR;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
     if (argc == 1) {
 	struct bu_vls logstr = BU_VLS_INIT_ZERO;
@@ -9108,7 +9108,7 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     /* read in a fresh copy */
     if (!illump || !illump->s_u_data)
 	return TCL_ERROR;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "sedit_reset(",
@@ -9224,7 +9224,7 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
 
     if (!illump->s_u_data)
 	return TCL_ERROR;
-    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);

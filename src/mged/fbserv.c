@@ -1111,7 +1111,7 @@ const struct pkg_switch pkg_switch[] = {
     { MSG_FBSCURSOR,                    fb_server_fb_scursor,     "Screen Cursor", NULL }, /*OLD*/
     { MSG_FBWINDOW,                     fb_server_fb_window,      "Window", NULL },          /*OLD*/
     { MSG_FBZOOM,                       fb_server_fb_zoom,        "Zoom", NULL },    /*OLD*/
-    { MSG_FBVIEW,                       fb_server_fb_view,        "View", NULL },    /*NEW*/
+    { MSG_FBV,                       fb_server_fb_view,        "View", NULL },    /*NEW*/
     { MSG_FBGETVIEW,                    fb_server_fb_getview,     "Get View", NULL },        /*NEW*/
     { MSG_FBRMAP,                       fb_server_fb_rmap,        "R Map", NULL },
     { MSG_FBWMAP,                       fb_server_fb_wmap,        "W Map", NULL },

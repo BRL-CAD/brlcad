@@ -28,11 +28,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bview.h"
+#include "bv.h"
 #include "librt_private.h"
 
 static fastf_t
-view_avg_size(const struct bview *gvp)
+view_avg_size(const struct bv *gvp)
 {
     fastf_t view_aspect, x_size, y_size;
 
@@ -44,7 +44,7 @@ view_avg_size(const struct bview *gvp)
 }
 
 fastf_t
-view_avg_sample_spacing(const struct bview *gvp)
+view_avg_sample_spacing(const struct bv *gvp)
 {
     fastf_t avg_view_size, avg_view_samples;
 
@@ -55,7 +55,7 @@ view_avg_sample_spacing(const struct bview *gvp)
 }
 
 fastf_t
-solid_point_spacing(const struct bview *gvp, fastf_t solid_width)
+solid_point_spacing(const struct bv *gvp, fastf_t solid_width)
 {
     fastf_t radius, avg_view_size, avg_sample_spacing;
     point2d_t p1, p2;

@@ -84,7 +84,7 @@ set(LIBBG_SOURCES
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbview;libbn;libbu;${POLY2TRI_LIBRARIES}")
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbv;libbn;libbu;${POLY2TRI_LIBRARIES}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (HIDE_INTERNAL_SYMBOLS)
   if (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)

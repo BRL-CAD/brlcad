@@ -428,7 +428,7 @@ rt_cline_free(register struct soltab *stp)
 
 
 int
-rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
 {
     struct rt_cline_internal *cline_ip;
     fastf_t top[16*3];
@@ -1132,7 +1132,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
 }
 
 void
-rt_cline_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v)
+rt_cline_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v)
 {
     if (!labels || !ip)
 	return;
@@ -1141,19 +1141,19 @@ rt_cline_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct 
     RT_CLINE_CK_MAGIC(cline);
 
     // Set up the containers
-    struct bview_label *l[2];
+    struct bv_label *l[2];
     for (int i = 0; i < 2; i++) {
-	struct bview_scene_obj *s;
-	struct bview_label *la;
-	BU_GET(s, struct bview_scene_obj);
-	BU_GET(la, struct bview_label);
+	struct bv_scene_obj *s;
+	struct bv_label *la;
+	BU_GET(s, struct bv_scene_obj);
+	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
 	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);
-	s->s_type_flags |= BVIEW_DBOBJ_BASED;
-	s->s_type_flags |= BVIEW_LABELS;
+	s->s_type_flags |= BV_DBOBJ_BASED;
+	s->s_type_flags |= BV_LABELS;
 	BU_VLS_INIT(&la->label);
 
 	l[i] = la;

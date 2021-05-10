@@ -223,7 +223,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 {
     const char **av;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
-    struct ged_bview_data *bdata = NULL;
+    struct ged_bv_data *bdata = NULL;
 
     if (GEDP == GED_NULL)
 	return TCL_OK;
@@ -237,7 +237,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	    av = (const char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
 	    av[0] = (const char *)argv[0];
 	    if (illump && illump->s_u_data) {
-		bdata = (struct ged_bview_data *)illump->s_u_data;
+		bdata = (struct ged_bv_data *)illump->s_u_data;
 		av[1] = (const char *)LAST_SOLID(bdata)->d_namep;
 		av[argc] = (const char *)NULL;
 		(void)(*ctp->ged_func)(GEDP, argc, (const char **)av);
@@ -432,7 +432,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
     int arg;
     const char *new_cmd[3];
     struct rt_db_internal intern;
-    struct ged_bview_data *bdata = NULL;
+    struct ged_bv_data *bdata = NULL;
 
     if (GEDP == GED_NULL)
 	return TCL_OK;
@@ -450,7 +450,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	struct directory *outdp = RT_DIR_NULL;
 	transform_editing_solid(&intern, es_mat, &es_int, 0);
 	if (illump && illump->s_u_data) {
-	    bdata = (struct ged_bview_data *)illump->s_u_data;
+	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
 	}
 
@@ -478,7 +478,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	bn_mat_mul(newmat, modelchanges, es_mat);
 	transform_editing_solid(&intern, newmat, &es_int, 0);
 	if (illump && illump->s_u_data) {
-	    bdata = (struct ged_bview_data *)illump->s_u_data;
+	    bdata = (struct ged_bv_data *)illump->s_u_data;
 	    outdp = LAST_SOLID(bdata);
 	}
 
@@ -1907,7 +1907,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 int
 cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int argc, const char *argv[])
 {
-    struct bview *gvp = NULL;
+    struct bv *gvp = NULL;
 
     if (GEDP)
 	gvp = GEDP->ged_gvp;

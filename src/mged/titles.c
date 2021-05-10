@@ -78,7 +78,7 @@ create_text_overlay(struct bu_vls *vp)
      * before Accept was clicked.
      */
     if (es_edflag >= 0 && illump != NULL && illump->s_u_data != NULL) {
-	struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	dp = LAST_SOLID(bdata);
 
@@ -100,7 +100,7 @@ create_text_overlay(struct bu_vls *vp)
 
     /* display path info for object editing also */
     if (STATE == ST_O_EDIT && illump != NULL && illump->s_u_data != NULL) {
-	struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	bu_vls_strcat(vp, "** PATH --  ");
 	db_path_to_vls(vp, &bdata->s_fullpath);
@@ -243,7 +243,7 @@ dotitles(struct bu_vls *overlay_vls)
     /* Set the Tcl variables to the appropriate values. */
 
     if (illump != NULL && illump->s_u_data != NULL) {
-	struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	struct bu_vls path_lhs = BU_VLS_INIT_ZERO;
 	struct bu_vls path_rhs = BU_VLS_INIT_ZERO;
@@ -425,7 +425,7 @@ dotitles(struct bu_vls *overlay_vls)
 	if (illump != NULL && illump->s_u_data != NULL &&
 	    (STATE==ST_O_PATH || STATE==ST_O_PICK || STATE==ST_S_PICK)) {
 
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	    for (i=0; i < bdata->s_fullpath.fp_len; i++) {
 		if (i == (size_t)ipathpos  &&  STATE == ST_O_PATH) {
@@ -591,7 +591,7 @@ dotitles(struct bu_vls *overlay_vls)
 
     if (illump != NULL && illump->s_u_data != NULL) {
 
-	struct ged_bview_data *bdata = (struct ged_bview_data *)illump->s_u_data;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
 
 	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    bu_vls_trunc(&vls, 0);

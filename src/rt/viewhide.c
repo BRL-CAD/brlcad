@@ -43,7 +43,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 
 /* private */
 #include "./rtuif.h"

@@ -92,7 +92,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     scale = view_state->vs_gvp->gv_size / 100;		/* divide by # chars/screen */
 
     for (i=1; i<argc; i++) {
-	struct bview_scene_obj *s;
+	struct bv_scene_obj *s;
 	if ((dp = db_lookup(DBIP, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	/* Find uses of this solid in the solid table */
@@ -100,10 +100,10 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    for (BU_LIST_FOR(s, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	    for (BU_LIST_FOR(s, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		if (!s->s_u_data)
 		    continue;
-		struct ged_bview_data *bdata = (struct ged_bview_data *)s->s_u_data;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)s->s_u_data;
 		if (db_full_path_search(&bdata->s_fullpath, dp)) {
 		    rt_label_vlist_verts(vbp, &s->s_vlist, mat, scale, base2local);
 		}
@@ -235,7 +235,7 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     scale = view_state->vs_gvp->gv_size / 100;      /* divide by # chars/screen */
 
     for (i=1; i<argc; i++) {
-        struct bview_scene_obj *s;
+        struct bv_scene_obj *s;
         if ((dp = db_lookup(DBIP, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
             continue;
 
@@ -243,10 +243,10 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
         gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
         while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
             next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-            for (BU_LIST_FOR(s, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+            for (BU_LIST_FOR(s, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 		if (!s->s_u_data)
 		    continue;
-		struct ged_bview_data *bdata = (struct ged_bview_data *)s->s_u_data;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)s->s_u_data;
                 if (db_full_path_search(&bdata->s_fullpath, dp)) {
                     get_face_list(m, &f_list);
                     rt_label_vlist_faces(vbp, &f_list, mat, scale, base2local);

@@ -33,7 +33,7 @@
 
 #include "vmath.h"
 #include "bu/time.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include "dm.h"
 #include "./include/private.h"
 #include "./null/dm-Null.h"
@@ -936,7 +936,7 @@ dm_hash(struct dm *dmp)
  * and into libdm. */
 static int
 dm_drawSolid(struct dm *dmp,
-	     struct bview_scene_obj *sp,
+	     struct bv_scene_obj *sp,
 	     short r,
 	     short g,
 	     short b,
@@ -995,7 +995,7 @@ dm_draw_display_list(struct dm *dmp,
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     fastf_t ratio;
     int ndrawn = 0;
     int opaque = 0;
@@ -1005,7 +1005,7 @@ dm_draw_display_list(struct dm *dmp,
     while (BU_LIST_NOT_HEAD(gdlp, dl)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    if (solids_down) sp->s_flag = DOWN;              /* Not drawn yet */
 
 	    /* If part of object edit, will be drawn below */

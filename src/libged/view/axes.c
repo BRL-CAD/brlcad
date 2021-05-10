@@ -35,7 +35,7 @@
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bview.h"
+#include "bv.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
@@ -55,7 +55,7 @@ _axes_cmd_create(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (s) {
         bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
         return GED_ERROR;
@@ -73,22 +73,22 @@ _axes_cmd_create(void *bs, int argc, const char **argv)
 	}
     }
 
-    BU_GET(s, struct bview_scene_obj);
+    BU_GET(s, struct bv_scene_obj);
     s->s_v = gedp->ged_gvp;
     BU_LIST_INIT(&(s->s_vlist));
     BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
     VSET(s->s_color, 255, 255, 0);
 
-    struct bview_axes *l;
-    BU_GET(l, struct bview_axes);
+    struct bv_axes *l;
+    BU_GET(l, struct bv_axes);
     VMOVE(l->axes_pos, p);
     l->line_width = 1;
     l->axes_size = 10;
     VSET(l->axes_color, 255, 255, 0);
     s->s_i_data = (void *)l;
 
-    s->s_type_flags |= BVIEW_VIEWONLY;
-    s->s_type_flags |= BVIEW_AXES;
+    s->s_type_flags |= BV_VIEWONLY;
+    s->s_type_flags |= BV_AXES;
 
     bu_vls_init(&s->s_uuid);
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
@@ -112,16 +112,16 @@ _axes_cmd_pos(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_AXES)) {
+    if (!(s->s_type_flags & BV_AXES)) {
         bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
         return GED_ERROR;
     }
-    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+    struct bv_axes *a = (struct bv_axes *)s->s_i_data;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%f %f %f\n", V3ARGS(a->axes_pos));
 	return GED_OK;
@@ -159,16 +159,16 @@ _axes_cmd_size(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_AXES)) {
+    if (!(s->s_type_flags & BV_AXES)) {
         bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
         return GED_ERROR;
     }
-    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+    struct bv_axes *a = (struct bv_axes *)s->s_i_data;
      if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%f\n", a->axes_size);
 	return GED_OK;
@@ -205,16 +205,16 @@ _axes_cmd_linewidth(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_AXES)) {
+    if (!(s->s_type_flags & BV_AXES)) {
         bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
         return GED_ERROR;
     }
-    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+    struct bv_axes *a = (struct bv_axes *)s->s_i_data;
      if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->line_width);
 	return GED_OK;
@@ -256,16 +256,16 @@ _axes_cmd_axes_color(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
         bu_vls_printf(gedp->ged_result_str, "View object named %s does not exist\n", gd->vobj);
         return GED_ERROR;
     }
-    if (!(s->s_type_flags & BVIEW_AXES)) {
+    if (!(s->s_type_flags & BV_AXES)) {
         bu_vls_printf(gedp->ged_result_str, "View object %s is not an axes object\n", gd->vobj);
         return GED_ERROR;
     }
-    struct bview_axes *a = (struct bview_axes *)s->s_i_data;
+    struct bv_axes *a = (struct bv_axes *)s->s_i_data;
      if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->axes_color[0], a->axes_color[1], a->axes_color[2]);
 	return GED_OK;

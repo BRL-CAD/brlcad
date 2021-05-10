@@ -587,7 +587,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     if (_dgcdp != (struct _ged_client_data *)0) {
 	dgcdp = *_dgcdp;            /* struct copy */
     } else {
-	struct bview *gvp;
+	struct bv *gvp;
 
 	memset(&dgcdp, 0, sizeof(struct _ged_client_data));
 	dgcdp.gedp = gedp;
@@ -859,18 +859,18 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		/* create solids */
 		for (i = 0; i < argc; ++i) {
-		    struct ged_solid_data bview_data;
-		    bview_data.draw_solid_lines_only = dgcdp.vs.draw_solid_lines_only;
-		    bview_data.wireframe_color_override = dgcdp.vs.color_override;
-		    bview_data.wireframe_color[0]= dgcdp.vs.color[0];
-		    bview_data.wireframe_color[1]= dgcdp.vs.color[1];
-		    bview_data.wireframe_color[2]= dgcdp.vs.color[2];
-		    bview_data.transparency= dgcdp.vs.transparency;
-		    bview_data.dmode = dgcdp.vs.s_dmode;
-		    bview_data.free_scene_obj = (void *)gedp->free_scene_obj;
+		    struct ged_solid_data bv_data;
+		    bv_data.draw_solid_lines_only = dgcdp.vs.draw_solid_lines_only;
+		    bv_data.wireframe_color_override = dgcdp.vs.color_override;
+		    bv_data.wireframe_color[0]= dgcdp.vs.color[0];
+		    bv_data.wireframe_color[1]= dgcdp.vs.color[1];
+		    bv_data.wireframe_color[2]= dgcdp.vs.color[2];
+		    bv_data.transparency= dgcdp.vs.transparency;
+		    bv_data.dmode = dgcdp.vs.s_dmode;
+		    bv_data.free_scene_obj = (void *)gedp->free_scene_obj;
 
 		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
-		    bview_data.gdlp = dgcdp.gdlp;
+		    bv_data.gdlp = dgcdp.gdlp;
 
 		    /* store draw path */
 		    paths_to_draw[i] = dgcdp.gdlp;
@@ -888,7 +888,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       NULL,
 				       wireframe_region_end,
 				       append_solid_to_display_list,
-				       (void *)&bview_data);
+				       (void *)&bv_data);
 		}
 
 		/* We need to know the view size in order to choose

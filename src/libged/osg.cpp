@@ -29,7 +29,7 @@
 #include "common.h"
 
 #include "ged.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include <assert.h>
 
 #include <osg/Geode>
@@ -53,7 +53,7 @@ struct osg_stuff {
 };
 
 HIDDEN void
-_osgLoadHiddenSolid(osg::Geode *geode, struct bview_scene_obj *sp)
+_osgLoadHiddenSolid(osg::Geode *geode, struct bv_scene_obj *sp)
 {
     register struct bv_vlist *vp = (struct bv_vlist *)&sp->s_vlist;
     osg::Vec3dArray* vertices;
@@ -61,7 +61,7 @@ _osgLoadHiddenSolid(osg::Geode *geode, struct bview_scene_obj *sp)
 
 
 HIDDEN void
-_osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices, osg::Vec3dArray *normals, struct bview_scene_obj *sp)
+_osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices, osg::Vec3dArray *normals, struct bv_scene_obj *sp)
 {
     struct bv_vlist *tvp;
     int first;
@@ -151,7 +151,7 @@ _ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
 {
     register struct display_list *gdlp;
     register struct display_list *next_gdlp;
-    struct bview_scene_obj *sp;
+    struct bv_scene_obj *sp;
     struct osg_stuff *osp = (struct osg_stuff *)osgData;
 
     bu_log("_ged_osgLoadScene: part B\n");

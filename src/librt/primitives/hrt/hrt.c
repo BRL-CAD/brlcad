@@ -1046,7 +1046,7 @@ rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
 
 
 int
-rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
 {
     fastf_t c, dtol, mag_h, ntol = M_PI, r1, r2, **ellipses, theta_prev, theta_new;
     int *pts_dbl;

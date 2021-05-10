@@ -47,7 +47,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "bg/plane.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 
 
 HIDDEN int rt_ck_overlap(const vect_t min, const vect_t max, const struct soltab *stp, const struct rt_i *rtip);

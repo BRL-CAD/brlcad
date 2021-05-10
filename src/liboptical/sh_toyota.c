@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "optical/light.h"
 
 

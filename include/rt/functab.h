@@ -37,7 +37,7 @@
 #include "bu/parse.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
-#include "bview.h"
+#include "bv.h"
 #include "rt/geom.h"
 #include "rt/defines.h"
 #include "rt/application.h"
@@ -127,15 +127,15 @@ struct rt_functab {
 		   struct rt_db_internal * /*ip*/,
 		   const struct bg_tess_tol * /*ttol*/,
 		   const struct bn_tol * /*tol*/,
-		   const struct bview * /*view info*/);
-#define RTFUNCTAB_FUNC_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *))((void (*)(void))_func))
+		   const struct bv * /*view info*/);
+#define RTFUNCTAB_FUNC_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bv *))((void (*)(void))_func))
 
     int (*ft_adaptive_plot)(struct bu_list * /*vhead*/,
 	                    struct rt_db_internal * /*ip*/,
 			    const struct bn_tol * /*tol*/,
-			    const struct bview * /* view info */,
+			    const struct bv * /* view info */,
 			    fastf_t /* s_size */);
-#define RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct bn_tol *, const struct bview *, fastf_t))((void (*)(void))_func))
+#define RTFUNCTAB_FUNC_ADAPTIVE_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct bn_tol *, const struct bv *, fastf_t))((void (*)(void))_func))
 
     void (*ft_vshot)(struct soltab * /*stp*/[],
 		     struct xray *[] /*rp*/,
@@ -269,9 +269,9 @@ struct rt_functab {
     int (*ft_prep_serialize)(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #define RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(_func) ((int (*)(struct soltab *, const struct rt_db_internal *, struct bu_external *, size_t *))((void (*)(void))_func))
 
-    /** generate struct bview_scene_obj labels for the primitive */
-    void (*ft_labels)(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bview *v);
-#define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(struct bu_ptbl *, const struct rt_db_internal *, struct bview *))((void (*)(void))_func))
+    /** generate struct bv_scene_obj labels for the primitive */
+    void (*ft_labels)(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv *v);
+#define RTFUNCTAB_FUNC_LABELS_CAST(_func) ((void (*)(struct bu_ptbl *, const struct rt_db_internal *, struct bv *))((void (*)(void))_func))
 
 };
 

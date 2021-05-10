@@ -850,8 +850,8 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct directory *dp;
-    struct bview_scene_obj *sp;
-    struct bview_scene_obj *lastfound = NULL;
+    struct bv_scene_obj *sp;
+    struct bv_scene_obj *lastfound = NULL;
     int i, j;
     int nmatch;
     int c;
@@ -984,11 +984,11 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	for (BU_LIST_FOR(sp, bview_scene_obj, &gdlp->dl_head_scene_obj)) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    int a_new_match;
 	    if (!sp->s_u_data)
 		continue;
-	    struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
 	    if (exact && nm_pieces != bdata->s_fullpath.fp_len)
 		continue;
@@ -2563,8 +2563,8 @@ abs_zoom(void)
 	}
     }
 
-    if (view_state->vs_gvp->gv_scale < BVIEW_MINVIEWSIZE) {
-	view_state->vs_gvp->gv_scale = BVIEW_MINVIEWSIZE;
+    if (view_state->vs_gvp->gv_scale < BV_MINVIEWSIZE) {
+	view_state->vs_gvp->gv_scale = BV_MINVIEWSIZE;
     }
 
     av[0] = "zoom";
@@ -3970,8 +3970,8 @@ mged_vscale(fastf_t sfactor)
 
     view_state->vs_gvp->gv_scale *= sfactor;
 
-    if (view_state->vs_gvp->gv_scale < BVIEW_MINVIEWSIZE) {
-	view_state->vs_gvp->gv_scale = BVIEW_MINVIEWSIZE;
+    if (view_state->vs_gvp->gv_scale < BV_MINVIEWSIZE) {
+	view_state->vs_gvp->gv_scale = BV_MINVIEWSIZE;
     }
 
     f = view_state->vs_gvp->gv_scale / view_state->vs_gvp->gv_i_scale;

@@ -33,7 +33,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 
 /* TODO - the examples below are run, but no check is made to determine
  * if the faces generated are actually correct.*/

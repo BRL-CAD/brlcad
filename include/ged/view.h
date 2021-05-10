@@ -61,11 +61,11 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
-struct ged_bview_data {
+struct ged_bv_data {
     struct db_full_path s_fullpath;
     void *u_data;
 };
-/* Check ged_bview data associated with a display list */
+/* Check ged_bv data associated with a display list */
 GED_EXPORT extern unsigned long long ged_dl_hash(struct display_list *dl);
 
 
@@ -145,12 +145,12 @@ GED_EXPORT extern int ged_view_func(struct ged *gedp, int argc, const char *argv
  */
 GED_EXPORT extern int ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[]);
 
-GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
+GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bv_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
 GED_EXPORT extern struct bg_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
 GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polygon *polyB);
 GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
 
-GED_EXPORT extern struct bview * ged_find_view(struct ged *gedp, const char *key);
+GED_EXPORT extern struct bv * ged_find_view(struct ged *gedp, const char *key);
 
 __END_DECLS
 

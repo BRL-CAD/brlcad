@@ -50,7 +50,7 @@
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bg/plane.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "nmg.h"
 
 #define PLOT_BOTH_FACES 1

@@ -73,7 +73,7 @@
 #include "raytrace.h"
 #include "libtermio.h"
 #include "rt/db4.h"
-#include "bview/util.h"
+#include "bv/util.h"
 #include "ged.h"
 #include "tclcad.h"
 
@@ -114,7 +114,7 @@ extern struct _mged_variables default_mged_variables;
 extern struct _color_scheme default_color_scheme;
 
 /* defined in grid.c */
-extern struct bview_grid_state default_grid_state;
+extern struct bv_grid_state default_grid_state;
 
 /* defined in axes.c */
 extern struct _axes_state default_axes_state;
@@ -366,7 +366,7 @@ new_edit_mats(void)
 
 
 void
-mged_view_callback(struct bview *gvp,
+mged_view_callback(struct bv *gvp,
 		   void *clientData)
 {
     struct _view_state *vsp = (struct _view_state *)clientData;
@@ -390,7 +390,7 @@ mged_view_callback(struct bview *gvp,
 void
 new_mats(void)
 {
-    bview_update(view_state->vs_gvp);
+    bv_update(view_state->vs_gvp);
 }
 
 
@@ -1307,7 +1307,7 @@ main(int argc, char *argv[])
     BU_ALLOC(color_scheme, struct _color_scheme);
     *color_scheme = default_color_scheme;	/* struct copy */
 
-    BU_ALLOC(grid_state, struct bview_grid_state);
+    BU_ALLOC(grid_state, struct bv_grid_state);
     *grid_state = default_grid_state;		/* struct copy */
 
     BU_ALLOC(axes_state, struct _axes_state);

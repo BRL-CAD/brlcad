@@ -35,8 +35,8 @@
 
 int
 to_axes(struct ged *gedp,
-	struct bview *gdvp,
-	struct bview_axes *gasp,
+	struct bv *gdvp,
+	struct bv_axes *gasp,
 	int argc,
 	const char *argv[],
 	const char *usage)
@@ -444,7 +444,7 @@ bad:
 int
 go_data_axes(Tcl_Interp *interp,
 	     struct ged *gedp,
-	     struct bview *gdvp,
+	     struct bv *gdvp,
 	     int argc,
 	     const char *argv[],
 	     const char *usage)
@@ -486,7 +486,7 @@ to_data_axes(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct bview *gdvp;
+    struct bv *gdvp;
     int ret;
 
     /* initialize result */
@@ -521,11 +521,11 @@ to_data_axes(struct ged *gedp,
 int
 to_data_axes_func(Tcl_Interp *interp,
 		  struct ged *gedp,
-		  struct bview *gdvp,
+		  struct bv *gdvp,
 		  int argc,
 		  const char *argv[])
 {
-    struct bview_data_axes_state *gdasp;
+    struct bv_data_axes_state *gdasp;
 
     if (argv[0][0] == 's')
 	gdasp = &gdvp->gv_tcl.gv_sdata_axes;
@@ -700,7 +700,7 @@ to_model_axes(struct ged *gedp,
 	      const char *usage,
 	      int UNUSED(maxargs))
 {
-    struct bview *gdvp;
+    struct bv *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -727,7 +727,7 @@ to_model_axes(struct ged *gedp,
 
 int
 go_view_axes(struct ged *gedp,
-	     struct bview *gdvp,
+	     struct bv *gdvp,
 	     int argc,
 	     const char *argv[],
 	     const char *usage)
@@ -758,7 +758,7 @@ to_view_axes(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    struct bview *gdvp;
+    struct bv *gdvp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);

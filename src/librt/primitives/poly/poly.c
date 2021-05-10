@@ -486,7 +486,7 @@ rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 
 
 int
-rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bv *UNUSED(info))
 {
     size_t i;
     size_t p;	/* current polygon number */

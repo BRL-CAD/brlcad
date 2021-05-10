@@ -30,7 +30,7 @@
 
 #include "ged.h"
 #include "tk.h"
-#include "bview/defines.h"
+#include "bv/defines.h"
 #include "dm.h"
 #include "dm-osgl.h"
 #include "../glx/dm-ogl.h"

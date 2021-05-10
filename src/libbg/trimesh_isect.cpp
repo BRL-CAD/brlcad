@@ -39,7 +39,7 @@
 #include <ctype.h>
 #include <time.h>
 
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn/tol.h"

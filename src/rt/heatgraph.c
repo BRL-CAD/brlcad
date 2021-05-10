@@ -40,7 +40,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "scanline.h"
 
 #include "./rtuif.h"

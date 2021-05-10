@@ -33,7 +33,7 @@
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bview.h"
+#include "bv.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
@@ -53,7 +53,7 @@ _line_cmd_create(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (s) {
         bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
         return GED_ERROR;
@@ -77,7 +77,7 @@ _line_cmd_create(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    BU_GET(s, struct bview_scene_obj);
+    BU_GET(s, struct bv_scene_obj);
     s->s_v = gedp->ged_gvp;
     BU_LIST_INIT(&(s->s_vlist));
 
@@ -105,7 +105,7 @@ _line_cmd_append(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview_scene_obj *s = gd->s;
+    struct bv_scene_obj *s = gd->s;
     if (!s) {
         bu_vls_printf(gedp->ged_result_str, "no view object named %s\n", gd->vobj);
         return GED_ERROR;

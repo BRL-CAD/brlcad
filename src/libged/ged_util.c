@@ -136,12 +136,12 @@ _ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
     return GED_OK;
 }
 
-struct bview *
+struct bv *
 ged_find_view(struct ged *gedp, const char *key)
 {
-    struct bview *gdvp = NULL;
+    struct bv *gdvp = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	gdvp = (struct bv *)BU_PTBL_GET(&gedp->ged_views, i);
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), key))
 	    break;
 	gdvp = NULL;
@@ -151,27 +151,27 @@ ged_find_view(struct ged *gedp, const char *key)
 }
 
 void
-ged_push_scene_obj(struct ged *gedp, struct bview_scene_obj *sp)
+ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp)
 {
     RT_FREE_VLIST(&(sp->s_vlist));
     if (sp->s_u_data) {
-	struct ged_bview_data *bdata = (struct ged_bview_data *)sp->s_u_data;
+	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	bdata->s_fullpath.fp_len = 0; // Don't free memory, but implicitly clear contents
     }
     bu_ptbl_ins(&gedp->free_solids, (long *)sp);
 }
 
-struct bview_scene_obj *
+struct bv_scene_obj *
 ged_pop_scene_obj(struct ged *gedp)
 {
-    struct bview_scene_obj *sp = NULL;
+    struct bv_scene_obj *sp = NULL;
     if (BU_PTBL_LEN(&gedp->free_solids)) {
-	sp = (struct bview_scene_obj *)BU_PTBL_GET(&gedp->free_solids, (BU_PTBL_LEN(&gedp->free_solids) - 1));
+	sp = (struct bv_scene_obj *)BU_PTBL_GET(&gedp->free_solids, (BU_PTBL_LEN(&gedp->free_solids) - 1));
 	bu_ptbl_rm(&gedp->free_solids, (long *)sp);
     } else {
-	BU_ALLOC(sp, struct bview_scene_obj); // from GET_BVIEW_SCENE_OBJ in bview/defines.h
-	struct ged_bview_data *bdata;
-	BU_GET(bdata, struct ged_bview_data);
+	BU_ALLOC(sp, struct bv_scene_obj); // from GET_BV_SCENE_OBJ in bv/defines.h
+	struct ged_bv_data *bdata;
+	BU_GET(bdata, struct ged_bv_data);
 	db_full_path_init(&bdata->s_fullpath);
 	sp->s_u_data = (void *)bdata;
     }

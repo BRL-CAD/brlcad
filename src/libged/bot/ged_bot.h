@@ -33,7 +33,7 @@
 #include <time.h>
 
 #include "bu/opt.h"
-#include "bview/plot3.h"
+#include "bv/plot3.h"
 #include "bu/color.h"
 #include "rt/db4.h"
 #include "raytrace.h"

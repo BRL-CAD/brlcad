@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libbview/snap.c
+/** @file libbv/snap.c
  *
  * Logic for snapping points to visual elements.
  *
@@ -33,26 +33,26 @@
 #include "bu/opt.h"
 #include "bu/vls.h"
 #include "bg/lseg.h"
-#include "bview.h"
+#include "bv.h"
 
-struct bview_cp_info {
+struct bv_cp_info {
     double ctol_sq; // square of the distance that defines "close to a line"
 
-    struct bview_data_line_state *c_lset; // container holding closest line
+    struct bv_data_line_state *c_lset; // container holding closest line
     point_t cp;  // closest point on closest line
     int c_l;     // index of closest line
     double dsq;  // squared distance to closest line
 
-    struct bview_data_line_state *c_lset2; // container holding 2nd closest line
+    struct bv_data_line_state *c_lset2; // container holding 2nd closest line
     point_t cp2;  // closest point on closest line
     int c_l2;   // index of 2nd closest line
     double dsq2; // squared distance to 2nd closest line
 };
-#define BVIEW_CP_INFO_INIT {BN_TOL_DIST, NULL, VINIT_ZERO, -1, DBL_MAX, NULL, VINIT_ZERO, -1, DBL_MAX}
+#define BV_CP_INFO_INIT {BN_TOL_DIST, NULL, VINIT_ZERO, -1, DBL_MAX, NULL, VINIT_ZERO, -1, DBL_MAX}
 
 static
 int
-_find_closest_point(struct bview_cp_info *s, point_t *p, struct bview_data_line_state *lines)
+_find_closest_point(struct bv_cp_info *s, point_t *p, struct bv_data_line_state *lines)
 {
     int ret = 0;
     point_t P0, P1;
@@ -107,7 +107,7 @@ _find_closest_point(struct bview_cp_info *s, point_t *p, struct bview_data_line_
 }
 
 void
-_find_close_isect(struct bview_cp_info *s, point_t *p)
+_find_close_isect(struct bv_cp_info *s, point_t *p)
 {
     point_t P0, P1, Q0, Q1;
     point_t c1, c2;
@@ -155,7 +155,7 @@ _find_close_isect(struct bview_cp_info *s, point_t *p)
 }
 
 static double
-line_tol_sq(struct bview *v, struct bview_data_line_state *gdlsp)
+line_tol_sq(struct bv *v, struct bv_data_line_state *gdlsp)
 {
     if (!v || !gdlsp)
 	return 100*100;
@@ -176,9 +176,9 @@ line_tol_sq(struct bview *v, struct bview_data_line_state *gdlsp)
 }
 
 int
-bview_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
+bv_snap_lines_3d(point_t *out_pt, struct bv *v, point_t *p)
 {
-    struct bview_cp_info cpinfo = BVIEW_CP_INFO_INIT;
+    struct bv_cp_info cpinfo = BV_CP_INFO_INIT;
 
     if (!p || !v) return BRLCAD_ERROR;
 
@@ -210,7 +210,7 @@ bview_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
 }
 
 int
-bview_snap_lines_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
+bv_snap_lines_2d(struct bv *v, fastf_t *vx, fastf_t *vy)
 {
     if (!v || !vx || !vy) return 0;
 
@@ -221,7 +221,7 @@ bview_snap_lines_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
     point_t p = VINIT_ZERO;
     MAT4X3PNT(p, v->gv_view2model, vp);
     point_t out_pt = VINIT_ZERO;
-    if (bview_snap_lines_3d(&out_pt, v, &p) == BRLCAD_OK) {
+    if (bv_snap_lines_3d(&out_pt, v, &p) == BRLCAD_OK) {
 	MAT4X3PNT(vp, v->gv_model2view, out_pt);
 	(*vx) = vp[0];
 	(*vy) = vp[1];
@@ -232,21 +232,21 @@ bview_snap_lines_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
 }
 
 void
-bview_view_center_linesnap(struct bview *v)
+bv_view_center_linesnap(struct bv *v)
 {
     point_t view_pt;
     point_t model_pt;
 
     MAT_DELTAS_GET_NEG(model_pt, v->gv_center);
     MAT4X3PNT(view_pt, v->gv_model2view, model_pt);
-    bview_snap_lines_2d(v, &view_pt[X], &view_pt[Y]);
+    bv_snap_lines_2d(v, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, v->gv_view2model, view_pt);
     MAT_DELTAS_VEC_NEG(v->gv_center, model_pt);
-    bview_update(v);
+    bv_update(v);
 }
 
 int
-bview_snap_grid_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
+bv_snap_grid_2d(struct bv *v, fastf_t *vx, fastf_t *vy)
 {
     int nh, nv;		/* whole grid units */
     point_t view_pt;
