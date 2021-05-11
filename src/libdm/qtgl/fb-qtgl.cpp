@@ -344,6 +344,7 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     qi->mw = new QtGLWin(ifp);
     qi->mw->canvas->setFixedSize(width, height);
     qi->mw->adjustSize();
+    qi->mw->setFixedSize(qi->mw->size());
     qi->mw->show();
     qi->glc = qi->mw->canvas;
 
