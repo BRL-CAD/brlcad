@@ -82,9 +82,8 @@ struct qtglinfo {
     int alive;
 };
 
-#define if_mem u2.p		/* shared memory pointer */
-#define QTGL(ptr) ((struct qtglinfo *)((ptr)->i->u6.p))
-#define QTGLL(ptr) ((ptr)->i->u6.p)     /* left hand side version */
+#define QTGL(ptr) ((struct qtglinfo *)((ptr)->i->pp))
+#define QTGLL(ptr) ((ptr)->i->pp)     /* left hand side version */
 
 
 /* If the parent application isn't supplying the OpenGL
@@ -298,7 +297,7 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FB(ifp->i);
 
-    if ((ifp->i->u6.p = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
+    if ((ifp->i->pp = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
 	fb_log("fb_qtgl_open:  qtglinfo malloc failed\n");
 	return -1;
     }
@@ -1004,6 +1003,8 @@ struct fb_impl qtgl_interface_impl =
     0L,			/* page_pixels */
     0,			/* debug */
     50000,		/* refresh rate */
+    NULL,
+    NULL,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */
