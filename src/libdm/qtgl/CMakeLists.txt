@@ -1,6 +1,7 @@
 set(QTGL_SRCS
   dm-qtgl.cpp
   fb-qtgl.cpp
+  qtglwin.cpp
   )
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
@@ -28,9 +29,12 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
     set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
   endif (OPENGL_gl_LIBRARY)
 
+  QT5_WRAP_CPP(qtgl_moc_srcs qtglwin.h)
+  set(QTGL_SRCS ${QTGL_SRCS} ${qtgl_moc_srcs})
+
   dm_plugin_library(dm-qtgl SHARED ${QTGL_SRCS})
-  target_link_libraries(dm-qtgl libdmgl libdm libbu Qt5::Core Qt5::Widgets
-    Qt5::OpenGL ${OPENGL_LIBS})
+  target_link_libraries(dm-qtgl
+    libdmgl libdm libbu Qt5::Core Qt5::Widgets Qt5::OpenGL ${OPENGL_LIBS})
   set_property(TARGET dm-qtgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-qtgl "${QTGL_SRCS}")
 
@@ -43,6 +47,7 @@ CMAKEFILES(
   ${QTGL_SRCS}
   dm-qtgl.h
   fb-qtgl.h
+  qtglwin.h
   )
 
 # Local Variables:

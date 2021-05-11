@@ -628,6 +628,7 @@ struct fb_impl tk_interface_impl = {
     0,			/* refresh rate */
     NULL,
     NULL,
+    0,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

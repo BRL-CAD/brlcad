@@ -1,4 +1,4 @@
-/*                      F B _ Q T G L . H
+/*                     Q T G L W I N . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,32 +17,36 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
-/** @{*/
-/** @file fb_qtgl.h
+/** @file main_window.h
  *
- * This is NOT public API for libfb, and is not guaranteed to be stable from
- * one release to the next.
+ * Defines the toplevel window for a stand-alone QtGL dm.
  *
  */
-/** @} */
 
-#include "common.h"
+#ifndef QTGLWIN_H
+#define QTGLWIN_H
 
-#include <QApplication>
-#include <QOpenGLWidget>
+#include <QMainWindow>
+#include "qtcad/QtGL.h"
 
-struct qtgl_fb_info {
-    QApplication *qapp;
-    QOpenGLWidget *glc;
+class QtGLWin : public QMainWindow
+{
+    Q_OBJECT
+    public:
+	QtGLWin();
+	QtGL *canvas = NULL;
 };
+
+#endif /* QTGLWIN_H */
 
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
+ * c-basic-offset: 4
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

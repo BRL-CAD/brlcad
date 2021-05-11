@@ -297,66 +297,35 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FB(ifp->i);
 
-    if ((ifp->i->pp = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
-	fb_log("fb_qtgl_open:  qtglinfo malloc failed\n");
+    /* The dm widget's initialization routines will call fb_qtgl_open_existing,
+     * which is where the real work will be done.  The only thing we do at this
+     * stage is to set a flag so everyone knows who is responsible for taking
+     * care of what. */
+    ifp->i->stand_alone = 1;
+
+    /* Set up a Qt window */
+    if (qt_setup(ifp, width, height) < 0) {
 	return -1;
     }
 
-    /* use defaults if invalid width and height specified */
-    if (width > 0)
-	ifp->i->if_width = width;
-    if (height > 0)
-	ifp->i->if_height = height;
+    return 0;
+}
 
-    /* use max values if width and height are greater */
-    if (width > ifp->i->if_max_width)
-	ifp->i->if_width = ifp->i->if_max_width;
-    if (height > ifp->i->if_max_height)
-	ifp->i->if_height = ifp->i->if_max_height;
+int
+_qtgl_open_existing(struct fb *ifp, int width, int height, void *UNUSED(dmp), void *UNUSED(traits))
+{
 
-    /* initialize window state variables before calling qtgl_getmem */
-    ifp->i->if_xzoom = 1;	/* for zoom fakeout */
-    ifp->i->if_yzoom = 1;	/* for zoom fakeout */
-    ifp->i->if_xcenter = width/2;
-    ifp->i->if_ycenter = height/2;
+    if ((ifp->i->pp = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
+	fb_log("fb_qtgl:  qtglinfo malloc failed\n");
+	return -1;
+    }
 
-    /* Allocate memory, potentially with a screen repaint */
+    /* Allocate memory */
     if (qtgl_getmem(ifp) < 0)
 	return -1;
 
-    struct qtglinfo *qi = new struct qtglinfo;
-    if (qi == NULL) {
-	fb_log("qt_open: qtglinfo malloc failed\n");
-	return -1;
-    }
-    QTGLL(ifp) = (char *)qi;
 
-    /* Set up an Qt window */
-    if (qt_setup(ifp, width, height) < 0) {
-	qt_destroy(qi);
-	return -1;
-    }
 
-    qtgl_configureWindow(ifp, width, height);
-
-    return 0;
-
-}
-
-#if 0
-
-int
-_qtgl_open_existing(struct fb *ifp, int width, int height, void *glc, void *traits)
-{
-    /*
-     * Allocate extension memory sections,
-     * addressed by WIN(ifp)->mi_xxx and QTGL(ifp)->xxx
-     */
-
-    if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo))) == NULL) {
-	fb_log("fb_qtgl_open:  wininfo malloc failed\n");
-	return -1;
-    }
     if ((QTGLL(ifp) = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
 	fb_log("fb_qtgl_open:  qtglinfo malloc failed\n");
 	return -1;
@@ -368,8 +337,6 @@ _qtgl_open_existing(struct fb *ifp, int width, int height, void *glc, void *trai
     QTGL(ifp)->win_width = QTGL(ifp)->vp_width = width;
     QTGL(ifp)->win_height = QTGL(ifp)->vp_height = height;
 
-    QTGL(ifp)->cursor_on = 1;
-
     /* initialize window state variables before calling qtgl_getmem */
     ifp->i->if_xzoom = 1;	/* for zoom fakeout */
     ifp->i->if_yzoom = 1;	/* for zoom fakeout */
@@ -380,18 +347,12 @@ _qtgl_open_existing(struct fb *ifp, int width, int height, void *glc, void *trai
     if (qtgl_getmem(ifp) < 0)
 	return -1;
 
-
-    ++qtgl_nwindows;
-
-    QTGL(ifp)->alive = 1;
-    QTGL(ifp)->firstTime = 1;
-
     fb_clipper(ifp);
+
+    qtgl_configureWindow(ifp, width, height);
 
     return 0;
 }
-
-#endif
 
 HIDDEN struct fb_platform_specific *
 qtgl_get_fbps(uint32_t magic)
@@ -1005,6 +966,7 @@ struct fb_impl qtgl_interface_impl =
     50000,		/* refresh rate */
     NULL,
     NULL,
+    0,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

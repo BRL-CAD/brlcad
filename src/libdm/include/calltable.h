@@ -214,6 +214,7 @@ struct fb_impl {
     long if_poll_refresh_rate; /**< @brief Recommended polling rate for interactive framebuffers in microseconds. */
     void *pp; /* Internal state pointer */
     char *if_mem;
+    int stand_alone;
     /* State variables for individual interface modules */
     union {
         char *p;

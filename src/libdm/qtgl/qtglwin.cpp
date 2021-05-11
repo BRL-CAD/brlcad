@@ -1,4 +1,4 @@
-/*                      F B _ Q T G L . H
+/*                      Q T G L W I N . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,32 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
-/** @{*/
-/** @file fb_qtgl.h
- *
- * This is NOT public API for libfb, and is not guaranteed to be stable from
- * one release to the next.
+/** @file qtglwin.cpp
  *
  */
-/** @} */
 
-#include "common.h"
+#include "qtglwin.h"
 
-#include <QApplication>
-#include <QOpenGLWidget>
-
-struct qtgl_fb_info {
-    QApplication *qapp;
-    QOpenGLWidget *glc;
-};
+QtGLWin::QtGLWin()
+{
+    canvas = new QtGL(this);
+    canvas->setMinimumSize(1,1);
+}
 
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
+ * c-basic-offset: 4
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
