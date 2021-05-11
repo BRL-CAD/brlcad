@@ -342,7 +342,8 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     QSurfaceFormat::setDefaultFormat(fmt);
 
     qi->mw = new QtGLWin(ifp);
-    qi->mw->canvas->resize(width, height);
+    qi->mw->canvas->setFixedSize(width, height);
+    qi->mw->adjustSize();
     qi->mw->show();
     qi->glc = qi->mw->canvas;
 
