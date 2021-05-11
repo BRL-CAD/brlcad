@@ -23,9 +23,9 @@
 
 #include "qtglwin.h"
 
-QtGLWin::QtGLWin()
+QtGLWin::QtGLWin(struct fb *fbp)
 {
-    canvas = new QtGL(this);
+    canvas = new QtGL(this, fbp);
     canvas->setMinimumSize(1,1);
 }
 

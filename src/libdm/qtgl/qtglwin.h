@@ -27,13 +27,14 @@
 #define QTGLWIN_H
 
 #include <QMainWindow>
+#include "dm.h"
 #include "qtcad/QtGL.h"
 
 class QtGLWin : public QMainWindow
 {
     Q_OBJECT
     public:
-	QtGLWin();
+	QtGLWin(struct fb *fbp);
 	QtGL *canvas = NULL;
 };
 

@@ -62,7 +62,6 @@ if(BRLCAD_ENABLE_QT)
   add_dependencies(libqtcad dm-swrast)
   if (OPENGL_LIBS)
     set_property(TARGET libqtcad APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
-    add_dependencies(libqtcad dm-qtgl)
   endif (OPENGL_LIBS)
 endif(BRLCAD_ENABLE_QT)
 

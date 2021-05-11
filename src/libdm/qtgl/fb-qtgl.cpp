@@ -65,9 +65,17 @@ extern "C" {
 extern struct fb qtgl_interface;
 }
 
+#include "qtglwin.h"
+
 struct qtglinfo {
+    int ac;
+    char **av;
     QApplication *qapp = NULL;
+    QtGLWin *mw = NULL;
     QOpenGLWidget *glc = NULL;
+
+    struct dm *dmp = NULL;
+
     struct fb_clip clip;        /* current view clipping */
 
     int win_width;              /* actual window width */
@@ -86,44 +94,14 @@ struct qtglinfo {
 #define QTGLL(ptr) ((ptr)->i->pp)     /* left hand side version */
 
 
-/* If the parent application isn't supplying the OpenGL
- * Qt widget, we need to provide a window ourselves and
- * set things up. */
-static int
-qt_setup(struct fb *ifp, int width, int height)
-{
-    struct qtglinfo *qi = QTGL(ifp);
-    int argc = 1;
-    char *argv[] = {(char *)"Frame buffer"};
-    FB_CK_FB(ifp->i);
-
-    qi->win_width = qi->vp_width = width;
-    qi->win_height = qi->vp_width = height;
-
-    qi->qapp = new QApplication(argc, argv);
-
-    QSurfaceFormat fmt;
-    fmt.setDepthBufferSize(24);
-    QSurfaceFormat::setDefaultFormat(fmt);
-
-    qi->glc = new QOpenGLWidget();
-    qi->glc->resize(width, height);
-    qi->glc->show();
-
-#if 0
-    while(!qi->glc->isExposed()) {
-	qi->qapp->processEvents();
-    }
-#endif
-
-    return 0;
-}
 
 static void
 qt_destroy(struct qtglinfo *qi)
 {
-    delete qi->glc;
+    delete qi->mw;
     delete qi->qapp;
+    free(qi->av[0]);
+    free(qi->av);
 }
 
 
@@ -292,44 +270,25 @@ qtgl_do_event(struct fb *ifp)
     QTGL(ifp)->glc->update();
 }
 
-HIDDEN int
-fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
+static int
+qtgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
-    FB_CK_FB(ifp->i);
+    BU_CKMAG(fb_p, FB_QTGL_MAGIC, "qtgl framebuffer");
 
-    /* The dm widget's initialization routines will call fb_qtgl_open_existing,
-     * which is where the real work will be done.  The only thing we do at this
-     * stage is to set a flag so everyone knows who is responsible for taking
-     * care of what. */
-    ifp->i->stand_alone = 1;
-
-    /* Set up a Qt window */
-    if (qt_setup(ifp, width, height) < 0) {
-	return -1;
+    // If this really is an existing ifp, we need to create this container - qtgl_open
+    // may already have allocated it to store Qt window info.
+    if (!ifp->i->pp) {
+	if ((ifp->i->pp = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
+	    fb_log("fb_qtgl:  qtglinfo malloc failed\n");
+	    return -1;
+	}
     }
 
-    return 0;
-}
-
-int
-_qtgl_open_existing(struct fb *ifp, int width, int height, void *UNUSED(dmp), void *UNUSED(traits))
-{
-
-    if ((ifp->i->pp = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
-	fb_log("fb_qtgl:  qtglinfo malloc failed\n");
-	return -1;
-    }
+    QTGL(ifp)->dmp = (struct dm *)fb_p->data;
 
     /* Allocate memory */
     if (qtgl_getmem(ifp) < 0)
 	return -1;
-
-
-
-    if ((QTGLL(ifp) = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
-	fb_log("fb_qtgl_open:  qtglinfo malloc failed\n");
-	return -1;
-    }
 
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
@@ -354,6 +313,52 @@ _qtgl_open_existing(struct fb *ifp, int width, int height, void *UNUSED(dmp), vo
     return 0;
 }
 
+static int
+fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
+{
+    FB_CK_FB(ifp->i);
+
+    if ((ifp->i->pp = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
+	fb_log("fb_qtgl:  qtglinfo malloc failed\n");
+	return -1;
+    }
+
+    ifp->i->stand_alone = 1;
+
+    struct qtglinfo *qi = QTGL(ifp);
+    qi->av = (char **)calloc(2, sizeof(char *));
+    qi->ac = 1;
+    qi->av[0] = bu_strdup("Frame buffer");
+    qi->av[1] = NULL;
+    FB_CK_FB(ifp->i);
+
+    qi->win_width = qi->vp_width = width;
+    qi->win_height = qi->vp_width = height;
+
+    qi->qapp = new QApplication(qi->ac, qi->av);
+
+    QSurfaceFormat fmt;
+    fmt.setDepthBufferSize(24);
+    QSurfaceFormat::setDefaultFormat(fmt);
+
+    qi->mw = new QtGLWin(ifp);
+    qi->mw->canvas->resize(width, height);
+    qi->mw->show();
+    qi->glc = qi->mw->canvas;
+
+    // Do the standard libdm attach to get our rendering backend.
+    const char *acmd = "attach";
+    struct dm *dmp = dm_open((void *)qi->mw->canvas, NULL, "qtgl", 1, &acmd);
+    if (!dmp)
+	return -1;
+
+    struct fb_platform_specific fbps;
+    fbps.magic = FB_QTGL_MAGIC;
+    fbps.data = (void *)dmp;
+
+    return qtgl_open_existing(ifp, width, height, &fbps);
+}
+
 HIDDEN struct fb_platform_specific *
 qtgl_get_fbps(uint32_t magic)
 {
@@ -374,14 +379,6 @@ qtgl_put_fbps(struct fb_platform_specific *fbps)
     BU_PUT(fbps->data, struct qtgl_fb_info);
     BU_PUT(fbps, struct fb_platform_specific);
     return;
-}
-
-HIDDEN int
-qtgl_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *fb_p)
-{
-    BU_CKMAG(fb_p, FB_QTGL_MAGIC, "qtgl framebuffer");
-    //return _qtgl_open_existing(ifp, width, height, qtgl_internal->glc, qtgl_internal->traits);
-    return 0;
 }
 
 
