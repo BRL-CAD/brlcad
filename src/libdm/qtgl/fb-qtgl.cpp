@@ -353,6 +353,8 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     struct dm *dmp = dm_open((void *)qi->mw->canvas, NULL, "qtgl", 1, &acmd);
     if (!dmp)
 	return -1;
+    BU_GET(qi->mw->canvas->v, struct bview);
+    bv_init(qi->mw->canvas->v);
 
     struct fb_platform_specific fbps;
     fbps.magic = FB_QTGL_MAGIC;
