@@ -63,12 +63,46 @@ struct fb *fb_get()
     return new_fb;
 }
 
+struct fb *fb_raw(const char *type)
+{
+    struct fb *new_fb = FB_NULL;
+    BU_GET(new_fb, struct fb);
+    BU_GET(new_fb->i, struct fb_impl);
+    if (!fb_set_interface(new_fb, type)) {
+    	BU_PUT(new_fb->i, struct fb_impl);
+	BU_PUT(new_fb, struct fb);
+	return NULL;
+    }
+    fb_set_magic(new_fb, FB_MAGIC);
+    return new_fb;
+}
+
 void fb_put(struct fb *ifp)
 {
     if (ifp != FB_NULL) {
 	BU_PUT(ifp->i, struct fb_impl);
 	BU_PUT(ifp, struct fb);
     }
+}
+
+void
+fb_set_standalone(struct fb *ifp, int val)
+{
+    if (!ifp) return;
+    ifp->i->stand_alone = val;
+}
+
+int
+fb_get_standalone(struct fb *ifp)
+{
+    if (!ifp) return 0;
+    return ifp->i->stand_alone;
+}
+
+void
+fb_setup_existing(struct fb *fbp, int width, int height, struct fb_platform_specific *fb_p)
+{
+    if (fbp->i->if_open_existing) fbp->i->if_open_existing(fbp, width, height, fb_p);
 }
 
 struct fb *
@@ -79,7 +113,7 @@ fb_open_existing(const char *file, int width, int height, struct fb_platform_spe
     ifp->i = (struct fb_impl *) calloc(sizeof(struct fb_impl), 1);
     fb_set_interface(ifp, file);
     fb_set_magic(ifp, FB_MAGIC);
-    if (ifp->i->if_open_existing) ifp->i->if_open_existing(ifp, width, height, fb_p);
+    fb_setup_existing(ifp, width, height, fb_p);
     return ifp;
 }
 

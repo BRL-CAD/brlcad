@@ -48,13 +48,14 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
     Q_OBJECT
 
     public:
-	explicit QtGL(QWidget *parent = nullptr);
+	explicit QtGL(QWidget *parent = nullptr, struct fb *fbp = NULL);
 	~QtGL();
 
 	void save_image();
 
 	struct bview *v = NULL;
 	struct dm *dmp = NULL;
+	struct fb *ifp = NULL;
 	struct bu_ptbl *dm_set = NULL;
 	struct dm **dm_current = NULL;
 	double *base2local = NULL;

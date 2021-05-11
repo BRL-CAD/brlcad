@@ -283,11 +283,11 @@ dm_default_type()
 }
 
 
-extern "C" void
+extern "C" int
 fb_set_interface(struct fb *ifp, const char *interface_type)
 {
     if (!ifp)
-	return;
+	return 0;
 
     std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
     std::map<std::string, const struct fb *>::iterator f_it;
@@ -297,9 +297,11 @@ fb_set_interface(struct fb *ifp, const char *interface_type)
         if (bu_strncmp(interface_type, f->i->if_name+5, strlen(interface_type)) == 0) {
 	    /* found it, copy its struct in */
             *ifp->i = *(f->i);
-            return;
+            return 1;
         }
     }
+
+    return 0;
 }
 
 

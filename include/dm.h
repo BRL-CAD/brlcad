@@ -362,8 +362,11 @@ typedef struct {
 /* Library entry points */
 
 DM_EXPORT struct fb *fb_get();
+DM_EXPORT struct fb *fb_raw(const char *type);
 DM_EXPORT void  fb_put(struct fb *ifp);
 DM_EXPORT extern char *fb_gettype(struct fb *ifp);
+DM_EXPORT extern void fb_set_standalone(struct fb *ifp, int val);
+DM_EXPORT extern int fb_get_standalone(struct fb *ifp);
 DM_EXPORT extern int fb_get_max_width(struct fb *ifp);
 DM_EXPORT extern int fb_get_max_height(struct fb *ifp);
 DM_EXPORT extern int fb_getwidth(struct fb *ifp);
@@ -419,7 +422,7 @@ DM_EXPORT extern int fb_read_icv(struct fb *ifp, icv_image_t *img, int file_xoff
 DM_EXPORT extern icv_image_t *fb_write_icv(struct fb *ifp, int scr_xoff, int scr_yoff, int width, int height);
 DM_EXPORT extern int fb_read_png(struct fb *ifp, FILE *fp_in, int file_xoff, int file_yoff, int scr_xoff, int scr_yoff, int clear, int zoom, int inverse, int one_line_only, int multiple_lines, int verbose, int header_only, double def_screen_gamma, struct bu_vls *result);
 
-DM_EXPORT extern void fb_set_interface(struct fb *ifp, const char *interface_type);
+DM_EXPORT extern int fb_set_interface(struct fb *ifp, const char *interface_type);
 DM_EXPORT extern void fb_set_name(struct fb *ifp, const char *name);
 DM_EXPORT extern const char *fb_get_name(const struct fb *ifp);
 DM_EXPORT extern void fb_set_magic(struct fb *ifp, uint32_t magic);
@@ -438,6 +441,7 @@ struct fb_platform_specific {uint32_t magic; void *data;};
 DM_EXPORT extern struct fb_platform_specific *fb_get_platform_specific(uint32_t magic);
 DM_EXPORT extern void fb_put_platform_specific(struct fb_platform_specific *fb_p);
 DM_EXPORT extern struct fb *fb_open_existing(const char *file, int _width, int _height, struct fb_platform_specific *fb_p);
+DM_EXPORT extern void fb_setup_existing(struct fb *fbp, int _width, int _height, struct fb_platform_specific *fb_p);
 
 /* backward compatibility hacks */
 DM_EXPORT extern int fb_reset(struct fb *ifp);

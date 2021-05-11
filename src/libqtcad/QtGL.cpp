@@ -35,14 +35,21 @@ extern "C" {
 #define QTGL_ZMIN -2048
 #define QTGL_ZMAX 2047
 
-QtGL::QtGL(QWidget *parent)
-    : QOpenGLWidget(parent)
+QtGL::QtGL(QWidget *parent, struct fb *fbp)
+    : QOpenGLWidget(parent), ifp(fbp)
 {
     // View is provided from the GED structure (usually gedp->ged_gvp)
     v = NULL;
 
     // Don't dm_open until we have the view.
     dmp = NULL;
+
+    // If we weren't supplied with a framebuffer, allocate one.
+    // We don't open it until we have the dmp.
+    if (!ifp) {
+	ifp = fb_raw("/dev/qtgl");
+	fb_set_standalone(ifp, 0);
+    }
 
     // This is an important Qt setting for interactivity - it allowing key
     // bindings to propagate to this widget and trigger actions such as
@@ -54,6 +61,9 @@ QtGL::~QtGL()
 {
     if (dmp)
 	dm_close(dmp);
+    if (ifp && !fb_get_standalone(ifp)) {
+	fb_close_existing(ifp);
+    }
     BU_PUT(v, struct bv);
 }
 
@@ -81,6 +91,14 @@ void QtGL::paintGL()
 	    dmp = dm_open((void *)this, NULL, "qtgl", 1, &acmd);
 	    if (!dmp)
 		return;
+
+	    // If we have a framebuffer, now we can open it
+	    if (ifp) {
+		struct fb_platform_specific fbps;
+		fbps.magic = FB_QTGL_MAGIC;
+		fbps.data = (void *)dmp;
+		fb_setup_existing(ifp, dm_get_width(dmp), dm_get_height(dmp), &fbps);
+	    }
 	}
 
 	dm_configure_win(dmp, 0);
