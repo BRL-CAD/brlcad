@@ -455,6 +455,7 @@ bv_hash(struct bview *v)
     _bv_other_state_hash(state, &v->gv_view_scale);
     _bv_interactive_rect_state_hash(state, &v->gv_rect);
     XXH64_update(state, &v->gv_fps, sizeof(int));
+    XXH64_update(state, &v->gv_fb_mode, sizeof(int));
     XXH64_update(state, &v->gv_data_vZ, sizeof(fastf_t));
 
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
