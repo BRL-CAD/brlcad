@@ -287,10 +287,6 @@ qtgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spe
     QTGL(ifp)->dmp = (struct dm *)fb_p->data;
     QTGL(ifp)->dmp->i->fbp = ifp;
 
-    /* Allocate memory */
-    if (qtgl_getmem(ifp) < 0)
-	return -1;
-
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
 
@@ -303,9 +299,11 @@ qtgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spe
     ifp->i->if_xcenter = width/2;
     ifp->i->if_ycenter = height/2;
 
-    /* Allocate memory, potentially with a screen repaint */
-    if (qtgl_getmem(ifp) < 0)
-	return -1;
+    /* Allocate memory */
+    if (!QTGL(ifp)->mi_memwidth) {
+	if (qtgl_getmem(ifp) < 0)
+	    return -1;
+    }
 
     fb_clipper(ifp);
 
@@ -887,6 +885,8 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
     glPushMatrix();
     glLoadIdentity();
 
+    glDisable(GL_LIGHTING);
+
     glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
 
     glBindTexture (GL_TEXTURE_2D, QTGL(ifp)->texid);
@@ -894,15 +894,24 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    //glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
     glTexSubImage2D (GL_TEXTURE_2D, 0, GL_RGB, QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
-    glBegin(GL_TRIANGLE_STRIP);
 
+    glBegin(GL_TRIANGLE_STRIP);
     glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
     glTexCoord2d(0, 1); glVertex3f(0, QTGL(ifp)->win_height, 0);
     glTexCoord2d(1, 0); glVertex3f(QTGL(ifp)->win_width, 0, 0);
     glTexCoord2d(1, 1); glVertex3f(QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0);
-
     glEnd();
+
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho(0, w, h, 0, -1, 1);
+    glPopMatrix();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glMatrixMode(mm);
 
     QTGL(ifp)->glc->update();
 
