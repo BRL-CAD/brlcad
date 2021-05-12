@@ -86,6 +86,7 @@ struct qtglinfo {
     int mi_memwidth;            /* width of scanline in if_mem */
 
     int texid;
+    void *texture;
 
     int alive;
 };
@@ -228,37 +229,14 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
 
     QTGL(ifp)->glc->makeCurrent();
 
+    // Set up texture memory
+    QTGL(ifp)->texture = realloc(QTGL(ifp)->texture, width * height * 3);
     glBindTexture (GL_TEXTURE_2D, QTGL(ifp)->texid);
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
-
-    glDisable(GL_LIGHTING);
-
-    glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    glOrtho(0, QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0, -1, 1);
-    glMatrixMode (GL_MODELVIEW);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glLoadIdentity();
-    glColor3f(1,1,1);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, QTGL(ifp)->texid);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
-    glBegin(GL_TRIANGLE_STRIP);
-
-    glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
-    glTexCoord2d(0, 1); glVertex3f(0, QTGL(ifp)->win_height, 0);
-    glTexCoord2d(1, 0); glVertex3f(QTGL(ifp)->win_width, 0, 0);
-    glTexCoord2d(1, 1); glVertex3f(QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0);
-
-    glEnd();
-
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, QTGL(ifp)->texture);
 
     return 0;
 }
@@ -859,6 +837,9 @@ int
 qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
 {
 
+    if (!QTGL(ifp)->glc)
+	return 0;
+
     if (w < 0) {
 	w = -w;
 	x -= w;
@@ -869,43 +850,36 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
 	y -= h;
     }
 
-#if 0
     int mm;
+    struct fb_clip *clp;
+
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
 
-    struct fb_clip *clp;
     fb_clipper(ifp);
     clp = &(QTGL(ifp)->clip);
     glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
     glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
-    glDisable(GL_LIGHTING);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
     glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
-#endif
-    glBindTexture (GL_TEXTURE_2D, QTGL(ifp)->texid);
-    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    //glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
-    glTexSubImage2D (GL_TEXTURE_2D, 0, GL_RGB, QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, QTGL(ifp)->mi_memwidth);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 
-    glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
-    glTexCoord2d(0, 1); glVertex3f(0, QTGL(ifp)->win_height, 0);
-    glTexCoord2d(1, 0); glVertex3f(QTGL(ifp)->win_width, 0, 0);
-    glTexCoord2d(1, 1); glVertex3f(QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0);
-    glEnd();
+    glRasterPos2i(0, 0);
+    glDrawPixels(ifp->i->if_width, ifp->i->if_height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *)ifp->i->if_mem);
 
-#if 0
+    glMatrixMode(GL_PROJECTION);
     glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-
     glMatrixMode(mm);
-#endif
 
     QTGL(ifp)->glc->update();
 

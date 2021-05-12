@@ -694,17 +694,12 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	dm_draw_scene_obj(dmp, s);
     }
-#if 0
-    // TODO - need to arrange to get this working properly and support overlay and
-    // underlay.  Not displaying correctly yet...
+
+    // TODO - need to arrange to get this supporting overlay and underlay, as well as
+    // respecting a view setting for enable/disabled.
     if (dm_get_fb(dmp)) {
 	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
     }
-
-    // These won't draw correctly, but put them up just to confirm something draws
-    v->gv_view_axes.draw = 1;
-#endif
-
 
     /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
     (void)dm_hud_begin(dmp);
