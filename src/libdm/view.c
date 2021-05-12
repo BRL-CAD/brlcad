@@ -683,7 +683,9 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
 #endif
 
     if (v->gv_fb_mode == 2 && dm_get_fb(dmp)) {
+	dm_set_zbuffer(dmp, 0);
 	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+	dm_set_zbuffer(dmp, 1);
     }
 
     // Draw geometry view objects
@@ -708,7 +710,9 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
     (void)dm_hud_end(dmp);
 
     if (v->gv_fb_mode == 1 && dm_get_fb(dmp)) {
+	dm_set_zbuffer(dmp, 0);
 	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+	dm_set_zbuffer(dmp, 1);
     }
 }
 /*

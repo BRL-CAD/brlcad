@@ -99,10 +99,6 @@ struct qtglinfo {
 #define CMB(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmb
 
 
-/*
- * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
- * rectangle of the frame buffer
- */
 static void
 qtgl_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
 {
