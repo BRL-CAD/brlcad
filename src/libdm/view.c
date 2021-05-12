@@ -698,6 +698,12 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
     /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
     (void)dm_hud_begin(dmp);
 
+    // TODO - need to arrange to get this working properly and support overlay and
+    // underlay.  Not displaying correctly yet...
+    if (dm_get_fb(dmp)) {
+	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+    }
+
     dm_draw_faceplate(v, base2local, local2base);
 
     /* Restore non-HUD settings. */
