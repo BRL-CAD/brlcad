@@ -381,8 +381,8 @@ struct bview {
     struct bv_other_state    gv_center_dot;
     struct bv_other_state    gv_view_params;
     struct bv_other_state    gv_view_scale;
-    int                         gv_fps; // Display Frames-Per-Second metric
-    double                      gv_frametime;
+    int                      gv_fps; // Display Frames-Per-Second metric
+    double                   gv_frametime;
 
     // More complex are the faceplate view elements not corresponding to
     // geometry objects but editable by the user.  These aren't managed as
@@ -390,6 +390,12 @@ struct bview {
     // they have some unique requirements.
     struct bv_adc_state              gv_adc;
     struct bv_interactive_rect_state gv_rect;
+
+
+    // Framebuffer visualization is possible if there is an attached dm and
+    // that dm has an associated framebuffer.  If those conditions are met,
+    // this variable is used to control how the fb is visualized.
+    int                      gv_fb_mode; // 0 = off, 1 = overlay, 2 = underlay
 
     // Container for db object groups (may come from GED)
     struct bu_ptbl                      *gv_db_grps;

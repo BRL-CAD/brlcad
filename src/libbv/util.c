@@ -131,6 +131,7 @@ bv_init(struct bview *gvp)
 
     gvp->gv_fps = 0;
     gvp->gv_frametime = 1;
+    gvp->gv_fb_mode = 0;
 
     gvp->gv_data_vZ = 0.0;
     gvp->gv_autoview = 1;

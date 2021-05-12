@@ -682,6 +682,10 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
     }
 #endif
 
+    if (v->gv_fb_mode == 2 && dm_get_fb(dmp)) {
+	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+    }
+
     // Draw geometry view objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
@@ -695,12 +699,6 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
 	dm_draw_scene_obj(dmp, s);
     }
 
-    // TODO - need to arrange to get this supporting overlay and underlay, as well as
-    // respecting a view setting for enable/disabled.
-    if (dm_get_fb(dmp)) {
-	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
-    }
-
     /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
     (void)dm_hud_begin(dmp);
 
@@ -709,6 +707,9 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
     /* Restore non-HUD settings. */
     (void)dm_hud_end(dmp);
 
+    if (v->gv_fb_mode == 1 && dm_get_fb(dmp)) {
+	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+    }
 }
 /*
  * Local Variables:

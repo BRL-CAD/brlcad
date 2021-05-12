@@ -175,6 +175,48 @@ _fp_cmd_fps(void *ds, int argc, const char **argv)
 }
 
 int
+_fp_cmd_fb(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "faceplate [options] fb [0|1|2]";
+    const char *purpose_string = "Report/set framebuffer mode";
+    if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_fp_info *gd = (struct _ged_fp_info *)ds;
+    struct ged *gedp = gd->gedp;
+    struct bview *v = gedp->ged_gvp;
+
+    if (!argc) {
+	bu_vls_printf(gedp->ged_result_str, "%d", v->gv_fb_mode);
+	return GED_OK;
+    }
+
+    if (argc == 1) {
+	if (BU_STR_EQUAL("2", argv[0])) {
+	    v->gv_fb_mode = 2;
+	    return GED_OK;
+	}
+	if (BU_STR_EQUAL("1", argv[0])) {
+	    v->gv_fb_mode = 1;
+	    return GED_OK;
+	}
+	if (BU_STR_EQUAL("0", argv[0])) {
+	    v->gv_fb_mode = 0;
+	    return GED_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0, 1 and 2\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "invalid command\n");
+
+    return GED_OK;
+}
+
+int
 _fp_cmd_scale(void *ds, int argc, const char **argv)
 {
     const char *usage_string = "faceplate [options] scale [0|1] [color r/g/b]";
@@ -298,6 +340,7 @@ const struct bu_cmdtab _fp_cmds[] = {
     { "center_dot",      _fp_cmd_center_dot},
     { "grid",            _fp_cmd_grid},
     { "irect",           _fp_cmd_irect},
+    { "fb",              _fp_cmd_fb},
     { "fps",             _fp_cmd_fps},
     { "model_axes",      _fp_cmd_model_axes},
     { "params",          _fp_cmd_params},
