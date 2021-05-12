@@ -68,6 +68,36 @@ void gl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
     bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[3], m[7], m[11], m[15]);
 }
 
+void
+GLmat_print(const char *title)
+{
+    GLfloat mvmat[16], pmat[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, mvmat);
+    glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+
+    bu_log("%s:\n", title);
+
+    bu_log("MODELVIEW:\n");
+    for (int i = 0; i < 16; i++) {
+	printf(" %g", mvmat[i]);
+	if (i == 15) {
+	    break;
+	} else if ((i & 3) == 3) {
+	    printf("\n");
+	}
+    }
+
+    bu_log("PROJECTION:\n");
+    for (int i = 0; i < 16; i++) {
+	printf(" %g", pmat[i]);
+	if (i == 15) {
+	    break;
+	} else if ((i & 3) == 3) {
+	    printf("\n");
+	}
+    }
+}
+
 void glvars_init(struct dm *dmp)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;

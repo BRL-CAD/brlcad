@@ -128,6 +128,11 @@ struct gl_vars {
     struct gl_internal_vars i;
 };
 
+
+/* For debugging - print GL_MODELVIEW and GL_PROJECTION matrices */
+DMGL_EXPORT extern void GLmat_print(const char *title);
+
+
 DMGL_EXPORT extern struct bu_structparse gl_vparse[];
 
 DMGL_EXPORT extern void glvars_init(struct dm *dmp);
