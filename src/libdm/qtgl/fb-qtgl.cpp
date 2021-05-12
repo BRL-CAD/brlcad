@@ -76,23 +76,101 @@ struct qtglinfo {
 
     struct dm *dmp = NULL;
 
-    struct fb_clip clip;        /* current view clipping */
-
+    int cmap_size;		/* hardware colormap size */
     int win_width;              /* actual window width */
     int win_height;             /* actual window height */
     int vp_width;               /* actual viewport width */
     int vp_height;              /* actual viewport height */
+    struct fb_clip clip;        /* current view clipping */
+    short mi_cmap_flag;		/* enabled when there is a non-linear map in memory */
 
     int mi_memwidth;            /* width of scanline in if_mem */
-
-    int texid;
-    void *texture;
 
     int alive;
 };
 
 #define QTGL(ptr) ((struct qtglinfo *)((ptr)->i->pp))
 #define QTGLL(ptr) ((ptr)->i->pp)     /* left hand side version */
+#define if_cmap u3.p		/* color map memory */
+#define CMR(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmr
+#define CMG(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmg
+#define CMB(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmb
+
+
+/*
+ * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
+ * rectangle of the frame buffer
+ */
+static void
+qtgl_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
+{
+    int y;
+    int n;
+    struct fb_clip *clp = &(QTGL(ifp)->clip);
+
+    int sw_cmap;	/* !0 => needs software color map */
+    if (QTGL(ifp)->mi_cmap_flag) {
+	sw_cmap = 1;
+    } else {
+	sw_cmap = 0;
+    }
+
+    if (xbase > clp->xpixmax || ybase > clp->ypixmax)
+	return;
+    if (xbase < clp->xpixmin)
+	xbase = clp->xpixmin;
+    if (ybase < clp->ypixmin)
+	ybase = clp->ypixmin;
+
+    if ((xbase + npix -1) > clp->xpixmax)
+	npix = clp->xpixmax - xbase + 1;
+    if ((ybase + nlines - 1) > clp->ypixmax)
+	nlines = clp->ypixmax - ybase + 1;
+
+    if (sw_cmap) {
+	/* Software colormap each line as it's transmitted */
+	int x;
+	struct fb_pixel *qtglp;
+	struct fb_pixel *scanline;
+
+	y = ybase;
+
+	if (FB_DEBUG)
+	    printf("Doing sw colormap xmit\n");
+
+	/* Perform software color mapping into temp scanline */
+	scanline = (struct fb_pixel *)calloc(ifp->i->if_width, sizeof(struct fb_pixel));
+	if (scanline == NULL) {
+	    fb_log("qtgl_getmem: scanline memory malloc failed\n");
+	    return;
+	}
+
+	for (n=nlines; n>0; n--, y++) {
+	    qtglp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth) * sizeof(struct fb_pixel)];
+	    for (x=xbase+npix-1; x>=xbase; x--) {
+		scanline[x].red   = CMR(ifp)[qtglp[x].red];
+		scanline[x].green = CMG(ifp)[qtglp[x].green];
+		scanline[x].blue  = CMB(ifp)[qtglp[x].blue];
+	    }
+
+	    glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
+	    glRasterPos2i(xbase, y);
+	    glDrawPixels(npix, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *)scanline);
+	}
+
+	(void)free((void *)scanline);
+
+    } else {
+	/* No need for software colormapping */
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, QTGL(ifp)->mi_memwidth);
+	glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
+	glPixelStorei(GL_UNPACK_SKIP_ROWS, ybase);
+
+	glRasterPos2i(xbase, ybase);
+	glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *) ifp->i->if_mem);
+    }
+}
+
 
 
 
@@ -228,15 +306,6 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
     fb_clipper(ifp);
 
     QTGL(ifp)->glc->makeCurrent();
-
-    // Set up texture memory
-    QTGL(ifp)->texture = realloc(QTGL(ifp)->texture, width * height * 3);
-    glBindTexture (GL_TEXTURE_2D, QTGL(ifp)->texid);
-    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, QTGL(ifp)->texture);
 
     return 0;
 }
@@ -478,7 +547,7 @@ qtgl_clear(struct fb *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+static int
 qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct fb_clip *clp;
@@ -523,7 +592,7 @@ qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-HIDDEN int
+static int
 qtgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (FB_DEBUG)
@@ -539,7 +608,7 @@ qtgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 /* read count pixels into pixelp starting at x, y */
-HIDDEN ssize_t
+static ssize_t
 qtgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
@@ -590,7 +659,7 @@ qtgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 /* write count pixels from pixelp starting at xstart, ystart */
-HIDDEN ssize_t
+static ssize_t
 qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     int x;
@@ -677,7 +746,9 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
 	    break;
     }
 
-    QTGL(ifp)->glc->update();
+    // TODO - until we can switch to a texture rendering approach to this,
+    // no point in updating - qtgl_xmit_scanlines calls aren't thread safe.
+    //QTGL(ifp)->glc->update();
 
     return ret;
 }
@@ -865,13 +936,7 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
     glLoadIdentity();
 
     glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, QTGL(ifp)->mi_memwidth);
-    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
-    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
-
-    glRasterPos2i(0, 0);
-    glDrawPixels(ifp->i->if_width, ifp->i->if_height, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *)ifp->i->if_mem);
-
+    qtgl_xmit_scanlines(ifp, y, h, x, w);
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
