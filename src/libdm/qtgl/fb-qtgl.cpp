@@ -406,6 +406,7 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 	return -1;
     BU_GET(qi->mw->canvas->v, struct bview);
     bv_init(qi->mw->canvas->v);
+    qi->mw->canvas->v->gv_fb_mode = 1;
 
     struct fb_platform_specific fbps;
     fbps.magic = FB_QTGL_MAGIC;
@@ -751,10 +752,6 @@ qtgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
 	    break;
     }
 
-    // TODO - until we can switch to a texture rendering approach to this,
-    // no point in updating - qtgl_xmit_scanlines calls aren't thread safe.
-    //QTGL(ifp)->glc->update();
-
     return ret;
 }
 
@@ -948,8 +945,7 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
     glPopMatrix();
     glMatrixMode(mm);
 
-    QTGL(ifp)->glc->update();
-
+    dm_set_dirty(QTGL(ifp)->dmp, 1);
     return 0;
 }
 
