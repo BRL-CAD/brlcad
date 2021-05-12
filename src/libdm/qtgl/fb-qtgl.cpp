@@ -65,6 +65,8 @@ extern struct fb qtgl_interface;
 }
 
 #include <QApplication>
+#define FB_INCLUDE
+#include "dm-qtgl.h"
 #include "qtglwin.h"
 
 struct qtglinfo {
@@ -333,6 +335,9 @@ qtgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spe
 
     QTGL(ifp)->dmp = (struct dm *)fb_p->data;
     QTGL(ifp)->dmp->i->fbp = ifp;
+
+    struct qtgl_vars *qv = (struct qtgl_vars *)QTGL(ifp)->dmp->i->dm_vars.priv_vars;
+    QTGL(ifp)->glc = qv->qw;
 
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
