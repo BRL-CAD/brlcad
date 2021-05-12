@@ -328,14 +328,10 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 	GLint mm;
 	glGetIntegerv(GL_MATRIX_MODE, &mm);
 
-	//GLmat_print("1");
-
 	// Set up an identity matrix for text drawing
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
-
-	//GLmat_print("2");
 
 	// Fontstash does not work in OpenGL raster coordinates,
 	// so we need the view and the coordinates in window
@@ -347,29 +343,18 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 	fastf_t coord_y = (fastf_t)dm_get_height(dmp)-pos[1];
 	//printf("%f:%f,%f:%f\n",x, coord_x, y, coord_y);
 
-	//GLmat_print("3");
-
 	// Have info and OpenGL state, do the text drawing
 	fonsSetFont(privars->fs, privars->fontNormal);
 	unsigned int color = glfonsRGBA(dmp->i->dm_fg[0], dmp->i->dm_fg[1], dmp->i->dm_fg[2], 255);
 	fonsSetSize(privars->fs, (int)font_size); /* cast to int so we always get a font */
 	fonsSetColor(privars->fs, color);
-
-	//GLmat_print("4");
-
 	fonsDrawText(privars->fs, coord_x, coord_y, str, NULL);
-
-	//GLmat_print("5");
 
 	// Restore previous projection matrix
 	glPopMatrix();
 
-	//GLmat_print("6");
-
 	// Restore view matrix (changed by glOrtho call)
 	glPopMatrix();
-
-	//GLmat_print("7");
 
 	// Put us back in whatever mode we were in before starting the text draw
 	glMatrixMode(mm);

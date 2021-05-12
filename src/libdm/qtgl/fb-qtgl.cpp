@@ -858,8 +858,6 @@ qtgl_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(
 int
 qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
 {
-    int mm;
-    struct fb_clip *clp;
 
     if (w < 0) {
 	w = -w;
@@ -871,24 +869,22 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
 	y -= h;
     }
 
+#if 0
+    int mm;
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
 
+    struct fb_clip *clp;
     fb_clipper(ifp);
     clp = &(QTGL(ifp)->clip);
     glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
     glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
     glDisable(GL_LIGHTING);
-
     glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
-
+#endif
     glBindTexture (GL_TEXTURE_2D, QTGL(ifp)->texid);
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -904,14 +900,12 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
     glTexCoord2d(1, 1); glVertex3f(QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0);
     glEnd();
 
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    glOrtho(0, w, h, 0, -1, 1);
+#if 0
+    glPopMatrix();
     glPopMatrix();
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
     glMatrixMode(mm);
+#endif
 
     QTGL(ifp)->glc->update();
 

@@ -353,6 +353,16 @@ swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int U
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	/* We want to restore the original state we were in when
+	 * we started the text operation - save it */
+	GLint mm;
+	glGetIntegerv(GL_MATRIX_MODE, &mm);
+
+	// Set up an identity matrix for text drawing
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+
 	// Fontstash does not work in OpenGL raster coordinates,
 	// so we need the view and the coordinates in window
 	// XY coordinates.
@@ -369,6 +379,15 @@ swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int U
 	fonsSetSize(privars->fs, (int)font_size); /* cast to int so we always get a font */
 	fonsSetColor(privars->fs, color);
 	fonsDrawText(privars->fs, coord_x, coord_y, str, NULL);
+
+	// Restore previous projection matrix
+	glPopMatrix();
+
+	// Restore view matrix (changed by glOrtho call)
+	glPopMatrix();
+
+	// Put us back in whatever mode we were in before starting the text draw
+	glMatrixMode(mm);
 
 	if (!blend_state) glDisable(GL_BLEND);
 
