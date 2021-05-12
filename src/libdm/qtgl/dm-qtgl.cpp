@@ -48,7 +48,6 @@ extern "C" {
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"
 }
-#include "./fb-qtgl.h"
 #include "./dm-qtgl.h"
 
 #include "../include/private.h"
@@ -437,12 +436,8 @@ int
 qtgl_openFb(struct dm *dmp)
 {
     struct fb_platform_specific *fb_ps;
-    struct qtgl_fb_info *ofb_ps;
-    struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
-
     fb_ps = fb_get_platform_specific(FB_QTGL_MAGIC);
-    ofb_ps = (struct qtgl_fb_info *)fb_ps->data;
-    ofb_ps->glc = privars->qw;
+    fb_ps->data = (void *)dmp;
     dmp->i->fbp = fb_open_existing("qtgl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
     return 0;

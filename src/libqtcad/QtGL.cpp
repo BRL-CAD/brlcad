@@ -94,10 +94,10 @@ void QtGL::paintGL()
 
 	    // If we have a framebuffer, now we can open it
 	    if (ifp) {
-		struct fb_platform_specific fbps;
-		fbps.magic = FB_QTGL_MAGIC;
-		fbps.data = (void *)dmp;
-		fb_setup_existing(ifp, dm_get_width(dmp), dm_get_height(dmp), &fbps);
+		struct fb_platform_specific *fbps = fb_get_platform_specific(FB_QTGL_MAGIC);
+		fbps->data = (void *)dmp;
+		fb_setup_existing(ifp, dm_get_width(dmp), dm_get_height(dmp), fbps);
+		fb_put_platform_specific(fbps);
 	    }
 	}
 

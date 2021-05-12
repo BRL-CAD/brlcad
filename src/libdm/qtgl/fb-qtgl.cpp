@@ -56,7 +56,6 @@
 
 #include "bu/app.h"
 
-#include "./fb-qtgl.h"
 extern "C" {
 #include "../include/private.h"
 }
@@ -65,6 +64,7 @@ extern "C" {
 extern struct fb qtgl_interface;
 }
 
+#include <QApplication>
 #include "qtglwin.h"
 
 struct qtglinfo {
@@ -253,8 +253,8 @@ qtgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spe
 {
     BU_CKMAG(fb_p, FB_QTGL_MAGIC, "qtgl framebuffer");
 
-    // If this really is an existing ifp, we need to create this container - qtgl_open
-    // may already have allocated it to store Qt window info.
+    // If this really is an existing ifp, may not need to create this container
+    // - qtgl_open may already have allocated it to store Qt window info.
     if (!ifp->i->pp) {
 	if ((ifp->i->pp = (char *)calloc(1, sizeof(struct qtglinfo))) == NULL) {
 	    fb_log("fb_qtgl:  qtglinfo malloc failed\n");
@@ -344,11 +344,9 @@ HIDDEN struct fb_platform_specific *
 qtgl_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
-    struct qtgl_fb_info *data = NULL;
     BU_GET(fb_ps, struct fb_platform_specific);
-    BU_GET(data, struct qtgl_fb_info);
     fb_ps->magic = magic;
-    fb_ps->data = data;
+    fb_ps->data = NULL;
     return fb_ps;
 }
 
@@ -357,7 +355,6 @@ HIDDEN void
 qtgl_put_fbps(struct fb_platform_specific *fbps)
 {
     BU_CKMAG(fbps, FB_QTGL_MAGIC, "qtgl framebuffer");
-    BU_PUT(fbps->data, struct qtgl_fb_info);
     BU_PUT(fbps, struct fb_platform_specific);
     return;
 }

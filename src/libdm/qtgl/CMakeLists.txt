@@ -46,7 +46,6 @@ CMAKEFILES(
   CMakeLists.txt
   ${QTGL_SRCS}
   dm-qtgl.h
-  fb-qtgl.h
   qtglwin.h
   )
 
