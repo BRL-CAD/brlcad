@@ -45,6 +45,18 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t 
     bu_log("got fdp\n");
 
     c->listen(fdp, p, callback, data);
+
+    switch (d) {
+	case BU_PROCESS_STDIN:
+	    p->stdin_active = 1;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    p->stdout_active = 1;
+	    break;
+	case BU_PROCESS_STDERR:
+	    p->stderr_active = 1;
+	    break;
+    }
 }
 
 extern "C" void
@@ -59,6 +71,19 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
     bu_log("delete io handler\n");
     QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
     c->detach();
+
+    switch (d) {
+	case BU_PROCESS_STDIN:
+	    p->stdin_active = 0;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    p->stdout_active = 0;
+	    break;
+	case BU_PROCESS_STDERR:
+	    p->stderr_active = 0;
+	    break;
+    }
+
 }
 
 int
