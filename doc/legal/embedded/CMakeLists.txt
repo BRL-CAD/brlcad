@@ -48,6 +48,7 @@ set(embedded_licenses
   point_in_polygon.txt
   polygonizer.txt
   pstdint.txt
+  qconsolelistener.txt
   qsort.txt
   QFlowLayout.txt
   QuickHull.txt

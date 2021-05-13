@@ -31,9 +31,10 @@
 extern "C" void
 qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t UNUSED(callback), void *UNUSED(data))
 {
-    //if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
-    if (!p || !p->p || !p->gedp)
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
 	return;
+
+    QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
 
     bu_log("create io handler\n");
 
@@ -42,6 +43,8 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t 
 	return;
 
     bu_log("got fdp\n");
+
+    c->listen(fdp, p->p);
 }
 
 extern "C" void
@@ -54,6 +57,8 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
     }
 
     bu_log("delete io handler\n");
+    QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
+    c->detach();
 }
 
 int
@@ -79,6 +84,7 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
     if (gedp) {
 	gedp->ged_create_io_handler = &qt_create_io_handler;
 	gedp->ged_delete_io_handler = &qt_delete_io_handler;
+	gedp->ged_io_data = (void *)this->w->console;
     }
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);

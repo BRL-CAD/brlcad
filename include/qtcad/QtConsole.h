@@ -47,7 +47,9 @@
 #include <QPlainTextEdit>
 #include <QFont>
 
+#include "bu.h"
 #include "qtcad/defines.h"
+#include "qtcad/QtConsoleListener.h"
 
 /**
   Qt widget that provides an interactive console - you can send text to the
@@ -57,7 +59,7 @@
 class QTCAD_EXPORT QtConsole : public QWidget
 {
   Q_OBJECT
-  
+
 public:
   QtConsole(QWidget* Parent);
   virtual ~QtConsole();
@@ -68,6 +70,9 @@ public:
   void setFont(const QFont &font);
 
   QPoint getCursorPosition();
+
+  void listen(int *fd, struct bu_process *p);
+  void detach();
 
 signals:
   /// Signal emitted whenever the user enters a command
@@ -93,6 +98,8 @@ public slots:
 private:
   QtConsole(const QtConsole&);
   QtConsole& operator=(const QtConsole&);
+
+  QConsoleListener *listener;
 
   void internalExecuteCommand(const QString& Command);
 

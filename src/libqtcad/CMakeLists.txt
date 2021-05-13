@@ -37,11 +37,13 @@ set(qtcad_srcs
   bindings.cpp
   QtSW.cpp
   QtConsole.cpp
+  QtConsoleListener.cpp
   )
 set(qtcad_moc_headers
   bindings.h
   ${BRLCAD_SOURCE_DIR}/include/qtcad/QtSW.h
   ${BRLCAD_SOURCE_DIR}/include/qtcad/QtConsole.h
+  ${BRLCAD_SOURCE_DIR}/include/qtcad/QtConsoleListener.h
   )
 
 if (OPENGL_LIBS)

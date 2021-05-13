@@ -53,6 +53,8 @@
 #include <QVBoxLayout>
 #include <QScrollBar>
 
+#include "bu.h"
+
 /////////////////////////////////////////////////////////////////////////
 // QtConsole::pqImplementation
 
@@ -361,6 +363,17 @@ QPoint QtConsole::getCursorPosition()
   QTextCursor tc = this->Implementation->textCursor();
 
   return this->Implementation->cursorRect(tc).topLeft();
+}
+
+//-----------------------------------------------------------------------------
+void QtConsole::listen(int *fd, struct bu_process *p)
+{
+  listener = new QConsoleListener(fd, p);
+  QObject::connect(listener, &QConsoleListener::newLine, this, &QtConsole::printString);
+}
+void QtConsole::detach()
+{
+  delete listener;
 }
 
 //-----------------------------------------------------------------------------

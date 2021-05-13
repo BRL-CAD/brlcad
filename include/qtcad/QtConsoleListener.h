@@ -1,0 +1,79 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2018 Juan Gonzalez Burgos
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * Originally from https://github.com/juangburgos/QConsoleListener
+ */
+
+#pragma once
+
+#include <QObject>
+#include <QThread>
+#include <iostream>
+
+#ifdef Q_OS_WIN
+#include <QWinEventNotifier>
+#include <windows.h>
+#else
+#include <QSocketNotifier>
+#endif
+
+#include "bu.h"
+
+class QConsoleListener : public QObject
+{
+    Q_OBJECT
+
+    public:
+	QConsoleListener(int *fd = NULL, struct bu_process *p = NULL);
+	~QConsoleListener();
+
+    Q_SIGNALS:
+	// connect to "newLine" to receive console input
+	void newLine(const QString &strNewLine);
+	// finishedGetLine if for internal use
+	void finishedGetLine(const QString &strNewLine);
+
+    private:
+#ifdef Q_OS_WIN
+	QWinEventNotifier *m_notifier;
+#else
+	QSocketNotifier *m_notifier;
+#endif
+
+    private Q_SLOTS:
+	void on_finishedGetLine(const QString &strNewLine);
+
+    private:
+        struct bu_process *process = NULL;
+	QThread m_thread;
+};
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+
