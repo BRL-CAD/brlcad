@@ -69,9 +69,9 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (BU_STR_EQUAL(cmd2, "1")) {
-	args = argc + 7 + 2 + ged_who_argc(gedp);
-    } else {
 	args = argc + 9 + 2 + ged_who_argc(gedp);
+    } else {
+	args = argc + 7 + 2 + ged_who_argc(gedp);
     }
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 

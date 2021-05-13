@@ -180,6 +180,41 @@ ged_pop_scene_obj(struct ged *gedp)
 }
 
 int
+scene_bounding_sph(struct bu_ptbl *so, vect_t *min, vect_t *max, int pflag)
+{
+    struct bv_scene_obj *sp;
+    vect_t minus, plus;
+    int is_empty = 1;
+
+    VSETALL((*min),  INFINITY);
+    VSETALL((*max), -INFINITY);
+
+    /* calculate the bounding for of all solids being displayed */
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
+	for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
+	    sp = (struct bv_scene_obj *)BU_PTBL_GET(&g->g->children, j);
+	    minus[X] = sp->s_center[X] - sp->s_size;
+	    minus[Y] = sp->s_center[Y] - sp->s_size;
+	    minus[Z] = sp->s_center[Z] - sp->s_size;
+	    VMIN((*min), minus);
+	    plus[X] = sp->s_center[X] + sp->s_size;
+	    plus[Y] = sp->s_center[Y] + sp->s_size;
+	    plus[Z] = sp->s_center[Z] + sp->s_size;
+	    VMAX((*max), plus);
+
+	    is_empty = 0;
+	}
+    }
+    if (!pflag) {
+	bu_log("todo - handle pflag\n");
+    }
+
+    return is_empty;
+}
+
+
+int
 _ged_results_init(struct ged_results *results)
 {
     if (UNLIKELY(!results))
@@ -1364,7 +1399,12 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    extremum[1][i] = -INFINITY;
 	}
 
-	(void)dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
+	const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+	if (BU_STR_EQUAL(cmd2, "1")) {
+	    (void)scene_bounding_sph(gedp->ged_gvp->gv_db_grps, &(extremum[0]), &(extremum[1]), 1);
+	} else {
+	    (void)dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
+	}
 
 	VMOVEN(direction, gedp->ged_gvp->gv_rotation + 8, 3);
 	for (i = 0; i < 3; ++i)
