@@ -25,7 +25,36 @@
 
 #include "bu/env.h"
 #include "bu/ptbl.h"
+#include "ged.h"
 #include "dmapp.h"
+
+extern "C" void
+qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t UNUSED(callback), void *UNUSED(data))
+{
+    //if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
+    if (!p || !p->p || !p->gedp)
+	return;
+
+    bu_log("create io handler\n");
+
+    int *fdp = (int *)bu_process_fd(p->p, d);
+    if (!fdp)
+	return;
+
+    bu_log("got fdp\n");
+}
+
+extern "C" void
+qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
+{
+    if (!p) return;
+    int *fdp = (int *)bu_process_fd(p->p, d);
+    if (fdp) {
+	bu_log("delete got fdp\n");
+    }
+
+    bu_log("delete io handler\n");
+}
 
 int
 DMApp::load_g(const char *filename, int argc, const char *argv[])
@@ -46,6 +75,11 @@ void
 DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     struct ged *prev_gedp = gedp;
+
+    if (gedp) {
+	gedp->ged_create_io_handler = &qt_create_io_handler;
+	gedp->ged_delete_io_handler = &qt_delete_io_handler;
+    }
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 

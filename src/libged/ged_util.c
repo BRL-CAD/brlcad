@@ -956,6 +956,14 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
 size_t
 ged_who_argc(struct ged *gedp)
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1")) {
+	if (!gedp || !gedp->ged_gvp)
+	    return 0;
+	struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+	return BU_PTBL_LEN(sg);
+    }
+
     struct display_list *gdlp = NULL;
     size_t visibleCount = 0;
 
