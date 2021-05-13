@@ -1,24 +1,37 @@
 TODO:
 
-1.  embedded framebuffer (need to see if we can refactor OpenGL code for fb into libdmgl...)
+X 1.  embedded framebuffer (remaining TODO - use texture rather than pixel drawing...)
 
-2.  temporary objects (nirt shotline, rtcheck/gqa overlap visuals, gdiff output...)
+2.  output of bu_subprocess commands back to QtConsole prompt.
 
-3.  output of bu_subprocess commands back to QtConsole prompt
+    Check https://github.com/juangburgos/QConsoleListener to see if it can help - we need
+    something that can achieve similar results to the Tcl mechanism being used to capture
+    rt output.  Also for rt in particular, check into what MGED and Archer are doing to
+    get raytracing output displayed and whether that can be refactored into something
+    more general.
 
-4.  color controls (background in particular) settable in MGED...
+3.  Finish accordion widget, into libqtcad
 
-5.  primitive editing MGED style.
+4.  Implement Qt quad view widget
 
-6.  Fix fps meter drawing - should either be lower left, or appended to status line if that's enabled
+5.  temporary objects (nirt shotline, rtcheck/gqa overlap visuals, gdiff output...)
 
-7.  MGED faceplate GUI - needed?  Does (for example) pipe editing need it...
+6.  color controls (background in particular) settable in MGED...
 
-8.  Predictor - is it useful, or can we remove it?
+7.  primitive editing MGED style.  Likely will need editing callbacks, probably per-primitive
+    with a librt functab entry.
 
-9.  Qt dialogues for color setting and fonts
+8.  Fix fps meter drawing - should either be lower left, or appended to status line if that's enabled
 
-10. Parse and interpret .mgedrc files...
+9.  Implement more key bindings for dm widgets.
+
+10.  MGED faceplate GUI - needed?  Does (for example) pipe editing need it...
+
+11.  Predictor - is it useful, or can we remove it?
+
+12.  Qt dialogues for color setting and fonts
+
+13. Parse and interpret .mgedrc files...
 
 Even if we can get a Tcl/Tk free stack working fully, users will need an option
 for a Tcl prompt if we are going to support .mgedrc customizations.
@@ -41,43 +54,36 @@ Would need to be tested, but if it can provide a MGED-style Tcl prompt that is
 sufficient for scripting purposes and loading .mgedrc files it would be a far
 simpler integration than the all-up libtcl build...
 
-11.  Man page viewer as libqtcad widget
+14.  Man page viewer as libqtcad widget
 
-12.  Qt .g tree hierarchy widget into libqtcad
+15.  Qt .g tree hierarchy widget into libqtcad
 
-13.  Qt palette widget - get plugin design finalized, into libqtcad
+16.  Qt palette widget - get plugin design finalized, into libqtcad
 
-14.  Finish accordion widget, into libqtcad
-
-15.  Implement more key bindings for dm widgets.
-
-16.  Come up with a way to configure key bindings - ideally command line supported
+17.  Come up with a way to configure key bindings - ideally command line supported
      in a portable way via dm libged command.
      Probably bindings subcommand will use a callback function to implement changes
      that is registered by the application
 
-17.  Implement Qt quad view widget
+18.  Raytrace control panel equivalent in Qt.
 
-18.  Editing callbacks, probably per-primitive with a librt functab entry.
+19.  Dedication dialog as Qt libqtcad widget
 
-19.  Raytrace control panel equivalent in Qt.
-
-20.  Dedication dialog as Qt libqtcad widget
-
-21.  Look over editor widgets, tools and panels to translate as Qt widgets - at least
+20.  Look over editor widgets, tools and panels to translate as Qt widgets - at least
      Combination Editor, Bot Edit, Build Pattern and Overlap tool need to be studied,
      and probably others.
 
-22.  Figure out how to do a button bar in Qt
+21.  Figure out how to do a button bar in Qt
 
-23.  See if we can switch the text label for a Qt dock widget to be a menu when it is
+22.  See if we can switch the text label for a Qt dock widget to be a menu when it is
      floating...
 
-24.  Archer help browser as a Qt widget.
+23.  Archer help browser as a Qt widget.
 
-25.  Translate sketch editor to Qt.
+24.  Translate sketch editor to Qt.
 
-
+25.  Look into build scripts from https://github.com/martinrotter/qt-minimalistic-builds to see if they can
+     help guide the preparation of an ExternalProject_Add Qt build.
 
 Other nice to haves:
 
