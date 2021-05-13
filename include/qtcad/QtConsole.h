@@ -72,7 +72,8 @@ public:
   QPoint getCursorPosition();
 
   void listen(int *fd, struct ged_subprocess *p, ged_io_func_t c, void *d);
-  void detach();
+
+  QConsoleListener *listener;
 
 signals:
   /// Signal emitted whenever the user enters a command
@@ -81,6 +82,9 @@ signals:
 public slots:
   /// Writes the supplied text to the console
   void printString(const QString& Text);
+
+  /// Clears a listener (called by the listener's finished() signal)
+  void detach();
 
   /// Updates the current command. Unlike printString, this will affect the
   /// current command being typed.
@@ -99,7 +103,6 @@ private:
   QtConsole(const QtConsole&);
   QtConsole& operator=(const QtConsole&);
 
-  QConsoleListener *listener;
 
   void internalExecuteCommand(const QString& Command);
 

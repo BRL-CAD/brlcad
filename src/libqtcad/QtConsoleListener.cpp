@@ -57,17 +57,17 @@ QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, ged_io_fun
     QObject::connect(m_notifier, &QSocketNotifier::activated,
 #endif
 	[this]() {
-	int count = 0;
-	char line[RT_MAXLINE] = {0};
-	printf("trying...\n");
-	if (bu_process_read((char *)line, &count, process->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
-	printf("nope.\n");
-	return;
-	}
-	printf("got something: %s\n", line);
-	QString strLine = QString::fromStdString(std::string(line));
+	if (callback) {
+	size_t strlen = bu_vls_strlen(process->gedp->ged_result_str);
+	(*callback)(data, 0);
+	size_t strlen2 = bu_vls_strlen(process->gedp->ged_result_str);
+	bu_log("lens: %zd, %zd\n", strlen, strlen2);
+	struct bu_vls nstr = BU_VLS_INIT_ZERO;
+	bu_vls_substr(&nstr, process->gedp->ged_result_str, strlen, strlen2 - strlen);
+	QString strLine = QString::fromStdString(std::string(bu_vls_cstr(&nstr)));
+	bu_vls_free(&nstr);
 	Q_EMIT this->finishedGetLine(strLine);
-	});
+	}});
     m_thread.start();
 }
 
@@ -76,10 +76,21 @@ void QConsoleListener::on_finishedGetLine(const QString &strNewLine)
     Q_EMIT this->newLine(strNewLine);
 }
 
+
+
 QConsoleListener::~QConsoleListener()
 {
+    disconnect();
     m_thread.quit();
     m_thread.wait();
+}
+
+
+void QConsoleListener::on_finished()
+{
+    QString strLine = QString::fromStdString(std::string("$ "));
+    Q_EMIT this->doPrompt(strLine);
+    Q_EMIT this->finished();
 }
 
 // Local Variables:

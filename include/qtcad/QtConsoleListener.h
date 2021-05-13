@@ -40,7 +40,9 @@
 #include "bu.h"
 #include "ged.h"
 
-class QConsoleListener : public QObject
+#include "qtcad/defines.h"
+
+class QTCAD_EXPORT QConsoleListener : public QObject
 {
     Q_OBJECT
 
@@ -48,11 +50,16 @@ class QConsoleListener : public QObject
 	QConsoleListener(int *fd = NULL, struct ged_subprocess *p = NULL, ged_io_func_t c = NULL, void *d = NULL);
 	~QConsoleListener();
 
+	void on_finished();
+
     Q_SIGNALS:
 	// connect to "newLine" to receive console input
 	void newLine(const QString &strNewLine);
 	// finishedGetLine if for internal use
 	void finishedGetLine(const QString &strNewLine);
+
+	void finished();
+	void doPrompt(const QString &strLine);
 
     private:
 #ifdef Q_OS_WIN

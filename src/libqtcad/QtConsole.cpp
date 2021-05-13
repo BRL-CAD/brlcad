@@ -370,6 +370,8 @@ void QtConsole::listen(int *fd, struct ged_subprocess *p, ged_io_func_t c, void 
 {
   listener = new QConsoleListener(fd, p, c, d);
   QObject::connect(listener, &QConsoleListener::newLine, this, &QtConsole::printString);
+  QObject::connect(listener, &QConsoleListener::finished, this, &QtConsole::detach);
+  QObject::connect(listener, &QConsoleListener::doPrompt, this, &QtConsole::prompt);
 }
 void QtConsole::detach()
 {

@@ -70,7 +70,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 
     bu_log("delete io handler\n");
     QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
-    c->detach();
+    c->listener->on_finished();
 
     switch (d) {
 	case BU_PROCESS_STDIN:
