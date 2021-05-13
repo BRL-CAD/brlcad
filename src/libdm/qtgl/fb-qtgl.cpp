@@ -65,8 +65,6 @@ extern struct fb qtgl_interface;
 }
 
 #include <QApplication>
-#define FB_INCLUDE
-#include "dm-qtgl.h"
 #include "qtglwin.h"
 
 struct qtglinfo {
@@ -74,7 +72,6 @@ struct qtglinfo {
     char **av;
     QApplication *qapp = NULL;
     QtGLWin *mw = NULL;
-    QOpenGLWidget *glc = NULL;
 
     struct dm *dmp = NULL;
 
@@ -303,7 +300,7 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
     qtgl_getmem(ifp);
     fb_clipper(ifp);
 
-    QTGL(ifp)->glc->makeCurrent();
+    dm_make_current(QTGL(ifp)->dmp);
 
     return 0;
 }
@@ -312,7 +309,7 @@ qtgl_configureWindow(struct fb *ifp, int width, int height)
 HIDDEN void
 qtgl_do_event(struct fb *ifp)
 {
-    QTGL(ifp)->glc->update();
+    QTGL(ifp)->mw->update();
 }
 
 static int
@@ -331,9 +328,6 @@ qtgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spe
 
     QTGL(ifp)->dmp = (struct dm *)fb_p->data;
     QTGL(ifp)->dmp->i->fbp = ifp;
-
-    struct qtgl_vars *qv = (struct qtgl_vars *)QTGL(ifp)->dmp->i->dm_vars.priv_vars;
-    QTGL(ifp)->glc = qv->qw;
 
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
@@ -393,7 +387,6 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     qi->mw->adjustSize();
     qi->mw->setFixedSize(qi->mw->size());
     qi->mw->show();
-    qi->glc = qi->mw->canvas;
 
     // Do the standard libdm attach to get our rendering backend.
     const char *acmd = "attach";
@@ -454,11 +447,8 @@ fb_qtgl_close(struct fb *ifp)
 }
 
 int
-qtgl_close_existing(struct fb *ifp)
+qtgl_close_existing(struct fb *UNUSED(ifp))
 {
-    struct qtglinfo *qi = QTGL(ifp);
-    qi->glc = NULL;
-    qi->alive = 0;
     return 0;
 }
 
@@ -535,7 +525,7 @@ qtgl_clear(struct fb *ifp, unsigned char *pp)
 	}
     }
 
-    QTGL(ifp)->glc->makeCurrent();
+    dm_make_current(QTGL(ifp)->dmp);
 
     if (pp != RGBPIXEL_NULL) {
 	glClearColor(pp[RED]/255.0, pp[GRN]/255.0, pp[BLU]/255.0, 0.0);
@@ -575,7 +565,7 @@ qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     ifp->i->if_xzoom = xzoom;
     ifp->i->if_yzoom = yzoom;
 
-    QTGL(ifp)->glc->makeCurrent();
+    dm_make_current(QTGL(ifp)->dmp);
 
     /* Set clipping matrix and zoom level */
     glMatrixMode(GL_PROJECTION);
@@ -588,7 +578,7 @@ qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
     glFlush();
 
-    QTGL(ifp)->glc->update();
+    QTGL(ifp)->mw->update();
 
     return 0;
 }
@@ -787,7 +777,7 @@ qtgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const 
 	}
     }
 
-    QTGL(ifp)->glc->update();
+    QTGL(ifp)->mw->update();
 
     return width*height;
 }
@@ -828,7 +818,7 @@ qtgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 	}
     }
 
-    QTGL(ifp)->glc->update();
+    QTGL(ifp)->mw->update();
 
     return width*height;
 }
@@ -902,10 +892,6 @@ qtgl_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(
 int
 qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
 {
-
-    if (!QTGL(ifp)->glc)
-	return 0;
-
     if (w < 0) {
 	w = -w;
 	x -= w;

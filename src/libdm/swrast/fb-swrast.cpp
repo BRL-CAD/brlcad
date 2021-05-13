@@ -30,6 +30,7 @@
 
 #include "bu/app.h"
 
+#define USE_MGL_NAMESPACE 1
 #include "OSMesa/gl.h"
 #include "OSMesa/osmesa.h"
 
@@ -46,9 +47,6 @@ extern struct fb swrast_interface;
 // core swrast logic, and we should always be able to replace the Qt dm here
 // with any other dm backend to achieve the same results.
 #include <QApplication>
-
-#define FB_INCLUDE
-#include "dm-swrast.h"
 #include "swrastwin.h"
 
 struct swrastinfo {
