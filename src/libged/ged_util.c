@@ -48,6 +48,7 @@
 #include "bu/str.h"
 #include "bu/units.h"
 #include "bu/vls.h"
+#include "bv.h"
 
 #include "ged.h"
 #include "./ged_private.h"
@@ -1483,11 +1484,20 @@ _ged_rt_write(struct ged *gedp,
      * remove the -1 case.) */
     if (argc >= 0) {
 	if (!argc) {
-	    struct display_list *gdlp;
-	    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
-		if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
-		    continue;
-		fprintf(fp, "draw %s;\n", bu_vls_addr(&gdlp->dl_path));
+	    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+	    if (BU_STR_EQUAL(cmd2, "1")) {
+		struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+		    fprintf(fp, "draw %s;\n", bu_vls_cstr(&g->g->s_name));
+		}
+	    } else {
+		struct display_list *gdlp;
+		for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
+		    if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
+			continue;
+		    fprintf(fp, "draw %s;\n", bu_vls_addr(&gdlp->dl_path));
+		}
 	    }
 	} else {
 	    int i = 0;
