@@ -47,7 +47,7 @@ QtGL::QtGL(QWidget *parent, struct fb *fbp)
     // If we weren't supplied with a framebuffer, allocate one.
     // We don't open it until we have the dmp.
     if (!ifp) {
-	ifp = fb_raw("/dev/qtgl");
+	ifp = fb_raw("qtgl");
 	fb_set_standalone(ifp, 0);
     }
 
