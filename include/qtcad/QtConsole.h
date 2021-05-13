@@ -71,7 +71,7 @@ public:
 
   QPoint getCursorPosition();
 
-  void listen(int *fd, struct ged_subprocess *p);
+  void listen(int *fd, struct ged_subprocess *p, ged_io_func_t c, void *d);
   void detach();
 
 signals:

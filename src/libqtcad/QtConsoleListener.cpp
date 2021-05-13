@@ -29,9 +29,11 @@
 
 #define RT_MAXLINE 10240
 
-QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p)
+QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, ged_io_func_t c, void *d)
 {
     this->process = p;
+    this->callback = c;
+    this->data = d;
     QObject::connect(
 	    this, &QConsoleListener::finishedGetLine,
 	    this, &QConsoleListener::on_finishedGetLine,

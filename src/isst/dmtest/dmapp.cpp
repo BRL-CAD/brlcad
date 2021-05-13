@@ -29,7 +29,7 @@
 #include "dmapp.h"
 
 extern "C" void
-qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t UNUSED(callback), void *UNUSED(data))
+qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data)
 {
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
 	return;
@@ -44,7 +44,7 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t 
 
     bu_log("got fdp\n");
 
-    c->listen(fdp, p);
+    c->listen(fdp, p, callback, data);
 }
 
 extern "C" void
