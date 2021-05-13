@@ -977,7 +977,7 @@ struct fb_impl qtgl_interface_impl =
     qtgl_flush,		/* flush output */
     qtgl_free,		/* free resources */
     qtgl_help,		/* help message */
-    bu_strdup("OpenSceneGraph OpenGL"),	/* device description */
+    bu_strdup("Qt OpenGL"),	/* device description */
     FB_XMAXSCREEN,		/* max width */
     FB_YMAXSCREEN,		/* max height */
     bu_strdup("/dev/qtgl"),		/* short device name */

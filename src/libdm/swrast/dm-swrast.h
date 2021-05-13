@@ -48,9 +48,12 @@ extern "C" {
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
-#define FONTSTASH_IMPLEMENTATION
+#ifndef FB_INCLUDE
+#  define FONTSTASH_IMPLEMENTATION
+#  define GLFONTSTASH_IMPLEMENTATION
+#endif
+
 #include "../fontstash/fontstash.h"
-#define GLFONTSTASH_IMPLEMENTATION
 #include "../fontstash/glfontstash.h"
 
 #if defined(__GNUC__) && !defined(__clang__)

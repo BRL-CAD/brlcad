@@ -1,4 +1,4 @@
-/*                   I F _ S W R A S T . C P P
+/*                   F B - S W R A S T . C P P
  * BRL-CAD
  *
  * Copyright (c) 1989-2021 United States Government as represented by
@@ -21,10 +21,7 @@
 /** @{ */
 /** @file fb-swrast.cpp
  *
- * A Software Rasterizer based OpenGL framebuffer.
- *
- * TODO - study https://stackoverflow.com/a/23230099
- *
+ * An OpenGL framebuffer using OSMesa software rasterization.
  */
 /** @} */
 
@@ -33,7 +30,9 @@
 
 #include "bu/app.h"
 
-#include "./fb-swrast.h"
+#include "OSMesa/gl.h"
+#include "OSMesa/osmesa.h"
+
 extern "C" {
 #include "../include/private.h"
 }
@@ -42,49 +41,125 @@ extern "C" {
 extern struct fb swrast_interface;
 }
 
-struct swrastinfo {
-    //QOpenGLWidget *glc = NULL;
-    struct fb_clip clip;        /* current view clipping */
+// NOTE - Qt is used here because we need a dm window to display the fb in
+// stand-alone mode.  There should be nothing specific to Qt in most of the
+// core swrast logic, and we should always be able to replace the Qt dm here
+// with any other dm backend to achieve the same results.
+#include <QApplication>
 
+#define FB_INCLUDE
+#include "dm-swrast.h"
+#include "swrastwin.h"
+
+struct swrastinfo {
+    int ac;
+    char **av;
+    QApplication *qapp = NULL;
+    QtSWWin *mw = NULL;
+
+    struct dm *dmp = NULL;
+
+    int cmap_size;		/* hardware colormap size */
     int win_width;              /* actual window width */
     int win_height;             /* actual window height */
     int vp_width;               /* actual viewport width */
     int vp_height;              /* actual viewport height */
+    struct fb_clip clip;        /* current view clipping */
+    short mi_cmap_flag;		/* enabled when there is a non-linear map in memory */
 
     int mi_memwidth;            /* width of scanline in if_mem */
-
-    int texid;
 
     int alive;
 };
 
-#define if_mem u2.p		/* shared memory pointer */
-#define QTGL(ptr) ((struct swrastinfo *)((ptr)->i->u6.p))
-#define QTGLL(ptr) ((ptr)->i->u6.p)     /* left hand side version */
+#define SWRAST(ptr) ((struct swrastinfo *)((ptr)->i->pp))
+#define SWRASTL(ptr) ((ptr)->i->pp)     /* left hand side version */
+#define if_cmap u3.p		/* color map memory */
+#define CMR(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmr
+#define CMG(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmg
+#define CMB(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmb
 
-
-/* If the parent application isn't supplying the OpenGL
- * Qt widget, we need to provide a window ourselves and
- * set things up. */
-static int
-qt_setup(struct fb *ifp, int width, int height)
-{
-    struct swrastinfo *qi = QTGL(ifp);
-    FB_CK_FB(ifp->i);
-
-    qi->win_width = qi->vp_width = width;
-    qi->win_height = qi->vp_width = height;
-
-    //qi->glc = new QOpenGLWidget();
-    //qi->glc->resize(width, height);
-    //qi->glc->show();
-
-    return 0;
-}
 
 static void
-qt_destroy(struct swrastinfo *UNUSED(qi))
+swrast_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
 {
+    int y;
+    int n;
+    struct fb_clip *clp = &(SWRAST(ifp)->clip);
+
+    int sw_cmap;	/* !0 => needs software color map */
+    if (SWRAST(ifp)->mi_cmap_flag) {
+	sw_cmap = 1;
+    } else {
+	sw_cmap = 0;
+    }
+
+    if (xbase > clp->xpixmax || ybase > clp->ypixmax)
+	return;
+    if (xbase < clp->xpixmin)
+	xbase = clp->xpixmin;
+    if (ybase < clp->ypixmin)
+	ybase = clp->ypixmin;
+
+    if ((xbase + npix -1) > clp->xpixmax)
+	npix = clp->xpixmax - xbase + 1;
+    if ((ybase + nlines - 1) > clp->ypixmax)
+	nlines = clp->ypixmax - ybase + 1;
+
+    if (sw_cmap) {
+	/* Software colormap each line as it's transmitted */
+	int x;
+	struct fb_pixel *swrastp;
+	struct fb_pixel *scanline;
+
+	y = ybase;
+
+	if (FB_DEBUG)
+	    printf("Doing sw colormap xmit\n");
+
+	/* Perform software color mapping into temp scanline */
+	scanline = (struct fb_pixel *)calloc(ifp->i->if_width, sizeof(struct fb_pixel));
+	if (scanline == NULL) {
+	    fb_log("swrast_getmem: scanline memory malloc failed\n");
+	    return;
+	}
+
+	for (n=nlines; n>0; n--, y++) {
+	    swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*SWRAST(ifp)->mi_memwidth) * sizeof(struct fb_pixel)];
+	    for (x=xbase+npix-1; x>=xbase; x--) {
+		scanline[x].red   = CMR(ifp)[swrastp[x].red];
+		scanline[x].green = CMG(ifp)[swrastp[x].green];
+		scanline[x].blue  = CMB(ifp)[swrastp[x].blue];
+	    }
+
+	    glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
+	    glRasterPos2i(xbase, y);
+	    glDrawPixels(npix, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *)scanline);
+	}
+
+	(void)free((void *)scanline);
+
+    } else {
+	/* No need for software colormapping */
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, SWRAST(ifp)->mi_memwidth);
+	glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
+	glPixelStorei(GL_UNPACK_SKIP_ROWS, ybase);
+
+	glRasterPos2i(xbase, ybase);
+	glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *) ifp->i->if_mem);
+    }
+}
+
+
+
+
+static void
+qt_destroy(struct swrastinfo *qi)
+{
+    delete qi->mw;
+    delete qi->qapp;
+    free(qi->av[0]);
+    free(qi->av);
 }
 
 
@@ -101,7 +176,7 @@ swrast_getmem(struct fb *ifp)
 	/*
 	 * only malloc as much memory as is needed.
 	 */
-	QTGL(ifp)->mi_memwidth = ifp->i->if_width;
+	SWRAST(ifp)->mi_memwidth = ifp->i->if_width;
 	pixsize = ifp->i->if_height * ifp->i->if_width * sizeof(struct fb_pixel);
 	size = pixsize + sizeof(struct fb_cmap);
 
@@ -144,22 +219,22 @@ fb_clipper(struct fb *ifp)
     int i;
     double pixels;
 
-    clp = &(QTGL(ifp)->clip);
+    clp = &(SWRAST(ifp)->clip);
 
-    i = QTGL(ifp)->vp_width/(2*ifp->i->if_xzoom);
+    i = SWRAST(ifp)->vp_width/(2*ifp->i->if_xzoom);
     clp->xscrmin = ifp->i->if_xcenter - i;
-    i = QTGL(ifp)->vp_width/ifp->i->if_xzoom;
+    i = SWRAST(ifp)->vp_width/ifp->i->if_xzoom;
     clp->xscrmax = clp->xscrmin + i;
     pixels = (double) i;
-    clp->oleft = ((double) clp->xscrmin) - 0.25*pixels/((double) QTGL(ifp)->vp_width);
+    clp->oleft = ((double) clp->xscrmin) - 0.25*pixels/((double) SWRAST(ifp)->vp_width);
     clp->oright = clp->oleft + pixels;
 
-    i = QTGL(ifp)->vp_height/(2*ifp->i->if_yzoom);
+    i = SWRAST(ifp)->vp_height/(2*ifp->i->if_yzoom);
     clp->yscrmin = ifp->i->if_ycenter - i;
-    i = QTGL(ifp)->vp_height/ifp->i->if_yzoom;
+    i = SWRAST(ifp)->vp_height/ifp->i->if_yzoom;
     clp->yscrmax = clp->yscrmin + i;
     pixels = (double) i;
-    clp->obottom = ((double) clp->yscrmin) - 0.25*pixels/((double) QTGL(ifp)->vp_height);
+    clp->obottom = ((double) clp->yscrmin) - 0.25*pixels/((double) SWRAST(ifp)->vp_height);
     clp->otop = clp->obottom + pixels;
 
     clp->xpixmin = clp->xscrmin;
@@ -188,148 +263,61 @@ swrast_configureWindow(struct fb *ifp, int width, int height)
 {
     int getmem = 0;
 
-    if (!QTGL(ifp)->mi_memwidth)
+    if (!SWRAST(ifp)->mi_memwidth)
 	getmem = 1;
 
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
 
-    QTGL(ifp)->win_width = QTGL(ifp)->vp_width = width;
-    QTGL(ifp)->win_height = QTGL(ifp)->vp_height = height;
+    SWRAST(ifp)->win_width = SWRAST(ifp)->vp_width = width;
+    SWRAST(ifp)->win_height = SWRAST(ifp)->vp_height = height;
 
     ifp->i->if_xzoom = 1;
     ifp->i->if_yzoom = 1;
     ifp->i->if_xcenter = width/2;
     ifp->i->if_ycenter = height/2;
 
-    if (!getmem && width == QTGL(ifp)->win_width &&
-	height == QTGL(ifp)->win_height)
+    if (!getmem && width == SWRAST(ifp)->win_width &&
+	height == SWRAST(ifp)->win_height)
 	return 1;
 
     swrast_getmem(ifp);
     fb_clipper(ifp);
 
-    //QTGL(ifp)->glc->makeCurrent();
-
-    glBindTexture (GL_TEXTURE_2D, QTGL(ifp)->texid);
-    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
-
-    glDisable(GL_LIGHTING);
-
-    glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    glOrtho(0, QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0, -1, 1);
-    glMatrixMode (GL_MODELVIEW);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glLoadIdentity();
-    glColor3f(1,1,1);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, QTGL(ifp)->texid);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
-    glBegin(GL_TRIANGLE_STRIP);
-
-    glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
-    glTexCoord2d(0, 1); glVertex3f(0, QTGL(ifp)->win_height, 0);
-    glTexCoord2d(1, 0); glVertex3f(QTGL(ifp)->win_width, 0, 0);
-    glTexCoord2d(1, 1); glVertex3f(QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0);
-
-    glEnd();
-
+    dm_make_current(SWRAST(ifp)->dmp);
 
     return 0;
 }
 
 
 HIDDEN void
-swrast_do_event(struct fb *UNUSED(ifp))
+swrast_do_event(struct fb *ifp)
 {
-    //QTGL(ifp)->glc->update();
+    SWRAST(ifp)->mw->update();
 }
 
-HIDDEN int
-fb_swrast_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
+static int
+swrast_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
-    FB_CK_FB(ifp->i);
+    BU_CKMAG(fb_p, FB_SWFB_MAGIC, "swrast framebuffer");
 
-    if ((ifp->i->u6.p = (char *)calloc(1, sizeof(struct swrastinfo))) == NULL) {
-	fb_log("fb_swrast_open:  swrastinfo malloc failed\n");
-	return -1;
+    // If this really is an existing ifp, may not need to create this container
+    // - swrast_open may already have allocated it to store Qt window info.
+    if (!ifp->i->pp) {
+	if ((ifp->i->pp = (char *)calloc(1, sizeof(struct swrastinfo))) == NULL) {
+	    fb_log("fb_swrast:  swrastinfo malloc failed\n");
+	    return -1;
+	}
     }
 
-    /* use defaults if invalid width and height specified */
-    if (width > 0)
-	ifp->i->if_width = width;
-    if (height > 0)
-	ifp->i->if_height = height;
-
-    /* use max values if width and height are greater */
-    if (width > ifp->i->if_max_width)
-	ifp->i->if_width = ifp->i->if_max_width;
-    if (height > ifp->i->if_max_height)
-	ifp->i->if_height = ifp->i->if_max_height;
-
-    /* initialize window state variables before calling swrast_getmem */
-    ifp->i->if_xzoom = 1;	/* for zoom fakeout */
-    ifp->i->if_yzoom = 1;	/* for zoom fakeout */
-    ifp->i->if_xcenter = width/2;
-    ifp->i->if_ycenter = height/2;
-
-    /* Allocate memory, potentially with a screen repaint */
-    if (swrast_getmem(ifp) < 0)
-	return -1;
-
-    struct swrastinfo *qi = new struct swrastinfo;
-    if (qi == NULL) {
-	fb_log("qt_open: swrastinfo malloc failed\n");
-	return -1;
-    }
-    QTGLL(ifp) = (char *)qi;
-
-    /* Set up an Qt window */
-    if (qt_setup(ifp, width, height) < 0) {
-	qt_destroy(qi);
-	return -1;
-    }
-
-    swrast_configureWindow(ifp, width, height);
-
-    return 0;
-
-}
-
-#if 0
-
-int
-_swrast_open_existing(struct fb *ifp, int width, int height, void *glc, void *traits)
-{
-    /*
-     * Allocate extension memory sections,
-     * addressed by WIN(ifp)->mi_xxx and QTGL(ifp)->xxx
-     */
-
-    if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo))) == NULL) {
-	fb_log("fb_swrast_open:  wininfo malloc failed\n");
-	return -1;
-    }
-    if ((QTGLL(ifp) = (char *)calloc(1, sizeof(struct swrastinfo))) == NULL) {
-	fb_log("fb_swrast_open:  swrastinfo malloc failed\n");
-	return -1;
-    }
+    SWRAST(ifp)->dmp = (struct dm *)fb_p->data;
+    SWRAST(ifp)->dmp->i->fbp = ifp;
 
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
 
-    QTGL(ifp)->win_width = QTGL(ifp)->vp_width = width;
-    QTGL(ifp)->win_height = QTGL(ifp)->vp_height = height;
-
-    QTGL(ifp)->cursor_on = 1;
+    SWRAST(ifp)->win_width = SWRAST(ifp)->vp_width = width;
+    SWRAST(ifp)->win_height = SWRAST(ifp)->vp_height = height;
 
     /* initialize window state variables before calling swrast_getmem */
     ifp->i->if_xzoom = 1;	/* for zoom fakeout */
@@ -337,32 +325,77 @@ _swrast_open_existing(struct fb *ifp, int width, int height, void *glc, void *tr
     ifp->i->if_xcenter = width/2;
     ifp->i->if_ycenter = height/2;
 
-    /* Allocate memory, potentially with a screen repaint */
-    if (swrast_getmem(ifp) < 0)
-	return -1;
-
-
-    ++swrast_nwindows;
-
-    QTGL(ifp)->alive = 1;
-    QTGL(ifp)->firstTime = 1;
+    /* Allocate memory */
+    if (!SWRAST(ifp)->mi_memwidth) {
+	if (swrast_getmem(ifp) < 0)
+	    return -1;
+    }
 
     fb_clipper(ifp);
+
+    swrast_configureWindow(ifp, width, height);
 
     return 0;
 }
 
-#endif
+static int
+fb_swrast_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
+{
+    FB_CK_FB(ifp->i);
+
+    if ((ifp->i->pp = (char *)calloc(1, sizeof(struct swrastinfo))) == NULL) {
+	fb_log("fb_swrast:  swrastinfo malloc failed\n");
+	return -1;
+    }
+
+    ifp->i->stand_alone = 1;
+
+    struct swrastinfo *qi = SWRAST(ifp);
+    qi->av = (char **)calloc(2, sizeof(char *));
+    qi->ac = 1;
+    qi->av[0] = bu_strdup("Frame buffer");
+    qi->av[1] = NULL;
+    FB_CK_FB(ifp->i);
+
+    qi->win_width = qi->vp_width = width;
+    qi->win_height = qi->vp_width = height;
+
+    qi->qapp = new QApplication(qi->ac, qi->av);
+
+    qi->mw = new QtSWWin(ifp);
+
+    BU_GET(qi->mw->canvas->v, struct bview);
+    bv_init(qi->mw->canvas->v);
+    qi->mw->canvas->v->gv_fb_mode = 1;
+    qi->mw->canvas->v->gv_width = width;
+    qi->mw->canvas->v->gv_height = height;
+
+
+    qi->mw->canvas->setFixedSize(width, height);
+    qi->mw->adjustSize();
+    qi->mw->setFixedSize(qi->mw->size());
+    qi->mw->show();
+
+    // Do the standard libdm attach to get our rendering backend.
+    const char *acmd = "attach";
+    struct dm *dmp = dm_open((void *)qi->mw->canvas->v, NULL, "swrast", 1, &acmd);
+    if (!dmp)
+	return -1;
+
+    struct fb_platform_specific fbps;
+    fbps.magic = FB_SWFB_MAGIC;
+    fbps.data = (void *)dmp;
+
+    return swrast_open_existing(ifp, width, height, &fbps);
+}
 
 HIDDEN struct fb_platform_specific *
 swrast_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
-    struct swrast_fb_info *data = NULL;
     BU_GET(fb_ps, struct fb_platform_specific);
-    BU_GET(data, struct swrast_fb_info);
     fb_ps->magic = magic;
-    fb_ps->data = data;
+    fb_ps->data = NULL;
     return fb_ps;
 }
 
@@ -370,18 +403,9 @@ swrast_get_fbps(uint32_t magic)
 HIDDEN void
 swrast_put_fbps(struct fb_platform_specific *fbps)
 {
-    BU_CKMAG(fbps, FB_QTGL_MAGIC, "swrast framebuffer");
-    BU_PUT(fbps->data, struct swrast_fb_info);
+    BU_CKMAG(fbps, FB_SWFB_MAGIC, "swrast framebuffer");
     BU_PUT(fbps, struct fb_platform_specific);
     return;
-}
-
-HIDDEN int
-swrast_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *fb_p)
-{
-    BU_CKMAG(fb_p, FB_QTGL_MAGIC, "swrast framebuffer");
-    //return _swrast_open_existing(ifp, width, height, swrast_internal->glc, swrast_internal->traits);
-    return 0;
 }
 
 
@@ -394,10 +418,15 @@ swrast_flush(struct fb *UNUSED(ifp))
 
 
 HIDDEN int
-fb_swrast_close(struct fb *UNUSED(ifp))
+fb_swrast_close(struct fb *ifp)
 {
-    //struct swrastinfo *qi = QTGL(ifp);
+    struct swrastinfo *qi = SWRAST(ifp);
 
+    /* if a window was created wait for user input and process events */
+    if (qi->qapp) {
+	return qi->qapp->exec();
+	qt_destroy(qi);
+    }
 
     return 0;
 }
@@ -405,8 +434,7 @@ fb_swrast_close(struct fb *UNUSED(ifp))
 int
 swrast_close_existing(struct fb *ifp)
 {
-    struct swrastinfo *qi = QTGL(ifp);
-    //qi->glc = NULL;
+    struct swrastinfo *qi = SWRAST(ifp);
     qi->alive = 0;
     return 0;
 }
@@ -419,7 +447,7 @@ swrast_poll(struct fb *ifp)
 {
     swrast_do_event(ifp);
 
-    if (QTGL(ifp)->alive)
+    if (SWRAST(ifp)->alive)
 	return 0;
     return 1;
 }
@@ -443,9 +471,9 @@ swrast_free(struct fb *ifp)
 	(void)free(ifp->i->if_mem);
     }
 
-    if (QTGLL(ifp) != NULL) {
-	(void)free((char *)QTGLL(ifp));
-	QTGLL(ifp) = NULL;
+    if (SWRASTL(ifp) != NULL) {
+	(void)free((char *)SWRASTL(ifp));
+	SWRASTL(ifp) = NULL;
     }
 
     return 0;
@@ -478,13 +506,13 @@ swrast_clear(struct fb *ifp, unsigned char *pp)
 
     /* Flood rectangle in memory */
     for (y = 0; y < ifp->i->if_height; y++) {
-	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+0)*sizeof(struct fb_pixel) ];
+	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*SWRAST(ifp)->mi_memwidth+0)*sizeof(struct fb_pixel) ];
 	for (cnt = ifp->i->if_width-1; cnt >= 0; cnt--) {
 	    *swrastp++ = bg;	/* struct copy */
 	}
     }
 
-    //QTGL(ifp)->glc->makeCurrent();
+    dm_make_current(SWRAST(ifp)->dmp);
 
     if (pp != RGBPIXEL_NULL) {
 	glClearColor(pp[RED]/255.0, pp[GRN]/255.0, pp[BLU]/255.0, 0.0);
@@ -498,7 +526,7 @@ swrast_clear(struct fb *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+static int
 swrast_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct fb_clip *clp;
@@ -524,26 +552,26 @@ swrast_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     ifp->i->if_xzoom = xzoom;
     ifp->i->if_yzoom = yzoom;
 
-    //QTGL(ifp)->glc->makeCurrent();
+    dm_make_current(SWRAST(ifp)->dmp);
 
     /* Set clipping matrix and zoom level */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
     fb_clipper(ifp);
-    clp = &(QTGL(ifp)->clip);
+    clp = &(SWRAST(ifp)->clip);
     glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
     glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
     glFlush();
 
-    //QTGL(ifp)->glc->update();
+    SWRAST(ifp)->mw->update();
 
     return 0;
 }
 
 
-HIDDEN int
+static int
 swrast_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (FB_DEBUG)
@@ -559,7 +587,7 @@ swrast_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoo
 
 
 /* read count pixels into pixelp starting at x, y */
-HIDDEN ssize_t
+static ssize_t
 swrast_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
@@ -587,7 +615,7 @@ swrast_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	else
 	    scan_count = count;
 
-	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+x)*sizeof(struct fb_pixel) ];
+	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*SWRAST(ifp)->mi_memwidth+x)*sizeof(struct fb_pixel) ];
 
 	n = scan_count;
 	while (n) {
@@ -610,7 +638,7 @@ swrast_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 /* write count pixels from pixelp starting at xstart, ystart */
-HIDDEN ssize_t
+static ssize_t
 swrast_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     int x;
@@ -656,7 +684,7 @@ swrast_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp
 	else
 	    scan_count = pix_count;
 
-	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+x)*sizeof(struct fb_pixel) ];
+	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*SWRAST(ifp)->mi_memwidth+x)*sizeof(struct fb_pixel) ];
 
 	n = scan_count;
 	if ((n & 3) != 0) {
@@ -697,8 +725,6 @@ swrast_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp
 	    break;
     }
 
-    //QTGL(ifp)->glc->update();
-
     return ret;
 }
 
@@ -727,7 +753,7 @@ swrast_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
-	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+xmin)*sizeof(struct fb_pixel) ];
+	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*SWRAST(ifp)->mi_memwidth+xmin)*sizeof(struct fb_pixel) ];
 	for (x = xmin; x < xmin+width; x++) {
 	    /* alpha channel is always zero */
 	    swrastp->red   = cp[RED];
@@ -738,7 +764,7 @@ swrast_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 	}
     }
 
-    //QTGL(ifp)->glc->update();
+    SWRAST(ifp)->mw->update();
 
     return width*height;
 }
@@ -768,7 +794,7 @@ swrast_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, co
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
-	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*QTGL(ifp)->mi_memwidth+xmin)*sizeof(struct fb_pixel) ];
+	swrastp = (struct fb_pixel *)&ifp->i->if_mem[(y*SWRAST(ifp)->mi_memwidth+xmin)*sizeof(struct fb_pixel) ];
 	for (x = xmin; x < xmin+width; x++) {
 	    int val;
 	    /* alpha channel is always zero */
@@ -779,7 +805,7 @@ swrast_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, co
 	}
     }
 
-    //QTGL(ifp)->glc->update();
+    SWRAST(ifp)->mw->update();
 
     return width*height;
 }
@@ -853,8 +879,6 @@ swrast_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSE
 int
 swrast_refresh(struct fb *ifp, int x, int y, int w, int h)
 {
-    int mm;
-    struct fb_clip *clp;
 
     if (w < 0) {
 	w = -w;
@@ -866,13 +890,16 @@ swrast_refresh(struct fb *ifp, int x, int y, int w, int h)
 	y -= h;
     }
 
+    int mm;
+    struct fb_clip *clp;
+
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
 
     fb_clipper(ifp);
-    clp = &(QTGL(ifp)->clip);
+    clp = &(SWRAST(ifp)->clip);
     glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
     glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
@@ -880,30 +907,15 @@ swrast_refresh(struct fb *ifp, int x, int y, int w, int h)
     glPushMatrix();
     glLoadIdentity();
 
-    glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
-
-    glBindTexture (GL_TEXTURE_2D, QTGL(ifp)->texid);
-    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, QTGL(ifp)->win_width, QTGL(ifp)->win_height, 0, GL_RGB, GL_UNSIGNED_BYTE, ifp->i->if_mem);
-
-    glDisable(GL_LIGHTING);
-
-    glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
-
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    glOrtho(0, w, h, 0, -1, 1);
+    glViewport(0, 0, SWRAST(ifp)->win_width, SWRAST(ifp)->win_height);
+    swrast_xmit_scanlines(ifp, y, h, x, w);
+    glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(mm);
 
-    //QTGL(ifp)->glc->update();
-
+    dm_set_dirty(SWRAST(ifp)->dmp, 1);
     return 0;
 }
 
@@ -912,7 +924,7 @@ swrast_refresh(struct fb *ifp, int x, int y, int w, int h)
 struct fb_impl swrast_interface_impl =
 {
     0,			/* magic number slot */
-    FB_QTGL_MAGIC,
+    FB_SWFB_MAGIC,
     fb_swrast_open,	/* open device */
     swrast_open_existing,    /* existing device_open */
     swrast_close_existing,    /* existing device_close */
@@ -939,7 +951,7 @@ struct fb_impl swrast_interface_impl =
     swrast_flush,		/* flush output */
     swrast_free,		/* free resources */
     swrast_help,		/* help message */
-    bu_strdup("OpenSceneGraph OpenGL"),	/* device description */
+    bu_strdup("OSMesa swrast OpenGL"),	/* device description */
     FB_XMAXSCREEN,		/* max width */
     FB_YMAXSCREEN,		/* max height */
     bu_strdup("/dev/swrast"),		/* short device name */

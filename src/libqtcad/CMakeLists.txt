@@ -59,7 +59,6 @@ if(BRLCAD_ENABLE_QT)
 
   QT5_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_headers})
   BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs}" "libged;libdm;librt;libbu;Qt5::Core;Qt5::Widgets;${OPENGL_LIBS}")
-  add_dependencies(libqtcad dm-swrast)
   if (OPENGL_LIBS)
     set_property(TARGET libqtcad APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
   endif (OPENGL_LIBS)

@@ -1,4 +1,4 @@
-/*                      F B - S W R A S T . H
+/*                   S W R A S T W I N . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,26 +17,37 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
-/** @{*/
-/** @file fb-swrast.h
+/** @file main_window.h
+ *
+ * Defines the toplevel Qt window for a stand-alone swrast dm.
+ *
  */
-/** @} */
 
-#include "common.h"
+#ifndef QTSWRASTWIN_H
+#define QTSWRASTWIN_H
 
-#include "OSMesa/osmesa.h"
+#include <QMainWindow>
+#include "dm.h"
+#include "qtcad/QtSW.h"
 
-struct swrast_fb_info {
-    OSMesaContext *glc;
+class QtSWWin : public QMainWindow
+{
+    Q_OBJECT
+    public:
+	QtSWWin(struct fb *fbp);
+	QtSW *canvas = NULL;
 };
+
+#endif /* QTSWRASTWIN_H */
 
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
+ * c-basic-offset: 4
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

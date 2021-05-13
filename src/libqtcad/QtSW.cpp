@@ -33,14 +33,21 @@ extern "C" {
 #include "bindings.h"
 #include "qtcad/QtSW.h"
 
-QtSW::QtSW(QWidget *parent)
-    : QWidget(parent)
+QtSW::QtSW(QWidget *parent, struct fb *fbp)
+    : QWidget(parent), ifp(fbp)
 {
     // View is provided from the GED structure (usually gedp->ged_gvp)
     v = NULL;
 
     // Don't dm_open until we have the view.
     dmp = NULL;
+
+    // If we weren't supplied with a framebuffer, allocate one.
+    // We don't open it until we have the dmp.
+    if (!ifp) {
+	ifp = fb_raw("swrast");
+	fb_set_standalone(ifp, 0);
+    }
 
     // This is an important Qt setting for interactivity - it allowing key
     // bindings to propagate to this widget and trigger actions such as
@@ -50,7 +57,11 @@ QtSW::QtSW(QWidget *parent)
 
 QtSW::~QtSW()
 {
-    dm_close(dmp);
+    if (dmp)
+	dm_close(dmp);
+    if (ifp && !fb_get_standalone(ifp)) {
+	fb_close_existing(ifp);
+    }
     BU_PUT(v, struct bv);
 }
 
@@ -74,6 +85,14 @@ void QtSW::paintEvent(QPaintEvent *e)
 	    dmp = dm_open((void *)v, NULL, "swrast", 1, &acmd);
 	    if (!dmp)
 		return;
+
+	    // If we have a framebuffer, now we can open it
+	    if (ifp) {
+		struct fb_platform_specific *fbps = fb_get_platform_specific(FB_QTGL_MAGIC);
+		fbps->data = (void *)dmp;
+		fb_setup_existing(ifp, dm_get_width(dmp), dm_get_height(dmp), fbps);
+		fb_put_platform_specific(fbps);
+	    }
 	}
 
 	dm_configure_win(dmp, 0);

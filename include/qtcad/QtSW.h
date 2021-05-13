@@ -54,13 +54,14 @@ class QTCAD_EXPORT QtSW : public QWidget
     Q_OBJECT
 
     public:
-	explicit QtSW(QWidget *parent = nullptr);
+	explicit QtSW(QWidget *parent = nullptr, struct fb *fbp = NULL);
 	~QtSW();
 
 	void save_image();
 
 	struct bview *v = NULL;
 	struct dm *dmp = NULL;
+	struct fb *ifp = NULL;
 	struct bu_ptbl *dm_set = NULL;
 	struct dm **dm_current = NULL;
 	double *base2local = NULL;

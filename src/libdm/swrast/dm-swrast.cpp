@@ -44,7 +44,6 @@ extern "C" {
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"
 }
-#include "./fb-swrast.h"
 #include "./dm-swrast.h"
 
 #include "../include/private.h"

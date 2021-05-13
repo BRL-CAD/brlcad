@@ -1,39 +1,47 @@
 set(SWRAST_SRCS
   dm-swrast.cpp
   fb-swrast.cpp
+  swrastwin.cpp
   ../dm-gl.c
   )
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/..
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BU_INCLUDE_DIRS}
-  ${OSMESA_INCLUDE_DIR}
-  )
+if(BRLCAD_ENABLE_QT)
 
-set_property(SOURCE dm-swrast.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-set_property(SOURCE if_swrast.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  # Qt is used for the stand-alone FB window, but other than that should not be
+  # used by swrast code.
+  find_package(Qt5 COMPONENTS Core Widgets)
 
-add_definitions(-DDM_PLUGIN)
+  include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
+    ${BU_INCLUDE_DIRS}
+    ${OSMESA_INCLUDE_DIR}
+    )
 
-# Use the Mesa mechanism for mangling names so we don't collide with any
-# system OpenGL libs
-add_definitions(-DUSE_MGL_NAMESPACE)
+  add_definitions(-DDM_PLUGIN)
 
-dm_plugin_library(dm-swrast SHARED ${SWRAST_SRCS})
-target_link_libraries(dm-swrast libdm libbu osmesa)
-set_property(TARGET dm-swrast APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H OSMESA)
-VALIDATE_STYLE(dm-swrast "${SWRAST_SRCS}")
+  # Use the Mesa mechanism for mangling names so we don't collide with any
+  # system OpenGL libs
+  add_definitions(-DUSE_MGL_NAMESPACE)
 
-PLUGIN_SETUP(dm-swrast dm)
+  QT5_WRAP_CPP(swrast_moc_srcs swrastwin.h)
+  set(SWRAST_SRCS ${SWRAST_SRCS} ${swrast_moc_srcs})
+
+  dm_plugin_library(dm-swrast SHARED ${SWRAST_SRCS})
+  target_link_libraries(dm-swrast libqtcad libdm libbu osmesa Qt5::Core Qt5::Widgets)
+  set_property(TARGET dm-swrast APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H OSMESA)
+  VALIDATE_STYLE(dm-swrast "${SWRAST_SRCS}")
+
+  PLUGIN_SETUP(dm-swrast dm)
+endif(BRLCAD_ENABLE_QT)
 
 CMAKEFILES(
   CMakeLists.txt
   ${SWRAST_SRCS}
   dm-swrast.h
-  fb-swrast.h
+  swrastwin.h
   )
 
 # Local Variables:
