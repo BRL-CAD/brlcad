@@ -38,13 +38,14 @@
 #endif
 
 #include "bu.h"
+#include "ged.h"
 
 class QConsoleListener : public QObject
 {
     Q_OBJECT
 
     public:
-	QConsoleListener(int *fd = NULL, struct bu_process *p = NULL);
+	QConsoleListener(int *fd = NULL, struct ged_subprocess *p = NULL);
 	~QConsoleListener();
 
     Q_SIGNALS:
@@ -64,7 +65,7 @@ class QConsoleListener : public QObject
 	void on_finishedGetLine(const QString &strNewLine);
 
     private:
-        struct bu_process *process = NULL;
+        struct ged_subprocess *process = NULL;
 	QThread m_thread;
 };
 

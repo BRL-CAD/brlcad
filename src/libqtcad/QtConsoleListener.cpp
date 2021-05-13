@@ -29,7 +29,7 @@
 
 #define RT_MAXLINE 10240
 
-QConsoleListener::QConsoleListener(int *fd, struct bu_process *p)
+QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p)
 {
     this->process = p;
     QObject::connect(
@@ -58,7 +58,7 @@ QConsoleListener::QConsoleListener(int *fd, struct bu_process *p)
 	int count = 0;
 	char line[RT_MAXLINE] = {0};
 	printf("trying...\n");
-	if (bu_process_read((char *)line, &count, process, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+	if (bu_process_read((char *)line, &count, process->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
 	printf("nope.\n");
 	return;
 	}

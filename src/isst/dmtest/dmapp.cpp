@@ -44,7 +44,7 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t 
 
     bu_log("got fdp\n");
 
-    c->listen(fdp, p->p);
+    c->listen(fdp, p);
 }
 
 extern "C" void

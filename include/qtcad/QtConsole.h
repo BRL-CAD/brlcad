@@ -47,7 +47,7 @@
 #include <QPlainTextEdit>
 #include <QFont>
 
-#include "bu.h"
+#include "ged.h"
 #include "qtcad/defines.h"
 #include "qtcad/QtConsoleListener.h"
 
@@ -71,7 +71,7 @@ public:
 
   QPoint getCursorPosition();
 
-  void listen(int *fd, struct bu_process *p);
+  void listen(int *fd, struct ged_subprocess *p);
   void detach();
 
 signals:
