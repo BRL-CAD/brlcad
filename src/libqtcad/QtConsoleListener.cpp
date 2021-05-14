@@ -88,7 +88,7 @@ void QConsoleListener::on_finishedGetLine(const QString &strNewLine)
 
 void QConsoleListener::on_finished()
 {
-    Q_EMIT this->finished();
+    Q_EMIT this->is_finished();
 }
 
 // Local Variables:

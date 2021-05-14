@@ -58,7 +58,7 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 	void newLine(const QString &strNewLine);
 
 	// Emit when on_finished() is called
-	void finished();
+	void is_finished();
 
 	// finishedGetLine is for internal use
 	void finishedGetLine(const QString &strNewLine);
