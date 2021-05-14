@@ -152,6 +152,8 @@ rtcheck_vector_handler(void *clientData, int type)
 		    if (!BU_LIST_IS_EMPTY(&(rtcp->vbp->head[i]))) {
 			struct bv_scene_obj *s;
 			GET_BV_SCENE_OBJ(s, &gedp->free_scene_obj->l);
+			s->s_type_flags = BV_VIEWONLY;
+			s->s_v = gedp->ged_gvp;
 			bu_vls_sprintf(&s->s_name, "%sobj%zd", sname, i);
 			bu_vls_sprintf(&s->s_uuid, "%sobj%zd", sname, i);
 			bu_log("Adding scene obj: %s\n", bu_vls_cstr(&s->s_name));
