@@ -424,15 +424,12 @@ void QtConsole::printString(const QString& Text)
 // QPlainTextEdit widgets with dedicated purposes - input prompt and output.
 void QtConsole::printStringBeforePrompt(const QString& Text)
 {
-  QTextCursor text_cursor = this->Implementation->textCursor();
-  int prompt_len = text_cursor.position() - prompt_start;
-  text_cursor.setPosition(prompt_start);
-  this->Implementation->setTextCursor(text_cursor);
-  text_cursor.insertText(Text);
+  QTextCursor tc = this->Implementation->textCursor();
+  tc.select(QTextCursor::LineUnderCursor);
+  tc.removeSelectedText();
+  this->Implementation->insertPlainText(Text);
+  this->Implementation->insertPlainText(prompt_str);
   this->Implementation->InteractivePosition = this->Implementation->documentEnd();
-  prompt_start = text_cursor.position();
-  text_cursor.setPosition(prompt_start+prompt_len);
-  this->Implementation->setTextCursor(text_cursor);
   this->Implementation->ensureCursorVisible();
 }
 
@@ -460,6 +457,7 @@ void QtConsole::prompt(const QString& text)
     }
 
   prompt_start = text_cursor.position();
+  prompt_str = text;
 
   this->Implementation->textCursor().insertText(text);
   this->Implementation->InteractivePosition = this->Implementation->documentEnd();

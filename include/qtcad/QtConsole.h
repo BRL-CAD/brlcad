@@ -111,6 +111,7 @@ private:
   QtConsole(const QtConsole&);
   QtConsole& operator=(const QtConsole&);
 
+  QString prompt_str;
   int prompt_start = 0;
 
   void internalExecuteCommand(const QString& Command);
