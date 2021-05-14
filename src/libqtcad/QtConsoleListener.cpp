@@ -63,11 +63,11 @@ QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, bu_process
 	  size_t s1 = bu_vls_strlen(process->gedp->ged_result_str);
 	  (*callback)(data, (int)type);
 	  size_t s2 = bu_vls_strlen(process->gedp->ged_result_str);
-	  struct bu_vls nstr = BU_VLS_INIT_ZERO;
-	  bu_vls_substr(&nstr, process->gedp->ged_result_str, s1, s2 - s1);
-	  QString strLine = QString::fromStdString(std::string(bu_vls_cstr(&nstr)));
-	  bu_vls_free(&nstr);
 	  if (s1 != s2) {
+	    struct bu_vls nstr = BU_VLS_INIT_ZERO;
+	    bu_vls_substr(&nstr, process->gedp->ged_result_str, s1, s2 - s1);
+	    QString strLine = QString::fromStdString(std::string(bu_vls_cstr(&nstr)));
+	    bu_vls_free(&nstr);
 	    Q_EMIT this->finishedGetLine(strLine);
 	  }
 	}
