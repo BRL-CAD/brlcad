@@ -31,11 +31,12 @@
 
 void noMessageOutput(QtMsgType, const QMessageLogContext&, const QString&) {}
 
-QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, ged_io_func_t c, void *d)
+QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
 {
     this->process = p;
     this->callback = c;
     this->data = d;
+    this->type = t;
     QObject::connect(
 	    this, &QConsoleListener::finishedGetLine,
 	    this, &QConsoleListener::on_finishedGetLine,
@@ -86,7 +87,7 @@ void QConsoleListener::on_finishedGetLine(const QString &strNewLine)
 
 void QConsoleListener::on_finished()
 {
-    Q_EMIT this->is_finished();
+    Q_EMIT this->is_finished(this->process, (int)this->type);
 }
 
 // Local Variables:

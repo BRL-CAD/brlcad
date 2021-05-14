@@ -29,20 +29,20 @@
 #include "dmapp.h"
 
 extern "C" void
-qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data)
+qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t callback, void *data)
 {
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
 	return;
 
     QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
 
-    int *fdp = (int *)bu_process_fd(p->p, d);
+    int *fdp = (int *)bu_process_fd(p->p, t);
     if (!fdp)
 	return;
 
-    c->listen(fdp, p, callback, data);
+    c->listen(fdp, p, t, callback, data);
 
-    switch (d) {
+    switch (t) {
 	case BU_PROCESS_STDIN:
 	    p->stdin_active = 1;
 	    break;
@@ -56,29 +56,31 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t 
 }
 
 extern "C" void
-qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
+qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 {
     if (!p) return;
 
     QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
 
-    // Since this callback is invoked from the listener, we can't
-    // call the listener's destructor directly.  We instead call a
-    // routine that emits a single that will notify the console
-    // widget it's time to detach the listener.
-    c->listener->on_finished();
-
-    switch (d) {
+    // Since these callbacks are invoked from the listener, we can't call
+    // the listener destructors directly.  We instead call a routine that
+    // emits a single that will notify the console widget it's time to
+    // detach the listener.
+    switch (t) {
 	case BU_PROCESS_STDIN:
 	    p->stdin_active = 0;
+	    c->listeners[std::make_pair(p, t)]->on_finished();
 	    break;
 	case BU_PROCESS_STDOUT:
 	    p->stdout_active = 0;
+	    c->listeners[std::make_pair(p, t)]->on_finished();
 	    break;
 	case BU_PROCESS_STDERR:
 	    p->stderr_active = 0;
+	    c->listeners[std::make_pair(p, t)]->on_finished();
 	    break;
     }
+
 }
 
 int

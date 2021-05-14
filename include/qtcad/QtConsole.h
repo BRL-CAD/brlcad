@@ -46,6 +46,7 @@
 #include <QWidget>
 #include <QPlainTextEdit>
 #include <QFont>
+#include <map>
 
 #include "ged.h"
 #include "qtcad/defines.h"
@@ -76,9 +77,8 @@ public:
 
   QPoint getCursorPosition();
 
-  void listen(int *fd, struct ged_subprocess *p, ged_io_func_t c, void *d);
-
-  QConsoleListener *listener;
+  void listen(int *fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
+  std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *> listeners;
 
 signals:
   /// Signal emitted whenever the user enters a command
@@ -92,7 +92,7 @@ public slots:
   void printStringBeforePrompt(const QString& Text);
 
   /// Clears a listener (called by the listener's finished() signal)
-  void detach();
+  void detach(struct ged_subprocess *p, int t);
 
   /// Updates the current command. Unlike printString, this will affect the
   /// current command being typed.

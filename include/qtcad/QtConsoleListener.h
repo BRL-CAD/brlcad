@@ -42,12 +42,13 @@
 
 #include "qtcad/defines.h"
 
+
 class QTCAD_EXPORT QConsoleListener : public QObject
 {
     Q_OBJECT
 
     public:
-	QConsoleListener(int *fd = NULL, struct ged_subprocess *p = NULL, ged_io_func_t c = NULL, void *d = NULL);
+	QConsoleListener(int *fd = NULL, struct ged_subprocess *p = NULL, bu_process_io_t t = BU_PROCESS_STDIN, ged_io_func_t c = NULL, void *d = NULL);
 	~QConsoleListener();
 
 	// Called by client code when it is done with the process
@@ -58,7 +59,7 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 	void newLine(const QString &strNewLine);
 
 	// Emit when on_finished() is called
-	void is_finished();
+	void is_finished(struct ged_subprocess *p, int t);
 
 	// finishedGetLine is for internal use
 	void finishedGetLine(const QString &strNewLine);
@@ -74,6 +75,7 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 #endif
         struct ged_subprocess *process = NULL;
 	ged_io_func_t callback;
+	bu_process_io_t type;
 	void *data;
 	QThread m_thread;
 };

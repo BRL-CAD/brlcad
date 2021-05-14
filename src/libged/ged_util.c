@@ -1038,8 +1038,25 @@ ged_who_argc(struct ged *gedp)
 int
 ged_who_argv(struct ged *gedp, char **start, const char **end)
 {
-    struct display_list *gdlp;
     char **vp = start;
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1")) {
+	if (!gedp || !gedp->ged_gvp)
+	    return 0;
+	struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+	    if ((vp != NULL) && ((const char **)vp < end)) {
+		*vp++ = bu_strdup(bu_vls_cstr(&g->g->s_name));
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", bu_vls_cstr(&g->g->s_name));
+		break;
+	    }
+	}
+	return (int)BU_PTBL_LEN(sg);
+    }
+
+    struct display_list *gdlp;
 
     if (!gedp || !gedp->ged_gdp || !gedp->ged_gdp->gd_headDisplay)
 	return 0;
