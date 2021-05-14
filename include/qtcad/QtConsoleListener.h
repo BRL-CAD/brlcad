@@ -54,6 +54,11 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 	// Called by client code when it is done with the process
 	void on_finished();
 
+	struct ged_subprocess *process = NULL;
+	ged_io_func_t callback;
+	bu_process_io_t type;
+	void *data;
+
     Q_SIGNALS:
 	// connect to "newLine" to receive console input
 	void newLine(const QString &strNewLine);
@@ -73,10 +78,6 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 #else
 	QSocketNotifier *m_notifier;
 #endif
-        struct ged_subprocess *process = NULL;
-	ged_io_func_t callback;
-	bu_process_io_t type;
-	void *data;
 	QThread m_thread;
 };
 

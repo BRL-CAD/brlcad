@@ -64,31 +64,31 @@ struct ged_rtcheck {
 static void
 rtcheck_handler_cleanup(struct ged_rtcheck *rtcp, int type)
 {
-    if (type != 2)
-	return;
     struct ged_subprocess *p = rtcp->rrtp;
     struct ged *gedp = p->gedp;
 
-    bu_log("called cleanup: %d\n", type);
+    /* Done watching for output, undo subprocess I/O hooks. */
+    if (type != -1 && gedp->ged_delete_io_handler) {
 
-    if (gedp->ged_delete_io_handler) {
 	(*gedp->ged_delete_io_handler)(p, (bu_process_io_t)type);
-    }
 
-    if (p->stdin_active || p->stdout_active || p->stderr_active) {
-	// If anyone else is still listening, we're not done yet.
-	if (p->stdin_active) {
-	    (*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDIN);
-	    return;
+	if (p->stdin_active || p->stdout_active || p->stderr_active) {
+	    // If anyone else is still listening, we're not done yet.
+	    if (p->stdin_active) {
+		(*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDIN);
+		return;
+	    }
+	    if (p->stdout_active) {
+		(*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDOUT);
+		return;
+	    }
+	    if (p->stderr_active) {
+		(*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDERR);
+		return;
+	    }
 	}
-	if (p->stdout_active) {
-	    (*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDOUT);
-	    return;
-	}
-	if (p->stderr_active) {
-	    (*gedp->ged_delete_io_handler)(p, BU_PROCESS_STDERR);
-	    return;
-	}
+
+	return;
     }
 
     bu_log("doing cleanup: %d\n", type);

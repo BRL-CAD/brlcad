@@ -376,15 +376,33 @@ void QtConsole::listen(int *fd, struct ged_subprocess *p, bu_process_io_t t, ged
 }
 void QtConsole::detach(struct ged_subprocess *p, int t)
 {
-  std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *>::iterator l_it;
+  std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *>::iterator l_it, si_it, so_it, e_it;
   l_it = listeners.find(std::make_pair(p,t));
+
+  struct ged_subprocess *process = NULL;
+  ged_io_func_t callback = NULL;
+  void *gdata = NULL;
+
   if (l_it != listeners.end()) {
      bu_log("Stop listening: %d\n", (int)t);
      QConsoleListener *l = l_it->second;
+     process = l->process;
+     callback = l->callback;
+     gdata = l->data;
      listeners.erase(l_it);
      delete l;
-  } else {
-     bu_log("Invalid detach call: %d\n", (int)t);
+  }
+
+  if (process) {
+     si_it = listeners.find(std::make_pair(p,(int)BU_PROCESS_STDIN));
+     so_it = listeners.find(std::make_pair(p,(int)BU_PROCESS_STDOUT));
+      e_it = listeners.find(std::make_pair(p,(int)BU_PROCESS_STDERR));
+
+     // We don't want to destroy the process until all the listeners are removed.
+     // If they all have been, do a final callback call with -1 key to instruct
+     // the callback to finalize process and memory removal.
+     if (si_it == listeners.end() && so_it == listeners.end() && e_it == listeners.end() && callback)
+        (*callback)(gdata, -1);
   }
 }
 

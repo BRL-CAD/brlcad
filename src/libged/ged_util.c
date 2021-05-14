@@ -1451,8 +1451,96 @@ _ged_rt_set_eye_model(struct ged *gedp,
 }
 
 void
-_ged_rt_output_handler(void *clientData, int UNUSED(mask))
+_ged_rt_output_handler2(void *clientData, int type)
 {
+    struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
+    int count = 0;
+    int retcode = 0;
+    int read_failed_stderr = 0;
+    int read_failed_stdout = 0;
+    char line[RT_MAXLINE+1] = {0};
+
+    if ((rrtp == (struct ged_subprocess *)NULL) || (rrtp->gedp == (struct ged *)NULL))
+	return;
+
+    BU_CKMAG(rrtp, GED_CMD_MAGIC, "ged subprocess");
+
+    struct ged *gedp = rrtp->gedp;
+
+    /* Get data from rt */
+    if (rrtp->stderr_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+	read_failed_stderr = 1;
+    }
+    if (rrtp->stdout_active && bu_process_read((char *)line, &count, rrtp->p, BU_PROCESS_STDOUT, RT_MAXLINE) <= 0) {
+	read_failed_stdout = 1;
+    }
+
+    if (read_failed_stderr || read_failed_stdout) {
+	int aborted;
+	
+	/* Done watching for output, undo subprocess I/O hooks. */
+	if (type != -1 && gedp->ged_delete_io_handler) {
+	    (*gedp->ged_delete_io_handler)(rrtp, (bu_process_io_t)type);
+
+	    if (rrtp->stdin_active || rrtp->stdout_active || rrtp->stderr_active) {
+		// If anyone else is still listening, we're not done yet.
+		if (rrtp->stdin_active) {
+		    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDIN);
+		    return;
+		}
+		if (rrtp->stdout_active) {
+		    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDOUT);
+		    return;
+		}
+		if (rrtp->stderr_active) {
+		    (*gedp->ged_delete_io_handler)(rrtp, BU_PROCESS_STDERR);
+		    return;
+		}
+	    }
+
+	    return;
+	}
+
+	/* Either EOF has been sent or there was a read error.
+	 * there is no need to block indefinitely */
+	retcode = bu_process_wait(&aborted, rrtp->p, 120);
+
+	if (aborted)
+	    bu_log("Raytrace aborted.\n");
+	else if (retcode)
+	    bu_log("Raytrace failed.\n");
+	else
+	    bu_log("Raytrace complete.\n");
+
+	if (gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    gedp->ged_gdp->gd_rtCmdNotify(aborted);
+
+	/* free rrtp */
+	bu_ptbl_rm(&gedp->ged_subp, (long *)rrtp);
+	BU_PUT(rrtp, struct ged_subprocess);
+
+	return;
+    }
+
+    /* for feelgoodedness */
+    line[count] = '\0';
+
+    /* handle (i.e., probably log to stderr) the resulting line */
+    if (gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
+	ged_output_handler_cb(gedp, line);
+    else
+	bu_vls_printf(gedp->ged_result_str, "%s", line);
+
+}
+
+void
+_ged_rt_output_handler(void *clientData, int mask)
+{
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1")) {
+	_ged_rt_output_handler2(clientData, mask);
+	return;
+    }
     struct ged_subprocess *rrtp = (struct ged_subprocess *)clientData;
     int count = 0;
     int retcode = 0;
