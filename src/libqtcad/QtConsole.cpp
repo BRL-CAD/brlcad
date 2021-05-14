@@ -419,6 +419,9 @@ void QtConsole::printString(const QString& Text)
 }
 
 //-----------------------------------------------------------------------------
+// TODO - this is too slow for large text outputs (Goliath rtcheck is an example.)
+// In some ways the better way to do this is probably to lay out a couple
+// QPlainTextEdit widgets with dedicated purposes - input prompt and output.
 void QtConsole::printStringBeforePrompt(const QString& Text)
 {
   QTextCursor text_cursor = this->Implementation->textCursor();
