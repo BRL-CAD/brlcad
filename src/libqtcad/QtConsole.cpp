@@ -370,8 +370,6 @@ void QtConsole::listen(int *fd, struct ged_subprocess *p, bu_process_io_t t, ged
 {
   QConsoleListener *l = new QConsoleListener(fd, p, t, c, d);
   bu_log("Start listening: %d\n", (int)t);
-  // Console printing isn't the right thing for all channels
-  //if (t == BU_PROCESS_STDERR)
   QObject::connect(l, &QConsoleListener::newLine, this, &QtConsole::printStringBeforePrompt);
   QObject::connect(l, &QConsoleListener::is_finished, this, &QtConsole::detach);
   listeners[std::make_pair(p, t)] = l;
@@ -381,13 +379,12 @@ void QtConsole::detach(struct ged_subprocess *p, int t)
   std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *>::iterator l_it;
   l_it = listeners.find(std::make_pair(p,t));
   if (l_it != listeners.end()) {
-  bu_log("Stop listening: %d\n", (int)t);
+     bu_log("Stop listening: %d\n", (int)t);
      QConsoleListener *l = l_it->second;
-     l->disconnect();
      listeners.erase(l_it);
      delete l;
   } else {
-	  bu_log("invalid detach call: %d\n", (int)t);
+     bu_log("Invalid detach call: %d\n", (int)t);
   }
 }
 
