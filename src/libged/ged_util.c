@@ -1477,10 +1477,9 @@ _ged_rt_output_handler2(void *clientData, int type)
 
     if (read_failed_stderr || read_failed_stdout) {
 	int aborted;
-	
+
 	/* Done watching for output, undo subprocess I/O hooks. */
 	if (type != -1 && gedp->ged_delete_io_handler) {
-	    (*gedp->ged_delete_io_handler)(rrtp, (bu_process_io_t)type);
 
 	    if (rrtp->stdin_active || rrtp->stdout_active || rrtp->stderr_active) {
 		// If anyone else is still listening, we're not done yet.

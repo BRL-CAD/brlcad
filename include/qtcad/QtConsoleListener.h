@@ -72,12 +72,13 @@ class QTCAD_EXPORT QConsoleListener : public QObject
     private Q_SLOTS:
 	void on_finishedGetLine(const QString &strNewLine);
 
-    private:
+    public:
 #ifdef Q_OS_WIN
 	QWinEventNotifier *m_notifier;
 #else
 	QSocketNotifier *m_notifier;
 #endif
+    private:
 	QThread m_thread;
 };
 

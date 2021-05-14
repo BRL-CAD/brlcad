@@ -62,25 +62,36 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 
     QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
 
+    bu_log("qt_delete_io_handler\n");
+
     // Since these callbacks are invoked from the listener, we can't call
     // the listener destructors directly.  We instead call a routine that
     // emits a single that will notify the console widget it's time to
     // detach the listener.
     switch (t) {
 	case BU_PROCESS_STDIN:
-	    p->stdin_active = 0;
-	    if (c->listeners.find(std::make_pair(p, t)) != c->listeners.end())
+	    bu_log("stdin\n");
+	    if (p->stdin_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
 		c->listeners[std::make_pair(p, t)]->on_finished();
+	    }
+	    p->stdin_active = 0;
 	    break;
 	case BU_PROCESS_STDOUT:
-	    p->stdout_active = 0;
-	    if (c->listeners.find(std::make_pair(p, t)) != c->listeners.end())
+	    if (p->stdout_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
 		c->listeners[std::make_pair(p, t)]->on_finished();
+		bu_log("stdout: %d\n", p->stdout_active);
+	    }
+	    p->stdout_active = 0;
 	    break;
 	case BU_PROCESS_STDERR:
-	    p->stderr_active = 0;
-	    if (c->listeners.find(std::make_pair(p, t)) != c->listeners.end())
+	    if (p->stderr_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
 		c->listeners[std::make_pair(p, t)]->on_finished();
+		bu_log("stderr: %d\n", p->stderr_active);
+	    }
+	    p->stderr_active = 0;
 	    break;
     }
 

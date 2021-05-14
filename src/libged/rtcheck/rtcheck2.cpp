@@ -66,11 +66,10 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp, int type)
 {
     struct ged_subprocess *p = rtcp->rrtp;
     struct ged *gedp = p->gedp;
+    bu_log("handler cleanup: %d\n", type);
 
     /* Done watching for output, undo subprocess I/O hooks. */
     if (type != -1 && gedp->ged_delete_io_handler) {
-
-	(*gedp->ged_delete_io_handler)(p, (bu_process_io_t)type);
 
 	if (p->stdin_active || p->stdout_active || p->stderr_active) {
 	    // If anyone else is still listening, we're not done yet.
