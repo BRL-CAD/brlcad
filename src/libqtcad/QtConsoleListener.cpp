@@ -67,7 +67,9 @@ QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, bu_process
 	  bu_vls_substr(&nstr, process->gedp->ged_result_str, s1, s2 - s1);
 	  QString strLine = QString::fromStdString(std::string(bu_vls_cstr(&nstr)));
 	  bu_vls_free(&nstr);
-	  Q_EMIT this->finishedGetLine(strLine);
+	  if (s1 != s2) {
+	    Q_EMIT this->finishedGetLine(strLine);
+	  }
 	}
 	});
     m_thread.start();
@@ -75,7 +77,7 @@ QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, bu_process
 
 QConsoleListener::~QConsoleListener()
 {
-    disconnect();
+    m_notifier->disconnect();
     m_thread.quit();
     m_thread.wait();
 }

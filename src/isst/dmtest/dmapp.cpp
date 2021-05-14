@@ -69,15 +69,18 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
     switch (t) {
 	case BU_PROCESS_STDIN:
 	    p->stdin_active = 0;
-	    c->listeners[std::make_pair(p, t)]->on_finished();
+	    if (c->listeners.find(std::make_pair(p, t)) != c->listeners.end())
+		c->listeners[std::make_pair(p, t)]->on_finished();
 	    break;
 	case BU_PROCESS_STDOUT:
 	    p->stdout_active = 0;
-	    c->listeners[std::make_pair(p, t)]->on_finished();
+	    if (c->listeners.find(std::make_pair(p, t)) != c->listeners.end())
+		c->listeners[std::make_pair(p, t)]->on_finished();
 	    break;
 	case BU_PROCESS_STDERR:
 	    p->stderr_active = 0;
-	    c->listeners[std::make_pair(p, t)]->on_finished();
+	    if (c->listeners.find(std::make_pair(p, t)) != c->listeners.end())
+		c->listeners[std::make_pair(p, t)]->on_finished();
 	    break;
     }
 
