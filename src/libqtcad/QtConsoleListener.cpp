@@ -61,7 +61,7 @@ QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, bu_process
 	[this]() {
 	if (callback) {
 	  size_t s1 = bu_vls_strlen(process->gedp->ged_result_str);
-	  (*callback)(data, 0);
+	  (*callback)(data, (int)type);
 	  size_t s2 = bu_vls_strlen(process->gedp->ged_result_str);
 	  struct bu_vls nstr = BU_VLS_INIT_ZERO;
 	  bu_vls_substr(&nstr, process->gedp->ged_result_str, s1, s2 - s1);
