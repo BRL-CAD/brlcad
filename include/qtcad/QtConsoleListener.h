@@ -59,7 +59,6 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 	void finishedGetLine(const QString &strNewLine);
 
 	void finished();
-	void doPrompt(const QString &strLine);
 
     private:
 #ifdef Q_OS_WIN

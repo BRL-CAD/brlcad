@@ -29,6 +29,8 @@
 
 #define RT_MAXLINE 10240
 
+void noMessageOutput(QtMsgType, const QMessageLogContext&, const QString&) {}
+
 QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, ged_io_func_t c, void *d)
 {
     this->process = p;
@@ -44,10 +46,9 @@ QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, ged_io_fun
     m_notifier = new QWinEventNotifier(h);
 #else
     int lfd = (!fd) ? fileno(stdin) : *fd;
-    bu_log("lfd: %d\n", lfd);
     m_notifier = new QSocketNotifier(lfd, QSocketNotifier::Read);
 #endif
-    // NOTE : move to thread because std::getline blocks, then we sync with
+    // NOTE : move to thread to avoid blocking, then sync with
     // main thread using a QueuedConnection with finishedGetLine
     m_notifier->moveToThread(&m_thread);
     QObject::connect(&m_thread , &QThread::finished, m_notifier, &QObject::deleteLater);
@@ -57,26 +58,21 @@ QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, ged_io_fun
     QObject::connect(m_notifier, &QSocketNotifier::activated,
 #endif
 	[this]() {
+	qInstallMessageHandler(noMessageOutput);
 	if (callback) {
-	size_t strlen = bu_vls_strlen(process->gedp->ged_result_str);
-	(*callback)(data, 0);
-	size_t strlen2 = bu_vls_strlen(process->gedp->ged_result_str);
-	bu_log("lens: %zd, %zd\n", strlen, strlen2);
-	struct bu_vls nstr = BU_VLS_INIT_ZERO;
-	bu_vls_substr(&nstr, process->gedp->ged_result_str, strlen, strlen2 - strlen);
-	QString strLine = QString::fromStdString(std::string(bu_vls_cstr(&nstr)));
-	bu_vls_free(&nstr);
-	Q_EMIT this->finishedGetLine(strLine);
-	}});
+	  size_t s1 = bu_vls_strlen(process->gedp->ged_result_str);
+	  (*callback)(data, 0);
+	  size_t s2 = bu_vls_strlen(process->gedp->ged_result_str);
+	  struct bu_vls nstr = BU_VLS_INIT_ZERO;
+	  bu_vls_substr(&nstr, process->gedp->ged_result_str, s1, s2 - s1);
+	  QString strLine = QString::fromStdString(std::string(bu_vls_cstr(&nstr)));
+	  bu_vls_free(&nstr);
+	  Q_EMIT this->finishedGetLine(strLine);
+	}
+	qInstallMessageHandler(0);
+	});
     m_thread.start();
 }
-
-void QConsoleListener::on_finishedGetLine(const QString &strNewLine)
-{
-    Q_EMIT this->newLine(strNewLine);
-}
-
-
 
 QConsoleListener::~QConsoleListener()
 {
@@ -85,11 +81,13 @@ QConsoleListener::~QConsoleListener()
     m_thread.wait();
 }
 
+void QConsoleListener::on_finishedGetLine(const QString &strNewLine)
+{
+    Q_EMIT this->newLine(strNewLine);
+}
 
 void QConsoleListener::on_finished()
 {
-    QString strLine = QString::fromStdString(std::string("$ "));
-    Q_EMIT this->doPrompt(strLine);
     Q_EMIT this->finished();
 }
 

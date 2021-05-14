@@ -83,6 +83,9 @@ public slots:
   /// Writes the supplied text to the console
   void printString(const QString& Text);
 
+  /// Writes the supplied text to the console
+  void printStringBeforePrompt(const QString& Text);
+
   /// Clears a listener (called by the listener's finished() signal)
   void detach();
 
@@ -103,6 +106,7 @@ private:
   QtConsole(const QtConsole&);
   QtConsole& operator=(const QtConsole&);
 
+  int prompt_start = 0;
 
   void internalExecuteCommand(const QString& Command);
 

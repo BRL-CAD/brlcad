@@ -369,9 +369,8 @@ QPoint QtConsole::getCursorPosition()
 void QtConsole::listen(int *fd, struct ged_subprocess *p, ged_io_func_t c, void *d)
 {
   listener = new QConsoleListener(fd, p, c, d);
-  QObject::connect(listener, &QConsoleListener::newLine, this, &QtConsole::printString);
+  QObject::connect(listener, &QConsoleListener::newLine, this, &QtConsole::printStringBeforePrompt);
   QObject::connect(listener, &QConsoleListener::finished, this, &QtConsole::detach);
-  QObject::connect(listener, &QConsoleListener::doPrompt, this, &QtConsole::prompt);
 }
 void QtConsole::detach()
 {
@@ -387,6 +386,21 @@ void QtConsole::printString(const QString& Text)
   text_cursor.insertText(Text);
 
   this->Implementation->InteractivePosition = this->Implementation->documentEnd();
+  this->Implementation->ensureCursorVisible();
+}
+
+//-----------------------------------------------------------------------------
+void QtConsole::printStringBeforePrompt(const QString& Text)
+{
+  QTextCursor text_cursor = this->Implementation->textCursor();
+  int prompt_len = text_cursor.position() - prompt_start;
+  text_cursor.setPosition(prompt_start);
+  this->Implementation->setTextCursor(text_cursor);
+  text_cursor.insertText(Text);
+  this->Implementation->InteractivePosition = this->Implementation->documentEnd();
+  prompt_start = text_cursor.position();
+  text_cursor.setPosition(prompt_start+prompt_len);
+  this->Implementation->setTextCursor(text_cursor);
   this->Implementation->ensureCursorVisible();
 }
 
@@ -412,6 +426,8 @@ void QtConsole::prompt(const QString& text)
     {
     this->Implementation->textCursor().insertText("\n");
     }
+
+  prompt_start = text_cursor.position();
 
   this->Implementation->textCursor().insertText(text);
   this->Implementation->InteractivePosition = this->Implementation->documentEnd();
