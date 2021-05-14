@@ -113,6 +113,8 @@ private:
 
   QString prompt_str;
   int prompt_start = 0;
+  int64_t log_timestamp = 0;
+  QString logbuf;
 
   void internalExecuteCommand(const QString& Command);
 

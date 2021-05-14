@@ -401,8 +401,14 @@ void QtConsole::detach(struct ged_subprocess *p, int t)
      // We don't want to destroy the process until all the listeners are removed.
      // If they all have been, do a final callback call with -1 key to instruct
      // the callback to finalize process and memory removal.
-     if (si_it == listeners.end() && so_it == listeners.end() && e_it == listeners.end() && callback)
+     if (si_it == listeners.end() && so_it == listeners.end() && e_it == listeners.end() && callback) {
         (*callback)(gdata, -1);
+	// This is also the point at which we know any output from the subprocess
+	// is at an end.  Finalize the before-prompt printing.
+	log_timestamp = 0;
+	QString estr("");
+	printStringBeforePrompt(estr);
+     }
   }
 }
 
@@ -419,18 +425,30 @@ void QtConsole::printString(const QString& Text)
 }
 
 //-----------------------------------------------------------------------------
-// TODO - this is too slow for large text outputs (Goliath rtcheck is an example.)
-// In some ways the better way to do this is probably to lay out a couple
-// QPlainTextEdit widgets with dedicated purposes - input prompt and output.
+// This style of insertion is is too slow to just attempt it every time the
+// subprocesses send output (Goliath rtcheck is an example.)  Instead, we
+// keep track of the last time we updated and if not enough time as passed
+// we just queue up the text for later insertion.
+//
+// This approach also depends on the listener clean-up finalizing the string -
+// otherwise there would be a chance of losing some printing due to timing
+// issues if the last bits of the output come in right after an insertion.
 void QtConsole::printStringBeforePrompt(const QString& Text)
 {
-  QTextCursor tc = this->Implementation->textCursor();
-  tc.select(QTextCursor::LineUnderCursor);
-  tc.removeSelectedText();
-  this->Implementation->insertPlainText(Text);
-  this->Implementation->insertPlainText(prompt_str);
-  this->Implementation->InteractivePosition = this->Implementation->documentEnd();
-  this->Implementation->ensureCursorVisible();
+  logbuf.append(Text);
+  int64_t ctime = bu_gettime();
+  double elapsed = ((double)ctime - (double)log_timestamp)/1000000.0;
+  if (elapsed > 0.1) {
+     log_timestamp = bu_gettime();
+     QTextCursor tc = this->Implementation->textCursor();
+     tc.select(QTextCursor::LineUnderCursor);
+     tc.removeSelectedText();
+     this->Implementation->insertPlainText(logbuf);
+     this->Implementation->insertPlainText(prompt_str);
+     this->Implementation->InteractivePosition = this->Implementation->documentEnd();
+     this->Implementation->ensureCursorVisible();
+     logbuf.clear();
+  }
 }
 
 //-----------------------------------------------------------------------------
