@@ -192,18 +192,31 @@ scene_bounding_sph(struct bu_ptbl *so, vect_t *min, vect_t *max, int pflag)
     /* calculate the bounding for of all solids being displayed */
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
-	for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
-	    sp = (struct bv_scene_obj *)BU_PTBL_GET(&g->g->children, j);
-	    minus[X] = sp->s_center[X] - sp->s_size;
-	    minus[Y] = sp->s_center[Y] - sp->s_size;
-	    minus[Z] = sp->s_center[Z] - sp->s_size;
-	    VMIN((*min), minus);
-	    plus[X] = sp->s_center[X] + sp->s_size;
-	    plus[Y] = sp->s_center[Y] + sp->s_size;
-	    plus[Z] = sp->s_center[Z] + sp->s_size;
-	    VMAX((*max), plus);
+	if (BU_PTBL_LEN(&g->g->children)) {
+	    for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
+		sp = (struct bv_scene_obj *)BU_PTBL_GET(&g->g->children, j);
+		minus[X] = sp->s_center[X] - sp->s_size;
+		minus[Y] = sp->s_center[Y] - sp->s_size;
+		minus[Z] = sp->s_center[Z] - sp->s_size;
+		VMIN((*min), minus);
+		plus[X] = sp->s_center[X] + sp->s_size;
+		plus[Y] = sp->s_center[Y] + sp->s_size;
+		plus[Z] = sp->s_center[Z] + sp->s_size;
+		VMAX((*max), plus);
 
-	    is_empty = 0;
+		is_empty = 0;
+	    }
+	} else {
+	    // If we're an evaluated object, the group itself has the
+	    // necessary info.
+	    minus[X] = g->g->s_center[X] - g->g->s_size;
+	    minus[Y] = g->g->s_center[Y] - g->g->s_size;
+	    minus[Z] = g->g->s_center[Z] - g->g->s_size;
+	    VMIN((*min), minus);
+	    plus[X] = g->g->s_center[X] + g->g->s_size;
+	    plus[Y] = g->g->s_center[Y] + g->g->s_size;
+	    plus[Z] = g->g->s_center[Z] + g->g->s_size;
+	    VMAX((*max), plus);
 	}
     }
     if (!pflag) {
