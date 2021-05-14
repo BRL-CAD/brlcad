@@ -61,6 +61,11 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
     if (!p) return;
 
     QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
+
+    // Since this callback is invoked from the listener, we can't
+    // call the listener's destructor directly.  We instead call a
+    // routine that emits a single that will notify the console
+    // widget it's time to detach the listener.
     c->listener->on_finished();
 
     switch (d) {

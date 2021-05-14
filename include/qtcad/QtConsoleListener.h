@@ -50,15 +50,21 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 	QConsoleListener(int *fd = NULL, struct ged_subprocess *p = NULL, ged_io_func_t c = NULL, void *d = NULL);
 	~QConsoleListener();
 
+	// Called by client code when it is done with the process
 	void on_finished();
 
     Q_SIGNALS:
 	// connect to "newLine" to receive console input
 	void newLine(const QString &strNewLine);
-	// finishedGetLine if for internal use
+
+	// Emit when on_finished() is called
+	void finished();
+
+	// finishedGetLine is for internal use
 	void finishedGetLine(const QString &strNewLine);
 
-	void finished();
+    private Q_SLOTS:
+	void on_finishedGetLine(const QString &strNewLine);
 
     private:
 #ifdef Q_OS_WIN
@@ -66,11 +72,6 @@ class QTCAD_EXPORT QConsoleListener : public QObject
 #else
 	QSocketNotifier *m_notifier;
 #endif
-
-    private Q_SLOTS:
-	void on_finishedGetLine(const QString &strNewLine);
-
-    private:
         struct ged_subprocess *process = NULL;
 	ged_io_func_t callback;
 	void *data;
