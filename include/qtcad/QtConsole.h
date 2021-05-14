@@ -55,6 +55,11 @@
   Qt widget that provides an interactive console - you can send text to the
   console by calling printString() and receive user input by connecting to the
   executeCommand() slot.
+
+  Note:  Qt's signals and slots mechanism helps to make a robust widget for
+  multithreaded inputs, since input strings to the console are coming in via
+  signals and written by slots.  Users should not attempt to manipulate the
+  underlying QPlainTextEdit widget directly.
 */
 class QTCAD_EXPORT QtConsole : public QWidget
 {

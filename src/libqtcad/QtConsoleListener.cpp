@@ -53,12 +53,11 @@ QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, ged_io_fun
     m_notifier->moveToThread(&m_thread);
     QObject::connect(&m_thread , &QThread::finished, m_notifier, &QObject::deleteLater);
 #ifdef Q_OS_WIN
-    QObject::connect(m_notifier, &QWinEventNotifier::activated,
+    QObject::connect(m_notifier, &QWinEventNotifier::activated, m_notifier,
 #else
-    QObject::connect(m_notifier, &QSocketNotifier::activated,
+    QObject::connect(m_notifier, &QSocketNotifier::activated, m_notifier,
 #endif
 	[this]() {
-	qInstallMessageHandler(noMessageOutput);
 	if (callback) {
 	  size_t s1 = bu_vls_strlen(process->gedp->ged_result_str);
 	  (*callback)(data, 0);
@@ -69,7 +68,6 @@ QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, ged_io_fun
 	  bu_vls_free(&nstr);
 	  Q_EMIT this->finishedGetLine(strLine);
 	}
-	qInstallMessageHandler(0);
 	});
     m_thread.start();
 }
