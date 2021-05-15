@@ -441,10 +441,13 @@ void QtConsole::printStringBeforePrompt(const QString& Text)
   if (elapsed > 0.1) {
      log_timestamp = bu_gettime();
      QTextCursor tc = this->Implementation->textCursor();
+     // TODO - need to select prompt and command buffer, not just the current line,
+     // in case of a multi-line command buffer
      tc.select(QTextCursor::LineUnderCursor);
      tc.removeSelectedText();
      this->Implementation->insertPlainText(logbuf);
      this->Implementation->insertPlainText(prompt_str);
+     this->Implementation->textCursor().insertText(this->Implementation->commandBuffer());
      this->Implementation->InteractivePosition = this->Implementation->documentEnd();
      this->Implementation->ensureCursorVisible();
      logbuf.clear();
