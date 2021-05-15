@@ -442,7 +442,12 @@ void QtConsole::printStringBeforePrompt(const QString& Text)
      log_timestamp = bu_gettime();
      QTextCursor tc = this->Implementation->textCursor();
      // TODO - need to select prompt and command buffer, not just the current line,
-     // in case of a multi-line command buffer
+     // in case of a multi-line command buffer.
+     //
+     // Also need to put everything back as we found it after each printing - command
+     // prompt, any partial command the user may be working on, and the cursor point.
+     // Right now, for a long running command with output lines, an in-progress command
+     // line gets messed up as output flows.
      tc.select(QTextCursor::LineUnderCursor);
      tc.removeSelectedText();
      this->Implementation->insertPlainText(logbuf);
