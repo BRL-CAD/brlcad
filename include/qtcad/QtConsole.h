@@ -84,6 +84,9 @@ signals:
   /// Signal emitted whenever the user enters a command
   void executeCommand(const QString& cmd);
 
+  /// Signal that there is queued, unprinted buffer output
+  void queued_log(const QString& Text);
+
 public slots:
   /// Writes the supplied text to the console
   void printString(const QString& Text);
@@ -110,6 +113,18 @@ public slots:
 private:
   QtConsole(const QtConsole&);
   QtConsole& operator=(const QtConsole&);
+
+  // Used by printStringBeforePrompt to queue up a timed repetition of printing
+  // to catch anything recently added but not subsequently printed successfully
+  // by an event based trigger.  Avoids output getting "stuck" in the buffer
+  // waiting for an event.  Noticed when rt instances are lingering but not
+  // closed and typing heavily on the command prompt - the last line or two of
+  // rt output sometimes weren't printed under those conditions until the
+  // window was closed.
+  void emit_queued() {
+     QString estring("");
+     Q_EMIT queued_log(estring);
+  }
 
   QString prompt_str;
   int prompt_start = 0;

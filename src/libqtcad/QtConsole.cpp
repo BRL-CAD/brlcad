@@ -49,6 +49,7 @@
 #include <QMimeData>
 #include <QPointer>
 #include <QTextCursor>
+#include <QTimer>
 #include <QPlainTextEdit>
 #include <QVBoxLayout>
 #include <QScrollBar>
@@ -337,6 +338,7 @@ QtConsole::QtConsole(QWidget* Parent) :
   QVBoxLayout* const l = new QVBoxLayout(this);
   l->setMargin(0);
   l->addWidget(this->Implementation);
+  QObject::connect(this, &QtConsole::queued_log, this, &QtConsole::printStringBeforePrompt);
 }
 
 //-----------------------------------------------------------------------------
@@ -433,13 +435,28 @@ void QtConsole::printString(const QString& Text)
 // This approach also depends on the listener clean-up finalizing the string -
 // otherwise there would be a chance of losing some printing due to timing
 // issues if the last bits of the output come in right after an insertion.
+//
+// TODO: It would be better if the input prompt and command were one
+// QPlainTextEdit and the output another, so they could operate independently -
+// this approach will still introduce brief periods where the input prompt
+// disappears and reappears during updating.  However, that would
+// require restructuring QtConsole's widget design - for now this functions,
+// and if this becomes the production solution we can/should revisit it later.
 void QtConsole::printStringBeforePrompt(const QString& Text)
 {
   logbuf.append(Text);
   int64_t ctime = bu_gettime();
   double elapsed = ((double)ctime - (double)log_timestamp)/1000000.0;
-  if (elapsed > 0.1) {
+  if (elapsed > 0.1 && logbuf.length()) {
+     // Make a local printing copy and clear the buffer
+     QString llogbuf = logbuf;
+     logbuf.clear();
+
      log_timestamp = bu_gettime();
+
+     // While we're manipulating the console contents, we don't want
+     // the user modifying anything.
+     this->Implementation->setReadOnly(true);
 
      // Make a copy of the text cursor on which to operate.  Note that this
      // is not the actual cursor being used for editing and we need to use
@@ -458,10 +475,8 @@ void QtConsole::printStringBeforePrompt(const QString& Text)
      tc.setPosition(this->Implementation->documentEnd(), QTextCursor::KeepAnchor);
      tc.removeSelectedText();
 
-     // Print the accumulated logged output to the command window, and reset
-     // the stored content so we don't re-print it later.
-     this->Implementation->insertPlainText(logbuf);
-     logbuf.clear();
+     // Print the accumulated logged output to the command window.
+     this->Implementation->insertPlainText(llogbuf);
 
      // Before we re-add the prompt and command buffer, store the new prompt
      // starting point for use in the next write cycle.
@@ -485,6 +500,13 @@ void QtConsole::printStringBeforePrompt(const QString& Text)
      tc.setPosition(prompt_start + prompt_str.length() + curr_pos_offset);
      this->Implementation->setTextCursor(tc);
 
+     // All done - unlock
+     this->Implementation->setReadOnly(false);
+  }
+
+  // If there is anything queued up, we need to make sure we print it soon(ish)
+  if (logbuf.length()) {
+      QTimer::singleShot(1000, this, &QtConsole::emit_queued);
   }
 }
 
