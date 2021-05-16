@@ -2,13 +2,16 @@ TODO:
 
 X 1.  embedded framebuffer (remaining TODO - use texture rather than pixel drawing...)
 
-2.  output of bu_subprocess commands back to QtConsole prompt.
+X 2.  output of bu_subprocess commands back to QtConsole prompt.
 
     Check https://github.com/juangburgos/QConsoleListener to see if it can help - we need
     something that can achieve similar results to the Tcl mechanism being used to capture
     rt output.  Also for rt in particular, check into what MGED and Archer are doing to
     get raytracing output displayed and whether that can be refactored into something
     more general.
+
+2a.  See about getting rt output into dm embedded framebuffer.  Study src/mged/fbserv.c
+    and src/libtclcad/fbserv.c to see if they can be generalized in some fashion.
 
 3.  Finish accordion widget, into libqtcad
 
