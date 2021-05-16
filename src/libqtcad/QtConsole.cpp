@@ -427,7 +427,7 @@ void QtConsole::printString(const QString& Text)
 //-----------------------------------------------------------------------------
 // This style of insertion is is too slow to just attempt it every time the
 // subprocesses send output (Goliath rtcheck is an example.)  Instead, we
-// keep track of the last time we updated and if not enough time as passed
+// keep track of the last time we updated and if not enough time has passed
 // we just queue up the text for later insertion.
 //
 // This approach also depends on the listener clean-up finalizing the string -
@@ -440,22 +440,51 @@ void QtConsole::printStringBeforePrompt(const QString& Text)
   double elapsed = ((double)ctime - (double)log_timestamp)/1000000.0;
   if (elapsed > 0.1) {
      log_timestamp = bu_gettime();
+
+     // Make a copy of the text cursor on which to operate.  Note that this
+     // is not the actual cursor being used for editing and we need to use
+     // setTextCursor to impact that cursor.  For most of this operation we
+     // don't need to, but it's important for restoring the editing state
+     // to the user at the end.
      QTextCursor tc = this->Implementation->textCursor();
-     // TODO - need to select prompt and command buffer, not just the current line,
-     // in case of a multi-line command buffer.
-     //
-     // Also need to put everything back as we found it after each printing - command
-     // prompt, any partial command the user may be working on, and the cursor point.
-     // Right now, for a long running command with output lines, an in-progress command
-     // line gets messed up as output flows.
-     tc.select(QTextCursor::LineUnderCursor);
+
+     // Store the current editing point relative to the prompt (it may not
+     // be the end of the command, if the user is editing mid-command.)
+     int curr_pos_offset = tc.position() - (prompt_start + prompt_str.length());
+
+     // Before appending new content to the log, clear the old prompt and
+     // command string.  We restore them after the new log content is added.
+     tc.setPosition(prompt_start);
+     tc.setPosition(this->Implementation->documentEnd(), QTextCursor::KeepAnchor);
      tc.removeSelectedText();
+
+     // Print the accumulated logged output to the command window, and reset
+     // the stored content so we don't re-print it later.
      this->Implementation->insertPlainText(logbuf);
+     logbuf.clear();
+
+     // Before we re-add the prompt and command buffer, store the new prompt
+     // starting point for use in the next write cycle.
+     prompt_start = tc.position();
+
+     // Restore the prompt and the next command (if any)
      this->Implementation->insertPlainText(prompt_str);
      this->Implementation->textCursor().insertText(this->Implementation->commandBuffer());
-     this->Implementation->InteractivePosition = this->Implementation->documentEnd();
+
+     // Denote the interactive portion of the new state of the buffer as starting after
+     // the new prompt.
+     this->Implementation->InteractivePosition = prompt_start + prompt_str.length();
+
+     // Make sure the scrolling is set to view the new prompt
      this->Implementation->ensureCursorVisible();
-     logbuf.clear();
+
+     // The final touch - in case the cursor was not at the end of the command buffer,
+     // restore it to its prior offset from the prompt.  Since we are altering the
+     // user-interactive editing cursor this time, and not just manipulating the text,
+     // we must use setTextCursor to apply the change.
+     tc.setPosition(prompt_start + prompt_str.length() + curr_pos_offset);
+     this->Implementation->setTextCursor(tc);
+
   }
 }
 
