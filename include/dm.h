@@ -482,36 +482,36 @@ typedef struct fb_internal FBIO;
  * Types of packages used for the remote frame buffer
  * communication
  */
-#define MSG_FBOPEN      1
-#define MSG_FBCLOSE     2
-#define MSG_FBCLEAR     3
-#define MSG_FBREAD      4
-#define MSG_FBWRITE     5
-#define MSG_FBCURSOR    6               /**< @brief fb_cursor() */
-#define MSG_FBWINDOW    7               /**< @brief OLD */
-#define MSG_FBZOOM      8               /**< @brief OLD */
-#define MSG_FBSCURSOR   9               /**< @brief OLD */
-#define MSG_FBV      10              /**< @brief NEW */
-#define MSG_FBGETVIEW   11              /**< @brief NEW */
-#define MSG_FBRMAP      12
-#define MSG_FBWMAP      13
-#define MSG_FBHELP      14
-#define MSG_FBREADRECT  15
-#define MSG_FBWRITERECT 16
-#define MSG_FBFLUSH     17
-#define MSG_FBFREE      18
-#define MSG_FBGETCURSOR 19              /**< @brief NEW */
-#define MSG_FBPOLL      30              /**< @brief NEW */
-#define MSG_FBSETCURSOR 31              /**< @brief NEW in Release 4.4 */
-#define MSG_FBBWREADRECT 32             /**< @brief NEW in Release 4.6 */
+#define MSG_FBOPEN        1
+#define MSG_FBCLOSE       2
+#define MSG_FBCLEAR       3
+#define MSG_FBREAD        4
+#define MSG_FBWRITE       5
+#define MSG_FBCURSOR      6             /**< @brief fb_cursor() */
+#define MSG_FBWINDOW      7             /**< @brief OLD */
+#define MSG_FBZOOM        8             /**< @brief OLD */
+#define MSG_FBSCURSOR     9             /**< @brief OLD */
+#define MSG_FBV           10            /**< @brief NEW */
+#define MSG_FBGETVIEW     11            /**< @brief NEW */
+#define MSG_FBRMAP        12
+#define MSG_FBWMAP        13
+#define MSG_FBHELP        14
+#define MSG_FBREADRECT    15
+#define MSG_FBWRITERECT   16
+#define MSG_FBFLUSH       17
+#define MSG_FBFREE        18
+#define MSG_FBGETCURSOR   19            /**< @brief NEW */
+#define MSG_FBPOLL        30            /**< @brief NEW */
+#define MSG_FBSETCURSOR   31            /**< @brief NEW in Release 4.4 */
+#define MSG_FBBWREADRECT  32            /**< @brief NEW in Release 4.6 */
 #define MSG_FBBWWRITERECT 33            /**< @brief NEW in Release 4.6 */
 
-#define MSG_DATA        20
-#define MSG_RETURN      21
-#define MSG_CLOSE       22
-#define MSG_ERROR       23
+#define MSG_DATA          20
+#define MSG_RETURN        21
+#define MSG_CLOSE         22
+#define MSG_ERROR         23
 
-#define MSG_NORETURN    100
+#define MSG_NORETURN     100
 
 __END_DECLS
 

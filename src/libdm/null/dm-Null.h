@@ -213,6 +213,81 @@ null_processEvents(struct dm *dmp);
 DM_NULL_EXPORT extern int
 null_openFb(struct dm *dmp);
 
+
+/* FB null functions */
+
+DM_NULL_EXPORT extern int
+_fb_null_open(struct fb *ifp, const char *file, int width, int height);
+
+DM_NULL_EXPORT extern struct fb_platform_specific *
+_fb_null_get_fbps(uint32_t magic);
+
+DM_NULL_EXPORT extern void
+_fb_null_put_fbps(struct fb_platform_specific *fbps);
+
+DM_NULL_EXPORT extern int
+_fb_null_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p);
+
+DM_NULL_EXPORT extern int
+_fb_null_close_existing(struct fb *ifp);
+
+DM_NULL_EXPORT extern int
+_fb_null_configure_window(struct fb *ifp, int width, int height);
+
+DM_NULL_EXPORT extern int
+_fb_null_refresh(struct fb *ifp, int x, int y, int w, int h);
+
+DM_NULL_EXPORT extern int
+_fb_null_close(struct fb *ifp);
+
+DM_NULL_EXPORT extern int
+_fb_null_clear(struct fb *ifp, unsigned char *pp);
+
+DM_NULL_EXPORT extern ssize_t
+_fb_null_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count);
+
+DM_NULL_EXPORT extern ssize_t
+_fb_null_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count);
+
+DM_NULL_EXPORT extern int
+_fb_null_rmap(struct fb *ifp, ColorMap *cmp);
+
+DM_NULL_EXPORT extern int
+_fb_null_wmap(struct fb *ifp, const ColorMap *cmp);
+
+DM_NULL_EXPORT extern int
+_fb_null_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
+
+DM_NULL_EXPORT extern int
+_fb_null_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
+
+DM_NULL_EXPORT extern int
+_fb_null_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
+
+DM_NULL_EXPORT extern int
+_fb_null_cursor(struct fb *ifp, int mode, int x, int y);
+
+DM_NULL_EXPORT extern int
+_fb_null_getcursor(struct fb *ifp, int *mode, int *x, int *y);
+
+DM_NULL_EXPORT extern int
+_fb_null_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
+
+DM_NULL_EXPORT extern int
+_fb_null_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp);
+
+DM_NULL_EXPORT extern int
+_fb_null_poll(struct fb *ifp);
+
+DM_NULL_EXPORT extern int
+_fb_null_flush(struct fb *ifp);
+
+DM_NULL_EXPORT extern int
+_fb_null_free(struct fb *ifp);
+
+DM_NULL_EXPORT extern int
+_fb_null_help(struct fb *ifp);
+
 __END_DECLS
 
 #endif  /* DM_NULL_H */
