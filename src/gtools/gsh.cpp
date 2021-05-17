@@ -22,6 +22,20 @@
  * This program (the BRL-CAD Geometry SHell) is a low level way to
  * interact with BRL-CAD geometry (.g) files.
  *
+ * TODO - right now this program can't handle async output from commands like
+ * rtcheck.  We need something similar to (but more cross platform than)
+ * https://github.com/antirez/linenoise/pull/95/
+ *
+ * In Qt we're using signals and slots to make this work with a single text
+ * widget, which is similar in some ways to what needs to happen here.
+ * (Indeed, it's most likely essential - in Qt we could use multiple text
+ * widgets, but that's not really an option for gsh.)  We don't want to pull in
+ * Qt as a gsh dependency... could we make use of https://github.com/fr00b0/nod
+ * here?  Perhaps trying timed I/O reading from a thread and then sending back
+ * any results to linenoise via signals, and then have linenoise do something
+ * similar to the 95 logic to get it on the screen?  nod (and a number of other
+ * libs) do stand-alone signals and slots, but so far I've not found a
+ * cross-platform wrapper equivalent to QSocketNotifier...
  */
 
 #include "common.h"
