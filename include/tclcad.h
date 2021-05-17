@@ -90,49 +90,6 @@ __BEGIN_DECLS
 /* Use fbserv */
 #define USE_FBSERV 1
 
-/* Framebuffer server object */
-
-#define NET_LONG_LEN 4 /**< @brief # bytes to network long */
-#define MAX_CLIENTS 32
-#define MAX_PORT_TRIES 100
-#define FBS_CALLBACK_NULL (void (*)())NULL
-#define FBSERV_OBJ_NULL (struct fbserv_obj *)NULL
-
-struct fbserv_listener {
-    int fbsl_fd;                        /**< @brief socket to listen for connections */
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    Tcl_Channel fbsl_chan;
-#endif
-    int fbsl_port;                      /**< @brief port number to listen on */
-    int fbsl_listen;                    /**< @brief !0 means listen for connections */
-    struct fbserv_obj *fbsl_fbsp;       /**< @brief points to its fbserv object */
-};
-
-
-struct fbserv_client {
-    int fbsc_fd;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    Tcl_Channel fbsc_chan;
-    Tcl_FileProc *fbsc_handler;
-#endif
-    struct pkg_conn *fbsc_pkg;
-    struct fbserv_obj *fbsc_fbsp;       /**< @brief points to its fbserv object */
-};
-
-
-struct fbserv_obj {
-    struct fb *fbs_fbp;                        /**< @brief framebuffer pointer */
-    void *fbs_interp;             /**< @brief tcl interpreter */
-    struct fbserv_listener fbs_listener;                /**< @brief data for listening */
-    struct fbserv_client fbs_clients[MAX_CLIENTS];      /**< @brief connected clients */
-    void (*fbs_callback)(void *clientData);             /**< @brief callback function */
-    void *fbs_clientData;
-    int fbs_mode;                       /**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
-};
-
-DM_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
-DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
-
 struct tclcad_ged_data {
     struct ged		*gedp;
     struct bu_vls	go_more_args_callback;

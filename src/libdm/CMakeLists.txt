@@ -41,6 +41,7 @@ set(LIBDM_SRCS
   fb_paged_io.c
   fb_rect.c
   fb_util.c
+  fbserv.c
   grid.c
   if_disk.c
   if_mem.c

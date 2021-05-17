@@ -1,5 +1,6 @@
 set(dm_headers
   defines.h
+  fbserv.h
   util.h
   view.h
   )

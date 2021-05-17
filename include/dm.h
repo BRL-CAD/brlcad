@@ -35,6 +35,7 @@
 #include "raytrace.h"
 
 #include "./dm/defines.h"
+#include "./dm/fbserv.h"
 #include "./dm/util.h"
 #include "./dm/view.h"
 
@@ -491,7 +492,7 @@ typedef struct fb_internal FBIO;
 #define MSG_FBWINDOW      7             /**< @brief OLD */
 #define MSG_FBZOOM        8             /**< @brief OLD */
 #define MSG_FBSCURSOR     9             /**< @brief OLD */
-#define MSG_FBV           10            /**< @brief NEW */
+#define MSG_FBVIEW        10            /**< @brief NEW */
 #define MSG_FBGETVIEW     11            /**< @brief NEW */
 #define MSG_FBRMAP        12
 #define MSG_FBWMAP        13

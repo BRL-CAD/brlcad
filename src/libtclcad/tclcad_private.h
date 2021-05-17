@@ -449,6 +449,20 @@ extern int to_more_args_func(struct ged *gedp,
                              ged_func_ptr func,
                              const char *usage,
                              int maxargs);
+
+extern int
+tclcad_is_listening(struct fbserv_obj *fbsp);
+extern int
+tclcad_listen_on_port(struct fbserv_obj *fbsp, int available_port);
+extern void
+tclcad_open_server_handler(struct fbserv_obj *fbsp);
+extern void
+tclcad_close_server_handler(struct fbserv_obj *fbsp);
+extern void
+tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *data);
+extern void
+tclcad_close_client_handler(struct fbserv_obj *fbsp, int sub);
+
 __END_DECLS
 
 #endif /* LIBTCLCAD_TCLCAD_PRIVATE_H */

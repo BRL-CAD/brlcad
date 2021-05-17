@@ -643,7 +643,7 @@ rem_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(ycenter);
     *(uint32_t *)&buf[2*NET_LONG_LEN] = htonl(xzoom);
     *(uint32_t *)&buf[3*NET_LONG_LEN] = htonl(yzoom);
-    if (pkg_send(MSG_FBV, (const char *)buf, 4*NET_LONG_LEN, PCP(ifp)) < 4*NET_LONG_LEN)
+    if (pkg_send(MSG_FBVIEW, (const char *)buf, 4*NET_LONG_LEN, PCP(ifp)) < 4*NET_LONG_LEN)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;

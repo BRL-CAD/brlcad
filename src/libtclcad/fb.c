@@ -355,9 +355,16 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	if (port >= 0)
+	if (port >= 0) {
+	    //Set up fbo_fbs callbacks, then call fbs_open
+	    fbop->fbo_fbs.fbs_is_listening = &tclcad_is_listening;
+	    fbop->fbo_fbs.fbs_listen_on_port = &tclcad_listen_on_port;
+	    fbop->fbo_fbs.fbs_open_server_handler = &tclcad_open_server_handler;
+	    fbop->fbo_fbs.fbs_close_server_handler = &tclcad_close_server_handler;
+	    fbop->fbo_fbs.fbs_open_client_handler = &tclcad_open_client_handler;
+	    fbop->fbo_fbs.fbs_close_client_handler = &tclcad_close_client_handler;
 	    fbs_open(&fbop->fbo_fbs, port);
-	else {
+	} else {
 	    fbs_close(&fbop->fbo_fbs);
 	}
 	bu_vls_printf(&vls, "%d", fbop->fbo_fbs.fbs_listener.fbsl_port);
@@ -1066,9 +1073,16 @@ to_listen(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
-	if (port >= 0)
+	if (port >= 0) {
+	    // Set up fbo_fbs callbacks, then call fbs_open
+	    tvd->gdv_fbs.fbs_is_listening = &tclcad_is_listening;
+	    tvd->gdv_fbs.fbs_listen_on_port = &tclcad_listen_on_port;
+	    tvd->gdv_fbs.fbs_open_server_handler = &tclcad_open_server_handler;
+	    tvd->gdv_fbs.fbs_close_server_handler = &tclcad_close_server_handler;
+	    tvd->gdv_fbs.fbs_open_client_handler = &tclcad_open_client_handler;
+	    tvd->gdv_fbs.fbs_close_client_handler = &tclcad_close_client_handler;
 	    fbs_open(&tvd->gdv_fbs, port);
-	else {
+	} else {
 	    fbs_close(&tvd->gdv_fbs);
 	}
 	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
