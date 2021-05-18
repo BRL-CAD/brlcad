@@ -77,7 +77,7 @@ public:
 
   QPoint getCursorPosition();
 
-  void listen(int *fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
+  void listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
   std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *> listeners;
 
 signals:

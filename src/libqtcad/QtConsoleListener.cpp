@@ -31,7 +31,7 @@
 
 void noMessageOutput(QtMsgType, const QMessageLogContext&, const QString&) {}
 
-QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
+QConsoleListener::QConsoleListener(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
 {
     this->process = p;
     this->callback = c;
@@ -43,10 +43,10 @@ QConsoleListener::QConsoleListener(int *fd, struct ged_subprocess *p, bu_process
 	    Qt::QueuedConnection
 	    );
 #ifdef Q_OS_WIN
-    HANDLE h = (!fd) ? GetStdHandle(STDIN) : (HANDLE)_get_osfhandle(*fd);
+    HANDLE h = (fd < 0) ? GetStdHandle(STDIN) : (HANDLE)_get_osfhandle(fd);
     m_notifier = new QWinEventNotifier(h);
 #else
-    int lfd = (!fd) ? fileno(stdin) : *fd;
+    int lfd = (fd < 0) ? fileno(stdin) : fd;
     m_notifier = new QSocketNotifier(lfd, QSocketNotifier::Read);
 #endif
     // NOTE : move to thread to avoid blocking, then sync with

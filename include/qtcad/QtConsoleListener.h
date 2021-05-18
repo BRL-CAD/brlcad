@@ -48,7 +48,7 @@ class QTCAD_EXPORT QConsoleListener : public QObject
     Q_OBJECT
 
     public:
-	QConsoleListener(int *fd = NULL, struct ged_subprocess *p = NULL, bu_process_io_t t = BU_PROCESS_STDIN, ged_io_func_t c = NULL, void *d = NULL);
+	QConsoleListener(int fd = -1, struct ged_subprocess *p = NULL, bu_process_io_t t = BU_PROCESS_STDIN, ged_io_func_t c = NULL, void *d = NULL);
 	~QConsoleListener();
 
 	// Called by client code when it is done with the process

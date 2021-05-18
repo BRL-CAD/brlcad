@@ -75,21 +75,24 @@ tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_fun
 {
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
 	return;
-    int *fdp = (int *)bu_process_fd(p->p, d);
-    if (fdp) {
-	struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
-	Tcl_CreateFileHandler(*fdp, t_iod->io_mode, callback, (ClientData)data);
-	switch (d) {
-	    case BU_PROCESS_STDIN:
-		p->stdin_active = 1;
-		break;
-	    case BU_PROCESS_STDOUT:
-		p->stdout_active = 1;
-		break;
-	    case BU_PROCESS_STDERR:
-		p->stderr_active = 1;
-		break;
-	}
+    int fd = bu_process_fileno(p->p, d);
+
+    // If invalid, nothing to do
+    if (fd < 0)
+	return;
+
+    struct tclcad_io_data *t_iod = (struct tclcad_io_data *)p->gedp->ged_io_data;
+    Tcl_CreateFileHandler(fd, t_iod->io_mode, callback, (ClientData)data);
+    switch (d) {
+	case BU_PROCESS_STDIN:
+	    p->stdin_active = 1;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    p->stdout_active = 1;
+	    break;
+	case BU_PROCESS_STDERR:
+	    p->stderr_active = 1;
+	    break;
     }
 }
 
@@ -98,10 +101,10 @@ void
 tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d)
 {
     if (!p) return;
-    int *fdp = (int *)bu_process_fd(p->p, d);
-    if (fdp) {
-	Tcl_DeleteFileHandler(*fdp);
-	close(*fdp);
+    int fd = bu_process_fileno(p->p, d);
+    if (fd >= 0) {
+	Tcl_DeleteFileHandler(fd);
+	close(fd);
     }
     switch (d) {
 	case BU_PROCESS_STDIN:
@@ -136,31 +139,35 @@ tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_fun
 	pchan = (*pmap)[p];
     }
 
-    HANDLE *fdp = (HANDLE *)bu_process_fd(p->p, d);
-    if (fdp) {
-	switch (d) {
-	    case BU_PROCESS_STDIN:
-		p->stdin_active = 1;
-		if (!pchan->cstdin) {
-		    pchan->cstdin = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-		    Tcl_CreateChannelHandler(pchan->cstdin, t_iod->io_mode, callback, (ClientData)data);
-		}
-		break;
-	    case BU_PROCESS_STDOUT:
-		p->stdout_active = 1;
-		if (!pchan->cstdout) {
-		    pchan->cstdout = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-		    Tcl_CreateChannelHandler(pchan->cstdout, t_iod->io_mode, callback, (ClientData)data);
-		}
-		break;
-	    case BU_PROCESS_STDERR:
-		p->stderr_active = 1;
-		if (!pchan->cstderr) {
-		    pchan->cstderr = Tcl_MakeFileChannel(*fdp, t_iod->io_mode);
-		    Tcl_CreateChannelHandler(pchan->cstderr, t_iod->io_mode, callback, (ClientData)data);
-		}
-		break;
-	}
+    int fd = bu_process_fileno(p->p, d);
+
+    // If fd is invalid, nothing to do.
+    if (fd < 0)
+	return;
+
+    HANDLE hdl = (HANDLE)_get_osfhandle(fd);
+    switch (d) {
+	case BU_PROCESS_STDIN:
+	    p->stdin_active = 1;
+	    if (!pchan->cstdin) {
+		pchan->cstdin = Tcl_MakeFileChannel(hdl, t_iod->io_mode);
+		Tcl_CreateChannelHandler(pchan->cstdin, t_iod->io_mode, callback, (ClientData)data);
+	    }
+	    break;
+	case BU_PROCESS_STDOUT:
+	    p->stdout_active = 1;
+	    if (!pchan->cstdout) {
+		pchan->cstdout = Tcl_MakeFileChannel(hdl, t_iod->io_mode);
+		Tcl_CreateChannelHandler(pchan->cstdout, t_iod->io_mode, callback, (ClientData)data);
+	    }
+	    break;
+	case BU_PROCESS_STDERR:
+	    p->stderr_active = 1;
+	    if (!pchan->cstderr) {
+		pchan->cstderr = Tcl_MakeFileChannel(hdl, t_iod->io_mode);
+		Tcl_CreateChannelHandler(pchan->cstderr, t_iod->io_mode, callback, (ClientData)data);
+	    }
+	    break;
     }
 }
 

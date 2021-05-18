@@ -368,7 +368,7 @@ QPoint QtConsole::getCursorPosition()
 }
 
 //-----------------------------------------------------------------------------
-void QtConsole::listen(int *fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
+void QtConsole::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
 {
   QConsoleListener *l = new QConsoleListener(fd, p, t, c, d);
   bu_log("Start listening: %d\n", (int)t);

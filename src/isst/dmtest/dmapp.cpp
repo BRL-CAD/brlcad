@@ -37,11 +37,11 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t 
 
     QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
 
-    int *fdp = (int *)bu_process_fd(p->p, t);
-    if (!fdp)
+    int fd = bu_process_fileno(p->p, t);
+    if (fd < 0)
 	return;
 
-    c->listen(fdp, p, t, callback, data);
+    c->listen(fd, p, t, callback, data);
 
     switch (t) {
 	case BU_PROCESS_STDIN:

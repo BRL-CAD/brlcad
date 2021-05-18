@@ -84,16 +84,13 @@ BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, bu_process_io_t
 
 
 /**
- * Retrieve the pointer to the input (BU_PROCESS_STDIN), output
- * (BU_PROCESS_STDOUT), or error (BU_PROCESS_STDERR) file descriptor associated
- * with the process.  To use this in calling code, the caller must cast the
- * supplied pointer to the file handle type of the calling code's specific
- * platform.
+ * Retrieve the file descriptor to the input (BU_PROCESS_STDIN), output
+ * (BU_PROCESS_STDOUT), or error (BU_PROCESS_STDERR) I/O channel associated
+ * with the process.
  *
- * FIXME: void pointer casting is bad.  this function probably
- * shouldn't exist.
+ * For Windows cases where HANDLE is needed, use _get_osfhandle
  */
-BU_EXPORT void *bu_process_fd(struct bu_process *pinfo, bu_process_io_t d);
+BU_EXPORT int bu_process_fileno(struct bu_process *pinfo, bu_process_io_t d);
 
 
 /**
