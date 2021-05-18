@@ -324,17 +324,6 @@ null_openFb(struct dm *UNUSED(dmp))
     return 0;
 }
 
-struct fbserv_obj *
-null_get_fbserv(struct dm *UNUSED(dmp))
-{
-    return NULL;
-}
-
-void
-null_put_fbserv(struct dm *UNUSED(dmp))
-{
-    return;
-}
 
 struct dm_impl dm_null_impl = {
     null_open,
@@ -432,9 +421,6 @@ struct dm_impl dm_null_impl = {
     0,                          /* not overriding the auto font size */
     BU_STRUCTPARSE_NULL,
     FB_NULL,
-    NULL,
-    null_get_fbserv,
-    null_put_fbserv,
     0				/* Tcl interpreter */
 };
 

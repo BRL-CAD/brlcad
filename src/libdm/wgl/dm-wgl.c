@@ -846,37 +846,6 @@ wgl_event_cmp(struct dm *dmp, dm_event_t type, int event)
     };
 }
 
-HIDDEN struct fbserv_obj *
-wgl_get_fbserv(struct dm *dmp)
-{
-    if (!dmp->i->fbp)
-	return NULL;
-
-    if (dmp->i->fbs)
-	return dmp->i->fbs;
-
-    BU_GET(dmp->i->fbs, struct fbserv_obj);
-    dmp->i->fbs->fbs_is_listening = &wgl_is_listening;
-    dmp->i->fbs->fbs_listen_on_port = &wgl_listen_on_port;
-    dmp->i->fbs->fbs_open_server_handler = &wgl_open_server_handler;
-    dmp->i->fbs->fbs_close_server_handler = &wgl_close_server_handler;
-    dmp->i->fbs->fbs_open_client_handler = &wgl_open_client_handler;
-    dmp->i->fbs->fbs_close_client_handler = &wgl_close_client_handler;
-
-    return dmp->i->fbs;
-}
-
-HIDDEN void
-wgl_put_fbserv(struct dm *dmp)
-{
-    if (!dmp->i->fbs)
-	return;
-
-    fbs_close(dmp->i->fbs);
-    BU_PUT(dmp->i->fbs, struct fbserv_obj);
-    dmp->i->fbs = NULL;
-}
-
 struct bu_structparse wgl_vparse[] = {
     {"%d",  1, "depthcue",         gl_MV_O(cueing_on),       gl_colorchange, NULL, NULL },
     {"%d",  1, "zclip",            gl_MV_O(zclipping_on),    gl_zclip_hook, NULL, NULL },
@@ -995,9 +964,6 @@ struct dm_impl dm_wgl_impl = {
     0,                          /* not overriding the auto font size */
     wgl_vparse,
     FB_NULL,
-    NULL,
-    wgl_get_fbserv,
-    wgl_put_fbserv,
     0				/* Tcl interpreter */
 };
 

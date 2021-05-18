@@ -214,14 +214,6 @@ DM_NULL_EXPORT extern int
 null_openFb(struct dm *dmp);
 
 
-DM_NULL_EXPORT extern struct fbserv_obj *
-null_get_fbserv(struct dm *dmp);
-
-
-DM_NULL_EXPORT extern void
-null_put_fbserv(struct dm *dmp);
-
-
 /* FB null functions */
 
 DM_NULL_EXPORT extern int

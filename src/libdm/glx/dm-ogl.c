@@ -107,7 +107,6 @@ HIDDEN XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
 
 struct dm *ogl_open(void *ctx, void *vinterp, int argc, const char **argv);
 HIDDEN int ogl_close(struct dm *dmp);
-HIDDEN void ogl_put_fbserv(struct dm *dmp);
 HIDDEN int ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int ogl_configureWin_guts(struct dm *dmp, int force);
 HIDDEN int ogl_configureWin(struct dm *dmp, int force);
@@ -477,8 +476,6 @@ ogl_close(struct dm *dmp)
 {
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
-
-    ogl_put_fbserv(dmp);
 
     if (pubvars->dpy) {
 	if (privars->glxc) {
@@ -1425,37 +1422,6 @@ ogl_event_cmp(struct dm *dmp, dm_event_t type, int event)
     };
 }
 
-HIDDEN struct fbserv_obj *
-ogl_get_fbserv(struct dm *dmp)
-{
-    if (!dmp->i->fbp)
-	return NULL;
-
-    if (dmp->i->fbs)
-	return dmp->i->fbs;
-
-    BU_GET(dmp->i->fbs, struct fbserv_obj);
-    dmp->i->fbs->fbs_is_listening = &ogl_is_listening;
-    dmp->i->fbs->fbs_listen_on_port = &ogl_listen_on_port;
-    dmp->i->fbs->fbs_open_server_handler = &ogl_open_server_handler;
-    dmp->i->fbs->fbs_close_server_handler = &ogl_close_server_handler;
-    dmp->i->fbs->fbs_open_client_handler = &ogl_open_client_handler;
-    dmp->i->fbs->fbs_close_client_handler = &ogl_close_client_handler;
-
-    return dmp->i->fbs;
-}
-
-HIDDEN void
-ogl_put_fbserv(struct dm *dmp)
-{
-    if (!dmp->i->fbs)
-	return;
-
-    fbs_close(dmp->i->fbs);
-    BU_PUT(dmp->i->fbs, struct fbserv_obj);
-    dmp->i->fbs = NULL;
-}
-
 struct dm_impl dm_ogl_impl = {
     ogl_open,
     ogl_close,
@@ -1552,9 +1518,6 @@ struct dm_impl dm_ogl_impl = {
     0,                          /* not overriding the auto font size */
     gl_vparse,
     FB_NULL,
-    NULL,
-    ogl_get_fbserv,
-    ogl_put_fbserv,
     0				/* Tcl interpreter */
 };
 

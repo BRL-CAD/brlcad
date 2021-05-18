@@ -192,20 +192,6 @@ dm_get_fb(struct dm *dmp)
     return dmp->i->fbp;
 }
 
-struct fbserv_obj *
-dm_get_fbserv(struct dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->i->dm_get_fbserv(dmp);
-}
-
-void
-dm_put_fbserv(struct dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return;
-    dmp->i->dm_put_fbserv(dmp);
-}
-
 const char *
 dm_get_dm_name(const struct dm *dmp)
 {

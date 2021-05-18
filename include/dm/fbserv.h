@@ -42,7 +42,6 @@
 
 #include "common.h"
 #include "pkg.h"
-#include "dm/defines.h"
 
 __BEGIN_DECLS
 

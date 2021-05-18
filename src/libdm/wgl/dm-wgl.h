@@ -38,8 +38,6 @@
 #include "tkWinInt.h"
 
 #include "bu/vls.h"
-#include "pkg.h"
-#include "dm/fbserv.h"
 
 __BEGIN_DECLS
 
@@ -98,14 +96,6 @@ struct wgl_vars {
 };
 
 extern void wgl_fogHint();
-
-// fbserv callbacks
-extern int wgl_is_listening(struct fbserv_obj *fbsp);
-extern int wgl_listen_on_port(struct fbserv_obj *fbsp, int available_port);
-extern void wgl_open_server_handler(struct fbserv_obj *fbsp);
-extern void wgl_close_server_handler(struct fbserv_obj *fbsp);
-extern void wgl_open_client_handler(struct fbserv_obj *fbsp, int i, void *data);
-extern void wgl_close_client_handler(struct fbserv_obj *fbsp, int sub);
 
 __END_DECLS
 
