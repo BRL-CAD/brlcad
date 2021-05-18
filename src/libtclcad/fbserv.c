@@ -49,6 +49,11 @@ comm_error(const char *str)
 }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
+/* Per SVN commit r29234, this function is needed because Windows uses
+ * Tcl_OpenTcpServer rather than pkg_permserver to set up communication
+ * on Windows (Tcl_OpenTcpServer's output is saved on fbsl_chan rather
+ * than fbsl_fd.)  This function set up a pkg_conn structure and
+ * assigns the fbsl_fd number for that scenario. */
 static struct pkg_conn *
 fbs_makeconn(int fd, const struct pkg_switch *switchp)
 {
@@ -195,7 +200,7 @@ tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
     fbsp->fbs_clients[i].fbsc_chan = (Tcl_Channel)data;
-    fbsp->fbs_clients[i].fbsc_handler = existing_client_handler;
+    fbsp->fbs_clients[i].fbsc_handler = fbs_existing_client_handler;
     Tcl_CreateChannelHandler(fbsp->fbs_clients[i].fbsc_chan, TCL_READABLE,
 	    fbsp->fbs_clients[i].fbsc_handler, (ClientData)&fbsp->fbs_clients[i]);
 #else
