@@ -36,6 +36,7 @@
 #include "bv/defines.h"
 #include "rt/search.h"
 #include "bv/defines.h"
+#include "dm/fbserv.h" // for fbserv_obj
 
 __BEGIN_DECLS
 
@@ -276,6 +277,18 @@ struct ged {
     void (*ged_create_io_handler)(struct ged_subprocess *gp, bu_process_io_t d, ged_io_func_t callback, void *data);
     void (*ged_delete_io_handler)(struct ged_subprocess *gp, bu_process_io_t fd);
     void *ged_io_data;  /**< brief caller supplied data */
+
+    /* fbserv server and I/O callbacks.  These must hook into the application's event
+     * loop, and so cannot be effectively supplied by low-level libraries - the
+     * application must tell us how to tie in with the toplevel event
+     * processing system it is using (typically tookit specific). */
+    struct fbserv_obj *ged_fbs;
+    int (*fbs_is_listening)(struct fbserv_obj *);          /**< @brief return 1 if listening, else 0 */
+    int (*fbs_listen_on_port)(struct fbserv_obj *, int);  /**< @brief return 1 on success, 0 on failure */
+    void (*fbs_open_server_handler)(struct fbserv_obj *);   /**< @brief platform/tookit method to open listener handler */
+    void (*fbs_close_server_handler)(struct fbserv_obj *);   /**< @brief platform/tookit method to close handler listener */
+    void (*fbs_open_client_handler)(struct fbserv_obj *, int, void *);   /**< @brief platform/tookit specific client handler setup (called by fbs_new_client) */
+    void (*fbs_close_client_handler)(struct fbserv_obj *, int);   /**< @brief platform/tookit method to close handler for client at index client_id */
 
     // Other callbacks...
     // Tcl command strings - these are libtclcad level callbacks that execute user supplied Tcl commands if set:

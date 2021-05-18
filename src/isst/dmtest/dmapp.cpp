@@ -26,6 +26,7 @@
 #include "bu/env.h"
 #include "bu/ptbl.h"
 #include "ged.h"
+#include "./fbserv.h"
 #include "dmapp.h"
 
 extern "C" void
@@ -108,6 +109,13 @@ DMApp::load_g(const char *filename, int argc, const char *argv[])
 	w->statusBar()->showMessage("open failed");
 	return -1;
     }
+
+    gedp->fbs_is_listening = &tclcad_is_listening;
+    gedp->fbs_listen_on_port = &tclcad_listen_on_port;
+    gedp->fbs_open_server_handler = &tclcad_open_server_handler;
+    gedp->fbs_close_server_handler = &tclcad_close_server_handler;
+    gedp->fbs_open_client_handler = &tclcad_open_client_handler;
+    gedp->fbs_close_client_handler = &tclcad_close_client_handler;
 
     return 0;
 }

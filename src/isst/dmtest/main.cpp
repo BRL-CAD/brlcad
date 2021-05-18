@@ -27,6 +27,8 @@
 #include <string>
 #include <QSettings>
 
+#include <tcl.h>
+
 #include "main_window.h"
 #include "dmapp.h"
 
@@ -38,6 +40,8 @@ int main(int argc, char *argv[])
 {
 
     bu_setprogname(argv[0]);
+
+    Tcl_CreateInterp();
 
     QSurfaceFormat format;
     format.setDepthBufferSize(16);

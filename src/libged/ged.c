@@ -316,6 +316,16 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_all_dmp, struct bu_ptbl);
     bu_ptbl_init(gedp->ged_all_dmp, 8, "display managers");
 
+    /* Create a non-opened fbserv */
+    BU_GET(gedp->ged_fbs, struct fbserv_obj);
+    gedp->ged_fbs->fbs_listener.fbsl_fd = -1;
+    gedp->fbs_is_listening = NULL;
+    gedp->fbs_listen_on_port = NULL;
+    gedp->fbs_open_server_handler = NULL;
+    gedp->fbs_close_server_handler = NULL;
+    gedp->fbs_open_client_handler = NULL;
+    gedp->fbs_close_client_handler = NULL;
+
     /* ? */
     gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;

@@ -8,6 +8,7 @@ include_directories(
 
 set(DM_SRCS
   dm.c
+  ert.c
   screengrab.c
   )
 
