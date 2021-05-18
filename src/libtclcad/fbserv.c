@@ -144,6 +144,8 @@ tclcad_listen_on_port(struct fbserv_obj *fbsp, int available_port)
 	/* This clobbers the result string which probably has junk
 	 * related to the failed open.
 	 */
+	Tcl_DString ds;
+	Tcl_DStringInit(&ds);
 	Tcl_DStringResult((Tcl_Interp *)fbsp->fbs_interp, &ds);
 	return 0;
     } else {
@@ -192,7 +194,7 @@ tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
 #endif
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    fbsp->fbs_clients[i].fbsc_chan = chan;
+    fbsp->fbs_clients[i].fbsc_chan = (Tcl_Channel)data;
     fbsp->fbs_clients[i].fbsc_handler = existing_client_handler;
     Tcl_CreateChannelHandler(fbsp->fbs_clients[i].fbsc_chan, TCL_READABLE,
 	    fbsp->fbs_clients[i].fbsc_handler, (ClientData)&fbsp->fbs_clients[i]);
@@ -206,7 +208,7 @@ void
 tclcad_close_client_handler(struct fbserv_obj *fbsp, int sub)
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    Tcl_DeleteChannelHandler(fbsp->fbs_clients[sub].fbsc_chan, fbsp->fbs_clients[sub].fbsc_handler, (ClientData)fb  sp->fbs_clients[sub].fbsc_fd);
+    Tcl_DeleteChannelHandler(fbsp->fbs_clients[sub].fbsc_chan, fbsp->fbs_clients[sub].fbsc_handler, (ClientData)fbsp->fbs_clients[sub].fbsc_fd);
 
     Tcl_Close((Tcl_Interp *)fbsp->fbs_interp, fbsp->fbs_clients[sub].fbsc_chan);
     fbsp->fbs_clients[sub].fbsc_chan = NULL;
