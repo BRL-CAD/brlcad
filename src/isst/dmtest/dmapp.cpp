@@ -110,12 +110,12 @@ DMApp::load_g(const char *filename, int argc, const char *argv[])
 	return -1;
     }
 
-    gedp->fbs_is_listening = &tclcad_is_listening;
-    gedp->fbs_listen_on_port = &tclcad_listen_on_port;
-    gedp->fbs_open_server_handler = &tclcad_open_server_handler;
-    gedp->fbs_close_server_handler = &tclcad_close_server_handler;
-    gedp->fbs_open_client_handler = &tclcad_open_client_handler;
-    gedp->fbs_close_client_handler = &tclcad_close_client_handler;
+    gedp->fbs_is_listening = &qdm_is_listening;
+    gedp->fbs_listen_on_port = &qdm_listen_on_port;
+    gedp->fbs_open_server_handler = &qdm_open_server_handler;
+    gedp->fbs_close_server_handler = &qdm_close_server_handler;
+    gedp->fbs_open_client_handler = &qdm_open_client_handler;
+    gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
     return 0;
 }
