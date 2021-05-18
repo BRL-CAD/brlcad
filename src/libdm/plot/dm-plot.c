@@ -771,6 +771,7 @@ struct dm_impl dm_plot_impl = {
     0,                          /* not overriding the auto font size */
     BU_STRUCTPARSE_NULL,
     FB_NULL,
+    NULL,
     null_get_fbserv,
     null_put_fbserv,
     NULL			/* Tcl interpreter */

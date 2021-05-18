@@ -489,6 +489,7 @@ struct dm_impl dm_txt_impl = {
     0,                          /* not overriding the auto font size */
     BU_STRUCTPARSE_NULL,
     FB_NULL,
+    NULL,
     txt_get_fbserv,
     txt_put_fbserv,
     0				/* Tcl interpreter */

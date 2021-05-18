@@ -41,6 +41,9 @@
 #include "tk.h"
 #define HAVE_X11_TYPES 1
 
+#include "pkg.h"
+#include "dm/fbserv.h"
+
 extern struct dm dm_ogl;
 
 /* Private, platform specific OpenGL variables */
@@ -64,6 +67,14 @@ struct dm_glxvars {
     int devbuttonpress;
     int devbuttonrelease;
 };
+
+// fbserv callbacks
+extern int ogl_is_listening(struct fbserv_obj *fbsp);
+extern int ogl_listen_on_port(struct fbserv_obj *fbsp, int available_port);
+extern void ogl_open_server_handler(struct fbserv_obj *fbsp);
+extern void ogl_close_server_handler(struct fbserv_obj *fbsp);
+extern void ogl_open_client_handler(struct fbserv_obj *fbsp, int i, void *data);
+extern void ogl_close_client_handler(struct fbserv_obj *fbsp, int sub);
 
 #endif /* DM_OGL_H */
 

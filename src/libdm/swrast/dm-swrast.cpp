@@ -631,6 +631,7 @@ struct dm_impl dm_swrast_impl = {
     0,                          /* not overriding the auto font size */
     gl_vparse,
     FB_NULL,
+    NULL,
     null_get_fbserv,
     null_put_fbserv,
     0				/* Tcl interpreter */

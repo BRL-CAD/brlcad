@@ -1,6 +1,7 @@
 set(OGL_SRCS
   dm-ogl.c
   if_ogl.c
+  fbserv.c
   )
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)

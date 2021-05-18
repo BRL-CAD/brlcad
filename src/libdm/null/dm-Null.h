@@ -213,6 +213,7 @@ null_processEvents(struct dm *dmp);
 DM_NULL_EXPORT extern int
 null_openFb(struct dm *dmp);
 
+
 DM_NULL_EXPORT extern struct fbserv_obj *
 null_get_fbserv(struct dm *dmp);
 
