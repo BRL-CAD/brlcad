@@ -109,7 +109,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     vp = &gd_rt_cmd[0];
     *vp++ = rt;
 
-    (void)sprintf(port_string, "-F%d", 0);
+    (void)sprintf(port_string, "-F%d", fbs->fbs_listener.fbsl_port);
     *vp++ = port_string;
 
     *vp++ = "-M";
