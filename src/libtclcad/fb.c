@@ -48,10 +48,6 @@
 #include "./tclcad_private.h"
 #include "./view/view.h"
 
-/* defined in libfb/tcl.c */
-extern int fb_refresh(struct fb *ifp, int x, int y, int w, int h);
-
-
 #define FBO_CONSTRAIN(_v, _a, _b)		\
     ((_v > _a) ? (_v < _b ? _v : _b) : _a)
 

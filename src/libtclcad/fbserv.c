@@ -111,10 +111,15 @@ new_client_handler(ClientData clientData, int UNUSED(port))
     struct pkg_conn *pcp = NULL;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) != TCL_OK)
+    uintptr_t pfd = (uintptr_t)fbslp->fbsl_fd;
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&pfd) != TCL_OK)
 	return;
     cdata = (void *)chan;
-    pcp = fbs_makeconn(fd, pswitch);
+    // TODO - we need the uintptr_t above, or we introduce stack corruption on
+    // Windows.  Less certain about why we're casting back to int and using
+    // it for fbs_makeconn...  presumably it's not really a valid pkc_fd, so
+    // does it make sense to assign it there?
+    pcp = fbs_makeconn((int)pfd, pswitch);
 #else
     pcp = pkg_getclient(fd, pswitch, comm_error, 0);
 #endif
