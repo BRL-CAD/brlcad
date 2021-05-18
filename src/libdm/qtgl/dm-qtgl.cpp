@@ -598,6 +598,8 @@ struct dm_impl dm_qtgl_impl = {
     0,                          /* not overriding the auto font size */
     gl_vparse,
     FB_NULL,
+    null_get_fbserv,
+    null_put_fbserv,
     0				/* Tcl interpreter */
 };
 

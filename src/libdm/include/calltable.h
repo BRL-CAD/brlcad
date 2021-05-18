@@ -153,6 +153,8 @@ struct dm_impl {
     int dm_fontsize;		/**< @brief !0 override's the auto font size */
     struct bu_structparse *vparse;    /**< @brief Table listing settable variables */
     struct fb *fbp;                    /**< @brief Framebuffer associated with this display instance */
+    struct fbserv_obj *(*dm_get_fbserv)(struct dm *dmp);  /**< @brief get/create framebuffer server associated with fbp */
+    void (*dm_put_fbserv)(struct dm *dmp);  /**< @brief close/delete framebuffer server associated with fbp */
     void *dm_interp;		/**< @brief interpreter */
 };
 

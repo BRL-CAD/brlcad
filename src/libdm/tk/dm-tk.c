@@ -1207,6 +1207,8 @@ struct dm_impl dm_tk_impl = {
     0,                          /* not overriding the auto font size */
     Tk_vparse,
     FB_NULL,
+    null_get_fbserv,
+    null_put_fbserv,
     0				/* Tcl interpreter */
 };
 

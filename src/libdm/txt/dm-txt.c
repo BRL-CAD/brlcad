@@ -379,6 +379,19 @@ txt_openFb(struct dm *UNUSED(dmp))
     return 0;
 }
 
+HIDDEN struct fbserv_obj *
+txt_get_fbserv(struct dm *UNUSED(dmp))
+{
+    bu_log("get_fbserv called\n");
+    return NULL;
+}
+
+HIDDEN void
+txt_put_fbserv(struct dm *UNUSED(dmp))
+{
+    bu_log("put_fbserv called\n");
+    return;
+}
 
 struct dm_impl dm_txt_impl = {
     txt_open,
@@ -476,6 +489,8 @@ struct dm_impl dm_txt_impl = {
     0,                          /* not overriding the auto font size */
     BU_STRUCTPARSE_NULL,
     FB_NULL,
+    txt_get_fbserv,
+    txt_put_fbserv,
     0				/* Tcl interpreter */
 };
 
