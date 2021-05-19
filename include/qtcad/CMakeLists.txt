@@ -1,7 +1,9 @@
 set(qtcad_headers
   QtConsole.h
+  QtConsoleListener.h
   QtGL.h
   QtSW.h
+  defines.h
   )
 BRLCAD_MANAGE_FILES(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad)
 
