@@ -924,6 +924,8 @@ _pkg_checkin(struct pkg_conn *pc, int nodelay)
 	FD_SET(pc->pkc_fd, &bits);
     }
     if (pc->pkc_fd == PKG_STDIO_MODE) {
+	// TODO - select doesn't work on non-socket file descriptors on Windows,
+	// so this isn't going to fly there.
 	i = select(pc->pkc_in_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv);
     } else {
 	i = select(pc->pkc_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv);
