@@ -20,11 +20,12 @@ set(dm_srcs
   main.cpp
   main_window.cpp
   dmapp.cpp
-  fbserv.c
+  fbserv.cpp
   )
 
 set(dm_moc_headers
   main_window.h
+  fbserv.h
   dmapp.h
   )
 
