@@ -293,6 +293,13 @@ _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
     memset((char *)pc, 0, sizeof(struct pkg_conn));
     pc->pkc_magic = PKG_MAGIC;
     pc->pkc_fd = fd;
+    if (fd == PKG_STDIO_MODE) {
+	pc->pkc_in_fd = -1;
+	pc->pkc_out_fd = -1;
+    } else {
+	pc->pkc_in_fd = fd;
+	pc->pkc_out_fd = fd;
+    }
     pc->pkc_switch = switchp;
     pc->pkc_errlog = errlog;
     pc->pkc_left = -1;
@@ -335,6 +342,9 @@ _pkg_ck_debug(void)
 struct pkg_conn *
 pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *UNUSED(passwd), const struct pkg_switch *switchp, void (*errlog)(const char *msg))
 {
+    if (strlen(host) == 5 && !strncmp(host, "STDIO", 5)) {
+	return _pkg_makeconn(PKG_STDIO_MODE, switchp, errlog);
+    }
 #ifdef HAVE_WINSOCK_H
     LPHOSTENT lpHostEntry;
     SOCKET netfd;
@@ -716,6 +726,11 @@ pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *pro
 struct pkg_conn *
 pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg), int nodelay)
 {
+    if (fd == PKG_STDIO_MODE) {
+	// Client has specified stdin/stdout mode.  That means we're doing
+	// communication via pipes, not TCP.  No need to do the socket setup.
+	return _pkg_makeconn(fd, switchp, errlog);
+    }
     int s2;
 #ifdef HAVE_WINSOCK_H
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
@@ -824,16 +839,19 @@ pkg_close(struct pkg_conn *pc)
 	pc->pkc_inbuf = (char *)0;
 	pc->pkc_inlen = 0;
     }
+
+    if (pc->pkc_fd != PKG_STDIO_MODE) {
 #ifdef HAVE_WINSOCK_H
-    (void)closesocket(pc->pkc_fd);
+	(void)closesocket(pc->pkc_fd);
 #else
-    (void)close(pc->pkc_fd);
+	(void)close(pc->pkc_fd);
 #endif
 
 #ifdef HAVE_WINSOCK_H
-    /* deinitialize Windows socket networking, decrements ref count */
-    WSACleanup();
+	/* deinitialize Windows socket networking, decrements ref count */
+	WSACleanup();
 #endif
+    }
 
     pc->pkc_fd = -1;		/* safety */
     pc->pkc_buf = (char *)0;	/* safety */
@@ -885,6 +903,7 @@ _pkg_inget(struct pkg_conn *pc, char *buf, size_t count)
 static void
 _pkg_checkin(struct pkg_conn *pc, int nodelay)
 {
+
     struct timeval tv;
     fd_set bits;
     ssize_t i;
@@ -899,8 +918,16 @@ _pkg_checkin(struct pkg_conn *pc, int nodelay)
 
     errno = 0;
     FD_ZERO(&bits);
-    FD_SET(pc->pkc_fd, &bits);
-    i = select(pc->pkc_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv);
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	FD_SET(pc->pkc_in_fd, &bits);
+    } else {
+	FD_SET(pc->pkc_fd, &bits);
+    }
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	i = select(pc->pkc_in_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv);
+    } else {
+	i = select(pc->pkc_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv);
+    }
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
@@ -986,7 +1013,11 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
      * in select() waiting for capacity to go out, and reading input
      * as well.  Prevents deadlocking.
      */
-    i = writev(pc->pkc_fd, cmdvec, (len>0)?2:1);
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	i = writev(pc->pkc_out_fd, cmdvec, (len>0)?2:1);
+    } else {
+	i = writev(pc->pkc_fd, cmdvec, (len>0)?2:1);
+    }
     if (i != (ssize_t)(len+sizeof(hdr))) {
 	if (i < 0) {
 	    _pkg_perror(pc->pkc_errlog, "pkg_send: writev");
@@ -1012,7 +1043,11 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	    memcpy(tbuf+sizeof(hdr), buf, len);
 
 	errno = 0;
-	i = PKG_SEND(pc->pkc_fd, tbuf, len+sizeof(hdr));
+	if (pc->pkc_fd == PKG_STDIO_MODE) {
+	    i = PKG_SEND(pc->pkc_out_fd, tbuf, len+sizeof(hdr));
+	} else {
+	    i = PKG_SEND(pc->pkc_fd, tbuf, len+sizeof(hdr));
+	}
 	if ((size_t)i != len+sizeof(hdr)) {
 	    if (i < 0) {
 		if (errno == EBADF)
@@ -1029,7 +1064,12 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
     }
     /* Send them separately */
     errno = 0;
-    if ((i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr))) != sizeof(hdr)) {
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	i = PKG_SEND(pc->pkc_out_fd, (char *)&hdr, sizeof(hdr));
+    } else {
+	i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr));
+    }
+    if (i != sizeof(hdr)) {
 	if (i < 0) {
 	    if (errno == EBADF)
 		return -1;
@@ -1044,7 +1084,11 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
     if (len <= 0)
 	return 0;
     errno = 0;
-    i = PKG_SEND(pc->pkc_fd, buf, len);
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	i = PKG_SEND(pc->pkc_out_fd, buf, len);
+    } else {
+	i = PKG_SEND(pc->pkc_fd, buf, len);
+    }
     if ((size_t)i != len) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1107,7 +1151,11 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
      * in select() waiting for capacity to go out, and reading input
      * as well.  Prevents deadlocking.
      */
-    i = writev(pc->pkc_fd, cmdvec, 3);
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	i = writev(pc->pkc_out_fd, cmdvec, 3);
+    } else {
+	i = writev(pc->pkc_fd, cmdvec, 3);
+    }
     if (i != (ssize_t)(len1+len2+sizeof(hdr))) {
 	if (i < 0) {
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: writev");
@@ -1139,7 +1187,11 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	if (len2 > 0)
 	    memcpy(tbuf+sizeof(hdr)+len1, buf2, len2);
 	errno = 0;
-	i = PKG_SEND(pc->pkc_fd, tbuf, len1+len2+sizeof(hdr));
+	if (pc->pkc_fd == PKG_STDIO_MODE) {
+	    i = PKG_SEND(pc->pkc_out_fd, tbuf, len1+len2+sizeof(hdr));
+	} else {
+	    i = PKG_SEND(pc->pkc_fd, tbuf, len1+len2+sizeof(hdr));
+	}
 	if ((size_t)i != len1+len2+sizeof(hdr)) {
 	    if (i < 0) {
 		if (errno == EBADF)
@@ -1156,7 +1208,11 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
     }
     /* Send it in three pieces */
     errno = 0;
-    i = (ssize_t)PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr));
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	i = (ssize_t)PKG_SEND(pc->pkc_out_fd, (char *)&hdr, sizeof(hdr));
+    } else {
+	i = (ssize_t)PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr));
+    }
     if (i != sizeof(hdr)) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1174,7 +1230,11 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
     }
 
     errno = 0;
-    i = PKG_SEND(pc->pkc_fd, buf1, len1);
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	i = PKG_SEND(pc->pkc_out_fd, buf1, len1);
+    } else {
+	i = PKG_SEND(pc->pkc_fd, buf1, len1);
+    }
     if ((size_t)i != len1) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1194,7 +1254,11 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	return i;
 
     errno = 0;
-    i = PKG_SEND(pc->pkc_fd, buf2, len2);
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	i = PKG_SEND(pc->pkc_out_fd, buf2, len2);
+    } else {
+	i = PKG_SEND(pc->pkc_fd, buf2, len2);
+    }
     if (i != (ssize_t)len2) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1267,7 +1331,11 @@ pkg_flush(struct pkg_conn *pc)
     }
 
     errno = 0;
-    i = write(pc->pkc_fd, pc->pkc_stream, (size_t)pc->pkc_strpos);
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	i = write(pc->pkc_out_fd, pc->pkc_stream, (size_t)pc->pkc_strpos);
+    } else {
+	i = write(pc->pkc_fd, pc->pkc_stream, (size_t)pc->pkc_strpos);
+    }
     if (i != pc->pkc_strpos) {
 	if (i < 0) {
 	    if (errno == EBADF)
@@ -1789,7 +1857,11 @@ pkg_suckin(struct pkg_conn *pc)
     }
 
     /* Take as much as the system will give us, up to buffer size */
-    got = PKG_READ(pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail);
+    if (pc->pkc_fd == PKG_STDIO_MODE) {
+	got = PKG_READ(pc->pkc_in_fd, &pc->pkc_inbuf[pc->pkc_inend], avail);
+    } else {
+	got = PKG_READ(pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail);
+    }
     if (got <= 0) {
 	if (got == 0) {
 	    if (_pkg_debug) {
