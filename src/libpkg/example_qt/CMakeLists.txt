@@ -11,7 +11,9 @@ if (BRLCAD_ENABLE_QT)
   LIST(REMOVE_DUPLICATES PKG_EXAMPLE_INCLUDES)
   include_directories(${PKG_EXAMPLE_INCLUDES})
 
-  BRLCAD_ADDEXEC(qt_test_server server.cpp "libbu;libpkg;Qt5::Core;Qt5::Network" NO_INSTALL)
+  QT5_WRAP_CPP(pkg_moc_srcs ncp.h)
+
+  BRLCAD_ADDEXEC(qt_test_server "server.cpp;${pkg_moc_srcs}" "libbu;libpkg;Qt5::Core;Qt5::Network" NO_INSTALL)
   BRLCAD_ADDEXEC(qt_test_client client.cpp "libbu;libpkg" NO_INSTALL)
 endif (BRLCAD_ENABLE_QT)
 

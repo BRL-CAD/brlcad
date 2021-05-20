@@ -37,6 +37,27 @@
 /* maximum number of digits on a port number */
 #define MAX_DIGITS      5
 
+#ifdef QT_SERVER
+#include <QHostAddress>
+#include <QTcpServer>
+
+class PKGServer : public QTcpServer
+{
+    public:
+
+	PKGServer();
+	~PKGServer();
+
+	struct pkg_conn *client;
+	int netfd;
+	int port = 2000;
+	struct bu_vls buffer = BU_VLS_INIT_ZERO;
+	char *msgbuffer;
+	long bytes = 0;
+
+};
+#endif
+
 #endif /* LIBPKG_EXAMPLE_NCP_H */
 
 /*
