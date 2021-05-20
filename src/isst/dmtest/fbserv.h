@@ -41,6 +41,25 @@
 
 #include "dm/fbserv.h"
 
+class QFBListener : public QObject
+{
+    Q_OBJECT
+
+    public:
+	QFBListener(struct fbserv_obj *fp = NULL, int is_client = 0);
+	~QFBListener();
+
+	int client = 0;
+	int fd = -1;
+	struct fbserv_obj *fbsp;
+	QSocketNotifier *m_notifier;
+
+    private:
+	QThread m_thread;
+
+};
+
+
 __BEGIN_DECLS
 
 extern int
