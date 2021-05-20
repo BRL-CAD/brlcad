@@ -24,7 +24,6 @@
 #  include <sys/wait.h>
 #endif
 
-#include <stdio.h>
 #include <stdlib.h> /* exit */
 #include <sys/types.h>
 #include "bio.h"
