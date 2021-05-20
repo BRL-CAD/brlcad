@@ -24,6 +24,7 @@
 #  include <sys/wait.h>
 #endif
 
+#include <stdio.h>
 #include <stdlib.h> /* exit */
 #include <sys/types.h>
 #include "bio.h"
@@ -111,27 +112,15 @@ bu_process_open(struct bu_process *pinfo, bu_process_io_t d)
     bu_process_close(pinfo, d);
 
     if (d == BU_PROCESS_STDIN) {
-#ifndef _WIN32
 	pinfo->fp_in = fdopen(pinfo->fd_in, "wb");
-#else
-	pinfo->fp_in = _fdopen(_open_osfhandle((intptr_t)pinfo->fd_in, _O_TEXT), "wb");
-#endif
 	return pinfo->fp_in;
     }
     if (d == BU_PROCESS_STDOUT) {
-#ifndef _WIN32
 	pinfo->fp_out = fdopen(pinfo->fd_out, "rb");
-#else
-	pinfo->fp_out = _fdopen(_open_osfhandle((intptr_t)pinfo->fd_out, _O_TEXT), "rb");
-#endif
 	return pinfo->fp_out;
     }
     if (d == BU_PROCESS_STDERR) {
-#ifndef _WIN32
 	pinfo->fp_err = fdopen(pinfo->fd_err, "rb");
-#else
-	pinfo->fp_err = _fdopen(_open_osfhandle((intptr_t)pinfo->fd_err, _O_TEXT), "rb");
-#endif
 	return pinfo->fp_err;
     }
 
@@ -446,13 +435,13 @@ bu_process_exec(
      * consistent - see
      * https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/open-osfhandle
      */
-    (*p)->fd_in = _open_osfhandle(pipe_inDup, 0);
+    (*p)->fd_in = _open_osfhandle((intptr_t)pipe_inDup, 0);
     if (out_eql_err) {
-	(*p)->fd_out = _open_osfhandle(pipe_errDup, 0);
+	(*p)->fd_out = _open_osfhandle((intptr_t)pipe_errDup, 0);
     } else {
-	(*p)->fd_out = _open_osfhandle(pipe_outDup, 0);
+	(*p)->fd_out = _open_osfhandle((intptr_t)pipe_outDup, 0);
     }
-    (*p)->fd_err = _open_osfhandle(pipe_errDup, 0);
+    (*p)->fd_err = _open_osfhandle((intptr_t)pipe_errDup, 0);
     (*p)->hProcess = pi.hProcess;
     (*p)->pid = pi.dwProcessId;
     (*p)->aborted = 0;
