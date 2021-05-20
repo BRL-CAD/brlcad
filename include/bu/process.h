@@ -152,10 +152,6 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  * FIXME: 'aborted' argument may be unnecessary (could make function
  * provide return value of the process waited for).  wtime
  * undocumented.
- *
- * FIXME: this doesn't actually release all the file descriptors that
- * were opened after exec.  observed open file exhausture after a
- * couple hundred calls.
  */
  BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
 
