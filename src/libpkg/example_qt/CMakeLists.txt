@@ -1,4 +1,7 @@
 if (BRLCAD_ENABLE_QT)
+
+  find_package(Qt5 COMPONENTS Core Network)
+
   # Include directories needed by libpkg users
   set(PKG_EXAMPLE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -8,7 +11,7 @@ if (BRLCAD_ENABLE_QT)
   LIST(REMOVE_DUPLICATES PKG_EXAMPLE_INCLUDES)
   include_directories(${PKG_EXAMPLE_INCLUDES})
 
-  BRLCAD_ADDEXEC(qt_test_server server.cpp "libbu;libpkg;Qt5::Core" NO_INSTALL)
+  BRLCAD_ADDEXEC(qt_test_server server.cpp "libbu;libpkg;Qt5::Core;Qt5::Network" NO_INSTALL)
   BRLCAD_ADDEXEC(qt_test_client client.cpp "libbu;libpkg" NO_INSTALL)
 endif (BRLCAD_ENABLE_QT)
 

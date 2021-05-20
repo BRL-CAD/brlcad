@@ -31,6 +31,9 @@
 #include <string.h>
 #include "bio.h"
 
+#include <QHostAddress>
+#include <QTcpServer>
+
 /* interface headers */
 #include "bu/log.h"
 #include "bu/str.h"
@@ -40,6 +43,8 @@
 #include "bu/snooze.h"
 #include "pkg.h"
 #include "ncp.h"
+
+
 
 /*
  * callback when a HELO message packet is received.
@@ -73,11 +78,13 @@ server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 }
 
 int
-main() {
+main()
+{
     int port = 2000;
+
+
     struct pkg_conn *client;
     int netfd;
-    char portname[MAX_DIGITS + 1] = {0};
     /* int pkg_result  = 0; */
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
     char *msgbuffer;
@@ -96,10 +103,13 @@ main() {
 #endif
 
     /* start up the server on the given port */
-    snprintf(portname, MAX_DIGITS, "%d", port);
-    netfd = pkg_permserver(portname, "tcp", 0, 0);
+    QTcpServer *tcps = new QTcpServer;
+    tcps->listen(QHostAddress::LocalHost, port);
+    netfd = (tcps->socketDescriptor()) ? tcps->socketDescriptor() : -1;
     if (netfd < 0) {
 	bu_bomb("Unable to start the server");
+    } else {
+	bu_log("netfd: %d\n", netfd);
     }
 
     /* listen for a good client indefinitely.  this is a simple
@@ -111,7 +121,7 @@ main() {
 	client = pkg_getclient(netfd, callbacks, NULL, 0);
 	if (client == PKC_NULL) {
 	    bu_log("Connection seems to be busy, waiting...\n");
-	    bu_snooze(BU_SEC2USEC(10));
+	    bu_snooze(BU_SEC2USEC(2));
 	    continue;
 	} else if (client == PKC_ERROR) {
 	    bu_log("Fatal error accepting client connection.\n");
