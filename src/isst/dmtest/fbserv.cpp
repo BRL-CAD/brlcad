@@ -52,16 +52,26 @@ QFBListener::QFBListener(struct fbserv_obj *fp, int is_client)
     if (is_client) {
 	client = 1;
     }
+
+    QObject::connect(
+	    this, &QFBListener::client_handler,
+	    this, &QFBListener::on_client_handler,
+	    Qt::QueuedConnection
+	    );
+
     m_notifier = new QSocketNotifier(fd, QSocketNotifier::Read);
+
     // NOTE : move to thread to avoid blocking, then sync with
     // main thread using a QueuedConnection with (TODO - figure
     // out what to do for this instead of finishedGetLine)
     m_notifier->moveToThread(&m_thread);
     QObject::connect(&m_thread , &QThread::finished, m_notifier, &QObject::deleteLater);
+
+
     QObject::connect(m_notifier, &QSocketNotifier::activated, m_notifier,
 	    [this]() {
 	    if (client) {
-	       fbs_existing_client_handler(fbsp, 0);
+	       emit QFBListener::client_handler();
 	    } else {
 	       struct pkg_switch *pswitch = fbs_pkg_switch();
 	       void *cdata = this;
@@ -77,6 +87,13 @@ QFBListener::~QFBListener()
     m_notifier->disconnect();
     m_thread.quit();
     m_thread.wait();
+}
+
+void
+QFBListener::on_client_handler()
+{
+    bu_log("on_client_handler\n");
+    fbs_existing_client_handler(this->fbsp, 0);
 }
 
 /* Check if we're already listening. */
@@ -104,7 +121,7 @@ qdm_listen_on_port(struct fbserv_obj *fbsp, int available_port)
 void
 qdm_open_server_handler(struct fbserv_obj *fbsp)
 {
-    fbsp->fbs_listener.fbsl_chan = new QFBListener(fbsp, -1);
+    fbsp->fbs_listener.fbsl_chan = new QFBListener(fbsp, 0);
 }
 
 void

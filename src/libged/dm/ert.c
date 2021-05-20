@@ -98,7 +98,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    args = argc + 8 + 2 + ged_who_argc(gedp);
+    args = argc + 10 + 2 + ged_who_argc(gedp);
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_dir(NULL, 0, BU_DIR_BIN, NULL);
@@ -109,13 +109,15 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     vp = &gd_rt_cmd[0];
     *vp++ = rt;
 
-    (void)sprintf(port_string, "-F%d", fbs->fbs_listener.fbsl_port);
+    *vp++ = "-F";
+    (void)sprintf(port_string, "%d", fbs->fbs_listener.fbsl_port);
     *vp++ = port_string;
 
     *vp++ = "-M";
 
     if (gedp->ged_gvp->gv_perspective > 0) {
-	(void)sprintf(pstring, "-p%g", gedp->ged_gvp->gv_perspective);
+	*vp++ = "-p";
+	(void)sprintf(pstring, "%g", gedp->ged_gvp->gv_perspective);
 	*vp++ = pstring;
     }
 

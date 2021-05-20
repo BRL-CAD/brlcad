@@ -54,6 +54,12 @@ class QFBListener : public QObject
 	struct fbserv_obj *fbsp;
 	QSocketNotifier *m_notifier;
 
+    Q_SIGNALS:
+	void client_handler();
+
+    private Q_SLOTS:
+	void on_client_handler();
+
     private:
 	QThread m_thread;
 
