@@ -80,12 +80,9 @@ server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 int
 main()
 {
-    int port = 2000;
-
-
     struct pkg_conn *client;
     int netfd;
-    /* int pkg_result  = 0; */
+    int port = 2000;
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
     char *msgbuffer;
     long bytes = 0;
@@ -103,9 +100,13 @@ main()
 #endif
 
     /* start up the server on the given port */
+    char portname[MAX_DIGITS + 1] = {0};
+    snprintf(portname, MAX_DIGITS, "%d", port);
+    netfd = pkg_permserver(portname, "tcp", 0, 0);
     QTcpServer *tcps = new QTcpServer;
-    tcps->listen(QHostAddress::LocalHost, port);
-    netfd = (tcps->socketDescriptor()) ? tcps->socketDescriptor() : -1;
+    long long int qnetfd = netfd;
+    tcps->setSocketDescriptor((qintptr)qnetfd);
+    netfd = (int)tcps->socketDescriptor();
     if (netfd < 0) {
 	bu_bomb("Unable to start the server");
     } else {
