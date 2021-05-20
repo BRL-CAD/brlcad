@@ -1198,6 +1198,8 @@ main(int argc, char *argv[])
 #endif
     } /* argc > 1 */
 
+    //bu_log("interactive: %d\n", interactive);
+
     if (bu_debug > 0)
 	fprintf(stdout, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);
 
@@ -2478,6 +2480,27 @@ mged_finish(int exitcode)
     int ret;
 
     (void)sprintf(place, "exit_status=%d", exitcode);
+
+    /* If we're in script mode, wait for subprocesses to finish before we
+     * wrap up */
+    if (GEDP && !interactive) {
+	struct bu_ptbl rmp = BU_PTBL_INIT_ZERO;
+	while (BU_PTBL_LEN(&GEDP->ged_subp)) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(&GEDP->ged_subp); i++) {
+		int aborted = 0;
+		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&GEDP->ged_subp, i);
+		if (bu_process_wait(&aborted, rrp->p, 1) != -1) {
+		    bu_ptbl_ins(&rmp, (long *)rrp);
+		}
+	    }
+	    for (size_t i = 0; i < BU_PTBL_LEN(&rmp); i++) {
+		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&GEDP->ged_subp, i);
+		bu_ptbl_rm(&GEDP->ged_subp, (long *)rrp);
+		BU_PUT(rrp, struct ged_subprocess);
+	    }
+	    bu_ptbl_reset(&rmp);
+	}
+    }
 
     /* Release all displays */
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
