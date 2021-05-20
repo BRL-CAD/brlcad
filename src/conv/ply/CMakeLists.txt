@@ -5,8 +5,8 @@ set(PLY_INCLUDE_DIRS
   )
 BRLCAD_INCLUDE_DIRS(PLY_INCLUDE_DIRS)
 
-BRLCAD_ADDEXEC(ply-g "ply-g.c;rply.c" "librt;libnmg;libbu;libwdb")
-BRLCAD_ADDEXEC(g-ply "g-ply.c;rply.c" "librt;libnmg;libbu")
+BRLCAD_ADDEXEC(ply-g "ply-g.c;rply.c" "librt;libnmg;libbu;libwdb" FOLDER Conv)
+BRLCAD_ADDEXEC(g-ply "g-ply.c;rply.c" "librt;libnmg;libbu" FOLDER Conv)
 
 if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET ply-g APPEND PROPERTY COMPILE_DEFINITIONS "RPLY_DLL_IMPORTS")

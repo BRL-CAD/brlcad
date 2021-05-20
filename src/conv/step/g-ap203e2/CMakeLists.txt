@@ -46,7 +46,7 @@ set(gap203e2_LIBS
   )
 list(APPEND gap203e2_LIBS ${gap203e2_LIBS})
 
-BRLCAD_ADDEXEC(g-ap203e2 "${gap203e2_SOURCES}" "${gap203e2_LIBS}" NO_STRICT)
+BRLCAD_ADDEXEC(g-ap203e2 "${gap203e2_SOURCES}" "${gap203e2_LIBS}" NO_STRICT FOLDER Conv)
 add_dependencies(g-ap203e2 step-express-${SCHEMA_NAME}-gap203e2)
 
 if (HIDE_INTERNAL_SYMBOLS)

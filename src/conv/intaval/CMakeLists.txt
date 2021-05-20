@@ -12,7 +12,7 @@ set(tgf_SRCS
   tgf-g.cpp
   write_brl.cpp
   )
-BRLCAD_ADDEXEC(tgf-g "${tgf_SRCS}" "libwdb;librt;libbu")
+BRLCAD_ADDEXEC(tgf-g "${tgf_SRCS}" "libwdb;librt;libbu" FOLDER Conv)
 
 set(intaval_ignore_files
   CMakeLists.txt

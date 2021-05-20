@@ -11,9 +11,9 @@ set(rawg_SRCS
   raw-g.cpp
   RegionList.cpp
   )
-BRLCAD_ADDEXEC(raw-g "${rawg_SRCS}" "libwdb;librt;libbu" NO_STRICT)
+BRLCAD_ADDEXEC(raw-g "${rawg_SRCS}" "libwdb;librt;libbu" NO_STRICT FOLDER Conv)
 
-BRLCAD_ADDEXEC(g-raw g-raw.c "librt;libgcv;libnmg;libbu;${WINSOCK_LIB}")
+BRLCAD_ADDEXEC(g-raw g-raw.c "librt;libgcv;libnmg;libbu;${WINSOCK_LIB}" FOLDER Conv)
 add_dependencies(g-raw gcv_plugins)
 
 set(RAW_IGNORE_FILES

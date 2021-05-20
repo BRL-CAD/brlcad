@@ -239,7 +239,7 @@ set(ap242g_LIBS
   )
 list(APPEND ap242g_LIBS ${ap242g_LIBS})
 
-BRLCAD_ADDEXEC(ap242-g "${ap242g_SOURCES}" "${ap242g_LIBS}" NO_STRICT)
+BRLCAD_ADDEXEC(ap242-g "${ap242g_SOURCES}" "${ap242g_LIBS}" NO_STRICT FOLDER Conv)
 add_dependencies(ap242-g step-express-${SCHEMA_NAME}-ap242g)
 
 if (HIDE_INTERNAL_SYMBOLS)

@@ -45,7 +45,7 @@ if (BRLCAD_ENABLE_STEP)
     ${OPENNURBS_LIBRARIES}
     )
 
-  BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
+  BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT FOLDER Conv)
   add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
   set_property(TARGET g-step APPEND PROPERTY INCLUDE_DIRECTORIES "${gstep_SCHEMA_OUT_DIR}")
   target_compile_definitions(g-step PRIVATE SC_SCHEMA_DLL_EXPORTS)

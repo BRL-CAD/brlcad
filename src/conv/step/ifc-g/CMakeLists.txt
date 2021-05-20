@@ -32,7 +32,7 @@ set(ifcg_LIBS
   )
 list(APPEND ifcg_LIBS ${ifcg_LIBS})
 
-BRLCAD_ADDEXEC(ifc-g "${ifcg_SOURCES}" "${ifcg_LIBS}" NO_STRICT)
+BRLCAD_ADDEXEC(ifc-g "${ifcg_SOURCES}" "${ifcg_LIBS}" NO_STRICT FOLDER Conv)
 add_dependencies(ifc-g ifc-express-${SCHEMA_NAME}-ifcg)
 
 if (HIDE_INTERNAL_SYMBOLS)

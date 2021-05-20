@@ -43,7 +43,7 @@ set(gap242_LIBS
   )
 list(APPEND gap242_LIBS ${gap242_LIBS})
 
-BRLCAD_ADDEXEC(g-ap242 "${gap242_SOURCES}" "${gap242_LIBS}" NO_STRICT)
+BRLCAD_ADDEXEC(g-ap242 "${gap242_SOURCES}" "${gap242_LIBS}" NO_STRICT FOLDER Conv)
 add_dependencies(g-ap242 step-express-${SCHEMA_NAME}-gap242)
 
 if (HIDE_INTERNAL_SYMBOLS)
