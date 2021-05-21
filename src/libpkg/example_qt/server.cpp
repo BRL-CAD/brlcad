@@ -51,7 +51,9 @@ PKGServer::PKGServer()
 
 PKGServer::~PKGServer()
 {
-    pkg_close(client);
+    if (client->pkc_inbuf)
+	free(client->pkc_inbuf);
+    BU_PUT(client, struct pkg_conn);
     bu_vls_free(&buffer);
 }
 
@@ -90,26 +92,58 @@ PKGServer::pgetc()
 	    }
 	}
     } while (!have_hello);
+
+    // Kick things off with a message
+    psend(MSG_DATA, "This is a message from the server.");
+
+    // For subsequent communications, when the client sends us something
+    // trigger the print_and_respond slot.
+    QObject::connect(s, &QTcpSocket::readyRead, this, &PKGServer::print_and_respond);
+}
+
+void
+PKGServer::print_and_respond()
+{
+    // Grab what the client sent us.  We use Qt's mechanisms for this rather than
+    // libpkg - pkg_suckin doesn't appear to work with the Qt socket.
+    QByteArray dbuff = s->read(client->pkc_inlen);
+
+    // Now that we have the data using Qt, prepare it for processing by libpkg
+    client->pkc_inbuf = (char *)realloc(client->pkc_inbuf, dbuff.length());
+    memcpy(client->pkc_inbuf, dbuff.data(), dbuff.length());
+    client->pkc_incur = 0;
+    client->pkc_inlen = client->pkc_inend = dbuff.length();
+
+    // Buffer is read and staged - process
+    pkg_process(client);
+
+    // Once we have confirmation from the client it got the done message, exit
+    if (client->pkc_type == MSG_CIAO) {
+	bu_log("MSG_CIAO\n");
+	bu_exit(0, "done");
+    }
+
+    // We should have gotten a MSG_DATA input
+    if (client->pkc_type == MSG_DATA) {
+	bu_log("MSG_DATA\n");
+    }
+
+    // We want to go back and forth a bit before quitting - count up
+    // communications cycles and once we hit the threshold send the client the
+    // DONE message.
+    if (cycles < 10) {
+	psend(MSG_DATA, "Acknowledged");
+	cycles++;
+    } else {
+	psend(MSG_CIAO, "DONE");
+    }
 }
 
 int
 PKGServer::psend(int type, const char *data)
 {
-    bu_vls_sprintf(&buffer, "%s", data);
+    bu_vls_sprintf(&buffer, "%s ", data);
     return pkg_send(type, bu_vls_addr(&buffer), (size_t)bu_vls_strlen(&buffer)+1, client);
-}
-
-void
-PKGServer::waitfor_client()
-{
-    do {
-	(void)pkg_process(client);
-	(void)pkg_suckin(client);
-	(void)pkg_process(client);
-    } while (client->pkc_type != MSG_CIAO);
-
-    /* Confirm the client is done */
-    (void)pkg_bwaitfor(MSG_CIAO , client);
 }
 
 /*
@@ -173,29 +207,6 @@ main(int argc, char *argv[])
     tcps->listen(QHostAddress::LocalHost, tcps->port);
 
     app.exec();
-
-    /* send the first message to the server */
-    if (tcps->psend(MSG_DATA, "This is a message from the server.") < 0)
-	goto failure;
-
-    /* send another message to the server */
-    if (tcps->psend(MSG_DATA, "Yet another message from the server.") < 0)
-	goto failure;
-
-    /* Tell the client we're done */
-    if (tcps->psend(MSG_CIAO, "DONE") < 0)
-	bu_log("Connection to client seems faulty.\n");
-
-    /* Wait to hear from the client */
-    tcps->waitfor_client();
-
-    /* shut down the server, one-time use */
-    delete tcps;
-    return 0;
-failure:
-    bu_log("Unable to successfully send message");
-    delete tcps;
-    return 0;
 }
 
 /*

@@ -60,10 +60,10 @@ class PKGServer : public QTcpServer
 
     public slots:
 	void pgetc();
+        void print_and_respond();
 
     public:
 	int psend(int type, const char *data);
-	void waitfor_client();
 
 	struct pkg_switch *callbacks = NULL;
 	struct pkg_conn *client = NULL;
@@ -72,6 +72,8 @@ class PKGServer : public QTcpServer
 	struct bu_vls buffer = BU_VLS_INIT_ZERO;
 	char *msgbuffer;
 	long bytes = 0;
+
+	int cycles = 0;
 
 	QTcpSocket *s;
 };

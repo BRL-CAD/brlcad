@@ -136,6 +136,8 @@ main() {
 	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
 	}
 
+	pkg_send(MSG_DATA, "Processed", 9, connection);
+
     } while (connection->pkc_type != MSG_CIAO);
 
     /* server's done, send our own message back to it */
