@@ -51,6 +51,7 @@ PKGServer::PKGServer()
 
 PKGServer::~PKGServer()
 {
+    pkg_close(client);
     bu_vls_free(&buffer);
 }
 
@@ -113,6 +114,19 @@ PKGServer::psend(int type, const char *data)
 {
     bu_vls_sprintf(&buffer, "%s", data);
     return pkg_send(type, bu_vls_addr(&buffer), (size_t)bu_vls_strlen(&buffer)+1, client);
+}
+
+void
+PKGServer::waitfor_client()
+{
+    do {
+	(void)pkg_process(client);
+	(void)pkg_suckin(client);
+	(void)pkg_process(client);
+    } while (client->pkc_type != MSG_CIAO);
+
+    /* Confirm the client is done */
+    (void)pkg_bwaitfor(MSG_CIAO , client);
 }
 
 /*
@@ -180,21 +194,12 @@ main()
 	bu_log("Connection to client seems faulty.\n");
 
     /* Wait to hear from the client */
-    do {
-	(void)pkg_process(tcps->client);
-	(void)pkg_suckin(tcps->client);
-	(void)pkg_process(tcps->client);
-    } while (tcps->client->pkc_type != MSG_CIAO);
-
-    /* Confirm the client is done */
-    (void)pkg_bwaitfor(MSG_CIAO , tcps->client);
+    tcps->waitfor_client();
 
     /* shut down the server, one-time use */
-    pkg_close(tcps->client);
     delete tcps;
     return 0;
 failure:
-    pkg_close(tcps->client);
     bu_log("Unable to successfully send message");
     delete tcps;
     return 0;

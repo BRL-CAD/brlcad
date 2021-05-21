@@ -53,6 +53,7 @@ class PKGServer : public QTcpServer
 	void start_server(int p = 2000);
 
 	int psend(int type, const char *data);
+	void waitfor_client();
 
 	struct pkg_switch *callbacks = NULL;
 	struct pkg_conn *client = NULL;
