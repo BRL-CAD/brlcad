@@ -39,9 +39,9 @@
 #include "bu/vls.h"
 #include "bu/snooze.h"
 #include "pkg.h"
-
-#define QT_SERVER
 #include "ncp.h"
+
+#include <QApplication>
 
 PKGServer::PKGServer()
     : QTcpServer()
@@ -56,57 +56,40 @@ PKGServer::~PKGServer()
 }
 
 void
-PKGServer::start_server(int p)
+PKGServer::pgetc()
 {
-    port = p;
+    // Have a new connection pending, accept it.
+    s = nextPendingConnection();
 
-    /* start up the server on the default port */
-    char portname[MAX_DIGITS + 1] = {0};
-    snprintf(portname, MAX_DIGITS, "%d", port);
-    netfd = pkg_permserver(portname, "tcp", 0, 0);
-    if (netfd < 0) {
-	bu_bomb("Unable to start the server");
-    } else {
-	bu_log("netfd: %d\n", netfd);
-    }
 
-    setSocketDescriptor(netfd);
+    int fd = s->socketDescriptor();
+    bu_log("fd: %d\n", fd);
+    BU_GET(client, struct pkg_conn);
+    client->pkc_magic = PKG_MAGIC;
+    client->pkc_fd = fd;
+    client->pkc_switch = callbacks;
+    client->pkc_errlog = 0;
+    client->pkc_left = -1;
+    client->pkc_buf = (char *)0;
+    client->pkc_curpos = (char *)0;
+    client->pkc_strpos = 0;
+    client->pkc_incur = client->pkc_inend = 0;
 
-    /* listen for a good client indefinitely.  this is a simple
-     * handshake that waits for a HELO message from the client.  if it
-     * doesn't get one, the server continues to wait.
-     */
-    bu_log("Listening on port %d\n", port);
+    int have_hello = 0;
     do {
-	client = pkg_getclient(netfd, callbacks, NULL, 0);
-	if (client == PKC_NULL) {
-	    bu_log("Connection seems to be busy, waiting...\n");
-	    bu_snooze(BU_SEC2USEC(2));
-	    continue;
-	} else if (client == PKC_ERROR) {
-	    bu_log("Fatal error accepting client connection.\n");
-	    pkg_close(client);
-	    client = PKC_NULL;
-	    continue;
-	}
-
 	/* got a connection, process it */
 	msgbuffer = pkg_bwaitfor (MSG_HELO, client);
 	if (msgbuffer == NULL) {
 	    bu_log("Failed to process the client connection, still waiting\n");
-	    pkg_close(client);
-	    client = PKC_NULL;
 	} else {
 	    bu_log("msgbuffer: %s\n", msgbuffer);
+	    have_hello = 1;
 	    /* validate magic header that client should have sent */
 	    if (!BU_STR_EQUAL(msgbuffer, MAGIC_ID)) {
 		bu_log("Bizarre corruption, received a HELO without at matching MAGIC ID!\n");
-		pkg_close(client);
-		client = PKC_NULL;
 	    }
 	}
-    } while (client == PKC_NULL);
-
+    } while (!have_hello);
 }
 
 int
@@ -161,8 +144,9 @@ server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 }
 
 int
-main()
+main(int argc, char *argv[])
 {
+    QApplication app(argc, argv);
     PKGServer *tcps = new PKGServer;
 
     /* ignore broken pipes, on platforms where we have SIGPIPE */
@@ -179,7 +163,16 @@ main()
     };
     tcps->callbacks = (struct pkg_switch *)callbacks;
 
-    tcps->start_server();
+    QObject::connect(
+	    tcps, &PKGServer::newConnection,
+	    tcps, &PKGServer::pgetc,
+	    Qt::QueuedConnection
+	    );
+
+    // Start listening for a connection on the default port
+    tcps->listen(QHostAddress::LocalHost, tcps->port);
+
+    app.exec();
 
     /* send the first message to the server */
     if (tcps->psend(MSG_DATA, "This is a message from the server.") < 0)

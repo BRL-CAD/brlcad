@@ -1,6 +1,6 @@
 if (BRLCAD_ENABLE_QT)
 
-  find_package(Qt5 COMPONENTS Core Network)
+  find_package(Qt5 COMPONENTS Core Network Widgets)
 
   # Include directories needed by libpkg users
   set(PKG_EXAMPLE_INCLUDES
@@ -13,7 +13,7 @@ if (BRLCAD_ENABLE_QT)
 
   QT5_WRAP_CPP(pkg_moc_srcs ncp.h)
 
-  BRLCAD_ADDEXEC(qt_test_server "server.cpp;${pkg_moc_srcs}" "libbu;libpkg;Qt5::Core;Qt5::Network" NO_INSTALL)
+  BRLCAD_ADDEXEC(qt_test_server "server.cpp;${pkg_moc_srcs}" "libbu;libpkg;Qt5::Core;Qt5::Network;Qt5::Widgets" NO_INSTALL)
   BRLCAD_ADDEXEC(qt_test_client client.cpp "libbu;libpkg" NO_INSTALL)
 endif (BRLCAD_ENABLE_QT)
 

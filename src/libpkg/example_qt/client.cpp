@@ -39,6 +39,7 @@
 #include "bu/file.h"
 #include "bu/vls.h"
 #include "pkg.h"
+#define QT_CLIENT
 #include "ncp.h"
 
 /* callback when an unexpected message packet is received. */

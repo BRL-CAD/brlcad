@@ -23,9 +23,6 @@
  *
  */
 
-#ifndef LIBPKG_EXAMPLE_NTP_H
-#define LIBPKG_EXAMPLE_NTP_H
-
 #include "pkg.h"
 
 /* simple network communication protocol. connection starts with a HELO,
@@ -39,19 +36,32 @@
 /* maximum number of digits on a port number */
 #define MAX_DIGITS      5
 
-#ifdef QT_SERVER
+// NOTE: the client code isn't supposed to know about Qt.  However, both
+// the server.cpp file and the moc code need to know about the class
+// definitions, and only server.cpp had QT_SERVER defined.  So instead
+// we define the following generally EXCEPT when building the client.
+// For a real program this would be a separate header and the common
+// definitions above would be in another, so this wouldn't arise.
+#ifndef QT_CLIENT
+#include "bu/vls.h"
 #include <QHostAddress>
 #include <QTcpServer>
+#include <QTcpSocket>
+#include <QObject>
 
 class PKGServer : public QTcpServer
 {
+    Q_OBJECT
+
     public:
 
 	PKGServer();
 	~PKGServer();
 
-	void start_server(int p = 2000);
+    public slots:
+	void pgetc();
 
+    public:
 	int psend(int type, const char *data);
 	void waitfor_client();
 
@@ -63,10 +73,10 @@ class PKGServer : public QTcpServer
 	char *msgbuffer;
 	long bytes = 0;
 
+	QTcpSocket *s;
 };
 #endif
 
-#endif /* LIBPKG_EXAMPLE_NCP_H */
 
 /*
  * Local Variables:

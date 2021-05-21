@@ -250,7 +250,7 @@ _pkg_perror(void (*errlog)(const char *msg), const char *s)
 
     if (errno >= 0 || strlen(_pkg_errbuf) >= MAX_PKG_ERRBUF_SIZE) {
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "%s: errno=%d\n", s, errno);
-	errlog(_pkg_errbuf);
+	fprintf(stderr, "%s", _pkg_errbuf);
 	return;
     }
 
@@ -1882,7 +1882,11 @@ pkg_suckin(struct pkg_conn *pc)
 		 pc->pkc_fd, (long)(&pc->pkc_inbuf[pc->pkc_inend]), (long)avail,
 		 got,
 		 (long)(pc->pkc_inbuf), pc->pkc_inend);
-	(pc->pkc_errlog)(_pkg_errbuf);
+	if (pc->pkc_errlog) {
+	    (pc->pkc_errlog)(_pkg_errbuf);
+	} else {
+	    fprintf(stderr, "%s", _pkg_errbuf);
+	}
 #endif
 	ret = -1;
 	goto out;
