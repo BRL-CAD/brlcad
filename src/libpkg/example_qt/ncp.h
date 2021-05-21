@@ -26,6 +26,8 @@
 #ifndef LIBPKG_EXAMPLE_NTP_H
 #define LIBPKG_EXAMPLE_NTP_H
 
+#include "pkg.h"
+
 /* simple network communication protocol. connection starts with a HELO,
  * then a variable number of GEOM/ARGS messages, then a CIAO to end.
  */
@@ -48,8 +50,11 @@ class PKGServer : public QTcpServer
 	PKGServer();
 	~PKGServer();
 
-	struct pkg_conn *client;
-	int netfd;
+	void start_server(int p = 2000);
+
+	struct pkg_switch *callbacks = NULL;
+	struct pkg_conn *client = NULL;
+	int netfd = -2;
 	int port = 2000;
 	struct bu_vls buffer = BU_VLS_INIT_ZERO;
 	char *msgbuffer;

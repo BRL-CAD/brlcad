@@ -54,6 +54,60 @@ PKGServer::~PKGServer()
     bu_vls_free(&buffer);
 }
 
+void
+PKGServer::start_server(int p)
+{
+    port = p;
+
+    /* start up the server on the default port */
+    char portname[MAX_DIGITS + 1] = {0};
+    snprintf(portname, MAX_DIGITS, "%d", port);
+    netfd = pkg_permserver(portname, "tcp", 0, 0);
+    if (netfd < 0) {
+	bu_bomb("Unable to start the server");
+    } else {
+	bu_log("netfd: %d\n", netfd);
+    }
+
+    setSocketDescriptor(netfd);
+
+    /* listen for a good client indefinitely.  this is a simple
+     * handshake that waits for a HELO message from the client.  if it
+     * doesn't get one, the server continues to wait.
+     */
+    bu_log("Listening on port %d\n", port);
+    do {
+	client = pkg_getclient(netfd, callbacks, NULL, 0);
+	if (client == PKC_NULL) {
+	    bu_log("Connection seems to be busy, waiting...\n");
+	    bu_snooze(BU_SEC2USEC(2));
+	    continue;
+	} else if (client == PKC_ERROR) {
+	    bu_log("Fatal error accepting client connection.\n");
+	    pkg_close(client);
+	    client = PKC_NULL;
+	    continue;
+	}
+
+	/* got a connection, process it */
+	msgbuffer = pkg_bwaitfor (MSG_HELO, client);
+	if (msgbuffer == NULL) {
+	    bu_log("Failed to process the client connection, still waiting\n");
+	    pkg_close(client);
+	    client = PKC_NULL;
+	} else {
+	    bu_log("msgbuffer: %s\n", msgbuffer);
+	    /* validate magic header that client should have sent */
+	    if (!BU_STR_EQUAL(msgbuffer, MAGIC_ID)) {
+		bu_log("Bizarre corruption, received a HELO without at matching MAGIC ID!\n");
+		pkg_close(client);
+		client = PKC_NULL;
+	    }
+	}
+    } while (client == PKC_NULL);
+
+}
+
 /*
  * callback when a HELO message packet is received.
  *
@@ -89,6 +143,12 @@ int
 main()
 {
     PKGServer *tcps = new PKGServer;
+
+    /* ignore broken pipes, on platforms where we have SIGPIPE */
+#ifdef SIGPIPE
+    (void)signal(SIGPIPE, SIG_IGN);
+#endif
+
     /** our server callbacks for each message type */
     struct pkg_switch callbacks[] = {
 	{MSG_HELO, server_helo, "HELO", NULL},
@@ -96,57 +156,9 @@ main()
 	{MSG_CIAO, server_ciao, "CIAO", NULL},
 	{0, 0, (char *)0, (void*)0}
     };
+    tcps->callbacks = (struct pkg_switch *)callbacks;
 
-    /* ignore broken pipes, on platforms where we have SIGPIPE */
-#ifdef SIGPIPE
-    (void)signal(SIGPIPE, SIG_IGN);
-#endif
-
-    /* start up the server on the given port */
-    char portname[MAX_DIGITS + 1] = {0};
-    snprintf(portname, MAX_DIGITS, "%d", tcps->port);
-    tcps->netfd = pkg_permserver(portname, "tcp", 0, 0);
-    tcps->setSocketDescriptor(tcps->netfd);
-    if (tcps->netfd < 0) {
-	bu_bomb("Unable to start the server");
-    } else {
-	bu_log("netfd: %d\n", tcps->netfd);
-    }
-
-    /* listen for a good client indefinitely.  this is a simple
-     * handshake that waits for a HELO message from the client.  if it
-     * doesn't get one, the server continues to wait.
-     */
-    bu_log("Listening on port %d\n", tcps->port);
-    do {
-	tcps->client = pkg_getclient(tcps->netfd, callbacks, NULL, 0);
-	if (tcps->client == PKC_NULL) {
-	    bu_log("Connection seems to be busy, waiting...\n");
-	    bu_snooze(BU_SEC2USEC(2));
-	    continue;
-	} else if (tcps->client == PKC_ERROR) {
-	    bu_log("Fatal error accepting client connection.\n");
-	    pkg_close(tcps->client);
-	    tcps->client = PKC_NULL;
-	    continue;
-	}
-
-	/* got a connection, process it */
-	tcps->msgbuffer = pkg_bwaitfor (MSG_HELO, tcps->client);
-	if (tcps->msgbuffer == NULL) {
-	    bu_log("Failed to process the client connection, still waiting\n");
-	    pkg_close(tcps->client);
-	    tcps->client = PKC_NULL;
-	} else {
-	    bu_log("msgbuffer: %s\n", tcps->msgbuffer);
-	    /* validate magic header that client should have sent */
-	    if (!BU_STR_EQUAL(tcps->msgbuffer, MAGIC_ID)) {
-		bu_log("Bizarre corruption, received a HELO without at matching MAGIC ID!\n");
-		pkg_close(tcps->client);
-		tcps->client = PKC_NULL;
-	    }
-	}
-    } while (tcps->client == PKC_NULL);
+    tcps->start_server();
 
     /* send the first message to the server */
     bu_vls_sprintf(&tcps->buffer, "This is a message from the server.");
