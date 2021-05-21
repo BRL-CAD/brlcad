@@ -28,6 +28,7 @@
 
 #include "common.h"
 
+#include <QByteArray>
 #include <QHostAddress>
 #include <QObject>
 #include <QTcpServer>
@@ -48,6 +49,9 @@ class QFBSocket : public QObject
 
     public slots:
 	void client_handler();
+
+    private:
+        QByteArray buff;
 };
 
 // Overall server that sets up clients

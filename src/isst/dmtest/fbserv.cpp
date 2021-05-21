@@ -49,27 +49,45 @@ QFBSocket::client_handler()
     pkc->pkc_server_data = (void *)fbsp->fbs_fbp;
 
     // Read data.  NOTE:  we're using the Qt read routines rather than
-    // pkg_suckin, so we don't call fbs_existing_client_hander from libdm.
-    //
-    // TODO - figure out what the size should be - this large constant is
-    // just a temporary hack to get data moving.
-    QByteArray dbuff = s->read(100000);
+    // pkg_suckin, so we can't call fbs_existing_client_hander from libdm.
+    // Initially tried pkg_suckin, but it didn't seem to work with the socket
+    // as set up by Qt.
+    QByteArray dbuff = s->read(s->bytesAvailable());
 
-    if (!dbuff.length())
+    // We may not have processed all the read data last time, so append
+    // this to anything left over from before
+    buff.append(dbuff);
+
+    // If we don't have anything, we're done
+    if (!buff.length())
 	return;
 
-    // Now that we have the data using Qt, prepare it for processing by libpkg
-    // TODO - this probably is too simplistic - fbs_existing_client_handler has
-    // provisions for "leftover" data processing, so it's unlikely this will
-    // work reliably as is...
-    pkc->pkc_inbuf = (char *)realloc(pkc->pkc_inbuf, dbuff.length());
-    memcpy(pkc->pkc_inbuf, dbuff.data(), dbuff.length());
+    // Now that we have the data read using Qt methods, prepare for processing
+    // using libpkg data structures.
+    pkc->pkc_inbuf = (char *)realloc(pkc->pkc_inbuf, buff.length());
+    memcpy(pkc->pkc_inbuf, buff.data(), buff.length());
     pkc->pkc_incur = 0;
-    pkc->pkc_inlen = pkc->pkc_inend = dbuff.length();
+    pkc->pkc_inlen = pkc->pkc_inend = buff.length();
 
+    // Now it's up to libpkg - if anything is left over, we'll know it after
+    // processing.  Clear buff so we're ready to preserve remaining data for
+    // the next processing cycle.
+    buff.clear();
+
+    // Use the defined callbacks to handle the data sent from the client
     if ((pkg_process(pkc)) < 0)
 	bu_log("client_handler pkg_process error encountered\n");
 
+    if (pkc->pkc_inend != pkc->pkc_inlen - 1) {
+	// If pkg_process didn't use all of the read data, store the rest for
+	// the next cycle.
+	//
+	// TODO - need to find a way to test to to make sure we're copying the
+	// right part of the buffer
+	buff.append(&pkc->pkc_inbuf[pkc->pkc_inend], pkc->pkc_inlen - pkc->pkc_inend);
+    }
+
+    // If we've got callbacks, execute them now.
     if (fbsp->fbs_callback != (void (*)(void *))FBS_CALLBACK_NULL) {
 	/* need to cast func pointer explicitly to get the function call */
 	void (*cfp)(void *);
