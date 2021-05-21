@@ -903,16 +903,18 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
     }
 
     int mm;
-    struct fb_clip *clp;
-
     glGetIntegerv(GL_MATRIX_MODE, &mm);
+
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
 
+#if 0
+    struct fb_clip *clp;
     fb_clipper(ifp);
     clp = &(QTGL(ifp)->clip);
     glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
+#endif
     glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
     glMatrixMode(GL_MODELVIEW);
@@ -921,11 +923,12 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
 
     glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
     qtgl_xmit_scanlines(ifp, y, h, x, w);
-    glMatrixMode(GL_PROJECTION);
+
     glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(mm);
+
+
 
     dm_set_dirty(QTGL(ifp)->dmp, 1);
     return 0;
