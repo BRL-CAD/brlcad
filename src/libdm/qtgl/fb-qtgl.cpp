@@ -578,8 +578,8 @@ qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
     glFlush();
 
-    QTGL(ifp)->mw->update();
-
+    // TODO - somehow, we need to trigger an update event here for incremental display...
+    dm_set_dirty(QTGL(ifp)->dmp, 1);
     return 0;
 }
 

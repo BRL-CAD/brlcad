@@ -1399,14 +1399,22 @@ _pkg_gethdr(struct pkg_conn *pc, char *buf)
 		     "_pkg_gethdr: skipping noise x%x\n",
 		     c);
 	}
-	(pc->pkc_errlog)(_pkg_errbuf);
+	if (pc->pkc_errlog) {
+	    (pc->pkc_errlog)(_pkg_errbuf);
+	} else {
+	    fprintf(stderr, "%s", _pkg_errbuf);
+	}
 	/* Slide over one byte and try again */
 	memmove((char *)&pc->pkc_hdr, ((char *)&pc->pkc_hdr)+1, sizeof(struct pkg_header)-1);
 	if ((i = _pkg_inget(pc,
 			    ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
 			    1)) != 1) {
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "_pkg_gethdr: hdr read=%ld?\n", (long)i);
-	    (pc->pkc_errlog)(_pkg_errbuf);
+	    if (pc->pkc_errlog) {
+		(pc->pkc_errlog)(_pkg_errbuf);
+	    } else {
+		fprintf(stderr, "%s", _pkg_errbuf);
+	    }
 	    return -1;
 	}
     }
