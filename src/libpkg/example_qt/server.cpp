@@ -108,6 +108,13 @@ PKGServer::start_server(int p)
 
 }
 
+int
+PKGServer::psend(int type, const char *data)
+{
+    bu_vls_sprintf(&buffer, "%s", data);
+    return pkg_send(type, bu_vls_addr(&buffer), (size_t)bu_vls_strlen(&buffer)+1, client);
+}
+
 /*
  * callback when a HELO message packet is received.
  *
@@ -161,20 +168,16 @@ main()
     tcps->start_server();
 
     /* send the first message to the server */
-    bu_vls_sprintf(&tcps->buffer, "This is a message from the server.");
-    tcps->bytes = pkg_send(MSG_DATA, bu_vls_addr(&tcps->buffer), (size_t)bu_vls_strlen(&tcps->buffer)+1, tcps->client);
-    if (tcps->bytes < 0) goto failure;
+    if (tcps->psend(MSG_DATA, "This is a message from the server.") < 0)
+	goto failure;
 
     /* send another message to the server */
-    bu_vls_sprintf(&tcps->buffer, "Yet another message from the server.");
-    tcps->bytes = pkg_send(MSG_DATA, bu_vls_addr(&tcps->buffer), (size_t)bu_vls_strlen(&tcps->buffer)+1, tcps->client);
-    if (tcps->bytes < 0) goto failure;
+    if (tcps->psend(MSG_DATA, "Yet another message from the server.") < 0)
+	goto failure;
 
     /* Tell the client we're done */
-    tcps->bytes = pkg_send(MSG_CIAO, "DONE", 5, tcps->client);
-    if (tcps->bytes < 0) {
+    if (tcps->psend(MSG_CIAO, "DONE") < 0)
 	bu_log("Connection to client seems faulty.\n");
-    }
 
     /* Wait to hear from the client */
     do {
@@ -182,7 +185,6 @@ main()
 	(void)pkg_suckin(tcps->client);
 	(void)pkg_process(tcps->client);
     } while (tcps->client->pkc_type != MSG_CIAO);
-
 
     /* Confirm the client is done */
     (void)pkg_bwaitfor(MSG_CIAO , tcps->client);
