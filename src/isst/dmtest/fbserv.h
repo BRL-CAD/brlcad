@@ -28,41 +28,43 @@
 
 #include "common.h"
 
+#include <QHostAddress>
 #include <QObject>
-#include <QThread>
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <iostream>
-
-#ifdef Q_OS_WIN
-#include <QWinEventNotifier>
-#include <windows.h>
-#else
-#include <QSocketNotifier>
-#endif
 
 #include "dm/fbserv.h"
 
-class QFBListener : public QObject
+// Per client info
+class QFBSocket : public QObject
 {
     Q_OBJECT
 
     public:
-	QFBListener(struct fbserv_obj *fp = NULL, int is_client = 0);
-	~QFBListener();
-
-	int client = 0;
-	int fd = -1;
+	QTcpSocket *s;
+	int ind;
 	struct fbserv_obj *fbsp;
-	QSocketNotifier *m_notifier;
 
-    Q_SIGNALS:
+    public slots:
 	void client_handler();
+};
 
-    private Q_SLOTS:
-	void on_client_handler();
+// Overall server that sets up clients
+// in response to connection requests
+class QFBServer : public QTcpServer
+{
+    Q_OBJECT
 
-    private:
-	QThread m_thread;
+    public:
+	QFBServer(struct fbserv_obj *fp = NULL);
+	~QFBServer();
 
+	int port = -1;
+	struct fbserv_obj *fbsp;
+
+    public slots:
+	void on_Connect();
 };
 
 

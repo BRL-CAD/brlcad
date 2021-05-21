@@ -33,67 +33,83 @@
 
 #include "common.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/vls.h"
 #include "./fbserv.h"
 
-/*
- * Communication error.  An error occurred on the PKG link.
- */
-static void
-comm_error(const char *str)
+void
+QFBSocket::client_handler()
 {
-    bu_log("%s", str);
-}
+    bu_log("socket client_handler\n");
 
-QFBListener::QFBListener(struct fbserv_obj *fp, int is_client)
-{
-    this->fbsp = fp;
-    fd = fp->fbs_listener.fbsl_fd;
-    if (is_client) {
-	client = 1;
+    // Get the current libpkg connection
+    struct pkg_conn *pkc = fbsp->fbs_clients[ind].fbsc_pkg;
+
+    // Set the current framebuffer pointer for callback functions
+    pkc->pkc_server_data = (void *)fbsp->fbs_fbp;
+
+    // Read data.  NOTE:  we're using the Qt read routines rather than
+    // pkg_suckin, so we don't call fbs_existing_client_hander from libdm.
+    QByteArray dbuff = s->read(pkc->pkc_inlen);
+
+    // Now that we have the data using Qt, prepare it for processing by libpkg
+    // TODO - this probably is too simplistic - fbs_existing_client_handler has
+    // provisions for "leftover" data processing, so it's unlikely this will
+    // work reliably as is...
+    pkc->pkc_inbuf = (char *)realloc(pkc->pkc_inbuf, dbuff.length());
+    memcpy(pkc->pkc_inbuf, dbuff.data(), dbuff.length());
+    pkc->pkc_incur = 0;
+    pkc->pkc_inlen = pkc->pkc_inend = dbuff.length();
+
+    if ((pkg_process(pkc)) < 0)
+	bu_log("client_handler pkg_process error encountered\n");
+
+    if (fbsp->fbs_callback != (void (*)(void *))FBS_CALLBACK_NULL) {
+	/* need to cast func pointer explicitly to get the function call */
+	void (*cfp)(void *);
+	cfp = (void (*)(void *))fbsp->fbs_callback;
+	cfp(fbsp->fbs_clientData);
     }
-
-    QObject::connect(
-	    this, &QFBListener::client_handler,
-	    this, &QFBListener::on_client_handler,
-	    Qt::QueuedConnection
-	    );
-
-    m_notifier = new QSocketNotifier(fd, QSocketNotifier::Read);
-
-    // NOTE : move to thread to avoid blocking, then sync with
-    // main thread using a QueuedConnection with (TODO - figure
-    // out what to do for this instead of finishedGetLine)
-    m_notifier->moveToThread(&m_thread);
-    QObject::connect(&m_thread , &QThread::finished, m_notifier, &QObject::deleteLater);
-
-
-    QObject::connect(m_notifier, &QSocketNotifier::activated, m_notifier,
-	    [this]() {
-	    if (client) {
-	       emit QFBListener::client_handler();
-	    } else {
-	       struct pkg_switch *pswitch = fbs_pkg_switch();
-	       void *cdata = this;
-	       struct pkg_conn *pcp = pkg_getclient(fd, pswitch, comm_error, 0);
-	       fbs_new_client(fbsp, pcp, cdata);
-	    }
-	    });
-    m_thread.start();
 }
 
-QFBListener::~QFBListener()
+
+QFBServer::QFBServer(struct fbserv_obj *fp)
 {
-    m_notifier->disconnect();
-    m_thread.quit();
-    m_thread.wait();
+    fbsp = fp;
+}
+
+QFBServer::~QFBServer()
+{
 }
 
 void
-QFBListener::on_client_handler()
+QFBServer::on_Connect()
 {
-    bu_log("on_client_handler\n");
-    fbs_existing_client_handler(this->fbsp, 0);
+    // Have a new connection pending, accept it.
+    QTcpSocket *tcps = nextPendingConnection();
+    QFBSocket *fs = new QFBSocket;
+    fs->s = tcps;
+    fs->fbsp = fbsp;
+
+    int fd = tcps->socketDescriptor();
+    bu_log("fd: %d\n", fd);
+    struct pkg_conn *pc;
+    BU_GET(pc, struct pkg_conn);
+    pc->pkc_magic = PKG_MAGIC;
+    pc->pkc_fd = fd;
+    pc->pkc_switch = fbs_pkg_switch();
+    pc->pkc_errlog = 0;
+    pc->pkc_left = -1;
+    pc->pkc_buf = (char *)0;
+    pc->pkc_curpos = (char *)0;
+    pc->pkc_strpos = 0;
+    pc->pkc_incur = pc->pkc_inend = 0;
+
+    fs->ind = fbs_new_client(fbsp, pc, (void *)fs);
+    if (fs->ind == -1) {
+	BU_PUT(pc, struct pkg_conn);
+	tcps->close();
+    }
 }
 
 /* Check if we're already listening. */
@@ -109,10 +125,11 @@ qdm_is_listening(struct fbserv_obj *fbsp)
 int
 qdm_listen_on_port(struct fbserv_obj *fbsp, int available_port)
 {
-    struct bu_vls portname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&portname, "%d", available_port);
-    fbsp->fbs_listener.fbsl_fd = pkg_permserver(bu_vls_cstr(&portname), 0, 0, comm_error);
-    bu_vls_free(&portname);
+    QFBServer *nl = new QFBServer(fbsp);
+    nl->port = available_port;
+    nl->listen(QHostAddress::LocalHost, available_port);
+    fbsp->fbs_listener.fbsl_chan = (void *)nl;
+    fbsp->fbs_listener.fbsl_fd = nl->socketDescriptor();
     if (fbsp->fbs_listener.fbsl_fd >= 0)
 	return 1;
     return 0;
@@ -121,29 +138,29 @@ qdm_listen_on_port(struct fbserv_obj *fbsp, int available_port)
 void
 qdm_open_server_handler(struct fbserv_obj *fbsp)
 {
-    fbsp->fbs_listener.fbsl_chan = new QFBListener(fbsp, 0);
+    QFBServer *nl = (QFBServer *)fbsp->fbs_listener.fbsl_chan;
+    QObject::connect(nl, &QFBServer::newConnection, nl, &QFBServer::on_Connect, Qt::QueuedConnection);
 }
 
 void
 qdm_close_server_handler(struct fbserv_obj *fbsp)
 {
-    QFBListener *fbl = (QFBListener *)fbsp->fbs_listener.fbsl_chan;
-    fbl->m_notifier->disconnect();
-    delete fbl;
+    QFBServer *nl = (QFBServer *)fbsp->fbs_listener.fbsl_chan;
+    delete nl;
 }
 
 void
 qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *UNUSED(data))
 {
-    fbsp->fbs_clients[i].fbsc_chan = new QFBListener(fbsp, i);
+    QFBSocket *s = (QFBSocket *)fbsp->fbs_clients[i].fbsc_chan;
+    QObject::connect(s->s, &QTcpSocket::readyRead, s, &QFBSocket::client_handler, Qt::QueuedConnection);
 }
 
 void
-qdm_close_client_handler(struct fbserv_obj *fbsp, int sub)
+qdm_close_client_handler(struct fbserv_obj *fbsp, int i)
 {
-    QFBListener *fbl = (QFBListener *)fbsp->fbs_clients[sub].fbsc_chan;
-    fbl->m_notifier->disconnect();
-    delete fbl;
+    QFBSocket *s = (QFBSocket *)fbsp->fbs_clients[i].fbsc_chan;
+    delete s;
 }
 
 /*

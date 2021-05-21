@@ -204,7 +204,7 @@ option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
 if (BRLCAD_ENABLE_QT)
 
-  find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL)
+  find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL Network)
 
   if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
     message("QT interface requested, but QT5 is not found - disabling")
