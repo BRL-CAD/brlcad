@@ -1,3 +1,8 @@
+NOTE:  before going this deep, start with "dm set debug #" to follow
+the libdm level function calls.
+
+
+
 When comparing the OpenGL behavior of two programs, the tool apitrace
 is quite useful (https://github.com/apitrace/apitrace)
 
