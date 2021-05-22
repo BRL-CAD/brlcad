@@ -1,0 +1,21 @@
+When comparing the OpenGL behavior of two programs, the tool apitrace
+is quite useful (https://github.com/apitrace/apitrace)
+
+The following steps allow for comparison between traces from MGED and qdm:
+
+apitrace trace ./bin/mged share/db/moss.g
+apitrace dump mged.trace > mged.log
+cut -f1 -d" " --complement mged.log > mged_trimmed.log
+
+apitrace trace ./bin/qdm share/db/moss.g
+apitrace dump qdm.trace > qdm.log
+cut -f1 -d" " --complement qdm.log > qdm_trimmed.log
+
+(The trimming step strips the leading numbers from the logs, which
+otherwise render comparisons with diff impractical.)
+
+Comparison is still not trivial - Qt does a lot of work "under the hood"
+to manage OpenGL, which will manifest in OpenGL calls not visible in an
+MGED trace.  It is necessary to identify the common logic blocks between
+the two programs corresponding to similar operations and look in those
+areas for significant differences.
