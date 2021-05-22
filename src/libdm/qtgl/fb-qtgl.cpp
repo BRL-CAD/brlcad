@@ -909,12 +909,10 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
     glPushMatrix();
     glLoadIdentity();
 
-#if 0
     struct fb_clip *clp;
     fb_clipper(ifp);
     clp = &(QTGL(ifp)->clip);
     glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
-#endif
     glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
     glMatrixMode(GL_MODELVIEW);
