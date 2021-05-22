@@ -109,7 +109,6 @@ set_target_properties(dm_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
 # Backend implementations
 add_subdirectory(X)
 add_subdirectory(glx)
-add_subdirectory(osgl)
 add_subdirectory(plot)
 add_subdirectory(postscript)
 add_subdirectory(qtgl)

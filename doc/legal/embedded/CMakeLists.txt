@@ -41,7 +41,6 @@ set(embedded_licenses
   normalize.txt
   obr.txt
   OpenNURBS.txt
-  osg.txt
   osl.txt
   ParaView.txt
   pbrt.txt
