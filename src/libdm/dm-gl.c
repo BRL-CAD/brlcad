@@ -62,40 +62,55 @@ void gl_printmat(struct bu_vls *tmp_vls, fastf_t *mat) {
 }
 
 void gl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
-    bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[0], m[4], m[8], m[12]);
-    bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[1], m[5], m[9], m[13]);
-    bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[2], m[6], m[10], m[14]);
-    bu_vls_printf(tmp_vls, "%g %g %g %g\n", m[3], m[7], m[11], m[15]);
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[0], m[4], m[8], m[12]);
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[1], m[5], m[9], m[13]);
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[2], m[6], m[10], m[14]);
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[3], m[7], m[11], m[15]);
+}
+
+static void
+gl_debug_log(struct dm *dmp, struct bu_vls *msg)
+{
+    if (bu_vls_strlen(&dmp->i->dm_log)) {
+	FILE* fp = fopen(bu_vls_cstr(&dmp->i->dm_log), "a");
+	if (fp) {
+	    fprintf(fp, "%s", bu_vls_cstr(msg));
+	    fclose(fp);
+	    return;
+	}
+    }
+    bu_log("%s", bu_vls_cstr(msg));
 }
 
 void
-GLmat_print(const char *title)
+gl_debug_print(struct dm *dmp, const char *title, int lvl)
 {
-    GLfloat mvmat[16], pmat[16];
-    glGetFloatv(GL_MODELVIEW_MATRIX, mvmat);
-    glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+    if (!lvl)
+	return;
 
-    bu_log("%s:\n", title);
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&msg, "%s\n", title);
 
-    bu_log("MODELVIEW:\n");
-    for (int i = 0; i < 16; i++) {
-	printf(" %g", mvmat[i]);
-	if (i == 15) {
-	    break;
-	} else if ((i & 3) == 3) {
-	    printf("\n");
+    if (lvl > 3) {
+	GLfloat mvmat[16], pmat[16];
+	glGetFloatv(GL_MODELVIEW_MATRIX, mvmat);
+	bu_vls_printf(&msg, "   MODELVIEW:\n");
+	gl_printglmat(&msg, (GLfloat *)mvmat);
+
+	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+	bu_vls_printf(&msg, "   PROJECTION:\n");
+	gl_printglmat(&msg, (GLfloat *)pmat);
+    }
+
+    if (lvl > 2) {
+	int glerror = 0;
+	while ((glerror = glGetError())!=0) {
+	    bu_vls_printf(&msg, "   Error: %x\n", glerror);
 	}
     }
 
-    bu_log("PROJECTION:\n");
-    for (int i = 0; i < 16; i++) {
-	printf(" %g", pmat[i]);
-	if (i == 15) {
-	    break;
-	} else if ((i & 3) == 3) {
-	    printf("\n");
-	}
-    }
+    gl_debug_log(dmp, &msg);
+    bu_vls_free(&msg);
 }
 
 void glvars_init(struct dm *dmp)
@@ -121,6 +136,8 @@ void glvars_init(struct dm *dmp)
 
 void gl_fogHint(struct dm *dmp, int fastfog)
 {
+    gl_debug_print(dmp, "gl_fogHint", dmp->i->dm_debugLevel);
+
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     mvars->fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
@@ -129,9 +146,9 @@ void gl_fogHint(struct dm *dmp, int fastfog)
 
 int gl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
+    gl_debug_print(dmp, "gl_setBGColor", dmp->i->dm_debugLevel);
+
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-    if (dmp->i->dm_debugLevel == 1)
-	bu_log("gl_setBGColor()\n");
 
     dmp->i->dm_bg[0] = r;
     dmp->i->dm_bg[1] = g;
@@ -162,12 +179,12 @@ int gl_reshape(struct dm *dmp, int width, int height)
     dmp->i->dm_width = width;
     dmp->i->dm_aspect = (fastf_t)dmp->i->dm_width / (fastf_t)dmp->i->dm_height;
 
-    if (dmp->i->dm_debugLevel) {
-	GLfloat m[16];
-	bu_log("gl_reshape()\n");
-	bu_log("width = %d, height = %d\n", dmp->i->dm_width, dmp->i->dm_height);
-	glGetFloatv (GL_MODELVIEW_MATRIX, m);
-	glGetFloatv (GL_PROJECTION_MATRIX, m);
+    gl_debug_print(dmp, "gl_reshape", dmp->i->dm_debugLevel);
+    if (dmp->i->dm_debugLevel > 1) {
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&msg, "width = %d, height = %d\n", dmp->i->dm_width, dmp->i->dm_height);
+	gl_debug_log(dmp, &msg);
+	bu_vls_free(&msg);
     }
 
     glViewport(0, 0, dmp->i->dm_width, dmp->i->dm_height);
@@ -186,9 +203,9 @@ int gl_reshape(struct dm *dmp, int width, int height)
 
 int gl_setLight(struct dm *dmp, int lighting_on)
 {
+    gl_debug_print(dmp, "gl_setLight", dmp->i->dm_debugLevel);
+
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_setLight()\n");
 
     dmp->i->dm_light = lighting_on;
     mvars->lighting_on = dmp->i->dm_light;
@@ -222,32 +239,13 @@ int gl_setLight(struct dm *dmp, int lighting_on)
  */
 int gl_drawBegin(struct dm *dmp)
 {
+    gl_debug_print(dmp, "gl_drawBegin", dmp->i->dm_debugLevel);
+
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
-    if (dmp->i->dm_debugLevel) {
-	bu_log("gl_drawBegin\n");
-    }
-
-    if (dmp->i->dm_debugLevel == 3) {
-	GLfloat m[16];
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&tmp_vls, "initial view matrix = \n");
-
-	glGetFloatv (GL_MODELVIEW_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_vls_printf(&tmp_vls, "initial projection matrix = \n");
-	glGetFloatv (GL_PROJECTION_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-
-	bu_log("%s", bu_vls_addr(&tmp_vls));
-	bu_vls_free(&tmp_vls);
-    }
-
-
     if (dm_make_current(dmp) != BRLCAD_OK) {
-	    return BRLCAD_ERROR;
-	}
+	return BRLCAD_ERROR;
+    }
 
     /* clear back buffer */
     if (!dmp->i->dm_clearBufferAfter && mvars->doublebuffer) {
@@ -263,22 +261,8 @@ int gl_drawBegin(struct dm *dmp)
     // of this immediately after we're done drawing faceplate...
     dm_hud_end(dmp);
 
-    if (dmp->i->dm_debugLevel == 3) {
-	GLfloat m[16];
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&tmp_vls, "after begin view matrix = \n");
-
-	glGetFloatv (GL_MODELVIEW_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_vls_printf(&tmp_vls, "after begin projection matrix = \n");
-	glGetFloatv (GL_PROJECTION_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-
-	bu_log("%s", bu_vls_addr(&tmp_vls));
-	bu_vls_free(&tmp_vls);
-    }
-
+    if (dmp->i->dm_debugLevel > 3)
+	gl_debug_print(dmp, "gl_drawBegin after:", dmp->i->dm_debugLevel);
 
     return BRLCAD_OK;
 }
@@ -286,24 +270,9 @@ int gl_drawBegin(struct dm *dmp)
 
 int gl_drawEnd(struct dm *dmp)
 {
+    gl_debug_print(dmp, "gl_drawEnd", dmp->i->dm_debugLevel);
+
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_drawEnd\n");
-
-    if (dmp->i->dm_debugLevel == 3) {
-	GLfloat m[16];
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&tmp_vls, "beginning of end view matrix = \n");
-	glGetFloatv (GL_MODELVIEW_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_vls_printf(&tmp_vls, "beginning of end projection matrix = \n");
-	glGetFloatv (GL_PROJECTION_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_log("%s", bu_vls_addr(&tmp_vls));
-	bu_vls_free(&tmp_vls);
-    }
-
 
     if (dmp->i->dm_light) {
 	glMatrixMode(GL_MODELVIEW);
@@ -323,33 +292,8 @@ int gl_drawEnd(struct dm *dmp)
 	}
     }
 
-    if (dmp->i->dm_debugLevel) {
-	int error;
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&tmp_vls, "ANY ERRORS?\n");
-
-	while ((error = glGetError())!=0) {
-	    bu_vls_printf(&tmp_vls, "Error: %x\n", error);
-	}
-
-	bu_log("%s", bu_vls_addr(&tmp_vls));
-	bu_vls_free(&tmp_vls);
-    }
-
-    if (dmp->i->dm_debugLevel == 3) {
-	GLfloat m[16];
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&tmp_vls, "end of drawend view matrix = \n");
-	glGetFloatv (GL_MODELVIEW_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_vls_printf(&tmp_vls, "end of drawend projection matrix = \n");
-	glGetFloatv (GL_PROJECTION_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_log("%s", bu_vls_addr(&tmp_vls));
-	bu_vls_free(&tmp_vls);
-    }
-
+    if (dmp->i->dm_debugLevel > 3)
+	gl_debug_print(dmp, "gl_drawEnd after:", dmp->i->dm_debugLevel);
 
     return BRLCAD_OK;
 }
@@ -364,31 +308,13 @@ int gl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     fastf_t *mptr;
     GLfloat gtmat[16];
 
-    if (dmp->i->dm_debugLevel == 1)
-	bu_log("gl_loadMatrix()\n");
-
+    gl_debug_print(dmp, "gl_loadMatrix", dmp->i->dm_debugLevel);
     if (dmp->i->dm_debugLevel == 3) {
-	GLfloat m[16];
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&tmp_vls, "beginning of loadMatrix view matrix = \n");
-	glGetFloatv (GL_MODELVIEW_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_vls_printf(&tmp_vls, "beginning of loadMatrix projection matrix = \n");
-	glGetFloatv (GL_PROJECTION_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_log("%s", bu_vls_addr(&tmp_vls));
-	bu_vls_free(&tmp_vls);
-    }
-
-
-    if (dmp->i->dm_debugLevel == 3) {
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
-	gl_printmat(&tmp_vls, mat);
-
-	bu_log("%s", bu_vls_addr(&tmp_vls));
-	bu_vls_free(&tmp_vls);
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&msg, "gl_loadMatrix input matrix = \n");
+	gl_printmat(&msg, mat);
+	gl_debug_log(dmp, &msg);
+	bu_vls_free(&msg);
     }
 
     switch (which_eye) {
@@ -438,18 +364,8 @@ int gl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 
-    if (dmp->i->dm_debugLevel == 3) {
-	GLfloat m[16];
-	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&tmp_vls, "end of loadMatrix view matrix = \n");
-	glGetFloatv (GL_MODELVIEW_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_vls_printf(&tmp_vls, "end of loadMatrix projection matrix = \n");
-	glGetFloatv (GL_PROJECTION_MATRIX, m);
-	gl_printglmat(&tmp_vls, m);
-	bu_log("%s", bu_vls_addr(&tmp_vls));
-	bu_vls_free(&tmp_vls);
-    }
+    if (dmp->i->dm_debugLevel > 3)
+	gl_debug_print(dmp, "gl_loadMatrix after:", dmp->i->dm_debugLevel);
 
     return BRLCAD_OK;
 }
@@ -463,6 +379,8 @@ int gl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
+
+    gl_debug_print(dmp, "gl_loadPMatrix", dmp->i->dm_debugLevel);
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
@@ -500,6 +418,9 @@ int gl_loadPMatrix(struct dm *dmp, fastf_t *mat)
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 
+    if (dmp->i->dm_debugLevel > 3)
+	gl_debug_print(dmp, "gl_loadPMatrix after", dmp->i->dm_debugLevel);
+
     return BRLCAD_OK;
 }
 
@@ -511,9 +432,7 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
     register struct bv_vlist *tvp;
     register int first;
 
-    if (dmp->i->dm_debugLevel == 1)
-	bu_log("gl_drawVList()\n");
-
+    gl_debug_print(dmp, "gl_drawVListHiddenLine", dmp->i->dm_debugLevel);
 
     /* First, draw polygons using background color. */
 
@@ -666,6 +585,9 @@ int gl_drawVListHiddenLine(struct dm *dmp, register struct bv_vlist *vp)
 
     glDisable(GL_POLYGON_OFFSET_FILL);
 
+    if (dmp->i->dm_debugLevel > 3)
+	gl_debug_print(dmp, "gl_drawVListHiddenLine", dmp->i->dm_debugLevel);
+
     return BRLCAD_OK;
 }
 
@@ -688,8 +610,7 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 
     pointSize = originalPointSize;
 
-    if (dmp->i->dm_debugLevel == 1)
-	bu_log("gl_drawVList()\n");
+    gl_debug_print(dmp, "gl_drawVListd", dmp->i->dm_debugLevel);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
@@ -701,9 +622,13 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    GLdouble dpt[3];
 	    VMOVE(dpt, *pt);
-/*
-	    if (dmp->i->dm_debugLevel > 2)
-		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));*/
+
+	    if (dmp->i->dm_debugLevel > 4) {
+		struct bu_vls msg = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&msg, "\t%d (%g %g %g)\n", *cmd, V3ARGS(dpt));
+		gl_debug_log(dmp, &msg);
+		bu_vls_free(&msg);
+	    }
 
 	    switch (*cmd) {
 		case BV_VLIST_LINE_MOVE:
@@ -854,6 +779,9 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
 
+    if (dmp->i->dm_debugLevel > 3)
+	gl_debug_print(dmp, "gl_drawVList", dmp->i->dm_debugLevel);
+
     return BRLCAD_OK;
 }
 
@@ -864,6 +792,8 @@ int gl_draw_data_axes(struct dm *dmp,
     int npoints = bndasp->num_points * 6;
     if (npoints < 1)
         return 0;
+
+    gl_debug_print(dmp, "gl_draw_data_axes", dmp->i->dm_debugLevel);
 
     /* set color */
     dm_set_fg(dmp, bndasp->color[0], bndasp->color[1], bndasp->color[2], 1, 1.0);
@@ -958,6 +888,8 @@ int gl_hud_begin(struct dm *dmp)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
+    gl_debug_print(dmp, "gl_hud_begin", dmp->i->dm_debugLevel);
+
     if (!mvars->i.faceFlag) {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
@@ -972,6 +904,9 @@ int gl_hud_begin(struct dm *dmp)
 	    glDisable(GL_LIGHTING);
     }
 
+    if (dmp->i->dm_debugLevel > 3)
+	gl_debug_print(dmp, "gl_hud_begin after", dmp->i->dm_debugLevel);
+
     return BRLCAD_OK;
 }
 
@@ -980,6 +915,8 @@ int gl_hud_end(struct dm *dmp)
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
 
     GLfloat fogdepth;
+
+    gl_debug_print(dmp, "gl_hud_end", dmp->i->dm_debugLevel);
 
     if (mvars->i.faceFlag) {
 	glMatrixMode(GL_PROJECTION);
@@ -1002,6 +939,9 @@ int gl_hud_end(struct dm *dmp)
 	}
    }
 
+    if (dmp->i->dm_debugLevel > 3)
+	gl_debug_print(dmp, "gl_hud_end after", dmp->i->dm_debugLevel);
+
     return BRLCAD_OK;
 }
 
@@ -1013,31 +953,18 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
     }
 
     if (dmp->i->dm_debugLevel) {
-	bu_log("%s", log_bu);
-	bu_log("drawLine3D: %f,%f,%f -> %f,%f,%f", V3ARGS(pt1), V3ARGS(pt2));
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&msg, "%s (drawLine3D): %f,%f,%f -> %f,%f,%f", log_bu, V3ARGS(pt1), V3ARGS(pt2));
 	if (wireColor) {
-	    bu_log("drawLine3D: have wirecolor");
+	    bu_vls_printf(&msg, "%s: have wirecolor", log_bu);
 	}
+	gl_debug_log(dmp, &msg);
+	bu_vls_free(&msg);
     }
+    gl_debug_print(dmp, log_bu, dmp->i->dm_debugLevel);
 
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLdouble pt[3];
-    if (dmp->i->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
 
     if (dmp->i->dm_light) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
@@ -1070,32 +997,18 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
     }
 
     if (dmp->i->dm_debugLevel) {
-	bu_log("%s", log_bu);
-	bu_log("drawLines3D %d pnts, flag %d: %f,%f,%f -> %f,%f,%f", npoints, lflag, V3ARGS(points[0]), V3ARGS(points[npoints - 1]));
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&msg, "%s (drawLines3D) %d pnts, flag %d: %f,%f,%f -> %f,%f,%f", log_bu, npoints, lflag, V3ARGS(points[0]), V3ARGS(points[npoints - 1]));
 	if (wireColor) {
-	    bu_log("drawLine3D: have wirecolor");
+	    bu_vls_printf(&msg, "%s: have wirecolor", log_bu);
 	}
+	gl_debug_log(dmp, &msg);
+	bu_vls_free(&msg);
     }
+    gl_debug_print(dmp, log_bu, dmp->i->dm_debugLevel);
 
     register int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
-    if (dmp->i->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
-
 
     if (dmp->i->dm_light) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
@@ -1131,26 +1044,12 @@ drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const
     }
 
     if (dmp->i->dm_debugLevel) {
-	bu_log("%s", log_bu);
-	bu_log("drawLine2D: %f,%f -> %f,%f", X1, Y1, X2, Y2);
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&msg, "%s (drawLine2D): %f,%f -> %f,%f", log_bu, X1, Y1, X2, Y2);
+	gl_debug_log(dmp, &msg);
+	bu_vls_free(&msg);
     }
-
-    if (dmp->i->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
+    gl_debug_print(dmp, log_bu, dmp->i->dm_debugLevel);
 
     glBegin(GL_LINES);
     glVertex2f(X1, Y1);
@@ -1185,8 +1084,10 @@ int gl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 int gl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     if (dmp->i->dm_debugLevel) {
-	bu_log("gl_drawPoint2D():\n");
-	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&msg, "gl_drawPoint2D: \tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
+	gl_debug_log(dmp, &msg);
+	bu_vls_free(&msg);
     }
 
 #if ENABLE_POINT_SMOOTH
@@ -1207,9 +1108,12 @@ int gl_drawPoint3D(struct dm *dmp, point_t point)
     if (!dmp || !point)
 	return BRLCAD_ERROR;
 
+    gl_debug_print(dmp, "gl_drawPoint3D", dmp->i->dm_debugLevel);
     if (dmp->i->dm_debugLevel) {
-	bu_log("gl_drawPoint3D():\n");
-	bu_log("\tdmp: %p\tpt - %lf %lf %lf\n", (void*)dmp, V3ARGS(point));
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&msg, "   pt: %lf %lf %lf\n", V3ARGS(point));
+	gl_debug_log(dmp, &msg);
+	bu_vls_free(&msg);
     }
 
     /* fastf_t to double */
@@ -1234,9 +1138,7 @@ int gl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
     if (!dmp || npoints < 0 || !points)
 	return BRLCAD_ERROR;
 
-    if (dmp->i->dm_debugLevel) {
-	bu_log("gl_drawPoint3D():\n");
-    }
+    gl_debug_print(dmp, "gl_drawPoints3D", dmp->i->dm_debugLevel);
 
 #if ENABLE_POINT_SMOOTH
     glEnable(GL_POINT_SMOOTH);
@@ -1259,6 +1161,8 @@ int gl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned cha
     dmp->i->dm_fg[0] = r;
     dmp->i->dm_fg[1] = g;
     dmp->i->dm_fg[2] = b;
+
+    gl_debug_print(dmp, "gl_setFGColor", dmp->i->dm_debugLevel);
 
     /* wireColor gets the full rgb */
     mvars->i.wireColor[0] = r / 255.0;
@@ -1315,6 +1219,8 @@ int gl_setLineAttr(struct dm *dmp, int width, int style)
     dmp->i->dm_lineWidth = width;
     dmp->i->dm_lineStyle = style;
 
+    gl_debug_print(dmp, "gl_setLineAttr", dmp->i->dm_debugLevel);
+
     glLineWidth((GLfloat) width);
 
     if (style == DM_DASHED_LINE)
@@ -1345,8 +1251,7 @@ int gl_setWinBounds(struct dm *dmp, fastf_t *w)
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     GLint mm;
 
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_setWinBounds()\n");
+    gl_debug_print(dmp, "gl_setWinBounds", dmp->i->dm_debugLevel);
 
     dmp->i->dm_clipmin[0] = w[0];
     dmp->i->dm_clipmin[1] = w[2];
@@ -1363,6 +1268,9 @@ int gl_setWinBounds(struct dm *dmp, fastf_t *w)
     glPushMatrix();
     glMatrixMode(mm);
 
+    if (dmp->i->dm_debugLevel > 3)
+	gl_debug_print(dmp, "gl_setWinBounds after:", dmp->i->dm_debugLevel);
+
     return BRLCAD_OK;
 }
 
@@ -1371,8 +1279,8 @@ int gl_setTransparency(struct dm *dmp,
 		    int transparency_on)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_setTransparency()\n");
+
+    gl_debug_print(dmp, "gl_setTransparency", dmp->i->dm_debugLevel);
 
     dmp->i->dm_transparency = transparency_on;
     mvars->transparency_on = dmp->i->dm_transparency;
@@ -1390,10 +1298,9 @@ int gl_setTransparency(struct dm *dmp,
 }
 
 
-int gl_setDepthMask(struct dm *dmp,
-		 int enable) {
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_setDepthMask()\n");
+int gl_setDepthMask(struct dm *dmp, int enable)
+{
+    gl_debug_print(dmp, "gl_setDepthMask", dmp->i->dm_debugLevel);
 
     dmp->i->dm_depthMask = enable;
 
@@ -1409,8 +1316,8 @@ int gl_setDepthMask(struct dm *dmp,
 int gl_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_setZBuffer:\n");
+
+    gl_debug_print(dmp, "gl_setZBuffer", dmp->i->dm_debugLevel);
 
     dmp->i->dm_zbuffer = zbuffer_on;
     mvars->zbuffer_on = dmp->i->dm_zbuffer;
@@ -1433,8 +1340,7 @@ int gl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
 int gl_beginDList(struct dm *dmp, unsigned int list)
 {
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_beginDList()\n");
+    gl_debug_print(dmp, "gl_beginDList", dmp->i->dm_debugLevel);
 
     glNewList((GLuint)list, GL_COMPILE);
     return BRLCAD_OK;
@@ -1443,8 +1349,7 @@ int gl_beginDList(struct dm *dmp, unsigned int list)
 
 int gl_endDList(struct dm *dmp)
 {
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_endDList()\n");
+    gl_debug_print(dmp, "gl_endDList", dmp->i->dm_debugLevel);
 
     glEndList();
     return BRLCAD_OK;
@@ -1460,8 +1365,7 @@ int gl_drawDList(unsigned int list)
 
 int gl_freeDLists(struct dm *dmp, unsigned int list, int range)
 {
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_freeDLists()\n");
+    gl_debug_print(dmp, "gl_freeDLists", dmp->i->dm_debugLevel);
 
     glDeleteLists((GLuint)list, (GLsizei)range);
     return BRLCAD_OK;
@@ -1470,14 +1374,15 @@ int gl_freeDLists(struct dm *dmp, unsigned int list, int range)
 
 int gl_genDLists(struct dm *dmp, size_t range)
 {
-    if (dmp->i->dm_debugLevel)
-	bu_log("gl_freeDLists()\n");
+    gl_debug_print(dmp, "gl_genDLists", dmp->i->dm_debugLevel);
 
     return glGenLists((GLsizei)range);
 }
 
 int gl_draw_obj(struct dm *dmp, struct display_list *obj)
 {
+    gl_debug_print(dmp, "gl_draw_obj", dmp->i->dm_debugLevel);
+
     struct bv_scene_obj *sp;
     for (BU_LIST_FOR(sp, bv_scene_obj, &obj->dl_head_scene_obj)) {
 	if (sp->s_dlist == 0)
@@ -1500,6 +1405,8 @@ int gl_draw_obj(struct dm *dmp, struct display_list *obj)
 
 int gl_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
 {
+    gl_debug_print(dmp, "gl_getDisplayImage", dmp->i->dm_debugLevel);
+
     unsigned char *idata;
     int width;
     int height;

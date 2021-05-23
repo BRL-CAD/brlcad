@@ -129,9 +129,10 @@ struct gl_vars {
 };
 
 
-/* For debugging - print GL_MODELVIEW and GL_PROJECTION matrices */
-DMGL_EXPORT extern void GLmat_print(const char *title);
-
+/* For debugging - print specified string, and additional state
+ * information depending on dm_debugLevel settings (such as
+ * GL_MODELVIEW and GL_PROJECTION matrices) */
+DMGL_EXPORT extern void gl_debug_print(struct dm *dmp, const char *title, int lvl);
 
 DMGL_EXPORT extern struct bu_structparse gl_vparse[];
 

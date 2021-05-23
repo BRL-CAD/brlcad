@@ -80,8 +80,7 @@ qtgl_makeCurrent(struct dm *dmp)
 {
     struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->i->dm_debugLevel)
-	bu_log("qtgl_makeCurrent()\n");
+    gl_debug_print(dmp, "qtgl_makeCurrent", dmp->i->dm_debugLevel);
 
     privars->qw->makeCurrent();
 
@@ -106,6 +105,8 @@ static int
 qtgl_configureWin(struct dm *dmp, int UNUSED(force))
 {
     struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
+
+    gl_debug_print(dmp, "qtgl_configureWin", dmp->i->dm_debugLevel);
 
     if (!privars || !privars->qw) {
 	bu_log("qtgl_configureWin: Couldn't make context current\n");
@@ -134,6 +135,7 @@ qtgl_configureWin(struct dm *dmp, int UNUSED(force))
 int
 qtgl_close(struct dm *dmp)
 {
+    gl_debug_print(dmp, "qtgl_close", dmp->i->dm_debugLevel);
     bu_vls_free(&dmp->i->dm_pathName);
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);
@@ -305,8 +307,8 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
-    if (dmp->i->dm_debugLevel)
-	bu_log("qtgl_drawString2D()\n");
+
+    gl_debug_print(dmp, "qtgl_drawString2D", dmp->i->dm_debugLevel);
 
     if (privars->fontNormal != FONS_INVALID) {
 
@@ -330,12 +332,19 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 	// Set up an identity matrix for text drawing
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
+	if (dmp->i->dm_debugLevel > 4)
+	    gl_debug_print(dmp, "qtgl_drawString2D 1:", dmp->i->dm_debugLevel);
 	glLoadIdentity();
+	if (dmp->i->dm_debugLevel > 4)
+	    gl_debug_print(dmp, "qtgl_drawString2D 2:", dmp->i->dm_debugLevel);
 
 	// Fontstash does not work in OpenGL raster coordinates,
 	// so we need the view and the coordinates in window
 	// XY coordinates.
 	glOrtho(0,dm_get_width(dmp),dm_get_height(dmp),0,-1,1);
+	if (dmp->i->dm_debugLevel > 4)
+	    gl_debug_print(dmp, "qtgl_drawString2D 3:", dmp->i->dm_debugLevel);
+
 	GLfloat pos[4];
 	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
 	fastf_t coord_x = pos[0];
@@ -348,20 +357,32 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 	fonsSetSize(privars->fs, (int)font_size); /* cast to int so we always get a font */
 	fonsSetColor(privars->fs, color);
 	fonsDrawText(privars->fs, coord_x, coord_y, str, NULL);
+	if (dmp->i->dm_debugLevel > 4)
+	    gl_debug_print(dmp, "qtgl_drawString2D 4:", dmp->i->dm_debugLevel);
 
 	// Restore previous projection matrix
 	glPopMatrix();
+	if (dmp->i->dm_debugLevel > 4)
+	    gl_debug_print(dmp, "qtgl_drawString2D 5:", dmp->i->dm_debugLevel);
 
 	// Restore view matrix (changed by glOrtho call)
 	glPopMatrix();
+	if (dmp->i->dm_debugLevel > 4)
+	    gl_debug_print(dmp, "qtgl_drawString2D 6:", dmp->i->dm_debugLevel);
 
 	// Put us back in whatever mode we were in before starting the text draw
 	glMatrixMode(mm);
+	if (dmp->i->dm_debugLevel > 4)
+	    gl_debug_print(dmp, "qtgl_drawString2D 7:", dmp->i->dm_debugLevel);
 
 	if (!blend_state) glDisable(GL_BLEND);
 
 	glOrtho(-mvars->i.xlim_view, mvars->i.xlim_view, -mvars->i.ylim_view, mvars->i.ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
     }
+
+    if (dmp->i->dm_debugLevel > 1)
+	gl_debug_print(dmp, "qtgl_drawString2D done:", dmp->i->dm_debugLevel);
+
     return BRLCAD_OK;
 }
 
@@ -369,9 +390,11 @@ static int
 qtgl_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
-    if (dmp->i->dm_debugLevel)
-	bu_log("qtgl_drawString2D()\n");
 
+    gl_debug_print(dmp, "qtgl_String2DBBox", dmp->i->dm_debugLevel);
+
+    // TODO - match the state management here to the actual drawing of text in
+    // the function above.
     if (privars->fontNormal != FONS_INVALID) {
 
 	/* Stash the previous raster position */
@@ -429,6 +452,10 @@ qtgl_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *st
 	if (bmax)
 	    V2SET(*bmax, bounds[2], bounds[3]);
     }
+
+    if (dmp->i->dm_debugLevel > 1)
+	gl_debug_print(dmp, "qtgl_String2DBBox after:", dmp->i->dm_debugLevel);
+
     return BRLCAD_OK;
 }
 
@@ -438,7 +465,10 @@ qtgl_openFb(struct dm *dmp)
     struct fb_platform_specific *fb_ps;
     fb_ps = fb_get_platform_specific(FB_QTGL_MAGIC);
     fb_ps->data = (void *)dmp;
+    gl_debug_print(dmp, "qtgl_openFb", dmp->i->dm_debugLevel);
     dmp->i->fbp = fb_open_existing("qtgl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    if (dmp->i->dm_debugLevel > 1)
+	gl_debug_print(dmp, "qtgl_openFb after:", dmp->i->dm_debugLevel);
     fb_put_platform_specific(fb_ps);
     return 0;
 }
