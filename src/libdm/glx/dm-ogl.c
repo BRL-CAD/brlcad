@@ -129,8 +129,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->i->dm_debugLevel)
-	bu_log("ogl_configureWin_guts()\n");
+    gl_debug_print(dmp, "ogl_configureWin_guts", dmp->i->dm_debugLevel);
 
     XGetWindowAttributes(pubvars->dpy,
 			 pubvars->win, &xwa);
@@ -264,8 +263,7 @@ ogl_makeCurrent(struct dm *dmp)
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->i->dm_debugLevel)
-	bu_log("ogl_makeCurrent()\n");
+    gl_debug_print(dmp, "ogl_makeCurrent", dmp->i->dm_debugLevel);
 
     if (!glXMakeCurrent(pubvars->dpy,
 			pubvars->win,
@@ -283,8 +281,7 @@ ogl_SwapBuffers(struct dm *dmp)
 {
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
 
-    if (dmp->i->dm_debugLevel)
-	bu_log("ogl_SwapBuffers()\n");
+    gl_debug_print(dmp, "ogl_SwapBuffers", dmp->i->dm_debugLevel);
 
     glXSwapBuffers(pubvars->dpy, pubvars->win);
 
@@ -308,6 +305,8 @@ ogl_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 HIDDEN int
 ogl_configureWin(struct dm *dmp, int force)
 {
+    gl_debug_print(dmp, "ogl_configureWin", dmp->i->dm_debugLevel);
+
     if (dm_make_current(dmp) != BRLCAD_OK) {
 	return BRLCAD_ERROR;
     }
@@ -322,6 +321,7 @@ ogl_configureWin(struct dm *dmp, int force)
 HIDDEN XVisualInfo *
 ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 {
+    gl_debug_print(dmp, "ogl_choose_visual", dmp->i->dm_debugLevel);
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
@@ -476,6 +476,8 @@ ogl_close(struct dm *dmp)
 {
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
+
+    gl_debug_print(dmp, "ogl_close", dmp->i->dm_debugLevel);
 
     if (pubvars->dpy) {
 	if (privars->glxc) {
@@ -895,6 +897,8 @@ Done:
 int
 ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
+    gl_debug_print(dmp, "ogl_share_dlist", dmp->i->dm_debugLevel);
+
     struct gl_vars *mvars = (struct gl_vars *)dmp1->i->m_vars;
     struct pogl_vars *privars = (struct pogl_vars *)dmp1->i->dm_vars.priv_vars;
     GLfloat backgnd[4];
@@ -1068,8 +1072,7 @@ HIDDEN int
 ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
-    if (dmp->i->dm_debugLevel)
-	bu_log("ogl_drawString2D()\n");
+    gl_debug_print(dmp, "ogl_drawString2D", dmp->i->dm_debugLevel);
 
     if (use_aspect)
 	glRasterPos2f(x, y * dmp->i->dm_aspect);
@@ -1090,6 +1093,7 @@ ogl_openFb(struct dm *dmp)
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
+    gl_debug_print(dmp, "ogl_openFb", dmp->i->dm_debugLevel);
 
     fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
     ofb_ps = (struct ogl_fb_info *)fb_ps->data;
@@ -1102,6 +1106,10 @@ ogl_openFb(struct dm *dmp)
     ofb_ps->soft_cmap = 0;
     dmp->i->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
+
+    if (dmp->i->dm_debugLevel > 1)
+	gl_debug_print(dmp, "ogl_openFb after:", dmp->i->dm_debugLevel);
+
     return 0;
 }
 
