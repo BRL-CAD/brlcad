@@ -10,17 +10,11 @@ X 2.  output of bu_subprocess commands back to QtConsole prompt.
     get raytracing output displayed and whether that can be refactored into something
     more general.
 
-2a.  See about getting rt output into dm embedded framebuffer.  Study src/mged/fbserv.c
+x 2a.  See about getting rt output into dm embedded framebuffer.  Study src/mged/fbserv.c
     and src/libtclcad/fbserv.c to see if they can be generalized in some fashion.
 
-    IDEA:  take if_remote.c, and rework a copy of it into if_pipe.c to send the same
-    data down the stdout pipe we would send down a TCP socket.  Then use the same
-    mechanisms we're using for console I/O from subprocesses to write data to the
-    embedded FB from stdout - listeners should in principle work for that case too.
-
-    That way we wouldn't need to embed the fbserv bit and could compare I/O at various
-    stages against the working MGED example.  The same principle might allow for things
-    like incremental plotting of vector results from rtcheck/gqa...
+    * At some point will want to look into QLocalServer/QLocalSocket to see if it
+      can be used, but for now using the Qt Tcp connection.
 
 3.  Finish accordion widget, into libqtcad
 
@@ -65,6 +59,8 @@ target_compile_definitions(jimtcl0 PUBLIC JIM_BOOTSTRAP_LIB_ONLY)
 Would need to be tested, but if it can provide a MGED-style Tcl prompt that is
 sufficient for scripting purposes and loading .mgedrc files it would be a far
 simpler integration than the all-up libtcl build...
+
+If it doesn't work, look into https://www.tcl.tk/community/tcl2019/assets/talk160/Paper.pdf
 
 14.  Man page viewer as libqtcad widget
 
