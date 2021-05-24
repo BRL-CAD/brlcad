@@ -1,4 +1,4 @@
-/*                         E R T . C
+/*                         E R T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2021 United States Government as represented by
@@ -26,6 +26,9 @@
 
 #include "common.h"
 
+#include <vector>
+#include <string>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -42,21 +45,11 @@
 #include "../ged_private.h"
 
 
-int
+extern "C" int
 ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 {
-    char **vp;
-    int i;
-    int units_supplied = 0;
-    char pstring[32];
-    char port_string[32];
-    int args;
-    char **gd_rt_cmd = NULL;
-    int gd_rt_cmd_len = 0;
-    int ret = GED_OK;
 
-    const char *bin;
-    char rt[256] = {0};
+    int ret = GED_OK;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -98,52 +91,68 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    args = argc + 10 + 2 + ged_who_argc(gedp);
-    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    // Assemble the arguments
+    struct bu_vls wstr = BU_VLS_INIT_ZERO;
+    std::vector<std::string> args;
 
-    bin = bu_dir(NULL, 0, BU_DIR_BIN, NULL);
-    if (bin) {
-	snprintf(rt, 256, "%s/%s", bin, "rt");
-    }
+    char rt[MAXPATHLEN] = {0};
+    bu_dir(rt, MAXPATHLEN, BU_DIR_BIN, "rt", BU_DIR_EXT, NULL);
+    args.push_back(std::string(rt));
+    args.push_back(std::string("-F"));
+    args.push_back(std::to_string(fbs->fbs_listener.fbsl_port));
+    args.push_back(std::string("-M"));
 
-    vp = &gd_rt_cmd[0];
-    *vp++ = rt;
+    int width = dm_get_width((struct dm *)gedp->ged_dmp);
+    int height = dm_get_height((struct dm *)gedp->ged_dmp);
 
-    *vp++ = "-F";
-    (void)sprintf(port_string, "%d", fbs->fbs_listener.fbsl_port);
-    *vp++ = port_string;
-
-    *vp++ = "-M";
-
+    args.push_back(std::string("-w"));
+    args.push_back(std::to_string(width));
+    args.push_back(std::string("-n"));
+    args.push_back(std::to_string(height));
+    args.push_back(std::string("-V"));
+    double aspect = (double)width/(double)height;
+    bu_vls_sprintf(&wstr, "%.14e", aspect);
+    args.push_back(std::string(bu_vls_cstr(&wstr)));
     if (gedp->ged_gvp->gv_perspective > 0) {
-	*vp++ = "-p";
-	(void)sprintf(pstring, "%g", gedp->ged_gvp->gv_perspective);
-	*vp++ = pstring;
+	args.push_back(std::string("-p"));
+	bu_vls_sprintf(&wstr, "%.14e", gedp->ged_gvp->gv_perspective);
+	args.push_back(std::string(bu_vls_cstr(&wstr)));
     }
 
+    // Everything before the "--" argument is incorporated into the
+    // initial command args
+    int units_supplied = 0;
+    int i = 0;
     for (i = 1; i < argc; i++) {
-	if (argv[i][0] == '-' && argv[i][1] == 'u' &&
-	    BU_STR_EQUAL(argv[1], "-u")) {
+	if (BU_STR_EQUAL(argv[1], "-u")) {
 	    units_supplied=1;
-	} else if (argv[i][0] == '-' && argv[i][1] == '-' &&
-		   argv[i][2] == '\0') {
+	} else if (argv[i][0] == '-' && argv[i][1] == '-' && argv[i][2] == '\0') {
 	    ++i;
 	    break;
 	}
-	*vp++ = (char *)argv[i];
+	args.push_back(std::string(argv[i]));
     }
 
     /* default to local units when not specified on command line */
     if (!units_supplied) {
-	*vp++ = "-u";
-	*vp++ = "model";
+	args.push_back(std::string("-u"));
+	args.push_back(std::string("model"));
     }
 
-    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
-    gd_rt_cmd_len = vp - gd_rt_cmd;
+    args.push_back(std::string(gedp->ged_wdbp->dbip->dbi_filename));
+
+    int gd_rt_cmd_len = args.size();
+    char **gd_rt_cmd = (char **)bu_calloc(gd_rt_cmd_len + ged_who_argc(gedp), sizeof(char *), "alloc gd_rt_cmd");
+    for (size_t j = 0; j < args.size(); j++) {
+	gd_rt_cmd[j] = bu_strdup(args[j].c_str());
+    }
 
     ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]));
 
+    bu_vls_cstr(&wstr);
+    for (size_t j = 0; j < args.size(); j++) {
+	bu_free(gd_rt_cmd[j], "free gd_rt_cmd arg");
+    }
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
     return ret;

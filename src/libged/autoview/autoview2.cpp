@@ -96,7 +96,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     /* set the default if unset or insane */
     if (factor < SQRT_SMALL_FASTF) {
-	factor = 1.0; /* 2 is half the view */
+	factor = 2.0; /* 2 is half the view */
     }
 
     VSETALL(sqrt_small, SQRT_SMALL_FASTF);
