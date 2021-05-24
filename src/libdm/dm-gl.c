@@ -917,6 +917,12 @@ int gl_hud_end(struct dm *dmp)
     GLfloat fogdepth;
 
     gl_debug_print(dmp, "gl_hud_end", dmp->i->dm_debugLevel);
+    if (dmp->i->dm_debugLevel > 3) {
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&msg, "faceFlag: %d\n", mvars->i.faceFlag);
+	gl_debug_log(dmp, &msg);
+	bu_vls_free(&msg);
+    }
 
     if (mvars->i.faceFlag) {
 	glMatrixMode(GL_PROJECTION);

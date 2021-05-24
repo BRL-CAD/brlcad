@@ -62,6 +62,7 @@ extern "C" {
 
 extern "C" {
 extern struct fb qtgl_interface;
+#include "../dm-gl.h"
 }
 
 #include <QApplication>
@@ -329,6 +330,9 @@ qtgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spe
     QTGL(ifp)->dmp = (struct dm *)fb_p->data;
     QTGL(ifp)->dmp->i->fbp = ifp;
 
+    if (QTGL(ifp)->dmp)
+	gl_debug_print(QTGL(ifp)->dmp, "FB: qtgl_open_existing", QTGL(ifp)->dmp->i->dm_debugLevel);
+
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
 
@@ -542,8 +546,6 @@ qtgl_clear(struct fb *ifp, unsigned char *pp)
 static int
 qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
-    struct fb_clip *clp;
-
     if (FB_DEBUG)
 	printf("entering qtgl_view\n");
 
@@ -567,16 +569,13 @@ qtgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
     dm_make_current(QTGL(ifp)->dmp);
 
-    /* Set clipping matrix and zoom level */
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+    if (QTGL(ifp)->dmp)
+	gl_debug_print(QTGL(ifp)->dmp, "FB: qtgl_view", QTGL(ifp)->dmp->i->dm_debugLevel);
 
     fb_clipper(ifp);
-    clp = &(QTGL(ifp)->clip);
-    glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
-    glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
-    glFlush();
+    if (QTGL(ifp)->dmp && QTGL(ifp)->dmp->i->dm_debugLevel > 3)
+	gl_debug_print(QTGL(ifp)->dmp, "FB: qtgl_view after:", QTGL(ifp)->dmp->i->dm_debugLevel);
 
     // TODO - somehow, we need to trigger an update event here for incremental display...
     dm_set_dirty(QTGL(ifp)->dmp, 1);
@@ -902,6 +901,9 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
 	y -= h;
     }
 
+    if (QTGL(ifp)->dmp)
+	gl_debug_print(QTGL(ifp)->dmp, "FB: qtgl_refresh", QTGL(ifp)->dmp->i->dm_debugLevel);
+
     int mm;
     glGetIntegerv(GL_MATRIX_MODE, &mm);
 
@@ -921,12 +923,18 @@ qtgl_refresh(struct fb *ifp, int x, int y, int w, int h)
 
     glViewport(0, 0, QTGL(ifp)->win_width, QTGL(ifp)->win_height);
     qtgl_xmit_scanlines(ifp, y, h, x, w);
+    if (QTGL(ifp)->dmp && QTGL(ifp)->dmp->i->dm_debugLevel > 3)
+	gl_debug_print(QTGL(ifp)->dmp, "FB: qtgl_refresh mid:", QTGL(ifp)->dmp->i->dm_debugLevel);
 
+
+    glMatrixMode(GL_PROJECTION);
     glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(mm);
 
-
+    if (QTGL(ifp)->dmp && QTGL(ifp)->dmp->i->dm_debugLevel > 3)
+	gl_debug_print(QTGL(ifp)->dmp, "FB: qtgl_refresh after:", QTGL(ifp)->dmp->i->dm_debugLevel);
 
     dm_set_dirty(QTGL(ifp)->dmp, 1);
     return 0;

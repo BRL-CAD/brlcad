@@ -93,6 +93,14 @@ extern struct fb ogl_interface;
 HIDDEN int ogl_nwindows = 0; 	/* number of open windows */
 HIDDEN XColor color_cell[256];		/* used to set colormap */
 
+#if 0
+static  void gl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[0], m[4], m[8], m[12]);
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[1], m[5], m[9], m[13]);
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[2], m[6], m[10], m[14]);
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[3], m[7], m[11], m[15]);
+}
+#endif
 
 /*
  * Per window state information, overflow area.
@@ -2267,6 +2275,18 @@ ogl_refresh(struct fb *ifp, int x, int y, int w, int h)
 	y -= h;
     }
 
+#if 0
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    GLfloat mvmat[16], pmat[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, mvmat);
+    bu_vls_printf(&msg, "   MODELVIEW:\n");
+    gl_printglmat(&msg, (GLfloat *)mvmat);
+    glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+    bu_vls_printf(&msg, "   PROJECTION:\n");
+    gl_printglmat(&msg, (GLfloat *)pmat);
+    bu_log("ogl_refresh: %s\n", bu_vls_cstr(&msg));
+    bu_vls_trunc(&msg, 0);
+#endif
 
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
@@ -2289,6 +2309,18 @@ ogl_refresh(struct fb *ifp, int x, int y, int w, int h)
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(mm);
+
+#if 0
+    glGetFloatv(GL_MODELVIEW_MATRIX, mvmat);
+    bu_vls_printf(&msg, "   MODELVIEW:\n");
+    gl_printglmat(&msg, (GLfloat *)mvmat);
+
+    glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+    bu_vls_printf(&msg, "   PROJECTION:\n");
+    gl_printglmat(&msg, (GLfloat *)pmat);
+
+    bu_log("ogl_refresh after: %s\n", bu_vls_cstr(&msg));
+#endif
 
     if (!OGL(ifp)->use_ext_ctrl) {
 	glFlush();

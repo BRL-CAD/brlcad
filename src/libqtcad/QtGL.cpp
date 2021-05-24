@@ -31,6 +31,12 @@ extern "C" {
 #include "bindings.h"
 #include "qtcad/QtGL.h"
 
+// FROM MGED
+#define XMIN            (-2048)
+#define XMAX            (2047)
+#define YMIN            (-2048)
+#define YMAX            (2047)
+
 // from GED_MIN and GED_MAX
 #define QTGL_ZMIN -2048
 #define QTGL_ZMAX 2047
@@ -99,14 +105,13 @@ void QtGL::paintGL()
 		fb_setup_existing(ifp, dm_get_width(dmp), dm_get_height(dmp), fbps);
 		fb_put_platform_specific(fbps);
 	    }
-	}
 
-	dm_configure_win(dmp, 0);
-	dm_set_pathname(dmp, "QTDM");
-	dm_set_zbuffer(dmp, 1);
+	    dm_set_pathname(dmp, "QTDM");
+	}
 
 	// QTGL_ZMIN and QTGL_ZMAX are historical - need better
 	// documentation on why those specific values are used.
+	//fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, QTGL_ZMIN, QTGL_ZMAX };
 	fastf_t windowbounds[6] = { -1, 1, -1, 1, QTGL_ZMIN, QTGL_ZMAX };
 	dm_set_win_bounds(dmp, windowbounds);
 
@@ -143,8 +148,6 @@ void QtGL::paintGL()
     // we end up with unrendered frames.
     dm_set_dirty(dmp, 0);
 
-    matp_t mat = v->gv_model2view;
-    dm_loadmatrix(dmp, mat, 0);
     if (base2local && local2base) {
 	v->gv_local2base = *local2base;
 	v->gv_base2local = *base2local;

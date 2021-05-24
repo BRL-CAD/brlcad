@@ -255,6 +255,11 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
 
 
     dm_make_current(dmp);
+
+    // FOR INITIALIZATION DEBUGGING - enable debugging/logging from the beginning
+    //dmp->i->dm_debugLevel = 5;
+    //bu_vls_sprintf(&dmp->i->dm_log, "qdm.log");
+
     gl_setBGColor(dmp, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

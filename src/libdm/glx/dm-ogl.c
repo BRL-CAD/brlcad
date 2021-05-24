@@ -263,7 +263,7 @@ ogl_makeCurrent(struct dm *dmp)
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct pogl_vars *privars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
 
-    gl_debug_print(dmp, "ogl_makeCurrent", dmp->i->dm_debugLevel);
+    //gl_debug_print(dmp, "ogl_makeCurrent", dmp->i->dm_debugLevel);
 
     if (!glXMakeCurrent(pubvars->dpy,
 			pubvars->win,
@@ -281,7 +281,7 @@ ogl_SwapBuffers(struct dm *dmp)
 {
     struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
 
-    gl_debug_print(dmp, "ogl_SwapBuffers", dmp->i->dm_debugLevel);
+    //gl_debug_print(dmp, "ogl_SwapBuffers", dmp->i->dm_debugLevel);
 
     glXSwapBuffers(pubvars->dpy, pubvars->win);
 
@@ -850,6 +850,12 @@ Done:
     /* This is the applications display list offset */
     dmp->i->dm_displaylist = privvars->fontOffset + 128;
 
+
+    // FOR INITIALIZATION DEBUGGING - enable debugging/logging from the beginning
+    //dmp->i->dm_debugLevel = 5;
+    //bu_vls_sprintf(&dmp->i->dm_log, "mged.log");
+
+
     gl_setBGColor(dmp, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -890,6 +896,7 @@ Done:
     gl_setZBuffer(dmp, dmp->i->dm_zbuffer);
     gl_setLight(dmp, dmp->i->dm_light);
 
+
     return dmp;
 }
 
@@ -897,8 +904,6 @@ Done:
 int
 ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
-    gl_debug_print(dmp, "ogl_share_dlist", dmp->i->dm_debugLevel);
-
     struct gl_vars *mvars = (struct gl_vars *)dmp1->i->m_vars;
     struct pogl_vars *privars = (struct pogl_vars *)dmp1->i->dm_vars.priv_vars;
     GLfloat backgnd[4];

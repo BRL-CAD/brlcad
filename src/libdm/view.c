@@ -674,6 +674,23 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
 {
     struct dm *dmp = (struct dm *)v->dmp;
 
+    // If we're drawing the framebuffer, that's the first order of business.
+    // The rest of the drawing layers manipulate the OpenGL view and projection
+    // matrices, but the framebuffer is always aligned to the view.  We also
+    // can't have the zbuffer enabled or the fb image won't draw correctly.
+    if (v->gv_fb_mode && dm_get_fb(dmp)) {
+	int zbuff_restore = dm_get_zbuffer(dmp);
+	dm_set_zbuffer(dmp, 0);
+	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+	if (zbuff_restore)
+	    dm_set_zbuffer(dmp, 1);
+	if (v->gv_fb_mode == 1) {
+	    // In overlay mode, it's just the fb - skip all the rest
+	    return;
+	}
+    }
+
+
 #if 0
     // Update selections (if any)
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
@@ -682,13 +699,12 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
     }
 #endif
 
-    if (v->gv_fb_mode == 2 && dm_get_fb(dmp)) {
-	dm_set_zbuffer(dmp, 0);
-	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
-	dm_set_zbuffer(dmp, 1);
-    }
+    // On to the scene objects - for drawing those we need the view matrix
+    matp_t mat = v->gv_model2view;
+    dm_loadmatrix(dmp, mat, 0);
 
     // Draw geometry view objects
+    // TODO - draw opaque, then transparent
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
 	bu_log("Draw %s\n", bu_vls_cstr(&g->g->s_name));
@@ -701,20 +717,18 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
 	dm_draw_scene_obj(dmp, s);
     }
 
-    /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
+
+    /* And finally, faceplate.  Set up matrices for HUD drawing, rather than 3D
+     * scene drawing. */
     (void)dm_hud_begin(dmp);
 
+    /* Draw faceplate elements based on their current enable/disable settings */
     dm_draw_faceplate(v, base2local, local2base);
 
     /* Restore non-HUD settings. */
     (void)dm_hud_end(dmp);
-
-    if (v->gv_fb_mode == 1 && dm_get_fb(dmp)) {
-	dm_set_zbuffer(dmp, 0);
-	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
-	dm_set_zbuffer(dmp, 1);
-    }
 }
+
 /*
  * Local Variables:
  * tab-width: 8
