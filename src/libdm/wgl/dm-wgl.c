@@ -964,7 +964,8 @@ struct dm_impl dm_wgl_impl = {
     0,                          /* not overriding the auto font size */
     wgl_vparse,
     FB_NULL,
-    0				/* Tcl interpreter */
+    0,				/* Tcl interpreter */
+    NULL                        /* Drawing context */
 };
 
 /*

@@ -154,6 +154,7 @@ struct dm_impl {
     struct bu_structparse *vparse;    /**< @brief Table listing settable variables */
     struct fb *fbp;                    /**< @brief Framebuffer associated with this display instance */
     void *dm_interp;		/**< @brief interpreter */
+    void *dm_ctx;		/**< @brief drawing context */
 };
 
 struct fb_impl {
@@ -215,6 +216,7 @@ struct fb_impl {
     void *pp; /* Internal state pointer */
     char *if_mem;
     int stand_alone;
+    struct dm *dmp;     /**< @brief Pointer to associated display manager, if FB is embedded */
     /* State variables for individual interface modules */
     union {
         char *p;

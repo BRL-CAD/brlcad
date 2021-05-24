@@ -199,6 +199,7 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     }
     privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
     privars->qw = (QOpenGLWidget *)ctx;
+    dmp->i->dm_ctx = ctx;
 
     dmp->i->dm_get_internal(dmp);
     mvars = (struct gl_vars *)dmp->i->m_vars;
@@ -633,7 +634,8 @@ struct dm_impl dm_qtgl_impl = {
     0,                          /* not overriding the auto font size */
     gl_vparse,
     FB_NULL,
-    0				/* Tcl interpreter */
+    0,				/* Tcl interpreter */
+    NULL                        /* Drawing context */
 };
 
 struct dm dm_qtgl = { DM_MAGIC, &dm_qtgl_impl, 0 };

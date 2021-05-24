@@ -421,7 +421,8 @@ struct dm_impl dm_null_impl = {
     0,                          /* not overriding the auto font size */
     BU_STRUCTPARSE_NULL,
     FB_NULL,
-    0				/* Tcl interpreter */
+    0,				/* Tcl interpreter */
+    NULL                        /* Drawing context */
 };
 
 struct dm dm_null = { DM_MAGIC, &dm_null_impl, 0 };

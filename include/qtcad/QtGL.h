@@ -61,6 +61,9 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 	double *base2local = NULL;
 	double *local2base = NULL;
 
+    public slots:
+	void need_update();
+
     protected:
 	void paintGL() override;
 	void resizeGL(int w, int h) override;

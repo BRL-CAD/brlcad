@@ -840,7 +840,8 @@ struct dm_impl dm_ps_impl = {
     0,                          /* not overriding the auto font size */
     BU_STRUCTPARSE_NULL,
     FB_NULL,
-    0				/* Tcl interpreter */
+    0,				/* Tcl interpreter */
+    NULL                        /* Drawing context */
 };
 
 

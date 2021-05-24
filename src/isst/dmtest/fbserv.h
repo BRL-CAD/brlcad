@@ -47,6 +47,9 @@ class QFBSocket : public QObject
 	int ind;
 	struct fbserv_obj *fbsp;
 
+    signals:
+	void updated();
+
     public slots:
 	void client_handler();
 

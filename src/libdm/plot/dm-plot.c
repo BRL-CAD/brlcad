@@ -771,7 +771,8 @@ struct dm_impl dm_plot_impl = {
     0,                          /* not overriding the auto font size */
     BU_STRUCTPARSE_NULL,
     FB_NULL,
-    NULL			/* Tcl interpreter */
+    NULL,			/* Tcl interpreter */
+    NULL                        /* Drawing context */
 };
 
 struct dm dm_plot = { DM_MAGIC, &dm_plot_impl, 0 };

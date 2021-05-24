@@ -631,7 +631,8 @@ struct dm_impl dm_swrast_impl = {
     0,                          /* not overriding the auto font size */
     gl_vparse,
     FB_NULL,
-    0				/* Tcl interpreter */
+    0,				/* Tcl interpreter */
+    NULL                        /* Drawing context */
 };
 
 struct dm dm_swrast = { DM_MAGIC, &dm_swrast_impl, 0 };

@@ -1207,7 +1207,8 @@ struct dm_impl dm_tk_impl = {
     0,                          /* not overriding the auto font size */
     Tk_vparse,
     FB_NULL,
-    0				/* Tcl interpreter */
+    0,				/* Tcl interpreter */
+    NULL                        /* Drawing context */
 };
 
 struct dm dm_tk = { DM_MAGIC, &dm_tk_impl, 0 };

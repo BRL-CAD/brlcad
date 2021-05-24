@@ -79,6 +79,7 @@ struct dm_hook_data {
 DM_EXPORT extern struct dm dm_null;
 
 DM_EXPORT extern void *dm_interp(struct dm *dmp);
+DM_EXPORT extern void *dm_get_ctx(struct dm *dmp);
 DM_EXPORT extern int dm_share_dlist(struct dm *dmp1,
 				    struct dm *dmp2);
 DM_EXPORT extern fastf_t dm_Xx2Normal(struct dm *dmp,
@@ -365,6 +366,7 @@ typedef struct {
 DM_EXPORT struct fb *fb_get();
 DM_EXPORT struct fb *fb_raw(const char *type);
 DM_EXPORT void  fb_put(struct fb *ifp);
+DM_EXPORT struct dm *fb_get_dm(struct fb *ifp);
 DM_EXPORT extern char *fb_gettype(struct fb *ifp);
 DM_EXPORT extern void fb_set_standalone(struct fb *ifp, int val);
 DM_EXPORT extern int fb_get_standalone(struct fb *ifp);

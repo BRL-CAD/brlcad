@@ -188,6 +188,12 @@ void fb_set_magic(struct fb *ifp, uint32_t magic)
 }
 
 
+struct dm *fb_get_dm(struct fb *ifp)
+{
+    if (!ifp) return NULL;
+    return ifp->i->dmp;
+}
+
 char *fb_gettype(struct fb *ifp)
 {
     return ifp->i->if_type;

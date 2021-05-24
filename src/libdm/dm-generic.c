@@ -45,6 +45,13 @@ dm_interp(struct dm *dmp)
     return (void *)dmp->i->dm_interp;
 }
 
+void *
+dm_get_ctx(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return NULL;
+    return (void *)dmp->i->dm_ctx;
+}
+
 void
 dm_fogHint(struct dm *dmp, int fastfog)
 {

@@ -3538,6 +3538,7 @@ struct fb_impl X24_interface_impl =  {
     NULL,
     NULL,
     0,
+    NULL,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

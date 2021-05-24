@@ -32,10 +32,13 @@
  */
 
 #include "common.h"
+
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
+#include "dm.h"
 #include "./fbserv.h"
+#include "qtcad/QtGL.h"
 
 void
 QFBSocket::client_handler()
@@ -86,6 +89,8 @@ QFBSocket::client_handler()
 	// right part of the buffer
 	buff.append(&pkc->pkc_inbuf[pkc->pkc_inend], pkc->pkc_inlen - pkc->pkc_inend);
     }
+
+    emit updated();
 
     // If we've got callbacks, execute them now.
     if (fbsp->fbs_callback != (void (*)(void *))FBS_CALLBACK_NULL) {
@@ -195,6 +200,11 @@ qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
     fbsp->fbs_clients[i].fbsc_chan = data;
     QFBSocket *s = (QFBSocket *)data;
     QObject::connect(s->s, &QTcpSocket::readyRead, s, &QFBSocket::client_handler, Qt::QueuedConnection);
+
+    QtGL *ctx = (QtGL *)dm_get_ctx(fb_get_dm(fbsp->fbs_fbp));
+    if (ctx) {
+	QObject::connect(s, &QFBSocket::updated, ctx, &QtGL::need_update, Qt::QueuedConnection);
+    }
 }
 
 void

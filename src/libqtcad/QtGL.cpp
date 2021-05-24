@@ -166,6 +166,12 @@ void QtGL::resizeGL(int, int)
     }
 }
 
+void QtGL::need_update()
+{
+    dm_set_dirty(dmp, 1);
+    update();
+}
+
 void QtGL::keyPressEvent(QKeyEvent *k) {
 
     if (!dmp || !v) {
