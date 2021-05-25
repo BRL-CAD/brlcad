@@ -25,10 +25,6 @@
 
 #include <iostream>
 
-#include <QIcon>
-#include <QImage>
-#include <QPixmap>
-
 #include "qtcad/QAccordionWidget.h"
 
 QAccordionObject::QAccordionObject(QWidget *pparent, QWidget *object, QString header_title) : QWidget(pparent)
@@ -37,12 +33,6 @@ QAccordionObject::QAccordionObject(QWidget *pparent, QWidget *object, QString he
     title = header_title;
     toggle = new QPushButton(title, this);
     toggle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    QImage iconimage;
-    iconimage.load(":/images/tree/branch-open.png");
-    QPixmap iconpixmap;
-    iconpixmap.convertFromImage(iconimage);
-    QIcon buttonicon(iconpixmap);
-    toggle->setIcon(buttonicon);
     QScrollArea *objscrollarea= new QScrollArea();
     objlayout = new QVBoxLayout(this);
     objlayout->setSpacing(0);
@@ -59,7 +49,7 @@ QAccordionObject::QAccordionObject(QWidget *pparent, QWidget *object, QString he
     object->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    QObject::connect(toggle, SIGNAL(clicked()), this, SLOT(toggleVisibility()));
+    QObject::connect(toggle, &QPushButton::clicked, this, &QAccordionObject::toggleVisibility);
 }
 
 QAccordionObject::~QAccordionObject()
@@ -91,22 +81,10 @@ QAccordionObject::setVisibility(int val)
 {
     visible = val;
     if (!visible) {
-	QImage iconimage;
-	iconimage.load(":/images/tree/branch-closed.png");
-	QPixmap iconpixmap;
-	iconpixmap.convertFromImage(iconimage);
-	QIcon buttonicon(iconpixmap);
-	toggle->setIcon(buttonicon);
 	child_object->hide();
 	emit made_hidden(this);
     }
     if (visible) {
-	QImage iconimage;
-	iconimage.load(":/images/tree/branch-open.png");
-	QPixmap iconpixmap;
-	iconpixmap.convertFromImage(iconimage);
-	QIcon buttonicon(iconpixmap);
-	toggle->setIcon(buttonicon);
 	child_object->show();
 	emit made_visible(this);
     }
@@ -130,7 +108,7 @@ QAccordionWidget::QAccordionWidget(QWidget *pparent) : QWidget(pparent)
     splitter = new QSplitter();
     splitter->setOrientation(Qt::Vertical);
     splitter->setChildrenCollapsible(false);
-    QObject::connect(splitter, SIGNAL(splitterMoved(int, int)), this, SLOT(update_sizes(int, int)));
+    QObject::connect(splitter, &QSplitter::splitterMoved, this, &QAccordionWidget::update_sizes);
     mlayout->addWidget(splitter);
 
     this->setLayout(mlayout);
@@ -149,8 +127,8 @@ QAccordionWidget::addObject(QAccordionObject *object)
     splitter->addWidget(object);
     object->idx = splitter->count() - 1;
     objects.insert(object);
-    QObject::connect(object, SIGNAL(made_visible(QAccordionObject *)), this, SLOT(stateUpdate(QAccordionObject *)));
-    QObject::connect(object, SIGNAL(made_hidden(QAccordionObject *)), this, SLOT(stateUpdate(QAccordionObject *)));
+    QObject::connect(object, &QAccordionObject::made_visible, this, &QAccordionWidget::stateUpdate);
+    QObject::connect(object, &QAccordionObject::made_hidden,  this, &QAccordionWidget::stateUpdate);
     size_states.clear();
 }
 
@@ -160,8 +138,8 @@ QAccordionWidget::insertObject(int idx, QAccordionObject *object)
     splitter->insertWidget(idx, object);
     object->idx = splitter->count() - 1;
     objects.insert(object);
-    QObject::connect(object, SIGNAL(made_visible(QAccordionObject *)), this, SLOT(stateUpdate(QAccordionObject *)));
-    QObject::connect(object, SIGNAL(made_hidden(QAccordionObject *)), this, SLOT(stateUpdate(QAccordionObject *)));
+    QObject::connect(object, &QAccordionObject::made_visible, this, &QAccordionWidget::stateUpdate);
+    QObject::connect(object, &QAccordionObject::made_hidden,  this, &QAccordionWidget::stateUpdate);
     foreach(QAccordionObject *obj, objects) {
 	if (obj->idx >= idx)
 	    obj->idx++;
