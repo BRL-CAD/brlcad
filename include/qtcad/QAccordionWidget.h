@@ -25,45 +25,22 @@
  *
  */
 
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
-#  pragma message "Disabling GCC float equality comparison warnings via pragma due to Qt headers..."
-#endif
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-#undef Success
+#ifndef QACCORDIANWIDGET_H
+#define QACCORDIANWIDGET_H
+
 #include <QWidget>
-#undef Success
 #include <QVBoxLayout>
-#undef Success
 #include <QPushButton>
-#undef Success
 #include <QSet>
-#undef Success
 #include <QMap>
-#undef Success
 #include <QScrollArea>
-#undef Success
 #include <QSplitter>
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
 
-class QAccordionWidget;
+#include "qtcad/defines.h"
 
-class QAccordionObject : public QWidget
+class QTCAD_EXPORT QAccordionWidget;
+
+class QTCAD_EXPORT QAccordionObject : public QWidget
 {
     Q_OBJECT
 
@@ -90,7 +67,7 @@ class QAccordionObject : public QWidget
 	QWidget *child_object;
 };
 
-class QAccordionWidget : public QWidget
+class QTCAD_EXPORT QAccordionWidget : public QWidget
 {
     Q_OBJECT
 
@@ -118,6 +95,7 @@ class QAccordionWidget : public QWidget
 	QMap<QString, QList<int> > size_states;
 };
 
+#endif /* QACCORDIANWIDGET_H */
 
 /*
  * Local Variables:

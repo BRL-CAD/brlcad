@@ -28,7 +28,7 @@
 #include "cadtreemodel.h"
 #include "cadattributes.h"
 #include "QToolPalette.h"
-#include "QAccordionWidget.h"
+#include "qtcad/QAccordionWidget.h"
 
 class CADViewControls : public QWidget
 {

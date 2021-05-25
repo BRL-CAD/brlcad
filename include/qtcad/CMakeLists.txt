@@ -1,4 +1,5 @@
 set(qtcad_headers
+  QAccordionWidget.h
   QtConsole.h
   QtConsoleListener.h
   QtGL.h
