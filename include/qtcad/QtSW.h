@@ -67,6 +67,9 @@ class QTCAD_EXPORT QtSW : public QWidget
 	double *base2local = NULL;
 	double *local2base = NULL;
 
+    public slots:
+	void need_update();
+
     protected:
 	void paintEvent(QPaintEvent *e) override;
 	void resizeEvent(QResizeEvent *e) override;

@@ -965,7 +965,8 @@ struct dm_impl dm_wgl_impl = {
     wgl_vparse,
     FB_NULL,
     0,				/* Tcl interpreter */
-    NULL                        /* Drawing context */
+    NULL,                       /* Drawing context */
+    NULL                        /* App data */
 };
 
 /*

@@ -39,6 +39,7 @@
 #include "dm.h"
 #include "./fbserv.h"
 #include "qtcad/QtGL.h"
+#include "qtcad/QtSW.h"
 
 void
 QFBSocket::client_handler()
@@ -204,6 +205,22 @@ qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
     QtGL *ctx = (QtGL *)dm_get_ctx(fb_get_dm(fbsp->fbs_fbp));
     if (ctx) {
 	QObject::connect(s, &QFBSocket::updated, ctx, &QtGL::need_update, Qt::QueuedConnection);
+    }
+}
+
+// Because swrast uses a bview as its context pointer, we need to unpack the app data
+// when using that display method
+void
+qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data)
+{
+    bu_log("open_client_handler\n");
+    fbsp->fbs_clients[i].fbsc_chan = data;
+    QFBSocket *s = (QFBSocket *)data;
+    QObject::connect(s->s, &QTcpSocket::readyRead, s, &QFBSocket::client_handler, Qt::QueuedConnection);
+
+    QtSW *ctx = (QtSW *)dm_get_udata(fb_get_dm(fbsp->fbs_fbp));
+    if (ctx) {
+	QObject::connect(s, &QFBSocket::updated, ctx, &QtSW::need_update, Qt::QueuedConnection);
     }
 }
 

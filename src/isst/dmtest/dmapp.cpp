@@ -114,7 +114,12 @@ DMApp::load_g(const char *filename, int argc, const char *argv[])
     gedp->fbs_listen_on_port = &qdm_listen_on_port;
     gedp->fbs_open_server_handler = &qdm_open_server_handler;
     gedp->fbs_close_server_handler = &qdm_close_server_handler;
-    gedp->fbs_open_client_handler = &qdm_open_client_handler;
+    if (w->canvas) {
+	gedp->fbs_open_client_handler = &qdm_open_client_handler;
+    }
+    if (w->canvas_sw) {
+	gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+    }
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
     return 0;

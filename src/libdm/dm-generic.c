@@ -52,6 +52,21 @@ dm_get_ctx(struct dm *dmp)
     return (void *)dmp->i->dm_ctx;
 }
 
+void *
+dm_get_udata(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return NULL;
+    return (void *)dmp->i->dm_udata;
+}
+
+void
+dm_set_udata(struct dm *dmp, void *udata)
+{
+    if (UNLIKELY(!dmp)) return;
+    dmp->i->dm_udata = udata;
+}
+
+
 void
 dm_fogHint(struct dm *dmp, int fastfog)
 {

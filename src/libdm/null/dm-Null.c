@@ -422,7 +422,8 @@ struct dm_impl dm_null_impl = {
     BU_STRUCTPARSE_NULL,
     FB_NULL,
     0,				/* Tcl interpreter */
-    NULL                        /* Drawing context */
+    NULL,                       /* Drawing context */
+    NULL                        /* App data */
 };
 
 struct dm dm_null = { DM_MAGIC, &dm_null_impl, 0 };

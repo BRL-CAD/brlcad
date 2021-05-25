@@ -88,6 +88,8 @@ qdm_close_server_handler(struct fbserv_obj *fbsp);
 extern void
 qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data);
 extern void
+qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data);
+extern void
 qdm_close_client_handler(struct fbserv_obj *fbsp, int sub);
 
 __END_DECLS

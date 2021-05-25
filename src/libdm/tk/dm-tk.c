@@ -1208,7 +1208,8 @@ struct dm_impl dm_tk_impl = {
     Tk_vparse,
     FB_NULL,
     0,				/* Tcl interpreter */
-    NULL                        /* Drawing context */
+    NULL,                       /* Drawing context */
+    NULL                        /* App data */
 };
 
 struct dm dm_tk = { DM_MAGIC, &dm_tk_impl, 0 };

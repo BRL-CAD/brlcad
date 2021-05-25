@@ -80,6 +80,8 @@ DM_EXPORT extern struct dm dm_null;
 
 DM_EXPORT extern void *dm_interp(struct dm *dmp);
 DM_EXPORT extern void *dm_get_ctx(struct dm *dmp);
+DM_EXPORT extern void *dm_get_udata(struct dm *dmp);
+DM_EXPORT extern void dm_set_udata(struct dm *dmp, void *udata);
 DM_EXPORT extern int dm_share_dlist(struct dm *dmp1,
 				    struct dm *dmp2);
 DM_EXPORT extern fastf_t dm_Xx2Normal(struct dm *dmp,

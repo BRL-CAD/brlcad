@@ -635,7 +635,8 @@ struct dm_impl dm_qtgl_impl = {
     gl_vparse,
     FB_NULL,
     0,				/* Tcl interpreter */
-    NULL                        /* Drawing context */
+    NULL,                       /* Drawing context */
+    NULL                        /* App data */
 };
 
 struct dm dm_qtgl = { DM_MAGIC, &dm_qtgl_impl, 0 };

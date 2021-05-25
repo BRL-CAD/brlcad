@@ -477,7 +477,8 @@ struct dm_impl dm_txt_impl = {
     BU_STRUCTPARSE_NULL,
     FB_NULL,
     0,				/* Tcl interpreter */
-    NULL                        /* Drawing context */
+    NULL,                       /* Drawing context */
+    NULL                        /* App data */
 };
 
 struct dm dm_txt = { DM_MAGIC, &dm_txt_impl, 0 };

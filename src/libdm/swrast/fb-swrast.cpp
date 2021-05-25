@@ -36,6 +36,7 @@
 
 extern "C" {
 #include "../include/private.h"
+#include "../dm-gl.h"
 }
 
 extern "C" {
@@ -54,8 +55,6 @@ struct swrastinfo {
     char **av;
     QApplication *qapp = NULL;
     QtSWWin *mw = NULL;
-
-    struct dm *dmp = NULL;
 
     int cmap_size;		/* hardware colormap size */
     int win_width;              /* actual window width */
@@ -282,7 +281,7 @@ swrast_configureWindow(struct fb *ifp, int width, int height)
     swrast_getmem(ifp);
     fb_clipper(ifp);
 
-    dm_make_current(SWRAST(ifp)->dmp);
+    dm_make_current(ifp->i->dmp);
 
     return 0;
 }
@@ -308,8 +307,14 @@ swrast_open_existing(struct fb *ifp, int width, int height, struct fb_platform_s
 	}
     }
 
-    SWRAST(ifp)->dmp = (struct dm *)fb_p->data;
-    SWRAST(ifp)->dmp->i->fbp = ifp;
+    ifp->i->dmp = (struct dm *)fb_p->data;
+
+    if (ifp->i->dmp) {
+	ifp->i->dmp->i->fbp = ifp;
+
+	// Since the fb is in the context of a dm, print its debugging output in dm style
+	gl_debug_print(ifp->i->dmp, "FB: qtgl_open_existing", ifp->i->dmp->i->dm_debugLevel);
+    }
 
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
@@ -510,7 +515,8 @@ swrast_clear(struct fb *ifp, unsigned char *pp)
 	}
     }
 
-    dm_make_current(SWRAST(ifp)->dmp);
+    if (ifp->i->dmp)
+	dm_make_current(ifp->i->dmp);
 
     if (pp != RGBPIXEL_NULL) {
 	glClearColor(pp[RED]/255.0, pp[GRN]/255.0, pp[BLU]/255.0, 0.0);
@@ -527,8 +533,6 @@ swrast_clear(struct fb *ifp, unsigned char *pp)
 static int
 swrast_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
-    struct fb_clip *clp;
-
     if (FB_DEBUG)
 	printf("entering swrast_view\n");
 
@@ -550,21 +554,19 @@ swrast_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     ifp->i->if_xzoom = xzoom;
     ifp->i->if_yzoom = yzoom;
 
-    dm_make_current(SWRAST(ifp)->dmp);
+    if (ifp->i->dmp) {
+	dm_make_current(ifp->i->dmp);
 
-    /* Set clipping matrix and zoom level */
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+	gl_debug_print(ifp->i->dmp, "FB: qtgl_view", ifp->i->dmp->i->dm_debugLevel);
+    }
 
     fb_clipper(ifp);
-    clp = &(SWRAST(ifp)->clip);
-    glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
-    glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
-    glFlush();
+    if (ifp->i->dmp && ifp->i->dmp->i->dm_debugLevel > 3)
+	gl_debug_print(ifp->i->dmp, "FB: qtgl_view after:", ifp->i->dmp->i->dm_debugLevel);
 
-    SWRAST(ifp)->mw->update();
-
+    // TODO - somehow, we need to trigger an update event here for incremental display...
+    dm_set_dirty(ifp->i->dmp, 1);
     return 0;
 }
 
@@ -888,14 +890,17 @@ swrast_refresh(struct fb *ifp, int x, int y, int w, int h)
 	y -= h;
     }
 
-    int mm;
-    struct fb_clip *clp;
+    if (ifp->i->dmp)
+	gl_debug_print(ifp->i->dmp, "FB: qtgl_refresh", ifp->i->dmp->i->dm_debugLevel);
 
+    int mm;
     glGetIntegerv(GL_MATRIX_MODE, &mm);
+
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
 
+    struct fb_clip *clp;
     fb_clipper(ifp);
     clp = &(SWRAST(ifp)->clip);
     glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
@@ -913,7 +918,10 @@ swrast_refresh(struct fb *ifp, int x, int y, int w, int h)
     glPopMatrix();
     glMatrixMode(mm);
 
-    dm_set_dirty(SWRAST(ifp)->dmp, 1);
+    if (ifp->i->dmp && ifp->i->dmp->i->dm_debugLevel > 3)
+	gl_debug_print(ifp->i->dmp, "FB: qtgl_refresh after:", ifp->i->dmp->i->dm_debugLevel);
+
+    dm_set_dirty(ifp->i->dmp, 1);
     return 0;
 }
 

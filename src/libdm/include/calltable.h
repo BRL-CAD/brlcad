@@ -155,6 +155,7 @@ struct dm_impl {
     struct fb *fbp;                    /**< @brief Framebuffer associated with this display instance */
     void *dm_interp;		/**< @brief interpreter */
     void *dm_ctx;		/**< @brief drawing context */
+    void *dm_udata;		/**< @brief associate general application data here */
 };
 
 struct fb_impl {

@@ -65,6 +65,12 @@ QtSW::~QtSW()
     BU_PUT(v, struct bv);
 }
 
+void QtSW::need_update()
+{
+    dm_set_dirty(dmp, 1);
+    update();
+}
+
 void QtSW::paintEvent(QPaintEvent *e)
 {
     // Go ahead and set the flag, but (unlike the rendering thread
@@ -85,6 +91,10 @@ void QtSW::paintEvent(QPaintEvent *e)
 	    dmp = dm_open((void *)v, NULL, "swrast", 1, &acmd);
 	    if (!dmp)
 		return;
+
+	    // Let dmp know what the app level widget is (needed so we can
+	    // connect framebuffer drawing events to the widget redraw logic.)
+	    dm_set_udata(dmp, this);
 
 	    // If we have a framebuffer, now we can open it
 	    if (ifp) {

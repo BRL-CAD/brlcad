@@ -841,7 +841,8 @@ struct dm_impl dm_ps_impl = {
     BU_STRUCTPARSE_NULL,
     FB_NULL,
     0,				/* Tcl interpreter */
-    NULL                        /* Drawing context */
+    NULL,                       /* Drawing context */
+    NULL                        /* App data */
 };
 
 
