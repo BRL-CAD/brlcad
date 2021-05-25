@@ -108,8 +108,12 @@ QAccordionWidget::QAccordionWidget(QWidget *pparent) : QWidget(pparent)
     splitter = new QSplitter();
     splitter->setOrientation(Qt::Vertical);
     splitter->setChildrenCollapsible(false);
+    splitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QObject::connect(splitter, &QSplitter::splitterMoved, this, &QAccordionWidget::update_sizes);
     mlayout->addWidget(splitter);
+
+    buffer = new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    mlayout->addItem(buffer);
 
     this->setLayout(mlayout);
 }
@@ -194,12 +198,28 @@ QAccordionWidget::stateUpdate(QAccordionObject *new_obj)
 	}
     }
     QString statekey;
+    int have_visible = 0;
     foreach(QAccordionObject *obj, objects) {
 	if (obj->visible) {
 	    statekey.append("1");
+	    have_visible = 1;
 	} else {
 	    statekey.append("0");
 	}
+    }
+
+    if (!prev_have_visible) {
+	splitter->setSizePolicy(spolicy);
+	buffer->changeSize(1, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    }
+
+    prev_have_visible = have_visible;
+
+    if (!have_visible) {
+	spolicy = splitter->sizePolicy();
+	buffer->changeSize(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding);
+	splitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+	return;
     }
 
     if (size_states.find(statekey) != size_states.end()) {
@@ -212,6 +232,8 @@ QAccordionWidget::stateUpdate(QAccordionObject *new_obj)
 	QList<int>::const_iterator stlIter;
 	int sheight = splitter->height();
 	int scount = splitter->count();
+	if (!scount)
+	    return;
 	int found_hidden = splitter->count() + 1;
 	foreach(QAccordionObject *obj, objects) {
 	    if (!obj->visible) {
