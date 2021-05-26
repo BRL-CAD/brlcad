@@ -16,9 +16,13 @@ x 2a.  See about getting rt output into dm embedded framebuffer.  Study src/mged
     * At some point will want to look into QLocalServer/QLocalSocket to see if it
       can be used, but for now using the Qt Tcp connection.
 
-3.  Finish accordion widget, into libqtcad
+x 3.  Finish accordion widget, into libqtcad (moved, behavior improved.  Open/close
+      placement may need more tweaking - that's a rather tricky behavior for QSplitter -
+      but it seems to be fairly close)
 
-4.  Implement Qt quad view widget
+4.  Implement Qt quad view widget  (start basic - do a QGridLayout with 4 QtGL/QtSW instances.
+    Probably need to flesh out new libged logic to handle multiple dms as well... at a
+    minimum, draw routines will need to update objects in all four scenes)
 
 5.  temporary objects (nirt shotline, rtcheck/gqa overlap visuals, gdiff output...)
 
