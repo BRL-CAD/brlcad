@@ -165,7 +165,7 @@ swrast_getmem(struct fb *ifp)
 {
     int pixsize;
     int size;
-    char *sp;
+    char *sp = (char *)ifp->i->if_mem;
 
     errno = 0;
 
@@ -177,7 +177,12 @@ swrast_getmem(struct fb *ifp)
 	pixsize = ifp->i->if_height * ifp->i->if_width * sizeof(struct fb_pixel);
 	size = pixsize + sizeof(struct fb_cmap);
 
-	sp = (char *)calloc(1, size);
+	if (!sp) {
+	    sp = (char *)calloc(1, size);
+	} else {
+	    sp = (char *)bu_realloc(sp, size, "realloc fb memory");
+	    memset(sp, 0, size);
+	}
 	if (sp == 0) {
 	    fb_log("swrast_getmem: frame buffer memory malloc failed\n");
 	    goto fail;
@@ -263,11 +268,11 @@ swrast_configureWindow(struct fb *ifp, int width, int height)
     if (!SWRAST(ifp)->mi_memwidth)
 	getmem = 1;
 
+    SWRAST(ifp)->vp_width = width;
+    SWRAST(ifp)->vp_height = height;
+
     ifp->i->if_width = ifp->i->if_max_width = width;
     ifp->i->if_height = ifp->i->if_max_height = height;
-
-    SWRAST(ifp)->win_width = SWRAST(ifp)->vp_width = width;
-    SWRAST(ifp)->win_height = SWRAST(ifp)->vp_height = height;
 
     ifp->i->if_xzoom = 1;
     ifp->i->if_yzoom = 1;
@@ -280,6 +285,9 @@ swrast_configureWindow(struct fb *ifp, int width, int height)
 
     swrast_getmem(ifp);
     fb_clipper(ifp);
+
+    SWRAST(ifp)->win_width = width;
+    SWRAST(ifp)->win_height = height;
 
     dm_make_current(ifp->i->dmp);
 

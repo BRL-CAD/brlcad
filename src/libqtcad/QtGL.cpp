@@ -163,6 +163,9 @@ void QtGL::resizeGL(int, int)
 	dm_configure_win(dmp, 0);
 	v->gv_width = dm_get_width(dmp);
 	v->gv_height = dm_get_height(dmp);
+	if (ifp) {
+	    fb_configure_window(ifp, v->gv_width, v->gv_height);
+	}
 	dm_set_dirty(dmp, 1);
     }
 }

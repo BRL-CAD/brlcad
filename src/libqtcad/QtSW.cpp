@@ -175,6 +175,9 @@ void QtSW::resizeEvent(QResizeEvent *e)
 	v->gv_width = width();
 	v->gv_height = height();
 	dm_configure_win(dmp, 0);
+	if (ifp) {
+	    fb_configure_window(ifp, v->gv_width, v->gv_height);
+	}
 	dm_set_dirty(dmp, 1);
     }
 }
