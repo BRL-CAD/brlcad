@@ -116,17 +116,21 @@ DMApp::load_g(const char *filename, int argc, const char *argv[])
     gedp->fbs_close_server_handler = &qdm_close_server_handler;
     if (w->canvas) {
 	int type = w->canvas->view_type();
+#ifdef BRLCAD_OPENGL
 	if (type == QtCADView_GL) {
 	    gedp->fbs_open_client_handler = &qdm_open_client_handler;
 	}
+#endif
 	if (type == QtCADView_SW) {
 	    gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
 	}
     }
+#ifdef BRLCAD_OPENGL
     if (w->c4) {
 	gedp->fbs_open_client_handler = &qdm_open_client_handler;
-     }
-     gedp->fbs_close_client_handler = &qdm_close_client_handler;
+    }
+#endif
+    gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
     return 0;
 }

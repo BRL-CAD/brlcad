@@ -24,6 +24,8 @@
 #ifndef QTCADVIEW_H
 #define QTCADVIEW_H
 
+#include "common.h"
+
 extern "C" {
 #include "bu/ptbl.h"
 #include "bv.h"
@@ -35,14 +37,19 @@ extern "C" {
 #include <QWidget>
 #include "qtcad/defines.h"
 #include "qtcad/QtSW.h"
-#include "qtcad/QtGL.h"
+#ifdef BRLCAD_OPENGL
+#  include "qtcad/QtGL.h"
+#endif
 
 #define QtCADView_AUTO 0
-#define QtCADView_GL 1
-#define QtCADView_SW 2
-#define QtCADView_QUAD_AUTO 3
-#define QtCADView_QUAD_GL 4
-#define QtCADView_QUAD_SW 5
+#define QtCADView_SW 1
+#define QtCADView_QUAD_AUTO 2
+#define QtCADView_QUAD_SW 3
+
+#ifdef BRLCAD_OPENGL
+#  define QtCADView_GL 4
+#  define QtCADView_QUAD_GL 5
+#endif
 
 class QTCAD_EXPORT QtCADView : public QWidget
 {
@@ -79,8 +86,10 @@ class QTCAD_EXPORT QtCADView : public QWidget
 
     private:
         QBoxLayout *l = NULL;
+	QtSW *canvas_sw = NULL;
+#ifdef BRLCAD_OPENGL
         QtGL *canvas_gl = NULL;
-        QtSW *canvas_sw = NULL;
+#endif
 	// TODO - quad view
 };
 

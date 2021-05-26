@@ -24,6 +24,8 @@
 #ifndef QTGLQUAD_H
 #define QTGLQUAD_H
 
+#include "common.h"
+
 #include <QWidget>
 
 extern "C" {
@@ -32,9 +34,10 @@ extern "C" {
 #include "dm.h"
 }
 
+#include "qtcad/defines.h"
 #include "qtcad/QtGL.h"
 
-class QtGLQuad : public QWidget
+class QTCAD_EXPORT QtGLQuad : public QWidget
 {
     Q_OBJECT
 

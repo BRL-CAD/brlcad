@@ -33,7 +33,8 @@
 #ifndef QTCAD_QTSW_H
 #define QTCAD_QTSW_H
 
-#include <QKeyEvent>
+#include "common.h"
+
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QResizeEvent>

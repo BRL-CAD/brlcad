@@ -23,6 +23,8 @@
  *
  */
 
+#include "common.h"
+
 extern "C" {
 #include "bv/defines.h"
 #include "bv/util.h"

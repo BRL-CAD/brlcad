@@ -24,6 +24,9 @@
 #ifndef QTGL_H
 #define QTGL_H
 
+#include "common.h"
+
+#include <QKeyEvent>
 #include <QImage>
 #include <QKeyEvent>
 #include <QMouseEvent>

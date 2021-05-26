@@ -21,8 +21,10 @@
  *
  */
 
+#include "common.h"
+
 #include <QGridLayout>
-#include "QtGLQuad.h"
+#include "qtcad/QtGLQuad.h"
 
 QtGLQuad::QtGLQuad(QWidget *parent)
     : QWidget(parent)

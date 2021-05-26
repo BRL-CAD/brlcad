@@ -24,6 +24,8 @@
 
 #define USE_MGL_NAMESPACE 1
 
+#include "common.h"
+
 #include <QImage>
 #include <QPainter>
 

@@ -23,6 +23,8 @@
  *
  */
 
+#include "common.h"
+
 #include <iostream>
 
 #include "qtcad/QAccordionWidget.h"

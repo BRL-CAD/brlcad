@@ -21,14 +21,12 @@ set(dm_srcs
   main_window.cpp
   dmapp.cpp
   fbserv.cpp
-  QtGLQuad.cpp
   )
 
 set(dm_moc_headers
   main_window.h
   fbserv.h
   dmapp.h
-  QtGLQuad.h
   )
 
 if(BRLCAD_ENABLE_QT)
@@ -42,7 +40,10 @@ if(BRLCAD_ENABLE_QT)
 
   QT5_WRAP_CPP(dm_moc_srcs ${dm_moc_headers})
   BRLCAD_ADDEXEC(qdm "${dm_srcs};${dm_moc_srcs}" "libqtcad;libged;libdm;librt;libbu;Qt5::Core;Qt5::Widgets;Qt5::OpenGL;Qt5::Network;${OPENGL_LIBS}")
-  add_dependencies(qdm dm-qtgl)
+  add_dependencies(qdm dm-swrast)
+  if(TARGET dm-qtgl)
+    add_dependencies(qdm dm-qtgl)
+  endif(TARGET dm-qtgl)
 endif(BRLCAD_ENABLE_QT)
 
 set(dm_ignore_srcs

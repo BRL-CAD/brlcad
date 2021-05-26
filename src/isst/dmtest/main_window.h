@@ -38,7 +38,7 @@
 #include <QSettings>
 #include "qtcad/QtConsole.h"
 #include "qtcad/QtCADView.h"
-#include "QtGLQuad.h"
+#include "qtcad/QtGLQuad.h"
 
 class DM_MainWindow : public QMainWindow
 {

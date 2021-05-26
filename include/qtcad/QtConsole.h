@@ -43,6 +43,8 @@
 #ifndef QTCAD_CONSOLE_H
 #define QTCAD_CONSOLE_H
 
+#include "common.h"
+
 #include <QWidget>
 #include <QPlainTextEdit>
 #include <QFont>

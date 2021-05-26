@@ -4,6 +4,7 @@ set(qtcad_headers
   QtConsole.h
   QtConsoleListener.h
   QtGL.h
+  QtGLQuad.h
   QtSW.h
   defines.h
   )

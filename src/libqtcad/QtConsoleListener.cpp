@@ -24,6 +24,8 @@
  * Originally from https://github.com/juangburgos/QConsoleListener
  */
 
+#include "common.h"
+
 #include <iostream>
 #include "qtcad/QtConsoleListener.h"
 

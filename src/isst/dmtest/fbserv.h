@@ -85,8 +85,10 @@ extern void
 qdm_open_server_handler(struct fbserv_obj *fbsp);
 extern void
 qdm_close_server_handler(struct fbserv_obj *fbsp);
+#ifdef BRLCAD_OPENGL
 extern void
 qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data);
+#endif
 extern void
 qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data);
 extern void

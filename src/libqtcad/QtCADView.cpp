@@ -24,6 +24,8 @@
  *
  */
 
+#include "common.h"
+
 #include "qtcad/QtCADView.h"
 
 extern "C" {
@@ -40,37 +42,48 @@ QtCADView::QtCADView(QWidget *parent, int type, struct fb *fbp)
     l->setContentsMargins(0, 0, 0, 0);
 
     switch (type) {
+#ifdef BRLCAD_OPENGL
 	case QtCADView_GL:
 	    canvas_gl = new QtGL(this, fbp);
 	    canvas_gl->setMinimumSize(512,512);
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
 	    break;
+	case QtCADView_QUAD_GL:
+	    break;
+#endif
 	case QtCADView_SW:
 	    canvas_sw = new QtSW(this, fbp);
 	    canvas_sw->setMinimumSize(512,512);
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_sw);
 	    break;
-	case QtCADView_QUAD_AUTO:
-	    break;
-	case QtCADView_QUAD_GL:
-	    break;
 	case QtCADView_QUAD_SW:
 	    break;
+	case QtCADView_QUAD_AUTO:
+	    break;
 	default:
+#ifdef BRLCAD_OPENGL
 	    canvas_gl = new QtGL(this, fbp);
 	    canvas_gl->setMinimumSize(512,512);
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
+#else
+	    canvas_sw = new QtSW(this, fbp);
+	    canvas_sw->setMinimumSize(512,512);
+	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	    l->addWidget(canvas_sw);
+#endif
 	    return;
     }
 }
 
 QtCADView::~QtCADView()
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl)
 	delete canvas_gl;
+#endif
     if (canvas_sw)
 	delete canvas_sw;
 }
@@ -81,8 +94,10 @@ QtCADView::isValid()
     if (canvas_sw)
 	return true;
 
+#ifdef BRLCAD_OPENGL
     if (canvas_gl)
 	return canvas_gl->isValid();
+#endif
 
     return false;
 }
@@ -93,6 +108,7 @@ QtCADView::fallback()
     if (canvas_sw)
 	return;
 
+#ifdef BRLCAD_OPENGL
     if (canvas_gl && !canvas_gl->isValid()) {
 	bu_log("System OpenGL Canvas didn't work, falling back on Software Rasterizer\n");
 	struct fb *fbp = canvas_gl->ifp;
@@ -103,14 +119,17 @@ QtCADView::fallback()
 	canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	l->addWidget(canvas_sw);
     }
+#endif
 }
 
 
 int
 QtCADView::view_type()
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl)
 	return QtCADView_GL;
+#endif
     if (canvas_sw)
 	return QtCADView_SW;
 
@@ -131,11 +150,12 @@ QtCADView::select(int UNUSED(quad))
 void
 QtCADView::need_update()
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl) {
 	canvas_gl->need_update();
 	return;
     }
-
+#endif
     if (canvas_sw) {
 	canvas_sw->need_update();
 	return;
@@ -145,9 +165,10 @@ QtCADView::need_update()
 struct bview *
 QtCADView::view()
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl)
 	return canvas_gl->v;
-
+#endif
     if (canvas_sw)
 	return canvas_sw->v;
 
@@ -157,9 +178,10 @@ QtCADView::view()
 struct dm *
 QtCADView::dmp()
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl)
 	return canvas_gl->dmp;
-
+#endif
     if (canvas_sw)
 	return canvas_sw->dmp;
 
@@ -169,9 +191,10 @@ QtCADView::dmp()
 struct fb *
 QtCADView::ifp()
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl)
 	return canvas_gl->ifp;
-
+#endif
     if (canvas_sw)
 	return canvas_sw->ifp;
 
@@ -181,11 +204,13 @@ QtCADView::ifp()
 double
 QtCADView::base2local()
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl) {
 	if (canvas_gl->base2local)
 	    return *canvas_gl->base2local;
 	return 1.0;
     }
+#endif
     if (canvas_sw) {
 	if (canvas_sw->base2local)
 	    return *canvas_sw->base2local;
@@ -198,11 +223,13 @@ QtCADView::base2local()
 double
 QtCADView::local2base()
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl) {
 	if (canvas_gl->local2base)
 	    return *canvas_gl->local2base;
 	return 1.0;
     }
+#endif
     if (canvas_sw) {
 	if (canvas_sw->local2base)
 	    return *canvas_sw->local2base;
@@ -215,13 +242,14 @@ QtCADView::local2base()
 void
 QtCADView::set_view(struct bview *nv, int UNUSED(quad))
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl) {
 	canvas_gl->v = nv;
 	if (canvas_gl->dmp && canvas_gl->v) {
 	    canvas_gl->v->dmp = canvas_gl->dmp;
 	}
     }
-
+#endif
     if (canvas_sw) {
 	canvas_sw->v = nv;
     	if (canvas_sw->dmp && canvas_sw->v) {
@@ -233,9 +261,10 @@ QtCADView::set_view(struct bview *nv, int UNUSED(quad))
 void
 QtCADView::set_dmp(struct dm *ndmp, int UNUSED(quad))
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl)
 	canvas_gl->dmp = ndmp;
-
+#endif
     if (canvas_sw)
 	canvas_sw->dmp = ndmp;
 }
@@ -243,13 +272,14 @@ QtCADView::set_dmp(struct dm *ndmp, int UNUSED(quad))
 void
 QtCADView::set_dm_current(struct dm **ndmp, int UNUSED(quad))
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl) {
 	canvas_gl->dm_current = ndmp;
 	if (canvas_gl->dmp && canvas_gl->dm_current) {
 	    (*canvas_gl->dm_current) = canvas_gl->dmp;
 	}
     }
-
+#endif
     if (canvas_sw) {
 	canvas_sw->dm_current = ndmp;
 	if (canvas_sw->dmp && canvas_sw->dm_current) {
@@ -261,9 +291,10 @@ QtCADView::set_dm_current(struct dm **ndmp, int UNUSED(quad))
 void
 QtCADView::set_ifp(struct fb *nfbp, int UNUSED(quad))
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl)
 	canvas_gl->ifp = nfbp;
-
+#endif
     if (canvas_sw)
 	canvas_sw->ifp = nfbp;
 }
@@ -271,13 +302,14 @@ QtCADView::set_ifp(struct fb *nfbp, int UNUSED(quad))
 void
 QtCADView::set_base2local(double *nb2l)
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl) {
 	canvas_gl->base2local= nb2l;
 	if (canvas_gl->v && canvas_gl->base2local) {
 	    canvas_gl->v->gv_base2local = *canvas_gl->base2local;
 	}
     }
-
+#endif
     if (canvas_sw) {
 	canvas_sw->base2local= nb2l;
 	if (canvas_sw->v && canvas_sw->base2local) {
@@ -289,13 +321,14 @@ QtCADView::set_base2local(double *nb2l)
 void
 QtCADView::set_local2base(double *nl2b)
 {
+#ifdef BRLCAD_OPENGL
     if (canvas_gl) {
 	canvas_gl->local2base = nl2b;
     	if (canvas_gl->v && canvas_gl->local2base) {
 	    canvas_gl->v->gv_local2base = *canvas_gl->local2base;
 	}
     }
-
+#endif
     if (canvas_sw) {
 	canvas_sw->local2base = nl2b;
 	if (canvas_sw->v && canvas_sw->local2base) {

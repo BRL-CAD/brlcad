@@ -28,6 +28,8 @@
 #ifndef QACCORDIANWIDGET_H
 #define QACCORDIANWIDGET_H
 
+#include "common.h"
+
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QPushButton>

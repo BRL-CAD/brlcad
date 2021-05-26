@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "common.h"
+
 #include <QObject>
 #include <QThread>
 #include <iostream>

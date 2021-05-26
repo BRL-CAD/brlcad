@@ -25,7 +25,10 @@
 #include "bv/util.h"
 #include "main_window.h"
 #include "qtcad/QtCADView.h"
-#include "qtcad/QtGL.h"
+#ifdef BRLCAD_OPENGL
+#  include "qtcad/QtGL.h"
+#  include "qtcad/QtGLQuad.h"
+#endif
 #include "dmapp.h"
 
 DM_MainWindow::DM_MainWindow(int canvas_type)
@@ -59,11 +62,12 @@ DM_MainWindow::DM_MainWindow(int canvas_type)
 	canvas = new QtCADView(this, canvas_type);
 	canvas->setMinimumSize(512,512);
     }
+#ifdef BRLCAD_OPENGL
     if (canvas_type == 2) {
 	c4 = new QtGLQuad(this);
 	c4->setMinimumSize(512,512);
     }
-
+#endif
     console = new QtConsole(this);
     console->prompt("$ ");
     wgrp = new QSplitter(Qt::Vertical, this);
@@ -162,6 +166,7 @@ DM_MainWindow::run_cmd(const QString &command)
 			dm_set_vp(canvas->dmp(), &canvas->view()->gv_scale);
 		    }
 		}
+#ifdef BRLCAD_OPENGL
 		if (c4) {
 		    for (int i = 1; i < 5; i++) {
 			QtGL *c = c4->get(i);
@@ -178,6 +183,7 @@ DM_MainWindow::run_cmd(const QString &command)
 			}
 		    }
 		}
+#endif
 		if ((*gedpp)->ged_dmp)
 		    bu_ptbl_ins((*gedpp)->ged_all_dmp, (long int *)(*gedpp)->ged_dmp);
 
@@ -200,6 +206,7 @@ DM_MainWindow::run_cmd(const QString &command)
 	    canvas->set_base2local(NULL);
 	    canvas->set_local2base(NULL);
 	}
+#ifdef BRLCAD_OPENGL
 	if (c4) {
 	    for (int i = 1; i < 5; i++) {
 		QtGL *c = c4->get(i);
@@ -210,7 +217,7 @@ DM_MainWindow::run_cmd(const QString &command)
 		c->local2base = NULL;
 	    }
 	}
-
+#endif
 	console->printString("closed database\n");
 	cmd_run = 1;
     }

@@ -40,6 +40,8 @@
  * This widget is based off of ParaView's QtConsole
  */
 
+#include "common.h"
+
 #include "qtcad/QtConsole.h"
 
 #include <QAbstractItemView>

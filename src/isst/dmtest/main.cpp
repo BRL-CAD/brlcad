@@ -141,6 +141,7 @@ int main(int argc, char *argv[])
 	    app.w->canvas->set_base2local(&app.gedp->ged_wdbp->dbip->dbi_base2local);
 	    app.w->canvas->set_local2base(&app.gedp->ged_wdbp->dbip->dbi_local2base);
 	}
+#ifdef BRLCAD_OPENGL
 	if (app.w->c4) {
 	    for (int i = 1; i < 5; i++) {
 		QtGL *c = app.w->c4->get(i);
@@ -151,6 +152,7 @@ int main(int argc, char *argv[])
 		c->local2base = &app.gedp->ged_wdbp->dbip->dbi_local2base;
 	    }
 	}
+#endif
     }
 
     int have_msg = 0;

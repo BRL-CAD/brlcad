@@ -41,20 +41,27 @@ set(qtcad_srcs
   QtConsole.cpp
   QtConsoleListener.cpp
   )
+
+set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
 set(qtcad_moc_headers
   bindings.h
-  ${BRLCAD_SOURCE_DIR}/include/qtcad/QAccordionWidget.h
-  ${BRLCAD_SOURCE_DIR}/include/qtcad/QtSW.h
-  ${BRLCAD_SOURCE_DIR}/include/qtcad/QtCADView.h
-  ${BRLCAD_SOURCE_DIR}/include/qtcad/QtConsole.h
-  ${BRLCAD_SOURCE_DIR}/include/qtcad/QtConsoleListener.h
+  ${QTCAD_HDR_DIR}/QAccordionWidget.h
+  ${QTCAD_HDR_DIR}/QtCADView.h
+  ${QTCAD_HDR_DIR}/QtConsole.h
+  ${QTCAD_HDR_DIR}/QtConsoleListener.h
+  ${QTCAD_HDR_DIR}/QtSW.h
   )
 
 if (OPENGL_LIBS)
-  set(qtcad_srcs ${qtcad_srcs} QtGL.cpp)
+  set(qtcad_srcs
+    ${qtcad_srcs}
+    QtGL.cpp
+    QtGLQuad.cpp
+    )
   set(qtcad_moc_headers
     ${qtcad_moc_headers}
-    ${BRLCAD_SOURCE_DIR}/include/qtcad/QtGL.h
+    ${QTCAD_HDR_DIR}/QtGL.h
+    ${QTCAD_HDR_DIR}/QtGLQuad.h
     )
 endif (OPENGL_LIBS)
 

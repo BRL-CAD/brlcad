@@ -194,6 +194,7 @@ qdm_close_server_handler(struct fbserv_obj *fbsp)
     delete nl;
 }
 
+#ifdef BRLCAD_OPENGL
 void
 qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 {
@@ -207,6 +208,7 @@ qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 	QObject::connect(s, &QFBSocket::updated, ctx, &QtGL::need_update, Qt::QueuedConnection);
     }
 }
+#endif
 
 // Because swrast uses a bview as its context pointer, we need to unpack the app data
 // when using that display method

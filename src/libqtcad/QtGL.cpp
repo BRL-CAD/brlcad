@@ -23,6 +23,8 @@
  *
  */
 
+#include "common.h"
+
 #include <QOpenGLWidget>
 
 extern "C" {
