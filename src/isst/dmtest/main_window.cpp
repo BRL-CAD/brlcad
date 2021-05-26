@@ -230,6 +230,17 @@ DM_MainWindow::run_cmd(const QString &command)
 	    canvas_sw->base2local = NULL;
 	    canvas_sw->local2base = NULL;
 	}
+	if (c4) {
+	    for (int i = 1; i < 5; i++) {
+		QtGL *c = c4->get(i);
+		c->v = NULL;
+		c->dm_set = NULL;
+		c->dm_current = NULL;
+		c->base2local = NULL;
+		c->local2base = NULL;
+	    }
+	}
+
 	console->printString("closed database\n");
 	cmd_run = 1;
     }

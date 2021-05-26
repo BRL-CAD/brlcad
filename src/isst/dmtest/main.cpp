@@ -69,6 +69,11 @@ int main(int argc, char *argv[])
 	    // Eventually this should be done properly with bu_opt...
 	    argc--; argv++;
 	}
+	if (BU_STR_EQUAL(argv[0], "-4")) {
+	    // If we had a -4 option it was handled in app creation.
+	    // Eventually this should be done properly with bu_opt...
+	    argc--; argv++;
+	}
 	if (argc) {
 	    const char *filename = argv[0];
 	    argc--; argv++;
@@ -100,16 +105,18 @@ int main(int argc, char *argv[])
 
     // If we're trying to use system OpenGL and it doesn't work, fall
     // back on the software option
-    if (app.w->canvas && !app.w->canvas->isValid()) {
-	bu_log("System OpenGL Canvas didn't work, falling back on Software Rasterizer\n");
-	app.w->canvas_sw = new QtSW(app.w);
-	app.w->canvas_sw->setMinimumSize(512,512);
-	// We should get the same size as before...
-	app.w->wgrp->replaceWidget(0, app.w->canvas_sw);
-	if (app.gedp)
-	    app.gedp->ged_gvp = app.w->canvas_sw->v;
-	delete app.w->canvas;
-	app.w->canvas = NULL;
+    if (!app.w->c4) {
+	if (app.w->canvas && !app.w->canvas->isValid()) {
+	    bu_log("System OpenGL Canvas didn't work, falling back on Software Rasterizer\n");
+	    app.w->canvas_sw = new QtSW(app.w);
+	    app.w->canvas_sw->setMinimumSize(512,512);
+	    // We should get the same size as before...
+	    app.w->wgrp->replaceWidget(0, app.w->canvas_sw);
+	    if (app.gedp)
+		app.gedp->ged_gvp = app.w->canvas_sw->v;
+	    delete app.w->canvas;
+	    app.w->canvas = NULL;
+	}
     }
 
     // Having forced the size we wanted, restore the original settings
@@ -142,6 +149,16 @@ int main(int argc, char *argv[])
 	    app.w->canvas_sw->dm_current = (struct dm **)&app.gedp->ged_dmp;
 	    app.w->canvas_sw->base2local = &app.gedp->ged_wdbp->dbip->dbi_base2local;
 	    app.w->canvas_sw->local2base = &app.gedp->ged_wdbp->dbip->dbi_local2base;
+	}
+	if (app.w->c4) {
+	    for (int i = 1; i < 5; i++) {
+		QtGL *c = app.w->c4->get(i);
+		c->v = app.gedp->ged_gvp;
+		c->dm_set = app.gedp->ged_all_dmp;
+		c->dm_current = (struct dm **)&app.gedp->ged_dmp;
+		c->base2local = &app.gedp->ged_wdbp->dbip->dbi_base2local;
+		c->local2base = &app.gedp->ged_wdbp->dbip->dbi_local2base;
+	    }
 	}
     }
 

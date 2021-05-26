@@ -27,36 +27,36 @@
 QtGLQuad::QtGLQuad(QWidget *parent)
     : QWidget(parent)
 {
+    // Create the four view widgets
     ur = new QtGL;
     ul = new QtGL;
     ll = new QtGL;
     lr = new QtGL;
 
+    // Define the spacers
+    QSpacerItem *s_top = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
+    QSpacerItem *s_bottom = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
+    QSpacerItem *s_left = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
+    QSpacerItem *s_right = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
+    QSpacerItem *s_center = new QSpacerItem(3, 3, QSizePolicy::Fixed, QSizePolicy::Fixed);
+
     // Default to selecting quadrant 1
     c = ur;
 
-    // Lay out the widgets
+    // Lay out the widgets and spacers in a Quad View arrangement
     QGridLayout *gl = new QGridLayout(this);
     gl->setSpacing(0);
     gl->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     this->setLayout(gl);
-
-    gl->addWidget(ul, 0, 0);
-    gl->addWidget(ur, 0, 2);
-    gl->addWidget(ll, 2, 0);
-    gl->addWidget(ur, 2, 2);
-
-    // Add the spacers
-    QSpacerItem *s_top = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
-    gl->addItem(s_top, 0, 1);
-    QSpacerItem *s_bottom = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
-    gl->addItem(s_bottom, 2, 1);
-    QSpacerItem *s_left = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
-    gl->addItem(s_left, 1, 0);
-    QSpacerItem *s_right = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
-    gl->addItem(s_right, 1, 2);
-    QSpacerItem *s_center = new QSpacerItem(3, 3, QSizePolicy::Fixed, QSizePolicy::Fixed);
+    gl->addWidget(ul,     0, 0);
+    gl->addItem(s_top,    0, 1);
+    gl->addWidget(ur,     0, 2);
+    gl->addItem(s_left,   1, 0);
     gl->addItem(s_center, 1, 1);
+    gl->addItem(s_right,  1, 2);
+    gl->addWidget(ll,     2, 0);
+    gl->addItem(s_bottom, 2, 1);
+    gl->addWidget(lr,     2, 2);
 }
 
 QtGLQuad::~QtGLQuad()

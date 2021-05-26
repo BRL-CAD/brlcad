@@ -114,7 +114,7 @@ DMApp::load_g(const char *filename, int argc, const char *argv[])
     gedp->fbs_listen_on_port = &qdm_listen_on_port;
     gedp->fbs_open_server_handler = &qdm_open_server_handler;
     gedp->fbs_close_server_handler = &qdm_close_server_handler;
-    if (w->canvas) {
+    if (w->canvas || w->c4) {
 	gedp->fbs_open_client_handler = &qdm_open_client_handler;
     }
     if (w->canvas_sw) {
@@ -186,6 +186,11 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		gedp->ged_gvp = w->canvas_sw->v;
 		dm_set_vp(w->canvas_sw->dmp, &gedp->ged_gvp->gv_scale);
 	    }
+	    if (w->c4) {
+		gedp->ged_dmp = w->c4->c->dmp;
+		gedp->ged_gvp = w->c4->c->v;
+		dm_set_vp(w->c4->c->dmp, &gedp->ged_gvp->gv_scale);
+	    }
 	    bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
 	}
 
@@ -197,6 +202,10 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    if (w->canvas_sw && w->canvas_sw->v) {
 		w->canvas_sw->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
 		w->canvas_sw->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
+	    }
+	    if (w->c4 && w->c4->c->v) {
+		w->c4->c->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
+		w->c4->c->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
 	    }
 
 	    /* Check if the ged_exec call changed either the display manager or
@@ -220,6 +229,9 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		    w->canvas->update();
 		if (w->canvas_sw)
 		    w->canvas_sw->update();
+		if (w->c4) {
+		    w->c4->c->update();
+		}
 	    }
 	} else {
 	    // gedp == NULL - can't cheat and use the gedp pointer
@@ -231,6 +243,10 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		if (w->canvas_sw) {
 		    dm_set_dirty(w->canvas_sw->dmp, 1);
 		    w->canvas_sw->update();
+		}
+		if (w->c4) {
+		    dm_set_dirty(w->c4->c->dmp, 1);
+		    w->c4->c->update();
 		}
 	    }
 	}
