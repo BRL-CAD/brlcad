@@ -108,7 +108,7 @@ QAccordionWidget::QAccordionWidget(QWidget *pparent) : QWidget(pparent)
     splitter = new QSplitter();
     splitter->setOrientation(Qt::Vertical);
     splitter->setChildrenCollapsible(false);
-    splitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    splitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     QObject::connect(splitter, &QSplitter::splitterMoved, this, &QAccordionWidget::update_sizes);
     mlayout->addWidget(splitter);
 
@@ -198,28 +198,12 @@ QAccordionWidget::stateUpdate(QAccordionObject *new_obj)
 	}
     }
     QString statekey;
-    int have_visible = 0;
     foreach(QAccordionObject *obj, objects) {
 	if (obj->visible) {
 	    statekey.append("1");
-	    have_visible = 1;
 	} else {
 	    statekey.append("0");
 	}
-    }
-
-    if (!prev_have_visible) {
-	splitter->setSizePolicy(spolicy);
-	buffer->changeSize(1, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
-    }
-
-    prev_have_visible = have_visible;
-
-    if (!have_visible) {
-	spolicy = splitter->sizePolicy();
-	buffer->changeSize(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding);
-	splitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-	return;
     }
 
     // If we have been in this open/close combination before, use the previous
@@ -229,15 +213,18 @@ QAccordionWidget::stateUpdate(QAccordionObject *new_obj)
 	return;
     }
 
+
+    int scount = splitter->count();
+    int sheight = splitter->height();
+    if (!scount || !sheight)
+	return;
+
     // New state - we need to figure out where things should be
     QVector<int> newsizes;
     newsizes.resize(splitter->count());
     QList<int> prevSizes = splitter->sizes();
     QList<int>::const_iterator stlIter;
-    int sheight = splitter->height();
-    int scount = splitter->count();
-    if (!scount)
-	return;
+
     int found_hidden = splitter->count() + 1;
     foreach(QAccordionObject *obj, objects) {
 	if (!obj->visible) {
@@ -251,6 +238,10 @@ QAccordionWidget::stateUpdate(QAccordionObject *new_obj)
 	    }
 	}
     }
+
+    if (!scount)
+	return;
+
     foreach(QAccordionObject *obj, objects) {
 	if (obj->visible) {
 	    if (obj->idx < found_hidden && obj->idx < new_obj->idx) {
@@ -267,8 +258,17 @@ QAccordionWidget::stateUpdate(QAccordionObject *new_obj)
     }
     QList<int> newsizesl;
     QVector<int>::const_iterator v_it;
+    int oheight = 0;
     for( v_it = newsizes.begin(); v_it != newsizes.end(); ++v_it ) {
 	newsizesl.push_back(*v_it);
+	oheight += *v_it;
+    }
+
+    // Use the spacer to push closed panels towards the top of the accordion
+    if (oheight < splitter->height()) {
+	buffer->changeSize(1, splitter->height() - oheight, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    } else {
+	buffer->changeSize(1, 0, QSizePolicy::Expanding, QSizePolicy::Minimum);
     }
 
     splitter->setSizes(newsizesl);

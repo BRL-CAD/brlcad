@@ -94,8 +94,6 @@ class QTCAD_EXPORT QAccordionWidget : public QWidget
     private:
 	QSet<QAccordionObject *> objects;
 	QMap<QString, QList<int> > size_states;
-	bool prev_have_visible = true;
-	QSizePolicy spolicy;
 	QSpacerItem *buffer;
 };
 
