@@ -30,6 +30,9 @@
 #include "bu/parallel.h"
 #include "isstgl.h"
 
+#include <chrono>
+#include <thread>
+
 TIERenderer::TIERenderer(isstGL *w)
     : m_w(w)
 {
@@ -139,7 +142,7 @@ void TIERenderer::render()
 
     if (!changed) {
 	// Avoid a hot spin
-	usleep(10000);
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	return;
     }
 
@@ -217,7 +220,7 @@ void TIERenderer::render()
     QMetaObject::invokeMethod(m_w, "update");
 
     // Avoid a hot spin
-    usleep(10000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
 isstGL::isstGL(QWidget *parent)

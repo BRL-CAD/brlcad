@@ -43,7 +43,7 @@ QConsoleListener::QConsoleListener(int fd, struct ged_subprocess *p, bu_process_
 	    Qt::QueuedConnection
 	    );
 #ifdef Q_OS_WIN
-    HANDLE h = (fd < 0) ? GetStdHandle(STDIN) : (HANDLE)_get_osfhandle(fd);
+    HANDLE h = (fd < 0) ? GetStdHandle(STD_INPUT_HANDLE) : (HANDLE)_get_osfhandle(fd);
     m_notifier = new QWinEventNotifier(h);
 #else
     int lfd = (fd < 0) ? fileno(stdin) : fd;

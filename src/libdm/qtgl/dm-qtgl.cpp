@@ -25,17 +25,14 @@
 
 #include "common.h"
 
+#include "./dm-qtgl.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
 #include <QEvent>
-#include <QtWidgets/QOpenGLWidget>
 
 #undef VMIN		/* is used in vmath.h, too */
 
@@ -48,7 +45,6 @@ extern "C" {
 #include "../null/dm-Null.h"
 #include "../dm-gl.h"
 }
-#include "./dm-qtgl.h"
 
 #include "../include/private.h"
 
