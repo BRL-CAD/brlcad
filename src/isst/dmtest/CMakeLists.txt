@@ -21,12 +21,14 @@ set(dm_srcs
   main_window.cpp
   dmapp.cpp
   fbserv.cpp
+  QtGLQuad.cpp
   )
 
 set(dm_moc_headers
   main_window.h
   fbserv.h
   dmapp.h
+  QtGLQuad.h
   )
 
 if(BRLCAD_ENABLE_QT)

@@ -63,6 +63,10 @@ DM_MainWindow::DM_MainWindow(int canvas_type)
 	canvas_sw = new QtSW(this);
 	canvas_sw->setMinimumSize(512,512);
     }
+    if (canvas_type == 2) {
+	c4 = new QtGLQuad(this);
+	c4->setMinimumSize(512,512);
+    }
 
     console = new QtConsole(this);
     console->prompt("$ ");
@@ -77,6 +81,10 @@ DM_MainWindow::DM_MainWindow(int canvas_type)
     if (canvas_sw) {
 	wgrp->addWidget(canvas_sw);
 	bu_log("Using OSMesa software rasterizer\n");
+    }
+    if (c4) {
+	wgrp->addWidget(c4);
+	bu_log("Quad View\n");
     }
     wgrp->addWidget(console);
 
@@ -175,6 +183,22 @@ DM_MainWindow::run_cmd(const QString &command)
 			canvas_sw->v->dmp = canvas_sw->dmp;
 			(*canvas_sw->dm_current) = canvas_sw->dmp;
 			dm_set_vp(canvas_sw->dmp, &canvas_sw->v->gv_scale);
+		    }
+		}
+		if (c4) {
+		    for (int i = 1; i < 5; i++) {
+			QtGL *c = c4->get(i);
+			c->v = (*gedpp)->ged_gvp; // TODO - ged_gvp will need to be driven by selected QtGL...
+			c->dm_set = (*gedpp)->ged_all_dmp;
+			c->dm_current = (struct dm **)&((*gedpp)->ged_dmp);
+			c->base2local = &(*gedpp)->ged_wdbp->dbip->dbi_base2local;
+			c->local2base = &(*gedpp)->ged_wdbp->dbip->dbi_local2base;
+			if (c->dmp) {
+			    // c may already be initialized, so set these here
+			    c->v->dmp = c->dmp;
+			    (*c->dm_current) = c->dmp;
+			    dm_set_vp(c->dmp, &c->v->gv_scale);
+			}
 		    }
 		}
 		if ((*gedpp)->ged_dmp)
