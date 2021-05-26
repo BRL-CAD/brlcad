@@ -48,6 +48,7 @@ QtGLQuad::QtGLQuad(QWidget *parent)
     // Lay out the widgets and spacers in a Quad View arrangement
     QGridLayout *gl = new QGridLayout(this);
     gl->setSpacing(0);
+    gl->setContentsMargins(0, 0, 0, 0);
     gl->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     this->setLayout(gl);
     gl->addWidget(ul,     0, 0);
