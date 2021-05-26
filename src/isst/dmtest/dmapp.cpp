@@ -114,13 +114,19 @@ DMApp::load_g(const char *filename, int argc, const char *argv[])
     gedp->fbs_listen_on_port = &qdm_listen_on_port;
     gedp->fbs_open_server_handler = &qdm_open_server_handler;
     gedp->fbs_close_server_handler = &qdm_close_server_handler;
-    if (w->canvas || w->c4) {
+    if (w->canvas) {
+	int type = w->canvas->view_type();
+	if (type == QtCADView_GL) {
+	    gedp->fbs_open_client_handler = &qdm_open_client_handler;
+	}
+	if (type == QtCADView_SW) {
+	    gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+	}
+    }
+    if (w->c4) {
 	gedp->fbs_open_client_handler = &qdm_open_client_handler;
-    }
-    if (w->canvas_sw) {
-	gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
-    }
-    gedp->fbs_close_client_handler = &qdm_close_client_handler;
+     }
+     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
     return 0;
 }
@@ -177,14 +183,9 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (gedp && prev_gedp != gedp) {
 	    bu_ptbl_reset(gedp->ged_all_dmp);
 	    if (w->canvas) {
-		gedp->ged_dmp = w->canvas->dmp;
-		gedp->ged_gvp = w->canvas->v;
-		dm_set_vp(w->canvas->dmp, &gedp->ged_gvp->gv_scale);
-	    }
-	    if (w->canvas_sw) {
-		gedp->ged_dmp = w->canvas_sw->dmp;
-		gedp->ged_gvp = w->canvas_sw->v;
-		dm_set_vp(w->canvas_sw->dmp, &gedp->ged_gvp->gv_scale);
+		gedp->ged_dmp = w->canvas->dmp();
+		gedp->ged_gvp = w->canvas->view();
+		dm_set_vp(w->canvas->dmp(), &gedp->ged_gvp->gv_scale);
 	    }
 	    if (w->c4) {
 		gedp->ged_dmp = w->c4->c->dmp;
@@ -195,13 +196,9 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
 
 	if (gedp) {
-	    if (w->canvas && w->canvas->v) {
-		w->canvas->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
-		w->canvas->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
-	    }
-	    if (w->canvas_sw && w->canvas_sw->v) {
-		w->canvas_sw->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
-		w->canvas_sw->v->gv_local2base = gedp->ged_wdbp->dbip->dbi_local2base;
+	    if (w->canvas && w->canvas->view()) {
+		w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
+		w->canvas->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
 	    }
 	    if (w->c4 && w->c4->c->v) {
 		w->c4->c->v->gv_base2local = gedp->ged_wdbp->dbip->dbi_base2local;
@@ -226,9 +223,7 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    // If anybody set the flag, trigger an update
 	    if (dm_get_dirty((struct dm *)gedp->ged_dmp)) {
 		if (w->canvas)
-		    w->canvas->update();
-		if (w->canvas_sw)
-		    w->canvas_sw->update();
+		    w->canvas->need_update();
 		if (w->c4) {
 		    w->c4->c->update();
 		}
@@ -237,12 +232,8 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    // gedp == NULL - can't cheat and use the gedp pointer
 	    if (prev_gedp != gedp) {
 		if (w->canvas) {
-		    dm_set_dirty(w->canvas->dmp, 1);
-		    w->canvas->update();
-		}
-		if (w->canvas_sw) {
-		    dm_set_dirty(w->canvas_sw->dmp, 1);
-		    w->canvas_sw->update();
+		    dm_set_dirty(w->canvas->dmp(), 1);
+		    w->canvas->need_update();
 		}
 		if (w->c4) {
 		    dm_set_dirty(w->c4->c->dmp, 1);

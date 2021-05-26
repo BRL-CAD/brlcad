@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
 	}
     }
 
+#if 0
     // This is an illustration of how to force an exact size for
     // the OpenGL canvas.  Useful when we need a framebuffer window
     // to exactly match a specified size.
@@ -99,6 +100,7 @@ int main(int argc, char *argv[])
 	app.w->canvas_sw->setMaximumSize(1100,800);
 	app.w->canvas_sw->updateGeometry();
     }
+#endif
 
     // Draw the window
     app.w->show();
@@ -106,19 +108,14 @@ int main(int argc, char *argv[])
     // If we're trying to use system OpenGL and it doesn't work, fall
     // back on the software option
     if (!app.w->c4) {
-	if (app.w->canvas && !app.w->canvas->isValid()) {
-	    bu_log("System OpenGL Canvas didn't work, falling back on Software Rasterizer\n");
-	    app.w->canvas_sw = new QtSW(app.w);
-	    app.w->canvas_sw->setMinimumSize(512,512);
-	    // We should get the same size as before...
-	    app.w->wgrp->replaceWidget(0, app.w->canvas_sw);
+	if (!app.w->canvas->isValid()) {
+	    app.w->canvas->fallback();
 	    if (app.gedp)
-		app.gedp->ged_gvp = app.w->canvas_sw->v;
-	    delete app.w->canvas;
-	    app.w->canvas = NULL;
+		app.gedp->ged_gvp = app.w->canvas->view();
 	}
     }
 
+#if 0
     // Having forced the size we wanted, restore the original settings
     // to allow for subsequent change (if it would have been allowed
     // by the original settings.)
@@ -130,6 +127,7 @@ int main(int argc, char *argv[])
 	app.w->canvas_sw->setMinimumSize(cminsize);
 	app.w->canvas_sw->setMaximumSize(cmaxsize);
     }
+#endif
 
     // If we have a GED structure, connect the wires
     if (app.gedp) {
@@ -137,18 +135,11 @@ int main(int argc, char *argv[])
 	bv_init(app.gedp->ged_gvp);
 	bu_ptbl_ins_unique(&app.gedp->ged_views, (long int *)app.gedp->ged_gvp);
 	if (app.w->canvas) {
-	    app.w->canvas->v = app.gedp->ged_gvp;
-	    app.w->canvas->dm_set = app.gedp->ged_all_dmp;
-	    app.w->canvas->dm_current = (struct dm **)&app.gedp->ged_dmp;
-	    app.w->canvas->base2local = &app.gedp->ged_wdbp->dbip->dbi_base2local;
-	    app.w->canvas->local2base = &app.gedp->ged_wdbp->dbip->dbi_local2base;
-	}
-	if (app.w->canvas_sw) {
-	    app.w->canvas_sw->v = app.gedp->ged_gvp;
-	    app.w->canvas_sw->dm_set = app.gedp->ged_all_dmp;
-	    app.w->canvas_sw->dm_current = (struct dm **)&app.gedp->ged_dmp;
-	    app.w->canvas_sw->base2local = &app.gedp->ged_wdbp->dbip->dbi_base2local;
-	    app.w->canvas_sw->local2base = &app.gedp->ged_wdbp->dbip->dbi_local2base;
+	    app.w->canvas->set_view(app.gedp->ged_gvp);
+	    //app.w->canvas->dm_set = app.gedp->ged_all_dmp;
+	    app.w->canvas->set_dm_current((struct dm **)&app.gedp->ged_dmp);
+	    app.w->canvas->set_base2local(&app.gedp->ged_wdbp->dbip->dbi_base2local);
+	    app.w->canvas->set_local2base(&app.gedp->ged_wdbp->dbip->dbi_local2base);
 	}
 	if (app.w->c4) {
 	    for (int i = 1; i < 5; i++) {

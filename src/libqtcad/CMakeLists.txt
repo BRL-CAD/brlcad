@@ -37,6 +37,7 @@ set(qtcad_srcs
   bindings.cpp
   QAccordionWidget.cpp
   QtSW.cpp
+  QtCADView.cpp
   QtConsole.cpp
   QtConsoleListener.cpp
   )
@@ -44,6 +45,7 @@ set(qtcad_moc_headers
   bindings.h
   ${BRLCAD_SOURCE_DIR}/include/qtcad/QAccordionWidget.h
   ${BRLCAD_SOURCE_DIR}/include/qtcad/QtSW.h
+  ${BRLCAD_SOURCE_DIR}/include/qtcad/QtCADView.h
   ${BRLCAD_SOURCE_DIR}/include/qtcad/QtConsole.h
   ${BRLCAD_SOURCE_DIR}/include/qtcad/QtConsoleListener.h
   )

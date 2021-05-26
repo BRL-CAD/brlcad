@@ -70,7 +70,8 @@ QtGL::~QtGL()
     if (ifp && !fb_get_standalone(ifp)) {
 	fb_close_existing(ifp);
     }
-    BU_PUT(v, struct bv);
+    if (v)
+	BU_PUT(v, struct bv);
 }
 
 

@@ -28,7 +28,6 @@
 #define DM_MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QtWidgets/QOpenGLWidget>
 #include <QDockWidget>
 #include <QMenu>
 #include <QMenuBar>
@@ -38,8 +37,7 @@
 #include <QFileDialog>
 #include <QSettings>
 #include "qtcad/QtConsole.h"
-#include "qtcad/QtGL.h"
-#include "qtcad/QtSW.h"
+#include "qtcad/QtCADView.h"
 #include "QtGLQuad.h"
 
 class DM_MainWindow : public QMainWindow
@@ -51,8 +49,7 @@ class DM_MainWindow : public QMainWindow
 	void readSettings();
 
 	QtConsole *console = NULL;
-	QtGL *canvas = NULL;
-	QtSW *canvas_sw = NULL;
+	QtCADView *canvas = NULL;
 	QtGLQuad *c4 = NULL;
 
 	QSplitter *wgrp;

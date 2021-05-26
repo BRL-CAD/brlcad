@@ -24,8 +24,8 @@
 #include <QSplitter>
 #include "bv/util.h"
 #include "main_window.h"
+#include "qtcad/QtCADView.h"
 #include "qtcad/QtGL.h"
-#include "qtcad/QtSW.h"
 #include "dmapp.h"
 
 DM_MainWindow::DM_MainWindow(int canvas_type)
@@ -55,13 +55,9 @@ DM_MainWindow::DM_MainWindow(int canvas_type)
     file_menu->addAction(g_exit);
 
     // Set up Display canvas
-    if (canvas_type == 0) {
-	canvas = new QtGL(this);
+    if (canvas_type != 2) {
+	canvas = new QtCADView(this, canvas_type);
 	canvas->setMinimumSize(512,512);
-    }
-    if (canvas_type == 1) {
-	canvas_sw = new QtSW(this);
-	canvas_sw->setMinimumSize(512,512);
     }
     if (canvas_type == 2) {
 	c4 = new QtGLQuad(this);
@@ -78,10 +74,6 @@ DM_MainWindow::DM_MainWindow(int canvas_type)
     setCentralWidget(wgrp);
     if (canvas)
 	wgrp->addWidget(canvas);
-    if (canvas_sw) {
-	wgrp->addWidget(canvas_sw);
-	bu_log("Using OSMesa software rasterizer\n");
-    }
     if (c4) {
 	wgrp->addWidget(c4);
 	bu_log("Quad View\n");
@@ -160,29 +152,14 @@ DM_MainWindow::run_cmd(const QString &command)
 		bu_ptbl_ins_unique(&(*gedpp)->ged_views, (long int *)(*gedpp)->ged_gvp);
 
 		if (canvas) {
-		    canvas->v = (*gedpp)->ged_gvp;
-		    canvas->dm_set = (*gedpp)->ged_all_dmp;
-		    canvas->dm_current = (struct dm **)&((*gedpp)->ged_dmp);
-		    canvas->base2local = &(*gedpp)->ged_wdbp->dbip->dbi_base2local;
-		    canvas->local2base = &(*gedpp)->ged_wdbp->dbip->dbi_local2base;
-		    if (canvas->dmp) {
-			// canvas may already be initialized, so set these here
-			canvas->v->dmp = canvas->dmp;
-			(*canvas->dm_current) = canvas->dmp;
-			dm_set_vp(canvas->dmp, &canvas->v->gv_scale);
-		    }
-		}
-		if (canvas_sw) {
-		    canvas_sw->v = (*gedpp)->ged_gvp;
-		    canvas_sw->dm_set = (*gedpp)->ged_all_dmp;
-		    canvas_sw->dm_current = (struct dm **)&((*gedpp)->ged_dmp);
-		    canvas_sw->base2local = &(*gedpp)->ged_wdbp->dbip->dbi_base2local;
-		    canvas_sw->local2base = &(*gedpp)->ged_wdbp->dbip->dbi_local2base;
-		    if (canvas_sw->dmp) {
-			// canvas_sw may already be initialized, so set these here
-			canvas_sw->v->dmp = canvas_sw->dmp;
-			(*canvas_sw->dm_current) = canvas_sw->dmp;
-			dm_set_vp(canvas_sw->dmp, &canvas_sw->v->gv_scale);
+		    canvas->set_view((*gedpp)->ged_gvp);
+		    //canvas->dm_set = (*gedpp)->ged_all_dmp;
+		    canvas->set_dm_current((struct dm **)&((*gedpp)->ged_dmp));
+		    canvas->set_base2local(&(*gedpp)->ged_wdbp->dbip->dbi_base2local);
+		    canvas->set_local2base(&(*gedpp)->ged_wdbp->dbip->dbi_local2base);
+		    if (canvas->dmp()) {
+			// canvas may already be initialized, so set this here
+			dm_set_vp(canvas->dmp(), &canvas->view()->gv_scale);
 		    }
 		}
 		if (c4) {
@@ -217,18 +194,11 @@ DM_MainWindow::run_cmd(const QString &command)
 	ged_close(*gedpp);
 	(*gedpp) = NULL;
 	if (canvas) {
-	    canvas->v = NULL;
-	    canvas->dm_set = NULL;
-	    canvas->dm_current = NULL;
-	    canvas->base2local = NULL;
-	    canvas->local2base = NULL;
-	}
-	if (canvas_sw) {
-	    canvas_sw->v = NULL;
-	    canvas_sw->dm_set = NULL;
-	    canvas_sw->dm_current = NULL;
-	    canvas_sw->base2local = NULL;
-	    canvas_sw->local2base = NULL;
+	    canvas->set_view(NULL);
+	    //canvas->dm_set = NULL;
+	    canvas->set_dm_current(NULL);
+	    canvas->set_base2local(NULL);
+	    canvas->set_local2base(NULL);
 	}
 	if (c4) {
 	    for (int i = 1; i < 5; i++) {
