@@ -384,6 +384,11 @@ struct bview {
     int                      gv_fps; // Display Frames-Per-Second metric
     double                   gv_frametime;
 
+    // Framebuffer visualization is possible if there is an attached dm and
+    // that dm has an associated framebuffer.  If those conditions are met,
+    // this variable is used to control how the fb is visualized.
+    int                      gv_fb_mode; // 0 = off, 1 = overlay, 2 = underlay
+
     // More complex are the faceplate view elements not corresponding to
     // geometry objects but editable by the user.  These aren't managed as
     // gv_view_objs (they are HUD visuals and thus not part of the scene) so
@@ -392,23 +397,35 @@ struct bview {
     struct bv_interactive_rect_state gv_rect;
 
 
-    // Framebuffer visualization is possible if there is an attached dm and
-    // that dm has an associated framebuffer.  If those conditions are met,
-    // this variable is used to control how the fb is visualized.
-    int                      gv_fb_mode; // 0 = off, 1 = overlay, 2 = underlay
 
-    // Container for db object groups (may come from GED)
-    struct bu_ptbl                      *gv_db_grps;
-    // Container for storing bv_scene_obj elements unique to this
-    // view (labels, polygons, etc.)
-    struct bu_ptbl                      *gv_view_objs;
+    // Container for db object groups (usually comes from the app and is owned
+    // by gedp)
+    struct bu_ptbl  *gv_db_grps;
 
-    // Available bv_vlist entities to recycle before allocating new.
-    struct bu_list      gv_vlfree;     /**< @brief  head of bv_vlist freelist */
+    // Optional container for defining shared view objects common to
+    // multiple views.  If present, this comes from the app.
+    struct bu_ptbl  *gv_view_shared_objs;
+
+    // bv_vlist entities to recycle for shared objects
+    struct bu_list  *vlfree;
+
+
+
+    // Container for storing bv_scene_obj elements unique to this view.
+    struct bu_ptbl  *gv_view_objs;
+
+    // Available bv_vlist entities to recycle before allocating new for local
+    // view objects.  This local list should be used ONLY for gv_view_objs -
+    // shared objects should use the vlfree container.
+    struct bu_list  gv_vlfree;
+
+
 
     // Not yet implemented - mechanism for defining a set of selected view
     // objects
     struct bu_ptbl                      *gv_selected;
+
+
 
     // libtclcad data
     struct bv_data_tclcad gv_tcl;

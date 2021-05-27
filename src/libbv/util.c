@@ -151,8 +151,18 @@ bv_init(struct bview *gvp)
 
     BU_GET(gvp->gv_db_grps, struct bu_ptbl);
     bu_ptbl_init(gvp->gv_db_grps, 8, "db_objs init");
+
+    // TODO: These will come from the app (usually ged_db_grps and ged_view_shared_objs)
+    //gvp->gv_db_grps = NULL;
+    gvp->gv_view_shared_objs = NULL;
+
+    // gv_db_grps and gv_view_shared_objs are supplied from callers,
+    // but gv_view_objs is local to this view and thus is controlled
+    // by the bv init and free routines.
     BU_GET(gvp->gv_view_objs, struct bu_ptbl);
     bu_ptbl_init(gvp->gv_view_objs, 8, "view_objs init");
+
+    // TODO - unimplemented
     BU_GET(gvp->gv_selected, struct bu_ptbl);
     bu_ptbl_init(gvp->gv_selected, 8, "scene_objs init");
 

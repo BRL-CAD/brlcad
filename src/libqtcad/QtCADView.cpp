@@ -105,7 +105,7 @@ QtCADView::fallback()
 #ifdef BRLCAD_OPENGL
     if (canvas_gl && !canvas_gl->isValid()) {
 	bu_log("System OpenGL Canvas didn't work, falling back on Software Rasterizer\n");
-	struct fb *fbp = canvas_gl->ifp;
+	struct fb *fbp = canvas_gl->ifp; // TODO - can we reuse the ifp like this?
 	delete canvas_gl;
 	canvas_gl = NULL;
 	canvas_sw = new QtSW(this, fbp);
@@ -233,6 +233,9 @@ QtCADView::local2base()
     return 1.0;
 }
 
+// TODO - for quad view, we're going to need to keep
+// local views - scene object vlists will be shared,
+// but camera settings will not.
 void
 QtCADView::set_view(struct bview *nv, int UNUSED(quad))
 {

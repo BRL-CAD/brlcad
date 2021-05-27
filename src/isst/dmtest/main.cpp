@@ -131,10 +131,10 @@ int main(int argc, char *argv[])
 
     // If we have a GED structure, connect the wires
     if (app.gedp) {
-	BU_GET(app.gedp->ged_gvp, struct bview);
-	bv_init(app.gedp->ged_gvp);
-	bu_ptbl_ins_unique(&app.gedp->ged_views, (long int *)app.gedp->ged_gvp);
 	if (app.w->canvas) {
+	    BU_GET(app.gedp->ged_gvp, struct bview);
+	    bv_init(app.gedp->ged_gvp);
+	    bu_ptbl_ins_unique(&app.gedp->ged_views, (long int *)app.gedp->ged_gvp);
 	    app.w->canvas->set_view(app.gedp->ged_gvp);
 	    //app.w->canvas->dm_set = app.gedp->ged_all_dmp;
 	    app.w->canvas->set_dm_current((struct dm **)&app.gedp->ged_dmp);
@@ -144,12 +144,17 @@ int main(int argc, char *argv[])
 	if (app.w->c4) {
 	    for (int i = 1; i < 5; i++) {
 		QtCADView *c = app.w->c4->get(i);
-		c->set_view(app.gedp->ged_gvp);
+		struct bview *nv;
+		BU_GET(nv, struct bview);
+		bv_init(nv);
+		bu_ptbl_ins_unique(&app.gedp->ged_views, (long int *)nv);
+		c->set_view(nv);
 		//c->dm_set = app.gedp->ged_all_dmp;
 		c->set_dm_current((struct dm **)&app.gedp->ged_dmp);
 		c->set_base2local(&app.gedp->ged_wdbp->dbip->dbi_base2local);
 		c->set_local2base(&app.gedp->ged_wdbp->dbip->dbi_local2base);
 	    }
+	    app.gedp->ged_gvp = app.w->c4->get(0)->view();
 	}
     }
 

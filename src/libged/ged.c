@@ -179,6 +179,9 @@ ged_free(struct ged *gedp)
     bu_ptbl_free(&gedp->ged_views);
     gedp->ged_gvp = NULL;
 
+    bu_ptbl_free(&gedp->ged_db_grps);
+    bu_ptbl_free(&gedp->ged_view_shared_objs);
+
     /* Since libged does not link libdm, it's also the responsibility of the
      * caller to close any display managers.  Client also frees the display
      * managers - we just take care of the table.  If the caller is not
@@ -257,30 +260,13 @@ ged_init(struct ged *gedp)
     // TODO - rename to ged_name
     bu_vls_init(&gedp->go_name);
 
+
+
+    // View related containers
     BU_PTBL_INIT(&gedp->ged_views);
-
-    BU_GET(gedp->ged_log, struct bu_vls);
-    bu_vls_init(gedp->ged_log);
-
-    BU_GET(gedp->ged_results, struct ged_results);
-    (void)_ged_results_init(gedp->ged_results);
-
-    BU_PTBL_INIT(&gedp->ged_subp);
-
-    /* For now, we're keeping the string... will go once no one uses it */
-    BU_GET(gedp->ged_result_str, struct bu_vls);
-    bu_vls_init(gedp->ged_result_str);
-
-    BU_GET(gedp->ged_gdp, struct ged_drawable);
-    BU_GET(gedp->ged_gdp->gd_headDisplay, struct bu_list);
-    BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
-    BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
-    BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
-
-    gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
-    qray_init(gedp->ged_gdp);
-
-    gedp->ged_selections = bu_hash_create(32);
+    bu_ptbl_init(&gedp->ged_db_grps, 8, "db_objs init");
+    bu_ptbl_init(&gedp->ged_view_shared_objs, 8, "view_objs init");
+    BU_LIST_INIT(&gedp->vlfree);
 
     /* init the solid list */
     struct bv_scene_obj *free_scene_obj;
@@ -293,18 +279,6 @@ ged_init(struct ged *gedp)
      * then free them when ged_free is called? (don't appear to be currently,
      * just calling FREE_BV_SCENE_OBJ which doesn't de-allocate... */
     BU_PTBL_INIT(&gedp->free_solids);
-
-    /* Initialize callbacks */
-    BU_GET(gedp->ged_cbs, struct ged_callback_state);
-    gedp->ged_refresh_handler = NULL;
-    gedp->ged_refresh_clientdata = NULL;
-    gedp->ged_output_handler = NULL;
-    gedp->ged_create_vlist_scene_obj_callback = NULL;
-    gedp->ged_create_vlist_display_list_callback = NULL;
-    gedp->ged_destroy_vlist_callback = NULL;
-    gedp->ged_create_io_handler = NULL;
-    gedp->ged_delete_io_handler = NULL;
-    gedp->ged_io_data = NULL;
 
     /* In principle we should be establishing an initial view here,
      * but Archer won't tolerate it. */
@@ -325,6 +299,43 @@ ged_init(struct ged *gedp)
     gedp->fbs_close_server_handler = NULL;
     gedp->fbs_open_client_handler = NULL;
     gedp->fbs_close_client_handler = NULL;
+
+
+    BU_GET(gedp->ged_gdp, struct ged_drawable);
+    BU_GET(gedp->ged_gdp->gd_headDisplay, struct bu_list);
+    BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
+    BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
+    BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
+
+    gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
+    qray_init(gedp->ged_gdp);
+
+    gedp->ged_selections = bu_hash_create(32);
+
+
+    BU_GET(gedp->ged_log, struct bu_vls);
+    bu_vls_init(gedp->ged_log);
+
+    BU_GET(gedp->ged_results, struct ged_results);
+    (void)_ged_results_init(gedp->ged_results);
+
+    BU_PTBL_INIT(&gedp->ged_subp);
+
+    /* For now, we're keeping the string... will go once no one uses it */
+    BU_GET(gedp->ged_result_str, struct bu_vls);
+    bu_vls_init(gedp->ged_result_str);
+
+    /* Initialize callbacks */
+    BU_GET(gedp->ged_cbs, struct ged_callback_state);
+    gedp->ged_refresh_handler = NULL;
+    gedp->ged_refresh_clientdata = NULL;
+    gedp->ged_output_handler = NULL;
+    gedp->ged_create_vlist_scene_obj_callback = NULL;
+    gedp->ged_create_vlist_display_list_callback = NULL;
+    gedp->ged_destroy_vlist_callback = NULL;
+    gedp->ged_create_io_handler = NULL;
+    gedp->ged_delete_io_handler = NULL;
+    gedp->ged_io_data = NULL;
 
     /* ? */
     gedp->ged_output_script = NULL;
