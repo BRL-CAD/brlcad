@@ -42,7 +42,7 @@ class DMApp : public QApplication
 	    if (argc && BU_STR_EQUAL(argv[1], "-s")) {
 		w = new DM_MainWindow(1, 0);
 	    } else if (argc && BU_STR_EQUAL(argv[1], "-4")) {
-		w = new DM_MainWindow(1, 1);
+		w = new DM_MainWindow(0, 1);
 	    } else {
 		w = new DM_MainWindow(0, 0);
 	    }
