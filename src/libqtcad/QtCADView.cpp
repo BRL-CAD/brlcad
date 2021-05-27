@@ -49,18 +49,12 @@ QtCADView::QtCADView(QWidget *parent, int type, struct fb *fbp)
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
 	    break;
-	case QtCADView_QUAD_GL:
-	    break;
 #endif
 	case QtCADView_SW:
 	    canvas_sw = new QtSW(this, fbp);
 	    canvas_sw->setMinimumSize(512,512);
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_sw);
-	    break;
-	case QtCADView_QUAD_SW:
-	    break;
-	case QtCADView_QUAD_AUTO:
 	    break;
 	default:
 #ifdef BRLCAD_OPENGL

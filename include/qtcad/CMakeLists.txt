@@ -1,10 +1,10 @@
 set(qtcad_headers
   QAccordionWidget.h
+  QtCADQuad.h
   QtCADView.h
   QtConsole.h
   QtConsoleListener.h
   QtGL.h
-  QtGLQuad.h
   QtSW.h
   defines.h
   )

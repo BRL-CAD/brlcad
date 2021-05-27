@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef QTGLQUAD_H
-#define QTGLQUAD_H
+#ifndef QTCADQUAD_H
+#define QTCADQUAD_H
 
 #include "common.h"
 
@@ -35,32 +35,32 @@ extern "C" {
 }
 
 #include "qtcad/defines.h"
-#include "qtcad/QtGL.h"
+#include "qtcad/QtCADView.h"
 
-class QTCAD_EXPORT QtGLQuad : public QWidget
+class QTCAD_EXPORT QtCADQuad : public QWidget
 {
     Q_OBJECT
 
     public:
-	explicit QtGLQuad(QWidget *parent = nullptr);
-	~QtGLQuad();
+	explicit QtCADQuad(QWidget *parent = nullptr, int type = QtCADView_AUTO);
+	~QtCADQuad();
 
-	QtGL *get(int quadrant_num);
+	QtCADView *get(int quadrant_num);
 	void select(int quadrant_num);
 	void select(const char *id); // valid inputs: ur, ul, ll and lr
 
-	QtGL *ur = NULL; // Quadrant 1
-	QtGL *ul = NULL; // Quadrant 2
-	QtGL *ll = NULL; // Quadrant 3
-	QtGL *lr = NULL; // Quadrant 4
+	QtCADView *ur = NULL; // Quadrant 1
+	QtCADView *ul = NULL; // Quadrant 2
+	QtCADView *ll = NULL; // Quadrant 3
+	QtCADView *lr = NULL; // Quadrant 4
 
-	QtGL *c = NULL; // Currently selected quadrant
+	QtCADView *c = NULL; // Currently selected quadrant
 
     public slots:
 	void need_update();
 };
 
-#endif /* QTGLQUAD_H */
+#endif /* QTCADQUAD_H */
 
 // Local Variables:
 // tab-width: 8

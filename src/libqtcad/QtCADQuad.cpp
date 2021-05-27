@@ -1,4 +1,4 @@
-/*                      Q T G L Q U A D . C P P
+/*                      Q T C A D Q U A D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021 United States Government as represented by
@@ -17,23 +17,23 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QtGLQuad.cpp
+/** @file QtCADQuad.cpp
  *
  */
 
 #include "common.h"
 
 #include <QGridLayout>
-#include "qtcad/QtGLQuad.h"
+#include "qtcad/QtCADQuad.h"
 
-QtGLQuad::QtGLQuad(QWidget *parent)
+QtCADQuad::QtCADQuad(QWidget *parent, int type)
     : QWidget(parent)
 {
     // Create the four view widgets
-    ur = new QtGL;
-    ul = new QtGL;
-    ll = new QtGL;
-    lr = new QtGL;
+    ur = new QtCADView(this, type);
+    ul = new QtCADView(this, type);
+    ll = new QtCADView(this, type);
+    lr = new QtCADView(this, type);
 
     // Define the spacers
     QSpacerItem *s_top = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -62,7 +62,7 @@ QtGLQuad::QtGLQuad(QWidget *parent)
     gl->addWidget(lr,     2, 2);
 }
 
-QtGLQuad::~QtGLQuad()
+QtCADQuad::~QtCADQuad()
 {
     delete ur;
     delete ul;
@@ -70,8 +70,8 @@ QtGLQuad::~QtGLQuad()
     delete lr;
 }
 
-QtGL *
-QtGLQuad::get(int quadrant_id)
+QtCADView *
+QtCADQuad::get(int quadrant_id)
 {
     switch (quadrant_id) {
 	case 1:
@@ -83,12 +83,12 @@ QtGLQuad::get(int quadrant_id)
 	case 4:
 	    return lr;
 	default:
-	    return NULL;
+	    return c;
     }
 }
 
 void
-QtGLQuad::select(int quadrant_id)
+QtCADQuad::select(int quadrant_id)
 {
     switch (quadrant_id) {
 	case 1:
@@ -107,13 +107,13 @@ QtGLQuad::select(int quadrant_id)
 	    return;
     }
 
-    // TODO - update coloring of spacers to
+    // TODO - update coloring of bg to
     // indicate active quadrant
 
 }
 
 void
-QtGLQuad::select(const char *quadrant_id)
+QtCADQuad::select(const char *quadrant_id)
 {
     if (BU_STR_EQUIV(quadrant_id, "ur")) {
 	select(1);
@@ -134,13 +134,16 @@ QtGLQuad::select(const char *quadrant_id)
 }
 
 void
-QtGLQuad::need_update()
+QtCADQuad::need_update()
 {
     ur->update();
     ul->update();
     ll->update();
     lr->update();
 }
+
+// TODO - need to enable mouse selection
+// of a quadrant as current
 
 // Local Variables:
 // tab-width: 8

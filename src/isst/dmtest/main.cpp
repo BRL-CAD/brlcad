@@ -141,18 +141,16 @@ int main(int argc, char *argv[])
 	    app.w->canvas->set_base2local(&app.gedp->ged_wdbp->dbip->dbi_base2local);
 	    app.w->canvas->set_local2base(&app.gedp->ged_wdbp->dbip->dbi_local2base);
 	}
-#ifdef BRLCAD_OPENGL
 	if (app.w->c4) {
 	    for (int i = 1; i < 5; i++) {
-		QtGL *c = app.w->c4->get(i);
-		c->v = app.gedp->ged_gvp;
-		c->dm_set = app.gedp->ged_all_dmp;
-		c->dm_current = (struct dm **)&app.gedp->ged_dmp;
-		c->base2local = &app.gedp->ged_wdbp->dbip->dbi_base2local;
-		c->local2base = &app.gedp->ged_wdbp->dbip->dbi_local2base;
+		QtCADView *c = app.w->c4->get(i);
+		c->set_view(app.gedp->ged_gvp);
+		//c->dm_set = app.gedp->ged_all_dmp;
+		c->set_dm_current((struct dm **)&app.gedp->ged_dmp);
+		c->set_base2local(&app.gedp->ged_wdbp->dbip->dbi_base2local);
+		c->set_local2base(&app.gedp->ged_wdbp->dbip->dbi_local2base);
 	    }
 	}
-#endif
     }
 
     int have_msg = 0;

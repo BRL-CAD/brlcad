@@ -37,6 +37,7 @@ set(qtcad_srcs
   bindings.cpp
   QAccordionWidget.cpp
   QtSW.cpp
+  QtCADQuad.cpp
   QtCADView.cpp
   QtConsole.cpp
   QtConsoleListener.cpp
@@ -47,6 +48,7 @@ set(qtcad_moc_headers
   bindings.h
   ${QTCAD_HDR_DIR}/QAccordionWidget.h
   ${QTCAD_HDR_DIR}/QtCADView.h
+  ${QTCAD_HDR_DIR}/QtCADQuad.h
   ${QTCAD_HDR_DIR}/QtConsole.h
   ${QTCAD_HDR_DIR}/QtConsoleListener.h
   ${QTCAD_HDR_DIR}/QtSW.h
@@ -56,12 +58,10 @@ if (OPENGL_LIBS)
   set(qtcad_srcs
     ${qtcad_srcs}
     QtGL.cpp
-    QtGLQuad.cpp
     )
   set(qtcad_moc_headers
     ${qtcad_moc_headers}
     ${QTCAD_HDR_DIR}/QtGL.h
-    ${QTCAD_HDR_DIR}/QtGLQuad.h
     )
 endif (OPENGL_LIBS)
 

@@ -38,19 +38,19 @@
 #include <QSettings>
 #include "qtcad/QtConsole.h"
 #include "qtcad/QtCADView.h"
-#include "qtcad/QtGLQuad.h"
+#include "qtcad/QtCADQuad.h"
 
 class DM_MainWindow : public QMainWindow
 {
     Q_OBJECT
     public:
-	DM_MainWindow(int canvas_type = 0);
+	DM_MainWindow(int canvas_type = 0, int quad_view = 0);
 
 	void readSettings();
 
 	QtConsole *console = NULL;
 	QtCADView *canvas = NULL;
-	QtGLQuad *c4 = NULL;
+	QtCADQuad *c4 = NULL;
 
 	QSplitter *wgrp;
 

@@ -25,13 +25,10 @@
 #include "bv/util.h"
 #include "main_window.h"
 #include "qtcad/QtCADView.h"
-#ifdef BRLCAD_OPENGL
-#  include "qtcad/QtGL.h"
-#  include "qtcad/QtGLQuad.h"
-#endif
+#include "qtcad/QtCADQuad.h"
 #include "dmapp.h"
 
-DM_MainWindow::DM_MainWindow(int canvas_type)
+DM_MainWindow::DM_MainWindow(int canvas_type, int quad_view)
 {
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
     // suspect Unity's "global toolbar" settings are being used even when
@@ -58,16 +55,13 @@ DM_MainWindow::DM_MainWindow(int canvas_type)
     file_menu->addAction(g_exit);
 
     // Set up Display canvas
-    if (canvas_type != 2) {
+    if (!quad_view) {
 	canvas = new QtCADView(this, canvas_type);
 	canvas->setMinimumSize(512,512);
-    }
-#ifdef BRLCAD_OPENGL
-    if (canvas_type == 2) {
-	c4 = new QtGLQuad(this);
+    } else {
+	c4 = new QtCADQuad(this, canvas_type);
 	c4->setMinimumSize(512,512);
     }
-#endif
     console = new QtConsole(this);
     console->prompt("$ ");
     wgrp = new QSplitter(Qt::Vertical, this);
@@ -166,24 +160,20 @@ DM_MainWindow::run_cmd(const QString &command)
 			dm_set_vp(canvas->dmp(), &canvas->view()->gv_scale);
 		    }
 		}
-#ifdef BRLCAD_OPENGL
 		if (c4) {
 		    for (int i = 1; i < 5; i++) {
-			QtGL *c = c4->get(i);
-			c->v = (*gedpp)->ged_gvp; // TODO - ged_gvp will need to be driven by selected QtGL...
-			c->dm_set = (*gedpp)->ged_all_dmp;
-			c->dm_current = (struct dm **)&((*gedpp)->ged_dmp);
-			c->base2local = &(*gedpp)->ged_wdbp->dbip->dbi_base2local;
-			c->local2base = &(*gedpp)->ged_wdbp->dbip->dbi_local2base;
-			if (c->dmp) {
-			    // c may already be initialized, so set these here
-			    c->v->dmp = c->dmp;
-			    (*c->dm_current) = c->dmp;
-			    dm_set_vp(c->dmp, &c->v->gv_scale);
+			QtCADView *c = c4->get(i);
+			c->set_view((*gedpp)->ged_gvp); // TODO - ged_gvp will need to be driven by selected QtCADView...
+			//c->dm_set = (*gedpp)->ged_all_dmp;
+			c->set_dm_current((struct dm **)&((*gedpp)->ged_dmp));
+			c->set_base2local(&(*gedpp)->ged_wdbp->dbip->dbi_base2local);
+			c->set_local2base(&(*gedpp)->ged_wdbp->dbip->dbi_local2base);
+			if (c->dmp()) {
+			    // c may already be initialized, so set this here
+			    dm_set_vp(c->dmp(), &c->view()->gv_scale);
 			}
 		    }
 		}
-#endif
 		if ((*gedpp)->ged_dmp)
 		    bu_ptbl_ins((*gedpp)->ged_all_dmp, (long int *)(*gedpp)->ged_dmp);
 
@@ -206,18 +196,16 @@ DM_MainWindow::run_cmd(const QString &command)
 	    canvas->set_base2local(NULL);
 	    canvas->set_local2base(NULL);
 	}
-#ifdef BRLCAD_OPENGL
 	if (c4) {
 	    for (int i = 1; i < 5; i++) {
-		QtGL *c = c4->get(i);
-		c->v = NULL;
-		c->dm_set = NULL;
-		c->dm_current = NULL;
-		c->base2local = NULL;
-		c->local2base = NULL;
+		QtCADView *c = c4->get(i);
+		//c->dm_set = NULL;
+		c->set_view(NULL);
+		c->set_dm_current(NULL);
+		c->set_base2local(NULL);
+		c->set_local2base(NULL);
 	    }
 	}
-#endif
 	console->printString("closed database\n");
 	cmd_run = 1;
     }

@@ -40,11 +40,11 @@ class DMApp : public QApplication
     public:
 	DMApp(int &argc, char *argv[]) :QApplication(argc, argv) {
 	    if (argc && BU_STR_EQUAL(argv[1], "-s")) {
-		w = new DM_MainWindow(1);
+		w = new DM_MainWindow(1, 0);
 	    } else if (argc && BU_STR_EQUAL(argv[1], "-4")) {
-		w = new DM_MainWindow(2);
+		w = new DM_MainWindow(1, 1);
 	    } else {
-		w = new DM_MainWindow(0);
+		w = new DM_MainWindow(0, 0);
 	    }
 	};
 	~DMApp() {};

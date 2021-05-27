@@ -43,12 +43,8 @@ extern "C" {
 
 #define QtCADView_AUTO 0
 #define QtCADView_SW 1
-#define QtCADView_QUAD_AUTO 2
-#define QtCADView_QUAD_SW 3
-
 #ifdef BRLCAD_OPENGL
-#  define QtCADView_GL 4
-#  define QtCADView_QUAD_GL 5
+#  define QtCADView_GL 2
 #endif
 
 class QTCAD_EXPORT QtCADView : public QWidget
@@ -90,7 +86,6 @@ class QTCAD_EXPORT QtCADView : public QWidget
 #ifdef BRLCAD_OPENGL
         QtGL *canvas_gl = NULL;
 #endif
-	// TODO - quad view
 };
 
 #endif /* QTCADVIEW_H */
