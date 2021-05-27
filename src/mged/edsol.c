@@ -1606,7 +1606,11 @@ spline_ed(int arg)
 static void
 nmg_ed(int arg)
 {
+    if (!GEDP || !GEDP->ged_wdbp || !GEDP->ged_wdbp->dbip)
+	return;
+
     struct bu_list *vlfree = &GEDP->ged_wdbp->dbip->dbi_vlfree;
+
     switch (arg) {
 	default:
 	    Tcl_AppendResult(INTERP, "nmg_ed: undefined menu event?\n", (char *)NULL);
@@ -6762,6 +6766,10 @@ sedit_mouse(const vect_t mousevec)
     vect_t raw_kp = VINIT_ZERO;        	/* es_keypoint with es_invmat applied */
     vect_t raw_mp = VINIT_ZERO;        	/* raw model position */
     mat_t mat;
+
+    if (!GEDP || !GEDP->ged_wdbp || !GEDP->ged_wdbp->dbip)
+	return;
+
     struct bu_list *vlfree = &GEDP->ged_wdbp->dbip->dbi_vlfree;
 
     if (es_edflag <= 0)

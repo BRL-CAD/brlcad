@@ -3209,6 +3209,10 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
     int shell_count=0;
     struct bu_vls shell_name;
     long **trans_tbl;
+
+    if (!wdbp || !wdbp->dbip)
+	return TCL_ERROR;
+
     struct bu_list *vlfree = &wdbp->dbip->dbi_vlfree;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -9190,6 +9194,10 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
     const char *nmg_name;
     int success = 0;
     int shell_count=0;
+
+    if (!wdbp || !wdbp->dbip)
+	return TCL_ERROR;
+
     struct bu_list *vlfree = &wdbp->dbip->dbi_vlfree;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -9417,6 +9425,10 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
     char count_str[32];
     fastf_t tol_coll;
     fastf_t min_angle;
+
+    if (!wdbp || !wdbp->dbip)
+	return TCL_ERROR;
+
     struct bu_list *vlfree = &wdbp->dbip->dbi_vlfree;
 
     WDB_TCL_CHECK_READ_ONLY;

@@ -77,6 +77,8 @@ poly_trail(struct bu_list *vhead, struct trail *t1, struct trail *t2)
     fastf_t *s1, *s2;
     vect_t right, up;
     vect_t norm;
+    if (!GEDP || !GEDP->ged_wdbp || !GEDP->ged_wdbp->dbip)
+	return;
     struct bu_list *vlfree = &GEDP->ged_wdbp->dbip->dbi_vlfree;
 
     if (t2->t_nused < todo) todo = t2->t_nused;
@@ -129,6 +131,8 @@ predictor_init(void)
 void
 predictor_kill(void)
 {
+    if (!GEDP || !GEDP->ged_wdbp || !GEDP->ged_wdbp->dbip)
+	return;
     BV_FREE_VLIST(&GEDP->ged_wdbp->dbip->dbi_vlfree, &mged_curr_dm->dm_p_vlist);
     predictor_init();
 }
@@ -174,6 +178,9 @@ predictor_frame(void)
     vect_t delta_v;
     vect_t right, up;
     vect_t norm;
+
+    if (!GEDP || !GEDP->ged_wdbp || !GEDP->ged_wdbp->dbip)
+	return;
     struct bu_list *vlfree = &GEDP->ged_wdbp->dbip->dbi_vlfree;
 
     if (view_state->vs_rateflag_rotate == 0 &&

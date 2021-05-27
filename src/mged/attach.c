@@ -217,7 +217,9 @@ release(char *name, int need_close)
     if (need_close)
 	dm_close(DMP);
 
-    BV_FREE_VLIST(&GEDP->ged_wdbp->dbip->dbi_vlfree, &mged_curr_dm->dm_p_vlist);
+    if (GEDP && GEDP->ged_wdbp && GEDP->ged_wdbp->dbip)
+	BV_FREE_VLIST(&GEDP->ged_wdbp->dbip->dbi_vlfree, &mged_curr_dm->dm_p_vlist);
+
     bu_ptbl_rm(&active_dm_set, (long *)mged_curr_dm);
     mged_slider_free_vls(mged_curr_dm);
     bu_free((void *)mged_curr_dm, "release: mged_curr_dm");

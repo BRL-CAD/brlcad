@@ -86,6 +86,9 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
+    if (!GEDP || !GEDP->ged_wdbp || !GEDP->ged_wdbp->dbip)
+	return TCL_ERROR;
+
     vbp = bv_vlblock_init(&GEDP->ged_wdbp->dbip->dbi_vlfree, 32);
     MAT_IDN(mat);
     bn_mat_inv(mat, view_state->vs_gvp->gv_rotation);
