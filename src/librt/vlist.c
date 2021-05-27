@@ -35,9 +35,8 @@
 #include "bv/plot3.h"
 #include "bv/vlist.h"
 
-#if 0
 struct bv_vlblock *
-bv_vlblock_init(&dbip->dbi_vlfree, 32)(void)
+rt_vlblock_init(void)
 {
     return bv_vlblock_init(&RTG.rtg_vlfree, 32);
 }
@@ -60,7 +59,6 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 {
     bv_vlist_import(&RTG.rtg_vlfree, hp, namevls, buf);
 }
-#endif
 
 #define TBAD	0 /* no such command */
 #define TNONE	1 /* no arguments */
