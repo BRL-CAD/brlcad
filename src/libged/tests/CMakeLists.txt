@@ -5,6 +5,7 @@ BRLCAD_ADDEXEC(ged_test_list test_list.c libged TEST)
 BRLCAD_ADD_TEST(NAME ged_test_list COMMAND ged_test_list 2)
 
 BRLCAD_ADDEXEC(ged_test_plugins plugins.cpp libged TEST)
+add_dependencies(ged_test_plugins ged_plugins)
 
 # Note: it is particularly important that the lint tests in particular are kept
 # in a separate file, since its bad input examples stand an excellent chance of
