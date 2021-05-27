@@ -117,12 +117,10 @@ swrast_configureWin(struct dm *dmp, int UNUSED(force))
 	return BRLCAD_ERROR;
     }
 
-    // We allocate enough memory here for four dm instances, to make sure
-    // OSMesa has enough space to deal with a quad view configuration.  Since
-    // swrast may be run in a no-monitor mode, we can't just allocate the
-    // screen size - we may not have such a size defined.
-    int max_views = 4;
-    pv->os_b = bu_realloc(pv->os_b, max_views * width * height * sizeof(GLubyte)*4, "OSMesa rendering buffer");
+    // 4096 is from MAX_WIDTH and MAX_HEIGHT as set in OSMesa's config.h.  We
+    // need to provide enough memory here for OSMesa to do all of its work
+    // (textures, etc.), not just the current dm image.
+    pv->os_b = bu_realloc(pv->os_b, 4096 * 4096 * sizeof(GLubyte)*4, "OSMesa rendering buffer");
     if (!pv->os_b) {
 	bu_log("swrast_configureWin: render buffer allocation failed\n");
 	return BRLCAD_ERROR;
