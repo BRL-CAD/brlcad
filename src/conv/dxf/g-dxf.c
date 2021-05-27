@@ -59,10 +59,10 @@
 void
 usage(const char *argv0)
 {
-    bu_log("Usage: %s [-v] [-i] [-p] [-xX lvl]\n\
-	    [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol]\n\
-	    [-o output_file_name.dxf] [-P #_of_CPUs] brlcad_db.g object(s)\n\n", argv0);
-
+    const char *u = "%s [-v] [-i] [-p] [-xX lvl]\n"
+	"       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol]\n"
+	"       [-o output_file_name.dxf] [-P #_of_CPUs] brlcad_db.g object(s)\n\n";
+    bu_log("Usage: %s%s", argv0, u);
     bu_log("Options:\n\
 	    -v	Verbose output\n\
 	    -i	Output using inches (instead of default mm)\n\

@@ -588,10 +588,9 @@ leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(p
 int
 main(int argc, char **argv)
 {
-    static char usage[] = "\
-			   Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\
-			   [-n norm_tess_tol (default: 0.0)][-t type (asc: ascii), (le: little endian), (be: big endian)]\n\
-			   [-s separate file per object][-D dist_calc_tol (default: 0.0005)] -o output_file_name brlcad_db.g object(s)\n";
+    static char usage[] = "Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n"
+	"[-n norm_tess_tol (default: 0.0)][-t type (asc: ascii), (le: little endian), (be: big endian)]\n"
+	"[-s separate file per object][-D dist_calc_tol (default: 0.0005)] -o output_file_name brlcad_db.g object(s)\n";
 
     int c, j;
     double percent;
