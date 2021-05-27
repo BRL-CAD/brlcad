@@ -489,7 +489,7 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     if (gb.visualize) {
 	GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-	gb.vbp = rt_vlblock_init();
+	gb.vbp = bv_vlblock_init(&gedp->ged_wdbp->dbip->dbi_vlfree, 32);
     }
     gb.color = color;
 

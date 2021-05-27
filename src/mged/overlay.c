@@ -86,7 +86,7 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_ERROR;
     }
 
-    vbp = rt_vlblock_init();
+    vbp = bv_vlblock_init(&GEDP->ged_wdbp->dbip->dbi_vlfree, 32);
     MAT_IDN(mat);
     bn_mat_inv(mat, view_state->vs_gvp->gv_rotation);
     scale = view_state->vs_gvp->gv_size / 100;		/* divide by # chars/screen */
@@ -229,7 +229,7 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     m = (struct model *)internal.idb_ptr;
     NMG_CK_MODEL(m);
 
-    vbp = rt_vlblock_init();
+    vbp = bv_vlblock_init(&GEDP->ged_wdbp->dbip->dbi_vlfree, 32);
     MAT_IDN(mat);
     bn_mat_inv(mat, view_state->vs_gvp->gv_rotation);
     scale = view_state->vs_gvp->gv_size / 100;      /* divide by # chars/screen */

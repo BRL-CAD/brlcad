@@ -648,6 +648,7 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(incoming);
+    struct bu_list *vlfree = incoming->idb_vlfree;
     hyp_in = (struct rt_hyp_internal *)incoming->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_in);
 
@@ -706,9 +707,9 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 	VADD4(ell[15], hyp->hyp_V, heightAxis[i], majorAxis[1], minorAxis[4]);
 
 	/* draw ellipse */
-	RT_ADD_VLIST(vhead, ell[15], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ell[15], BV_VLIST_LINE_MOVE);
 	for (j = 0; j < 16; j++) {
-	    RT_ADD_VLIST(vhead, ell[j], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ell[j], BV_VLIST_LINE_DRAW);
 	}
 
 	/* add ellipse's points to ribs */
@@ -719,9 +720,9 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
     /* draw ribs */
     for (i = 0; i < 16; i++) {
-	RT_ADD_VLIST(vhead, ribs[i][0], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ribs[i][0], BV_VLIST_LINE_MOVE);
 	for (j = 1; j < 7; j++) {
-	    RT_ADD_VLIST(vhead, ribs[i][j], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ribs[i][j], BV_VLIST_LINE_DRAW);
 	}
 
     }

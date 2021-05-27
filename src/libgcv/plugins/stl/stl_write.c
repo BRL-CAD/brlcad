@@ -200,7 +200,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	fprintf(pstate->fp, "solid %s\n", (region_name+1));
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &pstate->gcv_options->calculational_tolerance);
+    nmg_triangulate_model(m, &pstate->dbip->dbi_vlfree, &pstate->gcv_options->calculational_tolerance);
 
     /* Check triangles */
     for (BU_LIST_FOR (s, shell, &r->s_hd))
@@ -407,7 +407,6 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     /* make empty NMG model */
     state.the_model = nmg_mm();
-    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(state.dbip, gcv_options->num_objects, (const char **)gcv_options->object_names,
@@ -457,7 +456,6 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     /* Release dynamic storage */
     nmg_km(state.the_model);
-    rt_vlist_cleanup();
 
     return 1;
 }

@@ -343,7 +343,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-	vbp = rt_vlblock_init();
+	vbp = bv_vlblock_init(&gedp->ged_wdbp->dbip->dbi_vlfree, 32);
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 0);
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
@@ -373,7 +373,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-	vbp = rt_vlblock_init();
+	vbp = bv_vlblock_init(&gedp->ged_wdbp->dbip->dbi_vlfree, 32);
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);

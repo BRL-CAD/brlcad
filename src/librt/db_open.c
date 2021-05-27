@@ -231,6 +231,9 @@ db_open(const char *name, const char *mode)
     dbip->dbi_version = 0; /* make db_version() calculate */
     dbip->dbi_version = db_version(dbip);
 
+    /* Prepare bv_vlist free list */
+    BU_LIST_INIT(&dbip->dbi_vlfree);
+
     if (dbip->dbi_version < 5) {
 	if (rt_db_flip_endian(dbip)) {
 	    if (dbip->dbi_version > 0)
@@ -304,6 +307,8 @@ db_close_client(struct db_i *dbip, long int *client)
     if (client) {
 	(void)bu_ptbl_rm(&dbip->dbi_clients, client);
     }
+
+    bv_vlist_cleanup(&dbip->dbi_vlfree);
 
     db_close(dbip);
 }

@@ -154,14 +154,14 @@ vdraw_write(void *data, int argc, const char *argv[])
 	    /* we went all the way through */
 	    vp = BU_LIST_PNEXT(bv_vlist, vp);
 	    if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-		RT_GET_VLIST(vp);
+		BV_GET_VLIST(&gedp->ged_wdbp->dbip->dbi_vlfree, vp);
 		BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	    }
 	}
 	if (vp->nused >= BV_VLIST_CHUNK) {
 	    vp = BU_LIST_PNEXT(bv_vlist, vp);
 	    if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-		RT_GET_VLIST(vp);
+		BV_GET_VLIST(&gedp->ged_wdbp->dbip->dbi_vlfree, vp);
 		BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	    }
 	}
@@ -190,7 +190,7 @@ vdraw_write(void *data, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "vdraw: write out of range\n");
 		return GED_ERROR;
 	    }
-	    RT_GET_VLIST(vp);
+	    BV_GET_VLIST(&gedp->ged_wdbp->dbip->dbi_vlfree, vp);
 	    BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	}
 	if ((size_t)uind > vp->nused) {
@@ -280,7 +280,7 @@ vdraw_insert(void *data, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "vdraw: insert out of range\n");
 	    return GED_ERROR;
 	}
-	RT_GET_VLIST(vp);
+	BV_GET_VLIST(&gedp->ged_wdbp->dbip->dbi_vlfree, vp);
 	BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
     }
     if ((size_t)uind > vp->nused) {
@@ -647,7 +647,7 @@ vdraw_open(void *data, int argc, const char *argv[])
 
 	rcp->vdc_rgb = RT_VDRW_DEF_COLOR;
 	BU_LIST_INIT(&(rcp->vdc_vhd));
-	RT_GET_VLIST(vp);
+	BV_GET_VLIST(&gedp->ged_wdbp->dbip->dbi_vlfree, vp);
 	BU_LIST_APPEND(&(rcp->vdc_vhd), &(vp->l));
 	gedp->ged_gdp->gd_currVHead = rcp;
 	/* 1 means new entry */
@@ -656,7 +656,7 @@ vdraw_open(void *data, int argc, const char *argv[])
     } else {
 	/* entry already existed */
 	if (BU_LIST_IS_EMPTY(&(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
-	    RT_GET_VLIST(vp);
+	    BV_GET_VLIST(&gedp->ged_wdbp->dbip->dbi_vlfree, vp);
 	    BU_LIST_APPEND(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	}
 	gedp->ged_gdp->gd_currVHead->vdc_name[RT_VDRW_MAXNAME] = '\0'; /*safety*/
@@ -713,7 +713,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 		    gedp->ged_gdp->gd_currVHead = BU_LIST_LAST(vd_curve, gedp->ged_gdp->gd_headVDraw);
 		}
 	    }
-	    RT_FREE_VLIST(&(rcp2->vdc_vhd));
+	    BV_FREE_VLIST(&gedp->ged_wdbp->dbip->dbi_vlfree, &(rcp2->vdc_vhd));
 	    BU_PUT(rcp2, struct vd_curve);
 	    return GED_OK;
 	default:

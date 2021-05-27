@@ -385,6 +385,7 @@ ellipse_point_at_radian(
 
 void
 plot_ellipse(
+	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	const vect_t center,
 	const vect_t axis_a,
@@ -399,12 +400,12 @@ plot_ellipse(
 
     ellipse_point_at_radian(p, center, axis_a, axis_b,
 	    radian_step * (num_points - 1));
-    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
     radian = 0;
     for (i = 0; i < num_points; ++i) {
 	ellipse_point_at_radian(p, center, axis_a, axis_b, radian);
-	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
 	radian += radian_step;
     }

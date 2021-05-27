@@ -918,6 +918,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
+    struct bu_list *vlfree = ip->idb_vlfree;
     eto = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(eto)) {
 	return -1;
@@ -982,11 +983,11 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     }
 
     VJOIN1(center, eto_V, mag_aj / mag_N, eto_N);
-    plot_ellipse(vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, center, contour_A, contour_B, points_per_ellipse);
 
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, -mag_ai);
     VJOIN1(center, eto_V, -mag_aj / mag_N, eto_N);
-    plot_ellipse(vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, center, contour_A, contour_B, points_per_ellipse);
 
     /* plot elliptical contour showing extent of ellipse +B/-B */
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, mag_bi);
@@ -998,11 +999,11 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     }
 
     VJOIN1(center, eto_V, mag_bj / mag_N, eto_N);
-    plot_ellipse(vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, center, contour_A, contour_B, points_per_ellipse);
 
     eto_contour_axes(contour_A, contour_B, eto_A, eto_B, -mag_bi);
     VJOIN1(center, eto_V, -mag_bj / mag_N, eto_N);
-    plot_ellipse(vhead, center, contour_A, contour_B, points_per_ellipse);
+    plot_ellipse(vlfree, vhead, center, contour_A, contour_B, points_per_ellipse);
 
     /* draw elliptical radial cross sections */
     num_cross_sections = primitive_curve_count(ip, tol, v->curve_scale, s_size);
@@ -1029,7 +1030,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	VCOMB2(ellipse_A, mag_ai, I, mag_aj, J);
 	VCOMB2(ellipse_B, mag_bi, I, mag_bj, J);
 
-	plot_ellipse(vhead, center, ellipse_A, ellipse_B, points_per_ellipse);
+	plot_ellipse(vlfree, vhead, center, ellipse_A, ellipse_B, points_per_ellipse);
 
 	radian += radian_step;
     }
@@ -1061,6 +1062,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
+    struct bu_list *vlfree = ip->idb_vlfree;
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(tip)) {
 	return -1;
@@ -1138,16 +1140,16 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     /* draw ellipses */
     for (i = 0; i < nells; i++) {
-	RT_ADD_VLIST(vhead, ETO_PTA(i, npts-1), BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ETO_PTA(i, npts-1), BV_VLIST_LINE_MOVE);
 	for (j = 0; j < npts; j++)
-	    RT_ADD_VLIST(vhead, ETO_PTA(i, j), BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ETO_PTA(i, j), BV_VLIST_LINE_DRAW);
     }
 
     /* draw connecting circles */
     for (i = 0; i < npts; i++) {
-	RT_ADD_VLIST(vhead, ETO_PTA(nells-1, i), BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ETO_PTA(nells-1, i), BV_VLIST_LINE_MOVE);
 	for (j = 0; j < nells; j++)
-	    RT_ADD_VLIST(vhead, ETO_PTA(j, i), BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, ETO_PTA(j, i), BV_VLIST_LINE_DRAW);
     }
 
     bu_free((char *)eto_ells, "ells[]");

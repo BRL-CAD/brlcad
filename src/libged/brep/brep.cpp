@@ -1410,7 +1410,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERNAL(gedp, &gb.intern, gb.dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
     RT_CK_DB_INTERNAL(&gb.intern);
 
-    gb.vbp = rt_vlblock_init();
+    gb.vbp = bv_vlblock_init(&gedp->ged_wdbp->dbip->dbi_vlfree, 32);
     gb.color = color;
     gb.plotres = plotres;
 

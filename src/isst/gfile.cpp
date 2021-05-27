@@ -305,18 +305,18 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
     d.tribuf = this->tribuf;
 
     (void) db_walk_tree(dbip,
-			argc,			/* number of toplevel regions */
-			argv,			/* region names */
-			1,			/* ncpu */
-			&tree_state,		/* initial tree state */
-			nmg_to_adrt_regstart,	/* region start function */
-			gcv_region_end,		/* region end function */
-			nmg_booltree_leaf_tess,	/* leaf func */
-			(void *)&gcvwriter);	/* client data */
+	    argc,			/* number of toplevel regions */
+	    argv,			/* region names */
+	    1,			/* ncpu */
+	    &tree_state,		/* initial tree state */
+	    nmg_to_adrt_regstart,	/* region start function */
+	    gcv_region_end,		/* region end function */
+	    nmg_booltree_leaf_tess,	/* leaf func */
+	    (void *)&gcvwriter);	/* client data */
 
     /* Release dynamic storage */
     nmg_km(the_model);
-    rt_vlist_cleanup();
+
     db_close(dbip);
     bu_free(tribuf[0], "vert");
     bu_free(tribuf[1], "vert");

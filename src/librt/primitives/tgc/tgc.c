@@ -1887,6 +1887,7 @@ struct ellipse {
 
 static void
 draw_lines_between_rec_ellipses(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct ellipse ellipse1,
     vect_t h,
@@ -1901,14 +1902,15 @@ draw_lines_between_rec_ellipses(
 				ellipse1.axis_a, ellipse1.axis_b, i * radian_step);
 	VADD2(ellipse2_point, ellipse1_point, h);
 
-	RT_ADD_VLIST(vhead, ellipse1_point, BV_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, ellipse2_point, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, ellipse1_point, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ellipse2_point, BV_VLIST_LINE_DRAW);
     }
 }
 
 
 static void
 draw_lines_between_ellipses(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct ellipse ellipse1,
     struct ellipse ellipse2,
@@ -1924,8 +1926,8 @@ draw_lines_between_ellipses(
 	ellipse_point_at_radian(ellipse2_point, ellipse2.center,
 				ellipse2.axis_a, ellipse2.axis_b, i * radian_step);
 
-	RT_ADD_VLIST(vhead, ellipse1_point, BV_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, ellipse2_point, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, ellipse1_point, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, ellipse2_point, BV_VLIST_LINE_DRAW);
     }
 }
 
@@ -1998,6 +2000,7 @@ rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = ip->idb_vlfree;
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -2015,8 +2018,8 @@ rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	point_t p;
 
 	VADD2(p, tip->v, tip->h);
-	RT_ADD_VLIST(vhead, tip->v, BV_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, tip->v, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
 	return 0;
     }
@@ -2051,12 +2054,12 @@ rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	/* calculate and plot first ellipse */
 	ellipse_point_at_radian(pts[0], tip->v, tip->a, tip->b,
 				radian_step * (points_per_ellipse - 1));
-	RT_ADD_VLIST(vhead, pts[0], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, pts[0], BV_VLIST_LINE_MOVE);
 
 	radian = 0;
 	for (i = 0; i < points_per_ellipse; ++i) {
 	    ellipse_point_at_radian(pts[i], tip->v, tip->a, tip->b, radian);
-	    RT_ADD_VLIST(vhead, pts[i], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pts[i], BV_VLIST_LINE_DRAW);
 
 	    radian += radian_step;
 	}
@@ -2066,23 +2069,23 @@ rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	    VADD2(pts[i], tip->h, pts[i]);
 	}
 
-	RT_ADD_VLIST(vhead, pts[points_per_ellipse - 1], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, pts[points_per_ellipse - 1], BV_VLIST_LINE_MOVE);
 	for (i = 0; i < points_per_ellipse; ++i) {
-	    RT_ADD_VLIST(vhead, pts[i], BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pts[i], BV_VLIST_LINE_DRAW);
 	}
 
 	bu_free(pts, "tgc points");
 
-	draw_lines_between_rec_ellipses(vhead, ellipse1, tip->h,
+	draw_lines_between_rec_ellipses(vlfree, vhead, ellipse1, tip->h,
 					connecting_lines);
     } else {
-	plot_ellipse(vhead, ellipse1.center, ellipse1.axis_a, ellipse1.axis_b,
+	plot_ellipse(vlfree, vhead, ellipse1.center, ellipse1.axis_a, ellipse1.axis_b,
 		     points_per_ellipse);
 
-	plot_ellipse(vhead, ellipse2.center, ellipse2.axis_a, ellipse2.axis_b,
+	plot_ellipse(vlfree, vhead, ellipse2.center, ellipse2.axis_a, ellipse2.axis_b,
 		     points_per_ellipse);
 
-	draw_lines_between_ellipses(vhead, ellipse1, ellipse2,
+	draw_lines_between_ellipses(vlfree, vhead, ellipse1, ellipse2,
 				    connecting_lines);
     }
 
@@ -2101,6 +2104,7 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = ip->idb_vlfree;
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -2109,21 +2113,21 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     rt_ell_16pnts(top, work, tip->c, tip->d);
 
     /* Draw the top */
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i=0; i<16; i++) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw the bottom */
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i=0; i<16; i++) {
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i=0; i<16; i += 4) {
-	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
     return 0;
 }

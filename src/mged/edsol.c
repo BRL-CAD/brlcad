@@ -1606,6 +1606,7 @@ spline_ed(int arg)
 static void
 nmg_ed(int arg)
 {
+    struct bu_list *vlfree = &GEDP->ged_wdbp->dbip->dbi_vlfree;
     switch (arg) {
 	default:
 	    Tcl_AppendResult(INTERP, "nmg_ed: undefined menu event?\n", (char *)NULL);
@@ -1634,9 +1635,9 @@ nmg_ed(int arg)
 		    /* get space for list of items processed */
 		    tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
 					    "nmg_ed tab[]");
-		    vbp = rt_vlblock_init();
+		    vbp = bv_vlblock_init(&GEDP->ged_wdbp->dbip->dbi_vlfree, 32);
 
-		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &RTG.rtg_vlfree, &mged_tol);
+		    nmg_vlblock_around_eu(vbp, es_eu, tab, 1, vlfree, &mged_tol);
 		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
 
 		    bv_vlblock_free(vbp);
@@ -3969,6 +3970,8 @@ sedit(void)
     if (DBIP == DBI_NULL)
 	return;
 
+    struct bu_list *vlfree = &DBIP->dbi_vlfree;
+
     sedraw = 0;
     ++update_views;
 
@@ -5770,13 +5773,13 @@ sedit(void)
 		    nmg_face_g(fu, new_lu_pl);
 		}
 
-		(void)nmg_extrude_face(fu, extrude_vec, &RTG.rtg_vlfree, &mged_tol);
+		(void)nmg_extrude_face(fu, extrude_vec, vlfree, &mged_tol);
 
-		nmg_fix_normals(fu->s_p, &RTG.rtg_vlfree, &mged_tol);
+		nmg_fix_normals(fu->s_p, vlfree, &mged_tol);
 
 		m = nmg_find_model(&fu->l.magic);
 		nmg_rebound(m, &mged_tol);
-		(void)nmg_ck_geometry(m, &RTG.rtg_vlfree, &mged_tol);
+		(void)nmg_ck_geometry(m, vlfree, &mged_tol);
 
 		es_eu = (struct edgeuse *)NULL;
 
@@ -6759,6 +6762,7 @@ sedit_mouse(const vect_t mousevec)
     vect_t raw_kp = VINIT_ZERO;        	/* es_keypoint with es_invmat applied */
     vect_t raw_mp = VINIT_ZERO;        	/* raw model position */
     mat_t mat;
+    struct bu_list *vlfree = &GEDP->ged_wdbp->dbip->dbi_vlfree;
 
     if (es_edflag <= 0)
 	return;
@@ -7070,7 +7074,7 @@ sedit_mouse(const vect_t mousevec)
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		if ((e = nmg_find_e_nearest_pt2(&m->magic, pos_view,
-						view_state->vs_gvp->gv_model2view, &RTG.rtg_vlfree, &tmp_tol)) == (struct edge *)NULL) {
+						view_state->vs_gvp->gv_model2view, vlfree, &tmp_tol)) == (struct edge *)NULL) {
 		    Tcl_AppendResult(INTERP, "ECMD_NMG_EPICK: unable to find an edge\n",
 				     (char *)NULL);
 		    mged_print_result(TCL_ERROR);

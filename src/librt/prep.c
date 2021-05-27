@@ -74,19 +74,17 @@ rt_new_rti(struct db_i *dbip)
 
     RT_CK_DBI(dbip);
 
-    /* XXX Move to rt_global_init() ? */
-    if (BU_LIST_FIRST(bu_list, &RTG.rtg_vlfree) == 0) {
-	char *debug_flags;
-	debug_flags = getenv("LIBRT_DEBUG");
-	if (debug_flags) {
-	    if (rt_debug) {
-		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application-specified flags\n");
-	    } else {
-		rt_debug = strtol(debug_flags, NULL, 0x10);
-	    }
+    // NOTE - this was previously guarded by rtg_free initialization, and
+    // so would only be checked once.  Now we're checking each time a new
+    // rti is created.
+    char *debug_flags = getenv("LIBRT_DEBUG");
+    if (debug_flags) {
+	long new_rt_debug = strtol(debug_flags, NULL, 0x10);
+	if (rt_debug && (rt_debug != new_rt_debug)) {
+	    bu_log("WARNING: environment LIBRT_DEBUG value overridden in favor of application-specified flags\n");
+	} else {
+	    rt_debug = new_rt_debug;
 	}
-
-	BU_LIST_INIT(&RTG.rtg_vlfree);
     }
 
     BU_ALLOC(rtip, struct rt_i);
@@ -820,7 +818,7 @@ rt_plot_solid(
 
     bv_vlist_to_uplot(fp, &vhead);
 
-    RT_FREE_VLIST(&vhead);
+    BV_FREE_VLIST(&rtip->rti_dbip->dbi_vlfree, &vhead);
     return 0;			/* OK */
 }
 

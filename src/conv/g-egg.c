@@ -306,9 +306,9 @@ main(int argc, char *argv[])
 	for (i=1; i<argc; i++)
 	    bu_log(" %s", argv[i]);
 	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
     /* print the egg header stuff, including the command line to execute it */
@@ -322,14 +322,14 @@ main(int argc, char *argv[])
     while (--argc) {
 	fprintf(conv_data.fp, "<Group> %s {\n", *(argv+1));
 	(void) db_walk_tree(dbip,		/* db_i */
-			    1,		/* argc */
-			    (const char **)(++argv), /* argv */
-			    ncpu,		/* ncpu */
-			    &tree_state,	/* state */
-			    NULL,		/* start func */
-			    use_mc?gcv_region_end_mc:use_bottess?gcv_bottess_region_end:gcv_region_end,	/* end func */
-			    use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
-			    (void *)&gcvwriter);  /* client_data */
+		1,		/* argc */
+		(const char **)(++argv), /* argv */
+		ncpu,		/* ncpu */
+		&tree_state,	/* state */
+		NULL,		/* start func */
+		use_mc?gcv_region_end_mc:use_bottess?gcv_bottess_region_end:gcv_region_end,	/* end func */
+		use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
+		(void *)&gcvwriter);  /* client_data */
 	fprintf(conv_data.fp, "}\n");
     }
 
@@ -340,7 +340,7 @@ main(int argc, char *argv[])
 
     /* Release dynamic storage */
     nmg_km(the_model);
-    rt_vlist_cleanup();
+
     db_close(dbip);
 
     return 0;

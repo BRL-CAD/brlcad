@@ -292,7 +292,6 @@ main(int argc, const char **argv)
 
     /* Release dynamic storage */
     nmg_km(the_model);
-    rt_vlist_cleanup();
     db_close(dbip);
 
     return 0;

@@ -1323,7 +1323,7 @@ rt_ebm_free(struct soltab *stp)
 
 /* either x1==x2, or y1==y2 */
 void
-rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat, register struct bu_list *vhead)
+rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat, struct bu_list *vlfree, register struct bu_list *vhead)
 {
     point_t s, p;
     point_t srot, prot;
@@ -1331,21 +1331,21 @@ rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat
     BU_CK_LIST_HEAD(vhead);
     VSET(s, x_1, y_1, 0.0);
     MAT4X3PNT(srot, mat, s);
-    RT_ADD_VLIST(vhead, srot, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, srot, BV_VLIST_LINE_MOVE);
 
     VSET(p, x_1, y_1, t);
     MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
     VSET(p, x_2, y_2, t);
     MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
     p[Z] = 0;
     MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
-    RT_ADD_VLIST(vhead, srot, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, srot, BV_VLIST_LINE_DRAW);
 }
 
 
@@ -1359,6 +1359,7 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = ip->idb_vlfree;
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
 
@@ -1371,7 +1372,7 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		if ((*bit(eip, x-1, y) == 0) != (*bit(eip, x, y) == 0))
 		    continue;
 		rt_ebm_plate(x, base, x, y, eip->tallness,
-			     eip->mat, vhead);
+			     eip->mat, vlfree, vhead);
 		following = 0;
 	    } else {
 		if ((*bit(eip, x-1, y) == 0) == (*bit(eip, x, y) == 0))
@@ -1390,7 +1391,7 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		if ((*bit(eip, x, y-1) == 0) != (*bit(eip, x, y) == 0))
 		    continue;
 		rt_ebm_plate(base, y, x, y, eip->tallness,
-			     eip->mat, vhead);
+			     eip->mat, vlfree, vhead);
 		following = 0;
 	    } else {
 		if ((*bit(eip, x, y-1) == 0) == (*bit(eip, x, y) == 0))

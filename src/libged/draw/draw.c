@@ -935,7 +935,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
 		if (dgcdp.draw_edge_uses) {
 		    bu_vls_printf(gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
-		    dgcdp.draw_edge_uses_vbp = rt_vlblock_init();
+		    dgcdp.draw_edge_uses_vbp = bv_vlblock_init(&gedp->ged_wdbp->dbip->dbi_vlfree, 32);
 		}
 
 		for (i = 0; i < argc; ++i) {

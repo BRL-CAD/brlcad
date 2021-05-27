@@ -2340,7 +2340,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
-	ged_gqa_plot.vbp = rt_vlblock_init();
+	ged_gqa_plot.vbp = bv_vlblock_init(&gedp->ged_wdbp->dbip->dbi_vlfree, 32);
 	ged_gqa_plot.vhead = bv_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 

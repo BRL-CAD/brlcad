@@ -53,7 +53,7 @@
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \
     BU_LIST_APPEND(fp, &((p)->l)); \
-    RT_FREE_VLIST(&((p)->s_vlist)); }
+    BV_FREE_VLIST(&dbip->dbi_vlfree, &((p)->s_vlist)); }
 
 
 /* TODO:  Ew.  Globals. Make this go away... */
@@ -160,8 +160,6 @@ ged_free(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
-    gedp->ged_wdbp = RT_WDB_NULL;
-
     bu_vls_free(&gedp->go_name);
 
     // Note - it is the caller's responsibility to have freed any data
@@ -181,6 +179,22 @@ ged_free(struct ged *gedp)
 
     bu_ptbl_free(&gedp->ged_db_grps);
     bu_ptbl_free(&gedp->ged_view_shared_objs);
+
+    // TODO - replace free_scene_obj with free_solids ptbl
+    {
+	if (gedp && gedp->ged_wdbp && gedp->ged_wdbp->dbip) {
+	    struct db_i *dbip = gedp->ged_wdbp->dbip;
+	    struct bv_scene_obj *nsp;
+	    sp = BU_LIST_NEXT(bv_scene_obj, &gedp->free_scene_obj->l);
+	    while (BU_LIST_NOT_HEAD(sp, &gedp->free_scene_obj->l)) {
+		nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
+		BU_LIST_DEQUEUE(&((sp)->l));
+		FREE_BV_SCENE_OBJ(sp, &gedp->free_scene_obj->l);
+		sp = nsp;
+	    }
+	}
+    }
+    BU_PUT(gedp->free_scene_obj, struct bv_scene_obj);
 
     /* Since libged does not link libdm, it's also the responsibility of the
      * caller to close any display managers.  Client also frees the display
@@ -228,25 +242,14 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
-    // TODO - replace free_scene_obj with free_solids ptbl
-    {
-	struct bv_scene_obj *nsp;
-	sp = BU_LIST_NEXT(bv_scene_obj, &gedp->free_scene_obj->l);
-	while (BU_LIST_NOT_HEAD(sp, &gedp->free_scene_obj->l)) {
-	    nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
-	    BU_LIST_DEQUEUE(&((sp)->l));
-	    FREE_BV_SCENE_OBJ(sp, &gedp->free_scene_obj->l);
-	    sp = nsp;
-	}
-    }
-    BU_PUT(gedp->free_scene_obj, struct bv_scene_obj);
-
     free_object_selections(gedp->ged_selections);
     bu_hash_destroy(gedp->ged_selections);
 
     BU_PUT(gedp->ged_cbs, struct ged_callback_state);
 
     bu_ptbl_free(&gedp->ged_subp);
+
+    gedp->ged_wdbp = RT_WDB_NULL;
 }
 
 void

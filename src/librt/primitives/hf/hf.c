@@ -1660,6 +1660,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = ip->idb_vlfree;
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
 
@@ -1672,18 +1673,18 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
     goal = 20000;
 
     /* Draw the 4 corners of the base plate */
-    RT_ADD_VLIST(vhead, xip->v, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, xip->v, BV_VLIST_LINE_MOVE);
 
     VJOIN1(start, xip->v, xip->xlen, xip->x);
-    RT_ADD_VLIST(vhead, start, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, start, BV_VLIST_LINE_DRAW);
 
     VJOIN2(start, xip->v, xip->xlen, xip->x, xip->ylen, xip->y);
-    RT_ADD_VLIST(vhead, start, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, start, BV_VLIST_LINE_DRAW);
 
     VJOIN1(start, xip->v, xip->ylen, xip->y);
-    RT_ADD_VLIST(vhead, start, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, start, BV_VLIST_LINE_DRAW);
 
-    RT_ADD_VLIST(vhead, xip->v, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, xip->v, BV_VLIST_LINE_DRAW);
     goal -= 5;
 
 #define HF_GET(_p, _x, _y)	((_p)[(_y)*xip->w+(_x)])
@@ -1692,35 +1693,35 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
      */
     if (xip->shorts) {
 	/* X direction, Y=0, with edges down to base */
-	RT_ADD_VLIST(vhead, xip->v, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, xip->v, BV_VLIST_LINE_MOVE);
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0);
 	for (x = 0; x < xip->w; x++) {
 	    VJOIN2(cur, xip->v, x, xbasis, *sp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 	    sp++;
 	}
 	VJOIN1(cur, xip->v, xip->xlen, xip->x);
-	RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 
 	/* X direction, Y=n-1, with edges down to base */
 	VJOIN1(start, xip->v, xip->ylen, xip->y);
-	RT_ADD_VLIST(vhead, start, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, start, BV_VLIST_LINE_MOVE);
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, xip->n - 1);
 	VJOIN1(start, xip->v, xip->ylen, xip->y);
 	for (x = 0; x < xip->w; x++) {
 	    VJOIN2(cur, start, x, xbasis, *sp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 	    sp++;
 	}
 	VJOIN2(cur, xip->v, xip->xlen, xip->x, xip->ylen, xip->y);
-	RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 
 	/* Y direction, X=0 */
 	cmd = BV_VLIST_LINE_MOVE;
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0);
 	for (y = 0; y < xip->n; y++) {
 	    VJOIN2(cur, xip->v, y, ybasis, *sp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, cmd);
+	    BV_ADD_VLIST(vlfree, vhead, cur, cmd);
 	    cmd = BV_VLIST_LINE_DRAW;
 	    sp += xip->w;
 	}
@@ -1731,41 +1732,41 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	VJOIN1(start, xip->v, xip->xlen, xip->x);
 	for (y = 0; y < xip->n; y++) {
 	    VJOIN2(cur, start, y, ybasis, *sp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, cmd);
+	    BV_ADD_VLIST(vlfree, vhead, cur, cmd);
 	    cmd = BV_VLIST_LINE_DRAW;
 	    sp += xip->w;
 	}
     } else {
 	/* X direction, Y=0, with edges down to base */
-	RT_ADD_VLIST(vhead, xip->v, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, xip->v, BV_VLIST_LINE_MOVE);
 	dp = &HF_GET((double *)xip->mp->apbuf, 0, 0);
 	for (x = 0; x < xip->w; x++) {
 	    VJOIN2(cur, xip->v, x, xbasis, *dp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 	    dp++;
 	}
 	VJOIN1(cur, xip->v, xip->xlen, xip->x);
-	RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 
 	/* X direction, Y=n-1, with edges down to base */
 	VJOIN1(start, xip->v, xip->ylen, xip->y);
-	RT_ADD_VLIST(vhead, start, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, start, BV_VLIST_LINE_MOVE);
 	dp = &HF_GET((double *)xip->mp->apbuf, 0, xip->n - 1);
 	VJOIN1(start, xip->v, xip->ylen, xip->y);
 	for (x = 0; x < xip->w; x++) {
 	    VJOIN2(cur, start, x, xbasis, *dp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 	    dp++;
 	}
 	VJOIN2(cur, xip->v, xip->xlen, xip->x, xip->ylen, xip->y);
-	RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 
 	/* Y direction, X=0 */
 	cmd = BV_VLIST_LINE_MOVE;
 	dp = &HF_GET((double *)xip->mp->apbuf, 0, 0);
 	for (y = 0; y < xip->n; y++) {
 	    VJOIN2(cur, xip->v, y, ybasis, *dp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, cmd);
+	    BV_ADD_VLIST(vlfree, vhead, cur, cmd);
 	    cmd = BV_VLIST_LINE_DRAW;
 	    sp += xip->w;
 	}
@@ -1776,7 +1777,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	VJOIN1(start, xip->v, xip->xlen, xip->x);
 	for (y = 0; y < xip->n; y++) {
 	    VJOIN2(cur, start, y, ybasis, *dp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, cmd);
+	    BV_ADD_VLIST(vlfree, vhead, cur, cmd);
 	    cmd = BV_VLIST_LINE_DRAW;
 	    dp += xip->w;
 	}
@@ -1806,37 +1807,37 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	if (xip->shorts) {
 	    sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 	    VJOIN2(cur, start, x, xbasis, *sp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_MOVE);
 	    x += half_step;
 	    sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 	    for (; x < xip->w; x += step) {
 		VJOIN2(cur, start, x, xbasis, *sp, zbasis);
-		RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 		sp += step;
 	    }
 	    if (x != step+xip->w-1+step) {
 		x = xip->w - 1;
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, x, xbasis, *sp, zbasis);
-		RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 	    }
 	} else {
 	    /* doubles */
 	    dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 	    VJOIN2(cur, start, x, xbasis, *dp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_MOVE);
 	    x += half_step;
 	    dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 	    for (; x < xip->w; x+=step) {
 		VJOIN2(cur, start, x, xbasis, *dp, zbasis);
-		RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 		dp += step;
 	    }
 	    if (x != step+xip->w-1+step) {
 		x = xip->w - 1;
 		dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, x, xbasis, *dp, zbasis);
-		RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 	    }
 	}
     }
@@ -1848,18 +1849,18 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	    y = 0;
 	    sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 	    VJOIN2(cur, start, y, ybasis, *sp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_MOVE);
 	    y += half_step;
 	    for (; y < xip->n; y += step) {
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, y, ybasis, *sp, zbasis);
-		RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 	    }
 	    if (y != step+xip->n-1+step) {
 		y = xip->n - 1;
 		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, y, ybasis, *sp, zbasis);
-		RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 	    }
 	}
     } else {
@@ -1869,18 +1870,18 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	    y = 0;
 	    dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 	    VJOIN2(cur, start, y, ybasis, *dp, zbasis);
-	    RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_MOVE);
 	    y += half_step;
 	    for (; y < xip->n; y += step) {
 		dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, y, ybasis, *dp, zbasis);
-		RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 	    }
 	    if (y != step+xip->n-1+step) {
 		y = xip->n - 1;
 		dp = &HF_GET((double *)xip->mp->apbuf, x, y);
 		VJOIN2(cur, start, y, ybasis, *dp, zbasis);
-		RT_ADD_VLIST(vhead, cur, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, cur, BV_VLIST_LINE_DRAW);
 	    }
 	}
     }

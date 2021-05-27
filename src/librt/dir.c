@@ -144,6 +144,8 @@ rt_db_get_internal(
 	id = rt_id_solid(&ext);
     }
 
+    ip->idb_vlfree = (struct bu_list *)&dbip->dbi_vlfree;
+
     /* ip is already initialized and should not be re-initialized */
     ret = -1;
     if (OBJ[id].ft_import4) {

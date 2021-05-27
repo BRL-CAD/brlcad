@@ -241,13 +241,13 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 			    VSETIN(flt_ptr, v->vg_p->coord);
 			    flt_ptr += 3;
 			}
-		    else
-			if (!binary) {
-			    fprintf(fp, "%f %f %f\n", V3ARGS(v->vg_p->coord));
-			} else {
-			    VMOVE(flt_ptr, v->vg_p->coord);
-			    flt_ptr += 3;
-			}
+			else
+			    if (!binary) {
+				fprintf(fp, "%f %f %f\n", V3ARGS(v->vg_p->coord));
+			    } else {
+				VMOVE(flt_ptr, v->vg_p->coord);
+				flt_ptr += 3;
+			    }
 		}
 		if (vert_count > 3)
 		{
@@ -443,9 +443,9 @@ main(int argc, char *argv[])
 	for (i=1; i<argc; i++)
 	    bu_log(" %s", argv[i]);
 	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
     /* Write out STL header if output file is binary */
@@ -471,19 +471,19 @@ main(int argc, char *argv[])
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,
-			&tree_state,
-			0,			/* take all regions */
-			use_mc?gcv_region_end_mc:gcv_region_end,
-			use_mc?NULL:nmg_booltree_leaf_tess,
-			(void *)&gcvwriter);
+	    1,
+	    &tree_state,
+	    0,			/* take all regions */
+	    use_mc?gcv_region_end_mc:gcv_region_end,
+	    use_mc?NULL:nmg_booltree_leaf_tess,
+	    (void *)&gcvwriter);
 
     percent = 0;
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
 	if (verbose)
 	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-		   regions_tried, regions_converted, percent);
+		    regions_tried, regions_converted, percent);
     }
     percent = 0;
 
@@ -491,7 +491,7 @@ main(int argc, char *argv[])
 	percent = ((double)regions_written * 100) / regions_tried;
 	if (verbose)
 	    bu_log("                  %d triangulated successfully. %g%%\n",
-		   regions_written, percent);
+		    regions_written, percent);
     }
 
     bu_log("%zu triangles written\n", tot_polygons);
@@ -517,7 +517,7 @@ main(int argc, char *argv[])
 
     /* Release dynamic storage */
     nmg_km(the_model);
-    rt_vlist_cleanup();
+
     db_close(dbip);
 
     return 0;

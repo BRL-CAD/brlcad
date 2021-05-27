@@ -60,29 +60,29 @@ void
 usage(const char *argv0)
 {
     bu_log("Usage: %s [-v] [-i] [-p] [-xX lvl]\n\
-       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol]\n\
-       [-o output_file_name.dxf] [-P #_of_CPUs] brlcad_db.g object(s)\n\n", argv0);
+	    [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol]\n\
+	    [-o output_file_name.dxf] [-P #_of_CPUs] brlcad_db.g object(s)\n\n", argv0);
 
     bu_log("Options:\n\
- -v	Verbose output\n\
- -i	Output using inches (instead of default mm)\n\
- -p	Output POLYFACE MESH (instead of default 3DFACE) entities\n\n");
+	    -v	Verbose output\n\
+	    -i	Output using inches (instead of default mm)\n\
+	    -p	Output POLYFACE MESH (instead of default 3DFACE) entities\n\n");
 
     bu_log("\
- -x #	Specify an RT debug flag\n\
- -X #	Specify an NMG debug flag\n\n");
+	    -x #	Specify an RT debug flag\n\
+	    -X #	Specify an NMG debug flag\n\n");
 
     bu_log("\
- -a #	Specify an absolute tessellation tolerance (in mm)\n\
- -r #	Specify a relative tessellation tolerance (in mm)\n\
- -n #	Specify a surface normal tessellation tolerance (in degrees)\n\
- -D #	Specify a calculation distance tolerance (in mm)\n\n");
+	    -a #	Specify an absolute tessellation tolerance (in mm)\n\
+	    -r #	Specify a relative tessellation tolerance (in mm)\n\
+	    -n #	Specify a surface normal tessellation tolerance (in degrees)\n\
+	    -D #	Specify a calculation distance tolerance (in mm)\n\n");
 
     bu_log("\
- -P #	DISABLED: Specify number of CPUS to be used (value accepted, but not used)\n\n");
+	    -P #	DISABLED: Specify number of CPUS to be used (value accepted, but not used)\n\n");
 
     bu_log("\
- -o dxf	Output to the specified dxf filename\n\n---\n");
+	    -o dxf	Output to the specified dxf filename\n\n---\n");
 }
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
@@ -190,7 +190,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	}
     }
 
- triangulate:
+triangulate:
     if (do_triangulate) {
 	/* triangulate model */
 	nmg_triangulate_model(m, &RTG.rtg_vlfree, &tol);
@@ -225,7 +225,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 
 	fprintf(fp, "0\nPOLYLINE\n8\n%s\n62\n%d\n70\n64\n71\n%lu\n72\n%d\n",
-		 region_name, color_num, (unsigned long)BU_PTBL_LEN(&verts), tri_count);
+		region_name, color_num, (unsigned long)BU_PTBL_LEN(&verts), tri_count);
 	for (i = 0; i < BU_PTBL_LEN(&verts); i++) {
 	    fprintf(fp, "0\nVERTEX\n8\n%s\n", region_name);
 	    v = (struct vertex *)BU_PTBL_GET(&verts, i);
@@ -263,7 +263,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 		if (polyface_mesh) {
 		    fprintf(fp, "0\nVERTEX\n8\n%s\n70\n128\n10\n0.0\n20\n0.0\n30\n0.0\n",
-			     region_name);
+			    region_name);
 		} else {
 		    fprintf(fp, "0\n3DFACE\n8\n%s\n62\n%d\n", region_name, color_num);
 		}
@@ -279,24 +279,24 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 		    if (polyface_mesh) {
 			fprintf(fp, "%d\n%jd\n",
-				 vert_count+70, bu_ptbl_locate(&verts, (long *)v) + 1);
+				vert_count+70, bu_ptbl_locate(&verts, (long *)v) + 1);
 		    } else {
 			if (inches) {
 			    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-				     10 + vert_count - 1,
-				     v->vg_p->coord[X] / 25.4,
-				     20 + vert_count - 1,
-				     v->vg_p->coord[Y] / 25.4,
-				     30 + vert_count -1,
-				     v->vg_p->coord[Z] / 25.4);
+				    10 + vert_count - 1,
+				    v->vg_p->coord[X] / 25.4,
+				    20 + vert_count - 1,
+				    v->vg_p->coord[Y] / 25.4,
+				    30 + vert_count -1,
+				    v->vg_p->coord[Z] / 25.4);
 			} else {
 			    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-				     10 + vert_count - 1,
-				     v->vg_p->coord[X],
-				     20 + vert_count - 1,
-				     v->vg_p->coord[Y],
-				     30 + vert_count -1,
-				     v->vg_p->coord[Z]);
+				    10 + vert_count - 1,
+				    v->vg_p->coord[X],
+				    20 + vert_count - 1,
+				    v->vg_p->coord[Y],
+				    30 + vert_count -1,
+				    v->vg_p->coord[Z]);
 			}
 		    }
 		}
@@ -316,20 +316,20 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 			vert_count++;
 			if (inches) {
 			    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-				     10 + vert_count - 1,
-				     v->vg_p->coord[X] / 25.4,
-				     20 + vert_count - 1,
-				     v->vg_p->coord[Y] / 25.4,
-				     30 + vert_count -1,
-				     v->vg_p->coord[Z] / 25.4);
+				    10 + vert_count - 1,
+				    v->vg_p->coord[X] / 25.4,
+				    20 + vert_count - 1,
+				    v->vg_p->coord[Y] / 25.4,
+				    30 + vert_count -1,
+				    v->vg_p->coord[Z] / 25.4);
 			} else {
 			    fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-				     10 + vert_count - 1,
-				     v->vg_p->coord[X],
-				     20 + vert_count - 1,
-				     v->vg_p->coord[Y],
-				     30 + vert_count -1,
-				     v->vg_p->coord[Z]);
+				    10 + vert_count - 1,
+				    v->vg_p->coord[X],
+				    20 + vert_count - 1,
+				    v->vg_p->coord[Y],
+				    30 + vert_count -1,
+				    v->vg_p->coord[Z]);
 			}
 		    }
 		}
@@ -382,7 +382,7 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_dxf, NULL};
  * 8. Cleanup
  */
 int
-main(int argc, char *argv[])
+    main(int argc, char *argv[])
 {
     int c;
     double percent;
@@ -511,12 +511,12 @@ main(int argc, char *argv[])
 
     /* Walk indicated tree(s) just for layer names to put in TABLES section */
     (void)db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-		       1,			/* ncpu */
-		       &tree_state,
-		       0,			/* take all regions */
-		       get_layer,
-		       NULL,
-		       (void *)NULL);	/* in librt/nmg_bool.c */
+	    1,			/* ncpu */
+	    &tree_state,
+	    0,			/* take all regions */
+	    get_layer,
+	    NULL,
+	    (void *)NULL);	/* in librt/nmg_bool.c */
 
     /* end of layers section, start of ENTITIES SECTION */
     fprintf(fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n");
@@ -529,19 +529,19 @@ main(int argc, char *argv[])
     the_model = nmg_mm();
     tree_state.ts_m = &the_model;
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
-			&tree_state,
-			0,			/* take all regions */
-			gcv_region_end,
-			nmg_booltree_leaf_tess,
-			(void *)&gcvwriter);	/* callback for gcv_region_end */
+	    1,			/* ncpu */
+	    &tree_state,
+	    0,			/* take all regions */
+	    gcv_region_end,
+	    nmg_booltree_leaf_tess,
+	    (void *)&gcvwriter);	/* callback for gcv_region_end */
 
     percent = 0;
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
 	if (verbose)
 	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-		   regions_tried, regions_converted, percent);
+		    regions_tried, regions_converted, percent);
     }
     percent = 0;
 
@@ -562,7 +562,7 @@ main(int argc, char *argv[])
 
     /* Release dynamic storage */
     nmg_km(the_model);
-    rt_vlist_cleanup();
+
     db_close(dbip);
 
     return 0;

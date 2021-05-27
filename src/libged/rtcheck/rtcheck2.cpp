@@ -320,7 +320,7 @@ ged_rtcheck2_core(struct ged *gedp, int argc, const char *argv[])
     rtcp->fp = bu_process_open(p, BU_PROCESS_STDOUT);
     /* Needed on Windows for successful rtcheck drawing data communication */
     setmode(fileno(rtcp->fp), O_BINARY);
-    rtcp->vbp = rt_vlblock_init();
+    rtcp->vbp = bv_vlblock_init(&gedp->ged_wdbp->dbip->dbi_vlfree, 32);
     rtcp->vhead = bv_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
     rtcp->read_failed = 0;

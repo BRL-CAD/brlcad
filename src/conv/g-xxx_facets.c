@@ -43,10 +43,10 @@
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 #define VSETIN(a, b) {\
-	(a)[X] = (b)[X]/25.4; \
-	(a)[Y] = (b)[Y]/25.4; \
-	(a)[Z] = (b)[Z]/25.4; \
-    }
+    (a)[X] = (b)[X]/25.4; \
+    (a)[Y] = (b)[Y]/25.4; \
+    (a)[Z] = (b)[Z]/25.4; \
+}
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
@@ -58,11 +58,11 @@ extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full
 #define DEFAULT_NORM_TOL 0.0
 
 static const char *usage =
-    "[-v][-xX lvl][-a abs_tess_tol (default: " CPP_XQUOTE(DEFAULT_ABS_TOL) ")]"
-    "[-r rel_tess_tol (default: " CPP_XQUOTE(DEFAULT_REL_TOL) ")]\n"
-    "\t[-n norm_tess_tol (default: " CPP_XQUOTE(DEFAULT_NORM_TOL) ")]"
-    "[-D dist_calc_tol (default: " CPP_XQUOTE(BN_TOL_DIST) ")]\n"
-    "\t-o output_file_name brlcad_db.g object(s)\n";
+"[-v][-xX lvl][-a abs_tess_tol (default: " CPP_XQUOTE(DEFAULT_ABS_TOL) ")]"
+"[-r rel_tess_tol (default: " CPP_XQUOTE(DEFAULT_REL_TOL) ")]\n"
+"\t[-n norm_tess_tol (default: " CPP_XQUOTE(DEFAULT_NORM_TOL) ")]"
+"[-D dist_calc_tol (default: " CPP_XQUOTE(BN_TOL_DIST) ")]\n"
+"\t-o output_file_name brlcad_db.g object(s)\n";
 
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int verbose;
@@ -182,32 +182,32 @@ main(int argc, char **argv)
 	for (i = 1; i < argc; i++)
 	    bu_log(" %s", argv[i]);
 	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
-			&tree_state,
-			0,			/* take all regions */
-			do_region_end,
-			nmg_booltree_leaf_tess,
-			(void *)NULL);	/* in librt/nmg_bool.c */
+	    1,			/* ncpu */
+	    &tree_state,
+	    0,			/* take all regions */
+	    do_region_end,
+	    nmg_booltree_leaf_tess,
+	    (void *)NULL);	/* in librt/nmg_bool.c */
 
     percent = 0;
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
 	bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-	       regions_tried, regions_converted, percent);
+		regions_tried, regions_converted, percent);
     }
     percent = 0;
 
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
 	bu_log("                  %d triangulated successfully. %g%%\n",
-	       regions_written, percent);
+		regions_written, percent);
     }
 
     bu_log("%zd triangles written\n", tot_polygons);
@@ -220,7 +220,7 @@ main(int argc, char **argv)
 
     /* Release dynamic storage */
     nmg_km(the_model);
-    rt_vlist_cleanup();
+
     db_close(dbip);
 
     return 0;
@@ -405,9 +405,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
-	       regions_tried,
-	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
-	       sofar);
+		regions_tried,
+		regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
+		sofar);
 	bu_free(sofar, "path string");
     }
 

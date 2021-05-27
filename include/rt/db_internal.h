@@ -49,6 +49,7 @@ struct rt_db_internal {
     int                 idb_minor_type; /**< @brief ID_xxx */
     const struct rt_functab *idb_meth;  /**< @brief for ft_ifree(), etc. */
     void *              idb_ptr;
+    struct bu_list *    idb_vlfree;     /**< @brief for plotting routines */
     struct bu_attribute_value_set idb_avs;
 };
 #define idb_type                idb_minor_type
@@ -58,6 +59,7 @@ struct rt_db_internal {
 	(_p)->idb_minor_type = -1; \
 	(_p)->idb_meth = (const struct rt_functab *) ((void *)0); \
 	(_p)->idb_ptr = ((void *)0); \
+	(_p)->idb_vlfree = NULL; \
 	bu_avs_init_empty(&(_p)->idb_avs); \
     }
 #define RT_CK_DB_INTERNAL(_p) BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
