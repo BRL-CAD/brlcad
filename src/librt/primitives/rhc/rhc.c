@@ -819,6 +819,7 @@ rhc_hyperbolic_curve(fastf_t mag_b, fastf_t c, fastf_t r, int num_points)
  */
 static void
 rhc_plot_hyperbolic_curve(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct rhc_specific *rhc,
     struct rt_pnt_node *pts,
@@ -834,12 +835,12 @@ rhc_plot_hyperbolic_curve(
     VMOVE(Bu, rhc->rhc_Bunit);
 
     VJOIN2(p, t, rscale * pts->p[Y], Ru, -pts->p[Z], Bu);
-    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	VJOIN2(p, t, rscale * node->p[Y], Ru, -node->p[Z], Bu);
-	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
 	node = node->next;
     }
@@ -848,6 +849,7 @@ rhc_plot_hyperbolic_curve(
 
 static void
 rhc_plot_hyperbolas(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct rt_rhc_internal *rhc,
     struct rt_pnt_node *pts)
@@ -864,18 +866,19 @@ rhc_plot_hyperbolas(
     VUNITIZE(rhc_s.rhc_Runit);
 
     /* plot hyperbolic contour curve of face containing V */
-    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, 1.0);
-    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, -1.0);
+    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, 1.0);
+    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, -1.0);
 
     /* plot hyperbolic contour curve of opposing face */
     VMOVE(rhc_H, rhc->rhc_H);
-    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, 1.0);
-    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, -1.0);
+    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, 1.0);
+    rhc_plot_hyperbolic_curve(vlfree, vhead, &rhc_s, pts, rhc_H, -1.0);
 }
 
 
 static void
 rhc_plot_curve_connections(
+    struct bu_list *vlfree,
     struct bu_list *vhead,
     const struct rt_rhc_internal *rhc,
     int num_connections)
@@ -908,17 +911,17 @@ rhc_plot_curve_connections(
 
 	/* connect faces on one side of the curve */
 	VJOIN2(p, rhc->rhc_V, z, Zu, -y, Yu);
-	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
 	VADD2(p, p, rhc->rhc_H);
-	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
 	/* connect the faces on the other side */
 	VJOIN2(p, rhc->rhc_V, z, Zu, y, Yu);
-	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
 	VADD2(p, p, rhc->rhc_H);
-	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
     }
 }
 
@@ -955,6 +958,7 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     rhc = (struct rt_rhc_internal *)ip->idb_ptr;
     if (!rhc_is_valid(rhc)) {
 	return -2;
@@ -973,7 +977,7 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     VSCALE(rhc_R, rhc_R, rhc->rhc_r);
 
     pts = rhc_hyperbolic_curve(MAGNITUDE(rhc->rhc_B), rhc->rhc_c, rhc->rhc_r, num_curve_points);
-    rhc_plot_hyperbolas(vhead, rhc, pts);
+    rhc_plot_hyperbolas(vlfree, vhead, rhc, pts);
 
     node = pts;
     while (node != NULL) {
@@ -989,23 +993,23 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	num_connections = 2;
     }
 
-    rhc_plot_curve_connections(vhead, rhc, num_connections);
+    rhc_plot_curve_connections(vlfree, vhead, rhc, num_connections);
 
     /* plot rectangular face */
     VADD2(p, rhc->rhc_V, rhc_R);
-    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
     VADD2(p, p, rhc->rhc_H);
-    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -2.0, rhc_R);
-    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -1.0, rhc->rhc_H);
-    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, 2.0, rhc_R);
-    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
     return 0;
 }
@@ -1026,6 +1030,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     if (!rhc_is_valid(xip)) {
 	return -2;
@@ -1098,24 +1103,24 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* Draw the front */
-    RT_ADD_VLIST(vhead, &front[(n - 1)*ELEMENTS_PER_VECT],
+    BV_ADD_VLIST(vlfree, vhead, &front[(n - 1)*ELEMENTS_PER_VECT],
 		 BV_VLIST_LINE_MOVE);
 
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &front[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &front[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw the back */
-    RT_ADD_VLIST(vhead, &back[(n - 1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, &back[(n - 1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
 
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &back[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &back[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i = 0; i < n; i++) {
-	RT_ADD_VLIST(vhead, &front[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, &back[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, &front[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &back[i * ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* free mem */

@@ -33,7 +33,8 @@
 
 __BEGIN_DECLS
 
-RT_EXPORT extern int curve_to_vlist(struct bu_list              *vhead,
+RT_EXPORT extern int curve_to_vlist(struct bu_list              *vlfree,
+	                            struct bu_list              *vhead,
 				    const struct bg_tess_tol    *ttol,
 				    point_t                     V,
 				    vect_t                      u_vec,

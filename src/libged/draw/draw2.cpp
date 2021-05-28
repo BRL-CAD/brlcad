@@ -1077,6 +1077,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    g->g->s_update_callback = &_ged_update_db_path;
 	    g->g->s_free_callback = &_ged_free_draw_data;
 	    g->g->s_v = dd.v;
+	    g->g->s_v->vlfree = &RTG.rtg_vlfree;
 
 	    if (bounds_data.s_size && bounds_data.s_size->find(DB_FULL_PATH_CUR_DIR(fp)) != bounds_data.s_size->end()) {
 		g->g->s_size = (*bounds_data.s_size)[DB_FULL_PATH_CUR_DIR(fp)];

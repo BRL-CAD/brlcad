@@ -46,7 +46,6 @@ static int preview_tree_walk_needed;
 static int draw_eye_path;
 static char *image_name = NULL;
 
-
 /* FIXME: this shouldn't exist as a static array and doesn't even seem
  * to be necessary.  gd_rt_cmd points into it as an argv, but the
  * elements can probably be dup'd strings and released by the caller.
@@ -97,6 +96,7 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     vect_t xv, yv;			/* view x, y */
     vect_t xm, ym;			/* model x, y */
     struct bu_list *vhead = &preview_vbp->head[0];
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     /* Only display the frames the user is interested in */
     if (preview_currentframe < preview_desiredframe) return 0;
@@ -104,9 +104,9 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 
     /* Record eye path as a polyline.  Move, then draws */
     if (BU_LIST_IS_EMPTY(vhead)) {
-	RT_ADD_VLIST(vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
     } else {
-	RT_ADD_VLIST(vhead, _ged_eye_model, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, _ged_eye_model, BV_VLIST_LINE_DRAW);
     }
 
     /* First step:  put eye at view center (view 0, 0, 0) */
@@ -122,10 +122,10 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     VSET(yv, 0.0, 0.05, 0.0);
     MAT4X3PNT(xm, _ged_current_gedp->ged_gvp->gv_view2model, xv);
     MAT4X3PNT(ym, _ged_current_gedp->ged_gvp->gv_view2model, yv);
-    RT_ADD_VLIST(vhead, xm, BV_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, ym, BV_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, xm, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, ym, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
 
     /* Second step:  put eye at view 0, 0, 1.
      * For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
@@ -378,7 +378,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    preview_vbp = rt_vlblock_init();
+    preview_vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
 
     bu_vls_printf(gedp->ged_result_str, "eyepoint at (0, 0, 1) viewspace\n");
 

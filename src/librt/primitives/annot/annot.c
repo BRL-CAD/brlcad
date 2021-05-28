@@ -403,7 +403,7 @@ rt_annot_free(struct soltab *stp)
 
 
 static int
-seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, void *seg)
+seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, void *seg)
 {
     int ret=0;
     int i;
@@ -437,9 +437,9 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		break;
 	    }
 	    V2ADD2(pt, V, annot_ip->verts[lsg->start]);
-	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 	    V2ADD2(pt, V, annot_ip->verts[lsg->end]);
-	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 	    break;
 	case ANN_TSEG_MAGIC:
 	    tsg = (struct txt_seg *)lng;
@@ -520,16 +520,16 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		    oldu = 1.0;
 		    oldv = 0.0;
 		    VJOIN2(start_pt, center, oldu, semi_a, oldv, semi_b);
-		    RT_ADD_VLIST(vhead, start_pt, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		    for (i=1; i<nsegs; i++) {
 			newu = oldu * cosdel - oldv * sindel;
 			newv = oldu * sindel + oldv * cosdel;
 			VJOIN2(pt, center, newu, semi_a, newv, semi_b);
-			RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 			oldu = newu;
 			oldv = newv;
 		    }
-		    RT_ADD_VLIST(vhead, start_pt, BV_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_DRAW);
 		    break;
 		}
 
@@ -587,13 +587,13 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		V2ADD2(start_pt, V, start2d);
 		oldu = (start2d[0] - center2d[0]);
 		oldv = (start2d[1] - center2d[1]);
-		RT_ADD_VLIST(vhead, start_pt, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		for (i=0; i<nsegs; i++) {
 		    newu = oldu * cosdel - oldv * sindel;
 		    newv = oldu * sindel + oldv * cosdel;
 		    V2SET(new_uv, newu, newv);
 		    V2ADD2(pt, center, new_uv);
-		    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		    oldu = newu;
 		    oldv = newv;
 		}
@@ -622,14 +622,14 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 			inv_weight = 1.0/nsg->weights[0];
 			VSCALE(start_pt, start_pt, inv_weight);
 		    }
-		    RT_ADD_VLIST(vhead, start_pt, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		    for (i=1; i<nsg->c_size; i++) {
 			V2ADD2(pt, V, annot_ip->verts[nsg->ctl_points[i]]);
 			if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 			    inv_weight = 1.0/nsg->weights[i];
 			    VSCALE(pt, pt, inv_weight);
 			}
-			RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		    }
 		    break;
 		}
@@ -702,9 +702,9 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 			    pt[j] /= pt[coords-1];
 		    }
 		    if (i == 0)
-			RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 		    else
-			RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		bu_free((char *)eg.ctl_points, "eg.ctl_points");
 		break;
@@ -732,10 +732,10 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 	    if (bsg->degree == 1) {
 		/* straight line */
 		V2ADD2(start_pt, V, annot_ip->verts[bsg->ctl_points[0]]);
-		RT_ADD_VLIST(vhead, start_pt, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		for (i=1; i<=bsg->degree; i++) {
 		    V2ADD2(pt, V, annot_ip->verts[bsg->ctl_points[i]]);
-		    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		break;
 	    }
@@ -790,13 +790,13 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 	    /* plot the results */
 	    bz = BU_LIST_FIRST(bezier_2d_list, &bezier_hd->l);
 	    V2ADD2(pt, V, bz->ctl[0]);
-	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 
 	    while (BU_LIST_WHILE(bz, bezier_2d_list, &(bezier_hd->l))) {
 		BU_LIST_DEQUEUE(&bz->l);
 		for (i=1; i<=bsg->degree; i++) {
 		    V2ADD2(pt, V, bz->ctl[i]);
-		    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		bu_free((char *)bz->ctl, "g_annot.c: bz->ctl");
 		bu_free((char *)bz, "g_annot.c: bz");
@@ -814,19 +814,20 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 
 
 static int
-ant_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, struct rt_ant *ant)
+ant_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, struct rt_ant *ant)
 {
     size_t seg_no;
     int ret=0;
 
     BU_CK_LIST_HEAD(vhead);
 
-    RT_VLIST_SET_DISP_MAT(vhead, annot_ip->V);
+    BV_VLIST_SET_DISP_MAT(vlfree, vhead, annot_ip->V);
 
     for (seg_no=0; seg_no < ant->count; seg_no++) {
-	ret += seg_to_vlist(vhead, ttol, V, annot_ip, ant->segments[seg_no]);
+	ret += seg_to_vlist(vlfree, vhead, ttol, V, annot_ip, ant->segments[seg_no]);
     }
-    RT_VLIST_SET_MODEL_MAT(vhead);
+
+    BV_VLIST_SET_MODEL_MAT(vlfree, vhead);
 
     return ret;
 }
@@ -838,13 +839,14 @@ rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_
     struct rt_annot_internal *annot_ip;
     int ret;
     int myret=0;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     annot_ip = (struct rt_annot_internal *)ip->idb_ptr;
     RT_ANNOT_CK_MAGIC(annot_ip);
 
-    ret=ant_to_vlist(vhead, ttol, annot_ip->V, annot_ip, &annot_ip->ant);
+    ret=ant_to_vlist(vlfree, vhead, ttol, annot_ip->V, annot_ip, &annot_ip->ant);
     if (ret) {
 	myret--;
 	bu_log("WARNING: Errors in annotation (%d segments reference non-existent vertices)\n",

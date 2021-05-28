@@ -205,6 +205,7 @@ ellipse_point_at_radian(
 	fastf_t radian);
 
 extern void plot_ellipse(
+	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	const vect_t t,
 	const vect_t a,

@@ -60,7 +60,7 @@
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \
         BU_LIST_APPEND(fp, &((p)->l)); \
-        RT_FREE_VLIST(&((p)->s_vlist)); }
+        BV_FREE_VLIST(&RTG.rtg_vlfree, &((p)->s_vlist)); }
 
 
 /* defined in draw_calc.cpp */
@@ -786,7 +786,7 @@ redraw_solid(struct bv_scene_obj *sp, struct db_i *dbip, struct db_tree_state *t
     if (sp->s_os.s_dmode == _GED_WIREFRAME) {
 	/* replot wireframe */
 	if (BU_LIST_NON_EMPTY(&sp->s_vlist)) {
-	    RT_FREE_VLIST(&sp->s_vlist);
+	    BV_FREE_VLIST(&RTG.rtg_vlfree, &sp->s_vlist);
 	}
 	return draw_solid_wireframe(sp, gvp, dbip, tsp->ts_tol, tsp->ts_ttol);
     }
@@ -984,10 +984,10 @@ append_solid_to_display_list(
 }
 
 static void
-solid_copy_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
+solid_copy_vlist(struct db_i *UNUSED(dbip), struct bv_scene_obj *sp, struct bv_vlist *vlist)
 {
     BU_LIST_INIT(&(sp->s_vlist));
-    rt_vlist_copy(&(sp->s_vlist), (struct bu_list *)vlist);
+    bv_vlist_copy(&RTG.rtg_vlfree, &(sp->s_vlist), (struct bu_list *)vlist);
     sp->s_vlen = bv_vlist_cmd_cnt((struct bv_vlist *)(&(sp->s_vlist)));
 }
 
@@ -1028,7 +1028,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
 
     if (copy) {
-	solid_copy_vlist(sp, (struct bv_vlist *)vhead);
+	solid_copy_vlist(dbip, sp, (struct bv_vlist *)vhead);
     } else {
 	solid_append_vlist(sp, (struct bv_vlist *)vhead);
 	BU_LIST_INIT(vhead);

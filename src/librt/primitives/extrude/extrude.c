@@ -44,7 +44,7 @@
 #include "../../librt_private.h"
 
 
-extern int seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, point_t V,
+extern int seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, point_t V,
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, void *seg);
 
 extern void rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
@@ -1398,13 +1398,14 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
     if (!extrude_ip->skt) {
 	bu_log("ERROR: no sketch to extrude!\n");
-	RT_ADD_VLIST(vhead, extrude_ip->V, BV_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, extrude_ip->V, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, extrude_ip->V, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, extrude_ip->V, BV_VLIST_LINE_DRAW);
 	return 0;
     }
 
@@ -1420,15 +1421,15 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 	} else {
 	    bu_log("Unnamed sketch is empty, nothing to draw\n");
 	}
-	RT_ADD_VLIST(vhead, extrude_ip->V, BV_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, extrude_ip->V, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, extrude_ip->V, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, extrude_ip->V, BV_VLIST_LINE_DRAW);
 	return 0;
     }
 
     /* plot bottom curve */
     vp1 = BU_LIST_LAST(bv_vlist, vhead);
     nused1 = vp1->nused;
-    if (curve_to_vlist(vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv)) {
+    if (curve_to_vlist(vlfree, vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv)) {
 	bu_log("ERROR: sketch (%s) references non-existent vertices!\n",
 	       extrude_ip->sketch_name);
 	return -1;
@@ -1438,7 +1439,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     VADD2(end_of_h, extrude_ip->V, extrude_ip->h);
     vp2 = BU_LIST_LAST(bv_vlist, vhead);
     nused2 = vp2->nused;
-    curve_to_vlist(vhead, ttol, end_of_h, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv);
+    curve_to_vlist(vlfree, vhead, ttol, end_of_h, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv);
 
     /* plot connecting lines */
     vp2_start = vp2;
@@ -1455,8 +1456,8 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     }
 
     while (vp1 != vp2_start || (i1 < BV_VLIST_CHUNK && i2 < BV_VLIST_CHUNK && i1 != nused2)) {
-	RT_ADD_VLIST(vhead, vp1->pt[i1], BV_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, vp2->pt[i2], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, vp1->pt[i1], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, vp2->pt[i2], BV_VLIST_LINE_DRAW);
 	i1++;
 	if (i1 >= vp1->nused) {
 	    i1 = 0;
@@ -2070,6 +2071,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     struct bv_vlist *vlp;
 
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
@@ -2206,7 +2208,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	void *seg;
 
 	seg = (void *)BU_PTBL_GET(outer_loop, i);
-	if (seg_to_vlist(&vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, seg))
+	if (seg_to_vlist(vlfree, &vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, seg))
 	    goto failed;
     }
 
@@ -2274,7 +2276,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	    void *seg;
 
 	    seg = (void *)BU_PTBL_GET(aloop, j);
-	    if (seg_to_vlist(&vhead, ttol, extrude_ip->V,
+	    if (seg_to_vlist(vlfree, &vhead, ttol, extrude_ip->V,
 			     extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, seg))
 		goto failed;
 	}
@@ -2326,7 +2328,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 		}
 	    }
 	}
-	RT_FREE_VLIST(&vhead);
+	BV_FREE_VLIST(vlfree, &vhead);
     }
 
     /* extrude this face */

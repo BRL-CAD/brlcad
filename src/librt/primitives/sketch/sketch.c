@@ -464,7 +464,7 @@ rt_sketch_degree(struct rt_sketch_internal *sk)
 
 
 int
-seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, void *seg)
+seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, void *seg)
 {
     int ret=0;
     int i;
@@ -495,9 +495,9 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		break;
 	    }
 	    VJOIN2(pt, V, sketch_ip->verts[lsg->start][0], u_vec, sketch_ip->verts[lsg->start][1], v_vec);
-	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 	    VJOIN2(pt, V, sketch_ip->verts[lsg->end][0], u_vec, sketch_ip->verts[lsg->end][1], v_vec);
-	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 	    break;
 	case CURVE_CARC_MAGIC:
 	    {
@@ -563,16 +563,16 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		    oldu = 1.0;
 		    oldv = 0.0;
 		    VJOIN2(start_pt, center, oldu, semi_a, oldv, semi_b);
-		    RT_ADD_VLIST(vhead, start_pt, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		    for (i=1; i<nsegs; i++) {
 			newu = oldu * cosdel - oldv * sindel;
 			newv = oldu * sindel + oldv * cosdel;
 			VJOIN2(pt, center, newu, semi_a, newv, semi_b);
-			RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 			oldu = newu;
 			oldv = newv;
 		    }
-		    RT_ADD_VLIST(vhead, start_pt, BV_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_DRAW);
 		    break;
 		}
 
@@ -629,12 +629,12 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		VJOIN2(start_pt, V, start2d[0], u_vec, start2d[1], v_vec);
 		oldu = (start2d[0] - center2d[0]);
 		oldv = (start2d[1] - center2d[1]);
-		RT_ADD_VLIST(vhead, start_pt, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		for (i=0; i<nsegs; i++) {
 		    newu = oldu * cosdel - oldv * sindel;
 		    newv = oldu * sindel + oldv * cosdel;
 		    VJOIN2(pt, center, newu, u_vec, newv, v_vec);
-		    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		    oldu = newu;
 		    oldv = newv;
 		}
@@ -662,14 +662,14 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 			inv_weight = 1.0/nsg->weights[0];
 			VSCALE(start_pt, start_pt, inv_weight);
 		    }
-		    RT_ADD_VLIST(vhead, start_pt, BV_VLIST_LINE_MOVE);
+		    BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		    for (i=1; i<nsg->c_size; i++) {
 			VJOIN2(pt, V, sketch_ip->verts[nsg->ctl_points[i]][0], u_vec, sketch_ip->verts[nsg->ctl_points[i]][1], v_vec);
 			if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 			    inv_weight = 1.0/nsg->weights[i];
 			    VSCALE(pt, pt, inv_weight);
 			}
-			RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		    }
 		    break;
 		}
@@ -741,9 +741,9 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 			    pt[j] /= pt[coords-1];
 		    }
 		    if (i == 0)
-			RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 		    else
-			RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+			BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		bu_free((char *)eg.ctl_points, "eg.ctl_points");
 		break;
@@ -772,11 +772,11 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 		/* straight line */
 		VJOIN2(start_pt, V, sketch_ip->verts[bsg->ctl_points[0]][0],
 		       u_vec, sketch_ip->verts[bsg->ctl_points[0]][1], v_vec);
-		RT_ADD_VLIST(vhead, start_pt, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, start_pt, BV_VLIST_LINE_MOVE);
 		for (i=1; i<=bsg->degree; i++) {
 		    VJOIN2(pt, V, sketch_ip->verts[bsg->ctl_points[i]][0],
 			   u_vec, sketch_ip->verts[bsg->ctl_points[i]][1], v_vec);
-		    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		break;
 	    }
@@ -831,14 +831,14 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 	    /* plot the results */
 	    bz = BU_LIST_FIRST(bezier_2d_list, &bezier_hd->l);
 	    VJOIN2(pt, V, bz->ctl[0][0], u_vec, bz->ctl[0][1], v_vec);
-	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 
 	    while (BU_LIST_WHILE(bz, bezier_2d_list, &(bezier_hd->l))) {
 		BU_LIST_DEQUEUE(&bz->l);
 		for (i=1; i<=bsg->degree; i++) {
 		    VJOIN2(pt, V, bz->ctl[i][0], u_vec,
 			   bz->ctl[i][1], v_vec);
-		    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
+		    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 		}
 		bu_free((char *)bz->ctl, "g_sketch.c: bz->ctl");
 		bu_free((char *)bz, "g_sketch.c: bz");
@@ -856,7 +856,7 @@ seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, 
 
 
 int
-curve_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, struct rt_curve *crv)
+curve_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, struct rt_curve *crv)
 {
     size_t seg_no;
     int ret=0;
@@ -864,7 +864,7 @@ curve_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V
     BU_CK_LIST_HEAD(vhead);
 
     for (seg_no=0; seg_no < crv->count; seg_no++) {
-	ret += seg_to_vlist(vhead, ttol, V, u_vec, v_vec, sketch_ip, crv->segment[seg_no]);
+	ret += seg_to_vlist(vlfree, vhead, ttol, V, u_vec, v_vec, sketch_ip, crv->segment[seg_no]);
     }
 
     return ret;
@@ -882,8 +882,9 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg
     RT_CK_DB_INTERNAL(ip);
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
-    ret=curve_to_vlist(vhead, ttol, sketch_ip->V, sketch_ip->u_vec, sketch_ip->v_vec, sketch_ip, &sketch_ip->curve);
+    ret=curve_to_vlist(vlfree, vhead, ttol, sketch_ip->V, sketch_ip->u_vec, sketch_ip->v_vec, sketch_ip, &sketch_ip->curve);
     if (ret) {
 	myret--;
 	bu_log("WARNING: Errors in sketch (%d segments reference non-existent vertices)\n",

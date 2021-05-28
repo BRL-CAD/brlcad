@@ -252,6 +252,8 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return GED_OK;
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
+
     if (argc <= 2) {
 	name = "_ANIM_";
     } else {
@@ -273,7 +275,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
      * Now we draw the overlays.  We do this by building a mesh from
      * each grip to every other grip in that list.
      */
-    vbp = rt_vlblock_init();
+    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
     vhead = bv_vlblock_find(vbp, 0x00, 0xff, 0xff);
 
     for (BU_LIST_FOR(jp, artic_joints, &artic_head)) {
@@ -283,8 +285,8 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 	    for (gpp=BU_LIST_NEXT(artic_grips, &(gp->l));
 		 BU_LIST_NOT_HEAD(gpp, &(jp->head));
 		 gpp=BU_LIST_NEXT(artic_grips, &(gpp->l))) {
-		RT_ADD_VLIST(vhead, gp->vert, BV_VLIST_LINE_MOVE);
-		RT_ADD_VLIST(vhead, gpp->vert, BV_VLIST_LINE_DRAW);
+		BV_ADD_VLIST(vlfree, vhead, gp->vert, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vlfree, vhead, gpp->vert, BV_VLIST_LINE_DRAW);
 	    }
 	}
 	if (J_DEBUG & DEBUG_J_MESH) {

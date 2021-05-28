@@ -734,6 +734,7 @@ epa_parabola_y(fastf_t r, fastf_t mag_H, fastf_t z)
  */
 static void
 epa_plot_ellipse(
+	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	struct rt_epa_internal *epa,
 	fastf_t h,
@@ -757,11 +758,12 @@ epa_plot_ellipse(
     VSCALE(B, Bu, epa_parabola_y(epa->epa_r2, mag_H, h));
     VJOIN1(cross_section_plane, V, h, Hu);
 
-    plot_ellipse(vhead, cross_section_plane, A, B, num_points);
+    plot_ellipse(vlfree, vhead, cross_section_plane, A, B, num_points);
 }
 
 static void
 epa_plot_parabola(
+	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	struct rt_epa_internal *epa,
 	struct rt_pnt_node *pts,
@@ -779,14 +781,14 @@ epa_plot_parabola(
 
     z = pts->p[Z];
     VJOIN2(p, epa_V, epa_parabola_y(r, mag_H, -z), Ru, -z, Hu);
-    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	z = node->p[Z];
 	VJOIN2(p, epa_V, epa_parabola_y(r, mag_H, -z), Ru, -z, Hu);
 
-	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
 
 	node = node->next;
     }
@@ -835,6 +837,7 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     epa = (struct rt_epa_internal *)ip->idb_ptr;
     if (!epa_is_valid(epa)) {
 	return -2;
@@ -883,15 +886,15 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     z_step = mag_H / num_curves;
     z = 0.0;
     for (i = 0; i < num_curves; ++i) {
-	epa_plot_ellipse(vhead, epa, z, num_ellipse_points);
+	epa_plot_ellipse(vlfree, vhead, epa, z, num_ellipse_points);
 
 	z += z_step;
     }
 
-    epa_plot_parabola(vhead, epa, pts_r1, Au, r1);
-    epa_plot_parabola(vhead, epa, pts_r1, Au, -r1);
-    epa_plot_parabola(vhead, epa, pts_r1, Bu, r2);
-    epa_plot_parabola(vhead, epa, pts_r1, Bu, -r2);
+    epa_plot_parabola(vlfree, vhead, epa, pts_r1, Au, r1);
+    epa_plot_parabola(vlfree, vhead, epa, pts_r1, Au, -r1);
+    epa_plot_parabola(vlfree, vhead, epa, pts_r1, Bu, r2);
+    epa_plot_parabola(vlfree, vhead, epa, pts_r1, Bu, -r2);
 
     node1 = pts_r1;
     node2 = pts_r2;
@@ -911,6 +914,7 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 int
 rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;
     int *pts_dbl, i, j, nseg;
@@ -1077,11 +1081,11 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	pos_b = pos_b->next;
     }
     /* Draw the top ellipse */
-    RT_ADD_VLIST(vhead,
+    BV_ADD_VLIST(vlfree, vhead,
 		 &ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
 		 BV_VLIST_LINE_MOVE);
     for (i = 0; i < nseg; i++) {
-	RT_ADD_VLIST(vhead,
+	BV_ADD_VLIST(vlfree, vhead,
 		     &ellipses[nell-1][i*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_DRAW);
     }
@@ -1097,11 +1101,11 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    nseg /= 2;	/* # segs in 'bottom' ellipse */
 
 	/* Draw the current ellipse */
-	RT_ADD_VLIST(vhead,
+	BV_ADD_VLIST(vlfree, vhead,
 		     &ellipses[bottom][(nseg-1)*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_MOVE);
 	for (j = 0; j < nseg; j++) {
-	    RT_ADD_VLIST(vhead,
+	    BV_ADD_VLIST(vlfree, vhead,
 			 &ellipses[bottom][j*ELEMENTS_PER_VECT],
 			 BV_VLIST_LINE_DRAW);
 	}
@@ -1112,10 +1116,10 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		jj = j + j;	/* top ellipse index */
 	    else
 		jj = j;
-	    RT_ADD_VLIST(vhead,
+	    BV_ADD_VLIST(vlfree, vhead,
 			 &ellipses[bottom][j*ELEMENTS_PER_VECT],
 			 BV_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead,
+	    BV_ADD_VLIST(vlfree, vhead,
 			 &ellipses[top][jj*ELEMENTS_PER_VECT],
 			 BV_VLIST_LINE_DRAW);
 	}
@@ -1124,8 +1128,8 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     VADD2(Work, xip->epa_V, xip->epa_H);
     for (i = 0; i < nseg; i++) {
 	/* Draw connector */
-	RT_ADD_VLIST(vhead, Work, BV_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead,
+	BV_ADD_VLIST(vlfree, vhead, Work, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead,
 		     &ellipses[0][i*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_DRAW);
     }

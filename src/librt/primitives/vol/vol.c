@@ -80,7 +80,7 @@ const struct bu_structparse rt_vol_parse[] = {
 
 
 extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
-			 mat_t mat, struct bu_list *vhead, struct rt_vol_internal *vip);
+			 mat_t mat, struct bu_list *vlfree, struct bu_list *vhead, struct rt_vol_internal *vip);
 extern int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
 extern int rt_binunif_describe(struct bu_vls  *str, const struct rt_db_internal *ip, int verbose, double mm2local);
 /*
@@ -1138,6 +1138,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
@@ -1167,7 +1168,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		/* End of run of edge.  One cell beyond. */
 		VSET(c, x+0.5, y-0.5, z+0.5);
 		VSET(d, x+0.5, y-0.5, z-0.5);
-		rt_vol_plate(a, b, c, d, vip->mat, vhead, vip);
+		rt_vol_plate(a, b, c, d, vip->mat, vlfree, vhead, vip);
 	    }
 	}
     }
@@ -1193,7 +1194,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		/* End of run of edge.  One cell beyond */
 		VSET(c, (x-0.5), (y+0.5), (z+0.5));
 		VSET(d, (x-0.5), (y+0.5), (z-0.5));
-		rt_vol_plate(a, b, c, d, vip->mat, vhead, vip);
+		rt_vol_plate(a, b, c, d, vip->mat, vlfree, vhead, vip);
 	    }
 	}
     }
@@ -1219,7 +1220,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		/* End of run of edge.  One cell beyond */
 		VSET(c, (x+0.5), (y-0.5), (z+0.5));
 		VSET(d, (x-0.5), (y-0.5), (z+0.5));
-		rt_vol_plate(a, b, c, d, vip->mat, vhead, vip);
+		rt_vol_plate(a, b, c, d, vip->mat, vlfree, vhead, vip);
 	    }
 	}
     }
@@ -1228,7 +1229,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
 
 void
-rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *mat, register struct bu_list *vhead, register struct rt_vol_internal *vip)
+rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *mat, struct bu_list *vlfree, register struct bu_list *vhead, register struct rt_vol_internal *vip)
 {
     point_t s;		/* scaled original point */
     point_t arot, prot;
@@ -1237,21 +1238,21 @@ rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *m
 
     VELMUL(s, vip->cellsize, a);
     MAT4X3PNT(arot, mat, s);
-    RT_ADD_VLIST(vhead, arot, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, arot, BV_VLIST_LINE_MOVE);
 
     VELMUL(s, vip->cellsize, b);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
     VELMUL(s, vip->cellsize, c);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
     VELMUL(s, vip->cellsize, d);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
-    RT_ADD_VLIST(vhead, arot, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, arot, BV_VLIST_LINE_DRAW);
 }
 
 

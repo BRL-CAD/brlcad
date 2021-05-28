@@ -63,7 +63,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
     }
 
     if (out_type == 1) {
-	vbp = rt_vlblock_init();
+	vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
 	vhead = bv_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
     }
 

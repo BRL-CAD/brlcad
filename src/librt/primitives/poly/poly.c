@@ -494,6 +494,7 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
@@ -501,10 +502,10 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tes
 	struct rt_pg_face_internal *pp;
 
 	pp = &pgp->poly[p];
-	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)],
+	BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*(pp->npts-1)],
 		     BV_VLIST_LINE_MOVE);
 	for (i=0; i < pp->npts; i++) {
-	    RT_ADD_VLIST(vhead, &pp->verts[3*i],
+	    BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*i],
 			 BV_VLIST_LINE_DRAW);
 	}
     }
@@ -524,6 +525,7 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
@@ -538,13 +540,13 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 	VSUB2(bb, &pp->verts[3*(0)], &pp->verts[3*(2)]);
 	VCROSS(norm, aa, bb);
 	VUNITIZE(norm);
-	RT_ADD_VLIST(vhead, norm, BV_VLIST_POLY_START);
+	BV_ADD_VLIST(vlfree, vhead, norm, BV_VLIST_POLY_START);
 
-	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BV_VLIST_POLY_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*(pp->npts-1)], BV_VLIST_POLY_MOVE);
 	for (i=0; i < pp->npts-1; i++) {
-	    RT_ADD_VLIST(vhead, &pp->verts[3*i], BV_VLIST_POLY_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*i], BV_VLIST_POLY_DRAW);
 	}
-	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BV_VLIST_POLY_END);
+	BV_ADD_VLIST(vlfree, vhead, &pp->verts[3*(pp->npts-1)], BV_VLIST_POLY_END);
     }
     return 0;		/* OK */
 }

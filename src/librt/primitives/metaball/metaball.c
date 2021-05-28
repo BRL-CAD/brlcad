@@ -617,7 +617,7 @@ rt_metaball_free(register struct soltab *stp)
 
 
 void
-rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
+rt_metaball_plot_sph(struct bu_list *vlfree, struct bu_list *vhead, point_t *center, fastf_t radius)
 {
     fastf_t top[16*3], middle[16*3], bottom[16*3];
     point_t a, b, c;
@@ -632,12 +632,12 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
     rt_ell_16pnts(bottom, *center, b, c);
     rt_ell_16pnts(middle, *center, a, c);
 
-    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    for (i = 0; i < 16; i++) BV_ADD_VLIST(vlfree, vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
 }
 
 
@@ -651,6 +651,7 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
     rad = rt_metaball_get_bounding_sphere(&bsc, mb->threshold, mb);
@@ -658,10 +659,10 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     if (rad<0)
 	return 0;
 #if PLOT_THE_BIG_BOUNDING_SPHERE
-    rt_metaball_plot_sph(vhead, &bsc, rad);
+    rt_metaball_plot_sph(vlfree, vhead, &bsc, rad);
 #endif
     for (BU_LIST_FOR(mbpt, wdb_metaball_pnt, &mb->metaball_ctrl_head))
-	rt_metaball_plot_sph(vhead, &mbpt->coord, mbpt->fldstr / mb->threshold);
+	rt_metaball_plot_sph(vlfree, vhead, &mbpt->coord, mbpt->fldstr / mb->threshold);
     return 0;
 }
 

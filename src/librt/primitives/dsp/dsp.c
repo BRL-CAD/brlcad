@@ -3099,6 +3099,7 @@ rt_dsp_free(register struct soltab *stp)
 int
 rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
     point_t m_pt;
@@ -3149,11 +3150,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
 #define MOVE(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
-	RT_ADD_VLIST(vhead, m_pt, BV_VLIST_LINE_MOVE)
+	BV_ADD_VLIST(vlfree, vhead, m_pt, BV_VLIST_LINE_MOVE)
 
 #define DRAW(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
-	RT_ADD_VLIST(vhead, m_pt, BV_VLIST_LINE_DRAW)
+	BV_ADD_VLIST(vlfree, vhead, m_pt, BV_VLIST_LINE_DRAW)
 
 
     /* Draw the Bottom */
