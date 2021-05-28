@@ -114,3 +114,14 @@ Other nice to haves:
     (Note the idea here is a very simple, straightforward, unoptimized ability with minimal code complexity
      Any use of output for something real would want to re-encode for sane file sizes...)
 
+
+A note about RTG.rtg_vlfree - took a whack at removing most of the uses of the
+global, but first attempt failed to take into account RT_DB_INTERNAL_INIT
+initializations of rt_db_internal copies.  The vlfree pointer needs to be in
+both db_i and rt_db_internal to be available to the various levels of the logic
+that need vlfree, but if we're standing up a RT_DB_INTERNAL_INIT we need to
+provide the vlfree pointer from somewhere else.  The code has over 170 calls to
+RT_DB_INTERNAL_INIT, which will have to be checked and adjusted to set the
+correct information.  The simplest thing is probably to simply alter
+RT_DB_INTERNAL_INIT to require a struct bu_list pointer for vlfree.  Also need
+to check to see if any db_i containers are created in similar fashion.
