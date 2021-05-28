@@ -347,7 +347,13 @@ BRLCAD_ADD_TEST(NAME bg_polygon_op_basic   COMMAND bg_polygon_op)
 
 
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  bg_test.c.in
+  plane_dist.c
+  plane_isect.c
+  plane_pt.c
+  CMakeLists.txt
+  )
 
 # Local Variables:
 # tab-width: 8
