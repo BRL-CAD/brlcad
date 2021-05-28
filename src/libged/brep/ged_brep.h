@@ -115,15 +115,15 @@ GED_EXPORT extern int ged_dplot_core(struct ged *gedp, int argc, const char *arg
 
 using namespace brlcad;
 void
-plotface(const ON_BrepFace &face, struct bu_list *vlfree, struct bv_vlblock *vbp, int plotres, bool dim3d, const int red, const int green, const int blue);
+plotface(const ON_BrepFace &face, struct bv_vlblock *vbp, int plotres, bool dim3d, const int red, const int green, const int blue);
 void
-plotsurface(const ON_Surface &surf, struct bu_list *vlfree, struct bv_vlblock *vbp, int isocurveres, int gridres, const int red, const int green, const int blue);
+plotsurface(const ON_Surface &surf, struct bv_vlblock *vbp, int isocurveres, int gridres, const int red, const int green, const int blue);
 void
-plotcurve(const ON_Curve &curve, struct bu_list *vlfree, struct bv_vlblock *vbp, int plotres, const int red, const int green, const int blue);
+plotcurve(const ON_Curve &curve, struct bv_vlblock *vbp, int plotres, const int red, const int green, const int blue);
 void
-plotcurveonsurface(const ON_Curve *curve, const ON_Surface *surface, struct bu_list *vlfree, struct bv_vlblock *vbp, int plotres, const int red, const int green, const int blue);
+plotcurveonsurface(const ON_Curve *curve, const ON_Surface *surface, struct bv_vlblock *vbp, int plotres, const int red, const int green, const int blue);
 void
-plotpoint(const ON_3dPoint &point, struct bu_list *vlfree, struct bv_vlblock *vbp, const int red, const int green, const int blue);
+plotpoint(const ON_3dPoint &point, struct bv_vlblock *vbp, const int red, const int green, const int blue);
 
 __END_DECLS
 

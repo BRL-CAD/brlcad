@@ -527,6 +527,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     tree_state.ts_m = &the_model;
 
     the_model = nmg_mm();
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Write out header */
     if (NEAR_EQUAL(state.gcv_options->scale_factor, 1.0 / 25.4, RT_LEN_TOL))
@@ -560,6 +561,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     /* Release dynamic storage */
     nmg_km(the_model);
+    rt_vlist_cleanup();
 
     return 1;
 }

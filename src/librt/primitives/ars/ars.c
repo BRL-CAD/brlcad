@@ -721,7 +721,6 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     register size_t i;
     register size_t j;
     struct rt_ars_internal *arip;
-    struct bu_list *vlfree = ip->idb_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -736,17 +735,17 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	register fastf_t *v1;
 
 	v1 = arip->curves[i];
-	BV_ADD_VLIST(vlfree, vhead, v1, BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, v1, BV_VLIST_LINE_MOVE);
 	v1 += ELEMENTS_PER_VECT;
 	for (j = 1; j <= arip->pts_per_curve; j++, v1 += ELEMENTS_PER_VECT)
-	    BV_ADD_VLIST(vlfree, vhead, v1, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, v1, BV_VLIST_LINE_DRAW);
     }
 
     /* Connect the Ith points on each curve, to make a mesh.  */
     for (i = 0; i < arip->pts_per_curve; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &arip->curves[0][i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, &arip->curves[0][i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
 	for (j = 1; j < arip->ncurves; j++)
-	    BV_ADD_VLIST(vlfree, vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     return 0;

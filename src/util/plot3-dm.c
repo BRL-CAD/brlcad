@@ -618,7 +618,7 @@ cmd_openpl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **a
 	bu_vls_strcpy(&plp->pl_name, bnp);
 
     up_to_vl:
-	plp->pl_vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+	plp->pl_vbp = rt_vlblock_init();
 	rt_uplot_to_vlist(plp->pl_vbp, fp, 0.001, 0);
 	plp->pl_draw = 1;
 	fclose(fp);

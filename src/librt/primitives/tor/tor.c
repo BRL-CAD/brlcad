@@ -1030,7 +1030,6 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = ip->idb_vlfree;
     tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
 
@@ -1056,7 +1055,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	points_per_ellipse = 6;
     }
 
-    plot_ellipse(vlfree, vhead, tor->v, a, b, points_per_ellipse);
+    plot_ellipse(vhead, tor->v, a, b, points_per_ellipse);
 
     /* plot inner circular contour */
     VJOIN1(a, tor_a, -1.0 * mag_h / mag_a, tor_a);
@@ -1067,7 +1066,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	points_per_ellipse = 6;
     }
 
-    plot_ellipse(vlfree, vhead, tor->v, a, b, points_per_ellipse);
+    plot_ellipse(vhead, tor->v, a, b, points_per_ellipse);
 
     /* Draw parallel circles to show the primitive's most extreme points along
      * +h/-h.
@@ -1078,10 +1077,10 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     }
 
     VADD2(center, tor->v, tor_h);
-    plot_ellipse(vlfree, vhead, center, tor_a, tor_b, points_per_ellipse);
+    plot_ellipse(vhead, center, tor_a, tor_b, points_per_ellipse);
 
     VJOIN1(center, tor->v, -1.0, tor_h);
-    plot_ellipse(vlfree, vhead, center, tor_a, tor_b, points_per_ellipse);
+    plot_ellipse(vhead, center, tor_a, tor_b, points_per_ellipse);
 
     /* draw circular radial cross sections */
     VMOVE(b, tor_h);
@@ -1100,7 +1099,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	VUNITIZE(a);
 	VSCALE(a, a, mag_h);
 
-	plot_ellipse(vlfree, vhead, center, a, b, points_per_ellipse);
+	plot_ellipse(vhead, center, a, b, points_per_ellipse);
 
 	radian += radian_step;
     }
@@ -1135,7 +1134,6 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = ip->idb_vlfree;
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
@@ -1213,17 +1211,17 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     /* Draw lengthwise (around outside rim) */
     for (w = 0; w < nw; w++) {
 	len = nlen-1;
-	BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, TOR_PTA(w, len), BV_VLIST_LINE_MOVE);
 	for (len = 0; len < nlen; len++) {
-	    BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, TOR_PTA(w, len), BV_VLIST_LINE_DRAW);
 	}
     }
     /* Draw around the "width" (1 cross section) */
     for (len = 0; len < nlen; len++) {
 	w = nw-1;
-	BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, TOR_PTA(w, len), BV_VLIST_LINE_MOVE);
 	for (w = 0; w < nw; w++) {
-	    BV_ADD_VLIST(vlfree, vhead, TOR_PTA(w, len), BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, TOR_PTA(w, len), BV_VLIST_LINE_DRAW);
 	}
     }
 

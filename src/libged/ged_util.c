@@ -154,8 +154,7 @@ ged_find_view(struct ged *gedp, const char *key)
 void
 ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp)
 {
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
-    BV_FREE_VLIST(&dbip->dbi_vlfree, &(sp->s_vlist));
+    RT_FREE_VLIST(&(sp->s_vlist));
     if (sp->s_u_data) {
 	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 	bdata->s_fullpath.fp_len = 0; // Don't free memory, but implicitly clear contents

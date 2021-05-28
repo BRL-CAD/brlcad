@@ -741,7 +741,6 @@ rpc_parabolic_curve(fastf_t mag_b, fastf_t r, int num_points)
  */
 static void
 rpc_plot_parabolic_curve(
-	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	struct rpc_specific *rpc,
 	struct rt_pnt_node *pts,
@@ -757,12 +756,12 @@ rpc_plot_parabolic_curve(
     VMOVE(Bu, rpc->rpc_Bunit);
 
     VJOIN2(p, t, rscale * pts->p[Y], Ru, -pts->p[Z], Bu);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	VJOIN2(p, t, rscale * node->p[Y], Ru, -node->p[Z], Bu);
-	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
 	node = node->next;
     }
@@ -770,7 +769,6 @@ rpc_plot_parabolic_curve(
 
 static void
 rpc_plot_parabolas(
-	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	struct rt_rpc_internal *rpc,
 	struct rt_pnt_node *pts)
@@ -788,18 +786,17 @@ rpc_plot_parabolas(
 
     /* plot parabolic contour curve of face containing V */
     VSETALL(rpc_H, 0.0);
-    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, 1.0);
-    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, -1.0);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, 1.0);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, -1.0);
 
     /* plot parabolic contour curve of opposing face */
     VMOVE(rpc_H, rpc->rpc_H);
-    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, 1.0);
-    rpc_plot_parabolic_curve(vlfree, vhead, &rpc_s, pts, rpc_H, -1.0);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, 1.0);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, -1.0);
 }
 
 static void
 rpc_plot_curve_connections(
-	struct bu_list *vlfree,
 	struct bu_list *vhead,
 	struct rt_rpc_internal *rpc,
 	int num_connections)
@@ -831,17 +828,17 @@ rpc_plot_curve_connections(
 
 	/* connect faces on one side of the curve */
 	VJOIN2(pt, rpc->rpc_V, z, Zu, -y, Yu);
-	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
 
 	VADD2(pt, pt, rpc->rpc_H);
-	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
 
 	/* connect the faces on the other side */
 	VJOIN2(pt, rpc->rpc_V, z, Zu, y, Yu);
-	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
 
 	VADD2(pt, pt, rpc->rpc_H);
-	BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
     }
 }
 
@@ -872,7 +869,6 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     int num_curve_points, num_connections;
     struct rt_rpc_internal *rpc;
     struct rt_pnt_node *pts, *node, *tmp;
-    struct bu_list *vlfree = ip->idb_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -894,7 +890,7 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     VSCALE(rpc_R, rpc_R, rpc->rpc_r);
 
     pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_curve_points);
-    rpc_plot_parabolas(vlfree, vhead, rpc, pts);
+    rpc_plot_parabolas(vhead, rpc, pts);
 
     node = pts;
     while (node != NULL) {
@@ -910,23 +906,23 @@ rt_rpc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	num_connections = 2;
     }
 
-    rpc_plot_curve_connections(vlfree, vhead, rpc, num_connections);
+    rpc_plot_curve_connections(vhead, rpc, num_connections);
 
     /* plot rectangular face */
     VADD2(p, rpc->rpc_V, rpc_R);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
 
     VADD2(p, p, rpc->rpc_H);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -2.0, rpc_R);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, -1.0, rpc->rpc_H);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
     VJOIN1(p, p, 2.0, rpc_R);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
     return 0;
 }
@@ -941,7 +937,6 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     int i, n;
     struct rt_pnt_node *old, *pos, *pts;
     vect_t Bu, Hu, Ru, B, R;
-    struct bu_list *vlfree = ip->idb_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1015,21 +1010,22 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* Draw the front */
-    BV_ADD_VLIST(vlfree, vhead, &front[(n-1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &front[(n-1)*ELEMENTS_PER_VECT],
+		 BV_VLIST_LINE_MOVE);
     for (i = 0; i < n; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &front[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &front[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw the back */
-    BV_ADD_VLIST(vlfree, vhead, &back[(n-1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &back[(n-1)*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < n; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &back[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &back[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
     for (i = 0; i < n; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &front[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, &back[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &front[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, &back[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     bu_free((char *)front, "fastf_t");

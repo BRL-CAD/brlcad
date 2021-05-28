@@ -28,7 +28,6 @@
 
 #include "bu/path.h"
 #include "bu/mime.h"
-#include "bv/vlist.h"
 #include "icv.h"
 #include "dm.h"
 
@@ -173,7 +172,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", argv[1]);
 		return GED_ERROR;
 	    }
-	    vbp = bv_vlblock_init(&gedp->ged_wdbp->dbip->dbi_vlfree, 32);
+	    vbp = rt_vlblock_init();
 	    for (size_t i = 0; i < count; i++) {
 		if ((fp = fopen(files[i], "rb")) == NULL) {
 		    bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", files[i]);
@@ -191,7 +190,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_argv_free(count, files);
 	    ret = 0;
 	} else {
-	    vbp = bv_vlblock_init(&gedp->ged_wdbp->dbip->dbi_vlfree, 32);
+	    vbp = rt_vlblock_init();
 	    ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);
 	    fclose(fp);
 	    if (ret < 0) {

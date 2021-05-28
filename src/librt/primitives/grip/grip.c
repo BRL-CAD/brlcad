@@ -207,7 +207,6 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = ip->idb_vlfree;
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(gip);
 
@@ -226,21 +225,21 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     VADD2(y_1, gip->center, ybase);
     VSUB2(y_2, gip->center, ybase);
 
-    BV_ADD_VLIST(vlfree, vhead, x_1, BV_VLIST_LINE_MOVE); /* the base */
-    BV_ADD_VLIST(vlfree, vhead, y_1, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, x_2, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, y_2, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, x_1, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_1, BV_VLIST_LINE_MOVE); /* the base */
+    RT_ADD_VLIST(vhead, y_1, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_2, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, y_2, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_1, BV_VLIST_LINE_DRAW);
 
     VSCALE(tip, gip->normal, gip->mag);
     VADD2(tip, gip->center, tip);
 
-    BV_ADD_VLIST(vlfree, vhead, x_1,  BV_VLIST_LINE_MOVE); /* the sides */
-    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, x_2,  BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, y_1,  BV_VLIST_LINE_MOVE);
-    BV_ADD_VLIST(vlfree, vhead, tip, BV_VLIST_LINE_DRAW);
-    BV_ADD_VLIST(vlfree, vhead, y_2,  BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_1,  BV_VLIST_LINE_MOVE); /* the sides */
+    RT_ADD_VLIST(vhead, tip, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_2,  BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, y_1,  BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, tip, BV_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, y_2,  BV_VLIST_LINE_DRAW);
     return 0;
 }
 

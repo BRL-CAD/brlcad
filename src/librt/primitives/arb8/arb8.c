@@ -1157,11 +1157,11 @@ rt_arb_free(register struct soltab *stp)
 }
 
 
-#define ARB_FACE(vlist_vlfree, vlist_head, arb_pts, a, b, c, d) \
-    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[a], BV_VLIST_LINE_MOVE); \
-    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[b], BV_VLIST_LINE_DRAW); \
-    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[c], BV_VLIST_LINE_DRAW); \
-    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[d], BV_VLIST_LINE_DRAW);
+#define ARB_FACE(vlist_head, arb_pts, a, b, c, d) \
+    RT_ADD_VLIST(vlist_head, arb_pts[a], BV_VLIST_LINE_MOVE); \
+    RT_ADD_VLIST(vlist_head, arb_pts[b], BV_VLIST_LINE_DRAW); \
+    RT_ADD_VLIST(vlist_head, arb_pts[c], BV_VLIST_LINE_DRAW); \
+    RT_ADD_VLIST(vlist_head, arb_pts[d], BV_VLIST_LINE_DRAW);
 
 /**
  * Plot an ARB by tracing out four "U" shaped contours This draws each
@@ -1175,7 +1175,6 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 {
     point_t *pts;
     struct rt_arb_internal *aip;
-    struct bu_list *vlfree = ip->idb_vlfree;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1183,10 +1182,10 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     RT_ARB_CK_MAGIC(aip);
 
     pts = aip->pt;
-    ARB_FACE(vlfree, vhead, pts, 0, 1, 2, 3);
-    ARB_FACE(vlfree, vhead, pts, 4, 0, 3, 7);
-    ARB_FACE(vlfree, vhead, pts, 5, 4, 7, 6);
-    ARB_FACE(vlfree, vhead, pts, 1, 5, 6, 2);
+    ARB_FACE(vhead, pts, 0, 1, 2, 3);
+    ARB_FACE(vhead, pts, 4, 0, 3, 7);
+    ARB_FACE(vhead, pts, 5, 4, 7, 6);
+    ARB_FACE(vhead, pts, 1, 5, 6, 2);
 
     return 0;
 }

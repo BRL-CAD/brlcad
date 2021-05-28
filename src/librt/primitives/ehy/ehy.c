@@ -769,7 +769,6 @@ ehy_hyperbola_y(fastf_t mag_H, fastf_t c, fastf_t r, fastf_t z)
  */
 static void
 ehy_plot_ellipse(
-    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct rt_ehy_internal *ehy,
     fastf_t h,
@@ -793,13 +792,12 @@ ehy_plot_ellipse(
     VSCALE(B, Bu, ehy_hyperbola_y(mag_H, ehy->ehy_c, ehy->ehy_r2, h));
     VJOIN1(cross_section_plane, V, h, Hu);
 
-    plot_ellipse(vlfree, vhead, cross_section_plane, A, B, num_points);
+    plot_ellipse(vhead, cross_section_plane, A, B, num_points);
 }
 
 
 static void
 ehy_plot_hyperbola(
-    struct bu_list *vlfree,
     struct bu_list *vhead,
     struct rt_ehy_internal *ehy,
     struct rt_pnt_node *pts,
@@ -818,14 +816,14 @@ ehy_plot_hyperbola(
 
     z = pts->p[Z];
     VJOIN2(p, ehy_V, ehy_hyperbola_y(mag_H, c, r, -z), Ru, -z, Hu);
-    BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	z = node->p[Z];
 	VJOIN2(p, ehy_V, ehy_hyperbola_y(mag_H, c, r, -z), Ru, -z, Hu);
 
-	BV_ADD_VLIST(vlfree, vhead, p, BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, p, BV_VLIST_LINE_DRAW);
 
 	node = node->next;
     }
@@ -873,7 +871,6 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     int i, num_curve_points, num_ellipse_points, num_curves;
     struct rt_ehy_internal *ehy;
     struct rt_pnt_node *pts_r1, *pts_r2, *node, *node1, *node2;
-    struct bu_list *vlfree = ip->idb_vlfree;
 
     fastf_t point_spacing = solid_point_spacing(v, s_size);
 
@@ -923,14 +920,14 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     z_step = mag_H / num_curves;
     z = 0.0;
     for (i = 0; i < num_curves; ++i) {
-	ehy_plot_ellipse(vlfree, vhead, ehy, z, num_ellipse_points);
+	ehy_plot_ellipse(vhead, ehy, z, num_ellipse_points);
 	z += z_step;
     }
 
-    ehy_plot_hyperbola(vlfree, vhead, ehy, pts_r1, Au, r1);
-    ehy_plot_hyperbola(vlfree, vhead, ehy, pts_r1, Au, -r1);
-    ehy_plot_hyperbola(vlfree, vhead, ehy, pts_r1, Bu, r2);
-    ehy_plot_hyperbola(vlfree, vhead, ehy, pts_r1, Bu, -r2);
+    ehy_plot_hyperbola(vhead, ehy, pts_r1, Au, r1);
+    ehy_plot_hyperbola(vhead, ehy, pts_r1, Au, -r1);
+    ehy_plot_hyperbola(vhead, ehy, pts_r1, Bu, r2);
+    ehy_plot_hyperbola(vhead, ehy, pts_r1, Bu, -r2);
 
     node1 = pts_r1;
     node2 = pts_r2;
@@ -951,7 +948,6 @@ rt_ehy_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 int
 rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
-    struct bu_list *vlfree = ip->idb_vlfree;
     fastf_t c, dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_prev, theta_new;
     int *pts_dbl;
@@ -1127,11 +1123,11 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     }
 
     /* Draw the top ellipse */
-    BV_ADD_VLIST(vlfree, vhead,
+    RT_ADD_VLIST(vhead,
 		 &ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
 		 BV_VLIST_LINE_MOVE);
     for (i = 0; i < nseg; i++) {
-	BV_ADD_VLIST(vlfree, vhead,
+	RT_ADD_VLIST(vhead,
 		     &ellipses[nell-1][i*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_DRAW);
     }
@@ -1147,11 +1143,11 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    nseg /= 2;	/* # segs in 'bottom' ellipse */
 
 	/* Draw the current ellipse */
-	BV_ADD_VLIST(vlfree, vhead,
+	RT_ADD_VLIST(vhead,
 		     &ellipses[bottom][(nseg-1)*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_MOVE);
 	for (j = 0; j < nseg; j++) {
-	    BV_ADD_VLIST(vlfree, vhead,
+	    RT_ADD_VLIST(vhead,
 			 &ellipses[bottom][j*ELEMENTS_PER_VECT],
 			 BV_VLIST_LINE_DRAW);
 	}
@@ -1162,10 +1158,10 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		jj = j + j;	/* top ellipse index */
 	    else
 		jj = j;
-	    BV_ADD_VLIST(vlfree, vhead,
+	    RT_ADD_VLIST(vhead,
 			 &ellipses[bottom][j*ELEMENTS_PER_VECT],
 			 BV_VLIST_LINE_MOVE);
-	    BV_ADD_VLIST(vlfree, vhead,
+	    RT_ADD_VLIST(vhead,
 			 &ellipses[top][jj*ELEMENTS_PER_VECT],
 			 BV_VLIST_LINE_DRAW);
 	}
@@ -1174,8 +1170,8 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     VADD2(Work, xip->ehy_V, xip->ehy_H);
     for (i = 0; i < nseg; i++) {
 	/* Draw connector */
-	BV_ADD_VLIST(vlfree, vhead, Work, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead,
+	RT_ADD_VLIST(vhead, Work, BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
 		     &ellipses[0][i*ELEMENTS_PER_VECT],
 		     BV_VLIST_LINE_DRAW);
     }

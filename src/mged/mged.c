@@ -1267,6 +1267,7 @@ main(int argc, char *argv[])
 #endif /* HAVE_PIPE */
 
     /* Set up linked lists */
+    BU_LIST_INIT(&RTG.rtg_vlfree);
     BU_LIST_INIT(&RTG.rtg_headwdb.l);
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
@@ -2509,8 +2510,7 @@ mged_finish(int exitcode)
 
 	if (p && p->dm_dmp) {
 	    dm_close(p->dm_dmp);
-	    if (GEDP && GEDP->ged_wdbp && GEDP->ged_wdbp->dbip)
-		BV_FREE_VLIST(&GEDP->ged_wdbp->dbip->dbi_vlfree, &(p->dm_p_vlist));
+	    RT_FREE_VLIST(&p->dm_p_vlist);
 	    mged_slider_free_vls(p);
 	    bu_free(p, "release: mged_curr_dm");
 	}

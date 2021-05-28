@@ -361,7 +361,7 @@ free_nmg:
     if (v_tbl_regs)
 	bu_free(v_tbl_regs, "v_tbl_regs");
     nmg_km(the_model);
-
+    rt_vlist_cleanup();
     db_close(dbip);
     bu_exit(1, NULL);
 }
@@ -474,9 +474,9 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
-		regions_tried,
-		regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
-		sofar);
+	       regions_tried,
+	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
+	       sofar);
 	bu_free(sofar, "path string");
     }
 
@@ -588,9 +588,10 @@ leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(p
 int
 main(int argc, char **argv)
 {
-    static char usage[] = "Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n"
-	"[-n norm_tess_tol (default: 0.0)][-t type (asc: ascii), (le: little endian), (be: big endian)]\n"
-	"[-s separate file per object][-D dist_calc_tol (default: 0.0005)] -o output_file_name brlcad_db.g object(s)\n";
+    static char usage[] = "\
+Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\
+  [-n norm_tess_tol (default: 0.0)][-t type (asc: ascii), (le: little endian), (be: big endian)]\n\
+  [-s separate file per object][-D dist_calc_tol (default: 0.0005)] -o output_file_name brlcad_db.g object(s)\n";
 
     int c, j;
     double percent;
@@ -698,13 +699,13 @@ main(int argc, char **argv)
 	if (!ply_fp) {
 	    ply_close(ply_fp);
 	    nmg_km(the_model);
-
+	    rt_vlist_cleanup();
 	    bu_exit(1, "ERROR: Unable to create PLY file");
 	}
 	if (!ply_add_comment(ply_fp, "converted from BRL-CAD")) {
 	    ply_close(ply_fp);
 	    nmg_km(the_model);
-
+	    rt_vlist_cleanup();
 	    bu_exit(1, "ERROR: Unable to write to PLY file");
 	}
 
@@ -720,13 +721,13 @@ main(int argc, char **argv)
 	perror(argv[0]);
 	ply_close(ply_fp);
 	nmg_km(the_model);
-
+	rt_vlist_cleanup();
 	bu_exit(1, "ERROR: Unable to open geometry database file (%s)\n", argv[0]);
     }
     if (db_dirbuild(dbip)) {
 	ply_close(ply_fp);
 	nmg_km(the_model);
-
+	rt_vlist_cleanup();
 	bu_exit(1, "db_dirbuild failed\n");
     }
     BN_CK_TOL(tree_state.ts_tol);
@@ -740,9 +741,9 @@ main(int argc, char **argv)
 	for (i = 1; i < argc; i++)
 	    bu_log(" %s", argv[i]);
 	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
     /* Verify that all the specified objects are valid - if one or
@@ -759,12 +760,12 @@ main(int argc, char **argv)
      * allocating the memory, but that may be wrong
      */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-	    1,		/* ncpu */
-	    &tree_state,
-	    count_regions,
-	    region_stub,
-	    leaf_stub,
-	    (void *)NULL);	/* in librt/nmg_bool.c */
+			1,		/* ncpu */
+			&tree_state,
+			count_regions,
+			region_stub,
+			leaf_stub,
+			(void *)NULL);	/* in librt/nmg_bool.c */
     if (verbose)
 	bu_log("Found %d total regions.\n", tot_regions);
 
@@ -775,33 +776,33 @@ main(int argc, char **argv)
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-	    1,		/* ncpu */
-	    &tree_state,
-	    0,		/* take all regions */
-	    do_region_end,
-	    nmg_booltree_leaf_tess,
-	    (void *)NULL);	/* in librt/nmg_bool.c */
+			1,		/* ncpu */
+			&tree_state,
+			0,		/* take all regions */
+			do_region_end,
+			nmg_booltree_leaf_tess,
+			(void *)NULL);	/* in librt/nmg_bool.c */
     if (verbose)
 	bu_log("Found %d nmg regions.\n", cur_region);
 
     if (merge_all) {
 	int ri;
-	int fi;
-	int vi;
+        int fi;
+        int vi;
 	double *coords;
 
-	ply_add_element(ply_fp, "vertex", tot_vertices);
-	ply_add_scalar_property(ply_fp, "x", PLY_FLOAT);
-	ply_add_scalar_property(ply_fp, "y", PLY_FLOAT);
-	ply_add_scalar_property(ply_fp, "z", PLY_FLOAT);
-	ply_add_element(ply_fp, "face", tot_polygons);
-	ply_add_list_property(ply_fp, "vertex_indices", PLY_UCHAR, PLY_UINT);
-	if (color_info == 1) {
-	    ply_add_scalar_property(ply_fp, "red", PLY_UCHAR);
-	    ply_add_scalar_property(ply_fp, "green", PLY_UCHAR);
-	    ply_add_scalar_property(ply_fp, "blue", PLY_UCHAR);
-	}
-	ply_write_header(ply_fp);
+        ply_add_element(ply_fp, "vertex", tot_vertices);
+        ply_add_scalar_property(ply_fp, "x", PLY_FLOAT);
+        ply_add_scalar_property(ply_fp, "y", PLY_FLOAT);
+        ply_add_scalar_property(ply_fp, "z", PLY_FLOAT);
+        ply_add_element(ply_fp, "face", tot_polygons);
+        ply_add_list_property(ply_fp, "vertex_indices", PLY_UCHAR, PLY_UINT);
+        if (color_info == 1) {
+            ply_add_scalar_property(ply_fp, "red", PLY_UCHAR);
+            ply_add_scalar_property(ply_fp, "green", PLY_UCHAR);
+            ply_add_scalar_property(ply_fp, "blue", PLY_UCHAR);
+        }
+        ply_write_header(ply_fp);
 
 	for (ri = 0; ri < cur_region; ri++)
 	    if (write_verts(ply_fp, v_tbl_regs[ri])) {
@@ -849,14 +850,14 @@ main(int argc, char **argv)
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
 	bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-		regions_tried, regions_converted, percent);
+	       regions_tried, regions_converted, percent);
     }
     percent = 0;
 
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
 	bu_log("                  %d triangulated successfully. %g%%\n",
-		regions_written, percent);
+	       regions_written, percent);
     }
 
     bu_log("%zd triangles written\n", tot_polygons);
@@ -878,7 +879,7 @@ free_all:
     if (v_tbl_regs)
 	bu_free(v_tbl_regs, "v_tbl_regs");
     nmg_km(the_model);
-
+    rt_vlist_cleanup();
     db_close(dbip);
 
     return 0;

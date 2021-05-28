@@ -302,7 +302,7 @@ int check_overlaps(struct current_state *state,
     }
 
     if (options->overlaps_overlay_flag) {
-	check_plot.vbp = bv_vlblock_init(&dbip->dbi_vlfree, 32);
+	check_plot.vbp = rt_vlblock_init();
 	check_plot.vhead = bv_vlblock_find(check_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 

@@ -229,7 +229,6 @@ brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_inte
     bi2 = (struct rt_brep_internal *)intern2->idb_ptr;
     RT_BREP_CK_MAGIC(bi1);
     RT_BREP_CK_MAGIC(bi2);
-    struct bu_list *vlfree = intern1->idb_vlfree;
 
     const ON_Brep *brep1 = bi1->brep;
     const ON_Brep *brep2 = bi2->brep;
@@ -253,8 +252,8 @@ brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_inte
 	return -1;
     }
 
-    plotsurface(surf1, vlfree, vbp, 100, 10, PURERED);
-    plotsurface(surf2, vlfree, vbp, 100, 10, BLUE);
+    plotsurface(surf1, vbp, 100, 10, PURERED);
+    plotsurface(surf2, vbp, 100, 10, BLUE);
 
     // Plot the intersection curves (or points) (3D and 2D)
     for (int k = 0; k < events.Count(); k++) {
@@ -262,15 +261,15 @@ brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_inte
 	    case ON_SSX_EVENT::ssx_overlap:
 	    case ON_SSX_EVENT::ssx_tangent:
 	    case ON_SSX_EVENT::ssx_transverse:
-		plotcurveonsurface(events[k].m_curveA, &surf1, vlfree, vbp, 1000, PEACH);
-		plotcurveonsurface(events[k].m_curveB, &surf2, vlfree, vbp, 1000, DARKVIOLET);
-		plotcurve(*(events[k].m_curve3d), vlfree, vbp, 1000, GREEN);
+		plotcurveonsurface(events[k].m_curveA, &surf1, vbp, 1000, PEACH);
+		plotcurveonsurface(events[k].m_curveB, &surf2, vbp, 1000, DARKVIOLET);
+		plotcurve(*(events[k].m_curve3d), vbp, 1000, GREEN);
 		break;
 	    case ON_SSX_EVENT::ssx_tangent_point:
 	    case ON_SSX_EVENT::ssx_transverse_point:
-		plotpoint(surf1.PointAt(events[k].m_pointA.x, events[k].m_pointB.y), vlfree, vbp, PEACH);
-		plotpoint(surf2.PointAt(events[k].m_pointB.x, events[k].m_pointB.y), vlfree, vbp, DARKVIOLET);
-		plotpoint(events[k].m_point3d, vlfree, vbp, GREEN);
+		plotpoint(surf1.PointAt(events[k].m_pointA.x, events[k].m_pointB.y), vbp, PEACH);
+		plotpoint(surf2.PointAt(events[k].m_pointB.x, events[k].m_pointB.y), vbp, DARKVIOLET);
+		plotpoint(events[k].m_point3d, vbp, GREEN);
 		break;
 	    default:
 		break;

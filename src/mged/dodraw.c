@@ -267,8 +267,7 @@ replot_modified_solid(
     }
 
     /* Release existing vlist of this solid */
-    if (GEDP && GEDP->ged_wdbp && GEDP->ged_wdbp->dbip)
-	BV_FREE_VLIST(&GEDP->ged_wdbp->dbip->dbi_vlfree, &(sp->s_vlist));
+    RT_FREE_VLIST(&(sp->s_vlist));
 
     /* Draw (plot) a normal solid */
     RT_CK_DB_INTERNAL(ip);

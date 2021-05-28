@@ -37,17 +37,16 @@
 __BEGIN_DECLS
 
 /**
- * Replace these with the appropriate libbn calls specifically
- * passing &RTG.rtg_vlfree (for a 1-1 translation) or preferably
- * to &dbip->dbi_vlfree to avoid the deprecated global
+ * TODO - replace these with the appropriate libbn calls specifically
+ * passing &RTG.rtg_vlfree
  */
-DEPRECATED RT_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
+RT_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
 				    const struct bu_list *src);
-DEPRECATED RT_EXPORT extern void rt_vlist_cleanup(void);
-DEPRECATED RT_EXPORT extern void rt_vlist_import(struct bu_list *hp,
+RT_EXPORT extern void rt_vlist_cleanup(void);
+RT_EXPORT extern void rt_vlist_import(struct bu_list *hp,
 				      struct bu_vls *namevls,
 				      const unsigned char *buf);
-DEPRECATED RT_EXPORT extern struct bv_vlblock *    rt_vlblock_init(void);
+RT_EXPORT extern struct bv_vlblock *    rt_vlblock_init(void);
 
 
 

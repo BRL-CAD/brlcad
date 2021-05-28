@@ -667,7 +667,6 @@ rt_ell_16pnts(fastf_t *ov,
 }
 
 struct ell_draw_configuration {
-    struct bu_list *vlfree;
     struct bu_list *vhead;
     vect_t ell_center;
     vect_t ell_axis_vector_a;
@@ -749,7 +748,7 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
 		cross_section.ellipsoid_travel_axis_position / ell_t_mag);
 	VADD2(cross_section.translation, cross_section.translation, config.ell_center);
 
-	plot_ellipse(config.vlfree, config.vhead, cross_section.translation, cross_section.a,
+	plot_ellipse(config.vhead, cross_section.translation, cross_section.a,
 		     cross_section.b, points_per_section);
     }
 }
@@ -781,20 +780,18 @@ rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = ip->idb_vlfree;
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
     fastf_t point_spacing = solid_point_spacing(v, s_size);
 
-    config.vlfree = vlfree;
     config.vhead = vhead;
     VMOVE(config.ell_center, eip->v);
 
     config.points_per_section = ell_ellipse_points(eip, point_spacing);
 
     if (config.points_per_section < 4) {
-	BV_ADD_VLIST(vlfree, vhead, eip->v, BV_VLIST_POINT_DRAW);
+	RT_ADD_VLIST(vhead, eip->v, BV_VLIST_POINT_DRAW);
 	return 0;
     }
 
@@ -831,7 +828,6 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = ip->idb_vlfree;
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
@@ -839,19 +835,19 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     rt_ell_16pnts(bottom, eip->v, eip->b, eip->c);
     rt_ell_16pnts(middle, eip->v, eip->a, eip->c);
 
-    BV_ADD_VLIST(vlfree, vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    BV_ADD_VLIST(vlfree, vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
-    BV_ADD_VLIST(vlfree, vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BV_VLIST_LINE_MOVE);
     for (i = 0; i < 16; i++) {
-	BV_ADD_VLIST(vlfree, vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BV_VLIST_LINE_DRAW);
     }
 
     return 0;

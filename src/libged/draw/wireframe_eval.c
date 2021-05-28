@@ -56,7 +56,6 @@ struct bigE_data {
     struct application *ap;
     struct bu_ptbl leaf_list;
     struct rt_i *rtip;
-    struct bu_list *vlfree;
     time_t start_time;
     time_t etime;
     long nvectors;
@@ -200,7 +199,7 @@ add_solid(const struct directory *dp,
 
 	if (solid_is_plate_mode_bot
 		|| !eptr->l.m
-		|| (bot = nmg_bot(s, dgcdp->vlfree, dgcdp->tol)) == (struct rt_bot_internal *)NULL)
+		|| (bot = nmg_bot(s, &RTG.rtg_vlfree, dgcdp->tol)) == (struct rt_bot_internal *)NULL)
 	{
 	    eptr->l.stp->st_id = id;
 	    eptr->l.stp->st_meth = &OBJ[id];
@@ -940,7 +939,6 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct big
 static void
 shoot_and_plot(point_t start_pt,
 	       vect_t dir,
-	       struct bu_list *vlfree,
 	       struct bu_list *vhead,
 	       fastf_t edge_len,
 	       int skip_leaf1,
@@ -1112,9 +1110,9 @@ shoot_and_plot(point_t start_pt,
 
 	    dgcdp->nvectors++;
 	    VJOIN1(pt, rp.r_pt, seg->seg_in.hit_dist, rp.r_dir);
-	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_MOVE);
 	    VJOIN1(pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir);
-	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, pt, BV_VLIST_LINE_DRAW);
 	}
 
     }
@@ -1141,7 +1139,6 @@ Eplot(union E_tree *eptr,
     int i;
     struct bu_list *result;
     const struct bn_tol *tol = dgcdp->tol;
-    struct bu_list *vlfree = dgcdp->vlfree;
 
     CK_ETREE(eptr);
 
@@ -1154,7 +1151,7 @@ Eplot(union E_tree *eptr,
 	}
 
 	if (leaf_ptr->l.m)
-	    nmg_edge_tabulate(&leaf_ptr->l.edge_list, &leaf_ptr->l.m->magic, vlfree);
+	    nmg_edge_tabulate(&leaf_ptr->l.edge_list, &leaf_ptr->l.m->magic, &RTG.rtg_vlfree);
 	else
 	    bu_ptbl_init(&leaf_ptr->l.edge_list, 1, "edge_list");
     }
@@ -1194,7 +1191,7 @@ Eplot(union E_tree *eptr,
 		continue;
 	    inv_len = 1.0/edge_len;
 	    VSCALE(dir, dir, inv_len);
-	    shoot_and_plot(vg->coord, dir, vlfree, vhead, edge_len, leaf_no, -1, eptr, ON_SURF, dgcdp);
+	    shoot_and_plot(vg->coord, dir, vhead, edge_len, leaf_no, -1, eptr, ON_SURF, dgcdp);
 
 	}
     }
@@ -1469,7 +1466,7 @@ Eplot(union E_tree *eptr,
 			point_t ray_start;
 
 			VJOIN1(ray_start, start_pt, aseg->seg_in.hit_dist, dir);
-			shoot_and_plot(ray_start, dir, vlfree, vhead,
+			shoot_and_plot(ray_start, dir, vhead,
 				       aseg->seg_out.hit_dist - aseg->seg_in.hit_dist,
 				       leaf_no, leaf2, eptr, ON_INT, dgcdp);
 		    }
@@ -1565,7 +1562,6 @@ fix_halfs(struct bigE_data *dgcdp)
 	plane_t haf_pl;
 	struct half_specific *hp;
 	int j;
-	struct bu_list *vlfree = dgcdp->vlfree;
 
 	tp = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, i);
 
@@ -1597,7 +1593,7 @@ fix_halfs(struct bigE_data *dgcdp)
 	nmg_vertex_g(v[1], max[X], max[Y], min[Z]);
 	nmg_vertex_g(v[2], max[X], max[Y], max[Z]);
 	nmg_vertex_g(v[3], max[X], min[Y], max[Z]);
-	nmg_calc_face_g(fu, vlfree);
+	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
 
 	vp[0] = &v[4];
 	vp[1] = &v[5];
@@ -1608,35 +1604,35 @@ fix_halfs(struct bigE_data *dgcdp)
 	nmg_vertex_g(v[5], min[X], min[Y], max[Z]);
 	nmg_vertex_g(v[6], min[X], max[Y], max[Z]);
 	nmg_vertex_g(v[7], min[X], max[Y], min[Z]);
-	nmg_calc_face_g(fu, vlfree);
+	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
 
 	vp[0] = &v[0];
 	vp[1] = &v[3];
 	vp[2] = &v[5];
 	vp[3] = &v[4];
 	fu = nmg_cmface(s, vp, 4);
-	nmg_calc_face_g(fu, vlfree);
+	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
 
 	vp[0] = &v[1];
 	vp[1] = &v[7];
 	vp[2] = &v[6];
 	vp[3] = &v[2];
 	fu = nmg_cmface(s, vp, 4);
-	nmg_calc_face_g(fu, vlfree);
+	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
 
 	vp[0] = &v[3];
 	vp[1] = &v[2];
 	vp[2] = &v[6];
 	vp[3] = &v[5];
 	fu = nmg_cmface(s, vp, 4);
-	nmg_calc_face_g(fu, vlfree);
+	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
 
 	vp[0] = &v[1];
 	vp[1] = &v[0];
 	vp[2] = &v[4];
 	vp[3] = &v[7];
 	fu = nmg_cmface(s, vp, 4);
-	nmg_calc_face_g(fu, vlfree);
+	nmg_calc_face_g(fu, &RTG.rtg_vlfree);
 
 	nmg_region_a(r, tol);
 
@@ -1694,7 +1690,7 @@ fix_halfs(struct bigE_data *dgcdp)
 	    vcut[1] = new_eu->vu_p;
 	    nmg_vertex_gv(vcut[1]->v_p, pt[1]);
 
-	    new_lu = nmg_cut_loop(vcut[0], vcut[1], vlfree);
+	    new_lu = nmg_cut_loop(vcut[0], vcut[1], &RTG.rtg_vlfree);
 	    nmg_lu_reorient(lu);
 	    nmg_lu_reorient(new_lu);
 
@@ -1766,13 +1762,13 @@ fix_halfs(struct bigE_data *dgcdp)
 	}
 
 	nmg_rebound(tp->l.m, tol);
-	nmg_model_fuse(tp->l.m, vlfree, tol);
-	nmg_close_shell(s, vlfree, tol);
+	nmg_model_fuse(tp->l.m, &RTG.rtg_vlfree, tol);
+	nmg_close_shell(s, &RTG.rtg_vlfree, tol);
 	nmg_rebound(tp->l.m, tol);
 
 	BU_ALLOC(pg, struct rt_pg_internal);
 
-	if (!nmg_to_poly(tp->l.m, pg, vlfree, tol)) {
+	if (!nmg_to_poly(tp->l.m, pg, &RTG.rtg_vlfree, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
 	} else {
 	    struct rt_db_internal intern2;
@@ -1808,7 +1804,6 @@ draw_m3(struct bv_scene_obj *s)
     dgcdp.fp = &d->fp;
     dgcdp.tol = d->tol;
     dgcdp.ttol = d->ttol;
-    dgcdp.vlfree = s->s_v->vlfree;
 
     BU_ALLOC(dgcdp.ap, struct application);
     RT_APPLICATION_INIT(dgcdp.ap);

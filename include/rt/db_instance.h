@@ -71,7 +71,6 @@ struct db_i {
     double dbi_base2local;              /**< @brief unit conversion factors */
     char * dbi_title;                   /**< @brief title from IDENT rec */
     char ** dbi_filepath;               /**< @brief search path for aux file opens (convenience var) */
-    struct bu_list  dbi_vlfree;         /**< @brief Available bv_vlist entities to recycle before allocating new */
 
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 

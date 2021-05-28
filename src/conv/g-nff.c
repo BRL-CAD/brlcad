@@ -43,8 +43,8 @@
 #include "raytrace.h"
 
 static const char *usage =
-"[-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
-"[-e error_file ] [-D dist_calc_tol] [-o output.nff] database.g object(s)\n";
+    "[-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
+    "[-e error_file ] [-D dist_calc_tol] [-o output.nff] database.g object(s)\n";
 
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
 static int verbose;
@@ -244,9 +244,9 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
-		regions_tried,
-		regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
-		sofar);
+	       regions_tried,
+	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
+	       sofar);
 	bu_free(sofar, "path string");
     }
 
@@ -334,7 +334,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	npercent = (float)(regions_converted * 100) / regions_tried;
 	tpercent = (float)(regions_written * 100) / regions_tried;
 	printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%%\n",
-		regions_tried, regions_converted, regions_written, npercent, tpercent);
+	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
@@ -476,38 +476,38 @@ main(int argc, char *argv[])
     for (i = 1; i < argc; i++)
 	bu_log(" %s", argv[i]);
     bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-	    tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+	   tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
     bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-	    tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+	   tree_state.ts_tol->dist, tree_state.ts_tol->perp);
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-	    1,			/* ncpu */
-	    &tree_state,
-	    0,			/* take all regions */
-	    do_region_end,
-	    nmg_booltree_leaf_tess,
-	    (void *)NULL);	/* in librt/nmg_bool.c */
+			1,			/* ncpu */
+			&tree_state,
+			0,			/* take all regions */
+			do_region_end,
+			nmg_booltree_leaf_tess,
+			(void *)NULL);	/* in librt/nmg_bool.c */
 
     percent = 0;
     if (regions_tried > 0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
 	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-		regions_tried, regions_converted, percent);
+	       regions_tried, regions_converted, percent);
     }
     percent = 0;
 
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
 	printf("                  %d triangulated successfully. %g%%\n",
-		regions_written, percent);
+	       regions_written, percent);
     }
 
     bu_log("%ld triangles written\n", tot_polygons);
 
     /* Release dynamic storage */
     nmg_km(the_model);
-
+    rt_vlist_cleanup();
     db_close(dbip);
 
     /* write view information in the NFF file */

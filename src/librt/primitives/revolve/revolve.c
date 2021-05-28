@@ -1218,7 +1218,6 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    struct bu_list *vlfree = ip->idb_vlfree;
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
@@ -1329,16 +1328,16 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 	    VSCALE(cir[j], ucir[j], verts[i][X]);
 	    VADD3(ell[j], rip->v3d, cir[j], height);
 	}
-	BV_ADD_VLIST(vlfree, vhead, ell[0], BV_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, ell[0], BV_VLIST_LINE_MOVE);
 	for (j=1; j<narc; j++) {
-	    BV_ADD_VLIST(vlfree, vhead, ell[j], BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ell[j], BV_VLIST_LINE_DRAW);
 	}
 	if (narc < 16) {
 	    VSCALE(cir[narc], rEnd, verts[i][X]);
 	    VADD3(ell[narc], rip->v3d, cir[narc], height);
-	    BV_ADD_VLIST(vlfree, vhead, ell[narc], BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ell[narc], BV_VLIST_LINE_DRAW);
 	} else {
-	    BV_ADD_VLIST(vlfree, vhead, ell[0], BV_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ell[0], BV_VLIST_LINE_DRAW);
 	}
     }
 
@@ -1367,48 +1366,48 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
 
     /* draw sketch outlines */
     for (i=0; i<narc; i++) {
-	curve_to_vlist(vlfree, vhead, ttol, rip->v3d, ucir[i], uz, rip->skt, crv);
+	curve_to_vlist(vhead, ttol, rip->v3d, ucir[i], uz, rip->skt, crv);
 	for (j=0; j<nadd; j++) {
 	    if (j+1 < nadd &&
 		ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], ucir[i]);
 		VJOIN1(add3, add, verts[endcount[j+1]][X], ucir[i]);
-		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, add3, BV_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, add2, BV_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, add3, BV_VLIST_LINE_DRAW);
 		j++;
 	    } else {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], ucir[i]);
-		BV_ADD_VLIST(vlfree, vhead, add, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, add, BV_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, add2, BV_VLIST_LINE_DRAW);
 	    }
 	}
     }
     if (narc < 16) {
-	curve_to_vlist(vlfree, vhead, ttol, rip->v3d, rEnd, uz, rip->skt, crv);
+	curve_to_vlist(vhead, ttol, rip->v3d, rEnd, uz, rip->skt, crv);
 	for (j=0; j<nadd; j++) {
 	    if (j+1 < nadd &&
 		ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], rEnd);
 		VJOIN1(add3, add, verts[endcount[j+1]][X], rEnd);
-		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, add3, BV_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, add2, BV_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, add3, BV_VLIST_LINE_DRAW);
 		j++;
 	    } else {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, add, verts[endcount[j]][X], rEnd);
-		BV_ADD_VLIST(vlfree, vhead, add, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, add, BV_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, add2, BV_VLIST_LINE_DRAW);
 	    }
 	}
 	for (j=0; j<nadd; j+=2) {
 	    if (!ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
 		VJOIN1(add, rip->v3d, verts[endcount[j]][Y], rip->axis3d);
 		VJOIN1(add2, rip->v3d, verts[endcount[j+1]][Y], rip->axis3d);
-		BV_ADD_VLIST(vlfree, vhead, add, BV_VLIST_LINE_MOVE);
-		BV_ADD_VLIST(vlfree, vhead, add2, BV_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, add, BV_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, add2, BV_VLIST_LINE_DRAW);
 	    }
 	}
     }

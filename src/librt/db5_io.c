@@ -979,8 +979,6 @@ rt_db_get_internal5(
 
     BU_ASSERT(dbip->dbi_version == 5);
 
-    ip->idb_vlfree = (struct bu_list *)&dbip->dbi_vlfree;
-
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -2;		/* FAIL */
 
