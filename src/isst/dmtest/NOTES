@@ -24,6 +24,13 @@ x 3.  Finish accordion widget, into libqtcad (moved, behavior improved.  Open/cl
     Probably need to flesh out new libged logic to handle multiple dms as well... at a
     minimum, draw routines will need to update objects in all four scenes)
 
+    Design question: should adaptive plotting and similar settings that have implications
+    for view geometry be global?  Implications:  if not global, we can't reuse vlists for
+    database objects across views.  However, with adaptive plotting (which is view aware
+    can we really do that anyway?  The current view would have to be aware of other view
+    settings... maybe if adaptive plotting is on, we have to switch to non-shared scene
+    objects?
+
 5.  temporary objects (nirt shotline, rtcheck/gqa overlap visuals, gdiff output...)
 
 6.  color controls (background in particular) settable in MGED...
