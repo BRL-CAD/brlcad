@@ -728,12 +728,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* If we have no view, we have no way to draw */
-    if (!gedp->ged_gvp) {
-	bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
-	return GED_ERROR;
-    }
 
+    /* User settings may override various options - set up to collect them */
     struct bv_settings vs = BV_SETTINGS_INIT;
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
@@ -761,6 +757,38 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_cmd_help(gedp, usage, d);
 	return GED_OK;
     }
+
+    /* If adaptive plotting is enabled, we need to generate wireframes
+     * specific to that view */
+    int have_adaptive = 0;
+    int have_non_adaptive = 0;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (v->adaptive_plot) {
+	    have_adaptive = 1;
+	} else {
+	    have_non_adaptive = 1;
+	}
+    }
+
+    if (have_adaptive) {
+	bu_log("Adaptive plotting enabled\n");
+    }
+
+    if (have_adaptive && have_non_adaptive) {
+	bu_log("Both adaptive and non-adaptive views present\n");
+    }
+
+    /* TODO - below logic assumes ged_gvp.  Need to repackage it
+     * into a function that takes a bview pointer as an arg, so
+     * we can repeat drawing for multiple views if necessary.
+     * Until we do that, ged_gvp must be set... */
+    if (!gedp->ged_gvp) {
+	bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
+	return GED_ERROR;
+    }
+
+
 
     /* Option defaults come from the current view, but may be overridden for
      * the purposes of the current draw command by command line options. */
