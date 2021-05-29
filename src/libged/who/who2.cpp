@@ -36,6 +36,9 @@
  *
  * Usage:
  * who
+ *
+ * TODO - like draw2, this needs to be aware of whether we're using local or shared
+ * grp sets - if we're adaptive plotting, for example.
  */
 extern "C" int
 ged_who2_core(struct ged *gedp, int argc, const char *argv[])

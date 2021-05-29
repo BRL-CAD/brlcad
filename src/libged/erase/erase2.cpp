@@ -254,6 +254,8 @@ alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
 /*
  * Erase objects from the display.
  *
+ * TODO - like draw2, this needs to be aware of whether we're using local or shared
+ * grp sets.
  */
 extern "C" int
 ged_erase2_core(struct ged *gedp, int argc, const char *argv[])

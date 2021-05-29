@@ -42,6 +42,9 @@
 /*
  * Erase all currently displayed geometry
  *
+ * TODO - like draw2, this needs to be aware of whether we're using local or shared
+ * grp sets.
+ *
  * Usage:
  * zap
  *

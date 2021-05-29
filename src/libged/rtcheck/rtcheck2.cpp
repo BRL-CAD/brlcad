@@ -21,6 +21,8 @@
  *
  * The rtcheck command.
  *
+ * TODO - should these outputs always be in the shared view_obj set,
+ * even when adaptive plotting is on?
  */
 
 #include "common.h"

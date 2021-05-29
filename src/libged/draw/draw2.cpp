@@ -719,9 +719,15 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_settings *vs, int arg
 {
     // Abbreviations for convenience
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct bu_ptbl *sg = v->gv_db_grps;
     struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bu_ptbl *sg;
 
+    // If we're adaptive, we're operating locally
+    if (v->adaptive_plot) {
+	sg = v->gv_view_grps;
+    } else {
+	sg = v->gv_db_grps;
+    }
 
     // If we have no active groups and no view objects, we are drawing into a
     // blank canvas - unless options specifically disable it, if we are doing
@@ -1122,32 +1128,30 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
     /* If adaptive plotting is enabled, we need to generate wireframes
      * specific to that view */
-    int have_adaptive = 0;
     int have_non_adaptive = 0;
+    int ret = GED_OK;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
 	if (v->adaptive_plot) {
-	    have_adaptive = 1;
+	    int aret = ged_draw_view(gedp, v, &vs, argc, argv, bot_threshold, no_autoview);
+	    if (aret & GED_ERROR)
+		ret = aret;
 	} else {
 	    have_non_adaptive = 1;
 	}
     }
 
-    if (have_adaptive) {
-	bu_log("Adaptive plotting enabled\n");
+    if (have_non_adaptive) {
+	if (!gedp->ged_gvp) {
+	    bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
+	    return GED_ERROR;
+	}
+	int nret = ged_draw_view(gedp, gedp->ged_gvp, &vs, argc, argv, bot_threshold, no_autoview);
+	if (nret & GED_ERROR)
+	    ret = nret;
     }
 
-    if (have_adaptive && have_non_adaptive) {
-	bu_log("Both adaptive and non-adaptive views present\n");
-    }
-
-    // For now, we need ged_gvp...
-    if (!gedp->ged_gvp) {
-	bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
-	return GED_ERROR;
-    }
-
-    return ged_draw_view(gedp, gedp->ged_gvp, &vs, argc, argv, bot_threshold, no_autoview);
+    return ret;
 
 }
 
