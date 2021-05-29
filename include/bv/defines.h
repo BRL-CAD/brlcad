@@ -398,8 +398,8 @@ struct bview {
 
 
 
-    // Container for db object groups (usually comes from the app and is owned
-    // by gedp)
+    // Container for shared db object groups (usually comes from the app and is
+    // owned by gedp)
     struct bu_ptbl  *gv_db_grps;
 
     // Optional container for defining shared view objects common to
@@ -410,6 +410,10 @@ struct bview {
     struct bu_list  *vlfree;
 
 
+    // Container for db object groups unique to this view (typical use case is
+    // adaptive plotting, where geometry wireframes may differ from view to
+    // view and thus need unique vlists.)
+    struct bu_ptbl  *gv_view_grps;
 
     // Container for storing bv_scene_obj elements unique to this view.
     struct bu_ptbl  *gv_view_objs;
@@ -418,7 +422,6 @@ struct bview {
     // view objects.  This local list should be used ONLY for gv_view_objs -
     // shared objects should use the vlfree container.
     struct bu_list  gv_vlfree;
-
 
 
     // Not yet implemented - mechanism for defining a set of selected view

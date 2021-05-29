@@ -156,8 +156,12 @@ bv_init(struct bview *gvp)
     //gvp->gv_db_grps = NULL;
     gvp->gv_view_shared_objs = NULL;
 
-    // gv_db_grps and gv_view_shared_objs are supplied from callers,
-    // but gv_view_objs is local to this view and thus is controlled
+    // gv_view_grps is local to this view and thus is controlled
+    // by the bv init and free routines.
+    BU_GET(gvp->gv_view_grps, struct bu_ptbl);
+    bu_ptbl_init(gvp->gv_view_grps, 8, "view_objs init");
+
+    // gv_view_objs is local to this view and thus is controlled
     // by the bv init and free routines.
     BU_GET(gvp->gv_view_objs, struct bu_ptbl);
     bu_ptbl_init(gvp->gv_view_objs, 8, "view_objs init");
