@@ -24,12 +24,19 @@ x 3.  Finish accordion widget, into libqtcad (moved, behavior improved.  Open/cl
     Probably need to flesh out new libged logic to handle multiple dms as well... at a
     minimum, draw routines will need to update objects in all four scenes)
 
-    Design question: should adaptive plotting and similar settings that have implications
-    for view geometry be global?  Implications:  if not global, we can't reuse vlists for
-    database objects across views.  However, with adaptive plotting (which is view aware
-    can we really do that anyway?  The current view would have to be aware of other view
-    settings... maybe if adaptive plotting is on, we have to switch to non-shared scene
-    objects?
+    Design issue:  if scene object vlists can be different from one view to the next,
+    we will have to maintain per-view scene objects for geometry.  This will (potentially)
+    be the case with adaptive plotting, for example - one view may be zoomed at a
+    different level than another.  On the other hand, we don't want to duplicate vlists
+    if the settings are such that vlists will match in all views (the default) since
+    that can save substantial memory for large wireframes.
+
+    We may need to adapt draw2 so that it checks all defined views up front.  For each
+    view that has adaptive plotting enabled, per-view objects will need to be defined.
+    (In principle the same vlfree could be used... not sure about that yet.)  For others,
+    common vlist objects can be used.  Thinking the view will have both a local table
+    and a pointer to the global shared set, and the libdm drawing routine will pick
+    one or the other based on current settings.
 
 5.  temporary objects (nirt shotline, rtcheck/gqa overlap visuals, gdiff output...)
 
