@@ -19,6 +19,23 @@
  */
 /** @file QtCADQuad.cpp
  *
+ * TODO - initialize non-current views to the standard views (check MGED for
+ * what the defaults should be.)  Also, need to implement an event filter for
+ * this widget (I think there is an example in qged...)  Events should pass
+ * through to the current selected widget when they are either key based or
+ * take place with the xy coordinates matching the current widget.  However, a
+ * mouse click over the quad widget but NOT located with xy coordinates over
+ * the currently selected view should change the selected view (updating
+ * gedp->ged_gvp, perhaps changing the background or some other visual
+ * signature of which widget is currently active.
+ *
+ * One open question is whether the faceplate settings of the previous
+ * selection should be copied/transferred to the new current selection (in
+ * effect, making the faceplate settings independent of the specific view
+ * selected.)  Maybe this should be a widget setting, since there are arguments
+ * that could be made either way...  that we we wouldn't be locked into one
+ * approach at the app level.
+ *
  */
 
 #include "common.h"
