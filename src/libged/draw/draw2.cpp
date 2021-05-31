@@ -1039,7 +1039,16 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_settings *vs, int arg
     return GED_OK;
 }
 
-
+/* TODO - need some thought about whether we should allow per-view drawing
+ * specification of objects.  Complicates the view state management considerably,
+ * but would be necessary to support an interface that allows multiple independent
+ * inspections of the contents of a database.  Circumstances under which non-shared
+ * drawing would be needed:
+ *
+ * 1. if adaptive plotting is enabled
+ * 2. if no common db group container has been supplied
+ * 3. if a view is explicitly designated as independent
+ * */
 extern "C" int
 ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -1138,6 +1147,18 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 		ret = aret;
 	} else {
 	    have_non_adaptive = 1;
+	    // If we are switching from local adaptive geometry to shared
+	    // non-adaptive geometry, we need to clear any adaptive
+	    // plotting that may have been produced by previous draw calls.
+	    struct bu_ptbl *sg = v->gv_view_grps;
+	    if (sg) {
+		for (size_t j = 0; j < BU_PTBL_LEN(sg); j++) {
+		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, j);
+		    bv_scene_obj_free(cg->g, gedp->free_scene_obj);
+		    BU_PUT(cg, struct bv_scene_group);
+		}
+		bu_ptbl_reset(sg);
+	    }
 	}
     }
 
