@@ -410,11 +410,11 @@ _fp_cmd_grid(void *bs, int argc, const char **argv)
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_grid.draw = 1;
+	    v->gv_s->gv_grid.draw = 1;
 	    return GED_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_grid.draw = 0;
+	    v->gv_s->gv_grid.draw = 0;
 	    return GED_OK;
 	}
     }
@@ -440,7 +440,7 @@ _fp_cmd_grid(void *bs, int argc, const char **argv)
 
     struct _ged_fp_grid_info ginfo;
     ginfo.gd = gd;
-    ginfo.g = &v->gv_grid;
+    ginfo.g = &v->gv_s->gv_grid;
 
     return _ged_subcmd_exec(gedp, d, _fp_grid_cmds, "view faceplate grid", "[options] subcommand [args]", (void *)&ginfo, argc, argv, help, cmd_pos);
 }

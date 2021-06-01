@@ -1006,7 +1006,7 @@ rt_eto_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     plot_ellipse(vlfree, vhead, center, contour_A, contour_B, points_per_ellipse);
 
     /* draw elliptical radial cross sections */
-    num_cross_sections = primitive_curve_count(ip, tol, v->curve_scale, s_size);
+    num_cross_sections = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
 
     if (num_cross_sections < 3) {
 	num_cross_sections = 3;

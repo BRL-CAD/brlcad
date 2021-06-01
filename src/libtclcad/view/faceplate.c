@@ -65,16 +65,16 @@ to_faceplate(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "center_dot")) {
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
-		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_center_dot.gos_draw);
+		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_s->gv_center_dot.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
 		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
 
 		if (i)
-		    gdvp->gv_center_dot.gos_draw = 1;
+		    gdvp->gv_s->gv_center_dot.gos_draw = 1;
 		else
-		    gdvp->gv_center_dot.gos_draw = 0;
+		    gdvp->gv_s->gv_center_dot.gos_draw = 0;
 
 		to_refresh_view(gdvp);
 		return GED_OK;
@@ -83,7 +83,7 @@ to_faceplate(struct ged *gedp,
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
-		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_center_dot.gos_line_color));
+		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_s->gv_center_dot.gos_line_color));
 		return GED_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -93,7 +93,7 @@ to_faceplate(struct ged *gedp,
 		    bu_sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
-		VSET(gdvp->gv_center_dot.gos_line_color, r, g, b);
+		VSET(gdvp->gv_s->gv_center_dot.gos_line_color, r, g, b);
 		to_refresh_view(gdvp);
 		return GED_OK;
 	    }
@@ -145,16 +145,16 @@ to_faceplate(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "view_params")) {
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
-		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_view_params.gos_draw);
+		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_s->gv_view_params.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
 		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
 
 		if (i)
-		    gdvp->gv_view_params.gos_draw = 1;
+		    gdvp->gv_s->gv_view_params.gos_draw = 1;
 		else
-		    gdvp->gv_view_params.gos_draw = 0;
+		    gdvp->gv_s->gv_view_params.gos_draw = 0;
 
 		to_refresh_view(gdvp);
 		return GED_OK;
@@ -163,7 +163,7 @@ to_faceplate(struct ged *gedp,
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
-		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_view_params.gos_text_color));
+		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_s->gv_view_params.gos_text_color));
 		return GED_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -173,7 +173,7 @@ to_faceplate(struct ged *gedp,
 		    bu_sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
-		VSET(gdvp->gv_view_params.gos_text_color, r, g, b);
+		VSET(gdvp->gv_s->gv_view_params.gos_text_color, r, g, b);
 		to_refresh_view(gdvp);
 		return GED_OK;
 	    }
@@ -185,16 +185,16 @@ to_faceplate(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "view_scale")) {
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
-		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_view_scale.gos_draw);
+		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_s->gv_view_scale.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
 		if (bu_sscanf(argv[4], "%d", &i) != 1)
 		    goto bad;
 
 		if (i)
-		    gdvp->gv_view_scale.gos_draw = 1;
+		    gdvp->gv_s->gv_view_scale.gos_draw = 1;
 		else
-		    gdvp->gv_view_scale.gos_draw = 0;
+		    gdvp->gv_s->gv_view_scale.gos_draw = 0;
 
 		to_refresh_view(gdvp);
 		return GED_OK;
@@ -203,7 +203,7 @@ to_faceplate(struct ged *gedp,
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
-		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_view_scale.gos_line_color));
+		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gv_s->gv_view_scale.gos_line_color));
 		return GED_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -213,7 +213,7 @@ to_faceplate(struct ged *gedp,
 		    bu_sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
-		VSET(gdvp->gv_view_scale.gos_line_color, r, g, b);
+		VSET(gdvp->gv_s->gv_view_scale.gos_line_color, r, g, b);
 		to_refresh_view(gdvp);
 		return GED_OK;
 	    }

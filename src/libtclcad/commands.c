@@ -2820,7 +2820,7 @@ to_data_vZ(struct ged *gedp,
 
     /* Get the data vZ */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%lf", gdvp->gv_data_vZ);
+	bu_vls_printf(gedp->ged_result_str, "%lf", gdvp->gv_s->gv_data_vZ);
 	return GED_OK;
     }
 
@@ -2830,7 +2830,7 @@ to_data_vZ(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gv_data_vZ = vZ;
+    gdvp->gv_s->gv_data_vZ = vZ;
 
     return GED_OK;
 }
@@ -3705,8 +3705,8 @@ to_idle_mode(struct ged *gedp,
 
     mode = gdvp->gv_tcl.gv_polygon_mode;
 
-    if (gdvp->adaptive_plot &&
-	    gdvp->redraw_on_zoom &&
+    if (gdvp->gv_s->adaptive_plot &&
+	    gdvp->gv_s->redraw_on_zoom &&
 	    mode == TCLCAD_SCALE_MODE)
     {
 	const char *av[] = {"redraw", NULL};
@@ -3729,7 +3729,7 @@ to_idle_mode(struct ged *gedp,
 	bu_vls_free(&bindings);
     }
 
-    if (gdvp->gv_grid.snap &&
+    if (gdvp->gv_s->gv_grid.snap &&
 	    (mode == TCLCAD_TRANSLATE_MODE ||
 	     mode == TCLCAD_CONSTRAINED_TRANSLATE_MODE))
     {
@@ -4590,8 +4590,8 @@ to_new_view(struct ged *gedp,
     bv_init(new_gdvp);
     bu_ptbl_ins(&current_top->to_gedp->ged_views, (long *)new_gdvp);
 
-    new_gdvp->point_scale = 1.0;
-    new_gdvp->curve_scale = 1.0;
+    new_gdvp->gv_s->point_scale = 1.0;
+    new_gdvp->gv_s->curve_scale = 1.0;
 
     tvd->gdv_fbs.fbs_listener.fbsl_fbsp = &tvd->gdv_fbs;
     tvd->gdv_fbs.fbs_listener.fbsl_fd = -1;
@@ -4836,8 +4836,8 @@ to_paint_rect_area(struct ged *gedp,
     (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
-    (void)fb_refresh(tvd->gdv_fbs.fbs_fbp, gdvp->gv_rect.pos[X], gdvp->gv_rect.pos[Y],
-	    gdvp->gv_rect.dim[X], gdvp->gv_rect.dim[Y]);
+    (void)fb_refresh(tvd->gdv_fbs.fbs_fbp, gdvp->gv_s->gv_rect.pos[X], gdvp->gv_s->gv_rect.pos[Y],
+	    gdvp->gv_s->gv_rect.dim[X], gdvp->gv_s->gv_rect.dim[Y]);
 
     (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 1);
 
@@ -5830,16 +5830,16 @@ to_snap_view(struct ged *gedp,
     gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
 
     gedp->ged_gvp = gdvp;
-    if (!gedp->ged_gvp->gv_snap_lines && !gedp->ged_gvp->gv_grid.snap) {
+    if (!gedp->ged_gvp->gv_s->gv_snap_lines && !gedp->ged_gvp->gv_s->gv_grid.snap) {
 	bu_vls_printf(gedp->ged_result_str, "%lf %lf", fvx, fvy);
 	return GED_OK;
     }
 
     int snapped = 0;
-    if (gedp->ged_gvp->gv_snap_lines) {
+    if (gedp->ged_gvp->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(gedp->ged_gvp, &fvx, &fvy);
     }
-    if (!snapped && gedp->ged_gvp->gv_grid.snap) {
+    if (!snapped && gedp->ged_gvp->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(gedp->ged_gvp, &fvx, &fvy);
     }
 
@@ -6302,7 +6302,7 @@ to_vslew(struct ged *gedp,
     bu_vls_free(&slew_vec);
 
     if (ret == GED_OK) {
-	if (gdvp->gv_grid.snap) {
+	if (gdvp->gv_s->gv_grid.snap) {
 
 	    gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
 	    gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
@@ -6314,7 +6314,7 @@ to_vslew(struct ged *gedp,
 	    ged_grid(gedp, 2, (const char **)av);
 	}
 
-	if (gedp->ged_gvp->gv_snap_lines) {
+	if (gedp->ged_gvp->gv_s->gv_snap_lines) {
 	    bv_view_center_linesnap(gedp->ged_gvp);
 	}
 
@@ -6422,7 +6422,7 @@ to_zclip(struct ged *gedp,
 
     /* get zclip flag */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_zclip);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gv_s->gv_zclip);
 	return GED_OK;
     }
 
@@ -6437,7 +6437,7 @@ to_zclip(struct ged *gedp,
     else if (1 < zclip)
 	zclip = 1;
 
-    gdvp->gv_zclip = zclip;
+    gdvp->gv_s->gv_zclip = zclip;
     dm_set_zclip((struct dm *)gdvp->dmp, zclip);
     to_refresh_view(gdvp);
 

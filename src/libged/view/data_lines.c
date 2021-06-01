@@ -98,7 +98,7 @@ _view_dlines_cmd_snap(void *bs, int argc, const char **argv)
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_snap_lines);
+	bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_snap_lines);
 	return GED_OK;
     }
 
@@ -107,7 +107,7 @@ _view_dlines_cmd_snap(void *bs, int argc, const char **argv)
 
 	if (bu_sscanf(argv[1], "%d", &i) != 1) return GED_ERROR;
 
-	gedp->ged_gvp->gv_snap_lines = (i) ? 1 : 0;
+	gedp->ged_gvp->gv_s->gv_snap_lines = (i) ? 1 : 0;
 
 	return GED_OK;
     }

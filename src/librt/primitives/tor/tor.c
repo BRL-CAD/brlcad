@@ -1086,7 +1086,7 @@ rt_tor_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     /* draw circular radial cross sections */
     VMOVE(b, tor_h);
 
-    num_ellipses = primitive_curve_count(ip, tol, v->curve_scale, s_size);
+    num_ellipses = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
     if (num_ellipses < 3) {
 	num_ellipses = 3;
     }

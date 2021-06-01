@@ -398,6 +398,36 @@ _bv_obj_settings_differ(struct bv_obj_settings *v1, struct bv_obj_settings *v2)
 	return -1;
     return 0;
 }
+
+static int
+_bv_settings_differ(struct bview_settings *v1, struct bview_settings *v2)
+{
+    BV_CDIFF(1, _bv_obj_settings_differ, obj_s);
+    BV_CDIFF(1, _bv_adc_state_differ, gv_adc);
+    BV_CDIFF(1, _bv_axes_differ, gv_model_axes);
+    BV_CDIFF(1, _bv_axes_differ, gv_view_axes);
+    BV_CDIFF(1, _bv_grid_state_differ, gv_grid);
+    BV_CDIFF(1, _bv_other_state_differ, gv_center_dot);
+    BV_CDIFF(1, _bv_other_state_differ, gv_view_params);
+    BV_CDIFF(1, _bv_other_state_differ, gv_view_scale);
+    BV_CDIFF(1, _bv_interactive_rect_state_differ, gv_rect);
+
+    BV_NDIFF(1,gv_snap_lines);
+    BV_NDIFF(1,gv_snap_tol_factor);
+    BV_NDIFF(1,gv_cleared);
+    BV_NDIFF(1,gv_zclip);
+    BV_NDIFF(1,gv_data_vZ);
+
+    BV_NDIFF(1,adaptive_plot);
+    BV_NDIFF(1,redraw_on_zoom);
+    BV_NDIFF(1,point_scale);
+    BV_NDIFF(1,curve_scale);
+    BV_NDIFF(1,bot_threshold);
+
+    return 0;
+}
+
+
 int
 bv_differ(struct bview *v1, struct bview *v2)
 {
@@ -437,11 +467,6 @@ bv_differ(struct bview *v1, struct bview *v2)
     BV_NDIFF(1,gv_rscale);
     BV_NDIFF(1,gv_sscale);
 
-    // More complex containers have their own check routines
-    BV_CDIFF(1, _bv_obj_settings_differ, gvs);
-    BV_CDIFF(1, _bv_adc_state_differ, gv_adc);
-    BV_CDIFF(1, _bv_axes_differ, gv_model_axes);
-    BV_CDIFF(1, _bv_axes_differ, gv_view_axes);
     BV_CDIFF(1, _bv_data_arrow_state_differ, gv_tcl.gv_data_arrows);
     BV_CDIFF(1, _bv_data_axes_state_differ, gv_tcl.gv_data_axes);
     BV_CDIFF(1, _bv_data_label_state_differ, gv_tcl.gv_data_labels);
@@ -452,24 +477,21 @@ bv_differ(struct bview *v1, struct bview *v2)
     BV_CDIFF(1, _bv_data_label_state_differ, gv_tcl.gv_sdata_labels);
     BV_CDIFF(1, _bv_data_line_state_differ, gv_tcl.gv_sdata_lines);
     BV_CDIFF(1, _bv_data_polygon_state_differ, gv_tcl.gv_sdata_polygons);
-    BV_CDIFF(1, _bv_grid_state_differ, gv_grid);
-    BV_CDIFF(1, _bv_other_state_differ, gv_center_dot);
     BV_CDIFF(1, _bv_other_state_differ, gv_tcl.gv_prim_labels);
-    BV_CDIFF(1, _bv_other_state_differ, gv_view_params);
-    BV_CDIFF(1, _bv_other_state_differ, gv_view_scale);
-    BV_CDIFF(1, _bv_interactive_rect_state_differ, gv_rect);
 
-    BV_NDIFF(1,gv_snap_lines);
-    BV_NDIFF(1,gv_snap_tol_factor);
-    BV_NDIFF(1,gv_cleared);
-    BV_NDIFF(1,gv_zclip);
-    BV_NDIFF(1,gv_data_vZ);
+    if (v1->gv_s != v2->gv_s) {
+	return 1;
+    }
 
-    BV_NDIFF(1,adaptive_plot);
-    BV_NDIFF(1,redraw_on_zoom);
-    BV_NDIFF(1,point_scale);
-    BV_NDIFF(1,curve_scale);
-    BV_NDIFF(1,bot_threshold);
+    if (v1->gv_s) {
+	if (_bv_settings_differ(v1->gv_s, v2->gv_s)) {
+	    return 1;
+	}
+    }
+
+    if (_bv_settings_differ(&v1->gv_ls, &v2->gv_ls)) {
+	return 1;
+    }
 
     BV_DIFF(3,gv_callback);
     BV_DIFF(3,gv_clientData);

@@ -104,7 +104,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_shared, int clear_vi
      * operation has taken place. */
     if (!BU_PTBL_LEN(v->gv_view_objs) && !BU_PTBL_LEN(v->gv_view_shared_objs) &&
 	 !BU_PTBL_LEN(v->gv_view_grps) && !BU_PTBL_LEN(v->gv_db_grps)) {
-	v->gv_cleared = 1;
+	v->gv_s->gv_cleared = 1;
     }
 
     return GED_OK;

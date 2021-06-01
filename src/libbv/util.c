@@ -43,9 +43,6 @@ bv_init(struct bview *gvp)
 
     gvp->magic = BV_MAGIC;
 
-    struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
-    bv_obj_settings_sync(&gvp->gvs, &defaults);
-
     if (!BU_VLS_IS_INITIALIZED(&gvp->gv_name)) {
 	bu_vls_init(&gvp->gv_name);
     }
@@ -67,94 +64,17 @@ bv_init(struct bview *gvp)
     gvp->gv_rscale = 0.4;
     gvp->gv_sscale = 2.0;
 
-    gvp->gv_cleared = 1;
-
-    gvp->gv_adc.a1 = 45.0;
-    gvp->gv_adc.a2 = 45.0;
-    VSET(gvp->gv_adc.line_color, 255, 255, 0);
-    VSET(gvp->gv_adc.tick_color, 255, 255, 255);
-
-    VSET(gvp->gv_grid.anchor, 0.0, 0.0, 0.0);
-    gvp->gv_grid.res_h = 1.0;
-    gvp->gv_grid.res_v = 1.0;
-    gvp->gv_grid.res_major_h = 5;
-    gvp->gv_grid.res_major_v = 5;
-    VSET(gvp->gv_grid.color, 255, 255, 255);
-
-    gvp->gv_rect.draw = 0;
-    gvp->gv_rect.pos[0] = 128;
-    gvp->gv_rect.pos[1] = 128;
-    gvp->gv_rect.dim[0] = 256;
-    gvp->gv_rect.dim[1] = 256;
-    VSET(gvp->gv_rect.color, 255, 255, 255);
-
-    gvp->gv_view_axes.draw = 0;
-    VSET(gvp->gv_view_axes.axes_pos, 0.85, -0.85, 0.0);
-    gvp->gv_view_axes.axes_size = 0.2;
-    gvp->gv_view_axes.line_width = 0;
-    gvp->gv_view_axes.pos_only = 1;
-    VSET(gvp->gv_view_axes.axes_color, 255, 255, 255);
-    gvp->gv_view_axes.label_flag = 1;
-    VSET(gvp->gv_view_axes.label_color, 255, 255, 0);
-    gvp->gv_view_axes.triple_color = 1;
-
-    gvp->gv_model_axes.draw = 0;
-    VSET(gvp->gv_model_axes.axes_pos, 0.0, 0.0, 0.0);
-    gvp->gv_model_axes.axes_size = 2.0;
-    gvp->gv_model_axes.line_width = 0;
-    gvp->gv_model_axes.pos_only = 0;
-    VSET(gvp->gv_model_axes.axes_color, 255, 255, 255);
-    gvp->gv_model_axes.label_flag = 1;
-    VSET(gvp->gv_model_axes.label_color, 255, 255, 0);
-    gvp->gv_model_axes.triple_color = 0;
-    gvp->gv_model_axes.tick_enabled = 1;
-    gvp->gv_model_axes.tick_length = 4;
-    gvp->gv_model_axes.tick_major_length = 8;
-    gvp->gv_model_axes.tick_interval = 100;
-    gvp->gv_model_axes.ticks_per_major = 10;
-    gvp->gv_model_axes.tick_threshold = 8;
-    VSET(gvp->gv_model_axes.tick_color, 255, 255, 0);
-    VSET(gvp->gv_model_axes.tick_major_color, 255, 0, 0);
-
-    gvp->gv_center_dot.gos_draw = 0;
-    VSET(gvp->gv_center_dot.gos_line_color, 255, 255, 0);
-
-    gvp->gv_tcl.gv_prim_labels.gos_draw = 0;
-    VSET(gvp->gv_tcl.gv_prim_labels.gos_text_color, 255, 255, 0);
-
-    gvp->gv_view_params.gos_draw = 0;
-    VSET(gvp->gv_view_params.gos_text_color, 255, 255, 0);
-
-    gvp->gv_view_scale.gos_draw = 0;
-    VSET(gvp->gv_view_scale.gos_line_color, 255, 255, 0);
-    VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
-
-    gvp->gv_fps = 0;
-    gvp->gv_frametime = 1;
-    gvp->gv_fb_mode = 0;
-
-    gvp->gv_data_vZ = 0.0;
-    gvp->gv_autoview = 1;
-
-    gvp->adaptive_plot = 0;
-    gvp->redraw_on_zoom = 0;
-    gvp->point_scale = 1;
-    gvp->curve_scale = 1;
-    gvp->bot_threshold = 0;
+    /* Initialize local settings */
+    bv_settings_init(&gvp->gv_ls);
+    /* Out of the gate we don't have any shared settings */
+    gvp->gv_s = &gvp->gv_ls;
 
     /* FIXME: this causes the shaders.sh regression to fail */
     /* _ged_mat_aet(gvp); */
 
-    // Higher values indicate more aggressive behavior (i.e. points further away will be snapped).
-    gvp->gv_snap_tol_factor = 10;
-    gvp->gv_snap_lines = 0;
+    gvp->gv_tcl.gv_prim_labels.gos_draw = 0;
+    VSET(gvp->gv_tcl.gv_prim_labels.gos_text_color, 255, 255, 0);
 
-    BU_GET(gvp->gv_db_grps, struct bu_ptbl);
-    bu_ptbl_init(gvp->gv_db_grps, 8, "db_objs init");
-
-    // TODO: These will come from the app (usually ged_db_grps and ged_view_shared_objs)
-    //gvp->gv_db_grps = NULL;
-    gvp->gv_view_shared_objs = NULL;
 
     // gv_view_grps is local to this view and thus is controlled
     // by the bv init and free routines.
@@ -166,13 +86,106 @@ bv_init(struct bview *gvp)
     BU_GET(gvp->gv_view_objs, struct bu_ptbl);
     bu_ptbl_init(gvp->gv_view_objs, 8, "view_objs init");
 
-    // TODO - unimplemented
-    BU_GET(gvp->gv_selected, struct bu_ptbl);
-    bu_ptbl_init(gvp->gv_selected, 8, "scene_objs init");
+    // These should come from the app (usually ged_db_grps and ged_view_shared_objs).
+    // Initialize to the local containers until we get the shared ones from the app.
+    gvp->gv_db_grps = gvp->gv_view_grps;
+    gvp->gv_view_shared_objs = gvp->gv_view_objs;
 
+    // Until the app tells us differently, we need to use our local vlist
+    // container
     BU_LIST_INIT(&gvp->gv_vlfree);
+    gvp->vlfree = &gvp->gv_vlfree;
 
     bv_update(gvp);
+}
+
+void
+bv_settings_init(struct bview_settings *s)
+{
+    struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
+    bv_obj_settings_sync(&s->obj_s, &defaults);
+
+    s->gv_cleared = 1;
+
+    s->gv_adc.a1 = 45.0;
+    s->gv_adc.a2 = 45.0;
+    VSET(s->gv_adc.line_color, 255, 255, 0);
+    VSET(s->gv_adc.tick_color, 255, 255, 255);
+
+    VSET(s->gv_grid.anchor, 0.0, 0.0, 0.0);
+    s->gv_grid.res_h = 1.0;
+    s->gv_grid.res_v = 1.0;
+    s->gv_grid.res_major_h = 5;
+    s->gv_grid.res_major_v = 5;
+    VSET(s->gv_grid.color, 255, 255, 255);
+
+    s->gv_rect.draw = 0;
+    s->gv_rect.pos[0] = 128;
+    s->gv_rect.pos[1] = 128;
+    s->gv_rect.dim[0] = 256;
+    s->gv_rect.dim[1] = 256;
+    VSET(s->gv_rect.color, 255, 255, 255);
+
+    s->gv_view_axes.draw = 0;
+    VSET(s->gv_view_axes.axes_pos, 0.85, -0.85, 0.0);
+    s->gv_view_axes.axes_size = 0.2;
+    s->gv_view_axes.line_width = 0;
+    s->gv_view_axes.pos_only = 1;
+    VSET(s->gv_view_axes.axes_color, 255, 255, 255);
+    s->gv_view_axes.label_flag = 1;
+    VSET(s->gv_view_axes.label_color, 255, 255, 0);
+    s->gv_view_axes.triple_color = 1;
+
+    s->gv_model_axes.draw = 0;
+    VSET(s->gv_model_axes.axes_pos, 0.0, 0.0, 0.0);
+    s->gv_model_axes.axes_size = 2.0;
+    s->gv_model_axes.line_width = 0;
+    s->gv_model_axes.pos_only = 0;
+    VSET(s->gv_model_axes.axes_color, 255, 255, 255);
+    s->gv_model_axes.label_flag = 1;
+    VSET(s->gv_model_axes.label_color, 255, 255, 0);
+    s->gv_model_axes.triple_color = 0;
+    s->gv_model_axes.tick_enabled = 1;
+    s->gv_model_axes.tick_length = 4;
+    s->gv_model_axes.tick_major_length = 8;
+    s->gv_model_axes.tick_interval = 100;
+    s->gv_model_axes.ticks_per_major = 10;
+    s->gv_model_axes.tick_threshold = 8;
+    VSET(s->gv_model_axes.tick_color, 255, 255, 0);
+    VSET(s->gv_model_axes.tick_major_color, 255, 0, 0);
+
+    s->gv_center_dot.gos_draw = 0;
+    VSET(s->gv_center_dot.gos_line_color, 255, 255, 0);
+
+    s->gv_view_params.gos_draw = 0;
+    VSET(s->gv_view_params.gos_text_color, 255, 255, 0);
+
+    s->gv_view_scale.gos_draw = 0;
+    VSET(s->gv_view_scale.gos_line_color, 255, 255, 0);
+    VSET(s->gv_view_scale.gos_text_color, 255, 255, 255);
+
+    s->gv_fps = 0;
+    s->gv_frametime = 1;
+    s->gv_fb_mode = 0;
+
+    s->gv_data_vZ = 0.0;
+    s->gv_autoview = 1;
+
+    s->adaptive_plot = 0;
+    s->redraw_on_zoom = 0;
+    s->point_scale = 1;
+    s->curve_scale = 1;
+    s->bot_threshold = 0;
+
+    // Higher values indicate more aggressive behavior (i.e. points further away will be snapped).
+    s->gv_snap_tol_factor = 10;
+    s->gv_snap_lines = 0;
+
+
+    // TODO - unimplemented
+    BU_GET(s->gv_selected, struct bu_ptbl);
+    bu_ptbl_init(s->gv_selected, 8, "scene_objs init");
+
 }
 
 // TODO - investigate saveview/loadview logic, see if anything
@@ -288,14 +301,14 @@ bv_update_selected(struct bview *gvp)
     int ret = 0;
     if (!gvp)
 	return 0;
-
+#if 0
     for(size_t i = 0; i < BU_PTBL_LEN(gvp->gv_selected); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gvp->gv_selected, i);
 	if (s->s_update_callback) {
 	    ret += (*s->s_update_callback)(s);
 	}
     }
-
+#endif
     return (ret > 0) ? 1 : 0;
 }
 

@@ -408,7 +408,7 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 	return -1;
     BU_GET(qi->mw->canvas->v, struct bview);
     bv_init(qi->mw->canvas->v);
-    qi->mw->canvas->v->gv_fb_mode = 1;
+    qi->mw->canvas->v->gv_s->gv_fb_mode = 1;
 
     struct fb_platform_specific fbps;
     fbps.magic = FB_QTGL_MAGIC;

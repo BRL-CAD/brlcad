@@ -722,7 +722,7 @@ to_model_axes(struct ged *gedp,
         return GED_ERROR;
     }
 
-    return to_axes(gedp, gdvp, &gdvp->gv_model_axes, argc, argv, usage);
+    return to_axes(gedp, gdvp, &gdvp->gv_s->gv_model_axes, argc, argv, usage);
 }
 
 int
@@ -746,7 +746,7 @@ go_view_axes(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    return to_axes(gedp, gdvp, &gdvp->gv_view_axes, argc, argv, usage);
+    return to_axes(gedp, gdvp, &gdvp->gv_s->gv_view_axes, argc, argv, usage);
 }
 
 
@@ -780,7 +780,7 @@ to_view_axes(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    return to_axes(gedp, gdvp, &gdvp->gv_view_axes, argc, argv, usage);
+    return to_axes(gedp, gdvp, &gdvp->gv_s->gv_view_axes, argc, argv, usage);
 }
 
 

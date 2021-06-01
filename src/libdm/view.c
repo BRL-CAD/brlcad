@@ -302,62 +302,62 @@ void
 dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 {
     /* Center dot */
-    if (v->gv_center_dot.gos_draw) {
+    if (v->gv_s->gv_center_dot.gos_draw) {
 	(void)dm_set_fg((struct dm *)v->dmp,
-			v->gv_center_dot.gos_line_color[0],
-			v->gv_center_dot.gos_line_color[1],
-			v->gv_center_dot.gos_line_color[2],
+			v->gv_s->gv_center_dot.gos_line_color[0],
+			v->gv_s->gv_center_dot.gos_line_color[1],
+			v->gv_s->gv_center_dot.gos_line_color[2],
 			1, 1.0);
 	(void)dm_draw_point_2d((struct dm *)v->dmp, 0.0, 0.0);
     }
 
     /* Model axes */
-    if (v->gv_model_axes.draw) {
+    if (v->gv_s->gv_model_axes.draw) {
 	point_t map;
 	point_t save_map;
 
-	VMOVE(save_map, v->gv_model_axes.axes_pos);
-	VSCALE(map, v->gv_model_axes.axes_pos, local2base);
-	MAT4X3PNT(v->gv_model_axes.axes_pos, v->gv_model2view, map);
+	VMOVE(save_map, v->gv_s->gv_model_axes.axes_pos);
+	VSCALE(map, v->gv_s->gv_model_axes.axes_pos, local2base);
+	MAT4X3PNT(v->gv_s->gv_model_axes.axes_pos, v->gv_model2view, map);
 
 	dm_draw_hud_axes((struct dm *)v->dmp,
 		     v->gv_size,
 		     v->gv_rotation,
-		     &v->gv_model_axes);
+		     &v->gv_s->gv_model_axes);
 
-	VMOVE(v->gv_model_axes.axes_pos, save_map);
+	VMOVE(v->gv_s->gv_model_axes.axes_pos, save_map);
     }
 
     /* View axes */
-    if (v->gv_view_axes.draw) {
+    if (v->gv_s->gv_view_axes.draw) {
 	int width, height;
 	fastf_t inv_aspect;
 	fastf_t save_ypos;
 
-	save_ypos = v->gv_view_axes.axes_pos[Y];
+	save_ypos = v->gv_s->gv_view_axes.axes_pos[Y];
 	width = dm_get_width((struct dm *)v->dmp);
 	height = dm_get_height((struct dm *)v->dmp);
 	inv_aspect = (fastf_t)height / (fastf_t)width;
-	v->gv_view_axes.axes_pos[Y] = save_ypos * inv_aspect;
+	v->gv_s->gv_view_axes.axes_pos[Y] = save_ypos * inv_aspect;
 	dm_draw_hud_axes((struct dm *)v->dmp,
 		     v->gv_size,
 		     v->gv_rotation,
-		     &v->gv_view_axes);
+		     &v->gv_s->gv_view_axes);
 
-	v->gv_view_axes.axes_pos[Y] = save_ypos;
+	v->gv_s->gv_view_axes.axes_pos[Y] = save_ypos;
     }
 
 
     /* View scale */
-    if (v->gv_view_scale.gos_draw)
+    if (v->gv_s->gv_view_scale.gos_draw)
 	dm_draw_scale((struct dm *)v->dmp,
 		      v->gv_size*base2local,
 		      bu_units_string(1/base2local),
-		      v->gv_view_scale.gos_line_color,
-		      v->gv_view_params.gos_text_color);
+		      v->gv_s->gv_view_scale.gos_line_color,
+		      v->gv_s->gv_view_params.gos_text_color);
 
     /* View parameters */
-    if (v->gv_view_params.gos_draw) {
+    if (v->gv_s->gv_view_params.gos_draw) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	point_t center;
 	char *ustr;
@@ -372,16 +372,16 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 		      V3ARGS(center),
 		      V3ARGS(v->gv_aet));
 	(void)dm_set_fg((struct dm *)v->dmp,
-			v->gv_view_params.gos_text_color[0],
-			v->gv_view_params.gos_text_color[1],
-			v->gv_view_params.gos_text_color[2],
+			v->gv_s->gv_view_params.gos_text_color[0],
+			v->gv_s->gv_view_params.gos_text_color[1],
+			v->gv_s->gv_view_params.gos_text_color[2],
 			1, 1.0);
 	(void)dm_draw_string_2d((struct dm *)v->dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
 	bu_vls_free(&vls);
     }
 
     /* Frames per second */
-    if (v->gv_fps) {
+    if (v->gv_s->gv_fps) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	int width = dm_get_width((struct dm *)v->dmp);
 	int height = dm_get_height((struct dm *)v->dmp);
@@ -389,31 +389,31 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 	/* Only use reasonable measurements */
 	if (elapsed_time > 10LL && elapsed_time < 30000000LL) {
 	    /* Smoothly transition to new speed */
-	    v->gv_frametime = 0.9 * v->gv_frametime + 0.1 * elapsed_time / 1000000LL;
+	    v->gv_s->gv_frametime = 0.9 * v->gv_s->gv_frametime + 0.1 * elapsed_time / 1000000LL;
 	}
-	bu_vls_printf(&vls, "FPS:%.2f", 1/v->gv_frametime);
+	bu_vls_printf(&vls, "FPS:%.2f", 1/v->gv_s->gv_frametime);
 	// TODO - set up separate FPS color
 	(void)dm_set_fg((struct dm *)v->dmp,
-			v->gv_view_params.gos_text_color[0],
-			v->gv_view_params.gos_text_color[1],
-			v->gv_view_params.gos_text_color[2],
+			v->gv_s->gv_view_params.gos_text_color[0],
+			v->gv_s->gv_view_params.gos_text_color[1],
+			v->gv_s->gv_view_params.gos_text_color[2],
 			1, 1.0);
 	(void)dm_draw_string_2d((struct dm *)v->dmp, bu_vls_cstr(&vls), -1.0 + 10.0/(double)width, 1.0 - 40.0/(double)height, 10, 0);
 	bu_vls_free(&vls);
     }
 
     /* Draw the angle distance cursor */
-    if (v->gv_adc.draw)
-	dm_draw_adc((struct dm *)v->dmp, &(v->gv_adc), v->gv_view2model, v->gv_model2view);
+    if (v->gv_s->gv_adc.draw)
+	dm_draw_adc((struct dm *)v->dmp, &(v->gv_s->gv_adc), v->gv_view2model, v->gv_model2view);
 
     /* Draw grid */
-    if (v->gv_grid.draw) {
-	dm_draw_grid((struct dm *)v->dmp, &v->gv_grid, v->gv_scale, v->gv_model2view, base2local);
+    if (v->gv_s->gv_grid.draw) {
+	dm_draw_grid((struct dm *)v->dmp, &v->gv_s->gv_grid, v->gv_scale, v->gv_model2view, base2local);
     }
 
     /* Draw rect */
-    if (v->gv_rect.draw && v->gv_rect.line_width)
-	dm_draw_rect((struct dm *)v->dmp, &v->gv_rect);
+    if (v->gv_s->gv_rect.draw && v->gv_s->gv_rect.line_width)
+	dm_draw_rect((struct dm *)v->dmp, &v->gv_s->gv_rect);
 }
 
 void
@@ -678,13 +678,13 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
     // The rest of the drawing layers manipulate the OpenGL view and projection
     // matrices, but the framebuffer is always aligned to the view.  We also
     // can't have the zbuffer enabled or the fb image won't draw correctly.
-    if (v->gv_fb_mode && dm_get_fb(dmp)) {
+    if (v->gv_s->gv_fb_mode && dm_get_fb(dmp)) {
 	int zbuff_restore = dm_get_zbuffer(dmp);
 	dm_set_zbuffer(dmp, 0);
 	fb_refresh(dm_get_fb(dmp), 0, 0, dm_get_width(dmp), dm_get_height(dmp));
 	if (zbuff_restore)
 	    dm_set_zbuffer(dmp, 1);
-	if (v->gv_fb_mode == 1) {
+	if (v->gv_s->gv_fb_mode == 1) {
 	    // In overlay mode, it's just the fb - skip all the rest
 	    return;
 	}

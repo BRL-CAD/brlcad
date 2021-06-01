@@ -2024,7 +2024,7 @@ rt_tgc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	return 0;
     }
 
-    connecting_lines = tgc_connecting_lines(tip, v->curve_scale, s_size);
+    connecting_lines = tgc_connecting_lines(tip, v->gv_s->curve_scale, s_size);
 
     if (connecting_lines < 4) {
 	connecting_lines = 4;

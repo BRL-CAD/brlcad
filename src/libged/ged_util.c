@@ -1406,7 +1406,7 @@ void
 _ged_rt_set_eye_model(struct ged *gedp,
 		      vect_t eye_model)
 {
-    if (gedp->ged_gvp->gv_zclip || gedp->ged_gvp->gv_perspective > 0) {
+    if (gedp->ged_gvp->gv_s->gv_zclip || gedp->ged_gvp->gv_perspective > 0) {
 	vect_t temp;
 
 	VSET(temp, 0.0, 0.0, 1.0);

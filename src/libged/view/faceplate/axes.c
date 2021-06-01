@@ -703,11 +703,11 @@ _fp_cmd_model_axes(void *bs, int argc, const char **argv)
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_model_axes.draw = 1;
+	    v->gv_s->gv_model_axes.draw = 1;
 	    return GED_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_model_axes.draw = 0;
+	    v->gv_s->gv_model_axes.draw = 0;
 	    return GED_OK;
 	}
     }
@@ -733,7 +733,7 @@ _fp_cmd_model_axes(void *bs, int argc, const char **argv)
 
     struct _ged_fp_axes_info ainfo;
     ainfo.gd = gd;
-    ainfo.a = &v->gv_model_axes;
+    ainfo.a = &v->gv_s->gv_model_axes;
 
     return _ged_subcmd_exec(gedp, d, _fp_axes_cmds, "view faceplate model_axes", "[options] subcommand [args]", (void *)&ainfo, argc, argv, help, cmd_pos);
 }
@@ -762,11 +762,11 @@ _fp_cmd_view_axes(void *bs, int argc, const char **argv)
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_view_axes.draw = 1;
+	    v->gv_s->gv_view_axes.draw = 1;
 	    return GED_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_view_axes.draw = 0;
+	    v->gv_s->gv_view_axes.draw = 0;
 	    return GED_OK;
 	}
     }
@@ -792,7 +792,7 @@ _fp_cmd_view_axes(void *bs, int argc, const char **argv)
 
     struct _ged_fp_axes_info ainfo;
     ainfo.gd = gd;
-    ainfo.a = &v->gv_view_axes;
+    ainfo.a = &v->gv_s->gv_view_axes;
 
     return _ged_subcmd_exec(gedp, d, _fp_axes_cmds, "view faceplate view_axes", "[options] subcommand [args]", (void *)&ainfo, argc, argv, help, cmd_pos);
 }

@@ -156,25 +156,25 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     /* Print current state if no args are supplied */
     if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "enabled: %d\n", gvp->adaptive_plot);
-	bu_vls_printf(gedp->ged_result_str, "redraw_on_zoom: %d\n", gvp->redraw_on_zoom);
-	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", gvp->point_scale);
-	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", gvp->curve_scale);
-	bu_vls_printf(gedp->ged_result_str, "bot_threshold: %zd\n", gvp->bot_threshold);
+	bu_vls_printf(gedp->ged_result_str, "enabled: %d\n", gvp->gv_s->adaptive_plot);
+	bu_vls_printf(gedp->ged_result_str, "redraw_on_zoom: %d\n", gvp->gv_s->redraw_on_zoom);
+	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", gvp->gv_s->point_scale);
+	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", gvp->gv_s->curve_scale);
+	bu_vls_printf(gedp->ged_result_str, "bot_threshold: %zd\n", gvp->gv_s->bot_threshold);
 	return GED_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "enabled")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->adaptive_plot);
+	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot);
 	    return GED_OK;
 	}
 	if (bu_str_true(argv[1])) {
-	    gvp->adaptive_plot = 1;
+	    gvp->gv_s->adaptive_plot = 1;
 	    return GED_OK;
 	}
 	if (bu_str_false(argv[1])) {
-	    gvp->adaptive_plot = 0;
+	    gvp->gv_s->adaptive_plot = 0;
 	    return GED_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "unknown argument to enabled: %s\n", argv[1]);
@@ -183,15 +183,15 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUAL(argv[0], "redraw_on_zoom")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->redraw_on_zoom);
+	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->redraw_on_zoom);
 	    return GED_OK;
 	}
 	if (bu_str_true(argv[1])) {
-	    gvp->redraw_on_zoom = 1;
+	    gvp->gv_s->redraw_on_zoom = 1;
 	    return GED_OK;
 	}
 	if (bu_str_false(argv[1])) {
-	    gvp->redraw_on_zoom = 0;
+	    gvp->gv_s->redraw_on_zoom = 0;
 	    return GED_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "unknown argument to redraw_on_zoom: %s\n", argv[1]);
@@ -200,7 +200,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUAL(argv[0], "point_scale")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->point_scale);
+	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->point_scale);
 	    return GED_OK;
 	}
 	fastf_t scale = 1.0;
@@ -208,13 +208,13 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
 	    return GED_ERROR;
 	}
-	gvp->point_scale = scale;
+	gvp->gv_s->point_scale = scale;
 	return GED_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "curve_scale")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->curve_scale);
+	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->curve_scale);
 	    return GED_OK;
 	}
 	fastf_t scale = 1.0;
@@ -222,13 +222,13 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to curve_scale: %s\n", argv[1]);
 	    return GED_ERROR;
 	}
-	gvp->curve_scale = scale;
+	gvp->gv_s->curve_scale = scale;
 	return GED_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "bot_threshold")) {
 	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%zd\n", gvp->bot_threshold);
+	    bu_vls_printf(gedp->ged_result_str, "%zd\n", gvp->gv_s->bot_threshold);
 	    return GED_OK;
 	}
 	int bcnt = 0;
@@ -236,7 +236,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to bot_threshold: %s\n", argv[1]);
 	    return GED_ERROR;
 	}
-	gvp->bot_threshold = bcnt;
+	gvp->gv_s->bot_threshold = bcnt;
 	return GED_OK;
 
     }
@@ -276,7 +276,7 @@ _view_cmd_selections(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    bu_vls_printf(gd->gedp->ged_result_str, "%zd", BU_PTBL_LEN(v->gv_selected));
+    bu_vls_printf(gd->gedp->ged_result_str, "%zd", BU_PTBL_LEN(v->gv_s->gv_selected));
 
     return GED_OK;
 }

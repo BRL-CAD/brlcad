@@ -70,7 +70,7 @@ void set_curr_dm(struct mged_dm *nc)
     mged_curr_dm = nc;
     if (nc != MGED_DM_NULL && nc->dm_view_state) {
 	GEDP->ged_gvp = nc->dm_view_state->vs_gvp;
-	GEDP->ged_gvp->gv_grid = *nc->dm_grid_state; /* struct copy */
+	GEDP->ged_gvp->gv_s->gv_grid = *nc->dm_grid_state; /* struct copy */
     } else {
 	if (GEDP) {
 	    GEDP->ged_gvp = NULL;
@@ -480,7 +480,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     mged_fb_open();
 
     GEDP->ged_gvp = mged_curr_dm->dm_view_state->vs_gvp;
-    GEDP->ged_gvp->gv_grid = *mged_curr_dm->dm_grid_state; /* struct copy */
+    GEDP->ged_gvp->gv_s->gv_grid = *mged_curr_dm->dm_grid_state; /* struct copy */
 
     return TCL_OK;
 
@@ -693,10 +693,10 @@ dm_var_init(struct mged_dm *target_dm)
 
     *view_state->vs_gvp = *target_dm->dm_view_state->vs_gvp;	/* struct copy */
     view_state->vs_gvp->gv_clientData = (void *)view_state;
-    view_state->vs_gvp->adaptive_plot = 0;
-    view_state->vs_gvp->redraw_on_zoom = 0;
-    view_state->vs_gvp->point_scale = 1.0;
-    view_state->vs_gvp->curve_scale = 1.0;
+    view_state->vs_gvp->gv_s->adaptive_plot = 0;
+    view_state->vs_gvp->gv_s->redraw_on_zoom = 0;
+    view_state->vs_gvp->gv_s->point_scale = 1.0;
+    view_state->vs_gvp->gv_s->curve_scale = 1.0;
     view_state->vs_rc = 1;
     view_ring_init(mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
 

@@ -231,15 +231,15 @@ bv_create_polygon(struct bview *v, int type, int x, int y, struct bv_scene_obj *
 	return NULL;
     }
     int snapped = 0;
-    if (v->gv_snap_lines) {
+    if (v->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
-    if (!snapped && v->gv_grid.snap) {
+    if (!snapped && v->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     point_t v_pt, m_pt;
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, v->gv_s->gv_data_vZ);
     MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
     VMOVE(p->prev_point, v_pt);
 
@@ -294,15 +294,15 @@ bv_append_polygon_pt(struct bv_scene_obj *s)
 	return 0;
 
     int snapped = 0;
-    if (v->gv_snap_lines) {
+    if (v->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
-    if (!snapped && v->gv_grid.snap) {
+    if (!snapped && v->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     point_t v_pt;
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, v->gv_s->gv_data_vZ);
 
     struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
     c->num_points++;
@@ -333,15 +333,15 @@ bv_select_polygon_pt(struct bv_scene_obj *s)
 	return 0;
 
     int snapped = 0;
-    if (v->gv_snap_lines) {
+    if (v->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
-    if (!snapped && v->gv_grid.snap) {
+    if (!snapped && v->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     point_t v_pt, m_pt;
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, v->gv_s->gv_data_vZ);
     MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
 
 
@@ -404,15 +404,15 @@ bv_move_polygon_pt(struct bv_scene_obj *s)
 	return 0;
 
     int snapped = 0;
-    if (v->gv_snap_lines) {
+    if (v->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
-    if (!snapped && v->gv_grid.snap) {
+    if (!snapped && v->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     point_t v_pt, m_pt;
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, v->gv_s->gv_data_vZ);
     // Use the polygon's view context for actually moving the point
     MAT4X3PNT(m_pt, p->v.gv_view2model, v_pt);
 
@@ -449,14 +449,14 @@ bv_update_polygon_circle(struct bv_scene_obj *s)
 	return 0;
 
     int snapped = 0;
-    if (v->gv_snap_lines) {
+    if (v->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
-    if (!snapped && v->gv_grid.snap) {
+    if (!snapped && v->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(v, &fx, &fy);
     }
 
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, v->gv_s->gv_data_vZ);
     VSUB2(vdiff, v_pt, p->prev_point);
     r = MAGNITUDE(vdiff);
 
@@ -487,7 +487,7 @@ bv_update_polygon_circle(struct bv_scene_obj *s)
 
 	curr_fx = cos(ang*DEG2RAD) * r + p->prev_point[X];
 	curr_fy = sin(ang*DEG2RAD) * r + p->prev_point[Y];
-	VSET(v_pt, curr_fx, curr_fy, v->gv_data_vZ);
+	VSET(v_pt, curr_fx, curr_fy, v->gv_s->gv_data_vZ);
 	// Use the polygon's view context for actually adding the points
 	MAT4X3PNT(gpp->contour[0].point[n], p->v.gv_view2model, v_pt);
     }
@@ -520,10 +520,10 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s)
 	return 0;
 
     int snapped = 0;
-    if (v->gv_snap_lines) {
+    if (v->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
-    if (!snapped && v->gv_grid.snap) {
+    if (!snapped && v->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(v, &fx, &fy);
     }
 
@@ -544,8 +544,8 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s)
      * note that sin(alpha) is cos(90-alpha).
      */
 
-    VSET(A, a, 0, v->gv_data_vZ);
-    VSET(B, 0, b, v->gv_data_vZ);
+    VSET(A, a, 0, v->gv_s->gv_data_vZ);
+    VSET(B, 0, b, v->gv_s->gv_data_vZ);
 
     /* use a variable number of segments based on the size of the
      * circle being created so small circles have few segments and
@@ -607,21 +607,21 @@ bv_update_polygon_rectangle(struct bv_scene_obj *s)
 	return 0;
 
     int snapped = 0;
-    if (v->gv_snap_lines) {
+    if (v->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
-    if (!snapped && v->gv_grid.snap) {
+    if (!snapped && v->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(v, &fx, &fy);
     }
 
     // Use the polygon's view context for actually adjusting the points
     point_t v_pt;
     MAT4X3PNT(p->polygon.contour[0].point[0], p->v.gv_view2model, p->prev_point);
-    VSET(v_pt, p->prev_point[X], fy, v->gv_data_vZ);
+    VSET(v_pt, p->prev_point[X], fy, v->gv_s->gv_data_vZ);
     MAT4X3PNT(p->polygon.contour[0].point[1], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, v->gv_s->gv_data_vZ);
     MAT4X3PNT(p->polygon.contour[0].point[2], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, p->prev_point[Y], v->gv_data_vZ);
+    VSET(v_pt, fx, p->prev_point[Y], v->gv_s->gv_data_vZ);
     MAT4X3PNT(p->polygon.contour[0].point[3], p->v.gv_view2model, v_pt);
     p->polygon.contour[0].open = 0;
 
@@ -647,10 +647,10 @@ bv_update_polygon_square(struct bv_scene_obj *s)
 	return 0;
 
     int snapped = 0;
-    if (v->gv_snap_lines) {
+    if (v->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(v, &fx, &fy);
     }
-    if (!snapped && v->gv_grid.snap) {
+    if (!snapped && v->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(v, &fx, &fy);
     }
 
@@ -672,11 +672,11 @@ bv_update_polygon_square(struct bv_scene_obj *s)
     // Use the polygon's view context for actually adjusting the points
     point_t v_pt;
     MAT4X3PNT(p->polygon.contour[0].point[0], p->v.gv_view2model, p->prev_point);
-    VSET(v_pt, p->prev_point[X], fy, v->gv_data_vZ);
+    VSET(v_pt, p->prev_point[X], fy, v->gv_s->gv_data_vZ);
     MAT4X3PNT(p->polygon.contour[0].point[1], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, v->gv_s->gv_data_vZ);
     MAT4X3PNT(p->polygon.contour[0].point[2], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, p->prev_point[Y], v->gv_data_vZ);
+    VSET(v_pt, fx, p->prev_point[Y], v->gv_s->gv_data_vZ);
     MAT4X3PNT(p->polygon.contour[0].point[3], p->v.gv_view2model, v_pt);
     p->polygon.contour[0].open = 0;
 

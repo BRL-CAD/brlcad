@@ -2333,7 +2333,7 @@ rt_pipe_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const st
 
     fastf_t point_spacing = solid_point_spacing(v, s_size);
 
-    cur_seg->connecting_arcs = pipe_connecting_arcs(pipeobj, vhead, v->curve_scale, s_size);
+    cur_seg->connecting_arcs = pipe_connecting_arcs(pipeobj, vhead, v->gv_s->curve_scale, s_size);
 
     draw_pipe_end_adaptive(vlfree, vhead, cur_seg, point_spacing);
     pipe_seg_advance(cur_seg);

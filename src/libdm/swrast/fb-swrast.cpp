@@ -377,7 +377,7 @@ fb_swrast_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 
     BU_GET(qi->mw->canvas->v, struct bview);
     bv_init(qi->mw->canvas->v);
-    qi->mw->canvas->v->gv_fb_mode = 1;
+    qi->mw->canvas->v->gv_s->gv_fb_mode = 1;
     qi->mw->canvas->v->gv_width = width;
     qi->mw->canvas->v->gv_height = height;
 

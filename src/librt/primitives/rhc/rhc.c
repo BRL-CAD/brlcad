@@ -988,7 +988,7 @@ rt_rhc_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     }
 
     /* connect both halves of the hyperbolic contours of the opposing faces */
-    num_connections = primitive_curve_count(ip, tol, v->curve_scale, s_size);
+    num_connections = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
     if (num_connections < 2) {
 	num_connections = 2;
     }

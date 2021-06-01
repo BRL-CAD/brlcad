@@ -90,7 +90,7 @@ _wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
 
-    if (s->s_v->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
+    if (s->s_v->gv_s->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, s->s_v, s->s_size);
     } else if (ip->idb_meth->ft_plot) {
 	ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
@@ -254,11 +254,11 @@ geom_done:
     bv_scene_obj_bound(s);
 
     // Store current view info, in case of adaptive plotting
-    s->adaptive_wireframe = s->s_v->adaptive_plot;
+    s->adaptive_wireframe = s->s_v->gv_s->adaptive_plot;
     s->view_scale = s->s_v->gv_scale;
-    s->bot_threshold= s->s_v->bot_threshold;
-    s->curve_scale = s->s_v->curve_scale;
-    s->point_scale = s->s_v->point_scale;
+    s->bot_threshold= s->s_v->gv_s->bot_threshold;
+    s->curve_scale = s->s_v->gv_s->curve_scale;
+    s->point_scale = s->s_v->gv_s->point_scale;
 
     rt_db_free_internal(&dbintern);
 }
@@ -288,26 +288,26 @@ _ged_update_db_path(struct bv_scene_obj *s)
     // a new vlist for the current conditions.
 
     bool rework = false;
-    if (s->s_v->adaptive_plot != s->adaptive_wireframe) {
+    if (s->s_v->gv_s->adaptive_plot != s->adaptive_wireframe) {
 	rework = true;
     }
-    if (!rework && s->s_v->adaptive_plot) {
+    if (!rework && s->s_v->gv_s->adaptive_plot) {
 	// Check bot threshold
-	if (s->bot_threshold != s->s_v->bot_threshold) {
+	if (s->bot_threshold != s->s_v->gv_s->bot_threshold) {
 	    rework = true;
 	}
 	// Check point scale
-	if (!rework && !NEAR_EQUAL(s->curve_scale, s->s_v->curve_scale, SMALL_FASTF)) {
+	if (!rework && !NEAR_EQUAL(s->curve_scale, s->s_v->gv_s->curve_scale, SMALL_FASTF)) {
 	    rework = true;
 	}
 	// Check point scale
-	if (!rework && !NEAR_EQUAL(s->point_scale, s->s_v->point_scale, SMALL_FASTF)) {
+	if (!rework && !NEAR_EQUAL(s->point_scale, s->s_v->gv_s->point_scale, SMALL_FASTF)) {
 	    rework = true;
 	}
     }
 
     // If redraw-on-zoom is set, check the scale
-    if (!rework && s->s_v->adaptive_plot && s->s_v->redraw_on_zoom) {
+    if (!rework && s->s_v->gv_s->adaptive_plot && s->s_v->gv_s->redraw_on_zoom) {
 	// Check view scale
 	fastf_t delta = s->view_scale * 0.1/s->view_scale;
 	if (!rework && !NEAR_EQUAL(s->view_scale, s->s_v->gv_scale, delta)) {
@@ -723,7 +723,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     struct bu_ptbl *sg;
 
     // If we're adaptive, we're operating locally
-    if (v->adaptive_plot) {
+    if (v->gv_s->adaptive_plot) {
 	sg = v->gv_view_grps;
     } else {
 	sg = v->gv_db_grps;
@@ -777,7 +777,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 
     /* Bot threshold a per-view setting. */
     if (bot_threshold >= 0) {
-	v->bot_threshold = bot_threshold;
+	v->gv_s->bot_threshold = bot_threshold;
     }
 
 
@@ -881,7 +881,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    // for each group we're going to be using mat and walking the tree
 	    // of fp (or getting its box directly if fp is a solid with no
 	    // parents) to build up bounding info.
-	    if (blank_slate && v->adaptive_plot && !no_autoview) {
+	    if (blank_slate && v->gv_s->adaptive_plot && !no_autoview) {
 		mat_t cmat;
 		MAT_COPY(cmat, mat);
 		_bound_fp(fp, &cmat, (void *)&bounds_data);
@@ -900,7 +900,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	}
     }
 
-    if (blank_slate && v->adaptive_plot && !no_autoview) {
+    if (blank_slate && v->gv_s->adaptive_plot && !no_autoview) {
 	// We've checked the paths for bounding info - now set up the
 	// view
 	point_t center = VINIT_ZERO;
@@ -1072,7 +1072,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     /* Option defaults come from the current view, but may be overridden for
      * the purposes of the current draw command by command line options. */
     if (gedp->ged_gvp)
-	bv_obj_settings_sync(&vs, &gedp->ged_gvp->gvs);
+	bv_obj_settings_sync(&vs, &gedp->ged_gvp->gv_s->obj_s);
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
     struct bu_opt_desc d[16];
@@ -1141,7 +1141,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     int ret = GED_OK;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
-	if (v->adaptive_plot) {
+	if (v->gv_s->adaptive_plot) {
 	    int aret = ged_draw_view(gedp, v, &vs, argc, argv, bot_threshold, no_autoview);
 	    if (aret & GED_ERROR)
 		ret = aret;

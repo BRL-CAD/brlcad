@@ -798,7 +798,7 @@ rt_ell_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
 	return 0;
     }
 
-    config.num_cross_sections = primitive_curve_count(ip, tol, v->curve_scale, s_size);
+    config.num_cross_sections = primitive_curve_count(ip, tol, v->gv_s->curve_scale, s_size);
 
     VMOVE(config.ell_travel_vector, eip->a);
     VMOVE(config.ell_axis_vector_a, eip->b);

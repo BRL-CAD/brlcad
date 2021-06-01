@@ -39,7 +39,7 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
     if (tvd->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
-	if (gdvp->gv_rect.draw) {
+	if (gdvp->gv_s->gv_rect.draw) {
 	    go_draw(gdvp);
 
 	    dm_draw_viewobjs(gedp->ged_wdbp, gdvp, &tgd->go_dmv, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_wdbp->dbip->dbi_local2base);
@@ -48,14 +48,14 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
 	    fb_refresh(tvd->gdv_fbs.fbs_fbp,
-		       gdvp->gv_rect.pos[X], gdvp->gv_rect.pos[Y],
-		       gdvp->gv_rect.dim[X], gdvp->gv_rect.dim[Y]);
+		       gdvp->gv_s->gv_rect.pos[X], gdvp->gv_s->gv_rect.pos[Y],
+		       gdvp->gv_s->gv_rect.dim[X], gdvp->gv_s->gv_rect.dim[Y]);
 
 	    /* enable write to depth buffer */
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 1);
 
-	    if (gdvp->gv_rect.line_width)
-		dm_draw_rect((struct dm *)gdvp->dmp, &gdvp->gv_rect);
+	    if (gdvp->gv_s->gv_rect.line_width)
+		dm_draw_rect((struct dm *)gdvp->dmp, &gdvp->gv_s->gv_rect);
 	} else {
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
@@ -78,10 +78,10 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	/* disable write to depth buffer */
 	(void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
-	if (gdvp->gv_rect.draw) {
+	if (gdvp->gv_s->gv_rect.draw) {
 	    fb_refresh(tvd->gdv_fbs.fbs_fbp,
-		       gdvp->gv_rect.pos[X], gdvp->gv_rect.pos[Y],
-		       gdvp->gv_rect.dim[X], gdvp->gv_rect.dim[Y]);
+		       gdvp->gv_s->gv_rect.pos[X], gdvp->gv_s->gv_rect.pos[Y],
+		       gdvp->gv_s->gv_rect.dim[X], gdvp->gv_s->gv_rect.dim[Y]);
 	} else
 	    fb_refresh(tvd->gdv_fbs.fbs_fbp, 0, 0,
 		       dm_get_width((struct dm *)gdvp->dmp), dm_get_height((struct dm *)gdvp->dmp));
@@ -97,10 +97,10 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
 
-	    if (gdvp->gv_rect.draw) {
+	    if (gdvp->gv_s->gv_rect.draw) {
 		fb_refresh(tvd->gdv_fbs.fbs_fbp,
-			   gdvp->gv_rect.pos[X], gdvp->gv_rect.pos[Y],
-			   gdvp->gv_rect.dim[X], gdvp->gv_rect.dim[Y]);
+			   gdvp->gv_s->gv_rect.pos[X], gdvp->gv_s->gv_rect.pos[Y],
+			   gdvp->gv_s->gv_rect.dim[X], gdvp->gv_s->gv_rect.dim[Y]);
 	    } else
 		fb_refresh(tvd->gdv_fbs.fbs_fbp, 0, 0,
 			   dm_get_width((struct dm *)gdvp->dmp), dm_get_height((struct dm *)gdvp->dmp));

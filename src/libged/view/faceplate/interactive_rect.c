@@ -232,7 +232,7 @@ _fp_irect_cmd_dim(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
 	return GED_ERROR;
     }
-  
+
     int dim[2];
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&(dim[0])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
@@ -502,11 +502,11 @@ _fp_cmd_irect(void *bs, int argc, const char **argv)
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_rect.draw = 1;
+	    v->gv_s->gv_rect.draw = 1;
 	    return GED_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_rect.draw = 0;
+	    v->gv_s->gv_rect.draw = 0;
 	    return GED_OK;
 	}
     }
@@ -532,7 +532,7 @@ _fp_cmd_irect(void *bs, int argc, const char **argv)
 
     struct _ged_fp_irect_info rinfo;
     rinfo.gd = gd;
-    rinfo.r = &v->gv_rect;
+    rinfo.r = &v->gv_s->gv_rect;
 
     return _ged_subcmd_exec(gedp, d, _fp_irect_cmds, "view faceplate irect", "[options] subcommand [args]", (void *)&rinfo, argc, argv, help, cmd_pos);
 }

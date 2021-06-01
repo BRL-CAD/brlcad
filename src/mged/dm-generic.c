@@ -69,8 +69,8 @@ common_dm(int argc, const char *argv[])
 
 	/* redraw after scaling */
 	if (GEDP && GEDP->ged_gvp &&
-	    GEDP->ged_gvp->adaptive_plot &&
-	    GEDP->ged_gvp->redraw_on_zoom &&
+	    GEDP->ged_gvp->gv_s->adaptive_plot &&
+	    GEDP->ged_gvp->gv_s->redraw_on_zoom &&
 	    (am_mode == AMM_SCALE ||
 	     am_mode == AMM_CON_SCALE_X ||
 	     am_mode == AMM_CON_SCALE_Y ||
@@ -628,7 +628,7 @@ zclip_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
-    hs->vs->vs_gvp->gv_zclip = dm_get_zclip(hs->hs_dmp);
+    hs->vs->vs_gvp->gv_s->gv_zclip = dm_get_zclip(hs->hs_dmp);
     dirty_hook(sdp, name, base, value, data);
 }
 

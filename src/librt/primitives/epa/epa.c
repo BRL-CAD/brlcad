@@ -877,7 +877,7 @@ rt_epa_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     }
 
     fastf_t curve_spacing = s_size / 2.0;
-    curve_spacing /= v->curve_scale;
+    curve_spacing /= v->gv_s->curve_scale;
     num_curves = mag_H / curve_spacing;
     if (num_curves < 2) {
 	num_curves = 2;

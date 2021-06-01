@@ -383,6 +383,42 @@ bv_dl_hash(struct display_list *dl)
     return (unsigned long long)hash_val;
 }
 
+void
+bv_settings_hash(XXH64_state_t *state, struct bview_settings *s)
+{
+    XXH64_update(state, &s->adaptive_plot, sizeof(int));
+    XXH64_update(state, &s->bot_threshold, sizeof(size_t));
+    XXH64_update(state, &s->curve_scale, sizeof(fastf_t));
+    XXH64_update(state, &s->point_scale, sizeof(fastf_t));
+    XXH64_update(state, &s->redraw_on_zoom, sizeof(int));
+
+    _bv_obj_settings_hash(state, &s->obj_s);
+    XXH64_update(state, &s->gv_zclip, sizeof(int));
+    XXH64_update(state, &s->gv_cleared, sizeof(int));
+    _bv_adc_state_hash(state, &s->gv_adc);
+    _bv_axes_hash(state, &s->gv_model_axes);
+    _bv_axes_hash(state, &s->gv_view_axes);
+
+    XXH64_update(state, &s->gv_snap_lines, sizeof(int));
+    XXH64_update(state, &s->gv_snap_tol_factor, sizeof(double));
+    _bv_grid_state_hash(state, &s->gv_grid);
+    _bv_other_state_hash(state, &s->gv_center_dot);
+
+    _bv_other_state_hash(state, &s->gv_view_params);
+    _bv_other_state_hash(state, &s->gv_view_scale);
+    _bv_interactive_rect_state_hash(state, &s->gv_rect);
+    XXH64_update(state, &s->gv_fps, sizeof(int));
+    XXH64_update(state, &s->gv_fb_mode, sizeof(int));
+    XXH64_update(state, &s->gv_data_vZ, sizeof(fastf_t));
+
+#if 0
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
+	long *p = BU_PTBL_GET(v->gv_selected, i);
+	XXH64_update(state, p, sizeof(long *));
+    }
+#endif
+
+}
 
 unsigned long long
 bv_hash(struct bview *v)
@@ -424,18 +460,10 @@ bv_hash(struct bview *v)
     XXH64_update(state, &v->gv_rscale, sizeof(fastf_t));
     XXH64_update(state, &v->gv_sscale, sizeof(fastf_t));
 
-    XXH64_update(state, &v->adaptive_plot, sizeof(int));
-    XXH64_update(state, &v->bot_threshold, sizeof(size_t));
-    XXH64_update(state, &v->curve_scale, sizeof(fastf_t));
-    XXH64_update(state, &v->point_scale, sizeof(fastf_t));
-    XXH64_update(state, &v->redraw_on_zoom, sizeof(int));
+    if (v->gv_s)
+	bv_settings_hash(state, &v->gv_ls);
+    bv_settings_hash(state, &v->gv_ls);
 
-   _bv_obj_settings_hash(state, &v->gvs);
-    XXH64_update(state, &v->gv_zclip, sizeof(int));
-    XXH64_update(state, &v->gv_cleared, sizeof(int));
-    _bv_adc_state_hash(state, &v->gv_adc);
-    _bv_axes_hash(state, &v->gv_model_axes);
-    _bv_axes_hash(state, &v->gv_view_axes);
     _bv_data_arrow_state_hash(state, &v->gv_tcl.gv_data_arrows);
     _bv_data_axes_state_hash(state, &v->gv_tcl.gv_data_axes);
     _bv_data_label_state_hash(state, &v->gv_tcl.gv_data_labels);
@@ -445,23 +473,8 @@ bv_hash(struct bview *v)
     _bv_data_axes_state_hash(state, &v->gv_tcl.gv_sdata_axes);
     _bv_data_label_state_hash(state, &v->gv_tcl.gv_sdata_labels);
     _bv_data_line_state_hash(state, &v->gv_tcl.gv_sdata_lines);
-    XXH64_update(state, &v->gv_snap_lines, sizeof(int));
-    XXH64_update(state, &v->gv_snap_tol_factor, sizeof(double));
     _bv_data_polygon_state_hash(state, &v->gv_tcl.gv_sdata_polygons);
-    _bv_grid_state_hash(state, &v->gv_grid);
-    _bv_other_state_hash(state, &v->gv_center_dot);
     _bv_other_state_hash(state, &v->gv_tcl.gv_prim_labels);
-    _bv_other_state_hash(state, &v->gv_view_params);
-    _bv_other_state_hash(state, &v->gv_view_scale);
-    _bv_interactive_rect_state_hash(state, &v->gv_rect);
-    XXH64_update(state, &v->gv_fps, sizeof(int));
-    XXH64_update(state, &v->gv_fb_mode, sizeof(int));
-    XXH64_update(state, &v->gv_data_vZ, sizeof(fastf_t));
-
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
-	long *p = BU_PTBL_GET(v->gv_selected, i);
-	XXH64_update(state, p, sizeof(long *));
-    }
 
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);

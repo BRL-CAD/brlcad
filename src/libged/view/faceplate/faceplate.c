@@ -87,22 +87,22 @@ _fp_cmd_center_dot(void *ds, int argc, const char **argv)
 
     if (!argc) {
 	if (gd->verbosity) {
-	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_center_dot.gos_draw,
-		    v->gv_center_dot.gos_line_color[0], v->gv_center_dot.gos_line_color[1],
-		    v->gv_center_dot.gos_line_color[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_s->gv_center_dot.gos_draw,
+		    v->gv_s->gv_center_dot.gos_line_color[0], v->gv_s->gv_center_dot.gos_line_color[1],
+		    v->gv_s->gv_center_dot.gos_line_color[2]);
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_center_dot.gos_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_center_dot.gos_draw);
 	}
 	return GED_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_center_dot.gos_draw = 1;
+	    v->gv_s->gv_center_dot.gos_draw = 1;
 	    return GED_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_center_dot.gos_draw = 0;
+	    v->gv_s->gv_center_dot.gos_draw = 0;
 	    return GED_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
@@ -120,7 +120,7 @@ _fp_cmd_center_dot(void *ds, int argc, const char **argv)
 	if (bu_opt_color(&msg, argc, argv, &c) == -1) {
 	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
 	}
-	int *cls = (int *)(v->gv_center_dot.gos_line_color);
+	int *cls = (int *)(v->gv_s->gv_center_dot.gos_line_color);
 	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
 	return GED_OK;
     }
@@ -147,22 +147,22 @@ _fp_cmd_fps(void *ds, int argc, const char **argv)
 
     if (!argc) {
 	if (gd->verbosity) {
-	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_center_dot.gos_draw,
-		    v->gv_center_dot.gos_line_color[0], v->gv_center_dot.gos_line_color[1],
-		    v->gv_center_dot.gos_line_color[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_s->gv_center_dot.gos_draw,
+		    v->gv_s->gv_center_dot.gos_line_color[0], v->gv_s->gv_center_dot.gos_line_color[1],
+		    v->gv_s->gv_center_dot.gos_line_color[2]);
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_center_dot.gos_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_center_dot.gos_draw);
 	}
 	return GED_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_fps = 1;
+	    v->gv_s->gv_fps = 1;
 	    return GED_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_fps = 0;
+	    v->gv_s->gv_fps = 0;
 	    return GED_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
@@ -190,21 +190,21 @@ _fp_cmd_fb(void *ds, int argc, const char **argv)
     struct bview *v = gedp->ged_gvp;
 
     if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "%d", v->gv_fb_mode);
+	bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_fb_mode);
 	return GED_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("2", argv[0])) {
-	    v->gv_fb_mode = 2;
+	    v->gv_s->gv_fb_mode = 2;
 	    return GED_OK;
 	}
 	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_fb_mode = 1;
+	    v->gv_s->gv_fb_mode = 1;
 	    return GED_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_fb_mode = 0;
+	    v->gv_s->gv_fb_mode = 0;
 	    return GED_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0, 1 and 2\n", argv[0]);
@@ -233,22 +233,22 @@ _fp_cmd_scale(void *ds, int argc, const char **argv)
 
     if (!argc) {
 	if (gd->verbosity) {
-	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_view_scale.gos_draw,
-		    v->gv_view_scale.gos_line_color[0], v->gv_view_scale.gos_line_color[1],
-		    v->gv_view_scale.gos_line_color[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_s->gv_view_scale.gos_draw,
+		    v->gv_s->gv_view_scale.gos_line_color[0], v->gv_s->gv_view_scale.gos_line_color[1],
+		    v->gv_s->gv_view_scale.gos_line_color[2]);
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_view_scale.gos_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_scale.gos_draw);
 	}
 	return GED_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_view_scale.gos_draw = 1;
+	    v->gv_s->gv_view_scale.gos_draw = 1;
 	    return GED_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_view_scale.gos_draw = 0;
+	    v->gv_s->gv_view_scale.gos_draw = 0;
 	    return GED_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
@@ -266,7 +266,7 @@ _fp_cmd_scale(void *ds, int argc, const char **argv)
 	if (bu_opt_color(&msg, argc, argv, &c) == -1) {
 	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
 	}
-	int *cls = (int *)(v->gv_view_scale.gos_line_color);
+	int *cls = (int *)(v->gv_s->gv_view_scale.gos_line_color);
 	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
 	return GED_OK;
     }
@@ -293,22 +293,22 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 
     if (!argc) {
 	if (gd->verbosity) {
-	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_view_params.gos_draw,
-		    v->gv_view_params.gos_text_color[0], v->gv_view_params.gos_text_color[1],
-		    v->gv_view_params.gos_text_color[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%d (%d/%d/%d)", v->gv_s->gv_view_params.gos_draw,
+		    v->gv_s->gv_view_params.gos_text_color[0], v->gv_s->gv_view_params.gos_text_color[1],
+		    v->gv_s->gv_view_params.gos_text_color[2]);
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_view_params.gos_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.gos_draw);
 	}
 	return GED_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
-	    v->gv_view_params.gos_draw = 1;
+	    v->gv_s->gv_view_params.gos_draw = 1;
 	    return GED_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
-	    v->gv_view_params.gos_draw = 0;
+	    v->gv_s->gv_view_params.gos_draw = 0;
 	    return GED_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
@@ -326,7 +326,7 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 	if (bu_opt_color(&msg, argc, argv, &c) == -1) {
 	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
 	}
-	int *cls = (int *)(v->gv_view_params.gos_text_color);
+	int *cls = (int *)(v->gv_s->gv_view_params.gos_text_color);
 	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
 	return GED_OK;
     }

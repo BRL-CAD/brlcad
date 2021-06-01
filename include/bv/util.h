@@ -39,6 +39,8 @@ __BEGIN_DECLS
 /* Set default values for a bv. */
 BV_EXPORT extern void bv_init(struct bview *v);
 
+BV_EXPORT extern void bv_settings_init(struct bview_settings *s);
+
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
 

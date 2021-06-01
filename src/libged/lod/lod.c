@@ -63,19 +63,19 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Print current state if no args are supplied */
     if (argc == 1) {
-	if (gvp->adaptive_plot) {
+	if (gvp->gv_s->adaptive_plot) {
 	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: enabled\n");
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: disabled\n");
 	}
-	if (gvp->redraw_on_zoom) {
+	if (gvp->gv_s->redraw_on_zoom) {
 	    bu_vls_printf(gedp->ged_result_str, "Redraw on zoom: enabled\n");
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Redraw on zoom: disabled\n");
 	}
-	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", gvp->point_scale);
-	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", gvp->curve_scale);
-	bu_vls_printf(gedp->ged_result_str, "BoT face threshold: %zd\n", gvp->bot_threshold);
+	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", gvp->gv_s->point_scale);
+	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", gvp->gv_s->curve_scale);
+	bu_vls_printf(gedp->ged_result_str, "BoT face threshold: %zd\n", gvp->gv_s->bot_threshold);
 	return GED_OK;
     }
 
@@ -85,30 +85,30 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
     printUsage = 0;
     if (argc == 1 && BU_STR_EQUAL(argv[0], "on")) {
 	/* lod on */
-	gvp->adaptive_plot = 1;
+	gvp->gv_s->adaptive_plot = 1;
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "off")) {
 	/* lod off */
-	gvp->adaptive_plot = 0;
+	gvp->gv_s->adaptive_plot = 0;
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "enabled")) {
 	/* lod enabled - return on state */
-	bu_vls_printf(gedp->ged_result_str, "%d", gvp->adaptive_plot);
+	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_s->adaptive_plot);
     } else if (BU_STR_EQUAL(argv[0], "scale")) {
 	if (argc == 2 || argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "points")) {
 		if (argc == 2) {
 		    /* lod scale points - return current value */
-		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->point_scale);
+		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_s->point_scale);
 		} else {
 		    /* lod scale points f - set value */
-		    gvp->point_scale = atof(argv[2]);
+		    gvp->gv_s->point_scale = atof(argv[2]);
 		}
 	    } else if (BU_STR_EQUAL(argv[1], "curves")) {
 		if (argc == 2) {
 		    /* lod scale curves - return current value */
-		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->curve_scale);
+		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_s->curve_scale);
 		} else {
 		    /* lod scale curves f - set value */
-		    gvp->curve_scale = atof(argv[2]);
+		    gvp->gv_s->curve_scale = atof(argv[2]);
 		}
 	    } else {
 		printUsage = 1;
@@ -120,7 +120,7 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 	printUsage = 1;
 	if (argc == 1) {
 	    /* lod redraw - return current value */
-	    if (gvp->redraw_on_zoom) {
+	    if (gvp->gv_s->redraw_on_zoom) {
 		bu_vls_printf(gedp->ged_result_str, "onzoom");
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "off");
@@ -129,11 +129,11 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 	} else if (argc == 2) {
 	    if (BU_STR_EQUAL(argv[1], "off")) {
 		/* lod redraw off */
-		gvp->redraw_on_zoom = 0;
+		gvp->gv_s->redraw_on_zoom = 0;
 		printUsage = 0;
 	    } else if (BU_STR_EQUAL(argv[1], "onzoom")) {
 		/* lod redraw onzoom */
-		gvp->redraw_on_zoom = 1;
+		gvp->gv_s->redraw_on_zoom = 1;
 		printUsage = 0;
 	    }
 	}

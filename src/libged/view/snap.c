@@ -113,14 +113,14 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     /* Handle tolerance */
     if (stol < DBL_MAX || stol < -DBL_MAX + 1) {
 	if (stol > -DBL_MAX) {
-	    gedp->ged_gvp->gv_snap_tol_factor = stol;
+	    gedp->ged_gvp->gv_s->gv_snap_tol_factor = stol;
 	    if (!opt_ret) {
-		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_snap_tol_factor);
+		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_snap_tol_factor);
 		return GED_OK;
 	    }
 	} else {
 	    // Report current tolerance
-	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_snap_tol_factor);
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_snap_tol_factor);
 	    return GED_OK;
 	}
     }

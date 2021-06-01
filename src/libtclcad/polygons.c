@@ -164,7 +164,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	gdpsp = &gdvp->gv_tcl.gv_data_polygons;
 
     gdpsp->gdps_scale = gdvp->gv_scale;
-    gdpsp->gdps_data_vZ = gdvp->gv_data_vZ;
+    gdpsp->gdps_data_vZ = gdvp->gv_s->gv_data_vZ;
     VMOVE(gdpsp->gdps_origin, gdvp->gv_center);
     MAT_COPY(gdpsp->gdps_rotation, gdvp->gv_rotation);
     MAT_COPY(gdpsp->gdps_model2view, gdvp->gv_model2view);
@@ -1163,12 +1163,12 @@ to_poly_circ_mode_func(Tcl_Interp *interp,
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
     gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
     bv_screen_to_view(gdvp, &fx, &fy, x, y);
-    VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
+    VSET(v_pt, fx, fy, gdvp->gv_s->gv_data_vZ);
     int snapped = 0;
-    if (gedp->ged_gvp->gv_snap_lines) {
+    if (gedp->ged_gvp->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
-    if (!snapped && gedp->ged_gvp->gv_grid.snap) {
+    if (!snapped && gedp->ged_gvp->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
@@ -1237,12 +1237,12 @@ to_poly_cont_build_func(Tcl_Interp *interp,
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
     gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
     bv_screen_to_view(gdvp, &fx, &fy, x, y);
-    VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
+    VSET(v_pt, fx, fy, gdvp->gv_s->gv_data_vZ);
     int snapped = 0;
-    if (gedp->ged_gvp->gv_snap_lines) {
+    if (gedp->ged_gvp->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
-    if (!snapped && gedp->ged_gvp->gv_grid.snap) {
+    if (!snapped && gedp->ged_gvp->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
@@ -1598,12 +1598,12 @@ to_poly_ell_mode_func(Tcl_Interp *interp,
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
     gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
     bv_screen_to_view(gdvp, &fx, &fy, x, y);
-    VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
+    VSET(v_pt, fx, fy, gdvp->gv_s->gv_data_vZ);
     int snapped = 0;
-    if (gedp->ged_gvp->gv_snap_lines) {
+    if (gedp->ged_gvp->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
-    if (!snapped && gedp->ged_gvp->gv_grid.snap) {
+    if (!snapped && gedp->ged_gvp->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
@@ -1769,12 +1769,12 @@ to_poly_rect_mode_func(Tcl_Interp *interp,
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
     gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
     bv_screen_to_view(gdvp, &fx, &fy, x, y);
-    VSET(v_pt, fx, fy, gdvp->gv_data_vZ);
+    VSET(v_pt, fx, fy, gdvp->gv_s->gv_data_vZ);
     int snapped = 0;
-    if (gedp->ged_gvp->gv_snap_lines) {
+    if (gedp->ged_gvp->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
-    if (!snapped && gedp->ged_gvp->gv_grid.snap) {
+    if (!snapped && gedp->ged_gvp->gv_s->gv_grid.snap) {
 	bv_snap_grid_2d(gedp->ged_gvp, &v_pt[X], &v_pt[Y]);
     }
 
