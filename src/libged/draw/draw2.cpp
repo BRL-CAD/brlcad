@@ -715,7 +715,7 @@ alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
 // a view specific object.  Need to adjust the logic accordingly - right now it's assuming ged_gvp
 // as the only view of interest.
 static int
-ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int argc, const char *argv[], int bot_threshold, int no_autoview)
+ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int argc, const char *argv[], int shared_views, int bot_threshold, int no_autoview)
 {
     // Abbreviations for convenience
     struct db_i *dbip = gedp->ged_wdbp->dbip;
@@ -723,7 +723,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     struct bu_ptbl *sg;
 
     // Where the groups get stored depends on our mode
-    if (v->gv_s->adaptive_plot || v->independent) {
+    if (v->gv_s->adaptive_plot || (v->independent && !shared_views)) {
 	sg = v->gv_view_grps;
     } else {
 	sg = v->gv_db_grps;
@@ -1071,6 +1071,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int bot_threshold = -1;
     int no_autoview = 0;
+    int shared_views = 0;
     static const char *usage = "[options] path1 [path2 ...]";
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -1127,7 +1128,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
-    struct bu_opt_desc d[16];
+    struct bu_opt_desc d[18];
     BU_OPT(d[0],  "h", "help",          "",                 NULL, &print_help,         "Print help and exit");
     BU_OPT(d[1],  "?", "",              "",                 NULL, &print_help,         "");
     BU_OPT(d[2],  "m", "mode",         "#",          &bu_opt_int, &drawing_modes[0],  "0=wireframe;1=shaded bots;2=shaded;3=evaluated");
@@ -1143,8 +1144,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[12],  "", "no-dash",       "",                 NULL, &vs.draw_solid_lines_only,  "Use solid lines rather than dashed for subtraction solids");
     BU_OPT(d[13], "C", "color",         "r/g/b", &draw_opt_color, &vs,                "Override object colors");
     BU_OPT(d[14],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
-    BU_OPT(d[14], "R", "no-autoview",   "",                 NULL, &no_autoview,       "Do not calculate automatic view, even if initial scene is empty.");
-    BU_OPT_NULL(d[15]);
+    BU_OPT(d[15], "R", "no-autoview",   "",                 NULL, &no_autoview,       "Do not calculate automatic view, even if initial scene is empty.");
+    BU_OPT(d[16], "",  "shared",        "",                 NULL, &shared_views,      "Draw in all views showing shared objects, even if current view is an independent view.");
+    BU_OPT_NULL(d[17]);
 
     /* If no args, must be wanting help */
     if (!argc) {
@@ -1188,8 +1190,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // If we're independent, we only operate on one view
-    if (cv && cv->independent) {
-	return ged_draw_view(gedp, cv, &vs, argc, argv, bot_threshold, no_autoview);
+    if (cv && cv->independent && !shared_views) {
+	return ged_draw_view(gedp, cv, &vs, argc, argv, shared_views, bot_threshold, no_autoview);
     }
 
     /* If adaptive plotting is enabled, we need to generate wireframes
@@ -1198,13 +1200,13 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     int ret = GED_OK;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
-	if (v->independent) {
+	if (v->independent && v != cv) {
 	    // Independent views are handled by specifying the view - this
 	    // logic doesn't change them.
 	    continue;
 	}
 	if (v->gv_s->adaptive_plot) {
-	    int aret = ged_draw_view(gedp, v, &vs, argc, argv, bot_threshold, no_autoview);
+	    int aret = ged_draw_view(gedp, v, &vs, argc, argv, shared_views, bot_threshold, no_autoview);
 	    if (aret & GED_ERROR)
 		ret = aret;
 	} else {
@@ -1230,7 +1232,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
 	    return GED_ERROR;
 	}
-	int nret = ged_draw_view(gedp, cv, &vs, argc, argv, bot_threshold, no_autoview);
+	int nret = ged_draw_view(gedp, cv, &vs, argc, argv, shared_views, bot_threshold, no_autoview);
 	if (nret & GED_ERROR)
 	    ret = nret;
     }
