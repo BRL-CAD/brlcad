@@ -81,7 +81,7 @@ ged_view_update(struct ged *gedp)
 	av[1] = "-R";
 	av[2] = bu_vls_cstr(&opath);
 	av[3] = NULL;
-	ged_exec(gedp, 2, av);
+	ged_exec(gedp, 3, av);
 	bu_vls_free(&opath);
     }
 

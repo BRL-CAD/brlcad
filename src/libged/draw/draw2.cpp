@@ -1039,16 +1039,32 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     return GED_OK;
 }
 
-/* TODO - need some thought about whether we should allow per-view drawing
- * specification of objects.  Complicates the view state management considerably,
- * but would be necessary to support an interface that allows multiple independent
- * inspections of the contents of a database.  Circumstances under which non-shared
- * drawing would be needed:
+/*
+ * There are actually three scene object management scenarios we might want to
+ * consider:
  *
- * 1. if adaptive plotting is enabled
- * 2. if no common db group container has been supplied
- * 3. if a view is explicitly designated as independent
- * */
+ * 1.  All shared (default, most efficient from a vlist perspective, no
+ * independence of view contents)
+ *
+ * 2.  Adaptive plot, synced group lists (different vlists for different views,
+ * but drawn group lists should match.  From a user perspective, #1 with
+ * adaptive drawing).  This is almost #3 with adaptive plot on, but with one key
+ * difference - we don't want to have to specify the same objects for each view.
+ * I.e. - we want the controls from #1.
+ *
+ * 3.  Independent view lists - each view has its own info, not synced with
+ * other views.  Maximal flexibility, but also more memory usage than minimally
+ * necessary if views do in fact have shared objects with geometrically
+ * identical vlists.
+ *
+ * Theoretically we could also mix local and shared lists at the same time
+ * (i.e. "overlay" local lists on top of a shared list.)  My inclination right
+ * now is to not do that - the only gain would be to get some vlist storage
+ * benefits from being able to share objects that would otherwise be duplicated
+ * in multiple local lists.  That's a dubious use case in some ways, hard to track,
+ * and the complexity/usability implications are significant.
+ *
+ */
 extern "C" int
 ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 {
@@ -1091,6 +1107,12 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	if (!found_match) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return GED_ERROR;
+	}
+
+	if (!cv->independent) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support specifying db objects for display in only this view.  To change the view's status, he command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return GED_ERROR;
 	}

@@ -103,6 +103,85 @@ _view_cmd_faceplate(void *bs, int argc, const char **argv)
 }
 
 int
+_view_cmd_independent(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] independent <view> [0|1]";
+    const char *purpose_string = "make a view independent (1) or part of the default view set (0)";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    // We know we're the independent command - start processing args
+    argc--; argv++;
+
+    struct ged *gedp = gd->gedp;
+    if (!argc) {
+	bu_vls_printf(gedp->ged_result_str, "no view specified\n");
+	return GED_ERROR;
+    }
+
+    struct bview *v = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (BU_STR_EQUAL(bu_vls_cstr(&v->gv_name), argv[0])) {
+	    break;
+	}
+    }
+
+    if (!v) {
+	bu_vls_printf(gedp->ged_result_str, "view %s not found\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "%d\n", v->independent);
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "1")) {
+	v->independent = 1;
+	// Initialize local containers with current shared grps
+	struct bu_ptbl *sg = v->gv_db_grps;
+	if (!sg)
+	    return GED_OK;
+	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+	    struct bu_vls opath = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->g->s_name));
+	    const char *av[6];
+	    av[0] = "draw";
+	    av[1] = "-R";
+	    av[2] = "-V";
+	    av[3] = bu_vls_cstr(&v->gv_name);
+	    av[4] = bu_vls_cstr(&opath);
+	    av[5] = NULL;
+	    ged_exec(gedp, 5, av);
+	    bu_vls_free(&opath);
+	}
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[1], "0")) {
+	v->independent = 0;
+	// Clear local containers
+	struct bu_ptbl *sg = v->gv_view_grps;
+	if (sg) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+		bv_scene_obj_free(cg->g, gedp->free_scene_obj);
+		BU_PUT(cg, struct bv_scene_group);
+	    }
+	    bu_ptbl_reset(sg);
+	}
+	return GED_OK;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "invalid value supplied: %s (need 0 or 1)\n", argv[1]);
+    return GED_ERROR;
+}
+
+int
 _view_cmd_list(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -387,6 +466,7 @@ const struct bu_cmdtab _view_cmds[] = {
     { "eye",        _view_cmd_eye},
     { "faceplate",  _view_cmd_faceplate},
     { "height",     _view_cmd_height},
+    { "independent",_view_cmd_independent},
     { "list",       _view_cmd_list},
     { "lod",        _view_cmd_lod},
     { "obj",        _view_cmd_objs},

@@ -47,6 +47,9 @@ bv_init(struct bview *gvp)
 	bu_vls_init(&gvp->gv_name);
     }
 
+    gvp->independent = 0;
+
+
     gvp->gv_scale = 500.0;
     gvp->gv_i_scale = gvp->gv_scale;
     gvp->gv_a_scale = 1.0 - gvp->gv_scale / gvp->gv_i_scale;
