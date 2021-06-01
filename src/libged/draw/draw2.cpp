@@ -1082,7 +1082,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-
     /* Draw may operate on a specific user specified view.  If it does so,
      * we want the default settings to reflect those set in that particular
      * view.  In order to set up the correct default views, we need to know

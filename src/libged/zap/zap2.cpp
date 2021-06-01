@@ -130,7 +130,7 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
     const char *usage = "zap [options]\n";
-    struct bview *v = NULL;
+    struct bview *v = gedp->ged_gvp;
 
     argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
 
@@ -189,7 +189,7 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // If we're clearing just one view, handle it
-    if (v) {
+    if (v && v->independent && !clear_all_views) {
 	return ged_clear_view(gedp, v, clear_solid_objs, clear_view_objs);
     }
 
