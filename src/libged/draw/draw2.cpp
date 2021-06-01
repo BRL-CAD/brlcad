@@ -722,8 +722,8 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
     struct bu_ptbl *sg;
 
-    // If we're adaptive, we're operating locally
-    if (v->gv_s->adaptive_plot) {
+    // Where the groups get stored depends on our mode
+    if (v->gv_s->adaptive_plot || v->independent) {
 	sg = v->gv_view_grps;
     } else {
 	sg = v->gv_db_grps;
@@ -873,7 +873,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    db_path_to_vls(&g->g->s_name, fp);
 	    db_path_to_vls(&g->g->s_uuid, fp);
 	    bv_obj_settings_sync(&g->g->s_os, vs);
-	    bu_ptbl_ins(v->gv_db_grps, (long *)g);
+	    bu_ptbl_ins(sg, (long *)g);
 
 	    // If we're a blank slate, we're adaptive, and autoview isn't off
 	    // we need to be building up some sense of the view and object
@@ -893,7 +893,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    // Clear anything superseded by the new path
 	    for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
 		struct bv_scene_group *cg = *g_it;
-		bu_ptbl_rm(v->gv_db_grps, (long *)cg);
+		bu_ptbl_rm(sg, (long *)cg);
 		bv_scene_obj_free(cg->g, free_scene_obj);
 		BU_PUT(cg, struct bv_scene_group);
 	    }
@@ -1019,7 +1019,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     }
 
     // Sort
-    bu_sort(BU_PTBL_BASEADDR(v->gv_db_grps), BU_PTBL_LEN(v->gv_db_grps), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
+    bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
 
 
     // If we're starting from scratch and we're not being told to leave the
@@ -1032,10 +1032,10 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	return ged_exec(gedp, ac, (const char **)av);
     }
 
-    // Scene objects are created and stored in gv_db_grps. The application
-    // may now call each object's update callback to generate wireframes,
-    // triangles, etc. for that object based on current settings.  It is then
-    // the job of the dm to display the scene objects supplied by the view.
+    // Scene objects are created and stored. The application may now call each
+    // object's update callback to generate wireframes, triangles, etc. for
+    // that object based on current settings.  It is then the job of the dm to
+    // display the scene objects supplied by the view.
     return GED_OK;
 }
 
@@ -1188,12 +1188,22 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	vs.s_dmode = drawing_modes[0];
     }
 
+    // If we're independent, we only operate on one view
+    if (cv && cv->independent) {
+	return ged_draw_view(gedp, cv, &vs, argc, argv, bot_threshold, no_autoview);
+    }
+
     /* If adaptive plotting is enabled, we need to generate wireframes
-     * specific to that view */
+     * specific to each view */
     int have_non_adaptive = 0;
     int ret = GED_OK;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (v->independent) {
+	    // Independent views are handled by specifying the view - this
+	    // logic doesn't change them.
+	    continue;
+	}
 	if (v->gv_s->adaptive_plot) {
 	    int aret = ged_draw_view(gedp, v, &vs, argc, argv, bot_threshold, no_autoview);
 	    if (aret & GED_ERROR)
