@@ -47,8 +47,10 @@ bv_init(struct bview *gvp)
 	bu_vls_init(&gvp->gv_name);
     }
 
-    gvp->independent = 0;
-
+    // Independent has to be the default, since we don't
+    // have shared containers until they are supplied from
+    // an outside source.
+    gvp->independent = 1;
 
     gvp->gv_scale = 500.0;
     gvp->gv_i_scale = gvp->gv_scale;

@@ -272,9 +272,45 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    /* Erase may operate on a specific user specified view.  If it does so,
+     * we want the default settings to reflect those set in that particular
+     * view.  In order to set up the correct default views, we need to know
+     * if a specific view has in fact been specified.  We do a preliminary
+     * option check to figure this out */
+    struct bu_vls cvls = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc vd[2];
+    BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to draw on");
+    BU_OPT_NULL(vd[1]);
+    int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
+    argc = opt_ret;
+    if (bu_vls_strlen(&cvls)) {
+	int found_match = 0;
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
+		v = tv;
+		found_match = 1;
+		break;
+	    }
+	}
+	if (!found_match) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return GED_ERROR;
+	}
+
+	if (!v->independent) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support specifying db objects for display in only this view.  To change the view's status, he   command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return GED_ERROR;
+	}
+    }
+    bu_vls_free(&cvls);
+
+
     /* Check that we have a view */
     if (!v) {
-	bu_vls_printf(gedp->ged_result_str, "No current view defined in GED, nothing to erase from");
+	bu_vls_printf(gedp->ged_result_str, "No view specified and no current view defined in GED, nothing to erase from");
 	return GED_ERROR;
     }
 
@@ -300,7 +336,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     // user supplies a name without the path prefix.
     //
     struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
-    struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+    struct bu_ptbl *sg = (v->independent) ? v->gv_view_grps : v->gv_db_grps;
     std::set<struct bv_scene_group *> all;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
@@ -404,14 +440,14 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	new_scene_grps(&all, dbip, cg, spaths, free_scene_obj);
    }
 
-   // Repopulate the gv_db_grps tbl with the final results
+   // Repopulate the sg tbl with the final results
    for (c_it = all.begin(); c_it != all.end(); c_it++) {
        struct bv_scene_group *ng = *c_it;
-       bu_ptbl_ins(v->gv_db_grps, (long *)ng);
+       bu_ptbl_ins(sg, (long *)ng);
    }
 
    // Sort
-   bu_sort(BU_PTBL_BASEADDR(v->gv_db_grps), BU_PTBL_LEN(v->gv_db_grps), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
+   bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
 
    return GED_OK;
 }

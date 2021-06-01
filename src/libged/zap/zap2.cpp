@@ -40,14 +40,14 @@
     BU_LIST_INIT( &((p)->s_vlist) ); }
 
 static int
-ged_clear_view(struct ged *gedp, struct bview *v, int clear_shared, int clear_view_obj)
+ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clear_view_objs)
 {
     struct bu_ptbl *sv;
 
-    if (clear_view_obj != 2) {
+    if (clear_solid_objs) {
 	// Always make sure the view's specified local containers are cleared.  We
 	// may be skipping the shared objects depending on the settings, but a zap
-	// on a view alwayw clears the local versions.
+	// on a view always clears the local versions.
 	struct bu_ptbl *sg = v->gv_view_grps;
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
@@ -61,7 +61,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_shared, int clear_vi
 	// If set, clear the shared objects as well (this has implications
 	// beyond just this view, so it is only done when the caller
 	// specifically requests it.)
-	if (clear_shared) {
+	if (!v->independent) {
 	    sg = v->gv_db_grps;
 	    if (sg) {
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
@@ -75,7 +75,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_shared, int clear_vi
     }
 
     // If we're not processing view objects, we're done
-    if (clear_view_obj)
+    if (!clear_view_objs)
 	return GED_OK;
 
     // If the options indicate it, clear view objects as well
@@ -87,7 +87,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_shared, int clear_vi
 	    bv_scene_obj_free(s, gedp->free_scene_obj);
 	}
     }
-    if (clear_shared) {
+    if (!v->independent) {
 	sv = v->gv_view_shared_objs;
 	if (sv) {
 	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
@@ -102,9 +102,10 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_shared, int clear_vi
      * cleared.  Since the blast command may immediately re-populate the
      * display list, we set a flag in the view to inform the app a zap
      * operation has taken place. */
-    if (!BU_PTBL_LEN(v->gv_view_objs) && !BU_PTBL_LEN(v->gv_view_shared_objs) &&
-	 !BU_PTBL_LEN(v->gv_view_grps) && !BU_PTBL_LEN(v->gv_db_grps)) {
-	v->gv_s->gv_cleared = 1;
+    if (!BU_PTBL_LEN(v->gv_view_objs) && !BU_PTBL_LEN(v->gv_view_grps)) {
+	if (v->independent || (!BU_PTBL_LEN(v->gv_view_shared_objs) && !BU_PTBL_LEN(v->gv_db_grps))) {
+	    v->gv_s->gv_cleared = 1;
+	}
     }
 
     return GED_OK;
@@ -113,8 +114,6 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_shared, int clear_vi
 /*
  * Erase all currently displayed geometry
  *
- * TODO = needs an option to specify a single view to zap
- *
  * Usage:
  * zap
  *
@@ -122,27 +121,85 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_shared, int clear_vi
 extern "C" int
 ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 {
+    int print_help = 0;
+    struct bu_vls cvls = BU_VLS_INIT_ZERO;
+    int clear_view_objs = 0;
+    int clear_solid_objs = 0;
+    int clear_all_views = 0;
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    const char *usage = "zap [options]\n";
+    struct bview *v = NULL;
+
+    argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (argc != 1 && argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
+    struct bu_opt_desc d[7];
+    BU_OPT(d[0],  "h", "help",          "",        NULL,       &print_help, "Print help and exit");
+    BU_OPT(d[1],  "?", "",              "",        NULL,       &print_help, "");
+    BU_OPT(d[2],  "V", "view",     "name", &bu_opt_vls,             &cvls, "specify view to draw on");
+    BU_OPT(d[3],  "v", "view-objs",    "",        NULL,  &clear_view_objs, "clear non-solid based view objects");
+    BU_OPT(d[4],  "g", "solid-objs",   "",        NULL, &clear_solid_objs, "clear solid based view objects");
+    BU_OPT(d[5],  "",  "all",          "",        NULL, &clear_all_views, "clear shared and independent views");
+    BU_OPT_NULL(d[6]);
+
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    argc = opt_ret;
+
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_HELP;
+    }
+
+    if (argc) {
+	_ged_cmd_help(gedp, usage, d);
 	return GED_ERROR;
     }
 
-    int clear_view_obj = 0;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], "-v")) {
-	clear_view_obj = 1;
+    if (!clear_all_views && bu_vls_strlen(&cvls)) {
+	int found_match = 0;
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
+		v = tv;
+		found_match = 1;
+		break;
+	    }
+	}
+	if (!found_match) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return GED_ERROR;
+	}
+
+	if (!v->independent) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support clearing db objects in only this view.  To change the view's status, the command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return GED_ERROR;
+	}
+    }
+    bu_vls_free(&cvls);
+
+    if (!clear_solid_objs && !clear_view_objs) {
+	clear_solid_objs = 1;
+	clear_view_objs = 1;
     }
 
+    // If we're clearing just one view, handle it
+    if (v) {
+	return ged_clear_view(gedp, v, clear_solid_objs, clear_view_objs);
+    }
+
+    // Clear everything
     int ret = GED_OK;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
-	int nret = ged_clear_view(gedp, v, 1, clear_view_obj);
+	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (v->independent && !clear_all_views)
+	    continue;
+	int nret = ged_clear_view(gedp, v, clear_solid_objs, clear_view_objs);
 	if (nret & GED_ERROR)
 	    ret = nret;
     }
