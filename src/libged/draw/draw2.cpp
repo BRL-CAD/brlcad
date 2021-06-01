@@ -363,7 +363,7 @@ struct draw_data_t {
     struct db_i *dbip;
     struct bv_scene_group *g;
     struct bview *v;
-    struct bv_settings *vs;
+    struct bv_obj_settings *vs;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
     struct bv_scene_obj *free_scene_obj;
@@ -610,7 +610,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// TODO - append hash of matrix and op to uuid to make it properly unique...
 	s->s_v = dd->v;
 	MAT_COPY(s->s_mat, *curr_mat);
-	bv_settings_sync(&s->s_os, &dd->g->g->s_os);
+	bv_obj_settings_sync(&s->s_os, &dd->g->g->s_os);
 	s->s_type_flags = BV_DBOBJ_BASED;
 	s->s_changed++;
 	if (!s->s_os.draw_solid_lines_only) {
@@ -693,7 +693,7 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 static int
 draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
 {
-    struct bv_settings *vs = (struct bv_settings *)data;
+    struct bv_obj_settings *vs = (struct bv_obj_settings *)data;
     struct bu_color c;
     int ret = bu_opt_color(msg, argc, argv, (void *)&c);
     if (ret == 1 || ret == 3) {
@@ -715,7 +715,7 @@ alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
 // a view specific object.  Need to adjust the logic accordingly - right now it's assuming ged_gvp
 // as the only view of interest.
 static int
-ged_draw_view(struct ged *gedp, struct bview *v, struct bv_settings *vs, int argc, const char *argv[], int bot_threshold, int no_autoview)
+ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int argc, const char *argv[], int bot_threshold, int no_autoview)
 {
     // Abbreviations for convenience
     struct db_i *dbip = gedp->ged_wdbp->dbip;
@@ -872,7 +872,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_settings *vs, int arg
 	    bv_scene_obj_init(g->g, free_scene_obj);
 	    db_path_to_vls(&g->g->s_name, fp);
 	    db_path_to_vls(&g->g->s_uuid, fp);
-	    bv_settings_sync(&g->g->s_os, vs);
+	    bv_obj_settings_sync(&g->g->s_os, vs);
 	    bu_ptbl_ins(v->gv_db_grps, (long *)g);
 
 	    // If we're a blank slate, we're adaptive, and autoview isn't off
@@ -1067,12 +1067,12 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* User settings may override various options - set up to collect them */
-    struct bv_settings vs = BV_SETTINGS_INIT;
+    struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
 
     /* Option defaults come from the current view, but may be overridden for
      * the purposes of the current draw command by command line options. */
     if (gedp->ged_gvp)
-	bv_settings_sync(&vs, &gedp->ged_gvp->gvs);
+	bv_obj_settings_sync(&vs, &gedp->ged_gvp->gvs);
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
     struct bu_opt_desc d[16];

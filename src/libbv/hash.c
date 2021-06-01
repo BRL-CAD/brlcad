@@ -294,7 +294,7 @@ _bv_interactive_rect_state_hash(XXH64_state_t *state, struct bv_interactive_rect
 }
 
 static void
-_bv_settings_hash(XXH64_state_t *state, struct bv_settings *v)
+_bv_obj_settings_hash(XXH64_state_t *state, struct bv_obj_settings *v)
 {
     /* First, do sanity checks */
     if (!v || !state)
@@ -343,7 +343,7 @@ bv_scene_obj_hash(XXH64_state_t *state, struct bv_scene_obj *s)
     XXH64_update(state, &s->curve_scale, sizeof(fastf_t));
     XXH64_update(state, &s->point_scale, sizeof(fastf_t));
 
-    _bv_settings_hash(state, &s->s_os);
+    _bv_obj_settings_hash(state, &s->s_os);
 }
 
 unsigned long long
@@ -430,7 +430,7 @@ bv_hash(struct bview *v)
     XXH64_update(state, &v->point_scale, sizeof(fastf_t));
     XXH64_update(state, &v->redraw_on_zoom, sizeof(int));
 
-   _bv_settings_hash(state, &v->gvs);
+   _bv_obj_settings_hash(state, &v->gvs);
     XXH64_update(state, &v->gv_zclip, sizeof(int));
     XXH64_update(state, &v->gv_cleared, sizeof(int));
     _bv_adc_state_hash(state, &v->gv_adc);

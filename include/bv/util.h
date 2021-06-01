@@ -43,7 +43,7 @@ BV_EXPORT extern void bv_init(struct bview *v);
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
 
 /* Copy settings (potentially) common to the view and scene objects */
-BV_EXPORT extern void bv_settings_sync(struct bv_settings *dest, struct bv_settings *src);
+BV_EXPORT extern void bv_obj_settings_sync(struct bv_obj_settings *dest, struct bv_obj_settings *src);
 
 /* Sync values within the bv, perform callbacks if any are defined */
 BV_EXPORT extern void bv_update(struct bview *gvp);

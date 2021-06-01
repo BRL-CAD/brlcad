@@ -43,8 +43,8 @@ bv_init(struct bview *gvp)
 
     gvp->magic = BV_MAGIC;
 
-    struct bv_settings defaults = BV_SETTINGS_INIT;
-    bv_settings_sync(&gvp->gvs, &defaults);
+    struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
+    bv_obj_settings_sync(&gvp->gvs, &defaults);
 
     if (!BU_VLS_IS_INITIALIZED(&gvp->gv_name)) {
 	bu_vls_init(&gvp->gv_name);
@@ -269,7 +269,7 @@ bv_update(struct bview *gvp)
 }
 
 void
-bv_settings_sync(struct bv_settings *dest, struct bv_settings *src)
+bv_obj_settings_sync(struct bv_obj_settings *dest, struct bv_obj_settings *src)
 {
     dest->s_line_width = src->s_line_width;
     dest->s_arrow_tip_length = src->s_arrow_tip_length;
@@ -451,8 +451,8 @@ bv_scene_obj_init(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj)
     s->s_soldash = 0;
     s->s_arrow = 0;
 
-    struct bv_settings defaults = BV_SETTINGS_INIT;
-    bv_settings_sync(&s->s_os, &defaults);
+    struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
+    bv_obj_settings_sync(&s->s_os, &defaults);
 
     if (!BU_PTBL_IS_INITIALIZED(&s->children)) {
 	BU_PTBL_INIT(&s->children);

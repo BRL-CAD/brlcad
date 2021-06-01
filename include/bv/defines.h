@@ -131,7 +131,7 @@ struct bv_axes {
 //
 // TODO - once this settles down, it will probably warrant a bu_structparse
 // for value setting
-struct bv_settings {
+struct bv_obj_settings {
 
    int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
 				 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
@@ -150,7 +150,7 @@ struct bv_settings {
     int draw_solid_lines_only;   /**< @brief do not use dashed lines for subtraction solids */
     int draw_non_subtract_only;  /**< @brief do not visualize subtraction solids */
 };
-#define BV_SETTINGS_INIT {0, 1.0, 0, {255, 0, 0}, 1, 0.0, 0.0, 0, 0}
+#define BV_OBJ_SETTINGS_INIT {0, 1.0, 0, {255, 0, 0}, 1, 0.0, 0.0, 0, 0}
 
 
 /* Note that it is possible for a view object to be view-only (not
@@ -237,7 +237,7 @@ struct bv_scene_obj  {
 
     /* Scene object settings which also (potentially) have global defaults but
      * may be overridden locally */
-    struct bv_settings s_os;
+    struct bv_obj_settings s_os;
 
     /* Settings that may be less necessary... */
     struct bv_scene_obj_old_settings s_old;
@@ -251,6 +251,8 @@ struct bv_scene_obj  {
     /* User data to associate with this view object */
     void *s_u_data;
 };
+
+
 
 /* bv_scene_groups (one level above scene objects, conceptually equivalent
  * to display_list) are used to capture the intent of drawing commands.  For
@@ -314,6 +316,15 @@ struct bv_scene_group {
     struct bv_scene_obj *g;
 };
 
+#if 0
+/* We encapsulate non-camera settings into a container mainly to allow for
+ * easier re-use of the same settings between different views - if a common
+ * setting set is maintained between different views, this container allows
+ * us to just point to the common set from all views using it. */
+struct bview_settings {
+};
+#endif
+
 struct bview {
     uint32_t	  magic;             /**< @brief magic number */
     struct bu_vls gv_name;
@@ -356,7 +367,7 @@ struct bview {
     fastf_t       gv_maxMouseDelta;
 
     /* Settings */
-    struct bv_settings gvs;
+    struct bv_obj_settings gvs;
     int           gv_snap_lines;
     double 	  gv_snap_tol_factor;
     int           gv_cleared;
@@ -408,6 +419,9 @@ struct bview {
 
     // bv_vlist entities to recycle for shared objects
     struct bu_list  *vlfree;
+   /* Container for reusing bv_scene_obj allocations */
+    struct bv_scene_obj *free_scene_obj;
+
 
 
     // Container for db object groups unique to this view (typical use case is

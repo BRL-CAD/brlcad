@@ -184,7 +184,7 @@ struct _ged_client_data {
     int do_not_draw_nmg_solids_during_debugging;
 
 
-    struct bv_settings vs;
+    struct bv_obj_settings vs;
 };
 
 
