@@ -781,7 +781,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     }
 
 
-    // As a preliminary step, dheck the already drawn paths to see if the
+    // As a preliminary step, check the already drawn paths to see if the
     // proposed new path impacts them.  If we need to set up for adaptive
     // plotting, do initial bounds calculations to pave the way for an
     // initial view setup.
@@ -1066,13 +1066,44 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* User settings may override various options - set up to collect them */
-    struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
 
-    /* Option defaults come from the current view, but may be overridden for
+    /* Draw may operate on a specific user specified view.  If it does so,
+     * we want the default settings to reflect those set in that particular
+     * view.  In order to set up the correct default views, we need to know
+     * if a specific view has in fact been specified.  We do a preliminary
+     * option check to figure this out */
+    struct bview *cv = gedp->ged_gvp;
+    struct bu_vls cvls = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc vd[2];
+    BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to draw on");
+    BU_OPT_NULL(vd[1]);
+    int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
+    argc = opt_ret;
+    if (bu_vls_strlen(&cvls)) {
+	int found_match = 0;
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
+		cv = tv;
+		found_match = 1;
+		break;
+	    }
+	}
+	if (!found_match) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return GED_ERROR;
+	}
+    }
+    bu_vls_free(&cvls);
+
+    /* User settings may override various options - set up to collect them.
+     * Option defaults come from the current view, but may be overridden for
      * the purposes of the current draw command by command line options. */
-    if (gedp->ged_gvp)
-	bv_obj_settings_sync(&vs, &gedp->ged_gvp->gv_s->obj_s);
+    struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
+    if (cv)
+	bv_obj_settings_sync(&vs, &cv->gv_s->obj_s);
+
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
     struct bu_opt_desc d[16];
@@ -1101,7 +1132,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Process command line args into vs with bu_opt */
-    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
@@ -1148,10 +1179,11 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    have_non_adaptive = 1;
 	    // If we are switching from local adaptive geometry to shared
-	    // non-adaptive geometry, we need to clear any adaptive
-	    // plotting that may have been produced by previous draw calls.
+	    // non-adaptive geometry and we have both a shared and a local
+	    // ptbl, we need to clear any local adaptive plotting that may have
+	    // been produced by previous draw calls.
 	    struct bu_ptbl *sg = v->gv_view_grps;
-	    if (sg) {
+	    if (sg && sg != v->gv_db_grps) {
 		for (size_t j = 0; j < BU_PTBL_LEN(sg); j++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, j);
 		    bv_scene_obj_free(cg->g, gedp->free_scene_obj);
@@ -1163,11 +1195,11 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (have_non_adaptive) {
-	if (!gedp->ged_gvp) {
+	if (!cv) {
 	    bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
 	    return GED_ERROR;
 	}
-	int nret = ged_draw_view(gedp, gedp->ged_gvp, &vs, argc, argv, bot_threshold, no_autoview);
+	int nret = ged_draw_view(gedp, cv, &vs, argc, argv, bot_threshold, no_autoview);
 	if (nret & GED_ERROR)
 	    ret = nret;
     }

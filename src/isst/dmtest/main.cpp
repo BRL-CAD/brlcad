@@ -134,6 +134,7 @@ int main(int argc, char *argv[])
 	if (app.w->canvas) {
 	    BU_GET(app.gedp->ged_gvp, struct bview);
 	    bv_init(app.gedp->ged_gvp);
+	    bu_vls_sprintf(&app.gedp->ged_gvp->gv_name, "default");
 	    bu_ptbl_ins_unique(&app.gedp->ged_views, (long int *)app.gedp->ged_gvp);
 	    app.w->canvas->set_view(app.gedp->ged_gvp);
 	    //app.w->canvas->dm_set = app.gedp->ged_all_dmp;
@@ -147,6 +148,7 @@ int main(int argc, char *argv[])
 		struct bview *nv;
 		BU_GET(nv, struct bview);
 		bv_init(nv);
+		bu_vls_sprintf(&nv->gv_name, "Q%d", i);
 		bu_ptbl_ins_unique(&app.gedp->ged_views, (long int *)nv);
 		c->set_view(nv);
 		//c->dm_set = app.gedp->ged_all_dmp;

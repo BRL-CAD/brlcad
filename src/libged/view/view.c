@@ -103,6 +103,29 @@ _view_cmd_faceplate(void *bs, int argc, const char **argv)
 }
 
 int
+_view_cmd_list(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    const char *usage_string = "view [options] ";
+    const char *purpose_string = "list available views";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    struct ged *gedp = gd->gedp;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (v != gedp->ged_gvp) {
+	    bu_vls_printf(gedp->ged_result_str, "  %s\n", bu_vls_cstr(&v->gv_name));
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "* %s\n", bu_vls_cstr(&v->gv_name));
+	}
+    }
+
+    return GED_OK;
+}
+
+int
 _view_cmd_lod(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -364,6 +387,7 @@ const struct bu_cmdtab _view_cmds[] = {
     { "eye",        _view_cmd_eye},
     { "faceplate",  _view_cmd_faceplate},
     { "height",     _view_cmd_height},
+    { "list",       _view_cmd_list},
     { "lod",        _view_cmd_lod},
     { "obj",        _view_cmd_objs},
     { "quat",       _view_cmd_quat},

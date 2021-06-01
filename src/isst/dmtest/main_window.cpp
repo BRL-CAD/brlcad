@@ -145,8 +145,11 @@ DM_MainWindow::run_cmd(const QString &command)
 		bu_vls_sprintf(&msg, "Could not open %s as a .g file\n", av[1]) ;
 		console->printString(bu_vls_cstr(&msg));
 	    } else {
+		// TODO - quad view doesn't do view setup this way - see main.cpp
+		// and update this to do the right thing...
 		BU_GET((*gedpp)->ged_gvp, struct bview);
 		bv_init((*gedpp)->ged_gvp);
+		bu_vls_sprintf(&(*gedpp)->ged_gvp->gv_name, "default");
 		bu_ptbl_ins_unique(&(*gedpp)->ged_views, (long int *)(*gedpp)->ged_gvp);
 
 		if (canvas) {
@@ -161,6 +164,7 @@ DM_MainWindow::run_cmd(const QString &command)
 		    }
 		}
 		if (c4) {
+		    // TODO - handle view creation correctly for this case...
 		    for (int i = 1; i < 5; i++) {
 			QtCADView *c = c4->get(i);
 			c->set_view((*gedpp)->ged_gvp); // TODO - ged_gvp will need to be driven by selected QtCADView...
