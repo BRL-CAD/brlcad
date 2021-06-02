@@ -58,6 +58,9 @@ class QTCAD_EXPORT QtSW : public QWidget
 	explicit QtSW(QWidget *parent = nullptr, struct fb *fbp = NULL);
 	~QtSW();
 
+	void stash_hashes(); // Store current dmp and v hash values
+	bool diff_hashes();  // Set dmp dirty flag if current hashes != stashed hashes.  (Does not update   stored hash values - use stash_hashes for that operation.)
+
 	void save_image();
 
 	struct bview *v = NULL;
@@ -82,6 +85,9 @@ class QTCAD_EXPORT QtSW : public QWidget
 	void wheelEvent(QWheelEvent *e) override;
 
     private:
+	unsigned long long prev_dhash = 0;
+	unsigned long long prev_vhash = 0;
+
 	bool m_init = false;
 	int x_prev = -INT_MAX;
 	int y_prev = -INT_MAX;

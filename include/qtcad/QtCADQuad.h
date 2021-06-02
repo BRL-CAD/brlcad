@@ -45,6 +45,9 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	explicit QtCADQuad(QWidget *parent = nullptr, int type = QtCADView_AUTO);
 	~QtCADQuad();
 
+	void stash_hashes(); // Store current dmp and v hash values
+	bool diff_hashes();  // Set dmp dirty flags if current hashes != stashed hashes.  (Does not update stored hash values - use stash_hashes for that operation.)
+
 	QtCADView *get(int quadrant_num);
 	void select(int quadrant_num);
 	void select(const char *id); // valid inputs: ur, ul, ll and lr

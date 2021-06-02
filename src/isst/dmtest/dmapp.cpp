@@ -158,16 +158,13 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
     } else {
 
-	prev_dhash = 0;
-	prev_vhash = 0;
+	if (w->canvas)
+	    w->canvas->stash_hashes();
+
+	if (w->c4)
+	    w->c4->stash_hashes();
 
 	if (gedp) {
-
-	    // TODO - need to add hashing to check the dm variables as well (i.e. if lighting
-	    // was turned on/off by the dm command...)
-	    prev_dhash = dm_hash((struct dm *)gedp->ged_dmp);
-	    prev_vhash = bv_hash(gedp->ged_gvp);
-
 	    // Clear the edit flags ahead of the ged_exec call, so we can tell if
 	    // any geometry changed.
 	    struct directory *dp;
@@ -209,42 +206,35 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		w->c4->get(0)->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
 	    }
 
-	    /* Check if the ged_exec call changed either the display manager or
-	     * the view settings - in either case we'll need to redraw */
-	    if (prev_dhash != dm_hash((struct dm *)gedp->ged_dmp)) {
-		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	    }
-	    if (prev_vhash != bv_hash(gedp->ged_gvp)) {
-		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	    }
-
 	    // Checks the dp edit flags and does any necessary redrawing.  If
 	    // anything changed with the geometry, we also need to redraw
 	    if (ged_view_update(gedp) > 0) {
-		dm_set_dirty((struct dm *)gedp->ged_dmp, 1);
-	    }
-
-	    // If anybody set the flag, trigger an update
-	    if (dm_get_dirty((struct dm *)gedp->ged_dmp)) {
 		if (w->canvas)
 		    w->canvas->need_update();
-		if (w->c4) {
-		    w->c4->c->update();
-		}
+
+		if (w->c4)
+		    w->c4->need_update();
 	    }
 	} else {
 	    // gedp == NULL - can't cheat and use the gedp pointer
 	    if (prev_gedp != gedp) {
 		if (w->canvas) {
-		    dm_set_dirty(w->canvas->dmp(), 1);
 		    w->canvas->need_update();
 		}
 		if (w->c4) {
-		    dm_set_dirty(w->c4->get(0)->dmp(), 1);
 		    w->c4->c->update();
 		}
 	    }
 	}
+
+	/* Check if the ged_exec call changed either the display manager or
+	 * the view settings - in either case we'll need to redraw */
+	if (w->canvas)
+	    w->canvas->diff_hashes();
+
+	if (w->c4)
+	    w->c4->diff_hashes();
+
     }
 }
 

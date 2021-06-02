@@ -334,6 +334,34 @@ QtCADView::set_local2base(double *nl2b)
     }
 }
 
+void
+QtCADView::stash_hashes()
+{
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->stash_hashes();
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->stash_hashes();
+    }
+}
+
+bool
+QtCADView::diff_hashes()
+{
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	return canvas_gl->diff_hashes();
+    }
+#endif
+    if (canvas_sw) {
+	return canvas_sw->diff_hashes();
+    }
+
+    return false;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

@@ -274,6 +274,50 @@ void QtGL::mouseReleaseEvent(QMouseEvent *e) {
     QOpenGLWidget::mouseReleaseEvent(e);
 }
 
+void QtGL::stash_hashes()
+{
+    if (!dmp) {
+	prev_dhash = 0;
+    } else {
+	prev_dhash = dm_hash(dmp);
+    }
+    if (!v) {
+	prev_vhash = 0;
+    } else {
+	prev_vhash = bv_hash(v);
+    }
+}
+
+bool QtGL::diff_hashes()
+{
+    bool ret = false;
+    unsigned long long c_dhash = 0;
+    unsigned long long c_vhash = 0;
+
+    if (dmp) {
+	c_dhash = dm_hash(dmp);
+    }
+    if (v) {
+	c_vhash = bv_hash(v);
+    }
+
+    if (prev_dhash != c_dhash) {
+	if (dmp)
+	    dm_set_dirty(dmp, 1);
+	ret = true;
+    }
+    if (prev_vhash != c_vhash) {
+	if (dmp)
+	    dm_set_dirty(dmp, 1);
+	ret = true;
+    }
+
+    if (ret)
+	need_update();
+
+    return ret;
+}
+
 void QtGL::save_image() {
     QImage image = this->grabFramebuffer();
     image.save("file.png");

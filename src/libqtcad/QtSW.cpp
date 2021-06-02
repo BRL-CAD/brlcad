@@ -280,6 +280,50 @@ void QtSW::mouseReleaseEvent(QMouseEvent *e) {
     QWidget::mouseReleaseEvent(e);
 }
 
+void QtSW::stash_hashes()
+{
+    if (!dmp) {
+	prev_dhash = 0;
+    } else {
+	prev_dhash = dm_hash(dmp);
+    }
+    if (!v) {
+	prev_vhash = 0;
+    } else {
+	prev_vhash = bv_hash(v);
+    }
+}
+
+bool QtSW::diff_hashes()
+{
+    bool ret = false;
+    unsigned long long c_dhash = 0;
+    unsigned long long c_vhash = 0;
+
+    if (dmp) {
+	c_dhash = dm_hash(dmp);
+    }
+    if (v) {
+	c_vhash = bv_hash(v);
+    }
+
+    if (prev_dhash != c_dhash) {
+	if (dmp)
+	    dm_set_dirty(dmp, 1);
+	ret = true;
+    }
+    if (prev_vhash != c_vhash) {
+	if (dmp)
+	    dm_set_dirty(dmp, 1);
+	ret = true;
+    }
+
+    if (ret)
+	need_update();
+
+    return ret;
+}
+
 void QtSW::save_image() {
     // Set up a QImage with the rendered output..
     unsigned char *dm_image;

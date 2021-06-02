@@ -159,6 +159,29 @@ QtCADQuad::need_update()
     lr->update();
 }
 
+void
+QtCADQuad::stash_hashes()
+{
+    ur->stash_hashes();
+    ul->stash_hashes();
+    ll->stash_hashes();
+    lr->stash_hashes();
+}
+
+bool
+QtCADQuad::diff_hashes()
+{
+    bool ur_ret = ur->diff_hashes();
+    bool ul_ret = ul->diff_hashes();
+    bool ll_ret = ll->diff_hashes();
+    bool lr_ret = lr->diff_hashes();
+
+    if (ur_ret || ul_ret || ll_ret || lr_ret)
+	return true;
+
+    return false;
+}
+
 // TODO - need to enable mouse selection
 // of a quadrant as current
 

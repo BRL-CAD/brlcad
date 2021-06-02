@@ -57,6 +57,9 @@ class QTCAD_EXPORT QtCADView : public QWidget
 
 	int view_type();
 
+	void stash_hashes(); // Store current dmp and v hash values
+	bool diff_hashes();  // Set dmp dirty flag if current hashes != stashed hashes.  (Does not update   stored hash values - use stash_hashes for that operation.)
+
 	void save_image(int quad = 0);
 
 	bool isValid();
