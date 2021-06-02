@@ -189,9 +189,10 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		dm_set_vp(w->canvas->dmp(), &gedp->ged_gvp->gv_scale);
 	    }
 	    if (w->c4) {
-		gedp->ged_dmp = w->c4->c->dmp();
-		gedp->ged_gvp = w->c4->c->view();
-		dm_set_vp(w->c4->get(0)->dmp(), &gedp->ged_gvp->gv_scale);
+		QtCADView *c = w->c4->get();
+		gedp->ged_dmp = c->dmp();
+		gedp->ged_gvp = c->view();
+		dm_set_vp(c->dmp(), &gedp->ged_gvp->gv_scale);
 	    }
 	    bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
 	}
@@ -222,7 +223,8 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		    w->canvas->need_update();
 		}
 		if (w->c4) {
-		    w->c4->c->update();
+		    QtCADView *c = w->c4->get();
+		    c->update();
 		}
 	    }
 	}

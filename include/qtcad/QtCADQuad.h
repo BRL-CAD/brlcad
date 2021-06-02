@@ -49,7 +49,7 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	bool diff_hashes();  // Set dmp dirty flags if current hashes != stashed hashes.  (Does not update stored hash values - use stash_hashes for that operation.)
 
 	void default_views(); // Set the aet of the four quadrants to their standard defaults.
-	QtCADView *get(int quadrant_num);
+	QtCADView *get(int quadrant_num = 0);
 	void select(int quadrant_num);
 	void select(const char *id); // valid inputs: ur, ul, ll and lr
 
@@ -58,10 +58,16 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	QtCADView *ll = NULL; // Quadrant 3
 	QtCADView *lr = NULL; // Quadrant 4
 
-	QtCADView *c = NULL; // Currently selected quadrant
+	QtCADView *c = NULL;
+
+	// User pointer set to current quadrant's view
+	struct bview **cv = NULL;
 
     public slots:
 	void need_update();
+
+    private:
+        bool eventFilter(QObject*, QEvent*);
 };
 
 #endif /* QTCADQUAD_H */

@@ -52,6 +52,13 @@ QtCADQuad::QtCADQuad(QWidget *parent, int type)
     ll = new QtCADView(this, type);
     lr = new QtCADView(this, type);
 
+    // We'll need to do an event filter so we know which widget
+    // is current
+    ur->installEventFilter(this);
+    ul->installEventFilter(this);
+    ll->installEventFilter(this);
+    lr->installEventFilter(this);
+
     // Define the spacers
     QSpacerItem *s_top = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
     QSpacerItem *s_bottom = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -85,6 +92,25 @@ QtCADQuad::~QtCADQuad()
     delete ul;
     delete ll;
     delete lr;
+}
+
+bool
+QtCADQuad::eventFilter(QObject *t, QEvent *e)
+{
+    if (e->type() == QEvent::KeyPress || e->type() == QEvent::MouseButtonPress) {
+	bu_log("eventFilter\n");
+	if (t == ur) c = ur;
+	if (t == ul) c = ul;
+	if (t == ll) c = ll;
+	if (t == lr) c = lr;
+	if (cv) {
+	    if (t == ur) (*cv) = ur->view();
+	    if (t == ul) (*cv) = ul->view();
+	    if (t == ll) (*cv) = ll->view();
+	    if (t == lr) (*cv) = lr->view();
+	}
+    }
+    return QWidget::eventFilter(t, e);
 }
 
 void
@@ -132,6 +158,9 @@ QtCADQuad::select(int quadrant_id)
 	default:
 	    return;
     }
+
+    if (cv)
+	(*cv) = c->view();
 
     // TODO - update coloring of bg to
     // indicate active quadrant
