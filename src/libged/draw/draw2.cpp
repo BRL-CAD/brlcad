@@ -686,6 +686,7 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	    (*dd->s_size)[dp] = s_size;
 	    VMINMAX(dd->min, dd->max, bmin);
 	    VMINMAX(dd->min, dd->max, bmax);
+	    dd->have_bbox = 1;
 	}
     }
 }
@@ -711,9 +712,6 @@ alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
     return alphanum_impl(bu_vls_cstr(&ga->g->s_name), bu_vls_cstr(&gb->g->s_name), NULL);
 }
 
-// TODO - based on adaptive or non-adaptive plotting, we're either doing the general view objects or
-// a view specific object.  Need to adjust the logic accordingly - right now it's assuming ged_gvp
-// as the only view of interest.
 static int
 ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int argc, const char *argv[], int shared_views, int bot_threshold, int no_autoview)
 {
