@@ -487,8 +487,30 @@ bv_hash(struct bview *v)
 	bv_scene_obj_hash(state, g->g);
     }
 
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_grps); i++) {
+	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_view_grps, i);
+	if (BU_PTBL_IS_INITIALIZED(&g->g->children)) {
+	    for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
+		struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&g->g->children, j);
+		bv_scene_obj_hash(state, s_c);
+	    }
+	}
+	bv_scene_obj_hash(state, g->g);
+    }
+
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	if (BU_PTBL_IS_INITIALIZED(&s->children)) {
+	    for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
+		struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, j);
+		bv_scene_obj_hash(state, s_c);
+	    }
+	}
+	bv_scene_obj_hash(state, s);
+    }
+
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_shared_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_shared_objs, i);
 	if (BU_PTBL_IS_INITIALIZED(&s->children)) {
 	    for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
 		struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, j);

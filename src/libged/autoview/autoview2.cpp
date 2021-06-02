@@ -130,7 +130,12 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
 
-    struct bu_ptbl *so = v->gv_db_grps;
+    struct bu_ptbl *so;
+    if (v->independent) {
+	so = v->gv_view_grps;
+    } else {
+	so = v->gv_db_grps;
+    }
     vect_t minus, plus;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
@@ -177,7 +182,11 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     // When it comes to view-only objects, only include those that are db object based, polygons
     // or labels, unless the flag to consider all objects is set.
-    so = v->gv_view_objs;
+    if (v->independent) {
+	so = v->gv_view_objs;
+    } else {
+	so = v->gv_view_shared_objs;
+    }
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
 	if (!all_view_objs) {
