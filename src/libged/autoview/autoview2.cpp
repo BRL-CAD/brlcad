@@ -42,6 +42,7 @@ extern "C" int
 ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[options] [scale]";
+    struct bu_vls cvls = BU_VLS_INIT_ZERO;
     int is_empty = 1;
     vect_t min, max;
     vect_t center = VINIT_ZERO;
@@ -62,11 +63,13 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     int all_view_objs = 0;
     int print_help = 0;
+    struct bview *v = gedp->ged_gvp;
 
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",      "",  NULL,  &print_help,    "Print help and exit");
-    BU_OPT(d[1], "",  "all",       "",  NULL,  &all_view_objs, "Bound all non-faceplate view objects");
-    BU_OPT_NULL(d[2]);
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help",      "",        NULL,     &print_help, "Print help and exit");
+    BU_OPT(d[1], "",   "all-objs", "",        NULL,  &all_view_objs, "Bound all non-faceplate view objects");
+    BU_OPT(d[2], "V", "view",  "name", &bu_opt_vls,           &cvls, "Specify view to adjust");
+    BU_OPT_NULL(d[3]);
 
     argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
 
@@ -83,6 +86,25 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_cmd_help(gedp, usage, d);
 	return GED_ERROR;
     }
+
+    if (bu_vls_strlen(&cvls)) {
+	int found_match = 0;
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
+		v = tv;
+		found_match = 1;
+		break;
+	    }
+	}
+	if (!found_match) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return GED_ERROR;
+	}
+    }
+    bu_vls_free(&cvls);
+
 
     /* parse the optional scale argument */
     if (argc) {
@@ -108,7 +130,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
 
-    struct bu_ptbl *so = gedp->ged_gvp->gv_db_grps;
+    struct bu_ptbl *so = v->gv_db_grps;
     vect_t minus, plus;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
@@ -155,7 +177,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     // When it comes to view-only objects, only include those that are db object based, polygons
     // or labels, unless the flag to consider all objects is set.
-    so = gedp->ged_gvp->gv_view_objs;
+    so = v->gv_view_objs;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
 	if (!all_view_objs) {
@@ -205,15 +227,15 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
 	VSETALL(radial, 1.0);
 
-    MAT_IDN(gedp->ged_gvp->gv_center);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
-    gedp->ged_gvp->gv_scale = radial[X];
-    V_MAX(gedp->ged_gvp->gv_scale, radial[Y]);
-    V_MAX(gedp->ged_gvp->gv_scale, radial[Z]);
+    MAT_IDN(v->gv_center);
+    MAT_DELTAS_VEC_NEG(v->gv_center, center);
+    v->gv_scale = radial[X];
+    V_MAX(v->gv_scale, radial[Y]);
+    V_MAX(v->gv_scale, radial[Z]);
 
-    gedp->ged_gvp->gv_size = factor * gedp->ged_gvp->gv_scale;
-    gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    bv_update(gedp->ged_gvp);
+    v->gv_size = factor * v->gv_scale;
+    v->gv_isize = 1.0 / v->gv_size;
+    bv_update(v);
 
     return GED_OK;
 }

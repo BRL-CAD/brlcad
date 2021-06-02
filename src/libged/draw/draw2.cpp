@@ -1025,11 +1025,21 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     // If we're starting from scratch and we're not being told to leave the
     // view alone, make sure what we've drawn is visible.
     if (blank_slate && !no_autoview) {
-	int ac = 1;
-	const char *av[2];
-	av[0] = "autoview";
-	av[1] = NULL;
-	return ged_exec(gedp, ac, (const char **)av);
+	if (!bu_vls_strlen(&v->gv_name)) {
+	    int ac = 1;
+	    const char *av[2];
+	    av[0] = "autoview";
+	    av[1] = NULL;
+	    return ged_exec(gedp, ac, (const char **)av);
+	} else {
+	    int ac = 3;
+	    const char *av[4];
+	    av[0] = "autoview";
+	    av[1] = "-V";
+	    av[2] = bu_vls_cstr(&v->gv_name);
+	    av[3] = NULL;
+	    return ged_exec(gedp, ac, (const char **)av);
+	}
     }
 
     // Scene objects are created and stored. The application may now call each
@@ -1189,6 +1199,14 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	vs.s_dmode = drawing_modes[0];
     }
 
+    // Before we start doing anything with sg, record if things are starting
+    // out empty in the case of the shared list.  It will get populated in the
+    // first pass, but we still need to size the other views (if any).
+    int shared_blank_slate = 0;
+    if (!BU_PTBL_LEN(cv->gv_db_grps) && !BU_PTBL_LEN(cv->gv_view_shared_objs)) {
+	shared_blank_slate = 1;
+    }
+
     // If we're independent, we only operate on one view
     if (cv && cv->independent && !shared_views) {
 	return ged_draw_view(gedp, cv, &vs, argc, argv, shared_views, bot_threshold, no_autoview);
@@ -1232,7 +1250,38 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
 	    return GED_ERROR;
 	}
+
 	int nret = ged_draw_view(gedp, cv, &vs, argc, argv, shared_views, bot_threshold, no_autoview);
+
+	// If we're doing blank slate drawing, we need to autoview all shared views
+	if (shared_blank_slate && !no_autoview) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+		if (v->independent || v == cv) {
+		    // Independent views are handled by specifying the view - this
+		    // logic doesn't change them.  Current view was already handled
+		    // by ged_draw_view
+		    continue;
+		}
+
+		if (!bu_vls_strlen(&v->gv_name)) {
+		    int ac = 1;
+		    const char *av[2];
+		    av[0] = "autoview";
+		    av[1] = NULL;
+		    ged_exec(gedp, ac, (const char **)av);
+		} else {
+		    int ac = 3;
+		    const char *av[4];
+		    av[0] = "autoview";
+		    av[1] = "-V";
+		    av[2] = bu_vls_cstr(&v->gv_name);
+		    av[3] = NULL;
+		    ged_exec(gedp, ac, (const char **)av);
+		}
+	    }
+	}
+
 	if (nret & GED_ERROR)
 	    ret = nret;
     }
