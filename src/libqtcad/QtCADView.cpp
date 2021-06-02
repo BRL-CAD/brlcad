@@ -362,6 +362,19 @@ QtCADView::diff_hashes()
     return false;
 }
 
+void
+QtCADView::aet(double a, double e, double t)
+{
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->aet(a, e, t);
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->aet(a, e, t);
+    }
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

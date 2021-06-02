@@ -323,6 +323,38 @@ void QtGL::save_image() {
     image.save("file.png");
 }
 
+void QtGL::aet(double a, double e, double t)
+{
+    if (!v)
+	return;
+
+    fastf_t aet[3];
+    double aetd[3];
+    aetd[0] = a;
+    aetd[1] = e;
+    aetd[2] = t;
+
+    /* convert from double to fastf_t */
+    VMOVE(aet, aetd);
+
+    VMOVE(v->gv_aet, aet);
+
+    /* TODO - based on the suspect _ged_mat_aet... */
+    mat_t tmat;
+    fastf_t twist;
+    fastf_t c_twist;
+    fastf_t s_twist;
+    bn_mat_angles(v->gv_rotation, 270.0 + v->gv_aet[1], 0.0, 270.0 - v->gv_aet[0]);
+    twist = -v->gv_aet[2] * DEG2RAD;
+    c_twist = cos(twist);
+    s_twist = sin(twist);
+    bn_mat_zrot(tmat, s_twist, c_twist);
+    bn_mat_mul2(tmat, v->gv_rotation);
+
+    bv_update(v);
+}
+
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

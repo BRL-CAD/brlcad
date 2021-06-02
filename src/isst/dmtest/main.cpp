@@ -161,6 +161,7 @@ int main(int argc, char *argv[])
 		c->set_local2base(&app.gedp->ged_wdbp->dbip->dbi_local2base);
 	    }
 	    app.gedp->ged_gvp = app.w->c4->get(0)->view();
+	    app.w->c4->default_views();
 	}
     }
 

@@ -63,6 +63,8 @@ class QTCAD_EXPORT QtSW : public QWidget
 
 	void save_image();
 
+	void aet(double a, double e, double t);
+
 	struct bview *v = NULL;
 	struct dm *dmp = NULL;
 	struct fb *ifp = NULL;

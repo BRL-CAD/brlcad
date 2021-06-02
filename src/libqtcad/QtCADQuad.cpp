@@ -87,6 +87,15 @@ QtCADQuad::~QtCADQuad()
     delete lr;
 }
 
+void
+QtCADQuad::default_views()
+{
+    ur->aet(35, 25, 0);
+    ul->aet(0, 90, 0);
+    ll->aet(0, 0, 0);
+    lr->aet(90, 0, 0);
+}
+
 QtCADView *
 QtCADQuad::get(int quadrant_id)
 {

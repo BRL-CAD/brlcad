@@ -80,6 +80,8 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	void set_base2local(double *);
 	void set_local2base(double *);
 
+	void aet(double a, double e, double t);
+
     public slots:
 	void need_update();
 
