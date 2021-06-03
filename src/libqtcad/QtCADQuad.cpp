@@ -52,6 +52,11 @@ QtCADQuad::QtCADQuad(QWidget *parent, int type)
     ll = new QtCADView(this, type);
     lr = new QtCADView(this, type);
 
+    ur->set_current(0);
+    ul->set_current(0);
+    ll->set_current(0);
+    lr->set_current(0);
+
     // We'll need to do an event filter so we know which widget
     // is current
     ur->installEventFilter(this);
@@ -68,6 +73,7 @@ QtCADQuad::QtCADQuad(QWidget *parent, int type)
 
     // Default to selecting quadrant 1
     c = ur;
+    ur->set_current(1);
 
     // Lay out the widgets and spacers in a Quad View arrangement
     QGridLayout *gl = new QGridLayout(this);
@@ -111,25 +117,48 @@ QtCADQuad::fallback()
     ul->fallback();
     ll->fallback();
     lr->fallback();
+
+    ur->set_current(0);
+    ul->set_current(0);
+    ll->set_current(0);
+    lr->set_current(0);
+
+    // ur is still the default current
+    ur->set_current(1);
+
 }
 
 bool
 QtCADQuad::eventFilter(QObject *t, QEvent *e)
 {
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::MouseButtonPress) {
-	bu_log("eventFilter\n");
-	if (t == ur) c = ur;
-	if (t == ul) c = ul;
-	if (t == ll) c = ll;
-	if (t == lr) c = lr;
+	if (t == ur) {
+	    c = ur;
+	} else {
+	    ur->set_current(0);
+	}
+	if (t == ul) {
+	    c = ul;
+	} else {
+	    ul->set_current(0);
+	}
+	if (t == ll) {
+	    c = ll;
+	} else {
+	    ll->set_current(0);
+	}
+	if (t == lr) {
+	    c = lr;
+	} else {
+	    lr->set_current(0);
+	}
+
+	c->set_current(1);
 	if (cv) {
-	    if (t == ur) (*cv) = ur->view();
-	    if (t == ul) (*cv) = ul->view();
-	    if (t == ll) (*cv) = ll->view();
-	    if (t == lr) (*cv) = lr->view();
+	    (*cv) = c->view();
 	}
     }
-    return QWidget::eventFilter(t, e);
+    return false;
 }
 
 void

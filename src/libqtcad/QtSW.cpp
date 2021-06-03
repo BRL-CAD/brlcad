@@ -186,7 +186,7 @@ void QtSW::resizeEvent(QResizeEvent *e)
 
 void QtSW::keyPressEvent(QKeyEvent *k) {
 
-    if (!dmp || !v) {
+    if (!dmp || !v || !current) {
 	QWidget::keyPressEvent(k);
 	return;
     }
@@ -206,7 +206,7 @@ void QtSW::keyPressEvent(QKeyEvent *k) {
 
 void QtSW::mousePressEvent(QMouseEvent *e) {
 
-    if (!dmp || !v) {
+    if (!dmp || !v || !current) {
 	QWidget::mousePressEvent(e);
 	return;
     }
@@ -228,7 +228,7 @@ void QtSW::mousePressEvent(QMouseEvent *e) {
 
 void QtSW::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!dmp || !v) {
+    if (!dmp || !v || !current) {
 	QWidget::mouseMoveEvent(e);
 	return;
     }
@@ -252,7 +252,7 @@ void QtSW::mouseMoveEvent(QMouseEvent *e)
 
 void QtSW::wheelEvent(QWheelEvent *e) {
 
-    if (!dmp || !v) {
+    if (!dmp || !v || !current) {
 	QWidget::wheelEvent(e);
 	return;
     }

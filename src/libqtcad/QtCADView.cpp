@@ -374,6 +374,34 @@ QtCADView::aet(double a, double e, double t)
     }
 }
 
+void
+QtCADView::set_current(int i)
+{
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->current = i;
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->current = i;
+    }
+}
+
+int
+QtCADView::current()
+{
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	return canvas_gl->current;
+    }
+#endif
+    if (canvas_sw) {
+	return canvas_sw->current;
+    }
+
+    return 0;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

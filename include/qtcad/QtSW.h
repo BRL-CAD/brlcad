@@ -65,6 +65,7 @@ class QTCAD_EXPORT QtSW : public QWidget
 
 	void aet(double a, double e, double t);
 
+	int current = 1;
 	struct bview *v = NULL;
 	struct dm *dmp = NULL;
 	struct fb *ifp = NULL;

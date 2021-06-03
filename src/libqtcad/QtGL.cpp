@@ -180,7 +180,7 @@ void QtGL::need_update()
 
 void QtGL::keyPressEvent(QKeyEvent *k) {
 
-    if (!dmp || !v) {
+    if (!dmp || !v || !current) {
 	QOpenGLWidget::keyPressEvent(k);
 	return;
     }
@@ -200,7 +200,7 @@ void QtGL::keyPressEvent(QKeyEvent *k) {
 
 void QtGL::mousePressEvent(QMouseEvent *e) {
 
-    if (!dmp || !v) {
+    if (!dmp || !v || !current) {
 	QOpenGLWidget::mousePressEvent(e);
 	return;
     }
@@ -222,7 +222,7 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
 
 void QtGL::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!dmp || !v) {
+    if (!dmp || !v || !current) {
 	QOpenGLWidget::mouseMoveEvent(e);
 	return;
     }
@@ -246,7 +246,7 @@ void QtGL::mouseMoveEvent(QMouseEvent *e)
 
 void QtGL::wheelEvent(QWheelEvent *e) {
 
-    if (!dmp || !v) {
+    if (!dmp || !v || !current) {
 	QOpenGLWidget::wheelEvent(e);
 	return;
     }

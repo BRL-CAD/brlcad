@@ -60,6 +60,7 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 	void aet(double a, double e, double t);
 	void save_image();
 
+	int current = 1;
 	struct bview *v = NULL;
 	struct dm *dmp = NULL;
 	struct fb *ifp = NULL;
