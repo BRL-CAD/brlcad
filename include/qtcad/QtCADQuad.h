@@ -48,6 +48,9 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	void stash_hashes(); // Store current dmp and v hash values
 	bool diff_hashes();  // Set dmp dirty flags if current hashes != stashed hashes.  (Does not update stored hash values - use stash_hashes for that operation.)
 
+	bool isValid();
+	void fallback();
+
 	void default_views(); // Set the aet of the four quadrants to their standard defaults.
 	QtCADView *get(int quadrant_num = 0);
 	void select(int quadrant_num);

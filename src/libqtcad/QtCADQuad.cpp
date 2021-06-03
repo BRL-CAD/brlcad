@@ -95,6 +95,25 @@ QtCADQuad::~QtCADQuad()
 }
 
 bool
+QtCADQuad::isValid()
+{
+    if (!ur->isValid()) return false;
+    if (!ul->isValid()) return false;
+    if (!ll->isValid()) return false;
+    if (!lr->isValid()) return false;
+    return true;
+}
+
+void
+QtCADQuad::fallback()
+{
+    ur->fallback();
+    ul->fallback();
+    ll->fallback();
+    lr->fallback();
+}
+
+bool
 QtCADQuad::eventFilter(QObject *t, QEvent *e)
 {
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::MouseButtonPress) {
