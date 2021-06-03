@@ -1,4 +1,4 @@
-/*                           L O D . C
+/*                           L O D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2013-2021 United States Government as represented by
@@ -33,16 +33,10 @@
 
 #include "../ged_private.h"
 
-extern int ged_lod2_core(struct ged *gedp, int argc, const char *argv[]);
-int
-ged_lod_core(struct ged *gedp, int argc, const char *argv[])
-{
-    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
-    if (BU_STR_EQUAL(cmd2, "1"))
-	return ged_lod2_core(gedp, argc, argv);
 
-    struct bview *gvp;
-    int printUsage = 0;
+extern "C" int
+ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
+{
     static const char *usage = "lod (on|off|enabled)\n"
 			       "lod scale (points|curves) <factor>\n"
 			       "lod redraw (off|onzoom)\n";
@@ -54,19 +48,48 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    struct bview *cv = NULL;
+    struct bu_vls cvls = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc vd[2];
+    BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to change lod setting on");
+    BU_OPT_NULL(vd[1]);
+    int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
+    argc = opt_ret;
+    if (bu_vls_strlen(&cvls)) {
+	int found_match = 0;
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
+		cv = tv;
+		found_match = 1;
+		break;
+	    }
+	}
+	if (!found_match) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return GED_ERROR;
+	}
+    }
+    bu_vls_free(&cvls);
+
+    if (!cv && !BU_PTBL_LEN(&gedp->ged_views)) {
+	return GED_OK;
+    }
+
     /* must be wanting help */
     if (argc >= 2 && BU_STR_EQUAL(argv[1], "-h")) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
 	return GED_HELP;
     }
 
-    gvp = gedp->ged_gvp;
-    if (gvp == NULL) {
-	return GED_OK;
-    }
-
     /* Print current state if no args are supplied */
     if (argc == 1) {
+	struct bview *gvp = cv;
+	if (!gvp)
+	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
+	if (!gvp)
+	    return GED_ERROR;
 	if (gvp->gv_s->adaptive_plot) {
 	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: enabled\n");
 	} else {
@@ -84,19 +107,72 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* determine subcommand */
-    --argc;
-    ++argv;
-    printUsage = 0;
+    --argc; ++argv;
+    int printUsage = 0;
     if (argc == 1 && BU_STR_EQUAL(argv[0], "on")) {
 	/* lod on */
-	gvp->gv_s->adaptive_plot = 1;
+	if (cv) {
+	    if (!cv->gv_s->adaptive_plot) {
+		cv->gv_s->adaptive_plot = 1;
+		const char *cmd = "redraw";
+		ged_exec(gedp, 1, (const char **)&cmd);
+	    }
+	} else {
+	    int delta = 0;
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+		if (!v)
+		    continue;
+		if (!v->gv_s->adaptive_plot) {
+		    v->gv_s->adaptive_plot = 1;
+		    delta = 1;
+		}
+	    }
+	    if (delta) {
+		const char *cmd = "redraw";
+		ged_exec(gedp, 1, (const char **)&cmd);
+	    }
+	}
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "off")) {
 	/* lod off */
-	gvp->gv_s->adaptive_plot = 0;
+	if (cv) {
+	    if (cv->gv_s->adaptive_plot) {
+		cv->gv_s->adaptive_plot = 0;
+		const char *cmd = "redraw";
+		ged_exec(gedp, 1, (const char **)&cmd);
+	    }
+	} else {
+	    int delta = 0;
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+		if (!v)
+		    continue;
+		if (v->gv_s->adaptive_plot) {
+		    v->gv_s->adaptive_plot = 0;
+		    delta = 1;
+		}
+
+		if (delta) {
+		    const char *cmd = "redraw";
+		    ged_exec(gedp, 1, (const char **)&cmd);
+		}
+	    }
+
+	}
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "enabled")) {
 	/* lod enabled - return on state */
+	struct bview *gvp = cv;
+	if (!gvp)
+	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
+	if (!gvp)
+	    return GED_ERROR;
 	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_s->adaptive_plot);
     } else if (BU_STR_EQUAL(argv[0], "scale")) {
+	struct bview *gvp = cv;
+	if (!gvp)
+	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
+	if (!gvp)
+	    return GED_ERROR;
 	if (argc == 2 || argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "points")) {
 		if (argc == 2) {
@@ -121,6 +197,11 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 	    printUsage = 1;
 	}
     } else if (BU_STR_EQUAL(argv[0], "redraw")) {
+	struct bview *gvp = cv;
+	if (!gvp)
+	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
+	if (!gvp)
+	    return GED_ERROR;
 	printUsage = 1;
 	if (argc == 1) {
 	    /* lod redraw - return current value */
@@ -152,26 +233,6 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
-
-
-#ifdef GED_PLUGIN
-#include "../include/plugin.h"
-struct ged_cmd_impl lod_cmd_impl = {
-    "lod",
-    ged_lod_core,
-    GED_CMD_DEFAULT
-};
-
-const struct ged_cmd lod_cmd = { &lod_cmd_impl };
-const struct ged_cmd *lod_cmds[] = { &lod_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  lod_cmds, 1 };
-
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-{
-    return &pinfo;
-}
-#endif /* GED_PLUGIN */
 
 /*
  * Local Variables:

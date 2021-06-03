@@ -1244,9 +1244,14 @@ ged_ev_core(struct ged *gedp, int argc, const char *argv[])
     return ged_draw_guts(gedp, argc, argv, _GED_DRAW_NMG_POLY);
 }
 
+extern int ged_redraw2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_redraw2_core(gedp, argc, argv);
+
     int ret;
     struct display_list *gdlp;
 

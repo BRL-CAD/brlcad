@@ -713,7 +713,7 @@ alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
 }
 
 static int
-ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int argc, const char *argv[], int shared_views, int bot_threshold, int no_autoview)
+ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int argc, const char *argv[], int bot_threshold, int no_autoview)
 {
     // Abbreviations for convenience
     struct db_i *dbip = gedp->ged_wdbp->dbip;
@@ -721,7 +721,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     struct bu_ptbl *sg;
 
     // Where the groups get stored depends on our mode
-    if (v->gv_s->adaptive_plot || (v->independent && !shared_views)) {
+    if (v->gv_s->adaptive_plot || v->independent) {
 	sg = v->gv_view_grps;
     } else {
 	sg = v->gv_db_grps;
@@ -1047,31 +1047,37 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     return GED_OK;
 }
 
+static void
+_ged_shared_autoview(struct ged *gedp, struct bview *cv, int shared_blank_slate, int no_autoview)
+{
+    if (shared_blank_slate && !no_autoview) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    if (v->independent || v == cv || v->gv_s->adaptive_plot) {
+		continue;
+	    }
+
+	    if (!bu_vls_strlen(&v->gv_name)) {
+		int ac = 1;
+		const char *av[2];
+		av[0] = "autoview";
+		av[1] = NULL;
+		ged_exec(gedp, ac, (const char **)av);
+	    } else {
+		int ac = 3;
+		const char *av[4];
+		av[0] = "autoview";
+		av[1] = "-V";
+		av[2] = bu_vls_cstr(&v->gv_name);
+		av[3] = NULL;
+		ged_exec(gedp, ac, (const char **)av);
+	    }
+	}
+    }
+}
+
 /*
- * There are actually three scene object management scenarios we might want to
- * consider:
- *
- * 1.  All shared (default, most efficient from a vlist perspective, no
- * independence of view contents)
- *
- * 2.  Adaptive plot, synced group lists (different vlists for different views,
- * but drawn group lists should match.  From a user perspective, #1 with
- * adaptive drawing).  This is almost #3 with adaptive plot on, but with one key
- * difference - we don't want to have to specify the same objects for each view.
- * I.e. - we want the controls from #1.
- *
- * 3.  Independent view lists - each view has its own info, not synced with
- * other views.  Maximal flexibility, but also more memory usage than minimally
- * necessary if views do in fact have shared objects with geometrically
- * identical vlists.
- *
- * Theoretically we could also mix local and shared lists at the same time
- * (i.e. "overlay" local lists on top of a shared list.)  My inclination right
- * now is to not do that - the only gain would be to get some vlist storage
- * benefits from being able to share objects that would otherwise be duplicated
- * in multiple local lists.  That's a dubious use case in some ways, hard to track,
- * and the complexity/usability implications are significant.
- *
+ *  Main drawing command control logic
  */
 extern "C" int
 ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
@@ -1079,7 +1085,6 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int bot_threshold = -1;
     int no_autoview = 0;
-    int shared_views = 0;
     static const char *usage = "[options] path1 [path2 ...]";
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -1127,6 +1132,12 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_vls_free(&cvls);
 
+    // We need a current view, either from gedp or from the options
+    if (!cv) {
+	bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
+	return GED_ERROR;
+    }
+
     /* User settings may override various options - set up to collect them.
      * Option defaults come from the current view, but may be overridden for
      * the purposes of the current draw command by command line options. */
@@ -1136,7 +1147,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
-    struct bu_opt_desc d[18];
+    struct bu_opt_desc d[17];
     BU_OPT(d[0],  "h", "help",          "",                 NULL, &print_help,         "Print help and exit");
     BU_OPT(d[1],  "?", "",              "",                 NULL, &print_help,         "");
     BU_OPT(d[2],  "m", "mode",         "#",          &bu_opt_int, &drawing_modes[0],  "0=wireframe;1=shaded bots;2=shaded;3=evaluated");
@@ -1153,8 +1164,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[13], "C", "color",         "r/g/b", &draw_opt_color, &vs,                "Override object colors");
     BU_OPT(d[14],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
     BU_OPT(d[15], "R", "no-autoview",   "",                 NULL, &no_autoview,       "Do not calculate automatic view, even if initial scene is empty.");
-    BU_OPT(d[16], "",  "shared",        "",                 NULL, &shared_views,      "Draw in all views showing shared objects, even if current view is an independent view.");
-    BU_OPT_NULL(d[17]);
+    BU_OPT_NULL(d[16]);
 
     /* If no args, must be wanting help */
     if (!argc) {
@@ -1205,34 +1215,22 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	shared_blank_slate = 1;
     }
 
-    // If we're independent, we only operate on one view
-    if (cv && cv->independent && !shared_views) {
-	return ged_draw_view(gedp, cv, &vs, argc, argv, shared_views, bot_threshold, no_autoview);
-    }
-
-    /* If adaptive plotting is enabled, we need to generate wireframes
-     * specific to each view */
-    int have_non_adaptive = 0;
-    int ret = GED_OK;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
-	if (v->independent && v != cv) {
-	    // Independent views are handled by specifying the view - this
-	    // logic doesn't change them.
-	    continue;
-	}
-	if (v->gv_s->adaptive_plot) {
-	    int aret = ged_draw_view(gedp, v, &vs, argc, argv, shared_views, bot_threshold, no_autoview);
-	    if (aret & GED_ERROR)
-		ret = aret;
-	} else {
-	    have_non_adaptive = 1;
-	    // If we are switching from local adaptive geometry to shared
-	    // non-adaptive geometry and we have both a shared and a local
-	    // ptbl, we need to clear any local adaptive plotting that may have
-	    // been produced by previous draw calls.
-	    struct bu_ptbl *sg = v->gv_view_grps;
-	    if (sg && sg != v->gv_db_grps) {
+    // If we are switching views from adaptive plotting to non-adaptive
+    // plotting and we have both a shared and a local ptbl, we need to clear
+    // any local adaptive plotting that may have been produced by previous draw
+    // calls.  If the current/specified view satisfies the criteria we always
+    // do the cleanup.  Additionally, if cv is a shared view any additional
+    // shared views whose plotting status has changed also needs the clear
+    // operation.  Independent views do not need this operation, since they use
+    // gv_view_grps for both non-adaptive and adaptive plotting.  (I.e. in
+    // independent drawing any contents from gv_db_grps are ignored.)
+    if (!cv->independent) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    if (v->independent)
+		continue;
+	    struct bu_ptbl *sg = cv->gv_view_grps;
+	    if (sg && !v->gv_s->adaptive_plot) {
 		for (size_t j = 0; j < BU_PTBL_LEN(sg); j++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, j);
 		    bv_scene_obj_free(cg->g, gedp->free_scene_obj);
@@ -1243,49 +1241,261 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (have_non_adaptive) {
-	if (!cv) {
-	    bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
-	    return GED_ERROR;
+    // Drawing can get complicated when we have multiple active views with
+    // different settings.  In general there are three factors to consider:
+    //
+    // 1.  Presence of shared views (the standard/default)
+    // 2.  Presence of independent views
+    // 3.  Adaptive plotting enabled in shared views
+    //
+    // The latter case in particular is complicated by the fact that the object
+    // lists are common to multiple views, but the display vlists are not -
+    // there is no guarantee that two different views will have the same level
+    // of detail requirements, and the drawing logic cannot assume they will.
+
+    // The simplest case is when the current or specified view is an independent
+    // view - in that case, we do not need to consider updating other views.
+    if (cv->independent) {
+	return ged_draw_view(gedp, cv, &vs, argc, argv, bot_threshold, no_autoview);
+    }
+
+    // If the current/specified view is NOT independent, we are potentially
+    // acting separately on multiple views.  Do a quick check - if no shared
+    // views have adaptive plotting enabled, we need only process the current
+    // view.  If we do have adaptive plotting on, it gets more complicated.
+    int have_adaptive = 0;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (v->independent) {
+	    // Independent views are handled individually by the above case -
+	    // this logic doesn't reference them.
+	    continue;
 	}
-
-	int nret = ged_draw_view(gedp, cv, &vs, argc, argv, shared_views, bot_threshold, no_autoview);
-
-	// If we're doing blank slate drawing, we need to autoview all shared views
-	if (shared_blank_slate && !no_autoview) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-		struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
-		if (v->independent || v == cv) {
-		    // Independent views are handled by specifying the view - this
-		    // logic doesn't change them.  Current view was already handled
-		    // by ged_draw_view
-		    continue;
-		}
-
-		if (!bu_vls_strlen(&v->gv_name)) {
-		    int ac = 1;
-		    const char *av[2];
-		    av[0] = "autoview";
-		    av[1] = NULL;
-		    ged_exec(gedp, ac, (const char **)av);
-		} else {
-		    int ac = 3;
-		    const char *av[4];
-		    av[0] = "autoview";
-		    av[1] = "-V";
-		    av[2] = bu_vls_cstr(&v->gv_name);
-		    av[3] = NULL;
-		    ged_exec(gedp, ac, (const char **)av);
-		}
-	    }
+	if (v->gv_s->adaptive_plot) {
+	    have_adaptive = 1;
+	    break;
 	}
+    }
+    // If we're not doing adaptive plotting, we can update the shared views
+    // by processing only the current view.  However, we need to trigger
+    // autoview for other shared views if that is needed, since ged_draw_view
+    // will do it only for the current view.
+    if (!have_adaptive) {
+	int ret = ged_draw_view(gedp, cv, &vs, argc, argv, bot_threshold, no_autoview);
+	_ged_shared_autoview(gedp, cv, shared_blank_slate, no_autoview);
+	return ret;
+    }
 
-	if (nret & GED_ERROR)
-	    ret = nret;
+    /* If adaptive plotting is enabled, we need to generate wireframes
+     * specific to each adaptive view.  However, not all views may have
+     * adaptive plotting enabled, and for those views without it we should
+     * be supplying the standard shared view.  As with the above loop, we
+     * do not consider independent views here. */
+    std::vector<struct bview *> adaptive_views;
+    struct bview *non_adaptive_view = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (v->independent)
+	    continue;
+	if (v->gv_s->adaptive_plot) {
+	    adaptive_views.push_back(v);
+	} else {
+	    non_adaptive_view = v;
+	}
+    }
+
+    // If we have non-adaptive view(s) to handle, do that first
+    int ret = GED_OK;
+    if (non_adaptive_view) {
+	int aret = ged_draw_view(gedp, non_adaptive_view, &vs, argc, argv, bot_threshold, no_autoview);
+	if (aret & GED_ERROR)
+	    ret = aret;
+	_ged_shared_autoview(gedp, cv, shared_blank_slate, no_autoview);
+    }
+
+    std::vector<struct bview *>::iterator v_it;
+    for (v_it = adaptive_views.begin(); v_it != adaptive_views.end(); v_it++) {
+	struct bview *v = *v_it;
+	int aret = ged_draw_view(gedp, v, &vs, argc, argv, bot_threshold, no_autoview);
+	if (aret & GED_ERROR)
+	    ret = aret;
+
     }
 
     return ret;
+}
 
+static int
+_ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[])
+{
+    // Whether we have a specified set of paths or not, if we're switching from
+    // adaptive to non-adaptive plotting or vice versa we need to transition objects
+    // from local to shared containers or vice versa.
+    //
+    // If going from adaptive to shared we only need to do so once, but when going
+    // from shared to adaptive each view needs its own copy.  Check for the transition
+    // states, and handle accordingly.
+    if (v->gv_s->adaptive_plot && BU_PTBL_LEN(v->gv_db_grps) && !BU_PTBL_LEN(v->gv_view_grps)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
+	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	    if (v->independent) {
+		int ac = 5;
+		const char *av[6];
+		av[0] = "draw";
+		av[1] = "-R";
+		av[2] = "--view";
+		av[3] = bu_vls_cstr(&v->gv_name);
+		av[4] = bu_vls_cstr(&cg->g->s_name);
+		av[5] = NULL;
+		ged_exec(gedp, ac, (const char **)av);
+	    } else {
+		int ac = 3;
+		const char *av[4];
+		av[0] = "draw";
+		av[1] = "-R";
+		av[2] = bu_vls_cstr(&cg->g->s_name);
+		av[3] = NULL;
+		ged_exec(gedp, ac, (const char **)av);
+	    }
+	}
+	return GED_OK;
+    }
+    if (!v->gv_s->adaptive_plot && !BU_PTBL_LEN(v->gv_db_grps) && BU_PTBL_LEN(v->gv_view_grps)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_grps); i++) {
+	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_view_grps, i);
+	    if (v->independent) {
+		int ac = 5;
+		const char *av[6];
+		av[0] = "draw";
+		av[1] = "-R";
+		av[2] = "--view";
+		av[3] = bu_vls_cstr(&v->gv_name);
+		av[4] = bu_vls_cstr(&cg->g->s_name);
+		av[5] = NULL;
+		ged_exec(gedp, ac, (const char **)av);
+	    } else {
+		int ac = 3;
+		const char *av[4];
+		av[0] = "draw";
+		av[1] = "-R";
+		av[2] = bu_vls_cstr(&cg->g->s_name);
+		av[3] = NULL;
+		ged_exec(gedp, ac, (const char **)av);
+	    }
+	}
+	return GED_OK;
+    }
+
+    // If we're not transitioning, it's a garden variety redraw.
+    if (!argc) {
+	struct bu_ptbl *sg;
+	if (v->independent) {
+	    sg = v->gv_view_grps;
+	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+		int ac = 5;
+		const char *av[6];
+		av[0] = "draw";
+		av[1] = "-R";
+		av[2] = "--view";
+		av[3] = bu_vls_cstr(&v->gv_name);
+		av[4] = bu_vls_cstr(&cg->g->s_name);
+		av[5] = NULL;
+		ged_exec(gedp, ac, (const char **)av);
+	    }
+	} else {
+	    sg = v->gv_db_grps;
+	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+		int ac = 3;
+		const char *av[4];
+		av[0] = "draw";
+		av[1] = "-R";
+		av[2] = bu_vls_cstr(&cg->g->s_name);
+		av[3] = NULL;
+		ged_exec(gedp, ac, (const char **)av);
+	    }
+	}
+	return GED_OK;
+    } else {
+	if (v->independent) {
+	    for (int i = 0; i < argc; i++) {
+		int ac = 5;
+		const char *av[6];
+		av[0] = "draw";
+		av[1] = "-R";
+		av[2] = "--view";
+		av[3] = bu_vls_cstr(&v->gv_name);
+		av[4] = argv[i];
+		av[5] = NULL;
+		ged_exec(gedp, ac, (const char **)av);
+	    }
+	} else {
+	    for (int i = 0; i < argc; i++) {
+		int ac = 3;
+		const char *av[4];
+		av[0] = "draw";
+		av[1] = "-R";
+		av[4] = argv[i];
+		av[5] = NULL;
+		ged_exec(gedp, ac, (const char **)av);
+	    }
+	}
+	return GED_OK;
+    }
+}
+
+extern "C" int
+ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
+{
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    RT_CHECK_DBI(gedp->ged_wdbp->dbip);
+
+    argc--;argv++;
+
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* redraw may operate on a specific user specified view, or on
+     * all views (default) */
+    struct bview *cv = NULL;
+    struct bu_vls cvls = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc vd[2];
+    BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to draw on");
+    BU_OPT_NULL(vd[1]);
+    int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
+    argc = opt_ret;
+    if (bu_vls_strlen(&cvls)) {
+	int found_match = 0;
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
+		cv = tv;
+		found_match = 1;
+		break;
+	    }
+	}
+	if (!found_match) {
+	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
+	    bu_vls_free(&cvls);
+	    return GED_ERROR;
+	}
+    }
+    bu_vls_free(&cvls);
+
+    int ret = GED_OK;
+    if (cv) {
+	return _ged_redraw_view(gedp, cv, argc, argv);
+    } else {
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    int nret = _ged_redraw_view(gedp, v, argc, argv);
+	    if (nret != GED_OK)
+		ret = nret;
+	}
+    }
+    return ret;
 }
 
 /*
