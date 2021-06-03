@@ -31,6 +31,7 @@
 
 #include "main_window.h"
 #include "dmapp.h"
+#include "fbserv.h"
 
 #include "bu/app.h"
 #include "bu/log.h"
@@ -110,8 +111,16 @@ int main(int argc, char *argv[])
     if (!app.w->c4) {
 	if (!app.w->canvas->isValid()) {
 	    app.w->canvas->fallback();
-	    if (app.gedp)
-		app.gedp->ged_gvp = app.w->canvas->view();
+	    if (app.gedp) {
+		app.gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+	    }
+	}
+    } else {
+	if (!app.w->c4->isValid()) {
+	    app.w->c4->fallback();
+	    if (app.gedp) {
+		app.gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+	    }
 	}
     }
 
@@ -143,6 +152,7 @@ int main(int argc, char *argv[])
 	    app.w->canvas->set_dm_current((struct dm **)&app.gedp->ged_dmp);
 	    app.w->canvas->set_base2local(&app.gedp->ged_wdbp->dbip->dbi_base2local);
 	    app.w->canvas->set_local2base(&app.gedp->ged_wdbp->dbip->dbi_local2base);
+	    app.gedp->ged_gvp = app.w->canvas->view();
 	}
 	if (app.w->c4) {
 	    for (int i = 1; i < 5; i++) {
