@@ -112,7 +112,8 @@ rtcheck_vector_handler(void *clientData, int type)
 	// Clear any prior rtcheck outputs - whether or not we have new
 	// overlaps to draw, we're eliminating all the old objects
 	const char *sname = "rtcheck::";
-	struct bu_ptbl *vobjs = gedp->ged_gvp->gv_view_shared_objs;
+	struct bview *v = gedp->ged_gvp;
+	struct bu_ptbl *vobjs = (v->independent) ? v->gv_view_objs : v->gv_view_shared_objs;
 	std::set<struct bv_scene_obj *> robjs;
 	for (i = 0; i < BU_PTBL_LEN(vobjs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(vobjs, i);

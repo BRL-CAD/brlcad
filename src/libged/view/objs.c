@@ -371,9 +371,16 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	    }
 	}
 	if (list_view) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_shared_objs); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_shared_objs, i);
 		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+	    }
+
+	    if (v->gv_view_shared_objs != v->gv_view_objs) {
+		for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+		}
 	    }
 	}
 	return GED_OK;
