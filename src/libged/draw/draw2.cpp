@@ -1436,8 +1436,8 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		const char *av[4];
 		av[0] = "draw";
 		av[1] = "-R";
-		av[4] = argv[i];
-		av[5] = NULL;
+		av[2] = argv[i];
+		av[3] = NULL;
 		ged_exec(gedp, ac, (const char **)av);
 	    }
 	}
