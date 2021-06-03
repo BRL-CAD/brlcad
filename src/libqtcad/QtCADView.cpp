@@ -105,10 +105,9 @@ QtCADView::fallback()
 #ifdef BRLCAD_OPENGL
     if (canvas_gl && !canvas_gl->isValid()) {
 	bu_log("System OpenGL Canvas didn't work, falling back on Software Rasterizer\n");
-	struct fb *fbp = canvas_gl->ifp; // TODO - can we reuse the ifp like this?
 	delete canvas_gl;
 	canvas_gl = NULL;
-	canvas_sw = new QtSW(this, fbp);
+	canvas_sw = new QtSW(this, NULL);
 	canvas_sw->setMinimumSize(512,512);
 	canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	l->addWidget(canvas_sw);
