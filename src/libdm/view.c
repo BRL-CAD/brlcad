@@ -712,6 +712,12 @@ dm_draw_objs(struct bview *v, double base2local, double local2base)
 	dm_draw_scene_obj(dmp, g->g);
     }
 
+    // Draw shared view-only objects
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_shared_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_shared_objs, i);
+	dm_draw_scene_obj(dmp, s);
+    }
+
     // Draw view-only objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);

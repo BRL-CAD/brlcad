@@ -35,7 +35,8 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t 
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
 	return;
 
-    QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
+    DM_MainWindow *w = (DM_MainWindow *)p->gedp->ged_io_data;
+    QtConsole *c = w->console;
 
     int fd = bu_process_fileno(p->p, t);
     if (fd < 0)
@@ -61,7 +62,8 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 {
     if (!p) return;
 
-    QtConsole *c = (QtConsole *)p->gedp->ged_io_data;
+    DM_MainWindow *w = (DM_MainWindow *)p->gedp->ged_io_data;
+    QtConsole *c = w->console;
 
     bu_log("qt_delete_io_handler\n");
 
@@ -96,6 +98,10 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	    break;
     }
 
+    if (w->canvas)
+	w->canvas->need_update();
+    if (w->c4)
+	w->c4->need_update();
 }
 
 int
@@ -143,7 +149,7 @@ DMApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
     if (gedp) {
 	gedp->ged_create_io_handler = &qt_create_io_handler;
 	gedp->ged_delete_io_handler = &qt_delete_io_handler;
-	gedp->ged_io_data = (void *)this->w->console;
+	gedp->ged_io_data = (void *)this->w;
     }
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);

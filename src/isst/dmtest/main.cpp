@@ -145,6 +145,7 @@ int main(int argc, char *argv[])
 	    bv_init(app.gedp->ged_gvp);
 	    bu_vls_sprintf(&app.gedp->ged_gvp->gv_name, "default");
 	    app.gedp->ged_gvp->gv_db_grps = &app.gedp->ged_db_grps;
+	    app.gedp->ged_gvp->gv_view_shared_objs = &app.gedp->ged_view_shared_objs;
 	    app.gedp->ged_gvp->independent = 0;
 	    bu_ptbl_ins_unique(&app.gedp->ged_views, (long int *)app.gedp->ged_gvp);
 	    app.w->canvas->set_view(app.gedp->ged_gvp);
@@ -162,6 +163,7 @@ int main(int argc, char *argv[])
 		bv_init(nv);
 		bu_vls_sprintf(&nv->gv_name, "Q%d", i);
 		nv->gv_db_grps = &app.gedp->ged_db_grps;
+		nv->gv_view_shared_objs = &app.gedp->ged_view_shared_objs;
 		nv->independent = 0;
 		bu_ptbl_ins_unique(&app.gedp->ged_views, (long int *)nv);
 		c->set_view(nv);
