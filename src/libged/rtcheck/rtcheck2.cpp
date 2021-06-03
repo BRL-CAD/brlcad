@@ -41,17 +41,6 @@
 
 #include "../ged_private.h"
 
-#define GET_BV_SCENE_OBJ(p, fp) { \
-    if (BU_LIST_IS_EMPTY(fp)) { \
-       BU_ALLOC((p), struct bv_scene_obj); \
-    } else { \
-       p = BU_LIST_NEXT(bv_scene_obj, fp); \
-       BU_LIST_DEQUEUE(&((p)->l)); \
-    } \
-    bu_vls_init(&(p)->s_name); \
-    bu_vls_init(&(p)->s_uuid); \
-    BU_LIST_INIT( &((p)->s_vlist) ); }
-
 struct ged_rtcheck {
     struct ged_subprocess *rrtp;
     FILE *fp;
@@ -102,6 +91,7 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp, int type)
     }
     bu_ptbl_rm(&gedp->ged_subp, (long *)p);
     BU_PUT(p, struct ged_subprocess);
+    bv_vlblock_free(rtcp->vbp);
     BU_PUT(rtcp, struct ged_rtcheck);
 }
 
@@ -149,30 +139,8 @@ rtcheck_vector_handler(void *clientData, int type)
 
 	    if (have_visual) {
 		bu_log("final nused: %ld\n", rtcp->vbp->nused);
-		for (i = 0; i < rtcp->vbp->nused; i++) {
-		    if (!BU_LIST_IS_EMPTY(&(rtcp->vbp->head[i]))) {
-			struct bv_scene_obj *s;
-			GET_BV_SCENE_OBJ(s, &gedp->free_scene_obj->l);
-			s->s_type_flags = BV_VIEWONLY;
-			s->s_v = gedp->ged_gvp;
-			bu_vls_sprintf(&s->s_name, "%sobj%zd", sname, i);
-			bu_vls_sprintf(&s->s_uuid, "%sobj%zd", sname, i);
-			bu_log("Adding scene obj: %s\n", bu_vls_cstr(&s->s_name));
-			struct bv_vlist *bvl = (struct bv_vlist *)&rtcp->vbp->head[i];
-			long int rgb = rtcp->vbp->rgb[i];
-			s->s_vlen = bv_vlist_cmd_cnt(bvl);
-			BU_LIST_APPEND_LIST(&(s->s_vlist), &(bvl->l));
-			BU_LIST_INIT(&(bvl->l));
-			s->s_color[0] = (rgb>>16);
-			s->s_color[1] = (rgb>>8);
-			s->s_color[2] = (rgb) & 0xFF;
-			bu_ptbl_ins(vobjs, (long *)s);
-		    }
-		}
-	    //bv_vlblock_free(rtcp->vbp);
-	}
-
-	rtcp->vbp = NULL;
+		bv_vlblock_to_objs(vobjs, sname, rtcp->vbp, gedp->ged_gvp, gedp->free_scene_obj);
+	    }
 	}
     }
 

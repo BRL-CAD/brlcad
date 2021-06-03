@@ -66,6 +66,7 @@ BV_EXPORT extern unsigned long long bv_hash(struct bview *v);
 /* Return a hash of the contents of a display list.  Returns 0 on failure. */
 BV_EXPORT extern unsigned long long bv_dl_hash(struct display_list *dl);
 
+
 /* Note that some of these are mutually exclusive as far as producing any
  * changes - a simultaneous constraint in X and Y, for example, results in a
  * no-op. */

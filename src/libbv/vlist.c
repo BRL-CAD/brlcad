@@ -514,6 +514,43 @@ bv_plot_vlblock(FILE *fp, const struct bv_vlblock *vbp)
     }
 }
 
+#define GET_BV_SCENE_OBJ(p, fp) { \
+    if (BU_LIST_IS_EMPTY(fp)) { \
+	BU_ALLOC((p), struct bv_scene_obj); \
+    } else { \
+	p = BU_LIST_NEXT(bv_scene_obj, fp); \
+	BU_LIST_DEQUEUE(&((p)->l)); \
+    } \
+    bu_vls_init(&(p)->s_name); \
+    bu_vls_init(&(p)->s_uuid); \
+    BU_LIST_INIT( &((p)->s_vlist) ); }
+
+void
+bv_vlblock_to_objs(struct bu_ptbl *out, const char *name_root, struct bv_vlblock *vbp, struct bview *v, struct bv_scene_obj *f)
+{
+    if (!out || !vbp || !f)
+	return;
+
+    for (size_t i = 0; i < vbp->nused; i++) {
+	if (!BU_LIST_IS_EMPTY(&(vbp->head[i]))) {
+	    struct bv_scene_obj *s;
+	    GET_BV_SCENE_OBJ(s, &f->l);
+	    s->s_type_flags = BV_VIEWONLY;
+	    s->s_v = v;
+	    bu_vls_sprintf(&s->s_name, "%sobj%zd", name_root, i);
+	    bu_vls_sprintf(&s->s_uuid, "%sobj%zd", name_root, i);
+	    struct bv_vlist *bvl = (struct bv_vlist *)&vbp->head[i];
+	    long int rgb = vbp->rgb[i];
+	    s->s_vlen = bv_vlist_cmd_cnt(bvl);
+	    BU_LIST_APPEND_LIST(&(s->s_vlist), &(bvl->l));
+	    BU_LIST_INIT(&(bvl->l));
+	    s->s_color[0] = (rgb>>16);
+	    s->s_color[1] = (rgb>>8);
+	    s->s_color[2] = (rgb) & 0xFF;
+	    bu_ptbl_ins(out, (long *)s);
+	}
+    }
+}
 
 void
 bv_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
