@@ -312,9 +312,7 @@ struct bv_scene_obj  {
  * We define them to have different types only to help keep straight in the
  * code what is a conceptually a group and what is an individual scene object.
  */
-struct bv_scene_group {
-    struct bv_scene_obj *g;
-};
+#define bv_scene_group bv_scene_obj
 
 /* We encapsulate non-camera settings into a container mainly to allow for
  * easier re-use of the same settings between different views - if a common

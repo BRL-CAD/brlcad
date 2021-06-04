@@ -140,21 +140,21 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     int have_geom_objs = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
-	if (bu_list_len(&g->g->s_vlist)) {
-	    bv_scene_obj_bound(g->g);
+	if (bu_list_len(&g->s_vlist)) {
+	    bv_scene_obj_bound(g);
 	    is_empty = 0;
 	    have_geom_objs = 1;
-	    minus[X] = g->g->s_center[X] - g->g->s_size;
-	    minus[Y] = g->g->s_center[Y] - g->g->s_size;
-	    minus[Z] = g->g->s_center[Z] - g->g->s_size;
+	    minus[X] = g->s_center[X] - g->s_size;
+	    minus[Y] = g->s_center[Y] - g->s_size;
+	    minus[Z] = g->s_center[Z] - g->s_size;
 	    VMIN(min, minus);
-	    plus[X] = g->g->s_center[X] + g->g->s_size;
-	    plus[Y] = g->g->s_center[Y] + g->g->s_size;
-	    plus[Z] = g->g->s_center[Z] + g->g->s_size;
+	    plus[X] = g->s_center[X] + g->s_size;
+	    plus[Y] = g->s_center[Y] + g->s_size;
+	    plus[Z] = g->s_center[Z] + g->s_size;
 	    VMAX(max, plus);
 	}
-	for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->g->children, j);
+	for (size_t j = 0; j < BU_PTBL_LEN(&g->children); j++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, j);
 	    bv_scene_obj_bound(s);
 	    is_empty = 0;
 	    minus[X] = s->s_center[X] - s->s_size;

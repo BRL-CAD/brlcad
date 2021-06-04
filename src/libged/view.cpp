@@ -52,8 +52,8 @@ ged_view_update(struct ged *gedp)
 	// regenerated.
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	int invalid = 0;
-	for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+	for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
 	    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
 	    for (size_t fp_i = 0; fp_i < ud->fp.fp_len; fp_i++) {
 		struct directory *dp = db_lookup(dbip, ud->fp.fp_names[fp_i]->d_namep, LOOKUP_QUIET);
@@ -80,7 +80,7 @@ ged_view_update(struct ged *gedp)
     for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
 	struct bv_scene_group *cg = *r_it;
 	struct bu_vls opath = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->g->s_name));
+	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
 	const char *av[4];
 	av[0] = "draw";
 	av[1] = "-R";

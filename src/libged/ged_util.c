@@ -192,9 +192,9 @@ scene_bounding_sph(struct bu_ptbl *so, vect_t *min, vect_t *max, int pflag)
     /* calculate the bounding for of all solids being displayed */
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
-	if (BU_PTBL_LEN(&g->g->children)) {
-	    for (size_t j = 0; j < BU_PTBL_LEN(&g->g->children); j++) {
-		sp = (struct bv_scene_obj *)BU_PTBL_GET(&g->g->children, j);
+	if (BU_PTBL_LEN(&g->children)) {
+	    for (size_t j = 0; j < BU_PTBL_LEN(&g->children); j++) {
+		sp = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, j);
 		minus[X] = sp->s_center[X] - sp->s_size;
 		minus[Y] = sp->s_center[Y] - sp->s_size;
 		minus[Z] = sp->s_center[Z] - sp->s_size;
@@ -209,13 +209,13 @@ scene_bounding_sph(struct bu_ptbl *so, vect_t *min, vect_t *max, int pflag)
 	} else {
 	    // If we're an evaluated object, the group itself has the
 	    // necessary info.
-	    minus[X] = g->g->s_center[X] - g->g->s_size;
-	    minus[Y] = g->g->s_center[Y] - g->g->s_size;
-	    minus[Z] = g->g->s_center[Z] - g->g->s_size;
+	    minus[X] = g->s_center[X] - g->s_size;
+	    minus[Y] = g->s_center[Y] - g->s_size;
+	    minus[Z] = g->s_center[Z] - g->s_size;
 	    VMIN((*min), minus);
-	    plus[X] = g->g->s_center[X] + g->g->s_size;
-	    plus[Y] = g->g->s_center[Y] + g->g->s_size;
-	    plus[Z] = g->g->s_center[Z] + g->g->s_size;
+	    plus[X] = g->s_center[X] + g->s_size;
+	    plus[Y] = g->s_center[Y] + g->s_size;
+	    plus[Z] = g->s_center[Z] + g->s_size;
 	    VMAX((*max), plus);
 	}
     }
@@ -1047,9 +1047,9 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    if ((vp != NULL) && ((const char **)vp < end)) {
-		*vp++ = bu_strdup(bu_vls_cstr(&g->g->s_name));
+		*vp++ = bu_strdup(bu_vls_cstr(&g->s_name));
 	    } else {
-		bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", bu_vls_cstr(&g->g->s_name));
+		bu_vls_printf(gedp->ged_result_str, "INTERNAL ERROR: ged_who_argv() ran out of space at %s\n", bu_vls_cstr(&g->s_name));
 		break;
 	    }
 	}
@@ -1646,7 +1646,7 @@ _ged_rt_write(struct ged *gedp,
 		struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		    fprintf(fp, "draw %s;\n", bu_vls_cstr(&g->g->s_name));
+		    fprintf(fp, "draw %s;\n", bu_vls_cstr(&g->s_name));
 		}
 	    } else {
 		struct display_list *gdlp;
