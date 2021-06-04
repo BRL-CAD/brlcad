@@ -137,11 +137,13 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	so = v->gv_db_grps;
     }
     vect_t minus, plus;
+    int have_geom_objs = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
 	if (bu_list_len(&g->g->s_vlist)) {
 	    bv_scene_obj_bound(g->g);
 	    is_empty = 0;
+	    have_geom_objs = 1;
 	    minus[X] = g->g->s_center[X] - g->g->s_size;
 	    minus[Y] = g->g->s_center[Y] - g->g->s_size;
 	    minus[Z] = g->g->s_center[Z] - g->g->s_size;
@@ -180,8 +182,13 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    // When it comes to view-only objects, only include those that are db object based, polygons
-    // or labels, unless the flag to consider all objects is set.
+    // When it comes to view-only objects, normally we will only include those
+    // that are db object based, polygons or labels, unless the flag to
+    // consider all objects is set.   However, there is an exception - if there
+    // are NO such objects in the scene (have_geom_objs == 0) and we do have
+    // view objs (for example, when overlaying a plot file on an empty view)
+    // then basing autoview on the view-only objs is more intuitive than just
+    // using the default view settings.
     if (v->independent) {
 	so = v->gv_view_objs;
     } else {
@@ -189,7 +196,14 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     }
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
-	if (!all_view_objs) {
+	if ((s->s_type_flags & BV_DBOBJ_BASED) ||
+		(s->s_type_flags & BV_POLYGONS) ||
+		(s->s_type_flags & BV_LABELS))
+	    have_geom_objs = 1;
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	if (have_geom_objs && !all_view_objs) {
 	    if (!(s->s_type_flags & BV_DBOBJ_BASED) &&
 		    !(s->s_type_flags & BV_POLYGONS) &&
 		    !(s->s_type_flags & BV_LABELS))
