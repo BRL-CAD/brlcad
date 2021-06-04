@@ -30,31 +30,15 @@ x 5.  temporary objects (nirt shotline, rtcheck/gqa overlap visuals, gdiff outpu
     look at all libged commands using _ged_cvt_vlblock_to_solids to get a list of those that will
     need adjustment to work with the new setup.
 
-6.  primitive editing MGED style.  Likely will need editing callbacks, probably per-primitive
-    with a librt functab entry.
 
-    Want to do this without baking editing state into libged.  Current thought is to define a
-    view routine to create a transient interactive view object from the database solid that has
-    a local copy of the db internal.  The edit operations and wireframe updates will be done
-    using that local copy, and then a separate operation will be used to write the view object
-    back to the database.  Equivalent to the sed|oed/edit/apply cycle, with the sed operation
-    creating a view object (it will be a separate step to suppress the original wireframe, if
-    that's what the app wants to do) edit operations being applied to the view object, and
-    then apply writing the altered db internal from the view object back to the .g file.  (If
-    the app suppressed the old wireframe, it will also need to restore the new version since
-    applying the view obj changes and removing the view obj won't automatically draw the final
-    database object.  The "reject" operation would just be removing the view object on which
-    editing is being performed.
+x 7.  color controls (background in particular) settable in MGED...
 
-7.  color controls (background in particular) settable in MGED...
+    got background color setting supported via dm bg command - probably other things to set, will
+    come back to that later...
 
 8.  Fix fps meter drawing - should either be lower left, or appended to status line if that's enabled
 
 9.  Implement more key bindings for dm widgets.
-
-10.  MGED faceplate GUI - needed?  Does (for example) pipe editing need it...
-
-11.  Predictor - is it useful, or can we remove it?
 
 12.  Qt dialogues for color setting and fonts
 
@@ -113,6 +97,31 @@ If it doesn't work, look into https://www.tcl.tk/community/tcl2019/assets/talk16
 
 25.  Look into build scripts from https://github.com/martinrotter/qt-minimalistic-builds to see if they can
      help guide the preparation of an ExternalProject_Add Qt build.
+
+
+6.  primitive editing MGED style.  Likely will need editing callbacks, probably per-primitive
+    with a librt functab entry.
+
+    Want to do this without baking editing state into libged.  Current thought is to define a
+    view routine to create a transient interactive view object from the database solid that has
+    a local copy of the db internal.  The edit operations and wireframe updates will be done
+    using that local copy, and then a separate operation will be used to write the view object
+    back to the database.  Equivalent to the sed|oed/edit/apply cycle, with the sed operation
+    creating a view object (it will be a separate step to suppress the original wireframe, if
+    that's what the app wants to do) edit operations being applied to the view object, and
+    then apply writing the altered db internal from the view object back to the .g file.  (If
+    the app suppressed the old wireframe, it will also need to restore the new version since
+    applying the view obj changes and removing the view obj won't automatically draw the final
+    database object.  The "reject" operation would just be removing the view object on which
+    editing is being performed.
+
+    The above approach will also involve refactoring the edit command logic so we can call the
+    same routines both for immediate-application edits and for the intermediate view edits.
+
+10.  MGED faceplate GUI - needed?  Does (for example) pipe editing need it...
+
+11.  Predictor - is it useful, or can we remove it?
+
 
 Other nice to haves:
 

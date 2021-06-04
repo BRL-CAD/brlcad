@@ -95,6 +95,48 @@ _dm_name_lookup(struct _ged_dm_info *gd, const char *dm_name)
 
 
 int
+_dm_cmd_bg(void *ds, int argc, const char **argv)
+{
+    const char *usage_string = "dm [options] bg [r/g/b]";
+    const char *purpose_string = "get/set dm background color";
+    if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--; argv++;
+
+    struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
+
+    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
+    if (!cdmp) {
+	bu_vls_printf(gd->gedp->ged_result_str, ": no current DM set in GED\n");
+	return GED_ERROR;
+    }
+
+    if (!argc) {
+	const unsigned char *dm_bg = dm_get_bg(cdmp);
+	if (dm_bg) {
+	    bu_vls_printf(gd->gedp->ged_result_str, "%d/%d/%d\n", (short)dm_bg[0], (short)dm_bg[1], (short)dm_bg[2]);
+	    return GED_OK;
+	} else {
+	    bu_vls_printf(gd->gedp->ged_result_str, ": no background color available\n");
+	    return GED_ERROR;
+	}
+    }
+
+    struct bu_color c;
+    if (bu_opt_color(NULL, argc, argv, &c) == -1) {
+	bu_vls_printf(gd->gedp->ged_result_str, "invalid color specification\n");
+	return GED_ERROR;
+    }
+    unsigned char n_bg[3];
+    bu_color_to_rgb_chars(&c, n_bg);
+    dm_set_bg(cdmp, n_bg[0], n_bg[1], n_bg[2]);
+    return GED_OK;
+}
+
+
+int
 _dm_cmd_type(void *ds, int argc, const char **argv)
 {
     const char *usage_string = "dm [options] type [name]";
@@ -483,6 +525,7 @@ _dm_cmd_height(void *ds, int argc, const char **argv)
 
 const struct bu_cmdtab _dm_cmds[] = {
     { "attach",          _dm_cmd_attach},
+    { "bg",              _dm_cmd_bg},
     { "get",             _dm_cmd_get},
     { "height",          _dm_cmd_height},
     { "initmsg",         _dm_cmd_initmsg},

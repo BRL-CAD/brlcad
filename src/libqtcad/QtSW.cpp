@@ -145,6 +145,11 @@ void QtSW::paintEvent(QPaintEvent *e)
     if (!m_init || !v || !dmp)
 	return;
 
+    const unsigned char *dm_bg = dm_get_bg(dmp);
+    if (dm_bg) {
+	dm_set_bg(dmp, dm_bg[0], dm_bg[1], dm_bg[2]);
+    }
+
     matp_t mat = v->gv_model2view;
     dm_loadmatrix(dmp, mat, 0);
     dm_draw_begin(dmp);

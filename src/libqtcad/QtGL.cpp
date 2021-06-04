@@ -142,9 +142,10 @@ void QtGL::paintGL()
     if (!m_init || !v || !dmp)
 	return;
 
-    // TODO - this clear color probably shouldn't be hardcoded...
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    const unsigned char *dm_bg = dm_get_bg(dmp);
+    if (dm_bg) {
+	dm_set_bg(dmp, dm_bg[0], dm_bg[1], dm_bg[2]);
+    }
 
     // Go ahead and set the flag, but (unlike the rendering thread
     // implementation) we need to do the draw routine every time in paintGL, or
