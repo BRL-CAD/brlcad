@@ -525,12 +525,36 @@ bv_plot_vlblock(FILE *fp, const struct bv_vlblock *vbp)
     bu_vls_init(&(p)->s_uuid); \
     BU_LIST_INIT( &((p)->s_vlist) ); }
 
+#define FREE_BV_SCENE_OBJ(p, fp, vlf) { \
+    BU_LIST_APPEND(fp, &((p)->l)); \
+    BV_FREE_VLIST(vlf, &((p)->s_vlist)); }
+
 void
-bv_vlblock_to_objs(struct bu_ptbl *out, const char *name_root, struct bv_vlblock *vbp, struct bview *v, struct bv_scene_obj *f)
+bv_vlblock_to_objs(struct bu_ptbl *out, const char *name_root, struct bv_vlblock *vbp, struct bview *v, struct bv_scene_obj *f, struct bu_list *vlfree)
 {
     if (!out || !vbp || !f)
 	return;
 
+    // Before we create new objects, check that the proposed names are
+    // not already used.  If they are, we first remove the old versions
+    struct bu_ptbl oobjs = BU_PTBL_INIT_ZERO;
+    for (size_t i = 0; i < vbp->nused; i++) {
+	if (!BU_LIST_IS_EMPTY(&(vbp->head[i]))) {
+	    struct bu_vls cname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&cname, "%sobj%zd", name_root, i);
+	    for (size_t j = 0; j < BU_PTBL_LEN(out); j++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(out, j);
+		if (BU_STR_EQUAL(bu_vls_cstr(&cname), bu_vls_cstr(&s->s_name))) {
+		    bu_ptbl_ins_unique(&oobjs, (long *)s);
+		}
+	    }
+	}
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(&oobjs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&oobjs, i);
+	bu_ptbl_rm(out, (long *)s);
+	FREE_BV_SCENE_OBJ(s, &f->l, vlfree);
+    }
     for (size_t i = 0; i < vbp->nused; i++) {
 	if (!BU_LIST_IS_EMPTY(&(vbp->head[i]))) {
 	    struct bv_scene_obj *s;

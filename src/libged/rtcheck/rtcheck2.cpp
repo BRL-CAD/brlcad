@@ -140,7 +140,7 @@ rtcheck_vector_handler(void *clientData, int type)
 
 	    if (have_visual) {
 		bu_log("final nused: %ld\n", rtcp->vbp->nused);
-		bv_vlblock_to_objs(vobjs, sname, rtcp->vbp, gedp->ged_gvp, gedp->free_scene_obj);
+		bv_vlblock_to_objs(vobjs, sname, rtcp->vbp, gedp->ged_gvp, gedp->free_scene_obj, &gedp->vlfree);
 	    }
 	}
     }
