@@ -337,7 +337,14 @@ int check_overlaps(struct current_state *state,
     printOverlaps(&callbackdata, options);
 
     if (options->overlaps_overlay_flag) {
-	_ged_cvt_vlblock_to_solids(_ged_current_gedp, check_plot.vbp, "OVERLAPS", 0);
+	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	if (BU_STR_EQUAL(nview, "1")) {
+	    struct bview *view = _ged_current_gedp->ged_gvp;
+	    struct bu_ptbl *vobjs = (view->independent) ? view->gv_view_objs : view->gv_view_shared_objs;
+	    bv_vlblock_to_objs(vobjs, "check::overlaps_", check_plot.vbp, view, _ged_current_gedp->free_scene_obj, &_ged_current_gedp->vlfree);
+	} else {
+	    _ged_cvt_vlblock_to_solids(_ged_current_gedp, check_plot.vbp, "OVERLAPS", 0);
+	}
 	bv_vlblock_free(check_plot.vbp);
     }
 

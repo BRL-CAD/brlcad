@@ -1006,6 +1006,21 @@ plot_nurbs_cv(struct bu_list *vlfree, struct bv_vlblock *vbp, int ucount, int vc
     }
 }
 
+static void
+_brep_vlblock_plot(struct ged *gedp, struct bv_vlblock *vbp, const char *sname)
+{
+    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+    struct bu_vls nroot = BU_VLS_INIT_ZERO;
+    struct bview *view = gedp->ged_gvp;
+    struct bu_ptbl *vobjs = (view->independent) ? view->gv_view_objs : view->gv_view_shared_objs;
+    if (BU_STR_EQUAL(nview, "1")) {
+	bu_vls_sprintf(&nroot, "brep::%s", sname);
+	bv_vlblock_to_objs(vobjs, bu_vls_cstr(&nroot), vbp, view, gedp->free_scene_obj, &gedp->vlfree);
+    } else {
+	_ged_cvt_vlblock_to_solids(gedp, vbp, sname, 0);
+    }
+}
+
 struct _ged_brep_iplot {
     struct _ged_brep_info *gb;
     struct bu_vls *vls;
@@ -1082,7 +1097,7 @@ _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_C2_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1141,7 +1156,7 @@ _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_C3_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1204,7 +1219,7 @@ _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_E_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1264,7 +1279,7 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_F_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1324,7 +1339,7 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_F2d_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1390,7 +1405,7 @@ _brep_cmd_face_surface_bbox_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_SBB_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1456,7 +1471,7 @@ _brep_cmd_face_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_SBB_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1512,7 +1527,7 @@ _brep_cmd_face_trim_bbox_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_TBB_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1569,7 +1584,7 @@ _brep_cmd_face_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_TBB_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1624,7 +1639,7 @@ _brep_cmd_face_trim_direction_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_FTD_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1682,7 +1697,7 @@ _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_I_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1746,7 +1761,7 @@ _brep_cmd_loop_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_L_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1809,7 +1824,7 @@ _brep_cmd_loop_2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_L2d_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1868,7 +1883,7 @@ _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_S_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1930,7 +1945,7 @@ _brep_cmd_surface_control_verts_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_SCV_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -1984,7 +1999,7 @@ _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_SK_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2038,7 +2053,7 @@ _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_SK2d_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2095,7 +2110,7 @@ _brep_cmd_surface_normal_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_SN_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2193,7 +2208,7 @@ _brep_cmd_surface_uv_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_SUV_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2266,7 +2281,7 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_SUVP_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2326,7 +2341,7 @@ _brep_cmd_trim_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_T_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2386,7 +2401,7 @@ _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_T_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2444,7 +2459,7 @@ _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_V_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2489,7 +2504,7 @@ _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_CDT_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2534,7 +2549,7 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_CDT2d_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2579,7 +2594,7 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_CDTm2d_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2624,7 +2639,7 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_CDTp2d_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2669,7 +2684,7 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_CDTw_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2731,7 +2746,7 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_CDTw_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2792,7 +2807,7 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_CDT2d_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;
@@ -2853,7 +2868,7 @@ _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sname, "_BC_CDTw_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
     return GED_OK;

@@ -427,8 +427,16 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     fclose(fp);
     fp = NULL;
 
-    if (draw_eye_path)
-	_ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
+    if (draw_eye_path) {
+	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	if (BU_STR_EQUAL(nview, "1")) {
+	    struct bview *view = gedp->ged_gvp;
+	    struct bu_ptbl *vobjs = (view->independent) ? view->gv_view_objs : view->gv_view_shared_objs;
+	    bv_vlblock_to_objs(vobjs, "preview::eye_path_", preview_vbp, view, gedp->free_scene_obj, &gedp->vlfree);
+	} else {
+	    _ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
+	}
+    }
 
     if (preview_vbp) {
 	bv_vlblock_free(preview_vbp);

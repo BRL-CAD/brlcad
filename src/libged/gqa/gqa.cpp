@@ -2494,8 +2494,16 @@ aborted:
     if (!aborted) {
 	summary_reports(&state);
 
-	if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
-	    _ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
+	if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
+	    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	    if (BU_STR_EQUAL(nview, "1")) {
+		struct bview *view = gedp->ged_gvp;
+		struct bu_ptbl *vobjs = (view->independent) ? view->gv_view_objs : view->gv_view_shared_objs;
+		bv_vlblock_to_objs(vobjs, "gqa::overlaps_", ged_gqa_plot.vbp, view, gedp->free_scene_obj, &gedp->vlfree);
+	    } else {
+		_ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
+	    }
+	}
     } else
 	aborted = 0; /* reset flag */
 
