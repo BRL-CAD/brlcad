@@ -36,7 +36,7 @@ x 7.  color controls (background in particular) settable in MGED...
     got background color setting supported via dm bg command - probably other things to set, will
     come back to that later...
 
-8.  Fix fps meter drawing - should either be lower left, or appended to status line if that's enabled
+x 8.  Fix fps meter drawing - should either be lower left, or appended to status line if that's enabled
 
 9.  Implement more key bindings for dm widgets.
 

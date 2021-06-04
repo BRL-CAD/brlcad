@@ -357,48 +357,42 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 		      v->gv_s->gv_view_params.gos_text_color);
 
     /* View parameters */
-    if (v->gv_s->gv_view_params.gos_draw) {
+    if (v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	point_t center;
-	char *ustr;
-
+	char *ustr = (char *)bu_units_string(local2base);
 	MAT_DELTAS_GET_NEG(center, v->gv_center);
 	VSCALE(center, center, base2local);
-
-	ustr = (char *)bu_units_string(local2base);
-	bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f",
-		      ustr,
-		      v->gv_size * base2local,
-		      V3ARGS(center),
-		      V3ARGS(v->gv_aet));
-	(void)dm_set_fg((struct dm *)v->dmp,
-			v->gv_s->gv_view_params.gos_text_color[0],
-			v->gv_s->gv_view_params.gos_text_color[1],
-			v->gv_s->gv_view_params.gos_text_color[2],
-			1, 1.0);
-	(void)dm_draw_string_2d((struct dm *)v->dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
-	bu_vls_free(&vls);
-    }
-
-    /* Frames per second */
-    if (v->gv_s->gv_fps) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-	int width = dm_get_width((struct dm *)v->dmp);
-	int height = dm_get_height((struct dm *)v->dmp);
 	int64_t elapsed_time = bu_gettime() - ((struct dm *)v->dmp)->start_time;
 	/* Only use reasonable measurements */
 	if (elapsed_time > 10LL && elapsed_time < 30000000LL) {
 	    /* Smoothly transition to new speed */
 	    v->gv_s->gv_frametime = 0.9 * v->gv_s->gv_frametime + 0.1 * elapsed_time / 1000000LL;
 	}
-	bu_vls_printf(&vls, "FPS:%.2f", 1/v->gv_s->gv_frametime);
-	// TODO - set up separate FPS color
+
+	if (v->gv_s->gv_view_params.gos_draw && v->gv_s->gv_fps) {
+	    bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f  FPS:%.2f",
+		    ustr,
+		    v->gv_size * base2local,
+		    V3ARGS(center),
+		    V3ARGS(v->gv_aet),
+		    1/v->gv_s->gv_frametime
+		    );
+	} else if (v->gv_s->gv_view_params.gos_draw && !v->gv_s->gv_fps) {
+	    bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f",
+		    ustr,
+		    v->gv_size * base2local,
+		    V3ARGS(center),
+		    V3ARGS(v->gv_aet));
+	} else if (!v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
+	    bu_vls_printf(&vls, "FPS:%.2f", 1/v->gv_s->gv_frametime);
+	}
 	(void)dm_set_fg((struct dm *)v->dmp,
 			v->gv_s->gv_view_params.gos_text_color[0],
 			v->gv_s->gv_view_params.gos_text_color[1],
 			v->gv_s->gv_view_params.gos_text_color[2],
 			1, 1.0);
-	(void)dm_draw_string_2d((struct dm *)v->dmp, bu_vls_cstr(&vls), -1.0 + 10.0/(double)width, 1.0 - 40.0/(double)height, 10, 0);
+	(void)dm_draw_string_2d((struct dm *)v->dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
 	bu_vls_free(&vls);
     }
 
@@ -673,6 +667,11 @@ void
 dm_draw_objs(struct bview *v, double base2local, double local2base)
 {
     struct dm *dmp = (struct dm *)v->dmp;
+
+    // This is the start of a draw cycle - start the stopwatch to time the
+    // frame.  If the faceplate fps display is enabled, the faceplate draw at
+    // the end of the cycle will need this start time.
+    dmp->start_time = bu_gettime();
 
     // If we're drawing the framebuffer, that's the first order of business.
     // The rest of the drawing layers manipulate the OpenGL view and projection
