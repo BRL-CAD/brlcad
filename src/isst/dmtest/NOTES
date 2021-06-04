@@ -27,6 +27,9 @@ x 4.  Implement Qt quad view widget  (start basic - do a QGridLayout with 4 QtGL
 
 5.  temporary objects (nirt shotline, rtcheck/gqa overlap visuals, gdiff output...)
 
+    look at all libged commands using _ged_cvt_vlblock_to_solids to get a list of those that will
+    need adjustment to work with the new setup.
+
 
 6.  primitive editing MGED style.  Likely will need editing callbacks, probably per-primitive
     with a librt functab entry.

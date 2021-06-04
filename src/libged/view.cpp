@@ -30,7 +30,12 @@
 #include "bu/ptbl.h"
 #include "ged.h"
 
-// TODO - do the polygon update and other view element vlist updates here as well, for consistency.
+// For this routine to work correctly, we are relying on the children of the
+// group being full paths to solid objects.  Because they are, checking the
+// dp's edit_flag for each object in each path means we will see if any combs
+// anywhere along the paths have changed.  We only need to look until we either
+// find something that prompts a draw event for the group, or until we have
+// confirmed that we have no need to redraw.
 extern "C" int
 ged_view_update(struct ged *gedp)
 {
