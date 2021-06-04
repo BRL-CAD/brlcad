@@ -46,6 +46,7 @@ GED_EXPORT extern int _view_cmd_axes(void *bs, int argc, const char **argv);
 GED_EXPORT extern int _view_cmd_labels(void *bs, int argc, const char **argv);
 GED_EXPORT extern int _view_cmd_polygons(void *bs, int argc, const char **argv);
 GED_EXPORT extern int _view_cmd_objs(void *bs, int argc, const char **argv);
+GED_EXPORT extern int _view_cmd_gedit(void *bs, int argc, const char **argv);
 
 GED_EXPORT extern int _fp_cmd_grid(void *bs, int argc, const char **argv);
 
