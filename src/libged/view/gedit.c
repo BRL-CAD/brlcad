@@ -58,7 +58,6 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    struct bview *v = gedp->ged_gvp;
     const char *usage_string = "view gedit name create";
     const char *purpose_string = "create an editing view obj from a database solid/comb";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
@@ -96,6 +95,8 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
+#if 0
+    struct bview *v = gedp->ged_gvp;
 
     /* Set up the toplevel object */
     struct bv_scene_group *g;
@@ -127,7 +128,7 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
     bu_color_from_rgb_chars(&dd.c, wcolor);
     dd.vs = &vs;
     dd.g = g;
-    
+
     // Create a wireframe from the current state of the specified object
     db_fullpath_draw(fp, &mat, (void *)&dd);
 
@@ -149,6 +150,7 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
 
     // TODO - in principle, we should be sharing a lot of logic with the edit command -
     // the only difference is we won't be unpacking and writing the rt_db_internal.
+#endif
 
     return GED_OK;
 }

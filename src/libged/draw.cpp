@@ -308,7 +308,7 @@ _tree_color(struct directory *dp, struct draw_data_t *dd)
     struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
 
     // Easy answer - if we're overridden, dd color is already set.
-    if (dd->g->s_os.color_override)
+    if (dd->g->g->s_os.color_override)
 	return;
 
     // Not overridden by settings.  Next question - are we under an inherit?
@@ -504,7 +504,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 
 	// If we're skipping subtractions there's no
 	// point in going further.
-	if (dd->g->s_os.draw_non_subtract_only && dd->bool_op == 4) {
+	if (dd->g->g->s_os.draw_non_subtract_only && dd->bool_op == 4) {
 	    return;
 	}
 
@@ -529,7 +529,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// TODO - append hash of matrix and op to uuid to make it properly unique...
 	s->s_v = dd->v;
 	MAT_COPY(s->s_mat, *curr_mat);
-	bv_obj_settings_sync(&s->s_os, &dd->g->s_os);
+	bv_obj_settings_sync(&s->s_os, &dd->g->g->s_os);
 	s->s_type_flags = BV_DBOBJ_BASED;
 	s->s_changed++;
 	if (!s->s_os.draw_solid_lines_only) {
@@ -559,7 +559,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	ged_scene_obj_geom(s);
 
 	// Add object to scene group
-	bu_ptbl_ins(&dd->g->children, (long *)s);
+	bu_ptbl_ins(&dd->g->g->children, (long *)s);
     }
 }
 

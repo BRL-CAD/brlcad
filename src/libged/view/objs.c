@@ -360,11 +360,11 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	if (list_db) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
-		if (bu_list_len(&cg->s_vlist)) {
-		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->s_name));
+		if (bu_list_len(&cg->g->s_vlist)) {
+		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->g->s_name));
 		} else {
-		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
+		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
+			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
 			bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
 		    }
 		}
@@ -410,14 +410,14 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     if (!gd->s) {
 	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
-	    if (bu_list_len(&cg->s_vlist)) {
-		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&cg->s_name))) {
-		    gd->s = cg;
+	    if (bu_list_len(&cg->g->s_vlist)) {
+		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&cg->g->s_name))) {
+		    gd->s = cg->g;
 		    break;
 		}
 	    } else {
-		for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
+		for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
 		    if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_name))) {
 			gd->s = s;
 			break;

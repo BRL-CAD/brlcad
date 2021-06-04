@@ -52,7 +52,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		bv_scene_obj_free(cg, gedp->free_scene_obj);
+		bv_scene_obj_free(cg->g, gedp->free_scene_obj);
 		BU_PUT(cg, struct bv_scene_group);
 	    }
 	    bu_ptbl_reset(sg);
@@ -66,7 +66,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	    if (sg) {
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		    bv_scene_obj_free(cg, gedp->free_scene_obj);
+		    bv_scene_obj_free(cg->g, gedp->free_scene_obj);
 		    BU_PUT(cg, struct bv_scene_group);
 		}
 		bu_ptbl_reset(sg);
