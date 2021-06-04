@@ -26,55 +26,23 @@
 
 #ifndef BRLCAD_MAINWINDOW_H
 #define BRLCAD_MAINWINDOW_H
-
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
-#  pragma message "Disabling GCC float equality comparison warnings via pragma due to Qt headers..."
-#endif
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-#undef Success
 #include <QMainWindow>
-#undef Success
 #include <QGLWidget>
-#undef Success
-#include <QDockWidget>  // TODO may want to enhance this for our purposes...
-#undef Success
+#include <QDockWidget>
 #include <QMenu>
-#undef Success
 #include <QMenuBar>
-#undef Success
 #include <QAction>
-#undef Success
 #include <QStatusBar>
-#undef Success
 #include <QFileDialog>
-#undef Success
 #include <QTreeView>
-#undef Success
 #include <QHeaderView>
-#undef Success
 #include <QObject>
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
+
 
 #include "cadconsole.h"
 #include "cadtreemodel.h"
 #include "cadaccordion.h"
-#include <display/Display.h>
+#include "qtcad/QtCADView.h"
 
 // https://stackoverflow.com/q/44707344/2037687
 class QBDockWidget : public QDockWidget
@@ -93,7 +61,7 @@ class BRLCAD_MainWindow : public QMainWindow
     public:
 	BRLCAD_MainWindow();
 
-	BRLCADDisplay *canvas;
+	QtCADView *canvas;
 
     private slots:
 	void open_file();

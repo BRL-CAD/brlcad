@@ -7,6 +7,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
     ${BRLCAD_SOURCE_DIR}/include
+    ${QTCAD_INCLUDE_DIRS}
     ${GED_INCLUDE_DIRS}
     ${RT_INCLUDE_DIRS}
     ${BU_INCLUDE_DIRS}
@@ -18,8 +19,6 @@ endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 # NOTE: We can't use the CMake global values for automoc et. al.
 # because most of BRL-CAD's targets are not Qt targets.  We don't
 # want to run the automatic moc logic for all of them.
-
-include_directories("display")
 
 set(qged_srcs
   main.cpp
@@ -40,13 +39,6 @@ set(qged_srcs
   pqConsoleWidget.cpp
   QToolPalette.cpp
   QFlowLayout.cpp
-  display/OrthographicCamera.cpp
-  display/Display.cpp
-  display/DisplayManager.cpp
-  display/GeometryRenderer.cpp
-  display/GeometryRenderer.h
-  display/AxesRenderer.cpp
-  display/AxesRenderer.h
   )
 
 set(moc_headers
@@ -66,10 +58,6 @@ set(moc_headers
   pqConsoleWidget.h
   QToolPalette.h
   QFlowLayout.h
-  display/Camera.h
-  display/OrthographicCamera.h
-  display/Display.h
-  display/DisplayManager.h
   )
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
@@ -179,6 +167,20 @@ set(qged_ignore_srcs
   images/tree/branch-closed.png
   images/tree/branch-more.png
   images/tree/vline.png
+  display/AxesRenderer.cpp
+  display/AxesRenderer.h
+  display/Camera.h
+  display/Display.cpp
+  display/Display.h
+  display/DisplayManager.cpp
+  display/DisplayManager.h
+  display/GeometryRenderer.cpp
+  display/GeometryRenderer.h
+  display/OrthographicCamera.cpp
+  display/OrthographicCamera.h
+  display/README.txt
+  display/Renderable.h
+
   CMakeLists.txt
   Qt_Notes.txt
   TODO

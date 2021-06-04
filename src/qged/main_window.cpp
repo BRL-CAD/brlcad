@@ -77,7 +77,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     help_menu = menuBar()->addMenu("Help");
 
      // Set up Display canvas
-    canvas = new BRLCADDisplay();  //TODO - will need to subclass this so libdm/libfb updates are done correctly
+    canvas = new QtCADView(this);
     canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     canvas->setMinimumSize(512,512);
 
