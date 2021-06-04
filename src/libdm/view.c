@@ -356,7 +356,22 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 		      v->gv_s->gv_view_scale.gos_line_color,
 		      v->gv_s->gv_view_params.gos_text_color);
 
-    /* View parameters */
+
+    /* Draw the angle distance cursor */
+    if (v->gv_s->gv_adc.draw)
+	dm_draw_adc((struct dm *)v->dmp, &(v->gv_s->gv_adc), v->gv_view2model, v->gv_model2view);
+
+    /* Draw grid */
+    if (v->gv_s->gv_grid.draw) {
+	dm_draw_grid((struct dm *)v->dmp, &v->gv_s->gv_grid, v->gv_scale, v->gv_model2view, base2local);
+    }
+
+    /* Draw rect */
+    if (v->gv_s->gv_rect.draw && v->gv_s->gv_rect.line_width)
+	dm_draw_rect((struct dm *)v->dmp, &v->gv_s->gv_rect);
+
+    /* View parameters - drawn last so the FPS incorporates as much as possible
+     * of the drawing work. */
     if (v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	point_t center;
@@ -387,6 +402,9 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 	} else if (!v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
 	    bu_vls_printf(&vls, "FPS:%.2f", 1/v->gv_s->gv_frametime);
 	}
+
+	// TODO - really should put a rectangle behind this to ensure visibility...
+
 	(void)dm_set_fg((struct dm *)v->dmp,
 			v->gv_s->gv_view_params.gos_text_color[0],
 			v->gv_s->gv_view_params.gos_text_color[1],
@@ -395,19 +413,6 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 	(void)dm_draw_string_2d((struct dm *)v->dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
 	bu_vls_free(&vls);
     }
-
-    /* Draw the angle distance cursor */
-    if (v->gv_s->gv_adc.draw)
-	dm_draw_adc((struct dm *)v->dmp, &(v->gv_s->gv_adc), v->gv_view2model, v->gv_model2view);
-
-    /* Draw grid */
-    if (v->gv_s->gv_grid.draw) {
-	dm_draw_grid((struct dm *)v->dmp, &v->gv_s->gv_grid, v->gv_scale, v->gv_model2view, base2local);
-    }
-
-    /* Draw rect */
-    if (v->gv_s->gv_rect.draw && v->gv_s->gv_rect.line_width)
-	dm_draw_rect((struct dm *)v->dmp, &v->gv_s->gv_rect);
 }
 
 void
