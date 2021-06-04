@@ -11,7 +11,6 @@ set(DRAW_SRCS
   draw2.cpp
   loadview.c
   preview.c
-  wireframe_eval.c
   )
 
 add_definitions(-DGED_PLUGIN)

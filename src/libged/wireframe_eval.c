@@ -43,7 +43,7 @@
 #include "raytrace.h"
 #include "rt/func.h"
 
-#include "../ged_private.h"
+#include "./ged_private.h"
 
 struct bigE_data {
     struct bv_scene_obj *s;

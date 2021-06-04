@@ -29,6 +29,7 @@ set(LIBGED_SOURCES
   ged_init.cpp
   columns.c
   display_list.c
+  draw.cpp
   facedef.c
   ged.c
   ged_util.c
@@ -52,6 +53,7 @@ set(LIBGED_SOURCES
   vutil.c
   view/data_lines.c
   wdb_importFg4Section.c
+  wireframe_eval.c
   )
 
 set_property(SOURCE ged_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "GED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")

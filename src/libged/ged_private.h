@@ -188,6 +188,40 @@ struct _ged_client_data {
 };
 
 
+/* Data for tree walk */
+struct draw_data_t {
+    struct db_i *dbip;
+    struct bv_scene_group *g;
+    struct bview *v;
+    struct bv_obj_settings *vs;
+    const struct bn_tol *tol;
+    const struct bg_tess_tol *ttol;
+    struct bv_scene_obj *free_scene_obj;
+    struct bu_color c;
+    int color_inherit;
+    int bool_op;
+    struct resource *res;
+
+    /* To avoid the need for multiple subtree walking
+     * functions, we also set up to support a bounding
+     * only walk. */
+    int bound_only;
+    int skip_subtractions;
+    int have_bbox;
+    point_t min;
+    point_t max;
+#ifdef __cplusplus
+    std::map<struct directory *, fastf_t> *s_size;
+#endif
+};
+GED_EXPORT int ged_update_db_path(struct bv_scene_obj *s);
+GED_EXPORT void ged_free_draw_data(struct bv_scene_obj *s);
+GED_EXPORT void ged_scene_obj_geom(struct bv_scene_obj *s);
+GED_EXPORT void db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
+          void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
+          void *client_data);
+GED_EXPORT void db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data);
+
 GED_EXPORT void vls_col_item(struct bu_vls *str, const char *cp);
 GED_EXPORT void vls_col_eol(struct bu_vls *str);
 
