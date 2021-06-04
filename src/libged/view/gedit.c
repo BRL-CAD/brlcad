@@ -57,6 +57,8 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct bview *v = gedp->ged_gvp;
     const char *usage_string = "view gedit name create";
     const char *purpose_string = "create an editing view obj from a database solid/comb";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
@@ -69,11 +71,86 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
 
     struct bv_scene_obj *s = gd->s;
     if (s) {
-	bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
+	bu_vls_printf(gedp->ged_result_str, "View object for %s already exists\n", gd->vobj);
 	return GED_ERROR;
     }
 
-    return GED_ERROR;
+    /* Make sure we have a valid db object as an argument */
+    struct db_full_path *fp;
+    BU_GET(fp, struct db_full_path);
+    db_full_path_init(fp);
+    int ret = db_string_to_path(fp, dbip, gd->vobj);
+    if (ret < 0) {
+	// Invalid path
+	db_free_full_path(fp);
+	BU_PUT(fp, struct db_full_path);
+	bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", gd->vobj);
+	return GED_ERROR;
+    }
+    mat_t mat;
+    MAT_IDN(mat);
+    if (!db_path_to_mat(dbip, fp, mat, fp->fp_len-1, &rt_uniresource)) {
+	db_free_full_path(fp);
+	BU_PUT(fp, struct db_full_path);
+	bu_vls_printf(gedp->ged_result_str, "Invalid path matrix: %s\n", gd->vobj);
+	return GED_ERROR;
+    }
+
+
+    /* Set up the toplevel object */
+    struct bv_scene_group *g;
+    BU_GET(g, struct bv_scene_group);
+    GET_BV_SCENE_OBJ(g, &gedp->free_scene_obj->l);
+    bv_scene_obj_init(g, gedp->free_scene_obj);
+    db_path_to_vls(&g->s_name, fp);
+    db_path_to_vls(&g->s_uuid, fp);
+
+
+    // Set up drawing settings
+    unsigned char wcolor[3] = {255,255,255};
+    struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
+    if (v)
+	bv_obj_settings_sync(&vs, &v->gv_s->obj_s);
+    bv_obj_settings_sync(&g->s_os, &vs);
+
+    // We have a tree walk ahead to populate the wireframe - set up the client
+    // data structure.
+    struct draw_data_t dd;
+    dd.dbip = gedp->ged_wdbp->dbip;
+    dd.v = gedp->ged_gvp;
+    dd.tol = &gedp->ged_wdbp->wdb_tol;
+    dd.ttol = &gedp->ged_wdbp->wdb_ttol;
+    dd.free_scene_obj = gedp->free_scene_obj;
+    dd.color_inherit = 0;
+    dd.bound_only = 0;
+    dd.res = &rt_uniresource;
+    bu_color_from_rgb_chars(&dd.c, wcolor);
+    dd.vs = &vs;
+    dd.g = g;
+    
+    // Create a wireframe from the current state of the specified object
+    db_fullpath_draw(fp, &mat, (void *)&dd);
+
+    // We also need a local copy of the internal structure to edit
+    // associated with the scene object
+    struct rt_db_internal *ip;
+    BU_GET(ip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(ip);
+    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat, dd.res);
+    if (ret < 0) {
+	db_free_full_path(fp);
+	BU_PUT(fp, struct db_full_path);
+	bv_scene_obj_free(g, gedp->free_scene_obj);
+	return GED_ERROR;
+    }
+    g->s_i_data = (void *)ip;
+
+    // TODO - set the object callbacks
+
+    // TODO - in principle, we should be sharing a lot of logic with the edit command -
+    // the only difference is we won't be unpacking and writing the rt_db_internal.
+
+    return GED_OK;
 }
 
 int

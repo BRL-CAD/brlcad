@@ -222,6 +222,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	if (ret < 0) {
 	    // Invalid path
 	    db_free_full_path(fp);
+	    BU_PUT(fp, struct db_full_path);
 	    bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", argv[i]);
 	    continue;
 	}
