@@ -26,43 +26,14 @@
 #ifndef CADAPPEXEC_H
 #define CADAPPEXEC_H
 
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
-#  pragma message "Disabling GCC float equality comparison warnings via pragma due to Qt headers..."
-#endif
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-#undef Success
 #include <QObject>
-#undef Success
 #include <QString>
-#undef Success
 #include <QStringList>
-#undef Success
 #include <QVBoxLayout>
-#undef Success
 #include <QProcess>
-#undef Success
 #include <QDialog>
-#undef Success
 #include <QDialogButtonBox>
-#undef Success
 #include <QTextStream>
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
 
 #include "pqConsoleWidget.h"
 

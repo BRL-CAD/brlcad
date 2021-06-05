@@ -32,47 +32,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "pqConsoleWidget.h"
 
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
-#  pragma message "Disabling GCC float equality comparison warnings via pragma due to Qt headers..."
-#endif
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-#undef Success
 #include <QAbstractItemView>
-#undef Success
 #include <QApplication>
-#undef Success
 #include <QClipboard>
-#undef Success
 #include <QKeyEvent>
-#undef Success
 #include <QMimeData>
-#undef Success
 #include <QPointer>
-#undef Success
 #include <QTextCursor>
-#undef Success
 #include <QPlainTextEdit>
-#undef Success
 #include <QVBoxLayout>
-#undef Success
 #include <QScrollBar>
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
 
 /////////////////////////////////////////////////////////////////////////
 // pqConsoleWidget::pqImplementation
