@@ -36,6 +36,8 @@ endif(BRLCAD_ENABLE_QT)
 set(qtcad_srcs
   bindings.cpp
   QAccordionWidget.cpp
+  QFlowLayout.cpp
+  QToolPalette.cpp
   QtSW.cpp
   QtCADQuad.cpp
   QtCADView.cpp
@@ -47,6 +49,8 @@ set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
 set(qtcad_moc_headers
   bindings.h
   ${QTCAD_HDR_DIR}/QAccordionWidget.h
+  ${QTCAD_HDR_DIR}/QFlowLayout.h
+  ${QTCAD_HDR_DIR}/QToolPalette.h
   ${QTCAD_HDR_DIR}/QtCADView.h
   ${QTCAD_HDR_DIR}/QtCADQuad.h
   ${QTCAD_HDR_DIR}/QtConsole.h

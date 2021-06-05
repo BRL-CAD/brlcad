@@ -41,10 +41,14 @@
 #ifndef Q_FLOWLAYOUT_H
 #define Q_FLOWLAYOUT_H
 
+#include "common.h"
+
 #include <QLayout>
 #include <QRect>
 #include <QStyle>
-class QFlowLayout : public QLayout
+#include "qtcad/defines.h"
+
+class QTCAD_EXPORT QFlowLayout : public QLayout
 {
     public:
 	explicit QFlowLayout(QWidget *parent, int margin = -1, int hSpacing = -1, int vSpacing = -1);

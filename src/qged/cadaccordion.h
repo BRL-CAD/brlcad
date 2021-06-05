@@ -27,7 +27,7 @@
 #define CADACCORDIAN_H
 #include "cadtreemodel.h"
 #include "cadattributes.h"
-#include "QToolPalette.h"
+#include "qtcad/QToolPalette.h"
 #include "qtcad/QAccordionWidget.h"
 
 class CADViewControls : public QWidget

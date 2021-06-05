@@ -37,8 +37,6 @@ set(qged_srcs
   cadview.cpp
   console.cpp
   pqConsoleWidget.cpp
-  QToolPalette.cpp
-  QFlowLayout.cpp
   )
 
 set(moc_headers
@@ -56,8 +54,6 @@ set(moc_headers
   cadview.h
   console.h
   pqConsoleWidget.h
-  QToolPalette.h
-  QFlowLayout.h
   )
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)

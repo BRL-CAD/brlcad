@@ -23,8 +23,10 @@
  *
  */
 
+#include "common.h"
+
 #include <iostream>
-#include "QToolPalette.h"
+#include "qtcad/QToolPalette.h"
 
 QToolPaletteButton::QToolPaletteButton(QWidget *bparent, QIcon *iicon, QToolPaletteElement *eparent) : QPushButton(bparent)
 {

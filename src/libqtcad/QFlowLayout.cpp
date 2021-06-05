@@ -38,37 +38,13 @@
 **
 ****************************************************************************/
 
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
-#  pragma message "Disabling GCC float equality comparison warnings via pragma due to Qt headers..."
-#endif
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-#undef Success
-#include <QWidget>
-#undef Success
-#include <QLayout>
-#undef Success
-#include <QLayoutItem>
-#undef Success
-#include <QStyle>
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
+#include "common.h"
 
-#include "QFlowLayout.h"
+#include <QWidget>
+#include <QLayout>
+#include <QLayoutItem>
+#include <QStyle>
+#include "qtcad/QFlowLayout.h"
 
 QFlowLayout::QFlowLayout(QWidget *pparent, int mmargin, int hSpacing, int vSpacing)
     : QLayout(pparent), m_hSpace(hSpacing), m_vSpace(vSpacing)

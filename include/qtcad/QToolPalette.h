@@ -23,47 +23,24 @@
  *
  */
 
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
-#  pragma message "Disabling GCC float equality comparison warnings via pragma due to Qt headers..."
-#endif
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-#undef Success
+#ifndef QTOOLPALETTE_H
+#define QTOOLPALETTE_H
+
+#include "common.h"
+
 #include <QWidget>
-#undef Success
 #include <QVBoxLayout>
-#undef Success
 #include <QPushButton>
-#undef Success
 #include <QSet>
-#undef Success
 #include <QIcon>
-#undef Success
 #include <QScrollArea>
-#undef Success
 #include <QSplitter>
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
+#include "qtcad/defines.h"
+#include "qtcad/QFlowLayout.h"
 
-#include "QFlowLayout.h"
+class QTCAD_EXPORT QToolPaletteElement;
 
-class QToolPaletteElement;
-
-class QToolPaletteButton: public QPushButton
+class QTCAD_EXPORT QToolPaletteButton: public QPushButton
 {
     Q_OBJECT
 
@@ -84,7 +61,7 @@ class QToolPaletteButton: public QPushButton
 };
 
 
-class QToolPaletteElement: public QWidget
+class QTCAD_EXPORT QToolPaletteElement: public QWidget
 {
     Q_OBJECT
 
@@ -100,7 +77,7 @@ class QToolPaletteElement: public QWidget
 	QWidget *controls;
 };
 
-class QToolPalette: public QWidget
+class QTCAD_EXPORT QToolPalette: public QWidget
 {
     Q_OBJECT
 
@@ -132,6 +109,7 @@ class QToolPalette: public QWidget
       QSet<QToolPaletteElement *> elements;
 };
 
+#endif //QTOOLPALETTE_H
 
 /*
  * Local Variables:
