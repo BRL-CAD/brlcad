@@ -28,6 +28,7 @@
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QApplication>
+#include <QTextStream>
 
 #include "main_window.h"
 #include "app.h"
@@ -41,6 +42,15 @@ int main(int argc, char *argv[])
     bu_setprogname(argv[0]);
 
     CADApp app(argc, argv);
+
+#if 0
+    // The dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets looks like
+    // it may work for our purposes
+    QFile file(":/dark.qss");
+    file.open(QFile::ReadOnly | QFile::Text);
+    QTextStream stream(&file);
+    app.setStyleSheet(stream.readAll());
+#endif
 
     app.initialize();
 
