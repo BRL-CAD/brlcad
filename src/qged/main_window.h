@@ -38,7 +38,7 @@
 #include <QObject>
 
 
-#include "cadaccordion.h"
+#include "accordion.h"
 #include "qtcad/QtConsole.h"
 #include "qtcad/QtCADTree.h"
 #include "qtcad/QtCADView.h"

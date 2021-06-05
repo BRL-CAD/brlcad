@@ -32,7 +32,7 @@
 #include <QTextBrowser>
 #include <QDialogButtonBox>
 
-#include "cadapp.h"
+#include "app.h"
 
 class CADManViewer : public QDialog
 {

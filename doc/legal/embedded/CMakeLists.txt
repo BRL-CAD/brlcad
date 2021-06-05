@@ -1,7 +1,6 @@
 set(embedded_licenses
   alphanum.txt
   apple.txt
-  appleseed.txt
   art.txt
   ayam.txt
   b64.txt

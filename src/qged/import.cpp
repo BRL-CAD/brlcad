@@ -28,8 +28,8 @@
 #include <QFileInfo>
 #include <QFormLayout>
 
-#include "cadapp.h"
-#include "cadimport.h"
+#include "app.h"
+#include "import.h"
 
 #include "bu.h"
 

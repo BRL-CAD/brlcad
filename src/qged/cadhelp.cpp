@@ -26,7 +26,7 @@
 #include <iostream>
 #include <QFile>
 #include "cadhelp.h"
-#include "cadapp.h"
+#include "app.h"
 
 #include "bu.h"
 

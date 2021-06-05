@@ -28,8 +28,8 @@
 #include <QPlainTextEdit>
 #include <QTextStream>
 #include "qtcad/QtAppExecDialog.h"
-#include "cadapp.h"
-#include "cadaccordion.h"
+#include "app.h"
+#include "accordion.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 

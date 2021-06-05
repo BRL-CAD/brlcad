@@ -24,8 +24,8 @@
  */
 
 #include "main_window.h"
-#include "cadapp.h"
-#include "cadaccordion.h"
+#include "app.h"
+#include "accordion.h"
 
 QBDockWidget::QBDockWidget(const QString &title, QWidget *parent)
     : QDockWidget(title, parent)

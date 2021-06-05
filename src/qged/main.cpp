@@ -30,7 +30,7 @@
 #include <QApplication>
 
 #include "main_window.h"
-#include "cadapp.h"
+#include "app.h"
 
 #include "bu/app.h"
 #include "bu/log.h"

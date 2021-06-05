@@ -26,8 +26,8 @@
 #include <QPainter>
 #include <QString>
 
-#include "cadattributes.h"
-#include "cadapp.h"
+#include "attributes.h"
+#include "app.h"
 #include "bu/sort.h"
 #include "bu/avs.h"
 #include "bu/malloc.h"

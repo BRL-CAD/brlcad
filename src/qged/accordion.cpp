@@ -26,8 +26,8 @@
 #include <QPalette>
 #include <QColor>
 
-#include "cadaccordion.h"
-#include "cadapp.h"
+#include "accordion.h"
+#include "app.h"
 
 CADViewControls::CADViewControls(QWidget *pparent)
     : QWidget(pparent)
