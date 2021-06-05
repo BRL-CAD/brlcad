@@ -32,7 +32,6 @@ set(qged_srcs
   cadimport.cpp
   cadview.cpp
   console.cpp
-  pqConsoleWidget.cpp
   )
 
 set(moc_headers
@@ -46,7 +45,6 @@ set(moc_headers
   cadconsole.h
   cadview.h
   console.h
-  pqConsoleWidget.h
   )
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
@@ -74,46 +72,6 @@ CMAKEFILES(${qged_srcs})
 CMAKEFILES(${moc_headers})
 
 set(qged_ignore_srcs
-  pqConsoleWidget_LICENSE.txt
-  display/README.txt
-  display/Renderable.h
-  fonts/Inconsolata-LICENSE.txt
-  fonts/Inconsolata.otf
-  images/appleseed/scrollbar_arrow_up_disabled.png
-  images/appleseed/combobox_arrow_down_disabled.png
-  images/appleseed/radiobutton_unchecked_enabled.png
-  images/appleseed/radiobutton_checked_disabled.png
-  images/appleseed/spinbox_arrow_down_enabled.png
-  images/appleseed/spinbox_arrow_up_disabled.png
-  images/appleseed/menu_arrow_right_selected.png
-  images/appleseed/scrollbar_arrow_left_enabled.png
-  images/appleseed/radiobutton_checked_enabled_hover.png
-  images/appleseed/scrollbar_arrow_right_enabled.png
-  images/appleseed/radiobutton_unchecked_enabled_hover.png
-  images/appleseed/checkbox_indeterminate_disabled.png
-  images/appleseed/checkbox_checked_enabled.png
-  images/appleseed/scrollbar_arrow_up_enabled.png
-  images/appleseed/scrollbar_arrow_left_disabled.png
-  images/appleseed/scrollbar_arrow_down_enabled.png
-  images/appleseed/scrollbar_arrow_right_disabled.png
-  images/appleseed/header_arrow_up_enabled.png
-  images/appleseed/checkbox_unchecked_disabled.png
-  images/appleseed/combobox_arrow_down_selected.png
-  images/appleseed/scrollbar_arrow_down_disabled.png
-  images/appleseed/radiobutton_unchecked_disabled.png
-  images/appleseed/header_arrow_down_disabled.png
-  images/appleseed/menu_arrow_right_disabled.png
-  images/appleseed/checkbox_unchecked_enabled.png
-  images/appleseed/combobox_arrow_down_enabled.png
-  images/appleseed/header_arrow_up_disabled.png
-  images/appleseed/radiobutton_checked_enabled.png
-  images/appleseed/checkbox_indeterminate_enabled.png
-  images/appleseed/header_arrow_down_enabled.png
-  images/appleseed/spinbox_arrow_up_enabled.png
-  images/appleseed/LICENSE.txt
-  images/appleseed/menu_arrow_right_enabled.png
-  images/appleseed/spinbox_arrow_down_disabled.png
-  images/appleseed/checkbox_checked_disabled.png
   display/AxesRenderer.cpp
   display/AxesRenderer.h
   display/Camera.h
@@ -127,6 +85,43 @@ set(qged_ignore_srcs
   display/OrthographicCamera.h
   display/README.txt
   display/Renderable.h
+  fonts/Inconsolata-LICENSE.txt
+  fonts/Inconsolata.otf
+  images/appleseed/LICENSE.txt
+  images/appleseed/checkbox_checked_disabled.png
+  images/appleseed/checkbox_checked_enabled.png
+  images/appleseed/checkbox_indeterminate_disabled.png
+  images/appleseed/checkbox_indeterminate_enabled.png
+  images/appleseed/checkbox_unchecked_disabled.png
+  images/appleseed/checkbox_unchecked_enabled.png
+  images/appleseed/combobox_arrow_down_disabled.png
+  images/appleseed/combobox_arrow_down_enabled.png
+  images/appleseed/combobox_arrow_down_selected.png
+  images/appleseed/header_arrow_down_disabled.png
+  images/appleseed/header_arrow_down_enabled.png
+  images/appleseed/header_arrow_up_disabled.png
+  images/appleseed/header_arrow_up_enabled.png
+  images/appleseed/menu_arrow_right_disabled.png
+  images/appleseed/menu_arrow_right_enabled.png
+  images/appleseed/menu_arrow_right_selected.png
+  images/appleseed/radiobutton_checked_disabled.png
+  images/appleseed/radiobutton_checked_enabled.png
+  images/appleseed/radiobutton_checked_enabled_hover.png
+  images/appleseed/radiobutton_unchecked_disabled.png
+  images/appleseed/radiobutton_unchecked_enabled.png
+  images/appleseed/radiobutton_unchecked_enabled_hover.png
+  images/appleseed/scrollbar_arrow_down_disabled.png
+  images/appleseed/scrollbar_arrow_down_enabled.png
+  images/appleseed/scrollbar_arrow_left_disabled.png
+  images/appleseed/scrollbar_arrow_left_enabled.png
+  images/appleseed/scrollbar_arrow_right_disabled.png
+  images/appleseed/scrollbar_arrow_right_enabled.png
+  images/appleseed/scrollbar_arrow_up_disabled.png
+  images/appleseed/scrollbar_arrow_up_enabled.png
+  images/appleseed/spinbox_arrow_down_disabled.png
+  images/appleseed/spinbox_arrow_down_enabled.png
+  images/appleseed/spinbox_arrow_up_disabled.png
+  images/appleseed/spinbox_arrow_up_enabled.png
 
   CMakeLists.txt
   Qt_Notes.txt
