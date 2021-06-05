@@ -29,6 +29,10 @@ if(BRLCAD_ENABLE_QT)
 
 endif(BRLCAD_ENABLE_QT)
 
+# We build the resources in at this level, but list them out
+# in the subdirectories
+add_subdirectory(images)
+
 # NOTE: We can't use the CMake global values for automoc et. al.
 # because most of BRL-CAD's targets are not Qt targets.  We don't
 # want to run the automatic moc logic for all of them.
@@ -77,7 +81,8 @@ if(BRLCAD_ENABLE_QT)
   set(USE_OBJECT_LIBS OFF)
 
   QT5_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_headers})
-  BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs}" "libged;libdm;librt;libbu;Qt5::Core;Qt5::Widgets;${OPENGL_LIBS}")
+  QT5_ADD_RESOURCES(qtcad_qrc qtcad_resources.qrc)
+  BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "libged;libdm;librt;libbu;Qt5::Core;Qt5::Widgets;${OPENGL_LIBS}")
   if (OPENGL_LIBS)
     set_property(TARGET libqtcad APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
   endif (OPENGL_LIBS)
@@ -87,6 +92,7 @@ set(qtcad_ignore_srcs
   CMakeLists.txt
   ${qtcad_srcs}
   ${qtcad_moc_headers}
+  qtcad_resources.qrc
   QtGL.cpp
   )
 

@@ -72,6 +72,7 @@ CADTreeNode::~CADTreeNode()
 CADTreeModel::CADTreeModel(QObject *parentobj)
     : QAbstractItemModel(parentobj)
 {
+    Q_INIT_RESOURCE(qtcad_resources);
 }
 
 CADTreeModel::~CADTreeModel()
