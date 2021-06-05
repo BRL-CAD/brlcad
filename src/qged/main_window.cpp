@@ -147,21 +147,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     /* For testing - don't want uniqueness here, but may need or want it elsewhere */
     //panel->setUniqueVisibility(1);
 
-    /* Set default style for the application */
-    QString allstyle;
-    QFile stylesheet(":/cadstyle.qss");
-    if (stylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
-	allstyle.append(stylesheet.readAll());
-	stylesheet.close();
-    }
-
-    QFile treestylesheet(":/cadtreestyle.qss");
-    if (treestylesheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
-	allstyle.append(treestylesheet.readAll());
-	treestylesheet.close();
-    }
-    qApp->setStyleSheet(allstyle);
-
 }
 
 void

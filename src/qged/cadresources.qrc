@@ -74,8 +74,5 @@
      <file>images/appleseed/spinbox_arrow_up_disabled.png</file>
      <file>images/appleseed/spinbox_arrow_up_enabled.png</file>
      <file>fonts/Inconsolata.otf</file>
-     <file>cadtreestyle.qss</file>
-     <file>cadstyle.qss</file>
-     <file>default.qss</file>
  </qresource>
  </RCC>

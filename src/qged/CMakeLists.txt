@@ -81,9 +81,6 @@ CMAKEFILES(${qged_srcs})
 CMAKEFILES(${moc_headers})
 
 set(qged_ignore_srcs
-  default.qss
-  cadstyle.qss
-  cadtreestyle.qss
   pqConsoleWidget_LICENSE.txt
   display/README.txt
   display/Renderable.h
