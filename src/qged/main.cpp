@@ -31,7 +31,6 @@
 
 #include "main_window.h"
 #include "cadapp.h"
-#include "cadcommands.h"
 
 #include "bu/app.h"
 #include "bu/log.h"
@@ -74,9 +73,6 @@ int main(int argc, char *argv[])
 
     // TODO - this needs to be a setting that is saved and restored
     app.w->resize(1100, 800);
-
-    // Set up the command prompt's commands
-    cad_register_commands(&app);
 
     if (parser.isSet(consoleOption)) {
 	bu_exit(1, "Console mode unimplemented\n");
