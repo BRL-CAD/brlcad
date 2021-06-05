@@ -32,7 +32,7 @@ QToolPaletteButton::QToolPaletteButton(QWidget *bparent, QIcon *iicon, QToolPale
 {
     setIcon(*iicon);
     element = eparent;
-    QObject::connect(this, SIGNAL(clicked()), this, SLOT(select_element()));
+    QObject::connect(this, &QToolPaletteButton::clicked, this, &QToolPaletteButton::select_element);
 }
 
 
@@ -187,7 +187,7 @@ QToolPalette::addElement(QToolPaletteElement *element)
     element->button->setMaximumHeight(icon_height);
     button_layout->addWidget(element->button);
     elements.insert(element);
-    QObject::connect(element->button, SIGNAL(element_selected(QToolPaletteElement *)), this, SLOT(displayElement(QToolPaletteElement *)));
+    QObject::connect(element->button, &QToolPaletteButton::element_selected, this, &QToolPalette::displayElement);
     updateGeometry();
     if (!selected && always_selected) {
 	displayElement(element);

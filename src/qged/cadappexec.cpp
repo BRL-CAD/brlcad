@@ -33,7 +33,7 @@ QDialog_App::QDialog_App(QWidget *pparent, QString executable, QStringList args,
 {
     QVBoxLayout *dlayout = new QVBoxLayout;
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel);
-    connect(buttonBox, SIGNAL(rejected()), this, SLOT(process_abort()));
+    QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog_App::process_abort);
     console = new pqConsoleWidget(this);
     console->prompt("");
     setLayout(dlayout);
@@ -90,7 +90,7 @@ void QDialog_App::process_done(int , QProcess::ExitStatus)
     if (logfile) logfile->close();
     buttonBox->clear();
     buttonBox->addButton(QDialogButtonBox::Ok);
-    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
+    QObject::connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog_App::accept);
     setWindowTitle("Process Finished");
 }
 

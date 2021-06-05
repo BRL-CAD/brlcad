@@ -257,9 +257,9 @@ CADApp::exec_console_app_in_window(QString command, QStringList options, QString
 	out_win->console->printString(QString("\n"));
 	out_win->proc->setProgram(command);
 	out_win->proc->setArguments(options);
-	connect(out_win->proc, SIGNAL(readyReadStandardOutput()), out_win, SLOT(read_stdout()) );
-	connect(out_win->proc, SIGNAL(readyReadStandardError()), out_win, SLOT(read_stderr()) );
-	connect(out_win->proc, SIGNAL(finished(int, QProcess::ExitStatus)), out_win, SLOT(process_done(int, QProcess::ExitStatus)) );
+	connect(out_win->proc, &QProcess::readyReadStandardOutput, out_win, &QDialog_App::read_stdout);
+	connect(out_win->proc, &QProcess::readyReadStandardError, out_win, &QDialog_App::read_stderr);
+	connect(out_win->proc, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), out_win, &QDialog_App::process_done);
 	out_win->proc->start();
 	out_win->exec();
     }
