@@ -27,6 +27,7 @@ set(qged_srcs
   app.cpp
   attributes.cpp
   cadhelp.cpp
+  fbserv.cpp
   import.cpp
   )
 
@@ -36,6 +37,7 @@ set(moc_headers
   app.h
   attributes.h
   cadhelp.h
+  fbserv.h
   import.h
   )
 
@@ -54,7 +56,8 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
   #QT5_ADD_RESOURCES(cad_qrc breeze.qrc)
 
   add_executable(qged ${qged_srcs} ${moc_srcs} ${cad_qrc})
-  target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::OpenGL ${OPENGL_LIBS})
+  # Note - Network is needed for async embedded raytracing display
+  target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::OpenGL Qt5::Network ${OPENGL_LIBS})
   target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qged
     RUNTIME DESTINATION ${BIN_DIR}

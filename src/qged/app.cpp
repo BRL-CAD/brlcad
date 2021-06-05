@@ -27,12 +27,12 @@
 #include <QFile>
 #include <QPlainTextEdit>
 #include <QTextStream>
+#include "bu/malloc.h"
+#include "bu/file.h"
 #include "qtcad/QtAppExecDialog.h"
 #include "app.h"
 #include "accordion.h"
-#include "bu/malloc.h"
-#include "bu/file.h"
-
+#include "fbserv.h"
 
 extern "C" void
 qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t callback, void *data)
@@ -134,8 +134,6 @@ CADApp::wdbp()
 int
 CADApp::opendb(QString filename)
 {
-    struct db_i *f_dbip = DBI_NULL;
-    struct rt_wdb *f_wdbp = RT_WDB_NULL;
 
     /* First, make sure the file is actually there */
     QFileInfo fileinfo(filename);
@@ -154,21 +152,50 @@ CADApp::opendb(QString filename)
     if (gedp != GED_NULL) (void)closedb();
 
     // Call BRL-CAD's database open function
-    if ((f_dbip = db_open(g_path.toLocal8Bit(), DB_OPEN_READONLY)) == DBI_NULL) {
-        return 2;
-    }
+    gedp = ged_open("db", g_path.toLocal8Bit(), 1);
 
-    // Do the rest of the standard initialization steps
-    RT_CK_DBI(f_dbip);
-    if (db_dirbuild(f_dbip) < 0) {
-        db_close(f_dbip);
-        return 3;
-    }
-    db_update_nref(f_dbip, &rt_uniresource);
+    if (!gedp)
+	return 3;
 
-    f_wdbp = wdb_dbopen(f_dbip, RT_WDB_TYPE_DB_DISK);
-    BU_GET(gedp, struct ged);
-    GED_INIT(gedp, f_wdbp);
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
+    BU_GET(gedp->ged_gvp, struct bview);
+    bv_init(gedp->ged_gvp);
+    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
+    gedp->ged_gvp->gv_db_grps = &gedp->ged_db_grps;
+    gedp->ged_gvp->gv_view_shared_objs = &gedp->ged_view_shared_objs;
+    gedp->ged_gvp->independent = 0;
+    bu_ptbl_ins_unique(&gedp->ged_views, (long int *)gedp->ged_gvp);
+    w->canvas->set_view(gedp->ged_gvp);
+    //w->canvas->dm_set = gedp->ged_all_dmp;
+    w->canvas->set_dm_current((struct dm **)&gedp->ged_dmp);
+    w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
+    w->canvas->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+    gedp->ged_gvp = w->canvas->view();
+
+    gedp->fbs_is_listening = &qdm_is_listening;
+    gedp->fbs_listen_on_port = &qdm_listen_on_port;
+    gedp->fbs_open_server_handler = &qdm_open_server_handler;
+    gedp->fbs_close_server_handler = &qdm_close_server_handler;
+    if (w->canvas) {
+	int type = w->canvas->view_type();
+#ifdef BRLCAD_OPENGL
+	if (type == QtCADView_GL) {
+	    gedp->fbs_open_client_handler = &qdm_open_client_handler;
+	}
+#endif
+	if (type == QtCADView_SW) {
+	    gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+	}
+    }
+#ifdef BRLCAD_OPENGL
+#if 0
+    if (w->c4) {
+	gedp->fbs_open_client_handler = &qdm_open_client_handler;
+    }
+#endif
+#endif
+    gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
     current_file = filename;
 

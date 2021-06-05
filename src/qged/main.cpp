@@ -30,18 +30,26 @@
 #include <QApplication>
 #include <QTextStream>
 
-#include "main_window.h"
-#include "app.h"
-
 #include "bu/app.h"
 #include "bu/log.h"
 #include "brlcad_version.h"
+
+#include "main_window.h"
+#include "app.h"
+#include "fbserv.h"
 
 int main(int argc, char *argv[])
 {
     bu_setprogname(argv[0]);
 
+    QSurfaceFormat format;
+    format.setDepthBufferSize(16);
+    QSurfaceFormat::setDefaultFormat(format);
+
     CADApp app(argc, argv);
+    app.setOrganizationName("BRL-CAD");
+    app.setOrganizationDomain("brlcad.org");
+    app.setApplicationName("QGED");
 
 #if 0
     // The dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets looks like
@@ -55,6 +63,7 @@ int main(int argc, char *argv[])
     app.initialize();
 
     app.w = new BRLCAD_MainWindow();
+
 
     QCoreApplication::setApplicationName("BRL-CAD");
     QCoreApplication::setApplicationVersion(brlcad_version());
@@ -88,6 +97,32 @@ int main(int argc, char *argv[])
 	bu_exit(1, "Console mode unimplemented\n");
     } else {
 	app.w->show();
+
+	if (!app.w->canvas->isValid()) {
+	    app.w->canvas->fallback();
+	    if (app.gedp) {
+		app.gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+	    }
+	}
+
+	int have_msg = 0;
+	std::string ged_msgs(ged_init_msgs());
+	if (ged_msgs.size()) {
+	    app.w->console->printString(ged_msgs.c_str());
+	    app.w->console->printString("\n");
+	    have_msg = 1;
+	}
+	std::string dm_msgs(dm_init_msgs());
+	if (dm_msgs.size()) {
+	    if (dm_msgs.find("qtgl") != std::string::npos || dm_msgs.find("swrast") != std::string::npos) {
+		app.w->console->printString(dm_msgs.c_str());
+		app.w->console->printString("\n");
+		have_msg = 1;
+	    }
+	}
+	if (have_msg)
+	    app.w->console->prompt("$ ");
+
 	return app.exec();
     }
 }
