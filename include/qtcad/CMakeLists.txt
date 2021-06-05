@@ -1,6 +1,7 @@
 set(qtcad_headers
   QAccordionWidget.h
   QtCADQuad.h
+  QtCADTree.h
   QtCADView.h
   QtConsole.h
   QtConsoleListener.h
