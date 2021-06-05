@@ -72,8 +72,8 @@ RhinoImportDialog::RhinoImportDialog(QString filename)
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
 	    | QDialogButtonBox::Cancel);
 
-    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-    connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+    connect(buttonBox, &QDialogButtonBox::accepted, this, &RhinoImportDialog::accept);
+    connect(buttonBox, &QDialogButtonBox::rejected, this, &RhinoImportDialog::reject);
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(formGroupBox);
     mainLayout->addWidget(buttonBox);
@@ -150,8 +150,8 @@ STEPImportDialog::STEPImportDialog(QString filename)
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
 	    | QDialogButtonBox::Cancel);
 
-    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-    connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
+    connect(buttonBox, &QDialogButtonBox::accepted, this, &STEPImportDialog::accept);
+    connect(buttonBox, &QDialogButtonBox::rejected, this, &STEPImportDialog::reject);
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(formGroupBox);
     mainLayout->addWidget(buttonBox);

@@ -34,7 +34,7 @@ CADManViewer::CADManViewer(QWidget *pparent, QString *file) : QDialog(pparent)
 {
     QVBoxLayout *dlayout = new QVBoxLayout;
     buttons = new QDialogButtonBox(QDialogButtonBox::Ok);
-    connect(buttons, SIGNAL(accepted()), this, SLOT(accept()));
+    connect(buttons, &QDialogButtonBox::accepted, this, &CADManViewer::accept);
 
     browser = new QTextBrowser();
     QString filename(*file);

@@ -169,7 +169,7 @@ ConsoleLog::ConsoleLog(QWidget *pparent, Console *pc) : QTextBrowser(pparent)
     setFont(pc->terminalfont);
     CADTreeView *tview = ((CADApp *)qApp)->cadtreeview;
     if (tview) {
-	QObject::connect(this, SIGNAL(anchorClicked(const QUrl &)), tview, SLOT(expand_link(const QUrl &)));
+	QObject::connect(this, &ConsoleLog::anchorClicked, tview, &CADTreeView::expand_link);
     }
 }
 
@@ -256,7 +256,7 @@ Console::Console(QWidget *pparent) : QWidget(pparent)
     this->setLayout(mlayout);
 
     QScrollBar *scrollbar = scrollarea->verticalScrollBar();
-    connect(scrollbar, SIGNAL(rangeChanged(int, int)), this, SLOT(do_update_scrollbars(int, int)));
+    QObject::connect(scrollbar, &QScrollBar::rangeChanged, this, &Console::do_update_scrollbars);
 
     console_prompt = QString("console> ");
 }

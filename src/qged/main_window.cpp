@@ -63,11 +63,11 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     // Create Menus
     file_menu = menuBar()->addMenu("File");
     cad_open = new QAction("Open", this);
-    connect(cad_open, SIGNAL(triggered()), this, SLOT(open_file()));
+    QObject::connect(cad_open, &QAction::triggered, this, &BRLCAD_MainWindow::open_file);
     file_menu->addAction(cad_open);
 
     cad_exit = new QAction("Exit", this);
-    connect(cad_exit, SIGNAL(triggered()), this, SLOT(close()));
+    QObject::connect(cad_exit, &QAction::triggered, this, &BRLCAD_MainWindow::close);
     file_menu->addAction(cad_exit);
 
     view_menu = menuBar()->addMenu("View");
@@ -124,14 +124,14 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     treeview->setItemDelegate(new GObjectDelegate());
     treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     treeview->header()->setStretchLastSection(true);
-    QObject::connect((CADApp *)qApp, SIGNAL(db_change()), treemodel, SLOT(refresh()));
-    QObject::connect((CADApp *)qApp, SIGNAL(db_change()), canvas, SLOT(onDatabaseOpen()));
-    QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treeview, SLOT(tree_column_size(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), treemodel, SLOT(update_selected_node_relationships(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(expanded(const QModelIndex &)), treemodel, SLOT(expand_tree_node_relationships(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(collapsed(const QModelIndex &)), treemodel, SLOT(close_tree_node_relationships(const QModelIndex &)));
-    QObject::connect(treeview, SIGNAL(customContextMenuRequested(const QPoint&)), treeview, SLOT(context_menu(const QPoint&)));
+    QObject::connect((CADApp *)qApp, &CADApp::db_change, treemodel, &CADTreeModel::refresh);
+    QObject::connect((CADApp *)qApp, &CADApp::db_change, canvas, &QtCADView::need_update);
+    QObject::connect(treeview, &CADTreeView::expanded, (CADTreeView *)treeview, &CADTreeView::tree_column_size);
+    QObject::connect(treeview, &CADTreeView::collapsed, (CADTreeView *)treeview, &CADTreeView::tree_column_size);
+    QObject::connect(treeview, &CADTreeView::clicked, treemodel, &CADTreeModel::update_selected_node_relationships);
+    QObject::connect(treeview, &CADTreeView::expanded, treemodel, &CADTreeModel::expand_tree_node_relationships);
+    QObject::connect(treeview, &CADTreeView::collapsed, treemodel, &CADTreeModel::close_tree_node_relationships);
+    QObject::connect(treeview, &CADTreeView::customContextMenuRequested, (CADTreeView *)treeview, &CADTreeView::context_menu);
     treemodel->populate(DBI_NULL);
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
@@ -139,9 +139,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     panel = new CADAccordion(panel_dock);
     panel_dock->setWidget(panel);
 
-    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->stdpropmodel, SLOT(refresh(const QModelIndex &)));
-
-    QObject::connect(treeview, SIGNAL(clicked(const QModelIndex &)), panel->userpropmodel, SLOT(refresh(const QModelIndex &)));
+    QObject::connect(treeview, &CADTreeView::clicked, panel->stdpropmodel, &CADAttributesModel::refresh);
+    QObject::connect(treeview, &CADTreeView::clicked, panel->userpropmodel, &CADAttributesModel::refresh);
     ((CADApp *)qApp)->cadaccordion= (CADAccordion *)panel;
 
 
