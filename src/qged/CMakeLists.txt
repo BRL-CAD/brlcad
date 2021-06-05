@@ -25,7 +25,6 @@ set(qged_srcs
   main_window.cpp
   cadaccordion.cpp
   cadapp.cpp
-  cadappexec.cpp
   cadattributes.cpp
   cadcommands.cpp
   cadconsole.cpp
@@ -40,7 +39,6 @@ set(moc_headers
   main_window.h
   cadaccordion.h
   cadapp.h
-  cadappexec.h
   cadattributes.h
   cadcommands.h
   cadhelp.h

@@ -27,8 +27,8 @@
 #include <QFile>
 #include <QPlainTextEdit>
 #include <QTextStream>
+#include "qtcad/QtAppExecDialog.h"
 #include "cadapp.h"
-#include "cadappexec.h"
 #include "cadaccordion.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
@@ -244,7 +244,7 @@ CADApp::exec_console_app_in_window(QString command, QStringList options, QString
 {
     if (command.length() > 0) {
 
-	QDialog_App *out_win = new QDialog_App(0, command, options, lfile);
+	QtAppExecDialog *out_win = new QtAppExecDialog(0, command, options, lfile);
 	QString win_title("Running ");
 	win_title.append(command);
 	out_win->setWindowTitle(win_title);
@@ -257,9 +257,9 @@ CADApp::exec_console_app_in_window(QString command, QStringList options, QString
 	out_win->console->printString(QString("\n"));
 	out_win->proc->setProgram(command);
 	out_win->proc->setArguments(options);
-	connect(out_win->proc, &QProcess::readyReadStandardOutput, out_win, &QDialog_App::read_stdout);
-	connect(out_win->proc, &QProcess::readyReadStandardError, out_win, &QDialog_App::read_stderr);
-	connect(out_win->proc, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), out_win, &QDialog_App::process_done);
+	connect(out_win->proc, &QProcess::readyReadStandardOutput, out_win, &QtAppExecDialog::read_stdout);
+	connect(out_win->proc, &QProcess::readyReadStandardError, out_win, &QtAppExecDialog::read_stderr);
+	connect(out_win->proc, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), out_win, &QtAppExecDialog::process_done);
 	out_win->proc->start();
 	out_win->exec();
     }

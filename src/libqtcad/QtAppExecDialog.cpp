@@ -1,4 +1,4 @@
-/*                  C A D A P P E X E C . C X X
+/*                  Q T A P P E X E C D I A L O G . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,9 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadappexec.cxx
+/** @file QtAppExecDialog.cpp
  *
- * Support for running external applications and viewing the results.
+ * Support for running external applications and viewing the output
+ * stream in a console widget embedded in a dialog window.
  *
  */
 
@@ -27,14 +28,14 @@
 #include <QFile>
 #include <QPlainTextEdit>
 #include <QTextStream>
-#include "cadappexec.h"
+#include "qtcad/QtAppExecDialog.h"
 
-QDialog_App::QDialog_App(QWidget *pparent, QString executable, QStringList args, QString lfile) : QDialog(pparent)
+QtAppExecDialog::QtAppExecDialog(QWidget *pparent, QString executable, QStringList args, QString lfile) : QDialog(pparent)
 {
     QVBoxLayout *dlayout = new QVBoxLayout;
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel);
-    QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog_App::process_abort);
-    console = new pqConsoleWidget(this);
+    QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QtAppExecDialog::process_abort);
+    console = new QtConsole(this);
     console->prompt("");
     setLayout(dlayout);
     dlayout->addWidget(console);
@@ -51,7 +52,7 @@ QDialog_App::QDialog_App(QWidget *pparent, QString executable, QStringList args,
     }
 }
 
-void QDialog_App::read_stdout()
+void QtAppExecDialog::read_stdout()
 {
     QString std_output = proc->readAllStandardOutput();
     console->printString(std_output);
@@ -62,7 +63,7 @@ void QDialog_App::read_stdout()
     }
 }
 
-void QDialog_App::read_stderr()
+void QtAppExecDialog::read_stderr()
 {
     QString err_output = proc->readAllStandardError();
     console->printString(err_output);
@@ -73,7 +74,7 @@ void QDialog_App::read_stderr()
     }
 }
 
-void QDialog_App::process_abort()
+void QtAppExecDialog::process_abort()
 {
     proc->kill();
     console->printString("\nAborted!\n");
@@ -85,12 +86,12 @@ void QDialog_App::process_abort()
     process_done(0, QProcess::NormalExit);
 }
 
-void QDialog_App::process_done(int , QProcess::ExitStatus)
+void QtAppExecDialog::process_done(int , QProcess::ExitStatus)
 {
     if (logfile) logfile->close();
     buttonBox->clear();
     buttonBox->addButton(QDialogButtonBox::Ok);
-    QObject::connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog_App::accept);
+    QObject::connect(buttonBox, &QDialogButtonBox::accepted, this, &QtAppExecDialog::accept);
     setWindowTitle("Process Finished");
 }
 

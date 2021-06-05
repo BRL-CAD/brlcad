@@ -1,4 +1,4 @@
-/*                  C A D A P P E X E C . H
+/*                  Q T A P P E X E C D I A L O G . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -19,12 +19,13 @@
  */
 /** @file cadappexec.h
  *
- *  Support for running external programs.
+ *  Support for running console programs and viewing the output stream
+ *  in a dialog window.
  *
  */
 
-#ifndef CADAPPEXEC_H
-#define CADAPPEXEC_H
+#ifndef QTAPPEXECDIALOG_H
+#define QTAPPEXECDIALOG_H
 
 #include <QObject>
 #include <QString>
@@ -35,15 +36,16 @@
 #include <QDialogButtonBox>
 #include <QTextStream>
 
-#include "pqConsoleWidget.h"
+#include "qtcad/defines.h"
+#include "qtcad/QtConsole.h"
 
-class QDialog_App : public QDialog
+class QTCAD_EXPORT QtAppExecDialog : public QDialog
 {
     Q_OBJECT
 
     public:
-	QDialog_App(QWidget *pparent, QString executable, QStringList args, QString lfile = "");
-	~QDialog_App() {}
+	QtAppExecDialog(QWidget *pparent, QString executable, QStringList args, QString lfile = "");
+	~QtAppExecDialog() {}
 
     public slots:
 	void read_stdout();
@@ -53,12 +55,12 @@ class QDialog_App : public QDialog
 
     public:
 	QFile *logfile;
-        pqConsoleWidget *console;
+        QtConsole *console;
         QProcess *proc;
         QDialogButtonBox *buttonBox;
 };
 
-#endif // CADAPPEXEC_H
+#endif // QTAPPEXECDIALOG_H
 
 /*
  * Local Variables:

@@ -42,6 +42,7 @@ set(qtcad_srcs
   QAccordionWidget.cpp
   QFlowLayout.cpp
   QToolPalette.cpp
+  QtAppExecDialog.cpp
   QtSW.cpp
   QtCADQuad.cpp
   QtCADTree.cpp
@@ -56,6 +57,7 @@ set(qtcad_moc_headers
   ${QTCAD_HDR_DIR}/QAccordionWidget.h
   ${QTCAD_HDR_DIR}/QFlowLayout.h
   ${QTCAD_HDR_DIR}/QToolPalette.h
+  ${QTCAD_HDR_DIR}/QtAppExecDialog.h
   ${QTCAD_HDR_DIR}/QtCADTree.h
   ${QTCAD_HDR_DIR}/QtCADView.h
   ${QTCAD_HDR_DIR}/QtCADQuad.h
