@@ -33,32 +33,102 @@
 #include "bu/malloc.h"
 #include "bu/file.h"
 
+
+extern "C" void
+qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t callback, void *data)
+{
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
+	return;
+
+    BRLCAD_MainWindow *w = (BRLCAD_MainWindow *)p->gedp->ged_io_data;
+    QtConsole *c = w->console;
+
+    int fd = bu_process_fileno(p->p, t);
+    if (fd < 0)
+	return;
+
+    c->listen(fd, p, t, callback, data);
+
+    switch (t) {
+	case BU_PROCESS_STDIN:
+	    p->stdin_active = 1;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    p->stdout_active = 1;
+	    break;
+	case BU_PROCESS_STDERR:
+	    p->stderr_active = 1;
+	    break;
+    }
+}
+
+extern "C" void
+qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
+{
+    if (!p) return;
+
+    BRLCAD_MainWindow *w = (BRLCAD_MainWindow *)p->gedp->ged_io_data;
+    QtConsole *c = w->console;
+
+    // Since these callbacks are invoked from the listener, we can't call
+    // the listener destructors directly.  We instead call a routine that
+    // emits a single that will notify the console widget it's time to
+    // detach the listener.
+    switch (t) {
+	case BU_PROCESS_STDIN:
+	    bu_log("stdin\n");
+	    if (p->stdin_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+	    }
+	    p->stdin_active = 0;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    if (p->stdout_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+		bu_log("stdout: %d\n", p->stdout_active);
+	    }
+	    p->stdout_active = 0;
+	    break;
+	case BU_PROCESS_STDERR:
+	    if (p->stderr_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+		bu_log("stderr: %d\n", p->stderr_active);
+	    }
+	    p->stderr_active = 0;
+	    break;
+    }
+
+    if (w->canvas)
+	w->canvas->need_update();
+#if 0
+    if (w->c4)
+	w->c4->need_update();
+#endif
+}
+
 void
 CADApp::initialize()
 {
-    ged_pointer = GED_NULL;
+    gedp = GED_NULL;
     BU_LIST_INIT(&RTG.rtg_vlfree);
 }
 
 struct db_i *
 CADApp::dbip()
 {
-    if (!ged_pointer || ged_pointer == GED_NULL) return DBI_NULL;
-    if (!ged_pointer->ged_wdbp || ged_pointer->ged_wdbp == RT_WDB_NULL) return DBI_NULL;
-    return ged_pointer->ged_wdbp->dbip;
+    if (gedp == GED_NULL) return DBI_NULL;
+    if (gedp->ged_wdbp == RT_WDB_NULL) return DBI_NULL;
+    return gedp->ged_wdbp->dbip;
 }
 
 struct rt_wdb *
 CADApp::wdbp()
 {
-    if (!ged_pointer || ged_pointer == GED_NULL) return RT_WDB_NULL;
-    return ged_pointer->ged_wdbp;
-}
-
-struct ged *
-CADApp::gedp()
-{
-    return ged_pointer;
+    if (gedp == GED_NULL) return RT_WDB_NULL;
+    return gedp->ged_wdbp;
 }
 
 int
@@ -81,7 +151,7 @@ CADApp::opendb(QString filename)
     }
 
     // If we've already got an open file, close it.
-    if (ged_pointer != GED_NULL) (void)closedb();
+    if (gedp != GED_NULL) (void)closedb();
 
     // Call BRL-CAD's database open function
     if ((f_dbip = db_open(g_path.toLocal8Bit(), DB_OPEN_READONLY)) == DBI_NULL) {
@@ -97,8 +167,8 @@ CADApp::opendb(QString filename)
     db_update_nref(f_dbip, &rt_uniresource);
 
     f_wdbp = wdb_dbopen(f_dbip, RT_WDB_TYPE_DB_DISK);
-    BU_GET(ged_pointer, struct ged);
-    GED_INIT(ged_pointer, f_wdbp);
+    BU_GET(gedp, struct ged);
+    GED_INIT(gedp, f_wdbp);
 
     current_file = filename;
 
@@ -115,11 +185,11 @@ CADApp::opendb(QString filename)
 void
 CADApp::closedb()
 {
-    if (ged_pointer && ged_pointer != GED_NULL) {
-        ged_close(ged_pointer);
-        BU_PUT(ged_pointer, struct ged);
+    if (gedp != GED_NULL) {
+        ged_close(gedp);
+        BU_PUT(gedp, struct ged);
     }
-    ged_pointer = GED_NULL;
+    gedp = GED_NULL;
     current_file.clear();
     cadtreeview->m->dbip = DBI_NULL;
 }
@@ -142,100 +212,117 @@ CADApp::register_gui_command(QString cmdname, gui_cmd_ptr func, QString role)
     return 0;
 }
 
-// TODO - the function below does not take into account the possibility of
-// different command prompt languages - the "exec_command" call needs to
-// be a set of such calls, one per language, with the console switching
-// which one it calls based on a language setting.
-int
-CADApp::exec_command(QString *command, QString *result)
+void
+CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
-    int ret = -1;
-    QString lcommand = *command;
-    QMap<QString, gui_cmd_ptr>::iterator preprocess_cmd_itr;
-    QMap<QString, ged_func_ptr>::iterator ged_cmd_itr;
-    QMap<QString, gui_cmd_ptr>::iterator gui_cmd_itr;
-    QMap<QString, gui_cmd_ptr>::iterator postprocess_cmd_itr;
-    char *lcmd = NULL;
-    char **largv = NULL;
-    int largc = 0;
-    const char *ccmd = NULL;
-    int edist = 0;
-    struct bu_vls rmsg = BU_VLS_INIT_ZERO;
+    struct ged *prev_gedp = gedp;
 
-    if (ged_pointer != GED_NULL && command && command->length() > 0) {
-
-	QStringList command_items = lcommand.split(" ", QString::SkipEmptyParts);
-
-	QString cargv0 = command_items.at(0);
-
-	// First, see if the command needs any extra information from the application
-	// before being run (list of items in view, for example.)
-	preprocess_cmd_itr = preprocess_cmd_map.find(cargv0);
-	if (preprocess_cmd_itr != preprocess_cmd_map.end()) {
-	    (*(preprocess_cmd_itr.value()))(&lcommand, (CADApp *)qApp);
-	}
-
-	if (!ged_cmd_valid(cargv0.toLocal8Bit().constData(), NULL)) {
-	    // Prepare libged arguments
-	    lcmd = bu_strdup(lcommand.toLocal8Bit());
-	    largv = (char **)bu_calloc(lcommand.length()/2+1, sizeof(char *), "cmd_eval argv");
-	    largc = bu_argv_from_string(largv, lcommand.length()/2, lcmd);
-	    bu_vls_trunc(ged_pointer->ged_result_str, 0);
-
-	    // TODO - need a way to launch commands in a separate thread, or some other non-blocking
-	    // fashion as far as the rest of the gui is concerned.  Also need to support Ctrl-C
-	    // to abort a command on the terminal.  Don't worry about allowing other commands to
-	    // execute from the command prompt while one is running, since that will confuse the
-	    // text output quite a lot.  However, view commands should return while allowing long
-	    // drawing routines to execute in the background - using something like Z or B should
-	    // abort drawing and clear the view, but otherwise let it complete...
-	    ret = ged_exec(ged_pointer, largc, (const char **)largv);
-
-	    if (result && bu_vls_strlen(ged_pointer->ged_result_str) > 0) {
-		*result = QString(QLatin1String(bu_vls_addr(ged_pointer->ged_result_str)));
-	    }
-
-	    // Now that the command is run, emit any signals that need emitting.  TODO - we need
-	    // some better mechanism for this.  Once we move to transactions, we can analyze the
-	    // transaction list - hardcoding this per-command is not a great way to go...
-	    //if (edit_cmds.find(QString(largv[0])) != edit_cmds.end()) emit db_change();
-	    //if (view_cmds.find(QString(largv[0])) != view_cmds.end()) emit view_change();
-	    bu_free(lcmd, "free tmp cmd str");
-	    bu_free(largv, "free tmp argv");
-	    goto postprocess;
-	}
-
-	// Not a valid GED command - see if it's an application level command
-	gui_cmd_itr = gui_cmd_map.find(cargv0);
-	if (gui_cmd_itr != gui_cmd_map.end()) {
-	    QString args(lcommand);
-	    args.replace(0, cargv0.length()+1, QString(""));
-	    ret = (*(gui_cmd_itr.value()))(&args, (CADApp *)qApp);
-	    goto postprocess;
-	}
-
-	// If we didn't find the command either as a ged command or a gui command,
-	// see if libged has a suggestion.
-	edist = ged_cmd_lookup(&ccmd, cargv0.toLocal8Bit().constData());
-	if (edist <= cargv0.length()/2) {
-	    bu_vls_sprintf(&rmsg, "Command \"%s\" not found, did you mean \"%s\"?\n", cargv0.toLocal8Bit().constData(), ccmd);
-	    *result = QString(QLatin1String(bu_vls_cstr(&rmsg)));
-	    ret = 1;
-	}
-
-postprocess:
-	// Take care of any results post-processing needed
-	postprocess_cmd_itr = postprocess_cmd_map.find(cargv0);
-	if (postprocess_cmd_itr != postprocess_cmd_map.end()) {
-	    ret = (*(postprocess_cmd_itr.value()))(result, (CADApp *)qApp);
-	}
-
-	if (ret == -1)
-	    *result = QString("command not found");
+    if (gedp) {
+	gedp->ged_create_io_handler = &qt_create_io_handler;
+	gedp->ged_delete_io_handler = &qt_delete_io_handler;
+	gedp->ged_io_data = (void *)this->w;
     }
 
-    bu_vls_free(&rmsg);
-    return ret;
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+
+    if (ged_cmd_valid(argv[0], NULL)) {
+	const char *ccmd = NULL;
+	int edist = ged_cmd_lookup(&ccmd, argv[0]);
+	if (edist) {
+	    if (msg)
+		bu_vls_sprintf(msg, "Command %s not found, did you mean %s (edit distance %d)?\n", argv[0],   ccmd, edist);
+	    return;
+	}
+    } else {
+
+	if (w->canvas)
+	    w->canvas->stash_hashes();
+#if 0
+	if (w->c4)
+	    w->c4->stash_hashes();
+#endif
+	if (gedp) {
+	    // Clear the edit flags ahead of the ged_exec call, so we can tell if
+	    // any geometry changed.
+	    struct directory *dp;
+	    for (int i = 0; i < RT_DBNHASH; i++) {
+		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    dp->edit_flag = 0;
+		}
+	    }
+	}
+
+	ged_exec(gedp, argc, argv);
+	if (msg && gedp)
+	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
+
+
+	// It's possible that a ged_exec will introduce a new gedp - set up accordingly
+	if (gedp && prev_gedp != gedp) {
+	    bu_ptbl_reset(gedp->ged_all_dmp);
+	    if (w->canvas) {
+		gedp->ged_dmp = w->canvas->dmp();
+		gedp->ged_gvp = w->canvas->view();
+		dm_set_vp(w->canvas->dmp(), &gedp->ged_gvp->gv_scale);
+	    }
+#if 0
+	    if (w->c4) {
+		QtCADView *c = w->c4->get();
+		gedp->ged_dmp = c->dmp();
+		gedp->ged_gvp = c->view();
+		dm_set_vp(c->dmp(), &gedp->ged_gvp->gv_scale);
+	    }
+#endif
+	    bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
+	}
+
+	if (gedp) {
+	    if (w->canvas) {
+		w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
+		w->canvas->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+	    }
+#if 0
+	    if (w->c4 && w->c4->get(0)) {
+		w->c4->get(0)->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
+		w->c4->get(0)->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+	    }
+#endif
+	    // Checks the dp edit flags and does any necessary redrawing.  If
+	    // anything changed with the geometry, we also need to redraw
+	    if (ged_view_update(gedp) > 0) {
+		if (w->canvas)
+		    w->canvas->need_update();
+#if 0
+		if (w->c4)
+		    w->c4->need_update();
+#endif
+	    }
+	} else {
+	    // gedp == NULL - can't cheat and use the gedp pointer
+	    if (prev_gedp != gedp) {
+		if (w->canvas) {
+		    w->canvas->need_update();
+		}
+#if 0
+		if (w->c4) {
+		    QtCADView *c = w->c4->get();
+		    c->update();
+		}
+#endif
+	    }
+	}
+
+	/* Check if the ged_exec call changed either the display manager or
+	 * the view settings - in either case we'll need to redraw */
+	if (w->canvas)
+	    w->canvas->diff_hashes();
+
+#if 0
+	if (w->c4)
+	    w->c4->diff_hashes();
+#endif
+
+    }
 }
 
 

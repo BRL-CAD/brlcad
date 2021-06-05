@@ -42,9 +42,10 @@ int main(int argc, char *argv[])
     bu_setprogname(argv[0]);
 
     CADApp app(argc, argv);
-    BRLCAD_MainWindow mainWin;
 
     app.initialize();
+
+    app.w = new BRLCAD_MainWindow();
 
     QCoreApplication::setApplicationName("BRL-CAD");
     QCoreApplication::setApplicationVersion(brlcad_version());
@@ -72,7 +73,7 @@ int main(int argc, char *argv[])
     }
 
     // TODO - this needs to be a setting that is saved and restored
-    mainWin.resize(1100, 800);
+    app.w->resize(1100, 800);
 
     // Set up the command prompt's commands
     cad_register_commands(&app);
@@ -80,7 +81,7 @@ int main(int argc, char *argv[])
     if (parser.isSet(consoleOption)) {
 	bu_exit(1, "Console mode unimplemented\n");
     } else {
-	mainWin.show();
+	app.w->show();
 	return app.exec();
     }
 }

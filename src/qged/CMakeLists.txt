@@ -27,11 +27,9 @@ set(qged_srcs
   cadapp.cpp
   cadattributes.cpp
   cadcommands.cpp
-  cadconsole.cpp
   cadhelp.cpp
   cadimport.cpp
   cadview.cpp
-  console.cpp
   )
 
 set(moc_headers
@@ -42,9 +40,7 @@ set(moc_headers
   cadcommands.h
   cadhelp.h
   cadimport.h
-  cadconsole.h
   cadview.h
-  console.h
   )
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)

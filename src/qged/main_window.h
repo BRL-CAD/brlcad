@@ -38,8 +38,8 @@
 #include <QObject>
 
 
-#include "cadconsole.h"
 #include "cadaccordion.h"
+#include "qtcad/QtConsole.h"
 #include "qtcad/QtCADTree.h"
 #include "qtcad/QtCADView.h"
 
@@ -61,6 +61,10 @@ class BRLCAD_MainWindow : public QMainWindow
 	BRLCAD_MainWindow();
 
 	QtCADView *canvas;
+	QtConsole *console;
+
+    public slots:
+	void run_cmd(const QString &command);
 
     private slots:
 	void open_file();
@@ -76,7 +80,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	QBDockWidget *tree_dock;
 	QBDockWidget *panel_dock;
 
-	CADConsole *console;
 	CADTreeModel *treemodel;
 	QTreeView *treeview;
 	CADAccordion *panel;

@@ -35,10 +35,11 @@
 #include <QSet>
 #include <QModelIndex>
 
-#include "qtcad/QtCADTree.h"
 #include "raytrace.h"
 #include "ged.h"
+#include "qtcad/QtCADTree.h"
 
+#include "main_window.h"
 
 class CADApp;
 class CADAccordion;
@@ -59,14 +60,16 @@ class CADApp : public QApplication
 	void closedb();
 
 	int register_gui_command(QString cmdname, gui_cmd_ptr func, QString role = QString());
-	int exec_command(QString *command, QString *result);
+
+	void ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
 
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
-	struct ged *gedp();
+	struct ged *gedp;
 	struct db_i *dbip();
 	struct rt_wdb *wdbp();
 
+	BRLCAD_MainWindow *w;
 	CADTreeView *cadtreeview;
 	CADAccordion *cadaccordion;
 
@@ -75,7 +78,6 @@ class CADApp : public QApplication
 	void view_change();
 
     public:
-	struct ged *ged_pointer;
 	QString current_file;
 	QMap<QString, gui_cmd_ptr> gui_cmd_map;
 	QMap<QString, gui_cmd_ptr> preprocess_cmd_map;
