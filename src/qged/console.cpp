@@ -32,7 +32,7 @@
 
 #include "console.h"
 #include "cadapp.h"
-#include "cadtreeview.h"
+#include "qtcad/QtCADTree.h"
 
 ConsoleInput::ConsoleInput(QWidget *pparent, Console *pc) : QTextEdit(pparent)
 {

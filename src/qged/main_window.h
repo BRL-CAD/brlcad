@@ -27,7 +27,6 @@
 #ifndef BRLCAD_MAINWINDOW_H
 #define BRLCAD_MAINWINDOW_H
 #include <QMainWindow>
-#include <QGLWidget>
 #include <QDockWidget>
 #include <QMenu>
 #include <QMenuBar>
@@ -40,8 +39,8 @@
 
 
 #include "cadconsole.h"
-#include "cadtreemodel.h"
 #include "cadaccordion.h"
+#include "qtcad/QtCADTree.h"
 #include "qtcad/QtCADView.h"
 
 // https://stackoverflow.com/q/44707344/2037687

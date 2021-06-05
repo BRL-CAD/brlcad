@@ -120,7 +120,8 @@ CADPrimitiveEdit::~CADPrimitiveEdit()
 
 bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 {
-    int interaction_mode = ((CADApp *)qApp)->interaction_mode;
+    int interaction_mode = ((CADApp *)qApp)->cadtreeview->m->interaction_mode;
+    int *imode = &(((CADApp *)qApp)->cadtreeview->m->interaction_mode);
     CADAccordion *accordion = ((CADApp *)qApp)->cadaccordion;
     if (e->type() == QEvent::MouseButtonPress) {
 	QMouseEvent *me = (QMouseEvent *)e;
@@ -163,33 +164,33 @@ bool EditStateFilter::eventFilter(QObject *target, QEvent *e)
 	QRect userpropview_rect(userpropview_topleft, userpropview_bottomright);
 
 	if (view_ctrls_rect.contains(mpos)) {
-	    ((CADApp *)qApp)->interaction_mode = 0;
+	    (*imode) = 0;
 	    accordion->highlight_selected(accordion->view_obj);
 	}
 	if (instance_ctrls_rect.contains(mpos)) {
-	    ((CADApp *)qApp)->interaction_mode = 1;
+	    (*imode) = 1;
 	    accordion->highlight_selected(accordion->instance_obj);
 	}
 
 	if (primitive_ctrls_rect.contains(mpos)) {
-	    ((CADApp *)qApp)->interaction_mode = 2;
+	    (*imode) = 2;
 	    accordion->highlight_selected(accordion->primitive_obj);
 	}
 
 	if (stdpropview_rect.contains(mpos)) {
-	    ((CADApp *)qApp)->interaction_mode = 2;
+	    (*imode) = 2;
 	    accordion->highlight_selected(accordion->stdprop_obj);
 	}
 
 	if (userpropview_rect.contains(mpos)) {
-	    ((CADApp *)qApp)->interaction_mode = 2;
+	    (*imode) = 2;
 	    accordion->highlight_selected(accordion->userprop_obj);
 	}
 
 	CADTreeView *tview = (CADTreeView *)(((CADApp *)qApp)->cadtreeview);
 	CADTreeModel *tmodel = (CADTreeModel *)(tview->model());
 
-	if (interaction_mode != ((CADApp *)qApp)->interaction_mode) {
+	if (interaction_mode != (*imode)) {
 	    tmodel->update_selected_node_relationships(tview->selected());
 	}
     }

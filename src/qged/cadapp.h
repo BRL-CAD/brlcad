@@ -35,7 +35,7 @@
 #include <QSet>
 #include <QModelIndex>
 
-#include "cadtreeview.h"
+#include "qtcad/QtCADTree.h"
 #include "raytrace.h"
 #include "ged.h"
 
@@ -69,7 +69,6 @@ class CADApp : public QApplication
 
 	CADTreeView *cadtreeview;
 	CADAccordion *cadaccordion;
-	QModelIndex current_idx;
 
     signals:
 	void db_change();  // TODO - need this to carry some information about what has changed, if possible...
@@ -78,7 +77,6 @@ class CADApp : public QApplication
     public:
 	struct ged *ged_pointer;
 	QString current_file;
-	int interaction_mode;  // 0 = view, 1 = instance edit, 2 = primitive edit
 	QMap<QString, gui_cmd_ptr> gui_cmd_map;
 	QMap<QString, gui_cmd_ptr> preprocess_cmd_map;
 	QMap<QString, gui_cmd_ptr> postprocess_cmd_map;

@@ -25,8 +25,8 @@
 
 #ifndef CADACCORDIAN_H
 #define CADACCORDIAN_H
-#include "cadtreemodel.h"
 #include "cadattributes.h"
+#include "qtcad/QtCADTree.h"
 #include "qtcad/QToolPalette.h"
 #include "qtcad/QAccordionWidget.h"
 

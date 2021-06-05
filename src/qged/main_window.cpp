@@ -119,9 +119,13 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     /* Geometry Tree */
     treemodel = new CADTreeModel();
     treeview = new CADTreeView(tree_dock);
+    treemodel->cadtreeview = (CADTreeView *)treeview;
+    ((CADTreeView *)treeview)->m = treemodel;
+
     tree_dock->setWidget(treeview);
     treeview->setModel(treemodel);
-    treeview->setItemDelegate(new GObjectDelegate());
+    treeview->setItemDelegate(new GObjectDelegate((CADTreeView *)treeview));
+
     treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     treeview->header()->setStretchLastSection(true);
     QObject::connect((CADApp *)qApp, &CADApp::db_change, treemodel, &CADTreeModel::refresh);
@@ -133,6 +137,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QObject::connect(treeview, &CADTreeView::collapsed, treemodel, &CADTreeModel::close_tree_node_relationships);
     QObject::connect(treeview, &CADTreeView::customContextMenuRequested, (CADTreeView *)treeview, &CADTreeView::context_menu);
     treemodel->populate(DBI_NULL);
+    treemodel->interaction_mode = 0;
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
     /* Edit panel */
@@ -161,6 +166,7 @@ BRLCAD_MainWindow::open_file()
 	    QFileDialog::DontUseNativeDialog);
     if (!fileName.isEmpty()) {
 	int ret = ((CADApp *)qApp)->opendb(fileName.toLocal8Bit());
+	((CADApp *)qApp)->cadtreeview->m->dbip = ((CADApp *)qApp)->dbip();
 	if (ret) {
 	    statusBar()->showMessage("open failed");
 	} else {

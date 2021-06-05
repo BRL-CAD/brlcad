@@ -73,6 +73,7 @@ CADTreeModel::CADTreeModel(QObject *parentobj)
     : QAbstractItemModel(parentobj)
 {
     Q_INIT_RESOURCE(qtcad_resources);
+    current_idx = QModelIndex();
 }
 
 CADTreeModel::~CADTreeModel()
@@ -918,6 +919,7 @@ int CADTreeModel::populate(struct db_i *new_dbip)
 }
 
 /*       C A D T R E E V I E W    */
+
 void GObjectDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     struct directory *cdp = RT_DIR_NULL;

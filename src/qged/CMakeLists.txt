@@ -31,9 +31,6 @@ set(qged_srcs
   cadconsole.cpp
   cadhelp.cpp
   cadimport.cpp
-  cadtreemodel.cpp
-  cadtreeview.cpp
-  cadtreenode.cpp
   cadview.cpp
   console.cpp
   pqConsoleWidget.cpp
@@ -49,8 +46,6 @@ set(moc_headers
   cadhelp.h
   cadimport.h
   cadconsole.h
-  cadtreemodel.h
-  cadtreeview.h
   cadview.h
   console.h
   pqConsoleWidget.h
@@ -179,7 +174,6 @@ set(qged_ignore_srcs
   TODO
   TODO.qt
   cadresources.qrc
-  cadtreenode.h
   )
 
 CMAKEFILES(${qged_ignore_srcs})

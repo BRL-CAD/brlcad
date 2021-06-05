@@ -108,7 +108,7 @@ class QTCAD_EXPORT CADTreeModel : public QAbstractItemModel
 
 	// These came from CADApp in qged...
 	QModelIndex current_idx;
-	int interaction_mode;
+	int interaction_mode = 0; // 0 = view, 1 = instance edit, 2 = primitive edit
 	struct db_i *dbip = NULL;
 	CADTreeView *cadtreeview = NULL;
 
@@ -137,10 +137,12 @@ class QTCAD_EXPORT GObjectDelegate : public QStyledItemDelegate
 
     public:
 	GObjectDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
+	GObjectDelegate(CADTreeView *tv = NULL, QWidget *pparent = 0) : QStyledItemDelegate(pparent) {cadtreeview = tv;}
 
 	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 	QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
 
+	// Previously from CADApp in qged...
 	CADTreeView *cadtreeview = NULL;
 };
 
@@ -155,6 +157,7 @@ class QTCAD_EXPORT CADTreeView : public QTreeView
 	QModelIndex selected();
 
 	void drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const;
+	CADTreeModel *m = NULL;
 
     protected:
 	void resizeEvent(QResizeEvent *pevent);

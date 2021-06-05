@@ -37,8 +37,6 @@ void
 CADApp::initialize()
 {
     ged_pointer = GED_NULL;
-    current_idx = QModelIndex();
-    interaction_mode = 0;
     BU_LIST_INIT(&RTG.rtg_vlfree);
 }
 
@@ -104,10 +102,11 @@ CADApp::opendb(QString filename)
 
     current_file = filename;
 
+    cadtreeview->m->dbip = dbip();
+
     // Inform the world the database has changed
     emit db_change();
 
-    interaction_mode = 0;
     cadaccordion->highlight_selected(cadaccordion->view_obj);
 
     return 0;
@@ -122,6 +121,7 @@ CADApp::closedb()
     }
     ged_pointer = GED_NULL;
     current_file.clear();
+    cadtreeview->m->dbip = DBI_NULL;
 }
 
 int
