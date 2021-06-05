@@ -81,40 +81,6 @@ set(qged_ignore_srcs
   display/Renderable.h
   fonts/Inconsolata-LICENSE.txt
   fonts/Inconsolata.otf
-  images/primitives/other.png
-  images/primitives/dsp.png
-  images/primitives/ars.png
-  images/primitives/eto.png
-  images/primitives/region.png
-  images/primitives/tgc.png
-  images/primitives/extrude.png
-  images/primitives/part.png
-  images/primitives/tor.png
-  images/primitives/ehy.png
-  images/primitives/arb8.png
-  images/primitives/air.png
-  images/primitives/arbn.png
-  images/primitives/arb5.png
-  images/primitives/rpc.png
-  images/primitives/nmg.png
-  images/primitives/assembly.png
-  images/primitives/pipe.png
-  images/primitives/sketch.png
-  images/primitives/invalid.png
-  images/primitives/ell.png
-  images/primitives/sph.png
-  images/primitives/arb6.png
-  images/primitives/brep.png
-  images/primitives/comb.png
-  images/primitives/epa.png
-  images/primitives/bot.png
-  images/primitives/half.png
-  images/primitives/rhc.png
-  images/primitives/metaball.png
-  images/primitives/arb7.png
-  images/primitives/hyp.png
-  images/primitives/arb4.png
-  images/primitives/airregion.png
   images/appleseed/scrollbar_arrow_up_disabled.png
   images/appleseed/combobox_arrow_down_disabled.png
   images/appleseed/radiobutton_unchecked_enabled.png
@@ -150,11 +116,6 @@ set(qged_ignore_srcs
   images/appleseed/menu_arrow_right_enabled.png
   images/appleseed/spinbox_arrow_down_disabled.png
   images/appleseed/checkbox_checked_disabled.png
-  images/tree/branch-end.png
-  images/tree/branch-open.png
-  images/tree/branch-closed.png
-  images/tree/branch-more.png
-  images/tree/vline.png
   display/AxesRenderer.cpp
   display/AxesRenderer.h
   display/Camera.h
