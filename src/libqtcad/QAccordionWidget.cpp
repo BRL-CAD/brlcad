@@ -210,6 +210,8 @@ QAccordionWidget::stateUpdate(QAccordionObject *new_obj)
 
     // If we have been in this open/close combination before, use the previous
     // state (which may have been manually adjusted by the user
+    // TODO - if the window's height has changed, we may need to either scale
+    // or ignore the previous values...
     if (size_states.find(statekey) != size_states.end()) {
 	splitter->setSizes(size_states.find(statekey).value());
 	return;
