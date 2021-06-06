@@ -1043,11 +1043,13 @@ void CADTreeView::header_state()
     } else {
 	header()->setStretchLastSection(true);
     }
+    header()->setMaximumHeight(1);
 }
 
 void CADTreeView::resizeEvent(QResizeEvent *)
 {
     header_state();
+    emit m->layoutChanged();
 }
 
 void CADTreeView::tree_column_size(const QModelIndex &)
