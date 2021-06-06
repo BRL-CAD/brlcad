@@ -9,6 +9,12 @@ https://www.qt.io/blog/building-qt-creator-plugins-with-github-actions
 Qt will be moving to CMake as its internal build system in Qt 6:
 https://www.qt.io/blog/versionless-cmake-targets-qt-5.15
 
-Ways to improve the QDockWidget floating window behavior:
+For the console QDockWidget floating window, we want to switch the title
+widget to have the menu rather than just a text title, to mimic current
+MGED behavior:
 https://stackoverflow.com/a/50565632/2037687
+https://doc.qt.io/qt-5/qdockwidget.html#setTitleBarWidget
+
+
+Tried the following but wasn't able to get it to work...
 https://www.qtcentre.org/threads/58630-Dock-Widget-Custom-Resizing
