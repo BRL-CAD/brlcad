@@ -1026,14 +1026,19 @@ CADTreeView::drawBranches(QPainter* painter, const QRect& rrect, const QModelInd
 
 void CADTreeView::header_state()
 {
-    header()->setStretchLastSection(true);
-    int header_length = header()->length();
+    //header()->setStretchLastSection(true);
+    //int header_length = header()->length();
+    //header()->setSectionResizeMode(0, QHeaderView::Fixed);
+    //resizeColumnToContents(0);
+    //int column_width = columnWidth(0);
+
+    // TODO - when the dock widget is resized, there is a missing
+    // update somewhere - the scrollbar doesn't appear until the tree
+    // is selected...
+
+    header()->setSectionResizeMode(QHeaderView::ResizeToContents);
     header()->setStretchLastSection(false);
-    header()->setSectionResizeMode(0, QHeaderView::Fixed);
-    resizeColumnToContents(0);
-    int column_width = columnWidth(0);
-    header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    if (column_width > header_length) {
+    if (header()->count() == 1) {
 	header()->setStretchLastSection(false);
     } else {
 	header()->setStretchLastSection(true);
