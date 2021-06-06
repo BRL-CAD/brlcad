@@ -73,6 +73,7 @@ public:
     this->setTabChangesFocus(false);
     this->setAcceptDrops(false);
     this->setUndoRedoEnabled(false);
+    this->setMinimumHeight(200);
     this->setMaximumBlockCount(10000);
 
     QFont f("Courier");
@@ -92,6 +93,13 @@ public:
   QFont getFont()
   {
 	  return this->font();
+  }
+
+  // Try to keep the scrollbar slider from getting too small to be usable
+  void resizeEvent(QResizeEvent *e)
+  {
+     this->setMaximumBlockCount(2*this->height());
+     QPlainTextEdit::resizeEvent(e);
   }
 
   void insertFromMimeData(const QMimeData * s)
