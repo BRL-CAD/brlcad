@@ -44,6 +44,17 @@
  * be local - the current non-local impact is just too messy.  However,
  * we DO want to allow that interactive resizing, and so far I'm not
  * seeing a pre-existing widget that will do so...)
+ *
+ * Crazy idea - noticed more or less by accident that stacking multiple dock
+ * widgets in the right dock produces more or less the desired behavior.  What
+ * if we make a second QMainWindow (https://stackoverflow.com/questions/318641/multiple-qmainwindow-instances)
+ * with a placeholder main widget, disable docking in all but one of the docks,
+ * and turn all the individual palettes into first class dockable widgets?  Then we put
+ * the QMainWindow into a widget and make it a dockable widget into the actual
+ * main window?  I.e., a dockable dock?  That way we could float any palette
+ * we want to float, and rather than locking in the structure of the edit
+ * panel things would be arbitrarily reconfigurable.  (The latter might be
+ * of real help when defining other applications using the same gui elements...)
  */
 
 #ifndef QACCORDIANWIDGET_H
