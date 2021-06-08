@@ -23,22 +23,22 @@ endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 set(qged_srcs
   main.cpp
   main_window.cpp
-  accordion.cpp
   app.cpp
   attributes.cpp
   cadhelp.cpp
   fbserv.cpp
   import.cpp
+  palettes.cpp
   )
 
 set(moc_headers
   main_window.h
-  accordion.h
   app.h
   attributes.h
   cadhelp.h
   fbserv.h
   import.h
+  palettes.h
   )
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)

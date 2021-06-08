@@ -42,7 +42,6 @@
 #include "main_window.h"
 
 class CADApp;
-class CADAccordion;
 
 typedef int (*gui_cmd_ptr)(QString *command_string, CADApp *app);
 #define GUI_CMD_PTR_NULL ((gui_cmd_ptr)0)
@@ -71,7 +70,6 @@ class CADApp : public QApplication
 
 	BRLCAD_MainWindow *w;
 	CADTreeView *cadtreeview;
-	CADAccordion *cadaccordion;
 
     signals:
 	void db_change();  // TODO - need this to carry some information about what has changed, if possible...

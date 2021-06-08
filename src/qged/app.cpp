@@ -31,7 +31,6 @@
 #include "bu/file.h"
 #include "qtcad/QtAppExecDialog.h"
 #include "app.h"
-#include "accordion.h"
 #include "fbserv.h"
 
 extern "C" void
@@ -204,7 +203,7 @@ CADApp::opendb(QString filename)
     // Inform the world the database has changed
     emit db_change();
 
-    cadaccordion->highlight_selected(cadaccordion->view_obj);
+    //cadaccordion->highlight_selected(cadaccordion->view_obj);
 
     return 0;
 }

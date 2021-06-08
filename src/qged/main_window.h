@@ -38,7 +38,6 @@
 #include <QObject>
 
 
-#include "accordion.h"
 #include "qtcad/QtConsole.h"
 #include "qtcad/QtCADTree.h"
 #include "qtcad/QtCADView.h"
@@ -78,11 +77,10 @@ class BRLCAD_MainWindow : public QMainWindow
 
 	QBDockWidget *console_dock;
 	QBDockWidget *tree_dock;
-	QBDockWidget *panel_dock;
+	//QBDockWidget *panel_dock;
 
 	CADTreeModel *treemodel;
 	QTreeView *treeview;
-	CADAccordion *panel;
 	QString db_file;
 };
 

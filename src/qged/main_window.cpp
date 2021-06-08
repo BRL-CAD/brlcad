@@ -25,7 +25,8 @@
 
 #include "main_window.h"
 #include "app.h"
-#include "accordion.h"
+#include "palettes.h"
+#include "attributes.h"
 
 QBDockWidget::QBDockWidget(const QString &title, QWidget *parent)
     : QDockWidget(title, parent)
@@ -97,11 +98,45 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     view_menu->addAction(tree_dock->toggleViewAction());
     connect(tree_dock, &QBDockWidget::topLevelChanged, tree_dock, &QBDockWidget::toWindow);
 
-    panel_dock = new QBDockWidget("Edit Panel", this);
-    addDockWidget(Qt::RightDockWidgetArea, panel_dock);
-    panel_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    view_menu->addAction(panel_dock->toggleViewAction());
-    connect(panel_dock, &QBDockWidget::topLevelChanged, panel_dock, &QBDockWidget::toWindow);
+
+    QBDockWidget *vcd = new QBDockWidget("View Controls", this);
+    addDockWidget(Qt::RightDockWidgetArea, vcd);
+    vcd->setAllowedAreas(Qt::RightDockWidgetArea);
+    view_menu->addAction(vcd->toggleViewAction());
+    CADViewControls *vc = new CADViewControls(this);
+    vcd->setWidget(vc);
+
+    QBDockWidget *icd = new QBDockWidget("Instance Editing", this);
+    addDockWidget(Qt::RightDockWidgetArea, icd);
+    icd->setAllowedAreas(Qt::RightDockWidgetArea);
+    view_menu->addAction(icd->toggleViewAction());
+    CADInstanceEdit *ic = new CADInstanceEdit(this);
+    icd->setWidget(ic);
+
+    QBDockWidget *ocd = new QBDockWidget("Object Editing", this);
+    addDockWidget(Qt::RightDockWidgetArea, ocd);
+    ocd->setAllowedAreas(Qt::RightDockWidgetArea);
+    view_menu->addAction(ocd->toggleViewAction());
+    CADPrimitiveEdit *oc = new CADPrimitiveEdit(this);
+    ocd->setWidget(oc);
+
+    QBDockWidget *sattrd = new QBDockWidget("Standard Attributes", this);
+    addDockWidget(Qt::RightDockWidgetArea, sattrd);
+    sattrd->setAllowedAreas(Qt::RightDockWidgetArea);
+    view_menu->addAction(sattrd->toggleViewAction());
+    CADAttributesModel *stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
+    CADAttributesView *stdpropview = new CADAttributesView(this, 1);
+    stdpropview->setModel(stdpropmodel);
+    sattrd->setWidget(stdpropview);
+
+    QBDockWidget *uattrd = new QBDockWidget("User Attributes", this);
+    addDockWidget(Qt::RightDockWidgetArea, uattrd);
+    uattrd->setAllowedAreas(Qt::RightDockWidgetArea);
+    view_menu->addAction(uattrd->toggleViewAction());
+    CADAttributesModel *userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
+    CADAttributesView *userpropview = new CADAttributesView(this, 0);
+    userpropview->setModel(userpropmodel);
+    uattrd->setWidget(userpropview);
 
     /* Because the console usually doesn't need a huge amount of
      * horizontal space and the tree can use all the vertical space
@@ -146,14 +181,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     treemodel->interaction_mode = 0;
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
-    /* Edit panel */
-    panel = new CADAccordion(panel_dock);
-    panel_dock->setWidget(panel);
-
-    QObject::connect(treeview, &CADTreeView::clicked, panel->stdpropmodel, &CADAttributesModel::refresh);
-    QObject::connect(treeview, &CADTreeView::clicked, panel->userpropmodel, &CADAttributesModel::refresh);
-    ((CADApp *)qApp)->cadaccordion= (CADAccordion *)panel;
-
+    QObject::connect(treeview, &CADTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
+    QObject::connect(treeview, &CADTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
 
     /* For testing - don't want uniqueness here, but may need or want it elsewhere */
     //panel->setUniqueVisibility(1);
