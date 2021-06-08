@@ -34,8 +34,9 @@ CADViewControls::CADViewControls(QWidget *pparent)
     mlayout->setSpacing(0);
     mlayout->setContentsMargins(0,0,0,0);
     tpalette = new QToolPalette(this);
+    tpalette->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     info_view = new QWidget(this);
-    info_view->setMinimumHeight(100);
+    info_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     for(int i = 1; i < 8; i++) {
 	QIcon *obj_icon = new QIcon();
 	QString obj_label("tool controls ");
@@ -46,7 +47,7 @@ CADViewControls::CADViewControls(QWidget *pparent)
     }
     mlayout->addWidget(tpalette);
     mlayout->addWidget(info_view);
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
 }
 
@@ -69,8 +70,9 @@ CADInstanceEdit::CADInstanceEdit(QWidget *pparent)
     mlayout->setSpacing(0);
     mlayout->setContentsMargins(0,0,0,0);
     tpalette = new QToolPalette(this);
+    tpalette->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     info_view = new QWidget(this);
-    info_view->setMinimumHeight(100);
+    info_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     for(int i = 1; i < 4; i++) {
 	QIcon *obj_icon = new QIcon();
 	QString obj_label("tool controls ");
@@ -81,7 +83,7 @@ CADInstanceEdit::CADInstanceEdit(QWidget *pparent)
     }
     mlayout->addWidget(tpalette);
     mlayout->addWidget(info_view);
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
 }
 
@@ -105,8 +107,9 @@ CADPrimitiveEdit::CADPrimitiveEdit(QWidget *pparent)
     mlayout->setSpacing(0);
     mlayout->setContentsMargins(0,0,0,0);
     tpalette = new QToolPalette(this);
+    tpalette->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     shape_properties = new QWidget(this);
-    shape_properties->setMinimumHeight(100);
+    shape_properties->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     for(int i = 1; i < 15; i++) {
 	QIcon *obj_icon = new QIcon();
 	QString obj_label("tool controls ");
@@ -117,7 +120,7 @@ CADPrimitiveEdit::CADPrimitiveEdit(QWidget *pparent)
     }
     mlayout->addWidget(tpalette);
     mlayout->addWidget(shape_properties);
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
 }
 

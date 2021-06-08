@@ -37,10 +37,10 @@
 #include <QHeaderView>
 #include <QObject>
 
-
-#include "qtcad/QtConsole.h"
+#include "qtcad/QtCADQuad.h"
 #include "qtcad/QtCADTree.h"
 #include "qtcad/QtCADView.h"
+#include "qtcad/QtConsole.h"
 
 // https://stackoverflow.com/q/44707344/2037687
 class QBDockWidget : public QDockWidget
@@ -57,9 +57,13 @@ class BRLCAD_MainWindow : public QMainWindow
 {
     Q_OBJECT
     public:
-	BRLCAD_MainWindow();
+	BRLCAD_MainWindow(int canvas_type = 0, int quad_view = 0);
 
-	QtCADView *canvas;
+	QtCADView *canvas = NULL;
+	QtCADQuad *c4 = NULL;
+	bool isValid3D();
+	void fallback3D();
+
 	QtConsole *console;
 
     public slots:
@@ -77,7 +81,6 @@ class BRLCAD_MainWindow : public QMainWindow
 
 	QBDockWidget *console_dock;
 	QBDockWidget *tree_dock;
-	//QBDockWidget *panel_dock;
 
 	CADTreeModel *treemodel;
 	QTreeView *treeview;

@@ -55,8 +55,8 @@ QToolPaletteElement::QToolPaletteElement(QWidget *eparent, QIcon *iicon, QWidget
     button = new QToolPaletteButton(this, iicon, this);
     button->setCheckable(true);
     controls = control;
-    controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 }
 
 QToolPaletteElement::~QToolPaletteElement()
@@ -85,17 +85,13 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     mlayout->setSpacing(0);
     mlayout->setContentsMargins(1,1,1,1);
 
-    splitter = new QSplitter();
-    splitter->setOrientation(Qt::Vertical);
-    splitter->setChildrenCollapsible(false);
-    mlayout->addWidget(splitter);
 
     button_container = new QWidget();
     button_layout = new QFlowLayout();
     button_layout->setHorizontalSpacing(0);
     button_layout->setVerticalSpacing(0);
     button_layout->setContentsMargins(0,0,0,0);
-    button_container->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    button_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     button_container->setLayout(button_layout);
     control_container = new QWidget();
     control_layout = new QVBoxLayout();
@@ -107,21 +103,17 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     control_container->setMinimumWidth(icon_width*5+1);
     control_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    splitter->addWidget(button_container);
-    splitter->setStretchFactor(0, 1);
-    splitter->addWidget(control_container);
-    splitter->setStretchFactor(1, 100000);
-    splitter->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    mlayout->addWidget(button_container);
+    mlayout->addWidget(control_container);
 
     selected = NULL;
 
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
 }
 
 QToolPalette::~QToolPalette()
 {
-    delete splitter;
 }
 
 void

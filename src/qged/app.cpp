@@ -158,19 +158,41 @@ CADApp::opendb(QString filename)
 
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
-    BU_GET(gedp->ged_gvp, struct bview);
-    bv_init(gedp->ged_gvp);
-    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
-    gedp->ged_gvp->gv_db_grps = &gedp->ged_db_grps;
-    gedp->ged_gvp->gv_view_shared_objs = &gedp->ged_view_shared_objs;
-    gedp->ged_gvp->independent = 0;
-    bu_ptbl_ins_unique(&gedp->ged_views, (long int *)gedp->ged_gvp);
-    w->canvas->set_view(gedp->ged_gvp);
-    //w->canvas->dm_set = gedp->ged_all_dmp;
-    w->canvas->set_dm_current((struct dm **)&gedp->ged_dmp);
-    w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
-    w->canvas->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
-    gedp->ged_gvp = w->canvas->view();
+    if (w->canvas) {
+	BU_GET(gedp->ged_gvp, struct bview);
+	bv_init(gedp->ged_gvp);
+	bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
+	gedp->ged_gvp->gv_db_grps = &gedp->ged_db_grps;
+	gedp->ged_gvp->gv_view_shared_objs = &gedp->ged_view_shared_objs;
+	gedp->ged_gvp->independent = 0;
+	bu_ptbl_ins_unique(&gedp->ged_views, (long int *)gedp->ged_gvp);
+	w->canvas->set_view(gedp->ged_gvp);
+	//w->canvas->dm_set = gedp->ged_all_dmp;
+	w->canvas->set_dm_current((struct dm **)&gedp->ged_dmp);
+	w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
+	w->canvas->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+	gedp->ged_gvp = w->canvas->view();
+    } else if (w->c4) {
+	for (int i = 1; i < 5; i++) {
+	    QtCADView *c = w->c4->get(i);
+	    struct bview *nv;
+	    BU_GET(nv, struct bview);
+	    bv_init(nv);
+	    bu_vls_sprintf(&nv->gv_name, "Q%d", i);
+	    nv->gv_db_grps = &gedp->ged_db_grps;
+	    nv->gv_view_shared_objs = &gedp->ged_view_shared_objs;
+	    nv->independent = 0;
+	    bu_ptbl_ins_unique(&gedp->ged_views, (long int *)nv);
+	    c->set_view(nv);
+	    //c->dm_set = gedp->ged_all_dmp;
+	    c->set_dm_current((struct dm **)&gedp->ged_dmp);
+	    c->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
+	    c->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+	}
+	w->c4->cv = &gedp->ged_gvp;
+	w->c4->select(1);
+	w->c4->default_views();
+    }
 
     gedp->fbs_is_listening = &qdm_is_listening;
     gedp->fbs_listen_on_port = &qdm_listen_on_port;
@@ -188,11 +210,17 @@ CADApp::opendb(QString filename)
 	}
     }
 #ifdef BRLCAD_OPENGL
-#if 0
     if (w->c4) {
-	gedp->fbs_open_client_handler = &qdm_open_client_handler;
-    }
+	int type = w->c4->get(0)->view_type();
+#ifdef BRLCAD_OPENGL
+	if (type == QtCADView_GL) {
+	    gedp->fbs_open_client_handler = &qdm_open_client_handler;
+	}
 #endif
+	if (type == QtCADView_SW) {
+	    gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+	}
+    }
 #endif
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 

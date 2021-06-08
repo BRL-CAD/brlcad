@@ -49,7 +49,7 @@ void QBDockWidget::toWindow(bool floating)
     }
 }
 
-BRLCAD_MainWindow::BRLCAD_MainWindow()
+BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
     // suspect Unity's "global toolbar" settings are being used even when
@@ -78,27 +78,25 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 
     help_menu = menuBar()->addMenu("Help");
 
-     // Set up Display canvas
-    canvas = new QtCADView(this);
-    canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    canvas->setMinimumSize(512,512);
+     // Set up 3D display.  Unlike MGED, we don't create 4 views by default for
+     // quad view, since some drawing modes demand more memory for 4 views.
+     // Use a single canvas unless the user settings specify quad.
+    if (!quad_view) {
+	canvas = new QtCADView(this, canvas_type);
+	canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+	canvas->setMinimumSize(512,512);
+	setCentralWidget(canvas);
+    } else {
+	c4 = new QtCADQuad(this, canvas_type);
+	c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+	c4->setMinimumSize(512,512);
+	setCentralWidget(c4);
+    }
 
-    setCentralWidget(canvas);
-
-
-    // Define dock layout
-    console_dock = new QBDockWidget("Console", this);
-    addDockWidget(Qt::BottomDockWidgetArea, console_dock);
-    console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
-    view_menu->addAction(console_dock->toggleViewAction());
-    connect(console_dock, &QBDockWidget::topLevelChanged, console_dock, &QBDockWidget::toWindow);
-
-    tree_dock = new QBDockWidget("Hierarchy", this);
-    addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
-    tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    view_menu->addAction(tree_dock->toggleViewAction());
-    connect(tree_dock, &QBDockWidget::topLevelChanged, tree_dock, &QBDockWidget::toWindow);
-
+    // Define dock widgets - these are the console, controls, etc. that can be attached
+    // and detached from the main window.  Eventually this should be a dynamic set
+    // of widgets rather than hardcoded statics, so plugins can define their own
+    // graphical elements...
 
     QBDockWidget *vcd = new QBDockWidget("View Controls", this);
     addDockWidget(Qt::RightDockWidgetArea, vcd);
@@ -148,16 +146,19 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     userpropview->setModel(userpropmodel);
     uattrd->setWidget(userpropview);
 
-    /* Because the console usually doesn't need a huge amount of
-     * horizontal space and the tree can use all the vertical space
-     * it can get, give the bottom corners to the left/right docks */
+    /* Because the console usually doesn't need a huge amount of horizontal
+     * space and the tree can use all the vertical space it can get when
+     * viewing large .g hierarchyes, give the bottom corners to the left/right
+     * docks */
     setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
     setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 
-
-    /***** Create and add the widgets that inhabit the dock *****/
-
     /* Console */
+    console_dock = new QBDockWidget("Console", this);
+    addDockWidget(Qt::BottomDockWidgetArea, console_dock);
+    console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
+    view_menu->addAction(console_dock->toggleViewAction());
+    connect(console_dock, &QBDockWidget::topLevelChanged, console_dock, &QBDockWidget::toWindow);
     console = new QtConsole(console_dock);
     console->prompt("$ ");
     console_dock->setWidget(console);
@@ -165,9 +166,16 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     // application, so rather than embedding the command execution logic in the
     // widget we use a signal/slot connection to have the main window's slot
     // execute the command.
+    // TODO - run_cmd probably belongs with CADApp, really...
     QObject::connect(this->console, &QtConsole::executeCommand, this, &BRLCAD_MainWindow::run_cmd);
 
     /* Geometry Tree */
+    tree_dock = new QBDockWidget("Hierarchy", this);
+    addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
+    tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    view_menu->addAction(tree_dock->toggleViewAction());
+    connect(tree_dock, &QBDockWidget::topLevelChanged, tree_dock, &QBDockWidget::toWindow);
+
     treemodel = new CADTreeModel();
     treeview = new CADTreeView(tree_dock);
     treemodel->cadtreeview = (CADTreeView *)treeview;
@@ -180,7 +188,11 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     treeview->header()->setStretchLastSection(true);
     QObject::connect((CADApp *)qApp, &CADApp::db_change, treemodel, &CADTreeModel::refresh);
-    QObject::connect((CADApp *)qApp, &CADApp::db_change, canvas, &QtCADView::need_update);
+    if (canvas) {
+	QObject::connect((CADApp *)qApp, &CADApp::db_change, canvas, &QtCADView::need_update);
+    } else {
+	QObject::connect((CADApp *)qApp, &CADApp::db_change, c4, &QtCADQuad::need_update);
+    }
     QObject::connect(treeview, &CADTreeView::expanded, (CADTreeView *)treeview, &CADTreeView::tree_column_size);
     QObject::connect(treeview, &CADTreeView::collapsed, (CADTreeView *)treeview, &CADTreeView::tree_column_size);
     QObject::connect(treeview, &CADTreeView::clicked, treemodel, &CADTreeModel::update_selected_node_relationships);
@@ -194,9 +206,29 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
     QObject::connect(treeview, &CADTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
     QObject::connect(treeview, &CADTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
 
-    /* For testing - don't want uniqueness here, but may need or want it elsewhere */
-    //panel->setUniqueVisibility(1);
+}
 
+bool
+BRLCAD_MainWindow::isValid3D()
+{
+    if (canvas)
+	return canvas->isValid();
+    if (c4)
+	return c4->isValid();
+    return false;
+}
+
+void
+BRLCAD_MainWindow::fallback3D()
+{
+    if (canvas) {
+	canvas->fallback();
+	return;
+    }
+    if (c4) {
+	c4->fallback();
+	return;
+    }
 }
 
 void
