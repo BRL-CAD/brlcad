@@ -38,6 +38,7 @@
 
 #include "main_window.h"
 #include "app.h"
+#include "event_filter.h"
 #include "fbserv.h"
 
 static void
@@ -142,6 +143,9 @@ int main(int argc, char *argv[])
     app.setOrganizationDomain("brlcad.org");
     app.setOrganizationName("BRL-CAD");
     app.initialize();
+
+    EditStateFilter *efilter = new EditStateFilter();
+    app.installEventFilter(efilter);
 
     // Use the dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets
     QFile file(":/dark.qss");
