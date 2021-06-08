@@ -102,7 +102,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     addDockWidget(Qt::RightDockWidgetArea, vcd);
     vcd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(vcd->toggleViewAction());
-    CADViewControls *vc = new CADViewControls(this);
+    vc = new CADViewControls(this);
     vcd->setWidget(vc);
     // Make sure the buttons are all visible - trick from
     // https://stackoverflow.com/a/56852841/2037687
@@ -112,7 +112,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     addDockWidget(Qt::RightDockWidgetArea, icd);
     icd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(icd->toggleViewAction());
-    CADInstanceEdit *ic = new CADInstanceEdit(this);
+    ic = new CADInstanceEdit(this);
     icd->setWidget(ic);
     // Make sure the buttons are all visible - trick from
     // https://stackoverflow.com/a/56852841/2037687
@@ -122,11 +122,23 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     addDockWidget(Qt::RightDockWidgetArea, ocd);
     ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(ocd->toggleViewAction());
-    CADPrimitiveEdit *oc = new CADPrimitiveEdit(this);
+    oc = new CADPrimitiveEdit(this);
     ocd->setWidget(oc);
     // Make sure the buttons are all visible - trick from
     // https://stackoverflow.com/a/56852841/2037687
     QTimer::singleShot(0, oc, &CADPrimitiveEdit::reflow);
+
+    // The view and edit panels have consequences for the tree widget, so each
+    // needs to know which one is current
+    connect(vc, &CADViewControls::current, vc, &CADViewControls::makeCurrent);
+    connect(vc, &CADViewControls::current, ic, &CADInstanceEdit::makeCurrent);
+    connect(vc, &CADViewControls::current, oc, &CADPrimitiveEdit::makeCurrent);
+    connect(ic, &CADInstanceEdit::current, vc, &CADViewControls::makeCurrent);
+    connect(ic, &CADInstanceEdit::current, ic, &CADInstanceEdit::makeCurrent);
+    connect(ic, &CADInstanceEdit::current, oc, &CADPrimitiveEdit::makeCurrent);
+    connect(oc, &CADPrimitiveEdit::current, vc, &CADViewControls::makeCurrent);
+    connect(oc, &CADPrimitiveEdit::current, ic, &CADInstanceEdit::makeCurrent);
+    connect(oc, &CADPrimitiveEdit::current, oc, &CADPrimitiveEdit::makeCurrent);
 
     QBDockWidget *sattrd = new QBDockWidget("Standard Attributes", this);
     addDockWidget(Qt::RightDockWidgetArea, sattrd);

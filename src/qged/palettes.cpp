@@ -52,6 +52,16 @@ CADViewControls::CADViewControls(QWidget *pparent)
 }
 
 void
+CADViewControls::makeCurrent(QWidget *w)
+{
+    if (w == this) {
+	std::cout << "View current\n";
+    } else {
+	std::cout << "View not current\n";
+    }
+}
+
+void
 CADViewControls::reflow()
 {
     tpalette->button_layout_resize();
@@ -85,6 +95,16 @@ CADInstanceEdit::CADInstanceEdit(QWidget *pparent)
     mlayout->addWidget(info_view);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
+}
+
+void
+CADInstanceEdit::makeCurrent(QWidget *w)
+{
+    if (w == this) {
+	std::cout << "Instance current\n";
+    } else {
+	std::cout << "Instance not current\n";
+    }
 }
 
 void
@@ -122,6 +142,16 @@ CADPrimitiveEdit::CADPrimitiveEdit(QWidget *pparent)
     mlayout->addWidget(shape_properties);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
+}
+
+void
+CADPrimitiveEdit::makeCurrent(QWidget *w)
+{
+    if (w == this) {
+	std::cout << "Prim current\n";
+    } else {
+	std::cout << "Prim not current\n";
+    }
 }
 
 void

@@ -37,6 +37,7 @@
 #include <QHeaderView>
 #include <QObject>
 
+#include "palettes.h"
 #include "qtcad/QtCADQuad.h"
 #include "qtcad/QtCADTree.h"
 #include "qtcad/QtCADView.h"
@@ -85,6 +86,10 @@ class BRLCAD_MainWindow : public QMainWindow
 	CADTreeModel *treemodel;
 	QTreeView *treeview;
 	QString db_file;
+
+	CADViewControls *vc;
+	CADInstanceEdit *ic;
+	CADPrimitiveEdit *oc;
 };
 
 #endif /* BRLCAD_MAINWINDOW_H */

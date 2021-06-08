@@ -25,6 +25,7 @@
 
 #ifndef CADPALETTES_H
 #define CADPALETTES_H
+#include <iostream>
 #include "qtcad/QToolPalette.h"
 
 class CADViewControls : public QWidget
@@ -35,8 +36,12 @@ class CADViewControls : public QWidget
 	CADViewControls(QWidget *pparent = 0);
 	~CADViewControls();
 
+    signals:
+	void current(QWidget *);
+
     public slots:
 	void reflow();
+	void makeCurrent(QWidget *);
 
     private:
 	QToolPalette *tpalette;
@@ -51,8 +56,12 @@ class CADInstanceEdit : public QWidget
 	CADInstanceEdit(QWidget *pparent = 0);
 	~CADInstanceEdit();
 
+    signals:
+	void current(QWidget *);
+
     public slots:
 	void reflow();
+	void makeCurrent(QWidget *);
 
     private:
 	QToolPalette *tpalette;
@@ -67,8 +76,12 @@ class CADPrimitiveEdit : public QWidget
 	CADPrimitiveEdit(QWidget *pparent = 0);
 	~CADPrimitiveEdit();
 
+    signals:
+	void current(QWidget *);
+
     public slots:
 	void reflow();
+	void makeCurrent(QWidget *);
 
     private:
 	QToolPalette *tpalette;
