@@ -36,6 +36,9 @@ class CADViewControls : public QWidget
 	CADViewControls(QWidget *pparent = 0);
 	~CADViewControls();
 
+	QToolPalette *tpalette;
+	QWidget *info_view;
+
     signals:
 	void current(QWidget *);
 
@@ -43,9 +46,6 @@ class CADViewControls : public QWidget
 	void reflow();
 	void makeCurrent(QWidget *);
 
-    private:
-	QToolPalette *tpalette;
-	QWidget *info_view;
 };
 
 class CADInstanceEdit : public QWidget
@@ -56,6 +56,9 @@ class CADInstanceEdit : public QWidget
 	CADInstanceEdit(QWidget *pparent = 0);
 	~CADInstanceEdit();
 
+	QToolPalette *tpalette;
+	QWidget *info_view;
+
     signals:
 	void current(QWidget *);
 
@@ -63,9 +66,6 @@ class CADInstanceEdit : public QWidget
 	void reflow();
 	void makeCurrent(QWidget *);
 
-    private:
-	QToolPalette *tpalette;
-	QWidget *info_view;
 };
 
 class CADPrimitiveEdit : public QWidget
@@ -76,16 +76,15 @@ class CADPrimitiveEdit : public QWidget
 	CADPrimitiveEdit(QWidget *pparent = 0);
 	~CADPrimitiveEdit();
 
+	QToolPalette *tpalette;
+	QWidget *shape_properties;
+
     signals:
 	void current(QWidget *);
 
     public slots:
 	void reflow();
 	void makeCurrent(QWidget *);
-
-    private:
-	QToolPalette *tpalette;
-	QWidget *shape_properties;
 };
 
 #endif /* CADPALETTES_H */

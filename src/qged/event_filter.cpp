@@ -24,13 +24,53 @@
 
 #include <iostream>
 #include <QEvent>
+#include <QMouseEvent>
+#include "app.h"
 #include "event_filter.h"
 
 bool EditStateFilter::eventFilter(QObject *, QEvent *e)
 {
-    if (e->type() == QEvent::MouseButtonPress) {
-	std::cout << "filter fired\n";
+    if (e->type() != QEvent::MouseButtonPress) {
+	return false;
     }
+    QMouseEvent *m_e = (QMouseEvent *)e;
+    CADApp *c = (CADApp *)qApp;
+    if (!c || !c->w)
+	return false;
+    QWidget *vcp = c->w->vc->tpalette;
+    if (vcp) {
+	QRect lrect = vcp->geometry();
+	QPoint gpos = m_e->globalPos();
+	QPoint mpos = vcp->mapFromGlobal(gpos);
+	if (lrect.contains(mpos)) {
+	    CADViewControls *v = c->w->vc;
+	    emit v->current(v);
+	    return false;
+	}
+    }
+    QWidget *icp = c->w->ic->tpalette;
+    if (icp) {
+	QRect lrect = icp->geometry();
+	QPoint gpos = m_e->globalPos();
+	QPoint mpos = icp->mapFromGlobal(gpos);
+	if (lrect.contains(mpos)) {
+	    CADInstanceEdit *ed = c->w->ic;
+	    emit ed->current(ed);
+	    return false;
+	}
+    }
+    QWidget *ocp = c->w->oc->tpalette;
+    if (ocp) {
+	QRect lrect = ocp->geometry();
+	QPoint gpos = m_e->globalPos();
+	QPoint mpos = ocp->mapFromGlobal(gpos);
+	if (lrect.contains(mpos)) {
+	    CADPrimitiveEdit *pd = c->w->oc;
+	    emit pd->current(pd);
+	    return false;
+	}
+    }
+
     return false;
 }
 

@@ -66,6 +66,9 @@ class BRLCAD_MainWindow : public QMainWindow
 	void fallback3D();
 
 	QtConsole *console;
+	CADViewControls *vc;
+	CADInstanceEdit *ic;
+	CADPrimitiveEdit *oc;
 
     public slots:
 	void run_cmd(const QString &command);
@@ -82,14 +85,15 @@ class BRLCAD_MainWindow : public QMainWindow
 
 	QBDockWidget *console_dock;
 	QBDockWidget *tree_dock;
+	QBDockWidget *vcd;
+	QBDockWidget *icd;
+	QBDockWidget *ocd;
 
 	CADTreeModel *treemodel;
 	QTreeView *treeview;
 	QString db_file;
 
-	CADViewControls *vc;
-	CADInstanceEdit *ic;
-	CADPrimitiveEdit *oc;
+
 };
 
 #endif /* BRLCAD_MAINWINDOW_H */

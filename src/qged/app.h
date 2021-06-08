@@ -68,8 +68,8 @@ class CADApp : public QApplication
 	struct db_i *dbip();
 	struct rt_wdb *wdbp();
 
-	BRLCAD_MainWindow *w;
-	CADTreeView *cadtreeview;
+	BRLCAD_MainWindow *w = NULL;
+	CADTreeView *cadtreeview = NULL;
 
     signals:
 	void db_change();  // TODO - need this to carry some information about what has changed, if possible...

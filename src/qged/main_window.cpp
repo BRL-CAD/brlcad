@@ -98,7 +98,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // of widgets rather than hardcoded statics, so plugins can define their own
     // graphical elements...
 
-    QBDockWidget *vcd = new QBDockWidget("View Controls", this);
+    vcd = new QBDockWidget("View Controls", this);
     addDockWidget(Qt::RightDockWidgetArea, vcd);
     vcd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(vcd->toggleViewAction());
@@ -108,7 +108,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // https://stackoverflow.com/a/56852841/2037687
     QTimer::singleShot(0, vc, &CADViewControls::reflow);
 
-    QBDockWidget *icd = new QBDockWidget("Instance Editing", this);
+    icd = new QBDockWidget("Instance Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, icd);
     icd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(icd->toggleViewAction());
@@ -118,7 +118,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // https://stackoverflow.com/a/56852841/2037687
     QTimer::singleShot(0, ic, &CADInstanceEdit::reflow);
 
-    QBDockWidget *ocd = new QBDockWidget("Object Editing", this);
+    ocd = new QBDockWidget("Object Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, ocd);
     ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(ocd->toggleViewAction());
