@@ -103,7 +103,8 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     control_layout->setContentsMargins(0,0,0,0);
     control_container->setLayout(control_layout);
     control_container->setMinimumHeight(icon_height);
-    control_container->setMinimumWidth(icon_width);
+    // Make the minimum width 5 icons across
+    control_container->setMinimumWidth(icon_width*5+1);
     control_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     splitter->addWidget(button_container);

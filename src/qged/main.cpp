@@ -90,13 +90,25 @@ int main(int argc, char *argv[])
 	}
     }
 
-    // TODO - this needs to be a setting that is saved and restored
-    app.w->resize(1100, 800);
-
     if (parser.isSet(consoleOption)) {
 	bu_exit(1, "Console mode unimplemented\n");
     } else {
+
+	// Force an exact starting size.
+	QSize cminsize, cmaxsize;
+	cminsize = app.w->minimumSize();
+	cmaxsize = app.w->maximumSize();
+	app.w->setMinimumSize(1100,800);
+	app.w->setMaximumSize(1100,800);
+	app.w->updateGeometry();
+
+
 	app.w->show();
+
+	// Restore flexibility
+	app.w->setMinimumSize(cminsize);
+	app.w->setMaximumSize(cmaxsize);
+
 
 	if (!app.w->canvas->isValid()) {
 	    app.w->canvas->fallback();
@@ -104,6 +116,7 @@ int main(int argc, char *argv[])
 		app.gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
 	    }
 	}
+
 
 	int have_msg = 0;
 	std::string ged_msgs(ged_init_msgs());
@@ -122,6 +135,7 @@ int main(int argc, char *argv[])
 	}
 	if (have_msg)
 	    app.w->console->prompt("$ ");
+
 
 	return app.exec();
     }

@@ -23,6 +23,7 @@
  *
  */
 
+#include <QTimer>
 #include "main_window.h"
 #include "app.h"
 #include "palettes.h"
@@ -101,28 +102,37 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 
     QBDockWidget *vcd = new QBDockWidget("View Controls", this);
     addDockWidget(Qt::RightDockWidgetArea, vcd);
-    vcd->setAllowedAreas(Qt::RightDockWidgetArea);
+    vcd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(vcd->toggleViewAction());
     CADViewControls *vc = new CADViewControls(this);
     vcd->setWidget(vc);
+    // Make sure the buttons are all visible - trick from
+    // https://stackoverflow.com/a/56852841/2037687
+    QTimer::singleShot(0, vc, &CADViewControls::reflow);
 
     QBDockWidget *icd = new QBDockWidget("Instance Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, icd);
-    icd->setAllowedAreas(Qt::RightDockWidgetArea);
+    icd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(icd->toggleViewAction());
     CADInstanceEdit *ic = new CADInstanceEdit(this);
     icd->setWidget(ic);
+    // Make sure the buttons are all visible - trick from
+    // https://stackoverflow.com/a/56852841/2037687
+    QTimer::singleShot(0, ic, &CADInstanceEdit::reflow);
 
     QBDockWidget *ocd = new QBDockWidget("Object Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, ocd);
-    ocd->setAllowedAreas(Qt::RightDockWidgetArea);
+    ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(ocd->toggleViewAction());
     CADPrimitiveEdit *oc = new CADPrimitiveEdit(this);
     ocd->setWidget(oc);
+    // Make sure the buttons are all visible - trick from
+    // https://stackoverflow.com/a/56852841/2037687
+    QTimer::singleShot(0, oc, &CADPrimitiveEdit::reflow);
 
     QBDockWidget *sattrd = new QBDockWidget("Standard Attributes", this);
     addDockWidget(Qt::RightDockWidgetArea, sattrd);
-    sattrd->setAllowedAreas(Qt::RightDockWidgetArea);
+    sattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(sattrd->toggleViewAction());
     CADAttributesModel *stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
     CADAttributesView *stdpropview = new CADAttributesView(this, 1);
@@ -131,7 +141,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow()
 
     QBDockWidget *uattrd = new QBDockWidget("User Attributes", this);
     addDockWidget(Qt::RightDockWidgetArea, uattrd);
-    uattrd->setAllowedAreas(Qt::RightDockWidgetArea);
+    uattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(uattrd->toggleViewAction());
     CADAttributesModel *userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
     CADAttributesView *userpropview = new CADAttributesView(this, 0);

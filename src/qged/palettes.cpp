@@ -50,6 +50,12 @@ CADViewControls::CADViewControls(QWidget *pparent)
     this->setLayout(mlayout);
 }
 
+void
+CADViewControls::reflow()
+{
+    tpalette->button_layout_resize();
+}
+
 CADViewControls::~CADViewControls()
 {
     delete tpalette;
@@ -79,6 +85,11 @@ CADInstanceEdit::CADInstanceEdit(QWidget *pparent)
     this->setLayout(mlayout);
 }
 
+void
+CADInstanceEdit::reflow()
+{
+    tpalette->button_layout_resize();
+}
 
 CADInstanceEdit::~CADInstanceEdit()
 {
@@ -108,6 +119,12 @@ CADPrimitiveEdit::CADPrimitiveEdit(QWidget *pparent)
     mlayout->addWidget(shape_properties);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     this->setLayout(mlayout);
+}
+
+void
+CADPrimitiveEdit::reflow()
+{
+    tpalette->button_layout_resize();
 }
 
 CADPrimitiveEdit::~CADPrimitiveEdit()

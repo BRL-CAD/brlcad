@@ -35,6 +35,9 @@ class CADViewControls : public QWidget
 	CADViewControls(QWidget *pparent = 0);
 	~CADViewControls();
 
+    public slots:
+	void reflow();
+
     private:
 	QToolPalette *tpalette;
 	QWidget *info_view;
@@ -48,6 +51,9 @@ class CADInstanceEdit : public QWidget
 	CADInstanceEdit(QWidget *pparent = 0);
 	~CADInstanceEdit();
 
+    public slots:
+	void reflow();
+
     private:
 	QToolPalette *tpalette;
 	QWidget *info_view;
@@ -60,6 +66,9 @@ class CADPrimitiveEdit : public QWidget
     public:
 	CADPrimitiveEdit(QWidget *pparent = 0);
 	~CADPrimitiveEdit();
+
+    public slots:
+	void reflow();
 
     private:
 	QToolPalette *tpalette;
