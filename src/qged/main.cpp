@@ -62,11 +62,14 @@ int main(int argc, char *argv[])
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     const char *exec_name = argv[0];
 
+    // All BRL-CAD programs need to set this in order for relative path lookups
+    // to work reliably.
     bu_setprogname(argv[0]);
 
-    /* done with command name argv[0] */
+    /* Done with command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
 
+    /* Handle top level application options */
     struct bu_opt_desc d[6];
     BU_OPT(d[0],  "h", "help",   "", NULL, &print_help,    "Print help and exit");
     BU_OPT(d[1],  "?", "",       "", NULL, &print_help,    "");
@@ -75,14 +78,36 @@ int main(int argc, char *argv[])
     BU_OPT(d[4],  "4", "quad",   "", NULL, &quad_mode,     "Launch using quad view");
     BU_OPT_NULL(d[5]);
 
-    int opt_ac = bu_opt_parse(&msg, argc, (const char **)argv, d);
+    // High level options are only defined prior to the file argument (if there
+    // is one).  See if we need to limit our processing
+    int acmax = 0;
+    for (int i = 0; i < argc; i++) {
+	if (argv[i][0] == '-') {
+	    acmax++;
+	} else {
+	    break;
+	}
+    }
+
+    // Process high level args
+    int opt_ac = bu_opt_parse(&msg, acmax, (const char **)argv, d);
     if (opt_ac < 0) {
 	bu_log("%s\n", bu_vls_cstr(&msg));
 	bu_vls_free(&msg);
 	return BRLCAD_ERROR;
     }
 
-    argc = opt_ac;
+    // Shift everything not processed by bu_opt_parse down in argv to the last
+    // option left behind by bu_opt_parse (or the beginning of the array if
+    // opt_ac == 0
+    int opt_rem = opt_ac;
+    for (int i = acmax; i < argc; i++) {
+	argv[opt_ac + (i - acmax)] = argv[i];
+	opt_rem++;
+    }
+
+    // Set argc to the full count of whatever is left
+    argc = opt_rem;
 
     if (print_help) {
 	qged_usage(exec_name, d);
@@ -90,18 +115,27 @@ int main(int argc, char *argv[])
 	return BRLCAD_OK;
     }
 
+    // TODO - if we have commands beyond a .g file, we're supposed to process
+    // and exit...
     if (argc > 1 && !console_mode) {
 	bu_log("For qged GUI mode need either zero or one .g files specified\n");
 	return BRLCAD_ERROR;
     }
 
-    // Prepare the surface format for QOpenGLWidget
+    if (console_mode) {
+	bu_log("Unimplemented\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Define the surface format for QOpenGLWidget
     QSurfaceFormat format;
     format.setDepthBufferSize(16);
     QSurfaceFormat::setDefaultFormat(format);
 
-    // We derive our app type from QApplication so we can store any application
-    // state there.
+    // We derive our own app type from QApplication so we can store any custom
+    // application-wide state there - using the Qt provided global rather than
+    // introducing any of our own.  In particular, that is where the current GED
+    // state (gedp) lives.
     CADApp app(argc, argv);
     app.setApplicationName("BRL-CAD");
     app.setApplicationVersion(brlcad_version());
@@ -124,7 +158,7 @@ int main(int argc, char *argv[])
     // Disable animated redrawing to minimize performance issues
     app.w->setAnimated(false);
 
-    // This is when the windows are actually drawn
+    // This is when the window and widgets are actually drawn
     app.w->show();
 
     // If the 3D view didn't set up appropriately, try the fallback rendering
@@ -135,7 +169,10 @@ int main(int argc, char *argv[])
 	app.w->fallback3D();
     }
 
-    // If we have a default .g file supplied, open it
+    // If we have a default .g file supplied, open it.  We've delayed doing so
+    // until now in order to have the display related containers from graphical
+    // initialization available - the GED structure will need to know about some
+    // of them to have drawing commands connect properly to the 3D displays.
     if (argc && app.opendb(argv[0])) {
 	bu_log("Error opening file %s\n", argv[0]);
 	return BRLCAD_ERROR;
@@ -160,8 +197,10 @@ int main(int argc, char *argv[])
 	    have_msg = 1;
 	}
     }
-    if (have_msg)
+    // If we did write any messages, need to restore the prompt
+    if (have_msg) {
 	app.w->console->prompt("$ ");
+    }
 
     // Setup complete - time to enter the interactive event loop
     return app.exec();
