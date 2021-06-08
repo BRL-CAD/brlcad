@@ -53,7 +53,7 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
   QT5_WRAP_CPP(moc_srcs ${moc_headers})
 
   # https://github.com/Alexhuszagh/BreezeStyleSheets
-  #QT5_ADD_RESOURCES(cad_qrc breeze.qrc)
+  QT5_ADD_RESOURCES(cad_qrc theme/breeze.qrc)
 
   add_executable(qged ${qged_srcs} ${moc_srcs} ${cad_qrc})
   # Note - Network is needed for async embedded raytracing display

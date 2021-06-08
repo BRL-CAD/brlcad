@@ -143,14 +143,11 @@ int main(int argc, char *argv[])
     app.setOrganizationName("BRL-CAD");
     app.initialize();
 
-#if 0
-    // The dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets looks like
-    // it may work for our purposes
+    // Use the dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets
     QFile file(":/dark.qss");
     file.open(QFile::ReadOnly | QFile::Text);
     QTextStream stream(&file);
     app.setStyleSheet(stream.readAll());
-#endif
 
     // The main window defines the primary BRL-CAD interface.
     app.w = new BRLCAD_MainWindow(swrast_mode, quad_mode);

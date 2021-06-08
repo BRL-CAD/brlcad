@@ -4,6 +4,7 @@ set(embedded_licenses
   art.txt
   ayam.txt
   b64.txt
+  breeze_style.txt
   bullet.txt
   chull2d.txt
   clipper.txt
