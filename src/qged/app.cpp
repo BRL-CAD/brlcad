@@ -102,10 +102,8 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 
     if (w->canvas)
 	w->canvas->need_update();
-#if 0
     if (w->c4)
 	w->c4->need_update();
-#endif
 }
 
 void
@@ -291,10 +289,9 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 	if (w->canvas)
 	    w->canvas->stash_hashes();
-#if 0
 	if (w->c4)
 	    w->c4->stash_hashes();
-#endif
+
 	if (gedp) {
 	    // Clear the edit flags ahead of the ged_exec call, so we can tell if
 	    // any geometry changed.
@@ -319,14 +316,12 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		gedp->ged_gvp = w->canvas->view();
 		dm_set_vp(w->canvas->dmp(), &gedp->ged_gvp->gv_scale);
 	    }
-#if 0
 	    if (w->c4) {
 		QtCADView *c = w->c4->get();
 		gedp->ged_dmp = c->dmp();
 		gedp->ged_gvp = c->view();
 		dm_set_vp(c->dmp(), &gedp->ged_gvp->gv_scale);
 	    }
-#endif
 	    bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
 	}
 
@@ -335,21 +330,17 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
 		w->canvas->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
 	    }
-#if 0
 	    if (w->c4 && w->c4->get(0)) {
 		w->c4->get(0)->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
 		w->c4->get(0)->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
 	    }
-#endif
 	    // Checks the dp edit flags and does any necessary redrawing.  If
 	    // anything changed with the geometry, we also need to redraw
 	    if (ged_view_update(gedp) > 0) {
 		if (w->canvas)
 		    w->canvas->need_update();
-#if 0
 		if (w->c4)
 		    w->c4->need_update();
-#endif
 	    }
 	} else {
 	    // gedp == NULL - can't cheat and use the gedp pointer
@@ -357,12 +348,10 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		if (w->canvas) {
 		    w->canvas->need_update();
 		}
-#if 0
 		if (w->c4) {
 		    QtCADView *c = w->c4->get();
 		    c->update();
 		}
-#endif
 	    }
 	}
 
@@ -371,10 +360,8 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (w->canvas)
 	    w->canvas->diff_hashes();
 
-#if 0
 	if (w->c4)
 	    w->c4->diff_hashes();
-#endif
 
     }
 }

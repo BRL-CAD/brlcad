@@ -133,10 +133,6 @@ int main(int argc, char *argv[])
     // context setup was successful.
     if (!app.w->isValid3D()) {
 	app.w->fallback3D();
-	// TODO app.opendb needs to do this
-	//if (app.gedp) {
-	 //   app.gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
-	//}
     }
 
     // If we have a default .g file supplied, open it

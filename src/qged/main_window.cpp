@@ -190,7 +190,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QObject::connect((CADApp *)qApp, &CADApp::db_change, treemodel, &CADTreeModel::refresh);
     if (canvas) {
 	QObject::connect((CADApp *)qApp, &CADApp::db_change, canvas, &QtCADView::need_update);
-    } else {
+    } else if (c4) {
 	QObject::connect((CADApp *)qApp, &CADApp::db_change, c4, &QtCADQuad::need_update);
     }
     QObject::connect(treeview, &CADTreeView::expanded, (CADTreeView *)treeview, &CADTreeView::tree_column_size);
@@ -265,50 +265,9 @@ BRLCAD_MainWindow::run_cmd(const QString &command)
 	    if (*gedpp) {
 		ged_close(*gedpp);
 	    }
-	    (*gedpp) = ged_open("db", av[1], 0);
-	    if (!*gedpp) {
+	    int ret = ((CADApp *)qApp)->opendb(av[1]);
+	    if (ret) {
 		bu_vls_sprintf(&msg, "Could not open %s as a .g file\n", av[1]) ;
-		console->printString(bu_vls_cstr(&msg));
-	    } else {
-		// TODO - quad view doesn't do view setup this way - see main.cpp
-		// and update this to do the right thing...
-		BU_GET((*gedpp)->ged_gvp, struct bview);
-		bv_init((*gedpp)->ged_gvp);
-		bu_vls_sprintf(&(*gedpp)->ged_gvp->gv_name, "default");
-		bu_ptbl_ins_unique(&(*gedpp)->ged_views, (long int *)(*gedpp)->ged_gvp);
-
-		if (canvas) {
-		    canvas->set_view((*gedpp)->ged_gvp);
-		    //canvas->dm_set = (*gedpp)->ged_all_dmp;
-		    canvas->set_dm_current((struct dm **)&((*gedpp)->ged_dmp));
-		    canvas->set_base2local(&(*gedpp)->ged_wdbp->dbip->dbi_base2local);
-		    canvas->set_local2base(&(*gedpp)->ged_wdbp->dbip->dbi_local2base);
-		    if (canvas->dmp()) {
-			// canvas may already be initialized, so set this here
-			dm_set_vp(canvas->dmp(), &canvas->view()->gv_scale);
-		    }
-		}
-#if 0
-		if (c4) {
-		    // TODO - handle view creation correctly for this case...
-		    for (int i = 1; i < 5; i++) {
-			QtCADView *c = c4->get(i);
-			c->set_view((*gedpp)->ged_gvp); // TODO - ged_gvp will need to be driven by selected QtCADView...
-			//c->dm_set = (*gedpp)->ged_all_dmp;
-			c->set_dm_current((struct dm **)&((*gedpp)->ged_dmp));
-			c->set_base2local(&(*gedpp)->ged_wdbp->dbip->dbi_base2local);
-			c->set_local2base(&(*gedpp)->ged_wdbp->dbip->dbi_local2base);
-			if (c->dmp()) {
-			    // c may already be initialized, so set this here
-			    dm_set_vp(c->dmp(), &c->view()->gv_scale);
-			}
-		    }
-		}
-#endif
-		if ((*gedpp)->ged_dmp)
-		    bu_ptbl_ins((*gedpp)->ged_all_dmp, (long int *)(*gedpp)->ged_dmp);
-
-		bu_vls_sprintf(&msg, "Opened file %s\n", av[1]);
 		console->printString(bu_vls_cstr(&msg));
 	    }
 	} else {
@@ -326,7 +285,6 @@ BRLCAD_MainWindow::run_cmd(const QString &command)
 	    canvas->set_base2local(NULL);
 	    canvas->set_local2base(NULL);
 	}
-#if 0
 	if (c4) {
 	    for (int i = 1; i < 5; i++) {
 		QtCADView *c = c4->get(i);
@@ -337,7 +295,6 @@ BRLCAD_MainWindow::run_cmd(const QString &command)
 		c->set_local2base(NULL);
 	    }
 	}
-#endif
 	console->printString("closed database\n");
 	cmd_run = 1;
     }
