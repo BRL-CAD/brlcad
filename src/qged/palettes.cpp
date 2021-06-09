@@ -56,6 +56,7 @@ CADViewControls::makeCurrent(QWidget *w)
 {
     if (w == this) {
 	std::cout << "View current\n";
+	emit interaction_mode(0);
     } else {
 	std::cout << "View not current\n";
     }
@@ -102,6 +103,7 @@ CADInstanceEdit::makeCurrent(QWidget *w)
 {
     if (w == this) {
 	std::cout << "Instance current\n";
+	emit interaction_mode(1);
     } else {
 	std::cout << "Instance not current\n";
     }
@@ -149,6 +151,7 @@ CADPrimitiveEdit::makeCurrent(QWidget *w)
 {
     if (w == this) {
 	std::cout << "Prim current\n";
+	emit interaction_mode(2);
     } else {
 	std::cout << "Prim not current\n";
     }

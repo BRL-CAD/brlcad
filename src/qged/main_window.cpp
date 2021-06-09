@@ -199,12 +199,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     treeview->header()->setStretchLastSection(true);
-    QObject::connect((CADApp *)qApp, &CADApp::db_change, treemodel, &CADTreeModel::refresh);
-    if (canvas) {
-	QObject::connect((CADApp *)qApp, &CADApp::db_change, canvas, &QtCADView::need_update);
-    } else if (c4) {
-	QObject::connect((CADApp *)qApp, &CADApp::db_change, c4, &QtCADQuad::need_update);
-    }
     QObject::connect(treeview, &CADTreeView::expanded, (CADTreeView *)treeview, &CADTreeView::tree_column_size);
     QObject::connect(treeview, &CADTreeView::collapsed, (CADTreeView *)treeview, &CADTreeView::tree_column_size);
     QObject::connect(treeview, &CADTreeView::clicked, treemodel, &CADTreeModel::update_selected_node_relationships);
@@ -215,8 +209,21 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     treemodel->interaction_mode = 0;
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
+    connect(vc, &CADViewControls::interaction_mode, treemodel, &CADTreeModel::mode_change);
+    connect(ic, &CADInstanceEdit::interaction_mode, treemodel, &CADTreeModel::mode_change);
+    connect(oc, &CADPrimitiveEdit::interaction_mode, treemodel, &CADTreeModel::mode_change);
+
     QObject::connect(treeview, &CADTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
     QObject::connect(treeview, &CADTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
+
+
+
+    QObject::connect((CADApp *)qApp, &CADApp::db_change, treemodel, &CADTreeModel::refresh);
+    if (canvas) {
+	QObject::connect((CADApp *)qApp, &CADApp::db_change, canvas, &QtCADView::need_update);
+    } else if (c4) {
+	QObject::connect((CADApp *)qApp, &CADApp::db_change, c4, &QtCADQuad::need_update);
+    }
 
 }
 

@@ -873,6 +873,15 @@ void CADTreeModel::refresh()
     populate(dbip);
 }
 
+void CADTreeModel::mode_change(int i)
+{
+    if (i != interaction_mode && cadtreeview) {
+	interaction_mode = i;
+	update_selected_node_relationships(cadtreeview->selected());
+    }
+}
+
+
 HIDDEN int
 dp_cmp(const void *d1, const void *d2, void *UNUSED(arg))
 {

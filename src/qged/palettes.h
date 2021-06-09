@@ -41,6 +41,7 @@ class CADViewControls : public QWidget
 
     signals:
 	void current(QWidget *);
+	void interaction_mode(int);
 
     public slots:
 	void reflow();
@@ -61,6 +62,7 @@ class CADInstanceEdit : public QWidget
 
     signals:
 	void current(QWidget *);
+	void interaction_mode(int);
 
     public slots:
 	void reflow();
@@ -81,6 +83,7 @@ class CADPrimitiveEdit : public QWidget
 
     signals:
 	void current(QWidget *);
+	void interaction_mode(int);
 
     public slots:
 	void reflow();
