@@ -215,6 +215,7 @@ CMAKEFILES(
   git/gitconfig
   git/gitk
   git/history.txt
+  git/gitstats.txt
   git/mime_types.txt
   notes/bsd_semaphore_bug.txt
   notes/cmake_paths/CMakeLists.txt
