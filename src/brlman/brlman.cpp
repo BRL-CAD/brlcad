@@ -44,6 +44,7 @@
 #include <QObject>
 #include <QFile>
 #include <QDialog>
+#include <QListWidget>
 #include <QVBoxLayout>
 #include <QTextBrowser>
 #include <QSplitter>
@@ -51,7 +52,15 @@
 #include "qtcad/QAccordion.h"
 #endif
 
-#include "bu.h"
+#include "bu/app.h"
+#include "bu/exit.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/opt.h"
+#include "bu/path.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #ifndef USE_QT
 #  include "tclcad.h"
 #endif
@@ -143,7 +152,7 @@ opt_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 }
 
 
-HIDDEN char *
+static char *
 find_man_file(const char *man_name, const char *lang, char section, int gui)
 {
     const char *ddir;
@@ -259,6 +268,59 @@ tk_man_gui(const char *man_name, char man_section, const char *man_file)
 
 #ifdef USE_QT
 
+static size_t
+list_man_files(QListWidget *l, const char *lang, char section, int gui)
+{
+    const char *ddir;
+    struct bu_vls data_dir = BU_VLS_INIT_ZERO;
+    struct bu_vls file_ext = BU_VLS_INIT_ZERO;
+    struct bu_vls mpattern = BU_VLS_INIT_ZERO;
+    struct bu_vls mdir = BU_VLS_INIT_ZERO;
+    if (gui) {
+	bu_vls_sprintf(&file_ext, "html");
+	ddir = bu_dir(NULL, 0, BU_DIR_DOC, "html", NULL);
+	bu_vls_sprintf(&data_dir, "%s", ddir);
+    } else {
+	if (section != 'n') {
+	    bu_vls_sprintf(&file_ext, "%c", section);
+	} else {
+	    bu_vls_sprintf(&file_ext, "nged");
+	}
+	ddir = bu_dir(NULL, 0, BU_DIR_MAN, NULL);
+	bu_vls_sprintf(&data_dir, "%s", ddir);
+    }
+
+    bu_vls_sprintf(&mdir, "%s/%s/man%c", bu_vls_addr(&data_dir), lang, section);
+    if (!bu_file_directory(bu_vls_addr(&mdir))) {
+	bu_vls_sprintf(&mdir, "%s/man%c", bu_vls_addr(&data_dir), section);
+	if (!bu_file_directory(bu_vls_addr(&mdir))) {
+	    return 0;
+	}
+    }
+
+    bu_vls_sprintf(&mpattern, "*.%s", bu_vls_cstr(&file_ext));
+
+    char **mfiles = NULL;
+    size_t mcnt = bu_file_list(bu_vls_cstr(&mdir), bu_vls_cstr(&mpattern), &mfiles);
+
+    bu_vls_free(&data_dir);
+    bu_vls_free(&mpattern);
+    bu_vls_free(&file_ext);
+    bu_vls_free(&mdir);
+
+    if (mcnt) {
+	for (size_t i = 0; i < mcnt; i++) {
+	    struct bu_vls mname = BU_VLS_INIT_ZERO;
+	    if (bu_path_component(&mname, mfiles[i], BU_PATH_BASENAME_EXTLESS)) {
+		new QListWidgetItem(bu_vls_cstr(&mname), l);
+	    }
+	    bu_vls_free(&mname);
+	}
+    }
+
+    return mcnt;
+}
+
 class ManViewer : public QDialog
 {
     public:
@@ -280,26 +342,25 @@ ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, c
     lists = new QAccordion();
     s->addWidget(lists);
 
-    QWidget *t1 = new QWidget();
-    t1->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-    QAccordionObject *a1 = new QAccordionObject(lists, t1, "Programs (man1)");
-    lists->addObject(a1);
+    QListWidget *l1 = new QListWidget(this);
+    list_man_files(l1, "en", '1', 1);
+    l1->setSizeAdjustPolicy(QListWidget::AdjustToContents);
+    lists->addObject(new QAccordionObject(lists, l1, "Programs (man1)"));
 
-    QWidget *t3 = new QWidget();
-    t3->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-    QAccordionObject *a2 = new QAccordionObject(lists, t3, "Libraries (man3)");
-    lists->addObject(a2);
+    QListWidget *l3 = new QListWidget(this);
+    list_man_files(l3, "en", '3', 1);
+    l3->setSizeAdjustPolicy(QListWidget::AdjustToContents);
+    lists->addObject(new QAccordionObject(lists, l3, "Libraries (man3)"));
 
+    QListWidget *l5 = new QListWidget(this);
+    list_man_files(l5, "en", '5', 1);
+    l5->setSizeAdjustPolicy(QListWidget::AdjustToContents);
+    lists->addObject(new QAccordionObject(lists, l5, "Conventions (man5)"));
 
-    QWidget *t5 = new QWidget();
-    t5->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-    QAccordionObject *a3 = new QAccordionObject(lists, t5, "Conventions (man5)");
-    lists->addObject(a3);
-
-    QWidget *tn = new QWidget();
-    tn->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-    QAccordionObject *a4 = new QAccordionObject(lists, tn, "GED (mann)");
-    lists->addObject(a4);
+    QListWidget *ln = new QListWidget(this);
+    list_man_files(ln, "en", 'n', 1);
+    ln->setSizeAdjustPolicy(QListWidget::AdjustToContents);
+    lists->addObject(new QAccordionObject(lists, ln, "GED (mann)"));
 
 
     browser = new QTextBrowser();

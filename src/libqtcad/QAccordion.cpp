@@ -32,7 +32,9 @@ QAccordionObject::QAccordionObject(QWidget *pparent, QWidget *object, QString he
 {
     title = header_title;
     toggle = new QPushButton(title, this);
+    toggle->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     objscrollarea= new QScrollArea();
+    objscrollarea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
     objlayout = new QVBoxLayout(this);
     objlayout->setSpacing(0);
     objlayout->setContentsMargins(0,0,0,0);
