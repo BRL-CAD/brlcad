@@ -335,10 +335,10 @@ class ManViewer : public QDialog
 	QListWidget *ln;
 
     public slots:
-        void do_man1(QListWidgetItem *i);
-        void do_man3(QListWidgetItem *i);
-        void do_man5(QListWidgetItem *i);
-        void do_mann(QListWidgetItem *i);
+        void do_man1(QListWidgetItem *i, QListWidgetItem *p);
+        void do_man3(QListWidgetItem *i, QListWidgetItem *p);
+        void do_man5(QListWidgetItem *i, QListWidgetItem *p);
+        void do_mann(QListWidgetItem *i, QListWidgetItem *p);
 
     private:
 	struct bu_vls mlang = BU_VLS_INIT_ZERO;
@@ -348,7 +348,7 @@ class ManViewer : public QDialog
 };
 
 void
-ManViewer::do_man1(QListWidgetItem *i)
+ManViewer::do_man1(QListWidgetItem *i, QListWidgetItem *UNUSED(p))
 {
     QString mpage = i->text();
     const char *man_name = mpage.toLocal8Bit();
@@ -356,7 +356,7 @@ ManViewer::do_man1(QListWidgetItem *i)
 }
 
 void
-ManViewer::do_man3(QListWidgetItem *i)
+ManViewer::do_man3(QListWidgetItem *i, QListWidgetItem *UNUSED(p))
 {
     QString mpage = i->text();
     const char *man_name = mpage.toLocal8Bit();
@@ -364,7 +364,7 @@ ManViewer::do_man3(QListWidgetItem *i)
 }
 
 void
-ManViewer::do_man5(QListWidgetItem *i)
+ManViewer::do_man5(QListWidgetItem *i, QListWidgetItem *UNUSED(p))
 {
     QString mpage = i->text();
     const char *man_name = mpage.toLocal8Bit();
@@ -372,7 +372,7 @@ ManViewer::do_man5(QListWidgetItem *i)
 }
 
 void
-ManViewer::do_mann(QListWidgetItem *i)
+ManViewer::do_mann(QListWidgetItem *i, QListWidgetItem *UNUSED(p))
 {
     QString mpage = i->text();
     const char *man_name = mpage.toLocal8Bit();
@@ -419,28 +419,28 @@ ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, c
     l1->setSizeAdjustPolicy(QListWidget::AdjustToContents);
     QAccordionObject *a1 = new QAccordionObject(lists, l1, "Programs (man1)");
     lists->addObject(a1);
-    QObject::connect(l1, &QListWidget::itemClicked, this, &ManViewer::do_man1);
+    QObject::connect(l1, &QListWidget::currentItemChanged, this, &ManViewer::do_man1);
 
     l3 = new QListWidget(this);
     list_man_files(l3, bu_vls_cstr(&mlang), '3', 1);
     l3->setSizeAdjustPolicy(QListWidget::AdjustToContents);
     QAccordionObject *a3 = new QAccordionObject(lists, l3, "Libraries (man3)");
     lists->addObject(a3);
-    QObject::connect(l3, &QListWidget::itemClicked, this, &ManViewer::do_man3);
+    QObject::connect(l3, &QListWidget::currentItemChanged, this, &ManViewer::do_man3);
 
     l5 = new QListWidget(this);
     list_man_files(l5, bu_vls_cstr(&mlang), '5', 1);
     l5->setSizeAdjustPolicy(QListWidget::AdjustToContents);
     QAccordionObject *a5 = new QAccordionObject(lists, l5, "Conventions (man5)");
     lists->addObject(a5);
-    QObject::connect(l5, &QListWidget::itemClicked, this, &ManViewer::do_man5);
+    QObject::connect(l5, &QListWidget::currentItemChanged, this, &ManViewer::do_man5);
 
     ln = new QListWidget(this);
     list_man_files(ln, bu_vls_cstr(&mlang), 'n', 1);
     ln->setSizeAdjustPolicy(QListWidget::AdjustToContents);
     QAccordionObject *an = new QAccordionObject(lists, ln, "GED (mann)");
     lists->addObject(an);
-    QObject::connect(ln, &QListWidget::itemClicked, this, &ManViewer::do_mann);
+    QObject::connect(ln, &QListWidget::currentItemChanged, this, &ManViewer::do_mann);
 
     switch (man_section) {
 	case '1':
