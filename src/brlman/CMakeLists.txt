@@ -21,7 +21,7 @@ endif(TARGET Tkhtml)
 # Building "GUI" doesn't matter except on Windows, but
 # on Windows brlman works only in graphical mode - might
 # as well behave "nicely" there.
-BRLCAD_ADDEXEC(brlman brlman.c "${brlman_libs}" GUI)
+BRLCAD_ADDEXEC(brlman brlman.cpp "${brlman_libs}" GUI)
 add_dependencies(brlman brlman_tcl_cp)
 
 foreach(item ${tclindex_target_list})
@@ -31,7 +31,7 @@ endif (TARGET libtclcad)
 
 CMAKEFILES(
   CMakeLists.txt
-  brlman.c
+  brlman.cpp
   brlman.tcl
   )
 
