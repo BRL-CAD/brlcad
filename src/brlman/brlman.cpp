@@ -364,7 +364,7 @@ BRLMAN_MAIN(
 
     /* Get our args from the c-runtime. Ignore lpszCmdLine. */
     argc = __argc;
-    argv = __argv;
+    argv = (const char **)__argv;
 #endif
 
     /* initialize progname for run-time resource finding */
