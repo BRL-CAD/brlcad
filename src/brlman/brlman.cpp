@@ -46,7 +46,9 @@
 #include <QDialog>
 #include <QVBoxLayout>
 #include <QTextBrowser>
+#include <QSplitter>
 #include <QDialogButtonBox>
+#include "qtcad/QAccordion.h"
 #endif
 
 #include "bu.h"
@@ -263,6 +265,7 @@ class ManViewer : public QDialog
 	ManViewer(QWidget *p = NULL, const char *man_name = NULL, char man_section = '0', const char *file = NULL);
 	~ManViewer();
 
+	QAccordion *lists;
 	QTextBrowser *browser;
 	QDialogButtonBox *buttons;
 };
@@ -273,15 +276,49 @@ ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, c
     buttons = new QDialogButtonBox(QDialogButtonBox::Ok);
     connect(buttons, &QDialogButtonBox::accepted, this, &ManViewer::accept);
 
+    QSplitter *s = new QSplitter(Qt::Horizontal, this);
+    lists = new QAccordion();
+    s->addWidget(lists);
+
+    QWidget *t1 = new QWidget();
+    t1->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+    QAccordionObject *a1 = new QAccordionObject(lists, t1, "Programs (man1)");
+    lists->addObject(a1);
+
+    QWidget *t3 = new QWidget();
+    t3->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+    QAccordionObject *a2 = new QAccordionObject(lists, t3, "Libraries (man3)");
+    lists->addObject(a2);
+
+
+    QWidget *t5 = new QWidget();
+    t5->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+    QAccordionObject *a3 = new QAccordionObject(lists, t5, "Conventions (man5)");
+    lists->addObject(a3);
+
+    QWidget *tn = new QWidget();
+    tn->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
+    QAccordionObject *a4 = new QAccordionObject(lists, tn, "GED (mann)");
+    lists->addObject(a4);
+
+
     browser = new QTextBrowser();
     QString filename(file);
     QFile manfile(filename);
     if (manfile.open(QFile::ReadOnly | QFile::Text)) {
 	browser->setHtml(manfile.readAll());
     }
-    l->addWidget(browser);
+    s->addWidget(browser);
+
+    s->setStretchFactor(0, 0);
+    s->setStretchFactor(1, 100000);
+
+
+    l->addWidget(s);
+
     l->addWidget(buttons);
     setLayout(l);
+
 
     struct bu_vls title = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&title, "%s (%c)", man_name, man_section);

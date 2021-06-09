@@ -1,4 +1,5 @@
 set(qtcad_headers
+  QAccordion.h
   QtAppExecDialog.h
   QtCADQuad.h
   QtCADTree.h
