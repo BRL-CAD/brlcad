@@ -324,16 +324,88 @@ list_man_files(QListWidget *l, const char *lang, char section, int gui)
 class ManViewer : public QDialog
 {
     public:
-	ManViewer(QWidget *p = NULL, const char *man_name = NULL, char man_section = '0', const char *file = NULL);
+	ManViewer(QWidget *p = NULL, const char *man_name = NULL, char man_section = '0', const char *lang = NULL, const char *file = NULL);
 	~ManViewer();
 
+	void do_select(const char *man_name, char man_section);
+
+	QListWidget *l1;
+	QListWidget *l3;
+	QListWidget *l5;
+	QListWidget *ln;
+
+    public slots:
+        void do_man1(QListWidgetItem *i);
+        void do_man3(QListWidgetItem *i);
+        void do_man5(QListWidgetItem *i);
+        void do_mann(QListWidgetItem *i);
+
+    private:
+	struct bu_vls mlang = BU_VLS_INIT_ZERO;
 	QAccordion *lists;
 	QTextBrowser *browser;
 	QDialogButtonBox *buttons;
 };
 
-ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, const char *file) : QDialog(pparent)
+void
+ManViewer::do_man1(QListWidgetItem *i)
 {
+    QString mpage = i->text();
+    const char *man_name = mpage.toLocal8Bit();
+    do_select(man_name, '1');
+}
+
+void
+ManViewer::do_man3(QListWidgetItem *i)
+{
+    QString mpage = i->text();
+    const char *man_name = mpage.toLocal8Bit();
+    do_select(man_name, '3');
+}
+
+void
+ManViewer::do_man5(QListWidgetItem *i)
+{
+    QString mpage = i->text();
+    const char *man_name = mpage.toLocal8Bit();
+    do_select(man_name, '5');
+}
+
+void
+ManViewer::do_mann(QListWidgetItem *i)
+{
+    QString mpage = i->text();
+    const char *man_name = mpage.toLocal8Bit();
+    do_select(man_name, 'n');
+}
+
+void
+ManViewer::do_select(const char *man_name, char man_section)
+{
+    const char *man_file = find_man_file(man_name, bu_vls_cstr(&mlang), man_section, 1);
+    if (!man_file)
+	return;
+
+    struct bu_vls title = BU_VLS_INIT_ZERO;
+    if (man_name) {
+	bu_vls_sprintf(&title, "%s (%c)", man_name, man_section);
+    } else {
+	bu_vls_sprintf(&title, "BRL-CAD Manual Pages");
+    }
+    this->setWindowTitle(QString(bu_vls_cstr(&title)));
+    bu_vls_free(&title);
+
+    QString filename(man_file);
+    QFile manfile(filename);
+    if (manfile.open(QFile::ReadOnly | QFile::Text)) {
+	browser->setHtml(manfile.readAll());
+    }
+}
+
+ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, const char *lang, const char *file) : QDialog(pparent)
+{
+    bu_vls_sprintf(&mlang, "%s", lang);
+
     QVBoxLayout *l = new QVBoxLayout;
     buttons = new QDialogButtonBox(QDialogButtonBox::Ok);
     connect(buttons, &QDialogButtonBox::accepted, this, &ManViewer::accept);
@@ -342,38 +414,51 @@ ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, c
     lists = new QAccordion();
     s->addWidget(lists);
 
-    QListWidget *l1 = new QListWidget(this);
-    list_man_files(l1, "en", '1', 1);
+    l1 = new QListWidget(this);
+    list_man_files(l1, bu_vls_cstr(&mlang), '1', 1);
     l1->setSizeAdjustPolicy(QListWidget::AdjustToContents);
     lists->addObject(new QAccordionObject(lists, l1, "Programs (man1)"));
+    QObject::connect(l1, &QListWidget::itemClicked, this, &ManViewer::do_man1);
 
-    QListWidget *l3 = new QListWidget(this);
-    list_man_files(l3, "en", '3', 1);
+    l3 = new QListWidget(this);
+    list_man_files(l3, bu_vls_cstr(&mlang), '3', 1);
     l3->setSizeAdjustPolicy(QListWidget::AdjustToContents);
     lists->addObject(new QAccordionObject(lists, l3, "Libraries (man3)"));
+    QObject::connect(l3, &QListWidget::itemClicked, this, &ManViewer::do_man3);
 
-    QListWidget *l5 = new QListWidget(this);
-    list_man_files(l5, "en", '5', 1);
+    l5 = new QListWidget(this);
+    list_man_files(l5, bu_vls_cstr(&mlang), '5', 1);
     l5->setSizeAdjustPolicy(QListWidget::AdjustToContents);
     lists->addObject(new QAccordionObject(lists, l5, "Conventions (man5)"));
+    QObject::connect(l5, &QListWidget::itemClicked, this, &ManViewer::do_man5);
 
-    QListWidget *ln = new QListWidget(this);
-    list_man_files(ln, "en", 'n', 1);
+    ln = new QListWidget(this);
+    list_man_files(ln, bu_vls_cstr(&mlang), 'n', 1);
     ln->setSizeAdjustPolicy(QListWidget::AdjustToContents);
     lists->addObject(new QAccordionObject(lists, ln, "GED (mann)"));
-
+    QObject::connect(ln, &QListWidget::itemClicked, this, &ManViewer::do_mann);
 
     browser = new QTextBrowser();
-    QString filename(file);
-    QFile manfile(filename);
-    if (manfile.open(QFile::ReadOnly | QFile::Text)) {
-	browser->setHtml(manfile.readAll());
+
+    if (!man_name && !file) {
+	do_select("Introduction", 'n');
+    } else {
+	if (man_name) {
+	    do_select(man_name, man_section);
+	}
+	if (file) {
+	    QString filename(file);
+	    QFile manfile(filename);
+	    if (manfile.open(QFile::ReadOnly | QFile::Text)) {
+		browser->setHtml(manfile.readAll());
+	    }
+	}
     }
+
     s->addWidget(browser);
 
     s->setStretchFactor(0, 0);
     s->setStretchFactor(1, 100000);
-
 
     l->addWidget(s);
 
@@ -382,7 +467,11 @@ ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, c
 
 
     struct bu_vls title = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&title, "%s (%c)", man_name, man_section);
+    if (man_name) {
+	bu_vls_sprintf(&title, "%s (%c)", man_name, man_section);
+    } else {
+	bu_vls_sprintf(&title, "BRL-CAD Manual Pages");
+    }
     this->setWindowTitle(QString(bu_vls_cstr(&title)));
     bu_vls_free(&title);
 
