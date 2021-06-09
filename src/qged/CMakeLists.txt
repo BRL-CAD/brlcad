@@ -25,7 +25,6 @@ set(qged_srcs
   main_window.cpp
   app.cpp
   attributes.cpp
-  cadhelp.cpp
   event_filter.cpp
   fbserv.cpp
   import.cpp
@@ -36,7 +35,6 @@ set(moc_headers
   main_window.h
   app.h
   attributes.h
-  cadhelp.h
   event_filter.h
   fbserv.h
   import.h

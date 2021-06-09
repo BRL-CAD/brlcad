@@ -324,7 +324,7 @@ list_man_files(QListWidget *l, const char *lang, char section, int gui)
 class ManViewer : public QDialog
 {
     public:
-	ManViewer(QWidget *p = NULL, const char *man_name = NULL, char man_section = '0', const char *lang = NULL, const char *file = NULL);
+	ManViewer(QWidget *p = NULL, const char *man_name = NULL, char man_section = '0', const char *lang = NULL);
 	~ManViewer();
 
 	void do_select(const char *man_name, char man_section);
@@ -402,7 +402,7 @@ ManViewer::do_select(const char *man_name, char man_section)
     }
 }
 
-ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, const char *lang, const char *file) : QDialog(pparent)
+ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, const char *lang) : QDialog(pparent)
 {
     bu_vls_sprintf(&mlang, "%s", lang);
 
@@ -417,42 +417,55 @@ ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, c
     l1 = new QListWidget(this);
     list_man_files(l1, bu_vls_cstr(&mlang), '1', 1);
     l1->setSizeAdjustPolicy(QListWidget::AdjustToContents);
-    lists->addObject(new QAccordionObject(lists, l1, "Programs (man1)"));
+    QAccordionObject *a1 = new QAccordionObject(lists, l1, "Programs (man1)");
+    lists->addObject(a1);
     QObject::connect(l1, &QListWidget::itemClicked, this, &ManViewer::do_man1);
 
     l3 = new QListWidget(this);
     list_man_files(l3, bu_vls_cstr(&mlang), '3', 1);
     l3->setSizeAdjustPolicy(QListWidget::AdjustToContents);
-    lists->addObject(new QAccordionObject(lists, l3, "Libraries (man3)"));
+    QAccordionObject *a3 = new QAccordionObject(lists, l3, "Libraries (man3)");
+    lists->addObject(a3);
     QObject::connect(l3, &QListWidget::itemClicked, this, &ManViewer::do_man3);
 
     l5 = new QListWidget(this);
     list_man_files(l5, bu_vls_cstr(&mlang), '5', 1);
     l5->setSizeAdjustPolicy(QListWidget::AdjustToContents);
-    lists->addObject(new QAccordionObject(lists, l5, "Conventions (man5)"));
+    QAccordionObject *a5 = new QAccordionObject(lists, l5, "Conventions (man5)");
+    lists->addObject(a5);
     QObject::connect(l5, &QListWidget::itemClicked, this, &ManViewer::do_man5);
 
     ln = new QListWidget(this);
     list_man_files(ln, bu_vls_cstr(&mlang), 'n', 1);
     ln->setSizeAdjustPolicy(QListWidget::AdjustToContents);
-    lists->addObject(new QAccordionObject(lists, ln, "GED (mann)"));
+    QAccordionObject *an = new QAccordionObject(lists, ln, "GED (mann)");
+    lists->addObject(an);
     QObject::connect(ln, &QListWidget::itemClicked, this, &ManViewer::do_mann);
+
+    switch (man_section) {
+	case '1':
+	    emit a1->select(a1);
+	    break;
+	case '3':
+	    emit a3->select(a3);
+	    break;
+	case '5':
+	    emit a5->select(a5);
+	    break;
+	case 'n':
+	    emit an->select(an);
+	    break;
+	default:
+	    emit a1->select(a1);
+	    break;
+    }
 
     browser = new QTextBrowser();
 
-    if (!man_name && !file) {
+    if (!man_name) {
 	do_select("Introduction", 'n');
     } else {
-	if (man_name) {
-	    do_select(man_name, man_section);
-	}
-	if (file) {
-	    QString filename(file);
-	    QFile manfile(filename);
-	    if (manfile.open(QFile::ReadOnly | QFile::Text)) {
-		browser->setHtml(manfile.readAll());
-	    }
-	}
+	do_select(man_name, man_section);
     }
 
     s->addWidget(browser);
@@ -489,12 +502,12 @@ ManViewer::~ManViewer()
 
 
 int
-qt_man_gui(const char *man_name, char man_section, const char *man_file)
+qt_man_gui(const char *man_name, char man_section, const char *UNUSED(man_file))
 {
     int ac = 0;
     char **av = NULL;
     QApplication brlman(ac, av);
-    ManViewer *v = new ManViewer(NULL, man_name, man_section, man_file);
+    ManViewer *v = new ManViewer(NULL, man_name, man_section);
     v->show();
     brlman.exec();
     return BRLCAD_OK;

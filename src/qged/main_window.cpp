@@ -318,6 +318,30 @@ BRLCAD_MainWindow::run_cmd(const QString &command)
 	cmd_run = 1;
     }
 
+    /* The man command launches brlman in graphical mode
+     * to display the man page - GED has no knowledge of
+     * this, so handle it at this level.  Not entirely
+     * sure if we want to try to make man a GED command
+     * or not... */
+    if (BU_STR_EQUAL(av[0], "man")) {
+	int bac = (ac > 1) ? 5 : 4;
+	const char *bav[6];
+	char brlman[MAXPATHLEN] = {0};
+	bu_dir(brlman, MAXPATHLEN, BU_DIR_BIN, "brlman", BU_DIR_EXT, NULL);
+	bav[0] = (const char *)brlman;
+	bav[1] = "-g";
+	bav[2] = "-S";
+	bav[3] = "n";
+	bav[4] = (ac > 1) ? av[1] : NULL;
+	bav[5] = NULL;
+	struct bu_process *p = NULL;
+	bu_process_exec(&p, bav[0], bac, (const char **)bav, 0, 0);
+	if (bu_process_pid(p) == -1) {
+	    console->printString("Failed to launch man page viewer\n") ;
+	}
+	cmd_run = 1;
+    }
+
     if (!cmd_run) {
 	bApp->ged_run_cmd(&msg, ac, (const char **)av);
 	if (bu_vls_strlen(&msg) > 0) {
