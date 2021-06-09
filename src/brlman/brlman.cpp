@@ -39,6 +39,16 @@
 #  endif
 #endif
 
+#ifdef USE_QT
+#include <QApplication>
+#include <QObject>
+#include <QFile>
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QTextBrowser>
+#include <QDialogButtonBox>
+#endif
+
 #include "bu.h"
 #ifndef USE_QT
 #  include "tclcad.h"
@@ -241,6 +251,65 @@ tk_man_gui(const char *man_name, char man_section, const char *man_file)
     }
     Tcl_DeleteInterp(interp);
 
+    return BRLCAD_OK;
+}
+#endif
+
+#ifdef USE_QT
+
+class ManViewer : public QDialog
+{
+    public:
+	ManViewer(QWidget *p = NULL, const char *man_name = NULL, char man_section = '0', const char *file = NULL);
+	~ManViewer();
+
+	QTextBrowser *browser;
+	QDialogButtonBox *buttons;
+};
+
+ManViewer::ManViewer(QWidget *pparent, const char *man_name, char man_section, const char *file) : QDialog(pparent)
+{
+    QVBoxLayout *l = new QVBoxLayout;
+    buttons = new QDialogButtonBox(QDialogButtonBox::Ok);
+    connect(buttons, &QDialogButtonBox::accepted, this, &ManViewer::accept);
+
+    browser = new QTextBrowser();
+    QString filename(file);
+    QFile manfile(filename);
+    if (manfile.open(QFile::ReadOnly | QFile::Text)) {
+	browser->setHtml(manfile.readAll());
+    }
+    l->addWidget(browser);
+    l->addWidget(buttons);
+    setLayout(l);
+
+    struct bu_vls title = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&title, "%s (%c)", man_name, man_section);
+    this->setWindowTitle(QString(bu_vls_cstr(&title)));
+    bu_vls_free(&title);
+
+    // TODO - find something smarter to do for size
+    setMinimumWidth(800);
+    setMinimumHeight(600);
+
+    setWindowModality(Qt::NonModal);
+}
+
+ManViewer::~ManViewer()
+{
+    delete browser;
+}
+
+
+int
+qt_man_gui(const char *man_name, char man_section, const char *man_file)
+{
+    int ac = 0;
+    char **av = NULL;
+    QApplication brlman(ac, av);
+    ManViewer *v = new ManViewer(NULL, man_name, man_section, man_file);
+    v->show();
+    brlman.exec();
     return BRLCAD_OK;
 }
 #endif
@@ -456,7 +525,7 @@ BRLMAN_MAIN(
 #  ifndef USE_QT
     return tk_man_gui(man_name, man_section, man_file);
 #  else
-    bu_log("TODO - Qt gui\n");
+    return qt_man_gui(man_name, man_section, man_file);
 #  endif
 #else
     /* Shouldn't get here - should be caught by above tests */
