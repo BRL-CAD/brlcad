@@ -1,4 +1,4 @@
-/*                       B R L M A N  . C
+/*                     B R L M A N  . C P P
  * BRL-CAD
  *
  * Copyright (c) 2005-2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file brlman.c
+/** @file brlman.cpp
  *
  *  Man page viewer for BRL-CAD man pages.
  *
@@ -32,17 +32,21 @@
 #include "bnetwork.h"
 #include "bio.h"
 
-#include "tcl.h"
-#ifdef HAVE_TK
-#  include "tk.h"
+#ifndef USE_QT
+#  include "tcl.h"
+#  ifdef HAVE_TK
+#    include "tk.h"
+#  endif
 #endif
 
 #include "bu.h"
-#include "tclcad.h"
+#ifndef USE_QT
+#  include "tclcad.h"
+#endif
 
 /* Confine the constraining build conditions here - ultimately, we care
  * about graphical and non-graphical, whatever the reasons. */
-#ifdef HAVE_TK
+#if defined(HAVE_TK) || defined(USE_QT)
 #  define MAN_GUI 1
 #endif
 #ifndef HAVE_WINDOWS_H
@@ -164,6 +168,83 @@ find_man_file(const char *man_name, const char *lang, char section, int gui)
 }
 
 
+#ifndef USE_QT
+// Tk based GUI
+int
+tk_man_gui(const char *man_name, char man_section, const char *man_file)
+{
+    const char *result;
+    const char *fullname;
+    const char *tcl_man_file;
+    const char *brlman_tcl = NULL;
+    struct bu_vls tlog = BU_VLS_INIT_ZERO;
+    Tcl_DString temp;
+    Tcl_Interp *interp = Tcl_CreateInterp();
+    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+
+#ifdef HAVE_WINDOWS_H
+    Tk_InitConsoleChannels(interp);
+#endif
+
+    int status = tclcad_init(interp, 1, &tlog);
+
+    if (status == TCL_ERROR) {
+	bu_log("brlman tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
+	bu_vls_free(&tlog);
+	bu_exit(1, "tcl init error");
+    }
+    bu_vls_free(&tlog);
+
+    /* Have gui flag and specified man page but no file found - graphical failure notice */
+    if (man_name && !man_file) {
+	if (man_section != '\0') {
+	    bu_vls_sprintf(&tcl_cmd, "tk_messageBox -message \"Error: man page not found for %s in section %c\" -type ok", man_name, man_section);
+	} else {
+	    bu_vls_sprintf(&tcl_cmd, "tk_messageBox -message \"Error: man page not found for %s\" -type ok", man_name);
+	}
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	bu_exit(EXIT_FAILURE, NULL);
+    }
+
+    /* Pass the key variables into the interp */
+    if (man_section != '\0') {
+	bu_vls_sprintf(&tcl_cmd, "set ::section_number %c", man_section);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (man_file) {
+	Tcl_Obj *pathP, *norm;
+
+	bu_vls_sprintf(&tcl_cmd, "set ::man_name %s", man_name);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+
+	pathP = Tcl_NewStringObj(man_file, -1);
+	norm = Tcl_FSGetTranslatedPath(interp, pathP);
+	tcl_man_file = Tcl_GetString(norm);
+	bu_vls_sprintf(&tcl_cmd, "set ::man_file %s", tcl_man_file);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+
+    } else {
+	bu_vls_sprintf(&tcl_cmd, "set ::data_dir %s/html", bu_dir(NULL, 0, BU_DIR_DOC, NULL));
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    brlman_tcl = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "brlman", "brlman.tcl", NULL);
+    Tcl_DStringInit(&temp);
+    fullname = Tcl_TranslateFileName(interp, brlman_tcl, &temp);
+    status = Tcl_EvalFile(interp, fullname);
+    Tcl_DStringFree(&temp);
+
+    result = Tcl_GetStringResult(interp);
+    if (strlen(result) > 0 && status == TCL_ERROR) {
+	bu_log("%s\n", result);
+    }
+    Tcl_DeleteInterp(interp);
+
+    return BRLCAD_OK;
+}
+#endif
+
 #ifndef HAVE_WINDOWS_H
 #  define APIENTRY
 #  define BRLMAN_MAIN main
@@ -188,7 +269,8 @@ BRLMAN_MAIN(
 
 #if !defined(MAN_CMDLINE) && !defined(MAN_GUI)
     bu_exit(EXIT_FAILURE, "Error: man page display is not supported.");
-#else
+#endif
+
     int i = 0;
     int status = BRLCAD_ERROR;
     int uac = 0;
@@ -363,86 +445,23 @@ BRLMAN_MAIN(
 	/* Note - for reasons that are unclear, passing in man_cmd as the first
 	 * argument to execlp will *not* work... */
 	status = execlp("man", man_cmd, man_file, (char *)NULL);
+	return status;
 #else
 	/* Shouldn't get here - should be caught by above tests */
 	bu_exit(EXIT_FAILURE, "Error: Non-graphical man display is not supported.");
 #endif
-    } else {
-#ifdef MAN_GUI
-	const char *result;
-	const char *fullname;
-	const char *tcl_man_file;
-	const char *brlman_tcl = NULL;
-	struct bu_vls tlog = BU_VLS_INIT_ZERO;
-	Tcl_DString temp;
-	Tcl_Interp *interp = Tcl_CreateInterp();
-	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-
-#ifdef HAVE_WINDOWS_H
-	Tk_InitConsoleChannels(interp);
-#endif
-
-	status = tclcad_init(interp, enable_gui, &tlog);
-
-	if (status == TCL_ERROR) {
-	    bu_log("brlman tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
-	    bu_vls_free(&tlog);
-	    bu_exit(1, "tcl init error");
-	}
-	bu_vls_free(&tlog);
-
-	/* Have gui flag and specified man page but no file found - graphical failure notice */
-	if (enable_gui && man_name && !man_file) {
-	    if (man_section != '\0') {
-		bu_vls_sprintf(&tcl_cmd, "tk_messageBox -message \"Error: man page not found for %s in section %c\" -type ok", man_name, man_section);
-	    } else {
-		bu_vls_sprintf(&tcl_cmd, "tk_messageBox -message \"Error: man page not found for %s\" -type ok", man_name);
-	    }
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	    bu_exit(EXIT_FAILURE, NULL);
-	}
-
-	/* Pass the key variables into the interp */
-	if (man_section != '\0') {
-	    bu_vls_sprintf(&tcl_cmd, "set ::section_number %c", man_section);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	}
-
-	if (man_file) {
-	    Tcl_Obj *pathP, *norm;
-
-	    bu_vls_sprintf(&tcl_cmd, "set ::man_name %s", man_name);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-
-	    pathP = Tcl_NewStringObj(man_file, -1);
-	    norm = Tcl_FSGetTranslatedPath(interp, pathP);
-	    tcl_man_file = Tcl_GetString(norm);
-	    bu_vls_sprintf(&tcl_cmd, "set ::man_file %s", tcl_man_file);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-
-	} else {
-	    bu_vls_sprintf(&tcl_cmd, "set ::data_dir %s/html", bu_dir(NULL, 0, BU_DIR_DOC, NULL));
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	}
-
-	brlman_tcl = bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "brlman", "brlman.tcl", NULL);
-	Tcl_DStringInit(&temp);
-	fullname = Tcl_TranslateFileName(interp, brlman_tcl, &temp);
-	status = Tcl_EvalFile(interp, fullname);
-	Tcl_DStringFree(&temp);
-
-	result = Tcl_GetStringResult(interp);
-	if (strlen(result) > 0 && status == TCL_ERROR) {
-	    bu_log("%s\n", result);
-	}
-	Tcl_DeleteInterp(interp);
-#else
-	/* Shouldn't get here - should be caught by above tests */
-	bu_exit(EXIT_FAILURE, "Error: graphical man display is not supported.");
-#endif
     }
-    return status;
-#endif /* !defined(MAN_CMDLINE) && !defined(MAN_GUI) */
+
+#ifdef MAN_GUI
+#  ifndef USE_QT
+    return tk_man_gui(man_name, man_section, man_file);
+#  else
+    bu_log("TODO - Qt gui\n");
+#  endif
+#else
+    /* Shouldn't get here - should be caught by above tests */
+    bu_exit(EXIT_FAILURE, "Error: graphical man display is not supported.");
+#endif
 }
 
 
