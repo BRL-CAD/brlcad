@@ -36,7 +36,7 @@ class CADPalette : public QWidget
 	CADPalette(int mode = 0, QWidget *pparent = 0);
 	~CADPalette();
 
-	//void addPlugin(QToolPaletteElement *e);
+	void addTool(QToolPaletteElement *e);
 
 	QToolPalette *tpalette;
 

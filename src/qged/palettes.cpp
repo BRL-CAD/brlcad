@@ -35,34 +35,30 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
     mlayout->setContentsMargins(0,0,0,0);
     tpalette = new QToolPalette(this);
     tpalette->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-    for(int i = 1; i < 8; i++) {
-	QIcon *obj_icon = new QIcon();
-	QString obj_label("tool controls ");
-	obj_label.append(QString::number(i));
-	QPushButton *obj_control = new QPushButton(obj_label);
-	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
-	tpalette->addElement(el);
-    }
     mlayout->addWidget(tpalette);
 
     tpalette->selected_style = QString("border: 1px solid rgb(255, 255, 0)");
-    // Until the panel buttons are actually clicked on, we don't want the
-    // border to be yellow for the selected button - we are using that border
-    // color as a visual indicator that this panel is the active panel.
-    tpalette->selected->button->setStyleSheet("");
 
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
 }
 
 void
+CADPalette::addTool(QToolPaletteElement *e)
+{
+    tpalette->addElement(e);
+}
+
+void
 CADPalette::makeCurrent(QWidget *w)
 {
     if (w == this) {
-	this->tpalette->displayElement(this->tpalette->selected);
+	if (this->tpalette->selected)
+	    this->tpalette->displayElement(this->tpalette->selected);
 	emit interaction_mode(m_mode);
     } else {
-	this->tpalette->selected->button->setStyleSheet("");
+	if (this->tpalette->selected)
+	    this->tpalette->selected->button->setStyleSheet("");
     }
 }
 

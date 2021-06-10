@@ -149,6 +149,29 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(oc, &CADPalette::current, ic, &CADPalette::makeCurrent);
     connect(oc, &CADPalette::current, oc, &CADPalette::makeCurrent);
 
+    // Add some placeholder tools until we start to implement the real ones
+    {
+	QIcon *obj_icon = new QIcon();
+	QString obj_label("view controls ");
+	QPushButton *obj_control = new QPushButton(obj_label);
+	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
+	vc->addTool(el);
+    }
+    {
+	QIcon *obj_icon = new QIcon();
+	QString obj_label("instance controls ");
+	QPushButton *obj_control = new QPushButton(obj_label);
+	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
+	ic->addTool(el);
+    }
+    {
+	QIcon *obj_icon = new QIcon();
+	QString obj_label("primitive controls ");
+	QPushButton *obj_control = new QPushButton(obj_label);
+	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
+	oc->addTool(el);
+    }
+
     QDockWidget *sattrd = new QDockWidget("Standard Attributes", this);
     addDockWidget(Qt::RightDockWidgetArea, sattrd);
     sattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);

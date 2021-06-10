@@ -184,6 +184,7 @@ QToolPalette::addElement(QToolPaletteElement *element)
     updateGeometry();
     if (!selected && always_selected) {
 	displayElement(element);
+	selected->button->setStyleSheet("");
     }
 }
 
