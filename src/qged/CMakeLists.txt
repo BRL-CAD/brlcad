@@ -85,11 +85,8 @@ set(qged_ignore_srcs
   fonts/Inconsolata-LICENSE.txt
   fonts/Inconsolata.otf
   CMakeLists.txt
-  QDM_NOTES
   qdm_tests.txt
-  Qt_Notes.txt
   TODO
-  TODO.qt
   )
 
 CMAKEFILES(${qged_ignore_srcs})

@@ -1,63 +1,193 @@
-For editing in this interface, need to have three "tool palette" objects in the
-accordion on the right.
+QGED Tasks and Design Notes
 
-First one will be a view controller, with the available options for view
-manipulation and reporting on the current view information.   Selecting tools
-from that palette puts the GUI in view manipulation (the default) and no
-related object highlighting will be present in the tree.  This will avoid the
-work of identifying and highlighting related tree entities when no actual
-editing is taking place, which is when awareness of those relationships is most
-important.
+X 1.  embedded framebuffer (remaining TODO - use texture rather than pixel drawing...)
 
-Second will be an instance editor, which will offer controls related to
-manipulating a specific instance of an object in a comb.  For top level
-geometry this accordion object will be hidden, since by definition top level
-objects are not part of any comb.  For all other cases, the current selection
-in the tree will inform the GUI what the parent comb of the current instance
-is.  This editing panel will not offer any solid editing tools, but only
-manipulations possible in the comb "matrix-above-object" feature.  The
-highlighting, when any tool is selected in this panel, will highlight database
-items using not the selected object, but the parent of the selected object -
-when an instance is edited but the solid is not, only objects using the parent
-comb of the instance will be impacted by changes.  This will be the gui
-equalivent to MGED's "oed" command, and the qbrlcad implementation of oed will
-in fact have the same impact as selecting an object and activating something in
-the instance edit panel.
+X 2.  output of bu_subprocess commands back to QtConsole prompt.
 
-The third will be a primitive editor, which will expose the object parameters
-(tree objects a.l.a the l command for combs, and primitive parameters for
-solids.  When this dialog is active, the "related objects" highlighting will
-identify every path that uses the primitive itself, regardless of what its
-current parent is in the path.  This will be equalivent to MGED's "sed"
-command, and the qbrlcad implementation of sed will activate the primitive edit
-panel for the specified selection (if no path is given to sed, there will be no
-active selection identified in the tree and no instance edit panel show - just
-the primitive panel and the "related object" highlighting in the tree.  If a
-selection of one of the specific instances in the tree view is made by the
-user, the instance panel will appear and the highlighting on that selected
-instance will change from yellow (related) to the "selected item" highlighting.
+    Check https://github.com/juangburgos/QConsoleListener to see if it can help - we need
+    something that can achieve similar results to the Tcl mechanism being used to capture
+    rt output.  Also for rt in particular, check into what MGED and Archer are doing to
+    get raytracing output displayed and whether that can be refactored into something
+    more general.
 
-For combs, there will be a standard attributes accordion object that offers the
-standard attribute keys, even if they are not set.  All objects, comb and
-primitive, will have a "User attributes" accordion object which will show
-non-standard attributes and allow the user to add, delete and edit such
-attributes.
+x 2a.  See about getting rt output into dm embedded framebuffer.  Study src/mged/fbserv.c
+    and src/libtclcad/fbserv.c to see if they can be generalized in some fashion.
+
+    * At some point will want to look into QLocalServer/QLocalSocket to see if it
+      can be used, but for now using the Qt Tcp connection.
+
+x 3.  Finish accordion widget, into libqtcad (moved, behavior improved.  Open/close
+      placement may need more tweaking - that's a rather tricky behavior for QSplitter -
+      but it seems to be fairly close)
+
+x 4.  Implement Qt quad view widget  (start basic - do a QGridLayout with 4 QtGL/QtSW instances.)
+
+      More work can be done here, but basic functionality has been demonstrated.
 
 
+x 5.  temporary objects (nirt shotline, rtcheck/gqa overlap visuals, gdiff output...)
 
-The per-solid toolboxes will have most of the custom tools and logic - many
-(such as the facetize and brep conversion tools) will be common to most solids,
-but some (like bot sync, bot flip, etc.) will be very specific to individual
-object types.
-
-
-Will need to think about how to handle multi-object selection - in theory, if
-all selected objects are of a single type, a subset of the tool box might be
-applicable in "batch" mode - for example, selecting all bots and running sync
-on them.  Such selections could be achieved with the select command, which is
-another command that would benefit from having the option to use search
-filters...  The way to handle that may be to flag tools in the various
-toolboxes as "safe" for multi-selection scenarios... have to think about that.
+    look at all libged commands using _ged_cvt_vlblock_to_solids to get a list of those that will
+    need adjustment to work with the new setup.
 
 
-The "Esc" character should always return the application to view manipulation mode.
+x 7.  color controls (background in particular) settable in MGED...
+
+    got background color setting supported via dm bg command - probably other things to set, will
+    come back to that later...
+
+x 8.  Fix fps meter drawing - should either be lower left, or appended to status line if that's enabled
+
+9.  Implement more key bindings for dm widgets.
+
+12.  Qt dialogues for color setting and fonts
+
+13. Parse and interpret .mgedrc files...
+
+Even if we can get a Tcl/Tk free stack working fully, users will need an option
+for a Tcl prompt if we are going to support .mgedrc customizations.
+
+May be worth exploring whether we can get away with using just the minimal
+bootstrap version of jimtcl's library:
+
+https://github.com/msteveb/jimtcl
+
+The script make-bootstrap-jim can produce a single .c file:
+
+./make-bootstrap-jim > jimtcl0.c
+
+This file can in turn be compiled to a shared lib in CMake with:
+
+add_library(jimtcl0 SHARED jimtcl0.c)
+target_compile_definitions(jimtcl0 PUBLIC JIM_BOOTSTRAP_LIB_ONLY)
+
+Would need to be tested, but if it can provide a MGED-style Tcl prompt that is
+sufficient for scripting purposes and loading .mgedrc files it would be a far
+simpler integration than the all-up libtcl build...
+
+If it doesn't work, look into https://www.tcl.tk/community/tcl2019/assets/talk160/Paper.pdf
+
+x 14.  Man page viewer as libqtcad widget
+
+       Ended up doing this a different way - making a Qt version of the brlman
+       executable.  That is then run as a separate process by the man command.
+
+x  15.  Qt .g tree hierarchy widget into libqtcad
+
+       Widget needs some cleanup (particularly line drawing on opened trees, may
+       just eliminate that completely...)  Also, still doesn't support dynamic
+       geometry in the .g file.  However, has been moved to libqtcad so this
+       item is done.
+
+16.  Qt palette widget - get plugin design finalized, into libqtcad
+
+17.  Come up with a way to configure key bindings - ideally command line supported
+     in a portable way via dm libged command.
+     Probably bindings subcommand will use a callback function to implement changes
+     that is registered by the application
+
+18.  Raytrace control panel equivalent in Qt.
+
+19.  Dedication dialog as Qt libqtcad widget
+
+20.  Look over editor widgets, tools and panels to translate as Qt widgets - at least
+     Combination Editor, Bot Edit, Build Pattern and Overlap tool need to be studied,
+     and probably others.
+
+21.  Figure out how to do a button bar in Qt
+
+22.  See if we can switch the text label for a Qt dock widget to be a menu when it is
+     floating...
+
+23.  Archer help browser as a Qt widget.
+
+24.  Translate sketch editor to Qt.
+
+25.  Look into build scripts from https://github.com/martinrotter/qt-minimalistic-builds to see if they can
+     help guide the preparation of an ExternalProject_Add Qt build.
+
+
+6.  primitive editing MGED style.  Likely will need editing callbacks, probably per-primitive
+    with a librt functab entry.
+
+    Want to do this without baking editing state into libged.  Current thought is to define a
+    view routine to create a transient interactive view object from the database solid that has
+    a local copy of the db internal.  The edit operations and wireframe updates will be done
+    using that local copy, and then a separate operation will be used to write the view object
+    back to the database.  Equivalent to the sed|oed/edit/apply cycle, with the sed operation
+    creating a view object (it will be a separate step to suppress the original wireframe, if
+    that's what the app wants to do) edit operations being applied to the view object, and
+    then apply writing the altered db internal from the view object back to the .g file.  (If
+    the app suppressed the old wireframe, it will also need to restore the new version since
+    applying the view obj changes and removing the view obj won't automatically draw the final
+    database object.  The "reject" operation would just be removing the view object on which
+    editing is being performed.
+
+    The above approach will also involve refactoring the edit command logic so we can call the
+    same routines both for immediate-application edits and for the intermediate view edits.
+
+10.  MGED faceplate GUI - needed?  Does (for example) pipe editing need it...
+
+11.  Predictor - is it useful, or can we remove it?
+
+
+Other nice to haves:
+
+0.  Smarter, view aware wireframes for BoTs (RTree may be useful?  Can we do
+    points with normals to represent small triangles?  Incorporate bounding box
+    drawing in some fashion...)
+
+1.  gl2ps based vector output option for screengrab (may be able to replace postscript dm backend)
+
+2.  Might be fun to see if we could combine https://github.com/ioppermann/ezMPEG and
+    https://github.com/phoboslab/pl_mpeg to get a minimal video recording and playback going for
+    the display mangers...
+
+    For straight up capture this might be even simpler:  https://github.com/charlietangora/gif-h
+
+    (Note the idea here is a very simple, straightforward, unoptimized ability with minimal code complexity
+     Any use of output for something real would want to re-encode for sane file sizes...)
+
+
+A note about RTG.rtg_vlfree - took a whack at removing most of the uses of the
+global, but first attempt failed to take into account RT_DB_INTERNAL_INIT
+initializations of rt_db_internal copies.  The vlfree pointer needs to be in
+both db_i and rt_db_internal to be available to the various levels of the logic
+that need vlfree, but if we're standing up a RT_DB_INTERNAL_INIT we need to
+provide the vlfree pointer from somewhere else.  The code has over 170 calls to
+RT_DB_INTERNAL_INIT, which will have to be checked and adjusted to set the
+correct information.  The simplest thing is probably to simply alter
+RT_DB_INTERNAL_INIT to require a struct bu_list pointer for vlfree.  Also need
+to check to see if any db_i containers are created in similar fashion.
+
+
+Investigate Qt/OSG integration to see if it's usable/workable for this setup:
+
+http://bastian.rieck.ru/blog/posts/2014/qt_and_openscenegraph/
+https://github.com/Submanifold/QtOSG
+
+3rd party widgets of possible interest:
+
+The following might be of interest for scenarios where we were using tktable, if
+Qt's built ins aren't enough (one of the license options is LGPL 2.1):
+https://gitlab.com/ics-qicstable/qicstable
+
+QHexEdit2 might be useful for some low level debugging/inspection features...
+https://github.com/Simsys/qhexedit2
+
+Node editor:
+https://github.com/paceholder/nodeeditor
+
+Qt is explicitly relocatable as of 5.14 (this is good news, as it is what we
+would want/need for a bundled Qt)
+https://www.qt.io/blog/qt-is-relocatable
+
+Potentially useful example of Qt related building with Github actions:
+https://www.qt.io/blog/building-qt-creator-plugins-with-github-actions
+
+Qt will be moving to CMake as its internal build system in Qt 6:
+https://www.qt.io/blog/versionless-cmake-targets-qt-5.15
+
+
+Tried the following but wasn't able to get it to work...
+https://www.qtcentre.org/threads/58630-Dock-Widget-Custom-Resizing
