@@ -44,8 +44,7 @@
 
 class CADApp;
 
-typedef int (*gui_cmd_ptr)(QString *command_string, CADApp *app);
-#define GUI_CMD_PTR_NULL ((gui_cmd_ptr)0)
+typedef int (*app_cmd_ptr)(void *, int, const char **);
 
 class CADApp : public QApplication
 {
@@ -56,10 +55,9 @@ class CADApp : public QApplication
 	~CADApp() {};
 
 	void initialize();
+
 	int opendb(QString filename);
 	void closedb();
-
-	int register_gui_command(QString cmdname, gui_cmd_ptr func, QString role = QString());
 
 	bool ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
 
@@ -69,7 +67,6 @@ class CADApp : public QApplication
 	struct db_i *dbip();
 	struct rt_wdb *wdbp();
 
-	BRLCAD_MainWindow *w = NULL;
 
     signals:
 	void db_change();
@@ -84,10 +81,11 @@ class CADApp : public QApplication
         void do_view_change(struct bview **);
 
     public:
+	BRLCAD_MainWindow *w = NULL;
 	QString current_file;
-	QMap<QString, gui_cmd_ptr> gui_cmd_map;
-	QMap<QString, gui_cmd_ptr> preprocess_cmd_map;
-	QMap<QString, gui_cmd_ptr> postprocess_cmd_map;
+
+    private:
+	QMap<QString, app_cmd_ptr> app_cmd_map;
 };
 
 QString import_db(QString filename);

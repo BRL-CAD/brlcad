@@ -106,11 +106,98 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	w->c4->need_update();
 }
 
+extern "C" int
+app_open(void *p, int argc, const char **argv)
+{
+    CADApp *ap = (CADApp *)p;
+    struct ged **gedpp = &ap->gedp;
+    QtConsole *console = ap->w->console;
+    if (argc > 1) {
+	if (*gedpp) {
+	    ged_close(*gedpp);
+	}
+	int ret = ap->opendb(argv[1]);
+	if (ret && console) {
+	    struct bu_vls msg = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&msg, "Could not open %s as a .g file\n", argv[1]) ;
+	    console->printString(bu_vls_cstr(&msg));
+	    bu_vls_free(&msg);
+	}
+    } else {
+	if (console)
+	    console->printString("Error: invalid ged_open call\n");
+    }
+
+    return 0;
+}
+
+extern "C" int
+app_close(void *p, int UNUSED(argc), const char **UNUSED(argv))
+{
+    CADApp *ap = (CADApp *)p;
+    struct ged **gedpp = &ap->gedp;
+    QtConsole *console = ap->w->console;
+    ged_close(*gedpp);
+    (*gedpp) = NULL;
+    if (ap->w->canvas) {
+	QtCADView *canvas = ap->w->canvas;
+	canvas->set_view(NULL);
+	//canvas->dm_set = NULL;
+	canvas->set_dm_current(NULL);
+	canvas->set_base2local(NULL);
+	canvas->set_local2base(NULL);
+    }
+    if (ap->w->c4) {
+	QtCADQuad *c4= ap->w->c4;
+	for (int i = 1; i < 5; i++) {
+	    QtCADView *c = c4->get(i);
+	    //c->dm_set = NULL;
+	    c->set_view(NULL);
+	    c->set_dm_current(NULL);
+	    c->set_base2local(NULL);
+	    c->set_local2base(NULL);
+	}
+    }
+    if (console)
+	console->printString("closed database\n");
+
+    return 0;
+}
+
+extern "C" int
+app_man(void *ip, int argc, const char **argv)
+{
+    CADApp *ap = (CADApp *)ip;
+    QtConsole *console = ap->w->console;
+    int bac = (argc > 1) ? 5 : 4;
+    const char *bav[6];
+    char brlman[MAXPATHLEN] = {0};
+    bu_dir(brlman, MAXPATHLEN, BU_DIR_BIN, "brlman", BU_DIR_EXT, NULL);
+    bav[0] = (const char *)brlman;
+    bav[1] = "-g";
+    bav[2] = "-S";
+    bav[3] = "n";
+    bav[4] = (argc > 1) ? argv[1] : NULL;
+    bav[5] = NULL;
+    struct bu_process *p = NULL;
+    bu_process_exec(&p, bav[0], bac, (const char **)bav, 0, 0);
+    if (bu_process_pid(p) == -1 && console) {
+	console->printString("Failed to launch man page viewer\n") ;
+	return -1;
+    }
+    return 0;
+}
+
 void
 CADApp::initialize()
 {
     gedp = GED_NULL;
     BU_LIST_INIT(&RTG.rtg_vlfree);
+
+    app_cmd_map[QString("open")] = &app_open;
+    app_cmd_map[QString("close")] = &app_close;
+    app_cmd_map[QString("man")] = &app_man;
+
 }
 
 void
@@ -283,24 +370,6 @@ CADApp::closedb()
 	w->treeview->m->dbip = DBI_NULL;
 }
 
-int
-CADApp::register_gui_command(QString cmdname, gui_cmd_ptr func, QString role)
-{
-    if (role == QString()) {
-	if (gui_cmd_map.find(cmdname) != gui_cmd_map.end()) return -1;
-	gui_cmd_map.insert(cmdname, func);
-    }
-    if (role == QString("preprocess")) {
-	if (preprocess_cmd_map.find(cmdname) != preprocess_cmd_map.end()) return -1;
-	preprocess_cmd_map.insert(cmdname, func);
-    }
-    if (role == QString("postprocess")) {
-	if (postprocess_cmd_map.find(cmdname) != postprocess_cmd_map.end()) return -1;
-	postprocess_cmd_map.insert(cmdname, func);
-    }
-    return 0;
-}
-
 bool
 CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
@@ -436,78 +505,17 @@ CADApp::run_cmd(const QString &command)
 
     struct ged **gedpp = &gedp;
 
-    /* The "open" and close commands require a bit of
-     * awareness at this level, since the gedp pointer
-     * must respond to them and the canvas widget needs
-     * some info from the current gedp. */
+
+    // First, see if we have an application level command.
     int cmd_run = 0;
-    if (BU_STR_EQUAL(av[0], "open")) {
-	if (ac > 1) {
-	    if (*gedpp) {
-		ged_close(*gedpp);
-	    }
-	    int ret = opendb(av[1]);
-	    if (ret && console) {
-		bu_vls_sprintf(&msg, "Could not open %s as a .g file\n", av[1]) ;
-		console->printString(bu_vls_cstr(&msg));
-	    }
-	} else {
-	    if (console)
-		console->printString("Error: invalid ged_open call\n");
-	}
-	cmd_run = 1;
-    }
-    if (BU_STR_EQUAL(av[0], "close")) {
-	ged_close(*gedpp);
-	(*gedpp) = NULL;
-	if (w->canvas) {
-	    QtCADView *canvas = w->canvas;
-	    canvas->set_view(NULL);
-	    //canvas->dm_set = NULL;
-	    canvas->set_dm_current(NULL);
-	    canvas->set_base2local(NULL);
-	    canvas->set_local2base(NULL);
-	}
-	if (w->c4) {
-	    QtCADQuad *c4= w->c4;
-	    for (int i = 1; i < 5; i++) {
-		QtCADView *c = c4->get(i);
-		//c->dm_set = NULL;
-		c->set_view(NULL);
-		c->set_dm_current(NULL);
-		c->set_base2local(NULL);
-		c->set_local2base(NULL);
-	    }
-	}
-	if (console)
-	    console->printString("closed database\n");
+    if (app_cmd_map.contains(QString(av[0]))) {
+	app_cmd_ptr acmd = app_cmd_map.value(QString(av[0]));
+	(*acmd)((void *)this, ac, (const char **)av);
 	cmd_run = 1;
     }
 
-    /* The man command launches brlman in graphical mode
-     * to display the man page - GED has no knowledge of
-     * this, so handle it at this level.  Not entirely
-     * sure if we want to try to make man a GED command
-     * or not... */
-    if (BU_STR_EQUAL(av[0], "man")) {
-	int bac = (ac > 1) ? 5 : 4;
-	const char *bav[6];
-	char brlman[MAXPATHLEN] = {0};
-	bu_dir(brlman, MAXPATHLEN, BU_DIR_BIN, "brlman", BU_DIR_EXT, NULL);
-	bav[0] = (const char *)brlman;
-	bav[1] = "-g";
-	bav[2] = "-S";
-	bav[3] = "n";
-	bav[4] = (ac > 1) ? av[1] : NULL;
-	bav[5] = NULL;
-	struct bu_process *p = NULL;
-	bu_process_exec(&p, bav[0], bac, (const char **)bav, 0, 0);
-	if (bu_process_pid(p) == -1 && console) {
-	    console->printString("Failed to launch man page viewer\n") ;
-	}
-	cmd_run = 1;
-    }
 
+    // If it wasn't an app level command, try it as a GED command.
     if (!cmd_run) {
 	bool ret = ged_run_cmd(&msg, ac, (const char **)av);
 	if (bu_vls_strlen(&msg) > 0 && console) {
