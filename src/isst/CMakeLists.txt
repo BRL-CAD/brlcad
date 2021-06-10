@@ -56,8 +56,6 @@ set(isst_ignore_srcs
 
 CMAKEFILES(${isst_ignore_srcs})
 
-add_subdirectory(dmtest)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

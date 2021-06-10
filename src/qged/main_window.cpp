@@ -44,7 +44,6 @@ void QBDockWidget::toWindow(bool floating)
                 Qt::WindowMaximizeButtonHint |
 		Qt::WindowCloseButtonHint
 		);
-	// undo "setWindowFlags" hiding the widget
 	show();
     }
 }
@@ -67,6 +66,16 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     cad_open = new QAction("Open", this);
     QObject::connect(cad_open, &QAction::triggered, this, &BRLCAD_MainWindow::open_file);
     file_menu->addAction(cad_open);
+
+    cad_save_settings = new QAction("Save Settings", this);
+    connect(cad_save_settings, &QAction::triggered, this, &BRLCAD_MainWindow::write_settings);
+    file_menu->addAction(cad_save_settings);
+
+#if 0
+    cad_save_image = new QAction("Save Image", this);
+    connect(cad_save_image, &QAction::triggered, this, &BRLCAD_MainWindow::save_image);
+    file_menu->addAction(cad_save_image);
+#endif
 
     cad_exit = new QAction("Exit", this);
     QObject::connect(cad_exit, &QAction::triggered, this, &BRLCAD_MainWindow::close);
@@ -98,7 +107,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // of widgets rather than hardcoded statics, so plugins can define their own
     // graphical elements...
 
-    vcd = new QBDockWidget("View Controls", this);
+    vcd = new QDockWidget("View Controls", this);
     addDockWidget(Qt::RightDockWidgetArea, vcd);
     vcd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(vcd->toggleViewAction());
@@ -108,7 +117,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // https://stackoverflow.com/a/56852841/2037687
     QTimer::singleShot(0, vc, &CADViewControls::reflow);
 
-    icd = new QBDockWidget("Instance Editing", this);
+    icd = new QDockWidget("Instance Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, icd);
     icd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(icd->toggleViewAction());
@@ -118,7 +127,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // https://stackoverflow.com/a/56852841/2037687
     QTimer::singleShot(0, ic, &CADInstanceEdit::reflow);
 
-    ocd = new QBDockWidget("Object Editing", this);
+    ocd = new QDockWidget("Object Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, ocd);
     ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(ocd->toggleViewAction());
@@ -140,7 +149,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(oc, &CADPrimitiveEdit::current, ic, &CADInstanceEdit::makeCurrent);
     connect(oc, &CADPrimitiveEdit::current, oc, &CADPrimitiveEdit::makeCurrent);
 
-    QBDockWidget *sattrd = new QBDockWidget("Standard Attributes", this);
+    QDockWidget *sattrd = new QDockWidget("Standard Attributes", this);
     addDockWidget(Qt::RightDockWidgetArea, sattrd);
     sattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(sattrd->toggleViewAction());
@@ -149,7 +158,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     stdpropview->setModel(stdpropmodel);
     sattrd->setWidget(stdpropview);
 
-    QBDockWidget *uattrd = new QBDockWidget("User Attributes", this);
+    QDockWidget *uattrd = new QDockWidget("User Attributes", this);
     addDockWidget(Qt::RightDockWidgetArea, uattrd);
     uattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(uattrd->toggleViewAction());
@@ -249,6 +258,8 @@ BRLCAD_MainWindow::fallback3D()
 	return;
     }
 }
+
+
 
 void
 BRLCAD_MainWindow::run_cmd(const QString &command)
@@ -380,6 +391,25 @@ BRLCAD_MainWindow::open_file()
 	}
     }
 }
+
+void BRLCAD_MainWindow::readSettings()
+{
+    QSettings settings("BRL-CAD", "QGED");
+
+    settings.beginGroup("BRLCAD_MainWindow");
+    resize(settings.value("size", QSize(1100, 800)).toSize());
+    settings.endGroup();
+}
+
+void BRLCAD_MainWindow::write_settings()
+{
+    QSettings settings("BRL-CAD", "QGED");
+
+    settings.beginGroup("BRLCAD_MainWindow");
+    settings.setValue("size", size());
+    settings.endGroup();
+}
+
 
 /*
  * Local Variables:

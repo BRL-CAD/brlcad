@@ -138,10 +138,10 @@ int main(int argc, char *argv[])
     // introducing any of our own.  In particular, that is where the current GED
     // state (gedp) lives.
     CADApp app(argc, argv);
-    app.setApplicationName("BRL-CAD");
-    app.setApplicationVersion(brlcad_version());
-    app.setOrganizationDomain("brlcad.org");
     app.setOrganizationName("BRL-CAD");
+    app.setOrganizationDomain("brlcad.org");
+    app.setApplicationName("QGED");
+    app.setApplicationVersion(brlcad_version());
     app.initialize();
 
     EditStateFilter *efilter = new EditStateFilter();
@@ -155,6 +155,15 @@ int main(int argc, char *argv[])
 
     // The main window defines the primary BRL-CAD interface.
     app.w = new BRLCAD_MainWindow(swrast_mode, quad_mode);
+
+    // Read any saved settings
+    app.w->readSettings();
+
+    // (Debugging) Report settings filename
+    QSettings dmsettings("BRL-CAD", "QGED");
+    if (bu_file_exists(dmsettings.fileName().toStdString().c_str(), NULL)) {
+	std::cout << "Reading settings from " << dmsettings.fileName().toStdString() << "\n";
+    }
 
     // Disable animated redrawing to minimize performance issues
     app.w->setAnimated(false);

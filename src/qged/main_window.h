@@ -26,22 +26,24 @@
 
 #ifndef BRLCAD_MAINWINDOW_H
 #define BRLCAD_MAINWINDOW_H
-#include <QMainWindow>
+#include <QAction>
 #include <QDockWidget>
+#include <QFileDialog>
+#include <QHeaderView>
+#include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
-#include <QAction>
-#include <QStatusBar>
-#include <QFileDialog>
-#include <QTreeView>
-#include <QHeaderView>
 #include <QObject>
+#include <QSettings>
+#include <QStatusBar>
+#include <QTreeView>
 
-#include "palettes.h"
 #include "qtcad/QtCADQuad.h"
 #include "qtcad/QtCADTree.h"
 #include "qtcad/QtCADView.h"
 #include "qtcad/QtConsole.h"
+
+#include "palettes.h"
 
 // https://stackoverflow.com/q/44707344/2037687
 class QBDockWidget : public QDockWidget
@@ -72,6 +74,9 @@ class BRLCAD_MainWindow : public QMainWindow
 
     public slots:
 	void run_cmd(const QString &command);
+        void readSettings();
+        void write_settings();
+        //void save_image();
 
     private slots:
 	void open_file();
@@ -79,15 +84,17 @@ class BRLCAD_MainWindow : public QMainWindow
     private:
 	QMenu *file_menu;
 	QAction *cad_open;
+	QAction *cad_save_settings;
+	//QAction *cad_save_image;
 	QAction *cad_exit;
 	QMenu *view_menu;
 	QMenu *help_menu;
 
 	QBDockWidget *console_dock;
 	QBDockWidget *tree_dock;
-	QBDockWidget *vcd;
-	QBDockWidget *icd;
-	QBDockWidget *ocd;
+	QDockWidget *vcd;
+	QDockWidget *icd;
+	QDockWidget *ocd;
 
 	CADTreeModel *treemodel;
 	QTreeView *treeview;
