@@ -44,21 +44,52 @@
 #include "ged.h"
 #endif
 
-class CADAttributesNode
+class QKeyValNode
 {
 public:
-    CADAttributesNode(CADAttributesNode *aParent=0);
-    ~CADAttributesNode();
+    QKeyValNode(QKeyValNode *aParent=0);
+    ~QKeyValNode();
 
     QString name;
     QString value;
     int attr_type;
 
-    CADAttributesNode *parent;
-    QList<CADAttributesNode*> children;
+    QKeyValNode *parent;
+    QList<QKeyValNode*> children;
 };
 
-class CADAttributesModel : public QAbstractItemModel
+// "Building-block" class for making a Key/Value display froma TreeModel+TreeView
+class QKeyValModel : public QAbstractItemModel
+{
+    Q_OBJECT
+
+    public:
+	QKeyValModel(QObject *p = NULL);
+	~QKeyValModel();
+
+	QModelIndex index(int row, int column, const QModelIndex &parent) const;
+	QModelIndex parent(const QModelIndex &child) const;
+	int rowCount(const QModelIndex &child) const;
+	int columnCount(const QModelIndex &child) const;
+
+	void setRootNode(QKeyValNode *root);
+	QKeyValNode* rootNode();
+
+	QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+
+	QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+	bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
+
+	QKeyValNode *m_root;
+	QModelIndex NodeIndex(QKeyValNode *node) const;
+	QKeyValNode *IndexNode(const QModelIndex &index) const;
+
+	QKeyValNode *add_pair(const char *name, const char *value, QKeyValNode *curr_node, int type);
+
+	int NodeRow(QKeyValNode *node) const;
+};
+
+class CADAttributesModel : public QKeyValModel
 {
     Q_OBJECT
 
@@ -66,39 +97,18 @@ class CADAttributesModel : public QAbstractItemModel
 	explicit CADAttributesModel(QObject *parent = 0, struct db_i *dbip = DBI_NULL, struct directory *dp = RT_DIR_NULL, int show_std = 0, int show_user = 0);
 	~CADAttributesModel();
 
-	QModelIndex index(int row, int column, const QModelIndex &parent) const;
-	QModelIndex parent(const QModelIndex &child) const;
-	int rowCount(const QModelIndex &child) const;
-	int columnCount(const QModelIndex &child) const;
-
-	void setRootNode(CADAttributesNode *root);
-	CADAttributesNode* rootNode();
-
 	bool hasChildren(const QModelIndex &parent) const;
-	QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-
-	QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
-	bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
-
-	CADAttributesNode *m_root;
-	QModelIndex NodeIndex(CADAttributesNode *node) const;
-	CADAttributesNode *IndexNode(const QModelIndex &index) const;
-
-    public:  // BRL-CAD specific operations
 	int update(struct db_i *new_dbip, struct directory *dp);
 
     public slots:
 	void refresh(const QModelIndex &idx);
 
     protected:
-
-	int NodeRow(CADAttributesNode *node) const;
 	bool canFetchMore(const QModelIndex &parent) const;
 	void fetchMore(const QModelIndex &parent);
 
     private:
-	CADAttributesNode *add_attribute(const char *name, const char *value, CADAttributesNode *curr_node, int type);
-	void add_Children(const char *name, CADAttributesNode *curr_node);
+	void add_Children(const char *name, QKeyValNode *curr_node);
 	struct db_i *current_dbip;
 	struct directory *current_dp;
 	struct bu_attribute_value_set *avs;
@@ -106,24 +116,24 @@ class CADAttributesModel : public QAbstractItemModel
 	int user_visible;
 };
 
-class GAttributeDelegate : public QStyledItemDelegate
+class QKeyValDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 
     public:
-	GAttributeDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
+	QKeyValDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
 
 	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 	QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
 };
 
-class CADAttributesView : public QTreeView
+class QKeyValView : public QTreeView
 {
     Q_OBJECT
 
     public:
-	CADAttributesView(QWidget *pparent, int decorate_tree = 0);
-	~CADAttributesView() {};
+	QKeyValView(QWidget *pparent, int decorate_tree = 0);
+	~QKeyValView() {};
 };
 
 #endif /*CAD_ATTRIBUTES_H*/

@@ -181,7 +181,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     sattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(sattrd->toggleViewAction());
     CADAttributesModel *stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
-    CADAttributesView *stdpropview = new CADAttributesView(this, 1);
+    QKeyValView *stdpropview = new QKeyValView(this, 1);
     stdpropview->setModel(stdpropmodel);
     sattrd->setWidget(stdpropview);
 
@@ -190,7 +190,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     uattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(uattrd->toggleViewAction());
     CADAttributesModel *userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
-    CADAttributesView *userpropview = new CADAttributesView(this, 0);
+    QKeyValView *userpropview = new QKeyValView(this, 0);
     userpropview->setModel(userpropmodel);
     uattrd->setWidget(userpropview);
 
