@@ -38,7 +38,7 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     if (!c || !c->w)
 	return false;
     QWidget *vcp = c->w->vc->tpalette;
-    CADViewControls *v = c->w->vc;
+    CADPalette *v = c->w->vc;
     if (vcp) {
 	QRect lrect = vcp->geometry();
 	QPoint gpos = m_e->globalPos();
@@ -49,7 +49,7 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
 	}
     }
     QWidget *icp = c->w->ic->tpalette;
-    CADInstanceEdit *ed = c->w->ic;
+    CADPalette *ed = c->w->ic;
     if (icp) {
 	QRect lrect = icp->geometry();
 	QPoint gpos = m_e->globalPos();
@@ -60,7 +60,7 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
 	}
     }
     QWidget *ocp = c->w->oc->tpalette;
-    CADPrimitiveEdit *pd = c->w->oc;
+    CADPalette *pd = c->w->oc;
     if (ocp) {
 	QRect lrect = ocp->geometry();
 	QPoint gpos = m_e->globalPos();

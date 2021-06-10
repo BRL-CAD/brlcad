@@ -68,9 +68,9 @@ class BRLCAD_MainWindow : public QMainWindow
 	void fallback3D();
 
 	QtConsole *console;
-	CADViewControls *vc;
-	CADInstanceEdit *ic;
-	CADPrimitiveEdit *oc;
+	CADPalette *vc;
+	CADPalette *ic;
+	CADPalette *oc;
 
     public slots:
 	void run_cmd(const QString &command);

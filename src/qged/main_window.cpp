@@ -111,43 +111,43 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     addDockWidget(Qt::RightDockWidgetArea, vcd);
     vcd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(vcd->toggleViewAction());
-    vc = new CADViewControls(this);
+    vc = new CADPalette(0, this);
     vcd->setWidget(vc);
     // Make sure the buttons are all visible - trick from
     // https://stackoverflow.com/a/56852841/2037687
-    QTimer::singleShot(0, vc, &CADViewControls::reflow);
+    QTimer::singleShot(0, vc, &CADPalette::reflow);
 
     icd = new QDockWidget("Instance Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, icd);
     icd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(icd->toggleViewAction());
-    ic = new CADInstanceEdit(this);
+    ic = new CADPalette(1, this);
     icd->setWidget(ic);
     // Make sure the buttons are all visible - trick from
     // https://stackoverflow.com/a/56852841/2037687
-    QTimer::singleShot(0, ic, &CADInstanceEdit::reflow);
+    QTimer::singleShot(0, ic, &CADPalette::reflow);
 
     ocd = new QDockWidget("Object Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, ocd);
     ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(ocd->toggleViewAction());
-    oc = new CADPrimitiveEdit(this);
+    oc = new CADPalette(2, this);
     ocd->setWidget(oc);
     // Make sure the buttons are all visible - trick from
     // https://stackoverflow.com/a/56852841/2037687
-    QTimer::singleShot(0, oc, &CADPrimitiveEdit::reflow);
+    QTimer::singleShot(0, oc, &CADPalette::reflow);
 
     // The view and edit panels have consequences for the tree widget, so each
     // needs to know which one is current
-    connect(vc, &CADViewControls::current, vc, &CADViewControls::makeCurrent);
-    connect(vc, &CADViewControls::current, ic, &CADInstanceEdit::makeCurrent);
-    connect(vc, &CADViewControls::current, oc, &CADPrimitiveEdit::makeCurrent);
-    connect(ic, &CADInstanceEdit::current, vc, &CADViewControls::makeCurrent);
-    connect(ic, &CADInstanceEdit::current, ic, &CADInstanceEdit::makeCurrent);
-    connect(ic, &CADInstanceEdit::current, oc, &CADPrimitiveEdit::makeCurrent);
-    connect(oc, &CADPrimitiveEdit::current, vc, &CADViewControls::makeCurrent);
-    connect(oc, &CADPrimitiveEdit::current, ic, &CADInstanceEdit::makeCurrent);
-    connect(oc, &CADPrimitiveEdit::current, oc, &CADPrimitiveEdit::makeCurrent);
+    connect(vc, &CADPalette::current, vc, &CADPalette::makeCurrent);
+    connect(vc, &CADPalette::current, ic, &CADPalette::makeCurrent);
+    connect(vc, &CADPalette::current, oc, &CADPalette::makeCurrent);
+    connect(ic, &CADPalette::current, vc, &CADPalette::makeCurrent);
+    connect(ic, &CADPalette::current, ic, &CADPalette::makeCurrent);
+    connect(ic, &CADPalette::current, oc, &CADPalette::makeCurrent);
+    connect(oc, &CADPalette::current, vc, &CADPalette::makeCurrent);
+    connect(oc, &CADPalette::current, ic, &CADPalette::makeCurrent);
+    connect(oc, &CADPalette::current, oc, &CADPalette::makeCurrent);
 
     QDockWidget *sattrd = new QDockWidget("Standard Attributes", this);
     addDockWidget(Qt::RightDockWidgetArea, sattrd);
@@ -218,9 +218,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     treemodel->interaction_mode = 0;
     ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
-    connect(vc, &CADViewControls::interaction_mode, treemodel, &CADTreeModel::mode_change);
-    connect(ic, &CADInstanceEdit::interaction_mode, treemodel, &CADTreeModel::mode_change);
-    connect(oc, &CADPrimitiveEdit::interaction_mode, treemodel, &CADTreeModel::mode_change);
+    connect(vc, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
+    connect(ic, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
+    connect(oc, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
 
     QObject::connect(treeview, &CADTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
     QObject::connect(treeview, &CADTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);

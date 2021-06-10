@@ -1,4 +1,4 @@
-/*                  C A D A C C O R D I O N . H
+/*                    C A D P A L E T T E . H
  * BRL-CAD
  *
  * Copyright (c) 2020-2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadaccordion.h
+/** @file cadpalette.h
  *
  * Brief description
  *
@@ -28,16 +28,17 @@
 #include <iostream>
 #include "qtcad/QToolPalette.h"
 
-class CADViewControls : public QWidget
+class CADPalette : public QWidget
 {
     Q_OBJECT
 
     public:
-	CADViewControls(QWidget *pparent = 0);
-	~CADViewControls();
+	CADPalette(int mode = 0, QWidget *pparent = 0);
+	~CADPalette();
+
+	//void addPlugin(QToolPaletteElement *e);
 
 	QToolPalette *tpalette;
-	QWidget *info_view;
 
     signals:
 	void current(QWidget *);
@@ -47,47 +48,8 @@ class CADViewControls : public QWidget
 	void reflow();
 	void makeCurrent(QWidget *);
 
-};
-
-class CADInstanceEdit : public QWidget
-{
-    Q_OBJECT
-
-    public:
-	CADInstanceEdit(QWidget *pparent = 0);
-	~CADInstanceEdit();
-
-	QToolPalette *tpalette;
-	QWidget *info_view;
-
-    signals:
-	void current(QWidget *);
-	void interaction_mode(int);
-
-    public slots:
-	void reflow();
-	void makeCurrent(QWidget *);
-
-};
-
-class CADPrimitiveEdit : public QWidget
-{
-    Q_OBJECT
-
-    public:
-	CADPrimitiveEdit(QWidget *pparent = 0);
-	~CADPrimitiveEdit();
-
-	QToolPalette *tpalette;
-	QWidget *shape_properties;
-
-    signals:
-	void current(QWidget *);
-	void interaction_mode(int);
-
-    public slots:
-	void reflow();
-	void makeCurrent(QWidget *);
+    private:
+	int m_mode = 0;
 };
 
 #endif /* CADPALETTES_H */
