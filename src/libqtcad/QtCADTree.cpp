@@ -1006,9 +1006,27 @@ QSize GObjectDelegate::sizeHint(const QStyleOptionViewItem &option, const QModel
 }
 
 
-CADTreeView::CADTreeView(QWidget *pparent) : QTreeView(pparent)
+CADTreeView::CADTreeView(QWidget *pparent, CADTreeModel *treemodel) : QTreeView(pparent)
 {
     this->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    m = treemodel;
+    m->cadtreeview = this;
+
+    setModel(treemodel);
+
+    setItemDelegate(new GObjectDelegate(this));
+
+    header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    header()->setStretchLastSection(true);
+    QObject::connect(this, &CADTreeView::expanded, this, &CADTreeView::tree_column_size);
+    QObject::connect(this, &CADTreeView::collapsed, this, &CADTreeView::tree_column_size);
+    QObject::connect(this, &CADTreeView::clicked, treemodel, &CADTreeModel::update_selected_node_relationships);
+    QObject::connect(this, &CADTreeView::expanded, treemodel, &CADTreeModel::expand_tree_node_relationships);
+    QObject::connect(this, &CADTreeView::collapsed, treemodel, &CADTreeModel::close_tree_node_relationships);
+    QObject::connect(this, &CADTreeView::customContextMenuRequested, (CADTreeView *)this, &CADTreeView::context_menu);
+    treemodel->populate(DBI_NULL);
+    treemodel->interaction_mode = 0;
 }
 
 void

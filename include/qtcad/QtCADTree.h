@@ -152,7 +152,7 @@ class QTCAD_EXPORT CADTreeView : public QTreeView
     Q_OBJECT
 
     public:
-	CADTreeView(QWidget *pparent);
+	CADTreeView(QWidget *pparent, CADTreeModel *treemodel);
 	~CADTreeView() {};
 
 	QModelIndex selected();

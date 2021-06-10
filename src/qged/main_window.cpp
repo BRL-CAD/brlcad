@@ -226,24 +226,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(tree_dock, &QBDockWidget::topLevelChanged, tree_dock, &QBDockWidget::toWindow);
 
     treemodel = new CADTreeModel();
-    treeview = new CADTreeView(tree_dock);
-    treemodel->cadtreeview = (CADTreeView *)treeview;
-    ((CADTreeView *)treeview)->m = treemodel;
-
+    treeview = new CADTreeView(tree_dock, treemodel);
     tree_dock->setWidget(treeview);
-    treeview->setModel(treemodel);
-    treeview->setItemDelegate(new GObjectDelegate((CADTreeView *)treeview));
-
-    treeview->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    treeview->header()->setStretchLastSection(true);
-    QObject::connect(treeview, &CADTreeView::expanded, (CADTreeView *)treeview, &CADTreeView::tree_column_size);
-    QObject::connect(treeview, &CADTreeView::collapsed, (CADTreeView *)treeview, &CADTreeView::tree_column_size);
-    QObject::connect(treeview, &CADTreeView::clicked, treemodel, &CADTreeModel::update_selected_node_relationships);
-    QObject::connect(treeview, &CADTreeView::expanded, treemodel, &CADTreeModel::expand_tree_node_relationships);
-    QObject::connect(treeview, &CADTreeView::collapsed, treemodel, &CADTreeModel::close_tree_node_relationships);
-    QObject::connect(treeview, &CADTreeView::customContextMenuRequested, (CADTreeView *)treeview, &CADTreeView::context_menu);
-    treemodel->populate(DBI_NULL);
-    treemodel->interaction_mode = 0;
 
     connect(vc, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
     connect(ic, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
@@ -251,8 +235,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     QObject::connect(treeview, &CADTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
     QObject::connect(treeview, &CADTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
-
-
 
     QObject::connect((CADApp *)qApp, &CADApp::db_change, treemodel, &CADTreeModel::refresh);
     if (canvas) {
