@@ -191,3 +191,6 @@ https://www.qt.io/blog/versionless-cmake-targets-qt-5.15
 
 Tried the following but wasn't able to get it to work...
 https://www.qtcentre.org/threads/58630-Dock-Widget-Custom-Resizing
+
+The following is a handy tool:
+https://github.com/robertknight/Qt-Inspector
