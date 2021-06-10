@@ -67,9 +67,17 @@ simpler integration than the all-up libtcl build...
 
 If it doesn't work, look into https://www.tcl.tk/community/tcl2019/assets/talk160/Paper.pdf
 
-14.  Man page viewer as libqtcad widget
+x 14.  Man page viewer as libqtcad widget
 
-15.  Qt .g tree hierarchy widget into libqtcad
+       Ended up doing this a different way - making a Qt version of the brlman
+       executable.  That is then run as a separate process by the man command.
+
+x  15.  Qt .g tree hierarchy widget into libqtcad
+
+       Widget needs some cleanup (particularly line drawing on opened trees, may
+       just eliminate that completely...)  Also, still doesn't support dynamic
+       geometry in the .g file.  However, has been moved to libqtcad so this
+       item is done.
 
 16.  Qt palette widget - get plugin design finalized, into libqtcad
 
