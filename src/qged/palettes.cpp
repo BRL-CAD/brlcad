@@ -41,7 +41,7 @@ CADViewControls::CADViewControls(QWidget *pparent)
 	QString obj_label("tool controls ");
 	obj_label.append(QString::number(i));
 	QPushButton *obj_control = new QPushButton(obj_label);
-	QToolPaletteElement *el = new QToolPaletteElement(0, obj_icon, obj_control);
+	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
 	tpalette->addElement(el);
     }
     mlayout->addWidget(tpalette);
@@ -95,7 +95,7 @@ CADInstanceEdit::CADInstanceEdit(QWidget *pparent)
 	QString obj_label("tool controls ");
 	obj_label.append(QString::number(i));
 	QPushButton *obj_control = new QPushButton(obj_label);
-	QToolPaletteElement *el = new QToolPaletteElement(0, obj_icon, obj_control);
+	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
 	tpalette->addElement(el);
     }
     mlayout->addWidget(tpalette);
@@ -151,7 +151,7 @@ CADPrimitiveEdit::CADPrimitiveEdit(QWidget *pparent)
 	QString obj_label("tool controls ");
 	obj_label.append(QString::number(i));
 	QPushButton *obj_control = new QPushButton(obj_label);
-	QToolPaletteElement *el = new QToolPaletteElement(0, obj_icon, obj_control);
+	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
 	tpalette->addElement(el);
     }
     mlayout->addWidget(tpalette);

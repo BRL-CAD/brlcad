@@ -45,7 +45,7 @@ class QTCAD_EXPORT QToolPaletteButton: public QPushButton
     Q_OBJECT
 
     public:
-	QToolPaletteButton(QWidget *bparent = 0, QIcon *iicon = 0, QToolPaletteElement *eparent = 0);
+	QToolPaletteButton(QWidget *bparent, QIcon *iicon = 0, QToolPaletteElement *eparent = 0);
 	~QToolPaletteButton(){};
 
 	void setButtonElement(QIcon *iicon, QToolPaletteElement *n_element);
@@ -66,7 +66,7 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
     Q_OBJECT
 
     public:
-	QToolPaletteElement(QWidget *eparent = 0, QIcon *iicon = 0, QWidget *control = 0);
+	QToolPaletteElement(QIcon *iicon = 0, QWidget *control = 0);
 	~QToolPaletteElement();
 
 	void setButton(QToolPaletteButton *n_button);

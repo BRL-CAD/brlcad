@@ -50,7 +50,7 @@ QToolPaletteButton::setButtonElement(QIcon *iicon, QToolPaletteElement *n_elemen
 }
 
 
-QToolPaletteElement::QToolPaletteElement(QWidget *eparent, QIcon *iicon, QWidget *control) : QWidget(eparent)
+QToolPaletteElement::QToolPaletteElement(QIcon *iicon, QWidget *control)
 {
     button = new QToolPaletteButton(this, iicon, this);
     button->setCheckable(true);
