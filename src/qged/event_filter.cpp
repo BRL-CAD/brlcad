@@ -38,35 +38,49 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     if (!c || !c->w)
 	return false;
     QWidget *vcp = c->w->vc->tpalette;
+    CADViewControls *v = c->w->vc;
     if (vcp) {
 	QRect lrect = vcp->geometry();
 	QPoint gpos = m_e->globalPos();
 	QPoint mpos = vcp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
-	    CADViewControls *v = c->w->vc;
 	    emit v->current(v);
 	    return false;
 	}
     }
     QWidget *icp = c->w->ic->tpalette;
+    CADInstanceEdit *ed = c->w->ic;
     if (icp) {
 	QRect lrect = icp->geometry();
 	QPoint gpos = m_e->globalPos();
 	QPoint mpos = icp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
-	    CADInstanceEdit *ed = c->w->ic;
 	    emit ed->current(ed);
 	    return false;
 	}
     }
     QWidget *ocp = c->w->oc->tpalette;
+    CADPrimitiveEdit *pd = c->w->oc;
     if (ocp) {
 	QRect lrect = ocp->geometry();
 	QPoint gpos = m_e->globalPos();
 	QPoint mpos = ocp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
-	    CADPrimitiveEdit *pd = c->w->oc;
 	    emit pd->current(pd);
+	    return false;
+	}
+    }
+
+    QWidget *cw = c->w->console;
+    if (cw) {
+	QRect lrect = cw->geometry();
+	QPoint gpos = m_e->globalPos();
+	QPoint mpos = cw->mapFromGlobal(gpos);
+	if (lrect.contains(mpos)) {
+	    // Clear all selections if we click in the console
+	    v->makeCurrent(NULL);
+	    ed->makeCurrent(NULL);
+	    pd->makeCurrent(NULL);
 	    return false;
 	}
     }

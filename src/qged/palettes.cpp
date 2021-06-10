@@ -55,10 +55,10 @@ void
 CADViewControls::makeCurrent(QWidget *w)
 {
     if (w == this) {
-	std::cout << "View current\n";
+	this->setStyleSheet("border: 1px solid rgb(0, 0, 100)");
 	emit interaction_mode(0);
     } else {
-	std::cout << "View not current\n";
+	this->setStyleSheet("");
     }
 }
 
@@ -102,10 +102,10 @@ void
 CADInstanceEdit::makeCurrent(QWidget *w)
 {
     if (w == this) {
-	std::cout << "Instance current\n";
+	this->setStyleSheet("border: 1px solid rgb(0, 0, 100)");
 	emit interaction_mode(1);
     } else {
-	std::cout << "Instance not current\n";
+	this->setStyleSheet("");
     }
 }
 
@@ -150,10 +150,10 @@ void
 CADPrimitiveEdit::makeCurrent(QWidget *w)
 {
     if (w == this) {
-	std::cout << "Prim current\n";
+	this->setStyleSheet("border: 1px solid rgb(0, 0, 100)");
 	emit interaction_mode(2);
     } else {
-	std::cout << "Prim not current\n";
+	this->setStyleSheet("");
     }
 }
 
