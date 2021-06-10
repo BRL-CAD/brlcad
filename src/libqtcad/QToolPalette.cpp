@@ -220,7 +220,12 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 	    element->controls->show();
 	    selected = element;
 	    foreach(QToolPaletteElement *el, elements) {
-		if (el != selected)	el->button->setDown(false);
+		if (el != selected) {
+		    el->button->setDown(false);
+		    el->button->setStyleSheet("");
+		} else {
+		    el->button->setStyleSheet(selected_style);
+		}
 	    }
 	}
     }

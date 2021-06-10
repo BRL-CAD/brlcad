@@ -234,6 +234,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	QObject::connect((CADApp *)qApp, &CADApp::db_change, c4, &QtCADQuad::need_update);
     }
 
+    // We start out with the View Control panel as the current panel - by
+    // default we are viewing, not editing
+    vc->makeCurrent(vc);
 }
 
 bool

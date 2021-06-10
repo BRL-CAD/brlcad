@@ -71,20 +71,6 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
 	}
     }
 
-    QWidget *cw = c->w->console;
-    if (cw) {
-	QRect lrect = cw->geometry();
-	QPoint gpos = m_e->globalPos();
-	QPoint mpos = cw->mapFromGlobal(gpos);
-	if (lrect.contains(mpos)) {
-	    // Clear all selections if we click in the console
-	    v->makeCurrent(NULL);
-	    ed->makeCurrent(NULL);
-	    pd->makeCurrent(NULL);
-	    return false;
-	}
-    }
-
     return false;
 }
 

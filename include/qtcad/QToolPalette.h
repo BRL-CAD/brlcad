@@ -92,21 +92,23 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 
 	void resizeEvent(QResizeEvent *pevent);
 
+	QToolPaletteElement *selected;
+	QString selected_style = QString("");
+
    public slots:
 	void displayElement(QToolPaletteElement *);
 	void button_layout_resize();
 
-   private:
-      int always_selected;
-      int icon_width;
-      int icon_height;
-      QSplitter *splitter;
-      QWidget *button_container;
-      QFlowLayout *button_layout;
-      QWidget *control_container;
-      QVBoxLayout *control_layout;
-      QToolPaletteElement *selected;
-      QSet<QToolPaletteElement *> elements;
+    private:
+	int always_selected;
+	int icon_width;
+	int icon_height;
+	QSplitter *splitter;
+	QWidget *button_container;
+	QFlowLayout *button_layout;
+	QWidget *control_container;
+	QVBoxLayout *control_layout;
+	QSet<QToolPaletteElement *> elements;
 };
 
 #endif //QTOOLPALETTE_H

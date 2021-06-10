@@ -23,7 +23,6 @@
  *
  */
 
-#include <QPalette>
 #include <QColor>
 #include "palettes.h"
 
@@ -47,6 +46,13 @@ CADViewControls::CADViewControls(QWidget *pparent)
     }
     mlayout->addWidget(tpalette);
     mlayout->addWidget(info_view);
+
+    tpalette->selected_style = QString("border: 1px solid rgb(255, 255, 0)");
+    // Until the panel buttons are actually clicked on, we don't want the
+    // border to be yellow for the selected button - we are using that border
+    // color as a visual indicator that this panel is the active panel.
+    tpalette->selected->button->setStyleSheet("");
+
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
 }
@@ -55,10 +61,10 @@ void
 CADViewControls::makeCurrent(QWidget *w)
 {
     if (w == this) {
-	this->setStyleSheet("border: 1px solid rgb(61, 173, 232)");
+	this->tpalette->displayElement(this->tpalette->selected);
 	emit interaction_mode(0);
     } else {
-	this->setStyleSheet("");
+	this->tpalette->selected->button->setStyleSheet("");
     }
 }
 
@@ -94,6 +100,14 @@ CADInstanceEdit::CADInstanceEdit(QWidget *pparent)
     }
     mlayout->addWidget(tpalette);
     mlayout->addWidget(info_view);
+
+    tpalette->selected_style = QString("border: 1px solid rgb(255, 255, 0)");
+    // Until the panel buttons are actually clicked on, we don't want the
+    // border to be yellow for the selected button - we are using that border
+    // color as a visual indicator that this panel is the active panel.
+    tpalette->selected->button->setStyleSheet("");
+
+
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
 }
@@ -102,10 +116,10 @@ void
 CADInstanceEdit::makeCurrent(QWidget *w)
 {
     if (w == this) {
-	this->setStyleSheet("border: 1px solid rgb(61, 173, 232)");
+	this->tpalette->displayElement(this->tpalette->selected);
 	emit interaction_mode(1);
     } else {
-	this->setStyleSheet("");
+	this->tpalette->selected->button->setStyleSheet("");
     }
 }
 
@@ -142,6 +156,13 @@ CADPrimitiveEdit::CADPrimitiveEdit(QWidget *pparent)
     }
     mlayout->addWidget(tpalette);
     mlayout->addWidget(shape_properties);
+
+    tpalette->selected_style = QString("border: 1px solid rgb(255, 255, 0)");
+    // Until the panel buttons are actually clicked on, we don't want the
+    // border to be yellow for the selected button - we are using that border
+    // color as a visual indicator that this panel is the active panel.
+    tpalette->selected->button->setStyleSheet("");
+
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
 }
@@ -150,10 +171,10 @@ void
 CADPrimitiveEdit::makeCurrent(QWidget *w)
 {
     if (w == this) {
-	this->setStyleSheet("border: 1px solid rgb(61, 173, 232)");
+	this->tpalette->displayElement(this->tpalette->selected);
 	emit interaction_mode(2);
     } else {
-	this->setStyleSheet("");
+	this->tpalette->selected->button->setStyleSheet("");
     }
 }
 
