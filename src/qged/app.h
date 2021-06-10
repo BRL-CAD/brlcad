@@ -82,7 +82,7 @@ class CADApp : public QApplication
 
     public:
 	BRLCAD_MainWindow *w = NULL;
-	QString current_file;
+	QString db_filename;
 
     private:
 	QMap<QString, app_cmd_ptr> app_cmd_map;

@@ -124,8 +124,14 @@ app_open(void *p, int argc, const char **argv)
 	    bu_vls_free(&msg);
 	}
     } else {
-	if (console)
-	    console->printString("Error: invalid ged_open call\n");
+	if (console) {
+	    if (ap->db_filename.length()) {
+		console->printString(ap->db_filename);
+		console->printString("\n");
+	    } else {
+		console->printString("No file specified and no file open.\n");
+	    }
+	}
     }
 
     return 0;
@@ -135,10 +141,8 @@ extern "C" int
 app_close(void *p, int UNUSED(argc), const char **UNUSED(argv))
 {
     CADApp *ap = (CADApp *)p;
-    struct ged **gedpp = &ap->gedp;
     QtConsole *console = ap->w->console;
-    ged_close(*gedpp);
-    (*gedpp) = NULL;
+    ap->closedb();
     if (ap->w->canvas) {
 	QtCADView *canvas = ap->w->canvas;
 	canvas->set_view(NULL);
@@ -194,6 +198,7 @@ CADApp::initialize()
     gedp = GED_NULL;
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
+    // TODO - eventually, load these as plugins
     app_cmd_map[QString("open")] = &app_open;
     app_cmd_map[QString("close")] = &app_close;
     app_cmd_map[QString("man")] = &app_man;
@@ -250,8 +255,15 @@ CADApp::opendb(QString filename)
     if (!gedp)
 	return 3;
 
+    // We opened something - record the full path
+    char fp[MAXPATHLEN];
+    bu_file_realpath(g_path.toLocal8Bit(), fp);
+    db_filename = QString(fp);
+
+    // Update reference counts
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
+    // Connect the wires with the view(s)
     if (w->canvas) {
 	BU_GET(gedp->ged_gvp, struct bview);
 	bv_init(gedp->ged_gvp);
@@ -318,8 +330,6 @@ CADApp::opendb(QString filename)
 #endif
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
-    current_file = filename;
-
     if (w && w->treeview)
 	w->treeview->m->dbip = dbip();
 
@@ -365,7 +375,7 @@ CADApp::closedb()
         BU_PUT(gedp, struct ged);
     }
     gedp = GED_NULL;
-    current_file.clear();
+    db_filename.clear();
     if (w && w->treeview)
 	w->treeview->m->dbip = DBI_NULL;
 }
