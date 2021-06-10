@@ -55,7 +55,7 @@ void
 CADViewControls::makeCurrent(QWidget *w)
 {
     if (w == this) {
-	this->setStyleSheet("border: 1px solid rgb(0, 0, 100)");
+	this->setStyleSheet("border: 1px solid rgb(61, 173, 232)");
 	emit interaction_mode(0);
     } else {
 	this->setStyleSheet("");
@@ -102,7 +102,7 @@ void
 CADInstanceEdit::makeCurrent(QWidget *w)
 {
     if (w == this) {
-	this->setStyleSheet("border: 1px solid rgb(0, 0, 100)");
+	this->setStyleSheet("border: 1px solid rgb(61, 173, 232)");
 	emit interaction_mode(1);
     } else {
 	this->setStyleSheet("");
@@ -150,7 +150,7 @@ void
 CADPrimitiveEdit::makeCurrent(QWidget *w)
 {
     if (w == this) {
-	this->setStyleSheet("border: 1px solid rgb(0, 0, 100)");
+	this->setStyleSheet("border: 1px solid rgb(61, 173, 232)");
 	emit interaction_mode(2);
     } else {
 	this->setStyleSheet("");
