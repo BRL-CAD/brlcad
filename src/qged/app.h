@@ -70,13 +70,17 @@ class CADApp : public QApplication
 	struct rt_wdb *wdbp();
 
 	BRLCAD_MainWindow *w = NULL;
-	CADTreeView *cadtreeview = NULL;
 
     signals:
-	void db_change();  // TODO - need this to carry some information about what has changed, if possible...
+	void db_change();
 	void view_change(struct bview **);
 
     public slots:
+	void open_file();
+	void run_cmd(const QString &command);
+        void readSettings();
+        void write_settings();
+
         void do_view_change(struct bview **);
 
     public:

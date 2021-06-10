@@ -67,6 +67,8 @@ class BRLCAD_MainWindow : public QMainWindow
 	bool isValid3D();
 	void fallback3D();
 
+	CADTreeView *treeview;
+	CADTreeModel *treemodel;
 	QtConsole *console;
 	CADPalette *vc;
 	CADPalette *ic;
@@ -76,13 +78,7 @@ class BRLCAD_MainWindow : public QMainWindow
         void view_change(struct bview **);
 
     public slots:
-	void run_cmd(const QString &command);
-        void readSettings();
-        void write_settings();
         //void save_image();
-
-    private slots:
-	void open_file();
 
     private:
 	QMenu *file_menu;
@@ -98,11 +94,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	QDockWidget *vcd;
 	QDockWidget *icd;
 	QDockWidget *ocd;
-
-	CADTreeModel *treemodel;
-	QTreeView *treeview;
-	QString db_file;
-
 
 };
 

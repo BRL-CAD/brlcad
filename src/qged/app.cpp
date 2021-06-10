@@ -233,7 +233,8 @@ CADApp::opendb(QString filename)
 
     current_file = filename;
 
-    cadtreeview->m->dbip = dbip();
+    if (w && w->treeview)
+	w->treeview->m->dbip = dbip();
 
     // Inform the world the database has changed
     emit db_change();
@@ -247,6 +248,29 @@ CADApp::opendb(QString filename)
 }
 
 void
+CADApp::open_file()
+{
+    const char *file_filters = "BRL-CAD (*.g *.asc);;Rhino (*.3dm);;STEP (*.stp *.step);;All Files (*)";
+    QString fileName = QFileDialog::getOpenFileName((QWidget *)this,
+	    "Open Geometry File",
+	    applicationDirPath(),
+	    file_filters,
+	    NULL,
+	    QFileDialog::DontUseNativeDialog);
+    if (!fileName.isEmpty()) {
+	int ret = opendb(fileName.toLocal8Bit());
+	if (w) {
+	    if (ret) {
+		w->statusBar()->showMessage("open failed");
+	    } else {
+		w->statusBar()->showMessage(fileName);
+	    }
+	}
+    }
+}
+
+
+void
 CADApp::closedb()
 {
     if (gedp != GED_NULL) {
@@ -255,7 +279,8 @@ CADApp::closedb()
     }
     gedp = GED_NULL;
     current_file.clear();
-    cadtreeview->m->dbip = DBI_NULL;
+    if (w && w->treeview)
+	w->treeview->m->dbip = DBI_NULL;
 }
 
 int
@@ -382,6 +407,127 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
     return ret;
 }
 
+void
+CADApp::run_cmd(const QString &command)
+{
+    if (!w)
+	return;
+
+    QtConsole *console = w->console;
+    if (BU_STR_EQUAL(command.toStdString().c_str(), "q"))
+	bu_exit(0, "exit");
+
+    if (BU_STR_EQUAL(command.toStdString().c_str(), "clear")) {
+	if (console) {
+	    console->clear();
+	    console->prompt("$ ");
+	}
+	return;
+    }
+
+    // make an argv array
+    struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&ged_prefixed, "%s", command.toStdString().c_str());
+    char *input = bu_strdup(bu_vls_addr(&ged_prefixed));
+    bu_vls_free(&ged_prefixed);
+    char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
+    int ac = bu_argv_from_string(av, strlen(input), input);
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+
+    struct ged **gedpp = &gedp;
+
+    /* The "open" and close commands require a bit of
+     * awareness at this level, since the gedp pointer
+     * must respond to them and the canvas widget needs
+     * some info from the current gedp. */
+    int cmd_run = 0;
+    if (BU_STR_EQUAL(av[0], "open")) {
+	if (ac > 1) {
+	    if (*gedpp) {
+		ged_close(*gedpp);
+	    }
+	    int ret = opendb(av[1]);
+	    if (ret && console) {
+		bu_vls_sprintf(&msg, "Could not open %s as a .g file\n", av[1]) ;
+		console->printString(bu_vls_cstr(&msg));
+	    }
+	} else {
+	    if (console)
+		console->printString("Error: invalid ged_open call\n");
+	}
+	cmd_run = 1;
+    }
+    if (BU_STR_EQUAL(av[0], "close")) {
+	ged_close(*gedpp);
+	(*gedpp) = NULL;
+	if (w->canvas) {
+	    QtCADView *canvas = w->canvas;
+	    canvas->set_view(NULL);
+	    //canvas->dm_set = NULL;
+	    canvas->set_dm_current(NULL);
+	    canvas->set_base2local(NULL);
+	    canvas->set_local2base(NULL);
+	}
+	if (w->c4) {
+	    QtCADQuad *c4= w->c4;
+	    for (int i = 1; i < 5; i++) {
+		QtCADView *c = c4->get(i);
+		//c->dm_set = NULL;
+		c->set_view(NULL);
+		c->set_dm_current(NULL);
+		c->set_base2local(NULL);
+		c->set_local2base(NULL);
+	    }
+	}
+	if (console)
+	    console->printString("closed database\n");
+	cmd_run = 1;
+    }
+
+    /* The man command launches brlman in graphical mode
+     * to display the man page - GED has no knowledge of
+     * this, so handle it at this level.  Not entirely
+     * sure if we want to try to make man a GED command
+     * or not... */
+    if (BU_STR_EQUAL(av[0], "man")) {
+	int bac = (ac > 1) ? 5 : 4;
+	const char *bav[6];
+	char brlman[MAXPATHLEN] = {0};
+	bu_dir(brlman, MAXPATHLEN, BU_DIR_BIN, "brlman", BU_DIR_EXT, NULL);
+	bav[0] = (const char *)brlman;
+	bav[1] = "-g";
+	bav[2] = "-S";
+	bav[3] = "n";
+	bav[4] = (ac > 1) ? av[1] : NULL;
+	bav[5] = NULL;
+	struct bu_process *p = NULL;
+	bu_process_exec(&p, bav[0], bac, (const char **)bav, 0, 0);
+	if (bu_process_pid(p) == -1 && console) {
+	    console->printString("Failed to launch man page viewer\n") ;
+	}
+	cmd_run = 1;
+    }
+
+    if (!cmd_run) {
+	bool ret = ged_run_cmd(&msg, ac, (const char **)av);
+	if (bu_vls_strlen(&msg) > 0 && console) {
+	    console->printString(bu_vls_cstr(&msg));
+	}
+	if (ret)
+	    emit view_change(&gedp->ged_gvp);
+    }
+    if (*gedpp) {
+	bu_vls_trunc(gedp->ged_result_str, 0);
+    }
+
+    bu_vls_free(&msg);
+    bu_free(input, "input copy");
+    bu_free(av, "input argv");
+
+    if (console)
+	console->prompt("$ ");
+
+}
 
 int
 CADApp::exec_console_app_in_window(QString command, QStringList options, QString lfile)
@@ -408,6 +554,29 @@ CADApp::exec_console_app_in_window(QString command, QStringList options, QString
 	out_win->exec();
     }
     return 0;
+}
+
+void
+CADApp::readSettings()
+{
+    QSettings settings("BRL-CAD", "QGED");
+
+    settings.beginGroup("BRLCAD_MainWindow");
+    if (w)
+	w->resize(settings.value("size", QSize(1100, 800)).toSize());
+    settings.endGroup();
+}
+
+void
+CADApp::write_settings()
+{
+    QSettings settings("BRL-CAD", "QGED");
+
+    if (w) {
+	settings.beginGroup("BRLCAD_MainWindow");
+	settings.setValue("size", w->size());
+	settings.endGroup();
+    }
 }
 
 /*

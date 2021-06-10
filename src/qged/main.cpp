@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
     app.w = new BRLCAD_MainWindow(swrast_mode, quad_mode);
 
     // Read any saved settings
-    app.w->readSettings();
+    app.readSettings();
 
     // (Debugging) Report settings filename
     QSettings dmsettings("BRL-CAD", "QGED");

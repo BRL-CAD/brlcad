@@ -64,11 +64,11 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // Create Menus
     file_menu = menuBar()->addMenu("File");
     cad_open = new QAction("Open", this);
-    QObject::connect(cad_open, &QAction::triggered, this, &BRLCAD_MainWindow::open_file);
+    QObject::connect(cad_open, &QAction::triggered, ((CADApp *)qApp), &CADApp::open_file);
     file_menu->addAction(cad_open);
 
     cad_save_settings = new QAction("Save Settings", this);
-    connect(cad_save_settings, &QAction::triggered, this, &BRLCAD_MainWindow::write_settings);
+    connect(cad_save_settings, &QAction::triggered, ((CADApp *)qApp), &CADApp::write_settings);
     file_menu->addAction(cad_save_settings);
 
 #if 0
@@ -216,8 +216,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // application, so rather than embedding the command execution logic in the
     // widget we use a signal/slot connection to have the main window's slot
     // execute the command.
-    // TODO - run_cmd probably belongs with CADApp, really...
-    QObject::connect(this->console, &QtConsole::executeCommand, this, &BRLCAD_MainWindow::run_cmd);
+    QObject::connect(this->console, &QtConsole::executeCommand, ((CADApp *)qApp), &CADApp::run_cmd);
 
     /* Geometry Tree */
     tree_dock = new QBDockWidget("Hierarchy", this);
@@ -245,7 +244,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QObject::connect(treeview, &CADTreeView::customContextMenuRequested, (CADTreeView *)treeview, &CADTreeView::context_menu);
     treemodel->populate(DBI_NULL);
     treemodel->interaction_mode = 0;
-    ((CADApp *)qApp)->cadtreeview = (CADTreeView *)treeview;
 
     connect(vc, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
     connect(ic, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
@@ -294,160 +292,6 @@ BRLCAD_MainWindow::fallback3D()
 	return;
     }
 }
-
-
-
-void
-BRLCAD_MainWindow::run_cmd(const QString &command)
-{
-    if (BU_STR_EQUAL(command.toStdString().c_str(), "q"))
-	bu_exit(0, "exit");
-
-    if (BU_STR_EQUAL(command.toStdString().c_str(), "clear")) {
-	console->clear();
-	console->prompt("$ ");
-	return;
-    }
-
-    // make an argv array
-    struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&ged_prefixed, "%s", command.toStdString().c_str());
-    char *input = bu_strdup(bu_vls_addr(&ged_prefixed));
-    bu_vls_free(&ged_prefixed);
-    char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
-    int ac = bu_argv_from_string(av, strlen(input), input);
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-
-    CADApp *bApp = qobject_cast<CADApp *>(qApp);
-    struct ged **gedpp = &bApp->gedp;
-
-    /* The "open" and close commands require a bit of
-     * awareness at this level, since the gedp pointer
-     * must respond to them and the canvas widget needs
-     * some info from the current gedp. */
-    int cmd_run = 0;
-    if (BU_STR_EQUAL(av[0], "open")) {
-	if (ac > 1) {
-	    if (*gedpp) {
-		ged_close(*gedpp);
-	    }
-	    int ret = ((CADApp *)qApp)->opendb(av[1]);
-	    if (ret) {
-		bu_vls_sprintf(&msg, "Could not open %s as a .g file\n", av[1]) ;
-		console->printString(bu_vls_cstr(&msg));
-	    }
-	} else {
-	    console->printString("Error: invalid ged_open call\n");
-	}
-	cmd_run = 1;
-    }
-    if (BU_STR_EQUAL(av[0], "close")) {
-	ged_close(*gedpp);
-	(*gedpp) = NULL;
-	if (canvas) {
-	    canvas->set_view(NULL);
-	    //canvas->dm_set = NULL;
-	    canvas->set_dm_current(NULL);
-	    canvas->set_base2local(NULL);
-	    canvas->set_local2base(NULL);
-	}
-	if (c4) {
-	    for (int i = 1; i < 5; i++) {
-		QtCADView *c = c4->get(i);
-		//c->dm_set = NULL;
-		c->set_view(NULL);
-		c->set_dm_current(NULL);
-		c->set_base2local(NULL);
-		c->set_local2base(NULL);
-	    }
-	}
-	console->printString("closed database\n");
-	cmd_run = 1;
-    }
-
-    /* The man command launches brlman in graphical mode
-     * to display the man page - GED has no knowledge of
-     * this, so handle it at this level.  Not entirely
-     * sure if we want to try to make man a GED command
-     * or not... */
-    if (BU_STR_EQUAL(av[0], "man")) {
-	int bac = (ac > 1) ? 5 : 4;
-	const char *bav[6];
-	char brlman[MAXPATHLEN] = {0};
-	bu_dir(brlman, MAXPATHLEN, BU_DIR_BIN, "brlman", BU_DIR_EXT, NULL);
-	bav[0] = (const char *)brlman;
-	bav[1] = "-g";
-	bav[2] = "-S";
-	bav[3] = "n";
-	bav[4] = (ac > 1) ? av[1] : NULL;
-	bav[5] = NULL;
-	struct bu_process *p = NULL;
-	bu_process_exec(&p, bav[0], bac, (const char **)bav, 0, 0);
-	if (bu_process_pid(p) == -1) {
-	    console->printString("Failed to launch man page viewer\n") ;
-	}
-	cmd_run = 1;
-    }
-
-    if (!cmd_run) {
-	bool ret = bApp->ged_run_cmd(&msg, ac, (const char **)av);
-	if (bu_vls_strlen(&msg) > 0) {
-	    console->printString(bu_vls_cstr(&msg));
-	}
-	if (ret)
-	    emit view_change(&bApp->gedp->ged_gvp);
-    }
-    if (*gedpp) {
-	bu_vls_trunc(bApp->gedp->ged_result_str, 0);
-    }
-
-    bu_vls_free(&msg);
-    bu_free(input, "input copy");
-    bu_free(av, "input argv");
-
-    console->prompt("$ ");
-}
-
-
-void
-BRLCAD_MainWindow::open_file()
-{
-    const char *file_filters = "BRL-CAD (*.g *.asc);;Rhino (*.3dm);;STEP (*.stp *.step);;All Files (*)";
-    QString fileName = QFileDialog::getOpenFileName((QWidget *)this,
-	    "Open Geometry File",
-	    qApp->applicationDirPath(),
-	    file_filters,
-	    NULL,
-	    QFileDialog::DontUseNativeDialog);
-    if (!fileName.isEmpty()) {
-	int ret = ((CADApp *)qApp)->opendb(fileName.toLocal8Bit());
-	((CADApp *)qApp)->cadtreeview->m->dbip = ((CADApp *)qApp)->dbip();
-	if (ret) {
-	    statusBar()->showMessage("open failed");
-	} else {
-	    statusBar()->showMessage(fileName);
-	}
-    }
-}
-
-void BRLCAD_MainWindow::readSettings()
-{
-    QSettings settings("BRL-CAD", "QGED");
-
-    settings.beginGroup("BRLCAD_MainWindow");
-    resize(settings.value("size", QSize(1100, 800)).toSize());
-    settings.endGroup();
-}
-
-void BRLCAD_MainWindow::write_settings()
-{
-    QSettings settings("BRL-CAD", "QGED");
-
-    settings.beginGroup("BRLCAD_MainWindow");
-    settings.setValue("size", size());
-    settings.endGroup();
-}
-
 
 /*
  * Local Variables:
