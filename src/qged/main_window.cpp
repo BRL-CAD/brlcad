@@ -113,9 +113,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     view_menu->addAction(vcd->toggleViewAction());
     vc = new CADPalette(0, this);
     vcd->setWidget(vc);
-    // Make sure the buttons are all visible - trick from
-    // https://stackoverflow.com/a/56852841/2037687
-    QTimer::singleShot(0, vc, &CADPalette::reflow);
 
     icd = new QDockWidget("Instance Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, icd);
@@ -123,9 +120,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     view_menu->addAction(icd->toggleViewAction());
     ic = new CADPalette(1, this);
     icd->setWidget(ic);
-    // Make sure the buttons are all visible - trick from
-    // https://stackoverflow.com/a/56852841/2037687
-    QTimer::singleShot(0, ic, &CADPalette::reflow);
 
     ocd = new QDockWidget("Object Editing", this);
     addDockWidget(Qt::RightDockWidgetArea, ocd);
@@ -133,9 +127,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     view_menu->addAction(ocd->toggleViewAction());
     oc = new CADPalette(2, this);
     ocd->setWidget(oc);
-    // Make sure the buttons are all visible - trick from
-    // https://stackoverflow.com/a/56852841/2037687
-    QTimer::singleShot(0, oc, &CADPalette::reflow);
 
     // The view and edit panels have consequences for the tree widget, so each
     // needs to know which one is current
@@ -151,7 +142,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     // Add some placeholder tools until we start to implement the real ones
     {
-	QIcon *obj_icon = new QIcon();
+
+	QIcon *obj_icon = new QIcon(QPixmap(":info.svg"));
 	QString obj_label("view controls ");
 	QPushButton *obj_control = new QPushButton(obj_label);
 	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
@@ -171,6 +163,18 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
 	oc->addTool(el);
     }
+
+#if 0
+    // TODO - check if we still need this after we get proper post-construction
+    // plugin population working for palettes
+    //
+    // Make sure the palette buttons are all visible - trick from
+    // https://stackoverflow.com/a/56852841/2037687
+    QTimer::singleShot(0, vc, &CADPalette::reflow);
+    QTimer::singleShot(0, ic, &CADPalette::reflow);
+    QTimer::singleShot(0, oc, &CADPalette::reflow);
+#endif
+
 
     QDockWidget *sattrd = new QDockWidget("Standard Attributes", this);
     addDockWidget(Qt::RightDockWidgetArea, sattrd);
