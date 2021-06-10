@@ -45,28 +45,32 @@ QtCADView::QtCADView(QWidget *parent, int type, struct fb *fbp)
 #ifdef BRLCAD_OPENGL
 	case QtCADView_GL:
 	    canvas_gl = new QtGL(this, fbp);
-	    canvas_gl->setMinimumSize(512,512);
+	    canvas_gl->setMinimumSize(50,50);
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
+	    QObject::connect(canvas_gl, &QtGL::changed, this, &QtCADView::do_view_changed);
 	    break;
 #endif
 	case QtCADView_SW:
 	    canvas_sw = new QtSW(this, fbp);
-	    canvas_sw->setMinimumSize(512,512);
+	    canvas_sw->setMinimumSize(50,50);
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_sw);
+	    QObject::connect(canvas_sw, &QtSW::changed, this, &QtCADView::do_view_changed);
 	    break;
 	default:
 #ifdef BRLCAD_OPENGL
 	    canvas_gl = new QtGL(this, fbp);
-	    canvas_gl->setMinimumSize(512,512);
+	    canvas_gl->setMinimumSize(50,50);
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
+	    QObject::connect(canvas_gl, &QtGL::changed, this, &QtCADView::do_view_changed);
 #else
 	    canvas_sw = new QtSW(this, fbp);
-	    canvas_sw->setMinimumSize(512,512);
+	    canvas_sw->setMinimumSize(50,50);
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_sw);
+	    QObject::connect(canvas_sw, &QtSW::changed, this, &QtCADView::do_view_changed);
 #endif
 	    return;
     }
@@ -108,7 +112,7 @@ QtCADView::fallback()
 	delete canvas_gl;
 	canvas_gl = NULL;
 	canvas_sw = new QtSW(this, NULL);
-	canvas_sw->setMinimumSize(512,512);
+	canvas_sw->setMinimumSize(50,50);
 	canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	l->addWidget(canvas_sw);
     }
@@ -138,6 +142,12 @@ QtCADView::save_image(int UNUSED(quad))
 void
 QtCADView::select(int UNUSED(quad))
 {
+}
+
+void
+QtCADView::do_view_changed()
+{
+    emit changed();
 }
 
 void

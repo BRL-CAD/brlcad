@@ -69,6 +69,9 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 	double *base2local = NULL;
 	double *local2base = NULL;
 
+    signals:
+	void changed();
+
     public slots:
 	void need_update();
 

@@ -35,6 +35,7 @@
 #include <QSet>
 #include <QModelIndex>
 
+#include "bv.h"
 #include "raytrace.h"
 #include "ged.h"
 #include "qtcad/QtCADTree.h"
@@ -60,7 +61,7 @@ class CADApp : public QApplication
 
 	int register_gui_command(QString cmdname, gui_cmd_ptr func, QString role = QString());
 
-	void ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
+	bool ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
 
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
@@ -73,7 +74,10 @@ class CADApp : public QApplication
 
     signals:
 	void db_change();  // TODO - need this to carry some information about what has changed, if possible...
-	void view_change();
+	void view_change(struct bview **);
+
+    public slots:
+        void do_view_change(struct bview **);
 
     public:
 	QString current_file;

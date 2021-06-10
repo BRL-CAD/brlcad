@@ -170,6 +170,7 @@ void QtGL::resizeGL(int, int)
 	    fb_configure_window(ifp, v->gv_width, v->gv_height);
 	}
 	dm_set_dirty(dmp, 1);
+	emit changed();
     }
 }
 
@@ -194,6 +195,7 @@ void QtGL::keyPressEvent(QKeyEvent *k) {
     if (CADkeyPressEvent(v, x_prev, y_prev, k)) {
 	dm_set_dirty(dmp, 1);
 	update();
+	emit changed();
     }
 
     QOpenGLWidget::keyPressEvent(k);
@@ -214,6 +216,7 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
     if (CADmousePressEvent(v, x_prev, y_prev, e)) {
 	dm_set_dirty(dmp, 1);
 	update();
+	emit changed();
     }
 
     bu_log("X,Y: %d, %d\n", e->x(), e->y());
@@ -236,6 +239,7 @@ void QtGL::mouseMoveEvent(QMouseEvent *e)
     if (CADmouseMoveEvent(v, x_prev, y_prev, e)) {
 	dm_set_dirty(dmp, 1);
 	update();
+	emit changed();
     }
 
     // Current positions are the new previous positions
@@ -260,6 +264,7 @@ void QtGL::wheelEvent(QWheelEvent *e) {
     if (CADwheelEvent(v, e)) {
 	dm_set_dirty(dmp, 1);
 	update();
+	emit changed();
     }
 
     QOpenGLWidget::wheelEvent(e);
@@ -313,8 +318,10 @@ bool QtGL::diff_hashes()
 	ret = true;
     }
 
-    if (ret)
+    if (ret) {
 	need_update();
+	emit changed();
+    }
 
     return ret;
 }

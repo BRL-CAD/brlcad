@@ -93,12 +93,10 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     if (!quad_view) {
 	canvas = new QtCADView(this, canvas_type);
 	canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-	canvas->setMinimumSize(512,512);
 	setCentralWidget(canvas);
     } else {
 	c4 = new QtCADQuad(this, canvas_type);
 	c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-	c4->setMinimumSize(512,512);
 	setCentralWidget(c4);
     }
 
@@ -141,12 +139,15 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(oc, &CADPalette::current, oc, &CADPalette::makeCurrent);
 
     // Add some placeholder tools until we start to implement the real ones
+    CADViewModel *vmodel = new CADViewModel();
     {
 
 	QIcon *obj_icon = new QIcon(QPixmap(":info.svg"));
-	CADViewModel *vmodel = new CADViewModel();
 	QKeyValView *vview = new QKeyValView(this, 0);
 	vview->setModel(vmodel);
+	vview->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+	QObject::connect(((CADApp *)qApp), &CADApp::view_change, vmodel, &CADViewModel::refresh);
+	QObject::connect(this, &BRLCAD_MainWindow::view_change, vmodel, &CADViewModel::refresh);
 	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vview);
 	vc->addTool(el);
     }
@@ -258,8 +259,12 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QObject::connect((CADApp *)qApp, &CADApp::db_change, treemodel, &CADTreeModel::refresh);
     if (canvas) {
 	QObject::connect((CADApp *)qApp, &CADApp::db_change, canvas, &QtCADView::need_update);
+	QObject::connect(canvas, &QtCADView::changed, vmodel, &CADViewModel::update);
     } else if (c4) {
 	QObject::connect((CADApp *)qApp, &CADApp::db_change, c4, &QtCADQuad::need_update);
+	QObject::connect(c4, &QtCADQuad::selected, (CADApp *)qApp, &CADApp::do_view_change);
+	QObject::connect((CADApp *)qApp, &CADApp::view_change, vmodel, &CADViewModel::update);
+	QObject::connect(c4, &QtCADQuad::changed, vmodel, &CADViewModel::update);
     }
 
     // We start out with the View Control panel as the current panel - by
@@ -385,10 +390,12 @@ BRLCAD_MainWindow::run_cmd(const QString &command)
     }
 
     if (!cmd_run) {
-	bApp->ged_run_cmd(&msg, ac, (const char **)av);
+	bool ret = bApp->ged_run_cmd(&msg, ac, (const char **)av);
 	if (bu_vls_strlen(&msg) > 0) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
+	if (ret)
+	    emit view_change(&bApp->gedp->ged_gvp);
     }
     if (*gedpp) {
 	bu_vls_trunc(bApp->gedp->ged_result_str, 0);

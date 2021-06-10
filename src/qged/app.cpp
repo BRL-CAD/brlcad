@@ -113,6 +113,15 @@ CADApp::initialize()
     BU_LIST_INIT(&RTG.rtg_vlfree);
 }
 
+void
+CADApp::do_view_change(struct bview **nv)
+{
+    if (gedp && nv) {
+	gedp->ged_gvp = *nv;
+	emit view_change(&gedp->ged_gvp);
+    }
+}
+
 struct db_i *
 CADApp::dbip()
 {
@@ -229,6 +238,9 @@ CADApp::opendb(QString filename)
     // Inform the world the database has changed
     emit db_change();
 
+    // Also have a new view...
+    emit view_change(&gedp->ged_gvp);
+
     //cadaccordion->highlight_selected(cadaccordion->view_obj);
 
     return 0;
@@ -264,9 +276,11 @@ CADApp::register_gui_command(QString cmdname, gui_cmd_ptr func, QString role)
     return 0;
 }
 
-void
+bool
 CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
+    bool ret = false;
+
     struct ged *prev_gedp = gedp;
 
     if (gedp) {
@@ -283,7 +297,7 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (edist) {
 	    if (msg)
 		bu_vls_sprintf(msg, "Command %s not found, did you mean %s (edit distance %d)?\n", argv[0],   ccmd, edist);
-	    return;
+	    return ret;
 	}
     } else {
 
@@ -357,13 +371,15 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 	/* Check if the ged_exec call changed either the display manager or
 	 * the view settings - in either case we'll need to redraw */
-	if (w->canvas)
-	    w->canvas->diff_hashes();
-
-	if (w->c4)
-	    w->c4->diff_hashes();
-
+	if (w->canvas) {
+	    ret = w->canvas->diff_hashes();
+	}
+	if (w->c4) {
+	    ret = w->c4->diff_hashes();
+	}
     }
+
+    return ret;
 }
 
 

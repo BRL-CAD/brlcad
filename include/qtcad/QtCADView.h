@@ -84,8 +84,12 @@ class QTCAD_EXPORT QtCADView : public QWidget
 
 	void aet(double a, double e, double t);
 
+    signals:
+	void changed();
+
     public slots:
 	void need_update();
+	void do_view_changed();
 
     private:
         QBoxLayout *l = NULL;

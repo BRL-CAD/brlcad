@@ -40,14 +40,15 @@ class CADViewModel : public QKeyValModel
     Q_OBJECT
 
     public:
-	explicit CADViewModel(QObject *parent = 0, struct bview *v = NULL);
+	explicit CADViewModel(QObject *parent = 0, struct bview **v = NULL);
 	~CADViewModel();
 
     public slots:
-	void refresh(struct bview *);
+	void refresh(struct bview **);
+	void update();
 
     private:
-	struct bview *m_v;
+	struct bview **m_v = NULL;
 };
 
 class CADAttributesModel : public QKeyValModel

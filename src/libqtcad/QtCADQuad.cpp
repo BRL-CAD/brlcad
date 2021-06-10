@@ -90,6 +90,13 @@ QtCADQuad::QtCADQuad(QWidget *parent, int type)
     gl->addWidget(ll,     2, 0);
     gl->addItem(s_bottom, 2, 1);
     gl->addWidget(lr,     2, 2);
+
+    // Hook up the wiring to detect view changes
+    QObject::connect(ur, &QtCADView::changed, this, &QtCADQuad::do_view_changed);
+    QObject::connect(ul, &QtCADView::changed, this, &QtCADQuad::do_view_changed);
+    QObject::connect(ll, &QtCADView::changed, this, &QtCADQuad::do_view_changed);
+    QObject::connect(lr, &QtCADView::changed, this, &QtCADQuad::do_view_changed);
+
 }
 
 QtCADQuad::~QtCADQuad()
@@ -98,6 +105,12 @@ QtCADQuad::~QtCADQuad()
     delete ul;
     delete ll;
     delete lr;
+}
+
+void
+QtCADQuad::do_view_changed()
+{
+    emit changed();
 }
 
 bool
@@ -132,6 +145,7 @@ bool
 QtCADQuad::eventFilter(QObject *t, QEvent *e)
 {
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::MouseButtonPress) {
+	QtCADView *oc = c;
 	if (t == ur) {
 	    c = ur;
 	} else {
@@ -156,6 +170,8 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 	c->set_current(1);
 	if (cv) {
 	    (*cv) = c->view();
+	    if (c != oc)
+		emit selected(cv);
 	}
     }
     return false;
@@ -190,6 +206,7 @@ QtCADQuad::get(int quadrant_id)
 void
 QtCADQuad::select(int quadrant_id)
 {
+    QtCADView *oc = c;
     switch (quadrant_id) {
 	case 1:
 	    c = ur;
@@ -207,9 +224,11 @@ QtCADQuad::select(int quadrant_id)
 	    return;
     }
 
-    if (cv)
+    if (cv) {
 	(*cv) = c->view();
-
+	if (oc != c)
+	    emit selected(cv);
+    }
     // TODO - update coloring of bg to
     // indicate active quadrant
 

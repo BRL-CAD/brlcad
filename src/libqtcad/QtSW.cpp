@@ -186,6 +186,7 @@ void QtSW::resizeEvent(QResizeEvent *e)
 	    fb_configure_window(ifp, v->gv_width, v->gv_height);
 	}
 	dm_set_dirty(dmp, 1);
+	emit changed();
     }
 }
 
@@ -204,6 +205,7 @@ void QtSW::keyPressEvent(QKeyEvent *k) {
     if (CADkeyPressEvent(v, x_prev, y_prev, k)) {
 	dm_set_dirty(dmp, 1);
 	update();
+	emit changed();
     }
 
     QWidget::keyPressEvent(k);
@@ -224,6 +226,7 @@ void QtSW::mousePressEvent(QMouseEvent *e) {
     if (CADmousePressEvent(v, x_prev, y_prev, e)) {
 	dm_set_dirty(dmp, 1);
 	update();
+	emit changed();
     }
 
     bu_log("X,Y: %d, %d\n", e->x(), e->y());
@@ -246,6 +249,7 @@ void QtSW::mouseMoveEvent(QMouseEvent *e)
     if (CADmouseMoveEvent(v, x_prev, y_prev, e)) {
 	dm_set_dirty(dmp, 1);
 	update();
+	emit changed();
     }
 
     // Current positions are the new previous positions
@@ -270,6 +274,7 @@ void QtSW::wheelEvent(QWheelEvent *e) {
     if (CADwheelEvent(v, e)) {
 	dm_set_dirty(dmp, 1);
 	update();
+	emit changed();
     }
 
     QWidget::wheelEvent(e);
@@ -323,8 +328,10 @@ bool QtSW::diff_hashes()
 	ret = true;
     }
 
-    if (ret)
+    if (ret) {
 	need_update();
+	emit changed();
+    }
 
     return ret;
 }

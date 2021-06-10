@@ -66,8 +66,13 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	// User pointer set to current quadrant's view
 	struct bview **cv = NULL;
 
+    signals:
+	void changed();
+	void selected(struct bview **);
+
     public slots:
 	void need_update();
+        void do_view_changed();
 
     private:
         bool eventFilter(QObject*, QEvent*);

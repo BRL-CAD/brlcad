@@ -74,6 +74,9 @@ class QTCAD_EXPORT QtSW : public QWidget
 	double *base2local = NULL;
 	double *local2base = NULL;
 
+    signals:
+	void changed();
+
     public slots:
 	void need_update();
 
