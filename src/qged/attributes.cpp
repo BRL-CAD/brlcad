@@ -188,6 +188,9 @@ bool CADAttributesModel::canFetchMore(const QModelIndex &idx) const
 {
     CADAttributesNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return false;
+    if (rowCount(idx)) {
+	return false;
+    }
     int cnt = attr_children(curr_node->name.toLocal8Bit());
     if (cnt > 0) return true;
     return false;
