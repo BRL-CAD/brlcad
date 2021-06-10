@@ -144,9 +144,10 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     {
 
 	QIcon *obj_icon = new QIcon(QPixmap(":info.svg"));
-	QString obj_label("view controls ");
-	QPushButton *obj_control = new QPushButton(obj_label);
-	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
+	CADViewModel *vmodel = new CADViewModel();
+	QKeyValView *vview = new QKeyValView(this, 0);
+	vview->setModel(vmodel);
+	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vview);
 	vc->addTool(el);
     }
     {

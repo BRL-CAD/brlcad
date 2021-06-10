@@ -32,6 +32,39 @@
 #include "bu/avs.h"
 #include "bu/malloc.h"
 
+CADViewModel::CADViewModel(QObject *parentobj, struct bview *v)
+    : QKeyValModel(parentobj)
+{
+    m_root = new QKeyValNode();
+    refresh(v);
+}
+
+CADViewModel::~CADViewModel()
+{
+}
+
+void
+CADViewModel::refresh(struct bview *v)
+{
+    m_v = v;
+
+    if (m_v) {
+	QMap<QString, QKeyValNode*> standard_nodes;
+	int i = 0;
+	m_root = new QKeyValNode();
+	beginResetModel();
+
+	standard_nodes.insert("Name", add_pair("Name", bu_vls_cstr(&v->gv_name), m_root, i));
+
+	endResetModel();
+    } else {
+	m_root = new QKeyValNode();
+	beginResetModel();
+	endResetModel();
+    }
+}
+
+
 CADAttributesModel::CADAttributesModel(QObject *parentobj, struct db_i *dbip, struct directory *dp, int show_standard, int show_user)
     : QKeyValModel(parentobj)
 {

@@ -30,9 +30,25 @@
 
 #ifndef Q_MOC_RUN
 #include "bu/avs.h"
+#include "bv.h"
 #include "raytrace.h"
 #include "ged.h"
 #endif
+
+class CADViewModel : public QKeyValModel
+{
+    Q_OBJECT
+
+    public:
+	explicit CADViewModel(QObject *parent = 0, struct bview *v = NULL);
+	~CADViewModel();
+
+    public slots:
+	void refresh(struct bview *);
+
+    private:
+	struct bview *m_v;
+};
 
 class CADAttributesModel : public QKeyValModel
 {
