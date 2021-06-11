@@ -1,6 +1,4 @@
-if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
-
-  find_package(OpenGL)
+if(BRLCAD_ENABLE_QT)
 
   include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
@@ -11,10 +9,16 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
     ${GED_INCLUDE_DIRS}
     ${RT_INCLUDE_DIRS}
     ${BU_INCLUDE_DIRS}
-    ${OPENGL_INCLUDE_DIR}
     )
 
-endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
+  if (BRLCAD_ENABLE_OPENGL)
+
+    find_package(OpenGL)
+    include_directories(${OPENGL_INCLUDE_DIR})
+
+  endif (BRLCAD_ENABLE_OPENGL)
+
+endif(BRLCAD_ENABLE_QT)
 
 # NOTE: We can't use the CMake global values for automoc et. al.
 # because most of BRL-CAD's targets are not Qt targets.  We don't
@@ -41,14 +45,20 @@ set(moc_headers
   palettes.h
   )
 
-if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
+if (BRLCAD_ENABLE_QT)
 
-  if (OPENGL_opengl_LIBRARY)
-    set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
-  endif (OPENGL_opengl_LIBRARY)
-  if (OPENGL_gl_LIBRARY)
-    set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
-  endif (OPENGL_gl_LIBRARY)
+  if (BRLCAD_ENABLE_OPENGL)
+
+    set(OPENGL_LIBS Qt5::OpenGL)
+
+    if (OPENGL_opengl_LIBRARY)
+      set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
+    endif (OPENGL_opengl_LIBRARY)
+    if (OPENGL_gl_LIBRARY)
+      set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
+    endif (OPENGL_gl_LIBRARY)
+
+  endif (BRLCAD_ENABLE_OPENGL)
 
   QT5_WRAP_CPP(moc_srcs ${moc_headers})
 
@@ -58,13 +68,14 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
   add_executable(qged ${qged_srcs} ${moc_srcs} ${theme_qrc} ${icons_qrc})
   # Note - Network is needed for async embedded raytracing display
-  target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::OpenGL Qt5::Network ${OPENGL_LIBS})
+  target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::Network ${OPENGL_LIBS})
   target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qged
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
-endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
+
+endif (BRLCAD_ENABLE_QT)
 
 CMAKEFILES(${qged_srcs})
 CMAKEFILES(${moc_headers})
