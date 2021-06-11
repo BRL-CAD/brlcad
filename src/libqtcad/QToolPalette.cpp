@@ -109,6 +109,7 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     button_container->setLayout(button_layout);
 
     control_container = new QScrollArea();
+    control_container->setWidgetResizable(true);
     mlayout->addWidget(button_container);
     mlayout->addWidget(control_container);
 
@@ -221,8 +222,6 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 	    }
 	    control_container->takeWidget();
 	    control_container->setWidget(element->controls);
-	    if (element->needs_resize)
-		control_container->setWidgetResizable(true);
 	    element->controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	    element->controls->show();
 	    selected = element;

@@ -95,7 +95,6 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
     public:
 	QToolPaletteButton *button;
 	QWidget *controls;
-	bool needs_resize = false;
 };
 
 class QTCAD_EXPORT QToolPalette: public QWidget
