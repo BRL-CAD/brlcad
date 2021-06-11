@@ -207,6 +207,12 @@ int main(int argc, char *argv[])
 	    have_msg = 1;
 	}
     }
+    if (bu_vls_strlen(&app.init_msgs)) {
+    	app.w->console->printString(bu_vls_cstr(&app.init_msgs));
+	app.w->console->printString("\n");
+	have_msg = 1;
+    }
+
     // If we did write any messages, need to restore the prompt
     if (have_msg) {
 	app.w->console->prompt("$ ");

@@ -1,4 +1,4 @@
-/*                 C A D A T T R I B U T E S . H
+/*                    V I E W _ M O D E L . H
  * BRL-CAD
  *
  * Copyright (c) 2020-2021 United States Government as represented by
@@ -17,14 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadattributes.h
+/** @file view_model.h
  *
  * Brief description
  *
  */
 
-#ifndef CAD_ATTRIBUTES_H
-#define CAD_ATTRIBUTES_H
+#ifndef VIEW_MODEL_H
+#define VIEW_MODEL_H
 
 #include "qtcad/QKeyVal.h"
 
@@ -35,35 +35,23 @@
 #include "ged.h"
 #endif
 
-class CADAttributesModel : public QKeyValModel
+class CADViewModel : public QKeyValModel
 {
     Q_OBJECT
 
-    public:  // "standard" custom tree model functions
-	explicit CADAttributesModel(QObject *parent = 0, struct db_i *dbip = DBI_NULL, struct directory *dp = RT_DIR_NULL, int show_std = 0, int show_user = 0);
-	~CADAttributesModel();
-
-	bool hasChildren(const QModelIndex &parent) const;
-	int update(struct db_i *new_dbip, struct directory *dp);
+    public:
+	explicit CADViewModel(QObject *parent = 0, struct bview **v = NULL);
+	~CADViewModel();
 
     public slots:
-	void refresh(const QModelIndex &idx);
-
-    protected:
-	bool canFetchMore(const QModelIndex &parent) const;
-	void fetchMore(const QModelIndex &parent);
+	void refresh(struct bview **);
+	void update();
 
     private:
-	void add_Children(const char *name, QKeyValNode *curr_node);
-	struct db_i *current_dbip;
-	struct directory *current_dp;
-	struct bu_attribute_value_set *avs;
-	int std_visible;
-	int user_visible;
+	struct bview **m_v = NULL;
 };
 
-
-#endif /*CAD_ATTRIBUTES_H*/
+#endif /*VIEW_MODEL_H*/
 
 /*
  * Local Variables:

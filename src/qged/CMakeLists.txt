@@ -45,6 +45,8 @@ set(moc_headers
   palettes.h
   )
 
+set_property(SOURCE main_window.cpp APPEND PROPERTY COMPILE_DEFINITIONS "QGED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
+
 if (BRLCAD_ENABLE_QT)
 
   if (BRLCAD_ENABLE_OPENGL)
@@ -77,10 +79,12 @@ if (BRLCAD_ENABLE_QT)
 
 endif (BRLCAD_ENABLE_QT)
 
-CMAKEFILES(${qged_srcs})
-CMAKEFILES(${moc_headers})
+# Core application is defined, now handle plugins
+add_subdirectory(plugins)
 
 set(qged_ignore_srcs
+  ${qged_srcs}
+  ${moc_headers}
   display/AxesRenderer.cpp
   display/AxesRenderer.h
   display/Camera.h

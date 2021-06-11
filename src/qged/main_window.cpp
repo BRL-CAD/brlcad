@@ -50,6 +50,8 @@ void QBDockWidget::toWindow(bool floating)
 
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
+    CADApp *ap = (CADApp *)qApp;
+
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
     // suspect Unity's "global toolbar" settings are being used even when
     // the Qt app isn't being run under unity - this is probably a quirk
@@ -138,7 +140,84 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(oc, &CADPalette::current, ic, &CADPalette::makeCurrent);
     connect(oc, &CADPalette::current, oc, &CADPalette::makeCurrent);
 
+
+    /****************************************************************************
+     * The primary view and palette widgets are now in place.  We are ready to
+     * start loading tools defined as plugins.
+     ****************************************************************************/
+
+    {
+	const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "qged", NULL);
+	char **filenames;
+	struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&plugin_pattern, "*%s", QGED_PLUGIN_SUFFIX);
+	size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
+	for (size_t i = 0; i < nfiles; i++) {
+	    char pfile[MAXPATHLEN] = {0};
+	    bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "qged", filenames[i], NULL);
+	    void *dl_handle;
+	    dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
+	    if (!dl_handle) {
+		const char * const error_msg = bu_dlerror();
+		if (error_msg)
+		    bu_vls_printf(&ap->init_msgs, "%s\n", error_msg);
+
+		bu_vls_printf(&ap->init_msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
+		continue;
+	    }
+	    {
+		const char *psymbol = "qged_plugin_info";
+		void *info_val = bu_dlsym(dl_handle, psymbol);
+		const struct qged_plugin *(*plugin_info)() = (const struct qged_plugin *(*)())(intptr_t)info_val;
+		if (!plugin_info) {
+		    const char * const error_msg = bu_dlerror();
+
+		    if (error_msg)
+			bu_vls_printf(&ap->init_msgs, "%s\n", error_msg);
+
+		    bu_vls_printf(&ap->init_msgs, "Unable to load symbols from '%s' (skipping)\n", pfile);
+		    bu_vls_printf(&ap->init_msgs, "Could not find '%s' symbol in plugin\n", psymbol);
+		    bu_dlclose(dl_handle);
+		    continue;
+		}
+
+		const struct qged_plugin *plugin = plugin_info();
+
+		if (!plugin) {
+		    bu_vls_printf(&ap->init_msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
+		    bu_dlclose(dl_handle);
+		    continue;
+		}
+
+		if (*((const uint32_t *)(plugin)) != (uint32_t)  (QGED_TOOL_PLUGIN) && *((const uint32_t *)(plugin)) != (uint32_t)  (QGED_CMD_PLUGIN)) {
+		    bu_vls_printf(&ap->init_msgs, "Plugin version %d of '%s' does not match any valid candidates (skipping)\n", *((const uint32_t   *)(plugin)), pfile);
+		    bu_dlclose(dl_handle);
+		    continue;
+		}
+
+		if (!plugin->cmds) {
+		    bu_vls_printf(&ap->init_msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
+		    bu_dlclose(dl_handle);
+		    continue;
+		}
+
+		if (!plugin->cmd_cnt) {
+		    bu_vls_printf(&ap->init_msgs, "Plugin '%s' contains no commands, (skipping)\n", pfile);
+		    bu_dlclose(dl_handle);
+		    continue;
+		}
+
+		const struct qged_tool **cmds = plugin->cmds;
+		for (int c = 0; c < plugin->cmd_cnt; c++) {
+		    const struct qged_tool *cmd = cmds[c];
+		    (*cmd->i->tool_create)((CADApp *)qApp);
+		}
+	    }
+	}
+    }
+
     // Add some placeholder tools until we start to implement the real ones
+#if 0
     CADViewModel *vmodel = new CADViewModel();
     {
 
@@ -151,6 +230,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vview);
 	vc->addTool(el);
     }
+#endif
     {
 	QIcon *obj_icon = new QIcon();
 	QString obj_label("instance controls ");
@@ -255,6 +335,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	QObject::connect(c4, &QtCADQuad::selected, (CADApp *)qApp, &CADApp::do_view_change);
     }
 
+#if 0
     // If the view changes according to either the view or the app, we need to
     // update our view info in the tool.  TODO - this needs to be packaged a
     // bit somehow - other tools may need to make some sort of connections to
@@ -266,7 +347,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     } else if (c4) {
 	QObject::connect(c4, &QtCADQuad::changed, vmodel, &CADViewModel::update);
     }
-
+#endif
 
 
     // We start out with the View Control panel as the current panel - by
