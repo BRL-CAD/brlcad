@@ -47,7 +47,7 @@ extern "C" {
     const struct qged_tool view_info_tool = { &view_info_tool_impl };
     const struct qged_tool *view_info_tools[] = { &view_info_tool, NULL };
 
-    static const struct qged_plugin pinfo = { QGED_TOOL_PLUGIN, view_info_tools, 1 };
+    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_info_tools, 1 };
 
     COMPILER_DLLEXPORT const struct qged_plugin *qged_plugin_info()
     {

@@ -190,12 +190,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		    continue;
 		}
 
-		uint32_t ptype = *((const uint32_t *)(plugin));
-		if (ptype != (uint32_t)(QGED_TOOL_PLUGIN) && ptype != (uint32_t)(QGED_CMD_PLUGIN)) {
-		    bu_vls_printf(&ap->init_msgs, "Plugin version %d of '%s' does not match any valid candidates (skipping)\n", *((const uint32_t   *)(plugin)), pfile);
-		    bu_dlclose(dl_handle);
-		    continue;
-		}
+
 
 		if (!plugin->cmds) {
 		    bu_vls_printf(&ap->init_msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
@@ -210,12 +205,45 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		}
 
 		const struct qged_tool **cmds = plugin->cmds;
-		for (int c = 0; c < plugin->cmd_cnt; c++) {
-		    const struct qged_tool *cmd = cmds[c];
-		    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
-		    vc->addTool(el);
-		    QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
-		    QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+		uint32_t ptype = *((const uint32_t *)(plugin));
+
+		switch (ptype) {
+		    case QGED_VC_TOOL_PLUGIN:
+			for (int c = 0; c < plugin->cmd_cnt; c++) {
+			    const struct qged_tool *cmd = cmds[c];
+			    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
+			    vc->addTool(el);
+			    QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
+			    QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+			}
+			break;
+		    case QGED_IC_TOOL_PLUGIN:
+			for (int c = 0; c < plugin->cmd_cnt; c++) {
+			    const struct qged_tool *cmd = cmds[c];
+			    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
+			    ic->addTool(el);
+			    QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
+			    QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+			}
+			break;
+		    case QGED_OC_TOOL_PLUGIN:
+			for (int c = 0; c < plugin->cmd_cnt; c++) {
+			    const struct qged_tool *cmd = cmds[c];
+			    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
+			    oc->addTool(el);
+			    QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
+			    QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+			}
+			break;
+		    case QGED_CMD_PLUGIN:
+			bu_vls_printf(&ap->init_msgs, "TODO - implement cmd plugins\n");
+			bu_dlclose(dl_handle);
+			break;
+		    default:
+			bu_vls_printf(&ap->init_msgs, "Plugin type %d of '%s' does not match any valid candidates (skipping)\n", ptype, pfile);
+			bu_dlclose(dl_handle);
+			continue;
+			break;
 		}
 	    }
 	}
