@@ -33,6 +33,7 @@ view_settings_tool_create()
 
     QWidget *w = new QWidget();
     QVBoxLayout *wl = new QVBoxLayout;
+    wl->setAlignment(Qt::AlignTop);
 
     QCheckBox *a_ckbx = new QCheckBox("Adaptive Plotting");
     QCheckBox *adc_ckbx = new QCheckBox("Angle/Dist. Cursor");
