@@ -354,7 +354,7 @@ void
 CADApp::open_file()
 {
     const char *file_filters = "BRL-CAD (*.g *.asc);;Rhino (*.3dm);;STEP (*.stp *.step);;All Files (*)";
-    QString fileName = QFileDialog::getOpenFileName((QWidget *)this,
+    QString fileName = QFileDialog::getOpenFileName((QWidget *)this->w,
 	    "Open Geometry File",
 	    applicationDirPath(),
 	    file_filters,
