@@ -221,6 +221,8 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 	    }
 	    control_container->takeWidget();
 	    control_container->setWidget(element->controls);
+	    if (element->needs_resize)
+		control_container->setWidgetResizable(true);
 	    element->controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	    element->controls->show();
 	    selected = element;

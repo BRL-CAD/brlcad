@@ -32,8 +32,9 @@ view_info_tool_create()
     QIcon *obj_icon = new QIcon(QPixmap(":info.svg"));
     QKeyValView *vview = new QKeyValView(NULL, 0);
     vview->setModel(vmodel);
-    vview->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    vview->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vview);
+    el->needs_resize = true;
     QObject::connect(el, &QToolPaletteElement::app_view_update, vmodel, &CADViewModel::refresh);
 
     return el;
