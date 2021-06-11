@@ -43,7 +43,7 @@ extern "C" {
 	polygon_circle_tool_create
     };
 
-    const struct qged_tool polygon_circle_tool = { &polygon_circle_tool_impl };
+    const struct qged_tool polygon_circle_tool = { &polygon_circle_tool_impl, 100 };
     const struct qged_tool *polygon_circle_tools[] = { &polygon_circle_tool, NULL };
 
     static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, polygon_circle_tools, 1 };

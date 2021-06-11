@@ -27,6 +27,7 @@
 struct qged_tool_impl;
 struct qged_tool {
     struct qged_tool_impl *i;
+    int palette_priority;
 };
 
 struct qged_plugin {

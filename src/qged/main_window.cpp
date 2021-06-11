@@ -23,6 +23,8 @@
  *
  */
 
+#include <map>
+#include <set>
 #include <QTimer>
 #include "main_window.h"
 #include "app.h"
@@ -153,6 +155,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&plugin_pattern, "*%s", QGED_PLUGIN_SUFFIX);
 	size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
+	std::map<int, std::set<QToolPaletteElement *>> vc_map;
+	std::map<int, std::set<QToolPaletteElement *>> ic_map;
+	std::map<int, std::set<QToolPaletteElement *>> oc_map;
 	for (size_t i = 0; i < nfiles; i++) {
 	    char pfile[MAXPATHLEN] = {0};
 	    bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "qged", filenames[i], NULL);
@@ -212,27 +217,21 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 			for (int c = 0; c < plugin->cmd_cnt; c++) {
 			    const struct qged_tool *cmd = cmds[c];
 			    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
-			    vc->addTool(el);
-			    QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
-			    QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+			    vc_map[cmd->palette_priority].insert(el);
 			}
 			break;
 		    case QGED_IC_TOOL_PLUGIN:
 			for (int c = 0; c < plugin->cmd_cnt; c++) {
 			    const struct qged_tool *cmd = cmds[c];
 			    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
-			    ic->addTool(el);
-			    QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
-			    QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+			    ic_map[cmd->palette_priority].insert(el);
 			}
 			break;
 		    case QGED_OC_TOOL_PLUGIN:
 			for (int c = 0; c < plugin->cmd_cnt; c++) {
 			    const struct qged_tool *cmd = cmds[c];
 			    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
-			    oc->addTool(el);
-			    QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
-			    QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+			    oc_map[cmd->palette_priority].insert(el);
 			}
 			break;
 		    case QGED_CMD_PLUGIN:
@@ -247,23 +246,43 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		}
 	    }
 	}
+
+	std::map<int, std::set<QToolPaletteElement *>>::iterator e_it;
+	for (e_it = vc_map.begin(); e_it != vc_map.end(); e_it++) {
+	    std::set<QToolPaletteElement *>::iterator el_it;
+	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
+		QToolPaletteElement *el = *el_it;
+		vc->addTool(el);
+		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
+		QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+	    }
+	}
+
+	for (e_it = ic_map.begin(); e_it != ic_map.end(); e_it++) {
+	    std::set<QToolPaletteElement *>::iterator el_it;
+	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
+		QToolPaletteElement *el = *el_it;
+		ic->addTool(el);
+		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
+		QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+	    }
+	}
+
+	for (e_it = oc_map.begin(); e_it != oc_map.end(); e_it++) {
+	    std::set<QToolPaletteElement *>::iterator el_it;
+	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
+		QToolPaletteElement *el = *el_it;
+		oc->addTool(el);
+		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
+		QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+	    }
+	}
     }
+
+
+
 
     // Add some placeholder tools until we start to implement the real ones
-#if 0
-    CADViewModel *vmodel = new CADViewModel();
-    {
-
-	QIcon *obj_icon = new QIcon(QPixmap(":info.svg"));
-	QKeyValView *vview = new QKeyValView(this, 0);
-	vview->setModel(vmodel);
-	vview->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-	QObject::connect(((CADApp *)qApp), &CADApp::view_change, vmodel, &CADViewModel::refresh);
-	QObject::connect(this, &BRLCAD_MainWindow::view_change, vmodel, &CADViewModel::refresh);
-	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vview);
-	vc->addTool(el);
-    }
-#endif
     {
 	QIcon *obj_icon = new QIcon();
 	QString obj_label("instance controls ");

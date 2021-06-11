@@ -43,7 +43,7 @@ extern "C" {
 	polygon_ellipse_tool_create
     };
 
-    const struct qged_tool polygon_ellipse_tool = { &polygon_ellipse_tool_impl };
+    const struct qged_tool polygon_ellipse_tool = { &polygon_ellipse_tool_impl, 101 };
     const struct qged_tool *polygon_ellipse_tools[] = { &polygon_ellipse_tool, NULL };
 
     static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, polygon_ellipse_tools, 1 };

@@ -44,7 +44,7 @@ extern "C" {
 	view_info_tool_create
     };
 
-    const struct qged_tool view_info_tool = { &view_info_tool_impl };
+    const struct qged_tool view_info_tool = { &view_info_tool_impl, 0 };
     const struct qged_tool *view_info_tools[] = { &view_info_tool, NULL };
 
     static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, view_info_tools, 1 };
