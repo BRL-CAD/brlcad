@@ -43,6 +43,7 @@ ged_view_update(struct ged *gedp)
     struct bview *v = gedp->ged_gvp;
     struct bu_ptbl *sg = v->gv_db_grps;
     std::set<struct bv_scene_group *> regen;
+    std::set<struct bv_scene_group *> erase;
     std::set<struct bv_scene_group *>::iterator r_it;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	// When checking a scene group, there are two things to confirm:
@@ -55,8 +56,17 @@ ged_view_update(struct ged *gedp)
 	for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
 	    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
+
+	    // First, check the root - if it is no longer present, we're
+	    // erasing rather than redrawing.
+	    struct directory *dp = db_lookup(dbip, ud->fp.fp_names[0]->d_namep, LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) {
+		erase.insert(cg);
+		break;
+	    }
+
 	    for (size_t fp_i = 0; fp_i < ud->fp.fp_len; fp_i++) {
-		struct directory *dp = db_lookup(dbip, ud->fp.fp_names[fp_i]->d_namep, LOOKUP_QUIET);
+		dp = db_lookup(dbip, ud->fp.fp_names[fp_i]->d_namep, LOOKUP_QUIET);
 		if (dp == RT_DIR_NULL || dp != ud->fp.fp_names[fp_i]|| dp->edit_flag) {
 		    invalid = 1;
 		    break;
@@ -77,6 +87,17 @@ ged_view_update(struct ged *gedp)
 	}
     }
 
+    for (r_it = erase.begin(); r_it != erase.end(); r_it++) {
+	struct bv_scene_group *cg = *r_it;
+	struct bu_vls opath = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->g->s_name));
+	const char *av[3];
+	av[0] = "erase";
+	av[1] = bu_vls_cstr(&opath);
+	av[2] = NULL;
+	ged_exec(gedp, 2, av);
+	bu_vls_free(&opath);
+    }
     for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
 	struct bv_scene_group *cg = *r_it;
 	struct bu_vls opath = BU_VLS_INIT_ZERO;
@@ -90,7 +111,7 @@ ged_view_update(struct ged *gedp)
 	bu_vls_free(&opath);
     }
 
-    return (int)regen.size();
+    return (int)(regen.size() + erase.size());
 }
 
 // Local Variables:
