@@ -21,6 +21,8 @@
  *
  */
 
+#include <QGroupBox>
+#include <QCheckBox>
 #include "qtcad/QToolPalette.h"
 #include "../plugin.h"
 
@@ -29,11 +31,36 @@ view_settings_tool_create()
 {
     QIcon *obj_icon = new QIcon(QPixmap(":settings.svg"));
 
-    QString viewstr("view controls ");
-    QPushButton *view_control = new QPushButton(viewstr);
-    view_control->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    QWidget *w = new QWidget();
+    QVBoxLayout *wl = new QVBoxLayout;
 
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, view_control);
+    QCheckBox *a_ckbx = new QCheckBox("Adaptive Plotting");
+    QCheckBox *adc_ckbx = new QCheckBox("Angle/Dist. Cursor");
+    QCheckBox *cdot_ckbx = new QCheckBox("Center Dot");
+    QCheckBox *fb_ckbx = new QCheckBox("Framebuffer");
+    QCheckBox *fbo_ckbx = new QCheckBox("FB Overlay");
+    QCheckBox *fps_ckbx = new QCheckBox("FPS");
+    QCheckBox *grid_ckbx = new QCheckBox("Grid");
+    QCheckBox *i_ckbx = new QCheckBox("Independent View");
+    QCheckBox *mdlaxes_ckbx = new QCheckBox("Model Axes");
+    QCheckBox *params_ckbx = new QCheckBox("Parameters");
+    QCheckBox *scale_ckbx = new QCheckBox("Scale");
+    QCheckBox *viewaxes_ckbx = new QCheckBox("View Axes");
+    wl->addWidget(a_ckbx);
+    wl->addWidget(adc_ckbx);
+    wl->addWidget(cdot_ckbx);
+    wl->addWidget(fb_ckbx);
+    wl->addWidget(fbo_ckbx);
+    wl->addWidget(fps_ckbx);
+    wl->addWidget(grid_ckbx);
+    wl->addWidget(i_ckbx);
+    wl->addWidget(mdlaxes_ckbx);
+    wl->addWidget(params_ckbx);
+    wl->addWidget(scale_ckbx);
+    wl->addWidget(viewaxes_ckbx);
+    w->setLayout(wl);
+
+    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, w);
 
     return el;
 }

@@ -115,6 +115,8 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 	QToolPaletteElement *selected;
 	QString selected_style = QString("");
 
+	QVBoxLayout *mlayout;
+
    public slots:
 	void displayElement(QToolPaletteElement *);
 	void button_layout_resize();
@@ -126,8 +128,7 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 	QSplitter *splitter;
 	QWidget *button_container;
 	QFlowLayout *button_layout;
-	QWidget *control_container;
-	QVBoxLayout *control_layout;
+	QScrollArea *control_container;
 	QSet<QToolPaletteElement *> elements;
 };
 

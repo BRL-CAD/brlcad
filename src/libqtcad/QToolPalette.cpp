@@ -93,7 +93,7 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     always_selected = 1;
     icon_width = 30;
     icon_height = 30;
-    QVBoxLayout *mlayout = new QVBoxLayout();
+    mlayout = new QVBoxLayout();
     mlayout->setSpacing(0);
     mlayout->setContentsMargins(1,1,1,1);
 
@@ -104,8 +104,12 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     button_layout->setVerticalSpacing(0);
     button_layout->setContentsMargins(0,0,0,0);
     button_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    button_container->setMinimumHeight(icon_height);
+    button_container->setMinimumWidth(icon_width*5+1);
     button_container->setLayout(button_layout);
-    control_container = new QWidget();
+
+    control_container = new QScrollArea();
+#if 0
     control_layout = new QVBoxLayout();
     control_layout->setSpacing(0);
     control_layout->setContentsMargins(0,0,0,0);
@@ -114,7 +118,7 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     // Make the minimum width 5 icons across
     control_container->setMinimumWidth(icon_width*5+1);
     control_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
+#endif
     mlayout->addWidget(button_container);
     mlayout->addWidget(control_container);
 
@@ -131,7 +135,6 @@ QToolPalette::~QToolPalette()
 void
 QToolPalette::button_layout_resize()
 {
-    button_container->setMinimumWidth(control_container->minimumWidth());
     div_t layout_dim = div(button_container->size().width()-1, icon_width);
     div_t layout_grid = div(elements.count(), layout_dim.quot);
     if (layout_grid.rem > 0) {
@@ -219,17 +222,16 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 	if (element == selected && !always_selected) {
 	    if (element->button->isChecked()) element->button->setChecked(false);
 	    element->controls->hide();
-	    control_container->setMinimumHeight(icon_height);
 	    selected = NULL;
 	} else {
 	    if (!element->button->isChecked()) element->button->setChecked(true);
 	    if (selected && element != selected) {
-		control_layout->removeWidget(selected->controls);
 		selected->controls->hide();
 		if (selected->button->isChecked()) selected->button->setChecked(false);
 	    }
-	    control_layout->addWidget(element->controls);
-	    control_container->setMinimumHeight(element->controls->minimumHeight());
+	    control_container->takeWidget();
+	    control_container->setWidget(element->controls);
+	    element->controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	    element->controls->show();
 	    selected = element;
 	    foreach(QToolPaletteElement *el, elements) {
