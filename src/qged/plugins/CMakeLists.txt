@@ -29,6 +29,7 @@ CMAKEFILES(${plugin_ignore_files})
 add_subdirectory(polygon_circle)
 add_subdirectory(polygon_ellipse)
 add_subdirectory(view_info)
+add_subdirectory(view_settings)
 
 
 # Local Variables:

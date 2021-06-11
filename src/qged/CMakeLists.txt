@@ -44,9 +44,8 @@ if (BRLCAD_ENABLE_QT)
 
   # https://github.com/Alexhuszagh/BreezeStyleSheets
   QT5_ADD_RESOURCES(theme_qrc theme/breeze.qrc)
-  QT5_ADD_RESOURCES(icons_qrc icons/icons.qrc)
 
-  add_executable(qged main.cpp ${qged_srcs} ${moc_srcs} ${theme_qrc} ${icons_qrc})
+  add_executable(qged main.cpp ${qged_srcs} ${moc_srcs} ${theme_qrc})
   # Note - Network is needed for async embedded raytracing display
   target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::Network)
   target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
