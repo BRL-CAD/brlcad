@@ -108,6 +108,7 @@ class QGED_EXPORT CADApp : public QApplication
         void readSettings();
         void write_settings();
 
+        void do_view_update();
         void do_view_change(struct bview **);
 
     public:

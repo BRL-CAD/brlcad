@@ -76,6 +76,18 @@ QToolPaletteElement::setControls(QWidget *n_control)
     controls = n_control;
 }
 
+void
+QToolPaletteElement::do_app_view_update(struct bview **v)
+{
+    emit app_view_update(v);
+}
+
+void
+QToolPaletteElement::do_app_db_change()
+{
+    emit app_db_change();
+}
+
 QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
 {
     always_selected = 1;

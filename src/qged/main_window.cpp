@@ -336,20 +336,13 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	QObject::connect(c4, &QtCADQuad::selected, (CADApp *)qApp, &CADApp::do_view_change);
     }
 
-#if 0
-    // If the view changes according to either the view or the app, we need to
-    // update our view info in the tool.  TODO - this needs to be packaged a
-    // bit somehow - other tools may need to make some sort of connections to
-    // the main app and/or views... (for example, an editing tool needs to know if
-    // a kill command yanks the selected object away from it...)
-    QObject::connect((CADApp *)qApp, &CADApp::view_change, vmodel, &CADViewModel::update);
+    // If the view changes, let the world know.  The app signals are used by other
+    // widgets to hide the specifics of the current view implementation.
     if (canvas) {
-	QObject::connect(canvas, &QtCADView::changed, vmodel, &CADViewModel::update);
+	QObject::connect(canvas, &QtCADView::changed, ap, &CADApp::do_view_update);
     } else if (c4) {
-	QObject::connect(c4, &QtCADQuad::changed, vmodel, &CADViewModel::update);
+	QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_view_update);
     }
-#endif
-
 
     // We start out with the View Control panel as the current panel - by
     // default we are viewing, not editing

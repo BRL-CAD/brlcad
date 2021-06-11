@@ -37,19 +37,12 @@ view_info_tool_create(CADApp *ap)
     QKeyValView *vview = new QKeyValView(ap->w, 0);
     vview->setModel(vmodel);
     vview->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    QObject::connect(((CADApp *)qApp), &CADApp::view_change, vmodel, &CADViewModel::refresh);
-    QObject::connect(ap->w, &BRLCAD_MainWindow::view_change, vmodel, &CADViewModel::refresh);
     QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vview);
-    vc->addTool(el);
+    QObject::connect(el, &QToolPaletteElement::app_view_update, vmodel, &CADViewModel::refresh);
 
-    // If the view changes according to either the view or the app, we need to
-    // update our view info in the tool.
-    QObject::connect(ap, &CADApp::view_change, vmodel, &CADViewModel::update);
-    if (ap->w->canvas) {
-	QObject::connect(ap->w->canvas, &QtCADView::changed, vmodel, &CADViewModel::update);
-    } else if (ap->w->c4) {
-	QObject::connect(ap->w->c4, &QtCADQuad::changed, vmodel, &CADViewModel::update);
-    }
+
+    QObject::connect(((CADApp *)qApp), &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
+    vc->addTool(el);
 
     return 0;
 }

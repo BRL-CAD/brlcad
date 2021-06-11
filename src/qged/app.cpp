@@ -210,8 +210,14 @@ CADApp::do_view_change(struct bview **nv)
 {
     if (gedp && nv) {
 	gedp->ged_gvp = *nv;
-	emit view_change(&gedp->ged_gvp);
     }
+    do_view_update();
+}
+
+void
+CADApp::do_view_update()
+{
+    emit view_change(&gedp->ged_gvp);
 }
 
 struct db_i *

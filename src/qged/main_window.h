@@ -75,9 +75,6 @@ class QGED_EXPORT BRLCAD_MainWindow : public QMainWindow
 	CADPalette *ic;
 	CADPalette *oc;
 
-    signals:
-        void view_change(struct bview **);
-
     public slots:
         //void save_image();
 

@@ -72,6 +72,26 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	void setButton(QToolPaletteButton *n_button);
 	void setControls(QWidget *n_controls);
 
+    signals:
+	// These signals are emitted by the below slots, and should NEVER be
+	// emitted directly by any of the Element subcomponents.  They are
+	// intended to drive updating of Element subcomponents in response to
+	// application changes.  Subcomponents will connect to these in lieu
+	// of connecting directly to application signals, to decouple the
+	// implementation of the Element internals from the application.
+	void app_view_update(struct bview **);
+	void app_db_change();
+
+    public slots:
+	// These slots are intended to be connected to parent signals when the
+	// Element is added to a Palette.  They will in turn emit the local
+	// signals above for internal Element use.  These slots are used to
+	// hide any internal signal/slot implementation details from the
+	// application while still allowing changes at the app level to drive
+	// updates in the Element contents.
+	void do_app_view_update(struct bview **);
+	void do_app_db_change();
+
     public:
 	QToolPaletteButton *button;
 	QWidget *controls;
