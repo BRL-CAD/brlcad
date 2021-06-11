@@ -214,7 +214,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     console_dock->setWidget(console);
     // The console's run of a command has implications for the entire
     // application, so rather than embedding the command execution logic in the
-    // widget we use a signal/slot connection to have the main window's slot
+    // widget we use a signal/slot connection to have the application's slot
     // execute the command.
     QObject::connect(this->console, &QtConsole::executeCommand, ((CADApp *)qApp), &CADApp::run_cmd);
 
@@ -224,28 +224,50 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(tree_dock->toggleViewAction());
     connect(tree_dock, &QBDockWidget::topLevelChanged, tree_dock, &QBDockWidget::toWindow);
-
     treemodel = new CADTreeModel();
     treeview = new CADTreeView(tree_dock, treemodel);
     tree_dock->setWidget(treeview);
 
+    // The tree's highlighting changes based on which set of tools we're using - instance editing
+    // and primitive editing have different non-local implications in the hierarchy.
     connect(vc, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
     connect(ic, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
     connect(oc, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
 
+    // Update props if we select a new item in the tree.  TODO - these need to be updated when
+    // we have a db_change as well, since the change may have been to edit attributes...
     QObject::connect(treeview, &CADTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
     QObject::connect(treeview, &CADTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
 
+    // If the database changes, we need to refresh the tree.  (Right now this is only triggered
+    // if we open a new .g file, IIRC, but it needs to happen when we've editing combs or added/
+    // removed solids too...)
     QObject::connect((CADApp *)qApp, &CADApp::db_change, treemodel, &CADTreeModel::refresh);
+
+    // If the database changes, we need to update our views
     if (canvas) {
 	QObject::connect((CADApp *)qApp, &CADApp::db_change, canvas, &QtCADView::need_update);
-	QObject::connect(canvas, &QtCADView::changed, vmodel, &CADViewModel::update);
     } else if (c4) {
 	QObject::connect((CADApp *)qApp, &CADApp::db_change, c4, &QtCADQuad::need_update);
+	// The Quad View has an additional condition in the sense that the current view may
+	// change.  Probably we won't try to track this for floating dms attached to qged,
+	// but the quad view is a central view widget so we need to support it.
 	QObject::connect(c4, &QtCADQuad::selected, (CADApp *)qApp, &CADApp::do_view_change);
-	QObject::connect((CADApp *)qApp, &CADApp::view_change, vmodel, &CADViewModel::update);
+    }
+
+    // If the view changes according to either the view or the app, we need to
+    // update our view info in the tool.  TODO - this needs to be packaged a
+    // bit somehow - other tools may need to make some sort of connections to
+    // the main app and/or views... (for example, an editing tool needs to know if
+    // a kill command yanks the selected object away from it...)
+    QObject::connect((CADApp *)qApp, &CADApp::view_change, vmodel, &CADViewModel::update);
+    if (canvas) {
+	QObject::connect(canvas, &QtCADView::changed, vmodel, &CADViewModel::update);
+    } else if (c4) {
 	QObject::connect(c4, &QtCADQuad::changed, vmodel, &CADViewModel::update);
     }
+
+
 
     // We start out with the View Control panel as the current panel - by
     // default we are viewing, not editing
