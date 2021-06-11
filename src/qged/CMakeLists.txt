@@ -1,24 +1,13 @@
-if(BRLCAD_ENABLE_QT)
-
-  include_directories(
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
-    ${BRLCAD_SOURCE_DIR}/include
-    ${QTCAD_INCLUDE_DIRS}
-    ${GED_INCLUDE_DIRS}
-    ${RT_INCLUDE_DIRS}
-    ${BU_INCLUDE_DIRS}
-    )
-
-  if (BRLCAD_ENABLE_OPENGL)
-
-    find_package(OpenGL)
-    include_directories(${OPENGL_INCLUDE_DIR})
-
-  endif (BRLCAD_ENABLE_OPENGL)
-
-endif(BRLCAD_ENABLE_QT)
+include_directories(
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
+  ${BRLCAD_SOURCE_DIR}/include
+  ${QTCAD_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
+  ${BU_INCLUDE_DIRS}
+  )
 
 # NOTE: We can't use the CMake global values for automoc et. al.
 # because most of BRL-CAD's targets are not Qt targets.  We don't
@@ -46,19 +35,6 @@ set(moc_headers
 
 if (BRLCAD_ENABLE_QT)
 
-  if (BRLCAD_ENABLE_OPENGL)
-
-    set(OPENGL_LIBS Qt5::OpenGL)
-
-    if (OPENGL_opengl_LIBRARY)
-      set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
-    endif (OPENGL_opengl_LIBRARY)
-    if (OPENGL_gl_LIBRARY)
-      set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
-    endif (OPENGL_gl_LIBRARY)
-
-  endif (BRLCAD_ENABLE_OPENGL)
-
   # Let main_window know what the platform's extension is so it knows
   # what plugin filenames to look for
   set_property(SOURCE main_window.cpp APPEND PROPERTY
@@ -72,7 +48,7 @@ if (BRLCAD_ENABLE_QT)
 
   add_executable(qged main.cpp ${qged_srcs} ${moc_srcs} ${theme_qrc} ${icons_qrc})
   # Note - Network is needed for async embedded raytracing display
-  target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::Network ${OPENGL_LIBS})
+  target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::Network)
   target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qged
     RUNTIME DESTINATION ${BIN_DIR}
