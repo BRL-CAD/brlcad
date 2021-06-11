@@ -109,16 +109,6 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     button_container->setLayout(button_layout);
 
     control_container = new QScrollArea();
-#if 0
-    control_layout = new QVBoxLayout();
-    control_layout->setSpacing(0);
-    control_layout->setContentsMargins(0,0,0,0);
-    control_container->setLayout(control_layout);
-    control_container->setMinimumHeight(icon_height);
-    // Make the minimum width 5 icons across
-    control_container->setMinimumWidth(icon_width*5+1);
-    control_container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-#endif
     mlayout->addWidget(button_container);
     mlayout->addWidget(control_container);
 
