@@ -40,13 +40,9 @@
 #include "ged.h"
 #include "qtcad/QtCADTree.h"
 
-#include "defines.h"
 #include "main_window.h"
 
-
-/* Define support structures so we can load functionality as plugins */
-class QGED_EXPORT CADApp;
-
+class CADApp;
 
 /* Command type for application level commands */
 typedef int (*app_cmd_ptr)(void *, int, const char **);
@@ -57,7 +53,7 @@ typedef int (*app_cmd_ptr)(void *, int, const char **);
  * application wide facilities like the current GED pointer and the ability
  * to run commands are defined here. */
 
-class QGED_EXPORT CADApp : public QApplication
+class CADApp : public QApplication
 {
     Q_OBJECT
 

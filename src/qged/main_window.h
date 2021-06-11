@@ -43,7 +43,7 @@
 #include "qtcad/QtCADView.h"
 #include "qtcad/QtConsole.h"
 
-#include "defines.h"
+#include "plugins/plugin.h"
 #include "palettes.h"
 
 // https://stackoverflow.com/q/44707344/2037687
@@ -57,7 +57,7 @@ class QBDockWidget : public QDockWidget
        void toWindow(bool floating);
 };
 
-class QGED_EXPORT BRLCAD_MainWindow : public QMainWindow
+class BRLCAD_MainWindow : public QMainWindow
 {
     Q_OBJECT
     public:

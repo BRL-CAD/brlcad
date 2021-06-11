@@ -22,9 +22,8 @@
 
 #include <QObject>
 #include "qtcad/defines.h"
-#include "defines.h"
 
-class QGED_EXPORT EditStateFilter : public QObject
+class EditStateFilter : public QObject
 {
     Q_OBJECT
 

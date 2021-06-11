@@ -27,9 +27,8 @@
 #define CADPALETTES_H
 #include <iostream>
 #include "qtcad/QToolPalette.h"
-#include "defines.h"
 
-class QGED_EXPORT CADPalette : public QWidget
+class CADPalette : public QWidget
 {
     Q_OBJECT
 

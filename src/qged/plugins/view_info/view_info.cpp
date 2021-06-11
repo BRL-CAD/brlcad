@@ -21,8 +21,8 @@
  *
  */
 
-#include "../../defines.h"
 #include "qtcad/QToolPalette.h"
+#include "../plugin.h"
 #include "view_model.h"
 
 void *

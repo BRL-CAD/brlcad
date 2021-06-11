@@ -20,6 +20,7 @@ set_target_properties(qged_plugins PROPERTIES FOLDER "BRL-CAD Plugins")
 
 set(plugin_ignore_files
   CMakeLists.txt
+  plugin.h
   )
 CMAKEFILES(${plugin_ignore_files})
 

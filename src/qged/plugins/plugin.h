@@ -1,4 +1,4 @@
-/*                      D E F I N E S . H
+/*                      P L U G I N . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2021 United States Government as represented by
@@ -18,32 +18,11 @@
  * information.
  */
 
-/** @addtogroup qged_defines
- *
- * @brief
- * These are definitions specific to libqged
- *
- */
-/** @{ */
-/** @file qged/defines.h */
-
-#ifndef QGED_DEFINES_H
-#define QGED_DEFINES_H
+#ifndef QGED_PLUGIN_H
+#define QGED_PLUGIN_H
 
 #include "common.h"
 #include "brlcad_version.h"
-
-#ifndef QGED_EXPORT
-#  if defined(QGED_DLL_EXPORTS) && defined(QGED_DLL_IMPORTS)
-#    error "Only QGED_DLL_EXPORTS or QGED_DLL_IMPORTS can be defined, not both."
-#  elif defined(QGED_DLL_EXPORTS)
-#    define QGED_EXPORT COMPILER_DLLEXPORT
-#  elif defined(QGED_DLL_IMPORTS)
-#    define QGED_EXPORT COMPILER_DLLIMPORT
-#  else
-#    define QGED_EXPORT
-#  endif
-#endif
 
 struct qged_tool_impl;
 struct qged_tool {
@@ -66,7 +45,7 @@ struct qged_tool_impl {
     qged_func_ptr tool_create;
 };
 
-#endif  /* QGED_DEFINES_H */
+#endif  /* QGED_PLUGIN_H */
 
 /*
  * Local Variables:
