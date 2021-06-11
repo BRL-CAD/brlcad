@@ -41,11 +41,12 @@
 #include "ged.h"
 #include "qtcad/QtCADTree.h"
 
+#include "defines.h"
 #include "main_window.h"
 
 
 /* Define support structures so we can load functionality as plugins */
-class CADApp;
+class QGED_EXPORT CADApp;
 
 struct qged_tool_impl;
 struct qged_tool {
@@ -75,7 +76,7 @@ typedef int (*app_cmd_ptr)(void *, int, const char **);
  * application wide facilities like the current GED pointer and the ability
  * to run commands are defined here. */
 
-class CADApp : public QApplication
+class QGED_EXPORT CADApp : public QApplication
 {
     Q_OBJECT
 

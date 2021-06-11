@@ -51,6 +51,7 @@ void QBDockWidget::toWindow(bool floating)
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
     CADApp *ap = (CADApp *)qApp;
+    ap->w = this;
 
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
     // suspect Unity's "global toolbar" settings are being used even when

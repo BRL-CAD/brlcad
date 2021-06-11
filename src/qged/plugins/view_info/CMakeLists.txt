@@ -33,7 +33,7 @@ if(BRLCAD_ENABLE_QT)
   QT5_ADD_RESOURCES(icon_qrc icon.qrc)
 
   qged_plugin(qged_view_info SHARED ${view_info_srcs} ${view_info_moc_srcs} ${icon_qrc})
-  target_link_libraries(qged_view_info libqtcad libged librt libbu Qt5::Widgets Qt5::OpenGL Qt5::Network)
+  target_link_libraries(qged_view_info libqged libqtcad libged librt libbu Qt5::Widgets Qt5::OpenGL Qt5::Network)
   set_property(TARGET qged_view_info APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(qged_view_info view_info.cpp)
   PLUGIN_SETUP(qged_view_info qged)

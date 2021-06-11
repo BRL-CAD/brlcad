@@ -25,7 +25,6 @@ endif(BRLCAD_ENABLE_QT)
 # want to run the automatic moc logic for all of them.
 
 set(qged_srcs
-  main.cpp
   main_window.cpp
   app.cpp
   attributes.cpp
@@ -64,13 +63,17 @@ if (BRLCAD_ENABLE_QT)
 
   QT5_WRAP_CPP(moc_srcs ${moc_headers})
 
+  set(USE_OBJECT_LIBS OFF)
+  BRLCAD_ADDLIB(libqged "${qged_srcs};${moc_srcs}" "libqtcad;libged;libdm;librt;libbu;Qt5::Core;Qt5::Widgets;Qt5::Network;${OPENGL_LIBS}")
+  target_compile_definitions(libqged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+
   # https://github.com/Alexhuszagh/BreezeStyleSheets
   QT5_ADD_RESOURCES(theme_qrc theme/breeze.qrc)
   QT5_ADD_RESOURCES(icons_qrc icons/icons.qrc)
 
-  add_executable(qged ${qged_srcs} ${moc_srcs} ${theme_qrc} ${icons_qrc})
+  add_executable(qged main.cpp ${theme_qrc} ${icons_qrc})
   # Note - Network is needed for async embedded raytracing display
-  target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::Network ${OPENGL_LIBS})
+  target_link_libraries(qged libqged libqtcad libged librt libbu Qt5::Widgets Qt5::Network ${OPENGL_LIBS})
   target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qged
     RUNTIME DESTINATION ${BIN_DIR}
@@ -85,6 +88,7 @@ add_subdirectory(plugins)
 set(qged_ignore_srcs
   ${qged_srcs}
   ${moc_headers}
+  defines.h
   display/AxesRenderer.cpp
   display/AxesRenderer.h
   display/Camera.h
