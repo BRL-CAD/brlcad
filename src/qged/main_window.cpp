@@ -190,7 +190,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		    continue;
 		}
 
-		if (*((const uint32_t *)(plugin)) != (uint32_t)  (QGED_TOOL_PLUGIN) && *((const uint32_t *)(plugin)) != (uint32_t)  (QGED_CMD_PLUGIN)) {
+		uint32_t ptype = *((const uint32_t *)(plugin));
+		if (ptype != (uint32_t)(QGED_TOOL_PLUGIN) && ptype != (uint32_t)(QGED_CMD_PLUGIN)) {
 		    bu_vls_printf(&ap->init_msgs, "Plugin version %d of '%s' does not match any valid candidates (skipping)\n", *((const uint32_t   *)(plugin)), pfile);
 		    bu_dlclose(dl_handle);
 		    continue;
@@ -211,7 +212,10 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		const struct qged_tool **cmds = plugin->cmds;
 		for (int c = 0; c < plugin->cmd_cnt; c++) {
 		    const struct qged_tool *cmd = cmds[c];
-		    (*cmd->i->tool_create)((CADApp *)qApp);
+		    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
+		    vc->addTool(el);
+		    QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
+		    QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
 		}
 	    }
 	}

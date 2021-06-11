@@ -21,30 +21,22 @@
  *
  */
 
-#include "../../app.h"
-#include "../../palettes.h"
+#include "../../defines.h"
+#include "qtcad/QToolPalette.h"
 #include "view_model.h"
 
-int
-view_info_tool_create(CADApp *ap)
+void *
+view_info_tool_create()
 {
-    if (!ap || !ap->w || !ap->w->vc)
-	return -1;
-
-    CADPalette *vc = ap->w->vc;
     CADViewModel *vmodel = new CADViewModel();
     QIcon *obj_icon = new QIcon(QPixmap(":info.svg"));
-    QKeyValView *vview = new QKeyValView(ap->w, 0);
+    QKeyValView *vview = new QKeyValView(NULL, 0);
     vview->setModel(vmodel);
     vview->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vview);
     QObject::connect(el, &QToolPaletteElement::app_view_update, vmodel, &CADViewModel::refresh);
 
-
-    QObject::connect(((CADApp *)qApp), &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
-    vc->addTool(el);
-
-    return 0;
+    return el;
 }
 
 extern "C" {

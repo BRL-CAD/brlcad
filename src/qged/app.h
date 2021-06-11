@@ -35,7 +35,6 @@
 #include <QSet>
 #include <QModelIndex>
 
-#include "brlcad_version.h"
 #include "bv.h"
 #include "raytrace.h"
 #include "ged.h"
@@ -48,24 +47,6 @@
 /* Define support structures so we can load functionality as plugins */
 class QGED_EXPORT CADApp;
 
-struct qged_tool_impl;
-struct qged_tool {
-    struct qged_tool_impl *i;
-};
-
-struct qged_plugin {
-    uint32_t api_version; /* must be first in struct */
-    const struct qged_tool ** const cmds;
-    int cmd_cnt;
-};
-
-#define QGED_TOOL_PLUGIN (3*1000000 + (BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
-#define QGED_CMD_PLUGIN  (4*1000000 + (BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
-
-typedef int (*qged_func_ptr)(CADApp *ap);
-struct qged_tool_impl {
-    qged_func_ptr tool_create;
-};
 
 /* Command type for application level commands */
 typedef int (*app_cmd_ptr)(void *, int, const char **);

@@ -31,6 +31,7 @@
 #define QGED_DEFINES_H
 
 #include "common.h"
+#include "brlcad_version.h"
 
 #ifndef QGED_EXPORT
 #  if defined(QGED_DLL_EXPORTS) && defined(QGED_DLL_IMPORTS)
@@ -43,6 +44,25 @@
 #    define QGED_EXPORT
 #  endif
 #endif
+
+struct qged_tool_impl;
+struct qged_tool {
+    struct qged_tool_impl *i;
+};
+
+struct qged_plugin {
+    uint32_t api_version; /* must be first in struct */
+    const struct qged_tool ** const cmds;
+    int cmd_cnt;
+};
+
+#define QGED_TOOL_PLUGIN (3*1000000 + (BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
+#define QGED_CMD_PLUGIN  (4*1000000 + (BRLCAD_VERSION_MAJOR*10000) + (BRLCAD_VERSION_MINOR*100) + BRLCAD_VERSION_PATCH)
+
+typedef void * (*qged_func_ptr)();
+struct qged_tool_impl {
+    qged_func_ptr tool_create;
+};
 
 #endif  /* QGED_DEFINES_H */
 
