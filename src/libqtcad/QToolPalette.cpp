@@ -83,6 +83,12 @@ QToolPaletteElement::do_app_view_update(struct bview **v)
 }
 
 void
+QToolPaletteElement::do_el_view_change(struct bview **v)
+{
+    emit el_view_change(v);
+}
+
+void
 QToolPaletteElement::do_app_db_change()
 {
     emit app_db_change();

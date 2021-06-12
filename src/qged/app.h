@@ -78,6 +78,7 @@ class CADApp : public QApplication
     signals:
 	void db_change();
 	void view_change(struct bview **);
+	void el_view_change();
 
     public slots:
 	void open_file();
@@ -87,6 +88,8 @@ class CADApp : public QApplication
 
         void do_view_update();
         void do_view_change(struct bview **);
+
+	void do_el_view_change(struct bview **);
 
     public:
 	BRLCAD_MainWindow *w = NULL;

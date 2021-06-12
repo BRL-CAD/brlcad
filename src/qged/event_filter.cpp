@@ -28,6 +28,9 @@
 #include "app.h"
 #include "event_filter.h"
 
+// TODO - the emission of the events from the filter seems
+// to be interfering with widget interactions in the palettes.
+// Need to find another way to achieve this...
 bool EditStateFilter::eventFilter(QObject *, QEvent *e)
 {
     if (e->type() != QEvent::MouseButtonPress) {
@@ -39,32 +42,32 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
 	return false;
     QWidget *vcp = c->w->vc->tpalette;
     QPoint gpos = m_e->globalPos();
-    CADPalette *v = c->w->vc;
     if (vcp) {
 	QRect lrect = vcp->geometry();
 	QPoint mpos = vcp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
-	    emit v->current(v);
+	    //CADPalette *v = c->w->vc;
+	    //emit v->current(v);
 	    return false;
 	}
     }
     QWidget *icp = c->w->ic->tpalette;
-    CADPalette *ed = c->w->ic;
     if (icp) {
 	QRect lrect = icp->geometry();
 	QPoint mpos = icp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
-	    emit ed->current(ed);
+	    //CADPalette *ed = c->w->ic;
+	    //emit ed->current(ed);
 	    return false;
 	}
     }
     QWidget *ocp = c->w->oc->tpalette;
-    CADPalette *pd = c->w->oc;
     if (ocp) {
 	QRect lrect = ocp->geometry();
 	QPoint mpos = ocp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
-	    emit pd->current(pd);
+	    //CADPalette *pd = c->w->oc;
+	    //emit pd->current(pd);
 	    return false;
 	}
     }

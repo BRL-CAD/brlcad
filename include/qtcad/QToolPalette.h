@@ -82,6 +82,11 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	void app_view_update(struct bview **);
 	void app_db_change();
 
+	// Signal the application can listen to to see if the Element has
+	// changed anything.  Emitted by signal_view_update, which is normally
+	// connected to internal widget signals in the controls.
+	void el_view_change(struct bview **);
+
     public slots:
 	// These slots are intended to be connected to parent signals when the
 	// Element is added to a Palette.  They will in turn emit the local
@@ -91,6 +96,10 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	// updates in the Element contents.
 	void do_app_view_update(struct bview **);
 	void do_app_db_change();
+
+	// The following are intended for communicating back to the application
+	// when the Element has made a change
+	void do_el_view_change(struct bview **);
 
     public:
 	QToolPaletteButton *button;

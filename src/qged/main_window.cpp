@@ -143,7 +143,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(oc, &CADPalette::current, ic, &CADPalette::makeCurrent);
     connect(oc, &CADPalette::current, oc, &CADPalette::makeCurrent);
 
-
     /****************************************************************************
      * The primary view and palette widgets are now in place.  We are ready to
      * start loading tools defined as plugins.
@@ -255,6 +254,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		vc->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_view_update);
 		QObject::connect(ap, &CADApp::db_change, el, &QToolPaletteElement::do_app_db_change);
+
+		QObject::connect(el, &QToolPaletteElement::el_view_change, ap, &CADApp::do_el_view_change);
 	    }
 	}
 
@@ -379,8 +380,10 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // If the database changes, we need to update our views
     if (canvas) {
 	QObject::connect((CADApp *)qApp, &CADApp::db_change, canvas, &QtCADView::need_update);
+	QObject::connect((CADApp *)qApp, &CADApp::el_view_change, canvas, &QtCADView::need_update);
     } else if (c4) {
 	QObject::connect((CADApp *)qApp, &CADApp::db_change, c4, &QtCADQuad::need_update);
+	QObject::connect((CADApp *)qApp, &CADApp::el_view_change, c4, &QtCADQuad::need_update);
 	// The Quad View has an additional condition in the sense that the current view may
 	// change.  Probably we won't try to track this for floating dms attached to qged,
 	// but the quad view is a central view widget so we need to support it.
