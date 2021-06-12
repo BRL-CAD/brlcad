@@ -104,6 +104,7 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
     public:
 	QToolPaletteButton *button;
 	QWidget *controls;
+	int scroll_pos = 0;
 };
 
 class QTCAD_EXPORT QToolPalette: public QWidget

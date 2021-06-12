@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <QScrollBar>
 #include <iostream>
 #include "qtcad/QToolPalette.h"
 
@@ -227,6 +228,7 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 	} else {
 	    if (!element->button->isChecked()) element->button->setChecked(true);
 	    if (selected && element != selected) {
+		selected->scroll_pos = control_container->verticalScrollBar()->sliderPosition();
 		selected->controls->hide();
 		if (selected->button->isChecked()) selected->button->setChecked(false);
 	    }
@@ -234,6 +236,7 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 	    control_container->setWidget(element->controls);
 	    element->controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	    element->controls->show();
+	    control_container->verticalScrollBar()->setSliderPosition(element->scroll_pos);
 	    selected = element;
 	    foreach(QToolPaletteElement *el, elements) {
 		if (el != selected) {
