@@ -229,6 +229,37 @@ CADApp::do_view_update()
     emit view_change(&gedp->ged_gvp);
 }
 
+void
+CADApp::tree_update()
+{
+    if (!w)
+	return;
+    CADPalette *v = NULL;
+    CADPalette *vc = w->vc;
+    CADPalette *ic = w->ic;
+    CADPalette *oc = w->oc;
+    switch (interaction_mode) {
+	case 0:
+	    v = vc;
+	    break;
+	case 1:
+	    v = ic;
+	    break;
+	case 2:
+	    v = oc;
+	    break;
+	default:
+	    v = NULL;
+	    break;
+    }
+    if (!v)
+	return;
+    vc->makeCurrent(v);
+    ic->makeCurrent(v);
+    oc->makeCurrent(v);
+}
+
+
 struct db_i *
 CADApp::dbip()
 {

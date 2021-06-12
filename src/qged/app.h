@@ -74,6 +74,8 @@ class CADApp : public QApplication
 	struct db_i *dbip();
 	struct rt_wdb *wdbp();
 
+	int interaction_mode = 0; // Used to control tree widget highlighting
+	int prev_interaction_mode = 0;
 
     signals:
 	void db_change();
@@ -90,6 +92,8 @@ class CADApp : public QApplication
         void do_view_change(struct bview **);
 
 	void do_el_view_change(struct bview **);
+
+	void tree_update();
 
     public:
 	BRLCAD_MainWindow *w = NULL;

@@ -23,14 +23,12 @@
  */
 
 #include <iostream>
+#include <QTimer>
 #include <QEvent>
 #include <QMouseEvent>
 #include "app.h"
 #include "event_filter.h"
 
-// TODO - the emission of the events from the filter seems
-// to be interfering with widget interactions in the palettes.
-// Need to find another way to achieve this...
 bool EditStateFilter::eventFilter(QObject *, QEvent *e)
 {
     if (e->type() != QEvent::MouseButtonPress) {
@@ -45,9 +43,10 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     if (vcp) {
 	QRect lrect = vcp->geometry();
 	QPoint mpos = vcp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos)) {
-	    //CADPalette *v = c->w->vc;
-	    //emit v->current(v);
+	if (lrect.contains(mpos) && c->interaction_mode != 0) {
+	    c->prev_interaction_mode = c->interaction_mode;
+	    c->interaction_mode = 0;
+	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}
     }
@@ -55,9 +54,10 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     if (icp) {
 	QRect lrect = icp->geometry();
 	QPoint mpos = icp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos)) {
-	    //CADPalette *ed = c->w->ic;
-	    //emit ed->current(ed);
+	if (lrect.contains(mpos) && c->interaction_mode != 1) {
+	    c->prev_interaction_mode = c->interaction_mode;
+	    c->interaction_mode = 1;
+	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}
     }
@@ -65,9 +65,10 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     if (ocp) {
 	QRect lrect = ocp->geometry();
 	QPoint mpos = ocp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos)) {
-	    //CADPalette *pd = c->w->oc;
-	    //emit pd->current(pd);
+	if (lrect.contains(mpos) && c->interaction_mode != 2) {
+	    c->prev_interaction_mode = c->interaction_mode;
+	    c->interaction_mode = 2;
+	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}
     }
