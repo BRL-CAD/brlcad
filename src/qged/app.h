@@ -90,14 +90,15 @@ class CADApp : public QApplication
 	/* GUI/View connection slots */
     public slots:
 
-	void do_el_view_change(struct bview **);
-
 	// Called if the view is being altered by one of the app's graphical
 	// elements, rather than being driven by mouse movements or commands.
-	// Unlike do_view_update, it does NOT update GUI elements (which would
-	// result in a recursive loop) but instead lets the widgets know to
-	// update in response to the data altered by the GUI.
-        void do_gui_view_update();
+	// Changes the view settings, but does NOT update GUI elements.
+	void do_view_update_from_gui_change(struct bview **);
+
+        // Called when the view has been changed by mouse events or commands.
+	// It is responsible for updating the GUI elements that might be
+	// displaying view information.  Does not change the view settings.
+        void do_gui_update_from_view_change();
 
 	// This slot is used for quad view configurations - it is called if the
 	// user uses the mouse to select one of multiple views.  This slot has
