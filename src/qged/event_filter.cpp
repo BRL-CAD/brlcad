@@ -38,10 +38,10 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     if (!c || !c->w)
 	return false;
     QWidget *vcp = c->w->vc->tpalette;
+    QPoint gpos = m_e->globalPos();
     CADPalette *v = c->w->vc;
     if (vcp) {
 	QRect lrect = vcp->geometry();
-	QPoint gpos = m_e->globalPos();
 	QPoint mpos = vcp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
 	    emit v->current(v);
@@ -52,7 +52,6 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     CADPalette *ed = c->w->ic;
     if (icp) {
 	QRect lrect = icp->geometry();
-	QPoint gpos = m_e->globalPos();
 	QPoint mpos = icp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
 	    emit ed->current(ed);
@@ -63,7 +62,6 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     CADPalette *pd = c->w->oc;
     if (ocp) {
 	QRect lrect = ocp->geometry();
-	QPoint gpos = m_e->globalPos();
 	QPoint mpos = ocp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
 	    emit pd->current(pd);
