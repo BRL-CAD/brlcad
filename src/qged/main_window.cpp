@@ -387,7 +387,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	// The Quad View has an additional condition in the sense that the current view may
 	// change.  Probably we won't try to track this for floating dms attached to qged,
 	// but the quad view is a central view widget so we need to support it.
-	QObject::connect(c4, &QtCADQuad::selected, (CADApp *)qApp, &CADApp::do_view_change);
+	QObject::connect(c4, &QtCADQuad::selected, (CADApp *)qApp, &CADApp::do_quad_view_change);
     }
 
     // If the view changes, let the world know.  The app signals are used by other

@@ -206,7 +206,7 @@ CADApp::initialize()
 }
 
 void
-CADApp::do_view_change(struct bview **nv)
+CADApp::do_quad_view_change(struct bview **nv)
 {
     if (gedp && nv) {
 	gedp->ged_gvp = *nv;

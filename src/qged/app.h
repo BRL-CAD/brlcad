@@ -90,8 +90,14 @@ class CADApp : public QApplication
 	/* GUI/View connection slots */
     public slots:
         void do_view_update();
-        void do_view_change(struct bview **);
 	void do_el_view_change(struct bview **);
+
+	// This slot is used for quad view configurations - it is called if the
+	// user uses the mouse to select one of multiple views.  This slot has
+	// the responsibility to notify GUI elements of a view change via
+	// do_gui_view_change, after updating the current gedp->ged_gvp
+	// pointer to refer to the now-current view.
+	void do_quad_view_change(struct bview **);
 
        	/* Utility slots */
     public slots:
