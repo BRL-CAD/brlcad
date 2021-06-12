@@ -86,7 +86,7 @@ QToolPaletteElement::do_app_view_update(struct bview **v)
 void
 QToolPaletteElement::do_el_view_change(struct bview **v)
 {
-    emit el_view_change(v);
+    emit gui_changed_view(v);
 }
 
 void

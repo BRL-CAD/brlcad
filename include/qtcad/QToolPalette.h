@@ -83,9 +83,10 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	void app_db_change();
 
 	// Signal the application can listen to to see if the Element has
-	// changed anything.  Emitted by signal_view_update, which is normally
-	// connected to internal widget signals in the controls.
-	void el_view_change(struct bview **);
+	// changed anything in the view.  Emitted by signal_view_update slot,
+	// which is connected to internal widget signals in the controls. This
+	// provide a generic, public "signal interface" for widget internals.
+	void gui_changed_view(struct bview **);
 
     public slots:
 	// These slots are intended to be connected to parent signals when the

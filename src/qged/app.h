@@ -80,7 +80,7 @@ class CADApp : public QApplication
     signals:
 	void db_change();
 	void view_change(struct bview **);
-	void el_view_change();
+	void gui_changed_view();
 
         /* Menu slots */
     public slots:

@@ -220,7 +220,7 @@ CADApp::do_view_update_from_gui_change(struct bview **nv)
     if (gedp && nv) {
 	gedp->ged_gvp = *nv;
     }
-    emit el_view_change();
+    emit gui_changed_view();
 }
 
 void
