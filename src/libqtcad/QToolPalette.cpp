@@ -216,10 +216,14 @@ void
 QToolPalette::displayElement(QToolPaletteElement *element)
 {
     if (element) {
-	if (element == selected && !always_selected) {
-	    if (element->button->isChecked()) element->button->setChecked(false);
-	    element->controls->hide();
-	    selected = NULL;
+	if (element == selected) {
+	    if (!always_selected) {
+		if (element->button->isChecked()) element->button->setChecked(false);
+		element->controls->hide();
+		selected = NULL;
+	    } else {
+		element->button->setStyleSheet(selected_style);
+	    }
 	} else {
 	    if (!element->button->isChecked()) element->button->setChecked(true);
 	    if (selected && element != selected) {
