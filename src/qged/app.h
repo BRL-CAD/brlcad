@@ -82,17 +82,21 @@ class CADApp : public QApplication
 	void view_change(struct bview **);
 	void el_view_change();
 
+        /* Menu slots */
     public slots:
 	void open_file();
-	void run_cmd(const QString &command);
-        void readSettings();
         void write_settings();
 
+	/* GUI/View connection slots */
+    public slots:
         void do_view_update();
         void do_view_change(struct bview **);
-
 	void do_el_view_change(struct bview **);
 
+       	/* Utility slots */
+    public slots:
+	void run_cmd(const QString &command);
+        void readSettings();
 	void tree_update();
 
     public:
