@@ -211,7 +211,7 @@ CADApp::do_quad_view_change(struct bview **nv)
     if (gedp && nv) {
 	gedp->ged_gvp = *nv;
     }
-    do_view_update();
+    do_gui_view_update();
 }
 
 void
@@ -224,7 +224,7 @@ CADApp::do_el_view_change(struct bview **nv)
 }
 
 void
-CADApp::do_view_update()
+CADApp::do_gui_view_update()
 {
     emit view_change(&gedp->ged_gvp);
 }

@@ -390,12 +390,12 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	QObject::connect(c4, &QtCADQuad::selected, (CADApp *)qApp, &CADApp::do_quad_view_change);
     }
 
-    // If the view changes, let the world know.  The app signals are used by other
-    // widgets to hide the specifics of the current view implementation.
+    // If the view changes, let the GUI know.  The ap supplied signals are used by other
+    // widgets to hide the specifics of the current view implementation (single or quad).
     if (canvas) {
-	QObject::connect(canvas, &QtCADView::changed, ap, &CADApp::do_view_update);
+	QObject::connect(canvas, &QtCADView::changed, ap, &CADApp::do_gui_view_update);
     } else if (c4) {
-	QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_view_update);
+	QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_gui_view_update);
     }
 
     // We start out with the View Control panel as the current panel - by
