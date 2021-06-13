@@ -65,6 +65,17 @@ QToolPaletteElement::~QToolPaletteElement()
     delete button;
 }
 
+bool
+QToolPaletteElement::eventFilter(QObject *o, QEvent *e)
+{
+    if (!o || !e)
+	return false;
+
+    printf("palette element filter\n");
+
+    return false;
+}
+
 void
 QToolPaletteElement::setButton(QToolPaletteButton *n_button)
 {

@@ -72,6 +72,8 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	void setButton(QToolPaletteButton *n_button);
 	void setControls(QWidget *n_controls);
 
+	bool eventFilter(QObject *o, QEvent *e);
+
     signals:
 	// PUBLIC:
 	// Signal the application can listen to to see if the Element has
