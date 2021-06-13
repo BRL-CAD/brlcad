@@ -66,13 +66,13 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
     Q_OBJECT
 
     public:
-	QToolPaletteElement(QIcon *iicon = 0, QWidget *control = 0);
+	QToolPaletteElement(QIcon *iicon = 0, QWidget *control = 0, bool (*cef)(void *, QObject *, QEvent *) = NULL);
 	~QToolPaletteElement();
 
 	void setButton(QToolPaletteButton *n_button);
 	void setControls(QWidget *n_controls);
 
-	bool eventFilter(QObject *o, QEvent *e);
+	bool element_event_filter(QObject *o, QEvent *e);
 
     signals:
 	// PUBLIC:
@@ -120,6 +120,7 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	QToolPaletteButton *button;
 	QWidget *controls;
 	int scroll_pos = 0;
+	bool (*control_event_filter)(void *, QObject *, QEvent *) = NULL;
 };
 
 class QTCAD_EXPORT QToolPalette: public QWidget

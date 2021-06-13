@@ -24,6 +24,14 @@
 #include "qtcad/QToolPalette.h"
 #include "../plugin.h"
 
+bool pc_event_filter(void *, QObject *, QEvent *)
+{
+    printf("polygon circle filter\n");
+
+    return false;
+}
+
+
 void *
 polygon_circle_tool_create()
 {
@@ -33,7 +41,7 @@ polygon_circle_tool_create()
     QPushButton *poly_control = new QPushButton(polygon_ctrls);
     poly_control->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_control);
+    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_control, &pc_event_filter);
 
     return el;
 }
