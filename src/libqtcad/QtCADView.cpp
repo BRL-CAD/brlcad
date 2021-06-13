@@ -151,7 +151,7 @@ QtCADView::do_view_changed()
 }
 
 void
-QtCADView::need_update()
+QtCADView::need_update(void *)
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {

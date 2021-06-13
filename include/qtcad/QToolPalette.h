@@ -73,15 +73,7 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	void setControls(QWidget *n_controls);
 
     signals:
-	// These signals are emitted by the below slots, and should NEVER be
-	// emitted directly by any of the Element subcomponents.  They are
-	// intended to drive updating of Element subcomponents in response to
-	// application changes.  Subcomponents will connect to these in lieu
-	// of connecting directly to application signals, to decouple the
-	// implementation of the Element internals from the application.
-	void app_view_update(struct bview **);
-	void app_db_change();
-
+	// PUBLIC:
 	// Signal the application can listen to to see if the Element has
 	// changed anything in the view.  Emitted by signal_view_update slot,
 	// which is connected to internal widget signals in the controls. This
@@ -89,18 +81,38 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	void gui_changed_view(struct bview **);
 
     public slots:
+	// INTERNAL:
+	// The following slot is for connecting to by internal control widget
+	// signals when the widget makes a view change, and handles emission
+	// of the public facing gui_changed_view signal.
+	void do_gui_changed_view(struct bview **);
+
+
+    public slots:
+	// PUBLIC:
 	// These slots are intended to be connected to parent signals when the
 	// Element is added to a Palette.  They will in turn emit the local
-	// signals above for internal Element use.  These slots are used to
+	// signals below for internal Element use.  These slots are used to
 	// hide any internal signal/slot implementation details from the
 	// application while still allowing changes at the app level to drive
 	// updates in the Element contents.
-	void do_app_view_update(struct bview **);
-	void do_app_db_change();
+	void do_app_changed_view(struct bview **);
+	void do_app_changed_db(void *);
 
-	// The following are intended for communicating back to the application
-	// when the Element has made a change
-	void do_el_view_change(struct bview **);
+     signals:
+	// INTERNAL:
+	// These signals are emitted by the above slots.  Subcomponents will
+	// connect to these in lieu of connecting directly to application
+	// signals, to decouple the implementation of the Element internals
+	// from the application.  I.e. the application connects to the above
+	// slots, and internal connections listen for the emission of the below
+	// signals in lieu of the application signals.
+	//
+	// Note that these signals should NEVER be emitted directly by any of
+	// the Element subcomponents.  Nor should they be connected to by
+	// application code.
+	void app_changed_view(struct bview **);
+	void app_changed_db(void *);
 
     public:
 	QToolPaletteButton *button;

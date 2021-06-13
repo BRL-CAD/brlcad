@@ -256,7 +256,7 @@ QtCADQuad::select(const char *quadrant_id)
 }
 
 void
-QtCADQuad::need_update()
+QtCADQuad::need_update(void *)
 {
     ur->update();
     ul->update();

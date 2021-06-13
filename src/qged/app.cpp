@@ -101,9 +101,9 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
     }
 
     if (w->canvas)
-	w->canvas->need_update();
+	w->canvas->need_update(NULL);
     if (w->c4)
-	w->c4->need_update();
+	w->c4->need_update(NULL);
 }
 
 extern "C" int
@@ -220,7 +220,7 @@ CADApp::do_view_update_from_gui_change(struct bview **nv)
     if (gedp && nv) {
 	gedp->ged_gvp = *nv;
     }
-    emit gui_changed_view();
+    emit gui_changed_view(NULL);
 }
 
 void
@@ -380,7 +380,7 @@ CADApp::opendb(QString filename)
 	w->treeview->m->dbip = dbip();
 
     // Inform the world the database has changed
-    emit db_change();
+    emit app_changed_db((void *)gedp);
 
     // Also have a new view...
     emit view_change(&gedp->ged_gvp);
@@ -502,15 +502,15 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    // anything changed with the geometry, we also need to redraw
 	    if (ged_view_update(gedp) > 0) {
 		if (w->canvas)
-		    w->canvas->need_update();
+		    w->canvas->need_update(NULL);
 		if (w->c4)
-		    w->c4->need_update();
+		    w->c4->need_update(NULL);
 	    }
 	} else {
 	    // gedp == NULL - can't cheat and use the gedp pointer
 	    if (prev_gedp != gedp) {
 		if (w->canvas) {
-		    w->canvas->need_update();
+		    w->canvas->need_update(NULL);
 		}
 		if (w->c4) {
 		    QtCADView *c = w->c4->get();

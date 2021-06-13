@@ -71,7 +71,7 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	void selected(struct bview **);
 
     public slots:
-	void need_update();
+	void need_update(void *);
         void do_view_changed();
 
     private:

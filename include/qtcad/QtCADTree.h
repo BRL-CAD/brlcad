@@ -113,7 +113,7 @@ class QTCAD_EXPORT CADTreeModel : public QAbstractItemModel
 	CADTreeView *cadtreeview = NULL;
 
     public slots:
-	void refresh();
+	void refresh(void *);
         void mode_change(int);
 	void update_selected_node_relationships(const QModelIndex & index);
 	void expand_tree_node_relationships(const QModelIndex&);

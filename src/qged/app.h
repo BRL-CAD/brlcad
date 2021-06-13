@@ -78,9 +78,9 @@ class CADApp : public QApplication
 	int prev_interaction_mode = 0;
 
     signals:
-	void db_change();
+	void app_changed_db(void *);
 	void view_change(struct bview **);
-	void gui_changed_view();
+	void gui_changed_view(void *);
 
         /* Menu slots */
     public slots:

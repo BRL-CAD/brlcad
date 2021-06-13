@@ -867,7 +867,7 @@ bool CADTreeModel::hasChildren(const QModelIndex &idx) const
     return false;
 }
 
-void CADTreeModel::refresh()
+void CADTreeModel::refresh(void *)
 {
     all_nodes.clear();
     populate(dbip);
