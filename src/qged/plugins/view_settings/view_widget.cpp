@@ -92,66 +92,101 @@ CADViewSettings::checkbox_refresh(struct bview **nv)
     m_v = nv;
     if (m_v && *m_v) {
 	struct bview *v = *m_v;
+	a_ckbx->blockSignals(true);
 	if (v->gv_s->adaptive_plot) {
 	    a_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    a_ckbx->setCheckState(Qt::Unchecked);
 	}
+	a_ckbx->blockSignals(false);
+
+	adc_ckbx->blockSignals(true);
 	if (v->gv_s->gv_adc.draw) {
 	    adc_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    adc_ckbx->setCheckState(Qt::Unchecked);
 	}
+	adc_ckbx->blockSignals(false);
+
+	cdot_ckbx->blockSignals(true);
 	if (v->gv_s->gv_center_dot.gos_draw) {
 	    cdot_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    cdot_ckbx->setCheckState(Qt::Unchecked);
 	}
+	cdot_ckbx->blockSignals(false);
+
+	fb_ckbx->blockSignals(true);
 	if (v->gv_s->gv_fb_mode != 0) {
 	    fb_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    fb_ckbx->setCheckState(Qt::Unchecked);
 	}
+	fb_ckbx->blockSignals(false);
+
+	fbo_ckbx->blockSignals(true);
 	if (v->gv_s->gv_fb_mode == 1) {
 	    fbo_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    fbo_ckbx->setCheckState(Qt::Unchecked);
 	}
+	fbo_ckbx->blockSignals(false);
+
+	fps_ckbx->blockSignals(true);
 	if (v->gv_s->gv_fps) {
 	    fps_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    fps_ckbx->setCheckState(Qt::Unchecked);
 	}
+	fps_ckbx->blockSignals(false);
+
+	grid_ckbx->blockSignals(true);
 	if (v->gv_s->gv_grid.draw) {
 	    grid_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    grid_ckbx->setCheckState(Qt::Unchecked);
 	}
+	grid_ckbx->blockSignals(false);
+
+	i_ckbx->blockSignals(true);
 	if (v->independent) {
 	    i_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    i_ckbx->setCheckState(Qt::Unchecked);
 	}
+	i_ckbx->blockSignals(false);
+
+	mdlaxes_ckbx->blockSignals(true);
 	if (v->gv_s->gv_model_axes.draw) {
 	    mdlaxes_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    mdlaxes_ckbx->setCheckState(Qt::Unchecked);
 	}
+	mdlaxes_ckbx->blockSignals(false);
+
+	params_ckbx->blockSignals(true);
 	if (v->gv_s->gv_view_params.gos_draw) {
 	    params_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    params_ckbx->setCheckState(Qt::Unchecked);
 	}
+	params_ckbx->blockSignals(false);
+
+	scale_ckbx->blockSignals(true);
 	if (v->gv_s->gv_view_scale.gos_draw) {
 	    scale_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    scale_ckbx->setCheckState(Qt::Unchecked);
 	}
+	scale_ckbx->blockSignals(false);
+
+	viewaxes_ckbx->blockSignals(true);
 	if (v->gv_s->gv_view_axes.draw) {
 	    viewaxes_ckbx->setCheckState(Qt::Checked);
 	} else {
 	    viewaxes_ckbx->setCheckState(Qt::Unchecked);
 	}
+	viewaxes_ckbx->blockSignals(false);
 
     }
 }
