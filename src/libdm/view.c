@@ -668,9 +668,25 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 
 }
 
+// To allow completely custom modes like the sketch editor to be defined by
+// applications in terms of libdm, we allow an optional callback that can be
+// passed in to this function.  If non-NULL, that function will be called in
+// lieu of the standard logic below.
+//
+// Current thought is that this will allow the definition of a sketch editor
+// (or, for that matter, any custom visual) in libdm terms rather than in Tk or
+// even in OpenGL (although the latter may be what the custom function does
+// under the hood, if it doesn't want to define itself in libdm terms - libdm
+// doesn't guarantee raw OpenGL drawing is supported, but the dmp should
+// provide enough information for the calling app to know if that is possible.)
 void
-dm_draw_objs(struct bview *v, double base2local, double local2base)
+dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_draw_custom)(struct bview *, double, double, void *), void *u_data)
 {
+    if (dm_draw_custom) {
+	(*dm_draw_custom)(v, base2local, local2base, u_data);
+	return;
+    }
+
     struct dm *dmp = (struct dm *)v->dmp;
 
     // This is the start of a draw cycle - start the stopwatch to time the

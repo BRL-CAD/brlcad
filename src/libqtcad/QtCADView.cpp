@@ -412,6 +412,24 @@ QtCADView::current()
     return 0;
 }
 
+void
+QtCADView::set_draw_custom(void (*draw_custom)(struct bview *, double, double, void *), void *draw_udata)
+{
+
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->draw_custom = draw_custom;
+	canvas_gl->draw_udata = draw_udata;
+	return;
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->draw_custom = draw_custom;
+	canvas_sw->draw_udata = draw_udata;
+	return;
+    }
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

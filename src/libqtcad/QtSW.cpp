@@ -157,7 +157,7 @@ void QtSW::paintEvent(QPaintEvent *e)
 	v->gv_local2base = *local2base;
 	v->gv_base2local = *base2local;
     }
-    dm_draw_objs(v, v->gv_base2local, v->gv_local2base);
+    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, draw_custom, draw_udata);
     dm_draw_end(dmp);
 
     // Set up a QImage with the rendered output..

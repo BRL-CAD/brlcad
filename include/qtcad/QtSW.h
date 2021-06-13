@@ -74,6 +74,9 @@ class QTCAD_EXPORT QtSW : public QWidget
 	double *base2local = NULL;
 	double *local2base = NULL;
 
+	void (*draw_custom)(struct bview *, double, double, void *) = NULL;
+	void *draw_udata = NULL;
+
     signals:
 	void changed();
 
