@@ -21,15 +21,24 @@
  *
  */
 
-#include <QPushButton>
+#include <QLineEdit>
+#include <QComboBox>
+#include <QRadioButton>
 
-class QCirclePolyControl : public QPushButton
+class QCirclePolyControl : public QWidget
 {
     Q_OBJECT
 
     public:
-	QCirclePolyControl(QString s);
+	QCirclePolyControl();
 	~QCirclePolyControl();
+
+	QLineEdit *view_name;
+	QRadioButton *circle_mode;
+	QRadioButton *ellipse_mode;
+	QRadioButton *square_mode;
+	QRadioButton *rectangle_mode;
+	QRadioButton *general_mode;
 
     signals:
 	void view_updated(struct bview **);

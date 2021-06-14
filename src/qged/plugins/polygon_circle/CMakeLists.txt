@@ -41,6 +41,10 @@ set(ignore_srcs
   ${polygon_circle_moc_hdrs}
   icon.qrc
   circle.svg
+  ellipse.svg
+  polygon.svg
+  rectangle.svg
+  square.svg
   )
 
 CMAKEFILES(${ignore_srcs})

@@ -21,13 +21,58 @@
  *
  */
 
+#include <QLabel>
+#include <QLineEdit>
+#include <QGroupBox>
 #include "../../app.h"
 #include "polygon_circle_control.h"
 
-QCirclePolyControl::QCirclePolyControl(QString s)
-    : QPushButton(s)
+QCirclePolyControl::QCirclePolyControl()
+    : QWidget()
 {
+    QVBoxLayout *l = new QVBoxLayout;
+
+    QGroupBox *groupBox = new QGroupBox("Add Polygon");
+    QLabel *vn_label = new QLabel("Name of next polygon:");
+    view_name = new QLineEdit(this);
+
+    // Set an initial name (user can change, but need
+    // something if they don't have a specific name in
+    // mind.)
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    cpoly_cnt++;
+    bu_vls_sprintf(&pname, "polygon_%06d", cpoly_cnt);
+    view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+    bu_vls_free(&pname);
+
+    QVBoxLayout *gl = new QVBoxLayout;
+    circle_mode = new QRadioButton("Circle");
+    circle_mode->setIcon(QIcon(QPixmap(":circle.svg")));
+    circle_mode->setChecked(true);
+    ellipse_mode = new QRadioButton("Ellipse");
+    ellipse_mode->setIcon(QIcon(QPixmap(":ellipse.svg")));
+    square_mode = new QRadioButton("Square");
+    square_mode->setIcon(QIcon(QPixmap(":square.svg")));
+    rectangle_mode = new QRadioButton("Rectangle");
+    rectangle_mode->setIcon(QIcon(QPixmap(":rectangle.svg")));
+    general_mode = new QRadioButton("General");
+    general_mode->setIcon(QIcon(QPixmap(":polygon.svg")));
+    gl->addWidget(vn_label);
+    gl->addWidget(view_name);
+    gl->addWidget(circle_mode);
+    gl->addWidget(ellipse_mode);
+    gl->addWidget(square_mode);
+    gl->addWidget(rectangle_mode);
+    gl->addWidget(general_mode);
+    gl->setAlignment(Qt::AlignTop);
+    groupBox->setLayout(gl);
+
+    l->addWidget(groupBox);
+
+    l->setAlignment(Qt::AlignTop);
+    this->setLayout(l);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
 }
 
 QCirclePolyControl::~QCirclePolyControl()
@@ -50,14 +95,37 @@ QCirclePolyControl::eventFilter(QObject *, QEvent *e)
 
 	if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 	    if (!p) {
-		p = bv_create_polygon(gedp->ged_gvp, BV_POLYGON_CIRCLE, m_e->x(), m_e->y(), gedp->free_scene_obj);
-		struct bu_vls pname = BU_VLS_INIT_ZERO;
-		cpoly_cnt++;
-		bu_vls_sprintf(&pname, "circle_polygon_%06d", cpoly_cnt);
+		int ptype = BV_POLYGON_CIRCLE;
+		if (ellipse_mode->isChecked()) {
+		    ptype = BV_POLYGON_ELLIPSE;
+		}
+		if (square_mode->isChecked()) {
+		    ptype = BV_POLYGON_SQUARE;
+		}
+		if (rectangle_mode->isChecked()) {
+		    ptype = BV_POLYGON_RECTANGLE;
+		}
+		if (general_mode->isChecked()) {
+		    ptype = BV_POLYGON_GENERAL;
+		}
+		p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y(), gedp->free_scene_obj);
+
 		bu_vls_init(&p->s_uuid);
-		bu_vls_printf(&p->s_uuid, "%s", bu_vls_cstr(&pname));
-		bu_vls_free(&pname);
+		if (view_name->text().length()) {
+		    bu_vls_printf(&p->s_uuid, "%s", view_name->text().toLocal8Bit().data());
+		} else {
+		    bu_vls_printf(&p->s_uuid, "%s", view_name->placeholderText().toLocal8Bit().data());
+		}
 		bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);
+
+		cpoly_cnt++;
+
+		view_name->clear();
+		struct bu_vls pname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&pname, "polygon_%06d", cpoly_cnt);
+		view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+		bu_vls_free(&pname);
+
 		emit view_updated(&gedp->ged_gvp);
 		return true;
 	    }
