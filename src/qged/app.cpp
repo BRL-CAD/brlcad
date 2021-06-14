@@ -593,6 +593,12 @@ CADApp::run_cmd(const QString &command)
 
 }
 
+void
+CADApp::test_element_selected(QToolPaletteElement *)
+{
+    printf("App heard about element selection\n");
+}
+
 int
 CADApp::exec_console_app_in_window(QString command, QStringList options, QString lfile)
 {

@@ -259,6 +259,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	    }
 	}
 
+
 	for (e_it = ic_map.begin(); e_it != ic_map.end(); e_it++) {
 	    std::set<QToolPaletteElement *>::iterator el_it;
 	    for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
@@ -278,6 +279,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		QObject::connect(ap, &CADApp::app_changed_db, el, &QToolPaletteElement::do_app_changed_db);
 	    }
 	}
+
     }
 
 
@@ -298,6 +300,17 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
 	oc->addTool(el);
     }
+
+    // Now that we've got everything set up, connect the palette selection
+    // signals so they can update the view event filter as needed.  We don't do
+    // this before populating the palettes with tools since the initial
+    // addition would trigger a selection which we're not going to use.  (We
+    // default to selecting the default view tool at the end of this
+    // procedure by making vc the current palette.)
+    QObject::connect(vc->tpalette, &QToolPalette::element_selected, ap, &CADApp::test_element_selected);
+    QObject::connect(ic->tpalette, &QToolPalette::element_selected, ap, &CADApp::test_element_selected);
+    QObject::connect(oc->tpalette, &QToolPalette::element_selected, ap, &CADApp::test_element_selected);
+
 
 #if 0
     // TODO - check if we still need this after we get proper post-construction

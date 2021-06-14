@@ -112,6 +112,7 @@ class CADApp : public QApplication
 	void run_cmd(const QString &command);
         void readSettings();
 	void tree_update();
+	void test_element_selected(QToolPaletteElement *el);
 
     public:
 	BRLCAD_MainWindow *w = NULL;

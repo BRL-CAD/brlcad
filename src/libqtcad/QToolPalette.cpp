@@ -200,7 +200,6 @@ QToolPalette::setAlwaysSelected(int toggle)
     }
 }
 
-
 void
 QToolPalette::addElement(QToolPaletteElement *element)
 {
@@ -264,6 +263,7 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 		}
 	    }
 	}
+	emit element_selected(element);
     }
 }
 

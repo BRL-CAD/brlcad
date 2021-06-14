@@ -82,6 +82,7 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	// provide a generic, public "signal interface" for widget internals.
 	void gui_changed_view(struct bview **);
 
+
     public slots:
 	// INTERNAL:
 	// The following slot is for connecting to by internal control widget
@@ -142,6 +143,12 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 	QString selected_style = QString("");
 
 	QVBoxLayout *mlayout;
+
+   signals:
+	// Emitted when an element is selected.  The app's view needs to have
+	// the correct filter for the current tool (if defined) or at least
+	// remove any old filter from the previous tool.
+	void element_selected(QToolPaletteElement *);
 
    public slots:
 	void displayElement(QToolPaletteElement *);
