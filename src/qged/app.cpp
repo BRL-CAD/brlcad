@@ -596,8 +596,6 @@ CADApp::run_cmd(const QString &command)
 void
 CADApp::test_element_selected(QToolPaletteElement *el)
 {
-    printf("App heard about element selection\n");
-
     if (curr_view->curr_event_filter)
 	curr_view->removeEventFilter(curr_view->curr_event_filter);
 

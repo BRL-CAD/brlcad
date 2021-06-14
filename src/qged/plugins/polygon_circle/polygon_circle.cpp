@@ -43,6 +43,7 @@ polygon_circle_tool_create()
     poly_control->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_control);
+    QObject::connect(poly_control, &QCirclePolyControl::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
 
     return el;
 }

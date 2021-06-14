@@ -31,8 +31,15 @@ class QCirclePolyControl : public QPushButton
 	QCirclePolyControl(QString s);
 	~QCirclePolyControl();
 
+    signals:
+	void view_updated(struct bview **);
+
     protected:
 	bool eventFilter(QObject *, QEvent *);
+
+    private:
+	int cpoly_cnt = 0;
+	struct bv_scene_obj *p = NULL;
 };
 
 
