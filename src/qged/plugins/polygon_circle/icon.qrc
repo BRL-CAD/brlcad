@@ -1,5 +1,9 @@
 <RCC>
   <qresource>
     <file>circle.svg</file>
+    <file>ellipse.svg</file>
+    <file>polygon.svg</file>
+    <file>rectangle.svg</file>
+    <file>square.svg</file>
   </qresource>
 </RCC>

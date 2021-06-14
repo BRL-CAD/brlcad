@@ -10,13 +10,13 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="6.3767481mm"
-   height="6.3767481mm"
-   viewBox="0 0 6.3767481 6.3767481"
+   width="9.1879463mm"
+   height="9.1879463mm"
+   viewBox="0 0 9.1879463 9.1879463"
    version="1.1"
    id="svg8"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
-   sodipodi:docname="circle.svg">
+   sodipodi:docname="square.svg">
   <defs
      id="defs2">
     <linearGradient
@@ -35,9 +35,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="22.4"
-     inkscape:cx="20.188497"
-     inkscape:cy="9.1999804"
+     inkscape:zoom="5.6"
+     inkscape:cx="13.025549"
+     inkscape:cy="12.498865"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -66,12 +66,13 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-75.951602,-124.56096)">
-    <circle
-       style="opacity:0.95400002;fill:#0000ff;fill-opacity:1;stroke:#ffff00;stroke-width:0.2719464;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="path6037"
-       cx="79.139977"
-       cy="127.74934"
-       r="3.0524008" />
+     transform="translate(-74.875523,-131.34092)">
+    <rect
+       style="opacity:0.95400002;fill:#0000ff;fill-opacity:1;stroke:#ffff00;stroke-width:0.40000001;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect6649"
+       width="8.7879467"
+       height="8.7879467"
+       x="75.075523"
+       y="131.54092" />
   </g>
 </svg>
