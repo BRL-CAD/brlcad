@@ -120,10 +120,7 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	QWidget *controls;
 	int scroll_pos = 0;
 
-#if 0
-    protected:
-	bool eventFilter(QObject *obj, QEvent *ev) override;
-#endif
+	bool use_event_filter = false;
 
 };
 

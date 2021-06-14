@@ -413,6 +413,38 @@ QtCADView::current()
 }
 
 void
+QtCADView::add_event_filter(QObject *o)
+{
+    curr_event_filter = o;
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->installEventFilter(o);
+	return;
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->installEventFilter(o);
+	return;
+    }
+}
+
+void
+QtCADView::clear_event_filter(QObject *o)
+{
+    if (!o)
+	return;
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->removeEventFilter(o);
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->removeEventFilter(o);
+    }
+    curr_event_filter = NULL;
+}
+
+void
 QtCADView::set_draw_custom(void (*draw_custom)(struct bview *, double, double, void *), void *draw_udata)
 {
 

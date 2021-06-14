@@ -307,9 +307,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // addition would trigger a selection which we're not going to use.  (We
     // default to selecting the default view tool at the end of this
     // procedure by making vc the current palette.)
-    QObject::connect(vc->tpalette, &QToolPalette::element_selected, ap, &CADApp::test_element_selected);
-    QObject::connect(ic->tpalette, &QToolPalette::element_selected, ap, &CADApp::test_element_selected);
-    QObject::connect(oc->tpalette, &QToolPalette::element_selected, ap, &CADApp::test_element_selected);
+    QObject::connect(vc->tpalette, &QToolPalette::element_selected, ap, &CADApp::element_selected);
+    QObject::connect(ic->tpalette, &QToolPalette::element_selected, ap, &CADApp::element_selected);
+    QObject::connect(oc->tpalette, &QToolPalette::element_selected, ap, &CADApp::element_selected);
 
 
 #if 0

@@ -53,7 +53,7 @@ QCirclePolyControl::eventFilter(QObject *, QEvent *e)
 		p = bv_create_polygon(gedp->ged_gvp, BV_POLYGON_CIRCLE, m_e->x(), m_e->y(), gedp->free_scene_obj);
 		struct bu_vls pname = BU_VLS_INIT_ZERO;
 		cpoly_cnt++;
-		bu_vls_sprintf(&pname, "circle_polygon_%06d\n", cpoly_cnt);
+		bu_vls_sprintf(&pname, "circle_polygon_%06d", cpoly_cnt);
 		bu_vls_init(&p->s_uuid);
 		bu_vls_printf(&p->s_uuid, "%s", bu_vls_cstr(&pname));
 		bu_vls_free(&pname);

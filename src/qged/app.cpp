@@ -594,13 +594,21 @@ CADApp::run_cmd(const QString &command)
 }
 
 void
-CADApp::test_element_selected(QToolPaletteElement *el)
+CADApp::element_selected(QToolPaletteElement *el)
 {
-    if (curr_view->curr_event_filter)
-	curr_view->removeEventFilter(curr_view->curr_event_filter);
+    if (curr_view->curr_event_filter) {
+	curr_view->clear_event_filter(curr_view->curr_event_filter);
+	curr_view->curr_event_filter = NULL;
+    }
 
-    curr_view->installEventFilter(el->controls);
-    curr_view->curr_event_filter = el->controls;
+    if (el->use_event_filter) {
+	curr_view->add_event_filter(el->controls);
+	curr_view->curr_event_filter = el->controls;
+    }
+    if (curr_view->view()) {
+	curr_view->view()->gv_width = curr_view->width();
+	curr_view->view()->gv_height = curr_view->height();
+    }
 }
 
 int

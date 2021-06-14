@@ -43,7 +43,15 @@ polygon_circle_tool_create()
     poly_control->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_control);
+
+    // These controls may change the view - connect the internal widget signal
+    // to the QToolPaletteElement slot so the application can get the word when
+    // that happens.
     QObject::connect(poly_control, &QCirclePolyControl::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
+
+    // Let the element (and hence the application) know that this tool has a
+    // locally customized event filter to use with the view widget.
+    el->use_event_filter = true;
 
     return el;
 }
