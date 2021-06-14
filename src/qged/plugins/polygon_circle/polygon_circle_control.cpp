@@ -37,7 +37,6 @@ QCirclePolyControl::~QCirclePolyControl()
 bool
 QCirclePolyControl::eventFilter(QObject *, QEvent *e)
 {
-    printf("polygon circle filter\n");
 
     struct ged *gedp = ((CADApp *)qApp)->gedp;
     if (!gedp) {
@@ -46,6 +45,7 @@ QCirclePolyControl::eventFilter(QObject *, QEvent *e)
 
     if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove) {
 
+	printf("polygon circle filter mouse\n");
 	QMouseEvent *m_e = (QMouseEvent *)e;
 
 	if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
@@ -53,7 +53,7 @@ QCirclePolyControl::eventFilter(QObject *, QEvent *e)
 		p = bv_create_polygon(gedp->ged_gvp, BV_POLYGON_CIRCLE, m_e->x(), m_e->y(), gedp->free_scene_obj);
 		struct bu_vls pname = BU_VLS_INIT_ZERO;
 		cpoly_cnt++;
-		bu_vls_sprintf(&pname, "circle_polygon_%6d\n", cpoly_cnt);
+		bu_vls_sprintf(&pname, "circle_polygon_%06d\n", cpoly_cnt);
 		bu_vls_init(&p->s_uuid);
 		bu_vls_printf(&p->s_uuid, "%s", bu_vls_cstr(&pname));
 		bu_vls_free(&pname);
@@ -67,13 +67,15 @@ QCirclePolyControl::eventFilter(QObject *, QEvent *e)
 	    if (p && m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
 		p->s_changed = 0;
 		p->s_v = gedp->ged_gvp;
+		gedp->ged_gvp->gv_mouse_x = m_e->x();
+		gedp->ged_gvp->gv_mouse_y = m_e->y();
 		(*p->s_update_callback)(p);
 		emit view_updated(&gedp->ged_gvp);
 		return true;
 	    }
 	}
 
-	if (m_e->type() == QEvent::MouseButtonRelease && m_e->buttons().testFlag(Qt::LeftButton)) {
+	if (m_e->type() == QEvent::MouseButtonRelease) {
 	    p = NULL;
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
