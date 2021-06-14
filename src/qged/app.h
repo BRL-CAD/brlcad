@@ -105,7 +105,7 @@ class CADApp : public QApplication
 	// the responsibility to notify GUI elements of a view change via
 	// do_gui_view_change, after updating the current gedp->ged_gvp
 	// pointer to refer to the now-current view.
-	void do_quad_view_change(struct bview **);
+	void do_quad_view_change(QtCADView *);
 
        	/* Utility slots */
     public slots:
@@ -116,6 +116,7 @@ class CADApp : public QApplication
 
     public:
 	BRLCAD_MainWindow *w = NULL;
+	QtCADView *curr_view = NULL;
 	QString db_filename;
 	struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 

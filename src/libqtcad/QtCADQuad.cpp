@@ -171,7 +171,7 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 	if (cv) {
 	    (*cv) = c->view();
 	    if (c != oc)
-		emit selected(cv);
+		emit selected(c);
 	}
     }
     return false;
@@ -227,7 +227,7 @@ QtCADQuad::select(int quadrant_id)
     if (cv) {
 	(*cv) = c->view();
 	if (oc != c)
-	    emit selected(cv);
+	    emit selected(c);
     }
     // TODO - update coloring of bg to
     // indicate active quadrant

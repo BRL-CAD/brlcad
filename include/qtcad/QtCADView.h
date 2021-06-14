@@ -84,6 +84,7 @@ class QTCAD_EXPORT QtCADView : public QWidget
 
 	void aet(double a, double e, double t);
 
+	QObject *curr_event_filter = NULL;
 	void set_draw_custom(void (*draw_custom)(struct bview *, double, double, void *), void *draw_udata);
 
     signals:

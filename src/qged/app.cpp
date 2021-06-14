@@ -206,10 +206,10 @@ CADApp::initialize()
 }
 
 void
-CADApp::do_quad_view_change(struct bview **nv)
+CADApp::do_quad_view_change(QtCADView *cv)
 {
-    if (gedp && nv) {
-	gedp->ged_gvp = *nv;
+    if (gedp && cv) {
+	gedp->ged_gvp = cv->view();
     }
     do_gui_update_from_view_change();
 }
@@ -594,9 +594,15 @@ CADApp::run_cmd(const QString &command)
 }
 
 void
-CADApp::test_element_selected(QToolPaletteElement *)
+CADApp::test_element_selected(QToolPaletteElement *el)
 {
     printf("App heard about element selection\n");
+
+    if (curr_view->curr_event_filter)
+	curr_view->removeEventFilter(curr_view->curr_event_filter);
+
+    curr_view->installEventFilter(el->controls);
+    curr_view->curr_event_filter = el->controls;
 }
 
 int

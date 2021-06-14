@@ -68,7 +68,7 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 
     signals:
 	void changed();
-	void selected(struct bview **);
+	void selected(QtCADView *);
 
     public slots:
 	void need_update(void *);

@@ -51,9 +51,8 @@ QToolPaletteButton::setButtonElement(QIcon *iicon, QToolPaletteElement *n_elemen
 }
 
 
-QToolPaletteElement::QToolPaletteElement(QIcon *iicon, QWidget *control, bool (*cef)(void *, QObject *, QEvent *))
+QToolPaletteElement::QToolPaletteElement(QIcon *iicon, QWidget *control)
 {
-    control_event_filter = cef;
     button = new QToolPaletteButton(this, iicon, this);
     button->setCheckable(true);
     controls = control;
@@ -66,21 +65,18 @@ QToolPaletteElement::~QToolPaletteElement()
     delete button;
 }
 
+#if 0
 bool
-QToolPaletteElement::element_event_filter(QObject *o, QEvent *e)
+QToolPaletteElement::eventFilter(QObject *o, QEvent *e)
 {
     if (!o || !e)
 	return false;
 
-    if (control_event_filter) {
-	printf("palette element filter\n");
-	return (*control_event_filter)(controls, o, e);
-    }
+    printf("palette element filter\n");
 
-    printf("no element filter\n");
-
-    return false;
+    return controls->eventFilter(o, e);
 }
+#endif
 
 void
 QToolPaletteElement::setButton(QToolPaletteButton *n_button)

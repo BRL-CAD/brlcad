@@ -394,6 +394,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     if (canvas) {
 	QObject::connect((CADApp *)qApp, &CADApp::app_changed_db, canvas, &QtCADView::need_update);
 	QObject::connect((CADApp *)qApp, &CADApp::gui_changed_view, canvas, &QtCADView::need_update);
+	ap->curr_view = canvas;
     } else if (c4) {
 	QObject::connect((CADApp *)qApp, &CADApp::app_changed_db, c4, &QtCADQuad::need_update);
 	QObject::connect((CADApp *)qApp, &CADApp::gui_changed_view, c4, &QtCADQuad::need_update);
@@ -401,6 +402,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	// change.  Probably we won't try to track this for floating dms attached to qged,
 	// but the quad view is a central view widget so we need to support it.
 	QObject::connect(c4, &QtCADQuad::selected, (CADApp *)qApp, &CADApp::do_quad_view_change);
+	ap->curr_view = c4->get(0);
     }
 
     // If the view changes, let the GUI know.  The ap supplied signals are used by other

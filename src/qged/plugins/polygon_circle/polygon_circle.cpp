@@ -21,6 +21,7 @@
  *
  */
 
+#include "polygon_circle_control.h"
 #include "qtcad/QToolPalette.h"
 #include "../plugin.h"
 
@@ -37,11 +38,11 @@ polygon_circle_tool_create()
 {
     QIcon *obj_icon = new QIcon(QPixmap(":circle.svg"));
 
-    QString polygon_ctrls("polygon circle controls ");
-    QPushButton *poly_control = new QPushButton(polygon_ctrls);
+    QString polygon_ctrls("polygon circle controls");
+    QCirclePolyControl *poly_control = new QCirclePolyControl(polygon_ctrls);
     poly_control->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_control, &pc_event_filter);
+    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_control);
 
     return el;
 }
