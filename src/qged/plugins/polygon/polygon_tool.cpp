@@ -1,4 +1,4 @@
-/*               P O L Y G O N _ C I R C L E _ T O O L . C P P
+/*               P O L Y G O N  _ T O O L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,11 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file polygon_circle_tool.cpp
+/** @file polygon_tool.cpp
  *
  */
 
-#include "polygon_circle_control.h"
+#include "polygon_control.h"
 #include "qtcad/QToolPalette.h"
 #include "../plugin.h"
 
@@ -34,11 +34,11 @@ bool pc_event_filter(void *, QObject *, QEvent *)
 
 
 void *
-polygon_circle_tool_create()
+polygon_tool_create()
 {
-    QIcon *obj_icon = new QIcon(QPixmap(":circle.svg"));
+    QIcon *obj_icon = new QIcon(QPixmap(":polygon.svg"));
 
-    QCirclePolyControl *poly_control = new QCirclePolyControl();
+    QPolyControl *poly_control = new QPolyControl();
     poly_control->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_control);
@@ -46,7 +46,7 @@ polygon_circle_tool_create()
     // These controls may change the view - connect the internal widget signal
     // to the QToolPaletteElement slot so the application can get the word when
     // that happens.
-    QObject::connect(poly_control, &QCirclePolyControl::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
+    QObject::connect(poly_control, &QPolyControl::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.
@@ -56,14 +56,14 @@ polygon_circle_tool_create()
 }
 
 extern "C" {
-    struct qged_tool_impl polygon_circle_tool_impl = {
-	polygon_circle_tool_create
+    struct qged_tool_impl polygon_tool_impl = {
+	polygon_tool_create
     };
 
-    const struct qged_tool polygon_circle_tool = { &polygon_circle_tool_impl, 100 };
-    const struct qged_tool *polygon_circle_tools[] = { &polygon_circle_tool, NULL };
+    const struct qged_tool polygon_tool = { &polygon_tool_impl, 100 };
+    const struct qged_tool *polygon_tools[] = { &polygon_tool, NULL };
 
-    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, polygon_circle_tools, 1 };
+    static const struct qged_plugin pinfo = { QGED_VC_TOOL_PLUGIN, polygon_tools, 1 };
 
     COMPILER_DLLEXPORT const struct qged_plugin *qged_plugin_info()
     {

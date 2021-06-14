@@ -13,32 +13,32 @@ if(BRLCAD_ENABLE_QT)
 
 endif(BRLCAD_ENABLE_QT)
 
-set(polygon_circle_srcs
-  polygon_circle.cpp
-  polygon_circle_control.cpp
+set(polygon_srcs
+  polygon_tool.cpp
+  polygon_control.cpp
   )
 
-set(polygon_circle_moc_hdrs
-  polygon_circle_control.h
+set(polygon_moc_hdrs
+  polygon_control.h
   )
 
 if(BRLCAD_ENABLE_QT)
 
-  QT5_WRAP_CPP(polygon_circle_moc_srcs ${polygon_circle_moc_hdrs})
+  QT5_WRAP_CPP(polygon_moc_srcs ${polygon_moc_hdrs})
   QT5_ADD_RESOURCES(icon_qrc icon.qrc)
 
-  qged_plugin(qged_polygon_circle SHARED ${polygon_circle_srcs} ${polygon_circle_moc_srcs} ${icon_qrc})
-  target_link_libraries(qged_polygon_circle libqtcad libged librt libbu Qt5::Widgets)
-  set_property(TARGET qged_polygon_circle APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  VALIDATE_STYLE(qged_polygon_circle polygon_circle.cpp)
-  PLUGIN_SETUP(qged_polygon_circle qged)
+  qged_plugin(qged_polygon SHARED ${polygon_srcs} ${polygon_moc_srcs} ${icon_qrc})
+  target_link_libraries(qged_polygon libqtcad libged librt libbu Qt5::Widgets)
+  set_property(TARGET qged_polygon APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+  VALIDATE_STYLE(qged_polygon polygon_tool.cpp polygon_control.cpp)
+  PLUGIN_SETUP(qged_polygon qged)
 
 endif(BRLCAD_ENABLE_QT)
 
 set(ignore_srcs
   CMakeLists.txt
-  ${polygon_circle_srcs}
-  ${polygon_circle_moc_hdrs}
+  ${polygon_srcs}
+  ${polygon_moc_hdrs}
   icon.qrc
   circle.svg
   ellipse.svg

@@ -1,4 +1,4 @@
-/*         P O L Y G O N _ C I R C L E _ C O N T R O L . H
+/*         P O L Y G O N _ C O N T R O L . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -25,13 +25,13 @@
 #include <QComboBox>
 #include <QRadioButton>
 
-class QCirclePolyControl : public QWidget
+class QPolyControl : public QWidget
 {
     Q_OBJECT
 
     public:
-	QCirclePolyControl();
-	~QCirclePolyControl();
+	QPolyControl();
+	~QPolyControl();
 
 	QLineEdit *view_name;
 	QRadioButton *circle_mode;
@@ -47,7 +47,7 @@ class QCirclePolyControl : public QWidget
 	bool eventFilter(QObject *, QEvent *);
 
     private:
-	int cpoly_cnt = 0;
+	int poly_cnt = 0;
 	struct bv_scene_obj *p = NULL;
 };
 

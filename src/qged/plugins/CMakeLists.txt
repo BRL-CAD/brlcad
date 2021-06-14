@@ -26,8 +26,7 @@ CMAKEFILES(${plugin_ignore_files})
 
 
 # Plugins
-add_subdirectory(polygon_circle)
-add_subdirectory(polygon_ellipse)
+add_subdirectory(polygon)
 add_subdirectory(view_info)
 add_subdirectory(view_settings)
 

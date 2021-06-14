@@ -1,4 +1,4 @@
-/*         P O L Y G O N _ C I R C L E _ C O N T R O L . C P P
+/*         P O L Y G O N _ C O N T R O L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file polygon_circle_control.cpp
+/** @file polygon_control.cpp
  *
  */
 
@@ -25,9 +25,9 @@
 #include <QLineEdit>
 #include <QGroupBox>
 #include "../../app.h"
-#include "polygon_circle_control.h"
+#include "polygon_control.h"
 
-QCirclePolyControl::QCirclePolyControl()
+QPolyControl::QPolyControl()
     : QWidget()
 {
     QVBoxLayout *l = new QVBoxLayout;
@@ -40,13 +40,13 @@ QCirclePolyControl::QCirclePolyControl()
     // something if they don't have a specific name in
     // mind.)
     struct bu_vls pname = BU_VLS_INIT_ZERO;
-    cpoly_cnt++;
-    bu_vls_sprintf(&pname, "polygon_%06d", cpoly_cnt);
+    poly_cnt++;
+    bu_vls_sprintf(&pname, "polygon_%06d", poly_cnt);
     view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
     bu_vls_free(&pname);
 
     QVBoxLayout *gl = new QVBoxLayout;
-    circle_mode = new QRadioButton("Circle");
+    circle_mode = new QRadioButton("");
     circle_mode->setIcon(QIcon(QPixmap(":circle.svg")));
     circle_mode->setChecked(true);
     ellipse_mode = new QRadioButton("Ellipse");
@@ -75,12 +75,12 @@ QCirclePolyControl::QCirclePolyControl()
 
 }
 
-QCirclePolyControl::~QCirclePolyControl()
+QPolyControl::~QPolyControl()
 {
 }
 
 bool
-QCirclePolyControl::eventFilter(QObject *, QEvent *e)
+QPolyControl::eventFilter(QObject *, QEvent *e)
 {
 
     struct ged *gedp = ((CADApp *)qApp)->gedp;
@@ -90,7 +90,7 @@ QCirclePolyControl::eventFilter(QObject *, QEvent *e)
 
     if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove) {
 
-	printf("polygon circle filter mouse\n");
+	printf("polygon filter mouse\n");
 	QMouseEvent *m_e = (QMouseEvent *)e;
 
 	if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
@@ -118,11 +118,11 @@ QCirclePolyControl::eventFilter(QObject *, QEvent *e)
 		}
 		bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);
 
-		cpoly_cnt++;
+		poly_cnt++;
 
 		view_name->clear();
 		struct bu_vls pname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&pname, "polygon_%06d", cpoly_cnt);
+		bu_vls_sprintf(&pname, "polygon_%06d", poly_cnt);
 		view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
 		bu_vls_free(&pname);
 
