@@ -22,8 +22,10 @@
  */
 
 #include <QLineEdit>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QGroupBox>
+#include <QPushButton>
 #include <QRadioButton>
 
 class QPolyControl : public QWidget
@@ -34,22 +36,52 @@ class QPolyControl : public QWidget
 	QPolyControl();
 	~QPolyControl();
 
+	// Boolean Operation Mode
+	QComboBox *csg_modes;
+
+	// Adding polygons
 	QLineEdit *view_name;
 	QRadioButton *circle_mode;
 	QRadioButton *ellipse_mode;
 	QRadioButton *square_mode;
 	QRadioButton *rectangle_mode;
 	QRadioButton *general_mode;
+
+
+	// Draw default settings
+	// Default edge color
+	QCheckBox *default_fill_poly;
+	QPushButton *default_fill_color;
+	// TODO - maybe use sliders here?
+	QLineEdit *default_fill_angle;
+	QLineEdit *default_fill_density;
+
+	// Modifying polygons
+	QComboBox *mod_names;
+	QRadioButton *select_mode;
+	QRadioButton *move_mode;
+	QRadioButton *update_mode;
+
 	QGroupBox *general_mode_opts;
-	QRadioButton *new_general_poly;
-	QRadioButton *append_general_poly;
-	QRadioButton *close_general_poly;
+	QCheckBox *close_general_poly;
+	QRadioButton *append_pnt;
+	QRadioButton *select_pnt;
+	QRadioButton *move_pnt;
+
+	// Selected Edge color
+
+	QCheckBox *selected_fill_poly;
+	QPushButton *selected_fill_color;
+	// TODO - maybe use sliders here?
+	QLineEdit *selected_fill_angle;
+	QLineEdit *selected_fill_density;
 
     signals:
 	void view_updated(struct bview **);
 
     private slots:
 	void toggle_general_opts(bool);
+	void toggle_closed_poly(bool);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
