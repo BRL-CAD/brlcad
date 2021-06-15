@@ -339,6 +339,10 @@ struct bv_polygon {
 BG_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int type, int x, int y, struct bv_scene_obj *free_scene_obj);
 BG_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s);
 
+// Find the closest polygon obj to a view's current x,y mouse points
+BG_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, struct bview *v);
+
+BG_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s);
 
 
 __END_DECLS

@@ -105,6 +105,7 @@ QPolyControl::QPolyControl()
     select_mode = new QRadioButton("Select");
     t_grp->addButton(select_mode);
     move_mode = new QRadioButton("Move");
+    QObject::connect(move_mode, &QRadioButton::toggled, this, &QPolyControl::clear_pnt_selection);
     t_grp->addButton(move_mode);
     update_mode = new QRadioButton("Update");
     t_grp->addButton(update_mode);
@@ -300,7 +301,31 @@ QPolyControl::eventFilter(QObject *, QEvent *e)
 	printf("polygon filter mouse\n");
 	QMouseEvent *m_e = (QMouseEvent *)e;
 
+	gedp->ged_gvp->gv_prevMouseX = gedp->ged_gvp->gv_mouse_x;
+	gedp->ged_gvp->gv_prevMouseY = gedp->ged_gvp->gv_mouse_y;
+
+	gedp->ged_gvp->gv_mouse_x = m_e->x();
+	gedp->ged_gvp->gv_mouse_y = m_e->y();
+
+
 	if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
+
+	    if (select_mode->isChecked()) {
+		p = bv_select_polygon(gedp->ged_gvp->gv_view_objs, gedp->ged_gvp);
+		if (p) {
+		    int cind = mod_names->findText(bu_vls_cstr(&p->s_uuid));
+		    mod_names->blockSignals(true);
+		    mod_names->setCurrentIndex(cind);
+		    mod_names->blockSignals(false);
+		    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+		    if (ip->type == BV_POLYGON_GENERAL) {
+			general_mode_opts->setEnabled(true);
+			close_general_poly->setEnabled(true);
+		    }
+		}
+		return true;
+	    }
+
 	    if (!p) {
 		int ptype = BV_POLYGON_CIRCLE;
 		if (ellipse_mode->isChecked()) {
@@ -404,19 +429,25 @@ QPolyControl::eventFilter(QObject *, QEvent *e)
 
 	if (m_e->type() == QEvent::MouseMove) {
 	    if (p && m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
+
 		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 		if (select_pnt->isChecked()) {
+		    ip->aflag = 0;
 		    ip->mflag = 1;
+		    ip->sflag = 0;
+		    bv_update_polygon(p);
+		    emit view_updated(&gedp->ged_gvp);
+		} else if (move_mode->isChecked()) {
+		    bu_log("move polygon mode\n");
+		    bv_move_polygon(p);
+		    emit view_updated(&gedp->ged_gvp);
 		} else {
+		    ip->aflag = 0;
 		    ip->mflag = 0;
+		    ip->sflag = 0;
+		    bv_update_polygon(p);
+		    emit view_updated(&gedp->ged_gvp);
 		}
-
-		ip->sflag = 0;
-		ip->aflag = 0;
-		p->s_v->gv_mouse_x = m_e->x();
-		p->s_v->gv_mouse_y = m_e->y();
-		bv_update_polygon(p);
-		emit view_updated(&gedp->ged_gvp);
 		return true;
 	    }
 	}

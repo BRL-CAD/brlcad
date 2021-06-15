@@ -319,6 +319,46 @@ bv_append_polygon_pt(struct bv_scene_obj *s)
     return 0;
 }
 
+// NOTE: This is a naive brute force search for the closest edge at the
+// moment...
+struct bv_scene_obj *
+bv_select_polygon(struct bu_ptbl *objs, struct bview *v)
+{
+    if (!objs)
+	return NULL;
+
+    fastf_t fx, fy;
+    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
+
+    point_t v_pt, m_pt;
+    VSET(v_pt, fx, fy, v->gv_s->gv_data_vZ);
+    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
+
+    struct bv_scene_obj *closest = NULL;
+    double dist_min_sq = DBL_MAX;
+
+    for (size_t i = 0; i < BU_PTBL_LEN(objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(objs, i);
+	if (s->s_type_flags & BV_POLYGONS) {
+	    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+
+	    for (size_t j = 0; j < p->polygon.num_contours; j++) {
+		struct bg_poly_contour *c = &p->polygon.contour[j];
+		for (size_t k = 0; k < c->num_points; k++) {
+		    double dcand = DIST_PNT_PNT_SQ(c->point[k], m_pt);
+		    if (dcand < dist_min_sq) {
+			dist_min_sq = dcand;
+			closest = s;
+		    }
+		}
+	    }
+	}
+    }
+
+    return closest;
+}
+
 int
 bv_select_polygon_pt(struct bv_scene_obj *s)
 {
@@ -376,6 +416,40 @@ bv_select_polygon_pt(struct bv_scene_obj *s)
 
     p->curr_point_i = closest_ind;
     p->curr_contour_i = closest_contour;
+
+    /* Have new polygon, now update view object vlist */
+    bv_polygon_vlist(s);
+
+    /* Updated */
+    s->s_changed++;
+
+    return 0;
+}
+
+int
+bv_move_polygon(struct bv_scene_obj *s)
+{
+    fastf_t pfx, pfy, fx, fy;
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    struct bview *v = s->s_v;
+    if (bv_screen_to_view(v, &pfx, &pfy, v->gv_prevMouseX, v->gv_prevMouseY) < 0)
+	return 0;
+    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
+	return 0;
+    fastf_t dx = fx - pfx;
+    fastf_t dy = fy - pfy;
+
+    point_t v_pt, m_pt;
+    VSET(v_pt, dx, dy, v->gv_s->gv_data_vZ);
+    // Use the polygon's view context for actually moving the point
+    MAT4X3PNT(m_pt, p->v.gv_view2model, v_pt);
+
+    for (size_t j = 0; j < p->polygon.num_contours; j++) {
+	struct bg_poly_contour *c = &p->polygon.contour[j];
+	for (size_t i = 0; i < c->num_points; i++) {
+	    VADD2(c->point[i], c->point[i], m_pt);
+	}
+    }
 
     /* Have new polygon, now update view object vlist */
     bv_polygon_vlist(s);
