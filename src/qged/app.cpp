@@ -596,6 +596,14 @@ CADApp::run_cmd(const QString &command)
 void
 CADApp::element_selected(QToolPaletteElement *el)
 {
+    if (!el->controls->isVisible()) {
+	// Apparently this can happen when we have docked widgets
+	// closed and we click on the border between the view and
+	// the dock - need to avoid messing with the event filters
+	// if that happens or we break the user interactions.
+	return;
+    }
+
     if (curr_view->curr_event_filter) {
 	curr_view->clear_event_filter(curr_view->curr_event_filter);
 	curr_view->curr_event_filter = NULL;
