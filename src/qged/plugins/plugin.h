@@ -16,6 +16,21 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ *
+ * TODO - need to support more than just QToolPaletteElement types
+ * being created by plugins.  The four logical candidates so far:
+ *
+ * 1.  ged-style command line commands  (maybe should expand libged
+ *     plugin setup to support hooking them in at that level, but may
+ *     also want awareness of app level info in commands...)
+ * 2.  QToolPaletteLElement (currently what we're using)
+ * 3.  QDockWidget items, equivalent to (say) the standard attributes
+ *     dialog and able to be docked in the main GUI.
+ * 4.  Full-fledged dialogs that are their own windows and launched
+ *     from the menu.  Candidates might include complex procedural geometry
+ *     generation tools, tabular report generators, or other large
+ *     grpahical layout scenarios that won't fit well as a widget in
+ *     the main GUI.
  */
 
 #ifndef QGED_PLUGIN_H
