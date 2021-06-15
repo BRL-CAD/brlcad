@@ -23,6 +23,7 @@
 
 #include <QLineEdit>
 #include <QComboBox>
+#include <QGroupBox>
 #include <QRadioButton>
 
 class QPolyControl : public QWidget
@@ -39,9 +40,16 @@ class QPolyControl : public QWidget
 	QRadioButton *square_mode;
 	QRadioButton *rectangle_mode;
 	QRadioButton *general_mode;
+	QGroupBox *general_mode_opts;
+	QRadioButton *new_general_poly;
+	QRadioButton *append_general_poly;
+	QRadioButton *close_general_poly;
 
     signals:
 	void view_updated(struct bview **);
+
+    private slots:
+	void toggle_general_opts(bool);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);

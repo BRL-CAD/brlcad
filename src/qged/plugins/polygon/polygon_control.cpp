@@ -23,6 +23,7 @@
 
 #include <QLabel>
 #include <QLineEdit>
+#include <QButtonGroup>
 #include <QGroupBox>
 #include "../../app.h"
 #include "polygon_control.h"
@@ -57,6 +58,24 @@ QPolyControl::QPolyControl()
     rectangle_mode->setIcon(QIcon(QPixmap(":rectangle.svg")));
     general_mode = new QRadioButton("General");
     general_mode->setIcon(QIcon(QPixmap(":polygon.svg")));
+
+    general_mode_opts = new QGroupBox("General Polygon Modes");
+    QVBoxLayout *go_l = new QVBoxLayout();
+    QButtonGroup *gm_box = new QButtonGroup();
+    new_general_poly = new QRadioButton("Add new general polygon");
+    new_general_poly->setChecked(true);
+    gm_box->addButton(new_general_poly);
+    go_l->addWidget(new_general_poly);
+    append_general_poly = new QRadioButton("Append polygon point");
+    gm_box->addButton(append_general_poly);
+    go_l->addWidget(append_general_poly);
+    close_general_poly = new QRadioButton("Close polygon");
+    gm_box->addButton(close_general_poly);
+    go_l->addWidget(close_general_poly);
+    go_l->setAlignment(Qt::AlignTop);
+    general_mode_opts->setLayout(go_l);
+    QObject::connect(general_mode, &QRadioButton::toggled, this, &QPolyControl::toggle_general_opts);
+
     gl->addWidget(vn_label);
     gl->addWidget(view_name);
     gl->addWidget(circle_mode);
@@ -64,6 +83,7 @@ QPolyControl::QPolyControl()
     gl->addWidget(square_mode);
     gl->addWidget(rectangle_mode);
     gl->addWidget(general_mode);
+    gl->addWidget(general_mode_opts);
     gl->setAlignment(Qt::AlignTop);
     groupBox->setLayout(gl);
 
@@ -73,10 +93,22 @@ QPolyControl::QPolyControl()
     this->setLayout(l);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
+    general_mode_opts->setDisabled(true);
 }
 
 QPolyControl::~QPolyControl()
 {
+}
+
+void
+QPolyControl::toggle_general_opts(bool checked)
+{
+    printf("got here\n");
+    if (checked) {
+	general_mode_opts->setEnabled(true);
+    } else {
+	general_mode_opts->setDisabled(true);
+    }
 }
 
 bool
@@ -108,15 +140,24 @@ QPolyControl::eventFilter(QObject *, QEvent *e)
 		if (general_mode->isChecked()) {
 		    ptype = BV_POLYGON_GENERAL;
 		}
-		p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y(), gedp->free_scene_obj);
+		if (ptype != BV_POLYGON_GENERAL || (ptype == BV_POLYGON_GENERAL && new_general_poly->isChecked())) {
+		    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y(), gedp->free_scene_obj);
+		    bu_vls_init(&p->s_uuid);
+		    if (view_name->text().length()) {
+			bu_vls_printf(&p->s_uuid, "%s", view_name->text().toLocal8Bit().data());
+		    } else {
+			bu_vls_printf(&p->s_uuid, "%s", view_name->placeholderText().toLocal8Bit().data());
+		    }
+		    bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);
 
-		bu_vls_init(&p->s_uuid);
-		if (view_name->text().length()) {
-		    bu_vls_printf(&p->s_uuid, "%s", view_name->text().toLocal8Bit().data());
-		} else {
-		    bu_vls_printf(&p->s_uuid, "%s", view_name->placeholderText().toLocal8Bit().data());
+		    if (ptype == BV_POLYGON_GENERAL) {
+			append_general_poly->toggle();
+			struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+			ip->curr_contour_i = 0;
+			emit view_updated(&gedp->ged_gvp);
+			return true;
+		    }
 		}
-		bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);
 
 		poly_cnt++;
 
@@ -128,7 +169,37 @@ QPolyControl::eventFilter(QObject *, QEvent *e)
 
 		emit view_updated(&gedp->ged_gvp);
 		return true;
+
+	    } else if (append_general_poly->isChecked()) {
+		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+		ip->sflag = 0;
+		ip->mflag = 0;
+		ip->aflag = 1;
+
+		p->s_v->gv_mouse_x = m_e->x();
+		p->s_v->gv_mouse_y = m_e->y();
+		bv_update_polygon(p);
+
+		emit view_updated(&gedp->ged_gvp);
+		return true;
+	    } else if (close_general_poly->isChecked()) {
+		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+
+		ip->polygon.contour[0].open = 0;
+
+		ip->sflag = 0;
+		ip->mflag = 0;
+		ip->aflag = 0;
+
+		bv_update_polygon(p);
+
+		new_general_poly->toggle();
+
+		p = NULL;
+		emit view_updated(&gedp->ged_gvp);
+		return true;
 	    }
+
 	}
 
 	if (m_e->type() == QEvent::MouseMove) {
@@ -144,7 +215,9 @@ QPolyControl::eventFilter(QObject *, QEvent *e)
 	}
 
 	if (m_e->type() == QEvent::MouseButtonRelease) {
-	    p = NULL;
+	    if (!general_mode->isChecked()) {
+		p = NULL;
+	    }
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}
