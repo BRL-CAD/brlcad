@@ -82,6 +82,8 @@ class QPolyControl : public QWidget
     private slots:
 	void toggle_general_opts(bool);
 	void toggle_closed_poly(bool);
+	void reset(bool);
+	void select(const QString &t);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
