@@ -66,7 +66,6 @@ class QPolyControl : public QWidget
 	QCheckBox *close_general_poly;
 	QRadioButton *append_pnt;
 	QRadioButton *select_pnt;
-	QRadioButton *move_pnt;
 
 	// Selected Edge color
 
@@ -84,6 +83,7 @@ class QPolyControl : public QWidget
 	void toggle_closed_poly(bool);
 	void reset(bool);
 	void select(const QString &t);
+	void clear_pnt_selection(bool);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);

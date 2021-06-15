@@ -97,6 +97,7 @@ QPolyControl::QPolyControl()
 
     QGroupBox *modpolyBox = new QGroupBox("Modify Polygon");
     QVBoxLayout *mod_poly_gl = new QVBoxLayout;
+
     QLabel *cs_label = new QLabel("Currently selected polygon:");
     mod_names = new QComboBox(this);
     QObject::connect(mod_names, &QComboBox::currentTextChanged, this, &QPolyControl::select);
@@ -127,15 +128,16 @@ QPolyControl::QPolyControl()
     gm_box->addButton(append_pnt);
     go_l->addWidget(append_pnt);
     select_pnt = new QRadioButton("Select polygon pnt");
+    QObject::connect(select_pnt, &QRadioButton::toggled, this, &QPolyControl::clear_pnt_selection);
     gm_box->addButton(select_pnt);
     go_l->addWidget(select_pnt);
     general_mode_opts->setLayout(go_l);
     QObject::connect(update_mode, &QRadioButton::toggled, this, &QPolyControl::toggle_general_opts);
     general_mode_opts->setDisabled(true);
 
+    mod_poly_gl->addWidget(select_mode);
     mod_poly_gl->addWidget(cs_label);
     mod_poly_gl->addWidget(mod_names);
-    mod_poly_gl->addWidget(select_mode);
     mod_poly_gl->addWidget(move_mode);
     mod_poly_gl->addWidget(update_mode);
     mod_poly_gl->addWidget(close_general_poly);
@@ -160,8 +162,33 @@ QPolyControl::reset(bool checked)
 {
     if (checked) {
 	bu_log("reset\n");
+	clear_pnt_selection(false);
 	p = NULL;
     }
+}
+
+void
+QPolyControl::clear_pnt_selection(bool checked)
+{
+    if (checked)
+	return;
+    bu_log("got pnt selection clear\n");
+    int ptype = -1;
+    struct bv_polygon *ip = NULL;
+    if (p) {
+	ip = (struct bv_polygon *)p->s_i_data;
+	ptype = ip->type;
+    }
+    if (!ip || ptype != BV_POLYGON_GENERAL) {
+	return;
+    }
+    ip->curr_point_i = -1;
+    ip->curr_contour_i = 0;
+
+    bv_update_polygon(p);
+
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    emit view_updated(&gedp->ged_gvp);
 }
 
 void
@@ -176,6 +203,11 @@ QPolyControl::select(const QString &poly)
 	    if (pname == poly) {
 		p = s;
 		update_mode->toggle();
+		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+		if (ip->type == BV_POLYGON_GENERAL) {
+		    general_mode_opts->setEnabled(true);
+		    close_general_poly->setEnabled(true);
+		}
 		return;
 	    }
 	}
@@ -187,10 +219,14 @@ QPolyControl::toggle_general_opts(bool checked)
 {
     int ptype = -1;
     struct bv_polygon *ip = NULL;
-    if (p) {
-	ip = (struct bv_polygon *)p->s_i_data;
-	ptype = ip->type;
+    if (!p) {
+	QString curr_selection = mod_names->currentText();
+	if (curr_selection.length()) {
+	    select(curr_selection);
+	}
     }
+    ip = (struct bv_polygon *)p->s_i_data;
+    ptype = ip->type;
     if (checked && ptype == BV_POLYGON_GENERAL) {
 	general_mode_opts->setEnabled(true);
 	if (ip && !ip->polygon.contour[0].open) {
@@ -369,7 +405,7 @@ QPolyControl::eventFilter(QObject *, QEvent *e)
 	if (m_e->type() == QEvent::MouseMove) {
 	    if (p && m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
 		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-		if (move_mode->isChecked()) {
+		if (select_pnt->isChecked()) {
 		    ip->mflag = 1;
 		} else {
 		    ip->mflag = 0;
