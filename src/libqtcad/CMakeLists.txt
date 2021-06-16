@@ -40,6 +40,7 @@ add_subdirectory(images)
 set(qtcad_srcs
   bindings.cpp
   QAccordion.cpp
+  QColorRGB.cpp
   QFlowLayout.cpp
   QKeyVal.cpp
   QToolPalette.cpp
@@ -56,6 +57,7 @@ set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
 set(qtcad_moc_headers
   bindings.h
   ${QTCAD_HDR_DIR}/QAccordion.h
+  ${QTCAD_HDR_DIR}/QColorRGB.h
   ${QTCAD_HDR_DIR}/QFlowLayout.h
   ${QTCAD_HDR_DIR}/QKeyVal.h
   ${QTCAD_HDR_DIR}/QToolPalette.h
