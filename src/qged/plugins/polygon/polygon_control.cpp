@@ -515,9 +515,7 @@ QPolyControl::add_events(QObject *, QMouseEvent *m_e)
 
     if (m_e->type() == QEvent::MouseButtonRelease) {
 	if (do_bool) {
-	    int pcnt = bv_polygon_csg(gedp->ged_gvp->gv_view_objs, p, op);
-	    if (pcnt)
-		bu_log("pcnt: %d\n", pcnt);
+	    int pcnt = bv_polygon_csg(gedp->ged_gvp->gv_view_objs, p, op, 1);
 	    if (pcnt || op != bg_Union) {
 		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 		bg_polygon_free(&ip->polygon);

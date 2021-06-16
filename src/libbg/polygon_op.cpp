@@ -35,6 +35,9 @@
 #include "bg/defines.h"
 #include "bg/polygon.h"
 
+#define FREE_BV_SCENE_OBJ(p, fp) { \
+    BU_LIST_APPEND(fp, &((p)->l)); }
+
 fastf_t
 bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
 {
@@ -629,12 +632,15 @@ bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *cli
 
 
 int
-bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op)
+bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op, int merge)
 {
     if (!objs || !p)
 	return -1;
 
+    struct bu_ptbl null_polys = BU_PTBL_INIT_ZERO;
     int pcnt = 0;
+    struct bv_scene_obj *bp = p;
+    struct bv_scene_obj *free_scene_obj = p->free_scene_obj;
 
     for (size_t i = 0; i < BU_PTBL_LEN(objs); i++) {
 	struct bv_scene_obj *vp = (struct bv_scene_obj *)BU_PTBL_GET(objs, i);
@@ -643,7 +649,7 @@ bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op)
 	if (p == vp)
 	    continue;
 	struct bv_polygon *polyA = (struct bv_polygon *)vp->s_i_data;
-	struct bv_polygon *polyB = (struct bv_polygon *)p->s_i_data;
+	struct bv_polygon *polyB = (struct bv_polygon *)bp->s_i_data;
 
 	// Make sure the polygons overlap before we operate, since clipper results are
 	// always general polygons.  We don't want to perform a no-op clip and lose our
@@ -653,8 +659,7 @@ bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op)
 	if (!ovlp)
 	    continue;
 
-	// Perform the specified operation - TODO - what happens if polyA is eliminated (subsumed fully by B, for example, or
-	// subtracted away?)
+	// Perform the specified operation
 	struct bg_polygon *cp = bg_clip_polygon(op, &polyA->polygon, &polyB->polygon, CLIPPER_MAX, polyA->v.gv_model2view, polyA->v.gv_view2model);
 	bg_polygon_free(&polyA->polygon);
 	polyA->polygon.num_contours = cp->num_contours;
@@ -664,9 +669,39 @@ bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op)
 	// clipper results are always general polygons
 	polyA->type = BV_POLYGON_GENERAL;
 
+	if (op != bg_Difference && merge && polyA->polygon.num_contours) {
+
+	    // The seed polygon is handled elsewhere, but if we're
+	    // consolidating other view polygons into polyA we need to log the
+	    // consolidated polys for removal here.
+	    if (bp != p) {
+		bu_ptbl_ins_unique(&null_polys, (long *)bp);
+	    }
+
+	    // If we're merging results, subsequent operations will be done
+	    // using the results of this operation, not the original polygon
+	    bp = vp;
+	}
+
+	if (!polyA->polygon.num_contours) {
+	    // operation eliminated polyA - stash for removal from view
+	    bu_ptbl_ins_unique(&null_polys, (long *)vp);
+	} else {
+	    bv_update_polygon(vp);
+	}
+
 	BU_PUT(cp, struct bg_polygon);
-	bv_update_polygon(vp);
 	pcnt++;
+    }
+
+    // If we're eliminating any polygons from the view as a result of the operations, do it now
+    for (size_t i = 0; i < BU_PTBL_LEN(&null_polys); i++) {
+	struct bv_scene_obj *np = (struct bv_scene_obj *)BU_PTBL_GET(&null_polys, i);
+	struct bv_polygon *ip = (struct bv_polygon *)np->s_i_data;
+	bg_polygon_free(&ip->polygon);
+	BU_PUT(ip, struct bv_polygon);
+	bu_ptbl_rm(objs, (long *)np);
+	FREE_BV_SCENE_OBJ(np, &free_scene_obj->l);
     }
 
     return pcnt;
