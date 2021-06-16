@@ -63,24 +63,23 @@ QPolyControl::QPolyControl()
 
     circle_mode = new QRadioButton("Circle");
     circle_mode->setIcon(QIcon(QPixmap(":circle.svg")));
-    circle_mode->setChecked(true);
-    QObject::connect(circle_mode, &QCheckBox::toggled, this, &QPolyControl::reset);
+    QObject::connect(circle_mode, &QCheckBox::toggled, this, &QPolyControl::toplevel_config);
     t_grp->addButton(circle_mode);
     ellipse_mode = new QRadioButton("Ellipse");
     ellipse_mode->setIcon(QIcon(QPixmap(":ellipse.svg")));
-    QObject::connect(ellipse_mode, &QCheckBox::toggled, this, &QPolyControl::reset);
+    QObject::connect(ellipse_mode, &QCheckBox::toggled, this, &QPolyControl::toplevel_config);
     t_grp->addButton(ellipse_mode);
     square_mode = new QRadioButton("Square");
     square_mode->setIcon(QIcon(QPixmap(":square.svg")));
-    QObject::connect(square_mode, &QCheckBox::toggled, this, &QPolyControl::reset);
+    QObject::connect(square_mode, &QCheckBox::toggled, this, &QPolyControl::toplevel_config);
     t_grp->addButton(square_mode);
     rectangle_mode = new QRadioButton("Rectangle");
     rectangle_mode->setIcon(QIcon(QPixmap(":rectangle.svg")));
-    QObject::connect(rectangle_mode, &QCheckBox::toggled, this, &QPolyControl::reset);
+    QObject::connect(rectangle_mode, &QCheckBox::toggled, this, &QPolyControl::toplevel_config);
     t_grp->addButton(rectangle_mode);
     general_mode = new QRadioButton("General");
     general_mode->setIcon(QIcon(QPixmap(":polygon.svg")));
-    QObject::connect(general_mode, &QCheckBox::toggled, this, &QPolyControl::reset);
+    QObject::connect(general_mode, &QCheckBox::toggled, this, &QPolyControl::toplevel_config);
     t_grp->addButton(general_mode);
 
     add_poly_gl->addWidget(vn_label);
@@ -105,7 +104,7 @@ QPolyControl::QPolyControl()
     select_mode = new QRadioButton("Select");
     t_grp->addButton(select_mode);
     move_mode = new QRadioButton("Move");
-    QObject::connect(move_mode, &QRadioButton::toggled, this, &QPolyControl::clear_pnt_selection);
+    QObject::connect(move_mode, &QRadioButton::toggled, this, &QPolyControl::toplevel_config);
     t_grp->addButton(move_mode);
     update_mode = new QRadioButton("Update");
     t_grp->addButton(update_mode);
@@ -133,7 +132,7 @@ QPolyControl::QPolyControl()
     gm_box->addButton(select_pnt);
     go_l->addWidget(select_pnt);
     general_mode_opts->setLayout(go_l);
-    QObject::connect(update_mode, &QRadioButton::toggled, this, &QPolyControl::toggle_general_opts);
+    QObject::connect(update_mode, &QRadioButton::toggled, this, &QPolyControl::toplevel_config);
     general_mode_opts->setDisabled(true);
 
     mod_poly_gl->addWidget(select_mode);
@@ -152,6 +151,9 @@ QPolyControl::QPolyControl()
     this->setLayout(l);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
+    // By default, start in circle addition mode
+    circle_mode->setChecked(true);
+    toplevel_config(true);
 }
 
 QPolyControl::~QPolyControl()
@@ -159,14 +161,136 @@ QPolyControl::~QPolyControl()
 }
 
 void
-QPolyControl::reset(bool checked)
+QPolyControl::poly_type_settings(struct bv_polygon *ip)
 {
-    if (checked) {
-	bu_log("reset\n");
-	clear_pnt_selection(false);
-	p = NULL;
+    if (ip->type == BV_POLYGON_GENERAL) {
+	general_mode_opts->setEnabled(true);
+	close_general_poly->setEnabled(true);
+	close_general_poly->blockSignals(true);
+	append_pnt->blockSignals(true);
+	select_pnt->blockSignals(true);
+	if (!ip->polygon.contour[0].open) {
+	    close_general_poly->setChecked(true);
+	    select_pnt->setChecked(true);
+	    append_pnt->setChecked(false);
+	    append_pnt->setEnabled(false);
+	} else {
+	    close_general_poly->setChecked(false);
+	    append_pnt->setEnabled(true);
+	    append_pnt->setChecked(true);
+	    select_pnt->setChecked(false);
+	}
+	close_general_poly->blockSignals(false);
+	append_pnt->blockSignals(false);
+	select_pnt->blockSignals(false);
+    } else {
+	close_general_poly->blockSignals(true);
+	close_general_poly->setChecked(true);
+	close_general_poly->setEnabled(false);
+	close_general_poly->blockSignals(false);
+	general_mode_opts->setEnabled(false);
     }
 }
+
+void
+QPolyControl::toplevel_config(bool)
+{
+    // Initialize
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    bool draw_change = false;
+    add_mode = false;
+    mod_mode = false;
+
+    // This function is called when a top level mode change was initiated
+    // by a selection button.  Clear any selected points being displayed -
+    // when we're switching modes at this level, we always start with a
+    // blank slate for points.
+    if (gedp) {
+	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	    if (s->s_type_flags & BV_POLYGONS) {
+		// clear any selected points in non-current polygons
+		struct bv_polygon *ip = (struct bv_polygon *)s->s_i_data;
+		ip->sflag = 0;
+		ip->mflag = 0;
+		ip->aflag = 0;
+		if (ip->curr_point_i != -1) {
+		    bu_log("Clear pnt selection\n");
+		    draw_change = true;
+		    ip->curr_point_i = -1;
+		    ip->curr_contour_i = 0;
+		    bv_update_polygon(s);
+		}
+	    }
+	}
+    }
+
+    if (circle_mode->isChecked()) {
+	add_mode = true;
+    }
+
+    if (ellipse_mode->isChecked()) {
+	add_mode = true;
+    }
+
+    if (square_mode->isChecked()) {
+	add_mode = true;
+    }
+
+    if (rectangle_mode->isChecked()) {
+	add_mode = true;
+    }
+
+    if (general_mode->isChecked()) {
+	add_mode = true;
+    }
+
+    if (add_mode) {
+	p = NULL;
+	general_mode_opts->setDisabled(true);
+	if (draw_change && gedp)
+	    emit view_updated(&gedp->ged_gvp);
+	return;
+    }
+
+    // Mods are a bit more complicated.  What options are active depends on the
+    // type of the selected object, not on which option is selected
+    mod_mode = true;
+
+    // Make sure the Combo box list is current.
+    mod_names->blockSignals(true);
+    mod_names->clear();
+    // An empty selection (clearing the selected polygon) is allowed
+    mod_names->addItem("");
+    if (gedp) {
+	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	    if (s->s_type_flags & BV_POLYGONS) {
+		mod_names->addItem(bu_vls_cstr(&s->s_uuid));
+	    }
+	}
+    }
+    if (p) {
+	int cind = mod_names->findText(bu_vls_cstr(&p->s_uuid));
+	mod_names->setCurrentIndex(cind);
+	bu_log("select %s (%d)\n", bu_vls_cstr(&p->s_uuid), cind);
+    } else {
+	mod_names->setCurrentIndex(0);
+    }
+    mod_names->blockSignals(false);
+
+    // If we have a current p, we know the current type - enable/disable
+    // the general settings on that basis
+
+    if (p) {
+	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	poly_type_settings(ip);
+    }
+
+    if (draw_change && gedp)
+	emit view_updated(&gedp->ged_gvp);
+}
+
 
 void
 QPolyControl::clear_pnt_selection(bool checked)
@@ -203,44 +327,11 @@ QPolyControl::select(const QString &poly)
 	    QString pname(bu_vls_cstr(&s->s_uuid));
 	    if (pname == poly) {
 		p = s;
-		update_mode->toggle();
 		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-		if (ip->type == BV_POLYGON_GENERAL) {
-		    general_mode_opts->setEnabled(true);
-		    close_general_poly->setEnabled(true);
-		}
+		poly_type_settings(ip);
 		return;
 	    }
 	}
-    }
-}
-
-void
-QPolyControl::toggle_general_opts(bool checked)
-{
-    int ptype = -1;
-    struct bv_polygon *ip = NULL;
-    if (!p) {
-	QString curr_selection = mod_names->currentText();
-	if (curr_selection.length()) {
-	    select(curr_selection);
-	}
-    }
-    ip = (struct bv_polygon *)p->s_i_data;
-    ptype = ip->type;
-    if (checked && ptype == BV_POLYGON_GENERAL) {
-	close_general_poly->setEnabled(true);
-	general_mode_opts->setEnabled(true);
-	if (ip && !ip->polygon.contour[0].open) {
-	    close_general_poly->setChecked(true);
-	    append_pnt->setChecked(false);
-	} else {
-	    close_general_poly->setChecked(false);
-	}
-    } else {
-	general_mode_opts->setDisabled(true);
-	close_general_poly->setChecked(true);
-	close_general_poly->setEnabled(false);
     }
 }
 
@@ -253,30 +344,48 @@ QPolyControl::toggle_closed_poly(bool checked)
 	ip = (struct bv_polygon *)p->s_i_data;
 	ptype = ip->type;
     }
+
     if (!ip || ptype != BV_POLYGON_GENERAL) {
 	if (!checked) {
+	    close_general_poly->blockSignals(true);
 	    close_general_poly->setChecked(true);
-	    append_pnt->setChecked(false);
+	    close_general_poly->setEnabled(false);
+	    close_general_poly->blockSignals(false);
+	    general_mode_opts->setEnabled(false);
 	}
 	return;
     }
 
-    // A contour with less than 3 points can't be closed
     if (checked && ptype == BV_POLYGON_GENERAL) {
+	// A contour with less than 3 points can't be closed
 	if (ip->polygon.contour[0].num_points < 3) {
-	    close_general_poly->setChecked(false);
-	    return;
+	    ip->polygon.contour[0].open = 1;
+	} else {
+	    ip->polygon.contour[0].open = 0;
 	}
-    }
-
-    if (checked && ptype == BV_POLYGON_GENERAL) {
-	ip->polygon.contour[0].open = 0;
-	append_pnt->setDisabled(true);
-	select_pnt->toggle();
     } else {
 	ip->polygon.contour[0].open = 1;
-	append_pnt->setEnabled(true);
     }
+
+    close_general_poly->blockSignals(true);
+    append_pnt->blockSignals(true);
+    select_pnt->blockSignals(true);
+
+    if (!ip->polygon.contour[0].open) {
+	close_general_poly->setChecked(true);
+	select_pnt->setChecked(true);
+	append_pnt->setChecked(false);
+	append_pnt->setEnabled(false);
+    } else {
+	close_general_poly->setChecked(false);
+	append_pnt->setEnabled(true);
+	append_pnt->setChecked(true);
+	select_pnt->setChecked(false);
+    }
+
+    close_general_poly->blockSignals(false);
+    append_pnt->blockSignals(false);
+    select_pnt->blockSignals(false);
 
     ip->sflag = 0;
     ip->mflag = 0;
@@ -289,9 +398,200 @@ QPolyControl::toggle_closed_poly(bool checked)
 }
 
 bool
-QPolyControl::eventFilter(QObject *, QEvent *e)
+QPolyControl::add_events(QObject *, QMouseEvent *m_e)
+{
+    printf("polygon add\n");
+
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp) {
+	return false;
+    }
+
+    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
+	if (!p) {
+	    int ptype = BV_POLYGON_CIRCLE;
+	    if (ellipse_mode->isChecked()) {
+		ptype = BV_POLYGON_ELLIPSE;
+	    }
+	    if (square_mode->isChecked()) {
+		ptype = BV_POLYGON_SQUARE;
+	    }
+	    if (rectangle_mode->isChecked()) {
+		ptype = BV_POLYGON_RECTANGLE;
+	    }
+	    if (general_mode->isChecked()) {
+		ptype = BV_POLYGON_GENERAL;
+	    }
+
+	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y(), gedp->free_scene_obj);
+	    p->s_v = gedp->ged_gvp;
+
+	    if (ptype == BV_POLYGON_GENERAL) {
+
+		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+		// For general polygons, we need to identify the active contour
+		// for update operations to work.
+		//
+		// At some point we'll need to add support for adding and removing
+		// contours...
+		ip->curr_contour_i = 0;
+
+		poly_type_settings(ip);
+	    }
+
+	    bu_vls_init(&p->s_uuid);
+	    if (view_name->text().length()) {
+		bu_vls_printf(&p->s_uuid, "%s", view_name->text().toLocal8Bit().data());
+	    } else {
+		bu_vls_printf(&p->s_uuid, "%s", view_name->placeholderText().toLocal8Bit().data());
+	    }
+	    bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);
+
+
+	    poly_cnt++;
+	    view_name->clear();
+	    struct bu_vls pname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&pname, "polygon_%06d", poly_cnt);
+	    view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+	    bu_vls_free(&pname);
+
+	    if (ptype == BV_POLYGON_GENERAL) {
+		// Unlike the other polygon types, we need to use interactive
+		// mode to properly define a general polygon.
+		update_mode->toggle();
+	    }
+
+	    emit view_updated(&gedp->ged_gvp);
+	    return true;
+	}
+
+	// When we're dealing with polygons stray left clicks shouldn't zoom - just
+	// consume them if we're not using them above.
+	return true;
+    }
+
+    // During initial add/creation, we're just adjusting the shape
+    if (m_e->type() == QEvent::MouseMove) {
+	if (p && m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
+
+	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	    ip->aflag = 0;
+	    ip->mflag = 0;
+	    ip->sflag = 0;
+	    bv_update_polygon(p);
+	    emit view_updated(&gedp->ged_gvp);
+	    return true;
+	}
+    }
+
+    if (m_e->type() == QEvent::MouseButtonRelease) {
+	emit view_updated(&gedp->ged_gvp);
+	return true;
+    }
+
+    return false;
+}
+
+bool
+QPolyControl::mod_events(QObject *, QMouseEvent *m_e)
 {
 
+    printf("polygon mod\n");
+
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp) {
+	return false;
+    }
+
+    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
+
+	if (select_mode->isChecked()) {
+	    p = bv_select_polygon(gedp->ged_gvp->gv_view_objs, gedp->ged_gvp);
+	    if (p) {
+		int cind = mod_names->findText(bu_vls_cstr(&p->s_uuid));
+		mod_names->blockSignals(true);
+		mod_names->setCurrentIndex(cind);
+		mod_names->blockSignals(false);
+		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+		poly_type_settings(ip);
+	    }
+	    return true;
+	}
+
+	if (!p) {
+	    return true;
+	}
+
+	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	if (append_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
+	    ip->sflag = 0;
+	    ip->mflag = 0;
+	    ip->aflag = 1;
+
+	    p->s_v->gv_mouse_x = m_e->x();
+	    p->s_v->gv_mouse_y = m_e->y();
+	    bv_update_polygon(p);
+
+	    emit view_updated(&gedp->ged_gvp);
+	    return true;
+	}
+
+	if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
+	    ip->sflag = 1;
+	    ip->mflag = 0;
+	    ip->aflag = 0;
+	    p->s_v->gv_mouse_x = m_e->x();
+	    p->s_v->gv_mouse_y = m_e->y();
+	    bv_update_polygon(p);
+	    emit view_updated(&gedp->ged_gvp);
+	    return true;
+	}
+
+	// When we're dealing with polygons stray left clicks shouldn't zoom - just
+	// consume them if we're not using them above.
+	return true;
+    }
+
+    if (m_e->type() == QEvent::MouseMove) {
+	if (p && m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
+
+	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	    if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
+		ip->aflag = 0;
+		ip->mflag = 1;
+		ip->sflag = 0;
+		bv_update_polygon(p);
+		emit view_updated(&gedp->ged_gvp);
+	    } else if (move_mode->isChecked()) {
+		bu_log("move polygon mode\n");
+		clear_pnt_selection(false);
+		ip->aflag = 0;
+		ip->mflag = 0;
+		ip->sflag = 0;
+		bv_move_polygon(p);
+		emit view_updated(&gedp->ged_gvp);
+	    } else {
+		ip->aflag = 0;
+		ip->mflag = 0;
+		ip->sflag = 0;
+		bv_update_polygon(p);
+		emit view_updated(&gedp->ged_gvp);
+	    }
+	    return true;
+	}
+    }
+
+    if (m_e->type() == QEvent::MouseButtonRelease) {
+	emit view_updated(&gedp->ged_gvp);
+	return true;
+    }
+
+    return false;
+}
+
+bool
+QPolyControl::eventFilter(QObject *, QEvent *e)
+{
     struct ged *gedp = ((CADApp *)qApp)->gedp;
     if (!gedp) {
 	return false;
@@ -299,7 +599,6 @@ QPolyControl::eventFilter(QObject *, QEvent *e)
 
     if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove) {
 
-	printf("polygon filter mouse\n");
 	QMouseEvent *m_e = (QMouseEvent *)e;
 
 	gedp->ged_gvp->gv_prevMouseX = gedp->ged_gvp->gv_mouse_x;
@@ -308,158 +607,11 @@ QPolyControl::eventFilter(QObject *, QEvent *e)
 	gedp->ged_gvp->gv_mouse_x = m_e->x();
 	gedp->ged_gvp->gv_mouse_y = m_e->y();
 
-
-	if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
-
-	    if (select_mode->isChecked()) {
-		p = bv_select_polygon(gedp->ged_gvp->gv_view_objs, gedp->ged_gvp);
-		if (p) {
-		    int cind = mod_names->findText(bu_vls_cstr(&p->s_uuid));
-		    mod_names->blockSignals(true);
-		    mod_names->setCurrentIndex(cind);
-		    mod_names->blockSignals(false);
-		    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-		    if (ip->type == BV_POLYGON_GENERAL) {
-			general_mode_opts->setEnabled(true);
-			close_general_poly->setEnabled(true);
-		    }
-		}
-		return true;
-	    }
-
-	    if (!p) {
-		int ptype = BV_POLYGON_CIRCLE;
-		if (ellipse_mode->isChecked()) {
-		    ptype = BV_POLYGON_ELLIPSE;
-		}
-		if (square_mode->isChecked()) {
-		    ptype = BV_POLYGON_SQUARE;
-		}
-		if (rectangle_mode->isChecked()) {
-		    ptype = BV_POLYGON_RECTANGLE;
-		}
-		if (general_mode->isChecked()) {
-		    ptype = BV_POLYGON_GENERAL;
-		}
-
-		p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y(), gedp->free_scene_obj);
-		p->s_v = gedp->ged_gvp;
-
-		if (ptype == BV_POLYGON_GENERAL) {
-		    // For general polygons, we need to identify the active contour
-		    // for update operations to work.
-		    //
-		    // At some point we'll need to add support for adding and removing
-		    // contours...
-		    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-		    ip->curr_contour_i = 0;
-
-		    // Out of the gate, general polygons are not closed
-		    close_general_poly->setChecked(false);
-		    close_general_poly->setEnabled(true);
-		    append_pnt->toggle();
-		}
-
-		bu_vls_init(&p->s_uuid);
-		if (view_name->text().length()) {
-		    bu_vls_printf(&p->s_uuid, "%s", view_name->text().toLocal8Bit().data());
-		} else {
-		    bu_vls_printf(&p->s_uuid, "%s", view_name->placeholderText().toLocal8Bit().data());
-		}
-		bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);
-
-		// Having added a polygon, we now update the combo box of available polygons to select:
-		mod_names->blockSignals(true);
-		mod_names->clear();
-		for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
-		    if (s->s_type_flags & BV_POLYGONS) {
-			mod_names->addItem(bu_vls_cstr(&s->s_uuid));
-		    }
-		}
-		mod_names->blockSignals(false);
-		int cind = mod_names->findText(bu_vls_cstr(&p->s_uuid));
-		bu_log("select %s (%d)\n", bu_vls_cstr(&p->s_uuid), cind);
-		mod_names->setCurrentIndex(cind);
-		select(QString(bu_vls_cstr(&p->s_uuid)));
-		update_mode->toggle();
-
-
-		poly_cnt++;
-
-		view_name->clear();
-		struct bu_vls pname = BU_VLS_INIT_ZERO;
-		bu_vls_sprintf(&pname, "polygon_%06d", poly_cnt);
-		view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
-		bu_vls_free(&pname);
-
-		// TODO - kick GUI into modify mode now that the initial creation has taken place
-
-		emit view_updated(&gedp->ged_gvp);
-		return true;
-	    }
-
-	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	    if (append_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
-		ip->sflag = 0;
-		ip->mflag = 0;
-		ip->aflag = 1;
-
-		p->s_v->gv_mouse_x = m_e->x();
-		p->s_v->gv_mouse_y = m_e->y();
-		bv_update_polygon(p);
-
-		emit view_updated(&gedp->ged_gvp);
-		return true;
-	    }
-
-	    if (select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
-		ip->sflag = 1;
-		ip->mflag = 0;
-		ip->aflag = 0;
-		p->s_v->gv_mouse_x = m_e->x();
-		p->s_v->gv_mouse_y = m_e->y();
-		bv_update_polygon(p);
-		emit view_updated(&gedp->ged_gvp);
-	    }
-
-	    // When we're dealing with polygons stray left clicks shouldn't zoom - just
-	    // consume them if we're not using them above.
-	    return true;
+	if (add_mode) {
+	    return add_events(NULL, m_e);
 	}
-
-	if (m_e->type() == QEvent::MouseMove) {
-	    if (p && m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
-
-		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-		if (!move_mode->isChecked() && select_pnt->isChecked()) {
-		    ip->aflag = 0;
-		    ip->mflag = 1;
-		    ip->sflag = 0;
-		    bv_update_polygon(p);
-		    emit view_updated(&gedp->ged_gvp);
-		} else if (move_mode->isChecked()) {
-		    bu_log("move polygon mode\n");
-		    clear_pnt_selection(false);
-		    ip->aflag = 0;
-		    ip->mflag = 0;
-		    ip->sflag = 0;
-		    bv_move_polygon(p);
-		    emit view_updated(&gedp->ged_gvp);
-		} else {
-		    ip->aflag = 0;
-		    ip->mflag = 0;
-		    ip->sflag = 0;
-		    bv_update_polygon(p);
-		    emit view_updated(&gedp->ged_gvp);
-		}
-		return true;
-	    }
-	}
-
-	if (m_e->type() == QEvent::MouseButtonRelease) {
-	    emit view_updated(&gedp->ged_gvp);
-	    return true;
+	if (mod_mode) {
+	    return mod_events(NULL, m_e);
 	}
     }
 

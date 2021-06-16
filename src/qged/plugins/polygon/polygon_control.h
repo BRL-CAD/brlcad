@@ -79,9 +79,10 @@ class QPolyControl : public QWidget
 	void view_updated(struct bview **);
 
     private slots:
-	void toggle_general_opts(bool);
+
+	void toplevel_config(bool);
+
 	void toggle_closed_poly(bool);
-	void reset(bool);
 	void select(const QString &t);
 	void clear_pnt_selection(bool);
 
@@ -89,6 +90,11 @@ class QPolyControl : public QWidget
 	bool eventFilter(QObject *, QEvent *);
 
     private:
+	bool add_mode = false;
+	bool add_events(QObject *, QMouseEvent *);
+	bool mod_mode = false;
+	bool mod_events(QObject *, QMouseEvent *);
+	void poly_type_settings(struct bv_polygon *ip);
 	int poly_cnt = 0;
 	struct bv_scene_obj *p = NULL;
 };
