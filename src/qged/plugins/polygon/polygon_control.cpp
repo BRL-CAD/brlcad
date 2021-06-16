@@ -229,6 +229,7 @@ QPolyControl::toggle_general_opts(bool checked)
     ip = (struct bv_polygon *)p->s_i_data;
     ptype = ip->type;
     if (checked && ptype == BV_POLYGON_GENERAL) {
+	close_general_poly->setEnabled(true);
 	general_mode_opts->setEnabled(true);
 	if (ip && !ip->polygon.contour[0].open) {
 	    close_general_poly->setChecked(true);
@@ -431,7 +432,7 @@ QPolyControl::eventFilter(QObject *, QEvent *e)
 	    if (p && m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
 
 		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-		if (select_pnt->isChecked()) {
+		if (!move_mode->isChecked() && select_pnt->isChecked()) {
 		    ip->aflag = 0;
 		    ip->mflag = 1;
 		    ip->sflag = 0;
@@ -439,6 +440,10 @@ QPolyControl::eventFilter(QObject *, QEvent *e)
 		    emit view_updated(&gedp->ged_gvp);
 		} else if (move_mode->isChecked()) {
 		    bu_log("move polygon mode\n");
+		    clear_pnt_selection(false);
+		    ip->aflag = 0;
+		    ip->mflag = 0;
+		    ip->sflag = 0;
 		    bv_move_polygon(p);
 		    emit view_updated(&gedp->ged_gvp);
 		} else {
