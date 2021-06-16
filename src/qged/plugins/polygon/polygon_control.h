@@ -97,6 +97,7 @@ class QPolyControl : public QWidget
 	void poly_type_settings(struct bv_polygon *ip);
 	int poly_cnt = 0;
 	struct bv_scene_obj *p = NULL;
+	bool do_bool = false;
 };
 
 

@@ -392,13 +392,54 @@ QPolyControl::toggle_closed_poly(bool checked)
     append_pnt->blockSignals(false);
     select_pnt->blockSignals(false);
 
-    ip->sflag = 0;
-    ip->mflag = 0;
-    ip->aflag = 0;
-
-    bv_update_polygon(p);
-
     struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (do_bool && ip->type == BV_POLYGON_GENERAL && close_general_poly->isChecked()) {
+	bg_clip_t op = bg_Union;
+	if (do_bool) {
+	    if (csg_modes->currentText() == "Subtraction") {
+		op = bg_Difference;
+	    }
+	    if (csg_modes->currentText() == "Intersection") {
+		op = bg_Intersection;
+	    }
+	}
+	// If we're closing a general polygon and we're in boolean op mode,
+	// that's our signal to complete the operation
+	int pcnt = bv_polygon_csg(gedp->ged_gvp->gv_view_objs, p, op, 1);
+	if (pcnt || op != bg_Union) {
+	    bg_polygon_free(&ip->polygon);
+	    BU_PUT(ip, struct bv_polygon);
+	    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)p);
+	    FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
+	    p = NULL;
+	} else {
+	    // Union with no interactions - we're keeping it
+	    if (view_name->text().length()) {
+		bu_vls_sprintf(&p->s_uuid, "%s", view_name->text().toLocal8Bit().data());
+	    } else {
+		bu_vls_sprintf(&p->s_uuid, "%s", view_name->placeholderText().toLocal8Bit().data());
+	    }
+
+	    poly_cnt++;
+	    view_name->clear();
+	    struct bu_vls pname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
+	    view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+	    bu_vls_free(&pname);
+	}
+	do_bool = false;
+    }
+
+    if (p) {
+	ip->sflag = 0;
+	ip->mflag = 0;
+	ip->aflag = 0;
+
+	bv_update_polygon(p);
+    }
+
+    toplevel_config(false);
+
     emit view_updated(&gedp->ged_gvp);
 }
 
@@ -412,7 +453,7 @@ QPolyControl::add_events(QObject *, QMouseEvent *m_e)
 	return false;
     }
 
-    int do_bool = false;
+    do_bool = false;
     if (csg_modes->currentText() != "None") {
 	do_bool = true;
     }
@@ -538,6 +579,7 @@ QPolyControl::add_events(QObject *, QMouseEvent *m_e)
 		bu_vls_free(&pname);
 	    }
 	}
+	do_bool = false;
 	p = NULL;
 	emit view_updated(&gedp->ged_gvp);
 	return true;
