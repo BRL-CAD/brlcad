@@ -63,7 +63,7 @@ bg_polygons_overlap(
 	struct bg_polygon *polyA,
 	struct bg_polygon *polyB,
 	matp_t model2view,
-	struct bn_tol *tol,
+	const struct bn_tol *tol,
 	fastf_t iscale
 	);
 
@@ -340,10 +340,20 @@ BG_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int typ
 BG_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s);
 
 // Find the closest polygon obj to a view's current x,y mouse points
+// TODO - this isn't correct yet - right now it's just checking distances
+// from verts, not from polygon edges
 BG_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, struct bview *v);
 
 BG_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s);
 
+// For all polygon objects in the objs table, apply the specified boolean op
+// using p and replace the original polygons in objs with the results (NOTE:  p
+// will not act on itself if it is in objs):
+//
+// u : objs[i] u p  (unions p with objs[i])
+// - : objs[i] - p  (removes p from objs[i])
+// + : objs[i] + p  (intersects p with objs[i])
+BG_EXPORT extern int bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op);
 
 __END_DECLS
 

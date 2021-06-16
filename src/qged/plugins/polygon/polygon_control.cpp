@@ -28,6 +28,9 @@
 #include "../../app.h"
 #include "polygon_control.h"
 
+#define FREE_BV_SCENE_OBJ(p, fp) { \
+    BU_LIST_APPEND(fp, &((p)->l)); }
+
 QPolyControl::QPolyControl()
     : QWidget()
 {
@@ -57,7 +60,7 @@ QPolyControl::QPolyControl()
     // don't have a specific name in mind.)
     struct bu_vls pname = BU_VLS_INIT_ZERO;
     poly_cnt++;
-    bu_vls_sprintf(&pname, "polygon_%06d", poly_cnt);
+    bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
     view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
     bu_vls_free(&pname);
 
@@ -409,6 +412,24 @@ QPolyControl::add_events(QObject *, QMouseEvent *m_e)
 	return false;
     }
 
+    int do_bool = false;
+    if (csg_modes->currentText() != "None") {
+	do_bool = true;
+    }
+
+    // If we have a boolean op, we're not actually creating a
+    // lasting view object unless we have a union that doesn't
+    // intersect with any other polygons.
+    bg_clip_t op = bg_Union;
+    if (do_bool) {
+	if (csg_modes->currentText() == "Subtraction") {
+	    op = bg_Difference;
+	}
+	if (csg_modes->currentText() == "Intersection") {
+	    op = bg_Intersection;
+	}
+    }
+
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 	if (!p) {
 	    int ptype = BV_POLYGON_CIRCLE;
@@ -441,28 +462,34 @@ QPolyControl::add_events(QObject *, QMouseEvent *m_e)
 		poly_type_settings(ip);
 	    }
 
-	    bu_vls_init(&p->s_uuid);
-	    if (view_name->text().length()) {
-		bu_vls_printf(&p->s_uuid, "%s", view_name->text().toLocal8Bit().data());
-	    } else {
-		bu_vls_printf(&p->s_uuid, "%s", view_name->placeholderText().toLocal8Bit().data());
-	    }
+	    // Let the view know the polygon is there
 	    bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);
 
+	    // Name appropriately
+	    bu_vls_init(&p->s_uuid);
+	    if (!do_bool) {
+		if (view_name->text().length()) {
+		    bu_vls_printf(&p->s_uuid, "%s", view_name->text().toLocal8Bit().data());
+		} else {
+		    bu_vls_printf(&p->s_uuid, "%s", view_name->placeholderText().toLocal8Bit().data());
+		}
 
-	    poly_cnt++;
-	    view_name->clear();
-	    struct bu_vls pname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&pname, "polygon_%06d", poly_cnt);
-	    view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
-	    bu_vls_free(&pname);
+		poly_cnt++;
+		view_name->clear();
+		struct bu_vls pname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
+		view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+		bu_vls_free(&pname);
+
+	    } else {
+		bu_vls_printf(&p->s_uuid, "_tmp_bool_polygon");
+	    }
 
 	    if (ptype == BV_POLYGON_GENERAL) {
 		// Unlike the other polygon types, we need to use interactive
 		// mode to properly define a general polygon.
 		update_mode->toggle();
 	    }
-
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}
@@ -487,6 +514,33 @@ QPolyControl::add_events(QObject *, QMouseEvent *m_e)
     }
 
     if (m_e->type() == QEvent::MouseButtonRelease) {
+	if (do_bool) {
+	    int pcnt = bv_polygon_csg(gedp->ged_gvp->gv_view_objs, p, op);
+	    if (pcnt)
+		bu_log("pcnt: %d\n", pcnt);
+	    if (pcnt || op != bg_Union) {
+		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+		bg_polygon_free(&ip->polygon);
+		BU_PUT(ip, struct bv_polygon);
+		bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)p);
+		FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
+	    } else {
+		// Union with no interactions - we're keeping it
+		if (view_name->text().length()) {
+		    bu_vls_sprintf(&p->s_uuid, "%s", view_name->text().toLocal8Bit().data());
+		} else {
+		    bu_vls_sprintf(&p->s_uuid, "%s", view_name->placeholderText().toLocal8Bit().data());
+		}
+
+		poly_cnt++;
+		view_name->clear();
+		struct bu_vls pname = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
+		view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+		bu_vls_free(&pname);
+	    }
+	}
+	p = NULL;
 	emit view_updated(&gedp->ged_gvp);
 	return true;
     }

@@ -79,7 +79,7 @@ typedef struct {
 } polygon_2d;
 
 int
-bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, matp_t model2view, struct bn_tol *tol, fastf_t iscale)
+bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, matp_t model2view, const struct bn_tol *tol, fastf_t iscale)
 {
     size_t i, j;
     size_t beginA, endA, beginB, endB;
@@ -626,6 +626,52 @@ bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *cli
     inv_sf = 1.0/sf;
     return extract(result_clipper_polys, inv_sf, view2model, vZ);
 }
+
+
+int
+bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op)
+{
+    if (!objs || !p)
+	return -1;
+
+    int pcnt = 0;
+
+    for (size_t i = 0; i < BU_PTBL_LEN(objs); i++) {
+	struct bv_scene_obj *vp = (struct bv_scene_obj *)BU_PTBL_GET(objs, i);
+	if (!(vp->s_type_flags & BV_POLYGONS))
+	    continue;
+	if (p == vp)
+	    continue;
+	struct bv_polygon *polyA = (struct bv_polygon *)vp->s_i_data;
+	struct bv_polygon *polyB = (struct bv_polygon *)p->s_i_data;
+
+	// Make sure the polygons overlap before we operate, since clipper results are
+	// always general polygons.  We don't want to perform a no-op clip and lose our
+	// type info.
+	const struct bn_tol poly_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+	int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &poly_tol, polyA->v.gv_scale);
+	if (!ovlp)
+	    continue;
+
+	// Perform the specified operation - TODO - what happens if polyA is eliminated (subsumed fully by B, for example, or
+	// subtracted away?)
+	struct bg_polygon *cp = bg_clip_polygon(op, &polyA->polygon, &polyB->polygon, CLIPPER_MAX, polyA->v.gv_model2view, polyA->v.gv_view2model);
+	bg_polygon_free(&polyA->polygon);
+	polyA->polygon.num_contours = cp->num_contours;
+	polyA->polygon.hole = cp->hole;
+	polyA->polygon.contour = cp->contour;
+
+	// clipper results are always general polygons
+	polyA->type = BV_POLYGON_GENERAL;
+
+	BU_PUT(cp, struct bg_polygon);
+	bv_update_polygon(vp);
+	pcnt++;
+    }
+
+    return pcnt;
+}
+
 
 /*
  * Local Variables:
