@@ -297,7 +297,6 @@ QPolyControl::clear_pnt_selection(bool checked)
 {
     if (checked)
 	return;
-    bu_log("got pnt selection clear\n");
     int ptype = -1;
     struct bv_polygon *ip = NULL;
     if (p) {
@@ -307,6 +306,7 @@ QPolyControl::clear_pnt_selection(bool checked)
     if (!ip || ptype != BV_POLYGON_GENERAL) {
 	return;
     }
+    bu_log("got pnt selection clear\n");
     ip->curr_point_i = -1;
     ip->curr_contour_i = 0;
 
@@ -355,6 +355,8 @@ QPolyControl::toggle_closed_poly(bool checked)
 	}
 	return;
     }
+
+    clear_pnt_selection(false);
 
     if (checked && ptype == BV_POLYGON_GENERAL) {
 	// A contour with less than 3 points can't be closed
@@ -518,6 +520,11 @@ QPolyControl::mod_events(QObject *, QMouseEvent *m_e)
 	    return true;
 	}
 
+	if (move_mode->isChecked()) {
+	    // Left click is a no-op in move mode
+	    return true;
+	}
+
 	if (!p) {
 	    return true;
 	}
@@ -554,6 +561,11 @@ QPolyControl::mod_events(QObject *, QMouseEvent *m_e)
 
     if (m_e->type() == QEvent::MouseMove) {
 	if (p && m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
+
+	    if (select_mode->isChecked()) {
+		// Move is a no-op in select mode
+		return true;
+	    }
 
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	    if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
