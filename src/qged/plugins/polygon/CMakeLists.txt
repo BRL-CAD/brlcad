@@ -16,10 +16,12 @@ endif(BRLCAD_ENABLE_QT)
 set(polygon_srcs
   polygon_tool.cpp
   polygon_control.cpp
+  polygon_create.cpp
   )
 
 set(polygon_moc_hdrs
   polygon_control.h
+  polygon_create.h
   )
 
 if(BRLCAD_ENABLE_QT)
