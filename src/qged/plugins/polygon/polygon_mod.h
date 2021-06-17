@@ -1,4 +1,4 @@
-/*         P O L Y G O N _ C O N T R O L . H
+/*                   P O L Y G O N _ M O D . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file polygon_circle_control.h
+/** @file polygon_mod.h
  *
  */
 
@@ -29,13 +29,13 @@
 #include <QRadioButton>
 #include "qtcad/QColorRGB.h"
 
-class QPolyControl : public QWidget
+class QPolyMod : public QWidget
 {
     Q_OBJECT
 
     public:
-	QPolyControl();
-	~QPolyControl();
+	QPolyMod();
+	~QPolyMod();
 
 	// Boolean Operation Mode
 	QComboBox *csg_modes;

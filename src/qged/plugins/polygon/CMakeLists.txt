@@ -15,13 +15,13 @@ endif(BRLCAD_ENABLE_QT)
 
 set(polygon_srcs
   polygon_tool.cpp
-  polygon_control.cpp
   polygon_create.cpp
+  polygon_mod.cpp
   )
 
 set(polygon_moc_hdrs
-  polygon_control.h
   polygon_create.h
+  polygon_mod.h
   )
 
 if(BRLCAD_ENABLE_QT)
@@ -44,6 +44,8 @@ set(ignore_srcs
   icon.qrc
   circle.svg
   ellipse.svg
+  poly_create.svg
+  poly_modify.svg
   polygon.svg
   rectangle.svg
   square.svg

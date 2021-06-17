@@ -2,6 +2,8 @@
   <qresource>
     <file>circle.svg</file>
     <file>ellipse.svg</file>
+    <file>poly_create.svg</file>
+    <file>poly_modify.svg</file>
     <file>polygon.svg</file>
     <file>rectangle.svg</file>
     <file>square.svg</file>

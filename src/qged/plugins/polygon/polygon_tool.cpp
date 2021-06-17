@@ -22,14 +22,14 @@
  */
 
 #include "polygon_create.h"
-#include "polygon_control.h"
+#include "polygon_mod.h"
 #include "qtcad/QToolPalette.h"
 #include "../plugin.h"
 
 void *
 polygon_tool_create()
 {
-    QIcon *obj_icon = new QIcon(QPixmap(":polygon.svg"));
+    QIcon *obj_icon = new QIcon(QPixmap(":poly_create.svg"));
 
     QPolyCreate *poly_create = new QPolyCreate();
     poly_create->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -51,17 +51,17 @@ polygon_tool_create()
 void *
 polygon_tool_modify()
 {
-    QIcon *obj_icon = new QIcon(QPixmap(":polygon.svg"));
+    QIcon *obj_icon = new QIcon(QPixmap(":poly_modify.svg"));
 
-    QPolyControl *poly_control = new QPolyControl();
-    poly_control->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    QPolyMod *poly_mod = new QPolyMod();
+    poly_mod->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_control);
+    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, poly_mod);
 
-    // These controls may change the view - connect the internal widget signal
+    // These mods may change the view - connect the internal widget signal
     // to the QToolPaletteElement slot so the application can get the word when
     // that happens.
-    QObject::connect(poly_control, &QPolyControl::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
+    QObject::connect(poly_mod, &QPolyMod::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.

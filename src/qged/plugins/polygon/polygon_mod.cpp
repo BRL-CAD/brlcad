@@ -1,4 +1,4 @@
-/*         P O L Y G O N _ C O N T R O L . C P P
+/*                 P O L Y G O N _ M O D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file polygon_control.cpp
+/** @file polygon_mod.cpp
  *
  */
 
@@ -26,12 +26,12 @@
 #include <QButtonGroup>
 #include <QGroupBox>
 #include "../../app.h"
-#include "polygon_control.h"
+#include "polygon_mod.h"
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \
     BU_LIST_APPEND(fp, &((p)->l)); }
 
-QPolyControl::QPolyControl()
+QPolyMod::QPolyMod()
     : QWidget()
 {
     QVBoxLayout *l = new QVBoxLayout;
@@ -78,23 +78,23 @@ QPolyControl::QPolyControl()
 
     circle_mode = new QRadioButton("Circle");
     circle_mode->setIcon(QIcon(QPixmap(":circle.svg")));
-    QObject::connect(circle_mode, &QCheckBox::toggled, this, &QPolyControl::toplevel_config);
+    QObject::connect(circle_mode, &QCheckBox::toggled, this, &QPolyMod::toplevel_config);
     t_grp->addButton(circle_mode);
     ellipse_mode = new QRadioButton("Ellipse");
     ellipse_mode->setIcon(QIcon(QPixmap(":ellipse.svg")));
-    QObject::connect(ellipse_mode, &QCheckBox::toggled, this, &QPolyControl::toplevel_config);
+    QObject::connect(ellipse_mode, &QCheckBox::toggled, this, &QPolyMod::toplevel_config);
     t_grp->addButton(ellipse_mode);
     square_mode = new QRadioButton("Square");
     square_mode->setIcon(QIcon(QPixmap(":square.svg")));
-    QObject::connect(square_mode, &QCheckBox::toggled, this, &QPolyControl::toplevel_config);
+    QObject::connect(square_mode, &QCheckBox::toggled, this, &QPolyMod::toplevel_config);
     t_grp->addButton(square_mode);
     rectangle_mode = new QRadioButton("Rectangle");
     rectangle_mode->setIcon(QIcon(QPixmap(":rectangle.svg")));
-    QObject::connect(rectangle_mode, &QCheckBox::toggled, this, &QPolyControl::toplevel_config);
+    QObject::connect(rectangle_mode, &QCheckBox::toggled, this, &QPolyMod::toplevel_config);
     t_grp->addButton(rectangle_mode);
     general_mode = new QRadioButton("General");
     general_mode->setIcon(QIcon(QPixmap(":polygon.svg")));
-    QObject::connect(general_mode, &QCheckBox::toggled, this, &QPolyControl::toplevel_config);
+    QObject::connect(general_mode, &QCheckBox::toggled, this, &QPolyMod::toplevel_config);
     t_grp->addButton(general_mode);
 
     add_poly_gl->addWidget(vn_label);
@@ -120,12 +120,12 @@ QPolyControl::QPolyControl()
 
     QLabel *cs_label = new QLabel("Currently selected polygon:");
     mod_names = new QComboBox(this);
-    QObject::connect(mod_names, &QComboBox::currentTextChanged, this, &QPolyControl::select);
+    QObject::connect(mod_names, &QComboBox::currentTextChanged, this, &QPolyMod::select);
 
     select_mode = new QRadioButton("Select");
     t_grp->addButton(select_mode);
     move_mode = new QRadioButton("Move");
-    QObject::connect(move_mode, &QRadioButton::toggled, this, &QPolyControl::toplevel_config);
+    QObject::connect(move_mode, &QRadioButton::toggled, this, &QPolyMod::toplevel_config);
     t_grp->addButton(move_mode);
     update_mode = new QRadioButton("Update geometry");
     t_grp->addButton(update_mode);
@@ -135,7 +135,7 @@ QPolyControl::QPolyControl()
     close_general_poly->setChecked(true);
     close_general_poly->setDisabled(true);
     // Append polygon pnt if above is true (switch to select).
-    QObject::connect(close_general_poly, &QCheckBox::toggled, this, &QPolyControl::toggle_closed_poly);
+    QObject::connect(close_general_poly, &QCheckBox::toggled, this, &QPolyMod::toggle_closed_poly);
 
     // Basic shape updating is simple from an interaction standpoint, but the
     // general case is a bit more involved.
@@ -151,11 +151,11 @@ QPolyControl::QPolyControl()
     gm_box->addButton(append_pnt);
     go_l->addWidget(append_pnt);
     select_pnt = new QRadioButton("Select polygon pnt");
-    QObject::connect(select_pnt, &QRadioButton::toggled, this, &QPolyControl::clear_pnt_selection);
+    QObject::connect(select_pnt, &QRadioButton::toggled, this, &QPolyMod::clear_pnt_selection);
     gm_box->addButton(select_pnt);
     go_l->addWidget(select_pnt);
     general_mode_opts->setLayout(go_l);
-    QObject::connect(update_mode, &QRadioButton::toggled, this, &QPolyControl::toplevel_config);
+    QObject::connect(update_mode, &QRadioButton::toggled, this, &QPolyMod::toplevel_config);
     general_mode_opts->setDisabled(true);
 
 
@@ -188,12 +188,12 @@ QPolyControl::QPolyControl()
     toplevel_config(true);
 }
 
-QPolyControl::~QPolyControl()
+QPolyMod::~QPolyMod()
 {
 }
 
 void
-QPolyControl::poly_type_settings(struct bv_polygon *ip)
+QPolyMod::poly_type_settings(struct bv_polygon *ip)
 {
     if (ip->type == BV_POLYGON_GENERAL) {
 	general_mode_opts->setEnabled(true);
@@ -225,7 +225,7 @@ QPolyControl::poly_type_settings(struct bv_polygon *ip)
 }
 
 void
-QPolyControl::toplevel_config(bool)
+QPolyMod::toplevel_config(bool)
 {
     // Initialize
     struct ged *gedp = ((CADApp *)qApp)->gedp;
@@ -325,7 +325,7 @@ QPolyControl::toplevel_config(bool)
 
 
 void
-QPolyControl::clear_pnt_selection(bool checked)
+QPolyMod::clear_pnt_selection(bool checked)
 {
     if (checked)
 	return;
@@ -349,7 +349,7 @@ QPolyControl::clear_pnt_selection(bool checked)
 }
 
 void
-QPolyControl::select(const QString &poly)
+QPolyMod::select(const QString &poly)
 {
     struct ged *gedp = ((CADApp *)qApp)->gedp;
     p = NULL;
@@ -368,7 +368,7 @@ QPolyControl::select(const QString &poly)
 }
 
 void
-QPolyControl::toggle_closed_poly(bool checked)
+QPolyMod::toggle_closed_poly(bool checked)
 {
     int ptype = -1;
     struct bv_polygon *ip = NULL;
@@ -473,7 +473,7 @@ QPolyControl::toggle_closed_poly(bool checked)
 }
 
 bool
-QPolyControl::add_events(QObject *, QMouseEvent *m_e)
+QPolyMod::add_events(QObject *, QMouseEvent *m_e)
 {
     printf("polygon add\n");
 
@@ -618,7 +618,7 @@ QPolyControl::add_events(QObject *, QMouseEvent *m_e)
 }
 
 bool
-QPolyControl::mod_events(QObject *, QMouseEvent *m_e)
+QPolyMod::mod_events(QObject *, QMouseEvent *m_e)
 {
 
     printf("polygon mod\n");
@@ -725,7 +725,7 @@ QPolyControl::mod_events(QObject *, QMouseEvent *m_e)
 }
 
 bool
-QPolyControl::eventFilter(QObject *, QEvent *e)
+QPolyMod::eventFilter(QObject *, QEvent *e)
 {
     struct ged *gedp = ((CADApp *)qApp)->gedp;
     if (!gedp) {
