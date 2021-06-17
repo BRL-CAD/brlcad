@@ -111,6 +111,10 @@ QPolyControl::QPolyControl()
     l->addWidget(addpolyBox);
 
 
+    // TODO - Modify should probably be its own tool.  We only need a small
+    // part of it when initializing general polygons - we should just have a
+    // "Close" unhidden in the creation dialog when we're in creation mode...
+
     QGroupBox *modpolyBox = new QGroupBox("Modify Polygon");
     QVBoxLayout *mod_poly_gl = new QVBoxLayout;
 
