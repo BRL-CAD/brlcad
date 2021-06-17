@@ -44,20 +44,24 @@ QColorRGB::QColorRGB(QWidget *p, QString lstr, QColor dcolor) : QWidget(p)
     rgbcolor->setMinimumHeight(30);
     rgbcolor->setMaximumHeight(30);
 
+
     qc = dcolor;
-    set_button_color();
 
     QFont f("");
     f.setStyleHint(QFont::Monospace);
-    rgbtext = new QLineEdit("");
+    QString rgbstr = QString("%1/%2/%3").arg(qc.red()).arg(qc.green()).arg(qc.blue());
+    rgbtext = new QLineEdit(rgbstr);
     rgbtext->setFont(f);
-    set_color_text();
+    set_color_from_text();
 
     mlayout->addWidget(clbl);
     mlayout->addWidget(rgbtext);
     mlayout->addWidget(rgbcolor);
 
     this->setLayout(mlayout);
+
+    QObject::connect(rgbcolor, &QPushButton::clicked, this, &QColorRGB::set_color_from_button);
+    QObject::connect(rgbtext, &QLineEdit::returnPressed, this, &QColorRGB::set_color_from_text);
 }
 
 QColorRGB::~QColorRGB()
@@ -65,17 +69,47 @@ QColorRGB::~QColorRGB()
 }
 
 void
-QColorRGB::set_color_text()
+QColorRGB::set_color_from_button()
 {
-    QString rgbstr = QString("%1/%2/%3").arg(qc.red()).arg(qc.green()).arg(qc.blue());
-    rgbtext->setText(rgbstr);
+    QColor nc = QColorDialog::getColor(qc);
+    if (nc.isValid() && nc != qc) {
+	qc = nc;
+	QString rgbstr = QString("%1/%2/%3").arg(qc.red()).arg(qc.green()).arg(qc.blue());
+	rgbtext->setText(rgbstr);
+	QString qss = QString("background-color: rgb(%1, %2, %3);").arg(qc.red()).arg(qc.green()).arg(qc.blue());
+	rgbcolor->setStyleSheet(qss);
+
+	// Sync bu_color
+	QString colstr = rgbtext->text();
+	const char *ccstr = colstr.toLocal8Bit();
+	bu_opt_color(NULL, 1, &ccstr, (void *)&bc);
+
+    }
 }
 
 void
-QColorRGB::set_button_color()
+QColorRGB::set_color_from_text()
 {
-    QString qss = QString("background-color: rgb(%1, %2, %3);").arg(qc.red()).arg(qc.green()).arg(qc.blue());
-    rgbcolor->setStyleSheet(qss);
+    QString colstr = rgbtext->text();
+    const char *ccstr = colstr.toLocal8Bit();
+
+    // TODO - split into argv array, in case of spaces
+
+    int acnt = bu_opt_color(NULL, 1, &ccstr, (void *)&bc);
+    if (acnt != 1)
+	return;
+
+    int rgb[3];
+    if (!bu_color_to_rgb_ints(&bc, &rgb[0], &rgb[1], &rgb[2]))
+	return;
+
+    QColor nc(rgb[0], rgb[1], rgb[2]);
+
+    if (nc.isValid()) {
+	qc = nc;
+	QString qss = QString("background-color: rgb(%1, %2, %3);").arg(qc.red()).arg(qc.green()).arg(qc.blue());
+	rgbcolor->setStyleSheet(qss);
+    }
 }
 
 

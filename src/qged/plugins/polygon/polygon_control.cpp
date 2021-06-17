@@ -54,9 +54,9 @@ QPolyControl::QPolyControl()
 
     default_fill_poly = new QCheckBox("Shade polygon interiors");
     default_gl->addWidget(default_fill_poly);
-    default_edge_color = new QColorRGB(this, "Edge Color:", QColor(Qt::yellow));
+    default_edge_color = new QColorRGB(this, "Edge:", QColor(Qt::yellow));
     default_gl->addWidget(default_edge_color);
-    default_fill_color = new QColorRGB(this, "Fill Color:", QColor(Qt::blue));
+    default_fill_color = new QColorRGB(this, "Fill:", QColor(Qt::blue));
     default_gl->addWidget(default_fill_color);
 
     defaultBox->setLayout(default_gl);
@@ -156,8 +156,8 @@ QPolyControl::QPolyControl()
 
 
     selected_fill_poly = new QCheckBox("Shade polygon interior");
-    selected_edge_color = new QColorRGB(this, "Edge Color:", QColor(Qt::yellow));
-    selected_fill_color = new QColorRGB(this, "Fill Color:", QColor(Qt::blue));
+    selected_edge_color = new QColorRGB(this, "Edge:", QColor(Qt::yellow));
+    selected_fill_color = new QColorRGB(this, "Fill:", QColor(Qt::blue));
 
 
     mod_poly_gl->addWidget(select_mode);

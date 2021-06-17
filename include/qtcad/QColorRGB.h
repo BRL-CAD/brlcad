@@ -35,6 +35,7 @@
 #include <QLineEdit>
 
 #include "bu/color.h"
+#include "bu/opt.h"
 #include "qtcad/defines.h"
 
 class QTCAD_EXPORT QColorRGB: public QWidget
@@ -50,8 +51,8 @@ class QTCAD_EXPORT QColorRGB: public QWidget
 	struct bu_color bc;
 
     private slots:
-	void set_color_text();
-	void set_button_color();
+	void set_color_from_text();
+	void set_color_from_button();
 
     private:
 	QColorDialog *d;
