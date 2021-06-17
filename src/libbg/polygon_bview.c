@@ -185,7 +185,7 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 	bv_polygon_contour(s, &p->polygon.contour[i], ((int)i == p->curr_contour_i), p->curr_point_i, do_pnt);
     }
 
-    if (p->fill_flag && type != BV_POLYGON_LINE) {
+    if (p->fill_flag) {
 	bv_fill_polygon(s);
     }
 
@@ -244,8 +244,6 @@ bv_create_polygon(struct bview *v, int type, int x, int y, struct bv_scene_obj *
     VMOVE(p->prev_point, v_pt);
 
     int pcnt = 1;
-    if (type == BV_POLYGON_LINE)
-	pcnt = 2;
     if (type == BV_POLYGON_CIRCLE)
 	pcnt = 3;
     if (type == BV_POLYGON_ELLIPSE)
@@ -266,8 +264,8 @@ bv_create_polygon(struct bview *v, int type, int x, int y, struct bv_scene_obj *
 	VMOVE(p->polygon.contour[0].point[i], m_pt);
     }
 
-    // Only the general and polyline polygons aren't closed out of the gate
-    if (type == BV_POLYGON_GENERAL || type == BV_POLYGON_LINE)
+    // Only the general polygon isn't closed out of the gate
+    if (type == BV_POLYGON_GENERAL)
 	p->polygon.contour[0].open = 1;
 
     /* Have new polygon, now update view object vlist */
@@ -283,11 +281,8 @@ int
 bv_append_polygon_pt(struct bv_scene_obj *s)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    if (p->type != BV_POLYGON_GENERAL && p->type != BV_POLYGON_LINE)
+    if (p->type != BV_POLYGON_GENERAL)
 	return -1;
-
-    if (p->type == BV_POLYGON_LINE)
-	p->curr_contour_i = 0;
 
     if (p->curr_contour_i < 0)
 	return -1;
@@ -324,8 +319,8 @@ bv_append_polygon_pt(struct bv_scene_obj *s)
     return 0;
 }
 
-// NOTE: This is a naive brute force search for the closest point at the
-// moment, which is wrong - need to look for closest edge...
+// NOTE: This is a naive brute force search for the closest edge at the
+// moment...
 struct bv_scene_obj *
 bv_select_polygon(struct bu_ptbl *objs, struct bview *v)
 {
@@ -368,7 +363,7 @@ int
 bv_select_polygon_pt(struct bv_scene_obj *s)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    if (p->type != BV_POLYGON_GENERAL && p->type != BV_POLYGON_LINE)
+    if (p->type != BV_POLYGON_GENERAL)
 	return -1;
 
     fastf_t fx, fy;
@@ -469,7 +464,7 @@ int
 bv_move_polygon_pt(struct bv_scene_obj *s)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    if (p->type != BV_POLYGON_GENERAL && p->type != BV_POLYGON_LINE)
+    if (p->type != BV_POLYGON_GENERAL)
 	return -1;
 
     // Need to have a point selected before we can move
@@ -772,7 +767,7 @@ int
 bv_update_general_polygon(struct bv_scene_obj *s)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    if (p->type != BV_POLYGON_GENERAL && p->type != BV_POLYGON_LINE)
+    if (p->type != BV_POLYGON_GENERAL)
 	return 0;
 
     if (p->aflag) {
@@ -808,7 +803,7 @@ bv_update_polygon(struct bv_scene_obj *s)
 	return bv_update_polygon_rectangle(s);
     if (p->type == BV_POLYGON_SQUARE)
 	return bv_update_polygon_square(s);
-    if (p->type != BV_POLYGON_GENERAL && p->type != BV_POLYGON_LINE)
+    if (p->type != BV_POLYGON_GENERAL)
 	return 0;
     return bv_update_general_polygon(s);
 }
