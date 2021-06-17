@@ -36,19 +36,31 @@ QPolyControl::QPolyControl()
 {
     QVBoxLayout *l = new QVBoxLayout;
 
-
     QButtonGroup *t_grp = new QButtonGroup();
 
+    QGroupBox *defaultBox = new QGroupBox("Default Settings");
+    QVBoxLayout *default_gl = new QVBoxLayout;
+    default_gl->setAlignment(Qt::AlignTop);
+
     QLabel *csg_modes_label = new QLabel("Applying Boolean Operation:");
-    l->addWidget(csg_modes_label);
+    default_gl->addWidget(csg_modes_label);
     csg_modes = new QComboBox();
     csg_modes->addItem("None");
     csg_modes->addItem("Union");
     csg_modes->addItem("Subtraction");
     csg_modes->addItem("Intersection");
     csg_modes->setCurrentIndex(0);
-    l->addWidget(csg_modes);
+    default_gl->addWidget(csg_modes);
 
+    default_fill_poly = new QCheckBox("Shade polygon interiors");
+    default_gl->addWidget(default_fill_poly);
+    default_edge_color = new QColorRGB(this, "Edge Color:", QColor(Qt::yellow));
+    default_gl->addWidget(default_edge_color);
+    default_fill_color = new QColorRGB(this, "Fill Color:", QColor(Qt::blue));
+    default_gl->addWidget(default_fill_color);
+
+    defaultBox->setLayout(default_gl);
+    l->addWidget(defaultBox);
 
     QGroupBox *addpolyBox = new QGroupBox("Add Polygon");
     QVBoxLayout *add_poly_gl = new QVBoxLayout;
@@ -92,6 +104,8 @@ QPolyControl::QPolyControl()
     add_poly_gl->addWidget(square_mode);
     add_poly_gl->addWidget(rectangle_mode);
     add_poly_gl->addWidget(general_mode);
+    //add_poly_gl->setSpacing(0);
+    //add_poly_gl->setContentsMargins(1,1,1,1);
 
     addpolyBox->setLayout(add_poly_gl);
     l->addWidget(addpolyBox);
@@ -109,7 +123,7 @@ QPolyControl::QPolyControl()
     move_mode = new QRadioButton("Move");
     QObject::connect(move_mode, &QRadioButton::toggled, this, &QPolyControl::toplevel_config);
     t_grp->addButton(move_mode);
-    update_mode = new QRadioButton("Update");
+    update_mode = new QRadioButton("Update geometry");
     t_grp->addButton(update_mode);
 
     close_general_poly = new QCheckBox("Close polygon");
@@ -124,6 +138,8 @@ QPolyControl::QPolyControl()
     general_mode_opts = new QGroupBox("General Polygon Modes");
     QVBoxLayout *go_l = new QVBoxLayout();
     go_l->setAlignment(Qt::AlignTop);
+    //go_l->setSpacing(0);
+    //go_l->setContentsMargins(1,1,1,1);
 
     QButtonGroup *gm_box = new QButtonGroup();
     append_pnt = new QRadioButton("Append polygon pnt");
@@ -138,6 +154,12 @@ QPolyControl::QPolyControl()
     QObject::connect(update_mode, &QRadioButton::toggled, this, &QPolyControl::toplevel_config);
     general_mode_opts->setDisabled(true);
 
+
+    selected_fill_poly = new QCheckBox("Shade polygon interior");
+    selected_edge_color = new QColorRGB(this, "Edge Color:", QColor(Qt::yellow));
+    selected_fill_color = new QColorRGB(this, "Fill Color:", QColor(Qt::blue));
+
+
     mod_poly_gl->addWidget(select_mode);
     mod_poly_gl->addWidget(cs_label);
     mod_poly_gl->addWidget(mod_names);
@@ -145,6 +167,9 @@ QPolyControl::QPolyControl()
     mod_poly_gl->addWidget(update_mode);
     mod_poly_gl->addWidget(close_general_poly);
     mod_poly_gl->addWidget(general_mode_opts);
+    mod_poly_gl->addWidget(selected_fill_poly);
+    mod_poly_gl->addWidget(selected_edge_color);
+    mod_poly_gl->addWidget(selected_fill_color);
 
     modpolyBox->setLayout(mod_poly_gl);
     l->addWidget(modpolyBox);

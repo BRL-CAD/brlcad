@@ -27,6 +27,7 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QRadioButton>
+#include "qtcad/QColorRGB.h"
 
 class QPolyControl : public QWidget
 {
@@ -51,7 +52,8 @@ class QPolyControl : public QWidget
 	// Draw default settings
 	// Default edge color
 	QCheckBox *default_fill_poly;
-	QPushButton *default_fill_color;
+	QColorRGB *default_fill_color;
+	QColorRGB *default_edge_color;
 	// TODO - maybe use sliders here?
 	QLineEdit *default_fill_angle;
 	QLineEdit *default_fill_density;
@@ -70,7 +72,8 @@ class QPolyControl : public QWidget
 	// Selected Edge color
 
 	QCheckBox *selected_fill_poly;
-	QPushButton *selected_fill_color;
+	QColorRGB *selected_fill_color;
+	QColorRGB *selected_edge_color;
 	// TODO - maybe use sliders here?
 	QLineEdit *selected_fill_angle;
 	QLineEdit *selected_fill_density;

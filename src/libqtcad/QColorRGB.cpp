@@ -25,23 +25,37 @@
 
 #include "common.h"
 
+#include <QLabel>
 #include "qtcad/QColorRGB.h"
 
-QColorRGB::QColorRGB(QWidget *pparent) : QWidget(pparent)
+QColorRGB::QColorRGB(QWidget *p, QString lstr, QColor dcolor) : QWidget(p)
 {
     mlayout = new QHBoxLayout();
     mlayout->setSpacing(0);
     mlayout->setContentsMargins(1,1,1,1);
+
+    QString lstrm = QString("<font face=\"monospace\">%1</font>").arg(lstr);
+    QLabel *clbl = new QLabel(lstrm);
+
 
     rgbcolor = new QPushButton("");
     rgbcolor->setMinimumWidth(30);
     rgbcolor->setMaximumWidth(30);
     rgbcolor->setMinimumHeight(30);
     rgbcolor->setMaximumHeight(30);
-    mlayout->addWidget(rgbcolor);
 
+    qc = dcolor;
+    set_button_color();
+
+    QFont f("");
+    f.setStyleHint(QFont::Monospace);
     rgbtext = new QLineEdit("");
+    rgbtext->setFont(f);
+    set_color_text();
+
+    mlayout->addWidget(clbl);
     mlayout->addWidget(rgbtext);
+    mlayout->addWidget(rgbcolor);
 
     this->setLayout(mlayout);
 }
@@ -53,11 +67,15 @@ QColorRGB::~QColorRGB()
 void
 QColorRGB::set_color_text()
 {
+    QString rgbstr = QString("%1/%2/%3").arg(qc.red()).arg(qc.green()).arg(qc.blue());
+    rgbtext->setText(rgbstr);
 }
 
 void
 QColorRGB::set_button_color()
 {
+    QString qss = QString("background-color: rgb(%1, %2, %3);").arg(qc.red()).arg(qc.green()).arg(qc.blue());
+    rgbcolor->setStyleSheet(qss);
 }
 
 

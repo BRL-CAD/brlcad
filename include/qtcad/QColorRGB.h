@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <QColor>
 #include <QWidget>
 #include <QHBoxLayout>
 #include <QPushButton>
@@ -41,7 +42,7 @@ class QTCAD_EXPORT QColorRGB: public QWidget
     Q_OBJECT
 
     public:
-	QColorRGB(QWidget *pparent = 0);
+	QColorRGB(QWidget *p = NULL, QString lstr = QString("Color:"), QColor dcolor = QColor(Qt::red));
 	~QColorRGB();
 
 	QLineEdit *rgbtext;
