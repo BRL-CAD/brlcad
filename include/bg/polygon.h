@@ -310,6 +310,7 @@ BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int
 #define BV_POLYGON_ELLIPSE 2
 #define BV_POLYGON_RECTANGLE 3
 #define BV_POLYGON_SQUARE 4
+#define BV_POLYGON_LINE 5
 struct bv_polygon {
     int                 type;
     int                 cflag;             /* contour flag */

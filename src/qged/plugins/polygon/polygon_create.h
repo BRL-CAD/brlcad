@@ -43,6 +43,7 @@ class QPolyCreate : public QWidget
 
 	// Adding polygons
 	QLineEdit *view_name;
+	QRadioButton *polyline_mode;
 	QRadioButton *circle_mode;
 	QRadioButton *ellipse_mode;
 	QRadioButton *square_mode;
@@ -59,7 +60,7 @@ class QPolyCreate : public QWidget
 	QLineEdit *default_fill_density;
 
 	// Modifying polygons
-	QCheckBox *close_general_poly;
+	QCheckBox *finalize_poly;
 
     signals:
 	void view_updated(struct bview **);

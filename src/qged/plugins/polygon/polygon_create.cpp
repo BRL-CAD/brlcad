@@ -76,6 +76,10 @@ QPolyCreate::QPolyCreate()
     view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
     bu_vls_free(&pname);
 
+    polyline_mode = new QRadioButton("Polyline");
+    polyline_mode->setIcon(QIcon(QPixmap(":polyline.svg")));
+    QObject::connect(polyline_mode, &QCheckBox::toggled, this, &QPolyCreate::toplevel_config);
+    t_grp->addButton(polyline_mode);
     circle_mode = new QRadioButton("Circle");
     circle_mode->setIcon(QIcon(QPixmap(":circle.svg")));
     QObject::connect(circle_mode, &QCheckBox::toggled, this, &QPolyCreate::toplevel_config);
@@ -99,6 +103,7 @@ QPolyCreate::QPolyCreate()
 
     add_poly_gl->addWidget(vn_label);
     add_poly_gl->addWidget(view_name);
+    add_poly_gl->addWidget(polyline_mode);
     add_poly_gl->addWidget(circle_mode);
     add_poly_gl->addWidget(ellipse_mode);
     add_poly_gl->addWidget(square_mode);
@@ -110,12 +115,12 @@ QPolyCreate::QPolyCreate()
     addpolyBox->setLayout(add_poly_gl);
     l->addWidget(addpolyBox);
 
-    close_general_poly = new QCheckBox("Close polygon");
-    // Disabled if we're not a general polygon
-    close_general_poly->setChecked(true);
-    close_general_poly->setDisabled(true);
-    QObject::connect(close_general_poly, &QCheckBox::toggled, this, &QPolyCreate::finalize);
-    l->addWidget(close_general_poly);
+    finalize_poly = new QCheckBox("Finalize polygon");
+    // Disabled if we're not a polyline or general polygon
+    finalize_poly->setChecked(true);
+    finalize_poly->setDisabled(true);
+    QObject::connect(finalize_poly, &QCheckBox::toggled, this, &QPolyCreate::finalize);
+    l->addWidget(finalize_poly);
 
     l->setAlignment(Qt::AlignTop);
     this->setLayout(l);
@@ -140,7 +145,7 @@ QPolyCreate::finalize(bool)
     // Close the general polygon - if that's what we're creating,
     // at this point it will still be open.
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-    if (ip->polygon.contour[0].open) {
+    if (ip->polygon.contour[0].open && ip->type != BV_POLYGON_LINE) {
 
 	if (ip->polygon.contour[0].num_points < 3) {
 	    // If we're trying to finalize and we have less than
@@ -163,10 +168,10 @@ QPolyCreate::finalize(bool)
 	bv_update_polygon(p);
     }
 
-    close_general_poly->blockSignals(true);
-    close_general_poly->setChecked(true);
-    close_general_poly->blockSignals(false);
-    close_general_poly->setDisabled(true);
+    finalize_poly->blockSignals(true);
+    finalize_poly->setChecked(true);
+    finalize_poly->blockSignals(false);
+    finalize_poly->setDisabled(true);
 
     // Have close polygon - do boolean operation, if any.  Whether the new
     // polygon becomes its own object or just alters existing object
@@ -285,6 +290,9 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 	if (!p) {
 	    int ptype = BV_POLYGON_CIRCLE;
+	    if (polyline_mode->isChecked()) {
+		ptype = BV_POLYGON_LINE;
+	    }
 	    if (ellipse_mode->isChecked()) {
 		ptype = BV_POLYGON_ELLIPSE;
 	    }
@@ -301,7 +309,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y(), gedp->free_scene_obj);
 	    p->s_v = gedp->ged_gvp;
 
-	    if (ptype == BV_POLYGON_GENERAL) {
+	    if (ptype == BV_POLYGON_GENERAL || ptype == BV_POLYGON_LINE) {
 
 		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 		// For general polygons, we need to identify the active contour
@@ -311,12 +319,12 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 		// contours...
 		ip->curr_contour_i = 0;
 
-		close_general_poly->setEnabled(true);
-		close_general_poly->blockSignals(true);
-		close_general_poly->setChecked(false);
-		close_general_poly->blockSignals(false);
+		finalize_poly->setEnabled(true);
+		finalize_poly->blockSignals(true);
+		finalize_poly->setChecked(false);
+		finalize_poly->blockSignals(false);
 	    } else {
-		close_general_poly->setEnabled(false);
+		finalize_poly->setEnabled(false);
 	    }
 
 	    // Let the view know the polygon is there
@@ -335,7 +343,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	// If we're creating a general polygon, we're appending points after
 	// the initial creation
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL) {
+	if (ip->type == BV_POLYGON_GENERAL || ip->type == BV_POLYGON_LINE) {
 	    ip->sflag = 0;
 	    ip->mflag = 0;
 	    ip->aflag = 1;
@@ -360,7 +368,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 
 	// Non-general polygon creation doesn't use right click.
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type != BV_POLYGON_GENERAL) {
+	if (ip->type != BV_POLYGON_GENERAL && ip->type != BV_POLYGON_LINE) {
 	    return true;
 	}
 
@@ -401,7 +409,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    return true;
 
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL) {
+	if (ip->type == BV_POLYGON_GENERAL || ip->type == BV_POLYGON_LINE) {
 	    // General polygons are finalized by an explicit close
 	    // (either right mouse click or the close checkbox)
 	    return true;
