@@ -454,6 +454,11 @@ bv_move_polygon(struct bv_scene_obj *s)
     /* Have new polygon, now update view object vlist */
     bv_polygon_vlist(s);
 
+    // Shift the previous point so updates will start from the
+    // correct point.
+    p->prev_point[0] = p->prev_point[0]+dx;
+    p->prev_point[1] = p->prev_point[1]+dy;
+
     /* Updated */
     s->s_changed++;
 
