@@ -256,6 +256,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		QObject::connect(ap, &CADApp::app_changed_db, el, &QToolPaletteElement::do_app_changed_db);
 
 		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
+		QObject::connect(ap, &CADApp::gui_changed_view, el, &QToolPaletteElement::do_app_gui_changed_view);
 	    }
 	}
 
@@ -267,6 +268,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		ic->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
 		QObject::connect(ap, &CADApp::app_changed_db, el, &QToolPaletteElement::do_app_changed_db);
+		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
 	    }
 	}
 
@@ -277,6 +279,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		oc->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
 		QObject::connect(ap, &CADApp::app_changed_db, el, &QToolPaletteElement::do_app_changed_db);
+		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
 	    }
 	}
 

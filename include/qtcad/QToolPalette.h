@@ -100,6 +100,28 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	void do_app_changed_view(struct bview **);
 	void do_app_changed_db(void *);
 
+	// DANGER Will Robinson...  if ANYTHING triggered downstream of the
+	// app_gui_changed_view signal emitted by this slot in turn causes gui
+	// view update signals to get triggered, infinite looping will result.
+	//
+	// This is needed so plugin Gui elements displaying view info can respond
+	// to changes triggered from other plugins.  An example is the list of
+	// polygons in the polygon mod tool - the polygon creation tool will change
+	// that list every time it adds a polygon, but since there is no compile
+	// time connection between the plugins no direct signal/slot is possible.
+	//
+	// Only the app knows about all the plugins and so can connect
+	// QToolPalette signals and slots that will propagate the word, but
+	// since both the app and the plugins may be changing the view and
+	// updating in response to changes, there is a WHOLE lot of potential
+	// in all this for infinite looping.
+	//
+	// There may be some consolidation possible here, but it will have to be
+	// done with extreme care.  One possible safety measure might be to
+	// pass a counter around and if it gets too high stop emitting internal
+	// signals...
+	void do_app_gui_changed_view(void *);
+
      signals:
 	// INTERNAL:
 	// These signals are emitted by the above slots.  Subcomponents will
@@ -114,6 +136,11 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	// application code.
 	void app_changed_view(struct bview **);
 	void app_changed_db(void *);
+
+	// This signal must be used with great caution, or it will cause infinite
+	// loops.  It is intended for use when a GUI widget needs to know if another
+	// plugin has made a view change.
+	void app_gui_changed_view();
 
     public:
 	QToolPaletteButton *button;

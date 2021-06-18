@@ -97,6 +97,12 @@ QToolPaletteElement::do_app_changed_view(struct bview **v)
 }
 
 void
+QToolPaletteElement::do_app_gui_changed_view(void *)
+{
+    emit app_gui_changed_view();
+}
+
+void
 QToolPaletteElement::do_gui_changed_view(struct bview **v)
 {
     emit gui_changed_view(v);

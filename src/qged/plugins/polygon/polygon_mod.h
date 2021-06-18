@@ -40,24 +40,6 @@ class QPolyMod : public QWidget
 	// Boolean Operation Mode
 	QComboBox *csg_modes;
 
-	// Adding polygons
-	QLineEdit *view_name;
-	QRadioButton *circle_mode;
-	QRadioButton *ellipse_mode;
-	QRadioButton *square_mode;
-	QRadioButton *rectangle_mode;
-	QRadioButton *general_mode;
-
-
-	// Draw default settings
-	// Default edge color
-	QCheckBox *default_fill_poly;
-	QColorRGB *default_fill_color;
-	QColorRGB *default_edge_color;
-	// TODO - maybe use sliders here?
-	QLineEdit *default_fill_angle;
-	QLineEdit *default_fill_density;
-
 	// Modifying polygons
 	QComboBox *mod_names;
 	QRadioButton *select_mode;
@@ -81,8 +63,11 @@ class QPolyMod : public QWidget
     signals:
 	void view_updated(struct bview **);
 
-    private slots:
+    public slots:
+	void app_mod_names_reset(void *);
+	void mod_names_reset();
 
+    private slots:
 	void toplevel_config(bool);
 
 	void toggle_closed_poly(bool);
@@ -93,10 +78,6 @@ class QPolyMod : public QWidget
 	bool eventFilter(QObject *, QEvent *);
 
     private:
-	bool add_mode = false;
-	bool add_events(QObject *, QMouseEvent *);
-	bool mod_mode = false;
-	bool mod_events(QObject *, QMouseEvent *);
 	void poly_type_settings(struct bv_polygon *ip);
 	int poly_cnt = 0;
 	struct bv_scene_obj *p = NULL;

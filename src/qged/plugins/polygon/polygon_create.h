@@ -21,6 +21,9 @@
  *
  */
 
+#ifndef POLYGON_CREATE_H
+#define POLYGON_CREATE_H
+
 #include <QLineEdit>
 #include <QCheckBox>
 #include <QComboBox>
@@ -62,6 +65,7 @@ class QPolyCreate : public QWidget
 	QCheckBox *close_general_poly;
 
     signals:
+	void poly_added();
 	void view_updated(struct bview **);
 
     private slots:
@@ -78,6 +82,7 @@ class QPolyCreate : public QWidget
 	bool do_bool = false;
 };
 
+#endif //POLYGON_CREATE_H
 
 // Local Variables:
 // tab-width: 8
