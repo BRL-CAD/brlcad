@@ -97,9 +97,9 @@ QToolPaletteElement::do_app_changed_view(struct bview **v)
 }
 
 void
-QToolPaletteElement::do_app_gui_changed_view(void *)
+QToolPaletteElement::do_palette_unhide(void *)
 {
-    emit app_gui_changed_view();
+    emit palette_unhide();
 }
 
 void
@@ -254,6 +254,7 @@ QToolPalette::displayElement(QToolPaletteElement *element)
 	    control_container->setWidget(element->controls);
 	    element->controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 	    element->controls->show();
+	    element->do_palette_unhide(NULL);
 	    control_container->verticalScrollBar()->setSliderPosition(element->scroll_pos);
 	    selected = element;
 	    foreach(QToolPaletteElement *el, elements) {

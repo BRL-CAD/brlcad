@@ -66,13 +66,8 @@ polygon_tool_modify()
     // However the view changed, we need to make sure our list is current
     QObject::connect(poly_mod, &QPolyMod::view_updated, poly_mod, &QPolyMod::mod_names_reset);
     QObject::connect(el, &QToolPaletteElement::app_changed_view, poly_mod, &QPolyMod::mod_names_reset);
-    //
-    // We need to know when poly_create adds a polygon, but to avoid infinite
-    // looping a gui triggered view update is not going to turn around and
-    // create an app_changed_view signal.  We need to tie into the app's
-    // knowledge of this, but it is CRITICAL that mod_names_reset never assert
-    // any view changes!
-    QObject::connect(el, &QToolPaletteElement::app_gui_changed_view, poly_mod, &QPolyMod::mod_names_reset);
+    // //Make sure the list is current whenever we display the control widget
+    QObject::connect(el, &QToolPaletteElement::palette_unhide, poly_mod, &QPolyMod::mod_names_reset);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.
