@@ -1015,6 +1015,67 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
 }
 
 int
+_poly_cmd_fill_color(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view obj <obj1> polygon fill_color [r/g/b]";
+    const char *purpose_string = "customize fill lines color (if fill is enabled)";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct bv_scene_obj *s = gd->s;
+    if (!s) {
+	bu_vls_printf(gedp->ged_result_str, "View object %s does not exist\n", gd->vobj);
+	return GED_ERROR;
+    }
+    if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
+	bu_vls_printf(gedp->ged_result_str, "Specified object is not a view polygon.\n");
+	return GED_ERROR;
+    }
+
+    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+    if (!p->fill_flag)
+	return GED_OK;
+
+    struct bv_scene_obj *fobj = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
+	    fobj = s_c;
+	    break;
+	}
+    }
+
+    if (!argc) {
+
+	if (!fobj) {
+	    bu_vls_printf(gedp->ged_result_str, "Error - fill flag set, but fill lines not defined\n");
+	    return GED_ERROR;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", fobj->s_color[0], fobj->s_color[1], fobj->s_color[2]);
+
+	return GED_OK;
+    }
+
+    struct bu_color val;
+    if (bu_opt_color(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    bu_color_to_rgb_chars(&val, fobj->s_color);
+
+    return GED_OK;
+}
+
+int
 _poly_cmd_csg(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
@@ -1113,6 +1174,7 @@ const struct bu_cmdtab _poly_cmds[] = {
     { "csg",             _poly_cmd_csg},
     { "export",          _poly_cmd_export},
     { "fill",            _poly_cmd_fill},
+    { "fill_color",      _poly_cmd_fill_color},
     { "import",          _poly_cmd_import},
     { "move",            _poly_cmd_move},
     { "open",            _poly_cmd_open},
