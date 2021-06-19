@@ -300,10 +300,10 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 
 	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y(), gedp->free_scene_obj);
 	    p->s_v = gedp->ged_gvp;
+	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 
 	    if (ptype == BV_POLYGON_GENERAL) {
 
-		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 		// For general polygons, we need to identify the active contour
 		// for update operations to work.
 		//
@@ -318,6 +318,24 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    } else {
 		close_general_poly->setEnabled(false);
 	    }
+
+	    // Get color
+	    bu_color_to_rgb_chars(&default_edge_color->bc, p->s_color);
+
+	    // Set fill
+	    if (default_fill_poly->isChecked()) {
+		ip->fill_flag = 1;
+
+		// TODO - these need to be GUI settings...	
+		vect2d_t vdir = {10, 10};
+		fastf_t vdelta = 10;
+		V2MOVE(ip->fill_dir, vdir);
+		ip->fill_delta = vdelta;
+
+		bv_update_polygon(p);
+	    }
+
+	    // TODO - fill color
 
 	    // Let the view know the polygon is there
 	    bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);

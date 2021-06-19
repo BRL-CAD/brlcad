@@ -92,6 +92,13 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     lseg[0] = -1 * lseg[0]; // Looks like the projection flips this...
     V2UNITIZE(lseg);
     int dir_step_cnt = (int)(0.5*ldiag / fabs(line_spacing) + 1);
+
+    // If we're too small to handle the specified spacing, don't go any further
+    if (dir_step_cnt < 2) {
+	bg_polygon_free(&poly_2d);
+	return NULL;
+    }
+
     int step_cnt = 2*dir_step_cnt - 1; // center line is not repeated
 
     struct bg_polygon poly_lines;
