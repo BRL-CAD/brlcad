@@ -17,11 +17,13 @@ set(polygon_srcs
   polygon_tool.cpp
   polygon_create.cpp
   polygon_mod.cpp
+  polygon_settings.cpp
   )
 
 set(polygon_moc_hdrs
   polygon_create.h
   polygon_mod.h
+  polygon_settings.h
   )
 
 if(BRLCAD_ENABLE_QT)

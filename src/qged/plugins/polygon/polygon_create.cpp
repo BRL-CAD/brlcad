@@ -52,12 +52,8 @@ QPolyCreate::QPolyCreate()
     csg_modes->setCurrentIndex(0);
     default_gl->addWidget(csg_modes);
 
-    default_fill_poly = new QCheckBox("Shade polygon interiors");
-    default_gl->addWidget(default_fill_poly);
-    default_edge_color = new QColorRGB(this, "Edge:", QColor(Qt::yellow));
-    default_gl->addWidget(default_edge_color);
-    default_fill_color = new QColorRGB(this, "Fill:", QColor(Qt::blue));
-    default_gl->addWidget(default_fill_color);
+    ps = new QPolySettings();
+    default_gl->addWidget(ps);
 
     defaultBox->setLayout(default_gl);
     l->addWidget(defaultBox);
@@ -320,13 +316,13 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    }
 
 	    // Get edge color
-	    bu_color_to_rgb_chars(&default_edge_color->bc, p->s_color);
+	    bu_color_to_rgb_chars(&ps->edge_color->bc, p->s_color);
 
 	    // fill color
-	    BU_COLOR_CPY(&ip->fill_color, &default_fill_color->bc);
+	    BU_COLOR_CPY(&ip->fill_color, &ps->fill_color->bc);
 
 	    // Set fill
-	    if (default_fill_poly->isChecked()) {
+	    if (ps->fill_poly->isChecked()) {
 		ip->fill_flag = 1;
 
 		// TODO - these need to be GUI settings...	

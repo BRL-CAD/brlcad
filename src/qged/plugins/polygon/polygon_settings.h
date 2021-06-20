@@ -1,4 +1,4 @@
-/*         P O L Y G O N _ C R E A T E . H
+/*         P O L Y G O N _ S E T T I N G S . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,68 +17,42 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file polygon_create.h
+/** @file polygon_settings.h
  *
  */
 
-#ifndef POLYGON_CREATE_H
-#define POLYGON_CREATE_H
+#ifndef POLYGON_SETTINGS_H
+#define POLYGON_SETTINGS_H
 
 #include <QLineEdit>
 #include <QCheckBox>
 #include <QComboBox>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QRadioButton>
-#include "bg/polygon_types.h"
+#include "bv.h"
 #include "qtcad/QColorRGB.h"
-#include "polygon_settings.h"
 
-class QPolyCreate : public QWidget
+class QPolySettings : public QWidget
 {
     Q_OBJECT
 
     public:
-	QPolyCreate();
-	~QPolyCreate();
+	QPolySettings();
+	~QPolySettings();
 
-	// Boolean Operation Mode
-	QComboBox *csg_modes;
-
-	// Adding polygons
-	QLineEdit *view_name;
-	QRadioButton *circle_mode;
-	QRadioButton *ellipse_mode;
-	QRadioButton *square_mode;
-	QRadioButton *rectangle_mode;
-	QRadioButton *general_mode;
-
-	// Draw default settings
-	// Default edge color
-	QPolySettings *ps;
-
-	// Modifying polygons
-	QCheckBox *close_general_poly;
+	QColorRGB *edge_color;
+	QCheckBox *fill_poly;
+	QColorRGB *fill_color;
+	QLineEdit *fill_slope_x;
+	QLineEdit *fill_slope_y;
+	QLineEdit *fill_density;
 
     signals:
-	void poly_added();
-	void view_updated(struct bview **);
+	void settings_changed();
 
     private slots:
-	void toplevel_config(bool);
-	void finalize(bool);
-
-    protected:
-	bool eventFilter(QObject *, QEvent *);
-
-    private:
-	bg_clip_t op = bg_Union;
-	int poly_cnt = 0;
-	struct bv_scene_obj *p = NULL;
-	bool do_bool = false;
+	void settings_sync(struct bv_scene_obj *p);
 };
 
-#endif //POLYGON_CREATE_H
+#endif //POLYGON_SETTINGS_H
 
 // Local Variables:
 // tab-width: 8
