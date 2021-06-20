@@ -110,15 +110,12 @@ bv_fill_polygon(struct bv_scene_obj *s)
 	BU_LIST_INIT(&(fobj->s_vlist));
 	bu_vls_init(&fobj->s_uuid);
 	bu_vls_sprintf(&fobj->s_uuid, "fill");
-	// TODO - support custom color
-	fobj->s_color[0] = 0;
-	fobj->s_color[1] = 0;
-	fobj->s_color[2] = 255;
 	fobj->s_os.s_line_width = 1;
 	fobj->s_soldash = 0;
 	fobj->s_v = s->s_v;
 	bu_ptbl_ins(&s->children, (long *)fobj);
     }
+    bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
     for (size_t i = 0; i < fill->num_contours; i++) {
 	bv_polygon_contour(fobj, &fill->contour[i], 0, -1, 0);
     }
@@ -218,6 +215,10 @@ bv_create_polygon(struct bview *v, int type, int x, int y, struct bv_scene_obj *
     s->s_color[2] = 0;
     s->s_i_data = (void *)p;
     s->s_update_callback = &bv_update_polygon;
+
+    // Set default fill color to blue
+    unsigned char frgb[3] = {0, 0, 255};
+    bu_color_from_rgb_chars(&p->fill_color, frgb);
 
     // Let the view know these are now the previous x,y points
     v->gv_prevMouseX = x;
@@ -800,6 +801,20 @@ int
 bv_update_polygon(struct bv_scene_obj *s)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+
+    // Regardless of type, sync fill color
+    struct bv_scene_obj *fobj = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+        struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+        if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
+            fobj = s_c;
+            break;
+        }
+    }
+    if (fobj) {
+        bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
+    }
+
     if (p->type == BV_POLYGON_CIRCLE)
 	return bv_update_polygon_circle(s);
     if (p->type == BV_POLYGON_ELLIPSE)

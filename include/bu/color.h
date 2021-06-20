@@ -70,6 +70,15 @@ typedef struct bu_color bu_color_t;
  */
 #define BU_COLOR_INIT_ZERO {{0, 0, 0, 0}}
 
+/**
+ * Copy a bu_color
+ */
+#define BU_COLOR_CPY(_dest, _src) {\
+    (_dest)->buc_rgb[RED] = (_src)->buc_rgb[RED]; \
+    (_dest)->buc_rgb[GRN] = (_src)->buc_rgb[GRN]; \
+    (_dest)->buc_rgb[BLU] = (_src)->buc_rgb[BLU]; \
+    (_dest)->buc_rgb[ALP] = (_src)->buc_rgb[ALP]; \
+}
 
 
 /** random color generating methods */

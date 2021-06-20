@@ -32,6 +32,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/color.h"
 #include "bn/tol.h"
 #include "bv/defines.h"
 #include "bg/defines.h"
@@ -319,6 +320,7 @@ struct bv_polygon {
     int                 fill_flag;         /* set to shade the interior */
     vect2d_t            fill_dir;
     fastf_t             fill_delta;
+    struct bu_color     fill_color;
     long                curr_contour_i;
     long                curr_point_i;
     point_t             prev_point;

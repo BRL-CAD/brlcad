@@ -319,8 +319,11 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 		close_general_poly->setEnabled(false);
 	    }
 
-	    // Get color
+	    // Get edge color
 	    bu_color_to_rgb_chars(&default_edge_color->bc, p->s_color);
+
+	    // fill color
+	    BU_COLOR_CPY(&ip->fill_color, &default_fill_color->bc);
 
 	    // Set fill
 	    if (default_fill_poly->isChecked()) {
@@ -335,7 +338,6 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 		bv_update_polygon(p);
 	    }
 
-	    // TODO - fill color
 
 	    // Let the view know the polygon is there
 	    bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);

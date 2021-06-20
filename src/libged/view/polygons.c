@@ -1040,8 +1040,20 @@ _poly_cmd_fill_color(void *bs, int argc, const char **argv)
     }
 
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    if (!p->fill_flag)
+
+    if (!argc) {
+	unsigned char frgb[3];
+	bu_color_to_rgb_chars(&p->fill_color, (unsigned char *)frgb);
+
+	bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", frgb[0], frgb[1], frgb[2]);
+
 	return GED_OK;
+    }
+
+    if (bu_opt_color(NULL, 1, (const char **)&argv[0], (void *)&p->fill_color) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
 
     struct bv_scene_obj *fobj = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
@@ -1052,25 +1064,9 @@ _poly_cmd_fill_color(void *bs, int argc, const char **argv)
 	}
     }
 
-    if (!argc) {
-
-	if (!fobj) {
-	    bu_vls_printf(gedp->ged_result_str, "Error - fill flag set, but fill lines not defined\n");
-	    return GED_ERROR;
-	}
-
-	bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", fobj->s_color[0], fobj->s_color[1], fobj->s_color[2]);
-
-	return GED_OK;
+    if (fobj) {
+	bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
     }
-
-    struct bu_color val;
-    if (bu_opt_color(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
-    }
-
-    bu_color_to_rgb_chars(&val, fobj->s_color);
 
     return GED_OK;
 }
