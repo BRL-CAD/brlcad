@@ -84,6 +84,7 @@ QColorRGB::set_color_from_button()
 	const char *ccstr = colstr.toLocal8Bit();
 	bu_opt_color(NULL, 1, &ccstr, (void *)&bc);
 
+	emit color_changed();
     }
 }
 
@@ -109,6 +110,8 @@ QColorRGB::set_color_from_text()
 	qc = nc;
 	QString qss = QString("background-color: rgb(%1, %2, %3);").arg(qc.red()).arg(qc.green()).arg(qc.blue());
 	rgbcolor->setStyleSheet(qss);
+
+	emit color_changed();
     }
 }
 

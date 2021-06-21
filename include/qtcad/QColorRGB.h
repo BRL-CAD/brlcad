@@ -50,6 +50,9 @@ class QTCAD_EXPORT QColorRGB: public QWidget
 	QPushButton *rgbcolor;
 	struct bu_color bc;
 
+    signals:
+	void color_changed();
+
     private slots:
 	void set_color_from_text();
 	void set_color_from_button();
