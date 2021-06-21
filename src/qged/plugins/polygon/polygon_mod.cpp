@@ -117,6 +117,7 @@ QPolyMod::QPolyMod()
     bool_gl->addWidget(csg_modes);
     apply_bool = new QPushButton("Apply");
     bool_gl->addWidget(apply_bool);
+    QObject::connect(apply_bool, &QPushButton::released, this, &QPolyMod::apply_bool_op);
     boolBox->setLayout(bool_gl);
     l->addWidget(boolBox);
 
@@ -415,6 +416,48 @@ QPolyMod::toggle_closed_poly(bool checked)
 
     emit view_updated(&gedp->ged_gvp);
 }
+
+void
+QPolyMod::apply_bool_op()
+{
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp) {
+	return;
+    }
+
+    if (!p)
+	return;
+
+    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+    if (ip->polygon.contour[0].open) {
+	return;
+    }
+
+    bg_clip_t op = bg_Union;
+    if (csg_modes->currentText() == "Subtraction") {
+	op = bg_Difference;
+    }
+    if (csg_modes->currentText() == "Intersection") {
+	op = bg_Intersection;
+    }
+
+    int pcnt = bv_polygon_csg(gedp->ged_gvp->gv_view_objs, p, op, 1);
+    if (pcnt || op != bg_Union) {
+	bg_polygon_free(&ip->polygon);
+	BU_PUT(ip, struct bv_polygon);
+	bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)p);
+	FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
+	mod_names->setCurrentIndex(0);
+	if (mod_names->currentText().length()) {
+	    select(mod_names->currentText());
+	} else {
+	    p = NULL;
+	}
+    }
+
+    emit view_updated(&gedp->ged_gvp);
+}
+
 
 bool
 QPolyMod::eventFilter(QObject *, QEvent *e)

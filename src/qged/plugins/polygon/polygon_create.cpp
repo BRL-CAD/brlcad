@@ -98,8 +98,6 @@ QPolyCreate::QPolyCreate()
     add_poly_gl->addWidget(square_mode);
     add_poly_gl->addWidget(rectangle_mode);
     add_poly_gl->addWidget(general_mode);
-    //add_poly_gl->setSpacing(0);
-    //add_poly_gl->setContentsMargins(1,1,1,1);
 
     addpolyBox->setLayout(add_poly_gl);
     l->addWidget(addpolyBox);
