@@ -773,21 +773,21 @@ bv_update_polygon_square(struct bv_scene_obj *s)
 }
 
 int
-bv_update_general_polygon(struct bv_scene_obj *s)
+bv_update_general_polygon(struct bv_scene_obj *s, int utype)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     if (p->type != BV_POLYGON_GENERAL)
 	return 0;
 
-    if (p->aflag) {
+    if (utype == BV_POLYGON_UPDATE_PT_APPEND) {
 	return bv_append_polygon_pt(s);
     }
 
-    if (p->sflag) {
+    if (utype == BV_POLYGON_UPDATE_PT_SELECT) {
 	return bv_select_polygon_pt(s);
     }
 
-    if (p->mflag) {
+    if (utype == BV_POLYGON_UPDATE_PT_MOVE) {
 	return bv_move_polygon_pt(s);
     }
 
@@ -801,7 +801,7 @@ bv_update_general_polygon(struct bv_scene_obj *s)
 }
 
 int
-bv_update_polygon(struct bv_scene_obj *s)
+bv_update_polygon(struct bv_scene_obj *s, int utype)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
@@ -828,7 +828,7 @@ bv_update_polygon(struct bv_scene_obj *s)
 	return bv_update_polygon_square(s);
     if (p->type != BV_POLYGON_GENERAL)
 	return 0;
-    return bv_update_general_polygon(s);
+    return bv_update_general_polygon(s, utype);
 }
 
 /*

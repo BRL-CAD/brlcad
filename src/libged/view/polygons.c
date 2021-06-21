@@ -162,13 +162,9 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
     }
 
     p->curr_contour_i = contour_ind;
-    p->sflag = 1;
-    p->mflag = 0;
-    p->aflag = 0;
-
     s->s_v->gv_mouse_x = x;
     s->s_v->gv_mouse_y = y;
-    bv_update_polygon(s);
+    bv_update_polygon(s, BV_POLYGON_UPDATE_PT_SELECT);
 
     return GED_OK;
 }
@@ -231,13 +227,9 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    p->sflag = 0;
-    p->mflag = 0;
-    p->aflag = 1;
-
     s->s_v->gv_mouse_x = x;
     s->s_v->gv_mouse_y = y;
-    bv_update_polygon(s);
+    bv_update_polygon(s, BV_POLYGON_UPDATE_PT_APPEND);
 
     return GED_OK;
 }
@@ -287,13 +279,9 @@ _poly_cmd_move(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    p->sflag = 0;
-    p->mflag = 1;
-    p->aflag = 0;
-
     s->s_v->gv_mouse_x = x;
     s->s_v->gv_mouse_y = y;
-    bv_update_polygon(s);
+    bv_update_polygon(s, BV_POLYGON_UPDATE_PT_MOVE);
 
     return GED_OK;
 }
@@ -324,13 +312,9 @@ _poly_cmd_clear(void *bs, int argc, const char **argv)
     }
 
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    p->sflag = 0;
-    p->mflag = 0;
-    p->aflag = 0;
     p->curr_contour_i = 0;
     p->curr_point_i = -1;
-
-    bv_update_polygon(s);
+    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 
     return GED_OK;
 }
@@ -386,11 +370,7 @@ _poly_cmd_close(void *bs, int argc, const char **argv)
        p->polygon.contour[ind].open = 0;
    }
 
-    p->sflag = 0;
-    p->mflag = 0;
-    p->aflag = 0;
-
-    bv_update_polygon(s);
+    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 
     return GED_OK;
 }
@@ -447,11 +427,7 @@ _poly_cmd_open(void *bs, int argc, const char **argv)
        p->polygon.contour[ind].open = 1;
    }
 
-    p->sflag = 0;
-    p->mflag = 0;
-    p->aflag = 0;
-
-    bv_update_polygon(s);
+    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 
     return GED_OK;
 }
@@ -517,7 +493,7 @@ _poly_cmd_to_curr_view(void *bs, int argc, const char **argv)
     // Set view info
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     bv_sync(&p->v, gedp->ged_gvp);
-    bv_update_polygon(s);
+    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
     bv_update(gedp->ged_gvp);
 
     return GED_OK;
@@ -823,7 +799,7 @@ end:
     rt_db_free_internal(&intern);
 
     /* Have new polygon, now update view object vlist */
-    bv_update_polygon(s);
+    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 
     /* Done - add to scene objects */
     bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)s);
@@ -982,7 +958,7 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
     if (argc == 1 && BU_STR_EQUAL(argv[0], "0")) {
 	struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 	p->fill_flag = 0;
-	bv_update_polygon(s);
+	bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 	return GED_OK;
     }
 
@@ -1009,7 +985,7 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
     p->fill_flag = 1;
     V2MOVE(p->fill_dir, vdir);
     p->fill_delta = vdelta;
-    bv_update_polygon(s);
+    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 
     return GED_OK;
 }
@@ -1156,7 +1132,7 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     polyA->type = BV_POLYGON_GENERAL;
 
     BU_PUT(cp, struct bg_polygon);
-    bv_update_polygon(s);
+    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 
     return GED_OK;
 }

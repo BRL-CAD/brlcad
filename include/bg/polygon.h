@@ -311,12 +311,10 @@ BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int
 #define BV_POLYGON_ELLIPSE 2
 #define BV_POLYGON_RECTANGLE 3
 #define BV_POLYGON_SQUARE 4
+
 struct bv_polygon {
     int                 type;
-    int                 cflag;             /* contour flag */
-    int                 sflag;             /* point select flag */
-    int                 mflag;             /* point move flag */
-    int                 aflag;             /* point append flag */
+    //int                 cflag;             /* contour flag */
     int                 fill_flag;         /* set to shade the interior */
     vect2d_t            fill_dir;
     fastf_t             fill_delta;
@@ -339,7 +337,15 @@ struct bv_polygon {
 //  v->gv_width  = dm_get_width((struct dm *)v->dmp);
 //  v->gv_height = dm_get_height((struct dm *)v->dmp);
 BG_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int type, int x, int y, struct bv_scene_obj *free_scene_obj);
-BG_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s);
+
+// Various update modes have similar logic - we pass in the flags to the update
+// routine to enable/disable specific portions of the overall flow.
+#define BV_POLYGON_UPDATE_DEFAULT 0
+#define BV_POLYGON_UPDATE_PROPS_ONLY 1
+#define BV_POLYGON_UPDATE_PT_SELECT 2
+#define BV_POLYGON_UPDATE_PT_MOVE 3
+#define BV_POLYGON_UPDATE_PT_APPEND 4
+BG_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s, int utype);
 
 // Find the closest polygon obj to a view's current x,y mouse points
 // TODO - this isn't correct yet - right now it's just checking distances

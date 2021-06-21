@@ -553,7 +553,7 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s)
     // update to do.
     if (s->s_type_flags & BV_DBOBJ_BASED) {
 	if (s->s_update_callback)
-	    (*s->s_update_callback)(s);
+	    (*s->s_update_callback)(s, 0);
     }
 
     // Draw children. TODO - drawing children first may not

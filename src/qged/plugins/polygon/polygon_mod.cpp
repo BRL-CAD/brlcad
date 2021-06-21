@@ -63,7 +63,7 @@ QPolyMod::QPolyMod()
     default_gl->addWidget(ps);
     defaultBox->setLayout(default_gl);
     l->addWidget(defaultBox);
-    QObject::connect(ps, &QPolySettings::settings_changed, this, &QPolyMod::polygon_update);
+    QObject::connect(ps, &QPolySettings::settings_changed, this, &QPolyMod::polygon_update_props);
 
     QGroupBox *modpolyBox = new QGroupBox("Modify Polygon");
     QVBoxLayout *mod_poly_gl = new QVBoxLayout;
@@ -224,7 +224,7 @@ QPolyMod::poly_type_settings(struct bv_polygon *ip)
 }
 
 void
-QPolyMod::polygon_update()
+QPolyMod::polygon_update_props()
 {
     struct ged *gedp = ((CADApp *)qApp)->gedp;
     if (!gedp)
@@ -249,10 +249,8 @@ QPolyMod::polygon_update()
 	ip->fill_flag = 0;
     }
 
-    ip->sflag = 0;
-    ip->mflag = 0;
-    ip->aflag = 0;
-    bv_update_polygon(p);
+    // TODO - this should be a visual-properties-only update, but libbg doesn't support that yet.
+    bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
     emit view_updated(&gedp->ged_gvp);
 }
 
@@ -273,15 +271,12 @@ QPolyMod::toplevel_config(bool)
 	    if (s->s_type_flags & BV_POLYGONS) {
 		// clear any selected points in non-current polygons
 		struct bv_polygon *ip = (struct bv_polygon *)s->s_i_data;
-		ip->sflag = 0;
-		ip->mflag = 0;
-		ip->aflag = 0;
 		if (ip->curr_point_i != -1) {
 		    bu_log("Clear pnt selection\n");
 		    draw_change = true;
 		    ip->curr_point_i = -1;
 		    ip->curr_contour_i = 0;
-		    bv_update_polygon(s);
+		    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 		}
 	    }
 	}
@@ -321,7 +316,8 @@ QPolyMod::clear_pnt_selection(bool checked)
     ip->curr_point_i = -1;
     ip->curr_contour_i = 0;
 
-    bv_update_polygon(p);
+    // TODO - should be a visual-clear-only...
+    bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
 
     struct ged *gedp = ((CADApp *)qApp)->gedp;
     emit view_updated(&gedp->ged_gvp);
@@ -426,11 +422,7 @@ QPolyMod::toggle_closed_poly(bool checked)
     }
 
     if (p) {
-	ip->sflag = 0;
-	ip->mflag = 0;
-	ip->aflag = 0;
-
-	bv_update_polygon(p);
+	bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
     }
 
     toplevel_config(false);
@@ -558,25 +550,18 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	if (append_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
-	    ip->sflag = 0;
-	    ip->mflag = 0;
-	    ip->aflag = 1;
-
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
-	    bv_update_polygon(p);
+	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_APPEND);
 
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}
 
 	if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
-	    ip->sflag = 1;
-	    ip->mflag = 0;
-	    ip->aflag = 0;
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
-	    bv_update_polygon(p);
+	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_SELECT);
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}
@@ -596,24 +581,15 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	    if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
-		ip->aflag = 0;
-		ip->mflag = 1;
-		ip->sflag = 0;
-		bv_update_polygon(p);
+		bv_update_polygon(p, BV_POLYGON_UPDATE_PT_MOVE);
 		emit view_updated(&gedp->ged_gvp);
 	    } else if (move_mode->isChecked()) {
 		bu_log("move polygon mode\n");
 		clear_pnt_selection(false);
-		ip->aflag = 0;
-		ip->mflag = 0;
-		ip->sflag = 0;
 		bv_move_polygon(p);
 		emit view_updated(&gedp->ged_gvp);
 	    } else {
-		ip->aflag = 0;
-		ip->mflag = 0;
-		ip->sflag = 0;
-		bv_update_polygon(p);
+		bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
 		emit view_updated(&gedp->ged_gvp);
 	    }
 	    return true;

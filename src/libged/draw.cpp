@@ -220,7 +220,7 @@ geom_done:
 // are made, the subtrees should be redrawn to properly repopulate the scene
 // objects.
 int
-ged_update_db_path(struct bv_scene_obj *s)
+ged_update_db_path(struct bv_scene_obj *s, int UNUSED(flag))
 {
     /* Validate */
     if (!s)
@@ -268,7 +268,7 @@ ged_update_db_path(struct bv_scene_obj *s)
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
         struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	if (s_c->s_update_callback)
-	    (*s_c->s_update_callback)(s_c);
+	    (*s_c->s_update_callback)(s_c, 0);
     }
 
     // Clear out existing vlist, if any...

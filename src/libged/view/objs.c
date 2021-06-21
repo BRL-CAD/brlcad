@@ -288,7 +288,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 
     s->s_changed = 0;
     s->s_v = v;
-    (*s->s_update_callback)(s);
+    (*s->s_update_callback)(s, 0);
 
     return GED_OK;
 }

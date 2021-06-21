@@ -149,10 +149,7 @@ QPolyCreate::finalize(bool)
 	}
 
 	ip->polygon.contour[0].open = 0;
-	ip->sflag = 0;
-	ip->mflag = 0;
-	ip->aflag = 0;
-	bv_update_polygon(p);
+	bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
     }
 
     close_general_poly->blockSignals(true);
@@ -225,14 +222,12 @@ QPolyCreate::toplevel_config(bool)
 	    if (s->s_type_flags & BV_POLYGONS) {
 		// clear any selected points in non-current polygons
 		struct bv_polygon *ip = (struct bv_polygon *)s->s_i_data;
-		ip->sflag = 0;
-		ip->mflag = 0;
-		ip->aflag = 0;
 		if (ip->curr_point_i != -1) {
 		    draw_change = true;
 		    ip->curr_point_i = -1;
 		    ip->curr_contour_i = 0;
-		    bv_update_polygon(s);
+		    // TODO - probably should be a visual-only update...
+		    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 		}
 	    }
 	}
@@ -327,7 +322,8 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    // Set fill
 	    if (ps->fill_poly->isChecked()) {
 		ip->fill_flag = 1;
-		bv_update_polygon(p);
+		// TODO - should be a visual-props-only update
+		bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
 	    }
 
 	    // Let the view know the polygon is there
@@ -347,13 +343,9 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	// the initial creation
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	if (ip->type == BV_POLYGON_GENERAL) {
-	    ip->sflag = 0;
-	    ip->mflag = 0;
-	    ip->aflag = 1;
-
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
-	    bv_update_polygon(p);
+	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_APPEND);
 
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
@@ -396,10 +388,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	// For every other polygon type, call the libbv update routine
 	// with the view's x,y coordinates
 	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
-	    ip->aflag = 0;
-	    ip->mflag = 0;
-	    ip->sflag = 0;
-	    bv_update_polygon(p);
+	    bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}

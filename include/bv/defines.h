@@ -200,7 +200,7 @@ struct bv_scene_obj  {
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data, as well as
      * manage any custom data specific to this object */
     void *s_i_data;  /**< @brief custom view data (bv_line_seg, bv_label, bv_polyon, etc) */
-    int (*s_update_callback)(struct bv_scene_obj *);  /**< @brief custom update/generator for s_vlist */
+    int (*s_update_callback)(struct bv_scene_obj *, int);  /**< @brief custom update/generator for s_vlist */
     void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data */
 
     /* Actual 3D geometry data and information */
