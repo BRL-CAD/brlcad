@@ -28,6 +28,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include "qtcad/QColorRGB.h"
+#include "polygon_settings.h"
 
 class QPolyMod : public QWidget
 {
@@ -51,8 +52,9 @@ class QPolyMod : public QWidget
 	QRadioButton *append_pnt;
 	QRadioButton *select_pnt;
 
-	// Selected Edge color
+	QPolySettings *ps;
 
+	// Selected Edge color
 	QCheckBox *selected_fill_poly;
 	QColorRGB *selected_fill_color;
 	QColorRGB *selected_edge_color;
@@ -66,6 +68,7 @@ class QPolyMod : public QWidget
     public slots:
 	void app_mod_names_reset(void *);
 	void mod_names_reset();
+	void polygon_update();
 
     private slots:
 	void toplevel_config(bool);

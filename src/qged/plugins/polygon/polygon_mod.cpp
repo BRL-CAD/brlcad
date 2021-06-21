@@ -103,6 +103,9 @@ QPolyMod::QPolyMod()
     general_mode_opts->setDisabled(true);
 
 
+    ps = new QPolySettings();
+    QObject::connect(ps, &QPolySettings::settings_changed, this, &QPolyMod::polygon_update);
+
     selected_fill_poly = new QCheckBox("Shade polygon interior");
     selected_edge_color = new QColorRGB(this, "Edge:", QColor(Qt::yellow));
     selected_fill_color = new QColorRGB(this, "Fill:", QColor(Qt::blue));
@@ -202,6 +205,16 @@ QPolyMod::poly_type_settings(struct bv_polygon *ip)
 	close_general_poly->blockSignals(false);
 	general_mode_opts->setEnabled(false);
     }
+}
+
+void
+QPolyMod::polygon_update()
+{
+    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+    ip->sflag = 0;
+    ip->mflag = 0;
+    ip->aflag = 0;
+    bv_update_polygon(p);
 }
 
 void

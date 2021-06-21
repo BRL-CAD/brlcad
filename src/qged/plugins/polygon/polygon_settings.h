@@ -48,6 +48,9 @@ class QPolySettings : public QWidget
     signals:
 	void settings_changed();
 
+    public slots:
+	void do_settings_changed();
+
     private slots:
 	void settings_sync(struct bv_scene_obj *p);
 };
