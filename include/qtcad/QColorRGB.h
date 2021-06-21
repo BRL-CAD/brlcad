@@ -53,8 +53,10 @@ class QTCAD_EXPORT QColorRGB: public QWidget
     signals:
 	void color_changed();
 
-    private slots:
+    public slots:
 	void set_color_from_text();
+
+    private slots:
 	void set_color_from_button();
 
     private:

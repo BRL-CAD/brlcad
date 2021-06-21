@@ -228,7 +228,7 @@ QPolyMod::polygon_update()
     struct ged *gedp = ((CADApp *)qApp)->gedp;
     if (!gedp)
 	return;
-    
+
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 
     // Pull settings
@@ -339,6 +339,7 @@ QPolyMod::select(const QString &poly)
 		p = s;
 		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 		poly_type_settings(ip);
+		ps->settings_sync(p);
 		return;
 	    }
 	}
@@ -540,6 +541,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 		mod_names->blockSignals(false);
 		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 		poly_type_settings(ip);
+		ps->settings_sync(p);
 	    }
 	    return true;
 	}

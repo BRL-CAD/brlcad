@@ -23,6 +23,7 @@
 
 #include <QLabel>
 #include <QString>
+#include "bg/polygon.h"
 #include "polygon_settings.h"
 
 QPolySettings::QPolySettings()
@@ -106,8 +107,49 @@ QPolySettings::do_settings_changed()
 }
 
 void
-QPolySettings::settings_sync(struct bv_scene_obj *)
+QPolySettings::settings_sync(struct bv_scene_obj *p)
 {
+    if (!p)
+	return;
+
+
+    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+
+    edge_color->blockSignals(true);
+    edge_color->rgbtext->setText(QString("%1/%2/%3").arg(p->s_color[0]).arg(p->s_color[1]).arg(p->s_color[2]));
+    edge_color->blockSignals(false);
+
+    unsigned char frgb[3];
+    bu_color_to_rgb_chars(&ip->fill_color, frgb);
+    fill_color->blockSignals(true);
+    fill_color->rgbtext->setText(QString("%1/%2/%3").arg(frgb[0]).arg(frgb[1]).arg(frgb[2]));
+    fill_color->blockSignals(false);
+
+    fill_slope_x->blockSignals(true);
+    fill_slope_x->setText(QString("%1").arg(ip->fill_dir[0]));
+    fill_slope_x->blockSignals(false);
+
+    fill_slope_y->blockSignals(true);
+    fill_slope_y->setText(QString("%1").arg(ip->fill_dir[1]));
+    fill_slope_y->blockSignals(false);
+
+    fill_density->blockSignals(true);
+    fill_density->setText(QString("%1").arg(ip->fill_delta));
+    fill_density->blockSignals(false);
+
+    fill_poly->blockSignals(true);
+    if (ip->fill_flag) {
+	fill_poly->setChecked(true);
+    } else {
+	fill_poly->setChecked(false);
+    }
+    fill_poly->blockSignals(false);
+
+    // Values set, now update the button colors
+    this->blockSignals(true);
+    edge_color->set_color_from_text();
+    fill_color->set_color_from_text();
+    this->blockSignals(false);
 }
 
 
