@@ -30,7 +30,14 @@
 #include "polygon_mod.h"
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); }
+    for (size_t c_i = 0; c_i < BU_PTBL_LEN(&p->children); c_i++) { \
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&p->children, c_i); \
+	BU_LIST_APPEND(fp, &((s_c)->l)); \
+	BV_FREE_VLIST(&gedp->vlfree, &((s_c)->s_vlist)); \
+    } \
+    BU_LIST_APPEND(fp, &((p)->l)); \
+    BV_FREE_VLIST(&gedp->vlfree, &((p)->s_vlist)); \
+}
 
 QPolyMod::QPolyMod()
     : QWidget()
