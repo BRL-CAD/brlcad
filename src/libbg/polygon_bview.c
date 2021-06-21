@@ -39,10 +39,10 @@
 
 #define GET_BV_SCENE_OBJ(p, fp) { \
     if (BU_LIST_IS_EMPTY(fp)) { \
-       BU_ALLOC((p), struct bv_scene_obj); \
+	BU_ALLOC((p), struct bv_scene_obj); \
     } else { \
-       p = BU_LIST_NEXT(bv_scene_obj, fp); \
-       BU_LIST_DEQUEUE(&((p)->l)); \
+	p = BU_LIST_NEXT(bv_scene_obj, fp); \
+	BU_LIST_DEQUEUE(&((p)->l)); \
     } \
     BU_LIST_INIT( &((p)->s_vlist) ); }
 
@@ -157,13 +157,13 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 	    do_pnt = 1;
 	if (type == BV_POLYGON_RECTANGLE) {
 	    if (NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[1]), SMALL_FASTF) &&
-		NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[2]), SMALL_FASTF))
-	    do_pnt = 1;
+		    NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[2]), SMALL_FASTF))
+		do_pnt = 1;
 	}
 	if (type == BV_POLYGON_SQUARE) {
 	    if (NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[1]), SMALL_FASTF) &&
-		NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[2]), SMALL_FASTF))
-	    do_pnt = 1;
+		    NEAR_ZERO(DIST_PNT_PNT_SQ(p->polygon.contour[0].point[0], p->polygon.contour[0].point[2]), SMALL_FASTF))
+		do_pnt = 1;
 	}
 
 	if (p->polygon.hole[i]) {
@@ -724,7 +724,7 @@ bv_update_polygon_square(struct bv_scene_obj *s)
 
     fastf_t fx, fy;
 
-     // Use the polygon's view context
+    // Use the polygon's view context
     struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
@@ -803,19 +803,51 @@ bv_update_general_polygon(struct bv_scene_obj *s, int utype)
 int
 bv_update_polygon(struct bv_scene_obj *s, int utype)
 {
+    if (!s)
+	return 0;
+
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     // Regardless of type, sync fill color
     struct bv_scene_obj *fobj = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-        struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-        if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
-            fobj = s_c;
-            break;
-        }
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
+	    fobj = s_c;
+	    break;
+	}
     }
     if (fobj) {
-        bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
+	bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
+    }
+
+    if (utype == BV_POLYGON_UPDATE_PROPS_ONLY) {
+
+	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	    if (!s_c)
+		continue;
+	    s_c->s_color[0] = s->s_color[0];
+	    s_c->s_color[1] = s->s_color[1];
+	    s_c->s_color[2] = s->s_color[2];
+	}
+
+	if (p->fill_flag) {
+	    bv_fill_polygon(s);
+	} else {
+	    // Clear old fill
+	    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+		struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+		if (!s_c)
+		    continue;
+		if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
+		    BV_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
+		    break;
+		}
+	    }
+	}
+
+	return 0;
     }
 
     if (p->type == BV_POLYGON_CIRCLE)

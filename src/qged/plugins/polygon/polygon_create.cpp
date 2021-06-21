@@ -226,8 +226,7 @@ QPolyCreate::toplevel_config(bool)
 		    draw_change = true;
 		    ip->curr_point_i = -1;
 		    ip->curr_contour_i = 0;
-		    // TODO - probably should be a visual-only update...
-		    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
+		    bv_update_polygon(s, BV_POLYGON_UPDATE_PROPS_ONLY);
 		}
 	    }
 	}
@@ -322,8 +321,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    // Set fill
 	    if (ps->fill_poly->isChecked()) {
 		ip->fill_flag = 1;
-		// TODO - should be a visual-props-only update
-		bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
+		bv_update_polygon(p, BV_POLYGON_UPDATE_PROPS_ONLY);
 	    }
 
 	    // Let the view know the polygon is there
