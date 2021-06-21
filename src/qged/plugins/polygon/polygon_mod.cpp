@@ -183,9 +183,10 @@ QPolyMod::mod_names_reset()
 	mod_names->setCurrentIndex(cind);
     } else {
 	mod_names->setCurrentIndex(0);
-	if (mod_names->currentText().length()) {
-	    select(mod_names->currentText());
-	}
+
+    }
+    if (mod_names->currentText().length()) {
+	select(mod_names->currentText());
     }
     mod_names->blockSignals(false);
 }
