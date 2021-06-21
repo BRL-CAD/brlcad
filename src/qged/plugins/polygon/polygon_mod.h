@@ -52,10 +52,15 @@ class QPolyMod : public QWidget
 	QRadioButton *append_pnt;
 	QRadioButton *select_pnt;
 
+	// TODO - probably will want a copy operation at some point to
+	// duplicate an existing polygon in a new object...
 
 	// Boolean Operation Mode
 	QComboBox *csg_modes;
 	QPushButton *apply_bool;
+
+	// Removal
+	QPushButton *remove_poly;
 
     signals:
 	void view_updated(struct bview **);
@@ -72,6 +77,7 @@ class QPolyMod : public QWidget
 	void select(const QString &t);
 	void clear_pnt_selection(bool);
 	void apply_bool_op();
+	void delete_poly();
 
     protected:
 	bool eventFilter(QObject *, QEvent *);

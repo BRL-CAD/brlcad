@@ -121,6 +121,18 @@ QPolyMod::QPolyMod()
     boolBox->setLayout(bool_gl);
     l->addWidget(boolBox);
 
+
+    QGroupBox *removeBox = new QGroupBox("Remove Polygon");
+    QVBoxLayout *remove_gl = new QVBoxLayout;
+    remove_gl->setAlignment(Qt::AlignTop);
+    remove_poly = new QPushButton("Delete");
+    remove_poly->setStyleSheet("QPushButton {color: red;}");
+    remove_gl->addWidget(remove_poly);
+    QObject::connect(remove_poly, &QPushButton::released, this, &QPolyMod::delete_poly);
+    removeBox->setLayout(remove_gl);
+    l->addWidget(removeBox);
+
+
     l->setAlignment(Qt::AlignTop);
     this->setLayout(l);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -458,6 +470,31 @@ QPolyMod::apply_bool_op()
     emit view_updated(&gedp->ged_gvp);
 }
 
+void
+QPolyMod::delete_poly()
+{
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp) {
+	return;
+    }
+
+    if (!p)
+	return;
+
+    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+    bg_polygon_free(&ip->polygon);
+    BU_PUT(ip, struct bv_polygon);
+    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)p);
+    FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
+    mod_names->setCurrentIndex(0);
+    if (mod_names->currentText().length()) {
+	select(mod_names->currentText());
+    } else {
+	p = NULL;
+    }
+
+    emit view_updated(&gedp->ged_gvp);
+}
 
 bool
 QPolyMod::eventFilter(QObject *, QEvent *e)
