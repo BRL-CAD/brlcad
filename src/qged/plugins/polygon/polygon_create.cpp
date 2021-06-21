@@ -321,19 +321,18 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    // fill color
 	    BU_COLOR_CPY(&ip->fill_color, &ps->fill_color->bc);
 
+	    // fill settings
+	    vect2d_t vdir = V2INIT_ZERO;
+	    vdir[0] = (fastf_t)(ps->fill_slope_x->text().toDouble());
+	    vdir[1] = (fastf_t)(ps->fill_slope_y->text().toDouble());
+	    V2MOVE(ip->fill_dir, vdir);
+	    ip->fill_delta = (fastf_t)(ps->fill_density->text().toDouble());
+
 	    // Set fill
 	    if (ps->fill_poly->isChecked()) {
 		ip->fill_flag = 1;
-
-		// TODO - these need to be GUI settings...	
-		vect2d_t vdir = {10, 10};
-		fastf_t vdelta = 10;
-		V2MOVE(ip->fill_dir, vdir);
-		ip->fill_delta = vdelta;
-
 		bv_update_polygon(p);
 	    }
-
 
 	    // Let the view know the polygon is there
 	    bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);

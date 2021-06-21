@@ -53,6 +53,9 @@ QPolySettings::QPolySettings()
     hx->addWidget(xlbl);
     fill_slope_x = new QLineEdit(QString("1"));
     fill_slope_x->setFont(f);
+    QDoubleValidator *hxv = new QDoubleValidator(0, DBL_MAX, 5);
+    fill_slope_x->setValidator(hxv);
+    QObject::connect(fill_slope_x, &QLineEdit::editingFinished, this, &QPolySettings::do_settings_changed);
     hx->addWidget(fill_slope_x);
     xw->setLayout(hx);
     l->addWidget(xw);
@@ -65,6 +68,9 @@ QPolySettings::QPolySettings()
     hy->addWidget(ylbl);
     fill_slope_y = new QLineEdit(QString("1"));
     fill_slope_y->setFont(f);
+    QDoubleValidator *hyv = new QDoubleValidator(0, DBL_MAX, 5);
+    fill_slope_y->setValidator(hyv);
+    QObject::connect(fill_slope_y, &QLineEdit::editingFinished, this, &QPolySettings::do_settings_changed);
     hy->addWidget(fill_slope_y);
     yw->setLayout(hy);
     l->addWidget(yw);
@@ -78,6 +84,9 @@ QPolySettings::QPolySettings()
     hd->addWidget(dlbl);
     fill_density = new QLineEdit(QString("10"));
     fill_density->setFont(f);
+    QDoubleValidator *hdv = new QDoubleValidator(0, DBL_MAX, 5);
+    fill_density->setValidator(hdv);
+    QObject::connect(fill_density, &QLineEdit::editingFinished, this, &QPolySettings::do_settings_changed);
     hd->addWidget(fill_density);
     dw->setLayout(hd);
     l->addWidget(dw);
