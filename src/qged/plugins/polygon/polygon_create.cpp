@@ -41,26 +41,24 @@ QPolyCreate::QPolyCreate()
     QGroupBox *defaultBox = new QGroupBox("Settings");
     QVBoxLayout *default_gl = new QVBoxLayout;
     default_gl->setAlignment(Qt::AlignTop);
+    ps = new QPolySettings();
+    default_gl->addWidget(ps);
+    defaultBox->setLayout(default_gl);
+    l->addWidget(defaultBox);
+
+    QGroupBox *addpolyBox = new QGroupBox("Add Polygon");
+    QVBoxLayout *add_poly_gl = new QVBoxLayout;
+    add_poly_gl->setAlignment(Qt::AlignTop);
 
     QLabel *csg_modes_label = new QLabel("Boolean Operation:");
-    default_gl->addWidget(csg_modes_label);
+    add_poly_gl->addWidget(csg_modes_label);
     csg_modes = new QComboBox();
     csg_modes->addItem("None");
     csg_modes->addItem("Union");
     csg_modes->addItem("Subtraction");
     csg_modes->addItem("Intersection");
     csg_modes->setCurrentIndex(0);
-    default_gl->addWidget(csg_modes);
-
-    ps = new QPolySettings();
-    default_gl->addWidget(ps);
-
-    defaultBox->setLayout(default_gl);
-    l->addWidget(defaultBox);
-
-    QGroupBox *addpolyBox = new QGroupBox("Polygon Type");
-    QVBoxLayout *add_poly_gl = new QVBoxLayout;
-    add_poly_gl->setAlignment(Qt::AlignTop);
+    add_poly_gl->addWidget(csg_modes);
 
     QLabel *vn_label = new QLabel("Name of next polygon:");
     view_name = new QLineEdit(this);

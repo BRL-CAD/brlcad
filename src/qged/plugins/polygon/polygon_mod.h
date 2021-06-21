@@ -38,10 +38,10 @@ class QPolyMod : public QWidget
 	QPolyMod();
 	~QPolyMod();
 
-	// Boolean Operation Mode
-	QComboBox *csg_modes;
+	// Modify polygon graphical settings
+	QPolySettings *ps;
 
-	// Modifying polygons
+	// Modifying polygon geometry
 	QComboBox *mod_names;
 	QRadioButton *select_mode;
 	QRadioButton *move_mode;
@@ -52,15 +52,10 @@ class QPolyMod : public QWidget
 	QRadioButton *append_pnt;
 	QRadioButton *select_pnt;
 
-	QPolySettings *ps;
 
-	// Selected Edge color
-	QCheckBox *selected_fill_poly;
-	QColorRGB *selected_fill_color;
-	QColorRGB *selected_edge_color;
-	// TODO - maybe use sliders here?
-	QLineEdit *selected_fill_angle;
-	QLineEdit *selected_fill_density;
+	// Boolean Operation Mode
+	QComboBox *csg_modes;
+	QPushButton *apply_bool;
 
     signals:
 	void view_updated(struct bview **);

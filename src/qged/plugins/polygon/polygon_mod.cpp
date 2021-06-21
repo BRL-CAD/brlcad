@@ -39,35 +39,28 @@ QPolyMod::QPolyMod()
 
     QButtonGroup *t_grp = new QButtonGroup();
 
-    QGroupBox *defaultBox = new QGroupBox("Default Settings");
+    select_mode = new QRadioButton("Select");
+    t_grp->addButton(select_mode);
+    l->addWidget(select_mode);
+    QLabel *cs_label = new QLabel("Currently selected polygon:");
+    l->addWidget(cs_label);
+    mod_names = new QComboBox(this);
+    QObject::connect(mod_names, &QComboBox::currentTextChanged, this, &QPolyMod::select);
+    l->addWidget(mod_names);
+
+
+    QGroupBox *defaultBox = new QGroupBox("Settings");
     QVBoxLayout *default_gl = new QVBoxLayout;
     default_gl->setAlignment(Qt::AlignTop);
-
-    QLabel *csg_modes_label = new QLabel("Applying Boolean Operation:");
-    default_gl->addWidget(csg_modes_label);
-    csg_modes = new QComboBox();
-    csg_modes->addItem("None");
-    csg_modes->addItem("Union");
-    csg_modes->addItem("Subtraction");
-    csg_modes->addItem("Intersection");
-    csg_modes->setCurrentIndex(0);
-    default_gl->addWidget(csg_modes);
+    ps = new QPolySettings();
+    default_gl->addWidget(ps);
     defaultBox->setLayout(default_gl);
     l->addWidget(defaultBox);
-
-    // TODO - Modify should probably be its own tool.  We only need a small
-    // part of it when initializing general polygons - we should just have a
-    // "Close" unhidden in the creation dialog when we're in creation mode...
+    QObject::connect(ps, &QPolySettings::settings_changed, this, &QPolyMod::polygon_update);
 
     QGroupBox *modpolyBox = new QGroupBox("Modify Polygon");
     QVBoxLayout *mod_poly_gl = new QVBoxLayout;
 
-    QLabel *cs_label = new QLabel("Currently selected polygon:");
-    mod_names = new QComboBox(this);
-    QObject::connect(mod_names, &QComboBox::currentTextChanged, this, &QPolyMod::select);
-
-    select_mode = new QRadioButton("Select");
-    t_grp->addButton(select_mode);
     move_mode = new QRadioButton("Move");
     QObject::connect(move_mode, &QRadioButton::toggled, this, &QPolyMod::toplevel_config);
     t_grp->addButton(move_mode);
@@ -102,28 +95,30 @@ QPolyMod::QPolyMod()
     QObject::connect(update_mode, &QRadioButton::toggled, this, &QPolyMod::toplevel_config);
     general_mode_opts->setDisabled(true);
 
-
-    ps = new QPolySettings();
-    QObject::connect(ps, &QPolySettings::settings_changed, this, &QPolyMod::polygon_update);
-
-    selected_fill_poly = new QCheckBox("Shade polygon interior");
-    selected_edge_color = new QColorRGB(this, "Edge:", QColor(Qt::yellow));
-    selected_fill_color = new QColorRGB(this, "Fill:", QColor(Qt::blue));
-
-
-    mod_poly_gl->addWidget(select_mode);
-    mod_poly_gl->addWidget(cs_label);
-    mod_poly_gl->addWidget(mod_names);
     mod_poly_gl->addWidget(move_mode);
     mod_poly_gl->addWidget(update_mode);
     mod_poly_gl->addWidget(close_general_poly);
     mod_poly_gl->addWidget(general_mode_opts);
-    mod_poly_gl->addWidget(selected_fill_poly);
-    mod_poly_gl->addWidget(selected_edge_color);
-    mod_poly_gl->addWidget(selected_fill_color);
 
     modpolyBox->setLayout(mod_poly_gl);
     l->addWidget(modpolyBox);
+
+
+    QGroupBox *boolBox = new QGroupBox("Apply Boolean Op");
+    QVBoxLayout *bool_gl = new QVBoxLayout;
+    bool_gl->setAlignment(Qt::AlignTop);
+    QLabel *csg_modes_label = new QLabel("Current Operation:");
+    bool_gl->addWidget(csg_modes_label);
+    csg_modes = new QComboBox();
+    csg_modes->addItem("Union");
+    csg_modes->addItem("Subtraction");
+    csg_modes->addItem("Intersection");
+    csg_modes->setCurrentIndex(0);
+    bool_gl->addWidget(csg_modes);
+    apply_bool = new QPushButton("Apply");
+    bool_gl->addWidget(apply_bool);
+    boolBox->setLayout(bool_gl);
+    l->addWidget(boolBox);
 
     l->setAlignment(Qt::AlignTop);
     this->setLayout(l);
@@ -210,11 +205,34 @@ QPolyMod::poly_type_settings(struct bv_polygon *ip)
 void
 QPolyMod::polygon_update()
 {
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp)
+	return;
+    
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+
+    // Pull settings
+    bu_color_to_rgb_chars(&ps->edge_color->bc, p->s_color);
+    BU_COLOR_CPY(&ip->fill_color, &ps->fill_color->bc);
+
+    vect2d_t vdir = V2INIT_ZERO;
+    vdir[0] = (fastf_t)(ps->fill_slope_x->text().toDouble());
+    vdir[1] = (fastf_t)(ps->fill_slope_y->text().toDouble());
+    V2MOVE(ip->fill_dir, vdir);
+    ip->fill_delta = (fastf_t)(ps->fill_density->text().toDouble());
+
+    // Set fill
+    if (ps->fill_poly->isChecked()) {
+	ip->fill_flag = 1;
+    } else {
+	ip->fill_flag = 0;
+    }
+
     ip->sflag = 0;
     ip->mflag = 0;
     ip->aflag = 0;
     bv_update_polygon(p);
+    emit view_updated(&gedp->ged_gvp);
 }
 
 void

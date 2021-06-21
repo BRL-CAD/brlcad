@@ -38,6 +38,7 @@ QPolySettings::QPolySettings()
     QObject::connect(edge_color, &QColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
     fill_poly = new QCheckBox("Shade polygon interiors");
     l->addWidget(fill_poly);
+    QObject::connect(fill_poly, &QCheckBox::toggled, this, &QPolySettings::do_settings_changed);
     fill_color = new QColorRGB(this, "Fill:", QColor(Qt::blue));
     l->addWidget(fill_color);
     QObject::connect(fill_color, &QColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
