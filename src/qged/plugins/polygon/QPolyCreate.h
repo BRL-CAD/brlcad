@@ -24,10 +24,10 @@
 #ifndef QPOLYCREATE_H
 #define QPOLYCREATE_H
 
-#include <QLineEdit>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QGroupBox>
+#include <QLineEdit>
 #include <QPushButton>
 #include <QRadioButton>
 #include "bg/polygon_types.h"
@@ -59,6 +59,10 @@ class QPolyCreate : public QWidget
 	// Modifying polygons
 	QCheckBox *close_general_poly;
 
+	// Sketch to import
+	QLineEdit *import_name;
+	QPushButton *import_sketch;
+
     signals:
 	void poly_added();
 	void view_updated(struct bview **);
@@ -67,6 +71,7 @@ class QPolyCreate : public QWidget
     private slots:
 	void toplevel_config(bool);
 	void finalize(bool);
+	void do_import_sketch();
 
 	void sketch_sync_bool(bool);
 	void sketch_sync_str(const QString &);

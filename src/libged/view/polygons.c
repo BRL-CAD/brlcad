@@ -635,21 +635,16 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
 
 
     // Begin import
-    struct rt_db_internal intern;
-
     struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[0], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	return GED_ERROR;
     }
 
-    s = db_sketch_to_scene_obj(gd->vobj, gedp->ged_wdbp->dbip, dp, gedp->free_scene_obj);
+    s = db_sketch_to_scene_obj(gd->vobj, gedp->ged_wdbp->dbip, dp, gedp->ged_gvp, gedp->free_scene_obj);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return GED_ERROR;
     }
-
-    /* Clean up */
-    rt_db_free_internal(&intern);
 
     /* Done - add to scene objects */
     bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)s);

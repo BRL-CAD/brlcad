@@ -114,6 +114,19 @@ QPolyCreate::QPolyCreate()
     defaultBox->setLayout(default_gl);
     l->addWidget(defaultBox);
 
+    QGroupBox *importBox = new QGroupBox("Sketch to View Obj");
+    QVBoxLayout *import_gl = new QVBoxLayout;
+    import_gl->setAlignment(Qt::AlignTop);
+    QLabel *import_label = new QLabel("Sketch name:");
+    import_name = new QLineEdit();
+    import_sketch = new QPushButton("Import");
+    QObject::connect(import_sketch, &QPushButton::released, this, &QPolyCreate::do_import_sketch);
+    import_gl->addWidget(import_label);
+    import_gl->addWidget(import_name);
+    import_gl->addWidget(import_sketch);
+    importBox->setLayout(import_gl);
+    l->addWidget(importBox);
+
     l->setAlignment(Qt::AlignTop);
     this->setLayout(l);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -252,6 +265,67 @@ QPolyCreate::finalize(bool)
 	ps->sketch_name->setText("");
 	sketch_sync();
     }
+
+    do_bool = false;
+    p = NULL;
+    emit view_updated(&gedp->ged_gvp);
+}
+
+void
+QPolyCreate::do_import_sketch()
+{
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp)
+	return;
+
+    // Check if we have a name collision - if we do, it's no go
+    const char *vname = NULL;
+    if (ps->view_name->placeholderText().length()) {
+	vname = ps->view_name->placeholderText().toLocal8Bit().data();
+    }
+    if (ps->view_name->text().length()) {
+	vname = ps->view_name->text().toLocal8Bit().data();
+    }
+    bool colliding = false;
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	    colliding = true;
+	}
+    }
+    if (colliding) {
+	return;
+    }
+
+    if (!import_name->text().length())
+	return;
+
+    // See if we've got a valid dp name
+    char *sname = bu_strdup(import_name->text().toLocal8Bit().data());
+    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET);
+    bu_free(sname, "name cpy");
+
+    if (dp == RT_DIR_NULL)
+	return;
+
+    char *nname = bu_strdup(vname);
+    p = db_sketch_to_scene_obj(nname, gedp->ged_wdbp->dbip, dp, gedp->ged_gvp, gedp->free_scene_obj);
+    bu_free(nname, "name cpy");
+    if (!p) {
+	return;
+    }
+    p->s_v = gedp->ged_gvp;
+
+    // Let the view know the polygon is there
+    bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);
+
+    // Done processing view object - increment name
+    poly_cnt++;
+    ps->view_name->clear();
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
+    ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+    bu_vls_free(&pname);
 
     do_bool = false;
     p = NULL;

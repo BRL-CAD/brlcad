@@ -63,7 +63,7 @@ RT_EXPORT extern int curve_to_tcl_list(struct bu_vls *vls,
 				       struct rt_curve *crv);
 
 RT_EXPORT extern struct bv_scene_obj *
-db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bv_scene_obj *free_scene_obj);
+db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bview *sv, struct bv_scene_obj *free_scene_obj);
 
 RT_EXPORT extern struct directory *
 db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj *s);
