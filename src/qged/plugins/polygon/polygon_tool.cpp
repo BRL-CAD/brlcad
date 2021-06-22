@@ -40,6 +40,7 @@ polygon_tool_create()
     // to the QToolPaletteElement slot so the application can get the word when
     // that happens.
     QObject::connect(poly_create, &QPolyCreate::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
+    QObject::connect(poly_create, &QPolyCreate::db_updated, el, &QToolPaletteElement::do_gui_changed_db);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.
@@ -62,6 +63,7 @@ polygon_tool_modify()
     // to the QToolPaletteElement slot so the application can get the word when
     // that happens.
     QObject::connect(poly_mod, &QPolyMod::view_updated, el, &QToolPaletteElement::do_gui_changed_view);
+    QObject::connect(poly_mod, &QPolyMod::db_updated, el, &QToolPaletteElement::do_gui_changed_db);
 
     // However the view changed, we need to make sure our list is current
     QObject::connect(poly_mod, &QPolyMod::view_updated, poly_mod, &QPolyMod::mod_names_reset);

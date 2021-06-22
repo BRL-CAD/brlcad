@@ -256,6 +256,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		QObject::connect(ap, &CADApp::app_changed_db, el, &QToolPaletteElement::do_app_changed_db);
 
 		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
+		QObject::connect(el, &QToolPaletteElement::gui_changed_db, ap, &CADApp::do_db_update_from_gui_change);
 	    }
 	}
 

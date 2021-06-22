@@ -80,6 +80,9 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	// provide a generic, public "signal interface" for widget internals.
 	void gui_changed_view(struct bview **);
 
+	// Signal the application can listen to to see if the Element has
+	// changed anything in the database.
+	void gui_changed_db();
 
     public slots:
 	// INTERNAL:
@@ -88,6 +91,8 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	// of the public facing gui_changed_view signal.
 	void do_gui_changed_view(struct bview **);
 
+        // As above, for database changes
+        void do_gui_changed_db();
 
     public slots:
 	// PUBLIC:

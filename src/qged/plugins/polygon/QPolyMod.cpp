@@ -64,6 +64,15 @@ QPolyMod::QPolyMod()
     defaultBox->setLayout(default_gl);
     l->addWidget(defaultBox);
     QObject::connect(ps, &QPolySettings::settings_changed, this, &QPolyMod::polygon_update_props);
+    // We'll need to be aware if we specify a colliding view obj name
+    QObject::connect(ps->view_name, &QLineEdit::textEdited, this, &QPolyMod::view_name_edit_str);
+    QObject::connect(ps->view_name, &QLineEdit::editingFinished, this, &QPolyMod::view_name_update);
+    // The sketch name gets enabled/disabled and in some modes syncs with the
+    // view name.
+    QObject::connect(ps->sketch_sync, &QCheckBox::toggled, this, &QPolyMod::sketch_sync_bool);
+    QObject::connect(ps->sketch_name, &QLineEdit::textEdited, this, &QPolyMod::sketch_name_edit_str);
+    QObject::connect(ps->view_name, &QLineEdit::editingFinished, this, &QPolyMod::sketch_name_edit);
+    QObject::connect(ps->sketch_name, &QLineEdit::editingFinished, this, &QPolyMod::sketch_name_update);
 
     QGroupBox *modpolyBox = new QGroupBox("Modify Polygon");
     QVBoxLayout *mod_poly_gl = new QVBoxLayout;
@@ -336,6 +345,18 @@ QPolyMod::select(const QString &poly)
 		struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 		poly_type_settings(ip);
 		ps->settings_sync(p);
+		ps->view_name->setText(pname);
+		if (ip->u_data) {
+		    struct directory *dp = (struct directory *)ip->u_data;
+		    ps->sketch_sync->blockSignals(true);
+		    ps->sketch_sync->setChecked(true);
+		    ps->sketch_sync->blockSignals(false);
+		    ps->sketch_name->blockSignals(true);
+		    ps->sketch_name->setText(dp->d_namep);
+		    ps->sketch_name->setEnabled(true);
+		    ps->sketch_name->blockSignals(false);
+		}
+
 		return;
 	    }
 	}
@@ -493,6 +514,222 @@ QPolyMod::delete_poly()
 	p = NULL;
     }
 
+    emit view_updated(&gedp->ged_gvp);
+}
+
+void
+QPolyMod::sketch_sync_bool(bool)
+{
+    sketch_name_edit();
+}
+
+void
+QPolyMod::sketch_name_edit_str(const QString &)
+{
+    sketch_name_edit();
+}
+
+
+void
+QPolyMod::sketch_name_edit()
+{
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp) {
+	ps->sketch_name->setPlaceholderText("No .g file open");
+	ps->sketch_name->setStyleSheet("color: rgba(200,200,200)");
+	ps->sketch_name->setEnabled(false);
+	return;
+    }
+
+    if (ps->sketch_sync->isChecked()) {
+	const char *sname = NULL;
+	if (!ps->sketch_name->placeholderText().length()) {
+	    if (ps->view_name->placeholderText().length()) {
+		ps->sketch_name->setPlaceholderText(ps->view_name->placeholderText());
+		sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	    }
+	} else {
+	    sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	}
+	if (!ps->sketch_name->text().length()) {
+	    if (ps->view_name->text().length()) {
+		ps->sketch_name->setPlaceholderText(ps->view_name->text());
+		sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	    }
+	} else {
+	    sname = ps->sketch_name->text().toLocal8Bit().data();
+	}
+
+	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	if (!sname && ip->u_data) {
+	    struct directory *dp = (struct directory *)ip->u_data;
+	    ps->sketch_name->setPlaceholderText(QString(dp->d_namep));
+	    sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	}
+
+	if (sname) {
+	    // There may be a dp associated with the polygon.  If so, and the name
+	    // matches, then a save operation will replace the old copy with an
+	    // updated version.
+	    bool match_curr = false;
+	    if (ip->u_data) {
+		struct directory *dp = (struct directory *)ip->u_data;
+		if (BU_STR_EQUAL(dp->d_namep, sname)) {
+		    match_curr = true;
+		}
+	    }
+	    if (!match_curr) {
+		// Not a name match to existing dp - fall back on db check.
+		if (db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
+		    ps->sketch_name->setStyleSheet("color: rgba(255,0,0)");
+		} else {
+		    ps->sketch_name->setStyleSheet("");
+		}
+	    } else {
+		ps->sketch_name->setStyleSheet("");
+	    }
+	} else {
+	    ps->sketch_name->setStyleSheet("");
+	}
+	ps->sketch_name->setEnabled(true);
+    } else {
+	ps->sketch_name->setPlaceholderText("Enable to save sketch");
+	ps->sketch_name->setStyleSheet("color: rgba(200,200,200)");
+	ps->sketch_name->setEnabled(false);
+    }
+}
+
+void
+QPolyMod::sketch_name_update()
+{
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp)
+	return;
+
+    if (!p || !ps->sketch_sync->isChecked()) {
+	return;
+    }
+
+    const char *sname = NULL;
+    if (!ps->sketch_name->placeholderText().length()) {
+	if (ps->view_name->placeholderText().length()) {
+	    ps->sketch_name->setPlaceholderText(ps->view_name->placeholderText());
+	    sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	}
+    } else {
+	sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+    }
+    if (!ps->sketch_name->text().length()) {
+	if (ps->view_name->text().length()) {
+	    ps->sketch_name->setPlaceholderText(ps->view_name->text());
+	    sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	}
+    } else {
+	sname = ps->sketch_name->text().toLocal8Bit().data();
+    }
+
+    if (!sname)
+	return;
+
+    char *sk_name = bu_strdup(sname);
+
+    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+    if (ip->u_data) {
+	// remove previous dp, if name is different.  If name
+	// matches, we're done
+	struct directory *dp = (struct directory *)ip->u_data;
+	if (BU_STR_EQUAL(sk_name, dp->d_namep)) {
+	    bu_free(sk_name, "name copy");
+	    return;
+	}
+
+	// If the proposed new name collides with an existing object,
+	// we're done.
+	if (db_lookup(gedp->ged_wdbp->dbip, sk_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_free(sk_name, "name copy");
+	    return;
+	}
+
+	// Passed the tests - remove old object.
+	int ac = 2;
+	const char *av[3];
+	av[0] = "kill";
+	av[1] = dp->d_namep;
+	av[2] = NULL;
+	ged_kill(gedp, ac, av);
+    }
+
+    ip->u_data = (void *)db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, sk_name, p);
+    emit db_updated();
+
+    bu_free(sk_name, "name copy");
+}
+
+
+void
+QPolyMod::view_name_edit_str(const QString &)
+{
+    view_name_edit();
+}
+
+
+void
+QPolyMod::view_name_edit()
+{
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp) {
+	return;
+    }
+
+    const char *vname = NULL;
+    if (ps->view_name->placeholderText().length()) {
+	vname = ps->view_name->placeholderText().toLocal8Bit().data();
+    }
+    if (ps->view_name->text().length()) {
+	vname = ps->view_name->text().toLocal8Bit().data();
+    }
+    bool colliding = false;
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	if (p != s && BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	    colliding = true;
+	}
+    }
+    if (colliding) {
+	ps->view_name->setStyleSheet("color: rgba(255,0,0)");
+    } else {
+	ps->view_name->setStyleSheet("");
+    }
+}
+
+void
+QPolyMod::view_name_update()
+{
+
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp) {
+	return;
+    }
+
+    const char *vname = NULL;
+    if (ps->view_name->placeholderText().length()) {
+	vname = ps->view_name->placeholderText().toLocal8Bit().data();
+    }
+    if (ps->view_name->text().length()) {
+	vname = ps->view_name->text().toLocal8Bit().data();
+    }
+    bool colliding = false;
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	if (p != s && BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	    colliding = true;
+	}
+    }
+    if (colliding) {
+	return;
+    }
+
+    bu_vls_sprintf(&p->s_uuid, "%s", vname);
     emit view_updated(&gedp->ged_gvp);
 }
 

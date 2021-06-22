@@ -224,6 +224,12 @@ CADApp::do_view_update_from_gui_change(struct bview **nv)
 }
 
 void
+CADApp::do_db_update_from_gui_change()
+{
+    emit app_changed_db(NULL);
+}
+
+void
 CADApp::do_gui_update_from_view_change()
 {
     emit view_change(&gedp->ged_gvp);

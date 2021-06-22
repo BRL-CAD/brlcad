@@ -64,6 +64,7 @@ class QPolyMod : public QWidget
 
     signals:
 	void view_updated(struct bview **);
+	void db_updated();
 
     public slots:
 	void app_mod_names_reset(void *);
@@ -78,6 +79,14 @@ class QPolyMod : public QWidget
 	void clear_pnt_selection(bool);
 	void apply_bool_op();
 	void delete_poly();
+
+	void sketch_sync_bool(bool);
+	void sketch_name_edit_str(const QString &);
+	void sketch_name_edit();
+	void sketch_name_update();
+	void view_name_edit_str(const QString &);
+	void view_name_edit();
+	void view_name_update();
 
     protected:
 	bool eventFilter(QObject *, QEvent *);

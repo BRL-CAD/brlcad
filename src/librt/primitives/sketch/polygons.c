@@ -252,17 +252,17 @@ end:
     return s;
 }
 
-int
+struct directory *
 db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj *s)
 {
     // Make sure we have a view polygon
     if (!(s->s_type_flags & BV_VIEWONLY) || !(s->s_type_flags & BV_POLYGONS)) {
-	return BRLCAD_ERROR;
+	return NULL;
     }
 
     if (db_lookup(dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_log("Object %s already exists\n", sname);
-	return BRLCAD_ERROR;
+	return NULL;
     }
 
     size_t num_verts = 0;
@@ -278,7 +278,7 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
 	num_verts += p->polygon.contour[j].num_points;
 
     if (num_verts < 3) {
-	return BRLCAD_ERROR;
+	return NULL;
     }
 
     RT_DB_INTERNAL_INIT(&internal);
@@ -351,13 +351,13 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
 
     struct directory *dp = db_diradd(dbip, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type);
     if (dp == RT_DIR_NULL)
-	return BRLCAD_ERROR;
+	return NULL;
 
     if (rt_db_put_internal(dp, dbip, &internal, &rt_uniresource) < 0) {
-	return BRLCAD_ERROR;
+	return NULL;
     }
 
-    return BRLCAD_OK;
+    return dp;
 }
 
 /*

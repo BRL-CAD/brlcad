@@ -107,6 +107,7 @@ QPolyCreate::QPolyCreate()
     // The sketch name gets enabled/disabled and in some modes syncs with the
     // view name.
     QObject::connect(ps->sketch_sync, &QCheckBox::toggled, this, &QPolyCreate::sketch_sync_bool);
+    QObject::connect(ps->view_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
     QObject::connect(ps->sketch_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
 
     default_gl->addWidget(ps);
@@ -237,8 +238,11 @@ QPolyCreate::finalize(bool)
 		sname = ps->sketch_name->text().toLocal8Bit().data();
 	    }
 	    if (sname && db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET) == RT_DIR_NULL) {
-		db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, sname, p);
+		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, sname, p);
+		emit db_updated();
 	    }
+	} else {
+	    ip->u_data = NULL;
 	}
 
 	// Done with sketch - update name for next polygon

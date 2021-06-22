@@ -95,6 +95,10 @@ class CADApp : public QApplication
 	// Changes the view settings, but does NOT update GUI elements.
 	void do_view_update_from_gui_change(struct bview **);
 
+	// Called if the db is being altered by one of the app's graphical
+	// elements, rather than being driven by mouse movements or commands.
+	void do_db_update_from_gui_change();
+
         // Called when the view has been changed by mouse events or commands.
 	// It is responsible for updating the GUI elements that might be
 	// displaying view information.  Does not change the view settings.

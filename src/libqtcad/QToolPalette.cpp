@@ -109,6 +109,12 @@ QToolPaletteElement::do_gui_changed_view(struct bview **v)
 }
 
 void
+QToolPaletteElement::do_gui_changed_db()
+{
+    emit gui_changed_db();
+}
+
+void
 QToolPaletteElement::do_app_changed_db(void *d)
 {
     emit app_changed_db(d);

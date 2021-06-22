@@ -62,10 +62,12 @@ class QPolyCreate : public QWidget
     signals:
 	void poly_added();
 	void view_updated(struct bview **);
+	void db_updated();
 
     private slots:
 	void toplevel_config(bool);
 	void finalize(bool);
+
 	void sketch_sync_bool(bool);
 	void sketch_sync_str(const QString &);
 	void sketch_sync();
