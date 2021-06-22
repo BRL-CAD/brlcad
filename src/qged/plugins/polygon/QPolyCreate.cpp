@@ -101,10 +101,12 @@ QPolyCreate::QPolyCreate()
     ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
     bu_vls_free(&pname);
 
+    // We'll need to be aware if we specify a colliding view obj name
+    QObject::connect(ps->view_name, &QLineEdit::textEdited, this, &QPolyCreate::view_sync_str);
+
     // The sketch name gets enabled/disabled and in some modes syncs with the
     // view name.
     QObject::connect(ps->sketch_sync, &QCheckBox::toggled, this, &QPolyCreate::sketch_sync_bool);
-    QObject::connect(ps->view_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
     QObject::connect(ps->sketch_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
 
     default_gl->addWidget(ps);
@@ -182,6 +184,33 @@ QPolyCreate::finalize(bool)
 	bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)p);
 	FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
     } else {
+
+	// Check if we have a name collision - if we do, it's no go
+	const char *vname = NULL;
+	if (ps->view_name->placeholderText().length()) {
+	    vname = ps->view_name->placeholderText().toLocal8Bit().data();
+	}
+	if (ps->view_name->text().length()) {
+	    vname = ps->view_name->text().toLocal8Bit().data();
+	}
+	bool colliding = false;
+	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+		colliding = true;
+	    }
+	}
+	if (colliding) {
+	    bg_polygon_free(&ip->polygon);
+	    BU_PUT(ip, struct bv_polygon);
+	    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)p);
+	    FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
+	    do_bool = false;
+	    p = NULL;
+	    emit view_updated(&gedp->ged_gvp);
+	    return;
+	}
+
 	// Either a non-boolean creation or a Union with no interactions -
 	// either way we're keeping it, so assign a proper name
 	if (ps->view_name->text().length()) {
@@ -189,6 +218,8 @@ QPolyCreate::finalize(bool)
 	} else {
 	    bu_vls_sprintf(&p->s_uuid, "%s", ps->view_name->placeholderText().toLocal8Bit().data());
 	}
+
+	// Done processing view object - increment name
 	poly_cnt++;
 	ps->view_name->clear();
 	struct bu_vls pname = BU_VLS_INIT_ZERO;
@@ -265,7 +296,7 @@ QPolyCreate::sketch_sync()
 
 	if (sname) {
 	    if (db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
-		ps->sketch_name->setStyleSheet("color: rgba(250,0,0)");
+		ps->sketch_name->setStyleSheet("color: rgba(255,0,0)");
 	    } else {
 		ps->sketch_name->setStyleSheet("");
 	    }
@@ -277,6 +308,42 @@ QPolyCreate::sketch_sync()
 	ps->sketch_name->setPlaceholderText("Enable to save sketch");
 	ps->sketch_name->setStyleSheet("color: rgba(200,200,200)");
 	ps->sketch_name->setEnabled(false);
+    }
+}
+
+
+void
+QPolyCreate::view_sync_str(const QString &)
+{
+    view_sync();
+}
+
+void
+QPolyCreate::view_sync()
+{
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp) {
+	return;
+    }
+
+    const char *vname = NULL;
+    if (ps->view_name->placeholderText().length()) {
+	vname = ps->view_name->placeholderText().toLocal8Bit().data();
+    }
+    if (ps->view_name->text().length()) {
+	vname = ps->view_name->text().toLocal8Bit().data();
+    }
+    bool colliding = false;
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	    colliding = true;
+	}
+    }
+    if (colliding) {
+	ps->view_name->setStyleSheet("color: rgba(255,0,0)");
+    } else {
+	ps->view_name->setStyleSheet("");
     }
 }
 

@@ -69,6 +69,8 @@ class QPolyCreate : public QWidget
 	void sketch_sync_bool(bool);
 	void sketch_sync_str(const QString &);
 	void sketch_sync();
+	void view_sync_str(const QString &);
+	void view_sync();
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
