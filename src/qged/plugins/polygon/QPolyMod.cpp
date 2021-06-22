@@ -1,4 +1,4 @@
-/*                 P O L Y G O N _ M O D . C P P
+/*                     Q P O L Y M O D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file polygon_mod.cpp
+/** @file QPolyMod.cpp
  *
  */
 
@@ -26,8 +26,8 @@
 #include <QButtonGroup>
 #include <QGroupBox>
 #include "../../app.h"
-#include "polygon_create.h"
-#include "polygon_mod.h"
+#include "QPolyCreate.h"
+#include "QPolyMod.h"
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \
     for (size_t c_i = 0; c_i < BU_PTBL_LEN(&p->children); c_i++) { \

@@ -1,4 +1,4 @@
-/*            P O L Y G O N _ S E T T I N G S . C P P
+/*                 Q P O L Y S E T T I N G S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -24,7 +24,7 @@
 #include <QLabel>
 #include <QString>
 #include "bg/polygon.h"
-#include "polygon_settings.h"
+#include "QPolySettings.h"
 
 QPolySettings::QPolySettings()
     : QWidget()

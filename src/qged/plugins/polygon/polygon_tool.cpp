@@ -21,8 +21,8 @@
  *
  */
 
-#include "polygon_create.h"
-#include "polygon_mod.h"
+#include "QPolyCreate.h"
+#include "QPolyMod.h"
 #include "qtcad/QToolPalette.h"
 #include "../plugin.h"
 

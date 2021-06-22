@@ -1,4 +1,4 @@
-/*            P O L Y G O N _ C R E A T E . C P P
+/*                  Q P O L Y C R E A T E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file polygon_create.cpp
+/** @file QPolyCreate.cpp
  *
  */
 
@@ -26,7 +26,7 @@
 #include <QButtonGroup>
 #include <QGroupBox>
 #include "../../app.h"
-#include "polygon_create.h"
+#include "QPolyCreate.h"
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \
     BU_LIST_APPEND(fp, &((p)->l)); }

@@ -1,4 +1,4 @@
-/*         P O L Y G O N _ C R E A T E . H
+/*                       Q P O L Y M O D . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2021 United States Government as represented by
@@ -17,12 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file polygon_create.h
+/** @file QPolyMod.h
  *
  */
-
-#ifndef POLYGON_CREATE_H
-#define POLYGON_CREATE_H
 
 #include <QLineEdit>
 #include <QCheckBox>
@@ -30,55 +27,68 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QRadioButton>
-#include "bg/polygon_types.h"
 #include "qtcad/QColorRGB.h"
-#include "polygon_settings.h"
+#include "QPolySettings.h"
 
-class QPolyCreate : public QWidget
+class QPolyMod : public QWidget
 {
     Q_OBJECT
 
     public:
-	QPolyCreate();
-	~QPolyCreate();
+	QPolyMod();
+	~QPolyMod();
+
+	// Modify polygon graphical settings
+	QPolySettings *ps;
+
+	// Modifying polygon geometry
+	QComboBox *mod_names;
+	QRadioButton *select_mode;
+	QRadioButton *move_mode;
+	QRadioButton *update_mode;
+
+	QGroupBox *general_mode_opts;
+	QCheckBox *close_general_poly;
+	QRadioButton *append_pnt;
+	QRadioButton *select_pnt;
+
+	// TODO - probably will want a copy operation at some point to
+	// duplicate an existing polygon in a new object...
 
 	// Boolean Operation Mode
 	QComboBox *csg_modes;
+	QPushButton *apply_bool;
 
-	// Adding polygons
-	QLineEdit *view_name;
-	QRadioButton *circle_mode;
-	QRadioButton *ellipse_mode;
-	QRadioButton *square_mode;
-	QRadioButton *rectangle_mode;
-	QRadioButton *general_mode;
-
-	// Draw default settings
-	// Default edge color
-	QPolySettings *ps;
-
-	// Modifying polygons
-	QCheckBox *close_general_poly;
+	// Removal
+	QPushButton *remove_poly;
 
     signals:
-	void poly_added();
 	void view_updated(struct bview **);
+
+    public slots:
+	void app_mod_names_reset(void *);
+	void mod_names_reset();
+	void polygon_update_props();
 
     private slots:
 	void toplevel_config(bool);
-	void finalize(bool);
+
+	void toggle_closed_poly(bool);
+	void select(const QString &t);
+	void clear_pnt_selection(bool);
+	void apply_bool_op();
+	void delete_poly();
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
 
     private:
-	bg_clip_t op = bg_Union;
+	void poly_type_settings(struct bv_polygon *ip);
 	int poly_cnt = 0;
 	struct bv_scene_obj *p = NULL;
 	bool do_bool = false;
 };
 
-#endif //POLYGON_CREATE_H
 
 // Local Variables:
 // tab-width: 8
