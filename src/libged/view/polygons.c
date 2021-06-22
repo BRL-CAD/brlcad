@@ -636,19 +636,13 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
 
     // Begin import
     struct rt_db_internal intern;
-    struct rt_sketch_internal *sketch_ip;
 
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[0], gedp->ged_wdbp) & GED_ERROR) {
+    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[0], LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
 	return GED_ERROR;
     }
 
-    sketch_ip = (struct rt_sketch_internal *)intern.idb_ptr;
-    if (sketch_ip->vert_count < 3 || sketch_ip->curve.count < 1) {
-	rt_db_free_internal(&intern);
-	return GED_ERROR;
-    }
-
-    s = db_sketch_to_scene_obj(gd->vobj, sketch_ip, gedp->free_scene_obj);
+    s = db_sketch_to_scene_obj(gd->vobj, gedp->ged_wdbp->dbip, dp, gedp->free_scene_obj);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return GED_ERROR;

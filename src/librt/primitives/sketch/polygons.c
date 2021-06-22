@@ -29,15 +29,20 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/avs.h"
 #include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/opt.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 #include "bv.h"
 #include "bg/polygon.h"
 #include "rt/defines.h"
+#include "rt/directory.h"
+#include "rt/db_attr.h"
 #include "rt/db_internal.h"
 #include "rt/db5.h"
+#include "rt/db_instance.h"
 #include "rt/db_io.h"
 #include "rt/functab.h"
 #include "rt/geom.h"
@@ -80,9 +85,8 @@ _sketch_mat_aet(struct bview *gvp)
 }
 
 struct bv_scene_obj *
-db_sketch_to_scene_obj(const char *sname, struct rt_sketch_internal *sketch_ip, struct bv_scene_obj *free_scene_obj)
+db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bv_scene_obj *free_scene_obj)
 {
-
     // Begin import
     size_t ncontours = 0;
     struct bu_list HeadSegmentNodes;
@@ -91,7 +95,17 @@ db_sketch_to_scene_obj(const char *sname, struct rt_sketch_internal *sketch_ip, 
     struct segment_node *curr_snode;
     struct contour_node *curr_cnode;
 
-    if (!sketch_ip || sketch_ip->vert_count < 3 || sketch_ip->curve.count < 1) {
+    struct rt_db_internal intern;
+    struct rt_sketch_internal *sketch_ip;
+    mat_t mat;
+    if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
+	return NULL;
+    }
+    sketch_ip = (struct rt_sketch_internal *)intern.idb_ptr;
+    RT_SKETCH_CK_MAGIC(sketch_ip);
+
+    if (sketch_ip->vert_count < 3 || sketch_ip->curve.count < 1) {
+	rt_db_free_internal(&intern);
 	return NULL;
     }
 
@@ -102,6 +116,7 @@ db_sketch_to_scene_obj(const char *sname, struct rt_sketch_internal *sketch_ip, 
     ev.gv_height = 512;
     struct bv_scene_obj *s = bv_create_polygon(&ev, BV_POLYGON_GENERAL, 0, 0, free_scene_obj);
     if (!s) {
+	rt_db_free_internal(&intern);
 	return NULL;
     }
     bu_vls_init(&s->s_uuid);
@@ -243,12 +258,46 @@ end:
     /* Clean up */
     bu_free((void *)all_segment_nodes, "all_segment_nodes");
 
-    // TODO - check attributes for visual properties
-
+    // check attributes for visual properties
+    struct bu_attribute_value_set lavs;
+    bu_avs_init_empty(&lavs);
+    if (!db5_get_attributes(dbip, &lavs, dp)) {
+	const char *val = NULL;
+	// Check for various polygon properties
+	val = bu_avs_get(&lavs, "POLYGON_EDGE_COLOR");
+	if (val) {
+	    struct bu_color bc;
+	    if (bu_opt_color(NULL, 1, (const char **)&val, (void *)&bc) == 1) {
+		bu_color_to_rgb_chars(&bc, s->s_color);
+	    }
+	}
+	val = bu_avs_get(&lavs, "POLYGON_FILL_COLOR");
+	if (val) {
+	    bu_opt_color(NULL, 1, (const char **)&val, (void *)&p->fill_color);
+	}
+	val = bu_avs_get(&lavs, "POLYGON_FILL");
+	if (val && BU_STR_EQUAL(val, "1")) {
+	    p->fill_flag = 1;
+	}
+	val = bu_avs_get(&lavs, "POLYGON_FILL_SLOPE_X");
+	if (val) {
+	    bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&p->fill_dir[0]);
+	}
+	val = bu_avs_get(&lavs, "POLYGON_FILL_SLOPE_Y");
+	if (val) {
+	    bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&p->fill_dir[1]);
+	}
+	val = bu_avs_get(&lavs, "POLYGON_FILL_DELTA");
+	if (val) {
+	    bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&p->fill_delta);
+	}
+    }
+    bu_avs_free(&lavs);
 
     /* Have new polygon, now update view object vlist */
     bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 
+    rt_db_free_internal(&intern);
     return s;
 }
 
@@ -347,7 +396,6 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
     }
 
 
-    // TODO - write attributes to save visual properties
 
     struct directory *dp = db_diradd(dbip, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type);
     if (dp == RT_DIR_NULL)
@@ -356,6 +404,30 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
     if (rt_db_put_internal(dp, dbip, &internal, &rt_uniresource) < 0) {
 	return NULL;
     }
+
+    // write attributes to save visual properties
+
+    struct bu_attribute_value_set lavs;
+    bu_avs_init_empty(&lavs);
+    if (!db5_get_attributes(dbip, &lavs, dp)) {
+	struct bu_vls val = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&val, "%d/%d/%d", s->s_color[0], s->s_color[1], s->s_color[2]);
+	bu_avs_add(&lavs, "POLYGON_EDGE_COLOR", bu_vls_cstr(&val));
+	unsigned char rgb[3];
+	bu_color_to_rgb_chars(&p->fill_color, rgb);
+	bu_vls_sprintf(&val, "%d/%d/%d", rgb[0], rgb[1], rgb[2]);
+	bu_avs_add(&lavs, "POLYGON_FILL_COLOR", bu_vls_cstr(&val));
+	bu_vls_sprintf(&val, "%d", p->fill_flag);
+	bu_avs_add(&lavs, "POLYGON_FILL", bu_vls_cstr(&val));
+	bu_vls_sprintf(&val, "%g", p->fill_dir[0]);
+	bu_avs_add(&lavs, "POLYGON_FILL_SLOPE_X", bu_vls_cstr(&val));
+	bu_vls_sprintf(&val, "%g", p->fill_dir[1]);
+	bu_avs_add(&lavs, "POLYGON_FILL_SLOPE_Y", bu_vls_cstr(&val));
+	bu_vls_sprintf(&val, "%g", p->fill_delta);
+	bu_avs_add(&lavs, "POLYGON_FILL_DELTA", bu_vls_cstr(&val));
+    }
+    db5_update_attributes(dp, &lavs, dbip);
+    bu_avs_free(&lavs);
 
     return dp;
 }
