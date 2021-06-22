@@ -237,10 +237,12 @@ QPolyCreate::finalize(bool)
 	    if (ps->sketch_name->text().length()) {
 		sname = ps->sketch_name->text().toLocal8Bit().data();
 	    }
+	    char *sk_name = bu_strdup(sname);
 	    if (sname && db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET) == RT_DIR_NULL) {
-		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, sname, p);
+		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, sk_name, p);
 		emit db_updated();
 	    }
+	    bu_free(sk_name, "name cpy");
 	} else {
 	    ip->u_data = NULL;
 	}
