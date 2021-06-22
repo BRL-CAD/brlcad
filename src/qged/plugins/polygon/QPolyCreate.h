@@ -46,7 +46,6 @@ class QPolyCreate : public QWidget
 	QComboBox *csg_modes;
 
 	// Adding polygons
-	QLineEdit *view_name;
 	QRadioButton *circle_mode;
 	QRadioButton *ellipse_mode;
 	QRadioButton *square_mode;

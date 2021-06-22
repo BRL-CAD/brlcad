@@ -45,6 +45,10 @@ class QPolySettings : public QWidget
 	QLineEdit *fill_slope_y;
 	QLineEdit *fill_density;
 
+	QLineEdit *view_name;
+	QLineEdit *sketch_name;
+	QCheckBox *sketch_sync;
+
     signals:
 	void settings_changed();
 

@@ -34,6 +34,24 @@ QPolySettings::QPolySettings()
     l->setSpacing(1);
     l->setContentsMargins(1,1,1,1);
 
+    QLabel *vn_label = new QLabel("Polygon view obj name:");
+    view_name = new QLineEdit();
+    l->addWidget(vn_label);
+    l->addWidget(view_name);
+
+    QLabel *sn_label = new QLabel("Polygon sketch (.g) name:");
+    l->addWidget(sn_label);
+    QWidget *sn = new QWidget();
+    QHBoxLayout *snl = new QHBoxLayout();
+    snl->setSpacing(0);
+    snl->setContentsMargins(1,1,1,1);
+    sketch_sync = new QCheckBox();
+    snl->addWidget(sketch_sync);
+    sketch_name = new QLineEdit();
+    snl->addWidget(sketch_name);
+    sn->setLayout(snl);
+    l->addWidget(sn);
+
     edge_color = new QColorRGB(this, "Edge:", QColor(Qt::yellow));
     l->addWidget(edge_color);
     QObject::connect(edge_color, &QColorRGB::color_changed, this, &QPolySettings::do_settings_changed);

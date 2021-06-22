@@ -314,7 +314,6 @@ BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int
 
 struct bv_polygon {
     int                 type;
-    //int                 cflag;             /* contour flag */
     int                 fill_flag;         /* set to shade the interior */
     vect2d_t            fill_dir;
     fastf_t             fill_delta;
@@ -329,6 +328,9 @@ struct bv_polygon {
 
     /* Actual polygon info */
     struct bg_polygon   polygon;
+
+    /* Arbitrary data */
+    void *u_data;
 };
 
 // Note - for these functions it is important that the bv

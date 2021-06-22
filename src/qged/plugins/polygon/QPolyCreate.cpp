@@ -38,14 +38,6 @@ QPolyCreate::QPolyCreate()
 
     QButtonGroup *t_grp = new QButtonGroup();
 
-    QGroupBox *defaultBox = new QGroupBox("Settings");
-    QVBoxLayout *default_gl = new QVBoxLayout;
-    default_gl->setAlignment(Qt::AlignTop);
-    ps = new QPolySettings();
-    default_gl->addWidget(ps);
-    defaultBox->setLayout(default_gl);
-    l->addWidget(defaultBox);
-
     QGroupBox *addpolyBox = new QGroupBox("Add Polygon");
     QVBoxLayout *add_poly_gl = new QVBoxLayout;
     add_poly_gl->setAlignment(Qt::AlignTop);
@@ -59,16 +51,6 @@ QPolyCreate::QPolyCreate()
     csg_modes->addItem("Intersection");
     csg_modes->setCurrentIndex(0);
     add_poly_gl->addWidget(csg_modes);
-
-    QLabel *vn_label = new QLabel("Name of next polygon:");
-    view_name = new QLineEdit(this);
-    // Set an initial name (user can change, but we need something if they
-    // don't have a specific name in mind.)
-    struct bu_vls pname = BU_VLS_INIT_ZERO;
-    poly_cnt++;
-    bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
-    view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
-    bu_vls_free(&pname);
 
     circle_mode = new QRadioButton("Circle");
     circle_mode->setIcon(QIcon(QPixmap(":circle.svg")));
@@ -91,8 +73,6 @@ QPolyCreate::QPolyCreate()
     QObject::connect(general_mode, &QCheckBox::toggled, this, &QPolyCreate::toplevel_config);
     t_grp->addButton(general_mode);
 
-    add_poly_gl->addWidget(vn_label);
-    add_poly_gl->addWidget(view_name);
     add_poly_gl->addWidget(circle_mode);
     add_poly_gl->addWidget(ellipse_mode);
     add_poly_gl->addWidget(square_mode);
@@ -108,6 +88,21 @@ QPolyCreate::QPolyCreate()
     close_general_poly->setDisabled(true);
     QObject::connect(close_general_poly, &QCheckBox::toggled, this, &QPolyCreate::finalize);
     l->addWidget(close_general_poly);
+
+    QGroupBox *defaultBox = new QGroupBox("Settings");
+    QVBoxLayout *default_gl = new QVBoxLayout;
+    default_gl->setAlignment(Qt::AlignTop);
+    ps = new QPolySettings();
+    // Set an initial name (user can change, but we need something if they
+    // don't have a specific name in mind.)
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    poly_cnt++;
+    bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
+    ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+    bu_vls_free(&pname);
+    default_gl->addWidget(ps);
+    defaultBox->setLayout(default_gl);
+    l->addWidget(defaultBox);
 
     l->setAlignment(Qt::AlignTop);
     this->setLayout(l);
@@ -182,16 +177,16 @@ QPolyCreate::finalize(bool)
     } else {
 	// Either a non-boolean creation or a Union with no interactions -
 	// either way we're keeping it, so assign a proper name
-	if (view_name->text().length()) {
-	    bu_vls_sprintf(&p->s_uuid, "%s", view_name->text().toLocal8Bit().data());
+	if (ps->view_name->text().length()) {
+	    bu_vls_sprintf(&p->s_uuid, "%s", ps->view_name->text().toLocal8Bit().data());
 	} else {
-	    bu_vls_sprintf(&p->s_uuid, "%s", view_name->placeholderText().toLocal8Bit().data());
+	    bu_vls_sprintf(&p->s_uuid, "%s", ps->view_name->placeholderText().toLocal8Bit().data());
 	}
 	poly_cnt++;
-	view_name->clear();
+	ps->view_name->clear();
 	struct bu_vls pname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
-	view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+	ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
 	bu_vls_free(&pname);
     }
 

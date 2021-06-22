@@ -38,7 +38,7 @@ class QPolyMod : public QWidget
 	QPolyMod();
 	~QPolyMod();
 
-	// Modify polygon graphical settings
+	// Modify polygon settings
 	QPolySettings *ps;
 
 	// Modifying polygon geometry
