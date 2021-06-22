@@ -55,6 +55,9 @@ class QPolySettings : public QWidget
     public slots:
 	void do_settings_changed();
 	void settings_sync(struct bv_scene_obj *p);
+
+    private slots:
+	void sketch_sync_toggled(bool);
 };
 
 #endif //QPOLYSETTINGS_H
