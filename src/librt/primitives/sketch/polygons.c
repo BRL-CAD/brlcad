@@ -98,6 +98,7 @@ db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *d
     struct rt_db_internal intern;
     struct rt_sketch_internal *sketch_ip;
     mat_t mat;
+    MAT_IDN(mat);
     if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
 	return NULL;
     }
