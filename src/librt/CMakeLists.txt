@@ -190,6 +190,7 @@ set(LIBRT_SOURCES
   primitives/rpc/rpc_brep.cpp
   primitives/rpc/rpc_mirror.c
   primitives/script/script.c
+  primitives/sketch/polygons.c
   primitives/sketch/sketch.c
   primitives/sketch/sketch_brep.cpp
   primitives/sketch/sketch_tess.cpp

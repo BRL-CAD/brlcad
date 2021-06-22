@@ -36,6 +36,7 @@
 #include "bv.h"
 #include "bg/polygon.h"
 #include "rt/geom.h"
+#include "rt/primitives/sketch.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
@@ -632,15 +633,10 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
+
     // Begin import
-    size_t ncontours = 0;
     struct rt_db_internal intern;
     struct rt_sketch_internal *sketch_ip;
-    struct bu_list HeadSegmentNodes;
-    struct bu_list HeadContourNodes;
-    struct segment_node *all_segment_nodes;
-    struct segment_node *curr_snode;
-    struct contour_node *curr_cnode;
 
     if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[0], gedp->ged_wdbp) & GED_ERROR) {
 	return GED_ERROR;
@@ -652,154 +648,14 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    // Have a sketch - create an empty polygon
-    s = bv_create_polygon(gedp->ged_gvp, BV_POLYGON_GENERAL, 0, 0, gedp->free_scene_obj);
+    s = db_sketch_to_scene_obj(gd->vobj, sketch_ip, gedp->free_scene_obj);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return GED_ERROR;
     }
-    bu_vls_init(&s->s_uuid);
-    bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
-    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    bg_polygon_free(&p->polygon);
-
-    /* Start translating the sketch info into a polygon */
-    all_segment_nodes = (struct segment_node *)bu_calloc(sketch_ip->curve.count, sizeof(struct segment_node), "all_segment_nodes");
-
-    BU_LIST_INIT(&HeadSegmentNodes);
-    BU_LIST_INIT(&HeadContourNodes);
-    for (size_t n = 0; n < sketch_ip->curve.count; ++n) {
-	all_segment_nodes[n].segment = sketch_ip->curve.segment[n];
-	all_segment_nodes[n].reverse = sketch_ip->curve.reverse[n];
-	BU_LIST_INSERT(&HeadSegmentNodes, &all_segment_nodes[n].l);
-    }
-    curr_cnode = (struct contour_node *)0;
-    while (BU_LIST_NON_EMPTY(&HeadSegmentNodes)) {
-	struct segment_node *unused_snode = BU_LIST_FIRST(segment_node, &HeadSegmentNodes);
-	uint32_t *magic = (uint32_t *)unused_snode->segment;
-	struct line_seg *unused_lsg;
-
-	BU_LIST_DEQUEUE(&unused_snode->l);
-
-	/* For the moment, skipping everything except line segments */
-	if (*magic != CURVE_LSEG_MAGIC)
-	    continue;
-
-	unused_lsg = (struct line_seg *)unused_snode->segment;
-	if (unused_snode->reverse) {
-	    int tmp = unused_lsg->start;
-	    unused_lsg->start = unused_lsg->end;
-	    unused_lsg->end = tmp;
-	}
-
-	/* Find a contour to add the unused segment to. */
-	for (BU_LIST_FOR(curr_cnode, contour_node, &HeadContourNodes)) {
-	    for (BU_LIST_FOR(curr_snode, segment_node, &curr_cnode->head)) {
-		struct line_seg *curr_lsg = (struct line_seg *)curr_snode->segment;
-
-		if (unused_lsg->start == curr_lsg->end) {
-		    unused_snode->used = 1;
-		    BU_LIST_APPEND(&curr_snode->l, &unused_snode->l);
-		    goto end;
-		}
-
-		if (unused_lsg->end == curr_lsg->start) {
-		    unused_snode->used = 1;
-		    BU_LIST_INSERT(&curr_snode->l, &unused_snode->l);
-		    goto end;
-		}
-	    }
-	}
-
-end:
-	if (!unused_snode->used) {
-	    ++ncontours;
-	    BU_ALLOC(curr_cnode, struct contour_node);
-	    BU_LIST_INSERT(&HeadContourNodes, &curr_cnode->l);
-	    BU_LIST_INIT(&curr_cnode->head);
-	    BU_LIST_INSERT(&curr_cnode->head, &unused_snode->l);
-	}
-    }
-
-    p->polygon.num_contours = ncontours;
-    p->polygon.hole = (int *)bu_calloc(ncontours, sizeof(int), "gp_hole");
-    p->polygon.contour = (struct bg_poly_contour *)bu_calloc(ncontours, sizeof(struct bg_poly_contour), "gp_contour");
-
-    size_t j = 0;
-    fastf_t dmax = 0.0;
-    while (BU_LIST_NON_EMPTY(&HeadContourNodes)) {
-	size_t k = 0;
-	size_t npoints = 0;
-	struct line_seg *curr_lsg = NULL;
-
-	curr_cnode = BU_LIST_FIRST(contour_node, &HeadContourNodes);
-	BU_LIST_DEQUEUE(&curr_cnode->l);
-
-	/* Count the number of segments in this contour */
-	for (BU_LIST_FOR(curr_snode, segment_node, &curr_cnode->head))
-	    ++npoints;
-
-	p->polygon.contour[j].num_points = npoints;
-	p->polygon.contour[j].open = 0;
-	p->polygon.contour[j].point = (point_t *)bu_calloc(npoints, sizeof(point_t), "gpc_point");
-
-	while (BU_LIST_NON_EMPTY(&curr_cnode->head)) {
-	    curr_snode = BU_LIST_FIRST(segment_node, &curr_cnode->head);
-	    BU_LIST_DEQUEUE(&curr_snode->l);
-
-	    curr_lsg = (struct line_seg *)curr_snode->segment;
-
-	    /* Convert from UV space to model space */
-	    VJOIN2(p->polygon.contour[j].point[k], sketch_ip->V,
-		    sketch_ip->verts[curr_lsg->start][0], sketch_ip->u_vec,
-		    sketch_ip->verts[curr_lsg->start][1], sketch_ip->v_vec);
-	    fastf_t dtmp = DIST_PNT_PNT(sketch_ip->V, p->polygon.contour[j].point[k]);
-	    if (dtmp > dmax)
-		dmax = dtmp;
-	    ++k;
-	}
-
-	/* free contour node */
-	bu_free((void *)curr_cnode, "curr_cnode");
-
-	++j;
-    }
-
-    /* Construct an appropriate bv from the sketch's
-     * 3D info so we can snap to it. autoview, then dir.
-     * TODO - this needs improvement... */
-    struct bview *v = &p->v;
-    bv_init(v);
-    vect_t center = VINIT_ZERO;
-    vect_t min, max;
-    VSETALL(min, -dmax);
-    VSETALL(max, dmax);
-    vect_t radial;
-    VADD2SCALE(center, max, min, 0.5);
-    VSUB2(radial, max, center);
-    if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
-          VSETALL(radial, 1.0);
-    MAT_IDN(v->gv_center);
-    MAT_DELTAS_VEC_NEG(v->gv_center, center);
-    v->gv_scale = radial[X];
-    V_MAX(v->gv_scale, radial[Y]);
-    V_MAX(v->gv_scale, radial[Z]);
-    v->gv_size = 2.0 * v->gv_scale;
-    v->gv_isize = 1.0 / v->gv_size;
-    bv_update(v);
-
-    vect_t snorm;
-    VCROSS(snorm, sketch_ip->u_vec, sketch_ip->v_vec);
-    AZEL_FROM_V3DIR(p->v.gv_aet[0], p->v.gv_aet[1], snorm);
-    _ged_mat_aet(&p->v);
-    bv_update(&p->v);
 
     /* Clean up */
-    bu_free((void *)all_segment_nodes, "all_segment_nodes");
     rt_db_free_internal(&intern);
-
-    /* Have new polygon, now update view object vlist */
-    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
 
     /* Done - add to scene objects */
     bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)s);
@@ -839,93 +695,11 @@ _poly_cmd_export(void *bs, int argc, const char **argv)
 
     GED_CHECK_EXISTS(gedp, argv[0], LOOKUP_QUIET, GED_ERROR);
 
-    size_t num_verts = 0;
-    struct rt_db_internal internal;
-    struct rt_sketch_internal *sketch_ip;
-    struct line_seg *lsg;
-    struct directory *dp;
-    vect_t view;
-    point_t vorigin;
-    mat_t invRot;
 
-    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    for (size_t j = 0; j < p->polygon.num_contours; ++j)
-	num_verts += p->polygon.contour[j].num_points;
-
-    if (num_verts < 3) {
-	bu_vls_printf(gedp->ged_result_str, "Polygon is degenerate, not exporting.\n");
+    if (db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, argv[0], s) != BRLCAD_OK) {
+	bu_vls_printf(gedp->ged_result_str, "Failed to create sketch.\n");
 	return GED_ERROR;
     }
-
-    RT_DB_INTERNAL_INIT(&internal);
-    internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    internal.idb_type = ID_SKETCH;
-    internal.idb_meth = &OBJ[ID_SKETCH];
-
-    BU_ALLOC(internal.idb_ptr, struct rt_sketch_internal);
-    sketch_ip = (struct rt_sketch_internal *)internal.idb_ptr;
-    sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
-    sketch_ip->vert_count = num_verts;
-    sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->verts");
-    sketch_ip->curve.count = num_verts;
-    sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
-    sketch_ip->curve.segment = (void **)bu_calloc(sketch_ip->curve.count, sizeof(void *), "sketch_ip->curve.segment");
-
-    bn_mat_inv(invRot, p->v.gv_rotation);
-    VSET(view, 1.0, 0.0, 0.0);
-    MAT4X3PNT(sketch_ip->u_vec, invRot, view);
-
-    VSET(view, 0.0, 1.0, 0.0);
-    MAT4X3PNT(sketch_ip->v_vec, invRot, view);
-
-    /* should already be unit vectors */
-    VUNITIZE(sketch_ip->u_vec);
-    VUNITIZE(sketch_ip->v_vec);
-
-    /* Project the origin onto the front of the viewing cube */
-    MAT4X3PNT(vorigin, p->v.gv_model2view, p->v.gv_center);
-    vorigin[Z] = p->v.gv_s->gv_data_vZ;
-
-    /* Convert back to model coordinates for storage */
-    MAT4X3PNT(sketch_ip->V, p->v.gv_view2model, vorigin);
-
-    int n = 0;
-    for (size_t j = 0; j < p->polygon.num_contours; ++j) {
-	size_t cstart = n;
-	size_t k = 0;
-	for (k = 0; k < p->polygon.contour[j].num_points; ++k) {
-	    point_t vpt;
-	    vect_t vdiff;
-
-	    MAT4X3PNT(vpt, p->v.gv_model2view, p->polygon.contour[j].point[k]);
-	    VSUB2(vdiff, vpt, vorigin);
-	    VSCALE(vdiff, vdiff, p->v.gv_scale);
-	    V2MOVE(sketch_ip->verts[n], vdiff);
-
-	    if (k) {
-		BU_ALLOC(lsg, struct line_seg);
-		sketch_ip->curve.segment[n-1] = (void *)lsg;
-		lsg->magic = CURVE_LSEG_MAGIC;
-		lsg->start = n-1;
-		lsg->end = n;
-	    }
-
-	    ++n;
-	}
-
-	if (k) {
-	    BU_ALLOC(lsg, struct line_seg);
-	    sketch_ip->curve.segment[n-1] = (void *)lsg;
-	    lsg->magic = CURVE_LSEG_MAGIC;
-	    lsg->start = n-1;
-	    lsg->end = cstart;
-	}
-    }
-
-
-    GED_DB_DIRADD(gedp, dp, argv[0], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
-
 
     return GED_OK;
 }
