@@ -100,6 +100,13 @@ QPolyCreate::QPolyCreate()
     bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
     ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
     bu_vls_free(&pname);
+
+    // The sketch name gets enabled/disabled and in some modes syncs with the
+    // view name.
+    QObject::connect(ps->sketch_sync, &QCheckBox::toggled, this, &QPolyCreate::sketch_sync_bool);
+    QObject::connect(ps->view_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
+    QObject::connect(ps->sketch_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
+
     default_gl->addWidget(ps);
     defaultBox->setLayout(default_gl);
     l->addWidget(defaultBox);
@@ -188,11 +195,89 @@ QPolyCreate::finalize(bool)
 	bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
 	ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
 	bu_vls_free(&pname);
+
+	// If we're also writing this out as a sketch, take care of that.
+	if (ps->sketch_sync->isChecked()) {
+	    const char *sname = NULL;
+	    if (ps->sketch_name->placeholderText().length()) {
+		sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	    }
+	    if (ps->sketch_name->text().length()) {
+		sname = ps->sketch_name->text().toLocal8Bit().data();
+	    }
+	    if (sname && db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET) == RT_DIR_NULL) {
+		db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, sname, p);
+	    }
+	}
+
+	// Done with sketch - update name for next polygon
+	ps->sketch_name->setPlaceholderText("");
+	ps->sketch_name->setText("");
+	sketch_sync();
     }
 
     do_bool = false;
     p = NULL;
     emit view_updated(&gedp->ged_gvp);
+}
+
+void
+QPolyCreate::sketch_sync_bool(bool)
+{
+    sketch_sync();
+}
+
+void
+QPolyCreate::sketch_sync_str(const QString &)
+{
+    sketch_sync();
+}
+
+void
+QPolyCreate::sketch_sync()
+{
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp) {
+	ps->sketch_name->setPlaceholderText("No .g file open");
+	ps->sketch_name->setStyleSheet("color: rgba(200,200,200)");
+	ps->sketch_name->setEnabled(false);
+	return;
+    }
+
+    if (ps->sketch_sync->isChecked()) {
+	const char *sname = NULL;
+	if (!ps->sketch_name->placeholderText().length()) {
+	    if (ps->view_name->placeholderText().length()) {
+		ps->sketch_name->setPlaceholderText(ps->view_name->placeholderText());
+		sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	    }
+	} else {
+	    sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	}
+	if (!ps->sketch_name->text().length()) {
+	    if (ps->view_name->text().length()) {
+		ps->sketch_name->setPlaceholderText(ps->view_name->text());
+		sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	    }
+	} else {
+	    sname = ps->sketch_name->text().toLocal8Bit().data();
+	}
+
+	if (sname) {
+	    if (db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
+		ps->sketch_name->setStyleSheet("color: rgba(250,0,0)");
+	    } else {
+		ps->sketch_name->setStyleSheet("");
+	    }
+	} else {
+	    ps->sketch_name->setStyleSheet("");
+	}
+	ps->sketch_name->setEnabled(true);
+    } else {
+	ps->sketch_name->setPlaceholderText("Enable to save sketch");
+	ps->sketch_name->setStyleSheet("color: rgba(200,200,200)");
+	ps->sketch_name->setEnabled(false);
+    }
 }
 
 void

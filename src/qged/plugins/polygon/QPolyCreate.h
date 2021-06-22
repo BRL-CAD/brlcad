@@ -66,6 +66,9 @@ class QPolyCreate : public QWidget
     private slots:
 	void toplevel_config(bool);
 	void finalize(bool);
+	void sketch_sync_bool(bool);
+	void sketch_sync_str(const QString &);
+	void sketch_sync();
 
     protected:
 	bool eventFilter(QObject *, QEvent *);

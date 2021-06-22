@@ -126,7 +126,8 @@ void
 QPolySettings::sketch_sync_toggled(bool)
 {
     if (sketch_sync->isChecked()) {
-	sketch_name->setPlaceholderText("");
+	if (sketch_name->placeholderText() == QString("Enable to save sketch"))
+	    sketch_name->setPlaceholderText("");
 	sketch_name->setStyleSheet("");
 	sketch_name->setEnabled(true);
     } else {
