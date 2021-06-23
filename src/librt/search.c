@@ -1604,14 +1604,64 @@ c_depth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
  * True if the matrix combining the object into its parent tree is an
  * identity matrix.
  */
+
+static void
+child_matrix(union tree *tp, const char *n, mat_t *m)
+{
+    if (!tp) return;
+    RT_CK_TREE(tp);
+    switch (tp->tr_op) {
+	case OP_DB_LEAF:
+	    if (BU_STR_EQUAL(n, tp->tr_l.tl_name)) {
+		if (tp->tr_l.tl_mat)
+		    MAT_COPY(*m, tp->tr_l.tl_mat);
+	    }
+	    return;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	    /* This node is known to be a binary op */
+	    child_matrix(tp->tr_b.tb_left, n, m);
+	    child_matrix(tp->tr_b.tb_right, n, m);
+	    return;
+	default:
+	    bu_log("child_matrix: bad op %d\n", tp->tr_op);
+	    bu_bomb("child_matrix\n");
+    }
+    return;
+}
+
+
 HIDDEN int
 f_idn(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *dbip, struct bu_ptbl *UNUSED(results))
 {
-    mat_t mat;
-    MAT_IDN(mat);
-    if (!db_path_to_mat(dbip, db_node->path, mat, DB_FULL_PATH_LEN(db_node->path), &rt_uniresource)) {
+
+    if (DB_FULL_PATH_LEN(db_node->path) < 2) {
+	// Top level objects are always IDN included
+	return 1;
+    }
+
+    struct directory *cdp = DB_FULL_PATH_CUR_DIR(db_node->path);
+    struct directory *dp = DB_FULL_PATH_GET(db_node->path, DB_FULL_PATH_LEN(db_node->path) - 2);
+
+    if (!(dp->d_flags & RT_DIR_COMB)) {
 	return 0;
     }
+
+    struct rt_db_internal intern;
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	return 0;
+    }
+    struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
+    if (comb->tree == NULL) {
+	rt_db_free_internal(&intern);
+	return 0;
+    }
+
+    mat_t mat;
+    MAT_IDN(mat);
+    child_matrix(comb->tree, cdp->d_namep, &mat);
+    rt_db_free_internal(&intern);
 
     mat_t imat;
     MAT_IDN(imat);
