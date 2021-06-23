@@ -326,7 +326,6 @@ struct bview_settings {
     double 	  gv_snap_tol_factor;
     int           gv_cleared;
     int           gv_zclip;
-    fastf_t       gv_data_vZ;
     int           gv_autoview;
 
     // Adaptive plotting related settings - these are used when the wireframe
@@ -397,6 +396,14 @@ struct bview {
     mat_t         gv_pmodel2view;
     mat_t         gv_view2model;
     mat_t         gv_pmat;           /**< @brief  perspective matrix */
+
+    /* data_vZ is a bit of an oddity.  In an orthogonal view, a wireframe
+     * may be very far away from the camera eye point or right in
+     * front of it, and its appearance will be the same.
+     *
+     * TODO:  data_vZ is used to define where relative to the view plane data
+     * will be drawn (is this right?). */
+    fastf_t       gv_data_vZ;
 
     /* Keyboard/mouse info */
     fastf_t       gv_prevMouseX;

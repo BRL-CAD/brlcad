@@ -2820,7 +2820,7 @@ to_data_vZ(struct ged *gedp,
 
     /* Get the data vZ */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%lf", gdvp->gv_s->gv_data_vZ);
+	bu_vls_printf(gedp->ged_result_str, "%lf", gdvp->gv_data_vZ);
 	return GED_OK;
     }
 
@@ -2830,7 +2830,7 @@ to_data_vZ(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    gdvp->gv_s->gv_data_vZ = vZ;
+    gdvp->gv_data_vZ = vZ;
 
     return GED_OK;
 }

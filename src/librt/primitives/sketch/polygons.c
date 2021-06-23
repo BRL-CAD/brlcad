@@ -424,7 +424,7 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
 
     /* Project the origin onto the front of the viewing cube */
     MAT4X3PNT(vorigin, p->v.gv_model2view, p->v.gv_center);
-    vorigin[Z] = (p->v.gv_s) ? p->v.gv_s->gv_data_vZ : 0;
+    vorigin[Z] = p->v.gv_data_vZ;
 
     /* Convert back to model coordinates for storage */
     MAT4X3PNT(sketch_ip->V, p->v.gv_view2model, vorigin);

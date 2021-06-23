@@ -422,6 +422,37 @@ _view_cmd_ypr(void *bs, int argc, const char **argv)
     return ged_ypr_core(gd->gedp, argc, argv);
 }
 
+
+int
+_view_cmd_vZ(void *bs, int argc, const char **argv)
+{
+    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
+    struct ged *gedp = gd->gedp;
+    const char *usage_string = "view [options] vZ [val]";
+    const char *purpose_string = "get/set view vZ";
+    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
+	return GED_OK;
+
+    argc--; argv++;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "%g\n", gedp->ged_gvp->gv_data_vZ);
+	return GED_OK;
+    }
+
+    fastf_t val;
+    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	return GED_ERROR;
+    }
+
+    gedp->ged_gvp->gv_data_vZ = val;
+
+    return GED_OK;
+}
 int
 _view_cmd_width(void *ds, int argc, const char **argv)
 {
@@ -475,6 +506,7 @@ const struct bu_cmdtab _view_cmds[] = {
     { "selections", _view_cmd_selections},
     { "size",       _view_cmd_size},
     { "snap",       _view_cmd_snap},
+    { "vZ",         _view_cmd_vZ},
     { "width",      _view_cmd_width},
     { "ypr",        _view_cmd_ypr},
     { (char *)NULL,      NULL}

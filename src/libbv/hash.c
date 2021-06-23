@@ -409,7 +409,6 @@ bv_settings_hash(XXH64_state_t *state, struct bview_settings *s)
     _bv_interactive_rect_state_hash(state, &s->gv_rect);
     XXH64_update(state, &s->gv_fps, sizeof(int));
     XXH64_update(state, &s->gv_fb_mode, sizeof(int));
-    XXH64_update(state, &s->gv_data_vZ, sizeof(fastf_t));
 
 #if 0
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
@@ -459,6 +458,7 @@ bv_hash(struct bview *v)
     XXH64_update(state, &v->gv_maxMouseDelta, sizeof(fastf_t));
     XXH64_update(state, &v->gv_rscale, sizeof(fastf_t));
     XXH64_update(state, &v->gv_sscale, sizeof(fastf_t));
+    XXH64_update(state, &v->gv_data_vZ, sizeof(fastf_t));
 
     if (v->gv_s)
 	bv_settings_hash(state, &v->gv_ls);

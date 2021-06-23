@@ -69,6 +69,8 @@ bv_init(struct bview *gvp)
     gvp->gv_rscale = 0.4;
     gvp->gv_sscale = 2.0;
 
+    gvp->gv_data_vZ = 0.0;
+
     /* Initialize local settings */
     bv_settings_init(&gvp->gv_ls);
     /* Out of the gate we don't have any shared settings */
@@ -173,7 +175,6 @@ bv_settings_init(struct bview_settings *s)
     s->gv_frametime = 1;
     s->gv_fb_mode = 0;
 
-    s->gv_data_vZ = 0.0;
     s->gv_autoview = 1;
 
     s->adaptive_plot = 0;

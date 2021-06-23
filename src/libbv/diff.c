@@ -416,7 +416,6 @@ _bv_settings_differ(struct bview_settings *v1, struct bview_settings *v2)
     BV_NDIFF(1,gv_snap_tol_factor);
     BV_NDIFF(1,gv_cleared);
     BV_NDIFF(1,gv_zclip);
-    BV_NDIFF(1,gv_data_vZ);
 
     BV_NDIFF(1,adaptive_plot);
     BV_NDIFF(1,redraw_on_zoom);
@@ -466,6 +465,8 @@ bv_differ(struct bview *v1, struct bview *v2)
     BV_NDIFF(1,gv_maxMouseDelta);
     BV_NDIFF(1,gv_rscale);
     BV_NDIFF(1,gv_sscale);
+
+    BV_NDIFF(1,gv_data_vZ);
 
     BV_CDIFF(1, _bv_data_arrow_state_differ, gv_tcl.gv_data_arrows);
     BV_CDIFF(1, _bv_data_axes_state_differ, gv_tcl.gv_data_axes);

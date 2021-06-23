@@ -900,6 +900,7 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+
 const struct bu_cmdtab _poly_cmds[] = {
     { "append",          _poly_cmd_append},
     { "area",            _poly_cmd_area},
