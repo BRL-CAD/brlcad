@@ -232,6 +232,18 @@ d2.r
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-idn</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the object in question is being combined into the local hierarchy with an
+	    identity matrix.  This is most useful in combination with the <emphasis remap="B" role="bold">!</emphasis>
+	    operator, for finding objects in a hierarchy with matricies over them.
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><emphasis remap="B" role="bold">-iname</emphasis> <emphasis remap="I">pattern</emphasis></term>
 	<listitem>
@@ -897,6 +909,17 @@ d2.r
 	dimensional space and is arguably acceptable - the below
 	command finds nested region instances that are considered
 	errors.
+      </para>
+    </example>
+
+    <example><title>Finding all Non-Identity Matrix Instances</title>
+
+      <para>
+	<userinput>search / ! -idn -</userinput>
+      </para>
+      <para>
+	Reports all comb instances included in their parent comb with a
+	non-identity positioning matrix.
       </para>
     </example>
 
