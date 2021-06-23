@@ -288,6 +288,22 @@ end:
 	if (val) {
 	    bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&p->fill_delta);
 	}
+	val = bu_avs_get(&lavs, "POLYGON_TYPE");
+	if (BU_STR_EQUAL(val, "CIRCLE")) {
+	    p->type = BV_POLYGON_CIRCLE;
+	}
+	if (BU_STR_EQUAL(val, "ELLIPSE")) {
+	    p->type = BV_POLYGON_ELLIPSE;
+	}
+	if (BU_STR_EQUAL(val, "RECTANGLE")) {
+	    p->type = BV_POLYGON_RECTANGLE;
+	}
+	if (BU_STR_EQUAL(val, "SQUARE")) {
+	    p->type = BV_POLYGON_SQUARE;
+	}
+	if (BU_STR_EQUAL(val, "GENERAL")) {
+	    p->type = BV_POLYGON_GENERAL;
+	}
     }
     bu_avs_free(&lavs);
 
@@ -422,6 +438,24 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
 	bu_avs_add(&lavs, "POLYGON_FILL_SLOPE_Y", bu_vls_cstr(&val));
 	bu_vls_sprintf(&val, "%g", p->fill_delta);
 	bu_avs_add(&lavs, "POLYGON_FILL_DELTA", bu_vls_cstr(&val));
+	switch (p->type) {
+	    case BV_POLYGON_CIRCLE:
+		bu_vls_sprintf(&val, "CIRCLE");
+		break;
+	    case BV_POLYGON_ELLIPSE:
+		bu_vls_sprintf(&val, "ELLIPSE");
+		break;
+	    case BV_POLYGON_RECTANGLE:
+		bu_vls_sprintf(&val, "RECTANGLE");
+		break;
+	    case BV_POLYGON_SQUARE:
+		bu_vls_sprintf(&val, "SQUARE");
+		break;
+	    default:
+		bu_vls_sprintf(&val, "GENERAL");
+		break;
+	}
+	bu_avs_add(&lavs, "POLYGON_TYPE", bu_vls_cstr(&val));
     }
     db5_update_attributes(dp, &lavs, dbip);
     bu_avs_free(&lavs);
