@@ -112,6 +112,8 @@ class QTCAD_EXPORT CADTreeModel : public QAbstractItemModel
 	struct db_i *dbip = NULL;
 	CADTreeView *cadtreeview = NULL;
 
+	unsigned long long db_hash(struct db_i *);
+
     public slots:
 	void refresh(void *);
         void mode_change(int);

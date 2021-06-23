@@ -457,6 +457,14 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
     } else {
 
+#if 0
+	unsigned long long dbi_hash_pre = 0;
+	if (w->treemodel) {
+	    dbi_hash_pre = w->treemodel->db_hash(gedp->ged_wdbp->dbip);
+	}
+	bu_log("dbi_hash_pre: %lld\n", dbi_hash_pre);
+#endif
+
 	if (w->canvas)
 	    w->canvas->stash_hashes();
 	if (w->c4)
@@ -477,7 +485,6 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (msg && gedp)
 	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
 
-
 	// It's possible that a ged_exec will introduce a new gedp - set up accordingly
 	if (gedp && prev_gedp != gedp) {
 	    bu_ptbl_reset(gedp->ged_all_dmp);
@@ -495,6 +502,7 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
 	}
 
+	//unsigned long long dbi_hash_post = 0;
 	if (gedp) {
 	    if (w->canvas) {
 		w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
@@ -512,6 +520,10 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		if (w->c4)
 		    w->c4->need_update(NULL);
 	    }
+#if 0
+	    if (w->treemodel)
+		dbi_hash_post = w->treemodel->db_hash(gedp->ged_wdbp->dbip);
+#endif
 	} else {
 	    // gedp == NULL - can't cheat and use the gedp pointer
 	    if (prev_gedp != gedp) {
@@ -533,6 +545,13 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (w->c4) {
 	    ret = w->c4->diff_hashes();
 	}
+
+#if 0
+	// If the contents changed, the tree needs to know too
+	bu_log("dbi_hash_post: %lld\n", dbi_hash_post);
+	if (dbi_hash_pre != dbi_hash_post)
+	    emit app_changed_db(NULL);
+#endif
     }
 
     return ret;

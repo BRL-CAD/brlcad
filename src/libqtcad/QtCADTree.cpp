@@ -31,6 +31,10 @@
 #include <QMenu>
 #include <QQueue>
 
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
+
 #include "bu/sort.h"
 #include "raytrace.h"
 #include "qtcad/QtCADTree.h"
@@ -869,6 +873,9 @@ bool CADTreeModel::hasChildren(const QModelIndex &idx) const
 
 void CADTreeModel::refresh(void *)
 {
+    // TODO - need to store some notion of open paths, so we can
+    // restore as much of the tree state as possible after a
+    // refresh.
     all_nodes.clear();
     populate(dbip);
 }
@@ -925,6 +932,41 @@ int CADTreeModel::populate(struct db_i *new_dbip)
     }
 
     return 0;
+}
+
+unsigned long long
+CADTreeModel::db_hash(struct db_i *tdbip)
+{
+    XXH64_hash_t hash_val;
+    XXH64_state_t *state;
+    state = XXH64_createState();
+    if (!state)
+	return 0;
+    XXH64_reset(state, 0);
+
+    struct directory *dp;
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	for (dp = tdbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_HIDDEN) && dp->d_addr != RT_DIR_PHONY_ADDR) {
+		if (dp->d_flags & RT_DIR_COMB) {
+		    struct rt_db_internal *in = combinternals.find(dp).value();
+		    if (in) {
+			int cnt = 0;
+			struct rt_comb_internal *comb = (struct rt_comb_internal *)in->idb_ptr;
+			if (comb->tree)
+			    cad_count_children(comb->tree, &cnt);
+			XXH64_update(state, &cnt, sizeof(int));
+		    }
+		}
+		XXH64_update(state, &dp->d_namep, strlen(dp->d_namep));
+	    }
+	}
+    }
+
+    hash_val = XXH64_digest(state);
+    XXH64_freeState(state);
+
+    return (unsigned long long)hash_val;
 }
 
 /*       C A D T R E E V I E W    */
