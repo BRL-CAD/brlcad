@@ -114,18 +114,27 @@ QPolyCreate::QPolyCreate()
     defaultBox->setLayout(default_gl);
     l->addWidget(defaultBox);
 
-    QGroupBox *importBox = new QGroupBox("Sketch to View Obj");
-    QVBoxLayout *import_gl = new QVBoxLayout;
-    import_gl->setAlignment(Qt::AlignTop);
-    QLabel *import_label = new QLabel("Sketch name:");
+    QGroupBox *copyBox = new QGroupBox("Create Polygon from Data");
+    QVBoxLayout *copy_gl = new QVBoxLayout;
+    copy_gl->setAlignment(Qt::AlignTop);
+
+    QLabel *vpoly_label = new QLabel("Copy view polygon:");
+    vpoly_name = new QLineEdit();
+    vpoly_copy = new QPushButton("Copy");
+    QObject::connect(vpoly_copy, &QPushButton::released, this, &QPolyCreate::do_vpoly_copy);
+    copy_gl->addWidget(vpoly_label);
+    copy_gl->addWidget(vpoly_name);
+    copy_gl->addWidget(vpoly_copy);
+
+    QLabel *import_label = new QLabel("Import from sketch:");
     import_name = new QLineEdit();
     import_sketch = new QPushButton("Import");
     QObject::connect(import_sketch, &QPushButton::released, this, &QPolyCreate::do_import_sketch);
-    import_gl->addWidget(import_label);
-    import_gl->addWidget(import_name);
-    import_gl->addWidget(import_sketch);
-    importBox->setLayout(import_gl);
-    l->addWidget(importBox);
+    copy_gl->addWidget(import_label);
+    copy_gl->addWidget(import_name);
+    copy_gl->addWidget(import_sketch);
+    copyBox->setLayout(copy_gl);
+    l->addWidget(copyBox);
 
     l->setAlignment(Qt::AlignTop);
     this->setLayout(l);
@@ -265,6 +274,80 @@ QPolyCreate::finalize(bool)
 	ps->sketch_name->setText("");
 	sketch_sync();
     }
+
+    do_bool = false;
+    p = NULL;
+    emit view_updated(&gedp->ged_gvp);
+}
+
+void
+QPolyCreate::do_vpoly_copy()
+{
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp)
+	return;
+
+    // Check if we have a name collision - if we do, it's no go
+    char *vname = NULL;
+    if (ps->view_name->placeholderText().length()) {
+	vname = ps->view_name->placeholderText().toLocal8Bit().data();
+    }
+    if (ps->view_name->text().length()) {
+	vname = ps->view_name->text().toLocal8Bit().data();
+    }
+    bool colliding = false;
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	    colliding = true;
+	}
+    }
+    if (colliding) {
+	bu_free(vname, "name cpy");
+	return;
+    }
+
+    // Stash a copy of the name immediately for use later - a data pointer to
+    // the QString isn't stable.
+    char *nname = bu_strdup(vname);
+
+    // See if we've got a valid dp name
+    if (!vpoly_name->text().length()) {
+	bu_free(nname, "name cpy");
+	return;
+    }
+    char *sname = bu_strdup(vpoly_name->text().toLocal8Bit().data());
+    struct bv_scene_obj *src_obj = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
+	struct bv_scene_obj *cobj = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	if (BU_STR_EQUAL(bu_vls_cstr(&cobj->s_uuid), sname)) {
+	    src_obj = cobj;
+	}
+    }
+    bu_free(sname, "name cpy");
+    if (!src_obj) {
+	bu_free(nname, "name cpy");
+	return;
+    }
+
+    // Names are valid, src_obj is ready - do the copy
+    p = bg_dup_view_polygon(nname, src_obj);
+    bu_free(nname, "name cpy");
+    if (!p) {
+	return;
+    }
+    p->s_v = gedp->ged_gvp;
+
+    // Let the view know the polygon is there
+    bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)p);
+
+    // Done processing view object - increment name
+    poly_cnt++;
+    ps->view_name->clear();
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
+    ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+    bu_vls_free(&pname);
 
     do_bool = false;
     p = NULL;

@@ -59,7 +59,11 @@ class QPolyCreate : public QWidget
 	// Modifying polygons
 	QCheckBox *close_general_poly;
 
-	// Sketch to import
+	// Existing view polygon copy
+	QLineEdit *vpoly_name;
+	QPushButton *vpoly_copy;
+
+	// Sketch import
 	QLineEdit *import_name;
 	QPushButton *import_sketch;
 
@@ -72,6 +76,7 @@ class QPolyCreate : public QWidget
 	void toplevel_config(bool);
 	void finalize(bool);
 	void do_import_sketch();
+	void do_vpoly_copy();
 
 	void sketch_sync_bool(bool);
 	void sketch_sync_str(const QString &);

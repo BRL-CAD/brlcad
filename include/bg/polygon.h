@@ -96,6 +96,8 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 BG_EXPORT extern void bg_polygon_free(struct bg_polygon *gpp);
 BG_EXPORT extern void bg_polygons_free(struct bg_polygons *gpp);
 
+BG_EXPORT extern void bg_polygon_cpy(struct bg_polygon *dest, struct bg_polygon *src);
+
 
 /********************************
  * Operations on 2D point types *
@@ -353,11 +355,11 @@ BG_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s, int utype);
 BG_EXPORT extern void bv_polygon_vlist(struct bv_scene_obj *s);
 
 // Find the closest polygon obj to a view's current x,y mouse points
-// TODO - this isn't correct yet - right now it's just checking distances
-// from verts, not from polygon edges
 BG_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, struct bview *v);
 
 BG_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s);
+BG_EXPORT extern struct bv_scene_obj *bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s);
+
 
 // For all polygon objects in the objs table, apply the specified boolean op
 // using p and replace the original polygons in objs with the results (NOTE:  p

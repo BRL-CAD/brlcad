@@ -56,7 +56,7 @@ bv_polygon_contour(struct bv_scene_obj *s, struct bg_poly_contour *c, int curr_c
 	return;
 
     if (do_pnt) {
-	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BV_VLIST_POINT_DRAW);
+	BV_ADD_VLIST(s->s_v->vlfree, &s->s_vlist, c->point[0], BV_VLIST_POINT_DRAW);
 	return;
     }
 
@@ -235,15 +235,21 @@ bv_create_polygon(struct bview *v, int type, int x, int y, struct bv_scene_obj *
 	return NULL;
     }
     int snapped = 0;
-    if (v->gv_s->gv_snap_lines) {
-	snapped = bv_snap_lines_2d(v, &fx, &fy);
-    }
-    if (!snapped && v->gv_s->gv_grid.snap) {
-	bv_snap_grid_2d(v, &fx, &fy);
+    if (v->gv_s) {
+	if (v->gv_s->gv_snap_lines) {
+	    snapped = bv_snap_lines_2d(v, &fx, &fy);
+	}
+	if (!snapped && v->gv_s->gv_grid.snap) {
+	    bv_snap_grid_2d(v, &fx, &fy);
+	}
     }
 
     point_t v_pt, m_pt;
-    VSET(v_pt, fx, fy, v->gv_s->gv_data_vZ);
+    if (v->gv_s) {
+	VSET(v_pt, fx, fy, v->gv_s->gv_data_vZ);
+    } else {
+	VSET(v_pt, fx, fy, 0);
+    }
     MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
     VMOVE(p->prev_point, v_pt);
 
@@ -866,6 +872,48 @@ bv_update_polygon(struct bv_scene_obj *s, int utype)
     if (p->type != BV_POLYGON_GENERAL)
 	return 0;
     return bv_update_general_polygon(s, utype);
+}
+
+struct bv_scene_obj *
+bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
+{
+    if (!nname || !s)
+	return NULL;
+
+    struct bv_polygon *ip = (struct bv_polygon *)s->s_i_data;
+
+    // Since we want to create our copy using s's original creation frame and
+    // not (necessarily) the current s_v, make sure the s_v's vlfree list is
+    // set in the internal polygon's stored view.
+    ip->v.vlfree = s->s_v->vlfree;
+
+    struct bv_scene_obj *np = bv_create_polygon(&ip->v, ip->type, ip->v.gv_prevMouseX, ip->v.gv_prevMouseY, s->free_scene_obj);
+
+    // Internal "creation" view is defined - now set the working view that s is
+    // using for normal operations.
+    np->s_v = s->s_v;
+
+    // Copy polygon geometry
+    struct bv_polygon *dp = (struct bv_polygon *)np->s_i_data;
+    bg_polygon_free(&dp->polygon);
+    bg_polygon_cpy(&dp->polygon, &ip->polygon);
+
+    // Have geometry, now copy visual settings
+    VMOVE(np->s_color, s->s_color);
+    BU_COLOR_CPY(&dp->fill_color, &ip->fill_color);
+    V2MOVE(dp->fill_dir, ip->fill_dir);
+    dp->fill_delta = ip->fill_delta;
+    dp->fill_flag = ip->fill_flag;
+
+    // Update scene obj vlist
+    bv_polygon_vlist(np);
+
+    // Set new name
+    bu_vls_init(&np->s_uuid);
+    bu_vls_sprintf(&np->s_uuid, "%s", nname);
+
+    // Return new object
+    return np;
 }
 
 /*
