@@ -638,8 +638,8 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s)
      * note that sin(alpha) is cos(90-alpha).
      */
 
-    VSET(A, a, 0, v->gv_data_vZ);
-    VSET(B, 0, b, v->gv_data_vZ);
+    VSET(A, a, 0, 0);
+    VSET(B, 0, b, 0);
 
     /* use a variable number of segments based on the size of the
      * circle being created so small circles have few segments and
@@ -669,6 +669,11 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s)
 	fastf_t sina = sin(n * arc * DEG2RAD);
 
 	VJOIN2(ellout, p->prev_point, cosa, A, sina, B);
+
+	// Note - don't set Z until after elliptical point is calculated -
+	// if we set it beforehand we get ellipses not in the view plane.
+	ellout[Z] = v->gv_data_vZ;
+
 	// Use the polygon's view context for actually adding the points
 	MAT4X3PNT(gpp->contour[0].point[n], p->v.gv_view2model, ellout);
     }
