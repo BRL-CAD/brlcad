@@ -324,7 +324,8 @@ bv_append_polygon_pt(struct bv_scene_obj *s)
 }
 
 // NOTE: This is a naive brute force search for the closest edge at the
-// moment...
+// moment...  Would be better for repeated sampling of relatively static
+// scenes to build an RTree first...
 struct bv_scene_obj *
 bv_select_polygon(struct bu_ptbl *objs, struct bview *v)
 {
@@ -346,11 +347,15 @@ bv_select_polygon(struct bu_ptbl *objs, struct bview *v)
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(objs, i);
 	if (s->s_type_flags & BV_POLYGONS) {
 	    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-
 	    for (size_t j = 0; j < p->polygon.num_contours; j++) {
 		struct bg_poly_contour *c = &p->polygon.contour[j];
 		for (size_t k = 0; k < c->num_points; k++) {
-		    double dcand = DIST_PNT_PNT_SQ(c->point[k], m_pt);
+		    double dcand;
+		    if (k < c->num_points - 1) {
+			dcand = bg_distsq_lseg3_pt(NULL, c->point[k], c->point[k+1], m_pt);
+		    } else {
+			dcand = bg_distsq_lseg3_pt(NULL, c->point[k], c->point[0], m_pt);
+		    }
 		    if (dcand < dist_min_sq) {
 			dist_min_sq = dcand;
 			closest = s;
