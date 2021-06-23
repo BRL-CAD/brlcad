@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2021-XX-XX  Release 7.32.4                                     ---
 ----------------------------------------------------------------------
 
+* Added -idn search filter for finding identity matrices - Cliff Yapp
 * fixed MGED handling of long running subprocesses in script mode
         - Cliff Yapp, Sean Morrison
 * improve documentation for bot modes in bot and search - Cliff Yapp
