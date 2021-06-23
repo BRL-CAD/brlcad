@@ -183,9 +183,10 @@ struct push_state {
     /* Database information */
     struct rt_wdb *wdbp = RT_WDB_NULL;
 
-    /* Container for finalized database objects, used to assemble and
+    /* Containers for finalized database objects, used to assemble and
      * store them prior to the database writing step. */
     std::map<struct directory *, struct rt_db_internal *> updated;
+    std::map<struct directory *, struct rt_db_internal *> added;
 };
 
 /* Tree walks terminate at leaves.  However, what constitutes a leaf is not always
@@ -837,12 +838,13 @@ tree_update_walk(
 		BU_PUT(in, struct rt_db_internal);
 		return;
 	    }
+	    s->added[dp] = in;
 	} else {
 	    // We're editing the existing tree - reuse dp
 	    dp = dpi.dp;
+	    s->updated[dp] = in;
 	}
 
-	s->updated[dp] = in;
 
     } else {
 
@@ -940,14 +942,16 @@ tree_update_walk(
 	    }
 	    if (s->verbosity > 1 && s->msgs)
 		bu_vls_printf(s->msgs, "Write solid %s contents\n", dpi.iname.c_str());
+
+	    s->added[dp] = in;
 	} else {
 	    if (s->verbosity > 1 && s->msgs)
 		bu_vls_printf(s->msgs, "Write solid %s contents\n", dpi.dp->d_namep);
 
 	    dp = dpi.dp;
+	    s->updated[dp] = in;
 	}
 
-	s->updated[dp] = in;
 
     }
 }
@@ -1356,6 +1360,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
 	}
+	for (uf_it = s.added.begin(); uf_it != s.updated.end(); uf_it++) {
+	    struct rt_db_internal *in = uf_it->second;
+	    rt_db_free_internal(in);
+	    BU_PUT(in, struct rt_db_internal);
+	    db_dirdelete(gedp->ged_wdbp->dbip, uf_it->first);
+	}
 	return GED_ERROR;
     }
 
@@ -1376,6 +1386,20 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->wdb_resp) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
+	}
+	rt_db_free_internal(in);
+	BU_PUT(in, struct rt_db_internal);
+    }
+    for (u_it = s.added.begin(); u_it != s.added.end(); u_it++) {
+	struct directory *dp = u_it->first;
+	if (s.verbosity > 4) {
+	    bu_log("Adding %s to database\n", dp->d_namep);
+	}
+	struct rt_db_internal *in = u_it->second;
+	if (!s.dry_run) {
+	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->wdb_resp) < 0) {
+		bu_log("Unable to store %s to the database", dp->d_namep);
+	    }
 	} else {
 	    // Delete the directory pointers we set up - dry run, so we're not
 	    // actually creating the objects.
@@ -1389,46 +1413,48 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // validation check.
     s.valid_push = true;
     s.final_check = true;
-    for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
-	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
-	struct db_full_path *dfp;
-	BU_GET(dfp, struct db_full_path);
-	db_full_path_init(dfp);
-	db_add_node_to_full_path(dfp, dp);
-	validate_walk(dbip, dfp, &s);
-	db_free_full_path(dfp);
-	BU_PUT(dfp, struct db_full_path);
-    }
-    if (!s.valid_push) {
-	bu_vls_printf(gedp->ged_result_str, "failed to generate one or more objects listed in pushed trees.");
-	return GED_ERROR;
-    }
+    if (!s.dry_run) {
+	for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
+	    struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
+	    struct db_full_path *dfp;
+	    BU_GET(dfp, struct db_full_path);
+	    db_full_path_init(dfp);
+	    db_add_node_to_full_path(dfp, dp);
+	    validate_walk(dbip, dfp, &s);
+	    db_free_full_path(dfp);
+	    BU_PUT(dfp, struct db_full_path);
+	}
+	if (!s.valid_push) {
+	    bu_vls_printf(gedp->ged_result_str, "failed to generate one or more objects listed in pushed trees.");
+	    return GED_ERROR;
+	}
 
-    // Writing done - update nref again to reflect changes
-    db_update_nref(dbip, &rt_uniresource);
+	// Writing done - update nref again to reflect changes
+	db_update_nref(dbip, &rt_uniresource);
 
-    // Repeat the db_ls call and verify it is consistent.
-    struct directory **final_paths;
-    int final_tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &final_paths);
-    std::set<std::string> tops2;
-    for (int i = 0; i < final_tops_cnt; i++) {
-	tops2.insert(std::string(final_paths[i]->d_namep));
-    }
-    bu_free(final_paths, "free db_ls output");
+	// Repeat the db_ls call and verify it is consistent.
+	struct directory **final_paths;
+	int final_tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &final_paths);
+	std::set<std::string> tops2;
+	for (int i = 0; i < final_tops_cnt; i++) {
+	    tops2.insert(std::string(final_paths[i]->d_namep));
+	}
+	bu_free(final_paths, "free db_ls output");
 
-    // Report any differences
-    std::set<std::string> removed_tops, added_tops;
-    std::set_difference(tops1.begin(), tops1.end(), tops2.begin(), tops2.end(), std::inserter(removed_tops, removed_tops.end()));
-    std::set_difference(tops2.begin(), tops2.end(), tops1.begin(), tops1.end(), std::inserter(added_tops, added_tops.end()));
-    for (s_it = removed_tops.begin(); s_it != removed_tops.end(); s_it++) {
-	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s is no longer a tops object\n", (*s_it).c_str());
-    }
-    for (s_it = added_tops.begin(); s_it != added_tops.end(); s_it++) {
-	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s is now a tops object\n", (*s_it).c_str());
-    }
+	// Report any differences
+	std::set<std::string> removed_tops, added_tops;
+	std::set_difference(tops1.begin(), tops1.end(), tops2.begin(), tops2.end(), std::inserter(removed_tops, removed_tops.end()));
+	std::set_difference(tops2.begin(), tops2.end(), tops1.begin(), tops1.end(), std::inserter(added_tops, added_tops.end()));
+	for (s_it = removed_tops.begin(); s_it != removed_tops.end(); s_it++) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: object %s is no longer a tops object\n", (*s_it).c_str());
+	}
+	for (s_it = added_tops.begin(); s_it != added_tops.end(); s_it++) {
+	    bu_vls_sprintf(gedp->ged_result_str, "Error: object %s is now a tops object\n", (*s_it).c_str());
+	}
 
-    if (removed_tops.size() || added_tops.size()) {
-	return GED_ERROR;
+	if (removed_tops.size() || added_tops.size()) {
+	    return GED_ERROR;
+	}
     }
 
     return GED_OK;
