@@ -223,39 +223,11 @@ end:
 	++j;
     }
 
-    /* Construct an appropriate bv from the sketch's
-     * 3D info so we can snap to it. autoview, then dir.
-     * TODO - this needs improvement... */
-    struct bview *v = &p->v;
-    bv_init(v);
-    vect_t center = VINIT_ZERO;
-    vect_t min, max;
-    VSETALL(min, -dmax);
-    VSETALL(max, dmax);
-    vect_t radial;
-    VADD2SCALE(center, max, min, 0.5);
-    VSUB2(radial, max, center);
-    if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
-          VSETALL(radial, 1.0);
-    MAT_IDN(v->gv_center);
-    MAT_DELTAS_VEC_NEG(v->gv_center, center);
-    v->gv_scale = radial[X];
-    V_MAX(v->gv_scale, radial[Y]);
-    V_MAX(v->gv_scale, radial[Z]);
-    v->gv_size = 2.0 * v->gv_scale;
-    v->gv_isize = 1.0 / v->gv_size;
-    bv_update(v);
-
-    vect_t snorm;
-    VCROSS(snorm, sketch_ip->u_vec, sketch_ip->v_vec);
-    AZEL_FROM_V3DIR(p->v.gv_aet[0], p->v.gv_aet[1], snorm);
-    _sketch_mat_aet(&p->v);
-    bv_update(&p->v);
-
     /* Clean up */
     bu_free((void *)all_segment_nodes, "all_segment_nodes");
 
     // check attributes for visual properties
+    int have_view = 1;
     struct bu_attribute_value_set lavs;
     bu_avs_init_empty(&lavs);
     if (!db5_get_attributes(dbip, &lavs, dp)) {
@@ -304,11 +276,93 @@ end:
 	if (BU_STR_EQUAL(val, "GENERAL")) {
 	    p->type = BV_POLYGON_GENERAL;
 	}
+
+	// See if we have a stored view
+	if (have_view) {
+	    val = bu_avs_get(&lavs, "VIEWSCALE");
+	    if (val) {
+		bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&p->v.gv_scale);
+	    } else {
+		have_view = 0;
+	    }
+	}
+	if (have_view) {
+	    val = bu_avs_get(&lavs, "ROTATION");
+	    if (val) {
+		quat_t quat;
+		char *av[4];
+		char *lp = bu_strdup(val);
+		if (bu_argv_from_string(av, 4, lp) != 4) {
+		    have_view = 0;
+		} else {
+		    bu_opt_fastf_t(NULL, 1, (const char **)&av[0], (void *)&quat[0]);
+		    bu_opt_fastf_t(NULL, 1, (const char **)&av[1], (void *)&quat[1]);
+		    bu_opt_fastf_t(NULL, 1, (const char **)&av[2], (void *)&quat[2]);
+		    bu_opt_fastf_t(NULL, 1, (const char **)&av[3], (void *)&quat[3]);
+		    quat_quat2mat(p->v.gv_rotation, quat);
+		}
+		bu_free(lp, "val cpy");
+	    } else {
+		have_view = 0;
+	    }
+	}
+	if (have_view) {
+	    val = bu_avs_get(&lavs, "CENTER");
+	    if (val) {
+		quat_t quat;
+		char *av[4];
+		char *lp = bu_strdup(val);
+		if (bu_argv_from_string(av, 4, lp) != 4) {
+		    have_view = 0;
+		} else {
+		    bu_opt_fastf_t(NULL, 1, (const char **)&av[0], (void *)&quat[0]);
+		    bu_opt_fastf_t(NULL, 1, (const char **)&av[1], (void *)&quat[1]);
+		    bu_opt_fastf_t(NULL, 1, (const char **)&av[2], (void *)&quat[2]);
+		    bu_opt_fastf_t(NULL, 1, (const char **)&av[3], (void *)&quat[3]);
+		    quat_quat2mat(p->v.gv_center, quat);
+		}
+		bu_free(lp, "val cpy");
+	    } else {
+		have_view = 0;
+	    }
+	}
     }
     bu_avs_free(&lavs);
 
+    /* If we didn't have a saved version, construct an appropriate bv from the
+     * sketch's 3D info so we can snap to it. autoview, then dir.  TODO - this
+     * needs improvement... */
+    if (!have_view) {
+	struct bview *v = &p->v;
+	bv_init(v);
+	vect_t center = VINIT_ZERO;
+	vect_t min, max;
+	VSETALL(min, -dmax);
+	VSETALL(max, dmax);
+	vect_t radial;
+	VADD2SCALE(center, max, min, 0.5);
+	VSUB2(radial, max, center);
+	if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
+	    VSETALL(radial, 1.0);
+	MAT_IDN(v->gv_center);
+	MAT_DELTAS_VEC_NEG(v->gv_center, center);
+	v->gv_scale = radial[X];
+	V_MAX(v->gv_scale, radial[Y]);
+	V_MAX(v->gv_scale, radial[Z]);
+	v->gv_size = 2.0 * v->gv_scale;
+	v->gv_isize = 1.0 / v->gv_size;
+	bv_update(v);
+
+	vect_t snorm;
+	VCROSS(snorm, sketch_ip->u_vec, sketch_ip->v_vec);
+	AZEL_FROM_V3DIR(p->v.gv_aet[0], p->v.gv_aet[1], snorm);
+	_sketch_mat_aet(&p->v);
+    }
+
+    bv_update(&p->v);
+
     /* Have new polygon, now update view object vlist */
-    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
+    bv_polygon_vlist(s);
 
     rt_db_free_internal(&intern);
     return s;
@@ -456,6 +510,17 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
 		break;
 	}
 	bu_avs_add(&lavs, "POLYGON_TYPE", bu_vls_cstr(&val));
+	// Save view
+	bu_vls_sprintf(&val, "%.15e", p->v.gv_scale);
+	bu_avs_add(&lavs, "VIEWSCALE", bu_vls_cstr(&val));
+	quat_t rquat;
+	quat_mat2quat(rquat, p->v.gv_rotation);
+	bu_vls_sprintf(&val, "%.15e %.15e %.15e %.15e", V4ARGS(rquat));
+	bu_avs_add(&lavs, "ROTATION", bu_vls_cstr(&val));
+	quat_t cquat;
+	quat_mat2quat(cquat, p->v.gv_center);
+	bu_vls_sprintf(&val, "%.15e %.15e %.15e %.15e", V4ARGS(cquat));
+	bu_avs_add(&lavs, "CENTER", bu_vls_cstr(&val));
     }
     db5_update_attributes(dp, &lavs, dbip);
     bu_avs_free(&lavs);

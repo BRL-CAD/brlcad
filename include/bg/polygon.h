@@ -349,6 +349,9 @@ BG_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int typ
 #define BV_POLYGON_UPDATE_PT_APPEND 4
 BG_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s, int utype);
 
+// Update just the scene obj vlist, without altering the source polygon
+BG_EXPORT extern void bv_polygon_vlist(struct bv_scene_obj *s);
+
 // Find the closest polygon obj to a view's current x,y mouse points
 // TODO - this isn't correct yet - right now it's just checking distances
 // from verts, not from polygon edges

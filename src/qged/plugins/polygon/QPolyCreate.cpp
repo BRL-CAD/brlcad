@@ -297,18 +297,24 @@ QPolyCreate::do_import_sketch()
 	return;
     }
 
-    if (!import_name->text().length())
-	return;
+    // Stash a copy of the name immediately for use later - a data pointer to
+    // the QString isn't stable.
+    char *nname = bu_strdup(vname);
 
     // See if we've got a valid dp name
+    if (!import_name->text().length()) {
+	bu_free(nname, "name cpy");
+	return;
+    }
     char *sname = bu_strdup(import_name->text().toLocal8Bit().data());
     struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET);
     bu_free(sname, "name cpy");
-
-    if (dp == RT_DIR_NULL)
+    if (dp == RT_DIR_NULL) {
+	bu_free(nname, "name cpy");
 	return;
+    }
 
-    char *nname = bu_strdup(vname);
+    // Names are valid, dp is ready - try the sketch import
     p = db_sketch_to_scene_obj(nname, gedp->ged_wdbp->dbip, dp, gedp->ged_gvp, gedp->free_scene_obj);
     bu_free(nname, "name cpy");
     if (!p) {
