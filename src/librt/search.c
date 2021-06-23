@@ -119,6 +119,7 @@ static OPTION options[] = {
     { "-bool",      N_BOOL,         c_bool,	    O_ARGV },
     { "-depth",     N_DEPTH,        c_depth,        O_ARGV },
     { "-exec",      N_EXEC,         c_exec,         O_ARGVP},
+    { "-idn",       N_IDN,          c_idn,          O_ZERO },
     { "-iname",     N_INAME,        c_iname,        O_ARGV },
     { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
     { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
@@ -1591,6 +1592,44 @@ c_depth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
 
     newplan = palloc(N_DEPTH, f_depth, tbl);
     newplan->p_un._attr_data = pattern;
+    (*resultplan) = newplan;
+
+    return BRLCAD_OK;
+}
+
+
+/*
+ * -idn function --
+ *
+ * True if the matrix combining the object into its parent tree is an
+ * identity matrix.
+ */
+HIDDEN int
+f_idn(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *dbip, struct bu_ptbl *UNUSED(results))
+{
+    mat_t mat;
+    MAT_IDN(mat);
+    if (!db_path_to_mat(dbip, db_node->path, mat, DB_FULL_PATH_LEN(db_node->path), &rt_uniresource)) {
+	return 0;
+    }
+
+    mat_t imat;
+    MAT_IDN(imat);
+    const struct bn_tol mtol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    if (bn_mat_is_equal(mat, imat, &mtol)) {
+	return 1;
+    }
+
+    return 0;
+}
+
+
+HIDDEN int
+c_idn(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+{
+    struct db_plan_t *newplan;
+
+    newplan = palloc(N_IDN, f_idn, tbl);
     (*resultplan) = newplan;
 
     return BRLCAD_OK;
