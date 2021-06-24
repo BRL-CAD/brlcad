@@ -529,6 +529,48 @@ bv_scene_obj_bound(struct bv_scene_obj *sp)
     V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
 }
 
+fastf_t
+bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
+{
+    fastf_t vZ = 0.0;
+    int calc_mode = mode;
+    if (!s)
+	return vZ;
+
+    if (mode < 0)
+	calc_mode = 0;
+    if (mode > 1)
+	calc_mode = 1;
+
+    double calc_val = (calc_mode) ? -DBL_MAX : DBL_MAX;
+    int have_val = 0;
+    struct bv_vlist *tvp;
+    for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s->s_vlist))->l)) {
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
+	point_t *lpt = tvp->pt;
+	for (int l = 0; l < nused; l++, cmd++, lpt++) {
+	    vect_t vpt;
+	    MAT4X3PNT(vpt, v->gv_model2view, *lpt);
+	    if (calc_mode) {
+		if (vpt[Z] > calc_val) {
+		    calc_val = vpt[Z];
+		    have_val = 1;
+		}
+	    } else {
+		if (vpt[Z] < calc_val) {
+		    calc_val = vpt[Z];
+		    have_val = 1;
+		}
+	    }
+	}
+    }
+    if (have_val) {
+	vZ = calc_val;
+    }
+    return vZ;
+}
+
 /*
  * Local Variables:
  * tab-width: 8
