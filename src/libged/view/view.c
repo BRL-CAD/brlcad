@@ -423,20 +423,171 @@ _view_cmd_ypr(void *bs, int argc, const char **argv)
 }
 
 
+struct vZ_opt {
+    int set;
+    struct bu_vls vn;
+};
+
+static
+int vZ_opt_read(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    struct vZ_opt *vZ = (struct vZ_opt *)set_var;
+    vZ->set = 1;
+    if (bu_opt_vls(msg, argc, argv, (void *)&vZ->vn) == 1) {
+	return 1;
+    }
+    return 0;
+}
+
 int
 _view_cmd_vZ(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view [options] vZ [val]";
-    const char *purpose_string = "get/set view vZ";
+    const char *usage_string = "view [options] vZ [opts] [val]";
+    const char *purpose_string = "get/set/calc view data vZ value";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
 
-    argc--; argv++;
-
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+
+    int print_help = 0;
+    struct vZ_opt calc_near = { 0, BU_VLS_INIT_ZERO };
+    struct vZ_opt calc_far = { 0, BU_VLS_INIT_ZERO };
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help", "",       NULL,  &print_help, "Print help");
+    BU_OPT(d[1], "N", "near", "[obj]",  &vZ_opt_read,  &calc_near,  "Find vZ value of closest view obj vertex");
+    BU_OPT(d[2], "F", "far",  "[obj]",  &vZ_opt_read,  &calc_far,   "Find vZ value of furthest view obj vertex");
+    BU_OPT_NULL(d[3]);
+
+    // We know we're the vZ command - start processing args
+    argc--; argv++;
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+    argc = ac;
+
+    if (print_help || (calc_near.set && calc_far.set)) {
+	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage_string);
+	return GED_HELP;
+    }
+
+    int calc_mode = -1;
+    struct bu_vls calc_target = BU_VLS_INIT_ZERO;
+    if (calc_near.set) {
+	calc_mode = 0;
+	bu_vls_sprintf(&calc_target, "%s", bu_vls_cstr(&calc_near.vn));
+	bu_vls_free(&calc_near.vn);
+    }
+    if (calc_far.set) {
+	calc_mode = 1;
+	bu_vls_sprintf(&calc_target, "%s", bu_vls_cstr(&calc_far.vn));
+	bu_vls_free(&calc_far.vn);
+    }
+
+    if (calc_mode != -1) {
+	struct bview *v = gedp->ged_gvp;
+	if (bu_vls_strlen(&calc_target)) {
+	    // User has specified a view object to use - try to find it
+struct bv_scene_obj *wobj = NULL;
+	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+		if (!bu_vls_strcmp(&s->s_uuid, &calc_target)) {
+		    wobj = s;
+		    break;
+		}
+	    }
+	    if (!wobj) {
+		for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
+		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+		    if (bu_list_len(&cg->g->s_vlist)) {
+			if (!bu_vls_strcmp(&cg->g->s_name, &calc_target)) {
+			    wobj = cg->g;
+			    break;
+			}
+		    } else {
+			for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
+			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+			    if (!bu_vls_strcmp(&s->s_name, &calc_target)) {
+				wobj = s;
+				break;
+			    }
+			}
+		    }
+		}
+	    }
+	    if (wobj) {
+		fastf_t vZ = bv_vZ_calc(wobj, gedp->ged_gvp, calc_mode);
+		bu_vls_sprintf(gedp->ged_result_str, "%0.15f", vZ);
+		return GED_OK;
+	    } else {
+		bu_vls_sprintf(gedp->ged_result_str, "View object %s not found", bu_vls_cstr(&calc_target));
+		bu_vls_free(&calc_target);
+		return GED_ERROR;
+	    }
+	} else {
+	    // No specific view object to use - check all drawn
+	    // view objects.
+	    double vZ = (calc_mode) ? -DBL_MAX : DBL_MAX;
+	    int have_vz = 0;
+	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+		bu_log("Process %s\n", bu_vls_cstr(&s->s_uuid));
+		fastf_t calc_val = bv_vZ_calc(s, gedp->ged_gvp, calc_mode);
+		if (calc_mode) {
+		    if (calc_val > vZ) {
+			vZ = calc_mode;
+			have_vz = 1;
+		    }
+		} else {
+		    if (calc_val < vZ) {
+			vZ = calc_mode;
+			have_vz = 1;
+		    }
+		}
+	    }
+	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+		if (bu_list_len(&cg->g->s_vlist)) {
+		    bu_log("Process %s\n", bu_vls_cstr(&cg->g->s_name));
+		    fastf_t calc_val = bv_vZ_calc(cg->g, gedp->ged_gvp, calc_mode);
+		    if (calc_mode) {
+			if (calc_val > vZ) {
+			    vZ = calc_mode;
+			    have_vz = 1;
+			}
+		    } else {
+			if (calc_val < vZ) {
+			    vZ = calc_mode;
+			    have_vz = 1;
+			}
+		    }
+		} else {
+		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
+			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+			bu_log("Process %s\n", bu_vls_cstr(&s->s_name));
+			fastf_t calc_val = bv_vZ_calc(s, gedp->ged_gvp, calc_mode);
+			if (calc_mode) {
+			    if (calc_val > vZ) {
+				vZ = calc_mode;
+				have_vz = 1;
+			    }
+			} else {
+			    if (calc_val < vZ) {
+				vZ = calc_mode;
+				have_vz = 1;
+			    }
+			}
+		    }
+		}
+	    }
+	    if (have_vz) {
+		bu_vls_sprintf(gedp->ged_result_str, "%0.15f", vZ);
+	    }
+	}
+	return GED_OK;
+    }
+
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%g\n", gedp->ged_gvp->gv_data_vZ);

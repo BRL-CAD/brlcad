@@ -974,8 +974,10 @@ bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
 	}
     }
     if (have_val) {
-	MAT4X3PNT(d1, v->gv_model2view, d1);
-	vZ = d1[Z];
+	vect_t c;
+	VSCALE(c, nrml, VDOT(d1, nrml));
+	MAT4X3PNT(c, v->gv_model2view, c);
+	vZ = MAGNITUDE(c);
     }
     return vZ;
 }
