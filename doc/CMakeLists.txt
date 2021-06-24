@@ -213,7 +213,9 @@ CMAKEFILES(
   git/check.yml
   git/gitconfig
   git/gitk
+  git/git2gource.cpp
   git/gource.txt
+  git/gource.sh
   git/history.txt
   git/gitstats.txt
   git/mime_types.txt
