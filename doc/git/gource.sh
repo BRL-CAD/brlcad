@@ -23,7 +23,7 @@ echo "" >> input.log
 git log --pretty=format:user:%aN%n%ct --reverse --raw --encoding=UTF-8 --no-renames --no-show-signature --after=$STARTDATE >> input.log
 
 g++ -o git2gource git2gource.cpp
-git2gource input.log > gource.log
+./git2gource input.log > gource.log
 #gource gource.log
 
 # Local Variables:
