@@ -38,35 +38,45 @@ CADViewSettings::CADViewSettings(QWidget *, struct bview **v)
     fbo_ckbx = new QCheckBox("FB Overlay");
     fps_ckbx = new QCheckBox("FPS");
     grid_ckbx = new QCheckBox("Grid");
-    i_ckbx = new QCheckBox("Independent View");
     mdlaxes_ckbx = new QCheckBox("Model Axes");
     params_ckbx = new QCheckBox("Parameters");
     scale_ckbx = new QCheckBox("Scale");
     viewaxes_ckbx = new QCheckBox("View Axes");
     wl->addWidget(a_ckbx);
-    QObject::connect(a_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(a_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(adc_ckbx);
-    QObject::connect(adc_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(adc_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(cdot_ckbx);
-    QObject::connect(cdot_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(cdot_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(fb_ckbx);
-    QObject::connect(fb_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(fb_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(fbo_ckbx);
-    QObject::connect(fbo_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(fbo_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(fps_ckbx);
-    QObject::connect(fps_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(fps_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(grid_ckbx);
-    QObject::connect(grid_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
-    wl->addWidget(i_ckbx);
-    QObject::connect(i_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(grid_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(mdlaxes_ckbx);
-    QObject::connect(mdlaxes_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(mdlaxes_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(params_ckbx);
-    QObject::connect(params_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(params_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(scale_ckbx);
-    QObject::connect(scale_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(scale_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
     wl->addWidget(viewaxes_ckbx);
-    QObject::connect(viewaxes_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update);
+    QObject::connect(viewaxes_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
+
+    QWidget *zw = new QWidget();
+    QHBoxLayout *zl = new QHBoxLayout();
+    zl->setSpacing(0);
+    zl->setContentsMargins(1,1,1,1);
+    QLabel *zlbl = new QLabel("Data vZ");
+    vZ = new QLineEdit(QString("0"));
+    QObject::connect(vZ, &QLineEdit::editingFinished, this, &CADViewSettings::view_update);
+    zl->addWidget(zlbl);
+    zl->addWidget(vZ);
+    zw->setLayout(zl);
+    wl->addWidget(zw);
+
     this->setLayout(wl);
 }
 
@@ -81,7 +91,13 @@ CADViewSettings::checkbox_update()
 }
 
 void
-CADViewSettings::view_update(int)
+CADViewSettings::view_update()
+{
+    view_refresh(m_v);
+}
+
+void
+CADViewSettings::view_update_int(int)
 {
     view_refresh(m_v);
 }
@@ -148,14 +164,6 @@ CADViewSettings::checkbox_refresh(struct bview **nv)
 	}
 	grid_ckbx->blockSignals(false);
 
-	i_ckbx->blockSignals(true);
-	if (v->independent) {
-	    i_ckbx->setCheckState(Qt::Checked);
-	} else {
-	    i_ckbx->setCheckState(Qt::Unchecked);
-	}
-	i_ckbx->blockSignals(false);
-
 	mdlaxes_ckbx->blockSignals(true);
 	if (v->gv_s->gv_model_axes.draw) {
 	    mdlaxes_ckbx->setCheckState(Qt::Checked);
@@ -187,6 +195,10 @@ CADViewSettings::checkbox_refresh(struct bview **nv)
 	    viewaxes_ckbx->setCheckState(Qt::Unchecked);
 	}
 	viewaxes_ckbx->blockSignals(false);
+
+	vZ->blockSignals(true);
+	vZ->setText(QVariant(v->gv_data_vZ).toString());
+	vZ->blockSignals(false);
 
     }
 }
@@ -231,11 +243,6 @@ CADViewSettings::view_refresh(struct bview **nv)
 	} else {
 	    v->gv_s->gv_grid.draw = 0;
 	}
-	if (i_ckbx->checkState() == Qt::Checked) {
-	    v->independent = 1;
-	} else {
-	    v->independent = 0;
-	}
 	if (mdlaxes_ckbx->checkState() == Qt::Checked) {
 	    v->gv_s->gv_model_axes.draw = 1;
 	} else {
@@ -256,6 +263,8 @@ CADViewSettings::view_refresh(struct bview **nv)
 	} else {
 	    v->gv_s->gv_view_axes.draw = 0;
 	}
+
+	v->gv_data_vZ = (fastf_t)vZ->text().toDouble();
 
 	emit settings_changed(m_v);
     }

@@ -24,6 +24,8 @@
 #include <QWidget>
 #include <QGroupBox>
 #include <QCheckBox>
+#include <QLabel>
+#include <QLineEdit>
 #include "bv/defines.h"
 
 class CADViewSettings : public QWidget
@@ -41,12 +43,12 @@ class CADViewSettings : public QWidget
 	QCheckBox *fbo_ckbx;
 	QCheckBox *fps_ckbx;
 	QCheckBox *grid_ckbx;
-	QCheckBox *i_ckbx;
 	QCheckBox *mdlaxes_ckbx;
 	QCheckBox *params_ckbx;
 	QCheckBox *scale_ckbx;
 	QCheckBox *viewaxes_ckbx;
 
+	QLineEdit *vZ;
     signals:
 	void settings_changed(struct bview **);
 
@@ -54,7 +56,8 @@ class CADViewSettings : public QWidget
 	void checkbox_refresh(struct bview **);
 	void checkbox_update();
 	void view_refresh(struct bview **);
-	void view_update(int);
+	void view_update_int(int);
+	void view_update();
 
     private:
 	struct bview **m_v = NULL;
