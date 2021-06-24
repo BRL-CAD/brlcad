@@ -370,6 +370,8 @@ BG_EXPORT extern struct bv_scene_obj *bg_dup_view_polygon(const char *nname, str
 // + : objs[i] + p  (intersects p with objs[i])
 BG_EXPORT extern int bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op, int merge);
 
+BG_EXPORT extern fastf_t bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode);
+
 __END_DECLS
 
 #endif  /* BG_POLYGON_H */

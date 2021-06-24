@@ -35,6 +35,7 @@
 #include "bv/defines.h"
 #include "bv/util.h"
 #include "bg/lseg.h"
+#include "bg/plane.h"
 #include "bg/polygon.h"
 
 #define GET_BV_SCENE_OBJ(p, fp) { \
@@ -919,6 +920,64 @@ bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
 
     // Return new object
     return np;
+}
+
+fastf_t
+bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
+{
+    fastf_t vZ = 0.0;
+    int calc_mode = mode;
+    if (!s)
+	return vZ;
+
+    if (mode < 0)
+	calc_mode = 0;
+    if (mode > 1)
+	calc_mode = 1;
+
+    vect_t nrml;
+    point_t pt;
+    VSET(pt, 0, 0, 0);
+    MAT4X3PNT(pt, v->gv_view2model, pt);
+    VSET(nrml, 0, 0, 1);
+    MAT4X3PNT(nrml, v->gv_view2model, nrml);
+    VUNITIZE(nrml);
+    plane_t vplane;
+    bg_plane_pt_nrml(&vplane, pt, nrml);
+    int have_val = 0;
+    vect_t d1;
+    double calc_val = (calc_mode) ? -DBL_MAX : DBL_MAX;
+    struct bv_vlist *tvp;
+    for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s->s_vlist))->l)) {
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
+	point_t *lpt = tvp->pt;
+	for (int l = 0; l < nused; l++, cmd++, lpt++) {
+	    fastf_t pu, pv;
+	    point_t cpt;
+	    bg_plane_closest_pt(&pu, &pv, vplane, *lpt);
+	    bg_plane_pt_at(&cpt, vplane, pu, pv);
+	    double pdistsq = DIST_PNT_PNT_SQ(cpt, *lpt);
+	    if (calc_mode) {
+		if (pdistsq > calc_val) {
+		    VMOVE(d1, *lpt);
+		    calc_val = pdistsq;
+		    have_val = 1;
+		}
+	    } else {
+		if (pdistsq < calc_val) {
+		    VMOVE(d1, *lpt);
+		    calc_val = pdistsq;
+		    have_val = 1;
+		}
+	    }
+	}
+    }
+    if (have_val) {
+	MAT4X3PNT(d1, v->gv_model2view, d1);
+	vZ = d1[Z];
+    }
+    return vZ;
 }
 
 /*
