@@ -935,49 +935,31 @@ bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
     if (mode > 1)
 	calc_mode = 1;
 
-    vect_t nrml;
-    point_t pt;
-    VSET(pt, 0, 0, 0);
-    MAT4X3PNT(pt, v->gv_view2model, pt);
-    VSET(nrml, 0, 0, 1);
-    MAT4X3PNT(nrml, v->gv_view2model, nrml);
-    VUNITIZE(nrml);
-    plane_t vplane;
-    bg_plane_pt_nrml(&vplane, pt, nrml);
-    int have_val = 0;
-    vect_t d1;
     double calc_val = (calc_mode) ? -DBL_MAX : DBL_MAX;
+    int have_val = 0;
     struct bv_vlist *tvp;
     for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s->s_vlist))->l)) {
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
 	point_t *lpt = tvp->pt;
 	for (int l = 0; l < nused; l++, cmd++, lpt++) {
-	    fastf_t pu, pv;
-	    point_t cpt;
-	    bg_plane_closest_pt(&pu, &pv, vplane, *lpt);
-	    bg_plane_pt_at(&cpt, vplane, pu, pv);
-	    double pdistsq = DIST_PNT_PNT_SQ(cpt, *lpt);
+	    vect_t vpt;
+	    MAT4X3PNT(vpt, v->gv_model2view, *lpt);
 	    if (calc_mode) {
-		if (pdistsq > calc_val) {
-		    VMOVE(d1, *lpt);
-		    calc_val = pdistsq;
+		if (vpt[Z] > calc_val) {
+		    calc_val = vpt[Z];
 		    have_val = 1;
 		}
 	    } else {
-		if (pdistsq < calc_val) {
-		    VMOVE(d1, *lpt);
-		    calc_val = pdistsq;
+		if (vpt[Z] < calc_val) {
+		    calc_val = vpt[Z];
 		    have_val = 1;
 		}
 	    }
 	}
     }
     if (have_val) {
-	vect_t c;
-	VSCALE(c, nrml, VDOT(d1, nrml));
-	MAT4X3PNT(c, v->gv_model2view, c);
-	vZ = MAGNITUDE(c);
+	vZ = calc_val;
     }
     return vZ;
 }
