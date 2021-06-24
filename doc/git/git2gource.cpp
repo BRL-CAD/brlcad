@@ -60,7 +60,7 @@ main(int argc, const char *argv[])
 	}
 	std::string s1 = sfile.substr(37, std::string::npos);
 	std::string mode = s1.substr(0, 1);
-	std::string path = s1.substr(3, std::string::npos);
+	std::string path = s1.substr(2, std::string::npos);
 	std::cout << timestamp << "|" << author << "|" << mode << "|" << path << "\n";
     }
 
