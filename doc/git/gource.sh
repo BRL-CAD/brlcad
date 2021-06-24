@@ -24,7 +24,7 @@ git log --pretty=format:user:%aN%n%ct --reverse --raw --encoding=UTF-8 --no-rena
 
 g++ -o git2gource git2gource.cpp
 ./git2gource input.log > gource.log
-#gource gource.log
+#gource --date-format "%F" --key --1920x1080 --hide filenames,mouse,progress --file-idle-time 0 --max-files 0 --highlight-users --multi-sampling --auto-skip-seconds .1 -s 0.6 gource.log
 
 # Local Variables:
 # tab-width: 8
