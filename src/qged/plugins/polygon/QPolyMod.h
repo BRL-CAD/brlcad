@@ -59,6 +59,9 @@ class QPolyMod : public QWidget
 	QComboBox *csg_modes;
 	QPushButton *apply_bool;
 
+	// Align view to selected polygon
+	QPushButton *viewsnap_poly;
+
 	// Removal
 	QPushButton *remove_poly;
 
@@ -78,6 +81,7 @@ class QPolyMod : public QWidget
 	void select(const QString &t);
 	void clear_pnt_selection(bool);
 	void apply_bool_op();
+	void align_to_poly();
 	void delete_poly();
 
 	void sketch_sync_bool(bool);

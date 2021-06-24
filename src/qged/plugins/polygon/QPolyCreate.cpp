@@ -686,6 +686,11 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	return true;
     }
 
+    if (m_e->type() == QEvent::MouseButtonPress) {
+	// We also don't want other stray mouse clicks to do something surprising
+	return true;
+    }
+
     // During initial add/creation of non-general polygons, mouse movement
     // adjusts the shape
     if (m_e->type() == QEvent::MouseMove) {

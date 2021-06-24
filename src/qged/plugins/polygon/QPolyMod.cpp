@@ -138,6 +138,16 @@ QPolyMod::QPolyMod()
     l->addWidget(boolBox);
 
 
+    QGroupBox *viewsnapBox = new QGroupBox("Align View to Polygon");
+    QVBoxLayout *viewsnap_gl = new QVBoxLayout;
+    viewsnap_gl->setAlignment(Qt::AlignTop);
+    viewsnap_poly = new QPushButton("Align");
+    viewsnap_gl->addWidget(viewsnap_poly);
+    QObject::connect(viewsnap_poly, &QPushButton::released, this, &QPolyMod::align_to_poly);
+    viewsnapBox->setLayout(viewsnap_gl);
+    l->addWidget(viewsnapBox);
+
+
     QGroupBox *removeBox = new QGroupBox("Remove Polygon");
     QVBoxLayout *remove_gl = new QVBoxLayout;
     remove_gl->setAlignment(Qt::AlignTop);
@@ -492,6 +502,24 @@ QPolyMod::apply_bool_op()
 }
 
 void
+QPolyMod::align_to_poly()
+{
+    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    if (!gedp) {
+	return;
+    }
+
+    if (!p)
+	return;
+
+    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+    bv_sync(gedp->ged_gvp, &ip->v);
+    bv_update(gedp->ged_gvp);
+
+    emit view_updated(&gedp->ged_gvp);
+}
+
+void
 QPolyMod::delete_poly()
 {
     struct ged *gedp = ((CADApp *)qApp)->gedp;
@@ -804,6 +832,11 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 
 	// When we're dealing with polygons stray left clicks shouldn't zoom - just
 	// consume them if we're not using them above.
+	return true;
+    }
+
+    if (m_e->type() == QEvent::MouseButtonPress) {
+	// We also don't want other stray mouse clicks to do something surprising
 	return true;
     }
 
