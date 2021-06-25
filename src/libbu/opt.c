@@ -1254,21 +1254,18 @@ bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *vec)
 	    if (msg) {
 		bu_vls_sprintf(msg, "Not a number: %s.\n", argv[0]);
 	    }
-	    bu_free(str1, "free tmp str");
 	    return -1;
 	}
 	if (bu_opt_fastf_t(msg, 1, &argv[1], &v2) == -1) {
 	    if (msg) {
 		bu_vls_sprintf(msg, "Not a number: %s.\n", argv[1]);
 	    }
-	    bu_free(str1, "free tmp str");
 	    return -1;
 	}
 	if (bu_opt_fastf_t(msg, 1, &argv[2], &v3) == -1) {
 	    if (msg) {
 		bu_vls_sprintf(msg, "Not a number: %s.\n", argv[2]);
 	    }
-	    bu_free(str1, "free tmp str");
 	    return -1;
 	}
 	/* If we got here, 3 did the job */
