@@ -444,7 +444,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view [options] vZ [opts] [val]";
+    const char *usage_string = "view [options] vZ [opts] [val|x y z]";
     const char *purpose_string = "get/set/calc view data vZ value";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return GED_OK;
@@ -586,20 +586,36 @@ struct bv_scene_obj *wobj = NULL;
     }
 
 
-    if (argc != 1) {
+    if (!argc) {
 	bu_vls_printf(gedp->ged_result_str, "%g\n", gedp->ged_gvp->gv_data_vZ);
 	return GED_OK;
     }
 
-    fastf_t val;
-    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+    // First, see if it's a direct low level view space Z value
+    if (argc == 1) {
+	fastf_t val;
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) == 1) {
+	    gedp->ged_gvp->gv_data_vZ = val;
+	    return GED_OK;
+	}
     }
 
-    gedp->ged_gvp->gv_data_vZ = val;
+    // If not, try it as a model space point
+    if (argc == 1 || argc == 3) {
+	vect_t mpt;
+	int acnt = bu_opt_vect_t(NULL, argc, (const char **)argv, (void *)&mpt);
+	if (acnt != 1 && acnt != 3) {
+	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
+	    return GED_ERROR;
+	}
+	vect_t vpt;
+	MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, mpt);
+	gedp->ged_gvp->gv_data_vZ = vpt[Z];
+	return GED_OK;
+    }
 
-    return GED_OK;
+    bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage_string);
+    return GED_ERROR;
 }
 int
 _view_cmd_width(void *ds, int argc, const char **argv)

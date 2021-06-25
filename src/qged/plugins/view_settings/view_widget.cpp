@@ -22,6 +22,11 @@
  */
 
 #include <QVBoxLayout>
+
+#include "bu/opt.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+
 #include "view_widget.h"
 
 CADViewSettings::CADViewSettings(QWidget *, struct bview **v)
@@ -264,7 +269,25 @@ CADViewSettings::view_refresh(struct bview **nv)
 	    v->gv_s->gv_view_axes.draw = 0;
 	}
 
-	v->gv_data_vZ = (fastf_t)vZ->text().toDouble();
+	char *vZstr = bu_strdup(vZ->text().toLocal8Bit().data());
+	fastf_t val;
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&vZstr, (void *)&val) == 1) {
+	    v->gv_data_vZ = val;
+	} else {
+	    char **av = (char **)bu_calloc(strlen(vZstr) + 1, sizeof(char *), "argv array");
+	    int nargs = bu_argv_from_string(av, strlen(vZstr), vZstr);
+	    if (nargs) {
+		vect_t mpt;
+		int acnt = bu_opt_vect_t(NULL, nargs, (const char **)av, (void *)&mpt);
+		if (acnt == 1 || acnt == 3) {
+		    vect_t vpt;
+		    MAT4X3PNT(vpt, v->gv_model2view, mpt);
+		    v->gv_data_vZ = vpt[Z];
+		}
+	    }
+	    bu_free(av, "argv array");
+	}
+	bu_free(vZstr, "vZstr cpy");
 
 	emit settings_changed(m_v);
     }
