@@ -44,6 +44,7 @@ set(qtcad_srcs
   QFlowLayout.cpp
   QKeyVal.cpp
   QToolPalette.cpp
+  QgModel.cpp
   QtAppExecDialog.cpp
   QtSW.cpp
   QtCADQuad.cpp
@@ -61,6 +62,7 @@ set(qtcad_moc_headers
   ${QTCAD_HDR_DIR}/QFlowLayout.h
   ${QTCAD_HDR_DIR}/QKeyVal.h
   ${QTCAD_HDR_DIR}/QToolPalette.h
+  ${QTCAD_HDR_DIR}/QgModel.h
   ${QTCAD_HDR_DIR}/QtAppExecDialog.h
   ${QTCAD_HDR_DIR}/QtCADTree.h
   ${QTCAD_HDR_DIR}/QtCADView.h

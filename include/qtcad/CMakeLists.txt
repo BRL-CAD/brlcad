@@ -2,6 +2,7 @@ set(qtcad_headers
   QAccordion.h
   QColorRGB.h
   QKeyVal.h
+  QgModel.h
   QtAppExecDialog.h
   QtCADQuad.h
   QtCADTree.h
