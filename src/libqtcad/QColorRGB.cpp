@@ -83,8 +83,9 @@ QColorRGB::set_color_from_button()
 
 	// Sync bu_color
 	QString colstr = rgbtext->text();
-	const char *ccstr = colstr.toLocal8Bit();
-	bu_opt_color(NULL, 1, &ccstr, (void *)&bc);
+	char *ccstr = bu_strdup(colstr.toLocal8Bit().data());
+	bu_opt_color(NULL, 1, (const char **)&ccstr, (void *)&bc);
+	bu_free(ccstr, "ccstr");
 
 	emit color_changed();
     }
