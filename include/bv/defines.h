@@ -397,14 +397,6 @@ struct bview {
     mat_t         gv_view2model;
     mat_t         gv_pmat;           /**< @brief  perspective matrix */
 
-    /* data_vZ is a bit of an oddity.  In an orthogonal view, a wireframe
-     * may be very far away from the camera eye point or right in
-     * front of it, and its appearance will be the same.
-     *
-     * TODO:  data_vZ is used to define where relative to the view plane data
-     * will be drawn (is this right?). */
-    fastf_t       gv_data_vZ;
-
     /* Keyboard/mouse info */
     fastf_t       gv_prevMouseX;
     fastf_t       gv_prevMouseY;
@@ -452,6 +444,27 @@ struct bview {
 
     /* Container for reusing bv_scene_obj allocations */
     struct bv_scene_obj *free_scene_obj;
+
+    /*
+     * gv_data_vZ is an internal parameter used by commands creating and
+     * manipulating data objects.  Geometrically, it is a magnitude in the
+     * direction of the Z vector of the view plane. Functionally, what it
+     * allows the code to do is define a 2D plane embedded in in 3D space that
+     * is offset from but parallel to the view plane - in an orthogonal view
+     * this corresponds to objects drawn in that plane being "above" or "below"
+     * objects defined within the view plane itself.
+     *
+     * Visually, objects drawn in this fashion in orthogonal views will be
+     * indistinguishable regardless of their vZ offset - it is only when the
+     * view is rotated that the user will be able to see the "above" and
+     * "below" effect of creating view objects with differing vZ values.
+     *
+     * Users will generally not want to set gv_data_vZ directly, as it is a view
+     * space value and may not behave intuitively.  Commands are defined to
+     * calculate vZ values based on model spaces inputs, and these should be
+     * used to generate the value supplied to gv_data_vZ.
+     */
+    fastf_t       gv_data_vZ;
 
 
     // libtclcad data
