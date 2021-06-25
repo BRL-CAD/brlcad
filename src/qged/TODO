@@ -79,7 +79,7 @@ x  15.  Qt .g tree hierarchy widget into libqtcad
        geometry in the .g file.  However, has been moved to libqtcad so this
        item is done.
 
-16.  Qt palette widget - get plugin design finalized, into libqtcad
+x 16.  Qt palette widget - get plugin design finalized, into libqtcad
 
 17.  Come up with a way to configure key bindings - ideally command line supported
      in a portable way via dm libged command.
@@ -102,6 +102,9 @@ x  15.  Qt .g tree hierarchy widget into libqtcad
 23.  Archer help browser as a Qt widget.
 
 24.  Translate sketch editor to Qt.
+
+     polygon work will be relevant here - as much of the sketch editing as possible
+     should be implemented in libdm terms, so it's backend agnostic.
 
 25.  Look into build scripts from https://github.com/martinrotter/qt-minimalistic-builds to see if they can
      help guide the preparation of an ExternalProject_Add Qt build.
