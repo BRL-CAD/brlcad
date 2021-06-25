@@ -27,6 +27,8 @@
  *
  * https://doc.qt.io/qt-5/qtwidgets-itemviews-editabletreemodel-example.html
  *
+ * Also investigate https://wiki.qt.io/Model_Test to see if it may be
+ * useful for this code.
  */
 
 #ifndef QGMODEL_H
