@@ -209,12 +209,14 @@ QPolyCreate::finalize(bool)
     } else {
 
 	// Check if we have a name collision - if we do, it's no go
-	const char *vname = NULL;
+	char *vname = NULL;
 	if (ps->view_name->placeholderText().length()) {
-	    vname = ps->view_name->placeholderText().toLocal8Bit().data();
+	    vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
 	}
 	if (ps->view_name->text().length()) {
-	    vname = ps->view_name->text().toLocal8Bit().data();
+	    if (vname)
+		bu_free(vname, "vname");
+	    vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
 	}
 	bool colliding = false;
 	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
@@ -223,6 +225,7 @@ QPolyCreate::finalize(bool)
 		colliding = true;
 	    }
 	}
+	bu_free(vname, "vname");
 	if (colliding) {
 	    bg_polygon_free(&ip->polygon);
 	    BU_PUT(ip, struct bv_polygon);
@@ -252,19 +255,21 @@ QPolyCreate::finalize(bool)
 
 	// If we're also writing this out as a sketch, take care of that.
 	if (ps->sketch_sync->isChecked()) {
-	    const char *sname = NULL;
+	    char *sk_name = NULL;
 	    if (ps->sketch_name->placeholderText().length()) {
-		sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+		sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	    }
 	    if (ps->sketch_name->text().length()) {
-		sname = ps->sketch_name->text().toLocal8Bit().data();
+		if (sk_name)
+		    bu_free(sk_name, "sk_name");
+		sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
 	    }
-	    char *sk_name = bu_strdup(sname);
-	    if (sname && db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    if (sk_name && db_lookup(gedp->ged_wdbp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
 		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, sk_name, p);
 		emit db_updated();
 	    }
-	    bu_free(sk_name, "name cpy");
+	    if (sk_name)
+		bu_free(sk_name, "name cpy");
 	} else {
 	    ip->u_data = NULL;
 	}
@@ -290,10 +295,12 @@ QPolyCreate::do_vpoly_copy()
     // Check if we have a name collision - if we do, it's no go
     char *vname = NULL;
     if (ps->view_name->placeholderText().length()) {
-	vname = ps->view_name->placeholderText().toLocal8Bit().data();
+	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
     }
     if (ps->view_name->text().length()) {
-	vname = ps->view_name->text().toLocal8Bit().data();
+	if (vname)
+	    bu_free(vname, "vname");
+	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
     bool colliding = false;
     for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
@@ -307,13 +314,9 @@ QPolyCreate::do_vpoly_copy()
 	return;
     }
 
-    // Stash a copy of the name immediately for use later - a data pointer to
-    // the QString isn't stable.
-    char *nname = bu_strdup(vname);
-
     // See if we've got a valid dp name
     if (!vpoly_name->text().length()) {
-	bu_free(nname, "name cpy");
+	bu_free(vname, "name cpy");
 	return;
     }
     char *sname = bu_strdup(vpoly_name->text().toLocal8Bit().data());
@@ -326,13 +329,13 @@ QPolyCreate::do_vpoly_copy()
     }
     bu_free(sname, "name cpy");
     if (!src_obj) {
-	bu_free(nname, "name cpy");
+	bu_free(vname, "name cpy");
 	return;
     }
 
     // Names are valid, src_obj is ready - do the copy
-    p = bg_dup_view_polygon(nname, src_obj);
-    bu_free(nname, "name cpy");
+    p = bg_dup_view_polygon(vname, src_obj);
+    bu_free(vname, "name cpy");
     if (!p) {
 	return;
     }
@@ -362,12 +365,14 @@ QPolyCreate::do_import_sketch()
 	return;
 
     // Check if we have a name collision - if we do, it's no go
-    const char *vname = NULL;
+    char *vname = NULL;
     if (ps->view_name->placeholderText().length()) {
-	vname = ps->view_name->placeholderText().toLocal8Bit().data();
+	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
     }
     if (ps->view_name->text().length()) {
-	vname = ps->view_name->text().toLocal8Bit().data();
+	if (vname)
+	    bu_free(vname, "vname");
+	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
     bool colliding = false;
     for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
@@ -377,29 +382,26 @@ QPolyCreate::do_import_sketch()
 	}
     }
     if (colliding) {
+	bu_free(vname, "vname");
 	return;
     }
 
-    // Stash a copy of the name immediately for use later - a data pointer to
-    // the QString isn't stable.
-    char *nname = bu_strdup(vname);
-
     // See if we've got a valid dp name
     if (!import_name->text().length()) {
-	bu_free(nname, "name cpy");
+	bu_free(vname, "name cpy");
 	return;
     }
     char *sname = bu_strdup(import_name->text().toLocal8Bit().data());
     struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET);
     bu_free(sname, "name cpy");
     if (dp == RT_DIR_NULL) {
-	bu_free(nname, "name cpy");
+	bu_free(vname, "name cpy");
 	return;
     }
 
     // Names are valid, dp is ready - try the sketch import
-    p = db_sketch_to_scene_obj(nname, gedp->ged_wdbp->dbip, dp, gedp->ged_gvp, gedp->free_scene_obj);
-    bu_free(nname, "name cpy");
+    p = db_sketch_to_scene_obj(vname, gedp->ged_wdbp->dbip, dp, gedp->ged_gvp, gedp->free_scene_obj);
+    bu_free(vname, "name cpy");
     if (!p) {
 	return;
     }
@@ -445,22 +447,26 @@ QPolyCreate::sketch_sync()
     }
 
     if (ps->sketch_sync->isChecked()) {
-	const char *sname = NULL;
+	char *sname = NULL;
 	if (!ps->sketch_name->placeholderText().length()) {
 	    if (ps->view_name->placeholderText().length()) {
 		ps->sketch_name->setPlaceholderText(ps->view_name->placeholderText());
-		sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+		sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	    }
 	} else {
-	    sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	    sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	}
 	if (!ps->sketch_name->text().length()) {
 	    if (ps->view_name->text().length()) {
 		ps->sketch_name->setPlaceholderText(ps->view_name->text());
-		sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+		if (sname)
+		    bu_free(sname, "sname");
+		sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	    }
 	} else {
-	    sname = ps->sketch_name->text().toLocal8Bit().data();
+	    if (sname)
+		bu_free(sname, "sname");
+	    sname = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
 	}
 
 	if (sname) {
@@ -469,6 +475,7 @@ QPolyCreate::sketch_sync()
 	    } else {
 		ps->sketch_name->setStyleSheet("");
 	    }
+	    bu_free(sname, "sname");
 	} else {
 	    ps->sketch_name->setStyleSheet("");
 	}
@@ -495,12 +502,14 @@ QPolyCreate::view_sync()
 	return;
     }
 
-    const char *vname = NULL;
+    char *vname = NULL;
     if (ps->view_name->placeholderText().length()) {
-	vname = ps->view_name->placeholderText().toLocal8Bit().data();
+	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
     }
     if (ps->view_name->text().length()) {
-	vname = ps->view_name->text().toLocal8Bit().data();
+	if (!vname)
+	    bu_free(vname, "vname");
+	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
     bool colliding = false;
     for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
@@ -509,6 +518,7 @@ QPolyCreate::view_sync()
 	    colliding = true;
 	}
     }
+    bu_free(vname, "vname");
     if (colliding) {
 	ps->view_name->setStyleSheet("color: rgba(255,0,0)");
     } else {

@@ -570,29 +570,33 @@ QPolyMod::sketch_name_edit()
     }
 
     if (ps->sketch_sync->isChecked()) {
-	const char *sname = NULL;
+	char *sname = NULL;
 	if (!ps->sketch_name->placeholderText().length()) {
 	    if (ps->view_name->placeholderText().length()) {
 		ps->sketch_name->setPlaceholderText(ps->view_name->placeholderText());
-		sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+		sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	    }
 	} else {
-	    sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	    sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	}
 	if (!ps->sketch_name->text().length()) {
 	    if (ps->view_name->text().length()) {
 		ps->sketch_name->setPlaceholderText(ps->view_name->text());
-		sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+		if (sname)
+		    bu_free(sname, "sname");
+		sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	    }
 	} else {
-	    sname = ps->sketch_name->text().toLocal8Bit().data();
+	    if (sname)
+		bu_free(sname, "sname");
+	    sname = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
 	}
 
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	if (!sname && ip->u_data) {
 	    struct directory *dp = (struct directory *)ip->u_data;
 	    ps->sketch_name->setPlaceholderText(QString(dp->d_namep));
-	    sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	    sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	}
 
 	if (sname) {
@@ -616,6 +620,7 @@ QPolyMod::sketch_name_edit()
 	    } else {
 		ps->sketch_name->setStyleSheet("");
 	    }
+	    bu_free(sname, "sname");
 	} else {
 	    ps->sketch_name->setStyleSheet("");
 	}
@@ -638,28 +643,30 @@ QPolyMod::sketch_name_update()
 	return;
     }
 
-    const char *sname = NULL;
+    char *sk_name = NULL;
     if (!ps->sketch_name->placeholderText().length()) {
 	if (ps->view_name->placeholderText().length()) {
 	    ps->sketch_name->setPlaceholderText(ps->view_name->placeholderText());
-	    sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	    sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	}
     } else {
-	sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
     }
     if (!ps->sketch_name->text().length()) {
 	if (ps->view_name->text().length()) {
 	    ps->sketch_name->setPlaceholderText(ps->view_name->text());
-	    sname = ps->sketch_name->placeholderText().toLocal8Bit().data();
+	    if (sk_name)
+		bu_free(sk_name, "sk_name");
+	    sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	}
     } else {
-	sname = ps->sketch_name->text().toLocal8Bit().data();
+	if (sk_name)
+	    bu_free(sk_name, "sk_name");
+	sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
     }
 
-    if (!sname)
+    if (!sk_name)
 	return;
-
-    char *sk_name = bu_strdup(sname);
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
     if (ip->u_data) {
@@ -709,12 +716,14 @@ QPolyMod::view_name_edit()
 	return;
     }
 
-    const char *vname = NULL;
+    char *vname = NULL;
     if (ps->view_name->placeholderText().length()) {
-	vname = ps->view_name->placeholderText().toLocal8Bit().data();
+	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
     }
     if (ps->view_name->text().length()) {
-	vname = ps->view_name->text().toLocal8Bit().data();
+	if (!vname)
+	    bu_free(vname, "vname");
+	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
     bool colliding = false;
     for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
@@ -728,6 +737,9 @@ QPolyMod::view_name_edit()
     } else {
 	ps->view_name->setStyleSheet("");
     }
+
+    if (vname)
+	bu_free(vname, "vname");
 }
 
 void
@@ -739,13 +751,19 @@ QPolyMod::view_name_update()
 	return;
     }
 
-    const char *vname = NULL;
+    char *vname = NULL;
     if (ps->view_name->placeholderText().length()) {
-	vname = ps->view_name->placeholderText().toLocal8Bit().data();
+	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
     }
     if (ps->view_name->text().length()) {
-	vname = ps->view_name->text().toLocal8Bit().data();
+	if (vname)
+	    bu_free(vname, "vname");
+	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
+
+    if (!vname)
+	return;
+
     bool colliding = false;
     for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
@@ -754,11 +772,14 @@ QPolyMod::view_name_update()
 	}
     }
     if (colliding) {
+	bu_free(vname, "vname");
 	return;
     }
 
     bu_vls_sprintf(&p->s_uuid, "%s", vname);
+    bu_free(vname, "vname");
     emit view_updated(&gedp->ged_gvp);
+
 }
 
 bool
