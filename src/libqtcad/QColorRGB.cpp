@@ -26,6 +26,8 @@
 #include "common.h"
 
 #include <QLabel>
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "qtcad/QColorRGB.h"
 
 QColorRGB::QColorRGB(QWidget *p, QString lstr, QColor dcolor) : QWidget(p)
@@ -92,11 +94,18 @@ void
 QColorRGB::set_color_from_text()
 {
     QString colstr = rgbtext->text();
-    const char *ccstr = colstr.toLocal8Bit();
+    if (!colstr.length())
+	return;
 
-    // TODO - split into argv array, in case of spaces
+    // We need a C string to send into the libbu routines - directly referencing
+    // QString data isn't stable.  Also, split into argv array, in case of spaces
+    char *ccstr = bu_strdup(colstr.toLocal8Bit().data());
+    char **av = (char **)bu_calloc(strlen(ccstr) + 1, sizeof(char *), "argv array");
+    int nargs = bu_argv_from_string(av, strlen(ccstr), ccstr);
+    int acnt = bu_opt_color(NULL, nargs, (const char **)av, (void *)&bc);
+    bu_free(av, "av");
+    bu_free(ccstr, "ccstr");
 
-    int acnt = bu_opt_color(NULL, 1, &ccstr, (void *)&bc);
     if (acnt != 1)
 	return;
 
