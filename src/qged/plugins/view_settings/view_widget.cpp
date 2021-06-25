@@ -283,6 +283,9 @@ CADViewSettings::view_refresh(struct bview **nv)
 		    vect_t vpt;
 		    MAT4X3PNT(vpt, v->gv_model2view, mpt);
 		    v->gv_data_vZ = vpt[Z];
+		    vZ->blockSignals(true);
+		    vZ->setText(QVariant(v->gv_data_vZ).toString());
+		    vZ->blockSignals(false);
 		}
 	    }
 	    bu_free(av, "argv array");
