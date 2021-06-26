@@ -759,8 +759,11 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 
     BU_ASSERT(dbip->dbi_version == 5);
 
-    /* Making a change for real - set flag */
-    dp->edit_flag = 1;
+    /* Making a change for real - do callback */
+    if (dbip->dbi_changed) {
+	(*dbip->dbi_changed)(dp, 0, dbip->ctx);
+    }
+
 
     /* First, change the name. */
     if (db_wrap_v5_external(ep, dp->d_namep) < 0) {

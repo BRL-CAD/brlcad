@@ -309,7 +309,7 @@ main(int argc, const char **argv)
 		unsigned long long lhash = dl_name_hash(gedp);
 		unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
 		unsigned long long lhash_edit = lhash;
-		lhash_edit += dl_update(gedp);
+		//lhash_edit += dl_update(gedp);
 		if (dhash != prev_dhash) {
 		    dm_set_dirty(dmp, 1);
 		}

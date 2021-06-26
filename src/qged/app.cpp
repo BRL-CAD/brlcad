@@ -23,6 +23,8 @@
  *
  */
 
+#include <set>
+#include <unordered_set>
 #include <QFileInfo>
 #include <QFile>
 #include <QPlainTextEdit>
@@ -432,6 +434,87 @@ CADApp::closedb()
 	w->treeview->m->dbip = DBI_NULL;
 }
 
+
+extern "C" void
+qged_db_changed(struct directory *dp, int ctype, void *ctx)
+{
+    std::unordered_set<struct directory *> *changed = (std::unordered_set<struct directory *> *)ctx;
+    if (ctype == 0)
+	changed->insert(dp);
+}
+
+
+int
+qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *changed)
+{
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct bview *v = gedp->ged_gvp;
+    struct bu_ptbl *sg = v->gv_db_grps;
+    std::set<struct bv_scene_group *> regen;
+    std::set<struct bv_scene_group *> erase;
+    std::set<struct bv_scene_group *>::iterator r_it;
+    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	// When checking a scene group, there are two things to confirm:
+	// 1.  All dp pointers in all paths are valid
+	// 2.  No dps in path have changed.
+	// If either of these things is not true, the group must be
+	// regenerated.
+	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+	int invalid = 0;
+	for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+	    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
+
+	    // First, check the root - if it is no longer present, we're
+	    // erasing rather than redrawing.
+	    struct directory *dp = db_lookup(dbip, ud->fp.fp_names[0]->d_namep, LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) {
+		erase.insert(cg);
+		break;
+	    }
+
+	    for (size_t fp_i = 0; fp_i < ud->fp.fp_len; fp_i++) {
+		dp = db_lookup(dbip, ud->fp.fp_names[fp_i]->d_namep, LOOKUP_QUIET);
+		if (dp == RT_DIR_NULL || dp != ud->fp.fp_names[fp_i] || changed->find(dp) != changed->end()) {
+		    invalid = 1;
+		    break;
+		}
+	    }
+	    if (invalid) {
+		regen.insert(cg);
+		break;
+	    }
+	}
+    }
+
+    for (r_it = erase.begin(); r_it != erase.end(); r_it++) {
+	struct bv_scene_group *cg = *r_it;
+	struct bu_vls opath = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->g->s_name));
+	const char *av[3];
+	av[0] = "erase";
+	av[1] = bu_vls_cstr(&opath);
+	av[2] = NULL;
+	ged_exec(gedp, 2, av);
+	bu_vls_free(&opath);
+    }
+    for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
+	struct bv_scene_group *cg = *r_it;
+	struct bu_vls opath = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->g->s_name));
+	const char *av[4];
+	av[0] = "draw";
+	av[1] = "-R";
+	av[2] = bu_vls_cstr(&opath);
+	av[3] = NULL;
+	ged_exec(gedp, 3, av);
+	bu_vls_free(&opath);
+    }
+
+    return (int)(regen.size() + erase.size());
+}
+
+
 bool
 CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
@@ -470,15 +553,10 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	if (w->c4)
 	    w->c4->stash_hashes();
 
+	std::unordered_set<struct directory *> *changed = new std::unordered_set<struct directory *>;
 	if (gedp) {
-	    // Clear the edit flags ahead of the ged_exec call, so we can tell if
-	    // any geometry changed.
-	    struct directory *dp;
-	    for (int i = 0; i < RT_DBNHASH; i++) {
-		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		    dp->edit_flag = 0;
-		}
-	    }
+	    gedp->ged_wdbp->dbip->dbi_changed = &qged_db_changed;
+	    gedp->ged_wdbp->dbip->ctx = (void *)changed;
 	}
 
 	ged_exec(gedp, argc, argv);
@@ -514,7 +592,7 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    }
 	    // Checks the dp edit flags and does any necessary redrawing.  If
 	    // anything changed with the geometry, we also need to redraw
-	    if (ged_view_update(gedp) > 0) {
+	    if (qged_view_update(gedp, changed) > 0) {
 		if (w->canvas)
 		    w->canvas->need_update(NULL);
 		if (w->c4)
@@ -536,6 +614,8 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		}
 	    }
 	}
+
+	delete changed;
 
 	/* Check if the ged_exec call changed either the display manager or
 	 * the view settings - in either case we'll need to redraw */

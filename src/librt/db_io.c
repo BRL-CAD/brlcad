@@ -308,8 +308,10 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
     if (db_version(dbip) < 5) {
 	size_t ngran;
 
-	// db_put_external5 can't do it, so set the flag here
-	dp->edit_flag = 1;
+	// db_put_external5 can't do it, so do the callback here
+	if (dbip->dbi_changed) {
+	    (*dbip->dbi_changed)(dp, 0, dbip->ctx);
+	}
 
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if (ngran != dp->d_len) {

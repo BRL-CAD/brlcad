@@ -72,6 +72,20 @@ struct db_i {
     char * dbi_title;                   /**< @brief title from IDENT rec */
     char ** dbi_filepath;               /**< @brief search path for aux file opens (convenience var) */
 
+    /* Callback called when database objects are changed.  The int indicates
+     * the change type (0 = mod, 1 = add, 2 = rm). ctx is a user
+     * supplied context and is passed back as the last argument to db_change.
+     *
+     * TODO - would prefer to pass back rt_db_internal, bu_external, etc.
+     * structures that we would otherwise have to re-open from the directory
+     * pointer in the callback, to save extra memory and time.  Can we add
+     * another void * parameter to this function and use the BU_MAGIC type to
+     * unpack it in the user level callback? That way we could potentially handle
+     * different types of info passed by different invocations of db_change in
+     * various librt functions... */
+    void (*dbi_changed)(struct directory *, int, void *);
+    void *ctx;
+
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 
     struct directory * dbi_Head[RT_DBNHASH]; /** @brief PRIVATE: object hash table */
