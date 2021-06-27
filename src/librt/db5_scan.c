@@ -230,6 +230,9 @@ db_diradd5(
     dp->d_forw = *headp;
     *headp = dp;
 
+    if (dbip->dbi_changed)
+	(*dbip->dbi_changed)(dp, 1, dbip->ctx);
+
     return dp;
 }
 
@@ -312,6 +315,9 @@ db5_diradd(struct db_i *dbip,
     dp->d_uses = 0;
     dp->d_forw = *headp;
     *headp = dp;
+
+    if (dbip->dbi_changed)
+	(*dbip->dbi_changed)(dp, 1, dbip->ctx);
 
     return dp;
 }

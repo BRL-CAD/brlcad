@@ -307,6 +307,10 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     }
 
     bu_vls_free(&local);
+
+    if (dbip->dbi_changed)
+	(*dbip->dbi_changed)(dp, 1, dbip->ctx);
+
     return dp;
 }
 
