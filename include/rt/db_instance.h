@@ -75,15 +75,19 @@ struct db_i {
     /* Callback called when database objects are changed.  The int indicates
      * the change type (0 = mod, 1 = add, 2 = rm). ctx is a user
      * supplied context and is passed back as the last argument to db_change.
-     *
-     * TODO - would prefer to pass back rt_db_internal, bu_external, etc.
-     * structures that we would otherwise have to re-open from the directory
-     * pointer in the callback, to save extra memory and time.  Can we add
-     * another void * parameter to this function and use the BU_MAGIC type to
-     * unpack it in the user level callback? That way we could potentially handle
-     * different types of info passed by different invocations of db_change in
-     * various librt functions... */
+     */
     void (*dbi_changed)(struct directory *, int, void *);
+
+    /* Callback called when references are updated.  First arg is parent dp, second
+     * is child dp referenced by parent, third is ctx.  librt only stores the
+     * reference count in d_nref, but applications may need more explicit
+     * awareness of the parent/child relationships.  Since db_update_nref must
+     * be called in any case for librt to function properly, this callback lets
+     * the parent application benefit from the work db_update_nref is already
+     * doing to figure out these relationships. */
+    void (*dbi_update_nref)(struct directory *, struct directory *, void *);
+
+    /* Application context supplied to callback functions */
     void *ctx;
 
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */

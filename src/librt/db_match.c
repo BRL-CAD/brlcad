@@ -36,15 +36,19 @@
 #include "raytrace.h"
 
 HIDDEN void
-db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *UNUSED(dummy1), void *UNUSED(dummy2), void *UNUSED(dummy3), void *UNUSED(dummy4))
+db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *pdp, void *UNUSED(dummy2), void *UNUSED(dummy3), void *UNUSED(dummy4))
 {
     struct directory *dp;
+    struct directory *parent_dp = (struct directory *)pdp;
 
     if (comb) RT_CK_COMB(comb);
     RT_CK_TREE(comb_leaf);
 
-    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL)
+    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	++dp->d_nref;
+	if (dbip->dbi_update_nref)
+	    (*dbip->dbi_update_nref)(parent_dp, dp, dbip->ctx);
+    }
 }
 
 void
@@ -85,6 +89,8 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			dp2 = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
 			if (dp2 != RT_DIR_NULL) {
 			    dp2->d_nref++;
+			    if (dbip->dbi_update_nref)
+				(*dbip->dbi_update_nref)(dp, dp2, dbip->ctx);
 			}
 		    }
 		    rt_db_free_internal(&intern);
@@ -99,6 +105,8 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			dp2 = db_lookup(dbip, bu_vls_addr(&revolve->sketch_name), LOOKUP_QUIET);
 			if (dp2 != RT_DIR_NULL) {
 			    dp2->d_nref++;
+			    if (dbip->dbi_update_nref)
+				(*dbip->dbi_update_nref)(dp, dp2, dbip->ctx);
 			}
 		    }
 		    rt_db_free_internal(&intern);
@@ -113,6 +121,8 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			dp2 = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name), LOOKUP_QUIET);
 			if (dp2 != RT_DIR_NULL) {
 			    dp2->d_nref++;
+			    if (dbip->dbi_update_nref)
+				(*dbip->dbi_update_nref)(dp, dp2, dbip->ctx);
 			}
 		    }
 		    rt_db_free_internal(&intern);
@@ -131,7 +141,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    db_tree_funcleaf(dbip, comb, comb->tree,
-			     db_count_refs, (void *)NULL,
+			     db_count_refs, (void *)dp,
 			     (void *)NULL, (void *)NULL, (void *)NULL);
 	    rt_db_free_internal(&intern);
 	}
