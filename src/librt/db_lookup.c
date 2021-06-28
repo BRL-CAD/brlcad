@@ -332,6 +332,13 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
     }
 
     if (*headp == dp) {
+
+	// If we've gotten this far, the dp is on its way out - call the change
+	// callback first if defined, so the app can get information from the
+	// dp before it is cleared.
+	if (dbip->dbi_changed)
+	    (*dbip->dbi_changed)(dp, 2, dbip->ctx);
+
 	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
 	*headp = dp->d_forw;
 
@@ -343,6 +350,13 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
     for (findp = *headp; findp != RT_DIR_NULL; findp = findp->d_forw) {
 	if (findp->d_forw != dp)
 	    continue;
+
+	// If we've gotten this far, the dp is on its way out - call the change
+	// callback first if defined, so the app can get information from the
+	// dp before it is cleared.
+	if (dbip->dbi_changed)
+	    (*dbip->dbi_changed)(dp, 2, dbip->ctx);
+
 	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
 	findp->d_forw = dp->d_forw;
 
