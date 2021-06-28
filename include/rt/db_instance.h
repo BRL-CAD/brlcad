@@ -35,6 +35,7 @@
 #include "bu/mapped_file.h"
 #include "bu/ptbl.h"
 #include "rt/mem.h"
+#include "rt/op.h"
 #include "rt/directory.h"
 #include "rt/anim.h"
 
@@ -84,11 +85,13 @@ struct db_i {
      * 2. child dp referenced by parent dp
      * 3. the child name (should be available even if the child dp is null, which can happen with references to
      * non-existent objects)
-     * 4. dbip ctx (generally application provided context for use in the callback)
+     * 4. the boolean operation used to include the child
+     * 5. the matrix above the child (NULL == IDN matrix)
+     * 6. dbip ctx (generally application provided context for use in the callback)
      *
-     * NOTE:  the contents of the third callback parameter (the string from the
-     * comb tree) should be copied by the caller if they want to make use of it
-     * - it is not a reference to a stable string.
+     * NOTE:  the contents of the child name and matrix should be copied by the
+     * caller if they want to make use of them - they are not references to
+     * stable storage.
      *
      * NOTE:  the parent may be a non-comb object, if extrudes or other primitives
      * that reference other primitives are present in the .g - the caller should
@@ -100,7 +103,7 @@ struct db_i {
      * properly, this callback lets the parent application benefit from the
      * work db_update_nref is already doing to figure out these relationships.
      * */
-    void (*dbi_update_nref)(struct directory *, struct directory *, const char *, void *);
+    void (*dbi_update_nref)(struct directory *, struct directory *, const char *, db_op_t, matp_t, void *);
 
     /* Application context supplied to callback functions */
     void *ctx;

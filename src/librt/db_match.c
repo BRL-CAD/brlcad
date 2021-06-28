@@ -47,8 +47,16 @@ db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb
     if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	++dp->d_nref;
     }
-    if (dbip->dbi_update_nref)
-	(*dbip->dbi_update_nref)(parent_dp, dp, comb_leaf->tr_l.tl_name, dbip->ctx);
+    if (dbip->dbi_update_nref) {
+	db_op_t op = DB_OP_UNION;
+	if (comb_leaf->tr_l.tl_op == OP_SUBTRACT) {
+	    op = DB_OP_SUBTRACT;
+	}
+	if (comb_leaf->tr_l.tl_op == OP_INTERSECT) {
+	    op = DB_OP_INTERSECT;
+	}
+	(*dbip->dbi_update_nref)(parent_dp, dp, comb_leaf->tr_l.tl_name, op, comb_leaf->tr_l.tl_mat, dbip->ctx);
+    }
 }
 
 void
@@ -91,7 +99,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			    dp2->d_nref++;
 			}
 			if (dbip->dbi_update_nref)
-			    (*dbip->dbi_update_nref)(dp, dp2, extr->sketch_name, dbip->ctx);
+			    (*dbip->dbi_update_nref)(dp, dp2, extr->sketch_name, DB_OP_UNION, NULL, dbip->ctx);
 		    }
 		    rt_db_free_internal(&intern);
 		} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE) {
@@ -107,7 +115,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			    dp2->d_nref++;
 			}
 			if (dbip->dbi_update_nref)
-			    (*dbip->dbi_update_nref)(dp, dp2, bu_vls_cstr(&revolve->sketch_name), dbip->ctx);
+			    (*dbip->dbi_update_nref)(dp, dp2, bu_vls_cstr(&revolve->sketch_name), DB_OP_UNION, NULL, dbip->ctx);
 		    }
 		    rt_db_free_internal(&intern);
 		} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP) {
@@ -123,7 +131,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			    dp2->d_nref++;
 			}
 			if (dbip->dbi_update_nref)
-			    (*dbip->dbi_update_nref)(dp, dp2, bu_vls_cstr(&dsp->dsp_name), dbip->ctx);
+			    (*dbip->dbi_update_nref)(dp, dp2, bu_vls_cstr(&dsp->dsp_name), DB_OP_UNION, NULL, dbip->ctx);
 		    }
 		    rt_db_free_internal(&intern);
 		}
