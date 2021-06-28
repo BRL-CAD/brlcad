@@ -78,14 +78,29 @@ struct db_i {
      */
     void (*dbi_changed)(struct directory *, int, void *);
 
-    /* Callback called when references are updated.  First arg is parent dp, second
-     * is child dp referenced by parent, third is ctx.  librt only stores the
-     * reference count in d_nref, but applications may need more explicit
-     * awareness of the parent/child relationships.  Since db_update_nref must
-     * be called in any case for librt to function properly, this callback lets
-     * the parent application benefit from the work db_update_nref is already
-     * doing to figure out these relationships. */
-    void (*dbi_update_nref)(struct directory *, struct directory *, void *);
+    /* Callback called when references are updated. Args are:
+     *
+     * 1. parent dp,
+     * 2. child dp referenced by parent dp
+     * 3. the child name (should be available even if the child dp is null, which can happen with references to
+     * non-existent objects)
+     * 4. dbip ctx (generally application provided context for use in the callback)
+     *
+     * NOTE:  the contents of the third callback parameter (the string from the
+     * comb tree) should be copied by the caller if they want to make use of it
+     * - it is not a reference to a stable string.
+     *
+     * NOTE:  the parent may be a non-comb object, if extrudes or other primitives
+     * that reference other primitives are present in the .g - the caller should
+     * be aware of that when processing the results.
+     *
+     * librt only stores the reference count in d_nref, but applications may
+     * need more explicit awareness of the parent/child relationships.  Since
+     * db_update_nref must be called in any case for librt to function
+     * properly, this callback lets the parent application benefit from the
+     * work db_update_nref is already doing to figure out these relationships.
+     * */
+    void (*dbi_update_nref)(struct directory *, struct directory *, const char *, void *);
 
     /* Application context supplied to callback functions */
     void *ctx;

@@ -38,7 +38,7 @@
 HIDDEN void
 db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *pdp, void *UNUSED(dummy2), void *UNUSED(dummy3), void *UNUSED(dummy4))
 {
-    struct directory *dp;
+    struct directory *dp = RT_DIR_NULL;
     struct directory *parent_dp = (struct directory *)pdp;
 
     if (comb) RT_CK_COMB(comb);
@@ -46,9 +46,9 @@ db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb
 
     if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	++dp->d_nref;
-	if (dbip->dbi_update_nref)
-	    (*dbip->dbi_update_nref)(parent_dp, dp, dbip->ctx);
     }
+    if (dbip->dbi_update_nref)
+	(*dbip->dbi_update_nref)(parent_dp, dp, comb_leaf->tr_l.tl_name, dbip->ctx);
 }
 
 void
@@ -89,9 +89,9 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			dp2 = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
 			if (dp2 != RT_DIR_NULL) {
 			    dp2->d_nref++;
-			    if (dbip->dbi_update_nref)
-				(*dbip->dbi_update_nref)(dp, dp2, dbip->ctx);
 			}
+			if (dbip->dbi_update_nref)
+			    (*dbip->dbi_update_nref)(dp, dp2, extr->sketch_name, dbip->ctx);
 		    }
 		    rt_db_free_internal(&intern);
 		} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE) {
@@ -105,9 +105,9 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			dp2 = db_lookup(dbip, bu_vls_addr(&revolve->sketch_name), LOOKUP_QUIET);
 			if (dp2 != RT_DIR_NULL) {
 			    dp2->d_nref++;
-			    if (dbip->dbi_update_nref)
-				(*dbip->dbi_update_nref)(dp, dp2, dbip->ctx);
 			}
+			if (dbip->dbi_update_nref)
+			    (*dbip->dbi_update_nref)(dp, dp2, bu_vls_cstr(&revolve->sketch_name), dbip->ctx);
 		    }
 		    rt_db_free_internal(&intern);
 		} else if (dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP) {
@@ -121,9 +121,9 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			dp2 = db_lookup(dbip, bu_vls_addr(&dsp->dsp_name), LOOKUP_QUIET);
 			if (dp2 != RT_DIR_NULL) {
 			    dp2->d_nref++;
-			    if (dbip->dbi_update_nref)
-				(*dbip->dbi_update_nref)(dp, dp2, dbip->ctx);
 			}
+			if (dbip->dbi_update_nref)
+			    (*dbip->dbi_update_nref)(dp, dp2, bu_vls_cstr(&dsp->dsp_name), dbip->ctx);
 		    }
 		    rt_db_free_internal(&intern);
 		}
