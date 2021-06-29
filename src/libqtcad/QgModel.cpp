@@ -27,10 +27,85 @@
 #include "raytrace.h"
 #include "qtcad/QgModel.h"
 
+extern "C" void
+qgmodel_update_nref_callback(struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
+{
+    QgModel_ctx *ctx = (QgModel_ctx *)u_data;
+    if (!parent_dp && !child_dp && !child_name && op == DB_OP_UNION && m == NULL) {
+	bu_log("starting db_update_nref\n");
+	ctx->parent_children.clear();
+	ctx->child_parents.clear();
+	return;
+    }
+    if (!parent_dp && !child_dp && !child_name && op == DB_OP_SUBTRACT && m == NULL) {
+	bu_log("ending db_update_nref\n");
+	if (ctx->mdl) {
+	    bu_log("time to update Qt model\n");
+	}
+	return;
+    }
+
+    if (parent_dp) {
+	bu_log("PARENT: %s\n", parent_dp->d_namep);
+    } else {
+	bu_log("PARENT: NULL\n");
+    }
+
+    if (child_name) {
+	if (child_dp) {
+	    bu_log("CHILD: %s\n", child_name);
+	} else {
+	    bu_log("CHILD(invalid): %s\n", child_name);
+	}
+    }
+    switch (op) {
+	case DB_OP_UNION:
+	    bu_log("union\n");
+	    break;
+	case DB_OP_SUBTRACT:
+	    bu_log("subtract\n");
+	    break;
+	case DB_OP_INTERSECT:
+	    bu_log("intersect\n");
+	    break;
+	default:
+	    bu_log("unknown op\n");
+	    break;
+    }
+    if (m)
+	bn_mat_print("Instance matrix", m);
+}
+
+
+extern "C" void
+qgmodel_changed_callback(struct directory *dp, int mode, void *UNUSED(u_data))
+{
+    //QgModel_ctx *ctx = (QgModel *)u_data;
+    switch(mode) {
+	case 0:
+	    bu_log("MOD: %s\n", dp->d_namep);
+	    break;
+	case 1:
+	    bu_log("ADD: %s\n", dp->d_namep);
+	    break;
+	case 2:
+	    bu_log("RM:  %s\n", dp->d_namep);
+	    break;
+	default:
+	    bu_log("changed callback mode error: %d\n", mode);
+    }
+}
+
 
 QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct db_i *ndbip)
     : mdl(pmdl), dbip(ndbip)
 {
+    if (!ndbip)
+	return;
+
+    // If we do have a dbip, we have some setup to do
+    db_add_update_nref_clbk(dbip, &qgmodel_update_nref_callback, (void *)this);
+    db_add_changed_clbk(dbip, &qgmodel_changed_callback, (void *)this);
 }
 
 QgModel_ctx::~QgModel_ctx()

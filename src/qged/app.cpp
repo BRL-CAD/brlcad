@@ -314,6 +314,13 @@ CADApp::opendb(QString filename)
     bu_file_realpath(g_path.toLocal8Bit(), fp);
     db_filename = QString(fp);
 
+    // Set up our QgModel
+    if (mdl) {
+	delete mdl;
+	mdl = NULL;
+    }
+    mdl = new QgModel(this, gedp->ged_wdbp->dbip);
+
     // Update reference counts
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 

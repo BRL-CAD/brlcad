@@ -39,6 +39,7 @@
 #include "raytrace.h"
 #include "ged.h"
 #include "qtcad/QtCADTree.h"
+#include "qtcad/QgModel.h"
 
 #include "main_window.h"
 
@@ -70,6 +71,7 @@ class CADApp : public QApplication
 
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
+	QgModel *mdl = NULL;
 	struct ged *gedp;
 	struct db_i *dbip();
 	struct rt_wdb *wdbp();
