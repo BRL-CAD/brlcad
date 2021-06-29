@@ -117,6 +117,7 @@ app_open(void *p, int argc, const char **argv)
     if (argc > 1) {
 	if (*gedpp) {
 	    ged_close(*gedpp);
+	    (*gedpp) = NULL;
 	}
 	int ret = ap->opendb(argv[1]);
 	if (ret && console) {
