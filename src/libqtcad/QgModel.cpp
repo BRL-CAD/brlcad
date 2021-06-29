@@ -27,13 +27,37 @@
 #include "raytrace.h"
 #include "qtcad/QgModel.h"
 
-QgModel::QgModel(QObject *p)
-    : QAbstractItemModel(p)
+
+QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct db_i *ndbip)
+    : mdl(pmdl), dbip(ndbip)
 {
+}
+
+QgModel_ctx::~QgModel_ctx()
+{
+}
+
+
+QgModel::QgModel(QObject *, struct db_i *ndbip)
+{
+    ctx = new QgModel_ctx(this, ndbip);
 }
 
 QgModel::~QgModel()
 {
+    delete ctx;
+}
+
+QModelIndex
+QgModel::index(int , int , const QModelIndex &) const
+{
+    return QModelIndex();
+}
+
+QModelIndex
+QgModel::parent(const QModelIndex &) const
+{
+    return QModelIndex();
 }
 
 Qt::ItemFlags
@@ -43,7 +67,7 @@ QgModel::flags(const QModelIndex &UNUSED(index))
 }
 
 QVariant
-QgModel::data(const QModelIndex &UNUSED(index), int UNUSED(role))
+QgModel::data(const QModelIndex &UNUSED(index), int UNUSED(role)) const
 {
     return QVariant();
 }
@@ -55,13 +79,13 @@ QgModel::headerData(int UNUSED(section), Qt::Orientation UNUSED(orientation), in
 }
 
 int
-QgModel::rowCount(const QModelIndex &UNUSED(p))
+QgModel::rowCount(const QModelIndex &UNUSED(p)) const
 {
     return 0;
 }
 
 int
-QgModel::columnCount(const QModelIndex &UNUSED(p))
+QgModel::columnCount(const QModelIndex &UNUSED(p)) const
 {
     return 0;
 }

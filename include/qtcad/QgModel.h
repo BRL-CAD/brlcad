@@ -103,6 +103,11 @@ class QTCAD_EXPORT QgModel;
 class QgModel_ctx
 {
     public:
+	explicit QgModel_ctx(QgModel *pmdl = NULL, struct db_i *ndbip = NULL);
+	~QgModel_ctx();
+
+	// QgModel associated with this context
+	QgModel *mdl;
 
 	// .g Db interface and containers
 	struct db_i *dbip;
@@ -122,9 +127,6 @@ class QgModel_ctx
 	// To add an entry, we first assign
 	std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_set<QgInstance *>>> child_parents;
 
-	// QgModel associated with this context
-	QgModel *mdl;
-
     private:
 	bool model_needs_update = true;
 	std::queue<QgInstance *> free_instances;
@@ -136,15 +138,17 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
     Q_OBJECT
 
     public:
-	explicit QgModel(QObject *p = NULL);
+	explicit QgModel(QObject *p = NULL, struct db_i *ndbip = NULL);
 	~QgModel();
 
 	// Qt Model interface
+	QModelIndex index(int row, int column, const QModelIndex &p) const;
+	QModelIndex parent(const QModelIndex &child) const;
 	Qt::ItemFlags flags(const QModelIndex &index);
-	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole);
+	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
 	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole);
-	int rowCount(const QModelIndex &parent = QModelIndex());
-	int columnCount(const QModelIndex &parent = QModelIndex());
+	int rowCount(const QModelIndex &parent = QModelIndex()) const;
+	int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
 	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
 	bool setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role = Qt::EditRole);
