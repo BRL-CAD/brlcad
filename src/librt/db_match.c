@@ -80,6 +80,12 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    dp->d_nref = 0;
 
+    /* Do a NULL + union callback to indicate the start of an update cycle */
+    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
+	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+	(*cb->f)(NULL, NULL, NULL, DB_OP_UNION, NULL, cb->u_data);
+    }
+
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
@@ -176,6 +182,13 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 	    rt_db_free_internal(&intern);
 	}
     }
+
+    /* Do a NULL + subtraction callback to indicate the end of an update cycle */
+    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
+	struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
+	(*cb->f)(NULL, NULL, NULL, DB_OP_SUBTRACT, NULL, cb->u_data);
+    }
+
 }
 
 

@@ -60,6 +60,11 @@ typedef void (*dbi_changed_t)(struct directory *, int, void *);
  * 5. the matrix above the child (NULL == IDN matrix)
  * 6. dbi_u_data (generally application context set for use in these callbacks)
  *
+ * There are two particular sets of callback args that have special significance:
+ *
+ * NULL, NULL, NULL, DB_OP_UNION, NULL == the beginning of a db_update_nref cycle
+ * NULL, NULL, NULL, DB_OP_SUBTRACT, NULL == the end of a db_update_nref cycle
+ *
  * NOTE:  the contents of the child name and matrix should be copied by the
  * caller if they want to make use of them - they are not references to
  * stable storage.
