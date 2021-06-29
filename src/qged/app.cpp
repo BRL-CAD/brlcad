@@ -555,8 +555,8 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 	std::unordered_set<struct directory *> *changed = new std::unordered_set<struct directory *>;
 	if (gedp) {
-	    gedp->ged_wdbp->dbip->dbi_changed = &qged_db_changed;
-	    gedp->ged_wdbp->dbip->ctx = (void *)changed;
+	    db_rm_changed_clbk(gedp->ged_wdbp->dbip, &qged_db_changed, NULL);
+	    db_add_changed_clbk(gedp->ged_wdbp->dbip, &qged_db_changed, (void *)changed);
 	}
 
 	ged_exec(gedp, argc, argv);

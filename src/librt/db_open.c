@@ -225,6 +225,9 @@ db_open(const char *name, const char *mode)
 #endif
 
     bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
+    bu_ptbl_init(&dbip->dbi_changed_clbks , 8, "dbi_changed_clbks]");
+    bu_ptbl_init(&dbip->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
+
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
     /* determine version */
@@ -362,6 +365,10 @@ db_close(register struct db_i *dbip)
     dbip->dbi_inmem = NULL;		/* sanity */
 
     bu_ptbl_free(&dbip->dbi_clients);
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks))
+	bu_ptbl_free(&dbip->dbi_changed_clbks);
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks))
+	bu_ptbl_free(&dbip->dbi_update_nref_clbks);
 
     /* Free all directory entries */
     for (i = 0; i < RT_DBNHASH; i++) {

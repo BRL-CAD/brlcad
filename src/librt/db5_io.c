@@ -760,10 +760,12 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     BU_ASSERT(dbip->dbi_version == 5);
 
     /* Making a change for real - do callback */
-    if (dbip->dbi_changed) {
-	(*dbip->dbi_changed)(dp, 0, dbip->ctx);
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	    (*cb->f)(dp, 0, cb->u_data);
+	}
     }
-
 
     /* First, change the name. */
     if (db_wrap_v5_external(ep, dp->d_namep) < 0) {

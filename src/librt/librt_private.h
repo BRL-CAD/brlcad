@@ -134,6 +134,17 @@ extern int cyclic_path(const struct db_full_path *fp, const char *test_name, lon
 extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
 
 /* db_io.c */
+
+struct dbi_changed_clbk {
+    dbi_changed_t f;
+    void *u_data;
+};
+
+struct dbi_update_nref_clbk {
+    dbi_update_nref_t f;
+    void *u_data;
+};
+
 extern int db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset);
 
 /* db5_io.c */
@@ -218,6 +229,7 @@ extern int _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *a
 /* view.c */
 extern fastf_t solid_point_spacing(const struct bview *gvp, fastf_t solid_width);
 extern fastf_t view_avg_sample_spacing(const struct bview *gvp);
+
 
 #ifdef USE_OPENCL
 extern cl_device_id clt_get_cl_device(void);

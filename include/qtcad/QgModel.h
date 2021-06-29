@@ -34,6 +34,10 @@
 #ifndef QGMODEL_H
 #define QGMODEL_H
 
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <unordered_set>
 #include <QAbstractItemModel>
 #include <QModelIndex>
 
@@ -55,64 +59,19 @@ multiple instances?
 
 Design thoughts:
 
-add a callback to librt's db_i that has the following signature:
+two callbacks and a context pointer added to db_i struct:
 
-void db_changed(struct directory *dp, void *internal, int change_type, void *ctx);
+dbi_changed
+dbi_update_nref
+ctx
 
-ctx will also be a structure element added to db_i
+the former is called when directory entries are added, removed or modified.
+the latter is called when ever db_update_nref identifies a parent/child
+relationship in the database.
 
-Then, in db_put_internal, db_diradd, and db_dirremove(?) check if the
-db_i callback is defined.  If it is, call it with the appropriate change
-type set.  pass ctx from the db_i slot and the dp and (optional) internal
-from the local context's info
 
-Then, in the callback, we can do our model management based on the db change
+Using those callbacks, we can do our model management based on the db info
 in question.  Current thought:
-
-The first generation CADTreeModel defined a function that walked the
-subtrees of each open node to determine relationships.  Another possibility
-will be to maintain child->parents model-level containers of the form:
-
-unordered_map(parent_dp, unordered_set<child dps>)
-unordered_map(child_dp, unordered_set<parent dps>)
-
-the above, if maintained, give us enough info so that each db_change
-we can add/remove in a targeted fashion rather than having to scan
-everything each time.  If a dp is removed, we look up with it as a
-child key, find its parents, and remove the dp from each parent's
-child unordered set.  Then, we remove the child entry from the other
-map.
-
-We also need to maintain dp->QgInstance mappings, so we can mange the instances
-based on the db_change info.  In particular, if the operation is an edit or add
-of a comb dp we need to use the comb tree to update the instances.  We may
-have to also maintain a names-as-lookup-keys mapping system for defining parent
-child relationships...  comb trees use names as specifiers, so we will need to
-translate those names to both dps and QgInstances in order to specify the model
-parent child relationships.
-
-We will also need to maintain a set of vectors of strings to indicate which
-paths are populated - if we delete a comb instance and all its children, we need
-to rebuild the parent comb's tree with as close to the original "opened" state
-as the new tree structure will allow
-
-
-The hierarchy inherent in tree models means when adding an instance, we only
-need to process it in the local comb tree context. A comb reused in multiple
-places in the hierarchy will produce identical instances in a data sense,
-but because the parent chains of each will be different they may be
-considered in isolation.  Also, if we need to invalidate and remove
-QgInstances after a db edit, we can work top down - if a particular child
-has been removed its parent, all QgInstances below that instance are also
-invalidated.
-
-The intent is for these to be lazily populated, starting with only the top
-level objects with NULL as their parent.  Production .g hierarchies can be
-enormous, and we don't want to consume any more resources representing and
-viewing them than are necessary for what the user has requested.  However,
-that leaves us with a problem in that the highlighting options we want to
-support (the ones identifying other portions of the tree related to a
-selected item) need comprehensive knowledge of the .g hierarchy.
 
 When a QgInstance is selected, its immediate comb parents will be "activated" and
 placed in a queue, and for each queued dp any of its parents not already
@@ -125,23 +84,52 @@ the highlighting operation will need to be done every time either the tree
 selection or the highlighting mode changes.
 */
 
-#if 0
 class QTCAD_EXPORT QgInstance
 {
     public:
 	explicit QgInstance(QgInstance *p = NULL);
-	~QgModel();
-
-	QgInstance *parent();
-	bool valid();
+	~QgInstance();
 
 	struct directory *dp = NULL;
+	std::string dp_name;
 	db_op_t op = DB_OP_NULL;
 	mat_t c_m;
 	QgInstance *parent = NULL;
 
-}
-#endif
+};
+
+class QTCAD_EXPORT QgModel;
+
+class QgModel_ctx
+{
+    public:
+
+	// .g Db interface and containers
+	struct db_i *dbip;
+
+	// The parent->child storage is (potentially) 1 to many.
+	std::unordered_map<std::string, std::vector<QgInstance *>> parent_children;
+
+	// Because child names do not map uniquely to QgInstances (the same dp
+	// may be used in many trees with different matrices and boolean ops)
+	// the mapping must be more complex.  The structure is:
+	//
+	// child -> <parent -> <instances matching parent->child relationship>>
+	//
+	// So a child may have multiple parents.  For each parent, the child
+	// may be present in more than one instance in that hierarchy.
+	//
+	// To add an entry, we first assign
+	std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_set<QgInstance *>>> child_parents;
+
+	// QgModel associated with this context
+	QgModel *mdl;
+
+    private:
+	bool model_needs_update = true;
+	std::queue<QgInstance *> free_instances;
+
+};
 
 class QTCAD_EXPORT QgModel : public QAbstractItemModel
 {
@@ -151,6 +139,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	explicit QgModel(QObject *p = NULL);
 	~QgModel();
 
+	// Qt Model interface
 	Qt::ItemFlags flags(const QModelIndex &index);
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole);
 	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole);
@@ -165,7 +154,9 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	bool insertColumns(int column, int count, const QModelIndex &parent = QModelIndex());
 	bool removeColumns(int column, int count, const QModelIndex &parent = QModelIndex());
 
-	struct db_i *dbip;
+	// .g Db interface
+	QgModel_ctx *ctx;
+
 };
 
 #endif //QGMODEL_H
