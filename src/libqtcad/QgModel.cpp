@@ -47,7 +47,15 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	// the QgModel state.
 
 	if (op == DB_OP_UNION) {
-	    bu_log("starting db_update_nref\n");
+	    //bu_log("starting db_update_nref\n");
+
+	    // At the start of a hierarchy refresh cycle, grab all QgInstances
+	    // defined in pareht_children and store them for reuse.  Typically
+	    // most of these will still be current, but that's by no means
+	    // guaranteed and we have no way to know if they are or not until
+	    // db_update_nref tells.  So we have to "start over" building up
+	    // the instances, but at least we can avoid having to re-malloc all
+	    // of them.
 	    std::unordered_map<std::string, std::vector<QgInstance *>>::iterator p_it;
 	    for (p_it = ctx->parent_children.begin(); p_it != ctx->parent_children.end(); p_it++) {
 		for (size_t i = 0; i < p_it->second.size(); i++) {
@@ -65,7 +73,8 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	    return;
 	}
 	if (op == DB_OP_SUBTRACT) {
-	    bu_log("ending db_update_nref\n");
+	    //bu_log("ending db_update_nref\n");
+
 	    // Iterate over parent_children and build up child_parents.
 	    //
 	    // Main use of child->parents is going to be doing intelligent
@@ -80,6 +89,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 
 	    if (ctx->mdl) {
 		bu_log("time to update Qt model\n");
+		ctx->mdl->need_update_nref = false;
 	    }
 	    return;
 	}
@@ -89,6 +99,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	return;
     }
 
+#if 0
     if (parent_dp) {
 	bu_log("PARENT: %s\n", parent_dp->d_namep);
     } else {
@@ -118,7 +129,9 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
     }
     if (m)
 	bn_mat_print("Instance matrix", m);
+#endif
 
+    // We use a lot of these instances - reuse if possible
     QgInstance *ninst = NULL;
     if (ctx->free_instances.size()) {
 	ninst = ctx->free_instances.front();
@@ -126,8 +139,9 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
     } else {
 	ninst = new QgInstance();
     }
-    // Note - need to make sure to assign everything in the QgInstance here to
-    // avoid stale data, since we may be reusing an old instance.
+
+    // Important:  need to make sure to assign everything in the QgInstance
+    // here to avoid stale data, since we may be reusing an old instance.
     ninst->parent = parent_dp;
     ninst->dp = child_dp;
     ninst->dp_name = std::string(child_name);
@@ -137,25 +151,43 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
     } else {
 	MAT_IDN(ninst->c_m);
     }
+
+    // By default everything is inactive - a view selection is what dictates
+    // the active/inactive state.
     ninst->active = 0;
+
+    // Top level objects have empty parents, but we need all objects to be in
+    // the parent/child hierarchy so we add them with an empty string key.
     std::string key = (parent_dp) ? std::string(parent_dp->d_namep) : std::string("");
     ctx->parent_children[key].push_back(ninst);
 }
 
-
+// This callback is needed for cases where an individual object is changed but the
+// hierarchy is not disturbed (a rename, for example.)
+//
+// We also use it to catch cases where the internal logic SHOULD have called
+// db_update_nref after adding or removing objects, but didn't.
 extern "C" void
-qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *UNUSED(u_data))
+qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
-    //QgModel_ctx *ctx = (QgModel *)u_data;
+    QgModel_ctx *ctx = (QgModel_ctx *)u_data;
     switch(mode) {
 	case 0:
 	    bu_log("MOD: %s\n", dp->d_namep);
+	    if (ctx->mdl)
+		ctx->mdl->changed_dp.insert(dp);
 	    break;
 	case 1:
 	    bu_log("ADD: %s\n", dp->d_namep);
+	    if (ctx->mdl) {
+		ctx->mdl->changed_dp.insert(dp);
+		ctx->mdl->need_update_nref = true;
+	    }
 	    break;
 	case 2:
 	    bu_log("RM:  %s\n", dp->d_namep);
+	    if (ctx->mdl)
+		ctx->mdl->need_update_nref = true;
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -163,15 +195,15 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 }
 
 
-QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct db_i *ndbip)
-    : mdl(pmdl), dbip(ndbip)
+QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct ged *ngedp)
+    : mdl(pmdl), gedp(ngedp)
 {
-    if (!ndbip)
+    if (!ngedp)
 	return;
 
     // If we do have a dbip, we have some setup to do
-    db_add_update_nref_clbk(dbip, &qgmodel_update_nref_callback, (void *)this);
-    db_add_changed_clbk(dbip, &qgmodel_changed_callback, (void *)this);
+    db_add_update_nref_clbk(gedp->ged_wdbp->dbip, &qgmodel_update_nref_callback, (void *)this);
+    db_add_changed_clbk(gedp->ged_wdbp->dbip, &qgmodel_changed_callback, (void *)this);
 }
 
 QgModel_ctx::~QgModel_ctx()
@@ -179,9 +211,9 @@ QgModel_ctx::~QgModel_ctx()
 }
 
 
-QgModel::QgModel(QObject *, struct db_i *ndbip)
+QgModel::QgModel(QObject *, struct ged *ngedp)
 {
-    ctx = new QgModel_ctx(this, ndbip);
+    ctx = new QgModel_ctx(this, ngedp);
 }
 
 QgModel::~QgModel()

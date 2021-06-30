@@ -45,6 +45,7 @@
 
 #ifndef Q_MOC_RUN
 #include "raytrace.h"
+#include "ged.h"
 #endif
 
 /*
@@ -106,14 +107,14 @@ class QTCAD_EXPORT QgModel;
 class QgModel_ctx
 {
     public:
-	explicit QgModel_ctx(QgModel *pmdl = NULL, struct db_i *ndbip = NULL);
+	explicit QgModel_ctx(QgModel *pmdl = NULL, struct ged *ngedp = NULL);
 	~QgModel_ctx();
 
 	// QgModel associated with this context
 	QgModel *mdl;
 
 	// .g Db interface and containers
-	struct db_i *dbip;
+	struct ged *gedp;
 
 	// The parent->child storage is (potentially) 1 to many.
 	std::unordered_map<std::string, std::vector<QgInstance *>> parent_children;
@@ -139,7 +140,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
     Q_OBJECT
 
     public:
-	explicit QgModel(QObject *p = NULL, struct db_i *ndbip = NULL);
+	explicit QgModel(QObject *p = NULL, struct ged *ngedp = NULL);
 	~QgModel();
 
 	// Qt Model interface
@@ -161,6 +162,8 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 
 	// .g Db interface
 	QgModel_ctx *ctx;
+	bool need_update_nref = false;
+	std::unordered_set<struct directory *> changed_dp;
 
 };
 

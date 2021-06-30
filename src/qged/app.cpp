@@ -320,7 +320,7 @@ CADApp::opendb(QString filename)
 	delete mdl;
 	mdl = NULL;
     }
-    mdl = new QgModel(this, gedp->ged_wdbp->dbip);
+    mdl = new QgModel(this, gedp);
 
     // Update reference counts
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
