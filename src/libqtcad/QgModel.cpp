@@ -24,6 +24,10 @@
  */
 
 #include "common.h"
+
+#include <QFileInfo>
+
+#include "bu/env.h"
 #include "raytrace.h"
 #include "qtcad/QgModel.h"
 
@@ -208,6 +212,14 @@ QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct ged *ngedp)
 
 QgModel_ctx::~QgModel_ctx()
 {
+    if (gedp)
+	ged_close(gedp);
+
+    while (free_instances.size()) {
+	QgInstance *i = free_instances.front();
+	free_instances.pop();
+	delete i;
+    }
 }
 
 
@@ -220,6 +232,10 @@ QgModel::~QgModel()
 {
     delete ctx;
 }
+
+///////////////////////////////////////////////////////////////////////
+//          Qt abstract model interface implementation
+///////////////////////////////////////////////////////////////////////
 
 QModelIndex
 QgModel::index(int , int , const QModelIndex &) const
@@ -297,6 +313,74 @@ bool QgModel::removeColumns(int UNUSED(column), int UNUSED(count), const QModelI
     return false;
 }
 
+///////////////////////////////////////////////////////////////////////
+//                  .g Centric Methods
+///////////////////////////////////////////////////////////////////////
+bool QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
+{
+    if (!ctx || !ctx->gedp)
+	return false;
+
+    changed_dp.clear();
+
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+
+    if (ged_cmd_valid(argv[0], NULL)) {
+	const char *ccmd = NULL;
+	int edist = ged_cmd_lookup(&ccmd, argv[0]);
+	if (edist) {
+	    if (msg)
+		bu_vls_sprintf(msg, "Command %s not found, did you mean %s (edit distance %d)?\n", argv[0],   ccmd, edist);
+	}
+	return false;
+    }
+
+    ged_exec(ctx->gedp, argc, argv);
+    if (msg && ctx->gedp)
+	bu_vls_printf(msg, "%s", bu_vls_cstr(ctx->gedp->ged_result_str));
+
+    // If we have the need_update_nref flag set, we need to do db_update_nref
+    // ourselves - the backend logic made a dp add/remove but didn't do the
+    // nref updates.
+    if (ctx->gedp && need_update_nref)
+	db_update_nref(ctx->gedp->ged_wdbp->dbip, &rt_uniresource);
+
+    return true;
+}
+
+void
+QgModel::closedb()
+{
+    // Close an old context, if we have one
+    if (ctx)
+	delete ctx;
+
+    // Clear changed dps - we're starting over
+    changed_dp.clear();
+}
+
+int
+QgModel::opendb(QString filename)
+{
+    /* First, make sure the file is actually there */
+      QFileInfo fileinfo(filename);
+      if (!fileinfo.exists()) return 1;
+
+      closedb();
+
+      char *npath = bu_strdup(filename.toLocal8Bit().data());
+      struct ged *n = ged_open("db", (const char *)npath, 1);
+      if (n) {
+	  ctx = new QgModel_ctx(this, n);
+
+	  // Callbacks are set in ctx - make sure reference counts and model
+	  // hierarchy are properly initialized
+	  db_update_nref(n->ged_wdbp->dbip, &rt_uniresource);
+      }
+      bu_free(npath, "path");
+
+      return 0;
+}
 
 // Local Variables:
 // tab-width: 8

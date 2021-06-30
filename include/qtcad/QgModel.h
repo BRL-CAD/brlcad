@@ -161,6 +161,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	bool removeColumns(int column, int count, const QModelIndex &parent = QModelIndex());
 
 	// .g Db interface
+	bool run_cmd(struct bu_vls *msg, int argc, const char **argv);
+	int opendb(QString filename);
+	void closedb();
+
 	QgModel_ctx *ctx;
 	bool need_update_nref = false;
 	std::unordered_set<struct directory *> changed_dp;

@@ -112,13 +112,11 @@ extern "C" int
 app_open(void *p, int argc, const char **argv)
 {
     CADApp *ap = (CADApp *)p;
-    struct ged **gedpp = &ap->gedp;
+
     QtConsole *console = ap->w->console;
     if (argc > 1) {
-	if (*gedpp) {
-	    ged_close(*gedpp);
-	    (*gedpp) = NULL;
-	}
+	if (ap->mdl)
+	    delete ap->mdl;
 	int ret = ap->opendb(argv[1]);
 	if (ret && console) {
 	    struct bu_vls msg = BU_VLS_INIT_ZERO;
@@ -198,7 +196,7 @@ app_man(void *ip, int argc, const char **argv)
 void
 CADApp::initialize()
 {
-    gedp = GED_NULL;
+    mdl = NULL;
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
     // TODO - eventually, load these as plugins
@@ -211,8 +209,8 @@ CADApp::initialize()
 void
 CADApp::do_quad_view_change(QtCADView *cv)
 {
-    if (gedp && cv) {
-	gedp->ged_gvp = cv->view();
+    if (mdl && mdl->ctx && mdl->ctx->gedp && cv) {
+	mdl->ctx->gedp->ged_gvp = cv->view();
     }
     do_gui_update_from_view_change();
 }
@@ -220,8 +218,8 @@ CADApp::do_quad_view_change(QtCADView *cv)
 void
 CADApp::do_view_update_from_gui_change(struct bview **nv)
 {
-    if (gedp && nv) {
-	gedp->ged_gvp = *nv;
+    if (mdl && mdl->ctx && mdl->ctx->gedp && nv) {
+	mdl->ctx->gedp->ged_gvp = *nv;
     }
     emit gui_changed_view(NULL);
 }
@@ -235,7 +233,9 @@ CADApp::do_db_update_from_gui_change()
 void
 CADApp::do_gui_update_from_view_change()
 {
-    emit view_change(&gedp->ged_gvp);
+    if (mdl && mdl->ctx && mdl->ctx->gedp) {
+	emit view_change(&mdl->ctx->gedp->ged_gvp);
+    }
 }
 
 void
@@ -268,22 +268,6 @@ CADApp::tree_update()
     oc->makeCurrent(v);
 }
 
-
-struct db_i *
-CADApp::dbip()
-{
-    if (gedp == GED_NULL) return DBI_NULL;
-    if (gedp->ged_wdbp == RT_WDB_NULL) return DBI_NULL;
-    return gedp->ged_wdbp->dbip;
-}
-
-struct rt_wdb *
-CADApp::wdbp()
-{
-    if (gedp == GED_NULL) return RT_WDB_NULL;
-    return gedp->ged_wdbp;
-}
-
 int
 CADApp::opendb(QString filename)
 {
@@ -301,31 +285,20 @@ CADApp::opendb(QString filename)
         return 1;
     }
 
-    // If we've already got an open file, close it.
-    if (gedp != GED_NULL) (void)closedb();
+    if (!mdl)
+	mdl = new QgModel();
 
-    // Call BRL-CAD's database open function
-    gedp = ged_open("db", g_path.toLocal8Bit(), 1);
 
-    if (!gedp)
+    if (mdl->opendb(g_path))
 	return 3;
 
     // We opened something - record the full path
     char fp[MAXPATHLEN];
-    bu_file_realpath(g_path.toLocal8Bit(), fp);
+    bu_file_realpath(g_path.toLocal8Bit().data(), fp);
     db_filename = QString(fp);
 
-    // Set up our QgModel
-    if (mdl) {
-	delete mdl;
-	mdl = NULL;
-    }
-    mdl = new QgModel(this, gedp);
-
-    // Update reference counts
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-
     // Connect the wires with the view(s)
+    struct ged *gedp = mdl->ctx->gedp;
     if (w->canvas) {
 	BU_GET(gedp->ged_gvp, struct bview);
 	bv_init(gedp->ged_gvp);
@@ -393,7 +366,7 @@ CADApp::opendb(QString filename)
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
     if (w && w->treeview)
-	w->treeview->m->dbip = dbip();
+	w->treeview->m->dbip = gedp->ged_wdbp->dbip;
 
     // Inform the world the database has changed
     emit app_changed_db((void *)gedp);
@@ -432,11 +405,7 @@ CADApp::open_file()
 void
 CADApp::closedb()
 {
-    if (gedp != GED_NULL) {
-        ged_close(gedp);
-        BU_PUT(gedp, struct ged);
-    }
-    gedp = GED_NULL;
+    delete mdl;
     db_filename.clear();
     if (w && w->treeview)
 	w->treeview->m->dbip = DBI_NULL;
@@ -528,7 +497,11 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     bool ret = false;
 
-    struct ged *prev_gedp = gedp;
+    if (!mdl || !mdl->ctx)
+	return false;
+
+    struct ged *prev_gedp = mdl->ctx->gedp;
+    struct ged *gedp = mdl->ctx->gedp;
 
     if (gedp) {
 	gedp->ged_create_io_handler = &qt_create_io_handler;
@@ -536,110 +509,72 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	gedp->ged_io_data = (void *)this->w;
     }
 
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+    if (w->canvas)
+	w->canvas->stash_hashes();
+    if (w->c4)
+	w->c4->stash_hashes();
 
-    if (ged_cmd_valid(argv[0], NULL)) {
-	const char *ccmd = NULL;
-	int edist = ged_cmd_lookup(&ccmd, argv[0]);
-	if (edist) {
-	    if (msg)
-		bu_vls_sprintf(msg, "Command %s not found, did you mean %s (edit distance %d)?\n", argv[0],   ccmd, edist);
-	    return ret;
+
+    // Ask the model to execute the command
+    ret = mdl->run_cmd(msg, argc, argv);
+    if (!ret)
+	return false;
+
+    // It's possible that a ged_exec will introduce a new gedp - set up accordingly
+    gedp = mdl->ctx->gedp;
+    if (gedp && prev_gedp != gedp) {
+	bu_ptbl_reset(gedp->ged_all_dmp);
+	if (w->canvas) {
+	    gedp->ged_dmp = w->canvas->dmp();
+	    gedp->ged_gvp = w->canvas->view();
+	    dm_set_vp(w->canvas->dmp(), &gedp->ged_gvp->gv_scale);
+	}
+	if (w->c4) {
+	    QtCADView *c = w->c4->get();
+	    gedp->ged_dmp = c->dmp();
+	    gedp->ged_gvp = c->view();
+	    dm_set_vp(c->dmp(), &gedp->ged_gvp->gv_scale);
+	}
+	bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
+    }
+
+    if (gedp) {
+	if (w->canvas) {
+	    w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
+	    w->canvas->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+	}
+	if (w->c4 && w->c4->get(0)) {
+	    w->c4->get(0)->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
+	    w->c4->get(0)->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+	}
+	// Checks the dp edit flags and does any necessary redrawing.  If
+	// anything changed with the geometry, we also need to redraw
+	if (qged_view_update(gedp, &mdl->changed_dp) > 0) {
+	    if (w->canvas)
+		w->canvas->need_update(NULL);
+	    if (w->c4)
+		w->c4->need_update(NULL);
 	}
     } else {
-
-#if 0
-	unsigned long long dbi_hash_pre = 0;
-	if (w->treemodel) {
-	    dbi_hash_pre = w->treemodel->db_hash(gedp->ged_wdbp->dbip);
-	}
-	bu_log("dbi_hash_pre: %lld\n", dbi_hash_pre);
-#endif
-
-	if (w->canvas)
-	    w->canvas->stash_hashes();
-	if (w->c4)
-	    w->c4->stash_hashes();
-
-	std::unordered_set<struct directory *> *changed = new std::unordered_set<struct directory *>;
-	if (gedp) {
-	    db_rm_changed_clbk(gedp->ged_wdbp->dbip, &qged_db_changed, NULL);
-	    db_add_changed_clbk(gedp->ged_wdbp->dbip, &qged_db_changed, (void *)changed);
-	}
-
-	ged_exec(gedp, argc, argv);
-	if (msg && gedp)
-	    bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
-
-	// It's possible that a ged_exec will introduce a new gedp - set up accordingly
-	if (gedp && prev_gedp != gedp) {
-	    bu_ptbl_reset(gedp->ged_all_dmp);
+	// gedp == NULL - can't cheat and use the gedp pointer
+	if (prev_gedp != gedp) {
 	    if (w->canvas) {
-		gedp->ged_dmp = w->canvas->dmp();
-		gedp->ged_gvp = w->canvas->view();
-		dm_set_vp(w->canvas->dmp(), &gedp->ged_gvp->gv_scale);
+		w->canvas->need_update(NULL);
 	    }
 	    if (w->c4) {
 		QtCADView *c = w->c4->get();
-		gedp->ged_dmp = c->dmp();
-		gedp->ged_gvp = c->view();
-		dm_set_vp(c->dmp(), &gedp->ged_gvp->gv_scale);
-	    }
-	    bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
-	}
-
-	//unsigned long long dbi_hash_post = 0;
-	if (gedp) {
-	    if (w->canvas) {
-		w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
-		w->canvas->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
-	    }
-	    if (w->c4 && w->c4->get(0)) {
-		w->c4->get(0)->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
-		w->c4->get(0)->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
-	    }
-	    // Checks the dp edit flags and does any necessary redrawing.  If
-	    // anything changed with the geometry, we also need to redraw
-	    if (qged_view_update(gedp, changed) > 0) {
-		if (w->canvas)
-		    w->canvas->need_update(NULL);
-		if (w->c4)
-		    w->c4->need_update(NULL);
-	    }
-#if 0
-	    if (w->treemodel)
-		dbi_hash_post = w->treemodel->db_hash(gedp->ged_wdbp->dbip);
-#endif
-	} else {
-	    // gedp == NULL - can't cheat and use the gedp pointer
-	    if (prev_gedp != gedp) {
-		if (w->canvas) {
-		    w->canvas->need_update(NULL);
-		}
-		if (w->c4) {
-		    QtCADView *c = w->c4->get();
-		    c->update();
-		}
+		c->update();
 	    }
 	}
+    }
 
-	delete changed;
-
-	/* Check if the ged_exec call changed either the display manager or
-	 * the view settings - in either case we'll need to redraw */
-	if (w->canvas) {
-	    ret = w->canvas->diff_hashes();
-	}
-	if (w->c4) {
-	    ret = w->c4->diff_hashes();
-	}
-
-#if 0
-	// If the contents changed, the tree needs to know too
-	bu_log("dbi_hash_post: %lld\n", dbi_hash_post);
-	if (dbi_hash_pre != dbi_hash_post)
-	    emit app_changed_db(NULL);
-#endif
+    /* Check if the ged_exec call changed either the display manager or
+     * the view settings - in either case we'll need to redraw */
+    if (w->canvas) {
+	ret = w->canvas->diff_hashes();
+    }
+    if (w->c4) {
+	ret = w->c4->diff_hashes();
     }
 
     return ret;
@@ -672,9 +607,6 @@ CADApp::run_cmd(const QString &command)
     int ac = bu_argv_from_string(av, strlen(input), input);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    struct ged **gedpp = &gedp;
-
-
     // First, see if we have an application level command.
     int cmd_run = 0;
     if (app_cmd_map.contains(QString(av[0]))) {
@@ -683,18 +615,18 @@ CADApp::run_cmd(const QString &command)
 	cmd_run = 1;
     }
 
-
     // If it wasn't an app level command, try it as a GED command.
     if (!cmd_run) {
 	bool ret = ged_run_cmd(&msg, ac, (const char **)av);
 	if (bu_vls_strlen(&msg) > 0 && console) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
-	if (ret)
-	    emit view_change(&gedp->ged_gvp);
+	if (ret && mdl && mdl->ctx && mdl->ctx->gedp)
+	    emit view_change(&mdl->ctx->gedp->ged_gvp);
     }
-    if (*gedpp) {
-	bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (mdl && mdl->ctx && mdl->ctx->gedp) {
+	bu_vls_trunc(mdl->ctx->gedp->ged_result_str, 0);
     }
 
     bu_vls_free(&msg);

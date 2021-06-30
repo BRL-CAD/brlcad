@@ -176,9 +176,13 @@ int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
 void
 CADAttributesModel::refresh(const QModelIndex &idx)
 {
-    current_dbip = ((CADApp *)qApp)->dbip();
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp)
+	return;
+
     current_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
-    update(current_dbip, current_dp);
+    update(gedp->ged_wdbp->dbip, current_dp);
 }
 
 

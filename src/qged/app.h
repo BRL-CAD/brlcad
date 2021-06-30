@@ -67,14 +67,9 @@ class CADApp : public QApplication
 	int opendb(QString filename);
 	void closedb();
 
-	bool ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
-
-	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
-
 	QgModel *mdl = NULL;
-	struct ged *gedp;
-	struct db_i *dbip();
-	struct rt_wdb *wdbp();
+	bool ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
+	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
 	int interaction_mode = 0; // Used to control tree widget highlighting
 	int prev_interaction_mode = 0;

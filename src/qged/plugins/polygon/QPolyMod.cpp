@@ -181,7 +181,8 @@ QPolyMod::app_mod_names_reset(void *)
 void
 QPolyMod::mod_names_reset()
 {
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
     if (!gedp) {
 	return;
     }
@@ -245,9 +246,11 @@ QPolyMod::poly_type_settings(struct bv_polygon *ip)
 void
 QPolyMod::polygon_update_props()
 {
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
-    if (!gedp)
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp) {
 	return;
+    }
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 
@@ -277,7 +280,9 @@ void
 QPolyMod::toplevel_config(bool)
 {
     // Initialize
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+
     bool draw_change = false;
 
     // This function is called when a top level mode change was initiated
@@ -337,14 +342,23 @@ QPolyMod::clear_pnt_selection(bool checked)
 
     bv_update_polygon(p, BV_POLYGON_UPDATE_PROPS_ONLY);
 
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp)
+	return;
+
     emit view_updated(&gedp->ged_gvp);
 }
 
 void
 QPolyMod::select(const QString &poly)
 {
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
+
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp)
+	return;
+
     p = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
@@ -427,7 +441,11 @@ QPolyMod::toggle_closed_poly(bool checked)
     append_pnt->blockSignals(false);
     select_pnt->blockSignals(false);
 
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp)
+	return;
+
     if (do_bool && ip->type == BV_POLYGON_GENERAL && close_general_poly->isChecked()) {
 	bg_clip_t op = bg_Union;
 	if (do_bool) {
@@ -463,10 +481,10 @@ QPolyMod::toggle_closed_poly(bool checked)
 void
 QPolyMod::apply_bool_op()
 {
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
-    if (!gedp) {
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp)
 	return;
-    }
 
     if (!p)
 	return;
@@ -504,10 +522,11 @@ QPolyMod::apply_bool_op()
 void
 QPolyMod::align_to_poly()
 {
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
-    if (!gedp) {
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp)
 	return;
-    }
+
 
     if (!p)
 	return;
@@ -522,10 +541,10 @@ QPolyMod::align_to_poly()
 void
 QPolyMod::delete_poly()
 {
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
-    if (!gedp) {
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp)
 	return;
-    }
 
     if (!p)
 	return;
@@ -561,7 +580,8 @@ QPolyMod::sketch_name_edit_str(const QString &)
 void
 QPolyMod::sketch_name_edit()
 {
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
     if (!gedp) {
 	ps->sketch_name->setPlaceholderText("No .g file open");
 	ps->sketch_name->setStyleSheet("color: rgba(200,200,200)");
@@ -635,7 +655,8 @@ QPolyMod::sketch_name_edit()
 void
 QPolyMod::sketch_name_update()
 {
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -711,10 +732,10 @@ QPolyMod::view_name_edit_str(const QString &)
 void
 QPolyMod::view_name_edit()
 {
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
-    if (!gedp) {
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp)
 	return;
-    }
 
     char *vname = NULL;
     if (ps->view_name->placeholderText().length()) {
@@ -745,11 +766,10 @@ QPolyMod::view_name_edit()
 void
 QPolyMod::view_name_update()
 {
-
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
-    if (!gedp) {
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp)
 	return;
-    }
 
     char *vname = NULL;
     if (ps->view_name->placeholderText().length()) {
@@ -785,10 +805,10 @@ QPolyMod::view_name_update()
 bool
 QPolyMod::eventFilter(QObject *, QEvent *e)
 {
-    struct ged *gedp = ((CADApp *)qApp)->gedp;
-    if (!gedp) {
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    if (!gedp)
 	return false;
-    }
 
     QMouseEvent *m_e = NULL;
 
