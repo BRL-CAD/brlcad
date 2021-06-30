@@ -27,18 +27,40 @@
 #include "raytrace.h"
 #include "qtcad/QgModel.h"
 
+QgInstance::QgInstance()
+{
+}
+
+QgInstance::~QgInstance()
+{
+}
+
 extern "C" void
 qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
 {
     QgModel_ctx *ctx = (QgModel_ctx *)u_data;
     if (!dbip && !parent_dp && !child_dp && !child_name && op == DB_OP_UNION && m == NULL) {
 	bu_log("starting db_update_nref\n");
+	std::unordered_map<std::string, std::vector<QgInstance *>>::iterator p_it;
+	for (p_it = ctx->parent_children.begin(); p_it != ctx->parent_children.end(); p_it++) {
+	    for (size_t i = 0; i < p_it->second.size(); i++) {
+		ctx->free_instances.push(p_it->second[i]);
+	    }
+	}
 	ctx->parent_children.clear();
+
+	// child_parents should not contain any QgInstance containers not
+	// present in parent_children, so we just clear it without worrying
+	// about saving instances for reuse.
 	ctx->child_parents.clear();
 	return;
     }
     if (!dbip && !parent_dp && !child_dp && !child_name && op == DB_OP_SUBTRACT && m == NULL) {
 	bu_log("ending db_update_nref\n");
+	// TODO - iterate over parent_children and build up child_parents.
+	// Main use of child->parents is going to be doing intelligent
+	// highlighting, which in principle should be more performant with an
+	// intelligent way to work our way back up the tree...
 	if (ctx->mdl) {
 	    bu_log("time to update Qt model\n");
 	}
@@ -74,6 +96,28 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
     }
     if (m)
 	bn_mat_print("Instance matrix", m);
+
+    QgInstance *ninst = NULL;
+    if (ctx->free_instances.size()) {
+	ninst = ctx->free_instances.front();
+	ctx->free_instances.pop();
+    } else {
+	ninst = new QgInstance();
+    }
+    // Note - need to make sure to assign everything in the QgInstance here, to
+    // avoid stale data, since we may be reusing an old instance.
+    ninst->parent = parent_dp;
+    ninst->dp = child_dp;
+    ninst->dp_name = std::string(child_name);
+    ninst->op = op;
+    if (m) {
+	MAT_COPY(ninst->c_m, m);
+    } else {
+	MAT_IDN(ninst->c_m);
+    }
+    ninst->active = 0;
+    std::string key = (parent_dp) ? std::string(parent_dp->d_namep) : std::string("");
+    ctx->parent_children[key].push_back(ninst);
 }
 
 

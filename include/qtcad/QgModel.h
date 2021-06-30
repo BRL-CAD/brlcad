@@ -87,15 +87,18 @@ selection or the highlighting mode changes.
 class QTCAD_EXPORT QgInstance
 {
     public:
-	explicit QgInstance(QgInstance *p = NULL);
+	explicit QgInstance();
 	~QgInstance();
 
+	struct directory *parent = NULL;
 	struct directory *dp = NULL;
 	std::string dp_name;
 	db_op_t op = DB_OP_NULL;
 	mat_t c_m;
-	QgInstance *parent = NULL;
 
+	// The following flag is used for highlighting purposes
+	// to indicate an active instance.
+	int active = 0;
 };
 
 class QTCAD_EXPORT QgModel;
@@ -127,8 +130,6 @@ class QgModel_ctx
 	// To add an entry, we first assign
 	std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_set<QgInstance *>>> child_parents;
 
-    private:
-	bool model_needs_update = true;
 	std::queue<QgInstance *> free_instances;
 
 };
