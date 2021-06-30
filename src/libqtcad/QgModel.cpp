@@ -28,6 +28,7 @@
 #include <QFileInfo>
 
 #include "bu/env.h"
+#include "bu/sort.h"
 #include "raytrace.h"
 #include "qtcad/QgModel.h"
 
@@ -37,6 +38,14 @@ QgInstance::QgInstance()
 
 QgInstance::~QgInstance()
 {
+}
+
+static int
+dp_cmp(const void *d1, const void *d2, void *UNUSED(arg))
+{
+    struct directory *dp1 = *(struct directory **)d1;
+    struct directory *dp2 = *(struct directory **)d2;
+    return bu_strcmp(dp1->d_namep, dp2->d_namep);
 }
 
 extern "C" void
@@ -54,46 +63,120 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	    //bu_log("starting db_update_nref\n");
 
 	    // At the start of a hierarchy refresh cycle, grab all QgInstances
-	    // defined in pareht_children and store them for reuse.  Typically
+	    // defined in parent_children and store them for reuse.  Typically
 	    // most of these will still be current, but that's by no means
 	    // guaranteed and we have no way to know if they are or not until
-	    // db_update_nref tells.  So we have to "start over" building up
-	    // the instances, but at least we can avoid having to re-malloc all
-	    // of them.
-	    std::unordered_map<std::string, std::vector<QgInstance *>>::iterator p_it;
+	    // db_update_nref tells us.  We have to "start over" building up
+	    // the info, but at least we can avoid having to re-malloc all
+	    // of them again.
+	    std::unordered_map<struct directory *, std::vector<QgInstance*>>::iterator p_it;
 	    for (p_it = ctx->parent_children.begin(); p_it != ctx->parent_children.end(); p_it++) {
 		for (size_t i = 0; i < p_it->second.size(); i++) {
 		    ctx->free_instances.push(p_it->second[i]);
 		}
 	    }
 	    ctx->parent_children.clear();
-
-	    // child_parents should not contain any QgInstance containers not
-	    // present in parent_children (even top level objects should be
-	    // present in that map, with an empty string for the key), so we
-	    // just clear child_parents without worrying about saving instances
-	    // for reuse.
-	    ctx->child_parents.clear();
 	    return;
 	}
 	if (op == DB_OP_SUBTRACT) {
 	    //bu_log("ending db_update_nref\n");
 
-	    // Iterate over parent_children and build up child_parents.
-	    //
-	    // Main use of child->parents is going to be doing intelligent
-	    // highlighting, which in principle should be more performant with an
-	    // intelligent way to work our way back up the tree...
-	    std::unordered_map<std::string, std::vector<QgInstance *>>::iterator p_it;
-	    for (p_it = ctx->parent_children.begin(); p_it != ctx->parent_children.end(); p_it++) {
-		for (size_t i = 0; i < p_it->second.size(); i++) {
-		    ctx->child_parents[p_it->second[i]->dp_name][p_it->first].insert(p_it->second[i]);
-		}
+	    // Activity flag values are selection based, but even if the
+	    // selection hasn't changed since the last cycle the parent/child
+	    // relationships may have, which can invalidate previously active
+	    // dp flags.  We clear all flags, to present a clean slate when the
+	    // selection is re-applied.
+	    for (size_t i = 0; i < ctx->active_flags.size(); i++) {
+		ctx->active_flags[i] = 0;
 	    }
 
 	    if (ctx->mdl) {
+	
+		// Get tops list and add them as children of the null parent
+		struct directory **db_objects = NULL;
+		int path_cnt = db_ls(ctx->gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &db_objects);
+		if (path_cnt) {
+		    bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
+		    for (int i = 0; i < path_cnt; i++) {
+			struct directory *curr_dp = db_objects[i];
+			QgInstance *nobj = NULL;
+			if (ctx->free_instances.size()) {
+			    nobj = ctx->free_instances.front();
+			    ctx->free_instances.pop();
+			} else {
+			    nobj = new QgInstance();
+			}
+			nobj->parent = NULL;
+			nobj->dp = curr_dp;
+			nobj->dp_name = std::string(curr_dp->d_namep);
+			nobj->op = DB_OP_UNION;
+			MAT_IDN(nobj->c_m);
+			if (ctx->dp_to_active_ind.find(nobj->dp) != ctx->dp_to_active_ind.end()) {
+			    nobj->active_ind = ctx->dp_to_active_ind[nobj->dp];
+			} else {
+			    // New dp - add it.  By default a new dp will be inactive - a view
+			    // selection is what dictates, activity, and we don't (yet) have the
+			    // info to decide if this dp is activated by a view selection.
+			    ctx->active_flags.push_back(0);
+			    nobj->active_ind = ctx->active_flags.size() - 1;
+			    ctx->dp_to_active_ind[nobj->dp] = nobj->active_ind;
+			}
+			ctx->parent_children[(struct directory *)0].push_back(nobj);
+		    }
+		    bu_free(db_objects, "objs list");
+		}
+
+#if 0
+		std::vector<QgInstance*> &tops = ctx->parent_children[(struct directory *)0];
+		bu_log("tops size: %zd\n", tops.size());
+		for (size_t i = 0; i < tops.size(); i++) {
+		    std::cout << tops[i]->dp->d_namep << "\n";
+		    std::vector<QgInstance*> &tops_children = ctx->parent_children[tops[i]->dp];
+		    for (size_t j = 0; j < tops_children.size(); j++) {
+			if (tops_children[j]->dp) {
+			    std::cout << "\t" << tops_children[j]->dp->d_namep << "\n";
+			} else {
+			    std::cout << "\t" << tops_children[j]->dp_name << " (no dp)\n";
+			}
+		    }
+		}
+#endif
 		bu_log("time to update Qt model\n");
 		ctx->mdl->need_update_nref = false;
+
+		// TODO - QgItems are created lazily from QgInstances.  We need
+		// to recreate all of them that existed previously, since they
+		// are subject to the same inherent uncertainties as
+		// QgInstances, but we also try as much as possible to restore
+		// the previous state of population that existed before the
+		// rebuild so things like expanded tree view states are changed
+		// as little as possible within the constraints imposed by
+		// actual .g geometry alterations.
+		//
+		// This probably means at the beginning of an update pass we
+		// will need to iterate over the items and stash any
+		// QgInstances referenced by them in an unordered map so we can
+		// skip adding them to the free pile.  We will need to be able
+		// to use them when we build up a new item hierarchy from the
+		// newly realized QgInstances, since we will have to compare
+		// the original QgInstance data from the prior state to the new
+		// QgInstance children in order to find the correct
+		// associations to form when we rebuild.  This is where items
+		// that are removed but visible in a tree hierarchy will
+		// "disappear" by failing to be regenerated.  Objects that
+		// still exist in some form will be used as a basis for further
+		// recreation if the original has children, if analogs for
+		// those children (either exact or, if no exact analog is found
+		// the closest match) are present.
+		//
+		// After rebuilding, we clear the old items set and replace its
+		// contents with the new info.  The QgInstances saved for the
+		// items rebuild are then added to the free queue for the next
+		// round.
+		//
+		// We'll need an intelligent comparison function that finds the
+		// "closest" QgInstance in a set to a candidate QgInstance.
+
 	    }
 	    return;
 	}
@@ -103,7 +186,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	return;
     }
 
-#if 0
+#if 1
     if (parent_dp) {
 	bu_log("PARENT: %s\n", parent_dp->d_namep);
     } else {
@@ -132,10 +215,10 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	    break;
     }
     if (m)
-	bn_mat_print("Instance matrix", m);
+	bn_mat_print("Matrix", m);
 #endif
 
-    // We use a lot of these instances - reuse if possible
+    // We use a lot of these - reuse if possible
     QgInstance *ninst = NULL;
     if (ctx->free_instances.size()) {
 	ninst = ctx->free_instances.front();
@@ -155,15 +238,20 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
     } else {
 	MAT_IDN(ninst->c_m);
     }
+    if (ninst->dp != RT_DIR_NULL) {
+	if (ctx->dp_to_active_ind.find(ninst->dp) != ctx->dp_to_active_ind.end()) {
+	    ninst->active_ind = ctx->dp_to_active_ind[ninst->dp];
+	} else {
+	    // New dp - add it.  By default a new dp will be inactive - a view
+	    // selection is what dictates, activity, and we don't (yet) have the
+	    // info to decide if this dp is activated by a view selection.
+	    ctx->active_flags.push_back(0);
+	    ninst->active_ind = ctx->active_flags.size() - 1;
+	    ctx->dp_to_active_ind[ninst->dp] = ninst->active_ind;
+	}
+    }
 
-    // By default everything is inactive - a view selection is what dictates
-    // the active/inactive state.
-    ninst->active = 0;
-
-    // Top level objects have empty parents, but we need all objects to be in
-    // the parent/child hierarchy so we add them with an empty string key.
-    std::string key = (parent_dp) ? std::string(parent_dp->d_namep) : std::string("");
-    ctx->parent_children[key].push_back(ninst);
+    ctx->parent_children[parent_dp].push_back(ninst);
 }
 
 // This callback is needed for cases where an individual object is changed but the

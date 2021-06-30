@@ -48,43 +48,6 @@
 #include "ged.h"
 #endif
 
-/*
-Generally speaking, the atomic unit of a hierarchical .g model is a comb
-tree instance: it's unique matrix and boolean operation + the full path to
-that particular instance.  TODO - A further complication is the question of
-what to do if a comb tree does encode the exact same child twice - in that
-case the only unique reference data wise is the pointer to that particular
-comb's data, which is ephemeral... - how do we address an edit operation to
-the comb instance in question?  Do we need to store a counter to distinguish
-multiple instances?
-
-Design thoughts:
-
-two callbacks and a context pointer added to db_i struct:
-
-dbi_changed
-dbi_update_nref
-ctx
-
-the former is called when directory entries are added, removed or modified.
-the latter is called when ever db_update_nref identifies a parent/child
-relationship in the database.
-
-
-Using those callbacks, we can do our model management based on the db info
-in question.  Current thought:
-
-When a QgInstance is selected, its immediate comb parents will be "activated" and
-placed in a queue, and for each queued dp any of its parents not already
-active will also be activated and placed in the queue.  Eventually, once the
-queue is empty, all impacted combs will have "active" flags set which means
-the model items (which will know about the QgInstance which in turn will
-know its own leaf dp, and can report the activity flag to the highlighting
-delegate).  If the above ends up being performant it's worth exploring, since
-the highlighting operation will need to be done every time either the tree
-selection or the highlighting mode changes.
-*/
-
 class QTCAD_EXPORT QgInstance
 {
     public:
@@ -97,9 +60,12 @@ class QTCAD_EXPORT QgInstance
 	db_op_t op = DB_OP_NULL;
 	mat_t c_m;
 
-	// The following flag is used for highlighting purposes
-	// to indicate an active instance.
-	int active = 0;
+	// The following value holds the index of the active flags array to
+	// check when determining if this object is active.  I.e. activity is
+	// checked by looking at:
+	//
+	// ctx->active_flags[instance->obj->active_ind];
+	int active_ind = -1;
 };
 
 class QTCAD_EXPORT QgModel;
@@ -117,22 +83,47 @@ class QgModel_ctx
 	struct ged *gedp;
 
 	// The parent->child storage is (potentially) 1 to many.
-	std::unordered_map<std::string, std::vector<QgInstance *>> parent_children;
-
-	// Because child names do not map uniquely to QgInstances (the same dp
-	// may be used in many trees with different matrices and boolean ops)
-	// the mapping must be more complex.  The structure is:
-	//
-	// child -> <parent -> <instances matching parent->child relationship>>
-	//
-	// So a child may have multiple parents.  For each parent, the child
-	// may be present in more than one instance in that hierarchy.
-	//
-	// To add an entry, we first assign
-	std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_set<QgInstance *>>> child_parents;
-
+	std::unordered_map<struct directory *, std::vector<QgInstance *>> parent_children;
 	std::queue<QgInstance *> free_instances;
 
+	// Hierarchy items
+	//
+	// One of the subtle points of a .g hierarchy representation is that a
+	// QgInstance may be locally unique, but not globally unique.  For
+	// example, if comb A has underneath it two different instances of comb
+	// B using different placement matrices, and B is defined using C:
+	//
+	// A
+	//   u [M1] B
+	//            u C
+	//   u [M2] B
+	//            u C
+	//
+	// C has only one unique QgInstance definition in this hierarchy - IDN
+	// matrix union of C into B - but that instance has TWO manifestations
+	// in the overall tree that are NOT the same model items by virtue of
+	// having different parent items: Au[M1]BuC and Au[M2]BuC.
+	//
+	// To represent this, in addition to the parent_child map, we define an
+	// items map which holds QgItems that encode a reference to a QgInstance
+	// and the parent/child data specific to an individual place in the
+	// hierarchy.  Unlike instances, QgItems are created lazily in response
+	// to view requests, working from a seed set created from the top level
+	// objects in a database.
+#if 0
+	std::unordered_map<QgItem *, std::vector<QgItem *>> items;
+	std::queue<QgItem *> free_objs;
+#endif
+
+	// Activity flags (used for relevance highlighting) need to be updated
+	// whenever a selection changes.  Because the question of whether an
+	// object is related to the current selection hinges on the dp (a child
+	// being edited included in different combs with different matrices and/
+	// or boolean operations still impacts all those combs) the activity
+	// flags are dp centric.  We define one flag per dp, which is then referred
+	// to by all QgInstances using that dp as a reference
+	std::unordered_map<struct directory *, int> dp_to_active_ind;
+	std::vector<bool> active_flags;
 };
 
 class QTCAD_EXPORT QgModel : public QAbstractItemModel
