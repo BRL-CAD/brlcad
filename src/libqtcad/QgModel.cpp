@@ -40,6 +40,59 @@ QgInstance::~QgInstance()
 {
 }
 
+QgItem::QgItem()
+{
+}
+
+QgItem::~QgItem()
+{
+}
+
+// 0 = exact, 1 = name + op, 2 = name + mat, 3 = name only, -1 name mismatch
+int
+qgitem_cmp_score(QgItem *i1, QgItem *i2)
+{
+    int ret = -1;
+    if (!i1 || !i2 || !i1->inst || !i2->inst)
+	return ret;
+
+    if (i1->inst->dp_name != i2->inst->dp_name)
+	return ret;
+
+    // Names match
+    ret = 3;
+
+    // Look for a matrix match
+    struct bn_tol mtol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    if (bn_mat_is_equal(i1->inst->c_m, i2->inst->c_m, &mtol))
+	ret = 2;
+
+    // Look for a boolean op match
+    if (i1->inst->op == i2->inst->op)
+	ret = (ret == 2) ? 0 : 1;
+
+    return ret;
+}
+
+
+QgItem *
+find_similar_qgitem(QgItem *c, std::vector<QgItem *> &v)
+{
+    QgItem *m = NULL;
+    int lret = INT_MAX;
+    for (size_t i = 0; i < v.size(); i++) {
+	int score = qgitem_cmp_score(c, v[i]);
+	if (score < 0)
+	    continue;
+	m = (score < lret) ? v[i] : m;
+	if (!score)
+	    return m;
+    }
+
+    return m;
+}
+
+
 static int
 dp_cmp(const void *d1, const void *d2, void *UNUSED(arg))
 {
@@ -62,6 +115,26 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	if (op == DB_OP_UNION) {
 	    //bu_log("starting db_update_nref\n");
 
+	    std::queue<QgItem *> item_queue;
+	    std::unordered_set<QgInstance *> used_inst;
+
+	    // First order of business is to identify the items' instances,
+	    // which we can't just add to the free_instances pile since we will
+	    // need them later when we restore the item state.  Seed with the
+	    // tops set and work down.
+	    for (size_t i = 0; i < ctx->tops.size(); i++) {
+		item_queue.push(ctx->tops[i]);
+	    }
+	    while (item_queue.size()) {
+		QgItem *iq = item_queue.front();
+		item_queue.pop();
+		for (size_t i = 0; i < iq->children.size(); i++) {
+		    item_queue.push(iq->children[i]);
+		}
+		used_inst.insert(iq->inst);
+	    }
+
+
 	    // At the start of a hierarchy refresh cycle, grab all QgInstances
 	    // defined in parent_children and store them for reuse.  Typically
 	    // most of these will still be current, but that's by no means
@@ -72,7 +145,8 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	    std::unordered_map<struct directory *, std::vector<QgInstance*>>::iterator p_it;
 	    for (p_it = ctx->parent_children.begin(); p_it != ctx->parent_children.end(); p_it++) {
 		for (size_t i = 0; i < p_it->second.size(); i++) {
-		    ctx->free_instances.push(p_it->second[i]);
+		    if (used_inst.find(p_it->second[i]) == used_inst.end())
+			ctx->free_instances.push(p_it->second[i]);
 		}
 	    }
 	    ctx->parent_children.clear();
@@ -91,37 +165,70 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	    }
 
 	    if (ctx->mdl) {
+		std::vector<QgItem *> ntops;
 	
-		// Get tops list and add them as children of the null parent
+		// Get tops list and add them as children of the null parent.  Also use
+		// them as the seeds of the next tops QgItem vector.
 		struct directory **db_objects = NULL;
 		int path_cnt = db_ls(ctx->gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &db_objects);
 		if (path_cnt) {
 		    bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
 		    for (int i = 0; i < path_cnt; i++) {
 			struct directory *curr_dp = db_objects[i];
-			QgInstance *nobj = NULL;
+
+			// Make new QgInstance
+			QgInstance *ninst = NULL;
 			if (ctx->free_instances.size()) {
-			    nobj = ctx->free_instances.front();
+			    ninst = ctx->free_instances.front();
 			    ctx->free_instances.pop();
 			} else {
-			    nobj = new QgInstance();
+			    ninst = new QgInstance();
 			}
-			nobj->parent = NULL;
-			nobj->dp = curr_dp;
-			nobj->dp_name = std::string(curr_dp->d_namep);
-			nobj->op = DB_OP_UNION;
-			MAT_IDN(nobj->c_m);
-			if (ctx->dp_to_active_ind.find(nobj->dp) != ctx->dp_to_active_ind.end()) {
-			    nobj->active_ind = ctx->dp_to_active_ind[nobj->dp];
+			ninst->parent = NULL;
+			ninst->dp = curr_dp;
+			ninst->dp_name = std::string(curr_dp->d_namep);
+			ninst->op = DB_OP_UNION;
+			MAT_IDN(ninst->c_m);
+			if (ctx->dp_to_active_ind.find(ninst->dp) != ctx->dp_to_active_ind.end()) {
+			    ninst->active_ind = ctx->dp_to_active_ind[ninst->dp];
 			} else {
 			    // New dp - add it.  By default a new dp will be inactive - a view
 			    // selection is what dictates, activity, and we don't (yet) have the
 			    // info to decide if this dp is activated by a view selection.
 			    ctx->active_flags.push_back(0);
-			    nobj->active_ind = ctx->active_flags.size() - 1;
-			    ctx->dp_to_active_ind[nobj->dp] = nobj->active_ind;
+			    ninst->active_ind = ctx->active_flags.size() - 1;
+			    ctx->dp_to_active_ind[ninst->dp] = ninst->active_ind;
 			}
-			ctx->parent_children[(struct directory *)0].push_back(nobj);
+			ctx->parent_children[(struct directory *)0].push_back(ninst);
+
+			// Make new QgItem
+			QgItem *nitem = NULL;
+			if (ctx->free_items.size()) {
+			    nitem = ctx->free_items.front();
+			    ctx->free_items.pop();
+			} else {
+			    nitem = new QgItem();
+			}
+			nitem->parent = NULL;
+			nitem->inst = ninst;
+			ntops.push_back(nitem);
+
+			// TODO - Given new item, find analog (if any) in old tops vector, and see
+			// what the status of its children vector is.  If we find an analog
+			// and it has a non-empty child vector, we need to populate the nitem
+			// child vector as well.
+			QgItem *citem = find_similar_qgitem(nitem, ctx->tops);
+			if (citem) {
+			    if (citem->children.size()) {
+				bu_log("%s size: %zd\n", citem->inst->dp_name.c_str(), citem->children.size());
+			    } else {
+				bu_log("%s not open\n", citem->inst->dp_name.c_str());
+			    }
+			}
+
+			ctx->tops.clear();
+			ctx->tops = ntops;
+
 		    }
 		    bu_free(db_objects, "objs list");
 		}

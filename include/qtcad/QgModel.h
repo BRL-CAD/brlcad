@@ -68,6 +68,17 @@ class QTCAD_EXPORT QgInstance
 	int active_ind = -1;
 };
 
+class QTCAD_EXPORT QgItem
+{
+    public:
+	explicit QgItem();
+	~QgItem();
+
+	QgItem *parent;
+	QgInstance *inst;
+	std::vector<QgItem *>children;
+};
+
 class QTCAD_EXPORT QgModel;
 
 class QgModel_ctx
@@ -105,15 +116,13 @@ class QgModel_ctx
 	// having different parent items: Au[M1]BuC and Au[M2]BuC.
 	//
 	// To represent this, in addition to the parent_child map, we define an
-	// items map which holds QgItems that encode a reference to a QgInstance
-	// and the parent/child data specific to an individual place in the
-	// hierarchy.  Unlike instances, QgItems are created lazily in response
-	// to view requests, working from a seed set created from the top level
-	// objects in a database.
-#if 0
-	std::unordered_map<QgItem *, std::vector<QgItem *>> items;
-	std::queue<QgItem *> free_objs;
-#endif
+	// items hierarchy which holds QgItems that encode a reference to a
+	// QgInstance and the parent/child data specific to an individual place
+	// in the hierarchy.  Unlike instances, QgItems are created lazily in
+	// response to view requests, working from a seed set created from the
+	// top level objects in a database.
+	std::vector<QgItem *> tops;
+	std::queue<QgItem *> free_items;
 
 	// Activity flags (used for relevance highlighting) need to be updated
 	// whenever a selection changes.  Because the question of whether an

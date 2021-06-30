@@ -99,7 +99,7 @@ class dp_i {
 	    if (o.dp < dp) return false;
 
 	    // Important for multiple tests to know if matrices are IDN
-	    int tidn = bn_mat_is_equal(mat, bn_mat_identity, tol);;
+	    int tidn = bn_mat_is_equal(mat, bn_mat_identity, tol);
 	    int oidn = bn_mat_is_equal(o.mat, bn_mat_identity, tol);
 
 	    /* If the dp didn't resolve the question, check the matrix. */
