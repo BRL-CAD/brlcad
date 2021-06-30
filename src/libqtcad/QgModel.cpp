@@ -39,31 +39,53 @@ extern "C" void
 qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
 {
     QgModel_ctx *ctx = (QgModel_ctx *)u_data;
-    if (!dbip && !parent_dp && !child_dp && !child_name && op == DB_OP_UNION && m == NULL) {
-	bu_log("starting db_update_nref\n");
-	std::unordered_map<std::string, std::vector<QgInstance *>>::iterator p_it;
-	for (p_it = ctx->parent_children.begin(); p_it != ctx->parent_children.end(); p_it++) {
-	    for (size_t i = 0; i < p_it->second.size(); i++) {
-		ctx->free_instances.push(p_it->second[i]);
-	    }
-	}
-	ctx->parent_children.clear();
 
-	// child_parents should not contain any QgInstance containers not
-	// present in parent_children, so we just clear it without worrying
-	// about saving instances for reuse.
-	ctx->child_parents.clear();
-	return;
-    }
-    if (!dbip && !parent_dp && !child_dp && !child_name && op == DB_OP_SUBTRACT && m == NULL) {
-	bu_log("ending db_update_nref\n");
-	// TODO - iterate over parent_children and build up child_parents.
-	// Main use of child->parents is going to be doing intelligent
-	// highlighting, which in principle should be more performant with an
-	// intelligent way to work our way back up the tree...
-	if (ctx->mdl) {
-	    bu_log("time to update Qt model\n");
+    if (!dbip && !parent_dp && !child_dp && !child_name && m == NULL) {
+
+	// If all parameters except the op are NULL, we're either starting or ending
+	// the update pass.  Accordingly, we need to either initialize or finalize
+	// the QgModel state.
+
+	if (op == DB_OP_UNION) {
+	    bu_log("starting db_update_nref\n");
+	    std::unordered_map<std::string, std::vector<QgInstance *>>::iterator p_it;
+	    for (p_it = ctx->parent_children.begin(); p_it != ctx->parent_children.end(); p_it++) {
+		for (size_t i = 0; i < p_it->second.size(); i++) {
+		    ctx->free_instances.push(p_it->second[i]);
+		}
+	    }
+	    ctx->parent_children.clear();
+
+	    // child_parents should not contain any QgInstance containers not
+	    // present in parent_children (even top level objects should be
+	    // present in that map, with an empty string for the key), so we
+	    // just clear child_parents without worrying about saving instances
+	    // for reuse.
+	    ctx->child_parents.clear();
+	    return;
 	}
+	if (op == DB_OP_SUBTRACT) {
+	    bu_log("ending db_update_nref\n");
+	    // Iterate over parent_children and build up child_parents.
+	    //
+	    // Main use of child->parents is going to be doing intelligent
+	    // highlighting, which in principle should be more performant with an
+	    // intelligent way to work our way back up the tree...
+	    std::unordered_map<std::string, std::vector<QgInstance *>>::iterator p_it;
+	    for (p_it = ctx->parent_children.begin(); p_it != ctx->parent_children.end(); p_it++) {
+		for (size_t i = 0; i < p_it->second.size(); i++) {
+		    ctx->child_parents[p_it->second[i]->dp_name][p_it->first].insert(p_it->second[i]);
+		}
+	    }
+
+	    if (ctx->mdl) {
+		bu_log("time to update Qt model\n");
+	    }
+	    return;
+	}
+
+	// Any other op in this context indicates an error
+	bu_log("Error - unknown terminating condition for update_nref callback\n");
 	return;
     }
 
@@ -104,7 +126,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
     } else {
 	ninst = new QgInstance();
     }
-    // Note - need to make sure to assign everything in the QgInstance here, to
+    // Note - need to make sure to assign everything in the QgInstance here to
     // avoid stale data, since we may be reusing an old instance.
     ninst->parent = parent_dp;
     ninst->dp = child_dp;
