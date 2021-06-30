@@ -444,7 +444,7 @@ CADApp::closedb()
 
 
 extern "C" void
-qged_db_changed(struct directory *dp, int ctype, void *ctx)
+qged_db_changed(struct db_i *UNUSED(dbip), struct directory *dp, int ctype, void *ctx)
 {
     std::unordered_set<struct directory *> *changed = (std::unordered_set<struct directory *> *)ctx;
     if (ctype == 0)

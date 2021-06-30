@@ -234,7 +234,7 @@ db_diradd5(
     if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
 	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
-	    (*cb->f)(dp, 1, cb->u_data);
+	    (*cb->f)(dbip, dp, 1, cb->u_data);
 	}
     }
 
@@ -324,7 +324,7 @@ db5_diradd(struct db_i *dbip,
     if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
 	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
-	    (*cb->f)(dp, 1, cb->u_data);
+	    (*cb->f)(dbip, dp, 1, cb->u_data);
 	}
     }
 

@@ -311,7 +311,7 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
     if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
 	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
-	    (*cb->f)(dp, 1, cb->u_data);
+	    (*cb->f)(dbip, dp, 1, cb->u_data);
 	}
     }
 
@@ -343,7 +343,7 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 	if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
 		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
-		(*cb->f)(dp, 2, cb->u_data);
+		(*cb->f)(dbip, dp, 2, cb->u_data);
 	    }
 	}
 
@@ -365,7 +365,7 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 	if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
 		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
-		(*cb->f)(dp, 2, cb->u_data);
+		(*cb->f)(dbip, dp, 2, cb->u_data);
 	    }
 	}
 

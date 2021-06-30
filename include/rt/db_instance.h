@@ -41,13 +41,14 @@
 
 __BEGIN_DECLS
 
+struct db_i;   /* forward declaration */
 struct rt_wdb; /* forward declaration */
 
 /* Callback called when database objects are changed.  The int indicates
  * the change type (0 = mod, 1 = add, 2 = rm). ctx is a user
  * supplied context and is passed back as the last argument to db_change.
  */
-typedef void (*dbi_changed_t)(struct directory *, int, void *);
+typedef void (*dbi_changed_t)(struct db_i *, struct directory *, int, void *);
 
 
 /* Callback called when references are updated. Args are:
@@ -79,7 +80,7 @@ typedef void (*dbi_changed_t)(struct directory *, int, void *);
  * properly, this callback lets the parent application benefit from the
  * work db_update_nref is already doing to figure out these relationships.
  * */
-typedef void (*dbi_update_nref_t)(struct directory *, struct directory *, const char *, db_op_t, matp_t, void *);
+typedef void (*dbi_update_nref_t)(struct db_i *, struct directory *, struct directory *, const char *, db_op_t, matp_t, void *);
 
 /**
  * One of these structures is used to describe each separate instance

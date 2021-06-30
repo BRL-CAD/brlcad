@@ -313,7 +313,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
 		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
-		(*cb->f)(dp, 0, cb->u_data);
+		(*cb->f)(dbip, dp, 0, cb->u_data);
 	    }
 	}
 
