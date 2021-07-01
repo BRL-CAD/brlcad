@@ -83,6 +83,7 @@ class QTCAD_EXPORT QgItem
 	~QgItem();
 
 	QgInstance *inst;
+	unsigned long long hash;
 
 	QgItem *parent;
 	std::vector<QgItem *>children;
@@ -102,6 +103,10 @@ class QgModel_ctx
 	// .g Db interface and containers
 	struct ged *gedp;
 
+	QgInstance *add(std::unordered_map<unsigned long long, QgInstance *> *, QgInstance *);
+
+
+	std::unordered_map<unsigned long long, QgInstance *> instances;
 	// The parent->child storage is (potentially) 1 to many.
 	std::unordered_map<struct directory *, std::vector<QgInstance *>> parent_children;
 	std::queue<QgInstance *> free_instances;
