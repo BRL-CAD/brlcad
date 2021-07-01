@@ -21,11 +21,37 @@
  *
  * QAbstractItemModel of a BRL-CAD .g database.
  *
+ *
+ * TODO - make hasher(s) for the instances, so we can get lookup keys
+ * based on name+op, name+mat, name+op+mat and build lookup maps.
+ *
+ * Replace intermediate instance creation in update_ref callback with
+ * a processing step at the end that iterates over the array of all
+ * dps twice.  The first to get instances for tops objects, and the
+ * second to get all immediate children of all combs, sketches, etc.
+ * and make instances from them.
+ *
+ * If we use hash lookups, we may be able to avoid having to redo
+ * everything each time - we'll have to build up new maps and
+ * clear the old in order to spot removed instances, but if the data
+ * itself can only change when an instance changes we'll have more
+ * stability.
+ *
+ * The item tree can then be checked for validity by walking it, leaving
+ * intact unaltered items and only redoing those that are changed. We'll
+ * still need the approx lookups in that case, but rather than a full
+ * change of the model we can just take QgItems that are different and
+ * use them as seeds for local processing/replacement of that subtree.
+ *
  */
 
 #include "common.h"
 
 #include <QFileInfo>
+
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
 
 #include "bu/env.h"
 #include "bu/sort.h"
@@ -34,11 +60,44 @@
 
 QgInstance::QgInstance()
 {
+    h_state = XXH64_createState();
+    if (h_state)
+	XXH64_reset(h_state, 0);
 }
 
 QgInstance::~QgInstance()
 {
+    XXH64_freeState(h_state);
 }
+
+
+unsigned long long
+QgInstance::hash(int mode)
+{
+    if (!h_state)
+	return 0;
+
+    XXH64_hash_t hash_val;
+
+    if (parent)
+	XXH64_update(h_state, parent->d_namep, strlen(parent->d_namep));
+    if (dp)
+	XXH64_update(h_state, dp->d_namep, strlen(dp->d_namep));
+    if (dp_name.length())
+	XXH64_update(h_state, dp_name.c_str(), dp_name.length());
+
+    if (mode == 1 || mode == 3)
+	XXH64_update(h_state, (void *)op, sizeof(db_op_t));
+
+    if (mode == 2 || mode == 3)
+	XXH64_update(h_state, c_m, sizeof(mat_t));
+
+    hash_val = XXH64_digest(h_state);
+    XXH64_reset(h_state, 0);
+
+    return (unsigned long long)hash_val;
+}
+
 
 QgItem::QgItem()
 {
@@ -91,7 +150,6 @@ find_similar_qgitem(QgItem *c, std::vector<QgItem *> &v)
 
     return m;
 }
-
 
 static int
 dp_cmp(const void *d1, const void *d2, void *UNUSED(arg))
@@ -217,13 +275,19 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 			// what the status of its children vector is.  If we find an analog
 			// and it has a non-empty child vector, we need to populate the nitem
 			// child vector as well.
+			std::queue<QgItem *> to_expand;
 			QgItem *citem = find_similar_qgitem(nitem, ctx->tops);
 			if (citem) {
 			    if (citem->children.size()) {
 				bu_log("%s size: %zd\n", citem->inst->dp_name.c_str(), citem->children.size());
+				to_expand.push(citem);
 			    } else {
 				bu_log("%s not open\n", citem->inst->dp_name.c_str());
 			    }
+			}
+			while (to_expand.size()) {
+			    // Work our way through the children of citem down the tree, until we
+			    // don't find any more expanded children
 			}
 
 			ctx->tops.clear();

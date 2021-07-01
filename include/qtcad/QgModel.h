@@ -41,6 +41,8 @@
 #include <QAbstractItemModel>
 #include <QModelIndex>
 
+#include "xxhash.h"
+
 #include "qtcad/defines.h"
 
 #ifndef Q_MOC_RUN
@@ -54,6 +56,9 @@ class QTCAD_EXPORT QgInstance
 	explicit QgInstance();
 	~QgInstance();
 
+
+	unsigned long long hash(int mode);
+
 	struct directory *parent = NULL;
 	struct directory *dp = NULL;
 	std::string dp_name;
@@ -66,6 +71,9 @@ class QTCAD_EXPORT QgInstance
 	//
 	// ctx->active_flags[instance->obj->active_ind];
 	int active_ind = -1;
+
+    private:
+	XXH64_state_t *h_state;
 };
 
 class QTCAD_EXPORT QgItem
@@ -74,8 +82,9 @@ class QTCAD_EXPORT QgItem
 	explicit QgItem();
 	~QgItem();
 
-	QgItem *parent;
 	QgInstance *inst;
+
+	QgItem *parent;
 	std::vector<QgItem *>children;
 };
 
@@ -118,9 +127,20 @@ class QgModel_ctx
 	// To represent this, in addition to the parent_child map, we define an
 	// items hierarchy which holds QgItems that encode a reference to a
 	// QgInstance and the parent/child data specific to an individual place
-	// in the hierarchy.  Unlike instances, QgItems are created lazily in
-	// response to view requests, working from a seed set created from the
-	// top level objects in a database.
+	// in the hierarchy.  It is a QgItem, not a QgInstance, which can
+	// correspond to a row in a Qt abstract model.  Unlike instances,
+	// QgItems are created lazily in response to view requests, working
+	// from a seed set created from the top level objects in a database.
+	//
+	// The parent_children hierarchy guides the creation of QgItem hierarchies
+	// as follows:  a QgItem has an associated dp (unless it is an invalid
+	// leaf) and that dp, if it is not a solid or empty comb, has an associated
+	// set of QgInstances that correspond to its children.  Those QgInstances
+	// are used, when the children array is populated in the QgItem, to create
+	// a new vector of QgItems using those QgInstances as their .g definitions.
+	// The hierarchy parent and child relationships are thus established
+	// uniquely, by the QgItems, but following the hierarchy implicit in the
+	// .g information.
 	std::vector<QgItem *> tops;
 	std::queue<QgItem *> free_items;
 
