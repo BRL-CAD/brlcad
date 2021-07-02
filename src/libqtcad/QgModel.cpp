@@ -527,11 +527,6 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 #endif
 }
 
-// This callback is needed for cases where an individual object is changed but the
-// hierarchy is not disturbed (a rename, for example.)
-//
-// We also use it to catch cases where the internal logic SHOULD have called
-// db_update_nref after adding or removing objects, but didn't.
 extern "C" void
 qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
@@ -541,6 +536,28 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    bu_log("MOD: %s\n", dp->d_namep);
 	    if (ctx->mdl)
 		ctx->mdl->changed_dp.insert(dp);
+
+	    // What needs to happen here for combs is the construction of a
+	    // vector of QgInstances corresponding to the new children of the
+	    // comb.  We then construct two vectors of the hashes of the old
+	    // and new children sets, sort and use set_difference to find
+	    // QgInstances that have been removed from the new comb.  Those are
+	    // deleted, and the old QgInstance vector is replaced by the new.
+	    // QgItems will also need similar treatment, with the additional wrinkle
+	    // that any deleted QgItems also have all their children removed.
+	    // Initially that will mean that editing a comb instance will close it in
+	    // a tree view even if the edit is to its matrix or op - we may be able
+	    // to do a fuzzy matching to re-populate new QgItems that correspond
+	    // closely to a removed item, but that's for down the road.
+	    //
+	    // Will also need handlers for extrude/revolve/dsp.
+	    //
+	    // This is a variation on the logic used in initialization that sets
+	    // up the initial set of QgInstances - need to either refactor that
+	    // so it can be used for both situations or implement something suitable
+	    // for this case.
+
+
 	    break;
 	case 1:
 	    bu_log("ADD: %s\n", dp->d_namep);
@@ -548,11 +565,34 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 		ctx->mdl->changed_dp.insert(dp);
 		ctx->mdl->need_update_nref = true;
 	    }
+
+	    // We can either do it here or in the update_nref callback, but we need
+	    // to check whether any QgInstances are referencing the added name as
+	    // a child.  If so, the added object is not a tops object and doesn't
+	    // get a top level instance/item.  Thinking it may be better to do it
+	    // here - check only QgInstances with a null dp - for those, do a name
+	    // comparison.  If it matches, assign the dp and note that the item
+	    // isn't top level.
+	    //
+	    // If the added object is itself a comb or one of the primitives referencing
+	    // another object, we need to add new QgInstances.
+
 	    break;
 	case 2:
 	    bu_log("RM:  %s\n", dp->d_namep);
 	    if (ctx->mdl)
 		ctx->mdl->need_update_nref = true;
+
+	    // Check QgInstances using parent_children array to see if any of
+	    // them have become invalid.  If the parent_dp == removed dp,
+	    // they're removed (the easy case, as that's the vector stored by
+	    // parent_children).  However, we also need to check the others: if
+	    // dp == the removed dp, the QgInstance is now invalid (set dp to
+	    // NULL).  QgItems also need to be updated, not sure yet whether
+	    // it's better do that here or in update_nref callback.  New tops
+	    // objects at least will be more simply dealt with the update_nref
+	    // callback, after the d_nref counts are finalized.
+
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -603,7 +643,7 @@ QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct ged *ngedp)
 	    parent_children[(struct directory *)0].push_back(ninst);
 	    ilookup[(struct directory *)0][ninst->hash()] = ninst;
 
-	    // TODO - tops entries get a QgItem by default
+	    // tops entries get a QgItem by default
 	    QgItem *nitem = new QgItem();
 	    nitem->parent = NULL;
 	    nitem->inst = ninst;
