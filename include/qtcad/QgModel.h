@@ -103,13 +103,8 @@ class QgModel_ctx
 	// .g Db interface and containers
 	struct ged *gedp;
 
-	QgInstance *add(std::unordered_map<unsigned long long, QgInstance *> *, QgInstance *);
-
-
-	std::unordered_map<unsigned long long, QgInstance *> instances;
 	// The parent->child storage is (potentially) 1 to many.
 	std::unordered_map<struct directory *, std::vector<QgInstance *>> parent_children;
-	std::queue<QgInstance *> free_instances;
 
 	// Hierarchy items
 	//
@@ -147,7 +142,6 @@ class QgModel_ctx
 	// uniquely, by the QgItems, but following the hierarchy implicit in the
 	// .g information.
 	std::vector<QgItem *> tops;
-	std::queue<QgItem *> free_items;
 
 	// Activity flags (used for relevance highlighting) need to be updated
 	// whenever a selection changes.  Because the question of whether an
