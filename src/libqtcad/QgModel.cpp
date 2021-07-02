@@ -335,9 +335,17 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 		}
 		ctx->tops = ntops;
 
+		std::queue<QgItem *> itm_del;
 		for (size_t i = 0; i < removed.size(); i++) {
-		    // TODO - delete QgItem and all children
 		    QgItem *itm = olookup[removed[i]];
+		    itm_del.push(itm);
+		}
+		while (itm_del.size()) {
+		    QgItem *itm = itm_del.front();
+		    itm_del.pop();
+		    for (size_t i = 0; i < itm->children.size(); i++) {
+			itm_del.push(itm->children[i]);
+		    }
 		    delete itm;
 		}
 	    }
