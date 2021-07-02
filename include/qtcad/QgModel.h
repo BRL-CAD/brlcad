@@ -57,13 +57,21 @@ class QTCAD_EXPORT QgInstance
 	~QgInstance();
 
 
-	unsigned long long hash(int mode);
+	unsigned long long hash(int mode = 3);
 
 	struct directory *parent = NULL;
 	struct directory *dp = NULL;
 	std::string dp_name;
 	db_op_t op = DB_OP_NULL;
 	mat_t c_m;
+
+	// Normally this value is not needed, but in the rare case where a comb
+	// has two or more identical entries, we need to have some way to
+	// distinguish them. This value is assigned by the tree walk, which
+	// increments it in response to collisions found in an individual comb
+	// tree's leaf nodes.
+	int pcnt = 0;
+
 
 	// The following value holds the index of the active flags array to
 	// check when determining if this object is active.  I.e. activity is
@@ -105,6 +113,10 @@ class QgModel_ctx
 
 	// The parent->child storage is (potentially) 1 to many.
 	std::unordered_map<struct directory *, std::vector<QgInstance *>> parent_children;
+
+	// We maintain the vector above for leaf ordering, but we also build
+	// a map of QgInstance hashes to instances for easy lookup
+	std::unordered_map<struct directory *, std::unordered_map<unsigned long long, QgInstance *>> ilookup;
 
 	// Hierarchy items
 	//
