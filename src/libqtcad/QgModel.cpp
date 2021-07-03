@@ -190,6 +190,18 @@ qg_make_instances(struct db_i *dbip, struct rt_comb_internal *comb, union tree *
 	op = DB_OP_INTERSECT;
     }
 
+    // TODO - Instance creation is going to be tricky when we initialize and/or
+    // a comb's member instances - we may be adding a duplicate instance that
+    // matches already existing instances, so we don't have enough context
+    // based solely on the comb leaf to recognize if the intent is to add a
+    // duplicate or find and hook up an already existing instance.  That info
+    // is going to have to come from the caller, which will have to base that
+    // info on an analysis of all of the comb children.  Probably that means we
+    // can't use the db_tree_funcleaf walk for anything except initial
+    // information collection - we'll have to analyze the set of comb_leafs to
+    // spot duplicates in the original .g comb data read off of disk, flag
+    // them, and process accordingly.
+
     QgInstance *ninst = new QgInstance();
     ninst->pcnt = 0;
     ninst->parent = parent_dp;
