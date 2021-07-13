@@ -16,6 +16,11 @@
 # to be ready.  The key variable CMAKE_BUILD_RPATH must be set correctly ahead
 # of time - see RPath_Setup.cmake
 
+# NOTE - CMake 3.21 has introduced a new install() command called
+# IMPORTED_RUNTIME_ARTIFACTS that may be useful for this work... see:
+# https://cmake.org/cmake/help/v3.21/command/install.html
+
+
 # Be quite about tool outputs by default
 if(NOT DEFINED EXTPROJ_VERBOSE)
   set(EXTPROJ_VERBOSE 0)
