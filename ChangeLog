@@ -1,3 +1,27 @@
+TODO - cherry-picking in git has some consequences for merging, which
+may be severe in the RELEASE case (where we will eventually need to
+merge large sets of changes which will include those we cherry picked
+into RELEASE originally.)  Making a note of the commit at which
+RELEASE was last merged, so we can know where to start the change
+set generation for an eventual superset merge that will encompass
+cherry-picked commits:
+
+e6f70908a7cb43c18d9965a8929206685dc5e004
+
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>  2021-02-06 11:26:00
+Committer: Clifford Yapp <238416+starseeker@users.noreply.github.com>  2021-02-06 11:26:00
+Parent: 4bfc8f7df70f650f5784c5758d17367492f362e6 (Update ChangeLog)
+Child:  ce77edb146303ca0351e0c648e1b811ea8bf9cd9 (Merge RELEASE changes back into trunk, increment version numbers)
+Follows: rel-7-24-0
+Precedes:
+
+    Note the release date in NEWS
+
+    svn:revision:78205
+    svn:branch:RELEASE
+    svn:account:starseeker
+
+
 2021-02-06 16:22  starseeker
 
 	* [r78203] include/conf/PATCH, misc/debian/changelog:
