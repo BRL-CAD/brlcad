@@ -13,7 +13,9 @@ changes made.  See document footer for additional details.
 --- 2021-XX-XX  Release 7.32.4                                     ---
 ----------------------------------------------------------------------
 
-* Improve documentation for bot modes in bot and search - Cliff Yapp
+* fixed MGED handling of long running subprocesses in script mode
+        - Cliff Yapp, Sean Morrison
+* improve documentation for bot modes in bot and search - Cliff Yapp
 * added -o output option to GED stat command - Cliff Yapp
 * fixed overlay support for drawing multiple files - Cliff Yapp
 * fixed file creation for tire command - Cliff Yapp
