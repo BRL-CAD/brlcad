@@ -11,14 +11,6 @@ make the date readout readable.
 https://gist.github.com/eribeiro/5b7179f432bfffffe53d
 
 
-NOTE:  For partial history visualization the following feature would be nice:
-
-https://github.com/acaudwell/Gource/issues/116
-
-At some point if we need a more nuanced view we should investigate the custom
-log option noted in the comments...
-
-
 Options:
 
 
