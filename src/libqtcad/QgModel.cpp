@@ -91,7 +91,7 @@ QgInstance::hash(int mode)
     if (dp_name.length())
 	XXH64_update(h_state, dp_name.c_str(), dp_name.length());
 
-    XXH64_update(h_state, &pcnt, sizeof(int));
+    XXH64_update(h_state, &icnt, sizeof(int));
 
     int int_op = 0;
     switch (op) {
@@ -203,7 +203,7 @@ qg_make_instances(struct db_i *dbip, struct rt_comb_internal *comb, union tree *
     // them, and process accordingly.
 
     QgInstance *ninst = new QgInstance();
-    ninst->pcnt = 0;
+    ninst->icnt = 0;
     ninst->parent = parent_dp;
     ninst->dp = dp;
     ninst->dp_name = std::string(comb_leaf->tr_l.tl_name);
@@ -216,7 +216,7 @@ qg_make_instances(struct db_i *dbip, struct rt_comb_internal *comb, union tree *
     ctx->parent_children[parent_dp].push_back(ninst);
     unsigned long long nhash = ninst->hash();
     while (ctx->ilookup[parent_dp].find(nhash) != ctx->ilookup[parent_dp].end()) {
-	ninst->pcnt++;
+	ninst->icnt++;
 	nhash = ninst->hash();
     }
     ctx->ilookup[parent_dp][nhash] = ninst;
