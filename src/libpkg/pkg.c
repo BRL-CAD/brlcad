@@ -255,7 +255,8 @@ _pkg_perror(void (*errlog)(const char *msg), const char *s)
     }
 
     snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "%s: %s\n", s, strerror(errno));
-    errlog(_pkg_errbuf);
+    if (errlog)
+	errlog(_pkg_errbuf);
 }
 
 
@@ -1821,7 +1822,8 @@ pkg_suckin(struct pkg_conn *pc)
     if (pc->pkc_inbuf == (char *)0 || pc->pkc_inlen <= 0) {
 	pc->pkc_inlen = PKG_STREAMLEN;
 	if ((pc->pkc_inbuf = (char *)malloc((size_t)pc->pkc_inlen)) == (char *)0) {
-	    pc->pkc_errlog("pkg_suckin malloc failure\n");
+	    if (pc->pkc_errlog)
+		pc->pkc_errlog("pkg_suckin malloc failure\n");
 	    pc->pkc_inlen = 0;
 	    ret = -1;
 	    goto out;
@@ -1857,7 +1859,8 @@ pkg_suckin(struct pkg_conn *pc)
 	    fflush(_pkg_debug);
 	}
 	if ((pc->pkc_inbuf = (char *)realloc(pc->pkc_inbuf, (size_t)pc->pkc_inlen)) == (char *)0) {
-	    pc->pkc_errlog("pkg_suckin realloc failure\n");
+	    if (pc->pkc_errlog)
+		pc->pkc_errlog("pkg_suckin realloc failure\n");
 	    pc->pkc_inlen = 0;
 	    ret = -1;
 	    goto out;
@@ -1900,7 +1903,8 @@ pkg_suckin(struct pkg_conn *pc)
 	goto out;
     }
     if (got > (int)avail) {
-	pc->pkc_errlog("pkg_suckin: read more bytes than desired\n");
+	if (pc->pkc_errlog)
+	    pc->pkc_errlog("pkg_suckin: read more bytes than desired\n");
 	got = (int)avail;
     }
     pc->pkc_inend += got;
