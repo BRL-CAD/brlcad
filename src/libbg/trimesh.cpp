@@ -362,10 +362,14 @@ bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges)
 
     if (bedges) {
 	int copy_cnt = 0;
-	struct bg_trimesh_solid_errors errors;
+	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
 
 	bedge_cnt = bg_trimesh_solid2(vcnt, fcnt, v, f, &errors);
+
 	*bedges = (int *)bu_calloc(bedge_cnt * 2, sizeof(int), "bad edges");
+
+	if (!errors.unmatched.edges || !errors.unmatched.count)
+	    return 0;
 
 	memcpy(*bedges, errors.unmatched.edges, errors.unmatched.count * 2 * sizeof(int));
 	copy_cnt += errors.unmatched.count * 2;
@@ -679,7 +683,6 @@ HIDDEN struct bg_trimesh_edges *
 find_chain_with_endpoints(int endpoints[2], struct bg_trimesh_edges *edge_set, int max_chain_edges)
 {
     int i;
-    int found_chain;
     struct edge_list *terminal_edge;
     struct bg_trimesh_edges *chain_edges = NULL;
     struct bu_list *search_list = edges_to_list(edge_set);
@@ -688,14 +691,11 @@ find_chain_with_endpoints(int endpoints[2], struct bg_trimesh_edges *edge_set, i
     edge_options = (struct bu_list **)bu_calloc(max_chain_edges, sizeof(struct bu_list *), "edge options");
     edge_options[0] = get_edges_starting_from_endpoint(search_list, endpoints[0]);
 
-    found_chain = 0;
-
-    for (i = 1; i <= max_chain_edges && !found_chain; ++i) {
+    for (i = 1; i <= max_chain_edges; ++i) {
 	edge_options[i] = get_edges_that_follow_edges(search_list, edge_options[i - 1]);
 
 	terminal_edge = get_edge_ending_at_endpoint(edge_options[i], endpoints[1]);
 	if (terminal_edge != NULL) {
-	    found_chain = 1;
 	    chain_edges = get_edges_ending_at_edge(edge_options, i, terminal_edge);
 	    break;
 	}
