@@ -1,24 +1,27 @@
 set(other_licenses
+  Eigen.txt
+  bson.txt
   gct.txt
   gdal.txt
-  incrTcl.txt
-  libbson.txt
-  libbson_yajl.txt
-  libnetpbm.txt
-  libpng.txt
-  libregex.txt
+  itcl3.txt
+  itk3.txt
+  iwidgets.txt
+  libosmesa.txt
   libutahrle.txt
-  libz.txt
   linenoise.txt
-  OpenNURBS.txt
+  netpbm.txt
+  openNURBS.txt
   openscenegraph.txt
+  png.txt
   poly2tri.txt
   proj-4.txt
+  regex.txt
   stepcode.txt
   tcl.txt
+  tk.txt
   tkhtml.txt
-  tkpng.txt
   tktable.txt
+  zlib.txt
   )
 
 ADD_DOC(other_licenses legal/other)

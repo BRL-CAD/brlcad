@@ -1,4 +1,4 @@
-/*               L I C E N S E _ C H E C K . C X X
+/*               E M B E D D E D _ C H E C K . C X X
  * BRL-CAD
  *
  * Copyright (c) 2018-2021 United States Government as represented by
@@ -32,7 +32,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/** @file license_check.cxx
+/** @file embedded_check.cxx
  *
  * Check file for certain copyright/license signatures, and for
  * those that are 3rd party check that the appropriate license
@@ -140,7 +140,7 @@ int
 main(int argc, const char *argv[])
 {
     if (argc < 4) {
-	std::cerr << "Usage: license_check [-v] licenses_list file_list src_root\n";
+	std::cerr << "Usage: embedded_check [-v] licenses_list file_list src_root\n";
 	return -1;
     }
 
