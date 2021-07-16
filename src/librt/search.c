@@ -1458,6 +1458,8 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
     }
 
     if (db_node->flags & DB_SEARCH_RETURN_UNIQ_DP) {
+	if (!db_node || !db_node->path || !DB_FULL_PATH_CUR_DIR(db_node->path))
+	    return 1;
 	name = DB_FULL_PATH_CUR_DIR(db_node->path)->d_namep;
     } else {
 	name = db_path_to_string(db_node->path);
@@ -1469,7 +1471,6 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 	plain_begin = 0;
 	filled_len = 0;
 	plain_len = 0;
-	old_filled_len = 0;
 	for (char_i=0; originals[hole_i][char_i] != '\0'; char_i++) {
 	    if (originals[hole_i][char_i] == '{' && originals[hole_i][char_i+1] == '}') {
 		old_filled_len = filled_len;
@@ -2023,7 +2024,6 @@ yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* po
     struct db_plan_t *tail;             /* pointer to tail of subplan */
     struct db_plan_t *subplan;          /* pointer to head of () expression */
     extern int f_expr(struct db_plan_t *, struct db_node_t *, struct db_i *, struct bu_ptbl *);
-    int error_return = BRLCAD_OK;
 
     /* first pull the top node from the plan */
     if ((node = yanknode(planp)) == NULL) {
@@ -2038,7 +2038,7 @@ yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* po
      */
     if (node->type == N_OPENPAREN)
 	for (tail = subplan = NULL;;) {
-	    if ((error_return = yankexpr(planp, &next)) != BRLCAD_OK)
+	    if (yankexpr(planp, &next) != BRLCAD_OK)
 		return BRLCAD_ERROR;
 	    if (next == NULL) {
 		bu_log("(: missing closing ')'\n");
@@ -2185,7 +2185,8 @@ not_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* pl
 	    tail->next = next;
 	    tail = next;
 	}
-	tail->next = NULL;
+	if (tail)
+	    tail->next = NULL;
     }
     (*resultplan) = result;
     return BRLCAD_OK;
@@ -2439,7 +2440,7 @@ db_search_form_plan(char **argv,
     if (!db_search_isoutput) {
 	if (plan == NULL) {
 	    c_print(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl, NULL);
-	    tail = plan = newplan;
+	    plan = newplan;
 	} else {
 	    c_openparen(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl, NULL);
 	    newplan->next = plan;
@@ -2449,7 +2450,6 @@ db_search_form_plan(char **argv,
 	    tail = newplan;
 	    c_print(NULL, NULL, 0, &newplan, &db_search_isoutput, tbl, NULL);
 	    tail->next = newplan;
-	    tail = newplan;
 	}
     }
 

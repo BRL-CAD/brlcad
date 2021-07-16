@@ -509,6 +509,10 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
     outsize = bu_cv_itemlen(outcookie);
     insize = bu_cv_itemlen(incookie);
 
+    /* Sanity */
+    if (!outsize || !insize)
+	return 0;
+
     /*
      * If the input format is the same as the output format then the
      * most that has to be done is a host to net or net to host

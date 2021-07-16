@@ -325,7 +325,7 @@ _bu_dir_join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, str
 	return 0;
     }
 
-    rlen = llen = 0;
+    rlen = 0;
     if (rhs) {
 	rlen = strlen(rhs);
     }

@@ -134,7 +134,7 @@ ged_cmd_lookup(const char **ncmd, const char *cmd)
     std::string scmd(cmd);
     std::map<std::string, const struct ged_cmd *>::iterator cmd_it;
     for (cmd_it = cmd_map.begin(); cmd_it != cmd_map.end(); cmd_it++) {
-	unsigned long edist = bu_editdist(cmd, cmd_it->first.c_str(), 0);
+	unsigned long edist = bu_editdist(cmd, cmd_it->first.c_str());
 	if (edist < min_dist) {
 	    ccmd = (*cmd_it).first.c_str();
 	    min_dist = edist;

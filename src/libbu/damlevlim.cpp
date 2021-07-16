@@ -45,11 +45,8 @@
 #define DAMLEVLIM_MAX_EDIT_DIST 16384
 
 unsigned long
-bu_editdist(const char *s1, const char *s2, unsigned long max_dist)
+bu_editdist(const char *s1, const char *s2)
 {
-    // Cap at the defined maximum edit distance.
-    unsigned long max = (max_dist < DAMLEVLIM_MAX_EDIT_DIST) ? max_dist : DAMLEVLIM_MAX_EDIT_DIST;
-
     // If we don't have both strings, trivial equality
     if (!s1 || !s2) {
 	return 0;
@@ -58,11 +55,6 @@ bu_editdist(const char *s1, const char *s2, unsigned long max_dist)
     // If we have equal strings, trivial equality
     if (BU_STR_EQUAL(s1, s2)) {
 	return 0;
-    }
-
-    // If max == 0, go the limit
-    if (max == 0) {
-	max = DAMLEVLIM_MAX_EDIT_DIST;
     }
 
     // If one of either of the strings doesn't exist, the length of the other

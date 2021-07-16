@@ -352,7 +352,7 @@ BU_EXPORT extern char **bu_argv_dupinsert(int insert, size_t insertArgc, const c
  * and max_dist will be returned.  When max_dist is 0, the calculation will
  * proceed up to an internally defined calculation limit. */
 BU_EXPORT unsigned long
-bu_editdist(const char *s1, const char *s2, unsigned long max_dist);
+bu_editdist(const char *s1, const char *s2);
 
 
 __END_DECLS
