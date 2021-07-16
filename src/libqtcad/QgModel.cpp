@@ -786,7 +786,7 @@ QgModel::parent(const QModelIndex &) const
 }
 
 Qt::ItemFlags
-QgModel::flags(const QModelIndex &UNUSED(index))
+QgModel::flags(const QModelIndex &UNUSED(index)) const
 {
     return Qt::NoItemFlags;
 }
@@ -798,7 +798,7 @@ QgModel::data(const QModelIndex &UNUSED(index), int UNUSED(role)) const
 }
 
 QVariant
-QgModel::headerData(int UNUSED(section), Qt::Orientation UNUSED(orientation), int UNUSED(role))
+QgModel::headerData(int UNUSED(section), Qt::Orientation UNUSED(orientation), int UNUSED(role)) const
 {
     return QVariant();
 }

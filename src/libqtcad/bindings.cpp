@@ -109,8 +109,8 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
     unsigned long long view_flags = BV_IDLE;
 
     if (x_prev == -INT_MAX) {
-	x_prev = e->x();
-	y_prev = e->y();
+	//x_prev = e->x();
+	//y_prev = e->y();
 	return 0;
     }
 
