@@ -151,7 +151,7 @@ main(int argc, const char *argv[])
     std::regex r_regex(".*[\\/]misc/repoconv[\\/].*");
     std::regex rw_regex(".*[\\/]misc/repowork[\\/].*");
     std::regex d_regex(".*[\\/]doc[\\/].*");
-    std::regex l_regex(".*[\\/]licenses_check.cpp");
+    std::regex l_regex(".*[\\/]embedded_check.cpp");
     std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
     std::regex svn_regex(".*[\\/][.]svn[\\/].*");
     std::string root_path(argv[3]);
