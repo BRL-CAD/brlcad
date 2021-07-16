@@ -512,6 +512,9 @@ for f in "${!expected_failure[@]}"; do
 done
 fi
 
+# Clean up empty scan-* output dirs
+find . -type d -empty -name scan-\* |xargs rmdir
+
 if [ "$failures" -ne "0" ]; then
 	exit 1
 fi
