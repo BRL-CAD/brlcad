@@ -533,6 +533,9 @@ bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
     const_points_tmp = (const point2d_t *)points_tmp;
     ret = bg_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, const_points_tmp, pnt_cnt);
 
+    if (ret < 0)
+	return ret;
+
     /* Set up the 2D point list so converting it will result in useful 3D points */
     V2MOVE(points_obr[0], obr_2d_center);
     V2ADD2(points_obr[1], obr_2d_v1, obr_2d_center);
