@@ -120,8 +120,8 @@ tnchktc(void)
 {
 	register char *p, *q;
 	char tcname[16];	/* name of similar terminal */
-	char tcbuf[TCBUFSIZE];
-	char rmbuf[TCBUFSIZE];
+	char tcbuf[TCBUFSIZE] = {0};
+	char rmbuf[TCBUFSIZE] = {0};
 	char *holdtbuf = tbuf, *holdtc;
 	int l;
 
@@ -150,6 +150,7 @@ tnchktc(void)
 		}
 		if (tgetent(tcbuf, tcname) != 1) {
 			hopcount = 0;		/* unwind recursion */
+			tbuf = NULL;  // Clear reference to stack address
 			return(0);
 		}
 		hopcount--;
