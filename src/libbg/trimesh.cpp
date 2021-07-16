@@ -598,11 +598,16 @@ HIDDEN struct edge_list *
 get_parent_edge(struct bu_list *parent_options, struct edge_list *child)
 {
     struct edge_list *item;
+
+    if (!parent_options || !child)
+	return NULL;
+
     for (BU_LIST_FOR(item, edge_list, parent_options)) {
 	if (item->edge[1] == child->edge[0]) {
 	    return item;
 	}
     }
+
     return NULL;
 }
 
