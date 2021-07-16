@@ -158,7 +158,7 @@ bg_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
     x_0 = pts[i][0];
     z_0 = pts[i][2];
     x_1 = pts[0][0];
-    z_0 = pts[0][2];
+    z_1 = pts[0][2];
     a = x_0 *z_1 - x_1*z_0;
     signedArea += a;
     *cent[2] += (z_0 + z_1)*a;
