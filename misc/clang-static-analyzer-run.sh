@@ -62,6 +62,9 @@ rm -rfv ./scan-reports-*
 cd src/other
 make -j12
 cd ../../
+cd src/other/ext
+make -j12
+cd ../../../
 cd misc/tools
 make -j12
 cd ../../
