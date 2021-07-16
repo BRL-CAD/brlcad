@@ -132,7 +132,8 @@ mem_open(struct fb *ifp, const char *file, int width, int height)
 	}
 
     /* build a local static info struct */
-    if ((MIL(ifp) = (char *)calloc(1, sizeof(struct mem_info))) == NULL) {
+    size_t msize = sizeof(struct mem_info);
+    if ((MIL(ifp) = (char *)calloc(1, msize)) == NULL) {
 	fb_log("mem_open:  mem_info malloc failed\n");
 	return -1;
     }

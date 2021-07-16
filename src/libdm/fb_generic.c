@@ -527,12 +527,6 @@ fb_read_fd(struct fb *ifp, int fd, int file_width, int file_height, int file_xof
 	}
     }
 
-    /* If screen size was not set, track the file size */
-    if (scr_width == 0)
-	scr_width = file_width;
-    if (scr_height == 0)
-	scr_height = file_height;
-
     /* Get the screen size we were given */
     scr_width = fb_getwidth(ifp);
     scr_height = fb_getheight(ifp);
@@ -772,6 +766,10 @@ fb_read_icv(struct fb *ifp, icv_image_t *img_in, int file_xoff_in, int file_yoff
 	/* Zoom in, and center the display.  Use square zoom. */
 	int newzoom;
 	newzoom = scr_width/xout;
+
+	if (!yout)
+	    return BRLCAD_ERROR;
+
 	V_MIN(newzoom, scr_height/yout);
 
 	if (inverse) {
@@ -1038,8 +1036,11 @@ fb_read_png(struct fb *ifp, FILE *fp_in, int file_xoff, int file_yoff, int scr_x
     }
     if (zoom) {
 	/* Zoom in, and center the display.  Use square zoom. */
-	int newzoom;
-	newzoom = scr_width/xout;
+	int newzoom = scr_width/xout;
+
+	if (!yout)
+	    return BRLCAD_ERROR;
+
 	V_MIN(newzoom, scr_height/yout);
 
 	if (inverse) {

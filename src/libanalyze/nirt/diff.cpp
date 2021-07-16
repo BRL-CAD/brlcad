@@ -550,14 +550,17 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 			hseg_ptrs.erase(hseg_ptrs.begin());
 			if (h->type == NIRT_T_OUT) {
 			    bool paired = false;
-			    // If we have an out hit, check it against prev_subsegs to see if it
-			    // terminates one of them.
-			    for (size_t ps = 0; ps < prev_subsegs->size(); ps++) {
-				diff_segment &pseg = (*prev_subsegs)[ps];
-				// Don't need to check origins in this case - only the exact nirt_seg
-				// will match in this test
-				if (pseg.seg == h->seg) {
-				    paired = true;
+
+			    if (prev_subsegs) {
+				// If we have an out hit, check it against prev_subsegs to see if it
+				// terminates one of them.
+				for (size_t ps = 0; ps < prev_subsegs->size(); ps++) {
+				    diff_segment &pseg = (*prev_subsegs)[ps];
+				    // Don't need to check origins in this case - only the exact nirt_seg
+				    // will match in this test
+				    if (pseg.seg == h->seg) {
+					paired = true;
+				    }
 				}
 			    }
 
@@ -575,7 +578,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 					std::cout << "degen seg\n";
 					h_lin = hc;
 					paired = true;
-				    } 
+				    }
 				}
 			    }
 			    if (paired && !h_lin) {

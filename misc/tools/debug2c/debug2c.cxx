@@ -587,7 +587,6 @@ main(int argc, const char *argv[])
     ofile << "	return -1;\n";
     ofile << "    }\n";
     ofile << "\n";
-    ofile << "    lcnt = 0;\n";
     ofile << "    print_all_set_lib_flags(o_vls, max_strlen);\n";
     ofile << "\n";
     ofile << "    return 0;\n";

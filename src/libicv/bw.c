@@ -88,8 +88,6 @@ bw_read(const char *filename, size_t width, size_t height)
 
     /* buffer pixel wise */
     if (width == 0 || height == 0) {
-	int status = 0;
-
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "bw_read : unsigned char data");
 
@@ -97,7 +95,7 @@ bw_read(const char *filename, size_t width, size_t height)
 	 * Better to read in big chunks, but then one has to handle
 	 * partial-reads better.  Below seems to ignore a read error.
 	 */
-	while ((status = fread(&data[size], 1, 1, fp))==1) {
+	while (fread(&data[size], 1, 1, fp)==1) {
 	    size++;
 	    if (size==buffsize) {
 		buffsize+=1024;

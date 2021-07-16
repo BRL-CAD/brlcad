@@ -129,7 +129,7 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
     bu_free(ydata->n_vec, "y vec inputs");
     bu_free(ydata->n_p, "y p inputs");
     if (ret < 0) {
-	ret = 0;
+	count = ret;
 	goto memfree;
     }
 
@@ -148,7 +148,7 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
     bu_free(zdata->n_vec, "x vec inputs");
     bu_free(zdata->n_p, "x p inputs");
     if (ret < 0) {
-	ret = 0;
+	count = ret;
 	goto memfree;
     }
 

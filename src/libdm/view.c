@@ -83,7 +83,8 @@ dm_add_arrows(struct dm *dmp, struct bv_scene_obj *s)
 {
     struct bv_vlist *vp = (struct bv_vlist *)&s->s_vlist;
     struct bv_vlist *tvp;
-    point_t A, B;
+    point_t A = VINIT_ZERO;
+    point_t B = VINIT_ZERO;
     int pcnt = 0;
     if (!s->s_arrow)
 	return;
