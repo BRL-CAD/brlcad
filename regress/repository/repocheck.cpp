@@ -212,6 +212,7 @@ regex_init(repo_info_t &r) {
 	    "fftest.c",
 	    "ifftc.c",
 	    "embedded_check.cpp",
+	    "other_check.cpp",
 	    "misc/",
 	    "mt19937ar.c",
 	    "sha1.c",
