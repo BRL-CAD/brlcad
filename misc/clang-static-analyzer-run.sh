@@ -97,6 +97,7 @@ cleantest liboptical
 cleantest libicv
 failingtest libged
 cleantest libdm
+failingtest dm_plugins
 cleantest libfft
 failingtest libtclcad
 cleantest libtermio
