@@ -47,7 +47,7 @@ jobs:
       run: |
         sudo apt-get update
         # We want as many deps pre-installed as we can for this - the analyzer setup slows their compilation
-        sudo apt-get install libproj-dev libgdal-dev tcl-dev tk-dev itcl3-dev itk3-dev libpng-dev zlib1g-dev libxml2-dev libxslt1-dev xsltproc astyle
+        sudo apt-get install libproj-dev libgdal-dev tcl-dev tk-dev itcl3-dev itk3-dev libpng-dev zlib1g-dev libxml2-dev libxslt1-dev xsltproc astyle xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev
         sudo apt-get clean
 
     # Initializes the CodeQL tools for scanning.

@@ -44,6 +44,15 @@ jobs:
       - name: Setup - Ninja
         uses: seanmiddleditch/gha-setup-ninja@master
 
+      - name: Setup - System
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Install X/OpenGL dev pkgs
+          sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev
+          sudo apt-get clean
+
       - name: Checkout
         uses: actions/checkout@v2
 
