@@ -41,6 +41,15 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: Dependencies Setup
+      env:
+        DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # We want as many deps pre-installed as we can for this - the analyzer setup slows their compilation
+          sudo apt-get install libproj-dev libgdal-dev tcl-dev tk-dev itcl3-dev itk3-dev libpng-dev zlib1g-dev libxml2-dev libxslt1-dev xsltproc astyle
+          sudo apt-get clean
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
