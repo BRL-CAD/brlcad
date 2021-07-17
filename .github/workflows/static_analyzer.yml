@@ -1,0 +1,37 @@
+name: BRL-CAD Static Analysis
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+
+  linux:
+    name: Ubuntu Clang Analyser
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+        # Setup hint from https://github.com/darktable-org/rawspeed/blob/develop/.github/workflows/ci-static-analysis.yml
+      - name: Clang Static Analyzer Setup
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install clang-tools-10
+          # We want as many deps pre-installed as we can for this - the analyzer setup slows their compilation
+          sudo apt-get install libproj-dev libgdal-dev tcl-dev tk-dev itcl3-dev itk3-dev libpng-dev zlib1g-dev libxml2-dev libxslt1-dev xsltproc astyle
+          sudo apt-get clean
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Run Analyzer
+        run: |
+          pwd
+          export PATH=$ENV{GITHUB_WORKSPACE}:/usr/share/clang/scan-build-10/bin:/usr/share/clang/scan-build-10/libexec:$PATH
+          mkdir build && cd build && cp ../misc/clang-static-analyzer-run.sh .
+          ./clang-static-analyzer-run.sh
