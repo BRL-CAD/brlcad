@@ -2,7 +2,7 @@ name: BRL-CAD Static Analysis
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
 
