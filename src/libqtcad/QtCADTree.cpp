@@ -26,7 +26,12 @@
 #include "common.h"
 #include <iostream>
 #include <QPainter>
+
 #include <qmath.h>
+// Getting reports of conflict between MSVC math defines and qmath.h - try idea from
+// https://bugreports.qt.io/browse/QTBUG-45935
+#undef _USE_MATH_DEFINES
+
 #include <QAction>
 #include <QMenu>
 #include <QQueue>

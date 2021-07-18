@@ -139,7 +139,7 @@ class QTCAD_EXPORT GObjectDelegate : public QStyledItemDelegate
     Q_OBJECT
 
     public:
-	GObjectDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
+	//GObjectDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
 	GObjectDelegate(CADTreeView *tv = NULL, QWidget *pparent = 0) : QStyledItemDelegate(pparent) {cadtreeview = tv;}
 
 	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
