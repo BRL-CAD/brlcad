@@ -48,7 +48,7 @@ add_definitions(-DHAVE_TIMESPEC_GET=1)
 add_definitions(-DUSE_MGL_NAMESPACE)
 
 add_subdirectory(src)
-add_subdirectory(examples)
+#add_subdirectory(examples)
 
 # Local Variables:
 # tab-width: 8

@@ -11,10 +11,10 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/shader/slang
   ${CMAKE_CURRENT_SOURCE_DIR}/x86-64
   ${CMAKE_CURRENT_SOURCE_DIR}/x86
-  ${CMAKE_CURRENT_SOURCE_DIR}/glu/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/glu/libnurbs/internals
-  ${CMAKE_CURRENT_SOURCE_DIR}/glu/libnurbs/interface
-  ${CMAKE_CURRENT_SOURCE_DIR}/glu/libnurbs/nurbtess
+# ${CMAKE_CURRENT_SOURCE_DIR}/glu/include
+# ${CMAKE_CURRENT_SOURCE_DIR}/glu/libnurbs/internals
+# ${CMAKE_CURRENT_SOURCE_DIR}/glu/libnurbs/interface
+# ${CMAKE_CURRENT_SOURCE_DIR}/glu/libnurbs/nurbtess
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
@@ -294,7 +294,8 @@ set(glu_srcs
   glu/libnurbs/nurbtess/searchTree.cc
   )
 
-add_library(osmesa SHARED ${osmesa_srcs} ${glu_srcs})
+#add_library(osmesa SHARED ${osmesa_srcs} ${glu_srcs})
+add_library(osmesa SHARED ${osmesa_srcs})
 install(TARGETS osmesa
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
