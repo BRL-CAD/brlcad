@@ -1182,8 +1182,10 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
    C->I++;
 
    slang_operation_destruct(oper);
-   *oper = *ops; /* struct copy */
-   _slang_free(ops);
+   if (ops) {
+      *oper = *ops; /* struct copy */
+      _slang_free(ops);
+   }
 
    return 1;
 }

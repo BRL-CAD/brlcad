@@ -725,13 +725,15 @@ _mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
       /* This block is full.  Allocate a new block and chain to it */
       Node *newblock;
       n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
-      n[0].opcode = OPCODE_CONTINUE;
-      newblock = (Node *) _mesa_malloc(sizeof(Node) * BLOCK_SIZE);
-      if (!newblock) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "Building display list");
-         return NULL;
+      if (n) {
+         n[0].opcode = OPCODE_CONTINUE;
+         newblock = (Node *) _mesa_malloc(sizeof(Node) * BLOCK_SIZE);
+         if (!newblock) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "Building display list");
+            return NULL;
+         }
+         n[1].next = (Node *) newblock;
       }
-      n[1].next = (Node *) newblock;
       ctx->ListState.CurrentBlock = newblock;
       ctx->ListState.CurrentPos = 0;
    }
@@ -739,9 +741,13 @@ _mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
    n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
    ctx->ListState.CurrentPos += numNodes;
 
-   n[0].opcode = (OpCode) opcode;
+   if (n) {
+      n[0].opcode = (OpCode) opcode;
 
-   return (void *) (n + 1);     /* return ptr to node following opcode */
+      return (void *) (n + 1);     /* return ptr to node following opcode */
+   }
+
+   return NULL;
 }
 
 

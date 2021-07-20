@@ -297,7 +297,7 @@ delete_texture_wrapper(struct gl_renderbuffer *rb)
  * The new renderbuffer is plugged into the given attachment point.
  * This allows rendering into the texture as if it were a renderbuffer.
  */
-static void
+static int
 wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
 {
    struct texture_renderbuffer *trb;
@@ -309,7 +309,7 @@ wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
    trb = CALLOC_STRUCT(texture_renderbuffer);
    if (!trb) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "wrap_texture");
-      return;
+      return -1;
    }
 
    /* init base gl_renderbuffer fields */
@@ -326,6 +326,8 @@ wrap_texture(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
 
    /* update attachment point */
    _mesa_reference_renderbuffer(&att->Renderbuffer, &(trb->Base));
+
+   return 0;
 }
 
 
@@ -412,12 +414,15 @@ _mesa_render_texture(GLcontext *ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
+   int err_check = 0;
    (void) fb;
 
    if (!att->Renderbuffer) {
-      wrap_texture(ctx, att);
+      err_check = wrap_texture(ctx, att);
    }
-   update_wrapper(ctx, att);
+   if (!err_check) {
+      update_wrapper(ctx, att);
+   }
 }
 
 

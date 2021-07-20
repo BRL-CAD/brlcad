@@ -1545,13 +1545,9 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       _mesa_update_state(ctx);
    }
 
-   if (!ctx->ReadBuffer) {
-      /* XXX */
-   }
-
    /* check for complete framebuffers */
-   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT ||
-       ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+   if (!ctx->DrawBuffer || ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT ||
+       !ctx->ReadBuffer || ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
       _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
                   "glBlitFramebufferEXT(incomplete draw/read buffers)");
       return;

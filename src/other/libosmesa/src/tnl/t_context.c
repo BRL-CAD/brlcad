@@ -137,10 +137,11 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR_INDEX );
    }
 
-   if (ctx->Fog.Enabled ||
-       ((ctx->FragmentProgram._Active || ctx->FragmentProgram._Current) &&
+   if (ctx->Fog.Enabled || ctx->FragmentProgram._Active ||
+       (ctx->FragmentProgram._Current &&
         (ctx->FragmentProgram._Current->FogOption != GL_NONE ||
-         (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_FOGC))))
+         (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_FOGC)))
+       )
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_FOG );
 
    if (ctx->Polygon.FrontMode != GL_FILL || 

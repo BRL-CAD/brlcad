@@ -1060,7 +1060,7 @@ _swrast_choose_triangle( GLcontext *ctx )
          envMode = ctx->Texture.Unit[0].EnvMode;
 
          /* First see if we can use an optimized 2-D texture function */
-         if (ctx->Texture._EnabledCoordUnits == 0x1
+         if (texImg && texObj2D && ctx->Texture._EnabledCoordUnits == 0x1
              && !ctx->FragmentProgram._Current
              && !ctx->ATIFragmentShader._Enabled
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
