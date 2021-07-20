@@ -176,4 +176,27 @@ jobs:
 #         name: BRLCAD_OSX
 #         path: ${{ github.workspace }}/build/BRL-CAD*gz
 
+    # A full distcheck is too expensive for the runners, but we can run the
+    # repository integrity check and make sure we can build source archives.
+    archives:
+      name: Source Archives
+      runs-on: ubuntu-latest
+      strategy:
+        fail-fast: true
+      steps:
+        - name: Setup - CMake
+          uses: lukka/get-cmake@latest
+
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: Configure
+          run: |
+            export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+            cmake -S . -B build_archives -D ENABLE_ALL=ON
+
+        - name: Build
+          run: |
+            export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+            cmake --build build_archives --config Debug --target distcheck-source_archives
 
