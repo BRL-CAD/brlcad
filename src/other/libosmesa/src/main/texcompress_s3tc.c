@@ -468,7 +468,7 @@ fetch_texel_2d_f_rgb_dxt1( const struct gl_texture_image *texImage,
 }
 
 
-static void
+static int
 fetch_texel_2d_rgba_dxt1( const struct gl_texture_image *texImage,
                           GLint i, GLint j, GLint k, GLchan *texel )
 {
@@ -476,9 +476,10 @@ fetch_texel_2d_rgba_dxt1( const struct gl_texture_image *texImage,
    if (fetch_ext_rgba_dxt1) {
       fetch_ext_rgba_dxt1(texImage->RowStride,
                           (GLubyte *)(texImage)->Data, i, j, texel);
+      return 0;
    }
-   else
-      _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
+   _mesa_debug(NULL, "attempted to decode s3tc texture without library available\n");
+   return -1;
 }
 
 
@@ -488,7 +489,8 @@ fetch_texel_2d_f_rgba_dxt1( const struct gl_texture_image *texImage,
 {
    /* just sample as GLchan and convert to float here */
    GLchan rgba[4];
-   fetch_texel_2d_rgba_dxt1(texImage, i, j, k, rgba);
+   if (fetch_texel_2d_rgba_dxt1(texImage, i, j, k, rgba))
+      return;
    texel[RCOMP] = CHAN_TO_FLOAT(rgba[RCOMP]);
    texel[GCOMP] = CHAN_TO_FLOAT(rgba[GCOMP]);
    texel[BCOMP] = CHAN_TO_FLOAT(rgba[BCOMP]);
