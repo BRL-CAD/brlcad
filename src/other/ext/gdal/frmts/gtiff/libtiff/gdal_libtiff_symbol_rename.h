@@ -1,16 +1,20 @@
 /* This is a generated file by dump_symbols.h. *DO NOT EDIT MANUALLY !* */
 #define add_ms gdal_add_ms
+#define allocChoppedUpStripArrays gdal_allocChoppedUpStripArrays
 #define buildMap gdal_buildMap
 #define BuildMapBitdepth16To8 gdal_BuildMapBitdepth16To8
 #define BuildMapUaToAa gdal_BuildMapUaToAa
-#define call_gmon_start gdal_call_gmon_start
+#define ByteCountLooksBad gdal_ByteCountLooksBad
 #define checkcmap gdal_checkcmap
 #define CheckDirCount gdal_CheckDirCount
 #define checkInkNamesString gdal_checkInkNamesString
 #define ChopUpSingleUncompressedStrip gdal_ChopUpSingleUncompressedStrip
+#define CLAMPw gdal_CLAMPw
 #define cl_hash gdal_cl_hash
 #define codeLoop gdal_codeLoop
 #define cvtcmap gdal_cvtcmap
+#define DoubleToRational gdal_DoubleToRational
+#define DoubleToSrational gdal_DoubleToSrational
 #define DumpFixupTags gdal_DumpFixupTags
 #define DumpModeDecode gdal_DumpModeDecode
 #define DumpModeEncode gdal_DumpModeEncode
@@ -18,6 +22,7 @@
 #define EstimateStripByteCounts gdal_EstimateStripByteCounts
 #define Fax3BadLength gdal_Fax3BadLength
 #define Fax3Cleanup gdal_Fax3Cleanup
+#define _Fax3Close gdal__Fax3Close
 #define Fax3Close gdal_Fax3Close
 #define Fax3Decode1D gdal_Fax3Decode1D
 #define Fax3Decode2D gdal_Fax3Decode2D
@@ -46,6 +51,7 @@
 #define fpAcc gdal_fpAcc
 #define fpDiff gdal_fpDiff
 #define frame_dummy gdal_frame_dummy
+#define GetLercDataType gdal_GetLercDataType
 #define gtStripContig gdal_gtStripContig
 #define gtStripSeparate gdal_gtStripSeparate
 #define gtTileContig gdal_gtTileContig
@@ -69,6 +75,7 @@
 #define initCIELabConversion gdal_initCIELabConversion
 #define initYCbCrConversion gdal_initYCbCrConversion
 #define isCCITTCompression gdal_isCCITTCompression
+#define isInRefBlackWhiteRange gdal_isInRefBlackWhiteRange
 #define jpeg_create_decompress_encap gdal_jpeg_create_decompress_encap
 #define jpeg_encap_unwind gdal_jpeg_encap_unwind
 #define jpeg_read_header_encap gdal_jpeg_read_header_encap
@@ -78,6 +85,18 @@
 #define L16fromY gdal_L16fromY
 #define L16toGry gdal_L16toGry
 #define L16toY gdal_L16toY
+#define LERCCleanup gdal_LERCCleanup
+#define LERCDecode gdal_LERCDecode
+#define LERCEncode gdal_LERCEncode
+#define LERCFixupTags gdal_LERCFixupTags
+#define LERCPostEncode gdal_LERCPostEncode
+#define LERCPreDecode gdal_LERCPreDecode
+#define LERCPreEncode gdal_LERCPreEncode
+#define LERCSetupDecode gdal_LERCSetupDecode
+#define LERCSetupEncode gdal_LERCSetupEncode
+#define LERCVGetField gdal_LERCVGetField
+#define LERCVSetField gdal_LERCVSetField
+#define LERCVSetFieldBase gdal_LERCVSetFieldBase
 #define LogL10fromY gdal_LogL10fromY
 #define LogL10toY gdal_LogL10toY
 #define LogL16Decode gdal_LogL16Decode
@@ -146,6 +165,8 @@
 #define multiply_ms gdal_multiply_ms
 #define multiply_ms gdal_multiply_ms
 #define NeXTDecode gdal_NeXTDecode
+#define NeXTPreDecode gdal_NeXTPreDecode
+#define NoSanitizeSubUInt64 gdal_NoSanitizeSubUInt64
 #define _notConfigured gdal__notConfigured
 #define NotConfigured gdal_NotConfigured
 #define OJPEGCleanup gdal_OJPEGCleanup
@@ -277,6 +298,7 @@
 #define setExtraSamples gdal_setExtraSamples
 #define setorientation gdal_setorientation
 #define setupMap gdal_setupMap
+#define SetupUncompressedBuffer gdal_SetupUncompressedBuffer
 #define swabHorAcc16 gdal_swabHorAcc16
 #define swabHorAcc32 gdal_swabHorAcc32
 #define swabHorDiff16 gdal_swabHorDiff16
@@ -290,7 +312,10 @@
 #define TIFFAccessTagMethods gdal_TIFFAccessTagMethods
 #define TIFFAdvanceDirectory gdal_TIFFAdvanceDirectory
 #define TIFFAppendToStrip gdal_TIFFAppendToStrip
+#define _TIFFcalloc gdal__TIFFcalloc
+#define _TIFFCastUInt64ToSSize gdal__TIFFCastUInt64ToSSize
 #define TIFFCheckDirOffset gdal_TIFFCheckDirOffset
+#define _TIFFCheckFieldIsValidForCodec gdal__TIFFCheckFieldIsValidForCodec
 #define _TIFFCheckMalloc gdal__TIFFCheckMalloc
 #define TIFFCheckpointDirectory gdal_TIFFCheckpointDirectory
 #define TIFFCheckRead gdal_TIFFCheckRead
@@ -298,6 +323,13 @@
 #define TIFFCheckTile gdal_TIFFCheckTile
 #define TIFFCIELabToRGBInit gdal_TIFFCIELabToRGBInit
 #define TIFFCIELabToXYZ gdal_TIFFCIELabToXYZ
+#define _TIFFClampDoubleToFloat gdal__TIFFClampDoubleToFloat
+#define TIFFClampDoubleToInt16 gdal_TIFFClampDoubleToInt16
+#define TIFFClampDoubleToInt32 gdal_TIFFClampDoubleToInt32
+#define TIFFClampDoubleToInt8 gdal_TIFFClampDoubleToInt8
+#define TIFFClampDoubleToUInt16 gdal_TIFFClampDoubleToUInt16
+#define TIFFClampDoubleToUInt32 gdal_TIFFClampDoubleToUInt32
+#define TIFFClampDoubleToUInt8 gdal_TIFFClampDoubleToUInt8
 #define TIFFCleanup gdal_TIFFCleanup
 #define TIFFClientdata gdal_TIFFClientdata
 #define TIFFClientOpen gdal_TIFFClientOpen
@@ -309,6 +341,7 @@
 #define TIFFCreateCustomDirectory gdal_TIFFCreateCustomDirectory
 #define TIFFCreateDirectory gdal_TIFFCreateDirectory
 #define TIFFCreateEXIFDirectory gdal_TIFFCreateEXIFDirectory
+#define TIFFCreateGPSDirectory gdal_TIFFCreateGPSDirectory
 #define TIFFCurrentDirectory gdal_TIFFCurrentDirectory
 #define TIFFCurrentDirOffset gdal_TIFFCurrentDirOffset
 #define TIFFCurrentRow gdal_TIFFCurrentRow
@@ -318,11 +351,12 @@
 #define TIFFDataWidth gdal_TIFFDataWidth
 #define TIFFDefaultDirectory gdal_TIFFDefaultDirectory
 #define TIFFDefaultRefBlackWhite gdal_TIFFDefaultRefBlackWhite
-#define TIFFDefaultStripSize gdal_TIFFDefaultStripSize
 #define _TIFFDefaultStripSize gdal__TIFFDefaultStripSize
-#define TIFFDefaultTileSize gdal_TIFFDefaultTileSize
+#define TIFFDefaultStripSize gdal_TIFFDefaultStripSize
 #define _TIFFDefaultTileSize gdal__TIFFDefaultTileSize
+#define TIFFDefaultTileSize gdal_TIFFDefaultTileSize
 #define TIFFDefaultTransferFunction gdal_TIFFDefaultTransferFunction
+#define TIFFDeferStrileArrayWriting gdal_TIFFDeferStrileArrayWriting
 #define _tiffDummyMapProc gdal__tiffDummyMapProc
 #define _tiffDummyUnmapProc gdal__tiffDummyUnmapProc
 #define TIFFError gdal_TIFFError
@@ -331,6 +365,7 @@
 #define TIFFFdOpen gdal_TIFFFdOpen
 #define TIFFFetchDirectory gdal_TIFFFetchDirectory
 #define TIFFFetchNormalTag gdal_TIFFFetchNormalTag
+#define _TIFFFetchStrileValue gdal__TIFFFetchStrileValue
 #define TIFFFetchStripThing gdal_TIFFFetchStripThing
 #define TIFFFetchSubjectDistance gdal_TIFFFetchSubjectDistance
 #define TIFFFieldDataType gdal_TIFFFieldDataType
@@ -344,6 +379,7 @@
 #define TIFFFileName gdal_TIFFFileName
 #define TIFFFileno gdal_TIFFFileno
 #define _TIFFFillStriles gdal__TIFFFillStriles
+#define _TIFFFillStrilesInternal gdal__TIFFFillStrilesInternal
 #define TIFFFillStrip gdal_TIFFFillStrip
 #define TIFFFillStripPartial gdal_TIFFFillStripPartial
 #define TIFFFillTile gdal_TIFFFillTile
@@ -354,6 +390,7 @@
 #define TIFFFlush gdal_TIFFFlush
 #define TIFFFlushData gdal_TIFFFlushData
 #define TIFFFlushData1 gdal_TIFFFlushData1
+#define TIFFForceStrileArrayWriting gdal_TIFFForceStrileArrayWriting
 #define _TIFFfree gdal__TIFFfree
 #define TIFFFreeDirectory gdal_TIFFFreeDirectory
 #define TIFFGetBitRevTable gdal_TIFFGetBitRevTable
@@ -364,12 +401,19 @@
 #define TIFFGetField gdal_TIFFGetField
 #define TIFFGetFieldDefaulted gdal_TIFFGetFieldDefaulted
 #define _TIFFGetFields gdal__TIFFGetFields
+#define _TIFFGetGpsFields gdal__TIFFGetGpsFields
 #define TIFFGetMapFileProc gdal_TIFFGetMapFileProc
+#define _TIFFGetMaxColorChannels gdal__TIFFGetMaxColorChannels
 #define _TIFFgetMode gdal__TIFFgetMode
 #define TIFFGetMode gdal_TIFFGetMode
 #define TIFFGetReadProc gdal_TIFFGetReadProc
 #define TIFFGetSeekProc gdal_TIFFGetSeekProc
 #define TIFFGetSizeProc gdal_TIFFGetSizeProc
+#define TIFFGetStrileByteCount gdal_TIFFGetStrileByteCount
+#define TIFFGetStrileByteCountWithErr gdal_TIFFGetStrileByteCountWithErr
+#define TIFFGetStrileOffset gdal_TIFFGetStrileOffset
+#define _TIFFGetStrileOffsetOrByteCountValue gdal__TIFFGetStrileOffsetOrByteCountValue
+#define TIFFGetStrileOffsetWithErr gdal_TIFFGetStrileOffsetWithErr
 #define TIFFGetTagListCount gdal_TIFFGetTagListCount
 #define TIFFGetTagListEntry gdal_TIFFGetTagListEntry
 #define TIFFGetUnmapFileProc gdal_TIFFGetUnmapFileProc
@@ -382,10 +426,10 @@
 #define TIFFIsMSB2LSB gdal_TIFFIsMSB2LSB
 #define TIFFIsTiled gdal_TIFFIsTiled
 #define TIFFIsUpSampled gdal_TIFFIsUpSampled
+#define tiff_itrunc gdal_tiff_itrunc
 #define TIFFLastDirectory gdal_TIFFLastDirectory
 #define TIFFLinkDirectory gdal_TIFFLinkDirectory
 #define _TIFFmalloc gdal__TIFFmalloc
-#define _TIFFcalloc gdal__TIFFcalloc
 #define _tiffMapProc gdal__tiffMapProc
 #define _TIFFmemcmp gdal__TIFFmemcmp
 #define _TIFFmemcpy gdal__TIFFmemcpy
@@ -394,6 +438,7 @@
 #define _TIFFMergeFields gdal__TIFFMergeFields
 #define _TIFFMultiply32 gdal__TIFFMultiply32
 #define _TIFFMultiply64 gdal__TIFFMultiply64
+#define _TIFFMultiplySSize gdal__TIFFMultiplySSize
 #define TIFFNoDecode gdal_TIFFNoDecode
 #define TIFFNoEncode gdal_TIFFNoEncode
 #define _TIFFNoFixupTags gdal__TIFFNoFixupTags
@@ -410,6 +455,7 @@
 #define TIFFNumberOfStrips gdal_TIFFNumberOfStrips
 #define TIFFNumberOfTiles gdal_TIFFNumberOfTiles
 #define TIFFOpen gdal_TIFFOpen
+#define _TIFFPartialReadStripArray gdal__TIFFPartialReadStripArray
 #define TIFFPredictorCleanup gdal_TIFFPredictorCleanup
 #define TIFFPredictorInit gdal_TIFFPredictorInit
 #define _TIFFPrettyPrintField gdal__TIFFPrettyPrintField
@@ -423,6 +469,7 @@
 #define TIFFRasterScanlineSize64 gdal_TIFFRasterScanlineSize64
 #define TIFFRawStripSize gdal_TIFFRawStripSize
 #define TIFFRawStripSize64 gdal_TIFFRawStripSize64
+#define TIFFReadAndRealloc gdal_TIFFReadAndRealloc
 #define TIFFReadBufferSetup gdal_TIFFReadBufferSetup
 #define TIFFReadCustomDirectory gdal_TIFFReadCustomDirectory
 #define TIFFReadDirectory gdal_TIFFReadDirectory
@@ -430,6 +477,7 @@
 #define TIFFReadDirectoryFindEntry gdal_TIFFReadDirectoryFindEntry
 #define TIFFReadDirectoryFindFieldInfo gdal_TIFFReadDirectoryFindFieldInfo
 #define TIFFReadDirEntryArray gdal_TIFFReadDirEntryArray
+#define TIFFReadDirEntryArrayWithLimit gdal_TIFFReadDirEntryArrayWithLimit
 #define TIFFReadDirEntryByte gdal_TIFFReadDirEntryByte
 #define TIFFReadDirEntryByteArray gdal_TIFFReadDirEntryByteArray
 #define TIFFReadDirEntryCheckedByte gdal_TIFFReadDirEntryCheckedByte
@@ -483,6 +531,7 @@
 #define TIFFReadDirEntryCheckRangeSshortSlong gdal_TIFFReadDirEntryCheckRangeSshortSlong
 #define TIFFReadDirEntryCheckRangeSshortSlong8 gdal_TIFFReadDirEntryCheckRangeSshortSlong8
 #define TIFFReadDirEntryData gdal_TIFFReadDirEntryData
+#define TIFFReadDirEntryDataAndRealloc gdal_TIFFReadDirEntryDataAndRealloc
 #define TIFFReadDirEntryDouble gdal_TIFFReadDirEntryDouble
 #define TIFFReadDirEntryDoubleArray gdal_TIFFReadDirEntryDoubleArray
 #define TIFFReadDirEntryFloat gdal_TIFFReadDirEntryFloat
@@ -492,6 +541,7 @@
 #define TIFFReadDirEntryLong gdal_TIFFReadDirEntryLong
 #define TIFFReadDirEntryLong8 gdal_TIFFReadDirEntryLong8
 #define TIFFReadDirEntryLong8Array gdal_TIFFReadDirEntryLong8Array
+#define TIFFReadDirEntryLong8ArrayWithLimit gdal_TIFFReadDirEntryLong8ArrayWithLimit
 #define TIFFReadDirEntryLongArray gdal_TIFFReadDirEntryLongArray
 #define TIFFReadDirEntryOutputErr gdal_TIFFReadDirEntryOutputErr
 #define TIFFReadDirEntryPersampleShort gdal_TIFFReadDirEntryPersampleShort
@@ -502,24 +552,32 @@
 #define TIFFReadDirEntrySlongArray gdal_TIFFReadDirEntrySlongArray
 #define TIFFReadDirEntrySshortArray gdal_TIFFReadDirEntrySshortArray
 #define TIFFReadEncodedStrip gdal_TIFFReadEncodedStrip
+#define _TIFFReadEncodedStripAndAllocBuffer gdal__TIFFReadEncodedStripAndAllocBuffer
+#define TIFFReadEncodedStripGetStripSize gdal_TIFFReadEncodedStripGetStripSize
 #define TIFFReadEncodedTile gdal_TIFFReadEncodedTile
+#define _TIFFReadEncodedTileAndAllocBuffer gdal__TIFFReadEncodedTileAndAllocBuffer
 #define TIFFReadEXIFDirectory gdal_TIFFReadEXIFDirectory
+#define TIFFReadFromUserBuffer gdal_TIFFReadFromUserBuffer
+#define TIFFReadGPSDirectory gdal_TIFFReadGPSDirectory
 #define _tiffReadProc gdal__tiffReadProc
 #define TIFFReadRawStrip gdal_TIFFReadRawStrip
 #define TIFFReadRawStrip1 gdal_TIFFReadRawStrip1
+#define TIFFReadRawStripOrTile2 gdal_TIFFReadRawStripOrTile2
 #define TIFFReadRawTile gdal_TIFFReadRawTile
 #define TIFFReadRawTile1 gdal_TIFFReadRawTile1
 #define TIFFReadRGBAImage gdal_TIFFReadRGBAImage
 #define TIFFReadRGBAImageOriented gdal_TIFFReadRGBAImageOriented
 #define TIFFReadRGBAStrip gdal_TIFFReadRGBAStrip
-#define TIFFReadRGBATile gdal_TIFFReadRGBATile
 #define TIFFReadRGBAStripExt gdal_TIFFReadRGBAStripExt
+#define TIFFReadRGBATile gdal_TIFFReadRGBATile
 #define TIFFReadRGBATileExt gdal_TIFFReadRGBATileExt
 #define TIFFReadScanline gdal_TIFFReadScanline
 #define TIFFReadTile gdal_TIFFReadTile
+#define _TIFFReadTileAndAllocBuffer gdal__TIFFReadTileAndAllocBuffer
 #define TIFFReadUInt64 gdal_TIFFReadUInt64
 #define _TIFFrealloc gdal__TIFFrealloc
 #define TIFFRegisterCODEC gdal_TIFFRegisterCODEC
+#define _TIFFReserveLargeEnoughWriteBuffer gdal__TIFFReserveLargeEnoughWriteBuffer
 #define TIFFReverseBits gdal_TIFFReverseBits
 #define TIFFRewriteDirectory gdal_TIFFRewriteDirectory
 #define _TIFFRewriteField gdal__TIFFRewriteField
@@ -530,6 +588,7 @@
 #define TIFFScanlineSize gdal_TIFFScanlineSize
 #define TIFFScanlineSize64 gdal_TIFFScanlineSize64
 #define TIFFSeek gdal_TIFFSeek
+#define _TIFFSeekOK gdal__TIFFSeekOK
 #define _tiffSeekProc gdal__tiffSeekProc
 #define _TIFFsetByteArray gdal__TIFFsetByteArray
 #define TIFFSetClientdata gdal_TIFFSetClientdata
@@ -544,6 +603,7 @@
 #define TIFFSetFileName gdal_TIFFSetFileName
 #define TIFFSetFileno gdal_TIFFSetFileno
 #define _TIFFsetFloatArray gdal__TIFFsetFloatArray
+#define _TIFFSetGetFieldSize gdal__TIFFSetGetFieldSize
 #define _TIFFSetGetType gdal__TIFFSetGetType
 #define _TIFFsetLong8Array gdal__TIFFsetLong8Array
 #define _TIFFsetLongArray gdal__TIFFsetLongArray
@@ -563,6 +623,21 @@
 #define TIFFStartTile gdal_TIFFStartTile
 #define TIFFStripSize gdal_TIFFStripSize
 #define TIFFStripSize64 gdal_TIFFStripSize64
+#define _TIFFSwab16BitData gdal__TIFFSwab16BitData
+#define _TIFFSwab24BitData gdal__TIFFSwab24BitData
+#define _TIFFSwab32BitData gdal__TIFFSwab32BitData
+#define _TIFFSwab64BitData gdal__TIFFSwab64BitData
+#define TIFFSwabArrayOfDouble gdal_TIFFSwabArrayOfDouble
+#define TIFFSwabArrayOfFloat gdal_TIFFSwabArrayOfFloat
+#define TIFFSwabArrayOfLong gdal_TIFFSwabArrayOfLong
+#define TIFFSwabArrayOfLong8 gdal_TIFFSwabArrayOfLong8
+#define TIFFSwabArrayOfShort gdal_TIFFSwabArrayOfShort
+#define TIFFSwabArrayOfTriples gdal_TIFFSwabArrayOfTriples
+#define TIFFSwabDouble gdal_TIFFSwabDouble
+#define TIFFSwabFloat gdal_TIFFSwabFloat
+#define TIFFSwabLong gdal_TIFFSwabLong
+#define TIFFSwabLong8 gdal_TIFFSwabLong8
+#define TIFFSwabShort gdal_TIFFSwabShort
 #define TIFFTileRowSize gdal_TIFFTileRowSize
 #define TIFFTileRowSize64 gdal_TIFFTileRowSize64
 #define TIFFTileSize gdal_TIFFTileSize
@@ -573,13 +648,14 @@
 #define TIFFUnlinkDirectory gdal_TIFFUnlinkDirectory
 #define _tiffUnmapProc gdal__tiffUnmapProc
 #define TIFFUnRegisterCODEC gdal_TIFFUnRegisterCODEC
+#define _TIFFUnsanitizedAddUInt64AndInt gdal__TIFFUnsanitizedAddUInt64AndInt
 #define TIFFUnsetField gdal_TIFFUnsetField
-#define TIFFVGetField gdal_TIFFVGetField
 #define _TIFFVGetField gdal__TIFFVGetField
+#define TIFFVGetField gdal_TIFFVGetField
 #define TIFFVGetFieldDefaulted gdal_TIFFVGetFieldDefaulted
 #define _TIFFvoid gdal__TIFFvoid
-#define TIFFVSetField gdal_TIFFVSetField
 #define _TIFFVSetField gdal__TIFFVSetField
+#define TIFFVSetField gdal_TIFFVSetField
 #define TIFFVStripSize gdal_TIFFVStripSize
 #define TIFFVStripSize64 gdal_TIFFVStripSize64
 #define TIFFVTileSize gdal_TIFFVTileSize
@@ -604,12 +680,14 @@
 #define TIFFWriteDirectoryTagCheckedLongArray gdal_TIFFWriteDirectoryTagCheckedLongArray
 #define TIFFWriteDirectoryTagCheckedRational gdal_TIFFWriteDirectoryTagCheckedRational
 #define TIFFWriteDirectoryTagCheckedRationalArray gdal_TIFFWriteDirectoryTagCheckedRationalArray
+#define TIFFWriteDirectoryTagCheckedRationalDoubleArray gdal_TIFFWriteDirectoryTagCheckedRationalDoubleArray
 #define TIFFWriteDirectoryTagCheckedSbyteArray gdal_TIFFWriteDirectoryTagCheckedSbyteArray
 #define TIFFWriteDirectoryTagCheckedShort gdal_TIFFWriteDirectoryTagCheckedShort
 #define TIFFWriteDirectoryTagCheckedShortArray gdal_TIFFWriteDirectoryTagCheckedShortArray
 #define TIFFWriteDirectoryTagCheckedSlong8Array gdal_TIFFWriteDirectoryTagCheckedSlong8Array
 #define TIFFWriteDirectoryTagCheckedSlongArray gdal_TIFFWriteDirectoryTagCheckedSlongArray
 #define TIFFWriteDirectoryTagCheckedSrationalArray gdal_TIFFWriteDirectoryTagCheckedSrationalArray
+#define TIFFWriteDirectoryTagCheckedSrationalDoubleArray gdal_TIFFWriteDirectoryTagCheckedSrationalDoubleArray
 #define TIFFWriteDirectoryTagCheckedSshortArray gdal_TIFFWriteDirectoryTagCheckedSshortArray
 #define TIFFWriteDirectoryTagCheckedUndefinedArray gdal_TIFFWriteDirectoryTagCheckedUndefinedArray
 #define TIFFWriteDirectoryTagColormap gdal_TIFFWriteDirectoryTagColormap
@@ -624,6 +702,7 @@
 #define TIFFWriteDirectoryTagLongLong8Array gdal_TIFFWriteDirectoryTagLongLong8Array
 #define TIFFWriteDirectoryTagRational gdal_TIFFWriteDirectoryTagRational
 #define TIFFWriteDirectoryTagRationalArray gdal_TIFFWriteDirectoryTagRationalArray
+#define TIFFWriteDirectoryTagRationalDoubleArray gdal_TIFFWriteDirectoryTagRationalDoubleArray
 #define TIFFWriteDirectoryTagSampleformatArray gdal_TIFFWriteDirectoryTagSampleformatArray
 #define TIFFWriteDirectoryTagSbyteArray gdal_TIFFWriteDirectoryTagSbyteArray
 #define TIFFWriteDirectoryTagShort gdal_TIFFWriteDirectoryTagShort
@@ -633,6 +712,7 @@
 #define TIFFWriteDirectoryTagSlong8Array gdal_TIFFWriteDirectoryTagSlong8Array
 #define TIFFWriteDirectoryTagSlongArray gdal_TIFFWriteDirectoryTagSlongArray
 #define TIFFWriteDirectoryTagSrationalArray gdal_TIFFWriteDirectoryTagSrationalArray
+#define TIFFWriteDirectoryTagSrationalDoubleArray gdal_TIFFWriteDirectoryTagSrationalDoubleArray
 #define TIFFWriteDirectoryTagSshortArray gdal_TIFFWriteDirectoryTagSshortArray
 #define TIFFWriteDirectoryTagSubifd gdal_TIFFWriteDirectoryTagSubifd
 #define TIFFWriteDirectoryTagTransferfunction gdal_TIFFWriteDirectoryTagTransferfunction
@@ -647,10 +727,27 @@
 #define TIFFXYZToRGB gdal_TIFFXYZToRGB
 #define TIFFYCbCrtoRGB gdal_TIFFYCbCrtoRGB
 #define TIFFYCbCrToRGBInit gdal_TIFFYCbCrToRGBInit
+#define ToRationalEuclideanGCD gdal_ToRationalEuclideanGCD
+#define TryChopUpUncompressedBigTiff gdal_TryChopUpUncompressedBigTiff
+#define TWebPCleanup gdal_TWebPCleanup
+#define TWebPDatasetWriter gdal_TWebPDatasetWriter
+#define TWebPDecode gdal_TWebPDecode
+#define TWebPEncode gdal_TWebPEncode
+#define TWebPFixupTags gdal_TWebPFixupTags
+#define TWebPPostEncode gdal_TWebPPostEncode
+#define TWebPPreDecode gdal_TWebPPreDecode
+#define TWebPPreEncode gdal_TWebPPreEncode
+#define TWebPSetupDecode gdal_TWebPSetupDecode
+#define TWebPSetupEncode gdal_TWebPSetupEncode
+#define TWebPVGetField gdal_TWebPVGetField
+#define TWebPVSetField gdal_TWebPVSetField
 #define unixErrorHandler gdal_unixErrorHandler
 #define unixWarningHandler gdal_unixWarningHandler
 #define uv_decode gdal_uv_decode
 #define uv_encode gdal_uv_encode
+#define WriteAsLong4 gdal_WriteAsLong4
+#define WriteAsLong8 gdal_WriteAsLong8
+#define _WriteAsType gdal__WriteAsType
 #define XYZtoRGB24 gdal_XYZtoRGB24
 #define ZIPCleanup gdal_ZIPCleanup
 #define ZIPDecode gdal_ZIPDecode
@@ -663,6 +760,17 @@
 #define ZIPSetupEncode gdal_ZIPSetupEncode
 #define ZIPVGetField gdal_ZIPVGetField
 #define ZIPVSetField gdal_ZIPVSetField
+#define ZSTDCleanup gdal_ZSTDCleanup
+#define ZSTDDecode gdal_ZSTDDecode
+#define ZSTDEncode gdal_ZSTDEncode
+#define ZSTDFixupTags gdal_ZSTDFixupTags
+#define ZSTDPostEncode gdal_ZSTDPostEncode
+#define ZSTDPreDecode gdal_ZSTDPreDecode
+#define ZSTDPreEncode gdal_ZSTDPreEncode
+#define ZSTDSetupDecode gdal_ZSTDSetupDecode
+#define ZSTDSetupEncode gdal_ZSTDSetupEncode
+#define ZSTDVGetField gdal_ZSTDVGetField
+#define ZSTDVSetField gdal_ZSTDVSetField
 #define _msbmask gdal__msbmask
 #define zeroruns gdal_zeroruns
 #define oneruns gdal_oneruns
@@ -671,24 +779,27 @@
 #define vcodes gdal_vcodes
 #define photoTag gdal_photoTag
 #define display_sRGB gdal_display_sRGB
+#define uv_row gdal_uv_row
 #define TIFFBitRevTable gdal_TIFFBitRevTable
 #define TIFFNoBitRevTable gdal_TIFFNoBitRevTable
 #define twobitdeltas gdal_twobitdeltas
 #define threebitdeltas gdal_threebitdeltas
 #define TIFFVersion gdal_TIFFVersion
-#define TIFFFaxWhiteCodes gdal_TIFFFaxWhiteCodes
-#define TIFFFaxWhiteTable gdal_TIFFFaxWhiteTable
 #define TIFFFaxBlackCodes gdal_TIFFFaxBlackCodes
 #define TIFFFaxMainTable gdal_TIFFFaxMainTable
+#define TIFFFaxWhiteTable gdal_TIFFFaxWhiteTable
 #define TIFFFaxBlackTable gdal_TIFFFaxBlackTable
+#define TIFFFaxWhiteCodes gdal_TIFFFaxWhiteCodes
 #define tiffFieldArray gdal_tiffFieldArray
 #define tiffFields gdal_tiffFields
 #define exifFieldArray gdal_exifFieldArray
 #define exifFields gdal_exifFields
+#define gpsFieldArray gdal_gpsFieldArray
+#define gpsFields gdal_gpsFields
 #define faxFields gdal_faxFields
 #define fax3Fields gdal_fax3Fields
 #define fax4Fields gdal_fax4Fields
-#define uv_row gdal_uv_row
+#define LERCFields gdal_LERCFields
 #define LogLuvFields gdal_LogLuvFields
 #define lzmaFields gdal_lzmaFields
 #define ojpegFields gdal_ojpegFields
@@ -696,9 +807,11 @@
 #define predictFields gdal_predictFields
 #define photoNames gdal_photoNames
 #define orientNames gdal_orientNames
+#define TWebPFields gdal_TWebPFields
 #define zipFields gdal_zipFields
-#define _TIFFerrorHandler gdal__TIFFerrorHandler
+#define ZSTDFields gdal_ZSTDFields
 #define _TIFFBuiltinCODECS gdal__TIFFBuiltinCODECS
+#define _TIFFerrorHandler gdal__TIFFerrorHandler
 #define _TIFFwarningHandler gdal__TIFFwarningHandler
 #define registeredCODECS gdal_registeredCODECS
 #define _TIFFextender gdal__TIFFextender
@@ -707,8 +820,12 @@
 #define LogK2 gdal_LogK2
 #define _TIFFwarningHandlerExt gdal__TIFFwarningHandlerExt
 #define _TIFFerrorHandlerExt gdal__TIFFerrorHandlerExt
+
+#define DISABLE_CHECK_TIFFSWABMACROS
+
 #define TIFFInitDumpMode gdal_TIFFInitDumpMode
 #define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12
+#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12
 #ifdef LZW_SUPPORT
 #define TIFFInitLZW gdal_TIFFInitLZW
 #endif
@@ -748,4 +865,10 @@
 #endif
 #ifdef LZMA_SUPPORT
 #define TIFFInitLZMA gdal_TIFFInitLZMA
+#endif
+#ifdef WEBP_SUPPORT
+#define TIFFInitWebP gdal_TIFFInitWebP
+#endif
+#ifdef LERC_SUPPORT
+#define TIFFInitLERC gdal_TIFFInitLERC
 #endif

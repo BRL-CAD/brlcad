@@ -18,11 +18,13 @@ set(libtiff_srcs
 	tif_extension.c
 	tif_fax3.c
 	tif_fax3sm.c
+	tif_flush.c
 	tif_getimage.c
 	tif_jpeg.c
 	tif_jpeg_12.c
-	tif_flush.c
+	tif_lerc.c
 	tif_luv.c
+	tif_lzma.c
 	tif_lzw.c
 	tif_next.c
 	tif_ojpeg.c
@@ -32,16 +34,17 @@ set(libtiff_srcs
 	tif_predict.c
 	tif_print.c
 	tif_read.c
-	tif_swab.c
 	tif_strip.c
+	tif_swab.c
 	tif_thunder.c
 	tif_tile.c
-	tif_vsi.c
 	tif_version.c
+	tif_vsi.c
 	tif_warning.c
+	tif_webp.c
 	tif_write.c
 	tif_zip.c
-	tif_lzma.c
+	tif_zstd.c
 	)
 
 add_definitions(-DDONT_DEPRECATE_SPRINTF)
