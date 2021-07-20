@@ -63,6 +63,8 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
          /* already in list, check size */
          if (var->Size != shProg->Varying->Parameters[j].Size) {
             /* error */
+	    if (map)
+	       free(map);
             return GL_FALSE;
          }
       }
@@ -209,6 +211,8 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
             break;
          default:
             _mesa_problem(NULL, "bad parameter type in link_uniform_vars()");
+	    if (map)
+	       free(map);
             return GL_FALSE;
          }
       }
