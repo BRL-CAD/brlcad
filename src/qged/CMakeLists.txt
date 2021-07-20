@@ -62,6 +62,8 @@ add_subdirectory(plugins)
 set(qged_ignore_srcs
   ${qged_srcs}
   ${moc_headers}
+  CMakeLists.txt
+  TODO
   display/AxesRenderer.cpp
   display/AxesRenderer.h
   display/Camera.h
@@ -77,9 +79,52 @@ set(qged_ignore_srcs
   display/Renderable.h
   fonts/Inconsolata-LICENSE.txt
   fonts/Inconsolata.otf
-  CMakeLists.txt
+  main.cpp
   qdm_tests.txt
-  TODO
+  theme/LICENSE.md
+  theme/breeze.qrc
+  theme/dark.qss
+  theme/dark/branch_closed-on.svg
+  theme/dark/branch_closed.svg
+  theme/dark/branch_open-on.svg
+  theme/dark/branch_open.svg
+  theme/dark/checkbox_checked.svg
+  theme/dark/checkbox_checked_disabled.svg
+  theme/dark/checkbox_indeterminate.svg
+  theme/dark/checkbox_indeterminate_disabled.svg
+  theme/dark/checkbox_unchecked.svg
+  theme/dark/checkbox_unchecked_disabled.svg
+  theme/dark/close-hover.svg
+  theme/dark/close-pressed.svg
+  theme/dark/close.svg
+  theme/dark/down_arrow-hover.svg
+  theme/dark/down_arrow.svg
+  theme/dark/down_arrow_disabled.svg
+  theme/dark/hmovetoolbar.svg
+  theme/dark/hsepartoolbar.svg
+  theme/dark/left_arrow.svg
+  theme/dark/left_arrow_disabled.svg
+  theme/dark/radio_checked.svg
+  theme/dark/radio_checked_disabled.svg
+  theme/dark/radio_unchecked.svg
+  theme/dark/radio_unchecked_disabled.svg
+  theme/dark/right_arrow.svg
+  theme/dark/right_arrow_disabled.svg
+  theme/dark/sizegrip.svg
+  theme/dark/spinup_disabled.svg
+  theme/dark/stylesheet-branch-end-closed.svg
+  theme/dark/stylesheet-branch-end-open.svg
+  theme/dark/stylesheet-branch-end.svg
+  theme/dark/stylesheet-branch-more.svg
+  theme/dark/stylesheet-vline.svg
+  theme/dark/transparent.svg
+  theme/dark/undock-hover.svg
+  theme/dark/undock.svg
+  theme/dark/up_arrow-hover.svg
+  theme/dark/up_arrow.svg
+  theme/dark/up_arrow_disabled.svg
+  theme/dark/vmovetoolbar.svg
+  theme/dark/vsepartoolbars.svg
   )
 
 CMAKEFILES(${qged_ignore_srcs})
