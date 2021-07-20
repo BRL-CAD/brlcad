@@ -472,26 +472,20 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
 
    if (fb->Attachment[BUFFER_DEPTH].Renderbuffer) {
       fb->Visual.haveDepthBuffer = GL_TRUE;
-      fb->Visual.depthBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->DepthBits;
+      fb->Visual.depthBits = fb->Attachment[BUFFER_DEPTH].Renderbuffer->DepthBits;
    }
 
    if (fb->Attachment[BUFFER_STENCIL].Renderbuffer) {
       fb->Visual.haveStencilBuffer = GL_TRUE;
-      fb->Visual.stencilBits
-         = fb->Attachment[BUFFER_STENCIL].Renderbuffer->StencilBits;
+      fb->Visual.stencilBits = fb->Attachment[BUFFER_STENCIL].Renderbuffer->StencilBits;
    }
 
    if (fb->Attachment[BUFFER_ACCUM].Renderbuffer) {
       fb->Visual.haveAccumBuffer = GL_TRUE;
-      fb->Visual.accumRedBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->RedBits;
-      fb->Visual.accumGreenBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->GreenBits;
-      fb->Visual.accumBlueBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->BlueBits;
-      fb->Visual.accumAlphaBits
-         = fb->Attachment[BUFFER_DEPTH].Renderbuffer->AlphaBits;
+      fb->Visual.accumRedBits = fb->Attachment[BUFFER_ACCUM].Renderbuffer->RedBits;
+      fb->Visual.accumGreenBits = fb->Attachment[BUFFER_ACCUM].Renderbuffer->GreenBits;
+      fb->Visual.accumBlueBits = fb->Attachment[BUFFER_ACCUM].Renderbuffer->BlueBits;
+      fb->Visual.accumAlphaBits = fb->Attachment[BUFFER_ACCUM].Renderbuffer->AlphaBits;
    }
 
    compute_depth_max(fb);
