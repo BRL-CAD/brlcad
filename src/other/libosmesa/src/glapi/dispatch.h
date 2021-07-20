@@ -1,5 +1,3 @@
-/* DO NOT EDIT - This file generated automatically by gl_table.py (from Mesa) script */
-
 /*
  * (C) Copyright IBM Corporation 2005
  * All Rights Reserved.
@@ -40,7 +38,7 @@
  */
 
 #define CALL_by_offset(disp, cast, offset, parameters) \
-    (*(cast (GET_by_offset(disp, offset)))) parameters
+    if (offset >= 0) (*(cast (GET_by_offset(disp, offset))))(parameters)
 #define GET_by_offset(disp, offset) \
     (offset >= 0) ? (((_glapi_proc *)(disp))[offset]) : NULL
 #define SET_by_offset(disp, offset, fn) \
