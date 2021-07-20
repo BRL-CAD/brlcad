@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -31,36 +29,36 @@
  */
 #include "tiffiop.h"
 
-#ifndef TIFFSwabShort
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabShort)
 void
-TIFFSwabShort(uint16* wp)
+TIFFSwabShort(uint16_t* wp)
 {
 	register unsigned char* cp = (unsigned char*) wp;
 	unsigned char t;
-	assert(sizeof(uint16)==2);
+	assert(sizeof(uint16_t) == 2);
 	t = cp[1]; cp[1] = cp[0]; cp[0] = t;
 }
 #endif
 
-#ifndef TIFFSwabLong
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabLong)
 void
-TIFFSwabLong(uint32* lp)
+TIFFSwabLong(uint32_t* lp)
 {
 	register unsigned char* cp = (unsigned char*) lp;
 	unsigned char t;
-	assert(sizeof(uint32)==4);
+	assert(sizeof(uint32_t) == 4);
 	t = cp[3]; cp[3] = cp[0]; cp[0] = t;
 	t = cp[2]; cp[2] = cp[1]; cp[1] = t;
 }
 #endif
 
-#ifndef TIFFSwabLong8
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabLong8)
 void
-TIFFSwabLong8(uint64* lp)
+TIFFSwabLong8(uint64_t* lp)
 {
 	register unsigned char* cp = (unsigned char*) lp;
 	unsigned char t;
-	assert(sizeof(uint64)==8);
+	assert(sizeof(uint64_t) == 8);
 	t = cp[7]; cp[7] = cp[0]; cp[0] = t;
 	t = cp[6]; cp[6] = cp[1]; cp[1] = t;
 	t = cp[5]; cp[5] = cp[2]; cp[2] = t;
@@ -68,13 +66,13 @@ TIFFSwabLong8(uint64* lp)
 }
 #endif
 
-#ifndef TIFFSwabArrayOfShort
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfShort)
 void
-TIFFSwabArrayOfShort(register uint16* wp, tmsize_t n)
+TIFFSwabArrayOfShort(register uint16_t* wp, tmsize_t n)
 {
 	register unsigned char* cp;
 	register unsigned char t;
-	assert(sizeof(uint16)==2);
+	assert(sizeof(uint16_t) == 2);
 	/* XXX unroll loop some */
 	while (n-- > 0) {
 		cp = (unsigned char*) wp;
@@ -84,9 +82,9 @@ TIFFSwabArrayOfShort(register uint16* wp, tmsize_t n)
 }
 #endif
 
-#ifndef TIFFSwabArrayOfTriples
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfTriples)
 void
-TIFFSwabArrayOfTriples(register uint8* tp, tmsize_t n)
+TIFFSwabArrayOfTriples(register uint8_t* tp, tmsize_t n)
 {
 	unsigned char* cp;
 	unsigned char t;
@@ -100,13 +98,13 @@ TIFFSwabArrayOfTriples(register uint8* tp, tmsize_t n)
 }
 #endif
 
-#ifndef TIFFSwabArrayOfLong
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfLong)
 void
-TIFFSwabArrayOfLong(register uint32* lp, tmsize_t n)
+TIFFSwabArrayOfLong(register uint32_t* lp, tmsize_t n)
 {
 	register unsigned char *cp;
 	register unsigned char t;
-	assert(sizeof(uint32)==4);
+	assert(sizeof(uint32_t) == 4);
 	/* XXX unroll loop some */
 	while (n-- > 0) {
 		cp = (unsigned char *)lp;
@@ -117,13 +115,13 @@ TIFFSwabArrayOfLong(register uint32* lp, tmsize_t n)
 }
 #endif
 
-#ifndef TIFFSwabArrayOfLong8
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfLong8)
 void
-TIFFSwabArrayOfLong8(register uint64* lp, tmsize_t n)
+TIFFSwabArrayOfLong8(register uint64_t* lp, tmsize_t n)
 {
 	register unsigned char *cp;
 	register unsigned char t;
-	assert(sizeof(uint64)==8);
+	assert(sizeof(uint64_t) == 8);
 	/* XXX unroll loop some */
 	while (n-- > 0) {
 		cp = (unsigned char *)lp;
@@ -136,7 +134,7 @@ TIFFSwabArrayOfLong8(register uint64* lp, tmsize_t n)
 }
 #endif
 
-#ifndef TIFFSwabFloat
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabFloat)
 void
 TIFFSwabFloat(float* fp)
 {
@@ -148,7 +146,7 @@ TIFFSwabFloat(float* fp)
 }
 #endif
 
-#ifndef TIFFSwabArrayOfFloat
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfFloat)
 void
 TIFFSwabArrayOfFloat(register float* fp, tmsize_t n)
 {
@@ -165,7 +163,7 @@ TIFFSwabArrayOfFloat(register float* fp, tmsize_t n)
 }
 #endif
 
-#ifndef TIFFSwabDouble
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabDouble)
 void
 TIFFSwabDouble(double *dp)
 {
@@ -179,7 +177,7 @@ TIFFSwabDouble(double *dp)
 }
 #endif
 
-#ifndef TIFFSwabArrayOfDouble
+#if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfDouble)
 void
 TIFFSwabArrayOfDouble(double* dp, tmsize_t n)
 {
@@ -283,7 +281,7 @@ TIFFGetBitRevTable(int reversed)
 }
 
 void
-TIFFReverseBits(uint8* cp, tmsize_t n)  
+TIFFReverseBits(uint8_t* cp, tmsize_t n)
 {
 	for (; n > 8; n -= 8) {
 		cp[0] = TIFFBitRevTable[cp[0]];
