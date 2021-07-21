@@ -47,22 +47,6 @@
 #include "m_debug.h"
 #endif
 
-#ifdef USE_X86_ASM
-#include "x86/common_x86_asm.h"
-#endif
-
-#ifdef USE_X86_64_ASM
-#include "x86-64/x86-64.h"
-#endif
-
-#ifdef USE_SPARC_ASM
-#include "sparc/sparc.h"
-#endif
-
-#ifdef USE_PPC_ASM
-#include "ppc/common_ppc_features.h"
-#endif
-
 clip_func _mesa_clip_tab[5];
 clip_func _mesa_clip_np_tab[5];
 dotprod_func _mesa_dotprod_tab[5];

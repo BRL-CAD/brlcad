@@ -44,15 +44,7 @@
 #include "s_context.h"
 #include "s_span.h"
 
-
-#if defined(USE_MMX_ASM)
-#include "x86/mmx.h"
-#include "x86/common_x86_asm.h"
-#define _BLENDAPI _ASMAPI
-#else
 #define _BLENDAPI
-#endif
-
 
 /**
  * Integer divide by 255
