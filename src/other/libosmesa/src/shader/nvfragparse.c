@@ -1231,7 +1231,7 @@ Parse_InstructionSequence(struct parse_state *parseState,
     while (1) {
 	struct prog_instruction *inst = program + parseState->numInst;
 	struct instruction_pattern instMatch;
-	GLubyte token[100];
+	GLubyte token[100] = {0};
 
 	/* Initialize the instruction */
 	_mesa_init_instructions(inst, 1);

@@ -1611,6 +1611,10 @@ parse_result_binding(GLcontext *ctx, const GLubyte **inst,
 {
     const GLubyte token = *(*inst)++;
 
+    // Initialize
+    if (outputReg)
+	*outputReg = -1;
+
     switch (token) {
 	case FRAGMENT_RESULT_COLOR:
 	    if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
@@ -1677,7 +1681,8 @@ parse_result_binding(GLcontext *ctx, const GLubyte **inst,
 	break;
     }
 
-    Program->Base.OutputsWritten |= (1 << *outputReg);
+    if (outputReg && *outputReg >= 0 && *outputReg < INT_MAX)
+	Program->Base.OutputsWritten |= (1 << *outputReg);
 
     return 0;
 }
@@ -2399,11 +2404,14 @@ parse_src_reg(GLcontext * ctx, const GLubyte ** inst,
 	      enum register_file * File, GLint * Index,
 	      GLboolean *IsRelOffset)
 {
-    struct var_cache *src;
-    GLuint binding, is_generic, found;
-    GLint offset;
+    struct var_cache *src = NULL;
+    GLuint binding = 0;
+    GLuint is_generic = 0;
+    GLuint found = 0;
+    GLint offset = 0;
 
     *IsRelOffset = 0;
+    *Index = 0;
 
     /* And the binding for the src */
     switch (*(*inst)++) {
@@ -2917,10 +2925,10 @@ parse_fp_instruction(GLcontext * ctx, const GLubyte ** inst,
 		return 1;
 
 	    {
-		GLubyte swizzle[4];
-		GLubyte negateMask;
+		GLubyte swizzle[4] = {0};
+		GLubyte negateMask = 0;
 		enum register_file file;
-		GLint index;
+		GLint index = 0;
 
 		if (parse_src_reg(ctx, inst, vc_head, Program, &file, &index, &rel))
 		    return 1;
@@ -3308,11 +3316,11 @@ parse_vp_instruction(GLcontext * ctx, const GLubyte ** inst,
 		    break;
 	    }
 	    {
-		GLubyte swizzle[4];
-		GLubyte negateMask;
-		GLboolean relAddr;
+		GLubyte swizzle[4] = {0};
+		GLubyte negateMask = 0;
+		GLboolean relAddr = GL_FALSE;
 		enum register_file file;
-		GLint index;
+		GLint index = 0;
 
 		if (parse_vp_dst_reg(ctx, inst, vc_head, Program, &vp->DstReg))
 		    return 1;

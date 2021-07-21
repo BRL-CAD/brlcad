@@ -402,7 +402,8 @@ static struct ureg get_temp(struct texenv_fragment_program *p)
     if ((GLuint) bit > p->program->Base.NumTemporaries)
 	p->program->Base.NumTemporaries = bit;
 
-    p->temp_in_use |= 1<<(bit-1);
+    if (bit > 0)
+	p->temp_in_use |= 1<<(bit-1);
     return make_ureg(PROGRAM_TEMPORARY, (bit-1));
 }
 
@@ -430,7 +431,8 @@ static struct ureg get_tex_temp(struct texenv_fragment_program *p)
     if ((GLuint) bit > p->program->Base.NumTemporaries)
 	p->program->Base.NumTemporaries = bit;
 
-    p->temp_in_use |= 1<<(bit-1);
+    if (bit > 0)
+	p->temp_in_use |= 1<<(bit-1);
     return make_ureg(PROGRAM_TEMPORARY, (bit-1));
 }
 
@@ -530,7 +532,7 @@ emit_op(struct texenv_fragment_program *p,
 
     /* Accounting for indirection tracking:
      */
-    if (dest.file == PROGRAM_TEMPORARY)
+    if (dest.file == PROGRAM_TEMPORARY && dest.idx >= 0 && dest.idx < INT_MAX)
 	p->temps_output |= 1 << dest.idx;
 
     return inst;
@@ -559,7 +561,7 @@ static struct ureg emit_arith(struct texenv_fragment_program *p,
     if (!is_undef(src2) && src2.file == PROGRAM_TEMPORARY)
 	p->alu_temps |= 1 << src2.idx;
 
-    if (dest.file == PROGRAM_TEMPORARY)
+    if (dest.idx >= 0 && dest.idx < INT_MAX && dest.file == PROGRAM_TEMPORARY)
 	p->alu_temps |= 1 << dest.idx;
 
     p->program->Base.NumAluInstructions++;
@@ -588,14 +590,16 @@ static struct ureg emit_texld(struct texenv_fragment_program *p,
 
     /* Is this a texture indirection?
      */
-    if ((coord.file == PROGRAM_TEMPORARY &&
-	 (p->temps_output & (1<<coord.idx))) ||
-	(dest.file == PROGRAM_TEMPORARY &&
-	 (p->alu_temps & (1<<dest.idx)))) {
-	p->program->Base.NumTexIndirections++;
-	p->temps_output = 1<<coord.idx;
-	p->alu_temps = 0;
-	assert(0);		/* KW: texture env crossbar */
+    if (coord.idx >= 0 && coord.idx < INT_MAX && dest.idx >= 0 && dest.idx < INT_MAX ) {
+	if ((coord.file == PROGRAM_TEMPORARY &&
+		    (p->temps_output & (1<<coord.idx))) ||
+		(dest.file == PROGRAM_TEMPORARY &&
+		 (p->alu_temps & (1<<dest.idx)))) {
+	    p->program->Base.NumTexIndirections++;
+	    p->temps_output = 1<<coord.idx;
+	    p->alu_temps = 0;
+	    assert(0);		/* KW: texture env crossbar */
+	}
     }
 
     return dest;
@@ -1219,8 +1223,7 @@ static void cache_item(struct texenvprog_cache *cache,
 		       const struct state_key *key,
 		       void *data)
 {
-    struct texenvprog_cache_item *c
-	= (struct texenvprog_cache_item *) MALLOC(sizeof(*c));
+    struct texenvprog_cache_item *c = (struct texenvprog_cache_item *) MALLOC(sizeof(*c));
     c->hash = hash;
 
     c->key = _mesa_malloc(sizeof(*key));
@@ -1236,8 +1239,9 @@ static void cache_item(struct texenvprog_cache *cache,
     }
 
     cache->n_items++;
-    c->next = cache->items[hash % cache->size];
-    cache->items[hash % cache->size] = c;
+    size_t hmod = hash % cache->size;
+    c->next = cache->items[hmod];
+    cache->items[hmod] = c;
 }
 
 static GLuint hash_key(const struct state_key *key)

@@ -349,21 +349,25 @@ static struct ureg get_temp(struct tnl_program *p)
     if ((GLuint) bit > p->program->Base.NumTemporaries)
 	p->program->Base.NumTemporaries = bit;
 
-    p->temp_in_use |= 1<<(bit-1);
+    if (bit > 0)
+	p->temp_in_use |= 1<<(bit-1);
+
     return make_ureg(PROGRAM_TEMPORARY, bit-1);
 }
 
 static struct ureg reserve_temp(struct tnl_program *p)
 {
     struct ureg temp = get_temp(p);
-    p->temp_reserved |= 1<<temp.idx;
+    if (temp.idx > 0 && temp.idx < INT_MAX)
+	p->temp_reserved |= 1<<temp.idx;
     return temp;
 }
 
 static void release_temp(struct tnl_program *p, struct ureg reg)
 {
     if (reg.file == PROGRAM_TEMPORARY) {
-	p->temp_in_use &= ~(1<<reg.idx);
+	if (reg.idx > 0 && reg.idx < INT_MAX)
+	    p->temp_in_use &= ~(1<<reg.idx);
 	p->temp_in_use |= p->temp_reserved; /* can't release reserved temps */
     }
 }

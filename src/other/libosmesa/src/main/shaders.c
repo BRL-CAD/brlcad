@@ -242,7 +242,7 @@ void GLAPIENTRY
 _mesa_GetObjectParameterfvARB(GLhandleARB object, GLenum pname,
 			      GLfloat *params)
 {
-    GLint iparams[1];  /* XXX is one element enough? */
+    GLint iparams[1] = {0};  /* XXX is one element enough? */
     _mesa_GetObjectParameterivARB(object, pname, iparams);
     params[0] = (GLfloat) iparams[0];
 }

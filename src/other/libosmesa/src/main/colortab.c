@@ -835,7 +835,7 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 void GLAPIENTRY
 _mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
-    GLfloat fparams[4];
+    GLfloat fparams[4] = {0.0};
     if (pname == GL_COLOR_TABLE_SGI ||
 	pname == GL_TEXTURE_COLOR_TABLE_SGI ||
 	pname == GL_POST_CONVOLUTION_COLOR_TABLE_SGI ||

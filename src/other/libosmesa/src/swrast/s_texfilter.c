@@ -683,10 +683,11 @@ sample_1d_linear(GLcontext *ctx,
 		 const GLfloat texcoord[4], GLchan rgba[4])
 {
     const GLint width = img->Width2;
-    GLint i0, i1;
-    GLfloat u;
+    GLint i0 = 0;
+    GLint i1 = 0;
+    GLfloat u = 0.0;
     GLbitfield useBorderColor = 0x0;
-    GLfloat a;
+    GLfloat a = 0.0;
     GLchan t0[4], t1[4];  /* texels */
 
     COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width, i0, i1);
@@ -953,10 +954,15 @@ sample_2d_linear(GLcontext *ctx,
 {
     const GLint width = img->Width2;
     const GLint height = img->Height2;
-    GLint i0, j0, i1, j1;
+    GLint i0 = 0;
+    GLint j0 = 0;
+    GLint i1 = 0;
+    GLint j1 = 0;
     GLbitfield useBorderColor = 0x0;
-    GLfloat u, v;
-    GLfloat a, b;
+    GLfloat u = 0.0;
+    GLfloat v = 0.0;
+    GLfloat a = 0.0;
+    GLfloat b = 0.0;
     GLchan t00[4], t10[4], t01[4], t11[4]; /* sampled texel colors */
 
     COMPUTE_LINEAR_TEXEL_LOCATIONS(tObj->WrapS, texcoord[0], u, width,  i0, i1);
@@ -1403,7 +1409,9 @@ sample_3d_nearest(GLcontext *ctx,
     const GLint width = img->Width2;     /* without border, power of two */
     const GLint height = img->Height2;   /* without border, power of two */
     const GLint depth = img->Depth2;     /* without border, power of two */
-    GLint i, j, k;
+    GLint i = 0;
+    GLint j = 0;
+    GLint k = 0;
     (void) ctx;
 
     COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width,  i);
@@ -1435,10 +1443,19 @@ sample_3d_linear(GLcontext *ctx,
     const GLint width = img->Width2;
     const GLint height = img->Height2;
     const GLint depth = img->Depth2;
-    GLint i0, j0, k0, i1, j1, k1;
+    GLint i0 = 0;
+    GLint j0 = 0;
+    GLint k0 = 0;
+    GLint i1 = 0;
+    GLint j1 = 0;
+    GLint k1 = 0;
     GLbitfield useBorderColor = 0x0;
-    GLfloat u, v, w;
-    GLfloat a, b, c;
+    GLfloat u = 0.0;
+    GLfloat v = 0.0;
+    GLfloat w = 0.0;
+    GLfloat a = 0.0;
+    GLfloat b = 0.0;
+    GLfloat c = 0.0;
     GLchan t000[4], t010[4], t001[4], t011[4];
     GLchan t100[4], t110[4], t101[4], t111[4];
 
@@ -2252,17 +2269,16 @@ sample_depth_texture(GLcontext *ctx,
     if (tObj->MagFilter == GL_NEAREST) {
 	GLuint i;
 	for (i = 0; i < n; i++) {
-	    GLfloat depthSample;
-	    GLint col, row;
+	    GLfloat depthSample = 0.0;
+	    GLint col = 0;
+	    GLint row = 0;
 
 	    if (tObj->Target == GL_TEXTURE_RECTANGLE_ARB) {
 		col = clamp_rect_coord_nearest(tObj->WrapS, texcoords[i][0], width);
 		row = clamp_rect_coord_nearest(tObj->WrapT, texcoords[i][1], height);
 	    } else {
-		COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoords[i][0],
-					       width, col);
-		COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoords[i][1],
-					       height, row);
+		COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoords[i][0], width, col);
+		COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapT, texcoords[i][1], height, row);
 	    }
 	    if (col >= 0 && row >= 0 && col < width && row < height) {
 		img->FetchTexelf(img, col, row, 0, &depthSample);
@@ -2331,8 +2347,12 @@ sample_depth_texture(GLcontext *ctx,
 	ASSERT(tObj->MagFilter == GL_LINEAR);
 	for (i = 0; i < n; i++) {
 	    GLfloat depth00, depth01, depth10, depth11;
-	    GLint i0, i1, j0, j1;
-	    GLfloat u, v;
+	    GLint i0 = 0;
+	    GLint i1 = 0;
+	    GLint j0 = 0;
+	    GLint j1 = 0;
+	    GLfloat u = 0.0;
+	    GLfloat v = 0.0;
 	    GLuint useBorderTexel;
 
 	    if (tObj->Target == GL_TEXTURE_RECTANGLE_ARB) {

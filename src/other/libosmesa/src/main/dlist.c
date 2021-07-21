@@ -717,7 +717,7 @@ _mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
 
     if (ctx->ListState.CurrentPos + numNodes + 2 > BLOCK_SIZE) {
 	/* This block is full.  Allocate a new block and chain to it */
-	Node *newblock;
+	Node *newblock = NULL;
 	n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
 	if (n) {
 	    n[0].opcode = OPCODE_CONTINUE;
@@ -727,6 +727,9 @@ _mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
 		return NULL;
 	    }
 	    n[1].next = (Node *) newblock;
+	} else {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "Building display list");
+	    return NULL;
 	}
 	ctx->ListState.CurrentBlock = newblock;
 	ctx->ListState.CurrentPos = 0;
@@ -1845,7 +1848,7 @@ save_Fogf(GLenum pname, GLfloat param)
 static void GLAPIENTRY
 save_Fogiv(GLenum pname, const GLint *params)
 {
-    GLfloat p[4];
+    GLfloat p[4] = {0.0};
     switch (pname) {
 	case GL_FOG_MODE:
 	case GL_FOG_DENSITY:
@@ -2117,7 +2120,7 @@ save_LightModelf(GLenum pname, GLfloat param)
 static void GLAPIENTRY
 save_LightModeliv(GLenum pname, const GLint *params)
 {
-    GLfloat fparam[4];
+    GLfloat fparam[4] = {0.0};
     switch (pname) {
 	case GL_LIGHT_MODEL_AMBIENT:
 	    fparam[0] = INT_TO_FLOAT(params[0]);
