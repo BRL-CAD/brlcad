@@ -128,10 +128,12 @@ int main(int argc, char *argv[])
 	return BRLCAD_ERROR;
     }
 
+#ifdef BRLCAD_OPENGL
     // Define the surface format for QOpenGLWidget
     QSurfaceFormat format;
     format.setDepthBufferSize(16);
     QSurfaceFormat::setDefaultFormat(format);
+#endif
 
     // We derive our own app type from QApplication so we can store any custom
     // application-wide state there - using the Qt provided global rather than
