@@ -660,7 +660,7 @@ sample_1d_nearest(GLcontext *ctx,
 		  const GLfloat texcoord[4], GLchan rgba[4])
 {
     const GLint width = img->Width2;  /* without border, power of two */
-    GLint i;
+    GLint i = 0;
     COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width, i);
     /* skip over the border, if any */
     i += img->Border;
@@ -921,7 +921,8 @@ sample_2d_nearest(GLcontext *ctx,
 {
     const GLint width = img->Width2;    /* without border, power of two */
     const GLint height = img->Height2;  /* without border, power of two */
-    GLint i, j;
+    GLint i = 0;
+    GLint j = 0;
     (void) ctx;
 
     COMPUTE_NEAREST_TEXEL_LOCATION(tObj->WrapS, texcoord[0], width,  i);
