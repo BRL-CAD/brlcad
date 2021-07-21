@@ -328,9 +328,6 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
 # GDAL -  translator library for raster and vector geospatial data formats
 include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 
-# OpenSceneGraph
-include(${CMAKE_CURRENT_SOURCE_DIR}/openscenegraph.dist)
-
 # TCL - scripting language.  For Tcl/Tk builds we want
 # static lib building on so we get the stub libraries.
 set(BSL_CACHE ${BUILD_STATIC_LIBS})
@@ -391,7 +388,6 @@ if (COMMAND CMAKEFILES)
     iwidgets.dist
     netpbm.cmake
     netpbm.dist
-    openscenegraph.dist
     perplex.cmake
     perplex.dist
     png.cmake
