@@ -1838,7 +1838,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
 
     /* finish up by adding the END opcode to program */
     if (withEnd) {
-	struct prog_instruction *inst;
+	//struct prog_instruction *inst;
 	//inst = new_instruction(&emitInfo, OPCODE_END);
 	new_instruction(&emitInfo, OPCODE_END);
     }

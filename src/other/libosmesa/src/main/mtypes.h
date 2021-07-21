@@ -740,7 +740,7 @@ struct gl_eval_attrib {
     GLboolean Map1TextureCoord4;
     GLboolean Map1Vertex3;
     GLboolean Map1Vertex4;
-    GLboolean Map1Attrib[16];  /* GL_NV_vertex_program */
+    GLboolean Map1Attrib[32];  /* GL_NV_vertex_program */
     GLboolean Map2Color4;
     GLboolean Map2Index;
     GLboolean Map2Normal;
@@ -750,7 +750,7 @@ struct gl_eval_attrib {
     GLboolean Map2TextureCoord4;
     GLboolean Map2Vertex3;
     GLboolean Map2Vertex4;
-    GLboolean Map2Attrib[16];  /* GL_NV_vertex_program */
+    GLboolean Map2Attrib[32];  /* GL_NV_vertex_program */
     GLboolean AutoNormal;
     /*@}*/
 

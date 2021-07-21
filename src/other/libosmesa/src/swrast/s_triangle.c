@@ -241,6 +241,7 @@ struct affine_info {
     GLfixed er, eg, eb, ea;
     GLint tbytesline, tsize;
 };
+#define AFFINE_INFO_INIT_ZERO {0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, 0, 0}
 
 
 static INLINE GLint
@@ -518,7 +519,7 @@ affine_span(GLcontext *ctx, SWspan *span,
 #define T_SCALE theight
 
 #define SETUP_CODE							\
-   struct affine_info info;						\
+   struct affine_info info = AFFINE_INFO_INIT_ZERO;			\
    struct gl_texture_unit *unit = ctx->Texture.Unit+0;			\
    struct gl_texture_object *obj = unit->Current2D;			\
    const GLint b = obj->BaseLevel;					\
@@ -582,7 +583,7 @@ struct persp_info {
     GLfixed er, eg, eb, ea;   /* texture env color */
     GLint tbytesline, tsize;
 };
-
+#define PERSP_INFO_INIT_ZERO {0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, 0, 0}
 
 static INLINE void
 fast_persp_span(GLcontext *ctx, SWspan *span,
@@ -789,7 +790,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 #define INTERP_ATTRIBS 1
 
 #define SETUP_CODE							\
-   struct persp_info info;						\
+   struct persp_info info = PERSP_INFO_INIT_ZERO;		        \
    const struct gl_texture_unit *unit = ctx->Texture.Unit+0;		\
    const struct gl_texture_object *obj = unit->Current2D;		\
    const GLint b = obj->BaseLevel;					\

@@ -69,6 +69,7 @@
 void GLAPIENTRY
 _mesa_GetBooleanv(GLenum pname, GLboolean *params)
 {
+    int itmp = 0;
     GET_CURRENT_CONTEXT(ctx);
     ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -597,10 +598,12 @@ _mesa_GetBooleanv(GLenum pname, GLboolean *params)
 	    params[0] = INT_TO_BOOLEAN(MAX_PROJECTION_STACK_DEPTH);
 	    break;
 	case GL_MAX_TEXTURE_SIZE:
-	    params[0] = INT_TO_BOOLEAN(1 << (ctx->Const.MaxTextureLevels - 1));
+	    itmp = 1 << (ctx->Const.MaxTextureLevels - 1);
+	    params[0] = INT_TO_BOOLEAN(itmp);
 	    break;
 	case GL_MAX_3D_TEXTURE_SIZE:
-	    params[0] = INT_TO_BOOLEAN(1 << (ctx->Const.Max3DTextureLevels - 1));
+	    itmp = 1 << (ctx->Const.Max3DTextureLevels - 1);
+	    params[0] = INT_TO_BOOLEAN(itmp);
 	    break;
 	case GL_MAX_TEXTURE_STACK_DEPTH:
 	    params[0] = INT_TO_BOOLEAN(MAX_TEXTURE_STACK_DEPTH);
@@ -1053,7 +1056,8 @@ _mesa_GetBooleanv(GLenum pname, GLboolean *params)
 	    break;
 	case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
 	    CHECK_EXT1(ARB_texture_cube_map, "GetBooleanv");
-	    params[0] = INT_TO_BOOLEAN((1 << (ctx->Const.MaxCubeTextureLevels - 1)));
+	    itmp = (1 << (ctx->Const.MaxCubeTextureLevels - 1));
+	    params[0] = INT_TO_BOOLEAN(itmp);
 	    break;
 	case GL_TEXTURE_COMPRESSION_HINT_ARB:
 	    CHECK_EXT1(ARB_texture_compression, "GetBooleanv");
@@ -1554,7 +1558,8 @@ _mesa_GetBooleanv(GLenum pname, GLboolean *params)
 	    break;
 	case GL_ACTIVE_STENCIL_FACE_EXT:
 	    CHECK_EXT1(EXT_stencil_two_side, "GetBooleanv");
-	    params[0] = ENUM_TO_BOOLEAN(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
+	    //params[0] = ENUM_TO_BOOLEAN(ctx->Stencil.ActiveFace ? GL_BACK : GL_FRONT);
+	    params[0] = GL_TRUE;
 	    break;
 	case GL_MAX_SHININESS_NV:
 	    CHECK_EXT1(NV_light_max_exponent, "GetBooleanv");
@@ -1864,7 +1869,8 @@ _mesa_GetBooleanv(GLenum pname, GLboolean *params)
 	    break;
 	case GL_MAX_VARYING_FLOATS_ARB:
 	    CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
-	    params[0] = INT_TO_BOOLEAN(ctx->Const.MaxVarying * 4);
+	    itmp = ctx->Const.MaxVarying * 4;
+	    params[0] = INT_TO_BOOLEAN(itmp);
 	    break;
 	case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB:
 	    CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");

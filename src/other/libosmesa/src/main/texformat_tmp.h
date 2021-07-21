@@ -1060,8 +1060,8 @@ static void FETCH(ci8)(const struct gl_texture_image *texImage,
 {
     const GLubyte *src = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
     const struct gl_color_table *palette;
-    GLubyte texelUB[4];
-    GLuint index;
+    GLubyte texelUB[4] = {0};
+    GLuint index = 0;
     GET_CURRENT_CONTEXT(ctx);
 
     if (ctx->Texture.SharedPalette) {

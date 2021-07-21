@@ -645,7 +645,7 @@ _mesa_bitcount(unsigned int n)
 GLhalfARB
 _mesa_float_to_half(float val)
 {
-    const int flt = *((int *)(void *) &val);
+    const int flt = (const int)val;
     const int flt_m = flt & 0x7fffff;
     const int flt_e = (flt >> 23) & 0xff;
     const int flt_s = (flt >> 31) & 0x1;
@@ -780,7 +780,7 @@ _mesa_half_to_float(GLhalfARB val)
     }
 
     flt = (flt_s << 31) | (flt_e << 23) | flt_m;
-    result = *((float *)(void *) &flt);
+    result = (int)flt;
     return result;
 }
 

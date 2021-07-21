@@ -71,74 +71,7 @@ typedef void (*dxtCompressTexFuncExt)(GLint srccomps, GLint width,
 
 static dxtCompressTexFuncExt ext_tx_compress_dxtn = NULL;
 
-static void *dxtlibhandle = NULL;
-
-
 typedef void (*GenericFunc)(void);
-
-
-/**
- * Wrapper for dlopen().
- * XXX Probably move this and the following wrappers into imports.h someday.
- */
-static void *
-_mesa_dlopen(const char *libname, int flags)
-{
-#if USE_EXTERNAL_DXTN_LIB
-#ifdef __MINGW32__
-    return LoadLibrary(libname);
-#else
-    return dlopen(libname, flags);
-#endif
-#else
-    return NULL;
-#endif /* USE_EXTERNAL_DXTN_LIB */
-}
-
-
-/**
- * Wrapper for dlsym() that does a cast to a generic function type,
- * rather than a void *.  This reduces the number of warnings that are
- * generated.
- */
-static GenericFunc
-_mesa_dlsym(void *handle, const char *fname)
-{
-#if USE_EXTERNAL_DXTN_LIB
-#ifdef __MINGW32__
-    return (GenericFunc) GetProcAddress(handle, fname);
-#elif defined(__DJGPP__)
-    /* need '_' prefix on symbol names */
-    char fname2[1000];
-    fname2[0] = '_';
-    _mesa_strncpy(fname2 + 1, fname, 998);
-    fname2[999] = 0;
-    return (GenericFunc) dlsym(handle, fname2);
-#else
-    return (GenericFunc) dlsym(handle, fname);
-#endif
-#else
-    return (GenericFunc) NULL;
-#endif /* USE_EXTERNAL_DXTN_LIB */
-}
-
-
-/**
- * Wrapper for dlclose().
- */
-static void
-_mesa_dlclose(void *handle)
-{
-#if USE_EXTERNAL_DXTN_LIB
-#ifdef __MINGW32__
-    FreeLibrary(handle);
-#else
-    dlclose(handle);
-#endif
-#endif
-}
-
-
 
 void
 _mesa_init_texture_s3tc(GLcontext *ctx)
@@ -421,7 +354,7 @@ texstore_rgba_dxt5(TEXSTORE_PARAMS)
 
 
 static int
-fetch_texel_2d_rgb_dxt1(const struct gl_texture_image *texImage,
+fetch_texel_2d_rgb_dxt1_chk(const struct gl_texture_image *texImage,
 			GLint i, GLint j, GLint k, GLchan *texel)
 {
     (void) k;
@@ -435,6 +368,12 @@ fetch_texel_2d_rgb_dxt1(const struct gl_texture_image *texImage,
     return -1;
 }
 
+static void
+fetch_texel_2d_rgb_dxt1(const struct gl_texture_image *texImage,
+			GLint i, GLint j, GLint k, GLchan *texel)
+{
+    (void)fetch_texel_2d_rgb_dxt1_chk(texImage, i, j, k, texel);
+}
 
 static void
 fetch_texel_2d_f_rgb_dxt1(const struct gl_texture_image *texImage,
@@ -442,7 +381,7 @@ fetch_texel_2d_f_rgb_dxt1(const struct gl_texture_image *texImage,
 {
     /* just sample as GLchan and convert to float here */
     GLchan rgba[4];
-    if (fetch_texel_2d_rgb_dxt1(texImage, i, j, k, rgba))
+    if (fetch_texel_2d_rgb_dxt1_chk(texImage, i, j, k, rgba))
 	return;
     texel[RCOMP] = CHAN_TO_FLOAT(rgba[RCOMP]);
     texel[GCOMP] = CHAN_TO_FLOAT(rgba[GCOMP]);
@@ -452,7 +391,7 @@ fetch_texel_2d_f_rgb_dxt1(const struct gl_texture_image *texImage,
 
 
 static int
-fetch_texel_2d_rgba_dxt1(const struct gl_texture_image *texImage,
+fetch_texel_2d_rgba_dxt1_chk(const struct gl_texture_image *texImage,
 			 GLint i, GLint j, GLint k, GLchan *texel)
 {
     (void) k;
@@ -465,6 +404,12 @@ fetch_texel_2d_rgba_dxt1(const struct gl_texture_image *texImage,
     return -1;
 }
 
+static void
+fetch_texel_2d_rgba_dxt1(const struct gl_texture_image *texImage,
+			GLint i, GLint j, GLint k, GLchan *texel)
+{
+    (void)fetch_texel_2d_rgba_dxt1_chk(texImage, i, j, k, texel);
+}
 
 static void
 fetch_texel_2d_f_rgba_dxt1(const struct gl_texture_image *texImage,
@@ -472,7 +417,7 @@ fetch_texel_2d_f_rgba_dxt1(const struct gl_texture_image *texImage,
 {
     /* just sample as GLchan and convert to float here */
     GLchan rgba[4];
-    if (fetch_texel_2d_rgba_dxt1(texImage, i, j, k, rgba))
+    if (fetch_texel_2d_rgba_dxt1_chk(texImage, i, j, k, rgba))
 	return;
     texel[RCOMP] = CHAN_TO_FLOAT(rgba[RCOMP]);
     texel[GCOMP] = CHAN_TO_FLOAT(rgba[GCOMP]);
@@ -482,7 +427,7 @@ fetch_texel_2d_f_rgba_dxt1(const struct gl_texture_image *texImage,
 
 
 static int
-fetch_texel_2d_rgba_dxt3(const struct gl_texture_image *texImage,
+fetch_texel_2d_rgba_dxt3_chk(const struct gl_texture_image *texImage,
 			 GLint i, GLint j, GLint k, GLchan *texel)
 {
     (void) k;
@@ -495,6 +440,12 @@ fetch_texel_2d_rgba_dxt3(const struct gl_texture_image *texImage,
     return -1;
 }
 
+static void
+fetch_texel_2d_rgba_dxt3(const struct gl_texture_image *texImage,
+			GLint i, GLint j, GLint k, GLchan *texel)
+{
+    (void)fetch_texel_2d_rgba_dxt3_chk(texImage, i, j, k, texel);
+}
 
 static void
 fetch_texel_2d_f_rgba_dxt3(const struct gl_texture_image *texImage,
@@ -502,7 +453,7 @@ fetch_texel_2d_f_rgba_dxt3(const struct gl_texture_image *texImage,
 {
     /* just sample as GLchan and convert to float here */
     GLchan rgba[4];
-    if (fetch_texel_2d_rgba_dxt3(texImage, i, j, k, rgba))
+    if (fetch_texel_2d_rgba_dxt3_chk(texImage, i, j, k, rgba))
 	return;
     texel[RCOMP] = CHAN_TO_FLOAT(rgba[RCOMP]);
     texel[GCOMP] = CHAN_TO_FLOAT(rgba[GCOMP]);
@@ -512,7 +463,7 @@ fetch_texel_2d_f_rgba_dxt3(const struct gl_texture_image *texImage,
 
 
 static int
-fetch_texel_2d_rgba_dxt5(const struct gl_texture_image *texImage,
+fetch_texel_2d_rgba_dxt5_chk(const struct gl_texture_image *texImage,
 			 GLint i, GLint j, GLint k, GLchan *texel)
 {
     (void) k;
@@ -525,6 +476,12 @@ fetch_texel_2d_rgba_dxt5(const struct gl_texture_image *texImage,
     return -1;
 }
 
+static void
+fetch_texel_2d_rgba_dxt5(const struct gl_texture_image *texImage,
+			GLint i, GLint j, GLint k, GLchan *texel)
+{
+    (void)fetch_texel_2d_rgba_dxt5_chk(texImage, i, j, k, texel);
+}
 
 static void
 fetch_texel_2d_f_rgba_dxt5(const struct gl_texture_image *texImage,
@@ -532,7 +489,7 @@ fetch_texel_2d_f_rgba_dxt5(const struct gl_texture_image *texImage,
 {
     /* just sample as GLchan and convert to float here */
     GLchan rgba[4];
-    if (fetch_texel_2d_rgba_dxt5(texImage, i, j, k, rgba))
+    if (fetch_texel_2d_rgba_dxt5_chk(texImage, i, j, k, rgba))
 	return;
     texel[RCOMP] = CHAN_TO_FLOAT(rgba[RCOMP]);
     texel[GCOMP] = CHAN_TO_FLOAT(rgba[GCOMP]);

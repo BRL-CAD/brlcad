@@ -139,11 +139,12 @@ void
 _swrast_span_default_secondary_color(GLcontext *ctx, SWspan *span)
 {
     if (ctx->Visual.rgbMode && (ctx->Light.Enabled || ctx->Fog.ColorSumEnabled)) {
-	GLchan r, g, b, a;
+	GLchan r, g, b;
+	//GLchan a;
 	UNCLAMPED_FLOAT_TO_CHAN(r, ctx->Current.RasterSecondaryColor[0]);
 	UNCLAMPED_FLOAT_TO_CHAN(g, ctx->Current.RasterSecondaryColor[1]);
 	UNCLAMPED_FLOAT_TO_CHAN(b, ctx->Current.RasterSecondaryColor[2]);
-	UNCLAMPED_FLOAT_TO_CHAN(a, ctx->Current.RasterSecondaryColor[3]);
+	//UNCLAMPED_FLOAT_TO_CHAN(a, ctx->Current.RasterSecondaryColor[3]);
 #if CHAN_TYPE == GL_FLOAT
 	span->specRed = r;
 	span->specGreen = g;

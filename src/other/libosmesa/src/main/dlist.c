@@ -2663,15 +2663,17 @@ save_PointParameterfEXT(GLenum pname, GLfloat param)
 static void GLAPIENTRY
 save_PointParameteriNV(GLenum pname, GLint param)
 {
-    GLfloat p = (GLfloat) param;
-    save_PointParameterfvEXT(pname, &p);
+    GLfloat p[4] = {0};
+    p[0] = (GLfloat) param;
+    save_PointParameterfvEXT(pname, p);
 }
 
 static void GLAPIENTRY
 save_PointParameterivNV(GLenum pname, const GLint * param)
 {
-    GLfloat p = (GLfloat) param[0];
-    save_PointParameterfvEXT(pname, &p);
+    GLfloat p[4] = {0};
+    p[0] = (GLfloat) param[0];
+    save_PointParameterfvEXT(pname, p);
 }
 
 
@@ -3398,8 +3400,9 @@ save_TexGeniv(GLenum coord, GLenum pname, const GLint *params)
 static void GLAPIENTRY
 save_TexGend(GLenum coord, GLenum pname, GLdouble param)
 {
-    GLfloat p = (GLfloat) param;
-    save_TexGenfv(coord, pname, &p);
+    GLfloat p[4] = {0};
+    p[0] = (GLfloat) param;
+    save_TexGenfv(coord, pname, p);
 }
 
 

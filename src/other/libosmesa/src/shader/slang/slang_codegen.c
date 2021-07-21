@@ -1073,7 +1073,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
     slang_operation_copy(inlined, fun->body);
 
     /*** XXX review this */
-    assert(inlined->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE);
+    assert(inlined->type == SLANG_OPER_BLOCK_NO_NEW_SCOPE);
     inlined->type = SLANG_OPER_BLOCK_NEW_SCOPE;
 
 #if 0
@@ -1363,21 +1363,6 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
     }
 
     return n;
-}
-
-
-static void
-print_funcs(struct slang_function_scope_ *scope, const char *name)
-{
-    GLuint i;
-    for (i = 0; i < scope->num_functions; i++) {
-	slang_function *f = &scope->functions[i];
-	if (!name || strcmp(name, (char*) f->header.a_name) == 0)
-	    printf("  %s (%d args)\n", name, f->param_count);
-
-    }
-    if (scope->outer_scope)
-	print_funcs(scope->outer_scope, name);
 }
 
 

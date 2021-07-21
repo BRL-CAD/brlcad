@@ -103,7 +103,8 @@ struct vbo_exec_context {
 	 */
 	GLuint program_mode;
 	GLuint enabled_flags;
-	const struct gl_client_array *inputs[VERT_ATTRIB_MAX];
+	// NOTE - Using VBO_ATTRIB_MAX here since it is larger than VERT_ATTRIB_MAX
+	const struct gl_client_array *inputs[VBO_ATTRIB_MAX];
     } vtx;
 
 
@@ -121,8 +122,8 @@ struct vbo_exec_context {
 	/* These just mirror the current arrayobj (todo: make arrayobj
 	 * look like this and remove the mirror):
 	 */
-	const struct gl_client_array *legacy_array[16];
-	const struct gl_client_array *generic_array[16];
+	const struct gl_client_array *legacy_array[VERT_ATTRIB_MAX];
+	const struct gl_client_array *generic_array[VERT_ATTRIB_MAX];
 
 	/* Arrays and current values manipulated according to program
 	 * mode, etc.  These are the attributes as seen by vertex

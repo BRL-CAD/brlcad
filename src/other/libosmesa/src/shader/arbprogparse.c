@@ -1876,7 +1876,7 @@ static GLuint
 parse_param(GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head,
 	    struct arb_program *Program)
 {
-    GLuint found, err;
+    GLuint found;
     GLint specified_length;
     struct var_cache *param_var;
 

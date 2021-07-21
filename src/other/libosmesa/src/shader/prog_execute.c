@@ -54,8 +54,8 @@
  * Set x to positive or negative infinity.
  */
 #if defined(USE_IEEE) || defined(_WIN32)
-#define SET_POS_INFINITY(x)  ( *((GLuint *) (void *)&x) = 0x7F800000 )
-#define SET_NEG_INFINITY(x)  ( *((GLuint *) (void *)&x) = 0xFF800000 )
+#define SET_POS_INFINITY(x)  ( x = INFINITY )
+#define SET_NEG_INFINITY(x)  ( x = -INFINITY )
 #elif defined(VMS)
 #define SET_POS_INFINITY(x)  x = __MAXFLOAT
 #define SET_NEG_INFINITY(x)  x = -__MAXFLOAT
@@ -142,31 +142,6 @@ get_register_pointer(const struct prog_src_register *source,
 	    return NULL;
     }
 }
-
-
-#if FEATURE_MESA_program_debug
-static struct gl_program_machine *CurrentMachine = NULL;
-
-/**
- * For GL_MESA_program_debug.
- * Return current value (4*GLfloat) of a program register.
- * Called via ctx->Driver.GetProgramRegister().
- */
-void
-_mesa_get_program_register(GLcontext *ctx, enum register_file file,
-			   GLuint index, GLfloat val[4])
-{
-    if (CurrentMachine) {
-	struct prog_src_register src;
-	const GLfloat *reg;
-	src.File = file;
-	src.Index = index;
-	reg = get_register_pointer(&src, CurrentMachine);
-	COPY_4V(val, reg);
-    }
-}
-#endif /* FEATURE_MESA_program_debug */
-
 
 /**
  * Fetch a 4-element float vector from the given source register.
@@ -403,7 +378,6 @@ store_vector4(const struct prog_instruction *inst,
     const struct prog_dst_register *dest = &(inst->DstReg);
     const GLboolean clamp = inst->SaturateMode == SATURATE_ZERO_ONE;
     GLfloat *dstReg;
-    GLfloat dummyReg[4];
     GLfloat clampedValue[4];
     GLuint writeMask = dest->WriteMask;
 
@@ -515,10 +489,6 @@ _mesa_execute_program(GLcontext * ctx,
 	printf("execute program %u --------------------\n", program->Id);
     }
 
-#if FEATURE_MESA_program_debug
-    CurrentMachine = machine;
-#endif
-
     if (program->Target == GL_VERTEX_PROGRAM_ARB) {
 	machine->EnvParams = ctx->VertexProgram.Parameters;
     } else {
@@ -527,15 +497,6 @@ _mesa_execute_program(GLcontext * ctx,
 
     for (pc = 0; pc < numInst; pc++) {
 	const struct prog_instruction *inst = program->Instructions + pc;
-
-#if FEATURE_MESA_program_debug
-	if (ctx->FragmentProgram.CallbackEnabled &&
-	    ctx->FragmentProgram.Callback) {
-	    ctx->FragmentProgram.CurrentPosition = inst->StringPos;
-	    ctx->FragmentProgram.Callback(program->Target,
-					  ctx->FragmentProgram.CallbackData);
-	}
-#endif
 
 	if (DEBUG_PROG) {
 	    _mesa_print_instruction(inst);
@@ -1468,10 +1429,6 @@ _mesa_execute_program(GLcontext * ctx,
 	}
 
     } /* for pc */
-
-#if FEATURE_MESA_program_debug
-    CurrentMachine = NULL;
-#endif
 
     return GL_TRUE;
 }
