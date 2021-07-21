@@ -43,55 +43,53 @@
 /* EXT_vertex_cull.  Not really a big win, but probably depends on
  * your application.  This stage not included in the default pipeline.
  */
-static GLboolean run_cull_stage( GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage )
+static GLboolean run_cull_stage(GLcontext *ctx,
+				struct tnl_pipeline_stage *stage)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    struct vertex_buffer *VB = &tnl->vb;
 
-   const GLfloat a = ctx->Transform.CullObjPos[0];
-   const GLfloat b = ctx->Transform.CullObjPos[1];
-   const GLfloat c = ctx->Transform.CullObjPos[2];
-   GLfloat *norm = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data;
-   GLuint stride = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride;
-   GLuint count = VB->Count;
-   GLuint i;
+    const GLfloat a = ctx->Transform.CullObjPos[0];
+    const GLfloat b = ctx->Transform.CullObjPos[1];
+    const GLfloat c = ctx->Transform.CullObjPos[2];
+    GLfloat *norm = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_NORMAL]->data;
+    GLuint stride = VB->AttribPtr[_TNL_ATTRIB_NORMAL]->stride;
+    GLuint count = VB->Count;
+    GLuint i;
 
-   if (ctx->VertexProgram._Current ||
-       !ctx->Transform.CullVertexFlag) 
-      return GL_TRUE;
+    if (ctx->VertexProgram._Current ||
+	!ctx->Transform.CullVertexFlag)
+	return GL_TRUE;
 
-   VB->ClipOrMask &= ~CLIP_CULL_BIT;
-   VB->ClipAndMask |= CLIP_CULL_BIT;
+    VB->ClipOrMask &= ~CLIP_CULL_BIT;
+    VB->ClipAndMask |= CLIP_CULL_BIT;
 
-   for (i = 0 ; i < count ; i++) {
-      GLfloat dp = (norm[0] * a + 
-		    norm[1] * b +
-		    norm[2] * c);
+    for (i = 0 ; i < count ; i++) {
+	GLfloat dp = (norm[0] * a +
+		      norm[1] * b +
+		      norm[2] * c);
 
-      if (dp < 0) {
-	 VB->ClipMask[i] |= CLIP_CULL_BIT;
-	 VB->ClipOrMask |= CLIP_CULL_BIT;
-      }
-      else {
-	 VB->ClipMask[i] &= ~CLIP_CULL_BIT;
-	 VB->ClipAndMask &= ~CLIP_CULL_BIT;
-      }
+	if (dp < 0) {
+	    VB->ClipMask[i] |= CLIP_CULL_BIT;
+	    VB->ClipOrMask |= CLIP_CULL_BIT;
+	} else {
+	    VB->ClipMask[i] &= ~CLIP_CULL_BIT;
+	    VB->ClipAndMask &= ~CLIP_CULL_BIT;
+	}
 
-      STRIDE_F(norm, stride);
-   }
+	STRIDE_F(norm, stride);
+    }
 
-   return !(VB->ClipAndMask & CLIP_CULL_BIT);
+    return !(VB->ClipAndMask & CLIP_CULL_BIT);
 }
 
 
 
-const struct tnl_pipeline_stage _tnl_vertex_cull_stage =
-{
-   "EXT_cull_vertex",
-   NULL,			/* private data */
-   NULL,				/* ctr */
-   NULL,				/* destructor */
-   NULL,
-   run_cull_stage		/* run -- initially set to init */
+const struct tnl_pipeline_stage _tnl_vertex_cull_stage = {
+    "EXT_cull_vertex",
+    NULL,			/* private data */
+    NULL,				/* ctr */
+    NULL,				/* destructor */
+    NULL,
+    run_cull_stage		/* run -- initially set to init */
 };

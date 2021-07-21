@@ -51,72 +51,72 @@ extern void _math_trans_1f(GLfloat *to,
 			   GLuint stride,
 			   GLenum type,
 			   GLuint start,
-			   GLuint n );
+			   GLuint n);
 
 extern void _math_trans_1ui(GLuint *to,
 			    CONST void *ptr,
 			    GLuint stride,
 			    GLenum type,
 			    GLuint start,
-			    GLuint n );
+			    GLuint n);
 
 extern void _math_trans_1ub(GLubyte *to,
 			    CONST void *ptr,
 			    GLuint stride,
 			    GLenum type,
 			    GLuint start,
-			    GLuint n );
+			    GLuint n);
 
-extern void _math_trans_4ub(GLubyte (*to)[4],
+extern void _math_trans_4ub(GLubyte(*to)[4],
 			    CONST void *ptr,
 			    GLuint stride,
 			    GLenum type,
 			    GLuint size,
 			    GLuint start,
-			    GLuint n );
+			    GLuint n);
 
-extern void _math_trans_4chan( GLchan (*to)[4],
-			       CONST void *ptr,
-			       GLuint stride,
-			       GLenum type,
-			       GLuint size,
-			       GLuint start,
-			       GLuint n );
+extern void _math_trans_4chan(GLchan(*to)[4],
+			      CONST void *ptr,
+			      GLuint stride,
+			      GLenum type,
+			      GLuint size,
+			      GLuint start,
+			      GLuint n);
 
-extern void _math_trans_4us(GLushort (*to)[4],
+extern void _math_trans_4us(GLushort(*to)[4],
 			    CONST void *ptr,
 			    GLuint stride,
 			    GLenum type,
 			    GLuint size,
 			    GLuint start,
-			    GLuint n );
+			    GLuint n);
 
 /** Convert to floats w/out normalization (i.e. just cast) */
-extern void _math_trans_4f(GLfloat (*to)[4],
+extern void _math_trans_4f(GLfloat(*to)[4],
 			   CONST void *ptr,
 			   GLuint stride,
 			   GLenum type,
 			   GLuint size,
 			   GLuint start,
-			   GLuint n );
+			   GLuint n);
 
 /** Convert to normalized floats in [0,1] or [-1, 1] */
-extern void _math_trans_4fn(GLfloat (*to)[4],
+extern void _math_trans_4fn(GLfloat(*to)[4],
 			    CONST void *ptr,
 			    GLuint stride,
 			    GLenum type,
 			    GLuint size,
 			    GLuint start,
-			    GLuint n );
+			    GLuint n);
 
-extern void _math_trans_3fn(GLfloat (*to)[3],
-			   CONST void *ptr,
-			   GLuint stride,
-			   GLenum type,
-			   GLuint start,
-			   GLuint n );
+extern void _math_trans_3fn(GLfloat(*to)[3],
+			    CONST void *ptr,
+			    GLuint stride,
+			    GLenum type,
+			    GLuint start,
+			    GLuint n);
 
-extern void _math_init_translate( void );
+extern void _math_init_translate(void);
 
 
 #endif

@@ -41,12 +41,12 @@
 
 
 struct vertex_stage_data {
-   GLvector4f eye;
-   GLvector4f clip;
-   GLvector4f proj;
-   GLubyte *clipmask;
-   GLubyte ormask;
-   GLubyte andmask;
+    GLvector4f eye;
+    GLvector4f clip;
+    GLvector4f proj;
+    GLubyte *clipmask;
+    GLubyte ormask;
+    GLubyte andmask;
 };
 
 #define VERTEX_STAGE_DATA(stage) ((struct vertex_stage_data *)stage->privatePtr)
@@ -106,159 +106,156 @@ USER_CLIPTEST(userclip2, 2)
 USER_CLIPTEST(userclip3, 3)
 USER_CLIPTEST(userclip4, 4)
 
-static void (*(usercliptab[5]))( GLcontext *,
-				 GLvector4f *, GLubyte *,
-				 GLubyte *, GLubyte * ) =
-{
-   NULL,
-   NULL,
-   userclip2,
-   userclip3,
-   userclip4
+static void (*(usercliptab[5]))(GLcontext *,
+				GLvector4f *, GLubyte *,
+				GLubyte *, GLubyte *) = {
+    NULL,
+    NULL,
+    userclip2,
+    userclip3,
+    userclip4
 };
 
 
 
-static GLboolean run_vertex_stage( GLcontext *ctx,
-				   struct tnl_pipeline_stage *stage )
+static GLboolean run_vertex_stage(GLcontext *ctx,
+				  struct tnl_pipeline_stage *stage)
 {
-   struct vertex_stage_data *store = (struct vertex_stage_data *)stage->privatePtr;
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
+    struct vertex_stage_data *store = (struct vertex_stage_data *)stage->privatePtr;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    struct vertex_buffer *VB = &tnl->vb;
 
-   if (ctx->VertexProgram._Current) 
-      return GL_TRUE;
+    if (ctx->VertexProgram._Current)
+	return GL_TRUE;
 
-   if (ctx->_NeedEyeCoords) {
-      /* Separate modelview transformation:
-       * Use combined ModelProject to avoid some depth artifacts
-       */
-      if (ctx->ModelviewMatrixStack.Top->type == MATRIX_IDENTITY)
-	 VB->EyePtr = VB->ObjPtr;
-      else
-	 VB->EyePtr = TransformRaw( &store->eye,
-				    ctx->ModelviewMatrixStack.Top,
-				    VB->ObjPtr);
-   }
+    if (ctx->_NeedEyeCoords) {
+	/* Separate modelview transformation:
+	 * Use combined ModelProject to avoid some depth artifacts
+	 */
+	if (ctx->ModelviewMatrixStack.Top->type == MATRIX_IDENTITY)
+	    VB->EyePtr = VB->ObjPtr;
+	else
+	    VB->EyePtr = TransformRaw(&store->eye,
+				      ctx->ModelviewMatrixStack.Top,
+				      VB->ObjPtr);
+    }
 
-   VB->ClipPtr = TransformRaw( &store->clip,
+    VB->ClipPtr = TransformRaw(&store->clip,
 			       &ctx->_ModelProjectMatrix,
-			       VB->ObjPtr );
+			       VB->ObjPtr);
 
-   /* Drivers expect this to be clean to element 4...
-    */
-   switch (VB->ClipPtr->size) {
-   case 1:			
-      /* impossible */
-   case 2:
-      _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 2 );
-      /* fall-through */
-   case 3:
-      _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 3 );
-      /* fall-through */
-   case 4:
-      break;
-   }
-
-
-   /* Cliptest and perspective divide.  Clip functions must clear
-    * the clipmask.
-    */
-   store->ormask = 0;
-   store->andmask = CLIP_FRUSTUM_BITS;
-
-   if (tnl->NeedNdcCoords) {
-      VB->NdcPtr =
-	 _mesa_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
-					    &store->proj,
-					    store->clipmask,
-					    &store->ormask,
-					    &store->andmask );
-   }
-   else {
-      VB->NdcPtr = NULL;
-      _mesa_clip_np_tab[VB->ClipPtr->size]( VB->ClipPtr,
-					    NULL,
-					    store->clipmask,
-					    &store->ormask,
-					    &store->andmask );
-   }
-
-   if (store->andmask)
-      return GL_FALSE;
+    /* Drivers expect this to be clean to element 4...
+     */
+    switch (VB->ClipPtr->size) {
+	case 1:
+	/* impossible */
+	case 2:
+	    _mesa_vector4f_clean_elem(VB->ClipPtr, VB->Count, 2);
+	/* fall-through */
+	case 3:
+	    _mesa_vector4f_clean_elem(VB->ClipPtr, VB->Count, 3);
+	/* fall-through */
+	case 4:
+	    break;
+    }
 
 
-   /* Test userclip planes.  This contributes to VB->ClipMask, so
-    * is essentially required to be in this stage.
-    */
-   if (ctx->Transform.ClipPlanesEnabled) {
-      usercliptab[VB->ClipPtr->size]( ctx,
-				      VB->ClipPtr,
-				      store->clipmask,
-				      &store->ormask,
-				      &store->andmask );
+    /* Cliptest and perspective divide.  Clip functions must clear
+     * the clipmask.
+     */
+    store->ormask = 0;
+    store->andmask = CLIP_FRUSTUM_BITS;
 
-      if (store->andmask)
-	 return GL_FALSE;
-   }
+    if (tnl->NeedNdcCoords) {
+	VB->NdcPtr =
+	    _mesa_clip_tab[VB->ClipPtr->size](VB->ClipPtr,
+					      &store->proj,
+					      store->clipmask,
+					      &store->ormask,
+					      &store->andmask);
+    } else {
+	VB->NdcPtr = NULL;
+	_mesa_clip_np_tab[VB->ClipPtr->size](VB->ClipPtr,
+					     NULL,
+					     store->clipmask,
+					     &store->ormask,
+					     &store->andmask);
+    }
 
-   VB->ClipAndMask = store->andmask;
-   VB->ClipOrMask = store->ormask;
-   VB->ClipMask = store->clipmask;
+    if (store->andmask)
+	return GL_FALSE;
 
-   return GL_TRUE;
+
+    /* Test userclip planes.  This contributes to VB->ClipMask, so
+     * is essentially required to be in this stage.
+     */
+    if (ctx->Transform.ClipPlanesEnabled) {
+	usercliptab[VB->ClipPtr->size](ctx,
+				       VB->ClipPtr,
+				       store->clipmask,
+				       &store->ormask,
+				       &store->andmask);
+
+	if (store->andmask)
+	    return GL_FALSE;
+    }
+
+    VB->ClipAndMask = store->andmask;
+    VB->ClipOrMask = store->ormask;
+    VB->ClipMask = store->clipmask;
+
+    return GL_TRUE;
 }
 
 
-static GLboolean init_vertex_stage( GLcontext *ctx,
-				    struct tnl_pipeline_stage *stage )
+static GLboolean init_vertex_stage(GLcontext *ctx,
+				   struct tnl_pipeline_stage *stage)
 {
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-   struct vertex_stage_data *store;
-   GLuint size = VB->Size;
+    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+    struct vertex_stage_data *store;
+    GLuint size = VB->Size;
 
-   stage->privatePtr = CALLOC(sizeof(*store));
-   store = VERTEX_STAGE_DATA(stage);
-   if (!store)
-      return GL_FALSE;
+    stage->privatePtr = CALLOC(sizeof(*store));
+    store = VERTEX_STAGE_DATA(stage);
+    if (!store)
+	return GL_FALSE;
 
-   _mesa_vector4f_alloc( &store->eye, 0, size, 32 );
-   _mesa_vector4f_alloc( &store->clip, 0, size, 32 );
-   _mesa_vector4f_alloc( &store->proj, 0, size, 32 );
+    _mesa_vector4f_alloc(&store->eye, 0, size, 32);
+    _mesa_vector4f_alloc(&store->clip, 0, size, 32);
+    _mesa_vector4f_alloc(&store->proj, 0, size, 32);
 
-   store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32 );
+    store->clipmask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte)*size, 32);
 
-   if (!store->clipmask ||
-       !store->eye.data ||
-       !store->clip.data ||
-       !store->proj.data)
-      return GL_FALSE;
+    if (!store->clipmask ||
+	!store->eye.data ||
+	!store->clip.data ||
+	!store->proj.data)
+	return GL_FALSE;
 
-   return GL_TRUE;
+    return GL_TRUE;
 }
 
-static void dtr( struct tnl_pipeline_stage *stage )
+static void dtr(struct tnl_pipeline_stage *stage)
 {
-   struct vertex_stage_data *store = VERTEX_STAGE_DATA(stage);
+    struct vertex_stage_data *store = VERTEX_STAGE_DATA(stage);
 
-   if (store) {
-      _mesa_vector4f_free( &store->eye );
-      _mesa_vector4f_free( &store->clip );
-      _mesa_vector4f_free( &store->proj );
-      ALIGN_FREE( store->clipmask );
-      FREE(store);
-      stage->privatePtr = NULL;
-      stage->run = init_vertex_stage;
-   }
+    if (store) {
+	_mesa_vector4f_free(&store->eye);
+	_mesa_vector4f_free(&store->clip);
+	_mesa_vector4f_free(&store->proj);
+	ALIGN_FREE(store->clipmask);
+	FREE(store);
+	stage->privatePtr = NULL;
+	stage->run = init_vertex_stage;
+    }
 }
 
 
-const struct tnl_pipeline_stage _tnl_vertex_transform_stage =
-{
-   "modelview/project/cliptest/divide",
-   NULL,			/* private data */
-   init_vertex_stage,
-   dtr,				/* destructor */
-   NULL,
-   run_vertex_stage		/* run -- initially set to init */
+const struct tnl_pipeline_stage _tnl_vertex_transform_stage = {
+    "modelview/project/cliptest/divide",
+    NULL,			/* private data */
+    init_vertex_stage,
+    dtr,				/* destructor */
+    NULL,
+    run_vertex_stage		/* run -- initially set to init */
 };

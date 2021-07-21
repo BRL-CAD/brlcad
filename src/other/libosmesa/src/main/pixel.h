@@ -39,38 +39,38 @@
 /*@{*/
 
 extern void GLAPIENTRY
-_mesa_GetPixelMapfv( GLenum map, GLfloat *values );
+_mesa_GetPixelMapfv(GLenum map, GLfloat *values);
 
 extern void GLAPIENTRY
-_mesa_GetPixelMapuiv( GLenum map, GLuint *values );
+_mesa_GetPixelMapuiv(GLenum map, GLuint *values);
 
 extern void GLAPIENTRY
-_mesa_GetPixelMapusv( GLenum map, GLushort *values );
+_mesa_GetPixelMapusv(GLenum map, GLushort *values);
 
 extern void GLAPIENTRY
-_mesa_PixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values );
+_mesa_PixelMapfv(GLenum map, GLsizei mapsize, const GLfloat *values);
 
 extern void GLAPIENTRY
-_mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values );
+_mesa_PixelMapuiv(GLenum map, GLsizei mapsize, const GLuint *values);
 
 extern void GLAPIENTRY
-_mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values );
+_mesa_PixelMapusv(GLenum map, GLsizei mapsize, const GLushort *values);
 
 extern void GLAPIENTRY
-_mesa_PixelStoref( GLenum pname, GLfloat param );
+_mesa_PixelStoref(GLenum pname, GLfloat param);
 
 
 extern void GLAPIENTRY
-_mesa_PixelStorei( GLenum pname, GLint param );
+_mesa_PixelStorei(GLenum pname, GLint param);
 
 extern void GLAPIENTRY
-_mesa_PixelTransferf( GLenum pname, GLfloat param );
+_mesa_PixelTransferf(GLenum pname, GLfloat param);
 
 extern void GLAPIENTRY
-_mesa_PixelTransferi( GLenum pname, GLint param );
+_mesa_PixelTransferi(GLenum pname, GLint param);
 
 extern void GLAPIENTRY
-_mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor );
+_mesa_PixelZoom(GLfloat xfactor, GLfloat yfactor);
 
 /*@}*/
 
@@ -80,10 +80,10 @@ _mesa_PixelZoom( GLfloat xfactor, GLfloat yfactor );
 
 extern void
 _mesa_scale_and_bias_rgba(GLuint n, GLfloat rgba[][4],
-                          GLfloat rScale, GLfloat gScale,
-                          GLfloat bScale, GLfloat aScale,
-                          GLfloat rBias, GLfloat gBias,
-                          GLfloat bBias, GLfloat aBias);
+			  GLfloat rScale, GLfloat gScale,
+			  GLfloat bScale, GLfloat aScale,
+			  GLfloat rBias, GLfloat gBias,
+			  GLfloat bBias, GLfloat aBias);
 
 extern void
 _mesa_map_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4]);
@@ -95,33 +95,33 @@ _mesa_transform_rgba(const GLcontext *ctx, GLuint n, GLfloat rgba[][4]);
 
 extern void
 _mesa_lookup_rgba_float(const struct gl_color_table *table,
-                        GLuint n, GLfloat rgba[][4]);
+			GLuint n, GLfloat rgba[][4]);
 
 extern void
 _mesa_lookup_rgba_ubyte(const struct gl_color_table *table,
-                        GLuint n, GLubyte rgba[][4]);
+			GLuint n, GLubyte rgba[][4]);
 
 
 extern void
 _mesa_map_ci_to_rgba(const GLcontext *ctx,
-                     GLuint n, const GLuint index[], GLfloat rgba[][4]);
+		     GLuint n, const GLuint index[], GLfloat rgba[][4]);
 
 
 extern void
 _mesa_map_ci8_to_rgba8(const GLcontext *ctx, GLuint n, const GLubyte index[],
-                       GLubyte rgba[][4]);
+		       GLubyte rgba[][4]);
 
 
 extern void
 _mesa_scale_and_bias_depth(const GLcontext *ctx, GLuint n,
-                           GLfloat depthValues[]);
+			   GLfloat depthValues[]);
 
 
-extern void 
-_mesa_update_pixel( GLcontext *ctx, GLuint newstate );
+extern void
+_mesa_update_pixel(GLcontext *ctx, GLuint newstate);
 
-extern void 
-_mesa_init_pixel( GLcontext * ctx );
+extern void
+_mesa_init_pixel(GLcontext * ctx);
 
 /*@}*/
 

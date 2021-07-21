@@ -61,18 +61,18 @@ _mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string);
 
 extern const GLubyte *
 _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
-                       GLint *line, GLint *col);
+		       GLint *line, GLint *col);
 
 
-extern struct gl_program * 
-_mesa_init_vertex_program(GLcontext *ctx, 
-                          struct gl_vertex_program *prog, 
-                          GLenum target, GLuint id);
+extern struct gl_program *
+_mesa_init_vertex_program(GLcontext *ctx,
+			  struct gl_vertex_program *prog,
+			  GLenum target, GLuint id);
 
-extern struct gl_program * 
-_mesa_init_fragment_program(GLcontext *ctx, 
-                            struct gl_fragment_program *prog,
-                            GLenum target, GLuint id);
+extern struct gl_program *
+_mesa_init_fragment_program(GLcontext *ctx,
+			    struct gl_fragment_program *prog,
+			    GLenum target, GLuint id);
 
 extern struct gl_program *
 _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id);

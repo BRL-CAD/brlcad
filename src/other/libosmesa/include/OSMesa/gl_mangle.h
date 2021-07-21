@@ -1,24 +1,24 @@
 #if 0
 #define GL_MANGLE_C1 "DO NOT EDIT!!! - TO REGENERATE from gl.h, EXECUTE THIS FILE IN SHELL (/bin/sh) and save the output"
 #define GL_MANGLE_C2 "This file is used to create GL function protypes and aliases for the function names"
-	files="gl.h glext.h"
+files="gl.h glext.h"
 #define GL_MANGLE_C3 "get regeneration header - copy everything in this file above the 'REGENERATE_TO_END' line"
-	awk 	'!done; /^\/\*REGENERATE_TO_END/ {done=1}' $0
-	echo ""
+      awk 	'!done; /^\/\*REGENERATE_TO_END/ {done=1}' $0
+      echo ""
 #define GL_MANGLE_C4 get aliases
-	grep '^GLAPI' $files | sed -e 's/.*ENTRY gl\([^( ]*\).*$/#define gl\1		MANGLE(\1)/' | sort | uniq
-	echo ""
-	echo "#endif /* GL_MANGLE_H */"
-	exit
+      grep '^GLAPI' $files | sed -e 's/.*ENTRY gl\([^( ]*\).*$/#define gl\1		MANGLE(\1)/' | sort | uniq
+      echo ""
+      echo "#endif /* GL_MANGLE_H */"
+      exit
 #endif /* REGENERATION */
 
-/*
- * If you compile Mesa with USE_MGL_NAMESPACE defined then you can link
- * your application both with OpenGL and Mesa.  The Mesa functions will
- * be redefined so they are prefixed with "mgl" instead of "gl".
- * Mgl contributed by Randy Frank (rfrank@rsinc.com)
- * Regneration code contributed by Ray Tice (rayt@ma.ultra.net)
- */
+      /*
+       * If you compile Mesa with USE_MGL_NAMESPACE defined then you can link
+       * your application both with OpenGL and Mesa.  The Mesa functions will
+       * be redefined so they are prefixed with "mgl" instead of "gl".
+       * Mgl contributed by Randy Frank (rfrank@rsinc.com)
+       * Regneration code contributed by Ray Tice (rayt@ma.ultra.net)
+       */
 
 #ifndef GL_MANGLE_H
 #define GL_MANGLE_H
@@ -27,7 +27,7 @@
 #define   MANGLE(x) mgl##x
 #endif  /*MANGLE*/
 
-/*REGENERATE_TO_END-----------ALL LINES BELOW HERE GET REPLACED ON REGENERATION */
+      /*REGENERATE_TO_END-----------ALL LINES BELOW HERE GET REPLACED ON REGENERATION */
 
 #define glAccum		MANGLE(Accum)
 #define glActiveStencilFaceEXT		MANGLE(ActiveStencilFaceEXT)

@@ -36,19 +36,19 @@
 
 
 extern void GLAPIENTRY
-_mesa_ClearStencil( GLint s );
+_mesa_ClearStencil(GLint s);
 
 
 extern void GLAPIENTRY
-_mesa_StencilFunc( GLenum func, GLint ref, GLuint mask );
+_mesa_StencilFunc(GLenum func, GLint ref, GLuint mask);
 
 
 extern void GLAPIENTRY
-_mesa_StencilMask( GLuint mask );
+_mesa_StencilMask(GLuint mask);
 
 
 extern void GLAPIENTRY
-_mesa_StencilOp( GLenum fail, GLenum zfail, GLenum zpass );
+_mesa_StencilOp(GLenum fail, GLenum zfail, GLenum zpass);
 
 
 extern void GLAPIENTRY
@@ -74,7 +74,7 @@ extern void
 _mesa_update_stencil(GLcontext *ctx);
 
 
-extern void 
-_mesa_init_stencil( GLcontext * ctx );
+extern void
+_mesa_init_stencil(GLcontext * ctx);
 
 #endif

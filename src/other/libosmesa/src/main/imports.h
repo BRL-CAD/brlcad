@@ -119,7 +119,10 @@ extern "C" {
  * these casts generate warnings.
  * The following union typedef is used to solve that.
  */
-typedef union { GLfloat f; GLint i; } fi_type;
+typedef union {
+    GLfloat f;
+    GLint i;
+} fi_type;
 
 
 
@@ -201,11 +204,11 @@ typedef union { GLfloat f; GLint i; } fi_type;
  */
 static INLINE GLfloat LOG2(GLfloat x)
 {
-   const GLfloat y = x * x * x * x;
-   const GLuint ix = *((GLuint *) &y);
-   const GLuint exp = (ix >> 23) & 0xFF;
-   const GLint log2 = ((GLint) exp) - 127;
-   return (GLfloat) log2 * (1.0 / 4.0);  /* 4, because of x^4 above */
+    const GLfloat y = x * x * x * x;
+    const GLuint ix = *((GLuint *) &y);
+    const GLuint exp = (ix >> 23) & 0xFF;
+    const GLint log2 = ((GLint) exp) - 127;
+    return (GLfloat) log2 * (1.0 / 4.0);  /* 4, because of x^4 above */
 }
 #endif
 /* Pretty fast, and accurate.
@@ -213,14 +216,14 @@ static INLINE GLfloat LOG2(GLfloat x)
  */
 static INLINE GLfloat LOG2(GLfloat val)
 {
-   fi_type num;
-   GLint log_2;
-   num.f = val;
-   log_2 = ((num.i >> 23) & 255) - 128;
-   num.i &= ~(255 << 23);
-   num.i += 127 << 23;
-   num.f = ((-1.0f/3) * num.f + 2) * num.f - 2.0f/3;
-   return num.f + log_2;
+    fi_type num;
+    GLint log_2;
+    num.f = val;
+    log_2 = ((num.i >> 23) & 255) - 128;
+    num.i &= ~(255 << 23);
+    num.i += 127 << 23;
+    num.f = ((-1.0f/3) * num.f + 2) * num.f - 2.0f/3;
+    return num.f + log_2;
 }
 #else
 /*
@@ -235,11 +238,11 @@ static INLINE GLfloat LOG2(GLfloat val)
  *** IS_INF_OR_NAN: test if float is infinite or NaN
  ***/
 #ifdef USE_IEEE
-static INLINE int IS_INF_OR_NAN( float x )
+static INLINE int IS_INF_OR_NAN(float x)
 {
-   fi_type tmp;
-   tmp.f = x;
-   return !(int)((unsigned int)((tmp.i & 0x7fffffff)-0x7f800000) >> 31);
+    fi_type tmp;
+    tmp.f = x;
+    return !(int)((unsigned int)((tmp.i & 0x7fffffff)-0x7f800000) >> 31);
 }
 #elif defined(isfinite)
 #define IS_INF_OR_NAN(x)        (!isfinite(x))
@@ -258,11 +261,11 @@ static INLINE int IS_INF_OR_NAN( float x )
  *** IS_NEGATIVE: test if float is negative
  ***/
 #if defined(USE_IEEE)
-static INLINE int GET_FLOAT_BITS( float x )
+static INLINE int GET_FLOAT_BITS(float x)
 {
-   fi_type fi;
-   fi.f = x;
-   return fi.i;
+    fi_type fi;
+    fi.f = x;
+    return fi.i;
 }
 #define IS_NEGATIVE(x) (GET_FLOAT_BITS(x) < 0)
 #else
@@ -318,29 +321,29 @@ static INLINE int GET_FLOAT_BITS( float x )
 #if defined(USE_SPARC_ASM) && defined(__GNUC__) && defined(__sparc__)
 static INLINE int iround(float f)
 {
-   int r;
-   __asm__ ("fstoi %1, %0" : "=f" (r) : "f" (f));
-   return r;
+    int r;
+    __asm__("fstoi %1, %0" : "=f"(r) : "f"(f));
+    return r;
 }
 #define IROUND(x)  iround(x)
 #elif defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__) && \
 			(!defined(__BEOS__) || (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)))
 static INLINE int iround(float f)
 {
-   int r;
-   __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
-   return r;
+    int r;
+    __asm__("fistpl %0" : "=m"(r) : "t"(f) : "st");
+    return r;
 }
 #define IROUND(x)  iround(x)
 #elif defined(USE_X86_ASM) && defined(__MSC__) && defined(__WIN32__)
 static INLINE int iround(float f)
 {
-   int r;
-   _asm {
-	 fld f
-	 fistp r
-	}
-   return r;
+    int r;
+    _asm {
+	fld f
+	fistp r
+    }
+    return r;
 }
 #define IROUND(x)  iround(x)
 #elif defined(__WATCOMC__) && defined(__386__)
@@ -381,35 +384,37 @@ long iround(float f);
  */
 static INLINE int ifloor(float f)
 {
-   int ai, bi;
-   double af, bf;
-   af = (3 << 22) + 0.5 + (double)f;
-   bf = (3 << 22) + 0.5 - (double)f;
-   /* GCC generates an extra fstp/fld without this. */
-   __asm__ ("fstps %0" : "=m" (ai) : "t" (af) : "st");
-   __asm__ ("fstps %0" : "=m" (bi) : "t" (bf) : "st");
-   return (ai - bi) >> 1;
+    int ai, bi;
+    double af, bf;
+    af = (3 << 22) + 0.5 + (double)f;
+    bf = (3 << 22) + 0.5 - (double)f;
+    /* GCC generates an extra fstp/fld without this. */
+    __asm__("fstps %0" : "=m"(ai) : "t"(af) : "st");
+    __asm__("fstps %0" : "=m"(bi) : "t"(bf) : "st");
+    return (ai - bi) >> 1;
 }
 #define IFLOOR(x)  ifloor(x)
 #elif defined(USE_IEEE)
 static INLINE int ifloor(float f)
 {
-   int ai, bi;
-   double af, bf;
-   fi_type u;
+    int ai, bi;
+    double af, bf;
+    fi_type u;
 
-   af = (3 << 22) + 0.5 + (double)f;
-   bf = (3 << 22) + 0.5 - (double)f;
-   u.f = (float) af;  ai = u.i;
-   u.f = (float) bf;  bi = u.i;
-   return (ai - bi) >> 1;
+    af = (3 << 22) + 0.5 + (double)f;
+    bf = (3 << 22) + 0.5 - (double)f;
+    u.f = (float) af;
+    ai = u.i;
+    u.f = (float) bf;
+    bi = u.i;
+    return (ai - bi) >> 1;
 }
 #define IFLOOR(x)  ifloor(x)
 #else
 static INLINE int ifloor(float f)
 {
-   int i = IROUND(f);
-   return (i > f) ? i - 1 : i;
+    int i = IROUND(f);
+    return (i > f) ? i - 1 : i;
 }
 #define IFLOOR(x)  ifloor(x)
 #endif
@@ -428,34 +433,36 @@ static INLINE int ifloor(float f)
  */
 static INLINE int iceil(float f)
 {
-   int ai, bi;
-   double af, bf;
-   af = (3 << 22) + 0.5 + (double)f;
-   bf = (3 << 22) + 0.5 - (double)f;
-   /* GCC generates an extra fstp/fld without this. */
-   __asm__ ("fstps %0" : "=m" (ai) : "t" (af) : "st");
-   __asm__ ("fstps %0" : "=m" (bi) : "t" (bf) : "st");
-   return (ai - bi + 1) >> 1;
+    int ai, bi;
+    double af, bf;
+    af = (3 << 22) + 0.5 + (double)f;
+    bf = (3 << 22) + 0.5 - (double)f;
+    /* GCC generates an extra fstp/fld without this. */
+    __asm__("fstps %0" : "=m"(ai) : "t"(af) : "st");
+    __asm__("fstps %0" : "=m"(bi) : "t"(bf) : "st");
+    return (ai - bi + 1) >> 1;
 }
 #define ICEIL(x)  iceil(x)
 #elif defined(USE_IEEE)
 static INLINE int iceil(float f)
 {
-   int ai, bi;
-   double af, bf;
-   fi_type u;
-   af = (3 << 22) + 0.5 + (double)f;
-   bf = (3 << 22) + 0.5 - (double)f;
-   u.f = (float) af; ai = u.i;
-   u.f = (float) bf; bi = u.i;
-   return (ai - bi + 1) >> 1;
+    int ai, bi;
+    double af, bf;
+    fi_type u;
+    af = (3 << 22) + 0.5 + (double)f;
+    bf = (3 << 22) + 0.5 - (double)f;
+    u.f = (float) af;
+    ai = u.i;
+    u.f = (float) bf;
+    bi = u.i;
+    return (ai - bi + 1) >> 1;
 }
 #define ICEIL(x)  iceil(x)
 #else
 static INLINE int iceil(float f)
 {
-   int i = IROUND(f);
-   return (i < f) ? i + 1 : i;
+    int i = IROUND(f);
+    return (i < f) ? i + 1 : i;
 }
 #define ICEIL(x)  iceil(x)
 #endif
@@ -610,8 +617,8 @@ do {                                                                    \
 static INLINE GLboolean
 _mesa_little_endian(void)
 {
-   const GLuint ui = 1; /* intentionally not static */
-   return *((const GLubyte *) &ui);
+    const GLuint ui = 1; /* intentionally not static */
+    return *((const GLubyte *) &ui);
 }
 
 
@@ -621,50 +628,50 @@ _mesa_little_endian(void)
  */
 
 extern void *
-_mesa_malloc( size_t bytes );
+_mesa_malloc(size_t bytes);
 
 extern void *
-_mesa_calloc( size_t bytes );
+_mesa_calloc(size_t bytes);
 
 extern void
-_mesa_free( void *ptr );
+_mesa_free(void *ptr);
 
 extern void *
-_mesa_align_malloc( size_t bytes, unsigned long alignment );
+_mesa_align_malloc(size_t bytes, unsigned long alignment);
 
 extern void *
-_mesa_align_calloc( size_t bytes, unsigned long alignment );
+_mesa_align_calloc(size_t bytes, unsigned long alignment);
 
 extern void
-_mesa_align_free( void *ptr );
+_mesa_align_free(void *ptr);
 
 extern void *
 _mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
-                    unsigned long alignment);
+		    unsigned long alignment);
 
 extern void *
-_mesa_exec_malloc( GLuint size );
+_mesa_exec_malloc(GLuint size);
 
-extern void 
-_mesa_exec_free( void *addr );
+extern void
+_mesa_exec_free(void *addr);
 
 extern void *
-_mesa_realloc( void *oldBuffer, size_t oldSize, size_t newSize );
+_mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize);
 
 extern void *
-_mesa_memcpy( void *dest, const void *src, size_t n );
+_mesa_memcpy(void *dest, const void *src, size_t n);
 
 extern void
-_mesa_memset( void *dst, int val, size_t n );
+_mesa_memset(void *dst, int val, size_t n);
 
 extern void
-_mesa_memset16( unsigned short *dst, unsigned short val, size_t n );
+_mesa_memset16(unsigned short *dst, unsigned short val, size_t n);
 
 extern void
-_mesa_bzero( void *dst, size_t n );
+_mesa_bzero(void *dst, size_t n);
 
 extern int
-_mesa_memcmp( const void *s1, const void *s2, size_t n );
+_mesa_memcmp(const void *s1, const void *s2, size_t n);
 
 extern double
 _mesa_sin(double a);
@@ -717,66 +724,66 @@ _mesa_half_to_float(GLhalfARB h);
 
 
 extern void *
-_mesa_bsearch( const void *key, const void *base, size_t nmemb, size_t size, 
-               int (*compar)(const void *, const void *) );
+_mesa_bsearch(const void *key, const void *base, size_t nmemb, size_t size,
+	      int (*compar)(const void *, const void *));
 
 extern char *
-_mesa_getenv( const char *var );
+_mesa_getenv(const char *var);
 
 extern char *
-_mesa_strstr( const char *haystack, const char *needle );
+_mesa_strstr(const char *haystack, const char *needle);
 
 extern char *
-_mesa_strncat( char *dest, const char *src, size_t n );
+_mesa_strncat(char *dest, const char *src, size_t n);
 
 extern char *
-_mesa_strcpy( char *dest, const char *src );
+_mesa_strcpy(char *dest, const char *src);
 
 extern char *
-_mesa_strncpy( char *dest, const char *src, size_t n );
+_mesa_strncpy(char *dest, const char *src, size_t n);
 
 extern size_t
-_mesa_strlen( const char *s );
+_mesa_strlen(const char *s);
 
 extern int
-_mesa_strcmp( const char *s1, const char *s2 );
+_mesa_strcmp(const char *s1, const char *s2);
 
 extern int
-_mesa_strncmp( const char *s1, const char *s2, size_t n );
+_mesa_strncmp(const char *s1, const char *s2, size_t n);
 
 extern char *
-_mesa_strdup( const char *s );
+_mesa_strdup(const char *s);
 
 extern int
-_mesa_atoi( const char *s );
+_mesa_atoi(const char *s);
 
 extern double
-_mesa_strtod( const char *s, char **end );
+_mesa_strtod(const char *s, char **end);
 
 extern int
-_mesa_sprintf( char *str, const char *fmt, ... );
+_mesa_sprintf(char *str, const char *fmt, ...);
 
 extern void
-_mesa_printf( const char *fmtString, ... );
+_mesa_printf(const char *fmtString, ...);
 
-extern int 
-_mesa_vsprintf( char *str, const char *fmt, va_list args );
+extern int
+_mesa_vsprintf(char *str, const char *fmt, va_list args);
 
-
-extern void
-_mesa_warning( __GLcontext *gc, const char *fmtString, ... );
 
 extern void
-_mesa_problem( const __GLcontext *ctx, const char *fmtString, ... );
+_mesa_warning(__GLcontext *gc, const char *fmtString, ...);
 
 extern void
-_mesa_error( __GLcontext *ctx, GLenum error, const char *fmtString, ... );
+_mesa_problem(const __GLcontext *ctx, const char *fmtString, ...);
 
 extern void
-_mesa_debug( const __GLcontext *ctx, const char *fmtString, ... );
+_mesa_error(__GLcontext *ctx, GLenum error, const char *fmtString, ...);
 
-extern void 
-_mesa_exit( int status );
+extern void
+_mesa_debug(const __GLcontext *ctx, const char *fmtString, ...);
+
+extern void
+_mesa_exit(int status);
 
 
 #ifdef __cplusplus

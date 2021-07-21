@@ -75,12 +75,12 @@
 #elif defined(_WIN32)
 #  include <BaseTsd.h>
 #  if _MSC_VER == 1200
-     typedef UINT_PTR uintptr_t;
-#  endif 
+typedef UINT_PTR uintptr_t;
+#  endif
 #elif defined(__INTERIX)
 /* Interix 3.x has a gcc that shadows this. */
 #  ifndef _UINTPTR_T_DEFINED
-     typedef unsigned long uintptr_t;
+typedef unsigned long uintptr_t;
 #  define _UINTPTR_T_DEFINED
 #  endif
 #else
@@ -214,7 +214,7 @@
 /* If we build the library with gcc's -fvisibility=hidden flag, we'll
  * use the PUBLIC macro to mark functions that are to be exported.
  *
- * We also need to define a USED attribute, so the optimizer doesn't 
+ * We also need to define a USED attribute, so the optimizer doesn't
  * inline a static function that we later use in an alias. - ajax
  */
 #if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__) >= 303
@@ -235,7 +235,7 @@
 
 
 #if defined(BUILD_FOR_SNAP) && defined(CHECKED)
-#  define ASSERT(X)   _CHECK(X) 
+#  define ASSERT(X)   _CHECK(X)
 #elif defined(DEBUG)
 #  define ASSERT(X)   assert(X)
 #else

@@ -185,8 +185,8 @@ _mesa_WindowPos4ivMESA(const GLint *v);
 extern void GLAPIENTRY
 _mesa_WindowPos4svMESA(const GLshort *v);
 
-extern void 
-_mesa_init_rastpos( GLcontext * ctx );
+extern void
+_mesa_init_rastpos(GLcontext * ctx);
 
 /*@}*/
 

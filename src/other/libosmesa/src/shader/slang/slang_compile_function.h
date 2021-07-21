@@ -31,11 +31,10 @@ struct slang_code_unit_;
 /**
  * Types of functions.
  */
-typedef enum slang_function_kind_
-{
-   SLANG_FUNC_ORDINARY,
-   SLANG_FUNC_CONSTRUCTOR,
-   SLANG_FUNC_OPERATOR
+typedef enum slang_function_kind_ {
+    SLANG_FUNC_ORDINARY,
+    SLANG_FUNC_CONSTRUCTOR,
+    SLANG_FUNC_OPERATOR
 } slang_function_kind;
 
 
@@ -43,10 +42,9 @@ typedef enum slang_function_kind_
  * When we need to fill in addresses which we won't know until the future,
  * we keep track of them with a fix-up table.
  */
-typedef struct slang_fixup_table_
-{
-   GLuint *table;     /**< array[count] of addresses */
-   GLuint count;
+typedef struct slang_fixup_table_ {
+    GLuint *table;     /**< array[count] of addresses */
+    GLuint count;
 } slang_fixup_table;
 
 extern void slang_fixup_table_init(slang_fixup_table *);
@@ -57,15 +55,14 @@ extern GLboolean slang_fixup_save(slang_fixup_table *fixups, GLuint address);
 /**
  * Description of a compiled shader function.
  */
-typedef struct slang_function_
-{
-   slang_function_kind kind;
-   slang_variable header;      /**< The function's name and return type */
-   slang_variable_scope *parameters; /**< formal parameters AND local vars */
-   unsigned int param_count;   /**< number of formal params (no locals) */
-   slang_operation *body;      /**< The instruction tree */
-   unsigned int address;       /**< Address of this func in memory */
-   slang_fixup_table fixups;   /**< Mem locations which need func's address */
+typedef struct slang_function_ {
+    slang_function_kind kind;
+    slang_variable header;      /**< The function's name and return type */
+    slang_variable_scope *parameters; /**< formal parameters AND local vars */
+    unsigned int param_count;   /**< number of formal params (no locals) */
+    slang_operation *body;      /**< The instruction tree */
+    unsigned int address;       /**< Address of this func in memory */
+    slang_fixup_table fixups;   /**< Mem locations which need func's address */
 } slang_function;
 
 extern int slang_function_construct(slang_function *);
@@ -75,11 +72,10 @@ extern void slang_function_destruct(slang_function *);
 /**
  * Basically, a list of compiled functions.
  */
-typedef struct slang_function_scope_
-{
-   slang_function *functions;
-   GLuint num_functions;
-   struct slang_function_scope_ *outer_scope;
+typedef struct slang_function_scope_ {
+    slang_function *functions;
+    GLuint num_functions;
+    struct slang_function_scope_ *outer_scope;
 } slang_function_scope;
 
 

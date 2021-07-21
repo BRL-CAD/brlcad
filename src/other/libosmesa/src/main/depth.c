@@ -40,81 +40,81 @@
 
 
 void GLAPIENTRY
-_mesa_ClearDepth( GLclampd depth )
+_mesa_ClearDepth(GLclampd depth)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   depth = CLAMP( depth, 0.0, 1.0 );
+    depth = CLAMP(depth, 0.0, 1.0);
 
-   if (ctx->Depth.Clear == depth)
-      return;
+    if (ctx->Depth.Clear == depth)
+	return;
 
-   FLUSH_VERTICES(ctx, _NEW_DEPTH);
-   ctx->Depth.Clear = depth;
-   if (ctx->Driver.ClearDepth)
-      (*ctx->Driver.ClearDepth)( ctx, ctx->Depth.Clear );
+    FLUSH_VERTICES(ctx, _NEW_DEPTH);
+    ctx->Depth.Clear = depth;
+    if (ctx->Driver.ClearDepth)
+	(*ctx->Driver.ClearDepth)(ctx, ctx->Depth.Clear);
 }
 
 
 
 void GLAPIENTRY
-_mesa_DepthFunc( GLenum func )
+_mesa_DepthFunc(GLenum func)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug(ctx, "glDepthFunc %s\n", _mesa_lookup_enum_by_nr(func));
+    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+	_mesa_debug(ctx, "glDepthFunc %s\n", _mesa_lookup_enum_by_nr(func));
 
-   switch (func) {
-   case GL_LESS:    /* (default) pass if incoming z < stored z */
-   case GL_GEQUAL:
-   case GL_LEQUAL:
-   case GL_GREATER:
-   case GL_NOTEQUAL:
-   case GL_EQUAL:
-   case GL_ALWAYS:
-   case GL_NEVER:
-      break;
-   default:
-      _mesa_error( ctx, GL_INVALID_ENUM, "glDepth.Func" );
-      return;
-   }
+    switch (func) {
+	case GL_LESS:    /* (default) pass if incoming z < stored z */
+	case GL_GEQUAL:
+	case GL_LEQUAL:
+	case GL_GREATER:
+	case GL_NOTEQUAL:
+	case GL_EQUAL:
+	case GL_ALWAYS:
+	case GL_NEVER:
+	    break;
+	default:
+	    _mesa_error(ctx, GL_INVALID_ENUM, "glDepth.Func");
+	    return;
+    }
 
-   if (ctx->Depth.Func == func)
-      return;
+    if (ctx->Depth.Func == func)
+	return;
 
-   FLUSH_VERTICES(ctx, _NEW_DEPTH);
-   ctx->Depth.Func = func;
+    FLUSH_VERTICES(ctx, _NEW_DEPTH);
+    ctx->Depth.Func = func;
 
-   if (ctx->Driver.DepthFunc)
-      ctx->Driver.DepthFunc( ctx, func );
+    if (ctx->Driver.DepthFunc)
+	ctx->Driver.DepthFunc(ctx, func);
 }
 
 
 
 void GLAPIENTRY
-_mesa_DepthMask( GLboolean flag )
+_mesa_DepthMask(GLboolean flag)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug(ctx, "glDepthMask %d\n", flag);
+    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
+	_mesa_debug(ctx, "glDepthMask %d\n", flag);
 
-   /*
-    * GL_TRUE indicates depth buffer writing is enabled (default)
-    * GL_FALSE indicates depth buffer writing is disabled
-    */
-   if (ctx->Depth.Mask == flag)
-      return;
+    /*
+     * GL_TRUE indicates depth buffer writing is enabled (default)
+     * GL_FALSE indicates depth buffer writing is disabled
+     */
+    if (ctx->Depth.Mask == flag)
+	return;
 
-   FLUSH_VERTICES(ctx, _NEW_DEPTH);
-   ctx->Depth.Mask = flag;
+    FLUSH_VERTICES(ctx, _NEW_DEPTH);
+    ctx->Depth.Mask = flag;
 
-   if (ctx->Driver.DepthMask)
-      ctx->Driver.DepthMask( ctx, flag );
+    if (ctx->Driver.DepthMask)
+	ctx->Driver.DepthMask(ctx, flag);
 }
 
 
@@ -123,25 +123,25 @@ _mesa_DepthMask( GLboolean flag )
  * Specified by the GL_EXT_depth_bounds_test extension.
  */
 void GLAPIENTRY
-_mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
+_mesa_DepthBoundsEXT(GLclampd zmin, GLclampd zmax)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (zmin > zmax) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glDepthBoundsEXT(zmin > zmax)");
-      return;
-   }
+    if (zmin > zmax) {
+	_mesa_error(ctx, GL_INVALID_VALUE, "glDepthBoundsEXT(zmin > zmax)");
+	return;
+    }
 
-   zmin = CLAMP(zmin, 0.0, 1.0);
-   zmax = CLAMP(zmax, 0.0, 1.0);
+    zmin = CLAMP(zmin, 0.0, 1.0);
+    zmax = CLAMP(zmax, 0.0, 1.0);
 
-   if (ctx->Depth.BoundsMin == zmin && ctx->Depth.BoundsMax == zmax)
-      return;
+    if (ctx->Depth.BoundsMin == zmin && ctx->Depth.BoundsMax == zmax)
+	return;
 
-   FLUSH_VERTICES(ctx, _NEW_DEPTH);
-   ctx->Depth.BoundsMin = (GLfloat) zmin;
-   ctx->Depth.BoundsMax = (GLfloat) zmax;
+    FLUSH_VERTICES(ctx, _NEW_DEPTH);
+    ctx->Depth.BoundsMin = (GLfloat) zmin;
+    ctx->Depth.BoundsMax = (GLfloat) zmax;
 }
 
 
@@ -153,36 +153,34 @@ _mesa_DepthBoundsEXT( GLclampd zmin, GLclampd zmax )
 /**
  * Initialize the depth buffer attribute group in the given context.
  */
-void _mesa_init_depth( GLcontext * ctx )
+void _mesa_init_depth(GLcontext * ctx)
 {
-   /* Depth buffer group */
-   ctx->Depth.Test = GL_FALSE;
-   ctx->Depth.Clear = 1.0;
-   ctx->Depth.Func = GL_LESS;
-   ctx->Depth.Mask = GL_TRUE;
+    /* Depth buffer group */
+    ctx->Depth.Test = GL_FALSE;
+    ctx->Depth.Clear = 1.0;
+    ctx->Depth.Func = GL_LESS;
+    ctx->Depth.Mask = GL_TRUE;
 
-   /* XXX this is now per-framebuffer state */
+    /* XXX this is now per-framebuffer state */
 #if 00
-   /* Z buffer stuff */
-   if (ctx->Visual.depthBits == 0) {
-      /* Special case.  Even if we don't have a depth buffer we need
-       * good values for DepthMax for Z vertex transformation purposes
-       * and for per-fragment fog computation.
-       */
-      ctx->DepthMax = (1 << 16) - 1;
-      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
-   }
-   else if (ctx->Visual.depthBits < 32) {
-      ctx->DepthMax = (1 << ctx->Visual.depthBits) - 1;
-      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
-   }
-   else {
-      /* Special case since shift values greater than or equal to the
-       * number of bits in the left hand expression's type are undefined.
-       */
-      ctx->DepthMax = 0xffffffff;
-      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
-   }
-   ctx->MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
+    /* Z buffer stuff */
+    if (ctx->Visual.depthBits == 0) {
+	/* Special case.  Even if we don't have a depth buffer we need
+	 * good values for DepthMax for Z vertex transformation purposes
+	 * and for per-fragment fog computation.
+	 */
+	ctx->DepthMax = (1 << 16) - 1;
+	ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+    } else if (ctx->Visual.depthBits < 32) {
+	ctx->DepthMax = (1 << ctx->Visual.depthBits) - 1;
+	ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+    } else {
+	/* Special case since shift values greater than or equal to the
+	 * number of bits in the left hand expression's type are undefined.
+	 */
+	ctx->DepthMax = 0xffffffff;
+	ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+    }
+    ctx->MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
 #endif
 }

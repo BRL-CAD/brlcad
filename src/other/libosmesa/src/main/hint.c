@@ -33,104 +33,104 @@
 
 
 void GLAPIENTRY
-_mesa_Hint( GLenum target, GLenum mode )
+_mesa_Hint(GLenum target, GLenum mode)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glHint %s %d\n",
-                  _mesa_lookup_enum_by_nr(target), mode);
+    if (MESA_VERBOSE & VERBOSE_API)
+	_mesa_debug(ctx, "glHint %s %d\n",
+		    _mesa_lookup_enum_by_nr(target), mode);
 
-   if (mode != GL_NICEST && mode != GL_FASTEST && mode != GL_DONT_CARE) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glHint(mode)");
-      return;
-   }
+    if (mode != GL_NICEST && mode != GL_FASTEST && mode != GL_DONT_CARE) {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glHint(mode)");
+	return;
+    }
 
-   switch (target) {
-      case GL_FOG_HINT:
-         if (ctx->Hint.Fog == mode)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.Fog = mode;
-         break;
-      case GL_LINE_SMOOTH_HINT:
-         if (ctx->Hint.LineSmooth == mode)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.LineSmooth = mode;
-         break;
-      case GL_PERSPECTIVE_CORRECTION_HINT:
-         if (ctx->Hint.PerspectiveCorrection == mode)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.PerspectiveCorrection = mode;
-         break;
-      case GL_POINT_SMOOTH_HINT:
-         if (ctx->Hint.PointSmooth == mode)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.PointSmooth = mode;
-         break;
-      case GL_POLYGON_SMOOTH_HINT:
-         if (ctx->Hint.PolygonSmooth == mode)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.PolygonSmooth = mode;
-         break;
+    switch (target) {
+	case GL_FOG_HINT:
+	    if (ctx->Hint.Fog == mode)
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_HINT);
+	    ctx->Hint.Fog = mode;
+	    break;
+	case GL_LINE_SMOOTH_HINT:
+	    if (ctx->Hint.LineSmooth == mode)
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_HINT);
+	    ctx->Hint.LineSmooth = mode;
+	    break;
+	case GL_PERSPECTIVE_CORRECTION_HINT:
+	    if (ctx->Hint.PerspectiveCorrection == mode)
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_HINT);
+	    ctx->Hint.PerspectiveCorrection = mode;
+	    break;
+	case GL_POINT_SMOOTH_HINT:
+	    if (ctx->Hint.PointSmooth == mode)
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_HINT);
+	    ctx->Hint.PointSmooth = mode;
+	    break;
+	case GL_POLYGON_SMOOTH_HINT:
+	    if (ctx->Hint.PolygonSmooth == mode)
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_HINT);
+	    ctx->Hint.PolygonSmooth = mode;
+	    break;
 
-      /* GL_EXT_clip_volume_hint */
-      case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
-         if (ctx->Hint.ClipVolumeClipping == mode)
+	/* GL_EXT_clip_volume_hint */
+	case GL_CLIP_VOLUME_CLIPPING_HINT_EXT:
+	    if (ctx->Hint.ClipVolumeClipping == mode)
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_HINT);
+	    ctx->Hint.ClipVolumeClipping = mode;
+	    break;
+
+	/* GL_ARB_texture_compression */
+	case GL_TEXTURE_COMPRESSION_HINT_ARB:
+	    if (!ctx->Extensions.ARB_texture_compression) {
+		_mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
+		return;
+	    }
+	    if (ctx->Hint.TextureCompression == mode)
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_HINT);
+	    ctx->Hint.TextureCompression = mode;
+	    break;
+
+	/* GL_SGIS_generate_mipmap */
+	case GL_GENERATE_MIPMAP_HINT_SGIS:
+	    if (!ctx->Extensions.SGIS_generate_mipmap) {
+		_mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
+		return;
+	    }
+	    if (ctx->Hint.GenerateMipmap == mode)
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_HINT);
+	    ctx->Hint.GenerateMipmap = mode;
+	    break;
+
+	/* GL_ARB_fragment_shader */
+	case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
+	    if (!ctx->Extensions.ARB_fragment_shader) {
+		_mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
+		return;
+	    }
+	    if (ctx->Hint.FragmentShaderDerivative == mode)
+		return;
+	    FLUSH_VERTICES(ctx, _NEW_HINT);
+	    ctx->Hint.FragmentShaderDerivative = mode;
+	    break;
+
+	default:
+	    _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
 	    return;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.ClipVolumeClipping = mode;
-         break;
+    }
 
-      /* GL_ARB_texture_compression */
-      case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (!ctx->Extensions.ARB_texture_compression) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-	    return;
-         }
-	 if (ctx->Hint.TextureCompression == mode)
-	    return;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-	 ctx->Hint.TextureCompression = mode;
-         break;
-
-      /* GL_SGIS_generate_mipmap */
-      case GL_GENERATE_MIPMAP_HINT_SGIS:
-         if (!ctx->Extensions.SGIS_generate_mipmap) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-	    return;
-         }
-         if (ctx->Hint.GenerateMipmap == mode)
-            return;
-	 FLUSH_VERTICES(ctx, _NEW_HINT);
-	 ctx->Hint.GenerateMipmap = mode;
-         break;
-
-      /* GL_ARB_fragment_shader */
-      case GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB:
-         if (!ctx->Extensions.ARB_fragment_shader) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-            return;
-         }
-         if (ctx->Hint.FragmentShaderDerivative == mode)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_HINT);
-         ctx->Hint.FragmentShaderDerivative = mode;
-         break;
-
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glHint(target)");
-         return;
-   }
-
-   if (ctx->Driver.Hint) {
-      (*ctx->Driver.Hint)( ctx, target, mode );
-   }
+    if (ctx->Driver.Hint) {
+	(*ctx->Driver.Hint)(ctx, target, mode);
+    }
 }
 
 
@@ -138,16 +138,16 @@ _mesa_Hint( GLenum target, GLenum mode )
 /*****                      Initialization                        *****/
 /**********************************************************************/
 
-void _mesa_init_hint( GLcontext * ctx )
+void _mesa_init_hint(GLcontext * ctx)
 {
-   /* Hint group */
-   ctx->Hint.PerspectiveCorrection = GL_DONT_CARE;
-   ctx->Hint.PointSmooth = GL_DONT_CARE;
-   ctx->Hint.LineSmooth = GL_DONT_CARE;
-   ctx->Hint.PolygonSmooth = GL_DONT_CARE;
-   ctx->Hint.Fog = GL_DONT_CARE;
-   ctx->Hint.ClipVolumeClipping = GL_DONT_CARE;
-   ctx->Hint.TextureCompression = GL_DONT_CARE;
-   ctx->Hint.GenerateMipmap = GL_DONT_CARE;
-   ctx->Hint.FragmentShaderDerivative = GL_DONT_CARE;
+    /* Hint group */
+    ctx->Hint.PerspectiveCorrection = GL_DONT_CARE;
+    ctx->Hint.PointSmooth = GL_DONT_CARE;
+    ctx->Hint.LineSmooth = GL_DONT_CARE;
+    ctx->Hint.PolygonSmooth = GL_DONT_CARE;
+    ctx->Hint.Fog = GL_DONT_CARE;
+    ctx->Hint.ClipVolumeClipping = GL_DONT_CARE;
+    ctx->Hint.TextureCompression = GL_DONT_CARE;
+    ctx->Hint.GenerateMipmap = GL_DONT_CARE;
+    ctx->Hint.FragmentShaderDerivative = GL_DONT_CARE;
 }

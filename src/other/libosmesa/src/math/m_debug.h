@@ -29,13 +29,13 @@
 #ifndef __M_DEBUG_H__
 #define __M_DEBUG_H__
 
-extern void _math_test_all_transform_functions( char *description );
-extern void _math_test_all_normal_transform_functions( char *description );
-extern void _math_test_all_cliptest_functions( char *description );
+extern void _math_test_all_transform_functions(char *description);
+extern void _math_test_all_normal_transform_functions(char *description);
+extern void _math_test_all_cliptest_functions(char *description);
 
 /* Deprecated?
  */
-extern void _math_test_all_vertex_functions( char *description );
+extern void _math_test_all_vertex_functions(char *description);
 
 extern char *mesa_profile;
 

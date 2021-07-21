@@ -41,31 +41,31 @@
  * Given a vector [count][4] of floats, set all the [][elt] values
  * to 0 (if elt = 0, 1, 2) or 1.0 (if elt = 3).
  */
-void _mesa_vector4f_clean_elem( GLvector4f *vec, GLuint count, GLuint elt )
+void _mesa_vector4f_clean_elem(GLvector4f *vec, GLuint count, GLuint elt)
 {
-   static const GLubyte elem_bits[4] = {
-      VEC_DIRTY_0,
-      VEC_DIRTY_1,
-      VEC_DIRTY_2,
-      VEC_DIRTY_3
-   };
-   static const GLfloat clean[4] = { 0, 0, 0, 1 };
-   const GLfloat v = clean[elt];
-   GLfloat (*data)[4] = (GLfloat (*)[4])vec->start;
-   GLuint i;
+    static const GLubyte elem_bits[4] = {
+	VEC_DIRTY_0,
+	VEC_DIRTY_1,
+	VEC_DIRTY_2,
+	VEC_DIRTY_3
+    };
+    static const GLfloat clean[4] = { 0, 0, 0, 1 };
+    const GLfloat v = clean[elt];
+    GLfloat(*data)[4] = (GLfloat(*)[4])vec->start;
+    GLuint i;
 
-   for (i = 0 ; i < count ; i++)
-      data[i][elt] = v;
+    for (i = 0 ; i < count ; i++)
+	data[i][elt] = v;
 
-   vec->flags &= ~elem_bits[elt];
+    vec->flags &= ~elem_bits[elt];
 }
 
 static const GLubyte size_bits[5] = {
-   0,
-   VEC_SIZE_1,
-   VEC_SIZE_2,
-   VEC_SIZE_3,
-   VEC_SIZE_4,
+    0,
+    VEC_SIZE_1,
+    VEC_SIZE_2,
+    VEC_SIZE_3,
+    VEC_SIZE_4,
 };
 
 
@@ -78,14 +78,14 @@ static const GLubyte size_bits[5] = {
  */
 
 
-void _mesa_vector4f_init( GLvector4f *v, GLuint flags, GLfloat (*storage)[4] )
+void _mesa_vector4f_init(GLvector4f *v, GLuint flags, GLfloat(*storage)[4])
 {
-   v->stride = 4 * sizeof(GLfloat);
-   v->size = 2;   /* may change: 2-4 for vertices and 1-4 for texcoords */
-   v->data = storage;
-   v->start = (GLfloat *) storage;
-   v->count = 0;
-   v->flags = size_bits[4] | flags ;
+    v->stride = 4 * sizeof(GLfloat);
+    v->size = 2;   /* may change: 2-4 for vertices and 1-4 for texcoords */
+    v->data = storage;
+    v->start = (GLfloat *) storage;
+    v->count = 0;
+    v->flags = size_bits[4] | flags ;
 }
 
 
@@ -101,16 +101,16 @@ void _mesa_vector4f_init( GLvector4f *v, GLuint flags, GLfloat (*storage)[4] )
  */
 
 
-void _mesa_vector4f_alloc( GLvector4f *v, GLuint flags, GLuint count,
-			GLuint alignment )
+void _mesa_vector4f_alloc(GLvector4f *v, GLuint flags, GLuint count,
+			  GLuint alignment)
 {
-   v->stride = 4 * sizeof(GLfloat);
-   v->size = 2;
-   v->storage = ALIGN_MALLOC( count * 4 * sizeof(GLfloat), alignment );
-   v->start = (GLfloat *) v->storage;
-   v->data = (GLfloat (*)[4]) v->storage;
-   v->count = 0;
-   v->flags = size_bits[4] | flags | VEC_MALLOC ;
+    v->stride = 4 * sizeof(GLfloat);
+    v->size = 2;
+    v->storage = ALIGN_MALLOC(count * 4 * sizeof(GLfloat), alignment);
+    v->start = (GLfloat *) v->storage;
+    v->data = (GLfloat(*)[4]) v->storage;
+    v->count = 0;
+    v->flags = size_bits[4] | flags | VEC_MALLOC ;
 }
 
 
@@ -123,68 +123,67 @@ void _mesa_vector4f_alloc( GLvector4f *v, GLuint flags, GLuint count,
  */
 
 
-void _mesa_vector4f_free( GLvector4f *v )
+void _mesa_vector4f_free(GLvector4f *v)
 {
-   if (v->flags & VEC_MALLOC) {
-      ALIGN_FREE( v->storage );
-      v->data = NULL;
-      v->start = NULL;
-      v->storage = NULL;
-      v->flags &= ~VEC_MALLOC;
-   }
+    if (v->flags & VEC_MALLOC) {
+	ALIGN_FREE(v->storage);
+	v->data = NULL;
+	v->start = NULL;
+	v->storage = NULL;
+	v->flags &= ~VEC_MALLOC;
+    }
 }
 
 
 /*
  * For debugging
  */
-void _mesa_vector4f_print( GLvector4f *v, GLubyte *cullmask, GLboolean culling )
+void _mesa_vector4f_print(GLvector4f *v, GLubyte *cullmask, GLboolean culling)
 {
-   GLfloat c[4] = { 0, 0, 0, 1 };
-   const char *templates[5] = {
-      "%d:\t0, 0, 0, 1\n",
-      "%d:\t%f, 0, 0, 1\n",
-      "%d:\t%f, %f, 0, 1\n",
-      "%d:\t%f, %f, %f, 1\n",
-      "%d:\t%f, %f, %f, %f\n"
-   };
+    GLfloat c[4] = { 0, 0, 0, 1 };
+    const char *templates[5] = {
+	"%d:\t0, 0, 0, 1\n",
+	"%d:\t%f, 0, 0, 1\n",
+	"%d:\t%f, %f, 0, 1\n",
+	"%d:\t%f, %f, %f, 1\n",
+	"%d:\t%f, %f, %f, %f\n"
+    };
 
-   const char *t = templates[v->size];
-   GLfloat *d = (GLfloat *)v->data;
-   GLuint j, i = 0, count;
+    const char *t = templates[v->size];
+    GLfloat *d = (GLfloat *)v->data;
+    GLuint j, i = 0, count;
 
-   _mesa_printf("data-start\n");
-   for ( ; d != v->start ; STRIDE_F(d, v->stride), i++)
-      _mesa_printf(t, i, d[0], d[1], d[2], d[3]);
+    _mesa_printf("data-start\n");
+    for (; d != v->start ; STRIDE_F(d, v->stride), i++)
+	_mesa_printf(t, i, d[0], d[1], d[2], d[3]);
 
-   _mesa_printf("start-count(%u)\n", v->count);
-   count = i + v->count;
+    _mesa_printf("start-count(%u)\n", v->count);
+    count = i + v->count;
 
-   if (culling) {
-      for ( ; i < count ; STRIDE_F(d, v->stride), i++)
-	 if (cullmask[i])
+    if (culling) {
+	for (; i < count ; STRIDE_F(d, v->stride), i++)
+	    if (cullmask[i])
+		_mesa_printf(t, i, d[0], d[1], d[2], d[3]);
+    } else {
+	for (; i < count ; STRIDE_F(d, v->stride), i++)
 	    _mesa_printf(t, i, d[0], d[1], d[2], d[3]);
-   }
-   else {
-      for ( ; i < count ; STRIDE_F(d, v->stride), i++)
-	 _mesa_printf(t, i, d[0], d[1], d[2], d[3]);
-   }
+    }
 
-   for (j = v->size ; j < 4; j++) {
-      if ((v->flags & (1<<j)) == 0) {
+    for (j = v->size ; j < 4; j++) {
+	if ((v->flags & (1<<j)) == 0) {
 
-	 _mesa_printf("checking col %u is clean as advertised ", j);
+	    _mesa_printf("checking col %u is clean as advertised ", j);
 
-	 for (i = 0, d = (GLfloat *) v->data ;
-	      i < count && d[j] == c[j] ;
-	      i++, STRIDE_F(d, v->stride)) {};
+	    for (i = 0, d = (GLfloat *) v->data ;
+		 i < count && d[j] == c[j] ;
+		 i++, STRIDE_F(d, v->stride)) {};
 
-	 if (i == count)
-	    _mesa_printf(" --> ok\n");
-	 else
-	    _mesa_printf(" --> Failed at %u ******\n", i);
-      }
-   }
+	    if (i == count)
+		_mesa_printf(" --> ok\n");
+	    else
+		_mesa_printf(" --> Failed at %u ******\n", i);
+	}
+    }
 }
 
 

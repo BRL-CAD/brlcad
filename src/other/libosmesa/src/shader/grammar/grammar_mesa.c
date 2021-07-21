@@ -35,53 +35,53 @@
 #undef GRAMMAR_PORT_BUILD
 
 
-void grammar_alloc_free (void *ptr)
+void grammar_alloc_free(void *ptr)
 {
-    _mesa_free (ptr);
+    _mesa_free(ptr);
 }
 
-void *grammar_alloc_malloc (size_t size)
+void *grammar_alloc_malloc(size_t size)
 {
-    return _mesa_malloc (size);
+    return _mesa_malloc(size);
 }
 
-void *grammar_alloc_realloc (void *ptr, size_t old_size, size_t size)
+void *grammar_alloc_realloc(void *ptr, size_t old_size, size_t size)
 {
-    return _mesa_realloc (ptr, old_size, size);
+    return _mesa_realloc(ptr, old_size, size);
 }
 
-void *grammar_memory_copy (void *dst, const void * src, size_t size)
+void *grammar_memory_copy(void *dst, const void * src, size_t size)
 {
-    return _mesa_memcpy (dst, src, size);
+    return _mesa_memcpy(dst, src, size);
 }
 
-int grammar_string_compare (const byte *str1, const byte *str2)
+int grammar_string_compare(const byte *str1, const byte *str2)
 {
-    return _mesa_strcmp ((const char *) str1, (const char *) str2);
+    return _mesa_strcmp((const char *) str1, (const char *) str2);
 }
 
-int grammar_string_compare_n (const byte *str1, const byte *str2, size_t n)
+int grammar_string_compare_n(const byte *str1, const byte *str2, size_t n)
 {
-    return _mesa_strncmp ((const char *) str1, (const char *) str2, n);
+    return _mesa_strncmp((const char *) str1, (const char *) str2, n);
 }
 
-byte *grammar_string_copy (byte *dst, const byte *src)
+byte *grammar_string_copy(byte *dst, const byte *src)
 {
-    return (byte *) _mesa_strcpy ((char *) dst, (const char *) src);
+    return (byte *) _mesa_strcpy((char *) dst, (const char *) src);
 }
 
-byte *grammar_string_copy_n (byte *dst, const byte *src, size_t n)
+byte *grammar_string_copy_n(byte *dst, const byte *src, size_t n)
 {
-    return (byte *) _mesa_strncpy ((char *) dst, (const char *) src, n);
+    return (byte *) _mesa_strncpy((char *) dst, (const char *) src, n);
 }
 
-byte *grammar_string_duplicate (const byte *src)
+byte *grammar_string_duplicate(const byte *src)
 {
-    return (byte *) _mesa_strdup ((const char *) src);
+    return (byte *) _mesa_strdup((const char *) src);
 }
 
-unsigned int grammar_string_length (const byte *str)
+unsigned int grammar_string_length(const byte *str)
 {
-    return (unsigned int)_mesa_strlen ((const char *) str);
+    return (unsigned int)_mesa_strlen((const char *) str);
 }
 

@@ -40,8 +40,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 struct vbo_save_copied_vtx {
-   GLfloat buffer[VBO_ATTRIB_MAX * 4 * VBO_MAX_COPIED_VERTS];
-   GLuint nr;
+    GLfloat buffer[VBO_ATTRIB_MAX * 4 * VBO_MAX_COPIED_VERTS];
+    GLuint nr;
 };
 
 
@@ -61,20 +61,20 @@ struct vbo_save_copied_vtx {
  * compiled using the fallback opcode mechanism provided by dlist.c.
  */
 struct vbo_save_vertex_list {
-   GLubyte attrsz[VBO_ATTRIB_MAX];
-   GLuint vertex_size;
+    GLubyte attrsz[VBO_ATTRIB_MAX];
+    GLuint vertex_size;
 
-   GLuint buffer_offset;
-   GLuint count;
-   GLuint wrap_count;		/* number of copied vertices at start */
-   GLboolean dangling_attr_ref;	/* current attr implicitly referenced 
+    GLuint buffer_offset;
+    GLuint count;
+    GLuint wrap_count;		/* number of copied vertices at start */
+    GLboolean dangling_attr_ref;	/* current attr implicitly referenced
 				   outside the list */
 
-   struct _mesa_prim *prim;
-   GLuint prim_count;
+    struct _mesa_prim *prim;
+    GLuint prim_count;
 
-   struct vbo_save_vertex_store *vertex_store;
-   struct vbo_save_primitive_store *prim_store;
+    struct vbo_save_vertex_store *vertex_store;
+    struct vbo_save_primitive_store *prim_store;
 };
 
 /* These buffers should be a reasonable size to support upload to
@@ -96,82 +96,82 @@ struct vbo_save_vertex_list {
 /* Storage to be shared among several vertex_lists.
  */
 struct vbo_save_vertex_store {
-   struct gl_buffer_object *bufferobj;
-   GLfloat *buffer;
-   GLuint used;
-   GLuint refcount;
+    struct gl_buffer_object *bufferobj;
+    GLfloat *buffer;
+    GLuint used;
+    GLuint refcount;
 };
 
 struct vbo_save_primitive_store {
-   struct _mesa_prim buffer[VBO_SAVE_PRIM_SIZE];
-   GLuint used;
-   GLuint refcount;
+    struct _mesa_prim buffer[VBO_SAVE_PRIM_SIZE];
+    GLuint used;
+    GLuint refcount;
 };
 
 
 struct vbo_save_context {
-   GLcontext *ctx;
-   GLvertexformat vtxfmt;
-   struct gl_client_array arrays[VBO_ATTRIB_MAX];
-   const struct gl_client_array *inputs[VBO_ATTRIB_MAX];
+    GLcontext *ctx;
+    GLvertexformat vtxfmt;
+    struct gl_client_array arrays[VBO_ATTRIB_MAX];
+    const struct gl_client_array *inputs[VBO_ATTRIB_MAX];
 
-   GLubyte attrsz[VBO_ATTRIB_MAX];
-   GLubyte active_sz[VBO_ATTRIB_MAX];
-   GLuint vertex_size;
+    GLubyte attrsz[VBO_ATTRIB_MAX];
+    GLubyte active_sz[VBO_ATTRIB_MAX];
+    GLuint vertex_size;
 
-   GLfloat *buffer;
-   GLuint count;
-   GLuint wrap_count;
-   GLuint replay_flags;
+    GLfloat *buffer;
+    GLuint count;
+    GLuint wrap_count;
+    GLuint replay_flags;
 
-   struct _mesa_prim *prim;
-   GLuint prim_count, prim_max;
+    struct _mesa_prim *prim;
+    GLuint prim_count, prim_max;
 
-   struct vbo_save_vertex_store *vertex_store;
-   struct vbo_save_primitive_store *prim_store;
+    struct vbo_save_vertex_store *vertex_store;
+    struct vbo_save_primitive_store *prim_store;
 
-   GLfloat *vbptr;		   /* cursor, points into buffer */
-   GLfloat vertex[VBO_ATTRIB_MAX*4];	   /* current values */
-   GLfloat *attrptr[VBO_ATTRIB_MAX];
-   GLuint vert_count;
-   GLuint max_vert;
-   GLboolean dangling_attr_ref;
-   GLboolean have_materials;
+    GLfloat *vbptr;		   /* cursor, points into buffer */
+    GLfloat vertex[VBO_ATTRIB_MAX*4];	   /* current values */
+    GLfloat *attrptr[VBO_ATTRIB_MAX];
+    GLuint vert_count;
+    GLuint max_vert;
+    GLboolean dangling_attr_ref;
+    GLboolean have_materials;
 
-   GLuint opcode_vertex_list;
+    GLuint opcode_vertex_list;
 
-   struct vbo_save_copied_vtx copied;
-   
-   GLfloat *current[VBO_ATTRIB_MAX]; /* points into ctx->ListState */
-   GLubyte *currentsz[VBO_ATTRIB_MAX];
+    struct vbo_save_copied_vtx copied;
+
+    GLfloat *current[VBO_ATTRIB_MAX]; /* points into ctx->ListState */
+    GLubyte *currentsz[VBO_ATTRIB_MAX];
 };
 
 
-void vbo_save_init( GLcontext *ctx );
-void vbo_save_destroy( GLcontext *ctx );
-void vbo_save_fallback( GLcontext *ctx, GLboolean fallback );
+void vbo_save_init(GLcontext *ctx);
+void vbo_save_destroy(GLcontext *ctx);
+void vbo_save_fallback(GLcontext *ctx, GLboolean fallback);
 
 /* save_loopback.c:
  */
-void vbo_loopback_vertex_list( GLcontext *ctx,
-			       const GLfloat *buffer,
-			       const GLubyte *attrsz,
-			       const struct _mesa_prim *prim,
-			       GLuint prim_count,
-			       GLuint wrap_count,
-			       GLuint vertex_size);
+void vbo_loopback_vertex_list(GLcontext *ctx,
+			      const GLfloat *buffer,
+			      const GLubyte *attrsz,
+			      const struct _mesa_prim *prim,
+			      GLuint prim_count,
+			      GLuint wrap_count,
+			      GLuint vertex_size);
 
 /* Callbacks:
  */
-void vbo_save_EndList( GLcontext *ctx );
-void vbo_save_NewList( GLcontext *ctx, GLuint list, GLenum mode );
-void vbo_save_EndCallList( GLcontext *ctx );
-void vbo_save_BeginCallList( GLcontext *ctx, struct mesa_display_list *list );
-void vbo_save_SaveFlushVertices( GLcontext *ctx );
-GLboolean vbo_save_NotifyBegin( GLcontext *ctx, GLenum mode );
+void vbo_save_EndList(GLcontext *ctx);
+void vbo_save_NewList(GLcontext *ctx, GLuint list, GLenum mode);
+void vbo_save_EndCallList(GLcontext *ctx);
+void vbo_save_BeginCallList(GLcontext *ctx, struct mesa_display_list *list);
+void vbo_save_SaveFlushVertices(GLcontext *ctx);
+GLboolean vbo_save_NotifyBegin(GLcontext *ctx, GLenum mode);
 
-void vbo_save_playback_vertex_list( GLcontext *ctx, void *data );
+void vbo_save_playback_vertex_list(GLcontext *ctx, void *data);
 
-void vbo_save_api_init( struct vbo_save_context *save );
+void vbo_save_api_init(struct vbo_save_context *save);
 
 #endif

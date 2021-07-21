@@ -29,31 +29,29 @@
 extern "C" {
 #endif
 
-typedef struct slang_struct_scope_
-{
+    typedef struct slang_struct_scope_ {
 	struct slang_struct_ *structs;
-   GLuint num_structs;
+	GLuint num_structs;
 	struct slang_struct_scope_ *outer_scope;
-} slang_struct_scope;
+    } slang_struct_scope;
 
-extern GLvoid
-_slang_struct_scope_ctr (slang_struct_scope *);
+    extern GLvoid
+    _slang_struct_scope_ctr(slang_struct_scope *);
 
-void slang_struct_scope_destruct (slang_struct_scope *);
-int slang_struct_scope_copy (slang_struct_scope *, const slang_struct_scope *);
-struct slang_struct_ *slang_struct_scope_find (slang_struct_scope *, slang_atom, int);
+    void slang_struct_scope_destruct(slang_struct_scope *);
+    int slang_struct_scope_copy(slang_struct_scope *, const slang_struct_scope *);
+    struct slang_struct_ *slang_struct_scope_find(slang_struct_scope *, slang_atom, int);
 
-typedef struct slang_struct_
-{
+    typedef struct slang_struct_ {
 	slang_atom a_name;
 	struct slang_variable_scope_ *fields;
 	slang_struct_scope *structs;
-} slang_struct;
+    } slang_struct;
 
-int slang_struct_construct (slang_struct *);
-void slang_struct_destruct (slang_struct *);
-int slang_struct_copy (slang_struct *, const slang_struct *);
-int slang_struct_equal (const slang_struct *, const slang_struct *);
+    int slang_struct_construct(slang_struct *);
+    void slang_struct_destruct(slang_struct *);
+    int slang_struct_copy(slang_struct *, const slang_struct *);
+    int slang_struct_equal(const slang_struct *, const slang_struct *);
 
 #ifdef __cplusplus
 }

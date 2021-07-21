@@ -46,31 +46,31 @@
  */
 static INLINE void
 compute_plane(const GLfloat v0[], const GLfloat v1[], const GLfloat v2[],
-              GLfloat z0, GLfloat z1, GLfloat z2, GLfloat plane[4])
+	      GLfloat z0, GLfloat z1, GLfloat z2, GLfloat plane[4])
 {
-   const GLfloat px = v1[0] - v0[0];
-   const GLfloat py = v1[1] - v0[1];
-   const GLfloat pz = z1 - z0;
+    const GLfloat px = v1[0] - v0[0];
+    const GLfloat py = v1[1] - v0[1];
+    const GLfloat pz = z1 - z0;
 
-   const GLfloat qx = v2[0] - v0[0];
-   const GLfloat qy = v2[1] - v0[1];
-   const GLfloat qz = z2 - z0;
+    const GLfloat qx = v2[0] - v0[0];
+    const GLfloat qy = v2[1] - v0[1];
+    const GLfloat qz = z2 - z0;
 
-   /* Crossproduct "(a,b,c):= dv1 x dv2" is orthogonal to plane. */
-   const GLfloat a = py * qz - pz * qy;
-   const GLfloat b = pz * qx - px * qz;
-   const GLfloat c = px * qy - py * qx;
-   /* Point on the plane = "r*(a,b,c) + w", with fixed "r" depending
-      on the distance of plane from origin and arbitrary "w" parallel
-      to the plane. */
-   /* The scalar product "(r*(a,b,c)+w)*(a,b,c)" is "r*(a^2+b^2+c^2)",
-      which is equal to "-d" below. */
-   const GLfloat d = -(a * v0[0] + b * v0[1] + c * z0);
+    /* Crossproduct "(a,b,c):= dv1 x dv2" is orthogonal to plane. */
+    const GLfloat a = py * qz - pz * qy;
+    const GLfloat b = pz * qx - px * qz;
+    const GLfloat c = px * qy - py * qx;
+    /* Point on the plane = "r*(a,b,c) + w", with fixed "r" depending
+       on the distance of plane from origin and arbitrary "w" parallel
+       to the plane. */
+    /* The scalar product "(r*(a,b,c)+w)*(a,b,c)" is "r*(a^2+b^2+c^2)",
+       which is equal to "-d" below. */
+    const GLfloat d = -(a * v0[0] + b * v0[1] + c * z0);
 
-   plane[0] = a;
-   plane[1] = b;
-   plane[2] = c;
-   plane[3] = d;
+    plane[0] = a;
+    plane[1] = b;
+    plane[2] = c;
+    plane[3] = d;
 }
 
 
@@ -80,10 +80,10 @@ compute_plane(const GLfloat v0[], const GLfloat v1[], const GLfloat v2[],
 static INLINE void
 constant_plane(GLfloat value, GLfloat plane[4])
 {
-   plane[0] = 0.0;
-   plane[1] = 0.0;
-   plane[2] = -1.0;
-   plane[3] = value;
+    plane[0] = 0.0;
+    plane[1] = 0.0;
+    plane[2] = -1.0;
+    plane[3] = value;
 }
 
 #define CONSTANT_PLANE(VALUE, PLANE)	\
@@ -102,8 +102,8 @@ do {					\
 static INLINE GLfloat
 solve_plane(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
-   ASSERT(plane[2] != 0.0F);
-   return (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
+    ASSERT(plane[2] != 0.0F);
+    return (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
 }
 
 
@@ -117,11 +117,11 @@ solve_plane(GLfloat x, GLfloat y, const GLfloat plane[4])
 static INLINE GLfloat
 solve_plane_recip(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
-   const GLfloat denom = plane[3] + plane[0] * x + plane[1] * y;
-   if (denom == 0.0F)
-      return 0.0F;
-   else
-      return -plane[2] / denom;
+    const GLfloat denom = plane[3] + plane[0] * x + plane[1] * y;
+    if (denom == 0.0F)
+	return 0.0F;
+    else
+	return -plane[2] / denom;
 }
 
 
@@ -131,15 +131,15 @@ solve_plane_recip(GLfloat x, GLfloat y, const GLfloat plane[4])
 static INLINE GLchan
 solve_plane_chan(GLfloat x, GLfloat y, const GLfloat plane[4])
 {
-   const GLfloat z = (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
+    const GLfloat z = (plane[3] + plane[0] * x + plane[1] * y) / -plane[2];
 #if CHAN_TYPE == GL_FLOAT
-   return CLAMP(z, 0.0F, CHAN_MAXF);
+    return CLAMP(z, 0.0F, CHAN_MAXF);
 #else
-   if (z < 0)
-      return 0;
-   else if (z > CHAN_MAX)
-      return CHAN_MAX;
-   return (GLchan) IROUND_POS(z);
+    if (z < 0)
+	return 0;
+    else if (z > CHAN_MAX)
+	return CHAN_MAX;
+    return (GLchan) IROUND_POS(z);
 #endif
 }
 
@@ -152,105 +152,103 @@ solve_plane_chan(GLfloat x, GLfloat y, const GLfloat plane[4])
  */
 static GLfloat
 compute_coveragef(const GLfloat v0[3], const GLfloat v1[3],
-                  const GLfloat v2[3], GLint winx, GLint winy)
+		  const GLfloat v2[3], GLint winx, GLint winy)
 {
-   /* Given a position [0,3]x[0,3] return the sub-pixel sample position.
-    * Contributed by Ray Tice.
-    *
-    * Jitter sample positions -
-    * - average should be .5 in x & y for each column
-    * - each of the 16 rows and columns should be used once
-    * - the rectangle formed by the first four points
-    *   should contain the other points
-    * - the distrubition should be fairly even in any given direction
-    *
-    * The pattern drawn below isn't optimal, but it's better than a regular
-    * grid.  In the drawing, the center of each subpixel is surrounded by
-    * four dots.  The "x" marks the jittered position relative to the
-    * subpixel center.
-    */
+    /* Given a position [0,3]x[0,3] return the sub-pixel sample position.
+     * Contributed by Ray Tice.
+     *
+     * Jitter sample positions -
+     * - average should be .5 in x & y for each column
+     * - each of the 16 rows and columns should be used once
+     * - the rectangle formed by the first four points
+     *   should contain the other points
+     * - the distrubition should be fairly even in any given direction
+     *
+     * The pattern drawn below isn't optimal, but it's better than a regular
+     * grid.  In the drawing, the center of each subpixel is surrounded by
+     * four dots.  The "x" marks the jittered position relative to the
+     * subpixel center.
+     */
 #define POS(a, b) (0.5+a*4+b)/16
-   static const GLfloat samples[16][2] = {
-      /* start with the four corners */
-      { POS(0, 2), POS(0, 0) },
-      { POS(3, 3), POS(0, 2) },
-      { POS(0, 0), POS(3, 1) },
-      { POS(3, 1), POS(3, 3) },
-      /* continue with interior samples */
-      { POS(1, 1), POS(0, 1) },
-      { POS(2, 0), POS(0, 3) },
-      { POS(0, 3), POS(1, 3) },
-      { POS(1, 2), POS(1, 0) },
-      { POS(2, 3), POS(1, 2) },
-      { POS(3, 2), POS(1, 1) },
-      { POS(0, 1), POS(2, 2) },
-      { POS(1, 0), POS(2, 1) },
-      { POS(2, 1), POS(2, 3) },
-      { POS(3, 0), POS(2, 0) },
-      { POS(1, 3), POS(3, 0) },
-      { POS(2, 2), POS(3, 2) }
-   };
+    static const GLfloat samples[16][2] = {
+	/* start with the four corners */
+	{ POS(0, 2), POS(0, 0) },
+	{ POS(3, 3), POS(0, 2) },
+	{ POS(0, 0), POS(3, 1) },
+	{ POS(3, 1), POS(3, 3) },
+	/* continue with interior samples */
+	{ POS(1, 1), POS(0, 1) },
+	{ POS(2, 0), POS(0, 3) },
+	{ POS(0, 3), POS(1, 3) },
+	{ POS(1, 2), POS(1, 0) },
+	{ POS(2, 3), POS(1, 2) },
+	{ POS(3, 2), POS(1, 1) },
+	{ POS(0, 1), POS(2, 2) },
+	{ POS(1, 0), POS(2, 1) },
+	{ POS(2, 1), POS(2, 3) },
+	{ POS(3, 0), POS(2, 0) },
+	{ POS(1, 3), POS(3, 0) },
+	{ POS(2, 2), POS(3, 2) }
+    };
 
-   const GLfloat x = (GLfloat) winx;
-   const GLfloat y = (GLfloat) winy;
-   const GLfloat dx0 = v1[0] - v0[0];
-   const GLfloat dy0 = v1[1] - v0[1];
-   const GLfloat dx1 = v2[0] - v1[0];
-   const GLfloat dy1 = v2[1] - v1[1];
-   const GLfloat dx2 = v0[0] - v2[0];
-   const GLfloat dy2 = v0[1] - v2[1];
-   GLint stop = 4, i;
-   GLfloat insideCount = 16.0F;
+    const GLfloat x = (GLfloat) winx;
+    const GLfloat y = (GLfloat) winy;
+    const GLfloat dx0 = v1[0] - v0[0];
+    const GLfloat dy0 = v1[1] - v0[1];
+    const GLfloat dx1 = v2[0] - v1[0];
+    const GLfloat dy1 = v2[1] - v1[1];
+    const GLfloat dx2 = v0[0] - v2[0];
+    const GLfloat dy2 = v0[1] - v2[1];
+    GLint stop = 4, i;
+    GLfloat insideCount = 16.0F;
 
 #ifdef DEBUG
-   {
-      const GLfloat area = dx0 * dy1 - dx1 * dy0;
-      ASSERT(area >= 0.0);
-   }
+    {
+	const GLfloat area = dx0 * dy1 - dx1 * dy0;
+	ASSERT(area >= 0.0);
+    }
 #endif
 
-   for (i = 0; i < stop; i++) {
-      const GLfloat sx = x + samples[i][0];
-      const GLfloat sy = y + samples[i][1];
-      /* cross product determines if sample is inside or outside each edge */
-      GLfloat cross = (dx0 * (sy - v0[1]) - dy0 * (sx - v0[0]));
-      /* Check if the sample is exactly on an edge.  If so, let cross be a
-       * positive or negative value depending on the direction of the edge.
-       */
-      if (cross == 0.0F)
-         cross = dx0 + dy0;
-      if (cross < 0.0F) {
-         /* sample point is outside first edge */
-         insideCount -= 1.0F;
-         stop = 16;
-      }
-      else {
-         /* sample point is inside first edge */
-         cross = (dx1 * (sy - v1[1]) - dy1 * (sx - v1[0]));
-         if (cross == 0.0F)
-            cross = dx1 + dy1;
-         if (cross < 0.0F) {
-            /* sample point is outside second edge */
-            insideCount -= 1.0F;
-            stop = 16;
-         }
-         else {
-            /* sample point is inside first and second edges */
-            cross = (dx2 * (sy - v2[1]) -  dy2 * (sx - v2[0]));
-            if (cross == 0.0F)
-               cross = dx2 + dy2;
-            if (cross < 0.0F) {
-               /* sample point is outside third edge */
-               insideCount -= 1.0F;
-               stop = 16;
-            }
-         }
-      }
-   }
-   if (stop == 4)
-      return 1.0F;
-   else
-      return insideCount * (1.0F / 16.0F);
+    for (i = 0; i < stop; i++) {
+	const GLfloat sx = x + samples[i][0];
+	const GLfloat sy = y + samples[i][1];
+	/* cross product determines if sample is inside or outside each edge */
+	GLfloat cross = (dx0 * (sy - v0[1]) - dy0 * (sx - v0[0]));
+	/* Check if the sample is exactly on an edge.  If so, let cross be a
+	 * positive or negative value depending on the direction of the edge.
+	 */
+	if (cross == 0.0F)
+	    cross = dx0 + dy0;
+	if (cross < 0.0F) {
+	    /* sample point is outside first edge */
+	    insideCount -= 1.0F;
+	    stop = 16;
+	} else {
+	    /* sample point is inside first edge */
+	    cross = (dx1 * (sy - v1[1]) - dy1 * (sx - v1[0]));
+	    if (cross == 0.0F)
+		cross = dx1 + dy1;
+	    if (cross < 0.0F) {
+		/* sample point is outside second edge */
+		insideCount -= 1.0F;
+		stop = 16;
+	    } else {
+		/* sample point is inside first and second edges */
+		cross = (dx2 * (sy - v2[1]) -  dy2 * (sx - v2[0]));
+		if (cross == 0.0F)
+		    cross = dx2 + dy2;
+		if (cross < 0.0F) {
+		    /* sample point is outside third edge */
+		    insideCount -= 1.0F;
+		    stop = 16;
+		}
+	    }
+	}
+    }
+    if (stop == 4)
+	return 1.0F;
+    else
+	return insideCount * (1.0F / 16.0F);
 }
 
 
@@ -262,78 +260,78 @@ compute_coveragef(const GLfloat v0[3], const GLfloat v1[3],
  */
 static GLint
 compute_coveragei(const GLfloat v0[3], const GLfloat v1[3],
-                  const GLfloat v2[3], GLint winx, GLint winy)
+		  const GLfloat v2[3], GLint winx, GLint winy)
 {
-   /* NOTE: 15 samples instead of 16. */
-   static const GLfloat samples[15][2] = {
-      /* start with the four corners */
-      { POS(0, 2), POS(0, 0) },
-      { POS(3, 3), POS(0, 2) },
-      { POS(0, 0), POS(3, 1) },
-      { POS(3, 1), POS(3, 3) },
-      /* continue with interior samples */
-      { POS(1, 1), POS(0, 1) },
-      { POS(2, 0), POS(0, 3) },
-      { POS(0, 3), POS(1, 3) },
-      { POS(1, 2), POS(1, 0) },
-      { POS(2, 3), POS(1, 2) },
-      { POS(3, 2), POS(1, 1) },
-      { POS(0, 1), POS(2, 2) },
-      { POS(1, 0), POS(2, 1) },
-      { POS(2, 1), POS(2, 3) },
-      { POS(3, 0), POS(2, 0) },
-      { POS(1, 3), POS(3, 0) }
-   };
-   const GLfloat x = (GLfloat) winx;
-   const GLfloat y = (GLfloat) winy;
-   const GLfloat dx0 = v1[0] - v0[0];
-   const GLfloat dy0 = v1[1] - v0[1];
-   const GLfloat dx1 = v2[0] - v1[0];
-   const GLfloat dy1 = v2[1] - v1[1];
-   const GLfloat dx2 = v0[0] - v2[0];
-   const GLfloat dy2 = v0[1] - v2[1];
-   GLint stop = 4, i;
-   GLint insideCount = 15;
+    /* NOTE: 15 samples instead of 16. */
+    static const GLfloat samples[15][2] = {
+	/* start with the four corners */
+	{ POS(0, 2), POS(0, 0) },
+	{ POS(3, 3), POS(0, 2) },
+	{ POS(0, 0), POS(3, 1) },
+	{ POS(3, 1), POS(3, 3) },
+	/* continue with interior samples */
+	{ POS(1, 1), POS(0, 1) },
+	{ POS(2, 0), POS(0, 3) },
+	{ POS(0, 3), POS(1, 3) },
+	{ POS(1, 2), POS(1, 0) },
+	{ POS(2, 3), POS(1, 2) },
+	{ POS(3, 2), POS(1, 1) },
+	{ POS(0, 1), POS(2, 2) },
+	{ POS(1, 0), POS(2, 1) },
+	{ POS(2, 1), POS(2, 3) },
+	{ POS(3, 0), POS(2, 0) },
+	{ POS(1, 3), POS(3, 0) }
+    };
+    const GLfloat x = (GLfloat) winx;
+    const GLfloat y = (GLfloat) winy;
+    const GLfloat dx0 = v1[0] - v0[0];
+    const GLfloat dy0 = v1[1] - v0[1];
+    const GLfloat dx1 = v2[0] - v1[0];
+    const GLfloat dy1 = v2[1] - v1[1];
+    const GLfloat dx2 = v0[0] - v2[0];
+    const GLfloat dy2 = v0[1] - v2[1];
+    GLint stop = 4, i;
+    GLint insideCount = 15;
 
 #ifdef DEBUG
-   {
-      const GLfloat area = dx0 * dy1 - dx1 * dy0;
-      ASSERT(area >= 0.0);
-   }
+    {
+	const GLfloat area = dx0 * dy1 - dx1 * dy0;
+	ASSERT(area >= 0.0);
+    }
 #endif
 
-   for (i = 0; i < stop; i++) {
-      const GLfloat sx = x + samples[i][0];
-      const GLfloat sy = y + samples[i][1];
-      const GLfloat fx0 = sx - v0[0];
-      const GLfloat fy0 = sy - v0[1];
-      const GLfloat fx1 = sx - v1[0];
-      const GLfloat fy1 = sy - v1[1];
-      const GLfloat fx2 = sx - v2[0];
-      const GLfloat fy2 = sy - v2[1];
-      /* cross product determines if sample is inside or outside each edge */
-      GLfloat cross0 = (dx0 * fy0 - dy0 * fx0);
-      GLfloat cross1 = (dx1 * fy1 - dy1 * fx1);
-      GLfloat cross2 = (dx2 * fy2 - dy2 * fx2);
-      /* Check if the sample is exactly on an edge.  If so, let cross be a
-       * positive or negative value depending on the direction of the edge.
-       */
-      if (cross0 == 0.0F)
-         cross0 = dx0 + dy0;
-      if (cross1 == 0.0F)
-         cross1 = dx1 + dy1;
-      if (cross2 == 0.0F)
-         cross2 = dx2 + dy2;
-      if (cross0 < 0.0F || cross1 < 0.0F || cross2 < 0.0F) {
-         /* point is outside triangle */
-         insideCount--;
-         stop = 15;
-      }
-   }
-   if (stop == 4)
-      return 15;
-   else
-      return insideCount;
+    for (i = 0; i < stop; i++) {
+	const GLfloat sx = x + samples[i][0];
+	const GLfloat sy = y + samples[i][1];
+	const GLfloat fx0 = sx - v0[0];
+	const GLfloat fy0 = sy - v0[1];
+	const GLfloat fx1 = sx - v1[0];
+	const GLfloat fy1 = sy - v1[1];
+	const GLfloat fx2 = sx - v2[0];
+	const GLfloat fy2 = sy - v2[1];
+	/* cross product determines if sample is inside or outside each edge */
+	GLfloat cross0 = (dx0 * fy0 - dy0 * fx0);
+	GLfloat cross1 = (dx1 * fy1 - dy1 * fx1);
+	GLfloat cross2 = (dx2 * fy2 - dy2 * fx2);
+	/* Check if the sample is exactly on an edge.  If so, let cross be a
+	 * positive or negative value depending on the direction of the edge.
+	 */
+	if (cross0 == 0.0F)
+	    cross0 = dx0 + dy0;
+	if (cross1 == 0.0F)
+	    cross1 = dx1 + dy1;
+	if (cross2 == 0.0F)
+	    cross2 = dx2 + dy2;
+	if (cross0 < 0.0F || cross1 < 0.0F || cross2 < 0.0F) {
+	    /* point is outside triangle */
+	    insideCount--;
+	    stop = 15;
+	}
+    }
+    if (stop == 4)
+	return 15;
+    else
+	return insideCount;
 }
 
 
@@ -373,41 +371,41 @@ index_aa_tri(GLcontext *ctx,
  */
 static INLINE GLfloat
 compute_lambda(GLcontext *ctx,
-               const GLfloat sPlane[4], const GLfloat tPlane[4],
-               const GLfloat qPlane[4], GLfloat cx, GLfloat cy,
-               GLfloat invQ, GLuint unit)
+	       const GLfloat sPlane[4], const GLfloat tPlane[4],
+	       const GLfloat qPlane[4], GLfloat cx, GLfloat cy,
+	       GLfloat invQ, GLuint unit)
 {
-   const GLfloat s = solve_plane(cx, cy, sPlane);
-   const GLfloat t = solve_plane(cx, cy, tPlane);
-   const GLfloat invQ_x1 = solve_plane_recip(cx+1.0F, cy, qPlane);
-   const GLfloat invQ_y1 = solve_plane_recip(cx, cy+1.0F, qPlane);
-   const GLfloat s_x1 = s - sPlane[0] / sPlane[2];
-   const GLfloat s_y1 = s - sPlane[1] / sPlane[2];
-   const GLfloat t_x1 = t - tPlane[0] / tPlane[2];
-   const GLfloat t_y1 = t - tPlane[1] / tPlane[2];
-   GLfloat dsdx = s_x1 * invQ_x1 - s * invQ;
-   GLfloat dsdy = s_y1 * invQ_y1 - s * invQ;
-   GLfloat dtdx = t_x1 * invQ_x1 - t * invQ;
-   GLfloat dtdy = t_y1 * invQ_y1 - t * invQ;
-   GLfloat maxU, maxV, rho, lambda;
-   GLfloat texWidth = 1.0, texHeight = 1.0;
-   const struct gl_texture_object *obj = ctx->Texture.Unit[unit]._Current;
-   if (obj) {
-      const struct gl_texture_image *texImage = obj->Image[0][obj->BaseLevel];
-      if (texImage){
-         texWidth = (GLfloat) texImage->Width;
-         texHeight = (GLfloat) texImage->Height;
-      }
-   }
-   dsdx = FABSF(dsdx);
-   dsdy = FABSF(dsdy);
-   dtdx = FABSF(dtdx);
-   dtdy = FABSF(dtdy);
-   maxU = MAX2(dsdx, dsdy) * texWidth;
-   maxV = MAX2(dtdx, dtdy) * texHeight;
-   rho = MAX2(maxU, maxV);
-   lambda = LOG2(rho);
-   return lambda;
+    const GLfloat s = solve_plane(cx, cy, sPlane);
+    const GLfloat t = solve_plane(cx, cy, tPlane);
+    const GLfloat invQ_x1 = solve_plane_recip(cx+1.0F, cy, qPlane);
+    const GLfloat invQ_y1 = solve_plane_recip(cx, cy+1.0F, qPlane);
+    const GLfloat s_x1 = s - sPlane[0] / sPlane[2];
+    const GLfloat s_y1 = s - sPlane[1] / sPlane[2];
+    const GLfloat t_x1 = t - tPlane[0] / tPlane[2];
+    const GLfloat t_y1 = t - tPlane[1] / tPlane[2];
+    GLfloat dsdx = s_x1 * invQ_x1 - s * invQ;
+    GLfloat dsdy = s_y1 * invQ_y1 - s * invQ;
+    GLfloat dtdx = t_x1 * invQ_x1 - t * invQ;
+    GLfloat dtdy = t_y1 * invQ_y1 - t * invQ;
+    GLfloat maxU, maxV, rho, lambda;
+    GLfloat texWidth = 1.0, texHeight = 1.0;
+    const struct gl_texture_object *obj = ctx->Texture.Unit[unit]._Current;
+    if (obj) {
+	const struct gl_texture_image *texImage = obj->Image[0][obj->BaseLevel];
+	if (texImage) {
+	    texWidth = (GLfloat) texImage->Width;
+	    texHeight = (GLfloat) texImage->Height;
+	}
+    }
+    dsdx = FABSF(dsdx);
+    dsdy = FABSF(dsdy);
+    dtdx = FABSF(dtdx);
+    dtdy = FABSF(dtdy);
+    maxU = MAX2(dsdx, dsdy) * texWidth;
+    maxV = MAX2(dtdx, dtdy) * texHeight;
+    rho = MAX2(maxU, maxV);
+    lambda = LOG2(rho);
+    return lambda;
 }
 
 
@@ -448,23 +446,20 @@ spec_tex_aa_tri(GLcontext *ctx,
 void
 _swrast_set_aa_triangle_function(GLcontext *ctx)
 {
-   ASSERT(ctx->Polygon.SmoothFlag);
+    ASSERT(ctx->Polygon.SmoothFlag);
 
-   if (ctx->Texture._EnabledCoordUnits != 0
-       || ctx->FragmentProgram._Current) {
-      if (NEED_SECONDARY_COLOR(ctx)) {
-         SWRAST_CONTEXT(ctx)->Triangle = spec_tex_aa_tri;
-      }
-      else {
-         SWRAST_CONTEXT(ctx)->Triangle = tex_aa_tri;
-      }
-   }
-   else if (ctx->Visual.rgbMode) {
-      SWRAST_CONTEXT(ctx)->Triangle = rgba_aa_tri;
-   }
-   else {
-      SWRAST_CONTEXT(ctx)->Triangle = index_aa_tri;
-   }
+    if (ctx->Texture._EnabledCoordUnits != 0
+	|| ctx->FragmentProgram._Current) {
+	if (NEED_SECONDARY_COLOR(ctx)) {
+	    SWRAST_CONTEXT(ctx)->Triangle = spec_tex_aa_tri;
+	} else {
+	    SWRAST_CONTEXT(ctx)->Triangle = tex_aa_tri;
+	}
+    } else if (ctx->Visual.rgbMode) {
+	SWRAST_CONTEXT(ctx)->Triangle = rgba_aa_tri;
+    } else {
+	SWRAST_CONTEXT(ctx)->Triangle = index_aa_tri;
+    }
 
-   ASSERT(SWRAST_CONTEXT(ctx)->Triangle);
+    ASSERT(SWRAST_CONTEXT(ctx)->Triangle);
 }

@@ -32,77 +32,77 @@
 
 
 void GLAPIENTRY
-_mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
+_mesa_ClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha)
 {
-   GLfloat tmp[4];
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GLfloat tmp[4];
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   tmp[0] = CLAMP( red,   -1.0F, 1.0F );
-   tmp[1] = CLAMP( green, -1.0F, 1.0F );
-   tmp[2] = CLAMP( blue,  -1.0F, 1.0F );
-   tmp[3] = CLAMP( alpha, -1.0F, 1.0F );
+    tmp[0] = CLAMP(red,   -1.0F, 1.0F);
+    tmp[1] = CLAMP(green, -1.0F, 1.0F);
+    tmp[2] = CLAMP(blue,  -1.0F, 1.0F);
+    tmp[3] = CLAMP(alpha, -1.0F, 1.0F);
 
-   if (TEST_EQ_4V(tmp, ctx->Accum.ClearColor))
-      return;
+    if (TEST_EQ_4V(tmp, ctx->Accum.ClearColor))
+	return;
 
-   FLUSH_VERTICES(ctx, _NEW_ACCUM);
-   COPY_4FV( ctx->Accum.ClearColor, tmp );
+    FLUSH_VERTICES(ctx, _NEW_ACCUM);
+    COPY_4FV(ctx->Accum.ClearColor, tmp);
 }
 
 
 void GLAPIENTRY
-_mesa_Accum( GLenum op, GLfloat value )
+_mesa_Accum(GLenum op, GLfloat value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
-   switch (op) {
-   case GL_ADD:
-   case GL_MULT:
-   case GL_ACCUM:
-   case GL_LOAD:
-   case GL_RETURN:
-      /* OK */
-      break;
-   default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glAccum(op)");
-      return;
-   }
+    switch (op) {
+	case GL_ADD:
+	case GL_MULT:
+	case GL_ACCUM:
+	case GL_LOAD:
+	case GL_RETURN:
+	    /* OK */
+	    break;
+	default:
+	    _mesa_error(ctx, GL_INVALID_ENUM, "glAccum(op)");
+	    return;
+    }
 
-   if (ctx->DrawBuffer->Visual.haveAccumBuffer == 0) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glAccum(no accum buffer)");
-      return;
-   }
+    if (ctx->DrawBuffer->Visual.haveAccumBuffer == 0) {
+	_mesa_error(ctx, GL_INVALID_OPERATION, "glAccum(no accum buffer)");
+	return;
+    }
 
-   if (ctx->DrawBuffer != ctx->ReadBuffer) {
-      /* See GLX_SGI_make_current_read or WGL_ARB_make_current_read,
-       * or GL_EXT_framebuffer_blit.
-       */
-      _mesa_error(ctx, GL_INVALID_OPERATION,
-                  "glAccum(different read/draw buffers)");
-      return;
-   }
+    if (ctx->DrawBuffer != ctx->ReadBuffer) {
+	/* See GLX_SGI_make_current_read or WGL_ARB_make_current_read,
+	 * or GL_EXT_framebuffer_blit.
+	 */
+	_mesa_error(ctx, GL_INVALID_OPERATION,
+		    "glAccum(different read/draw buffers)");
+	return;
+    }
 
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
+    if (ctx->NewState)
+	_mesa_update_state(ctx);
 
-   if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-      _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
-                  "glAccum(incomplete framebuffer)");
-      return;
-   }
+    if (ctx->DrawBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+	_mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
+		    "glAccum(incomplete framebuffer)");
+	return;
+    }
 
-   if (ctx->RenderMode == GL_RENDER) {
-      ctx->Driver.Accum(ctx, op, value);
-   }
+    if (ctx->RenderMode == GL_RENDER) {
+	ctx->Driver.Accum(ctx, op, value);
+    }
 }
 
 
 
-void 
-_mesa_init_accum( GLcontext *ctx )
+void
+_mesa_init_accum(GLcontext *ctx)
 {
-   /* Accumulate buffer group */
-   ASSIGN_4V( ctx->Accum.ClearColor, 0.0, 0.0, 0.0, 0.0 );
+    /* Accumulate buffer group */
+    ASSIGN_4V(ctx->Accum.ClearColor, 0.0, 0.0, 0.0, 0.0);
 }

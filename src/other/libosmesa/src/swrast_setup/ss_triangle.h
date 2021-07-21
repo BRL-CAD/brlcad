@@ -33,7 +33,7 @@
 #include "ss_context.h"
 
 
-void _swsetup_trifuncs_init( GLcontext *ctx );
-void _swsetup_choose_trifuncs( GLcontext *ctx );
+void _swsetup_trifuncs_init(GLcontext *ctx);
+void _swsetup_choose_trifuncs(GLcontext *ctx);
 
 #endif

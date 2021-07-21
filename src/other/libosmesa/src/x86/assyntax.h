@@ -262,11 +262,11 @@
 #endif
 
 
-	/****************************************/
-	/*					*/
-	/*	Select the various choices	*/
-	/*					*/
-	/****************************************/
+/****************************************/
+/*					*/
+/*	Select the various choices	*/
+/*					*/
+/****************************************/
 
 
 /* Redefine assembler directives */
@@ -806,12 +806,12 @@
 
 #else /* NASM_ASSEMBLER || MASM_ASSEMBLER is defined */
 
-	/****************************************/
-	/*					*/
-	/*	Intel style assemblers.		*/
-	/*	(NASM and MASM)			*/
-	/*					*/
-	/****************************************/
+/****************************************/
+/*					*/
+/*	Intel style assemblers.		*/
+/*	(NASM and MASM)			*/
+/*					*/
+/****************************************/
 
 #define P_EAX		EAX
 #define L_EAX		EAX
@@ -922,7 +922,7 @@
 /* #define COMM */
 #if defined(__WATCOMC__)
 SECTION _TEXT public align=16 class=CODE use32 flat
-SECTION _DATA public align=16 class=DATA use32 flat
+					SECTION _DATA public align=16 class=DATA use32 flat
 #define SEG_TEXT	SECTION _TEXT
 #define SEG_DATA	SECTION _DATA
 #define SEG_BSS		SECTION .bss
@@ -936,7 +936,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 
 #define AS_BEGIN
 
-/* Jcc's should be handled better than this... */
+    /* Jcc's should be handled better than this... */
 #define NEAR		near
 
 #else /* MASM */
@@ -992,11 +992,11 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define GLNAME(a)	CONCAT(_, a)
 #endif
 
-/*
- *	Addressing Modes
- */
+    /*
+     *	Addressing Modes
+     */
 
-/* Immediate Mode */
+    /* Immediate Mode */
 #define P_ADDR(a)		OFFSET a
 #define X_ADDR(a)		OFFSET a
 #define D_ADDR(a)		OFFSET a
@@ -1011,7 +1011,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define W_CONST(a)		a
 #define B_CONST(a)		a
 
-/* Indirect Mode */
+    /* Indirect Mode */
 #ifdef NASM_ASSEMBLER
 #define P_CONTENT(a)		[a]
 #define X_CONTENT(a)		TBYTE_PTR [a]
@@ -1028,7 +1028,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define B_CONTENT(a)		BYTE_PTR a
 #endif
 
-/* Register a indirect */
+    /* Register a indirect */
 #define P_REGIND(a)		[a]
 #define X_REGIND(a)		TBYTE_PTR [a]
 #define D_REGIND(a)		QWORD_PTR [a]
@@ -1036,7 +1036,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define W_REGIND(a)		WORD_PTR [a]
 #define B_REGIND(a)		BYTE_PTR [a]
 
-/* Register b indirect plus displacement a */
+    /* Register b indirect plus displacement a */
 #define P_REGOFF(a, b)		[b + a]
 #define X_REGOFF(a, b)		TBYTE_PTR [b + a]
 #define D_REGOFF(a, b)		QWORD_PTR [b + a]
@@ -1044,9 +1044,9 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define W_REGOFF(a, b)		WORD_PTR [b + a]
 #define B_REGOFF(a, b)		BYTE_PTR [b + a]
 
-/* Reg indirect Base + Index + Displacement  - this is mainly for 16-bit mode
- * which has no scaling
- */
+    /* Reg indirect Base + Index + Displacement  - this is mainly for 16-bit mode
+     * which has no scaling
+     */
 #define P_REGBID(b, i, d)	[b + i + d]
 #define X_REGBID(b, i, d)	TBYTE_PTR [b + i + d]
 #define D_REGBID(b, i, d)	QWORD_PTR [b + i + d]
@@ -1054,7 +1054,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define W_REGBID(b, i, d)	WORD_PTR [b + i + d]
 #define B_REGBID(b, i, d)	BYTE_PTR [b + i + d]
 
-/* Reg indirect Base + (Index * Scale) */
+    /* Reg indirect Base + (Index * Scale) */
 #define P_REGBIS(b, i, s)	[b + i * s]
 #define X_REGBIS(b, i, s)	TBYTE_PTR [b + i * s]
 #define D_REGBIS(b, i, s)	QWORD_PTR [b + i * s]
@@ -1062,7 +1062,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define W_REGBIS(b, i, s)	WORD_PTR [b + i * s]
 #define B_REGBIS(b, i, s)	BYTE_PTR [b + i * s]
 
-/* Reg indirect Base + (Index * Scale) + Displacement */
+    /* Reg indirect Base + (Index * Scale) + Displacement */
 #define P_REGBISD(b, i, s, d)	[b + i * s + d]
 #define X_REGBISD(b, i, s, d)	TBYTE_PTR [b + i * s + d]
 #define D_REGBISD(b, i, s, d)	QWORD_PTR [b + i * s + d]
@@ -1070,7 +1070,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define W_REGBISD(b, i, s, d)	WORD_PTR [b + i * s + d]
 #define B_REGBISD(b, i, s, d)	BYTE_PTR [b + i * s + d]
 
-/* Displaced Scaled Index: */
+    /* Displaced Scaled Index: */
 #define P_REGDIS(d, i, s)	[i * s + d]
 #define X_REGDIS(d, i, s)	TBYTE_PTR [i * s + d]
 #define D_REGDIS(d, i, s)	QWORD_PTR [i * s + d]
@@ -1078,7 +1078,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define W_REGDIS(d, i, s)	WORD_PTR [i * s + d]
 #define B_REGDIS(d, i, s)	BYTE_PTR [i * s + d]
 
-/* Indexed Base: */
+    /* Indexed Base: */
 #define P_REGBI(b, i)		[b + i]
 #define X_REGBI(b, i)		TBYTE_PTR [b + i]
 #define D_REGBI(b, i)		QWORD_PTR [b + i]
@@ -1086,7 +1086,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define W_REGBI(b, i)		WORD_PTR [b + i]
 #define B_REGBI(b, i)		BYTE_PTR [b + i]
 
-/* Displaced Base: */
+    /* Displaced Base: */
 #define P_REGDB(d, b)		[b + d]
 #define X_REGDB(d, b)		TBYTE_PTR [b + d]
 #define D_REGDB(d, b)		QWORD_PTR [b + d]
@@ -1094,15 +1094,15 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define W_REGDB(d, b)		WORD_PTR [b + d]
 #define B_REGDB(d, b)		BYTE_PTR [b + d]
 
-/* Variable indirect: */
+    /* Variable indirect: */
 #define VARINDIRECT(var)	[var]
 
-/* Use register contents as jump/call target: */
+    /* Use register contents as jump/call target: */
 #define CODEPTR(reg)		P_(reg)
 
-/*
- * Redefine assembler commands
- */
+    /*
+     * Redefine assembler commands
+     */
 
 #define P_(a)			P_ ## a
 #define X_(a)			X_ ## a
@@ -1404,7 +1404,7 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define XOR_B(a, b)		xor B_(b), B_(a)
 
 
-/* Floating Point Instructions */
+    /* Floating Point Instructions */
 #define F2XM1			f2xm1
 #define FABS			fabs
 #define FADD_D(a)		fadd D_(a)
@@ -1523,12 +1523,12 @@ SECTION _DATA public align=16 class=DATA use32 flat
 
 #endif /* NASM_ASSEMBLER, MASM_ASSEMBLER */
 
-	/****************************************/
-	/*					*/
-	/*	Extensions to x86 insn set -	*/
-	/*	MMX, 3DNow!			*/
-	/*					*/
-	/****************************************/
+/****************************************/
+/*					*/
+/*	Extensions to x86 insn set -	*/
+/*	MMX, 3DNow!			*/
+/*					*/
+/****************************************/
 
 #if defined(NASM_ASSEMBLER) || defined(MASM_ASSEMBLER)
 #define P_ARG1(a)		P_ ## a

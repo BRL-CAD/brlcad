@@ -37,58 +37,58 @@
 
 #include "vbo_context.h"
 
-void vbo_exec_init( GLcontext *ctx )
+void vbo_exec_init(GLcontext *ctx)
 {
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
 
-   exec->ctx = ctx;
+    exec->ctx = ctx;
 
-   /* Initialize the arrayelt helper
-    */
-   if (!ctx->aelt_context &&
-       !_ae_create_context( ctx )) 
-      return;
+    /* Initialize the arrayelt helper
+     */
+    if (!ctx->aelt_context &&
+	!_ae_create_context(ctx))
+	return;
 
-   vbo_exec_vtx_init( exec );
-   vbo_exec_array_init( exec );
+    vbo_exec_vtx_init(exec);
+    vbo_exec_array_init(exec);
 
-   /* Hook our functions into exec and compile dispatch tables.
-    */
-   _mesa_install_exec_vtxfmt( ctx, &exec->vtxfmt );
+    /* Hook our functions into exec and compile dispatch tables.
+     */
+    _mesa_install_exec_vtxfmt(ctx, &exec->vtxfmt);
 
-   ctx->Driver.NeedFlush = 0;
-   ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
-   ctx->Driver.FlushVertices = vbo_exec_FlushVertices;
+    ctx->Driver.NeedFlush = 0;
+    ctx->Driver.CurrentExecPrimitive = PRIM_OUTSIDE_BEGIN_END;
+    ctx->Driver.FlushVertices = vbo_exec_FlushVertices;
 
-   vbo_exec_invalidate_state( ctx, ~0 );
+    vbo_exec_invalidate_state(ctx, ~0);
 }
 
 
-void vbo_exec_destroy( GLcontext *ctx )
+void vbo_exec_destroy(GLcontext *ctx)
 {
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
 
-   if (ctx->aelt_context) {
-      _ae_destroy_context( ctx );
-      ctx->aelt_context = NULL;
-   }
+    if (ctx->aelt_context) {
+	_ae_destroy_context(ctx);
+	ctx->aelt_context = NULL;
+    }
 
-   vbo_exec_vtx_destroy( exec );
-   vbo_exec_array_destroy( exec );
+    vbo_exec_vtx_destroy(exec);
+    vbo_exec_array_destroy(exec);
 }
 
 /* Really want to install these callbacks to a central facility to be
  * invoked according to the state flags.  That will have to wait for a
  * mesa rework:
- */ 
-void vbo_exec_invalidate_state( GLcontext *ctx, GLuint new_state )
+ */
+void vbo_exec_invalidate_state(GLcontext *ctx, GLuint new_state)
 {
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
 
-   if (new_state & (_NEW_PROGRAM|_NEW_EVAL))
-      exec->eval.recalculate_maps = 1;
+    if (new_state & (_NEW_PROGRAM|_NEW_EVAL))
+	exec->eval.recalculate_maps = 1;
 
-   _ae_invalidate_state(ctx, new_state);
+    _ae_invalidate_state(ctx, new_state);
 }
 
 

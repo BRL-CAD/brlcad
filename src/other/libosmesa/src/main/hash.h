@@ -1,6 +1,6 @@
 /**
  * \file hash.h
- * Generic hash table. 
+ * Generic hash table.
  */
 
 /*
@@ -47,13 +47,13 @@ extern void _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key);
 
 extern void
 _mesa_HashDeleteAll(struct _mesa_HashTable *table,
-                    void (*callback)(GLuint key, void *data, void *userData),
-                    void *userData);
+		    void (*callback)(GLuint key, void *data, void *userData),
+		    void *userData);
 
 extern void
 _mesa_HashWalk(const struct _mesa_HashTable *table,
-               void (*callback)(GLuint key, void *data, void *userData),
-               void *userData);
+	       void (*callback)(GLuint key, void *data, void *userData),
+	       void *userData);
 
 extern GLuint _mesa_HashFirstEntry(struct _mesa_HashTable *table);
 

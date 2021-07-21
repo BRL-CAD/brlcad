@@ -42,146 +42,144 @@
 void GLAPIENTRY
 _mesa_EnableVertexAttribArrayARB(GLuint index)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glEnableVertexAttribArrayARB(index)");
-      return;
-   }
+    if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+	_mesa_error(ctx, GL_INVALID_VALUE,
+		    "glEnableVertexAttribArrayARB(index)");
+	return;
+    }
 
-   FLUSH_VERTICES(ctx, _NEW_ARRAY);
-   ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_TRUE;
-   ctx->Array.ArrayObj->_Enabled |= _NEW_ARRAY_ATTRIB(index);
-   ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
+    FLUSH_VERTICES(ctx, _NEW_ARRAY);
+    ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_TRUE;
+    ctx->Array.ArrayObj->_Enabled |= _NEW_ARRAY_ATTRIB(index);
+    ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
 }
 
 
 void GLAPIENTRY
 _mesa_DisableVertexAttribArrayARB(GLuint index)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glEnableVertexAttribArrayARB(index)");
-      return;
-   }
+    if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+	_mesa_error(ctx, GL_INVALID_VALUE,
+		    "glEnableVertexAttribArrayARB(index)");
+	return;
+    }
 
-   FLUSH_VERTICES(ctx, _NEW_ARRAY);
-   ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_FALSE;
-   ctx->Array.ArrayObj->_Enabled &= ~_NEW_ARRAY_ATTRIB(index);
-   ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
+    FLUSH_VERTICES(ctx, _NEW_ARRAY);
+    ctx->Array.ArrayObj->VertexAttrib[index].Enabled = GL_FALSE;
+    ctx->Array.ArrayObj->_Enabled &= ~_NEW_ARRAY_ATTRIB(index);
+    ctx->Array.NewState |= _NEW_ARRAY_ATTRIB(index);
 }
 
 
 void GLAPIENTRY
 _mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
 {
-   GLfloat fparams[4];
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GLfloat fparams[4];
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   _mesa_GetVertexAttribfvARB(index, pname, fparams);
-   if (ctx->ErrorValue == GL_NO_ERROR) {
-      if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
-         COPY_4V(params, fparams);
-      }
-      else {
-         params[0] = fparams[0];
-      }
-   }
+    _mesa_GetVertexAttribfvARB(index, pname, fparams);
+    if (ctx->ErrorValue == GL_NO_ERROR) {
+	if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
+	    COPY_4V(params, fparams);
+	} else {
+	    params[0] = fparams[0];
+	}
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribfvARB(index)");
-      return;
-   }
+    if (index >= MAX_VERTEX_PROGRAM_ATTRIBS) {
+	_mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribfvARB(index)");
+	return;
+    }
 
-   switch (pname) {
-      case GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Enabled;
-         break;
-      case GL_VERTEX_ATTRIB_ARRAY_SIZE_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Size;
-         break;
-      case GL_VERTEX_ATTRIB_ARRAY_STRIDE_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Stride;
-         break;
-      case GL_VERTEX_ATTRIB_ARRAY_TYPE_ARB:
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Type;
-         break;
-      case GL_VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB:
-         params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Normalized;
-         break;
-      case GL_CURRENT_VERTEX_ATTRIB_ARB:
-         if (index == 0) {
-            _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glGetVertexAttribfvARB(index==0)");
-            return;
-         }
-         FLUSH_CURRENT(ctx, 0);
-         COPY_4V(params, ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index]);
-         break;
-      case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
-         if (!ctx->Extensions.ARB_vertex_buffer_object) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribfvARB(pname)");
-            return;
-         }
-         params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].BufferObj->Name;
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribfvARB(pname)");
-         return;
-   }
+    switch (pname) {
+	case GL_VERTEX_ATTRIB_ARRAY_ENABLED_ARB:
+	    params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Enabled;
+	    break;
+	case GL_VERTEX_ATTRIB_ARRAY_SIZE_ARB:
+	    params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Size;
+	    break;
+	case GL_VERTEX_ATTRIB_ARRAY_STRIDE_ARB:
+	    params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Stride;
+	    break;
+	case GL_VERTEX_ATTRIB_ARRAY_TYPE_ARB:
+	    params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].Type;
+	    break;
+	case GL_VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB:
+	    params[0] = ctx->Array.ArrayObj->VertexAttrib[index].Normalized;
+	    break;
+	case GL_CURRENT_VERTEX_ATTRIB_ARB:
+	    if (index == 0) {
+		_mesa_error(ctx, GL_INVALID_OPERATION,
+			    "glGetVertexAttribfvARB(index==0)");
+		return;
+	    }
+	    FLUSH_CURRENT(ctx, 0);
+	    COPY_4V(params, ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index]);
+	    break;
+	case GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING_ARB:
+	    if (!ctx->Extensions.ARB_vertex_buffer_object) {
+		_mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribfvARB(pname)");
+		return;
+	    }
+	    params[0] = (GLfloat) ctx->Array.ArrayObj->VertexAttrib[index].BufferObj->Name;
+	    break;
+	default:
+	    _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribfvARB(pname)");
+	    return;
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params)
 {
-   GLfloat fparams[4];
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GLfloat fparams[4];
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   _mesa_GetVertexAttribfvARB(index, pname, fparams);
-   if (ctx->ErrorValue == GL_NO_ERROR) {
-      if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
-         COPY_4V_CAST(params, fparams, GLint);  /* float to int */
-      }
-      else {
-         params[0] = (GLint) fparams[0];
-      }
-   }
+    _mesa_GetVertexAttribfvARB(index, pname, fparams);
+    if (ctx->ErrorValue == GL_NO_ERROR) {
+	if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
+	    COPY_4V_CAST(params, fparams, GLint);  /* float to int */
+	} else {
+	    params[0] = (GLint) fparams[0];
+	}
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribPointerARB(index)");
-      return;
-   }
+    if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+	_mesa_error(ctx, GL_INVALID_VALUE, "glGetVertexAttribPointerARB(index)");
+	return;
+    }
 
-   if (pname != GL_VERTEX_ATTRIB_ARRAY_POINTER_ARB) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribPointerARB(pname)");
-      return;
-   }
+    if (pname != GL_VERTEX_ATTRIB_ARRAY_POINTER_ARB) {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glGetVertexAttribPointerARB(pname)");
+	return;
+    }
 
-   *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[index].Ptr;
+    *pointer = (GLvoid *) ctx->Array.ArrayObj->VertexAttrib[index].Ptr;
 }
 
 
@@ -195,115 +193,111 @@ _mesa_GetVertexAttribPointervARB(GLuint index, GLenum pname, GLvoid **pointer)
 GLboolean GLAPIENTRY
 _mesa_IsProgramARB(GLuint id)
 {
-   struct gl_program *prog = NULL; 
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
+    struct gl_program *prog = NULL;
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (id == 0)
-      return GL_FALSE;
+    if (id == 0)
+	return GL_FALSE;
 
-   prog = _mesa_lookup_program(ctx, id);
-   if (prog && (prog != &_mesa_DummyProgram))
-      return GL_TRUE;
-   else
-      return GL_FALSE;
+    prog = _mesa_lookup_program(ctx, id);
+    if (prog && (prog != &_mesa_DummyProgram))
+	return GL_TRUE;
+    else
+	return GL_FALSE;
 }
 
 
 void GLAPIENTRY
 _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
-                       const GLvoid *string)
+		       const GLvoid *string)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if (format != GL_PROGRAM_FORMAT_ASCII_ARB) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(format)");
-      return;
-   }
+    if (format != GL_PROGRAM_FORMAT_ASCII_ARB) {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(format)");
+	return;
+    }
 
-   if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program) {
-      struct gl_vertex_program *prog = ctx->VertexProgram.Current;
-      _mesa_parse_arb_vertex_program(ctx, target, string, len, prog);
-      
-      if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
-	 ctx->Driver.ProgramStringNotify( ctx, target, &prog->Base );
-   }
-   else if (target == GL_FRAGMENT_PROGRAM_ARB
-            && ctx->Extensions.ARB_fragment_program) {
-      struct gl_fragment_program *prog = ctx->FragmentProgram.Current;
-      _mesa_parse_arb_fragment_program(ctx, target, string, len, prog);
+    if (target == GL_VERTEX_PROGRAM_ARB
+	&& ctx->Extensions.ARB_vertex_program) {
+	struct gl_vertex_program *prog = ctx->VertexProgram.Current;
+	_mesa_parse_arb_vertex_program(ctx, target, string, len, prog);
 
-      if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
-	 ctx->Driver.ProgramStringNotify( ctx, target, &prog->Base );
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(target)");
-      return;
-   }
+	if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
+	    ctx->Driver.ProgramStringNotify(ctx, target, &prog->Base);
+    } else if (target == GL_FRAGMENT_PROGRAM_ARB
+	       && ctx->Extensions.ARB_fragment_program) {
+	struct gl_fragment_program *prog = ctx->FragmentProgram.Current;
+	_mesa_parse_arb_fragment_program(ctx, target, string, len, prog);
+
+	if (ctx->Program.ErrorPos == -1 && ctx->Driver.ProgramStringNotify)
+	    ctx->Driver.ProgramStringNotify(ctx, target, &prog->Base);
+    } else {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glProgramStringARB(target)");
+	return;
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
-                               GLdouble x, GLdouble y, GLdouble z, GLdouble w)
+			       GLdouble x, GLdouble y, GLdouble z, GLdouble w)
 {
-   _mesa_ProgramEnvParameter4fARB(target, index, (GLfloat) x, (GLfloat) y, 
-		                  (GLfloat) z, (GLfloat) w);
+    _mesa_ProgramEnvParameter4fARB(target, index, (GLfloat) x, (GLfloat) y,
+				   (GLfloat) z, (GLfloat) w);
 }
 
 
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
-                                const GLdouble *params)
+				const GLdouble *params)
 {
-   _mesa_ProgramEnvParameter4fARB(target, index, (GLfloat) params[0], 
-	                          (GLfloat) params[1], (GLfloat) params[2], 
-				  (GLfloat) params[3]);
+    _mesa_ProgramEnvParameter4fARB(target, index, (GLfloat) params[0],
+				   (GLfloat) params[1], (GLfloat) params[2],
+				   (GLfloat) params[3]);
 }
 
 
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
-                               GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+			       GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if (target == GL_FRAGMENT_PROGRAM_ARB
-       && ctx->Extensions.ARB_fragment_program) {
-      if (index >= ctx->Const.FragmentProgram.MaxEnvParams) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
-         return;
-      }
-      ASSIGN_4V(ctx->FragmentProgram.Parameters[index], x, y, z, w);
-   }
-   else if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program) {
-      if (index >= ctx->Const.VertexProgram.MaxEnvParams) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
-         return;
-      }
-      ASSIGN_4V(ctx->VertexProgram.Parameters[index], x, y, z, w);
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramEnvParameter(target)");
-      return;
-   }
+    if (target == GL_FRAGMENT_PROGRAM_ARB
+	&& ctx->Extensions.ARB_fragment_program) {
+	if (index >= ctx->Const.FragmentProgram.MaxEnvParams) {
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
+	    return;
+	}
+	ASSIGN_4V(ctx->FragmentProgram.Parameters[index], x, y, z, w);
+    } else if (target == GL_VERTEX_PROGRAM_ARB
+	       && ctx->Extensions.ARB_vertex_program) {
+	if (index >= ctx->Const.VertexProgram.MaxEnvParams) {
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameter(index)");
+	    return;
+	}
+	ASSIGN_4V(ctx->VertexProgram.Parameters[index], x, y, z, w);
+    } else {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glProgramEnvParameter(target)");
+	return;
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
-                                   const GLfloat *params)
+				const GLfloat *params)
 {
-   _mesa_ProgramEnvParameter4fARB(target, index, params[0], params[1],
-                                  params[2], params[3]);
+    _mesa_ProgramEnvParameter4fARB(target, index, params[0], params[1],
+				   params[2], params[3]);
 }
 
 
@@ -311,94 +305,90 @@ void GLAPIENTRY
 _mesa_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 				 const GLfloat *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GLint i;
-   GLfloat * dest;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    GLint i;
+    GLfloat * dest;
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if (count <= 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameters4fv(count)");
-   }
+    if (count <= 0) {
+	_mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameters4fv(count)");
+    }
 
-   if (target == GL_FRAGMENT_PROGRAM_ARB
-       && ctx->Extensions.ARB_fragment_program) {
-      if ((index + count) > ctx->Const.FragmentProgram.MaxEnvParams) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameters4fv(index + count)");
-         return;
-      }
-      dest = ctx->FragmentProgram.Parameters[index];
-   }
-   else if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program) {
-      if ((index + count) > ctx->Const.VertexProgram.MaxEnvParams) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameters4fv(index + count)");
-         return;
-      }
-      dest = ctx->VertexProgram.Parameters[index];
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramEnvParameters4fv(target)");
-      return;
-   }
+    if (target == GL_FRAGMENT_PROGRAM_ARB
+	&& ctx->Extensions.ARB_fragment_program) {
+	if ((index + count) > ctx->Const.FragmentProgram.MaxEnvParams) {
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameters4fv(index + count)");
+	    return;
+	}
+	dest = ctx->FragmentProgram.Parameters[index];
+    } else if (target == GL_VERTEX_PROGRAM_ARB
+	       && ctx->Extensions.ARB_vertex_program) {
+	if ((index + count) > ctx->Const.VertexProgram.MaxEnvParams) {
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glProgramEnvParameters4fv(index + count)");
+	    return;
+	}
+	dest = ctx->VertexProgram.Parameters[index];
+    } else {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glProgramEnvParameters4fv(target)");
+	return;
+    }
 
-   for ( i = 0 ; i < count ; i++ ) {
-      COPY_4V(dest, params);
-      params += 4;
-      dest += 4;
-   }
+    for (i = 0 ; i < count ; i++) {
+	COPY_4V(dest, params);
+	params += 4;
+	dest += 4;
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_GetProgramEnvParameterdvARB(GLenum target, GLuint index,
-                                  GLdouble *params)
+				  GLdouble *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat fparams[4];
+    GET_CURRENT_CONTEXT(ctx);
+    GLfloat fparams[4];
 
-   _mesa_GetProgramEnvParameterfvARB(target, index, fparams);
-   if (ctx->ErrorValue == GL_NO_ERROR) {
-      params[0] = fparams[0];
-      params[1] = fparams[1];
-      params[2] = fparams[2];
-      params[3] = fparams[3];
-   }
+    _mesa_GetProgramEnvParameterfvARB(target, index, fparams);
+    if (ctx->ErrorValue == GL_NO_ERROR) {
+	params[0] = fparams[0];
+	params[1] = fparams[1];
+	params[2] = fparams[2];
+	params[3] = fparams[3];
+    }
 }
 
 
 void GLAPIENTRY
-_mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index, 
-                                  GLfloat *params)
+_mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
+				  GLfloat *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
+    GET_CURRENT_CONTEXT(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if (!ctx->_CurrentProgram)
-      ASSERT_OUTSIDE_BEGIN_END(ctx);
+    if (!ctx->_CurrentProgram)
+	ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_FRAGMENT_PROGRAM_ARB
-       && ctx->Extensions.ARB_fragment_program) {
-      if (index >= ctx->Const.FragmentProgram.MaxEnvParams) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
-         return;
-      }
-      COPY_4V(params, ctx->FragmentProgram.Parameters[index]);
-   }
-   else if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program) {
-      if (index >= ctx->Const.VertexProgram.MaxEnvParams) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
-         return;
-      }
-      COPY_4V(params, ctx->VertexProgram.Parameters[index]);
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramEnvParameter(target)");
-      return;
-   }
+    if (target == GL_FRAGMENT_PROGRAM_ARB
+	&& ctx->Extensions.ARB_fragment_program) {
+	if (index >= ctx->Const.FragmentProgram.MaxEnvParams) {
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
+	    return;
+	}
+	COPY_4V(params, ctx->FragmentProgram.Parameters[index]);
+    } else if (target == GL_VERTEX_PROGRAM_ARB
+	       && ctx->Extensions.ARB_vertex_program) {
+	if (index >= ctx->Const.VertexProgram.MaxEnvParams) {
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glGetProgramEnvParameter(index)");
+	    return;
+	}
+	COPY_4V(params, ctx->VertexProgram.Parameters[index]);
+    } else {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramEnvParameter(target)");
+	return;
+    }
 }
 
 
@@ -407,42 +397,40 @@ _mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
  */
 void GLAPIENTRY
 _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
-                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+				 GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct gl_program *prog;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    struct gl_program *prog;
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if ((target == GL_FRAGMENT_PROGRAM_NV
-        && ctx->Extensions.NV_fragment_program) ||
-       (target == GL_FRAGMENT_PROGRAM_ARB
-        && ctx->Extensions.ARB_fragment_program)) {
-      if (index >= ctx->Const.FragmentProgram.MaxLocalParams) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameterARB");
-         return;
-      }
-      prog = &(ctx->FragmentProgram.Current->Base);
-   }
-   else if (target == GL_VERTEX_PROGRAM_ARB
-            && ctx->Extensions.ARB_vertex_program) {
-      if (index >= ctx->Const.VertexProgram.MaxLocalParams) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameterARB");
-         return;
-      }
-      prog = &(ctx->VertexProgram.Current->Base);
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameterARB");
-      return;
-   }
+    if ((target == GL_FRAGMENT_PROGRAM_NV
+	 && ctx->Extensions.NV_fragment_program) ||
+	(target == GL_FRAGMENT_PROGRAM_ARB
+	 && ctx->Extensions.ARB_fragment_program)) {
+	if (index >= ctx->Const.FragmentProgram.MaxLocalParams) {
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameterARB");
+	    return;
+	}
+	prog = &(ctx->FragmentProgram.Current->Base);
+    } else if (target == GL_VERTEX_PROGRAM_ARB
+	       && ctx->Extensions.ARB_vertex_program) {
+	if (index >= ctx->Const.VertexProgram.MaxLocalParams) {
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameterARB");
+	    return;
+	}
+	prog = &(ctx->VertexProgram.Current->Base);
+    } else {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameterARB");
+	return;
+    }
 
-   ASSERT(index < MAX_PROGRAM_LOCAL_PARAMS);
-   prog->LocalParams[index][0] = x;
-   prog->LocalParams[index][1] = y;
-   prog->LocalParams[index][2] = z;
-   prog->LocalParams[index][3] = w;
+    ASSERT(index < MAX_PROGRAM_LOCAL_PARAMS);
+    prog->LocalParams[index][0] = x;
+    prog->LocalParams[index][1] = y;
+    prog->LocalParams[index][2] = z;
+    prog->LocalParams[index][3] = w;
 }
 
 
@@ -451,10 +439,10 @@ _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
  */
 void GLAPIENTRY
 _mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
-                                  const GLfloat *params)
+				  const GLfloat *params)
 {
-   _mesa_ProgramLocalParameter4fARB(target, index, params[0], params[1],
-                                    params[2], params[3]);
+    _mesa_ProgramLocalParameter4fARB(target, index, params[0], params[1],
+				     params[2], params[3]);
 }
 
 
@@ -462,43 +450,41 @@ void GLAPIENTRY
 _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 				   const GLfloat *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct gl_program *prog;
-   GLint i;
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    struct gl_program *prog;
+    GLint i;
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   if (count <= 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fv(count)");
-   }
+    if (count <= 0) {
+	_mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fv(count)");
+    }
 
-   if (target == GL_FRAGMENT_PROGRAM_ARB
-       && ctx->Extensions.ARB_fragment_program) {
-      if ((index + count) > ctx->Const.FragmentProgram.MaxLocalParams) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fvEXT(index + count)");
-         return;
-      }
-      prog = &(ctx->FragmentProgram.Current->Base);
-   }
-   else if (target == GL_VERTEX_PROGRAM_ARB
-            && ctx->Extensions.ARB_vertex_program) {
-      if ((index + count) > ctx->Const.VertexProgram.MaxLocalParams) {
-         _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fvEXT(index + count)");
-         return;
-      }
-      prog = &(ctx->VertexProgram.Current->Base);
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameters4fvEXT(target)");
-      return;
-   }
+    if (target == GL_FRAGMENT_PROGRAM_ARB
+	&& ctx->Extensions.ARB_fragment_program) {
+	if ((index + count) > ctx->Const.FragmentProgram.MaxLocalParams) {
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fvEXT(index + count)");
+	    return;
+	}
+	prog = &(ctx->FragmentProgram.Current->Base);
+    } else if (target == GL_VERTEX_PROGRAM_ARB
+	       && ctx->Extensions.ARB_vertex_program) {
+	if ((index + count) > ctx->Const.VertexProgram.MaxLocalParams) {
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glProgramLocalParameters4fvEXT(index + count)");
+	    return;
+	}
+	prog = &(ctx->VertexProgram.Current->Base);
+    } else {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glProgramLocalParameters4fvEXT(target)");
+	return;
+    }
 
-   for (i = 0; i < count; i++) {
-      ASSERT((index + i) < MAX_PROGRAM_LOCAL_PARAMS);
-      COPY_4V(prog->LocalParams[index + i], params);
-      params += 4;
-   }
+    for (i = 0; i < count; i++) {
+	ASSERT((index + i) < MAX_PROGRAM_LOCAL_PARAMS);
+	COPY_4V(prog->LocalParams[index + i], params);
+	params += 4;
+    }
 }
 
 
@@ -507,11 +493,11 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
  */
 void GLAPIENTRY
 _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
-                                 GLdouble x, GLdouble y,
-                                 GLdouble z, GLdouble w)
+				 GLdouble x, GLdouble y,
+				 GLdouble z, GLdouble w)
 {
-   _mesa_ProgramLocalParameter4fARB(target, index, (GLfloat) x, (GLfloat) y, 
-                                    (GLfloat) z, (GLfloat) w);
+    _mesa_ProgramLocalParameter4fARB(target, index, (GLfloat) x, (GLfloat) y,
+				     (GLfloat) z, (GLfloat) w);
 }
 
 
@@ -520,11 +506,11 @@ _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
  */
 void GLAPIENTRY
 _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
-                                  const GLdouble *params)
+				  const GLdouble *params)
 {
-   _mesa_ProgramLocalParameter4fARB(target, index,
-                                    (GLfloat) params[0], (GLfloat) params[1],
-                                    (GLfloat) params[2], (GLfloat) params[3]);
+    _mesa_ProgramLocalParameter4fARB(target, index,
+				     (GLfloat) params[0], (GLfloat) params[1],
+				     (GLfloat) params[2], (GLfloat) params[3]);
 }
 
 
@@ -533,43 +519,40 @@ _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
  */
 void GLAPIENTRY
 _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
-                                    GLfloat *params)
+				    GLfloat *params)
 {
-   const struct gl_program *prog;
-   GLuint maxParams;
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    const struct gl_program *prog;
+    GLuint maxParams;
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program) {
-      prog = &(ctx->VertexProgram.Current->Base);
-      maxParams = ctx->Const.VertexProgram.MaxLocalParams;
-   }
-   else if (target == GL_FRAGMENT_PROGRAM_ARB
-            && ctx->Extensions.ARB_fragment_program) {
-      prog = &(ctx->FragmentProgram.Current->Base);
-      maxParams = ctx->Const.FragmentProgram.MaxLocalParams;
-   }
-   else if (target == GL_FRAGMENT_PROGRAM_NV
-            && ctx->Extensions.NV_fragment_program) {
-      prog = &(ctx->FragmentProgram.Current->Base);
-      maxParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM,
-                  "glGetProgramLocalParameterARB(target)");
-      return;
-   }
+    if (target == GL_VERTEX_PROGRAM_ARB
+	&& ctx->Extensions.ARB_vertex_program) {
+	prog = &(ctx->VertexProgram.Current->Base);
+	maxParams = ctx->Const.VertexProgram.MaxLocalParams;
+    } else if (target == GL_FRAGMENT_PROGRAM_ARB
+	       && ctx->Extensions.ARB_fragment_program) {
+	prog = &(ctx->FragmentProgram.Current->Base);
+	maxParams = ctx->Const.FragmentProgram.MaxLocalParams;
+    } else if (target == GL_FRAGMENT_PROGRAM_NV
+	       && ctx->Extensions.NV_fragment_program) {
+	prog = &(ctx->FragmentProgram.Current->Base);
+	maxParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
+    } else {
+	_mesa_error(ctx, GL_INVALID_ENUM,
+		    "glGetProgramLocalParameterARB(target)");
+	return;
+    }
 
-   if (index >= maxParams) {
-      _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glGetProgramLocalParameterARB(index)");
-      return;
-   }
+    if (index >= maxParams) {
+	_mesa_error(ctx, GL_INVALID_VALUE,
+		    "glGetProgramLocalParameterARB(index)");
+	return;
+    }
 
-   ASSERT(prog);
-   ASSERT(index < MAX_PROGRAM_LOCAL_PARAMS);
-   COPY_4V(params, prog->LocalParams[index]);
+    ASSERT(prog);
+    ASSERT(index < MAX_PROGRAM_LOCAL_PARAMS);
+    COPY_4V(params, prog->LocalParams[index]);
 }
 
 
@@ -578,229 +561,223 @@ _mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
  */
 void GLAPIENTRY
 _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
-                                    GLdouble *params)
+				    GLdouble *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat floatParams[4];
-   _mesa_GetProgramLocalParameterfvARB(target, index, floatParams);
-   if (ctx->ErrorValue == GL_NO_ERROR) {
-      COPY_4V(params, floatParams);
-   }
+    GET_CURRENT_CONTEXT(ctx);
+    GLfloat floatParams[4];
+    _mesa_GetProgramLocalParameterfvARB(target, index, floatParams);
+    if (ctx->ErrorValue == GL_NO_ERROR) {
+	COPY_4V(params, floatParams);
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_GetProgramivARB(GLenum target, GLenum pname, GLint *params)
 {
-   const struct gl_program_constants *limits;
-   struct gl_program *prog;
-   GET_CURRENT_CONTEXT(ctx);
+    const struct gl_program_constants *limits;
+    struct gl_program *prog;
+    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->_CurrentProgram)
-      ASSERT_OUTSIDE_BEGIN_END(ctx);
+    if (!ctx->_CurrentProgram)
+	ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_VERTEX_PROGRAM_ARB
-       && ctx->Extensions.ARB_vertex_program) {
-      prog = &(ctx->VertexProgram.Current->Base);
-      limits = &ctx->Const.VertexProgram;
-   }
-   else if (target == GL_FRAGMENT_PROGRAM_ARB
-            && ctx->Extensions.ARB_fragment_program) {
-      prog = &(ctx->FragmentProgram.Current->Base);
-      limits = &ctx->Const.FragmentProgram;
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(target)");
-      return;
-   }
+    if (target == GL_VERTEX_PROGRAM_ARB
+	&& ctx->Extensions.ARB_vertex_program) {
+	prog = &(ctx->VertexProgram.Current->Base);
+	limits = &ctx->Const.VertexProgram;
+    } else if (target == GL_FRAGMENT_PROGRAM_ARB
+	       && ctx->Extensions.ARB_fragment_program) {
+	prog = &(ctx->FragmentProgram.Current->Base);
+	limits = &ctx->Const.FragmentProgram;
+    } else {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(target)");
+	return;
+    }
 
-   ASSERT(prog);
-   ASSERT(limits);
+    ASSERT(prog);
+    ASSERT(limits);
 
-   /* Queries supported for both vertex and fragment programs */
-   switch (pname) {
-      case GL_PROGRAM_LENGTH_ARB:
-         *params
-            = prog->String ? (GLint) _mesa_strlen((char *) prog->String) : 0;
-         return;
-      case GL_PROGRAM_FORMAT_ARB:
-         *params = prog->Format;
-         return;
-      case GL_PROGRAM_BINDING_ARB:
-         *params = prog->Id;
-         return;
-      case GL_PROGRAM_INSTRUCTIONS_ARB:
-         *params = prog->NumInstructions;
-         return;
-      case GL_MAX_PROGRAM_INSTRUCTIONS_ARB:
-         *params = limits->MaxInstructions;
-         return;
-      case GL_PROGRAM_NATIVE_INSTRUCTIONS_ARB:
-         *params = prog->NumNativeInstructions;
-         return;
-      case GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB:
-         *params = limits->MaxNativeInstructions;
-         return;
-      case GL_PROGRAM_TEMPORARIES_ARB:
-         *params = prog->NumTemporaries;
-         return;
-      case GL_MAX_PROGRAM_TEMPORARIES_ARB:
-         *params = limits->MaxTemps;
-         return;
-      case GL_PROGRAM_NATIVE_TEMPORARIES_ARB:
-         *params = prog->NumNativeTemporaries;
-         return;
-      case GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB:
-         *params = limits->MaxNativeTemps;
-         return;
-      case GL_PROGRAM_PARAMETERS_ARB:
-         *params = prog->NumParameters;
-         return;
-      case GL_MAX_PROGRAM_PARAMETERS_ARB:
-         *params = limits->MaxParameters;
-         return;
-      case GL_PROGRAM_NATIVE_PARAMETERS_ARB:
-         *params = prog->NumNativeParameters;
-         return;
-      case GL_MAX_PROGRAM_NATIVE_PARAMETERS_ARB:
-         *params = limits->MaxNativeParameters;
-         return;
-      case GL_PROGRAM_ATTRIBS_ARB:
-         *params = prog->NumAttributes;
-         return;
-      case GL_MAX_PROGRAM_ATTRIBS_ARB:
-         *params = limits->MaxAttribs;
-         return;
-      case GL_PROGRAM_NATIVE_ATTRIBS_ARB:
-         *params = prog->NumNativeAttributes;
-         return;
-      case GL_MAX_PROGRAM_NATIVE_ATTRIBS_ARB:
-         *params = limits->MaxNativeAttribs;
-         return;
-      case GL_PROGRAM_ADDRESS_REGISTERS_ARB:
-         *params = prog->NumAddressRegs;
-         return;
-      case GL_MAX_PROGRAM_ADDRESS_REGISTERS_ARB:
-         *params = limits->MaxAddressRegs;
-         return;
-      case GL_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB:
-         *params = prog->NumNativeAddressRegs;
-         return;
-      case GL_MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB:
-         *params = limits->MaxNativeAddressRegs;
-         return;
-      case GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB:
-         *params = limits->MaxLocalParams;
-         return;
-      case GL_MAX_PROGRAM_ENV_PARAMETERS_ARB:
-         *params = limits->MaxEnvParams;
-         return;
-      case GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB:
-         /*
-          * XXX we may not really need a driver callback here.
-          * If the number of native instructions, registers, etc. used
-          * are all below the maximums, we could return true.
-          * The spec says that even if this query returns true, there's
-          * no guarantee that the program will run in hardware.
-          */
-         if (prog->Id == 0) {
-            /* default/null program */
-            *params = GL_FALSE;
-         }
-	 else if (ctx->Driver.IsProgramNative) {
-            /* ask the driver */
-	    *params = ctx->Driver.IsProgramNative( ctx, target, prog );
-         }
-	 else {
-            /* probably running in software */
-	    *params = GL_TRUE;
-         }
-         return;
-      default:
-         /* continue with fragment-program only queries below */
-         break;
-   }
+    /* Queries supported for both vertex and fragment programs */
+    switch (pname) {
+	case GL_PROGRAM_LENGTH_ARB:
+	    *params
+		= prog->String ? (GLint) _mesa_strlen((char *) prog->String) : 0;
+	    return;
+	case GL_PROGRAM_FORMAT_ARB:
+	    *params = prog->Format;
+	    return;
+	case GL_PROGRAM_BINDING_ARB:
+	    *params = prog->Id;
+	    return;
+	case GL_PROGRAM_INSTRUCTIONS_ARB:
+	    *params = prog->NumInstructions;
+	    return;
+	case GL_MAX_PROGRAM_INSTRUCTIONS_ARB:
+	    *params = limits->MaxInstructions;
+	    return;
+	case GL_PROGRAM_NATIVE_INSTRUCTIONS_ARB:
+	    *params = prog->NumNativeInstructions;
+	    return;
+	case GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB:
+	    *params = limits->MaxNativeInstructions;
+	    return;
+	case GL_PROGRAM_TEMPORARIES_ARB:
+	    *params = prog->NumTemporaries;
+	    return;
+	case GL_MAX_PROGRAM_TEMPORARIES_ARB:
+	    *params = limits->MaxTemps;
+	    return;
+	case GL_PROGRAM_NATIVE_TEMPORARIES_ARB:
+	    *params = prog->NumNativeTemporaries;
+	    return;
+	case GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB:
+	    *params = limits->MaxNativeTemps;
+	    return;
+	case GL_PROGRAM_PARAMETERS_ARB:
+	    *params = prog->NumParameters;
+	    return;
+	case GL_MAX_PROGRAM_PARAMETERS_ARB:
+	    *params = limits->MaxParameters;
+	    return;
+	case GL_PROGRAM_NATIVE_PARAMETERS_ARB:
+	    *params = prog->NumNativeParameters;
+	    return;
+	case GL_MAX_PROGRAM_NATIVE_PARAMETERS_ARB:
+	    *params = limits->MaxNativeParameters;
+	    return;
+	case GL_PROGRAM_ATTRIBS_ARB:
+	    *params = prog->NumAttributes;
+	    return;
+	case GL_MAX_PROGRAM_ATTRIBS_ARB:
+	    *params = limits->MaxAttribs;
+	    return;
+	case GL_PROGRAM_NATIVE_ATTRIBS_ARB:
+	    *params = prog->NumNativeAttributes;
+	    return;
+	case GL_MAX_PROGRAM_NATIVE_ATTRIBS_ARB:
+	    *params = limits->MaxNativeAttribs;
+	    return;
+	case GL_PROGRAM_ADDRESS_REGISTERS_ARB:
+	    *params = prog->NumAddressRegs;
+	    return;
+	case GL_MAX_PROGRAM_ADDRESS_REGISTERS_ARB:
+	    *params = limits->MaxAddressRegs;
+	    return;
+	case GL_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB:
+	    *params = prog->NumNativeAddressRegs;
+	    return;
+	case GL_MAX_PROGRAM_NATIVE_ADDRESS_REGISTERS_ARB:
+	    *params = limits->MaxNativeAddressRegs;
+	    return;
+	case GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB:
+	    *params = limits->MaxLocalParams;
+	    return;
+	case GL_MAX_PROGRAM_ENV_PARAMETERS_ARB:
+	    *params = limits->MaxEnvParams;
+	    return;
+	case GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB:
+	    /*
+	     * XXX we may not really need a driver callback here.
+	     * If the number of native instructions, registers, etc. used
+	     * are all below the maximums, we could return true.
+	     * The spec says that even if this query returns true, there's
+	     * no guarantee that the program will run in hardware.
+	     */
+	    if (prog->Id == 0) {
+		/* default/null program */
+		*params = GL_FALSE;
+	    } else if (ctx->Driver.IsProgramNative) {
+		/* ask the driver */
+		*params = ctx->Driver.IsProgramNative(ctx, target, prog);
+	    } else {
+		/* probably running in software */
+		*params = GL_TRUE;
+	    }
+	    return;
+	default:
+	    /* continue with fragment-program only queries below */
+	    break;
+    }
 
-   /*
-    * The following apply to fragment programs only (at this time)
-    */
-   if (target == GL_FRAGMENT_PROGRAM_ARB) {
-      const struct gl_fragment_program *fp = ctx->FragmentProgram.Current;
-      switch (pname) {
-         case GL_PROGRAM_ALU_INSTRUCTIONS_ARB:
-            *params = fp->Base.NumNativeAluInstructions;
-            return;
-         case GL_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB:
-            *params = fp->Base.NumAluInstructions;
-            return;
-         case GL_PROGRAM_TEX_INSTRUCTIONS_ARB:
-            *params = fp->Base.NumTexInstructions;
-            return;
-         case GL_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB:
-            *params = fp->Base.NumNativeTexInstructions;
-            return;
-         case GL_PROGRAM_TEX_INDIRECTIONS_ARB:
-            *params = fp->Base.NumTexIndirections;
-            return;
-         case GL_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB:
-            *params = fp->Base.NumNativeTexIndirections;
-            return;
-         case GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB:
-            *params = limits->MaxAluInstructions;
-            return;
-         case GL_MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB:
-            *params = limits->MaxNativeAluInstructions;
-            return;
-         case GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB:
-            *params = limits->MaxTexInstructions;
-            return;
-         case GL_MAX_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB:
-            *params = limits->MaxNativeTexInstructions;
-            return;
-         case GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB:
-            *params = limits->MaxTexIndirections;
-            return;
-         case GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB:
-            *params = limits->MaxNativeTexIndirections;
-            return;
-         default:
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(pname)");
-            return;
-      }
-   }
+    /*
+     * The following apply to fragment programs only (at this time)
+     */
+    if (target == GL_FRAGMENT_PROGRAM_ARB) {
+	const struct gl_fragment_program *fp = ctx->FragmentProgram.Current;
+	switch (pname) {
+	    case GL_PROGRAM_ALU_INSTRUCTIONS_ARB:
+		*params = fp->Base.NumNativeAluInstructions;
+		return;
+	    case GL_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB:
+		*params = fp->Base.NumAluInstructions;
+		return;
+	    case GL_PROGRAM_TEX_INSTRUCTIONS_ARB:
+		*params = fp->Base.NumTexInstructions;
+		return;
+	    case GL_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB:
+		*params = fp->Base.NumNativeTexInstructions;
+		return;
+	    case GL_PROGRAM_TEX_INDIRECTIONS_ARB:
+		*params = fp->Base.NumTexIndirections;
+		return;
+	    case GL_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB:
+		*params = fp->Base.NumNativeTexIndirections;
+		return;
+	    case GL_MAX_PROGRAM_ALU_INSTRUCTIONS_ARB:
+		*params = limits->MaxAluInstructions;
+		return;
+	    case GL_MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB:
+		*params = limits->MaxNativeAluInstructions;
+		return;
+	    case GL_MAX_PROGRAM_TEX_INSTRUCTIONS_ARB:
+		*params = limits->MaxTexInstructions;
+		return;
+	    case GL_MAX_PROGRAM_NATIVE_TEX_INSTRUCTIONS_ARB:
+		*params = limits->MaxNativeTexInstructions;
+		return;
+	    case GL_MAX_PROGRAM_TEX_INDIRECTIONS_ARB:
+		*params = limits->MaxTexIndirections;
+		return;
+	    case GL_MAX_PROGRAM_NATIVE_TEX_INDIRECTIONS_ARB:
+		*params = limits->MaxNativeTexIndirections;
+		return;
+	    default:
+		_mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramivARB(pname)");
+		return;
+	}
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_GetProgramStringARB(GLenum target, GLenum pname, GLvoid *string)
 {
-   const struct gl_program *prog;
-   char *dst = (char *) string;
-   GET_CURRENT_CONTEXT(ctx);
+    const struct gl_program *prog;
+    char *dst = (char *) string;
+    GET_CURRENT_CONTEXT(ctx);
 
-   if (!ctx->_CurrentProgram)
-      ASSERT_OUTSIDE_BEGIN_END(ctx);
+    if (!ctx->_CurrentProgram)
+	ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (target == GL_VERTEX_PROGRAM_ARB) {
-      prog = &(ctx->VertexProgram.Current->Base);
-   }
-   else if (target == GL_FRAGMENT_PROGRAM_ARB) {
-      prog = &(ctx->FragmentProgram.Current->Base);
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramStringARB(target)");
-      return;
-   }
+    if (target == GL_VERTEX_PROGRAM_ARB) {
+	prog = &(ctx->VertexProgram.Current->Base);
+    } else if (target == GL_FRAGMENT_PROGRAM_ARB) {
+	prog = &(ctx->FragmentProgram.Current->Base);
+    } else {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramStringARB(target)");
+	return;
+    }
 
-   ASSERT(prog);
+    ASSERT(prog);
 
-   if (pname != GL_PROGRAM_STRING_ARB) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramStringARB(pname)");
-      return;
-   }
+    if (pname != GL_PROGRAM_STRING_ARB) {
+	_mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramStringARB(pname)");
+	return;
+    }
 
-   if (prog->String)
-      _mesa_memcpy(dst, prog->String, _mesa_strlen((char *) prog->String));
-   else
-      *dst = '\0';
+    if (prog->String)
+	_mesa_memcpy(dst, prog->String, _mesa_strlen((char *) prog->String));
+    else
+	*dst = '\0';
 }

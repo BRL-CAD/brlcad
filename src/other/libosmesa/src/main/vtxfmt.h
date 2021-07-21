@@ -1,6 +1,6 @@
 /**
  * \file vtxfmt.h
- * 
+ *
  * \author Keith Whitwell <keith@tungstengraphics.com>
  * \author Gareth Hughes
  */
@@ -33,11 +33,11 @@
 #ifndef _VTXFMT_H_
 #define _VTXFMT_H_
 
-extern void _mesa_init_exec_vtxfmt( GLcontext *ctx );
+extern void _mesa_init_exec_vtxfmt(GLcontext *ctx);
 
-extern void _mesa_install_exec_vtxfmt( GLcontext *ctx, const GLvertexformat *vfmt );
-extern void _mesa_install_save_vtxfmt( GLcontext *ctx, const GLvertexformat *vfmt );
+extern void _mesa_install_exec_vtxfmt(GLcontext *ctx, const GLvertexformat *vfmt);
+extern void _mesa_install_save_vtxfmt(GLcontext *ctx, const GLvertexformat *vfmt);
 
-extern void _mesa_restore_exec_vtxfmt( GLcontext *ctx );
+extern void _mesa_restore_exec_vtxfmt(GLcontext *ctx);
 
 #endif

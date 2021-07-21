@@ -33,11 +33,11 @@
 
 extern void
 _mesa_ProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
-                          GLvoid *data);
+			  GLvoid *data);
 
 extern void
 _mesa_GetProgramRegisterfvMESA(GLenum target, GLsizei len,
-                               const GLubyte *registerName, GLfloat *v);
+			       const GLubyte *registerName, GLfloat *v);
 
 
 

@@ -37,36 +37,33 @@
 extern "C" {
 #endif
 
-typedef enum slang_unit_type_
-{
-   SLANG_UNIT_FRAGMENT_SHADER,
-   SLANG_UNIT_VERTEX_SHADER,
-   SLANG_UNIT_FRAGMENT_BUILTIN,
-   SLANG_UNIT_VERTEX_BUILTIN
-} slang_unit_type;
+    typedef enum slang_unit_type_ {
+	SLANG_UNIT_FRAGMENT_SHADER,
+	SLANG_UNIT_VERTEX_SHADER,
+	SLANG_UNIT_FRAGMENT_BUILTIN,
+	SLANG_UNIT_VERTEX_BUILTIN
+    } slang_unit_type;
 
 
-typedef struct slang_var_pool_
-{
-   GLuint next_addr;
-} slang_var_pool;
+    typedef struct slang_var_pool_ {
+	GLuint next_addr;
+    } slang_var_pool;
 
 
-typedef struct slang_code_unit_
-{
-   slang_variable_scope vars;
-   slang_function_scope funs;
-   slang_struct_scope structs;
-   slang_unit_type type;
-   struct slang_code_object_ *object;
-} slang_code_unit;
+    typedef struct slang_code_unit_ {
+	slang_variable_scope vars;
+	slang_function_scope funs;
+	slang_struct_scope structs;
+	slang_unit_type type;
+	struct slang_code_object_ *object;
+    } slang_code_unit;
 
 
-extern GLvoid
-_slang_code_unit_ctr (slang_code_unit *, struct slang_code_object_ *);
+    extern GLvoid
+    _slang_code_unit_ctr(slang_code_unit *, struct slang_code_object_ *);
 
-extern GLvoid
-_slang_code_unit_dtr (slang_code_unit *);
+    extern GLvoid
+    _slang_code_unit_dtr(slang_code_unit *);
 
 #define SLANG_BUILTIN_CORE   0
 #define SLANG_BUILTIN_120_CORE   1
@@ -75,22 +72,21 @@ _slang_code_unit_dtr (slang_code_unit *);
 
 #define SLANG_BUILTIN_TOTAL  4
 
-typedef struct slang_code_object_
-{
-   slang_code_unit builtin[SLANG_BUILTIN_TOTAL];
-   slang_code_unit unit;
-   slang_var_pool varpool;
-   slang_atom_pool atompool;
-} slang_code_object;
+    typedef struct slang_code_object_ {
+	slang_code_unit builtin[SLANG_BUILTIN_TOTAL];
+	slang_code_unit unit;
+	slang_var_pool varpool;
+	slang_atom_pool atompool;
+    } slang_code_object;
 
-extern GLvoid
-_slang_code_object_ctr (slang_code_object *);
+    extern GLvoid
+    _slang_code_object_ctr(slang_code_object *);
 
-extern GLvoid
-_slang_code_object_dtr (slang_code_object *);
+    extern GLvoid
+    _slang_code_object_dtr(slang_code_object *);
 
-extern GLboolean
-_slang_compile (GLcontext *ctx, struct gl_shader *shader);
+    extern GLboolean
+    _slang_compile(GLcontext *ctx, struct gl_shader *shader);
 
 #ifdef __cplusplus
 }

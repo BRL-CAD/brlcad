@@ -71,7 +71,7 @@ const extern void *_glapi_Context;
 const extern struct _glapi_table *_glapi_Dispatch;
 
 extern __thread void * _glapi_tls_Context
-    __attribute__((tls_model("initial-exec")));
+__attribute__((tls_model("initial-exec")));
 
 # define GET_CURRENT_CONTEXT(C)  GLcontext *C = (GLcontext *) _glapi_tls_Context
 
@@ -140,8 +140,8 @@ _glapi_check_table(const struct _glapi_table *table);
 
 
 extern int
-_glapi_add_dispatch( const char * const * function_names,
-		     const char * parameter_signature );
+_glapi_add_dispatch(const char * const * function_names,
+		    const char * parameter_signature);
 
 extern GLint
 _glapi_get_proc_offset(const char *funcName);

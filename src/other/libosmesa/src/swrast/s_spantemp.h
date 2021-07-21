@@ -54,172 +54,170 @@
 
 
 static void
-NAME(get_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
-               GLuint count, GLint x, GLint y, void *values )
+NAME(get_row)(GLcontext *ctx, struct gl_renderbuffer *rb,
+	      GLuint count, GLint x, GLint y, void *values)
 {
 #ifdef SPAN_VARS
-   SPAN_VARS
+    SPAN_VARS
 #endif
 #ifdef CI_MODE
-   RB_TYPE *dest = (RB_TYPE *) values;
+    RB_TYPE *dest = (RB_TYPE *) values;
 #else
-   RB_TYPE (*dest)[RB_COMPONENTS] = (RB_TYPE (*)[RB_COMPONENTS]) values;
+    RB_TYPE(*dest)[RB_COMPONENTS] = (RB_TYPE(*)[RB_COMPONENTS]) values;
 #endif
-   GLuint i;
-   INIT_PIXEL_PTR(pixel, x, y);
-   for (i = 0; i < count; i++) {
-      FETCH_PIXEL(dest[i], pixel);
-      INC_PIXEL_PTR(pixel);
-   }
-   (void) rb;
+    GLuint i;
+    INIT_PIXEL_PTR(pixel, x, y);
+    for (i = 0; i < count; i++) {
+	FETCH_PIXEL(dest[i], pixel);
+	INC_PIXEL_PTR(pixel);
+    }
+    (void) rb;
 }
 
 
 static void
-NAME(get_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
-                  GLuint count, const GLint x[], const GLint y[], void *values )
+NAME(get_values)(GLcontext *ctx, struct gl_renderbuffer *rb,
+		 GLuint count, const GLint x[], const GLint y[], void *values)
 {
 #ifdef SPAN_VARS
-   SPAN_VARS
+    SPAN_VARS
 #endif
 #ifdef CI_MODE
-   RB_TYPE *dest = (RB_TYPE *) values;
+    RB_TYPE *dest = (RB_TYPE *) values;
 #else
-   RB_TYPE (*dest)[RB_COMPONENTS] = (RB_TYPE (*)[RB_COMPONENTS]) values;
+    RB_TYPE(*dest)[RB_COMPONENTS] = (RB_TYPE(*)[RB_COMPONENTS]) values;
 #endif
-   GLuint i;
-   for (i = 0; i < count; i++) {
-      INIT_PIXEL_PTR(pixel, x[i], y[i]);
-      FETCH_PIXEL(dest[i], pixel);
-   }
-   (void) rb;
+    GLuint i;
+    for (i = 0; i < count; i++) {
+	INIT_PIXEL_PTR(pixel, x[i], y[i]);
+	FETCH_PIXEL(dest[i], pixel);
+    }
+    (void) rb;
 }
 
 
 static void
-NAME(put_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
-               GLuint count, GLint x, GLint y,
-               const void *values, const GLubyte mask[] )
+NAME(put_row)(GLcontext *ctx, struct gl_renderbuffer *rb,
+	      GLuint count, GLint x, GLint y,
+	      const void *values, const GLubyte mask[])
 {
 #ifdef SPAN_VARS
-   SPAN_VARS
+    SPAN_VARS
 #endif
-   const RB_TYPE (*src)[RB_COMPONENTS] = (const RB_TYPE (*)[RB_COMPONENTS]) values;
-   GLuint i;
-   INIT_PIXEL_PTR(pixel, x, y);
-   if (mask) {
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            STORE_PIXEL(pixel, x + i, y, src[i]);
-         }
-         INC_PIXEL_PTR(pixel);
-      }
-   }
-   else {
-      for (i = 0; i < count; i++) {
-         STORE_PIXEL(pixel, x + i, y, src[i]);
-         INC_PIXEL_PTR(pixel);
-      }
-   }
-   (void) rb;
+    const RB_TYPE(*src)[RB_COMPONENTS] = (const RB_TYPE(*)[RB_COMPONENTS]) values;
+    GLuint i;
+    INIT_PIXEL_PTR(pixel, x, y);
+    if (mask) {
+	for (i = 0; i < count; i++) {
+	    if (mask[i]) {
+		STORE_PIXEL(pixel, x + i, y, src[i]);
+	    }
+	    INC_PIXEL_PTR(pixel);
+	}
+    } else {
+	for (i = 0; i < count; i++) {
+	    STORE_PIXEL(pixel, x + i, y, src[i]);
+	    INC_PIXEL_PTR(pixel);
+	}
+    }
+    (void) rb;
 }
 
 
 #if !defined(CI_MODE)
 static void
-NAME(put_row_rgb)( GLcontext *ctx, struct gl_renderbuffer *rb,
-                   GLuint count, GLint x, GLint y,
-                   const void *values, const GLubyte mask[] )
+NAME(put_row_rgb)(GLcontext *ctx, struct gl_renderbuffer *rb,
+		  GLuint count, GLint x, GLint y,
+		  const void *values, const GLubyte mask[])
 {
 #ifdef SPAN_VARS
-   SPAN_VARS
+    SPAN_VARS
 #endif
-   const RB_TYPE (*src)[3] = (const RB_TYPE (*)[3]) values;
-   GLuint i;
-   INIT_PIXEL_PTR(pixel, x, y);
-   for (i = 0; i < count; i++) {
-      if (!mask || mask[i]) {
+    const RB_TYPE(*src)[3] = (const RB_TYPE(*)[3]) values;
+    GLuint i;
+    INIT_PIXEL_PTR(pixel, x, y);
+    for (i = 0; i < count; i++) {
+	if (!mask || mask[i]) {
 #ifdef STORE_PIXEL_RGB
-         STORE_PIXEL_RGB(pixel, x + i, y, src[i]);
+	    STORE_PIXEL_RGB(pixel, x + i, y, src[i]);
 #else
-         STORE_PIXEL(pixel, x + i, y, src[i]);
+	    STORE_PIXEL(pixel, x + i, y, src[i]);
 #endif
-      }
-      INC_PIXEL_PTR(pixel);
-   }
-   (void) rb;
+	}
+	INC_PIXEL_PTR(pixel);
+    }
+    (void) rb;
 }
 #endif
 
 
 static void
-NAME(put_mono_row)( GLcontext *ctx, struct gl_renderbuffer *rb,
-                    GLuint count, GLint x, GLint y,
-                    const void *value, const GLubyte mask[] )
+NAME(put_mono_row)(GLcontext *ctx, struct gl_renderbuffer *rb,
+		   GLuint count, GLint x, GLint y,
+		   const void *value, const GLubyte mask[])
 {
 #ifdef SPAN_VARS
-   SPAN_VARS
+    SPAN_VARS
 #endif
-   const RB_TYPE *src = (const RB_TYPE *) value;
-   GLuint i;
-   INIT_PIXEL_PTR(pixel, x, y);
-   if (mask) {
-      for (i = 0; i < count; i++) {
-         if (mask[i]) {
-            STORE_PIXEL(pixel, x + i, y, src);
-         }
-         INC_PIXEL_PTR(pixel);
-      }
-   }
-   else {
-      for (i = 0; i < count; i++) {
-         STORE_PIXEL(pixel, x + i, y, src);
-         INC_PIXEL_PTR(pixel);
-      }
-   }
-   (void) rb;
+    const RB_TYPE *src = (const RB_TYPE *) value;
+    GLuint i;
+    INIT_PIXEL_PTR(pixel, x, y);
+    if (mask) {
+	for (i = 0; i < count; i++) {
+	    if (mask[i]) {
+		STORE_PIXEL(pixel, x + i, y, src);
+	    }
+	    INC_PIXEL_PTR(pixel);
+	}
+    } else {
+	for (i = 0; i < count; i++) {
+	    STORE_PIXEL(pixel, x + i, y, src);
+	    INC_PIXEL_PTR(pixel);
+	}
+    }
+    (void) rb;
 }
 
 
 static void
-NAME(put_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
-                  GLuint count, const GLint x[], const GLint y[],
-                  const void *values, const GLubyte mask[] )
+NAME(put_values)(GLcontext *ctx, struct gl_renderbuffer *rb,
+		 GLuint count, const GLint x[], const GLint y[],
+		 const void *values, const GLubyte mask[])
 {
 #ifdef SPAN_VARS
-   SPAN_VARS
+    SPAN_VARS
 #endif
-   const RB_TYPE (*src)[RB_COMPONENTS] = (const RB_TYPE (*)[RB_COMPONENTS]) values;
-   GLuint i;
-   ASSERT(mask);
-   for (i = 0; i < count; i++) {
-      if (mask[i]) {
-         INIT_PIXEL_PTR(pixel, x[i], y[i]);
-         STORE_PIXEL(pixel, x[i], y[i], src[i]);
-      }
-   }
-   (void) rb;
+    const RB_TYPE(*src)[RB_COMPONENTS] = (const RB_TYPE(*)[RB_COMPONENTS]) values;
+    GLuint i;
+    ASSERT(mask);
+    for (i = 0; i < count; i++) {
+	if (mask[i]) {
+	    INIT_PIXEL_PTR(pixel, x[i], y[i]);
+	    STORE_PIXEL(pixel, x[i], y[i], src[i]);
+	}
+    }
+    (void) rb;
 }
 
 
 static void
-NAME(put_mono_values)( GLcontext *ctx, struct gl_renderbuffer *rb,
-                       GLuint count, const GLint x[], const GLint y[],
-                       const void *value, const GLubyte mask[] )
+NAME(put_mono_values)(GLcontext *ctx, struct gl_renderbuffer *rb,
+		      GLuint count, const GLint x[], const GLint y[],
+		      const void *value, const GLubyte mask[])
 {
 #ifdef SPAN_VARS
-   SPAN_VARS
+    SPAN_VARS
 #endif
-   const RB_TYPE *src = (const RB_TYPE *) value;
-   GLuint i;
-   ASSERT(mask);
-   for (i = 0; i < count; i++) {
-      if (mask[i]) {
-         INIT_PIXEL_PTR(pixel, x[i], y[i]);
-         STORE_PIXEL(pixel, x[i], y[i], src);
-      }
-   }
-   (void) rb;
+    const RB_TYPE *src = (const RB_TYPE *) value;
+    GLuint i;
+    ASSERT(mask);
+    for (i = 0; i < count; i++) {
+	if (mask[i]) {
+	    INIT_PIXEL_PTR(pixel, x[i], y[i]);
+	    STORE_PIXEL(pixel, x[i], y[i], src);
+	}
+    }
+    (void) rb;
 }
 
 

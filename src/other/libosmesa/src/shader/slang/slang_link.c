@@ -46,235 +46,229 @@
 static GLboolean
 link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 {
-   GLuint *map, i, firstVarying, newFile;
-   GLbitfield varsWritten, varsRead;
+    GLuint *map, i, firstVarying, newFile;
+    GLbitfield varsWritten, varsRead;
 
-   map = (GLuint *) malloc(prog->Varying->NumParameters * sizeof(GLuint));
-   if (!map)
-      return GL_FALSE;
+    map = (GLuint *) malloc(prog->Varying->NumParameters * sizeof(GLuint));
+    if (!map)
+	return GL_FALSE;
 
-   for (i = 0; i < prog->Varying->NumParameters; i++) {
-      /* see if this varying is in the linked varying list */
-      const struct gl_program_parameter *var
-         = prog->Varying->Parameters + i;
+    for (i = 0; i < prog->Varying->NumParameters; i++) {
+	/* see if this varying is in the linked varying list */
+	const struct gl_program_parameter *var
+		= prog->Varying->Parameters + i;
 
-      GLint j = _mesa_lookup_parameter_index(shProg->Varying, -1, var->Name);
-      if (j >= 0) {
-         /* already in list, check size */
-         if (var->Size != shProg->Varying->Parameters[j].Size) {
-            /* error */
-	    if (map)
-	       free(map);
-            return GL_FALSE;
-         }
-      }
-      else {
-         /* not already in linked list */
-         j = _mesa_add_varying(shProg->Varying, var->Name, var->Size);
-      }
-      ASSERT(j >= 0);
+	GLint j = _mesa_lookup_parameter_index(shProg->Varying, -1, var->Name);
+	if (j >= 0) {
+	    /* already in list, check size */
+	    if (var->Size != shProg->Varying->Parameters[j].Size) {
+		/* error */
+		if (map)
+		    free(map);
+		return GL_FALSE;
+	    }
+	} else {
+	    /* not already in linked list */
+	    j = _mesa_add_varying(shProg->Varying, var->Name, var->Size);
+	}
+	ASSERT(j >= 0);
 
-      map[i] = j;
-   }
+	map[i] = j;
+    }
 
 
-   /* Varying variables are treated like other vertex program outputs
-    * (and like other fragment program inputs).  The position of the
-    * first varying differs for vertex/fragment programs...
-    * Also, replace File=PROGRAM_VARYING with File=PROGRAM_INPUT/OUTPUT.
-    */
-   if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
-      firstVarying = VERT_RESULT_VAR0;
-      newFile = PROGRAM_OUTPUT;
-   }
-   else {
-      assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
-      firstVarying = FRAG_ATTRIB_VAR0;
-      newFile = PROGRAM_INPUT;
-   }
+    /* Varying variables are treated like other vertex program outputs
+     * (and like other fragment program inputs).  The position of the
+     * first varying differs for vertex/fragment programs...
+     * Also, replace File=PROGRAM_VARYING with File=PROGRAM_INPUT/OUTPUT.
+     */
+    if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
+	firstVarying = VERT_RESULT_VAR0;
+	newFile = PROGRAM_OUTPUT;
+    } else {
+	assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
+	firstVarying = FRAG_ATTRIB_VAR0;
+	newFile = PROGRAM_INPUT;
+    }
 
-   /* keep track of which varying vars we read and write */
-   varsWritten = varsRead = 0x0;
+    /* keep track of which varying vars we read and write */
+    varsWritten = varsRead = 0x0;
 
-   /* OK, now scan the program/shader instructions looking for varying vars,
-    * replacing the old index with the new index.
-    */
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
-      GLuint j;
+    /* OK, now scan the program/shader instructions looking for varying vars,
+     * replacing the old index with the new index.
+     */
+    for (i = 0; i < prog->NumInstructions; i++) {
+	struct prog_instruction *inst = prog->Instructions + i;
+	GLuint j;
 
-      if (inst->DstReg.File == PROGRAM_VARYING) {
-         inst->DstReg.File = newFile;
-         inst->DstReg.Index = map[ inst->DstReg.Index ] + firstVarying;
-         varsWritten |= (1 << inst->DstReg.Index);
-      }
+	if (inst->DstReg.File == PROGRAM_VARYING) {
+	    inst->DstReg.File = newFile;
+	    inst->DstReg.Index = map[ inst->DstReg.Index ] + firstVarying;
+	    varsWritten |= (1 << inst->DstReg.Index);
+	}
 
-      for (j = 0; j < 3; j++) {
-         if (inst->SrcReg[j].File == PROGRAM_VARYING) {
-            inst->SrcReg[j].File = newFile;
-            inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ] + firstVarying;
-            varsRead |= (1 << inst->SrcReg[j].Index);
-         }
-      }
-   }
+	for (j = 0; j < 3; j++) {
+	    if (inst->SrcReg[j].File == PROGRAM_VARYING) {
+		inst->SrcReg[j].File = newFile;
+		inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ] + firstVarying;
+		varsRead |= (1 << inst->SrcReg[j].Index);
+	    }
+	}
+    }
 
-   if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
-      prog->OutputsWritten |= varsWritten;
-      /*printf("VERT OUTPUTS: 0x%x \n", varsWritten);*/
-   }
-   else {
-      assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
-      prog->InputsRead |= varsRead;
-      /*printf("FRAG INPUTS: 0x%x\n", varsRead);*/
-   }
+    if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
+	prog->OutputsWritten |= varsWritten;
+	/*printf("VERT OUTPUTS: 0x%x \n", varsWritten);*/
+    } else {
+	assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
+	prog->InputsRead |= varsRead;
+	/*printf("FRAG INPUTS: 0x%x\n", varsRead);*/
+    }
 
-   free(map);
+    free(map);
 
-   return GL_TRUE;
+    return GL_TRUE;
 }
 
 
 static GLboolean
 is_uniform(GLuint file)
 {
-   return (file == PROGRAM_ENV_PARAM ||
-           file == PROGRAM_STATE_VAR ||
-           file == PROGRAM_NAMED_PARAM ||
-           file == PROGRAM_CONSTANT ||
-           file == PROGRAM_SAMPLER ||
-           file == PROGRAM_UNIFORM);
+    return (file == PROGRAM_ENV_PARAM ||
+	    file == PROGRAM_STATE_VAR ||
+	    file == PROGRAM_NAMED_PARAM ||
+	    file == PROGRAM_CONSTANT ||
+	    file == PROGRAM_SAMPLER ||
+	    file == PROGRAM_UNIFORM);
 }
 
 
 static GLboolean
 link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 {
-   GLuint *map, i;
+    GLuint *map, i;
 
 #if 0
-   printf("================ pre link uniforms ===============\n");
-   _mesa_print_parameter_list(shProg->Uniforms);
+    printf("================ pre link uniforms ===============\n");
+    _mesa_print_parameter_list(shProg->Uniforms);
 #endif
 
-   map = (GLuint *) malloc(prog->Parameters->NumParameters * sizeof(GLuint));
-   if (!map)
-      return GL_FALSE;
+    map = (GLuint *) malloc(prog->Parameters->NumParameters * sizeof(GLuint));
+    if (!map)
+	return GL_FALSE;
 
-   for (i = 0; i < prog->Parameters->NumParameters; /* incr below*/) {
-      /* see if this uniform is in the linked uniform list */
-      const struct gl_program_parameter *p = prog->Parameters->Parameters + i;
-      const GLfloat *pVals = prog->Parameters->ParameterValues[i];
-      GLint j;
-      GLint size;
+    for (i = 0; i < prog->Parameters->NumParameters; /* incr below*/) {
+	/* see if this uniform is in the linked uniform list */
+	const struct gl_program_parameter *p = prog->Parameters->Parameters + i;
+	const GLfloat *pVals = prog->Parameters->ParameterValues[i];
+	GLint j;
+	GLint size;
 
-      /* sanity check */
-      assert(is_uniform(p->Type));
+	/* sanity check */
+	assert(is_uniform(p->Type));
 
-      if (p->Name) {
-         j = _mesa_lookup_parameter_index(shProg->Uniforms, -1, p->Name);
-      }
-      else {
-         /*GLuint swizzle;*/
-         ASSERT(p->Type == PROGRAM_CONSTANT);
-         if (_mesa_lookup_parameter_constant(shProg->Uniforms, pVals,
-                                             p->Size, &j, NULL)) {
-            assert(j >= 0);
-         }
-         else {
-            j = -1;
-         }
-      }
+	if (p->Name) {
+	    j = _mesa_lookup_parameter_index(shProg->Uniforms, -1, p->Name);
+	} else {
+	    /*GLuint swizzle;*/
+	    ASSERT(p->Type == PROGRAM_CONSTANT);
+	    if (_mesa_lookup_parameter_constant(shProg->Uniforms, pVals,
+						p->Size, &j, NULL)) {
+		assert(j >= 0);
+	    } else {
+		j = -1;
+	    }
+	}
 
-      if (j >= 0) {
-         /* already in list, check size XXX check this */
+	if (j >= 0) {
+	    /* already in list, check size XXX check this */
 #if 0
-         assert(p->Size == shProg->Uniforms->Parameters[j].Size);
+	    assert(p->Size == shProg->Uniforms->Parameters[j].Size);
 #endif
-      }
-      else {
-         /* not already in linked list */
-         switch (p->Type) {
-         case PROGRAM_ENV_PARAM:
-            j = _mesa_add_named_parameter(shProg->Uniforms, p->Name, pVals);
-            break;
-         case PROGRAM_CONSTANT:
-            j = _mesa_add_named_constant(shProg->Uniforms, p->Name, pVals, p->Size);
-            break;
-         case PROGRAM_STATE_VAR:
-            j = _mesa_add_state_reference(shProg->Uniforms, p->StateIndexes);
-            break;
-         case PROGRAM_UNIFORM:
-            j = _mesa_add_uniform(shProg->Uniforms, p->Name, p->Size, p->DataType);
-            break;
-         case PROGRAM_SAMPLER:
-            j = _mesa_add_sampler(shProg->Uniforms, p->Name, p->DataType);
-            break;
-         default:
-            _mesa_problem(NULL, "bad parameter type in link_uniform_vars()");
-	    if (map)
-	       free(map);
-            return GL_FALSE;
-         }
-      }
+	} else {
+	    /* not already in linked list */
+	    switch (p->Type) {
+		case PROGRAM_ENV_PARAM:
+		    j = _mesa_add_named_parameter(shProg->Uniforms, p->Name, pVals);
+		    break;
+		case PROGRAM_CONSTANT:
+		    j = _mesa_add_named_constant(shProg->Uniforms, p->Name, pVals, p->Size);
+		    break;
+		case PROGRAM_STATE_VAR:
+		    j = _mesa_add_state_reference(shProg->Uniforms, p->StateIndexes);
+		    break;
+		case PROGRAM_UNIFORM:
+		    j = _mesa_add_uniform(shProg->Uniforms, p->Name, p->Size, p->DataType);
+		    break;
+		case PROGRAM_SAMPLER:
+		    j = _mesa_add_sampler(shProg->Uniforms, p->Name, p->DataType);
+		    break;
+		default:
+		    _mesa_problem(NULL, "bad parameter type in link_uniform_vars()");
+		    if (map)
+			free(map);
+		    return GL_FALSE;
+	    }
+	}
 
-      ASSERT(j >= 0);
+	ASSERT(j >= 0);
 
-      size = p->Size;
-      while (size > 0) {
-         map[i] = j;
-         i++;
-         j++;
-         size -= 4;
-      }
+	size = p->Size;
+	while (size > 0) {
+	    map[i] = j;
+	    i++;
+	    j++;
+	    size -= 4;
+	}
 
-   }
+    }
 
 #if 0
-   printf("================ post link uniforms ===============\n");
-   _mesa_print_parameter_list(shProg->Uniforms);
+    printf("================ post link uniforms ===============\n");
+    _mesa_print_parameter_list(shProg->Uniforms);
 #endif
 
 #if 0
-   {
-      GLuint i;
-      for (i = 0; i < prog->Parameters->NumParameters; i++) {
-         printf("map[%d] = %d\n", i, map[i]);
-      }
-      _mesa_print_parameter_list(shProg->Uniforms);
-   }
+    {
+	GLuint i;
+	for (i = 0; i < prog->Parameters->NumParameters; i++) {
+	    printf("map[%d] = %d\n", i, map[i]);
+	}
+	_mesa_print_parameter_list(shProg->Uniforms);
+    }
 #endif
 
-   /* OK, now scan the program/shader instructions looking for uniform vars,
-    * replacing the old index with the new index.
-    */
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
-      GLuint j;
+    /* OK, now scan the program/shader instructions looking for uniform vars,
+     * replacing the old index with the new index.
+     */
+    for (i = 0; i < prog->NumInstructions; i++) {
+	struct prog_instruction *inst = prog->Instructions + i;
+	GLuint j;
 
-      if (is_uniform(inst->DstReg.File)) {
-         inst->DstReg.Index = map[ inst->DstReg.Index ];
-      }
+	if (is_uniform(inst->DstReg.File)) {
+	    inst->DstReg.Index = map[ inst->DstReg.Index ];
+	}
 
-      for (j = 0; j < 3; j++) {
-         if (is_uniform(inst->SrcReg[j].File)) {
-            inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ];
-         }
-      }
+	for (j = 0; j < 3; j++) {
+	    if (is_uniform(inst->SrcReg[j].File)) {
+		inst->SrcReg[j].Index = map[ inst->SrcReg[j].Index ];
+	    }
+	}
 
-      if (inst->Opcode == OPCODE_TEX ||
-          inst->Opcode == OPCODE_TXB ||
-          inst->Opcode == OPCODE_TXP) {
-         /*
-         printf("====== remap sampler from %d to %d\n",
-                inst->Sampler, map[ inst->Sampler ]);
-         */
-         inst->Sampler = map[ inst->Sampler ];
-      }
-   }
+	if (inst->Opcode == OPCODE_TEX ||
+	    inst->Opcode == OPCODE_TXB ||
+	    inst->Opcode == OPCODE_TXP) {
+	    /*
+	    printf("====== remap sampler from %d to %d\n",
+	           inst->Sampler, map[ inst->Sampler ]);
+	    */
+	    inst->Sampler = map[ inst->Sampler ];
+	}
+    }
 
-   free(map);
+    free(map);
 
-   return GL_TRUE;
+    return GL_TRUE;
 }
 
 
@@ -286,73 +280,72 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
  */
 static GLboolean
 _slang_resolve_attributes(struct gl_shader_program *shProg,
-                          struct gl_program *prog)
+			  struct gl_program *prog)
 {
-   GLuint i, j;
-   GLbitfield usedAttributes;
-   GLint size = 4; /* XXX fix */
+    GLuint i, j;
+    GLbitfield usedAttributes;
+    GLint size = 4; /* XXX fix */
 
-   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+    assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
 
-   if (!shProg->Attributes)
-      shProg->Attributes = _mesa_new_parameter_list();
+    if (!shProg->Attributes)
+	shProg->Attributes = _mesa_new_parameter_list();
 
-   /* Build a bitmask indicating which attribute indexes have been
-    * explicitly bound by the user with glBindAttributeLocation().
-    */
-   usedAttributes = 0x0;
-   for (i = 0; i < shProg->Attributes->NumParameters; i++) {
-      GLint attr = shProg->Attributes->Parameters[i].StateIndexes[0];
-      usedAttributes |= attr;
-   }
+    /* Build a bitmask indicating which attribute indexes have been
+     * explicitly bound by the user with glBindAttributeLocation().
+     */
+    usedAttributes = 0x0;
+    for (i = 0; i < shProg->Attributes->NumParameters; i++) {
+	GLint attr = shProg->Attributes->Parameters[i].StateIndexes[0];
+	usedAttributes |= attr;
+    }
 
-   /*
-    * Scan program for generic attribute references
-    */
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
-      for (j = 0; j < 3; j++) {
-         if (inst->SrcReg[j].File == PROGRAM_INPUT &&
-             inst->SrcReg[j].Index >= VERT_ATTRIB_GENERIC0) {
-            /* this is a generic attrib */
-            const GLint k = inst->SrcReg[j].Index - VERT_ATTRIB_GENERIC0;
-            const char *name = prog->Attributes->Parameters[k].Name;
-            /* See if this attrib name is in the program's attribute list
-             * (i.e. was bound by the user).
-             */
-            GLint index = _mesa_lookup_parameter_index(shProg->Attributes,
-                                                          -1, name);
-            GLint attr;
-            if (index >= 0) {
-               /* found, user must have specified a binding */
-               attr = shProg->Attributes->Parameters[index].StateIndexes[0];
-            }
-            else {
-               /* Not found, choose our own attribute number.
-                * Start at 1 since generic attribute 0 always aliases
-                * glVertex/position.
-                */
-               for (attr = 1; attr < MAX_VERTEX_ATTRIBS; attr++) {
-                  if (((1 << attr) & usedAttributes) == 0) {
-                     usedAttributes |= (1 << attr);
-                     break;
-                  }
-               }
-               if (attr == MAX_VERTEX_ATTRIBS) {
-                  /* too many!  XXX record error log */
-                  return GL_FALSE;
-               }
-               _mesa_add_attribute(shProg->Attributes, name, size, attr);
+    /*
+     * Scan program for generic attribute references
+     */
+    for (i = 0; i < prog->NumInstructions; i++) {
+	struct prog_instruction *inst = prog->Instructions + i;
+	for (j = 0; j < 3; j++) {
+	    if (inst->SrcReg[j].File == PROGRAM_INPUT &&
+		inst->SrcReg[j].Index >= VERT_ATTRIB_GENERIC0) {
+		/* this is a generic attrib */
+		const GLint k = inst->SrcReg[j].Index - VERT_ATTRIB_GENERIC0;
+		const char *name = prog->Attributes->Parameters[k].Name;
+		/* See if this attrib name is in the program's attribute list
+		 * (i.e. was bound by the user).
+		 */
+		GLint index = _mesa_lookup_parameter_index(shProg->Attributes,
+			      -1, name);
+		GLint attr;
+		if (index >= 0) {
+		    /* found, user must have specified a binding */
+		    attr = shProg->Attributes->Parameters[index].StateIndexes[0];
+		} else {
+		    /* Not found, choose our own attribute number.
+		     * Start at 1 since generic attribute 0 always aliases
+		     * glVertex/position.
+		     */
+		    for (attr = 1; attr < MAX_VERTEX_ATTRIBS; attr++) {
+			if (((1 << attr) & usedAttributes) == 0) {
+			    usedAttributes |= (1 << attr);
+			    break;
+			}
+		    }
+		    if (attr == MAX_VERTEX_ATTRIBS) {
+			/* too many!  XXX record error log */
+			return GL_FALSE;
+		    }
+		    _mesa_add_attribute(shProg->Attributes, name, size, attr);
 
-	       /* set the attribute as used */
-	       usedAttributes |= 1<<attr;
-            }
+		    /* set the attribute as used */
+		    usedAttributes |= 1<<attr;
+		}
 
-            inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + attr;
-         }
-      }
-   }
-   return GL_TRUE;
+		inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + attr;
+	    }
+	}
+    }
+    return GL_TRUE;
 }
 
 
@@ -364,25 +357,25 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
 static void
 _slang_count_temporaries(struct gl_program *prog)
 {
-   GLuint i, j;
-   GLint maxIndex = -1;
+    GLuint i, j;
+    GLint maxIndex = -1;
 
-   for (i = 0; i < prog->NumInstructions; i++) {
-      const struct prog_instruction *inst = prog->Instructions + i;
-      const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
-      for (j = 0; j < numSrc; j++) {
-         if (inst->SrcReg[j].File == PROGRAM_TEMPORARY) {
-            if (maxIndex < inst->SrcReg[j].Index)
-               maxIndex = inst->SrcReg[j].Index;
-         }
-         if (inst->DstReg.File == PROGRAM_TEMPORARY) {
-            if (maxIndex < inst->DstReg.Index)
-               maxIndex = inst->DstReg.Index;
-         }
-      }
-   }
+    for (i = 0; i < prog->NumInstructions; i++) {
+	const struct prog_instruction *inst = prog->Instructions + i;
+	const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
+	for (j = 0; j < numSrc; j++) {
+	    if (inst->SrcReg[j].File == PROGRAM_TEMPORARY) {
+		if (maxIndex < inst->SrcReg[j].Index)
+		    maxIndex = inst->SrcReg[j].Index;
+	    }
+	    if (inst->DstReg.File == PROGRAM_TEMPORARY) {
+		if (maxIndex < inst->DstReg.Index)
+		    maxIndex = inst->DstReg.Index;
+	    }
+	}
+    }
 
-   prog->NumTemporaries = (GLuint) (maxIndex + 1);
+    prog->NumTemporaries = (GLuint)(maxIndex + 1);
 }
 
 
@@ -393,23 +386,23 @@ _slang_count_temporaries(struct gl_program *prog)
 static void
 _slang_update_inputs_outputs(struct gl_program *prog)
 {
-   GLuint i, j;
+    GLuint i, j;
 
-   prog->InputsRead = 0x0;
-   prog->OutputsWritten = 0x0;
+    prog->InputsRead = 0x0;
+    prog->OutputsWritten = 0x0;
 
-   for (i = 0; i < prog->NumInstructions; i++) {
-      const struct prog_instruction *inst = prog->Instructions + i;
-      const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
-      for (j = 0; j < numSrc; j++) {
-         if (inst->SrcReg[j].File == PROGRAM_INPUT) {
-            prog->InputsRead |= 1 << inst->SrcReg[j].Index;
-         }
-      }
-      if (inst->DstReg.File == PROGRAM_OUTPUT) {
-         prog->OutputsWritten |= 1 << inst->DstReg.Index;
-      }
-   }
+    for (i = 0; i < prog->NumInstructions; i++) {
+	const struct prog_instruction *inst = prog->Instructions + i;
+	const GLuint numSrc = _mesa_num_inst_src_regs(inst->Opcode);
+	for (j = 0; j < numSrc; j++) {
+	    if (inst->SrcReg[j].File == PROGRAM_INPUT) {
+		prog->InputsRead |= 1 << inst->SrcReg[j].Index;
+	    }
+	}
+	if (inst->DstReg.File == PROGRAM_OUTPUT) {
+	    prog->OutputsWritten |= 1 << inst->DstReg.Index;
+	}
+    }
 }
 
 
@@ -423,22 +416,22 @@ _slang_update_inputs_outputs(struct gl_program *prog)
 void
 _slang_remap_attribute(struct gl_program *prog, GLuint oldAttrib, GLuint newAttrib)
 {
-   GLuint i, j;
+    GLuint i, j;
 
-   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+    assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
 
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
-      for (j = 0; j < 3; j++) {
-         if (inst->SrcReg[j].File == PROGRAM_INPUT) {
-            if (inst->SrcReg[j].Index == VERT_ATTRIB_GENERIC0 + oldAttrib) {
-               inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + newAttrib;
-            }
-         }
-      }
-   }
+    for (i = 0; i < prog->NumInstructions; i++) {
+	struct prog_instruction *inst = prog->Instructions + i;
+	for (j = 0; j < 3; j++) {
+	    if (inst->SrcReg[j].File == PROGRAM_INPUT) {
+		if (inst->SrcReg[j].Index == VERT_ATTRIB_GENERIC0 + oldAttrib) {
+		    inst->SrcReg[j].Index = VERT_ATTRIB_GENERIC0 + newAttrib;
+		}
+	    }
+	}
+    }
 
-   _slang_update_inputs_outputs(prog);
+    _slang_update_inputs_outputs(prog);
 }
 
 
@@ -450,25 +443,25 @@ _slang_remap_attribute(struct gl_program *prog, GLuint oldAttrib, GLuint newAttr
  */
 void
 _slang_resolve_samplers(struct gl_shader_program *shProg,
-                        struct gl_program *prog)
+			struct gl_program *prog)
 {
-   GLuint i;
+    GLuint i;
 
-   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
-      prog->TexturesUsed[i] = 0;
+    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
+	prog->TexturesUsed[i] = 0;
 
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
-      if (inst->Opcode == OPCODE_TEX ||
-          inst->Opcode == OPCODE_TXB ||
-          inst->Opcode == OPCODE_TXP) {
-         GLint sampleUnit = (GLint) shProg->Uniforms->ParameterValues[inst->Sampler][0];
-         assert(sampleUnit < MAX_TEXTURE_IMAGE_UNITS);
-         inst->TexSrcUnit = sampleUnit;
+    for (i = 0; i < prog->NumInstructions; i++) {
+	struct prog_instruction *inst = prog->Instructions + i;
+	if (inst->Opcode == OPCODE_TEX ||
+	    inst->Opcode == OPCODE_TXB ||
+	    inst->Opcode == OPCODE_TXP) {
+	    GLint sampleUnit = (GLint) shProg->Uniforms->ParameterValues[inst->Sampler][0];
+	    assert(sampleUnit < MAX_TEXTURE_IMAGE_UNITS);
+	    inst->TexSrcUnit = sampleUnit;
 
-         prog->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
-      }
-   }
+	    prog->TexturesUsed[inst->TexSrcUnit] |= (1 << inst->TexSrcTarget);
+	}
+    }
 }
 
 
@@ -477,8 +470,8 @@ _slang_resolve_samplers(struct gl_shader_program *shProg,
 static struct gl_vertex_program *
 vertex_program(struct gl_program *prog)
 {
-   assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
-   return (struct gl_vertex_program *) prog;
+    assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
+    return (struct gl_vertex_program *) prog;
 }
 
 
@@ -486,8 +479,8 @@ vertex_program(struct gl_program *prog)
 static struct gl_fragment_program *
 fragment_program(struct gl_program *prog)
 {
-   assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
-   return (struct gl_fragment_program *) prog;
+    assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
+    return (struct gl_fragment_program *) prog;
 }
 
 
@@ -497,11 +490,11 @@ fragment_program(struct gl_program *prog)
 static void
 link_error(struct gl_shader_program *shProg, const char *msg)
 {
-   if (shProg->InfoLog) {
-      _mesa_free(shProg->InfoLog);
-   }
-   shProg->InfoLog = _mesa_strdup(msg);
-   shProg->LinkStatus = GL_FALSE;
+    if (shProg->InfoLog) {
+	_mesa_free(shProg->InfoLog);
+    }
+    shProg->InfoLog = _mesa_strdup(msg);
+    shProg->LinkStatus = GL_FALSE;
 }
 
 
@@ -522,158 +515,156 @@ link_error(struct gl_shader_program *shProg, const char *msg)
  */
 void
 _slang_link(GLcontext *ctx,
-            GLhandleARB programObj,
-            struct gl_shader_program *shProg)
+	    GLhandleARB programObj,
+	    struct gl_shader_program *shProg)
 {
-   const struct gl_vertex_program *vertProg;
-   const struct gl_fragment_program *fragProg;
-   GLuint i;
+    const struct gl_vertex_program *vertProg;
+    const struct gl_fragment_program *fragProg;
+    GLuint i;
 
-   _mesa_clear_shader_program_data(ctx, shProg);
+    _mesa_clear_shader_program_data(ctx, shProg);
 
-   /* check that all programs compiled successfully */
-   for (i = 0; i < shProg->NumShaders; i++) {
-      if (!shProg->Shaders[i]->CompileStatus) {
-         link_error(shProg, "linking with uncompiled shader\n");
-         return;
-      }
-   }
+    /* check that all programs compiled successfully */
+    for (i = 0; i < shProg->NumShaders; i++) {
+	if (!shProg->Shaders[i]->CompileStatus) {
+	    link_error(shProg, "linking with uncompiled shader\n");
+	    return;
+	}
+    }
 
-   shProg->Uniforms = _mesa_new_parameter_list();
-   shProg->Varying = _mesa_new_parameter_list();
+    shProg->Uniforms = _mesa_new_parameter_list();
+    shProg->Varying = _mesa_new_parameter_list();
 
-   /**
-    * Find attached vertex shader, fragment shader
-    */
-   vertProg = NULL;
-   fragProg = NULL;
-   for (i = 0; i < shProg->NumShaders; i++) {
-      if (shProg->Shaders[i]->Type == GL_VERTEX_SHADER)
-         vertProg = vertex_program(shProg->Shaders[i]->Programs[0]);
-      else if (shProg->Shaders[i]->Type == GL_FRAGMENT_SHADER)
-         fragProg = fragment_program(shProg->Shaders[i]->Programs[0]);
-      else
-         _mesa_problem(ctx, "unexpected shader target in slang_link()");
-   }
+    /**
+     * Find attached vertex shader, fragment shader
+     */
+    vertProg = NULL;
+    fragProg = NULL;
+    for (i = 0; i < shProg->NumShaders; i++) {
+	if (shProg->Shaders[i]->Type == GL_VERTEX_SHADER)
+	    vertProg = vertex_program(shProg->Shaders[i]->Programs[0]);
+	else if (shProg->Shaders[i]->Type == GL_FRAGMENT_SHADER)
+	    fragProg = fragment_program(shProg->Shaders[i]->Programs[0]);
+	else
+	    _mesa_problem(ctx, "unexpected shader target in slang_link()");
+    }
 
-   /*
-    * Make copies of the vertex/fragment programs now since we'll be
-    * changing src/dst registers after merging the uniforms and varying vars.
-    */
-   if (vertProg) {
-      shProg->VertexProgram
-         = vertex_program(_mesa_clone_program(ctx, &vertProg->Base));
-   }
-   else {
-      shProg->VertexProgram = NULL;
-   }
+    /*
+     * Make copies of the vertex/fragment programs now since we'll be
+     * changing src/dst registers after merging the uniforms and varying vars.
+     */
+    if (vertProg) {
+	shProg->VertexProgram
+	    = vertex_program(_mesa_clone_program(ctx, &vertProg->Base));
+    } else {
+	shProg->VertexProgram = NULL;
+    }
 
-   if (fragProg) {
-      shProg->FragmentProgram
-         = fragment_program(_mesa_clone_program(ctx, &fragProg->Base));
-   }
-   else {
-      shProg->FragmentProgram = NULL;
-   }
+    if (fragProg) {
+	shProg->FragmentProgram
+	    = fragment_program(_mesa_clone_program(ctx, &fragProg->Base));
+    } else {
+	shProg->FragmentProgram = NULL;
+    }
 
-   if (shProg->VertexProgram)
-      link_varying_vars(shProg, &shProg->VertexProgram->Base);
-   if (shProg->FragmentProgram)
-      link_varying_vars(shProg, &shProg->FragmentProgram->Base);
+    if (shProg->VertexProgram)
+	link_varying_vars(shProg, &shProg->VertexProgram->Base);
+    if (shProg->FragmentProgram)
+	link_varying_vars(shProg, &shProg->FragmentProgram->Base);
 
-   if (shProg->VertexProgram)
-      link_uniform_vars(shProg, &shProg->VertexProgram->Base);
-   if (shProg->FragmentProgram)
-      link_uniform_vars(shProg, &shProg->FragmentProgram->Base);
+    if (shProg->VertexProgram)
+	link_uniform_vars(shProg, &shProg->VertexProgram->Base);
+    if (shProg->FragmentProgram)
+	link_uniform_vars(shProg, &shProg->FragmentProgram->Base);
 
-   /* The vertex and fragment programs share a common set of uniforms now */
-   if (shProg->VertexProgram) {
-      _mesa_free_parameter_list(shProg->VertexProgram->Base.Parameters);
-      shProg->VertexProgram->Base.Parameters = shProg->Uniforms;
-   }
-   if (shProg->FragmentProgram) {
-      _mesa_free_parameter_list(shProg->FragmentProgram->Base.Parameters);
-      shProg->FragmentProgram->Base.Parameters = shProg->Uniforms;
-   }
+    /* The vertex and fragment programs share a common set of uniforms now */
+    if (shProg->VertexProgram) {
+	_mesa_free_parameter_list(shProg->VertexProgram->Base.Parameters);
+	shProg->VertexProgram->Base.Parameters = shProg->Uniforms;
+    }
+    if (shProg->FragmentProgram) {
+	_mesa_free_parameter_list(shProg->FragmentProgram->Base.Parameters);
+	shProg->FragmentProgram->Base.Parameters = shProg->Uniforms;
+    }
 
-   if (shProg->VertexProgram) {
-      _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
-   }
-   if (shProg->FragmentProgram) {
-      _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
-   }
+    if (shProg->VertexProgram) {
+	_slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
+    }
+    if (shProg->FragmentProgram) {
+	_slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
+    }
 
-   if (shProg->VertexProgram) {
-      if (!_slang_resolve_attributes(shProg, &shProg->VertexProgram->Base)) {
-         /*goto cleanup;*/
-         _mesa_problem(ctx, "_slang_resolve_attributes() failed");
-         return;
-      }
-   }
+    if (shProg->VertexProgram) {
+	if (!_slang_resolve_attributes(shProg, &shProg->VertexProgram->Base)) {
+	    /*goto cleanup;*/
+	    _mesa_problem(ctx, "_slang_resolve_attributes() failed");
+	    return;
+	}
+    }
 
-   if (shProg->VertexProgram) {
-      _slang_update_inputs_outputs(&shProg->VertexProgram->Base);
-      _slang_count_temporaries(&shProg->VertexProgram->Base);
-      if (!(shProg->VertexProgram->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
-         /* the vertex program did not compute a vertex position */
-         link_error(shProg,
-                    "gl_Position was not written by vertex shader\n");
-         return;
-      }
-   }
-   if (shProg->FragmentProgram) {
-      _slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
-      _slang_count_temporaries(&shProg->FragmentProgram->Base);
-   }
+    if (shProg->VertexProgram) {
+	_slang_update_inputs_outputs(&shProg->VertexProgram->Base);
+	_slang_count_temporaries(&shProg->VertexProgram->Base);
+	if (!(shProg->VertexProgram->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
+	    /* the vertex program did not compute a vertex position */
+	    link_error(shProg,
+		       "gl_Position was not written by vertex shader\n");
+	    return;
+	}
+    }
+    if (shProg->FragmentProgram) {
+	_slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
+	_slang_count_temporaries(&shProg->FragmentProgram->Base);
+    }
 
-   /* Check that all the varying vars needed by the fragment shader are
-    * actually produced by the vertex shader.
-    */
-   if (shProg->FragmentProgram) {
-      const GLbitfield varyingRead
-         = shProg->FragmentProgram->Base.InputsRead >> FRAG_ATTRIB_VAR0;
-      const GLbitfield varyingWritten = shProg->VertexProgram ?
-         shProg->VertexProgram->Base.OutputsWritten >> VERT_RESULT_VAR0 : 0x0;
-      if ((varyingRead & varyingWritten) != varyingRead) {
-         link_error(shProg,
-          "Fragment program using varying vars not written by vertex shader\n");
-         return;
-      }         
-   }
+    /* Check that all the varying vars needed by the fragment shader are
+     * actually produced by the vertex shader.
+     */
+    if (shProg->FragmentProgram) {
+	const GLbitfield varyingRead
+	    = shProg->FragmentProgram->Base.InputsRead >> FRAG_ATTRIB_VAR0;
+	const GLbitfield varyingWritten = shProg->VertexProgram ?
+					  shProg->VertexProgram->Base.OutputsWritten >> VERT_RESULT_VAR0 : 0x0;
+	if ((varyingRead & varyingWritten) != varyingRead) {
+	    link_error(shProg,
+		       "Fragment program using varying vars not written by vertex shader\n");
+	    return;
+	}
+    }
 
 
-   if (fragProg && shProg->FragmentProgram) {
-      /* notify driver that a new fragment program has been compiled/linked */
-      ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
-                                      &shProg->FragmentProgram->Base);
+    if (fragProg && shProg->FragmentProgram) {
+	/* notify driver that a new fragment program has been compiled/linked */
+	ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
+					&shProg->FragmentProgram->Base);
 #if 0
-      printf("************** original fragment program\n");
-      _mesa_print_program(&fragProg->Base);
-      _mesa_print_program_parameters(ctx, &fragProg->Base);
+	printf("************** original fragment program\n");
+	_mesa_print_program(&fragProg->Base);
+	_mesa_print_program_parameters(ctx, &fragProg->Base);
 #endif
 #if 0
-      printf("************** linked fragment prog\n");
-      _mesa_print_program(&shProg->FragmentProgram->Base);
-      _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
+	printf("************** linked fragment prog\n");
+	_mesa_print_program(&shProg->FragmentProgram->Base);
+	_mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
 #endif
-   }
+    }
 
-   if (vertProg && shProg->VertexProgram) {
-      /* notify driver that a new vertex program has been compiled/linked */
-      ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
-                                      &shProg->VertexProgram->Base);
+    if (vertProg && shProg->VertexProgram) {
+	/* notify driver that a new vertex program has been compiled/linked */
+	ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
+					&shProg->VertexProgram->Base);
 #if 0
-      printf("************** original vertex program\n");
-      _mesa_print_program(&vertProg->Base);
-      _mesa_print_program_parameters(ctx, &vertProg->Base);
+	printf("************** original vertex program\n");
+	_mesa_print_program(&vertProg->Base);
+	_mesa_print_program_parameters(ctx, &vertProg->Base);
 #endif
 #if 0
-      printf("************** linked vertex prog\n");
-      _mesa_print_program(&shProg->VertexProgram->Base);
-      _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
+	printf("************** linked vertex prog\n");
+	_mesa_print_program(&shProg->VertexProgram->Base);
+	_mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
 #endif
-   }
+    }
 
-   shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);
+    shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);
 }
 

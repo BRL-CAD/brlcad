@@ -155,15 +155,15 @@
 
 
 
-void _swrast_add_spec_terms_point( GLcontext *ctx,
-				   const SWvertex *v0 )
+void _swrast_add_spec_terms_point(GLcontext *ctx,
+				  const SWvertex *v0)
 {
-   SWvertex *ncv0 = (SWvertex *)v0;
-   GLchan c[1][4];
-   COPY_CHAN4( c[0], ncv0->color );
-   ACC_3V( ncv0->color, ncv0->specular );
-   SWRAST_CONTEXT(ctx)->SpecPoint( ctx, ncv0 );
-   COPY_CHAN4( ncv0->color, c[0] );
+    SWvertex *ncv0 = (SWvertex *)v0;
+    GLchan c[1][4];
+    COPY_CHAN4(c[0], ncv0->color);
+    ACC_3V(ncv0->color, ncv0->specular);
+    SWRAST_CONTEXT(ctx)->SpecPoint(ctx, ncv0);
+    COPY_CHAN4(ncv0->color, c[0]);
 }
 
 
@@ -192,84 +192,69 @@ do {                                   \
  * should be used.
  */
 void
-_swrast_choose_point( GLcontext *ctx )
+_swrast_choose_point(GLcontext *ctx)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLboolean rgbMode = ctx->Visual.rgbMode;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    GLboolean rgbMode = ctx->Visual.rgbMode;
 
-   if (ctx->RenderMode==GL_RENDER) {
-      if (ctx->Point.PointSprite) {
-         /* GL_ARB_point_sprite / GL_NV_point_sprite */
-         /* XXX this might not be good enough */
-         if (ctx->Point._Attenuated)
-            USE(atten_sprite_point);
-         else
-            USE(sprite_point);
-      }
-      else if (ctx->Point.SmoothFlag) {
-         /* Smooth points */
-         if (rgbMode) {
-            if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
-               USE(atten_antialiased_rgba_point);
-            }
-            else if (ctx->Texture._EnabledCoordUnits) {
-               USE(antialiased_tex_rgba_point);
-            }
-            else {
-               USE(antialiased_rgba_point);
-            }
-         }
-         else {
-            USE(antialiased_ci_point);
-         }
-      }
-      else if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
-         if (rgbMode) {
-            if (ctx->Texture._EnabledCoordUnits) {
-               if (ctx->Point.SmoothFlag) {
-                  USE(atten_antialiased_rgba_point);
-               }
-               else {
-                  USE(atten_textured_rgba_point);
-               }
-            }
-            else {
-               USE(atten_general_rgba_point);
-            }
-         }
-         else {
-            /* ci, atten */
-            USE(atten_general_ci_point);
-         }
-      }
-      else if (ctx->Texture._EnabledCoordUnits && rgbMode) {
-         /* textured */
-         USE(textured_rgba_point);
-      }
-      else if (ctx->Point._Size != 1.0) {
-         /* large points */
-         if (rgbMode) {
-            USE(general_rgba_point);
-         }
-         else {
-            USE(general_ci_point);
-         }
-      }
-      else {
-         /* single pixel points */
-         if (rgbMode) {
-            USE(size1_rgba_point);
-         }
-         else {
-            USE(size1_ci_point);
-         }
-      }
-   }
-   else if (ctx->RenderMode==GL_FEEDBACK) {
-      USE(_swrast_feedback_point);
-   }
-   else {
-      /* GL_SELECT mode */
-      USE(_swrast_select_point);
-   }
+    if (ctx->RenderMode==GL_RENDER) {
+	if (ctx->Point.PointSprite) {
+	    /* GL_ARB_point_sprite / GL_NV_point_sprite */
+	    /* XXX this might not be good enough */
+	    if (ctx->Point._Attenuated)
+		USE(atten_sprite_point);
+	    else
+		USE(sprite_point);
+	} else if (ctx->Point.SmoothFlag) {
+	    /* Smooth points */
+	    if (rgbMode) {
+		if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
+		    USE(atten_antialiased_rgba_point);
+		} else if (ctx->Texture._EnabledCoordUnits) {
+		    USE(antialiased_tex_rgba_point);
+		} else {
+		    USE(antialiased_rgba_point);
+		}
+	    } else {
+		USE(antialiased_ci_point);
+	    }
+	} else if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
+	    if (rgbMode) {
+		if (ctx->Texture._EnabledCoordUnits) {
+		    if (ctx->Point.SmoothFlag) {
+			USE(atten_antialiased_rgba_point);
+		    } else {
+			USE(atten_textured_rgba_point);
+		    }
+		} else {
+		    USE(atten_general_rgba_point);
+		}
+	    } else {
+		/* ci, atten */
+		USE(atten_general_ci_point);
+	    }
+	} else if (ctx->Texture._EnabledCoordUnits && rgbMode) {
+	    /* textured */
+	    USE(textured_rgba_point);
+	} else if (ctx->Point._Size != 1.0) {
+	    /* large points */
+	    if (rgbMode) {
+		USE(general_rgba_point);
+	    } else {
+		USE(general_ci_point);
+	    }
+	} else {
+	    /* single pixel points */
+	    if (rgbMode) {
+		USE(size1_rgba_point);
+	    } else {
+		USE(size1_ci_point);
+	    }
+	}
+    } else if (ctx->RenderMode==GL_FEEDBACK) {
+	USE(_swrast_feedback_point);
+    } else {
+	/* GL_SELECT mode */
+	USE(_swrast_select_point);
+    }
 }

@@ -45,122 +45,119 @@
  * All parameter error checking will have been done before this is called.
  */
 void
-_swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
-		GLsizei width, GLsizei height,
-		const struct gl_pixelstore_attrib *unpack,
-		const GLubyte *bitmap )
+_swrast_Bitmap(GLcontext *ctx, GLint px, GLint py,
+	       GLsizei width, GLsizei height,
+	       const struct gl_pixelstore_attrib *unpack,
+	       const GLubyte *bitmap)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLint row, col;
-   GLuint count = 0;
-   SWspan span;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    GLint row, col;
+    GLuint count = 0;
+    SWspan span;
 
-   ASSERT(ctx->RenderMode == GL_RENDER);
+    ASSERT(ctx->RenderMode == GL_RENDER);
 
-   if (unpack->BufferObj->Name) {
-      /* unpack from PBO */
-      GLubyte *buf;
-      if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
-                                     GL_COLOR_INDEX, GL_BITMAP,
-                                     (GLvoid *) bitmap)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,"glBitmap(invalid PBO access)");
-         return;
-      }
-      buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                              GL_READ_ONLY_ARB,
-                                              unpack->BufferObj);
-      if (!buf) {
-         /* buffer is already mapped - that's an error */
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glBitmap(PBO is mapped)");
-         return;
-      }
-      bitmap = ADD_POINTERS(buf, bitmap);
-   }
+    if (unpack->BufferObj->Name) {
+	/* unpack from PBO */
+	GLubyte *buf;
+	if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
+				       GL_COLOR_INDEX, GL_BITMAP,
+				       (GLvoid *) bitmap)) {
+	    _mesa_error(ctx, GL_INVALID_OPERATION,"glBitmap(invalid PBO access)");
+	    return;
+	}
+	buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+						GL_READ_ONLY_ARB,
+						unpack->BufferObj);
+	if (!buf) {
+	    /* buffer is already mapped - that's an error */
+	    _mesa_error(ctx, GL_INVALID_OPERATION, "glBitmap(PBO is mapped)");
+	    return;
+	}
+	bitmap = ADD_POINTERS(buf, bitmap);
+    }
 
-   RENDER_START(swrast,ctx);
+    RENDER_START(swrast,ctx);
 
-   if (SWRAST_CONTEXT(ctx)->NewState)
-      _swrast_validate_derived( ctx );
+    if (SWRAST_CONTEXT(ctx)->NewState)
+	_swrast_validate_derived(ctx);
 
-   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_XY);
+    INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_XY);
 
-   _swrast_span_default_color(ctx, &span);
-   _swrast_span_default_secondary_color(ctx, &span);
-   if (ctx->Depth.Test)
-      _swrast_span_default_z(ctx, &span);
-   if (SPAN_NEEDS_FOG(ctx))
-      _swrast_span_default_fog(ctx, &span);
-   if (ctx->Texture._EnabledCoordUnits)
-      _swrast_span_default_texcoords(ctx, &span);
+    _swrast_span_default_color(ctx, &span);
+    _swrast_span_default_secondary_color(ctx, &span);
+    if (ctx->Depth.Test)
+	_swrast_span_default_z(ctx, &span);
+    if (SPAN_NEEDS_FOG(ctx))
+	_swrast_span_default_fog(ctx, &span);
+    if (ctx->Texture._EnabledCoordUnits)
+	_swrast_span_default_texcoords(ctx, &span);
 
-   for (row = 0; row < height; row++) {
-      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
-                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
+    for (row = 0; row < height; row++) {
+	const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
+			     bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
 
-      if (unpack->LsbFirst) {
-         /* Lsb first */
-         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-            if (*src & mask) {
-               span.array->x[count] = px + col;
-               span.array->y[count] = py + row;
-               count++;
-            }
-            if (mask == 128U) {
-               src++;
-               mask = 1U;
-            }
-            else {
-               mask = mask << 1;
-            }
-         }
+	if (unpack->LsbFirst) {
+	    /* Lsb first */
+	    GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
+	    for (col = 0; col < width; col++) {
+		if (*src & mask) {
+		    span.array->x[count] = px + col;
+		    span.array->y[count] = py + row;
+		    count++;
+		}
+		if (mask == 128U) {
+		    src++;
+		    mask = 1U;
+		} else {
+		    mask = mask << 1;
+		}
+	    }
 
-         /* get ready for next row */
-         if (mask != 1)
-            src++;
-      }
-      else {
-         /* Msb first */
-         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
-         for (col = 0; col < width; col++) {
-            if (*src & mask) {
-               span.array->x[count] = px + col;
-               span.array->y[count] = py + row;
-               count++;
-            }
-            if (mask == 1U) {
-               src++;
-               mask = 128U;
-            }
-            else {
-               mask = mask >> 1;
-            }
-         }
+	    /* get ready for next row */
+	    if (mask != 1)
+		src++;
+	} else {
+	    /* Msb first */
+	    GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
+	    for (col = 0; col < width; col++) {
+		if (*src & mask) {
+		    span.array->x[count] = px + col;
+		    span.array->y[count] = py + row;
+		    count++;
+		}
+		if (mask == 1U) {
+		    src++;
+		    mask = 128U;
+		} else {
+		    mask = mask >> 1;
+		}
+	    }
 
-         /* get ready for next row */
-         if (mask != 128)
-            src++;
-      }
+	    /* get ready for next row */
+	    if (mask != 128)
+		src++;
+	}
 
-      if (count + width >= MAX_WIDTH || row + 1 == height) {
-         /* flush the span */
-         span.end = count;
-         if (ctx->Visual.rgbMode)
-            _swrast_write_rgba_span(ctx, &span);
-         else
-            _swrast_write_index_span(ctx, &span);
-         span.end = 0;
-         count = 0;
-      }
-   }
+	if (count + width >= MAX_WIDTH || row + 1 == height) {
+	    /* flush the span */
+	    span.end = count;
+	    if (ctx->Visual.rgbMode)
+		_swrast_write_rgba_span(ctx, &span);
+	    else
+		_swrast_write_index_span(ctx, &span);
+	    span.end = 0;
+	    count = 0;
+	}
+    }
 
-   RENDER_FINISH(swrast,ctx);
+    RENDER_FINISH(swrast,ctx);
 
-   if (unpack->BufferObj->Name) {
-      /* done with PBO so unmap it now */
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
-   }
+    if (unpack->BufferObj->Name) {
+	/* done with PBO so unmap it now */
+	ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
+				unpack->BufferObj);
+    }
 }
 
 
@@ -171,90 +168,87 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
  * draw or skip.
  */
 void
-_swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
-		GLsizei width, GLsizei height,
-		const struct gl_pixelstore_attrib *unpack,
-		const GLubyte *bitmap )
+_swrast_Bitmap(GLcontext *ctx, GLint px, GLint py,
+	       GLsizei width, GLsizei height,
+	       const struct gl_pixelstore_attrib *unpack,
+	       const GLubyte *bitmap)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLint row, col;
-   SWspan span;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    GLint row, col;
+    SWspan span;
 
-   ASSERT(ctx->RenderMode == GL_RENDER);
-   ASSERT(bitmap);
+    ASSERT(ctx->RenderMode == GL_RENDER);
+    ASSERT(bitmap);
 
-   RENDER_START(swrast,ctx);
+    RENDER_START(swrast,ctx);
 
-   if (SWRAST_CONTEXT(ctx)->NewState)
-      _swrast_validate_derived( ctx );
+    if (SWRAST_CONTEXT(ctx)->NewState)
+	_swrast_validate_derived(ctx);
 
-   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_MASK);
+    INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_MASK);
 
-   /*span.arrayMask |= SPAN_MASK;*/  /* we'll init span.mask[] */
-   span.x = px;
-   span.y = py;
-   /*span.end = width;*/
+    /*span.arrayMask |= SPAN_MASK;*/  /* we'll init span.mask[] */
+    span.x = px;
+    span.y = py;
+    /*span.end = width;*/
 
-   _swrast_span_default_color(ctx, &span);
-   if (ctx->Depth.Test)
-      _swrast_span_default_z(ctx, &span);
-   if (swrast->_FogEnabled)
-      _swrast_span_default_fog(ctx, &span);
-   if (ctx->Texture._EnabledCoordUnits)
-      _swrast_span_default_texcoords(ctx, &span);
+    _swrast_span_default_color(ctx, &span);
+    if (ctx->Depth.Test)
+	_swrast_span_default_z(ctx, &span);
+    if (swrast->_FogEnabled)
+	_swrast_span_default_fog(ctx, &span);
+    if (ctx->Texture._EnabledCoordUnits)
+	_swrast_span_default_texcoords(ctx, &span);
 
-   for (row=0; row<height; row++, span.y++) {
-      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
-                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
+    for (row=0; row<height; row++, span.y++) {
+	const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
+			     bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
 
-      if (unpack->LsbFirst) {
-         /* Lsb first */
-         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
-         for (col=0; col<width; col++) {
-            span.array->mask[col] = (*src & mask) ? GL_TRUE : GL_FALSE;
-            if (mask == 128U) {
-               src++;
-               mask = 1U;
-            }
-            else {
-               mask = mask << 1;
-            }
-         }
+	if (unpack->LsbFirst) {
+	    /* Lsb first */
+	    GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
+	    for (col=0; col<width; col++) {
+		span.array->mask[col] = (*src & mask) ? GL_TRUE : GL_FALSE;
+		if (mask == 128U) {
+		    src++;
+		    mask = 1U;
+		} else {
+		    mask = mask << 1;
+		}
+	    }
 
-         if (ctx->Visual.rgbMode)
-            _swrast_write_rgba_span(ctx, &span);
-         else
-	    _swrast_write_index_span(ctx, &span);
+	    if (ctx->Visual.rgbMode)
+		_swrast_write_rgba_span(ctx, &span);
+	    else
+		_swrast_write_index_span(ctx, &span);
 
-         /* get ready for next row */
-         if (mask != 1)
-            src++;
-      }
-      else {
-         /* Msb first */
-         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
-         for (col=0; col<width; col++) {
-            span.array->mask[col] = (*src & mask) ? GL_TRUE : GL_FALSE;
-            if (mask == 1U) {
-               src++;
-               mask = 128U;
-            }
-            else {
-               mask = mask >> 1;
-            }
-         }
+	    /* get ready for next row */
+	    if (mask != 1)
+		src++;
+	} else {
+	    /* Msb first */
+	    GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
+	    for (col=0; col<width; col++) {
+		span.array->mask[col] = (*src & mask) ? GL_TRUE : GL_FALSE;
+		if (mask == 1U) {
+		    src++;
+		    mask = 128U;
+		} else {
+		    mask = mask >> 1;
+		}
+	    }
 
-         if (ctx->Visual.rgbMode)
-            _swrast_write_rgba_span(ctx, &span);
-         else
-            _swrast_write_index_span(ctx, &span);
+	    if (ctx->Visual.rgbMode)
+		_swrast_write_rgba_span(ctx, &span);
+	    else
+		_swrast_write_index_span(ctx, &span);
 
-         /* get ready for next row */
-         if (mask != 128)
-            src++;
-      }
-   }
+	    /* get ready for next row */
+	    if (mask != 128)
+		src++;
+	}
+    }
 
-   RENDER_FINISH(swrast,ctx);
+    RENDER_FINISH(swrast,ctx);
 }
 #endif

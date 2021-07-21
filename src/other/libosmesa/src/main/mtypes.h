@@ -54,17 +54,17 @@
  * Color channel data type.
  */
 #if CHAN_BITS == 8
-   typedef GLubyte GLchan;
+typedef GLubyte GLchan;
 #define CHAN_MAX 255
 #define CHAN_MAXF 255.0F
 #define CHAN_TYPE GL_UNSIGNED_BYTE
 #elif CHAN_BITS == 16
-   typedef GLushort GLchan;
+typedef GLushort GLchan;
 #define CHAN_MAX 65535
 #define CHAN_MAXF 65535.0F
 #define CHAN_TYPE GL_UNSIGNED_SHORT
 #elif CHAN_BITS == 32
-   typedef GLfloat GLchan;
+typedef GLfloat GLchan;
 #define CHAN_MAX 1.0
 #define CHAN_MAXF 1.0F
 #define CHAN_TYPE GL_FLOAT
@@ -77,9 +77,9 @@
  * Stencil buffer data type.
  */
 #if STENCIL_BITS==8
-   typedef GLubyte GLstencil;
+typedef GLubyte GLstencil;
 #elif STENCIL_BITS==16
-   typedef GLushort GLstencil;
+typedef GLushort GLstencil;
 #else
 #  error "illegal number of stencil bits"
 #endif
@@ -140,41 +140,40 @@ typedef struct gl_framebuffer GLframebuffer;
  * In GL_ARB_vertex_shader / OpenGL 2.0 the aliasing is disallowed (the
  * generic attributes are distinct/separate).
  */
-enum
-{
-   VERT_ATTRIB_POS = 0,
-   VERT_ATTRIB_WEIGHT = 1,
-   VERT_ATTRIB_NORMAL = 2,
-   VERT_ATTRIB_COLOR0 = 3,
-   VERT_ATTRIB_COLOR1 = 4,
-   VERT_ATTRIB_FOG = 5,
-   VERT_ATTRIB_COLOR_INDEX = 6,
-   VERT_ATTRIB_EDGEFLAG = 7,
-   VERT_ATTRIB_TEX0 = 8,
-   VERT_ATTRIB_TEX1 = 9,
-   VERT_ATTRIB_TEX2 = 10,
-   VERT_ATTRIB_TEX3 = 11,
-   VERT_ATTRIB_TEX4 = 12,
-   VERT_ATTRIB_TEX5 = 13,
-   VERT_ATTRIB_TEX6 = 14,
-   VERT_ATTRIB_TEX7 = 15,
-   VERT_ATTRIB_GENERIC0 = 16,
-   VERT_ATTRIB_GENERIC1 = 17,
-   VERT_ATTRIB_GENERIC2 = 18,
-   VERT_ATTRIB_GENERIC3 = 19,
-   VERT_ATTRIB_GENERIC4 = 20,
-   VERT_ATTRIB_GENERIC5 = 21,
-   VERT_ATTRIB_GENERIC6 = 22,
-   VERT_ATTRIB_GENERIC7 = 23,
-   VERT_ATTRIB_GENERIC8 = 24,
-   VERT_ATTRIB_GENERIC9 = 25,
-   VERT_ATTRIB_GENERIC10 = 26,
-   VERT_ATTRIB_GENERIC11 = 27,
-   VERT_ATTRIB_GENERIC12 = 28,
-   VERT_ATTRIB_GENERIC13 = 29,
-   VERT_ATTRIB_GENERIC14 = 30,
-   VERT_ATTRIB_GENERIC15 = 31,
-   VERT_ATTRIB_MAX = 32
+enum {
+    VERT_ATTRIB_POS = 0,
+    VERT_ATTRIB_WEIGHT = 1,
+    VERT_ATTRIB_NORMAL = 2,
+    VERT_ATTRIB_COLOR0 = 3,
+    VERT_ATTRIB_COLOR1 = 4,
+    VERT_ATTRIB_FOG = 5,
+    VERT_ATTRIB_COLOR_INDEX = 6,
+    VERT_ATTRIB_EDGEFLAG = 7,
+    VERT_ATTRIB_TEX0 = 8,
+    VERT_ATTRIB_TEX1 = 9,
+    VERT_ATTRIB_TEX2 = 10,
+    VERT_ATTRIB_TEX3 = 11,
+    VERT_ATTRIB_TEX4 = 12,
+    VERT_ATTRIB_TEX5 = 13,
+    VERT_ATTRIB_TEX6 = 14,
+    VERT_ATTRIB_TEX7 = 15,
+    VERT_ATTRIB_GENERIC0 = 16,
+    VERT_ATTRIB_GENERIC1 = 17,
+    VERT_ATTRIB_GENERIC2 = 18,
+    VERT_ATTRIB_GENERIC3 = 19,
+    VERT_ATTRIB_GENERIC4 = 20,
+    VERT_ATTRIB_GENERIC5 = 21,
+    VERT_ATTRIB_GENERIC6 = 22,
+    VERT_ATTRIB_GENERIC7 = 23,
+    VERT_ATTRIB_GENERIC8 = 24,
+    VERT_ATTRIB_GENERIC9 = 25,
+    VERT_ATTRIB_GENERIC10 = 26,
+    VERT_ATTRIB_GENERIC11 = 27,
+    VERT_ATTRIB_GENERIC12 = 28,
+    VERT_ATTRIB_GENERIC13 = 29,
+    VERT_ATTRIB_GENERIC14 = 30,
+    VERT_ATTRIB_GENERIC15 = 31,
+    VERT_ATTRIB_MAX = 32
 };
 
 /**
@@ -248,22 +247,21 @@ enum
 /**
  * Indexes for fragment program input attributes.
  */
-enum
-{
-   FRAG_ATTRIB_WPOS = 0,
-   FRAG_ATTRIB_COL0 = 1,
-   FRAG_ATTRIB_COL1 = 2,
-   FRAG_ATTRIB_FOGC = 3,
-   FRAG_ATTRIB_TEX0 = 4,
-   FRAG_ATTRIB_TEX1 = 5,
-   FRAG_ATTRIB_TEX2 = 6,
-   FRAG_ATTRIB_TEX3 = 7,
-   FRAG_ATTRIB_TEX4 = 8,
-   FRAG_ATTRIB_TEX5 = 9,
-   FRAG_ATTRIB_TEX6 = 10,
-   FRAG_ATTRIB_TEX7 = 11,
-   FRAG_ATTRIB_VAR0 = 12,  /**< shader varying */
-   FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
+enum {
+    FRAG_ATTRIB_WPOS = 0,
+    FRAG_ATTRIB_COL0 = 1,
+    FRAG_ATTRIB_COL1 = 2,
+    FRAG_ATTRIB_FOGC = 3,
+    FRAG_ATTRIB_TEX0 = 4,
+    FRAG_ATTRIB_TEX1 = 5,
+    FRAG_ATTRIB_TEX2 = 6,
+    FRAG_ATTRIB_TEX3 = 7,
+    FRAG_ATTRIB_TEX4 = 8,
+    FRAG_ATTRIB_TEX5 = 9,
+    FRAG_ATTRIB_TEX6 = 10,
+    FRAG_ATTRIB_TEX7 = 11,
+    FRAG_ATTRIB_VAR0 = 12,  /**< shader varying */
+    FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
 };
 
 /**
@@ -301,13 +299,12 @@ enum
 /**
  * Fragment program results
  */
-enum
-{
-   FRAG_RESULT_COLR = 0,
-   FRAG_RESULT_COLH = 1,
-   FRAG_RESULT_DEPR = 2,
-   FRAG_RESULT_DATA0 = 3,
-   FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
+enum {
+    FRAG_RESULT_COLR = 0,
+    FRAG_RESULT_COLH = 1,
+    FRAG_RESULT_DEPR = 2,
+    FRAG_RESULT_DATA0 = 3,
+    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
 };
 
 
@@ -315,26 +312,26 @@ enum
  * Indexes for all renderbuffers
  */
 enum {
-   BUFFER_FRONT_LEFT  = 0,  /* the four standard color buffers */
-   BUFFER_BACK_LEFT   = 1,
-   BUFFER_FRONT_RIGHT = 2,
-   BUFFER_BACK_RIGHT  = 3,
-   BUFFER_AUX0        = 4,  /* optional aux buffer */
-   BUFFER_AUX1        = 5,
-   BUFFER_AUX2        = 6,
-   BUFFER_AUX3        = 7,
-   BUFFER_DEPTH       = 8,
-   BUFFER_STENCIL     = 9,
-   BUFFER_ACCUM       = 10,
-   BUFFER_COLOR0      = 11, /* generic renderbuffers */
-   BUFFER_COLOR1      = 12,
-   BUFFER_COLOR2      = 13,
-   BUFFER_COLOR3      = 14,
-   BUFFER_COLOR4      = 15,
-   BUFFER_COLOR5      = 16,
-   BUFFER_COLOR6      = 17,
-   BUFFER_COLOR7      = 18,
-   BUFFER_COUNT       = 19
+    BUFFER_FRONT_LEFT  = 0,  /* the four standard color buffers */
+    BUFFER_BACK_LEFT   = 1,
+    BUFFER_FRONT_RIGHT = 2,
+    BUFFER_BACK_RIGHT  = 3,
+    BUFFER_AUX0        = 4,  /* optional aux buffer */
+    BUFFER_AUX1        = 5,
+    BUFFER_AUX2        = 6,
+    BUFFER_AUX3        = 7,
+    BUFFER_DEPTH       = 8,
+    BUFFER_STENCIL     = 9,
+    BUFFER_ACCUM       = 10,
+    BUFFER_COLOR0      = 11, /* generic renderbuffers */
+    BUFFER_COLOR1      = 12,
+    BUFFER_COLOR2      = 13,
+    BUFFER_COLOR3      = 14,
+    BUFFER_COLOR4      = 15,
+    BUFFER_COLOR5      = 16,
+    BUFFER_COLOR6      = 17,
+    BUFFER_COLOR7      = 18,
+    BUFFER_COUNT       = 19
 };
 
 /**
@@ -393,19 +390,18 @@ enum {
 /**
  * Data structure for color tables
  */
-struct gl_color_table
-{
-   GLenum InternalFormat;      /**< The user-specified format */
-   GLenum _BaseFormat;         /**< GL_ALPHA, GL_RGBA, GL_RGB, etc */
-   GLuint Size;                /**< number of entries in table */
-   GLfloat *TableF;            /**< Color table, floating point values */
-   GLubyte *TableUB;           /**< Color table, ubyte values */
-   GLubyte RedSize;
-   GLubyte GreenSize;
-   GLubyte BlueSize;
-   GLubyte AlphaSize;
-   GLubyte LuminanceSize;
-   GLubyte IntensitySize;
+struct gl_color_table {
+    GLenum InternalFormat;      /**< The user-specified format */
+    GLenum _BaseFormat;         /**< GL_ALPHA, GL_RGBA, GL_RGB, etc */
+    GLuint Size;                /**< number of entries in table */
+    GLfloat *TableF;            /**< Color table, floating point values */
+    GLubyte *TableUB;           /**< Color table, ubyte values */
+    GLubyte RedSize;
+    GLubyte GreenSize;
+    GLubyte BlueSize;
+    GLubyte AlphaSize;
+    GLubyte LuminanceSize;
+    GLubyte IntensitySize;
 };
 
 
@@ -413,11 +409,11 @@ struct gl_color_table
  * \name Bit flags used for updating material values.
  */
 /*@{*/
-#define MAT_ATTRIB_FRONT_AMBIENT           0 
+#define MAT_ATTRIB_FRONT_AMBIENT           0
 #define MAT_ATTRIB_BACK_AMBIENT            1
-#define MAT_ATTRIB_FRONT_DIFFUSE           2 
+#define MAT_ATTRIB_FRONT_DIFFUSE           2
 #define MAT_ATTRIB_BACK_DIFFUSE            3
-#define MAT_ATTRIB_FRONT_SPECULAR          4 
+#define MAT_ATTRIB_FRONT_SPECULAR          4
 #define MAT_ATTRIB_BACK_SPECULAR           5
 #define MAT_ATTRIB_FRONT_EMISSION          6
 #define MAT_ATTRIB_BACK_EMISSION           7
@@ -427,12 +423,12 @@ struct gl_color_table
 #define MAT_ATTRIB_BACK_INDEXES            11
 #define MAT_ATTRIB_MAX                     12
 
-#define MAT_ATTRIB_AMBIENT(f)  (MAT_ATTRIB_FRONT_AMBIENT+(f))  
-#define MAT_ATTRIB_DIFFUSE(f)  (MAT_ATTRIB_FRONT_DIFFUSE+(f))  
-#define MAT_ATTRIB_SPECULAR(f) (MAT_ATTRIB_FRONT_SPECULAR+(f)) 
-#define MAT_ATTRIB_EMISSION(f) (MAT_ATTRIB_FRONT_EMISSION+(f)) 
+#define MAT_ATTRIB_AMBIENT(f)  (MAT_ATTRIB_FRONT_AMBIENT+(f))
+#define MAT_ATTRIB_DIFFUSE(f)  (MAT_ATTRIB_FRONT_DIFFUSE+(f))
+#define MAT_ATTRIB_SPECULAR(f) (MAT_ATTRIB_FRONT_SPECULAR+(f))
+#define MAT_ATTRIB_EMISSION(f) (MAT_ATTRIB_FRONT_EMISSION+(f))
 #define MAT_ATTRIB_SHININESS(f)(MAT_ATTRIB_FRONT_SHININESS+(f))
-#define MAT_ATTRIB_INDEXES(f)  (MAT_ATTRIB_FRONT_INDEXES+(f))  
+#define MAT_ATTRIB_INDEXES(f)  (MAT_ATTRIB_FRONT_INDEXES+(f))
 
 #define MAT_INDEX_AMBIENT  0
 #define MAT_INDEX_DIFFUSE  1
@@ -476,68 +472,65 @@ struct gl_color_table
 /**
  * Material shininess lookup table.
  */
-struct gl_shine_tab
-{
-   struct gl_shine_tab *next, *prev;
-   GLfloat tab[SHINE_TABLE_SIZE+1];
-   GLfloat shininess;
-   GLuint refcount;
+struct gl_shine_tab {
+    struct gl_shine_tab *next, *prev;
+    GLfloat tab[SHINE_TABLE_SIZE+1];
+    GLfloat shininess;
+    GLuint refcount;
 };
 
 
 /**
  * Light source state.
  */
-struct gl_light
-{
-   struct gl_light *next;	/**< double linked list with sentinel */
-   struct gl_light *prev;
+struct gl_light {
+    struct gl_light *next;	/**< double linked list with sentinel */
+    struct gl_light *prev;
 
-   GLfloat Ambient[4];		/**< ambient color */
-   GLfloat Diffuse[4];		/**< diffuse color */
-   GLfloat Specular[4];		/**< specular color */
-   GLfloat EyePosition[4];	/**< position in eye coordinates */
-   GLfloat EyeDirection[4];	/**< spotlight dir in eye coordinates */
-   GLfloat SpotExponent;
-   GLfloat SpotCutoff;		/**< in degrees */
-   GLfloat _CosCutoffNeg;	/**< = cos(SpotCutoff) */
-   GLfloat _CosCutoff;		/**< = MAX(0, cos(SpotCutoff)) */
-   GLfloat ConstantAttenuation;
-   GLfloat LinearAttenuation;
-   GLfloat QuadraticAttenuation;
-   GLboolean Enabled;		/**< On/off flag */
+    GLfloat Ambient[4];		/**< ambient color */
+    GLfloat Diffuse[4];		/**< diffuse color */
+    GLfloat Specular[4];		/**< specular color */
+    GLfloat EyePosition[4];	/**< position in eye coordinates */
+    GLfloat EyeDirection[4];	/**< spotlight dir in eye coordinates */
+    GLfloat SpotExponent;
+    GLfloat SpotCutoff;		/**< in degrees */
+    GLfloat _CosCutoffNeg;	/**< = cos(SpotCutoff) */
+    GLfloat _CosCutoff;		/**< = MAX(0, cos(SpotCutoff)) */
+    GLfloat ConstantAttenuation;
+    GLfloat LinearAttenuation;
+    GLfloat QuadraticAttenuation;
+    GLboolean Enabled;		/**< On/off flag */
 
-   /** 
-    * \name Derived fields
-    */
-   /*@{*/
-   GLbitfield _Flags;		/**< State */
+    /**
+     * \name Derived fields
+     */
+    /*@{*/
+    GLbitfield _Flags;		/**< State */
 
-   GLfloat _Position[4];	/**< position in eye/obj coordinates */
-   GLfloat _VP_inf_norm[3];	/**< Norm direction to infinite light */
-   GLfloat _h_inf_norm[3];	/**< Norm( _VP_inf_norm + <0,0,1> ) */
-   GLfloat _NormDirection[4];	/**< normalized spotlight direction */
-   GLfloat _VP_inf_spot_attenuation;
+    GLfloat _Position[4];	/**< position in eye/obj coordinates */
+    GLfloat _VP_inf_norm[3];	/**< Norm direction to infinite light */
+    GLfloat _h_inf_norm[3];	/**< Norm( _VP_inf_norm + <0,0,1> ) */
+    GLfloat _NormDirection[4];	/**< normalized spotlight direction */
+    GLfloat _VP_inf_spot_attenuation;
 
-   GLfloat _SpotExpTable[EXP_TABLE_SIZE][2];  /**< to replace a pow() call */
-   GLfloat _MatAmbient[2][3];	/**< material ambient * light ambient */
-   GLfloat _MatDiffuse[2][3];	/**< material diffuse * light diffuse */
-   GLfloat _MatSpecular[2][3];	/**< material spec * light specular */
-   GLfloat _dli;		/**< CI diffuse light intensity */
-   GLfloat _sli;		/**< CI specular light intensity */
-   /*@}*/
+    GLfloat _SpotExpTable[EXP_TABLE_SIZE][2];  /**< to replace a pow() call */
+    GLfloat _MatAmbient[2][3];	/**< material ambient * light ambient */
+    GLfloat _MatDiffuse[2][3];	/**< material diffuse * light diffuse */
+    GLfloat _MatSpecular[2][3];	/**< material spec * light specular */
+    GLfloat _dli;		/**< CI diffuse light intensity */
+    GLfloat _sli;		/**< CI specular light intensity */
+    /*@}*/
 };
 
 
 /**
  * Light model state.
  */
-struct gl_lightmodel
-{
-   GLfloat Ambient[4];		/**< ambient color */
-   GLboolean LocalViewer;	/**< Local (or infinite) view point? */
-   GLboolean TwoSide;		/**< Two (or one) sided lighting? */
-   GLenum ColorControl;		/**< either GL_SINGLE_COLOR
+struct gl_lightmodel {
+    GLfloat Ambient[4];		/**< ambient color */
+    GLboolean LocalViewer;	/**< Local (or infinite) view point? */
+    GLboolean TwoSide;		/**< Two (or one) sided lighting? */
+    GLenum ColorControl;		/**< either GL_SINGLE_COLOR
 				 *    or GL_SEPARATE_SPECULAR_COLOR */
 };
 
@@ -545,317 +538,305 @@ struct gl_lightmodel
 /**
  * Material state.
  */
-struct gl_material
-{
-   GLfloat Attrib[MAT_ATTRIB_MAX][4];
+struct gl_material {
+    GLfloat Attrib[MAT_ATTRIB_MAX][4];
 };
 
 
 /**
  * Accumulation buffer attribute group (GL_ACCUM_BUFFER_BIT)
  */
-struct gl_accum_attrib
-{
-   GLfloat ClearColor[4];	/**< Accumulation buffer clear color */
+struct gl_accum_attrib {
+    GLfloat ClearColor[4];	/**< Accumulation buffer clear color */
 };
 
 
 /**
  * Color buffer attribute group (GL_COLOR_BUFFER_BIT).
  */
-struct gl_colorbuffer_attrib
-{
-   GLuint ClearIndex;			/**< Index to use for glClear */
-   GLclampf ClearColor[4];		/**< Color to use for glClear */
+struct gl_colorbuffer_attrib {
+    GLuint ClearIndex;			/**< Index to use for glClear */
+    GLclampf ClearColor[4];		/**< Color to use for glClear */
 
-   GLuint IndexMask;			/**< Color index write mask */
-   GLubyte ColorMask[4];		/**< Each flag is 0xff or 0x0 */
+    GLuint IndexMask;			/**< Color index write mask */
+    GLubyte ColorMask[4];		/**< Each flag is 0xff or 0x0 */
 
-   GLenum DrawBuffer[MAX_DRAW_BUFFERS];	/**< Which buffer to draw into */
+    GLenum DrawBuffer[MAX_DRAW_BUFFERS];	/**< Which buffer to draw into */
 
-   /** 
-    * \name alpha testing
-    */
-   /*@{*/
-   GLboolean AlphaEnabled;		/**< Alpha test enabled flag */
-   GLenum AlphaFunc;			/**< Alpha test function */
-   GLclampf AlphaRef;			/**< Alpha reference value */
-   /*@}*/
+    /**
+     * \name alpha testing
+     */
+    /*@{*/
+    GLboolean AlphaEnabled;		/**< Alpha test enabled flag */
+    GLenum AlphaFunc;			/**< Alpha test function */
+    GLclampf AlphaRef;			/**< Alpha reference value */
+    /*@}*/
 
-   /** 
-    * \name Blending
-    */
-   /*@{*/
-   GLboolean BlendEnabled;		/**< Blending enabled flag */
-   GLenum BlendSrcRGB;			/**< Blending source operator */
-   GLenum BlendDstRGB;			/**< Blending destination operator */
-   GLenum BlendSrcA;			/**< GL_INGR_blend_func_separate */
-   GLenum BlendDstA;			/**< GL_INGR_blend_func_separate */
-   GLenum BlendEquationRGB;		/**< Blending equation */
-   GLenum BlendEquationA;		/**< GL_EXT_blend_equation_separate */
-   GLfloat BlendColor[4];		/**< Blending color */
-   /*@}*/
+    /**
+     * \name Blending
+     */
+    /*@{*/
+    GLboolean BlendEnabled;		/**< Blending enabled flag */
+    GLenum BlendSrcRGB;			/**< Blending source operator */
+    GLenum BlendDstRGB;			/**< Blending destination operator */
+    GLenum BlendSrcA;			/**< GL_INGR_blend_func_separate */
+    GLenum BlendDstA;			/**< GL_INGR_blend_func_separate */
+    GLenum BlendEquationRGB;		/**< Blending equation */
+    GLenum BlendEquationA;		/**< GL_EXT_blend_equation_separate */
+    GLfloat BlendColor[4];		/**< Blending color */
+    /*@}*/
 
-   /** 
-    * \name Logic op
-    */
-   /*@{*/
-   GLenum LogicOp;			/**< Logic operator */
-   GLboolean IndexLogicOpEnabled;	/**< Color index logic op enabled flag */
-   GLboolean ColorLogicOpEnabled;	/**< RGBA logic op enabled flag */
-   GLboolean _LogicOpEnabled;		/**< RGBA logic op + EXT_blend_logic_op enabled flag */
-   /*@}*/
+    /**
+     * \name Logic op
+     */
+    /*@{*/
+    GLenum LogicOp;			/**< Logic operator */
+    GLboolean IndexLogicOpEnabled;	/**< Color index logic op enabled flag */
+    GLboolean ColorLogicOpEnabled;	/**< RGBA logic op enabled flag */
+    GLboolean _LogicOpEnabled;		/**< RGBA logic op + EXT_blend_logic_op enabled flag */
+    /*@}*/
 
-   GLboolean DitherFlag;		/**< Dither enable flag */
+    GLboolean DitherFlag;		/**< Dither enable flag */
 
-   GLenum ClampFragmentColor; /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
-   GLenum ClampReadColor;     /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
+    GLenum ClampFragmentColor; /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
+    GLenum ClampReadColor;     /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
 };
 
 
 /**
  * Current attribute group (GL_CURRENT_BIT).
  */
-struct gl_current_attrib
-{
-   /**
-    * \name Current vertex attributes.
-    * \note Values are valid only after FLUSH_VERTICES has been called.
-    * \note Index and Edgeflag current values are stored as floats in the 
-    * SIX and SEVEN attribute slots.
-    */
-   /*@{*/
-   GLfloat Attrib[VERT_ATTRIB_MAX][4];	/**< Position, color, texcoords, etc */
-   /*@}*/
+struct gl_current_attrib {
+    /**
+     * \name Current vertex attributes.
+     * \note Values are valid only after FLUSH_VERTICES has been called.
+     * \note Index and Edgeflag current values are stored as floats in the
+     * SIX and SEVEN attribute slots.
+     */
+    /*@{*/
+    GLfloat Attrib[VERT_ATTRIB_MAX][4];	/**< Position, color, texcoords, etc */
+    /*@}*/
 
-   /**
-    * \name Current raster position attributes (always valid).
-    * \note This set of attributes is very similar to the SWvertex struct.
-    */
-   /*@{*/
-   GLfloat RasterPos[4];
-   GLfloat RasterDistance;
-   GLfloat RasterColor[4];
-   GLfloat RasterSecondaryColor[4];
-   GLfloat RasterIndex;
-   GLfloat RasterTexCoords[MAX_TEXTURE_COORD_UNITS][4];
-   GLboolean RasterPosValid;
-   /*@}*/
+    /**
+     * \name Current raster position attributes (always valid).
+     * \note This set of attributes is very similar to the SWvertex struct.
+     */
+    /*@{*/
+    GLfloat RasterPos[4];
+    GLfloat RasterDistance;
+    GLfloat RasterColor[4];
+    GLfloat RasterSecondaryColor[4];
+    GLfloat RasterIndex;
+    GLfloat RasterTexCoords[MAX_TEXTURE_COORD_UNITS][4];
+    GLboolean RasterPosValid;
+    /*@}*/
 };
 
 
 /**
  * Depth buffer attribute group (GL_DEPTH_BUFFER_BIT).
  */
-struct gl_depthbuffer_attrib
-{
-   GLenum Func;			/**< Function for depth buffer compare */
-   GLclampd Clear;		/**< Value to clear depth buffer to */
-   GLboolean Test;		/**< Depth buffering enabled flag */
-   GLboolean Mask;		/**< Depth buffer writable? */
-   GLboolean BoundsTest;        /**< GL_EXT_depth_bounds_test */
-   GLfloat BoundsMin, BoundsMax;/**< GL_EXT_depth_bounds_test */
+struct gl_depthbuffer_attrib {
+    GLenum Func;			/**< Function for depth buffer compare */
+    GLclampd Clear;		/**< Value to clear depth buffer to */
+    GLboolean Test;		/**< Depth buffering enabled flag */
+    GLboolean Mask;		/**< Depth buffer writable? */
+    GLboolean BoundsTest;        /**< GL_EXT_depth_bounds_test */
+    GLfloat BoundsMin, BoundsMax;/**< GL_EXT_depth_bounds_test */
 };
 
 
 /**
  * glEnable()/glDisable() attribute group (GL_ENABLE_BIT).
  */
-struct gl_enable_attrib
-{
-   GLboolean AlphaTest;
-   GLboolean AutoNormal;
-   GLboolean Blend;
-   GLbitfield ClipPlanes;
-   GLboolean ColorMaterial;
-   GLboolean ColorTable[COLORTABLE_MAX];
-   GLboolean Convolution1D;
-   GLboolean Convolution2D;
-   GLboolean Separable2D;
-   GLboolean CullFace;
-   GLboolean DepthTest;
-   GLboolean Dither;
-   GLboolean Fog;
-   GLboolean Histogram;
-   GLboolean Light[MAX_LIGHTS];
-   GLboolean Lighting;
-   GLboolean LineSmooth;
-   GLboolean LineStipple;
-   GLboolean IndexLogicOp;
-   GLboolean ColorLogicOp;
-   GLboolean Map1Color4;
-   GLboolean Map1Index;
-   GLboolean Map1Normal;
-   GLboolean Map1TextureCoord1;
-   GLboolean Map1TextureCoord2;
-   GLboolean Map1TextureCoord3;
-   GLboolean Map1TextureCoord4;
-   GLboolean Map1Vertex3;
-   GLboolean Map1Vertex4;
-   GLboolean Map1Attrib[16];  /* GL_NV_vertex_program */
-   GLboolean Map2Color4;
-   GLboolean Map2Index;
-   GLboolean Map2Normal;
-   GLboolean Map2TextureCoord1;
-   GLboolean Map2TextureCoord2;
-   GLboolean Map2TextureCoord3;
-   GLboolean Map2TextureCoord4;
-   GLboolean Map2Vertex3;
-   GLboolean Map2Vertex4;
-   GLboolean Map2Attrib[16];  /* GL_NV_vertex_program */
-   GLboolean MinMax;
-   GLboolean Normalize;
-   GLboolean PixelTexture;
-   GLboolean PointSmooth;
-   GLboolean PolygonOffsetPoint;
-   GLboolean PolygonOffsetLine;
-   GLboolean PolygonOffsetFill;
-   GLboolean PolygonSmooth;
-   GLboolean PolygonStipple;
-   GLboolean RescaleNormals;
-   GLboolean Scissor;
-   GLboolean Stencil;
-   GLboolean StencilTwoSide;          /* GL_EXT_stencil_two_side */
-   GLboolean MultisampleEnabled;      /* GL_ARB_multisample */
-   GLboolean SampleAlphaToCoverage;   /* GL_ARB_multisample */
-   GLboolean SampleAlphaToOne;        /* GL_ARB_multisample */
-   GLboolean SampleCoverage;          /* GL_ARB_multisample */
-   GLboolean SampleCoverageInvert;    /* GL_ARB_multisample */
-   GLboolean RasterPositionUnclipped; /* GL_IBM_rasterpos_clip */
-   GLuint Texture[MAX_TEXTURE_IMAGE_UNITS];
-   GLuint TexGen[MAX_TEXTURE_COORD_UNITS];
-   /* SGI_texture_color_table */
-   GLboolean TextureColorTable[MAX_TEXTURE_IMAGE_UNITS];
-   /* GL_ARB_vertex_program / GL_NV_vertex_program */
-   GLboolean VertexProgram;
-   GLboolean VertexProgramPointSize;
-   GLboolean VertexProgramTwoSide;
-   /* GL_ARB_point_sprite / GL_NV_point_sprite */
-   GLboolean PointSprite;
-   GLboolean FragmentShaderATI;
+struct gl_enable_attrib {
+    GLboolean AlphaTest;
+    GLboolean AutoNormal;
+    GLboolean Blend;
+    GLbitfield ClipPlanes;
+    GLboolean ColorMaterial;
+    GLboolean ColorTable[COLORTABLE_MAX];
+    GLboolean Convolution1D;
+    GLboolean Convolution2D;
+    GLboolean Separable2D;
+    GLboolean CullFace;
+    GLboolean DepthTest;
+    GLboolean Dither;
+    GLboolean Fog;
+    GLboolean Histogram;
+    GLboolean Light[MAX_LIGHTS];
+    GLboolean Lighting;
+    GLboolean LineSmooth;
+    GLboolean LineStipple;
+    GLboolean IndexLogicOp;
+    GLboolean ColorLogicOp;
+    GLboolean Map1Color4;
+    GLboolean Map1Index;
+    GLboolean Map1Normal;
+    GLboolean Map1TextureCoord1;
+    GLboolean Map1TextureCoord2;
+    GLboolean Map1TextureCoord3;
+    GLboolean Map1TextureCoord4;
+    GLboolean Map1Vertex3;
+    GLboolean Map1Vertex4;
+    GLboolean Map1Attrib[16];  /* GL_NV_vertex_program */
+    GLboolean Map2Color4;
+    GLboolean Map2Index;
+    GLboolean Map2Normal;
+    GLboolean Map2TextureCoord1;
+    GLboolean Map2TextureCoord2;
+    GLboolean Map2TextureCoord3;
+    GLboolean Map2TextureCoord4;
+    GLboolean Map2Vertex3;
+    GLboolean Map2Vertex4;
+    GLboolean Map2Attrib[16];  /* GL_NV_vertex_program */
+    GLboolean MinMax;
+    GLboolean Normalize;
+    GLboolean PixelTexture;
+    GLboolean PointSmooth;
+    GLboolean PolygonOffsetPoint;
+    GLboolean PolygonOffsetLine;
+    GLboolean PolygonOffsetFill;
+    GLboolean PolygonSmooth;
+    GLboolean PolygonStipple;
+    GLboolean RescaleNormals;
+    GLboolean Scissor;
+    GLboolean Stencil;
+    GLboolean StencilTwoSide;          /* GL_EXT_stencil_two_side */
+    GLboolean MultisampleEnabled;      /* GL_ARB_multisample */
+    GLboolean SampleAlphaToCoverage;   /* GL_ARB_multisample */
+    GLboolean SampleAlphaToOne;        /* GL_ARB_multisample */
+    GLboolean SampleCoverage;          /* GL_ARB_multisample */
+    GLboolean SampleCoverageInvert;    /* GL_ARB_multisample */
+    GLboolean RasterPositionUnclipped; /* GL_IBM_rasterpos_clip */
+    GLuint Texture[MAX_TEXTURE_IMAGE_UNITS];
+    GLuint TexGen[MAX_TEXTURE_COORD_UNITS];
+    /* SGI_texture_color_table */
+    GLboolean TextureColorTable[MAX_TEXTURE_IMAGE_UNITS];
+    /* GL_ARB_vertex_program / GL_NV_vertex_program */
+    GLboolean VertexProgram;
+    GLboolean VertexProgramPointSize;
+    GLboolean VertexProgramTwoSide;
+    /* GL_ARB_point_sprite / GL_NV_point_sprite */
+    GLboolean PointSprite;
+    GLboolean FragmentShaderATI;
 };
 
 
 /**
  * Evaluator attribute group (GL_EVAL_BIT).
  */
-struct gl_eval_attrib
-{
-   /**
-    * \name Enable bits 
-    */
-   /*@{*/
-   GLboolean Map1Color4;
-   GLboolean Map1Index;
-   GLboolean Map1Normal;
-   GLboolean Map1TextureCoord1;
-   GLboolean Map1TextureCoord2;
-   GLboolean Map1TextureCoord3;
-   GLboolean Map1TextureCoord4;
-   GLboolean Map1Vertex3;
-   GLboolean Map1Vertex4;
-   GLboolean Map1Attrib[16];  /* GL_NV_vertex_program */
-   GLboolean Map2Color4;
-   GLboolean Map2Index;
-   GLboolean Map2Normal;
-   GLboolean Map2TextureCoord1;
-   GLboolean Map2TextureCoord2;
-   GLboolean Map2TextureCoord3;
-   GLboolean Map2TextureCoord4;
-   GLboolean Map2Vertex3;
-   GLboolean Map2Vertex4;
-   GLboolean Map2Attrib[16];  /* GL_NV_vertex_program */
-   GLboolean AutoNormal;
-   /*@}*/
-   
-   /**
-    * \name Map Grid endpoints and divisions and calculated du values
-    */
-   /*@{*/
-   GLint MapGrid1un;
-   GLfloat MapGrid1u1, MapGrid1u2, MapGrid1du;
-   GLint MapGrid2un, MapGrid2vn;
-   GLfloat MapGrid2u1, MapGrid2u2, MapGrid2du;
-   GLfloat MapGrid2v1, MapGrid2v2, MapGrid2dv;
-   /*@}*/
+struct gl_eval_attrib {
+    /**
+     * \name Enable bits
+     */
+    /*@{*/
+    GLboolean Map1Color4;
+    GLboolean Map1Index;
+    GLboolean Map1Normal;
+    GLboolean Map1TextureCoord1;
+    GLboolean Map1TextureCoord2;
+    GLboolean Map1TextureCoord3;
+    GLboolean Map1TextureCoord4;
+    GLboolean Map1Vertex3;
+    GLboolean Map1Vertex4;
+    GLboolean Map1Attrib[16];  /* GL_NV_vertex_program */
+    GLboolean Map2Color4;
+    GLboolean Map2Index;
+    GLboolean Map2Normal;
+    GLboolean Map2TextureCoord1;
+    GLboolean Map2TextureCoord2;
+    GLboolean Map2TextureCoord3;
+    GLboolean Map2TextureCoord4;
+    GLboolean Map2Vertex3;
+    GLboolean Map2Vertex4;
+    GLboolean Map2Attrib[16];  /* GL_NV_vertex_program */
+    GLboolean AutoNormal;
+    /*@}*/
+
+    /**
+     * \name Map Grid endpoints and divisions and calculated du values
+     */
+    /*@{*/
+    GLint MapGrid1un;
+    GLfloat MapGrid1u1, MapGrid1u2, MapGrid1du;
+    GLint MapGrid2un, MapGrid2vn;
+    GLfloat MapGrid2u1, MapGrid2u2, MapGrid2du;
+    GLfloat MapGrid2v1, MapGrid2v2, MapGrid2dv;
+    /*@}*/
 };
 
 
 /**
  * Fog attribute group (GL_FOG_BIT).
  */
-struct gl_fog_attrib
-{
-   GLboolean Enabled;		/**< Fog enabled flag */
-   GLfloat Color[4];		/**< Fog color */
-   GLfloat Density;		/**< Density >= 0.0 */
-   GLfloat Start;		/**< Start distance in eye coords */
-   GLfloat End;			/**< End distance in eye coords */
-   GLfloat Index;		/**< Fog index */
-   GLenum Mode;			/**< Fog mode */
-   GLboolean ColorSumEnabled;
-   GLenum FogCoordinateSource;  /**< GL_EXT_fog_coord */
-   GLfloat _Scale;		/**< (End == Start) ? 1.0 : 1.0 / (End - Start) */
+struct gl_fog_attrib {
+    GLboolean Enabled;		/**< Fog enabled flag */
+    GLfloat Color[4];		/**< Fog color */
+    GLfloat Density;		/**< Density >= 0.0 */
+    GLfloat Start;		/**< Start distance in eye coords */
+    GLfloat End;			/**< End distance in eye coords */
+    GLfloat Index;		/**< Fog index */
+    GLenum Mode;			/**< Fog mode */
+    GLboolean ColorSumEnabled;
+    GLenum FogCoordinateSource;  /**< GL_EXT_fog_coord */
+    GLfloat _Scale;		/**< (End == Start) ? 1.0 : 1.0 / (End - Start) */
 };
 
 
-/** 
+/**
  * Hint attribute group (GL_HINT_BIT).
- * 
+ *
  * Values are always one of GL_FASTEST, GL_NICEST, or GL_DONT_CARE.
  */
-struct gl_hint_attrib
-{
-   GLenum PerspectiveCorrection;
-   GLenum PointSmooth;
-   GLenum LineSmooth;
-   GLenum PolygonSmooth;
-   GLenum Fog;
-   GLenum ClipVolumeClipping;   /**< GL_EXT_clip_volume_hint */
-   GLenum TextureCompression;   /**< GL_ARB_texture_compression */
-   GLenum GenerateMipmap;       /**< GL_SGIS_generate_mipmap */
-   GLenum FragmentShaderDerivative; /**< GL_ARB_fragment_shader */
+struct gl_hint_attrib {
+    GLenum PerspectiveCorrection;
+    GLenum PointSmooth;
+    GLenum LineSmooth;
+    GLenum PolygonSmooth;
+    GLenum Fog;
+    GLenum ClipVolumeClipping;   /**< GL_EXT_clip_volume_hint */
+    GLenum TextureCompression;   /**< GL_ARB_texture_compression */
+    GLenum GenerateMipmap;       /**< GL_SGIS_generate_mipmap */
+    GLenum FragmentShaderDerivative; /**< GL_ARB_fragment_shader */
 };
 
 
 /**
  * Histogram attributes.
  */
-struct gl_histogram_attrib
-{
-   GLuint Width;				/**< number of table entries */
-   GLint Format;				/**< GL_ALPHA, GL_RGB, etc */
-   GLuint Count[HISTOGRAM_TABLE_SIZE][4];	/**< the histogram */
-   GLboolean Sink;				/**< terminate image transfer? */
-   GLubyte RedSize;				/**< Bits per counter */
-   GLubyte GreenSize;
-   GLubyte BlueSize;
-   GLubyte AlphaSize;
-   GLubyte LuminanceSize;
+struct gl_histogram_attrib {
+    GLuint Width;				/**< number of table entries */
+    GLint Format;				/**< GL_ALPHA, GL_RGB, etc */
+    GLuint Count[HISTOGRAM_TABLE_SIZE][4];	/**< the histogram */
+    GLboolean Sink;				/**< terminate image transfer? */
+    GLubyte RedSize;				/**< Bits per counter */
+    GLubyte GreenSize;
+    GLubyte BlueSize;
+    GLubyte AlphaSize;
+    GLubyte LuminanceSize;
 };
 
 
 /**
  * Color Min/max state.
  */
-struct gl_minmax_attrib
-{
-   GLenum Format;
-   GLboolean Sink;
-   GLfloat Min[4], Max[4];   /**< RGBA */
+struct gl_minmax_attrib {
+    GLenum Format;
+    GLboolean Sink;
+    GLfloat Min[4], Max[4];   /**< RGBA */
 };
 
 
 /**
  * Image convolution state.
  */
-struct gl_convolution_attrib
-{
-   GLenum Format;
-   GLenum InternalFormat;
-   GLuint Width;
-   GLuint Height;
-   GLfloat Filter[MAX_CONVOLUTION_WIDTH * MAX_CONVOLUTION_HEIGHT * 4];
+struct gl_convolution_attrib {
+    GLenum Format;
+    GLenum InternalFormat;
+    GLuint Width;
+    GLuint Height;
+    GLfloat Filter[MAX_CONVOLUTION_WIDTH * MAX_CONVOLUTION_HEIGHT * 4];
 };
 
 
@@ -873,72 +854,68 @@ struct gl_convolution_attrib
 /**
  * Lighting attribute group (GL_LIGHT_BIT).
  */
-struct gl_light_attrib
-{
-   struct gl_light Light[MAX_LIGHTS];	/**< Array of light sources */
-   struct gl_lightmodel Model;		/**< Lighting model */
+struct gl_light_attrib {
+    struct gl_light Light[MAX_LIGHTS];	/**< Array of light sources */
+    struct gl_lightmodel Model;		/**< Lighting model */
 
-   /**
-    * Must flush FLUSH_VERTICES before referencing:
-    */
-   /*@{*/
-   struct gl_material Material; 	/**< Includes front & back values */
-   /*@}*/
+    /**
+     * Must flush FLUSH_VERTICES before referencing:
+     */
+    /*@{*/
+    struct gl_material Material; 	/**< Includes front & back values */
+    /*@}*/
 
-   GLboolean Enabled;			/**< Lighting enabled flag */
-   GLenum ShadeModel;			/**< GL_FLAT or GL_SMOOTH */
-   GLenum ColorMaterialFace;		/**< GL_FRONT, BACK or FRONT_AND_BACK */
-   GLenum ColorMaterialMode;		/**< GL_AMBIENT, GL_DIFFUSE, etc */
-   GLbitfield ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
-   GLboolean ColorMaterialEnabled;
-   GLenum ClampVertexColor;
+    GLboolean Enabled;			/**< Lighting enabled flag */
+    GLenum ShadeModel;			/**< GL_FLAT or GL_SMOOTH */
+    GLenum ColorMaterialFace;		/**< GL_FRONT, BACK or FRONT_AND_BACK */
+    GLenum ColorMaterialMode;		/**< GL_AMBIENT, GL_DIFFUSE, etc */
+    GLbitfield ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
+    GLboolean ColorMaterialEnabled;
+    GLenum ClampVertexColor;
 
-   struct gl_light EnabledList;         /**< List sentinel */
+    struct gl_light EnabledList;         /**< List sentinel */
 
-   /** 
-    * Derived state for optimizations: 
-    */
-   /*@{*/
-   GLboolean _NeedEyeCoords;		
-   GLboolean _NeedVertices;		/**< Use fast shader? */
-   GLbitfield  _Flags;		        /**< LIGHT_* flags, see above */
-   GLfloat _BaseColor[2][3];
-   /*@}*/
+    /**
+     * Derived state for optimizations:
+     */
+    /*@{*/
+    GLboolean _NeedEyeCoords;
+    GLboolean _NeedVertices;		/**< Use fast shader? */
+    GLbitfield  _Flags;		        /**< LIGHT_* flags, see above */
+    GLfloat _BaseColor[2][3];
+    /*@}*/
 };
 
 
 /**
  * Line attribute group (GL_LINE_BIT).
  */
-struct gl_line_attrib
-{
-   GLboolean SmoothFlag;	/**< GL_LINE_SMOOTH enabled? */
-   GLboolean StippleFlag;	/**< GL_LINE_STIPPLE enabled? */
-   GLushort StipplePattern;	/**< Stipple pattern */
-   GLint StippleFactor;		/**< Stipple repeat factor */
-   GLfloat Width;		/**< Line width */
-   GLfloat _Width;		/**< Clamped Line width */
+struct gl_line_attrib {
+    GLboolean SmoothFlag;	/**< GL_LINE_SMOOTH enabled? */
+    GLboolean StippleFlag;	/**< GL_LINE_STIPPLE enabled? */
+    GLushort StipplePattern;	/**< Stipple pattern */
+    GLint StippleFactor;		/**< Stipple repeat factor */
+    GLfloat Width;		/**< Line width */
+    GLfloat _Width;		/**< Clamped Line width */
 };
 
 
 /**
  * Display list attribute group (GL_LIST_BIT).
  */
-struct gl_list_attrib
-{
-   GLuint ListBase;
+struct gl_list_attrib {
+    GLuint ListBase;
 };
 
 
 /**
  * Used by device drivers to hook new commands into display lists.
  */
-struct gl_list_instruction
-{
-   GLuint Size;
-   void (*Execute)( GLcontext *ctx, void *data );
-   void (*Destroy)( GLcontext *ctx, void *data );
-   void (*Print)( GLcontext *ctx, void *data );
+struct gl_list_instruction {
+    GLuint Size;
+    void (*Execute)(GLcontext *ctx, void *data);
+    void (*Destroy)(GLcontext *ctx, void *data);
+    void (*Print)(GLcontext *ctx, void *data);
 };
 
 #define MAX_DLIST_EXT_OPCODES 16
@@ -946,184 +923,175 @@ struct gl_list_instruction
 /**
  * Used by device drivers to hook new commands into display lists.
  */
-struct gl_list_extensions
-{
-   struct gl_list_instruction Opcode[MAX_DLIST_EXT_OPCODES];
-   GLuint NumOpcodes;
+struct gl_list_extensions {
+    struct gl_list_instruction Opcode[MAX_DLIST_EXT_OPCODES];
+    GLuint NumOpcodes;
 };
 
 
 /**
  * Multisample attribute group (GL_MULTISAMPLE_BIT).
  */
-struct gl_multisample_attrib
-{
-   GLboolean Enabled;
-   GLboolean SampleAlphaToCoverage;
-   GLboolean SampleAlphaToOne;
-   GLboolean SampleCoverage;
-   GLfloat SampleCoverageValue;
-   GLboolean SampleCoverageInvert;
+struct gl_multisample_attrib {
+    GLboolean Enabled;
+    GLboolean SampleAlphaToCoverage;
+    GLboolean SampleAlphaToOne;
+    GLboolean SampleCoverage;
+    GLfloat SampleCoverageValue;
+    GLboolean SampleCoverageInvert;
 };
 
 
 /**
  * A pixelmap (see glPixelMap)
  */
-struct gl_pixelmap
-{
-   GLint Size;
-   GLfloat Map[MAX_PIXEL_MAP_TABLE];
-   GLubyte Map8[MAX_PIXEL_MAP_TABLE];  /**< converted to 8-bit color */
+struct gl_pixelmap {
+    GLint Size;
+    GLfloat Map[MAX_PIXEL_MAP_TABLE];
+    GLubyte Map8[MAX_PIXEL_MAP_TABLE];  /**< converted to 8-bit color */
 };
 
 
 /**
  * Collection of all pixelmaps
  */
-struct gl_pixelmaps
-{
-   struct gl_pixelmap RtoR;  /**< i.e. GL_PIXEL_MAP_R_TO_R */
-   struct gl_pixelmap GtoG;
-   struct gl_pixelmap BtoB;
-   struct gl_pixelmap AtoA;
-   struct gl_pixelmap ItoR;
-   struct gl_pixelmap ItoG;
-   struct gl_pixelmap ItoB;
-   struct gl_pixelmap ItoA;
-   struct gl_pixelmap ItoI;
-   struct gl_pixelmap StoS;
+struct gl_pixelmaps {
+    struct gl_pixelmap RtoR;  /**< i.e. GL_PIXEL_MAP_R_TO_R */
+    struct gl_pixelmap GtoG;
+    struct gl_pixelmap BtoB;
+    struct gl_pixelmap AtoA;
+    struct gl_pixelmap ItoR;
+    struct gl_pixelmap ItoG;
+    struct gl_pixelmap ItoB;
+    struct gl_pixelmap ItoA;
+    struct gl_pixelmap ItoI;
+    struct gl_pixelmap StoS;
 };
 
 
 /**
  * Pixel attribute group (GL_PIXEL_MODE_BIT).
  */
-struct gl_pixel_attrib
-{
-   GLenum ReadBuffer;		/**< source buffer for glRead/CopyPixels() */
+struct gl_pixel_attrib {
+    GLenum ReadBuffer;		/**< source buffer for glRead/CopyPixels() */
 
-   /*--- Begin Pixel Transfer State ---*/
-   /* Fields are in the order in which they're applied... */
+    /*--- Begin Pixel Transfer State ---*/
+    /* Fields are in the order in which they're applied... */
 
-   /* Scale & Bias (index shift, offset) */
-   GLfloat RedBias, RedScale;
-   GLfloat GreenBias, GreenScale;
-   GLfloat BlueBias, BlueScale;
-   GLfloat AlphaBias, AlphaScale;
-   GLfloat DepthBias, DepthScale;
-   GLint IndexShift, IndexOffset;
+    /* Scale & Bias (index shift, offset) */
+    GLfloat RedBias, RedScale;
+    GLfloat GreenBias, GreenScale;
+    GLfloat BlueBias, BlueScale;
+    GLfloat AlphaBias, AlphaScale;
+    GLfloat DepthBias, DepthScale;
+    GLint IndexShift, IndexOffset;
 
-   /* Pixel Maps */
-   /* Note: actual pixel maps are not part of this attrib group */
-   GLboolean MapColorFlag;
-   GLboolean MapStencilFlag;
+    /* Pixel Maps */
+    /* Note: actual pixel maps are not part of this attrib group */
+    GLboolean MapColorFlag;
+    GLboolean MapStencilFlag;
 
-   /* There are multiple color table stages: */
-   GLboolean ColorTableEnabled[COLORTABLE_MAX];
-   GLfloat ColorTableScale[COLORTABLE_MAX][4];  /**< RGBA */
-   GLfloat ColorTableBias[COLORTABLE_MAX][4];   /**< RGBA */
+    /* There are multiple color table stages: */
+    GLboolean ColorTableEnabled[COLORTABLE_MAX];
+    GLfloat ColorTableScale[COLORTABLE_MAX][4];  /**< RGBA */
+    GLfloat ColorTableBias[COLORTABLE_MAX][4];   /**< RGBA */
 
-   /* Convolution (GL_EXT_convolution) */
-   GLboolean Convolution1DEnabled;
-   GLboolean Convolution2DEnabled;
-   GLboolean Separable2DEnabled;
-   GLfloat ConvolutionBorderColor[3][4];
-   GLenum ConvolutionBorderMode[3];
-   GLfloat ConvolutionFilterScale[3][4];  /**< RGBA */
-   GLfloat ConvolutionFilterBias[3][4];   /**< RGBA */
-   GLfloat PostConvolutionScale[4];  /**< RGBA */
-   GLfloat PostConvolutionBias[4];   /**< RGBA */
+    /* Convolution (GL_EXT_convolution) */
+    GLboolean Convolution1DEnabled;
+    GLboolean Convolution2DEnabled;
+    GLboolean Separable2DEnabled;
+    GLfloat ConvolutionBorderColor[3][4];
+    GLenum ConvolutionBorderMode[3];
+    GLfloat ConvolutionFilterScale[3][4];  /**< RGBA */
+    GLfloat ConvolutionFilterBias[3][4];   /**< RGBA */
+    GLfloat PostConvolutionScale[4];  /**< RGBA */
+    GLfloat PostConvolutionBias[4];   /**< RGBA */
 
-   /* Color matrix (GL_SGI_color_matrix) */
-   /* Note: the color matrix is not part of this attrib group */
-   GLfloat PostColorMatrixScale[4];  /**< RGBA */
-   GLfloat PostColorMatrixBias[4];   /**< RGBA */
+    /* Color matrix (GL_SGI_color_matrix) */
+    /* Note: the color matrix is not part of this attrib group */
+    GLfloat PostColorMatrixScale[4];  /**< RGBA */
+    GLfloat PostColorMatrixBias[4];   /**< RGBA */
 
-   /* Histogram & minmax (GL_EXT_histogram) */
-   /* Note: histogram and minmax data are not part of this attrib group */
-   GLboolean HistogramEnabled;
-   GLboolean MinMaxEnabled;
+    /* Histogram & minmax (GL_EXT_histogram) */
+    /* Note: histogram and minmax data are not part of this attrib group */
+    GLboolean HistogramEnabled;
+    GLboolean MinMaxEnabled;
 
-   /*--- End Pixel Transfer State ---*/
+    /*--- End Pixel Transfer State ---*/
 
-   /* Pixel Zoom */
-   GLfloat ZoomX, ZoomY;
+    /* Pixel Zoom */
+    GLfloat ZoomX, ZoomY;
 
-   /** GL_SGI_texture_color_table */
-   GLfloat TextureColorTableScale[4];
-   GLfloat TextureColorTableBias[4];
+    /** GL_SGI_texture_color_table */
+    GLfloat TextureColorTableScale[4];
+    GLfloat TextureColorTableBias[4];
 };
 
 
 /**
  * Point attribute group (GL_POINT_BIT).
  */
-struct gl_point_attrib
-{
-   GLboolean SmoothFlag;	/**< True if GL_POINT_SMOOTH is enabled */
-   GLfloat Size;		/**< User-specified point size */
-   GLfloat _Size;		/**< Size clamped to user limits */
-   GLfloat Params[3];		/**< GL_EXT_point_parameters */
-   GLfloat MinSize, MaxSize;	/**< GL_EXT_point_parameters */
-   GLfloat Threshold;		/**< GL_EXT_point_parameters */
-   GLboolean _Attenuated;	/**< True if Params != [1, 0, 0] */
-   GLboolean PointSprite;	/**< GL_NV/ARB_point_sprite */
-   GLboolean CoordReplace[MAX_TEXTURE_COORD_UNITS]; /**< GL_ARB_point_sprite */
-   GLenum SpriteRMode;		/**< GL_NV_point_sprite (only!) */
-   GLenum SpriteOrigin;		/**< GL_ARB_point_sprite */
+struct gl_point_attrib {
+    GLboolean SmoothFlag;	/**< True if GL_POINT_SMOOTH is enabled */
+    GLfloat Size;		/**< User-specified point size */
+    GLfloat _Size;		/**< Size clamped to user limits */
+    GLfloat Params[3];		/**< GL_EXT_point_parameters */
+    GLfloat MinSize, MaxSize;	/**< GL_EXT_point_parameters */
+    GLfloat Threshold;		/**< GL_EXT_point_parameters */
+    GLboolean _Attenuated;	/**< True if Params != [1, 0, 0] */
+    GLboolean PointSprite;	/**< GL_NV/ARB_point_sprite */
+    GLboolean CoordReplace[MAX_TEXTURE_COORD_UNITS]; /**< GL_ARB_point_sprite */
+    GLenum SpriteRMode;		/**< GL_NV_point_sprite (only!) */
+    GLenum SpriteOrigin;		/**< GL_ARB_point_sprite */
 };
 
 
 /**
  * Polygon attribute group (GL_POLYGON_BIT).
  */
-struct gl_polygon_attrib
-{
-   GLenum FrontFace;		/**< Either GL_CW or GL_CCW */
-   GLenum FrontMode;		/**< Either GL_POINT, GL_LINE or GL_FILL */
-   GLenum BackMode;		/**< Either GL_POINT, GL_LINE or GL_FILL */
-   GLboolean _FrontBit;		/**< 0=GL_CCW, 1=GL_CW */
-   GLboolean CullFlag;		/**< Culling on/off flag */
-   GLboolean SmoothFlag;	/**< True if GL_POLYGON_SMOOTH is enabled */
-   GLboolean StippleFlag;	/**< True if GL_POLYGON_STIPPLE is enabled */
-   GLenum CullFaceMode;		/**< Culling mode GL_FRONT or GL_BACK */
-   GLfloat OffsetFactor;	/**< Polygon offset factor, from user */
-   GLfloat OffsetUnits;		/**< Polygon offset units, from user */
-   GLboolean OffsetPoint;	/**< Offset in GL_POINT mode */
-   GLboolean OffsetLine;	/**< Offset in GL_LINE mode */
-   GLboolean OffsetFill;	/**< Offset in GL_FILL mode */
+struct gl_polygon_attrib {
+    GLenum FrontFace;		/**< Either GL_CW or GL_CCW */
+    GLenum FrontMode;		/**< Either GL_POINT, GL_LINE or GL_FILL */
+    GLenum BackMode;		/**< Either GL_POINT, GL_LINE or GL_FILL */
+    GLboolean _FrontBit;		/**< 0=GL_CCW, 1=GL_CW */
+    GLboolean CullFlag;		/**< Culling on/off flag */
+    GLboolean SmoothFlag;	/**< True if GL_POLYGON_SMOOTH is enabled */
+    GLboolean StippleFlag;	/**< True if GL_POLYGON_STIPPLE is enabled */
+    GLenum CullFaceMode;		/**< Culling mode GL_FRONT or GL_BACK */
+    GLfloat OffsetFactor;	/**< Polygon offset factor, from user */
+    GLfloat OffsetUnits;		/**< Polygon offset units, from user */
+    GLboolean OffsetPoint;	/**< Offset in GL_POINT mode */
+    GLboolean OffsetLine;	/**< Offset in GL_LINE mode */
+    GLboolean OffsetFill;	/**< Offset in GL_FILL mode */
 };
 
 
 /**
  * Scissor attributes (GL_SCISSOR_BIT).
  */
-struct gl_scissor_attrib
-{
-   GLboolean Enabled;		/**< Scissor test enabled? */
-   GLint X, Y;			/**< Lower left corner of box */
-   GLsizei Width, Height;	/**< Size of box */
+struct gl_scissor_attrib {
+    GLboolean Enabled;		/**< Scissor test enabled? */
+    GLint X, Y;			/**< Lower left corner of box */
+    GLsizei Width, Height;	/**< Size of box */
 };
 
 
 /**
  * Stencil attribute group (GL_STENCIL_BUFFER_BIT).
  */
-struct gl_stencil_attrib
-{
-   GLboolean Enabled;		/**< Enabled flag */
-   GLboolean TestTwoSide;	/**< GL_EXT_stencil_two_side */
-   GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 1) */
-   GLboolean _TestTwoSide;
-   GLenum Function[2];		/**< Stencil function */
-   GLenum FailFunc[2];		/**< Fail function */
-   GLenum ZPassFunc[2];		/**< Depth buffer pass function */
-   GLenum ZFailFunc[2];		/**< Depth buffer fail function */
-   GLint Ref[2];		/**< Reference value */
-   GLuint ValueMask[2];		/**< Value mask */
-   GLuint WriteMask[2];		/**< Write mask */
-   GLuint Clear;		/**< Clear value */
+struct gl_stencil_attrib {
+    GLboolean Enabled;		/**< Enabled flag */
+    GLboolean TestTwoSide;	/**< GL_EXT_stencil_two_side */
+    GLubyte ActiveFace;		/**< GL_EXT_stencil_two_side (0 or 1) */
+    GLboolean _TestTwoSide;
+    GLenum Function[2];		/**< Stencil function */
+    GLenum FailFunc[2];		/**< Fail function */
+    GLenum ZPassFunc[2];		/**< Depth buffer pass function */
+    GLenum ZFailFunc[2];		/**< Depth buffer fail function */
+    GLint Ref[2];		/**< Reference value */
+    GLuint ValueMask[2];		/**< Value mask */
+    GLuint WriteMask[2];		/**< Write mask */
+    GLuint Clear;		/**< Clear value */
 };
 
 
@@ -1212,30 +1180,30 @@ struct gl_stencil_attrib
  * extract RGBA, color indexes and depth components out of 1D, 2D and 3D
  * texture images.  These functions help to isolate us from the gritty
  * details of all the various texture image encodings.
- * 
+ *
  * \param texImage texture image.
  * \param col texel column.
  * \param row texel row.
  * \param img texel image level/layer.
  * \param texelOut output texel (up to 4 GLchans)
  */
-typedef void (*FetchTexelFuncC)( const struct gl_texture_image *texImage,
-                                 GLint col, GLint row, GLint img,
-                                 GLchan *texelOut );
+typedef void (*FetchTexelFuncC)(const struct gl_texture_image *texImage,
+				GLint col, GLint row, GLint img,
+				GLchan *texelOut);
 
 /**
  * As above, but returns floats.
  * Used for depth component images and for upcoming signed/float
  * texture images.
  */
-typedef void (*FetchTexelFuncF)( const struct gl_texture_image *texImage,
-                                 GLint col, GLint row, GLint img,
-                                 GLfloat *texelOut );
+typedef void (*FetchTexelFuncF)(const struct gl_texture_image *texImage,
+				GLint col, GLint row, GLint img,
+				GLfloat *texelOut);
 
 
 typedef void (*StoreTexelFunc)(struct gl_texture_image *texImage,
-                               GLint col, GLint row, GLint img,
-                               const void *texel);
+			       GLint col, GLint row, GLint img,
+			       const void *texel);
 
 
 /**
@@ -1270,49 +1238,48 @@ typedef void (*StoreTexelFunc)(struct gl_texture_image *texImage,
 /**
  * Texture image storage function.
  */
-typedef GLboolean (*StoreTexImageFunc)(TEXSTORE_PARAMS);
+typedef GLboolean(*StoreTexImageFunc)(TEXSTORE_PARAMS);
 
 
 /**
- * Texture format record 
+ * Texture format record
  */
-struct gl_texture_format
-{
-   GLint MesaFormat;		/**< One of the MESA_FORMAT_* values */
+struct gl_texture_format {
+    GLint MesaFormat;		/**< One of the MESA_FORMAT_* values */
 
-   GLenum BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
+    GLenum BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
 				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
 				 *   GL_INTENSITY, GL_COLOR_INDEX or
 				 *   GL_DEPTH_COMPONENT.
 				 */
-   GLenum DataType;		/**< GL_FLOAT or GL_UNSIGNED_NORMALIZED_ARB */
-   GLubyte RedBits;		/**< Bits per texel component */
-   GLubyte GreenBits;		/**< These are just rough approximations for */
-   GLubyte BlueBits;		/**< compressed texture formats. */
-   GLubyte AlphaBits;
-   GLubyte LuminanceBits;
-   GLubyte IntensityBits;
-   GLubyte IndexBits;
-   GLubyte DepthBits;
-   GLubyte StencilBits; 	/**< GL_EXT_packed_depth_stencil */
+    GLenum DataType;		/**< GL_FLOAT or GL_UNSIGNED_NORMALIZED_ARB */
+    GLubyte RedBits;		/**< Bits per texel component */
+    GLubyte GreenBits;		/**< These are just rough approximations for */
+    GLubyte BlueBits;		/**< compressed texture formats. */
+    GLubyte AlphaBits;
+    GLubyte LuminanceBits;
+    GLubyte IntensityBits;
+    GLubyte IndexBits;
+    GLubyte DepthBits;
+    GLubyte StencilBits; 	/**< GL_EXT_packed_depth_stencil */
 
-   GLuint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
+    GLuint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
 
-   StoreTexImageFunc StoreImage;
+    StoreTexImageFunc StoreImage;
 
-   /**
-    * \name Texel fetch function pointers
-    */
-   /*@{*/
-   FetchTexelFuncC FetchTexel1D;
-   FetchTexelFuncC FetchTexel2D;
-   FetchTexelFuncC FetchTexel3D;
-   FetchTexelFuncF FetchTexel1Df;
-   FetchTexelFuncF FetchTexel2Df;
-   FetchTexelFuncF FetchTexel3Df;
-   /*@}*/
+    /**
+     * \name Texel fetch function pointers
+     */
+    /*@{*/
+    FetchTexelFuncC FetchTexel1D;
+    FetchTexelFuncC FetchTexel2D;
+    FetchTexelFuncC FetchTexel3D;
+    FetchTexelFuncF FetchTexel1Df;
+    FetchTexelFuncF FetchTexel2Df;
+    FetchTexelFuncF FetchTexel3Df;
+    /*@}*/
 
-   StoreTexelFunc StoreTexel;
+    StoreTexelFunc StoreTexel;
 };
 
 
@@ -1322,53 +1289,52 @@ struct gl_texture_format
  * Texture image state.  Describes the dimensions of a texture image,
  * the texel format and pointers to Texel Fetch functions.
  */
-struct gl_texture_image
-{
-   GLenum _BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
+struct gl_texture_image {
+    GLenum _BaseFormat;		/**< Either GL_RGB, GL_RGBA, GL_ALPHA,
 				 *   GL_LUMINANCE, GL_LUMINANCE_ALPHA,
 				 *   GL_INTENSITY, GL_COLOR_INDEX,
 				 *   GL_DEPTH_COMPONENT or GL_DEPTH_STENCIL_EXT
                                  *   only. Used for choosing TexEnv arithmetic.
 				 */
-   GLint InternalFormat;	/**< Internal format as given by the user */
-   GLuint Border;		/**< 0 or 1 */
-   GLuint Width;		/**< = 2^WidthLog2 + 2*Border */
-   GLuint Height;		/**< = 2^HeightLog2 + 2*Border */
-   GLuint Depth;		/**< = 2^DepthLog2 + 2*Border */
-   GLuint Width2;		/**< = Width - 2*Border */
-   GLuint Height2;		/**< = Height - 2*Border */
-   GLuint Depth2;		/**< = Depth - 2*Border */
-   GLuint WidthLog2;		/**< = log2(Width2) */
-   GLuint HeightLog2;		/**< = log2(Height2) */
-   GLuint DepthLog2;		/**< = log2(Depth2) */
-   GLuint MaxLog2;		/**< = MAX(WidthLog2, HeightLog2) */
-   GLfloat WidthScale;		/**< used for mipmap LOD computation */
-   GLfloat HeightScale;		/**< used for mipmap LOD computation */
-   GLfloat DepthScale;		/**< used for mipmap LOD computation */
-   GLboolean IsClientData;	/**< Data owned by client? */
-   GLboolean _IsPowerOfTwo;	/**< Are all dimensions powers of two? */
+    GLint InternalFormat;	/**< Internal format as given by the user */
+    GLuint Border;		/**< 0 or 1 */
+    GLuint Width;		/**< = 2^WidthLog2 + 2*Border */
+    GLuint Height;		/**< = 2^HeightLog2 + 2*Border */
+    GLuint Depth;		/**< = 2^DepthLog2 + 2*Border */
+    GLuint Width2;		/**< = Width - 2*Border */
+    GLuint Height2;		/**< = Height - 2*Border */
+    GLuint Depth2;		/**< = Depth - 2*Border */
+    GLuint WidthLog2;		/**< = log2(Width2) */
+    GLuint HeightLog2;		/**< = log2(Height2) */
+    GLuint DepthLog2;		/**< = log2(Depth2) */
+    GLuint MaxLog2;		/**< = MAX(WidthLog2, HeightLog2) */
+    GLfloat WidthScale;		/**< used for mipmap LOD computation */
+    GLfloat HeightScale;		/**< used for mipmap LOD computation */
+    GLfloat DepthScale;		/**< used for mipmap LOD computation */
+    GLboolean IsClientData;	/**< Data owned by client? */
+    GLboolean _IsPowerOfTwo;	/**< Are all dimensions powers of two? */
 
-   const struct gl_texture_format *TexFormat;
+    const struct gl_texture_format *TexFormat;
 
-   struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
+    struct gl_texture_object *TexObject;  /**< Pointer back to parent object */
 
-   FetchTexelFuncC FetchTexelc;	/**< GLchan texel fetch function pointer */
-   FetchTexelFuncF FetchTexelf;	/**< Float texel fetch function pointer */
+    FetchTexelFuncC FetchTexelc;	/**< GLchan texel fetch function pointer */
+    FetchTexelFuncF FetchTexelf;	/**< Float texel fetch function pointer */
 
-   GLboolean IsCompressed;	/**< GL_ARB_texture_compression */
-   GLuint CompressedSize;	/**< GL_ARB_texture_compression */
+    GLboolean IsCompressed;	/**< GL_ARB_texture_compression */
+    GLuint CompressedSize;	/**< GL_ARB_texture_compression */
 
-   GLuint RowStride;		/**< == Width unless IsClientData and padded */
-   GLuint *ImageOffsets;        /**< if 3D texture: array [Depth] of offsets to
+    GLuint RowStride;		/**< == Width unless IsClientData and padded */
+    GLuint *ImageOffsets;        /**< if 3D texture: array [Depth] of offsets to
                                      each 2D slice in 'Data', in texels */
-   GLvoid *Data;		/**< Image data, accessed via FetchTexel() */
+    GLvoid *Data;		/**< Image data, accessed via FetchTexel() */
 
-   /**
-    * \name For device driver:
-    */
-   /*@{*/
-   void *DriverData;		/**< Arbitrary device driver data */
-   /*@}*/
+    /**
+     * \name For device driver:
+     */
+    /*@{*/
+    void *DriverData;		/**< Arbitrary device driver data */
+    /*@}*/
 };
 
 
@@ -1391,74 +1357,72 @@ struct gl_texture_image
  * wrap modes, filter modes, shadow/texcompare state, and the per-texture
  * color palette.
  */
-struct gl_texture_object
-{
-   _glthread_Mutex Mutex;	/**< for thread safety */
-   GLint RefCount;		/**< reference count */
-   GLuint Name;			/**< the user-visible texture object ID */
-   GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
-   GLfloat Priority;		/**< in [0,1] */
-   GLfloat BorderColor[4];	/**< unclamped */
-   GLchan _BorderChan[4];	/**< clamped, as GLchan */
-   GLenum WrapS;		/**< S-axis texture image wrap mode */
-   GLenum WrapT;		/**< T-axis texture image wrap mode */
-   GLenum WrapR;		/**< R-axis texture image wrap mode */
-   GLenum MinFilter;		/**< minification filter */
-   GLenum MagFilter;		/**< magnification filter */
-   GLfloat MinLod;		/**< min lambda, OpenGL 1.2 */
-   GLfloat MaxLod;		/**< max lambda, OpenGL 1.2 */
-   GLfloat LodBias;		/**< OpenGL 1.4 */
-   GLint BaseLevel;		/**< min mipmap level, OpenGL 1.2 */
-   GLint MaxLevel;		/**< max mipmap level, OpenGL 1.2 */
-   GLfloat MaxAnisotropy;	/**< GL_EXT_texture_filter_anisotropic */
-   GLboolean CompareFlag;	/**< GL_SGIX_shadow */
-   GLenum CompareOperator;	/**< GL_SGIX_shadow */
-   GLfloat ShadowAmbient;       /**< GL_ARB_shadow_ambient */
-   GLenum CompareMode;		/**< GL_ARB_shadow */
-   GLenum CompareFunc;		/**< GL_ARB_shadow */
-   GLenum DepthMode;		/**< GL_ARB_depth_texture */
-   GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
-   GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
-   GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
-   GLboolean Complete;		/**< Is texture object complete? */
+struct gl_texture_object {
+    _glthread_Mutex Mutex;	/**< for thread safety */
+    GLint RefCount;		/**< reference count */
+    GLuint Name;			/**< the user-visible texture object ID */
+    GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
+    GLfloat Priority;		/**< in [0,1] */
+    GLfloat BorderColor[4];	/**< unclamped */
+    GLchan _BorderChan[4];	/**< clamped, as GLchan */
+    GLenum WrapS;		/**< S-axis texture image wrap mode */
+    GLenum WrapT;		/**< T-axis texture image wrap mode */
+    GLenum WrapR;		/**< R-axis texture image wrap mode */
+    GLenum MinFilter;		/**< minification filter */
+    GLenum MagFilter;		/**< magnification filter */
+    GLfloat MinLod;		/**< min lambda, OpenGL 1.2 */
+    GLfloat MaxLod;		/**< max lambda, OpenGL 1.2 */
+    GLfloat LodBias;		/**< OpenGL 1.4 */
+    GLint BaseLevel;		/**< min mipmap level, OpenGL 1.2 */
+    GLint MaxLevel;		/**< max mipmap level, OpenGL 1.2 */
+    GLfloat MaxAnisotropy;	/**< GL_EXT_texture_filter_anisotropic */
+    GLboolean CompareFlag;	/**< GL_SGIX_shadow */
+    GLenum CompareOperator;	/**< GL_SGIX_shadow */
+    GLfloat ShadowAmbient;       /**< GL_ARB_shadow_ambient */
+    GLenum CompareMode;		/**< GL_ARB_shadow */
+    GLenum CompareFunc;		/**< GL_ARB_shadow */
+    GLenum DepthMode;		/**< GL_ARB_depth_texture */
+    GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
+    GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
+    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
+    GLboolean Complete;		/**< Is texture object complete? */
 
-   /** Actual texture images, indexed by [cube face] and [mipmap level] */
-   struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
+    /** Actual texture images, indexed by [cube face] and [mipmap level] */
+    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
 
-   /** GL_EXT_paletted_texture */
-   struct gl_color_table Palette;
+    /** GL_EXT_paletted_texture */
+    struct gl_color_table Palette;
 
 
-   /**
-    * \name For device driver.
-    * Note: instead of attaching driver data to this pointer, it's preferable
-    * to instead use this struct as a base class for your own texture object
-    * class.  Driver->NewTextureObject() can be used to implement the
-    * allocation.
-    */
-   void *DriverData;	/**< Arbitrary device driver data */
+    /**
+     * \name For device driver.
+     * Note: instead of attaching driver data to this pointer, it's preferable
+     * to instead use this struct as a base class for your own texture object
+     * class.  Driver->NewTextureObject() can be used to implement the
+     * allocation.
+     */
+    void *DriverData;	/**< Arbitrary device driver data */
 };
 
 
 /**
  * Texture combine environment state.
- * 
+ *
  * \todo
  * If GL_NV_texture_env_combine4 is ever supported, the arrays in this
  * structure will need to be expanded for 4 elements.
  */
-struct gl_tex_env_combine_state
-{
-   GLenum ModeRGB;       /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
-   GLenum ModeA;         /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
-   GLenum SourceRGB[3];  /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
-   GLenum SourceA[3];    /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
-   GLenum OperandRGB[3]; /**< SRC_COLOR, ONE_MINUS_SRC_COLOR, etc */
-   GLenum OperandA[3];   /**< SRC_ALPHA, ONE_MINUS_SRC_ALPHA, etc */
-   GLuint ScaleShiftRGB; /**< 0, 1 or 2 */
-   GLuint ScaleShiftA;   /**< 0, 1 or 2 */
-   GLuint _NumArgsRGB;   /**< Number of inputs used for the combine mode. */
-   GLuint _NumArgsA;     /**< Number of inputs used for the combine mode. */
+struct gl_tex_env_combine_state {
+    GLenum ModeRGB;       /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
+    GLenum ModeA;         /**< GL_REPLACE, GL_DECAL, GL_ADD, etc. */
+    GLenum SourceRGB[3];  /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
+    GLenum SourceA[3];    /**< GL_PRIMARY_COLOR, GL_TEXTURE, etc. */
+    GLenum OperandRGB[3]; /**< SRC_COLOR, ONE_MINUS_SRC_COLOR, etc */
+    GLenum OperandA[3];   /**< SRC_ALPHA, ONE_MINUS_SRC_ALPHA, etc */
+    GLuint ScaleShiftRGB; /**< 0, 1 or 2 */
+    GLuint ScaleShiftA;   /**< 0, 1 or 2 */
+    GLuint _NumArgsRGB;   /**< Number of inputs used for the combine mode. */
+    GLuint _NumArgsA;     /**< Number of inputs used for the combine mode. */
 };
 
 
@@ -1467,170 +1431,164 @@ struct gl_tex_env_combine_state
  * combiners, texgen state, pointers to current texture objects and
  * post-filter color tables.
  */
-struct gl_texture_unit
-{
-   GLbitfield Enabled;          /**< bitmask of TEXTURE_*_BIT flags */
-   GLbitfield _ReallyEnabled;   /**< 0 or exactly one of TEXTURE_*_BIT flags */
+struct gl_texture_unit {
+    GLbitfield Enabled;          /**< bitmask of TEXTURE_*_BIT flags */
+    GLbitfield _ReallyEnabled;   /**< 0 or exactly one of TEXTURE_*_BIT flags */
 
-   GLenum EnvMode;              /**< GL_MODULATE, GL_DECAL, GL_BLEND, etc. */
-   GLfloat EnvColor[4];
-   GLbitfield TexGenEnabled;	/**< Bitwise-OR of [STRQ]_BIT values */
-   /** \name Tex coord generation mode
-    * Either GL_OBJECT_LINEAR, GL_EYE_LINEAR or GL_SPHERE_MAP. */
-   /*@{*/
-   GLenum GenModeS;		
-   GLenum GenModeT;
-   GLenum GenModeR;
-   GLenum GenModeQ;
-   /*@}*/
-   GLbitfield _GenBitS;
-   GLbitfield _GenBitT;
-   GLbitfield _GenBitR;
-   GLbitfield _GenBitQ;
-   GLbitfield _GenFlags;	/**< bitwise or of GenBit[STRQ] */
-   GLfloat ObjectPlaneS[4];
-   GLfloat ObjectPlaneT[4];
-   GLfloat ObjectPlaneR[4];
-   GLfloat ObjectPlaneQ[4];
-   GLfloat EyePlaneS[4];
-   GLfloat EyePlaneT[4];
-   GLfloat EyePlaneR[4];
-   GLfloat EyePlaneQ[4];
-   GLfloat LodBias;		/**< for biasing mipmap levels */
+    GLenum EnvMode;              /**< GL_MODULATE, GL_DECAL, GL_BLEND, etc. */
+    GLfloat EnvColor[4];
+    GLbitfield TexGenEnabled;	/**< Bitwise-OR of [STRQ]_BIT values */
+    /** \name Tex coord generation mode
+     * Either GL_OBJECT_LINEAR, GL_EYE_LINEAR or GL_SPHERE_MAP. */
+    /*@{*/
+    GLenum GenModeS;
+    GLenum GenModeT;
+    GLenum GenModeR;
+    GLenum GenModeQ;
+    /*@}*/
+    GLbitfield _GenBitS;
+    GLbitfield _GenBitT;
+    GLbitfield _GenBitR;
+    GLbitfield _GenBitQ;
+    GLbitfield _GenFlags;	/**< bitwise or of GenBit[STRQ] */
+    GLfloat ObjectPlaneS[4];
+    GLfloat ObjectPlaneT[4];
+    GLfloat ObjectPlaneR[4];
+    GLfloat ObjectPlaneQ[4];
+    GLfloat EyePlaneS[4];
+    GLfloat EyePlaneT[4];
+    GLfloat EyePlaneR[4];
+    GLfloat EyePlaneQ[4];
+    GLfloat LodBias;		/**< for biasing mipmap levels */
 
-   /** 
-    * \name GL_EXT_texture_env_combine 
-    */
-   struct gl_tex_env_combine_state Combine;
+    /**
+     * \name GL_EXT_texture_env_combine
+     */
+    struct gl_tex_env_combine_state Combine;
 
-   /**
-    * Derived state based on \c EnvMode and the \c BaseFormat of the
-    * currently enabled texture.
-    */
-   struct gl_tex_env_combine_state _EnvMode;
+    /**
+     * Derived state based on \c EnvMode and the \c BaseFormat of the
+     * currently enabled texture.
+     */
+    struct gl_tex_env_combine_state _EnvMode;
 
-   /**
-    * Currently enabled combiner state.  This will point to either
-    * \c Combine or \c _EnvMode.
-    */
-   struct gl_tex_env_combine_state *_CurrentCombine;
+    /**
+     * Currently enabled combiner state.  This will point to either
+     * \c Combine or \c _EnvMode.
+     */
+    struct gl_tex_env_combine_state *_CurrentCombine;
 
-   struct gl_texture_object *Current1D;
-   struct gl_texture_object *Current2D;
-   struct gl_texture_object *Current3D;
-   struct gl_texture_object *CurrentCubeMap; /**< GL_ARB_texture_cube_map */
-   struct gl_texture_object *CurrentRect;    /**< GL_NV_texture_rectangle */
+    struct gl_texture_object *Current1D;
+    struct gl_texture_object *Current2D;
+    struct gl_texture_object *Current3D;
+    struct gl_texture_object *CurrentCubeMap; /**< GL_ARB_texture_cube_map */
+    struct gl_texture_object *CurrentRect;    /**< GL_NV_texture_rectangle */
 
-   struct gl_texture_object *_Current; /**< Points to really enabled tex obj */
+    struct gl_texture_object *_Current; /**< Points to really enabled tex obj */
 
-   /* GL_SGI_texture_color_table */
-   struct gl_color_table ColorTable;
-   struct gl_color_table ProxyColorTable;
-   GLboolean ColorTableEnabled;
+    /* GL_SGI_texture_color_table */
+    struct gl_color_table ColorTable;
+    struct gl_color_table ProxyColorTable;
+    GLboolean ColorTableEnabled;
 };
 
 struct texenvprog_cache_item {
-   GLuint hash;
-   void *key;
-   struct gl_fragment_program *data;
-   struct texenvprog_cache_item *next;
+    GLuint hash;
+    void *key;
+    struct gl_fragment_program *data;
+    struct texenvprog_cache_item *next;
 };
 
 struct texenvprog_cache {
-   struct texenvprog_cache_item **items;
-   GLuint size, n_items;
-   GLcontext *ctx;
+    struct texenvprog_cache_item **items;
+    GLuint size, n_items;
+    GLcontext *ctx;
 };
 
 /**
  * Texture attribute group (GL_TEXTURE_BIT).
  */
-struct gl_texture_attrib
-{
-   /**
-    * name multitexture 
-    */
-   /**@{*/
-   GLuint CurrentUnit;	       /**< Active texture unit */
-   GLbitfield _EnabledUnits;  /**< one bit set for each really-enabled unit */
-   GLbitfield _EnabledCoordUnits;   /**< one bit per enabled coordinate unit */
-   GLbitfield _GenFlags;            /**< for texgen */
-   GLbitfield _TexGenEnabled;
-   GLbitfield _TexMatEnabled;
-   /**@}*/
+struct gl_texture_attrib {
+    /**
+     * name multitexture
+     */
+    /**@{*/
+    GLuint CurrentUnit;	       /**< Active texture unit */
+    GLbitfield _EnabledUnits;  /**< one bit set for each really-enabled unit */
+    GLbitfield _EnabledCoordUnits;   /**< one bit per enabled coordinate unit */
+    GLbitfield _GenFlags;            /**< for texgen */
+    GLbitfield _TexGenEnabled;
+    GLbitfield _TexMatEnabled;
+    /**@}*/
 
-   struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
+    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
 
-   struct gl_texture_object *Proxy1D;
-   struct gl_texture_object *Proxy2D;
-   struct gl_texture_object *Proxy3D;
-   struct gl_texture_object *ProxyCubeMap;
-   struct gl_texture_object *ProxyRect;
+    struct gl_texture_object *Proxy1D;
+    struct gl_texture_object *Proxy2D;
+    struct gl_texture_object *Proxy3D;
+    struct gl_texture_object *ProxyCubeMap;
+    struct gl_texture_object *ProxyRect;
 
-   /** GL_EXT_shared_texture_palette */
-   GLboolean SharedPalette;
-   struct gl_color_table Palette;
-   
-   /** Cached texenv fragment programs */
-   struct texenvprog_cache env_fp_cache;
+    /** GL_EXT_shared_texture_palette */
+    GLboolean SharedPalette;
+    struct gl_color_table Palette;
+
+    /** Cached texenv fragment programs */
+    struct texenvprog_cache env_fp_cache;
 };
 
 
 /**
  * Transformation attribute group (GL_TRANSFORM_BIT).
  */
-struct gl_transform_attrib
-{
-   GLenum MatrixMode;				/**< Matrix mode */
-   GLfloat EyeUserPlane[MAX_CLIP_PLANES][4];	/**< User clip planes */
-   GLfloat _ClipUserPlane[MAX_CLIP_PLANES][4];	/**< derived */
-   GLbitfield ClipPlanesEnabled;                /**< on/off bitmask */
-   GLboolean Normalize;				/**< Normalize all normals? */
-   GLboolean RescaleNormals;			/**< GL_EXT_rescale_normal */
-   GLboolean RasterPositionUnclipped;           /**< GL_IBM_rasterpos_clip */
+struct gl_transform_attrib {
+    GLenum MatrixMode;				/**< Matrix mode */
+    GLfloat EyeUserPlane[MAX_CLIP_PLANES][4];	/**< User clip planes */
+    GLfloat _ClipUserPlane[MAX_CLIP_PLANES][4];	/**< derived */
+    GLbitfield ClipPlanesEnabled;                /**< on/off bitmask */
+    GLboolean Normalize;				/**< Normalize all normals? */
+    GLboolean RescaleNormals;			/**< GL_EXT_rescale_normal */
+    GLboolean RasterPositionUnclipped;           /**< GL_IBM_rasterpos_clip */
 
-   GLboolean CullVertexFlag;	/**< True if GL_CULL_VERTEX_EXT is enabled */
-   GLfloat CullEyePos[4];
-   GLfloat CullObjPos[4];
+    GLboolean CullVertexFlag;	/**< True if GL_CULL_VERTEX_EXT is enabled */
+    GLfloat CullEyePos[4];
+    GLfloat CullObjPos[4];
 };
 
 
 /**
  * Viewport attribute group (GL_VIEWPORT_BIT).
  */
-struct gl_viewport_attrib
-{
-   GLint X, Y;			/**< position */
-   GLsizei Width, Height;	/**< size */
-   GLfloat Near, Far;		/**< Depth buffer range */
-   GLmatrix _WindowMap;		/**< Mapping transformation as a matrix. */
+struct gl_viewport_attrib {
+    GLint X, Y;			/**< position */
+    GLsizei Width, Height;	/**< size */
+    GLfloat Near, Far;		/**< Depth buffer range */
+    GLmatrix _WindowMap;		/**< Mapping transformation as a matrix. */
 };
 
 
 /**
  * Node for the attribute stack.
  */
-struct gl_attrib_node
-{
-   GLbitfield kind;
-   void *data;
-   struct gl_attrib_node *next;
+struct gl_attrib_node {
+    GLbitfield kind;
+    void *data;
+    struct gl_attrib_node *next;
 };
 
 
 /**
  * GL_ARB_vertex/pixel_buffer_object buffer object
  */
-struct gl_buffer_object
-{
-   GLint RefCount;
-   GLuint Name;
-   GLenum Usage;
-   GLenum Access;
-   GLvoid *Pointer;          /**< Only valid while buffer is mapped */
-   GLsizeiptrARB Size;       /**< Size of storage in bytes */
-   GLubyte *Data;            /**< Location of storage either in RAM or VRAM. */
-   GLboolean OnCard;         /**< Is buffer in VRAM? (hardware drivers) */
+struct gl_buffer_object {
+    GLint RefCount;
+    GLuint Name;
+    GLenum Usage;
+    GLenum Access;
+    GLvoid *Pointer;          /**< Only valid while buffer is mapped */
+    GLsizeiptrARB Size;       /**< Size of storage in bytes */
+    GLubyte *Data;            /**< Location of storage either in RAM or VRAM. */
+    GLboolean OnCard;         /**< Is buffer in VRAM? (hardware drivers) */
 };
 
 
@@ -1638,19 +1596,18 @@ struct gl_buffer_object
 /**
  * Client pixel packing/unpacking attributes
  */
-struct gl_pixelstore_attrib
-{
-   GLint Alignment;
-   GLint RowLength;
-   GLint SkipPixels;
-   GLint SkipRows;
-   GLint ImageHeight;     /**< for GL_EXT_texture3D */
-   GLint SkipImages;      /**< for GL_EXT_texture3D */
-   GLboolean SwapBytes;
-   GLboolean LsbFirst;
-   GLboolean ClientStorage; /**< GL_APPLE_client_storage */
-   GLboolean Invert;        /**< GL_MESA_pack_invert */
-   struct gl_buffer_object *BufferObj; /**< GL_ARB_pixel_buffer_object */
+struct gl_pixelstore_attrib {
+    GLint Alignment;
+    GLint RowLength;
+    GLint SkipPixels;
+    GLint SkipRows;
+    GLint ImageHeight;     /**< for GL_EXT_texture3D */
+    GLint SkipImages;      /**< for GL_EXT_texture3D */
+    GLboolean SwapBytes;
+    GLboolean LsbFirst;
+    GLboolean ClientStorage; /**< GL_APPLE_client_storage */
+    GLboolean Invert;        /**< GL_MESA_pack_invert */
+    struct gl_buffer_object *BufferObj; /**< GL_ARB_pixel_buffer_object */
 };
 
 
@@ -1658,19 +1615,18 @@ struct gl_pixelstore_attrib
 /**
  * Client vertex array attributes
  */
-struct gl_client_array
-{
-   GLint Size;                  /**< components per element (1,2,3,4) */
-   GLenum Type;                 /**< datatype: GL_FLOAT, GL_INT, etc */
-   GLsizei Stride;		/**< user-specified stride */
-   GLsizei StrideB;		/**< actual stride in bytes */
-   const GLubyte *Ptr;          /**< Points to array data */
-   GLboolean Enabled;		/**< Enabled flag is a boolean */
-   GLboolean Normalized;        /**< GL_ARB_vertex_program */
+struct gl_client_array {
+    GLint Size;                  /**< components per element (1,2,3,4) */
+    GLenum Type;                 /**< datatype: GL_FLOAT, GL_INT, etc */
+    GLsizei Stride;		/**< user-specified stride */
+    GLsizei StrideB;		/**< actual stride in bytes */
+    const GLubyte *Ptr;          /**< Points to array data */
+    GLboolean Enabled;		/**< Enabled flag is a boolean */
+    GLboolean Normalized;        /**< GL_ARB_vertex_program */
 
-   /**< GL_ARB_vertex_buffer_object */
-   struct gl_buffer_object *BufferObj;
-   GLuint _MaxElement;
+    /**< GL_ARB_vertex_buffer_object */
+    struct gl_buffer_object *BufferObj;
+    GLuint _MaxElement;
 };
 
 
@@ -1678,144 +1634,137 @@ struct gl_client_array
  * Collection of vertex arrays.  Defined by the GL_APPLE_vertex_array_object
  * extension, but a nice encapsulation in any case.
  */
-struct gl_array_object
-{
-   /** Name of the array object as received from glGenVertexArrayAPPLE. */
-   GLuint Name;
+struct gl_array_object {
+    /** Name of the array object as received from glGenVertexArrayAPPLE. */
+    GLuint Name;
 
-   /** Conventional vertex arrays */
-   /*@{*/
-   struct gl_client_array Vertex;
-   struct gl_client_array Normal;
-   struct gl_client_array Color;
-   struct gl_client_array SecondaryColor;
-   struct gl_client_array FogCoord;
-   struct gl_client_array Index;
-   struct gl_client_array EdgeFlag;
-   struct gl_client_array TexCoord[MAX_TEXTURE_COORD_UNITS];
-   /*@}*/
+    /** Conventional vertex arrays */
+    /*@{*/
+    struct gl_client_array Vertex;
+    struct gl_client_array Normal;
+    struct gl_client_array Color;
+    struct gl_client_array SecondaryColor;
+    struct gl_client_array FogCoord;
+    struct gl_client_array Index;
+    struct gl_client_array EdgeFlag;
+    struct gl_client_array TexCoord[MAX_TEXTURE_COORD_UNITS];
+    /*@}*/
 
-   /** Generic arrays for vertex programs/shaders */
-   struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];
+    /** Generic arrays for vertex programs/shaders */
+    struct gl_client_array VertexAttrib[VERT_ATTRIB_MAX];
 
-   /** Mask of _NEW_ARRAY_* values indicating which arrays are enabled */
-   GLbitfield _Enabled;
+    /** Mask of _NEW_ARRAY_* values indicating which arrays are enabled */
+    GLbitfield _Enabled;
 };
 
 
 /**
  * Vertex array state
  */
-struct gl_array_attrib
-{
-   struct gl_array_object *ArrayObj;
-   struct gl_array_object *DefaultArrayObj;
+struct gl_array_attrib {
+    struct gl_array_object *ArrayObj;
+    struct gl_array_object *DefaultArrayObj;
 
-   GLint ActiveTexture;		/**< Client Active Texture */
-   GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
-   GLuint LockCount;            /**< GL_EXT_compiled_vertex_array */
+    GLint ActiveTexture;		/**< Client Active Texture */
+    GLuint LockFirst;            /**< GL_EXT_compiled_vertex_array */
+    GLuint LockCount;            /**< GL_EXT_compiled_vertex_array */
 
-   GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
+    GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
 
 #if FEATURE_ARB_vertex_buffer_object
-   struct gl_buffer_object *NullBufferObj;
-   struct gl_buffer_object *ArrayBufferObj;
-   struct gl_buffer_object *ElementArrayBufferObj;
+    struct gl_buffer_object *NullBufferObj;
+    struct gl_buffer_object *ArrayBufferObj;
+    struct gl_buffer_object *ElementArrayBufferObj;
 #endif
-   GLuint _MaxElement;          /* Min of all enabled array's maxes */
+    GLuint _MaxElement;          /* Min of all enabled array's maxes */
 };
 
 
 /**
  * Feedback buffer state
  */
-struct gl_feedback
-{
-   GLenum Type;
-   GLbitfield _Mask;		/* FB_* bits */
-   GLfloat *Buffer;
-   GLuint BufferSize;
-   GLuint Count;
+struct gl_feedback {
+    GLenum Type;
+    GLbitfield _Mask;		/* FB_* bits */
+    GLfloat *Buffer;
+    GLuint BufferSize;
+    GLuint Count;
 };
 
 
 /**
  * Selection buffer state
  */
-struct gl_selection
-{
-   GLuint *Buffer;	/**< selection buffer */
-   GLuint BufferSize;	/**< size of the selection buffer */
-   GLuint BufferCount;	/**< number of values in the selection buffer */
-   GLuint Hits;		/**< number of records in the selection buffer */
-   GLuint NameStackDepth; /**< name stack depth */
-   GLuint NameStack[MAX_NAME_STACK_DEPTH]; /**< name stack */
-   GLboolean HitFlag;	/**< hit flag */
-   GLfloat HitMinZ;	/**< minimum hit depth */
-   GLfloat HitMaxZ;	/**< maximum hit depth */
+struct gl_selection {
+    GLuint *Buffer;	/**< selection buffer */
+    GLuint BufferSize;	/**< size of the selection buffer */
+    GLuint BufferCount;	/**< number of values in the selection buffer */
+    GLuint Hits;		/**< number of records in the selection buffer */
+    GLuint NameStackDepth; /**< name stack depth */
+    GLuint NameStack[MAX_NAME_STACK_DEPTH]; /**< name stack */
+    GLboolean HitFlag;	/**< hit flag */
+    GLfloat HitMinZ;	/**< minimum hit depth */
+    GLfloat HitMaxZ;	/**< maximum hit depth */
 };
 
 
 /**
  * 1-D Evaluator control points
  */
-struct gl_1d_map
-{
-   GLuint Order;	/**< Number of control points */
-   GLfloat u1, u2, du;	/**< u1, u2, 1.0/(u2-u1) */
-   GLfloat *Points;	/**< Points to contiguous control points */
+struct gl_1d_map {
+    GLuint Order;	/**< Number of control points */
+    GLfloat u1, u2, du;	/**< u1, u2, 1.0/(u2-u1) */
+    GLfloat *Points;	/**< Points to contiguous control points */
 };
 
 
 /**
  * 2-D Evaluator control points
  */
-struct gl_2d_map
-{
-   GLuint Uorder;		/**< Number of control points in U dimension */
-   GLuint Vorder;		/**< Number of control points in V dimension */
-   GLfloat u1, u2, du;
-   GLfloat v1, v2, dv;
-   GLfloat *Points;		/**< Points to contiguous control points */
+struct gl_2d_map {
+    GLuint Uorder;		/**< Number of control points in U dimension */
+    GLuint Vorder;		/**< Number of control points in V dimension */
+    GLfloat u1, u2, du;
+    GLfloat v1, v2, dv;
+    GLfloat *Points;		/**< Points to contiguous control points */
 };
 
 
 /**
  * All evaluator control point state
  */
-struct gl_evaluators
-{
-   /** 
-    * \name 1-D maps
-    */
-   /*@{*/
-   struct gl_1d_map Map1Vertex3;
-   struct gl_1d_map Map1Vertex4;
-   struct gl_1d_map Map1Index;
-   struct gl_1d_map Map1Color4;
-   struct gl_1d_map Map1Normal;
-   struct gl_1d_map Map1Texture1;
-   struct gl_1d_map Map1Texture2;
-   struct gl_1d_map Map1Texture3;
-   struct gl_1d_map Map1Texture4;
-   struct gl_1d_map Map1Attrib[16];  /**< GL_NV_vertex_program */
-   /*@}*/
+struct gl_evaluators {
+    /**
+     * \name 1-D maps
+     */
+    /*@{*/
+    struct gl_1d_map Map1Vertex3;
+    struct gl_1d_map Map1Vertex4;
+    struct gl_1d_map Map1Index;
+    struct gl_1d_map Map1Color4;
+    struct gl_1d_map Map1Normal;
+    struct gl_1d_map Map1Texture1;
+    struct gl_1d_map Map1Texture2;
+    struct gl_1d_map Map1Texture3;
+    struct gl_1d_map Map1Texture4;
+    struct gl_1d_map Map1Attrib[16];  /**< GL_NV_vertex_program */
+    /*@}*/
 
-   /** 
-    * \name 2-D maps 
-    */
-   /*@{*/
-   struct gl_2d_map Map2Vertex3;
-   struct gl_2d_map Map2Vertex4;
-   struct gl_2d_map Map2Index;
-   struct gl_2d_map Map2Color4;
-   struct gl_2d_map Map2Normal;
-   struct gl_2d_map Map2Texture1;
-   struct gl_2d_map Map2Texture2;
-   struct gl_2d_map Map2Texture3;
-   struct gl_2d_map Map2Texture4;
-   struct gl_2d_map Map2Attrib[16];  /**< GL_NV_vertex_program */
-   /*@}*/
+    /**
+     * \name 2-D maps
+     */
+    /*@{*/
+    struct gl_2d_map Map2Vertex3;
+    struct gl_2d_map Map2Vertex4;
+    struct gl_2d_map Map2Index;
+    struct gl_2d_map Map2Color4;
+    struct gl_2d_map Map2Normal;
+    struct gl_2d_map Map2Texture1;
+    struct gl_2d_map Map2Texture2;
+    struct gl_2d_map Map2Texture3;
+    struct gl_2d_map Map2Texture4;
+    struct gl_2d_map Map2Attrib[16];  /**< GL_NV_vertex_program */
+    /*@}*/
 };
 
 
@@ -1830,23 +1779,22 @@ struct gl_evaluators
  * be "uniform" variables since they can only be set outside glBegin/End.
  * They're also all stored in the same Parameters array.
  */
-enum register_file
-{
-   PROGRAM_TEMPORARY = 0,   /**< machine->Temporary[] */
-   PROGRAM_LOCAL_PARAM = 1, /**< gl_program->LocalParams[] */
-   PROGRAM_ENV_PARAM = 2,   /**< gl_program->Parameters[] */
-   PROGRAM_STATE_VAR = 3,   /**< gl_program->Parameters[] */
-   PROGRAM_INPUT = 4,       /**< machine->Inputs[] */
-   PROGRAM_OUTPUT = 5,      /**< machine->Outputs[] */
-   PROGRAM_NAMED_PARAM = 6, /**< gl_program->Parameters[] */
-   PROGRAM_CONSTANT = 7,    /**< gl_program->Parameters[] */
-   PROGRAM_UNIFORM = 8,     /**< gl_program->Parameters[] */
-   PROGRAM_VARYING = 9,     /**< machine->Inputs[]/Outputs[] */
-   PROGRAM_WRITE_ONLY = 10, /**< A dummy, write-only register */
-   PROGRAM_ADDRESS = 11,    /**< machine->AddressReg */
-   PROGRAM_SAMPLER = 12,    /**< for shader samplers, compile-time only */
-   PROGRAM_UNDEFINED = 13,  /**< Invalid value */
-   PROGRAM_FILE_MAX
+enum register_file {
+    PROGRAM_TEMPORARY = 0,   /**< machine->Temporary[] */
+    PROGRAM_LOCAL_PARAM = 1, /**< gl_program->LocalParams[] */
+    PROGRAM_ENV_PARAM = 2,   /**< gl_program->Parameters[] */
+    PROGRAM_STATE_VAR = 3,   /**< gl_program->Parameters[] */
+    PROGRAM_INPUT = 4,       /**< machine->Inputs[] */
+    PROGRAM_OUTPUT = 5,      /**< machine->Outputs[] */
+    PROGRAM_NAMED_PARAM = 6, /**< gl_program->Parameters[] */
+    PROGRAM_CONSTANT = 7,    /**< gl_program->Parameters[] */
+    PROGRAM_UNIFORM = 8,     /**< gl_program->Parameters[] */
+    PROGRAM_VARYING = 9,     /**< machine->Inputs[]/Outputs[] */
+    PROGRAM_WRITE_ONLY = 10, /**< A dummy, write-only register */
+    PROGRAM_ADDRESS = 11,    /**< machine->AddressReg */
+    PROGRAM_SAMPLER = 12,    /**< for shader samplers, compile-time only */
+    PROGRAM_UNDEFINED = 13,  /**< Invalid value */
+    PROGRAM_FILE_MAX
 };
 
 
@@ -1858,118 +1806,113 @@ struct gl_program_parameter_list;
 /**
  * Base class for any kind of program object
  */
-struct gl_program
-{
-   GLuint Id;
-   GLubyte *String;  /**< Null-terminated program text */
-   GLint RefCount;
-   GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB, GL_FRAGMENT_PROGRAM_NV */
-   GLenum Format;    /**< String encoding format */
-   GLboolean Resident;
+struct gl_program {
+    GLuint Id;
+    GLubyte *String;  /**< Null-terminated program text */
+    GLint RefCount;
+    GLenum Target;    /**< GL_VERTEX/FRAGMENT_PROGRAM_ARB, GL_FRAGMENT_PROGRAM_NV */
+    GLenum Format;    /**< String encoding format */
+    GLboolean Resident;
 
-   struct prog_instruction *Instructions;
+    struct prog_instruction *Instructions;
 
-   GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
-   GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
-   GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
+    GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
+    GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
+    GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
 
-   /** Named parameters, constants, etc. from program text */
-   struct gl_program_parameter_list *Parameters;
-   /** Numbered local parameters */
-   GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
+    /** Named parameters, constants, etc. from program text */
+    struct gl_program_parameter_list *Parameters;
+    /** Numbered local parameters */
+    GLfloat LocalParams[MAX_PROGRAM_LOCAL_PARAMS][4];
 
-   /** Vertex/fragment shader varying vars */
-   struct gl_program_parameter_list *Varying;
-   /** Vertex program user-defined attributes */
-   struct gl_program_parameter_list *Attributes;
+    /** Vertex/fragment shader varying vars */
+    struct gl_program_parameter_list *Varying;
+    /** Vertex program user-defined attributes */
+    struct gl_program_parameter_list *Attributes;
 
-   /** Logical counts */
-   /*@{*/
-   GLuint NumInstructions;
-   GLuint NumTemporaries;
-   GLuint NumParameters;
-   GLuint NumAttributes;
-   GLuint NumAddressRegs;
-   GLuint NumAluInstructions;
-   GLuint NumTexInstructions;
-   GLuint NumTexIndirections;
-   /*@}*/
-   /** Native, actual h/w counts */
-   /*@{*/
-   GLuint NumNativeInstructions;
-   GLuint NumNativeTemporaries;
-   GLuint NumNativeParameters;
-   GLuint NumNativeAttributes;
-   GLuint NumNativeAddressRegs;
-   GLuint NumNativeAluInstructions;
-   GLuint NumNativeTexInstructions;
-   GLuint NumNativeTexIndirections;
-   /*@}*/
+    /** Logical counts */
+    /*@{*/
+    GLuint NumInstructions;
+    GLuint NumTemporaries;
+    GLuint NumParameters;
+    GLuint NumAttributes;
+    GLuint NumAddressRegs;
+    GLuint NumAluInstructions;
+    GLuint NumTexInstructions;
+    GLuint NumTexIndirections;
+    /*@}*/
+    /** Native, actual h/w counts */
+    /*@{*/
+    GLuint NumNativeInstructions;
+    GLuint NumNativeTemporaries;
+    GLuint NumNativeParameters;
+    GLuint NumNativeAttributes;
+    GLuint NumNativeAddressRegs;
+    GLuint NumNativeAluInstructions;
+    GLuint NumNativeTexInstructions;
+    GLuint NumNativeTexIndirections;
+    /*@}*/
 };
 
 
 /** Vertex program object */
-struct gl_vertex_program
-{
-   struct gl_program Base;   /**< base class */
-   GLboolean IsNVProgram;    /**< is this a GL_NV_vertex_program program? */
-   GLboolean IsPositionInvariant;
-   void *TnlData;		/**< should probably use Base.DriverData */
+struct gl_vertex_program {
+    struct gl_program Base;   /**< base class */
+    GLboolean IsNVProgram;    /**< is this a GL_NV_vertex_program program? */
+    GLboolean IsPositionInvariant;
+    void *TnlData;		/**< should probably use Base.DriverData */
 };
 
 
 /** Fragment program object */
-struct gl_fragment_program
-{
-   struct gl_program Base;   /**< base class */
-   GLenum FogOption;
-   GLboolean UsesKill;
+struct gl_fragment_program {
+    struct gl_program Base;   /**< base class */
+    GLenum FogOption;
+    GLboolean UsesKill;
 };
 
 
 /**
  * State common to vertex and fragment programs.
  */
-struct gl_program_state
-{
-   GLint ErrorPos;                       /* GL_PROGRAM_ERROR_POSITION_ARB/NV */
-   const char *ErrorString;              /* GL_PROGRAM_ERROR_STRING_ARB/NV */
+struct gl_program_state {
+    GLint ErrorPos;                       /* GL_PROGRAM_ERROR_POSITION_ARB/NV */
+    const char *ErrorString;              /* GL_PROGRAM_ERROR_STRING_ARB/NV */
 };
 
 
 /**
  * Context state for vertex programs.
  */
-struct gl_vertex_program_state
-{
-   GLboolean Enabled;               /**< GL_VERTEX_PROGRAM_ARB/NV */
-   GLboolean _Enabled;              /**< Enabled and valid program? */
-   GLboolean PointSizeEnabled;      /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
-   GLboolean TwoSideEnabled;        /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
-   struct gl_vertex_program *Current;  /**< user-bound vertex program */
+struct gl_vertex_program_state {
+    GLboolean Enabled;               /**< GL_VERTEX_PROGRAM_ARB/NV */
+    GLboolean _Enabled;              /**< Enabled and valid program? */
+    GLboolean PointSizeEnabled;      /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
+    GLboolean TwoSideEnabled;        /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
+    struct gl_vertex_program *Current;  /**< user-bound vertex program */
 
-   /** Currently enabled and valid program (including internal programs
-    * and compiled shader programs).
-    */
-   struct gl_vertex_program *_Current;
+    /** Currently enabled and valid program (including internal programs
+     * and compiled shader programs).
+     */
+    struct gl_vertex_program *_Current;
 
-   GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
+    GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
 
-   /* For GL_NV_vertex_program only: */
-   GLenum TrackMatrix[MAX_PROGRAM_ENV_PARAMS / 4];
-   GLenum TrackMatrixTransform[MAX_PROGRAM_ENV_PARAMS / 4];
+    /* For GL_NV_vertex_program only: */
+    GLenum TrackMatrix[MAX_PROGRAM_ENV_PARAMS / 4];
+    GLenum TrackMatrixTransform[MAX_PROGRAM_ENV_PARAMS / 4];
 
-   /** Should fixed-function T&L be implemented with a vertex prog? */
-   GLboolean _MaintainTnlProgram;
+    /** Should fixed-function T&L be implemented with a vertex prog? */
+    GLboolean _MaintainTnlProgram;
 
-   /** Program to emulate fixed-function T&L (see above) */
-   struct gl_vertex_program *_TnlProgram;
+    /** Program to emulate fixed-function T&L (see above) */
+    struct gl_vertex_program *_TnlProgram;
 
 #if FEATURE_MESA_program_debug
-   GLprogramcallbackMESA Callback;
-   GLvoid *CallbackData;
-   GLboolean CallbackEnabled;
-   GLuint CurrentPosition;
+    GLprogramcallbackMESA Callback;
+    GLvoid *CallbackData;
+    GLboolean CallbackEnabled;
+    GLuint CurrentPosition;
 #endif
 };
 
@@ -1977,32 +1920,31 @@ struct gl_vertex_program_state
 /**
  * Context state for fragment programs.
  */
-struct gl_fragment_program_state
-{
-   GLboolean Enabled;     /**< User-set fragment program enable flag */
-   GLboolean _Enabled;    /**< Fragment program enabled and valid? */
-   GLboolean _Active;
-   struct gl_fragment_program *Current;  /**< User-bound fragment program */
+struct gl_fragment_program_state {
+    GLboolean Enabled;     /**< User-set fragment program enable flag */
+    GLboolean _Enabled;    /**< Fragment program enabled and valid? */
+    GLboolean _Active;
+    struct gl_fragment_program *Current;  /**< User-bound fragment program */
 
-   /** Currently enabled and valid program (including internal programs
-    * and compiled shader programs).
-    */
-   struct gl_fragment_program *_Current;
+    /** Currently enabled and valid program (including internal programs
+     * and compiled shader programs).
+     */
+    struct gl_fragment_program *_Current;
 
-   GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
+    GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
 
-   /** Should fixed-function texturing be implemented with a fragment prog? */
-   GLboolean _MaintainTexEnvProgram;
-   GLboolean _UseTexEnvProgram;
+    /** Should fixed-function texturing be implemented with a fragment prog? */
+    GLboolean _MaintainTexEnvProgram;
+    GLboolean _UseTexEnvProgram;
 
-   /** Program to emulate fixed-function texture env/combine (see above) */
-   struct gl_fragment_program *_TexEnvProgram;
+    /** Program to emulate fixed-function texture env/combine (see above) */
+    struct gl_fragment_program *_TexEnvProgram;
 
 #if FEATURE_MESA_program_debug
-   GLprogramcallbackMESA Callback;
-   GLvoid *CallbackData;
-   GLboolean CallbackEnabled;
-   GLuint CurrentPosition;
+    GLprogramcallbackMESA Callback;
+    GLvoid *CallbackData;
+    GLboolean CallbackEnabled;
+    GLuint CurrentPosition;
 #endif
 };
 
@@ -2019,57 +1961,53 @@ struct atifs_setupinst;
 /**
  * ATI fragment shader
  */
-struct ati_fragment_shader
-{
-   GLuint Id;
-   GLint RefCount;
-   struct atifs_instruction *Instructions[2];
-   struct atifs_setupinst *SetupInst[2];
-   GLfloat Constants[8][4];
-   GLbitfield LocalConstDef;  /** Indicates which constants have been set */
-   GLubyte numArithInstr[2];
-   GLubyte regsAssigned[2];
-   GLubyte NumPasses;         /** 1 or 2 */
-   GLubyte cur_pass;
-   GLubyte last_optype;
-   GLboolean interpinp1;
-   GLboolean isValid;
-   GLuint swizzlerq;
+struct ati_fragment_shader {
+    GLuint Id;
+    GLint RefCount;
+    struct atifs_instruction *Instructions[2];
+    struct atifs_setupinst *SetupInst[2];
+    GLfloat Constants[8][4];
+    GLbitfield LocalConstDef;  /** Indicates which constants have been set */
+    GLubyte numArithInstr[2];
+    GLubyte regsAssigned[2];
+    GLubyte NumPasses;         /** 1 or 2 */
+    GLubyte cur_pass;
+    GLubyte last_optype;
+    GLboolean interpinp1;
+    GLboolean isValid;
+    GLuint swizzlerq;
 };
 
 /**
  * Context state for GL_ATI_fragment_shader
  */
-struct gl_ati_fragment_shader_state
-{
-   GLboolean Enabled;
-   GLboolean _Enabled;                      /** enabled and valid shader? */
-   GLboolean Compiling;
-   GLfloat GlobalConstants[8][4];
-   struct ati_fragment_shader *Current;
+struct gl_ati_fragment_shader_state {
+    GLboolean Enabled;
+    GLboolean _Enabled;                      /** enabled and valid shader? */
+    GLboolean Compiling;
+    GLfloat GlobalConstants[8][4];
+    struct ati_fragment_shader *Current;
 };
 
 
 /**
  * Occlusion/timer query object.
  */
-struct gl_query_object
-{
-   GLuint Id;
-   GLuint64EXT Result; /* the counter */
-   GLboolean Active;   /* inside Begin/EndQuery */
-   GLboolean Ready;    /* result is ready */
+struct gl_query_object {
+    GLuint Id;
+    GLuint64EXT Result; /* the counter */
+    GLboolean Active;   /* inside Begin/EndQuery */
+    GLboolean Ready;    /* result is ready */
 };
 
 
 /**
  * Context state for query objects.
  */
-struct gl_query_state
-{
-   struct _mesa_HashTable *QueryObjects;
-   struct gl_query_object *CurrentOcclusionObject; /* GL_ARB_occlusion_query */
-   struct gl_query_object *CurrentTimerObject;     /* GL_EXT_timer_query */
+struct gl_query_state {
+    struct _mesa_HashTable *QueryObjects;
+    struct gl_query_object *CurrentOcclusionObject; /* GL_ARB_occlusion_query */
+    struct gl_query_object *CurrentTimerObject;     /* GL_EXT_timer_query */
 };
 
 
@@ -2077,130 +2015,126 @@ struct gl_query_state
 /**
  * A GLSL shader object.
  */
-struct gl_shader
-{
-   GLenum Type;  /**< GL_FRAGMENT_SHADER || GL_VERTEX_SHADER (first field!) */
-   GLuint Name;  /**< AKA the handle */
-   GLint RefCount;  /**< Reference count */
-   GLboolean DeletePending;
+struct gl_shader {
+    GLenum Type;  /**< GL_FRAGMENT_SHADER || GL_VERTEX_SHADER (first field!) */
+    GLuint Name;  /**< AKA the handle */
+    GLint RefCount;  /**< Reference count */
+    GLboolean DeletePending;
 
-   const GLchar *Source;  /**< Source code string */
-   GLboolean CompileStatus;
-   GLuint NumPrograms;  /**< size of Programs[] array */
-   struct gl_program **Programs;  /**< Post-compile assembly code */
-   GLchar *InfoLog;
+    const GLchar *Source;  /**< Source code string */
+    GLboolean CompileStatus;
+    GLuint NumPrograms;  /**< size of Programs[] array */
+    struct gl_program **Programs;  /**< Post-compile assembly code */
+    GLchar *InfoLog;
 };
 
 
 /**
  * A GLSL program object.  Basically a linked collection of "shaders".
  */
-struct gl_shader_program
-{
-   GLenum Type;  /**< Always GL_SHADER_PROGRAM (internal token) */
-   GLuint Name;  /**< aka handle or ID */
-   GLint RefCount;  /**< Reference count */
-   GLboolean DeletePending;
+struct gl_shader_program {
+    GLenum Type;  /**< Always GL_SHADER_PROGRAM (internal token) */
+    GLuint Name;  /**< aka handle or ID */
+    GLint RefCount;  /**< Reference count */
+    GLboolean DeletePending;
 
-   GLuint NumShaders;          /**< number of attached shaders */
-   struct gl_shader **Shaders; /**< List of attached the shaders */
+    GLuint NumShaders;          /**< number of attached shaders */
+    struct gl_shader **Shaders; /**< List of attached the shaders */
 
-   /* post-link info: */
-   struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
-   struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
-   struct gl_program_parameter_list *Uniforms; /**< Plus constants, etc */
-   struct gl_program_parameter_list *Varying;
-   struct gl_program_parameter_list *Attributes; /**< Vertex attributes */
-   GLboolean LinkStatus;   /**< GL_LINK_STATUS */
-   GLboolean Validated;
-   GLchar *InfoLog;
-};   
+    /* post-link info: */
+    struct gl_vertex_program *VertexProgram;     /**< Linked vertex program */
+    struct gl_fragment_program *FragmentProgram; /**< Linked fragment prog */
+    struct gl_program_parameter_list *Uniforms; /**< Plus constants, etc */
+    struct gl_program_parameter_list *Varying;
+    struct gl_program_parameter_list *Attributes; /**< Vertex attributes */
+    GLboolean LinkStatus;   /**< GL_LINK_STATUS */
+    GLboolean Validated;
+    GLchar *InfoLog;
+};
 
 
 /**
  * Context state for GLSL vertex/fragment shaders.
  */
-struct gl_shader_state
-{
-   struct gl_shader_program *CurrentProgram; /**< The user-bound program */
-   /** Driver-selectable options: */
-   GLboolean EmitHighLevelInstructions; /**< IF/ELSE/ENDIF vs. BRA, etc. */
-   GLboolean EmitCondCodes;             /**< Use condition codes? */
-   GLboolean EmitComments;              /**< Annotated instructions */
-   void *MemPool;
+struct gl_shader_state {
+    struct gl_shader_program *CurrentProgram; /**< The user-bound program */
+    /** Driver-selectable options: */
+    GLboolean EmitHighLevelInstructions; /**< IF/ELSE/ENDIF vs. BRA, etc. */
+    GLboolean EmitCondCodes;             /**< Use condition codes? */
+    GLboolean EmitComments;              /**< Annotated instructions */
+    void *MemPool;
 };
 
 
 /**
  * State which can be shared by multiple contexts:
  */
-struct gl_shared_state
-{
-   _glthread_Mutex Mutex;		   /**< for thread safety */
-   GLint RefCount;			   /**< Reference count */
-   struct _mesa_HashTable *DisplayList;	   /**< Display lists hash table */
-   struct _mesa_HashTable *TexObjects;	   /**< Texture objects hash table */
+struct gl_shared_state {
+    _glthread_Mutex Mutex;		   /**< for thread safety */
+    GLint RefCount;			   /**< Reference count */
+    struct _mesa_HashTable *DisplayList;	   /**< Display lists hash table */
+    struct _mesa_HashTable *TexObjects;	   /**< Texture objects hash table */
 
-   /**
-    * \name Default texture objects (shared by all multi-texture units)
-    */
-   /*@{*/
-   struct gl_texture_object *Default1D;
-   struct gl_texture_object *Default2D;
-   struct gl_texture_object *Default3D;
-   struct gl_texture_object *DefaultCubeMap;
-   struct gl_texture_object *DefaultRect;
-   /*@}*/
+    /**
+     * \name Default texture objects (shared by all multi-texture units)
+     */
+    /*@{*/
+    struct gl_texture_object *Default1D;
+    struct gl_texture_object *Default2D;
+    struct gl_texture_object *Default3D;
+    struct gl_texture_object *DefaultCubeMap;
+    struct gl_texture_object *DefaultRect;
+    /*@}*/
 
-   /**
-    * \name Thread safety and statechange notification for texture
-    * objects. 
-    *
-    * \todo Improve the granularity of locking.
-    */
-   /*@{*/
-   _glthread_Mutex TexMutex;		   /**< texobj thread safety */
-   GLuint TextureStateStamp;	           /**< state notification for shared tex  */
-   /*@}*/
-
+    /**
+     * \name Thread safety and statechange notification for texture
+     * objects.
+     *
+     * \todo Improve the granularity of locking.
+     */
+    /*@{*/
+    _glthread_Mutex TexMutex;		   /**< texobj thread safety */
+    GLuint TextureStateStamp;	           /**< state notification for shared tex  */
+    /*@}*/
 
 
-   /**
-    * \name Vertex/fragment programs
-    */
-   /*@{*/
-   struct _mesa_HashTable *Programs; /**< All vertex/fragment programs */
+
+    /**
+     * \name Vertex/fragment programs
+     */
+    /*@{*/
+    struct _mesa_HashTable *Programs; /**< All vertex/fragment programs */
 #if FEATURE_ARB_vertex_program
-   struct gl_program *DefaultVertexProgram;
+    struct gl_program *DefaultVertexProgram;
 #endif
 #if FEATURE_ARB_fragment_program
-   struct gl_program *DefaultFragmentProgram;
+    struct gl_program *DefaultFragmentProgram;
 #endif
-   /*@}*/
+    /*@}*/
 
 #if FEATURE_ATI_fragment_shader
-   struct _mesa_HashTable *ATIShaders;
-   struct ati_fragment_shader *DefaultFragmentShader;
+    struct _mesa_HashTable *ATIShaders;
+    struct ati_fragment_shader *DefaultFragmentShader;
 #endif
 
 #if FEATURE_ARB_vertex_buffer_object || FEATURE_ARB_pixel_buffer_object
-   struct _mesa_HashTable *BufferObjects;
+    struct _mesa_HashTable *BufferObjects;
 #endif
 
 #if FEATURE_ARB_shader_objects
-   /** Table of both gl_shader and gl_shader_program objects */
-   struct _mesa_HashTable *ShaderObjects;
+    /** Table of both gl_shader and gl_shader_program objects */
+    struct _mesa_HashTable *ShaderObjects;
 #endif
 
 #if FEATURE_EXT_framebuffer_object
-   struct _mesa_HashTable *RenderBuffers;
-   struct _mesa_HashTable *FrameBuffers;
+    struct _mesa_HashTable *RenderBuffers;
+    struct _mesa_HashTable *FrameBuffers;
 #endif
 
-   /** Objects associated with the GL_APPLE_vertex_array_object extension. */
-   struct _mesa_HashTable *ArrayObjects;
+    /** Objects associated with the GL_APPLE_vertex_array_object extension. */
+    struct _mesa_HashTable *ArrayObjects;
 
-   void *DriverData;  /**< Device driver shared state */
+    void *DriverData;  /**< Device driver shared state */
 };
 
 
@@ -2215,97 +2149,96 @@ struct gl_shared_state
  * hook.  Drivers will likely wrap this class inside a driver-specific
  * class to simulate inheritance.
  */
-struct gl_renderbuffer
-{
+struct gl_renderbuffer {
 #define RB_MAGIC 0xaabbccdd
-   int Magic; /** XXX TEMPORARY DEBUG INFO */
-   _glthread_Mutex Mutex;		   /**< for thread safety */
-   GLuint ClassID;        /**< Useful for drivers */
-   GLuint Name;
-   GLint RefCount;
-   GLuint Width, Height;
-   GLenum InternalFormat; /**< The user-specified format */
-   GLenum _ActualFormat;  /**< The driver-chosen format */
-   GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
+    int Magic; /** XXX TEMPORARY DEBUG INFO */
+    _glthread_Mutex Mutex;		   /**< for thread safety */
+    GLuint ClassID;        /**< Useful for drivers */
+    GLuint Name;
+    GLint RefCount;
+    GLuint Width, Height;
+    GLenum InternalFormat; /**< The user-specified format */
+    GLenum _ActualFormat;  /**< The driver-chosen format */
+    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
-   GLenum DataType;      /**< Type of values passed to the Get/Put functions */
-   GLubyte RedBits;      /**< Bits of red per pixel */
-   GLubyte GreenBits;
-   GLubyte BlueBits;
-   GLubyte AlphaBits;
-   GLubyte IndexBits;
-   GLubyte DepthBits;
-   GLubyte StencilBits;
-   GLvoid *Data;        /**< This may not be used by some kinds of RBs */
+    GLenum DataType;      /**< Type of values passed to the Get/Put functions */
+    GLubyte RedBits;      /**< Bits of red per pixel */
+    GLubyte GreenBits;
+    GLubyte BlueBits;
+    GLubyte AlphaBits;
+    GLubyte IndexBits;
+    GLubyte DepthBits;
+    GLubyte StencilBits;
+    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
 
-   /* Used to wrap one renderbuffer around another: */
-   struct gl_renderbuffer *Wrapped;
+    /* Used to wrap one renderbuffer around another: */
+    struct gl_renderbuffer *Wrapped;
 
-   /* Delete this renderbuffer */
-   void (*Delete)(struct gl_renderbuffer *rb);
+    /* Delete this renderbuffer */
+    void (*Delete)(struct gl_renderbuffer *rb);
 
-   /* Allocate new storage for this renderbuffer */
-   GLboolean (*AllocStorage)(GLcontext *ctx, struct gl_renderbuffer *rb,
-                             GLenum internalFormat,
-                             GLuint width, GLuint height);
+    /* Allocate new storage for this renderbuffer */
+    GLboolean(*AllocStorage)(GLcontext *ctx, struct gl_renderbuffer *rb,
+			     GLenum internalFormat,
+			     GLuint width, GLuint height);
 
-   /* Lock/Unlock are called before/after calling the Get/Put functions.
-    * Not sure this is the right place for these yet.
-   void (*Lock)(GLcontext *ctx, struct gl_renderbuffer *rb);
-   void (*Unlock)(GLcontext *ctx, struct gl_renderbuffer *rb);
-    */
+    /* Lock/Unlock are called before/after calling the Get/Put functions.
+     * Not sure this is the right place for these yet.
+    void (*Lock)(GLcontext *ctx, struct gl_renderbuffer *rb);
+    void (*Unlock)(GLcontext *ctx, struct gl_renderbuffer *rb);
+     */
 
-   /* Return a pointer to the element/pixel at (x,y).
-    * Should return NULL if the buffer memory can't be directly addressed.
-    */
-   void *(*GetPointer)(GLcontext *ctx, struct gl_renderbuffer *rb,
-                       GLint x, GLint y);
+    /* Return a pointer to the element/pixel at (x,y).
+     * Should return NULL if the buffer memory can't be directly addressed.
+     */
+    void *(*GetPointer)(GLcontext *ctx, struct gl_renderbuffer *rb,
+			GLint x, GLint y);
 
-   /* Get/Read a row of values.
-    * The values will be of format _BaseFormat and type DataType.
-    */
-   void (*GetRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
-                  GLint x, GLint y, void *values);
+    /* Get/Read a row of values.
+     * The values will be of format _BaseFormat and type DataType.
+     */
+    void (*GetRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+		   GLint x, GLint y, void *values);
 
-   /* Get/Read values at arbitrary locations.
-    * The values will be of format _BaseFormat and type DataType.
-    */
-   void (*GetValues)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
-                     const GLint x[], const GLint y[], void *values);
+    /* Get/Read values at arbitrary locations.
+     * The values will be of format _BaseFormat and type DataType.
+     */
+    void (*GetValues)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+		      const GLint x[], const GLint y[], void *values);
 
-   /* Put/Write a row of values.
-    * The values will be of format _BaseFormat and type DataType.
-    */
-   void (*PutRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
-                  GLint x, GLint y, const void *values, const GLubyte *mask);
+    /* Put/Write a row of values.
+     * The values will be of format _BaseFormat and type DataType.
+     */
+    void (*PutRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+		   GLint x, GLint y, const void *values, const GLubyte *mask);
 
-   /* Put/Write a row of RGB values.  This is a special-case routine that's
-    * only used for RGBA renderbuffers when the source data is GL_RGB. That's
-    * a common case for glDrawPixels and some triangle routines.
-    * The values will be of format GL_RGB and type DataType.
-    */
-   void (*PutRowRGB)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
-                    GLint x, GLint y, const void *values, const GLubyte *mask);
+    /* Put/Write a row of RGB values.  This is a special-case routine that's
+     * only used for RGBA renderbuffers when the source data is GL_RGB. That's
+     * a common case for glDrawPixels and some triangle routines.
+     * The values will be of format GL_RGB and type DataType.
+     */
+    void (*PutRowRGB)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+		      GLint x, GLint y, const void *values, const GLubyte *mask);
 
 
-   /* Put/Write a row of identical values.
-    * The values will be of format _BaseFormat and type DataType.
-    */
-   void (*PutMonoRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
-                     GLint x, GLint y, const void *value, const GLubyte *mask);
+    /* Put/Write a row of identical values.
+     * The values will be of format _BaseFormat and type DataType.
+     */
+    void (*PutMonoRow)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+		       GLint x, GLint y, const void *value, const GLubyte *mask);
 
-   /* Put/Write values at arbitrary locations.
-    * The values will be of format _BaseFormat and type DataType.
-    */
-   void (*PutValues)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
-                     const GLint x[], const GLint y[], const void *values,
-                     const GLubyte *mask);
-   /* Put/Write identical values at arbitrary locations.
-    * The values will be of format _BaseFormat and type DataType.
-    */
-   void (*PutMonoValues)(GLcontext *ctx, struct gl_renderbuffer *rb,
-                         GLuint count, const GLint x[], const GLint y[],
-                         const void *value, const GLubyte *mask);
+    /* Put/Write values at arbitrary locations.
+     * The values will be of format _BaseFormat and type DataType.
+     */
+    void (*PutValues)(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
+		      const GLint x[], const GLint y[], const void *values,
+		      const GLubyte *mask);
+    /* Put/Write identical values at arbitrary locations.
+     * The values will be of format _BaseFormat and type DataType.
+     */
+    void (*PutMonoValues)(GLcontext *ctx, struct gl_renderbuffer *rb,
+			  GLuint count, const GLint x[], const GLint y[],
+			  const void *value, const GLubyte *mask);
 };
 
 
@@ -2314,19 +2247,18 @@ struct gl_renderbuffer
  * (and specifies a mipmap level, cube face or 3D texture slice) or
  * points to a renderbuffer.
  */
-struct gl_renderbuffer_attachment
-{
-   GLenum Type;  /* GL_NONE or GL_TEXTURE or GL_RENDERBUFFER_EXT */
-   GLboolean Complete;
+struct gl_renderbuffer_attachment {
+    GLenum Type;  /* GL_NONE or GL_TEXTURE or GL_RENDERBUFFER_EXT */
+    GLboolean Complete;
 
-   /* IF Type == GL_RENDERBUFFER_EXT: */
-   struct gl_renderbuffer *Renderbuffer;
+    /* IF Type == GL_RENDERBUFFER_EXT: */
+    struct gl_renderbuffer *Renderbuffer;
 
-   /* IF Type == GL_TEXTURE: */
-   struct gl_texture_object *Texture;
-   GLuint TextureLevel;
-   GLuint CubeMapFace;  /* 0 .. 5, for cube map textures */
-   GLuint Zoffset;      /* for 3D textures */
+    /* IF Type == GL_TEXTURE: */
+    struct gl_texture_object *Texture;
+    GLuint TextureLevel;
+    GLuint CubeMapFace;  /* 0 .. 5, for cube map textures */
+    GLuint Zoffset;      /* for 3D textures */
 };
 
 
@@ -2335,91 +2267,89 @@ struct gl_renderbuffer_attachment
  * In C++ terms, think of this as a base class from which device drivers
  * will make derived classes.
  */
-struct gl_framebuffer
-{
-   _glthread_Mutex Mutex;		   /**< for thread safety */
-   GLuint Name;      /* if zero, this is a window system framebuffer */
-   GLint RefCount;
-   GLboolean DeletePending;
+struct gl_framebuffer {
+    _glthread_Mutex Mutex;		   /**< for thread safety */
+    GLuint Name;      /* if zero, this is a window system framebuffer */
+    GLint RefCount;
+    GLboolean DeletePending;
 
-   GLvisual Visual;	/**< The framebuffer's visual.
+    GLvisual Visual;	/**< The framebuffer's visual.
                              Immutable if this is a window system buffer.
                              Computed from attachments if user-made FBO. */
 
-   GLboolean Initialized;
+    GLboolean Initialized;
 
-   GLuint Width, Height;	/**< size of frame buffer in pixels */
+    GLuint Width, Height;	/**< size of frame buffer in pixels */
 
-   /** \name  Drawing bounds (Intersection of buffer size and scissor box) */
-   /*@{*/
-   GLint _Xmin, _Xmax;  /**< inclusive */
-   GLint _Ymin, _Ymax;  /**< exclusive */
-   /*@}*/
+    /** \name  Drawing bounds (Intersection of buffer size and scissor box) */
+    /*@{*/
+    GLint _Xmin, _Xmax;  /**< inclusive */
+    GLint _Ymin, _Ymax;  /**< exclusive */
+    /*@}*/
 
-   /** \name  Derived Z buffer stuff */
-   /*@{*/
-   GLuint _DepthMax;	/**< Max depth buffer value */
-   GLfloat _DepthMaxF;	/**< Float max depth buffer value */
-   GLfloat _MRD;	/**< minimum resolvable difference in Z values */
-   /*@}*/
+    /** \name  Derived Z buffer stuff */
+    /*@{*/
+    GLuint _DepthMax;	/**< Max depth buffer value */
+    GLfloat _DepthMaxF;	/**< Float max depth buffer value */
+    GLfloat _MRD;	/**< minimum resolvable difference in Z values */
+    /*@}*/
 
-   GLenum _Status; /* One of the GL_FRAMEBUFFER_(IN)COMPLETE_* tokens */
+    GLenum _Status; /* One of the GL_FRAMEBUFFER_(IN)COMPLETE_* tokens */
 
-   /* Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
-   struct gl_renderbuffer_attachment Attachment[BUFFER_COUNT];
+    /* Array of all renderbuffer attachments, indexed by BUFFER_* tokens. */
+    struct gl_renderbuffer_attachment Attachment[BUFFER_COUNT];
 
-   /* In unextended OpenGL these vars are part of the GL_COLOR_BUFFER
-    * attribute group and GL_PIXEL attribute group, respectively.
-    */
-   GLenum ColorDrawBuffer[MAX_DRAW_BUFFERS];
-   GLenum ColorReadBuffer;
+    /* In unextended OpenGL these vars are part of the GL_COLOR_BUFFER
+     * attribute group and GL_PIXEL attribute group, respectively.
+     */
+    GLenum ColorDrawBuffer[MAX_DRAW_BUFFERS];
+    GLenum ColorReadBuffer;
 
-   /* These are computed from ColorDrawBuffer and ColorReadBuffer */
-   GLbitfield _ColorDrawBufferMask[MAX_DRAW_BUFFERS]; /* Mask of BUFFER_BIT_* flags */
-   GLint _ColorReadBufferIndex; /* -1 = None */
+    /* These are computed from ColorDrawBuffer and ColorReadBuffer */
+    GLbitfield _ColorDrawBufferMask[MAX_DRAW_BUFFERS]; /* Mask of BUFFER_BIT_* flags */
+    GLint _ColorReadBufferIndex; /* -1 = None */
 
-   /* These are computed from _ColorDrawBufferMask and _ColorReadBufferIndex */
-   GLuint _NumColorDrawBuffers[MAX_DRAW_BUFFERS];
-   struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS][4];
-   struct gl_renderbuffer *_ColorReadBuffer;
+    /* These are computed from _ColorDrawBufferMask and _ColorReadBufferIndex */
+    GLuint _NumColorDrawBuffers[MAX_DRAW_BUFFERS];
+    struct gl_renderbuffer *_ColorDrawBuffers[MAX_DRAW_BUFFERS][4];
+    struct gl_renderbuffer *_ColorReadBuffer;
 
-   /** The Actual depth/stencil buffers to use.  May be wrappers around the
-    * depth/stencil buffers attached above. */
-   struct gl_renderbuffer *_DepthBuffer;
-   struct gl_renderbuffer *_StencilBuffer;
+    /** The Actual depth/stencil buffers to use.  May be wrappers around the
+     * depth/stencil buffers attached above. */
+    struct gl_renderbuffer *_DepthBuffer;
+    struct gl_renderbuffer *_StencilBuffer;
 
-   /** Delete this framebuffer */
-   void (*Delete)(struct gl_framebuffer *fb);
+    /** Delete this framebuffer */
+    void (*Delete)(struct gl_framebuffer *fb);
 };
 
 
 /**
  * Limits for vertex and fragment programs.
  */
-struct gl_program_constants
-{
-   /* logical limits */
-   GLuint MaxInstructions;
-   GLuint MaxAluInstructions; /* fragment programs only, for now */
-   GLuint MaxTexInstructions; /* fragment programs only, for now */
-   GLuint MaxTexIndirections; /* fragment programs only, for now */
-   GLuint MaxAttribs;
-   GLuint MaxTemps;
-   GLuint MaxAddressRegs; /* vertex program only, for now */
-   GLuint MaxParameters;
-   GLuint MaxLocalParams;
-   GLuint MaxEnvParams;
-   /* native/hardware limits */
-   GLuint MaxNativeInstructions;
-   GLuint MaxNativeAluInstructions; /* fragment programs only, for now */
-   GLuint MaxNativeTexInstructions; /* fragment programs only, for now */
-   GLuint MaxNativeTexIndirections; /* fragment programs only, for now */
-   GLuint MaxNativeAttribs;
-   GLuint MaxNativeTemps;
-   GLuint MaxNativeAddressRegs; /* vertex program only, for now */
-   GLuint MaxNativeParameters;
-   /* For shaders */
-   GLuint MaxUniformComponents;
+struct gl_program_constants {
+    /* logical limits */
+    GLuint MaxInstructions;
+    GLuint MaxAluInstructions; /* fragment programs only, for now */
+    GLuint MaxTexInstructions; /* fragment programs only, for now */
+    GLuint MaxTexIndirections; /* fragment programs only, for now */
+    GLuint MaxAttribs;
+    GLuint MaxTemps;
+    GLuint MaxAddressRegs; /* vertex program only, for now */
+    GLuint MaxParameters;
+    GLuint MaxLocalParams;
+    GLuint MaxEnvParams;
+    /* native/hardware limits */
+    GLuint MaxNativeInstructions;
+    GLuint MaxNativeAluInstructions; /* fragment programs only, for now */
+    GLuint MaxNativeTexInstructions; /* fragment programs only, for now */
+    GLuint MaxNativeTexIndirections; /* fragment programs only, for now */
+    GLuint MaxNativeAttribs;
+    GLuint MaxNativeTemps;
+    GLuint MaxNativeAddressRegs; /* vertex program only, for now */
+    GLuint MaxNativeParameters;
+    /* For shaders */
+    GLuint MaxUniformComponents;
 };
 
 
@@ -2427,51 +2357,50 @@ struct gl_program_constants
  * Constants which may be overridden by device driver during context creation
  * but are never changed after that.
  */
-struct gl_constants
-{
-   GLint MaxTextureLevels;		/**< Maximum number of allowed mipmap levels. */ 
-   GLint Max3DTextureLevels;		/**< Maximum number of allowed mipmap levels for 3D texture targets. */
-   GLint MaxCubeTextureLevels;          /**< Maximum number of allowed mipmap levels for GL_ARB_texture_cube_map */
-   GLint MaxTextureRectSize;            /* GL_NV_texture_rectangle */
-   GLuint MaxTextureCoordUnits;
-   GLuint MaxTextureImageUnits;
-   GLuint MaxTextureUnits;              /* = MIN(CoordUnits, ImageUnits) */
-   GLfloat MaxTextureMaxAnisotropy;	/* GL_EXT_texture_filter_anisotropic */
-   GLfloat MaxTextureLodBias;           /* GL_EXT_texture_lod_bias */
-   GLuint MaxArrayLockSize;
-   GLint SubPixelBits;
-   GLfloat MinPointSize, MaxPointSize;		/* aliased */
-   GLfloat MinPointSizeAA, MaxPointSizeAA;	/* antialiased */
-   GLfloat PointSizeGranularity;
-   GLfloat MinLineWidth, MaxLineWidth;		/* aliased */
-   GLfloat MinLineWidthAA, MaxLineWidthAA;	/* antialiased */
-   GLfloat LineWidthGranularity;
-   GLuint MaxColorTableSize;
-   GLuint MaxConvolutionWidth;
-   GLuint MaxConvolutionHeight;
-   GLuint MaxClipPlanes;
-   GLuint MaxLights;
-   GLfloat MaxShininess;			/* GL_NV_light_max_exponent */
-   GLfloat MaxSpotExponent;			/* GL_NV_light_max_exponent */
-   GLuint MaxViewportWidth, MaxViewportHeight;
-   struct gl_program_constants VertexProgram;    /* GL_ARB_vertex_program */
-   struct gl_program_constants FragmentProgram;  /* GL_ARB_fragment_program */
-   /* shared by vertex and fragment program: */
-   GLuint MaxProgramMatrices;
-   GLuint MaxProgramMatrixStackDepth;
-   /* vertex array / buffer object bounds checking */
-   GLboolean CheckArrayBounds;
-   /* GL_ARB_draw_buffers */
-   GLuint MaxDrawBuffers;
-   /* GL_OES_read_format */
-   GLenum ColorReadFormat;
-   GLenum ColorReadType;
-   /* GL_EXT_framebuffer_object */
-   GLuint MaxColorAttachments;
-   GLuint MaxRenderbufferSize;
-   /* GL_ARB_vertex_shader */
-   GLuint MaxVertexTextureImageUnits;
-   GLuint MaxVarying;
+struct gl_constants {
+    GLint MaxTextureLevels;		/**< Maximum number of allowed mipmap levels. */
+    GLint Max3DTextureLevels;		/**< Maximum number of allowed mipmap levels for 3D texture targets. */
+    GLint MaxCubeTextureLevels;          /**< Maximum number of allowed mipmap levels for GL_ARB_texture_cube_map */
+    GLint MaxTextureRectSize;            /* GL_NV_texture_rectangle */
+    GLuint MaxTextureCoordUnits;
+    GLuint MaxTextureImageUnits;
+    GLuint MaxTextureUnits;              /* = MIN(CoordUnits, ImageUnits) */
+    GLfloat MaxTextureMaxAnisotropy;	/* GL_EXT_texture_filter_anisotropic */
+    GLfloat MaxTextureLodBias;           /* GL_EXT_texture_lod_bias */
+    GLuint MaxArrayLockSize;
+    GLint SubPixelBits;
+    GLfloat MinPointSize, MaxPointSize;		/* aliased */
+    GLfloat MinPointSizeAA, MaxPointSizeAA;	/* antialiased */
+    GLfloat PointSizeGranularity;
+    GLfloat MinLineWidth, MaxLineWidth;		/* aliased */
+    GLfloat MinLineWidthAA, MaxLineWidthAA;	/* antialiased */
+    GLfloat LineWidthGranularity;
+    GLuint MaxColorTableSize;
+    GLuint MaxConvolutionWidth;
+    GLuint MaxConvolutionHeight;
+    GLuint MaxClipPlanes;
+    GLuint MaxLights;
+    GLfloat MaxShininess;			/* GL_NV_light_max_exponent */
+    GLfloat MaxSpotExponent;			/* GL_NV_light_max_exponent */
+    GLuint MaxViewportWidth, MaxViewportHeight;
+    struct gl_program_constants VertexProgram;    /* GL_ARB_vertex_program */
+    struct gl_program_constants FragmentProgram;  /* GL_ARB_fragment_program */
+    /* shared by vertex and fragment program: */
+    GLuint MaxProgramMatrices;
+    GLuint MaxProgramMatrixStackDepth;
+    /* vertex array / buffer object bounds checking */
+    GLboolean CheckArrayBounds;
+    /* GL_ARB_draw_buffers */
+    GLuint MaxDrawBuffers;
+    /* GL_OES_read_format */
+    GLenum ColorReadFormat;
+    GLenum ColorReadType;
+    /* GL_EXT_framebuffer_object */
+    GLuint MaxColorAttachments;
+    GLuint MaxRenderbufferSize;
+    /* GL_ARB_vertex_shader */
+    GLuint MaxVertexTextureImageUnits;
+    GLuint MaxVarying;
 };
 
 
@@ -2479,148 +2408,146 @@ struct gl_constants
  * Enable flag for each OpenGL extension.  Different device drivers will
  * enable different extensions at runtime.
  */
-struct gl_extensions
-{
-   /**
-    * \name Flags to quickly test if certain extensions are available.
-    * 
-    * Not every extension needs to have such a flag, but it's encouraged.
-    */
-   /*@{*/
-   GLboolean dummy;  /* don't remove this! */
-   GLboolean ARB_depth_texture;
-   GLboolean ARB_draw_buffers;
-   GLboolean ARB_fragment_program;
-   GLboolean ARB_fragment_shader;
-   GLboolean ARB_half_float_pixel;
-   GLboolean ARB_imaging;
-   GLboolean ARB_multisample;
-   GLboolean ARB_multitexture;
-   GLboolean ARB_occlusion_query;
-   GLboolean ARB_point_sprite;
-   GLboolean ARB_shader_objects;
-   GLboolean ARB_shading_language_100;
-   GLboolean ARB_shading_language_120;
-   GLboolean ARB_shadow;
-   GLboolean ARB_texture_border_clamp;
-   GLboolean ARB_texture_compression;
-   GLboolean ARB_texture_cube_map;
-   GLboolean ARB_texture_env_combine;
-   GLboolean ARB_texture_env_crossbar;
-   GLboolean ARB_texture_env_dot3;
-   GLboolean ARB_texture_float;
-   GLboolean ARB_texture_mirrored_repeat;
-   GLboolean ARB_texture_non_power_of_two;
-   GLboolean ARB_transpose_matrix;
-   GLboolean ARB_vertex_buffer_object;
-   GLboolean ARB_vertex_program;
-   GLboolean ARB_vertex_shader;
-   GLboolean ARB_window_pos;
-   GLboolean EXT_abgr;
-   GLboolean EXT_bgra;
-   GLboolean EXT_blend_color;
-   GLboolean EXT_blend_equation_separate;
-   GLboolean EXT_blend_func_separate;
-   GLboolean EXT_blend_logic_op;
-   GLboolean EXT_blend_minmax;
-   GLboolean EXT_blend_subtract;
-   GLboolean EXT_clip_volume_hint;
-   GLboolean EXT_cull_vertex;
-   GLboolean EXT_convolution;
-   GLboolean EXT_compiled_vertex_array;
-   GLboolean EXT_copy_texture;
-   GLboolean EXT_depth_bounds_test;
-   GLboolean EXT_draw_range_elements;
-   GLboolean EXT_framebuffer_object;
-   GLboolean EXT_fog_coord;
-   GLboolean EXT_framebuffer_blit;
-   GLboolean EXT_gpu_program_parameters;
-   GLboolean EXT_histogram;
-   GLboolean EXT_multi_draw_arrays;
-   GLboolean EXT_paletted_texture;
-   GLboolean EXT_packed_depth_stencil;
-   GLboolean EXT_packed_pixels;
-   GLboolean EXT_pixel_buffer_object;
-   GLboolean EXT_point_parameters;
-   GLboolean EXT_polygon_offset;
-   GLboolean EXT_rescale_normal;
-   GLboolean EXT_shadow_funcs;
-   GLboolean EXT_secondary_color;
-   GLboolean EXT_separate_specular_color;
-   GLboolean EXT_shared_texture_palette;
-   GLboolean EXT_stencil_wrap;
-   GLboolean EXT_stencil_two_side;
-   GLboolean EXT_subtexture;
-   GLboolean EXT_texture;
-   GLboolean EXT_texture_object;
-   GLboolean EXT_texture3D;
-   GLboolean EXT_texture_compression_s3tc;
-   GLboolean EXT_texture_env_add;
-   GLboolean EXT_texture_env_combine;
-   GLboolean EXT_texture_env_dot3;
-   GLboolean EXT_texture_filter_anisotropic;
-   GLboolean EXT_texture_lod_bias;
-   GLboolean EXT_texture_mirror_clamp;
-   GLboolean EXT_texture_sRGB;
-   GLboolean EXT_timer_query;
-   GLboolean EXT_vertex_array;
-   GLboolean EXT_vertex_array_set;
-   /* vendor extensions */
-   GLboolean APPLE_client_storage;
-   GLboolean APPLE_packed_pixels;
-   GLboolean APPLE_vertex_array_object;
-   GLboolean ATI_texture_mirror_once;
-   GLboolean ATI_texture_env_combine3;
-   GLboolean ATI_fragment_shader;
-   GLboolean ATI_separate_stencil;
-   GLboolean IBM_rasterpos_clip;
-   GLboolean IBM_multimode_draw_arrays;
-   GLboolean MESA_pack_invert;
-   GLboolean MESA_packed_depth_stencil;
-   GLboolean MESA_program_debug;
-   GLboolean MESA_resize_buffers;
-   GLboolean MESA_ycbcr_texture;
-   GLboolean NV_blend_square;
-   GLboolean NV_fragment_program;
-   GLboolean NV_light_max_exponent;
-   GLboolean NV_point_sprite;
-   GLboolean NV_texgen_reflection;
-   GLboolean NV_texture_rectangle;
-   GLboolean NV_vertex_program;
-   GLboolean NV_vertex_program1_1;
-   GLboolean OES_read_format;
-   GLboolean SGI_color_matrix;
-   GLboolean SGI_color_table;
-   GLboolean SGI_texture_color_table;
-   GLboolean SGIS_generate_mipmap;
-   GLboolean SGIS_texture_edge_clamp;
-   GLboolean SGIS_texture_lod;
-   GLboolean SGIX_depth_texture;
-   GLboolean SGIX_shadow;
-   GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
-   GLboolean TDFX_texture_compression_FXT1;
-   GLboolean S3_s3tc;
-   /*@}*/
-   /* The extension string */
-   const GLubyte *String;
+struct gl_extensions {
+    /**
+     * \name Flags to quickly test if certain extensions are available.
+     *
+     * Not every extension needs to have such a flag, but it's encouraged.
+     */
+    /*@{*/
+    GLboolean dummy;  /* don't remove this! */
+    GLboolean ARB_depth_texture;
+    GLboolean ARB_draw_buffers;
+    GLboolean ARB_fragment_program;
+    GLboolean ARB_fragment_shader;
+    GLboolean ARB_half_float_pixel;
+    GLboolean ARB_imaging;
+    GLboolean ARB_multisample;
+    GLboolean ARB_multitexture;
+    GLboolean ARB_occlusion_query;
+    GLboolean ARB_point_sprite;
+    GLboolean ARB_shader_objects;
+    GLboolean ARB_shading_language_100;
+    GLboolean ARB_shading_language_120;
+    GLboolean ARB_shadow;
+    GLboolean ARB_texture_border_clamp;
+    GLboolean ARB_texture_compression;
+    GLboolean ARB_texture_cube_map;
+    GLboolean ARB_texture_env_combine;
+    GLboolean ARB_texture_env_crossbar;
+    GLboolean ARB_texture_env_dot3;
+    GLboolean ARB_texture_float;
+    GLboolean ARB_texture_mirrored_repeat;
+    GLboolean ARB_texture_non_power_of_two;
+    GLboolean ARB_transpose_matrix;
+    GLboolean ARB_vertex_buffer_object;
+    GLboolean ARB_vertex_program;
+    GLboolean ARB_vertex_shader;
+    GLboolean ARB_window_pos;
+    GLboolean EXT_abgr;
+    GLboolean EXT_bgra;
+    GLboolean EXT_blend_color;
+    GLboolean EXT_blend_equation_separate;
+    GLboolean EXT_blend_func_separate;
+    GLboolean EXT_blend_logic_op;
+    GLboolean EXT_blend_minmax;
+    GLboolean EXT_blend_subtract;
+    GLboolean EXT_clip_volume_hint;
+    GLboolean EXT_cull_vertex;
+    GLboolean EXT_convolution;
+    GLboolean EXT_compiled_vertex_array;
+    GLboolean EXT_copy_texture;
+    GLboolean EXT_depth_bounds_test;
+    GLboolean EXT_draw_range_elements;
+    GLboolean EXT_framebuffer_object;
+    GLboolean EXT_fog_coord;
+    GLboolean EXT_framebuffer_blit;
+    GLboolean EXT_gpu_program_parameters;
+    GLboolean EXT_histogram;
+    GLboolean EXT_multi_draw_arrays;
+    GLboolean EXT_paletted_texture;
+    GLboolean EXT_packed_depth_stencil;
+    GLboolean EXT_packed_pixels;
+    GLboolean EXT_pixel_buffer_object;
+    GLboolean EXT_point_parameters;
+    GLboolean EXT_polygon_offset;
+    GLboolean EXT_rescale_normal;
+    GLboolean EXT_shadow_funcs;
+    GLboolean EXT_secondary_color;
+    GLboolean EXT_separate_specular_color;
+    GLboolean EXT_shared_texture_palette;
+    GLboolean EXT_stencil_wrap;
+    GLboolean EXT_stencil_two_side;
+    GLboolean EXT_subtexture;
+    GLboolean EXT_texture;
+    GLboolean EXT_texture_object;
+    GLboolean EXT_texture3D;
+    GLboolean EXT_texture_compression_s3tc;
+    GLboolean EXT_texture_env_add;
+    GLboolean EXT_texture_env_combine;
+    GLboolean EXT_texture_env_dot3;
+    GLboolean EXT_texture_filter_anisotropic;
+    GLboolean EXT_texture_lod_bias;
+    GLboolean EXT_texture_mirror_clamp;
+    GLboolean EXT_texture_sRGB;
+    GLboolean EXT_timer_query;
+    GLboolean EXT_vertex_array;
+    GLboolean EXT_vertex_array_set;
+    /* vendor extensions */
+    GLboolean APPLE_client_storage;
+    GLboolean APPLE_packed_pixels;
+    GLboolean APPLE_vertex_array_object;
+    GLboolean ATI_texture_mirror_once;
+    GLboolean ATI_texture_env_combine3;
+    GLboolean ATI_fragment_shader;
+    GLboolean ATI_separate_stencil;
+    GLboolean IBM_rasterpos_clip;
+    GLboolean IBM_multimode_draw_arrays;
+    GLboolean MESA_pack_invert;
+    GLboolean MESA_packed_depth_stencil;
+    GLboolean MESA_program_debug;
+    GLboolean MESA_resize_buffers;
+    GLboolean MESA_ycbcr_texture;
+    GLboolean NV_blend_square;
+    GLboolean NV_fragment_program;
+    GLboolean NV_light_max_exponent;
+    GLboolean NV_point_sprite;
+    GLboolean NV_texgen_reflection;
+    GLboolean NV_texture_rectangle;
+    GLboolean NV_vertex_program;
+    GLboolean NV_vertex_program1_1;
+    GLboolean OES_read_format;
+    GLboolean SGI_color_matrix;
+    GLboolean SGI_color_table;
+    GLboolean SGI_texture_color_table;
+    GLboolean SGIS_generate_mipmap;
+    GLboolean SGIS_texture_edge_clamp;
+    GLboolean SGIS_texture_lod;
+    GLboolean SGIX_depth_texture;
+    GLboolean SGIX_shadow;
+    GLboolean SGIX_shadow_ambient; /* or GL_ARB_shadow_ambient */
+    GLboolean TDFX_texture_compression_FXT1;
+    GLboolean S3_s3tc;
+    /*@}*/
+    /* The extension string */
+    const GLubyte *String;
 };
 
 
 /**
  * A stack of matrices (projection, modelview, color, texture, etc).
  */
-struct gl_matrix_stack
-{
-   GLmatrix *Top;      /**< points into Stack */
-   GLmatrix *Stack;    /**< array [MaxDepth] of GLmatrix */
-   GLuint Depth;       /**< 0 <= Depth < MaxDepth */
-   GLuint MaxDepth;    /**< size of Stack[] array */
-   GLuint DirtyFlag;   /**< _NEW_MODELVIEW or _NEW_PROJECTION, for example */
+struct gl_matrix_stack {
+    GLmatrix *Top;      /**< points into Stack */
+    GLmatrix *Stack;    /**< array [MaxDepth] of GLmatrix */
+    GLuint Depth;       /**< 0 <= Depth < MaxDepth */
+    GLuint MaxDepth;    /**< size of Stack[] array */
+    GLuint DirtyFlag;   /**< _NEW_MODELVIEW or _NEW_PROJECTION, for example */
 };
 
 
 /**
- * \name Bits for image transfer operations 
+ * \name Bits for image transfer operations
  *
  * \sa __GLcontextRec::ImageTransferState.
  */
@@ -2656,7 +2583,7 @@ struct gl_matrix_stack
 
 
 /**
- * \name Bits to indicate what state has changed.  
+ * \name Bits to indicate what state has changed.
  *
  * 4 unused flags.
  */
@@ -2694,7 +2621,7 @@ struct gl_matrix_stack
 
 
 /**
- * \name Bits to track array state changes 
+ * \name Bits to track array state changes
  *
  * Also used to summarize array enabled.
  */
@@ -2726,7 +2653,7 @@ struct gl_matrix_stack
 
 /**
  * \name A bunch of flags that we think might be useful to drivers.
- * 
+ *
  * Set in the __GLcontextRec::_TriangleCaps bitfield.
  */
 /*@{*/
@@ -2799,70 +2726,67 @@ typedef union node Node;
 /**
  * Core Mesa's support for tnl modules:
  */
-struct gl_tnl_module
-{
-   /**
-    * Vertex format to be lazily swapped into current dispatch.
-    */
-   const GLvertexformat *Current;
+struct gl_tnl_module {
+    /**
+     * Vertex format to be lazily swapped into current dispatch.
+     */
+    const GLvertexformat *Current;
 
-   /**
-    * \name Record of functions swapped out.  
-    * On restore, only need to swap these functions back in.
-    */
-   /*@{*/
-   struct {
-       _glapi_proc * location;
-       _glapi_proc function;
-   } Swapped[NUM_VERTEX_FORMAT_ENTRIES];
-   GLuint SwapCount;
-   /*@}*/
+    /**
+     * \name Record of functions swapped out.
+     * On restore, only need to swap these functions back in.
+     */
+    /*@{*/
+    struct {
+	_glapi_proc * location;
+	_glapi_proc function;
+    } Swapped[NUM_VERTEX_FORMAT_ENTRIES];
+    GLuint SwapCount;
+    /*@}*/
 };
 
 /* Strictly this is a tnl/ private concept, but it doesn't seem
  * worthwhile adding a tnl private structure just to hold this one bit
  * of information:
  */
-#define MESA_DLIST_DANGLING_REFS     0x1 
+#define MESA_DLIST_DANGLING_REFS     0x1
 
 /* Provide a location where information about a display list can be
  * collected.  Could be extended with driverPrivate structures,
  * etc. in the future.
  */
-struct mesa_display_list
-{
-   Node *node;
-   GLuint id;
-   GLbitfield flags;
+struct mesa_display_list {
+    Node *node;
+    GLuint id;
+    GLbitfield flags;
 };
 
 
 /**
  * State used during display list compilation and execution.
  */
-struct gl_dlist_state
-{
-   GLuint CallDepth;		/**< Current recursion calling depth */
+struct gl_dlist_state {
+    GLuint CallDepth;		/**< Current recursion calling depth */
 
-   struct mesa_display_list *CurrentList;
-   Node *CurrentListPtr;	/**< Head of list being compiled */
-   GLuint CurrentListNum;	/**< Number of the list being compiled */
-   Node *CurrentBlock;		/**< Pointer to current block of nodes */
-   GLuint CurrentPos;		/**< Index into current block of nodes */
+    struct mesa_display_list *CurrentList;
+    Node *CurrentListPtr;	/**< Head of list being compiled */
+    GLuint CurrentListNum;	/**< Number of the list being compiled */
+    Node *CurrentBlock;		/**< Pointer to current block of nodes */
+    GLuint CurrentPos;		/**< Index into current block of nodes */
 
-   GLvertexformat ListVtxfmt;
+    GLvertexformat ListVtxfmt;
 
-   GLubyte ActiveAttribSize[VERT_ATTRIB_MAX];
-   GLfloat CurrentAttrib[VERT_ATTRIB_MAX][4];
-   
-   GLubyte ActiveMaterialSize[MAT_ATTRIB_MAX];
-   GLfloat CurrentMaterial[MAT_ATTRIB_MAX][4];
+    GLubyte ActiveAttribSize[VERT_ATTRIB_MAX];
+    GLfloat CurrentAttrib[VERT_ATTRIB_MAX][4];
 
-   GLubyte ActiveIndex;
-   GLfloat CurrentIndex;
-   
-   GLubyte ActiveEdgeFlag;
-   GLboolean CurrentEdgeFlag;
+    GLubyte ActiveMaterialSize[MAT_ATTRIB_MAX];
+    GLfloat CurrentMaterial[MAT_ATTRIB_MAX][4];
+
+    GLubyte ActiveIndex;
+    GLfloat CurrentIndex;
+
+    GLubyte ActiveEdgeFlag;
+    GLboolean CurrentEdgeFlag;
 };
 
 
@@ -2876,189 +2800,188 @@ struct gl_dlist_state
  *
  * The GLcontext typedef names this structure.
  */
-struct __GLcontextRec
-{
-   /** State possibly shared with other contexts in the address space */
-   struct gl_shared_state *Shared;
+struct __GLcontextRec {
+    /** State possibly shared with other contexts in the address space */
+    struct gl_shared_state *Shared;
 
-   /** \name API function pointer tables */
-   /*@{*/
-   struct _glapi_table *Save;	/**< Display list save functions */
-   struct _glapi_table *Exec;	/**< Execute functions */
-   struct _glapi_table *CurrentDispatch;  /**< == Save or Exec !! */
-   /*@}*/
+    /** \name API function pointer tables */
+    /*@{*/
+    struct _glapi_table *Save;	/**< Display list save functions */
+    struct _glapi_table *Exec;	/**< Execute functions */
+    struct _glapi_table *CurrentDispatch;  /**< == Save or Exec !! */
+    /*@}*/
 
-   GLvisual Visual;
-   GLframebuffer *DrawBuffer;	/**< buffer for writing */
-   GLframebuffer *ReadBuffer;	/**< buffer for reading */
-   GLframebuffer *WinSysDrawBuffer;  /**< set with MakeCurrent */
-   GLframebuffer *WinSysReadBuffer;  /**< set with MakeCurrent */
+    GLvisual Visual;
+    GLframebuffer *DrawBuffer;	/**< buffer for writing */
+    GLframebuffer *ReadBuffer;	/**< buffer for reading */
+    GLframebuffer *WinSysDrawBuffer;  /**< set with MakeCurrent */
+    GLframebuffer *WinSysReadBuffer;  /**< set with MakeCurrent */
 
-   /**
-    * Device driver function pointer table
-    */
-   struct dd_function_table Driver;
+    /**
+     * Device driver function pointer table
+     */
+    struct dd_function_table Driver;
 
-   void *DriverCtx;	/**< Points to device driver context/state */
+    void *DriverCtx;	/**< Points to device driver context/state */
 
-   /** Core/Driver constants */
-   struct gl_constants Const;
+    /** Core/Driver constants */
+    struct gl_constants Const;
 
-   /** \name The various 4x4 matrix stacks */
-   /*@{*/
-   struct gl_matrix_stack ModelviewMatrixStack;
-   struct gl_matrix_stack ProjectionMatrixStack;
-   struct gl_matrix_stack ColorMatrixStack;
-   struct gl_matrix_stack TextureMatrixStack[MAX_TEXTURE_COORD_UNITS];
-   struct gl_matrix_stack ProgramMatrixStack[MAX_PROGRAM_MATRICES];
-   struct gl_matrix_stack *CurrentStack; /**< Points to one of the above stacks */
-   /*@}*/
+    /** \name The various 4x4 matrix stacks */
+    /*@{*/
+    struct gl_matrix_stack ModelviewMatrixStack;
+    struct gl_matrix_stack ProjectionMatrixStack;
+    struct gl_matrix_stack ColorMatrixStack;
+    struct gl_matrix_stack TextureMatrixStack[MAX_TEXTURE_COORD_UNITS];
+    struct gl_matrix_stack ProgramMatrixStack[MAX_PROGRAM_MATRICES];
+    struct gl_matrix_stack *CurrentStack; /**< Points to one of the above stacks */
+    /*@}*/
 
-   /** Combined modelview and projection matrix */
-   GLmatrix _ModelProjectMatrix;
+    /** Combined modelview and projection matrix */
+    GLmatrix _ModelProjectMatrix;
 
-   /** \name Display lists */
-   struct gl_dlist_state ListState;
+    /** \name Display lists */
+    struct gl_dlist_state ListState;
 
-   GLboolean ExecuteFlag;	/**< Execute GL commands? */
-   GLboolean CompileFlag;	/**< Compile GL commands into display list? */
+    GLboolean ExecuteFlag;	/**< Execute GL commands? */
+    GLboolean CompileFlag;	/**< Compile GL commands into display list? */
 
-   /** Extension information */
-   struct gl_extensions Extensions;
+    /** Extension information */
+    struct gl_extensions Extensions;
 
-   /** \name State attribute stack (for glPush/PopAttrib) */
-   /*@{*/
-   GLuint AttribStackDepth;
-   struct gl_attrib_node *AttribStack[MAX_ATTRIB_STACK_DEPTH];
-   /*@}*/
+    /** \name State attribute stack (for glPush/PopAttrib) */
+    /*@{*/
+    GLuint AttribStackDepth;
+    struct gl_attrib_node *AttribStack[MAX_ATTRIB_STACK_DEPTH];
+    /*@}*/
 
-   /** \name Renderer attribute groups
-    * 
-    * We define a struct for each attribute group to make pushing and popping
-    * attributes easy.  Also it's a good organization.
-    */
-   /*@{*/
-   struct gl_accum_attrib	Accum;		/**< Accum buffer attributes */
-   struct gl_colorbuffer_attrib	Color;		/**< Color buffer attributes */
-   struct gl_current_attrib	Current;	/**< Current attributes */
-   struct gl_depthbuffer_attrib	Depth;		/**< Depth buffer attributes */
-   struct gl_eval_attrib	Eval;		/**< Eval attributes */
-   struct gl_fog_attrib		Fog;		/**< Fog attributes */
-   struct gl_hint_attrib	Hint;		/**< Hint attributes */
-   struct gl_light_attrib	Light;		/**< Light attributes */
-   struct gl_line_attrib	Line;		/**< Line attributes */
-   struct gl_list_attrib	List;		/**< List attributes */
-   struct gl_multisample_attrib Multisample;
-   struct gl_pixel_attrib	Pixel;		/**< Pixel attributes */
-   struct gl_point_attrib	Point;		/**< Point attributes */
-   struct gl_polygon_attrib	Polygon;	/**< Polygon attributes */
-   GLuint PolygonStipple[32];			/**< Polygon stipple */
-   struct gl_scissor_attrib	Scissor;	/**< Scissor attributes */
-   struct gl_stencil_attrib	Stencil;	/**< Stencil buffer attributes */
-   struct gl_texture_attrib	Texture;	/**< Texture attributes */
-   struct gl_transform_attrib	Transform;	/**< Transformation attributes */
-   struct gl_viewport_attrib	Viewport;	/**< Viewport attributes */
-   /*@}*/
+    /** \name Renderer attribute groups
+     *
+     * We define a struct for each attribute group to make pushing and popping
+     * attributes easy.  Also it's a good organization.
+     */
+    /*@{*/
+    struct gl_accum_attrib	Accum;		/**< Accum buffer attributes */
+    struct gl_colorbuffer_attrib	Color;		/**< Color buffer attributes */
+    struct gl_current_attrib	Current;	/**< Current attributes */
+    struct gl_depthbuffer_attrib	Depth;		/**< Depth buffer attributes */
+    struct gl_eval_attrib	Eval;		/**< Eval attributes */
+    struct gl_fog_attrib		Fog;		/**< Fog attributes */
+    struct gl_hint_attrib	Hint;		/**< Hint attributes */
+    struct gl_light_attrib	Light;		/**< Light attributes */
+    struct gl_line_attrib	Line;		/**< Line attributes */
+    struct gl_list_attrib	List;		/**< List attributes */
+    struct gl_multisample_attrib Multisample;
+    struct gl_pixel_attrib	Pixel;		/**< Pixel attributes */
+    struct gl_point_attrib	Point;		/**< Point attributes */
+    struct gl_polygon_attrib	Polygon;	/**< Polygon attributes */
+    GLuint PolygonStipple[32];			/**< Polygon stipple */
+    struct gl_scissor_attrib	Scissor;	/**< Scissor attributes */
+    struct gl_stencil_attrib	Stencil;	/**< Stencil buffer attributes */
+    struct gl_texture_attrib	Texture;	/**< Texture attributes */
+    struct gl_transform_attrib	Transform;	/**< Transformation attributes */
+    struct gl_viewport_attrib	Viewport;	/**< Viewport attributes */
+    /*@}*/
 
-   /** \name Client attribute stack */
-   /*@{*/
-   GLuint ClientAttribStackDepth;
-   struct gl_attrib_node *ClientAttribStack[MAX_CLIENT_ATTRIB_STACK_DEPTH];
-   /*@}*/
+    /** \name Client attribute stack */
+    /*@{*/
+    GLuint ClientAttribStackDepth;
+    struct gl_attrib_node *ClientAttribStack[MAX_CLIENT_ATTRIB_STACK_DEPTH];
+    /*@}*/
 
-   /** \name Client attribute groups */
-   /*@{*/
-   struct gl_array_attrib	Array;	/**< Vertex arrays */
-   struct gl_pixelstore_attrib	Pack;	/**< Pixel packing */
-   struct gl_pixelstore_attrib	Unpack;	/**< Pixel unpacking */
-   struct gl_pixelstore_attrib	DefaultPacking;	/**< Default params */
-   /*@}*/
+    /** \name Client attribute groups */
+    /*@{*/
+    struct gl_array_attrib	Array;	/**< Vertex arrays */
+    struct gl_pixelstore_attrib	Pack;	/**< Pixel packing */
+    struct gl_pixelstore_attrib	Unpack;	/**< Pixel unpacking */
+    struct gl_pixelstore_attrib	DefaultPacking;	/**< Default params */
+    /*@}*/
 
-   /** \name Other assorted state (not pushed/popped on attribute stack) */
-   /*@{*/
-   struct gl_pixelmaps          PixelMaps;
-   struct gl_histogram_attrib	Histogram;
-   struct gl_minmax_attrib	MinMax;
-   struct gl_convolution_attrib Convolution1D;
-   struct gl_convolution_attrib Convolution2D;
-   struct gl_convolution_attrib Separable2D;
+    /** \name Other assorted state (not pushed/popped on attribute stack) */
+    /*@{*/
+    struct gl_pixelmaps          PixelMaps;
+    struct gl_histogram_attrib	Histogram;
+    struct gl_minmax_attrib	MinMax;
+    struct gl_convolution_attrib Convolution1D;
+    struct gl_convolution_attrib Convolution2D;
+    struct gl_convolution_attrib Separable2D;
 
-   struct gl_evaluators EvalMap;   /**< All evaluators */
-   struct gl_feedback   Feedback;  /**< Feedback */
-   struct gl_selection  Select;    /**< Selection */
+    struct gl_evaluators EvalMap;   /**< All evaluators */
+    struct gl_feedback   Feedback;  /**< Feedback */
+    struct gl_selection  Select;    /**< Selection */
 
-   struct gl_color_table ColorTable[COLORTABLE_MAX];
-   struct gl_color_table ProxyColorTable[COLORTABLE_MAX];
+    struct gl_color_table ColorTable[COLORTABLE_MAX];
+    struct gl_color_table ProxyColorTable[COLORTABLE_MAX];
 #if 0
-   struct gl_color_table PostConvolutionColorTable;
-   struct gl_color_table ProxyPostConvolutionColorTable;
-   struct gl_color_table PostColorMatrixColorTable;
-   struct gl_color_table ProxyPostColorMatrixColorTable;
+    struct gl_color_table PostConvolutionColorTable;
+    struct gl_color_table ProxyPostConvolutionColorTable;
+    struct gl_color_table PostColorMatrixColorTable;
+    struct gl_color_table ProxyPostColorMatrixColorTable;
 #endif
 
-   struct gl_program_state Program;        /**< for vertex or fragment progs */
-   struct gl_vertex_program_state VertexProgram;   /**< GL_ARB/NV_vertex_program */
-   struct gl_fragment_program_state FragmentProgram;  /**< GL_ARB/NV_vertex_program */
-   struct gl_ati_fragment_shader_state ATIFragmentShader;  /**< GL_ATI_fragment_shader */
+    struct gl_program_state Program;        /**< for vertex or fragment progs */
+    struct gl_vertex_program_state VertexProgram;   /**< GL_ARB/NV_vertex_program */
+    struct gl_fragment_program_state FragmentProgram;  /**< GL_ARB/NV_vertex_program */
+    struct gl_ati_fragment_shader_state ATIFragmentShader;  /**< GL_ATI_fragment_shader */
 
-   struct gl_query_state Query;  /**< GL_ARB_occlusion_query */
+    struct gl_query_state Query;  /**< GL_ARB_occlusion_query */
 
-   struct gl_shader_state Shader; /**< GLSL shader object state */
-   /*@}*/
+    struct gl_shader_state Shader; /**< GLSL shader object state */
+    /*@}*/
 
 #if FEATURE_EXT_framebuffer_object
-   struct gl_renderbuffer *CurrentRenderbuffer;
+    struct gl_renderbuffer *CurrentRenderbuffer;
 #endif
 
-   GLenum ErrorValue;        /**< Last error code */
-   GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
-   GLbitfield NewState;      /**< bitwise-or of _NEW_* flags */
+    GLenum ErrorValue;        /**< Last error code */
+    GLenum RenderMode;        /**< either GL_RENDER, GL_SELECT, GL_FEEDBACK */
+    GLbitfield NewState;      /**< bitwise-or of _NEW_* flags */
 
-   /** \name Derived state */
-   /*@{*/
-   GLbitfield _TriangleCaps;      /**< bitwise-or of DD_* flags */
-   GLbitfield _ImageTransferState;/**< bitwise-or of IMAGE_*_BIT flags */
-   GLfloat _EyeZDir[3];
-   GLfloat _ModelViewInvScale;
-   GLboolean _NeedEyeCoords;
-   GLboolean _ForceEyeCoords; 
-   GLenum _CurrentProgram;    /* currently executing program */
+    /** \name Derived state */
+    /*@{*/
+    GLbitfield _TriangleCaps;      /**< bitwise-or of DD_* flags */
+    GLbitfield _ImageTransferState;/**< bitwise-or of IMAGE_*_BIT flags */
+    GLfloat _EyeZDir[3];
+    GLfloat _ModelViewInvScale;
+    GLboolean _NeedEyeCoords;
+    GLboolean _ForceEyeCoords;
+    GLenum _CurrentProgram;    /* currently executing program */
 
-   GLuint TextureStateTimestamp; /* detect changes to shared state */
+    GLuint TextureStateTimestamp; /* detect changes to shared state */
 
-   struct gl_shine_tab *_ShineTable[2]; /**< Active shine tables */
-   struct gl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */
-   /**@}*/
+    struct gl_shine_tab *_ShineTable[2]; /**< Active shine tables */
+    struct gl_shine_tab *_ShineTabList;  /**< MRU list of inactive shine tables */
+    /**@}*/
 
-   struct gl_list_extensions ListExt; /**< driver dlist extensions */
+    struct gl_list_extensions ListExt; /**< driver dlist extensions */
 
-   /** \name For debugging/development only */
-   /*@{*/
-   GLboolean FirstTimeCurrent;
-   /*@}*/
+    /** \name For debugging/development only */
+    /*@{*/
+    GLboolean FirstTimeCurrent;
+    /*@}*/
 
-   /** Dither disable via MESA_NO_DITHER env var */
-   GLboolean NoDither;
+    /** Dither disable via MESA_NO_DITHER env var */
+    GLboolean NoDither;
 
-   /** software compression/decompression supported or not */
-   GLboolean Mesa_DXTn;
+    /** software compression/decompression supported or not */
+    GLboolean Mesa_DXTn;
 
-   /** Core tnl module support */
-   struct gl_tnl_module TnlModule;
+    /** Core tnl module support */
+    struct gl_tnl_module TnlModule;
 
-   /**
-    * \name Hooks for module contexts.  
-    *
-    * These will eventually live in the driver or elsewhere.
-    */
-   /*@{*/
-   void *swrast_context;
-   void *swsetup_context;
-   void *swtnl_context;
-   void *swtnl_im;
-   void *acache_context;
-   void *aelt_context;
-   /*@}*/
+    /**
+     * \name Hooks for module contexts.
+     *
+     * These will eventually live in the driver or elsewhere.
+     */
+    /*@{*/
+    void *swrast_context;
+    void *swsetup_context;
+    void *swtnl_context;
+    void *swtnl_im;
+    void *acache_context;
+    void *aelt_context;
+    /*@}*/
 };
 
 
@@ -3080,26 +3003,24 @@ extern int MESA_DEBUG_FLAGS;
 #endif
 
 
-enum _verbose
-{
-   VERBOSE_VARRAY		= 0x0001,
-   VERBOSE_TEXTURE		= 0x0002,
-   VERBOSE_IMMEDIATE		= 0x0004,
-   VERBOSE_PIPELINE		= 0x0008,
-   VERBOSE_DRIVER		= 0x0010,
-   VERBOSE_STATE		= 0x0020,
-   VERBOSE_API			= 0x0040,
-   VERBOSE_DISPLAY_LIST		= 0x0100,
-   VERBOSE_LIGHTING		= 0x0200,
-   VERBOSE_PRIMS		= 0x0400,
-   VERBOSE_VERTS		= 0x0800,
-   VERBOSE_DISASSEM		= 0x1000
+enum _verbose {
+    VERBOSE_VARRAY		= 0x0001,
+    VERBOSE_TEXTURE		= 0x0002,
+    VERBOSE_IMMEDIATE		= 0x0004,
+    VERBOSE_PIPELINE		= 0x0008,
+    VERBOSE_DRIVER		= 0x0010,
+    VERBOSE_STATE		= 0x0020,
+    VERBOSE_API			= 0x0040,
+    VERBOSE_DISPLAY_LIST		= 0x0100,
+    VERBOSE_LIGHTING		= 0x0200,
+    VERBOSE_PRIMS		= 0x0400,
+    VERBOSE_VERTS		= 0x0800,
+    VERBOSE_DISASSEM		= 0x1000
 };
 
 
-enum _debug
-{
-   DEBUG_ALWAYS_FLUSH		= 0x1
+enum _debug {
+    DEBUG_ALWAYS_FLUSH		= 0x1
 };
 
 

@@ -42,7 +42,7 @@
 #include "math/m_debug.h"
 #endif
 
-DECLARE_XFORM_GROUP( x86_64, 4 )
+DECLARE_XFORM_GROUP(x86_64, 4)
 
 #else
 /* just to silence warning below */
@@ -60,21 +60,21 @@ extern void _mesa_x86_64_transform_points4_2d( XFORM_ARGS );
 */
 
 #ifdef USE_X86_64_ASM
-static void message( const char *msg )
+static void message(const char *msg)
 {
-   GLboolean debug;
+    GLboolean debug;
 #ifdef DEBUG
-   debug = GL_TRUE;
+    debug = GL_TRUE;
 #else
-   if ( _mesa_getenv( "MESA_DEBUG" ) ) {
-      debug = GL_TRUE;
-   } else {
-      debug = GL_FALSE;
-   }
+    if (_mesa_getenv("MESA_DEBUG")) {
+	debug = GL_TRUE;
+    } else {
+	debug = GL_FALSE;
+    }
 #endif
-   if ( debug ) {
-      _mesa_debug( NULL, "%s", msg );
-   }
+    if (debug) {
+	_mesa_debug(NULL, "%s", msg);
+    }
 }
 #endif
 
@@ -83,35 +83,35 @@ void _mesa_init_all_x86_64_transform_asm(void)
 {
 #ifdef USE_X86_64_ASM
 
-   if ( _mesa_getenv( "MESA_NO_ASM" ) ) {
-     return;
-   }
+    if (_mesa_getenv("MESA_NO_ASM")) {
+	return;
+    }
 
-   message("Initializing x86-64 optimizations\n");
+    message("Initializing x86-64 optimizations\n");
 
-   ASSIGN_XFORM_GROUP( x86_64, 4 );
+    ASSIGN_XFORM_GROUP(x86_64, 4);
 
-   /*
-   _mesa_transform_tab[4][MATRIX_GENERAL] =
-      _mesa_x86_64_transform_points4_general;
-   _mesa_transform_tab[4][MATRIX_IDENTITY] =
-      _mesa_x86_64_transform_points4_identity;
-   _mesa_transform_tab[4][MATRIX_3D] =
-      _mesa_x86_64_transform_points4_3d;
-   _mesa_transform_tab[4][MATRIX_3D_NO_ROT] =
-      _mesa_x86_64_transform_points4_3d_no_rot;
-   _mesa_transform_tab[4][MATRIX_PERSPECTIVE] =
-      _mesa_x86_64_transform_points4_perspective;
-   _mesa_transform_tab[4][MATRIX_2D_NO_ROT] =
-      _mesa_x86_64_transform_points4_2d_no_rot;
-   _mesa_transform_tab[4][MATRIX_2D] =
-      _mesa_x86_64_transform_points4_2d;
-   */
-   
+    /*
+    _mesa_transform_tab[4][MATRIX_GENERAL] =
+       _mesa_x86_64_transform_points4_general;
+    _mesa_transform_tab[4][MATRIX_IDENTITY] =
+       _mesa_x86_64_transform_points4_identity;
+    _mesa_transform_tab[4][MATRIX_3D] =
+       _mesa_x86_64_transform_points4_3d;
+    _mesa_transform_tab[4][MATRIX_3D_NO_ROT] =
+       _mesa_x86_64_transform_points4_3d_no_rot;
+    _mesa_transform_tab[4][MATRIX_PERSPECTIVE] =
+       _mesa_x86_64_transform_points4_perspective;
+    _mesa_transform_tab[4][MATRIX_2D_NO_ROT] =
+       _mesa_x86_64_transform_points4_2d_no_rot;
+    _mesa_transform_tab[4][MATRIX_2D] =
+       _mesa_x86_64_transform_points4_2d;
+    */
+
 #ifdef DEBUG_MATH
-   _math_test_all_transform_functions("x86_64");
-   _math_test_all_cliptest_functions("x86_64");
-   _math_test_all_normal_transform_functions("x86_64");
+    _math_test_all_transform_functions("x86_64");
+    _math_test_all_cliptest_functions("x86_64");
+    _math_test_all_normal_transform_functions("x86_64");
 #endif
 
 #endif

@@ -69,41 +69,41 @@
 unsigned long
 _glthread_GetID(void)
 {
-   return (unsigned long) pthread_self();
+    return (unsigned long) pthread_self();
 }
 
 
 void
 _glthread_InitTSD(_glthread_TSD *tsd)
 {
-   if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
-      perror(INIT_TSD_ERROR);
-      exit(-1);
-   }
-   tsd->initMagic = INIT_MAGIC;
+    if (pthread_key_create(&tsd->key, NULL/*free*/) != 0) {
+	perror(INIT_TSD_ERROR);
+	exit(-1);
+    }
+    tsd->initMagic = INIT_MAGIC;
 }
 
 
 void *
 _glthread_GetTSD(_glthread_TSD *tsd)
 {
-   if (tsd->initMagic != (int) INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   return pthread_getspecific(tsd->key);
+    if (tsd->initMagic != (int) INIT_MAGIC) {
+	_glthread_InitTSD(tsd);
+    }
+    return pthread_getspecific(tsd->key);
 }
 
 
 void
 _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 {
-   if (tsd->initMagic != (int) INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   if (pthread_setspecific(tsd->key, ptr) != 0) {
-      perror(SET_TSD_ERROR);
-      exit(-1);
-   }
+    if (tsd->initMagic != (int) INIT_MAGIC) {
+	_glthread_InitTSD(tsd);
+    }
+    if (pthread_setspecific(tsd->key, ptr) != 0) {
+	perror(SET_TSD_ERROR);
+	exit(-1);
+    }
 }
 
 #endif /* PTHREADS */
@@ -123,54 +123,54 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 unsigned long
 _glthread_GetID(void)
 {
-   abort();   /* XXX not implemented yet */
-   return (unsigned long) 0;
+    abort();   /* XXX not implemented yet */
+    return (unsigned long) 0;
 }
 
 
 void
 _glthread_InitTSD(_glthread_TSD *tsd)
 {
-   if ((errno = mutex_init(&tsd->keylock, 0, NULL)) != 0 ||
-      (errno = thr_keycreate(&(tsd->key), free)) != 0) {
-      perror(INIT_TSD_ERROR);
-      exit(-1);
-   }
-   tsd->initMagic = INIT_MAGIC;
+    if ((errno = mutex_init(&tsd->keylock, 0, NULL)) != 0 ||
+	(errno = thr_keycreate(&(tsd->key), free)) != 0) {
+	perror(INIT_TSD_ERROR);
+	exit(-1);
+    }
+    tsd->initMagic = INIT_MAGIC;
 }
 
 
 void *
 _glthread_GetTSD(_glthread_TSD *tsd)
 {
-   void* ret;
-   if (tsd->initMagic != INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
+    void* ret;
+    if (tsd->initMagic != INIT_MAGIC) {
+	_glthread_InitTSD(tsd);
+    }
 #ifdef USE_LOCK_FOR_KEY
-   mutex_lock(&tsd->keylock);
-   thr_getspecific(tsd->key, &ret);
-   mutex_unlock(&tsd->keylock);
+    mutex_lock(&tsd->keylock);
+    thr_getspecific(tsd->key, &ret);
+    mutex_unlock(&tsd->keylock);
 #else
-   if ((errno = thr_getspecific(tsd->key, &ret)) != 0) {
-      perror(GET_TSD_ERROR);
-      exit(-1);
-   }
+    if ((errno = thr_getspecific(tsd->key, &ret)) != 0) {
+	perror(GET_TSD_ERROR);
+	exit(-1);
+    }
 #endif
-   return ret;
+    return ret;
 }
 
 
 void
 _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 {
-   if (tsd->initMagic != INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   if ((errno = thr_setspecific(tsd->key, ptr)) != 0) {
-      perror(SET_TSD_ERROR);
-      exit(-1);
-   }
+    if (tsd->initMagic != INIT_MAGIC) {
+	_glthread_InitTSD(tsd);
+    }
+    if ((errno = thr_setspecific(tsd->key, ptr)) != 0) {
+	perror(SET_TSD_ERROR);
+	exit(-1);
+    }
 }
 
 #undef USE_LOCK_FOR_KEY
@@ -187,58 +187,58 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 
 void FreeTSD(_glthread_TSD *p)
 {
-   if (p->initMagic==INIT_MAGIC) {
-      TlsFree(p->key);
-      p->initMagic=0;
-   }
+    if (p->initMagic==INIT_MAGIC) {
+	TlsFree(p->key);
+	p->initMagic=0;
+    }
 }
 
 void InsteadOf_exit(int nCode)
 {
-   DWORD dwErr=GetLastError();
+    DWORD dwErr=GetLastError();
 }
 
 unsigned long
 _glthread_GetID(void)
 {
-   return GetCurrentThreadId();
+    return GetCurrentThreadId();
 }
 
 
 void
 _glthread_InitTSD(_glthread_TSD *tsd)
 {
-   tsd->key = TlsAlloc();
-   if (tsd->key == TLS_OUT_OF_INDEXES) {
-      perror("Mesa:_glthread_InitTSD");
-      InsteadOf_exit(-1);
-   }
-   tsd->initMagic = INIT_MAGIC;
+    tsd->key = TlsAlloc();
+    if (tsd->key == TLS_OUT_OF_INDEXES) {
+	perror("Mesa:_glthread_InitTSD");
+	InsteadOf_exit(-1);
+    }
+    tsd->initMagic = INIT_MAGIC;
 }
 
 
 void *
 _glthread_GetTSD(_glthread_TSD *tsd)
 {
-   if (tsd->initMagic != INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   return TlsGetValue(tsd->key);
+    if (tsd->initMagic != INIT_MAGIC) {
+	_glthread_InitTSD(tsd);
+    }
+    return TlsGetValue(tsd->key);
 }
 
 
 void
 _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 {
-   /* the following code assumes that the _glthread_TSD has been initialized
-      to zero at creation */
-   if (tsd->initMagic != INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   if (TlsSetValue(tsd->key, ptr) == 0) {
-	  perror("Mesa:_glthread_SetTSD");
-	  InsteadOf_exit(-1);
-   }
+    /* the following code assumes that the _glthread_TSD has been initialized
+       to zero at creation */
+    if (tsd->initMagic != INIT_MAGIC) {
+	_glthread_InitTSD(tsd);
+    }
+    if (TlsSetValue(tsd->key, ptr) == 0) {
+	perror("Mesa:_glthread_SetTSD");
+	InsteadOf_exit(-1);
+    }
 }
 
 #endif /* WIN32_THREADS */
@@ -254,40 +254,40 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 unsigned long
 _glthread_GetID(void)
 {
-   return (unsigned long) xthread_self();
+    return (unsigned long) xthread_self();
 }
 
 
 void
 _glthread_InitTSD(_glthread_TSD *tsd)
 {
-   if (xthread_key_create(&tsd->key, NULL) != 0) {
-      perror(INIT_TSD_ERROR);
-      exit(-1);
-   }
-   tsd->initMagic = INIT_MAGIC;
+    if (xthread_key_create(&tsd->key, NULL) != 0) {
+	perror(INIT_TSD_ERROR);
+	exit(-1);
+    }
+    tsd->initMagic = INIT_MAGIC;
 }
 
 
 void *
 _glthread_GetTSD(_glthread_TSD *tsd)
 {
-   void *ptr;
-   if (tsd->initMagic != INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   xthread_get_specific(tsd->key, &ptr);
-   return ptr;
+    void *ptr;
+    if (tsd->initMagic != INIT_MAGIC) {
+	_glthread_InitTSD(tsd);
+    }
+    xthread_get_specific(tsd->key, &ptr);
+    return ptr;
 }
 
 
 void
 _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 {
-   if (tsd->initMagic != INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   xthread_set_specific(tsd->key, ptr);
+    if (tsd->initMagic != INIT_MAGIC) {
+	_glthread_InitTSD(tsd);
+    }
+    xthread_set_specific(tsd->key, ptr);
 }
 
 #endif /* XTHREAD */
@@ -302,32 +302,32 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 unsigned long
 _glthread_GetID(void)
 {
-   return (unsigned long) find_thread(NULL);
+    return (unsigned long) find_thread(NULL);
 }
 
 void
 _glthread_InitTSD(_glthread_TSD *tsd)
 {
-   tsd->key = tls_allocate();
-   tsd->initMagic = INIT_MAGIC;
+    tsd->key = tls_allocate();
+    tsd->initMagic = INIT_MAGIC;
 }
 
 void *
 _glthread_GetTSD(_glthread_TSD *tsd)
 {
-   if (tsd->initMagic != (int) INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   return tls_get(tsd->key);
+    if (tsd->initMagic != (int) INIT_MAGIC) {
+	_glthread_InitTSD(tsd);
+    }
+    return tls_get(tsd->key);
 }
 
 void
 _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 {
-   if (tsd->initMagic != (int) INIT_MAGIC) {
-      _glthread_InitTSD(tsd);
-   }
-   tls_set(tsd->key, ptr);
+    if (tsd->initMagic != (int) INIT_MAGIC) {
+	_glthread_InitTSD(tsd);
+    }
+    tls_set(tsd->key, ptr);
 }
 
 #endif /* BEOS_THREADS */
@@ -344,30 +344,30 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 unsigned long
 _glthread_GetID(void)
 {
-   return 0;
+    return 0;
 }
 
 
 void
 _glthread_InitTSD(_glthread_TSD *tsd)
 {
-   (void) tsd;
+    (void) tsd;
 }
 
 
 void *
 _glthread_GetTSD(_glthread_TSD *tsd)
 {
-   (void) tsd;
-   return NULL;
+    (void) tsd;
+    return NULL;
 }
 
 
 void
 _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 {
-   (void) tsd;
-   (void) ptr;
+    (void) tsd;
+    (void) ptr;
 }
 
 

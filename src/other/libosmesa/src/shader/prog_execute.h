@@ -27,13 +27,13 @@
 
 
 typedef void (*FetchTexelLodFunc)(GLcontext *ctx, const GLfloat texcoord[4],
-                                  GLfloat lambda, GLuint unit, GLfloat color[4]);
+				  GLfloat lambda, GLuint unit, GLfloat color[4]);
 
 typedef void (*FetchTexelDerivFunc)(GLcontext *ctx, const GLfloat texcoord[4],
-                                    const GLfloat texdx[4],
-                                    const GLfloat texdy[4],
-                                    GLfloat lodBias,
-                                    GLuint unit, GLfloat color[4]);
+				    const GLfloat texdx[4],
+				    const GLfloat texdy[4],
+				    GLfloat lodBias,
+				    GLuint unit, GLfloat color[4]);
 
 
 /** The larger of VERT_RESULT_MAX, FRAG_RESULT_MAX */
@@ -43,43 +43,42 @@ typedef void (*FetchTexelDerivFunc)(GLcontext *ctx, const GLfloat texcoord[4],
 /**
  * Virtual machine state used during execution of vertex/fragment programs.
  */
-struct gl_program_machine
-{
-   const struct gl_program *CurProgram;
+struct gl_program_machine {
+    const struct gl_program *CurProgram;
 
-   /** Fragment Input attributes */
-   GLfloat (*Attribs)[MAX_WIDTH][4];
-   GLfloat (*DerivX)[4];
-   GLfloat (*DerivY)[4];
-   GLuint NumDeriv; /**< Max index into DerivX/Y arrays */
-   GLuint CurElement; /**< Index into Attribs arrays */
+    /** Fragment Input attributes */
+    GLfloat(*Attribs)[MAX_WIDTH][4];
+    GLfloat(*DerivX)[4];
+    GLfloat(*DerivY)[4];
+    GLuint NumDeriv; /**< Max index into DerivX/Y arrays */
+    GLuint CurElement; /**< Index into Attribs arrays */
 
-   /** Vertex Input attribs */
-   GLfloat VertAttribs[VERT_ATTRIB_MAX][4];
+    /** Vertex Input attribs */
+    GLfloat VertAttribs[VERT_ATTRIB_MAX][4];
 
-   GLfloat Temporaries[MAX_PROGRAM_TEMPS][4];
-   GLfloat Outputs[MAX_PROGRAM_OUTPUTS][4];
-   GLfloat (*EnvParams)[4]; /**< Vertex or Fragment env parameters */
-   GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
-   GLint AddressReg[MAX_PROGRAM_ADDRESS_REGS][4];
+    GLfloat Temporaries[MAX_PROGRAM_TEMPS][4];
+    GLfloat Outputs[MAX_PROGRAM_OUTPUTS][4];
+    GLfloat(*EnvParams)[4];  /**< Vertex or Fragment env parameters */
+    GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
+    GLint AddressReg[MAX_PROGRAM_ADDRESS_REGS][4];
 
-   GLuint CallStack[MAX_PROGRAM_CALL_DEPTH]; /**< For CAL/RET instructions */
-   GLuint StackDepth; /**< Index/ptr to top of CallStack[] */
+    GLuint CallStack[MAX_PROGRAM_CALL_DEPTH]; /**< For CAL/RET instructions */
+    GLuint StackDepth; /**< Index/ptr to top of CallStack[] */
 
-   /** Texture fetch functions */
-   FetchTexelLodFunc FetchTexelLod;
-   FetchTexelDerivFunc FetchTexelDeriv;
+    /** Texture fetch functions */
+    FetchTexelLodFunc FetchTexelLod;
+    FetchTexelDerivFunc FetchTexelDeriv;
 };
 
 
 extern void
 _mesa_get_program_register(GLcontext *ctx, enum register_file file,
-                           GLuint index, GLfloat val[4]);
+			   GLuint index, GLfloat val[4]);
 
 extern GLboolean
 _mesa_execute_program(GLcontext *ctx,
-                      const struct gl_program *program,
-                      struct gl_program_machine *machine);
+		      const struct gl_program *program,
+		      struct gl_program_machine *machine);
 
 
 #endif /* PROG_EXECUTE_H */

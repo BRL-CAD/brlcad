@@ -41,7 +41,7 @@
  * The module captures both immediate mode and display list drawing,
  * and manages the allocation, reference counting and deallocation of
  * vertex buffer objects itself.
- * 
+ *
  * The DrawPrimitives() callback can be either implemented by the
  * driver itself or hooked to the tnl module's _tnl_draw_primitives()
  * function for hardware without tnl capablilties or during fallbacks.
@@ -58,50 +58,50 @@
 
 
 struct vbo_context {
-   struct gl_client_array currval[VBO_ATTRIB_MAX];
-   
-   /* These point into the above.  TODO: remove. 
-    */
-   struct gl_client_array *legacy_currval;
-   struct gl_client_array *generic_currval;
-   struct gl_client_array *mat_currval;
+    struct gl_client_array currval[VBO_ATTRIB_MAX];
 
-   GLuint map_vp_none[32];
-   GLuint map_vp_arb[32];
+    /* These point into the above.  TODO: remove.
+     */
+    struct gl_client_array *legacy_currval;
+    struct gl_client_array *generic_currval;
+    struct gl_client_array *mat_currval;
 
-   GLfloat *current[VBO_ATTRIB_MAX]; /* points into ctx->Current, ctx->Light.Material */
-   GLfloat CurrentFloatEdgeFlag;
+    GLuint map_vp_none[32];
+    GLuint map_vp_arb[32];
+
+    GLfloat *current[VBO_ATTRIB_MAX]; /* points into ctx->Current, ctx->Light.Material */
+    GLfloat CurrentFloatEdgeFlag;
 
 
-   struct vbo_exec_context exec;
-   struct vbo_save_context save;
+    struct vbo_exec_context exec;
+    struct vbo_save_context save;
 
-   /* Callback into the driver.  This must always succeed, the driver
-    * is responsible for initiating any fallback actions required:
-    */
-   vbo_draw_func draw_prims;
+    /* Callback into the driver.  This must always succeed, the driver
+     * is responsible for initiating any fallback actions required:
+     */
+    vbo_draw_func draw_prims;
 };
 
 
-static INLINE struct vbo_context *vbo_context(GLcontext *ctx) 
+static INLINE struct vbo_context *vbo_context(GLcontext *ctx)
 {
-   return (struct vbo_context *)(ctx->swtnl_im);
+    return (struct vbo_context *)(ctx->swtnl_im);
 }
 
 enum {
-   VP_NONE = 1,
-   VP_NV,
-   VP_ARB
+    VP_NONE = 1,
+    VP_NV,
+    VP_ARB
 };
 
-static INLINE GLuint get_program_mode( GLcontext *ctx )
+static INLINE GLuint get_program_mode(GLcontext *ctx)
 {
-   if (!ctx->VertexProgram._Current)
-      return VP_NONE;
-   else if (ctx->VertexProgram._Current->IsNVProgram)
-      return VP_NV;
-   else
-      return VP_ARB;
+    if (!ctx->VertexProgram._Current)
+	return VP_NONE;
+    else if (ctx->VertexProgram._Current->IsNVProgram)
+	return VP_NV;
+    else
+	return VP_ARB;
 }
 
 

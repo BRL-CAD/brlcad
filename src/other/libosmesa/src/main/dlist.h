@@ -41,43 +41,43 @@
 extern void
 _mesa_delete_list(GLcontext *ctx, struct mesa_display_list *dlist);
 
-extern void GLAPIENTRY _mesa_CallList( GLuint list );
+extern void GLAPIENTRY _mesa_CallList(GLuint list);
 
-extern void GLAPIENTRY _mesa_CallLists( GLsizei n, GLenum type, const GLvoid *lists );
+extern void GLAPIENTRY _mesa_CallLists(GLsizei n, GLenum type, const GLvoid *lists);
 
-extern void GLAPIENTRY _mesa_DeleteLists( GLuint list, GLsizei range );
+extern void GLAPIENTRY _mesa_DeleteLists(GLuint list, GLsizei range);
 
-extern void GLAPIENTRY _mesa_EndList( void );
+extern void GLAPIENTRY _mesa_EndList(void);
 
-extern GLuint GLAPIENTRY _mesa_GenLists( GLsizei range );
+extern GLuint GLAPIENTRY _mesa_GenLists(GLsizei range);
 
-extern GLboolean GLAPIENTRY _mesa_IsList( GLuint list );
+extern GLboolean GLAPIENTRY _mesa_IsList(GLuint list);
 
-extern void GLAPIENTRY _mesa_ListBase( GLuint base );
+extern void GLAPIENTRY _mesa_ListBase(GLuint base);
 
-extern void GLAPIENTRY _mesa_NewList( GLuint list, GLenum mode );
+extern void GLAPIENTRY _mesa_NewList(GLuint list, GLenum mode);
 
-extern void GLAPIENTRY _mesa_save_CallLists( GLsizei n, GLenum type, const GLvoid *lists );
+extern void GLAPIENTRY _mesa_save_CallLists(GLsizei n, GLenum type, const GLvoid *lists);
 
-extern void GLAPIENTRY _mesa_save_CallList( GLuint list );
+extern void GLAPIENTRY _mesa_save_CallList(GLuint list);
 
 
 
-extern void _mesa_init_dlist_table( struct _glapi_table *table );
+extern void _mesa_init_dlist_table(struct _glapi_table *table);
 
-extern void _mesa_compile_error( GLcontext *ctx, GLenum error, const char *s );
+extern void _mesa_compile_error(GLcontext *ctx, GLenum error, const char *s);
 
 
 extern void *_mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint sz);
 
-extern GLint _mesa_alloc_opcode( GLcontext *ctx, GLuint sz,
-                                 void (*execute)( GLcontext *, void * ),
-                                 void (*destroy)( GLcontext *, void * ),
-                                 void (*print)( GLcontext *, void * ) );
+extern GLint _mesa_alloc_opcode(GLcontext *ctx, GLuint sz,
+				void (*execute)(GLcontext *, void *),
+				void (*destroy)(GLcontext *, void *),
+				void (*print)(GLcontext *, void *));
 
-extern void _mesa_init_display_list( GLcontext * ctx );
+extern void _mesa_init_display_list(GLcontext * ctx);
 
-extern void _mesa_save_vtxfmt_init( GLvertexformat *vfmt );
+extern void _mesa_save_vtxfmt_init(GLvertexformat *vfmt);
 
 
 #else

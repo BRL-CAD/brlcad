@@ -45,271 +45,265 @@
 void GLAPIENTRY
 _mesa_AttachObjectARB(GLhandleARB program, GLhandleARB shader)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.AttachShader(ctx, program, shader);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.AttachShader(ctx, program, shader);
 }
 
 
 void GLAPIENTRY
 _mesa_AttachShader(GLuint program, GLuint shader)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.AttachShader(ctx, program, shader);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.AttachShader(ctx, program, shader);
 }
 
 
 void GLAPIENTRY
 _mesa_BindAttribLocationARB(GLhandleARB program, GLuint index,
-                            const GLcharARB *name)
+			    const GLcharARB *name)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.BindAttribLocation(ctx, program, index, name);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.BindAttribLocation(ctx, program, index, name);
 }
 
 
 void GLAPIENTRY
 _mesa_CompileShaderARB(GLhandleARB shaderObj)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.CompileShader(ctx, shaderObj);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.CompileShader(ctx, shaderObj);
 }
 
 
 GLuint GLAPIENTRY
 _mesa_CreateShader(GLenum type)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   return ctx->Driver.CreateShader(ctx, type);
+    GET_CURRENT_CONTEXT(ctx);
+    return ctx->Driver.CreateShader(ctx, type);
 }
 
 
 GLhandleARB GLAPIENTRY
 _mesa_CreateShaderObjectARB(GLenum type)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   return ctx->Driver.CreateShader(ctx, type);
+    GET_CURRENT_CONTEXT(ctx);
+    return ctx->Driver.CreateShader(ctx, type);
 }
 
 
 GLuint GLAPIENTRY
 _mesa_CreateProgram(void)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   return ctx->Driver.CreateProgram(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    return ctx->Driver.CreateProgram(ctx);
 }
 
 
 GLhandleARB GLAPIENTRY
 _mesa_CreateProgramObjectARB(void)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   return ctx->Driver.CreateProgram(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    return ctx->Driver.CreateProgram(ctx);
 }
 
 
 void GLAPIENTRY
 _mesa_DeleteObjectARB(GLhandleARB obj)
 {
-   if (obj) {
-      GET_CURRENT_CONTEXT(ctx);
-      if (ctx->Driver.IsProgram(ctx, obj)) {
-         ctx->Driver.DeleteProgram2(ctx, obj);
-      }
-      else if (ctx->Driver.IsShader(ctx, obj)) {
-         ctx->Driver.DeleteShader(ctx, obj);
-      }
-      else {
-         /* error? */
-      }
-   }
+    if (obj) {
+	GET_CURRENT_CONTEXT(ctx);
+	if (ctx->Driver.IsProgram(ctx, obj)) {
+	    ctx->Driver.DeleteProgram2(ctx, obj);
+	} else if (ctx->Driver.IsShader(ctx, obj)) {
+	    ctx->Driver.DeleteShader(ctx, obj);
+	} else {
+	    /* error? */
+	}
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_DeleteProgram(GLuint name)
 {
-   if (name) {
-      GET_CURRENT_CONTEXT(ctx);
-      ctx->Driver.DeleteProgram2(ctx, name);
-   }
+    if (name) {
+	GET_CURRENT_CONTEXT(ctx);
+	ctx->Driver.DeleteProgram2(ctx, name);
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_DeleteShader(GLuint name)
 {
-   if (name) {
-      GET_CURRENT_CONTEXT(ctx);
-      ctx->Driver.DeleteShader(ctx, name);
-   }
+    if (name) {
+	GET_CURRENT_CONTEXT(ctx);
+	ctx->Driver.DeleteShader(ctx, name);
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_DetachObjectARB(GLhandleARB program, GLhandleARB shader)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.DetachShader(ctx, program, shader);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.DetachShader(ctx, program, shader);
 }
 
 
 void GLAPIENTRY
 _mesa_DetachShader(GLuint program, GLuint shader)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.DetachShader(ctx, program, shader);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.DetachShader(ctx, program, shader);
 }
 
 
 void GLAPIENTRY
 _mesa_GetActiveAttribARB(GLhandleARB program, GLuint index,
-                         GLsizei maxLength, GLsizei * length, GLint * size,
-                         GLenum * type, GLcharARB * name)
+			 GLsizei maxLength, GLsizei * length, GLint * size,
+			 GLenum * type, GLcharARB * name)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetActiveAttrib(ctx, program, index, maxLength, length, size,
-                               type, name);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetActiveAttrib(ctx, program, index, maxLength, length, size,
+				type, name);
 }
 
 
 void GLAPIENTRY
 _mesa_GetActiveUniformARB(GLhandleARB program, GLuint index,
-                          GLsizei maxLength, GLsizei * length, GLint * size,
-                          GLenum * type, GLcharARB * name)
+			  GLsizei maxLength, GLsizei * length, GLint * size,
+			  GLenum * type, GLcharARB * name)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetActiveUniform(ctx, program, index, maxLength, length, size,
-                                type, name);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetActiveUniform(ctx, program, index, maxLength, length, size,
+				 type, name);
 }
 
 
 void GLAPIENTRY
 _mesa_GetAttachedObjectsARB(GLhandleARB container, GLsizei maxCount,
-                            GLsizei * count, GLhandleARB * obj)
+			    GLsizei * count, GLhandleARB * obj)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetAttachedShaders(ctx, container, maxCount, count, obj);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetAttachedShaders(ctx, container, maxCount, count, obj);
 }
 
 
 void GLAPIENTRY
 _mesa_GetAttachedShaders(GLuint program, GLsizei maxCount,
-                         GLsizei *count, GLuint *obj)
+			 GLsizei *count, GLuint *obj)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetAttachedShaders(ctx, program, maxCount, count, obj);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetAttachedShaders(ctx, program, maxCount, count, obj);
 }
 
 
 GLint GLAPIENTRY
 _mesa_GetAttribLocationARB(GLhandleARB program, const GLcharARB * name)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   return ctx->Driver.GetAttribLocation(ctx, program, name);
+    GET_CURRENT_CONTEXT(ctx);
+    return ctx->Driver.GetAttribLocation(ctx, program, name);
 }
 
 
 void GLAPIENTRY
 _mesa_GetInfoLogARB(GLhandleARB object, GLsizei maxLength, GLsizei * length,
-                    GLcharARB * infoLog)
+		    GLcharARB * infoLog)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   /* Implement in terms of GetProgramInfoLog, GetShaderInfoLog */
-   if (ctx->Driver.IsProgram(ctx, object)) {
-      ctx->Driver.GetProgramInfoLog(ctx, object, maxLength, length, infoLog);
-   }
-   else if (ctx->Driver.IsShader(ctx, object)) {
-      ctx->Driver.GetShaderInfoLog(ctx, object, maxLength, length, infoLog);
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetInfoLogARB");
-   }
+    GET_CURRENT_CONTEXT(ctx);
+    /* Implement in terms of GetProgramInfoLog, GetShaderInfoLog */
+    if (ctx->Driver.IsProgram(ctx, object)) {
+	ctx->Driver.GetProgramInfoLog(ctx, object, maxLength, length, infoLog);
+    } else if (ctx->Driver.IsShader(ctx, object)) {
+	ctx->Driver.GetShaderInfoLog(ctx, object, maxLength, length, infoLog);
+    } else {
+	_mesa_error(ctx, GL_INVALID_OPERATION, "glGetInfoLogARB");
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_GetObjectParameterivARB(GLhandleARB object, GLenum pname, GLint *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   /* Implement in terms of GetProgramiv, GetShaderiv */
-   if (ctx->Driver.IsProgram(ctx, object)) {
-      ctx->Driver.GetProgramiv(ctx, object, pname, params);
-   }
-   else if (ctx->Driver.IsShader(ctx, object)) {
-      ctx->Driver.GetShaderiv(ctx, object, pname, params);
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
-   }
+    GET_CURRENT_CONTEXT(ctx);
+    /* Implement in terms of GetProgramiv, GetShaderiv */
+    if (ctx->Driver.IsProgram(ctx, object)) {
+	ctx->Driver.GetProgramiv(ctx, object, pname, params);
+    } else if (ctx->Driver.IsShader(ctx, object)) {
+	ctx->Driver.GetShaderiv(ctx, object, pname, params);
+    } else {
+	_mesa_error(ctx, GL_INVALID_OPERATION, "glGetObjectParameterivARB");
+    }
 }
 
 
 void GLAPIENTRY
 _mesa_GetObjectParameterfvARB(GLhandleARB object, GLenum pname,
-                              GLfloat *params)
+			      GLfloat *params)
 {
-   GLint iparams[1];  /* XXX is one element enough? */
-   _mesa_GetObjectParameterivARB(object, pname, iparams);
-   params[0] = (GLfloat) iparams[0];
+    GLint iparams[1];  /* XXX is one element enough? */
+    _mesa_GetObjectParameterivARB(object, pname, iparams);
+    params[0] = (GLfloat) iparams[0];
 }
 
 
 void GLAPIENTRY
 _mesa_GetProgramiv(GLuint program, GLenum pname, GLint *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetProgramiv(ctx, program, pname, params);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetProgramiv(ctx, program, pname, params);
 }
 
 
 void GLAPIENTRY
 _mesa_GetShaderiv(GLuint shader, GLenum pname, GLint *params)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetShaderiv(ctx, shader, pname, params);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetShaderiv(ctx, shader, pname, params);
 }
 
 
 void GLAPIENTRY
 _mesa_GetProgramInfoLog(GLuint program, GLsizei bufSize,
-                        GLsizei *length, GLchar *infoLog)
+			GLsizei *length, GLchar *infoLog)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetProgramInfoLog(ctx, program, bufSize, length, infoLog);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetProgramInfoLog(ctx, program, bufSize, length, infoLog);
 }
 
 
 void GLAPIENTRY
 _mesa_GetShaderInfoLog(GLuint shader, GLsizei bufSize,
-                       GLsizei *length, GLchar *infoLog)
+		       GLsizei *length, GLchar *infoLog)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetShaderInfoLog(ctx, shader, bufSize, length, infoLog);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetShaderInfoLog(ctx, shader, bufSize, length, infoLog);
 }
 
 
 void GLAPIENTRY
 _mesa_GetShaderSourceARB(GLhandleARB shader, GLsizei maxLength,
-                         GLsizei *length, GLcharARB *sourceOut)
+			 GLsizei *length, GLcharARB *sourceOut)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetShaderSource(ctx, shader, maxLength, length, sourceOut);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetShaderSource(ctx, shader, maxLength, length, sourceOut);
 }
 
 
 void GLAPIENTRY
 _mesa_GetUniformfvARB(GLhandleARB program, GLint location, GLfloat * params)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetUniformfv(ctx, program, location, params);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetUniformfv(ctx, program, location, params);
 }
 
 
 void GLAPIENTRY
 _mesa_GetUniformivARB(GLhandleARB program, GLint location, GLint * params)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.GetUniformiv(ctx, program, location, params);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.GetUniformiv(ctx, program, location, params);
 }
 
 
@@ -318,8 +312,8 @@ _mesa_GetUniformivARB(GLhandleARB program, GLint location, GLint * params)
 GLint GLAPIENTRY
 _mesa_GetUniformLocation(GLuint program, const GLcharARB *name)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   return ctx->Driver.GetUniformLocation(ctx, program, name);
+    GET_CURRENT_CONTEXT(ctx);
+    return ctx->Driver.GetUniformLocation(ctx, program, name);
 }
 #endif
 
@@ -327,40 +321,40 @@ _mesa_GetUniformLocation(GLuint program, const GLcharARB *name)
 GLhandleARB GLAPIENTRY
 _mesa_GetHandleARB(GLenum pname)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   return ctx->Driver.GetHandle(ctx, pname);
+    GET_CURRENT_CONTEXT(ctx);
+    return ctx->Driver.GetHandle(ctx, pname);
 }
 
 
 GLint GLAPIENTRY
 _mesa_GetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   return ctx->Driver.GetUniformLocation(ctx, programObj, name);
+    GET_CURRENT_CONTEXT(ctx);
+    return ctx->Driver.GetUniformLocation(ctx, programObj, name);
 }
 
 
 GLboolean GLAPIENTRY
 _mesa_IsProgram(GLuint name)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   return ctx->Driver.IsProgram(ctx, name);
+    GET_CURRENT_CONTEXT(ctx);
+    return ctx->Driver.IsProgram(ctx, name);
 }
 
 
 GLboolean GLAPIENTRY
 _mesa_IsShader(GLuint name)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   return ctx->Driver.IsShader(ctx, name);
+    GET_CURRENT_CONTEXT(ctx);
+    return ctx->Driver.IsShader(ctx, name);
 }
 
 
 void GLAPIENTRY
 _mesa_LinkProgramARB(GLhandleARB programObj)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.LinkProgram(ctx, programObj);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.LinkProgram(ctx, programObj);
 }
 
 
@@ -371,232 +365,232 @@ _mesa_LinkProgramARB(GLhandleARB programObj)
  */
 void GLAPIENTRY
 _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
-                      const GLcharARB ** string, const GLint * length)
+		      const GLcharARB ** string, const GLint * length)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GLint *offsets;
-   GLsizei i, totalLength;
-   GLcharARB *source;
+    GET_CURRENT_CONTEXT(ctx);
+    GLint *offsets;
+    GLsizei i, totalLength;
+    GLcharARB *source;
 
-   if (string == NULL) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB");
-      return;
-   }
+    if (string == NULL) {
+	_mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB");
+	return;
+    }
 
-   /*
-    * This array holds offsets of where the appropriate string ends, thus the
-    * last element will be set to the total length of the source code.
-    */
-   offsets = (GLint *) _mesa_malloc(count * sizeof(GLint));
-   if (offsets == NULL) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
-      return;
-   }
+    /*
+     * This array holds offsets of where the appropriate string ends, thus the
+     * last element will be set to the total length of the source code.
+     */
+    offsets = (GLint *) _mesa_malloc(count * sizeof(GLint));
+    if (offsets == NULL) {
+	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
+	return;
+    }
 
-   for (i = 0; i < count; i++) {
-      if (string[i] == NULL) {
-         _mesa_free((GLvoid *) offsets);
-         _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB(null string)");
-         return;
-      }
-      if (length == NULL || length[i] < 0)
-         offsets[i] = _mesa_strlen(string[i]);
-      else
-         offsets[i] = length[i];
-      /* accumulate string lengths */
-      if (i > 0)
-         offsets[i] += offsets[i - 1];
-   }
+    for (i = 0; i < count; i++) {
+	if (string[i] == NULL) {
+	    _mesa_free((GLvoid *) offsets);
+	    _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB(null string)");
+	    return;
+	}
+	if (length == NULL || length[i] < 0)
+	    offsets[i] = _mesa_strlen(string[i]);
+	else
+	    offsets[i] = length[i];
+	/* accumulate string lengths */
+	if (i > 0)
+	    offsets[i] += offsets[i - 1];
+    }
 
-   /* Total length of source string is sum off all strings plus two.
-    * One extra byte for terminating zero, another extra byte to silence
-    * valgrind warnings in the parser/grammer code.
-    */
-   totalLength = offsets[count - 1] + 2;
-   source = (GLcharARB *) _mesa_malloc(totalLength * sizeof(GLcharARB));
-   if (source == NULL) {
-      _mesa_free((GLvoid *) offsets);
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
-      return;
-   }
+    /* Total length of source string is sum off all strings plus two.
+     * One extra byte for terminating zero, another extra byte to silence
+     * valgrind warnings in the parser/grammer code.
+     */
+    totalLength = offsets[count - 1] + 2;
+    source = (GLcharARB *) _mesa_malloc(totalLength * sizeof(GLcharARB));
+    if (source == NULL) {
+	_mesa_free((GLvoid *) offsets);
+	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
+	return;
+    }
 
-   for (i = 0; i < count; i++) {
-      GLint start = (i > 0) ? offsets[i - 1] : 0;
-      _mesa_memcpy(source + start, string[i],
-                   (offsets[i] - start) * sizeof(GLcharARB));
-   }
-   source[totalLength - 1] = '\0';
-   source[totalLength - 2] = '\0';
+    for (i = 0; i < count; i++) {
+	GLint start = (i > 0) ? offsets[i - 1] : 0;
+	_mesa_memcpy(source + start, string[i],
+		     (offsets[i] - start) * sizeof(GLcharARB));
+    }
+    source[totalLength - 1] = '\0';
+    source[totalLength - 2] = '\0';
 
-   ctx->Driver.ShaderSource(ctx, shaderObj, source);
+    ctx->Driver.ShaderSource(ctx, shaderObj, source);
 
-   _mesa_free(offsets);
+    _mesa_free(offsets);
 }
 
 
 void GLAPIENTRY
 _mesa_Uniform1fARB(GLint location, GLfloat v0)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.Uniform(ctx, location, 1, &v0, GL_FLOAT);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.Uniform(ctx, location, 1, &v0, GL_FLOAT);
 }
 
 void GLAPIENTRY
 _mesa_Uniform2fARB(GLint location, GLfloat v0, GLfloat v1)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat v[2];
-   v[0] = v0;
-   v[1] = v1;
-   ctx->Driver.Uniform(ctx, location, 1, v, GL_FLOAT_VEC2);
+    GET_CURRENT_CONTEXT(ctx);
+    GLfloat v[2];
+    v[0] = v0;
+    v[1] = v1;
+    ctx->Driver.Uniform(ctx, location, 1, v, GL_FLOAT_VEC2);
 }
 
 void GLAPIENTRY
 _mesa_Uniform3fARB(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat v[3];
-   v[0] = v0;
-   v[1] = v1;
-   v[2] = v2;
-   ctx->Driver.Uniform(ctx, location, 1, v, GL_FLOAT_VEC3);
+    GET_CURRENT_CONTEXT(ctx);
+    GLfloat v[3];
+    v[0] = v0;
+    v[1] = v1;
+    v[2] = v2;
+    ctx->Driver.Uniform(ctx, location, 1, v, GL_FLOAT_VEC3);
 }
 
 void GLAPIENTRY
 _mesa_Uniform4fARB(GLint location, GLfloat v0, GLfloat v1, GLfloat v2,
-                   GLfloat v3)
+		   GLfloat v3)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GLfloat v[4];
-   v[0] = v0;
-   v[1] = v1;
-   v[2] = v2;
-   v[3] = v3;
-   ctx->Driver.Uniform(ctx, location, 1, v, GL_FLOAT_VEC4);
+    GET_CURRENT_CONTEXT(ctx);
+    GLfloat v[4];
+    v[0] = v0;
+    v[1] = v1;
+    v[2] = v2;
+    v[3] = v3;
+    ctx->Driver.Uniform(ctx, location, 1, v, GL_FLOAT_VEC4);
 }
 
 void GLAPIENTRY
 _mesa_Uniform1iARB(GLint location, GLint v0)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.Uniform(ctx, location, 1, &v0, GL_INT);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.Uniform(ctx, location, 1, &v0, GL_INT);
 }
 
 void GLAPIENTRY
 _mesa_Uniform2iARB(GLint location, GLint v0, GLint v1)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GLint v[2];
-   v[0] = v0;
-   v[1] = v1;
-   ctx->Driver.Uniform(ctx, location, 1, v, GL_INT_VEC2);
+    GET_CURRENT_CONTEXT(ctx);
+    GLint v[2];
+    v[0] = v0;
+    v[1] = v1;
+    ctx->Driver.Uniform(ctx, location, 1, v, GL_INT_VEC2);
 }
 
 void GLAPIENTRY
 _mesa_Uniform3iARB(GLint location, GLint v0, GLint v1, GLint v2)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GLint v[3];
-   v[0] = v0;
-   v[1] = v1;
-   v[2] = v2;
-   ctx->Driver.Uniform(ctx, location, 1, v, GL_INT_VEC3);
+    GET_CURRENT_CONTEXT(ctx);
+    GLint v[3];
+    v[0] = v0;
+    v[1] = v1;
+    v[2] = v2;
+    ctx->Driver.Uniform(ctx, location, 1, v, GL_INT_VEC3);
 }
 
 void GLAPIENTRY
 _mesa_Uniform4iARB(GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   GLint v[4];
-   v[0] = v0;
-   v[1] = v1;
-   v[2] = v2;
-   v[3] = v3;
-   ctx->Driver.Uniform(ctx, location, 1, v, GL_INT_VEC4);
+    GET_CURRENT_CONTEXT(ctx);
+    GLint v[4];
+    v[0] = v0;
+    v[1] = v1;
+    v[2] = v2;
+    v[3] = v3;
+    ctx->Driver.Uniform(ctx, location, 1, v, GL_INT_VEC4);
 }
 
 void GLAPIENTRY
 _mesa_Uniform1fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT);
 }
 
 void GLAPIENTRY
 _mesa_Uniform2fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT_VEC2);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT_VEC2);
 }
 
 void GLAPIENTRY
 _mesa_Uniform3fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT_VEC3);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT_VEC3);
 }
 
 void GLAPIENTRY
 _mesa_Uniform4fvARB(GLint location, GLsizei count, const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT_VEC4);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.Uniform(ctx, location, count, value, GL_FLOAT_VEC4);
 }
 
 void GLAPIENTRY
 _mesa_Uniform1ivARB(GLint location, GLsizei count, const GLint * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.Uniform(ctx, location, count, value, GL_INT);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.Uniform(ctx, location, count, value, GL_INT);
 }
 
 void GLAPIENTRY
 _mesa_Uniform2ivARB(GLint location, GLsizei count, const GLint * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.Uniform(ctx, location, count, value, GL_INT_VEC2);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.Uniform(ctx, location, count, value, GL_INT_VEC2);
 }
 
 void GLAPIENTRY
 _mesa_Uniform3ivARB(GLint location, GLsizei count, const GLint * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.Uniform(ctx, location, count, value, GL_INT_VEC3);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.Uniform(ctx, location, count, value, GL_INT_VEC3);
 }
 
 void GLAPIENTRY
 _mesa_Uniform4ivARB(GLint location, GLsizei count, const GLint * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.Uniform(ctx, location, count, value, GL_INT_VEC4);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.Uniform(ctx, location, count, value, GL_INT_VEC4);
 }
 
 
 void GLAPIENTRY
 _mesa_UniformMatrix2fvARB(GLint location, GLsizei count, GLboolean transpose,
-                          const GLfloat * value)
+			  const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 2, 2, GL_FLOAT_MAT2,
-                             location, count, transpose, value);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.UniformMatrix(ctx, 2, 2, GL_FLOAT_MAT2,
+			      location, count, transpose, value);
 }
 
 void GLAPIENTRY
 _mesa_UniformMatrix3fvARB(GLint location, GLsizei count, GLboolean transpose,
-                          const GLfloat * value)
+			  const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 3, 3, GL_FLOAT_MAT3,
-                             location, count, transpose, value);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.UniformMatrix(ctx, 3, 3, GL_FLOAT_MAT3,
+			      location, count, transpose, value);
 }
 
 void GLAPIENTRY
 _mesa_UniformMatrix4fvARB(GLint location, GLsizei count, GLboolean transpose,
-                          const GLfloat * value)
+			  const GLfloat * value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 4, 4, GL_FLOAT_MAT4,
-                             location, count, transpose, value);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.UniformMatrix(ctx, 4, 4, GL_FLOAT_MAT4,
+			      location, count, transpose, value);
 }
 
 
@@ -605,72 +599,72 @@ _mesa_UniformMatrix4fvARB(GLint location, GLsizei count, GLboolean transpose,
  */
 void GLAPIENTRY
 _mesa_UniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose,
-                         const GLfloat *value)
+			 const GLfloat *value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 2, 3, GL_FLOAT_MAT2x3,
-                             location, count, transpose, value);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.UniformMatrix(ctx, 2, 3, GL_FLOAT_MAT2x3,
+			      location, count, transpose, value);
 }
 
 void GLAPIENTRY
 _mesa_UniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose,
-                         const GLfloat *value)
+			 const GLfloat *value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 3, 2, GL_FLOAT_MAT3x2,
-                             location, count, transpose, value);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.UniformMatrix(ctx, 3, 2, GL_FLOAT_MAT3x2,
+			      location, count, transpose, value);
 }
 
 void GLAPIENTRY
 _mesa_UniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose,
-                         const GLfloat *value)
+			 const GLfloat *value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 2, 4, GL_FLOAT_MAT2x4,
-                             location, count, transpose, value);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.UniformMatrix(ctx, 2, 4, GL_FLOAT_MAT2x4,
+			      location, count, transpose, value);
 }
 
 void GLAPIENTRY
 _mesa_UniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose,
-                         const GLfloat *value)
+			 const GLfloat *value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 4, 2, GL_FLOAT_MAT4x2,
-                             location, count, transpose, value);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.UniformMatrix(ctx, 4, 2, GL_FLOAT_MAT4x2,
+			      location, count, transpose, value);
 }
 
 void GLAPIENTRY
 _mesa_UniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose,
-                         const GLfloat *value)
+			 const GLfloat *value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 3, 4, GL_FLOAT_MAT3x4,
-                             location, count, transpose, value);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.UniformMatrix(ctx, 3, 4, GL_FLOAT_MAT3x4,
+			      location, count, transpose, value);
 }
 
 void GLAPIENTRY
 _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
-                         const GLfloat *value)
+			 const GLfloat *value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 4, 3, GL_FLOAT_MAT4x3,
-                             location, count, transpose, value);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.UniformMatrix(ctx, 4, 3, GL_FLOAT_MAT4x3,
+			      location, count, transpose, value);
 }
 
 
 void GLAPIENTRY
 _mesa_UseProgramObjectARB(GLhandleARB program)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-   ctx->Driver.UseProgram(ctx, program);
+    GET_CURRENT_CONTEXT(ctx);
+    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+    ctx->Driver.UseProgram(ctx, program);
 }
 
 
 void GLAPIENTRY
 _mesa_ValidateProgramARB(GLhandleARB program)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.ValidateProgram(ctx, program);
+    GET_CURRENT_CONTEXT(ctx);
+    ctx->Driver.ValidateProgram(ctx, program);
 }
 

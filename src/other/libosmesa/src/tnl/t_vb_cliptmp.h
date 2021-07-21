@@ -115,170 +115,168 @@ do {									\
 /* Clip a line against the viewport and user clip planes.
  */
 static INLINE void
-TAG(clip_line)( GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask )
+TAG(clip_line)(GLcontext *ctx, GLuint v0, GLuint v1, GLubyte mask)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   tnl_interp_func interp = tnl->Driver.Render.Interp;
-   GLfloat (*coord)[4] = VB->ClipPtr->data;
-   GLuint newvert = VB->Count;
-   GLfloat t0 = 0;
-   GLfloat t1 = 0;
-   GLuint p;
-   const GLuint v0_orig = v0;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    struct vertex_buffer *VB = &tnl->vb;
+    tnl_interp_func interp = tnl->Driver.Render.Interp;
+    GLfloat(*coord)[4] = VB->ClipPtr->data;
+    GLuint newvert = VB->Count;
+    GLfloat t0 = 0;
+    GLfloat t1 = 0;
+    GLuint p;
+    const GLuint v0_orig = v0;
 
-   if (mask & 0x3f) {
-      LINE_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
-      LINE_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
-      LINE_CLIP( CLIP_TOP_BIT,     0, -1,  0, 1 );
-      LINE_CLIP( CLIP_BOTTOM_BIT,  0,  1,  0, 1 );
-      LINE_CLIP( CLIP_FAR_BIT,     0,  0, -1, 1 );
-      LINE_CLIP( CLIP_NEAR_BIT,    0,  0,  1, 1 );
-   }
+    if (mask & 0x3f) {
+	LINE_CLIP(CLIP_RIGHT_BIT,  -1,  0,  0, 1);
+	LINE_CLIP(CLIP_LEFT_BIT,    1,  0,  0, 1);
+	LINE_CLIP(CLIP_TOP_BIT,     0, -1,  0, 1);
+	LINE_CLIP(CLIP_BOTTOM_BIT,  0,  1,  0, 1);
+	LINE_CLIP(CLIP_FAR_BIT,     0,  0, -1, 1);
+	LINE_CLIP(CLIP_NEAR_BIT,    0,  0,  1, 1);
+    }
 
-   if (mask & CLIP_USER_BIT) {
-      for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
-	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
-	    LINE_CLIP( CLIP_USER_BIT, a, b, c, d );
-	 }
-      }
-   }
+    if (mask & CLIP_USER_BIT) {
+	for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
+	    if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
+		const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+		const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+		const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+		const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+		LINE_CLIP(CLIP_USER_BIT, a, b, c, d);
+	    }
+	}
+    }
 
-   if (VB->ClipMask[v0]) {
-      INTERP_4F( t0, coord[newvert], coord[v0], coord[v1] );
-      interp( ctx, t0, newvert, v0, v1, GL_FALSE );
-      v0 = newvert;
-      newvert++;
-   }
-   else {
-      ASSERT(t0 == 0.0);
-   }
+    if (VB->ClipMask[v0]) {
+	INTERP_4F(t0, coord[newvert], coord[v0], coord[v1]);
+	interp(ctx, t0, newvert, v0, v1, GL_FALSE);
+	v0 = newvert;
+	newvert++;
+    } else {
+	ASSERT(t0 == 0.0);
+    }
 
-   /* Note: we need to use vertex v0_orig when computing the new
-    * interpolated/clipped vertex position, not the current v0 which
-    * may have got set when we clipped the other end of the line!
-    */
-   if (VB->ClipMask[v1]) {
-      INTERP_4F( t1, coord[newvert], coord[v1], coord[v0_orig] );
-      interp( ctx, t1, newvert, v1, v0_orig, GL_FALSE );
+    /* Note: we need to use vertex v0_orig when computing the new
+     * interpolated/clipped vertex position, not the current v0 which
+     * may have got set when we clipped the other end of the line!
+     */
+    if (VB->ClipMask[v1]) {
+	INTERP_4F(t1, coord[newvert], coord[v1], coord[v0_orig]);
+	interp(ctx, t1, newvert, v1, v0_orig, GL_FALSE);
 
-      if (ctx->Light.ShadeModel == GL_FLAT)
-	 tnl->Driver.Render.CopyPV( ctx, newvert, v1 );
+	if (ctx->Light.ShadeModel == GL_FLAT)
+	    tnl->Driver.Render.CopyPV(ctx, newvert, v1);
 
-      v1 = newvert;
+	v1 = newvert;
 
-      newvert++;
-   }
-   else {
-      ASSERT(t1 == 0.0);
-   }
+	newvert++;
+    } else {
+	ASSERT(t1 == 0.0);
+    }
 
-   tnl->Driver.Render.ClippedLine( ctx, v0, v1 );
+    tnl->Driver.Render.ClippedLine(ctx, v0, v1);
 }
 
 
 /* Clip a triangle against the viewport and user clip planes.
  */
 static INLINE void
-TAG(clip_tri)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask )
+TAG(clip_tri)(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLubyte mask)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   tnl_interp_func interp = tnl->Driver.Render.Interp;
-   GLuint newvert = VB->Count;
-   GLfloat (*coord)[4] = VB->ClipPtr->data;
-   GLuint pv = v2;
-   GLuint vlist[2][MAX_CLIPPED_VERTICES];
-   GLuint *inlist = vlist[0], *outlist = vlist[1];
-   GLuint p;
-   GLuint n = 3;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    struct vertex_buffer *VB = &tnl->vb;
+    tnl_interp_func interp = tnl->Driver.Render.Interp;
+    GLuint newvert = VB->Count;
+    GLfloat(*coord)[4] = VB->ClipPtr->data;
+    GLuint pv = v2;
+    GLuint vlist[2][MAX_CLIPPED_VERTICES];
+    GLuint *inlist = vlist[0], *outlist = vlist[1];
+    GLuint p;
+    GLuint n = 3;
 
-   ASSIGN_3V(inlist, v2, v0, v1 ); /* pv rotated to slot zero */
+    ASSIGN_3V(inlist, v2, v0, v1);  /* pv rotated to slot zero */
 
-   if (mask & 0x3f) {
-      POLY_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
-      POLY_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
-      POLY_CLIP( CLIP_TOP_BIT,     0, -1,  0, 1 );
-      POLY_CLIP( CLIP_BOTTOM_BIT,  0,  1,  0, 1 );
-      POLY_CLIP( CLIP_FAR_BIT,     0,  0, -1, 1 );
-      POLY_CLIP( CLIP_NEAR_BIT,    0,  0,  1, 1 );
-   }
+    if (mask & 0x3f) {
+	POLY_CLIP(CLIP_RIGHT_BIT,  -1,  0,  0, 1);
+	POLY_CLIP(CLIP_LEFT_BIT,    1,  0,  0, 1);
+	POLY_CLIP(CLIP_TOP_BIT,     0, -1,  0, 1);
+	POLY_CLIP(CLIP_BOTTOM_BIT,  0,  1,  0, 1);
+	POLY_CLIP(CLIP_FAR_BIT,     0,  0, -1, 1);
+	POLY_CLIP(CLIP_NEAR_BIT,    0,  0,  1, 1);
+    }
 
-   if (mask & CLIP_USER_BIT) {
-      for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
-         if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
-            POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
-         }
-      }
-   }
+    if (mask & CLIP_USER_BIT) {
+	for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
+	    if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
+		const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+		const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+		const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+		const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+		POLY_CLIP(CLIP_USER_BIT, a, b, c, d);
+	    }
+	}
+    }
 
-   if (ctx->Light.ShadeModel == GL_FLAT) {
-      if (pv != inlist[0]) {
-	 ASSERT( inlist[0] >= VB->Count );
-	 tnl->Driver.Render.CopyPV( ctx, inlist[0], pv );
-      }
-   }
+    if (ctx->Light.ShadeModel == GL_FLAT) {
+	if (pv != inlist[0]) {
+	    ASSERT(inlist[0] >= VB->Count);
+	    tnl->Driver.Render.CopyPV(ctx, inlist[0], pv);
+	}
+    }
 
-   tnl->Driver.Render.ClippedPolygon( ctx, inlist, n );
+    tnl->Driver.Render.ClippedPolygon(ctx, inlist, n);
 }
 
 
 /* Clip a quad against the viewport and user clip planes.
  */
 static INLINE void
-TAG(clip_quad)( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
-                GLubyte mask )
+TAG(clip_quad)(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
+	       GLubyte mask)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   tnl_interp_func interp = tnl->Driver.Render.Interp;
-   GLuint newvert = VB->Count;
-   GLfloat (*coord)[4] = VB->ClipPtr->data;
-   GLuint pv = v3;
-   GLuint vlist[2][MAX_CLIPPED_VERTICES];
-   GLuint *inlist = vlist[0], *outlist = vlist[1];
-   GLuint p;
-   GLuint n = 4;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    struct vertex_buffer *VB = &tnl->vb;
+    tnl_interp_func interp = tnl->Driver.Render.Interp;
+    GLuint newvert = VB->Count;
+    GLfloat(*coord)[4] = VB->ClipPtr->data;
+    GLuint pv = v3;
+    GLuint vlist[2][MAX_CLIPPED_VERTICES];
+    GLuint *inlist = vlist[0], *outlist = vlist[1];
+    GLuint p;
+    GLuint n = 4;
 
-   ASSIGN_4V(inlist, v3, v0, v1, v2 ); /* pv rotated to slot zero */
+    ASSIGN_4V(inlist, v3, v0, v1, v2);  /* pv rotated to slot zero */
 
-   if (mask & 0x3f) {
-      POLY_CLIP( CLIP_RIGHT_BIT,  -1,  0,  0, 1 );
-      POLY_CLIP( CLIP_LEFT_BIT,    1,  0,  0, 1 );
-      POLY_CLIP( CLIP_TOP_BIT,     0, -1,  0, 1 );
-      POLY_CLIP( CLIP_BOTTOM_BIT,  0,  1,  0, 1 );
-      POLY_CLIP( CLIP_FAR_BIT,     0,  0, -1, 1 );
-      POLY_CLIP( CLIP_NEAR_BIT,    0,  0,  1, 1 );
-   }
+    if (mask & 0x3f) {
+	POLY_CLIP(CLIP_RIGHT_BIT,  -1,  0,  0, 1);
+	POLY_CLIP(CLIP_LEFT_BIT,    1,  0,  0, 1);
+	POLY_CLIP(CLIP_TOP_BIT,     0, -1,  0, 1);
+	POLY_CLIP(CLIP_BOTTOM_BIT,  0,  1,  0, 1);
+	POLY_CLIP(CLIP_FAR_BIT,     0,  0, -1, 1);
+	POLY_CLIP(CLIP_NEAR_BIT,    0,  0,  1, 1);
+    }
 
-   if (mask & CLIP_USER_BIT) {
-      for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
-	 if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-            const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
-            const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
-            const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
-            const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
-	    POLY_CLIP( CLIP_USER_BIT, a, b, c, d );
-	 }
-      }
-   }
+    if (mask & CLIP_USER_BIT) {
+	for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
+	    if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
+		const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+		const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+		const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+		const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+		POLY_CLIP(CLIP_USER_BIT, a, b, c, d);
+	    }
+	}
+    }
 
-   if (ctx->Light.ShadeModel == GL_FLAT) {
-      if (pv != inlist[0]) {
-	 ASSERT( inlist[0] >= VB->Count );
-	 tnl->Driver.Render.CopyPV( ctx, inlist[0], pv );
-      }
-   }
+    if (ctx->Light.ShadeModel == GL_FLAT) {
+	if (pv != inlist[0]) {
+	    ASSERT(inlist[0] >= VB->Count);
+	    tnl->Driver.Render.CopyPV(ctx, inlist[0], pv);
+	}
+    }
 
-   tnl->Driver.Render.ClippedPolygon( ctx, inlist, n );
+    tnl->Driver.Render.ClippedPolygon(ctx, inlist, n);
 }
 
 #undef W

@@ -28,9 +28,9 @@
 
 #include "mtypes.h"
 
-extern void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx );
+extern void _tnl_UpdateFixedFunctionProgram(GLcontext *ctx);
 
-extern void _tnl_ProgramCacheInit( GLcontext *ctx );
-extern void _tnl_ProgramCacheDestroy( GLcontext *ctx );
+extern void _tnl_ProgramCacheInit(GLcontext *ctx);
+extern void _tnl_ProgramCacheDestroy(GLcontext *ctx);
 
 #endif

@@ -56,44 +56,44 @@
 
 /** \name Visual-related functions */
 /*@{*/
- 
+
 extern GLvisual *
-_mesa_create_visual( GLboolean rgbFlag,
-                     GLboolean dbFlag,
-                     GLboolean stereoFlag,
-                     GLint redBits,
-                     GLint greenBits,
-                     GLint blueBits,
-                     GLint alphaBits,
-                     GLint indexBits,
-                     GLint depthBits,
-                     GLint stencilBits,
-                     GLint accumRedBits,
-                     GLint accumGreenBits,
-                     GLint accumBlueBits,
-                     GLint accumAlphaBits,
-                     GLint numSamples );
+_mesa_create_visual(GLboolean rgbFlag,
+		    GLboolean dbFlag,
+		    GLboolean stereoFlag,
+		    GLint redBits,
+		    GLint greenBits,
+		    GLint blueBits,
+		    GLint alphaBits,
+		    GLint indexBits,
+		    GLint depthBits,
+		    GLint stencilBits,
+		    GLint accumRedBits,
+		    GLint accumGreenBits,
+		    GLint accumBlueBits,
+		    GLint accumAlphaBits,
+		    GLint numSamples);
 
 extern GLboolean
-_mesa_initialize_visual( GLvisual *v,
-                         GLboolean rgbFlag,
-                         GLboolean dbFlag,
-                         GLboolean stereoFlag,
-                         GLint redBits,
-                         GLint greenBits,
-                         GLint blueBits,
-                         GLint alphaBits,
-                         GLint indexBits,
-                         GLint depthBits,
-                         GLint stencilBits,
-                         GLint accumRedBits,
-                         GLint accumGreenBits,
-                         GLint accumBlueBits,
-                         GLint accumAlphaBits,
-                         GLint numSamples );
+_mesa_initialize_visual(GLvisual *v,
+			GLboolean rgbFlag,
+			GLboolean dbFlag,
+			GLboolean stereoFlag,
+			GLint redBits,
+			GLint greenBits,
+			GLint blueBits,
+			GLint alphaBits,
+			GLint indexBits,
+			GLint depthBits,
+			GLint stencilBits,
+			GLint accumRedBits,
+			GLint accumGreenBits,
+			GLint accumBlueBits,
+			GLint accumAlphaBits,
+			GLint numSamples);
 
 extern void
-_mesa_destroy_visual( GLvisual *vis );
+_mesa_destroy_visual(GLvisual *vis);
 
 /*@}*/
 
@@ -102,23 +102,23 @@ _mesa_destroy_visual( GLvisual *vis );
 /*@{*/
 
 extern GLcontext *
-_mesa_create_context( const GLvisual *visual,
-                      GLcontext *share_list,
-                      const struct dd_function_table *driverFunctions,
-                      void *driverContext );
+_mesa_create_context(const GLvisual *visual,
+		     GLcontext *share_list,
+		     const struct dd_function_table *driverFunctions,
+		     void *driverContext);
 
 extern GLboolean
-_mesa_initialize_context( GLcontext *ctx,
-                          const GLvisual *visual,
-                          GLcontext *share_list,
-                          const struct dd_function_table *driverFunctions,
-                          void *driverContext );
+_mesa_initialize_context(GLcontext *ctx,
+			 const GLvisual *visual,
+			 GLcontext *share_list,
+			 const struct dd_function_table *driverFunctions,
+			 void *driverContext);
 
 extern void
-_mesa_free_context_data( GLcontext *ctx );
+_mesa_free_context_data(GLcontext *ctx);
 
 extern void
-_mesa_destroy_context( GLcontext *ctx );
+_mesa_destroy_context(GLcontext *ctx);
 
 
 extern void
@@ -126,8 +126,8 @@ _mesa_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
 
 
 extern void
-_mesa_make_current( GLcontext *ctx, GLframebuffer *drawBuffer,
-                    GLframebuffer *readBuffer );
+_mesa_make_current(GLcontext *ctx, GLframebuffer *drawBuffer,
+		   GLframebuffer *readBuffer);
 
 extern GLboolean
 _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare);
@@ -151,13 +151,13 @@ _mesa_get_dispatch(GLcontext *ctx);
 /*@{*/
 
 extern void
-_mesa_record_error( GLcontext *ctx, GLenum error );
+_mesa_record_error(GLcontext *ctx, GLenum error);
 
 extern void GLAPIENTRY
-_mesa_Finish( void );
+_mesa_Finish(void);
 
 extern void GLAPIENTRY
-_mesa_Flush( void );
+_mesa_Flush(void);
 
 /*@}*/
 
@@ -210,7 +210,7 @@ do {								\
 /**
  * Macro to assert that the API call was made outside the
  * glBegin()/glEnd() pair, with return value.
- * 
+ *
  * \param ctx GL context.
  * \param retval value to return value in case the assertion fails.
  */
@@ -225,7 +225,7 @@ do {									\
 /**
  * Macro to assert that the API call was made outside the
  * glBegin()/glEnd() pair.
- * 
+ *
  * \param ctx GL context.
  */
 #define ASSERT_OUTSIDE_BEGIN_END(ctx)					\
@@ -239,7 +239,7 @@ do {									\
 /**
  * Macro to assert that the API call was made outside the
  * glBegin()/glEnd() pair and flush the vertices.
- * 
+ *
  * \param ctx GL context.
  */
 #define ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx)				\
@@ -251,7 +251,7 @@ do {									\
 /**
  * Macro to assert that the API call was made outside the
  * glBegin()/glEnd() pair and flush the vertices, with return value.
- * 
+ *
  * \param ctx GL context.
  * \param retval value to return value in case the assertion fails.
  */

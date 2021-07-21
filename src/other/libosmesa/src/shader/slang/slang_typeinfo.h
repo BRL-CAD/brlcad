@@ -41,39 +41,36 @@ struct slang_operation_;
  * is "y", 2 is "z" and 3 is "w".
  * Example: "xwz" --> { 3, { 0, 3, 2, not used } }.
  */
-typedef struct slang_swizzle_
-{
-   GLuint num_components;
-   GLuint swizzle[4];
+typedef struct slang_swizzle_ {
+    GLuint num_components;
+    GLuint swizzle[4];
 } slang_swizzle;
 
-typedef struct slang_name_space_
-{
-   struct slang_function_scope_ *funcs;
-   struct slang_struct_scope_ *structs;
-   struct slang_variable_scope_ *vars;
+typedef struct slang_name_space_ {
+    struct slang_function_scope_ *funcs;
+    struct slang_struct_scope_ *structs;
+    struct slang_variable_scope_ *vars;
 } slang_name_space;
 
 
-typedef struct slang_assemble_ctx_
-{
-   slang_atom_pool *atoms;
-   slang_name_space space;
-   struct gl_program *program;
-   slang_var_table *vartable;
-   slang_info_log *log;
-   struct slang_label_ *curFuncEndLabel;
-   struct slang_ir_node_ *CurLoop;
-   struct slang_function_ *CurFunction;
+typedef struct slang_assemble_ctx_ {
+    slang_atom_pool *atoms;
+    slang_name_space space;
+    struct gl_program *program;
+    slang_var_table *vartable;
+    slang_info_log *log;
+    struct slang_label_ *curFuncEndLabel;
+    struct slang_ir_node_ *CurLoop;
+    struct slang_function_ *CurFunction;
 } slang_assemble_ctx;
 
 
 extern struct slang_function_ *
 _slang_locate_function(const struct slang_function_scope_ *funcs,
-                       slang_atom name, struct slang_operation_ *params,
-                       GLuint num_params,
-                       const slang_name_space *space,
-                       slang_atom_pool *atoms, slang_info_log *log);
+		       slang_atom name, struct slang_operation_ *params,
+		       GLuint num_params,
+		       const slang_name_space *space,
+		       slang_atom_pool *atoms, slang_info_log *log);
 
 
 extern GLboolean
@@ -84,57 +81,55 @@ _slang_is_swizzle_mask(const slang_swizzle *swz, GLuint rows);
 
 extern GLvoid
 _slang_multiply_swizzles(slang_swizzle *, const slang_swizzle *,
-                         const slang_swizzle *);
+			 const slang_swizzle *);
 
 
 /**
  * The basic shading language types (float, vec4, mat3, etc)
  */
-typedef enum slang_type_specifier_type_
-{
-   SLANG_SPEC_VOID,
-   SLANG_SPEC_BOOL,
-   SLANG_SPEC_BVEC2,
-   SLANG_SPEC_BVEC3,
-   SLANG_SPEC_BVEC4,
-   SLANG_SPEC_INT,
-   SLANG_SPEC_IVEC2,
-   SLANG_SPEC_IVEC3,
-   SLANG_SPEC_IVEC4,
-   SLANG_SPEC_FLOAT,
-   SLANG_SPEC_VEC2,
-   SLANG_SPEC_VEC3,
-   SLANG_SPEC_VEC4,
-   SLANG_SPEC_MAT2,
-   SLANG_SPEC_MAT3,
-   SLANG_SPEC_MAT4,
-   SLANG_SPEC_MAT23,
-   SLANG_SPEC_MAT32,
-   SLANG_SPEC_MAT24,
-   SLANG_SPEC_MAT42,
-   SLANG_SPEC_MAT34,
-   SLANG_SPEC_MAT43,
-   SLANG_SPEC_SAMPLER1D,
-   SLANG_SPEC_SAMPLER2D,
-   SLANG_SPEC_SAMPLER3D,
-   SLANG_SPEC_SAMPLERCUBE,
-   SLANG_SPEC_SAMPLER2DRECT,
-   SLANG_SPEC_SAMPLER1DSHADOW,
-   SLANG_SPEC_SAMPLER2DSHADOW,
-   SLANG_SPEC_SAMPLER2DRECTSHADOW,
-   SLANG_SPEC_STRUCT,
-   SLANG_SPEC_ARRAY
+typedef enum slang_type_specifier_type_ {
+    SLANG_SPEC_VOID,
+    SLANG_SPEC_BOOL,
+    SLANG_SPEC_BVEC2,
+    SLANG_SPEC_BVEC3,
+    SLANG_SPEC_BVEC4,
+    SLANG_SPEC_INT,
+    SLANG_SPEC_IVEC2,
+    SLANG_SPEC_IVEC3,
+    SLANG_SPEC_IVEC4,
+    SLANG_SPEC_FLOAT,
+    SLANG_SPEC_VEC2,
+    SLANG_SPEC_VEC3,
+    SLANG_SPEC_VEC4,
+    SLANG_SPEC_MAT2,
+    SLANG_SPEC_MAT3,
+    SLANG_SPEC_MAT4,
+    SLANG_SPEC_MAT23,
+    SLANG_SPEC_MAT32,
+    SLANG_SPEC_MAT24,
+    SLANG_SPEC_MAT42,
+    SLANG_SPEC_MAT34,
+    SLANG_SPEC_MAT43,
+    SLANG_SPEC_SAMPLER1D,
+    SLANG_SPEC_SAMPLER2D,
+    SLANG_SPEC_SAMPLER3D,
+    SLANG_SPEC_SAMPLERCUBE,
+    SLANG_SPEC_SAMPLER2DRECT,
+    SLANG_SPEC_SAMPLER1DSHADOW,
+    SLANG_SPEC_SAMPLER2DSHADOW,
+    SLANG_SPEC_SAMPLER2DRECTSHADOW,
+    SLANG_SPEC_STRUCT,
+    SLANG_SPEC_ARRAY
 } slang_type_specifier_type;
 
 
 /**
  * Describes more sophisticated types, like structs and arrays.
  */
-typedef struct slang_type_specifier_
-{
-   slang_type_specifier_type type;
-   struct slang_struct_ *_struct;         /**< used if type == spec_struct */
-   struct slang_type_specifier_ *_array;  /**< used if type == spec_array */
+typedef struct slang_type_specifier_ {
+    slang_type_specifier_type type;
+    struct slang_struct_ *_struct;         /**< used if type == spec_struct */
+    struct slang_type_specifier_ *_array;  /**< used if type == spec_array */
 } slang_type_specifier;
 
 
@@ -149,16 +144,15 @@ slang_type_specifier_copy(slang_type_specifier *, const slang_type_specifier *);
 
 extern GLboolean
 slang_type_specifier_equal(const slang_type_specifier *,
-                           const slang_type_specifier *);
+			   const slang_type_specifier *);
 
 
-typedef struct slang_typeinfo_
-{
-   GLboolean can_be_referenced;
-   GLboolean is_swizzled;
-   slang_swizzle swz;
-   slang_type_specifier spec;
-   GLuint array_len;
+typedef struct slang_typeinfo_ {
+    GLboolean can_be_referenced;
+    GLboolean is_swizzled;
+    slang_swizzle swz;
+    slang_type_specifier spec;
+    GLuint array_len;
 } slang_typeinfo;
 
 extern GLboolean
@@ -175,14 +169,14 @@ slang_typeinfo_destruct(slang_typeinfo *);
  */
 extern GLboolean
 _slang_typeof_operation(const slang_assemble_ctx *,
-                        struct slang_operation_ *,
-                        slang_typeinfo *);
+			struct slang_operation_ *,
+			slang_typeinfo *);
 
 extern GLboolean
 _slang_typeof_operation_(struct slang_operation_ *,
-                         const slang_name_space *,
-                         slang_typeinfo *, slang_atom_pool *,
-                         slang_info_log *log);
+			 const slang_name_space *,
+			 slang_typeinfo *, slang_atom_pool *,
+			 slang_info_log *log);
 
 extern GLboolean
 _slang_type_is_matrix(slang_type_specifier_type);

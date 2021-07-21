@@ -40,43 +40,43 @@ typedef void (*trans_1f_func)(GLfloat *to,
 			      CONST void *ptr,
 			      GLuint stride,
 			      GLuint start,
-			      GLuint n );
+			      GLuint n);
 
 typedef void (*trans_1ui_func)(GLuint *to,
 			       CONST void *ptr,
 			       GLuint stride,
 			       GLuint start,
-			       GLuint n );
+			       GLuint n);
 
 typedef void (*trans_1ub_func)(GLubyte *to,
 			       CONST void *ptr,
 			       GLuint stride,
 			       GLuint start,
-			       GLuint n );
+			       GLuint n);
 
-typedef void (*trans_4ub_func)(GLubyte (*to)[4],
-                               CONST void *ptr,
-                               GLuint stride,
-                               GLuint start,
-                               GLuint n );
+typedef void (*trans_4ub_func)(GLubyte(*to)[4],
+			       CONST void *ptr,
+			       GLuint stride,
+			       GLuint start,
+			       GLuint n);
 
-typedef void (*trans_4us_func)(GLushort (*to)[4],
-                               CONST void *ptr,
-                               GLuint stride,
-                               GLuint start,
-                               GLuint n );
+typedef void (*trans_4us_func)(GLushort(*to)[4],
+			       CONST void *ptr,
+			       GLuint stride,
+			       GLuint start,
+			       GLuint n);
 
-typedef void (*trans_4f_func)(GLfloat (*to)[4],
+typedef void (*trans_4f_func)(GLfloat(*to)[4],
 			      CONST void *ptr,
 			      GLuint stride,
 			      GLuint start,
-			      GLuint n );
+			      GLuint n);
 
-typedef void (*trans_3fn_func)(GLfloat (*to)[3],
-			      CONST void *ptr,
-			      GLuint stride,
-			      GLuint start,
-			      GLuint n );
+typedef void (*trans_3fn_func)(GLfloat(*to)[3],
+			       CONST void *ptr,
+			       GLuint stride,
+			       GLuint start,
+			       GLuint n);
 
 
 
@@ -529,74 +529,74 @@ static trans_4f_func  _math_trans_4fn_tab[5][MAX_TYPES];
 #undef TRX_UI
 
 
-static void trans_4_GLubyte_4ub_raw(GLubyte (*t)[4],
+static void trans_4_GLubyte_4ub_raw(GLubyte(*t)[4],
 				    CONST void *Ptr,
 				    GLuint stride,
-				    ARGS )
+				    ARGS)
 {
-   const GLubyte *f = (GLubyte *) Ptr + SRC_START * stride;
-   GLuint i;
+    const GLubyte *f = (GLubyte *) Ptr + SRC_START * stride;
+    GLuint i;
 
-   if (((((uintptr_t) f | (uintptr_t) stride)) & 3L) == 0L) {
-      /* Aligned.
-       */
-      for (i = DST_START ; i < n ; i++, f += stride) {
-	 COPY_4UBV( t[i], f );
-      }
-   } else {
-      for (i = DST_START ; i < n ; i++, f += stride) {
-	 t[i][0] = f[0];
-	 t[i][1] = f[1];
-	 t[i][2] = f[2];
-	 t[i][3] = f[3];
-      }
-   }
+    if (((((uintptr_t) f | (uintptr_t) stride)) & 3L) == 0L) {
+	/* Aligned.
+	 */
+	for (i = DST_START ; i < n ; i++, f += stride) {
+	    COPY_4UBV(t[i], f);
+	}
+    } else {
+	for (i = DST_START ; i < n ; i++, f += stride) {
+	    t[i][0] = f[0];
+	    t[i][1] = f[1];
+	    t[i][2] = f[2];
+	    t[i][3] = f[3];
+	}
+    }
 }
 
 
 static void init_translate_raw(void)
 {
-   MEMSET( TAB(_1ui), 0, sizeof(TAB(_1ui)) );
-   MEMSET( TAB(_1ub), 0, sizeof(TAB(_1ub)) );
-   MEMSET( TAB(_3fn),  0, sizeof(TAB(_3fn)) );
-   MEMSET( TAB(_4ub), 0, sizeof(TAB(_4ub)) );
-   MEMSET( TAB(_4us), 0, sizeof(TAB(_4us)) );
-   MEMSET( TAB(_4f),  0, sizeof(TAB(_4f)) );
-   MEMSET( TAB(_4fn),  0, sizeof(TAB(_4fn)) );
+    MEMSET(TAB(_1ui), 0, sizeof(TAB(_1ui)));
+    MEMSET(TAB(_1ub), 0, sizeof(TAB(_1ub)));
+    MEMSET(TAB(_3fn),  0, sizeof(TAB(_3fn)));
+    MEMSET(TAB(_4ub), 0, sizeof(TAB(_4ub)));
+    MEMSET(TAB(_4us), 0, sizeof(TAB(_4us)));
+    MEMSET(TAB(_4f),  0, sizeof(TAB(_4f)));
+    MEMSET(TAB(_4fn),  0, sizeof(TAB(_4fn)));
 
-   init_trans_4_GLbyte_raw();
-   init_trans_3_GLbyte_raw();
-   init_trans_2_GLbyte_raw();
-   init_trans_1_GLbyte_raw();
-   init_trans_1_GLubyte_raw();
-   init_trans_3_GLubyte_raw();
-   init_trans_4_GLubyte_raw();
-   init_trans_4_GLshort_raw();
-   init_trans_3_GLshort_raw();
-   init_trans_2_GLshort_raw();
-   init_trans_1_GLshort_raw();
-   init_trans_4_GLushort_raw();
-   init_trans_3_GLushort_raw();
-   init_trans_2_GLushort_raw();
-   init_trans_1_GLushort_raw();
-   init_trans_4_GLint_raw();
-   init_trans_3_GLint_raw();
-   init_trans_2_GLint_raw();
-   init_trans_1_GLint_raw();
-   init_trans_4_GLuint_raw();
-   init_trans_3_GLuint_raw();
-   init_trans_2_GLuint_raw();
-   init_trans_1_GLuint_raw();
-   init_trans_4_GLdouble_raw();
-   init_trans_3_GLdouble_raw();
-   init_trans_2_GLdouble_raw();
-   init_trans_1_GLdouble_raw();
-   init_trans_4_GLfloat_raw();
-   init_trans_3_GLfloat_raw();
-   init_trans_2_GLfloat_raw();
-   init_trans_1_GLfloat_raw();
+    init_trans_4_GLbyte_raw();
+    init_trans_3_GLbyte_raw();
+    init_trans_2_GLbyte_raw();
+    init_trans_1_GLbyte_raw();
+    init_trans_1_GLubyte_raw();
+    init_trans_3_GLubyte_raw();
+    init_trans_4_GLubyte_raw();
+    init_trans_4_GLshort_raw();
+    init_trans_3_GLshort_raw();
+    init_trans_2_GLshort_raw();
+    init_trans_1_GLshort_raw();
+    init_trans_4_GLushort_raw();
+    init_trans_3_GLushort_raw();
+    init_trans_2_GLushort_raw();
+    init_trans_1_GLushort_raw();
+    init_trans_4_GLint_raw();
+    init_trans_3_GLint_raw();
+    init_trans_2_GLint_raw();
+    init_trans_1_GLint_raw();
+    init_trans_4_GLuint_raw();
+    init_trans_3_GLuint_raw();
+    init_trans_2_GLuint_raw();
+    init_trans_1_GLuint_raw();
+    init_trans_4_GLdouble_raw();
+    init_trans_3_GLdouble_raw();
+    init_trans_2_GLdouble_raw();
+    init_trans_1_GLdouble_raw();
+    init_trans_4_GLfloat_raw();
+    init_trans_3_GLfloat_raw();
+    init_trans_2_GLfloat_raw();
+    init_trans_1_GLfloat_raw();
 
-   TAB(_4ub)[4][TYPE_IDX(GL_UNSIGNED_BYTE)] = trans_4_GLubyte_4ub_raw;
+    TAB(_4ub)[4][TYPE_IDX(GL_UNSIGNED_BYTE)] = trans_4_GLubyte_4ub_raw;
 }
 
 
@@ -615,9 +615,9 @@ static void init_translate_raw(void)
 
 
 
-void _math_init_translate( void )
+void _math_init_translate(void)
 {
-   init_translate_raw();
+    init_translate_raw();
 }
 
 
@@ -629,9 +629,9 @@ void _math_trans_1f(GLfloat *to,
 		    GLuint stride,
 		    GLenum type,
 		    GLuint start,
-		    GLuint n )
+		    GLuint n)
 {
-   _math_trans_1f_tab[TYPE_IDX(type)]( to, ptr, stride, start, n );
+    _math_trans_1f_tab[TYPE_IDX(type)](to, ptr, stride, start, n);
 }
 
 /**
@@ -642,9 +642,9 @@ void _math_trans_1ui(GLuint *to,
 		     GLuint stride,
 		     GLenum type,
 		     GLuint start,
-		     GLuint n )
+		     GLuint n)
 {
-   _math_trans_1ui_tab[TYPE_IDX(type)]( to, ptr, stride, start, n );
+    _math_trans_1ui_tab[TYPE_IDX(type)](to, ptr, stride, start, n);
 }
 
 /**
@@ -655,97 +655,97 @@ void _math_trans_1ub(GLubyte *to,
 		     GLuint stride,
 		     GLenum type,
 		     GLuint start,
-		     GLuint n )
+		     GLuint n)
 {
-   _math_trans_1ub_tab[TYPE_IDX(type)]( to, ptr, stride, start, n );
+    _math_trans_1ub_tab[TYPE_IDX(type)](to, ptr, stride, start, n);
 }
 
 
 /**
  * Translate vector of values to GLubyte [4].
  */
-void _math_trans_4ub(GLubyte (*to)[4],
+void _math_trans_4ub(GLubyte(*to)[4],
 		     CONST void *ptr,
 		     GLuint stride,
 		     GLenum type,
 		     GLuint size,
 		     GLuint start,
-		     GLuint n )
+		     GLuint n)
 {
-   _math_trans_4ub_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
+    _math_trans_4ub_tab[size][TYPE_IDX(type)](to, ptr, stride, start, n);
 }
 
 /**
  * Translate vector of values to GLchan [4].
  */
-void _math_trans_4chan( GLchan (*to)[4],
-			CONST void *ptr,
-			GLuint stride,
-			GLenum type,
-			GLuint size,
-			GLuint start,
-			GLuint n )
+void _math_trans_4chan(GLchan(*to)[4],
+		       CONST void *ptr,
+		       GLuint stride,
+		       GLenum type,
+		       GLuint size,
+		       GLuint start,
+		       GLuint n)
 {
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
-   _math_trans_4ub( to, ptr, stride, type, size, start, n );
+    _math_trans_4ub(to, ptr, stride, type, size, start, n);
 #elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   _math_trans_4us( to, ptr, stride, type, size, start, n );
+    _math_trans_4us(to, ptr, stride, type, size, start, n);
 #elif CHAN_TYPE == GL_FLOAT
-   _math_trans_4fn( to, ptr, stride, type, size, start, n );
+    _math_trans_4fn(to, ptr, stride, type, size, start, n);
 #endif
 }
 
 /**
  * Translate vector of values to GLushort [4].
  */
-void _math_trans_4us(GLushort (*to)[4],
+void _math_trans_4us(GLushort(*to)[4],
 		     CONST void *ptr,
 		     GLuint stride,
 		     GLenum type,
 		     GLuint size,
 		     GLuint start,
-		     GLuint n )
+		     GLuint n)
 {
-   _math_trans_4us_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
+    _math_trans_4us_tab[size][TYPE_IDX(type)](to, ptr, stride, start, n);
 }
 
 /**
  * Translate vector of values to GLfloat [4].
  */
-void _math_trans_4f(GLfloat (*to)[4],
+void _math_trans_4f(GLfloat(*to)[4],
 		    CONST void *ptr,
 		    GLuint stride,
 		    GLenum type,
 		    GLuint size,
 		    GLuint start,
-		    GLuint n )
+		    GLuint n)
 {
-   _math_trans_4f_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
+    _math_trans_4f_tab[size][TYPE_IDX(type)](to, ptr, stride, start, n);
 }
 
 /**
  * Translate vector of values to GLfloat[4], normalized to [-1, 1].
  */
-void _math_trans_4fn(GLfloat (*to)[4],
-		    CONST void *ptr,
-		    GLuint stride,
-		    GLenum type,
-		    GLuint size,
-		    GLuint start,
-		    GLuint n )
+void _math_trans_4fn(GLfloat(*to)[4],
+		     CONST void *ptr,
+		     GLuint stride,
+		     GLenum type,
+		     GLuint size,
+		     GLuint start,
+		     GLuint n)
 {
-   _math_trans_4fn_tab[size][TYPE_IDX(type)]( to, ptr, stride, start, n );
+    _math_trans_4fn_tab[size][TYPE_IDX(type)](to, ptr, stride, start, n);
 }
 
 /**
  * Translate vector of values to GLfloat[3], normalized to [-1, 1].
  */
-void _math_trans_3fn(GLfloat (*to)[3],
-		    CONST void *ptr,
-		    GLuint stride,
-		    GLenum type,
-		    GLuint start,
-		    GLuint n )
+void _math_trans_3fn(GLfloat(*to)[3],
+		     CONST void *ptr,
+		     GLuint stride,
+		     GLenum type,
+		     GLuint start,
+		     GLuint n)
 {
-   _math_trans_3fn_tab[TYPE_IDX(type)]( to, ptr, stride, start, n );
+    _math_trans_3fn_tab[TYPE_IDX(type)](to, ptr, stride, start, n);
 }

@@ -73,8 +73,8 @@ extern GLuint	_ASMAPI _mesa_x86_cpuid_edx(GLuint op);
  * kernels provide full SSE support on all processors that expose SSE via
  * the CPUID mechanism.
  */
-extern void _mesa_test_os_sse_support( void );
-extern void _mesa_test_os_sse_exception_support( void );
+extern void _mesa_test_os_sse_support(void);
+extern void _mesa_test_os_sse_exception_support(void);
 
 #if defined(WIN32)
 #ifndef STATUS_FLOAT_MULTIPLE_TRAPS
@@ -82,232 +82,231 @@ extern void _mesa_test_os_sse_exception_support( void );
 #endif
 static LONG WINAPI ExceptionFilter(LPEXCEPTION_POINTERS exp)
 {
-   PEXCEPTION_RECORD rec = exp->ExceptionRecord;
-   PCONTEXT ctx = exp->ContextRecord;
+    PEXCEPTION_RECORD rec = exp->ExceptionRecord;
+    PCONTEXT ctx = exp->ContextRecord;
 
-   if ( rec->ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION ) {
-      _mesa_debug(NULL, "EXCEPTION_ILLEGAL_INSTRUCTION\n" );
-      _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
-   } else if ( rec->ExceptionCode == STATUS_FLOAT_MULTIPLE_TRAPS ) {
-      _mesa_debug(NULL, "STATUS_FLOAT_MULTIPLE_TRAPS\n");
-      /* Windows seems to clear the exception flag itself, we just have to increment Eip */
-   } else {
-      _mesa_debug(NULL, "UNEXPECTED EXCEPTION (0x%08x), terminating!\n" );
-      return EXCEPTION_EXECUTE_HANDLER;
-   }
+    if (rec->ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION) {
+	_mesa_debug(NULL, "EXCEPTION_ILLEGAL_INSTRUCTION\n");
+	_mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
+    } else if (rec->ExceptionCode == STATUS_FLOAT_MULTIPLE_TRAPS) {
+	_mesa_debug(NULL, "STATUS_FLOAT_MULTIPLE_TRAPS\n");
+	/* Windows seems to clear the exception flag itself, we just have to increment Eip */
+    } else {
+	_mesa_debug(NULL, "UNEXPECTED EXCEPTION (0x%08x), terminating!\n");
+	return EXCEPTION_EXECUTE_HANDLER;
+    }
 
-   if ( (ctx->ContextFlags & CONTEXT_CONTROL) != CONTEXT_CONTROL ) {
-      _mesa_debug(NULL, "Context does not contain control registers, terminating!\n");
-      return EXCEPTION_EXECUTE_HANDLER;
-   }
-   ctx->Eip += 3;
+    if ((ctx->ContextFlags & CONTEXT_CONTROL) != CONTEXT_CONTROL) {
+	_mesa_debug(NULL, "Context does not contain control registers, terminating!\n");
+	return EXCEPTION_EXECUTE_HANDLER;
+    }
+    ctx->Eip += 3;
 
-   return EXCEPTION_CONTINUE_EXECUTION;
+    return EXCEPTION_CONTINUE_EXECUTION;
 }
 #endif /* WIN32 */
 
 
-static void check_os_sse_support( void )
+static void check_os_sse_support(void)
 {
 #if defined(__FreeBSD__) || defined(__DragonFly__)
-   {
-      int ret, enabled;
-      unsigned int len;
-      len = sizeof(enabled);
-      ret = sysctlbyname("hw.instruction_sse", &enabled, &len, NULL, 0);
-      if (ret || !enabled)
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
-   }
+    {
+	int ret, enabled;
+	unsigned int len;
+	len = sizeof(enabled);
+	ret = sysctlbyname("hw.instruction_sse", &enabled, &len, NULL, 0);
+	if (ret || !enabled)
+	    _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
+    }
 #elif defined (__NetBSD__)
-   {
-      int ret, enabled;
-      size_t len = sizeof(enabled);
-      ret = sysctlbyname("machdep.sse", &enabled, &len, (void *)NULL, 0);
-      if (ret || !enabled)
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
-   }
+    {
+	int ret, enabled;
+	size_t len = sizeof(enabled);
+	ret = sysctlbyname("machdep.sse", &enabled, &len, (void *)NULL, 0);
+	if (ret || !enabled)
+	    _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
+    }
 #elif defined(__OpenBSD__)
-   {
-      int mib[2];
-      int ret, enabled;
-      size_t len = sizeof(enabled);
+    {
+	int mib[2];
+	int ret, enabled;
+	size_t len = sizeof(enabled);
 
-      mib[0] = CTL_MACHDEP;
-      mib[1] = CPU_SSE;
+	mib[0] = CTL_MACHDEP;
+	mib[1] = CPU_SSE;
 
-      ret = sysctl(mib, 2, &enabled, &len, NULL, 0);
-      if (ret || !enabled)
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
-   }
+	ret = sysctl(mib, 2, &enabled, &len, NULL, 0);
+	if (ret || !enabled)
+	    _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
+    }
 #elif defined(WIN32)
-   LPTOP_LEVEL_EXCEPTION_FILTER oldFilter;
-   
-   /* Install our ExceptionFilter */
-   oldFilter = SetUnhandledExceptionFilter( ExceptionFilter );
-   
-   if ( cpu_has_xmm ) {
-      _mesa_debug(NULL, "Testing OS support for SSE...\n");
+    LPTOP_LEVEL_EXCEPTION_FILTER oldFilter;
 
-      _mesa_test_os_sse_support();
+    /* Install our ExceptionFilter */
+    oldFilter = SetUnhandledExceptionFilter(ExceptionFilter);
 
-      if ( cpu_has_xmm ) {
-	 _mesa_debug(NULL, "Yes.\n");
-      } else {
-	 _mesa_debug(NULL, "No!\n");
-      }
-   }
+    if (cpu_has_xmm) {
+	_mesa_debug(NULL, "Testing OS support for SSE...\n");
 
-   if ( cpu_has_xmm ) {
-      _mesa_debug(NULL, "Testing OS support for SSE unmasked exceptions...\n");
+	_mesa_test_os_sse_support();
 
-      _mesa_test_os_sse_exception_support();
+	if (cpu_has_xmm) {
+	    _mesa_debug(NULL, "Yes.\n");
+	} else {
+	    _mesa_debug(NULL, "No!\n");
+	}
+    }
 
-      if ( cpu_has_xmm ) {
-	 _mesa_debug(NULL, "Yes.\n");
-      } else {
-	 _mesa_debug(NULL, "No!\n");
-      }
-   }
+    if (cpu_has_xmm) {
+	_mesa_debug(NULL, "Testing OS support for SSE unmasked exceptions...\n");
 
-   /* Restore previous exception filter */
-   SetUnhandledExceptionFilter( oldFilter );
+	_mesa_test_os_sse_exception_support();
 
-   if ( cpu_has_xmm ) {
-      _mesa_debug(NULL, "Tests of OS support for SSE passed.\n");
-   } else {
-      _mesa_debug(NULL, "Tests of OS support for SSE failed!\n");
-   }
+	if (cpu_has_xmm) {
+	    _mesa_debug(NULL, "Yes.\n");
+	} else {
+	    _mesa_debug(NULL, "No!\n");
+	}
+    }
+
+    /* Restore previous exception filter */
+    SetUnhandledExceptionFilter(oldFilter);
+
+    if (cpu_has_xmm) {
+	_mesa_debug(NULL, "Tests of OS support for SSE passed.\n");
+    } else {
+	_mesa_debug(NULL, "Tests of OS support for SSE failed!\n");
+    }
 #else
-   /* Do nothing on other platforms for now.
-    */
-   _mesa_debug(NULL, "Not testing OS support for SSE, leaving enabled.\n");
+    /* Do nothing on other platforms for now.
+     */
+    _mesa_debug(NULL, "Not testing OS support for SSE, leaving enabled.\n");
 #endif /* __FreeBSD__ */
 }
 
 #endif /* USE_SSE_ASM */
 
 
-void _mesa_init_all_x86_transform_asm( void )
+void _mesa_init_all_x86_transform_asm(void)
 {
 #ifdef USE_X86_ASM
-   _mesa_x86_cpu_features = 0;
+    _mesa_x86_cpu_features = 0;
 
-   if (!_mesa_x86_has_cpuid()) {
-       _mesa_debug(NULL, "CPUID not detected\n");
-   }
-   else {
-       GLuint cpu_features;
-       GLuint cpu_ext_features;
-       GLuint cpu_ext_info;
-       char cpu_vendor[13];
-       GLuint result;
+    if (!_mesa_x86_has_cpuid()) {
+	_mesa_debug(NULL, "CPUID not detected\n");
+    } else {
+	GLuint cpu_features;
+	GLuint cpu_ext_features;
+	GLuint cpu_ext_info;
+	char cpu_vendor[13];
+	GLuint result;
 
-       /* get vendor name */
-       _mesa_x86_cpuid(0, &result, (GLuint *)(cpu_vendor + 0), (GLuint *)(cpu_vendor + 8), (GLuint *)(cpu_vendor + 4));
-       cpu_vendor[12] = '\0';
+	/* get vendor name */
+	_mesa_x86_cpuid(0, &result, (GLuint *)(cpu_vendor + 0), (GLuint *)(cpu_vendor + 8), (GLuint *)(cpu_vendor + 4));
+	cpu_vendor[12] = '\0';
 
-       _mesa_debug(NULL, "CPU vendor: %s\n", cpu_vendor);
+	_mesa_debug(NULL, "CPU vendor: %s\n", cpu_vendor);
 
-       /* get cpu features */
-       cpu_features = _mesa_x86_cpuid_edx(1);
+	/* get cpu features */
+	cpu_features = _mesa_x86_cpuid_edx(1);
 
-       if (cpu_features & X86_CPU_FPU)
-	   _mesa_x86_cpu_features |= X86_FEATURE_FPU;
-       if (cpu_features & X86_CPU_CMOV)
-	   _mesa_x86_cpu_features |= X86_FEATURE_CMOV;
+	if (cpu_features & X86_CPU_FPU)
+	    _mesa_x86_cpu_features |= X86_FEATURE_FPU;
+	if (cpu_features & X86_CPU_CMOV)
+	    _mesa_x86_cpu_features |= X86_FEATURE_CMOV;
 
 #ifdef USE_MMX_ASM
-       if (cpu_features & X86_CPU_MMX)
-	   _mesa_x86_cpu_features |= X86_FEATURE_MMX;
+	if (cpu_features & X86_CPU_MMX)
+	    _mesa_x86_cpu_features |= X86_FEATURE_MMX;
 #endif
 
 #ifdef USE_SSE_ASM
-       if (cpu_features & X86_CPU_XMM)
-	   _mesa_x86_cpu_features |= X86_FEATURE_XMM;
-       if (cpu_features & X86_CPU_XMM2)
-	   _mesa_x86_cpu_features |= X86_FEATURE_XMM2;
+	if (cpu_features & X86_CPU_XMM)
+	    _mesa_x86_cpu_features |= X86_FEATURE_XMM;
+	if (cpu_features & X86_CPU_XMM2)
+	    _mesa_x86_cpu_features |= X86_FEATURE_XMM2;
 #endif
 
-       /* query extended cpu features */
-       if ((cpu_ext_info = _mesa_x86_cpuid_eax(0x80000000)) > 0x80000000) {
-	   if (cpu_ext_info >= 0x80000001) {
+	/* query extended cpu features */
+	if ((cpu_ext_info = _mesa_x86_cpuid_eax(0x80000000)) > 0x80000000) {
+	    if (cpu_ext_info >= 0x80000001) {
 
-	       cpu_ext_features = _mesa_x86_cpuid_edx(0x80000001);
+		cpu_ext_features = _mesa_x86_cpuid_edx(0x80000001);
 
-	       if (cpu_features & X86_CPU_MMX) {
+		if (cpu_features & X86_CPU_MMX) {
 
 #ifdef USE_3DNOW_ASM
-		   if (cpu_ext_features & X86_CPUEXT_3DNOW)
-		       _mesa_x86_cpu_features |= X86_FEATURE_3DNOW;
-		   if (cpu_ext_features & X86_CPUEXT_3DNOW_EXT)
-		       _mesa_x86_cpu_features |= X86_FEATURE_3DNOWEXT;
+		    if (cpu_ext_features & X86_CPUEXT_3DNOW)
+			_mesa_x86_cpu_features |= X86_FEATURE_3DNOW;
+		    if (cpu_ext_features & X86_CPUEXT_3DNOW_EXT)
+			_mesa_x86_cpu_features |= X86_FEATURE_3DNOWEXT;
 #endif
 
 #ifdef USE_MMX_ASM
-		   if (cpu_ext_features & X86_CPUEXT_MMX_EXT)
-		       _mesa_x86_cpu_features |= X86_FEATURE_MMXEXT;
+		    if (cpu_ext_features & X86_CPUEXT_MMX_EXT)
+			_mesa_x86_cpu_features |= X86_FEATURE_MMXEXT;
 #endif
-	       }
-	   }
+		}
+	    }
 
-	   /* query cpu name */
-	   if (cpu_ext_info >= 0x80000002) {
-	       GLuint ofs;
-	       char cpu_name[49];
-	       for (ofs = 0; ofs < 3; ofs++)
-		   _mesa_x86_cpuid(0x80000002+ofs, (GLuint *)(cpu_name + (16*ofs)+0), (GLuint *)(cpu_name + (16*ofs)+4), (GLuint *)(cpu_name + (16*ofs)+8), (GLuint *)(cpu_name + (16*ofs)+12));
-	       cpu_name[48] = '\0'; /* the name should be NULL terminated, but just to be sure */
+	    /* query cpu name */
+	    if (cpu_ext_info >= 0x80000002) {
+		GLuint ofs;
+		char cpu_name[49];
+		for (ofs = 0; ofs < 3; ofs++)
+		    _mesa_x86_cpuid(0x80000002+ofs, (GLuint *)(cpu_name + (16*ofs)+0), (GLuint *)(cpu_name + (16*ofs)+4), (GLuint *)(cpu_name + (16*ofs)+8), (GLuint *)(cpu_name + (16*ofs)+12));
+		cpu_name[48] = '\0'; /* the name should be NULL terminated, but just to be sure */
 
-	       _mesa_debug(NULL, "CPU name: %s\n", cpu_name);
-	   }
-       }
+		_mesa_debug(NULL, "CPU name: %s\n", cpu_name);
+	    }
+	}
 
-   }
-   
-   if ( _mesa_getenv( "MESA_NO_ASM" ) ) {
-      _mesa_x86_cpu_features = 0;
-   }
+    }
 
-   if ( _mesa_x86_cpu_features ) {
-      _mesa_init_x86_transform_asm();
-   }
+    if (_mesa_getenv("MESA_NO_ASM")) {
+	_mesa_x86_cpu_features = 0;
+    }
+
+    if (_mesa_x86_cpu_features) {
+	_mesa_init_x86_transform_asm();
+    }
 
 #ifdef USE_MMX_ASM
-   if ( cpu_has_mmx ) {
-      if ( _mesa_getenv( "MESA_NO_MMX" ) == 0 ) {
-         _mesa_debug(NULL, "MMX cpu detected.\n");
-      } else {
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_MMX);
-      }
-   }
+    if (cpu_has_mmx) {
+	if (_mesa_getenv("MESA_NO_MMX") == 0) {
+	    _mesa_debug(NULL, "MMX cpu detected.\n");
+	} else {
+	    _mesa_x86_cpu_features &= ~(X86_FEATURE_MMX);
+	}
+    }
 #endif
 
 #ifdef USE_3DNOW_ASM
-   if ( cpu_has_3dnow ) {
-      if ( _mesa_getenv( "MESA_NO_3DNOW" ) == 0 ) {
-         _mesa_debug(NULL, "3DNow! cpu detected.\n");
-         _mesa_init_3dnow_transform_asm();
-      } else {
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
-      }
-   }
+    if (cpu_has_3dnow) {
+	if (_mesa_getenv("MESA_NO_3DNOW") == 0) {
+	    _mesa_debug(NULL, "3DNow! cpu detected.\n");
+	    _mesa_init_3dnow_transform_asm();
+	} else {
+	    _mesa_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
+	}
+    }
 #endif
 
 #ifdef USE_SSE_ASM
-   if ( cpu_has_xmm ) {
-      if ( _mesa_getenv( "MESA_NO_SSE" ) == 0 ) {
-         _mesa_debug(NULL, "SSE cpu detected.\n");
-         if ( _mesa_getenv( "MESA_FORCE_SSE" ) == 0 ) {
-            check_os_sse_support();
-         }
-         if ( cpu_has_xmm ) {
-            _mesa_init_sse_transform_asm();
-         }
-      } else {
-         _mesa_debug(NULL, "SSE cpu detected, but switched off by user.\n");
-         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
-      }
-   }
+    if (cpu_has_xmm) {
+	if (_mesa_getenv("MESA_NO_SSE") == 0) {
+	    _mesa_debug(NULL, "SSE cpu detected.\n");
+	    if (_mesa_getenv("MESA_FORCE_SSE") == 0) {
+		check_os_sse_support();
+	    }
+	    if (cpu_has_xmm) {
+		_mesa_init_sse_transform_asm();
+	    }
+	} else {
+	    _mesa_debug(NULL, "SSE cpu detected, but switched off by user.\n");
+	    _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
+	}
+    }
 #endif
 #endif
 }

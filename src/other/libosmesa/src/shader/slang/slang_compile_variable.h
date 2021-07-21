@@ -30,99 +30,95 @@ extern "C" {
 #endif
 
 
-typedef enum slang_type_qualifier_
-{
-   SLANG_QUAL_NONE,
-   SLANG_QUAL_CONST,
-   SLANG_QUAL_ATTRIBUTE,
-   SLANG_QUAL_VARYING,
-   SLANG_QUAL_UNIFORM,
-   SLANG_QUAL_OUT,
-   SLANG_QUAL_INOUT,
-   SLANG_QUAL_FIXEDOUTPUT,      /* internal */
-   SLANG_QUAL_FIXEDINPUT        /* internal */
-} slang_type_qualifier;
+    typedef enum slang_type_qualifier_ {
+	SLANG_QUAL_NONE,
+	SLANG_QUAL_CONST,
+	SLANG_QUAL_ATTRIBUTE,
+	SLANG_QUAL_VARYING,
+	SLANG_QUAL_UNIFORM,
+	SLANG_QUAL_OUT,
+	SLANG_QUAL_INOUT,
+	SLANG_QUAL_FIXEDOUTPUT,      /* internal */
+	SLANG_QUAL_FIXEDINPUT        /* internal */
+    } slang_type_qualifier;
 
-extern slang_type_specifier_type
-slang_type_specifier_type_from_string(const char *);
+    extern slang_type_specifier_type
+    slang_type_specifier_type_from_string(const char *);
 
-extern const char *
-slang_type_specifier_type_to_string(slang_type_specifier_type);
-
+    extern const char *
+    slang_type_specifier_type_to_string(slang_type_specifier_type);
 
 
-typedef struct slang_fully_specified_type_
-{
-   slang_type_qualifier qualifier;
-   slang_type_specifier specifier;
-} slang_fully_specified_type;
 
-extern int
-slang_fully_specified_type_construct(slang_fully_specified_type *);
+    typedef struct slang_fully_specified_type_ {
+	slang_type_qualifier qualifier;
+	slang_type_specifier specifier;
+    } slang_fully_specified_type;
 
-extern void
-slang_fully_specified_type_destruct(slang_fully_specified_type *);
+    extern int
+    slang_fully_specified_type_construct(slang_fully_specified_type *);
 
-extern int
-slang_fully_specified_type_copy(slang_fully_specified_type *,
-				const slang_fully_specified_type *);
+    extern void
+    slang_fully_specified_type_destruct(slang_fully_specified_type *);
 
-
-/**
- * A shading language program variable.
- */
-typedef struct slang_variable_
-{
-   slang_fully_specified_type type; /**< Variable's data type */
-   slang_atom a_name;               /**< The variable's name (char *) */
-   GLuint array_len;                /**< only if type == SLANG_SPEC_ARRAy */
-   struct slang_operation_ *initializer; /**< Optional initializer code */
-   GLuint address;                  /**< Storage location */
-   GLuint size;                     /**< Variable's size in bytes */
-   GLboolean isTemp;                /**< a named temporary (__resultTmp) */
-   void *aux;                       /**< Used during code gen */
-} slang_variable;
+    extern int
+    slang_fully_specified_type_copy(slang_fully_specified_type *,
+				    const slang_fully_specified_type *);
 
 
-/**
- * Basically a list of variables, with a pointer to the parent scope.
- */
-typedef struct slang_variable_scope_
-{
-   slang_variable **variables;  /**< Array [num_variables] of ptrs to vars */
-   GLuint num_variables;
-   struct slang_variable_scope_ *outer_scope;
-} slang_variable_scope;
+    /**
+     * A shading language program variable.
+     */
+    typedef struct slang_variable_ {
+	slang_fully_specified_type type; /**< Variable's data type */
+	slang_atom a_name;               /**< The variable's name (char *) */
+	GLuint array_len;                /**< only if type == SLANG_SPEC_ARRAy */
+	struct slang_operation_ *initializer; /**< Optional initializer code */
+	GLuint address;                  /**< Storage location */
+	GLuint size;                     /**< Variable's size in bytes */
+	GLboolean isTemp;                /**< a named temporary (__resultTmp) */
+	void *aux;                       /**< Used during code gen */
+    } slang_variable;
 
 
-extern slang_variable_scope *
-_slang_variable_scope_new(slang_variable_scope *parent);
+    /**
+     * Basically a list of variables, with a pointer to the parent scope.
+     */
+    typedef struct slang_variable_scope_ {
+	slang_variable **variables;  /**< Array [num_variables] of ptrs to vars */
+	GLuint num_variables;
+	struct slang_variable_scope_ *outer_scope;
+    } slang_variable_scope;
 
-extern GLvoid
-_slang_variable_scope_ctr(slang_variable_scope *);
 
-extern void
-slang_variable_scope_destruct(slang_variable_scope *);
+    extern slang_variable_scope *
+    _slang_variable_scope_new(slang_variable_scope *parent);
 
-extern int
-slang_variable_scope_copy(slang_variable_scope *,
-                          const slang_variable_scope *);
+    extern GLvoid
+    _slang_variable_scope_ctr(slang_variable_scope *);
 
-extern slang_variable *
-slang_variable_scope_grow(slang_variable_scope *);
+    extern void
+    slang_variable_scope_destruct(slang_variable_scope *);
 
-extern int
-slang_variable_construct(slang_variable *);
+    extern int
+    slang_variable_scope_copy(slang_variable_scope *,
+			      const slang_variable_scope *);
 
-extern void
-slang_variable_destruct(slang_variable *);
+    extern slang_variable *
+    slang_variable_scope_grow(slang_variable_scope *);
 
-extern int
-slang_variable_copy(slang_variable *, const slang_variable *);
+    extern int
+    slang_variable_construct(slang_variable *);
 
-extern slang_variable *
-_slang_locate_variable(const slang_variable_scope *, const slang_atom a_name,
-                       GLboolean all);
+    extern void
+    slang_variable_destruct(slang_variable *);
+
+    extern int
+    slang_variable_copy(slang_variable *, const slang_variable *);
+
+    extern slang_variable *
+    _slang_locate_variable(const slang_variable_scope *, const slang_atom a_name,
+			   GLboolean all);
 
 
 #ifdef __cplusplus

@@ -57,26 +57,25 @@
 /**
  * OSMesa rendering context, derived from core Mesa GLcontext.
  */
-struct osmesa_context
-{
-   GLcontext mesa;		/*< Base class - this must be first */
-   GLvisual *gl_visual;		/*< Describes the buffers */
-   struct gl_renderbuffer *rb;  /*< The user's colorbuffer */
-   GLframebuffer *gl_buffer;	/*< The framebuffer, containing user's rb */
-   GLenum format;		/*< User-specified context format */
-   GLint userRowLength;		/*< user-specified number of pixels per row */
-   GLint rInd, gInd, bInd, aInd;/*< index offsets for RGBA formats */
-   GLvoid *rowaddr[MAX_HEIGHT];	/*< address of first pixel in each image row */
-   GLboolean yup;		/*< TRUE  -> Y increases upward */
-				/*< FALSE -> Y increases downward */
+struct osmesa_context {
+    GLcontext mesa;		/*< Base class - this must be first */
+    GLvisual *gl_visual;		/*< Describes the buffers */
+    struct gl_renderbuffer *rb;  /*< The user's colorbuffer */
+    GLframebuffer *gl_buffer;	/*< The framebuffer, containing user's rb */
+    GLenum format;		/*< User-specified context format */
+    GLint userRowLength;		/*< user-specified number of pixels per row */
+    GLint rInd, gInd, bInd, aInd;/*< index offsets for RGBA formats */
+    GLvoid *rowaddr[MAX_HEIGHT];	/*< address of first pixel in each image row */
+    GLboolean yup;		/*< TRUE  -> Y increases upward */
+    /*< FALSE -> Y increases downward */
 };
 
 
 static INLINE OSMesaContext
 OSMESA_CONTEXT(GLcontext *ctx)
 {
-   /* Just cast, since we're using structure containment */
-   return (OSMesaContext) ctx;
+    /* Just cast, since we're using structure containment */
+    return (OSMesaContext) ctx;
 }
 
 
@@ -86,32 +85,32 @@ OSMESA_CONTEXT(GLcontext *ctx)
 
 
 static const GLubyte *
-get_string( GLcontext *ctx, GLenum name )
+get_string(GLcontext *ctx, GLenum name)
 {
-   (void) ctx;
-   switch (name) {
-      case GL_RENDERER:
+    (void) ctx;
+    switch (name) {
+	case GL_RENDERER:
 #if CHAN_BITS == 32
-         return (const GLubyte *) "Mesa OffScreen32";
+	    return (const GLubyte *) "Mesa OffScreen32";
 #elif CHAN_BITS == 16
-         return (const GLubyte *) "Mesa OffScreen16";
+	    return (const GLubyte *) "Mesa OffScreen16";
 #else
-         return (const GLubyte *) "Mesa OffScreen";
+	    return (const GLubyte *) "Mesa OffScreen";
 #endif
-      default:
-         return NULL;
-   }
+	default:
+	    return NULL;
+    }
 }
 
 
 static void
-osmesa_update_state( GLcontext *ctx, GLuint new_state )
+osmesa_update_state(GLcontext *ctx, GLuint new_state)
 {
-   /* easy - just propogate */
-   _swrast_InvalidateState( ctx, new_state );
-   _swsetup_InvalidateState( ctx, new_state );
-   _tnl_InvalidateState( ctx, new_state );
-   _vbo_InvalidateState( ctx, new_state );
+    /* easy - just propogate */
+    _swrast_InvalidateState(ctx, new_state);
+    _swsetup_InvalidateState(ctx, new_state);
+    _tnl_InvalidateState(ctx, new_state);
+    _vbo_InvalidateState(ctx, new_state);
 }
 
 
@@ -573,37 +572,37 @@ do {							\
  * function.  Otherwise, return NULL.
  */
 static swrast_line_func
-osmesa_choose_line_function( GLcontext *ctx )
+osmesa_choose_line_function(GLcontext *ctx)
 {
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   const SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (osmesa->rb->DataType != GL_UNSIGNED_BYTE)
-      return NULL;
+    if (osmesa->rb->DataType != GL_UNSIGNED_BYTE)
+	return NULL;
 
-   if (ctx->RenderMode != GL_RENDER)      return NULL;
-   if (ctx->Line.SmoothFlag)              return NULL;
-   if (ctx->Texture._EnabledUnits)        return NULL;
-   if (ctx->Light.ShadeModel != GL_FLAT)  return NULL;
-   if (ctx->Line.Width != 1.0F)           return NULL;
-   if (ctx->Line.StippleFlag)             return NULL;
-   if (ctx->Line.SmoothFlag)              return NULL;
-   if (osmesa->format != OSMESA_RGBA &&
-       osmesa->format != OSMESA_BGRA &&
-       osmesa->format != OSMESA_ARGB)     return NULL;
+    if (ctx->RenderMode != GL_RENDER)      return NULL;
+    if (ctx->Line.SmoothFlag)              return NULL;
+    if (ctx->Texture._EnabledUnits)        return NULL;
+    if (ctx->Light.ShadeModel != GL_FLAT)  return NULL;
+    if (ctx->Line.Width != 1.0F)           return NULL;
+    if (ctx->Line.StippleFlag)             return NULL;
+    if (ctx->Line.SmoothFlag)              return NULL;
+    if (osmesa->format != OSMESA_RGBA &&
+	osmesa->format != OSMESA_BGRA &&
+	osmesa->format != OSMESA_ARGB)     return NULL;
 
-   if (swrast->_RasterMask==DEPTH_BIT
-       && ctx->Depth.Func==GL_LESS
-       && ctx->Depth.Mask==GL_TRUE
-       && ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS) {
-      return (swrast_line_func) flat_rgba_z_line;
-   }
+    if (swrast->_RasterMask==DEPTH_BIT
+	&& ctx->Depth.Func==GL_LESS
+	&& ctx->Depth.Mask==GL_TRUE
+	&& ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS) {
+	return (swrast_line_func) flat_rgba_z_line;
+    }
 
-   if (swrast->_RasterMask == 0) {
-      return (swrast_line_func) flat_rgba_line;
-   }
+    if (swrast->_RasterMask == 0) {
+	return (swrast_line_func) flat_rgba_line;
+    }
 
-   return (swrast_line_func) NULL;
+    return (swrast_line_func) NULL;
 }
 
 
@@ -684,37 +683,36 @@ osmesa_choose_line_function( GLcontext *ctx )
  * Return pointer to an optimized triangle function if possible.
  */
 static swrast_tri_func
-osmesa_choose_triangle_function( GLcontext *ctx )
+osmesa_choose_triangle_function(GLcontext *ctx)
 {
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   const SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (osmesa->rb->DataType != GL_UNSIGNED_BYTE)
-      return (swrast_tri_func) NULL;
+    if (osmesa->rb->DataType != GL_UNSIGNED_BYTE)
+	return (swrast_tri_func) NULL;
 
-   if (ctx->RenderMode != GL_RENDER)    return (swrast_tri_func) NULL;
-   if (ctx->Polygon.SmoothFlag)         return (swrast_tri_func) NULL;
-   if (ctx->Polygon.StippleFlag)        return (swrast_tri_func) NULL;
-   if (ctx->Texture._EnabledUnits)      return (swrast_tri_func) NULL;
-   if (osmesa->format != OSMESA_RGBA &&
-       osmesa->format != OSMESA_BGRA &&
-       osmesa->format != OSMESA_ARGB)   return (swrast_tri_func) NULL;
-   if (ctx->Polygon.CullFlag && 
-       ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
-                                        return (swrast_tri_func) NULL;
+    if (ctx->RenderMode != GL_RENDER)    return (swrast_tri_func) NULL;
+    if (ctx->Polygon.SmoothFlag)         return (swrast_tri_func) NULL;
+    if (ctx->Polygon.StippleFlag)        return (swrast_tri_func) NULL;
+    if (ctx->Texture._EnabledUnits)      return (swrast_tri_func) NULL;
+    if (osmesa->format != OSMESA_RGBA &&
+	osmesa->format != OSMESA_BGRA &&
+	osmesa->format != OSMESA_ARGB)   return (swrast_tri_func) NULL;
+    if (ctx->Polygon.CullFlag &&
+	ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
+	return (swrast_tri_func) NULL;
 
-   if (swrast->_RasterMask == DEPTH_BIT &&
-       ctx->Depth.Func == GL_LESS &&
-       ctx->Depth.Mask == GL_TRUE &&
-       ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS) {
-      if (ctx->Light.ShadeModel == GL_SMOOTH) {
-         return (swrast_tri_func) smooth_rgba_z_triangle;
-      }
-      else {
-         return (swrast_tri_func) flat_rgba_z_triangle;
-      }
-   }
-   return (swrast_tri_func) NULL;
+    if (swrast->_RasterMask == DEPTH_BIT &&
+	ctx->Depth.Func == GL_LESS &&
+	ctx->Depth.Mask == GL_TRUE &&
+	ctx->Visual.depthBits == DEFAULT_SOFTWARE_DEPTH_BITS) {
+	if (ctx->Light.ShadeModel == GL_SMOOTH) {
+	    return (swrast_tri_func) smooth_rgba_z_triangle;
+	} else {
+	    return (swrast_tri_func) flat_rgba_z_triangle;
+	}
+    }
+    return (swrast_tri_func) NULL;
 }
 
 
@@ -724,23 +722,23 @@ osmesa_choose_triangle_function( GLcontext *ctx )
  * standard swrast functions.
  */
 static void
-osmesa_choose_triangle( GLcontext *ctx )
+osmesa_choose_triangle(GLcontext *ctx)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   swrast->Triangle = osmesa_choose_triangle_function( ctx );
-   if (!swrast->Triangle)
-      _swrast_choose_triangle( ctx );
+    swrast->Triangle = osmesa_choose_triangle_function(ctx);
+    if (!swrast->Triangle)
+	_swrast_choose_triangle(ctx);
 }
 
 static void
-osmesa_choose_line( GLcontext *ctx )
+osmesa_choose_line(GLcontext *ctx)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   swrast->Line = osmesa_choose_line_function( ctx );
-   if (!swrast->Line)
-      _swrast_choose_line( ctx );
+    swrast->Line = osmesa_choose_line_function(ctx);
+    if (!swrast->Line)
+	_swrast_choose_line(ctx);
 }
 
 
@@ -749,63 +747,59 @@ osmesa_choose_line( GLcontext *ctx )
  * Recompute the values of the context's rowaddr array.
  */
 static void
-compute_row_addresses( OSMesaContext osmesa )
+compute_row_addresses(OSMesaContext osmesa)
 {
-   GLint bytesPerPixel, bytesPerRow, i;
-   GLubyte *origin = (GLubyte *) osmesa->rb->Data;
-   GLint bpc; /* bytes per channel */
-   GLint rowlength; /* in pixels */
-   GLint height = osmesa->rb->Height;
+    GLint bytesPerPixel, bytesPerRow, i;
+    GLubyte *origin = (GLubyte *) osmesa->rb->Data;
+    GLint bpc; /* bytes per channel */
+    GLint rowlength; /* in pixels */
+    GLint height = osmesa->rb->Height;
 
-   if (osmesa->userRowLength)
-      rowlength = osmesa->userRowLength;
-   else
-      rowlength = osmesa->rb->Width;
+    if (osmesa->userRowLength)
+	rowlength = osmesa->userRowLength;
+    else
+	rowlength = osmesa->rb->Width;
 
-   if (osmesa->rb->DataType == GL_UNSIGNED_BYTE)
-      bpc = 1;
-   else if (osmesa->rb->DataType == GL_UNSIGNED_SHORT)
-      bpc = 2;
-   else if (osmesa->rb->DataType == GL_FLOAT)
-      bpc = 4;
-   else {
-      _mesa_problem(&osmesa->mesa,
-                    "Unexpected datatype in osmesa::compute_row_addresses");
-      return;
-   }
+    if (osmesa->rb->DataType == GL_UNSIGNED_BYTE)
+	bpc = 1;
+    else if (osmesa->rb->DataType == GL_UNSIGNED_SHORT)
+	bpc = 2;
+    else if (osmesa->rb->DataType == GL_FLOAT)
+	bpc = 4;
+    else {
+	_mesa_problem(&osmesa->mesa,
+		      "Unexpected datatype in osmesa::compute_row_addresses");
+	return;
+    }
 
-   if (osmesa->format == OSMESA_COLOR_INDEX) {
-      /* CI mode */
-      bytesPerPixel = 1 * sizeof(GLubyte);
-   }
-   else if ((osmesa->format == OSMESA_RGB) || (osmesa->format == OSMESA_BGR)) {
-      /* RGB mode */
-      bytesPerPixel = 3 * bpc;
-   }
-   else if (osmesa->format == OSMESA_RGB_565) {
-      /* 5/6/5 RGB pixel in 16 bits */
-      bytesPerPixel = 2;
-   }
-   else {
-      /* RGBA mode */
-      bytesPerPixel = 4 * bpc;
-   }
+    if (osmesa->format == OSMESA_COLOR_INDEX) {
+	/* CI mode */
+	bytesPerPixel = 1 * sizeof(GLubyte);
+    } else if ((osmesa->format == OSMESA_RGB) || (osmesa->format == OSMESA_BGR)) {
+	/* RGB mode */
+	bytesPerPixel = 3 * bpc;
+    } else if (osmesa->format == OSMESA_RGB_565) {
+	/* 5/6/5 RGB pixel in 16 bits */
+	bytesPerPixel = 2;
+    } else {
+	/* RGBA mode */
+	bytesPerPixel = 4 * bpc;
+    }
 
-   bytesPerRow = rowlength * bytesPerPixel;
+    bytesPerRow = rowlength * bytesPerPixel;
 
-   if (osmesa->yup) {
-      /* Y=0 is bottom line of window */
-      for (i = 0; i < height; i++) {
-         osmesa->rowaddr[i] = (GLvoid *) ((GLubyte *) origin + i * bytesPerRow);
-      }
-   }
-   else {
-      /* Y=0 is top line of window */
-      for (i = 0; i < height; i++) {
-         GLint j = height - i - 1;
-         osmesa->rowaddr[i] = (GLvoid *) ((GLubyte *) origin + j * bytesPerRow);
-      }
-   }
+    if (osmesa->yup) {
+	/* Y=0 is bottom line of window */
+	for (i = 0; i < height; i++) {
+	    osmesa->rowaddr[i] = (GLvoid *)((GLubyte *) origin + i * bytesPerRow);
+	}
+    } else {
+	/* Y=0 is top line of window */
+	for (i = 0; i < height; i++) {
+	    GLint j = height - i - 1;
+	    osmesa->rowaddr[i] = (GLvoid *)((GLubyte *) origin + j * bytesPerRow);
+	}
+    }
 }
 
 
@@ -816,7 +810,7 @@ compute_row_addresses( OSMesaContext osmesa )
 static void
 osmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
-   _mesa_free(rb);
+    _mesa_free(rb);
 }
 
 
@@ -827,208 +821,191 @@ osmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
  */
 static GLboolean
 osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
-                            GLenum internalFormat, GLuint width, GLuint height)
+			    GLenum internalFormat, GLuint width, GLuint height)
 {
-   const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
-   GLint bpc; /* bits per channel */
+    const OSMesaContext osmesa = OSMESA_CONTEXT(ctx);
+    GLint bpc; /* bits per channel */
 
-   if (rb->DataType == GL_UNSIGNED_BYTE)
-      bpc = 8;
-   else if (rb->DataType == GL_UNSIGNED_SHORT)
-      bpc = 16;
-   else
-      bpc = 32;
+    if (rb->DataType == GL_UNSIGNED_BYTE)
+	bpc = 8;
+    else if (rb->DataType == GL_UNSIGNED_SHORT)
+	bpc = 16;
+    else
+	bpc = 32;
 
-   rb->RedBits =
-   rb->GreenBits =
-   rb->BlueBits =
-   rb->AlphaBits = bpc;
+    rb->RedBits =
+	rb->GreenBits =
+	    rb->BlueBits =
+		rb->AlphaBits = bpc;
 
-   /* Note: we can ignoring internalFormat for "window-system" renderbuffers */
-   (void) internalFormat;
+    /* Note: we can ignoring internalFormat for "window-system" renderbuffers */
+    (void) internalFormat;
 
-   if (osmesa->format == OSMESA_RGBA) {
-      if (rb->DataType == GL_UNSIGNED_BYTE) {
-         rb->GetRow = get_row_RGBA8;
-         rb->GetValues = get_values_RGBA8;
-         rb->PutRow = put_row_RGBA8;
-         rb->PutRowRGB = put_row_rgb_RGBA8;
-         rb->PutMonoRow = put_mono_row_RGBA8;
-         rb->PutValues = put_values_RGBA8;
-         rb->PutMonoValues = put_mono_values_RGBA8;
-      }
-      else if (rb->DataType == GL_UNSIGNED_SHORT) {
-         rb->GetRow = get_row_RGBA16;
-         rb->GetValues = get_values_RGBA16;
-         rb->PutRow = put_row_RGBA16;
-         rb->PutRowRGB = put_row_rgb_RGBA16;
-         rb->PutMonoRow = put_mono_row_RGBA16;
-         rb->PutValues = put_values_RGBA16;
-         rb->PutMonoValues = put_mono_values_RGBA16;
-      }
-      else {
-         rb->GetRow = get_row_RGBA32;
-         rb->GetValues = get_values_RGBA32;
-         rb->PutRow = put_row_RGBA32;
-         rb->PutRowRGB = put_row_rgb_RGBA32;
-         rb->PutMonoRow = put_mono_row_RGBA32;
-         rb->PutValues = put_values_RGBA32;
-         rb->PutMonoValues = put_mono_values_RGBA32;
-      }
-      rb->RedBits = rb->GreenBits = rb->BlueBits = rb->AlphaBits = bpc;
-   }
-   else if (osmesa->format == OSMESA_BGRA) {
-      if (rb->DataType == GL_UNSIGNED_BYTE) {
-         rb->GetRow = get_row_BGRA8;
-         rb->GetValues = get_values_BGRA8;
-         rb->PutRow = put_row_BGRA8;
-         rb->PutRowRGB = put_row_rgb_BGRA8;
-         rb->PutMonoRow = put_mono_row_BGRA8;
-         rb->PutValues = put_values_BGRA8;
-         rb->PutMonoValues = put_mono_values_BGRA8;
-      }
-      else if (rb->DataType == GL_UNSIGNED_SHORT) {
-         rb->GetRow = get_row_BGRA16;
-         rb->GetValues = get_values_BGRA16;
-         rb->PutRow = put_row_BGRA16;
-         rb->PutRowRGB = put_row_rgb_BGRA16;
-         rb->PutMonoRow = put_mono_row_BGRA16;
-         rb->PutValues = put_values_BGRA16;
-         rb->PutMonoValues = put_mono_values_BGRA16;
-      }
-      else {
-         rb->GetRow = get_row_BGRA32;
-         rb->GetValues = get_values_BGRA32;
-         rb->PutRow = put_row_BGRA32;
-         rb->PutRowRGB = put_row_rgb_BGRA32;
-         rb->PutMonoRow = put_mono_row_BGRA32;
-         rb->PutValues = put_values_BGRA32;
-         rb->PutMonoValues = put_mono_values_BGRA32;
-      }
-      rb->RedBits = rb->GreenBits = rb->BlueBits = rb->AlphaBits = bpc;
-   }
-   else if (osmesa->format == OSMESA_ARGB) {
-      if (rb->DataType == GL_UNSIGNED_BYTE) {
-         rb->GetRow = get_row_ARGB8;
-         rb->GetValues = get_values_ARGB8;
-         rb->PutRow = put_row_ARGB8;
-         rb->PutRowRGB = put_row_rgb_ARGB8;
-         rb->PutMonoRow = put_mono_row_ARGB8;
-         rb->PutValues = put_values_ARGB8;
-         rb->PutMonoValues = put_mono_values_ARGB8;
-      }
-      else if (rb->DataType == GL_UNSIGNED_SHORT) {
-         rb->GetRow = get_row_ARGB16;
-         rb->GetValues = get_values_ARGB16;
-         rb->PutRow = put_row_ARGB16;
-         rb->PutRowRGB = put_row_rgb_ARGB16;
-         rb->PutMonoRow = put_mono_row_ARGB16;
-         rb->PutValues = put_values_ARGB16;
-         rb->PutMonoValues = put_mono_values_ARGB16;
-      }
-      else {
-         rb->GetRow = get_row_ARGB32;
-         rb->GetValues = get_values_ARGB32;
-         rb->PutRow = put_row_ARGB32;
-         rb->PutRowRGB = put_row_rgb_ARGB32;
-         rb->PutMonoRow = put_mono_row_ARGB32;
-         rb->PutValues = put_values_ARGB32;
-         rb->PutMonoValues = put_mono_values_ARGB32;
-      }
-      rb->RedBits = rb->GreenBits = rb->BlueBits = rb->AlphaBits = bpc;
-   }
-   else if (osmesa->format == OSMESA_RGB) {
-      if (rb->DataType == GL_UNSIGNED_BYTE) {
-         rb->GetRow = get_row_RGB8;
-         rb->GetValues = get_values_RGB8;
-         rb->PutRow = put_row_RGB8;
-         rb->PutRowRGB = put_row_rgb_RGB8;
-         rb->PutMonoRow = put_mono_row_RGB8;
-         rb->PutValues = put_values_RGB8;
-         rb->PutMonoValues = put_mono_values_RGB8;
-      }
-      else if (rb->DataType == GL_UNSIGNED_SHORT) {
-         rb->GetRow = get_row_RGB16;
-         rb->GetValues = get_values_RGB16;
-         rb->PutRow = put_row_RGB16;
-         rb->PutRowRGB = put_row_rgb_RGB16;
-         rb->PutMonoRow = put_mono_row_RGB16;
-         rb->PutValues = put_values_RGB16;
-         rb->PutMonoValues = put_mono_values_RGB16;
-      }
-      else {
-         rb->GetRow = get_row_RGB32;
-         rb->GetValues = get_values_RGB32;
-         rb->PutRow = put_row_RGB32;
-         rb->PutRowRGB = put_row_rgb_RGB32;
-         rb->PutMonoRow = put_mono_row_RGB32;
-         rb->PutValues = put_values_RGB32;
-         rb->PutMonoValues = put_mono_values_RGB32;
-      }
-      rb->RedBits = rb->GreenBits = rb->BlueBits = bpc;
-   }
-   else if (osmesa->format == OSMESA_BGR) {
-      if (rb->DataType == GL_UNSIGNED_BYTE) {
-         rb->GetRow = get_row_BGR8;
-         rb->GetValues = get_values_BGR8;
-         rb->PutRow = put_row_BGR8;
-         rb->PutRowRGB = put_row_rgb_BGR8;
-         rb->PutMonoRow = put_mono_row_BGR8;
-         rb->PutValues = put_values_BGR8;
-         rb->PutMonoValues = put_mono_values_BGR8;
-      }
-      else if (rb->DataType == GL_UNSIGNED_SHORT) {
-         rb->GetRow = get_row_BGR16;
-         rb->GetValues = get_values_BGR16;
-         rb->PutRow = put_row_BGR16;
-         rb->PutRowRGB = put_row_rgb_BGR16;
-         rb->PutMonoRow = put_mono_row_BGR16;
-         rb->PutValues = put_values_BGR16;
-         rb->PutMonoValues = put_mono_values_BGR16;
-      }
-      else {
-         rb->GetRow = get_row_BGR32;
-         rb->GetValues = get_values_BGR32;
-         rb->PutRow = put_row_BGR32;
-         rb->PutRowRGB = put_row_rgb_BGR32;
-         rb->PutMonoRow = put_mono_row_BGR32;
-         rb->PutValues = put_values_BGR32;
-         rb->PutMonoValues = put_mono_values_BGR32;
-      }
-      rb->RedBits = rb->GreenBits = rb->BlueBits = bpc;
-   }
-   else if (osmesa->format == OSMESA_RGB_565) {
-      ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-      rb->GetRow = get_row_RGB_565;
-      rb->GetValues = get_values_RGB_565;
-      rb->PutRow = put_row_RGB_565;
-      rb->PutRowRGB = put_row_rgb_RGB_565;
-      rb->PutMonoRow = put_mono_row_RGB_565;
-      rb->PutValues = put_values_RGB_565;
-      rb->PutMonoValues = put_mono_values_RGB_565;
-      rb->RedBits = 5;
-      rb->GreenBits = 6;
-      rb->BlueBits = 5;
-   }
-   else if (osmesa->format == OSMESA_COLOR_INDEX) {
-      rb->GetRow = get_row_CI;
-      rb->GetValues = get_values_CI;
-      rb->PutRow = put_row_CI;
-      rb->PutMonoRow = put_mono_row_CI;
-      rb->PutValues = put_values_CI;
-      rb->PutMonoValues = put_mono_values_CI;
-      rb->IndexBits = 8;
-   }
-   else {
-      _mesa_problem(ctx, "bad pixel format in osmesa renderbuffer_storage");
-   }
+    if (osmesa->format == OSMESA_RGBA) {
+	if (rb->DataType == GL_UNSIGNED_BYTE) {
+	    rb->GetRow = get_row_RGBA8;
+	    rb->GetValues = get_values_RGBA8;
+	    rb->PutRow = put_row_RGBA8;
+	    rb->PutRowRGB = put_row_rgb_RGBA8;
+	    rb->PutMonoRow = put_mono_row_RGBA8;
+	    rb->PutValues = put_values_RGBA8;
+	    rb->PutMonoValues = put_mono_values_RGBA8;
+	} else if (rb->DataType == GL_UNSIGNED_SHORT) {
+	    rb->GetRow = get_row_RGBA16;
+	    rb->GetValues = get_values_RGBA16;
+	    rb->PutRow = put_row_RGBA16;
+	    rb->PutRowRGB = put_row_rgb_RGBA16;
+	    rb->PutMonoRow = put_mono_row_RGBA16;
+	    rb->PutValues = put_values_RGBA16;
+	    rb->PutMonoValues = put_mono_values_RGBA16;
+	} else {
+	    rb->GetRow = get_row_RGBA32;
+	    rb->GetValues = get_values_RGBA32;
+	    rb->PutRow = put_row_RGBA32;
+	    rb->PutRowRGB = put_row_rgb_RGBA32;
+	    rb->PutMonoRow = put_mono_row_RGBA32;
+	    rb->PutValues = put_values_RGBA32;
+	    rb->PutMonoValues = put_mono_values_RGBA32;
+	}
+	rb->RedBits = rb->GreenBits = rb->BlueBits = rb->AlphaBits = bpc;
+    } else if (osmesa->format == OSMESA_BGRA) {
+	if (rb->DataType == GL_UNSIGNED_BYTE) {
+	    rb->GetRow = get_row_BGRA8;
+	    rb->GetValues = get_values_BGRA8;
+	    rb->PutRow = put_row_BGRA8;
+	    rb->PutRowRGB = put_row_rgb_BGRA8;
+	    rb->PutMonoRow = put_mono_row_BGRA8;
+	    rb->PutValues = put_values_BGRA8;
+	    rb->PutMonoValues = put_mono_values_BGRA8;
+	} else if (rb->DataType == GL_UNSIGNED_SHORT) {
+	    rb->GetRow = get_row_BGRA16;
+	    rb->GetValues = get_values_BGRA16;
+	    rb->PutRow = put_row_BGRA16;
+	    rb->PutRowRGB = put_row_rgb_BGRA16;
+	    rb->PutMonoRow = put_mono_row_BGRA16;
+	    rb->PutValues = put_values_BGRA16;
+	    rb->PutMonoValues = put_mono_values_BGRA16;
+	} else {
+	    rb->GetRow = get_row_BGRA32;
+	    rb->GetValues = get_values_BGRA32;
+	    rb->PutRow = put_row_BGRA32;
+	    rb->PutRowRGB = put_row_rgb_BGRA32;
+	    rb->PutMonoRow = put_mono_row_BGRA32;
+	    rb->PutValues = put_values_BGRA32;
+	    rb->PutMonoValues = put_mono_values_BGRA32;
+	}
+	rb->RedBits = rb->GreenBits = rb->BlueBits = rb->AlphaBits = bpc;
+    } else if (osmesa->format == OSMESA_ARGB) {
+	if (rb->DataType == GL_UNSIGNED_BYTE) {
+	    rb->GetRow = get_row_ARGB8;
+	    rb->GetValues = get_values_ARGB8;
+	    rb->PutRow = put_row_ARGB8;
+	    rb->PutRowRGB = put_row_rgb_ARGB8;
+	    rb->PutMonoRow = put_mono_row_ARGB8;
+	    rb->PutValues = put_values_ARGB8;
+	    rb->PutMonoValues = put_mono_values_ARGB8;
+	} else if (rb->DataType == GL_UNSIGNED_SHORT) {
+	    rb->GetRow = get_row_ARGB16;
+	    rb->GetValues = get_values_ARGB16;
+	    rb->PutRow = put_row_ARGB16;
+	    rb->PutRowRGB = put_row_rgb_ARGB16;
+	    rb->PutMonoRow = put_mono_row_ARGB16;
+	    rb->PutValues = put_values_ARGB16;
+	    rb->PutMonoValues = put_mono_values_ARGB16;
+	} else {
+	    rb->GetRow = get_row_ARGB32;
+	    rb->GetValues = get_values_ARGB32;
+	    rb->PutRow = put_row_ARGB32;
+	    rb->PutRowRGB = put_row_rgb_ARGB32;
+	    rb->PutMonoRow = put_mono_row_ARGB32;
+	    rb->PutValues = put_values_ARGB32;
+	    rb->PutMonoValues = put_mono_values_ARGB32;
+	}
+	rb->RedBits = rb->GreenBits = rb->BlueBits = rb->AlphaBits = bpc;
+    } else if (osmesa->format == OSMESA_RGB) {
+	if (rb->DataType == GL_UNSIGNED_BYTE) {
+	    rb->GetRow = get_row_RGB8;
+	    rb->GetValues = get_values_RGB8;
+	    rb->PutRow = put_row_RGB8;
+	    rb->PutRowRGB = put_row_rgb_RGB8;
+	    rb->PutMonoRow = put_mono_row_RGB8;
+	    rb->PutValues = put_values_RGB8;
+	    rb->PutMonoValues = put_mono_values_RGB8;
+	} else if (rb->DataType == GL_UNSIGNED_SHORT) {
+	    rb->GetRow = get_row_RGB16;
+	    rb->GetValues = get_values_RGB16;
+	    rb->PutRow = put_row_RGB16;
+	    rb->PutRowRGB = put_row_rgb_RGB16;
+	    rb->PutMonoRow = put_mono_row_RGB16;
+	    rb->PutValues = put_values_RGB16;
+	    rb->PutMonoValues = put_mono_values_RGB16;
+	} else {
+	    rb->GetRow = get_row_RGB32;
+	    rb->GetValues = get_values_RGB32;
+	    rb->PutRow = put_row_RGB32;
+	    rb->PutRowRGB = put_row_rgb_RGB32;
+	    rb->PutMonoRow = put_mono_row_RGB32;
+	    rb->PutValues = put_values_RGB32;
+	    rb->PutMonoValues = put_mono_values_RGB32;
+	}
+	rb->RedBits = rb->GreenBits = rb->BlueBits = bpc;
+    } else if (osmesa->format == OSMESA_BGR) {
+	if (rb->DataType == GL_UNSIGNED_BYTE) {
+	    rb->GetRow = get_row_BGR8;
+	    rb->GetValues = get_values_BGR8;
+	    rb->PutRow = put_row_BGR8;
+	    rb->PutRowRGB = put_row_rgb_BGR8;
+	    rb->PutMonoRow = put_mono_row_BGR8;
+	    rb->PutValues = put_values_BGR8;
+	    rb->PutMonoValues = put_mono_values_BGR8;
+	} else if (rb->DataType == GL_UNSIGNED_SHORT) {
+	    rb->GetRow = get_row_BGR16;
+	    rb->GetValues = get_values_BGR16;
+	    rb->PutRow = put_row_BGR16;
+	    rb->PutRowRGB = put_row_rgb_BGR16;
+	    rb->PutMonoRow = put_mono_row_BGR16;
+	    rb->PutValues = put_values_BGR16;
+	    rb->PutMonoValues = put_mono_values_BGR16;
+	} else {
+	    rb->GetRow = get_row_BGR32;
+	    rb->GetValues = get_values_BGR32;
+	    rb->PutRow = put_row_BGR32;
+	    rb->PutRowRGB = put_row_rgb_BGR32;
+	    rb->PutMonoRow = put_mono_row_BGR32;
+	    rb->PutValues = put_values_BGR32;
+	    rb->PutMonoValues = put_mono_values_BGR32;
+	}
+	rb->RedBits = rb->GreenBits = rb->BlueBits = bpc;
+    } else if (osmesa->format == OSMESA_RGB_565) {
+	ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
+	rb->GetRow = get_row_RGB_565;
+	rb->GetValues = get_values_RGB_565;
+	rb->PutRow = put_row_RGB_565;
+	rb->PutRowRGB = put_row_rgb_RGB_565;
+	rb->PutMonoRow = put_mono_row_RGB_565;
+	rb->PutValues = put_values_RGB_565;
+	rb->PutMonoValues = put_mono_values_RGB_565;
+	rb->RedBits = 5;
+	rb->GreenBits = 6;
+	rb->BlueBits = 5;
+    } else if (osmesa->format == OSMESA_COLOR_INDEX) {
+	rb->GetRow = get_row_CI;
+	rb->GetValues = get_values_CI;
+	rb->PutRow = put_row_CI;
+	rb->PutMonoRow = put_mono_row_CI;
+	rb->PutValues = put_values_CI;
+	rb->PutMonoValues = put_mono_values_CI;
+	rb->IndexBits = 8;
+    } else {
+	_mesa_problem(ctx, "bad pixel format in osmesa renderbuffer_storage");
+    }
 
-   rb->Width = width;
-   rb->Height = height;
+    rb->Width = width;
+    rb->Height = height;
 
-   compute_row_addresses( osmesa );
+    compute_row_addresses(osmesa);
 
-   return GL_TRUE;
+    return GL_TRUE;
 }
 
 
@@ -1038,27 +1015,26 @@ osmesa_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 static struct gl_renderbuffer *
 new_osmesa_renderbuffer(GLcontext *ctx, GLenum format, GLenum type)
 {
-   const GLuint name = 0;
-   struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, name);
-   if (rb) {
-      rb->RefCount = 1;
-      rb->Delete = osmesa_delete_renderbuffer;
-      rb->AllocStorage = osmesa_renderbuffer_storage;
+    const GLuint name = 0;
+    struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, name);
+    if (rb) {
+	rb->RefCount = 1;
+	rb->Delete = osmesa_delete_renderbuffer;
+	rb->AllocStorage = osmesa_renderbuffer_storage;
 
-      if (format == OSMESA_COLOR_INDEX) {
-         rb->InternalFormat = GL_COLOR_INDEX;
-         rb->_ActualFormat = GL_COLOR_INDEX8_EXT;
-         rb->_BaseFormat = GL_COLOR_INDEX;
-         rb->DataType = GL_UNSIGNED_BYTE;
-      }
-      else {
-         rb->InternalFormat = GL_RGBA;
-         rb->_ActualFormat = GL_RGBA;
-         rb->_BaseFormat = GL_RGBA;
-         rb->DataType = type;
-      }
-   }
-   return rb;
+	if (format == OSMESA_COLOR_INDEX) {
+	    rb->InternalFormat = GL_COLOR_INDEX;
+	    rb->_ActualFormat = GL_COLOR_INDEX8_EXT;
+	    rb->_BaseFormat = GL_COLOR_INDEX;
+	    rb->DataType = GL_UNSIGNED_BYTE;
+	} else {
+	    rb->InternalFormat = GL_RGBA;
+	    rb->_ActualFormat = GL_RGBA;
+	    rb->_BaseFormat = GL_RGBA;
+	    rb->DataType = type;
+	}
+    }
+    return rb;
 }
 
 
@@ -1077,11 +1053,11 @@ new_osmesa_renderbuffer(GLcontext *ctx, GLenum format, GLenum type)
  * Return:  an OSMesaContext or 0 if error
  */
 GLAPI OSMesaContext GLAPIENTRY
-OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
+OSMesaCreateContext(GLenum format, OSMesaContext sharelist)
 {
-   const GLint accumBits = (format == OSMESA_COLOR_INDEX) ? 0 : 16;
-   return OSMesaCreateContextExt(format, DEFAULT_SOFTWARE_DEPTH_BITS,
-                                 8, accumBits, sharelist);
+    const GLint accumBits = (format == OSMESA_COLOR_INDEX) ? 0 : 16;
+    return OSMesaCreateContextExt(format, DEFAULT_SOFTWARE_DEPTH_BITS,
+				  8, accumBits, sharelist);
 }
 
 
@@ -1092,201 +1068,196 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist )
  * Create context and specify size of ancillary buffers.
  */
 GLAPI OSMesaContext GLAPIENTRY
-OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
-                        GLint accumBits, OSMesaContext sharelist )
+OSMesaCreateContextExt(GLenum format, GLint depthBits, GLint stencilBits,
+		       GLint accumBits, OSMesaContext sharelist)
 {
-   OSMesaContext osmesa;
-   struct dd_function_table functions;
-   GLint rind, gind, bind, aind;
-   GLint indexBits = 0, redBits = 0, greenBits = 0, blueBits = 0, alphaBits =0;
-   GLboolean rgbmode;
-   GLenum type = CHAN_TYPE;
+    OSMesaContext osmesa;
+    struct dd_function_table functions;
+    GLint rind, gind, bind, aind;
+    GLint indexBits = 0, redBits = 0, greenBits = 0, blueBits = 0, alphaBits =0;
+    GLboolean rgbmode;
+    GLenum type = CHAN_TYPE;
 
-   rind = gind = bind = aind = 0;
-   if (format==OSMESA_COLOR_INDEX) {
-      indexBits = 8;
-      rgbmode = GL_FALSE;
-   }
-   else if (format==OSMESA_RGBA) {
-      indexBits = 0;
-      redBits = CHAN_BITS;
-      greenBits = CHAN_BITS;
-      blueBits = CHAN_BITS;
-      alphaBits = CHAN_BITS;
-      rind = 0;
-      gind = 1;
-      bind = 2;
-      aind = 3;
-      rgbmode = GL_TRUE;
-   }
-   else if (format==OSMESA_BGRA) {
-      indexBits = 0;
-      redBits = CHAN_BITS;
-      greenBits = CHAN_BITS;
-      blueBits = CHAN_BITS;
-      alphaBits = CHAN_BITS;
-      bind = 0;
-      gind = 1;
-      rind = 2;
-      aind = 3;
-      rgbmode = GL_TRUE;
-   }
-   else if (format==OSMESA_ARGB) {
-      indexBits = 0;
-      redBits = CHAN_BITS;
-      greenBits = CHAN_BITS;
-      blueBits = CHAN_BITS;
-      alphaBits = CHAN_BITS;
-      aind = 0;
-      rind = 1;
-      gind = 2;
-      bind = 3;
-      rgbmode = GL_TRUE;
-   }
-   else if (format==OSMESA_RGB) {
-      indexBits = 0;
-      redBits = CHAN_BITS;
-      greenBits = CHAN_BITS;
-      blueBits = CHAN_BITS;
-      alphaBits = 0;
-      rind = 0;
-      gind = 1;
-      bind = 2;
-      rgbmode = GL_TRUE;
-   }
-   else if (format==OSMESA_BGR) {
-      indexBits = 0;
-      redBits = CHAN_BITS;
-      greenBits = CHAN_BITS;
-      blueBits = CHAN_BITS;
-      alphaBits = 0;
-      rind = 2;
-      gind = 1;
-      bind = 0;
-      rgbmode = GL_TRUE;
-   }
+    rind = gind = bind = aind = 0;
+    if (format==OSMESA_COLOR_INDEX) {
+	indexBits = 8;
+	rgbmode = GL_FALSE;
+    } else if (format==OSMESA_RGBA) {
+	indexBits = 0;
+	redBits = CHAN_BITS;
+	greenBits = CHAN_BITS;
+	blueBits = CHAN_BITS;
+	alphaBits = CHAN_BITS;
+	rind = 0;
+	gind = 1;
+	bind = 2;
+	aind = 3;
+	rgbmode = GL_TRUE;
+    } else if (format==OSMESA_BGRA) {
+	indexBits = 0;
+	redBits = CHAN_BITS;
+	greenBits = CHAN_BITS;
+	blueBits = CHAN_BITS;
+	alphaBits = CHAN_BITS;
+	bind = 0;
+	gind = 1;
+	rind = 2;
+	aind = 3;
+	rgbmode = GL_TRUE;
+    } else if (format==OSMESA_ARGB) {
+	indexBits = 0;
+	redBits = CHAN_BITS;
+	greenBits = CHAN_BITS;
+	blueBits = CHAN_BITS;
+	alphaBits = CHAN_BITS;
+	aind = 0;
+	rind = 1;
+	gind = 2;
+	bind = 3;
+	rgbmode = GL_TRUE;
+    } else if (format==OSMESA_RGB) {
+	indexBits = 0;
+	redBits = CHAN_BITS;
+	greenBits = CHAN_BITS;
+	blueBits = CHAN_BITS;
+	alphaBits = 0;
+	rind = 0;
+	gind = 1;
+	bind = 2;
+	rgbmode = GL_TRUE;
+    } else if (format==OSMESA_BGR) {
+	indexBits = 0;
+	redBits = CHAN_BITS;
+	greenBits = CHAN_BITS;
+	blueBits = CHAN_BITS;
+	alphaBits = 0;
+	rind = 2;
+	gind = 1;
+	bind = 0;
+	rgbmode = GL_TRUE;
+    }
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
-   else if (format==OSMESA_RGB_565) {
-      indexBits = 0;
-      redBits = 5;
-      greenBits = 6;
-      blueBits = 5;
-      alphaBits = 0;
-      rind = 0; /* not used */
-      gind = 0;
-      bind = 0;
-      rgbmode = GL_TRUE;
-   }
+    else if (format==OSMESA_RGB_565) {
+	indexBits = 0;
+	redBits = 5;
+	greenBits = 6;
+	blueBits = 5;
+	alphaBits = 0;
+	rind = 0; /* not used */
+	gind = 0;
+	bind = 0;
+	rgbmode = GL_TRUE;
+    }
 #endif
-   else {
-      return NULL;
-   }
+    else {
+	return NULL;
+    }
 
-   osmesa = (OSMesaContext) CALLOC_STRUCT(osmesa_context);
-   if (osmesa) {
-      osmesa->gl_visual = _mesa_create_visual( rgbmode,
-                                               GL_FALSE,    /* double buffer */
-                                               GL_FALSE,    /* stereo */
-                                               redBits,
-                                               greenBits,
-                                               blueBits,
-                                               alphaBits,
-                                               indexBits,
-                                               depthBits,
-                                               stencilBits,
-                                               accumBits,
-                                               accumBits,
-                                               accumBits,
-                                               alphaBits ? accumBits : 0,
-                                               1            /* num samples */
-                                               );
-      if (!osmesa->gl_visual) {
-         _mesa_free(osmesa);
-         return NULL;
-      }
+    osmesa = (OSMesaContext) CALLOC_STRUCT(osmesa_context);
+    if (osmesa) {
+	osmesa->gl_visual = _mesa_create_visual(rgbmode,
+						GL_FALSE,    /* double buffer */
+						GL_FALSE,    /* stereo */
+						redBits,
+						greenBits,
+						blueBits,
+						alphaBits,
+						indexBits,
+						depthBits,
+						stencilBits,
+						accumBits,
+						accumBits,
+						accumBits,
+						alphaBits ? accumBits : 0,
+						1            /* num samples */
+					       );
+	if (!osmesa->gl_visual) {
+	    _mesa_free(osmesa);
+	    return NULL;
+	}
 
-      /* Initialize device driver function table */
-      _mesa_init_driver_functions(&functions);
-      /* override with our functions */
-      functions.GetString = get_string;
-      functions.UpdateState = osmesa_update_state;
-      functions.GetBufferSize = NULL;
+	/* Initialize device driver function table */
+	_mesa_init_driver_functions(&functions);
+	/* override with our functions */
+	functions.GetString = get_string;
+	functions.UpdateState = osmesa_update_state;
+	functions.GetBufferSize = NULL;
 
-      if (!_mesa_initialize_context(&osmesa->mesa,
-                                    osmesa->gl_visual,
-                                    sharelist ? &sharelist->mesa
-                                              : (GLcontext *) NULL,
-                                    &functions, (void *) osmesa)) {
-         _mesa_destroy_visual( osmesa->gl_visual );
-         _mesa_free(osmesa);
-         return NULL;
-      }
+	if (!_mesa_initialize_context(&osmesa->mesa,
+				      osmesa->gl_visual,
+				      sharelist ? &sharelist->mesa
+				      : (GLcontext *) NULL,
+				      &functions, (void *) osmesa)) {
+	    _mesa_destroy_visual(osmesa->gl_visual);
+	    _mesa_free(osmesa);
+	    return NULL;
+	}
 
-      _mesa_enable_sw_extensions(&(osmesa->mesa));
-      _mesa_enable_1_3_extensions(&(osmesa->mesa));
-      _mesa_enable_1_4_extensions(&(osmesa->mesa));
-      _mesa_enable_1_5_extensions(&(osmesa->mesa));
+	_mesa_enable_sw_extensions(&(osmesa->mesa));
+	_mesa_enable_1_3_extensions(&(osmesa->mesa));
+	_mesa_enable_1_4_extensions(&(osmesa->mesa));
+	_mesa_enable_1_5_extensions(&(osmesa->mesa));
 
-      osmesa->gl_buffer = _mesa_create_framebuffer(osmesa->gl_visual);
-      if (!osmesa->gl_buffer) {
-         _mesa_destroy_visual( osmesa->gl_visual );
-         _mesa_free_context_data( &osmesa->mesa );
-         _mesa_free(osmesa);
-         return NULL;
-      }
+	osmesa->gl_buffer = _mesa_create_framebuffer(osmesa->gl_visual);
+	if (!osmesa->gl_buffer) {
+	    _mesa_destroy_visual(osmesa->gl_visual);
+	    _mesa_free_context_data(&osmesa->mesa);
+	    _mesa_free(osmesa);
+	    return NULL;
+	}
 
-      /* create front color buffer in user-provided memory (no back buffer) */
-      osmesa->rb = new_osmesa_renderbuffer(&osmesa->mesa, format, type);
-      _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
-      assert(osmesa->rb->RefCount == 2);
-                        
-      _mesa_add_soft_renderbuffers(osmesa->gl_buffer,
-                                   GL_FALSE, /* color */
-                                   osmesa->gl_visual->haveDepthBuffer,
-                                   osmesa->gl_visual->haveStencilBuffer,
-                                   osmesa->gl_visual->haveAccumBuffer,
-                                   GL_FALSE, /* alpha */
-                                   GL_FALSE /* aux */ );
+	/* create front color buffer in user-provided memory (no back buffer) */
+	osmesa->rb = new_osmesa_renderbuffer(&osmesa->mesa, format, type);
+	_mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
+	assert(osmesa->rb->RefCount == 2);
 
-      osmesa->format = format;
-      osmesa->userRowLength = 0;
-      osmesa->yup = GL_TRUE;
-      osmesa->rInd = rind;
-      osmesa->gInd = gind;
-      osmesa->bInd = bind;
-      osmesa->aInd = aind;
+	_mesa_add_soft_renderbuffers(osmesa->gl_buffer,
+				     GL_FALSE, /* color */
+				     osmesa->gl_visual->haveDepthBuffer,
+				     osmesa->gl_visual->haveStencilBuffer,
+				     osmesa->gl_visual->haveAccumBuffer,
+				     GL_FALSE, /* alpha */
+				     GL_FALSE /* aux */);
 
-      /* Initialize the software rasterizer and helper modules. */
-      {
-	 GLcontext *ctx = &osmesa->mesa;
-         SWcontext *swrast;
-         TNLcontext *tnl;
+	osmesa->format = format;
+	osmesa->userRowLength = 0;
+	osmesa->yup = GL_TRUE;
+	osmesa->rInd = rind;
+	osmesa->gInd = gind;
+	osmesa->bInd = bind;
+	osmesa->aInd = aind;
 
-	 if (!_swrast_CreateContext( ctx ) ||
-             !_vbo_CreateContext( ctx ) ||
-             !_tnl_CreateContext( ctx ) ||
-             !_swsetup_CreateContext( ctx )) {
-            _mesa_destroy_visual(osmesa->gl_visual);
-            _mesa_free_context_data(ctx);
-            _mesa_free(osmesa);
-            return NULL;
-         }
-	
-	 _swsetup_Wakeup( ctx );
+	/* Initialize the software rasterizer and helper modules. */
+	{
+	    GLcontext *ctx = &osmesa->mesa;
+	    SWcontext *swrast;
+	    TNLcontext *tnl;
 
-         /* use default TCL pipeline */
-         tnl = TNL_CONTEXT(ctx);
-         tnl->Driver.RunPipeline = _tnl_run_pipeline;
+	    if (!_swrast_CreateContext(ctx) ||
+		!_vbo_CreateContext(ctx) ||
+		!_tnl_CreateContext(ctx) ||
+		!_swsetup_CreateContext(ctx)) {
+		_mesa_destroy_visual(osmesa->gl_visual);
+		_mesa_free_context_data(ctx);
+		_mesa_free(osmesa);
+		return NULL;
+	    }
 
-         /* Extend the software rasterizer with our optimized line and triangle
-          * drawing functions.
-          */
-         swrast = SWRAST_CONTEXT( ctx );
-         swrast->choose_line = osmesa_choose_line;
-         swrast->choose_triangle = osmesa_choose_triangle;
-      }
-   }
-   return osmesa;
+	    _swsetup_Wakeup(ctx);
+
+	    /* use default TCL pipeline */
+	    tnl = TNL_CONTEXT(ctx);
+	    tnl->Driver.RunPipeline = _tnl_run_pipeline;
+
+	    /* Extend the software rasterizer with our optimized line and triangle
+	     * drawing functions.
+	     */
+	    swrast = SWRAST_CONTEXT(ctx);
+	    swrast->choose_line = osmesa_choose_line;
+	    swrast->choose_triangle = osmesa_choose_triangle;
+	}
+    }
+    return osmesa;
 }
 
 
@@ -1296,23 +1267,23 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
  * \param osmesa  the context to destroy
  */
 GLAPI void GLAPIENTRY
-OSMesaDestroyContext( OSMesaContext osmesa )
+OSMesaDestroyContext(OSMesaContext osmesa)
 {
-   if (osmesa) {
-      if (osmesa->rb)
-         _mesa_reference_renderbuffer(&osmesa->rb, NULL);
+    if (osmesa) {
+	if (osmesa->rb)
+	    _mesa_reference_renderbuffer(&osmesa->rb, NULL);
 
-      _swsetup_DestroyContext( &osmesa->mesa );
-      _tnl_DestroyContext( &osmesa->mesa );
-      _vbo_DestroyContext( &osmesa->mesa );
-      _swrast_DestroyContext( &osmesa->mesa );
+	_swsetup_DestroyContext(&osmesa->mesa);
+	_tnl_DestroyContext(&osmesa->mesa);
+	_vbo_DestroyContext(&osmesa->mesa);
+	_swrast_DestroyContext(&osmesa->mesa);
 
-      _mesa_destroy_visual( osmesa->gl_visual );
-      _mesa_unreference_framebuffer( &osmesa->gl_buffer );
+	_mesa_destroy_visual(osmesa->gl_visual);
+	_mesa_unreference_framebuffer(&osmesa->gl_buffer);
 
-      _mesa_free_context_data( &osmesa->mesa );
-      _mesa_free( osmesa );
-   }
+	_mesa_free_context_data(&osmesa->mesa);
+	_mesa_free(osmesa);
+    }
 }
 
 
@@ -1343,152 +1314,151 @@ OSMesaDestroyContext( OSMesaContext osmesa )
  *          width>internal limit or height>internal limit.
  */
 GLAPI GLboolean GLAPIENTRY
-OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
-                   GLsizei width, GLsizei height )
+OSMesaMakeCurrent(OSMesaContext osmesa, void *buffer, GLenum type,
+		  GLsizei width, GLsizei height)
 {
-   if (!osmesa || !buffer ||
-       width < 1 || height < 1 ||
-       width > MAX_WIDTH || height > MAX_HEIGHT) {
-      return GL_FALSE;
-   }
+    if (!osmesa || !buffer ||
+	width < 1 || height < 1 ||
+	width > MAX_WIDTH || height > MAX_HEIGHT) {
+	return GL_FALSE;
+    }
 
-   if (osmesa->format == OSMESA_RGB_565 && type != GL_UNSIGNED_SHORT_5_6_5) {
-      return GL_FALSE;
-   }
+    if (osmesa->format == OSMESA_RGB_565 && type != GL_UNSIGNED_SHORT_5_6_5) {
+	return GL_FALSE;
+    }
 
 #if 0
-   if (!(type == GL_UNSIGNED_BYTE ||
-         (type == GL_UNSIGNED_SHORT && CHAN_BITS >= 16) ||
-         (type == GL_FLOAT && CHAN_BITS == 32))) {
-      /* i.e. is sizeof(type) * 8 > CHAN_BITS? */
-      return GL_FALSE;
-   }
+    if (!(type == GL_UNSIGNED_BYTE ||
+	  (type == GL_UNSIGNED_SHORT && CHAN_BITS >= 16) ||
+	  (type == GL_FLOAT && CHAN_BITS == 32))) {
+	/* i.e. is sizeof(type) * 8 > CHAN_BITS? */
+	return GL_FALSE;
+    }
 #endif
 
-   osmesa_update_state( &osmesa->mesa, 0 );
+    osmesa_update_state(&osmesa->mesa, 0);
 
-   /* Call this periodically to detect when the user has begun using
-    * GL rendering from multiple threads.
-    */
-   _glapi_check_multithread();
+    /* Call this periodically to detect when the user has begun using
+     * GL rendering from multiple threads.
+     */
+    _glapi_check_multithread();
 
-   /* Set renderbuffer fields.  Set width/height = 0 to force 
-    * osmesa_renderbuffer_storage() being called by _mesa_resize_framebuffer()
-    */
-   osmesa->rb->Data = buffer;
-   osmesa->rb->DataType = type;
-   osmesa->rb->Width = osmesa->rb->Height = 0;
+    /* Set renderbuffer fields.  Set width/height = 0 to force
+     * osmesa_renderbuffer_storage() being called by _mesa_resize_framebuffer()
+     */
+    osmesa->rb->Data = buffer;
+    osmesa->rb->DataType = type;
+    osmesa->rb->Width = osmesa->rb->Height = 0;
 
-   /* Set the framebuffer's size.  This causes the
-    * osmesa_renderbuffer_storage() function to get called.
-    */
-   _mesa_resize_framebuffer(&osmesa->mesa, osmesa->gl_buffer, width, height);
-   osmesa->gl_buffer->Initialized = GL_TRUE; /* XXX TEMPORARY? */
+    /* Set the framebuffer's size.  This causes the
+     * osmesa_renderbuffer_storage() function to get called.
+     */
+    _mesa_resize_framebuffer(&osmesa->mesa, osmesa->gl_buffer, width, height);
+    osmesa->gl_buffer->Initialized = GL_TRUE; /* XXX TEMPORARY? */
 
-   _mesa_make_current( &osmesa->mesa, osmesa->gl_buffer, osmesa->gl_buffer );
+    _mesa_make_current(&osmesa->mesa, osmesa->gl_buffer, osmesa->gl_buffer);
 
-   /* Remove renderbuffer attachment, then re-add.  This installs the
-    * renderbuffer adaptor/wrapper if needed (for bpp conversion).
-    */
-   _mesa_remove_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT);
-   _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
+    /* Remove renderbuffer attachment, then re-add.  This installs the
+     * renderbuffer adaptor/wrapper if needed (for bpp conversion).
+     */
+    _mesa_remove_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT);
+    _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
 
 
-   /* this updates the visual's red/green/blue/alphaBits fields */
-   _mesa_update_framebuffer_visual(osmesa->gl_buffer);
+    /* this updates the visual's red/green/blue/alphaBits fields */
+    _mesa_update_framebuffer_visual(osmesa->gl_buffer);
 
-   /* update the framebuffer size */
-   _mesa_resize_framebuffer(&osmesa->mesa, osmesa->gl_buffer, width, height);
+    /* update the framebuffer size */
+    _mesa_resize_framebuffer(&osmesa->mesa, osmesa->gl_buffer, width, height);
 
-   return GL_TRUE;
+    return GL_TRUE;
 }
 
 
 
 GLAPI OSMesaContext GLAPIENTRY
-OSMesaGetCurrentContext( void )
+OSMesaGetCurrentContext(void)
 {
-   GLcontext *ctx = _mesa_get_current_context();
-   if (ctx)
-      return (OSMesaContext) ctx;
-   else
-      return NULL;
+    GLcontext *ctx = _mesa_get_current_context();
+    if (ctx)
+	return (OSMesaContext) ctx;
+    else
+	return NULL;
 }
 
 
 
 GLAPI void GLAPIENTRY
-OSMesaPixelStore( GLint pname, GLint value )
+OSMesaPixelStore(GLint pname, GLint value)
 {
-   OSMesaContext osmesa = OSMesaGetCurrentContext();
+    OSMesaContext osmesa = OSMesaGetCurrentContext();
 
-   switch (pname) {
-      case OSMESA_ROW_LENGTH:
-         if (value<0) {
-            _mesa_error( &osmesa->mesa, GL_INVALID_VALUE,
-                      "OSMesaPixelStore(value)" );
-            return;
-         }
-         osmesa->userRowLength = value;
-         break;
-      case OSMESA_Y_UP:
-         osmesa->yup = value ? GL_TRUE : GL_FALSE;
-         break;
-      default:
-         _mesa_error( &osmesa->mesa, GL_INVALID_ENUM, "OSMesaPixelStore(pname)" );
-         return;
-   }
+    switch (pname) {
+	case OSMESA_ROW_LENGTH:
+	    if (value<0) {
+		_mesa_error(&osmesa->mesa, GL_INVALID_VALUE,
+			    "OSMesaPixelStore(value)");
+		return;
+	    }
+	    osmesa->userRowLength = value;
+	    break;
+	case OSMESA_Y_UP:
+	    osmesa->yup = value ? GL_TRUE : GL_FALSE;
+	    break;
+	default:
+	    _mesa_error(&osmesa->mesa, GL_INVALID_ENUM, "OSMesaPixelStore(pname)");
+	    return;
+    }
 
-   compute_row_addresses( osmesa );
+    compute_row_addresses(osmesa);
 }
 
 
 GLAPI void GLAPIENTRY
-OSMesaGetIntegerv( GLint pname, GLint *value )
+OSMesaGetIntegerv(GLint pname, GLint *value)
 {
-   OSMesaContext osmesa = OSMesaGetCurrentContext();
+    OSMesaContext osmesa = OSMesaGetCurrentContext();
 
-   switch (pname) {
-      case OSMESA_WIDTH:
-         if (osmesa->gl_buffer)
-            *value = osmesa->gl_buffer->Width;
-         else
-            *value = 0;
-         return;
-      case OSMESA_HEIGHT:
-         if (osmesa->gl_buffer)
-            *value = osmesa->gl_buffer->Height;
-         else
-            *value = 0;
-         return;
-      case OSMESA_FORMAT:
-         *value = osmesa->format;
-         return;
-      case OSMESA_TYPE:
-         /* current color buffer's data type */
-         if (osmesa->rb) {
-            *value = osmesa->rb->DataType;
-         }
-         else {
-            *value = 0;
-         }
-         return;
-      case OSMESA_ROW_LENGTH:
-         *value = osmesa->userRowLength;
-         return;
-      case OSMESA_Y_UP:
-         *value = osmesa->yup;
-         return;
-      case OSMESA_MAX_WIDTH:
-         *value = MAX_WIDTH;
-         return;
-      case OSMESA_MAX_HEIGHT:
-         *value = MAX_HEIGHT;
-         return;
-      default:
-         _mesa_error(&osmesa->mesa, GL_INVALID_ENUM, "OSMesaGetIntergerv(pname)");
-         return;
-   }
+    switch (pname) {
+	case OSMESA_WIDTH:
+	    if (osmesa->gl_buffer)
+		*value = osmesa->gl_buffer->Width;
+	    else
+		*value = 0;
+	    return;
+	case OSMESA_HEIGHT:
+	    if (osmesa->gl_buffer)
+		*value = osmesa->gl_buffer->Height;
+	    else
+		*value = 0;
+	    return;
+	case OSMESA_FORMAT:
+	    *value = osmesa->format;
+	    return;
+	case OSMESA_TYPE:
+	    /* current color buffer's data type */
+	    if (osmesa->rb) {
+		*value = osmesa->rb->DataType;
+	    } else {
+		*value = 0;
+	    }
+	    return;
+	case OSMESA_ROW_LENGTH:
+	    *value = osmesa->userRowLength;
+	    return;
+	case OSMESA_Y_UP:
+	    *value = osmesa->yup;
+	    return;
+	case OSMESA_MAX_WIDTH:
+	    *value = MAX_WIDTH;
+	    return;
+	case OSMESA_MAX_HEIGHT:
+	    *value = MAX_HEIGHT;
+	    return;
+	default:
+	    _mesa_error(&osmesa->mesa, GL_INVALID_ENUM, "OSMesaGetIntergerv(pname)");
+	    return;
+    }
 }
 
 
@@ -1501,31 +1471,30 @@ OSMesaGetIntegerv( GLint pname, GLint *value )
  * Return:  GL_TRUE or GL_FALSE to indicate success or failure.
  */
 GLAPI GLboolean GLAPIENTRY
-OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
-                      GLint *bytesPerValue, void **buffer )
+OSMesaGetDepthBuffer(OSMesaContext c, GLint *width, GLint *height,
+		     GLint *bytesPerValue, void **buffer)
 {
-   struct gl_renderbuffer *rb = NULL;
+    struct gl_renderbuffer *rb = NULL;
 
-   if (c->gl_buffer)
-      rb = c->gl_buffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+    if (c->gl_buffer)
+	rb = c->gl_buffer->Attachment[BUFFER_DEPTH].Renderbuffer;
 
-   if (!rb || !rb->Data) {
-      *width = 0;
-      *height = 0;
-      *bytesPerValue = 0;
-      *buffer = 0;
-      return GL_FALSE;
-   }
-   else {
-      *width = rb->Width;
-      *height = rb->Height;
-      if (c->gl_visual->depthBits <= 16)
-         *bytesPerValue = sizeof(GLushort);
-      else
-         *bytesPerValue = sizeof(GLuint);
-      *buffer = rb->Data;
-      return GL_TRUE;
-   }
+    if (!rb || !rb->Data) {
+	*width = 0;
+	*height = 0;
+	*bytesPerValue = 0;
+	*buffer = 0;
+	return GL_FALSE;
+    } else {
+	*width = rb->Width;
+	*height = rb->Height;
+	if (c->gl_visual->depthBits <= 16)
+	    *bytesPerValue = sizeof(GLushort);
+	else
+	    *bytesPerValue = sizeof(GLuint);
+	*buffer = rb->Data;
+	return GL_TRUE;
+    }
 }
 
 
@@ -1538,71 +1507,68 @@ OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
  * Return:  GL_TRUE or GL_FALSE to indicate success or failure.
  */
 GLAPI GLboolean GLAPIENTRY
-OSMesaGetColorBuffer( OSMesaContext osmesa, GLint *width,
-                      GLint *height, GLint *format, void **buffer )
+OSMesaGetColorBuffer(OSMesaContext osmesa, GLint *width,
+		     GLint *height, GLint *format, void **buffer)
 {
-   if (osmesa->rb && osmesa->rb->Data) {
-      *width = osmesa->rb->Width;
-      *height = osmesa->rb->Height;
-      *format = osmesa->format;
-      *buffer = osmesa->rb->Data;
-      return GL_TRUE;
-   }
-   else {
-      *width = 0;
-      *height = 0;
-      *format = 0;
-      *buffer = 0;
-      return GL_FALSE;
-   }
+    if (osmesa->rb && osmesa->rb->Data) {
+	*width = osmesa->rb->Width;
+	*height = osmesa->rb->Height;
+	*format = osmesa->format;
+	*buffer = osmesa->rb->Data;
+	return GL_TRUE;
+    } else {
+	*width = 0;
+	*height = 0;
+	*format = 0;
+	*buffer = 0;
+	return GL_FALSE;
+    }
 }
 
 
-struct name_function
-{
-   const char *Name;
-   OSMESAproc Function;
+struct name_function {
+    const char *Name;
+    OSMESAproc Function;
 };
 
 static struct name_function functions[] = {
-   { "OSMesaCreateContext", (OSMESAproc) OSMesaCreateContext },
-   { "OSMesaCreateContextExt", (OSMESAproc) OSMesaCreateContextExt },
-   { "OSMesaDestroyContext", (OSMESAproc) OSMesaDestroyContext },
-   { "OSMesaMakeCurrent", (OSMESAproc) OSMesaMakeCurrent },
-   { "OSMesaGetCurrentContext", (OSMESAproc) OSMesaGetCurrentContext },
-   { "OSMesaPixelsStore", (OSMESAproc) OSMesaPixelStore },
-   { "OSMesaGetIntegerv", (OSMESAproc) OSMesaGetIntegerv },
-   { "OSMesaGetDepthBuffer", (OSMESAproc) OSMesaGetDepthBuffer },
-   { "OSMesaGetColorBuffer", (OSMESAproc) OSMesaGetColorBuffer },
-   { "OSMesaGetProcAddress", (OSMESAproc) OSMesaGetProcAddress },
-   { "OSMesaColorClamp", (OSMESAproc) OSMesaColorClamp },
-   { NULL, NULL }
+    { "OSMesaCreateContext", (OSMESAproc) OSMesaCreateContext },
+    { "OSMesaCreateContextExt", (OSMESAproc) OSMesaCreateContextExt },
+    { "OSMesaDestroyContext", (OSMESAproc) OSMesaDestroyContext },
+    { "OSMesaMakeCurrent", (OSMESAproc) OSMesaMakeCurrent },
+    { "OSMesaGetCurrentContext", (OSMESAproc) OSMesaGetCurrentContext },
+    { "OSMesaPixelsStore", (OSMESAproc) OSMesaPixelStore },
+    { "OSMesaGetIntegerv", (OSMESAproc) OSMesaGetIntegerv },
+    { "OSMesaGetDepthBuffer", (OSMESAproc) OSMesaGetDepthBuffer },
+    { "OSMesaGetColorBuffer", (OSMESAproc) OSMesaGetColorBuffer },
+    { "OSMesaGetProcAddress", (OSMESAproc) OSMesaGetProcAddress },
+    { "OSMesaColorClamp", (OSMESAproc) OSMesaColorClamp },
+    { NULL, NULL }
 };
 
 
 GLAPI OSMESAproc GLAPIENTRY
-OSMesaGetProcAddress( const char *funcName )
+OSMesaGetProcAddress(const char *funcName)
 {
-   int i;
-   for (i = 0; functions[i].Name; i++) {
-      if (_mesa_strcmp(functions[i].Name, funcName) == 0)
-         return functions[i].Function;
-   }
-   return _glapi_get_proc_address(funcName);
+    int i;
+    for (i = 0; functions[i].Name; i++) {
+	if (_mesa_strcmp(functions[i].Name, funcName) == 0)
+	    return functions[i].Function;
+    }
+    return _glapi_get_proc_address(funcName);
 }
 
 
 GLAPI void GLAPIENTRY
 OSMesaColorClamp(GLboolean enable)
 {
-   OSMesaContext osmesa = OSMesaGetCurrentContext();
+    OSMesaContext osmesa = OSMesaGetCurrentContext();
 
-   if (enable == GL_TRUE) {
-      osmesa->mesa.Color.ClampFragmentColor = GL_TRUE;
-   }
-   else {
-      osmesa->mesa.Color.ClampFragmentColor = GL_FIXED_ONLY_ARB;
-   }
+    if (enable == GL_TRUE) {
+	osmesa->mesa.Color.ClampFragmentColor = GL_TRUE;
+    } else {
+	osmesa->mesa.Color.ClampFragmentColor = GL_FIXED_ONLY_ARB;
+    }
 }
 
 

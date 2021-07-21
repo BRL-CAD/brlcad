@@ -43,10 +43,10 @@
 
 extern void GLAPIENTRY
 _mesa_VertexPointer(GLint size, GLenum type, GLsizei stride,
-                    const GLvoid *ptr);
+		    const GLvoid *ptr);
 
 extern void GLAPIENTRY
-_mesa_UnlockArraysEXT( void );
+_mesa_UnlockArraysEXT(void);
 
 extern void GLAPIENTRY
 _mesa_LockArraysEXT(GLint first, GLsizei count);
@@ -66,7 +66,7 @@ _mesa_IndexPointer(GLenum type, GLsizei stride, const GLvoid *ptr);
 
 extern void GLAPIENTRY
 _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
-                      const GLvoid *ptr);
+		      const GLvoid *ptr);
 
 
 extern void GLAPIENTRY
@@ -75,27 +75,27 @@ _mesa_EdgeFlagPointer(GLsizei stride, const GLvoid *ptr);
 
 extern void GLAPIENTRY
 _mesa_VertexPointerEXT(GLint size, GLenum type, GLsizei stride,
-                       GLsizei count, const GLvoid *ptr);
+		       GLsizei count, const GLvoid *ptr);
 
 
 extern void GLAPIENTRY
 _mesa_NormalPointerEXT(GLenum type, GLsizei stride, GLsizei count,
-                       const GLvoid *ptr);
+		       const GLvoid *ptr);
 
 
 extern void GLAPIENTRY
 _mesa_ColorPointerEXT(GLint size, GLenum type, GLsizei stride, GLsizei count,
-                      const GLvoid *ptr);
+		      const GLvoid *ptr);
 
 
 extern void GLAPIENTRY
 _mesa_IndexPointerEXT(GLenum type, GLsizei stride, GLsizei count,
-                      const GLvoid *ptr);
+		      const GLvoid *ptr);
 
 
 extern void GLAPIENTRY
 _mesa_TexCoordPointerEXT(GLint size, GLenum type, GLsizei stride,
-                         GLsizei count, const GLvoid *ptr);
+			 GLsizei count, const GLvoid *ptr);
 
 
 extern void GLAPIENTRY
@@ -113,13 +113,13 @@ _mesa_SecondaryColorPointerEXT(GLint size, GLenum type,
 
 extern void GLAPIENTRY
 _mesa_VertexAttribPointerNV(GLuint index, GLint size, GLenum type,
-                            GLsizei stride, const GLvoid *pointer);
+			    GLsizei stride, const GLvoid *pointer);
 
 
 extern void GLAPIENTRY
 _mesa_VertexAttribPointerARB(GLuint index, GLint size, GLenum type,
-                             GLboolean normalized, GLsizei stride,
-                             const GLvoid *pointer);
+			     GLboolean normalized, GLsizei stride,
+			     const GLvoid *pointer);
 
 
 extern void GLAPIENTRY
@@ -127,28 +127,28 @@ _mesa_InterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer);
 
 
 extern void GLAPIENTRY
-_mesa_MultiDrawArraysEXT( GLenum mode, GLint *first,
-                          GLsizei *count, GLsizei primcount );
+_mesa_MultiDrawArraysEXT(GLenum mode, GLint *first,
+			 GLsizei *count, GLsizei primcount);
 
 extern void GLAPIENTRY
-_mesa_MultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type,
-                            const GLvoid **indices, GLsizei primcount );
-
-
-extern void GLAPIENTRY
-_mesa_MultiModeDrawArraysIBM( const GLenum * mode, const GLint * first,
-			      const GLsizei * count,
-			      GLsizei primcount, GLint modestride );
+_mesa_MultiDrawElementsEXT(GLenum mode, const GLsizei *count, GLenum type,
+			   const GLvoid **indices, GLsizei primcount);
 
 
 extern void GLAPIENTRY
-_mesa_MultiModeDrawElementsIBM( const GLenum * mode, const GLsizei * count,
-				GLenum type, const GLvoid * const * indices,
-				GLsizei primcount, GLint modestride );
+_mesa_MultiModeDrawArraysIBM(const GLenum * mode, const GLint * first,
+			     const GLsizei * count,
+			     GLsizei primcount, GLint modestride);
+
+
+extern void GLAPIENTRY
+_mesa_MultiModeDrawElementsIBM(const GLenum * mode, const GLsizei * count,
+			       GLenum type, const GLvoid * const * indices,
+			       GLsizei primcount, GLint modestride);
 
 
 extern void
-_mesa_init_varray( GLcontext * ctx );
+_mesa_init_varray(GLcontext * ctx);
 
 #else
 

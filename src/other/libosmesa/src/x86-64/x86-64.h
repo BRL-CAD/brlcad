@@ -27,6 +27,6 @@
 #ifndef __X86_64_ASM_H__
 #define __X86_64_ASM_H__
 
-extern void _mesa_init_all_x86_64_transform_asm( void );
+extern void _mesa_init_all_x86_64_transform_asm(void);
 
 #endif

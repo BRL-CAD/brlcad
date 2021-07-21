@@ -12,26 +12,23 @@
 #define MAX_NUM_PASSES_ATI                2
 #define MAX_NUM_FRAGMENT_REGISTERS_ATI    6
 
-struct ati_fs_opcode_st
-{
-   GLenum opcode;
-   GLint num_src_args;
+struct ati_fs_opcode_st {
+    GLenum opcode;
+    GLint num_src_args;
 };
 
 extern struct ati_fs_opcode_st ati_fs_opcodes[];
 
-struct atifragshader_src_register
-{
-   GLuint Index;
-   GLuint argRep;
-   GLuint argMod;
+struct atifragshader_src_register {
+    GLuint Index;
+    GLuint argRep;
+    GLuint argMod;
 };
 
-struct atifragshader_dst_register
-{
-   GLuint Index;
-   GLuint dstMod;
-   GLuint dstMask;
+struct atifragshader_dst_register {
+    GLuint Index;
+    GLuint dstMod;
+    GLuint dstMask;
 };
 
 #define ATI_FRAGMENT_SHADER_COLOR_OP 0
@@ -41,20 +38,18 @@ struct atifragshader_dst_register
 
 /* two opcodes - one for color/one for alpha */
 /* up to three source registers for most ops */
-struct atifs_instruction
-{
-   GLenum Opcode[2];
-   GLuint ArgCount[2];
-   struct atifragshader_src_register SrcReg[2][3];
-   struct atifragshader_dst_register DstReg[2];
+struct atifs_instruction {
+    GLenum Opcode[2];
+    GLuint ArgCount[2];
+    struct atifragshader_src_register SrcReg[2][3];
+    struct atifragshader_dst_register DstReg[2];
 };
 
 /* different from arithmetic shader instruction */
-struct atifs_setupinst
-{
-   GLenum Opcode;
-   GLuint src;
-   GLenum swizzle;
+struct atifs_setupinst {
+    GLenum Opcode;
+    GLuint src;
+    GLenum swizzle;
 };
 
 
@@ -63,7 +58,7 @@ _mesa_new_ati_fragment_shader(GLcontext *ctx, GLuint id);
 
 extern void
 _mesa_delete_ati_fragment_shader(GLcontext *ctx,
-                                 struct ati_fragment_shader *s);
+				 struct ati_fragment_shader *s);
 
 
 extern GLuint GLAPIENTRY _mesa_GenFragmentShadersATI(GLuint range);

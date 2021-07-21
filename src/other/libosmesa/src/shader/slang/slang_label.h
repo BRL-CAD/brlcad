@@ -6,17 +6,16 @@
 #include "prog_instruction.h"
 
 
-struct slang_label_
-{
-   char *Name;
-   GLint Location;
-   /**
-    * List of instruction references (numbered starting at zero) which need
-    * their BranchTarget field filled in with the location eventually
-    * assigned to the label.
-    */
-   GLuint NumReferences;
-   GLuint *References;   /** Array [NumReferences] */
+struct slang_label_ {
+    char *Name;
+    GLint Location;
+    /**
+     * List of instruction references (numbered starting at zero) which need
+     * their BranchTarget field filled in with the location eventually
+     * assigned to the label.
+     */
+    GLuint NumReferences;
+    GLuint *References;   /** Array [NumReferences] */
 };
 
 typedef struct slang_label_ slang_label;
@@ -39,7 +38,7 @@ _slang_label_get_location(const slang_label *l);
 
 extern void
 _slang_label_set_location(slang_label *l, GLint location,
-                          struct gl_program *prog);
+			  struct gl_program *prog);
 
 
 #endif /* SLANG_LABEL_H */

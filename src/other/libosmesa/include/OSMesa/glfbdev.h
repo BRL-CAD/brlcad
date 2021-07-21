@@ -60,14 +60,14 @@ typedef struct GLFBDevContextRec *GLFBDevContextPtr;
 /* Misc functions */
 
 extern const char *
-glFBDevGetString( int str );
+glFBDevGetString(int str);
 
 
 typedef void (*GLFBDevProc)();
 
 
 extern GLFBDevProc
-glFBDevGetProcAddress( const char *procName );
+glFBDevGetProcAddress(const char *procName);
 
 
 
@@ -78,15 +78,15 @@ glFBDevGetProcAddress( const char *procName );
  * \param attribs - for requesting depth, stencil, accum buffers, etc.
  */
 extern GLFBDevVisualPtr
-glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
-                     const struct fb_var_screeninfo *varInfo,
-                     const int *attribs );
+glFBDevCreateVisual(const struct fb_fix_screeninfo *fixInfo,
+		    const struct fb_var_screeninfo *varInfo,
+		    const int *attribs);
 
 extern void
-glFBDevDestroyVisual( GLFBDevVisualPtr visual );
+glFBDevDestroyVisual(GLFBDevVisualPtr visual);
 
 extern int
-glFBDevGetVisualAttrib( const GLFBDevVisualPtr visual, int attrib);
+glFBDevGetVisualAttrib(const GLFBDevVisualPtr visual, int attrib);
 
 
 
@@ -100,25 +100,25 @@ glFBDevGetVisualAttrib( const GLFBDevVisualPtr visual, int attrib);
  * \param size - size of the color buffer(s) in bytes.
  */
 extern GLFBDevBufferPtr
-glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
-                     const struct fb_var_screeninfo *varInfo,
-                     const GLFBDevVisualPtr visual,
-                     void *frontBuffer, void *backBuffer, size_t size );
+glFBDevCreateBuffer(const struct fb_fix_screeninfo *fixInfo,
+		    const struct fb_var_screeninfo *varInfo,
+		    const GLFBDevVisualPtr visual,
+		    void *frontBuffer, void *backBuffer, size_t size);
 
 extern void
-glFBDevDestroyBuffer( GLFBDevBufferPtr buffer );
+glFBDevDestroyBuffer(GLFBDevBufferPtr buffer);
 
 extern int
-glFBDevGetBufferAttrib( const GLFBDevBufferPtr buffer, int attrib);
+glFBDevGetBufferAttrib(const GLFBDevBufferPtr buffer, int attrib);
 
 extern GLFBDevBufferPtr
-glFBDevGetCurrentDrawBuffer( void );
+glFBDevGetCurrentDrawBuffer(void);
 
 extern GLFBDevBufferPtr
-glFBDevGetCurrentReadBuffer( void );
+glFBDevGetCurrentReadBuffer(void);
 
 extern void
-glFBDevSwapBuffers( GLFBDevBufferPtr buffer );
+glFBDevSwapBuffers(GLFBDevBufferPtr buffer);
 
 
 
@@ -129,21 +129,21 @@ glFBDevSwapBuffers( GLFBDevBufferPtr buffer );
  * display lists, etc. (may be NULL).
  */
 extern GLFBDevContextPtr
-glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share );
+glFBDevCreateContext(const GLFBDevVisualPtr visual, GLFBDevContextPtr share);
 
 extern void
-glFBDevDestroyContext( GLFBDevContextPtr context );
+glFBDevDestroyContext(GLFBDevContextPtr context);
 
 extern int
-glFBDevGetContextAttrib( const GLFBDevContextPtr context, int attrib);
+glFBDevGetContextAttrib(const GLFBDevContextPtr context, int attrib);
 
 extern GLFBDevContextPtr
-glFBDevGetCurrentContext( void );
+glFBDevGetCurrentContext(void);
 
 extern int
-glFBDevMakeCurrent( GLFBDevContextPtr context,
-                    GLFBDevBufferPtr drawBuffer,
-                    GLFBDevBufferPtr readBuffer );
+glFBDevMakeCurrent(GLFBDevContextPtr context,
+		   GLFBDevBufferPtr drawBuffer,
+		   GLFBDevBufferPtr readBuffer);
 
 
 #endif /* GLFBDEV_H */

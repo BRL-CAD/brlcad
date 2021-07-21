@@ -33,19 +33,19 @@
 
 
 extern GLboolean
-_swrast_culltriangle( GLcontext *ctx,
-                     const SWvertex *v0,
-                     const SWvertex *v1,
-                     const SWvertex *v2);
+_swrast_culltriangle(GLcontext *ctx,
+		     const SWvertex *v0,
+		     const SWvertex *v1,
+		     const SWvertex *v2);
 
 extern void
-_swrast_choose_triangle( GLcontext *ctx );
+_swrast_choose_triangle(GLcontext *ctx);
 
 extern void
-_swrast_add_spec_terms_triangle( GLcontext *ctx,
-				 const SWvertex *v0,
-				 const SWvertex *v1,
-				 const SWvertex *v2 );
+_swrast_add_spec_terms_triangle(GLcontext *ctx,
+				const SWvertex *v0,
+				const SWvertex *v1,
+				const SWvertex *v2);
 
 
 #endif

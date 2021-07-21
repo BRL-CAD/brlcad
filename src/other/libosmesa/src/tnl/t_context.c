@@ -41,145 +41,144 @@
 #include "vbo/vbo.h"
 
 GLboolean
-_tnl_CreateContext( GLcontext *ctx )
+_tnl_CreateContext(GLcontext *ctx)
 {
-   TNLcontext *tnl;
+    TNLcontext *tnl;
 
-   /* Create the TNLcontext structure
-    */
-   ctx->swtnl_context = tnl = (TNLcontext *) CALLOC( sizeof(TNLcontext) );
+    /* Create the TNLcontext structure
+     */
+    ctx->swtnl_context = tnl = (TNLcontext *) CALLOC(sizeof(TNLcontext));
 
-   if (!tnl) {
-      return GL_FALSE;
-   }
+    if (!tnl) {
+	return GL_FALSE;
+    }
 
-   /* Initialize the VB.
-    */
-   tnl->vb.Size = ctx->Const.MaxArrayLockSize + MAX_CLIPPED_VERTICES;
+    /* Initialize the VB.
+     */
+    tnl->vb.Size = ctx->Const.MaxArrayLockSize + MAX_CLIPPED_VERTICES;
 
 
-   /* Initialize tnl state.
-    */
-   if (ctx->VertexProgram._MaintainTnlProgram) {
-      _tnl_ProgramCacheInit( ctx );
-      _tnl_install_pipeline( ctx, _tnl_vp_pipeline );
-   } else {
-      _tnl_install_pipeline( ctx, _tnl_default_pipeline );
-   }
+    /* Initialize tnl state.
+     */
+    if (ctx->VertexProgram._MaintainTnlProgram) {
+	_tnl_ProgramCacheInit(ctx);
+	_tnl_install_pipeline(ctx, _tnl_vp_pipeline);
+    } else {
+	_tnl_install_pipeline(ctx, _tnl_default_pipeline);
+    }
 
-   tnl->NeedNdcCoords = GL_TRUE;
-   tnl->AllowVertexFog = GL_TRUE;
-   tnl->AllowPixelFog = GL_TRUE;
+    tnl->NeedNdcCoords = GL_TRUE;
+    tnl->AllowVertexFog = GL_TRUE;
+    tnl->AllowPixelFog = GL_TRUE;
 
-   /* Set a few default values in the driver struct.
-    */
-   tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
-   tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
-   tnl->Driver.NotifyMaterialChange = _mesa_validate_all_lighting_tables;
+    /* Set a few default values in the driver struct.
+     */
+    tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
+    tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
+    tnl->Driver.NotifyMaterialChange = _mesa_validate_all_lighting_tables;
 
-   tnl->nr_blocks = 0;
+    tnl->nr_blocks = 0;
 
-   return GL_TRUE;
+    return GL_TRUE;
 }
 
 
 void
-_tnl_DestroyContext( GLcontext *ctx )
+_tnl_DestroyContext(GLcontext *ctx)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-   _tnl_destroy_pipeline( ctx );
+    _tnl_destroy_pipeline(ctx);
 
-   if (ctx->VertexProgram._MaintainTnlProgram)
-      _tnl_ProgramCacheDestroy( ctx );
+    if (ctx->VertexProgram._MaintainTnlProgram)
+	_tnl_ProgramCacheDestroy(ctx);
 
-   FREE(tnl);
-   ctx->swtnl_context = NULL;
+    FREE(tnl);
+    ctx->swtnl_context = NULL;
 }
 
 
 void
-_tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
+_tnl_InvalidateState(GLcontext *ctx, GLuint new_state)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   const struct gl_vertex_program *vp = ctx->VertexProgram._Current;
-   const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    const struct gl_vertex_program *vp = ctx->VertexProgram._Current;
+    const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
 
-   if (new_state & (_NEW_HINT)) {
-      ASSERT(tnl->AllowVertexFog || tnl->AllowPixelFog);
-      tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
-         || !tnl->AllowPixelFog;
-   }
+    if (new_state & (_NEW_HINT)) {
+	ASSERT(tnl->AllowVertexFog || tnl->AllowPixelFog);
+	tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
+			    || !tnl->AllowPixelFog;
+    }
 
-   tnl->pipeline.new_state |= new_state;
+    tnl->pipeline.new_state |= new_state;
 
-   /* Calculate tnl->render_inputs:
-    */
-   if (ctx->Visual.rgbMode) {
-      GLuint i;
+    /* Calculate tnl->render_inputs:
+     */
+    if (ctx->Visual.rgbMode) {
+	GLuint i;
 
-      RENDERINPUTS_ZERO( tnl->render_inputs_bitset );
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POS );
-      if (!fp || (fp->Base.InputsRead & FRAG_BIT_COL0)) {
-         RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0 );
-      }
-      for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
-         if (ctx->Texture._EnabledCoordUnits & (1 << i)) {
-            RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) );
-         }
-      }
+	RENDERINPUTS_ZERO(tnl->render_inputs_bitset);
+	RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_POS);
+	if (!fp || (fp->Base.InputsRead & FRAG_BIT_COL0)) {
+	    RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0);
+	}
+	for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+	    if (ctx->Texture._EnabledCoordUnits & (1 << i)) {
+		RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i));
+	    }
+	}
 
-      if (NEED_SECONDARY_COLOR(ctx))
-         RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 );
-   }
-   else {
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POS );
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR_INDEX );
-   }
+	if (NEED_SECONDARY_COLOR(ctx))
+	    RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1);
+    } else {
+	RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_POS);
+	RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR_INDEX);
+    }
 
-   if (ctx->Fog.Enabled || ctx->FragmentProgram._Active ||
-       (ctx->FragmentProgram._Current &&
-        (ctx->FragmentProgram._Current->FogOption != GL_NONE ||
-         (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_FOGC)))
+    if (ctx->Fog.Enabled || ctx->FragmentProgram._Active ||
+	(ctx->FragmentProgram._Current &&
+	 (ctx->FragmentProgram._Current->FogOption != GL_NONE ||
+	  (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_FOGC)))
        )
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_FOG );
+	RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_FOG);
 
-   if (ctx->Polygon.FrontMode != GL_FILL || 
-       ctx->Polygon.BackMode != GL_FILL)
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_EDGEFLAG );
+    if (ctx->Polygon.FrontMode != GL_FILL ||
+	ctx->Polygon.BackMode != GL_FILL)
+	RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_EDGEFLAG);
 
-   if (ctx->RenderMode == GL_FEEDBACK)
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_TEX0 );
+    if (ctx->RenderMode == GL_FEEDBACK)
+	RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_TEX0);
 
-   if (ctx->Point._Attenuated ||
-       (ctx->VertexProgram._Enabled && ctx->VertexProgram.PointSizeEnabled))
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE );
+    if (ctx->Point._Attenuated ||
+	(ctx->VertexProgram._Enabled && ctx->VertexProgram.PointSizeEnabled))
+	RENDERINPUTS_SET(tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE);
 
-   /* check for varying vars which are written by the vertex program */
-   if (vp) {
-      GLuint i;
-      for (i = 0; i < MAX_VARYING; i++) {
-         if (vp->Base.OutputsWritten & (1 << (VERT_RESULT_VAR0 + i))) {
-            RENDERINPUTS_SET(tnl->render_inputs_bitset,
-                             _TNL_ATTRIB_GENERIC(i));
-         }
-      }
-   }
+    /* check for varying vars which are written by the vertex program */
+    if (vp) {
+	GLuint i;
+	for (i = 0; i < MAX_VARYING; i++) {
+	    if (vp->Base.OutputsWritten & (1 << (VERT_RESULT_VAR0 + i))) {
+		RENDERINPUTS_SET(tnl->render_inputs_bitset,
+				 _TNL_ATTRIB_GENERIC(i));
+	    }
+	}
+    }
 }
 
 
 void
-_tnl_wakeup( GLcontext *ctx )
+_tnl_wakeup(GLcontext *ctx)
 {
-   /* Assume we haven't been getting state updates either:
-    */
-   _tnl_InvalidateState( ctx, ~0 );
+    /* Assume we haven't been getting state updates either:
+     */
+    _tnl_InvalidateState(ctx, ~0);
 
 #if 0
-   if (ctx->Light.ColorMaterialEnabled) {
-      _mesa_update_color_material( ctx, 
-				   ctx->Current.Attrib[VERT_ATTRIB_COLOR0] );
-   }
+    if (ctx->Light.ColorMaterialEnabled) {
+	_mesa_update_color_material(ctx,
+				    ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
+    }
 #endif
 }
 
@@ -192,28 +191,28 @@ _tnl_wakeup( GLcontext *ctx )
  * we should "Divide-by-W".  Software renders will want that.
  */
 void
-_tnl_need_projected_coords( GLcontext *ctx, GLboolean mode )
+_tnl_need_projected_coords(GLcontext *ctx, GLboolean mode)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->NeedNdcCoords = mode;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    tnl->NeedNdcCoords = mode;
 }
 
 void
-_tnl_allow_vertex_fog( GLcontext *ctx, GLboolean value )
+_tnl_allow_vertex_fog(GLcontext *ctx, GLboolean value)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->AllowVertexFog = value;
-   tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
-      || !tnl->AllowPixelFog;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    tnl->AllowVertexFog = value;
+    tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
+			|| !tnl->AllowPixelFog;
 
 }
 
 void
-_tnl_allow_pixel_fog( GLcontext *ctx, GLboolean value )
+_tnl_allow_pixel_fog(GLcontext *ctx, GLboolean value)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->AllowPixelFog = value;
-   tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
-      || !tnl->AllowPixelFog;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    tnl->AllowPixelFog = value;
+    tnl->_DoVertexFog = (tnl->AllowVertexFog && (ctx->Hint.Fog != GL_NICEST))
+			|| !tnl->AllowPixelFog;
 }
 

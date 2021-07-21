@@ -27,11 +27,10 @@
 #define SLANG_LOG_H
 
 
-typedef struct slang_info_log_
-{
-   char *text;
-   GLboolean dont_free_text;
-   GLboolean error_flag;
+typedef struct slang_info_log_ {
+    char *text;
+    GLboolean dont_free_text;
+    GLboolean error_flag;
 } slang_info_log;
 
 

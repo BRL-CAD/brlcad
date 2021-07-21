@@ -191,7 +191,7 @@ extern char *mesa_profile;
      unsigned int a,d; \
      __asm__ volatile("rdtsc" : "=a" (a), "=d" (d)); \
      (val) = ((unsigned long)a) | (((unsigned long)d)<<32); \
-} while(0) 
+} while(0)
 
 /* Copied from i386 PIII version */
 #define  INIT_COUNTER()							\
@@ -259,42 +259,42 @@ x -= counter_overhead;
  * Helper functions
  */
 
-static GLfloat rnd( void )
+static GLfloat rnd(void)
 {
-   GLfloat f = (GLfloat)rand() / (GLfloat)RAND_MAX;
-   GLfloat gran = (GLfloat)(1 << 13);
+    GLfloat f = (GLfloat)rand() / (GLfloat)RAND_MAX;
+    GLfloat gran = (GLfloat)(1 << 13);
 
-   f = (GLfloat)(GLint)(f * gran) / gran;
+    f = (GLfloat)(GLint)(f * gran) / gran;
 
-   return f * 2.0 - 1.0;
+    return f * 2.0 - 1.0;
 }
 
-static int significand_match( GLfloat a, GLfloat b )
+static int significand_match(GLfloat a, GLfloat b)
 {
-   GLfloat d = a - b;
-   int a_ex, b_ex, d_ex;
+    GLfloat d = a - b;
+    int a_ex, b_ex, d_ex;
 
-   if ( d == 0.0F ) {
-      return MAX_PRECISION;   /* Exact match */
-   }
+    if (d == 0.0F) {
+	return MAX_PRECISION;   /* Exact match */
+    }
 
-   if ( a == 0.0F || b == 0.0F ) {
-      /* It would probably be better to check if the
-       * non-zero number is denormalized and return
-       * the index of the highest set bit here.
-       */
-      return 0;
-   }
+    if (a == 0.0F || b == 0.0F) {
+	/* It would probably be better to check if the
+	 * non-zero number is denormalized and return
+	 * the index of the highest set bit here.
+	 */
+	return 0;
+    }
 
-   FREXPF( a, &a_ex );
-   FREXPF( b, &b_ex );
-   FREXPF( d, &d_ex );
+    FREXPF(a, &a_ex);
+    FREXPF(b, &b_ex);
+    FREXPF(d, &d_ex);
 
-   if ( a_ex < b_ex ) {
-      return a_ex - d_ex;
-   } else {
-      return b_ex - d_ex;
-   }
+    if (a_ex < b_ex) {
+	return a_ex - d_ex;
+    } else {
+	return b_ex - d_ex;
+    }
 }
 
 enum { NIL = 0, ONE = 1, NEG = -1, VAR = 2 };
@@ -306,9 +306,9 @@ enum { NIL = 0, ONE = 1, NEG = -1, VAR = 2 };
 #elif defined(__MSC__)
 #  define ALIGN16(type, array)	type array __declspec(align(16)) /* GH: Does this work? */
 #elif defined(__WATCOMC__)
-#  define ALIGN16(type, array)	                    /* Watcom does not support this */ 
+#  define ALIGN16(type, array)	                    /* Watcom does not support this */
 #elif defined(__xlC__)
-#  define ALIGN16(type, array)       type __align (16) array 
+#  define ALIGN16(type, array)       type __align (16) array
 #else
 #  warning "ALIGN16 will not 16-byte align!\n"
 #  define ALIGN16

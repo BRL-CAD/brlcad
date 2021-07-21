@@ -47,21 +47,21 @@
  * Just used for feedback mode.
  */
 GLboolean
-_swrast_culltriangle( GLcontext *ctx,
-                      const SWvertex *v0,
-                      const SWvertex *v1,
-                      const SWvertex *v2 )
+_swrast_culltriangle(GLcontext *ctx,
+		     const SWvertex *v0,
+		     const SWvertex *v1,
+		     const SWvertex *v2)
 {
-   GLfloat ex = v1->win[0] - v0->win[0];
-   GLfloat ey = v1->win[1] - v0->win[1];
-   GLfloat fx = v2->win[0] - v0->win[0];
-   GLfloat fy = v2->win[1] - v0->win[1];
-   GLfloat c = ex*fy-ey*fx;
+    GLfloat ex = v1->win[0] - v0->win[0];
+    GLfloat ey = v1->win[1] - v0->win[1];
+    GLfloat fx = v2->win[0] - v0->win[0];
+    GLfloat fy = v2->win[1] - v0->win[1];
+    GLfloat c = ex*fy-ey*fx;
 
-   if (c * SWRAST_CONTEXT(ctx)->_BackfaceCullSign > 0)
-      return 0;
+    if (c * SWRAST_CONTEXT(ctx)->_BackfaceCullSign > 0)
+	return 0;
 
-   return 1;
+    return 1;
 }
 
 
@@ -231,31 +231,30 @@ _swrast_culltriangle( GLcontext *ctx,
 
 #if CHAN_TYPE != GL_FLOAT
 
-struct affine_info
-{
-   GLenum filter;
-   GLenum format;
-   GLenum envmode;
-   GLint smask, tmask;
-   GLint twidth_log2;
-   const GLchan *texture;
-   GLfixed er, eg, eb, ea;
-   GLint tbytesline, tsize;
+struct affine_info {
+    GLenum filter;
+    GLenum format;
+    GLenum envmode;
+    GLint smask, tmask;
+    GLint twidth_log2;
+    const GLchan *texture;
+    GLfixed er, eg, eb, ea;
+    GLint tbytesline, tsize;
 };
 
 
 static INLINE GLint
 ilerp(GLint t, GLint a, GLint b)
 {
-   return a + ((t * (b - a)) >> FIXED_SHIFT);
+    return a + ((t * (b - a)) >> FIXED_SHIFT);
 }
 
 static INLINE GLint
 ilerp_2d(GLint ia, GLint ib, GLint v00, GLint v10, GLint v01, GLint v11)
 {
-   const GLint temp0 = ilerp(ia, v00, v10);
-   const GLint temp1 = ilerp(ia, v01, v11);
-   return ilerp(ib, temp0, temp1);
+    const GLint temp0 = ilerp(ia, v00, v10);
+    const GLint temp1 = ilerp(ia, v01, v11);
+    return ilerp(ib, temp0, temp1);
 }
 
 
@@ -265,15 +264,15 @@ ilerp_2d(GLint ia, GLint ib, GLint v00, GLint v10, GLint v01, GLint v11)
  */
 static INLINE void
 affine_span(GLcontext *ctx, SWspan *span,
-            struct affine_info *info)
+	    struct affine_info *info)
 {
-   GLchan sample[4];  /* the filtered texture sample */
+    GLchan sample[4];  /* the filtered texture sample */
 
-   /* Instead of defining a function for each mode, a test is done
-    * between the outer and inner loops. This is to reduce code size
-    * and complexity. Observe that an optimizing compiler kills
-    * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
-    */
+    /* Instead of defining a function for each mode, a test is done
+     * between the outer and inner loops. This is to reduce code size
+     * and complexity. Observe that an optimizing compiler kills
+     * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
+     */
 
 #define NEAREST_RGB			\
    sample[RCOMP] = tex00[RCOMP];	\
@@ -335,7 +334,7 @@ affine_span(GLcontext *ctx, SWspan *span,
       dest[ACOMP] = span->alpha * (sample[ACOMP] + 1) >> (FIXED_SHIFT + 8); \
   }
 
-/* shortcuts */
+    /* shortcuts */
 
 #define NEAREST_RGB_REPLACE		\
    NEAREST_RGB;				\
@@ -394,111 +393,111 @@ affine_span(GLcontext *ctx, SWspan *span,
 	}
 
 
-   GLuint i;
-   GLchan *dest = span->array->rgba[0];
+    GLuint i;
+    GLchan *dest = span->array->rgba[0];
 
-   span->intTex[0] -= FIXED_HALF;
-   span->intTex[1] -= FIXED_HALF;
-   switch (info->filter) {
-   case GL_NEAREST:
-      switch (info->format) {
-      case GL_RGB:
-         switch (info->envmode) {
-         case GL_MODULATE:
-            SPAN_NEAREST(NEAREST_RGB;MODULATE,3);
-            break;
-         case GL_DECAL:
-         case GL_REPLACE:
-            SPAN_NEAREST(NEAREST_RGB_REPLACE,3);
-            break;
-         case GL_BLEND:
-            SPAN_NEAREST(NEAREST_RGB;BLEND,3);
-            break;
-         case GL_ADD:
-            SPAN_NEAREST(NEAREST_RGB;ADD,3);
-            break;
-         default:
-            _mesa_problem(ctx, "bad tex env mode in SPAN_LINEAR");
-            return;
-         }
-         break;
-      case GL_RGBA:
-         switch(info->envmode) {
-         case GL_MODULATE:
-            SPAN_NEAREST(NEAREST_RGBA;MODULATE,4);
-            break;
-         case GL_DECAL:
-            SPAN_NEAREST(NEAREST_RGBA;DECAL,4);
-            break;
-         case GL_BLEND:
-            SPAN_NEAREST(NEAREST_RGBA;BLEND,4);
-            break;
-         case GL_ADD:
-            SPAN_NEAREST(NEAREST_RGBA;ADD,4);
-            break;
-         case GL_REPLACE:
-            SPAN_NEAREST(NEAREST_RGBA_REPLACE,4);
-            break;
-         default:
-            _mesa_problem(ctx, "bad tex env mode (2) in SPAN_LINEAR");
-            return;
-         }
-         break;
-      }
-      break;
+    span->intTex[0] -= FIXED_HALF;
+    span->intTex[1] -= FIXED_HALF;
+    switch (info->filter) {
+	case GL_NEAREST:
+	    switch (info->format) {
+		case GL_RGB:
+		    switch (info->envmode) {
+			case GL_MODULATE:
+			    SPAN_NEAREST(NEAREST_RGB; MODULATE,3);
+			    break;
+			case GL_DECAL:
+			case GL_REPLACE:
+			    SPAN_NEAREST(NEAREST_RGB_REPLACE,3);
+			    break;
+			case GL_BLEND:
+			    SPAN_NEAREST(NEAREST_RGB; BLEND,3);
+			    break;
+			case GL_ADD:
+			    SPAN_NEAREST(NEAREST_RGB; ADD,3);
+			    break;
+			default:
+			    _mesa_problem(ctx, "bad tex env mode in SPAN_LINEAR");
+			    return;
+		    }
+		    break;
+		case GL_RGBA:
+		    switch (info->envmode) {
+			case GL_MODULATE:
+			    SPAN_NEAREST(NEAREST_RGBA; MODULATE,4);
+			    break;
+			case GL_DECAL:
+			    SPAN_NEAREST(NEAREST_RGBA; DECAL,4);
+			    break;
+			case GL_BLEND:
+			    SPAN_NEAREST(NEAREST_RGBA; BLEND,4);
+			    break;
+			case GL_ADD:
+			    SPAN_NEAREST(NEAREST_RGBA; ADD,4);
+			    break;
+			case GL_REPLACE:
+			    SPAN_NEAREST(NEAREST_RGBA_REPLACE,4);
+			    break;
+			default:
+			    _mesa_problem(ctx, "bad tex env mode (2) in SPAN_LINEAR");
+			    return;
+		    }
+		    break;
+	    }
+	    break;
 
-   case GL_LINEAR:
-      span->intTex[0] -= FIXED_HALF;
-      span->intTex[1] -= FIXED_HALF;
-      switch (info->format) {
-      case GL_RGB:
-         switch (info->envmode) {
-         case GL_MODULATE:
-            SPAN_LINEAR(LINEAR_RGB;MODULATE,3);
-            break;
-         case GL_DECAL:
-         case GL_REPLACE:
-            SPAN_LINEAR(LINEAR_RGB;REPLACE,3);
-            break;
-         case GL_BLEND:
-            SPAN_LINEAR(LINEAR_RGB;BLEND,3);
-            break;
-         case GL_ADD:
-            SPAN_LINEAR(LINEAR_RGB;ADD,3);
-            break;
-         default:
-            _mesa_problem(ctx, "bad tex env mode (3) in SPAN_LINEAR");
-            return;
-         }
-         break;
-      case GL_RGBA:
-         switch (info->envmode) {
-         case GL_MODULATE:
-            SPAN_LINEAR(LINEAR_RGBA;MODULATE,4);
-            break;
-         case GL_DECAL:
-            SPAN_LINEAR(LINEAR_RGBA;DECAL,4);
-            break;
-         case GL_BLEND:
-            SPAN_LINEAR(LINEAR_RGBA;BLEND,4);
-            break;
-         case GL_ADD:
-            SPAN_LINEAR(LINEAR_RGBA;ADD,4);
-            break;
-         case GL_REPLACE:
-            SPAN_LINEAR(LINEAR_RGBA;REPLACE,4);
-            break;
-         default:
-            _mesa_problem(ctx, "bad tex env mode (4) in SPAN_LINEAR");
-            return;
-         }
-         break;
-      }
-      break;
-   }
-   span->interpMask &= ~SPAN_RGBA;
-   ASSERT(span->arrayMask & SPAN_RGBA);
-   _swrast_write_rgba_span(ctx, span);
+	case GL_LINEAR:
+	    span->intTex[0] -= FIXED_HALF;
+	    span->intTex[1] -= FIXED_HALF;
+	    switch (info->format) {
+		case GL_RGB:
+		    switch (info->envmode) {
+			case GL_MODULATE:
+			    SPAN_LINEAR(LINEAR_RGB; MODULATE,3);
+			    break;
+			case GL_DECAL:
+			case GL_REPLACE:
+			    SPAN_LINEAR(LINEAR_RGB; REPLACE,3);
+			    break;
+			case GL_BLEND:
+			    SPAN_LINEAR(LINEAR_RGB; BLEND,3);
+			    break;
+			case GL_ADD:
+			    SPAN_LINEAR(LINEAR_RGB; ADD,3);
+			    break;
+			default:
+			    _mesa_problem(ctx, "bad tex env mode (3) in SPAN_LINEAR");
+			    return;
+		    }
+		    break;
+		case GL_RGBA:
+		    switch (info->envmode) {
+			case GL_MODULATE:
+			    SPAN_LINEAR(LINEAR_RGBA; MODULATE,4);
+			    break;
+			case GL_DECAL:
+			    SPAN_LINEAR(LINEAR_RGBA; DECAL,4);
+			    break;
+			case GL_BLEND:
+			    SPAN_LINEAR(LINEAR_RGBA; BLEND,4);
+			    break;
+			case GL_ADD:
+			    SPAN_LINEAR(LINEAR_RGBA; ADD,4);
+			    break;
+			case GL_REPLACE:
+			    SPAN_LINEAR(LINEAR_RGBA; REPLACE,4);
+			    break;
+			default:
+			    _mesa_problem(ctx, "bad tex env mode (4) in SPAN_LINEAR");
+			    return;
+		    }
+		    break;
+	    }
+	    break;
+    }
+    span->interpMask &= ~SPAN_RGBA;
+    ASSERT(span->arrayMask & SPAN_RGBA);
+    _swrast_write_rgba_span(ctx, span);
 
 #undef SPAN_NEAREST
 #undef SPAN_LINEAR
@@ -573,16 +572,15 @@ affine_span(GLcontext *ctx, SWspan *span,
 
 
 
-struct persp_info
-{
-   GLenum filter;
-   GLenum format;
-   GLenum envmode;
-   GLint smask, tmask;
-   GLint twidth_log2;
-   const GLchan *texture;
-   GLfixed er, eg, eb, ea;   /* texture env color */
-   GLint tbytesline, tsize;
+struct persp_info {
+    GLenum filter;
+    GLenum format;
+    GLenum envmode;
+    GLint smask, tmask;
+    GLint twidth_log2;
+    const GLchan *texture;
+    GLfixed er, eg, eb, ea;   /* texture env color */
+    GLint tbytesline, tsize;
 };
 
 
@@ -590,13 +588,13 @@ static INLINE void
 fast_persp_span(GLcontext *ctx, SWspan *span,
 		struct persp_info *info)
 {
-   GLchan sample[4];  /* the filtered texture sample */
+    GLchan sample[4];  /* the filtered texture sample */
 
-  /* Instead of defining a function for each mode, a test is done
-   * between the outer and inner loops. This is to reduce code size
-   * and complexity. Observe that an optimizing compiler kills
-   * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
-   */
+    /* Instead of defining a function for each mode, a test is done
+     * between the outer and inner loops. This is to reduce code size
+     * and complexity. Observe that an optimizing compiler kills
+     * unused variables (for instance tf,sf,ti,si in case of GL_NEAREST).
+     */
 #define SPAN_NEAREST(DO_TEX,COMP)					\
 	for (i = 0; i < span->end; i++) {				\
            GLdouble invQ = tex_coord[2] ?				\
@@ -654,125 +652,125 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
            dest += 4;							\
 	}
 
-   GLuint i;
-   GLfloat tex_coord[3], tex_step[3];
-   GLchan *dest = span->array->rgba[0];
+    GLuint i;
+    GLfloat tex_coord[3], tex_step[3];
+    GLchan *dest = span->array->rgba[0];
 
-   const GLuint savedTexEnable = ctx->Texture._EnabledUnits;
-   ctx->Texture._EnabledUnits = 0;
+    const GLuint savedTexEnable = ctx->Texture._EnabledUnits;
+    ctx->Texture._EnabledUnits = 0;
 
-   tex_coord[0] = span->attrStart[FRAG_ATTRIB_TEX0][0]  * (info->smask + 1);
-   tex_step[0] = span->attrStepX[FRAG_ATTRIB_TEX0][0] * (info->smask + 1);
-   tex_coord[1] = span->attrStart[FRAG_ATTRIB_TEX0][1] * (info->tmask + 1);
-   tex_step[1] = span->attrStepX[FRAG_ATTRIB_TEX0][1] * (info->tmask + 1);
-   /* span->attrStart[FRAG_ATTRIB_TEX0][2] only if 3D-texturing, here only 2D */
-   tex_coord[2] = span->attrStart[FRAG_ATTRIB_TEX0][3];
-   tex_step[2] = span->attrStepX[FRAG_ATTRIB_TEX0][3];
+    tex_coord[0] = span->attrStart[FRAG_ATTRIB_TEX0][0]  * (info->smask + 1);
+    tex_step[0] = span->attrStepX[FRAG_ATTRIB_TEX0][0] * (info->smask + 1);
+    tex_coord[1] = span->attrStart[FRAG_ATTRIB_TEX0][1] * (info->tmask + 1);
+    tex_step[1] = span->attrStepX[FRAG_ATTRIB_TEX0][1] * (info->tmask + 1);
+    /* span->attrStart[FRAG_ATTRIB_TEX0][2] only if 3D-texturing, here only 2D */
+    tex_coord[2] = span->attrStart[FRAG_ATTRIB_TEX0][3];
+    tex_step[2] = span->attrStepX[FRAG_ATTRIB_TEX0][3];
 
-   switch (info->filter) {
-   case GL_NEAREST:
-      switch (info->format) {
-      case GL_RGB:
-         switch (info->envmode) {
-         case GL_MODULATE:
-            SPAN_NEAREST(NEAREST_RGB;MODULATE,3);
-            break;
-         case GL_DECAL:
-         case GL_REPLACE:
-            SPAN_NEAREST(NEAREST_RGB_REPLACE,3);
-            break;
-         case GL_BLEND:
-            SPAN_NEAREST(NEAREST_RGB;BLEND,3);
-            break;
-         case GL_ADD:
-            SPAN_NEAREST(NEAREST_RGB;ADD,3);
-            break;
-         default:
-            _mesa_problem(ctx, "bad tex env mode (5) in SPAN_LINEAR");
-            return;
-         }
-         break;
-      case GL_RGBA:
-         switch(info->envmode) {
-         case GL_MODULATE:
-            SPAN_NEAREST(NEAREST_RGBA;MODULATE,4);
-            break;
-         case GL_DECAL:
-            SPAN_NEAREST(NEAREST_RGBA;DECAL,4);
-            break;
-         case GL_BLEND:
-            SPAN_NEAREST(NEAREST_RGBA;BLEND,4);
-            break;
-         case GL_ADD:
-            SPAN_NEAREST(NEAREST_RGBA;ADD,4);
-            break;
-         case GL_REPLACE:
-            SPAN_NEAREST(NEAREST_RGBA_REPLACE,4);
-            break;
-         default:
-            _mesa_problem(ctx, "bad tex env mode (6) in SPAN_LINEAR");
-            return;
-         }
-         break;
-      }
-      break;
+    switch (info->filter) {
+	case GL_NEAREST:
+	    switch (info->format) {
+		case GL_RGB:
+		    switch (info->envmode) {
+			case GL_MODULATE:
+			    SPAN_NEAREST(NEAREST_RGB; MODULATE,3);
+			    break;
+			case GL_DECAL:
+			case GL_REPLACE:
+			    SPAN_NEAREST(NEAREST_RGB_REPLACE,3);
+			    break;
+			case GL_BLEND:
+			    SPAN_NEAREST(NEAREST_RGB; BLEND,3);
+			    break;
+			case GL_ADD:
+			    SPAN_NEAREST(NEAREST_RGB; ADD,3);
+			    break;
+			default:
+			    _mesa_problem(ctx, "bad tex env mode (5) in SPAN_LINEAR");
+			    return;
+		    }
+		    break;
+		case GL_RGBA:
+		    switch (info->envmode) {
+			case GL_MODULATE:
+			    SPAN_NEAREST(NEAREST_RGBA; MODULATE,4);
+			    break;
+			case GL_DECAL:
+			    SPAN_NEAREST(NEAREST_RGBA; DECAL,4);
+			    break;
+			case GL_BLEND:
+			    SPAN_NEAREST(NEAREST_RGBA; BLEND,4);
+			    break;
+			case GL_ADD:
+			    SPAN_NEAREST(NEAREST_RGBA; ADD,4);
+			    break;
+			case GL_REPLACE:
+			    SPAN_NEAREST(NEAREST_RGBA_REPLACE,4);
+			    break;
+			default:
+			    _mesa_problem(ctx, "bad tex env mode (6) in SPAN_LINEAR");
+			    return;
+		    }
+		    break;
+	    }
+	    break;
 
-   case GL_LINEAR:
-      switch (info->format) {
-      case GL_RGB:
-         switch (info->envmode) {
-         case GL_MODULATE:
-            SPAN_LINEAR(LINEAR_RGB;MODULATE,3);
-            break;
-         case GL_DECAL:
-         case GL_REPLACE:
-            SPAN_LINEAR(LINEAR_RGB;REPLACE,3);
-            break;
-         case GL_BLEND:
-            SPAN_LINEAR(LINEAR_RGB;BLEND,3);
-            break;
-         case GL_ADD:
-            SPAN_LINEAR(LINEAR_RGB;ADD,3);
-            break;
-         default:
-            _mesa_problem(ctx, "bad tex env mode (7) in SPAN_LINEAR");
-            return;
-         }
-         break;
-      case GL_RGBA:
-         switch (info->envmode) {
-         case GL_MODULATE:
-            SPAN_LINEAR(LINEAR_RGBA;MODULATE,4);
-            break;
-         case GL_DECAL:
-            SPAN_LINEAR(LINEAR_RGBA;DECAL,4);
-            break;
-         case GL_BLEND:
-            SPAN_LINEAR(LINEAR_RGBA;BLEND,4);
-            break;
-         case GL_ADD:
-            SPAN_LINEAR(LINEAR_RGBA;ADD,4);
-            break;
-         case GL_REPLACE:
-            SPAN_LINEAR(LINEAR_RGBA;REPLACE,4);
-            break;
-         default:
-            _mesa_problem(ctx, "bad tex env mode (8) in SPAN_LINEAR");
-            return;
-         }
-         break;
-      }
-      break;
-   }
-   
-   ASSERT(span->arrayMask & SPAN_RGBA);
-   _swrast_write_rgba_span(ctx, span);
+	case GL_LINEAR:
+	    switch (info->format) {
+		case GL_RGB:
+		    switch (info->envmode) {
+			case GL_MODULATE:
+			    SPAN_LINEAR(LINEAR_RGB; MODULATE,3);
+			    break;
+			case GL_DECAL:
+			case GL_REPLACE:
+			    SPAN_LINEAR(LINEAR_RGB; REPLACE,3);
+			    break;
+			case GL_BLEND:
+			    SPAN_LINEAR(LINEAR_RGB; BLEND,3);
+			    break;
+			case GL_ADD:
+			    SPAN_LINEAR(LINEAR_RGB; ADD,3);
+			    break;
+			default:
+			    _mesa_problem(ctx, "bad tex env mode (7) in SPAN_LINEAR");
+			    return;
+		    }
+		    break;
+		case GL_RGBA:
+		    switch (info->envmode) {
+			case GL_MODULATE:
+			    SPAN_LINEAR(LINEAR_RGBA; MODULATE,4);
+			    break;
+			case GL_DECAL:
+			    SPAN_LINEAR(LINEAR_RGBA; DECAL,4);
+			    break;
+			case GL_BLEND:
+			    SPAN_LINEAR(LINEAR_RGBA; BLEND,4);
+			    break;
+			case GL_ADD:
+			    SPAN_LINEAR(LINEAR_RGBA; ADD,4);
+			    break;
+			case GL_REPLACE:
+			    SPAN_LINEAR(LINEAR_RGBA; REPLACE,4);
+			    break;
+			default:
+			    _mesa_problem(ctx, "bad tex env mode (8) in SPAN_LINEAR");
+			    return;
+		    }
+		    break;
+	    }
+	    break;
+    }
+
+    ASSERT(span->arrayMask & SPAN_RGBA);
+    _swrast_write_rgba_span(ctx, span);
 
 #undef SPAN_NEAREST
 #undef SPAN_LINEAR
 
-   /* restore state */
-   ctx->Texture._EnabledUnits = savedTexEnable;
+    /* restore state */
+    ctx->Texture._EnabledUnits = savedTexEnable;
 }
 
 
@@ -846,7 +844,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 
 #endif /* CHAN_BITS != GL_FLOAT */
 
-                
+
 
 
 /*
@@ -909,12 +907,12 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 
 
 static void
-nodraw_triangle( GLcontext *ctx,
-                 const SWvertex *v0,
-                 const SWvertex *v1,
-                 const SWvertex *v2 )
+nodraw_triangle(GLcontext *ctx,
+		const SWvertex *v0,
+		const SWvertex *v1,
+		const SWvertex *v2)
 {
-   (void) (ctx && v0 && v1 && v2);
+    (void)(ctx && v0 && v1 && v2);
 }
 
 
@@ -924,51 +922,51 @@ nodraw_triangle( GLcontext *ctx,
  * draw the triangle, then restore the original primary color.
  * Inefficient, but seldom needed.
  */
-void _swrast_add_spec_terms_triangle( GLcontext *ctx,
-				      const SWvertex *v0,
-				      const SWvertex *v1,
-				      const SWvertex *v2 )
+void _swrast_add_spec_terms_triangle(GLcontext *ctx,
+				     const SWvertex *v0,
+				     const SWvertex *v1,
+				     const SWvertex *v2)
 {
-   SWvertex *ncv0 = (SWvertex *)v0; /* drop const qualifier */
-   SWvertex *ncv1 = (SWvertex *)v1;
-   SWvertex *ncv2 = (SWvertex *)v2;
+    SWvertex *ncv0 = (SWvertex *)v0; /* drop const qualifier */
+    SWvertex *ncv1 = (SWvertex *)v1;
+    SWvertex *ncv2 = (SWvertex *)v2;
 #if CHAN_TYPE == GL_FLOAT
-   GLfloat rSum, gSum, bSum;
+    GLfloat rSum, gSum, bSum;
 #else
-   GLint rSum, gSum, bSum;
+    GLint rSum, gSum, bSum;
 #endif
-   GLchan c[3][4];
-   /* save original colors */
-   COPY_CHAN4( c[0], ncv0->color );
-   COPY_CHAN4( c[1], ncv1->color );
-   COPY_CHAN4( c[2], ncv2->color );
-   /* sum v0 */
-   rSum = ncv0->color[0] + ncv0->specular[0];
-   gSum = ncv0->color[1] + ncv0->specular[1];
-   bSum = ncv0->color[2] + ncv0->specular[2];
-   ncv0->color[0] = MIN2(rSum, CHAN_MAX);
-   ncv0->color[1] = MIN2(gSum, CHAN_MAX);
-   ncv0->color[2] = MIN2(bSum, CHAN_MAX);
-   /* sum v1 */
-   rSum = ncv1->color[0] + ncv1->specular[0];
-   gSum = ncv1->color[1] + ncv1->specular[1];
-   bSum = ncv1->color[2] + ncv1->specular[2];
-   ncv1->color[0] = MIN2(rSum, CHAN_MAX);
-   ncv1->color[1] = MIN2(gSum, CHAN_MAX);
-   ncv1->color[2] = MIN2(bSum, CHAN_MAX);
-   /* sum v2 */
-   rSum = ncv2->color[0] + ncv2->specular[0];
-   gSum = ncv2->color[1] + ncv2->specular[1];
-   bSum = ncv2->color[2] + ncv2->specular[2];
-   ncv2->color[0] = MIN2(rSum, CHAN_MAX);
-   ncv2->color[1] = MIN2(gSum, CHAN_MAX);
-   ncv2->color[2] = MIN2(bSum, CHAN_MAX);
-   /* draw */
-   SWRAST_CONTEXT(ctx)->SpecTriangle( ctx, ncv0, ncv1, ncv2 );
-   /* restore original colors */
-   COPY_CHAN4( ncv0->color, c[0] );
-   COPY_CHAN4( ncv1->color, c[1] );
-   COPY_CHAN4( ncv2->color, c[2] );
+    GLchan c[3][4];
+    /* save original colors */
+    COPY_CHAN4(c[0], ncv0->color);
+    COPY_CHAN4(c[1], ncv1->color);
+    COPY_CHAN4(c[2], ncv2->color);
+    /* sum v0 */
+    rSum = ncv0->color[0] + ncv0->specular[0];
+    gSum = ncv0->color[1] + ncv0->specular[1];
+    bSum = ncv0->color[2] + ncv0->specular[2];
+    ncv0->color[0] = MIN2(rSum, CHAN_MAX);
+    ncv0->color[1] = MIN2(gSum, CHAN_MAX);
+    ncv0->color[2] = MIN2(bSum, CHAN_MAX);
+    /* sum v1 */
+    rSum = ncv1->color[0] + ncv1->specular[0];
+    gSum = ncv1->color[1] + ncv1->specular[1];
+    bSum = ncv1->color[2] + ncv1->specular[2];
+    ncv1->color[0] = MIN2(rSum, CHAN_MAX);
+    ncv1->color[1] = MIN2(gSum, CHAN_MAX);
+    ncv1->color[2] = MIN2(bSum, CHAN_MAX);
+    /* sum v2 */
+    rSum = ncv2->color[0] + ncv2->specular[0];
+    gSum = ncv2->color[1] + ncv2->specular[1];
+    bSum = ncv2->color[2] + ncv2->specular[2];
+    ncv2->color[0] = MIN2(rSum, CHAN_MAX);
+    ncv2->color[1] = MIN2(gSum, CHAN_MAX);
+    ncv2->color[2] = MIN2(bSum, CHAN_MAX);
+    /* draw */
+    SWRAST_CONTEXT(ctx)->SpecTriangle(ctx, ncv0, ncv1, ncv2);
+    /* restore original colors */
+    COPY_CHAN4(ncv0->color, c[0]);
+    COPY_CHAN4(ncv1->color, c[1]);
+    COPY_CHAN4(ncv2->color, c[2]);
 }
 
 
@@ -1002,132 +1000,124 @@ do {						\
  * remove tests to this code.
  */
 void
-_swrast_choose_triangle( GLcontext *ctx )
+_swrast_choose_triangle(GLcontext *ctx)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLboolean rgbmode = ctx->Visual.rgbMode;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    const GLboolean rgbmode = ctx->Visual.rgbMode;
 
-   if (ctx->Polygon.CullFlag &&
-       ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) {
-      USE(nodraw_triangle);
-      return;
-   }
+    if (ctx->Polygon.CullFlag &&
+	ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) {
+	USE(nodraw_triangle);
+	return;
+    }
 
-   if (ctx->RenderMode==GL_RENDER) {
+    if (ctx->RenderMode==GL_RENDER) {
 
-      if (ctx->Polygon.SmoothFlag) {
-         _swrast_set_aa_triangle_function(ctx);
-         ASSERT(swrast->Triangle);
-         return;
-      }
+	if (ctx->Polygon.SmoothFlag) {
+	    _swrast_set_aa_triangle_function(ctx);
+	    ASSERT(swrast->Triangle);
+	    return;
+	}
 
-      /* special case for occlusion testing */
-      if (ctx->Query.CurrentOcclusionObject &&
-          ctx->Depth.Test &&
-          ctx->Depth.Mask == GL_FALSE &&
-          ctx->Depth.Func == GL_LESS &&
-          !ctx->Stencil.Enabled) {
-         if ((rgbmode &&
-              ctx->Color.ColorMask[0] == 0 &&
-              ctx->Color.ColorMask[1] == 0 &&
-              ctx->Color.ColorMask[2] == 0 &&
-              ctx->Color.ColorMask[3] == 0)
-             ||
-             (!rgbmode && ctx->Color.IndexMask == 0)) {
-            USE(occlusion_zless_triangle);
-            return;
-         }
-      }
-
-      if (!rgbmode) {
-         USE(ci_triangle);
-         return;
-      }
-
-      if (ctx->Texture._EnabledCoordUnits ||
-          ctx->FragmentProgram._Current ||
-          ctx->ATIFragmentShader._Enabled) {
-         /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
-         const struct gl_texture_object *texObj2D;
-         const struct gl_texture_image *texImg;
-         GLenum minFilter, magFilter, envMode;
-         GLint format;
-         texObj2D = ctx->Texture.Unit[0].Current2D;
-         texImg = texObj2D ? texObj2D->Image[0][texObj2D->BaseLevel] : NULL;
-         format = texImg ? texImg->TexFormat->MesaFormat : -1;
-         minFilter = texObj2D ? texObj2D->MinFilter : (GLenum) 0;
-         magFilter = texObj2D ? texObj2D->MagFilter : (GLenum) 0;
-         envMode = ctx->Texture.Unit[0].EnvMode;
-
-         /* First see if we can use an optimized 2-D texture function */
-         if (texImg && texObj2D && ctx->Texture._EnabledCoordUnits == 0x1
-             && !ctx->FragmentProgram._Current
-             && !ctx->ATIFragmentShader._Enabled
-             && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
-             && texObj2D->WrapS == GL_REPEAT
-             && texObj2D->WrapT == GL_REPEAT
-             && texImg->_IsPowerOfTwo
-             && texImg->Border == 0
-             && texImg->Width == texImg->RowStride
-             && (format == MESA_FORMAT_RGB || format == MESA_FORMAT_RGBA)
-             && minFilter == magFilter
-             && ctx->Light.Model.ColorControl == GL_SINGLE_COLOR
-             && ctx->Texture.Unit[0].EnvMode != GL_COMBINE_EXT) {
-	    if (ctx->Hint.PerspectiveCorrection==GL_FASTEST) {
-	       if (minFilter == GL_NEAREST
-		   && format == MESA_FORMAT_RGB
-		   && (envMode == GL_REPLACE || envMode == GL_DECAL)
-		   && ((swrast->_RasterMask == (DEPTH_BIT | TEXTURE_BIT)
-			&& ctx->Depth.Func == GL_LESS
-			&& ctx->Depth.Mask == GL_TRUE)
-		       || swrast->_RasterMask == TEXTURE_BIT)
-		   && ctx->Polygon.StippleFlag == GL_FALSE
-                   && ctx->DrawBuffer->Visual.depthBits <= 16) {
-		  if (swrast->_RasterMask == (DEPTH_BIT | TEXTURE_BIT)) {
-		     USE(simple_z_textured_triangle);
-		  }
-		  else {
-		     USE(simple_textured_triangle);
-		  }
-	       }
-	       else {
-#if (CHAN_BITS == 16 || CHAN_BITS == 32)
-                  USE(general_triangle);
-#else
-                  USE(affine_textured_triangle);
-#endif
-	       }
+	/* special case for occlusion testing */
+	if (ctx->Query.CurrentOcclusionObject &&
+	    ctx->Depth.Test &&
+	    ctx->Depth.Mask == GL_FALSE &&
+	    ctx->Depth.Func == GL_LESS &&
+	    !ctx->Stencil.Enabled) {
+	    if ((rgbmode &&
+		 ctx->Color.ColorMask[0] == 0 &&
+		 ctx->Color.ColorMask[1] == 0 &&
+		 ctx->Color.ColorMask[2] == 0 &&
+		 ctx->Color.ColorMask[3] == 0)
+		||
+		(!rgbmode && ctx->Color.IndexMask == 0)) {
+		USE(occlusion_zless_triangle);
+		return;
 	    }
-	    else {
+	}
+
+	if (!rgbmode) {
+	    USE(ci_triangle);
+	    return;
+	}
+
+	if (ctx->Texture._EnabledCoordUnits ||
+	    ctx->FragmentProgram._Current ||
+	    ctx->ATIFragmentShader._Enabled) {
+	    /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
+	    const struct gl_texture_object *texObj2D;
+	    const struct gl_texture_image *texImg;
+	    GLenum minFilter, magFilter, envMode;
+	    GLint format;
+	    texObj2D = ctx->Texture.Unit[0].Current2D;
+	    texImg = texObj2D ? texObj2D->Image[0][texObj2D->BaseLevel] : NULL;
+	    format = texImg ? texImg->TexFormat->MesaFormat : -1;
+	    minFilter = texObj2D ? texObj2D->MinFilter : (GLenum) 0;
+	    magFilter = texObj2D ? texObj2D->MagFilter : (GLenum) 0;
+	    envMode = ctx->Texture.Unit[0].EnvMode;
+
+	    /* First see if we can use an optimized 2-D texture function */
+	    if (texImg && texObj2D && ctx->Texture._EnabledCoordUnits == 0x1
+		&& !ctx->FragmentProgram._Current
+		&& !ctx->ATIFragmentShader._Enabled
+		&& ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
+		&& texObj2D->WrapS == GL_REPEAT
+		&& texObj2D->WrapT == GL_REPEAT
+		&& texImg->_IsPowerOfTwo
+		&& texImg->Border == 0
+		&& texImg->Width == texImg->RowStride
+		&& (format == MESA_FORMAT_RGB || format == MESA_FORMAT_RGBA)
+		&& minFilter == magFilter
+		&& ctx->Light.Model.ColorControl == GL_SINGLE_COLOR
+		&& ctx->Texture.Unit[0].EnvMode != GL_COMBINE_EXT) {
+		if (ctx->Hint.PerspectiveCorrection==GL_FASTEST) {
+		    if (minFilter == GL_NEAREST
+			&& format == MESA_FORMAT_RGB
+			&& (envMode == GL_REPLACE || envMode == GL_DECAL)
+			&& ((swrast->_RasterMask == (DEPTH_BIT | TEXTURE_BIT)
+			     && ctx->Depth.Func == GL_LESS
+			     && ctx->Depth.Mask == GL_TRUE)
+			    || swrast->_RasterMask == TEXTURE_BIT)
+			&& ctx->Polygon.StippleFlag == GL_FALSE
+			&& ctx->DrawBuffer->Visual.depthBits <= 16) {
+			if (swrast->_RasterMask == (DEPTH_BIT | TEXTURE_BIT)) {
+			    USE(simple_z_textured_triangle);
+			} else {
+			    USE(simple_textured_triangle);
+			}
+		    } else {
 #if (CHAN_BITS == 16 || CHAN_BITS == 32)
-               USE(general_triangle);
+			USE(general_triangle);
 #else
-               USE(persp_textured_triangle);
+			USE(affine_textured_triangle);
 #endif
+		    }
+		} else {
+#if (CHAN_BITS == 16 || CHAN_BITS == 32)
+		    USE(general_triangle);
+#else
+		    USE(persp_textured_triangle);
+#endif
+		}
+	    } else {
+		/* general case textured triangles */
+		USE(general_triangle);
 	    }
-	 }
-         else {
-            /* general case textured triangles */
-            USE(general_triangle);
-         }
-      }
-      else {
-         ASSERT(!ctx->Texture._EnabledCoordUnits);
-	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
-	    /* smooth shaded, no texturing, stippled or some raster ops */
-            USE(smooth_rgba_triangle);
-	 }
-	 else {
-	    /* flat shaded, no texturing, stippled or some raster ops */
-            USE(flat_rgba_triangle);
-	 }
-      }
-   }
-   else if (ctx->RenderMode==GL_FEEDBACK) {
-      USE(_swrast_feedback_triangle);
-   }
-   else {
-      /* GL_SELECT mode */
-      USE(_swrast_select_triangle);
-   }
+	} else {
+	    ASSERT(!ctx->Texture._EnabledCoordUnits);
+	    if (ctx->Light.ShadeModel==GL_SMOOTH) {
+		/* smooth shaded, no texturing, stippled or some raster ops */
+		USE(smooth_rgba_triangle);
+	    } else {
+		/* flat shaded, no texturing, stippled or some raster ops */
+		USE(flat_rgba_triangle);
+	    }
+	}
+    } else if (ctx->RenderMode==GL_FEEDBACK) {
+	USE(_swrast_feedback_triangle);
+    } else {
+	/* GL_SELECT mode */
+	USE(_swrast_select_triangle);
+    }
 }

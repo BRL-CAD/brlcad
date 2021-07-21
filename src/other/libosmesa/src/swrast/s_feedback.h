@@ -32,20 +32,20 @@
 #include "swrast.h"
 
 
-extern void _swrast_feedback_point( GLcontext *ctx, const SWvertex *v );
+extern void _swrast_feedback_point(GLcontext *ctx, const SWvertex *v);
 
-extern void _swrast_feedback_line( GLcontext *ctx,
-                              const SWvertex *v1, const SWvertex *v2 );
+extern void _swrast_feedback_line(GLcontext *ctx,
+				  const SWvertex *v1, const SWvertex *v2);
 
-extern void _swrast_feedback_triangle( GLcontext *ctx, const SWvertex *v0,
-                                  const SWvertex *v1, const SWvertex *v2 );
+extern void _swrast_feedback_triangle(GLcontext *ctx, const SWvertex *v0,
+				      const SWvertex *v1, const SWvertex *v2);
 
-extern void _swrast_select_point( GLcontext *ctx, const SWvertex *v );
+extern void _swrast_select_point(GLcontext *ctx, const SWvertex *v);
 
-extern void _swrast_select_line( GLcontext *ctx,
-                            const SWvertex *v1, const SWvertex *v2 );
+extern void _swrast_select_line(GLcontext *ctx,
+				const SWvertex *v1, const SWvertex *v2);
 
-extern void _swrast_select_triangle( GLcontext *ctx, const SWvertex *v0,
-                                const SWvertex *v1, const SWvertex *v2 );
+extern void _swrast_select_triangle(GLcontext *ctx, const SWvertex *v0,
+				    const SWvertex *v1, const SWvertex *v2);
 
 #endif

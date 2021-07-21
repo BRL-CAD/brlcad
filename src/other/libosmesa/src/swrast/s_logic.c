@@ -159,25 +159,25 @@ do {						\
 
 static INLINE void
 logicop_uint1(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
-              const GLubyte mask[])
+	      const GLubyte mask[])
 {
-   LOGIC_OP_LOOP(ctx->Color.LogicOp, 1);
+    LOGIC_OP_LOOP(ctx->Color.LogicOp, 1);
 }
 
 
 static INLINE void
 logicop_uint2(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
-              const GLubyte mask[])
+	      const GLubyte mask[])
 {
-   LOGIC_OP_LOOP(ctx->Color.LogicOp, 2);
+    LOGIC_OP_LOOP(ctx->Color.LogicOp, 2);
 }
 
 
 static INLINE void
 logicop_uint4(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
-              const GLubyte mask[])
+	      const GLubyte mask[])
 {
-   LOGIC_OP_LOOP(ctx->Color.LogicOp, 4);
+    LOGIC_OP_LOOP(ctx->Color.LogicOp, 4);
 }
 
 
@@ -188,24 +188,23 @@ logicop_uint4(GLcontext *ctx, GLuint n, GLuint src[], const GLuint dest[],
  */
 void
 _swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                        SWspan *span)
+			SWspan *span)
 {
-   GLuint dest[MAX_WIDTH];
-   GLuint *index = span->array->index;
+    GLuint dest[MAX_WIDTH];
+    GLuint *index = span->array->index;
 
-   ASSERT(span->end < MAX_WIDTH);
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
+    ASSERT(span->end < MAX_WIDTH);
+    ASSERT(rb->DataType == GL_UNSIGNED_INT);
 
-   /* Read dest values from frame buffer */
-   if (span->arrayMask & SPAN_XY) {
-      _swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
-                         dest, sizeof(GLuint));
-   }
-   else {
-      rb->GetRow(ctx, rb, span->end, span->x, span->y, dest);
-   }
+    /* Read dest values from frame buffer */
+    if (span->arrayMask & SPAN_XY) {
+	_swrast_get_values(ctx, rb, span->end, span->array->x, span->array->y,
+			   dest, sizeof(GLuint));
+    } else {
+	rb->GetRow(ctx, rb, span->end, span->x, span->y, dest);
+    }
 
-   logicop_uint1(ctx, span->end, index, dest, span->array->mask);
+    logicop_uint1(ctx, span->end, index, dest, span->array->mask);
 }
 
 
@@ -216,31 +215,29 @@ _swrast_logicop_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 void
 _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
-                          SWspan *span)
+			  SWspan *span)
 {
-   void *rbPixels;
+    void *rbPixels;
 
-   ASSERT(span->end < MAX_WIDTH);
-   ASSERT(span->arrayMask & SPAN_RGBA);
-   ASSERT(rb->DataType == span->array->ChanType);
+    ASSERT(span->end < MAX_WIDTH);
+    ASSERT(span->arrayMask & SPAN_RGBA);
+    ASSERT(rb->DataType == span->array->ChanType);
 
-   rbPixels = _swrast_get_dest_rgba(ctx, rb, span);
+    rbPixels = _swrast_get_dest_rgba(ctx, rb, span);
 
-   if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-      /* treat 4*GLubyte as GLuint */
-      logicop_uint1(ctx, span->end,
-                    (GLuint *) span->array->color.sz1.rgba,
-                    (const GLuint *) rbPixels, span->array->mask);
-   }
-   else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-      /* treat 2*GLushort as GLuint */
-      logicop_uint2(ctx, 2 * span->end,
-                    (GLuint *) span->array->color.sz2.rgba,
-                    (const GLuint *) rbPixels, span->array->mask);
-   }
-   else {
-      logicop_uint4(ctx, 4 * span->end,
-                    (GLuint *) span->array->attribs[FRAG_ATTRIB_COL0],
-                    (const GLuint *) rbPixels, span->array->mask);
-   }
+    if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+	/* treat 4*GLubyte as GLuint */
+	logicop_uint1(ctx, span->end,
+		      (GLuint *) span->array->color.sz1.rgba,
+		      (const GLuint *) rbPixels, span->array->mask);
+    } else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+	/* treat 2*GLushort as GLuint */
+	logicop_uint2(ctx, 2 * span->end,
+		      (GLuint *) span->array->color.sz2.rgba,
+		      (const GLuint *) rbPixels, span->array->mask);
+    } else {
+	logicop_uint4(ctx, 4 * span->end,
+		      (GLuint *) span->array->attribs[FRAG_ATTRIB_COL0],
+		      (const GLuint *) rbPixels, span->array->mask);
+    }
 }

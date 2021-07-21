@@ -28,7 +28,7 @@
 
 #include "glheader.h"
 
-void _math_init_eval( void );
+void _math_init_eval(void);
 
 
 /*

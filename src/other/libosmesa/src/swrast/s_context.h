@@ -50,27 +50,27 @@
 
 
 typedef void (*texture_sample_func)(GLcontext *ctx,
-                                    const struct gl_texture_object *tObj,
-                                    GLuint n, const GLfloat texcoords[][4],
-                                    const GLfloat lambda[], GLchan rgba[][4]);
+				    const struct gl_texture_object *tObj,
+				    GLuint n, const GLfloat texcoords[][4],
+				    const GLfloat lambda[], GLchan rgba[][4]);
 
-typedef void (_ASMAPIP blend_func)( GLcontext *ctx, GLuint n,
-                                    const GLubyte mask[],
-                                    GLvoid *src, const GLvoid *dst,
-                                    GLenum chanType);
+typedef void (_ASMAPIP blend_func)(GLcontext *ctx, GLuint n,
+				   const GLubyte mask[],
+				   GLvoid *src, const GLvoid *dst,
+				   GLenum chanType);
 
-typedef void (*swrast_point_func)( GLcontext *ctx, const SWvertex *);
+typedef void (*swrast_point_func)(GLcontext *ctx, const SWvertex *);
 
-typedef void (*swrast_line_func)( GLcontext *ctx,
-                                  const SWvertex *, const SWvertex *);
+typedef void (*swrast_line_func)(GLcontext *ctx,
+				 const SWvertex *, const SWvertex *);
 
-typedef void (*swrast_tri_func)( GLcontext *ctx, const SWvertex *,
-                                 const SWvertex *, const SWvertex *);
+typedef void (*swrast_tri_func)(GLcontext *ctx, const SWvertex *,
+				const SWvertex *, const SWvertex *);
 
 
 typedef void (*validate_texture_image_func)(GLcontext *ctx,
-                                            struct gl_texture_object *texObj,
-                                            GLuint face, GLuint level);
+	struct gl_texture_object *texObj,
+	GLuint face, GLuint level);
 
 
 /**
@@ -88,7 +88,7 @@ typedef void (*validate_texture_image_func)(GLcontext *ctx,
 #define STENCIL_BIT		0x040	/**< Stencil pixels */
 #define MASKING_BIT		0x080	/**< Do glColorMask or glIndexMask */
 #define MULTI_DRAW_BIT		0x400	/**< Write to more than one color- */
-                                        /**< buffer or no buffers. */
+/**< buffer or no buffers. */
 #define OCCLUSION_BIT           0x800   /**< GL_HP_occlusion_test enabled */
 #define TEXTURE_BIT		0x1000	/**< Texturing really enabled */
 #define FRAGPROG_BIT            0x2000  /**< Fragment program enabled */
@@ -112,126 +112,125 @@ typedef void (*validate_texture_image_func)(GLcontext *ctx,
  * \struct SWcontext
  * \brief  Per-context state that's private to the software rasterizer module.
  */
-typedef struct
-{
-   /** Driver interface:
-    */
-   struct swrast_device_driver Driver;
+typedef struct {
+    /** Driver interface:
+     */
+    struct swrast_device_driver Driver;
 
-   /** Configuration mechanisms to make software rasterizer match
-    * characteristics of the hardware rasterizer (if present):
-    */
-   GLboolean AllowVertexFog;
-   GLboolean AllowPixelFog;
+    /** Configuration mechanisms to make software rasterizer match
+     * characteristics of the hardware rasterizer (if present):
+     */
+    GLboolean AllowVertexFog;
+    GLboolean AllowPixelFog;
 
-   /** Derived values, invalidated on statechanges, updated from
-    * _swrast_validate_derived():
-    */
-   GLbitfield _RasterMask;
-   GLfloat _BackfaceSign;      /** +1 or -1 */
-   GLfloat _BackfaceCullSign;  /** +1, 0, or -1 */
-   GLboolean _PreferPixelFog;    /* Compute fog blend factor per fragment? */
-   GLboolean _AnyTextureCombine;
-   GLboolean _FogEnabled;
-   GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
+    /** Derived values, invalidated on statechanges, updated from
+     * _swrast_validate_derived():
+     */
+    GLbitfield _RasterMask;
+    GLfloat _BackfaceSign;      /** +1 or -1 */
+    GLfloat _BackfaceCullSign;  /** +1, 0, or -1 */
+    GLboolean _PreferPixelFog;    /* Compute fog blend factor per fragment? */
+    GLboolean _AnyTextureCombine;
+    GLboolean _FogEnabled;
+    GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
 
-   /** Multiple render targets */
-   GLbitfield _ColorOutputsMask;
-   GLuint _NumColorOutputs;
+    /** Multiple render targets */
+    GLbitfield _ColorOutputsMask;
+    GLuint _NumColorOutputs;
 
-   /** List/array of the fragment attributes to interpolate */
-   GLuint _ActiveAttribs[FRAG_ATTRIB_MAX];
-   /** Number of fragment attributes to interpolate */
-   GLuint _NumActiveAttribs;
+    /** List/array of the fragment attributes to interpolate */
+    GLuint _ActiveAttribs[FRAG_ATTRIB_MAX];
+    /** Number of fragment attributes to interpolate */
+    GLuint _NumActiveAttribs;
 
-   /* Accum buffer temporaries.
-    */
-   GLboolean _IntegerAccumMode;	/**< Storing unscaled integers? */
-   GLfloat _IntegerAccumScaler;	/**< Implicit scale factor */
+    /* Accum buffer temporaries.
+     */
+    GLboolean _IntegerAccumMode;	/**< Storing unscaled integers? */
+    GLfloat _IntegerAccumScaler;	/**< Implicit scale factor */
 
-   /* Working values:
-    */
-   GLuint StippleCounter;    /**< Line stipple counter */
-   GLuint PointLineFacing;
-   GLbitfield NewState;
-   GLuint StateChanges;
-   GLenum Primitive;    /* current primitive being drawn (ala glBegin) */
+    /* Working values:
+     */
+    GLuint StippleCounter;    /**< Line stipple counter */
+    GLuint PointLineFacing;
+    GLbitfield NewState;
+    GLuint StateChanges;
+    GLenum Primitive;    /* current primitive being drawn (ala glBegin) */
 
-   void (*InvalidateState)( GLcontext *ctx, GLbitfield new_state );
+    void (*InvalidateState)(GLcontext *ctx, GLbitfield new_state);
 
-   /**
-    * When the NewState mask intersects these masks, we invalidate the
-    * Point/Line/Triangle function pointers below.
-    */
-   /*@{*/
-   GLbitfield InvalidatePointMask;
-   GLbitfield InvalidateLineMask;
-   GLbitfield InvalidateTriangleMask;
-   /*@}*/
+    /**
+     * When the NewState mask intersects these masks, we invalidate the
+     * Point/Line/Triangle function pointers below.
+     */
+    /*@{*/
+    GLbitfield InvalidatePointMask;
+    GLbitfield InvalidateLineMask;
+    GLbitfield InvalidateTriangleMask;
+    /*@}*/
 
-   /**
-    * Device drivers plug in functions for these callbacks.
-    * Will be called when the GL state change mask intersects the above masks.
-    */
-   /*@{*/
-   void (*choose_point)( GLcontext * );
-   void (*choose_line)( GLcontext * );
-   void (*choose_triangle)( GLcontext * );
-   /*@}*/
+    /**
+     * Device drivers plug in functions for these callbacks.
+     * Will be called when the GL state change mask intersects the above masks.
+     */
+    /*@{*/
+    void (*choose_point)(GLcontext *);
+    void (*choose_line)(GLcontext *);
+    void (*choose_triangle)(GLcontext *);
+    /*@}*/
 
-   /**
-    * Current point, line and triangle drawing functions.
-    */
-   /*@{*/
-   swrast_point_func Point;
-   swrast_line_func Line;
-   swrast_tri_func Triangle;
-   /*@}*/
+    /**
+     * Current point, line and triangle drawing functions.
+     */
+    /*@{*/
+    swrast_point_func Point;
+    swrast_line_func Line;
+    swrast_tri_func Triangle;
+    /*@}*/
 
-   /**
-    * Placeholders for when separate specular (or secondary color) is
-    * enabled but texturing is not.
-    */
-   /*@{*/
-   swrast_point_func SpecPoint;
-   swrast_line_func SpecLine;
-   swrast_tri_func SpecTriangle;
-   /*@}*/
+    /**
+     * Placeholders for when separate specular (or secondary color) is
+     * enabled but texturing is not.
+     */
+    /*@{*/
+    swrast_point_func SpecPoint;
+    swrast_line_func SpecLine;
+    swrast_tri_func SpecTriangle;
+    /*@}*/
 
-   /**
-    * Typically, we'll allocate a sw_span structure as a local variable
-    * and set its 'array' pointer to point to this object.  The reason is
-    * this object is big and causes problems when allocated on the stack
-    * on some systems.
-    */
-   SWspanarrays *SpanArrays;
-   SWspanarrays *ZoomedArrays;  /**< For pixel zooming */
+    /**
+     * Typically, we'll allocate a sw_span structure as a local variable
+     * and set its 'array' pointer to point to this object.  The reason is
+     * this object is big and causes problems when allocated on the stack
+     * on some systems.
+     */
+    SWspanarrays *SpanArrays;
+    SWspanarrays *ZoomedArrays;  /**< For pixel zooming */
 
-   /**
-    * Used to buffer N GL_POINTS, instead of rendering one by one.
-    */
-   SWspan PointSpan;
+    /**
+     * Used to buffer N GL_POINTS, instead of rendering one by one.
+     */
+    SWspan PointSpan;
 
-   /** Internal hooks, kept up to date by the same mechanism as above.
-    */
-   blend_func BlendFunc;
-   texture_sample_func TextureSample[MAX_TEXTURE_IMAGE_UNITS];
+    /** Internal hooks, kept up to date by the same mechanism as above.
+     */
+    blend_func BlendFunc;
+    texture_sample_func TextureSample[MAX_TEXTURE_IMAGE_UNITS];
 
-   /** Buffer for saving the sampled texture colors.
-    * Needed for GL_ARB_texture_env_crossbar implementation.
-    */
-   GLchan *TexelBuffer;
+    /** Buffer for saving the sampled texture colors.
+     * Needed for GL_ARB_texture_env_crossbar implementation.
+     */
+    GLchan *TexelBuffer;
 
-   validate_texture_image_func ValidateTextureImage;
+    validate_texture_image_func ValidateTextureImage;
 
-   /** State used during execution of fragment programs */
-   struct gl_program_machine FragProgMachine;
+    /** State used during execution of fragment programs */
+    struct gl_program_machine FragProgMachine;
 
 } SWcontext;
 
 
 extern void
-_swrast_validate_derived( GLcontext *ctx );
+_swrast_validate_derived(GLcontext *ctx);
 
 extern void
 _swrast_update_texture_samplers(GLcontext *ctx);

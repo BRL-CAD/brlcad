@@ -30,12 +30,12 @@
 #include "mtypes.h"
 
 void
-_swrast_choose_line( GLcontext *ctx );
+_swrast_choose_line(GLcontext *ctx);
 
 void
-_swrast_add_spec_terms_line( GLcontext *ctx,
-			     const SWvertex *v0,
-			     const SWvertex *v1 );
+_swrast_add_spec_terms_line(GLcontext *ctx,
+			    const SWvertex *v0,
+			    const SWvertex *v1);
 
 
 #endif

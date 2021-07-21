@@ -35,47 +35,47 @@
 #include "mtypes.h"
 
 extern void GLAPIENTRY
-_mesa_ShadeModel( GLenum mode );
+_mesa_ShadeModel(GLenum mode);
 
 #if _HAVE_FULL_GL
 extern void GLAPIENTRY
-_mesa_ColorMaterial( GLenum face, GLenum mode );
+_mesa_ColorMaterial(GLenum face, GLenum mode);
 
 extern void GLAPIENTRY
-_mesa_Lightf( GLenum light, GLenum pname, GLfloat param );
+_mesa_Lightf(GLenum light, GLenum pname, GLfloat param);
 
 extern void GLAPIENTRY
-_mesa_Lightfv( GLenum light, GLenum pname, const GLfloat *params );
+_mesa_Lightfv(GLenum light, GLenum pname, const GLfloat *params);
 
 extern void GLAPIENTRY
-_mesa_Lightiv( GLenum light, GLenum pname, const GLint *params );
+_mesa_Lightiv(GLenum light, GLenum pname, const GLint *params);
 
 extern void GLAPIENTRY
-_mesa_Lighti( GLenum light, GLenum pname, GLint param );
+_mesa_Lighti(GLenum light, GLenum pname, GLint param);
 
 extern void GLAPIENTRY
-_mesa_LightModelf( GLenum pname, GLfloat param );
+_mesa_LightModelf(GLenum pname, GLfloat param);
 
 extern void GLAPIENTRY
-_mesa_LightModelfv( GLenum pname, const GLfloat *params );
+_mesa_LightModelfv(GLenum pname, const GLfloat *params);
 
 extern void GLAPIENTRY
-_mesa_LightModeli( GLenum pname, GLint param );
+_mesa_LightModeli(GLenum pname, GLint param);
 
 extern void GLAPIENTRY
-_mesa_LightModeliv( GLenum pname, const GLint *params );
+_mesa_LightModeliv(GLenum pname, const GLint *params);
 
 extern void GLAPIENTRY
-_mesa_GetLightfv( GLenum light, GLenum pname, GLfloat *params );
+_mesa_GetLightfv(GLenum light, GLenum pname, GLfloat *params);
 
 extern void GLAPIENTRY
-_mesa_GetLightiv( GLenum light, GLenum pname, GLint *params );
+_mesa_GetLightiv(GLenum light, GLenum pname, GLint *params);
 
 extern void GLAPIENTRY
-_mesa_GetMaterialfv( GLenum face, GLenum pname, GLfloat *params );
+_mesa_GetMaterialfv(GLenum face, GLenum pname, GLfloat *params);
 
 extern void GLAPIENTRY
-_mesa_GetMaterialiv( GLenum face, GLenum pname, GLint *params );
+_mesa_GetMaterialiv(GLenum face, GLenum pname, GLint *params);
 
 
 extern void
@@ -100,36 +100,36 @@ do {									\
 } while (0)
 
 
-extern GLuint _mesa_material_bitmask( GLcontext *ctx,
-                                      GLenum face, GLenum pname,
-                                      GLuint legal,
-                                      const char * );
+extern GLuint _mesa_material_bitmask(GLcontext *ctx,
+				     GLenum face, GLenum pname,
+				     GLuint legal,
+				     const char *);
 
-extern void _mesa_invalidate_spot_exp_table( struct gl_light *l );
+extern void _mesa_invalidate_spot_exp_table(struct gl_light *l);
 
-extern void _mesa_invalidate_shine_table( GLcontext *ctx, GLuint i );
+extern void _mesa_invalidate_shine_table(GLcontext *ctx, GLuint i);
 
-extern void _mesa_validate_all_lighting_tables( GLcontext *ctx );
+extern void _mesa_validate_all_lighting_tables(GLcontext *ctx);
 
-extern void _mesa_update_lighting( GLcontext *ctx );
+extern void _mesa_update_lighting(GLcontext *ctx);
 
-extern void _mesa_update_tnl_spaces( GLcontext *ctx, GLuint new_state );
+extern void _mesa_update_tnl_spaces(GLcontext *ctx, GLuint new_state);
 
-extern void _mesa_update_material( GLcontext *ctx,
-                                   GLuint bitmask );
+extern void _mesa_update_material(GLcontext *ctx,
+				  GLuint bitmask);
 
-extern void _mesa_copy_materials( struct gl_material *dst,
-				  const struct gl_material *src,
-				  GLuint bitmask );
+extern void _mesa_copy_materials(struct gl_material *dst,
+				 const struct gl_material *src,
+				 GLuint bitmask);
 
-extern void _mesa_update_color_material( GLcontext *ctx,
-                                         const GLfloat rgba[4] );
+extern void _mesa_update_color_material(GLcontext *ctx,
+					const GLfloat rgba[4]);
 
-extern void _mesa_init_lighting( GLcontext *ctx );
+extern void _mesa_init_lighting(GLcontext *ctx);
 
-extern void _mesa_free_lighting_data( GLcontext *ctx );
+extern void _mesa_free_lighting_data(GLcontext *ctx);
 
-extern void _mesa_allow_light_in_model( GLcontext *ctx, GLboolean flag );
+extern void _mesa_allow_light_in_model(GLcontext *ctx, GLboolean flag);
 
 #else
 #define _mesa_update_color_material( c, r ) ((void)0)

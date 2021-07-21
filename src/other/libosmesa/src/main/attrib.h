@@ -1,7 +1,7 @@
 /**
  * \file attrib.h
  * Attribute stacks.
- * 
+ *
  * \if subset
  * (No-op)
  *
@@ -44,22 +44,22 @@
 #if _HAVE_FULL_GL
 
 extern void GLAPIENTRY
-_mesa_PushAttrib( GLbitfield mask );
+_mesa_PushAttrib(GLbitfield mask);
 
 extern void GLAPIENTRY
-_mesa_PopAttrib( void );
+_mesa_PopAttrib(void);
 
 extern void GLAPIENTRY
-_mesa_PushClientAttrib( GLbitfield mask );
+_mesa_PushClientAttrib(GLbitfield mask);
 
 extern void GLAPIENTRY
-_mesa_PopClientAttrib( void );
+_mesa_PopClientAttrib(void);
 
-extern void 
-_mesa_init_attrib( GLcontext *ctx );
+extern void
+_mesa_init_attrib(GLcontext *ctx);
 
-extern void 
-_mesa_free_attrib_data( GLcontext *ctx );
+extern void
+_mesa_free_attrib_data(GLcontext *ctx);
 
 #else
 

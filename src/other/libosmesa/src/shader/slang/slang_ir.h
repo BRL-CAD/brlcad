@@ -42,110 +42,108 @@
 /**
  * Intermediate Representation opcodes
  */
-typedef enum
-{
-   IR_NOP = 0,
-   IR_SEQ,     /* sequence (eval left, then right) */
-   IR_SCOPE,   /* new variable scope (one child) */
+typedef enum {
+    IR_NOP = 0,
+    IR_SEQ,     /* sequence (eval left, then right) */
+    IR_SCOPE,   /* new variable scope (one child) */
 
-   IR_LABEL,   /* target of a jump or cjump */
+    IR_LABEL,   /* target of a jump or cjump */
 
-   IR_COND,    /* conditional expression/predicate */
+    IR_COND,    /* conditional expression/predicate */
 
-   IR_IF,      /* high-level IF/then/else */
-               /* Children[0] = conditional expression */
-               /* Children[1] = if-true part */
-               /* Children[2] = if-else part, or NULL */
+    IR_IF,      /* high-level IF/then/else */
+    /* Children[0] = conditional expression */
+    /* Children[1] = if-true part */
+    /* Children[2] = if-else part, or NULL */
 
-   IR_BEGIN_SUB, /* begin subroutine */
-   IR_END_SUB,   /* end subroutine */
-   IR_RETURN,    /* return from subroutine */
-   IR_CALL,      /* call subroutine */
+    IR_BEGIN_SUB, /* begin subroutine */
+    IR_END_SUB,   /* end subroutine */
+    IR_RETURN,    /* return from subroutine */
+    IR_CALL,      /* call subroutine */
 
-   IR_LOOP,      /* high-level loop-begin / loop-end */
-                 /* Children[0] = loop body */
-                 /* Children[1] = loop tail code, or NULL */
+    IR_LOOP,      /* high-level loop-begin / loop-end */
+    /* Children[0] = loop body */
+    /* Children[1] = loop tail code, or NULL */
 
-   IR_CONT,      /* continue loop */
-                 /* n->Parent = ptr to parent IR_LOOP Node */
-   IR_BREAK,     /* break loop */
+    IR_CONT,      /* continue loop */
+    /* n->Parent = ptr to parent IR_LOOP Node */
+    IR_BREAK,     /* break loop */
 
-   IR_BREAK_IF_TRUE,
-   IR_CONT_IF_TRUE,
-                 /* Children[0] = the condition expression */
+    IR_BREAK_IF_TRUE,
+    IR_CONT_IF_TRUE,
+    /* Children[0] = the condition expression */
 
-   IR_MOVE,
+    IR_MOVE,
 
-   /* vector ops: */
-   IR_ADD,
-   IR_SUB,
-   IR_MUL,
-   IR_DIV,
-   IR_DOT4,
-   IR_DOT3,
-   IR_CROSS,   /* vec3 cross product */
-   IR_LRP,
-   IR_CLAMP,
-   IR_MIN,
-   IR_MAX,
-   IR_SEQUAL,  /* Set if args are equal (vector) */
-   IR_SNEQUAL, /* Set if args are not equal (vector) */
-   IR_SGE,     /* Set if greater or equal (vector) */
-   IR_SGT,     /* Set if greater than (vector) */
-   IR_SLE,     /* Set if less or equal (vector) */
-   IR_SLT,     /* Set if less than (vector) */
-   IR_POW,     /* x^y */
-   IR_EXP,     /* e^x */
-   IR_EXP2,    /* 2^x */
-   IR_LOG2,    /* log base 2 */
-   IR_RSQ,     /* 1/sqrt() */
-   IR_RCP,     /* reciprocol */
-   IR_FLOOR,
-   IR_FRAC,
-   IR_ABS,     /* absolute value */
-   IR_NEG,     /* negate */
-   IR_DDX,     /* derivative w.r.t. X */
-   IR_DDY,     /* derivative w.r.t. Y */
-   IR_SIN,     /* sine */
-   IR_COS,     /* cosine */
-   IR_NOISE1,  /* noise(x) */
-   IR_NOISE2,  /* noise(x, y) */
-   IR_NOISE3,  /* noise(x, y, z) */
-   IR_NOISE4,  /* noise(x, y, z, w) */
+    /* vector ops: */
+    IR_ADD,
+    IR_SUB,
+    IR_MUL,
+    IR_DIV,
+    IR_DOT4,
+    IR_DOT3,
+    IR_CROSS,   /* vec3 cross product */
+    IR_LRP,
+    IR_CLAMP,
+    IR_MIN,
+    IR_MAX,
+    IR_SEQUAL,  /* Set if args are equal (vector) */
+    IR_SNEQUAL, /* Set if args are not equal (vector) */
+    IR_SGE,     /* Set if greater or equal (vector) */
+    IR_SGT,     /* Set if greater than (vector) */
+    IR_SLE,     /* Set if less or equal (vector) */
+    IR_SLT,     /* Set if less than (vector) */
+    IR_POW,     /* x^y */
+    IR_EXP,     /* e^x */
+    IR_EXP2,    /* 2^x */
+    IR_LOG2,    /* log base 2 */
+    IR_RSQ,     /* 1/sqrt() */
+    IR_RCP,     /* reciprocol */
+    IR_FLOOR,
+    IR_FRAC,
+    IR_ABS,     /* absolute value */
+    IR_NEG,     /* negate */
+    IR_DDX,     /* derivative w.r.t. X */
+    IR_DDY,     /* derivative w.r.t. Y */
+    IR_SIN,     /* sine */
+    IR_COS,     /* cosine */
+    IR_NOISE1,  /* noise(x) */
+    IR_NOISE2,  /* noise(x, y) */
+    IR_NOISE3,  /* noise(x, y, z) */
+    IR_NOISE4,  /* noise(x, y, z, w) */
 
-   IR_EQUAL,   /* boolean equality */
-   IR_NOTEQUAL,/* boolean inequality */
-   IR_NOT,     /* boolean not */
+    IR_EQUAL,   /* boolean equality */
+    IR_NOTEQUAL,/* boolean inequality */
+    IR_NOT,     /* boolean not */
 
-   IR_VAR,     /* variable reference */
-   IR_VAR_DECL,/* var declaration */
+    IR_VAR,     /* variable reference */
+    IR_VAR_DECL,/* var declaration */
 
-   IR_ELEMENT, /* array element */
-   IR_FIELD,   /* struct field */
-   IR_SWIZZLE, /* swizzled storage access */
+    IR_ELEMENT, /* array element */
+    IR_FIELD,   /* struct field */
+    IR_SWIZZLE, /* swizzled storage access */
 
-   IR_TEX,     /* texture lookup */
-   IR_TEXB,    /* texture lookup with LOD bias */
-   IR_TEXP,    /* texture lookup with projection */
+    IR_TEX,     /* texture lookup */
+    IR_TEXB,    /* texture lookup with LOD bias */
+    IR_TEXP,    /* texture lookup with projection */
 
-   IR_FLOAT,
-   IR_I_TO_F,  /* int[4] to float[4] conversion */
-   IR_F_TO_I,  /* float[4] to int[4] conversion */
+    IR_FLOAT,
+    IR_I_TO_F,  /* int[4] to float[4] conversion */
+    IR_F_TO_I,  /* float[4] to int[4] conversion */
 
-   IR_KILL     /* fragment kill/discard */
+    IR_KILL     /* fragment kill/discard */
 } slang_ir_opcode;
 
 
 /**
  * Describes where data storage is allocated.
  */
-struct _slang_ir_storage
-{
-   enum register_file File;  /**< PROGRAM_TEMPORARY, PROGRAM_INPUT, etc */
-   GLint Index;  /**< -1 means unallocated */
-   GLint Size;  /**< number of floats */
-   GLuint Swizzle;
-   GLint RefCount; /**< Used during IR tree delete */
+struct _slang_ir_storage {
+    enum register_file File;  /**< PROGRAM_TEMPORARY, PROGRAM_INPUT, etc */
+    GLint Index;  /**< -1 means unallocated */
+    GLint Size;  /**< number of floats */
+    GLuint Swizzle;
+    GLint RefCount; /**< Used during IR tree delete */
 };
 
 typedef struct _slang_ir_storage slang_ir_storage;
@@ -155,22 +153,21 @@ typedef struct _slang_ir_storage slang_ir_storage;
  * Intermediate Representation (IR) tree node
  * Basically a binary tree, but IR_LRP and IR_CLAMP have three children.
  */
-typedef struct slang_ir_node_
-{
-   slang_ir_opcode Opcode;
-   struct slang_ir_node_ *Children[3];
-   slang_ir_storage *Store;  /**< location of result of this operation */
-   GLint InstLocation;  /**< Location of instruction emitted for this node */
+typedef struct slang_ir_node_ {
+    slang_ir_opcode Opcode;
+    struct slang_ir_node_ *Children[3];
+    slang_ir_storage *Store;  /**< location of result of this operation */
+    GLint InstLocation;  /**< Location of instruction emitted for this node */
 
-   /** special fields depending on Opcode: */
-   const char *Field;  /**< If Opcode == IR_FIELD */
-   int FieldOffset;  /**< If Opcode == IR_FIELD */
-   GLuint Writemask;  /**< If Opcode == IR_MOVE */
-   GLfloat Value[4];    /**< If Opcode == IR_FLOAT */
-   slang_variable *Var;  /**< If Opcode == IR_VAR or IR_VAR_DECL */
-   struct slang_ir_node_ *List;  /**< For various linked lists */
-   struct slang_ir_node_ *Parent;  /**< Pointer to logical parent (ie. loop) */
-   slang_label *Label;  /**< Used for branches */
+    /** special fields depending on Opcode: */
+    const char *Field;  /**< If Opcode == IR_FIELD */
+    int FieldOffset;  /**< If Opcode == IR_FIELD */
+    GLuint Writemask;  /**< If Opcode == IR_MOVE */
+    GLfloat Value[4];    /**< If Opcode == IR_FLOAT */
+    slang_variable *Var;  /**< If Opcode == IR_VAR or IR_VAR_DECL */
+    struct slang_ir_node_ *List;  /**< For various linked lists */
+    struct slang_ir_node_ *Parent;  /**< Pointer to logical parent (ie. loop) */
+    slang_label *Label;  /**< Used for branches */
 } slang_ir_node;
 
 
@@ -178,12 +175,11 @@ typedef struct slang_ir_node_
 /**
  * Assembly and IR info
  */
-typedef struct
-{
-   slang_ir_opcode IrOpcode;
-   const char *IrName;
-   gl_inst_opcode InstOpcode;
-   GLuint ResultSize, NumParams;
+typedef struct {
+    slang_ir_opcode IrOpcode;
+    const char *IrName;
+    gl_inst_opcode InstOpcode;
+    GLuint ResultSize, NumParams;
 } slang_ir_info;
 
 

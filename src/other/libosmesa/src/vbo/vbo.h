@@ -35,15 +35,15 @@
 #include "mtypes.h"
 
 struct _mesa_prim {
-   GLuint mode:8;
-   GLuint indexed:1;
-   GLuint begin:1;
-   GLuint end:1;
-   GLuint weak:1;
-   GLuint pad:20;
+    GLuint mode:8;
+    GLuint indexed:1;
+    GLuint begin:1;
+    GLuint end:1;
+    GLuint weak:1;
+    GLuint pad:20;
 
-   GLuint start;
-   GLuint count;
+    GLuint start;
+    GLuint count;
 };
 
 /* Would like to call this a "vbo_index_buffer", but this would be
@@ -51,26 +51,26 @@ struct _mesa_prim {
  * buffer object.
  */
 struct _mesa_index_buffer {
-   GLuint count;
-   GLenum type;
-   struct gl_buffer_object *obj;
-   const void *ptr;
+    GLuint count;
+    GLenum type;
+    struct gl_buffer_object *obj;
+    const void *ptr;
 };
 
 
 
-GLboolean _vbo_CreateContext( GLcontext *ctx );
-void _vbo_DestroyContext( GLcontext *ctx );
-void _vbo_InvalidateState( GLcontext *ctx, GLuint new_state );
+GLboolean _vbo_CreateContext(GLcontext *ctx);
+void _vbo_DestroyContext(GLcontext *ctx);
+void _vbo_InvalidateState(GLcontext *ctx, GLuint new_state);
 
 
-typedef void (*vbo_draw_func)( GLcontext *ctx,
-			       const struct gl_client_array **arrays,
-			       const struct _mesa_prim *prims,
-			       GLuint nr_prims,
-			       const struct _mesa_index_buffer *ib,
-			       GLuint min_index,
-			       GLuint max_index );
+typedef void (*vbo_draw_func)(GLcontext *ctx,
+			      const struct gl_client_array **arrays,
+			      const struct _mesa_prim *prims,
+			      GLuint nr_prims,
+			      const struct _mesa_index_buffer *ib,
+			      GLuint min_index,
+			      GLuint max_index);
 
 
 
@@ -83,35 +83,35 @@ typedef void (*vbo_draw_func)( GLcontext *ctx,
  *    - Maximum hardware vertex buffer size.
  */
 struct split_limits {
-   GLuint max_verts;
-   GLuint max_indices;
-   GLuint max_vb_size;		/* bytes */
+    GLuint max_verts;
+    GLuint max_indices;
+    GLuint max_vb_size;		/* bytes */
 };
 
 
-void vbo_split_prims( GLcontext *ctx,
+void vbo_split_prims(GLcontext *ctx,
+		     const struct gl_client_array *arrays[],
+		     const struct _mesa_prim *prim,
+		     GLuint nr_prims,
+		     const struct _mesa_index_buffer *ib,
+		     GLuint min_index,
+		     GLuint max_index,
+		     vbo_draw_func draw,
+		     const struct split_limits *limits);
+
+
+/* Helpers for dealing translating away non-zero min_index.
+ */
+GLboolean vbo_all_varyings_in_vbos(const struct gl_client_array *arrays[]);
+
+void vbo_rebase_prims(GLcontext *ctx,
 		      const struct gl_client_array *arrays[],
 		      const struct _mesa_prim *prim,
 		      GLuint nr_prims,
 		      const struct _mesa_index_buffer *ib,
 		      GLuint min_index,
 		      GLuint max_index,
-		      vbo_draw_func draw,
-		      const struct split_limits *limits );
-
-
-/* Helpers for dealing translating away non-zero min_index.
- */
-GLboolean vbo_all_varyings_in_vbos( const struct gl_client_array *arrays[] );
-
-void vbo_rebase_prims( GLcontext *ctx,
-		       const struct gl_client_array *arrays[],
-		       const struct _mesa_prim *prim,
-		       GLuint nr_prims,
-		       const struct _mesa_index_buffer *ib,
-		       GLuint min_index,
-		       GLuint max_index,
-		       vbo_draw_func draw );
+		      vbo_draw_func draw);
 
 
 #endif

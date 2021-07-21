@@ -33,12 +33,12 @@
 #include "mtypes.h"
 #include "t_context.h"
 
-extern void _tnl_run_pipeline( GLcontext *ctx );
+extern void _tnl_run_pipeline(GLcontext *ctx);
 
-extern void _tnl_destroy_pipeline( GLcontext *ctx );
+extern void _tnl_destroy_pipeline(GLcontext *ctx);
 
-extern void _tnl_install_pipeline( GLcontext *ctx,
-				   const struct tnl_pipeline_stage **stages );
+extern void _tnl_install_pipeline(GLcontext *ctx,
+				  const struct tnl_pipeline_stage **stages);
 
 
 /* These are implemented in the t_vb_*.c files:
@@ -65,10 +65,10 @@ extern const struct tnl_pipeline_stage *_tnl_vp_pipeline[];
 extern tnl_render_func _tnl_render_tab_elts[];
 extern tnl_render_func _tnl_render_tab_verts[];
 
-extern void _tnl_RenderClippedPolygon( GLcontext *ctx, 
-				       const GLuint *elts, GLuint n );
+extern void _tnl_RenderClippedPolygon(GLcontext *ctx,
+				      const GLuint *elts, GLuint n);
 
-extern void _tnl_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj );
+extern void _tnl_RenderClippedLine(GLcontext *ctx, GLuint ii, GLuint jj);
 
 
 #endif

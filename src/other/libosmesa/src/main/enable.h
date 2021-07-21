@@ -36,22 +36,22 @@
 
 
 extern void
-_mesa_set_enable( GLcontext* ctx, GLenum cap, GLboolean state );
+_mesa_set_enable(GLcontext* ctx, GLenum cap, GLboolean state);
 
 extern void GLAPIENTRY
-_mesa_Disable( GLenum cap );
+_mesa_Disable(GLenum cap);
 
 extern void GLAPIENTRY
-_mesa_Enable( GLenum cap );
+_mesa_Enable(GLenum cap);
 
 extern GLboolean GLAPIENTRY
-_mesa_IsEnabled( GLenum cap );
+_mesa_IsEnabled(GLenum cap);
 
 extern void GLAPIENTRY
-_mesa_EnableClientState( GLenum cap );
+_mesa_EnableClientState(GLenum cap);
 
 extern void GLAPIENTRY
-_mesa_DisableClientState( GLenum cap );
+_mesa_DisableClientState(GLenum cap);
 
 
 #endif

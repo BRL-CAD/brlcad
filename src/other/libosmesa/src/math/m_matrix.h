@@ -53,97 +53,97 @@
  * We use these to select specific optimized vertex transformation routines.
  */
 enum GLmatrixtype {
-   MATRIX_GENERAL,	/**< general 4x4 matrix */
-   MATRIX_IDENTITY,	/**< identity matrix */
-   MATRIX_3D_NO_ROT,	/**< orthogonal projection and others... */
-   MATRIX_PERSPECTIVE,	/**< perspective projection matrix */
-   MATRIX_2D,		/**< 2-D transformation */
-   MATRIX_2D_NO_ROT,	/**< 2-D scale & translate only */
-   MATRIX_3D		/**< 3-D transformation */
+    MATRIX_GENERAL,	/**< general 4x4 matrix */
+    MATRIX_IDENTITY,	/**< identity matrix */
+    MATRIX_3D_NO_ROT,	/**< orthogonal projection and others... */
+    MATRIX_PERSPECTIVE,	/**< perspective projection matrix */
+    MATRIX_2D,		/**< 2-D transformation */
+    MATRIX_2D_NO_ROT,	/**< 2-D scale & translate only */
+    MATRIX_3D		/**< 3-D transformation */
 } ;
 
 /**
  * Matrix type to represent 4x4 transformation matrices.
  */
 typedef struct {
-   GLfloat *m;		/**< 16 matrix elements (16-byte aligned) */
-   GLfloat *inv;	/**< optional 16-element inverse (16-byte aligned) */
-   GLuint flags;        /**< possible values determined by (of \link
+    GLfloat *m;		/**< 16 matrix elements (16-byte aligned) */
+    GLfloat *inv;	/**< optional 16-element inverse (16-byte aligned) */
+    GLuint flags;        /**< possible values determined by (of \link
                          * MatFlags MAT_FLAG_* flags\endlink)
                          */
-   enum GLmatrixtype type;
+    enum GLmatrixtype type;
 } GLmatrix;
 
 
 
 
 extern void
-_math_matrix_ctr( GLmatrix *m );
+_math_matrix_ctr(GLmatrix *m);
 
 extern void
-_math_matrix_dtr( GLmatrix *m );
+_math_matrix_dtr(GLmatrix *m);
 
 extern void
-_math_matrix_alloc_inv( GLmatrix *m );
+_math_matrix_alloc_inv(GLmatrix *m);
 
 extern void
-_math_matrix_mul_matrix( GLmatrix *dest, const GLmatrix *a, const GLmatrix *b );
+_math_matrix_mul_matrix(GLmatrix *dest, const GLmatrix *a, const GLmatrix *b);
 
 extern void
-_math_matrix_mul_floats( GLmatrix *dest, const GLfloat *b );
+_math_matrix_mul_floats(GLmatrix *dest, const GLfloat *b);
 
 extern void
-_math_matrix_loadf( GLmatrix *mat, const GLfloat *m );
+_math_matrix_loadf(GLmatrix *mat, const GLfloat *m);
 
 extern void
-_math_matrix_translate( GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z );
+_math_matrix_translate(GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z);
 
 extern void
-_math_matrix_rotate( GLmatrix *m, GLfloat angle,
-		     GLfloat x, GLfloat y, GLfloat z );
+_math_matrix_rotate(GLmatrix *m, GLfloat angle,
+		    GLfloat x, GLfloat y, GLfloat z);
 
 extern void
-_math_matrix_scale( GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z );
+_math_matrix_scale(GLmatrix *mat, GLfloat x, GLfloat y, GLfloat z);
 
 extern void
-_math_matrix_ortho( GLmatrix *mat,
-		    GLfloat left, GLfloat right,
-		    GLfloat bottom, GLfloat top,
-		    GLfloat nearval, GLfloat farval );
+_math_matrix_ortho(GLmatrix *mat,
+		   GLfloat left, GLfloat right,
+		   GLfloat bottom, GLfloat top,
+		   GLfloat nearval, GLfloat farval);
 
 extern void
-_math_matrix_frustum( GLmatrix *mat,
-		      GLfloat left, GLfloat right,
-		      GLfloat bottom, GLfloat top,
-		      GLfloat nearval, GLfloat farval );
+_math_matrix_frustum(GLmatrix *mat,
+		     GLfloat left, GLfloat right,
+		     GLfloat bottom, GLfloat top,
+		     GLfloat nearval, GLfloat farval);
 
 extern void
 _math_matrix_viewport(GLmatrix *m, GLint x, GLint y, GLint width, GLint height,
-                      GLfloat zNear, GLfloat zFar, GLfloat depthMax);
+		      GLfloat zNear, GLfloat zFar, GLfloat depthMax);
 
 extern void
-_math_matrix_set_identity( GLmatrix *dest );
+_math_matrix_set_identity(GLmatrix *dest);
 
 extern void
-_math_matrix_copy( GLmatrix *to, const GLmatrix *from );
+_math_matrix_copy(GLmatrix *to, const GLmatrix *from);
 
 extern void
-_math_matrix_analyse( GLmatrix *mat );
+_math_matrix_analyse(GLmatrix *mat);
 
 extern void
-_math_matrix_print( const GLmatrix *m );
+_math_matrix_print(const GLmatrix *m);
 
 extern GLboolean
-_math_matrix_is_length_preserving( const GLmatrix *m );
+_math_matrix_is_length_preserving(const GLmatrix *m);
 
 extern GLboolean
-_math_matrix_has_rotation( const GLmatrix *m );
+_math_matrix_has_rotation(const GLmatrix *m);
 
 extern GLboolean
-_math_matrix_is_general_scale( const GLmatrix *m );
+_math_matrix_is_general_scale(const GLmatrix *m);
 
 extern GLboolean
-_math_matrix_is_dirty( const GLmatrix *m );
+_math_matrix_is_dirty(const GLmatrix *m);
 
 
 /**
@@ -152,13 +152,13 @@ _math_matrix_is_dirty( const GLmatrix *m );
 /*@{*/
 
 extern void
-_math_transposef( GLfloat to[16], const GLfloat from[16] );
+_math_transposef(GLfloat to[16], const GLfloat from[16]);
 
 extern void
-_math_transposed( GLdouble to[16], const GLdouble from[16] );
+_math_transposed(GLdouble to[16], const GLdouble from[16]);
 
 extern void
-_math_transposefd( GLfloat to[16], const GLdouble from[16] );
+_math_transposefd(GLfloat to[16], const GLdouble from[16]);
 
 
 /*

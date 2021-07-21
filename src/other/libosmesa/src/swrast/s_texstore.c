@@ -64,31 +64,31 @@
  * \return pointer to image
  */
 static GLvoid *
-read_color_image( GLcontext *ctx, GLint x, GLint y, GLenum type,
-                  GLsizei width, GLsizei height )
+read_color_image(GLcontext *ctx, GLint x, GLint y, GLenum type,
+		 GLsizei width, GLsizei height)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
-   const GLint pixelSize = _mesa_bytes_per_pixel(GL_RGBA, type);
-   const GLint stride = width * pixelSize;
-   GLint row;
-   GLubyte *image, *dst;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+    const GLint pixelSize = _mesa_bytes_per_pixel(GL_RGBA, type);
+    const GLint stride = width * pixelSize;
+    GLint row;
+    GLubyte *image, *dst;
 
-   image = (GLubyte *) _mesa_malloc(width * height * pixelSize);
-   if (!image)
-      return NULL;
+    image = (GLubyte *) _mesa_malloc(width * height * pixelSize);
+    if (!image)
+	return NULL;
 
-   RENDER_START(swrast, ctx);
+    RENDER_START(swrast, ctx);
 
-   dst = image;
-   for (row = 0; row < height; row++) {
-      _swrast_read_rgba_span(ctx, rb, width, x, y + row, type, dst);
-      dst += stride;
-   }
+    dst = image;
+    for (row = 0; row < height; row++) {
+	_swrast_read_rgba_span(ctx, rb, width, x, y + row, type, dst);
+	dst += stride;
+    }
 
-   RENDER_FINISH(swrast, ctx);
+    RENDER_FINISH(swrast, ctx);
 
-   return image;
+    return image;
 }
 
 
@@ -97,29 +97,29 @@ read_color_image( GLcontext *ctx, GLint x, GLint y, GLenum type,
  * \sa read_color_image
  */
 static GLuint *
-read_depth_image( GLcontext *ctx, GLint x, GLint y,
-                  GLsizei width, GLsizei height )
+read_depth_image(GLcontext *ctx, GLint x, GLint y,
+		 GLsizei width, GLsizei height)
 {
-   struct gl_renderbuffer *rb = ctx->ReadBuffer->_DepthBuffer;
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLuint *image, *dst;
-   GLint i;
+    struct gl_renderbuffer *rb = ctx->ReadBuffer->_DepthBuffer;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    GLuint *image, *dst;
+    GLint i;
 
-   image = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
-   if (!image)
-      return NULL;
+    image = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
+    if (!image)
+	return NULL;
 
-   RENDER_START(swrast, ctx);
+    RENDER_START(swrast, ctx);
 
-   dst = image;
-   for (i = 0; i < height; i++) {
-      _swrast_read_depth_span_uint(ctx, rb, width, x, y + i, dst);
-      dst += width;
-   }
+    dst = image;
+    for (i = 0; i < height; i++) {
+	_swrast_read_depth_span_uint(ctx, rb, width, x, y + i, dst);
+	dst += width;
+    }
 
-   RENDER_FINISH(swrast, ctx);
+    RENDER_FINISH(swrast, ctx);
 
-   return image;
+    return image;
 }
 
 
@@ -128,114 +128,111 @@ read_depth_image( GLcontext *ctx, GLint x, GLint y,
  */
 static GLuint *
 read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
-                         GLsizei width, GLsizei height)
+			 GLsizei width, GLsizei height)
 {
-   struct gl_renderbuffer *depthRb = ctx->ReadBuffer->_DepthBuffer;
-   struct gl_renderbuffer *stencilRb = ctx->ReadBuffer->_StencilBuffer;
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLuint *image, *dst;
-   GLint i;
+    struct gl_renderbuffer *depthRb = ctx->ReadBuffer->_DepthBuffer;
+    struct gl_renderbuffer *stencilRb = ctx->ReadBuffer->_StencilBuffer;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    GLuint *image, *dst;
+    GLint i;
 
-   ASSERT(depthRb);
-   ASSERT(stencilRb);
+    ASSERT(depthRb);
+    ASSERT(stencilRb);
 
-   image = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
-   if (!image)
-      return NULL;
+    image = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
+    if (!image)
+	return NULL;
 
-   RENDER_START(swrast, ctx);
+    RENDER_START(swrast, ctx);
 
-   /* read from depth buffer */
-   dst = image;
-   if (depthRb->DataType == GL_UNSIGNED_INT) {
-      for (i = 0; i < height; i++) {
-         _swrast_get_row(ctx, depthRb, width, x, y + i, dst, sizeof(GLuint));
-         dst += width;
-      }
-   }
-   else {
-      GLushort z16[MAX_WIDTH];
-      ASSERT(depthRb->DataType == GL_UNSIGNED_SHORT);
-      for (i = 0; i < height; i++) {
-         GLint j;
-         _swrast_get_row(ctx, depthRb, width, x, y + i, z16, sizeof(GLushort));
-         /* convert GLushorts to GLuints */
-         for (j = 0; j < width; j++) {
-            dst[j] = z16[j];
-         }
-         dst += width;
-      }
-   }
+    /* read from depth buffer */
+    dst = image;
+    if (depthRb->DataType == GL_UNSIGNED_INT) {
+	for (i = 0; i < height; i++) {
+	    _swrast_get_row(ctx, depthRb, width, x, y + i, dst, sizeof(GLuint));
+	    dst += width;
+	}
+    } else {
+	GLushort z16[MAX_WIDTH];
+	ASSERT(depthRb->DataType == GL_UNSIGNED_SHORT);
+	for (i = 0; i < height; i++) {
+	    GLint j;
+	    _swrast_get_row(ctx, depthRb, width, x, y + i, z16, sizeof(GLushort));
+	    /* convert GLushorts to GLuints */
+	    for (j = 0; j < width; j++) {
+		dst[j] = z16[j];
+	    }
+	    dst += width;
+	}
+    }
 
-   /* put depth values into bits 0xffffff00 */
-   if (ctx->ReadBuffer->Visual.depthBits == 24) {
-      GLint j;
-      for (j = 0; j < width * height; j++) {
-         image[j] <<= 8;
-      }
-   }
-   else if (ctx->ReadBuffer->Visual.depthBits == 16) {
-      GLint j;
-      for (j = 0; j < width * height; j++) {
-         image[j] = (image[j] << 16) | (image[j] & 0xff00);
-      }      
-   }
-   else {
-      /* this handles arbitrary depthBits >= 12 */
-      const GLint rShift = ctx->ReadBuffer->Visual.depthBits;
-      const GLint lShift = 32 - rShift;
-      GLint j;
-      for (j = 0; j < width * height; j++) {
-         GLuint z = (image[j] << lShift);
-         image[j] = z | (z >> rShift);
-      }
-   }
+    /* put depth values into bits 0xffffff00 */
+    if (ctx->ReadBuffer->Visual.depthBits == 24) {
+	GLint j;
+	for (j = 0; j < width * height; j++) {
+	    image[j] <<= 8;
+	}
+    } else if (ctx->ReadBuffer->Visual.depthBits == 16) {
+	GLint j;
+	for (j = 0; j < width * height; j++) {
+	    image[j] = (image[j] << 16) | (image[j] & 0xff00);
+	}
+    } else {
+	/* this handles arbitrary depthBits >= 12 */
+	const GLint rShift = ctx->ReadBuffer->Visual.depthBits;
+	const GLint lShift = 32 - rShift;
+	GLint j;
+	for (j = 0; j < width * height; j++) {
+	    GLuint z = (image[j] << lShift);
+	    image[j] = z | (z >> rShift);
+	}
+    }
 
-   /* read stencil values and interleave into image array */
-   dst = image;
-   for (i = 0; i < height; i++) {
-      GLstencil stencil[MAX_WIDTH];
-      GLint j;
-      ASSERT(8 * sizeof(GLstencil) == stencilRb->StencilBits);
-      _swrast_get_row(ctx, stencilRb, width, x, y + i,
-                      stencil, sizeof(GLstencil));
-      for (j = 0; j < width; j++) {
-         dst[j] = (dst[j] & 0xffffff00) | (stencil[j] & 0xff);
-      }
-      dst += width;
-   }
+    /* read stencil values and interleave into image array */
+    dst = image;
+    for (i = 0; i < height; i++) {
+	GLstencil stencil[MAX_WIDTH];
+	GLint j;
+	ASSERT(8 * sizeof(GLstencil) == stencilRb->StencilBits);
+	_swrast_get_row(ctx, stencilRb, width, x, y + i,
+			stencil, sizeof(GLstencil));
+	for (j = 0; j < width; j++) {
+	    dst[j] = (dst[j] & 0xffffff00) | (stencil[j] & 0xff);
+	}
+	dst += width;
+    }
 
-   RENDER_FINISH(swrast, ctx);
+    RENDER_FINISH(swrast, ctx);
 
-   return image;
+    return image;
 }
 
 
 static GLboolean
 is_depth_format(GLenum format)
 {
-   switch (format) {
-      case GL_DEPTH_COMPONENT:
-      case GL_DEPTH_COMPONENT16_SGIX:
-      case GL_DEPTH_COMPONENT24_SGIX:
-      case GL_DEPTH_COMPONENT32_SGIX:
-         return GL_TRUE;
-      default:
-         return GL_FALSE;
-   }
+    switch (format) {
+	case GL_DEPTH_COMPONENT:
+	case GL_DEPTH_COMPONENT16_SGIX:
+	case GL_DEPTH_COMPONENT24_SGIX:
+	case GL_DEPTH_COMPONENT32_SGIX:
+	    return GL_TRUE;
+	default:
+	    return GL_FALSE;
+    }
 }
 
 
 static GLboolean
 is_depth_stencil_format(GLenum format)
 {
-   switch (format) {
-      case GL_DEPTH_STENCIL_EXT:
-      case GL_DEPTH24_STENCIL8_EXT:
-         return GL_TRUE;
-      default:
-         return GL_FALSE;
-   }
+    switch (format) {
+	case GL_DEPTH_STENCIL_EXT:
+	case GL_DEPTH24_STENCIL8_EXT:
+	    return GL_TRUE;
+	default:
+	    return GL_FALSE;
+    }
 }
 
 
@@ -243,70 +240,68 @@ is_depth_stencil_format(GLenum format)
  * Fallback for Driver.CopyTexImage1D().
  */
 void
-_swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
-                         GLenum internalFormat,
-                         GLint x, GLint y, GLsizei width, GLint border )
+_swrast_copy_teximage1d(GLcontext *ctx, GLenum target, GLint level,
+			GLenum internalFormat,
+			GLint x, GLint y, GLsizei width, GLint border)
 {
-   struct gl_texture_unit *texUnit;
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
+    struct gl_texture_unit *texUnit;
+    struct gl_texture_object *texObj;
+    struct gl_texture_image *texImage;
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   ASSERT(texObj);
-   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-   ASSERT(texImage);
+    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+    texObj = _mesa_select_tex_object(ctx, texUnit, target);
+    ASSERT(texObj);
+    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+    ASSERT(texImage);
 
-   ASSERT(ctx->Driver.TexImage1D);
+    ASSERT(ctx->Driver.TexImage1D);
 
-   if (is_depth_format(internalFormat)) {
-      /* read depth image from framebuffer */
-      GLuint *image = read_depth_image(ctx, x, y, width, 1);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
-         return;
-      }
-      /* call glTexImage1D to redefine the texture */
-      ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
-                             width, border,
-                             GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
-                             &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
-   else if (is_depth_stencil_format(internalFormat)) {
-      /* read depth/stencil image from framebuffer */
-      GLuint *image = read_depth_stencil_image(ctx, x, y, width, 1);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
-         return;
-      }
-      /* call glTexImage1D to redefine the texture */
-      ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
-                             width, border,
-                             GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
-                             image, &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
-   else {
-      /* read RGBA image from framebuffer */
-      const GLenum format = GL_RGBA;
-      const GLenum type = ctx->ReadBuffer->_ColorReadBuffer->DataType;
-      GLvoid *image = read_color_image(ctx, x, y, type, width, 1);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
-         return;
-      }
-      /* call glTexImage1D to redefine the texture */
-      ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
-                             width, border, format, type, image,
-                             &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
+    if (is_depth_format(internalFormat)) {
+	/* read depth image from framebuffer */
+	GLuint *image = read_depth_image(ctx, x, y, width, 1);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
+	    return;
+	}
+	/* call glTexImage1D to redefine the texture */
+	ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+			       width, border,
+			       GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
+			       &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    } else if (is_depth_stencil_format(internalFormat)) {
+	/* read depth/stencil image from framebuffer */
+	GLuint *image = read_depth_stencil_image(ctx, x, y, width, 1);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
+	    return;
+	}
+	/* call glTexImage1D to redefine the texture */
+	ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+			       width, border,
+			       GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
+			       image, &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    } else {
+	/* read RGBA image from framebuffer */
+	const GLenum format = GL_RGBA;
+	const GLenum type = ctx->ReadBuffer->_ColorReadBuffer->DataType;
+	GLvoid *image = read_color_image(ctx, x, y, type, width, 1);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage1D");
+	    return;
+	}
+	/* call glTexImage1D to redefine the texture */
+	ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+			       width, border, format, type, image,
+			       &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target, texUnit, texObj);
-   }
+    /* GL_SGIS_generate_mipmap */
+    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+	_mesa_generate_mipmap(ctx, target, texUnit, texObj);
+    }
 }
 
 
@@ -319,70 +314,68 @@ _swrast_copy_teximage1d( GLcontext *ctx, GLenum target, GLint level,
  * Device drivers should try to implement direct framebuffer->texture copies.
  */
 void
-_swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
-                         GLenum internalFormat,
-                         GLint x, GLint y, GLsizei width, GLsizei height,
-                         GLint border )
+_swrast_copy_teximage2d(GLcontext *ctx, GLenum target, GLint level,
+			GLenum internalFormat,
+			GLint x, GLint y, GLsizei width, GLsizei height,
+			GLint border)
 {
-   struct gl_texture_unit *texUnit;
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
+    struct gl_texture_unit *texUnit;
+    struct gl_texture_object *texObj;
+    struct gl_texture_image *texImage;
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   ASSERT(texObj);
-   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-   ASSERT(texImage);
+    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+    texObj = _mesa_select_tex_object(ctx, texUnit, target);
+    ASSERT(texObj);
+    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+    ASSERT(texImage);
 
-   ASSERT(ctx->Driver.TexImage2D);
+    ASSERT(ctx->Driver.TexImage2D);
 
-   if (is_depth_format(internalFormat)) {
-      /* read depth image from framebuffer */
-      GLuint *image = read_depth_image(ctx, x, y, width, height);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
-         return;
-      }
-      /* call glTexImage2D to redefine the texture */
-      ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
-                             width, height, border,
-                             GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
-                             &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
-   else if (is_depth_stencil_format(internalFormat)) {
-      GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
-         return;
-      }
-      /* call glTexImage2D to redefine the texture */
-      ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
-                             width, height, border,
-                             GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
-                             image, &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
-   else {
-      /* read RGBA image from framebuffer */
-      const GLenum format = GL_RGBA;
-      const GLenum type = ctx->ReadBuffer->_ColorReadBuffer->DataType;
-      GLvoid *image = read_color_image(ctx, x, y, type, width, height);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
-         return;
-      }
-      /* call glTexImage2D to redefine the texture */
-      ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
-                             width, height, border, format, type, image,
-                             &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
+    if (is_depth_format(internalFormat)) {
+	/* read depth image from framebuffer */
+	GLuint *image = read_depth_image(ctx, x, y, width, height);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
+	    return;
+	}
+	/* call glTexImage2D to redefine the texture */
+	ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+			       width, height, border,
+			       GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
+			       &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    } else if (is_depth_stencil_format(internalFormat)) {
+	GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
+	    return;
+	}
+	/* call glTexImage2D to redefine the texture */
+	ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+			       width, height, border,
+			       GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
+			       image, &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    } else {
+	/* read RGBA image from framebuffer */
+	const GLenum format = GL_RGBA;
+	const GLenum type = ctx->ReadBuffer->_ColorReadBuffer->DataType;
+	GLvoid *image = read_color_image(ctx, x, y, type, width, height);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexImage2D");
+	    return;
+	}
+	/* call glTexImage2D to redefine the texture */
+	ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+			       width, height, border, format, type, image,
+			       &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target, texUnit, texObj);
-   }
+    /* GL_SGIS_generate_mipmap */
+    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+	_mesa_generate_mipmap(ctx, target, texUnit, texObj);
+    }
 }
 
 
@@ -390,68 +383,66 @@ _swrast_copy_teximage2d( GLcontext *ctx, GLenum target, GLint level,
  * Fallback for Driver.CopyTexSubImage1D().
  */
 void
-_swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
-                            GLint xoffset, GLint x, GLint y, GLsizei width )
+_swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
+			   GLint xoffset, GLint x, GLint y, GLsizei width)
 {
-   struct gl_texture_unit *texUnit;
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
+    struct gl_texture_unit *texUnit;
+    struct gl_texture_object *texObj;
+    struct gl_texture_image *texImage;
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   ASSERT(texObj);
-   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-   ASSERT(texImage);
+    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+    texObj = _mesa_select_tex_object(ctx, texUnit, target);
+    ASSERT(texObj);
+    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+    ASSERT(texImage);
 
-   ASSERT(ctx->Driver.TexImage1D);
+    ASSERT(ctx->Driver.TexImage1D);
 
-   if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
-      /* read depth image from framebuffer */
-      GLuint *image = read_depth_image(ctx, x, y, width, 1);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D");
-         return;
-      }
+    if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
+	/* read depth image from framebuffer */
+	GLuint *image = read_depth_image(ctx, x, y, width, 1);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D");
+	    return;
+	}
 
-      /* call glTexSubImage1D to redefine the texture */
-      ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
-                                GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
-                                &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
-   else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
-      /* read depth/stencil image from framebuffer */
-      GLuint *image = read_depth_stencil_image(ctx, x, y, width, 1);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D");
-         return;
-      }
-      /* call glTexImage1D to redefine the texture */
-      ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
-                                GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
-                                image, &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
-   else {
-      /* read RGBA image from framebuffer */
-      const GLenum format = GL_RGBA;
-      const GLenum type = ctx->ReadBuffer->_ColorReadBuffer->DataType;
-      GLvoid *image = read_color_image(ctx, x, y, type, width, 1);
-      if (!image) {
-         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D" );
-         return;
-      }
-      /* now call glTexSubImage1D to do the real work */
-      ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
-                                format, type, image,
-                                &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
+	/* call glTexSubImage1D to redefine the texture */
+	ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
+				  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
+				  &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    } else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+	/* read depth/stencil image from framebuffer */
+	GLuint *image = read_depth_stencil_image(ctx, x, y, width, 1);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D");
+	    return;
+	}
+	/* call glTexImage1D to redefine the texture */
+	ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
+				  GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
+				  image, &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    } else {
+	/* read RGBA image from framebuffer */
+	const GLenum format = GL_RGBA;
+	const GLenum type = ctx->ReadBuffer->_ColorReadBuffer->DataType;
+	GLvoid *image = read_color_image(ctx, x, y, type, width, 1);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage1D");
+	    return;
+	}
+	/* now call glTexSubImage1D to do the real work */
+	ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
+				  format, type, image,
+				  &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target, texUnit, texObj);
-   }
+    /* GL_SGIS_generate_mipmap */
+    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+	_mesa_generate_mipmap(ctx, target, texUnit, texObj);
+    }
 }
 
 
@@ -462,72 +453,70 @@ _swrast_copy_texsubimage1d( GLcontext *ctx, GLenum target, GLint level,
  * off to ctx->Driver.TexSubImage2D().
  */
 void
-_swrast_copy_texsubimage2d( GLcontext *ctx,
-                            GLenum target, GLint level,
-                            GLint xoffset, GLint yoffset,
-                            GLint x, GLint y, GLsizei width, GLsizei height )
+_swrast_copy_texsubimage2d(GLcontext *ctx,
+			   GLenum target, GLint level,
+			   GLint xoffset, GLint yoffset,
+			   GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   struct gl_texture_unit *texUnit;
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
+    struct gl_texture_unit *texUnit;
+    struct gl_texture_object *texObj;
+    struct gl_texture_image *texImage;
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   ASSERT(texObj);
-   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-   ASSERT(texImage);
+    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+    texObj = _mesa_select_tex_object(ctx, texUnit, target);
+    ASSERT(texObj);
+    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+    ASSERT(texImage);
 
-   ASSERT(ctx->Driver.TexImage2D);
+    ASSERT(ctx->Driver.TexImage2D);
 
-   if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
-      /* read depth image from framebuffer */
-      GLuint *image = read_depth_image(ctx, x, y, width, height);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D");
-         return;
-      }
-      /* call glTexImage2D to redefine the texture */
-      ctx->Driver.TexSubImage2D(ctx, target, level,
-                                xoffset, yoffset, width, height,
-                                GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
-                                &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
-   else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
-      /* read depth/stencil image from framebuffer */
-      GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D");
-         return;
-      }
-      /* call glTexImage2D to redefine the texture */
-      ctx->Driver.TexSubImage2D(ctx, target, level,
-                                xoffset, yoffset, width, height,
-                                GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
-                                image, &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
-   else {
-      /* read RGBA image from framebuffer */
-      const GLenum format = GL_RGBA;
-      const GLenum type = ctx->ReadBuffer->_ColorReadBuffer->DataType;
-      GLvoid *image = read_color_image(ctx, x, y, type, width, height);
-      if (!image) {
-         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D" );
-         return;
-      }
-      /* now call glTexSubImage2D to do the real work */
-      ctx->Driver.TexSubImage2D(ctx, target, level,
-                                xoffset, yoffset, width, height,
-                                format, type, image,
-                                &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
+    if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
+	/* read depth image from framebuffer */
+	GLuint *image = read_depth_image(ctx, x, y, width, height);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D");
+	    return;
+	}
+	/* call glTexImage2D to redefine the texture */
+	ctx->Driver.TexSubImage2D(ctx, target, level,
+				  xoffset, yoffset, width, height,
+				  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
+				  &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    } else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+	/* read depth/stencil image from framebuffer */
+	GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D");
+	    return;
+	}
+	/* call glTexImage2D to redefine the texture */
+	ctx->Driver.TexSubImage2D(ctx, target, level,
+				  xoffset, yoffset, width, height,
+				  GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
+				  image, &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    } else {
+	/* read RGBA image from framebuffer */
+	const GLenum format = GL_RGBA;
+	const GLenum type = ctx->ReadBuffer->_ColorReadBuffer->DataType;
+	GLvoid *image = read_color_image(ctx, x, y, type, width, height);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage2D");
+	    return;
+	}
+	/* now call glTexSubImage2D to do the real work */
+	ctx->Driver.TexSubImage2D(ctx, target, level,
+				  xoffset, yoffset, width, height,
+				  format, type, image,
+				  &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target, texUnit, texObj);
-   }
+    /* GL_SGIS_generate_mipmap */
+    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+	_mesa_generate_mipmap(ctx, target, texUnit, texObj);
+    }
 }
 
 
@@ -535,70 +524,68 @@ _swrast_copy_texsubimage2d( GLcontext *ctx,
  * Fallback for Driver.CopyTexSubImage3D().
  */
 void
-_swrast_copy_texsubimage3d( GLcontext *ctx,
-                            GLenum target, GLint level,
-                            GLint xoffset, GLint yoffset, GLint zoffset,
-                            GLint x, GLint y, GLsizei width, GLsizei height )
+_swrast_copy_texsubimage3d(GLcontext *ctx,
+			   GLenum target, GLint level,
+			   GLint xoffset, GLint yoffset, GLint zoffset,
+			   GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   struct gl_texture_unit *texUnit;
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
+    struct gl_texture_unit *texUnit;
+    struct gl_texture_object *texObj;
+    struct gl_texture_image *texImage;
 
-   texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   ASSERT(texObj);
-   texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-   ASSERT(texImage);
+    texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+    texObj = _mesa_select_tex_object(ctx, texUnit, target);
+    ASSERT(texObj);
+    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
+    ASSERT(texImage);
 
-   ASSERT(ctx->Driver.TexImage3D);
+    ASSERT(ctx->Driver.TexImage3D);
 
-   if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
-      /* read depth image from framebuffer */
-      GLuint *image = read_depth_image(ctx, x, y, width, height);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D");
-         return;
-      }
-      /* call glTexImage3D to redefine the texture */
-      ctx->Driver.TexSubImage3D(ctx, target, level,
-                                xoffset, yoffset, zoffset, width, height, 1,
-                                GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
-                                &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
-   else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
-      /* read depth/stencil image from framebuffer */
-      GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
-      if (!image) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D");
-         return;
-      }
-      /* call glTexImage3D to redefine the texture */
-      ctx->Driver.TexSubImage3D(ctx, target, level,
-                                xoffset, yoffset, zoffset, width, height, 1,
-                                GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
-                                image, &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
-   else {
-      /* read RGBA image from framebuffer */
-      const GLenum format = GL_RGBA;
-      const GLenum type = ctx->ReadBuffer->_ColorReadBuffer->DataType;
-      GLvoid *image = read_color_image(ctx, x, y, type, width, height);
-      if (!image) {
-         _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D" );
-         return;
-      }
-      /* now call glTexSubImage3D to do the real work */
-      ctx->Driver.TexSubImage3D(ctx, target, level,
-                                xoffset, yoffset, zoffset, width, height, 1,
-                                format, type, image,
-                                &ctx->DefaultPacking, texObj, texImage);
-      _mesa_free(image);
-   }
+    if (texImage->_BaseFormat == GL_DEPTH_COMPONENT) {
+	/* read depth image from framebuffer */
+	GLuint *image = read_depth_image(ctx, x, y, width, height);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D");
+	    return;
+	}
+	/* call glTexImage3D to redefine the texture */
+	ctx->Driver.TexSubImage3D(ctx, target, level,
+				  xoffset, yoffset, zoffset, width, height, 1,
+				  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
+				  &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    } else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
+	/* read depth/stencil image from framebuffer */
+	GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D");
+	    return;
+	}
+	/* call glTexImage3D to redefine the texture */
+	ctx->Driver.TexSubImage3D(ctx, target, level,
+				  xoffset, yoffset, zoffset, width, height, 1,
+				  GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
+				  image, &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    } else {
+	/* read RGBA image from framebuffer */
+	const GLenum format = GL_RGBA;
+	const GLenum type = ctx->ReadBuffer->_ColorReadBuffer->DataType;
+	GLvoid *image = read_color_image(ctx, x, y, type, width, height);
+	if (!image) {
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyTexSubImage3D");
+	    return;
+	}
+	/* now call glTexSubImage3D to do the real work */
+	ctx->Driver.TexSubImage3D(ctx, target, level,
+				  xoffset, yoffset, zoffset, width, height, 1,
+				  format, type, image,
+				  &ctx->DefaultPacking, texObj, texImage);
+	_mesa_free(image);
+    }
 
-   /* GL_SGIS_generate_mipmap */
-   if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
-      _mesa_generate_mipmap(ctx, target, texUnit, texObj);
-   }
+    /* GL_SGIS_generate_mipmap */
+    if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
+	_mesa_generate_mipmap(ctx, target, texUnit, texObj);
+    }
 }

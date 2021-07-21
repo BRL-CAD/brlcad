@@ -1,19 +1,19 @@
 /*
  * Mesa 3-D graphics library
  * Version:  6.5
- * 
+ *
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -117,7 +117,7 @@ typedef struct osmesa_context *OSMesaContext;
  * Return:  an OSMesaContext or 0 if error
  */
 GLAPI OSMesaContext GLAPIENTRY
-OSMesaCreateContext( GLenum format, OSMesaContext sharelist );
+OSMesaCreateContext(GLenum format, OSMesaContext sharelist);
 
 
 
@@ -130,8 +130,8 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist );
  * New in Mesa 3.5
  */
 GLAPI OSMesaContext GLAPIENTRY
-OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
-                        GLint accumBits, OSMesaContext sharelist);
+OSMesaCreateContextExt(GLenum format, GLint depthBits, GLint stencilBits,
+		       GLint accumBits, OSMesaContext sharelist);
 
 
 /*
@@ -140,7 +140,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
  * Input:  ctx - the context to destroy
  */
 GLAPI void GLAPIENTRY
-OSMesaDestroyContext( OSMesaContext ctx );
+OSMesaDestroyContext(OSMesaContext ctx);
 
 
 
@@ -172,8 +172,8 @@ OSMesaDestroyContext( OSMesaContext ctx );
  *          width>internal limit or height>internal limit.
  */
 GLAPI GLboolean GLAPIENTRY
-OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
-                   GLsizei width, GLsizei height );
+OSMesaMakeCurrent(OSMesaContext ctx, void *buffer, GLenum type,
+		  GLsizei width, GLsizei height);
 
 
 
@@ -182,7 +182,7 @@ OSMesaMakeCurrent( OSMesaContext ctx, void *buffer, GLenum type,
  * Return the current Off-Screen Mesa rendering context handle.
  */
 GLAPI OSMesaContext GLAPIENTRY
-OSMesaGetCurrentContext( void );
+OSMesaGetCurrentContext(void);
 
 
 
@@ -200,7 +200,7 @@ OSMesaGetCurrentContext( void );
  * New in version 2.0.
  */
 GLAPI void GLAPIENTRY
-OSMesaPixelStore( GLint pname, GLint value );
+OSMesaPixelStore(GLint pname, GLint value);
 
 
 
@@ -216,7 +216,7 @@ OSMesaPixelStore( GLint pname, GLint value );
  *         value - pointer to integer in which to return result.
  */
 GLAPI void GLAPIENTRY
-OSMesaGetIntegerv( GLint pname, GLint *value );
+OSMesaGetIntegerv(GLint pname, GLint *value);
 
 
 
@@ -231,8 +231,8 @@ OSMesaGetIntegerv( GLint pname, GLint *value );
  * New in Mesa 2.4.
  */
 GLAPI GLboolean GLAPIENTRY
-OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
-                      GLint *bytesPerValue, void **buffer );
+OSMesaGetDepthBuffer(OSMesaContext c, GLint *width, GLint *height,
+		     GLint *bytesPerValue, void **buffer);
 
 
 
@@ -247,8 +247,8 @@ OSMesaGetDepthBuffer( OSMesaContext c, GLint *width, GLint *height,
  * New in Mesa 3.3.
  */
 GLAPI GLboolean GLAPIENTRY
-OSMesaGetColorBuffer( OSMesaContext c, GLint *width, GLint *height,
-                      GLint *format, void **buffer );
+OSMesaGetColorBuffer(OSMesaContext c, GLint *width, GLint *height,
+		     GLint *format, void **buffer);
 
 
 
@@ -264,7 +264,7 @@ typedef void (*OSMESAproc)();
  * Return OSMESAproc in 6.3.
  */
 GLAPI OSMESAproc GLAPIENTRY
-OSMesaGetProcAddress( const char *funcName );
+OSMesaGetProcAddress(const char *funcName);
 
 
 

@@ -15,9 +15,9 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * KEITH WHITWELL, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM, 
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+ * KEITH WHITWELL, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
@@ -36,18 +36,18 @@
 
 
 struct mem_block {
-   struct mem_block *next, *prev;
-   struct mem_block *next_free, *prev_free;
-   struct mem_block *heap;
-   unsigned int ofs;
-   int size;
-   unsigned int free:1;
-   unsigned int reserved:1;
+    struct mem_block *next, *prev;
+    struct mem_block *next_free, *prev_free;
+    struct mem_block *heap;
+    unsigned int ofs;
+    int size;
+    unsigned int free:1;
+    unsigned int reserved:1;
 };
 
 
 
-/** 
+/**
  * input: total size in bytes
  * return: a heap pointer if OK, NULL if error
  */
@@ -63,8 +63,8 @@ extern struct mem_block *mmInit(unsigned int ofs, int size);
  *		startSearch = linear offset from start of heap to begin search
  * return: pointer to the allocated block, 0 if error
  */
-extern struct mem_block *mmAllocMem(struct mem_block *heap, int size, int align2, 
-                            int startSearch);
+extern struct mem_block *mmAllocMem(struct mem_block *heap, int size, int align2,
+				    int startSearch);
 
 /**
  * Free block starts at offset

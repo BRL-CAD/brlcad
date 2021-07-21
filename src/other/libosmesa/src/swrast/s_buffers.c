@@ -43,61 +43,59 @@
 static void
 clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   const GLint x = ctx->DrawBuffer->_Xmin;
-   const GLint y = ctx->DrawBuffer->_Ymin;
-   const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-   const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-   SWspan span;
-   GLint i;
+    const GLint x = ctx->DrawBuffer->_Xmin;
+    const GLint y = ctx->DrawBuffer->_Ymin;
+    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+    SWspan span;
+    GLint i;
 
-   ASSERT(ctx->Visual.rgbMode);
-   ASSERT(rb->PutRow);
+    ASSERT(ctx->Visual.rgbMode);
+    ASSERT(rb->PutRow);
 
-   /* Initialize color span with clear color */
-   /* XXX optimize for clearcolor == black/zero (bzero) */
-   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
-   span.array->ChanType = rb->DataType;
-   if (span.array->ChanType == GL_UNSIGNED_BYTE) {
-      GLubyte clearColor[4];
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[RCOMP], ctx->Color.ClearColor[0]);
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[GCOMP], ctx->Color.ClearColor[1]);
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[BCOMP], ctx->Color.ClearColor[2]);
-      UNCLAMPED_FLOAT_TO_UBYTE(clearColor[ACOMP], ctx->Color.ClearColor[3]);
-      for (i = 0; i < width; i++) {
-         COPY_4UBV(span.array->rgba[i], clearColor);
-      }
-   }
-   else if (span.array->ChanType == GL_UNSIGNED_SHORT) {
-      GLushort clearColor[4];
-      UNCLAMPED_FLOAT_TO_USHORT(clearColor[RCOMP], ctx->Color.ClearColor[0]);
-      UNCLAMPED_FLOAT_TO_USHORT(clearColor[GCOMP], ctx->Color.ClearColor[1]);
-      UNCLAMPED_FLOAT_TO_USHORT(clearColor[BCOMP], ctx->Color.ClearColor[2]);
-      UNCLAMPED_FLOAT_TO_USHORT(clearColor[ACOMP], ctx->Color.ClearColor[3]);
-      for (i = 0; i < width; i++) {
-         COPY_4V(span.array->rgba[i], clearColor);
-      }
-   }
-   else {
-      ASSERT(span.array->ChanType == GL_FLOAT);
-      for (i = 0; i < width; i++) {
-         CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][0], ctx->Color.ClearColor[0]);
-         CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][1], ctx->Color.ClearColor[1]);
-         CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][2], ctx->Color.ClearColor[2]);
-         CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][3], ctx->Color.ClearColor[3]);
-      }
-   }
+    /* Initialize color span with clear color */
+    /* XXX optimize for clearcolor == black/zero (bzero) */
+    INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+    span.array->ChanType = rb->DataType;
+    if (span.array->ChanType == GL_UNSIGNED_BYTE) {
+	GLubyte clearColor[4];
+	UNCLAMPED_FLOAT_TO_UBYTE(clearColor[RCOMP], ctx->Color.ClearColor[0]);
+	UNCLAMPED_FLOAT_TO_UBYTE(clearColor[GCOMP], ctx->Color.ClearColor[1]);
+	UNCLAMPED_FLOAT_TO_UBYTE(clearColor[BCOMP], ctx->Color.ClearColor[2]);
+	UNCLAMPED_FLOAT_TO_UBYTE(clearColor[ACOMP], ctx->Color.ClearColor[3]);
+	for (i = 0; i < width; i++) {
+	    COPY_4UBV(span.array->rgba[i], clearColor);
+	}
+    } else if (span.array->ChanType == GL_UNSIGNED_SHORT) {
+	GLushort clearColor[4];
+	UNCLAMPED_FLOAT_TO_USHORT(clearColor[RCOMP], ctx->Color.ClearColor[0]);
+	UNCLAMPED_FLOAT_TO_USHORT(clearColor[GCOMP], ctx->Color.ClearColor[1]);
+	UNCLAMPED_FLOAT_TO_USHORT(clearColor[BCOMP], ctx->Color.ClearColor[2]);
+	UNCLAMPED_FLOAT_TO_USHORT(clearColor[ACOMP], ctx->Color.ClearColor[3]);
+	for (i = 0; i < width; i++) {
+	    COPY_4V(span.array->rgba[i], clearColor);
+	}
+    } else {
+	ASSERT(span.array->ChanType == GL_FLOAT);
+	for (i = 0; i < width; i++) {
+	    CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][0], ctx->Color.ClearColor[0]);
+	    CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][1], ctx->Color.ClearColor[1]);
+	    CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][2], ctx->Color.ClearColor[2]);
+	    CLAMPED_FLOAT_TO_CHAN(span.array->rgba[i][3], ctx->Color.ClearColor[3]);
+	}
+    }
 
-   /* Note that masking will change the color values, but only the
-    * channels for which the write mask is GL_FALSE.  The channels
-    * which which are write-enabled won't get modified.
-    */
-   for (i = 0; i < height; i++) {
-      span.x = x;
-      span.y = y + i;
-      _swrast_mask_rgba_span(ctx, rb, &span);
-      /* write masked row */
-      rb->PutRow(ctx, rb, width, x, y + i, span.array->rgba, NULL);
-   }
+    /* Note that masking will change the color values, but only the
+     * channels for which the write mask is GL_FALSE.  The channels
+     * which which are write-enabled won't get modified.
+     */
+    for (i = 0; i < height; i++) {
+	span.x = x;
+	span.y = y + i;
+	_swrast_mask_rgba_span(ctx, rb, &span);
+	/* write masked row */
+	rb->PutRow(ctx, rb, width, x, y + i, span.array->rgba, NULL);
+    }
 }
 
 
@@ -107,34 +105,34 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   const GLint x = ctx->DrawBuffer->_Xmin;
-   const GLint y = ctx->DrawBuffer->_Ymin;
-   const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-   const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-   SWspan span;
-   GLint i;
+    const GLint x = ctx->DrawBuffer->_Xmin;
+    const GLint y = ctx->DrawBuffer->_Ymin;
+    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+    SWspan span;
+    GLint i;
 
-   ASSERT(!ctx->Visual.rgbMode);
-   ASSERT(rb->PutRow);
-   ASSERT(rb->DataType == GL_UNSIGNED_INT);
+    ASSERT(!ctx->Visual.rgbMode);
+    ASSERT(rb->PutRow);
+    ASSERT(rb->DataType == GL_UNSIGNED_INT);
 
-   /* Initialize index span with clear index */
-   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
-   for (i = 0; i < width;i++) {
-      span.array->index[i] = ctx->Color.ClearIndex;
-   }
+    /* Initialize index span with clear index */
+    INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+    for (i = 0; i < width; i++) {
+	span.array->index[i] = ctx->Color.ClearIndex;
+    }
 
-   /* Note that masking will change the color indexes, but only the
-    * bits for which the write mask is GL_FALSE.  The bits
-    * which are write-enabled won't get modified.
-    */
-   for (i = 0; i < height;i++) {
-      span.x = x;
-      span.y = y + i;
-      _swrast_mask_ci_span(ctx, rb, &span);
-      /* write masked row */
-      rb->PutRow(ctx, rb, width, x, y + i, span.array->index, NULL);
-   }
+    /* Note that masking will change the color indexes, but only the
+     * bits for which the write mask is GL_FALSE.  The bits
+     * which are write-enabled won't get modified.
+     */
+    for (i = 0; i < height; i++) {
+	span.x = x;
+	span.y = y + i;
+	_swrast_mask_ci_span(ctx, rb, &span);
+	/* write masked row */
+	rb->PutRow(ctx, rb, width, x, y + i, span.array->index, NULL);
+    }
 }
 
 
@@ -144,50 +142,50 @@ clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_rgba_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   const GLint x = ctx->DrawBuffer->_Xmin;
-   const GLint y = ctx->DrawBuffer->_Ymin;
-   const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-   const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-   GLubyte clear8[4];
-   GLushort clear16[4];
-   GLvoid *clearVal;
-   GLint i;
+    const GLint x = ctx->DrawBuffer->_Xmin;
+    const GLint y = ctx->DrawBuffer->_Ymin;
+    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+    GLubyte clear8[4];
+    GLushort clear16[4];
+    GLvoid *clearVal;
+    GLint i;
 
-   ASSERT(ctx->Visual.rgbMode);
+    ASSERT(ctx->Visual.rgbMode);
 
-   ASSERT(ctx->Color.ColorMask[0] &&
-          ctx->Color.ColorMask[1] &&
-          ctx->Color.ColorMask[2] &&
-          ctx->Color.ColorMask[3]);             
+    ASSERT(ctx->Color.ColorMask[0] &&
+	   ctx->Color.ColorMask[1] &&
+	   ctx->Color.ColorMask[2] &&
+	   ctx->Color.ColorMask[3]);
 
-   ASSERT(rb->PutMonoRow);
+    ASSERT(rb->PutMonoRow);
 
-   switch (rb->DataType) {
-      case GL_UNSIGNED_BYTE:
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[0], ctx->Color.ClearColor[0]);
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[1], ctx->Color.ClearColor[1]);
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[2], ctx->Color.ClearColor[2]);
-         UNCLAMPED_FLOAT_TO_UBYTE(clear8[3], ctx->Color.ClearColor[3]);
-         clearVal = clear8;
-         break;
-      case GL_UNSIGNED_SHORT:
-         UNCLAMPED_FLOAT_TO_USHORT(clear16[0], ctx->Color.ClearColor[0]);
-         UNCLAMPED_FLOAT_TO_USHORT(clear16[1], ctx->Color.ClearColor[1]);
-         UNCLAMPED_FLOAT_TO_USHORT(clear16[2], ctx->Color.ClearColor[2]);
-         UNCLAMPED_FLOAT_TO_USHORT(clear16[3], ctx->Color.ClearColor[3]);
-         clearVal = clear16;
-         break;
-      case GL_FLOAT:
-         clearVal = ctx->Color.ClearColor;
-         break;
-      default:
-         _mesa_problem(ctx, "Bad rb DataType in clear_color_buffer");
-         return;
-   }
+    switch (rb->DataType) {
+	case GL_UNSIGNED_BYTE:
+	    UNCLAMPED_FLOAT_TO_UBYTE(clear8[0], ctx->Color.ClearColor[0]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(clear8[1], ctx->Color.ClearColor[1]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(clear8[2], ctx->Color.ClearColor[2]);
+	    UNCLAMPED_FLOAT_TO_UBYTE(clear8[3], ctx->Color.ClearColor[3]);
+	    clearVal = clear8;
+	    break;
+	case GL_UNSIGNED_SHORT:
+	    UNCLAMPED_FLOAT_TO_USHORT(clear16[0], ctx->Color.ClearColor[0]);
+	    UNCLAMPED_FLOAT_TO_USHORT(clear16[1], ctx->Color.ClearColor[1]);
+	    UNCLAMPED_FLOAT_TO_USHORT(clear16[2], ctx->Color.ClearColor[2]);
+	    UNCLAMPED_FLOAT_TO_USHORT(clear16[3], ctx->Color.ClearColor[3]);
+	    clearVal = clear16;
+	    break;
+	case GL_FLOAT:
+	    clearVal = ctx->Color.ClearColor;
+	    break;
+	default:
+	    _mesa_problem(ctx, "Bad rb DataType in clear_color_buffer");
+	    return;
+    }
 
-   for (i = 0; i < height; i++) {
-      rb->PutMonoRow(ctx, rb, width, x, y + i, clearVal, NULL);
-   }
+    for (i = 0; i < height; i++) {
+	rb->PutMonoRow(ctx, rb, width, x, y + i, clearVal, NULL);
+    }
 }
 
 
@@ -197,44 +195,44 @@ clear_rgba_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_ci_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
-   const GLint x = ctx->DrawBuffer->_Xmin;
-   const GLint y = ctx->DrawBuffer->_Ymin;
-   const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
-   const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-   GLubyte clear8;
-   GLushort clear16;
-   GLuint clear32;
-   GLvoid *clearVal;
-   GLint i;
+    const GLint x = ctx->DrawBuffer->_Xmin;
+    const GLint y = ctx->DrawBuffer->_Ymin;
+    const GLint height = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+    const GLint width  = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
+    GLubyte clear8;
+    GLushort clear16;
+    GLuint clear32;
+    GLvoid *clearVal;
+    GLint i;
 
-   ASSERT(!ctx->Visual.rgbMode);
+    ASSERT(!ctx->Visual.rgbMode);
 
-   ASSERT((ctx->Color.IndexMask & ((1 << rb->IndexBits) - 1))
-          == (GLuint) ((1 << rb->IndexBits) - 1));
+    ASSERT((ctx->Color.IndexMask & ((1 << rb->IndexBits) - 1))
+	   == (GLuint)((1 << rb->IndexBits) - 1));
 
-   ASSERT(rb->PutMonoRow);
+    ASSERT(rb->PutMonoRow);
 
-   /* setup clear value */
-   switch (rb->DataType) {
-      case GL_UNSIGNED_BYTE:
-         clear8 = (GLubyte) ctx->Color.ClearIndex;
-         clearVal = &clear8;
-         break;
-      case GL_UNSIGNED_SHORT:
-         clear16 = (GLushort) ctx->Color.ClearIndex;
-         clearVal = &clear16;
-         break;
-      case GL_UNSIGNED_INT:
-         clear32 = ctx->Color.ClearIndex;
-         clearVal = &clear32;
-         break;
-      default:
-         _mesa_problem(ctx, "Bad rb DataType in clear_color_buffer");
-         return;
-   }
+    /* setup clear value */
+    switch (rb->DataType) {
+	case GL_UNSIGNED_BYTE:
+	    clear8 = (GLubyte) ctx->Color.ClearIndex;
+	    clearVal = &clear8;
+	    break;
+	case GL_UNSIGNED_SHORT:
+	    clear16 = (GLushort) ctx->Color.ClearIndex;
+	    clearVal = &clear16;
+	    break;
+	case GL_UNSIGNED_INT:
+	    clear32 = ctx->Color.ClearIndex;
+	    clearVal = &clear32;
+	    break;
+	default:
+	    _mesa_problem(ctx, "Bad rb DataType in clear_color_buffer");
+	    return;
+    }
 
-   for (i = 0; i < height; i++)
-      rb->PutMonoRow(ctx, rb, width, x, y + i, clearVal, NULL);
+    for (i = 0; i < height; i++)
+	rb->PutMonoRow(ctx, rb, width, x, y + i, clearVal, NULL);
 }
 
 
@@ -246,50 +244,44 @@ clear_ci_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_color_buffers(GLcontext *ctx)
 {
-   GLboolean masking;
-   GLuint i;
+    GLboolean masking;
+    GLuint i;
 
-   if (ctx->Visual.rgbMode) {
-      if (ctx->Color.ColorMask[0] && 
-          ctx->Color.ColorMask[1] && 
-          ctx->Color.ColorMask[2] && 
-          ctx->Color.ColorMask[3]) {
-         masking = GL_FALSE;
-      }
-      else {
-         masking = GL_TRUE;
-      }
-   }
-   else {
-      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
-      const GLuint indexBits = (1 << rb->IndexBits) - 1;
-      if ((ctx->Color.IndexMask & indexBits) == indexBits) {
-         masking = GL_FALSE;
-      }
-      else {
-         masking = GL_TRUE;
-      }
-   }
+    if (ctx->Visual.rgbMode) {
+	if (ctx->Color.ColorMask[0] &&
+	    ctx->Color.ColorMask[1] &&
+	    ctx->Color.ColorMask[2] &&
+	    ctx->Color.ColorMask[3]) {
+	    masking = GL_FALSE;
+	} else {
+	    masking = GL_TRUE;
+	}
+    } else {
+	struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+	const GLuint indexBits = (1 << rb->IndexBits) - 1;
+	if ((ctx->Color.IndexMask & indexBits) == indexBits) {
+	    masking = GL_FALSE;
+	} else {
+	    masking = GL_TRUE;
+	}
+    }
 
-   for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers[0]; i++) {
-      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][i];
-      if (ctx->Visual.rgbMode) {
-         if (masking) {
-            clear_rgba_buffer_with_masking(ctx, rb);
-         }
-         else {
-            clear_rgba_buffer(ctx, rb);
-         }
-      }
-      else {
-         if (masking) {
-            clear_ci_buffer_with_masking(ctx, rb);
-         }
-         else {
-            clear_ci_buffer(ctx, rb);
-         }
-      }
-   }
+    for (i = 0; i < ctx->DrawBuffer->_NumColorDrawBuffers[0]; i++) {
+	struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][i];
+	if (ctx->Visual.rgbMode) {
+	    if (masking) {
+		clear_rgba_buffer_with_masking(ctx, rb);
+	    } else {
+		clear_rgba_buffer(ctx, rb);
+	    }
+	} else {
+	    if (masking) {
+		clear_ci_buffer_with_masking(ctx, rb);
+	    } else {
+		clear_ci_buffer(ctx, rb);
+	    }
+	}
+    }
 }
 
 
@@ -303,44 +295,44 @@ clear_color_buffers(GLcontext *ctx)
 void
 _swrast_Clear(GLcontext *ctx, GLbitfield buffers)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
 #ifdef DEBUG_FOO
-   {
-      const GLbitfield legalBits =
-         BUFFER_BIT_FRONT_LEFT |
-	 BUFFER_BIT_FRONT_RIGHT |
-	 BUFFER_BIT_BACK_LEFT |
-	 BUFFER_BIT_BACK_RIGHT |
-	 BUFFER_BIT_DEPTH |
-	 BUFFER_BIT_STENCIL |
-	 BUFFER_BIT_ACCUM |
-         BUFFER_BIT_AUX0 |
-         BUFFER_BIT_AUX1 |
-         BUFFER_BIT_AUX2 |
-         BUFFER_BIT_AUX3;
-      assert((buffers & (~legalBits)) == 0);
-   }
+    {
+	const GLbitfield legalBits =
+	    BUFFER_BIT_FRONT_LEFT |
+	    BUFFER_BIT_FRONT_RIGHT |
+	    BUFFER_BIT_BACK_LEFT |
+	    BUFFER_BIT_BACK_RIGHT |
+	    BUFFER_BIT_DEPTH |
+	    BUFFER_BIT_STENCIL |
+	    BUFFER_BIT_ACCUM |
+	    BUFFER_BIT_AUX0 |
+	    BUFFER_BIT_AUX1 |
+	    BUFFER_BIT_AUX2 |
+	    BUFFER_BIT_AUX3;
+	assert((buffers & (~legalBits)) == 0);
+    }
 #endif
 
-   RENDER_START(swrast,ctx);
+    RENDER_START(swrast,ctx);
 
-   /* do software clearing here */
-   if (buffers) {
-      if (buffers & ctx->DrawBuffer->_ColorDrawBufferMask[0]) {
-         clear_color_buffers(ctx);
-      }
-      if (buffers & BUFFER_BIT_DEPTH) {
-         _swrast_clear_depth_buffer(ctx, ctx->DrawBuffer->_DepthBuffer);
-      }
-      if (buffers & BUFFER_BIT_ACCUM) {
-         _swrast_clear_accum_buffer(ctx,
-                       ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
-      }
-      if (buffers & BUFFER_BIT_STENCIL) {
-         _swrast_clear_stencil_buffer(ctx, ctx->DrawBuffer->_StencilBuffer);
-      }
-   }
+    /* do software clearing here */
+    if (buffers) {
+	if (buffers & ctx->DrawBuffer->_ColorDrawBufferMask[0]) {
+	    clear_color_buffers(ctx);
+	}
+	if (buffers & BUFFER_BIT_DEPTH) {
+	    _swrast_clear_depth_buffer(ctx, ctx->DrawBuffer->_DepthBuffer);
+	}
+	if (buffers & BUFFER_BIT_ACCUM) {
+	    _swrast_clear_accum_buffer(ctx,
+				       ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
+	}
+	if (buffers & BUFFER_BIT_STENCIL) {
+	    _swrast_clear_stencil_buffer(ctx, ctx->DrawBuffer->_StencilBuffer);
+	}
+    }
 
-   RENDER_FINISH(swrast,ctx);
+    RENDER_FINISH(swrast,ctx);
 }

@@ -1,7 +1,7 @@
 /**
  * \file accum.h
  * Accumulation buffer operations.
- * 
+ *
  * \if subset
  * (No-op)
  *
@@ -43,14 +43,14 @@
 #if _HAVE_FULL_GL
 
 extern void GLAPIENTRY
-_mesa_Accum( GLenum op, GLfloat value );
+_mesa_Accum(GLenum op, GLfloat value);
 
 
 extern void GLAPIENTRY
-_mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha );
+_mesa_ClearAccum(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 
-extern void 
-_mesa_init_accum( GLcontext *ctx );
+extern void
+_mesa_init_accum(GLcontext *ctx);
 
 #else
 

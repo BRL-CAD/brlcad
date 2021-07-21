@@ -44,15 +44,14 @@
  * If the vec4 module is enabled, 4-component vectors of floats are
  * used when possible. 4x4 matrices are constructed of 4 vec4 slots.
  */
-typedef enum slang_storage_type_
-{
-   /* core */
-   SLANG_STORE_AGGREGATE,
-   SLANG_STORE_BOOL,
-   SLANG_STORE_INT,
-   SLANG_STORE_FLOAT,
-   /* vec4 */
-   SLANG_STORE_VEC4
+typedef enum slang_storage_type_ {
+    /* core */
+    SLANG_STORE_AGGREGATE,
+    SLANG_STORE_BOOL,
+    SLANG_STORE_INT,
+    SLANG_STORE_FLOAT,
+    /* vec4 */
+    SLANG_STORE_VEC4
 } slang_storage_type;
 
 
@@ -70,15 +69,14 @@ typedef enum slang_storage_type_
  * from arrays of their basic types. Matrices are formed of an array
  * of column vectors, which are in turn processed as other vectors.
  */
-typedef struct slang_storage_array_
-{
-   slang_storage_type type;
-   struct slang_storage_aggregate_ *aggregate;
-   GLuint length;
+typedef struct slang_storage_array_ {
+    slang_storage_type type;
+    struct slang_storage_aggregate_ *aggregate;
+    GLuint length;
 } slang_storage_array;
 
-GLboolean slang_storage_array_construct (slang_storage_array *);
-GLvoid slang_storage_array_destruct (slang_storage_array *);
+GLboolean slang_storage_array_construct(slang_storage_array *);
+GLvoid slang_storage_array_destruct(slang_storage_array *);
 
 
 /**
@@ -89,24 +87,23 @@ GLvoid slang_storage_array_destruct (slang_storage_array *);
  * types are implemented as aggregates. Aggregates can collect data of
  * a different type.
  */
-typedef struct slang_storage_aggregate_
-{
-   slang_storage_array *arrays;
-   GLuint count;
+typedef struct slang_storage_aggregate_ {
+    slang_storage_array *arrays;
+    GLuint count;
 } slang_storage_aggregate;
 
-GLboolean slang_storage_aggregate_construct (slang_storage_aggregate *);
-GLvoid slang_storage_aggregate_destruct (slang_storage_aggregate *);
+GLboolean slang_storage_aggregate_construct(slang_storage_aggregate *);
+GLvoid slang_storage_aggregate_destruct(slang_storage_aggregate *);
 
 
 extern GLboolean
 _slang_aggregate_variable(slang_storage_aggregate *agg,
-                          slang_type_specifier *spec,
-                          GLuint array_len,
-                          slang_function_scope *funcs,
-                          slang_struct_scope *structs,
-                          slang_variable_scope *vars,
-                          slang_atom_pool *atoms);
+			  slang_type_specifier *spec,
+			  GLuint array_len,
+			  slang_function_scope *funcs,
+			  slang_struct_scope *structs,
+			  slang_variable_scope *vars,
+			  slang_atom_pool *atoms);
 
 /*
  * Returns the size (in machine units) of the given storage type.
@@ -114,7 +111,7 @@ _slang_aggregate_variable(slang_storage_aggregate *agg,
  * Returns 0 on error.
  */
 extern GLuint
-_slang_sizeof_type (slang_storage_type);
+_slang_sizeof_type(slang_storage_type);
 
 
 /**
@@ -122,7 +119,7 @@ _slang_sizeof_type (slang_storage_type);
  * Returns 0 on error.
  */
 extern GLuint
-_slang_sizeof_aggregate (const slang_storage_aggregate *);
+_slang_sizeof_aggregate(const slang_storage_aggregate *);
 
 
 #if 0
@@ -132,8 +129,8 @@ _slang_sizeof_aggregate (const slang_storage_aggregate *);
  * GL_FALSE otherwise.
  */
 extern GLboolean
-_slang_flatten_aggregate (slang_storage_aggregate *,
-                          const slang_storage_aggregate *);
+_slang_flatten_aggregate(slang_storage_aggregate *,
+			 const slang_storage_aggregate *);
 
 #endif
 

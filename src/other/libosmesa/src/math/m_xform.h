@@ -102,30 +102,30 @@ _math_init_transformation(void);
 #define CLIP_FRUSTUM_BITS    0x3f
 
 
-typedef GLvector4f * (_XFORMAPIP clip_func)( GLvector4f *vClip,
-					     GLvector4f *vProj,
-					     GLubyte clipMask[],
-					     GLubyte *orMask,
-					     GLubyte *andMask );
+typedef GLvector4f * (_XFORMAPIP clip_func)(GLvector4f *vClip,
+	GLvector4f *vProj,
+	GLubyte clipMask[],
+	GLubyte *orMask,
+	GLubyte *andMask);
 
-typedef void (*dotprod_func)( GLfloat *out,
-			      GLuint out_stride,
-			      CONST GLvector4f *coord_vec,
-			      CONST GLfloat plane[4] );
+typedef void (*dotprod_func)(GLfloat *out,
+			     GLuint out_stride,
+			     CONST GLvector4f *coord_vec,
+			     CONST GLfloat plane[4]);
 
-typedef void (*vec_copy_func)( GLvector4f *to,
-			       CONST GLvector4f *from );
+typedef void (*vec_copy_func)(GLvector4f *to,
+			      CONST GLvector4f *from);
 
 
 
 /*
  * Functions for transformation of normals in the VB.
  */
-typedef void (_NORMAPIP normal_func)( CONST GLmatrix *mat,
-				      GLfloat scale,
-				      CONST GLvector4f *in,
-				      CONST GLfloat lengths[],
-				      GLvector4f *dest );
+typedef void (_NORMAPIP normal_func)(CONST GLmatrix *mat,
+				     GLfloat scale,
+				     CONST GLvector4f *in,
+				     CONST GLfloat lengths[],
+				     GLvector4f *dest);
 
 
 /* Flags for selecting a normal transformation function.
@@ -143,21 +143,21 @@ typedef void (_NORMAPIP normal_func)( CONST GLmatrix *mat,
  *     when the mask byte is zero.  This is always present as a
  *     parameter, to allow a unified interface.
  */
-typedef void (_XFORMAPIP transform_func)( GLvector4f *to_vec,
-					  CONST GLfloat m[16],
-					  CONST GLvector4f *from_vec );
+typedef void (_XFORMAPIP transform_func)(GLvector4f *to_vec,
+	CONST GLfloat m[16],
+	CONST GLvector4f *from_vec);
 
 
-extern GLvector4f *_mesa_project_points( GLvector4f *to,
-					 CONST GLvector4f *from );
+extern GLvector4f *_mesa_project_points(GLvector4f *to,
+					CONST GLvector4f *from);
 
-extern void _mesa_transform_bounds3( GLubyte *orMask, GLubyte *andMask,
-				     CONST GLfloat m[16],
-				     CONST GLfloat src[][3] );
+extern void _mesa_transform_bounds3(GLubyte *orMask, GLubyte *andMask,
+				    CONST GLfloat m[16],
+				    CONST GLfloat src[][3]);
 
-extern void _mesa_transform_bounds2( GLubyte *orMask, GLubyte *andMask,
-				     CONST GLfloat m[16],
-				     CONST GLfloat src[][3] );
+extern void _mesa_transform_bounds2(GLubyte *orMask, GLubyte *andMask,
+				    CONST GLfloat m[16],
+				    CONST GLfloat src[][3]);
 
 
 extern dotprod_func  _mesa_dotprod_tab[5];
@@ -173,8 +173,8 @@ extern normal_func   _mesa_normal_tab[0xf];
 extern transform_func *_mesa_transform_tab[5];
 
 
-extern void _mesa_transform_point_sz( GLfloat Q[4], CONST GLfloat M[16],
-				      CONST GLfloat P[4], GLuint sz );
+extern void _mesa_transform_point_sz(GLfloat Q[4], CONST GLfloat M[16],
+				     CONST GLfloat P[4], GLuint sz);
 
 
 #define TransformRaw( to, mat, from ) \

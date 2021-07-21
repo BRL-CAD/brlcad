@@ -24,7 +24,7 @@
 
 /* KW:  Moved these here to remove knowledge of swrast from core mesa.
  * Should probably pull the entire software implementation of these
- * extensions into either swrast or a sister module.  
+ * extensions into either swrast or a sister module.
  */
 
 #include "s_context.h"
@@ -34,166 +34,166 @@
 
 
 void
-_swrast_CopyColorTable( GLcontext *ctx, 
-			GLenum target, GLenum internalformat,
-			GLint x, GLint y, GLsizei width)
+_swrast_CopyColorTable(GLcontext *ctx,
+		       GLenum target, GLenum internalformat,
+		       GLint x, GLint y, GLsizei width)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLchan data[MAX_WIDTH][4];
-   struct gl_buffer_object *bufferSave;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    GLchan data[MAX_WIDTH][4];
+    struct gl_buffer_object *bufferSave;
 
-   if (!ctx->ReadBuffer->_ColorReadBuffer) {
-      /* no readbuffer - OK */
-      return;
-   }
+    if (!ctx->ReadBuffer->_ColorReadBuffer) {
+	/* no readbuffer - OK */
+	return;
+    }
 
-   if (width > MAX_WIDTH)
-      width = MAX_WIDTH;
+    if (width > MAX_WIDTH)
+	width = MAX_WIDTH;
 
-   RENDER_START( swrast, ctx );
+    RENDER_START(swrast, ctx);
 
-   /* read the data from framebuffer */
-   _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                           width, x, y, CHAN_TYPE, data );
+    /* read the data from framebuffer */
+    _swrast_read_rgba_span(ctx, ctx->ReadBuffer->_ColorReadBuffer,
+			   width, x, y, CHAN_TYPE, data);
 
-   RENDER_FINISH(swrast,ctx);
+    RENDER_FINISH(swrast,ctx);
 
-   /* save PBO binding */
-   bufferSave = ctx->Unpack.BufferObj;
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+    /* save PBO binding */
+    bufferSave = ctx->Unpack.BufferObj;
+    ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
 
-   _mesa_ColorTable(target, internalformat, width, GL_RGBA, CHAN_TYPE, data);
+    _mesa_ColorTable(target, internalformat, width, GL_RGBA, CHAN_TYPE, data);
 
-   /* restore PBO binding */
-   ctx->Unpack.BufferObj = bufferSave;
+    /* restore PBO binding */
+    ctx->Unpack.BufferObj = bufferSave;
 }
 
 
 void
-_swrast_CopyColorSubTable( GLcontext *ctx,GLenum target, GLsizei start,
-			   GLint x, GLint y, GLsizei width)
+_swrast_CopyColorSubTable(GLcontext *ctx,GLenum target, GLsizei start,
+			  GLint x, GLint y, GLsizei width)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLchan data[MAX_WIDTH][4];
-   struct gl_buffer_object *bufferSave;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    GLchan data[MAX_WIDTH][4];
+    struct gl_buffer_object *bufferSave;
 
-   if (!ctx->ReadBuffer->_ColorReadBuffer) {
-      /* no readbuffer - OK */
-      return;
-   }
+    if (!ctx->ReadBuffer->_ColorReadBuffer) {
+	/* no readbuffer - OK */
+	return;
+    }
 
-   if (width > MAX_WIDTH)
-      width = MAX_WIDTH;
+    if (width > MAX_WIDTH)
+	width = MAX_WIDTH;
 
-   RENDER_START( swrast, ctx );
+    RENDER_START(swrast, ctx);
 
-   /* read the data from framebuffer */
-   _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                           width, x, y, CHAN_TYPE, data );
+    /* read the data from framebuffer */
+    _swrast_read_rgba_span(ctx, ctx->ReadBuffer->_ColorReadBuffer,
+			   width, x, y, CHAN_TYPE, data);
 
-   RENDER_FINISH(swrast,ctx);
+    RENDER_FINISH(swrast,ctx);
 
-   /* save PBO binding */
-   bufferSave = ctx->Unpack.BufferObj;
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+    /* save PBO binding */
+    bufferSave = ctx->Unpack.BufferObj;
+    ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
 
-   _mesa_ColorSubTable(target, start, width, GL_RGBA, CHAN_TYPE, data);
+    _mesa_ColorSubTable(target, start, width, GL_RGBA, CHAN_TYPE, data);
 
-   /* restore PBO binding */
-   ctx->Unpack.BufferObj = bufferSave;
+    /* restore PBO binding */
+    ctx->Unpack.BufferObj = bufferSave;
 }
 
 
 void
-_swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target, 
-				GLenum internalFormat, 
+_swrast_CopyConvolutionFilter1D(GLcontext *ctx, GLenum target,
+				GLenum internalFormat,
 				GLint x, GLint y, GLsizei width)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLchan rgba[MAX_CONVOLUTION_WIDTH][4];
-   struct gl_buffer_object *bufferSave;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    GLchan rgba[MAX_CONVOLUTION_WIDTH][4];
+    struct gl_buffer_object *bufferSave;
 
-   if (!ctx->ReadBuffer->_ColorReadBuffer) {
-      /* no readbuffer - OK */
-      return;
-   }
+    if (!ctx->ReadBuffer->_ColorReadBuffer) {
+	/* no readbuffer - OK */
+	return;
+    }
 
-   RENDER_START( swrast, ctx );
+    RENDER_START(swrast, ctx);
 
-   /* read the data from framebuffer */
-   _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                           width, x, y, CHAN_TYPE, rgba );
-   
-   RENDER_FINISH( swrast, ctx );
+    /* read the data from framebuffer */
+    _swrast_read_rgba_span(ctx, ctx->ReadBuffer->_ColorReadBuffer,
+			   width, x, y, CHAN_TYPE, rgba);
 
-   /* save PBO binding */
-   bufferSave = ctx->Unpack.BufferObj;
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+    RENDER_FINISH(swrast, ctx);
 
-   /* store as convolution filter */
-   _mesa_ConvolutionFilter1D(target, internalFormat, width,
-                             GL_RGBA, CHAN_TYPE, rgba);
+    /* save PBO binding */
+    bufferSave = ctx->Unpack.BufferObj;
+    ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
 
-   /* restore PBO binding */
-   ctx->Unpack.BufferObj = bufferSave;
+    /* store as convolution filter */
+    _mesa_ConvolutionFilter1D(target, internalFormat, width,
+			      GL_RGBA, CHAN_TYPE, rgba);
+
+    /* restore PBO binding */
+    ctx->Unpack.BufferObj = bufferSave;
 }
 
 
 void
-_swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target, 
-				GLenum internalFormat, 
+_swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
+				GLenum internalFormat,
 				GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   struct gl_pixelstore_attrib packSave;
-   GLchan rgba[MAX_CONVOLUTION_HEIGHT][MAX_CONVOLUTION_WIDTH][4];
-   GLint i;
-   struct gl_buffer_object *bufferSave;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    struct gl_pixelstore_attrib packSave;
+    GLchan rgba[MAX_CONVOLUTION_HEIGHT][MAX_CONVOLUTION_WIDTH][4];
+    GLint i;
+    struct gl_buffer_object *bufferSave;
 
-   if (!ctx->ReadBuffer->_ColorReadBuffer) {
-      /* no readbuffer - OK */
-      return;
-   }
+    if (!ctx->ReadBuffer->_ColorReadBuffer) {
+	/* no readbuffer - OK */
+	return;
+    }
 
-   RENDER_START(swrast,ctx);
-   
-   /* read pixels from framebuffer */
-   for (i = 0; i < height; i++) {
-      _swrast_read_rgba_span( ctx, ctx->ReadBuffer->_ColorReadBuffer,
-                              width, x, y + i, CHAN_TYPE, rgba[i] );
-   }
+    RENDER_START(swrast,ctx);
 
-   RENDER_FINISH(swrast,ctx);
+    /* read pixels from framebuffer */
+    for (i = 0; i < height; i++) {
+	_swrast_read_rgba_span(ctx, ctx->ReadBuffer->_ColorReadBuffer,
+			       width, x, y + i, CHAN_TYPE, rgba[i]);
+    }
 
-   /*
-    * HACK: save & restore context state so we can store this as a
-    * convolution filter via the GL api.  Doesn't call any callbacks
-    * hanging off ctx->Unpack statechanges.
-    */
+    RENDER_FINISH(swrast,ctx);
 
-   packSave = ctx->Unpack;  /* save pixel packing params */
+    /*
+     * HACK: save & restore context state so we can store this as a
+     * convolution filter via the GL api.  Doesn't call any callbacks
+     * hanging off ctx->Unpack statechanges.
+     */
 
-   ctx->Unpack.Alignment = 1;
-   ctx->Unpack.RowLength = MAX_CONVOLUTION_WIDTH;
-   ctx->Unpack.SkipPixels = 0;
-   ctx->Unpack.SkipRows = 0;
-   ctx->Unpack.ImageHeight = 0;
-   ctx->Unpack.SkipImages = 0;
-   ctx->Unpack.SwapBytes = GL_FALSE;
-   ctx->Unpack.LsbFirst = GL_FALSE;
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
-   ctx->NewState |= _NEW_PACKUNPACK;
+    packSave = ctx->Unpack;  /* save pixel packing params */
 
-   /* save PBO binding */
-   bufferSave = ctx->Unpack.BufferObj;
-   ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+    ctx->Unpack.Alignment = 1;
+    ctx->Unpack.RowLength = MAX_CONVOLUTION_WIDTH;
+    ctx->Unpack.SkipPixels = 0;
+    ctx->Unpack.SkipRows = 0;
+    ctx->Unpack.ImageHeight = 0;
+    ctx->Unpack.SkipImages = 0;
+    ctx->Unpack.SwapBytes = GL_FALSE;
+    ctx->Unpack.LsbFirst = GL_FALSE;
+    ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
+    ctx->NewState |= _NEW_PACKUNPACK;
 
-   _mesa_ConvolutionFilter2D(target, internalFormat, width, height,
-                             GL_RGBA, CHAN_TYPE, rgba);
+    /* save PBO binding */
+    bufferSave = ctx->Unpack.BufferObj;
+    ctx->Unpack.BufferObj = ctx->Array.NullBufferObj;
 
-   /* restore PBO binding */
-   ctx->Unpack.BufferObj = bufferSave;
+    _mesa_ConvolutionFilter2D(target, internalFormat, width, height,
+			      GL_RGBA, CHAN_TYPE, rgba);
 
-   ctx->Unpack = packSave;  /* restore pixel packing params */
-   ctx->NewState |= _NEW_PACKUNPACK; 
+    /* restore PBO binding */
+    ctx->Unpack.BufferObj = bufferSave;
+
+    ctx->Unpack = packSave;  /* restore pixel packing params */
+    ctx->NewState |= _NEW_PACKUNPACK;
 }

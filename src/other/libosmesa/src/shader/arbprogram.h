@@ -57,27 +57,27 @@ _mesa_IsProgramARB(GLuint id);
 
 extern void GLAPIENTRY
 _mesa_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
-                       const GLvoid *string);
+		       const GLvoid *string);
 
 
 extern void GLAPIENTRY
 _mesa_ProgramEnvParameter4dARB(GLenum target, GLuint index,
-                               GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+			       GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 
 
 extern void GLAPIENTRY
 _mesa_ProgramEnvParameter4dvARB(GLenum target, GLuint index,
-                                const GLdouble *params);
+				const GLdouble *params);
 
 
 extern void GLAPIENTRY
 _mesa_ProgramEnvParameter4fARB(GLenum target, GLuint index,
-                               GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+			       GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
 
 extern void GLAPIENTRY
 _mesa_ProgramEnvParameter4fvARB(GLenum target, GLuint index,
-                                const GLfloat *params);
+				const GLfloat *params);
 
 
 extern void GLAPIENTRY
@@ -87,23 +87,23 @@ _mesa_ProgramEnvParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 
 extern void GLAPIENTRY
 _mesa_ProgramLocalParameter4dARB(GLenum target, GLuint index,
-                                 GLdouble x, GLdouble y,
-                                 GLdouble z, GLdouble w);
+				 GLdouble x, GLdouble y,
+				 GLdouble z, GLdouble w);
 
 
 extern void GLAPIENTRY
 _mesa_ProgramLocalParameter4dvARB(GLenum target, GLuint index,
-                                  const GLdouble *params);
+				  const GLdouble *params);
 
 
 extern void GLAPIENTRY
 _mesa_ProgramLocalParameter4fARB(GLenum target, GLuint index,
-                                 GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+				 GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
 
 extern void GLAPIENTRY
 _mesa_ProgramLocalParameter4fvARB(GLenum target, GLuint index,
-                                  const GLfloat *params);
+				  const GLfloat *params);
 
 
 extern void GLAPIENTRY
@@ -113,22 +113,22 @@ _mesa_ProgramLocalParameters4fvEXT(GLenum target, GLuint index, GLsizei count,
 
 extern void GLAPIENTRY
 _mesa_GetProgramEnvParameterdvARB(GLenum target, GLuint index,
-                                  GLdouble *params);
+				  GLdouble *params);
 
 
 extern void GLAPIENTRY
-_mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index, 
-                                  GLfloat *params);
+_mesa_GetProgramEnvParameterfvARB(GLenum target, GLuint index,
+				  GLfloat *params);
 
 
 extern void GLAPIENTRY
 _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
-                                    GLdouble *params);
+				    GLdouble *params);
 
 
 extern void GLAPIENTRY
-_mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index, 
-                                    GLfloat *params);
+_mesa_GetProgramLocalParameterfvARB(GLenum target, GLuint index,
+				    GLfloat *params);
 
 
 extern void GLAPIENTRY

@@ -1,7 +1,7 @@
 /**
  * \file eval.h
  * Eval operations.
- * 
+ *
  * \if subset
  * (No-op)
  *
@@ -41,79 +41,79 @@
 
 #if _HAVE_FULL_GL
 
-extern void _mesa_init_eval( GLcontext *ctx );
-extern void _mesa_free_eval_data( GLcontext *ctx );
+extern void _mesa_init_eval(GLcontext *ctx);
+extern void _mesa_free_eval_data(GLcontext *ctx);
 
 
-extern GLuint _mesa_evaluator_components( GLenum target );
+extern GLuint _mesa_evaluator_components(GLenum target);
 
 
-extern void gl_free_control_points( GLcontext *ctx,
-                                    GLenum target, GLfloat *data );
+extern void gl_free_control_points(GLcontext *ctx,
+				   GLenum target, GLfloat *data);
 
 
-extern GLfloat *_mesa_copy_map_points1f( GLenum target,
-                                      GLint ustride, GLint uorder,
-                                      const GLfloat *points );
+extern GLfloat *_mesa_copy_map_points1f(GLenum target,
+					GLint ustride, GLint uorder,
+					const GLfloat *points);
 
-extern GLfloat *_mesa_copy_map_points1d( GLenum target,
-                                      GLint ustride, GLint uorder,
-                                      const GLdouble *points );
+extern GLfloat *_mesa_copy_map_points1d(GLenum target,
+					GLint ustride, GLint uorder,
+					const GLdouble *points);
 
-extern GLfloat *_mesa_copy_map_points2f( GLenum target,
-                                      GLint ustride, GLint uorder,
-                                      GLint vstride, GLint vorder,
-                                      const GLfloat *points );
+extern GLfloat *_mesa_copy_map_points2f(GLenum target,
+					GLint ustride, GLint uorder,
+					GLint vstride, GLint vorder,
+					const GLfloat *points);
 
 extern GLfloat *_mesa_copy_map_points2d(GLenum target,
-                                     GLint ustride, GLint uorder,
-                                     GLint vstride, GLint vorder,
-                                     const GLdouble *points );
+					GLint ustride, GLint uorder,
+					GLint vstride, GLint vorder,
+					const GLdouble *points);
 
 
 
 extern void GLAPIENTRY
-_mesa_Map1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride,
-             GLint order, const GLfloat *points );
+_mesa_Map1f(GLenum target, GLfloat u1, GLfloat u2, GLint stride,
+	    GLint order, const GLfloat *points);
 
 extern void GLAPIENTRY
-_mesa_Map2f( GLenum target,
-             GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
-             GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
-             const GLfloat *points );
+_mesa_Map2f(GLenum target,
+	    GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
+	    GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
+	    const GLfloat *points);
 
 extern void GLAPIENTRY
-_mesa_Map1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride,
-             GLint order, const GLdouble *points );
+_mesa_Map1d(GLenum target, GLdouble u1, GLdouble u2, GLint stride,
+	    GLint order, const GLdouble *points);
 
 extern void GLAPIENTRY
-_mesa_Map2d( GLenum target,
-             GLdouble u1, GLdouble u2, GLint ustride, GLint uorder,
-             GLdouble v1, GLdouble v2, GLint vstride, GLint vorder,
-             const GLdouble *points );
+_mesa_Map2d(GLenum target,
+	    GLdouble u1, GLdouble u2, GLint ustride, GLint uorder,
+	    GLdouble v1, GLdouble v2, GLint vstride, GLint vorder,
+	    const GLdouble *points);
 
 extern void GLAPIENTRY
-_mesa_MapGrid1f( GLint un, GLfloat u1, GLfloat u2 );
+_mesa_MapGrid1f(GLint un, GLfloat u1, GLfloat u2);
 
 extern void GLAPIENTRY
-_mesa_MapGrid1d( GLint un, GLdouble u1, GLdouble u2 );
+_mesa_MapGrid1d(GLint un, GLdouble u1, GLdouble u2);
 
 extern void GLAPIENTRY
-_mesa_MapGrid2f( GLint un, GLfloat u1, GLfloat u2,
-                 GLint vn, GLfloat v1, GLfloat v2 );
+_mesa_MapGrid2f(GLint un, GLfloat u1, GLfloat u2,
+		GLint vn, GLfloat v1, GLfloat v2);
 
 extern void GLAPIENTRY
-_mesa_MapGrid2d( GLint un, GLdouble u1, GLdouble u2,
-                 GLint vn, GLdouble v1, GLdouble v2 );
+_mesa_MapGrid2d(GLint un, GLdouble u1, GLdouble u2,
+		GLint vn, GLdouble v1, GLdouble v2);
 
 extern void GLAPIENTRY
-_mesa_GetMapdv( GLenum target, GLenum query, GLdouble *v );
+_mesa_GetMapdv(GLenum target, GLenum query, GLdouble *v);
 
 extern void GLAPIENTRY
-_mesa_GetMapfv( GLenum target, GLenum query, GLfloat *v );
+_mesa_GetMapfv(GLenum target, GLenum query, GLfloat *v);
 
 extern void GLAPIENTRY
-_mesa_GetMapiv( GLenum target, GLenum query, GLint *v );
+_mesa_GetMapiv(GLenum target, GLenum query, GLint *v);
 
 #else
 

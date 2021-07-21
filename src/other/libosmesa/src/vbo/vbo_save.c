@@ -35,55 +35,55 @@
 
 
 
-static void vbo_save_callback_init( GLcontext *ctx )
+static void vbo_save_callback_init(GLcontext *ctx)
 {
-   ctx->Driver.NewList = vbo_save_NewList;
-   ctx->Driver.EndList = vbo_save_EndList;
-   ctx->Driver.SaveFlushVertices = vbo_save_SaveFlushVertices;
-   ctx->Driver.BeginCallList = vbo_save_BeginCallList;
-   ctx->Driver.EndCallList = vbo_save_EndCallList;
-   ctx->Driver.NotifySaveBegin = vbo_save_NotifyBegin;
+    ctx->Driver.NewList = vbo_save_NewList;
+    ctx->Driver.EndList = vbo_save_EndList;
+    ctx->Driver.SaveFlushVertices = vbo_save_SaveFlushVertices;
+    ctx->Driver.BeginCallList = vbo_save_BeginCallList;
+    ctx->Driver.EndCallList = vbo_save_EndCallList;
+    ctx->Driver.NotifySaveBegin = vbo_save_NotifyBegin;
 }
 
 
 
-void vbo_save_init( GLcontext *ctx )
+void vbo_save_init(GLcontext *ctx)
 {
-   struct vbo_context *vbo = vbo_context(ctx);
-   struct vbo_save_context *save = &vbo->save;
+    struct vbo_context *vbo = vbo_context(ctx);
+    struct vbo_save_context *save = &vbo->save;
 
-   save->ctx = ctx;
+    save->ctx = ctx;
 
-   vbo_save_api_init( save );
-   vbo_save_callback_init(ctx);
+    vbo_save_api_init(save);
+    vbo_save_callback_init(ctx);
 
-   {
-      struct gl_client_array *arrays = save->arrays;
-      memcpy(arrays,      vbo->legacy_currval,  16 * sizeof(arrays[0]));
-      memcpy(arrays + 16, vbo->generic_currval, 16 * sizeof(arrays[0]));
-   }
+    {
+	struct gl_client_array *arrays = save->arrays;
+	memcpy(arrays,      vbo->legacy_currval,  16 * sizeof(arrays[0]));
+	memcpy(arrays + 16, vbo->generic_currval, 16 * sizeof(arrays[0]));
+    }
 
-   ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
+    ctx->Driver.CurrentSavePrimitive = PRIM_UNKNOWN;
 }
 
 
-void vbo_save_destroy( GLcontext *ctx )
+void vbo_save_destroy(GLcontext *ctx)
 {
-   struct vbo_context *vbo = vbo_context(ctx);
-   struct vbo_save_context *save = &vbo->save;
-   if (save->prim_store) {
-      if ( --save->prim_store->refcount == 0 ) {
-         FREE( save->prim_store );
-         save->prim_store = NULL;
-      }
-      if ( --save->vertex_store->refcount == 0 ) {
-         if (save->vertex_store->bufferobj)
-            ctx->Driver.DeleteBuffer( ctx, save->vertex_store->bufferobj );
+    struct vbo_context *vbo = vbo_context(ctx);
+    struct vbo_save_context *save = &vbo->save;
+    if (save->prim_store) {
+	if (--save->prim_store->refcount == 0) {
+	    FREE(save->prim_store);
+	    save->prim_store = NULL;
+	}
+	if (--save->vertex_store->refcount == 0) {
+	    if (save->vertex_store->bufferobj)
+		ctx->Driver.DeleteBuffer(ctx, save->vertex_store->bufferobj);
 
-         FREE( save->vertex_store );
-         save->vertex_store = NULL;
-      }
-   }
+	    FREE(save->vertex_store);
+	    save->vertex_store = NULL;
+	}
+    }
 }
 
 
@@ -91,14 +91,14 @@ void vbo_save_destroy( GLcontext *ctx )
 
 /* Note that this can occur during the playback of a display list:
  */
-void vbo_save_fallback( GLcontext *ctx, GLboolean fallback )
+void vbo_save_fallback(GLcontext *ctx, GLboolean fallback)
 {
-   struct vbo_save_context *save = &vbo_context(ctx)->save;
+    struct vbo_save_context *save = &vbo_context(ctx)->save;
 
-   if (fallback)
-      save->replay_flags |= VBO_SAVE_FALLBACK;
-   else
-      save->replay_flags &= ~VBO_SAVE_FALLBACK;
+    if (fallback)
+	save->replay_flags |= VBO_SAVE_FALLBACK;
+    else
+	save->replay_flags &= ~VBO_SAVE_FALLBACK;
 }
 
 

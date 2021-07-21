@@ -27,7 +27,7 @@
  * \brief Bitset of arbitrary size definitions.
  * \author Michal Krol
  */
- 
+
 /****************************************************************************
  * generic bitset implementation
  */
@@ -77,7 +77,7 @@
 /****************************************************************************
  * 64-bit bitset implementation
  */
- 
+
 #define BITSET64_WORD GLuint
 #define BITSET64_WORDBITS (sizeof (BITSET64_WORD) * 8)
 

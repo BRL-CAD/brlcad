@@ -40,32 +40,32 @@
  * \sa glLineWidth().
  */
 void GLAPIENTRY
-_mesa_LineWidth( GLfloat width )
+_mesa_LineWidth(GLfloat width)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   if (width<=0.0) {
-      _mesa_error( ctx, GL_INVALID_VALUE, "glLineWidth" );
-      return;
-   }
+    if (width<=0.0) {
+	_mesa_error(ctx, GL_INVALID_VALUE, "glLineWidth");
+	return;
+    }
 
-   if (ctx->Line.Width == width)
-      return;
+    if (ctx->Line.Width == width)
+	return;
 
-   FLUSH_VERTICES(ctx, _NEW_LINE);
-   ctx->Line.Width = width;
-   ctx->Line._Width = CLAMP(width,
-			    ctx->Const.MinLineWidth,
-			    ctx->Const.MaxLineWidth);
+    FLUSH_VERTICES(ctx, _NEW_LINE);
+    ctx->Line.Width = width;
+    ctx->Line._Width = CLAMP(width,
+			     ctx->Const.MinLineWidth,
+			     ctx->Const.MaxLineWidth);
 
-   if (width != 1.0F)
-      ctx->_TriangleCaps |= DD_LINE_WIDTH;
-   else
-      ctx->_TriangleCaps &= ~DD_LINE_WIDTH;
+    if (width != 1.0F)
+	ctx->_TriangleCaps |= DD_LINE_WIDTH;
+    else
+	ctx->_TriangleCaps &= ~DD_LINE_WIDTH;
 
-   if (ctx->Driver.LineWidth)
-      ctx->Driver.LineWidth(ctx, width);
+    if (ctx->Driver.LineWidth)
+	ctx->Driver.LineWidth(ctx, width);
 }
 
 
@@ -74,7 +74,7 @@ _mesa_LineWidth( GLfloat width )
  *
  * \param factor pattern scale factor.
  * \param pattern bit pattern.
- * 
+ *
  * \sa glLineStipple().
  *
  * Updates gl_line_attrib::StippleFactor and gl_line_attrib::StipplePattern. On
@@ -82,23 +82,23 @@ _mesa_LineWidth( GLfloat width )
  * the dd_function_table::LineStipple callback.
  */
 void GLAPIENTRY
-_mesa_LineStipple( GLint factor, GLushort pattern )
+_mesa_LineStipple(GLint factor, GLushort pattern)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END(ctx);
+    GET_CURRENT_CONTEXT(ctx);
+    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   factor = CLAMP( factor, 1, 256 );
+    factor = CLAMP(factor, 1, 256);
 
-   if (ctx->Line.StippleFactor == factor &&
-       ctx->Line.StipplePattern == pattern)
-      return;
+    if (ctx->Line.StippleFactor == factor &&
+	ctx->Line.StipplePattern == pattern)
+	return;
 
-   FLUSH_VERTICES(ctx, _NEW_LINE);
-   ctx->Line.StippleFactor = factor;
-   ctx->Line.StipplePattern = pattern;
+    FLUSH_VERTICES(ctx, _NEW_LINE);
+    ctx->Line.StippleFactor = factor;
+    ctx->Line.StipplePattern = pattern;
 
-   if (ctx->Driver.LineStipple)
-      ctx->Driver.LineStipple( ctx, factor, pattern );
+    if (ctx->Driver.LineStipple)
+	ctx->Driver.LineStipple(ctx, factor, pattern);
 }
 
 
@@ -110,13 +110,13 @@ _mesa_LineStipple( GLint factor, GLushort pattern )
  * Initializes __GLcontextRec::Line and line related constants in
  * __GLcontextRec::Const.
  */
-void GLAPIENTRY _mesa_init_line( GLcontext * ctx )
+void GLAPIENTRY _mesa_init_line(GLcontext * ctx)
 {
-   /* Line group */
-   ctx->Line.SmoothFlag = GL_FALSE;
-   ctx->Line.StippleFlag = GL_FALSE;
-   ctx->Line.Width = 1.0;
-   ctx->Line._Width = 1.0;
-   ctx->Line.StipplePattern = 0xffff;
-   ctx->Line.StippleFactor = 1;
+    /* Line group */
+    ctx->Line.SmoothFlag = GL_FALSE;
+    ctx->Line.StippleFlag = GL_FALSE;
+    ctx->Line.Width = 1.0;
+    ctx->Line._Width = 1.0;
+    ctx->Line.StipplePattern = 0xffff;
+    ctx->Line.StippleFactor = 1;
 }

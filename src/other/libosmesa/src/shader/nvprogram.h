@@ -33,7 +33,7 @@
 extern void GLAPIENTRY
 _mesa_ExecuteProgramNV(GLenum target, GLuint id, const GLfloat *params);
 
-extern GLboolean GLAPIENTRY 
+extern GLboolean GLAPIENTRY
 _mesa_AreProgramsResidentNV(GLsizei n, const GLuint *ids, GLboolean *residences);
 
 extern void GLAPIENTRY
@@ -93,27 +93,27 @@ _mesa_TrackMatrixNV(GLenum target, GLuint address, GLenum matrix, GLenum transfo
 
 extern void GLAPIENTRY
 _mesa_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte *name,
-                                GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+				GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
 extern void GLAPIENTRY
 _mesa_ProgramNamedParameter4fvNV(GLuint id, GLsizei len, const GLubyte *name,
-                                 const float v[]);
+				 const float v[]);
 
 extern void GLAPIENTRY
 _mesa_ProgramNamedParameter4dNV(GLuint id, GLsizei len, const GLubyte *name,
-                                GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+				GLdouble x, GLdouble y, GLdouble z, GLdouble w);
 
 extern void GLAPIENTRY
 _mesa_ProgramNamedParameter4dvNV(GLuint id, GLsizei len, const GLubyte *name,
-                                 const double v[]);
+				 const double v[]);
 
 extern void GLAPIENTRY
 _mesa_GetProgramNamedParameterfvNV(GLuint id, GLsizei len, const GLubyte *name,
-                                   GLfloat *params);
+				   GLfloat *params);
 
 extern void GLAPIENTRY
 _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
-                                   GLdouble *params);
+				   GLdouble *params);
 
 
 #endif

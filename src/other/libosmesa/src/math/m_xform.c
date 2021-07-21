@@ -99,28 +99,27 @@ transform_func *_mesa_transform_tab[5];
 
 
 
-GLvector4f *_mesa_project_points( GLvector4f *proj_vec,
-				  const GLvector4f *clip_vec )
+GLvector4f *_mesa_project_points(GLvector4f *proj_vec,
+				 const GLvector4f *clip_vec)
 {
-   const GLuint stride = clip_vec->stride;
-   const GLfloat *from = (GLfloat *)clip_vec->start;
-   const GLuint count = clip_vec->count;
-   GLfloat (*vProj)[4] = (GLfloat (*)[4])proj_vec->start;
-   GLuint i;
+    const GLuint stride = clip_vec->stride;
+    const GLfloat *from = (GLfloat *)clip_vec->start;
+    const GLuint count = clip_vec->count;
+    GLfloat(*vProj)[4] = (GLfloat(*)[4])proj_vec->start;
+    GLuint i;
 
-   for (i = 0 ; i < count ; i++, STRIDE_F(from, stride))
-   {
-	 GLfloat oow = 1.0F / from[3];
-	 vProj[i][3] = oow;
-	 vProj[i][0] = from[0] * oow;
-	 vProj[i][1] = from[1] * oow;
-	 vProj[i][2] = from[2] * oow;
-   }
+    for (i = 0 ; i < count ; i++, STRIDE_F(from, stride)) {
+	GLfloat oow = 1.0F / from[3];
+	vProj[i][3] = oow;
+	vProj[i][0] = from[0] * oow;
+	vProj[i][1] = from[1] * oow;
+	vProj[i][2] = from[2] * oow;
+    }
 
-   proj_vec->flags |= VEC_SIZE_4;
-   proj_vec->size = 3;
-   proj_vec->count = clip_vec->count;
-   return proj_vec;
+    proj_vec->flags |= VEC_SIZE_4;
+    proj_vec->size = 3;
+    proj_vec->count = clip_vec->count;
+    return proj_vec;
 }
 
 
@@ -137,14 +136,14 @@ GLvector4f *_mesa_project_points( GLvector4f *proj_vec,
  *         m - transformation matrix
  * Output:  u - transformed vector
  */
-void _mesa_transform_vector( GLfloat u[4], const GLfloat v[4], const GLfloat m[16] )
+void _mesa_transform_vector(GLfloat u[4], const GLfloat v[4], const GLfloat m[16])
 {
-   GLfloat v0=v[0], v1=v[1], v2=v[2], v3=v[3];
+    GLfloat v0=v[0], v1=v[1], v2=v[2], v3=v[3];
 #define M(row,col)  m[row + col*4]
-   u[0] = v0 * M(0,0) + v1 * M(1,0) + v2 * M(2,0) + v3 * M(3,0);
-   u[1] = v0 * M(0,1) + v1 * M(1,1) + v2 * M(2,1) + v3 * M(3,1);
-   u[2] = v0 * M(0,2) + v1 * M(1,2) + v2 * M(2,2) + v3 * M(3,2);
-   u[3] = v0 * M(0,3) + v1 * M(1,3) + v2 * M(2,3) + v3 * M(3,3);
+    u[0] = v0 * M(0,0) + v1 * M(1,0) + v2 * M(2,0) + v3 * M(3,0);
+    u[1] = v0 * M(0,1) + v1 * M(1,1) + v2 * M(2,1) + v3 * M(3,1);
+    u[2] = v0 * M(0,2) + v1 * M(1,2) + v2 * M(2,2) + v3 * M(3,2);
+    u[3] = v0 * M(0,3) + v1 * M(1,3) + v2 * M(2,3) + v3 * M(3,3);
 #undef M
 }
 
@@ -153,40 +152,33 @@ void _mesa_transform_vector( GLfloat u[4], const GLfloat v[4], const GLfloat m[1
  * Note that because the matrix isn't analysed we do too many
  * multiplies, and that the result is always 4-clean.
  */
-void _mesa_transform_point_sz( GLfloat Q[4], const GLfloat M[16],
-			    const GLfloat P[4], GLuint sz )
+void _mesa_transform_point_sz(GLfloat Q[4], const GLfloat M[16],
+			      const GLfloat P[4], GLuint sz)
 {
-   if (Q == P)
-      return;
+    if (Q == P)
+	return;
 
-   if (sz == 4)
-   {
-      Q[0] = M[0] * P[0] + M[4] * P[1] + M[8] *  P[2] + M[12] * P[3];
-      Q[1] = M[1] * P[0] + M[5] * P[1] + M[9] *  P[2] + M[13] * P[3];
-      Q[2] = M[2] * P[0] + M[6] * P[1] + M[10] * P[2] + M[14] * P[3];
-      Q[3] = M[3] * P[0] + M[7] * P[1] + M[11] * P[2] + M[15] * P[3];
-   }
-   else if (sz == 3)
-   {
-      Q[0] = M[0] * P[0] + M[4] * P[1] + M[8] *  P[2] + M[12];
-      Q[1] = M[1] * P[0] + M[5] * P[1] + M[9] *  P[2] + M[13];
-      Q[2] = M[2] * P[0] + M[6] * P[1] + M[10] * P[2] + M[14];
-      Q[3] = M[3] * P[0] + M[7] * P[1] + M[11] * P[2] + M[15];
-   }
-   else if (sz == 2)
-   {
-      Q[0] = M[0] * P[0] + M[4] * P[1] +                M[12];
-      Q[1] = M[1] * P[0] + M[5] * P[1] +                M[13];
-      Q[2] = M[2] * P[0] + M[6] * P[1] +                M[14];
-      Q[3] = M[3] * P[0] + M[7] * P[1] +                M[15];
-   }
-   else if (sz == 1)
-   {
-      Q[0] = M[0] * P[0] +                              M[12];
-      Q[1] = M[1] * P[0] +                              M[13];
-      Q[2] = M[2] * P[0] +                              M[14];
-      Q[3] = M[3] * P[0] +                              M[15];
-   }
+    if (sz == 4) {
+	Q[0] = M[0] * P[0] + M[4] * P[1] + M[8] *  P[2] + M[12] * P[3];
+	Q[1] = M[1] * P[0] + M[5] * P[1] + M[9] *  P[2] + M[13] * P[3];
+	Q[2] = M[2] * P[0] + M[6] * P[1] + M[10] * P[2] + M[14] * P[3];
+	Q[3] = M[3] * P[0] + M[7] * P[1] + M[11] * P[2] + M[15] * P[3];
+    } else if (sz == 3) {
+	Q[0] = M[0] * P[0] + M[4] * P[1] + M[8] *  P[2] + M[12];
+	Q[1] = M[1] * P[0] + M[5] * P[1] + M[9] *  P[2] + M[13];
+	Q[2] = M[2] * P[0] + M[6] * P[1] + M[10] * P[2] + M[14];
+	Q[3] = M[3] * P[0] + M[7] * P[1] + M[11] * P[2] + M[15];
+    } else if (sz == 2) {
+	Q[0] = M[0] * P[0] + M[4] * P[1] +                M[12];
+	Q[1] = M[1] * P[0] + M[5] * P[1] +                M[13];
+	Q[2] = M[2] * P[0] + M[6] * P[1] +                M[14];
+	Q[3] = M[3] * P[0] + M[7] * P[1] +                M[15];
+    } else if (sz == 1) {
+	Q[0] = M[0] * P[0] +                              M[12];
+	Q[1] = M[1] * P[0] +                              M[13];
+	Q[2] = M[2] * P[0] +                              M[14];
+	Q[3] = M[3] * P[0] +                              M[15];
+    }
 }
 
 
@@ -196,35 +188,35 @@ void _mesa_transform_point_sz( GLfloat Q[4], const GLfloat M[16],
  * AMD 3Dnow! capability, Intel SSE, etc. and hook in the right code.
  */
 void
-_math_init_transformation( void )
+_math_init_transformation(void)
 {
-   init_c_transformations();
-   init_c_norm_transform();
-   init_c_cliptest();
-   init_copy0();
-   init_dotprod();
+    init_c_transformations();
+    init_c_norm_transform();
+    init_c_cliptest();
+    init_copy0();
+    init_dotprod();
 
 #ifdef DEBUG_MATH
-   _math_test_all_transform_functions( "default" );
-   _math_test_all_normal_transform_functions( "default" );
-   _math_test_all_cliptest_functions( "default" );
+    _math_test_all_transform_functions("default");
+    _math_test_all_normal_transform_functions("default");
+    _math_test_all_cliptest_functions("default");
 #endif
 
 #ifdef USE_X86_ASM
-   _mesa_init_all_x86_transform_asm();
+    _mesa_init_all_x86_transform_asm();
 #elif defined( USE_SPARC_ASM )
-   _mesa_init_all_sparc_transform_asm();
+    _mesa_init_all_sparc_transform_asm();
 #elif defined( USE_PPC_ASM )
-   _mesa_init_all_ppc_transform_asm();
+    _mesa_init_all_ppc_transform_asm();
 #elif defined( USE_X86_64_ASM )
-   _mesa_init_all_x86_64_transform_asm();
+    _mesa_init_all_x86_64_transform_asm();
 #endif
 }
 
 void
-_math_init( void )
+_math_init(void)
 {
-   _math_init_transformation();
-   _math_init_translate();
-   _math_init_eval();
+    _math_init_transformation();
+    _math_init_translate();
+    _math_init_eval();
 }

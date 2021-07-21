@@ -38,21 +38,21 @@
 static void
 feedback_vertex(GLcontext * ctx, const SWvertex * v, const SWvertex * pv)
 {
-   GLfloat win[4];
-   GLfloat color[4];
-   const GLfloat *vtc = v->attrib[FRAG_ATTRIB_TEX0];
+    GLfloat win[4];
+    GLfloat color[4];
+    const GLfloat *vtc = v->attrib[FRAG_ATTRIB_TEX0];
 
-   win[0] = v->win[0];
-   win[1] = v->win[1];
-   win[2] = v->win[2] / ctx->DrawBuffer->_DepthMaxF;
-   win[3] = 1.0F / v->win[3];
+    win[0] = v->win[0];
+    win[1] = v->win[1];
+    win[2] = v->win[2] / ctx->DrawBuffer->_DepthMaxF;
+    win[3] = 1.0F / v->win[3];
 
-   color[0] = CHAN_TO_FLOAT(pv->color[0]);
-   color[1] = CHAN_TO_FLOAT(pv->color[1]);
-   color[2] = CHAN_TO_FLOAT(pv->color[2]);
-   color[3] = CHAN_TO_FLOAT(pv->color[3]);
+    color[0] = CHAN_TO_FLOAT(pv->color[0]);
+    color[1] = CHAN_TO_FLOAT(pv->color[1]);
+    color[2] = CHAN_TO_FLOAT(pv->color[2]);
+    color[3] = CHAN_TO_FLOAT(pv->color[3]);
 
-   _mesa_feedback_vertex(ctx, win, color, (GLfloat) v->index, vtc);
+    _mesa_feedback_vertex(ctx, win, color, (GLfloat) v->index, vtc);
 }
 
 
@@ -61,84 +61,82 @@ feedback_vertex(GLcontext * ctx, const SWvertex * v, const SWvertex * pv)
  */
 void
 _swrast_feedback_triangle(GLcontext *ctx, const SWvertex *v0,
-                          const SWvertex *v1, const SWvertex *v2)
+			  const SWvertex *v1, const SWvertex *v2)
 {
-   if (_swrast_culltriangle(ctx, v0, v1, v2)) {
-      FEEDBACK_TOKEN(ctx, (GLfloat) (GLint) GL_POLYGON_TOKEN);
-      FEEDBACK_TOKEN(ctx, (GLfloat) 3); /* three vertices */
+    if (_swrast_culltriangle(ctx, v0, v1, v2)) {
+	FEEDBACK_TOKEN(ctx, (GLfloat)(GLint) GL_POLYGON_TOKEN);
+	FEEDBACK_TOKEN(ctx, (GLfloat) 3); /* three vertices */
 
-      if (ctx->Light.ShadeModel == GL_SMOOTH) {
-         feedback_vertex(ctx, v0, v0);
-         feedback_vertex(ctx, v1, v1);
-         feedback_vertex(ctx, v2, v2);
-      }
-      else {
-         feedback_vertex(ctx, v0, v2);
-         feedback_vertex(ctx, v1, v2);
-         feedback_vertex(ctx, v2, v2);
-      }
-   }
+	if (ctx->Light.ShadeModel == GL_SMOOTH) {
+	    feedback_vertex(ctx, v0, v0);
+	    feedback_vertex(ctx, v1, v1);
+	    feedback_vertex(ctx, v2, v2);
+	} else {
+	    feedback_vertex(ctx, v0, v2);
+	    feedback_vertex(ctx, v1, v2);
+	    feedback_vertex(ctx, v2, v2);
+	}
+    }
 }
 
 
 void
 _swrast_feedback_line(GLcontext *ctx, const SWvertex *v0,
-                      const SWvertex *v1)
+		      const SWvertex *v1)
 {
-   GLenum token = GL_LINE_TOKEN;
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    GLenum token = GL_LINE_TOKEN;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   if (swrast->StippleCounter == 0)
-      token = GL_LINE_RESET_TOKEN;
+    if (swrast->StippleCounter == 0)
+	token = GL_LINE_RESET_TOKEN;
 
-   FEEDBACK_TOKEN(ctx, (GLfloat) (GLint) token);
+    FEEDBACK_TOKEN(ctx, (GLfloat)(GLint) token);
 
-   if (ctx->Light.ShadeModel == GL_SMOOTH) {
-      feedback_vertex(ctx, v0, v0);
-      feedback_vertex(ctx, v1, v1);
-   }
-   else {
-      feedback_vertex(ctx, v0, v1);
-      feedback_vertex(ctx, v1, v1);
-   }
+    if (ctx->Light.ShadeModel == GL_SMOOTH) {
+	feedback_vertex(ctx, v0, v0);
+	feedback_vertex(ctx, v1, v1);
+    } else {
+	feedback_vertex(ctx, v0, v1);
+	feedback_vertex(ctx, v1, v1);
+    }
 
-   swrast->StippleCounter++;
+    swrast->StippleCounter++;
 }
 
 
 void
 _swrast_feedback_point(GLcontext *ctx, const SWvertex *v)
 {
-   FEEDBACK_TOKEN(ctx, (GLfloat) (GLint) GL_POINT_TOKEN);
-   feedback_vertex(ctx, v, v);
+    FEEDBACK_TOKEN(ctx, (GLfloat)(GLint) GL_POINT_TOKEN);
+    feedback_vertex(ctx, v, v);
 }
 
 
 void
 _swrast_select_triangle(GLcontext *ctx, const SWvertex *v0,
-                        const SWvertex *v1, const SWvertex *v2)
+			const SWvertex *v1, const SWvertex *v2)
 {
-   if (_swrast_culltriangle(ctx, v0, v1, v2)) {
-      const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-      _mesa_update_hitflag(ctx, v0->win[2] * zs);
-      _mesa_update_hitflag(ctx, v1->win[2] * zs);
-      _mesa_update_hitflag(ctx, v2->win[2] * zs);
-   }
+    if (_swrast_culltriangle(ctx, v0, v1, v2)) {
+	const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
+	_mesa_update_hitflag(ctx, v0->win[2] * zs);
+	_mesa_update_hitflag(ctx, v1->win[2] * zs);
+	_mesa_update_hitflag(ctx, v2->win[2] * zs);
+    }
 }
 
 
 void
 _swrast_select_line(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
 {
-   const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-   _mesa_update_hitflag(ctx, v0->win[2] * zs);
-   _mesa_update_hitflag(ctx, v1->win[2] * zs);
+    const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
+    _mesa_update_hitflag(ctx, v0->win[2] * zs);
+    _mesa_update_hitflag(ctx, v1->win[2] * zs);
 }
 
 
 void
 _swrast_select_point(GLcontext *ctx, const SWvertex *v)
 {
-   const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-   _mesa_update_hitflag(ctx, v->win[2] * zs);
+    const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
+    _mesa_update_hitflag(ctx, v->win[2] * zs);
 }

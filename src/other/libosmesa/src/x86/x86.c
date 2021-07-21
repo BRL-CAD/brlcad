@@ -42,54 +42,54 @@
 
 
 #ifdef USE_X86_ASM
-DECLARE_XFORM_GROUP( x86, 2 )
-DECLARE_XFORM_GROUP( x86, 3 )
-DECLARE_XFORM_GROUP( x86, 4 )
+DECLARE_XFORM_GROUP(x86, 2)
+DECLARE_XFORM_GROUP(x86, 3)
+DECLARE_XFORM_GROUP(x86, 4)
 
 
 extern GLvector4f * _ASMAPI
-_mesa_x86_cliptest_points4( GLvector4f *clip_vec,
-			    GLvector4f *proj_vec,
-			    GLubyte clipMask[],
-			    GLubyte *orMask,
-			    GLubyte *andMask );
+_mesa_x86_cliptest_points4(GLvector4f *clip_vec,
+			   GLvector4f *proj_vec,
+			   GLubyte clipMask[],
+			   GLubyte *orMask,
+			   GLubyte *andMask);
 
 extern GLvector4f * _ASMAPI
-_mesa_x86_cliptest_points4_np( GLvector4f *clip_vec,
-			       GLvector4f *proj_vec,
-			       GLubyte clipMask[],
-			       GLubyte *orMask,
-			       GLubyte *andMask );
+_mesa_x86_cliptest_points4_np(GLvector4f *clip_vec,
+			      GLvector4f *proj_vec,
+			      GLubyte clipMask[],
+			      GLubyte *orMask,
+			      GLubyte *andMask);
 
 extern void _ASMAPI
-_mesa_v16_x86_cliptest_points4( GLfloat *first_vert,
-				GLfloat *last_vert,
-				GLubyte *or_mask,
-				GLubyte *and_mask,
-				GLubyte *clip_mask );
+_mesa_v16_x86_cliptest_points4(GLfloat *first_vert,
+			       GLfloat *last_vert,
+			       GLubyte *or_mask,
+			       GLubyte *and_mask,
+			       GLubyte *clip_mask);
 
 extern void _ASMAPI
-_mesa_v16_x86_general_xform( GLfloat *dest,
-			     const GLfloat *m,
-			     const GLfloat *src,
-			     GLuint src_stride,
-			     GLuint count );
+_mesa_v16_x86_general_xform(GLfloat *dest,
+			    const GLfloat *m,
+			    const GLfloat *src,
+			    GLuint src_stride,
+			    GLuint count);
 #endif
 
 
-void _mesa_init_x86_transform_asm( void )
+void _mesa_init_x86_transform_asm(void)
 {
 #ifdef USE_X86_ASM
-   ASSIGN_XFORM_GROUP( x86, 2 );
-   ASSIGN_XFORM_GROUP( x86, 3 );
-   ASSIGN_XFORM_GROUP( x86, 4 );
+    ASSIGN_XFORM_GROUP(x86, 2);
+    ASSIGN_XFORM_GROUP(x86, 3);
+    ASSIGN_XFORM_GROUP(x86, 4);
 
-   _mesa_clip_tab[4] = _mesa_x86_cliptest_points4;
-   _mesa_clip_np_tab[4] = _mesa_x86_cliptest_points4_np;
+    _mesa_clip_tab[4] = _mesa_x86_cliptest_points4;
+    _mesa_clip_np_tab[4] = _mesa_x86_cliptest_points4_np;
 
 #ifdef DEBUG_MATH
-   _math_test_all_transform_functions( "x86" );
-   _math_test_all_cliptest_functions( "x86" );
+    _math_test_all_transform_functions("x86");
+    _math_test_all_cliptest_functions("x86");
 #endif
 #endif
 }

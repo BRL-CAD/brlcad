@@ -9,21 +9,21 @@
 ** this file except in compliance with the License. You may obtain a copy
 ** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
 ** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-** 
+**
 ** http://oss.sgi.com/projects/FreeB
-** 
+**
 ** Note that, as provided in the License, the Software is distributed on an
 ** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
 ** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
 ** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
 ** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-** 
+**
 ** Original Code. The Original Code is: OpenGL Sample Implementation,
 ** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
 ** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
 ** Copyright in any portions created by third parties is as indicated
 ** elsewhere herein. All Rights Reserved.
-** 
+**
 ** Additional Notice Provisions: The application programming interfaces
 ** established by SGI in conjunction with the Original Code are The
 ** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
@@ -60,11 +60,11 @@ typedef struct __GLcontextRec __GLcontext;
  * kept around in the context so that values can be used during
  * command execution, and for returning information about the
  * context to the application.
- * 
+ *
  * Instances of this structure are shared by the driver and the loader.  To
  * maintain binary compatability, new fields \b must be added only to the
  * end of the structure.
- * 
+ *
  * \sa _gl_context_modes_create
  */
 typedef struct __GLcontextModesRec {
@@ -97,7 +97,7 @@ typedef struct __GLcontextModesRec {
 
     /* GLX */
     GLint visualID;
-    GLint visualType;     /**< One of the GLX X visual types. (i.e., 
+    GLint visualType;     /**< One of the GLX X visual types. (i.e.,
 			   * \c GLX_TRUE_COLOR, etc.)
 			   */
 
@@ -106,7 +106,7 @@ typedef struct __GLcontextModesRec {
 
     /* EXT_visual_info / GLX 1.2 */
     GLint transparentPixel;
-				/*    colors are floats scaled to ints */
+    /*    colors are floats scaled to ints */
     GLint transparentRed, transparentGreen, transparentBlue, transparentAlpha;
     GLint transparentIndex;
 

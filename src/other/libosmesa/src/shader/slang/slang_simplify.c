@@ -46,37 +46,37 @@
 GLint
 _slang_lookup_constant(const char *name)
 {
-   struct constant_info {
-      const char *Name;
-      const GLenum Token;
-   };
-   static const struct constant_info info[] = {
-      { "gl_MaxClipPlanes", GL_MAX_CLIP_PLANES },
-      { "gl_MaxCombinedTextureImageUnits", GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS },
-      { "gl_MaxDrawBuffers", GL_MAX_DRAW_BUFFERS },
-      { "gl_MaxFragmentUniformComponents", GL_MAX_FRAGMENT_UNIFORM_COMPONENTS },
-      { "gl_MaxLights", GL_MAX_LIGHTS },
-      { "gl_MaxTextureUnits", GL_MAX_TEXTURE_UNITS },
-      { "gl_MaxTextureCoords", GL_MAX_TEXTURE_COORDS },
-      { "gl_MaxVertexAttribs", GL_MAX_VERTEX_ATTRIBS },
-      { "gl_MaxVertexUniformComponents", GL_MAX_VERTEX_UNIFORM_COMPONENTS },
-      { "gl_MaxVaryingFloats", GL_MAX_VARYING_FLOATS },
-      { "gl_MaxVertexTextureImageUnits", GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS },
-      { "gl_MaxTextureImageUnits", GL_MAX_TEXTURE_IMAGE_UNITS },
-      { NULL, 0 }
-   };
-   GLuint i;
+    struct constant_info {
+	const char *Name;
+	const GLenum Token;
+    };
+    static const struct constant_info info[] = {
+	{ "gl_MaxClipPlanes", GL_MAX_CLIP_PLANES },
+	{ "gl_MaxCombinedTextureImageUnits", GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS },
+	{ "gl_MaxDrawBuffers", GL_MAX_DRAW_BUFFERS },
+	{ "gl_MaxFragmentUniformComponents", GL_MAX_FRAGMENT_UNIFORM_COMPONENTS },
+	{ "gl_MaxLights", GL_MAX_LIGHTS },
+	{ "gl_MaxTextureUnits", GL_MAX_TEXTURE_UNITS },
+	{ "gl_MaxTextureCoords", GL_MAX_TEXTURE_COORDS },
+	{ "gl_MaxVertexAttribs", GL_MAX_VERTEX_ATTRIBS },
+	{ "gl_MaxVertexUniformComponents", GL_MAX_VERTEX_UNIFORM_COMPONENTS },
+	{ "gl_MaxVaryingFloats", GL_MAX_VARYING_FLOATS },
+	{ "gl_MaxVertexTextureImageUnits", GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS },
+	{ "gl_MaxTextureImageUnits", GL_MAX_TEXTURE_IMAGE_UNITS },
+	{ NULL, 0 }
+    };
+    GLuint i;
 
-   for (i = 0; info[i].Name; i++) {
-      if (strcmp(info[i].Name, name) == 0) {
-         /* found */
-         GLint value = -1.0;
-         _mesa_GetIntegerv(info[i].Token, &value);
-         ASSERT(value >= 0);  /* sanity check that glGetFloatv worked */
-         return value;
-      }
-   }
-   return -1;
+    for (i = 0; info[i].Name; i++) {
+	if (strcmp(info[i].Name, name) == 0) {
+	    /* found */
+	    GLint value = -1.0;
+	    _mesa_GetIntegerv(info[i].Token, &value);
+	    ASSERT(value >= 0);  /* sanity check that glGetFloatv worked */
+	    return value;
+	}
+    }
+    return -1;
 }
 
 
@@ -90,211 +90,211 @@ _slang_lookup_constant(const char *name)
  */
 void
 _slang_simplify(slang_operation *oper,
-                const slang_name_space * space,
-                slang_atom_pool * atoms)
+		const slang_name_space * space,
+		slang_atom_pool * atoms)
 {
-   GLboolean isFloat[4];
-   GLboolean isBool[4];
-   GLuint i, n;
+    GLboolean isFloat[4];
+    GLboolean isBool[4];
+    GLuint i, n;
 
-   if (oper->type == SLANG_OPER_IDENTIFIER) {
-      /* see if it's a named constant */
-      GLint value = _slang_lookup_constant((char *) oper->a_id);
-      if (value >= 0) {
-         oper->literal[0] =
-         oper->literal[1] =
-         oper->literal[2] =
-         oper->literal[3] = value;
-         oper->type = SLANG_OPER_LITERAL_INT;
-         return;
-      }
-   }
+    if (oper->type == SLANG_OPER_IDENTIFIER) {
+	/* see if it's a named constant */
+	GLint value = _slang_lookup_constant((char *) oper->a_id);
+	if (value >= 0) {
+	    oper->literal[0] =
+		oper->literal[1] =
+		    oper->literal[2] =
+			oper->literal[3] = value;
+	    oper->type = SLANG_OPER_LITERAL_INT;
+	    return;
+	}
+    }
 
-   /* first, simplify children */
-   for (i = 0; i < oper->num_children; i++) {
-      _slang_simplify(&oper->children[i], space, atoms);
-   }
+    /* first, simplify children */
+    for (i = 0; i < oper->num_children; i++) {
+	_slang_simplify(&oper->children[i], space, atoms);
+    }
 
-   /* examine children */
-   n = MIN2(oper->num_children, 4);
-   for (i = 0; i < n; i++) {
-      isFloat[i] = (oper->children[i].type == SLANG_OPER_LITERAL_FLOAT ||
-                   oper->children[i].type == SLANG_OPER_LITERAL_INT);
-      isBool[i] = (oper->children[i].type == SLANG_OPER_LITERAL_BOOL);
-   }
-                              
-   if (oper->num_children == 2 && isFloat[0] && isFloat[1]) {
-      /* probably simple arithmetic */
-      switch (oper->type) {
-      case SLANG_OPER_ADD:
-         for (i = 0; i < 4; i++) {
-            oper->literal[i]
-               = oper->children[0].literal[i] + oper->children[1].literal[i];
-         }
-         oper->literal_size = oper->children[0].literal_size;
-         slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_FLOAT;
-         return;
-      case SLANG_OPER_SUBTRACT:
-         for (i = 0; i < 4; i++) {
-            oper->literal[i]
-               = oper->children[0].literal[i] - oper->children[1].literal[i];
-         }
-         oper->literal_size = oper->children[0].literal_size;
-         slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_FLOAT;
-         return;
-      case SLANG_OPER_MULTIPLY:
-         for (i = 0; i < 4; i++) {
-            oper->literal[i]
-               = oper->children[0].literal[i] * oper->children[1].literal[i];
-         }
-         oper->literal_size = oper->children[0].literal_size;
-         slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_FLOAT;
-         return;
-      case SLANG_OPER_DIVIDE:
-         for (i = 0; i < 4; i++) {
-            oper->literal[i]
-               = oper->children[0].literal[i] / oper->children[1].literal[i];
-         }
-         oper->literal_size = oper->children[0].literal_size;
-         slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_FLOAT;
-         return;
-      default:
-         ; /* nothing */
-      }
-   }
+    /* examine children */
+    n = MIN2(oper->num_children, 4);
+    for (i = 0; i < n; i++) {
+	isFloat[i] = (oper->children[i].type == SLANG_OPER_LITERAL_FLOAT ||
+		      oper->children[i].type == SLANG_OPER_LITERAL_INT);
+	isBool[i] = (oper->children[i].type == SLANG_OPER_LITERAL_BOOL);
+    }
 
-   if (oper->num_children == 1 && isFloat[0]) {
-      switch (oper->type) {
-      case SLANG_OPER_MINUS:
-         for (i = 0; i < 4; i++) {
-            oper->literal[i] = -oper->children[0].literal[i];
-         }
-         oper->literal_size = oper->children[0].literal_size;
-         slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_FLOAT;
-         return;
-      case SLANG_OPER_PLUS:
-         COPY_4V(oper->literal, oper->children[0].literal);
-         oper->literal_size = oper->children[0].literal_size;
-         slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_FLOAT;
-         return;
-      default:
-         ; /* nothing */
-      }
-   }
+    if (oper->num_children == 2 && isFloat[0] && isFloat[1]) {
+	/* probably simple arithmetic */
+	switch (oper->type) {
+	    case SLANG_OPER_ADD:
+		for (i = 0; i < 4; i++) {
+		    oper->literal[i]
+			= oper->children[0].literal[i] + oper->children[1].literal[i];
+		}
+		oper->literal_size = oper->children[0].literal_size;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_FLOAT;
+		return;
+	    case SLANG_OPER_SUBTRACT:
+		for (i = 0; i < 4; i++) {
+		    oper->literal[i]
+			= oper->children[0].literal[i] - oper->children[1].literal[i];
+		}
+		oper->literal_size = oper->children[0].literal_size;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_FLOAT;
+		return;
+	    case SLANG_OPER_MULTIPLY:
+		for (i = 0; i < 4; i++) {
+		    oper->literal[i]
+			= oper->children[0].literal[i] * oper->children[1].literal[i];
+		}
+		oper->literal_size = oper->children[0].literal_size;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_FLOAT;
+		return;
+	    case SLANG_OPER_DIVIDE:
+		for (i = 0; i < 4; i++) {
+		    oper->literal[i]
+			= oper->children[0].literal[i] / oper->children[1].literal[i];
+		}
+		oper->literal_size = oper->children[0].literal_size;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_FLOAT;
+		return;
+	    default:
+		; /* nothing */
+	}
+    }
 
-   if (oper->num_children == 2 && isBool[0] && isBool[1]) {
-      /* simple boolean expression */
-      switch (oper->type) {
-      case SLANG_OPER_LOGICALAND:
-         for (i = 0; i < 4; i++) {
-            const GLint a = oper->children[0].literal[i] ? 1 : 0;
-            const GLint b = oper->children[1].literal[i] ? 1 : 0;
-            oper->literal[i] = (GLfloat) (a && b);
-         }
-         oper->literal_size = oper->children[0].literal_size;
-         slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_BOOL;
-         return;
-      case SLANG_OPER_LOGICALOR:
-         for (i = 0; i < 4; i++) {
-            const GLint a = oper->children[0].literal[i] ? 1 : 0;
-            const GLint b = oper->children[1].literal[i] ? 1 : 0;
-            oper->literal[i] = (GLfloat) (a || b);
-         }
-         oper->literal_size = oper->children[0].literal_size;
-         slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_BOOL;
-         return;
-      case SLANG_OPER_LOGICALXOR:
-         for (i = 0; i < 4; i++) {
-            const GLint a = oper->children[0].literal[i] ? 1 : 0;
-            const GLint b = oper->children[1].literal[i] ? 1 : 0;
-            oper->literal[i] = (GLfloat) (a ^ b);
-         }
-         oper->literal_size = oper->children[0].literal_size;
-         slang_operation_destruct(oper);
-         oper->type = SLANG_OPER_LITERAL_BOOL;
-         return;
-      default:
-         ; /* nothing */
-      }
-   }
+    if (oper->num_children == 1 && isFloat[0]) {
+	switch (oper->type) {
+	    case SLANG_OPER_MINUS:
+		for (i = 0; i < 4; i++) {
+		    oper->literal[i] = -oper->children[0].literal[i];
+		}
+		oper->literal_size = oper->children[0].literal_size;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_FLOAT;
+		return;
+	    case SLANG_OPER_PLUS:
+		COPY_4V(oper->literal, oper->children[0].literal);
+		oper->literal_size = oper->children[0].literal_size;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_FLOAT;
+		return;
+	    default:
+		; /* nothing */
+	}
+    }
 
-   if (oper->num_children == 4
-       && isFloat[0] && isFloat[1] && isFloat[2] && isFloat[3]) {
-      /* vec4(flt, flt, flt, flt) constructor */
-      if (oper->type == SLANG_OPER_CALL) {
-         if (strcmp((char *) oper->a_id, "vec4") == 0) {
-            oper->literal[0] = oper->children[0].literal[0];
-            oper->literal[1] = oper->children[1].literal[0];
-            oper->literal[2] = oper->children[2].literal[0];
-            oper->literal[3] = oper->children[3].literal[0];
-            oper->literal_size = 4;
-            slang_operation_destruct(oper);
-            oper->type = SLANG_OPER_LITERAL_FLOAT;
-            return;
-         }
-      }
-   }
+    if (oper->num_children == 2 && isBool[0] && isBool[1]) {
+	/* simple boolean expression */
+	switch (oper->type) {
+	    case SLANG_OPER_LOGICALAND:
+		for (i = 0; i < 4; i++) {
+		    const GLint a = oper->children[0].literal[i] ? 1 : 0;
+		    const GLint b = oper->children[1].literal[i] ? 1 : 0;
+		    oper->literal[i] = (GLfloat)(a && b);
+		}
+		oper->literal_size = oper->children[0].literal_size;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_BOOL;
+		return;
+	    case SLANG_OPER_LOGICALOR:
+		for (i = 0; i < 4; i++) {
+		    const GLint a = oper->children[0].literal[i] ? 1 : 0;
+		    const GLint b = oper->children[1].literal[i] ? 1 : 0;
+		    oper->literal[i] = (GLfloat)(a || b);
+		}
+		oper->literal_size = oper->children[0].literal_size;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_BOOL;
+		return;
+	    case SLANG_OPER_LOGICALXOR:
+		for (i = 0; i < 4; i++) {
+		    const GLint a = oper->children[0].literal[i] ? 1 : 0;
+		    const GLint b = oper->children[1].literal[i] ? 1 : 0;
+		    oper->literal[i] = (GLfloat)(a ^ b);
+		}
+		oper->literal_size = oper->children[0].literal_size;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_BOOL;
+		return;
+	    default:
+		; /* nothing */
+	}
+    }
 
-   if (oper->num_children == 3 && isFloat[0] && isFloat[1] && isFloat[2]) {
-      /* vec3(flt, flt, flt) constructor */
-      if (oper->type == SLANG_OPER_CALL) {
-         if (strcmp((char *) oper->a_id, "vec3") == 0) {
-            oper->literal[0] = oper->children[0].literal[0];
-            oper->literal[1] = oper->children[1].literal[0];
-            oper->literal[2] = oper->children[2].literal[0];
-            oper->literal[3] = oper->literal[2];
-            oper->literal_size = 3;
-            slang_operation_destruct(oper);
-            oper->type = SLANG_OPER_LITERAL_FLOAT;
-            return;
-         }
-      }
-   }
+    if (oper->num_children == 4
+	&& isFloat[0] && isFloat[1] && isFloat[2] && isFloat[3]) {
+	/* vec4(flt, flt, flt, flt) constructor */
+	if (oper->type == SLANG_OPER_CALL) {
+	    if (strcmp((char *) oper->a_id, "vec4") == 0) {
+		oper->literal[0] = oper->children[0].literal[0];
+		oper->literal[1] = oper->children[1].literal[0];
+		oper->literal[2] = oper->children[2].literal[0];
+		oper->literal[3] = oper->children[3].literal[0];
+		oper->literal_size = 4;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_FLOAT;
+		return;
+	    }
+	}
+    }
 
-   if (oper->num_children == 2 && isFloat[0] && isFloat[1]) {
-      /* vec2(flt, flt) constructor */
-      if (oper->type == SLANG_OPER_CALL) {
-         if (strcmp((char *) oper->a_id, "vec2") == 0) {
-            oper->literal[0] = oper->children[0].literal[0];
-            oper->literal[1] = oper->children[1].literal[0];
-            oper->literal[2] = oper->literal[1];
-            oper->literal[3] = oper->literal[1];
-            oper->literal_size = 2;
-            slang_operation_destruct(oper); /* XXX oper->locals goes NULL! */
-            oper->type = SLANG_OPER_LITERAL_FLOAT;
-            assert(oper->num_children == 0);
-            return;
-         }
-      }
-   }
+    if (oper->num_children == 3 && isFloat[0] && isFloat[1] && isFloat[2]) {
+	/* vec3(flt, flt, flt) constructor */
+	if (oper->type == SLANG_OPER_CALL) {
+	    if (strcmp((char *) oper->a_id, "vec3") == 0) {
+		oper->literal[0] = oper->children[0].literal[0];
+		oper->literal[1] = oper->children[1].literal[0];
+		oper->literal[2] = oper->children[2].literal[0];
+		oper->literal[3] = oper->literal[2];
+		oper->literal_size = 3;
+		slang_operation_destruct(oper);
+		oper->type = SLANG_OPER_LITERAL_FLOAT;
+		return;
+	    }
+	}
+    }
 
-   if (oper->num_children == 1 && isFloat[0]) {
-      /* vec2/3/4(flt, flt) constructor */
-      if (oper->type == SLANG_OPER_CALL) {
-         const char *func = (const char *) oper->a_id;
-         if (strncmp(func, "vec", 3) == 0 && func[3] >= '2' && func[3] <= '4') {
-            oper->literal[0] =
-            oper->literal[1] =
-            oper->literal[2] =
-            oper->literal[3] = oper->children[0].literal[0];
-            oper->literal_size = func[3] - '0';
-            assert(oper->literal_size >= 2);
-            assert(oper->literal_size <= 4);
-            slang_operation_destruct(oper); /* XXX oper->locals goes NULL! */
-            oper->type = SLANG_OPER_LITERAL_FLOAT;
-            assert(oper->num_children == 0);
-            return;
-         }
-      }
-   }
+    if (oper->num_children == 2 && isFloat[0] && isFloat[1]) {
+	/* vec2(flt, flt) constructor */
+	if (oper->type == SLANG_OPER_CALL) {
+	    if (strcmp((char *) oper->a_id, "vec2") == 0) {
+		oper->literal[0] = oper->children[0].literal[0];
+		oper->literal[1] = oper->children[1].literal[0];
+		oper->literal[2] = oper->literal[1];
+		oper->literal[3] = oper->literal[1];
+		oper->literal_size = 2;
+		slang_operation_destruct(oper); /* XXX oper->locals goes NULL! */
+		oper->type = SLANG_OPER_LITERAL_FLOAT;
+		assert(oper->num_children == 0);
+		return;
+	    }
+	}
+    }
+
+    if (oper->num_children == 1 && isFloat[0]) {
+	/* vec2/3/4(flt, flt) constructor */
+	if (oper->type == SLANG_OPER_CALL) {
+	    const char *func = (const char *) oper->a_id;
+	    if (strncmp(func, "vec", 3) == 0 && func[3] >= '2' && func[3] <= '4') {
+		oper->literal[0] =
+		    oper->literal[1] =
+			oper->literal[2] =
+			    oper->literal[3] = oper->children[0].literal[0];
+		oper->literal_size = func[3] - '0';
+		assert(oper->literal_size >= 2);
+		assert(oper->literal_size <= 4);
+		slang_operation_destruct(oper); /* XXX oper->locals goes NULL! */
+		oper->type = SLANG_OPER_LITERAL_FLOAT;
+		assert(oper->num_children == 0);
+		return;
+	    }
+	}
+    }
 }
 
 
@@ -309,141 +309,139 @@ _slang_simplify(slang_operation *oper,
  */
 GLboolean
 _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
-                  const slang_name_space * space,
-                  slang_atom_pool * atoms, slang_info_log *log)
+		  const slang_name_space * space,
+		  slang_atom_pool * atoms, slang_info_log *log)
 {
-   const GLboolean haveRetValue = _slang_function_has_return_value(fun);
-   const int numParams = fun->param_count - haveRetValue;
-   int i;
-   int dbg = 0;
+    const GLboolean haveRetValue = _slang_function_has_return_value(fun);
+    const int numParams = fun->param_count - haveRetValue;
+    int i;
+    int dbg = 0;
 
-   if (dbg) printf("Adapt %d args to %d parameters\n",
-                   callOper->num_children, numParams);
+    if (dbg) printf("Adapt %d args to %d parameters\n",
+			callOper->num_children, numParams);
 
-   /* Only try adapting for constructors */
-   if (fun->kind != SLANG_FUNC_CONSTRUCTOR)
-      return GL_FALSE;
+    /* Only try adapting for constructors */
+    if (fun->kind != SLANG_FUNC_CONSTRUCTOR)
+	return GL_FALSE;
 
-   if (callOper->num_children != numParams) {
-      /* number of arguments doesn't match number of parameters */
+    if (callOper->num_children != numParams) {
+	/* number of arguments doesn't match number of parameters */
 
-      if (fun->kind == SLANG_FUNC_CONSTRUCTOR) {
-         /* For constructor calls, we can try to unroll vector/matrix args
-          * into individual floats/ints and try to match the function params.
-          */
-         for (i = 0; i < numParams; i++) {
-            slang_typeinfo argType;
-            GLint argSz, j;
+	if (fun->kind == SLANG_FUNC_CONSTRUCTOR) {
+	    /* For constructor calls, we can try to unroll vector/matrix args
+	     * into individual floats/ints and try to match the function params.
+	     */
+	    for (i = 0; i < numParams; i++) {
+		slang_typeinfo argType;
+		GLint argSz, j;
 
-            /* Get type of arg[i] */
-            if (!slang_typeinfo_construct(&argType))
-               return GL_FALSE;
-            if (!_slang_typeof_operation_(&callOper->children[i], space,
-                                          &argType, atoms, log)) {
-               slang_typeinfo_destruct(&argType);
-               return GL_FALSE;
-            }
+		/* Get type of arg[i] */
+		if (!slang_typeinfo_construct(&argType))
+		    return GL_FALSE;
+		if (!_slang_typeof_operation_(&callOper->children[i], space,
+					      &argType, atoms, log)) {
+		    slang_typeinfo_destruct(&argType);
+		    return GL_FALSE;
+		}
 
-            /*
-            paramSz = _slang_sizeof_type_specifier(&paramVar->type.specifier);
-            assert(paramSz == 1);
-            */
-            argSz = _slang_sizeof_type_specifier(&argType.spec);
-            if (argSz > 1) {
-               slang_operation origArg;
-               /* break up arg[i] into components */
-               if (dbg)
-                  printf("Break up arg %d from 1 to %d elements\n", i, argSz);
+		/*
+		paramSz = _slang_sizeof_type_specifier(&paramVar->type.specifier);
+		assert(paramSz == 1);
+		*/
+		argSz = _slang_sizeof_type_specifier(&argType.spec);
+		if (argSz > 1) {
+		    slang_operation origArg;
+		    /* break up arg[i] into components */
+		    if (dbg)
+			printf("Break up arg %d from 1 to %d elements\n", i, argSz);
 
-               slang_operation_construct(&origArg);
-               slang_operation_copy(&origArg,
-                                    &callOper->children[i]);
+		    slang_operation_construct(&origArg);
+		    slang_operation_copy(&origArg,
+					 &callOper->children[i]);
 
-               /* insert argSz-1 new children/args */
-               for (j = 0; j < argSz - 1; j++) {
-                  (void) slang_operation_insert(&callOper->num_children,
-                                                &callOper->children, i);
-               }
+		    /* insert argSz-1 new children/args */
+		    for (j = 0; j < argSz - 1; j++) {
+			(void) slang_operation_insert(&callOper->num_children,
+						      &callOper->children, i);
+		    }
 
-               /* replace arg[i+j] with subscript/index oper */
-               for (j = 0; j < argSz; j++) {
-                  callOper->children[i + j].type = SLANG_OPER_SUBSCRIPT;
-                  callOper->children[i + j].num_children = 2;
-                  callOper->children[i + j].children = slang_operation_new(2);
-                  slang_operation_copy(&callOper->children[i + j].children[0],
-                                       &origArg);
-                  callOper->children[i + j].children[1].type
-                     = SLANG_OPER_LITERAL_INT;
-                  callOper->children[i + j].children[1].literal[0] = j;
-               }
+		    /* replace arg[i+j] with subscript/index oper */
+		    for (j = 0; j < argSz; j++) {
+			callOper->children[i + j].type = SLANG_OPER_SUBSCRIPT;
+			callOper->children[i + j].num_children = 2;
+			callOper->children[i + j].children = slang_operation_new(2);
+			slang_operation_copy(&callOper->children[i + j].children[0],
+					     &origArg);
+			callOper->children[i + j].children[1].type
+			    = SLANG_OPER_LITERAL_INT;
+			callOper->children[i + j].children[1].literal[0] = j;
+		    }
 
-            }
-         } /* for i */
-      }
-      else {
-         /* non-constructor function: number of args must match number
-          * of function params.
-          */
-         return GL_FALSE; /* caller will record an error msg */
-      }
-   }
+		}
+	    } /* for i */
+	} else {
+	    /* non-constructor function: number of args must match number
+	     * of function params.
+	     */
+	    return GL_FALSE; /* caller will record an error msg */
+	}
+    }
 
-   if (callOper->num_children < numParams) {
-      /* still not enough args for all params */
-      return GL_FALSE;
-   }
-   else if (callOper->num_children > numParams) {
-      /* now too many arguments */
-      /* XXX this isn't always an error, see spec */
-      return GL_FALSE;
-   }
+    if (callOper->num_children < numParams) {
+	/* still not enough args for all params */
+	return GL_FALSE;
+    } else if (callOper->num_children > numParams) {
+	/* now too many arguments */
+	/* XXX this isn't always an error, see spec */
+	return GL_FALSE;
+    }
 
-   /*
-    * Second phase, argument casting.
-    * Example:
-    *   void foo(int i, bool b) {}
-    *   x = foo(3.15, 9);
-    * Gets translated into:
-    *   x = foo(int(3.15), bool(9))
-    */
-   for (i = 0; i < numParams; i++) {
-      slang_typeinfo argType;
-      slang_variable *paramVar = fun->parameters->variables[i];
+    /*
+     * Second phase, argument casting.
+     * Example:
+     *   void foo(int i, bool b) {}
+     *   x = foo(3.15, 9);
+     * Gets translated into:
+     *   x = foo(int(3.15), bool(9))
+     */
+    for (i = 0; i < numParams; i++) {
+	slang_typeinfo argType;
+	slang_variable *paramVar = fun->parameters->variables[i];
 
-      /* Get type of arg[i] */
-      if (!slang_typeinfo_construct(&argType))
-         return GL_FALSE;
-      if (!_slang_typeof_operation_(&callOper->children[i], space,
-                                    &argType, atoms, log)) {
-         slang_typeinfo_destruct(&argType);
-         return GL_FALSE;
-      }
+	/* Get type of arg[i] */
+	if (!slang_typeinfo_construct(&argType))
+	    return GL_FALSE;
+	if (!_slang_typeof_operation_(&callOper->children[i], space,
+				      &argType, atoms, log)) {
+	    slang_typeinfo_destruct(&argType);
+	    return GL_FALSE;
+	}
 
-      /* see if arg type matches parameter type */
-      if (!slang_type_specifier_equal(&argType.spec,
-                                      &paramVar->type.specifier)) {
-         /* need to adapt arg type to match param type */
-         const char *constructorName =
-            slang_type_specifier_type_to_string(paramVar->type.specifier.type);
-         slang_operation *child = slang_operation_new(1);
+	/* see if arg type matches parameter type */
+	if (!slang_type_specifier_equal(&argType.spec,
+					&paramVar->type.specifier)) {
+	    /* need to adapt arg type to match param type */
+	    const char *constructorName =
+		slang_type_specifier_type_to_string(paramVar->type.specifier.type);
+	    slang_operation *child = slang_operation_new(1);
 
-         slang_operation_copy(child, &callOper->children[i]);
-         child->locals->outer_scope = callOper->children[i].locals;
+	    slang_operation_copy(child, &callOper->children[i]);
+	    child->locals->outer_scope = callOper->children[i].locals;
 
-         callOper->children[i].type = SLANG_OPER_CALL;
-         callOper->children[i].a_id = slang_atom_pool_atom(atoms, constructorName);
-         callOper->children[i].num_children = 1;
-         callOper->children[i].children = child;
-      }
+	    callOper->children[i].type = SLANG_OPER_CALL;
+	    callOper->children[i].a_id = slang_atom_pool_atom(atoms, constructorName);
+	    callOper->children[i].num_children = 1;
+	    callOper->children[i].children = child;
+	}
 
-      slang_typeinfo_destruct(&argType);
-   }
+	slang_typeinfo_destruct(&argType);
+    }
 
-   if (dbg) {
-      printf("===== New call to %s with adapted arguments ===============\n",
-             (char*) fun->header.a_name);
-      slang_print_tree(callOper, 5);
-   }
+    if (dbg) {
+	printf("===== New call to %s with adapted arguments ===============\n",
+	       (char*) fun->header.a_name);
+	slang_print_tree(callOper, 5);
+    }
 
-   return GL_TRUE;
+    return GL_TRUE;
 }

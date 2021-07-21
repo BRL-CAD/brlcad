@@ -63,55 +63,55 @@ static unsigned char *exec_mem = NULL;
 static void
 init_heap(void)
 {
-   if (!exec_heap)
-      exec_heap = mmInit( 0, EXEC_HEAP_SIZE );
-   
-   if (!exec_mem)
-      exec_mem = (unsigned char *) mmap(0, EXEC_HEAP_SIZE, 
-					PROT_EXEC | PROT_READ | PROT_WRITE, 
-					MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (!exec_heap)
+	exec_heap = mmInit(0, EXEC_HEAP_SIZE);
+
+    if (!exec_mem)
+	exec_mem = (unsigned char *) mmap(0, EXEC_HEAP_SIZE,
+					  PROT_EXEC | PROT_READ | PROT_WRITE,
+					  MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 }
 
 
 void *
 _mesa_exec_malloc(GLuint size)
 {
-   struct mem_block *block = NULL;
-   void *addr = NULL;
+    struct mem_block *block = NULL;
+    void *addr = NULL;
 
-   _glthread_LOCK_MUTEX(exec_mutex);
+    _glthread_LOCK_MUTEX(exec_mutex);
 
-   init_heap();
+    init_heap();
 
-   if (exec_heap) {
-      size = (size + 31) & ~31;
-      block = mmAllocMem( exec_heap, size, 32, 0 );
-   }
+    if (exec_heap) {
+	size = (size + 31) & ~31;
+	block = mmAllocMem(exec_heap, size, 32, 0);
+    }
 
-   if (block)
-      addr = exec_mem + block->ofs;
-   else 
-      _mesa_printf("_mesa_exec_malloc failed\n");
-   
-   _glthread_UNLOCK_MUTEX(exec_mutex);
-   
-   return addr;
+    if (block)
+	addr = exec_mem + block->ofs;
+    else
+	_mesa_printf("_mesa_exec_malloc failed\n");
+
+    _glthread_UNLOCK_MUTEX(exec_mutex);
+
+    return addr;
 }
 
- 
-void 
+
+void
 _mesa_exec_free(void *addr)
 {
-   _glthread_LOCK_MUTEX(exec_mutex);
+    _glthread_LOCK_MUTEX(exec_mutex);
 
-   if (exec_heap) {
-      struct mem_block *block = mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
-   
-      if (block)
-	 mmFreeMem(block);
-   }
+    if (exec_heap) {
+	struct mem_block *block = mmFindBlock(exec_heap, (unsigned char *)addr - exec_mem);
 
-   _glthread_UNLOCK_MUTEX(exec_mutex);
+	if (block)
+	    mmFreeMem(block);
+    }
+
+    _glthread_UNLOCK_MUTEX(exec_mutex);
 }
 
 
@@ -124,14 +124,14 @@ _mesa_exec_free(void *addr)
 void *
 _mesa_exec_malloc(GLuint size)
 {
-   return _mesa_malloc( size );
+    return _mesa_malloc(size);
 }
 
- 
-void 
+
+void
 _mesa_exec_free(void *addr)
 {
-   _mesa_free(addr);
+    _mesa_free(addr);
 }
 
 

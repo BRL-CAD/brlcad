@@ -35,23 +35,23 @@
  * Fetch a texel.
  */
 static void
-fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
-             GLuint unit, GLfloat color[4] )
+fetch_texel(GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
+	    GLuint unit, GLfloat color[4])
 {
-   GLchan rgba[4];
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
+    GLchan rgba[4];
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
 
-   if (texObj)
-      lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
+    if (texObj)
+	lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
 
-   /* XXX use a float-valued TextureSample routine here!!! */
-   swrast->TextureSample[unit](ctx, texObj, 1, (const GLfloat (*)[4]) texcoord,
-                               &lambda, &rgba);
-   color[0] = CHAN_TO_FLOAT(rgba[0]);
-   color[1] = CHAN_TO_FLOAT(rgba[1]);
-   color[2] = CHAN_TO_FLOAT(rgba[2]);
-   color[3] = CHAN_TO_FLOAT(rgba[3]);
+    /* XXX use a float-valued TextureSample routine here!!! */
+    swrast->TextureSample[unit](ctx, texObj, 1, (const GLfloat(*)[4]) texcoord,
+				&lambda, &rgba);
+    color[0] = CHAN_TO_FLOAT(rgba[0]);
+    color[1] = CHAN_TO_FLOAT(rgba[1]);
+    color[2] = CHAN_TO_FLOAT(rgba[2]);
+    color[3] = CHAN_TO_FLOAT(rgba[3]);
 }
 
 
@@ -60,36 +60,36 @@ fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
  * of detail in the mipmap.
  */
 static void
-fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
-                   const GLfloat texdx[4], const GLfloat texdy[4],
-                   GLfloat lodBias, GLuint unit, GLfloat color[4] )
+fetch_texel_deriv(GLcontext *ctx, const GLfloat texcoord[4],
+		  const GLfloat texdx[4], const GLfloat texdy[4],
+		  GLfloat lodBias, GLuint unit, GLfloat color[4])
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
-   GLfloat lambda;
-   GLchan rgba[4];
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
+    GLfloat lambda;
+    GLchan rgba[4];
 
-   if (texObj) {
-      const struct gl_texture_image *texImg = texObj->Image[0][texObj->BaseLevel];
-      const GLfloat texW = (GLfloat) texImg->WidthScale;
-      const GLfloat texH = (GLfloat) texImg->HeightScale;
+    if (texObj) {
+	const struct gl_texture_image *texImg = texObj->Image[0][texObj->BaseLevel];
+	const GLfloat texW = (GLfloat) texImg->WidthScale;
+	const GLfloat texH = (GLfloat) texImg->HeightScale;
 
-      lambda = _swrast_compute_lambda(texdx[0], texdy[0], /* ds/dx, ds/dy */
-                                      texdx[1], texdy[1], /* dt/dx, dt/dy */
-                                      texdx[3], texdy[2], /* dq/dx, dq/dy */
-                                      texW, texH,
-                                      texcoord[0], texcoord[1], texcoord[3],
-                                      1.0F / texcoord[3]) + lodBias;
+	lambda = _swrast_compute_lambda(texdx[0], texdy[0], /* ds/dx, ds/dy */
+					texdx[1], texdy[1], /* dt/dx, dt/dy */
+					texdx[3], texdy[2], /* dq/dx, dq/dy */
+					texW, texH,
+					texcoord[0], texcoord[1], texcoord[3],
+					1.0F / texcoord[3]) + lodBias;
 
-      lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
-   }
+	lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
+    }
 
-   swrast->TextureSample[unit](ctx, texObj, 1, (const GLfloat (*)[4]) texcoord,
-                               &lambda, &rgba);
-   color[0] = CHAN_TO_FLOAT(rgba[0]);
-   color[1] = CHAN_TO_FLOAT(rgba[1]);
-   color[2] = CHAN_TO_FLOAT(rgba[2]);
-   color[3] = CHAN_TO_FLOAT(rgba[3]);
+    swrast->TextureSample[unit](ctx, texObj, 1, (const GLfloat(*)[4]) texcoord,
+				&lambda, &rgba);
+    color[0] = CHAN_TO_FLOAT(rgba[0]);
+    color[1] = CHAN_TO_FLOAT(rgba[1]);
+    color[2] = CHAN_TO_FLOAT(rgba[2]);
+    color[3] = CHAN_TO_FLOAT(rgba[3]);
 }
 
 
@@ -104,40 +104,40 @@ fetch_texel_deriv( GLcontext *ctx, const GLfloat texcoord[4],
  */
 static void
 init_machine(GLcontext *ctx, struct gl_program_machine *machine,
-             const struct gl_fragment_program *program,
-             const SWspan *span, GLuint col)
+	     const struct gl_fragment_program *program,
+	     const SWspan *span, GLuint col)
 {
-   if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
-      /* Clear temporary registers (undefined for ARB_f_p) */
-      _mesa_bzero(machine->Temporaries,
-                  MAX_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
-   }
+    if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
+	/* Clear temporary registers (undefined for ARB_f_p) */
+	_mesa_bzero(machine->Temporaries,
+		    MAX_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
+    }
 
-   /* Setup pointer to input attributes */
-   machine->Attribs = span->array->attribs;
+    /* Setup pointer to input attributes */
+    machine->Attribs = span->array->attribs;
 
-   machine->DerivX = (GLfloat (*)[4]) span->attrStepX;
-   machine->DerivY = (GLfloat (*)[4]) span->attrStepY;
-   machine->NumDeriv = FRAG_ATTRIB_MAX;
+    machine->DerivX = (GLfloat(*)[4]) span->attrStepX;
+    machine->DerivY = (GLfloat(*)[4]) span->attrStepY;
+    machine->NumDeriv = FRAG_ATTRIB_MAX;
 
-   if (ctx->Shader.CurrentProgram) {
-      /* Store front/back facing value in register FOGC.Y */
-      machine->Attribs[FRAG_ATTRIB_FOGC][col][1] = 1.0 - span->facing;
-   }
+    if (ctx->Shader.CurrentProgram) {
+	/* Store front/back facing value in register FOGC.Y */
+	machine->Attribs[FRAG_ATTRIB_FOGC][col][1] = 1.0 - span->facing;
+    }
 
-   machine->CurElement = col;
+    machine->CurElement = col;
 
-   /* init condition codes */
-   machine->CondCodes[0] = COND_EQ;
-   machine->CondCodes[1] = COND_EQ;
-   machine->CondCodes[2] = COND_EQ;
-   machine->CondCodes[3] = COND_EQ;
+    /* init condition codes */
+    machine->CondCodes[0] = COND_EQ;
+    machine->CondCodes[1] = COND_EQ;
+    machine->CondCodes[2] = COND_EQ;
+    machine->CondCodes[3] = COND_EQ;
 
-   /* init call stack */
-   machine->StackDepth = 0;
+    /* init call stack */
+    machine->StackDepth = 0;
 
-   machine->FetchTexelLod = fetch_texel;
-   machine->FetchTexelDeriv = fetch_texel_deriv;
+    machine->FetchTexelLod = fetch_texel;
+    machine->FetchTexelDeriv = fetch_texel_deriv;
 }
 
 
@@ -147,55 +147,53 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
 static void
 run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
-   const GLbitfield outputsWritten = program->Base.OutputsWritten;
-   struct gl_program_machine *machine = &swrast->FragProgMachine;
-   GLuint i;
+    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
+    const GLbitfield outputsWritten = program->Base.OutputsWritten;
+    struct gl_program_machine *machine = &swrast->FragProgMachine;
+    GLuint i;
 
-   for (i = start; i < end; i++) {
-      if (span->array->mask[i]) {
-         init_machine(ctx, machine, program, span, i);
+    for (i = start; i < end; i++) {
+	if (span->array->mask[i]) {
+	    init_machine(ctx, machine, program, span, i);
 
-         if (_mesa_execute_program(ctx, &program->Base, machine)) {
+	    if (_mesa_execute_program(ctx, &program->Base, machine)) {
 
-            /* Store result color */
-            if (outputsWritten & (1 << FRAG_RESULT_COLR)) {
-               COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0][i],
-                       machine->Outputs[FRAG_RESULT_COLR]);
-            }
-            else {
-               /* Multiple drawbuffers / render targets
-                * Note that colors beyond 0 and 1 will overwrite other
-                * attributes, such as FOGC, TEX0, TEX1, etc.  That's OK.
-                */
-               GLuint output;
-               for (output = 0; output < swrast->_NumColorOutputs; output++) {
-                  if (outputsWritten & (1 << (FRAG_RESULT_DATA0 + output))) {
-                     COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0+output][i],
-                             machine->Outputs[FRAG_RESULT_DATA0 + output]);
-                  }
-               }
-            }
+		/* Store result color */
+		if (outputsWritten & (1 << FRAG_RESULT_COLR)) {
+		    COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0][i],
+			    machine->Outputs[FRAG_RESULT_COLR]);
+		} else {
+		    /* Multiple drawbuffers / render targets
+		     * Note that colors beyond 0 and 1 will overwrite other
+		     * attributes, such as FOGC, TEX0, TEX1, etc.  That's OK.
+		     */
+		    GLuint output;
+		    for (output = 0; output < swrast->_NumColorOutputs; output++) {
+			if (outputsWritten & (1 << (FRAG_RESULT_DATA0 + output))) {
+			    COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0+output][i],
+				    machine->Outputs[FRAG_RESULT_DATA0 + output]);
+			}
+		    }
+		}
 
-            /* Store result depth/z */
-            if (outputsWritten & (1 << FRAG_RESULT_DEPR)) {
-               const GLfloat depth = machine->Outputs[FRAG_RESULT_DEPR][2];
-               if (depth <= 0.0)
-                  span->array->z[i] = 0;
-               else if (depth >= 1.0)
-                  span->array->z[i] = ctx->DrawBuffer->_DepthMax;
-               else
-                  span->array->z[i] = IROUND(depth * ctx->DrawBuffer->_DepthMaxF);
-            }
-         }
-         else {
-            /* killed fragment */
-            span->array->mask[i] = GL_FALSE;
-            span->writeAll = GL_FALSE;
-         }
-      }
-   }
+		/* Store result depth/z */
+		if (outputsWritten & (1 << FRAG_RESULT_DEPR)) {
+		    const GLfloat depth = machine->Outputs[FRAG_RESULT_DEPR][2];
+		    if (depth <= 0.0)
+			span->array->z[i] = 0;
+		    else if (depth >= 1.0)
+			span->array->z[i] = ctx->DrawBuffer->_DepthMax;
+		    else
+			span->array->z[i] = IROUND(depth * ctx->DrawBuffer->_DepthMaxF);
+		}
+	    } else {
+		/* killed fragment */
+		span->array->mask[i] = GL_FALSE;
+		span->writeAll = GL_FALSE;
+	    }
+	}
+    }
 }
 
 
@@ -204,29 +202,29 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
  * in the given span.
  */
 void
-_swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
+_swrast_exec_fragment_program(GLcontext *ctx, SWspan *span)
 {
-   const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
+    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
 
-   /* incoming colors should be floats */
-   if (program->Base.InputsRead & FRAG_BIT_COL0) {
-      ASSERT(span->array->ChanType == GL_FLOAT);
-   }
+    /* incoming colors should be floats */
+    if (program->Base.InputsRead & FRAG_BIT_COL0) {
+	ASSERT(span->array->ChanType == GL_FLOAT);
+    }
 
-   ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
+    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
 
-   run_program(ctx, span, 0, span->end);
+    run_program(ctx, span, 0, span->end);
 
-   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR)) {
-      span->interpMask &= ~SPAN_RGBA;
-      span->arrayMask |= SPAN_RGBA;
-   }
+    if (program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR)) {
+	span->interpMask &= ~SPAN_RGBA;
+	span->arrayMask |= SPAN_RGBA;
+    }
 
-   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
-      span->interpMask &= ~SPAN_Z;
-      span->arrayMask |= SPAN_Z;
-   }
+    if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
+	span->interpMask &= ~SPAN_Z;
+	span->arrayMask |= SPAN_Z;
+    }
 
-   ctx->_CurrentProgram = 0;
+    ctx->_CurrentProgram = 0;
 }
 

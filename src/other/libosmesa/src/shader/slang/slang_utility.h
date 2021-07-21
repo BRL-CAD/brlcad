@@ -37,41 +37,40 @@
 #define slang_string_copy(dst, src) _mesa_strcpy (dst, src)
 #define slang_string_length(str) _mesa_strlen (str)
 
-char *slang_string_concat (char *, const char *);
+char *slang_string_concat(char *, const char *);
 
 /* slang_string */
 
-typedef struct
-{
-   char *data;
-   GLuint length;
-   GLuint capacity;
-   GLboolean fail;
+typedef struct {
+    char *data;
+    GLuint length;
+    GLuint capacity;
+    GLboolean fail;
 } slang_string;
 
 GLvoid
-slang_string_init (slang_string *);
+slang_string_init(slang_string *);
 
 GLvoid
-slang_string_free (slang_string *);
+slang_string_free(slang_string *);
 
 GLvoid
-slang_string_reset (slang_string *);
+slang_string_reset(slang_string *);
 
 GLvoid
-slang_string_push (slang_string *, const slang_string *);
+slang_string_push(slang_string *, const slang_string *);
 
 GLvoid
-slang_string_pushc (slang_string *, const char);
+slang_string_pushc(slang_string *, const char);
 
 GLvoid
-slang_string_pushs (slang_string *, const char *, GLuint);
+slang_string_pushs(slang_string *, const char *, GLuint);
 
 GLvoid
-slang_string_pushi (slang_string *, GLint);
+slang_string_pushi(slang_string *, GLint);
 
 const char *
-slang_string_cstr (slang_string *);
+slang_string_cstr(slang_string *);
 
 /* slang_atom */
 
@@ -79,23 +78,21 @@ typedef GLvoid *slang_atom;
 
 #define SLANG_ATOM_NULL ((slang_atom) 0)
 
-typedef struct slang_atom_entry_
-{
-	char *id;
-	struct slang_atom_entry_ *next;
+typedef struct slang_atom_entry_ {
+    char *id;
+    struct slang_atom_entry_ *next;
 } slang_atom_entry;
 
 #define SLANG_ATOM_POOL_SIZE 1023
 
-typedef struct slang_atom_pool_
-{
-	slang_atom_entry *entries[SLANG_ATOM_POOL_SIZE];
+typedef struct slang_atom_pool_ {
+    slang_atom_entry *entries[SLANG_ATOM_POOL_SIZE];
 } slang_atom_pool;
 
-GLvoid slang_atom_pool_construct (slang_atom_pool *);
-GLvoid slang_atom_pool_destruct (slang_atom_pool *);
-slang_atom slang_atom_pool_atom (slang_atom_pool *, const char *);
-const char *slang_atom_pool_id (slang_atom_pool *, slang_atom);
+GLvoid slang_atom_pool_construct(slang_atom_pool *);
+GLvoid slang_atom_pool_destruct(slang_atom_pool *);
+slang_atom slang_atom_pool_atom(slang_atom_pool *, const char *);
+const char *slang_atom_pool_id(slang_atom_pool *, slang_atom);
 
 
 #endif

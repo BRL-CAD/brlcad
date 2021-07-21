@@ -42,41 +42,41 @@
 	CTX->Feedback.Count++;
 
 
-extern void _mesa_init_feedback( GLcontext * ctx );
+extern void _mesa_init_feedback(GLcontext * ctx);
 
-extern void _mesa_feedback_vertex( GLcontext *ctx,
-                                const GLfloat win[4],
-                                const GLfloat color[4],
-				GLfloat index,
-                                const GLfloat texcoord[4] );
-
-
-extern void _mesa_update_hitflag( GLcontext *ctx, GLfloat z );
+extern void _mesa_feedback_vertex(GLcontext *ctx,
+				  const GLfloat win[4],
+				  const GLfloat color[4],
+				  GLfloat index,
+				  const GLfloat texcoord[4]);
 
 
-extern void GLAPIENTRY
-_mesa_PassThrough( GLfloat token );
+extern void _mesa_update_hitflag(GLcontext *ctx, GLfloat z);
+
 
 extern void GLAPIENTRY
-_mesa_FeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer );
+_mesa_PassThrough(GLfloat token);
 
 extern void GLAPIENTRY
-_mesa_SelectBuffer( GLsizei size, GLuint *buffer );
+_mesa_FeedbackBuffer(GLsizei size, GLenum type, GLfloat *buffer);
 
 extern void GLAPIENTRY
-_mesa_InitNames( void );
+_mesa_SelectBuffer(GLsizei size, GLuint *buffer);
 
 extern void GLAPIENTRY
-_mesa_LoadName( GLuint name );
+_mesa_InitNames(void);
 
 extern void GLAPIENTRY
-_mesa_PushName( GLuint name );
+_mesa_LoadName(GLuint name);
 
 extern void GLAPIENTRY
-_mesa_PopName( void );
+_mesa_PushName(GLuint name);
+
+extern void GLAPIENTRY
+_mesa_PopName(void);
 
 extern GLint GLAPIENTRY
-_mesa_RenderMode( GLenum mode );
+_mesa_RenderMode(GLenum mode);
 
 
 #endif

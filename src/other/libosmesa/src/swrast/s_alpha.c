@@ -92,69 +92,63 @@ do {						\
 GLint
 _swrast_alpha_test(const GLcontext *ctx, SWspan *span)
 {
-   const GLuint n = span->end;
-   GLubyte *mask = span->array->mask;
-   GLuint i;
+    const GLuint n = span->end;
+    GLubyte *mask = span->array->mask;
+    GLuint i;
 
-   if (ctx->Color.AlphaFunc == GL_ALWAYS) {
-      /* do nothing */
-      return 1;
-   }
-   else if (ctx->Color.AlphaFunc == GL_NEVER) {
-      /* All pixels failed - caller should check for this return value and
-       * act accordingly.
-       */
-      span->writeAll = GL_FALSE;
-      return 0;
-   }
+    if (ctx->Color.AlphaFunc == GL_ALWAYS) {
+	/* do nothing */
+	return 1;
+    } else if (ctx->Color.AlphaFunc == GL_NEVER) {
+	/* All pixels failed - caller should check for this return value and
+	 * act accordingly.
+	 */
+	span->writeAll = GL_FALSE;
+	return 0;
+    }
 
-   if (span->arrayMask & SPAN_RGBA) {
-      /* Use array's alpha values */
-      if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-         GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
-         GLubyte ref;
-         CLAMPED_FLOAT_TO_UBYTE(ref, ctx->Color.AlphaRef);
-         ALPHA_TEST(rgba[i][ACOMP], ;);
-      }
-      else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-         GLushort (*rgba)[4] = span->array->color.sz2.rgba;
-         GLushort ref;
-         CLAMPED_FLOAT_TO_USHORT(ref, ctx->Color.AlphaRef);
-         ALPHA_TEST(rgba[i][ACOMP], ;);
-      }
-      else {
-         GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
-         const GLfloat ref = ctx->Color.AlphaRef;
-         ALPHA_TEST(rgba[i][ACOMP], ;);
-      }
-   }
-   else {
-      /* Interpolate alpha values */
-      ASSERT(span->interpMask & SPAN_RGBA);
-      if (span->array->ChanType == GL_UNSIGNED_BYTE) {
-         const GLfixed alphaStep = span->alphaStep;
-         GLfixed alpha = span->alpha;
-         GLubyte ref;
-         CLAMPED_FLOAT_TO_UBYTE(ref, ctx->Color.AlphaRef);
-         ALPHA_TEST(FixedToInt(alpha), alpha += alphaStep);
-      }
-      else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
-         const GLfixed alphaStep = span->alphaStep;
-         GLfixed alpha = span->alpha;
-         GLushort ref;
-         CLAMPED_FLOAT_TO_USHORT(ref, ctx->Color.AlphaRef);
-         ALPHA_TEST(FixedToInt(alpha), alpha += alphaStep);
-      }
-      else {
-         const GLfloat alphaStep = span->alphaStep;
-         GLfloat alpha = span->alpha;
-         const GLfloat ref = ctx->Color.AlphaRef;
-         ALPHA_TEST(alpha, alpha += alphaStep);
-      }
-   }
+    if (span->arrayMask & SPAN_RGBA) {
+	/* Use array's alpha values */
+	if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+	    GLubyte(*rgba)[4] = span->array->color.sz1.rgba;
+	    GLubyte ref;
+	    CLAMPED_FLOAT_TO_UBYTE(ref, ctx->Color.AlphaRef);
+	    ALPHA_TEST(rgba[i][ACOMP], ;);
+	} else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+	    GLushort(*rgba)[4] = span->array->color.sz2.rgba;
+	    GLushort ref;
+	    CLAMPED_FLOAT_TO_USHORT(ref, ctx->Color.AlphaRef);
+	    ALPHA_TEST(rgba[i][ACOMP], ;);
+	} else {
+	    GLfloat(*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
+	    const GLfloat ref = ctx->Color.AlphaRef;
+	    ALPHA_TEST(rgba[i][ACOMP], ;);
+	}
+    } else {
+	/* Interpolate alpha values */
+	ASSERT(span->interpMask & SPAN_RGBA);
+	if (span->array->ChanType == GL_UNSIGNED_BYTE) {
+	    const GLfixed alphaStep = span->alphaStep;
+	    GLfixed alpha = span->alpha;
+	    GLubyte ref;
+	    CLAMPED_FLOAT_TO_UBYTE(ref, ctx->Color.AlphaRef);
+	    ALPHA_TEST(FixedToInt(alpha), alpha += alphaStep);
+	} else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
+	    const GLfixed alphaStep = span->alphaStep;
+	    GLfixed alpha = span->alpha;
+	    GLushort ref;
+	    CLAMPED_FLOAT_TO_USHORT(ref, ctx->Color.AlphaRef);
+	    ALPHA_TEST(FixedToInt(alpha), alpha += alphaStep);
+	} else {
+	    const GLfloat alphaStep = span->alphaStep;
+	    GLfloat alpha = span->alpha;
+	    const GLfloat ref = ctx->Color.AlphaRef;
+	    ALPHA_TEST(alpha, alpha += alphaStep);
+	}
+    }
 
-   span->writeAll = GL_FALSE;
+    span->writeAll = GL_FALSE;
 
-   /* XXX examine mask[] values? */
-   return 1;
+    /* XXX examine mask[] values? */
+    return 1;
 }

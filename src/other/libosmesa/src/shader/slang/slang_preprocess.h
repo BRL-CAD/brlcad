@@ -30,11 +30,11 @@
 
 
 extern GLboolean
-_slang_preprocess_version (const char *, GLuint *, GLuint *, slang_info_log *);
+_slang_preprocess_version(const char *, GLuint *, GLuint *, slang_info_log *);
 
 extern GLboolean
-_slang_preprocess_directives (slang_string *output, const char *input,
-                              slang_info_log *);
+_slang_preprocess_directives(slang_string *output, const char *input,
+			     slang_info_log *);
 
 
 #endif /* SLANG_PREPROCESS_H */

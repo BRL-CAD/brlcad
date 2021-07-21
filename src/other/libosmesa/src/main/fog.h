@@ -1,7 +1,7 @@
 /**
  * \file fog.h
  * Fog operations.
- * 
+ *
  * \if subset
  * (No-op)
  *
@@ -46,15 +46,15 @@ extern void GLAPIENTRY
 _mesa_Fogf(GLenum pname, GLfloat param);
 
 extern void GLAPIENTRY
-_mesa_Fogi(GLenum pname, GLint param );
+_mesa_Fogi(GLenum pname, GLint param);
 
 extern void GLAPIENTRY
-_mesa_Fogfv(GLenum pname, const GLfloat *params );
+_mesa_Fogfv(GLenum pname, const GLfloat *params);
 
 extern void GLAPIENTRY
-_mesa_Fogiv(GLenum pname, const GLint *params );
+_mesa_Fogiv(GLenum pname, const GLint *params);
 
-extern void _mesa_init_fog( GLcontext * ctx );
+extern void _mesa_init_fog(GLcontext * ctx);
 
 #else
 

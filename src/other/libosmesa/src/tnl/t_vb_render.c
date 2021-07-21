@@ -145,38 +145,38 @@ do {							\
 
 /* TODO: do this for all primitives, verts and elts:
  */
-static void clip_elt_triangles( GLcontext *ctx,
-				GLuint start,
-				GLuint count,
-				GLuint flags )
+static void clip_elt_triangles(GLcontext *ctx,
+			       GLuint start,
+			       GLuint count,
+			       GLuint flags)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl_render_func render_tris = tnl->Driver.Render.PrimTabElts[GL_TRIANGLES];
-   struct vertex_buffer *VB = &tnl->vb;
-   const GLuint * const elt = VB->Elts;
-   GLubyte *mask = VB->ClipMask;
-   GLuint last = count-2;
-   GLuint j;
-   (void) flags;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    tnl_render_func render_tris = tnl->Driver.Render.PrimTabElts[GL_TRIANGLES];
+    struct vertex_buffer *VB = &tnl->vb;
+    const GLuint * const elt = VB->Elts;
+    GLubyte *mask = VB->ClipMask;
+    GLuint last = count-2;
+    GLuint j;
+    (void) flags;
 
-   tnl->Driver.Render.PrimitiveNotify( ctx, GL_TRIANGLES );
+    tnl->Driver.Render.PrimitiveNotify(ctx, GL_TRIANGLES);
 
-   for (j=start; j < last; j+=3 ) {
-      GLubyte c1 = mask[elt[j]];
-      GLubyte c2 = mask[elt[j+1]];
-      GLubyte c3 = mask[elt[j+2]];
-      GLubyte ormask = c1|c2|c3;
-      if (ormask) {
-	 if (start < j)
-	    render_tris( ctx, start, j, 0 );
-	 if (!(c1&c2&c3&CLIPMASK))
-	    clip_tri_4( ctx, elt[j], elt[j+1], elt[j+2], ormask );
-	 start = j+3;
-      }
-   }
+    for (j=start; j < last; j+=3) {
+	GLubyte c1 = mask[elt[j]];
+	GLubyte c2 = mask[elt[j+1]];
+	GLubyte c3 = mask[elt[j+2]];
+	GLubyte ormask = c1|c2|c3;
+	if (ormask) {
+	    if (start < j)
+		render_tris(ctx, start, j, 0);
+	    if (!(c1&c2&c3&CLIPMASK))
+		clip_tri_4(ctx, elt[j], elt[j+1], elt[j+2], ormask);
+	    start = j+3;
+	}
+    }
 
-   if (start < j)
-      render_tris( ctx, start, j, 0 );
+    if (start < j)
+	render_tris(ctx, start, j, 0);
 }
 
 /**********************************************************************/
@@ -234,21 +234,21 @@ static void clip_elt_triangles( GLcontext *ctx,
 /*              Helper functions for drivers                  */
 /**********************************************************************/
 
-void _tnl_RenderClippedPolygon( GLcontext *ctx, const GLuint *elts, GLuint n )
+void _tnl_RenderClippedPolygon(GLcontext *ctx, const GLuint *elts, GLuint n)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   GLuint *tmp = VB->Elts;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    struct vertex_buffer *VB = &tnl->vb;
+    GLuint *tmp = VB->Elts;
 
-   VB->Elts = (GLuint *)elts;
-   tnl->Driver.Render.PrimTabElts[GL_POLYGON]( ctx, 0, n, PRIM_BEGIN|PRIM_END );
-   VB->Elts = tmp;
+    VB->Elts = (GLuint *)elts;
+    tnl->Driver.Render.PrimTabElts[GL_POLYGON](ctx, 0, n, PRIM_BEGIN|PRIM_END);
+    VB->Elts = tmp;
 }
 
-void _tnl_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
+void _tnl_RenderClippedLine(GLcontext *ctx, GLuint ii, GLuint jj)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   tnl->Driver.Render.Line( ctx, ii, jj );
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    tnl->Driver.Render.Line(ctx, ii, jj);
 }
 
 
@@ -258,73 +258,70 @@ void _tnl_RenderClippedLine( GLcontext *ctx, GLuint ii, GLuint jj )
 /**********************************************************************/
 
 
-static GLboolean run_render( GLcontext *ctx,
-			     struct tnl_pipeline_stage *stage )
+static GLboolean run_render(GLcontext *ctx,
+			    struct tnl_pipeline_stage *stage)
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   tnl_render_func *tab;
-   GLint pass = 0;
+    TNLcontext *tnl = TNL_CONTEXT(ctx);
+    struct vertex_buffer *VB = &tnl->vb;
+    tnl_render_func *tab;
+    GLint pass = 0;
 
-   /* Allow the drivers to lock before projected verts are built so
-    * that window coordinates are guarenteed not to change before
-    * rendering.
-    */
-   ASSERT(tnl->Driver.Render.Start);
+    /* Allow the drivers to lock before projected verts are built so
+     * that window coordinates are guarenteed not to change before
+     * rendering.
+     */
+    ASSERT(tnl->Driver.Render.Start);
 
-   tnl->Driver.Render.Start( ctx );
+    tnl->Driver.Render.Start(ctx);
 
-   ASSERT(tnl->Driver.Render.BuildVertices);
-   ASSERT(tnl->Driver.Render.PrimitiveNotify);
-   ASSERT(tnl->Driver.Render.Points);
-   ASSERT(tnl->Driver.Render.Line);
-   ASSERT(tnl->Driver.Render.Triangle);
-   ASSERT(tnl->Driver.Render.Quad);
-   ASSERT(tnl->Driver.Render.ResetLineStipple);
-   ASSERT(tnl->Driver.Render.Interp);
-   ASSERT(tnl->Driver.Render.CopyPV);
-   ASSERT(tnl->Driver.Render.ClippedLine);
-   ASSERT(tnl->Driver.Render.ClippedPolygon);
-   ASSERT(tnl->Driver.Render.Finish);
+    ASSERT(tnl->Driver.Render.BuildVertices);
+    ASSERT(tnl->Driver.Render.PrimitiveNotify);
+    ASSERT(tnl->Driver.Render.Points);
+    ASSERT(tnl->Driver.Render.Line);
+    ASSERT(tnl->Driver.Render.Triangle);
+    ASSERT(tnl->Driver.Render.Quad);
+    ASSERT(tnl->Driver.Render.ResetLineStipple);
+    ASSERT(tnl->Driver.Render.Interp);
+    ASSERT(tnl->Driver.Render.CopyPV);
+    ASSERT(tnl->Driver.Render.ClippedLine);
+    ASSERT(tnl->Driver.Render.ClippedPolygon);
+    ASSERT(tnl->Driver.Render.Finish);
 
-   tnl->Driver.Render.BuildVertices( ctx, 0, VB->Count, ~0 );
+    tnl->Driver.Render.BuildVertices(ctx, 0, VB->Count, ~0);
 
-   if (VB->ClipOrMask) {
-      tab = VB->Elts ? clip_render_tab_elts : clip_render_tab_verts;
-      clip_render_tab_elts[GL_TRIANGLES] = clip_elt_triangles;
-   }
-   else {
-      tab = (VB->Elts ? 
-	     tnl->Driver.Render.PrimTabElts : 
-	     tnl->Driver.Render.PrimTabVerts);
-   }
+    if (VB->ClipOrMask) {
+	tab = VB->Elts ? clip_render_tab_elts : clip_render_tab_verts;
+	clip_render_tab_elts[GL_TRIANGLES] = clip_elt_triangles;
+    } else {
+	tab = (VB->Elts ?
+	       tnl->Driver.Render.PrimTabElts :
+	       tnl->Driver.Render.PrimTabVerts);
+    }
 
-   do
-   {
-      GLuint i;
+    do {
+	GLuint i;
 
-      for (i = 0 ; i < VB->PrimitiveCount ; i++)
-      {
-	 GLuint prim = _tnl_translate_prim(&VB->Primitive[i]);
-	 GLuint start = VB->Primitive[i].start;
-	 GLuint length = VB->Primitive[i].count;
+	for (i = 0 ; i < VB->PrimitiveCount ; i++) {
+	    GLuint prim = _tnl_translate_prim(&VB->Primitive[i]);
+	    GLuint start = VB->Primitive[i].start;
+	    GLuint length = VB->Primitive[i].count;
 
-	 assert((prim & PRIM_MODE_MASK) <= GL_POLYGON);
+	    assert((prim & PRIM_MODE_MASK) <= GL_POLYGON);
 
-	 if (MESA_VERBOSE & VERBOSE_PRIMS) 
-	    _mesa_debug(NULL, "MESA prim %s %d..%d\n", 
-			_mesa_lookup_enum_by_nr(prim & PRIM_MODE_MASK), 
-			start, start+length);
+	    if (MESA_VERBOSE & VERBOSE_PRIMS)
+		_mesa_debug(NULL, "MESA prim %s %d..%d\n",
+			    _mesa_lookup_enum_by_nr(prim & PRIM_MODE_MASK),
+			    start, start+length);
 
-	 if (length)
-	    tab[prim & PRIM_MODE_MASK]( ctx, start, start + length, prim );
-      }
-   } while (tnl->Driver.Render.Multipass &&
-	    tnl->Driver.Render.Multipass( ctx, ++pass ));
+	    if (length)
+		tab[prim & PRIM_MODE_MASK](ctx, start, start + length, prim);
+	}
+    } while (tnl->Driver.Render.Multipass &&
+	     tnl->Driver.Render.Multipass(ctx, ++pass));
 
-   tnl->Driver.Render.Finish( ctx );
+    tnl->Driver.Render.Finish(ctx);
 
-   return GL_FALSE;		/* finished the pipe */
+    return GL_FALSE;		/* finished the pipe */
 }
 
 
@@ -336,12 +333,11 @@ static GLboolean run_render( GLcontext *ctx,
 
 
 
-const struct tnl_pipeline_stage _tnl_render_stage =
-{
-   "render",			/* name */
-   NULL,			/* private data */
-   NULL,			/* creator */
-   NULL,			/* destructor */
-   NULL,			/* validate */
-   run_render			/* run */
+const struct tnl_pipeline_stage _tnl_render_stage = {
+    "render",			/* name */
+    NULL,			/* private data */
+    NULL,			/* creator */
+    NULL,			/* destructor */
+    NULL,			/* validate */
+    run_render			/* run */
 };

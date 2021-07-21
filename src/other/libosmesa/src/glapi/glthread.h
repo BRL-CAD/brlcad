@@ -89,8 +89,8 @@
 #include <pthread.h> /* POSIX threads headers */
 
 typedef struct {
-   pthread_key_t  key;
-   int initMagic;
+    pthread_key_t  key;
+    int initMagic;
 } _glthread_TSD;
 
 typedef pthread_t _glthread_Thread;
@@ -127,9 +127,9 @@ typedef pthread_mutex_t _glthread_Mutex;
 #include <thread.h>
 
 typedef struct {
-   thread_key_t key;
-   mutex_t      keylock;
-   int          initMagic;
+    thread_key_t key;
+    mutex_t      keylock;
+    int          initMagic;
 } _glthread_TSD;
 
 typedef thread_t _glthread_Thread;
@@ -157,8 +157,8 @@ typedef mutex_t _glthread_Mutex;
 #include <windows.h>
 
 typedef struct {
-   DWORD key;
-   int   initMagic;
+    DWORD key;
+    int   initMagic;
 } _glthread_TSD;
 
 typedef HANDLE _glthread_Thread;
@@ -184,8 +184,8 @@ typedef CRITICAL_SECTION _glthread_Mutex;
 #include <X11/Xthreads.h>
 
 typedef struct {
-   xthread_key_t key;
-   int initMagic;
+    xthread_key_t key;
+    int initMagic;
 } _glthread_TSD;
 
 typedef xthread_t _glthread_Thread;
@@ -225,8 +225,8 @@ typedef xmutex_rec _glthread_Mutex;
 #include <support/TLS.h>
 
 typedef struct {
-   int32        key;
-   int          initMagic;
+    int32        key;
+    int          initMagic;
 } _glthread_TSD;
 
 typedef thread_id _glthread_Thread;
@@ -297,7 +297,7 @@ _glthread_SetTSD(_glthread_TSD *, void *);
 #if defined(GLX_USE_TLS)
 
 extern __thread struct _glapi_table * _glapi_tls_Dispatch
-    __attribute__((tls_model("initial-exec")));
+__attribute__((tls_model("initial-exec")));
 
 #define GET_DISPATCH() _glapi_tls_Dispatch
 
