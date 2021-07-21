@@ -291,3 +291,13 @@ _swsetup_Translate(GLcontext *ctx, const void *vertex, SWvertex *dest)
     dest->pointSize = tmp[0];
 }
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

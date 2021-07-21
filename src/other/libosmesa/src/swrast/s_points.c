@@ -258,3 +258,13 @@ _swrast_choose_point(GLcontext *ctx)
 	USE(_swrast_select_point);
     }
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

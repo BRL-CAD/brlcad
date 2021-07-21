@@ -109,3 +109,13 @@ const struct tnl_pipeline_stage _tnl_point_attenuation_stage = {
     NULL,
     run_point_stage		/* run */
 };
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

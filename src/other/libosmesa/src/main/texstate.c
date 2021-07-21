@@ -2988,3 +2988,13 @@ _mesa_free_texture_data(GLcontext *ctx)
 
     _mesa_TexEnvProgramCacheDestroy(ctx);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

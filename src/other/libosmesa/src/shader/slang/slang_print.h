@@ -27,3 +27,13 @@ slang_checksum_tree(const slang_operation *op);
 
 #endif /* SLANG_PRINT */
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

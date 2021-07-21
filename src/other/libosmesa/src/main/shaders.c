@@ -668,3 +668,13 @@ _mesa_ValidateProgramARB(GLhandleARB program)
     ctx->Driver.ValidateProgram(ctx, program);
 }
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

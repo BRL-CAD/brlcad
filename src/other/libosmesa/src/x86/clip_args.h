@@ -58,3 +58,13 @@
 #define ARG_AND		REGOFF(FRAME_OFFSET+OFFSET_AND, ESP)
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

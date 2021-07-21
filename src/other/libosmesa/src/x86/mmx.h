@@ -52,3 +52,13 @@ _mesa_mmx_blend_modulate(GLcontext *ctx, GLuint n, const GLubyte mask[],
 			 GLenum chanType);
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -287,3 +287,13 @@ TAG(clip_quad)(GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint v3,
 #undef TAG
 #undef POLY_CLIP
 #undef LINE_CLIP
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

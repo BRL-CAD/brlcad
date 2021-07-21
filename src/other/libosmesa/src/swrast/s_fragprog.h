@@ -36,3 +36,13 @@ _swrast_exec_fragment_program(GLcontext *ctx, SWspan *span);
 
 #endif /* S_FRAGPROG_H */
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

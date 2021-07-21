@@ -1045,3 +1045,13 @@ init_glapi_relocs(void)
 #endif
 }
 #endif /* defined(PTHREADS) || defined(GLX_USE_TLS) */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

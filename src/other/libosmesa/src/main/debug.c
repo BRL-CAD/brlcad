@@ -225,3 +225,13 @@ _mesa_init_debug(GLcontext *ctx)
 	add_debug_flags(c);
 }
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

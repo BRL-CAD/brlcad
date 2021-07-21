@@ -964,3 +964,13 @@ _mesa_noop_vtxfmt_init(GLvertexformat *vfmt)
     vfmt->EvalMesh1 = _mesa_noop_EvalMesh1;
     vfmt->EvalMesh2 = _mesa_noop_EvalMesh2;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

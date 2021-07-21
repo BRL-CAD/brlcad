@@ -295,3 +295,13 @@ _mesa_init_glsl_driver_functions(struct dd_function_table *driver)
     driver->UseProgram = _mesa_use_program;
     driver->ValidateProgram = _mesa_validate_program;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

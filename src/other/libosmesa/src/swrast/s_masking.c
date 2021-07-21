@@ -129,3 +129,13 @@ _swrast_mask_ci_span(GLcontext *ctx, struct gl_renderbuffer *rb,
 	index[i] = (index[i] & srcMask) | (dest[i] & dstMask);
     }
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

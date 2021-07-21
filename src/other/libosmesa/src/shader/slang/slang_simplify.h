@@ -20,3 +20,13 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
 
 
 #endif /* SLANG_SIMPLIFY_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

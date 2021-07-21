@@ -1330,3 +1330,13 @@ void _mesa_TexEnvProgramCacheDestroy(GLcontext *ctx)
     clear_cache(&ctx->Texture.env_fp_cache);
     _mesa_free(ctx->Texture.env_fp_cache.items);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

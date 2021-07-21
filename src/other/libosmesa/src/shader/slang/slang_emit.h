@@ -47,3 +47,13 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vartable,
 
 
 #endif /* SLANG_EMIT_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -298,3 +298,13 @@ _swrast_choose_line(GLcontext *ctx)
 
     /*_mesa_print_line_function(ctx);*/
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

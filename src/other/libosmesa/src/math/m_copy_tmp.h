@@ -84,3 +84,13 @@ static void TAG2(init_copy, 0)(void)
     _mesa_copy_tab[0xe] = TAG2(copy, 0xe);
     _mesa_copy_tab[0xf] = TAG2(copy, 0xf);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

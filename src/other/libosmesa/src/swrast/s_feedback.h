@@ -49,3 +49,13 @@ extern void _swrast_select_triangle(GLcontext *ctx, const SWvertex *v0,
 				    const SWvertex *v1, const SWvertex *v2);
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

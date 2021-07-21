@@ -8540,3 +8540,13 @@ _mesa_init_display_list(GLcontext *ctx)
 
     _mesa_save_vtxfmt_init(&ctx->ListState.ListVtxfmt);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

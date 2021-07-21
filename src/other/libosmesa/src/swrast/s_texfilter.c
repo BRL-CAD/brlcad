@@ -2704,3 +2704,13 @@ _swrast_choose_texture_sample_func(GLcontext *ctx,
 	}
     }
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

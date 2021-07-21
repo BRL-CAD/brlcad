@@ -38,3 +38,13 @@ _slang_preprocess_directives(slang_string *output, const char *input,
 
 
 #endif /* SLANG_PREPROCESS_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

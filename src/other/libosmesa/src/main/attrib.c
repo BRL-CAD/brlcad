@@ -915,7 +915,7 @@ _mesa_PopAttrib(void)
 		    /* Call the API_level functions, not _mesa_drawbuffers()
 		     * since we need to do error checking on the pop'd
 		     * GL_DRAW_BUFFER.
-		     * Ex: if GL_FRONT were pushed, but we're popping with a
+		     * ex: shiftwidth=4 tabstop=8
 		     * user FBO bound, GL_FRONT will be illegal and we'll need
 		     * to record that error.  Per OpenGL ARB decision.
 		     */
@@ -1463,3 +1463,13 @@ void _mesa_init_attrib(GLcontext *ctx)
     ctx->AttribStackDepth = 0;
     ctx->ClientAttribStackDepth = 0;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

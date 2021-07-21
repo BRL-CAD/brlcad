@@ -180,3 +180,13 @@ const struct tnl_pipeline_stage _tnl_normal_transform_stage = {
     validate_normal_stage,	/* validate */
     run_normal_stage             /* run */
 };
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

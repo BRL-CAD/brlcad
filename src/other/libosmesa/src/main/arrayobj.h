@@ -68,3 +68,13 @@ void GLAPIENTRY _mesa_GenVertexArraysAPPLE(GLsizei n, GLuint *buffer);
 GLboolean GLAPIENTRY _mesa_IsVertexArrayAPPLE(GLuint id);
 
 #endif /* ARRAYOBJ_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

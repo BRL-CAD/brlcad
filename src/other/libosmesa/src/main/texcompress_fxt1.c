@@ -1725,3 +1725,13 @@ fxt1_decode_1(const void *texture, GLint stride,  /* in pixels */
 
     decode_1[mode](code, t, rgba);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

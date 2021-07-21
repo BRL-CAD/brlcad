@@ -38,3 +38,13 @@ _mesa_new_renderbuffer_32wrap16(GLcontext *ctx, struct gl_renderbuffer *rb16);
 
 
 #endif /* RBADAPTORS_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

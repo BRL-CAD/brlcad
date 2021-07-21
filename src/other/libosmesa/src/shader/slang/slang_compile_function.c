@@ -214,3 +214,13 @@ slang_function_scope_find(slang_function_scope * funcs, slang_function * fun,
 	return slang_function_scope_find(funcs->outer_scope, fun, 1);
     return NULL;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

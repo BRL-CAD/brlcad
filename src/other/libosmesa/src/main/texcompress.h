@@ -72,3 +72,13 @@ _mesa_init_texture_fxt1(GLcontext *ctx);
 #endif /* _HAVE_FULL_GL */
 
 #endif /* TEXCOMPRESS_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

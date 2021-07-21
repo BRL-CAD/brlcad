@@ -195,3 +195,13 @@ do {						\
         for(ptr=(list)->next,t=(ptr)->next; list != ptr; ptr=t, t=(t)->next)
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

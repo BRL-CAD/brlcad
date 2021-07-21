@@ -40,3 +40,13 @@ extern void _ae_map_vbos(GLcontext *ctx);
 extern void _ae_unmap_vbos(GLcontext *ctx);
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

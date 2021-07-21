@@ -816,3 +816,13 @@ struct _glapi_table {
 };
 
 #endif /* !defined( _GLAPI_TABLE_H_ ) */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

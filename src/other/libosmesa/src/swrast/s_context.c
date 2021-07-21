@@ -928,3 +928,13 @@ _swrast_print_vertex(GLcontext *ctx, const SWvertex *v)
 	_mesa_debug(ctx, "\n");
     }
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

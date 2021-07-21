@@ -152,3 +152,13 @@ _swrast_alpha_test(const GLcontext *ctx, SWspan *span)
     /* XXX examine mask[] values? */
     return 1;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

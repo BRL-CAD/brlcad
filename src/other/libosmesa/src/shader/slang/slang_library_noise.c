@@ -545,3 +545,13 @@ GLfloat _slang_library_noise4(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
     return 27.0f * (n0 + n1 + n2 + n3 + n4); /* TODO: The scale factor is preliminary! */
 }
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

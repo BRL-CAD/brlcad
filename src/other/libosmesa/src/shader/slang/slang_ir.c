@@ -380,3 +380,13 @@ _slang_print_ir_tree(const slang_ir_node *n, int indent)
 	    _slang_print_ir_tree(n->Children[1], indent+3);
     }
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

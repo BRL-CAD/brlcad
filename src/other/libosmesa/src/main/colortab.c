@@ -1230,3 +1230,13 @@ _mesa_free_colortables_data(GLcontext *ctx)
 	_mesa_free_colortable_data(&ctx->ProxyColorTable[i]);
     }
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

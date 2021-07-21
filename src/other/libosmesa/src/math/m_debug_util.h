@@ -318,3 +318,13 @@ enum { NIL = 0, ONE = 1, NEG = -1, VAR = 2 };
 #endif /* DEBUG_MATH */
 
 #endif /* __M_DEBUG_UTIL_H__ */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

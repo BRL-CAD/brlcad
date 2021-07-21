@@ -1177,3 +1177,13 @@ void vbo_save_api_init(struct vbo_save_context *save)
     _mesa_install_save_vtxfmt(ctx, &ctx->ListState.ListVtxfmt);
 }
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

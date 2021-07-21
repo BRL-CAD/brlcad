@@ -427,3 +427,13 @@ RENDER_TAB_QUALIFIER void (*TAG(render_tab)[GL_POLYGON+2])(GLcontext *,
 
 #undef PRESERVE_VB_DEFS
 #undef PRESERVE_TAG
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -181,3 +181,13 @@ typedef struct __GLcontextModesRec {
 #define GLX_TEXTURE_RECTANGLE_BIT_EXT      0x00000004
 
 #endif /* __gl_core_h_ */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

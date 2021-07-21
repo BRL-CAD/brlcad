@@ -105,3 +105,13 @@ extern void _ASMAPI _mesa_##pfx##_transform_normalize_normals_no_rot( NORM_ARGS 
 
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

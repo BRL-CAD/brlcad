@@ -1574,3 +1574,13 @@ _mesa_choose_tex_format(GLcontext *ctx, GLint internalFormat,
     _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
     return NULL;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

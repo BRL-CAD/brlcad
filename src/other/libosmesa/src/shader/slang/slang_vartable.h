@@ -40,3 +40,13 @@ _slang_is_temp(const slang_var_table *t, const struct _slang_ir_storage *store);
 
 
 #endif /* SLANG_VARTABLE_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -184,3 +184,13 @@ void _mesa_init_depth(GLcontext * ctx)
     ctx->MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
 #endif
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

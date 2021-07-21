@@ -664,3 +664,13 @@ const struct gl_texture_format _mesa_texformat_rgba_dxt5 = {
     NULL, /*impossible*/ 		/* FetchTexel3Df */
     NULL					/* StoreTexel */
 };
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

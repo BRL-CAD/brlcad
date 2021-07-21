@@ -54,3 +54,13 @@ extern void _generic_read_RGBA_span_RGB565_MMX(const unsigned char *,
 #endif
 
 #endif /* READ_RGBA_SPAN_X86_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

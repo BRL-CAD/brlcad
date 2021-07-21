@@ -749,3 +749,13 @@ void _math_trans_3fn(GLfloat(*to)[3],
 {
     _math_trans_3fn_tab[TYPE_IDX(type)](to, ptr, stride, start, n);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

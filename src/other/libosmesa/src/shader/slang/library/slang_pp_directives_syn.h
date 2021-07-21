@@ -237,3 +237,13 @@
 "lex_next_identifier_character\n"
 " 'a'-'z' .or 'A'-'Z' .or '0'-'9' .or '_';\n"
 ""
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

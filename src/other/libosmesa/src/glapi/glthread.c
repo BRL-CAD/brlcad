@@ -372,3 +372,13 @@ _glthread_SetTSD(_glthread_TSD *tsd, void *ptr)
 
 
 #endif /* THREADS */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

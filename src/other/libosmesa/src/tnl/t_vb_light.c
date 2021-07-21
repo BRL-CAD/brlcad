@@ -357,3 +357,13 @@ const struct tnl_pipeline_stage _tnl_lighting_stage = {
     validate_lighting,
     run_lighting
 };
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

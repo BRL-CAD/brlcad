@@ -651,3 +651,13 @@ _mesa_promote_stencil(GLcontext *ctx, struct gl_renderbuffer *stencilRb)
 
     stencilRb->_BaseFormat = GL_DEPTH_STENCIL_EXT;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

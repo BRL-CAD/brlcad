@@ -337,3 +337,13 @@ _slang_locate_variable(const slang_variable_scope * scope,
 	return _slang_locate_variable(scope->outer_scope, a_name, 1);
     return NULL;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

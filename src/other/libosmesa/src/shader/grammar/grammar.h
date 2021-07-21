@@ -101,3 +101,13 @@ void grammar_get_last_error(byte *text, unsigned int size, int *pos);
 
 #endif
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -231,3 +231,13 @@ NAME(put_mono_values)(GLcontext *ctx, struct gl_renderbuffer *rb,
 #undef STORE_PIXEL
 #undef STORE_PIXEL_RGB
 #undef FETCH_PIXEL
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -54,3 +54,13 @@ _swrast_clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb);
 
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

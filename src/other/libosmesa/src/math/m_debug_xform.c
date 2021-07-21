@@ -347,3 +347,13 @@ void _math_test_all_transform_functions(char *description)
 
 
 #endif /* DEBUG_MATH */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

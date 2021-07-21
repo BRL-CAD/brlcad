@@ -779,3 +779,13 @@
 "err_identifier\n"
 " id_character_first .and .loop id_character_next;\n"
 ""
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

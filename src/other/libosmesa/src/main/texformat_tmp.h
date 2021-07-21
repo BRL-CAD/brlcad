@@ -1364,3 +1364,13 @@ static void store_texel_z24_s8(struct gl_texture_image *texImage,
 #undef TEXEL_ADDR
 #undef DIM
 #undef FETCH
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

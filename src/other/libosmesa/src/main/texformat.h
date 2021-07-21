@@ -242,3 +242,13 @@ _mesa_choose_tex_format(GLcontext *ctx, GLint internalFormat,
 			GLenum format, GLenum type);
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

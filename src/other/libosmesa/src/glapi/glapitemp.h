@@ -6647,3 +6647,13 @@ static _glapi_proc UNUSED_TABLE_NAME[] = {
 #  undef UNUSED_TABLE_NAME
 #  undef TABLE_ENTRY
 #  undef HIDDEN
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

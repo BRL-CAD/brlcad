@@ -450,3 +450,13 @@ _math_init_eval(void)
     for (i = 1; i < MAX_EVAL_ORDER; i++)
 	inv_tab[i] = 1.0F / i;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

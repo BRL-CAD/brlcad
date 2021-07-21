@@ -44,3 +44,13 @@ typedef struct {
 #define SWSETUP_CONTEXT(ctx) ((SScontext *)ctx->swsetup_context)
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

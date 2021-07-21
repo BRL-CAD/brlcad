@@ -532,3 +532,13 @@ _mesa_free_query_data(GLcontext *ctx)
     _mesa_HashDeleteAll(ctx->Query.QueryObjects, delete_queryobj_cb, NULL);
     _mesa_DeleteHashTable(ctx->Query.QueryObjects);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

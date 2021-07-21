@@ -106,3 +106,13 @@ _mesa_init_accum(GLcontext *ctx)
     /* Accumulate buffer group */
     ASSIGN_4V(ctx->Accum.ClearColor, 0.0, 0.0, 0.0, 0.0);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

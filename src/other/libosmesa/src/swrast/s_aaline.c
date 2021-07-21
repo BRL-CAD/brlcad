@@ -526,3 +526,13 @@ _swrast_choose_aa_line_function(GLcontext *ctx)
 	swrast->Line = aa_ci_line;
     }
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -93,3 +93,13 @@ const struct tnl_pipeline_stage _tnl_vertex_cull_stage = {
     NULL,
     run_cull_stage		/* run -- initially set to init */
 };
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

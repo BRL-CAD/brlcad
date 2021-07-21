@@ -100,3 +100,13 @@ static void TAG(init_dotprod)(void)
     _mesa_dotprod_tab[3] = TAG(dotprod_vec3);
     _mesa_dotprod_tab[4] = TAG(dotprod_vec4);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

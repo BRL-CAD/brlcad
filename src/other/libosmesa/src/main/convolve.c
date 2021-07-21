@@ -1513,3 +1513,13 @@ _mesa_adjust_image_for_convolution(const GLcontext *ctx, GLuint dimensions,
 	*height = *height - (MAX2(ctx->Separable2D.Height, 1) - 1);
     }
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

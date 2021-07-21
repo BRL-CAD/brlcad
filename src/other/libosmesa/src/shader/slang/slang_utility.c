@@ -226,3 +226,13 @@ slang_atom_pool_id(slang_atom_pool * pool, slang_atom atom)
 {
     return (const char *)(atom);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

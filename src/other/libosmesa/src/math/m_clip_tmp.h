@@ -244,3 +244,13 @@ static void TAG(init_c_cliptest)(void)
     _mesa_clip_np_tab[3] = TAG(cliptest_points3);
     _mesa_clip_np_tab[2] = TAG(cliptest_points2);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

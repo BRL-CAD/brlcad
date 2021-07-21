@@ -197,3 +197,13 @@ _slang_print_ir_tree(const slang_ir_node *n, int indent);
 
 
 #endif /* SLANG_IR_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

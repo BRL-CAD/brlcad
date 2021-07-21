@@ -42,3 +42,13 @@ _slang_label_set_location(slang_label *l, GLint location,
 
 
 #endif /* SLANG_LABEL_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

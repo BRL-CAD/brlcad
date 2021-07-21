@@ -407,3 +407,13 @@ _mesa_IsVertexArrayAPPLE(GLuint id)
 
     return (obj != NULL) ? GL_TRUE : GL_FALSE;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

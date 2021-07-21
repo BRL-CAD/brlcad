@@ -140,3 +140,13 @@ _swrast_select_point(GLcontext *ctx, const SWvertex *v)
     const GLfloat zs = 1.0F / ctx->DrawBuffer->_DepthMaxF;
     _mesa_update_hitflag(ctx, v->win[2] * zs);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

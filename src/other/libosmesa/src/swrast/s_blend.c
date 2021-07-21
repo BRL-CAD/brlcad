@@ -971,3 +971,13 @@ _swrast_blend_span(GLcontext *ctx, struct gl_renderbuffer *rb, SWspan *span)
     swrast->BlendFunc(ctx, span->end, span->array->mask,
 		      span->array->rgba, rbPixels, span->array->ChanType);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

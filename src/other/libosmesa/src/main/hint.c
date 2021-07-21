@@ -151,3 +151,13 @@ void _mesa_init_hint(GLcontext * ctx)
     ctx->Hint.GenerateMipmap = GL_DONT_CARE;
     ctx->Hint.FragmentShaderDerivative = GL_DONT_CARE;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

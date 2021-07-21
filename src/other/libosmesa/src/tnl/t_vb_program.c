@@ -536,3 +536,13 @@ const struct tnl_pipeline_stage _tnl_vertex_program_stage = {
     validate_vp_stage, 		/* validate */
     run_vp			/* run -- initially set to ctr */
 };
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -1656,3 +1656,13 @@ _mesa_loopback_init_api_table(struct _glapi_table *dest)
     SET_VertexAttrib4NusvARB(dest, loopback_VertexAttrib4NusvARB);
     SET_VertexAttrib4NuivARB(dest, loopback_VertexAttrib4NuivARB);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -231,3 +231,13 @@ void vbo_exec_vtx_flush(struct vbo_exec_context *exec)
     exec->vtx.vert_count = 0;
     exec->vtx.vbptr = (GLfloat *)exec->vtx.buffer_map;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

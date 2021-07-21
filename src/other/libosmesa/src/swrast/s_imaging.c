@@ -197,3 +197,13 @@ _swrast_CopyConvolutionFilter2D(GLcontext *ctx, GLenum target,
     ctx->Unpack = packSave;  /* restore pixel packing params */
     ctx->NewState |= _NEW_PACKUNPACK;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

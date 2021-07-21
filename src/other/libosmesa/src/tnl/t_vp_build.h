@@ -34,3 +34,13 @@ extern void _tnl_ProgramCacheInit(GLcontext *ctx);
 extern void _tnl_ProgramCacheDestroy(GLcontext *ctx);
 
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

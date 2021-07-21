@@ -229,3 +229,13 @@ void vbo_save_playback_vertex_list(GLcontext *ctx, void *data)
      */
     _playback_copy_to_current(ctx, node);
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -970,3 +970,13 @@ void _mesa_free_eval_data(GLcontext *ctx)
     for (i = 0; i < 16; i++)
 	FREE((ctx->EvalMap.Map2Attrib[i].Points));
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
