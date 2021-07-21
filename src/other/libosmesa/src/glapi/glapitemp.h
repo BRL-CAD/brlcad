@@ -1878,13 +1878,6 @@ KEYWORD1 void KEYWORD2 NAME(ColorTable)(GLenum target, GLenum internalformat, GL
     DISPATCH(ColorTable, (target, internalformat, width, format, type, table), (F, "glColorTable(0x%x, 0x%x, %d, 0x%x, 0x%x, %p);\n", target, internalformat, width, format, type, (const void *) table));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_339)(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_339)(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table)
-{
-    DISPATCH(ColorTable, (target, internalformat, width, format, type, table), (F, "glColorTableSGI(0x%x, 0x%x, %d, 0x%x, 0x%x, %p);\n", target, internalformat, width, format, type, (const void *) table));
-}
-
 KEYWORD1 void KEYWORD2 NAME(ColorTableEXT)(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * table)
 {
     DISPATCH(ColorTable, (target, internalformat, width, format, type, table), (F, "glColorTableEXT(0x%x, 0x%x, %d, 0x%x, 0x%x, %p);\n", target, internalformat, width, format, type, (const void *) table));
@@ -1895,23 +1888,9 @@ KEYWORD1 void KEYWORD2 NAME(ColorTableParameterfv)(GLenum target, GLenum pname, 
     DISPATCH(ColorTableParameterfv, (target, pname, params), (F, "glColorTableParameterfv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_340)(GLenum target, GLenum pname, const GLfloat * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_340)(GLenum target, GLenum pname, const GLfloat * params)
-{
-    DISPATCH(ColorTableParameterfv, (target, pname, params), (F, "glColorTableParameterfvSGI(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-
 KEYWORD1 void KEYWORD2 NAME(ColorTableParameteriv)(GLenum target, GLenum pname, const GLint * params)
 {
     DISPATCH(ColorTableParameteriv, (target, pname, params), (F, "glColorTableParameteriv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_341)(GLenum target, GLenum pname, const GLint * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_341)(GLenum target, GLenum pname, const GLint * params)
-{
-    DISPATCH(ColorTableParameteriv, (target, pname, params), (F, "glColorTableParameterivSGI(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
 KEYWORD1 void KEYWORD2 NAME(CopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
@@ -1919,26 +1898,10 @@ KEYWORD1 void KEYWORD2 NAME(CopyColorTable)(GLenum target, GLenum internalformat
     DISPATCH(CopyColorTable, (target, internalformat, x, y, width), (F, "glCopyColorTable(0x%x, 0x%x, %d, %d, %d);\n", target, internalformat, x, y, width));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_342)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_342)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
-{
-    DISPATCH(CopyColorTable, (target, internalformat, x, y, width), (F, "glCopyColorTableSGI(0x%x, 0x%x, %d, %d, %d);\n", target, internalformat, x, y, width));
-}
-
 KEYWORD1 void KEYWORD2 NAME(GetColorTable)(GLenum target, GLenum format, GLenum type, GLvoid * table)
 {
     DISPATCH(GetColorTable, (target, format, type, table), (F, "glGetColorTable(0x%x, 0x%x, 0x%x, %p);\n", target, format, type, (const void *) table));
 }
-
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_343)(GLenum target, GLenum format, GLenum type, GLvoid * table);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_343)(GLenum target, GLenum format, GLenum type, GLvoid * table)
-{
-    DISPATCH(GetColorTable, (target, format, type, table), (F, "glGetColorTableSGI(0x%x, 0x%x, 0x%x, %p);\n", target, format, type, (const void *) table));
-}
-#endif /* GLX_INDIRECT_RENDERING */
 
 #ifndef GLX_INDIRECT_RENDERING
 KEYWORD1 void KEYWORD2 NAME(GetColorTableEXT)(GLenum target, GLenum format, GLenum type, GLvoid * table)
@@ -1953,15 +1916,6 @@ KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterfv)(GLenum target, GLenum pnam
 }
 
 #ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_344)(GLenum target, GLenum pname, GLfloat * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_344)(GLenum target, GLenum pname, GLfloat * params)
-{
-    DISPATCH(GetColorTableParameterfv, (target, pname, params), (F, "glGetColorTableParameterfvSGI(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-#endif /* GLX_INDIRECT_RENDERING */
-
-#ifndef GLX_INDIRECT_RENDERING
 KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterfvEXT)(GLenum target, GLenum pname, GLfloat * params)
 {
     DISPATCH(GetColorTableParameterfv, (target, pname, params), (F, "glGetColorTableParameterfvEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
@@ -1972,15 +1926,6 @@ KEYWORD1 void KEYWORD2 NAME(GetColorTableParameteriv)(GLenum target, GLenum pnam
 {
     DISPATCH(GetColorTableParameteriv, (target, pname, params), (F, "glGetColorTableParameteriv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
-
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_345)(GLenum target, GLenum pname, GLint * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_345)(GLenum target, GLenum pname, GLint * params)
-{
-    DISPATCH(GetColorTableParameteriv, (target, pname, params), (F, "glGetColorTableParameterivSGI(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-#endif /* GLX_INDIRECT_RENDERING */
 
 #ifndef GLX_INDIRECT_RENDERING
 KEYWORD1 void KEYWORD2 NAME(GetColorTableParameterivEXT)(GLenum target, GLenum pname, GLint * params)
@@ -1994,23 +1939,9 @@ KEYWORD1 void KEYWORD2 NAME(ColorSubTable)(GLenum target, GLsizei start, GLsizei
     DISPATCH(ColorSubTable, (target, start, count, format, type, data), (F, "glColorSubTable(0x%x, %d, %d, 0x%x, 0x%x, %p);\n", target, start, count, format, type, (const void *) data));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_346)(GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid * data);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_346)(GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid * data)
-{
-    DISPATCH(ColorSubTable, (target, start, count, format, type, data), (F, "glColorSubTableEXT(0x%x, %d, %d, 0x%x, 0x%x, %p);\n", target, start, count, format, type, (const void *) data));
-}
-
 KEYWORD1 void KEYWORD2 NAME(CopyColorSubTable)(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width)
 {
     DISPATCH(CopyColorSubTable, (target, start, x, y, width), (F, "glCopyColorSubTable(0x%x, %d, %d, %d, %d);\n", target, start, x, y, width));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_347)(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_347)(GLenum target, GLsizei start, GLint x, GLint y, GLsizei width)
-{
-    DISPATCH(CopyColorSubTable, (target, start, x, y, width), (F, "glCopyColorSubTableEXT(0x%x, %d, %d, %d, %d);\n", target, start, x, y, width));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ConvolutionFilter1D)(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * image)
@@ -2018,23 +1949,9 @@ KEYWORD1 void KEYWORD2 NAME(ConvolutionFilter1D)(GLenum target, GLenum internalf
     DISPATCH(ConvolutionFilter1D, (target, internalformat, width, format, type, image), (F, "glConvolutionFilter1D(0x%x, 0x%x, %d, 0x%x, 0x%x, %p);\n", target, internalformat, width, format, type, (const void *) image));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_348)(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * image);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_348)(GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid * image)
-{
-    DISPATCH(ConvolutionFilter1D, (target, internalformat, width, format, type, image), (F, "glConvolutionFilter1DEXT(0x%x, 0x%x, %d, 0x%x, 0x%x, %p);\n", target, internalformat, width, format, type, (const void *) image));
-}
-
 KEYWORD1 void KEYWORD2 NAME(ConvolutionFilter2D)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * image)
 {
     DISPATCH(ConvolutionFilter2D, (target, internalformat, width, height, format, type, image), (F, "glConvolutionFilter2D(0x%x, 0x%x, %d, %d, 0x%x, 0x%x, %p);\n", target, internalformat, width, height, format, type, (const void *) image));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_349)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * image);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_349)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * image)
-{
-    DISPATCH(ConvolutionFilter2D, (target, internalformat, width, height, format, type, image), (F, "glConvolutionFilter2DEXT(0x%x, 0x%x, %d, %d, 0x%x, 0x%x, %p);\n", target, internalformat, width, height, format, type, (const void *) image));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ConvolutionParameterf)(GLenum target, GLenum pname, GLfloat params)
@@ -2042,23 +1959,9 @@ KEYWORD1 void KEYWORD2 NAME(ConvolutionParameterf)(GLenum target, GLenum pname, 
     DISPATCH(ConvolutionParameterf, (target, pname, params), (F, "glConvolutionParameterf(0x%x, 0x%x, %f);\n", target, pname, params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_350)(GLenum target, GLenum pname, GLfloat params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_350)(GLenum target, GLenum pname, GLfloat params)
-{
-    DISPATCH(ConvolutionParameterf, (target, pname, params), (F, "glConvolutionParameterfEXT(0x%x, 0x%x, %f);\n", target, pname, params));
-}
-
 KEYWORD1 void KEYWORD2 NAME(ConvolutionParameterfv)(GLenum target, GLenum pname, const GLfloat * params)
 {
     DISPATCH(ConvolutionParameterfv, (target, pname, params), (F, "glConvolutionParameterfv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_351)(GLenum target, GLenum pname, const GLfloat * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_351)(GLenum target, GLenum pname, const GLfloat * params)
-{
-    DISPATCH(ConvolutionParameterfv, (target, pname, params), (F, "glConvolutionParameterfvEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
 KEYWORD1 void KEYWORD2 NAME(ConvolutionParameteri)(GLenum target, GLenum pname, GLint params)
@@ -2066,23 +1969,9 @@ KEYWORD1 void KEYWORD2 NAME(ConvolutionParameteri)(GLenum target, GLenum pname, 
     DISPATCH(ConvolutionParameteri, (target, pname, params), (F, "glConvolutionParameteri(0x%x, 0x%x, %d);\n", target, pname, params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_352)(GLenum target, GLenum pname, GLint params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_352)(GLenum target, GLenum pname, GLint params)
-{
-    DISPATCH(ConvolutionParameteri, (target, pname, params), (F, "glConvolutionParameteriEXT(0x%x, 0x%x, %d);\n", target, pname, params));
-}
-
 KEYWORD1 void KEYWORD2 NAME(ConvolutionParameteriv)(GLenum target, GLenum pname, const GLint * params)
 {
     DISPATCH(ConvolutionParameteriv, (target, pname, params), (F, "glConvolutionParameteriv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_353)(GLenum target, GLenum pname, const GLint * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_353)(GLenum target, GLenum pname, const GLint * params)
-{
-    DISPATCH(ConvolutionParameteriv, (target, pname, params), (F, "glConvolutionParameterivEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
 KEYWORD1 void KEYWORD2 NAME(CopyConvolutionFilter1D)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
@@ -2090,23 +1979,9 @@ KEYWORD1 void KEYWORD2 NAME(CopyConvolutionFilter1D)(GLenum target, GLenum inter
     DISPATCH(CopyConvolutionFilter1D, (target, internalformat, x, y, width), (F, "glCopyConvolutionFilter1D(0x%x, 0x%x, %d, %d, %d);\n", target, internalformat, x, y, width));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_354)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_354)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width)
-{
-    DISPATCH(CopyConvolutionFilter1D, (target, internalformat, x, y, width), (F, "glCopyConvolutionFilter1DEXT(0x%x, 0x%x, %d, %d, %d);\n", target, internalformat, x, y, width));
-}
-
 KEYWORD1 void KEYWORD2 NAME(CopyConvolutionFilter2D)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height)
 {
     DISPATCH(CopyConvolutionFilter2D, (target, internalformat, x, y, width, height), (F, "glCopyConvolutionFilter2D(0x%x, 0x%x, %d, %d, %d, %d);\n", target, internalformat, x, y, width, height));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_355)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_355)(GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height)
-{
-    DISPATCH(CopyConvolutionFilter2D, (target, internalformat, x, y, width, height), (F, "glCopyConvolutionFilter2DEXT(0x%x, 0x%x, %d, %d, %d, %d);\n", target, internalformat, x, y, width, height));
 }
 
 KEYWORD1 void KEYWORD2 NAME(GetConvolutionFilter)(GLenum target, GLenum format, GLenum type, GLvoid * image)
@@ -2114,67 +1989,24 @@ KEYWORD1 void KEYWORD2 NAME(GetConvolutionFilter)(GLenum target, GLenum format, 
     DISPATCH(GetConvolutionFilter, (target, format, type, image), (F, "glGetConvolutionFilter(0x%x, 0x%x, 0x%x, %p);\n", target, format, type, (const void *) image));
 }
 
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_356)(GLenum target, GLenum format, GLenum type, GLvoid * image);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_356)(GLenum target, GLenum format, GLenum type, GLvoid * image)
-{
-    DISPATCH(GetConvolutionFilter, (target, format, type, image), (F, "glGetConvolutionFilterEXT(0x%x, 0x%x, 0x%x, %p);\n", target, format, type, (const void *) image));
-}
-#endif /* GLX_INDIRECT_RENDERING */
-
 KEYWORD1 void KEYWORD2 NAME(GetConvolutionParameterfv)(GLenum target, GLenum pname, GLfloat * params)
 {
     DISPATCH(GetConvolutionParameterfv, (target, pname, params), (F, "glGetConvolutionParameterfv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
-
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_357)(GLenum target, GLenum pname, GLfloat * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_357)(GLenum target, GLenum pname, GLfloat * params)
-{
-    DISPATCH(GetConvolutionParameterfv, (target, pname, params), (F, "glGetConvolutionParameterfvEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-#endif /* GLX_INDIRECT_RENDERING */
 
 KEYWORD1 void KEYWORD2 NAME(GetConvolutionParameteriv)(GLenum target, GLenum pname, GLint * params)
 {
     DISPATCH(GetConvolutionParameteriv, (target, pname, params), (F, "glGetConvolutionParameteriv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_358)(GLenum target, GLenum pname, GLint * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_358)(GLenum target, GLenum pname, GLint * params)
-{
-    DISPATCH(GetConvolutionParameteriv, (target, pname, params), (F, "glGetConvolutionParameterivEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-#endif /* GLX_INDIRECT_RENDERING */
-
 KEYWORD1 void KEYWORD2 NAME(GetSeparableFilter)(GLenum target, GLenum format, GLenum type, GLvoid * row, GLvoid * column, GLvoid * span)
 {
     DISPATCH(GetSeparableFilter, (target, format, type, row, column, span), (F, "glGetSeparableFilter(0x%x, 0x%x, 0x%x, %p, %p, %p);\n", target, format, type, (const void *) row, (const void *) column, (const void *) span));
 }
 
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_359)(GLenum target, GLenum format, GLenum type, GLvoid * row, GLvoid * column, GLvoid * span);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_359)(GLenum target, GLenum format, GLenum type, GLvoid * row, GLvoid * column, GLvoid * span)
-{
-    DISPATCH(GetSeparableFilter, (target, format, type, row, column, span), (F, "glGetSeparableFilterEXT(0x%x, 0x%x, 0x%x, %p, %p, %p);\n", target, format, type, (const void *) row, (const void *) column, (const void *) span));
-}
-#endif /* GLX_INDIRECT_RENDERING */
-
 KEYWORD1 void KEYWORD2 NAME(SeparableFilter2D)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * row, const GLvoid * column)
 {
     DISPATCH(SeparableFilter2D, (target, internalformat, width, height, format, type, row, column), (F, "glSeparableFilter2D(0x%x, 0x%x, %d, %d, 0x%x, 0x%x, %p, %p);\n", target, internalformat, width, height, format, type, (const void *) row, (const void *) column));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_360)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * row, const GLvoid * column);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_360)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid * row, const GLvoid * column)
-{
-    DISPATCH(SeparableFilter2D, (target, internalformat, width, height, format, type, row, column), (F, "glSeparableFilter2DEXT(0x%x, 0x%x, %d, %d, 0x%x, 0x%x, %p, %p);\n", target, internalformat, width, height, format, type, (const void *) row, (const void *) column));
 }
 
 KEYWORD1 void KEYWORD2 NAME(GetHistogram)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values)
@@ -2182,95 +2014,34 @@ KEYWORD1 void KEYWORD2 NAME(GetHistogram)(GLenum target, GLboolean reset, GLenum
     DISPATCH(GetHistogram, (target, reset, format, type, values), (F, "glGetHistogram(0x%x, %d, 0x%x, 0x%x, %p);\n", target, reset, format, type, (const void *) values));
 }
 
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_361)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_361)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values)
-{
-    DISPATCH(GetHistogram, (target, reset, format, type, values), (F, "glGetHistogramEXT(0x%x, %d, 0x%x, 0x%x, %p);\n", target, reset, format, type, (const void *) values));
-}
-#endif /* GLX_INDIRECT_RENDERING */
-
 KEYWORD1 void KEYWORD2 NAME(GetHistogramParameterfv)(GLenum target, GLenum pname, GLfloat * params)
 {
     DISPATCH(GetHistogramParameterfv, (target, pname, params), (F, "glGetHistogramParameterfv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
-
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_362)(GLenum target, GLenum pname, GLfloat * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_362)(GLenum target, GLenum pname, GLfloat * params)
-{
-    DISPATCH(GetHistogramParameterfv, (target, pname, params), (F, "glGetHistogramParameterfvEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-#endif /* GLX_INDIRECT_RENDERING */
 
 KEYWORD1 void KEYWORD2 NAME(GetHistogramParameteriv)(GLenum target, GLenum pname, GLint * params)
 {
     DISPATCH(GetHistogramParameteriv, (target, pname, params), (F, "glGetHistogramParameteriv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_363)(GLenum target, GLenum pname, GLint * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_363)(GLenum target, GLenum pname, GLint * params)
-{
-    DISPATCH(GetHistogramParameteriv, (target, pname, params), (F, "glGetHistogramParameterivEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-#endif /* GLX_INDIRECT_RENDERING */
-
 KEYWORD1 void KEYWORD2 NAME(GetMinmax)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values)
 {
     DISPATCH(GetMinmax, (target, reset, format, type, values), (F, "glGetMinmax(0x%x, %d, 0x%x, 0x%x, %p);\n", target, reset, format, type, (const void *) values));
 }
-
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_364)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_364)(GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid * values)
-{
-    DISPATCH(GetMinmax, (target, reset, format, type, values), (F, "glGetMinmaxEXT(0x%x, %d, 0x%x, 0x%x, %p);\n", target, reset, format, type, (const void *) values));
-}
-#endif /* GLX_INDIRECT_RENDERING */
 
 KEYWORD1 void KEYWORD2 NAME(GetMinmaxParameterfv)(GLenum target, GLenum pname, GLfloat * params)
 {
     DISPATCH(GetMinmaxParameterfv, (target, pname, params), (F, "glGetMinmaxParameterfv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_365)(GLenum target, GLenum pname, GLfloat * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_365)(GLenum target, GLenum pname, GLfloat * params)
-{
-    DISPATCH(GetMinmaxParameterfv, (target, pname, params), (F, "glGetMinmaxParameterfvEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-#endif /* GLX_INDIRECT_RENDERING */
-
 KEYWORD1 void KEYWORD2 NAME(GetMinmaxParameteriv)(GLenum target, GLenum pname, GLint * params)
 {
     DISPATCH(GetMinmaxParameteriv, (target, pname, params), (F, "glGetMinmaxParameteriv(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
 }
 
-#ifndef GLX_INDIRECT_RENDERING
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_366)(GLenum target, GLenum pname, GLint * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_366)(GLenum target, GLenum pname, GLint * params)
-{
-    DISPATCH(GetMinmaxParameteriv, (target, pname, params), (F, "glGetMinmaxParameterivEXT(0x%x, 0x%x, %p);\n", target, pname, (const void *) params));
-}
-#endif /* GLX_INDIRECT_RENDERING */
-
 KEYWORD1 void KEYWORD2 NAME(Histogram)(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink)
 {
     DISPATCH(Histogram, (target, width, internalformat, sink), (F, "glHistogram(0x%x, %d, 0x%x, %d);\n", target, width, internalformat, sink));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_367)(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_367)(GLenum target, GLsizei width, GLenum internalformat, GLboolean sink)
-{
-    DISPATCH(Histogram, (target, width, internalformat, sink), (F, "glHistogramEXT(0x%x, %d, 0x%x, %d);\n", target, width, internalformat, sink));
 }
 
 KEYWORD1 void KEYWORD2 NAME(Minmax)(GLenum target, GLenum internalformat, GLboolean sink)
@@ -2278,35 +2049,14 @@ KEYWORD1 void KEYWORD2 NAME(Minmax)(GLenum target, GLenum internalformat, GLbool
     DISPATCH(Minmax, (target, internalformat, sink), (F, "glMinmax(0x%x, 0x%x, %d);\n", target, internalformat, sink));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_368)(GLenum target, GLenum internalformat, GLboolean sink);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_368)(GLenum target, GLenum internalformat, GLboolean sink)
-{
-    DISPATCH(Minmax, (target, internalformat, sink), (F, "glMinmaxEXT(0x%x, 0x%x, %d);\n", target, internalformat, sink));
-}
-
 KEYWORD1 void KEYWORD2 NAME(ResetHistogram)(GLenum target)
 {
     DISPATCH(ResetHistogram, (target), (F, "glResetHistogram(0x%x);\n", target));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_369)(GLenum target);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_369)(GLenum target)
-{
-    DISPATCH(ResetHistogram, (target), (F, "glResetHistogramEXT(0x%x);\n", target));
-}
-
 KEYWORD1 void KEYWORD2 NAME(ResetMinmax)(GLenum target)
 {
     DISPATCH(ResetMinmax, (target), (F, "glResetMinmax(0x%x);\n", target));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_370)(GLenum target);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_370)(GLenum target)
-{
-    DISPATCH(ResetMinmax, (target), (F, "glResetMinmaxEXT(0x%x);\n", target));
 }
 
 KEYWORD1 void KEYWORD2 NAME(TexImage3D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * pixels)
@@ -2757,13 +2507,6 @@ KEYWORD1 void KEYWORD2 NAME(StencilMaskSeparate)(GLenum face, GLuint mask)
 KEYWORD1 void KEYWORD2 NAME(StencilOpSeparate)(GLenum face, GLenum sfail, GLenum zfail, GLenum zpass)
 {
     DISPATCH(StencilOpSeparate, (face, sfail, zfail, zpass), (F, "glStencilOpSeparate(0x%x, 0x%x, 0x%x, 0x%x);\n", face, sfail, zfail, zpass));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_423)(GLenum face, GLenum sfail, GLenum zfail, GLenum zpass);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_423)(GLenum face, GLenum sfail, GLenum zfail, GLenum zpass)
-{
-    DISPATCH(StencilOpSeparate, (face, sfail, zfail, zpass), (F, "glStencilOpSeparateATI(0x%x, 0x%x, 0x%x, 0x%x);\n", face, sfail, zfail, zpass));
 }
 
 KEYWORD1 void KEYWORD2 NAME(UniformMatrix2x3fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat * value)
@@ -4092,13 +3835,6 @@ KEYWORD1 void KEYWORD2 NAME(PointParameterfEXT)(GLenum pname, GLfloat param)
     DISPATCH(PointParameterfEXT, (pname, param), (F, "glPointParameterfEXT(0x%x, %f);\n", pname, param));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_576)(GLenum pname, GLfloat param);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_576)(GLenum pname, GLfloat param)
-{
-    DISPATCH(PointParameterfEXT, (pname, param), (F, "glPointParameterfSGIS(0x%x, %f);\n", pname, param));
-}
-
 KEYWORD1 void KEYWORD2 NAME(PointParameterfv)(GLenum pname, const GLfloat * params)
 {
     DISPATCH(PointParameterfvEXT, (pname, params), (F, "glPointParameterfv(0x%x, %p);\n", pname, (const void *) params));
@@ -4112,13 +3848,6 @@ KEYWORD1 void KEYWORD2 NAME(PointParameterfvARB)(GLenum pname, const GLfloat * p
 KEYWORD1 void KEYWORD2 NAME(PointParameterfvEXT)(GLenum pname, const GLfloat * params)
 {
     DISPATCH(PointParameterfvEXT, (pname, params), (F, "glPointParameterfvEXT(0x%x, %p);\n", pname, (const void *) params));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_577)(GLenum pname, const GLfloat * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_577)(GLenum pname, const GLfloat * params)
-{
-    DISPATCH(PointParameterfvEXT, (pname, params), (F, "glPointParameterfvSGIS(0x%x, %p);\n", pname, (const void *) params));
 }
 
 KEYWORD1 void KEYWORD2 NAME(LockArraysEXT)(GLint first, GLsizei count)
@@ -4400,13 +4129,6 @@ KEYWORD1 void KEYWORD2 NAME(BlendFuncSeparate)(GLenum sfactorRGB, GLenum dfactor
 KEYWORD1 void KEYWORD2 NAME(BlendFuncSeparateEXT)(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha)
 {
     DISPATCH(BlendFuncSeparateEXT, (sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha), (F, "glBlendFuncSeparateEXT(0x%x, 0x%x, 0x%x, 0x%x);\n", sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha));
-}
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_607)(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_607)(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha)
-{
-    DISPATCH(BlendFuncSeparateEXT, (sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha), (F, "glBlendFuncSeparateINGR(0x%x, 0x%x, 0x%x, 0x%x);\n", sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha));
 }
 
 KEYWORD1 void KEYWORD2 NAME(FlushVertexArrayRangeNV)(void)
