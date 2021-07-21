@@ -207,7 +207,7 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 			   const GLfloat values[4], GLuint size,
 			   GLuint *swizzleOut)
 {
-    GLint pos;
+    GLint pos = -1;
     ASSERT(size >= 1);
     ASSERT(size <= 4);
 
