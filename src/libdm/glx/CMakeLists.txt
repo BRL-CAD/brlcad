@@ -40,21 +40,27 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
     list(APPEND X11_LIBRARIES ${X11_Xi_LIB})
   endif (X11_Xi_LIB)
 
-  set(XOPENGL_LIBS
-    ${XOPENGL_gl_LIBRARY}
-    ${XOPENGL_glu_LIBRARY}
-    )
-  if (XOPENGL_gldispatch_LIBRARY)
-    set(XOPENGL_LIBS ${XOPENGL_LIBS} ${XOPENGL_gldispatch_LIBRARY})
-  endif (XOPENGL_gldispatch_LIBRARY)
+  # If we don't have X OpenGL, there's no point in trying to build this plugin
+  if (XOPENGL_gl_LIBRARY)
 
-  dm_plugin_library(dm-ogl SHARED ${OGL_SRCS})
-  target_link_libraries(dm-ogl libdm libbu ${X11_LIBRARIES} ${XOPENGL_LIBS} ${TCL_LIBRARY} ${TK_LIBRARY})
-  set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-  set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS HAVE_GL_GLX_H)
-  VALIDATE_STYLE(dm-ogl "${OGL_SRCS}")
+    set(XOPENGL_LIBS ${XOPENGL_gl_LIBRARY})
 
-  PLUGIN_SETUP(dm-ogl dm)
+    if (XOPENGL_glu_LIBRARY)
+      set(XOPENGL_LIBS ${XOPENGL_LIBS} ${XOPENGL_glu_LIBRARY})
+    endif (XOPENGL_glu_LIBRARY)
+    if (XOPENGL_gldispatch_LIBRARY)
+      set(XOPENGL_LIBS ${XOPENGL_LIBS} ${XOPENGL_gldispatch_LIBRARY})
+    endif (XOPENGL_gldispatch_LIBRARY)
+
+    dm_plugin_library(dm-ogl SHARED ${OGL_SRCS})
+    target_link_libraries(dm-ogl libdm libbu ${X11_LIBRARIES} ${XOPENGL_LIBS} ${TCL_LIBRARY} ${TK_LIBRARY})
+    set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+    set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS HAVE_GL_GLX_H)
+    VALIDATE_STYLE(dm-ogl "${OGL_SRCS}")
+
+    PLUGIN_SETUP(dm-ogl dm)
+
+  endif (XOPENGL_gl_LIBRARY)
 
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK AND BRLCAD_ENABLE_OPENGL)
 
