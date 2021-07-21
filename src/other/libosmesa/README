@@ -10,10 +10,8 @@ support from the OS or graphics hardware.  The idea is to guarantee an
 application's ability to produce scene rasterizations as images even when the
 primary graphics stack of the machine is unavailable.
 
-For convenience, the GLU utility libraries are also built as part of the
-libosmesa library.
-
 Changes are (or at least are intended to be) relatively minor and include
 things like updating header includes to avoid accidentally including system
-versions of gl.h/glu.h.
+versions of gl.h.  CPU/platform specific optimizations are removed in favor
+of portable code.
 
