@@ -537,7 +537,7 @@ GetVersionFromFile(
 		    ++q;
 		}
 
-		memcpy(szBuffer, p, q - p);
+		memmove(szBuffer, p, q - p);
 		szBuffer[q-p] = 0;
 		szResult = szBuffer;
 		break;
@@ -674,7 +674,7 @@ SubstituteFile(
 		    memcpy(szBuffer, szCopy, sizeof(szCopy));
 		}
 	    }
-	    printf(szBuffer);
+	    printf("%s", szBuffer);
 	}
 
 	list_free(&substPtr);
