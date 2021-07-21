@@ -11,10 +11,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/shader/slang
   ${CMAKE_CURRENT_SOURCE_DIR}/x86-64
   ${CMAKE_CURRENT_SOURCE_DIR}/x86
-# ${CMAKE_CURRENT_SOURCE_DIR}/glu/include
-# ${CMAKE_CURRENT_SOURCE_DIR}/glu/libnurbs/internals
-# ${CMAKE_CURRENT_SOURCE_DIR}/glu/libnurbs/interface
-# ${CMAKE_CURRENT_SOURCE_DIR}/glu/libnurbs/nurbtess
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
@@ -201,100 +197,6 @@ set(osmesa_srcs
   x86/x86.c
   )
 
-# Bundle the glu functionality as well
-set(glu_srcs
-  glu/libutil/error.c
-  glu/libutil/glue.c
-  glu/libutil/mipmap.c
-  glu/libutil/project.c
-  glu/libutil/quad.c
-  glu/libutil/registry.c
-  glu/libtess/dict.c
-  glu/libtess/geom.c
-  glu/libtess/memalloc.c
-  glu/libtess/mesh.c
-  glu/libtess/normal.c
-  glu/libtess/priorityq.c
-  glu/libtess/render.c
-  glu/libtess/sweep.c
-  glu/libtess/tess.c
-  glu/libtess/tessmono.c
-  glu/libnurbs/interface/bezierEval.cc
-  glu/libnurbs/interface/bezierPatch.cc
-  glu/libnurbs/interface/bezierPatchMesh.cc
-  glu/libnurbs/interface/glcurveval.cc
-  glu/libnurbs/interface/glinterface.cc
-  glu/libnurbs/interface/glrenderer.cc
-  glu/libnurbs/interface/glsurfeval.cc
-  glu/libnurbs/interface/incurveeval.cc
-  glu/libnurbs/interface/insurfeval.cc
-  glu/libnurbs/internals/arc.cc
-  glu/libnurbs/internals/arcsorter.cc
-  glu/libnurbs/internals/arctess.cc
-  glu/libnurbs/internals/backend.cc
-  glu/libnurbs/internals/basiccrveval.cc
-  glu/libnurbs/internals/basicsurfeval.cc
-  glu/libnurbs/internals/bin.cc
-  glu/libnurbs/internals/bufpool.cc
-  glu/libnurbs/internals/cachingeval.cc
-  glu/libnurbs/internals/ccw.cc
-  glu/libnurbs/internals/coveandtiler.cc
-  glu/libnurbs/internals/curve.cc
-  glu/libnurbs/internals/curvelist.cc
-  glu/libnurbs/internals/curvesub.cc
-  glu/libnurbs/internals/dataTransform.cc
-  glu/libnurbs/internals/displaylist.cc
-  glu/libnurbs/internals/flist.cc
-  glu/libnurbs/internals/flistsorter.cc
-  glu/libnurbs/internals/hull.cc
-  glu/libnurbs/internals/intersect.cc
-  glu/libnurbs/internals/knotvector.cc
-  glu/libnurbs/internals/mapdesc.cc
-  glu/libnurbs/internals/mapdescv.cc
-  glu/libnurbs/internals/maplist.cc
-  glu/libnurbs/internals/mesher.cc
-  glu/libnurbs/internals/monoTriangulationBackend.cc
-  glu/libnurbs/internals/monotonizer.cc
-  glu/libnurbs/internals/mycode.cc
-  glu/libnurbs/internals/nurbsinterfac.cc
-  glu/libnurbs/internals/nurbstess.cc
-  glu/libnurbs/internals/patch.cc
-  glu/libnurbs/internals/patchlist.cc
-  glu/libnurbs/internals/quilt.cc
-  glu/libnurbs/internals/reader.cc
-  glu/libnurbs/internals/renderhints.cc
-  glu/libnurbs/internals/slicer.cc
-  glu/libnurbs/internals/sorter.cc
-  glu/libnurbs/internals/splitarcs.cc
-  glu/libnurbs/internals/subdivider.cc
-  glu/libnurbs/internals/tobezier.cc
-  glu/libnurbs/internals/trimline.cc
-  glu/libnurbs/internals/trimregion.cc
-  glu/libnurbs/internals/trimvertpool.cc
-  glu/libnurbs/internals/uarray.cc
-  glu/libnurbs/internals/varray.cc
-  glu/libnurbs/nurbtess/directedLine.cc
-  glu/libnurbs/nurbtess/gridWrap.cc
-  glu/libnurbs/nurbtess/monoChain.cc
-  glu/libnurbs/nurbtess/monoPolyPart.cc
-  glu/libnurbs/nurbtess/monoTriangulation.cc
-  glu/libnurbs/nurbtess/partitionX.cc
-  glu/libnurbs/nurbtess/partitionY.cc
-  glu/libnurbs/nurbtess/polyDBG.cc
-  glu/libnurbs/nurbtess/polyUtil.cc
-  glu/libnurbs/nurbtess/primitiveStream.cc
-  glu/libnurbs/nurbtess/quicksort.cc
-  glu/libnurbs/nurbtess/rectBlock.cc
-  glu/libnurbs/nurbtess/sampleComp.cc
-  glu/libnurbs/nurbtess/sampleCompBot.cc
-  glu/libnurbs/nurbtess/sampleCompRight.cc
-  glu/libnurbs/nurbtess/sampleCompTop.cc
-  glu/libnurbs/nurbtess/sampleMonoPoly.cc
-  glu/libnurbs/nurbtess/sampledLine.cc
-  glu/libnurbs/nurbtess/searchTree.cc
-  )
-
-#add_library(osmesa SHARED ${osmesa_srcs} ${glu_srcs})
 add_library(osmesa SHARED ${osmesa_srcs})
 install(TARGETS osmesa
   RUNTIME DESTINATION ${BIN_DIR}
@@ -307,14 +209,6 @@ set_property(TARGET osmesa APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "GL_DLL
 if (O3_COMPILER_FLAG)
   target_compile_options(osmesa PRIVATE "-O3")
 endif (O3_COMPILER_FLAG)
-
-#if (BUILD_STATIC_LIBS)
-#  add_library(osmesa-static STATIC ${osmesa_srcs})
-#  install(TARGETS osmesa-static
-#    RUNTIME DESTINATION ${BIN_DIR}
-#    LIBRARY DESTINATION ${LIB_DIR}
-#    ARCHIVE DESTINATION ${LIB_DIR})
-#endif (BUILD_STATIC_LIBS)
 
 # Local Variables:
 # tab-width: 8
