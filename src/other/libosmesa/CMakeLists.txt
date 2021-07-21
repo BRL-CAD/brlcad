@@ -4,21 +4,6 @@ cmake_minimum_required(VERSION 3.12)
 # Set CMake project name
 project(OSMESA)
 
-# Tell CMake where to look for local CMake modules
-list(APPEND CMAKE_MODULE_PATH "${OSMESA_SOURCE_DIR}/CMake")
-
-if (NOT BIN_DIR)
-  set(BIN_DIR bin)
-endif (NOT BIN_DIR)
-
-if (NOT INCLUDE_DIR)
-  set(INCLUDE_DIR include)
-endif (NOT INCLUDE_DIR)
-
-if (NOT DEFINED LIB_DIR)
-  set(LIB_DIR lib)
-endif (NOT DEFINED LIB_DIR)
-
 find_package(Threads REQUIRED)
 if (CMAKE_USE_PTHREADS_INIT)
   add_definitions(-DHAVE_PTHREAD)
@@ -39,16 +24,11 @@ endif (HAVE_ENDIAN_H)
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
 
-include(CheckFunctionExists)
-# TODO - check for the following
-add_definitions(-DHAVE_TIMESPEC_GET=1)
-
 # Don't want to conflict with system OpenGL, so enable the
 # mangling headers to produce mgl prefixing
 add_definitions(-DUSE_MGL_NAMESPACE)
 
 add_subdirectory(src)
-#add_subdirectory(examples)
 
 # Local Variables:
 # tab-width: 8
