@@ -42,7 +42,6 @@ CMAKEFILES(
   ${SWRAST_SRCS}
   dm-swrast.h
   swrastwin.h
-  tinygl_testing.patch
   )
 
 # Local Variables:
