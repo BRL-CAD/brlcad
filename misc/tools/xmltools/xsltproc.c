@@ -1,39 +1,15 @@
 /*
  * xsltproc.c: user program for the XSL Transformation 1.0 engine
  *
- * Copyright (C) 2001-2002 Daniel Veillard.  All Rights Reserved.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is fur-
- * nished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FIT-
- * NESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
- * DANIEL VEILLARD BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CON-
- * NECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Except as contained in this notice, the name of Daniel Veillard shall not
- * be used in advertising or otherwise to promote the sale, use or other deal-
- * ings in this Software without prior written authorization from him.
+ * See Copyright for the status of this software.
  *
  * daniel@veillard.com
  */
 
-#include <stdio.h>
-#include "libxml/xmlversion.h"
-#include "libxml/config.h"
-#include "libxslt/config.h"
-#include "libexslt/exsltconfig.h"
 #include "libxslt/libxslt.h"
+#include "libxslt/xsltconfig.h"
 #include "libexslt/exslt.h"
+#include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -54,6 +30,9 @@
 #endif
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
+#endif
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <fcntl.h>
 #endif
 #include <libxml/xmlmemory.h>
 #include <libxml/debugXML.h>
@@ -78,21 +57,11 @@
 
 #include <libexslt/exsltconfig.h>
 
-#if defined(WIN32) && !defined (__CYGWIN__)
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#if !defined(_WINSOCKAPI_)
-#include <winsock2.h>
-#endif
-#define gettimeofday(p1,p2)
-#define snprintf _snprintf
-#endif /* _MS_VER */
-#else /* WIN32 */
 #if defined(HAVE_SYS_TIME_H)
 #include <sys/time.h>
 #elif defined(HAVE_TIME_H)
 #include <time.h>
 #endif
-#endif /* WIN32 */
 
 #ifdef HAVE_SYS_TIMEB_H
 #include <sys/timeb.h>
@@ -119,6 +88,11 @@ static int profile = 0;
 
 #define MAX_PARAMETERS 64
 #define MAX_PATHS 64
+#ifdef _WIN32
+# define PATH_SEPARATOR ';'
+#else
+# define PATH_SEPARATOR ':'
+#endif
 
 static int options = XSLT_PARSE_OPTIONS;
 static const char *params[MAX_PARAMETERS + 1];
@@ -134,6 +108,7 @@ static const char *writesubtree = NULL;
 /*
  * Entity loading control and customization.
  */
+
 static
 void parsePath(const xmlChar *path) {
     const xmlChar *cur;
@@ -146,10 +121,10 @@ void parsePath(const xmlChar *path) {
 	    return;
 	}
 	cur = path;
-	while ((*cur == ' ') || (*cur == ':'))
+	while ((*cur == ' ') || (*cur == PATH_SEPARATOR))
 	    cur++;
 	path = cur;
-	while ((*cur != 0) && (*cur != ' ') && (*cur != ':'))
+	while ((*cur != 0) && (*cur != ' ') && (*cur != PATH_SEPARATOR))
 	    cur++;
 	if (cur != path) {
 	    paths[nbpaths] = xmlStrndup(path, cur - path);
@@ -162,10 +137,10 @@ void parsePath(const xmlChar *path) {
 
 xmlExternalEntityLoader defaultEntityLoader = NULL;
 
-static xmlParserInputPtr 
+static xmlParserInputPtr
 xsltprocExternalEntityLoader(const char *URL, const char *ID,
 			     xmlParserCtxtPtr ctxt) {
-    xmlParserInputPtr ret;
+    xmlParserInputPtr ret = NULL;
     warningSAXFunc warning = NULL;
 
     int i;
@@ -207,16 +182,17 @@ xsltprocExternalEntityLoader(const char *URL, const char *ID,
 	newURL = xmlStrcat(newURL, (const xmlChar *) "/");
 	newURL = xmlStrcat(newURL, (const xmlChar *) lastsegment);
 	if (newURL != NULL) {
-	    ret = defaultEntityLoader((const char *)newURL, ID, ctxt);
+	    if (defaultEntityLoader != NULL)
+		ret = defaultEntityLoader((const char *)newURL, ID, ctxt);
 	    if (ret != NULL) {
 		if (warning != NULL)
 		    ctxt->sax->warning = warning;
 		if (load_trace) {
 		    fprintf \
-		    	(stderr,
-		    	 "Loaded URL=\"%s\" ID=\"%s\"\n",
+			(stderr,
+			 "Loaded URL=\"%s\" ID=\"%s\"\n",
 			 newURL,
-		    	 ID ? ID : "(null)");
+			 ID ? ID : "(null)");
 		}
 		xmlFree(newURL);
 		return(ret);
@@ -238,7 +214,7 @@ xsltprocExternalEntityLoader(const char *URL, const char *ID,
  * Internal timing routines to remove the necessity to have unix-specific
  * function calls
  */
-#ifndef HAVE_GETTIMEOFDAY 
+#ifndef HAVE_GETTIMEOFDAY
 #ifdef HAVE_SYS_TIMEB_H
 #ifdef HAVE_SYS_TIME_H
 #ifdef HAVE_FTIME
@@ -262,6 +238,8 @@ my_gettimeofday(struct timeval *tvp, void *tzp)
 #endif /* HAVE_SYS_TIME_H */
 #endif /* HAVE_SYS_TIMEB_H */
 #endif /* !HAVE_GETTIMEOFDAY */
+
+static void endTimer(const char *format, ...) LIBXSLT_ATTR_FORMAT(1,2);
 
 #if defined(HAVE_GETTIMEOFDAY)
 static struct timeval begin, endtime;
@@ -311,7 +289,7 @@ static void startTimer(void)
 {
     begin=clock();
 }
-static void endTimer(char *format, ...)
+static void endTimer(const char *format, ...)
 {
     long msec;
     va_list ap;
@@ -337,7 +315,7 @@ static void startTimer(void)
    * Do nothing
    */
 }
-static void endTimer(char *format, ...)
+static void endTimer(const char *format, ...)
 {
   /*
    * We cannot do anything because we don't have a timing function
@@ -346,7 +324,7 @@ static void endTimer(char *format, ...)
     va_start(ap, format);
     vfprintf(stderr,format,ap);
     va_end(ap);
-    fprintf(stderr, " was not timed\n", msec);
+    fprintf(stderr, " was not timed\n");
 #else
   /* We don't have gettimeofday, time or stdarg.h, what crazy world is
    * this ?!
@@ -382,20 +360,27 @@ static void
 xsltProcess(xmlDocPtr doc, xsltStylesheetPtr cur, const char *filename) {
     xmlDocPtr res;
     xsltTransformContextPtr ctxt;
-   
+
 
 #ifdef LIBXML_XINCLUDE_ENABLED
     if (xinclude) {
+        int ret;
+
 	if (timing)
 	    startTimer();
 #if LIBXML_VERSION >= 20603
-	xmlXIncludeProcessFlags(doc, XSLT_PARSE_OPTIONS);
+	ret = xmlXIncludeProcessFlags(doc, XSLT_PARSE_OPTIONS);
 #else
-	xmlXIncludeProcess(doc);
+	ret = xmlXIncludeProcess(doc);
 #endif
 	if (timing) {
 	    endTimer("XInclude processing %s", filename);
 	}
+
+        if (ret < 0) {
+	    errorno = 6;
+            return;
+        }
     }
 #endif
     if (timing)
@@ -493,6 +478,9 @@ xsltProcess(xmlDocPtr doc, xsltStylesheetPtr cur, const char *filename) {
 	if (xinclude)
 	    ctxt->xinclude = 1;
 #endif
+	ctxt->maxTemplateDepth = xsltMaxDepth;
+	ctxt->maxTemplateVars = xsltMaxVars;
+
 	if (profile) {
 	    ret = xsltRunStylesheetUser(cur, doc, params, output,
 		                        NULL, NULL, stderr, ctxt);
@@ -525,16 +513,21 @@ static void usage(const char *name) {
     printf("\t--debug: dump the tree of the result instead\n");
 #endif
     printf("\t--dumpextensions: dump the registered extension elements and functions to stdout\n");
-    printf("\t--novalid skip the Dtd loading phase\n");
+    printf("\t--novalid skip the DTD loading phase\n");
     printf("\t--nodtdattr do not default attributes from the DTD\n");
     printf("\t--noout: do not dump the result\n");
-    printf("\t--maxdepth val : increase the maximum depth\n");
+    printf("\t--maxdepth val : increase the maximum depth (default %d)\n", xsltMaxDepth);
+    printf("\t--maxvars val : increase the maximum variables (default %d)\n", xsltMaxVars);
     printf("\t--maxparserdepth val : increase the maximum parser depth\n");
+    printf("\t--huge: relax any hardcoded limit from the parser\n");
+    printf("\t             fixes \"parser error : internal error: Huge input lookup\"\n");
+    printf("\t--seed-rand val : initialize pseudo random number generator with specific seed\n");
 #ifdef LIBXML_HTML_ENABLED
     printf("\t--html: the input document is(are) an HTML file(s)\n");
 #endif
     printf("\t--encoding: the input document character encoding\n");
     printf("\t--param name value : pass a (parameter,value) pair\n");
+    printf("\t       name is a QName or a string of the form {URI}NCName.\n");
     printf("\t       value is an UTF8 XPath expression.\n");
     printf("\t       string values must be quoted like \"'string'\"\n or");
     printf("\t       use stringparam to avoid it\n");
@@ -554,7 +547,7 @@ static void usage(const char *name) {
     printf("\t--xincludestyle : do XInclude processing on stylesheets\n");
 #endif
     printf("\t--load-trace : print trace of all external entites loaded\n");
-    printf("\t--profile or --norman : dump profiling informations \n");
+    printf("\t--profile or --norman : dump profiling information \n");
     printf("\nProject libxslt home page: http://xmlsoft.org/XSLT/\n");
     printf("To report bugs and get help: http://xmlsoft.org/XSLT/bugs.html\n");
 }
@@ -572,7 +565,16 @@ main(int argc, char **argv)
         return (1);
     }
 
+    srand(time(NULL));
     xmlInitMemory();
+
+#if defined(_WIN32) && !defined(__CYGINW__)
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
+#endif
+#if defined(_MSC_VER) && _MSC_VER < 1900
+    _set_output_format(_TWO_DIGIT_EXPONENT);
+#endif
 
     LIBXML_TEST_VERSION
 
@@ -600,8 +602,8 @@ main(int argc, char **argv)
                    (!strcmp(argv[i], "-output")) ||
                    (!strcmp(argv[i], "--output"))) {
             i++;
-#if defined(WIN32) || defined (__CYGWIN__)
-	    output = xmlCanonicPath(argv[i]);
+#if defined(_WIN32) || defined (__CYGWIN__)
+	    output = (char *) xmlCanonicPath((xmlChar *) argv[i]);
             if (output == NULL)
 #endif
 		output = (char *) xmlStrdup((xmlChar *) argv[i]);
@@ -744,23 +746,53 @@ main(int argc, char **argv)
             int value;
 
             i++;
+            if (i == argc) {
+                fprintf(stderr, "XSLT maxdepth value not specified!\n");
+                return (2);
+            }
+
             if (sscanf(argv[i], "%d", &value) == 1) {
                 if (value > 0)
                     xsltMaxDepth = value;
+            }
+        } else if ((!strcmp(argv[i], "-maxvars")) ||
+                   (!strcmp(argv[i], "--maxvars"))) {
+            int value;
+
+            i++;
+            if (sscanf(argv[i], "%d", &value) == 1) {
+                if (value > 0)
+                    xsltMaxVars = value;
             }
         } else if ((!strcmp(argv[i], "-maxparserdepth")) ||
                    (!strcmp(argv[i], "--maxparserdepth"))) {
             int value;
 
             i++;
+            if (i == argc) {
+                fprintf(stderr, "XML maxparserdepth value not specified!\n");
+                return (2);
+            }
+
             if (sscanf(argv[i], "%d", &value) == 1) {
                 if (value > 0)
                     xmlParserMaxDepth = value;
             }
+        } else if ((!strcmp(argv[i], "-huge")) ||
+                   (!strcmp(argv[i], "--huge"))) {
+            options |= XML_PARSE_HUGE;
+        } else if ((!strcmp(argv[i], "-seed-rand")) ||
+                   (!strcmp(argv[i], "--seed-rand"))) {
+            int value;
+
+            i++;
+            if (sscanf(argv[i], "%d", &value) == 1) {
+                if (value > 0)
+                    srand(value);
+            }
         } else if ((!strcmp(argv[i],"-dumpextensions"))||
 			(!strcmp(argv[i],"--dumpextensions"))) {
 		dumpextensions++;
-		
 	} else {
             fprintf(stderr, "Unknown option %s\n", argv[i]);
             usage(argv[0]);
@@ -782,7 +814,7 @@ main(int argc, char **argv)
     exsltRegisterAll();
     xsltRegisterTestModule();
 
-    if (dumpextensions) 
+    if (dumpextensions)
 	xsltDebugDumpExtensions(NULL);
 
     for (i = 1; i < argc; i++) {
@@ -790,8 +822,16 @@ main(int argc, char **argv)
             (!strcmp(argv[i], "--maxdepth"))) {
             i++;
             continue;
+        } else if ((!strcmp(argv[i], "-maxvars")) ||
+            (!strcmp(argv[i], "--maxvars"))) {
+            i++;
+            continue;
         } else if ((!strcmp(argv[i], "-maxparserdepth")) ||
             (!strcmp(argv[i], "--maxparserdepth"))) {
+            i++;
+            continue;
+        } else if ((!strcmp(argv[i], "-seed-rand")) ||
+            (!strcmp(argv[i], "--seed-rand"))) {
             i++;
             continue;
         } else if ((!strcmp(argv[i], "-o")) ||
@@ -825,8 +865,9 @@ main(int argc, char **argv)
             if (timing)
                 startTimer();
 	    style = xmlReadFile((const char *) argv[i], NULL, options);
-            if (timing) 
+            if (timing)
 		endTimer("Parsing stylesheet %s", argv[i]);
+#ifdef LIBXML_XINCLUDE_ENABLED
 	    if (xincludestyle) {
 		if (style != NULL) {
 		    if (timing)
@@ -841,6 +882,7 @@ main(int argc, char **argv)
 		    }
 		}
 	    }
+#endif
 	    if (style == NULL) {
 		fprintf(stderr,  "cannot parse %s\n", argv[i]);
 		cur = NULL;

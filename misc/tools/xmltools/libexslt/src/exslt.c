@@ -1,17 +1,12 @@
 #define IN_LIBEXSLT
 #include "libexslt/libexslt.h"
 
-#include <libxml/xmlversion.h>
-
-#include "config.h"
-
-#include <libxslt/xsltconfig.h>
 #include <libxslt/extensions.h>
 
 #include <libexslt/exsltconfig.h>
 #include "exslt.h"
 
-const char *exsltLibraryVersion = LIBEXSLT_VERSION_STRING 
+const char *exsltLibraryVersion = LIBEXSLT_VERSION_STRING
 				LIBEXSLT_VERSION_EXTRA;
 const int exsltLibexsltVersion = LIBEXSLT_VERSION;
 const int exsltLibxsltVersion = LIBXSLT_VERSION;

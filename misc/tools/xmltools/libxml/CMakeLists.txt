@@ -1,3 +1,5 @@
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 find_package(Threads)
 include(CheckIncludeFile)
 if(Threads_FOUND)
@@ -142,7 +144,9 @@ set(WITH_RUN_DEBUG 0)
 set(WITH_REGEXPS 1)
 set(WITH_SCHEMAS 1)
 set(WITH_SCHEMATRON 1)
+set(WITH_THREAD_ALLOC 0)
 set(WITH_MODULES 0)
+set(WITH_LZMA 0)
 set(WITH_ZLIB 0)
 
 set(LIBXML_VERSION "2.7.8")
@@ -196,6 +200,7 @@ set(libxml_srcs
   src/HTMLtree.c
   src/SAX.c
   src/SAX2.c
+  src/buf.c
   src/c14n.c
   src/catalog.c
   src/chvalid.c
