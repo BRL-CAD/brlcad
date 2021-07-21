@@ -417,7 +417,6 @@ store_vector4(const struct prog_instruction *inst,
 	    dstReg = machine->Temporaries[dest->Index];
 	    break;
 	case PROGRAM_WRITE_ONLY:
-	    dstReg = dummyReg;
 	    return;
 	default:
 	    _mesa_problem(NULL, "bad register file in store_vector4(fp)");

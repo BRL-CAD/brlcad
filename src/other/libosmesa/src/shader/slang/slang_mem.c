@@ -179,7 +179,6 @@ _slang_realloc(void *oldBuffer, GLuint oldSize, GLuint newSize)
     return _mesa_realloc(oldBuffer, oldSize, newSize);
 #else
     GET_CURRENT_CONTEXT(ctx);
-    slang_mempool *pool = (slang_mempool *) ctx->Shader.MemPool;
 
     if (newSize < oldSize) {
 	return oldBuffer;
@@ -187,8 +186,12 @@ _slang_realloc(void *oldBuffer, GLuint oldSize, GLuint newSize)
 	const GLuint copySize = (oldSize < newSize) ? oldSize : newSize;
 	void *newBuffer = _slang_alloc(newSize);
 
-	if (oldBuffer)
+#if 0
+	if (oldBuffer) {
+	    slang_mempool *pool = (slang_mempool *) ctx->Shader.MemPool;
 	    ASSERT(is_valid_address(pool, oldBuffer));
+	}
+#endif
 
 	if (newBuffer && oldBuffer && copySize > 0)
 	    _mesa_memcpy(newBuffer, oldBuffer, copySize);
@@ -228,8 +231,8 @@ _slang_free(void *addr)
 #else
     if (addr) {
 	GET_CURRENT_CONTEXT(ctx);
-	slang_mempool *pool = (slang_mempool *) ctx->Shader.MemPool;
-	ASSERT(is_valid_address(pool, addr));
+	//slang_mempool *pool = (slang_mempool *) ctx->Shader.MemPool;
+	//ASSERT(is_valid_address(pool, addr));
     }
 #endif
 }

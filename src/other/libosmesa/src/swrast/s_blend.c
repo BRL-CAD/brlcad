@@ -472,9 +472,9 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
 	    const GLfloat Bd = dest[i][BCOMP];
 	    const GLfloat Ad = dest[i][ACOMP];
 
-	    GLfloat sR, sG, sB, sA;  /* Source factor */
-	    GLfloat dR, dG, dB, dA;  /* Dest factor */
-	    GLfloat r, g, b, a;      /* result color */
+	    GLfloat sR = 0.0, sG = 0.0, sB = 0.0, sA = 0.0;  /* Source factor */
+	    GLfloat dR = 0.0, dG = 0.0, dB = 0.0, dA = 0.0;  /* Dest factor */
+	    GLfloat r = 0.0, g = 0.0, b = 0.0, a = 0.0;      /* result color */
 
 	    /* XXX for the case of constant blend terms we could init
 	     * the sX and dX variables just once before the loop.
@@ -598,7 +598,6 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
 		    break;
 		default:
 		    /* this should never happen */
-		    sA = 0.0F;
 		    _mesa_problem(ctx, "Bad blend source A factor in blend_general_float");
 		    return;
 	    }
@@ -661,7 +660,6 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
 		    break;
 		default:
 		    /* this should never happen */
-		    dR = dG = dB = 0.0F;
 		    _mesa_problem(ctx, "Bad blend dest RGB factor in blend_general_float");
 		    return;
 	    }
@@ -712,7 +710,6 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
 		    break;
 		default:
 		    /* this should never happen */
-		    dA = 0.0F;
 		    _mesa_problem(ctx, "Bad blend dest A factor in blend_general_float");
 		    return;
 	    }
@@ -723,19 +720,16 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
 		    r = Rs * sR + Rd * dR;
 		    g = Gs * sG + Gd * dG;
 		    b = Bs * sB + Bd * dB;
-		    a = As * sA + Ad * dA;
 		    break;
 		case GL_FUNC_SUBTRACT:
 		    r = Rs * sR - Rd * dR;
 		    g = Gs * sG - Gd * dG;
 		    b = Bs * sB - Bd * dB;
-		    a = As * sA - Ad * dA;
 		    break;
 		case GL_FUNC_REVERSE_SUBTRACT:
 		    r = Rd * dR - Rs * sR;
 		    g = Gd * dG - Gs * sG;
 		    b = Bd * dB - Bs * sB;
-		    a = Ad * dA - As * sA;
 		    break;
 		case GL_MIN:
 		    r = MIN2(Rd, Rs);
@@ -749,7 +743,6 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
 		    break;
 		default:
 		    /* should never get here */
-		    r = g = b = 0.0F;  /* silence uninitialized var warning */
 		    _mesa_problem(ctx, "unexpected BlendEquation in blend_general()");
 		    return;
 	    }
@@ -773,7 +766,6 @@ blend_general_float(GLcontext *ctx, GLuint n, const GLubyte mask[],
 		    break;
 		default:
 		    /* should never get here */
-		    a = 0.0F;  /* silence uninitialized var warning */
 		    _mesa_problem(ctx, "unexpected BlendEquation in blend_general()");
 		    return;
 	    }

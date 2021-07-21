@@ -164,7 +164,7 @@ static void split_prims(struct split_context *split)
 	    struct _mesa_prim *outprim = next_outprim(split);
 	    *outprim = *prim;
 	    csr += prim->count;
-	    available = align(split->limits->max_verts - csr - 1, 2);
+	    align(split->limits->max_verts - csr - 1, 2);
 	} else if (split_inplace) {
 	    GLuint j, nr;
 

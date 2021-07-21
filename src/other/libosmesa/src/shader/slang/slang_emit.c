@@ -690,7 +690,8 @@ emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
      * ch[2] = max limit
      */
 
-    inst = emit(emitInfo, n->Children[0]);
+    //inst = emit(emitInfo, n->Children[0]);
+    emit(emitInfo, n->Children[0]);
 
     /* If lower limit == 0.0 and upper limit == 1.0,
      *    set prev instruction's SaturateMode field to SATURATE_ZERO_ONE.
@@ -833,7 +834,7 @@ emit_fcall(slang_emit_info *emitInfo, slang_ir_node *n)
     /* add RET instruction now, if needed */
     inst = prev_instruction(emitInfo);
     if (inst && inst->Opcode != OPCODE_RET) {
-	inst = new_instruction(emitInfo, OPCODE_RET);
+	new_instruction(emitInfo, OPCODE_RET);
     }
 
     if (emitInfo->EmitBeginEndSub) {
@@ -1215,7 +1216,7 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
 {
     struct gl_program *prog = emitInfo->prog;
     struct prog_instruction *endInst;
-    GLuint beginInstLoc, tailInstLoc, endInstLoc;
+    GLuint beginInstLoc, endInstLoc;
     slang_ir_node *ir;
 
     /* emit OPCODE_BGNLOOP */
@@ -1228,7 +1229,6 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
     emit(emitInfo, n->Children[0]);
 
     /* tail */
-    tailInstLoc = prog->NumInstructions;
     if (n->Children[1]) {
 	if (emitInfo->EmitComments)
 	    emit_comment(emitInfo, "Loop tail code:");
@@ -1359,7 +1359,7 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
 	    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
 	    n->InstLocation = emitInfo->prog->NumInstructions;
 
-	    inst = new_instruction(emitInfo, opcode);
+	    new_instruction(emitInfo, opcode);
 	    inst = new_instruction(emitInfo, OPCODE_ENDIF);
 
 	    emitInfo->prog->Instructions[ifInstLoc].BranchTarget
@@ -1839,7 +1839,8 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
     /* finish up by adding the END opcode to program */
     if (withEnd) {
 	struct prog_instruction *inst;
-	inst = new_instruction(&emitInfo, OPCODE_END);
+	//inst = new_instruction(&emitInfo, OPCODE_END);
+	new_instruction(&emitInfo, OPCODE_END);
     }
 
     _slang_resolve_subroutines(&emitInfo);

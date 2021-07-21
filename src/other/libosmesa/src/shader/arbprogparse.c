@@ -1823,7 +1823,7 @@ parse_param_elements(GLcontext * ctx, const GLubyte ** inst,
 
 		for (new_idx = start_idx; new_idx <= end_idx; new_idx++) {
 		    state_tokens[2] = new_idx;
-		    idx = _mesa_add_state_reference(Program->Base.Parameters,
+		    _mesa_add_state_reference(Program->Base.Parameters,
 						    state_tokens);
 		    param_var->param_binding_length++;
 		    Program->Base.NumParameters++;
@@ -1880,7 +1880,6 @@ parse_param(GLcontext * ctx, const GLubyte ** inst, struct var_cache **vc_head,
     GLint specified_length;
     struct var_cache *param_var;
 
-    err = 0;
     param_var = parse_string(inst, vc_head, Program, &found);
     Program->Position = parse_position(inst);
 
@@ -3793,7 +3792,6 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
     program->UsesKill = 0;
 
     vc_head = NULL;
-    err = GL_FALSE;
 
     /* Start examining the tokens in the array */
     inst = parsed;

@@ -28,7 +28,6 @@
 
 static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
 {
-    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
     SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
     SWvertex *v[3];
     GLfloat z[3];
@@ -59,6 +58,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
 	    if (facing == 1) {
 		if (IND & SS_TWOSIDE_BIT) {
 		    if (IND & SS_RGBA_BIT) {
+			struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 			if (VB->ColorPtr[1]) {
 			    GLfloat(*vbcolor)[4] = VB->ColorPtr[1]->data;
 
@@ -95,6 +95,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
 			    }
 			}
 		    } else {
+			struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 			GLfloat *vbindex = (GLfloat *)VB->IndexPtr[1]->data;
 			saved_index[0] = v[0]->index;
 			saved_index[1] = v[1]->index;
@@ -162,6 +163,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
     if (IND & SS_TWOSIDE_BIT) {
 	if (facing == 1) {
 	    if (IND & SS_RGBA_BIT) {
+		struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 		if (VB->ColorPtr[1]) {
 		    COPY_CHAN4(v[0]->color, saved_color[0]);
 		    COPY_CHAN4(v[1]->color, saved_color[1]);

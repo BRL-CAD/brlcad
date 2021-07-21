@@ -779,10 +779,9 @@ static struct ureg emit_combine(struct texenv_fragment_program *p,
 				const struct mode_opt *opt)
 {
     struct ureg src[3];
-    struct ureg tmp, half;
+    struct ureg tmp = undef;
+    struct ureg half;
     GLuint i;
-
-    tmp = undef; /* silence warning (bug 5318) */
 
     for (i = 0; i < nr; i++)
 	src[i] = emit_combine_source(p, mask, unit, opt[i].Source, opt[i].Operand);
@@ -925,7 +924,7 @@ emit_texenv(struct texenv_fragment_program *p, GLuint unit)
 	/* Need to do something to stop from re-emitting identical
 	 * argument calculations here:
 	 */
-	out = emit_combine(p, dest, WRITEMASK_XYZ, saturate,
+	emit_combine(p, dest, WRITEMASK_XYZ, saturate,
 			   unit,
 			   key->unit[unit].NumArgsRGB,
 			   key->unit[unit].ModeRGB,

@@ -96,7 +96,6 @@ texstore_rgb_fxt1(TEXSTORE_PARAMS)
 	_mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
 	pixels = tempImage;
 	srcRowStride = 3 * srcWidth;
-	srcFormat = GL_RGB;
     } else {
 	pixels = (const GLchan *) srcAddr;
 	srcRowStride = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat,
@@ -152,7 +151,6 @@ texstore_rgba_fxt1(TEXSTORE_PARAMS)
 	_mesa_adjust_image_for_convolution(ctx, dims, &srcWidth, &srcHeight);
 	pixels = tempImage;
 	srcRowStride = 4 * srcWidth;
-	srcFormat = GL_RGBA;
     } else {
 	pixels = (const GLchan *) srcAddr;
 	srcRowStride = _mesa_image_row_stride(srcPacking, srcWidth, srcFormat,
