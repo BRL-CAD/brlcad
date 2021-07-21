@@ -1385,7 +1385,7 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
 static GLuint
 fix_swizzle(GLuint swizzle)
 {
-    GLuint swz[4], i;
+    GLuint swz[4] = {0}, i;
     for (i = 0; i < 4; i++) {
 	swz[i] = GET_SWZ(swizzle, i);
 	if (swz[i] == SWIZZLE_NIL) {

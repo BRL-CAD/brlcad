@@ -522,7 +522,7 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
 		    }
 		} else if (vSize <= list->Parameters[i].Size) {
 		    /* see if we can match this constant (with a swizzle) */
-		    GLuint swz[4];
+		    GLuint swz[4] = {0};
 		    GLuint match = 0, j, k;
 		    for (j = 0; j < vSize; j++) {
 			if (v[j] == list->ParameterValues[i][j]) {

@@ -80,7 +80,7 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
 void GLAPIENTRY
 _mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
 {
-    GLfloat fparams[4];
+    GLfloat fparams[4] = {0.0};
     GET_CURRENT_CONTEXT(ctx);
     ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -148,7 +148,7 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 void GLAPIENTRY
 _mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params)
 {
-    GLfloat fparams[4];
+    GLfloat fparams[4] = {0.0};
     GET_CURRENT_CONTEXT(ctx);
     ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -348,7 +348,7 @@ _mesa_GetProgramEnvParameterdvARB(GLenum target, GLuint index,
 				  GLdouble *params)
 {
     GET_CURRENT_CONTEXT(ctx);
-    GLfloat fparams[4];
+    GLfloat fparams[4] = {0.0};
 
     _mesa_GetProgramEnvParameterfvARB(target, index, fparams);
     if (ctx->ErrorValue == GL_NO_ERROR) {
@@ -564,7 +564,7 @@ _mesa_GetProgramLocalParameterdvARB(GLenum target, GLuint index,
 				    GLdouble *params)
 {
     GET_CURRENT_CONTEXT(ctx);
-    GLfloat floatParams[4];
+    GLfloat floatParams[4] = {0.0};
     _mesa_GetProgramLocalParameterfvARB(target, index, floatParams);
     if (ctx->ErrorValue == GL_NO_ERROR) {
 	COPY_4V(params, floatParams);

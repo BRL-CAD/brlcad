@@ -863,7 +863,7 @@ void GLAPIENTRY
 _mesa_GetProgramNamedParameterdvNV(GLuint id, GLsizei len, const GLubyte *name,
 				   GLdouble *params)
 {
-    GLfloat floatParams[4];
+    GLfloat floatParams[4] = {0.0};
     _mesa_GetProgramNamedParameterfvNV(id, len, name, floatParams);
     COPY_4V(params, floatParams);
 }

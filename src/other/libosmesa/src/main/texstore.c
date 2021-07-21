@@ -345,8 +345,10 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
 	    = (transferOps & IMAGE_PRE_CONVOLUTION_BITS) | IMAGE_CLAMP_BIT;
 	const GLuint postConvTransferOps
 	    = (transferOps & IMAGE_POST_CONVOLUTION_BITS) | IMAGE_CLAMP_BIT;
-	GLint img, row;
-	GLint convWidth, convHeight;
+	GLint img = 0;
+	GLint row = 0;
+	GLint convWidth = 0;
+	GLint convHeight = 0;
 	GLfloat *convImage;
 
 	/* pre-convolution image buffer (3D) */
