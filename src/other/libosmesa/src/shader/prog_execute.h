@@ -70,11 +70,6 @@ struct gl_program_machine {
     FetchTexelDerivFunc FetchTexelDeriv;
 };
 
-
-extern void
-_mesa_get_program_register(GLcontext *ctx, enum register_file file,
-			   GLuint index, GLfloat val[4]);
-
 extern GLboolean
 _mesa_execute_program(GLcontext *ctx,
 		      const struct gl_program *program,
