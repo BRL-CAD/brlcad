@@ -916,6 +916,8 @@ mark_as_advanced(P2T_INCLUDE_DIR)
 mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
+mark_as_advanced(POLY2TRI_LIBRARIES)
+mark_as_advanced(POLY2TRI_INCLUDE_DIRS)
 
 # PROJ.4 library - used by GDAL
 set(proj4_DESCRIPTION "

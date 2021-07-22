@@ -1239,6 +1239,10 @@ if(CMAKE_THREAD_LIBS_INIT)
 else(CMAKE_THREAD_LIBS_INIT)
   message("Using threading from system library")
 endif(CMAKE_THREAD_LIBS_INIT)
+mark_as_advanced(CMAKE_HP_PTHREADS_INIT)
+mark_as_advanced(CMAKE_THREADS_LIBS_INIT)
+mark_as_advanced(CMAKE_USE_PTHREADS_INIT)
+mark_as_advanced(CMAKE_USE_WIN32_THREADS_INIT)
 
 # By default, the Threads package doesn't stash any of its values in
 # cache.  This is inconvenient for debugging, so we set them ourselves.
