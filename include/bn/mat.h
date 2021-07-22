@@ -483,6 +483,16 @@ BN_EXPORT extern void persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t n
 BN_EXPORT extern void mike_persp_mat(fastf_t *pmat, const fastf_t *eye);
 BN_EXPORT extern void deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye);
 
+
+/* Option parser/validator for libbu's option system that will read in a matrix
+ * from the argv entries.  set_var should be a matp_t
+ *
+ * NOTE:  In one sense this could be defined with the other option parsers in
+ * bu/opt.h, as vmath.h (which defines the matrix type) is stand-alone, but
+ * since it is defining a matrix it's a better overall conceptual fit with
+ * libbn - hence it is defined as part of that API. */
+BN_EXPORT extern int bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+
 __END_DECLS
 
 #endif  /* BN_MAT_H */
