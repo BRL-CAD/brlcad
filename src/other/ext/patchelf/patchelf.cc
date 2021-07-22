@@ -776,12 +776,15 @@ void ElfFile<ElfFileParamNames>::rewriteSectionsLibrary()
        PT_LOAD segment located directly after the last virtual address
        page of other segments. */
     Elf_Addr startPage = 0;
+    Elf_Addr firstPage = 0;
     for (auto & phdr : phdrs) {
         Elf_Addr thisPage = roundUp(rdi(phdr.p_vaddr) + rdi(phdr.p_memsz), getPageSize());
         if (thisPage > startPage) startPage = thisPage;
+        if (rdi(phdr.p_type) == PT_PHDR) firstPage = rdi(phdr.p_vaddr) - rdi(phdr.p_offset);
     }
 
     debug("last page is 0x%llx\n", (unsigned long long) startPage);
+    debug("first page is 0x%llx\n", (unsigned long long) firstPage);
 
     /* When normalizing note segments we will in the worst case be adding
        1 program header for each SHT_NOTE section. */
@@ -854,7 +857,7 @@ void ElfFile<ElfFileParamNames>::rewriteSectionsLibrary()
     assert(curOff == startOffset + neededSpace);
 
     /* Write out the updated program and section headers */
-    rewriteHeaders(rdi(hdr->e_phoff));
+    rewriteHeaders(firstPage + rdi(hdr->e_phoff));
 }
 
 
@@ -1063,7 +1066,7 @@ void ElfFile<ElfFileParamNames>::rewriteHeaders(Elf_Addr phdrAddress)
 
     /* If there is a segment for the program header table, update it.
        (According to the ELF spec, there can only be one.) */
-    for (auto phdr : phdrs) {
+    for (auto & phdr : phdrs) {
         if (rdi(phdr.p_type) == PT_PHDR) {
             phdr.p_offset = hdr->e_phoff;
             wri(phdr.p_vaddr, wri(phdr.p_paddr, phdrAddress));
@@ -1296,31 +1299,31 @@ void ElfFile<ElfFileParamNames>::modifyRPath(RPathOp op,
     char * rpath = nullptr;
     Elf_Dyn *dynRPath = nullptr, *dynRunPath = nullptr;
     {
-    auto dyn = (Elf_Dyn *)(contents + rdi(shdrDynamic.sh_offset));
-    for ( ; rdi(dyn->d_tag) != DT_NULL; dyn++) {
-        if (rdi(dyn->d_tag) == DT_RPATH) {
-            dynRPath = dyn;
-            /* Only use DT_RPATH if there is no DT_RUNPATH. */
-            if (!dynRunPath)
-                rpath = strTab + rdi(dyn->d_un.d_val);
-        }
-        else if (rdi(dyn->d_tag) == DT_RUNPATH) {
-            dynRunPath = dyn;
-            rpath = strTab + rdi(dyn->d_un.d_val);
-        }
-        else if (rdi(dyn->d_tag) == DT_NEEDED)
-            neededLibs.push_back(std::string(strTab + rdi(dyn->d_un.d_val)));
-    }
-    }
+       auto dyn = (Elf_Dyn *)(contents + rdi(shdrDynamic.sh_offset));
+       for ( ; rdi(dyn->d_tag) != DT_NULL; dyn++) {
+           if (rdi(dyn->d_tag) == DT_RPATH) {
+               dynRPath = dyn;
+               /* Only use DT_RPATH if there is no DT_RUNPATH. */
+               if (!dynRunPath)
+                   rpath = strTab + rdi(dyn->d_un.d_val);
+           }
+           else if (rdi(dyn->d_tag) == DT_RUNPATH) {
+               dynRunPath = dyn;
+               rpath = strTab + rdi(dyn->d_un.d_val);
+           }
+           else if (rdi(dyn->d_tag) == DT_NEEDED)
+               neededLibs.push_back(std::string(strTab + rdi(dyn->d_un.d_val)));
+       }
 
-    if (op == rpPrint) {
-        printf("%s\n", rpath ? rpath : "");
-        return;
-    }
+        if (op == rpPrint) {
+            printf("%s\n", rpath ? rpath : "");
+            return;
+        }
 
-    if (op == rpShrink && !rpath) {
-        debug("no RPATH to shrink\n");
-        return;
+	if (op == rpShrink && !rpath) {
+            debug("no RPATH to shrink\n");
+            return;
+        }
     }
 
 
@@ -1377,20 +1380,22 @@ void ElfFile<ElfFileParamNames>::modifyRPath(RPathOp op,
             return;
         }
 
-        auto dyn = (Elf_Dyn *)(contents + rdi(shdrDynamic.sh_offset));
-        Elf_Dyn * last = dyn;
-        for ( ; rdi(dyn->d_tag) != DT_NULL; dyn++) {
-            if (rdi(dyn->d_tag) == DT_RPATH) {
-                debug("removing DT_RPATH entry\n");
-                changed = true;
-            } else if (rdi(dyn->d_tag) == DT_RUNPATH) {
-                debug("removing DT_RUNPATH entry\n");
-                changed = true;
-            } else {
-                *last++ = *dyn;
-            }
-        }
-        memset(last, 0, sizeof(Elf_Dyn) * (dyn - last));
+	{
+           auto dyn = (Elf_Dyn *)(contents + rdi(shdrDynamic.sh_offset));
+           Elf_Dyn * last = dyn;
+           for ( ; rdi(dyn->d_tag) != DT_NULL; dyn++) {
+               if (rdi(dyn->d_tag) == DT_RPATH) {
+                   debug("removing DT_RPATH entry\n");
+                   changed = true;
+               } else if (rdi(dyn->d_tag) == DT_RUNPATH) {
+                   debug("removing DT_RUNPATH entry\n");
+                   changed = true;
+               } else {
+                   *last++ = *dyn;
+               }
+           }
+           memset(last, 0, sizeof(Elf_Dyn) * (dyn - last));
+	}
         return;
     }
 
