@@ -11,7 +11,6 @@ set(other_licenses
   linenoise.txt
   netpbm.txt
   openNURBS.txt
-  openscenegraph.txt
   png.txt
   poly2tri.txt
   proj-4.txt
