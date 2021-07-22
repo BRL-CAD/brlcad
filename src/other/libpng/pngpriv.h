@@ -139,7 +139,6 @@
    /* NEON optimizations are to be at least considered by libpng, so enable the
     * callbacks to do this.
     */
-#  define PNG_FILTER_OPTIMIZATIONS png_init_filter_functions_neon
 
    /* By default the 'intrinsics' code in arm/filter_neon_intrinsics.c is used
     * if possible - if __ARM_NEON__ is set and the compiler version is not known
@@ -238,15 +237,10 @@
 #      endif
 #   endif
 
-#   if PNG_INTEL_SSE_IMPLEMENTATION > 0
-#      define PNG_FILTER_OPTIMIZATIONS png_init_filter_functions_sse2
-#   endif
-#else
 #   define PNG_INTEL_SSE_IMPLEMENTATION 0
 #endif
 
 #if PNG_MIPS_MSA_OPT > 0
-#  define PNG_FILTER_OPTIMIZATIONS png_init_filter_functions_msa
 #  ifndef PNG_MIPS_MSA_IMPLEMENTATION
 #     if defined(__mips_msa)
 #        if defined(__clang__)
@@ -266,7 +260,6 @@
 #endif /* PNG_MIPS_MSA_OPT > 0 */
 
 #if PNG_POWERPC_VSX_OPT > 0
-#  define PNG_FILTER_OPTIMIZATIONS png_init_filter_functions_vsx
 #  define PNG_POWERPC_VSX_IMPLEMENTATION 1
 #endif
 
@@ -2083,36 +2076,6 @@ PNG_INTERNAL_FUNCTION(void, png_image_free, (png_imagep image), PNG_EMPTY);
 #endif /* !SIMPLIFIED_READ */
 
 #endif /* SIMPLIFIED READ/WRITE */
-
-/* These are initialization functions for hardware specific PNG filter
- * optimizations; list these here then select the appropriate one at compile
- * time using the macro PNG_FILTER_OPTIMIZATIONS.  If the macro is not defined
- * the generic code is used.
- */
-#ifdef PNG_FILTER_OPTIMIZATIONS
-PNG_INTERNAL_FUNCTION(void, PNG_FILTER_OPTIMIZATIONS, (png_structp png_ptr,
-   unsigned int bpp), PNG_EMPTY);
-   /* Just declare the optimization that will be used */
-#else
-   /* List *all* the possible optimizations here - this branch is required if
-    * the builder of libpng passes the definition of PNG_FILTER_OPTIMIZATIONS in
-    * CFLAGS in place of CPPFLAGS *and* uses symbol prefixing.
-    */
-#  if PNG_ARM_NEON_OPT > 0
-PNG_INTERNAL_FUNCTION(void, png_init_filter_functions_neon,
-   (png_structp png_ptr, unsigned int bpp), PNG_EMPTY);
-#endif
-
-#if PNG_MIPS_MSA_OPT > 0
-PNG_INTERNAL_FUNCTION(void, png_init_filter_functions_msa,
-   (png_structp png_ptr, unsigned int bpp), PNG_EMPTY);
-#endif
-
-#  if PNG_INTEL_SSE_IMPLEMENTATION > 0
-PNG_INTERNAL_FUNCTION(void, png_init_filter_functions_sse2,
-   (png_structp png_ptr, unsigned int bpp), PNG_EMPTY);
-#  endif
-#endif
 
 PNG_INTERNAL_FUNCTION(png_uint_32, png_check_keyword, (png_structrp png_ptr,
    png_const_charp key, png_bytep new_key), PNG_EMPTY);
