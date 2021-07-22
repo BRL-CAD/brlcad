@@ -37,6 +37,7 @@
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "vmath.h"
 #include "bn/mat.h"
@@ -1428,6 +1429,112 @@ deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t 
 }
 
 
+int
+bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
+{
+    matp_t m = (matp_t)set_var;
+    mat_t mtmp;
+    MAT_IDN(mtmp);
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bn_opt_mat");
+
+    // First, see if we have a matrix defined in a single string
+    {
+	int ac;
+	char **av;
+	char *str1 = NULL;
+	struct bu_vls mvls = BU_VLS_INIT_ZERO;
+
+	// Pre-process
+	str1 = bu_strdup(argv[0]);
+	int i = 0;
+	while (str1[i]) {
+	    /* If we have a separator, replace with a space */
+	    if (str1[i] == ',' || str1[i] == '/') {
+		str1[i] = ' ';
+	    }
+	    i++;
+	}
+	bu_vls_sprintf(&mvls, "%s", str1);
+	bu_free(str1, "str1");
+	if (bu_vls_cstr(&mvls)[bu_vls_strlen(&mvls) - 1] == '}')
+	    bu_vls_trunc(&mvls, -1);
+	if (bu_vls_cstr(&mvls)[0] == '{')
+	    bu_vls_nibble(&mvls, 1);
+	str1 = bu_strdup(bu_vls_cstr(&mvls));
+	bu_vls_free(&mvls);
+
+	av = (char **)bu_calloc(strlen(str1), sizeof(char *), "av");
+	ac = bu_argv_from_string(av, strlen(str1), str1);
+	if (ac == 16) {
+	    // We have 16 elements - read each one to see if it's a valid fastf_t
+	    for (i = 0; i < ac; i++) {
+		fastf_t mi = 0.0;
+		if (bu_opt_fastf_t(msg, 1, (const char **)&av[i], &mi) == -1) {
+		    if (msg) {
+			bu_vls_sprintf(msg, "Not a number: %s.\n", av[i]);
+		    }
+
+		    bu_free(str1, "str1");
+		    if (av)
+			bu_free((char *)av, "av");
+		    return -1;
+		}
+		mtmp[i] = mi;
+	    }
+
+	    // Have 16 valid numbers - we have a matrix.
+	    if (m)
+		MAT_COPY(m, mtmp);
+
+	    // Cleanup
+	    bu_free(str1, "str1");
+	    if (av)
+		bu_free((char *)av, "av");
+
+	    // Used 1 arg to read in the matrix
+	    return 1;
+	}
+
+	// Done with string copy
+	bu_free(str1, "str1");
+	if (av)
+	    bu_free((char *)av, "av");
+    }
+
+    // If we didn't have a single arg matrix, see if we
+    // have a special case specifier.
+    if (BU_STR_EQUIV(argv[0], "IDN")) {
+	if (m)
+	    MAT_IDN(m);
+	return 1;
+    }
+
+    // The other option is 16 individual numbers, if we have that many args...
+    if (argc > 15) {
+	// We have at lest 16 elements - read see if they define a valid matrix
+	size_t i = 0;
+	for (i = 0; i < argc; i++) {
+	    fastf_t mi = 0.0;
+	    if (bu_opt_fastf_t(msg, 1, &argv[i], &mi) == -1) {
+		if (msg) {
+		    bu_vls_sprintf(msg, "Not a number: %s.\n", argv[i]);
+		}
+		return -1;
+	    }
+	    mtmp[i] = mi;
+	}
+
+	// Have 16 valid numbers - we have a matrix.
+	if (i == 16 && m)
+	    MAT_COPY(m, mtmp);
+
+	return 16;
+    }
+
+    // Nope, no matrix
+    return 0;
+}
 
 /** @} */
 /*

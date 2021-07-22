@@ -485,6 +485,17 @@ BRLCAD_ADD_TEST(NAME bn_mat_ck_3             COMMAND bn_test mat 26 -0.38457345,
 
 BRLCAD_ADD_TEST(NAME bn_mat_dup              COMMAND bn_test mat 27 0)
 
+
+# For function #28 (bn_mat_opt), two matrices are supplied.  The
+# first is the expected answer - 16 floating point values separated
+# by commas.  Subsequent arguments are the option input(s)
+
+BRLCAD_ADD_TEST(NAME bn_mat_opt_idn_1          COMMAND bn_test mat 28 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 IDN)
+BRLCAD_ADD_TEST(NAME bn_mat_opt_idn_2          COMMAND bn_test mat 28 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1})
+BRLCAD_ADD_TEST(NAME bn_mat_opt_idn_3          COMMAND bn_test mat 28 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1)
+BRLCAD_ADD_TEST(NAME bn_mat_opt_idn_4          COMMAND bn_test mat 28 27.7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,3.3 {27.7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,3.3})
+BRLCAD_ADD_TEST(NAME bn_mat_opt_idn_5          COMMAND bn_test mat 28 27.7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,3.3 27.7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 3.3)
+
 #  ***************** sobolseq.c tests ***************
 
 BRLCAD_ADD_TEST(NAME bn_sobol_3_1000         COMMAND bn_test sobolseq 3 1000)
