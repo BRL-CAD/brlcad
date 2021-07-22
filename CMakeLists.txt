@@ -1264,10 +1264,14 @@ set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 # By default, the Threads package doesn't stash any of its values in
 # cache.  This is inconvenient for debugging, so we set them ourselves.
-set(CMAKE_THREAD_LIBS_INIT ${CMAKE_THREAD_LIBS_INIT} CACHE STRING "Threads")
-set(CMAKE_USE_WIN32_THREADS_INIT ${CMAKE_USE_WIN32_THREADS_INIT} CACHE STRING "Threads")
-set(CMAKE_USE_PTHREADS_INIT ${CMAKE_USE_PTHREADS_INIT} CACHE STRING "Threads")
 set(CMAKE_HP_PTHREADS_INIT ${CMAKE_HP_PTHREADS_INIT} CACHE STRING "Threads")
+set(CMAKE_THREAD_LIBS_INIT ${CMAKE_THREAD_LIBS_INIT} CACHE STRING "Threads")
+set(CMAKE_USE_PTHREADS_INIT ${CMAKE_USE_PTHREADS_INIT} CACHE STRING "Threads")
+set(CMAKE_USE_WIN32_THREADS_INIT ${CMAKE_USE_WIN32_THREADS_INIT} CACHE STRING "Threads")
+mark_as_advanced(CMAKE_HP_PTHREADS_INIT)
+mark_as_advanced(CMAKE_THREADS_LIBS_INIT)
+mark_as_advanced(CMAKE_USE_PTHREADS_INIT)
+mark_as_advanced(CMAKE_USE_WIN32_THREADS_INIT)
 
 # Check for the C++ STL library - need to link it explicitly in
 # some compilation situations
