@@ -5,6 +5,8 @@
 # bson extension can do what we need - the jsoncons setup is header only,
 # so it might be simpler to integrate and keep updated
 
+# Might also be worth a look, if MessagePack is an option:
+# https://github.com/msgpack/msgpack-c/tree/c_master
 
 # For testing
 # set(BRLCAD_ENABLE_BINARY_ATTRIBUTES ON)
