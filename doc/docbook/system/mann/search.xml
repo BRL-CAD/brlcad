@@ -58,7 +58,7 @@
       "alphanum" algorithm, which is basically a human-intuitive ordering for
       strings with letters and numbers.  For example, a result returning d1.r, d10.r and d2.r
       will be sorted as:
-      
+
       <literallayout>
 d1.r
 d2.r
@@ -66,7 +66,7 @@ d10.r
       </literallayout>
 
       instead of the default ASCII character ordering, which would look like:
-      
+
       <literallayout>
 d1.r
 d10.r
@@ -234,17 +234,6 @@ d2.r
       </varlistentry>
 
       <varlistentry>
-	<term><emphasis remap="B" role="bold">-idn</emphasis></term>
-	<listitem>
-	  <para>
-	    True if the object in question is being combined into the local hierarchy with an
-	    identity matrix.  This is most useful in combination with the <emphasis remap="B" role="bold">!</emphasis>
-	    operator, for finding objects in a hierarchy with matricies over them.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
 	<term><emphasis remap="B" role="bold">-iname</emphasis> <emphasis remap="I">pattern</emphasis></term>
 	<listitem>
 	  <para>
@@ -262,6 +251,19 @@ d2.r
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-matrix</emphasis> <emphasis remap="I">IDN|{#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#}</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the object in question is being combined into the local hierarchy with an
+	    with the specified matrix.  This is useful in combination with the <emphasis remap="B" role="bold">!</emphasis>
+	    operator, for finding objects in a hierarchy with matricies over them.  "IDN" is a shorthand
+	    that allows users to specify an identity matrix more succinctly.
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><emphasis remap="B" role="bold">-maxdepth</emphasis> <emphasis remap="I">n</emphasis></term>
 	<listitem>
@@ -915,7 +917,7 @@ d2.r
     <example><title>Finding all Non-Identity Matrix Instances</title>
 
       <para>
-	<userinput>search / ! -idn -</userinput>
+	<userinput>search / ! -matrix IDN -</userinput>
       </para>
       <para>
 	Reports all comb instances included in their parent comb with a
