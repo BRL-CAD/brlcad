@@ -79,11 +79,8 @@ jobs:
           find . -name '*.gcda' -exec rm {} \;
           make check
           lcov --capture --directory . --output-file coverage.info
-          lcov -r coverage.info \*\/build\/\* > coverage-2.info
-          lcov -r coverage-2.info \*\/other\/\* > coverage-3.info
-          lcov -r coverage-3.info \/usr\/\* > coverage-4.info
-          lcov -r coverage-4.info \*\/misc\/\* > coverage-5.info
-          lcov -r coverage-5.info \*\/tests\/\* > coverage_cad.info
+          lcov -r coverage.info \*\/other\/\* > coverage-2.info
+          lcov -r coverage-2.info \/usr\/\* > coverage_cad.info
           rm coverage-*.info
           #genhtml coverage_cad.info --output-directory lcov-output
           mv coverage_cad.info ..
