@@ -64,7 +64,7 @@ set(LIBBU_SOURCES
   dir.c
   dirent.c
   damlevlim.cpp
-  datetime.cpp
+  datetime.c
   dylib.c
   encode.c
   endian.c

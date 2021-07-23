@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	    if (!BU_STR_EQUAL(result.vls_str, "2069-09-27T05:00:49Z"))
 		return 1;
 	    break;
-
+#if 0
 	case 11:
 	    {
 		/* Per POSIX and Microsoft's docs, time should return the time
@@ -160,6 +160,7 @@ main(int argc, char *argv[])
 		bu_vls_free(&result2);
 		return 0;
 	    }
+#endif
     }
     return 0;
 }
