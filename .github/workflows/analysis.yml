@@ -37,6 +37,7 @@ jobs:
           ./clang-static-analyzer-run.sh
 
   linux_cov:
+    # See https://app.codecov.io/gh/BRL-CAD/brlcad for analysis results
     name: LCOV Coverage testing
     runs-on: ubuntu-latest
     strategy:
