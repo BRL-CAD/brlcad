@@ -1,0 +1,95 @@
+name: BRL-CAD Analysis
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+
+  linux_static:
+    name: Clang Static Analyser
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+        # Setup hint from https://github.com/darktable-org/rawspeed/blob/develop/.github/workflows/ci-static-analysis.yml
+      - name: Clang Static Analyzer Setup
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install clang-tools-10
+          # We want as many deps pre-installed as we can for this - the analyzer setup slows their compilation
+          sudo apt-get install libproj-dev libgdal-dev tcl-dev tk-dev itcl3-dev itk3-dev libpng-dev zlib1g-dev libxml2-dev libxslt1-dev xsltproc libxml2-utils astyle xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev
+          sudo apt-get clean
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Run Analyzer
+        run: |
+          pwd
+          export PATH=$ENV{GITHUB_WORKSPACE}:/usr/share/clang/scan-build-10/bin:/usr/share/clang/scan-build-10/libexec:$PATH
+          mkdir build && cd build && cp ../misc/clang-static-analyzer-run.sh .
+          ./clang-static-analyzer-run.sh
+
+        linux_cov:
+          name: LCOV Coverage testing
+        runs-on: ubuntu-latest
+        strategy:
+          fail-fast: true
+        steps:
+          - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          # Get the lcov tool and its dependencies
+          sudo apt-get install lcov
+          # We want as many deps pre-installed as we can for this - the analyzer setup slows their compilation
+          sudo apt-get install libproj-dev libgdal-dev tcl-dev tk-dev itcl3-dev itk3-dev libpng-dev zlib1g-dev libxml2-dev libxslt1-dev xsltproc libxml2-utils astyle xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev
+          sudo apt-get clean
+
+      - name: Setup - Qt
+        uses: jurplel/install-qt-action@v2
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure
+        run: |
+          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          cmake -S . -B build -DBRLCAD_ENABLE_QT=ON -DBRLCAD_ENABLE_COVERAGE=ON
+
+      - name: Build
+        run: |
+          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          cd build && make && cd ..
+
+      - name: Run Coverage Test
+        run: |
+          export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
+          cd build
+          find . -name '*.gcda' -exec rm {} \;
+          make check
+          lcov --capture --directory . --output-file coverage.info
+          lcov -r coverage.info \*\/build\/\* > coverage-2.info
+          lcov -r coverage-2.info \*\/other\/\* > coverage-3.info
+          lcov -r coverage-3.info \/usr\/\* > coverage-4.info
+          lcov -r coverage-4.info \*\/misc\/\* > coverage-5.info
+          lcov -r coverage-5.info \*\/tests\/\* > coverage_cad.info
+          rm coverage-*.info
+          #genhtml coverage_cad.info --output-directory lcov-output
+          mv coverage_cad.info ..
+
+      - name: Upload
+        uses: codecov/codecov-action@v2
+        with:
+          files: ./coverage_cad.info
+
