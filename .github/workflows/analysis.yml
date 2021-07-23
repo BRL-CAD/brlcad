@@ -36,13 +36,13 @@ jobs:
           mkdir build && cd build && cp ../misc/clang-static-analyzer-run.sh .
           ./clang-static-analyzer-run.sh
 
-        linux_cov:
-          name: LCOV Coverage testing
-        runs-on: ubuntu-latest
-        strategy:
-          fail-fast: true
-        steps:
-          - name: Setup - CMake
+  linux_cov:
+    name: LCOV Coverage testing
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
         uses: lukka/get-cmake@latest
 
       - name: Setup
