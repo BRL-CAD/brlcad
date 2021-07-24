@@ -32,7 +32,7 @@
 #include "bnetwork.h"
 #include "bio.h"
 
-#if !defined(USE_QT) && defined(TK)
+#if !defined(USE_QT) && defined(HAVE_TK)
 #  include "tcl.h"
 #  include "tk.h"
 #endif
@@ -59,7 +59,7 @@
 #include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
-#if !defined(USE_QT) && defined(TK)
+#if !defined(USE_QT) && defined(HAVE_TK)
 #  include "tclcad.h"
 #endif
 
@@ -187,7 +187,7 @@ find_man_file(const char *man_name, const char *lang, char section, int gui)
 }
 
 
-#if !defined(USE_QT) && defined(TK)
+#if !defined(USE_QT) && defined(HAVE_TK)
 // Tk based GUI
 int
 tk_man_gui(const char *man_name, char man_section, const char *man_file)
@@ -720,7 +720,7 @@ BRLMAN_MAIN(
     }
 
 #ifdef MAN_GUI
-#  if !defined(USE_QT) && defined(TK)
+#  if !defined(USE_QT) && defined(HAVE_TK)
     return tk_man_gui(man_name, man_section, man_file);
 #  else
     return qt_man_gui(man_name, man_section, man_file);
