@@ -25,3 +25,19 @@ and install the older version of bigdecimal (per https://stackoverflow.com/a/170
 
 gem install bigdecimal -v 1.4.2
 
+
+
+
+Note - even without the gitstats web system, git's command line itself can do
+quite a bit of interesting summarization.  For example, the following script
+summarizes commit counts per author per year:
+
+#!/bin/bash
+for y in {1984..2021}; do
+	py=$(expr $y - 1);
+	d1="1 Jan $py"
+	d2="1 Jan $y"
+	echo $d1 "-" $d2
+	git shortlog --all -sne --since="$d1" --before="$d2";
+done
+
