@@ -361,9 +361,6 @@ if(BRLCAD_TCL_BUILD)
   # Let the BRL-CAD compilation know we have Tcl
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
 
-  # There is no system init.tcl that we need to provide a path for
-  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
-
   # Set the necessary variables ourselves since FindTCL.cmake doesn't know about our build
   set(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
   set(TCL_STUB_LIBRARY tclstub CACHE STRING "TCL_LIBRARY" FORCE)
