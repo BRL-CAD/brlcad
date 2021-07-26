@@ -1319,7 +1319,7 @@ Release steps are as follows:
     bin/rt        # should report usage with correct library versions
     bin/mged -c test.g "make sph sph ; draw sph ; rt ; after 1000 ; l sph"   # create, view and list info about a sphere
     bin/mged      # displays gui, run: opendb [file join [bu_dir init] test.g] ; draw sph ; rt
-    bin/archer    # displays gui, run: opendb test.g ; draw sph ; rt
+    bin/archer    # displays gui, run: opendb <path to your build dir>/test.g ; draw sph ; rt
 
     # clean up
     cd .. && rm -rf .build
