@@ -1365,7 +1365,7 @@ Release steps are as follows:
     TODO - if we want GNU style changelogs, more work will be needed
     as there's not an out of the box solution...
 
-    LAST=`grep -E "\--- [0-9]{4}-[0-9]{2}-[0-9]{2}" NEWS | head -n 2 | tail -n 1 | awk '{print $2}'`
+    LAST=`grep -E "\--- [0-9]{4}-[0-9X]{2}-[0-9X]{2}" NEWS | head -n 2 | tail -n 1 | awk '{print $2}'`
     echo "LAST=$LAST"
     git log --since=$LAST > ChangeLog
     git add ChangeLog
