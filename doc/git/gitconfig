@@ -30,8 +30,9 @@
 	# Get commit counts per committer (https://stackoverflow.com/a/9839491)
 	ccount = shortlog -s -n --all
 
-        # Cherry-picking
-	cp = cherry-pick
+	# Cherry-picking (we want the reference to prior commit to make it clear this is a
+	# cherry pick commit)
+	cp = cherry-pick -x
 
         # https://gist.github.com/HarshadRanganathan/eb48dd68133054fdd9db2de8b426f411
 	# cherry-pick without making a commit, and when when recording the commit, append a line that says "(cherry picked from commit ...)"
