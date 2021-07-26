@@ -1,4091 +1,512 @@
-TODO - cherry-picking in git has some consequences for merging, which
-may be severe in the RELEASE case (where we will eventually need to
-merge large sets of changes which will include those we cherry picked
-into RELEASE originally.)  Making a note of the commit at which
-RELEASE was last merged, so we can know where to start the change
-set generation for an eventual superset merge that will encompass
-cherry-picked commits:
+commit 8044ec9252cb3db0b51ce1e51bb5f392dc965c29
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 26 14:29:31 2021 -0400
 
-e6f70908a7cb43c18d9965a8929206685dc5e004
+    Bump version numbers
 
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>  2021-02-06 11:26:00
-Committer: Clifford Yapp <238416+starseeker@users.noreply.github.com>  2021-02-06 11:26:00
-Parent: 4bfc8f7df70f650f5784c5758d17367492f362e6 (Update ChangeLog)
-Child:  ce77edb146303ca0351e0c648e1b811ea8bf9cd9 (Merge RELEASE changes back into trunk, increment version numbers)
-Follows: rel-7-24-0
-Precedes:
+commit e19aaa465cb7cc14941b9ec46d4ba0f308e5904f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 26 14:15:00 2021 -0400
 
-    Note the release date in NEWS
+    Archer will need the full directory, at least at the moment.
+    
+    (cherry picked from commit 0839fb52b6a6b324fba54b036419f384231ef3c3)
 
-    svn:revision:78205
-    svn:branch:RELEASE
+commit 291532123056e3ad4dfc424d7b0fff6633994477
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 26 12:35:54 2021 -0400
+
+    Initial working directory is in /home/cyapp - adjust mged test example.
+    
+    (cherry picked from commit deec305c837f7a33dc0c4364e912a12e7b24d328)
+
+commit 63edcadd4952444c7adfcea462dd7d425c0d746a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 26 13:55:29 2021 -0400
+
+    Don't define this at all (even to empty) when building bundled.
+
+commit 5c95a06ef9696e730e9d9109cf850ca7ca6c1e53
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jul 23 10:04:41 2021 -0400
+
+    Apply memory leak fix from upstream commit eb6767
+    
+    Fix memory leak if eXIf has incorrect crc
+
+commit aa62a3d87b484812f6825e8cb66c09e3598f66ea
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jul 23 09:24:32 2021 -0400
+
+    Sigh.  Apparently C++ clocks don't have what we need.  Put back the previous code.
+
+commit 8a61b9422af2eec0b17a51d695007acac34d8274
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jul 22 17:47:31 2021 -0400
+
+    Mark some vars as advanced.
+
+commit 76e6503dea614a192931e993c07b16a74c34a674
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jul 22 17:03:31 2021 -0400
+
+    Replace -idn search opt with more general -matrix
+    
+    Per suggestion from Sean, replace the -idn option (which was limited to
+    identity matrices) with a more general -matrix filter.  IDN is supported
+    as a way to specify the identity matrix ("-idn" is now "-matrix IDN")
+    but the new logic also allows specification of a full 16 number matrix
+    as an alternative.
+
+commit 1f1a662ae8c349789ff3f4d6f8a8ebd654c960e6
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jul 22 15:18:59 2021 -0400
+
+    Add a function for reading in matrices via the bu_opt mechanism.
+
+commit d4ecd86137fa5dd37f6941593b13d08f0b3b54fc
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jul 22 11:34:12 2021 -0400
+
+    Remove PNG_FILTER_OPTIMIZATIONS - we're not using it for this build and we don't want it accidentally defined.
+
+commit 44cdb2e41573aceb4174fac624b620fa739d10bb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 21 18:33:59 2021 -0400
+
+    Apply changes from https://github.com/tcltk commit 4705dbdde2f for CVE-2021-35331
+
+commit 9ffd2f5747d3c7cd6609529bd46bd2ecac22ff33
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 19 21:45:16 2021 -0400
+
+    Upgrade included libtiff in GDAL to latest from https://github.com/OSGeo/gdal
+
+commit 9b0da13ab58ab6d3cd9a2c862e255c2ce1da6e6a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 19 21:32:14 2021 -0400
+
+    Backport OSGeo/gdal double free fix from 148115fcc40f at https://github.com/OSGeo/gdal
+
+commit de6381d829a024749686484eb1da3ae3308dafd8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 13 13:42:37 2021 -0400
+
+    Whoops - don't need the sc_cf.h.in change without the other changes.
+
+commit 0994492ca437fae2a6aa7508820049d649a4ed17
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jun 24 11:13:47 2021 -0400
+
+    Add richer example gource launching line.
+
+commit d711195ef0cda954bb2988d2ea5782e068eeecb3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jun 24 11:12:35 2021 -0400
+
+    Correct spacing on initial setup data.
+
+commit 6e56e184cc0a5326f116a7d545f7a7786c68b08c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jun 24 10:49:33 2021 -0400
+
+    exec is local
+
+commit e03f978f8ff144b2ebb78bbafe93f9f88e3b7d09
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Jun 24 10:48:00 2021 -0400
+
+    Stash a solution to visualizing a subset of the history with gource starting with the full tree (as opposed to its default mode of just the changed files).
+
+commit bc5ff11154f0187a2cc180ff015d157066cc2fa0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 23 18:06:19 2021 -0400
+
+    Document -idn search option - lets us find comb instances with IDN (and non-IDN) matrices.
+
+commit 77b73f61481c500b5676351f3c69cc9c137581fc
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 23 17:10:57 2021 -0400
+
+    More focused search on just the local matrix, rather than the cumulative matrix along the path.
+
+commit fa39a518508d82896ccda50eb9044152295753f5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 23 16:36:53 2021 -0400
+
+    First quick stab at a way to filter paths based on IDN or non-IDN matrices.
+
+commit beb794176337fa91341bfe85c6f121b297660024
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 23 15:57:13 2021 -0400
+
+    If we're reusing dps, don't delete them in try runs.
+
+commit 22fb5e6a72c6244b1ee56fbfc252b569e2aca707
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jun 14 10:29:30 2021 -0400
+
+    Stash some notes about using gource source code visualizer.
+
+commit a52eb7b6323856577e555ef381bf4d877fcb39ff
+Author: Jade <software@lfcode.ca>
+Date:   Sat Jun 12 01:54:17 2021 -0700
+
+    Fix missing includes of <limits>
+    
+    Example compile error from gcc-11.1.0 on archlinux:
+    /home/jade/builds/brlcad/src/brlcad/src/libged/brep/brep.cpp: In function ‘int _brep_cmd_plate_mode(void*, int, const char*
+    *)’:
+    /home/jade/builds/brlcad/src/brlcad/src/libged/brep/brep.cpp:810:48: error: ‘numeric_limits’ is not a member of ‘std’
+      810 |     ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
+          |                                                ^~~~~~~~~~~~~~
+
+commit df2ce0ec39c604a4644ce40f9ef321bdd85f19da
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jun 8 21:48:28 2021 -0400
+
+    Put back the note about git_stats for reference, at least until we find a better solution.
+
+commit d3c7b1d6e9b3f85d95372a5d842e78cc519a0be6
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu May 20 13:12:25 2021 -0400
+
+    I think SVN commit r76847 fixed this
+
+commit 0b4974d1fcfa2abe13291495e0a7252c86b1e4a1
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 13 11:54:31 2021 -0400
+
+    Note MGED script mode fix in NEWS file.
+
+commit 063f3cc47938d334e7ac864d79e89db019bd1866
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu May 20 11:44:29 2021 -0400
+
+    Wait for subprocesses in non-interactive mode
+    
+    Report from user that a script doing a raytrace wasn't producing a file.
+    Sean suspected that MGED was quitting too early and killing the
+    processes run by the script, it looks like that was correct.
+    
+    If we're in script mode, wait for subprocesses to finish up before we
+    quit MGED.
+
+commit ac62105e196cea5f7fa025c81ba408d8d691800c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat May 8 15:10:18 2021 -0400
+
+    Don't crash if bu_ptbl_free is passed NULL.
+
+commit f6725bca40e26f204aed54afaa30cdd587d4a9b8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 5 15:16:51 2021 -0400
+
+    Add missing paren
+
+commit 160803c054afb5e8a558a3a12ea4cf52fad003e3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 5 13:31:54 2021 -0400
+
+    Note documentation changes for bot/seach listing the mode values.
+
+commit 83025aab9cd802df519d665ebd5e89b7f18fab8a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 5 13:21:42 2021 -0400
+
+    Have bot set orientation support param strings as well as cw/ccw forms.
+
+commit 7e1da993d685dbebace9b8ab42d4ef44ee72c2dc
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 5 13:30:44 2021 -0400
+
+    List possible values for mode and orient
+
+commit e0c7216bd054be8a2df4335a16a24104757642cd
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Apr 29 11:06:11 2021 -0400
+
+    Add -o output option to GED stat command
+    
+    For user convenience, add an option to allow for capturing stat command
+    output to a file rather than just printing it.
+
+commit 611814b8c39d8a027f00d08500bad615d4a1dee5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Apr 23 09:37:08 2021 -0400
+
+    Probably want the diff the other way
+
+commit 7e427d87c306fb60438081d45c6b4677f427e4ad
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Apr 23 09:35:35 2021 -0400
+
+    Add an alias for seeing what the changes in a sha1 were relative to its parent
+
+commit 537e213703af63c688666eafdb9697144cb9aee0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Apr 22 08:44:14 2021 -0400
+
+    Unbreak overlay command's support for pattern matching.
+
+commit 4a551eb685c3a4a5b58555a28a85896e79af212c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Apr 19 11:49:09 2021 -0400
+
+    Feeding a full path to ged_exec will work, but generates a GED_UNKNOWN return code since the full path doesn't correspond to a GED command name.  This is fine, except we were checking for any non-zero return from ged_tire and considering it an error, so the output file got deleted.  Check instead if the return code has GED_ERROR set.
+
+commit 2a86a5fc229130752584f1e49e8eb7ea5110fb3a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Apr 3 11:37:28 2021 -0400
+
+    Properly expose redraw as a ged_exec command.
+
+commit df033a02b185fdadb4cf0225204c0028c7719960
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Apr 1 21:11:28 2021 -0400
+
+    Add some notes about following file history in Git.
+
+commit 131a748ba0400d9ad4194f10f30497e52d3f2b44
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 00:44:26 2021 -0400
+
+    Add documentation for BRL-CAD + Git
+    
+    Going through the notes accumulated over the course of the conversion
+    effort, this commit tries to collect the interesting/relevant pieces
+    into some new files for preservation going forward.  (Much of the NOTES
+    file from repoconv is now obsolete, since we have shifted to a
+    conversion approach that does not use the git notes mechanism.)
+
+commit 692c97e253806caa693906f64e6a60357f781a75
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 25 14:02:42 2021 -0400
+
+    libgvm in geomcore uses the external->internal unpacker
+
+commit 1c115e4dc5e6b7b62debc72eda369bc6c1d830d3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 23 09:03:56 2021 -0400
+
+    Just go with basic porcelain without ignored files
+
+commit de26f5a96cb30c60b10bdfb8842aff340ca1b13a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Mar 20 14:17:20 2021 -0400
+
+    Check for a .gitattributes file in the source dir
+    
+    Be proactive about making sure a .gitattributes file doesn't introduce
+    problems into the source tree.  Use the error message to direct devs to
+    the discussion file with more details.
+
+commit 7e009398784d24b7a4edefc32b2b48ad6627fa82
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Mar 20 14:02:04 2021 -0400
+
+    Set up .gitignore with common problem cases
+    
+    This requires some care since patterns here that are too broad will
+    cause problems, but the chances of inadvertently adding these files is
+    high.  Also (unlike .gitattributes) nothing here alters files on
+    checkout or commit so it's safer to have this file in place.
+
+commit ab288d672c94cf7175123a994cd1eac9c3198ada
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Mar 20 13:53:14 2021 -0400
+
+    Handle more git status --porcelain cases
+
+commit b2a80207875080588eb2f721c6143017308e87f9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 17:39:24 2021 -0400
+
+    Update some links in the Hacking BRL-CAD book.
+
+commit 6c6fa87ef5918bc667d25b8da7445805d7dad52e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 13:50:16 2021 -0400
+
+    Make a couple updates to INSTALL
+
+commit 23250550e257afee025d4eff9e86c5ae454eeb4f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 12:47:19 2021 -0400
+
+    Fix parsing for modified file checking with Git
+    
+    Previously we weren't breaking the output string down properly into
+    individual entries.  Also, be a little more nuanced when Git reports a
+    file is staged for deletion.
+
+commit d88f039945b8a379dc1973d1cd7a482f56e5cfbe
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 11:47:36 2021 -0400
+
+    First cut at updating HACKING, COPYING, README
+    
+    Undoubtedly a lot more to do here, but make an attempt to update the
+    HACKING workflow and other references to the SVN repository.
+    
+    Note that the binary and source file hosting were not updated yet, and
+    the mailing lists are also unchanged as yet.  Those will be updated as
+    new solutions come online.
+
+commit 08cf6f487cd13dd58b34398ef8dbab5a9a6f5961
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 09:30:08 2021 -0400
+
+    Remove SVN portions of CMake distcheck logic
+
+commit a04d80fccaa7cfd2ca369243f4db44b1cf96ff6a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 08:24:02 2021 -0400
+
+    Don't zap sc_cf.h.in if src dir == bin dir
+
+commit b744b36afb307e2470f76972d912f116dcb76989
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 00:49:01 2021 -0400
+
+    Remove repoconv files from working tree
+    
+    Removed in main - remove as well in RELEASE for patch release.
+    Migration is complete and there is no point in keeping these.
+
+commit 7ad5dece315115b881833cf04e9e449c723622c4
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 00:37:29 2021 -0400
+
+    Update fastgen regression LF/CRLF test handling
+    
+    fast4 files classify as text files to VCS, so their line endings get
+    updated on checkout.  Normally this won't matter, but this particular
+    regression test is intended to make sure that it in fact does *not*
+    matter.  For that, we need to preserve the LF (UNIX) or CLRF (DOS) line
+    endings in the files upon checkout.
+    
+    Rather than use .gitattributes (which invite mishaps if pattern matches
+    produce unintentional matches elsewhere in the tree or get stale as
+    files change) we instead compress the LF and CRLF versions of the files
+    to be checked out as tbz2 archives.  They are then decompressed when
+    needed.  We can do this since CMake itself is able to do the
+    decompression, and we are guaranteed to have CMake on any platform where
+    building is possible in the first place.
+    
+    As an extra check, the regression script also verifies that the LF and
+    CRLF versions of the input are in fact different after being unpacked.
+
+commit d7c1fcb60d1fcc1ac3acb4e80c56834ce77180a8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 19 01:13:59 2021 -0400
+
+    Set CMAKE_RC_FLAGS for Windows Ninja build
+    
+    This setting was reported to be a problem for users building with Visual
+    Studio, but it appears to be a necessity when building with Ninja.
+
+commit 534b0e9591fc08f246db80a9a755f2f7a5a5b4df
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 5 03:35:36 2021 +0000
+
+    User report that setting this flag caused a compilation failure, with RC complaining about 'invalid usage'.  Removing the definition produced a successful build.
+    
+    svn:revision:78379
+    svn:branch:trunk
     svn:account:starseeker
 
-
-2021-02-06 16:22  starseeker
-
-	* [r78203] include/conf/PATCH, misc/debian/changelog:
-	  Update version numbers
-
-2021-02-06 16:18  starseeker
-
-	* [r78202] NEWS:
-	  g-iges change is in principle user visible - fixed crash running
-	  regression test on OSX.
-
-2021-02-06 16:15  starseeker
-
-	* [r78201] doc/docbook/system/mann/gdiff.xml:
-	  gdiff -S also checks boolean operations
-
-2021-02-06 16:13  starseeker
-
-	* [r78200] NEWS, doc/docbook/system/mann/gdiff.xml:
-	  Document the -S option added to libged's gdiff command.
-
-2021-02-06 16:05  starseeker
-
-	* [r78199] NEWS:
-	  Note addition of -? option to which in r78052
-
-2021-02-06 15:57  starseeker
-
-	* [r78198] NEWS:
-	  Whoops, redundant item
-
-2021-02-06 15:50  starseeker
-
-	* [r78197] NEWS:
-	  Note fixes to libtclcad command I/O that were causing problems
-	  (particularly on OSX, but almost certainly elsewhere as well.)
-
-2021-02-06 15:41  starseeker
-
-	* [r78196] NEWS:
-	  Note work on librt timer code
-	  
-	  This is borderline - certain timing outputs may change now
-	  that we are making more of an effort to use the CPU timers
-	  when the API says we are, but it's not clear that there will
-	  be significant user visible implications.
-	  
-	  If timing answer change that will be potentially significant,
-	  so going ahead and noting in NEWS to provide some visibility.
-
-2021-02-06 15:33  starseeker
-
-	* [r78195] NEWS:
-	  User visible - Sean fixed example in the saveview man page.
-
-2021-02-06 15:28  starseeker
-
-	* [r78194] NEWS:
-	  Note Sumagna Das's patch #556 adding in-database support for vol
-	  primitive data.
-
-2021-02-06 15:21  starseeker
-
-	* [r78193] NEWS:
-	  Note change of MGED Overlap GUI to using gchecker tool behind the
-	  scenes for more reliable execution on Windows.
-
-2021-02-06 15:03  starseeker
-
-	* [r78192] BUGS:
-	  semaphore protection appears to fix the gqa invalid plot3 issue
-
-2021-02-06 14:45  starseeker
-
-	* [r78191] TODO:
-	  quick check of dbconcat m35 into ktank seems to work?
-
-2021-02-06 14:41  starseeker
-
-	* [r78190] ChangeLog:
-	  Update ChangeLog with commits through 78187.
-
-2021-02-05 23:51  starseeker
-        * [r78187]  **many files**:
-	  Update copyright statements to year 2021 per sh/copyright.sh script
-
-2021-02-05 20:43  starseeker
-
-	* [r78186] misc/CMake/distcheck_in_src_dir.cmake.in:
-	  The in-src-dir distcheck has the same issue as the others -
-	  ignore the .ninja_log file as there is nothing we can do about it
-	  - ninja is being run to do the build steps, including cleanup,
-	  and as long as ninja is running the log file is there.
-
-2021-02-05 19:42  starseeker
-
-	* [r78185] NEWS:
-	  Still testing, but unless proven otherwise gqa plotting in
-	  multithreaded mode works now.
-
-2021-02-05 18:49  starseeker
-
-	* [r78184] TODO, src/gtools/tests/CMakeLists.txt,
-	  src/libanalyze/analyze_private.h, src/libanalyze/api.c,
-	  src/libged/gqa/gqa.cpp:
-	  Add specific semaphore protection for GQA plot I/O.
-
-2021-02-05 16:27  starseeker
-
-	* [r78183] src/conv/iges/g-iges.c:
-	  Avoid duplicating call to nmg_kr() in g-iges
-	  
-	  OSX is getting a crash, and valgrind on Linux reports an issue
-	  with db_free_tree called from g-iges.c:646 getting an invalid
-	  read. The comment with that db_free_tree line indicates
-	  db_free_tree does an nmg_kr call, so it looks like this prior
-	  call in the same routine was interfering.
-
-2021-02-05 01:07  starseeker
-
-	* [r78182] src/other/CMakeLists.txt:
-	  Getting some leftover files on the Mac
-
-2021-02-04 21:39  starseeker
-
-	* [r78181] regress/ged/CMakeLists.txt, regress/ged/ppush_tests.g,
-	  regress/ged/push.cpp, regress/ged/push_tests.g,
-	  regress/ged/regress-ged_push.cmake.in, regress/ged/xpush_tests.g,
-	  src/libged/tests/CMakeLists.txt, src/libged/tests/ppush_tests.g,
-	  src/libged/tests/push.cpp, src/libged/tests/push_tests.g,
-	  src/libged/tests/xpush_tests.g:
-	  Modify ged push tests to be regression tests, not unit tests.
-
-2021-02-04 20:46  starseeker
-
-	* [r78180] src/libged/tests/CMakeLists.txt:
-	  Linux I/O isn't reliably placing the file for this test...
-
-2021-02-04 20:14  starseeker
-
-	* [r78179] src/libanalyze/util.cpp:
-	  initialize
-
-2021-02-04 19:53  starseeker
-
-	* [r78178] src/gtools/tests/CMakeLists.txt:
-	  Comment out the multithreaded gqa ovlp test temporarily, so we
-	  can do distcheck testing.
-
-2021-02-04 18:38  starseeker
-
-	* [r78177] TODO:
-	  We identified which change caused the regression, but not yet
-	  whether the problem is with the new semaphore system as used with
-	  gqa or with some other issue that was simply being masked by the
-	  old semaphore system. Workaround until this is fixed is to use
-	  -P1 to generate plot files. Bump down to next patch release.
-
-2021-02-04 18:35  starseeker
-
-	* [r78176] TODO:
-	  Looked at gdiff issue - as near as I can tell resolution would be
-	  a significant implementation change either in gdiff or librt's
-	  lower level bookkeeping. keep+dbconcat offers a workaround in the
-	  interim.
-
-2021-02-04 17:16  starseeker
-
-	* [r78175] src/libged/npush/npush.cpp:
-	  Add a note addressing tor's issue with non uniform matrices and
-	  why we're handling it as we are. (Duplicating push's behavior and
-	  letting the low level primitive routines deal with it, and not
-	  considering a failure to apply such a matrix a push failure.)
-
-2021-02-04 16:28  starseeker
-
-	* [r78174] src/libged/tests/CMakeLists.txt:
-	  Add ctest runs for the new npush tests.
-
-2021-02-04 16:26  starseeker
-
-	* [r78173] src/libged/exec_mapping.cpp:
-	  We don't know what calling code may or may not do with their argv
-	  array and contents - they own it. Restore the original state of
-	  the argv[0] entry before returning.
-
-2021-02-04 15:23  starseeker
-
-	* [r78172] src/libanalyze/raydiff.c, src/libanalyze/util.cpp,
-	  src/libged/tests/push.cpp:
-	  valgrind caught a few memory leaks in libanalyze
-
-2021-02-04 15:06  starseeker
-
-	* [r78171] src/libged/npush/npush.cpp:
-	  Make sure tidn and oidn are always correctly initialized.
-
-2021-02-03 20:35  starseeker
-
-	* [r78170] misc/repowork/repowork.cpp:
-	  Add ability to update svn:revision labels in Git commit messages
-
-2021-02-02 21:48  starseeker
-
-	* [r78169] src/libged/npush/npush.cpp:
-	  Use bn_mat_ck to validate the matrix being applied to a solid
-	  object.
-
-2021-02-02 17:09  starseeker
-
-	* [r78168] src/libged/npush/npush.cpp:
-	  Incorporate more full path printing into logging
-
-2021-02-02 15:27  starseeker
-
-	* [r78167] src/libged/npush/npush.cpp:
-	  Pass the full path for the tree update walk as well for better
-	  reporting.
-
-2021-02-02 15:11  starseeker
-
-	* [r78166] src/libged/npush/npush.cpp:
-	  Track full paths in the push_walk step.
-
-2021-02-02 14:50  starseeker
-
-	* [r78165] src/libged/npush/npush.cpp:
-	  report full path for validation failures to provide more context
-
-2021-02-02 14:30  starseeker
-
-	* [r78164] src/libged/tests/push.cpp:
-	  reorganize the test reporting
-
-2021-02-02 13:48  starseeker
-
-	* [r78163] src/libged/npush/npush.cpp:
-	  We're already catching cyclic paths with another check - update
-	  message.
-
-2021-02-01 18:55  starseeker
-
-	* [r78162] src/libged/npush/npush.cpp:
-	  Verify tops object set hasn't changed.
-
-2021-02-01 17:10  starseeker
-
-	* [r78161] src/libged/tests/push.cpp:
-	  Check the _ext top levels to verify the locality (or not) of push
-	  changes.
-
-2021-02-01 16:55  starseeker
-
-	* [r78160] src/libged/npush/npush.cpp:
-	  Ah. With the -L flag we're getting a case where checking
-	  tree_altered isn't enough - check for an iname as well.
-
-2021-02-01 15:59  starseeker
-
-	* [r78159] src/libged/npush/npush.cpp:
-	  Sort by matrices first, then check apply_solid
-
-2021-02-01 15:25  starseeker
-
-	* [r78158] src/libged/npush/npush.cpp:
-	  Add a final check to spot missing objects added to pushed trees.
-
-2021-02-01 14:15  starseeker
-
-	* [r78157] src/libged/npush/npush.cpp:
-	  Turn on the halting criteria for the -r flag (matrices above
-	  regions.)
-
-2021-01-31 19:35  starseeker
-
-	* [r78156] src/libged/npush/npush.cpp:
-	  Fix depth setting in tree_update walk, set error condition if we
-	  can't find what we're looking for, depth limit the update walk if
-	  a limit is set.
-
-2021-01-30 23:50  starseeker
-
-	* [r78155] src/libged/npush/npush.cpp:
-	  Make a note - depth limits (-d, -r, etc.) aren't working yet.
-
-2021-01-30 19:14  starseeker
-
-	* [r78154] src/libged/tests/push.cpp:
-	  Use the -S option to gdiff instead of the custom tree walker in
-	  the test program.
-
-2021-01-30 15:23  starseeker
-
-	* [r78153] src/libged/gdiff/gdiff.c:
-	  Rough in a version of the "tree diff" capability under the gdiff
-	  command.
-
-2021-01-30 15:16  starseeker
-
-	* [r78152] include/rt/db_diff.h:
-	  include avs, type is used by db_diff
-
-2021-01-30 14:08  starseeker
-
-	* [r78151] src/libged/npush/npush.cpp:
-	  Dry run only controls writing the internals - all other steps
-	  should be active.
-
-2021-01-29 22:17  starseeker
-
-	* [r78150] src/libged/tests/push.cpp:
-	  more notes
-
-2021-01-29 22:15  starseeker
-
-	* [r78149] src/libged/tests/push.cpp:
-	  TODO - see if the cross-checking ability of this program can be
-	  built in to npush itself - have npush with -V enabled call keep
-	  to make a temp copy of the tree, process, then dbconcat back in
-	  with a prefix, do the checks, then killtree -f the dbconcated
-	  copy.
-
-2021-01-29 22:04  starseeker
-
-	* [r78148] src/libged/npush/npush.cpp, src/libged/tests/push.cpp:
-	  Looking better to keep the current processing than trying to
-	  consolidate. Rename to reflect final purpose of various codes.
-	  With a test program in place, next step will be to shake down the
-	  various options.
-
-2021-01-29 20:49  starseeker
-
-	* [r78147] src/libged/tests/push.cpp:
-	  Be a bit more verbose with messages.
-
-2021-01-29 20:31  starseeker
-
-	* [r78146] src/libged/tests/push.cpp:
-	  need per-call argv copy for npush
-
-2021-01-29 20:14  starseeker
-
-	* [r78145] src/libged/tests/push.cpp:
-	  Ray diffing isn't enough - also need to check for matrix
-	  differences in the tree.
-
-2021-01-29 18:59  starseeker
-
-	* [r78144] src/libged/tests/push.cpp:
-	  Implement concat call
-
-2021-01-29 14:58  starseeker
-
-	* [r78143] src/libged/tests/CMakeLists.txt,
-	  src/libged/tests/push.cpp:
-	  Start rigging a program to do testing of push behaviors.
-
-2021-01-29 00:23  starseeker
-
-	* [r78142] src/libged/tests/CMakeLists.txt,
-	  src/libged/tests/ppush_tests.g, src/libged/tests/xpush_tests.g:
-	  Add control .g files with the results of push and xpush
-
-2021-01-27 21:20  starseeker
-
-	* [r78141] src/libged/npush/npush.cpp:
-	  Note next step
-
-2021-01-27 20:30  starseeker
-
-	* [r78140] src/libged/npush/npush.cpp:
-	  Same deal with solids - can't write until we've staged
-	  everything.
-
-2021-01-27 20:15  starseeker
-
-	* [r78139] src/libged/npush/npush.cpp:
-	  Fix inverted check for identity matrix.
-
-2021-01-27 20:06  starseeker
-
-	* [r78138] src/libanalyze/raydiff.c:
-	  Free rti before resources
-
-2021-01-27 19:05  starseeker
-
-	* [r78137] src/libged/npush/npush.cpp:
-	  Quirk in sorting was preventing lookup from finding correct
-	  instance.
-
-2021-01-27 19:03  starseeker
-
-	* [r78136] src/libged/npush/npush.cpp:
-	  Fix matrix sorting, only look at solid flag if dp isn't a comb
-
-2021-01-27 18:25  starseeker
-
-	* [r78135] src/libged/npush/npush.cpp:
-	  still got a problem somewhere in the walking
-
-2021-01-27 17:53  starseeker
-
-	* [r78134] src/libged/tests/push_tests.g:
-	  Use smaller spheres for tests.
-
-2021-01-27 17:43  starseeker
-
-	* [r78133] src/libged/npush/npush.cpp:
-	  Do write operations on a separate copy of the tree. This may not
-	  be necessary, but until I can prove overwriting data mid-walk can
-	  never cause a problem go with the safer option.
-
-2021-01-27 03:02  starseeker
-
-	* [r78132] src/libged/npush/npush.cpp:
-	  Closer - object names in tree look more reasonable.
-
-2021-01-27 02:44  starseeker
-
-	* [r78131] src/libged/npush/npush.cpp:
-	  Tree walk still isn't right...
-
-2021-01-26 23:41  starseeker
-
-	* [r78130] src/libged/npush/npush.cpp:
-	  I was afraid of that... can't edit and walk the tree
-	  simultaneously. Need to rethink.
-
-2021-01-26 22:17  starseeker
-
-	* [r78129] src/libged/npush/npush.cpp:
-	  Start working on the actual I/O logic
-
-2021-01-26 20:25  starseeker
-
-	* [r78128] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-26 19:32  starseeker
-
-	* [r78127] src/libged/npush/npush.cpp:
-	  Adjust walking code
-
-2021-01-26 18:59  starseeker
-
-	* [r78126] src/libged/npush/npush.cpp:
-	  No need to pass dbip around if it is also in the state container.
-
-2021-01-26 16:47  starseeker
-
-	* [r78125] doc/docbook/system/mann/stat.xml:
-	  typo
-
-2021-01-26 14:16  starseeker
-
-	* [r78124] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-25 21:36  starseeker
-
-	* [r78123] src/libged/npush/npush.cpp:
-	  Note if we're applying matrix to the solid parameters
-
-2021-01-25 21:23  starseeker
-
-	* [r78122] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-25 21:08  starseeker
-
-	* [r78121] src/libged/npush/npush.cpp:
-	  Various adjustments for shallower nesting of code.
-
-2021-01-25 20:43  starseeker
-
-	* [r78120] src/libged/npush/npush.cpp:
-	  Cleanup, pass settings in to state
-
-2021-01-25 19:52  starseeker
-
-	* [r78119] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-25 17:24  starseeker
-
-	* [r78118] src/libged/npush/npush.cpp:
-	  Step 1 - copy objects that need copying
-
-2021-01-25 15:50  starseeker
-
-	* [r78117] src/libged/npush/npush.cpp:
-	  Look at how each instance needs to be edited.
-
-2021-01-25 15:42  starseeker
-
-	* [r78116] src/libged/npush/npush.cpp:
-	  Cleanup
-
-2021-01-25 15:19  starseeker
-
-	* [r78115] src/libged/npush/npush.cpp:
-	  More reporting adjustments. Need to tune this for the various
-	  cases.
-
-2021-01-25 15:10  starseeker
-
-	* [r78114] src/libged/npush/npush.cpp:
-	  Improve reporting, check candidate names against database and
-	  each other.
-
-2021-01-25 14:38  starseeker
-
-	* [r78113] src/libged/npush/npush.cpp:
-	  Make the 'look beyond the specified trees' feature optional (and
-	  non-default) so we can better match existing push behavior. (The
-	  non-locality feature probably also has significant performance
-	  implications in large .g files, but that's currently untested.)
-
-2021-01-25 14:25  starseeker
-
-	* [r78112] src/libged/npush/npush.cpp:
-	  Remove combtree_i structure from npush - unneeded.
-	  
-	  Was making things too complicated by assigning IDN matrices
-	  to dp_i instances on the way down the push tree - combs will
-	  need IDN matrices, but only when writing the comb instances
-	  in the .g file. In the meantime, we need to keep the "current"
-	  matrix state in order to recognize situations where we're going
-	  to need to copy higher level combs with the dp_i instances.
-	  Once non IDN matrices are recorded rather than thrown away, we
-	  don't need any detailed look at the comb tree itself - the
-	  matrix encapsulates the uniqueness (or non-uniqueness) of the
-	  comb.
-
-2021-01-23 13:48  starseeker
-
-	* [r78111] src/libged/npush/npush.cpp:
-	  comment adjustments
-
-2021-01-22 22:02  starseeker
-
-	* [r78110] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-22 20:33  starseeker
-
-	* [r78109] src/libged/npush/npush.cpp:
-	  Not sure these are being assembled correctly...
-
-2021-01-22 19:54  starseeker
-
-	* [r78108] src/libged/npush/npush.cpp:
-	  comments
-
-2021-01-22 19:49  starseeker
-
-	* [r78107] src/libged/npush/npush.cpp:
-	  Add some notes about how to proceed
-
-2021-01-22 19:27  starseeker
-
-	* [r78106] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-22 16:02  starseeker
-
-	* [r78105] src/libged/npush/npush.cpp:
-	  print full msg
-
-2021-01-22 16:00  starseeker
-
-	* [r78104] src/libged/npush/npush.cpp:
-	  print matrix
-
-2021-01-22 15:47  starseeker
-
-	* [r78103] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-21 22:50  starseeker
-
-	* [r78102] doc/docbook/system/mann/npush.xml:
-	  Lay out an example that requires parent comb redefinition. Still
-	  not sure how to implement this yet, but there are clearly cases
-	  where it can be necessary.
-
-2021-01-21 21:47  starseeker
-
-	* [r78101] src/libged/tests/push_tests.g:
-	  Add another test case
-
-2021-01-21 16:42  starseeker
-
-	* [r78100] src/libged/npush/npush.cpp:
-	  Adjust printing messages for npush
-
-2021-01-21 16:06  starseeker
-
-	* [r78099] NEWS, src/libged/ged.c, src/libged/ged_private.h,
-	  src/libged/tree/tree.c:
-	  Add verbosity option to tree command to label comb instances with
-	  non-IDN matrices.
-
-2021-01-21 16:04  starseeker
-
-	* [r78098] src/libged/npush/npush.cpp:
-	  Add comments
-
-2021-01-20 17:33  starseeker
-
-	* [r78097] src/libged/npush/npush.cpp:
-	  Add more comments
-
-2021-01-20 16:28  starseeker
-
-	* [r78096] src/libged/npush/npush.cpp:
-	  Comment state variables
-
-2021-01-19 19:30  starseeker
-
-	* [r78095] src/libged/npush/npush.cpp:
-	  Take s_i out of the push_state - not used in tree walking
-
-2021-01-19 19:27  starseeker
-
-	* [r78094] src/libged/npush/npush.cpp:
-	  Adjust combtree, add more comments
-
-2021-01-15 20:00  starseeker
-
-	* [r78093] src/libged/tests/push_tests.g:
-	  It's not best practice, but it is allowed by librt - make an
-	  example with three of the exact same comb in the same group,
-	  differentiated only by their instance matrices.
-
-2021-01-15 19:55  starseeker
-
-	* [r78092] src/libged/npush/npush.cpp,
-	  src/libged/tests/push_tests.g:
-	  Add example of comb present in different levels of a push tree.
-
-2021-01-15 19:07  starseeker
-
-	* [r78091] src/libged/npush/npush.cpp:
-	  Rough in logic to keep the tree walk going post-leaf for
-	  information.
-
-2021-01-15 18:59  starseeker
-
-	* [r78090] src/libged/npush/npush.cpp:
-	  Pass the survey state, so we can change how we're recording more
-	  easily mid-tree-walk.
-
-2021-01-15 18:13  starseeker
-
-	* [r78089] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-15 16:40  starseeker
-
-	* [r78088] src/libged/npush/npush.cpp:
-	  Not sure how yet, but going to have to develop ability to
-	  propagate comb tree changes back up the hierarchy if necessary.
-
-2021-01-15 15:44  starseeker
-
-	* [r78087] src/libged/npush/npush.cpp:
-	  Print when we have differing trees.
-
-2021-01-15 15:38  starseeker
-
-	* [r78086] src/libged/npush/npush.cpp:
-	  Halting pushes above primitives has complex implications for
-	  combs.
-
-2021-01-15 15:37  starseeker
-
-	* [r78085] src/libged/tests/push_tests.g:
-	  Add more tests
-
-2021-01-15 01:52  starseeker
-
-	* [r78084] src/libged/npush/npush.cpp:
-	  TODO note... this needs to be more robust.
-
-2021-01-15 01:49  starseeker
-
-	* [r78083] src/libged/npush/npush.cpp:
-	  Not a renaming candidate unless the matrix is non-IDN
-
-2021-01-14 23:46  starseeker
-
-	* [r78082] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-14 21:43  starseeker
-
-	* [r78081] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-14 19:44  starseeker
-
-	* [r78080] src/libged/npush/npush.cpp:
-	  Check list of objects against the active trees - don't try to
-	  push if an object that is below a specified object is also
-	  specified. Particularly if depth limitations are specified, I
-	  don't know whether this is safe (or guaranteed to produce
-	  intuitive results) in all cases.
-
-2021-01-14 18:48  starseeker
-
-	* [r78079] src/libged/npush/npush.cpp:
-	  Make a note - we'll have to do each specified push fully before
-	  processing the next, if multiple comb inputs are specified to the
-	  push command.
-
-2021-01-14 18:43  starseeker
-
-	* [r78078] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-14 15:05  starseeker
-
-	* [r78077] src/libged/npush/npush.cpp:
-	  Leaves in a push aren't necessarily solids - will need to handle
-	  differently.
-
-2021-01-13 20:40  starseeker
-
-	* [r78076] src/libged/npush/npush.cpp:
-	  Start working on how to check comb trees for uniqueness in a .g
-	  file
-
-2021-01-13 19:11  starseeker
-
-	* [r78075] doc/docbook/system/mann/npush.xml,
-	  src/libged/tests/push_tests.g:
-	  Add another example that would require comb copying with a depth
-	  limit set.
-
-2021-01-13 18:05  starseeker
-
-	* [r78074] src/libged/npush/npush.cpp:
-	  Include string header
-
-2021-01-13 16:43  starseeker
-
-	* [r78073] src/libged/npush/npush.cpp:
-	  Make a note - we need to think about comb trees in all this,
-	  since they define comb objects which may not be localized to just
-	  the pushed tree...
-
-2021-01-13 16:29  starseeker
-
-	* [r78072] src/libged/tests/push_tests.g:
-	  Add mixed depth hierarchy
-
-2021-01-13 15:27  starseeker
-
-	* [r78071] src/libged/tests/push_tests.g:
-	  Add a deeper hierarchy with matrices
-
-2021-01-13 15:06  starseeker
-
-	* [r78070] doc/README.Windows:
-	  Elaborate more on the RelWithDebInfo CMake mode as it pertains to
-	  Visual STStudio.
-
-2021-01-12 21:10  starseeker
-
-	* [r78069] NEWS, doc/docbook/system/mann/quit.xml, src/mged/cmd.c,
-	  src/tclscripts/mged/mview.tcl:
-	  This needs to be done with a more informative dialog, if we're
-	  going to go this route - revert r77990
-
-2021-01-12 18:54  starseeker
-
-	* [r78068] doc/docbook/system/mann/CMakeLists.txt,
-	  doc/docbook/system/mann/npush.xml, src/libged/npush/npush.cpp:
-	  Start roughing out a man page. Need to clearly articulate what
-	  some of these ideas are supposed to do in order to know what has
-	  to be implemented, so might as well document the meaning while
-	  we're at it...
-
-2021-01-12 15:33  starseeker
-
-	* [r78067] src/libged/lint/lint.cpp:
-	  Fix crash if lint -F option is passed invalid search args. (lint
-	  isn't documented yet, so not really user visible.)
-
-2021-01-12 15:25  starseeker
-
-	* [r78066] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-12 14:37  starseeker
-
-	* [r78065] src/libged/npush/npush.cpp:
-	  Also use the leaf matrix here, if there is one.
-
-2021-01-12 14:36  starseeker
-
-	* [r78064] src/libged/tests/push_tests.g:
-	  Add a test with object usage outside tree to push
-
-2021-01-12 14:10  starseeker
-
-	* [r78063] src/libged/tests/CMakeLists.txt,
-	  src/libged/tests/push_tests.g:
-	  Start assembling some basic test cases for matrix pushing.
-
-2021-01-11 22:01  starseeker
-
-	* [r78062] src/libged/npush/npush.cpp:
-	  Report both need-copy and push-matrix-only.
-
-2021-01-11 19:22  starseeker
-
-	* [r78061] src/libged/npush/npush.cpp:
-	  Checkpoint. Slowly working through the conceptual implications of
-	  various forms of push.
-
-2021-01-08 19:08  starseeker
-
-	* [r78060] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-08 18:03  starseeker
-
-	* [r78059] src/libged/npush/npush.cpp:
-	  checkpoint
-
-2021-01-08 16:10  starseeker
-
-	* [r78058] src/libged/npush/npush.cpp:
-	  Add a verbosity option - I suspect this type of output may prove
-	  useful in the long run, so let's promote it beyond
-	  development/debugging throwaway code to a feature.
-
-2021-01-08 16:00  starseeker
-
-	* [r78057] src/libged/npush/npush.cpp:
-	  Checkpoint
-
-2021-01-08 15:33  starseeker
-
-	* [r78056] src/libged/npush/npush.cpp:
-	  Checkpoint
-
-2021-01-07 19:01  brlcad
-
-	* [r78055] TODO:
-	  dbconcat appears to be not working even on a simple case
-
-2021-01-07 17:41  starseeker
-
-	* [r78054] src/libged/npush/npush.cpp:
-	  Rough in various npush options
-
-2021-01-07 16:36  starseeker
-
-	* [r78053] src/libged/npush/npush.cpp:
-	  Whoops, commited too many files. Get npush building
-
-2021-01-07 16:33  starseeker
-
-	* [r78052] src/libged/npush/npush.cpp, src/libged/which/which.cpp:
-	  Missed ? when enabling help option for which GED cmd.
-
-2021-01-07 15:27  starseeker
-
-	* [r78051] include/ged/commands.h, src/libged/CMakeLists.txt,
-	  src/libged/exec_mapping.cpp, src/libged/npush,
-	  src/libged/npush/CMakeLists.txt, src/libged/npush/npush.cpp,
-	  src/libged/xpush/xpush.c, src/libtclcad/commands.c,
-	  src/mged/setup.c:
-	  Rough in a command for experimenting with push/xpush style logic.
-
-2021-01-07 14:04  starseeker
-
-	* [r78050] src/libanalyze/raydiff.c:
-	  Clean up rtip
-
-2021-01-07 01:47  starseeker
-
-	* [r78049] src/archer/CMakeLists.txt:
-	  Fix Archer shortcuts
-
-2021-01-06 23:34  brlcad
-
-	* [r78048] src/util/pixscale.c:
-	  not a fix, but this looks like it's off by one
-
-2021-01-06 23:33  brlcad
-
-	* [r78047] src/util/bwmod.c:
-	  we reopen file descriptors, so really shouldn't be using the
-	  numbers direct.
-
-2021-01-06 23:32  brlcad
-
-	* [r78046] TODO:
-	  pixscale aborts premature
-
-2021-01-06 17:29  starseeker
-
-	* [r78045] NEWS, src/archer/archer.bat, src/archer/archer.c,
-	  src/mged/CMakeLists.txt, src/mged/mged.bat, src/mged/mged.c,
-	  src/rtwizard/CMakeLists.txt, src/rtwizard/main.c,
-	  src/rtwizard/rtwizard.bat:
-	  Adjust GUI apps default working dir to HOME.
-	  
-	  When launched from a system installed location via icon, the
-	  default
-	  working directory of MGED, Archer and rtwizard gets set to the
-	  bin
-	  directory that holds the executable. This is typically a
-	  read-only
-	  location, which results in a variety of problems when trying to
-	  run
-	  various commands.
-	  
-	  The most typical case where this is a problem is Windows desktop
-	  and
-	  start menu shortcuts. The NSIS installer has a way to adjust the
-	  directory, but the MSI installer generated by WiX is a tougher
-	  nut to
-	  crack. Various experiments have so far failed to identify a
-	  working
-	  approach to adjusting the shortcut startup directories with
-	  CMake/WiX.
-	  Using Windows bat files as launchers works, but using them with
-	  the
-	  MSI installer results in incorrect icons for the desktop
-	  shortcuts
-	  with no obvious way to override them.
-	  
-	  Rather than continue to jump through hoops, just set the working
-	  dir
-	  directly to the user's home directory when these three
-	  applications
-	  are invoked without arguments. This should preserve all existing
-	  behaviors for any scripting cases, but will avoid a read-only
-	  working
-	  directory when using the no-args launch produced by desktop
-	  shortcuts.
-
-2021-01-06 13:54  starseeker
-
-	* [r78044] src/archer/CMakeLists.txt, src/archer/archer.bat:
-	  Try an alternative with Archer (untested)
-
-2021-01-06 13:25  starseeker
-
-	* [r78043] src/mged/CMakeLists.txt, src/rtwizard/CMakeLists.txt,
-	  src/rtwizard/main.c, src/rtwizard/rtwizard.bat:
-	  Set up similar wrapper for rtwizard to adjust working dir when
-	  invoking from MSI shortcut. Archer is trickier, since all of its
-	  option parsing is in Tcl/Tk right now.
-
-2021-01-06 09:40  brlcad
-
-	* [r78042] TODO:
-	  gdiff appears to be misbehaving
-
-2021-01-05 20:50  starseeker
-
-	* [r78041] src/mged/CMakeLists.txt, src/mged/mged.bat:
-	  Grr. Windows bat file test.
-
-2021-01-05 20:04  starseeker
-
-	* [r78040] src/mged/mged.c:
-	  Experiment with an option to set working dir.
-	  
-	  Trying to get the MSI installer from WiX to change the working
-	  directory for shortcuts has proven challenging. An alternative
-	  is to allow for the possibility of defining a shortcut that tells
-	  the application itself to change the working directory - untested
-	  as yet.
-
-2021-01-04 14:55  starseeker
-
-	* [r78039] CMakeLists.txt:
-	  Need this variable set in CMake, not just the header. Noticed it
-	  because the Windows icons for WiX weren't being set.
-
-2020-12-20 14:58  starseeker
-
-	* [r78037] src/libged/brep/CMakeLists.txt:
-	  add distclean rule
-
-2020-12-19 22:11  starseeker
-
-	* [r78031] regress/mged/mged.sh:
-	  MGED now recognizes that a completely empty file isn't a valid .g
-	  file - remove this part of mged.sh
-
-2020-12-19 18:00  starseeker
-
-	* [r78028] NEWS, src/mged/set.c:
-	  Wrong level of indirection passing the struct to parsing was
-	  breaking reporting for MGED 'vars' command. Also report rc
-	  setting.
-
-2020-12-19 17:41  starseeker
-
-	* [r78027] src/libdm/dm_init.cpp, src/libged/ged_init.cpp:
-	  More memory cleanup
-
-2020-12-19 17:34  starseeker
-
-	* [r78026] src/libtclcad/auto_path.c:
-	  Do some memory cleanup
-
-2020-12-19 15:35  starseeker
-
-	* [r78025] TODO:
-	  Note history found to date to serve as starting point for further
-	  debugging.
-
-2020-12-19 15:32  starseeker
-
-	* [r78024] NEWS, TODO, src/mged/mged.c:
-	  If a file doesn't report a valid .g header, don't keep opening it
-	  in MGED.
-
-2020-12-19 15:14  starseeker
-
-	* [r78023] TODO:
-	  Ditto bu_brlcad_root - commits need review, but should be removed
-	  now.
-
-2020-12-19 15:11  starseeker
-
-	* [r78022] TODO:
-	  Commits need review, but bu_argv0_full_path should now be
-	  eliminated from BRL-CAD's code (except the deprecated function
-	  itself.)
-
-2020-12-19 15:06  starseeker
-
-	* [r78021] CHANGES, include/bu/exit.h, src/libbu/backtrace.c,
-	  src/libbu/crashreport.c:
-	  In the two cases where we may want/need a full path to an
-	  executable that can't be deduced by libbu (external user of libs
-	  with an applicaton location not in the CAD dirs) provide versions
-	  of the functions where the caller can pass in the path, per the
-	  TODO item. Set up deprecation so we can eventually eliminate the
-	  old form in favor of the new.
-
-2020-12-19 03:27  starseeker
-
-	* [r78020] src/libged/gqa/gqa.cpp:
-	  I think sem_lists wasn't being initialized for gqa?
-
-2020-12-19 00:22  starseeker
-
-	* [r78019] CHANGES:
-	  List bu_brlcad_root and bu_brlcad_dir for deprecation.
-
-2020-12-19 00:18  starseeker
-
-	* [r78018]
-	  src/archer/plugins/Utility/attrGroupsDisplayUtilityP.tcl,
-	  src/archer/plugins/Utility/botUtilityP.tcl,
-	  src/archer/plugins/Utility/lodUtilityP.tcl,
-	  src/archer/plugins/Wizards/humanwizard.tcl, src/gtools/gsh.cpp,
-	  src/libanalyze/tests/nhit.cpp, src/libbu/dir.c,
-	  src/util/morphedit.tcl:
-	  Remainder of bu_brlcad_root -> bu_dir changes
-
-2020-12-19 00:13  starseeker
-
-	* [r78017] src/archer/plugins/Wizards/tankwizard.tcl,
-	  src/archer/plugins/Wizards/tirewizard.tcl, src/brlman/brlman.tcl,
-	  src/burst/burst.cpp, src/libdm/osgl/dm-osgl.cpp,
-	  src/libdm/osgl/if_osgl.cpp,
-	  src/librt/primitives/primitive_util.c, src/qged/cadimport.cpp:
-	  More bu_brlcad_root changes
-
-2020-12-19 00:03  starseeker
-
-	* [r78016] src/tclscripts/lib/RtImage.tcl,
-	  src/tclscripts/lib/gui_conversion.tcl,
-	  src/tclscripts/mged/asc2g.tcl, src/tclscripts/mged/dbupgrade.tcl,
-	  src/tclscripts/mged/g2asc.tcl, src/tclscripts/mged/help.tcl,
-	  src/tclscripts/mged/man.tcl, src/tclscripts/mged/mged.tcl,
-	  src/tclscripts/mged/mike.tcl, src/tclscripts/mged/openw.tcl,
-	  src/tclscripts/mged/points.tcl, src/tclscripts/mged/rt.tcl,
-	  src/tclscripts/mged/shaders.tcl:
-	  More bu_dir conversions
-
-2020-12-18 23:52  starseeker
-
-	* [r78015] src/tclscripts/lib/Ged.tcl,
-	  src/tclscripts/lib/GeometryIO.tcl,
-	  src/tclscripts/rtwizard/lib/FbPage.itk,
-	  src/tclscripts/rtwizard/lib/PictureTypeA.itcl,
-	  src/tclscripts/rtwizard/lib/PictureTypeB.itcl,
-	  src/tclscripts/rtwizard/lib/PictureTypeC.itcl,
-	  src/tclscripts/rtwizard/lib/PictureTypeD.itcl,
-	  src/tclscripts/rtwizard/lib/PictureTypeE.itcl,
-	  src/tclscripts/rtwizard/lib/PictureTypeF.itcl:
-	  Update some rtwizard and Ged Tcl files to use bu_dir, convert
-	  GeometryIO as well.
-
-2020-12-18 23:35  starseeker
-
-	* [r78014] src/tclscripts/archer/ArcherCore.tcl,
-	  src/tclscripts/archer/ShaderEdit.tcl,
-	  src/tclscripts/rtwizard/rtwizard:
-	  bu_brlcad_root -> bu_dir in rtwizard, misc Tcl files
-
-2020-12-18 23:30  starseeker
-
-	* [r78013] src/tclscripts/archer/Archer.tcl:
-	  bu_brlcad_root -> bu_dir in Archer.tcl
-
-2020-12-18 23:23  starseeker
-
-	* [r78012] src/tclscripts/geometree/GeometryBrowser.tcl,
-	  src/tclscripts/igraph/GraphEditor.tcl,
-	  src/tclscripts/man_browser.tcl:
-	  More Tcl bu_brlcad_root -> bu_dir updates
-
-2020-12-18 23:19  starseeker
-
-	* [r78011] src/archer/archer_launch.tcl:
-	  Replace bu_brlcad_root with bu_dir in the Archer launch script.
-
-2020-12-18 22:12  starseeker
-
-	* [r78010] include/bu/app.h, src/adrt/isst.c, src/archer/archer.c,
-	  src/brlman/brlman.c, src/libbu/vfont.c, src/libged/help/help.cpp,
-	  src/libged/rt/rt.c, src/libged/rtcheck/rtcheck.c,
-	  src/libged/rtwizard/rtwizard.c, src/libtclcad/bu.c,
-	  src/mged/mged.c, src/mged/plot.c, src/nirt/main.cpp,
-	  src/nirt/nirt.c, src/rtwizard/main.c, src/util/plot3-dm.c:
-	  First cut at deprecating bu_brlcad_root and bu_brlcad_dir. Needs
-	  more review and testing, particularly the libtclcad wrappers that
-	  are having to be emulated.
-
-2020-12-18 21:33  starseeker
-
-	* [r78009] include/bu/app.h, src/libbu/backtrace.c,
-	  src/libbu/brlcad_path.c, src/libbu/crashreport.c,
-	  src/libbu/dir.c, src/libbu/tests/progname.c,
-	  src/libbu/whereami.h, src/mged/setup.c:
-	  Apply DEPRECATED to bu_argv0_full_path. Update instances of its
-	  use in our code to use other information - needs review,
-	  particularly the libbu crash and backtrace pieces.
-
-2020-12-18 20:29  starseeker
-
-	* [r78008] NEWS:
-	  Erratic I/O on the MGED command prompt observed on Mac OSX and
-	  (possibly) Windows was due to incorrect management of I/O
-	  channels in the libtclcad library.
-
-2020-12-18 20:27  starseeker
-
-	* [r78007] TODO:
-	  Think the asynchronous I/O has been fixed - turned out to be an
-	  incorrect fix to a typo in the libtclcad management logic. Added
-	  a stdout handler when it wasn't needed, which avoided a crash due
-	  to the original issue but introduced other problems.
-
-2020-12-18 20:24  starseeker
-
-	* [r78006] NEWS, doc/docbook/system/mann/facetize.xml:
-	  Update facetize man page with examples showing the use of the
-	  decimation-feature-size option in CM mode.
-
-2020-12-18 19:57  starseeker
-
-	* [r78005] TODO:
-	  Make a note to look into the MGED vars command behavior.
-
-2020-12-18 18:28  starseeker
-
-	* [r78004] TODO:
-	  Postpone libbu/librt timer merge - need to shake down new librt
-	  timer implementation first.
-
-2020-12-18 17:15  starseeker
-
-	* [r78003] src/gtools/tests/CMakeLists.txt:
-	  Adjust path, define in one location
-
-2020-12-18 17:11  starseeker
-
-	* [r78002] src/gtools/tests/CMakeLists.txt,
-	  src/libged/tests/CMakeLists.txt:
-	  As defined this is actually a gqa test, not a libged test.
-
-2020-12-18 17:07  starseeker
-
-	* [r78001] src/libged/tests/CMakeLists.txt,
-	  src/libged/tests/ged_tests.g:
-	  Add CTest tests to exercise gqa plotting and check the validity
-	  of its output. As expected based on user report, we have a
-	  failure in the multithreaded case. If I recall correctly, when I
-	  looked at this previously it is a regression - need to get it
-	  working before patch release.
-
-2020-12-18 15:38  starseeker
-
-	* [r78000] src/libbn/tests/CMakeLists.txt, src/libbn/tests/plot3.c:
-	  Enable the bn_plot3 tests. These simply check the ability to
-	  detect valid and invalid plot3 files successfully, but that's a
-	  foundation for being able to detect invalid plot3 output from
-	  other routines down the road...
-
-2020-12-18 15:17  starseeker
-
-	* [r77999] src/other/CMakeLists.txt:
-	  Getting a stray toplevel target in MSVC
-
-2020-12-18 04:10  starseeker
-
-	* [r77998] src/libtclcad/command_io.cpp:
-	  Whoops, weren't checking cstderr
-
-2020-12-18 04:02  starseeker
-
-	* [r77997] src/libtclcad/command_io.cpp:
-	  typo
-
-2020-12-18 03:58  starseeker
-
-	* [r77996] include/ged/defines.h, src/libged/ged_util.c,
-	  src/libged/rtcheck/rtcheck.c, src/libged/rtwizard/rtwizard.c,
-	  src/libtclcad/command_io.cpp:
-	  Setting a _ged_rt_output_handler on BU_PROCESS_STDOUT was
-	  breaking the Mac. Try a different approach.
-
-2020-12-17 21:41  starseeker
-
-	* [r77995] NEWS, TODO, src/conv/gcv/gcv.c, src/libgcv/gcv.c:
-	  If an existing .g file is supplied to gcv, rather than quitting
-	  append to it. This involves changing libgcv's logic to append to
-	  rather than replacing an existing .g file.
-
-2020-12-17 21:10  starseeker
-
-	* [r77994] TODO, src/libged/concat/concat.cpp:
-	  db_diradd wasn't setting the d_major_type correctly during
-	  db_concat. Looks like this wasn't an issue in 7.32.0, so doesn't
-	  need a news item.
-
-2020-12-17 20:40  starseeker
-
-	* [r77993] TODO:
-	  MGED nirt command line needs a bit of design thought - should be
-	  a subprocess like rt and friends so it can be aborted at need,
-	  but it will need I/O management like rtcheck to get the drawing
-	  elements back to MGED.
-
-2020-12-17 20:30  starseeker
-
-	* [r77992] TODO:
-	  More bumping of tasks not scoped/needed for a patch release.
-
-2020-12-17 20:22  starseeker
-
-	* [r77991] TODO:
-	  Bump a number of issues too large for current patch release.
-
-2020-12-17 20:20  starseeker
-
-	* [r77990] NEWS, TODO, doc/docbook/system/mann/quit.xml,
-	  src/mged/cmd.c, src/tclscripts/mged/mview.tcl:
-	  Update the MGED quit command to not quit by default if there are
-	  active GED subprocesses. Support a '-f' option to force quitting
-	  anyway, and print out information on how to identify running
-	  processes if not quitting.
-
-2020-12-17 19:44  starseeker
-
-	* [r77989] NEWS, TODO, src/tclscripts/mged/openw.tcl:
-	  Remove a variety of menu entries from MGED
-	  
-	  Removed from MGED's menu bar (unused features, can be
-	  accomplished
-	  another way, or should be exposed only as lower level settings
-	  when
-	  there are sensible defaults that seldom change):
-	  
-	  ViewRing menu and entries.
-	  Modes->Persistent Sweep Rectangle
-	  Modes->Collaborate
-	  Modes->Rateknobs
-	  Settings->Mouse Behavior->Sweep Raytrace-Rectangle
-	  Settings->Mouse Behavior->Sweep Paint-Rectangle
-	  Settings->Mouse Behavior->Sweep Zoom-Rectangle
-	  Settings->Apply To->Local Panes
-	  Settings->Apply To->Listed Panes
-	  Settings->Framebuffer->Rectangle Area
-	  
-	  There are others on the TODO list, but they pertain a little more
-	  directly to features known to be in use (lighting, display lists,
-	  key forwarding) so those need a little more care to be sure the
-	  alternative ways of managing them work and are documented - bump
-	  them down to the next release iteration.
-
-2020-12-17 19:28  starseeker
-
-	* [r77988] src/mged/set.c:
-	  Make sure dlp2 is non-NULL
-
-2020-12-17 18:35  starseeker
-
-	* [r77987] src/tclscripts/mged/openw.tcl:
-	  Remove MGED ViewRing menu and entries.
-
-2020-12-17 18:25  starseeker
-
-	* [r77986] TODO:
-	  Done - gcv plugins relocated to libexec.
-
-2020-12-17 18:25  starseeker
-
-	* [r77985] TODO:
-	  Proper embedded rasterizing backend will take time - not scoped
-	  for this patch release.
-
-2020-12-17 17:34  starseeker
-
-	* [r77984] src/librt/gdiam/gdiam.cpp:
-	  Use the fabs function for long double (fabsl)
-
-2020-12-17 17:31  starseeker
-
-	* [r77983] bench/pixcmp.c:
-	  Older clang on OSX doesn't like these initializers
-
-2020-12-17 17:24  starseeker
-
-	* [r77982] src/libbg/spsr/SPSR.cpp:
-	  this warning is only in newer clang versions
-
-2020-12-17 15:03  starseeker
-
-	* [r77981] src/tclscripts/mged/mview.tcl:
-	  Recognize when all the windows are gone - if that's what has
-	  happened, we're shutting down the application.
-
-2020-12-17 15:00  starseeker
-
-	* [r77980] src/tclscripts/mged/openw.tcl:
-	  Ah. open_cmd_win was missing the global identification of
-	  mged_gui, so the state setting wasn't happening correctly.
-
-2020-12-17 14:57  starseeker
-
-	* [r77979] src/tclscripts/mged/openw.tcl:
-	  Checkpoint some Tcl/Tk tracing logic to try and debug an
-	  unexpected behavior with variable setting.
-
-2020-12-16 16:29  starseeker
-
-	* [r77978] doc/README.Windows:
-	  Add notes for showIncludes and WinDbg.
-
-2020-12-16 14:43  starseeker
-
-	* [r77974] CMakeLists.txt:
-	  Fix logic for when to add optimization flags. Multiconfig builds
-	  were never possible on Linux before Ninja Multi-Config, so this
-	  logic was never actually exercised properly in that mode.
-
-2020-12-15 19:10  starseeker
-
-	* [r77970] misc/repoconv/github_ci_actions.yml:
-	  Update the github CI script to specify verbose ExternalProject
-	  output.
-
-2020-12-11 14:16  starseeker
-
-	* [r77959] src/external/Creo/creo-brl.h, src/external/Creo/csg.cpp,
-	  src/external/Creo/shim.cpp, src/external/Creo/shim.h,
-	  src/external/Creo/util.cpp:
-	  Apply patch #560 from William Chambers updating usage of
-	  ProToolkit APIs. (Minor adjustments were made to the shim.h and
-	  shim.cpp files supplied with the patch.)
-
-2020-12-10 18:19  starseeker
-
-	* [r77956] src/tclscripts/CMakeLists.txt:
-	  Skip the index_gen.log file and just print the output to the
-	  usual I/O channels. In CI we can't see the log contents.
-
-2020-12-10 17:12  starseeker
-
-	* [r77955] NEWS, src/libbrep/cdt/fast.cpp:
-	  Fix check for null vls when trying to write out debug message
-	  when shading invalid brep objects. Was causing a crash.
-
-2020-12-10 15:26  starseeker
-
-	* [r77954] misc/repoconv/github_ci_actions.yml:
-	  Packages are taking a lot of space - skip for now.
-
-2020-12-08 16:37  starseeker
-
-	* [r77950] src/conv/step/STEPWrapper.cpp,
-	  src/conv/step/g-step/Assembly_Product.cpp,
-	  src/conv/step/g-step/Default_Geometric_Context.cpp,
-	  src/conv/step/g-step/ON_NurbsCurve.cpp,
-	  src/conv/step/g-step/ON_NurbsSurface.cpp,
-	  src/conv/step/step-g/BSplineCurveWithKnots.cpp,
-	  src/conv/step/step-g/BSplineSurfaceWithKnots.cpp,
-	  src/conv/step/step-g/CartesianPoint.cpp,
-	  src/conv/step/step-g/Direction.cpp,
-	  src/conv/step/step-g/RationalBSplineCurve.cpp,
-	  src/conv/step/step-g/RationalBSplineSurface.cpp,
-	  src/conv/step/step-g/ShellBasedSurfaceModel.cpp,
-	  src/conv/step/step-g/SurfaceCurve.cpp,
-	  src/conv/step/step-g/TrimmedCurve.cpp,
-	  src/conv/step/util/list_elements.cpp,
-	  src/other/stepcode/src/clstepcore/STEPattribute.cc,
-	  src/other/stepcode/src/clstepcore/STEPattribute.h,
-	  src/other/stepcode/src/clstepcore/sdaiApplication_instance.cc,
-	  src/other/stepcode/src/clstepcore/sdaiApplication_instance.h:
-	  Revert compatibility changes for upstream stepcode.
-	  
-	  After discussions with Sean, it's not clear these methods would
-	  be
-	  regarded as best practice and we may simply change upstream to
-	  re-expose the direct pointers.
-	  
-	  Also, rather than altering our copy, the promising results with
-	  the
-	  extbuild experiments suggest it is time to look at getting back
-	  in
-	  sync with upstream. However, rather than doing this in extbuild
-	  and conflating it with those changes, the decision is to do the
-	  stepcode sync in a separate branch. This will allow for easier
-	  testing and change review.
-
-2020-12-08 09:11  brlcad
-
-	* [r77948] TODO:
-	  remove the conflict divider
-
-2020-12-07 17:03  starseeker
-
-	* [r77945] src/librt/primitives/arbn/arbn.c:
-	  Initialize
-
-2020-12-07 16:55  starseeker
-
-	* [r77944] src/libbg/spsr/Octree.inl:
-	  Initialize
-
-2020-12-07 16:42  starseeker
-
-	* [r77943] src/libbg/spsr/MultiGridOctreeData.IsoSurface.inl:
-	  Initialize
-
-2020-12-07 16:40  starseeker
-
-	* [r77942] include/brep/defines.h,
-	  src/conv/step/step-g/OpenNurbsInterfaces.cpp:
-	  Use GCC_PREREQ from common.h (thanks Sean)
-
-2020-12-07 15:41  starseeker
-
-	* [r77941] src/conv/step/step-g/OpenNurbsInterfaces.cpp:
-	  One more newer GCC guard
-
-2020-12-07 15:36  starseeker
-
-	* [r77940] include/brep/defines.h,
-	  src/libbg/spsr/MarchingCubes.cpp:
-	  Another newer-GCC only warning
-
-2020-12-07 15:26  starseeker
-
-	* [r77939] src/libbg/spsr/MarchingCubes.cpp:
-	  This flag was introduced recently, and we may still see older
-	  GCCs on some platforms.
-
-2020-12-07 03:54  starseeker
-
-	* [r77938] src/other/CMakeLists.txt:
-	  Ah, right - need to set the correct enabling var for FindTCL with
-	  the new setup.
-
-2020-12-06 17:56  starseeker
-
-	* [r77937] misc/CMake/ThirdParty_TCL.cmake:
-	  If wishcmd is set to a build target, we can't test since the
-	  executable doesn't exist yet.
-
-2020-12-06 05:41  starseeker
-
-	* [r77936] src/other/tcl/CMake/tcl.cmake:
-	  Put back TCL_CHECK_INCLUDE_FILE
-
-2020-12-05 19:48  starseeker
-
-	* [r77935] src/other/tk/CMakeLists.txt:
-	  Just point directly to where tcl is located
-
-2020-12-05 18:26  starseeker
-
-	* [r77933] misc/CMake/scripts/tcl_mkindex.cmake:
-	  Work around an issue passing in spaces in pathnames.
-
-2020-12-04 20:07  starseeker
-
-	* [r77932] misc/repoconv/NOTES:
-	  Stash a few links documenting other conversion efforts.
-
-2020-12-04 18:49  starseeker
-
-	* [r77931] src/libtclcad/auto_path.c, src/other/CMakeLists.txt:
-	  Supply and use ITK_VERSION, instead of assuming ITCL and ITK
-	  match exactly.
-
-2020-12-04 18:43  starseeker
-
-	* [r77930] misc/tools/dom2dox/CMake/FindLEMON.cmake,
-	  misc/tools/dom2dox/CMake/FindPERPLEX.cmake:
-	  Update dom2dox copies as well...
-
-2020-12-04 18:40  starseeker
-
-	* [r77929] misc/CMake/CMakeLists.txt, misc/CMake/FindLEMON.cmake,
-	  misc/CMake/FindNETPBM.cmake, misc/CMake/FindOPENNURBS.cmake,
-	  misc/CMake/FindPERPLEX.cmake, misc/CMake/FindRE2C.cmake,
-	  misc/CMake/FindSSE.cmake, misc/CMake/FindTCL.cmake,
-	  misc/CMake/FindUTAHRLE.cmake, src/external/Creo/CMakeLists.txt,
-	  src/external/Cubit/CMakeLists.txt,
-	  src/external/Unigraphics/CMakeLists.txt,
-	  src/libbg/CMakeLists.txt, src/libbrep/CMakeLists.txt,
-	  src/libbu/CMakeLists.txt, src/libdm/wgl/CMakeLists.txt,
-	  src/libgcv/plugins/gdal/CMakeLists.txt,
-	  src/libgcv/plugins/obj/wfobj/CMake/FindLEMON.cmake,
-	  src/libgcv/plugins/obj/wfobj/CMake/FindPERPLEX.cmake,
-	  src/libtclcad/CMakeLists.txt, src/mged/CMakeLists.txt,
-	  src/other/CMakeLists.txt, src/rt/CMakeLists.txt,
-	  src/rtwizard/CMakeLists.txt, src/util/CMakeLists.txt:
-	  Pull in the majority (though not quite all) of the Find* module
-	  updates and their associated CMakeLists.txt adjustments from
-	  extbuild, altering the existing src/other/CMakeLists.txt to
-	  define the newer variables in a couple of cases.
-
-2020-12-04 17:06  starseeker
-
-	* [r77928] src/conv/step/ap203e2-g/CMakeLists.txt,
-	  src/conv/step/ap214-g/CMakeLists.txt,
-	  src/conv/step/ap242-g/CMakeLists.txt,
-	  src/conv/step/g-ap203e2/CMakeLists.txt,
-	  src/conv/step/g-ap214/CMakeLists.txt,
-	  src/conv/step/g-ap242/CMakeLists.txt,
-	  src/conv/step/g-step/CMakeLists.txt,
-	  src/conv/step/ifc-g/CMakeLists.txt,
-	  src/conv/step/step-g/CMakeLists.txt,
-	  src/conv/step/util/CMakeLists.txt:
-	  Incorporate what should (currently) be no-op CMake changes for
-	  step converters from extbuild.
-
-2020-12-04 15:23  starseeker
-
-	* [r77926] misc/CMake/CMakeLists.txt,
-	  misc/CMake/TCL_PKGINDEX.cmake,
-	  misc/CMake/scripts/tcl_mkindex.cmake:
-	  Bring in the other CMake logic updates for tclscript index files.
-
-2020-12-04 14:59  starseeker
-
-	* [r77925] src/tclscripts/CMakeLists.txt:
-	  Whoops - need the update to the tclscript logic for proper use of
-	  CMAKE_CFG_INTDIR and $<CONFIG>
-
-2020-12-04 02:37  starseeker
-
-	* [r77923] TODO:
-	  Remove old CMake note
-
-2020-12-04 02:26  starseeker
-
-	* [r77922] TODO:
-	  If the new approach to zlib and png continues to work, this is
-	  probably not worth doing anytime soon. If third party libs begin
-	  supporting their use we can consider it, but to really make it
-	  word we'd have to update all of them ourselves at the moment.
-
-2020-12-04 02:22  starseeker
-
-	* [r77921] TODO:
-	  png and zlib should be handled now - remove TODO item.
-
-2020-12-04 02:11  starseeker
-
-	* [r77920] src/librt/primitives/dsp/dsp_brep.cpp,
-	  src/librt/primitives/revolve/revolve_brep.cpp,
-	  src/librt/primitives/sketch/sketch_brep.cpp,
-	  src/proc-db/brepintersect.cpp:
-	  Pull in a number of adjustments to openNURBS using code from
-	  extbuild.
-
-2020-12-04 00:55  starseeker
-
-	* [r77919] src/archer/CMakeLists.txt, src/bwish/CMakeLists.txt:
-	  Shouldn't need to directly link the itcl/itk libs any longer.
-
-2020-12-04 00:54  starseeker
-
-	* [r77918] regress/user/CMakeLists.txt:
-	  Use $<CONFIG> here, not CMAKE_CFG_INTDIR.
-
-2020-12-04 00:47  starseeker
-
-	* [r77917] misc/CMake/distcheck_no_tcl.cmake.in,
-	  misc/CMake/distcheck_target.cmake.in:
-	  Ninja will ensure a .ninja_log file exists - adjust for that when
-	  doing distcheck.
-
-2020-12-04 00:46  starseeker
-
-	* [r77916] misc/CMake/CMakeLists.txt,
-	  misc/CMake/FindPOLY2TRI.cmake, misc/CMake/FindSTEPCODE.cmake:
-	  Not using yet but go ahead and stage poly2tri and stepcode find
-	  logic.
-
-2020-12-04 00:40  starseeker
-
-	* [r77915] misc/CMake/BRLCAD_User_Options.cmake:
-	  Pull in a couple extbuild adjustments to user options.
-
-2020-12-04 00:33  starseeker
-
-	* [r77914] CMakeLists.txt, misc/CMake/BRLCAD_Install_Prefix.cmake,
-	  misc/CMake/multiconfig_path_read.cmake.in:
-	  Adjust how we are updating the install path for the dev and rel
-	  paths. With Ninja MultiConfig on Windows, the old approach was
-	  inadequate.
-
-2020-12-03 20:14  starseeker
-
-	* [r77913] src/other/CMakeLists.txt:
-	  Specify more files for disclean to scrub
-
-2020-12-03 17:43  starseeker
-
-	* [r77912] src/libgcv/plugins/gdal/gdal.cpp,
-	  src/libgcv/plugins/gdal/gdal_ll.cpp:
-	  Prefer local GDAL headers for inclusion, if both are visible.
-
-2020-12-03 17:32  starseeker
-
-	* [r77910] misc/CMake/BRLCAD_Install_Prefix.cmake:
-	  Pull the working CMAKE_IGNORE_PATH logic from extbuild - need to
-	  ignore exact paths of interest, not the prefix dir for those
-	  paths.
-
-2020-12-03 17:28  starseeker
-
-	* [r77909] misc/CMake/BRLCAD_Install_Prefix.cmake:
-	  Make sure we have sleep, remove a no-op statement probably left
-	  over from a search-and-replace.
-
-2020-12-03 17:24  starseeker
-
-	* [r77908] misc/CMake/BRLCAD_Targets.cmake:
-	  We're requiring >3.6 now, we can discard the APPLE specific bit
-	  here.
-
-2020-12-03 17:23  starseeker
-
-	* [r77907] misc/CMake/BRLCAD_Targets.cmake:
-	  Ensure dependencies are set for static targets
-
-2020-12-03 17:22  starseeker
-
-	* [r77906] misc/CMake/BRLCAD_Targets.cmake:
-	  Document why we are setting the object dependencies.
-
-2020-12-03 17:21  starseeker
-
-	* [r77905] misc/CMake/BRLCAD_Install_Prefix.cmake,
-	  misc/CMake/BRLCAD_Targets.cmake:
-	  revert - added too many files
-
-2020-12-03 17:20  starseeker
-
-	* [r77904] misc/CMake/BRLCAD_Install_Prefix.cmake,
-	  misc/CMake/BRLCAD_Targets.cmake:
-	  Document why we are setting the object dependencies.
-
-2020-12-03 17:19  starseeker
-
-	* [r77903] misc/CMake/BRLCAD_Test_Wrappers.cmake:
-	  Use cmake_host_system_information to get the core count
-
-2020-12-03 17:18  starseeker
-
-	* [r77902] misc/CMake/BRLCAD_User_Options.cmake:
-	  fix line wrapping
-
-2020-12-03 17:04  starseeker
-
-	* [r77899] misc/CMake/BRLCAD_Build_Types.cmake:
-	  missed header
-
-2020-12-03 16:53  starseeker
-
-	* [r77897] misc/CMake/BRLCAD_Build_Types.cmake,
-	  misc/CMake/BRLCAD_CPack.cmake,
-	  misc/CMake/BRLCAD_Environment_Setup.cmake,
-	  misc/CMake/BRLCAD_Install_Prefix.cmake,
-	  misc/CMake/BRLCAD_Targets.cmake,
-	  misc/CMake/BRLCAD_Test_Wrappers.cmake,
-	  misc/CMake/BRLCAD_User_Options.cmake:
-	  Add headers and footers, ws
-
-2020-12-03 16:41  starseeker
-
-	* [r77896] CMakeLists.txt:
-	  Have cmake_host_system_information report user and hostname.
-
-2020-12-03 16:35  starseeker
-
-	* [r77895] CMakeLists.txt:
-	  Pull in a variety of minor changes from the extbuild
-	  CMakeLists.txt file.
-
-2020-12-03 16:14  starseeker
-
-	* [r77894] CMakeLists.txt, misc/CMake/BRLCAD_User_Options.cmake,
-	  misc/CMake/BRLCAD_Util.cmake, misc/CMake/CMakeLists.txt:
-	  Break the user options out into their own file.
-
-2020-12-03 16:04  starseeker
-
-	* [r77893] CMakeLists.txt, misc/CMake/BRLCAD_Test_Wrappers.cmake,
-	  misc/CMake/CMakeLists.txt:
-	  Break test wrappers out into their own file.
-
-2020-12-03 15:59  starseeker
-
-	* [r77892] CMakeLists.txt,
-	  misc/CMake/BRLCAD_Environment_Setup.cmake,
-	  misc/CMake/BRLCAD_Install_Prefix.cmake,
-	  misc/CMake/CMakeLists.txt:
-	  Fix environment setup, break out install prefix management.
-
-2020-12-03 15:45  starseeker
-
-	* [r77891] CMakeLists.txt,
-	  misc/CMake/BRLCAD_Environment_Setup.cmake,
-	  misc/CMake/CMakeLists.txt:
-	  Put enviornment setup and characterization code into its own
-	  file.
-
-2020-12-03 15:25  starseeker
-
-	* [r77890] CMakeLists.txt, misc/CMake/BRLCAD_CPack.cmake,
-	  misc/CMake/CMakeLists.txt:
-	  Break CPack logic out into its own file.
-
-2020-12-03 15:16  starseeker
-
-	* [r77889] CMakeLists.txt, misc/CMake/BRLCAD_Build_Types.cmake,
-	  misc/CMake/CMakeLists.txt:
-	  Break out build type management into its own file.
-
-2020-12-02 14:30  starseeker
-
-	* [r77868] src/librt/timer.cpp:
-	  Fixes for Windows specific bits of timer.cpp
-
-2020-12-02 03:21  starseeker
-
-	* [r77867] src/librt/timer.cpp:
-	  Use the C++ style clock() for consistency
-
-2020-12-02 03:02  starseeker
-
-	* [r77865] CMakeLists.txt:
-	  Folders shouldn't be MSVC specific in principle - just go ahead
-	  and set.
-
-2020-12-02 02:58  starseeker
-
-	* [r77864] CMakeLists.txt:
-	  Just go ahead and set this - ignored on platforms other than
-	  Apple according to CMake docs.
-
-2020-12-02 02:55  starseeker
-
-	* [r77863] CMakeLists.txt:
-	  Remove comment, and mark BRLCAD_WORD_SIZE as advanced regardless
-	  of platform.
-
-2020-12-02 02:52  starseeker
-
-	* [r77862] include/rt/timer.h, src/librt/CMakeLists.txt,
-	  src/librt/timer-nt.c, src/librt/timer.cpp, src/librt/timer42.c,
-	  src/librt/timerunix.c:
-	  Make a stab at a portable librt timer.
-	  
-	  This code attempts to replace the various librt timer* files with
-	  a
-	  single implementation in C++. Insofar as we can, use standard
-	  C/C++
-	  functions to retrieve values.
-	  
-	  Windows presents a complication in that clock() does not return
-	  CPU
-	  time. Per their documentation and examples, try to use the only
-	  available option on that platform to get CPU time.
-	  
-	  For elapsed time (I think this is intended to be wall clock
-	  time?)
-	  use C++11 chrono support which should be portable across all
-	  targeted
-	  platforms.
-	  
-	  This needs review - I'm not sure we were returning CPU time from
-	  the
-	  rt_get_timer function even on systems with a standards compliant
-	  clock() available previously, so this may be a behavior change
-	  even
-	  though it is trying to match the behavior described in
-	  rt/timer.h.
-
-2020-12-02 01:52  starseeker
-
-	* [r77861] CMakeLists.txt:
-	  Grr. Windows doesn't provide CPU time with clock() - which, if
-	  I'm reading this right, means timer-nt.c is measuring the wrong
-	  thing? rt/timer.h says the timer is supposed to be reporting CPU
-	  time... First step is to see if we've got GetProcessTimes
-	  available.
-
-2020-12-02 01:14  starseeker
-
-	* [r77859] src/libbu/tbl.c:
-	  Before we unpack last, make sure it's not null
-
-2020-12-01 23:57  starseeker
-
-	* [r77857] src/libbu/tbl.c:
-	  Initialize
-
-2020-12-01 19:09  starseeker
-
-	* [r77853] CMakeLists.txt, misc/CMake/BRLCAD_Options.cmake:
-	  Use a more clearly BRL-CAD specific name for this file
-
-2020-12-01 15:17  starseeker
-
-	* [r77847] src/conv/step/g-step/Assembly_Product.cpp,
-	  src/conv/step/g-step/Default_Geometric_Context.cpp,
-	  src/conv/step/g-step/ON_NurbsCurve.cpp,
-	  src/conv/step/g-step/ON_NurbsSurface.cpp,
-	  src/conv/step/util/list_elements.cpp,
-	  src/other/stepcode/src/clstepcore/STEPattribute.h:
-	  More future-proofing of stepcode C++
-
-2020-12-01 10:31  brlcad
-
-	* [r77842] include/bu/defines.h:
-	  provide _BU_ATTR_FLATTEN so performance critical functions can be
-	  better guide inlining.
-
-2020-12-01 09:22  brlcad
-
-	* [r77841] CMakeLists.txt:
-	  test for the flatten attribute for optimization strategies
-
-2020-12-01 09:22  brlcad
-
-	* [r77840] TODO:
-	  per discussion, command that reduces
-
-2020-12-01 09:21  brlcad
-
-	* [r77839] include/bu/tbl.h, src/libbu/tbl.c:
-	  rename SIMPLE to LIST. adjust padding to be more minimal.
-	  document some examples.
-
-2020-12-01 02:00  starseeker
-
-	* [r77837] src/conv/step/STEPWrapper.cpp,
-	  src/conv/step/step-g/BSplineCurveWithKnots.cpp,
-	  src/conv/step/step-g/BSplineSurfaceWithKnots.cpp,
-	  src/conv/step/step-g/CartesianPoint.cpp,
-	  src/conv/step/step-g/Direction.cpp,
-	  src/conv/step/step-g/RationalBSplineCurve.cpp,
-	  src/conv/step/step-g/RationalBSplineSurface.cpp,
-	  src/conv/step/step-g/ShellBasedSurfaceModel.cpp,
-	  src/conv/step/step-g/SurfaceCurve.cpp,
-	  src/conv/step/step-g/TrimmedCurve.cpp,
-	  src/other/stepcode/src/clstepcore/STEPattribute.cc,
-	  src/other/stepcode/src/clstepcore/STEPattribute.h,
-	  src/other/stepcode/src/clstepcore/sdaiApplication_instance.cc,
-	  src/other/stepcode/src/clstepcore/sdaiApplication_instance.h:
-	  Backport a couple changes from upstream stepcode.
-	  
-	  In order to prepare our step converter code for updating to the
-	  latest
-	  upstream stepcode, we've backported a couple changes needed to
-	  make
-	  the current version work the way the new one will.
-	  
-	  Discovered I was testing with the wrong stepcode branch when I
-	  tried
-	  upgrading earlier in the extbuild branch - stepcode's master
-	  wasn't in
-	  a working state. The develop branch was where updates and fixes
-	  had
-	  been applied. Fixed upstream with a ff merge of develop onto
-	  master,
-	  and then tried again to test building step-g.
-	  
-	  A couple class data members we were directly reading that have
-	  now been
-	  protected in upstream classes. Since the old code didn't have
-	  equivalent accessors, we add them in our fork so our converter
-	  code
-	  is ready to shift.
-	  
-	  We will also need to address or ignore a couple compiler warnings
-	  being
-	  tripped by the newer stepcode generated output. Prefer to fix the
-	  generated code upstream, but not sure yet how hard it will be.
-	  
-	  Only other change spotted is an adjustment of the template that
-	  lists
-	  the generated STEP C++ files to add the *_unity.cc files. They
-	  include
-	  all the individual entity files that are now being written. There
-	  is
-	  a note that not all compilers support those files, but we will
-	  have to
-	  see - if we need to list individual entity files build logic will
-	  be
-	  uglier, since we will need pre-generated per-schema lists of cc
-	  and h
-	  files for CMake and we won't have any way to auto-generate them
-	  at
-	  CMake time out of the box.
-
-2020-11-30 18:35  brlcad
-
-	* [r77832] src/libbu/tbl.c:
-	  attempt to quell warning about empty format string. intentionally
-	  writing an empty (nul) string to clear cells.
-
-2020-11-30 15:45  starseeker
-
-	* [r77829] src/adrt/CMakeLists.txt, src/conv/3dm/CMakeLists.txt,
-	  src/conv/CMakeLists.txt, src/conv/gcv/CMakeLists.txt,
-	  src/conv/raw/CMakeLists.txt, src/libgcv/CMakeLists.txt,
-	  src/libgcv/gcv.c, src/libgcv/plugins/CMakeLists.txt,
-	  src/libgcv/plugins/asc/CMakeLists.txt,
-	  src/libgcv/plugins/decimate/CMakeLists.txt,
-	  src/libgcv/plugins/fastgen4/CMakeLists.txt,
-	  src/libgcv/plugins/gdal/CMakeLists.txt,
-	  src/libgcv/plugins/obj/CMakeLists.txt,
-	  src/libgcv/plugins/rhino/CMakeLists.txt,
-	  src/libgcv/plugins/stl/CMakeLists.txt,
-	  src/libgcv/plugins/vol/CMakeLists.txt,
-	  src/libgcv/plugins/vrml/CMakeLists.txt:
-	  Put r77777 back, this time with the missing libraries added.
-	  Builds on MSVC.
-
-2020-11-30 13:35  brlcad
-
-	* [r77827] src/libbu/tbl.c:
-	  add support for empty cells in formatting.
-	  
-	  this is something strtok() doesn't intrinsically support, so we
-	  augment
-	  behavior by looking for sequences of nulls or separators within
-	  the
-	  strtok-modified buffer. strsep() does support empties, but it's
-	  not
-	  portably guaranteed. the reason for implementing this is
-	  two-fold:
-	  first, it lets authors skip columns while printing and second, it
-	  avoids a bug in libfort (reported) that precludes indexing
-	  directly
-	  into empty cells. this was a bit nasty to figure out and not the
-	  best coding to say the least, but not seeing a good way to reduce
-	  the
-	  complexity just yet. it does seem to work well (at least on mac's
-	  bsd
-	  strtok), but does warrant portability / unit testing.
-
-2020-11-30 11:06  brlcad
-
-	* [r77826] src/libbu/tbl.c:
-	  alignment is a cell property
-
-2020-11-30 08:56  brlcad
-
-	* [r77825] doc/legal/embedded/fort.txt:
-	  still need/intend to refactor it to one instance, but think this
-	  is the right way to denote the dupe libfort.
-
-2020-11-30 08:53  brlcad
-
-	* [r77824] src/libbu/CMakeLists.txt, src/libbu/fort.c,
-	  src/libbu/fort.h, src/libbu/tbl.c:
-	  implement the guts to bu_tbl using libfort.
-	  
-	  this implements a basic table formatting API useful for all the
-	  places where we currently display gridded table output. first
-	  proofed by cliff in the stat command, libfort is pretty awesome
-	  for this purpose and will replace the other manual approach
-	  started in num.c (for matrix printing). intentionally not
-	  exposing the breadth of libfort functionality. this is 1) so
-	  libbu API symbols can be kept to a bare minimum, 2) so calling
-	  code can utilize similar/familiar code patterns (readability),
-	  and 3) so calling sites stick to a limited set of table styles
-	  for end-user consistency and usability.
-
-2020-11-30 08:38  brlcad
-
-	* [r77823] include/bu/tbl.h:
-	  need to get+set position and more alignment options.
-	  
-	  also, don't interleave styling commands into the printf stream.
-	  let
-	  bu_tbl_style() handle it instead, otherwise the impl has a
-	  problem.
-
-2020-11-29 17:43  starseeker
-
-	* [r77822] doc/legal/embedded/sobolseq.txt:
-	  Update license reference
-
-2020-11-29 07:12  brlcad
-
-	* [r77821] include/bu/tbl.h:
-	  target 5 basic styles for now based on usage/needs
-
-2020-11-29 05:49  brlcad
-
-	* [r77820] include/bu/tbl.h:
-	  change the design to not be so focused on line/element pre-post
-	  printing. merge formatting concepts into a simpler api that
-	  should be adaptable to most of our existing use cases. was good
-	  to let this simmer.
-
-2020-11-25 07:38  brlcad
-
-	* [r77818] src/libbn/sobol.c:
-	  zero-initialize for safety.
-	  
-	  dynamic allocators are already not performance-critical, so we
-	  can afford
-	  to be more careful and future-proof.
-
-2020-11-25 07:32  brlcad
-
-	* [r77817] src/libbn/sobol.c:
-	  eliminate possibility for bn_sobol_create() to return NULL
-
-2020-11-25 07:28  brlcad
-
-	* [r77816] include/bu/CMakeLists.txt, include/bu/assert.h,
-	  include/bu/defines.h, include/bu/list.h, src/libbn/sobol.c,
-	  src/libbn/tabdata.c, src/libbu/color.cpp, src/libbu/interrupt.c,
-	  src/libbu/parse.c, src/libbu/sscanf.c, src/libbu/y2038/time64.c:
-	  separate BU_ASSERT() into its own header, update calling sites as
-	  needed
-
-2020-11-25 07:23  brlcad
-
-	* [r77815] misc/CMake/BRLCAD_Targets.cmake:
-	  indent ws cleanup
-
-2020-11-24 20:52  brlcad
-
-	* [r77814] misc/CMake/BRLCAD_Targets.cmake:
-	  format comments consistently to col-70
-
-2020-11-24 20:01  brlcad
-
-	* [r77813] src/libbn/sobol.c:
-	  general comment cleanup, make symbol names consistent
-
-2020-11-24 19:51  brlcad
-
-	* [r77812] src/libbn/CMakeLists.txt, src/libbn/sobol.c,
-	  src/libbn/soboldata.h, src/libbn/sobolseq.c:
-	  rename source to match the public header
-
-2020-11-24 19:24  brlcad
-
-	* [r77811] src/libbn/sobolseq.c:
-	  clean up memory management. it's not possible for bu memory
-	  allocators to return null. perform input validation up front to
-	  exit early and prevent deeper scope nestings (and improve
-	  readability).
-
-2020-11-24 15:48  starseeker
-
-	* [r77810] src/adrt/CMakeLists.txt, src/conv/3dm/CMakeLists.txt,
-	  src/conv/CMakeLists.txt, src/conv/gcv/CMakeLists.txt,
-	  src/conv/raw/CMakeLists.txt, src/libgcv/CMakeLists.txt,
-	  src/libgcv/gcv.c, src/libgcv/plugins/CMakeLists.txt,
-	  src/libgcv/plugins/asc/CMakeLists.txt,
-	  src/libgcv/plugins/decimate/CMakeLists.txt,
-	  src/libgcv/plugins/fastgen4/CMakeLists.txt,
-	  src/libgcv/plugins/gdal/CMakeLists.txt,
-	  src/libgcv/plugins/obj/CMakeLists.txt,
-	  src/libgcv/plugins/rhino/CMakeLists.txt,
-	  src/libgcv/plugins/stl/CMakeLists.txt,
-	  src/libgcv/plugins/vol/CMakeLists.txt,
-	  src/libgcv/plugins/vrml/CMakeLists.txt:
-	  Back out r77777/77806 - gcv plugin build not working on Windows,
-	  so something's missing.
-
-2020-11-24 08:18  brlcad
-
-	* [r77809] src/libbn/plot3.c, src/libbn/sobolseq.c,
-	  src/libbn/tabdata.c, src/libbn/tests/vlist.c:
-	  quiet all the remaining libbn msvc data loss warnings due to
-	  size_t / signedness conversions.
-
-2020-11-24 07:58  brlcad
-
-	* [r77808] include/bn/vlist.h, src/libbn/vlist.c,
-	  src/mged/dodraw.c:
-	  update bn_vlist_bbox() to using a size_t length parameter. avoids
-	  potential data truncation as reporteted by msvc.
-
-2020-11-24 06:51  brlcad
-
-	* [r77807] TODO:
-	  mged subcommand execution appears to be not working right. it's
-	  locking up hard until the framebuffer window is closed, seemingly
-	  not getting invoked asynchronously.
-
-2020-11-23 22:59  starseeker
-
-	* [r77806] src/libgcv/plugins/asc/CMakeLists.txt,
-	  src/libgcv/plugins/fastgen4/CMakeLists.txt,
-	  src/libgcv/plugins/gdal/CMakeLists.txt,
-	  src/libgcv/plugins/obj/CMakeLists.txt,
-	  src/libgcv/plugins/stl/CMakeLists.txt,
-	  src/libgcv/plugins/vol/CMakeLists.txt,
-	  src/libgcv/plugins/vrml/CMakeLists.txt:
-	  libwdb has mk_* functions
-
-2020-11-23 17:48  brlcad
-
-	* [r77805] doc/docbook/system/mann/saveview.xml:
-	  fix the example that refers to the old name for the command.
-
-2020-11-21 00:13  starseeker
-
-	* [r77777] src/adrt/CMakeLists.txt, src/conv/3dm/CMakeLists.txt,
-	  src/conv/CMakeLists.txt, src/conv/gcv/CMakeLists.txt,
-	  src/conv/raw/CMakeLists.txt, src/libgcv/CMakeLists.txt,
-	  src/libgcv/gcv.c, src/libgcv/plugins/CMakeLists.txt,
-	  src/libgcv/plugins/asc/CMakeLists.txt,
-	  src/libgcv/plugins/decimate/CMakeLists.txt,
-	  src/libgcv/plugins/fastgen4/CMakeLists.txt,
-	  src/libgcv/plugins/gdal/CMakeLists.txt,
-	  src/libgcv/plugins/obj/CMakeLists.txt,
-	  src/libgcv/plugins/rhino/CMakeLists.txt,
-	  src/libgcv/plugins/stl/CMakeLists.txt,
-	  src/libgcv/plugins/vol/CMakeLists.txt,
-	  src/libgcv/plugins/vrml/CMakeLists.txt:
-	  Update the gcv plugin setup to match the libdm/libged approach.
-
-2020-11-20 14:29  brlcad
-
-	* [r77756] TODO:
-	  dibelka has again requested a skinning exterior surface
-	  capability
-
-2020-11-19 04:22  brlcad
-
-	* [r77749] db/CMakeLists.txt, db/radialgrid.asc:
-	  add some sample geometry for a radial grid.
-	  
-	  was used as a lighting test, but potentially useful for other
-	  purposes.
-	  it helps to adjust the light.r light factor, number of shadow
-	  rays, and
-	  amount of ambient (and AO).
-
-2020-11-18 23:56  brlcad
-
-	* [r77748] NEWS:
-	  changed mvall to rename even when there's no source object. per
-	  docs, the command is supposed to update all database instances.
-
-2020-11-18 23:50  brlcad
-
-	* [r77747] src/libged/move_all/move_all.c:
-	  if there are no objects and no references, say so and return an
-	  error (match 'mv' semantics).
-
-2020-11-18 23:46  brlcad
-
-	* [r77746] src/libged/move_all/move_all.c:
-	  make mvall continue even when source doesn't exist
-	  
-	  previously, mvall would halt early if the source object doesn't
-	  exist,
-	  but per the documentation, the command is supposed to update all
-	  objects and references. thus the only error condition should be
-	  if
-	  there is no object AND no references or some other error
-	  condition
-	  exists.
-
-2020-11-17 04:41  brlcad
-
-	* [r77739] TODO:
-	  dibelka requested onehit processing from rtarea for
-	  faster/simpler results. note it and consolidate/refine the other
-	  rtarea tasks together.
-
-2020-11-11 06:11  brlcad
-
-	* [r77728] CMakeLists.txt:
-	  looks like the list was extended, but indicies were not. apparent
-	  copy-paste mistake.
-
-2020-11-10 21:50  starseeker
-
-	* [r77725] CMakeLists.txt:
-	  Stash the cmake_language method for dealing with empty string
-	  passing for later use - it requires 3.18, but seems to be a
-	  (much) cleaner solution to this particular issue. See
-	  https://gitlab.kitware.com/cmake/cmake/-/issues/21414 for more
-	  info.
-
-2020-11-10 21:44  starseeker
-
-	* [r77724] CMakeLists.txt:
-	  Had these tests backwards in the reworked version of the logic.
-
-2020-11-10 21:00  starseeker
-
-	* [r77723] TODO:
-	  Add another crash simulation models link
-
-2020-11-10 20:55  starseeker
-
-	* [r77722] TODO:
-	  gwu link seems to be down, and another with at least a few
-	  models.
-
-2020-11-10 20:43  starseeker
-
-	* [r77721] CMakeLists.txt:
-	  Empty arguments still disappear when passing through the function
-	  (essentially, ARGN is not a literal representation of the argv
-	  array originally passed to the function call) so we still need
-	  this workaround code.
-
-2020-11-10 20:18  starseeker
-
-	* [r77720] CMakeLists.txt, bench/CMakeLists.txt,
-	  regress/CMakeLists.txt, regress/asc/CMakeLists.txt,
-	  regress/bots/CMakeLists.txt, regress/comgeom/CMakeLists.txt,
-	  regress/dsp/CMakeLists.txt, regress/fuzz/CMakeLists.txt,
-	  regress/gqa/CMakeLists.txt, regress/iges/CMakeLists.txt,
-	  regress/lights/CMakeLists.txt, regress/mged/CMakeLists.txt,
-	  regress/moss/CMakeLists.txt, regress/nirt/CMakeLists.txt,
-	  regress/red/CMakeLists.txt, regress/rtedge/CMakeLists.txt,
-	  regress/shaders/CMakeLists.txt, regress/solids/CMakeLists.txt,
-	  regress/spdi/CMakeLists.txt, regress/weight/CMakeLists.txt,
-	  src/gtools/tests/CMakeLists.txt,
-	  src/libanalyze/tests/CMakeLists.txt,
-	  src/libbg/tests/CMakeLists.txt, src/libbn/tests/CMakeLists.txt,
-	  src/libbrep/tests/CMakeLists.txt, src/libbu/tests/CMakeLists.txt,
-	  src/libbu/tests/dylib/CMakeLists.txt,
-	  src/libgcv/tests/CMakeLists.txt,
-	  src/libged/simulate/tests/CMakeLists.txt,
-	  src/libged/tests/CMakeLists.txt, src/libnmg/tests/CMakeLists.txt,
-	  src/librt/tests/CMakeLists.txt:
-	  Go with a BRLCAD_ADD_TEST wrapper in lieu of using the _add_test
-	  approach. Simpler (no need for whitespace workaround) and
-	  conforms to CMake recommended practice.
-
-2020-11-10 14:48  starseeker
-
-	* [r77717] misc/repoconv/github_ci_actions.yml:
-	  Commit some (commented out) examples of manipulation of the
-	  configure and build lines for more targeted testing of subbuilds
-	  in CI. The msbuild diagnostics unfortunately didn't provide the
-	  cl.exe command line - best way to get that still seems to be
-	  inspection of the properties in Visual Studio - but may be useful
-	  down the road.
-
-2020-11-08 07:10  brlcad
-
-	* [r77713] src/gtools/tests/CMakeLists.txt:
-	  skip the bigdb test if we can't allocate enough memory.
-	  
-	  cmake 3.1 has a feature where a test will be considered skipped
-	  if
-	  there's a particular exit code. use this to detect when the bigdb
-	  test is aborting due to not being able to allocate 5x the amount
-	  of
-	  requested memory (this is a librt issue).
-
-2020-11-08 07:07  brlcad
-
-	* [r77712] src/gtools/tests/bigdb.c:
-	  modify the test to make sure we can allocate enough.
-	  
-	  upon observing and debugging test failures on lower-memory
-	  systems,
-	  came to understand more specifically the cause being incredibly
-	  inefficient handling by librt. debugging shows a given allocation
-	  passed in as title ends up creating 9 copies. Due to how AVS are
-	  copied/merged/recopied as they're synced as well as how objects
-	  are
-	  serialized for export, there are as many as 5 copies
-	  simultaneously!
-	  
-	  In order to combat this, we test whether we can allocate in
-	  advance
-	  with malloc first, and halt if we can't get 5x the requested
-	  amount.
-
-2020-11-07 18:39  brlcad
-
-	* [r77711] src/libbg/spsr/Octree.inl:
-	  libc gets precedence on _underscore symbols, so rename with Oct
-	  prefix. fixes build failure conflict with openbsd libc.
-
-2020-11-06 17:40  brlcad
-
-	* [r77699] src/librt/search.c:
-	  make sure db_node and the path for that node are not null before
-	  adding them to the results table...
-
-2020-11-06 16:54  brlcad
-
-	* [r77698] include/rt/geom.h, include/wdb.h,
-	  src/libged/search/search.c, src/libged/typein/typein.c,
-	  src/librt/db_fullpath.c, src/librt/primitives/vol/vol.c,
-	  src/libwdb/vol.c, src/mged/edsol.c:
-	  accept sf patch #556 (in database support for vol primitive) from
-	  sumagna das. via the struct-parsing, this looks to be
-	  conveniently forwards-compatible and backwards-compatible for the
-	  'file' type data sources.
-
-2020-11-06 06:05  brlcad
-
-	* [r77697] src/librt/search.c:
-	  consistent braces and make sure we don't try to strlen a null
-
-2020-11-05 16:09  starseeker
-
-	* [r77696] src/tclscripts/checker/OverlapFileTool.tcl:
-	  Running the check command directly from Tcl isn't playing well
-	  with the MGED command prompt - instead, just have the GUI run the
-	  gchecker command line program to generate the file. Needs user
-	  testing.
-
-2020-11-05 07:36  brlcad
-
-	* [r77695] src/libged/search/search.c:
-	  refactor three of the four search result iterations into a
-	  function
-
-2020-11-05 05:34  brlcad
-
-	* [r77694] src/libged/search/search.c:
-	  reduction of the common looping logic. four of these begs
-	  refactoring.
-
-2020-11-05 04:59  brlcad
-
-	* [r77693] src/libbu/mappedfile.c:
-	  if mged was run on a database that doesn't mmap and can't be
-	  read, it was crashing due to an already freed mp->buf pointer
-	  getting released twice. uncrashed by making the mappedfile
-	  interface handle itself more gracefully.
-
-2020-11-04 23:08  brlcad
-
-	* [r77692] src/libbu/mappedfile.c:
-	  strdup was resulting in leaked memory when we invalidate. just
-	  set to null.
-
-2020-11-04 22:43  brlcad
-
-	* [r77691] src/librt/db_fullpath.c:
-	  empty string is not same as null pointer. need to check the
-	  latter. an empty path string conceptually just maps to an empty
-	  string, I think?
-
-2020-11-04 20:55  brlcad
-
-	* [r77688] src/libged/search/search.c:
-	  convert the remainder of search result loopings to not ptbl get
-	  even once on an empty set while taking care to still iterate in
-	  the same order (back-to-front)
-
-2020-11-04 19:31  brlcad
-
-	* [r77687] NEWS:
-	  fixed a search segfault condition. code looks like there may be
-	  other ways to provoke it, but simple case was running search . on
-	  an empty database.
-
-2020-11-04 19:27  brlcad
-
-	* [r77686] src/libged/search/search.c:
-	  change the search set iteration to also not try and ptbl_get an
-	  empty search set. fixes two distinct segfaults when there aren't
-	  paths.
-
-2020-11-04 19:10  brlcad
-
-	* [r77685] src/libged/search/search.c:
-	  invert the loop so we avoid attempting to BU_PTBL_GET on an empty
-	  table
-
-2020-11-04 19:08  brlcad
-
-	* [r77684] src/libged/search/search.c:
-	  convert ptbl and path iterators to size_t since that's what both
-	  db_ls and ptbl indexing are expecting
-
-2020-11-04 19:00  brlcad
-
-	* [r77683] src/libged/search/search.c:
-	  rewrite _ged_free_search_set() to simplify the looping construct
-	  and eliminate some unnecessary conditionals. avoids calling
-	  BU_PTBL_GET on an invalid index too.
-
-2020-11-04 18:51  brlcad
-
-	* [r77682] src/libged/search/search.c:
-	  inject some newlines for readability. helps to separate decls and
-	  setting values from work loops. it's hard for non-authors (or at
-	  least it is for me) to read walls of code quickly otherwise.
-
-2020-11-04 15:01  brlcad
-
-	* [r77681] include/rt/db_internal.h:
-	  document the mat parameter
-
-2020-11-04 14:36  brlcad
-
-	* [r77680] src/librt/db5_io.c:
-	  oepl cleanup, ws, and tidy up a big bu_log
-
-2020-11-04 14:26  brlcad
-
-	* [r77678] src/librt/dir.c:
-	  cleanup, oepl
-
-2020-11-04 03:17  brlcad
-
-	* [r77677] src/libbn/mat.c:
-	  use typedef types, match declaration.
-
-2020-11-04 03:12  brlcad
-
-	* [r77676] src/libbn/mat.c:
-	  match the declaration, eliminate register from function argument
-	  definitions.
-
-2020-11-04 03:06  brlcad
-
-	* [r77675] src/libbn/axis.c:
-	  match decl, use our typedefs
-
-2020-11-03 20:18  starseeker
-
-	* [r77673] misc/repoconv/github_ci_actions.yml:
-	  Stash attempt at simplification of github actions logic.
-
-2020-11-03 13:17  starseeker
-
-	* [r77668] misc/repoconv/github_ci_actions.yml:
-	  Probably want this off by default.
-
-2020-11-02 22:07  starseeker
-
-	* [r77666] misc/repoconv/github_ci_actions.yml:
-	  Explain a little more what we're doing here with Windows
-	  environment reproduction, and handle a case where file(STRINGS)
-	  isn't up to the job. This looks like it is
-	  necessary-but-not-sufficient for fixing the github runners...
-
-2020-10-30 06:06  brlcad
-
-	* [r77659] doc/BRL-CAD.bib:
-	  AFRL published a limited distribution report heavily pertaining
-	  to BRL-CAD.
-	  
-	  Alas, even the abstract is limited distribution, so more cannot
-	  be said.
-
-2020-10-29 07:28  brlcad
-
-	* [r77658] src/mged/attach.c:
-	  don't try to get the name of NULL dmpies
-
-2020-10-28 06:51  brlcad
-
-	* [r77655] CMakeLists.txt, src/other/gct/CMakeLists.txt,
-	  src/other/gdal/CMakeLists.txt:
-	  looking at other projects, more common convention seems to be to
-	  just set that pthread flag is preferred. docs say this is
-	  recommended too.
-
-2020-10-28 06:23  brlcad
-
-	* [r77654] CMakeLists.txt:
-	  probably don't want to keep this long-term, but blather the
-	  status of the pthread library being used for a bit.
-
-2020-10-28 01:32  starseeker
-
-	* [r77652] CMakeLists.txt, misc/tools/env2c/CMakeLists.txt,
-	  regress/coverage/CMakeLists.txt, regress/pkg/CMakeLists.txt,
-	  regress/repository/CMakeLists.txt, src/art/CMakeLists.txt,
-	  src/libbu/CMakeLists.txt, src/other/gdal/CMakeLists.txt,
-	  src/other/proj-4/src/CMakeLists.txt,
-	  src/other/tcl/CMakeLists.txt, src/rt/CMakeLists.txt,
-	  src/rtwizard/CMakeLists.txt:
-	  Post 3.1 CMake 'highly recommends' using the Threads::Threads
-	  imported target and the THREADS_PREFER_PTHREAD_FLAG - switch over
-	  to the recommended approach.
-
-2020-10-27 06:38  brlcad
-
-	* [r77651] CMakeLists.txt:
-	  looks like we have a copy-pasted chunk of code but are missing a
-	  line to indicate a preference for -pthread where it's working
-
-2020-10-25 17:17  starseeker
-
-	* [r77650] CMakeLists.txt, misc/CMake/RPath_Setup.cmake:
-	  Adjust CMAKE_INSTALL_PREFIX management - looks like some changes
-	  I was considering making don't play out correctly...
-
-2020-10-24 17:32  brlcad
-
-	* [r77641] NEWS:
-	  post-document the new 'n' (now 'N') key binding that runs nirt in
-	  a graphics window.
-
-2020-10-24 17:23  brlcad
-
-	* [r77640] doc/docbook/articles/mged.xml:
-	  document 'N' to shoot a nirt ray in the graphics window. bindings
-	  appear to be unsorted and out of sync.
-
-2020-10-24 17:20  brlcad
-
-	* [r77639] AUTHORS, NEWS:
-	  vikram atreya rewrote and tested rt_bot_bbox() so that it
-	  iterates over used vertices once. this cuts calculations by a
-	  third and showed approximately 42% improvement on the hairball
-	  test case.
-
-2020-10-24 17:13  brlcad
-
-	* [r77638] src/librt/primitives/bot/bot.c:
-	  eliminate the use of intermediate variables.
-
-2020-10-24 17:07  brlcad
-
-	* [r77637] src/librt/primitives/bot/bot.c:
-	  applied sf patch # 558 (Improved bounding box time complexity)
-	  from Vikram Atreya. this improved the bot bounding box
-	  calculation to only consider referenced vertices without testing
-	  all vertices or all face vertex references thus cutting the
-	  number of tests by a third.
-
-2020-10-24 06:02  brlcad
-
-	* [r77632] CMakeLists.txt:
-	  wow, I guess we have to wrap this for older cmake. c'mon cmake
-	  guys...
-
-2020-10-24 05:07  brlcad
-
-	* [r77631] CMakeLists.txt:
-	  3.19 added support for spaces, but that's too new to require, so
-	  set the policy accordingly
-
-2020-10-23 17:47  starseeker
-
-	* [r77617] CMakeLists.txt, doc/notes/c_cxx_patterns/CMakeLists.txt,
-	  misc/tools/astyle/CMakeLists.txt,
-	  misc/tools/debug2c/CMakeLists.txt,
-	  misc/tools/dom2dox/CMakeLists.txt,
-	  misc/tools/env2c/CMakeLists.txt, misc/tools/lemon/CMakeLists.txt,
-	  misc/tools/perplex/CMakeLists.txt,
-	  misc/tools/re2c/CMakeLists.txt,
-	  misc/tools/xmltools/CMakeLists.txt,
-	  src/external/Creo/CMakeLists.txt,
-	  src/external/Cubit/CMakeLists.txt,
-	  src/external/Unigraphics/CMakeLists.txt,
-	  src/libgcv/plugins/obj/wfobj/CMakeLists.txt,
-	  src/other/gct/CMakeLists.txt, src/other/gdal/CMakeLists.txt,
-	  src/other/itcl3/CMakeLists.txt, src/other/itk3/CMakeLists.txt,
-	  src/other/iwidgets/CMakeLists.txt,
-	  src/other/libbson/CMakeLists.txt,
-	  src/other/libnetpbm/CMakeLists.txt,
-	  src/other/libpng/CMakeLists.txt,
-	  src/other/libregex/CMakeLists.txt,
-	  src/other/libutahrle/CMakeLists.txt,
-	  src/other/libz/CMakeLists.txt,
-	  src/other/openNURBS/CMakeLists.txt,
-	  src/other/openscenegraph/CMakeLists.txt,
-	  src/other/poly2tri/CMakeLists.txt,
-	  src/other/proj-4/CMakeLists.txt,
-	  src/other/stepcode/CMakeLists.txt,
-	  src/other/stepcode/src/base/judy/CMakeLists.txt,
-	  src/other/stepcode/test/cpp/CMakeLists.txt,
-	  src/other/stepcode/test/cpp/schema_specific/CMakeLists.txt,
-	  src/other/stepcode/test/cpp/stepcore/CMakeLists.txt,
-	  src/other/stepcode/test/p21/CMakeLists.txt,
-	  src/other/tcl/CMakeLists.txt, src/other/tk/CMakeLists.txt,
-	  src/other/tkhtml/CMakeLists.txt,
-	  src/other/tktable/CMakeLists.txt:
-	  Fall back to requiring 3.12 for distros shipping older CMakes.
-
-2020-10-23 06:42  brlcad
-
-	* [r77592] src/tclscripts/mged/bindings.tcl:
-	  separate the control+key bindings from shift grips
-
-2020-10-23 06:39  brlcad
-
-	* [r77591] src/tclscripts/mged/bindings.tcl:
-	  categorize and sort the display manager key bindings so we can
-	  get a handle on this mess.
-
-2020-10-22 22:26  starseeker
-
-	* [r77558] src/rt/do.c:
-	  Right, got bio.h in this file already.
-
-2020-10-22 15:49  starseeker
-
-	* [r77545] include/brep/defines.h:
-	  Guard inclusion of opennurbs.h
-
-2020-10-22 15:44  starseeker
-
-	* [r77544] src/libtclcad/auto_path.c:
-	  Adapt libtclcad auto_path setup changes from thirdparty rework
-	  branch. Uses bu_dir to do path lookups.
-
-2020-10-22 15:24  starseeker
-
-	* [r77543] src/rt/do.c:
-	  Directly include stdio.h in do.c
-
-2020-10-22 15:24  starseeker
-
-	* [r77542] src/libtclcad/commands.c:
-	  Don't think we need this header here anymore...
-
-2020-10-22 15:19  starseeker
-
-	* [r77541] src/libdm/wgl/dm-wgl.c:
-	  fix header name
-
-2020-10-22 15:16  starseeker
-
-	* [r77540] src/fb/CMakeLists.txt:
-	  No longer using utahrle here
-
-2020-10-22 15:14  starseeker
-
-	* [r77539] src/conv/step/step-g/OpenNurbsInterfaces.cpp:
-	  openNURBS has class-memaccess issues - guard the header.
-
-2020-10-22 14:50  starseeker
-
-	* [r77538] src/conv/asc/asc2g.c:
-	  Be more verbose if tclcad_init fails in asc2g processing.
-
-2020-10-22 14:43  starseeker
-
-	* [r77537] CMakeLists.txt, doc/notes/c_cxx_patterns/CMakeLists.txt,
-	  misc/tools/astyle/CMakeLists.txt,
-	  misc/tools/debug2c/CMakeLists.txt,
-	  misc/tools/dom2dox/CMakeLists.txt,
-	  misc/tools/env2c/CMakeLists.txt, misc/tools/lemon/CMakeLists.txt,
-	  misc/tools/perplex/CMakeLists.txt,
-	  misc/tools/re2c/CMakeLists.txt,
-	  misc/tools/xmltools/CMakeLists.txt,
-	  src/external/Creo/CMakeLists.txt,
-	  src/external/Cubit/CMakeLists.txt,
-	  src/external/Unigraphics/CMakeLists.txt,
-	  src/libgcv/plugins/obj/wfobj/CMakeLists.txt,
-	  src/other/gct/CMakeLists.txt, src/other/gdal/CMakeLists.txt,
-	  src/other/itcl3/CMakeLists.txt, src/other/itk3/CMakeLists.txt,
-	  src/other/iwidgets/CMakeLists.txt,
-	  src/other/libbson/CMakeLists.txt,
-	  src/other/libnetpbm/CMakeLists.txt,
-	  src/other/libpng/CMakeLists.txt,
-	  src/other/libregex/CMakeLists.txt,
-	  src/other/libutahrle/CMakeLists.txt,
-	  src/other/libz/CMakeLists.txt,
-	  src/other/openNURBS/CMakeLists.txt,
-	  src/other/openscenegraph/CMakeLists.txt,
-	  src/other/poly2tri/CMakeLists.txt,
-	  src/other/proj-4/CMakeLists.txt,
-	  src/other/stepcode/CMakeLists.txt,
-	  src/other/stepcode/src/base/judy/CMakeLists.txt,
-	  src/other/stepcode/test/cpp/CMakeLists.txt,
-	  src/other/stepcode/test/cpp/schema_specific/CMakeLists.txt,
-	  src/other/stepcode/test/cpp/stepcore/CMakeLists.txt,
-	  src/other/stepcode/test/p21/CMakeLists.txt,
-	  src/other/tcl/CMakeLists.txt, src/other/tk/CMakeLists.txt,
-	  src/other/tkhtml/CMakeLists.txt,
-	  src/other/tktable/CMakeLists.txt:
-	  Looking like 3.14 is the CMake version floor for the new setup -
-	  update minimum required versions.
-
-2020-10-22 14:23  starseeker
-
-	* [r77536] src/libged/exec.cpp, src/libged/ged_init.cpp,
-	  src/libged/include/plugin.h:
-	  Revert r77533 - breaks the build on Linux. asc2g segfaults trying
-	  to build the .g examples.
-
-2020-10-22 12:26  starseeker
-
-	* [r77535] src/tclscripts/mged/bindings.tcl:
-	  Maybe try N instead of S for nirt shooting, so we don't conflict
-	  with the existing S binding?
-
-2020-10-22 04:34  brlcad
-
-	* [r77534] src/tclscripts/mged/bindings.tcl:
-	  switch the nirt binding from 'n' to 'S' for shoot or sample. need
-	  to review all bindings, but this adds some safety to the
-	  invocation. switching the key binding to requiring a modifier
-	  (i.e., shift-s) makes it less likely to be accidentally triggered
-	  which is important given neither mged or archer handle nirt's
-	  invocation gracefully / asynchronously. encountered a hard
-	  multi-minute unresponsive lockup while spinning a nurbs model
-	  around as nirt ran prep.
-
-2020-10-22 04:26  brlcad
-
-	* [r77533] src/libged/exec.cpp, src/libged/ged_init.cpp,
-	  src/libged/include/plugin.h:
-	  having every potential access point call init is super brittle.
-	  void pointer is no good too. instead, wrap the command map in a
-	  function and make it do the init check for all. that said, we
-	  shouldn't be initializing like this.
-
-2020-10-22 03:59  brlcad
-
-	* [r77532] src/libged/tests/plugins.cpp:
-	  don't use ged_ prefix on non-public symbols. makes it harder to
-	  read and shadowed a global.
-
-2020-10-22 03:54  brlcad
-
-	* [r77531] src/libged/ged_init.cpp:
-	  ws
-
-2020-10-22 03:52  brlcad
-
-	* [r77530] src/libged/ged_init.cpp:
-	  rename non-public symbols without the ged prefix
-
-2020-10-22 03:44  brlcad
-
-	* [r77529] src/libged/ged_init.cpp:
-	  the resulting vls doesn't need to be dynamic, avoid GET/PUT here
-	  and rename sans prefix.
-
-2020-10-22 03:42  brlcad
-
-	* [r77528] src/libged/exec.cpp:
-	  cleanup while reading
-
-2020-10-22 03:41  brlcad
-
-	* [r77527] src/gtools/tests/bigdb.c:
-	  make sure we don't overflow the allocation and print the title
-	  differently
-
-2020-10-21 23:50  starseeker
-
-	* [r77525] src/libtclcad/init.c:
-	  Adapt logic from the thirdparty rework branch to assist the Tcl
-	  init with finding the init.tcl file when we're using a bundled
-	  Tcl.
-
-2020-10-21 23:37  starseeker
-
-	* [r77524] src/libtclcad/init.c:
-	  Print more information about init failures.
-
-2020-10-21 22:12  starseeker
-
-	* [r77523] src/gtools/tests/CMakeLists.txt:
-	  With the shift to plugins for ged commands, any test executables
-	  using them will need to be located in the bin dir, just like
-	  those tests that need files from the data dir, and for the same
-	  reason - we need bu_dir path lookups to work reliably, and for
-	  that we need to be able to decode the executable path to a
-	  correct relative location. Sean noticed the bigdb_1gb test was
-	  failing when run with ctest but succeeded when run from the build
-	  dir. Observing in debugger, bu_dir was succeeding when program
-	  was run in isolation from a working dir of the top level build
-	  dir, but failing when ctest did the launching.
-
-2020-10-21 00:08  starseeker
-
-	* [r77522] src/libged/brep/dplot_reader.c,
-	  src/libged/brep/dplot_reader.h:
-	  Add header and footer
-
-2020-10-20 21:50  starseeker
-
-	* [r77521] include/bn/plot3.h:
-	  Whoops, commit header
-
-2020-10-20 20:19  starseeker
-
-	* [r77520] src/libbn/tests/CMakeLists.txt,
-	  src/libbn/tests/invalid.plot3, src/libbn/tests/valid.plot3:
-	  Stash valid and invalid binary plot3 files from gqa
-
-2020-10-20 20:00  starseeker
-
-	* [r77519] src/libbn/plot3.c, src/libbn/tests/CMakeLists.txt,
-	  src/libbn/tests/plot3.c:
-	  Rough in a way to test the validity/invalidity of a plot3 file,
-	  using logic similar to that used by rt_uplot_to_vlist. Idea is to
-	  be able to detect when plotting file output has gone wrong for
-	  regression testing.
-
-2020-10-20 19:14  starseeker
-
-	* [r77518] src/mged/attach.c:
-	  Check for a view state before we try to set this - if the last
-	  MGED dm was closed, we may not have one. (User reported issue)
-
-2020-10-20 19:07  starseeker
-
-	* [r77517] src/libbu/file.c:
-	  Think we mean to check fn here, not rp? rp is uninitialized at
-	  this point inthe code (thanks GCC)
-
-2020-10-20 17:39  starseeker
-
-	* [r77516] NEWS:
-	  libtclcad I/O handlers weren't set up to handle opening and
-	  closing multiple processes as subcommands - this has now been
-	  fixed with per-process channel management.
-
-2020-10-20 17:36  starseeker
-
-	* [r77515] NEWS:
-	  Fixed handling of 'n' key when MGED forward_key_bindings is
-	  called - needs to be treated like other bindings now that it
-	  shoots a nirt ray in the view.
-
-2020-10-20 17:19  starseeker
-
-	* [r77514] misc/repoconv/checkout_dercs.sh:
-	  Generalize slightly
-
-2020-10-20 03:11  starseeker
-
-	* [r77511] misc/repoconv/checkout_dercs.sh:
-	  Work in the third party branch moved stepcode, and the files in
-	  the new location no longer matched the rejection filters for
-	  dercs.
-
-2020-10-18 21:56  brlcad
-
-	* [r77486] regress/repository/repocheck.cpp:
-	  bring it under 250
-
-2020-10-18 21:55  brlcad
-
-	* [r77485] src/libged/brep/dplot_reader.c:
-	  regress fix, call bu_setprogname()
-
-2020-10-18 08:09  brlcad
-
-	* [r77480] bench/run.sh:
-	  echo builtin is unreliable as some platforms support \n and
-	  others do not, some recognize -n and -c flags to echo, others do
-	  not. instead use a here now doc so we can avoid calling echo
-	  altogether.
-
-2020-10-18 08:02  brlcad
-
-	* [r77479] src/libbu/file.c:
-	  add special case handling of '-' as representing standard input
-	  for bu_file_same() and bu_file_exits() but not for all the other
-	  lower-lever file handling functions.
-
-2020-10-18 07:54  brlcad
-
-	* [r77478] include/bu/file.h:
-	  mention the special handling of '-'
-
-2020-10-18 05:54  brlcad
-
-	* [r77477] src/libbu/file.c:
-	  stdin is a special case for bu_file_same()
-
-2020-10-17 16:41  starseeker
-
-	* [r77475] CMakeLists.txt, misc/CMake/BRLCAD_Util.cmake,
-	  misc/CMake/CMakeLists.txt, misc/CMake/scripts,
-	  misc/CMake/scripts/printtime.cmake,
-	  misc/CMake/scripts/timestamp.cmake:
-	  Pull the timestamping updates from thirdparty_rework back up into
-	  trunk.
-
-2020-10-17 15:51  starseeker
-
-	* [r77472] CMakeLists.txt, bench/CMakeLists.txt, db/CMakeLists.txt,
-	  doc/CMakeLists.txt, doc/docbook/CMakeLists.txt,
-	  doc/docbook/articles/CMakeLists.txt,
-	  doc/docbook/books/CMakeLists.txt,
-	  doc/docbook/devguides/CMakeLists.txt,
-	  doc/docbook/lessons/CMakeLists.txt,
-	  doc/docbook/presentations/CMakeLists.txt,
-	  doc/docbook/resources/brlcad/CMakeLists.txt,
-	  doc/docbook/specifications/CMakeLists.txt,
-	  doc/docbook/system/CMakeLists.txt,
-	  doc/docbook/system/man5/CMakeLists.txt,
-	  misc/CMake/BRLCAD_Targets.cmake, misc/CMake/Distcheck.cmake,
-	  misc/CMake/DocBook.cmake, misc/CMake/ThirdParty_TCL.cmake,
-	  misc/pkgconfig/CMakeLists.txt, misc/tools/lemon/CMakeLists.txt,
-	  misc/tools/re2c/CMakeLists.txt,
-	  misc/tools/xmltools/libexslt/CMakeLists.txt,
-	  misc/tools/xmltools/libxml/CMakeLists.txt,
-	  misc/tools/xmltools/libxslt/CMakeLists.txt,
-	  src/libbn/tests/CMakeLists.txt, src/libbrep/CMakeLists.txt,
-	  src/libbrep/tests/CMakeLists.txt, src/libbu/tests/CMakeLists.txt,
-	  src/libgcv/plugins/vol/CMakeLists.txt,
-	  src/libged/brep/CMakeLists.txt, src/other/CMakeLists.txt:
-	  Replace implicit configure_file distclean calls with explicit
-	  calls.
-
-2020-10-17 15:12  starseeker
-
-	* [r77471] CMakeLists.txt, db/CMakeLists.txt,
-	  doc/docbook/system/man5/CMakeLists.txt,
-	  regress/icv/CMakeLists.txt, regress/nurbs/CMakeLists.txt,
-	  regress/pkg/CMakeLists.txt, src/libbn/tests/CMakeLists.txt,
-	  src/libbu/tests/CMakeLists.txt:
-	  See if we can eliminate the wrapping of configure_file
-
-2020-10-17 14:49  starseeker
-
-	* [r77470] CMakeLists.txt, misc/CMake/BRLCAD_Targets.cmake,
-	  src/libbu/tests/dylib/CMakeLists.txt:
-	  Eliminate wrapper for add_library.
-
-2020-10-17 14:39  starseeker
-
-	* [r77469] CMakeLists.txt:
-	  Always define the timestamp utilites, eliminate the override of
-	  add_subdirectory. Getting close...
-
-2020-10-17 14:27  starseeker
-
-	* [r77468] CMakeLists.txt:
-	  Replace manual tracking of build target sets with use of new
-	  CMake properties. Significantly reduces (but doesn't yet
-	  eliminate) our use of the discouraged practice of CMake function
-	  redefinition.
-
-2020-10-15 16:41  starseeker
-
-	* [r77455] src/tclscripts/mged/bindings.tcl:
-	  n has a binding now, so clear it as well when forwarding is
-	  turned on.
-
-2020-10-15 14:40  starseeker
-
-	* [r77454] src/libtclcad/command_io.cpp:
-	  Whoops, svn add the file...
-
-2020-10-15 14:40  starseeker
-
-	* [r77453] src/libtclcad/CMakeLists.txt, src/libtclcad/commands.c,
-	  src/libtclcad/commands.cpp:
-	  Break just the I/O portion out into a C++ file, fix a few things
-	  in the Windows portion.
-
-2020-10-15 13:46  starseeker
-
-	* [r77452] src/libtclcad/commands.cpp:
-	  C++17 doesn't like register
-
-2020-10-15 13:44  starseeker
-
-	* [r77451] include/tclcad.h, src/libtclcad/commands.cpp,
-	  src/mged/mged.c:
-	  Start working on per-process channel storage for Windows
-
-2020-10-15 12:58  starseeker
-
-	* [r77450] src/libtclcad/commands.cpp:
-	  Adjust to C++
-
-2020-10-15 12:56  starseeker
-
-	* [r77449] src/libtclcad/CMakeLists.txt, src/libtclcad/commands.c,
-	  src/libtclcad/commands.cpp:
-	  C->C++
-
-2020-10-15 12:54  starseeker
-
-	* [r77448] src/libtclcad/commands.c:
-	  Add some const markers to string assignments
-
-2020-10-15 07:57  brlcad
-
-	* [r77447] bench/run.sh:
-	  we only care about the pixel count line
-
-2020-10-15 07:55  brlcad
-
-	* [r77446] bench/run.sh:
-	  can't rely on echo -n in strict mode, so just match a single rgb
-	  triplet of newlines. print the return value too, so we have a
-	  better idea what's going on when things are sour.
-
-2020-10-15 07:04  brlcad
-
-	* [r77445] src/mged/attach.c:
-	  plug memory leak
-
-2020-10-15 07:00  brlcad
-
-	* [r77444] NEWS:
-	  fixed mged crashing when no DMs other than nu are available.
-	  
-	  if all DMs except nu end up disabled after cmake, e.g., headless
-	  server compiles or no-X11 builds, mged was crashing in classic
-	  mode on
-	  attach prompt construction. I made it less likely for libdm to
-	  return
-	  no dms and made mged handle that condition regardless for
-	  future-proofing. bug that was observed by a user and myself.
-
-2020-10-15 06:51  brlcad
-
-	* [r77443] src/mged/attach.c:
-	  redo the attach prompt so we don't crash when there aren't dm's
-	  or dm_list_types() doesn't return anything, for whatever reason.
-	  also avoid making an unnecessary copy and memory allocations just
-	  so we can iterate over an argv... just do a normal tokenized
-	  iteration.
-
-2020-10-15 06:23  brlcad
-
-	* [r77442] src/libdm/dm_plugins.cpp:
-	  make sure dm_list_types() returns the nu interface
-
-2020-10-15 06:14  brlcad
-
-	* [r77441] src/libdm/dm_plugins.cpp:
-	  remove nu from the list of priorities since it's a special
-	  built-in. it needs to be specifically considered anyways, so
-	  removing can make logic inconsistencies more obvious (e.g.,
-	  dm_list_types() failed to return it)
-
-2020-10-15 05:39  brlcad
-
-	* [r77440] src/libdm/dm_plugins.cpp:
-	  consolidate the list of interfaces to one place
-
-2020-10-15 05:15  brlcad
-
-	* [r77439] src/libdm/dm_plugins.cpp:
-	  minor cleanup
-
-2020-10-15 05:10  brlcad
-
-	* [r77438] src/libdm/dm_plugins.cpp:
-	  had maintenance cost, not immediately actionable. let repo hold
-	  it.
-
-2020-10-15 05:05  brlcad
-
-	* [r77437] src/libdm/dm_plugins.cpp:
-	  nix the unnecessary vls. fixes memory leak too.
-
-2020-10-15 03:33  starseeker
-
-	* [r77436] src/libtclcad/commands.c:
-	  Closing multiple rt instances is crashing MGED on Windows. Really
-	  need to defer I/O channel closure until all currently running
-	  subprocesses are terminated... in the meantime try not to do
-	  things that cause the crash. This isn't a final solution, because
-	  I/O from any remaining running subprocesses will be lost as the
-	  first one calls the delete handlers and closes the channels.
-
-2020-10-15 00:49  starseeker
-
-	* [r77433] misc/CMake/CompilerFlags.cmake:
-	  CMake 3.19rc1 provides a CHECK_COMPILER_FLAG definition - don't
-	  define ours if the more general upstream version is present.
-	  (Otherwise it produces a recursion error.) Once we require 3.19
-	  as a minimum we can just eliminate this altogether.
-
-2020-10-14 17:31  brlcad
-
-	* [r77432] src/mged/attach.c:
-	  reduce retries to 100. still need to fix potential 0-alloc.
-
-2020-10-14 17:21  brlcad
-
-	* [r77431] src/libged/overlay/overlay.c:
-	  icv_image_size() takes size_t, not unsigned long. error reported
-	  by bob prohaska (sf sreq# 123)
-
-2020-10-13 20:01  brlcad
-
-	* [r77420] include/bio.h:
-	  derp.
-
-2020-10-13 19:43  brlcad
-
-	* [r77419] include/bio.h:
-	  be a bit more robust, make sure we only define the macro where we
-	  have the stat mode.
-
-2020-10-13 19:39  brlcad
-
-	* [r77417] include/bio.h:
-	  add all the stat wrappers for windows comapt
-
-2020-10-13 19:25  brlcad
-
-	* [r77415] bench/pixcmp.c:
-	  rename with more specificity
-
-2020-10-13 13:21  starseeker
-
-	* [r77409] src/art/art.cpp, src/art/art.h,
-	  src/art/brlcadplugin.cpp:
-	  Similar class-memaccess guard for art code
-
-2020-10-13 13:13  starseeker
-
-	* [r77408] src/libbg/spsr/SPSR.cpp:
-	  User tried compiling and got an unknown option failure with the
-	  pragma for class-memaccess. Daniel checked and determined this
-	  was introduced in GCC 8, so add a guard to only use the pragma if
-	  available.
-
-2020-10-08 18:27  brlcad
-
-	* [r77369] bench/pixcmp.c:
-	  break the actual comparison out into a function since the main
-	  loop is getting unwieldy
-
-2020-10-08 18:07  brlcad
-
-	* [r77368] bench/pixcmp.c:
-	  make sure standard input is binary mode, leave note about stdout
-	  for future me
-
-2020-10-08 18:00  brlcad
-
-	* [r77367] src/util/pixdiff.c:
-	  replace the macro with a function, utilize size_t
-
-2020-10-08 17:28  brlcad
-
-	* [r77366] bench/pixcmp.c:
-	  prevent overflow and bad behavior on large values
-
-2020-10-08 05:37  brlcad
-
-	* [r77365] bench/pixcmp.c:
-	  prevent stop-after value from interfering with iteration until
-	  end of input. also fix a bug causing double-skipping of inputs.
-	  most significant is switching from relying upon EOF to asuming a
-	  valid stat size so users can specify lengths that go beyond
-	  available data.
-
-2020-10-08 04:12  brlcad
-
-	* [r77364] bench/pixcmp.c:
-	  non-trivial to skip differing amounts in an interlaced stream, so
-	  just don't allow it. also make sure usage statements prints the
-	  right name of the binary.
-
-2020-10-08 03:58  brlcad
-
-	* [r77363] bench/pixcmp.c:
-	  implement a -n option.
-	  
-	  This options makes it so we can specify exactly how many pixels
-	  or bytes to compare. The change also fixes a bug where we attempt
-	  to seek piped input and exit.
-
-2020-10-08 03:28  brlcad
-
-	* [r77362] bench/pixcmp.c:
-	  fix copy-paste error so debug msg is right.
-
-2020-10-07 16:27  starseeker
-
-	* [r77358] BUGS:
-	  GQA isn't generating valid plot3 files in multithreaded mode.
-
-2020-10-07 16:14  starseeker
-
-	* [r77357] include/analyze/info.h, src/libged/gqa/CMakeLists.txt,
-	  src/libged/gqa/gqa.c, src/libged/gqa/gqa.cpp:
-	  C->C++
-
-2020-10-07 15:17  starseeker
-
-	* [r77356] bench/pixcmp.c:
-	  I don't think we ment to fall through here?
-
-2020-10-06 20:58  brlcad
-
-	* [r77353] bench/run.sh:
-	  fixed a pixcmp bug where it skipped the last byte comparison, so
-	  now we need to not send the newline
-
-2020-10-06 20:55  brlcad
-
-	* [r77352] doc/docbook/system/man1/pixcmp.xml:
-	  update pixcmp manual page with the remapped options and a new
-	  example involving the echo command
-
-2020-10-06 20:17  brlcad
-
-	* [r77351] NEWS:
-	  note pixcmp changes. now has imnew options for -s same and -d
-	  different pixel/byte printing. has new help flags. enforces the
-	  -q flag (previously -s) on header and footer. reports the type of
-	  difference too.
-
-2020-10-06 20:16  brlcad
-
-	* [r77350] CHANGES:
-	  pixcmp switches are trivially accommodated
-
-2020-10-06 20:09  brlcad
-
-	* [r77349] bench/pixcmp.c:
-	  Overhaul pixcmp with modified options and new output formatting.
-	  
-	  Notably, changed -s to -q from silence to quiet, so we can add a
-	  -s
-	  flag for printing same value matches. Also changed -l to -d for
-	  printing different bytes to be consistent. Also added help flags.
-	  
-	  Another notable change is now those -d and -s output lines will
-	  report
-	  a label indicating whether the pixel or byte is matching,
-	  off-by-1,
-	  off-by-many, or missing as pixcmp now also handles comparing
-	  different
-	  size images.
-	  
-	  Cleaned up printing and usage accordingly. Will update other docs
-	  and
-	  references subsequently.
-
-2020-10-06 19:51  starseeker
-
-	* [r77347] misc/CMake/CMakeLists.txt, misc/CMake/date_delta.cpp:
-	  It may be a while before it gets used, but stash the core piece
-	  needed for a time delta calculator using date.h, which is close
-	  to what's being considered for C++20. Eventually, we can use this
-	  and replace the explicit math in the dreport_src logic in
-	  misc/CMake/BRLCAD_Util.cmake - stashing now so I remember how to
-	  do this next time.
-
-2020-10-06 13:14  brlcad
-
-	* [r77340] bench/pixcmp.c:
-	  if we're printing values, display a header on stderr
-
-2020-10-06 13:13  brlcad
-
-	* [r77339] bench/pixcmp.c:
-	  implement support for comparing images with different sizes.
-	  instead of globbing the extra pixels in as off by many, currently
-	  printing them separately as a missing count
-
-2020-10-06 03:26  brlcad
-
-	* [r77338] misc/CMake/FindGL.cmake, misc/CMake/FindX11.cmake:
-	  this feels wrong given implications, but it does appear to be how
-	  this is coded. this support for arm (raspberry pi) is consistent
-	  with the inclusion of i386-linux-gnu as a search path. this is sf
-	  patch #557 X11 and OpenGL detection on Raspberry Pi (from Anssi
-	  Saari and Bob Prohaska)
-
-2020-10-05 16:23  brlcad
-
-	* [r77334] src/liboptical/material.c:
-	  one expression per line for readability
-
-2020-10-05 16:19  brlcad
-
-	* [r77333] src/liboptical/material.c:
-	  rework the dynamic library lookup to go through bu_dir() for all
-	  lookups, so there are no longer hardcoded assumptions about the
-	  library suffix. eliminates the need for a direct cwd call as
-	  well.
-
-2020-10-05 14:32  brlcad
-
-	* [r77332] src/liboptical/material.c:
-	  cal bu_dir() to build up our path so we can build up an
-	  appropriate path into the libdir. also lets us specify a proper
-	  library suffix.
-
-2020-10-05 14:20  brlcad
-
-	* [r77331] src/liboptical/material.c, src/liboptical/sh_xxx.c:
-	  don't look for a hard-coded 'shaders.so' library. quite the
-	  security vulnerability. also, more consistently check for the
-	  library with and without the lib prefix (not great, but ugh)
-
-2020-10-05 14:12  brlcad
-
-	* [r77330] src/liboptical/material.c:
-	  convert another gnu-extension call to getcwd() into bu_getcwd().
-	  here, the non-null return looks beneficial.
-
-2020-10-05 14:04  brlcad
-
-	* [r77329] src/librt/db_open.c:
-	  save to get app.h for bu_getcwd
-
-2020-10-05 14:02  brlcad
-
-	* [r77328] src/librt/db_open.c:
-	  compiler warns we're assuming a gnu extension here. go through
-	  our wrapper to ensure getcwd is called portably. means we'll
-	  never get NULL return, though, so make sure we got a path.
-
-2020-10-05 13:28  brlcad
-
-	* [r77327] src/libbg/spsr/MAT.inl:
-	  midPoint is an int, initialized to -1, so the size_t needs to be
-	  cast to check that (otherwise, always conditional is always true)
-
-2020-10-02 18:06  starseeker
-
-	* [r77326] doc/docbook/system/mann/search.xml:
-	  fix xml
-
-2020-10-02 17:29  starseeker
-
-	* [r77325] NEWS, src/librt/search.c:
-	  List a couple more objects that aren't shapes
-
-2020-10-02 17:20  starseeker
-
-	* [r77324] NEWS, doc/docbook/system/mann/search.xml,
-	  src/librt/search.c:
-	  Per user request, add a 'volume' option to types that will match
-	  objects locally defining a non-implicit volume.
-
-2020-10-02 12:43  starseeker
-
-	* [r77320] bench/pixcmp.c:
-	  macOS runner isn't liking size_t - just cast to ll.
-
-2020-10-02 01:34  starseeker
-
-	* [r77319] src/librt/gdiam/gdiam_test.cpp:
-	  add bu_setprogname call
-
-2020-10-02 01:33  starseeker
-
-	* [r77318] doc/legal/embedded/gdiam.txt,
-	  src/librt/gdiam/gdiam_test.cpp:
-	  fix license and list test file
-
-2020-10-02 00:13  starseeker
-
-	* [r77317] src/librt/vds/vds.c:
-	  Check fread return, correct @param comments
-
-2020-10-01 21:46  starseeker
-
-	* [r77316] doc/legal/embedded/SPSR.txt,
-	  src/libbg/spsr/MemoryUsage.h:
-	  remove unused file
-
-2020-10-01 21:41  starseeker
-
-	* [r77315] INSTALL, configure, doc/legal/embedded/CMakeLists.txt,
-	  doc/legal/embedded/gdiam.txt, doc/legal/other/CMakeLists.txt,
-	  doc/legal/other/libgdiam.txt, misc/win32-msvc/Dll/CMakeLists.txt,
-	  src/external/Creo/CMakeLists.txt,
-	  src/external/Cubit/CMakeLists.txt,
-	  src/external/Unigraphics/CMakeLists.txt,
-	  src/librt/CMakeLists.txt, src/librt/gdiam,
-	  src/librt/gdiam/LICENSE.MIT, src/librt/gdiam/README,
-	  src/librt/gdiam/gdiam.cpp, src/librt/gdiam/gdiam.hpp,
-	  src/librt/gdiam/gdiam_test.cpp, src/other/CMakeLists.txt,
-	  src/other/libgdiam, src/other/libgdiam.dist:
-	  gdiam is another easy one, without any particular upstream
-	  activity.
-
-2020-10-01 21:19  starseeker
-
-	* [r77314] misc/CMakeLists.txt, misc/external_build_testing:
-	  Obsolete due to thirdparty_rework branch.
-
-2020-10-01 21:17  starseeker
-
-	* [r77313] INSTALL, configure, doc/legal/embedded/CMakeLists.txt,
-	  doc/legal/embedded/vds.txt, doc/legal/other/CMakeLists.txt,
-	  doc/legal/other/libvds.txt, misc/CMake/CMakeLists.txt,
-	  misc/CMake/FindVDS.cmake, misc/win32-msvc/Dll/CMakeLists.txt,
-	  src/external/Creo/CMakeLists.txt,
-	  src/external/Cubit/CMakeLists.txt,
-	  src/external/Unigraphics/CMakeLists.txt,
-	  src/librt/CMakeLists.txt, src/librt/vds, src/librt/vds/COPYING,
-	  src/librt/vds/README, src/librt/vds/vds.c, src/librt/vds/vds.h,
-	  src/other/CMakeLists.txt, src/other/libvds,
-	  src/other/libvds.dist:
-	  Not even Debian is maintaining a vds package anymore. This one is
-	  an easy embedding in librt - strip down, clean up and move.
-
-2020-10-01 21:08  starseeker
-
-	* [r77312] doc/legal/embedded/SPSR.txt, src/libbg/CMakeLists.txt,
-	  src/libbg/spsr/Geometry.h, src/libbg/spsr/Hash.h,
-	  src/libbg/spsr/MultiGridOctreeData.h:
-	  Don't need Hash.h anymore
-
-2020-10-01 20:42  starseeker
-
-	* [r77311] INSTALL, configure, doc/legal/embedded/SPSR.txt,
-	  misc/CMake/BRLCAD_Targets.cmake,
-	  src/external/Creo/CMakeLists.txt, src/libbg/CMakeLists.txt,
-	  src/libbg/spsr, src/libbg/spsr.c, src/libbg/spsr/Allocator.h,
-	  src/libbg/spsr/Array.h, src/libbg/spsr/Array.inl,
-	  src/libbg/spsr/BSplineData.h, src/libbg/spsr/BSplineData.inl,
-	  src/libbg/spsr/BinaryNode.h, src/libbg/spsr/Factor.cpp,
-	  src/libbg/spsr/Factor.h, src/libbg/spsr/FunctionData.h,
-	  src/libbg/spsr/FunctionData.inl, src/libbg/spsr/Geometry.cpp,
-	  src/libbg/spsr/Geometry.h, src/libbg/spsr/Geometry.inl,
-	  src/libbg/spsr/Hash.h, src/libbg/spsr/LICENSE,
-	  src/libbg/spsr/MAT.h, src/libbg/spsr/MAT.inl,
-	  src/libbg/spsr/MarchingCubes.cpp, src/libbg/spsr/MarchingCubes.h,
-	  src/libbg/spsr/MemoryUsage.h,
-	  src/libbg/spsr/MultiGridOctreeData.IsoSurface.inl,
-	  src/libbg/spsr/MultiGridOctreeData.SortedTreeNodes.inl,
-	  src/libbg/spsr/MultiGridOctreeData.h,
-	  src/libbg/spsr/MultiGridOctreeData.inl, src/libbg/spsr/Octree.h,
-	  src/libbg/spsr/Octree.inl, src/libbg/spsr/PPolynomial.h,
-	  src/libbg/spsr/PPolynomial.inl, src/libbg/spsr/PlyVertexMini.h,
-	  src/libbg/spsr/PointStream.h, src/libbg/spsr/PointStream.inl,
-	  src/libbg/spsr/Polynomial.h, src/libbg/spsr/Polynomial.inl,
-	  src/libbg/spsr/SPSR.cpp, src/libbg/spsr/SPSR.h,
-	  src/libbg/spsr/SparseMatrix.h, src/libbg/spsr/SparseMatrix.inl,
-	  src/libbg/spsr/Vector.h, src/libbg/spsr/Vector.inl,
-	  src/libbg/spsr/cvertex.h, src/other/CMakeLists.txt,
-	  src/other/libspsr, src/other/libspsr.dist:
-	  Upstream has moved quite a bit from this version of SPSR, we've
-	  added the library call to it which still isn't in upstream, and
-	  experiments with the latest PoissonRecon project code indicated
-	  it now takes a huge amount of RAM to compile out of the box.
-	  Strip this down somewhat and move it into a subdir of libbg,
-	  since a system version is currently guaranteed not to be
-	  suitable... No particular point in paying the third party build
-	  maintenance overhead right now.
-
-2020-10-01 19:56  starseeker
-
-	* [r77310] doc/README.Windows:
-	  Note the trick about finding the source of a header inclusion -
-	  this can be exceedingly useful at times...
-
-2020-10-01 19:02  starseeker
-
-	* [r77309] CMakeLists.txt:
-	  With a level 1 build, we no longer need Tcl.
-
-2020-10-01 14:32  starseeker
-
-	* [r77308] src/other/CMakeLists.txt:
-	  Record notes about cdt library...
-
-2020-10-01 13:13  starseeker
-
-	* [r77302] NEWS, src/conv/fast4-g.c:
-	  Just the filename for a default tile in fast4-g, not the whole
-	  argv
-
-2020-09-30 22:26  starseeker
-
-	* [r77298] TODO:
-	  Make a note to relocate install location for GCV plugins.
-
-2020-09-30 22:25  starseeker
-
-	* [r77297] TODO:
-	  Release done, bump tasks
-
-2020-09-30 19:22  starseeker
-
-	* [r77289] include/bu/app.h, src/libbu/dir.c, src/libtclcad/bu.c:
-	  At least for now, back install dir reporting out of bu_dir in
-	  trunk. Only being used in a branch right now, and exposing it has
-	  design implications.
-
-2020-09-30 15:50  starseeker
-
-	* [r77287] include/bu/app.h, src/libbu/dir.c, src/libtclcad/bu.c:
-	  Add the install target to bu_dir, so we can tell if we're running
-	  from the install target location or not.
-
-2020-09-29 18:35  brlcad
-
-	* [r77275] NEWS:
-	  pixcmp was essentially aborting every time if you tried to use
-	  the skip option when the file size check was added. now it takes
-	  the skip into consideration, only aborting if the comparison set
-	  is different.
-
-2020-09-29 18:32  brlcad
-
-	* [r77274] bench/pixcmp.c:
-	  the size check was wrong if the skip option is being used. set
-	  the stage for this being advisory since we certainly can compare
-	  different size images.
-
-2020-09-29 18:09  starseeker
-
-	* [r77273] bench/run.sh:
-	  Revert r77207 workaround for pixcmp issue
-
-2020-09-29 17:51  brlcad
-
-	* [r77272] bench/pixcmp.c:
-	  the problem on bsd was simple struct initialization. needed to be
-	  zero'd before use.
-
-2020-09-29 00:23  starseeker
-
-	* [r77259] doc/legal/embedded/SPSR.txt,
-	  doc/legal/other/CMakeLists.txt, doc/legal/other/SPSR.txt:
-	  fix regress-licenses
-
-2020-09-28 22:16  starseeker
-
-	* [r77258] src/other/libspsr.dist:
-	  Update distcheck file
-
-2020-09-28 19:48  starseeker
-
-	* [r77257] doc/legal/other/SPSR.txt, src/other/libspsr/Src/Ply.h,
-	  src/other/libspsr/Src/PlyFile.cpp,
-	  src/other/libspsr/Src/PlyVertexMini.h,
-	  src/other/libspsr/Src/PointStream.h,
-	  src/other/libspsr/Src/PointStream.inl,
-	  src/other/libspsr/Src/PoissonRecon.cpp,
-	  src/other/libspsr/Src/SPSR.cpp,
-	  src/other/libspsr/Src/SurfaceTrimmer.cpp:
-	  Update for PoissonRecon issue #143:
-	  https://github.com/mkazhdan/PoissonRecon/issues/143
-
-2020-09-25 20:22  starseeker
-
-	* [r77239] src/libbrep/tests/ppx.cpp:
-	  Get ppx.cpp building on Windows
-
-2020-09-25 16:51  starseeker
-
-	* [r77231] ., doc, doc/docbook/CMakeLists.txt,
-	  doc/docbook/devguides, include, include/ged/commands.h,
-	  src/libbrep/CMakeLists.txt, src/libbrep/boolean.cpp,
-	  src/libbrep/brep_defines.h, src/libbrep/debug_plot.cpp,
-	  src/libbrep/debug_plot.h, src/libbrep/intersect.cpp,
-	  src/libbrep/tests/CMakeLists.txt, src/libbrep/tests/ppx.cpp,
-	  src/libged/brep/CMakeLists.txt, src/libged/brep/brep.cpp,
-	  src/libged/brep/dplot.c, src/libged/brep/dplot_parser.lemon,
-	  src/libged/brep/dplot_reader.c, src/libged/brep/dplot_reader.h,
-	  src/libged/brep/dplot_scanner.perplex,
-	  src/libged/brep/ged_brep.h, src/libged/exec_mapping.cpp,
-	  src/libtclcad/commands.c, src/tclscripts/lib/Ged.tcl:
-	  Merge brep-debug logic into trunk
-	  
-	  These changes are getting increasingly difficult to maintain in a
-	  branch. They are not changing much at the moment, so there is
-	  little
-	  incentive to keep them separate in a branch. Moreover, the
-	  maintenance
-	  cost of doing so is becoming significant. The branch can be made
-	  again
-	  when development resumes, but for the moment (since we don't want
-	  to
-	  lose this work) bring the files back into trunk so they are part
-	  of
-	  routine updates and modernization.
-
-2020-09-25 16:43  starseeker
-
-	* [r77230] src/libged/analyze/util.cpp:
-	  Add license header
-
-2020-09-25 13:41  starseeker
-
-	* [r77222] ., NEWS, doc/docbook/system/mann/analyze.xml,
-	  doc/docbook/system/mann/kill.xml,
-	  src/libged/analyze/CMakeLists.txt, src/libged/analyze/analyze.c,
-	  src/libged/analyze/analyze.cpp, src/libged/analyze/arb8.cpp,
-	  src/libged/analyze/arbn.cpp, src/libged/analyze/ars.cpp,
-	  src/libged/analyze/ged_analyze.h,
-	  src/libged/analyze/op_pnts_vol.cpp,
-	  src/libged/analyze/sketch.cpp, src/libged/analyze/superell.cpp,
-	  src/libged/analyze/util.cpp, src/libged/kill/kill.c,
-	  src/libged/pnts_util.c, src/libged/pnts_util.h,
-	  src/libged/tests/CMakeLists.txt, src/libged/tests/pnts_in_out.g:
-	  Merge analyze command rework from branch, add doc update and NEWS
-	  items. Immediate functionality is to use geometric inside/outside
-	  testing to peform boolean ops on point clouds and generate new
-	  point sets, but should be implemented in such a way as to allow
-	  for expansion of additional capabilities.
-
-2020-09-25 01:10  starseeker
-
-	* [r77219] misc/repoconv/github_ci_actions.yml:
-	  Switch MSVC back to a Ninja build.
-
-2020-09-24 21:20  starseeker
-
-	* [r77218] misc/repoconv/github_ci_actions.yml:
-	  Since even serial building isn't guaranteeing stable outcomes, go
-	  ahead and re-enable parallel.
-
-2020-09-24 20:55  starseeker
-
-	* [r77217] misc/repoconv/github_ci_actions.yml:
-	  fix CMake syntax
-
-2020-09-24 20:50  starseeker
-
-	* [r77216] misc/repoconv/github_ci_actions.yml:
-	  This is a workaround, but if the build fails once try it a few
-	  more times before giving up. Since a fair number of the failures
-	  seen so far are intermittent, multiple attemps may succeed
-	  instead of generating false negatives. Switch execute_process to
-	  one call per action - per CMake docs that's the way to do
-	  sequential execution.
-
-2020-09-24 19:31  starseeker
-
-	* [r77215] misc/repoconv/github_ci_actions.yml:
-	  Try to do a more minimal build to generate smaller artifacts.
-	  Eventually will need a series of stages for this smaller/frequent
-	  -> full/infrequent, but right now we're testing pretty
-	  frequently...
-
-2020-09-24 19:25  starseeker
-
-	* [r77214] doc/GITHUB:
-	  Another (potentially) useful note.
-
-2020-09-24 16:40  starseeker
-
-	* [r77213] CMakeLists.txt, db/CMakeLists.txt,
-	  regress/nurbs/CMakeLists.txt, src/conv/step/CMakeLists.txt,
-	  src/conv/step/g-step/CMakeLists.txt,
-	  src/conv/step/step-g/CMakeLists.txt,
-	  src/conv/step/util/CMakeLists.txt, src/other/CMakeLists.txt:
-	  Add the ability to optionally disable building the components
-	  needing STEPcode.
-
-2020-09-24 16:16  starseeker
-
-	* [r77212] regress/gcv/dem/CMakeLists.txt:
-	  Make sure we're building gdal before enabling this regression
-	  test
-
-2020-09-24 16:12  starseeker
-
-	* [r77211] misc/repoconv/github_ci_actions.yml:
-	  Adjust targets for BRL-CAD rather than the test setup.
-
-2020-09-24 16:09  starseeker
-
-	* [r77210] misc/repoconv/github_ci_actions.yml:
-	  Get selected BRL-CAD binary packages as artifacts from the build.
-	  Really will beg for an aggressive policy to clear out older
-	  versions, since an active commit day may produce a *lot* of large
-	  package files and there's a size cap.
-
-2020-09-24 12:18  starseeker
-
-	* [r77209] doc/CMakeLists.txt, doc/GITHUB:
-	  Not quite sure where this should go, but want to capture info
-	  about how to go about debugging runtime behavior on github
-	  runners by making small test repositories with the binary build
-	  and using github actions.
-
-2020-09-24 12:04  starseeker
-
-	* [r77208] misc/repoconv/github_ci_actions.yml:
-	  Make a note to investigate cleanup logic for artifacts
-
-2020-09-24 11:44  starseeker
-
-	* [r77207] bench/run.sh:
-	  Test to see if this is what Jenkins/BSD is unhappy about with the
-	  benchmark changes.
-
-2020-09-24 06:43  brlcad
-
-	* [r77206] bench/run.sh:
-	  eliminate usage of /dev/null throughout the benchmark as it's not
-	  necessary if we restructure things a bit. output is simply
-	  caputured and ignored/logged as desired. also do a little better
-	  reporting on the logfile.
-
-2020-09-23 22:31  starseeker
-
-	* [r77205] misc/repoconv/github_ci_actions.yml:
-	  Looks like the real issue is we can't build parallel safely - the
-	  runner I/O doesn't complete reliably when we do. Re-enable Ninja,
-	  but do it single threaded.
-
-2020-09-23 22:30  starseeker
-
-	* [r77204] doc/docbook/system/mann/stat.xml:
-	  fix command name
-
-2020-09-23 21:31  brlcad
-
-	* [r77203] bench/run.sh:
-	  try the inverse, detecting if NUL appears to work as a special
-	  device.
-
-2020-09-23 20:32  brlcad
-
-	* [r77202] bench/run.sh:
-	  msys path conversion appears to be making test -e /dev/null
-	  succeed as well. lets try to tell msys to just cut it out, no
-	  conversions.
-
-2020-09-23 17:59  starseeker
-
-	* [r77201] misc/repoconv/github_ci_actions.yml:
-	  See if we get fewer intermittent build failures on the VMs with
-	  default tools instead of Ninja
-
-2020-09-23 14:54  starseeker
-
-	* [r77200] misc/repoconv/github_ci_actions.yml:
-	  Update checkout to v2
-
-2020-09-23 12:48  starseeker
-
-	* [r77199] NEWS:
-	  Add a NEWS item for new MGED stat command. Purpose is to support
-	  structured reporting of .g object information.
-
-2020-09-23 12:38  starseeker
-
-	* [r77198] src/libged/stat/stat.cpp:
-	  Use std::set to build up the unique set of directory pointers.
-
-2020-09-23 03:42  starseeker
-
-	* [r77197] src/libged/stat/stat.cpp:
-	  If the search filters rule out all possible outputs, we know the
-	  answer already.
-
-2020-09-23 03:07  brlcad
-
-	* [r77196] src/libged/stat/fort.c:
-	  don't try to assert something unused...
-
-2020-09-23 02:52  starseeker
-
-	* [r77195] src/libged/stat/fort.c:
-	  Incorrect - revert
-
-2020-09-23 02:40  starseeker
-
-	* [r77194] src/libged/exec_mapping.cpp:
-	  Windows #define of stat doesn't work in this file.
-
-2020-09-23 02:17  starseeker
-
-	* [r77193] src/libged/stat/fort.c:
-	  Don't want to overwrite a terminating NULL, so avoid the last
-	  byte when calling strlcpy.
-
-2020-09-22 14:02  starseeker
-
-	* [r77192] doc/legal/embedded/CMakeLists.txt,
-	  doc/legal/embedded/fort.txt:
-	  fix regress-licenses
-
-2020-09-22 13:57  starseeker
-
-	* [r77191] src/libged/stat/fort.c:
-	  Fixes for regress-repository - not sure if the bu_strlcat
-	  replacements are correctly using sz yet - our usage isn't
-	  exercising that code.
-
-2020-09-22 02:51  starseeker
-
-	* [r77190] doc/docbook/system/mann/CMakeLists.txt,
-	  doc/docbook/system/mann/stat.xml, include/ged/commands.h,
-	  src/libged/CMakeLists.txt, src/libged/exec_mapping.cpp,
-	  src/libged/stat, src/libged/stat/CMakeLists.txt,
-	  src/libged/stat/fort.c, src/libged/stat/fort.h,
-	  src/libged/stat/stat.cpp, src/mged/cmd.c, src/mged/cmd.h,
-	  src/mged/setup.c:
-	  Far enough along now to be interesting. Implement a tabular stat
-	  command for reporting database object info, using
-	  https://github.com/seleznevae/libfort for table printing. Can
-	  specify columns and sorting, as well as applying search filters
-	  to focus output. Not sure this is a keeper, but checkpoint so
-	  progress is recorded.
-
-2020-09-21 23:39  starseeker
-
-	* [r77189] src/libged/CMakeLists.txt, src/libged/exec_mapping.cpp,
-	  src/libged/ged_private.h:
-	  Whoops, grabbed too many files in previous commit.
-
-2020-09-21 23:37  starseeker
-
-	* [r77188] src/libged/CMakeLists.txt, src/libged/exec_mapping.cpp,
-	  src/libged/ged_private.h, src/libged/ged_util.c,
-	  src/libged/tests/plugins.cpp:
-	  Checkpoint
-
-2020-09-21 03:27  brlcad
-
-	* [r77186] NEWS:
-	  missing delimiter on some older releases, shorten one that wa
-	  stoo long
-
-2020-09-19 21:59  starseeker
-
-	* [r77185] misc/repoconv/CONVERT.sh:
-	  Note default branch rename step.
-
-2020-09-19 14:20  starseeker
-
-	* [r77184] src/qged/cadapp.cpp, src/qged/cadapp.h:
-	  trim code code we're not using - this will probably go in a
-	  different direction.
-
-2020-09-19 13:57  starseeker
-
-	* [r77183] src/qged/cadapp.cpp, src/qged/cadcommands.cpp:
-	  Replace hardcoded ged command listings with ged_exec
-
-2020-09-19 02:22  starseeker
-
-	* [r77182] doc/legal/embedded/CMakeLists.txt,
-	  doc/legal/embedded/damlev.txt:
-	  fix regress-licenses
-
-2020-09-19 02:17  starseeker
-
-	* [r77181] src/qged/QToolPalette.cpp:
-	  Don't call show() here - this is what's causing the "Negative
-	  sizes (-1,-1) are not possible" messages.
-
-2020-09-19 02:02  starseeker
-
-	* [r77180] src/qged/CMakeLists.txt, src/qged/display/glm:
-	  Remove glm from qged subdir.
-
-2020-09-19 02:00  starseeker
-
-	* [r77179] doc/legal/embedded/CMakeLists.txt,
-	  doc/legal/embedded/glm.txt, src/qged/display/Camera.h,
-	  src/qged/display/Display.cpp,
-	  src/qged/display/OrthographicCamera.cpp,
-	  src/qged/display/OrthographicCamera.h:
-	  Backport switch from glm to internal Qt math types from arbalest
-
-2020-09-19 01:20  starseeker
-
-	* [r77178] src/qged/cadtreemodel.cpp:
-	  Not falling through here means we're missing most of the
-	  highlighting.
-
-2020-09-19 01:02  starseeker
-
-	* [r77177] src/qged/cadtreemodel.cpp:
-	  We're getting multiple populations of the tree children. Probably
-	  means we need to revisit the whole cadtreemodel design, but for
-	  now just don't populate if we've already done so.
-
-2020-09-18 23:57  starseeker
-
-	* [r77176] src/libbu/simd.c:
-	  Jot down a note about a possibly interesting bit of code for
-	  future use...
-
-2020-09-18 19:59  starseeker
-
-	* [r77175] NEWS, doc/docbook/system/man1/gdiff.xml:
-	  Correct the gdiff man page examples for the new verbosity
-	  options.
-
-2020-09-18 14:17  starseeker
-
-	* [r77174] NEWS, src/gtools/gdiff/gdiff.c:
-	  Copy/paste error for help message of gdiff's -F option.
-
-2020-09-18 13:18  starseeker
-
-	* [r77173] src/qged/TODO.qt:
-	  Sean found the Pty-Qt widget, of definite interest here.
-
-2020-09-17 19:53  starseeker
-
-	* [r77172] include/ged/commands.h, include/ged/defines.h:
-	  These probably belong in ged/commands.h
-
-2020-09-17 19:43  starseeker
-
-	* [r77171] include/bu/str.h, include/ged/commands.h,
-	  src/gtools/gsh.cpp, src/libbu/CMakeLists.txt,
-	  src/libbu/damlevlim.cpp, src/libged/ged_init.cpp:
-	  Checkpoint an experiment to use Damerau–Levenshtein edit distance
-	  lookup to suggest corrections to potentially mistyped ged
-	  commands.
-
-2020-09-17 13:29  brlcad
-
-	* [r77170] NEWS:
-	  looks like mged -c graphical attach modes (at least using the
-	  initial prompt) got released broken. fixed the bomb by checking
-	  for an empty arg condition.
-
-2020-09-17 13:23  brlcad
-
-	* [r77169] src/libdm/options.c:
-	  validate args before proceeding
-
-2020-09-17 13:19  brlcad
-
-	* [r77168] src/libbu/argv.c:
-	  prevent overflow condition if caller passes a -1 or other
-	  negative/invalid value. encountered during dm option processing.
-
-2020-09-17 03:18  brlcad
-
-	* [r77167] NEWS:
-	  with eric murray's help, isolated the bug where the graphics
-	  window filepath fails to update after opening a .g file. bug was
-	  due to spaces in the filename. quoting the filename fixed the
-	  title and it now displays correctly even if there are newlines.
-
-2020-09-17 03:13  brlcad
-
-	* [r77166] BUGS:
-	  fixed the titlebar bug when opening a filename with spaces
-
-2020-09-17 03:11  brlcad
-
-	* [r77165] src/mged/mged.c:
-	  make sure we quote the filename in case it has spaces so the
-	  window title bar gets updated appropriately. this fixes a
-	  user-reported bug
-
-2020-09-15 20:22  brlcad
-
-	* [r77164] src/external/Creo/part.cpp:
-	  accept sf patch 555 (Add linefeed to output log file of CREO-BRL
-	  converter) from Red Carrera (redcarrera) that adds a newline to
-	  the output, for improved readability.
-
-2020-09-15 19:53  starseeker
-
-	* [r77163] misc/repoconv/CONVERT.sh:
-	  Looks like we may need a separate push for tags
-
-2020-09-14 21:16  brlcad
-
-	* [r77162] BUGS:
-	  spaces cause the title bar problem
-
-2020-09-14 17:03  starseeker
-
-	* [r77161] bench/CMakeLists.txt:
-	  This should be an "ALL" custom target, so a build always stages
-	  the bin/benchmark script whether anything requrires it or not.
-
-2020-09-14 13:43  starseeker
-
-	* [r77160] doc/README.Linux:
-	  Note required package for rpm building
-
-2020-09-14 13:42  starseeker
-
-	* [r77159] doc/README.Linux:
-	  Our minimum version may be newer than this, but for sure it's not
-	  gcc 3...
-
-2020-09-14 13:36  starseeker
-
-	* [r77158] doc/README.Linux:
-	  Stash useful note on what to do about CentOS in VirtualBox if
-	  networking isn't set up by default.
-
-2020-09-14 13:00  starseeker
-
-	* [r77157] NEWS, README, misc/macosx/Resources/ReadMe.rtfd/TXT.rtf,
-	  misc/macosx/Resources/Welcome.rtfd/TXT.rtf:
-	  Stage the version numbers for the next release.
-
-2020-09-14 12:58  starseeker
-
-	* [r77156] ., ChangeLog, NEWS, doc, misc/debian/changelog,
-	  misc/macosx/Resources/ReadMe.rtfd/TXT.rtf,
-	  misc/macosx/Resources/Welcome.rtfd/TXT.rtf:
-	  Pull in file updates from RELEASE
-
-2020-09-14 12:40  starseeker
-
-	* [r77155] include/conf/MINOR, include/conf/PATCH:
-	  bump to next development revision after tagging the 7.32.0
-	  release
-
-2020-09-14 11:31  starseeker
-
-	* [r77150] doc/README.Linux:
-	  Add instructions for older CentOS vanilla image - should be
-	  representative of what to do generally if one is on a Redhat
-	  based image that has a too-old default toolset.
-
-2020-09-14 10:22  starseeker
-
-	* [r77148] CMakeLists.txt:
-	  distclean line from RELEASE
-
-2020-09-14 08:45  brlcad
-
-	* [r77143] NEWS:
-	  include a brief summary writeup of highlights
-
+commit 50f91d17aa94a91daedb411a4e5bd9a09baac2f9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 24 18:11:55 2021 +0000
+
+    If we're switching back and forth between full and object searches, the UNIQ_DB flag may be set incorrectly.  Make sure the flag for unique path returns is unset before invoking a full path db_search.  Reported by Sean.
+    
+    svn:revision:78317
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit 37211066a6fb8bb993713ad300e4d03e960fd037
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 24 16:45:51 2021 +0000
+
+    Add a search example finding regions contining a specific object included using a specific boolean operation.
+    
+    svn:revision:78316
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit b072086186eb348bd8c81ff01508ab179ead5405
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Feb 18 14:56:08 2021 +0000
+
+    Fix infinite looping of isst on initialization.
+    
+    svn:revision:78260
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit e82e6f481a71f6d34f499470de37bb779d7e3936
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Feb 16 03:33:41 2021 +0000
+
+    extern C for BU_SEM_DATETIME
+    
+    svn:revision:78245
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit aacdc38fccfea788aa0719931dde2c5c12d1c622
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 10 19:46:13 2021 +0000
+
+    Hmm.  high_resolution_clock on BSD isn't returning the correct epoch answer.
+    
+    svn:revision:78232
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit d65d06f717bec79a7302f3041a798829b88fcf4f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 10 17:42:38 2021 +0000
+
+    Shouldn't need this declaration with the C++11 approach.
+    
+    svn:revision:78231
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit 4bbabb64f69076bfc9993058d69f394b3f8e3101
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 10 14:36:17 2021 +0000
+
+    Use C++11 high_resolution_clock instead of platform specific APIs.
+    
+    svn:revision:78230
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit 5b3190d4ebc394f6e6ff4d9b442372d9134cf6e5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 10 12:57:41 2021 +0000
+
+    C->C++
+    
+    svn:revision:78229
+    svn:branch:trunk
+    svn:account:starseeker
+
+commit c4b8d16ff5480b4f8c8fbb90a0a55c007243f5e2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 13 10:16:25 2021 -0400
+
+    Note the last pre-cherrypicking commit to RELEASE
+    
+    Not really sure where to put this yet, or even if it is truly necessary,
+    but we will need to do a cherry-pick patch release to pull some main
+    changes into RELEASE without a full merge, and I'm seeing warnings that
+    this will complicate eventual full merges of main into release.
+    
+    To make sure it's clear where the cherry picking process started, make
+    an explicit record of the last RELEASE commit made prior to the start of
+    the process.
