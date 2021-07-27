@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2021-XX-XX  Release 7.32.4                                     ---
+--- 2021-07-27  Release 7.32.4                                     ---
 ----------------------------------------------------------------------
 
 * Added -matrix search filter for finding comb matrices - Cliff Yapp
