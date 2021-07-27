@@ -36,6 +36,10 @@
 
 /* implementation headers */
 #include "AdvancedBrepShapeRepresentation.h"
+#include "BSplineSurfaceWithKnots.h"
+#include "GeometricallyBoundedSurfaceShapeRepresentation.h"
+#include "GeometricSet.h"
+#include "GeometricSetSelect.h"
 #include "Axis2Placement3D.h"
 #include "CartesianPoint.h"
 #include "SurfacePatch.h"
@@ -267,6 +271,23 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		}
 	    }
 	}
+
+	// Geometric Sets define collections of surfaces
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_geometric_set))) {
+	    GeometricSet *gs = dynamic_cast<GeometricSet*>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+	    if (!gs) {
+		bu_exit(1, "ERROR: unable to allocate a 'GeometricSet' entity\n");
+	    }
+	    int id = gs->GetId();
+	    std::string pname  = gs->Name();
+	    pname = dotg->CleanBRLCADName(pname);
+	    std::cout << "pname(" << id << "): " << pname << "\n";
+	    if (pname.empty() || (pname.compare("''") == 0)) {
+		std::string str = "GeometricSet@";
+		pname = dotg->GetBRLCADName(str);
+	    }
+	    id2name_map[id] = pname;
+	}
     }
     /*
      * Pickup BREP related to SHAPE_REPRESENTATION through SHAPE_REPRESENTATION_RELATIONSHIP
@@ -301,6 +322,8 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
 	    if (srr) {
 		ShapeRepresentation *aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
+
+		// First thing to try - Brep
 		AdvancedBrepShapeRepresentation *aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
 		if (!aBrep) { //try rep_1
 		    aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
@@ -340,8 +363,55 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 			    }
 			}
 		    }
+		    Factory::DeleteObjects();
+		    continue;
 		}
+
+		// If not a Brep, try a bounded surface shape
+		// NOTE:  The modeling intent may be for the set of surfaces to
+		// bound a closed volume, but the topological information
+		// defining the BRep doesn't appear to be encoded explicitly in
+		// this representation.  We will import it as plate mode
+		// surfaces under a comb - it will be up to some sort of
+		// "welding" operation to deduce and construct the actual
+		// OpenNURBS BRep from the surface set, if they do in fact
+		// define such a closed volume.
+		GeometricallyBoundedSurfaceShapeRepresentation *aBS = dynamic_cast<GeometricallyBoundedSurfaceShapeRepresentation*>(srr->GetRepresentationRelationshipRep_2());
+		if (!aBS) { //try rep_1
+		    aBS = dynamic_cast<GeometricallyBoundedSurfaceShapeRepresentation*>(srr->GetRepresentationRelationshipRep_1());
+		    aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
+		}
+		if (aSR && aBS) {
+		    std::cout << "GeometricallyBoundedSurfaceShapeRepresentation\n";
+		    int sr_id = aSR->GetId();
+		    std::cout << "sr_id: " << sr_id << "\n";
+		    LIST_OF_REPRESENTATION_ITEMS *items = aBS->items_();
+		    LIST_OF_REPRESENTATION_ITEMS::iterator ii;
+		    for (ii = items->begin(); ii != items->end(); ++ii) {
+			GeometricSet *gs = dynamic_cast<GeometricSet*>(*ii);
+			std::string pname  = gs->Name();
+			if (gs != NULL) {
+			    std::cout << pname << " is a GeometricSet\n";
+			}
+			LIST_OF_GEOMETRIC_SET_SELECT *sitems = gs->GetElements();
+			LIST_OF_GEOMETRIC_SET_SELECT::iterator sii;
+			for (sii = sitems->begin(); sii != sitems->end(); ++sii) {
+			    BSplineSurfaceWithKnots *ks = dynamic_cast<BSplineSurfaceWithKnots*>((*sii)->GetSurfaceElement());
+			    if (ks) {
+				int kd = ks->GetId();
+				std::string kname  = ks->Name() + std::string("_") + std::to_string(kd);
+				kname = dotg->CleanBRLCADName(kname);
+				std::cout << kname << " is a BSplineSurfaceWithKnots\n";
+			    }
+			}
+		    }
+
+		    Factory::DeleteObjects();
+		    continue;
+		}
+
 		Factory::DeleteObjects();
+
 	    }
 	}
     }
