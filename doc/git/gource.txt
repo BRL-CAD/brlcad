@@ -1,0 +1,69 @@
+The Gource software project history visualization tool (https://gource.io/) can
+be used to visualize BRL-CAD's git history.  The default settings will produce
+a long video, so below we've collected some options that can be passed to
+produce variations in the visualization.
+
+This gist has a useful script for overview purposes, although I had better luck
+outputting an mpg file rather than mp4.  Also, for our repo the title (in the
+lower left) doesn't interact well with other visual elements and the font size
+in this script is a bit large.  Also, the --date-format "%F" option is need to
+make the date readout readable.
+https://gist.github.com/eribeiro/5b7179f432bfffffe53d
+
+
+NOTE:  For partial history visualization the following feature would be nice:
+
+https://github.com/acaudwell/Gource/issues/116
+
+At some point if we need a more nuanced view we should investigate the custom
+log option noted in the comments...
+
+
+Options:
+
+
+-s 0.05
+
+If we want to get a rapid visual overview of the whole project, we need to set
+the seconds per day value to something fairly small.
+
+--date-format "%F"
+
+Gives a YYYY-MM-DD fixed size date readout, which is needed when rapidly playing
+history (variable width jumps around too fast to be readable.)
+
+--key
+
+Reports statistics and color coding for file types in a column on the left of
+the image.
+
+--hide filenames,dirnames
+
+Suppress the text labels.  When our repo gets large in the later stages, the
+names are too crowded to read.
+
+--hide mouse,progress,files,filenames,dirnames
+
+This hide version from the gist script simplifies the visual further.
+
+--1920x1080
+
+Adjusts the default aspect ratio to be more in line with typical video
+generation.
+
+
+
+Line I use for MPG generation:
+
+gource --date-format "%F" -s 0.06 --key --1920x1080 --hide filenames,dirnames,mouse,progress --file-idle-time 0 --max-files 0 --highlight-users --multi-sampling --stop-at-end --auto-skip-seconds .1 --output-ppm-stream -  --output-framerate 30 | ffmpeg -y -r 30 -f image2pipe -vcodec ppm -i - -b 65536K movie.mpg
+
+
+Visualizing a subset of the history.
+
+Starting at a later date while showing the full tree for context is a bit
+tricky - by default, gource will only show files as they are changed.
+Following the hints in https://github.com/acaudwell/Gource/issues/116, the
+included gource.sh script and git2gource.cpp program can help deal with this
+case.  (The desired start date must be set in gource.sh)
+
+

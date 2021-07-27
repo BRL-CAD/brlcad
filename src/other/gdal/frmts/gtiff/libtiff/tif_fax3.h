@@ -1,5 +1,3 @@
-/* $Id$ */
-
 /*
  * Copyright (c) 1990-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -43,7 +41,7 @@
  * The routine must have the type signature given below;
  * for example:
  *
- * fillruns(unsigned char* buf, uint32* runs, uint32* erun, uint32 lastx)
+ * fillruns(unsigned char* buf, uint32_t* runs, uint32_t* erun, uint32_t lastx)
  *
  * where buf is place to set the bits, runs is the array of b&w run
  * lengths (white then black), erun is the last run in the array, and
@@ -52,7 +50,7 @@
  * data in the run array as needed (e.g. to append zero runs to bring
  * the count up to a nice multiple).
  */
-typedef void (*TIFFFaxFillFunc)(unsigned char*, uint32*, uint32*, uint32);
+typedef void (*TIFFFaxFillFunc)(unsigned char*, uint32_t*, uint32_t*, uint32_t);
 
 /*
  * The default run filler; made external for other decoders.
@@ -60,7 +58,7 @@ typedef void (*TIFFFaxFillFunc)(unsigned char*, uint32*, uint32*, uint32);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-extern void _TIFFFax3fillruns(unsigned char*, uint32*, uint32*, uint32);
+extern void _TIFFFax3fillruns(unsigned char*, uint32_t*, uint32_t*, uint32_t);
 #if defined(__cplusplus)
 }
 #endif
@@ -86,7 +84,7 @@ extern void _TIFFFax3fillruns(unsigned char*, uint32*, uint32*, uint32);
 typedef struct {                /* state table entry */
 	unsigned char State;    /* see above */
 	unsigned char Width;    /* width of code in bits */
-	uint32 Param;           /* unsigned 32-bit run length in bits (holds on 16 bit actually, but cannot be changed. See above warning) */
+	uint32_t Param;           /* unsigned 32-bit run length in bits (holds on 16 bit actually, but cannot be changed. See above warning) */
 } TIFFFaxTabEnt;
 
 extern const TIFFFaxTabEnt TIFFFaxMainTable[];
@@ -143,7 +141,7 @@ extern const TIFFFaxTabEnt TIFFFaxBlackTable[];
 		goto eoflab;						\
 	    BitsAvail = (n);			/* pad with zeros */	\
 	} else {							\
-	    BitAcc |= ((uint32) bitmap[*cp++])<<BitsAvail;		\
+	    BitAcc |= ((uint32_t) bitmap[*cp++])<<BitsAvail;		\
 	    BitsAvail += 8;						\
 	}								\
     }									\
@@ -157,13 +155,13 @@ extern const TIFFFaxTabEnt TIFFFaxBlackTable[];
 		goto eoflab;						\
 	    BitsAvail = (n);			/* pad with zeros */	\
 	} else {							\
-	    BitAcc |= ((uint32) bitmap[*cp++])<<BitsAvail;		\
+	    BitAcc |= ((uint32_t) bitmap[*cp++])<<BitsAvail;		\
 	    if ((BitsAvail += 8) < (n)) {				\
 		if (EndOfData()) {					\
 		    /* NB: we know BitsAvail is non-zero here */	\
 		    BitsAvail = (n);		/* pad with zeros */	\
 		} else {						\
-		    BitAcc |= ((uint32) bitmap[*cp++])<<BitsAvail;	\
+		    BitAcc |= ((uint32_t) bitmap[*cp++])<<BitsAvail;	\
 		    BitsAvail += 8;					\
 		}							\
 	    }								\
@@ -242,6 +240,11 @@ static const char* StateNames[] = {
  * current row and reset decoding state.
  */
 #define SETVALUE(x) do {							\
+    if (pa >= thisrun + sp->nruns) {					\
+        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+                    sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+        return (-1);							\
+    }									\
     *pa++ = RunLength + (x);						\
     a0 += (x);								\
     RunLength = 0;							\
@@ -379,6 +382,11 @@ done1d:									\
  */
 #define CHECK_b1 do {							\
     if (pa != thisrun) while (b1 <= a0 && b1 < lastx) {			\
+	if( pb + 1 >= sp->refruns + sp->nruns) { 			\
+	    TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+	    return (-1);						\
+	}								\
 	b1 += pb[0] + pb[1];						\
 	pb += 2;							\
     }									\
@@ -389,10 +397,20 @@ done1d:									\
  */
 #define EXPAND2D(eoflab) do {						\
     while (a0 < lastx) {						\
+	if (pa >= thisrun + sp->nruns) {				\
+		TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+		             sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+		return (-1);						\
+	}								\
 	LOOKUP8(7, TIFFFaxMainTable, eof2d);				\
 	switch (TabEnt->State) {					\
 	case S_Pass:							\
 	    CHECK_b1;							\
+	    if( pb + 1 >= sp->refruns + sp->nruns) { 			\
+	        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+	        return (-1);						\
+	    }								\
 	    b1 += *pb++;						\
 	    RunLength += b1 - a0;					\
 	    a0 = b1;							\
@@ -471,20 +489,28 @@ done1d:									\
 	case S_V0:							\
 	    CHECK_b1;							\
 	    SETVALUE(b1 - a0);						\
+	    if( pb >= sp->refruns + sp->nruns) { 			\
+	        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+	        return (-1);						\
+	    }								\
 	    b1 += *pb++;						\
 	    break;							\
 	case S_VR:							\
 	    CHECK_b1;							\
 	    SETVALUE(b1 - a0 + TabEnt->Param);				\
+	    if( pb >= sp->refruns + sp->nruns) { 			\
+	        TIFFErrorExt(tif->tif_clientdata, module, "Buffer overflow at line %u of %s %u",	\
+	                sp->line, isTiled(tif) ? "tile" : "strip", isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);	\
+	        return (-1);						\
+	    }								\
 	    b1 += *pb++;						\
 	    break;							\
 	case S_VL:							\
 	    CHECK_b1;							\
-	    if (b1 <= (int) (a0 + TabEnt->Param)) {			\
-		if (b1 < (int) (a0 + TabEnt->Param) || pa != thisrun) {	\
-		    unexpected("VL", a0);				\
-		    goto eol2d;						\
-		}							\
+	    if (b1 < (int) (a0 + TabEnt->Param)) {			\
+		unexpected("VL", a0);				\
+		goto eol2d;						\
 	    }								\
 	    SETVALUE(b1 - a0 - TabEnt->Param);				\
 	    b1 -= *--pb;						\
@@ -531,6 +557,7 @@ eol2d:									\
     CLEANUP_RUNS();							\
 } while (0)
 #endif /* _FAX3_ */
+/* vim: set ts=8 sts=4 sw=4 noet: */
 /*
  * Local Variables:
  * mode: c

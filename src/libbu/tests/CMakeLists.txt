@@ -641,7 +641,7 @@ BRLCAD_ADD_TEST(NAME bu_opt_3_vect_04  COMMAND bu_test opt 3 V 4)
 #  *********** datetime.c tests ************
 #
 
-foreach(num RANGE 0 11)
+foreach(num RANGE 0 10)
   BRLCAD_ADD_TEST(NAME "bu_datetime${num}" COMMAND bu_test datetime "${num}")
 endforeach()
 

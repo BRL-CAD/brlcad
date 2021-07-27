@@ -531,6 +531,28 @@ test_bn_mat_dup(void)
     return !mat_equal(expected, actual);
 }
 
+static int
+test_bn_mat_opt(int argc, char *argv[])
+{
+    mat_t expected, m;
+
+    if (argc < 3) {
+	bu_exit(1, "<args> format: <expected_result> <specifier>\n");
+    }
+
+    scan_mat_args(argv, 2, &expected);
+
+    argc -= 3;
+    argv++; argv++; argv++;
+
+    if (argc < 1)
+	return -1;
+
+    bn_opt_mat(NULL, argc, (const char **)argv, (matp_t)m);
+
+    return !mat_equal(expected, m);
+}
+
 int
 mat_main(int argc, char *argv[])
 {
@@ -541,7 +563,7 @@ mat_main(int argc, char *argv[])
     }
 
     sscanf(argv[1], "%d", &function_num);
-    if (function_num < 1 || function_num > 27) function_num = 0;
+    if (function_num < 1 || function_num > 28) function_num = 0;
 
     switch (function_num) {
 	case 1:
@@ -598,6 +620,8 @@ mat_main(int argc, char *argv[])
 	    return test_bn_mat_ck(argc, argv);
 	case 27:
 	    return test_bn_mat_dup();
+	case 28:
+	    return test_bn_mat_opt(argc, argv);
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);

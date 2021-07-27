@@ -58,7 +58,7 @@
       "alphanum" algorithm, which is basically a human-intuitive ordering for
       strings with letters and numbers.  For example, a result returning d1.r, d10.r and d2.r
       will be sorted as:
-      
+
       <literallayout>
 d1.r
 d2.r
@@ -66,7 +66,7 @@ d10.r
       </literallayout>
 
       instead of the default ASCII character ordering, which would look like:
-      
+
       <literallayout>
 d1.r
 d10.r
@@ -232,6 +232,7 @@ d2.r
 	  </para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><emphasis remap="B" role="bold">-iname</emphasis> <emphasis remap="I">pattern</emphasis></term>
 	<listitem>
@@ -250,6 +251,19 @@ d2.r
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-matrix</emphasis> <emphasis remap="I">IDN|{#,#,#,#,#,#,#,#,#,#,#,#,#,#,#,#}</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the object in question is being combined into the local hierarchy with an
+	    with the specified matrix.  This is useful in combination with the <emphasis remap="B" role="bold">!</emphasis>
+	    operator, for finding objects in a hierarchy with matricies over them.  "IDN" is a shorthand
+	    that allows users to specify an identity matrix more succinctly.
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><emphasis remap="B" role="bold">-maxdepth</emphasis> <emphasis remap="I">n</emphasis></term>
 	<listitem>
@@ -329,7 +343,7 @@ d2.r
 		  </row>
 		  <row>
 		    <entry>bot</entry>
-		    <entry>mode, orient, V, F, T</entry>
+		    <entry>mode[surf,volume,plate,plate_nocos], orient[no,lh,rh], V, F, T</entry>
 		  </row>
 		  <row>
 		    <entry>cline</entry>
@@ -900,6 +914,17 @@ d2.r
       </para>
     </example>
 
+    <example><title>Finding all Non-Identity Matrix Instances</title>
+
+      <para>
+	<userinput>search / ! -matrix IDN -</userinput>
+      </para>
+      <para>
+	Reports all comb instances included in their parent comb with a
+	non-identity positioning matrix.
+      </para>
+    </example>
+
     <example><title>Finding all Regions with RGB color 180 180 180</title>
 
       <para>
@@ -921,6 +946,17 @@ d2.r
       <para>
 	Prints all combs immediately above either obj1 or obj2.  This more or less mimics the results of
 	the dbfind command, although it will be somewhat slower (noticably so on large databases.)
+      </para>
+    </example>
+
+    <example><title>Finding all regions containing an intersection of obj2</title>
+
+      <para>
+	<userinput>search |/ -maxdepth 0 -type region -above ( -name obj2 -bool + ) </userinput>
+      </para>
+      <para>
+	Prints all regions immediately above obj2 where obj2 is included using an intersection
+	operation.
       </para>
     </example>
 

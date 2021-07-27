@@ -1,7 +1,0 @@
-M 100644 c206cbf82c7a08957a06afad8b5b8195733df9c3 "misc/nsis/Makefile.am"
-M 100644 76ddcacd2c915ba41fcd9880563017099971b3cf "misc/nsis/brlcad.ico"
-M 100644 b4b70a8579bcec21c75f8055819b910a5979064f "misc/nsis/brlcad.nsi"
-M 100644 1917edf1ae3af870a1aeb779b5a514facf2e18e5 "misc/nsis/header.bmp"
-M 100644 f66f2cd1c7dd1d45cef65b4271dbb7b3d06c1167 "misc/nsis/side.bmp"
-M 100644 6bb8aa6f329b8b202bc92e6e18abc22e48174251 "misc/nsis/uninstall.ico"
-D "misc/nsis/copying.txt"

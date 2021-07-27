@@ -361,9 +361,6 @@ if(BRLCAD_TCL_BUILD)
   # Let the BRL-CAD compilation know we have Tcl
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
 
-  # There is no system init.tcl that we need to provide a path for
-  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
-
   # Set the necessary variables ourselves since FindTCL.cmake doesn't know about our build
   set(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
   set(TCL_STUB_LIBRARY tclstub CACHE STRING "TCL_LIBRARY" FORCE)
@@ -771,6 +768,7 @@ if(BRLCAD_SC_BUILD)
   mark_as_advanced(EXP2CXX_EXEC)
   mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.gen")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_version_string.h")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/src/express/ExpParser_expparse/expparse.y")
@@ -915,6 +913,8 @@ mark_as_advanced(P2T_INCLUDE_DIR)
 mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
+mark_as_advanced(POLY2TRI_LIBRARIES)
+mark_as_advanced(POLY2TRI_INCLUDE_DIRS)
 
 # PROJ.4 library - used by GDAL
 set(proj4_DESCRIPTION "

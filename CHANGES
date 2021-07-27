@@ -719,7 +719,7 @@ perl -0777 -pi -e 'EXPRESSION' FILE
 To apply an expression to an entire source tree, the following pattern
 may work:
 
-find . -type f -not -path "*.svn/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
 
 find src \( -name '*.c' -or -name '*.cxx' -or -name '*.cpp' -or -name '*.h' -or -name '*.hxx' -or -name '*.hpp' -or -name '*.java' -or -name '*.f' -or -name '*.sh' -or -name '*.tcl' -or -name '*.tk' -or -name '*.itcl' -or -name '*.itk' -or -name '*.pl' -or -name '*.php' -or -name '*.inc' -or -name '*.mged' -or -name '*.y' -or -name '*.l' -or -name '*.yy' \) -not \( -name other -or -regex '.*/other/.*' -or -name tools -or -regex '.*/misc/tools/.*' -or -regex '.*/\.[^\.].*' -or -regex '.*~' -or -regex '.*/#.*' \)
 

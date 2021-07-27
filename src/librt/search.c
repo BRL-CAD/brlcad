@@ -97,6 +97,7 @@
 #include "vmath.h"
 
 #include "bu/cmd.h"
+#include "bu/opt.h"
 #include "bu/path.h"
 
 #include "rt/db4.h"
@@ -121,6 +122,7 @@ static OPTION options[] = {
     { "-exec",      N_EXEC,         c_exec,         O_ARGVP},
     { "-iname",     N_INAME,        c_iname,        O_ARGV },
     { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
+    { "-matrix",    N_MATRIX,       c_matrix,       O_ARGV },
     { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
     { "-mindepth",  N_MINDEPTH,     c_mindepth,     O_ARGV },
     { "-name",      N_NAME,         c_name,         O_ARGV },
@@ -1591,6 +1593,90 @@ c_depth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
 
     newplan = palloc(N_DEPTH, f_depth, tbl);
     newplan->p_un._attr_data = pattern;
+    (*resultplan) = newplan;
+
+    return BRLCAD_OK;
+}
+
+
+/*
+ * -idn function --
+ *
+ * True if the matrix combining the object into its parent tree is an
+ * identity matrix.
+ */
+
+static void
+child_matrix(union tree *tp, const char *n, mat_t *m)
+{
+    if (!tp) return;
+    RT_CK_TREE(tp);
+    switch (tp->tr_op) {
+	case OP_DB_LEAF:
+	    if (BU_STR_EQUAL(n, tp->tr_l.tl_name)) {
+		if (tp->tr_l.tl_mat)
+		    MAT_COPY(*m, tp->tr_l.tl_mat);
+	    }
+	    return;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	    /* This node is known to be a binary op */
+	    child_matrix(tp->tr_b.tb_left, n, m);
+	    child_matrix(tp->tr_b.tb_right, n, m);
+	    return;
+	default:
+	    bu_log("child_matrix: bad op %d\n", tp->tr_op);
+	    bu_bomb("child_matrix\n");
+    }
+    return;
+}
+
+
+HIDDEN int
+f_matrix(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct bu_ptbl *UNUSED(results))
+{
+    const struct bn_tol mtol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    mat_t mat;
+    MAT_IDN(mat);
+    
+    // Top level objects are always IDN included.  For anything else, see what
+    // the comb says.  Note that this filter uses the immediate parent/child
+    // matrix, not the accumulated matrix along the path.
+    if (DB_FULL_PATH_LEN(db_node->path) > 1) {
+
+	struct directory *cdp = DB_FULL_PATH_CUR_DIR(db_node->path);
+	struct directory *dp = DB_FULL_PATH_GET(db_node->path, DB_FULL_PATH_LEN(db_node->path) - 2);
+
+	if (dp->d_flags & RT_DIR_COMB) {
+	    struct rt_db_internal intern;
+	    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) > 0) {
+		struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
+		if (comb->tree != NULL) {
+		    child_matrix(comb->tree, cdp->d_namep, &mat);
+		}
+		rt_db_free_internal(&intern);
+	    }
+	}
+    }
+
+    if (bn_mat_is_equal(mat, plan->m, &mtol)) {
+	return 1;
+    }
+
+    return 0;
+}
+
+
+HIDDEN int
+c_matrix(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl, struct db_search_context *UNUSED(ctx))
+{
+    struct db_plan_t *newplan;
+
+    newplan = palloc(N_MATRIX, f_matrix, tbl);
+
+    MAT_IDN(newplan->m);
+    bn_opt_mat(NULL, 1, (const char **)&pattern, (matp_t)newplan->m);
     (*resultplan) = newplan;
 
     return BRLCAD_OK;

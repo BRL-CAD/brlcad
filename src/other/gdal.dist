@@ -344,6 +344,7 @@ frmts/gtiff/libtiff/tif_flush.c
 frmts/gtiff/libtiff/tif_getimage.c
 frmts/gtiff/libtiff/tif_jpeg.c
 frmts/gtiff/libtiff/tif_jpeg_12.c
+frmts/gtiff/libtiff/tif_lerc.c
 frmts/gtiff/libtiff/tif_luv.c
 frmts/gtiff/libtiff/tif_lzma.c
 frmts/gtiff/libtiff/tif_lzw.c
@@ -363,8 +364,10 @@ frmts/gtiff/libtiff/tif_tile.c
 frmts/gtiff/libtiff/tif_version.c
 frmts/gtiff/libtiff/tif_vsi.c
 frmts/gtiff/libtiff/tif_warning.c
+frmts/gtiff/libtiff/tif_webp.c
 frmts/gtiff/libtiff/tif_write.c
 frmts/gtiff/libtiff/tif_zip.c
+frmts/gtiff/libtiff/tif_zstd.c
 frmts/gtiff/libtiff/tiff.h
 frmts/gtiff/libtiff/tiffconf.h
 frmts/gtiff/libtiff/tiffio.h

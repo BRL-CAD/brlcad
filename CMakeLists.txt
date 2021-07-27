@@ -106,6 +106,15 @@ list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
 
 
 #---------------------------------------------------------------------
+# We definitely do not want a .gitattributes files present, as it is
+# a potential source of subtle problems.  Bail with an explanation if
+# it is found to be present.
+if (EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
+  message(FATAL_ERROR "\nBRL-CAD does not use a .gitattributes file in its repository.  This is intended to prevent subtle errors from creeping in due to inadvertant pattern matches.  See ${BRLCAD_SOURCE_DIR}/doc/git/mime_types.txt for an in-depth discussion of the recommended alternatives to use for the problems .gitattributes is intended to address.\n")
+endif (EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
+
+
+#---------------------------------------------------------------------
 # Setup and checks related to system environment settings.  Some of
 # these impact search results needed to set default options, so we
 # do this early in the process.
@@ -1230,6 +1239,10 @@ if(CMAKE_THREAD_LIBS_INIT)
 else(CMAKE_THREAD_LIBS_INIT)
   message("Using threading from system library")
 endif(CMAKE_THREAD_LIBS_INIT)
+mark_as_advanced(CMAKE_HP_PTHREADS_INIT)
+mark_as_advanced(CMAKE_THREADS_LIBS_INIT)
+mark_as_advanced(CMAKE_USE_PTHREADS_INIT)
+mark_as_advanced(CMAKE_USE_WIN32_THREADS_INIT)
 
 # By default, the Threads package doesn't stash any of its values in
 # cache.  This is inconvenient for debugging, so we set them ourselves.

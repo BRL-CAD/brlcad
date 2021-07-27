@@ -2087,10 +2087,8 @@ png_handle_eXIf(png_structrp png_ptr, png_inforp info_ptr, png_uint_32 length)
       }
    }
 
-   if (png_crc_finish(png_ptr, 0) != 0)
-      return;
-
-   png_set_eXIf_1(png_ptr, info_ptr, length, info_ptr->eXIf_buf);
+   if (png_crc_finish(png_ptr, 0) == 0)
+      png_set_eXIf_1(png_ptr, info_ptr, length, info_ptr->eXIf_buf);
 
    png_free(png_ptr, info_ptr->eXIf_buf);
    info_ptr->eXIf_buf = NULL;
@@ -4113,18 +4111,6 @@ png_init_filter_functions(png_structrp pp)
    else
       pp->read_filter[PNG_FILTER_VALUE_PAETH-1] =
          png_read_filter_row_paeth_multibyte_pixel;
-
-#ifdef PNG_FILTER_OPTIMIZATIONS
-   /* To use this define PNG_FILTER_OPTIMIZATIONS as the name of a function to
-    * call to install hardware optimizations for the above functions; simply
-    * replace whatever elements of the pp->read_filter[] array with a hardware
-    * specific (or, for that matter, generic) optimization.
-    *
-    * To see an example of this examine what configure.ac does when
-    * --enable-arm-neon is specified on the command line.
-    */
-   PNG_FILTER_OPTIMIZATIONS(pp, bpp);
-#endif
 }
 
 void /* PRIVATE */

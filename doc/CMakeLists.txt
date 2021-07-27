@@ -210,6 +210,15 @@ CMAKEFILES(
   CMakeLists.txt
   STARTERS
   STRATEGY
+  git/check.yml
+  git/gitconfig
+  git/gitk
+  git/git2gource.cpp
+  git/gource.txt
+  git/gource.sh
+  git/history.txt
+  git/gitstats.txt
+  git/mime_types.txt
   notes/bsd_semaphore_bug.txt
   notes/cmake_paths/CMakeLists.txt
   notes/cmake_paths/README.txt

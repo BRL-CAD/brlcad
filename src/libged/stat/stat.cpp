@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include <stdio.h>
+
 #include <set>
 #include <sstream>
 
@@ -464,6 +466,8 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls search_filter = BU_VLS_INIT_ZERO;
     struct bu_vls sort_str = BU_VLS_INIT_ZERO;
     struct bu_vls keys_str = BU_VLS_INIT_ZERO;
+    struct bu_vls ofile = BU_VLS_INIT_ZERO;
+    FILE *fp = NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     const char *pname = argv[0];
@@ -483,7 +487,8 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[4], "F", "filter",     "\"string\"",  &bu_opt_vls,       &search_filter, "Filter objects being reported (uses search style filter specifications)");
     BU_OPT(d[5], "C", "columns",       "\"type1[,type2]...\"",  &bu_opt_vls,       &keys_str,      "Comma separated list of data columns to print");
     BU_OPT(d[6], "S", "sort-order",       "\"type1[,type2]...\"",  &bu_opt_vls,       &sort_str,      "Comma separated list of cols to sort by (priority is left to right).  To reverse sorting order for an individual column, prefix the specifier with a '!' character.");
-    BU_OPT_NULL(d[7]);
+    BU_OPT(d[7], "o", "output-file",    "filename",  &bu_opt_vls,       &ofile,      "Write output to file");
+    BU_OPT_NULL(d[8]);
 
     int ret_ac = bu_opt_parse(&msg, argc, argv, d);
     if (ret_ac < 0) {
@@ -492,6 +497,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&search_filter);
 	bu_vls_free(&sort_str);
 	bu_vls_free(&keys_str);
+	bu_vls_free(&ofile);
 	return GED_ERROR;
     }
     bu_vls_free(&msg);
@@ -501,6 +507,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&search_filter);
 	bu_vls_free(&sort_str);
 	bu_vls_free(&keys_str);
+	bu_vls_free(&ofile);
 	return GED_HELP;
     }
 
@@ -512,7 +519,31 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&search_filter);
 	bu_vls_free(&sort_str);
 	bu_vls_free(&keys_str);
+	bu_vls_free(&ofile);
 	return GED_ERROR;
+    }
+
+    // If we have an output file specified, make sure it's not already there
+    if (bu_vls_strlen(&ofile)) {
+	int oret = 0;
+	if (bu_file_exists(bu_vls_cstr(&ofile), NULL)) {
+	    bu_vls_printf(gedp->ged_result_str, "%s already exists, not overwriting", bu_vls_cstr(&ofile));
+	    oret = 1;
+	}
+	if (!oret) {
+	    fp = fopen(bu_vls_cstr(&ofile), "wb");
+	    if (!fp) {
+		bu_vls_printf(gedp->ged_result_str, "failed to open %s", bu_vls_cstr(&ofile));
+		oret = 1;
+	    }
+	}
+	if (oret) {
+	    bu_vls_free(&search_filter);
+	    bu_vls_free(&sort_str);
+	    bu_vls_free(&keys_str);
+	    bu_vls_free(&ofile);
+	    return GED_ERROR;
+	}
     }
 
     if (!bu_vls_strlen(&keys_str)) {
@@ -604,7 +635,12 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_ptbl_free(&objs);
 
-    bu_vls_printf(gedp->ged_result_str, "%s\n", ft_to_string(table));
+    if (!fp) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", ft_to_string(table));
+    } else {
+	fprintf(fp, "%s\n", ft_to_string(table));
+	fclose(fp);
+    }
     ft_destroy_table(table);
     bu_ptbl_free(&sobjs);
 

@@ -230,6 +230,9 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 void
 bu_ptbl_free(struct bu_ptbl *b)
 {
+    if (UNLIKELY(!b))
+	return;
+
     BU_CK_PTBL(b);
 
     if (b->buffer) {

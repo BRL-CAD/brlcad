@@ -158,11 +158,6 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	name = argv[1];
     }
 
-    if (!bu_file_exists(argv[0], NULL)) {
-	bu_vls_printf(gedp->ged_result_str, ": file %s not found", argv[0]);
-	return GED_ERROR;
-    }
-
     if (!write_fb) {
 	struct bn_vlblock*vbp;
 	FILE *fp = fopen(argv[0], "rb");
@@ -172,7 +167,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	 * be what was specified. */
 	if (fp == NULL) {
 	    char **files = NULL;
-	    size_t count = bu_file_list(".", argv[1], &files);
+	    size_t count = bu_file_list(".", argv[0], &files);
 	    if (count <= 0) {
 		bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", argv[1]);
 		return GED_ERROR;
@@ -210,6 +205,11 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
 
     } else {
+
+	if (!bu_file_exists(argv[0], NULL)) {
+	    bu_vls_printf(gedp->ged_result_str, ": file %s not found", argv[0]);
+	    return GED_ERROR;
+	}
 
 	const char *file_name = argv[0];
 
