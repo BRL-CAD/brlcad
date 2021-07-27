@@ -53,6 +53,8 @@ public:
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
 
+    LIST_OF_GEOMETRIC_SET_SELECT *GetElements() { return &elements; };
+
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
