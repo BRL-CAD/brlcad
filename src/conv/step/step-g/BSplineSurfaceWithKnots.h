@@ -51,6 +51,7 @@ public:
     virtual ~BSplineSurfaceWithKnots();
     BSplineSurfaceWithKnots(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    ON_Brep *GetONBrep();
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
 
