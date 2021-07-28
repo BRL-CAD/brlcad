@@ -174,6 +174,57 @@ convert_WritePlateBrep(
     }
 }
 
+int
+convert_WriteBSpline(
+	BSplineSurfaceWithKnots *sB,
+	BRLCADWrapper *dot_g,
+	std::string *name,
+	int dry_run)
+{
+    if (dry_run) return 0;
+    ON_Brep *onBrep = sB->GetONBrep();
+    if (!onBrep) {
+	return 1;
+    } else {
+	ON_TextLog tl;
+
+	if (!onBrep->IsValid(&tl)) {
+	    bu_log("WARNING: %s is not valid\n", name->c_str());
+	}
+
+	mat_t mat;
+	MAT_IDN(mat);
+
+#if 0
+	// TODO - manifold surface container has an axis...
+	Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
+	if (axis != NULL) {
+	    //assign matrix values
+	    double translate_to[3];
+	    const double *toXaxis = axis->GetXAxis();
+	    const double *toYaxis = axis->GetYAxis();
+	    const double *toZaxis = axis->GetZAxis();
+	    mat_t rot_mat;
+
+	    VMOVE(translate_to,axis->GetOrigin());
+	    VSCALE(translate_to,translate_to,LocalUnits::length);
+
+	    MAT_IDN(rot_mat);
+	    VMOVE(&rot_mat[0], toXaxis);
+	    VMOVE(&rot_mat[4], toYaxis);
+	    VMOVE(&rot_mat[8], toZaxis);
+	    bn_mat_inv(mat, rot_mat);
+	    MAT_DELTAS_VEC(mat, translate_to);
+	}
+#endif
+	dot_g->WriteBrep(*name, onBrep, mat);
+
+	delete onBrep;
+
+	return 0;
+    }
+}
+
 bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 {
     MAP_OF_PRODUCT_NAME_TO_ENTITY_ID name2id_map;
@@ -382,17 +433,15 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		    aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
 		}
 		if (aSR && aBS) {
-		    std::cout << "GeometricallyBoundedSurfaceShapeRepresentation\n";
-		    int sr_id = aSR->GetId();
-		    std::cout << "sr_id: " << sr_id << "\n";
+		    mat_t mat;
+		    MAT_IDN(mat);
+		    //std::cout << "GeometricallyBoundedSurfaceShapeRepresentation\n";
 		    LIST_OF_REPRESENTATION_ITEMS *items = aBS->items_();
 		    LIST_OF_REPRESENTATION_ITEMS::iterator ii;
 		    for (ii = items->begin(); ii != items->end(); ++ii) {
 			GeometricSet *gs = dynamic_cast<GeometricSet*>(*ii);
-			std::string pname  = gs->Name();
-			if (gs != NULL) {
-			    std::cout << pname << " is a GeometricSet\n";
-			}
+			string comb = id2name_map[gs->GetId()];
+			dotg->AddMember(std::string("shells"), comb, mat);
 			LIST_OF_GEOMETRIC_SET_SELECT *sitems = gs->GetElements();
 			LIST_OF_GEOMETRIC_SET_SELECT::iterator sii;
 			for (sii = sitems->begin(); sii != sitems->end(); ++sii) {
@@ -401,7 +450,10 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 				int kd = ks->GetId();
 				std::string kname  = ks->Name() + std::string("_") + std::to_string(kd);
 				kname = dotg->CleanBRLCADName(kname);
-				std::cout << kname << " is a BSplineSurfaceWithKnots\n";
+				if (!dry_run)
+				    dotg->AddMember(comb,kname,mat);
+
+				convert_WriteBSpline(ks, dotg, &kname, dry_run);
 			    }
 			}
 		    }

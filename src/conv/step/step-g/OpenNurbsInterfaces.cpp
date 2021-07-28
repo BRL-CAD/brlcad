@@ -639,6 +639,31 @@ BSplineSurface::LoadONBrep(ON_Brep *brep)
     return true;
 }
 
+ON_Brep *
+BSplineSurfaceWithKnots::GetONBrep()
+{
+    ON_Brep *brep = ON_Brep::New();
+
+    if (!brep) {
+	std::cerr << "ERROR: INTERNAL MEMORY ALLOCATION FAILURE in " << __FILE__ << ":" << __LINE__ << std::endl;
+	return NULL;
+    }
+
+    if (!LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::GetONBrep() - Error loading openNURBS brep." << std::endl;
+	//still return brep may contain something useful to diagnose
+	return brep;
+    }
+
+    ON_Brep *b2 = ON_Brep::New();
+    b2->NewFace(*brep->m_S[0]);
+    b2->Flip();
+
+    delete brep;
+
+    return b2;
+}
+
 
 bool
 BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
