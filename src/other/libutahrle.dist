@@ -6,7 +6,6 @@ cmd_name.c
 colorquant.c
 dither.c
 float_to_exp.c
-getopt.c
 hilbert.c
 include/colorquant.h
 include/rle.h
