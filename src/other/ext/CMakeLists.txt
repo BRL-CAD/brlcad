@@ -233,6 +233,7 @@ set(LOG_OPTS)
 # Load some CMake macros to handle the special case of third party libraries.
 include(ThirdParty)
 include(ThirdPartyExecutable)
+include(ThirdPartyHeaders)
 
 # In case we need to pass some sort of reasonable parallel
 # flag to a build system, check our processor count
@@ -350,6 +351,19 @@ if (COMMAND CONFIG_H_APPEND)
   CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
 endif (COMMAND CONFIG_H_APPEND)
 
+
+# The above libraries are all compilation targets with libraries, and so have
+# build outputs that must be distributed with BRL-CAD.  The following are
+# header-only libraries, and as such may remain in place - they are needed only
+# for building.  Hence, the only question we need to answer for these are
+# whether we are using a system version or we need to define the variables for
+# local including.
+Third_Party_Headers(Eigen EIGEN FIND_NAME Eigen3)
+include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
+CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
+
+
 std_build_rpath()
 
 if (COMMAND CMAKEFILES)
@@ -373,9 +387,11 @@ if (COMMAND CMAKEFILES)
     CMake/RPath_Setup.cmake
     CMake/ThirdParty.cmake
     CMake/ThirdPartyExecutable.cmake
+    CMake/ThirdPartyHeaders.cmake
     CMake/buildpath_replace.cxx.in
     CMake/rpath_replace.cxx.in
     CMake/tcl_replace.cxx.in
+    Eigen.dist
     bson.cmake
     bson.dist
     gdal.cmake

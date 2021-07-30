@@ -15,7 +15,6 @@ set(embedded_licenses
   delaunator.txt
   DejaVu_Fonts.txt
   earcut.txt
-  Eigen.txt
   fnmatch.txt
   fontstash.txt
   fort.txt
