@@ -992,6 +992,22 @@ BG_EXPORT extern int bg_coplanar(const plane_t a,
 				 const plane_t b,
 				 const struct bn_tol *tol);
 
+
+
+/**
+ *@brief
+ * Test if a set of points are coplanar. Note:  if 0 < pt_cnt <=3 the point(s)
+ * are trivially coplanar, and 1 will be returned.
+ *
+ * @return -1   error
+ * @return 0	not coplanar
+ * @return 1	coplanar
+ */
+BG_EXPORT extern int bg_coplanar_pts(const point_t *pts,
+				 int pt_cnt,
+				 const struct bn_tol *tol);
+
+
 /**
  * Using two perpendicular vectors (x_dir and y_dir) which lie in the
  * same plane as 'vec', return the angle (in radians) of 'vec' from

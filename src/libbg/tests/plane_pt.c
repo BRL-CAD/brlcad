@@ -210,6 +210,41 @@ test_bg_plane_closest_pt(int argc, char **argv)
     return 0;
 }
 
+static int
+test_bg_coplanar_pts(int argc, char **argv)
+{
+    point_t pp[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+    int is_coplanar = 0;
+    struct bn_tol tol = TOL_INIT;
+
+    argc--;argv++;
+    argc--;argv++;
+
+    if (argc != 5) {
+	bu_exit(1, "ERROR: input format is P1x,P1y,P1z P2x,P2y,P2z P3x,P3y,P3z P4x,P4y,P4z [0,1]\n");
+    }
+
+    sscanf(argv[0], "%lf,%lf,%lf", &pp[0][X], &pp[0][Y], &pp[0][Z]);
+    sscanf(argv[1], "%lf,%lf,%lf", &pp[1][X], &pp[1][Y], &pp[1][Z]);
+    sscanf(argv[2], "%lf,%lf,%lf", &pp[2][X], &pp[2][Y], &pp[2][Z]);
+    sscanf(argv[3], "%lf,%lf,%lf", &pp[3][X], &pp[3][Y], &pp[3][Z]);
+
+    if (BU_STR_EQUAL(argv[4], "1"))
+	is_coplanar = 1;
+
+    int cp_test = bg_coplanar_pts((const point_t *)pp, 4, &tol);
+    if (cp_test < 0) {
+	bu_log("bg_coplanar_pts ERROR\n");
+	return -1;
+    }
+
+    if (is_coplanar != cp_test) {
+	bu_log("unexpected coplanar test answer!\n");
+	return 1;
+    }
+
+    return 0;
+}
 
 int
 plane_pt_main(int argc, char *argv[])
@@ -221,8 +256,6 @@ plane_pt_main(int argc, char *argv[])
     }
 
     sscanf(argv[1], "%d", &function_num);
-    if (function_num < 1 || function_num > 6)
-	function_num = 0;
 
     switch (function_num) {
 	case 1:
@@ -237,7 +270,14 @@ plane_pt_main(int argc, char *argv[])
 	    return test_bg_make_plane_3pnts(argc, argv);
 	case 6:
 	    return test_bg_plane_closest_pt(argc, argv);
+	case 7:
+	    return test_bg_coplanar_pts(argc, argv);
+	default:
+	    return 1;
+
     }
+
+    // Shouldn't get here
     return 1;
 }
 

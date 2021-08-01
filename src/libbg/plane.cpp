@@ -2185,6 +2185,27 @@ bg_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 }
 
 
+extern "C" int
+bg_coplanar_pts(const point_t *pts, int pt_cnt, const struct bn_tol *tol)
+{
+    if (!pts || pt_cnt < 1 || !tol)
+	return -1;
+
+    if (pt_cnt < 4)
+	return 1;
+
+    plane_t p = {0};
+    if (bg_make_plane_3pnts((fastf_t *)p, (fastf_t *)pts[0], (fastf_t *)pts[1], (fastf_t *)pts[2], tol) < 0)
+	return -1;
+
+    for (int i = 3; i < pt_cnt; i++) {
+	if (fabs(DIST_PNT_PLANE(pts[i], p)) > tol->dist)
+	    return 0;
+    }
+
+    return 1;
+}
+
 double
 bg_angle_measure(fastf_t *vec, const fastf_t *x_dir, const fastf_t *y_dir)
 {
