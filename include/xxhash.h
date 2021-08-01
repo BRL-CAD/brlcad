@@ -2703,7 +2703,9 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src
 #  elif defined(__SSE2__)
 #    include <emmintrin.h>
 #  elif defined(__ARM_NEON__) || defined(__ARM_NEON)
-#    define inline __inline__  /* circumvent a clang bug */
+#    ifndef __APPLE__
+#      define inline __inline__  /* circumvent a clang bug */
+#    endif
 #    include <arm_neon.h>
 #    undef inline
 #  endif
