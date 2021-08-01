@@ -102,6 +102,7 @@ set(qtcad_ignore_srcs
   ${qtcad_moc_headers}
   qtcad_resources.qrc
   QtGL.cpp
+  qt6.patch
   )
 
 CMAKEFILES(${qtcad_ignore_srcs})
