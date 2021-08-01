@@ -150,7 +150,8 @@
 
 #ifdef HAVE_LOCALE_H
 #  include <locale.h>
-#elif defined(HAVE_XLOCALE_H)
+#endif
+#if defined(HAVE_XLOCALE_H) && !defined(LC_ALL)
 #  include <xlocale.h>
 #endif
 
