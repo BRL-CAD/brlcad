@@ -21,6 +21,21 @@
  *
  * Interface to Screened Poisson Surface Reconstruction
  *
+ * TODO - it may be worth porting the Open3D ball pivot code to vmath.h
+ * types and using straight nanoflann to provide another alternative to
+ * the SPSR methodology:
+ *
+ * https://github.com/isl-org/Open3D/blob/master/cpp/open3d/geometry/SurfaceReconstructionBallPivoting.cpp
+ *
+ * Not sure if that would be easier than reviving the src/other/gct code or not
+ * at this point, but the latter hasn't been built in a long time.
+ *
+ * Ball Pivot lacks the solidity properties of SPSR, but it may be a useful,
+ * fast alternative in some situations now that the patent is expired and we
+ * can look at using it.  In particular, I'm wondering if it might be used to
+ * construct plate mode meshes for thin surface shapes that SPSR doesn't do
+ * well with...
+ *
  */
 #include "common.h"
 #include "vmath.h"
