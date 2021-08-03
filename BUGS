@@ -15,6 +15,18 @@ on-going issues.
 Recent Bugs
 -----------
 
+* object names with a / or \ in them make ls or underlying directory
+  parsing logic display them incorrectly.
+
+* search -exec results are inconsistent with search filtered
+  results. for example, "search . -attr ..." returns A B C, but
+  "search . -attr ... -exec attr show {} \;" results in attr show
+  output for A B C as well as subtracted repetitions.  For example,
+  say A contains - B - C, then it will show output for A B C B C.
+
+  adding -bool u gets closer to consistent but still appears to repeat
+  the last object
+
 * fbclear -c appears to hang indefinitely inside pkg_bwaitfor,
   possible protocol mismatch or capability removed/changed in fbserv.
 
