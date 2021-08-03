@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2021-XX-XX  Release 7.32.6                                     ---
 ----------------------------------------------------------------------
 
+* fixed pixscale bug when scaling images down - Sean Morrison
 
 ----------------------------------------------------------------------
 --- 2021-07-27  Release 7.32.4                                     ---
