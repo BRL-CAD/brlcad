@@ -100,8 +100,10 @@ fill_buffer(int y)
 	file_pos = buf_start * scanlen;
     }
     ret = fread(buffer, scanlen, buflines, buffp);
-    if (ret < (size_t)buflines)
+    if (ret < (size_t)buflines && ferror(buffp))
 	perror("fread");
+    else if (feof(buffp))
+	bu_log("WARNING: Short read (%zu < %zu)", ret, buflines);
 
     file_pos += buflines * scanlen;
 }
@@ -279,7 +281,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 
 		/* Make sure we have this row in the buffer */
 		bufy = l - buf_start;
-		if (bufy < 0 || bufy >= buflines-1) {
+		if (bufy < 0 || bufy >= buflines) {
 		    fill_buffer(l);
 		    bufy = l - buf_start;
 		}
