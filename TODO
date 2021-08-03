@@ -122,6 +122,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* ability to visualize metaball centerpoints and with/without
+  translucency.
+
+* add linear interpolation method for metaballs
+
+* add script/command for changing metaball weights in masse
+
 * dbconcat option to override / merge over existing objects
 
 * gdiff in mged appears to be broken?  get "no primitives found" on
