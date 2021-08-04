@@ -498,7 +498,7 @@ fb_server_fb_unknown(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 {
-    char rbuf[5*NET_LONG_LEN+1];
+    char rbuf[5*NET_LONG_LEN+1] = {0};
     int want;
 
     if (buf == NULL) {
@@ -524,7 +524,7 @@ fb_server_fb_open(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_close(struct pkg_conn *pcp, char *buf)
 {
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     /*
      * We are playing FB server so we don't really close the frame
@@ -546,7 +546,7 @@ fb_server_fb_close(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_free(struct pkg_conn *pcp, char *buf)
 {
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     /* Don't really free framebuffer */
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
@@ -561,7 +561,7 @@ static void
 fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
 {
     RGBpixel bg;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     if (buf == NULL) {
 	bu_log("fb_server_fb_window: null buffer\n");
@@ -626,7 +626,7 @@ static void
 fb_server_fb_write(struct pkg_conn *pcp, char *buf)
 {
     int x, y, num;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int type;
 
@@ -700,7 +700,7 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
 {
     int x, y;
     int width, height;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int type;
 
@@ -778,7 +778,7 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
 {
     int x, y;
     int width, height;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int type;
 
@@ -809,7 +809,7 @@ static void
 fb_server_fb_cursor(struct pkg_conn *pcp, char *buf)
 {
     int mode, x, y;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     if (buf == NULL) {
 	bu_log("fb_server_fb_window: null buffer\n");
@@ -848,7 +848,7 @@ fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf)
 static void
 fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 {
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int xbits, ybits;
     int xorig, yorig;
@@ -882,7 +882,7 @@ static void
 fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 {
     int mode, x, y;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     if (buf == NULL) {
 	bu_log("fb_server_fb_open: null buffer\n");
@@ -906,7 +906,7 @@ static void
 fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 {
     int x, y;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     if (buf == NULL) {
 	bu_log("fb_server_fb_window: null buffer\n");
@@ -930,7 +930,7 @@ static void
 fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
 {
     int x, y;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     if (buf == NULL) {
 	bu_log("fb_server_fb_readrect: null buffer\n");
@@ -952,7 +952,7 @@ fb_server_fb_view(struct pkg_conn *pcp, char *buf)
 {
     int ret;
     int xcenter, ycenter, xzoom, yzoom;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     if (buf == NULL) {
 	bu_log("fb_server_fb_readrect: null buffer\n");
@@ -995,7 +995,7 @@ static void
 fb_server_fb_rmap(struct pkg_conn *pcp, char *buf)
 {
     int i;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     ColorMap map;
     unsigned char cm[256*2*3];
 
@@ -1022,7 +1022,7 @@ static void
 fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
 {
     int i;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     long ret;
     ColorMap map;
 
@@ -1052,7 +1052,7 @@ static void
 fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
 {
     int ret;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     ret = fb_flush(fbp);
 
@@ -1083,7 +1083,7 @@ static void
 fb_server_fb_help(struct pkg_conn *pcp, char *buf)
 {
     long ret;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     if (buf == NULL) {
 	bu_log("fb_server_fb_window: null buffer\n");

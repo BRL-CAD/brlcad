@@ -73,7 +73,7 @@ static void
 fbs_rfbopen(struct pkg_conn *pcp, char *buf)
 {
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
-    char rbuf[5*NET_LONG_LEN+1];
+    char rbuf[5*NET_LONG_LEN+1] = {0};
     int want;
 
     /* Don't really open a new framebuffer --- use existing one */
@@ -97,7 +97,7 @@ void
 fbs_rfbclose(struct pkg_conn *pcp, char *buf)
 {
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     /*
      * We are playing FB server so we don't really close the frame
@@ -121,7 +121,7 @@ fbs_rfbclose(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbfree(struct pkg_conn *pcp, char *buf)
 {
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     /* Don't really free framebuffer */
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
@@ -138,7 +138,7 @@ fbs_rfbclear(struct pkg_conn *pcp, char *buf)
 {
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
     RGBpixel bg;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
 
     if (!buf) {
 	bu_log("fbs_rfbclear: null buffer\n");
@@ -201,7 +201,7 @@ void
 fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
 {
     long x, y, num;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int type;
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
@@ -274,7 +274,7 @@ fbs_rfbwriterect(struct pkg_conn *pcp, char *buf)
 {
     int x, y;
     int width, height;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int type;
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
@@ -350,7 +350,7 @@ fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 {
     int x, y;
     int width, height;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int type;
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
@@ -381,7 +381,7 @@ void
 fbs_rfbcursor(struct pkg_conn *pcp, char *buf)
 {
     int mode, x, y;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
 
     if (!buf) {
@@ -404,7 +404,7 @@ fbs_rfbgetcursor(struct pkg_conn *pcp, char *buf)
 {
     int ret;
     int mode, x, y;
-    char rbuf[4*NET_LONG_LEN+1];
+    char rbuf[4*NET_LONG_LEN+1] = {0};
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
 
     ret = fb_getcursor(curr_fbp, &mode, &x, &y);
@@ -423,7 +423,7 @@ fbs_rfbgetcursor(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf)
 {
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int xbits, ybits;
     int xorig, yorig;
@@ -455,7 +455,7 @@ void
 fbs_rfbscursor(struct pkg_conn *pcp, char *buf)
 {
     int mode, x, y;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
 
     if (!buf) {
@@ -478,7 +478,7 @@ void
 fbs_rfbwindow(struct pkg_conn *pcp, char *buf)
 {
     int x, y;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
 
     if (!buf) {
@@ -501,7 +501,7 @@ void
 fbs_rfbzoom(struct pkg_conn *pcp, char *buf)
 {
     int x, y;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
 
     if (!buf) {
@@ -523,7 +523,7 @@ fbs_rfbview(struct pkg_conn *pcp, char *buf)
 {
     int ret;
     int xcenter, ycenter, xzoom, yzoom;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
 
     if (!buf) {
@@ -548,7 +548,7 @@ fbs_rfbgetview(struct pkg_conn *pcp, char *buf)
 {
     int ret;
     int xcenter, ycenter, xzoom, yzoom;
-    char rbuf[5*NET_LONG_LEN+1];
+    char rbuf[5*NET_LONG_LEN+1] = {0};
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
 
     ret = fb_getview(curr_fbp, &xcenter, &ycenter, &xzoom, &yzoom);
@@ -569,7 +569,7 @@ void
 fbs_rfbrmap(struct pkg_conn *pcp, char *buf)
 {
     register int i;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     ColorMap map;
     unsigned char cm[256*2*3];
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
@@ -599,7 +599,7 @@ void
 fbs_rfbwmap(struct pkg_conn *pcp, char *buf)
 {
     int i;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     long ret;
     ColorMap map;
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
@@ -629,7 +629,7 @@ void
 fbs_rfbflush(struct pkg_conn *pcp, char *buf)
 {
     int ret;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
 
     ret = fb_flush(curr_fbp);
@@ -668,7 +668,7 @@ void
 fbs_rfbhelp(struct pkg_conn *pcp, char *buf)
 {
     long ret;
-    char rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1] = {0};
     struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
 
     if (!buf) {
