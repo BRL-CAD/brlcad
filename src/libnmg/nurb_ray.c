@@ -40,7 +40,7 @@
 void rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax);
 
 struct face_g_snurb *
-nmg_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2)
+nmg_nurb_project_srf(const struct face_g_snurb *srf, plane_t plane1, plane_t plane2)
 {
 
     register struct face_g_snurb *psrf;
@@ -320,7 +320,7 @@ nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1
 
 
 struct nmg_nurb_uv_hit *
-nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, double uv_tol, struct bu_list *plist)
+nmg_nurb_intersect(const struct face_g_snurb *srf, plane_t plane1, plane_t plane2, double uv_tol, struct bu_list *plist)
 {
     struct nmg_nurb_uv_hit * h;
     struct face_g_snurb * psrf,

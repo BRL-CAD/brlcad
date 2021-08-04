@@ -123,8 +123,8 @@ DM_EXPORT extern int clip(fastf_t *,
 			  fastf_t *,
 			  fastf_t *,
 			  fastf_t *);
-DM_EXPORT extern int vclip(fastf_t *,
-			   fastf_t *,
+DM_EXPORT extern int vclip(point_t,
+			   point_t,
 			   fastf_t *,
 			   fastf_t *);
 

@@ -205,7 +205,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
  * nmg_class_pnt_l
  */
 HIDDEN void
-nmg_class_pnt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse *eu, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_e(struct neighbor *closest, const point_t pt, const struct edgeuse *eu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     vect_t ptvec;	/* vector from lseg to pt */
     vect_t left;	/* vector left of edge -- into inside of loop */
@@ -409,7 +409,7 @@ out:
  *		from: nmg_misc.c / nmg_split_loops_handler()
  */
 HIDDEN void
-nmg_class_pnt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_l(struct neighbor *closest, const point_t pt, const struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     vect_t delta;
     pointp_t lu_pt;
@@ -622,7 +622,7 @@ static const point_t nmg_good_dirs[MAX_DIR_TRYS] = {
  * NMG_CLASS_AoutB pt is OUTSIDE the volume of the shell.
  */
 int
-nmg_class_pnt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_s(const point_t pt, const struct shell *s, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     const struct faceuse *fu;
     struct model *m;

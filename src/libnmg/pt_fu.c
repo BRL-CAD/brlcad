@@ -1224,7 +1224,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *v
  *	NMG_CLASS_AonB, etc...
  */
 int
-nmg_class_pnt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct loopuse *ignore_lu,
+nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu,
 		       void (*eu_func) (struct edgeuse *, point_t, const char *, struct bu_list *), void (*vu_func) (struct vertexuse *, point_t, const char *), const char *priv,
 		       const int call_on_hits, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
 
@@ -1381,7 +1381,7 @@ nmg_class_pnt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struc
  * It will not work properly on crack loops.
  */
 int
-nmg_class_pnt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge *e_p, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_lu_except(point_t pt, const struct loopuse *lu, const struct edge *e_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     register struct edgeuse *eu;
     struct edge_info edge_list;

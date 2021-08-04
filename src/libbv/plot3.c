@@ -565,7 +565,7 @@ pd_box(register FILE *plotfp, double px1, double py1, double px2, double py2)
 
 /* Double 3-D, both in vector and enumerated versions */
 void
-pdv_3space(register FILE *plotfp, const fastf_t *min, const fastf_t *max)
+pdv_3space(register FILE *plotfp, const vect_t min, const vect_t max)
 {
     size_t ret;
     unsigned char out[6*8+1];
@@ -611,7 +611,7 @@ pd_3space(register FILE *plotfp, double px1, double py1, double pz1, double px2,
 }
 
 void
-pdv_3point(register FILE *plotfp, const fastf_t *pt)
+pdv_3point(register FILE *plotfp, const point_t pt)
 {
     pdv_3(plotfp, pt, 'X'); /* calling common function pdv_3 */
 }
@@ -623,7 +623,7 @@ pd_3point(register FILE *plotfp, double x, double y, double z)
 }
 
 void
-pdv_3move(register FILE *plotfp, const fastf_t *pt)
+pdv_3move(register FILE *plotfp, const point_t pt)
 {
     pdv_3(plotfp, pt, 'O'); /* calling common function pdv_3 */
 }
@@ -635,7 +635,7 @@ pd_3move(register FILE *plotfp, double x, double y, double z)
 }
 
 void
-pdv_3cont(register FILE *plotfp, const fastf_t *pt)
+pdv_3cont(register FILE *plotfp, const point_t pt)
 {
     pdv_3(plotfp, pt, 'Q'); /* calling common function pdv_3 */
 }
@@ -647,7 +647,7 @@ pd_3cont(register FILE *plotfp, double x, double y, double z)
 }
 
 void
-pdv_3line(register FILE *plotfp, const fastf_t *a, const fastf_t *b)
+pdv_3line(register FILE *plotfp, const vect_t a, const vect_t b)
 {
     size_t ret;
     unsigned char out[6*8+1];
@@ -693,7 +693,7 @@ pd_3line(register FILE *plotfp, double px1, double py1, double pz1, double px2, 
 }
 
 void
-pdv_3box(register FILE *plotfp, const fastf_t *a, const fastf_t *b)
+pdv_3box(register FILE *plotfp, const vect_t a, const vect_t b)
 {
     pd_3move(plotfp, a[X], a[Y], a[Z]);
     /* first side */
@@ -750,7 +750,7 @@ pd_3box(register FILE *plotfp, double px1, double py1, double pz1, double px2, d
  * Draw a ray
  */
 void
-pdv_3ray(FILE *fp, const fastf_t *pt, const fastf_t *dir, double t)
+pdv_3ray(FILE *fp, const point_t pt, const vect_t dir, double t)
 {
     point_t tip;
 

@@ -35,7 +35,7 @@
 
 
 int
-mk_vol(struct rt_wdb *fp, const char *name, char datasrc, const char *file, size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi, const fastf_t *cellsize, const matp_t mat)
+mk_vol(struct rt_wdb *fp, const char *name, char datasrc, const char *file, size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi, const vect_t cellsize, const matp_t mat)
     /* type of data source */
     /* name of file/object containing bitmap */
     /* X dimension of file (w cells) */

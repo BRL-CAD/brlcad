@@ -88,7 +88,7 @@ verts_in_nmg_face(struct faceuse *fu)
  * Translate a face using a vector's magnitude and direction.
  */
 void
-nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, struct bu_list *vlfree)
+nmg_translate_face(struct faceuse *fu, const vect_t Vec, struct bu_list *vlfree)
 {
     int in_there;
     size_t i;
@@ -174,7 +174,7 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, struct bu_list *vlfre
  * a solid bounded by these faces.
  */
 int
-nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_extrude_face(struct faceuse *fu, const vect_t Vec, struct bu_list *vlfree, const struct bn_tol *tol)
 /* Face to extrude. */
 /* Magnitude and direction of extrusion. */
 /* NMG tolerances. */

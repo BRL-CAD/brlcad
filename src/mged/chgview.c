@@ -50,16 +50,16 @@ void knob_update_rate_vars(void);
 int mged_svbase(void);
 int mged_vrot(char origin, fastf_t *newrot);
 int mged_zoom(double val);
-void mged_center(fastf_t *center);
+void mged_center(point_t center);
 static void abs_zoom(void);
 void usejoy(double xangle, double yangle, double zangle);
 
 int knob_rot(vect_t rvec, char origin, int mf, int vf, int ef);
-int knob_tran(fastf_t *tvec, int model_flag, int view_flag, int edit_flag);
+int knob_tran(vect_t tvec, int model_flag, int view_flag, int edit_flag);
 int mged_etran(char coords, vect_t tvec);
-int mged_mtran(const fastf_t *tvec);
-int mged_otran(const fastf_t *tvec);
-int mged_vtran(const fastf_t *tvec);
+int mged_mtran(const vect_t tvec);
+int mged_otran(const vect_t tvec);
+int mged_vtran(const vect_t tvec);
 
 
 extern vect_t curr_e_axes_pos;

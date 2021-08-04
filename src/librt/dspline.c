@@ -119,7 +119,7 @@ GetCardinal(fastf_t *m, const double tension)
 
 
 void
-rt_dspline_matrix(fastf_t *m, const char *type, const double tension, const double bias)
+rt_dspline_matrix(mat_t m, const char *type, const double tension, const double bias)
 
 /* "Cardinal", "Catmull", "Beta" */
 /* Cardinal tension of .5 is Catmull spline */
@@ -139,7 +139,7 @@ rt_dspline_matrix(fastf_t *m, const char *type, const double tension, const doub
 
 
 double
-rt_dspline4(fastf_t *m, double a, double b, double c, double d, double alpha)
+rt_dspline4(mat_t m, double a, double b, double c, double d, double alpha)
 /* spline matrix */
 /* control pts */
 /* point to interpolate at */
@@ -156,7 +156,7 @@ rt_dspline4(fastf_t *m, double a, double b, double c, double d, double alpha)
 
 
 void
-rt_dspline4v(double *pt, const fastf_t *m, const double *a, const double *b, const double *c, const double *d, const int depth, const double alpha)
+rt_dspline4v(double *pt, const mat_t m, const double *a, const double *b, const double *c, const double *d, const int depth, const double alpha)
 /* result */
 /* spline matrix obtained with spline_matrix() */
 /* knots */
@@ -179,7 +179,7 @@ rt_dspline4v(double *pt, const fastf_t *m, const double *a, const double *b, con
 }
 
 void
-rt_dspline_n(double *r, const fastf_t *m, const double *knots, const int nknots, const int depth, const double alpha)
+rt_dspline_n(double *r, const mat_t m, const double *knots, const int nknots, const int depth, const double alpha)
 /* result */
 /* spline matrix */
 /* knot values */

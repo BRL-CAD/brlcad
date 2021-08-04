@@ -242,7 +242,7 @@ rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
  * 0 ERROR
  */
 int
-rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf_t in, fastf_t out, struct xray *rp, struct application *ap)
+rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, vect_t out_norm, fastf_t in, fastf_t out, struct xray *rp, struct application *ap)
 {
     fastf_t norm_dist_min, norm_dist_max;
     fastf_t slant_factor;

@@ -89,7 +89,7 @@ pull_comb(struct db_i *dbip,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     matp_t mat = (matp_t)mp;
-    mat_t m;
+    mat_t m = MAT_INIT_ZERO;
     mat_t invMat;
 
     if (dp->d_flags & RT_DIR_SOLID)
@@ -108,7 +108,7 @@ pull_comb(struct db_i *dbip,
     }
 
     bn_mat_inverse(invMat, mat);
-    bn_mat_mul2(mat,m);
+    bn_mat_mul2(mat, m);
     MAT_COPY(mat, m);/* updates current matrix pointer */
 
     if (comb->tree) {

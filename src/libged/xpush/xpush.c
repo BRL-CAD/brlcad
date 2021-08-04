@@ -420,7 +420,7 @@ Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree
 }
 
 
-static struct directory *Copy_object(struct ged *gedp, struct directory *dp, fastf_t *xform);
+static struct directory *Copy_object(struct ged *gedp, struct directory *dp, mat_t xform);
 
 int
 ged_xpush_core(struct ged *gedp, int argc, const char *argv[])

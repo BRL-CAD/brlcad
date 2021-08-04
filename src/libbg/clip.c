@@ -111,7 +111,7 @@ bg_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2, fastf_t cli
 
 
 int
-bg_ray_vclip(vect_t a, vect_t b, fastf_t *min_pt, fastf_t *max_pt)
+bg_ray_vclip(point_t a, point_t b, fastf_t *min_pt, fastf_t *max_pt)
 {
     static vect_t diff;
     static double sv;

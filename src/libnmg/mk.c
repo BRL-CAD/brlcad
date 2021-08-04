@@ -1664,7 +1664,7 @@ nmg_km(struct model *m)
  * Associate point_t ("vector") coordinates with a vertex
  */
 void
-nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
+nmg_vertex_gv(struct vertex *v, const point_t pt)
 {
     struct vertex_g *vg;
     struct model *m;
@@ -1715,7 +1715,7 @@ nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
  * Assign a normal vector to a vertexuse
  */
 void
-nmg_vertexuse_nv(struct vertexuse *vu, const fastf_t *norm)
+nmg_vertexuse_nv(struct vertexuse *vu, const vect_t norm)
 {
     struct model *m;
 
@@ -2231,7 +2231,7 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
  * In the interest of modularity this no longer calls nmg_face_bb().
  */
 void
-nmg_face_g(struct faceuse *fu, const fastf_t *p)
+nmg_face_g(struct faceuse *fu, const plane_t p)
 {
     int i;
     struct face_g_plane *fg;
@@ -2277,7 +2277,7 @@ nmg_face_g(struct faceuse *fu, const fastf_t *p)
  * geometry for this face, then make a new geometry for this face.
  */
 void
-nmg_face_new_g(struct faceuse *fu, const fastf_t *pl)
+nmg_face_new_g(struct faceuse *fu, const plane_t pl)
 {
     struct face *f;
     struct face *f_tmp;

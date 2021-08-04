@@ -1433,7 +1433,7 @@ NMG_EXPORT extern double nmg_measure_fu_angle(const struct edgeuse *eu,
 NMG_EXPORT extern struct loopuse*nmg_find_lu_of_vu(const struct vertexuse *vu);
 NMG_EXPORT extern int nmg_loop_is_a_crack(const struct loopuse *lu);
 NMG_EXPORT extern int    nmg_loop_is_ccw(const struct loopuse *lu,
-					 const plane_t norm,
+					 const vect_t norm,
 					 const struct bn_tol *tol);
 NMG_EXPORT extern const struct vertexuse *nmg_loop_touches_self(const struct loopuse *lu);
 NMG_EXPORT extern int nmg_2lu_identical(const struct edgeuse *eu1,

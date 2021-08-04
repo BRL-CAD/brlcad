@@ -7088,8 +7088,8 @@ wdb_pull_comb(struct db_i *dbip,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     matp_t mat = (matp_t)mp;
-    mat_t m;
-    mat_t invMat;
+    mat_t m = MAT_INIT_ZERO;
+    mat_t invMat = MAT_INIT_ZERO;
 
     if (dp->d_flags & RT_DIR_SOLID)
 	return;
@@ -7745,7 +7745,7 @@ Copy_solid(struct db_i *dbip,
 }
 
 
-static struct directory *Copy_object(struct db_i *dbip, struct directory *dp, fastf_t *xform, struct rt_wdb *wdbp);
+static struct directory *Copy_object(struct db_i *dbip, struct directory *dp, mat_t xform, struct rt_wdb *wdbp);
 
 HIDDEN void
 Do_copy_membs(struct db_i *dbip,

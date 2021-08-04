@@ -427,7 +427,7 @@ rt_uplot_to_vlist(struct bv_vlblock *vbp, register FILE *fp, double char_size, i
 }
 
 void
-rt_label_vlist_verts(struct bv_vlblock *vbp, struct bu_list *src, fastf_t *mat, double sz, double mm2local)
+rt_label_vlist_verts(struct bv_vlblock *vbp, struct bu_list *src, mat_t mat, double sz, double mm2local)
 {
     struct bv_vlist *vp;
     struct bu_list *vhead;
@@ -451,7 +451,7 @@ rt_label_vlist_verts(struct bv_vlblock *vbp, struct bu_list *src, fastf_t *mat, 
 
 void
 rt_label_vlist_faces(struct bv_vlblock* vbp, struct bu_list* f_list,
-		     fastf_t *mat, double sz, double UNUSED(mm2local) )
+		     mat_t mat, double sz, double UNUSED(mm2local) )
 {
     struct bu_list* vhead;
     struct face* curr_f;
