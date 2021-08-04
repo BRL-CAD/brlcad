@@ -1706,7 +1706,6 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 	struct line_seg *lsg=NULL;
 	struct carc_seg *csg=NULL;
 	struct bezier_seg *bsg=NULL;
-	point2d_t d1;
 	point2d_t diff;
 	fastf_t radius;
 	point2d_t *verts;
@@ -1715,10 +1714,16 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 
 	lng = (uint32_t *)BU_PTBL_GET(loop, i);
 	switch (*lng) {
-	    case CURVE_LSEG_MAGIC:
+	    case CURVE_LSEG_MAGIC: {
+		point_t v3p = VINIT_ZERO;
+		vect_t v3d = VINIT_ZERO;
+		point_t d1 = VINIT_ZERO;
+		V2MOVE(v3p, pta);
+		V2MOVE(v3d, dir);
+
 		lsg = (struct line_seg *)lng;
 		V2SUB2(d1, ip->verts[lsg->end], ip->verts[lsg->start]);
-		code = bg_isect_line2_lseg2(dist, pta, dir, ip->verts[lsg->start], d1, tol);
+		code = bg_isect_line2_lseg2(dist, v3p, v3d, ip->verts[lsg->start], d1, tol);
 		if (code < 0)
 		    break;
 		if (code == 0) {
@@ -1788,6 +1793,7 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 		}
 		break;
+	    }
 	    case CURVE_CARC_MAGIC:
 		csg = (struct carc_seg *)lng;
 		radius = csg->radius;
@@ -1821,6 +1827,11 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 
 		} else {
+		    point_t v3p = VINIT_ZERO;
+		    vect_t v3d = VINIT_ZERO;
+		    V2MOVE(v3p, pta);
+		    V2MOVE(v3d, dir);
+
 		    point_t center = VINIT_ZERO;
 
 		    V2MOVE(start2d, ip->verts[csg->start]);
@@ -1855,9 +1866,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    VSET(rb, 0.0, radius, 0.0);
 		    VSET(center, center2d[X], center2d[Y], 0.0);
 
-		    code = isect_line_earc(dist, pta, dir, center, ra, rb,
-					   norm, ip->verts[csg->start], ip->verts[csg->end],
-					   csg->orientation);
+		    code = isect_line_earc(dist, v3p, v3d, center, ra, rb,
+					   norm, ip->verts[csg->start], ip->verts[csg->end], csg->orientation);
 		    if (code <= 0)
 			break;
 		    for (j = 0; j < (size_t)code; j++) {
