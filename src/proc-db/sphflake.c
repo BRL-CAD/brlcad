@@ -556,7 +556,7 @@ void getZRotMat(mat_t (*t), fastf_t phi)
     memcpy(*t, r, sizeof(*t));
 }
 
-void makeFlake(int depth, mat_t (*trans), fastf_t *center, fastf_t radius, double delta, int maxDepth)
+void makeFlake(int depth, mat_t (*trans), point_t center, fastf_t radius, double delta, int maxDepth)
 {
     char name[MAX_INPUT_LENGTH];
     int i = 0;

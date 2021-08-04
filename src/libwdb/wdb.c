@@ -50,7 +50,7 @@
 
 
 int
-mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, fastf_t d)
+mk_half(struct rt_wdb *wdbp, const char *name, const vect_t norm, fastf_t d)
 {
     struct rt_half_internal *half;
 
@@ -84,7 +84,7 @@ mk_grip(
 
 
 int
-mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t *max)
+mk_rpp(struct rt_wdb *wdbp, const char *name, const point_t min, const point_t max)
 {
     point_t pt8[8];
 
@@ -103,7 +103,7 @@ mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t 
 
 
 int
-mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf_t *xdirv, const fastf_t *zdirv, fastf_t xlen, fastf_t ylen, fastf_t zlen, fastf_t x_top_len)
+mk_wedge(struct rt_wdb *wdbp, const char *name, const point_t vert, const vect_t xdirv, const vect_t zdirv, fastf_t xlen, fastf_t ylen, fastf_t zlen, fastf_t x_top_len)
 {
     point_t pts[8];	/* vertices for the wedge */
     vect_t xvec;	/* x_axis vector */
@@ -249,7 +249,7 @@ mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
 
 int
-mk_sph(struct rt_wdb *wdbp, const char *name, const fastf_t *center, fastf_t radius)
+mk_sph(struct rt_wdb *wdbp, const char *name, const point_t center, fastf_t radius)
 {
     struct rt_ell_internal *ell;
 
@@ -265,7 +265,7 @@ mk_sph(struct rt_wdb *wdbp, const char *name, const fastf_t *center, fastf_t rad
 
 
 int
-mk_ell(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf_t *a, const fastf_t *b, const fastf_t *c)
+mk_ell(struct rt_wdb *wdbp, const char *name, const point_t center, const vect_t a, const vect_t b, const vect_t c)
 {
     struct rt_ell_internal *ell;
 
@@ -331,7 +331,7 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
 
 
 int
-mk_tor(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf_t *inorm, double r1, double r2)
+mk_tor(struct rt_wdb *wdbp, const char *name, const point_t center, const vect_t inorm, double r1, double r2)
 {
     struct rt_tor_internal *tor;
 
@@ -347,7 +347,7 @@ mk_tor(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
 
 
 int
-mk_rcc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, fastf_t radius)
+mk_rcc(struct rt_wdb *wdbp, const char *name, const point_t base, const vect_t height, fastf_t radius)
 {
     vect_t cross1, cross2;
     vect_t a, b;
@@ -368,7 +368,7 @@ mk_rcc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
 
 
 int
-mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, const fastf_t *a, const fastf_t *b, const fastf_t *c, const fastf_t *d)
+mk_tgc(struct rt_wdb *wdbp, const char *name, const point_t base, const vect_t height, const vect_t a, const vect_t b, const vect_t c, const vect_t d)
 {
     struct rt_tgc_internal *tgc;
 
@@ -386,7 +386,7 @@ mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
 
 
 int
-mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *dirv, fastf_t height, fastf_t base_radius, fastf_t nose_radius)
+mk_cone(struct rt_wdb *wdbp, const char *name, const point_t base, const vect_t dirv, fastf_t height, fastf_t base_radius, fastf_t nose_radius)
 {
     vect_t a, avec;	/* one base radius vector */
     vect_t b, bvec;	/* another base radius vector */
@@ -417,7 +417,7 @@ mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_
 
 
 int
-mk_trc_h(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, fastf_t radbase, fastf_t radtop)
+mk_trc_h(struct rt_wdb *wdbp, const char *name, const vect_t base, const vect_t height, fastf_t radbase, fastf_t radtop)
 {
     vect_t cross1, cross2;
     vect_t a, b, c, d;
@@ -441,7 +441,7 @@ mk_trc_h(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf
 
 
 int
-mk_trc_top(struct rt_wdb *wdbp, const char *name, const fastf_t *ibase, const fastf_t *itop, fastf_t radbase, fastf_t radtop)
+mk_trc_top(struct rt_wdb *wdbp, const char *name, const point_t ibase, const point_t itop, fastf_t radbase, fastf_t radtop)
 {
     vect_t height;
 

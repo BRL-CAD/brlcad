@@ -3205,7 +3205,7 @@ enlist:
  * If the fuser did its job, there should be only one.
  */
 struct edge_g_lseg *
-nmg_find_eg_on_line(const uint32_t *magic_p, const fastf_t *pt, const fastf_t *dir, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_find_eg_on_line(const uint32_t *magic_p, const point_t pt, const vect_t dir, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct bu_ptbl eutab;
     struct edgeuse **eup;
@@ -3578,7 +3578,7 @@ nmg_isect_eu_verts(struct edgeuse *eu, struct vertex_g *vg1, struct vertex_g *vg
 
 
 void
-nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1b, fastf_t *dir1, struct edgeuse *eu2, struct bu_ptbl *verts, struct bu_ptbl *inters, const struct bn_tol *tol)
+nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1b, vect_t dir1, struct edgeuse *eu2, struct bu_ptbl *verts, struct bu_ptbl *inters, const struct bn_tol *tol)
 {
     struct model *m;
     struct vertex_g *vg2a, *vg2b;
@@ -4731,7 +4731,7 @@ re_tabulate:
 
 /* XXX move to nmg_info.c */
 int
-nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *UNUSED(pt), const fastf_t *dir, const struct bn_tol *tol)
+nmg_is_eu_on_line3(const struct edgeuse *eu, const point_t UNUSED(pt), const vect_t dir, const struct bn_tol *tol)
 {
     struct edge_g_lseg *eg;
 
@@ -4955,7 +4955,7 @@ out:
  * 0 line does not lie on the plane
  */
 int
-rt_line_on_plane(const fastf_t *pt, const fastf_t *dir, const fastf_t *plane, const struct bn_tol *tol)
+rt_line_on_plane(const point_t pt, const vect_t dir, const plane_t plane, const struct bn_tol *tol)
 {
     vect_t unitdir;
     fastf_t dist;
@@ -5133,7 +5133,7 @@ out:
 
 
 void
-nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_inter_struct *is, struct bu_list *vlfree)
+nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, plane_t pl, struct nmg_inter_struct *is, struct bu_list *vlfree)
 {
     struct model *m;
     struct edgeuse *eu;

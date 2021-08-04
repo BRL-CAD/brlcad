@@ -161,7 +161,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 
 
 void
-nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fastf_t *pt_on_srf)
+nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, point_t pt_on_srf)
 {
     struct face *f;
     hpoint_t tmp_pt = HINIT_ZERO;
@@ -193,7 +193,7 @@ nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fa
 
 
 void
-nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v, fastf_t *norm)
+nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v, vect_t norm)
 {
     struct face *f;
 
@@ -218,7 +218,7 @@ nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v
 
 
 void
-nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu, const struct vertexuse *vu, fastf_t *norm)
+nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu, const struct vertexuse *vu, vect_t norm)
 {
     struct vertexuse_a_cnurb *va;
 
@@ -1251,7 +1251,7 @@ nmg_move_lu_between_fus(struct faceuse *dest, struct faceuse *src, struct loopus
  * reversed.
  */
 void
-nmg_loop_plane_newell(const struct loopuse *lu, fastf_t *pl)
+nmg_loop_plane_newell(const struct loopuse *lu, plane_t pl)
 {
     struct edgeuse *eu;
     double hmin, hmax;
@@ -1321,7 +1321,7 @@ nmg_loop_plane_newell(const struct loopuse *lu, fastf_t *pl)
  * pl is assigned the plane equation for the loop
  */
 fastf_t
-nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
+nmg_loop_plane_area(const struct loopuse *lu, plane_t pl)
 {
     fastf_t area;
     fastf_t pt_count=0.0;
@@ -1425,7 +1425,7 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
  *       faceuse normal.
  */
 fastf_t
-nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol *tol)
+nmg_loop_plane_area2(const struct loopuse *lu, plane_t pl, const struct bn_tol *tol)
 {
     struct edgeuse *eu;
     size_t cnt;
@@ -1558,7 +1558,7 @@ out:
  *
  */
 int
-nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl, struct bu_list *vlfree)
+nmg_calc_face_plane(struct faceuse *fu_in, plane_t pl, struct bu_list *vlfree)
 {
     double one_over_vertex_count;
     fastf_t det;
@@ -6941,7 +6941,7 @@ nmg_faces_are_radial(const struct faceuse *fu1, const struct faceuse *fu2)
  * 	0 - success
  */
 int
-nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_tol *tol)
+nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const point_t pt, const struct bn_tol *tol)
 {
     struct faceuse *fu, *fu1;
     struct edgeuse *eu, *eu1;
@@ -8759,7 +8759,7 @@ nmg_join_cnurbs(struct bu_list *crv_head)
  * the +Z direction).
  */
 struct edge_g_cnurb *
-nmg_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point_type, const struct bn_tol *tol)
+nmg_arc2d_to_cnurb(point_t i_center, point_t i_start, point_t i_end, int point_type, const struct bn_tol *tol)
 {
     struct edge_g_cnurb *crv;
     struct bu_list crv_head;

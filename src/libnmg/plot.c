@@ -446,7 +446,7 @@ nmg_m_to_vlist(struct bu_list *vhead, struct model *m, int poly_markers, struct 
  * itself.
  */
 void
-nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_normal, int tip)
+nmg_offset_eu_vert(point_t base, const struct edgeuse *eu, const vect_t face_normal, int tip)
 {
     struct edgeuse *prev_eu;
     const struct edgeuse *this_eu;
@@ -974,7 +974,7 @@ nmg_vlblock_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, long *tab, int 
  * Color is determined by caller.
  */
 void
-nmg_vlblock_euleft(struct bu_list *vh, const struct edgeuse *eu, const fastf_t *center, const fastf_t *mat, const fastf_t *xvec, const fastf_t *yvec, double len, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_vlblock_euleft(struct bu_list *vh, const struct edgeuse *eu, const point_t center, const mat_t mat, const vect_t xvec, const vect_t yvec, double len, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     vect_t left;
     point_t tip;
@@ -2012,7 +2012,7 @@ nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const st
  * Plot the loop, a ray from vu1 to vu2, and the left vector.
  */
 void
-nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const struct vertexuse *vu2, const fastf_t *left, struct bu_list *vlfree)
+nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const struct vertexuse *vu2, const vect_t left, struct bu_list *vlfree)
 {
     FILE *fp;
     struct model *m;
@@ -2064,7 +2064,7 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
 
 
 void
-nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const struct faceuse *fu, struct bu_list *vlfree)
+nmg_plot_ray_face(const char *fname, point_t pt, const vect_t dir, const struct faceuse *fu, struct bu_list *vlfree)
 {
     FILE *fp;
     long *b;

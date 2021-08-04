@@ -131,7 +131,7 @@ clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
  * if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
 int
-vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
+vclip(point_t a, point_t b, fastf_t *min, fastf_t *max)
 {
     static vect_t diff;
     static double sv;

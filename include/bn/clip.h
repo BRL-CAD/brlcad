@@ -59,7 +59,7 @@ BN_EXPORT extern int bn_lseg_clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fast
  * Implicit Return -
  * if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
-BN_EXPORT extern int bn_ray_vclip(vect_t a, vect_t b, fastf_t *min_pt, fastf_t *max_pt);
+BN_EXPORT extern int bn_ray_vclip(point_t a, point_t b, fastf_t *min_pt, fastf_t *max_pt);
 
 __END_DECLS
 

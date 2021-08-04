@@ -571,7 +571,7 @@ rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, dou
  *  0 if no overlap.
  */
 HIDDEN int
-rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register const struct soltab *stp, register const struct rt_i *rtip)
+rt_ck_overlap(const vect_t min, const vect_t max, const struct soltab *stp, const struct rt_i *rtip)
 {
     RT_CHECK_SOLTAB(stp);
 

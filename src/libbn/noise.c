@@ -215,7 +215,7 @@ bn_noise_init(void)
 
 
 double
-bn_noise_perlin(fastf_t *point)
+bn_noise_perlin(point_t point)
 {
     register int jx, jy, jz;
     int ix, iy, iz;	/* lower integer lattice point */
@@ -292,7 +292,7 @@ bn_noise_perlin(fastf_t *point)
 
 
 void
-bn_noise_vec(fastf_t *point, fastf_t *result)
+bn_noise_vec(point_t point, point_t result)
 {
     register int jx, jy, jz;
     int ix, iy, iz;		/* lower integer lattice point */
@@ -525,7 +525,7 @@ find_spec_wgt(double h, double l, double o)
 
 
 double
-bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
+bn_noise_fbm(point_t point, double h_val, double lacunarity, double octaves)
 {
     struct fbm_spec *ep;
     double value, noise_remainder, *spec_wgts;
@@ -569,7 +569,7 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 
 
 double
-bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
+bn_noise_turb(point_t point, double h_val, double lacunarity, double octaves)
 {
     struct fbm_spec *ep;
     double value, noise_remainder, *spec_wgts;
@@ -622,7 +622,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
 
 double
-bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
+bn_noise_ridged(point_t point, double h_val, double lacunarity, double octaves, double offset)
 {
     struct fbm_spec *ep;
     double result, weight, noise_signal, *spec_wgts;
@@ -677,7 +677,7 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 
 
 double
-bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
+bn_noise_mf(point_t point, double h_val, double lacunarity, double octaves, double offset)
 {
     struct fbm_spec *ep;
     double result, *spec_wgts;

@@ -46,7 +46,7 @@
 
 
 void
-bn_quat_distance_wrapper(double *dp, mat_t q1, mat_t q2)
+bn_quat_distance_wrapper(double *dp, quat_t q1, quat_t q2)
 {
     *dp = quat_distance(q1, q2);
 }
@@ -60,7 +60,7 @@ bn_mat4x3vec(fastf_t *o, mat_t m, vect_t i)
 
 
 static void
-bn_hdivide(fastf_t *o, const mat_t i)
+bn_hdivide(fastf_t *o, const hvect_t i)
 {
     HDIVIDE(o, i);
 }

@@ -183,7 +183,7 @@ extern int irot();
 extern void mged_setup(Tcl_Interp **interpreter);
 extern void mged_global_variable_teardown(Tcl_Interp *interpreter); /* cmd.c */
 extern void dir_build();
-extern void buildHrot(fastf_t *, double, double, double);
+extern void buildHrot(mat_t, double, double, double);
 extern void dozoom(int which_eye);
 #ifndef _WIN32
 extern void itoa(int n, char *s, int w);
@@ -191,7 +191,7 @@ extern void itoa(int n, char *s, int w);
 extern void eraseobj(struct directory **dpp);
 extern void eraseobjall(struct directory **dpp);
 extern void mged_finish(int exitcode);
-extern void slewview(fastf_t *view_pos);
+extern void slewview(vect_t view_pos);
 extern void mmenu_init(void);
 extern void moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate);
 extern void moveHobj(struct directory *dp, matp_t xlate);
@@ -603,7 +603,7 @@ void oedit_abs_scale(void);
 void oedit_accept(void);
 void oedit_reject(void);
 void objedit_mouse(const vect_t mousevec);
-extern int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const fastf_t *ref_pt, const fastf_t *mat);
+extern int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const point_t ref_pt, const mat_t mat);
 void label_edited_solid(int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
 void init_oedit(void);
 void init_sedit(void);
