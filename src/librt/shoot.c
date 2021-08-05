@@ -42,6 +42,16 @@
      ((_step)[Z] >= 0 && (_pz) > (_hi)[Z]))
 
 
+HIDDEN void
+shoot_setup_status(struct rt_shootray_status *ss, struct application *ap)
+{
+    ss->newray = ap->a_ray;		/* struct copy */
+    ss->odist_corr = ss->obox_start = ss->obox_end = -99;
+    ss->dist_corr = 0.0;
+    ss->box_num = 0;
+}
+
+
 void
 rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
 {
@@ -830,9 +840,7 @@ rt_shootray(register struct application *ap)
 	    VMOVE(ss.curmin, rtip->mdl_min);
 	    VMOVE(ss.curmax, rtip->mdl_max);
 	    last_bool_start = BACKING_DIST;
-	    ss.newray = ap->a_ray;		/* struct copy */
-	    ss.odist_corr = ss.obox_start = ss.obox_end = -99;
-	    ss.dist_corr = 0.0;
+	    shoot_setup_status(&ss, ap);
 	    goto start_cell;
 	}
 	resp->re_nmiss_model++;
@@ -936,10 +944,7 @@ rt_shootray(register struct application *ap)
     }
 
     last_bool_start = BACKING_DIST;
-    ss.newray = ap->a_ray;		/* struct copy */
-    ss.odist_corr = ss.obox_start = ss.obox_end = -99;
-    ss.dist_corr = 0.0;
-    ss.box_num = 0;
+    shoot_setup_status(&ss, ap);
 
     /*
      * While the ray remains inside model space, push from box to box
@@ -1487,9 +1492,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	VMOVE(ss.curmax, rtip->mdl_max);
     }
 
-    ss.newray = ap->a_ray;		/* struct copy */
-    ss.odist_corr = ss.obox_start = ss.obox_end = -99;
-    ss.dist_corr = 0.0;
+    shoot_setup_status(&ss, ap);
 
     /*
      * While the ray remains inside model space, push from box to box
