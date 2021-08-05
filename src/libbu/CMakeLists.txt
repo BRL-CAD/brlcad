@@ -41,8 +41,6 @@ if(HAVE_FPIC)
   set_property(SOURCE y2038/time64.c APPEND PROPERTY COMPILE_FLAGS "-fPIC")
 endif(HAVE_FPIC)
 
-set_property(SOURCE fort.c APPEND PROPERTY COMPILE_FLAGS "-g -ggdb -O0")
-
 set(LIBBU_SOURCES
   y2038/time64.c
   affinity.c
