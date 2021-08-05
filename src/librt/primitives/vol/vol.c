@@ -466,6 +466,9 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Default VOL cell size in ideal coordinates is one unit/cell */
     VSETALL(vip->cellsize, 1);
 
+    /* default source is file for compatibility with old VOL */
+    vip->datasrc = RT_VOL_SRC_FILE;
+
     bu_vls_strcpy(&str, rp->ss.ss_args);
     if (bu_struct_parse(&str, rt_vol_parse, (char *)vip, NULL) < 0) {
 	bu_vls_free(&str);
@@ -799,6 +802,9 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT_IDN(vip->mat);
     vip->lo = 0;
     vip->hi = 255;
+
+    /* default source is file for compatibility with old VOL */
+    vip->datasrc = RT_VOL_SRC_FILE;
 
     /* Default VOL cell size in ideal coordinates is one unit/cell */
     VSETALL(vip->cellsize, 1);
