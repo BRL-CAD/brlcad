@@ -75,12 +75,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 {
     TIE_3 pos, foc;
     unsigned char rm, op;
-    uint32_t ind, wlen;
-    uint16_t wid;
-
-    /* Length of work data */
-    wlen = work->ind;
-    ind = 0;
+    uint32_t ind = 0;
+    uint16_t wid = 0;
 
     /* Get work type */
     TCOPY(uint8_t, work->data, ind, &op, 0);
