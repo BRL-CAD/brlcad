@@ -26,22 +26,26 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <string.h>
-
-#include "zlib.h"
-
+/* system headers */
 #include "bio.h"
+#include "bsocket.h"
+#include "bnetwork.h"
+#include "zlib.h"
+#include <stdlib.h>
+#include <string.h>
+#ifdef HAVE_NETDB_H
+#  include <netdb.h>
+#endif
+
+/* public api headers */
 #include "rt/tie.h"
+
+/* adrt headers */
 #include "adrt.h"
 #include "tienet.h"
 
-#include "tienet_slave.h"
+/* local api headers */
+#include "./tienet_slave.h"
 
 
 
