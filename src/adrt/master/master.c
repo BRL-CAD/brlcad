@@ -21,28 +21,26 @@
  *
  */
 
-#include "master.h"
+#include "common.h"
 
+/* interface header */
+#include "./master.h"
+
+/* system headers */
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-
 #ifdef HAVE_GETOPT_H
 #  include <getopt.h>
 #endif
-
-#if 0
-#include <tinycthread.h>
-#endif
 #include "zlib.h"
-
 #include "bnetwork.h"
 #include "bio.h"
 
+/* public api headers */
 #include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -51,6 +49,7 @@
 #include "bu/str.h"
 #include "bu/snooze.h"
 
+/* adrt headers */
 #include "adrt.h"		/* adrt Defines */
 #include "adrt_struct.h"	/* adrt common structs */
 #include "tienet.h"

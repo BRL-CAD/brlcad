@@ -23,31 +23,34 @@
 
 #include "common.h"
 
+/* interface header */
+#include "./slave.h"
+
+/* system headers */
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#include "bio.h"
-
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 #ifdef HAVE_GETOPT_H
 #  include <getopt.h>
 #endif
+#include "bio.h"
 
+/* public api headers */
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "rt/tie.h"
-#include "adrt.h"
-#include "camera.h"
-#include "adrt.h"
-#include "rt/tie.h"
-#include "render_util.h"
 
-#include "slave.h"
-#include "tienet_slave.h"
+/* adrt headers */
+#include "adrt.h"
 #include "load.h"
+#include "camera.h"
+#include "render_util.h"
+#include "tienet_slave.h"
+
 
 typedef struct adrt_slave_project_s {
     struct tie_s tie;
