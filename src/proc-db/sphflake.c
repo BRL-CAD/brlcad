@@ -98,7 +98,6 @@ typedef struct params params_t;
 
 int count = 0; /* global sphere count */
 struct rt_wdb *fp;
-mat_t IDENT;
 
 /* make the wmember structs, in order to produce individual
    combinations so we can have separate materials among differing
@@ -360,7 +359,6 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    fflush(stdin);
 	}
     }
-    MAT_IDN(IDENT);
 }
 
 
