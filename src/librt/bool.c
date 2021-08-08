@@ -39,6 +39,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/defines.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -140,7 +141,7 @@ bool_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *
 }
 
 
-void
+_BU_ATTR_FLATTEN void
 rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, struct application *ap)
 {
     register struct seg *segp;
@@ -1407,7 +1408,7 @@ pop:
 }
 
 
-int
+_BU_ATTR_FLATTEN int
 rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t startdist, fastf_t enddist, struct bu_ptbl *regiontable, struct application *ap, const struct bu_bitv *solidbits)
 {
     struct region *lastregion = (struct region *)NULL;
