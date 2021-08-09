@@ -25,6 +25,7 @@ BRLCAD_ADDEXEC(brep_trimmed "brep_trimmed.cpp" "libwdb;${OPENNURBS_LIBRARIES}" N
 BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(csgbrep csgbrep.cpp "libwdb;libnmg" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(donuts donuts.c "libwdb" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(gtimes gtimes.c "libged;librt;libbu" NO_INSTALL)
 BRLCAD_ADDEXEC(nmgmodel nmgmodel.c "libwdb;libnmg" NO_INSTALL)
 BRLCAD_ADDEXEC(pipetest pipetest.c libwdb NO_INSTALL)
