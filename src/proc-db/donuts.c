@@ -36,19 +36,6 @@
 #include "wdb.h"
 
 
-/* this macro does the standard conversion of an angle to a radian
- * value.  the value of pi defined in M_PI is pulled from math.h
- */
-#define RADIAN(x) (((x)*_PI)/180.0)
-
-#define MATXPNT(d, m, v) { \
-    register double _i = 1.0/((m)[12]*(v)[0] + (m)[13]*(v)[1] + (m)[14]*(v)[2] + (m)[15]*1); \
-    (d)[0] = ((m)[0]*(v)[0] + (m)[1]*(v)[1] + (m)[2]*(v)[2] + (m)[3])*_i; \
-    (d)[1] = ((m)[4]*(v)[0] + (m)[5]*(v)[1] + (m)[6]*(v)[2] + (m)[7])*_i; \
-    (d)[2] = ((m)[8]*(v)[0] + (m)[9]*(v)[1] + (m)[10]*(v)[2] + (m)[11])*_i; \
-  }
-
-
 #define DEFAULT_DEBUG 0
 #define DEFAULT_VERBOSE 0
 #define DEFAULT_INTERACTIVE 0
@@ -707,7 +694,7 @@ void makeFlake(depth, trans, center, radius, delta, maxDepth)
   for (i = 0; i < 9; i++) {
     memcpy(temp, trans, sizeof(temp));
     getTrans(&temp, dir[i][0], dir[i][1], radius+newRadius);
-    MATXPNT(pcentTemp, temp, origin);
+    MAT4X3PNT(pcentTemp, temp, origin);
     VADD2(pcent, pcentTemp, center);
     makeFlake(depth+1, &temp, pcent, newRadius, delta, maxDepth);
   }
