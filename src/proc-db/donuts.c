@@ -250,13 +250,15 @@ getName(char *base, int id, char *paramstring)
 char
 *getPrePostName(char *prefix, char *base, char *suffix)
 {
-    static char newname[DEFAULT_MAXNAMELENGTH];
+    static char newname[DEFAULT_MAXNAMELENGTH] = {0};
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
-    memset(newname, 0, DEFAULT_MAXNAMELENGTH);
+    if (prefix) bu_vls_strcat(&v, prefix);
+    if (base) bu_vls_strcat(&v, base);
+    if (suffix) bu_vls_strcat(&v, suffix);
 
-    if (prefix) sprintf(newname, "%s", prefix);
-    if (base) sprintf(newname, "%s%s", newname, base);
-    if (suffix) sprintf(newname, "%s%s", newname, suffix);
+    bu_strlcat(newname, bu_vls_cstr(&v), DEFAULT_MAXNAMELENGTH);
+    bu_vls_free(&v);
 
     return newname;
 }
@@ -424,7 +426,7 @@ initializeInfo(params_t *p, char *name, int depth)
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-		    sscanf(input, "%d %d %d", &(c[0]), &(c[1]), &(c[2]));
+		    sscanf(input, "%u %u %u", &(c[0]), &(c[1]), &(c[2]));
 		    p->materialArray[i].color[0] = c[0];
 		    p->materialArray[i].color[1] = c[1];
 		    p->materialArray[i].color[2] = c[2];
