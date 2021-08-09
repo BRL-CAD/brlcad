@@ -835,6 +835,8 @@ main(int argc, char **argv)
 {
     int i;
 
+    bu_setprogname(argv[0]);
+
     bu_strlcpy(parameters.fileName, DEFAULT_OUTPUTFILENAME, DEFAULT_MAXNAMELENGTH);
     parameters.maxDepth=DEFAULT_MAXDEPTH;
     parameters.maxInnerRadius=DEFAULT_MAXINNERRADIUS;
