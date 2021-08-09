@@ -118,9 +118,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* libgcv should add objects to an existing .g if one is specified as
-  the output target - right now it's overwriting the old file
-
 * add metaball scaling feature (presently in a tclscript)
 
 * ability to visualize metaball centerpoints and with/without
