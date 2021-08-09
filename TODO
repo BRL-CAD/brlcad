@@ -122,6 +122,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* libgcv should add objects to an existing .g if one is specified as
+  the output target - right now it's overwriting the old file
+
+* add metaball scaling feature (presently in a tclscript)
+
 * ability to visualize metaball centerpoints and with/without
   translucency.
 
@@ -2367,12 +2372,10 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 (i.e., v6 database format)
 --------------------------------------------------
 
-* support matrices over any object, including over top-level combs
-  without affecting members and including over primitives so they may
-  optionally retain a local coordinate system even after a push
-  operation this also will allow primitives like the torus support
-  non-uniform scaling.
-
+* have all primitives record a matrix so they may retain a local
+  coordinate system even after pushed matrices.  this also will allow
+  primitives like the torus to support non-uniform scaling.
+  
 * change convention of using 'u', '+', and '-' for unions,
   intersections, and subtractions respectively to symbols that
   unambiguously describe the underlying CSG operation.

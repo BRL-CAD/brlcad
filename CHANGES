@@ -166,7 +166,7 @@ btclsh, bwish
 	Emacs key binding emulation
 	achieved by running btclsh in Emacs [deprecated 7.30]
 
-include/bu/redblach.h
+include/bu/redblack.h
 	All redblack related functions, structures and macros
 	defined in libbu's redblack.h.  Functions are:
 	bu_rb_create, bu_rb_delete, bu_rb_diagnose_tree,
@@ -219,8 +219,14 @@ signal analysis tools
 	d2-c', double-asc' : incorporating into cv
 	Removed as part of distillation effort [deprecated 7.26]
 include/bu/ptbl.h
-        BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
-        Removed as private implementation detail [deprecated 7.26
+  BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
+  Removed as private implementation detail [deprecated 7.26
+include/bu/hash.h
+  bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value, bu_get_hash_key,
+  bu_hash_tbl_add, bu_hash_tbl_print, bu_hash_tbl_free, bu_hash_tbl_first,
+  bu_hash_tbl_next, bu_hash_tbl_traverse, public structs bu_hash_entry and
+  bu_hash_tbl will be made private.
+  Replaced with new API [deprecated 7.26]
 include/bu/cmd.h
 	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
 	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,
