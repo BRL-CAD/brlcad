@@ -723,13 +723,13 @@ argumentExamples(FILE *outfp, char *progname)
  * which, in turn, are used as fence parameters.
  *****************************/
 int
-parseArguments(int argc, char **argv)
+parseArguments(int argc, char *argv[])
 {
     int c = 0;
 
     const char *progname = argv[0];
 
-    opterr = 0;
+    bu_opterr = 0;
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	switch (c) {
@@ -799,7 +799,7 @@ parseArguments(int argc, char **argv)
 		break;
 	}
     }
-    return(optind);
+    return(bu_optind);
 }
 
 
