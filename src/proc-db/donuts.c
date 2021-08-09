@@ -1,26 +1,27 @@
-/*
- *                      D O N U T S . C
+/*                        D O N U T S . C
+ * BRL-CAD
  *
- * This program generages a "donut flake".  Based in-part off
- * sphflake originally written by Jason Owens.
+ * Copyright (c) 1998-2021 United States Government as represented by
+ * the U.S. Army Research Laboratory.
  *
- * Author -
- * Christopher Sean Morrison
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
  *
- * Source -
- * The U. S. Army Research Laboratory
- * Aberdeen Proving Ground, Maryland 21005-5068 USA
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * Distribution Notice -
- * Re-distribution of this software is restricted, as described in
- * your "Statement of Terms and Conditions for the Release of
- * The BRL-CAD Package" agreement.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file donuts.c
  *
- * Copyright Notice -
- * This software is Copyright (C) 1998-2021 by the United States Army
- * in all countries except the USA.  All rights reserved.
+ * This program generates a "donut flake" similar to sphflake.
  *
- ***********************************************************************/
+ */
 
 #include "common.h"
 
@@ -107,22 +108,22 @@
 
 
 struct depthMaterial {
-  char name[DEFAULT_MAXNAMELENGTH];
-  char parameters[DEFAULT_MAXNAMELENGTH];
-  unsigned char color[3];
+    char name[DEFAULT_MAXNAMELENGTH];
+    char parameters[DEFAULT_MAXNAMELENGTH];
+    unsigned char color[3];
 };
 typedef struct depthMaterial depthMaterial_t;
 
 struct params {
-  char fileName[DEFAULT_MAXNAMELENGTH];
-  int maxDepth;
-  int maxInnerRadius;
-  int maxTorusRadius;
-  double innerRadiusDelta;
-  double torusRadiusDelta;
-  point_t position;
-  vect_t normal;
-  depthMaterial_t *materialArray;
+    char fileName[DEFAULT_MAXNAMELENGTH];
+    int maxDepth;
+    int maxInnerRadius;
+    int maxTorusRadius;
+    double innerRadiusDelta;
+    double torusRadiusDelta;
+    point_t position;
+    vect_t normal;
+    depthMaterial_t *materialArray;
 };
 typedef struct params params_t;
 
@@ -152,24 +153,24 @@ int dir[9][2] = {  {0, -90},
 #ifdef __cplusplus
 extern "C" {
 #endif
-  extern void initializeInfo(params_t *p, char *name, int depth);
-  extern void createDonuts(params_t *p);
-  extern void createLights(params_t *p);
-  extern void createPlane(params_t *p);
-  extern void createScene(params_t *p);
-  extern void createEnvironMap(params_t *p);
-  extern void getYRotMat(mat_t *mat, fastf_t theta);
-  extern void getZRotMat(mat_t *mat, fastf_t phi);
-  extern void getTrans(mat_t *trans, int i, int j, fastf_t v);
-  extern void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, double delta, int maxDepth);
-  extern void usage(char *n);
-  extern void argumentHelp(FILE *fp, const char *progname, char *message);
-  extern void argumentExamples(FILE *fp, char *progname);
-  extern void defaultSettings(FILE *fp);
-  extern int parseArguments(int argc, char *argv[]);
-  extern void printMatrix(FILE *fp, char *n, mat_t m);
-  extern char *getName(char *base, int id, char *suffix);
-  extern char *getPrePostName(char *prefix, char *base, char *suffix);
+    extern void initializeInfo(params_t *p, char *name, int depth);
+    extern void createDonuts(params_t *p);
+    extern void createLights(params_t *p);
+    extern void createPlane(params_t *p);
+    extern void createScene(params_t *p);
+    extern void createEnvironMap(params_t *p);
+    extern void getYRotMat(mat_t *mat, fastf_t theta);
+    extern void getZRotMat(mat_t *mat, fastf_t phi);
+    extern void getTrans(mat_t *trans, int i, int j, fastf_t v);
+    extern void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, double delta, int maxDepth);
+    extern void usage(char *n);
+    extern void argumentHelp(FILE *fp, const char *progname, char *message);
+    extern void argumentExamples(FILE *fp, char *progname);
+    extern void defaultSettings(FILE *fp);
+    extern int parseArguments(int argc, char *argv[]);
+    extern void printMatrix(FILE *fp, char *n, mat_t m);
+    extern char *getName(char *base, int id, char *suffix);
+    extern char *getPrePostName(char *prefix, char *base, char *suffix);
 #ifdef __cplusplus
 }
 #endif
@@ -181,18 +182,21 @@ const char *options="IiDdVvO:o:N:n:U:u:";
 extern char *optarg;
 extern int optind, opterr, getopt();
 
-/* these variables control the "behavior" of this program's output
- *   if debug is set, debug information (extra "useful" output is given) is
- *     displayed on stdout.
- *   if verbose is set, then all prompting and output that may be shown
- *     (such as results and errors) will be sent to stderr.  this should
- *     probably be switched with debug (maybe) but convention was taken
- *     from another db program.
- *   if interactive is set, then the user will be prompted for values from
- *     stdin.
+/* these variables control the "behavior" of this program's output:
  *
- *   the default output file pointers for debug and verbose can be set
- *     in the header file
+ * if debug is set, debug information (extra "useful" output is given)
+ *     is displayed on stdout.
+ *
+ * if verbose is set, then all prompting and output that may be shown
+ *     (such as results and errors) will be sent to stderr.  this
+ *     should probably be switched with debug (maybe) but convention
+ *     was taken from another db program.
+ *
+ * if interactive is set, then the user will be prompted for values
+ *     from stdin.
+ *
+ * the default output file pointers for debug and verbose can be set
+ * in the header file
  */
 int debug=DEFAULT_DEBUG;
 int verbose=DEFAULT_VERBOSE;
@@ -221,21 +225,21 @@ params_t parameters;
  * something like that)
  ***********************************/
 char *getName(base, id, paramstring)
-     char *base;
-     int id;
-     char *paramstring;
+    char *base;
+    int id;
+    char *paramstring;
 {
-  static char name[DEFAULT_MAXNAMELENGTH];
+    static char name[DEFAULT_MAXNAMELENGTH];
 
-  memset(name, 0, DEFAULT_MAXNAMELENGTH);
+    memset(name, 0, DEFAULT_MAXNAMELENGTH);
 
-  if (id>=0) sprintf(name, paramstring, base, id);
-  else sprintf(name, paramstring, base);
+    if (id>=0) sprintf(name, paramstring, base, id);
+    else sprintf(name, paramstring, base);
 
-  if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "getName(): base[%s], id[%d]\n", base, id);
-  if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Using name[%s]\n", name);
+    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "getName(): base[%s], id[%d]\n", base, id);
+    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Using name[%s]\n", name);
 
-  return name;
+    return name;
 }
 
 
@@ -246,327 +250,327 @@ char *getName(base, id, paramstring)
  * sending a NULL parameter
  *****************************************/
 char *getPrePostName(prefix, base, suffix)
-     char *prefix;
-     char *base;
-     char *suffix;
+    char *prefix;
+    char *base;
+    char *suffix;
 {
-  static char newname[DEFAULT_MAXNAMELENGTH];
+    static char newname[DEFAULT_MAXNAMELENGTH];
 
-  memset(newname, 0, DEFAULT_MAXNAMELENGTH);
+    memset(newname, 0, DEFAULT_MAXNAMELENGTH);
 
-  if (prefix) sprintf(newname, "%s", prefix);
-  if (base) sprintf(newname, "%s%s", newname, base);
-  if (suffix) sprintf(newname, "%s%s", newname, suffix);
+    if (prefix) sprintf(newname, "%s", prefix);
+    if (base) sprintf(newname, "%s%s", newname, base);
+    if (suffix) sprintf(newname, "%s%s", newname, suffix);
 
-  return newname;
+    return newname;
 }
 
 
 void initializeInfo(p, name, depth)
-     params_t *p;
-     char *name;
-     int depth;
+    params_t *p;
+    char *name;
+    int depth;
 {
-  char input[MAX_INPUT_LENGTH] = {0};
-  int i = 0;
-  int len = 0;
-  unsigned int c[3];
+    char input[MAX_INPUT_LENGTH] = {0};
+    int i = 0;
+    int len = 0;
+    unsigned int c[3];
 
-  if (name == NULL) {
-    bu_strlcpy(p->fileName, DEFAULT_OUTPUTFILENAME, DEFAULT_MAXNAMELENGTH);
-  } else {
-    bu_strlcpy(p->fileName, name, DEFAULT_MAXNAMELENGTH);
-  }
-  p->maxInnerRadius = DEFAULT_MAXINNERRADIUS;
-  p->maxTorusRadius = DEFAULT_MAXTORUSRADIUS;
-  p->maxDepth =  (depth > 0) ? (depth) : (DEFAULT_MAXDEPTH);
-  p->innerRadiusDelta = p->torusRadiusDelta = DEFAULT_RADIUSDELTA;
-  p->position[X] = DEFAULT_ORIGIN_X;
-  p->position[Y] = DEFAULT_ORIGIN_Y;
-  p->position[Z] = DEFAULT_ORIGIN_Z;
-
-  p->materialArray = (depthMaterial_t *)bu_malloc(sizeof(depthMaterial_t) * (p->maxDepth+1), "alloc materialArray");
-
-  for (i = 0; i <= p->maxDepth; i++) {
-    strncpy(p->materialArray[i].name, DEFAULT_MATERIAL, MAX_INPUT_LENGTH);
-    strncpy(p->materialArray[i].parameters, DEFAULT_MATPARAM, MAX_INPUT_LENGTH);
-    sscanf(DEFAULT_MATCOLOR, "%u %u %u", &(c[0]), &(c[1]), &(c[2]));
-    p->materialArray[i].color[0] = c[0];
-    p->materialArray[i].color[1] = c[1];
-    p->materialArray[i].color[2] = c[2];
-  }
-
-  if (interactive) {
-    /* prompt the user for some data */
-    /* no error checking here.... */
-    printf("\nPlease enter a filename for donuts output: [%s] ", p->fileName);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-      fprintf(stderr, "donuts: initializeInfo: fgets filename read error.\n");
-      fprintf(stderr, "Continuing with default value.\n");
+    if (name == NULL) {
+	bu_strlcpy(p->fileName, DEFAULT_OUTPUTFILENAME, DEFAULT_MAXNAMELENGTH);
     } else {
-      len = strlen(input);
-      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-        sscanf(input, "%s", p->fileName);
-      }
+	bu_strlcpy(p->fileName, name, DEFAULT_MAXNAMELENGTH);
     }
-    fflush(stdin);
+    p->maxInnerRadius = DEFAULT_MAXINNERRADIUS;
+    p->maxTorusRadius = DEFAULT_MAXTORUSRADIUS;
+    p->maxDepth =  (depth > 0) ? (depth) : (DEFAULT_MAXDEPTH);
+    p->innerRadiusDelta = p->torusRadiusDelta = DEFAULT_RADIUSDELTA;
+    p->position[X] = DEFAULT_ORIGIN_X;
+    p->position[Y] = DEFAULT_ORIGIN_Y;
+    p->position[Z] = DEFAULT_ORIGIN_Z;
 
-    printf("Initial position X Y Z: [%.2f %.2f %.2f] ", p->position[X], p->position[Y], p->position[Z]);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-      fprintf(stderr, "donuts: initializeInfo: fgets position read error.\n");
-      fprintf(stderr, "Continuing with default values.\n");
-    } else {
-      len = strlen(input);
-      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-      if (strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
-        sscanf(input, "%lg %lg %lg", &(p->position[X]), &(p->position[Y]), &(p->position[Z]));
-      }
-    }
-    fflush(stdin);
-
-    printf("maxInnerRadius: [%d] ", p->maxInnerRadius);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-      fprintf(stderr, "donuts: initializeInfo: fgets maxinnerradius read error.\n");
-      fprintf(stderr, "Continuing with default value.\n");
-    } else {
-      len = strlen(input);
-      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-        sscanf(input, "%d", &(p->maxInnerRadius));
-      }
-    }
-    fflush(stdin);
-
-    printf("maxTorusRadius: [%d] ", p->maxTorusRadius);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-      fprintf(stderr, "donuts: initializeInfo: fgets maxouterradius read error.\n");
-      fprintf(stderr, "Continuing with default value.\n");
-    } else {
-      len = strlen(input);
-      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-        sscanf(input, "%d", &(p->maxTorusRadius));
-      }
-    }
-    fflush(stdin);
-
-    printf("innerRadiusDelta: [%.2f] ", p->innerRadiusDelta);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-      fprintf(stderr, "donuts: initializeInfo: fgets innerradiusdelta read error.\n");
-      fprintf(stderr, "Continuing with default value.\n");
-    } else {
-      len = strlen(input);
-      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-        sscanf(input, "%lg", &(p->innerRadiusDelta));
-      }
-    }
-    fflush(stdin);
-
-    printf("torusRadiusDelta: [%.2f] ", p->torusRadiusDelta);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-      fprintf(stderr, "donuts: initializeInfo: fgets torusradiusdelta read error.\n");
-      fprintf(stderr, "Continuing with default value.\n");
-    } else {
-      len = strlen(input);
-      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-        sscanf(input, "%lg", &(p->torusRadiusDelta));
-      }
-    }
-    fflush(stdin);
-
-    printf("maxDepth: [%d] ", p->maxDepth);
-    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-      fprintf(stderr, "donuts: initializeInfo: fgets maxdepth read error.\n");
-      fprintf(stderr, "Continuing with default value.\n");
-    } else {
-      len = strlen(input);
-      if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-      if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-        sscanf(input, "%d", &(p->maxDepth));
-      }
-    }
-    fflush(stdin);
-
+    p->materialArray = (depthMaterial_t *)bu_malloc(sizeof(depthMaterial_t) * (p->maxDepth+1), "alloc materialArray");
 
     for (i = 0; i <= p->maxDepth; i++) {
-      printf("Material for depth %d: [%s] ", i, p->materialArray[i].name);
-      if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-        fprintf(stderr, "donuts: initializeInfo: fgets material read error.\n");
-        fprintf(stderr, "Continuing with default value.\n");
-      } else {
-        len = strlen(input);
-        if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-        if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-          sscanf(input, "%s", p->materialArray[i].name);
-        }
-      }
-      fflush(stdin);
-
-      printf("Mat. params for depth %d: [%s] ", i, p->materialArray[i].parameters);
-      if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-        fprintf(stderr, "donuts: initializeInfo: fgets params read error.\n");
-        fprintf(stderr, "Continuing with default value.\n");
-      } else {
-        len = strlen(input);
-        if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-        if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-          sscanf(input, "%s", p->materialArray[i].parameters);
-        }
-      }
-      fflush(stdin);
-
-      printf("Mat. color for depth %d: [%d %d %d] ", i, p->materialArray[i].color[0], p->materialArray[i].color[1], p->materialArray[i].color[2]);
-      if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-        fprintf(stderr, "donuts: initializeInfo: fgets color read error.\n");
-        fprintf(stderr, "Continuing with default values.\n");
-      } else {
-        len = strlen(input);
-        if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-        if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-          sscanf(input, "%d %d %d", &(c[0]), &(c[1]), &(c[2]));
-          p->materialArray[i].color[0] = c[0];
-          p->materialArray[i].color[1] = c[1];
-          p->materialArray[i].color[2] = c[2];
-        }
-      }
-      fflush(stdin);
+	strncpy(p->materialArray[i].name, DEFAULT_MATERIAL, MAX_INPUT_LENGTH);
+	strncpy(p->materialArray[i].parameters, DEFAULT_MATPARAM, MAX_INPUT_LENGTH);
+	sscanf(DEFAULT_MATCOLOR, "%u %u %u", &(c[0]), &(c[1]), &(c[2]));
+	p->materialArray[i].color[0] = c[0];
+	p->materialArray[i].color[1] = c[1];
+	p->materialArray[i].color[2] = c[2];
     }
-  }
+
+    if (interactive) {
+	/* prompt the user for some data */
+	/* no error checking here.... */
+	printf("\nPlease enter a filename for donuts output: [%s] ", p->fileName);
+	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: fgets filename read error.\n");
+	    fprintf(stderr, "Continuing with default value.\n");
+	} else {
+	    len = strlen(input);
+	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		sscanf(input, "%s", p->fileName);
+	    }
+	}
+	fflush(stdin);
+
+	printf("Initial position X Y Z: [%.2f %.2f %.2f] ", p->position[X], p->position[Y], p->position[Z]);
+	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: fgets position read error.\n");
+	    fprintf(stderr, "Continuing with default values.\n");
+	} else {
+	    len = strlen(input);
+	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+	    if (strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
+		sscanf(input, "%lg %lg %lg", &(p->position[X]), &(p->position[Y]), &(p->position[Z]));
+	    }
+	}
+	fflush(stdin);
+
+	printf("maxInnerRadius: [%d] ", p->maxInnerRadius);
+	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: fgets maxinnerradius read error.\n");
+	    fprintf(stderr, "Continuing with default value.\n");
+	} else {
+	    len = strlen(input);
+	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		sscanf(input, "%d", &(p->maxInnerRadius));
+	    }
+	}
+	fflush(stdin);
+
+	printf("maxTorusRadius: [%d] ", p->maxTorusRadius);
+	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: fgets maxouterradius read error.\n");
+	    fprintf(stderr, "Continuing with default value.\n");
+	} else {
+	    len = strlen(input);
+	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		sscanf(input, "%d", &(p->maxTorusRadius));
+	    }
+	}
+	fflush(stdin);
+
+	printf("innerRadiusDelta: [%.2f] ", p->innerRadiusDelta);
+	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: fgets innerradiusdelta read error.\n");
+	    fprintf(stderr, "Continuing with default value.\n");
+	} else {
+	    len = strlen(input);
+	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		sscanf(input, "%lg", &(p->innerRadiusDelta));
+	    }
+	}
+	fflush(stdin);
+
+	printf("torusRadiusDelta: [%.2f] ", p->torusRadiusDelta);
+	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: fgets torusradiusdelta read error.\n");
+	    fprintf(stderr, "Continuing with default value.\n");
+	} else {
+	    len = strlen(input);
+	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		sscanf(input, "%lg", &(p->torusRadiusDelta));
+	    }
+	}
+	fflush(stdin);
+
+	printf("maxDepth: [%d] ", p->maxDepth);
+	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: fgets maxdepth read error.\n");
+	    fprintf(stderr, "Continuing with default value.\n");
+	} else {
+	    len = strlen(input);
+	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		sscanf(input, "%d", &(p->maxDepth));
+	    }
+	}
+	fflush(stdin);
+
+
+	for (i = 0; i <= p->maxDepth; i++) {
+	    printf("Material for depth %d: [%s] ", i, p->materialArray[i].name);
+	    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
+		fprintf(stderr, "donuts: initializeInfo: fgets material read error.\n");
+		fprintf(stderr, "Continuing with default value.\n");
+	    } else {
+		len = strlen(input);
+		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		    sscanf(input, "%s", p->materialArray[i].name);
+		}
+	    }
+	    fflush(stdin);
+
+	    printf("Mat. params for depth %d: [%s] ", i, p->materialArray[i].parameters);
+	    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
+		fprintf(stderr, "donuts: initializeInfo: fgets params read error.\n");
+		fprintf(stderr, "Continuing with default value.\n");
+	    } else {
+		len = strlen(input);
+		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		    sscanf(input, "%s", p->materialArray[i].parameters);
+		}
+	    }
+	    fflush(stdin);
+
+	    printf("Mat. color for depth %d: [%d %d %d] ", i, p->materialArray[i].color[0], p->materialArray[i].color[1], p->materialArray[i].color[2]);
+	    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
+		fprintf(stderr, "donuts: initializeInfo: fgets color read error.\n");
+		fprintf(stderr, "Continuing with default values.\n");
+	    } else {
+		len = strlen(input);
+		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
+		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		    sscanf(input, "%d %d %d", &(c[0]), &(c[1]), &(c[2]));
+		    p->materialArray[i].color[0] = c[0];
+		    p->materialArray[i].color[1] = c[1];
+		    p->materialArray[i].color[2] = c[2];
+		}
+	    }
+	    fflush(stdin);
+	}
+    }
 }
 
 
 void createDonuts(p)
-     params_t *p;
+    params_t *p;
 {
-  mat_t trans;
-  char name[MAX_INPUT_LENGTH];
-  int i = 0;
+    mat_t trans;
+    char name[MAX_INPUT_LENGTH];
+    int i = 0;
 
-  /* now begin the creation of the donuts... */
-  MAT_IDN(trans); /* get the identity matrix */
-  makeFlake(0, &trans, p->position, (fastf_t)p->maxTorusRadius * DEFAULT_SCALE, p->torusRadiusDelta, p->maxDepth);
-  /*
-    Now create the depth combinations/regions This is done to
-    facilitate application of different materials to the different
-    depths */
+    /* now begin the creation of the donuts... */
+    MAT_IDN(trans); /* get the identity matrix */
+    makeFlake(0, &trans, p->position, (fastf_t)p->maxTorusRadius * DEFAULT_SCALE, p->torusRadiusDelta, p->maxDepth);
+    /*
+      Now create the depth combinations/regions This is done to
+      facilitate application of different materials to the different
+      depths */
 
-  for (i = 0; i <= p->maxDepth; i++) {
-    memset(name, 0, MAX_INPUT_LENGTH);
-    sprintf(name, "depth%d.r", i);
-    mk_lcomb(fp, name, &(wmemberArray[i+ADDITIONAL_OBJECTS]), 1, p->materialArray[i].name, p->materialArray[i].parameters, p->materialArray[i].color, 0);
-  }
-  printf("\nDonuts created");
+    for (i = 0; i <= p->maxDepth; i++) {
+	memset(name, 0, MAX_INPUT_LENGTH);
+	sprintf(name, "depth%d.r", i);
+	mk_lcomb(fp, name, &(wmemberArray[i+ADDITIONAL_OBJECTS]), 1, p->materialArray[i].name, p->materialArray[i].parameters, p->materialArray[i].color, 0);
+    }
+    printf("\nDonuts created");
 
 }
 
 
 void createLights(p)
-     params_t *p;
+    params_t *p;
 {
-  char name[MAX_INPUT_LENGTH];
-  point_t lPos;
-  int r, g, b;
-  unsigned char c[3];
+    char name[MAX_INPUT_LENGTH];
+    point_t lPos;
+    int r, g, b;
+    unsigned char c[3];
 
 
-  /* first create the light spheres */
-  VSET(lPos, p->position[X]+(5 * p->maxTorusRadius), p->position[Y]+(-5 * p->maxTorusRadius), p->position[Z]+(150 * p->maxTorusRadius));
-  memset(name, 0, MAX_INPUT_LENGTH);
-  sprintf(name, "light0");
-  mk_sph(fp, name, lPos, p->maxTorusRadius*5);
+    /* first create the light spheres */
+    VSET(lPos, p->position[X]+(5 * p->maxTorusRadius), p->position[Y]+(-5 * p->maxTorusRadius), p->position[Z]+(150 * p->maxTorusRadius));
+    memset(name, 0, MAX_INPUT_LENGTH);
+    sprintf(name, "light0");
+    mk_sph(fp, name, lPos, p->maxTorusRadius*5);
 
-  /* now make the light region... */
-  mk_addmember(name, &(wmemberArray[LIGHT0_ID].l), NULL, WMOP_UNION);
-  strcat(name, ".r");
-  sscanf(LIGHT0_MATCOLOR, "%d %d %d", &r, &g, &b);
-  c[0] = (char)r;
-  c[1] = (char)g;
-  c[2] = (char)b;
-  mk_lcomb(fp, name, &(wmemberArray[LIGHT0_ID]), 1, LIGHT0_MAT, LIGHT0_MATPARAM,
-           (const unsigned char *) c, 0);
+    /* now make the light region... */
+    mk_addmember(name, &(wmemberArray[LIGHT0_ID].l), NULL, WMOP_UNION);
+    strcat(name, ".r");
+    sscanf(LIGHT0_MATCOLOR, "%d %d %d", &r, &g, &b);
+    c[0] = (char)r;
+    c[1] = (char)g;
+    c[2] = (char)b;
+    mk_lcomb(fp, name, &(wmemberArray[LIGHT0_ID]), 1, LIGHT0_MAT, LIGHT0_MATPARAM,
+	     (const unsigned char *) c, 0);
 
-  VSET(lPos, p->position[X]+(13 * p->maxTorusRadius), p->position[Y]+(-13 * p->maxTorusRadius), p->position[Z]+(152 * p->maxTorusRadius));
-  sprintf(name, "light1");
-  mk_sph(fp, name, lPos, p->maxTorusRadius*5);
+    VSET(lPos, p->position[X]+(13 * p->maxTorusRadius), p->position[Y]+(-13 * p->maxTorusRadius), p->position[Z]+(152 * p->maxTorusRadius));
+    sprintf(name, "light1");
+    mk_sph(fp, name, lPos, p->maxTorusRadius*5);
 
-  /* now make the light region... */
-  mk_addmember(name, &(wmemberArray[LIGHT1_ID].l), NULL, WMOP_UNION);
-  strcat(name, ".r");
-  sscanf(LIGHT1_MATCOLOR, "%d %d %d", &r, &g, &b);
-  c[0] = (char)r;
-  c[1] = (char)g;
-  c[2] = (char)b;
-  mk_lcomb(fp, name, &(wmemberArray[LIGHT1_ID]), 1, LIGHT1_MAT, LIGHT1_MATPARAM,
-           (const unsigned char *) c, 0);
+    /* now make the light region... */
+    mk_addmember(name, &(wmemberArray[LIGHT1_ID].l), NULL, WMOP_UNION);
+    strcat(name, ".r");
+    sscanf(LIGHT1_MATCOLOR, "%d %d %d", &r, &g, &b);
+    c[0] = (char)r;
+    c[1] = (char)g;
+    c[2] = (char)b;
+    mk_lcomb(fp, name, &(wmemberArray[LIGHT1_ID]), 1, LIGHT1_MAT, LIGHT1_MATPARAM,
+	     (const unsigned char *) c, 0);
 
-  printf("\nLights created");
+    printf("\nLights created");
 }
 
 
 void createPlane(p)
-     params_t *p;
+    params_t *p;
 {
-  char name[MAX_INPUT_LENGTH];
-  point_t lPos;
-  const unsigned char *matcolor = (unsigned char *)PLANE_MATCOLOR;
+    char name[MAX_INPUT_LENGTH];
+    point_t lPos;
+    const unsigned char *matcolor = (unsigned char *)PLANE_MATCOLOR;
 
-  VSET(lPos, 0, 0, 1); /* set the normal */
-  memset(name, 0, MAX_INPUT_LENGTH);
-  sprintf(name, "plane");
-  mk_half(fp, name, lPos, -p->maxTorusRadius * 2 * DEFAULT_SCALE);
+    VSET(lPos, 0, 0, 1); /* set the normal */
+    memset(name, 0, MAX_INPUT_LENGTH);
+    sprintf(name, "plane");
+    mk_half(fp, name, lPos, -p->maxTorusRadius * 2 * DEFAULT_SCALE);
 
-  /* now make the plane region... */
-  mk_addmember(name, &(wmemberArray[PLANE_ID].l), NULL, WMOP_UNION);
-  strcat(name, ".r");
-  mk_lcomb(fp, name, &(wmemberArray[PLANE_ID]), 1, PLANE_MAT, PLANE_MATPARAM, matcolor, 0);
+    /* now make the plane region... */
+    mk_addmember(name, &(wmemberArray[PLANE_ID].l), NULL, WMOP_UNION);
+    strcat(name, ".r");
+    mk_lcomb(fp, name, &(wmemberArray[PLANE_ID]), 1, PLANE_MAT, PLANE_MATPARAM, matcolor, 0);
 
-  printf("\nPlane created");
+    printf("\nPlane created");
 }
 
 
 void createEnvironMap(p)
-     params_t *p;
+    params_t *p;
 {
-  char name[MAX_INPUT_LENGTH];
-  const unsigned char *color = (unsigned char *)"0 0 0";
+    char name[MAX_INPUT_LENGTH];
+    const unsigned char *color = (unsigned char *)"0 0 0";
 
-  if (!p) return;
+    if (!p) return;
 
-  memset(name, 0, MAX_INPUT_LENGTH);
-  sprintf(name, "light0");
-  mk_addmember(name, &(wmemberArray[ENVIRON_ID].l), NULL, WMOP_UNION);
-  memset(name, 0, MAX_INPUT_LENGTH);
-  sprintf(name, "environ.r");
-  mk_lcomb(fp, name, &(wmemberArray[ENVIRON_ID]), 1, ENVIRON_MAT, ENVIRON_MATPARAM, color, 0);
+    memset(name, 0, MAX_INPUT_LENGTH);
+    sprintf(name, "light0");
+    mk_addmember(name, &(wmemberArray[ENVIRON_ID].l), NULL, WMOP_UNION);
+    memset(name, 0, MAX_INPUT_LENGTH);
+    sprintf(name, "environ.r");
+    mk_lcomb(fp, name, &(wmemberArray[ENVIRON_ID]), 1, ENVIRON_MAT, ENVIRON_MATPARAM, color, 0);
 
-  printf("\nEnvironment map created");
+    printf("\nEnvironment map created");
 
 }
 
 
 void createScene(p)
-     params_t *p;
+    params_t *p;
 {
-  int i;
-  char name[MAX_INPUT_LENGTH];
+    int i;
+    char name[MAX_INPUT_LENGTH];
 
-  for (i = 0; i < p->maxDepth+1; i++) {
+    for (i = 0; i < p->maxDepth+1; i++) {
+	memset(name, 0, MAX_INPUT_LENGTH);
+	sprintf(name, "depth%d.r", i);
+	mk_addmember(name, &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
+    }
+    mk_addmember("light0.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
+    mk_addmember("light1.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
+    mk_addmember("plane.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
+    mk_addmember("environ.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
     memset(name, 0, MAX_INPUT_LENGTH);
-    sprintf(name, "depth%d.r", i);
-    mk_addmember(name, &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
-  }
-  mk_addmember("light0.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
-  mk_addmember("light1.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
-  mk_addmember("plane.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
-  mk_addmember("environ.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
-  memset(name, 0, MAX_INPUT_LENGTH);
-  sprintf(name, "scene.r");
-  mk_lfcomb(fp, name, &(wmemberArray[SCENE_ID]), 0);
+    sprintf(name, "scene.r");
+    mk_lfcomb(fp, name, &(wmemberArray[SCENE_ID]), 0);
 
-  printf("\nScene created (FILE: %s)\n", p->fileName);
+    printf("\nScene created (FILE: %s)\n", p->fileName);
 }
 
 
@@ -575,83 +579,83 @@ void createScene(p)
  * some fp (usually DEFAULT_DEBUG_OUTPUT or DEFAULT_VERBOSE_OUTPUT).
  *************************/
 void printMatrix(outfp, n, m)
-  FILE *outfp;
-  char *n;
-  mat_t m;
+    FILE *outfp;
+    char *n;
+    mat_t m;
 {
-  int i = 0;
-  fprintf(outfp, "\n-----%s------\n", n);
-  for (i = 0; i < 16; i++) {
-    if (i%4 == 0 && i != 0) fprintf(outfp, "\n");
-    fprintf(outfp, "%6.2f ", m[i]);
-  }
-  fprintf(outfp, "\n-----------\n");
+    int i = 0;
+    fprintf(outfp, "\n-----%s------\n", n);
+    for (i = 0; i < 16; i++) {
+	if (i%4 == 0 && i != 0) fprintf(outfp, "\n");
+	fprintf(outfp, "%6.2f ", m[i]);
+    }
+    fprintf(outfp, "\n-----------\n");
 }
 
 
 void getZRotMat(t, phi)
-     mat_t *t;
-     fastf_t phi;
+    mat_t *t;
+    fastf_t phi;
 {
-  fastf_t sin_ = sin(DEG2RAD*phi);
-  fastf_t cos_ = cos(DEG2RAD*phi);
-  mat_t r;
-  MAT_ZERO(r);
-  r[0] = cos_;
-  r[1] = -sin_;
-  r[4] = sin_;
-  r[5] = cos_;
-  r[10] = 1;
-  r[15] = 1;
-  memcpy(*t, r, sizeof(*t));
+    fastf_t sin_ = sin(DEG2RAD*phi);
+    fastf_t cos_ = cos(DEG2RAD*phi);
+    mat_t r;
+    MAT_ZERO(r);
+    r[0] = cos_;
+    r[1] = -sin_;
+    r[4] = sin_;
+    r[5] = cos_;
+    r[10] = 1;
+    r[15] = 1;
+    memcpy(*t, r, sizeof(*t));
 }
 
 
 void getYRotMat(t, theta)
-     mat_t *t;
-     fastf_t theta;
+    mat_t *t;
+    fastf_t theta;
 {
-  fastf_t sin_ = sin(DEG2RAD*theta);
-  fastf_t cos_ = cos(DEG2RAD*theta);
-  mat_t r;
-  MAT_ZERO(r);
-  r[0] = cos_;
-  r[2] = sin_;
-  r[5] = 1;
-  r[8] = -sin_;
-  r[10] = cos_;
-  r[15] = 1;
-  memcpy(*t, r, sizeof(*t));
+    fastf_t sin_ = sin(DEG2RAD*theta);
+    fastf_t cos_ = cos(DEG2RAD*theta);
+    mat_t r;
+    MAT_ZERO(r);
+    r[0] = cos_;
+    r[2] = sin_;
+    r[5] = 1;
+    r[8] = -sin_;
+    r[10] = cos_;
+    r[15] = 1;
+    memcpy(*t, r, sizeof(*t));
 }
 
 
 void getTrans(t, theta, phi, radius)
-     mat_t *t;
-     int theta;
-     int phi;
-     fastf_t radius;
+    mat_t *t;
+    int theta;
+    int phi;
+    fastf_t radius;
 {
-  mat_t z;
-  mat_t y;
-  mat_t toRelative;
-  mat_t newPos;
-  MAT_IDN(z);
-  MAT_IDN(y);
-  MAT_IDN(newPos);
-  MAT_IDN(toRelative);
+    mat_t z;
+    mat_t y;
+    mat_t toRelative;
+    mat_t newPos;
+    MAT_IDN(z);
+    MAT_IDN(y);
+    MAT_IDN(newPos);
+    MAT_IDN(toRelative);
 
-  MAT_DELTAS(toRelative, 0, 0, radius);
+    MAT_DELTAS(toRelative, 0, 0, radius);
 
-  getZRotMat(&z, theta);
-  getYRotMat(&y, phi);
+    getZRotMat(&z, theta);
+    getYRotMat(&y, phi);
 
-  bn_mat_mul2(toRelative, newPos); /* translate to new position */
-  bn_mat_mul2(y, newPos);          /* rotate z */
-  bn_mat_mul2(z, newPos);          /* rotate y */
-  MAT_DELTAS(*t, 0, 0, 0);
-  bn_mat_mul2(*t, newPos);
+    bn_mat_mul2(toRelative, newPos); /* translate to new position */
+    bn_mat_mul2(y, newPos);          /* rotate z */
+    bn_mat_mul2(z, newPos);          /* rotate y */
+    MAT_DELTAS(*t, 0, 0, 0);
+    bn_mat_mul2(*t, newPos);
 
-  memcpy(*t, newPos, sizeof(newPos));
+    memcpy(*t, newPos, sizeof(newPos));
 }
 
 
@@ -659,45 +663,45 @@ void getTrans(t, theta, phi, radius)
   void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, float delta, int maxDepth)
 */
 void makeFlake(depth, trans, center, radius, delta, maxDepth)
-     int depth;
-     mat_t *trans;
-     point_t center;
-     fastf_t radius;
-     double delta;
-     int maxDepth;
+    int depth;
+    mat_t *trans;
+    point_t center;
+    fastf_t radius;
+    double delta;
+    int maxDepth;
 {
-  char name[MAX_INPUT_LENGTH];
-  int i = 0;
-  point_t pcent;
-  fastf_t newRadius;
-  mat_t temp;
-  point_t origin;
-  point_t pcentTemp;
-  vect_t normal;
+    char name[MAX_INPUT_LENGTH];
+    int i = 0;
+    point_t pcent;
+    fastf_t newRadius;
+    mat_t temp;
+    point_t origin;
+    point_t pcentTemp;
+    vect_t normal;
 
-  VSET(origin, 0, 0, 0);
-  VSET(normal, 1.0, 0, 0);
+    VSET(origin, 0, 0, 0);
+    VSET(normal, 1.0, 0, 0);
 
-  /* just return if depth == maxDepth */
-  if (depth > maxDepth) return;
+    /* just return if depth == maxDepth */
+    if (depth > maxDepth) return;
 
 
-  /* create self, then recurse for each different angle */
-  count++;
-  sprintf(name, "sph%d", count);
-  mk_tor(fp, name, center, normal, radius, radius/4.0);
-  newRadius = radius*delta;
+    /* create self, then recurse for each different angle */
+    count++;
+    sprintf(name, "sph%d", count);
+    mk_tor(fp, name, center, normal, radius, radius/4.0);
+    newRadius = radius*delta;
 
-  /* add the sphere to the correct combination */
-  mk_addmember(name, &(wmemberArray[depth+ADDITIONAL_OBJECTS].l), NULL, WMOP_UNION);
+    /* add the sphere to the correct combination */
+    mk_addmember(name, &(wmemberArray[depth+ADDITIONAL_OBJECTS].l), NULL, WMOP_UNION);
 
-  for (i = 0; i < 9; i++) {
-    memcpy(temp, trans, sizeof(temp));
-    getTrans(&temp, dir[i][0], dir[i][1], radius+newRadius);
-    MAT4X3PNT(pcentTemp, temp, origin);
-    VADD2(pcent, pcentTemp, center);
-    makeFlake(depth+1, &temp, pcent, newRadius, delta, maxDepth);
-  }
+    for (i = 0; i < 9; i++) {
+	memcpy(temp, trans, sizeof(temp));
+	getTrans(&temp, dir[i][0], dir[i][1], radius+newRadius);
+	MAT4X3PNT(pcentTemp, temp, origin);
+	VADD2(pcent, pcentTemp, center);
+	makeFlake(depth+1, &temp, pcent, newRadius, delta, maxDepth);
+    }
 }
 
 
@@ -707,15 +711,15 @@ void makeFlake(depth, trans, center, radius, delta, maxDepth)
  *
  ***********************/
 void defaultSettings(outfp)
-     FILE *outfp;
+    FILE *outfp;
 {
-  fprintf(outfp, "Default values:\n\n");
-  fprintf(outfp, "\tVerbose mode is %s\n", verbose ? "on" : "off");
-  fprintf(outfp, "\tDebug mode is %s\n", debug ? "on" : "off");
-  fprintf(outfp, "\tInteractive mode is %s\n", interactive ? "on" : "off");
-  fprintf(outfp, "\n\tOutput file name is %s\n", outputFilename);
-  fprintf(outfp, "\t\tid='%s' units='%s'\n", title, units);
-  fprintf(outfp, "No action performed.\n");
+    fprintf(outfp, "Default values:\n\n");
+    fprintf(outfp, "\tVerbose mode is %s\n", verbose ? "on" : "off");
+    fprintf(outfp, "\tDebug mode is %s\n", debug ? "on" : "off");
+    fprintf(outfp, "\tInteractive mode is %s\n", interactive ? "on" : "off");
+    fprintf(outfp, "\n\tOutput file name is %s\n", outputFilename);
+    fprintf(outfp, "\t\tid='%s' units='%s'\n", title, units);
+    fprintf(outfp, "No action performed.\n");
 }
 
 
@@ -724,13 +728,13 @@ void defaultSettings(outfp)
  * arguments in a useful manner
  **********************************/
 void argumentExamples(outfp, progname)
-     FILE *outfp;
-     char *progname;
+    FILE *outfp;
+    char *progname;
 {
-  if (progname)
-    fprintf(outfp, "Usage Examples: \n\n");
+    if (progname)
+	fprintf(outfp, "Usage Examples: \n\n");
 
-  return;
+    return;
 }
 
 
@@ -740,84 +744,84 @@ void argumentExamples(outfp, progname)
  * which, in turn, are used as fence parameters.
  *****************************/
 int parseArguments(argc, argv)
-     int argc;
-     char **argv;
+    int argc;
+    char **argv;
 {
-  int c = 0;
+    int c = 0;
 
-  const char *progname = argv[0];
+    const char *progname = argv[0];
 
-  opterr = 0;
+    opterr = 0;
 
-  while ((c=getopt(argc, argv, options)) != -1) {
-    switch (c) {
-      case 'I' :
-        interactive=(DEFAULT_INTERACTIVE) ? 0 : 1;
-        break;
+    while ((c=getopt(argc, argv, options)) != -1) {
+	switch (c) {
+	    case 'I' :
+		interactive=(DEFAULT_INTERACTIVE) ? 0 : 1;
+		break;
 
-      case 'i' :
-        interactive=1;
-        break;
+	    case 'i' :
+		interactive=1;
+		break;
 
-      case 'D' :
-        debug=(DEFAULT_DEBUG) ? 0 : 1;
-        break;
+	    case 'D' :
+		debug=(DEFAULT_DEBUG) ? 0 : 1;
+		break;
 
-      case 'd' :
-        debug=1;
-        break;
+	    case 'd' :
+		debug=1;
+		break;
 
-      case 'V' :
-        verbose=(DEFAULT_VERBOSE) ? 0 : 1;
-        break;
+	    case 'V' :
+		verbose=(DEFAULT_VERBOSE) ? 0 : 1;
+		break;
 
-      case 'v' :
-        verbose=1;
-        break;
+	    case 'v' :
+		verbose=1;
+		break;
 
-      case 'o' :
-        memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
-        strncpy(outputFilename, optarg, DEFAULT_MAXNAMELENGTH);
-        break;
-      case 'O' :
-        memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
-        strncpy(outputFilename, optarg, DEFAULT_MAXNAMELENGTH);
-        break;
+	    case 'o' :
+		memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
+		strncpy(outputFilename, optarg, DEFAULT_MAXNAMELENGTH);
+		break;
+	    case 'O' :
+		memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
+		strncpy(outputFilename, optarg, DEFAULT_MAXNAMELENGTH);
+		break;
 
-      case 'n' :
-        memset(title, 0, DEFAULT_MAXNAMELENGTH);
-        strncpy(title, optarg, DEFAULT_MAXNAMELENGTH);
-        break;
-      case 'N' :
-        memset(title, 0, DEFAULT_MAXNAMELENGTH);
-        strncpy(title, optarg, DEFAULT_MAXNAMELENGTH);
-        break;
+	    case 'n' :
+		memset(title, 0, DEFAULT_MAXNAMELENGTH);
+		strncpy(title, optarg, DEFAULT_MAXNAMELENGTH);
+		break;
+	    case 'N' :
+		memset(title, 0, DEFAULT_MAXNAMELENGTH);
+		strncpy(title, optarg, DEFAULT_MAXNAMELENGTH);
+		break;
 
-      case 'u' :
-        memset(units, 0, DEFAULT_MAXNAMELENGTH);
-        strncpy(units, optarg, DEFAULT_MAXNAMELENGTH);
-        break;
-      case 'U' :
-        memset(units, 0, DEFAULT_MAXNAMELENGTH);
-        strncpy(units, optarg, DEFAULT_MAXNAMELENGTH);
-        break;
+	    case 'u' :
+		memset(units, 0, DEFAULT_MAXNAMELENGTH);
+		strncpy(units, optarg, DEFAULT_MAXNAMELENGTH);
+		break;
+	    case 'U' :
+		memset(units, 0, DEFAULT_MAXNAMELENGTH);
+		strncpy(units, optarg, DEFAULT_MAXNAMELENGTH);
+		break;
 
-      case 'l' :
-        // maxDepth = atoi(c);
-        break;
+	    case 'l' :
+		// maxDepth = atoi(c);
+		break;
 
-      case '?' :
-        (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance");
-        exit(1);
-        break;
+	    case '?' :
+		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance");
+		exit(1);
+		break;
 
-      default  : /*shouldn't be reached since getopt throws a ? for args not found*/
-        (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Illegal command-line argument");
-        exit(1);
-        break;
+	    default  : /*shouldn't be reached since getopt throws a ? for args not found*/
+		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Illegal command-line argument");
+		exit(1);
+		break;
+	}
     }
-  }
-  return(optind);
+    return(optind);
 }
 
 
@@ -827,22 +831,22 @@ int parseArguments(argc, argv)
  * requests assistance.
  ***************************************/
 void argumentHelp(outfp, progname, message)
-     FILE *outfp;
-     const char *progname;
-     char *message;
+    FILE *outfp;
+    const char *progname;
+    char *message;
 {
-  if (message) {
-    fprintf(outfp, "%s\n", message);
-  }
+    if (message) {
+	fprintf(outfp, "%s\n", message);
+    }
 
-  fprintf(outfp, "Usage Format: \n%s %s\n\n", progname, \
-          "-[ivdonu]" \
-          );
+    fprintf(outfp, "Usage Format: \n%s %s\n\n", progname, \
+	    "-[ivdonu]" \
+	);
 
-  fprintf(outfp, "\t-[zZ]\n\t\tdisplays the default settings\n");
-  putc((int)'\n', outfp);
+    fprintf(outfp, "\t-[zZ]\n\t\tdisplays the default settings\n");
+    putc((int)'\n', outfp);
 
-  return;
+    return;
 }
 
 
@@ -851,84 +855,95 @@ void argumentHelp(outfp, progname, message)
  * data in an interactive mode
  *******************/
 int main(argc, argv)
-     int argc;
-     char **argv;
+    int argc;
+    char **argv;
 {
-  int i;
+    int i;
 
-  bu_strlcpy(parameters.fileName, DEFAULT_OUTPUTFILENAME, DEFAULT_MAXNAMELENGTH);
-  parameters.maxDepth=DEFAULT_MAXDEPTH;
-  parameters.maxInnerRadius=DEFAULT_MAXINNERRADIUS;
-  parameters.maxTorusRadius=DEFAULT_MAXTORUSRADIUS;
-  parameters.innerRadiusDelta=DEFAULT_RADIUSDELTA;
-  parameters.torusRadiusDelta=DEFAULT_RADIUSDELTA;
-  vect_t normal = DEFAULT_NORMAL;
-  point_t position = DEFAULT_POSITION;
-  VMOVE(parameters.normal, normal);
-  VMOVE(parameters.position, position);
-  //  parameters.materialArray;
+    bu_strlcpy(parameters.fileName, DEFAULT_OUTPUTFILENAME, DEFAULT_MAXNAMELENGTH);
+    parameters.maxDepth=DEFAULT_MAXDEPTH;
+    parameters.maxInnerRadius=DEFAULT_MAXINNERRADIUS;
+    parameters.maxTorusRadius=DEFAULT_MAXTORUSRADIUS;
+    parameters.innerRadiusDelta=DEFAULT_RADIUSDELTA;
+    parameters.torusRadiusDelta=DEFAULT_RADIUSDELTA;
+    vect_t normal = DEFAULT_NORMAL;
+    point_t position = DEFAULT_POSITION;
+    VMOVE(parameters.normal, normal);
+    VMOVE(parameters.position, position);
+    //  parameters.materialArray;
 
-  (void) parseArguments(argc, argv);
+    (void) parseArguments(argc, argv);
 
-  if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nUsing [%s] for output file\n\n", outputFilename);
+    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nUsing [%s] for output file\n\n", outputFilename);
 
-  if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Verbose mode is on\n");
-  if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "Debug mode is on\n");
-  if (verbose && interactive) fprintf(DEFAULT_VERBOSE_OUTPUT, "Interactive mode is on\n");
+    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Verbose mode is on\n");
+    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "Debug mode is on\n");
+    if (verbose && interactive) fprintf(DEFAULT_VERBOSE_OUTPUT, "Interactive mode is on\n");
 
-  if (verbose) {
-    fprintf(DEFAULT_VERBOSE_OUTPUT, "\nDonut Flake Properties:\n");
+    if (verbose) {
+	fprintf(DEFAULT_VERBOSE_OUTPUT, "\nDonut Flake Properties:\n");
 
-    putc((int)'\n', DEFAULT_VERBOSE_OUTPUT);
-  }
+	putc((int)'\n', DEFAULT_VERBOSE_OUTPUT);
+    }
 
-  initializeInfo(&parameters, parameters.fileName, parameters.maxDepth);
+    initializeInfo(&parameters, parameters.fileName, parameters.maxDepth);
 
-  /* now open a file for outputting the database */
-  bu_strlcpy(parameters.fileName, outputFilename, DEFAULT_MAXNAMELENGTH);
-  fp = wdb_fopen(parameters.fileName);
-  if (fp==NULL) {
-    perror(outputFilename);
-    exit(2);
-  }
+    /* now open a file for outputting the database */
+    bu_strlcpy(parameters.fileName, outputFilename, DEFAULT_MAXNAMELENGTH);
+    fp = wdb_fopen(parameters.fileName);
+    if (fp==NULL) {
+	perror(outputFilename);
+	exit(2);
+    }
 
-  /* create the initial id */
-  mk_id_units(fp, "DonutFlake", "mm");
+    /* create the initial id */
+    mk_id_units(fp, "DonutFlake", "mm");
 
-  /* initialize the wmember structs...
-     this is for creating the regions */
-  wmemberArray = (struct wmember *)bu_malloc(sizeof(struct wmember)  *(parameters.maxDepth+1+ADDITIONAL_OBJECTS), "alloc wmemberArray");
-  for (i = 0; i <= parameters.maxDepth+ADDITIONAL_OBJECTS; i++) {
-    BU_LIST_INIT(&(wmemberArray[i].l));
-  }
+    /* initialize the wmember structs...
+       this is for creating the regions */
+    wmemberArray = (struct wmember *)bu_malloc(sizeof(struct wmember)  *(parameters.maxDepth+1+ADDITIONAL_OBJECTS), "alloc wmemberArray");
+    for (i = 0; i <= parameters.maxDepth+ADDITIONAL_OBJECTS; i++) {
+	BU_LIST_INIT(&(wmemberArray[i].l));
+    }
 
-  /****** Create the Donuts ******/
+    /****** Create the Donuts ******/
 
-  createDonuts(&parameters);
+    createDonuts(&parameters);
 
-  /*
-    now that the entire donuts has been created, we can create the
-    additional objects needed to complete the scene.
-  */
-  /****** Create the Lights ******/
+    /*
+      now that the entire donuts has been created, we can create the
+      additional objects needed to complete the scene.
+    */
+    /****** Create the Lights ******/
 
-  createLights(&parameters);
+    createLights(&parameters);
 
-  /****** Create the Plane ******/
+    /****** Create the Plane ******/
 
-  createPlane(&parameters);
+    createPlane(&parameters);
 
-  /****** Create the Environment map ******/
+    /****** Create the Environment map ******/
 
-  createEnvironMap(&parameters);
+    createEnvironMap(&parameters);
 
-  /****** Create the entire Scene combination ******/
+    /****** Create the entire Scene combination ******/
 
-  createScene(&parameters);
+    createScene(&parameters);
 
-  wdb_close(fp);
-  bu_free(wmemberArray, "free wmemberArray");
+    wdb_close(fp);
+    bu_free(wmemberArray, "free wmemberArray");
 
 
-  return 0;
+    return 0;
 }
+
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
