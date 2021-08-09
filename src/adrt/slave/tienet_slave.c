@@ -48,6 +48,10 @@
 #include "./tienet_slave.h"
 
 
+#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
+extern struct hostent *gethostbyname(const char *);
+#endif
+
 
 void	tienet_slave_worker(int port, char *host);
 
