@@ -179,8 +179,7 @@ extern "C" {
 /* command-line options are described in the parseArguments function
  */
 const char *options="IiDdVvO:o:N:n:U:u:";
-extern char *optarg;
-extern int optind, opterr, getopt();
+
 
 /* these variables control the "behavior" of this program's output:
  *
@@ -288,8 +287,8 @@ initializeInfo(params_t *p, char *name, int depth)
     p->materialArray = (depthMaterial_t *)bu_malloc(sizeof(depthMaterial_t) * (p->maxDepth+1), "alloc materialArray");
 
     for (i = 0; i <= p->maxDepth; i++) {
-	strncpy(p->materialArray[i].name, DEFAULT_MATERIAL, MAX_INPUT_LENGTH);
-	strncpy(p->materialArray[i].parameters, DEFAULT_MATPARAM, MAX_INPUT_LENGTH);
+	bu_strlcpy(p->materialArray[i].name, DEFAULT_MATERIAL, MAX_INPUT_LENGTH);
+	bu_strlcpy(p->materialArray[i].parameters, DEFAULT_MATPARAM, MAX_INPUT_LENGTH);
 	sscanf(DEFAULT_MATCOLOR, "%u %u %u", &(c[0]), &(c[1]), &(c[2]));
 	p->materialArray[i].color[0] = c[0];
 	p->materialArray[i].color[1] = c[1];
@@ -300,91 +299,91 @@ initializeInfo(params_t *p, char *name, int depth)
 	/* prompt the user for some data */
 	/* no error checking here.... */
 	printf("\nPlease enter a filename for donuts output: [%s] ", p->fileName);
-	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-	    fprintf(stderr, "donuts: initializeInfo: fgets filename read error.\n");
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: bu_fgets filename read error.\n");
 	    fprintf(stderr, "Continuing with default value.\n");
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		sscanf(input, "%s", p->fileName);
 	    }
 	}
 	fflush(stdin);
 
 	printf("Initial position X Y Z: [%.2f %.2f %.2f] ", p->position[X], p->position[Y], p->position[Z]);
-	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-	    fprintf(stderr, "donuts: initializeInfo: fgets position read error.\n");
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: bu_fgets position read error.\n");
 	    fprintf(stderr, "Continuing with default values.\n");
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
 		sscanf(input, "%lg %lg %lg", &(p->position[X]), &(p->position[Y]), &(p->position[Z]));
 	    }
 	}
 	fflush(stdin);
 
 	printf("maxInnerRadius: [%d] ", p->maxInnerRadius);
-	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-	    fprintf(stderr, "donuts: initializeInfo: fgets maxinnerradius read error.\n");
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: bu_fgets maxinnerradius read error.\n");
 	    fprintf(stderr, "Continuing with default value.\n");
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		sscanf(input, "%d", &(p->maxInnerRadius));
 	    }
 	}
 	fflush(stdin);
 
 	printf("maxTorusRadius: [%d] ", p->maxTorusRadius);
-	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-	    fprintf(stderr, "donuts: initializeInfo: fgets maxouterradius read error.\n");
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: bu_fgets maxouterradius read error.\n");
 	    fprintf(stderr, "Continuing with default value.\n");
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		sscanf(input, "%d", &(p->maxTorusRadius));
 	    }
 	}
 	fflush(stdin);
 
 	printf("innerRadiusDelta: [%.2f] ", p->innerRadiusDelta);
-	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-	    fprintf(stderr, "donuts: initializeInfo: fgets innerradiusdelta read error.\n");
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: bu_fgets innerradiusdelta read error.\n");
 	    fprintf(stderr, "Continuing with default value.\n");
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		sscanf(input, "%lg", &(p->innerRadiusDelta));
 	    }
 	}
 	fflush(stdin);
 
 	printf("torusRadiusDelta: [%.2f] ", p->torusRadiusDelta);
-	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-	    fprintf(stderr, "donuts: initializeInfo: fgets torusradiusdelta read error.\n");
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: bu_fgets torusradiusdelta read error.\n");
 	    fprintf(stderr, "Continuing with default value.\n");
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		sscanf(input, "%lg", &(p->torusRadiusDelta));
 	    }
 	}
 	fflush(stdin);
 
 	printf("maxDepth: [%d] ", p->maxDepth);
-	if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-	    fprintf(stderr, "donuts: initializeInfo: fgets maxdepth read error.\n");
+	if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
+	    fprintf(stderr, "donuts: initializeInfo: bu_fgets maxdepth read error.\n");
 	    fprintf(stderr, "Continuing with default value.\n");
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		sscanf(input, "%d", &(p->maxDepth));
 	    }
 	}
@@ -393,39 +392,39 @@ initializeInfo(params_t *p, char *name, int depth)
 
 	for (i = 0; i <= p->maxDepth; i++) {
 	    printf("Material for depth %d: [%s] ", i, p->materialArray[i].name);
-	    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-		fprintf(stderr, "donuts: initializeInfo: fgets material read error.\n");
+	    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
+		fprintf(stderr, "donuts: initializeInfo: bu_fgets material read error.\n");
 		fprintf(stderr, "Continuing with default value.\n");
 	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		    sscanf(input, "%s", p->materialArray[i].name);
 		}
 	    }
 	    fflush(stdin);
 
 	    printf("Mat. params for depth %d: [%s] ", i, p->materialArray[i].parameters);
-	    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-		fprintf(stderr, "donuts: initializeInfo: fgets params read error.\n");
+	    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
+		fprintf(stderr, "donuts: initializeInfo: bu_fgets params read error.\n");
 		fprintf(stderr, "Continuing with default value.\n");
 	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		    sscanf(input, "%s", p->materialArray[i].parameters);
 		}
 	    }
 	    fflush(stdin);
 
 	    printf("Mat. color for depth %d: [%d %d %d] ", i, p->materialArray[i].color[0], p->materialArray[i].color[1], p->materialArray[i].color[2]);
-	    if (! fgets(input, MAX_INPUT_LENGTH, stdin)) {
-		fprintf(stderr, "donuts: initializeInfo: fgets color read error.\n");
+	    if (! bu_fgets(input, MAX_INPUT_LENGTH, stdin)) {
+		fprintf(stderr, "donuts: initializeInfo: bu_fgets color read error.\n");
 		fprintf(stderr, "Continuing with default values.\n");
 	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-		if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
 		    sscanf(input, "%u %u %u", &(c[0]), &(c[1]), &(c[2]));
 		    p->materialArray[i].color[0] = c[0];
 		    p->materialArray[i].color[1] = c[1];
@@ -480,7 +479,7 @@ createLights(params_t *p)
 
     /* now make the light region... */
     mk_addmember(name, &(wmemberArray[LIGHT0_ID].l), NULL, WMOP_UNION);
-    strcat(name, ".r");
+    bu_strlcat(name, ".r", MAX_INPUT_LENGTH);
     sscanf(LIGHT0_MATCOLOR, "%d %d %d", &r, &g, &b);
     c[0] = (char)r;
     c[1] = (char)g;
@@ -494,7 +493,7 @@ createLights(params_t *p)
 
     /* now make the light region... */
     mk_addmember(name, &(wmemberArray[LIGHT1_ID].l), NULL, WMOP_UNION);
-    strcat(name, ".r");
+    bu_strlcat(name, ".r", MAX_INPUT_LENGTH);
     sscanf(LIGHT1_MATCOLOR, "%d %d %d", &r, &g, &b);
     c[0] = (char)r;
     c[1] = (char)g;
@@ -520,7 +519,7 @@ createPlane(params_t *p)
 
     /* now make the plane region... */
     mk_addmember(name, &(wmemberArray[PLANE_ID].l), NULL, WMOP_UNION);
-    strcat(name, ".r");
+    bu_strlcat(name, ".r", MAX_INPUT_LENGTH);
     mk_lcomb(fp, name, &(wmemberArray[PLANE_ID]), 1, PLANE_MAT, PLANE_MATPARAM, matcolor, 0);
 
     printf("\nPlane created");
@@ -732,7 +731,7 @@ parseArguments(int argc, char **argv)
 
     opterr = 0;
 
-    while ((c=getopt(argc, argv, options)) != -1) {
+    while ((c=bu_getopt(argc, argv, options)) != -1) {
 	switch (c) {
 	    case 'I' :
 		interactive=(DEFAULT_INTERACTIVE) ? 0 : 1;
@@ -760,29 +759,29 @@ parseArguments(int argc, char **argv)
 
 	    case 'o' :
 		memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
-		strncpy(outputFilename, optarg, DEFAULT_MAXNAMELENGTH);
+		bu_strlcpy(outputFilename, bu_optarg, DEFAULT_MAXNAMELENGTH);
 		break;
 	    case 'O' :
 		memset(outputFilename, 0, DEFAULT_MAXNAMELENGTH);
-		strncpy(outputFilename, optarg, DEFAULT_MAXNAMELENGTH);
+		bu_strlcpy(outputFilename, bu_optarg, DEFAULT_MAXNAMELENGTH);
 		break;
 
 	    case 'n' :
 		memset(title, 0, DEFAULT_MAXNAMELENGTH);
-		strncpy(title, optarg, DEFAULT_MAXNAMELENGTH);
+		bu_strlcpy(title, bu_optarg, DEFAULT_MAXNAMELENGTH);
 		break;
 	    case 'N' :
 		memset(title, 0, DEFAULT_MAXNAMELENGTH);
-		strncpy(title, optarg, DEFAULT_MAXNAMELENGTH);
+		bu_strlcpy(title, bu_optarg, DEFAULT_MAXNAMELENGTH);
 		break;
 
 	    case 'u' :
 		memset(units, 0, DEFAULT_MAXNAMELENGTH);
-		strncpy(units, optarg, DEFAULT_MAXNAMELENGTH);
+		bu_strlcpy(units, bu_optarg, DEFAULT_MAXNAMELENGTH);
 		break;
 	    case 'U' :
 		memset(units, 0, DEFAULT_MAXNAMELENGTH);
-		strncpy(units, optarg, DEFAULT_MAXNAMELENGTH);
+		bu_strlcpy(units, bu_optarg, DEFAULT_MAXNAMELENGTH);
 		break;
 
 	    case 'l' :
