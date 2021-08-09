@@ -224,10 +224,8 @@ params_t parameters;
  * objects and groups.  (i.e. base="rcc", id="5"==> returns "rcc005.s" or
  * something like that)
  ***********************************/
-char *getName(base, id, paramstring)
-    char *base;
-    int id;
-    char *paramstring;
+char *
+getName(char *base, int id, char *paramstring)
 {
     static char name[DEFAULT_MAXNAMELENGTH];
 
@@ -249,10 +247,8 @@ char *getName(base, id, paramstring)
  * the base, prefix, and suffix of the name.  any three are optional by
  * sending a NULL parameter
  *****************************************/
-char *getPrePostName(prefix, base, suffix)
-    char *prefix;
-    char *base;
-    char *suffix;
+char
+*getPrePostName(char *prefix, char *base, char *suffix)
 {
     static char newname[DEFAULT_MAXNAMELENGTH];
 
@@ -266,10 +262,8 @@ char *getPrePostName(prefix, base, suffix)
 }
 
 
-void initializeInfo(p, name, depth)
-    params_t *p;
-    char *name;
-    int depth;
+void
+initializeInfo(params_t *p, char *name, int depth)
 {
     char input[MAX_INPUT_LENGTH] = {0};
     int i = 0;
@@ -442,8 +436,8 @@ void initializeInfo(p, name, depth)
 }
 
 
-void createDonuts(p)
-    params_t *p;
+void
+createDonuts(params_t *p)
 {
     mat_t trans;
     char name[MAX_INPUT_LENGTH];
@@ -467,8 +461,8 @@ void createDonuts(p)
 }
 
 
-void createLights(p)
-    params_t *p;
+void
+createLights(params_t *p)
 {
     char name[MAX_INPUT_LENGTH];
     point_t lPos;
@@ -510,8 +504,8 @@ void createLights(p)
 }
 
 
-void createPlane(p)
-    params_t *p;
+void
+createPlane(params_t *p)
 {
     char name[MAX_INPUT_LENGTH];
     point_t lPos;
@@ -531,8 +525,8 @@ void createPlane(p)
 }
 
 
-void createEnvironMap(p)
-    params_t *p;
+void
+createEnvironMap(params_t *p)
 {
     char name[MAX_INPUT_LENGTH];
     const unsigned char *color = (unsigned char *)"0 0 0";
@@ -551,8 +545,8 @@ void createEnvironMap(p)
 }
 
 
-void createScene(p)
-    params_t *p;
+void
+createScene(params_t *p)
 {
     int i;
     char name[MAX_INPUT_LENGTH];
@@ -578,10 +572,8 @@ void createScene(p)
  * printMatrix() does just that, it prints out a matrix and a label passed to
  * some fp (usually DEFAULT_DEBUG_OUTPUT or DEFAULT_VERBOSE_OUTPUT).
  *************************/
-void printMatrix(outfp, n, m)
-    FILE *outfp;
-    char *n;
-    mat_t m;
+void
+printMatrix(FILE *outfp, char *n, mat_t m)
 {
     int i = 0;
     fprintf(outfp, "\n-----%s------\n", n);
@@ -593,9 +585,8 @@ void printMatrix(outfp, n, m)
 }
 
 
-void getZRotMat(t, phi)
-    mat_t *t;
-    fastf_t phi;
+void
+getZRotMat(mat_t *t, fastf_t phi)
 {
     fastf_t sin_ = sin(DEG2RAD*phi);
     fastf_t cos_ = cos(DEG2RAD*phi);
@@ -611,9 +602,8 @@ void getZRotMat(t, phi)
 }
 
 
-void getYRotMat(t, theta)
-    mat_t *t;
-    fastf_t theta;
+void
+getYRotMat(mat_t *t, fastf_t theta)
 {
     fastf_t sin_ = sin(DEG2RAD*theta);
     fastf_t cos_ = cos(DEG2RAD*theta);
@@ -629,11 +619,8 @@ void getYRotMat(t, theta)
 }
 
 
-void getTrans(t, theta, phi, radius)
-    mat_t *t;
-    int theta;
-    int phi;
-    fastf_t radius;
+void
+getTrans(mat_t *t, int theta, int phi, fastf_t radius)
 {
     mat_t z;
     mat_t y;
@@ -659,16 +646,8 @@ void getTrans(t, theta, phi, radius)
 }
 
 
-/*
-  void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, float delta, int maxDepth)
-*/
-void makeFlake(depth, trans, center, radius, delta, maxDepth)
-    int depth;
-    mat_t *trans;
-    point_t center;
-    fastf_t radius;
-    double delta;
-    int maxDepth;
+void
+makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, double delta, int maxDepth)
 {
     char name[MAX_INPUT_LENGTH];
     int i = 0;
@@ -710,8 +689,8 @@ void makeFlake(depth, trans, center, radius, delta, maxDepth)
  * given file pointer.
  *
  ***********************/
-void defaultSettings(outfp)
-    FILE *outfp;
+void
+defaultSettings(FILE *outfp)
 {
     fprintf(outfp, "Default values:\n\n");
     fprintf(outfp, "\tVerbose mode is %s\n", verbose ? "on" : "off");
@@ -727,9 +706,8 @@ void defaultSettings(outfp)
  * argumentExamples() outputs some examples of using the command line
  * arguments in a useful manner
  **********************************/
-void argumentExamples(outfp, progname)
-    FILE *outfp;
-    char *progname;
+void
+argumentExamples(FILE *outfp, char *progname)
 {
     if (progname)
 	fprintf(outfp, "Usage Examples: \n\n");
@@ -743,9 +721,8 @@ void argumentExamples(outfp, progname)
  * arguments that the user specifies.  The args that are read set variables
  * which, in turn, are used as fence parameters.
  *****************************/
-int parseArguments(argc, argv)
-    int argc;
-    char **argv;
+int
+parseArguments(int argc, char **argv)
 {
     int c = 0;
 
@@ -830,10 +807,8 @@ int parseArguments(argc, argv)
  * an invalid command line argument is entered or if the user explicitly
  * requests assistance.
  ***************************************/
-void argumentHelp(outfp, progname, message)
-    FILE *outfp;
-    const char *progname;
-    char *message;
+void
+argumentHelp(FILE *outfp, const char *progname, char *message)
 {
     if (message) {
 	fprintf(outfp, "%s\n", message);
@@ -854,9 +829,8 @@ void argumentHelp(outfp, progname, message)
  * defaults according to what the user has specified and offers the opportunity to enter
  * data in an interactive mode
  *******************/
-int main(argc, argv)
-    int argc;
-    char **argv;
+int
+main(int argc, char **argv)
 {
     int i;
 
