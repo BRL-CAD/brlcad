@@ -42,7 +42,7 @@
  * NO_BOMBING_MACROS is defined by the configuration.
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT(expression_) (void)(equation_)
+#  define BU_ASSERT(expression_) (void)(expression_)
 #else
 #  define BU_ASSERT(expression_)	\
     if (UNLIKELY(!(expression_))) { \
