@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
 
 			case 'v':
 			cout << "re2c 0.13.5 BRL-CAD\n";
-			return 2;
+			return 0;
 
 			case 'w':
 			nRealChars = (1<<16); /* 0x10000 */
