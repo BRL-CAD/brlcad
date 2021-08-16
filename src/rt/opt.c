@@ -155,13 +155,13 @@ int model_units = 0;
 
 /***** end variables shared with view.c *****/
 
-char *densityfile = (char *)NULL;       /* name of density file */
+const char *densityfile = NULL;       /* name of density file */
 
 /* temporary kludge to get rt to use a tighter tolerance for raytracing */
 fastf_t rt_dist_tol = (fastf_t)0.0005;  /* Value for rti_tol.dist */
 
 fastf_t rt_perp_tol = (fastf_t)0.0;     /* Value for rti_tol.perp */
-char *framebuffer = (char *)NULL;       /* desired framebuffer */
+char *framebuffer = NULL;       /* desired framebuffer */
 
 /**
  * space partitioning algorithm to use.  previously had experimental
