@@ -19,41 +19,50 @@
 # and license in png.h
 
 cmake_minimum_required(VERSION 3.12)
-cmake_policy(VERSION 3.1)
 
-# Use new variable expansion policy.
-if (POLICY CMP0053)
-  cmake_policy(SET CMP0053 NEW)
-endif(POLICY CMP0053)
-if (POLICY CMP0054)
-  cmake_policy(SET CMP0054 NEW)
-endif(POLICY CMP0054)
-
-set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo")
+# install(CODE) uses generator expressions - requires 3.14 or newer.
+# We want it to be on, but until we can bump our minimum requirement
+# set it to OLD to make sure we don't break anything.
+if (POLICY CMP0087)
+  cmake_policy(SET CMP0087 OLD)
+endif (POLICY CMP0087)
 
 project(libpng C)
 enable_testing()
+
+# OpenBSD has its own naming conventions.  Set a platform variable based on
+# the OS name so we can test for it succinctly.
+if ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
+  set(OPENBSD ON)
+endif ("${CMAKE_SYSTEM}" MATCHES ".*OpenBSD.*")
 
 set(PNGLIB_MAJOR 1)
 set(PNGLIB_MINOR 6)
 set(PNGLIB_RELEASE 37)
 set(PNGLIB_NAME libpng${PNGLIB_MAJOR}${PNGLIB_MINOR})
-set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
+if(OPENBSD)
+  set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR})
+else(OPENBSD)
+  set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
+endif(OPENBSD)
+
 
 # needed packages
-  find_package(ZLIB REQUIRED)
-  include_directories(${ZLIB_INCLUDE_DIRS})
+if (Z_PREFIX)
+  add_definitions(-DZ_PREFIX)
+endif (Z_PREFIX)
+if (Z_PREFIX_STR)
+  add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
+endif (Z_PREFIX_STR)
 
-if(UNIX AND NOT APPLE AND NOT BEOS AND NOT HAIKU)
-  find_library(M_LIBRARY m)
-else()
-  # libm is not needed and/or not available
-  set(M_LIBRARY "")
-endif()
+find_package(ZLIB REQUIRED)
+include_directories(${ZLIB_INCLUDE_DIRS})
+
+find_library(M_LIBRARY m)
 
 # COMMAND LINE OPTIONS
 option(PNG_SHARED "Build shared lib" ON)
-option(PNG_STATIC "Build static lib" ON)
+option(PNG_STATIC "Build static lib" ${BUILD_STATIC_LIBS})
 option(PNG_TESTS  "Build libpng tests" ON)
 
 # Many more configuration options could be added here
@@ -70,7 +79,7 @@ if (NOT DEFINED PNG_LIB_NAME)
 endif (NOT DEFINED PNG_LIB_NAME)
 
 # to distinguish between debug and release lib
-set(CMAKE_DEBUG_POSTFIX "d")
+#set(CMAKE_DEBUG_POSTFIX "d")
 
 include(CheckCSourceCompiles)
 option(ld-version-script "Enable linker version script" ON)
@@ -374,12 +383,10 @@ if(PNG_SHARED)
   set(PNG_LIB_TARGETS png)
   set_target_properties(png PROPERTIES OUTPUT_NAME ${PNG_LIB_NAME})
   add_dependencies(png genfiles)
-  if(MSVC)
-    # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(png PROPERTIES PREFIX "lib")
-    set_target_properties(png PROPERTIES IMPORT_PREFIX "lib")
+  if (M_LIBRARY)
+    target_link_libraries(png ${M_LIBRARY})
   endif()
-  target_link_libraries(png ${ZLIB_LIBRARIES} ${M_LIBRARY})
+  target_link_libraries(png ${ZLIB_LIBRARIES})
 
   if(UNIX AND AWK)
     if(HAVE_LD_VERSION_SCRIPT)
@@ -410,11 +417,10 @@ if(PNG_STATIC)
       CLEAN_DIRECT_OUTPUT 1)
   endif()
   list(APPEND PNG_LIB_TARGETS png_static)
-  if(MSVC)
-    # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(png_static PROPERTIES PREFIX "lib")
+  if (M_LIBRARY)
+    target_link_libraries(png_static ${M_LIBRARY})
   endif()
-  target_link_libraries(png_static ${ZLIB_LIBRARIES} ${M_LIBRARY})
+  target_link_libraries(png_static ${ZLIB_LIBRARIES})
 endif()
 
 if(PNG_FRAMEWORK)
@@ -550,11 +556,16 @@ endif()
 
 # SET UP LINKS
 if(PNG_SHARED)
-  set_target_properties(png PROPERTIES
-#   VERSION 16.${PNGLIB_RELEASE}.1.6.37
-    VERSION 16.${PNGLIB_RELEASE}.0
-    SOVERSION 16
-    CLEAN_DIRECT_OUTPUT 1)
+  if(OPENBSD)
+    set_target_properties(png PROPERTIES
+      VERSION 1.6
+      CLEAN_DIRECT_OUTPUT 1)
+  else(OPENBSD)
+    set_target_properties(png PROPERTIES
+      VERSION 16.${PNGLIB_RELEASE}.0
+      SOVERSION 16
+      CLEAN_DIRECT_OUTPUT 1)
+  endif(OPENBSD)
 endif()
 
 # INSTALL
@@ -566,7 +577,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
           FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-  if(PNG_SHARED)
+  if(PNG_SHARED AND NOT OPENBSD)
     # Create a symlink for libpng.dll.a => libpng16.dll.a on Cygwin
     if(CYGWIN OR MINGW)
       create_symlink(libpng${CMAKE_IMPORT_LIBRARY_SUFFIX} TARGET png)
@@ -581,7 +592,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
     endif()
   endif()
 
-  if(PNG_STATIC)
+  if(PNG_STATIC AND NOT OPENBSD)
     if(NOT WIN32 OR CYGWIN OR MINGW)
       create_symlink(libpng${CMAKE_STATIC_LIBRARY_SUFFIX} TARGET png_static)
       install(FILES $<TARGET_LINKER_FILE_DIR:png_static>/libpng${CMAKE_STATIC_LIBRARY_SUFFIX}
@@ -591,7 +602,6 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
 endif()
 
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
-  message("got here?????")
   install(FILES ${libpng_public_hdrs} DESTINATION include)
   install(FILES ${libpng_public_hdrs} DESTINATION include/${PNGLIB_NAME})
 endif()
