@@ -5,10 +5,7 @@ README
 include/OSMesa/gl.h
 include/OSMesa/gl_mangle.h
 include/OSMesa/glext.h
-include/OSMesa/glfbdev.h
-include/OSMesa/internal/dri_interface.h
 include/OSMesa/internal/glcore.h
-include/OSMesa/internal/sarea.h
 include/OSMesa/osmesa.h
 src/CMakeLists.txt
 src/drivers/common/driverfuncs.c
@@ -66,7 +63,6 @@ src/main/dispatch.c
 src/main/dlist.c
 src/main/dlist.h
 src/main/drawpix.c
-src/main/drawpix.h
 src/main/enable.c
 src/main/enable.h
 src/main/enums.c
@@ -187,7 +183,6 @@ src/shader/atifragshader.c
 src/shader/atifragshader.h
 src/shader/grammar/grammar.c
 src/shader/grammar/grammar.h
-src/shader/grammar/grammar_crt.h
 src/shader/grammar/grammar_mesa.c
 src/shader/grammar/grammar_mesa.h
 src/shader/grammar/grammar_syn.h
@@ -216,8 +211,6 @@ src/shader/programopt.h
 src/shader/shader_api.c
 src/shader/shader_api.h
 src/shader/slang/library/slang_120_core_gc.h
-src/shader/slang/library/slang_builtin_120_common_gc.h
-src/shader/slang/library/slang_builtin_120_fragment_gc.h
 src/shader/slang/library/slang_common_builtin_gc.h
 src/shader/slang/library/slang_core_gc.h
 src/shader/slang/library/slang_fragment_builtin_gc.h
@@ -225,7 +218,6 @@ src/shader/slang/library/slang_pp_directives_syn.h
 src/shader/slang/library/slang_pp_expression_syn.h
 src/shader/slang/library/slang_pp_version_syn.h
 src/shader/slang/library/slang_shader_syn.h
-src/shader/slang/library/slang_version_syn.h
 src/shader/slang/library/slang_vertex_builtin_gc.h
 src/shader/slang/slang_builtin.c
 src/shader/slang/slang_builtin.h
@@ -292,7 +284,6 @@ src/swrast/s_copypix.c
 src/swrast/s_depth.c
 src/swrast/s_depth.h
 src/swrast/s_drawpix.c
-src/swrast/s_drawpix.h
 src/swrast/s_feedback.c
 src/swrast/s_feedback.h
 src/swrast/s_fog.c
@@ -323,7 +314,6 @@ src/swrast/s_texfilter.h
 src/swrast/s_texstore.c
 src/swrast/s_triangle.c
 src/swrast/s_triangle.h
-src/swrast/s_trispan.h
 src/swrast/s_tritemp.h
 src/swrast/s_zoom.c
 src/swrast/s_zoom.h
@@ -333,7 +323,6 @@ src/swrast_setup/ss_context.h
 src/swrast_setup/ss_triangle.c
 src/swrast_setup/ss_triangle.h
 src/swrast_setup/ss_tritmp.h
-src/swrast_setup/ss_vb.h
 src/swrast_setup/swrast_setup.h
 src/tnl/t_context.c
 src/tnl/t_context.h

@@ -34,7 +34,8 @@
 #include "state.h"
 
 #include "s_context.h"
-#include "s_drawpix.h"
+#include "mtypes.h"
+#include "swrast.h"
 #include "s_span.h"
 #include "s_stencil.h"
 #include "s_zoom.h"
