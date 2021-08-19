@@ -96,6 +96,8 @@ if(BRLCAD_ENABLE_QT)
   endif (OPENGL_LIBS)
 endif(BRLCAD_ENABLE_QT)
 
+add_subdirectory(tests)
+
 set(qtcad_ignore_srcs
   CMakeLists.txt
   ${qtcad_srcs}

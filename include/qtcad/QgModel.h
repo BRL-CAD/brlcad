@@ -21,6 +21,74 @@
  *
  * Abstract Qt model of a BRL-CAD .g database
  *
+ * Qt uses a Model/View approach to visualizing information such as trees, and
+ * for BRL-CAD hierarchy visualization the most natural fit in Qt is to define
+ * a Qt Model that corresponds to the .g data.  There are challenges in
+ * defining such a model that aren't immediately apparent, and they complicate
+ * the implication considerably.  In essence it is necessary to translate
+ * BRL-CAD's data concepts to those needed by Qt and vice versa.  To attempt
+ * to articulate the motivations for the model as defined here, the following
+ * discussion tries to detail the issues encountered.
+ *
+ * The most fundamental difficulty is that comb object instances - the primary
+ * hierarchical unit defined in .g files - are not necessarily globally unique
+ * in the .g file. To illustrate this, consider a combination A that has
+ * underneath it two different instances of a combination B using different
+ * placement matrices (M1 and M2). B is in turn defined using combination C
+ * which is defined using object D:
+ *
+ * A
+ *   u [M1] B
+ *            u C
+ *                u D
+ *   u [M2] B
+ *            u C
+ *                u D
+ *
+ * The objects A, B, C and D are unique (all .g objects are uniquely named,
+ * which ensures uniqueness in at least one sense) but the Qt model hierarchy
+ * requires the expression of comb INSTANCES, not objects.  Moreover, it needs
+ * those instances to be not just locally unique, but GLOBALLY unique.  The
+ * union of D into C using an identity matrix is unique with respect to B, but
+ * not when B is combined with A multiple times.  That inclusion of B into A
+ * (which is completely non-local as far as C's or B's definitions are
+ * concerned) results in TWO manifestations of CuD in the overall model that
+ * are NOT the same model item, despite mapping to exactly the same .g data.
+ * Or, stated another way, we have multiple items of CuD in the hierarchy:
+ * Au[M1]BuCuD and Au[M2]BuCuD.  However, from the .g data perspective, CuD IS
+ * a unique combination instance - it is stored only once, and any edit to C or
+ * D will impact BOTH Au[M1]BuCuD and Au[M2]BuCuD. This means that .g comb
+ * instances cannot, by themselves, map directly to items in a Qt model.
+ *
+ * Conversely, in a Qt .g model, if a Qt item which is going to express .g
+ * instance editing the mode must be prepared to cope with changes having non
+ * local side effects - i.e. any change to one item can potentially change an
+ * arbitrary number of additional items, based on what else in the .g database
+ * is referencing the object being changed.
+ *
+ * The approach taken to cope with these issues is to conceptually split the
+ * wrapping of .g comb instances into two parts - a QgInstance that corresponds
+ * to one unique parent+bool_op+matrix+child instance in a .g combination tree,
+ * and a QgItem which corresponds to a globally unique instance of a QgInstance.
+ * So, in the above example, CuD would be expressed as a QgInstance, and the
+ * Au[M1]BuCuD QgItem would reference the CuD QgInstance to connect the .g
+ * database information to the unique model hierarchy item.  Likewise, the
+ * Au[M2]BuCuD QgItem would reference the same QgInstance, despite being a
+ * different item in the model.
+ *
+ * QgInstances are created to reflect the .g database state, and they are what
+ * is updated as a direct consequence of callbacks registered with the low
+ * level database I/O routines.  QgItems must then be updated (or
+ * added/removed) in response to QgInstance changes.  The only QgItems that
+ * will be populated by default are the top level items - all others will be
+ * lazily created in response as the user specifies which combs to open in
+ * the view.  (The latter is necessary for large databases, which may have
+ * very large and deep hierarchies.)
+ *
+ *
+ *
+ *
+ *
  * NOTE - the QtCADTree model has many of the pieces we will need,
  * but has limitations.  The intent here is to start "from the
  * ground up" and be guided by the Qt editable example:
@@ -56,9 +124,12 @@ class QTCAD_EXPORT QgInstance
 	explicit QgInstance();
 	~QgInstance();
 
+	// Debugging function for printing out data in container
+	std::string print();
+
 	// QgInstance content based hash for quick lookup/comparison of two
 	// QgInstances.  By default incorporate everything into the hash -
-	// other modes are allowed for in case we want to do partial hashing.
+	// other modes are allowed for in case we want to do fuzzy matching.
 	unsigned long long hash(int mode = 3);
 
 	// dp of parent comb (NULL for tops objects)
@@ -74,28 +145,25 @@ class QTCAD_EXPORT QgInstance
 
 	// BRL-CAD's combs do not have internal guarantees of instance
 	// uniqueness within a comb tree - i.e., it is structurally possible
-	// for two absolutely identical combination instances to exist
-	// simultaneously in the same comb.  Generally speaking this is not a
-	// desired condition, but because it is not precluded we must make
-	// arrangements to handle it.
+	// for two or more absolutely identical combination instances to exist
+	// simultaneously in the same comb.  However, because all individual
+	// objects in a .g file are unique, if we ensure QgInstances are unique
+	// within their parent comb's immediate tree, we will also ensure they
+	// are globally unique.Therefore, in order to produce a QgInstance that
+	// is globally unique, we must provide a mechanism for encoding that
+	// uniqueness at the QgInstance level when we are constructing it from
+	// the comb definition.
 	//
-	// As long as QgInstances are unique within their parent comb's
-	// immediate tree, they are globally unique - the parent is a unique
-	// object, so even if an otherwise identical instance exists in another
-	// comb the difference is clear from a data standpoint.  Therefore, in
-	// order to produce a QgInstance that is globally unique, we must
-	// provide a mechanism for encoding that uniqueness at the QgInstance
-	// level.
-	//
-	// The solution is quite simple - a simple incremented instance counter
-	// that gets incremented each time another duplicate of a particular
-	// comb instance is encountered within the same comb's immediate tree.
-	// For the instance in question, the current counter value is assigned
-	// to the icnt variable.  Since we are incrementing each time an
-	// instance is encountered, this produces a QgInstance that can be
-	// identified uniquely.  Because we must have global knowledge of the
-	// comb tree's contents to generate the counts, we must assign these
-	// values during the tree walk which creates the instances.
+	// The current solution is the trivial one - a simple incremented
+	// instance counter that gets incremented each time another duplicate
+	// of a particular comb instance is encountered within the same comb's
+	// immediate tree.  For the instance in question, the current counter
+	// value is assigned to the icnt variable.  Since we are incrementing
+	// each time an instance is encountered, this produces a QgInstance
+	// that can be identified uniquely.  Because we must have global
+	// knowledge of the comb tree's contents to generate the counts, we
+	// must assign these values during the tree walk which creates the
+	// instances.
 	//
 	// There is a limit to how "neatly" we can associate a QgInstance with
 	// an exact on-disk comb tree instance - if a tree with multiple such
@@ -167,6 +235,20 @@ class QTCAD_EXPORT QgItem
     public:
 	explicit QgItem();
 	~QgItem();
+
+#if 0
+	QgItem *child(int n);
+	int childCount() const;
+	int columnCount() const;
+	QVariant data(int col) const;
+	bool insertChildren(int pos, int cnt, int col);
+	bool insertColumns(int pos, int col);
+	QgItem *parent();
+	bool removeChildren(int pos, int cnt);
+	bool removeColumns(int pos, int cnt);
+	int childNumber() const;
+	bool setData(int col, const QVariant &v);
+#endif
 
 	QgInstance *inst;
 	unsigned long long hash;

@@ -74,6 +74,42 @@ QgInstance::~QgInstance()
     XXH64_freeState(h_state);
 }
 
+std::string
+QgInstance::print()
+{
+    std::string s;
+    if (parent) {
+	s.append(std::string(parent->d_namep));
+	s.append(std::string(" ->"));
+    }
+    switch (op) {
+	case DB_OP_UNION:
+	    s.append(std::string(" u "));
+	    break;
+	case DB_OP_SUBTRACT:
+	    s.append(std::string(" - "));
+	    break;
+	case DB_OP_INTERSECT:
+	    s.append(std::string(" + "));
+	    break;
+	default:
+	    bu_log("Warning - unknown op");
+	    break;
+    }
+    if (!bn_mat_is_identity(c_m)) {
+	s.append(std::string("[M]"));
+    }
+    s.append(dp_name);
+    if (!dp) {
+	s.append(std::string("[missing]"));
+    }
+    if (icnt) {
+	s.append(std::string("_"));
+	s.append(std::to_string(icnt));
+    }
+
+    return s;
+}
 
 unsigned long long
 QgInstance::hash(int mode)
