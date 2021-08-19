@@ -23,6 +23,7 @@ endif (BRLCAD_ENABLE_QT)
 
 
 CMAKEFILES(
+  CMakeLists.txt
   qgmodel.cpp
   )
 
