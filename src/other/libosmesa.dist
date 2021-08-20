@@ -63,6 +63,7 @@ src/main/dispatch.c
 src/main/dlist.c
 src/main/dlist.h
 src/main/drawpix.c
+src/main/drawpix.h
 src/main/enable.c
 src/main/enable.h
 src/main/enums.c
