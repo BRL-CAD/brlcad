@@ -25,14 +25,17 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <vector>
 
 #include "bu/app.h"
 #include "bu/log.h"
+#include "../../libged/alphanum.h"
 #include "qtcad/QgModel.h"
 
 struct model_state {
     std::unordered_map<unsigned long long, QgInstance *> instances;
     std::unordered_map<unsigned long long, QgInstance *> tops_instances;
+    std::vector<QgItem *> tops_items;
 };
 
 db_op_t int_to_op(int bool_op)
@@ -155,6 +158,46 @@ make_tops_instances(struct db_i *dbip, struct model_state *s)
     return tops_cnt;
 }
 
+struct QgItem_cmp {
+    inline bool operator() (const QgItem *i1, const QgItem *i2)
+    {
+	if (!i1 && i2)
+	    return true;
+	if (i1 && !i2)
+	    return false;
+	if (!i1->inst && i2->inst)
+	    return true;
+	if (i1->inst && !i2->inst)
+	    return false;
+
+	const char *n1 = i1->inst->dp_name.c_str();
+	const char *n2 = i2->inst->dp_name.c_str();
+	if (alphanum_impl(n1, n2, NULL) < 0)
+	    return true;
+	return false;
+    }
+};
+
+void
+make_tops_items(struct model_state *s)
+{
+    std::unordered_map<unsigned long long, QgInstance *>::iterator t_it;
+    for (t_it = s->tops_instances.begin(); t_it != s->tops_instances.end(); t_it++) {
+	QgInstance *qg = t_it->second;
+	QgItem *qi = new QgItem;
+	qi->parent = NULL;
+	qi->inst = qg;
+	s->tops_items.push_back(qi);
+    }
+    // Sort tops_items according to alphanum
+    std::sort(s->tops_items.begin(), s->tops_items.end(), QgItem_cmp());
+
+    for (size_t i = 0; i < s->tops_items.size(); i++) {
+	std::cout << s->tops_items[i]->inst->dp_name << "\n";
+    }
+}
+
+
 int main(int argc, char *argv[])
 {
 
@@ -205,11 +248,11 @@ int main(int argc, char *argv[])
     bu_log("Top instance cnt: %zd\n", s.tops_instances.size());
 
 
-    // TODO - so the rough progression of steps here is:
-    //
-    // 1.  Make items that correspond to the top level instances - those are the only
+    // Make items that correspond to the top level instances - those are the only
     // items that will always be present in some form.
-    //
+    make_tops_items(&s);
+
+    // TODO - so the rough progression of steps here is:
     // 2.  Implement "open" and "close" routines for the items that will exercise
     // the logic to identify, populate, and clear items based on child info.  So far,
     // we're still within the read-only capabilities of the current model, but we want
