@@ -30,8 +30,9 @@
 #include "bu/log.h"
 #include "qtcad/QgModel.h"
 
-struct walk_state {
+struct model_state {
     std::unordered_map<unsigned long long, QgInstance *> instances;
+    std::unordered_map<unsigned long long, QgInstance *> tops_instances;
 };
 
 db_op_t int_to_op(int bool_op)
@@ -49,7 +50,7 @@ db_op_t int_to_op(int bool_op)
 }
 
 static void
-_get_qg_instances(db_op_t curr_bool, struct db_i *dbip, struct directory *parent_dp, union tree *tp, struct walk_state *s)
+_get_qg_instances(db_op_t curr_bool, struct db_i *dbip, struct directory *parent_dp, union tree *tp, struct model_state *s)
 {
     db_op_t bool_op = curr_bool;
     QgInstance *qg = NULL;
@@ -113,12 +114,45 @@ _get_qg_instances(db_op_t curr_bool, struct db_i *dbip, struct directory *parent
 
 
 int
-make_qg_instances(struct db_i *dbip, struct directory *parent_dp, struct rt_comb_internal *comb, struct walk_state *s)
+make_qg_instances(struct db_i *dbip, struct directory *parent_dp, struct rt_comb_internal *comb, struct model_state *s)
 {
     int node_count = db_tree_nleaves(comb->tree);
     if (!node_count) return 0;
     _get_qg_instances(int_to_op(OP_UNION), dbip, parent_dp, comb->tree, s);
     return 0;
+}
+
+int
+make_tops_instances(struct db_i *dbip, struct model_state *s)
+{
+    if (!s)
+	return -1;
+
+    struct directory **tops_paths;
+    int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &tops_paths);
+
+    if (!tops_cnt) {
+	bu_log("Error - unable to find tops objects!\n");
+	return -1;
+    }
+
+    QgInstance *qg = NULL;
+    unsigned long long qg_hash = 0;
+    for (int i = 0; i < tops_cnt; i++) {
+	qg = new QgInstance;
+	qg->parent = NULL;
+	qg->dp = tops_paths[i];
+	qg->dp_name = std::string(qg->dp->d_namep);
+	qg->op = DB_OP_UNION;
+	MAT_IDN(qg->c_m);
+	qg_hash = qg->hash();
+	s->tops_instances[qg_hash] = qg;
+    }
+
+    // Cleanup
+    bu_free(tops_paths, "tops array");
+
+    return tops_cnt;
 }
 
 int main(int argc, char *argv[])
@@ -142,7 +176,7 @@ int main(int argc, char *argv[])
     }
     db_update_nref(dbip, &rt_uniresource);
 
-    struct walk_state s;
+    struct model_state s;
 
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp = RT_DIR_NULL;
@@ -158,12 +192,19 @@ int main(int argc, char *argv[])
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		make_qg_instances(dbip, dp, comb, &s);
 	    }
+	    // TODO - extrusions, other primitives that reference another obj
 	}
     }
+    bu_log("Hierarchy instance cnt: %zd\n", s.instances.size());
 
-    bu_log("Instance cnt: %zd\n", s.instances.size());
+    // The above logic will create hierarchy instances, but it won't create the
+    // top level instances (which, by definition, aren't under anything.)  Make
+    // a second pass using db_ls to create those instances (this depends on
+    // db_update_nref being up to date.)
+    make_tops_instances(dbip, &s);
+    bu_log("Top instance cnt: %zd\n", s.tops_instances.size());
 
-    return s.instances.size();
+    return s.instances.size() + s.tops_instances.size();
 }
 
 /*
