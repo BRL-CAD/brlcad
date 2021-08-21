@@ -143,42 +143,6 @@ class QTCAD_EXPORT QgInstance
 	// Matrix above comb instance in comb tree (default is IDN)
 	mat_t c_m;
 
-	// BRL-CAD's combs do not have internal guarantees of instance
-	// uniqueness within a comb tree - i.e., it is structurally possible
-	// for two or more absolutely identical combination instances to exist
-	// simultaneously in the same comb.  However, because all individual
-	// objects in a .g file are unique, if we ensure QgInstances are unique
-	// within their parent comb's immediate tree, we will also ensure they
-	// are globally unique.Therefore, in order to produce a QgInstance that
-	// is globally unique, we must provide a mechanism for encoding that
-	// uniqueness at the QgInstance level when we are constructing it from
-	// the comb definition.
-	//
-	// The current solution is the trivial one - a simple incremented
-	// instance counter that gets incremented each time another duplicate
-	// of a particular comb instance is encountered within the same comb's
-	// immediate tree.  For the instance in question, the current counter
-	// value is assigned to the icnt variable.  Since we are incrementing
-	// each time an instance is encountered, this produces a QgInstance
-	// that can be identified uniquely.  Because we must have global
-	// knowledge of the comb tree's contents to generate the counts, we
-	// must assign these values during the tree walk which creates the
-	// instances.
-	//
-	// There is a limit to how "neatly" we can associate a QgInstance with
-	// an exact on-disk comb tree instance - if a tree with multiple such
-	// instances is edited, icnt == 3 in the original tree may become icnt
-	// == 2 or icnt == 4 in the next version.  If we want to preserve the
-	// "open" and "closed" states of such instances through editing, we
-	// would have to take particular care with bookkeeping to index which
-	// duplicates are open and adjust those indices to reflect the changes
-	// made to the comb's tree during an edit.  Whether we would actually
-	// match the original instances even then depends on the details of the
-	// comb tree storage and walking - it is unlikely that the code
-	// complexity inherent in such tracking is worthwhile given this case
-	// is rare and a borderline modeling error in the first place.
-	size_t icnt = 0;
-
 	// The following value holds the index of the active flags array to
 	// check when determining if this object is active.  I.e. activity is
 	// checked by looking at:

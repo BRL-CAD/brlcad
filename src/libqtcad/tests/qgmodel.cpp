@@ -91,22 +91,15 @@ _get_qg_instances(db_op_t curr_bool, struct db_i *dbip, struct directory *parent
 		MAT_IDN(qg->c_m);
 	    }
 	    qg_hash = qg->hash();
-	    while (s->instances.find(qg_hash) != s->instances.end()) {
-		// Note - for now this is the simplistic solution of checking
-		// until we find an open number.  This won't scale well if we
-		// have enormous numbers of identical comb entries - in that
-		// case we'll have to add a lookup based on a hash without the
-		// icnt variable and track the maximum number used there - but
-		// not bothering to add that refinement until it's clear we
-		// need it.
-		qg->icnt++;
-		qg_hash = qg->hash();
+	    if (s->instances.find(qg_hash) == s->instances.end()) {
+		s->instances[qg_hash] = qg;
+		msg = qg->print();
+		std::cout << msg << "\n";
+	    } else {
+		delete qg;
+		qg = NULL;
+		std::cout << "Not creating duplicate\n";
 	    }
-
-	    s->instances[qg_hash] = qg;
-
-	    msg = qg->print();
-	    std::cout << msg << "\n";
 	    break;
 
 	default:
@@ -266,35 +259,22 @@ int main(int argc, char *argv[])
     // changes made, and then do a single Item update pass at the end for
     // performance reasons (we don't want the view updating a whole bunch if
     // thousands of objects are impacted by a single edit...)  We'll probably want
-    // to update the hierarchy instances from the per-object callbacks, and then
-    // the tops list after everything is done and the update_nref work has been done
-    // (see examples in the current code for how to trigger on the latter)
+    // to update the QgInstances from the per-object callbacks, and then
+    // rebuild the tops list and walk down the Items associated with those instances
+    // to perform any needed updates.
     //
     // 4. Figure out how to do the Item update pass in response to #3.  In
     // particular, how to preserve the tree's "opened/closed" state through
-    // edit operations.  Most promising thought so far is to store a "tree
-    // position" counter for each qginstance that is incremented each time an
-    // object with the same name is encountered (not an all-up hash check, just
-    // the instance name).  Then when we create items we store a copy of that
-    // value in the item.  After editing, if the item a) can fuzzily match a
-    // qginstance (parent+name only) and b) the item's stored copy of that tree
-    // counter and the qginstance's match (indicating the qginstance in
-    // question was previously at this position in the tree), assign the
-    // qginstance to the existing item and validate the item's chilren against
-    // the qginstance's children.  Otherwise, scrap the item and all its
-    // children and start over.  (For rebuilt or newly added items, they'll
-    // start closed.)  Note that item validation will have to walk "down" the
-    // tree, since a parent item going invalid will invalidate all the children
-    // regardless of the details of their local state.  Probably the way to do
-    // it will be to queue up the tops items, do a special check to see if any
-    // new tops have appear or old ones are gone, and then add all the tops children
-    // (if any are populated) to a queue for processing.  Repeat until all are
-    // either validated or cleared.
+    // edit operations.  For each child items vector we'll build a new vector
+    // based on the QgInstances tree, comparing it as we go to the Items array
+    // that existed previously.  For each old item, if the new item matches the
+    // old (qghash comparison?) reuse the old item, otherwise create a new one.
+    // This is where set_difference may be useful (not clear yet - if so it may require
+    // some fancy tricks with the comparison function...)  We'll need to do this for
+    // all active items, but unless the user has tried to expand all trees in
+    // all paths this should be a relatively small subset of the .g file
+    // structure to verify.
     //
-    // We'll probably do all the item updates after the final post-update-nref
-    // call in #3, when we know all activity is complete and all QgInstances
-    // are in their proper state.
-
 
     return s.instances.size() + s.tops_instances.size();
 }
