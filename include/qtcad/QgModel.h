@@ -215,9 +215,9 @@ class QTCAD_EXPORT QgItem
 
 
 	void appendChild(QgItem *C);
-#if 0
 	QgItem *child(int n);
 	int childCount() const;
+#if 0
 	int columnCount() const;
 	QVariant data(int col) const;
 	bool insertChildren(int pos, int cnt, int col);

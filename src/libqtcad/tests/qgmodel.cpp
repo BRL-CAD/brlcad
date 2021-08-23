@@ -68,10 +68,6 @@ int main(int argc, char *argv[])
     // a second pass using db_ls to create those instances (this depends on
     // db_update_nref being up to date.)
     bu_log("Top instance cnt: %zd\n", s.tops_instances->size());
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgInstance *inst = (*s.instances)[s.tops_items[i]->ihash];
-	std::cout << inst->dp_name << "\n";
-    }
 
     // TODO - so the rough progression of steps here is:
     // 2.  Implement "open" and "close" routines for the items that will exercise
@@ -82,7 +78,16 @@ int main(int argc, char *argv[])
 	QgItem *itm = s.tops_items[i];
 	if (!itm->ihash)
 	    continue;
+	QgInstance *inst = (*s.instances)[s.tops_items[i]->ihash];
+	std::cout << inst->dp_name << "\n";
 	itm->open();
+	for (int j = 0; j < itm->childCount(); j++) {
+	    QgItem *c = itm->child(j);
+	    if (s.instances->find(c->ihash) == s.instances->end())
+		continue;
+	    QgInstance *cinst = (*s.instances)[c->ihash];
+	    std::cout << " * " << cinst->dp_name << "\n";
+	}
     }
 
     // 3.  Add callback support for syncing the instance sets after a database

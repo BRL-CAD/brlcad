@@ -273,7 +273,7 @@ QgItem::open()
 	qii->parent = this;
 	qii->ihash = ic[i];
 	qii->ctx = ctx;
-	this->children.push_back(qii);
+	appendChild(qii);
     }
 }
 
@@ -283,7 +283,20 @@ QgItem::appendChild(QgItem *c)
     children.push_back(c);
 }
 
+QgItem *
+QgItem::child(int n)
+{
+    if (n < 0 || n > (int)children.size())
+	return NULL;
 
+    return children[n];
+}
+
+int
+QgItem::childCount() const
+{
+    return (int)children.size();
+}
 
 // 0 = exact, 1 = name + op, 2 = name + mat, 3 = name only, -1 name mismatch
 int
