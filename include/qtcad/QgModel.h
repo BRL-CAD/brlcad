@@ -118,6 +118,8 @@
 #include "ged.h"
 #endif
 
+class QTCAD_EXPORT QgModel_ctx; 
+
 class QTCAD_EXPORT QgInstance
 {
     public:
@@ -143,6 +145,9 @@ class QTCAD_EXPORT QgInstance
 	// Matrix above comb instance in comb tree (default is IDN)
 	mat_t c_m;
 
+	// Return hashes of child instances, if any
+	std::vector<unsigned long long> children();
+
 	// The following value holds the index of the active flags array to
 	// check when determining if this object is active.  I.e. activity is
 	// checked by looking at:
@@ -167,6 +172,9 @@ class QTCAD_EXPORT QgInstance
 	// its state change and the assignments must take place in order to
 	// propagate the necessary awareness up to the visible level.
 	int active_ind = -1;
+
+	// If available, the model context in which this instance is defined
+	QgModel_ctx *ctx;
 
     private:
 	XXH64_state_t *h_state;
@@ -200,6 +208,13 @@ class QTCAD_EXPORT QgItem
 	explicit QgItem();
 	~QgItem();
 
+
+	// Testing functions to simulate GUI activities
+	void open();
+	void close();
+
+
+	void appendChild(QgItem *C);
 #if 0
 	QgItem *child(int n);
 	int childCount() const;
@@ -214,11 +229,12 @@ class QTCAD_EXPORT QgItem
 	bool setData(int col, const QVariant &v);
 #endif
 
-	QgInstance *inst;
-	unsigned long long hash;
+	unsigned long long ihash = 0;
+	QgModel_ctx *ctx = NULL;
+	QgItem *parent = NULL;
 
-	QgItem *parent;
-	std::vector<QgItem *>children;
+    private:
+	std::vector<QgItem *> children;
 };
 
 // Forward declaration for context.  It may be in the end that we merge
@@ -237,15 +253,6 @@ class QgModel_ctx
 	// .g Db interface and containers
 	struct ged *gedp;
 
-	// The parent->child storage is (potentially) 1 to many. TODO -
-	// we may just do this with the localized tree walk of the comb
-	// and a hash lookup of each leaf, rather than maintaining a
-	// separate parent_children container - this probably has too
-	// much opportunity for getting out of sync with the real comb state,
-	// and may not really have any simplicity benefits either, given
-	// the one-to-many issues...
-	std::unordered_map<struct directory *, std::vector<QgInstance *>> parent_children;
-
 	// We maintain the vector above for leaf ordering, but we also build a
 	// map of QgInstance hashes to instances for easy lookup.  This is for
 	// QgInstance reuse - we in fact have to construct a temporary
@@ -256,7 +263,10 @@ class QgModel_ctx
 	// TODO - the nested map with the parent dp as the first key mainly
 	// serves to reduce the chance of hash collisions, but if that's not a
 	// practical issue we should simplify this
-	std::unordered_map<struct directory *, std::unordered_map<unsigned long long, QgInstance *>> ilookup;
+	//std::unordered_map<struct directory *, std::unordered_map<unsigned long long, QgInstance *>> ilookup;
+
+	std::unordered_map<unsigned long long, QgInstance *> *instances = NULL;
+	std::unordered_map<unsigned long long, QgInstance *> *tops_instances = NULL;
 
 	// Hierarchy items
 	//
@@ -295,7 +305,7 @@ class QgModel_ctx
 	// TODO - check what tops does about a database with a cyclic definition
 	// of an otherwise top level comb...  I suspect in that case we may have
 	// to break the cycle to generate a pseudo-tops object...
-	std::vector<QgItem *> tops;
+	std::vector<QgItem *> tops_items;
 
 	// Activity flags (used for relevance highlighting) need to be updated
 	// whenever a selection changes.  We define one flag per QgInstance,
