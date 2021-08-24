@@ -1347,6 +1347,10 @@ _pkg_gethdr(struct pkg_conn *pc, char *buf)
     if (pc->pkc_left == 0)
 	return 1;		/* msg here, no data */
 
+    /* ensure we don't allocate maliciously */
+    if (pc->pkc_len > SSIZE_MAX-2)
+	return -1;
+
     if (buf) {
 	pc->pkc_buf = buf;
     } else {
@@ -1387,6 +1391,11 @@ pkg_waitfor (int type, char *buf, size_t len, struct pkg_conn *pc)
     }
     if (_pkg_gethdr(pc, buf) < 0)
 	return -1;
+
+    /* ensure we don't allocate maliciously */
+    if (pc->pkc_len > SSIZE_MAX-2)
+	return -1;
+
     if (pc->pkc_type != type) {
 	/* A message of some other type has unexpectedly arrived. */
 	if (pc->pkc_len > 0) {
