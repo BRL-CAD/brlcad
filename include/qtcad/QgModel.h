@@ -253,6 +253,15 @@ class QgModel_ctx
 	// .g Db interface and containers
 	struct ged *gedp;
 
+	// Certain .g objects (comb, extrude, etc.) will define one or more
+	// implicit instances.  We need to create those instances both on
+	// initialization of an existing .g file and on database editing.
+	void add_instances(struct directory *dp);
+
+	// A modification in the .g file to an object may necessitate a variety
+	// of updates to the QgInstance containers
+	void update_instances(struct directory *dp);
+
 	// We maintain the vector above for leaf ordering, but we also build a
 	// map of QgInstance hashes to instances for easy lookup.  This is for
 	// QgInstance reuse - we in fact have to construct a temporary

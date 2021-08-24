@@ -359,6 +359,24 @@ qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent
 	    return;
 	}
 
+	// Jobs to do:
+	//
+	// 1.  Validate tops QgInstances - any that have nrefs are out.
+	// 2.  Identify any new tops QgInstances
+	// 3.  Update any QgInstances that were invalid (no dp in the database
+	//     to match the name) but now are valid.
+	// 4.  Queue up QgItems based on instances changes so a big model
+	//     update can be done all at once.
+
+
+
+
+
+
+
+
+
+
 	// Activity flag values are selection based, but even if the
 	// selection hasn't changed since the last cycle the parent/child
 	// relationships may have, which can invalidate previously active
@@ -475,192 +493,27 @@ qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent
 	}
 #endif
     }
-
-
-    // TODO - we do have work to do on an individual basis to check for
-    // previously invalid comb entries that are no longer invalid, so we
-    // shouldn't be skipping everything else... need to implement those checks
-
-
-
-#if 0
-
-
-			// Make new QgItem
-			QgItem *nitem = NULL;
-			if (ctx->free_items.size()) {
-			    nitem = ctx->free_items.front();
-			    ctx->free_items.pop();
-			} else {
-			    nitem = new QgItem();
-			}
-			nitem->parent = NULL;
-			nitem->inst = ninst;
-			ntops.push_back(nitem);
-
-			// TODO - Given new item, find analog (if any) in old tops vector, and see
-			// what the status of its children vector is.  If we find an analog
-			// and it has a non-empty child vector, we need to populate the nitem
-			// child vector as well.
-			std::queue<QgItem *> to_expand;
-			QgItem *citem = find_similar_qgitem(nitem, ctx->tops);
-			if (citem) {
-			    if (citem->children.size()) {
-				bu_log("%s size: %zd\n", citem->inst->dp_name.c_str(), citem->children.size());
-				to_expand.push(citem);
-			    } else {
-				bu_log("%s not open\n", citem->inst->dp_name.c_str());
-			    }
-			}
-			while (to_expand.size()) {
-			    // Work our way through the children of citem down the tree, until we
-			    // don't find any more expanded children
-			}
-
-			ctx->tops.clear();
-			ctx->tops = ntops;
-
-		    }
-		    bu_free(db_objects, "objs list");
-		}
-
-		std::vector<QgInstance*> &tops = ctx->parent_children[(struct directory *)0];
-		bu_log("tops size: %zd\n", tops.size());
-		for (size_t i = 0; i < tops.size(); i++) {
-		    std::cout << tops[i]->dp->d_namep << "\n";
-		    std::vector<QgInstance*> &tops_children = ctx->parent_children[tops[i]->dp];
-		    for (size_t j = 0; j < tops_children.size(); j++) {
-			if (tops_children[j]->dp) {
-			    std::cout << "\t" << tops_children[j]->dp->d_namep << "\n";
-			} else {
-			    std::cout << "\t" << tops_children[j]->dp_name << " (no dp)\n";
-			}
-		    }
-		}
-
-		bu_log("time to update Qt model\n");
-		ctx->mdl->need_update_nref = false;
-
-		// TODO - QgItems are created lazily from QgInstances.  We need
-		// to recreate all of them that existed previously, since they
-		// are subject to the same inherent uncertainties as
-		// QgInstances, but we also try as much as possible to restore
-		// the previous state of population that existed before the
-		// rebuild so things like expanded tree view states are changed
-		// as little as possible within the constraints imposed by
-		// actual .g geometry alterations.
-		//
-		// This probably means at the beginning of an update pass we
-		// will need to iterate over the items and stash any
-		// QgInstances referenced by them in an unordered map so we can
-		// skip adding them to the free pile.  We will need to be able
-		// to use them when we build up a new item hierarchy from the
-		// newly realized QgInstances, since we will have to compare
-		// the original QgInstance data from the prior state to the new
-		// QgInstance children in order to find the correct
-		// associations to form when we rebuild.  This is where items
-		// that are removed but visible in a tree hierarchy will
-		// "disappear" by failing to be regenerated.  Objects that
-		// still exist in some form will be used as a basis for further
-		// recreation if the original has children, if analogs for
-		// those children (either exact or, if no exact analog is found
-		// the closest match) are present.
-		//
-		// After rebuilding, we clear the old items set and replace its
-		// contents with the new info.  The QgInstances saved for the
-		// items rebuild are then added to the free queue for the next
-		// round.
-		//
-		// We'll need an intelligent comparison function that finds the
-		// "closest" QgInstance in a set to a candidate QgInstance.
-
-	    }
-	    return;
-	}
-
-	// Any other op in this context indicates an error
-	bu_log("Error - unknown terminating condition for update_nref callback\n");
-	return;
-    }
-
-    if (parent_dp) {
-	bu_log("PARENT: %s\n", parent_dp->d_namep);
-    } else {
-	bu_log("PARENT: NULL\n");
-    }
-
-    if (child_name) {
-	if (child_dp) {
-	    bu_log("CHILD: %s\n", child_name);
-	} else {
-	    bu_log("CHILD(invalid): %s\n", child_name);
-	}
-    }
-    switch (op) {
-	case DB_OP_UNION:
-	    bu_log("union\n");
-	    break;
-	case DB_OP_SUBTRACT:
-	    bu_log("subtract\n");
-	    break;
-	case DB_OP_INTERSECT:
-	    bu_log("intersect\n");
-	    break;
-	default:
-	    bu_log("unknown op\n");
-	    break;
-    }
-    if (m)
-	bn_mat_print("Matrix", m);
-
-    // We use a lot of these - reuse if possible
-    QgInstance *ninst = NULL;
-    if (ctx->free_instances.size()) {
-	ninst = ctx->free_instances.front();
-	ctx->free_instances.pop();
-    } else {
-	ninst = new QgInstance();
-    }
-
-    // Important:  need to make sure to assign everything in the QgInstance
-    // here to avoid stale data, since we may be reusing an old instance.
-    ninst->ctx = ctx;
-    ninst->pcnt = 0;
-    ninst->parent = parent_dp;
-    ninst->dp = child_dp;
-    ninst->dp_name = std::string(child_name);
-    ninst->op = op;
-    if (m) {
-	MAT_COPY(ninst->c_m, m);
-    } else {
-	MAT_IDN(ninst->c_m);
-    }
-    if (ninst->dp != RT_DIR_NULL) {
-	if (ctx->dp_to_active_ind.find(ninst->dp) != ctx->dp_to_active_ind.end()) {
-	    ninst->active_ind = ctx->dp_to_active_ind[ninst->dp];
-	} else {
-	    // New dp - add it.  By default a new dp will be inactive - a view
-	    // selection is what dictates, activity, and we don't (yet) have the
-	    // info to decide if this dp is activated by a view selection.
-	    ctx->active_flags.push_back(0);
-	    ninst->active_ind = ctx->active_flags.size() - 1;
-	    ctx->dp_to_active_ind[ninst->dp] = ninst->active_ind;
-	}
-    }
-
-    ctx->parent_children[parent_dp].push_back(ninst);
-#endif
 }
 
 extern "C" void
 qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
+    std::queue<std::unordered_map<unsigned long long, QgInstance *>::iterator> rmq;
+    std::unordered_map<unsigned long long, QgInstance *>::iterator i_it, trm_it;
     QgModel_ctx *ctx = (QgModel_ctx *)u_data;
+    QgInstance *inst = NULL;
+
     switch(mode) {
 	case 0:
 	    bu_log("MOD: %s\n", dp->d_namep);
+
+	    // TODO - don't know if we'll actually need this in the end...
 	    if (ctx->mdl)
 		ctx->mdl->changed_dp.insert(dp);
+
+
+	    // ctx->update_instances(dp);
+
 
 	    // What needs to happen here for combs is the construction of a
 	    // vector of QgInstances corresponding to the new children of the
@@ -686,37 +539,77 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    break;
 	case 1:
 	    bu_log("ADD: %s\n", dp->d_namep);
+
+	    // If this is a new tops solid we'll only know to create that
+	    // instance after an update_nref pass, but if it's a new comb or
+	    // one of the other instance defining primitives create the new
+	    // instances now.
+	    ctx->add_instances(dp);
+
+	    // TODO - don't know if we'll actually need this in the end...
 	    if (ctx->mdl) {
-		ctx->mdl->changed_dp.insert(dp);
 		ctx->mdl->need_update_nref = true;
 	    }
 
-	    // We can either do it here or in the update_nref callback, but we need
-	    // to check whether any QgInstances are referencing the added name as
-	    // a child.  If so, the added object is not a tops object and doesn't
-	    // get a top level instance/item.  Thinking it may be better to do it
-	    // here - check only QgInstances with a null dp - for those, do a name
-	    // comparison.  If it matches, assign the dp and note that the item
-	    // isn't top level.
-	    //
-	    // If the added object is itself a comb or one of the primitives referencing
-	    // another object, we need to add new QgInstances.
+	    // If we have any invalid instances that are now valid, update them
+	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
+		inst = i_it->second;
+		if (!inst->dp && inst->dp_name == std::string(dp->d_namep)) {
+		    inst->dp = dp;
+		}
+	    }
 
 	    break;
 	case 2:
 	    bu_log("RM:  %s\n", dp->d_namep);
+
+	    // For removal, we need to 1) remove any instances where the parent is
+	    // dp, and 2) invalidate the dps in any instances where they match.
+	    //
+	    // NOTE:  we'll need to make sure QgItems can sort out removed QgInstances -
+	    // current thought is a failed lookup of the hash will be workable, but
+	    // we may need to have the QgInstance directly track associated QgItems if
+	    // that is too slow...
+	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
+		inst = i_it->second;
+		if (inst->dp == dp)
+		    inst->dp = NULL;
+		if (inst->parent == dp) {
+		    rmq.push(i_it);
+		    delete inst;
+		}
+	    }
+	    while (!rmq.empty()) {
+		i_it = rmq.front();
+		rmq.pop();
+		ctx->instances->erase(i_it);
+	    }
+
+	    // If the object is being removed, we know for sure it's not going to be
+	    // a tops instance any longer...
+	    trm_it = ctx->tops_instances->end();
+	    for (i_it = ctx->tops_instances->begin(); i_it != ctx->tops_instances->end(); i_it++) {
+		inst = i_it->second;
+		if (inst->dp_name == std::string(dp->d_namep)) {
+		    trm_it = i_it;
+		    delete inst;
+		    break;
+		}
+	    }
+	    if (trm_it != ctx->tops_instances->end()) {
+		ctx->tops_instances->erase(trm_it);
+	    }
+
+	    // TODO - don't know if we'll actually need this in the end...
 	    if (ctx->mdl)
 		ctx->mdl->need_update_nref = true;
 
-	    // Check QgInstances using parent_children array to see if any of
-	    // them have become invalid.  If the parent_dp == removed dp,
-	    // they're removed (the easy case, as that's the vector stored by
-	    // parent_children).  However, we also need to check the others: if
-	    // dp == the removed dp, the QgInstance is now invalid (set dp to
-	    // NULL).  QgItems also need to be updated, not sure yet whether
-	    // it's better do that here or in update_nref callback.  New tops
-	    // objects at least will be more simply dealt with the update_nref
-	    // callback, after the d_nref counts are finalized.
+	    // TODO: QgItems also need to be updated, not sure yet whether
+	    // it's better do that here or in update_nref callback.  Leaning
+	    // towards the latter, since update_nref will have to be called after
+	    // an addition or removal for a tree view to work anyway and if a
+	    // command does a bunch of individual removals we don't want to slow
+	    // the UI by doing huge numbers of intra-command updates.
 
 	    break;
 	default:
@@ -809,88 +702,16 @@ QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct ged *ngedp)
     std::sort(tops_items.begin(), tops_items.end(), QgItem_cmp());
 
 
+    // TODO - need to decide what to do about cyclic paths...
+
+
     // Run through the objects and crack the non-leaf objects to define
     // non-tops instances (i.e. all comb instances and some primitive
     // types that reference other objects).
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & RT_DIR_HIDDEN)
-		continue;
-
-	    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
-		struct rt_db_internal intern;
-		RT_DB_INTERNAL_INIT(&intern);
-		if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
-		    continue;
-		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)intern.idb_ptr;
-		RT_EXTRUDE_CK_MAGIC(extr);
-		if (extr->sketch_name) {
-		    QgInstance *ninst = new QgInstance();
-		    ninst->ctx = this;
-		    ninst->parent = dp;
-		    ninst->dp = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
-		    ninst->dp_name = std::string(extr->sketch_name);
-		    MAT_IDN(ninst->c_m);
-		    ninst->op = DB_OP_UNION;
-		    unsigned long long nhash = ninst->hash();
-		    (*instances)[nhash] = ninst;
-		}
-	    }
-	    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
-		struct rt_db_internal intern;
-		RT_DB_INTERNAL_INIT(&intern);
-		if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
-		    continue;
-		struct rt_revolve_internal *revolve = (struct rt_revolve_internal *)intern.idb_ptr;
-		RT_REVOLVE_CK_MAGIC(revolve);
-		if (bu_vls_strlen(&revolve->sketch_name) > 0) {
-		    QgInstance *ninst = new QgInstance();
-		    ninst->ctx = this;
-		    ninst->parent = dp;
-		    ninst->dp = db_lookup(dbip, bu_vls_cstr(&revolve->sketch_name), LOOKUP_QUIET);
-		    ninst->dp_name = std::string(bu_vls_cstr(&revolve->sketch_name));
-		    MAT_IDN(ninst->c_m);
-		    ninst->op = DB_OP_UNION;
-		    unsigned long long nhash = ninst->hash();
-		    (*instances)[nhash] = ninst;
-		}
-	    }
-	    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP) {
-		struct rt_db_internal intern;
-		RT_DB_INTERNAL_INIT(&intern);
-		if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
-		    continue;
-		struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)intern.idb_ptr;
-		RT_DSP_CK_MAGIC(dsp);
-		if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
-		    QgInstance *ninst = new QgInstance();
-		    ninst->ctx = this;
-		    ninst->parent = dp;
-		    ninst->dp = db_lookup(dbip, bu_vls_cstr(&dsp->dsp_name), LOOKUP_QUIET);
-		    ninst->dp_name = std::string(bu_vls_cstr(&dsp->dsp_name));
-		    MAT_IDN(ninst->c_m);
-		    ninst->op = DB_OP_UNION;
-		    unsigned long long nhash = ninst->hash();
-		    (*instances)[nhash] = ninst;
-		}
-	    }
-
-	    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
-		struct rt_db_internal intern;
-		RT_DB_INTERNAL_INIT(&intern);
-		if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
-		    continue;
-		if (intern.idb_type != ID_COMBINATION) {
-		    bu_log("NOTICE: %s was marked a combination, but isn't one?  Clearing flag\n", dp->d_namep);
-		    dp->d_flags &= ~RT_DIR_COMB;
-		    rt_db_free_internal(&intern);
-		    continue;
-		}
-
-		struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-		db_tree_funcleaf(dbip, comb, comb->tree, qg_instance, (void *)dp, (void *)this, NULL, NULL);
-	    }
+	    add_instances(dp);
 	}
     }
 
@@ -910,6 +731,233 @@ QgModel_ctx::~QgModel_ctx()
     delete instances;
     delete tops_instances;
 }
+
+void
+QgModel_ctx::add_instances(struct directory *dp)
+{
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
+
+    if (dp->d_flags & RT_DIR_HIDDEN)
+	return;
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+	struct rt_extrude_internal *extr = (struct rt_extrude_internal *)intern.idb_ptr;
+	RT_EXTRUDE_CK_MAGIC(extr);
+	if (extr->sketch_name) {
+	    QgInstance *ninst = new QgInstance();
+	    ninst->ctx = this;
+	    ninst->parent = dp;
+	    ninst->dp = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
+	    ninst->dp_name = std::string(extr->sketch_name);
+	    MAT_IDN(ninst->c_m);
+	    ninst->op = DB_OP_UNION;
+	    unsigned long long nhash = ninst->hash();
+	    if (instances->find(nhash) != instances->end()) {
+		delete ninst;
+		rt_db_free_internal(&intern);
+		return;
+	    }
+	    (*instances)[nhash] = ninst;
+	}
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+	struct rt_revolve_internal *revolve = (struct rt_revolve_internal *)intern.idb_ptr;
+	RT_REVOLVE_CK_MAGIC(revolve);
+	if (bu_vls_strlen(&revolve->sketch_name) > 0) {
+	    QgInstance *ninst = new QgInstance();
+	    ninst->ctx = this;
+	    ninst->parent = dp;
+	    ninst->dp = db_lookup(dbip, bu_vls_cstr(&revolve->sketch_name), LOOKUP_QUIET);
+	    ninst->dp_name = std::string(bu_vls_cstr(&revolve->sketch_name));
+	    MAT_IDN(ninst->c_m);
+	    ninst->op = DB_OP_UNION;
+	    unsigned long long nhash = ninst->hash();
+	    if (instances->find(nhash) != instances->end()) {
+		delete ninst;
+		rt_db_free_internal(&intern);
+		return;
+	    }
+	    (*instances)[nhash] = ninst;
+	}
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP) {
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+	struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)intern.idb_ptr;
+	RT_DSP_CK_MAGIC(dsp);
+	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
+	    QgInstance *ninst = new QgInstance();
+	    ninst->ctx = this;
+	    ninst->parent = dp;
+	    ninst->dp = db_lookup(dbip, bu_vls_cstr(&dsp->dsp_name), LOOKUP_QUIET);
+	    ninst->dp_name = std::string(bu_vls_cstr(&dsp->dsp_name));
+	    MAT_IDN(ninst->c_m);
+	    ninst->op = DB_OP_UNION;
+	    unsigned long long nhash = ninst->hash();
+	    if (instances->find(nhash) != instances->end()) {
+		delete ninst;
+		rt_db_free_internal(&intern);
+		return;
+	    }
+	    (*instances)[nhash] = ninst;
+	}
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+	if (intern.idb_type != ID_COMBINATION) {
+	    bu_log("NOTICE: %s was marked a combination, but isn't one?  Clearing flag\n", dp->d_namep);
+	    dp->d_flags &= ~RT_DIR_COMB;
+	    rt_db_free_internal(&intern);
+	    return;
+	}
+
+	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
+	db_tree_funcleaf(dbip, comb, comb->tree, qg_instance, (void *)dp, (void *)this, NULL, NULL);
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+}
+
+void
+QgModel_ctx::update_instances(struct directory *dp)
+{
+    //struct db_i *dbip = gedp->ged_wdbp->dbip;
+
+    if (dp->d_flags & RT_DIR_HIDDEN)
+	return;
+
+    // Updating is tricky - we may need to add new instances, remove old instances
+    // or just mod those already defined.
+
+#if 0
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+	struct rt_extrude_internal *extr = (struct rt_extrude_internal *)intern.idb_ptr;
+	RT_EXTRUDE_CK_MAGIC(extr);
+	if (extr->sketch_name) {
+	    QgInstance *ninst = new QgInstance();
+	    ninst->ctx = this;
+	    ninst->parent = dp;
+	    ninst->dp = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
+	    ninst->dp_name = std::string(extr->sketch_name);
+	    MAT_IDN(ninst->c_m);
+	    ninst->op = DB_OP_UNION;
+	    unsigned long long nhash = ninst->hash();
+	    if (instances->find(nhash) != instances->end()) {
+		delete ninst;
+		rt_db_free_internal(&intern);
+		return;
+	    }
+	    (*instances)[nhash] = ninst;
+	}
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+	struct rt_revolve_internal *revolve = (struct rt_revolve_internal *)intern.idb_ptr;
+	RT_REVOLVE_CK_MAGIC(revolve);
+	if (bu_vls_strlen(&revolve->sketch_name) > 0) {
+	    QgInstance *ninst = new QgInstance();
+	    ninst->ctx = this;
+	    ninst->parent = dp;
+	    ninst->dp = db_lookup(dbip, bu_vls_cstr(&revolve->sketch_name), LOOKUP_QUIET);
+	    ninst->dp_name = std::string(bu_vls_cstr(&revolve->sketch_name));
+	    MAT_IDN(ninst->c_m);
+	    ninst->op = DB_OP_UNION;
+	    unsigned long long nhash = ninst->hash();
+	    if (instances->find(nhash) != instances->end()) {
+		delete ninst;
+		rt_db_free_internal(&intern);
+		return;
+	    }
+	    (*instances)[nhash] = ninst;
+	}
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP) {
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+	struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)intern.idb_ptr;
+	RT_DSP_CK_MAGIC(dsp);
+	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
+	    QgInstance *ninst = new QgInstance();
+	    ninst->ctx = this;
+	    ninst->parent = dp;
+	    ninst->dp = db_lookup(dbip, bu_vls_cstr(&dsp->dsp_name), LOOKUP_QUIET);
+	    ninst->dp_name = std::string(bu_vls_cstr(&dsp->dsp_name));
+	    MAT_IDN(ninst->c_m);
+	    ninst->op = DB_OP_UNION;
+	    unsigned long long nhash = ninst->hash();
+	    if (instances->find(nhash) != instances->end()) {
+		delete ninst;
+		rt_db_free_internal(&intern);
+		return;
+	    }
+	    (*instances)[nhash] = ninst;
+	}
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+	if (intern.idb_type != ID_COMBINATION) {
+	    bu_log("NOTICE: %s was marked a combination, but isn't one?  Clearing flag\n", dp->d_namep);
+	    dp->d_flags &= ~RT_DIR_COMB;
+	    rt_db_free_internal(&intern);
+	    return;
+	}
+
+	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
+	db_tree_funcleaf(dbip, comb, comb->tree, qg_instance, (void *)dp, (void *)this, NULL, NULL);
+	rt_db_free_internal(&intern);
+	return;
+    }
+
+#endif
+}
+
+
+
 
 QgModel::QgModel(QObject *, struct ged *ngedp)
 {
