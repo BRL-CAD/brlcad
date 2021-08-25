@@ -56,7 +56,12 @@ print_children(QgItem *itm, QgModel_ctx *s, int depth)
     if (!itm || !itm->ihash)
 	return;
 
-    QgInstance *inst = (*s->instances)[itm->ihash];
+    QgInstance *inst;
+    if (depth == 0) {
+	inst = (*s->tops_instances)[itm->ihash];
+    } else {
+	inst = (*s->instances)[itm->ihash];
+    }
 
     for (int i = 0; i < depth; i++) {
 	std::cout << "  ";

@@ -52,6 +52,7 @@
 #include "common.h"
 
 #include <set>
+#include <unordered_set>
 #include <QFileInfo>
 
 #define XXH_STATIC_LINKING_ONLY
@@ -63,6 +64,28 @@
 #include "../libged/alphanum.h"
 #include "raytrace.h"
 #include "qtcad/QgModel.h"
+
+struct QgItem_cmp {
+    inline bool operator() (const QgItem *i1, const QgItem *i2)
+    {
+	if (!i1 && i2)
+	    return true;
+	if (i1 && !i2)
+	    return false;
+	if (!i1->ihash && i2->ihash)
+	    return true;
+	if (i1->ihash && !i2->ihash)
+	    return false;
+
+	QgInstance *inst1 = (*i1->ctx->instances)[i1->ihash];
+	QgInstance *inst2 = (*i2->ctx->instances)[i2->ihash];
+	const char *n1 = inst1->dp_name.c_str();
+	const char *n2 = inst2->dp_name.c_str();
+	if (alphanum_impl(n1, n2, NULL) < 0)
+	    return true;
+	return false;
+    }
+};
 
 static void
 qg_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *pdp, void *vctx, void *vchash, void *)
@@ -372,35 +395,112 @@ find_similar_qgitem(QgItem *c, std::vector<QgItem *> &v)
 
 
 extern "C" void
-qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
+qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
 {
     if (!parent_dp && !child_dp && !child_name && m == NULL && op == DB_OP_SUBTRACT) {
+	std::unordered_map<unsigned long long, QgInstance *>::iterator i_it;
 
 	std::cout << "update nref callback\n";
 
 	// Cycle complete, nref count is current.  Start analyzing.
 	QgModel_ctx *ctx = (QgModel_ctx *)u_data;
 
+#if 0
 	if (!ctx->mdl) {
 	    // If we don't have a model there's not much we can do...
 	    return;
 	}
+#endif
 
-	// Jobs to do:
-	//
-	// 1.  Validate tops QgInstances - any that have nrefs are out.
-	// 2.  Identify any new tops QgInstances
-	// 3.  Update any QgInstances that were invalid (no dp in the database
-	//     to match the name) but now are valid.
-	// 4.  Queue up QgItems based on instances changes so a big model
-	//     update can be done all at once.
+	// 1.  Rebuild top instances
+	{
+	    for (i_it = ctx->tops_instances->begin(); i_it != ctx->tops_instances->end(); i_it++) {
+		QgInstance *t = i_it->second;
+		delete t;
+		ctx->instances->erase(i_it->first);
+	    }
+	    ctx->tops_instances->clear();
 
+	    struct directory **db_objects = NULL;
+	    int path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &db_objects);
 
+	    if (path_cnt) {
 
+		// Sort so the top level ordering is correct for listing in tree views
+		bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
 
+		for (int i = 0; i < path_cnt; i++) {
+		    struct directory *curr_dp = db_objects[i];
+		    QgInstance *ninst = new QgInstance();
+		    ninst->ctx = ctx;
+		    ninst->parent = NULL;
+		    ninst->dp = curr_dp;
+		    ninst->dp_name = std::string(curr_dp->d_namep);
+		    ninst->op = DB_OP_UNION;
+		    MAT_IDN(ninst->c_m);
+		    unsigned long long nhash = ninst->hash();
+		    (*ctx->tops_instances)[nhash] = ninst;
+		    (*ctx->instances)[nhash] = ninst;
+		}
+	    }
+	    bu_free(db_objects, "tops obj list");
+	}
 
+	// 2.  Build up sets of the old and new tops QgItems, and identify differences.
+	// We want to keep as many of the old QgItems unchanged as possible to minimize
+	// the difficulties of updating.  We will create a "full" new QgItems tops vector,
+	// but the set_difference comparison will be based on comparison of the
+	// directory pointers.
+	std::vector<QgItem *> ntops_items;
+	for (i_it = ctx->tops_instances->begin(); i_it != ctx->tops_instances->end(); i_it++) {
+	    QgItem *nitem = new QgItem();
+	    nitem->parent = NULL;
+	    nitem->ihash = i_it->first;
+	    nitem->ctx = ctx;
+	    ntops_items.push_back(nitem);
+	}
+	std::sort(ntops_items.begin(), ntops_items.end(), QgItem_cmp());
+	std::vector<QgItem *> removed, added;
+	std::set_difference(ctx->tops_items.begin(), ctx->tops_items.end(), ntops_items.begin(), ntops_items.end(), std::back_inserter(removed), QgItem_cmp());
+	std::set_difference(ntops_items.begin(), ntops_items.end(), ctx->tops_items.begin(), ctx->tops_items.end(), std::back_inserter(added), QgItem_cmp());
 
+	// Delete anything in the ntops_items array that we're not adding
+	std::unordered_set<QgItem *> added_set(added.begin(), added.end());
+	for (size_t i = 0; i < ntops_items.size(); i++) {
+	    if (added_set.find(ntops_items[i]) == added_set.end())
+		delete ntops_items[i];
+	}
 
+	// Assemble the new tops vector, combining the original old items that
+	// aren't being removed and the new additions
+	std::vector<QgItem *> modded_tops_items;
+	std::unordered_set<QgItem *> removed_set(removed.begin(), removed.end());
+	for (size_t i = 0; i < ctx->tops_items.size(); i++) {
+	    QgItem *itm = ctx->tops_items[i];
+	    if (removed_set.find(itm) == removed_set.end()) {
+		modded_tops_items.push_back(itm);
+	    } else {
+		std::cout << "removed: " << itm->ihash << "\n";
+	    }
+	}
+	for (size_t i = 0; i < added.size(); i++) {
+	    std::cout << "added: " << added[i]->ihash << "\n";
+	    modded_tops_items.push_back(added[i]);
+	}
+	std::sort(modded_tops_items.begin(), modded_tops_items.end(), QgItem_cmp());
+
+	// TODO - this is probably about where we would need to start doing the
+	// proper steps for updating a Qt model (see Qt docs).  Up until this step
+	// we've not been modding the QtItem data exposed to the model - once we
+	// update the tops list and start walking any open children to validate
+	// them, we're modding the Qt data
+	ctx->tops_items.clear();
+	ctx->tops_items = modded_tops_items;
+
+	// We've updated the tops array now - delete the old QgItems that were removed.
+	for (size_t i = 0; i < removed.size(); i++) {
+	    delete removed[i];
+	}
 
 
 
@@ -623,28 +723,6 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
     }
 }
 
-struct QgItem_cmp {
-    inline bool operator() (const QgItem *i1, const QgItem *i2)
-    {
-	if (!i1 && i2)
-	    return true;
-	if (i1 && !i2)
-	    return false;
-	if (!i1->ihash && i2->ihash)
-	    return true;
-	if (i1->ihash && !i2->ihash)
-	    return false;
-
-	QgInstance *inst1 = (*i1->ctx->instances)[i1->ihash];
-	QgInstance *inst2 = (*i2->ctx->instances)[i2->ihash];
-	const char *n1 = inst1->dp_name.c_str();
-	const char *n2 = inst2->dp_name.c_str();
-	if (alphanum_impl(n1, n2, NULL) < 0)
-	    return true;
-	return false;
-    }
-};
-
 
 QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct ged *ngedp)
     : mdl(pmdl), gedp(ngedp)
@@ -662,15 +740,15 @@ QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct ged *ngedp)
     // update_nref pass is complete.
     db_add_update_nref_clbk(dbip, &qgmodel_update_nref_callback, (void *)this);
 
+    // Initialize the instance containers
     tops_instances = new std::unordered_map<unsigned long long, QgInstance *>;
+    tops_instances->clear();
     instances = new std::unordered_map<unsigned long long, QgInstance *>;
-
+    instances->clear();
 
     // tops objects in the .g file are "instances" beneath the .g itself, which
     // is the analogy to Qt's hidden "root" node in a model.  To handle them,
     // we define "NULL root" instances.
-    tops_instances->clear();
-    instances->clear();
     struct directory **db_objects = NULL;
     int path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &db_objects);
 
@@ -681,8 +759,6 @@ QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct ged *ngedp)
 
 	for (int i = 0; i < path_cnt; i++) {
 	    struct directory *curr_dp = db_objects[i];
-	    // Make temporary QgInstance and call the add method to either
-	    // get a reference to the existing instance or create a new one.
 	    QgInstance *ninst = new QgInstance();
 	    ninst->ctx = this;
 	    ninst->parent = NULL;
@@ -691,6 +767,11 @@ QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct ged *ngedp)
 	    ninst->op = DB_OP_UNION;
 	    MAT_IDN(ninst->c_m);
 	    unsigned long long nhash = ninst->hash();
+
+	    // We store the tops instances in both maps so we can always use
+	    // instances to look up any QgInstance.  When we rebuild tops_instances
+	    // we must be sure to remove the obsolete QgInstances from instances
+	    // as well as tops_instances.
 	    (*tops_instances)[nhash] = ninst;
 	    (*instances)[nhash] = ninst;
 
