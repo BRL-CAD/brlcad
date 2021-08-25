@@ -38,6 +38,23 @@ open_children(QgItem *itm, QgModel_ctx *s, int depth, int max_depth)
     if (!itm || !itm->ihash)
 	return;
 
+    if (max_depth > 0 && depth >= max_depth)
+	return;
+
+    itm->open();
+    for (int j = 0; j < itm->childCount(); j++) {
+	QgItem *c = itm->child(j);
+	if (s->instances->find(c->ihash) == s->instances->end())
+	    continue;
+	open_children(c, s, depth+1, max_depth);
+    }
+}
+
+void
+print_children(QgItem *itm, QgModel_ctx *s, int depth)
+{
+    if (!itm || !itm->ihash)
+	return;
 
     QgInstance *inst = (*s->instances)[itm->ihash];
 
@@ -49,15 +66,11 @@ open_children(QgItem *itm, QgModel_ctx *s, int depth, int max_depth)
 
     std::cout << inst->dp_name << "\n";
 
-    if (max_depth > 0 && depth >= max_depth)
-	return;
-
-    itm->open();
     for (int j = 0; j < itm->childCount(); j++) {
 	QgItem *c = itm->child(j);
 	if (s->instances->find(c->ihash) == s->instances->end())
 	    continue;
-	open_children(c, s, depth+1, max_depth);
+	print_children(c, s, depth+1);
     }
 }
 
@@ -108,6 +121,12 @@ int main(int argc, char *argv[])
 	    continue;
 	open_children(itm, &s, 0, -1);
     }
+    for (size_t i = 0; i < s.tops_items.size(); i++) {
+	QgItem *itm = s.tops_items[i];
+	if (!itm->ihash)
+	    continue;
+	print_children(itm, &s, 0);
+    }
 
     // Close everything
     for (size_t i = 0; i < s.tops_items.size(); i++) {
@@ -121,6 +140,12 @@ int main(int argc, char *argv[])
 	if (!itm->ihash)
 	    continue;
 	open_children(itm, &s, 0, 1);
+    }
+    for (size_t i = 0; i < s.tops_items.size(); i++) {
+	QgItem *itm = s.tops_items[i];
+	if (!itm->ihash)
+	    continue;
+	print_children(itm, &s, 0);
     }
 
     // Close
