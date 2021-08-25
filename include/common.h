@@ -182,10 +182,11 @@ typedef unsigned short u_short;
 #   ifndef SSIZE_MAX
 typedef ptrdiff_t ssize_t;
 #     define HAVE_SSIZE_T 1
-/*    Go with the minimum POSIX acceptable value (_POSIX_SSIZE_MAX). This
- *    may be smaller than we would like, but seems to be the safest general
- *    definition to make. */
-#     define SSIZE_MAX 32767
+#     if defined(_WIN64)
+#        define SSIZE_MAX LONG_MAX
+#     else
+#        define SSIZE_MAX INT_MAX
+#     endif
 #   endif
 # endif
 #endif
