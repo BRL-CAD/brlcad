@@ -33,10 +33,12 @@
 #include "qtcad/QgModel.h"
 
 void
-open_children(QgItem *itm, QgModel_ctx *s, int depth)
+open_children(QgItem *itm, QgModel_ctx *s, int depth, int max_depth)
 {
     if (!itm || !itm->ihash)
 	return;
+
+
     QgInstance *inst = (*s->instances)[itm->ihash];
 
     for (int i = 0; i < depth; i++) {
@@ -46,12 +48,16 @@ open_children(QgItem *itm, QgModel_ctx *s, int depth)
 	std::cout << "* ";
 
     std::cout << inst->dp_name << "\n";
+
+    if (max_depth > 0 && depth >= max_depth)
+	return;
+
     itm->open();
     for (int j = 0; j < itm->childCount(); j++) {
 	QgItem *c = itm->child(j);
 	if (s->instances->find(c->ihash) == s->instances->end())
 	    continue;
-	open_children(c, s, depth+1);
+	open_children(c, s, depth+1, max_depth);
     }
 }
 
@@ -92,19 +98,38 @@ int main(int argc, char *argv[])
     // db_update_nref being up to date.)
     bu_log("Top instance cnt: %zd\n", s.tops_instances->size());
 
-    // TODO - so the rough progression of steps here is:
     // 2.  Implement "open" and "close" routines for the items that will exercise
-    // the logic to identify, populate, and clear items based on child info.  So far,
-    // we're still within the read-only capabilities of the current model, but we want
-    // to make sure of this bookkeeping before the next step...
+    // the logic to identify, populate, and clear items based on child info.
+
+    // Open everything
     for (size_t i = 0; i < s.tops_items.size(); i++) {
-	std::queue<QgItem *> to_open;
 	QgItem *itm = s.tops_items[i];
 	if (!itm->ihash)
 	    continue;
-	open_children(itm, &s, 0);
+	open_children(itm, &s, 0, -1);
     }
 
+    // Close everything
+    for (size_t i = 0; i < s.tops_items.size(); i++) {
+	QgItem *itm = s.tops_items[i];
+	itm->close();
+    }
+
+    // Open first level
+    for (size_t i = 0; i < s.tops_items.size(); i++) {
+	QgItem *itm = s.tops_items[i];
+	if (!itm->ihash)
+	    continue;
+	open_children(itm, &s, 0, 1);
+    }
+
+    // Close
+    for (size_t i = 0; i < s.tops_items.size(); i++) {
+	QgItem *itm = s.tops_items[i];
+	itm->close();
+    }
+
+    // TODO - so the rough progression of steps here is:
     // 3.  Add callback support for syncing the instance sets after a database
     // operation.  This is the most foundational of the pieces needed for
     // read/write support.  The callback experiments we've been doing have some

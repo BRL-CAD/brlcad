@@ -277,6 +277,31 @@ QgItem::open()
     }
 }
 
+
+void
+QgItem::close()
+{
+    if (!ctx)
+	return;
+
+    if (ctx->instances->find(ihash) == ctx->instances->end()) {
+	bu_log("Invalid ihash\n");
+	return;
+    }
+
+    std::vector<unsigned long long> ic = (*ctx->instances)[ihash]->children();
+    for (int i = 0; i < childCount(); i++) {
+	QgItem *qii = child(i);
+	qii->close();
+    }
+    for (int i = 0; i < childCount(); i++) {
+	QgItem *qii = child(i);
+	delete qii;
+    }
+    children.clear();
+    std::cout << ihash << " closed\n";
+}
+
 void
 QgItem::appendChild(QgItem *c)
 {
