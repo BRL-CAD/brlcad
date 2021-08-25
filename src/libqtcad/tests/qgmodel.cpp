@@ -157,7 +157,43 @@ int main(int argc, char *argv[])
     // TODO - so the rough progression of steps here is:
     // 3.  Add callback support for syncing the instance sets after a database
     // operation.  This is the most foundational of the pieces needed for
-    // read/write support.  The callback experiments we've been doing have some
+    // read/write support.
+
+    for (size_t i = 0; i < s.tops_items.size(); i++) {
+	QgItem *itm = s.tops_items[i];
+	if (!itm->ihash)
+	    continue;
+	open_children(itm, &s, 0, 1);
+    }
+    std::cout << "Before\n";
+    for (size_t i = 0; i < s.tops_items.size(); i++) {
+	QgItem *itm = s.tops_items[i];
+	if (!itm->ihash)
+	    continue;
+	print_children(itm, &s, 0);
+    }
+
+    // Perform edit operations to trigger callbacks.  assuming
+    // moss.g example
+    int ac = 3;
+    const char *av[4];
+    av[0] = "rm";
+    av[1] = "all.g";
+    av[2] = "ellipse.r";
+    av[3] = NULL;
+    ged_exec(&g, ac, (const char **)av);
+
+    std::cout << "After\n";
+    for (size_t i = 0; i < s.tops_items.size(); i++) {
+	QgItem *itm = s.tops_items[i];
+	if (!itm->ihash)
+	    continue;
+	print_children(itm, &s, 0);
+    }
+
+
+
+    // The callback experiments we've been doing have some
     // of this, but we'll need to carefully consider how to handle it.  My
     // current thought is we'll accumulate items to change based on QgInstance
     // changes made, and then do a single Item update pass at the end for

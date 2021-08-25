@@ -376,6 +376,8 @@ qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent
 {
     if (!parent_dp && !child_dp && !child_name && m == NULL && op == DB_OP_SUBTRACT) {
 
+	std::cout << "update nref callback\n";
+
 	// Cycle complete, nref count is current.  Start analyzing.
 	QgModel_ctx *ctx = (QgModel_ctx *)u_data;
 
@@ -989,6 +991,7 @@ QgModel_ctx::update_instances(struct directory *dp)
     // multiple instances derived from a comb.
     std::set<unsigned long long> ohash;
     for (i_it = instances->begin(); i_it != instances->end(); i_it++) {
+	inst = i_it->second;
 	if (inst->parent == dp) {
 	    ohash.insert(i_it->first);
 	}

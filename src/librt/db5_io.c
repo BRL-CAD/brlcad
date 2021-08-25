@@ -759,14 +759,6 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 
     BU_ASSERT(dbip->dbi_version == 5);
 
-    /* Making a change for real - do callback */
-    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
-	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
-	    (*cb->f)(dbip, dp, 0, cb->u_data);
-	}
-    }
-
     /* First, change the name. */
     if (db_wrap_v5_external(ep, dp->d_namep) < 0) {
 	bu_log("db_put_external5(%s) failure in db_wrap_v5_external()\n",
@@ -791,6 +783,15 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     if (db_write(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
 	return -1;
     }
+
+    /* Made a change for real - do callback */
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	    (*cb->f)(dbip, dp, 0, cb->u_data);
+	}
+    }
+
     return 0;
 }
 
@@ -829,14 +830,6 @@ rt_db_put_internal5(
     }
     BU_ASSERT(ext.ext_nbytes == dp->d_len);
 
-    /* Making a change for real - do callback */
-    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
-	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
-	    (*cb->f)(dbip, dp, 0, cb->u_data);
-	}
-    }
-
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy(dp->d_un.ptr, ext.ext_buf, ext.ext_nbytes);
 	goto ok;
@@ -845,6 +838,15 @@ rt_db_put_internal5(
     if (db_write(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
 	goto fail;
     }
+
+    /* Made a change for real - do callback */
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	    (*cb->f)(dbip, dp, 0, cb->u_data);
+	}
+    }
+
 ok:
     bu_free_external(&ext);
     rt_db_free_internal(ip);
