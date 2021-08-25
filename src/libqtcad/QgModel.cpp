@@ -986,8 +986,9 @@ QgModel_ctx::update_instances(struct directory *dp)
     db_tree_funcleaf(dbip, comb, comb->tree, qg_instance, (void *)dp, (void *)this, (void *)&chashv, NULL);
     rt_db_free_internal(&intern);
 
-    // To clear out the old instances, we need to see if ohashv contains anything
-    // that chashv does not - those need to go.
+    // To clear out the old instances, we need to see if ohash contains anything
+    // that chashv does not - if so those need to go, because they represent comb
+    // structures no longer present in the tree.
     std::set<unsigned long long> chash(chashv.begin(), chashv.end());
     std::vector<unsigned long long> removed;
     std::set_difference(ohash.begin(), ohash.end(), chash.begin(), chash.end(), std::back_inserter(removed));

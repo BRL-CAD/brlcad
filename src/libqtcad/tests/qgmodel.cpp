@@ -32,6 +32,29 @@
 #include "../../libged/alphanum.h"
 #include "qtcad/QgModel.h"
 
+void
+open_children(QgItem *itm, QgModel_ctx *s, int depth)
+{
+    if (!itm || !itm->ihash)
+	return;
+    QgInstance *inst = (*s->instances)[itm->ihash];
+
+    for (int i = 0; i < depth; i++) {
+	std::cout << "  ";
+    }
+    if (depth)
+	std::cout << "* ";
+
+    std::cout << inst->dp_name << "\n";
+    itm->open();
+    for (int j = 0; j < itm->childCount(); j++) {
+	QgItem *c = itm->child(j);
+	if (s->instances->find(c->ihash) == s->instances->end())
+	    continue;
+	open_children(c, s, depth+1);
+    }
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -75,19 +98,11 @@ int main(int argc, char *argv[])
     // we're still within the read-only capabilities of the current model, but we want
     // to make sure of this bookkeeping before the next step...
     for (size_t i = 0; i < s.tops_items.size(); i++) {
+	std::queue<QgItem *> to_open;
 	QgItem *itm = s.tops_items[i];
 	if (!itm->ihash)
 	    continue;
-	QgInstance *inst = (*s.instances)[s.tops_items[i]->ihash];
-	std::cout << inst->dp_name << "\n";
-	itm->open();
-	for (int j = 0; j < itm->childCount(); j++) {
-	    QgItem *c = itm->child(j);
-	    if (s.instances->find(c->ihash) == s.instances->end())
-		continue;
-	    QgInstance *cinst = (*s.instances)[c->ihash];
-	    std::cout << " * " << cinst->dp_name << "\n";
-	}
+	open_children(itm, &s, 0);
     }
 
     // 3.  Add callback support for syncing the instance sets after a database
