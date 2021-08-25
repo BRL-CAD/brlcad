@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
+#include <limits.h>
 #include <time.h>
 #include <string.h>
 
