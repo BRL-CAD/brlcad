@@ -211,6 +211,22 @@ int main(int argc, char *argv[])
 	print_children(itm, &s, 0);
     }
 
+    for (size_t i = 0; i < s.tops_items.size(); i++) {
+	QgItem *itm = s.tops_items[i];
+	if (!itm->ihash)
+	    continue;
+	open_children(itm, &s, 0, 2);
+    }
+    std::cout << "After 3\n";
+    for (size_t i = 0; i < s.tops_items.size(); i++) {
+	QgItem *itm = s.tops_items[i];
+	if (!itm->ihash)
+	    continue;
+	print_children(itm, &s, 0);
+    }
+
+
+
     // The callback experiments we've been doing have some
     // of this, but we'll need to carefully consider how to handle it.  My
     // current thought is we'll accumulate items to change based on QgInstance

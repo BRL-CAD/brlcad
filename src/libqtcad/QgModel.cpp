@@ -286,6 +286,9 @@ QgItem::open()
 	return;
     }
 
+    // We don't want to double-count - clear out any prior opens
+    close();
+
     std::vector<unsigned long long> ic = (*ctx->instances)[ihash]->children();
     for (size_t i = 0; i < ic.size(); i++) {
 	if (ctx->instances->find(ic[i]) == ctx->instances->end()) {
@@ -322,7 +325,6 @@ QgItem::close()
 	delete qii;
     }
     children.clear();
-    std::cout << ihash << " closed\n";
 }
 
 
@@ -332,7 +334,7 @@ QgItem::update_children()
     if (!ctx)
 	return false;
     if (ctx->instances->find(ihash) == ctx->instances->end()) {
-	//bu_log("Invalid ihash in child\n");
+	bu_log("Invalid ihash in child\n");
 	return false;
     }
     std::cout << "Update child " << ihash << "\n";
@@ -593,10 +595,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	// find any that require updating vs. their parent instances.
 	for (size_t i = 0; i < ctx->tops_items.size(); i++) {
 	    QgItem *itm = ctx->tops_items[i];
-	    for (int j = 0; j < itm->childCount(); j++) {
-		QgItem *c = itm->child(j);
-		c->update_children();
-	    }
+	    itm->update_children();
 	}
 
 
