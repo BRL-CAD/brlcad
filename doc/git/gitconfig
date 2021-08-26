@@ -102,7 +102,7 @@
 	# Compatibility/utility aliases for Subversion
 	#---------------------------------------------------------------------------------#
 	co = checkout
-	up = pull
+	up = pull --rebase
 	info = "!f() { \
 		git remote show origin | grep 'Fetch\\|HEAD' ; \
                 git log -1 --pretty='format:  %as %h %s' ; \
