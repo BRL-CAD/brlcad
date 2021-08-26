@@ -161,7 +161,9 @@ QgInstance::QgInstance()
 
 QgInstance::~QgInstance()
 {
-    XXH64_freeState(h_state);
+    if (h_state)
+	XXH64_freeState(h_state);
+    h_state = NULL;
 }
 
 std::string
@@ -303,22 +305,23 @@ QgItem::update_children()
 {
     if (!ctx || !open_itm)
 	return false;
+
+    // If we are trying to update a QgItem and it references an
+    // invalid instance, there's nothing to update.
     if (ctx->instances->find(ihash) == ctx->instances->end()) {
-	bu_log("Invalid ihash in child\n");
 	return false;
     }
-    std::cout << "Update child " << ihash << "\n";
 
-    // Now the tricky part - we need the QgItem child array to reflect the
-    // current state of the comb tree, but we also want to keep the old QgItems
-    // to minimize disturbances to the model that aren't necessary due to .g
-    // changes. However, unlike the tops case we can't just alphanum sort and
-    // compare old to new - we need to use the ordering derived from the comb
-    // tree.  Moreover, we have to add new QgItems for new instances *at the
-    // right point in the array* to reflect the tree ordering - we can't just
-    // tack them on at the end.  To make it even more complicated, we don't
-    // have a uniqueness guarantee for instance hashes - we may have the same
-    // hash in multiple distinct QgItems.
+    // We need the QgItem child array to reflect the current state of the comb
+    // tree, but we also want to keep the old QgItems to minimize disturbances
+    // to the model that aren't necessary due to .g changes. However, unlike
+    // the tops case we can't just alphanum sort and compare old to new - we
+    // need to use the ordering derived from the comb tree.  Moreover, we have
+    // to add new QgItems for new instances *at the right point in the array*
+    // to reflect the tree ordering - we can't just tack them on at the end.
+    // To make it even more complicated, we don't have a uniqueness guarantee
+    // for instance hashes - we may have the same hash in multiple distinct
+    // QgItems.
     //
     // To manage this, we make a map of queues and iterate over the old QgItems
     // array, queueing up the old items in a manner that allows us to look them
@@ -327,9 +330,11 @@ QgItem::update_children()
     // trying to minimize its change in the child ordering relative to its
     // previous position.
 
-    // We need to compare the hash sets of the current instance and the
-    // (potentially) not current items array.  We also want to reuse as
-    // many QgItems as possible, .
+    // We depend on the instance's set of child hashes being current, either
+    // from initialization or from the per-object editing callback.  If this
+    // set is not current, we need to fix logic elsewhere to ensure that list
+    // IS correct before QgItem's update_children is called - we're not going
+    // to try and fix it here.
     std::vector<unsigned long long> nh = (*ctx->instances)[ihash]->children();
 
     // Since we will be popping items off the queues, to get a similar order to
@@ -375,12 +380,16 @@ QgItem::update_children()
 	itm->update_children();
     }
 
-    // TODO - do set differences on old and new children arrays.  If nothing changed,
-    // we can skip the assignment and return false.
-    children.clear();
-    children = nc;
+    // If nothing changed, we can skip the assignment and return false - otherwise,
+    // we have a new child vector.  TODO - this is the point were an actual Qt model
+    // update is needed...
+    if (nc != children) {
+	children.clear();
+	children = nc;
+	return true;
+    } 
 
-    return true;
+    return false;
 }
 
 void

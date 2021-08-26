@@ -51,6 +51,17 @@ open_children(QgItem *itm, QgModel_ctx *s, int depth, int max_depth)
 }
 
 void
+open_tops(QgModel_ctx *s, int depth)
+{
+    for (size_t i = 0; i < s->tops_items.size(); i++) {
+	QgItem *itm = s->tops_items[i];
+	if (!itm->ihash)
+	    continue;
+	open_children(itm, s, 0, depth);
+    }
+}
+
+void
 close_children(QgItem *itm)
 {
     itm->close();
@@ -91,6 +102,17 @@ print_children(QgItem *itm, QgModel_ctx *s, int depth)
 	}
 
 	print_children(c, s, depth+1);
+    }
+}
+
+void
+print_tops(QgModel_ctx *s)
+{
+    for (size_t i = 0; i < s->tops_items.size(); i++) {
+	QgItem *itm = s->tops_items[i];
+	if (!itm->ihash)
+	    continue;
+	print_children(itm, s, 0);
     }
 }
 
@@ -135,18 +157,8 @@ int main(int argc, char *argv[])
     // the logic to identify, populate, and clear items based on child info.
 
     // Open everything
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
-	if (!itm->ihash)
-	    continue;
-	open_children(itm, &s, 0, -1);
-    }
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
-	if (!itm->ihash)
-	    continue;
-	print_children(itm, &s, 0);
-    }
+    open_tops(&s, -1);
+    print_tops(&s);
 
     // Close everything
     for (size_t i = 0; i < s.tops_items.size(); i++) {
@@ -155,18 +167,8 @@ int main(int argc, char *argv[])
     }
 
     // Open first level
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
-	if (!itm->ihash)
-	    continue;
-	open_children(itm, &s, 0, 1);
-    }
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
-	if (!itm->ihash)
-	    continue;
-	print_children(itm, &s, 0);
-    }
+    open_tops(&s, 1);
+    print_tops(&s);
 
     // Close
     for (size_t i = 0; i < s.tops_items.size(); i++) {
@@ -179,19 +181,9 @@ int main(int argc, char *argv[])
     // operation.  This is the most foundational of the pieces needed for
     // read/write support.
 
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
-	if (!itm->ihash)
-	    continue;
-	open_children(itm, &s, 0, 2);
-    }
     std::cout << "Before\n";
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
-	if (!itm->ihash)
-	    continue;
-	print_children(itm, &s, 0);
-    }
+    open_tops(&s, 2);
+    print_tops(&s);
 
     // Perform edit operations to trigger callbacks.  assuming
     // moss.g example
@@ -204,12 +196,7 @@ int main(int argc, char *argv[])
     ged_exec(&g, ac, (const char **)av);
 
     std::cout << "After 1\n";
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
-	if (!itm->ihash)
-	    continue;
-	print_children(itm, &s, 0);
-    }
+    print_tops(&s);
 
     av[0] = "g";
     av[1] = "all.g";
@@ -217,29 +204,29 @@ int main(int argc, char *argv[])
     av[3] = NULL;
     ged_exec(&g, ac, (const char **)av);
 
-
     std::cout << "After 2\n";
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
-	if (!itm->ihash)
-	    continue;
-	print_children(itm, &s, 0);
-    }
+    print_tops(&s);
 
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
-	if (!itm->ihash)
-	    continue;
-	open_children(itm, &s, 0, 2);
-    }
     std::cout << "After 3\n";
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
-	if (!itm->ihash)
-	    continue;
-	print_children(itm, &s, 0);
-    }
+    open_tops(&s, 2);
+    print_tops(&s);
 
+
+    av[0] = "rm";
+    av[1] = "tor.r";
+    av[2] = "tor";
+    av[3] = NULL;
+    ged_exec(&g, ac, (const char **)av);
+    std::cout << "rm tor.r\n";
+    print_tops(&s);
+
+    av[0] = "kill";
+    av[1] = "-f";
+    av[2] = "all.g";
+    av[3] = NULL;
+    ged_exec(&g, ac, (const char **)av);
+    std::cout << "delete all.g\n";
+    print_tops(&s);
 
 
     // The callback experiments we've been doing have some
