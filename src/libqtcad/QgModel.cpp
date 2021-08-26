@@ -325,77 +325,6 @@ QgItem::close()
     std::cout << ihash << " closed\n";
 }
 
-void
-QgItem::array_nibble(std::vector<QgItem *> *nc, std::vector<unsigned long long> *nh, std::vector<QgItem *> *oc) {
-    // Easy cases first
-    if (!oc->size() && !nh->size()) {
-	return;
-    }
-    if (!oc->size() && nh->size()) {
-	// Nothing left in the old children - we're creating new for anything
-	// that's left in nh
-	for (size_t i = 0; i < nh->size(); i++) {
-	    QgItem *nitem = new QgItem();
-	    nitem->parent = this;
-	    nitem->ihash = (*nh)[i];
-	    nitem->ctx = ctx;
-	    nc->push_back(nitem);
-	}
-	return;
-    }
-    if (oc->size() && !nh->size()) {
-	// Nothing left in the new children - anything left in the old is defunct
-	for (size_t i = 0; i < oc->size(); i++) {
-	    QgItem *oitem = (*oc)[i];
-	    oitem->remove_children();
-	    delete oitem;
-	}
-	return;
-    }
-
-    // If we're a match, stash and continue
-    if ((*nh)[0] == (*oc)[0]->ihash) {
-	nc->push_back((*oc)[0]);
-	nh->erase(nh->begin());
-	oc->erase(oc->begin());
-	array_nibble(nc, nh, oc);
-	return;
-    }
-
-    // If we don't match, things start to get interesting.  Find any additional
-    // hash matches in the remainder of oc.
-
-    int mcnt = 0;
-    for (size_t i = 0; i < oc->size(); i++) {
-	if ((*oc)[i]->ihash == (*nh)[0])
-	    mcnt++;
-    }
-
-    // If we have no matches, add a new QgItem and continue
-    if (!mcnt) {
-	QgItem *nitem = new QgItem();
-	nitem->parent = this;
-	nitem->ihash = (*nh)[0];
-	nitem->ctx = ctx;
-	nc->push_back(nitem);
-	nh->erase(nh->begin());
-	array_nibble(nc, nh, oc);
-	return;
-    }
-
-    // If we have one or more matches, we need to score the impact of various
-    // options on the overall number of QgItems we have to create and destroy
-    // for various operations.  We could:
-    //
-    // 1.  Ignore the matches, create a new item, and process the remainder of the arrays
-    // 2.  Accept a match, remove the QgItems between the current position and
-    // the match, and create new QgItems for anything in between that might have
-    // matched something else in nh.  If we do the latter, we want to know which
-    // candidate match requires the least number of new QgItems - this is a variation
-    // on the longest common substring problem.
-
-}
-
 
 bool
 QgItem::update_children()
@@ -403,39 +332,78 @@ QgItem::update_children()
     if (!ctx)
 	return false;
     if (ctx->instances->find(ihash) == ctx->instances->end()) {
-	bu_log("Invalid ihash in child\n");
+	//bu_log("Invalid ihash in child\n");
 	return false;
     }
     std::cout << "Update child " << ihash << "\n";
 
 
-    // This is a bit tricky.  We need to recognize a child item that
-    // is no longer current, remove it and it's subtrees (if any),
-    // and add any new children.  It has some features in common
-    // with the updating of the tops list.
+    // Now the tricky part - we need the QgItem child array to reflect the
+    // current state of the comb tree, but we also want to keep the old QgItems
+    // to minimize disturbances to the model that aren't necessary due to .g
+    // changes. However, unlike the tops case we can't just alphanum sort and
+    // compare old to new - we need to use the ordering derived from the comb
+    // tree.  Moreover, we have to add new QgItems for new instances *at the
+    // right point in the array* to reflect the tree ordering - we can't just
+    // tack them on at the end.  To make it even more complicated, we don't
+    // have a uniqueness guarantee for instance hashes - we may have the same
+    // hash in multiple distinct QgItems.
+    //
+    // To manage this, we make a map of queues and iterate over the old QgItems
+    // array, queueing up the old items in a manner that allows us to look them
+    // up using their hash and pop the item closest to the "top" of the tree
+    // off the queue.  This way, whenever we need a particular item, we are
+    // trying to minimize its change in the child ordering relative to its
+    // previous position.
 
     // We need to compare the hash sets of the current instance and the
-    // (potentially) not current items array:
+    // (potentially) not current items array.  We also want to reuse as
+    // many QgItems as possible, .
     std::vector<unsigned long long> nh = (*ctx->instances)[ihash]->children();
-    std::vector<QgItem *> oc;
-    for (int i = 0; i < childCount(); i++) {
+
+    // Since we will be popping items off the queues, to get a similar order to
+    // the original usage when we extract them we go backwards here and push
+    // the "last" child items onto the queue first.
+    std::unordered_map<unsigned long long, std::queue<QgItem *>> oc;
+    for (int i = childCount()-1; i >= 0; i--) {
 	QgItem *qii = child(i);
-	oc.push_back(qii);
+	oc[qii->ihash].push(qii);
     }
 
-    // Now the really tricky part.  We want to keep the old QgItems, but
-    // unlike the tops instance we can't just alphanum sort - we have to
-    // use the ordering of the ic array.  Moreover, we have to make new QgItems
-    // for added instances *at the right point in the array* to reflect the
-    // ic ordering - we can't just tack them on at the end.  To make it even
-    // more complicated, we don't have a uniqueness guarantee here for instance
-    // hashes.  What we need is similar to a Levenshtein editing sequence from
-    // the old array to the new, where the "words" are sequences of QgItems that
-    // are unchanged between the old array and the new.
+    // Iterate the QgInstance's array of hashes, building up a QgItems array
+    // using either the stored QgItems from the previous state or new items.
     std::vector<QgItem *> nc;
-    array_nibble(&nc, &nh, &oc); 
+    for (size_t i = 0; i < nh.size(); i++) {
+	if (oc.find(nh[i]) != oc.end() && !oc[nh[i]].empty()) {
+	    QgItem *itm = oc[nh[i]].front();
+	    oc[nh[i]].pop();
+	    nc.push_back(itm);
+	} else {
+	    QgItem *nitem = new QgItem();
+	    nitem->parent = this;
+	    nitem->ihash = nh[i];
+	    nitem->ctx = ctx;
+	    nc.push_back(nitem);
+	}
+    }
 
-    return false;
+    // Anything still left in the queues is now obsolete
+    std::unordered_map<unsigned long long, std::queue<QgItem *>>::iterator oc_it;
+    for (oc_it = oc.begin(); oc_it != oc.end(); oc_it++) {
+	while (!oc_it->second.empty()) {
+	    QgItem *itm = oc_it->second.front();
+	    oc_it->second.pop();
+	    itm->remove_children();
+	    delete itm;
+	}
+    }
+
+    // TODO - do set differences on old and new children arrays.  If nothing changed,
+    // we can skip the assignment and return false.
+    children.clear();
+    children = nc;
+
+    return true;
 }
 
 void

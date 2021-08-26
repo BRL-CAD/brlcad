@@ -240,7 +240,6 @@ class QTCAD_EXPORT QgItem
 	QgItem *parent = NULL;
 
     private:
-	void array_nibble(std::vector<QgItem *> *nc, std::vector<unsigned long long> *nh, std::vector<QgItem *> *oc);
 	std::vector<QgItem *> children;
 };
 
