@@ -292,7 +292,7 @@ QgItem::open()
 	    bu_log("Error - QgInstance not found\n");
 	    continue;
 	}
-	QgItem *qii = new QgItem();	
+	QgItem *qii = new QgItem();
 	qii->parent = this;
 	qii->ihash = ic[i];
 	qii->ctx = ctx;
@@ -323,6 +323,124 @@ QgItem::close()
     }
     children.clear();
     std::cout << ihash << " closed\n";
+}
+
+void
+QgItem::array_nibble(std::vector<QgItem *> *nc, std::vector<unsigned long long> *nh, std::vector<QgItem *> *oc) {
+    // Easy cases first
+    if (!oc->size() && !nh->size()) {
+	return;
+    }
+    if (!oc->size() && nh->size()) {
+	// Nothing left in the old children - we're creating new for anything
+	// that's left in nh
+	for (size_t i = 0; i < nh->size(); i++) {
+	    QgItem *nitem = new QgItem();
+	    nitem->parent = this;
+	    nitem->ihash = (*nh)[i];
+	    nitem->ctx = ctx;
+	    nc->push_back(nitem);
+	}
+	return;
+    }
+    if (oc->size() && !nh->size()) {
+	// Nothing left in the new children - anything left in the old is defunct
+	for (size_t i = 0; i < oc->size(); i++) {
+	    QgItem *oitem = (*oc)[i];
+	    oitem->remove_children();
+	    delete oitem;
+	}
+	return;
+    }
+
+    // If we're a match, stash and continue
+    if ((*nh)[0] == (*oc)[0]->ihash) {
+	nc->push_back((*oc)[0]);
+	nh->erase(nh->begin());
+	oc->erase(oc->begin());
+	array_nibble(nc, nh, oc);
+	return;
+    }
+
+    // If we don't match, things start to get interesting.  Find any additional
+    // hash matches in the remainder of oc.
+
+    int mcnt = 0;
+    for (size_t i = 0; i < oc->size(); i++) {
+	if ((*oc)[i]->ihash == (*nh)[0])
+	    mcnt++;
+    }
+
+    // If we have no matches, add a new QgItem and continue
+    if (!mcnt) {
+	QgItem *nitem = new QgItem();
+	nitem->parent = this;
+	nitem->ihash = (*nh)[0];
+	nitem->ctx = ctx;
+	nc->push_back(nitem);
+	nh->erase(nh->begin());
+	array_nibble(nc, nh, oc);
+	return;
+    }
+
+    // If we have one or more matches, we need to score the impact of various
+    // options on the overall number of QgItems we have to create and destroy
+    // for various operations.  We could:
+    //
+    // 1.  Ignore the matches, create a new item, and process the remainder of the arrays
+    // 2.  Accept a match, remove the QgItems between the current position and
+    // the match, and create new QgItems for anything in between that might have
+    // matched something else in nh.  If we do the latter, we want to know which
+    // candidate match requires the least number of new QgItems - this is a variation
+    // on the longest common substring problem.
+
+}
+
+
+bool
+QgItem::update_children()
+{
+    if (!ctx)
+	return false;
+    if (ctx->instances->find(ihash) == ctx->instances->end()) {
+	bu_log("Invalid ihash in child\n");
+	return false;
+    }
+    std::cout << "Update child " << ihash << "\n";
+
+
+    // This is a bit tricky.  We need to recognize a child item that
+    // is no longer current, remove it and it's subtrees (if any),
+    // and add any new children.  It has some features in common
+    // with the updating of the tops list.
+
+    // We need to compare the hash sets of the current instance and the
+    // (potentially) not current items array:
+    std::vector<unsigned long long> nh = (*ctx->instances)[ihash]->children();
+    std::vector<QgItem *> oc;
+    for (int i = 0; i < childCount(); i++) {
+	QgItem *qii = child(i);
+	oc.push_back(qii);
+    }
+
+    // Now the really tricky part.  We want to keep the old QgItems, but
+    // unlike the tops instance we can't just alphanum sort - we have to
+    // use the ordering of the ic array.  Moreover, we have to make new QgItems
+    // for added instances *at the right point in the array* to reflect the
+    // ic ordering - we can't just tack them on at the end.  To make it even
+    // more complicated, we don't have a uniqueness guarantee here for instance
+    // hashes.  What we need is similar to a Levenshtein editing sequence from
+    // the old array to the new, where the "words" are sequences of QgItems that
+    // are unchanged between the old array and the new.
+    std::vector<QgItem *> nc;
+    array_nibble(&nc, &nh, &oc); 
+
+    return false;
+}
+
+void
+QgItem::remove_children()
+{
 }
 
 void
@@ -503,6 +621,17 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	}
 
 
+	// 3.  With the tops array updated, now we must walk the child items and
+	// find any that require updating vs. their parent instances.
+	for (size_t i = 0; i < ctx->tops_items.size(); i++) {
+	    QgItem *itm = ctx->tops_items[i];
+	    for (int j = 0; j < itm->childCount(); j++) {
+		QgItem *c = itm->child(j);
+		c->update_children();
+	    }
+	}
+
+
 
 	// Activity flag values are selection based, but even if the
 	// selection hasn't changed since the last cycle the parent/child
@@ -512,113 +641,6 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	for (size_t i = 0; i < ctx->active_flags.size(); i++) {
 	    ctx->active_flags[i] = 0;
 	}
-
-#if 0
-	// maybe do a sanity check here for parent_children items in the
-	// null key entries whose dp->d_nref is now > 0.
-	//
-	// The db_diradd callback would have had no way to know when introducing
-	// the new primitive and so would create a toplevel QgInstance, but the
-	// individual callback check of db_update_nref should have spotted this
-	// situation and corrected it.  An invalid reference in a comb should be
-	// checked to see if it is still invalid, and if not the appropriate
-	// corrective QgInstance actions taken - i.e., the empty top level gets
-	// removed if present.  Another option might be to just do the sanity
-	// check above, and always double check a null dp when we need to...
-
-	// Note:  we don't delete any QgInstance objects here, nor do we create them.
-	// Those operations are handled in the other callback.
-
-	// What we need to do here is identify the current tops objects, and make
-	// sure the QgItem hierarchy is updated to reflect them with minimal
-	// disruption.
-	std::vector<QgItem *> ntops;
-	std::unordered_set<struct directory *> tops_dp;
-	struct directory **db_objects = NULL;
-	int path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &db_objects);
-	if (path_cnt) {
-
-	    bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
-
-	    // We take advantage of the sorted vectors to do set differences.
-	    // Unlike comb trees, which are ordered based on their boolean
-	    // expressions, tops sorting is by obj names.
-	    //
-	    // NOTE:  we may be able to do the same thing for comb vectors with
-	    // the hashes, as far as spotting added and removed children...
-	    std::vector<struct directory *> ndps;
-	    for (int i = 0; i < path_cnt; i++) {
-		ndps.push_back(db_objects[i]);
-	    }
-	    bu_free(db_objects, "tops obj list");
-
-	    std::vector<struct directory *> odps;
-	    std::unordered_map<struct directory *, QgItem *> olookup;
-	    for (size_t i = 0; i < ctx->tops.size(); i++) {
-		odps.push_back(ctx->tops[i]->inst->dp);
-		olookup[ctx->tops[i]->inst->dp] = ctx->tops[i];
-	    }
-
-	    // Find out what the differences are (if any)
-	    std::vector<struct directory *> removed, added;
-	    std::set_difference(odps.begin(), odps.end(), ndps.begin(), ndps.end(),
-		    std::back_inserter(removed), DpCmp);
-	    std::set_difference(ndps.begin(), ndps.end(), odps.begin(), odps.end(),
-		    std::back_inserter(added), DpCmp);
-
-	    // If we do have differences, there's more work to do
-	    if (removed.size() || added.size()) {
-
-		std::vector<struct directory *> common;
-		std::set_intersection(odps.begin(), odps.end(), ndps.begin(), ndps.end(),
-			std::back_inserter(common), DpCmp);
-
-		// Construct unordered_sets of the above results for easy lookup
-		std::unordered_set<struct directory *> added_dp(added.begin(), added.end());
-		std::unordered_set<struct directory *> common_dp(common.begin(), common.end());
-
-		for (int i = 0; i < path_cnt; i++) {
-		    struct directory *dp = db_objects[i];
-		    if (common_dp.find(dp) != common_dp.end()) {
-			QgItem *itm = olookup[dp];
-			ntops.push_back(itm);
-		    }
-		    if (added_dp.find(dp) != added_dp.end()) {
-			// New entry.  We should already have a new instance
-			// from the addition of the object, but we need the
-			// hash to look it up so make a temporary copy.
-			QgInstance tmp_inst;
-			tmp_inst.parent = NULL;
-			tmp_inst.dp = dp;
-			tmp_inst.dp_name = std::string(dp->d_namep);
-			tmp_inst.op = DB_OP_UNION;
-			MAT_IDN(tmp_inst.c_m);
-
-			QgItem *nitem = new QgItem();
-			nitem->parent = NULL;
-			nitem->ctx = ctx;
-			nitem->ihash = tmp_inst.hash();
-			ntops.push_back(nitem);
-		    }
-		}
-		ctx->tops = ntops;
-
-		std::queue<QgItem *> itm_del;
-		for (size_t i = 0; i < removed.size(); i++) {
-		    QgItem *itm = olookup[removed[i]];
-		    itm_del.push(itm);
-		}
-		while (itm_del.size()) {
-		    QgItem *itm = itm_del.front();
-		    itm_del.pop();
-		    for (size_t i = 0; i < itm->children.size(); i++) {
-			itm_del.push(itm->children[i]);
-		    }
-		    delete itm;
-		}
-	    }
-	}
-#endif
     }
 }
 

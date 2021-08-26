@@ -213,6 +213,12 @@ class QTCAD_EXPORT QgItem
 	void open();
 	void close();
 
+	// If a database edit has occurred, everything in
+	// the tree must be validated to see if it is still
+	// current.
+	bool update_children();
+	void remove_children();
+
 
 	void appendChild(QgItem *C);
 	QgItem *child(int n);
@@ -234,6 +240,7 @@ class QTCAD_EXPORT QgItem
 	QgItem *parent = NULL;
 
     private:
+	void array_nibble(std::vector<QgItem *> *nc, std::vector<unsigned long long> *nh, std::vector<QgItem *> *oc);
 	std::vector<QgItem *> children;
 };
 
