@@ -286,59 +286,28 @@ QgItem::open()
 	return;
     }
 
-    // We don't want to double-count - clear out any prior opens
-    close();
-
-    std::vector<unsigned long long> ic = (*ctx->instances)[ihash]->children();
-    for (size_t i = 0; i < ic.size(); i++) {
-	if (ctx->instances->find(ic[i]) == ctx->instances->end()) {
-	    bu_log("Error - QgInstance not found\n");
-	    continue;
-	}
-	QgItem *qii = new QgItem();
-	qii->parent = this;
-	qii->ihash = ic[i];
-	qii->ctx = ctx;
-	appendChild(qii);
-    }
+    open_itm = true;
+    update_children();
 }
 
 
 void
 QgItem::close()
 {
-    if (!ctx)
-	return;
-
-    if (ctx->instances->find(ihash) == ctx->instances->end()) {
-	bu_log("Invalid ihash\n");
-	return;
-    }
-
-    std::vector<unsigned long long> ic = (*ctx->instances)[ihash]->children();
-    for (int i = 0; i < childCount(); i++) {
-	QgItem *qii = child(i);
-	qii->close();
-    }
-    for (int i = 0; i < childCount(); i++) {
-	QgItem *qii = child(i);
-	delete qii;
-    }
-    children.clear();
+    open_itm = false;
 }
 
 
 bool
 QgItem::update_children()
 {
-    if (!ctx)
+    if (!ctx || !open_itm)
 	return false;
     if (ctx->instances->find(ihash) == ctx->instances->end()) {
 	bu_log("Invalid ihash in child\n");
 	return false;
     }
     std::cout << "Update child " << ihash << "\n";
-
 
     // Now the tricky part - we need the QgItem child array to reflect the
     // current state of the comb tree, but we also want to keep the old QgItems
@@ -398,6 +367,12 @@ QgItem::update_children()
 	    itm->remove_children();
 	    delete itm;
 	}
+    }
+
+    // If any prior existing children were open, propagate down the tree
+    for (size_t i = 0; i < nc.size(); i++) {
+	QgItem *itm = nc[i];
+	itm->update_children();
     }
 
     // TODO - do set differences on old and new children arrays.  If nothing changed,

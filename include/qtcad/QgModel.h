@@ -236,6 +236,7 @@ class QTCAD_EXPORT QgItem
 #endif
 
 	unsigned long long ihash = 0;
+	bool open_itm = false;
 	QgModel_ctx *ctx = NULL;
 	QgItem *parent = NULL;
 

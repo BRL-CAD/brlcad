@@ -51,6 +51,16 @@ open_children(QgItem *itm, QgModel_ctx *s, int depth, int max_depth)
 }
 
 void
+close_children(QgItem *itm)
+{
+    itm->close();
+    for (int j = 0; j < itm->childCount(); j++) {
+	QgItem *c = itm->child(j);
+	close_children(c);
+    }
+}
+
+void
 print_children(QgItem *itm, QgModel_ctx *s, int depth)
 {
     if (!itm || !itm->ihash)
@@ -75,6 +85,11 @@ print_children(QgItem *itm, QgModel_ctx *s, int depth)
 	QgItem *c = itm->child(j);
 	if (s->instances->find(c->ihash) == s->instances->end())
 	    continue;
+
+	if (!itm->open_itm) {
+	    continue;
+	}
+
 	print_children(c, s, depth+1);
     }
 }
@@ -156,7 +171,7 @@ int main(int argc, char *argv[])
     // Close
     for (size_t i = 0; i < s.tops_items.size(); i++) {
 	QgItem *itm = s.tops_items[i];
-	itm->close();
+	close_children(itm);
     }
 
     // TODO - so the rough progression of steps here is:
