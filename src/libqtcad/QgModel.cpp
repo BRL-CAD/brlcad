@@ -492,17 +492,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 
 	// 1.  Rebuild top instances
 	{
-	    for (i_it = ctx->tops_instances->begin(); i_it != ctx->tops_instances->end(); i_it++) {
-		QgInstance *t = i_it->second;
-		ctx->instances->erase(i_it->first);
-		// NOTE - it may be worth using a pool for these instances to
-		// avoid continual frees and deletes, but don't want to add the
-		// additional logic until profiling suggests it would be a
-		// significant performance win.
-		delete t;
-	    }
-	    ctx->tops_instances->clear();
-
+	    std::unordered_map<unsigned long long, QgInstance *> obsolete = (*ctx->tops_instances);
 	    struct directory **db_objects = NULL;
 	    int path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &db_objects);
 
@@ -511,21 +501,38 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 		// Sort so the top level ordering is correct for listing in tree views
 		bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
 
+		QgInstance *ninst = NULL;
 		for (int i = 0; i < path_cnt; i++) {
 		    struct directory *curr_dp = db_objects[i];
-		    QgInstance *ninst = new QgInstance();
-		    ninst->ctx = ctx;
-		    ninst->parent = NULL;
+		    if (!ninst) {
+			ninst = new QgInstance();
+			ninst->ctx = ctx;
+			ninst->parent = NULL;
+			ninst->op = DB_OP_UNION;
+			MAT_IDN(ninst->c_m);
+		    }
 		    ninst->dp = curr_dp;
 		    ninst->dp_name = std::string(curr_dp->d_namep);
-		    ninst->op = DB_OP_UNION;
-		    MAT_IDN(ninst->c_m);
 		    unsigned long long nhash = ninst->hash();
-		    (*ctx->tops_instances)[nhash] = ninst;
-		    (*ctx->instances)[nhash] = ninst;
+		    if (ctx->tops_instances->find(nhash) != ctx->tops_instances->end()) {
+			obsolete.erase(nhash);
+		    } else {
+			(*ctx->tops_instances)[nhash] = ninst;
+			(*ctx->instances)[nhash] = ninst;
+			ninst = NULL;
+		    }
 		}
+		if (ninst)
+		    delete ninst;
 	    }
 	    bu_free(db_objects, "tops obj list");
+
+	    // Anything left in obsolete needs to be cleared out
+	    for (i_it = obsolete.begin(); i_it != obsolete.end(); i_it++) {
+		ctx->tops_instances->erase(i_it->first);
+		ctx->instances->erase(i_it->first);
+		delete i_it->second;
+	    }
 	}
 
 	// 2.  Build up sets of the old and new tops QgItems, and identify differences.
@@ -533,65 +540,66 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	// the difficulties of updating.  We will create a "full" new QgItems tops vector,
 	// but the set_difference comparison will be based on comparison of the
 	// directory pointers.
-	std::vector<QgItem *> ntops_items;
-	for (i_it = ctx->tops_instances->begin(); i_it != ctx->tops_instances->end(); i_it++) {
-	    QgItem *nitem = new QgItem();
-	    nitem->parent = NULL;
-	    nitem->ihash = i_it->first;
-	    nitem->ctx = ctx;
-	    ntops_items.push_back(nitem);
-	}
-	std::sort(ntops_items.begin(), ntops_items.end(), QgItem_cmp());
-	std::vector<QgItem *> removed, added;
-	std::set_difference(ctx->tops_items.begin(), ctx->tops_items.end(), ntops_items.begin(), ntops_items.end(), std::back_inserter(removed), QgItem_cmp());
-	std::set_difference(ntops_items.begin(), ntops_items.end(), ctx->tops_items.begin(), ctx->tops_items.end(), std::back_inserter(added), QgItem_cmp());
+	{
+	    // Build up a "candidate" vector of new QgItems based on the now-updated tops_instances data.
+	    std::vector<QgItem *> ntops_items;
+	    for (i_it = ctx->tops_instances->begin(); i_it != ctx->tops_instances->end(); i_it++) {
+		QgItem *nitem = new QgItem();
+		nitem->parent = NULL;
+		nitem->ihash = i_it->first;
+		nitem->ctx = ctx;
+		ntops_items.push_back(nitem);
+	    }
+	    std::sort(ntops_items.begin(), ntops_items.end(), QgItem_cmp());
 
-	// Delete anything in the ntops_items array that we're not adding
-	std::unordered_set<QgItem *> added_set(added.begin(), added.end());
-	for (size_t i = 0; i < ntops_items.size(); i++) {
-	    if (added_set.find(ntops_items[i]) == added_set.end())
-		delete ntops_items[i];
-	}
+	    // Compare the context's current tops_items array with the proposed new array, using QgItem_cmp.
+	    // Build up sets of both added and removed items.
+	    std::vector<QgItem *> removed, added;
+	    std::set_difference(ctx->tops_items.begin(), ctx->tops_items.end(), ntops_items.begin(), ntops_items.end(), std::back_inserter(removed), QgItem_cmp());
+	    std::set_difference(ntops_items.begin(), ntops_items.end(), ctx->tops_items.begin(), ctx->tops_items.end(), std::back_inserter(added), QgItem_cmp());
 
-	// Assemble the new tops vector, combining the original old items that
-	// aren't being removed and the new additions
-	std::vector<QgItem *> modded_tops_items;
-	std::unordered_set<QgItem *> removed_set(removed.begin(), removed.end());
-	for (size_t i = 0; i < ctx->tops_items.size(); i++) {
-	    QgItem *itm = ctx->tops_items[i];
-	    if (removed_set.find(itm) == removed_set.end()) {
-		modded_tops_items.push_back(itm);
-	    } else {
-		std::cout << "removed: " << itm->ihash << "\n";
+	    // Delete anything in the ntops_items array that we're not adding - the existing tops_items
+	    // QgItems will be reused in those cases
+	    std::unordered_set<QgItem *> added_set(added.begin(), added.end());
+	    for (size_t i = 0; i < ntops_items.size(); i++) {
+		if (added_set.find(ntops_items[i]) == added_set.end())
+		    delete ntops_items[i];
+	    }
+
+	    // Assemble the new composite tops vector, combining the original
+	    // QgItems that aren't being obsolete and any new additions
+	    std::vector<QgItem *> modded_tops_items;
+	    std::unordered_set<QgItem *> removed_set(removed.begin(), removed.end());
+	    for (size_t i = 0; i < ctx->tops_items.size(); i++) {
+		if (removed_set.find(ctx->tops_items[i]) == removed_set.end())
+		    modded_tops_items.push_back(ctx->tops_items[i]);
+	    }
+	    for (size_t i = 0; i < added.size(); i++) {
+		modded_tops_items.push_back(added[i]);
+	    }
+
+	    std::sort(modded_tops_items.begin(), modded_tops_items.end(), QgItem_cmp());
+
+	    // TODO - this is probably about where we would need to start doing the
+	    // proper steps for updating a Qt model (see Qt docs).  Up until this step
+	    // we've not been modding the QtItem data exposed to the model - once we
+	    // update the tops list and start walking any open children to validate
+	    // them, we're modding the Qt data
+	    ctx->tops_items.clear();
+	    ctx->tops_items = modded_tops_items;
+
+	    // We've updated the tops array now - delete the old QgItems that were removed.
+	    for (size_t i = 0; i < removed.size(); i++) {
+		delete removed[i];
 	    }
 	}
-	for (size_t i = 0; i < added.size(); i++) {
-	    std::cout << "added: " << added[i]->ihash << "\n";
-	    modded_tops_items.push_back(added[i]);
-	}
-	std::sort(modded_tops_items.begin(), modded_tops_items.end(), QgItem_cmp());
-
-	// TODO - this is probably about where we would need to start doing the
-	// proper steps for updating a Qt model (see Qt docs).  Up until this step
-	// we've not been modding the QtItem data exposed to the model - once we
-	// update the tops list and start walking any open children to validate
-	// them, we're modding the Qt data
-	ctx->tops_items.clear();
-	ctx->tops_items = modded_tops_items;
-
-	// We've updated the tops array now - delete the old QgItems that were removed.
-	for (size_t i = 0; i < removed.size(); i++) {
-	    delete removed[i];
-	}
-
 
 	// 3.  With the tops array updated, now we must walk the child items and
-	// find any that require updating vs. their parent instances.
+	// find any that require updating vs. their assigned instances.
 	for (size_t i = 0; i < ctx->tops_items.size(); i++) {
 	    QgItem *itm = ctx->tops_items[i];
 	    itm->update_children();
 	}
-
 
 
 	// Activity flag values are selection based, but even if the

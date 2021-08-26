@@ -157,24 +157,38 @@ int main(int argc, char *argv[])
     // the logic to identify, populate, and clear items based on child info.
 
     // Open everything
+    std::cout << "\nAll open:\n";
     open_tops(&s, -1);
     print_tops(&s);
 
-    // Close everything
+    // Close top level
+    std::cout << "\nTop level closed:\n";
     for (size_t i = 0; i < s.tops_items.size(); i++) {
 	QgItem *itm = s.tops_items[i];
 	itm->close();
     }
+    print_tops(&s);
+
 
     // Open first level
+    std::cout << "\nOpen first level (remember open children):\n";
     open_tops(&s, 1);
     print_tops(&s);
 
-    // Close
+
+    // Close everything
+    std::cout << "\nEverything closed:\n";
     for (size_t i = 0; i < s.tops_items.size(); i++) {
 	QgItem *itm = s.tops_items[i];
 	close_children(itm);
     }
+    print_tops(&s);
+
+    // Open first level
+    std::cout << "\nOpen first level (children closed):\n";
+    open_tops(&s, 1);
+    print_tops(&s);
+
 
     // 3.  Add callback support for syncing the instance sets after a database
     // operation.  This is the most foundational of the pieces needed for
@@ -203,7 +217,6 @@ int main(int argc, char *argv[])
     av[3] = NULL;
     ged_exec(&g, ac, (const char **)av);
 
-    std::cout << "After 2\n";
     std::cout << "\nAdded ellipse.r back to the end of all.g, no call to open:\n";
     print_tops(&s);
 
