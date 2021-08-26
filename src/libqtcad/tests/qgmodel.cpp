@@ -176,12 +176,11 @@ int main(int argc, char *argv[])
 	close_children(itm);
     }
 
-    // TODO - so the rough progression of steps here is:
     // 3.  Add callback support for syncing the instance sets after a database
     // operation.  This is the most foundational of the pieces needed for
     // read/write support.
 
-    std::cout << "Before\n";
+    std::cout << "\nInitial state:\n";
     open_tops(&s, 2);
     print_tops(&s);
 
@@ -195,7 +194,7 @@ int main(int argc, char *argv[])
     av[3] = NULL;
     ged_exec(&g, ac, (const char **)av);
 
-    std::cout << "After 1\n";
+    std::cout << "\nRemoved ellipse.r from all.g:\n";
     print_tops(&s);
 
     av[0] = "g";
@@ -205,9 +204,10 @@ int main(int argc, char *argv[])
     ged_exec(&g, ac, (const char **)av);
 
     std::cout << "After 2\n";
+    std::cout << "\nAdded ellipse.r back to the end of all.g, no call to open:\n";
     print_tops(&s);
 
-    std::cout << "After 3\n";
+    std::cout << "\nAfter additional open pass on tree:\n";
     open_tops(&s, 2);
     print_tops(&s);
 
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
     av[2] = "tor";
     av[3] = NULL;
     ged_exec(&g, ac, (const char **)av);
-    std::cout << "rm tor.r\n";
+    std::cout << "\ntops tree after removing tor from tor.r:\n";
     print_tops(&s);
 
     av[0] = "kill";
@@ -225,19 +225,14 @@ int main(int argc, char *argv[])
     av[2] = "all.g";
     av[3] = NULL;
     ged_exec(&g, ac, (const char **)av);
-    std::cout << "delete all.g\n";
+    std::cout << "\ntops tree after deleting all.g:\n";
     print_tops(&s);
 
+    std::cout << "\nexpanded tops tree after deleting all.g:\n";
+    open_tops(&s, -1);
+    print_tops(&s);
 
-    // The callback experiments we've been doing have some
-    // of this, but we'll need to carefully consider how to handle it.  My
-    // current thought is we'll accumulate items to change based on QgInstance
-    // changes made, and then do a single Item update pass at the end for
-    // performance reasons (we don't want the view updating a whole bunch if
-    // thousands of objects are impacted by a single edit...)  We'll probably want
-    // to update the QgInstances from the per-object callbacks, and then
-    // rebuild the tops list and walk down the Items associated with those instances
-    // to perform any needed updates.
+    // TODO - so the rough progression of steps here is:
     //
     // 4. Figure out how to do the Item update pass in response to #3.  In
     // particular, how to preserve the tree's "opened/closed" state through

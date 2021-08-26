@@ -79,6 +79,12 @@ struct QgItem_cmp {
 
 	QgInstance *inst1 = (*i1->ctx->instances)[i1->ihash];
 	QgInstance *inst2 = (*i2->ctx->instances)[i2->ihash];
+
+	if (!inst1 && inst2)
+	    return true;
+	if (inst1 && !inst2)
+	    return false;
+
 	const char *n1 = inst1->dp_name.c_str();
 	const char *n2 = inst2->dp_name.c_str();
 	if (alphanum_impl(n1, n2, NULL) < 0)
@@ -488,8 +494,12 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	{
 	    for (i_it = ctx->tops_instances->begin(); i_it != ctx->tops_instances->end(); i_it++) {
 		QgInstance *t = i_it->second;
-		delete t;
 		ctx->instances->erase(i_it->first);
+		// NOTE - it may be worth using a pool for these instances to
+		// avoid continual frees and deletes, but don't want to add the
+		// additional logic until profiling suggests it would be a
+		// significant performance win.
+		delete t;
 	    }
 	    ctx->tops_instances->clear();
 
@@ -645,10 +655,7 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    // For removal, we need to 1) remove any instances where the parent is
 	    // dp, and 2) invalidate the dps in any instances where they match.
 	    //
-	    // NOTE:  we'll need to make sure QgItems can sort out removed QgInstances -
-	    // current thought is a failed lookup of the hash will be workable, but
-	    // we may need to have the QgInstance directly track associated QgItems if
-	    // that is too slow...
+	    // NOTE:  tops instances are handled separately in the update_nref callback.
 	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
 		inst = i_it->second;
 		if (inst->dp == dp)
@@ -664,31 +671,9 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 		ctx->instances->erase(i_it);
 	    }
 
-	    // If the object is being removed, we know for sure it's not going to be
-	    // a tops instance any longer...
-	    trm_it = ctx->tops_instances->end();
-	    for (i_it = ctx->tops_instances->begin(); i_it != ctx->tops_instances->end(); i_it++) {
-		inst = i_it->second;
-		if (inst->dp_name == std::string(dp->d_namep)) {
-		    trm_it = i_it;
-		    delete inst;
-		    break;
-		}
-	    }
-	    if (trm_it != ctx->tops_instances->end()) {
-		ctx->tops_instances->erase(trm_it);
-	    }
-
 	    // TODO - don't know if we'll actually need this in the end...
 	    if (ctx->mdl)
 		ctx->mdl->need_update_nref = true;
-
-	    // TODO: QgItems also need to be updated, not sure yet whether
-	    // it's better do that here or in update_nref callback.  Leaning
-	    // towards the latter, since update_nref will have to be called after
-	    // an addition or removal for a tree view to work anyway and if a
-	    // command does a bunch of individual removals we don't want to slow
-	    // the UI by doing huge numbers of intra-command updates.
 
 	    break;
 	default:
