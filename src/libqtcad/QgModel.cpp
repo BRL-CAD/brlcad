@@ -787,14 +787,17 @@ QgModel_ctx::~QgModel_ctx()
     if (gedp)
 	ged_close(gedp);
 
-    std::unordered_map<unsigned long long, QgInstance *>::iterator i_it;
-    for (i_it = (*instances).begin(); i_it != (*instances).end(); i_it++) {
-	QgInstance *inst = i_it->second;
-	delete inst;
+    if (instances) {
+	std::unordered_map<unsigned long long, QgInstance *>::iterator i_it;
+	for (i_it = (*instances).begin(); i_it != (*instances).end(); i_it++) {
+	    QgInstance *inst = i_it->second;
+	    delete inst;
+	}
+	delete instances;
     }
 
-    delete instances;
-    delete tops_instances;
+    if (tops_instances)
+	delete tops_instances;
 }
 
 void
