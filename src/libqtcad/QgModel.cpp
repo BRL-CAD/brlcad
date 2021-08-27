@@ -77,8 +77,14 @@ struct QgItem_cmp {
 	if (i1->ihash && !i2->ihash)
 	    return false;
 
-	QgInstance *inst1 = (*i1->ctx->instances)[i1->ihash];
-	QgInstance *inst2 = (*i2->ctx->instances)[i2->ihash];
+	QgInstance *inst1 = NULL;
+	QgInstance *inst2 = NULL;
+	if (i1->ctx->instances->find(i1->ihash) != i1->ctx->instances->end()) {
+	    inst1 = (*i1->ctx->instances)[i1->ihash];
+	}
+	if (i2->ctx->instances->find(i2->ihash) != i2->ctx->instances->end()) {
+	    inst2 = (*i2->ctx->instances)[i2->ihash];
+	}
 
 	if (!inst1 && inst2)
 	    return true;
@@ -535,7 +541,8 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 		if (ninst)
 		    delete ninst;
 	    }
-	    bu_free(db_objects, "tops obj list");
+	    if (db_objects)
+		bu_free(db_objects, "tops obj list");
 
 	    // Anything left in obsolete no longer matches a current tops
 	    // object and needs to be cleared out
@@ -674,21 +681,21 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 
 	    // For removal, we need to 1) remove any instances where the parent is
 	    // dp, and 2) invalidate the dps in any instances where they match.
-	    //
-	    // NOTE:  tops instances are handled separately in the update_nref callback.
 	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
 		inst = i_it->second;
+		// NOTE:  tops instances are handled separately in the update_nref callback.
+		if (!inst->parent)
+		    continue;
 		if (inst->dp == dp)
 		    inst->dp = NULL;
 		if (inst->parent == dp) {
 		    rmq.push(i_it);
-		    delete inst;
 		}
 	    }
 	    while (!rmq.empty()) {
 		i_it = rmq.front();
 		rmq.pop();
-		ctx->instances->erase(i_it);
+		ctx->instances->erase(i_it->first);
 	    }
 
 	    // TODO - don't know if we'll actually need this in the end...

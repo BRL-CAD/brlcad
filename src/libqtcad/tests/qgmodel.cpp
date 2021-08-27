@@ -245,6 +245,26 @@ int main(int argc, char *argv[])
     open_tops(&s, -1);
     print_tops(&s);
 
+    const char *objs[] = {"box.r", "box.s", "cone.r", "cone.s", "ellipse.r", "ellipse.s", "light.r", "LIGHT", "platform.r", "platform.s", "tor", "tor.r", NULL};
+    const char *obj = objs[0];
+    int i = 0;
+    while (obj) {
+	av[0] = "kill";
+	av[1] = "-f";
+	av[2] = obj;
+	av[3] = NULL;
+	ged_exec(&g, ac, (const char **)av);
+	i++;
+	obj = objs[i];
+    }
+    std::cout << "\ntops tree after deleting everything:\n";
+    print_tops(&s);
+
+    std::cout << "\nexpanded tops tree after deleting everything:\n";
+    open_tops(&s, -1);
+    print_tops(&s);
+
+
     // TODO - so the rough progression of steps here is:
     //
     // 4. Figure out how to do the Item update pass in response to #3.  In
