@@ -501,9 +501,14 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 		// Sort so the top level ordering is correct for listing in tree views
 		bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
 
+		// Identify still-valid instances and create any that are missing
 		QgInstance *ninst = NULL;
 		for (int i = 0; i < path_cnt; i++) {
+
 		    struct directory *curr_dp = db_objects[i];
+
+		    // We can reuse this instance unless/until it needs to
+		    // be assigned to a new tops object
 		    if (!ninst) {
 			ninst = new QgInstance();
 			ninst->ctx = ctx;
@@ -511,9 +516,14 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 			ninst->op = DB_OP_UNION;
 			MAT_IDN(ninst->c_m);
 		    }
+
+		    // Assign the object specific info and compute the hash
 		    ninst->dp = curr_dp;
 		    ninst->dp_name = std::string(curr_dp->d_namep);
 		    unsigned long long nhash = ninst->hash();
+
+		    // Do we already have a matching instance?  If so, just use
+		    // the old one - else, ninst will be used.
 		    if (ctx->tops_instances->find(nhash) != ctx->tops_instances->end()) {
 			obsolete.erase(nhash);
 		    } else {
@@ -527,7 +537,8 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	    }
 	    bu_free(db_objects, "tops obj list");
 
-	    // Anything left in obsolete needs to be cleared out
+	    // Anything left in obsolete no longer matches a current tops
+	    // object and needs to be cleared out
 	    for (i_it = obsolete.begin(); i_it != obsolete.end(); i_it++) {
 		ctx->tops_instances->erase(i_it->first);
 		ctx->instances->erase(i_it->first);
@@ -578,6 +589,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 		modded_tops_items.push_back(added[i]);
 	    }
 
+	    // Make sure what will become the final tops list is alphanum sorted
 	    std::sort(modded_tops_items.begin(), modded_tops_items.end(), QgItem_cmp());
 
 	    // TODO - this is probably about where we would need to start doing the
