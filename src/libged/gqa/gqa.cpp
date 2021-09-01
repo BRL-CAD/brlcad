@@ -2353,7 +2353,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	ged_gqa_plot.vhead = bv_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 
-    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    rtip = rt_new_rti(gedp->dbip);
     rtip->useair = use_air;
 
     start_objs = arg_count;

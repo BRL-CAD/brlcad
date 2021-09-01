@@ -1355,7 +1355,7 @@ edit_translate(struct ged *gedp, const vect_t *from,
     struct rt_db_internal intern;
 
     VSUB2(delta, *to, *from);
-    VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(delta, delta, gedp->dbip->dbi_local2base);
     d_obj = DB_FULL_PATH_CUR_DIR(path);
 
     if (ged_path_validate(gedp, path) == GED_ERROR) {
@@ -1813,7 +1813,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	}
 
 	/* it may still be an obj, so quietly check db for obj name */
-	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
+	if (db_lookup(gedp->dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
 	    goto convert_obj;
     }
 
@@ -1871,7 +1871,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 convert_obj:
     /* convert string to path/object */
     BU_ALLOC(arg->object, struct db_full_path);
-    if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
+    if (db_string_to_path(arg->object, gedp->dbip,
 			  str)) {
 	db_free_full_path(arg->object);
 	bu_free((void *)arg->object, "db_string_to_path");

@@ -180,7 +180,7 @@ static int
 ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int argc, const char *argv[], int bot_threshold, int no_autoview)
 {
     // Abbreviations for convenience
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
     struct bu_ptbl *sg;
 
@@ -423,7 +423,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 
 	// Prepare tree walking data container
 	struct draw_data_t dd;
-	dd.dbip = gedp->ged_wdbp->dbip;
+	dd.dbip = gedp->dbip;
 	dd.v = v;
 	dd.tol = &gedp->ged_wdbp->wdb_tol;
 	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
@@ -916,7 +916,7 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-    RT_CHECK_DBI(gedp->ged_wdbp->dbip);
+    RT_CHECK_DBI(gedp->dbip);
 
     argc--;argv++;
 

@@ -58,10 +58,10 @@ int
 ged_cm_anim(const int argc, const char **argv)
 {
 
-    if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
+    if (_ged_current_gedp->dbip == DBI_NULL)
 	return 0;
 
-    if (db_parse_anim(_ged_current_gedp->ged_wdbp->dbip, argc, (const char **)argv) < 0) {
+    if (db_parse_anim(_ged_current_gedp->dbip, argc, (const char **)argv) < 0) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "cm_anim:  %s %s failed\n", argv[1], argv[2]);
 	return -1;		/* BAD */
     }
@@ -75,13 +75,13 @@ ged_cm_anim(const int argc, const char **argv)
 int
 ged_cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 {
-    if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
+    if (_ged_current_gedp->dbip == DBI_NULL)
 	return 0;
 
     /*f_zap(NULL, interp, 0, (char **)0);*/
 
     /* Free animation structures */
-    db_free_anim(_ged_current_gedp->ged_wdbp->dbip);
+    db_free_anim(_ged_current_gedp->dbip);
 
     preview_tree_walk_needed = 0;
     return 0;
@@ -442,7 +442,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 	bv_vlblock_free(preview_vbp);
 	preview_vbp = (struct bv_vlblock *)NULL;
     }
-    db_free_anim(gedp->ged_wdbp->dbip);	/* Forget any anim commands */
+    db_free_anim(gedp->dbip);	/* Forget any anim commands */
 
     return GED_OK;
 }

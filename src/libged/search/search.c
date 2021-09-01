@@ -226,7 +226,7 @@ _ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls 
     /* We've handled the toplevel special cases - now the only question
      * is is the path valid */
     (*is_specific) = 1;
-    path_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(normalized), LOOKUP_QUIET);
+    path_dp = db_lookup(gedp->dbip, bu_vls_addr(normalized), LOOKUP_QUIET);
     if (path_dp == RT_DIR_NULL) {
 	bu_vls_printf(normalized, " not found in database!");
 	return 0;
@@ -245,7 +245,7 @@ _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct 
 
     BU_ALLOC(tmp_search, struct bu_ptbl);
 
-    (void)db_search(tmp_search, DB_SEARCH_RETURN_UNIQ_DP, comb_str, 1, &path, gedp->ged_wdbp->dbip, ctx);
+    (void)db_search(tmp_search, DB_SEARCH_RETURN_UNIQ_DP, comb_str, 1, &path, gedp->dbip, ctx);
     path_cnt = BU_PTBL_LEN(tmp_search);
     (*path_list) = (struct directory **)bu_malloc(sizeof(char *) * (path_cnt+1), "object path array");
 
@@ -371,7 +371,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
     /* Update references once before we start all of this - db_search
      * needs nref to be current to work correctly. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -414,16 +414,16 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 		if (!is_specific) {
 		    if (!is_flat && !aflag && !flat_only)
-			new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &(new_search->paths));
+			new_search->path_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &(new_search->paths));
 		    if (!is_flat && aflag && !flat_only)
-			new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &(new_search->paths));
+			new_search->path_cnt = db_ls(gedp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &(new_search->paths));
 		    if (is_flat && !aflag && !flat_only)
-			new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, 0, NULL, &(new_search->paths));
+			new_search->path_cnt = db_ls(gedp->dbip, 0, NULL, &(new_search->paths));
 		    if (is_flat && aflag && !flat_only)
-			new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_HIDDEN, NULL, &(new_search->paths));
+			new_search->path_cnt = db_ls(gedp->dbip, DB_LS_HIDDEN, NULL, &(new_search->paths));
 		} else {
 		    /* _ged_search_characterize_path verified that the db_lookup will succeed */
-		    struct directory *local_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&argvls), LOOKUP_QUIET);
+		    struct directory *local_dp = db_lookup(gedp->dbip, bu_vls_addr(&argvls), LOOKUP_QUIET);
 		    if (is_flat) {
 			new_search->path_cnt = _ged_search_localized_obj_list(gedp, local_dp, &(new_search->paths), ctx);
 		    } else {
@@ -450,9 +450,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 		    BU_ALLOC(new_search, struct ged_search);
 
 		    if (!aflag)
-			new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &(new_search->paths));
+			new_search->path_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &(new_search->paths));
 		    if (aflag)
-			new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &(new_search->paths));
+			new_search->path_cnt = db_ls(gedp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &(new_search->paths));
 
 		    new_search->search_type = 1;
 		    bu_ptbl_ins(search_set, (long *)new_search);
@@ -509,7 +509,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 	    while (path_cnt < search->path_cnt) {
 		flags |= DB_SEARCH_RETURN_UNIQ_DP;
-		(void)db_search(uniq_db_objs, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip, ctx);
+		(void)db_search(uniq_db_objs, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
 		path_cnt++;
 		curr_path = search->paths[path_cnt];
 	    }
@@ -532,7 +532,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	BU_GET(sdata->right, struct bu_vls);
 	bu_vls_init(sdata->left);
 	bu_vls_init(sdata->right);
-	sdata->dbip = gedp->ged_wdbp->dbip;
+	sdata->dbip = gedp->dbip;
 	sdata->print_verbose_info = print_verbose_info;
 
 	for (i = 0; i < BU_PTBL_LEN(search_set); i++) {
@@ -552,9 +552,9 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 
 		    for (k = 0; k < RT_DBNHASH; k++) {
 			struct directory *dp;
-			for (dp = gedp->ged_wdbp->dbip->dbi_Head[k]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+			for (dp = gedp->dbip->dbi_Head[k]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 			    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->ged_wdbp->dbip, ctx);
+				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &dp, gedp->dbip, ctx);
 			    }
 			}
 		    }
@@ -580,7 +580,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 			switch (search->search_type) {
 			    case 0:
 				flags &= ~DB_SEARCH_RETURN_UNIQ_DP;
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip, ctx);
+				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
 
 				sr_len = j = BU_PTBL_LEN(search_results);
 				if (sr_len > 0) {
@@ -589,14 +589,14 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 				    while (j-- > 0) {
 					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
 					bu_vls_trunc(&fullpath_string, 0);
-					db_fullpath_to_vls(&fullpath_string, dfptr, gedp->ged_wdbp->dbip, print_verbose_info);
+					db_fullpath_to_vls(&fullpath_string, dfptr, gedp->dbip, print_verbose_info);
 					bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&fullpath_string));
 				    }
 				}
 				break;
 			    case 1:
 				flags |= DB_SEARCH_RETURN_UNIQ_DP;
-				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip, ctx);
+				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->dbip, ctx);
 
 				search_print_objs_to_vls(search_results, gedp->ged_result_str);
 

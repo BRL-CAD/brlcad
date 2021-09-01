@@ -217,7 +217,7 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* No database to match against, so return. */
-    if (gedp->ged_wdbp == RT_WDB_NULL || gedp->ged_wdbp->dbip == DBI_NULL)
+    if (gedp->ged_wdbp == RT_WDB_NULL || gedp->dbip == DBI_NULL)
 	return GED_OK;
 
     /* must be wanting help */
@@ -232,7 +232,7 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    (void)_ged_expand_str_glob(gedp->ged_result_str, argv[1], gedp->ged_wdbp->dbip, flags);
+    (void)_ged_expand_str_glob(gedp->ged_result_str, argv[1], gedp->dbip, flags);
 
 
     return GED_OK;

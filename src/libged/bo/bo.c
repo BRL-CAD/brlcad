@@ -65,7 +65,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* check that we are using a version 5 database */
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "This is an older database version.\nIt does not support binary objects.Use \"dbupgrade\" to upgrade this database to the current version.\n");
 	return GED_ERROR;
     }
@@ -182,7 +182,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
 	obj_name = (char *)*argv;
 
-	dp = db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_NOISY);
+	dp = db_lookup(gedp->dbip, obj_name, LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {
 	    return GED_ERROR;
 	}
@@ -202,7 +202,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL,
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL,
 			       &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Error reading %s from database", dp->d_namep);
 	    fclose(fp);

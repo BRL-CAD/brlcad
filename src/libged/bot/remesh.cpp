@@ -204,11 +204,11 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     }
 
     /* check that we are using a version 5 database */
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "ERROR: Unable to remesh the current (v%d) database.\n"
 		      "Use \"dbupgrade\" to upgrade this database to the current version.\n",
-		      db_version(gedp->ged_wdbp->dbip));
+		      db_version(gedp->dbip));
 	return GED_ERROR;
     }
 

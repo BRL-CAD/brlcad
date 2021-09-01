@@ -71,7 +71,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 	    obj = bu_strdup(argv[i]);
 	}
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	    bu_vls_printf(&error_str, "%s: db_lookup(%s) error\n", argv[0], obj);
 	    bu_free(obj, "free obj");
 	    continue;
@@ -121,13 +121,13 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 		/* Save new bot name for later use */
 		bu_vls_printf(&new_bots, "%s ", bu_vls_addr(gedp->ged_result_str));
 
-		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&bot_intern.idb_type);
+		dp = db_diradd(gedp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&bot_intern.idb_type);
 		if (dp == RT_DIR_NULL) {
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
 		} else {
-		  if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &bot_intern, &rt_uniresource) < 0) {
+		  if (rt_db_put_internal(dp, gedp->dbip, &bot_intern, &rt_uniresource) < 0) {
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);

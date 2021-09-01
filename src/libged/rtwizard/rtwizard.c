@@ -142,7 +142,7 @@ ged_rtwizard_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     *vp++ = "-i";
-    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+    *vp++ = gedp->dbip->dbi_filename;
 
     /* Append all args */
     for (i = 1; i < argc; i++)

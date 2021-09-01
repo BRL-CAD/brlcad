@@ -62,7 +62,7 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
 
     name = (char *)argv[1];
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists", argv[1]);
 	return GED_ERROR;
     }

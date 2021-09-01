@@ -86,7 +86,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 	if (*cp == '\0')
 	    continue;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[1], cp);
 	    continue;
 	}
@@ -96,7 +96,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) != ID_COMBINATION) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) != ID_COMBINATION) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
 	    continue;
 	}
@@ -127,7 +127,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (changed) {
 	    /* write out all changes */
-	    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
+	    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource)) {
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 		bu_vls_printf(gedp->ged_result_str,
 			      "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety, \nyou should exit now, and resolve the I/O problem, before continuing.\n");

@@ -119,7 +119,7 @@ add_solid(const struct directory *dp,
     BU_ALLOC(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
-    id = rt_db_get_internal(&intern, dp, dgcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dgcdp->gedp->dbip, mat, &rt_uniresource);
     if (id < 0) {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "Failed to get internal form of %s\n", dp->d_namep);
 	eptr->l.m = (struct model *)NULL;
@@ -251,7 +251,7 @@ build_etree(union tree *tp,
 	    BU_LIST_INIT(&eptr->l.seghead);
 	    break;
 	case OP_DB_LEAF:
-	    dp = db_lookup(dgcdp->gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
+	    dp = db_lookup(dgcdp->gedp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
 	    if (dp == RT_DIR_NULL) {
 	      break;
 	    }
@@ -2056,7 +2056,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
     av[1] = (char *)0;
     for (i = 0; i < argc; ++i) {
 	dl_erasePathFromDisplay(gedp, argv[i], 0);
-	dgcdp->gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
+	dgcdp->gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 
 	BU_ALLOC(dgcdp->ap, struct application);
 	RT_APPLICATION_INIT(dgcdp->ap);
@@ -2067,7 +2067,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 
 	bu_ptbl_init(&dgcdp->leaf_list, 8, "leaf_list");
 
-	dgcdp->rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+	dgcdp->rtip = rt_new_rti(gedp->dbip);
 	dgcdp->rtip->rti_tol = gedp->ged_wdbp->wdb_tol;	/* struct copy */
 	dgcdp->rtip->useair = 1;
 	dgcdp->ap->a_rt_i = dgcdp->rtip;
@@ -2108,7 +2108,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 		free_etree(eptr, dgcdp);
 		bu_ptbl_reset(&dgcdp->leaf_list);
 		ts.ts_mater = rp->reg_mater;
-		db_string_to_path(&path, gedp->ged_wdbp->dbip, rp->reg_name);
+		db_string_to_path(&path, gedp->dbip, rp->reg_name);
 		_ged_drawH_part2(0, &vhead, &path, &ts, dgcdp);
 		db_free_full_path(&path);
 	    }

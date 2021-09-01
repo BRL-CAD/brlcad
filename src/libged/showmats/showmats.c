@@ -92,7 +92,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, parent, LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, parent, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return GED_ERROR;
 
 	if (!aflag)
@@ -104,7 +104,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 	    break;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
 	    return GED_ERROR;
 	}
@@ -113,7 +113,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 	sm_data.smd_count = 0;
 
 	if (comb->tree)
-	    db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_showmats,
+	    db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_showmats,
 			     (void *)&sm_data, (void *)&aflag, (void *)NULL, (void *)NULL);
 	rt_db_free_internal(&intern);
 

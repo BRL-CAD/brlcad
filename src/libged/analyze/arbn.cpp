@@ -81,12 +81,12 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     print_faces_table(gedp, &table);
     print_volume_table(gedp,
 		       tot_vol
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local,
 		       tot_area
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local,
 		       tot_vol/GALLONS_TO_MM3
 	);
 

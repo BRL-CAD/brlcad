@@ -57,7 +57,7 @@ ged_whatid_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
     if (dp == RT_DIR_NULL)
 	return GED_ERROR;
 
@@ -66,7 +66,7 @@ ged_whatid_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 	return GED_ERROR;
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 

@@ -115,7 +115,7 @@ edarb_extrude(void *data, int argc, const char *argv[])
     dist = atof(argv[4]);
 
     /* convert from the local unit (as input) to the base unit */
-    dist = dist * gedp->ged_wdbp->dbip->dbi_local2base;
+    dist = dist * gedp->dbip->dbi_local2base;
 
     if (arb_extrude(arb, face, dist, &gedp->ged_wdbp->wdb_tol, peqn)) {
 	bu_vls_printf(gedp->ged_result_str, "ARB%d: error extruding face\n", type);

@@ -244,7 +244,7 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
      * check to make sure that a solid is not pushed in two
      * different directions at the same time.
      */
-    i = db_walk_tree(gedp->ged_wdbp->dbip, argc, (const char **)argv,
+    i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
 		     ncpu,
 		     &gedp->ged_wdbp->wdb_initial_tree_state,
 		     0,				/* take all regions */
@@ -272,14 +272,14 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
  * the matrix we've stored for each solid.
  */
     FOR_ALL_PUSH_SOLIDS(gpip, gpdp->pi_head) {
-	if (rt_db_get_internal(&es_int, gpip->pi_dir, gedp->ged_wdbp->dbip, gpip->pi_mat, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&es_int, gpip->pi_dir, gedp->dbip, gpip->pi_mat, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_push_core: Read error fetching '%s'\n", gpip->pi_dir->d_namep);
 	    gpdp->push_error = -1;
 	    continue;
 	}
 	RT_CK_DB_INTERNAL(&es_int);
 
-	if (rt_db_put_internal(gpip->pi_dir, gedp->ged_wdbp->dbip, &es_int, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(gpip->pi_dir, gedp->dbip, &es_int, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_push_core(%s): solid export failure\n", gpip->pi_dir->d_namep);
 	}
 	rt_db_free_internal(&es_int);
@@ -297,9 +297,9 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
 
     while (argc > 0) {
 	struct directory *db;
-	db = db_lookup(gedp->ged_wdbp->dbip, *argv++, 0);
+	db = db_lookup(gedp->dbip, *argv++, 0);
 	if (db)
-	    identitize(db, gedp->ged_wdbp->dbip, gedp->ged_result_str);
+	    identitize(db, gedp->dbip, gedp->ged_result_str);
 	--argc;
     }
 

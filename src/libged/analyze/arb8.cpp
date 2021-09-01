@@ -67,7 +67,7 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
     row->nfields = 2;
     row->fields[0].nchars = sprintf(row->fields[0].buf, "%d%d", a + 1, b + 1);
     row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f",
-				    DIST_PNT_PNT(arb->pt[a], arb->pt[b])*gedp->ged_wdbp->dbip->dbi_base2local);
+				    DIST_PNT_PNT(arb->pt[a], arb->pt[b])*gedp->dbip->dbi_base2local);
 }
 
 
@@ -187,12 +187,12 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 
     print_volume_table(gedp,
 		       tot_vol
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local,
 		       tot_area
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local,
 		       tot_vol/GALLONS_TO_MM3
 	);
 

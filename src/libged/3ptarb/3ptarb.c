@@ -124,8 +124,8 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	    }
 
-	    pt4[0] = atof(argv[12]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	    pt4[1] = atof(argv[13]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    pt4[0] = atof(argv[12]) * gedp->dbip->dbi_local2base;
+	    pt4[1] = atof(argv[13]) * gedp->dbip->dbi_local2base;
 	    break;
 
 	case 'y':
@@ -144,8 +144,8 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	    }
 
-	    pt4[0] = atof(argv[12]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	    pt4[1] = atof(argv[13]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    pt4[0] = atof(argv[12]) * gedp->dbip->dbi_local2base;
+	    pt4[1] = atof(argv[13]) * gedp->dbip->dbi_local2base;
 	    break;
 
 	case 'z':
@@ -164,8 +164,8 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	    }
 
-	    pt4[0] = atof(argv[12]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	    pt4[1] = atof(argv[13]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    pt4[0] = atof(argv[12]) * gedp->dbip->dbi_local2base;
+	    pt4[1] = atof(argv[13]) * gedp->dbip->dbi_local2base;
 	    break;
 
 	default:
@@ -198,10 +198,10 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 0; i < 3; i++) {
 	/* the three given vertices */
-	VSET(aip->pt[i], atof(argv[i*3+2])*gedp->ged_wdbp->dbip->dbi_local2base, atof(argv[i*3+3])*gedp->ged_wdbp->dbip->dbi_local2base, atof(argv[i*3+4])*gedp->ged_wdbp->dbip->dbi_local2base);
+	VSET(aip->pt[i], atof(argv[i*3+2])*gedp->dbip->dbi_local2base, atof(argv[i*3+3])*gedp->dbip->dbi_local2base, atof(argv[i*3+4])*gedp->dbip->dbi_local2base);
     }
 
-    thick *= gedp->ged_wdbp->dbip->dbi_local2base;
+    thick *= gedp->dbip->dbi_local2base;
 
     ndotv = VDOT(aip->pt[0], norm);
 

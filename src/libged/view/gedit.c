@@ -57,7 +57,7 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     const char *usage_string = "view gedit name create";
     const char *purpose_string = "create an editing view obj from a database solid/comb";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
@@ -117,7 +117,7 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
     // We have a tree walk ahead to populate the wireframe - set up the client
     // data structure.
     struct draw_data_t dd;
-    dd.dbip = gedp->ged_wdbp->dbip;
+    dd.dbip = gedp->dbip;
     dd.v = gedp->ged_gvp;
     dd.tol = &gedp->ged_wdbp->wdb_tol;
     dd.ttol = &gedp->ged_wdbp->wdb_ttol;

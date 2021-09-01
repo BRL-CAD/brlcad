@@ -489,7 +489,7 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct d
     const char **nonexists = (const char **)bu_calloc(argc, sizeof(const char *), "obj nonexists array");
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     for (i = 0; i < argc; i++) {
-	dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
+	dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
 	    nonexists[nonexist_cnt] = argv[i];
 	    nonexist_cnt++;
@@ -600,7 +600,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 
     /* If we don't have an explicitly specified file, see if we have definitions in
      * the database itself. */
-    if (gedp->ged_wdbp->dbip != DBI_NULL) {
+    if (gedp->dbip != DBI_NULL) {
 	int ret = 0;
 	int ecnt = 0;
 	struct bu_vls msgs = BU_VLS_INIT_ZERO;
@@ -610,11 +610,11 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 	struct analyze_densities *densities;
 	char *buf;
 
-	dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
+	dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
 
 	if (dp != (struct directory *)NULL) {
 
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
 		return GED_ERROR;
 	    }
@@ -650,7 +650,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 	    (*dens) = densities;
 	    if (ret > 0) {
 		if (den_src) {
-		   (*den_src) = bu_strdup(gedp->ged_wdbp->dbip->dbi_filename);
+		   (*den_src) = bu_strdup(gedp->dbip->dbi_filename);
 		}
 	    } else {
 		if (ret == 0 && densities) {
@@ -665,7 +665,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
      * have .density files in either the current database directory or HOME. */
 
     /* Try .g path first */
-    if (bu_path_component(&d_path_dir, gedp->ged_wdbp->dbip->dbi_filename, BU_PATH_DIRNAME)) {
+    if (bu_path_component(&d_path_dir, gedp->dbip->dbi_filename, BU_PATH_DIRNAME)) {
 
 	bu_vls_printf(&d_path_dir, "/.density");
 
@@ -707,12 +707,12 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 
     GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 
-    if (!fflag && db_lookup(to_gedp->ged_wdbp->dbip, to, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (!fflag && db_lookup(to_gedp->dbip, to, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(from_gedp->ged_result_str, "%s already exists.", to);
 	return GED_ERROR;
     }
 
-    if (db_get_external(&external, from_dp, from_gedp->ged_wdbp->dbip)) {
+    if (db_get_external(&external, from_dp, from_gedp->dbip)) {
 	bu_vls_printf(from_gedp->ged_result_str, "Database read error, aborting\n");
 	return GED_ERROR;
     }
@@ -729,7 +729,7 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
     bu_free_external(&external);
 
     /* Need to do something extra for _GLOBAL */
-    if (db_version(to_gedp->ged_wdbp->dbip) > 4 && BU_STR_EQUAL(to, DB5_GLOBAL_OBJECT_NAME)) {
+    if (db_version(to_gedp->dbip) > 4 && BU_STR_EQUAL(to, DB5_GLOBAL_OBJECT_NAME)) {
 	struct directory *to_dp;
 	struct bu_attribute_value_set avs;
 	const char *val;
@@ -737,20 +737,20 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	GED_DB_LOOKUP(to_gedp, to_dp, to, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 
 	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(to_gedp->ged_wdbp->dbip, &avs, to_dp)) {
+	if (db5_get_attributes(to_gedp->dbip, &avs, to_dp)) {
 	    bu_vls_printf(from_gedp->ged_result_str, "Cannot get attributes for object %s\n", to_dp->d_namep);
 	    return GED_ERROR;
 	}
 
 	if ((val = bu_avs_get(&avs, "title")) != NULL)
-	    to_gedp->ged_wdbp->dbip->dbi_title = bu_strdup(val);
+	    to_gedp->dbip->dbi_title = bu_strdup(val);
 
 	if ((val = bu_avs_get(&avs, "units")) != NULL) {
 	    double loc2mm;
 
 	    if ((loc2mm = bu_mm_value(val)) > 0) {
-		to_gedp->ged_wdbp->dbip->dbi_local2base = loc2mm;
-		to_gedp->ged_wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
+		to_gedp->dbip->dbi_local2base = loc2mm;
+		to_gedp->dbip->dbi_base2local = 1.0 / loc2mm;
 	    }
 	}
 
@@ -1091,7 +1091,7 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
     int id;
     struct rt_db_internal intern;
 
-    RT_CK_DBI(gedp->ged_wdbp->dbip);
+    RT_CK_DBI(gedp->dbip);
 
     if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	/* this is the _GLOBAL object */
@@ -1101,7 +1101,7 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 	bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
 	bu_vls_strcat(gedp->ged_result_str, ": global attributes object\n");
 	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for %s\n", dp->d_namep);
 	    return;
 	}
@@ -1131,7 +1131,7 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 	}
     } else {
 
-	if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
+	if ((id = rt_db_get_internal(&intern, dp, gedp->dbip,
 				     (fastf_t *)NULL, &rt_uniresource)) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure\n", dp->d_namep);
 	    rt_db_free_internal(&intern);
@@ -1144,7 +1144,7 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 	    OBJ[id].ft_describe(gedp->ged_result_str,
 				&intern,
 				verbose,
-				gedp->ged_wdbp->dbip->dbi_base2local) < 0)
+				gedp->dbip->dbi_base2local) < 0)
 	    bu_vls_printf(gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
 	rt_db_free_internal(&intern);
     }
@@ -1779,9 +1779,9 @@ _ged_combadd(struct ged *gedp,
 	return RT_DIR_NULL;
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
-    return db_lookup(gedp->ged_wdbp->dbip, combname, LOOKUP_QUIET);
+    return db_lookup(gedp->dbip, combname, LOOKUP_QUIET);
 }
 
 
@@ -1821,7 +1821,7 @@ _ged_combadd2(struct ged *gedp,
     /*
      * Check to see if we have to create a new combination
      */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  combname, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip,  combname, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	int flags;
 
 	if (region_flag)
@@ -1898,7 +1898,7 @@ addmembers:
 
     for (i = 0; i < argc; ++i) {
 	if (validate) {
-	    if ((objp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((objp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "skip member %s\n", argv[i]);
 		continue;
 	    }
@@ -1945,7 +1945,7 @@ addmembers:
     bu_free((char *)tree_list, "combadd: tree_list");
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     return GED_OK;
 }
@@ -2028,7 +2028,7 @@ _ged_build_dpp(struct ged *gedp,
      */
     dpp = (struct directory **)bu_calloc(ac+1, sizeof(struct directory *), "_ged_build_dpp: directory pointers");
     for (i = 0; i < ac; ++i) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, av[i], 0)) != RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, av[i], 0)) != RT_DIR_NULL)
 	    dpp[i] = dp;
 	else {
 	    /* object is not currently being displayed */
@@ -2335,7 +2335,7 @@ _ged_characterize_pathspec(struct bu_vls *normalized, struct ged *gedp, const ch
     /* We've handled the toplevel special cases.  If we got here, we have a specific
      * path - now the only question is whether that path is valid */
     flags |= GED_PATHSPEC_SPECIFIC;
-    struct directory *path_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&np), LOOKUP_QUIET);
+    struct directory *path_dp = db_lookup(gedp->dbip, bu_vls_cstr(&np), LOOKUP_QUIET);
     if (path_dp == RT_DIR_NULL) {
 	flags = GED_PATHSPEC_INVALID;
     } else {

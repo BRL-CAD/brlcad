@@ -48,7 +48,7 @@ ged_keypoint_core(struct ged *gedp, int argc, const char *argv[])
 
     /* get keypoint */
     if (argc == 1) {
-	VSCALE(keypoint, gedp->ged_gvp->gv_keypoint, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(keypoint, gedp->ged_gvp->gv_keypoint, gedp->dbip->dbi_base2local);
 	bn_encode_vect(gedp->ged_result_str, keypoint, 1);
 
 	return GED_OK;
@@ -85,7 +85,7 @@ ged_keypoint_core(struct ged *gedp, int argc, const char *argv[])
 	VMOVE(keypoint, scan);
     }
 
-    VSCALE(gedp->ged_gvp->gv_keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(gedp->ged_gvp->gv_keypoint, keypoint, gedp->dbip->dbi_local2base);
 
     return GED_OK;
 }

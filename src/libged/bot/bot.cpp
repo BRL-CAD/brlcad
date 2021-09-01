@@ -54,7 +54,7 @@
 int
 _bot_obj_setup(struct _ged_bot_info *gb, const char *name)
 {
-    gb->dp = db_lookup(gb->gedp->ged_wdbp->dbip, name, LOOKUP_NOISY);
+    gb->dp = db_lookup(gb->gedp->dbip, name, LOOKUP_NOISY);
     if (gb->dp == RT_DIR_NULL) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": %s is not a solid or does not exist in database", name);
 	return GED_ERROR;
@@ -259,7 +259,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	}
     }
 
-    if (rt_db_put_internal(gb->dp, gb->gedp->ged_wdbp->dbip, gb->intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Failed to update BoT");
 	return GED_ERROR;
     }
@@ -311,7 +311,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
         bu_vls_sprintf(&out_name, "%s.hull", gb->dp->d_namep);
     }
 
-    if (db_lookup(gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&out_name), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gb->gedp->dbip, bu_vls_cstr(&out_name), LOOKUP_QUIET) != RT_DIR_NULL) {
         bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&out_name));
         bu_vls_free(&out_name);
         return GED_ERROR;

@@ -204,14 +204,14 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Update references once before we start all of this - db_search
      * needs nref to be current to work correctly. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     /* Objects that would be killed are in the first sublist */
     if (gktd.print)
 	bu_vls_printf(gedp->ged_result_str, "{");
 
     for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	/* ignore phony objects */
@@ -221,7 +221,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 	/* stash the what's killed so we can find refs elsewhere */
 	gktd.top = argv[i];
 
-	db_functree(gedp->ged_wdbp->dbip, dp,
+	db_functree(gedp->dbip, dp,
 		    killtree_callback, killtree_callback,
 		    gedp->ged_wdbp->wdb_resp, (void *)&gktd);
     }
@@ -252,7 +252,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     gktd.av = NULL;
 
     /* Done removing stuff - update references. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     return GED_OK;
 }

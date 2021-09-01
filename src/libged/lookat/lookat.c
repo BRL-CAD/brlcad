@@ -87,7 +87,7 @@ ged_lookat_core(struct ged *gedp, int argc, const char *argv[])
 	VMOVE(look, scan);
     }
 
-    VSCALE(look, look, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(look, look, gedp->dbip->dbi_local2base);
 
     VSET(tmp, 0.0, 0.0, 1.0);
     MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, tmp);

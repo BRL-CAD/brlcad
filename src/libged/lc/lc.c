@@ -287,14 +287,14 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Update references once before we start all of this - db_search
      * needs nref to be current to work correctly. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     group_name = argv[1];
 
     /* The 7 is for the "-name" and '\0' */
     plan = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 7), "ged_lc_core");
     sprintf(plan, "-name %s", group_name);
-    matches = db_search(&results1, DB_SEARCH_TREE, plan, 0, NULL, gedp->ged_wdbp->dbip, NULL);
+    matches = db_search(&results1, DB_SEARCH_TREE, plan, 0, NULL, gedp->dbip, NULL);
     if (matches < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Error: Group '%s' does not exist.\n", group_name);
 	return GED_ERROR;
@@ -309,8 +309,8 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
     }
     path = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 2), "ged_lc_core");
     sprintf(path, "/%s", group_name);
-    db_string_to_path(&root, gedp->ged_wdbp->dbip, path);
-    matches = db_search(&results2, DB_SEARCH_TREE, plan, root.fp_len, root.fp_names, gedp->ged_wdbp->dbip, NULL);
+    db_string_to_path(&root, gedp->dbip, path);
+    matches = db_search(&results2, DB_SEARCH_TREE, plan, root.fp_len, root.fp_names, gedp->dbip, NULL);
     bu_free(path, "ged_lc_core");
     if (matches < 1) { return GED_ERROR; }
     regions = (struct region_record *) bu_malloc(sizeof(struct region_record) * BU_PTBL_LEN(&results2), "ged_lc_core");
@@ -323,7 +323,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 	regions[j].ignore = 0;
 
 	bu_avs_init_empty(&avs);
-	db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp_curr_dir);
+	db5_get_attributes(gedp->dbip, &avs, dp_curr_dir);
 
 	regions[j].region_id = get_attr(&avs, "region_id");
 	V_MAX(region_id_len_max, strlen(regions[j].region_id));

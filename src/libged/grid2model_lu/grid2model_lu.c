@@ -58,12 +58,12 @@ ged_grid2model_lu_core(struct ged *gedp, int argc, const char *argv[])
 	goto bad;
     scan[Z] = 0.0;
 
-    f = 1.0 / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+    f = 1.0 / (gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
     VSCALE(diff, scan, f);
     MAT4X3PNT(mo_view_pt, gedp->ged_gvp->gv_model2view, model_pt);
     VADD2(view_pt, mo_view_pt, diff);
     MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
-    VSCALE(model_pt, model_pt, gedp->ged_wdbp->dbip->dbi_base2local);
+    VSCALE(model_pt, model_pt, gedp->dbip->dbi_base2local);
     bn_encode_vect(gedp->ged_result_str, model_pt, 1);
 
     return GED_OK;

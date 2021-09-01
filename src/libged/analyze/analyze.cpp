@@ -321,7 +321,7 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
 
     /* use the names that were input */
     for (int i = 0; i < argc; i++) {
-	struct directory *ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY);
+	struct directory *ndp = db_lookup(gedp->dbip,  argv[i], LOOKUP_NOISY);
 	if (ndp == RT_DIR_NULL)
 	    continue;
 
@@ -408,7 +408,7 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     argc = ac;
 
     if (bu_vls_strlen(&oname)) {
-	struct directory *dp_out = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
+	struct directory *dp_out = db_lookup(gedp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
 	if (dp_out != RT_DIR_NULL) {
 	    bu_vls_sprintf(gedp->ged_result_str, "specified output object %s already exists.\n", bu_vls_cstr(&oname));
 	    bu_vls_free(&oname);
@@ -418,8 +418,8 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 
     long ret = 0;
     const char *tmpname = "___analyze_cmd_intersect_tmp_obj__";
-    struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, argv[0], LOOKUP_NOISY);
-    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    struct directory *dp1 = db_lookup(gedp->dbip, argv[0], LOOKUP_NOISY);
+    struct directory *dp2 = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
     op_func_ptr of = _analyze_find_processor(gc, DB_OP_INTERSECT, dp1->d_minor_type, dp2->d_minor_type);
     if (!of) {
 	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
@@ -439,8 +439,8 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	for (int i = 2; i < argc; i++) {
 	    const char *n1 = tmpname;
 	    const char *n2 = argv[i];
-	    dp1 = db_lookup(gedp->ged_wdbp->dbip, n1, LOOKUP_NOISY);
-	    dp2 = db_lookup(gedp->ged_wdbp->dbip, n2, LOOKUP_NOISY);
+	    dp1 = db_lookup(gedp->dbip, n1, LOOKUP_NOISY);
+	    dp2 = db_lookup(gedp->dbip, n2, LOOKUP_NOISY);
 	    of = _analyze_find_processor(gc, DB_OP_INTERSECT, dp1->d_minor_type, dp2->d_minor_type);
 	    if (!of) {
 		bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
@@ -516,7 +516,7 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     argc = ac;
 
     if (bu_vls_strlen(&oname)) {
-	struct directory *dp_out = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
+	struct directory *dp_out = db_lookup(gedp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
 	if (dp_out != RT_DIR_NULL) {
 	    bu_vls_sprintf(gedp->ged_result_str, "specified output object %s already exists.\n", bu_vls_cstr(&oname));
 	    bu_vls_free(&oname);
@@ -526,8 +526,8 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 
     long ret = 0;
     const char *tmpname = "___analyze_cmd_subtract_tmp_obj__";
-    struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, argv[0], LOOKUP_NOISY);
-    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    struct directory *dp1 = db_lookup(gedp->dbip, argv[0], LOOKUP_NOISY);
+    struct directory *dp2 = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
     op_func_ptr of = _analyze_find_processor(gc, DB_OP_SUBTRACT, dp1->d_minor_type, dp2->d_minor_type);
     if (!of) {
 	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
@@ -547,8 +547,8 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 	for (int i = 2; i < argc; i++) {
 	    const char *n1 = tmpname;
 	    const char *n2 = argv[i];
-	    dp1 = db_lookup(gedp->ged_wdbp->dbip, n1, LOOKUP_NOISY);
-	    dp2 = db_lookup(gedp->ged_wdbp->dbip, n2, LOOKUP_NOISY);
+	    dp1 = db_lookup(gedp->dbip, n1, LOOKUP_NOISY);
+	    dp2 = db_lookup(gedp->dbip, n2, LOOKUP_NOISY);
 	    of = _analyze_find_processor(gc, DB_OP_SUBTRACT, dp1->d_minor_type, dp2->d_minor_type);
 	    if (!of) {
 		bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");

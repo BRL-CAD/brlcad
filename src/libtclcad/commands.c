@@ -1316,7 +1316,7 @@ to_base2local(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gedp->dbip->dbi_base2local);
 
     return GED_OK;
 }
@@ -3614,7 +3614,7 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 	    mat_t dvec;
 
 	    MAT_DELTAS_GET(dvec, params->edit_mat);
-	    VSCALE(dvec, dvec, data->gedp->ged_wdbp->dbip->dbi_base2local);
+	    VSCALE(dvec, dvec, data->gedp->dbip->dbi_base2local);
 
 	    bu_vls_printf(&tran_x_vls, "%lf", dvec[X]);
 	    bu_vls_printf(&tran_y_vls, "%lf", dvec[Y]);
@@ -3872,7 +3872,7 @@ to_local2base(struct ged *gedp,
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gedp->ged_wdbp->dbip->dbi_local2base);
+    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gedp->dbip->dbi_local2base);
 
     return GED_OK;
 }
@@ -6577,7 +6577,7 @@ to_rt_gettrees_application(struct ged *gedp,
 	return RT_APPLICATION_NULL;
     }
 
-    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    rtip = rt_new_rti(gedp->dbip);
 
     while (0 < argc && argv[0][0] == '-') {
 	if (BU_STR_EQUAL(argv[0], "-i")) {

@@ -59,11 +59,11 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((sphdp = db_lookup(gedp->ged_wdbp->dbip, argv[argc-1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((sphdp = db_lookup(gedp->dbip, argv[argc-1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Specified bounding sphere %s not found\n", argv[argc-1]);
 	return GED_ERROR;
     } else {
-	if (rt_db_get_internal(&sph_intern, sphdp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal(&sph_intern, sphdp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 	  return GED_ERROR;
 	if ((sph_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ELL) && (sph_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SPH)) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified bounding object %s not a sphere\n", argv[argc-1]);
@@ -74,7 +74,7 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
 
     /* get objects to add to group - at the moment, only gets regions*/
     for (i = 0; i < RT_DBNHASH; i++)
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) continue;
 	    if (BU_STR_EQUAL(dp->d_namep, sphdp->d_namep)) continue;
 	    if (!(dp->d_flags & RT_DIR_REGION)) continue;

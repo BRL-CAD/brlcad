@@ -128,7 +128,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	    sscanf(argv[argc-1], "%lf", &scan[Z]) == 1) {
 	    use_input_orig = 1;
 	    argc -= 3;
-	    VSCALE(center_model, scan, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(center_model, scan, gedp->dbip->dbi_local2base);
 	}
     }
 
@@ -140,7 +140,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
     }
 
-    VSCALE(cml, center_model, gedp->ged_wdbp->dbip->dbi_base2local);
+    VSCALE(cml, center_model, gedp->dbip->dbi_base2local);
     VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
     VSCALE(dir, dir, -1.0);
 
@@ -241,7 +241,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
-    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+    *vp++ = gedp->dbip->dbi_filename;
 
     gd_rt_cmd_len = vp - gd_rt_cmd;
 
@@ -479,7 +479,7 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
     /* Calculate point from which to fire ray */
     VSCALE(view_ray_orig, scan, sf);
     MAT4X3PNT(center_model, gedp->ged_gvp->gv_view2model, view_ray_orig);
-    VSCALE(center_model, center_model, gedp->ged_wdbp->dbip->dbi_base2local);
+    VSCALE(center_model, center_model, gedp->dbip->dbi_base2local);
 
     bu_vls_printf(&x_vls, "%lf", center_model[X]);
     bu_vls_printf(&y_vls, "%lf", center_model[Y]);

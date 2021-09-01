@@ -237,7 +237,7 @@ ged_rtcheck2_core(struct ged *gedp, int argc, const char *argv[])
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
 
-    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+    *vp++ = gedp->dbip->dbi_filename;
 
     /*
      * Now that we've grabbed all the options, if no args remain,

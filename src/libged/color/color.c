@@ -65,7 +65,7 @@ color_putrec(struct ged *gedp, struct mater *mp)
 
     if (mp->mt_daddr == MATER_NO_ADDR) {
 	/* Need to allocate new database space */
-	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1)) {
+	if (db_alloc(gedp->dbip, &dir, 1)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database alloc error, aborting");
 	    return;
 	}
@@ -75,7 +75,7 @@ color_putrec(struct ged *gedp, struct mater *mp)
 	dir.d_len = 1;
     }
 
-    if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1)) {
+    if (db_put(gedp->dbip, &dir, &rec, 0, 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return;
     }
@@ -100,7 +100,7 @@ color_zaprec(struct ged *gedp, struct mater *mp)
     dir.d_addr = mp->mt_daddr;
     dir.d_flags = 0;
 
-    if (db_delete(gedp->ged_wdbp->dbip, &dir) != 0) {
+    if (db_delete(gedp->dbip, &dir) != 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database delete error, aborting");
 	return;
     }
@@ -179,7 +179,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	/* Zap all the current records, both in core and on disk */
 	while (rt_material_head() != MATER_NULL) {
 	    zot = rt_material_head();
@@ -231,7 +231,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&vls, "{%d %d %d %d %d} ", low, hi, r, g, b);
 	}
 
-	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&vls), gedp->ged_wdbp->dbip);
+	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&vls), gedp->dbip);
 	db5_import_color_table(bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
@@ -302,7 +302,7 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	/* Delete all color records from the database */
 	mp = rt_material_head();
 	while (mp != MATER_NULL) {
@@ -351,7 +351,7 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	 */
 	rt_vls_color_map(&colors);
 
-	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), gedp->ged_wdbp->dbip);
+	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), gedp->dbip);
 	bu_vls_free(&colors);
     }
 

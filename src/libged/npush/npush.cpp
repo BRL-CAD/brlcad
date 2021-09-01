@@ -1014,7 +1014,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
 
     /* Need nref current for db_ls to work */
     db_update_nref(dbip, &rt_uniresource);
@@ -1068,7 +1068,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // should not alter this top level list - any changes indicate a problem
     // with the logic.
     struct directory **all_paths;
-    int tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
+    int tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
     std::set<std::string> tops1;
     for (int i = 0; i < tops_cnt; i++) {
 	tops1.insert(std::string(all_paths[i]->d_namep));
@@ -1234,7 +1234,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     std::set<std::string> dbnames;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_namep) {
 		std::string dpn(dp->d_namep);
 		dbnames.insert(dpn);
@@ -1364,7 +1364,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    struct rt_db_internal *in = uf_it->second;
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
-	    db_dirdelete(gedp->ged_wdbp->dbip, uf_it->first);
+	    db_dirdelete(gedp->dbip, uf_it->first);
 	}
 	return GED_ERROR;
     }
@@ -1403,7 +1403,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    // Delete the directory pointers we set up - dry run, so we're not
 	    // actually creating the objects.
-	    db_dirdelete(gedp->ged_wdbp->dbip, dp);
+	    db_dirdelete(gedp->dbip, dp);
 	}
 	rt_db_free_internal(in);
 	BU_PUT(in, struct rt_db_internal);
@@ -1434,7 +1434,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
 	// Repeat the db_ls call and verify it is consistent.
 	struct directory **final_paths;
-	int final_tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &final_paths);
+	int final_tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &final_paths);
 	std::set<std::string> tops2;
 	for (int i = 0; i < final_tops_cnt; i++) {
 	    tops2.insert(std::string(final_paths[i]->d_namep));

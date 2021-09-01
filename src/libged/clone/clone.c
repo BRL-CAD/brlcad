@@ -267,7 +267,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 	} else /* non-region combinations */
 	    bu_vls_printf(newname, "%d", (num == 0) ? i + 1 : i + num);
 	i++;
-    } while (db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
+    } while (db_lookup(state->gedp->dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
     return newname;
 }
 
@@ -728,13 +728,13 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
     /* copy the object */
     if (dp->d_flags & RT_DIR_COMB) {
 
-	if (db_version(state->gedp->ged_wdbp->dbip) < 5) {
+	if (db_version(state->gedp->dbip) < 5) {
 	    /* A v4 method of peeking into a combination */
 
 	    int errors = 0;
 
 	    /* get an in-memory record of this object */
-	    if ((rp = db_getmrec(state->gedp->ged_wdbp->dbip, dp)) == (union record *)0) {
+	    if ((rp = db_getmrec(state->gedp->dbip, dp)) == (union record *)0) {
 		bu_vls_printf(state->gedp->ged_result_str, "Database read error, aborting\n");
 		goto done_copy_tree;
 	    }
@@ -743,7 +743,7 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 	     * make up the object.
 	     */
 	    for (i = 1; i < dp->d_len; i++) {
-		if ((mdp = db_lookup(state->gedp->ged_wdbp->dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == RT_DIR_NULL) {
+		if ((mdp = db_lookup(state->gedp->dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		    errors++;
 		    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
 		    continue;
@@ -760,13 +760,13 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 	    }
 
 	    /* copy this combination itself */
-	    copy_comb(state->gedp->ged_wdbp->dbip, dp, (void *)state);
+	    copy_comb(state->gedp->dbip, dp, (void *)state);
 	} else
 	    /* A v5 method of peeking into a combination */
-	    db_functree(state->gedp->ged_wdbp->dbip, dp, copy_comb, copy_solid, resp, (void *)state);
+	    db_functree(state->gedp->dbip, dp, copy_comb, copy_solid, resp, (void *)state);
     } else if (dp->d_flags & RT_DIR_SOLID)
 	/* leaf node -- make a copy the object */
-	copy_solid(state->gedp->ged_wdbp->dbip, dp, (void *)state);
+	copy_solid(state->gedp->dbip, dp, (void *)state);
     else {
 	bu_vls_printf(state->gedp->ged_result_str, "%s is neither a combination or a primitive?\n", dp->d_namep);
 	goto done_copy_tree;
@@ -777,7 +777,7 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 	bu_vls_printf(state->gedp->ged_result_str, "ERROR: unable to successfully clone \"%s\" to \"%s\"\n",
 		      dp->d_namep, bu_vls_addr(copyname));
     else
-	copy = db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
+	copy = db_lookup(state->gedp->dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
 
 done_copy_tree:
     if (rp)
@@ -978,9 +978,9 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 
     GED_DB_LOOKUP(gedp, state->src, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
 
-    VSCALE(state->trans, state->trans, gedp->ged_wdbp->dbip->dbi_local2base);
-    VSCALE(state->rpnt, state->rpnt, gedp->ged_wdbp->dbip->dbi_local2base);
-    state->mirpos *= gedp->ged_wdbp->dbip->dbi_local2base;
+    VSCALE(state->trans, state->trans, gedp->dbip->dbi_local2base);
+    VSCALE(state->rpnt, state->rpnt, gedp->dbip->dbi_local2base);
+    state->mirpos *= gedp->dbip->dbi_local2base;
 
     return GED_OK;
 }

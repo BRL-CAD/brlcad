@@ -632,7 +632,7 @@ QPolyMod::sketch_name_edit()
 	    }
 	    if (!match_curr) {
 		// Not a name match to existing dp - fall back on db check.
-		if (db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
+		if (db_lookup(gedp->dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
 		    ps->sketch_name->setStyleSheet("color: rgba(255,0,0)");
 		} else {
 		    ps->sketch_name->setStyleSheet("");
@@ -701,7 +701,7 @@ QPolyMod::sketch_name_update()
 
 	// If the proposed new name collides with an existing object,
 	// we're done.
-	if (db_lookup(gedp->ged_wdbp->dbip, sk_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+	if (db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_free(sk_name, "name copy");
 	    return;
 	}
@@ -715,7 +715,7 @@ QPolyMod::sketch_name_update()
 	ged_kill(gedp, ac, av);
     }
 
-    ip->u_data = (void *)db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, sk_name, p);
+    ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
     emit db_updated();
 
     bu_free(sk_name, "name copy");

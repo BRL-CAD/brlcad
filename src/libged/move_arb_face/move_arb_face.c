@@ -121,7 +121,7 @@ ged_move_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s not found", argv[1]);
 	return GED_ERROR;
     }
@@ -166,7 +166,7 @@ ged_move_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    VSCALE(pt, pt, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(pt, pt, gedp->dbip->dbi_local2base);
 
 #define CHECK_FACE(face_idx, max_idx) \
 if (face_idx > max_idx) { \

@@ -530,8 +530,8 @@ to_mouse_constrain_trans(struct ged *gedp,
 
     width = dm_get_width((struct dm *)gdvp->dmp);
     inv_width = 1.0 / (fastf_t)width;
-    dx *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
-    dy *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
+    dx *= inv_width * gdvp->gv_size * gedp->dbip->dbi_local2base;
+    dy *= inv_width * gdvp->gv_size * gedp->dbip->dbi_local2base;
 
     if (fabs(dx) > fabs(dy))
 	sf = dx;
@@ -1205,8 +1205,8 @@ to_mouse_move_arb_edge(struct ged *gedp,
     width = dm_get_width((struct dm *)gdvp->dmp);
     inv_width = 1.0 / (fastf_t)width;
     /* ged_move_arb_edge expects things to be in local units */
-    dx *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
-    dy *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
+    dx *= inv_width * gdvp->gv_size * gedp->dbip->dbi_base2local;
+    dy *= inv_width * gdvp->gv_size * gedp->dbip->dbi_base2local;
     VSET(view, dx, dy, 0.0);
     bn_mat_inv(inv_rot, gdvp->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
@@ -1301,8 +1301,8 @@ to_mouse_move_arb_face(struct ged *gedp,
     width = dm_get_width((struct dm *)gdvp->dmp);
     inv_width = 1.0 / (fastf_t)width;
     /* ged_move_arb_face expects things to be in local units */
-    dx *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
-    dy *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
+    dx *= inv_width * gdvp->gv_size * gedp->dbip->dbi_base2local;
+    dy *= inv_width * gdvp->gv_size * gedp->dbip->dbi_base2local;
     VSET(view, dx, dy, 0.0);
     bn_mat_inv(inv_rot, gdvp->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
@@ -1477,7 +1477,7 @@ to_mouse_move_bot_pnt(struct ged *gedp,
     MAT4X3PNT(model, v2m_mat, view);
 
     /* ged_bot_move_pnt expects things to be in local units */
-    VSCALE(model, model, gedp->ged_wdbp->dbip->dbi_base2local);
+    VSCALE(model, model, gedp->dbip->dbi_base2local);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp;
@@ -1590,7 +1590,7 @@ to_mouse_move_bot_pnts(struct ged *gedp,
     MAT4X3PNT(model, v2m_mat, view);
 
     /* ged_bot_move_pnts expects things to be in local units */
-    VSCALE(model, model, gedp->ged_wdbp->dbip->dbi_base2local);
+    VSCALE(model, model, gedp->dbip->dbi_base2local);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp;
@@ -1690,8 +1690,8 @@ to_mouse_move_pnt_common(struct ged *gedp,
     width = dm_get_width((struct dm *)gdvp->dmp);
     inv_width = 1.0 / (fastf_t)width;
     /* ged_pipe_move_pnt expects things to be in local units */
-    dx *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
-    dy *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
+    dx *= inv_width * gdvp->gv_size * gedp->dbip->dbi_base2local;
+    dy *= inv_width * gdvp->gv_size * gedp->dbip->dbi_base2local;
     VSET(view, dx, dy, 0.0);
     bn_mat_inv(inv_rot, gdvp->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
@@ -1998,8 +1998,8 @@ to_mouse_otranslate(struct ged *gedp,
     width = dm_get_width((struct dm *)gdvp->dmp);
     inv_width = 1.0 / (fastf_t)width;
     /* ged_otranslate expects things to be in local units */
-    dx *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
-    dy *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
+    dx *= inv_width * gdvp->gv_size * gedp->dbip->dbi_base2local;
+    dy *= inv_width * gdvp->gv_size * gedp->dbip->dbi_base2local;
 
     VSET(view, dx, dy, 0.0);
     bu_vls_printf(&tran_x_vls, "%lf", model[X]);
@@ -2034,7 +2034,7 @@ to_mouse_otranslate(struct ged *gedp,
 
 	MAT_IDN(params->edit_mat);
 	MAT4X3PNT(model, inv_rot, view);
-	VSCALE(dvec, model, gedp->ged_wdbp->dbip->dbi_local2base);
+	VSCALE(dvec, model, gedp->dbip->dbi_local2base);
 	MAT_DELTAS_VEC(params->edit_mat, dvec);
 
 	to_refresh_view(gdvp);
@@ -3454,8 +3454,8 @@ to_mouse_ptranslate(struct ged *gedp,
     width = dm_get_width((struct dm *)gdvp->dmp);
     inv_width = 1.0 / (fastf_t)width;
     /* ged_ptranslate expects things to be in local units */
-    dx *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
-    dy *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
+    dx *= inv_width * gdvp->gv_size * gedp->dbip->dbi_base2local;
+    dy *= inv_width * gdvp->gv_size * gedp->dbip->dbi_base2local;
     VSET(view, dx, dy, 0.0);
     bn_mat_inv(inv_rot, gdvp->gv_rotation);
     MAT4X3PNT(model, inv_rot, view);
@@ -3546,8 +3546,8 @@ to_mouse_trans(struct ged *gedp,
 
     width = dm_get_width((struct dm *)gdvp->dmp);
     inv_width = 1.0 / (fastf_t)width;
-    dx *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
-    dy *= inv_width * gdvp->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
+    dx *= inv_width * gdvp->gv_size * gedp->dbip->dbi_local2base;
+    dy *= inv_width * gdvp->gv_size * gedp->dbip->dbi_local2base;
 
     bu_vls_printf(&trans_vls, "%lf %lf 0", dx, dy);
 

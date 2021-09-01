@@ -155,30 +155,30 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* make sure object mirroring to does not already exist */
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind+1], LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[bu_optind+1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists\n", argv[bu_optind+1]);
 	return GED_ERROR;
     }
 
     /* look up the object being mirrored */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[bu_optind], LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip, argv[bu_optind], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to find solid [%s]\n", argv[bu_optind]);
 	return GED_ERROR;
     }
 
     /* get object being mirrored */
-    ret = rt_db_get_internal(&internal, dp, gedp->ged_wdbp->dbip, NULL, gedp->ged_wdbp->wdb_resp);
+    ret = rt_db_get_internal(&internal, dp, gedp->dbip, NULL, gedp->ged_wdbp->wdb_resp);
     if (ret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to load solid [%s]\n", argv[bu_optind]);
 	return GED_ERROR;
     }
 
-    mirror_offset *= gedp->ged_wdbp->dbip->dbi_local2base;
+    mirror_offset *= gedp->dbip->dbi_local2base;
     VUNITIZE(mirror_dir);
     VJOIN1(mirror_pt, mirror_pt, mirror_offset, mirror_dir);
 
     /* mirror the object */
-    ip = rt_mirror(gedp->ged_wdbp->dbip,
+    ip = rt_mirror(gedp->dbip,
 		   &internal,
 		   mirror_pt,
 		   mirror_dir,
@@ -189,13 +189,13 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* add the mirrored object to the directory */
-    dp = db_diradd(gedp->ged_wdbp->dbip, argv[bu_optind+1], RT_DIR_PHONY_ADDR, 0, dp->d_flags, (void *)&ip->idb_type);
+    dp = db_diradd(gedp->dbip, argv[bu_optind+1], RT_DIR_PHONY_ADDR, 0, dp->d_flags, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to add [%s] to the database directory", argv[bu_optind+1]);
 	return GED_ERROR;
     }
     /* save the mirrored object to disk */
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, ip, gedp->ged_wdbp->wdb_resp) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, ip, gedp->ged_wdbp->wdb_resp) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to store [%s] to the database", argv[bu_optind+1]);
 	return GED_ERROR;
     }

@@ -175,7 +175,7 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 	(void)bu_vls_strcpy(&gedp->ged_wdbp->wdb_prestr, argv[2]);
 
     gedp->ged_wdbp->wdb_num_dups = 0;
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	if ((gedp->ged_wdbp->wdb_ncharadd = bu_vls_strlen(&gedp->ged_wdbp->wdb_prestr)) > 12) {
 	    gedp->ged_wdbp->wdb_ncharadd = 12;
 	    bu_vls_trunc(&gedp->ged_wdbp->wdb_prestr, 12);
@@ -193,7 +193,7 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str,
 		  "\n*** Comparing %s with %s for duplicate names\n",
-		  gedp->ged_wdbp->dbip->dbi_filename, argv[1]);
+		  gedp->dbip->dbi_filename, argv[1]);
     if (gedp->ged_wdbp->wdb_ncharadd) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "  For comparison, all names in %s were prefixed with: %s\n",
@@ -201,14 +201,14 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Get array to hold names of duplicates */
-    if ((dirp0 = _ged_getspace(gedp->ged_wdbp->dbip, 0)) == (struct directory **) 0) {
+    if ((dirp0 = _ged_getspace(gedp->dbip, 0)) == (struct directory **) 0) {
 	bu_vls_printf(gedp->ged_result_str, "f_dup: unable to get memory\n");
 	db_close(newdbp);
 	return GED_ERROR;
     }
 
     /* Scan new database for overlaps */
-    dcs.main_dbip = gedp->ged_wdbp->dbip;
+    dcs.main_dbip = gedp->dbip;
     dcs.wdbp = gedp->ged_wdbp;
     dcs.dup_dirp = dirp0;
     if (db_version(newdbp) < 5) {

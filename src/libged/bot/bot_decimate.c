@@ -154,18 +154,18 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 
     /* convert maximum error, edge length, and feature size to mm */
     if (max_chord_error > 0.0) {
-	max_chord_error = max_chord_error * gedp->ged_wdbp->dbip->dbi_local2base;
+	max_chord_error = max_chord_error * gedp->dbip->dbi_local2base;
     }
 
     if (min_edge_length > 0.0) {
-	min_edge_length = min_edge_length * gedp->ged_wdbp->dbip->dbi_local2base;
+	min_edge_length = min_edge_length * gedp->dbip->dbi_local2base;
     }
 
     if (feature_size >= 0.0) {
 	/* use the new GCT decimator */
 	const size_t orig_num_faces = bot->num_faces;
 	size_t edges_removed;
-	feature_size *= gedp->ged_wdbp->dbip->dbi_local2base;
+	feature_size *= gedp->dbip->dbi_local2base;
 	edges_removed = rt_bot_decimate_gct(bot, feature_size);
 	bu_log("original face count = %zu\n", orig_num_faces);
 	bu_log("\tedges removed = %zu\n", edges_removed);

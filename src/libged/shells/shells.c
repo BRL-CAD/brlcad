@@ -63,10 +63,10 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((old_dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+    if ((old_dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
-    if (rt_db_get_internal(&old_intern, old_dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&old_intern, old_dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return GED_ERROR;
     }
@@ -94,7 +94,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	    nmg_m_reindex(m, 0);
 
 	    bu_vls_printf(&shell_name, "shell.%d", shell_count);
-	    while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), 0) != RT_DIR_NULL) {
+	    while (db_lookup(gedp->dbip, bu_vls_addr(&shell_name), 0) != RT_DIR_NULL) {
 		bu_vls_trunc(&shell_name, 0);
 		shell_count++;
 		bu_vls_printf(&shell_name, "shell.%d", shell_count);
@@ -107,7 +107,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	    new_intern.idb_meth = &OBJ[ID_NMG];
 	    new_intern.idb_ptr = (void *)m_tmp;
 
-	    new_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
+	    new_dp = db_diradd(gedp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 	    if (new_dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.\n");
 		return GED_ERROR;
@@ -116,7 +116,7 @@ ged_shells_core(struct ged *gedp, int argc, const char *argv[])
 	    /* make sure the geometry/bounding boxes are up to date */
 	    nmg_rebound(m_tmp, &gedp->ged_wdbp->wdb_tol);
 
-	    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
 		/* Free memory */
 		nmg_km(m_tmp);
 		bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");

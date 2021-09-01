@@ -132,8 +132,8 @@ qray_data_to_vlist(struct ged *gedp,
 
 	VSET(in_pt, ndlp->x_in, ndlp->y_in, ndlp->z_in);
 	VJOIN1(out_pt, in_pt, ndlp->los, dir);
-	VSCALE(in_pt, in_pt, gedp->ged_wdbp->dbip->dbi_local2base);
-	VSCALE(out_pt, out_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	VSCALE(in_pt, in_pt, gedp->dbip->dbi_local2base);
+	VSCALE(out_pt, out_pt, gedp->dbip->dbi_local2base);
 	BV_ADD_VLIST(vlfree, vhead, in_pt, BV_VLIST_LINE_MOVE);
 	BV_ADD_VLIST(vlfree, vhead, out_pt, BV_VLIST_LINE_DRAW);
 

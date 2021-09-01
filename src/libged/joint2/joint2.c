@@ -157,7 +157,7 @@ joint_selection(
 	    operation.parameters.tran.dy = atof(argv[6]);
 	    operation.parameters.tran.dz = atof(argv[7]);
 
-	    ret = ip->idb_meth->ft_process_selection(ip, gedp->ged_wdbp->dbip,
+	    ret = ip->idb_meth->ft_process_selection(ip, gedp->dbip,
 		    (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
 
 	    if (ret != 0) {
@@ -196,7 +196,7 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((ndp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", argv[1]);
 	return GED_ERROR;
     }

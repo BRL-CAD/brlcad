@@ -60,7 +60,7 @@ ged_view2grid_lu_core(struct ged *gedp, int argc, const char *argv[])
 	goto bad;
 
     MAT4X3PNT(mo_view_pt, gedp->ged_gvp->gv_model2view, model_pt);
-    f = gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
+    f = gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local;
     VSCALE(mo_view_pt, mo_view_pt, f);
     VSUB2(diff, view_pt, mo_view_pt);
 

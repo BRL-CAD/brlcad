@@ -193,12 +193,12 @@ main(int argc, const char **argv)
 
     // Make sure our reference counts are up to date, so we can tell
     // which objects are top level
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     std::vector<struct directory *> objs;
     if (argc > 1) {
 	for (int i = 1; i < argc; i++) {
-	    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
+	    struct directory *dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
 	    if (dp == RT_DIR_NULL) {
 		bu_exit(1, "Failed to open object \"%s\" in \"%s\" ", argv[i], bu_vls_cstr(&gbasename));
 	    }
@@ -207,7 +207,7 @@ main(int argc, const char **argv)
     } else {
 	// Get all top level objects
 	struct directory **all_paths;
-	int obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
+	int obj_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
 	for (int i = 0; i < obj_cnt; i++) {
 	    objs.push_back(all_paths[i]);
 	}

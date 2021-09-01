@@ -62,7 +62,7 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    ret = db_dump(op, gedp->ged_wdbp->dbip);
+    ret = db_dump(op, gedp->dbip);
     wdb_close(op);
 
     if (ret < 0) {

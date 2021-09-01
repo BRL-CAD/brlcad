@@ -625,9 +625,9 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
     row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", face->plane_eqn[Y]);
     row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", face->plane_eqn[Z]);
     row->fields[6].nchars = sprintf(row->fields[6].buf, "%10.8f",
-				    face->plane_eqn[W]*gedp->ged_wdbp->dbip->dbi_base2local);
+				    face->plane_eqn[W]*gedp->dbip->dbi_base2local);
     row->fields[7].nchars = sprintf(row->fields[7].buf, "%10.8f",
-				    face->area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
+				    face->area*gedp->dbip->dbi_base2local*gedp->dbip->dbi_base2local);
 }
 
 /**
@@ -661,19 +661,19 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
     if (OBJ[ip->idb_minor_type].ft_centroid) {
 	OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
 	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
-		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
-		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
-		      centroid[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
+		      centroid[X] * gedp->dbip->dbi_base2local,
+		      centroid[Y] * gedp->dbip->dbi_base2local,
+		      centroid[Z] * gedp->dbip->dbi_base2local);
     }
 
     print_volume_table(gedp,
 		       vol
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local,
 		       area
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local,
 		       vol/GALLONS_TO_MM3
 	);
 }

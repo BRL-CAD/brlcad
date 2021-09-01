@@ -182,7 +182,7 @@ CADAttributesModel::refresh(const QModelIndex &idx)
 	return;
 
     current_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
-    update(gedp->ged_wdbp->dbip, current_dp);
+    update(gedp->dbip, current_dp);
 }
 
 

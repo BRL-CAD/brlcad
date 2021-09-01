@@ -100,19 +100,19 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	goto out3;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists\n", new_name);
 	ret = GED_ERROR;
 	goto out3;
     }
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    if ((dp=db_lookup(gedp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", nmg_name);
 	ret = GED_ERROR;
 	goto out3;
     }
 
-    if (rt_db_get_internal(&nmg_intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&nmg_intern, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	ret = GED_ERROR;
 	goto out3;
@@ -254,7 +254,7 @@ out1:
 	bu_vls_printf(gedp->ged_result_str,
 		"Single vertexuse in shell of %s has been ignored in conversion\n", nmg_name);
 
-    dp = db_diradd(gedp->ged_wdbp->dbip, new_name,
+    dp = db_diradd(gedp->dbip, new_name,
 	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 
     if (dp == RT_DIR_NULL) {
@@ -264,7 +264,7 @@ out1:
 	goto out2;
     }
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&new_intern);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	success = 0;

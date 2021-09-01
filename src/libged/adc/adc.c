@@ -219,14 +219,14 @@ ged_adc_core(struct ged *gedp,
 
     if (BU_STR_EQUAL(parameter, "dst")) {
 	if (argc == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_adc.dst * gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_adc.dst * gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_dst) {
 		if (incr_flag)
-		    gedp->ged_gvp->gv_s->gv_adc.dst += user_pt[0] / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		    gedp->ged_gvp->gv_s->gv_adc.dst += user_pt[0] / (gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
 		else
-		    gedp->ged_gvp->gv_s->gv_adc.dst = user_pt[0] / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		    gedp->ged_gvp->gv_s->gv_adc.dst = user_pt[0] / (gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
 
 		gedp->ged_gvp->gv_s->gv_adc.dv_dist = (gedp->ged_gvp->gv_s->gv_adc.dst / M_SQRT1_2 - 1.0) * GED_MAX;
 	    }
@@ -262,7 +262,7 @@ ged_adc_core(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "dh")) {
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
-		gedp->ged_gvp->gv_s->gv_adc.pos_grid[X] += user_pt[0] / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		gedp->ged_gvp->gv_s->gv_adc.pos_grid[X] += user_pt[0] / (gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
 		adc_grid_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_view2model, GED_MAX);
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_view);
 	    }
@@ -277,7 +277,7 @@ ged_adc_core(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "dv")) {
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
-		gedp->ged_gvp->gv_s->gv_adc.pos_grid[Y] += user_pt[0] / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		gedp->ged_gvp->gv_s->gv_adc.pos_grid[Y] += user_pt[0] / (gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
 		adc_grid_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_view2model, GED_MAX);
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_view);
 	    }
@@ -292,17 +292,17 @@ ged_adc_core(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "hv")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%g %g",
-			  gedp->ged_gvp->gv_s->gv_adc.pos_grid[X] * gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local,
-			  gedp->ged_gvp->gv_s->gv_adc.pos_grid[Y] * gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+			  gedp->ged_gvp->gv_s->gv_adc.pos_grid[X] * gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local,
+			  gedp->ged_gvp->gv_s->gv_adc.pos_grid[Y] * gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
 	    return GED_OK;
 	} else if (argc == 2) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
 		if (incr_flag) {
-		    gedp->ged_gvp->gv_s->gv_adc.pos_grid[X] += user_pt[X] / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
-		    gedp->ged_gvp->gv_s->gv_adc.pos_grid[Y] += user_pt[Y] / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		    gedp->ged_gvp->gv_s->gv_adc.pos_grid[X] += user_pt[X] / (gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
+		    gedp->ged_gvp->gv_s->gv_adc.pos_grid[Y] += user_pt[Y] / (gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
 		} else {
-		    gedp->ged_gvp->gv_s->gv_adc.pos_grid[X] = user_pt[X] / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
-		    gedp->ged_gvp->gv_s->gv_adc.pos_grid[Y] = user_pt[Y] / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		    gedp->ged_gvp->gv_s->gv_adc.pos_grid[X] = user_pt[X] / (gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
+		    gedp->ged_gvp->gv_s->gv_adc.pos_grid[Y] = user_pt[Y] / (gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
 		}
 
 		gedp->ged_gvp->gv_s->gv_adc.pos_grid[Z] = 0.0;
@@ -320,7 +320,7 @@ ged_adc_core(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "dx")) {
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
-		gedp->ged_gvp->gv_s->gv_adc.pos_model[X] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
+		gedp->ged_gvp->gv_s->gv_adc.pos_model[X] += user_pt[0] * gedp->dbip->dbi_local2base;
 		adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, GED_MAX);
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 	    }
@@ -335,7 +335,7 @@ ged_adc_core(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "dy")) {
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
-		gedp->ged_gvp->gv_s->gv_adc.pos_model[Y] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
+		gedp->ged_gvp->gv_s->gv_adc.pos_model[Y] += user_pt[0] * gedp->dbip->dbi_local2base;
 		adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, GED_MAX);
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 	    }
@@ -350,7 +350,7 @@ ged_adc_core(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "dz")) {
 	if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
-		gedp->ged_gvp->gv_s->gv_adc.pos_model[Z] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
+		gedp->ged_gvp->gv_s->gv_adc.pos_model[Z] += user_pt[0] * gedp->dbip->dbi_local2base;
 		adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, GED_MAX);
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 	    }
@@ -364,11 +364,11 @@ ged_adc_core(struct ged *gedp,
 
     if (BU_STR_EQUAL(parameter, "xyz")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_wdbp->dbip->dbi_base2local);
+	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->dbip->dbi_base2local);
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 	    return GED_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(user_pt, user_pt, gedp->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_s->gv_adc.pos_model, user_pt);
@@ -481,12 +481,12 @@ ged_adc_core(struct ged *gedp,
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_a1")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_a1, gedp->ged_wdbp->dbip->dbi_base2local);
+	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_a1, gedp->dbip->dbi_base2local);
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
 	    return GED_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(user_pt, user_pt, gedp->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(gedp->ged_gvp->gv_s->gv_adc.anchor_pt_a1, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_a1, user_pt);
@@ -527,13 +527,13 @@ ged_adc_core(struct ged *gedp,
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_a2")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_a2, gedp->ged_wdbp->dbip->dbi_base2local);
+	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_a2, gedp->dbip->dbi_base2local);
 
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
 	    return GED_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(user_pt, user_pt, gedp->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(gedp->ged_gvp->gv_s->gv_adc.anchor_pt_a2, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_a2, user_pt);
@@ -574,12 +574,12 @@ ged_adc_core(struct ged *gedp,
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_dst")) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_dst, gedp->ged_wdbp->dbip->dbi_base2local);
+	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_dst, gedp->dbip->dbi_base2local);
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
 	    return GED_OK;
 	} else if (argc == 3) {
-	    VSCALE(user_pt, user_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(user_pt, user_pt, gedp->dbip->dbi_local2base);
 
 	    if (incr_flag) {
 		VADD2(gedp->ged_gvp->gv_s->gv_adc.anchor_pt_dst, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_dst, user_pt);
@@ -608,7 +608,7 @@ ged_adc_core(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(parameter, "vars")) {
-	adc_vls_print(gedp->ged_gvp, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_result_str);
+	adc_vls_print(gedp->ged_gvp, gedp->dbip->dbi_base2local, gedp->ged_result_str);
 	return GED_OK;
     }
 

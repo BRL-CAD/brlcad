@@ -80,7 +80,7 @@ vls_long_dpp(struct ged *gedp,
 	else if (dp->d_flags & RT_DIR_SOLID) {
 	    struct rt_db_internal intern;
 	    len = 9; /* "primitive" */
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
 		len = strlen(intern.idb_meth->ft_label);
 		rt_db_free_internal(&intern);
 	    }
@@ -121,7 +121,7 @@ vls_long_dpp(struct ged *gedp,
 	} else if (dp->d_flags & RT_DIR_SOLID) {
 	    struct rt_db_internal intern;
 	    type = "primitive";
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
 		type = intern.idb_meth->ft_label;
 		rt_db_free_internal(&intern);
 	    }
@@ -289,7 +289,7 @@ _ged_ls_attr_objs(struct ged *gedp, struct _ged_ls_data *ls, int argc, const cha
 	}
     }
 
-    ls->results_obj = db_lookup_by_attr(gedp->ged_wdbp->dbip, ls->dir_flags, &avs, op);
+    ls->results_obj = db_lookup_by_attr(gedp->dbip, ls->dir_flags, &avs, op);
     bu_avs_free(&avs);
 
     return GED_OK;
@@ -316,13 +316,13 @@ _ged_ls_named_objs(struct ged *gedp, struct _ged_ls_data *ls, int argc, const ch
 	if (is_path) {
 	    /* TODO - for now, just do a db_lookup on the full path, but need to rework
 	     * the printing logic and formatting to properly deal with paths */
-	    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], lq);
+	    struct directory *dp = db_lookup(gedp->dbip, argv[i], lq);
 	    if (dp != RT_DIR_NULL && ((dp->d_flags & ls->dir_flags) != 0)) {
 		bu_ptbl_ins(ls->results_obj, (long *)dp);
 	    }
 
 	} else {
-	    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], lq);
+	    struct directory *dp = db_lookup(gedp->dbip, argv[i], lq);
 	    if (dp != RT_DIR_NULL && ((dp->d_flags & ls->dir_flags) != 0)) {
 		bu_ptbl_ins(ls->results_obj, (long *)dp);
 	    }
@@ -443,7 +443,7 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 	     * list adding pointers (to the directory entries) to the tbl.
 	     */
 	    for (i = 0; i < RT_DBNHASH; i++) {
-		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		    if (!ls.aflag && (dp->d_flags & RT_DIR_HIDDEN)) continue;
 		    if (((dp->d_flags & ls.dir_flags) != 0)) {
 			bu_ptbl_ins(ls.results_obj, (long *)dp);

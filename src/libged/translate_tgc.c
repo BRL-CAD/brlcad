@@ -42,7 +42,7 @@ _ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *at
 
     RT_TGC_CK_MAGIC(tgc);
 
-    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(tvec, tvec, gedp->dbip->dbi_local2base);
 
     switch (attribute[0]) {
 	case 'h':

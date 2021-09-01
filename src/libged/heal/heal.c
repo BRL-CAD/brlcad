@@ -77,7 +77,7 @@ ged_heal_core(struct ged *gedp, int argc, const char *argv[])
     RT_BOT_CK_MAGIC(bot);
 
     analyze_heal_bot(bot, zipper_tol);
-    rt_db_put_internal(bot_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource);
+    rt_db_put_internal(bot_dp, gedp->dbip, &intern, &rt_uniresource);
 
     bu_vls_printf(gedp->ged_result_str, "Healed Mesh!");
 

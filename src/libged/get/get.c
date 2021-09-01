@@ -58,7 +58,7 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Verify that this wdb supports lookup operations
        (non-null dbip) */
-    if (gedp->ged_wdbp->dbip == 0) {
+    if (gedp->dbip == 0) {
 	bu_vls_printf(gedp->ged_result_str, "dbip does not support lookup operations");
 	return GED_ERROR;
     }

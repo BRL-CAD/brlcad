@@ -779,7 +779,7 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     MAT_IDN(mat);
 
     /* get the internal form */
-    ret = rt_db_get_internal(&intern, dp, gbdcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
+    ret = rt_db_get_internal(&intern, dp, gbdcdp->gedp->dbip, mat, &rt_uniresource);
 
     if (ret < 0) {
 	bu_log("ged_bot_leaf: rt_get_internal failure %d on %s\n", ret, dp->d_namep);
@@ -793,7 +793,7 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    _ged_bot_dump(dp, pathp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->ged_wdbp->dbip->dbi_filename);
+    _ged_bot_dump(dp, pathp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->dbip->dbi_filename);
     rt_db_free_internal(&intern);
 
     return curtree;
@@ -995,14 +995,14 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 1) {
 	/* dump all the bots */
-	FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
 
 	    /* we only dump BOT primitives, so skip some obvious exceptions */
 	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
 	    if (dp->d_flags & RT_DIR_COMB) continue;
 
 	    /* get the internal form */
-	    i = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
+	    i = rt_db_get_internal(&intern, dp, gedp->dbip, mat, &rt_uniresource);
 	    if (i < 0) {
 		fprintf(stderr, "%s: rt_get_internal failure %d on %s\n", cmd_name, i, dp->d_namep);
 		continue;
@@ -1013,7 +1013,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
+	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, gedp->dbip->dbi_filename);
 	    rt_db_free_internal(&intern);
 
 	} FOR_ALL_DIRECTORY_END;
@@ -1031,7 +1031,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
 	for (i = 0; i < argc; ++i) {
 	    av[0] = (char *)argv[i];
-	    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+	    ret = db_walk_tree(gedp->dbip,
 			       ac,
 			       (const char **)av,
 			       ncpu,
@@ -1579,7 +1579,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
     }
 
-    dl_botdump(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, fp, fd, file_ext, output_type, &curr_obj_red, &curr_obj_green, &curr_obj_blue, &curr_obj_alpha);
+    dl_botdump(gedp->ged_gdp->gd_headDisplay, gedp->dbip, fp, fd, file_ext, output_type, &curr_obj_red, &curr_obj_green, &curr_obj_blue, &curr_obj_alpha);
 
     data_dump(gedp, fp);
 

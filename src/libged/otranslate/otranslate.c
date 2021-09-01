@@ -88,7 +88,7 @@ ged_otranslate_cmd(struct ged *gedp, int argc, const char *argv[])
     }
 
     MAT_IDN(dmat);
-    VSCALE(delta, scan, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(delta, scan, gedp->dbip->dbi_local2base);
     MAT_DELTAS_VEC(dmat, delta);
 
     bn_mat_inv(invXform, gtd.gtd_xform);

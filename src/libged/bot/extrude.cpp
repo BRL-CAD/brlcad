@@ -131,7 +131,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	bu_vls_sprintf(&comb_name, "%s_extrusion.r", gb->dp->d_namep);
     }
 
-    if (db_lookup(gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&comb_name), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gb->gedp->dbip, bu_vls_cstr(&comb_name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&comb_name));
 	bu_vls_free(&comb_name);
 	return GED_ERROR;

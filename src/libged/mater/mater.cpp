@@ -234,7 +234,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     bu_avs_init_empty(&avs);
-    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	bu_avs_free(&avs);
 	return GED_ERROR;
@@ -245,7 +245,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
-    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+    if (db5_update_attributes(dp, &avs, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: failed to update attributes\n");
 	bu_avs_free(&avs);
 	return GED_ERROR;
@@ -263,13 +263,13 @@ mater_source(struct ged *gedp)
     struct bu_vls d_path_dir = BU_VLS_INIT_ZERO;
 
     /* Check in priority order */
-    if (db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s\n", gedp->ged_wdbp->dbip->dbi_filename);
+    if (db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", gedp->dbip->dbi_filename);
 	return GED_OK;
     }
 
     /* Try .density file in database path first */
-    if (bu_path_component(&d_path_dir, gedp->ged_wdbp->dbip->dbi_filename, BU_PATH_DIRNAME)) {
+    if (bu_path_component(&d_path_dir, gedp->dbip->dbi_filename, BU_PATH_DIRNAME)) {
 
 	bu_vls_printf(&d_path_dir, "/.density");
 
@@ -300,12 +300,12 @@ static int
 mater_clear(struct ged *gedp)
 {
     struct directory *dp;
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
-	if (db_delete(gedp->ged_wdbp->dbip, dp) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, dp) != 0) {
+    if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Error removing density information from database.");
 	    return GED_ERROR;
 	}
-	db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+	db_update_nref(gedp->dbip, &rt_uniresource);
     }
     return GED_OK;
 }
@@ -381,7 +381,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	    densities_filename = argv[1];
 	}
     }
-    gddp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
+    gddp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
 
     if (densities_filename && gddp != RT_DIR_NULL) {
 	// This is OK, but let the user know if we are doing a file based run but there is a
@@ -412,11 +412,11 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
     struct bu_ptbl id_objs = BU_PTBL_INIT_ZERO;
     std::set<struct directory *> mns, ids;
     std::set<struct directory *>::iterator dp_it;
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
     const char *mname_search = "-attr material_name";
     const char *mid_search = "-attr material_id";
-    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
-    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
+    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL);
+    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {
 	dp = (struct directory *)BU_PTBL_GET(&mn_objs, i);
 	mns.insert(dp);
@@ -453,7 +453,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	struct bu_vls msg = BU_VLS_INIT_ZERO;
 	struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 	dp = *dp_it;
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Warning: cannot get attributes for object %s\n", dp->d_namep);
 	    continue;
 	}
@@ -528,7 +528,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 			    const char *oname = NULL;
 			    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 			    dp = *dp_it;
-			    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+			    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 				continue;
 			    }
 			    mat_id = bu_avs_get(&avs, "material_id");
@@ -564,7 +564,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	    const char *oname = NULL;
 	    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 	    dp = *dp_it;
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		continue;
 	    }
 	    oname = bu_avs_get(&avs, "material_name");
@@ -609,7 +609,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	    const char *oname = NULL;
 	    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 	    dp = *dp_it;
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		continue;
 	    }
 
@@ -703,7 +703,7 @@ mater_export(struct ged *gedp, size_t argc, const char *argv[])
 	return GED_OK;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "no density information found in database\n");
 	return GED_ERROR;
     }
@@ -720,7 +720,7 @@ mater_export(struct ged *gedp, size_t argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "error reading %s from database", dp->d_namep);
 	fclose(fp);
 	return GED_ERROR;
@@ -917,7 +917,7 @@ mater_get(struct ged *gedp, size_t argc, const char *argv[])
 	goto ged_mater_get_fail;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "no density information found in database.  To insert density information, use the mater -d set and/or mater -d import commands.\n");
 	goto ged_mater_get_fail;
     }
@@ -928,7 +928,7 @@ mater_get(struct ged *gedp, size_t argc, const char *argv[])
 	}
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "error reading %s from database", dp->d_namep);
 	goto ged_mater_get_fail;
     }
@@ -1059,7 +1059,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != GED_OK) {
 	    return GED_ERROR;
 	}
@@ -1148,7 +1148,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     struct bu_external bin_ext;
     int ret = -1;
     if (intern.idb_meth->ft_export5) {
-	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->ged_wdbp->dbip, gedp->ged_wdbp->wdb_resp);
+	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, gedp->dbip, gedp->ged_wdbp->wdb_resp);
     }
     if (ret != 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to export %s\n", GED_DB_DENSITY_OBJECT);
@@ -1166,14 +1166,14 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     bu_free_external(&body);
 
     /* make sure the database directory is initialized */
-    if (gedp->ged_wdbp->dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
-	if (db_dirbuild(gedp->ged_wdbp->dbip)) {
+    if (gedp->dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
+	if (db_dirbuild(gedp->dbip)) {
 	    return GED_ERROR;
 	}
     }
 
     /* add this (phony until written) object to the directory */
-    dp = db_diradd5(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, RT_DIR_PHONY_ADDR, intern.idb_major_type, intern.idb_minor_type, 0, 0, NULL);
+    dp = db_diradd5(gedp->dbip, GED_DB_DENSITY_OBJECT, RT_DIR_PHONY_ADDR, intern.idb_major_type, intern.idb_minor_type, 0, 0, NULL);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to add new name (%s) to the database", GED_DB_DENSITY_OBJECT);
 	bu_free_external(&bin_ext);
@@ -1181,7 +1181,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     /* and write it to the database */
-    if (db_put_external5(&bin_ext, dp, gedp->ged_wdbp->dbip)) {
+    if (db_put_external5(&bin_ext, dp, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "Error while adding new binary object (%s) to the database", GED_DB_DENSITY_OBJECT);
 	bu_free_external(&bin_ext);
 	return GED_ERROR;
@@ -1426,7 +1426,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     if (!bu_vls_strlen(&dfilename)) {
 	// If we don't have a density file, we can't proceed
 	// unless the database has density information.
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	    if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != GED_OK) {
 		bu_vls_printf(gedp->ged_result_str, "No density information found and no density file specified, cannot proceed.");
 		goto ged_mater_mat_id_fail;
@@ -1474,9 +1474,9 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     // Find the objects we need to work with (if any)
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
-    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->ged_wdbp->dbip, NULL);
+    db_update_nref(gedp->dbip, &rt_uniresource);
+    (void)db_search(&mn_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mname_search, 0, NULL, gedp->dbip, NULL);
+    (void)db_search(&id_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, mid_search, 0, NULL, gedp->dbip, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&mn_objs); i++) {
 	dp = (struct directory *)BU_PTBL_GET(&mn_objs, i);
 	mns.insert(dp);
@@ -1494,7 +1494,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	    BU_GET(avs, struct bu_attribute_value_set);
 	    dp = *dp_it;
 	    bu_avs_init_empty(avs);
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, avs, dp)) {
+	    if (db5_get_attributes(gedp->dbip, avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		goto ged_mater_mat_id_fail;
 	    }
@@ -1518,7 +1518,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	    char *nname = analyze_densities_name(a, std::stol(mat_id));
 	    if (!oname || !BU_STR_EQUAL(nname, oname)) {
 		(void)bu_avs_add(avs, "material_name", nname);
-		if (db5_update_attributes(dp, avs, gedp->ged_wdbp->dbip)) {
+		if (db5_update_attributes(dp, avs, gedp->dbip)) {
 		    bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
 		    bu_avs_free(avs);
 		    BU_PUT(avs, struct bu_attribute_value_set);
@@ -1556,7 +1556,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	dp = *dp_it;
 	BU_GET(avs, struct bu_attribute_value_set);
 	bu_avs_init_empty(avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, avs, dp)) {
+	if (db5_get_attributes(gedp->dbip, avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	    analyze_densities_destroy(a);
 	    bu_avs_free(avs);
@@ -1580,7 +1580,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	nid = wids[0];
 	if (!mat_id || std::stoi(mat_id) != nid) {
 	    (void)bu_avs_add(avs, "material_id", std::to_string(nid).c_str());
-	    if (db5_update_attributes(dp, avs, gedp->ged_wdbp->dbip)) {
+	    if (db5_update_attributes(dp, avs, gedp->dbip)) {
 		bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
 		bu_avs_free(avs);
 		BU_PUT(avs, struct bu_attribute_value_set);

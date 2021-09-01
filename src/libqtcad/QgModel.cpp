@@ -258,7 +258,7 @@ std::vector<unsigned long long>
 QgInstance::children()
 {
     std::vector<unsigned long long> chash;
-    struct db_i *dbip = ctx->gedp->ged_wdbp->dbip;
+    struct db_i *dbip = ctx->gedp->dbip;
     if (!dp)
 	return chash;
 
@@ -715,7 +715,7 @@ QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct ged *ngedp)
     if (!gedp)
 	return;
 
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
 
     // Primary driver of model updates is when individual objects are changed
     db_add_changed_clbk(dbip, &qgmodel_changed_callback, (void *)this);
@@ -810,7 +810,7 @@ QgModel_ctx::~QgModel_ctx()
 void
 QgModel_ctx::add_instances(struct directory *dp)
 {
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
 
     if (dp->d_flags & RT_DIR_HIDDEN)
 	return;
@@ -919,7 +919,7 @@ QgModel_ctx::add_instances(struct directory *dp)
 void
 QgModel_ctx::update_instances(struct directory *dp)
 {
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     std::unordered_map<unsigned long long, QgInstance *>::iterator i_it;
     QgInstance *inst = NULL;
 
@@ -1218,7 +1218,7 @@ bool QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     // ourselves - the backend logic made a dp add/remove but didn't do the
     // nref updates.
     if (ctx->gedp && need_update_nref)
-	db_update_nref(ctx->gedp->ged_wdbp->dbip, &rt_uniresource);
+	db_update_nref(ctx->gedp->dbip, &rt_uniresource);
 
     return true;
 }

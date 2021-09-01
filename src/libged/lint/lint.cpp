@@ -140,7 +140,7 @@ _ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree 
 	    _ged_cyclic_search_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, client_data);
 	    break;
 	case OP_DB_LEAF:
-	    dp = db_lookup(gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_QUIET);
+	    dp = db_lookup(gedp->dbip, tp->tr_l.tl_name, LOOKUP_QUIET);
 	    if (dp == RT_DIR_NULL) {
 		return;
 	    } else {
@@ -184,7 +184,7 @@ _ged_cyclic_search(struct db_full_path *fp, void *client_data)
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) return;
+	if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	_ged_cyclic_search_subtree(fp, OP_UNION, comb->tree, _ged_cyclic_search, client_data);
@@ -216,7 +216,7 @@ _ged_cyclic_check(struct _ged_cyclic_data *cdata, struct ged *gedp, int argc, st
 	 * path can produce a situation where there are no tops objects and/or
 	 * hide the paths we need to report. */
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		db_add_node_to_full_path(start_path, dp);
 		_ged_cyclic_search(start_path, (void *)cdata);
 		DB_FULL_PATH_POP(start_path);
@@ -334,7 +334,7 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
 	const char *osearch = "-type comb";
 	if (!dpa) return GED_ERROR;
 	BU_ALLOC(pc, struct bu_ptbl);
-	if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
+	if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, argc, dpa, gedp->dbip, NULL) < 0) {
 	    ret = GED_ERROR;
 	    bu_ptbl_free(pc);
 	    bu_free(pc, "pc table");
@@ -344,11 +344,11 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
 		if (dp->d_flags & RT_DIR_COMB) {
 		    struct rt_db_internal in;
 		    struct rt_comb_internal *comb;
-		    if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) continue;
+		    if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) continue;
 		    comb = (struct rt_comb_internal *)in.idb_ptr;
-		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->ged_wdbp->dbip, comb->tree);
+		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->dbip, comb->tree);
 		} else {
-		    _ged_lint_shape_find_missing(mdata, gedp->ged_wdbp->dbip, dp);
+		    _ged_lint_shape_find_missing(mdata, gedp->dbip, dp);
 		}
 	    }
 	    bu_ptbl_free(pc);
@@ -357,15 +357,15 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
     } else {
 	int i;
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (dp->d_flags & RT_DIR_COMB) {
 		    struct rt_db_internal in;
 		    struct rt_comb_internal *comb;
-		    if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) continue;
+		    if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) continue;
 		    comb = (struct rt_comb_internal *)in.idb_ptr;
-		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->ged_wdbp->dbip, comb->tree);
+		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->dbip, comb->tree);
 		} else {
-		    _ged_lint_shape_find_missing(mdata, gedp->ged_wdbp->dbip, dp);
+		    _ged_lint_shape_find_missing(mdata, gedp->dbip, dp);
 		}
 	    }
 	}
@@ -389,7 +389,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
     if (dp->d_flags & RT_DIR_HIDDEN) return;
     if (dp->d_addr == RT_DIR_PHONY_ADDR) return;
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	rt_db_free_internal(&intern);
 	return;
@@ -453,7 +453,7 @@ _ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int 
     struct bu_vls sopts = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sopts, "! -type comb %s", bu_vls_cstr(&opts->filter));
     BU_ALLOC(pc, struct bu_ptbl);
-    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
+    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), argc, dpa, gedp->dbip, NULL) < 0) {
 	ret = GED_ERROR;
 	bu_free(pc, "pc table");
     } else {

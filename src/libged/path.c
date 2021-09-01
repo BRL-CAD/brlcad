@@ -46,7 +46,7 @@ path_validate_recurse(struct ged *gedp, struct db_full_path *path,
     struct directory *root = DB_FULL_PATH_ROOT_DIR(path);
 
     /* get comb object */
-    if (rt_db_get_internal(&intern, root, gedp->ged_wdbp->dbip,
+    if (rt_db_get_internal(&intern, root, gedp->dbip,
 			   (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return GED_ERROR;

@@ -515,7 +515,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 
     // Only do this if we haven't already done it - tree walking may
     // result in multiple references to a single object
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_name), LOOKUP_QUIET) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_addr(&comb_name), LOOKUP_QUIET) == RT_DIR_NULL) {
 	bu_vls_printf(log, "Converting %s to %s\n", dp->d_namep, bu_vls_addr(&comb_name));
 
 	BU_LIST_INIT(&pcomb.l);
@@ -571,7 +571,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 		brep->GetBoundingBox(bbox);
 		tol.dist = (bbox.Diagonal().Length() / 100.0);
 		bu_vls_printf(log, "Analyzing %s csg conversion, tol %f...\n", dp->d_namep, tol.dist);
-		if (analyze_raydiff(NULL, gedp->ged_wdbp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
+		if (analyze_raydiff(NULL, gedp->dbip, dp->d_namep, bu_vls_addr(&comb_name), &tol, 1)) {
 		    /* remove generated tree if debugging flag isn't passed - not valid */
 		    int ac = 3;
 		    const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
@@ -650,8 +650,8 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 	case OP_DB_LEAF:
 	    oldname = oldtree->tr_l.tl_name;
 	    bu_vls_sprintf(&tmpname, "csg_%s", oldname);
-	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) == RT_DIR_NULL) {
-		struct directory *dir = db_lookup(gedp->ged_wdbp->dbip, oldname, LOOKUP_QUIET);
+	    if (db_lookup(gedp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) == RT_DIR_NULL) {
+		struct directory *dir = db_lookup(gedp->dbip, oldname, LOOKUP_QUIET);
 
 		if (dir != RT_DIR_NULL) {
 		    if (dir->d_flags & RT_DIR_COMB) {

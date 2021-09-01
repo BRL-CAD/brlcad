@@ -226,7 +226,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
     if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	return;
     }
@@ -319,7 +319,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		    break;
 	    }
 
-	    sol_dp = db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET);
+	    sol_dp = db_lookup(gedp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET);
 	    if (sol_dp != RT_DIR_NULL) {
 		if (sol_dp->d_flags & RT_DIR_COMB) {
 		    bu_vls_printf(tobj->tree, "   RG %c %s\n", op, sol_dp->d_namep);
@@ -334,7 +334,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		    } else {
 			MAT_COPY(temp_mat, old_mat);
 		    }
-		    if (rt_db_get_internal(&sol_intern, sol_dp, gedp->ged_wdbp->dbip, temp_mat, &rt_uniresource) < 0) {
+		    if (rt_db_get_internal(&sol_intern, sol_dp, gedp->dbip, temp_mat, &rt_uniresource) < 0) {
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
 			nsoltemp = 0;
 		    }
@@ -360,7 +360,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		if (!OBJ[sol_intern.idb_type].ft_describe ||
-		    OBJ[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local) < 0) {
+		    OBJ[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->dbip->dbi_base2local) < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "%s describe error\n", tree_list[i].tl_tree->tr_l.tl_name);
 		}
 		bu_vls_printf(tobj->describe, "%s", bu_vls_addr(&tmp_vls));
@@ -402,7 +402,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		}
 	    }
 
-	    nextdp = db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY);
+	    nextdp = db_lookup(gedp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY);
 	    if (nextdp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "\tskipping this object\n");
 		continue;
@@ -434,7 +434,7 @@ tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *ge
 {
     int i;
     bu_vls_printf(tabvls, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
-    bu_vls_printf(tabvls, "2 -7         file name    : %s\n", gedp->ged_wdbp->dbip->dbi_filename);
+    bu_vls_printf(tabvls, "2 -7         file name    : %s\n", gedp->dbip->dbi_filename);
     bu_vls_printf(tabvls, "3 -6         \n");
     bu_vls_printf(tabvls, "4 -5         \n");
 #ifndef _WIN32
@@ -449,8 +449,8 @@ tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *ge
 	    bu_vls_printf(tabvls, "5 -4         user         : UNKNOWN\n");
     }
 #endif
-    bu_vls_printf(tabvls, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
-    bu_vls_printf(tabvls, "7 -2         target units : %s\n", bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
+    bu_vls_printf(tabvls, "6 -3         target title : %s\n", gedp->dbip->dbi_title);
+    bu_vls_printf(tabvls, "7 -2         target units : %s\n", bu_units_string(gedp->dbip->dbi_local2base));
     bu_vls_printf(tabvls, "8 -1         objects      :");
     for (i = 2; i < argc; i++) {
 	if ((i%8) == 0)
@@ -552,7 +552,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 
 	bu_ptbl_reset(&cur_path);
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
 	    tables_new(gedp, &tabobjs, dp, &cur_path, (const fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
 	else
 	    bu_vls_printf(gedp->ged_result_str, "%s:  skip this object\n", argv[i]);

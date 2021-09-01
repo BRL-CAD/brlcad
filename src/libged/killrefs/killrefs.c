@@ -74,11 +74,11 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 
     ret = GED_OK;
 
-    FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
 	if (!(dp->d_flags & RT_DIR_COMB))
 	    continue;
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 	    ret = GED_ERROR;
 	    continue;
@@ -105,7 +105,7 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Unable to write new combination into database.\n");
 	    ret = GED_ERROR;
 	    continue;
@@ -113,7 +113,7 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
     } FOR_ALL_DIRECTORY_END;
 
     /* Update references. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     return ret;
 }

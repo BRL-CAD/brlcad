@@ -55,9 +55,9 @@ ged_model2view_core_lu(struct ged *gedp, int argc, const char *argv[])
 	sscanf(argv[3], "%lf", &model_pt[Z]) != 1)
 	goto bad;
 
-    VSCALE(model_pt, model_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(model_pt, model_pt, gedp->dbip->dbi_local2base);
     MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
-    f = gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
+    f = gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local;
     VSCALE(view_pt, view_pt, f);
     bn_encode_vect(gedp->ged_result_str, view_pt, 1);
 

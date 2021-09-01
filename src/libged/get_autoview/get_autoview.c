@@ -90,8 +90,8 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
     if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
 	VSETALL(radial, 1.0);
 
-    VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
-    VSCALE(radial, radial, gedp->ged_wdbp->dbip->dbi_base2local * 2.0);
+    VSCALE(center, center, gedp->dbip->dbi_base2local);
+    VSCALE(radial, radial, gedp->dbip->dbi_base2local * 2.0);
     size = radial[X];
     V_MAX(size, radial[Y]);
     V_MAX(size, radial[Z]);

@@ -62,7 +62,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
     comb->tree = final_tree;
 
     if (!BU_STR_EQUAL(dir_name, comb_name) && dp) {
-	if (db_delete(gedp->ged_wdbp->dbip, dp) || db_dirdelete(gedp->ged_wdbp->dbip, dp)) {
+	if (db_delete(gedp->dbip, dp) || db_dirdelete(gedp->dbip, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "make_tree: Unable to delete directory entry for %s\n", comb_name);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return GED_ERROR;
@@ -78,7 +78,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 	else
 	    flags = RT_DIR_COMB;
 
-	dp = db_diradd(gedp->ged_wdbp->dbip, dir_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type);
+	dp = db_diradd(gedp->dbip, dir_name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&intern.idb_type);
 	if (dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", dir_name);
 	    intern.idb_meth->ft_ifree(&intern);
@@ -91,7 +91,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
     else
 	dp->d_flags &= ~RT_DIR_REGION;
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "make_tree: Unable to write combination to database.\n");
 	return GED_ERROR;
     }
@@ -111,7 +111,7 @@ mktemp_comb(struct ged *gedp, const char *str)
     char *ptr;
     static char name[NAMESIZE] = {0};
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
+    if (gedp->dbip == DBI_NULL)
 	return NULL;
 
     /* leave room for 5 digits */
@@ -129,7 +129,7 @@ mktemp_comb(struct ged *gedp, const char *str)
     done = 0;
     while (!done && counter < 99999) {
 	sprintf(ptr, "%d", counter);
-	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) == RT_DIR_NULL)
+	if (db_lookup(gedp->dbip, str, LOOKUP_QUIET) == RT_DIR_NULL)
 	    done = 1;
 	else
 	    counter++;
@@ -150,18 +150,18 @@ save_comb(struct ged *gedp, struct directory *dpold)
     /* Make a temp name */
     const char *name = mktemp_comb(gedp, tmpcomb);
 
-    if (rt_db_get_internal(&intern, dpold, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dpold, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "save_comb: Database read error, aborting\n");
 	return NULL;
     }
 
-    dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (void *)&intern.idb_type);
+    dp = db_diradd(gedp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
 	return NULL;
     }
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
 	return NULL;
     }
@@ -359,7 +359,7 @@ put_tree_into_comb_and_export(struct ged *gedp, struct rt_comb_internal *comb, s
 		name[i] = '\0';
 
 	    /* Check for existence of member */
-	    if ((db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET)) == RT_DIR_NULL)
+	    if ((db_lookup(gedp->dbip, name, LOOKUP_QUIET)) == RT_DIR_NULL)
 		bu_log("\tWARNING: ' %s ' does not exist\n", name);
 
 	    /* get matrix */
@@ -514,14 +514,14 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     comb = (struct rt_comb_internal *)NULL;
-    dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, comb_name, LOOKUP_QUIET);
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a combination, so cannot be edited this way\n", cmd_name, comb_name);
 	    return GED_ERROR;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting\n", cmd_name);
 	    return GED_ERROR;
 	}

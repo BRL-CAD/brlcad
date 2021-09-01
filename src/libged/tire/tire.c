@@ -1922,7 +1922,7 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&name), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_addr(&name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s already exists.\n", bu_vls_addr(&name));
 	bu_vls_free(&name);
 	bu_vls_free(&str);

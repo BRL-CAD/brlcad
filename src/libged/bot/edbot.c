@@ -78,7 +78,7 @@ ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return GED_ERROR;
@@ -220,7 +220,7 @@ ged_bot_face_split(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return GED_ERROR;
@@ -397,7 +397,7 @@ ged_bot_move_pnt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return GED_ERROR;
@@ -413,7 +413,7 @@ ged_bot_move_pnt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    VSCALE(pt, pt, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(pt, pt, gedp->dbip->dbi_local2base);
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
@@ -503,7 +503,7 @@ ged_bot_move_pnts(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return GED_ERROR;
@@ -514,7 +514,7 @@ ged_bot_move_pnts(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    VSCALE(vec, vec, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(vec, vec, gedp->dbip->dbi_local2base);
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);

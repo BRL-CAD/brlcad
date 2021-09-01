@@ -139,7 +139,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 	args.push_back(std::string("model"));
     }
 
-    args.push_back(std::string(gedp->ged_wdbp->dbip->dbi_filename));
+    args.push_back(std::string(gedp->dbip->dbi_filename));
 
     int gd_rt_cmd_len = args.size();
     char **gd_rt_cmd = (char **)bu_calloc(gd_rt_cmd_len + ged_who_argc(gedp), sizeof(char *), "alloc gd_rt_cmd");

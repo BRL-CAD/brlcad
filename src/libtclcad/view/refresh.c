@@ -42,7 +42,7 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	if (gdvp->gv_s->gv_rect.draw) {
 	    go_draw(gdvp);
 
-	    dm_draw_viewobjs(gedp->ged_wdbp, gdvp, &tgd->go_dmv, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_wdbp->dbip->dbi_local2base);
+	    dm_draw_viewobjs(gedp->ged_wdbp, gdvp, &tgd->go_dmv, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
 
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
@@ -116,7 +116,7 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	go_draw(gdvp);
     }
 
-    dm_draw_viewobjs(gedp->ged_wdbp, gdvp, &tgd->go_dmv, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_wdbp->dbip->dbi_local2base);
+    dm_draw_viewobjs(gedp->ged_wdbp, gdvp, &tgd->go_dmv, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
 }
 
 void

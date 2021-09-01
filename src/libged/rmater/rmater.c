@@ -124,13 +124,13 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 				     &r, &g, &b, &override, &inherit)) & GED_ERROR)
 	    continue;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_rmater: Failed to find %s\n", name);
 	    status = GED_ERROR;
 	    continue;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	    status = GED_ERROR;
 	}
@@ -150,7 +150,7 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 	comb->inherit = inherit;
 
 	/* Write new values to database */
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting\n");
 	    status = GED_ERROR;
 	}

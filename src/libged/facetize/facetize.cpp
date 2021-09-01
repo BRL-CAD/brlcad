@@ -142,9 +142,9 @@ _ged_facetize_attempted(struct ged *gedp, const char *oname, int method)
 {
     int ret = 0;
     struct bu_attribute_value_set avs;
-    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
+    struct directory *dp = db_lookup(gedp->dbip, oname, LOOKUP_QUIET);
     if (!dp) return 0;
-    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) return 0;
+    if (db5_get_attributes(gedp->dbip, &avs, dp)) return 0;
     if (bu_avs_get(&avs, _ged_facetize_attr(method))) ret = 1;
     bu_avs_free(&avs);
     return ret;
@@ -266,7 +266,7 @@ static int
 _db_uniq_test(struct bu_vls *n, void *data)
 {
     struct ged *gedp = (struct ged *)data;
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
+    if (db_lookup(gedp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
     return 0;
 }
 
@@ -328,7 +328,7 @@ _ged_facetize_mkname(struct ged *gedp, struct _ged_facetize_opts *opts, const ch
 	bu_vls_free(&incr_template);
 	return;
     }
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&incr_template), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_addr(&incr_template), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(&incr_template, "-0");
 	bu_vls_incr(&incr_template, NULL, NULL, &_db_uniq_test, (void *)gedp);
     }
@@ -402,7 +402,7 @@ _ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, str
     if (argc < 1 || !dpa || !gedp) return 0;
 
     /* If we have pnts, it's not a solid tree */
-    if (db_search(NULL, DB_SEARCH_QUIET, pnt_objs, argc, dpa, gedp->ged_wdbp->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_QUIET, pnt_objs, argc, dpa, gedp->dbip, NULL) > 0) {
 	if (opts->verbosity) {
 	    bu_log("-- Found pnts objects in tree\n");
 	}
@@ -410,7 +410,7 @@ _ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, str
     }
 
     BU_ALLOC(bot_dps, struct bu_ptbl);
-    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
+    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, argc, dpa, gedp->dbip, NULL) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Problem searching for BoTs - aborting.\n");
 	}
@@ -532,7 +532,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     _ged_facetize_log_nmg(o);
 
-    db_init_db_tree_state(&init_state, gedp->ged_wdbp->dbip, gedp->ged_wdbp->wdb_resp);
+    db_init_db_tree_state(&init_state, gedp->dbip, gedp->ged_wdbp->wdb_resp);
 
     /* Establish tolerances */
     init_state.ts_ttol = &gedp->ged_wdbp->wdb_ttol;
@@ -544,7 +544,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     if (!BU_SETJUMP) {
 	/* try */
-	i = db_walk_tree(gedp->ged_wdbp->dbip, argc, (const char **)argv,
+	i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
 	    1,
 	    &init_state,
 	    0,			/* take all regions */
@@ -695,7 +695,7 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, stru
 {
     struct rt_db_internal intern;
     struct directory *dp;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
 
     /* Export BOT as a new solid */
     RT_DB_INTERNAL_INIT(&intern);
@@ -728,7 +728,7 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _
 {
     struct rt_db_internal intern;
     struct directory *dp;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
 
     /* Export NMG as a new solid */
     RT_DB_INTERNAL_INIT(&intern);
@@ -762,7 +762,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     int ret = GED_OK;
     struct directory *dp;
     int decimation_succeeded = 0;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     struct rt_db_internal in_intern;
     struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
     struct rt_pnts_internal *pnts;
@@ -826,7 +826,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	    bu_log("SPSR: generating %d points from %s\n", max_pnts, objname);
 	}
 
-	if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
+	if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
 	    r->failure_mode = GED_FACETIZE_FAILURE_PNTGEN;
 	    ret = GED_FACETIZE_FAILURE;
 	    goto ged_facetize_spsr_memfree;
@@ -934,7 +934,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 
 	flags = ANALYZE_OBJ_TO_PNTS_RAND;
 	bu_vls_sprintf(&tmpname, "%s.tmp", newname);
-	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	if (db_lookup(gedp->dbip, bu_vls_addr(&tmpname), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(&tmpname, "-0");
 	    bu_vls_incr(&tmpname, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	}
@@ -945,7 +945,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	    goto ged_facetize_spsr_memfree;
 	}
 
-	if (analyze_obj_to_pnts(NULL, &navg_thickness, gedp->ged_wdbp->dbip, bu_vls_addr(&tmpname), &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
+	if (analyze_obj_to_pnts(NULL, &navg_thickness, gedp->dbip, bu_vls_addr(&tmpname), &btol, flags, max_pnts, opts->max_time, opts->verbosity)) {
 	    bu_log("SPSR: could not raytrace temporary BoT %s\n", bu_vls_addr(&tmpname));
 	    ret = GED_FACETIZE_FAILURE;
 	}
@@ -1028,7 +1028,7 @@ _ged_check_plate_mode(struct ged *gedp, struct directory *dp)
     if (!dp || !gedp) return 0;
 
     BU_ALLOC(bot_dps, struct bu_ptbl);
-    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, 1, &dp, gedp->ged_wdbp->dbip, NULL) < 0) {
+    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, 1, &dp, gedp->dbip, NULL) < 0) {
 	goto ged_check_plate_mode_memfree;
     }
 
@@ -1070,7 +1070,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     int decimation_succeeded = 0;
     double xlen, ylen, zlen;
     struct directory *dp;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     struct rt_db_internal in_intern;
     struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
     struct rt_pnts_internal *pnts;
@@ -1137,7 +1137,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     }
 
     /* Shoot - we need both the avg thickness of the hit partitions and seed points */
-    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity) || pnts->count <= 0) {
+    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->dbip, objname, &btol, flags, max_pnts, opts->max_time, opts->verbosity) || pnts->count <= 0) {
 	r->failure_mode = GED_FACETIZE_FAILURE_PNTGEN;
 	ret = GED_FACETIZE_FAILURE;
 	goto ged_facetize_continuation_memfree;
@@ -1224,7 +1224,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	polygonize_failure = analyze_polygonize(&(bot->faces), (int *)&(bot->num_faces),
 		    (point_t **)&(bot->vertices),
 		    (int *)&(bot->num_vertices),
-		    feature_size, pn->v, objname, gedp->ged_wdbp->dbip, &params);
+		    feature_size, pn->v, objname, gedp->dbip, &params);
 	delta = (int)((bu_gettime() - timestamp)/1e6);
 	if (polygonize_failure || bot->num_faces < successful_bot_count || delta < 2) {
 	    if (polygonize_failure == 3) {
@@ -1503,7 +1503,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
     int newobj_cnt;
     char *newname;
     struct directory **dpa = NULL;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     struct bu_vls oname = BU_VLS_INIT_ZERO;
     int flags = opts->method_flags;
     struct bg_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
@@ -1647,7 +1647,7 @@ int
 _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts *opts)
 {
     int ret = GED_OK;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     struct directory *dp;
     struct rt_db_internal ointern, intern;
     struct rt_comb_internal *ocomb, *comb;
@@ -1832,7 +1832,7 @@ int
 _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname, struct _ged_facetize_opts *opts, int ocnt, int max_cnt, int cmethod, struct _ged_facetize_report_info *cinfo)
 {
     int ret = GED_FACETIZE_FAILURE;
-    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
+    struct directory *dp = db_lookup(gedp->dbip, oname, LOOKUP_QUIET);
 
     if (dp == RT_DIR_NULL) {
 	return GED_ERROR;
@@ -1929,7 +1929,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     struct directory **dpa = NULL;
     struct bu_attribute_value_set rnames;
     struct bu_attribute_value_set bnames;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
 
     if (!argc) return GED_ERROR;
 
@@ -1973,7 +1973,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	const char *rname;
 	const char *bname;
 	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, n)) continue;
+	if (db5_get_attributes(gedp->dbip, &avs, n)) continue;
 	rname = bu_avs_get(&avs, "facetize:original_region");
 	bname = bu_avs_get(&avs, "facetize:target_name");
 	if (!rname || !bname) {
@@ -2027,7 +2027,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	    if (dp == RT_DIR_NULL) {
 		if (opts->retry || !_ged_facetize_attempted(gedp, cname, cmethod)) {
 		    /* Before we try this (unless we're point sampling), check that all the objects in the specified tree(s) are valid solids */
-		    struct directory *odp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
+		    struct directory *odp = db_lookup(gedp->dbip, oname, LOOKUP_QUIET);
 
 		    /* Regardless of the outcome, record what settings were tried. */
 		    _ged_methodattr_set(gedp, opts, cname, cmethod, &cinfo);
@@ -2081,7 +2081,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 ged_facetize_regions_resume_memfree:
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     if (bu_vls_strlen(opts->nmg_log) && opts->method_flags & GED_FACETIZE_NMGBOOL && opts->verbosity > 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(opts->nmg_log));
@@ -2118,7 +2118,7 @@ _ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _ged_
 {
     int i = 0;
     int ret = GED_OK;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = NULL;
     struct directory **children = NULL;
@@ -2216,7 +2216,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     int ret = GED_OK;
     unsigned int i = 0;
     struct directory **dpa = NULL;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     struct bu_ptbl *pc = NULL;
     struct bu_ptbl *ar = NULL;
     struct bu_ptbl *ar2 = NULL;
@@ -2447,7 +2447,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 
 	    if (dp == RT_DIR_NULL) {
 		/* Before we try this (unless we're point sampling), check that all the objects in the specified tree(s) are valid solids */
-		struct directory *odp = db_lookup(gedp->ged_wdbp->dbip, oname, LOOKUP_QUIET);
+		struct directory *odp = db_lookup(gedp->dbip, oname, LOOKUP_QUIET);
 		struct _ged_facetize_report_info cinfo;
 
 		/* Regardless of the outcome, record what settings were tried. */
@@ -2515,7 +2515,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 ged_facetize_regions_memfree:
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     if (bu_vls_strlen(opts->nmg_log) && opts->method_flags & GED_FACETIZE_NMGBOOL && opts->verbosity > 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(opts->nmg_log));
@@ -2553,7 +2553,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     char *newname = NULL;
     int newobj_cnt = 0;
     struct directory **dpa = NULL;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     struct bu_ptbl *ac = NULL;
     struct bu_ptbl *br = NULL;
     std::vector<ON_Brep_CDT_State *> ss_cdt;
@@ -2802,7 +2802,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     }
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     for (size_t i = 0; i < ss_cdt.size(); i++) {
 	ON_Brep_CDT_Destroy(ss_cdt[i]);

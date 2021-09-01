@@ -71,14 +71,14 @@ ged_units_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Get units */
     if (argc == 1) {
-	str = bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base);
+	str = bu_units_string(gedp->dbip->dbi_local2base);
 	if (!str) str = "Unknown_unit";
 
 	if (sflag)
 	    bu_vls_printf(gedp->ged_result_str, "%s", str);
 	else
 	    bu_vls_printf(gedp->ged_result_str, "You are editing in '%s'.  1 %s = %g mm \n",
-			  str, str, gedp->ged_wdbp->dbip->dbi_local2base);
+			  str, str, gedp->dbip->dbi_local2base);
 
 	return GED_OK;
     }
@@ -92,17 +92,17 @@ ged_units_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (db_update_ident(gedp->ged_wdbp->dbip, gedp->ged_wdbp->dbip->dbi_title, loc2mm) < 0) {
+    if (db_update_ident(gedp->dbip, gedp->dbip->dbi_title, loc2mm) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Warning: unable to stash working units into database\n");
     }
 
-    gedp->ged_wdbp->dbip->dbi_local2base = loc2mm;
-    gedp->ged_wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
+    gedp->dbip->dbi_local2base = loc2mm;
+    gedp->dbip->dbi_base2local = 1.0 / loc2mm;
 
-    str = bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base);
+    str = bu_units_string(gedp->dbip->dbi_local2base);
     if (!str) str = "Unknown_unit";
     bu_vls_printf(gedp->ged_result_str, "You are now editing in '%s'.  1 %s = %g mm \n",
-		  str, str, gedp->ged_wdbp->dbip->dbi_local2base);
+		  str, str, gedp->dbip->dbi_local2base);
 
     return GED_OK;
 }

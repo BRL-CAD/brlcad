@@ -182,7 +182,7 @@ ged_free(struct ged *gedp)
 
     // TODO - replace free_scene_obj with free_solids ptbl
     {
-	if (gedp && gedp->ged_wdbp && gedp->ged_wdbp->dbip) {
+	if (gedp && gedp->ged_wdbp && gedp->dbip) {
 	    struct bv_scene_obj *nsp;
 	    sp = BU_LIST_NEXT(bv_scene_obj, &gedp->free_scene_obj->l);
 	    while (BU_LIST_NOT_HEAD(sp, &gedp->free_scene_obj->l)) {

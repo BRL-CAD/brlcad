@@ -258,17 +258,17 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	db_full_path_init(rp);
 
 	struct directory *dp1, *dp2;
-	if ((dp1 = db_lookup(gedp->ged_wdbp->dbip, left_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp1 = db_lookup(gedp->dbip, left_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    return GED_ERROR;
 	}
-	if ((dp2 = db_lookup(gedp->ged_wdbp->dbip, right_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp2 = db_lookup(gedp->dbip, right_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    return GED_ERROR;
 	}
 
 	db_add_node_to_full_path(lp, dp1);
 	db_add_node_to_full_path(rp, dp2);
 
-	check_walk(&diff, &smsgs, gedp->ged_wdbp->dbip, lp, rp);
+	check_walk(&diff, &smsgs, gedp->dbip, lp, rp);
 
 	db_free_full_path(lp);
 	BU_PUT(lp, struct db_full_path);
@@ -319,10 +319,10 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
      * specified, the argv environments will override use of the "current" .g environment.
      */
 
-    if (db_lookup(gedp->ged_wdbp->dbip, left_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, left_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
 	return GED_ERROR;
     }
-    if (db_lookup(gedp->ged_wdbp->dbip, right_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, right_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
 	return GED_ERROR;
     }
 
@@ -342,7 +342,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     }
     tol.dist = len_tol;
 
-    analyze_raydiff(&results, gedp->ged_wdbp->dbip, left_obj, right_obj, &tol, !grazereport);
+    analyze_raydiff(&results, gedp->dbip, left_obj, right_obj, &tol, !grazereport);
 
     /* TODO - may want to integrate with a "regular" diff and report intelligently.  Needs
      * some thought. */
@@ -370,11 +370,11 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	vbp = bv_vlblock_init(&local_vlist, 32);
 
 	/* Clear any previous diff drawing */
-	if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualff", LOOKUP_QUIET) != RT_DIR_NULL)
+	if (db_lookup(gedp->dbip, "diff_visualff", LOOKUP_QUIET) != RT_DIR_NULL)
 	    dl_erasePathFromDisplay(gedp, "diff_visualff", 1);
-	if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualff0000", LOOKUP_QUIET) != RT_DIR_NULL)
+	if (db_lookup(gedp->dbip, "diff_visualff0000", LOOKUP_QUIET) != RT_DIR_NULL)
 	    dl_erasePathFromDisplay(gedp, "diff_visualff0000", 1);
-	if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualffffff", LOOKUP_QUIET) != RT_DIR_NULL)
+	if (db_lookup(gedp->dbip, "diff_visualffffff", LOOKUP_QUIET) != RT_DIR_NULL)
 	    dl_erasePathFromDisplay(gedp, "diff_visualffffff", 1);
 
 	/* Draw left-only lines */

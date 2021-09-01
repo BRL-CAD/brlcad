@@ -72,7 +72,7 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s already exists\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -118,8 +118,8 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
-		pt[i][X] *= gedp->ged_wdbp->dbip->dbi_local2base;
-		pt[i][Y] *= gedp->ged_wdbp->dbip->dbi_local2base;
+		pt[i][X] *= gedp->dbip->dbi_local2base;
+		pt[i][Y] *= gedp->dbip->dbi_local2base;
 		break;
 
 	    case 'y':
@@ -135,8 +135,8 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
-		pt[i][X] *= gedp->ged_wdbp->dbip->dbi_local2base;
-		pt[i][Y] *= gedp->ged_wdbp->dbip->dbi_local2base;
+		pt[i][X] *= gedp->dbip->dbi_local2base;
+		pt[i][Y] *= gedp->dbip->dbi_local2base;
 		break;
 
 	    case 'z':
@@ -152,8 +152,8 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
-		pt[i][X] *= gedp->ged_wdbp->dbip->dbi_local2base;
-		pt[i][Y] *= gedp->ged_wdbp->dbip->dbi_local2base;
+		pt[i][X] *= gedp->dbip->dbi_local2base;
+		pt[i][Y] *= gedp->dbip->dbi_local2base;
 		break;
 
 	    default:
@@ -166,7 +166,7 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s: bad thickness - %s", argv[0], argv[7+3*3]);
 	return GED_ERROR;
     }
-    thick *= gedp->ged_wdbp->dbip->dbi_local2base;
+    thick *= gedp->dbip->dbi_local2base;
 
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -180,7 +180,7 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 	VSET(aip->pt[i], 0.0, 0.0, 0.0);
     }
 
-    VSCALE(aip->pt[0], known_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(aip->pt[0], known_pt, gedp->dbip->dbi_local2base);
 
     ndotv = VDOT(aip->pt[0], norm);
 
@@ -225,13 +225,13 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1(aip->pt[i+4], aip->pt[i], thick, norm);
     }
 
-    dp = db_diradd(gedp->ged_wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type);
+    dp = db_diradd(gedp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Cannot add %s to the directory\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &internal, &rt_uniresource) < 0) {
 	rt_db_free_internal(&internal);
 	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting.\n", argv[0]);
     }

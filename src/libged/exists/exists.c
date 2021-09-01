@@ -417,7 +417,7 @@ binop(struct exists_data *ed)
 int db_object_exists(struct exists_data *ed)
 {
     struct directory *dp = NULL;
-    dp = db_lookup(ed->gedp->ged_wdbp->dbip, *(ed->t_wp), LOOKUP_QUIET);
+    dp = db_lookup(ed->gedp->dbip, *(ed->t_wp), LOOKUP_QUIET);
     if (dp) return 1;
     return 0;
 }

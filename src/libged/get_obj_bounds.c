@@ -53,9 +53,9 @@ ged_get_obj_bounds(struct ged *gedp,
     struct region *regp;
 
     /* Make a new rt_i instance from the existing db_i structure */
-    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    rtip = rt_new_rti(gedp->dbip);
     if (rtip == RTI_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s\n", gedp->ged_wdbp->dbip->dbi_filename);
+	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s\n", gedp->dbip->dbi_filename);
 	return GED_ERROR;
     }
 
@@ -193,7 +193,7 @@ get_objpath_mat(struct ged *gedp,
 	tok = strtok(av0, "/");
 	while (tok) {
 	    if ((gtdp->gtd_obj[gtdp->gtd_objpos++] =
-		 db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
+		 db_lookup(gedp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "get_objpath_mat: Failed to find %s", tok);
 		free(av0);
 		return GED_ERROR;
@@ -209,7 +209,7 @@ get_objpath_mat(struct ged *gedp,
 	/* build directory pointer array for desired path */
 	for (i = 0; i < gtdp->gtd_objpos; i++) {
 	    if ((gtdp->gtd_obj[i] =
-		 db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+		 db_lookup(gedp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "get_objpath_mat: Failed to find %s", argv[pos_in+i]);
 		return GED_ERROR;
 	    }
@@ -252,9 +252,9 @@ _ged_get_obj_bounds2(struct ged *gedp,
     GED_DB_GET_INTERNAL(gedp, &intern, dp, gtdp->gtd_xform, &rt_uniresource, GED_ERROR);
 
     /* Make a new rt_i instance from the existing db_i structure */
-    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    rtip = rt_new_rti(gedp->dbip);
     if (rtip == RTI_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s", gedp->ged_wdbp->dbip->dbi_filename);
+	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s", gedp->dbip->dbi_filename);
 	return GED_ERROR;
     }
 

@@ -72,12 +72,12 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 
     new_name = (char *)argv[2];
 
-    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists\n", new_name);
 	return GED_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
     if (dp == RT_DIR_NULL)
 	return GED_ERROR;
 
@@ -86,7 +86,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to get internal form of %s!!!!\n", argv[1]);
 	return GED_ERROR;
     }
@@ -97,7 +97,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    tol_coll = atof(argv[3]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    tol_coll = atof(argv[3]) * gedp->dbip->dbi_local2base;
     if (tol_coll <= 0.0) {
 	bu_vls_printf(gedp->ged_result_str, "tolerance distance too small\n");
 	return GED_ERROR;
@@ -133,14 +133,14 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 
     count = (size_t)nmg_edge_collapse(m, &gedp->ged_wdbp->wdb_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
 
-    dp = db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    dp = db_diradd(gedp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	return GED_ERROR;

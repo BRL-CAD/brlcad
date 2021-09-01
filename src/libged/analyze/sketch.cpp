@@ -44,17 +44,17 @@ analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
     if (area > 0.0) {
 	bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
 		      area
-		      * gedp->ged_wdbp->dbip->dbi_local2base
-		      * gedp->ged_wdbp->dbip->dbi_local2base
+		      * gedp->dbip->dbi_local2base
+		      * gedp->dbip->dbi_local2base
 	    );
     }
 
     if (OBJ[ID_SKETCH].ft_centroid) {
 	OBJ[ID_SKETCH].ft_centroid(&centroid, ip);
 	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
-		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
-		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
-		      centroid[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
+		      centroid[X] * gedp->dbip->dbi_base2local,
+		      centroid[Y] * gedp->dbip->dbi_base2local,
+		      centroid[Z] * gedp->dbip->dbi_base2local);
     }
 }
 

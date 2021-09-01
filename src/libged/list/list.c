@@ -98,7 +98,7 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 
 	    db_full_path_init(&path);
 	    ts = gedp->ged_wdbp->wdb_initial_tree_state;     /* struct copy */
-	    ts.ts_dbip = gedp->ged_wdbp->dbip;
+	    ts.ts_dbip = gedp->dbip;
 	    ts.ts_resp = &rt_uniresource;
 	    MAT_IDN(ts.ts_mat);
 
@@ -107,7 +107,7 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 
 	    dp = DB_FULL_PATH_CUR_DIR(&path);
 
-	    if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, ts.ts_mat, &rt_uniresource)) < 0) {
+	    if ((id = rt_db_get_internal(&intern, dp, gedp->dbip, ts.ts_mat, &rt_uniresource)) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 		continue;
 	    }
@@ -117,14 +117,14 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s:  ", argv[arg]);
 
 	    if (!OBJ[id].ft_describe
-		|| OBJ[id].ft_describe(gedp->ged_result_str, &intern, verbose, gedp->ged_wdbp->dbip->dbi_base2local) < 0)
+		|| OBJ[id].ft_describe(gedp->ged_result_str, &intern, verbose, gedp->dbip->dbi_base2local) < 0)
 	    {
 		bu_vls_printf(gedp->ged_result_str, "%s: describe error", dp->d_namep);
 	    }
 
 	    rt_db_free_internal(&intern);
 	} else {
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 		continue;
 
 	    _ged_do_list(gedp, dp, verbose);	/* very verbose */

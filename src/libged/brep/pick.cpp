@@ -78,7 +78,7 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
     } else {
 	// If not explicitly specified, get the ray from GED
 	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
-	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(origin, origin, gedp->dbip->dbi_base2local);
 	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
 	VSCALE(dir, dir, -1.0);
 	// Back outside the shape using the brep bounding box diagonal length
@@ -227,7 +227,7 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
     } else {
 	// If not explicitly specified, get the ray from GED
 	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
-	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(origin, origin, gedp->dbip->dbi_base2local);
 	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
 	VSCALE(dir, dir, -1.0);
 	// Back outside the shape using the brep bounding box diagonal length
@@ -400,7 +400,7 @@ _brep_cmd_vertex_pick(void *bs, int argc, const char **argv)
     } else {
 	// If not explicitly specified, get the ray from GED
 	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
-	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(origin, origin, gedp->dbip->dbi_base2local);
 	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
 	VSCALE(dir, dir, -1.0);
 	// Back outside the shape using the brep bounding box diagonal length

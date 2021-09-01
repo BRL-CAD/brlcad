@@ -322,7 +322,7 @@ dpath_sort(void *paths, int path_cnt, const char *col_order, struct ged *gedp)
 {
     struct cmp_dps_arg sarg;
     std::vector<std::string> keys;
-    sarg.dbip = gedp->ged_wdbp->dbip;
+    sarg.dbip = gedp->dbip;
     sarg.keys = &keys;
     if (!strlen(col_order)) {
 	keys.push_back(std::string("name"));
@@ -383,7 +383,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
 
     if (BU_STR_EQUAL(key, "type")) {
 	struct bu_vls tstr = BU_VLS_INIT_ZERO;
-	type_str(&tstr, dp, gedp->ged_wdbp->dbip);
+	type_str(&tstr, dp, gedp->dbip);
 	ft_write(table, bu_vls_cstr(&tstr));
 	bu_vls_free(&tstr);
 	return;
@@ -407,7 +407,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
 
     // If we've gotten this far, we're after an attribute
     struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
-    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	bu_log("Error: cannot get attributes for object %s\n", dp->d_namep);
 	return;
     }
@@ -469,7 +469,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls ofile = BU_VLS_INIT_ZERO;
     FILE *fp = NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     const char *pname = argv[0];
 
     // Stashed command name, increment and continue
@@ -599,7 +599,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < argc; i++) {
 
 	struct directory **paths;
-	int path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_HIDDEN, argv[i], &paths);
+	int path_cnt = db_ls(gedp->dbip, DB_LS_HIDDEN, argv[i], &paths);
 
 
 	for (int j = 0; j < path_cnt; j++) {

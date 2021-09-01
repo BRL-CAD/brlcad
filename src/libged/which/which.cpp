@@ -153,18 +153,18 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
     if (bu_vls_strlen(&root)) {
 	// Find all regions in the specified root
 	const char *sstring = "-type region";
-	struct directory *sdp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&root), LOOKUP_QUIET);
+	struct directory *sdp = db_lookup(gedp->dbip, bu_vls_cstr(&root), LOOKUP_QUIET);
 	if (sdp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: no object named %s in database.", bu_vls_cstr(&root));
 	    bu_vls_free(&root);
 	    return GED_ERROR;
 	}
 	struct bu_ptbl comb_objs = BU_PTBL_INIT_ZERO;
-	(void)db_search(&comb_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, sstring, 1, &sdp, gedp->ged_wdbp->dbip, NULL);
+	(void)db_search(&comb_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, sstring, 1, &sdp, gedp->dbip, NULL);
 	for(size_t i = 0; i < BU_PTBL_LEN(&comb_objs); i++) {
 	    dp = (struct directory *)BU_PTBL_GET(&comb_objs, i);
 
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 		bu_vls_free(&root);
 		return GED_ERROR;
@@ -181,11 +181,11 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	db_search_free(&comb_objs);
     } else {
 	for (int i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (!(dp->d_flags & RT_DIR_REGION))
 		    continue;
 
-		if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 		    bu_vls_free(&root);
 		    return GED_ERROR;

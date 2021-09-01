@@ -112,7 +112,7 @@ _tree_print_node(struct ged *gedp,
     if (aflag) {
 	struct bu_attribute_value_set avs;
 	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	    /* need a bombing macro or set an error code here: return GED_ERROR; */
 	    bu_vls_free(&tmp_str);
@@ -153,7 +153,7 @@ _tree_print_node(struct ged *gedp,
      * Process all the arcs (e.g., directory members).
      */
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return;
     }
@@ -203,7 +203,7 @@ _tree_print_node(struct ged *gedp,
 		    break;
 	    }
 
-	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    if ((nextdp = db_lookup(gedp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		size_t j;
 
 		for (j = 0; j < pathpos+1; j++)
@@ -328,7 +328,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (j > 1)
 	    bu_vls_printf(gedp->ged_result_str, "\n");
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	_tree_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0, verbosity, 0);
     }

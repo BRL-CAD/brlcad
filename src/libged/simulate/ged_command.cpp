@@ -114,8 +114,8 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	return GED_ERROR;
     }
 
-    rt_wdb * const orig_wdbp = gedp->ged_wdbp->dbip->dbi_wdbp;
-    gedp->ged_wdbp->dbip->dbi_wdbp = gedp->ged_wdbp;
+    rt_wdb * const orig_wdbp = gedp->dbip->dbi_wdbp;
+    gedp->dbip->dbi_wdbp = gedp->ged_wdbp;
 
     try {
 	const simulate::Simulation::DebugMode debug_mode =
@@ -130,18 +130,18 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 	const simulate::AutoPtr<db_full_path, db_free_full_path> autofree_path(&path);
 	db_full_path_init(&path);
 
-	if (db_string_to_path(&path, gedp->ged_wdbp->dbip, argv[1]))
+	if (db_string_to_path(&path, gedp->dbip, argv[1]))
 	    throw simulate::InvalidSimulationError("invalid path");
 
-	simulate::Simulation simulation(*gedp->ged_wdbp->dbip, path);
+	simulate::Simulation simulation(*gedp->dbip, path);
 	simulation.step(seconds, debug_mode);
     } catch (const simulate::InvalidSimulationError &exception) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s", exception.what());
-	gedp->ged_wdbp->dbip->dbi_wdbp = orig_wdbp;
+	gedp->dbip->dbi_wdbp = orig_wdbp;
 	return GED_ERROR;
     }
 
-    gedp->ged_wdbp->dbip->dbi_wdbp = orig_wdbp;
+    gedp->dbip->dbi_wdbp = orig_wdbp;
     return GED_OK;
 }
 

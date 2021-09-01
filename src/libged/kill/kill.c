@@ -95,7 +95,7 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], verbose)) != RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip,  argv[i], verbose)) != RT_DIR_NULL) {
 	    if (!force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
 		bu_vls_printf(gedp->ged_result_str, "You attempted to delete the _GLOBAL object.\n");
 		bu_vls_printf(gedp->ged_result_str, "\tIf you delete the \"_GLOBAL\" object you will be losing some important information\n");
@@ -112,7 +112,7 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 
 	    _dl_eraseAllNamesFromDisplay(gedp, argv[i], 0);
 
-	    if (db_delete(gedp->ged_wdbp->dbip, dp) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, dp) != 0) {
+	    if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 		/* Abort kill processing on first error */
 		bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[i]);
 		return GED_ERROR;
@@ -121,7 +121,7 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Update references. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     return GED_OK;
 }

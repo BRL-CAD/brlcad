@@ -84,7 +84,7 @@ go_draw_solid(struct bview *gdvp, struct bv_scene_obj *sp)
     struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     data.s_fpath = &bdata->s_fullpath;
-    data.dbip = gedp->ged_wdbp->dbip;
+    data.dbip = gedp->dbip;
     entry = key_matches_paths(tgd->go_dmv.edited_paths, &data);
 
     if (entry != NULL) {
@@ -231,7 +231,7 @@ to_edit_redraw(struct ged *gedp,
 	gdlp = BU_LIST_PNEXT(display_list, gdlp);
     }
 
-    if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, argv[1]) == 0) {
+    if (db_string_to_path(&subpath, gedp->dbip, argv[1]) == 0) {
 	for (i = 0; i < subpath.fp_len; ++i) {
 	    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {

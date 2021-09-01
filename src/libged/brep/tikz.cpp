@@ -52,7 +52,7 @@ tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, stru
 	    break;
 	case OP_DB_LEAF:
 	    {
-		struct directory *dir = db_lookup(gedp->ged_wdbp->dbip, oldtree->tr_l.tl_name, LOOKUP_QUIET);
+		struct directory *dir = db_lookup(gedp->dbip, oldtree->tr_l.tl_name, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    if (dir->d_flags & RT_DIR_COMB) {
 			tikz_comb(gedp, tikz, dir, color, cnt);
@@ -62,7 +62,7 @@ tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, stru
 			struct rt_db_internal bintern;
 			struct rt_brep_internal *b_ip = NULL;
 			RT_DB_INTERNAL_INIT(&bintern)
-			    if (rt_db_get_internal(&bintern, dir, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+			    if (rt_db_get_internal(&bintern, dir, gedp->dbip, NULL, &rt_uniresource) < 0) {
 				return GED_ERROR;
 			    }
 			if (bintern.idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
@@ -152,8 +152,8 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
     ON_MinMaxInit(&(bbox.m_min), &(bbox.m_max));
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &gb->dp, gedp->ged_wdbp->dbip, NULL);
+    db_update_nref(gedp->dbip, &rt_uniresource);
+    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &gb->dp, gedp->dbip, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct rt_db_internal bintern;
 	struct rt_brep_internal *b_ip = NULL;

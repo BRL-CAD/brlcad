@@ -179,7 +179,7 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
 
 
     // We've already looked up the first sold, get the second
-    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_NOISY);
+    struct directory *dp2 = db_lookup(gedp->dbip, argv[2], LOOKUP_NOISY);
     if (dp2 == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", argv[3]);
 	return GED_ERROR;
@@ -337,7 +337,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 	struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_brep_internal* bi;
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, obj_names[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, obj_names[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", obj_names[i]);
 	    return GED_ERROR;
 	}
@@ -451,7 +451,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	struct bu_vls bname_suffix;
 	bu_vls_init(&bname_suffix);
 	bu_vls_sprintf(&bname_suffix, "%s%s", gb->solid_name.c_str(), bu_vls_cstr(&suffix));
-	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&bname_suffix), LOOKUP_QUIET) != RT_DIR_NULL) {
+	if (db_lookup(gedp->dbip, bu_vls_cstr(&bname_suffix), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_cstr(&bname_suffix));
 	    bu_vls_free(&bname);
 	    bu_vls_free(&suffix);
@@ -486,12 +486,12 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
     // Attempt to evalute to a single object
     struct rt_db_internal brep_db_internal;
     ON_Brep* brep;
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&bname), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_cstr(&bname), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_cstr(&bname));
 	bu_vls_free(&bname);
 	return GED_OK;
     }
-    int ret = brep_conversion(&gb->intern, &brep_db_internal, gedp->ged_wdbp->dbip);
+    int ret = brep_conversion(&gb->intern, &brep_db_internal, gedp->dbip);
     if (ret == -1) {
 	bu_vls_printf(gedp->ged_result_str, "%s doesn't have a "
 		"brep-conversion function yet. Type: %s", gb->solid_name.c_str(),
@@ -526,7 +526,7 @@ _brep_cmd_csg(void *bs, int argc, const char **argv)
     struct bu_vls bname_csg;
     bu_vls_init(&bname_csg);
     bu_vls_sprintf(&bname_csg, "csg_%s", gb->solid_name.c_str());
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&bname_csg), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_cstr(&bname_csg), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_cstr(&bname_csg));
 	bu_vls_free(&bname_csg);
 	return GED_OK;
@@ -651,7 +651,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
     }
 
     // We've already looked up the first sold, get the second
-    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    struct directory *dp2 = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
     if (dp2 == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", argv[3]);
 	return GED_ERROR;
@@ -753,7 +753,7 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 	double thickness;
 	int nocos;
 	rt_brep_plate_mode_getvals(&thickness, &nocos, &gb->intern);
-	thickness = gb->gedp->ged_wdbp->dbip->dbi_base2local * thickness;
+	thickness = gb->gedp->dbip->dbi_base2local * thickness;
 	if (nocos) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "%f (NOCOS)", thickness);
 	} else {
@@ -764,17 +764,17 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 
     const char *val = argv[1];
     struct bu_attribute_value_set avs;
-    double local2base = gb->gedp->ged_wdbp->dbip->dbi_local2base;
+    double local2base = gb->gedp->dbip->dbi_local2base;
 
     // Make sure we can get attributes
-    if (db5_get_attributes(gb->gedp->ged_wdbp->dbip, &avs, gb->dp)) {
+    if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	return GED_ERROR;
     };
 
     if (BU_STR_EQUIV(val, "cos")) {
 	(void)bu_avs_add(&avs, "_plate_mode_nocos", "0");
-	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->ged_wdbp->dbip)) {
+	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	    return GED_ERROR;
 	} else {
@@ -785,7 +785,7 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUIV(val, "nocos")) {
 	(void)bu_avs_add(&avs, "_plate_mode_nocos", "1");
-	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->ged_wdbp->dbip)) {
+	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	    return GED_ERROR;
 	} else {
@@ -811,7 +811,7 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
     ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
     std::string sd = ss.str();
     (void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
-    if (db5_replace_attributes(gb->dp, &avs, gb->gedp->ged_wdbp->dbip)) {
+    if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	return GED_ERROR;
     } else {
@@ -961,7 +961,7 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
 	    operation.parameters.tran.dy = atof(argv[3]);
 	    operation.parameters.tran.dz = atof(argv[4]);
 
-	    ret = ip->idb_meth->ft_process_selection(ip, gedp->ged_wdbp->dbip,
+	    ret = ip->idb_meth->ft_process_selection(ip, gedp->dbip,
 		    (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
 
 	    if (ret != 0) {
@@ -1086,7 +1086,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	}
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s already exists.", bu_vls_cstr(&ocomb));
 	bu_vls_free(&ocomb);
 	return GED_ERROR;
@@ -1125,26 +1125,26 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	    delete fbrep;
 	    if (thickness > 0) {
 		struct bu_attribute_value_set avs;
-		struct directory *ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&fbrep_name), LOOKUP_QUIET);
+		struct directory *ndp = db_lookup(gedp->dbip, bu_vls_cstr(&fbrep_name), LOOKUP_QUIET);
 		if (ndp == RT_DIR_NULL) {
 		    bu_vls_printf(gedp->ged_result_str, ": failed to create brep for face %d", f_id);
 		    bu_vls_free(&fbrep_name);
 		    bu_vls_free(&ocomb);
 		    return GED_ERROR;
 		}
-		if (db5_get_attributes(gb->gedp->ged_wdbp->dbip, &avs, gb->dp)) {
+		if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
 		    bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from face brep  %s", bu_vls_cstr(&fbrep_name));
 		    bu_vls_free(&fbrep_name);
 		    bu_vls_free(&ocomb);
 		    return GED_ERROR;
 		};
-		double local2base = gb->gedp->ged_wdbp->dbip->dbi_local2base;
+		double local2base = gb->gedp->dbip->dbi_local2base;
 		double pthicknessmm = local2base * thickness;
 		std::ostringstream ss;
 		ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
 		std::string sd = ss.str();
 		(void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
-		if (db5_replace_attributes(ndp, &avs, gb->gedp->ged_wdbp->dbip)) {
+		if (db5_replace_attributes(ndp, &avs, gb->gedp->dbip)) {
 		    bu_vls_printf(gedp->ged_result_str, ": failed to set plate mode thickness for face %d", f_id);
 		    bu_vls_free(&fbrep_name);
 		    bu_vls_free(&ocomb);
@@ -1172,24 +1172,24 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	ret = mk_brep(gedp->ged_wdbp, bu_vls_cstr(&ocomb), brep);
 	if (thickness > 0) {
 	    struct bu_attribute_value_set avs;
-	    struct directory *ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET);
+	    struct directory *ndp = db_lookup(gedp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET);
 	    if (ndp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to create brep");
 		bu_vls_free(&ocomb);
 		return GED_ERROR;
 	    }
-	    if (db5_get_attributes(gb->gedp->ged_wdbp->dbip, &avs, gb->dp)) {
+	    if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from brep");
 		bu_vls_free(&ocomb);
 		return GED_ERROR;
 	    };
-	    double local2base = gb->gedp->ged_wdbp->dbip->dbi_local2base;
+	    double local2base = gb->gedp->dbip->dbi_local2base;
 	    double pthicknessmm = local2base * thickness;
 	    std::ostringstream ss;
 	    ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
 	    std::string sd = ss.str();
 	    (void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
-	    if (db5_replace_attributes(ndp, &avs, gb->gedp->ged_wdbp->dbip)) {
+	    if (db5_replace_attributes(ndp, &avs, gb->gedp->dbip)) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to set plate mode thickness");
 		bu_vls_free(&ocomb);
 		return GED_ERROR;
@@ -1396,7 +1396,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     gb.solid_name = std::string(argv[0]);
-    gb.dp = db_lookup(gedp->ged_wdbp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
+    gb.dp = db_lookup(gedp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
     if (gb.dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", gb.solid_name.c_str());
 	if (color) {

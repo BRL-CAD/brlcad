@@ -77,7 +77,7 @@ get_pleqn(struct ged *gedp, fastf_t *plane, const char *argv[])
     for (i=0; i<4; i++)
 	plane[i]= atof(argv[i]);
     VUNITIZE(&plane[0]);
-    plane[W] *= gedp->ged_wdbp->dbip->dbi_local2base;
+    plane[W] *= gedp->dbip->dbi_local2base;
     return;
 }
 
@@ -98,11 +98,11 @@ get_3pts(struct ged *gedp, fastf_t *plane, const char *argv[], const struct bn_t
     point_t a, b, c;
 
     for (i=0; i<3; i++)
-	a[i] = atof(argv[0+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	a[i] = atof(argv[0+i]) * gedp->dbip->dbi_local2base;
     for (i=0; i<3; i++)
-	b[i] = atof(argv[3+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	b[i] = atof(argv[3+i]) * gedp->dbip->dbi_local2base;
     for (i=0; i<3; i++)
-	c[i] = atof(argv[6+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	c[i] = atof(argv[6+i]) * gedp->dbip->dbi_local2base;
 
     if (bg_make_plane_3pnts(plane, a, b, c, tol) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "facedef: not a plane\n");
@@ -141,7 +141,7 @@ get_rotfb(struct ged *gedp, fastf_t *plane, const char *argv[], const struct rt_
     } else {
 	/* definite point given */
 	for (i=0; i<3; i++)
-	    pt[i]=atof(argv[2+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    pt[i]=atof(argv[2+i]) * gedp->dbip->dbi_local2base;
 	plane[W]=VDOT(&plane[0], pt);
     }
 }
@@ -159,7 +159,7 @@ get_nupnt(struct ged *gedp, fastf_t *plane, const char *argv[])
     point_t pt;
 
     for (i=0; i<3; i++)
-	pt[i] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pt[i] = atof(argv[i]) * gedp->dbip->dbi_local2base;
     plane[W] = VDOT(&plane[0], pt);
 }
 

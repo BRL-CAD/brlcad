@@ -310,8 +310,8 @@ CADApp::opendb(QString filename)
 	w->canvas->set_view(gedp->ged_gvp);
 	//w->canvas->dm_set = gedp->ged_all_dmp;
 	w->canvas->set_dm_current((struct dm **)&gedp->ged_dmp);
-	w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
-	w->canvas->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+	w->canvas->set_base2local(&gedp->dbip->dbi_base2local);
+	w->canvas->set_local2base(&gedp->dbip->dbi_local2base);
 	gedp->ged_gvp = w->canvas->view();
     } else if (w->c4) {
 	for (int i = 1; i < 5; i++) {
@@ -327,8 +327,8 @@ CADApp::opendb(QString filename)
 	    c->set_view(nv);
 	    //c->dm_set = gedp->ged_all_dmp;
 	    c->set_dm_current((struct dm **)&gedp->ged_dmp);
-	    c->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
-	    c->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+	    c->set_base2local(&gedp->dbip->dbi_base2local);
+	    c->set_local2base(&gedp->dbip->dbi_local2base);
 	}
 	w->c4->cv = &gedp->ged_gvp;
 	w->c4->select(1);
@@ -366,7 +366,7 @@ CADApp::opendb(QString filename)
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
     if (w && w->treeview)
-	w->treeview->m->dbip = gedp->ged_wdbp->dbip;
+	w->treeview->m->dbip = gedp->dbip;
 
     // Inform the world the database has changed
     emit app_changed_db((void *)gedp);
@@ -424,7 +424,7 @@ qged_db_changed(struct db_i *UNUSED(dbip), struct directory *dp, int ctype, void
 int
 qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *changed)
 {
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     struct bview *v = gedp->ged_gvp;
     struct bu_ptbl *sg = v->gv_db_grps;
     std::set<struct bv_scene_group *> regen;
@@ -540,12 +540,12 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     if (gedp) {
 	if (w->canvas) {
-	    w->canvas->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
-	    w->canvas->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+	    w->canvas->set_base2local(&gedp->dbip->dbi_base2local);
+	    w->canvas->set_local2base(&gedp->dbip->dbi_local2base);
 	}
 	if (w->c4 && w->c4->get(0)) {
-	    w->c4->get(0)->set_base2local(&gedp->ged_wdbp->dbip->dbi_base2local);
-	    w->c4->get(0)->set_local2base(&gedp->ged_wdbp->dbip->dbi_local2base);
+	    w->c4->get(0)->set_base2local(&gedp->dbip->dbi_base2local);
+	    w->c4->get(0)->set_local2base(&gedp->dbip->dbi_local2base);
 	}
 	// Checks the dp edit flags and does any necessary redrawing.  If
 	// anything changed with the geometry, we also need to redraw

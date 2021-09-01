@@ -249,7 +249,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     char *topv[2000];
     int topc;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
+    if (gedp->dbip == DBI_NULL)
 	return GED_OK;
 
     struct bu_list *vlfree = &RTG.rtg_vlfree;
@@ -263,7 +263,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     topc = ged_who_argv(gedp, topv, (const char **)(topv+2000));
     dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
-    i = db_walk_tree(gedp->ged_wdbp->dbip, topc, (const char **)topv,
+    i = db_walk_tree(gedp->dbip, topc, (const char **)topv,
 		     1,			/* Number of cpus */
 		     &mesh_initial_tree_state,
 		     0,			/* Begin region */
@@ -517,7 +517,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
     struct rt_grip_internal *gip;
     struct rt_db_internal intern;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
+    if (gedp->dbip == DBI_NULL)
 	return 1;
 
     /* default is the origin. */
@@ -529,7 +529,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	    return 1;
 	case ID_GRIP:
 	    if (hp->flag & HOLD_PT_GOOD) {
-		db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
+		db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
 		MAT4X3PNT(loc, mat, hp->point);
 		return 1;
 	    }
@@ -537,7 +537,7 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 		bu_vls_printf(gedp->ged_result_str, "hold_point_location: null pointer! '%s' not found!\n", "hp->path.fp_names");
 		bu_bomb("this shouldn't happen\n");
 	    }
-	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_len-1], gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0)
+	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_len-1], gedp->dbip, NULL, &rt_uniresource) < 0)
 		return 0;
 
 	    RT_CK_DB_INTERNAL(&intern);
@@ -548,11 +548,11 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	    hp->flag |= HOLD_PT_GOOD;
 	    rt_db_free_internal(&intern);
 
-	    db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
+	    db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
 	    MAT4X3PNT(loc, mat, hp->point);
 	    return 1;
 	case ID_JOINT:
-	    db_path_to_mat(gedp->ged_wdbp->dbip, &hp->path, mat, hp->path.fp_len-3, &rt_uniresource);
+	    db_path_to_mat(gedp->dbip, &hp->path, mat, hp->path.fp_len-3, &rt_uniresource);
 	    if (hp->flag & HOLD_PT_GOOD) {
 		MAT4X3VEC(loc, mat, hp->point);
 		return 1;
@@ -661,7 +661,7 @@ joint_unload(struct ged *gedp, int argc, const char *argv[])
     struct hold *hp;
     int joints, holds;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL) {
+    if (gedp->dbip == DBI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
 	return GED_ERROR;
     }
@@ -670,7 +670,7 @@ joint_unload(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Unexpected parameter [%s]\n", argv[1]);
     }
 
-    db_free_anim(gedp->ged_wdbp->dbip);
+    db_free_anim(gedp->dbip);
     holds = 0;
     while (BU_LIST_WHILE(hp, hold, &hold_head)) {
 	holds++;
@@ -2065,7 +2065,7 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	    if (!hp->effector.path.fp_names) {
 		db_free_full_path(&hp->effector.path); /* sanity */
 		for (i=0; i<= hp->effector.arc.arc_last; i++) {
-		    dp = db_lookup(gedp->ged_wdbp->dbip, hp->effector.arc.arc[i], LOOKUP_NOISY);
+		    dp = db_lookup(gedp->dbip, hp->effector.arc.arc[i], LOOKUP_NOISY);
 		    if (!dp) {
 			continue;
 		    }
@@ -2075,7 +2075,7 @@ parse_hold(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	    if (!hp->objective.path.fp_names) {
 		db_free_full_path(&hp->objective.path); /* sanity */
 		for (i=0; i<= hp->objective.arc.arc_last; i++) {
-		    dp = db_lookup(gedp->ged_wdbp->dbip, hp->objective.arc.arc[i], LOOKUP_NOISY);
+		    dp = db_lookup(gedp->dbip, hp->objective.arc.arc[i], LOOKUP_NOISY);
 		    if (!dp) {
 			continue;
 		    }
@@ -2195,7 +2195,7 @@ joint_adjust(struct ged *gedp, struct joint *jp)
     quat_t q1;
     int i;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
+    if (gedp->dbip == DBI_NULL)
 	return;
 
     /*
@@ -2210,14 +2210,14 @@ joint_adjust(struct ged *gedp, struct joint *jp)
 	db_full_path_init(&anp->an_path);
 
 	for (i=0; i<= jp->path.arc_last; i++) {
-	    dp = db_lookup(gedp->ged_wdbp->dbip, jp->path.arc[i], LOOKUP_NOISY);
+	    dp = db_lookup(gedp->dbip, jp->path.arc[i], LOOKUP_NOISY);
 	    if (!dp) {
 		continue;
 	    }
 	    db_add_node_to_full_path(&anp->an_path, dp);
 	}
 	jp->anim = anp;
-	db_add_anim(gedp->ged_wdbp->dbip, anp, 0);
+	db_add_anim(gedp->dbip, anp, 0);
 
 	if (J_DEBUG & DEBUG_J_MOVE) {
 	    sofar = db_path_to_string(&jp->anim->an_path);
@@ -2276,7 +2276,7 @@ joint_adjust(struct ged *gedp, struct joint *jp)
 
 	if (J_DEBUG & DEBUG_J_MOVE) {
 	    bu_vls_printf(gedp->ged_result_str, "joint move: moving %g along (%g %g %g)\n",
-			  tmp*gedp->ged_wdbp->dbip->dbi_base2local, m2[3], m2[7], m2[11]);
+			  tmp*gedp->dbip->dbi_base2local, m2[3], m2[7], m2[11]);
 	}
 	MAT_COPY(m1, ANIM_MAT);
 	bn_mat_mul(ANIM_MAT, m2, m1);
@@ -2306,7 +2306,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
     struct joint *jp;
     struct hold *hp;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL) {
+    if (gedp->dbip == DBI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
 	return GED_ERROR;
     }
@@ -2326,8 +2326,8 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
     argc -= bu_optind;
     if (!no_unload) joint_unload(gedp, 0, NULL);
 
-    base2mm = gedp->ged_wdbp->dbip->dbi_base2local;
-    mm2base = gedp->ged_wdbp->dbip->dbi_local2base;
+    base2mm = gedp->dbip->dbi_base2local;
+    mm2base = gedp->dbip->dbi_local2base;
 
     while (argc) {
 	fip = fopen(*argv, "rb");
@@ -2406,7 +2406,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 
 	    /* search for these paths. */
 	    for (i=0; i<= hp->effector.arc.arc_last; i++) {
-		dp = db_lookup(gedp->ged_wdbp->dbip, hp->effector.arc.arc[i], LOOKUP_NOISY);
+		dp = db_lookup(gedp->dbip, hp->effector.arc.arc[i], LOOKUP_NOISY);
 		if (!dp) {
 		    continue;
 		}
@@ -2417,7 +2417,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 	    db_full_path_init(&hp->objective.path);
 
 	    for (i=0; i<= hp->objective.arc.arc_last; i++) {
-		dp = db_lookup(gedp->ged_wdbp->dbip, hp->objective.arc.arc[i], LOOKUP_NOISY);
+		dp = db_lookup(gedp->dbip, hp->objective.arc.arc[i], LOOKUP_NOISY);
 		if (!dp) {
 		    break;
 		}
@@ -2437,7 +2437,7 @@ joint_save(struct ged *gedp, int argc, const char *argv[])
     int i;
     FILE *fop;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL) {
+    if (gedp->dbip == DBI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
 	return GED_ERROR;
     }
@@ -2455,13 +2455,13 @@ joint_save(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
     fprintf(fop, "# joints and constraints for '%s'\n",
-	    gedp->ged_wdbp->dbip->dbi_title);
+	    gedp->dbip->dbi_title);
 
     /* Output the current editing units */
-    fprintf(fop, "units %gmm;\n", gedp->ged_wdbp->dbip->dbi_local2base);
+    fprintf(fop, "units %gmm;\n", gedp->dbip->dbi_local2base);
 
-    mm2base = gedp->ged_wdbp->dbip->dbi_local2base;
-    base2mm = gedp->ged_wdbp->dbip->dbi_base2local;
+    mm2base = gedp->dbip->dbi_local2base;
+    base2mm = gedp->dbip->dbi_base2local;
 
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	fprintf(fop, "joint %s {\n", jp->name);
@@ -3398,7 +3398,7 @@ joint_move(struct ged *gedp, int argc, const char *argv[])
     int i;
     double tmp;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
+    if (gedp->dbip == DBI_NULL)
 	return GED_OK;
 
     /* find the joint. */
@@ -3454,7 +3454,7 @@ joint_move(struct ged *gedp, int argc, const char *argv[])
 	    --argc;
 	    continue;
 	}
-	tmp = atof(*argv) * gedp->ged_wdbp->dbip->dbi_local2base;
+	tmp = atof(*argv) * gedp->dbip->dbi_local2base;
 	if (tmp <= jp->dirs[i].upper &&
 	    tmp >= jp->dirs[i].lower) {
 	    jp->dirs[i].current = tmp;

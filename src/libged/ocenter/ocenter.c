@@ -81,7 +81,7 @@ ged_ocenter_core(struct ged *gedp, int argc, const char *argv[])
     VSCALE(oldCenter, oldCenter, 0.5);
 
     if (argc == 2) {
-	VSCALE(center, oldCenter, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(center, oldCenter, gedp->dbip->dbi_base2local);
 	bn_encode_vect(gedp->ged_result_str, center, 1);
 
 	return GED_OK;
@@ -105,7 +105,7 @@ ged_ocenter_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    VSCALE(center, scan, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(center, scan, gedp->dbip->dbi_local2base);
     VSUB2(delta, center, oldCenter);
     MAT_IDN(dmat);
     MAT_DELTAS_VEC(dmat, delta);

@@ -157,7 +157,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 
     /* First, clear any existing counts */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    dp->d_nref = 0;
     }
 
@@ -166,9 +166,9 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     new_dbip = db_open(argv[0], DB_OPEN_READWRITE);
 
     if (new_dbip != DBI_NULL) {
-	if (db_version(new_dbip) != db_version(gedp->ged_wdbp->dbip)) {
+	if (db_version(new_dbip) != db_version(gedp->dbip)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: File format mismatch between '%s' and '%s'\n",
-			  cmd, argv[0], gedp->ged_wdbp->dbip->dbi_filename);
+			  cmd, argv[0], gedp->dbip->dbi_filename);
 	    return GED_ERROR;
 	}
 
@@ -184,7 +184,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 	}
     } else {
 	/* Create a new database */
-	keepfp = wdb_fopen_v(argv[0], db_version(gedp->ged_wdbp->dbip));
+	keepfp = wdb_fopen_v(argv[0], db_version(gedp->dbip));
 
 	if (keepfp == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s command was unable to create file '%s'\n", cmd, argv[0]);
@@ -196,12 +196,12 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     knd.gedp = gedp;
 
     /* ident record */
-    if (bu_strncmp(gedp->ged_wdbp->dbip->dbi_title, "Parts of: ", 10) != 0) {
+    if (bu_strncmp(gedp->dbip->dbi_title, "Parts of: ", 10) != 0) {
 	bu_vls_strcat(&title, "Parts of: ");
     }
-    bu_vls_strcat(&title, gedp->ged_wdbp->dbip->dbi_title);
+    bu_vls_strcat(&title, gedp->dbip->dbi_title);
 
-    if (db_update_ident(keepfp->dbip, bu_vls_addr(&title), gedp->ged_wdbp->dbip->dbi_local2base) < 0) {
+    if (db_update_ident(keepfp->dbip, bu_vls_addr(&title), gedp->dbip->dbi_local2base) < 0) {
 	perror("fwrite");
 	bu_vls_printf(gedp->ged_result_str, "db_update_ident() failed\n");
 	wdb_close(keepfp);
@@ -211,15 +211,15 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&title);
 
     for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	if (!flag_R) {
 	    /* recursively keep objects */
-	    db_functree(gedp->ged_wdbp->dbip, dp, node_write, node_write, &rt_uniresource, (void *)&knd);
+	    db_functree(gedp->dbip, dp, node_write, node_write, &rt_uniresource, (void *)&knd);
 	} else {
 	    /* keep just this object */
-	    node_write(gedp->ged_wdbp->dbip, dp, (void *)&knd);
+	    node_write(gedp->dbip, dp, (void *)&knd);
 	}
     }
 

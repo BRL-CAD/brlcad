@@ -169,7 +169,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
     tmp_tree = (union tree *)NULL;
 
     while (argc) {
-	i = db_walk_tree(gedp->ged_wdbp->dbip, 1, (const char **)argv,
+	i = db_walk_tree(gedp->dbip, 1, (const char **)argv,
 			 ncpu,
 			 &gedp->ged_wdbp->wdb_initial_tree_state,
 			 0,			/* take all regions */

@@ -268,8 +268,8 @@ QPolyCreate::finalize(bool)
 		    bu_free(sk_name, "sk_name");
 		sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
 	    }
-	    if (sk_name && db_lookup(gedp->ged_wdbp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
-		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, sk_name, p);
+	    if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
 		emit db_updated();
 	    }
 	    if (sk_name)
@@ -398,7 +398,7 @@ QPolyCreate::do_import_sketch()
 	return;
     }
     char *sname = bu_strdup(import_name->text().toLocal8Bit().data());
-    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET);
+    struct directory *dp = db_lookup(gedp->dbip, sname, LOOKUP_QUIET);
     bu_free(sname, "name cpy");
     if (dp == RT_DIR_NULL) {
 	bu_free(vname, "name cpy");
@@ -406,7 +406,7 @@ QPolyCreate::do_import_sketch()
     }
 
     // Names are valid, dp is ready - try the sketch import
-    p = db_sketch_to_scene_obj(vname, gedp->ged_wdbp->dbip, dp, gedp->ged_gvp, gedp->free_scene_obj);
+    p = db_sketch_to_scene_obj(vname, gedp->dbip, dp, gedp->ged_gvp, gedp->free_scene_obj);
     bu_free(vname, "name cpy");
     if (!p) {
 	return;
@@ -477,7 +477,7 @@ QPolyCreate::sketch_sync()
 	}
 
 	if (sname) {
-	    if (db_lookup(gedp->ged_wdbp->dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
+	    if (db_lookup(gedp->dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
 		ps->sketch_name->setStyleSheet("color: rgba(255,0,0)");
 	    } else {
 		ps->sketch_name->setStyleSheet("");

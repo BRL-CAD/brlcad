@@ -530,7 +530,7 @@ _poly_cmd_area(void *bs, int argc, const char **argv)
     double area = bg_find_polygon_area(&p->polygon, CLIPPER_MAX,
 	                               p->v.gv_model2view, p->v.gv_scale);
 
-    bu_vls_printf(gedp->ged_result_str, "%g", area * gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(gedp->ged_result_str, "%g", area * gedp->dbip->dbi_base2local);
     return GED_OK;
 }
 
@@ -635,12 +635,12 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
 
 
     // Begin import
-    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[0], LOOKUP_QUIET);
+    struct directory *dp = db_lookup(gedp->dbip, argv[0], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	return GED_ERROR;
     }
 
-    s = db_sketch_to_scene_obj(gd->vobj, gedp->ged_wdbp->dbip, dp, gedp->ged_gvp, gedp->free_scene_obj);
+    s = db_sketch_to_scene_obj(gd->vobj, gedp->dbip, dp, gedp->ged_gvp, gedp->free_scene_obj);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return GED_ERROR;
@@ -685,7 +685,7 @@ _poly_cmd_export(void *bs, int argc, const char **argv)
     GED_CHECK_EXISTS(gedp, argv[0], LOOKUP_QUIET, GED_ERROR);
 
 
-    if (db_scene_obj_to_sketch(gedp->ged_wdbp->dbip, argv[0], s) != BRLCAD_OK) {
+    if (db_scene_obj_to_sketch(gedp->dbip, argv[0], s) != BRLCAD_OK) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create sketch.\n");
 	return GED_ERROR;
     }

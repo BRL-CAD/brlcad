@@ -69,7 +69,7 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* will attempt to create the region */
 	if (gedp->ged_wdbp->wdb_item_default) {
 	    gedp->ged_wdbp->wdb_item_default++;
@@ -80,7 +80,7 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Get operation and solid name for each solid */
     for (i = 2; i < argc; i += 2) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "skipping %s\n", argv[i+1]);
 	    continue;
 	}
@@ -102,7 +102,7 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* failed to create region */
 	if (gedp->ged_wdbp->wdb_item_default > 1)
 	    gedp->ged_wdbp->wdb_item_default--;

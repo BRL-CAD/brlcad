@@ -46,7 +46,7 @@ ged_sync_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    db_sync(gedp->ged_wdbp->dbip);
+    db_sync(gedp->dbip);
 
     return GED_OK;
 }

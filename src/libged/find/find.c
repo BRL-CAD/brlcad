@@ -99,14 +99,14 @@ ged_find_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & RT_DIR_COMB) ||
 		(!aflag && (dp->d_flags & RT_DIR_HIDDEN)))
 		continue;
 
 	    if (rt_db_get_internal(&intern,
 				   dp,
-				   gedp->ged_wdbp->dbip,
+				   gedp->dbip,
 				   (fastf_t *)NULL,
 				   &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
@@ -115,7 +115,7 @@ ged_find_core(struct ged *gedp, int argc, const char *argv[])
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    for (k = 1; k < argc; k++)
-		db_tree_funcleaf(gedp->ged_wdbp->dbip,
+		db_tree_funcleaf(gedp->dbip,
 				 comb,
 				 comb->tree,
 				 find_ref,

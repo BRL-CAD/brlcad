@@ -188,7 +188,7 @@ attr_list(struct ged *gedp, size_t path_cnt, struct directory **paths, int argc,
 	struct directory *dp = paths[i];
 	struct bu_attribute_value_set lavs;
 	bu_avs_init_empty(&lavs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &lavs, dp)) {
+	if (db5_get_attributes(gedp->dbip, &lavs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	    bu_avs_free(&lavs);
 	    return GED_ERROR;
@@ -345,14 +345,14 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
     /* this is only valid for v5 databases */
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.");
 	return GED_ERROR;
     }
 
     scmd = attr_cmd(argv[1]);
 
-    path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_HIDDEN, argv[2], &paths);
+    path_cnt = db_ls(gedp->dbip, DB_LS_HIDDEN, argv[2], &paths);
 
     if (path_cnt == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot locate objects matching %s\n", argv[2]);
@@ -371,7 +371,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 	    dp = paths[i];
 
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		ret = GED_ERROR;
 		goto ged_attr_core_memfree;
@@ -417,7 +417,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 	    dp = paths[0];
 
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		ret = GED_ERROR;
 		goto ged_attr_core_memfree;
@@ -474,7 +474,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 		bu_avs_init_empty(&avs);
 		dp = paths[i];
 
-		if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		    ret = GED_ERROR;
 		    goto ged_attr_core_memfree;
@@ -547,7 +547,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	    struct bu_attribute_value_set lavs;
 	    bu_avs_init_empty(&lavs);
 	    dp = paths[i];
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &lavs, dp)) {
+	    if (db5_get_attributes(gedp->dbip, &lavs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		ret = GED_ERROR;
 		goto ged_attr_core_memfree;
@@ -556,7 +556,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	    if (val) {
 		(void)bu_avs_add(&lavs, nattr, val);
 		db5_standardize_avs(&lavs);
-		if (db5_update_attributes(dp, &lavs, gedp->ged_wdbp->dbip)) {
+		if (db5_update_attributes(dp, &lavs, gedp->dbip)) {
 		    bu_vls_printf(gedp->ged_result_str,
 			    "Error: failed to update attributes\n");
 		    bu_avs_free(&lavs);
@@ -584,7 +584,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_avs_init_empty(&avs);
 	    dp = paths[i];
 
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		ret = GED_ERROR;
 		goto ged_attr_core_memfree;
@@ -598,7 +598,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 		j += 2;
 	    }
 	    db5_standardize_avs(&avs);
-	    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	    if (db5_update_attributes(dp, &avs, gedp->dbip)) {
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
@@ -616,7 +616,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_avs_init_empty(&avs);
 	    dp = paths[i];
 
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		ret = GED_ERROR;
 		goto ged_attr_core_memfree;
@@ -630,7 +630,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 		(void)bu_avs_remove(&avs, argv[j]);
 		j++;
 	    }
-	    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	    if (db5_replace_attributes(dp, &avs, gedp->dbip)) {
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
@@ -654,7 +654,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_avs_init_empty(&avs);
 	    dp = paths[i];
 
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		ret = GED_ERROR;
 		goto ged_attr_core_memfree;
@@ -680,7 +680,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 		j += 2;
 	    }
-	    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	    if (db5_replace_attributes(dp, &avs, gedp->dbip)) {
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
@@ -700,7 +700,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_avs_init_empty(&avs);
 	    dp = paths[i];
 
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		ret = GED_ERROR;
 		goto ged_attr_core_memfree;

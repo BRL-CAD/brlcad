@@ -612,32 +612,32 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
     sub = argv[0];
     len = strlen(sub);
     if (bu_strncmp(sub, "adj_air", len) == 0) {
-	if (check_adj_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_adj_air(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "centroid", len) == 0) {
-	if (check_centroid(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_centroid(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "exp_air", len) == 0) {
-	if (check_exp_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_exp_air(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "gap", len) == 0) {
-	if (check_gap(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_gap(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "mass", len) == 0) {
-	if (check_mass(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_mass(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "moments", len) == 0) {
-	if (check_moments(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_moments(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
@@ -649,22 +649,22 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 	    _ged_rt_set_eye_model(gedp, eye_model);
 	    analyze_set_view_information(state, gedp->ged_gvp->gv_size, &eye_model, &quat);
 	}
-	if (check_overlaps(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_overlaps(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "surf_area", len) == 0) {
-	if (check_surf_area(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_surf_area(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "unconf_air", len) == 0) {
-	if (check_unconf_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_unconf_air(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "volume", len) == 0) {
-	if (check_volume(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_volume(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}

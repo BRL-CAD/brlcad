@@ -137,9 +137,9 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 		    /* convert from double to fastf_t */
 		    VMOVE(sizeVoxel, scan);
 
-		    sizeVoxel[0] = sizeVoxel[0] * gedp->ged_wdbp->dbip->dbi_local2base;
-		    sizeVoxel[1] = sizeVoxel[1] * gedp->ged_wdbp->dbip->dbi_local2base;
-		    sizeVoxel[2] = sizeVoxel[2] * gedp->ged_wdbp->dbip->dbi_local2base;
+		    sizeVoxel[0] = sizeVoxel[0] * gedp->dbip->dbi_local2base;
+		    sizeVoxel[1] = sizeVoxel[1] * gedp->dbip->dbi_local2base;
+		    sizeVoxel[2] = sizeVoxel[2] * gedp->dbip->dbi_local2base;
 		}
 		break;
 
@@ -175,12 +175,12 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
     argc--;
     argv++;
 
-    if (db_lookup(gedp->ged_wdbp->dbip, voxDat.newname, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, voxDat.newname, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "error: solid '%s' already exists, aborting\n", voxDat.newname);
 	return GED_ERROR;
     }
 
-    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    rtip = rt_new_rti(gedp->dbip);
     rtip->useair = 1;
 
     /* Walk trees.  Here we identify any object trees in the database

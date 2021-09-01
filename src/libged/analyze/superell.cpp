@@ -117,12 +117,12 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 print_results:
     print_volume_table(gedp,
 		       vol
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local,
 		       sur_area
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		       * gedp->dbip->dbi_base2local
+		       * gedp->dbip->dbi_base2local,
 		       vol/GALLONS_TO_MM3
 	);
 }

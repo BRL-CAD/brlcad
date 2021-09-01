@@ -175,7 +175,7 @@ get_path_and_state(
     struct ged *gedp)
 {
     *tsp = gedp->ged_wdbp->wdb_initial_tree_state;
-    tsp->ts_dbip = gedp->ged_wdbp->dbip;
+    tsp->ts_dbip = gedp->dbip;
     tsp->ts_resp = &rt_uniresource;
 
     return db_follow_path_for_state(tsp, pathp, path_name, LOOKUP_QUIET);
@@ -575,7 +575,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int threshold_cached = 0;
     int shaded_mode_override = _GED_SHADED_MODE_UNSET;
 
-    RT_CHECK_DBI(gedp->ged_wdbp->dbip);
+    RT_CHECK_DBI(gedp->dbip);
 
     if (argc <= 0)
 	return -1;	/* FAIL */
@@ -818,7 +818,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
+			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
@@ -837,7 +837,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    }
 
 		    av[0] = (char *)argv[i];
-		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+		    ret = db_walk_tree(gedp->dbip,
 				       ac,
 				       (const char **)av,
 				       ncpu,
@@ -869,7 +869,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bv_data.dmode = dgcdp.vs.s_dmode;
 		    bv_data.free_scene_obj = (void *)gedp->free_scene_obj;
 
-		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
+		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 		    bv_data.gdlp = dgcdp.gdlp;
 
 		    /* store draw path */
@@ -880,7 +880,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    }
 
 		    av[0] = (char *)argv[i];
-		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+		    ret = db_walk_tree(gedp->dbip,
 				       ac,
 				       (const char **)av,
 				       ncpu,
@@ -940,13 +940,13 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
-			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
+			dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 
 		    if (dgcdp.gdlp == GED_DISPLAY_LIST_NULL)
 			continue;
 
 		    av[0] = (char *)argv[i];
-		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+		    ret = db_walk_tree(gedp->dbip,
 				       ac,
 				       (const char **)av,
 				       ncpu,
@@ -1102,7 +1102,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr(gedp->ged_wdbp->dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
+	tbl = db_lookup_by_attr(gedp->dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
 	bu_avs_free(&avs);
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");
@@ -1258,7 +1258,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-    RT_CHECK_DBI(gedp->ged_wdbp->dbip);
+    RT_CHECK_DBI(gedp->dbip);
 
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -1278,7 +1278,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* redraw the specified paths */
 	for (i = 1; i < argc; ++i) {
-	    ret = db_string_to_path(&obj_path, gedp->ged_wdbp->dbip, argv[i]);
+	    ret = db_string_to_path(&obj_path, gedp->dbip, argv[i]);
 	    if (ret < 0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"%s: %s is not a valid path\n", argv[0], argv[i]);
@@ -1288,7 +1288,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 	    found_path = 0;
 	    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
 	    {
-		ret = db_string_to_path(&dl_path, gedp->ged_wdbp->dbip,
+		ret = db_string_to_path(&dl_path, gedp->dbip,
 			bu_vls_addr(&gdlp->dl_path));
 		if (ret < 0) {
 		    bu_vls_printf(gedp->ged_result_str,

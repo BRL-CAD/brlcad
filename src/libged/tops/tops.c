@@ -81,17 +81,17 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Can this be executed only sometimes?
        Perhaps a "dirty bit" on the database? */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     /*
      * Find number of possible entries and allocate memory
      */
-    dirp = _ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
+    dirp = _ged_dir_getspace(gedp->dbip, 0);
     dirp0 = dirp;
 
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i];
+	    for (dp = gedp->dbip->dbi_Head[i];
 		 dp != RT_DIR_NULL;
 		 dp = dp->d_forw) {
 		if (dp->d_nref == 0)
@@ -99,7 +99,7 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 	    }
     } else {
 	for (i = 0; i < RT_DBNHASH; i++)
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 
 		if (dp->d_nref != 0) {
 		    continue;

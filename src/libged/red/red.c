@@ -239,7 +239,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     rt_tree_array = (struct rt_tree_array *)NULL;
 
     /* Standard sanity checks */
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
+    if (gedp->dbip == DBI_NULL)
 	return GED_ERROR;
 
     GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
@@ -555,13 +555,13 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     db5_sync_attr_to_comb(comb, &avs, dp);
     db5_sync_comb_to_attr(&avs, comb);
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
 	return GED_ERROR;
     }
 
-    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip))
+    if (db5_replace_attributes(dp, &avs, gedp->dbip))
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Failed to update attributes\n", dp->d_namep);
 
     bu_avs_free(&avs);
@@ -587,7 +587,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 
     bu_avs_init_empty(&avs);
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
       bu_vls_free(&spacer);
       return GED_ERROR;
@@ -649,7 +649,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	actual_count = 0;
     }
 
-    hasattr = db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
+    hasattr = db5_get_attributes(gedp->dbip, &avs, dp);
     db5_standardize_avs(&avs);
     db5_sync_comb_to_attr(&avs, comb);
 
@@ -778,7 +778,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
     argc -= bu_optind - 1;
     argv += bu_optind - 1;
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
 
     /* Now, sanity check to make sure a comb is listed instead of a
      * primitive, and either write out existing contents for an
@@ -796,7 +796,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	     * object names.
 	     */
 	    bu_vls_sprintf(&temp_name, "%s_red%d", dp->d_namep, counter);
-	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), LOOKUP_QUIET) == RT_DIR_NULL) {
+	    if (db_lookup(gedp->dbip, bu_vls_addr(&temp_name), LOOKUP_QUIET) == RT_DIR_NULL) {
 		have_tmp_name = 1;
 	    } else {
 		counter++;
@@ -846,7 +846,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	 * that red may be used to view objects.
 	 */
 
-	if (gedp->ged_wdbp->dbip->dbi_read_only) {
+	if (gedp->dbip->dbi_read_only) {
 	    bu_vls_printf(gedp->ged_result_str, "Database is READ-ONLY.\nNo changes were made.\n");
 	    goto cleanup;
 	}
@@ -859,17 +859,17 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	 */
 
 	if (dp) {
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 		goto cleanup;
 	    }
 
-	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, dp->d_flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
+	    if ((tmp_dp = db_diradd(gedp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, dp->d_flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		goto cleanup;
 	    }
 
-	    if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	    if (rt_db_put_internal(tmp_dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		goto cleanup;
 	    }
@@ -917,7 +917,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	 */
 	if (bu_vls_strlen(&final_name) > 0) {
 	    if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&final_name))) {
-		if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&final_name), LOOKUP_QUIET) != RT_DIR_NULL) {
+		if (db_lookup(gedp->dbip, bu_vls_addr(&final_name), LOOKUP_QUIET) != RT_DIR_NULL) {
 		    if (force_flag) {
 			av[0] = "kill";
 			av[1] = bu_vls_addr(&final_name);

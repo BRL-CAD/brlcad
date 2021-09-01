@@ -61,7 +61,7 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* check that we are using a version 5 database */
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "This is an older database version.\nIt does not support BOT surface normals.\nUse \"dbupgrade\" to upgrade this database to the current version.\n");
 	return GED_ERROR;
     }
@@ -110,7 +110,7 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
     old_bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(old_bot);
 
-    if (rt_bot_smooth(old_bot, old_bot_name, gedp->ged_wdbp->dbip, tolerance_angle*DEG2RAD)) {
+    if (rt_bot_smooth(old_bot, old_bot_name, gedp->dbip, tolerance_angle*DEG2RAD)) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to smooth %s\n", old_bot_name);
 	rt_db_free_internal(&intern);
 	return GED_ERROR;

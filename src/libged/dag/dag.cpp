@@ -528,7 +528,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     struct bu_hash_entry *hsh_entry1;
     struct bu_hash_entry *prev = NULL;
     unsigned long idx;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
 
     /* Create the master "objects" hash table. It will have at most 64 entries. */
     objects = bu_hash_tbl_create(1);
@@ -551,13 +551,13 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
      * It is incremented every time a new Avoid::ConnRef is added to the graph.
      * It is needed in order to avoid the overlapping with the Avoid::ShapeRef ids when adding a Avoid::ConnRef to the graph.
      */
-    dag->last_connref_id = gedp->ged_wdbp->dbip->dbi_nrec;
+    dag->last_connref_id = gedp->dbip->dbi_nrec;
 
     /* Traverse the database 'gedp' and for each object add its name and an ID into the "objects" hash table. */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
-	    ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), 1);
+	    ndp = db_lookup(gedp->dbip, bu_vls_addr(&dp_name_vls), 1);
 	    if (ndp) {
 		/* Check if this object is already in the hash table. If not, add it to the objects hash table. */
 		int new_entry;
@@ -591,9 +591,9 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
      * and add its name into the corresponding list.
      */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
-	    ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), 1);
+	    ndp = db_lookup(gedp->dbip, bu_vls_addr(&dp_name_vls), 1);
 	    if (ndp) {
 		put_me_in_a_bucket(dp, ndp, dbip, objects, &o, dag);
 	    } else {

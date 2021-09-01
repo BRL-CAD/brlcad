@@ -60,7 +60,7 @@ ged_bot_merge_core(struct ged *gedp, int argc, const char *argv[])
 
     /* read in all the bots */
     for (idx = 0, i = 2; i < argc; ++i) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
 

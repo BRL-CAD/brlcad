@@ -41,7 +41,7 @@ _ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, co
 
     RT_EXTRUDE_CK_MAGIC(extrude);
 
-    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(tvec, tvec, gedp->dbip->dbi_local2base);
 
     switch (attribute[0]) {
 	case 'h':

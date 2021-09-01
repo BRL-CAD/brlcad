@@ -62,7 +62,7 @@ ged_copy_core(struct ged *gedp, int argc, const char *argv[])
     GED_DB_LOOKUP(gedp, from_dp, argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
     GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
 
-    if (db_get_external(&external, from_dp, gedp->ged_wdbp->dbip)) {
+    if (db_get_external(&external, from_dp, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	return GED_ERROR;
     }

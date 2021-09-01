@@ -149,12 +149,12 @@ _ged_do_tra(struct ged *gedp,
 
     switch (coord) {
 	case 'm':
-	    VSCALE(delta, tvec, -gedp->ged_wdbp->dbip->dbi_base2local);
+	    VSCALE(delta, tvec, -gedp->dbip->dbi_base2local);
 	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
 	    break;
 	case 'v':
 	default:
-	    VSCALE(tvec, tvec, -2.0*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_gvp->gv_isize);
+	    VSCALE(tvec, tvec, -2.0*gedp->dbip->dbi_base2local*gedp->ged_gvp->gv_isize);
 	    MAT4X3PNT(work, gedp->ged_gvp->gv_view2model, tvec);
 	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
 	    VSUB2(delta, work, vc);

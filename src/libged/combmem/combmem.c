@@ -578,9 +578,9 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	    VSET(aetvec, az, el, tw);
 	    VSCALE(aetvec, aetvec, DEG2RAD);
 	    VSET(tvec, tx, ty, tz);
-	    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(tvec, tvec, gedp->dbip->dbi_local2base);
 	    VSET(key_pt, kx, ky, kz);
-	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(key_pt, key_pt, gedp->dbip->dbi_local2base);
 	    QSET(svec, sx, sy, sz, sa);
 
 	    combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 1);
@@ -668,7 +668,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    mat_t mat_rot;
 
 	    VSET(key_pt, kx, ky, kz);
-	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(key_pt, key_pt, gedp->dbip->dbi_local2base);
 
 	    if (etype == ETYPES_ROT_AET) {
 		az *= DEG2RAD;
@@ -754,7 +754,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	    sscanf(argv[i+8], "%lf", &ang) == 1) {
 
 	    VSET(pt, px, py, pz);
-	    VSCALE(pt, pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(pt, pt, gedp->dbip->dbi_local2base);
 	    VSET(dir, dx, dy, dz);
 	    VUNITIZE(dir);
 	    ang *= DEG2RAD;
@@ -826,7 +826,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    sscanf(argv[i+4], "%lf", &tz) == 1) {
 
 	    VSET(tvec, tx, ty, tz);
-	    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(tvec, tvec, gedp->dbip->dbi_local2base);
 	    MAT_DELTAS_VEC(mat, tvec);
 	}
 
@@ -900,7 +900,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    VSETALL(aetvec, 0.0);
 	    VSETALL(tvec, 0.0);
 	    VSET(key_pt, kx, ky, kz);
-	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(key_pt, key_pt, gedp->dbip->dbi_local2base);
 	    QSET(svec, sx, sy, sz, sa);
 
 	    combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 1);
@@ -944,7 +944,7 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -954,7 +954,7 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }									\
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return GED_ERROR;
     }
@@ -964,7 +964,7 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
     db_free_tree(comb->tree, &rt_uniresource);
     comb->tree = NULL;
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to write combination into database - %s\n", argv[1]);
 	return GED_ERROR;
     }

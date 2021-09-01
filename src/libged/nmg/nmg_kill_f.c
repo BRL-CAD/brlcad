@@ -100,13 +100,13 @@ ged_nmg_kill_f_core(struct ged* gedp, int argc, const char* argv[])
     /* attempt to resolve and verify */
     name = argv[0];
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", name);
 	return GED_ERROR;
     }
 
-    if (rt_db_get_internal(&internal, dp, gedp->ged_wdbp->dbip,	bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&internal, dp, gedp->dbip,	bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return GED_ERROR;
     }

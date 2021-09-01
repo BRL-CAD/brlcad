@@ -415,9 +415,9 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 
     }
 
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	if (bu_vls_strlen(&cc_data.affix) > _GED_V4_MAXNAME-1) {
-	    bu_log("ERROR: affix [%s] is too long for v%d\n", bu_vls_addr(&cc_data.affix), db_version(gedp->ged_wdbp->dbip));
+	    bu_log("ERROR: affix [%s] is too long for v%d\n", bu_vls_addr(&cc_data.affix), db_version(gedp->dbip));
 	    bu_vls_free(&cc_data.affix);
 	    return GED_ERROR;
 	}
@@ -431,17 +431,17 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (db_version(newdbp) > 4 && db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(newdbp) > 4 && db_version(gedp->dbip) < 5) {
 	bu_vls_free(&cc_data.affix);
 	bu_vls_printf(gedp->ged_result_str, "%s: databases are incompatible, use dbupgrade on %s first",
-		      commandName, gedp->ged_wdbp->dbip->dbi_filename);
+		      commandName, gedp->dbip->dbi_filename);
 	return GED_ERROR;
     }
 
     db_dirbuild(newdbp);
 
     cc_data.new_dbip = newdbp;
-    cc_data.old_dbip = gedp->ged_wdbp->dbip;
+    cc_data.old_dbip = gedp->dbip;
 
     /* visit each directory pointer in the input database */
     if (importUnits || importTitle || importColorTable) {
@@ -457,7 +457,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    continue;
 	}
-	copy_object(gedp, dp, newdbp, gedp->ged_wdbp->dbip, name_map, used_names, &cc_data);
+	copy_object(gedp, dp, newdbp, gedp->dbip, name_map, used_names, &cc_data);
     } FOR_ALL_DIRECTORY_END;
 
     bu_vls_free(&cc_data.affix);
@@ -481,8 +481,8 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 
     if (importTitle) {
 	if ((cp = bu_avs_get(&g_avs, "title")) != NULL) {
-	    char *oldTitle = gedp->ged_wdbp->dbip->dbi_title;
-	    gedp->ged_wdbp->dbip->dbi_title = bu_strdup(cp);
+	    char *oldTitle = gedp->dbip->dbi_title;
+	    gedp->dbip->dbi_title = bu_strdup(cp);
 	    if (oldTitle) {
 		bu_free(oldTitle, "old title");
 	    }
@@ -503,8 +503,8 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 		       oldfile, DB5_GLOBAL_OBJECT_NAME, cp);
 		bu_avs_remove(&g_avs, "units");
 	    } else {
-		gedp->ged_wdbp->dbip->dbi_local2base = dd;
-		gedp->ged_wdbp->dbip->dbi_base2local = 1 / dd;
+		gedp->dbip->dbi_local2base = dd;
+		gedp->dbip->dbi_base2local = 1 / dd;
 	    }
 	} else {
 	    bu_vls_printf(gedp->ged_result_str,
@@ -516,14 +516,14 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (saveGlobalAttrs) {
-	dp = db_lookup(gedp->ged_wdbp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY);
-	db5_update_attributes(dp, &g_avs, gedp->ged_wdbp->dbip);
+	dp = db_lookup(gedp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY);
+	db5_update_attributes(dp, &g_avs, gedp->dbip);
     }
 
-    db_sync(gedp->ged_wdbp->dbip);	/* force changes to disk */
+    db_sync(gedp->dbip);	/* force changes to disk */
 
     /* Update references. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     return GED_OK;
 }
