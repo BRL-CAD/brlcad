@@ -104,6 +104,9 @@ struct ged_callback_state;
 #define GED_INIT(_gedp, _wdbp) { \
 	ged_init((_gedp)); \
 	(_gedp)->ged_wdbp = (_wdbp); \
+        if ((_gedp)->ged_wdbp) { \
+	    (_gedp)->dbip = (_gedp)->ged_wdbp->dbip; \
+        } \
     }
 
 #define GED_INITIALIZED(_gedp) ((_gedp)->ged_wdbp != RT_WDB_NULL)
@@ -193,6 +196,7 @@ struct ged_results;
 struct ged {
     struct bu_vls               go_name;
     struct rt_wdb		*ged_wdbp;
+    struct db_i                 *dbip;
 
     /*************************************************************/
     /* Information pertaining to views and view objects .        */
