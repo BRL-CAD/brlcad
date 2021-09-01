@@ -2536,7 +2536,7 @@ rt_arb_labels(struct bu_ptbl *labels, const struct rt_db_internal *ip, struct bv
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    const struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    const struct bn_tol arb_tol = BG_TOL_INIT;
     int arbType = rt_arb_std_type(ip, &arb_tol);
 
     // Set up the containers

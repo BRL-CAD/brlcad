@@ -27,10 +27,6 @@
 #include "bu.h"
 #include "bn.h"
 
-
-#define TOL_INIT { BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 }
-
-
 static int
 test_bg_dist_pnt3_line3(int argc, char **argv)
 {
@@ -43,7 +39,7 @@ test_bg_dist_pnt3_line3(int argc, char **argv)
     point_t a = VINIT_ZERO;
     vect_t dir = VINIT_ZERO;
     point_t p = VINIT_ZERO;
-    struct bn_tol tol = TOL_INIT;
+    struct bn_tol tol = BG_TOL_INIT;
 
     if (argc != 8) {
 	bu_exit(1, "ERROR: input format is Ax,Ay,Az DIRx,DIRy,DIRz Px,Py,Pz expected_return expected_dist PCAx,PCAy,PCAz [%s]\n", argv[0]);
@@ -82,7 +78,7 @@ test_bg_dist_pnt3_lseg3(int argc, char **argv)
     point_t a = VINIT_ZERO;
     point_t b = VINIT_ZERO;
     point_t p = VINIT_ZERO;
-    struct bn_tol tol = TOL_INIT;
+    struct bn_tol tol = BG_TOL_INIT;
 
     if (argc != 8) {
 	bu_exit(1, "ERROR: input format is Ax,Ay,Az Bx,By,Bz Px,Py,Pz expected_return expected_dist PCAx,PCAy,PCAz [%s]\n", argv[0]);

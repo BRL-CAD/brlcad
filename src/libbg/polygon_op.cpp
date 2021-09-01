@@ -654,7 +654,7 @@ bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op, int m
 	// Make sure the polygons overlap before we operate, since clipper results are
 	// always general polygons.  We don't want to perform a no-op clip and lose our
 	// type info.
-	const struct bn_tol poly_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+	const struct bn_tol poly_tol = BG_TOL_INIT;
 	int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &poly_tol, polyA->v.gv_scale);
 	if (!ovlp)
 	    continue;

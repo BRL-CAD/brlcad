@@ -101,7 +101,7 @@ static int
 get_arb_type(struct directory *dp, struct db_i *dbip)
 {
     int type;
-    const struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    const struct bn_tol arb_tol = BG_TOL_INIT;
     struct rt_db_internal intern;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
     type = rt_arb_std_type(&intern, &arb_tol);

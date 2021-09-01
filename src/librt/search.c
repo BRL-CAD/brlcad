@@ -1038,7 +1038,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     struct rt_bot_internal *bot_ip;
     int type_match = 0;
     int type;
-    const struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    const struct bn_tol arb_tol = BG_TOL_INIT;
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp)
@@ -1637,10 +1637,10 @@ child_matrix(union tree *tp, const char *n, mat_t *m)
 HIDDEN int
 f_matrix(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct bu_ptbl *UNUSED(results))
 {
-    const struct bn_tol mtol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    const struct bn_tol mtol = BG_TOL_INIT;
     mat_t mat;
     MAT_IDN(mat);
-    
+
     // Top level objects are always IDN included.  For anything else, see what
     // the comb says.  Note that this filter uses the immediate parent/child
     // matrix, not the accumulated matrix along the path.

@@ -231,7 +231,7 @@ _db_fp_find_node(struct db_fp_pool_impl *p, const char *pname, const char *oname
 	if ((mat && !n->m) || (!mat && n->m)) continue;
 	if (mat && n->m) {
 	    /* TODO - what's an appropriate tolerance here? */
-	    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	    struct bn_tol btol = BG_TOL_INIT;
 	    if (!bn_mat_is_equal(mat, n->m, &btol)) continue;
 	}
 	/* Made it - we have a match! */
@@ -577,7 +577,7 @@ db_fp_identical(const struct db_fp *a, const struct db_fp *b)
 	if ((d1->m && !d2->m) || (!d1->m && d2->m)) return 0;
 	if (d1->m && d2->m) {
 	    /* TODO - what's an appropriate tolerance here? */
-	    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	    struct bn_tol btol = BG_TOL_INIT;
 	    if (!bn_mat_is_equal(d1->m, d2->m, &btol)) return 0;
 	}
     }
@@ -634,7 +634,7 @@ db_fp_identical_solid(const struct db_fp *a, const struct db_fp *b)
     db_fp_eval_mat(amat, a, 0);
     db_fp_eval_mat(bmat, a, 0);
     /* TODO - what's an appropriate tolerance here? */
-    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    struct bn_tol btol = BG_TOL_INIT;
     if (!bn_mat_is_equal(amat, bmat, &btol)) return 0;
 
     return 1;
@@ -649,7 +649,7 @@ _db_fp_node_equal(struct db_fp_node *an, struct db_fp_node *bn)
     if ((an->m && !bn->m) || (!an->m && bn->m)) return 0;
     if (an->m && bn->m) {
 	/* TODO - what's an appropriate tolerance here? */
-	struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	struct bn_tol btol = BG_TOL_INIT;
 	if (!bn_mat_is_equal(an->m, bn->m, &btol)) return 0;
     }
     return 1;

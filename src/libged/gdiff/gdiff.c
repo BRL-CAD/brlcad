@@ -192,7 +192,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 {
     size_t i;
     struct analyze_raydiff_results *results;
-    struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    struct bn_tol tol = BG_TOL_INIT;
 
     long verbosity = 0;
     int structure_diff = 0;

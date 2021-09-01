@@ -28,9 +28,6 @@
 #include "bn.h"
 
 
-#define TOL_INIT { BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 }
-
-
 static int
 test_bg_isect_line_lseg(int argc, char **argv)
 {
@@ -42,7 +39,7 @@ test_bg_isect_line_lseg(int argc, char **argv)
     vect_t d = VINIT_ZERO;
     point_t a = VINIT_ZERO;
     point_t b = VINIT_ZERO;
-    struct bn_tol tol = TOL_INIT;
+    struct bn_tol tol = BG_TOL_INIT;
 
     if (argc != 8) {
 	bu_exit(1, "ERROR: input format is Px,Py,Pz Dx,Dy,Dz Ax,Ay,Az Bx,By,Bz expected_return expected_t [%s]\n", argv[0]);
@@ -76,7 +73,7 @@ test_bg_isect_lseg3_lseg3(int argc, char **argv)
     vect_t pdir = VINIT_ZERO;
     point_t q = VINIT_ZERO;
     vect_t qdir = VINIT_ZERO;
-    struct bn_tol tol = TOL_INIT;
+    struct bn_tol tol = BG_TOL_INIT;
 
     if (argc != 9) {
 	bu_exit(1, "ERROR: input format is Px,Py,Pz PDIRx,PDIRy,PDIRz Qx,Qy,Qz QDIRx,QDIRy,QDIRz expected_return expected_dist_0 expected_dist_1 [%s]\n", argv[0]);

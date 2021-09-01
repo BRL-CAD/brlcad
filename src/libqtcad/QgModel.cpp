@@ -447,7 +447,7 @@ qgitem_cmp_score(QgItem *i1, QgItem *i2)
     ret = 3;
 
     // Look for a matrix match
-    struct bn_tol mtol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    struct bn_tol mtol = BG_TOL_INIT;
     if (bn_mat_is_equal(inst1->c_m, inst2->c_m, &mtol))
 	ret = 2;
 

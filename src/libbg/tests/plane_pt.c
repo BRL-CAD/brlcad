@@ -28,9 +28,6 @@
 #include "bn.h"
 
 
-#define TOL_INIT { BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 }
-
-
 static int
 test_bg_3pnts_collinear(int argc, char **argv)
 {
@@ -39,7 +36,7 @@ test_bg_3pnts_collinear(int argc, char **argv)
     point_t p0 = VINIT_ZERO;
     point_t p1 = VINIT_ZERO;
     point_t p2 = VINIT_ZERO;
-    struct bn_tol tol = TOL_INIT;
+    struct bn_tol tol = BG_TOL_INIT;
 
     if (argc != 6) {
 	bu_exit(1, "ERROR: input format is P0x,P0y,P0z P1x,P1y,P1z P2x,P2y,P2z expected_result [%s]\n", argv[0]);
@@ -66,7 +63,7 @@ test_bg_3pnts_distinct(int argc, char **argv)
     point_t p0 = VINIT_ZERO;
     point_t p1 = VINIT_ZERO;
     point_t p2 = VINIT_ZERO;
-    struct bn_tol tol = TOL_INIT;
+    struct bn_tol tol = BG_TOL_INIT;
 
     if (argc != 6) {
 	bu_exit(1, "ERROR: input format is P0x,P0y,P0z P1x,P1y,P1z P2x,P2y,P2z expected_result [%s]\n", argv[0]);
@@ -121,7 +118,7 @@ test_bg_distsq_pnt3_lseg3_v2(int argc, char **argv)
     point_t a = VINIT_ZERO;
     point_t b = VINIT_ZERO;
     point_t p = VINIT_ZERO;
-    struct bn_tol tol = TOL_INIT;
+    struct bn_tol tol = BG_TOL_INIT;
 
     if (argc != 7) {
 	bu_exit(1, "ERROR: input format is Ax,Ay,Az Bx,By,Bz Px,Py,Pz expected_return expected_dist [%s]\n", argv[0]);
@@ -155,7 +152,7 @@ test_bg_make_plane_3pnts(int argc, char **argv)
     point_t b = VINIT_ZERO;
     point_t c = VINIT_ZERO;
     plane_t plane = HINIT_ZERO;
-    struct bn_tol tol = TOL_INIT;
+    struct bn_tol tol = BG_TOL_INIT;
 
     if (argc != 6) {
 	bu_exit(1, "ERROR: input format is Ax,Ay,Az Bx,By,Bz Cx,Cy,Cz expected_return [%s]\n", argv[0]);
@@ -215,7 +212,7 @@ test_bg_coplanar_pts(int argc, char **argv)
 {
     point_t pp[4] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
     int is_coplanar = 0;
-    struct bn_tol tol = TOL_INIT;
+    struct bn_tol tol = BG_TOL_INIT;
 
     argc--;argv++;
     argc--;argv++;
