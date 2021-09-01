@@ -1040,9 +1040,18 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		los = pp->pt_regionp->reg_los;
 
 		if (los < 1) {
-		    bu_semaphore_acquire(state->sem_worker);
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
-		    bu_semaphore_release(state->sem_worker);
+		    const int MAX_PRINT = 10;
+		    static int printed = 0;
+		    static int warned = 0;
+		    if (printed < MAX_PRINT) {
+			bu_semaphore_acquire(state->sem_worker);
+			bu_vls_printf(_ged_current_gedp->ged_result_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
+			printed++;
+			bu_semaphore_release(state->sem_worker);
+		    } else if (!warned) {
+			bu_vls_printf(_ged_current_gedp->ged_result_str, "Additional bad LOS warnings will be suppressed.\n");
+			warned++;
+		    }
 		}
 
 		/* accumulate the total weight values */
