@@ -122,8 +122,8 @@ main(int argc, const char **argv)
     /* Need a view for commands that expect a view */
     struct bview *gsh_view;
     BU_GET(gsh_view, struct bview);
-    bu_vls_sprintf(&gsh_view->gv_name, "default");
     bv_init(gsh_view);
+    bu_vls_sprintf(&gsh_view->gv_name, "default");
 
     /* See if we've been told to pre-load a specific .g file. */
     if (argc) {
