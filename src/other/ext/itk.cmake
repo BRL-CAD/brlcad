@@ -128,8 +128,8 @@ if (BRLCAD_ENABLE_TK)
       FIXPATH
       )
 
-    set(ITK_LIBRARY itk CACHE STRING "Building bundled itcl" FORCE)
-    set(ITK_LIBRARIES itk CACHE STRING "Building bundled itcl" FORCE)
+    set(ITK_LIBRARY itk CACHE STRING "Building bundled itk" FORCE)
+    set(ITK_LIBRARIES itk CACHE STRING "Building bundled itk" FORCE)
 
     if (TARGET itcl_stage)
       add_dependencies(itk_stage itcl_stage)
