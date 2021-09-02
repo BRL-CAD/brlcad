@@ -675,6 +675,14 @@ main(int argc, const char **argv)
     bu_vls_sprintf(io_data.outfile, "stdout");
     bu_vls_sprintf(io_data.errfile, "stderr");
 
+    if (show_formats) {
+	/* Print available header formats and exit */
+	nirt_msg(&io_data, "Formats available:\n");
+	list_formats(&io_data, NULL);
+	ret = EXIT_SUCCESS;
+	goto done;
+    }
+
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
     if (print_help || argc < 2 || (silent_mode == SILENT_YES && verbose_mode)) {
@@ -684,14 +692,6 @@ main(int argc, const char **argv)
 	nirt_out(&io_data, bu_vls_addr(&msg));
 	if (help)
 	    bu_free(help, "help str");
-	goto done;
-    }
-
-    if (show_formats) {
-	/* Print available header formats and exit */
-	nirt_msg(&io_data, "Formats available:\n");
-	list_formats(&io_data, NULL);
-	ret = EXIT_SUCCESS;
 	goto done;
     }
 
