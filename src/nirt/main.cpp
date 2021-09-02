@@ -598,7 +598,7 @@ main(int argc, const char **argv)
     double scan[16] = MAT_INIT_ZERO;
     size_t prec = std::numeric_limits<fastf_t>::max_digits10;
     char *buf = NULL;
-    int  status = 0x0;
+    int  status = 0;
     mat_t m;
     mat_t q;
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
