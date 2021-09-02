@@ -182,10 +182,6 @@ Recent Bugs
 
   pixborder -b "255 0 0" -t "255 255 255" < pix/moss.pix | pix-fb
 
-* report that attempting to change units on a read-only file in MGED
-  will not change the units in the file but changes them in MGED,
-  resulting in problems with nirt missing geometry it shouldn't miss.
-
 * typing 'comb -f -r assembly_name' shuts down mged with the error:
   ERROR: bad pointer 0000000000B4CA50: s/b bu_external(x768dbbd0), was bu_vls(x89333bbb), file ..\..\..\brlcad_src\src\libbu\parse.c, line 2443"
   And on the mged command line:
@@ -198,9 +194,6 @@ Recent Bugs
 
 * wgl framebuffer is not lingering on windows (regardless of using
   wgll or default) when it should
-
-* nirt -e "xyz val val val" doesn't work due to the space after the -e
-  and how the nirt/rt commands parse quoted args.
 
 * calling "attr set obj key value" should always result in key getting
   set to value, no matter what, as it is the lowest-level attribute
@@ -359,10 +352,6 @@ Recent Bugs
   finishes drawing.
 
 * report of rt aborting randomly on 64-bit with camo shader.
-
-* mged raytrace fails with simple "raytrace failed" message when using
-  rt, nirt, etc. on Windows after modifying a region.  See sf bug
-  report 2954404.
 
 * mged rrt command is not respecting the view size, just does
   something similar to autoview but even gets az/el wrong too.
@@ -603,8 +592,6 @@ Recent Bugs
 
 * wavelet isn't working correctly on a simple image decomposition &
   reconstruction.
-
-* query_ray can't find nirt if not installed
 
 * fbed is looking for /usr/lib/vfont/nonie.r.12
 
