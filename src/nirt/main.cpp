@@ -598,7 +598,7 @@ main(int argc, const char **argv)
     double scan[16] = MAT_INIT_ZERO;
     size_t prec = std::numeric_limits<fastf_t>::max_digits10;
     char *buf = NULL;
-    int  status = 0;
+    int status = 0;
     mat_t m;
     mat_t q;
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
@@ -613,7 +613,7 @@ main(int argc, const char **argv)
     BU_OPT(d[5],  "B", "",     "n",      &bu_opt_int,      &minpieces,      "set rt_bot_minpieces=n");
     BU_OPT(d[6],  "T", "",     "n",      &bu_opt_int,      &bot_mintie,     "set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)");
     BU_OPT(d[7],  "e", "",     "script", &enqueue_script,  &init_scripts,   "run script before interacting");
-    BU_OPT(d[8],  "f", "",     "format", &enqueue_format,  &sfd,            "load predefined format or file (see -L)");
+    BU_OPT(d[8],  "f", "",     "format", &enqueue_format,  &sfd,            "load predefined format (see -L) or file");
     BU_OPT(d[9],  "E", "",     "",       &dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
     BU_OPT(d[10], "L", "",     "",       NULL,             &show_formats,   "list output formatting options");
     BU_OPT(d[11], "s", "",     "",       NULL,             &silent_mode,    "run in silent (non-verbose) mode");
