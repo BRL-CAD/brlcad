@@ -70,6 +70,9 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	new_materp = rt_material_head();
 
 	gedp->dbip = old_dbip;
+	if (gedp->ged_wdbp) {
+	    gedp->ged_wdbp->dbip = gedp->dbip;
+	}
 	rt_new_material_head(old_materp);
 
 	av[0] = "zap";
@@ -80,6 +83,9 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	db_close(gedp->dbip);
 
 	gedp->dbip = new_dbip;
+	if (gedp->ged_wdbp) {
+	    gedp->ged_wdbp->dbip = gedp->dbip;
+	}
 	rt_new_material_head(new_materp);
 
 	bu_vls_printf(gedp->ged_result_str, "%s", gedp->dbip->dbi_filename);
