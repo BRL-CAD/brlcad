@@ -22,6 +22,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   stdout are intermittently failing with:
   Error: error writing "stdout": invalid argument
 
+* snap grid mode is failing in Archer (user report, most likely related
+  to one of the code refactorings breaking something.)
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
