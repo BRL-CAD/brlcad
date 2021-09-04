@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -72,12 +74,13 @@ static fastf_t max_short = (fastf_t)SHRT_MAX;
 static int tk_close(struct dm *dmp);
 static int tk_configureWin_guts(struct dm *dmp, int force);
 
+
 /*
  * Fire up the display manager, and the display processor.
  *
  */
 struct dm *
-tk_open(void *vinterp, int argc, const char **argv)
+tk_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
 {
     static int count = 0;
     int make_square = -1;
@@ -125,16 +128,6 @@ tk_open(void *vinterp, int argc, const char **argv)
     }
 
     ++count;
-    if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
-	char *dp;
-
-	dp = DisplayString(Tk_Display(tkwin));
-
-	if (dp)
-	    bu_vls_strcpy(&dmp->i->dm_dName, dp);
-	else
-	    bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
-    }
 
     /* initialize dm specific variables */
     pubvars->devmotionnotify = LASTEvent;
@@ -146,8 +139,7 @@ tk_open(void *vinterp, int argc, const char **argv)
 
     if (dmp->i->dm_top) {
 	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin = Tk_CreateWindowFromPath(interp,
-	       	tkwin, bu_vls_addr(&dmp->i->dm_pathName), bu_vls_addr(&dmp->i->dm_dName));
+	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin, bu_vls_addr(&dmp->i->dm_pathName), NULL);
 	pubvars->top = pubvars->xtkwin;
     } else {
 	char *cp;
@@ -200,13 +192,12 @@ tk_open(void *vinterp, int argc, const char **argv)
     }
 
     if (dmp->i->dm_width == 0) {
-	dmp->i->dm_width =
-	    WidthOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+	dmp->i->dm_width = Tk_Width(pubvars->xtkwin) - 30;
 	++make_square;
     }
 
     if (dmp->i->dm_height == 0) {
-	dmp->i->dm_height = HeightOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+	dmp->i->dm_height = Tk_Height(pubvars->xtkwin) - 30;
 	++make_square;
     }
 
@@ -229,7 +220,7 @@ tk_open(void *vinterp, int argc, const char **argv)
 
     privars->pix =
 	Tk_GetPixmap(pubvars->dpy,
-		     DefaultRootWindow(pubvars->dpy),
+		     pubvars->win,
 		     dmp->i->dm_width,
 		     dmp->i->dm_height,
 		     Tk_Depth(pubvars->xtkwin));
@@ -983,7 +974,7 @@ tk_configureWin_guts(struct dm *dmp, int force)
 		  privars->pix);
     privars->pix =
 	Tk_GetPixmap(pubvars->dpy,
-		     DefaultRootWindow(pubvars->dpy),
+		     pubvars->win,
 		     dmp->i->dm_width,
 		     dmp->i->dm_height,
 		     Tk_Depth(pubvars->xtkwin));
