@@ -55,6 +55,13 @@
 typedef int ptrdiff_t;
 #endif
 
+/* for compat with tcl 8.5 */
+typedef int (Tcl_NRPostProc) (ClientData data[], Tcl_Interp *interp,
+				int result);
+#ifndef CONST86
+#      define CONST86 CONST84
+#endif
+
 /*
  * Ensure WORDS_BIGENDIAN is defined correctly:
  * Needs to happen here in addition to configure to work with fat compiles on
