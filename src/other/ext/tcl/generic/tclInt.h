@@ -55,11 +55,12 @@
 typedef int ptrdiff_t;
 #endif
 
-/* for compat with tcl 8.5 */
-typedef int (Tcl_NRPostProc) (ClientData data[], Tcl_Interp *interp,
-				int result);
-#ifndef CONST86
-#      define CONST86 CONST84
+/* for tclInt.h compatibility with tcl 8.5 - CSM added 20210903 */
+#if !defined(_MSC_VER)
+typedef int (Tcl_NRPostProc) (ClientData data[], Tcl_Interp *interp, int result);
+#  ifndef CONST86
+#    define CONST86 CONST84
+#  endif
 #endif
 
 /*
