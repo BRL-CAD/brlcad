@@ -330,7 +330,7 @@ Simulation::Region::get_regions(db_i &db, const db_full_path &path,
 
     if (0 > db_search(&found, DB_SEARCH_TREE,
 		      (std::string() + "-attr " + attribute_prefix + "type=region -below -attr " +
-		       attribute_prefix + "type=region").c_str(), path.fp_len, path.fp_names, &db))
+		       attribute_prefix + "type=region").c_str(), path.fp_len, path.fp_names, &db, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found))
@@ -341,7 +341,7 @@ Simulation::Region::get_regions(db_i &db, const db_full_path &path,
 		      (std::string() + "-depth >0 -attr " + attribute_prefix + "* -not ( -attr " +
 		       attribute_prefix + "type=region -or ( -type shape -not -below -attr " +
 		       attribute_prefix + "type=region ) )").c_str(), path.fp_len,
-		      path.fp_names, &db))
+		      path.fp_names, &db, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found))
@@ -352,7 +352,7 @@ Simulation::Region::get_regions(db_i &db, const db_full_path &path,
     if (0 > db_search(&found, DB_SEARCH_TREE,
 		      (std::string() + "-attr " + attribute_prefix +
 		       "type=region -or -type shape -not -below -attr " + attribute_prefix +
-		       "type=region").c_str(), path.fp_len, path.fp_names, &db))
+		       "type=region").c_str(), path.fp_len, path.fp_names, &db, NULL))
 	bu_bomb("db_search() failed");
 
     if (!BU_PTBL_LEN(&found))
