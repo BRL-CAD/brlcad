@@ -27,6 +27,7 @@
 
 #include "../utility.hpp"
 
+#include "bu/app.h"
 #include "ged/analyze.h"
 #include "wdb.h"
 
