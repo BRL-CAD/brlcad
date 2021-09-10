@@ -665,10 +665,7 @@ tree_update_walk_subtree(
 	    if (dpii == s->instances.end()) {
 		char *ps = db_path_to_string(dfp);
 		bu_log("%s: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
-		dpii = s->instances.find(ldpi);
 		bn_mat_print("curr_mat", *curr_mat);
-		if (dpii->apply_to_solid)
-		    bu_log("%s: apply_to_solid set\n", ps);
 		for (i_it = s->instances.begin(); i_it != s->instances.end(); i_it++) {
 		    const dp_i &ddpi = *i_it;
 		    if (ddpi.dp == dp) {
