@@ -654,6 +654,30 @@ tree_update_walk_subtree(
 	    }
 	    bn_mat_mul(*curr_mat, om, nm);
 
+	    /* Depending on use verbosity settings, report various information about
+	     * the current state of the tree walk */
+	    if (s->verbosity > 2 && s->msgs) {
+		char *ps = db_path_to_string(dfp);
+		if (tp->tr_l.tl_mat && !bn_mat_is_equal(*curr_mat, bn_mat_identity, s->tol)) {
+		    bu_vls_printf(s->msgs, "W3[%s]: found [M]%s\n", ps, dp->d_namep);
+		    if (s->verbosity > 3) {
+			struct bu_vls title = BU_VLS_INIT_ZERO;
+			bu_vls_sprintf(&title, "W3[%s]: %s instance matrix", ps, dp->d_namep);
+			bn_mat_print_vls(bu_vls_cstr(&title), *curr_mat, s->msgs);
+			bu_vls_free(&title);
+		    }
+		} else {
+		    bu_vls_printf(s->msgs, "W3[%s]: found %s\n", ps, dp->d_namep);
+		}
+		if (s->verbosity > 3) {
+		    struct bu_vls title = BU_VLS_INIT_ZERO;
+		    bu_vls_sprintf(&title, "W3[%s]: %s current overall path matrix", ps, dp->d_namep);
+		    bn_mat_print_vls(bu_vls_cstr(&title), *curr_mat, s->msgs);
+		    bu_vls_free(&title);
+		}
+		bu_free(ps, "path string");
+	    }
+
 	    // Look up the dpi for this comb+curr_mat combination.
 	    ldpi.dp = dp;
 	    MAT_COPY(ldpi.mat, *curr_mat);
@@ -722,6 +746,8 @@ tree_update_walk_subtree(
 	    // If we're at max depth, we're done creating instances to manipulate
 	    // on this tree branch.
 	    if (s->max_depth && (depth == s->max_depth)) {
+		/* Done with branch - put back the old matrix state */
+		MAT_COPY(*curr_mat, om);
 		return;
 	    }
 
