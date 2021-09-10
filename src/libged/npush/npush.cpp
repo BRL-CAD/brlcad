@@ -1357,7 +1357,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
 	}
-	for (uf_it = s.added.begin(); uf_it != s.updated.end(); uf_it++) {
+	for (uf_it = s.added.begin(); uf_it != s.added.end(); uf_it++) {
 	    struct rt_db_internal *in = uf_it->second;
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
