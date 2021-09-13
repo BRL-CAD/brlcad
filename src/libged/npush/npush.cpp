@@ -110,13 +110,20 @@ class dp_i {
 		if (oidn && !tidn) return false;
 
 		// If we don't have an IDN matrix involved, fall back on
-		// numerical sorting to order the instances
-		for (int i = 0; i < 16; i++) {
-		    if (mat[i] < o.mat[i]) {
-			return true;
-		    }
-		    if (mat[i] > o.mat[i]) {
-			return false;
+		// numerical sorting to order the instances.  Prefer larger
+		// differences on numbers further into the matrix, rather than
+		// fine differences in earlier numbers.
+		fastf_t tols[3] = {BN_TOL_DIST, VUNITIZE_TOL, SMALL_FASTF};
+		for (int ttype = 0; ttype < 3; ttype++) {
+		    for (int i = 0; i < 16; i++) {
+			if (NEAR_EQUAL(mat[i], o.mat[i], tols[ttype]))
+			    continue;
+			if (mat[i] < o.mat[i]) {
+			    return true;
+			}
+			if (mat[i] > o.mat[i]) {
+			    return false;
+			}
 		    }
 		}
 	    }
@@ -700,7 +707,7 @@ tree_update_walk_subtree(
 		    if (ddpi.dp == dp) {
 			if (s->msgs) {
 			    struct bu_vls title = BU_VLS_INIT_ZERO;
-			    bu_vls_sprintf(&title, "Have %s matrix:", tp->tr_l.tl_name);
+			    bu_vls_sprintf(&title, "Have %s matrix", tp->tr_l.tl_name);
 			    bn_mat_print_vls(bu_vls_cstr(&title), ddpi.mat, s->msgs);
 			    bu_vls_free(&title);
 			    if (ddpi.iname.length())
