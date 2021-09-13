@@ -688,16 +688,32 @@ tree_update_walk_subtree(
 	    dpii = s->instances.find(ldpi);
 	    if (dpii == s->instances.end()) {
 		char *ps = db_path_to_string(dfp);
-		bu_log("%s: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
-		bn_mat_print("curr_mat", *curr_mat);
+		if (s->msgs) {
+		    bu_vls_printf(s->msgs, "%s: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
+		    bn_mat_print_vls("Missing matrix", *curr_mat, s->msgs);
+		} else {
+		    bu_log("%s: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
+		    bn_mat_print("curr_mat", *curr_mat);
+		}
 		for (i_it = s->instances.begin(); i_it != s->instances.end(); i_it++) {
 		    const dp_i &ddpi = *i_it;
 		    if (ddpi.dp == dp) {
-			bn_mat_print(tp->tr_l.tl_name, ddpi.mat);
-			if (ddpi.iname.length())
-			    bu_log("%s: iname: %s\n", ps, ddpi.iname.c_str());
-			if (ddpi.apply_to_solid)
-			    bu_log("%s: apply_to_solid set\n", ps);
+			if (s->msgs) {
+			    struct bu_vls title = BU_VLS_INIT_ZERO;
+			    bu_vls_sprintf(&title, "Have %s matrix:", tp->tr_l.tl_name);
+			    bn_mat_print_vls(bu_vls_cstr(&title), ddpi.mat, s->msgs);
+			    bu_vls_free(&title);
+			    if (ddpi.iname.length())
+				bu_vls_printf(s->msgs, "%s: iname: %s\n", ps, ddpi.iname.c_str());
+			    if (ddpi.apply_to_solid)
+				bu_vls_printf(s->msgs, "%s: apply_to_solid set\n", ps);
+			} else {
+			    bn_mat_print(tp->tr_l.tl_name, ddpi.mat);
+			    if (ddpi.iname.length())
+				bu_log("%s: iname: %s\n", ps, ddpi.iname.c_str());
+			    if (ddpi.apply_to_solid)
+				bu_log("%s: apply_to_solid set\n", ps);
+			}
 		    }
 		}
 		bu_free(ps, "path string");
