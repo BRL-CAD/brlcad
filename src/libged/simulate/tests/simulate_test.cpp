@@ -75,6 +75,8 @@ test_basic()
     const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
     ged_init(&ged_instance);
     ged_instance.ged_wdbp = db_create_inmem()->dbi_wdbp;
+    ged_instance.dbip = ged_instance.ged_wdbp->dbip;
+    ged_instance.dbip->dbi_wdbp = ged_instance.ged_wdbp;
 
     {
 	const point_t center = {10.0e3, -3.0e3, 7.0e3};
@@ -171,6 +173,8 @@ test_matrices()
     const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
     ged_init(&ged_instance);
     ged_instance.ged_wdbp = db_create_inmem()->dbi_wdbp;
+    ged_instance.dbip = ged_instance.ged_wdbp->dbip;
+    ged_instance.dbip->dbi_wdbp = ged_instance.ged_wdbp;
 
     {
 	const point_t center = {0.0e3, 0.0e3, 10.0e3};
@@ -250,6 +254,8 @@ test_tutorial()
     const simulate::AutoPtr<ged, ged_free> autofree_ged_instance(&ged_instance);
     ged_init(&ged_instance);
     ged_instance.ged_wdbp = db_create_inmem()->dbi_wdbp;
+    ged_instance.dbip = ged_instance.ged_wdbp->dbip;
+    ged_instance.dbip->dbi_wdbp = ged_instance.ged_wdbp;
 
     {
 	const point_t cube_min = { -1.0e3, -1.0e3, -1.0e3}, cube_max = {1.0e3, 1.0e3, 1.0e3};
