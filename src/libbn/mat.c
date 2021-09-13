@@ -80,14 +80,37 @@ bn_mat_print_guts(
     }
 }
 
+/* bn_mat_print_guts is exposed as public API, so we can't just
+ * replace it with a VLS version */
+static void
+bn_mat_print_vls_guts(
+    struct bu_vls *obuf,
+    const char *title,
+    const mat_t m)
+{
+    bu_vls_printf(obuf, "MATRIX %s:\n  ", title);
+    if (!m) {
+	bu_vls_strcat(obuf, "(Identity)");
+    } else {
+	for (int i = 0; i < 16; i++) {
+	    bu_vls_printf(obuf, " %8.3f", m[i]);
+	    if (i == 15) {
+		break;
+	    } else if ((i & 3) == 3) {
+		bu_vls_printf(obuf, "\n  ");
+	    }
+	}
+    }
+}
 
 void
 bn_mat_print(const char *title, const mat_t m)
 {
-    char obuf[1024];	/* snprintf may be non-PARALLEL */
+    struct bu_vls obuf = BU_VLS_INIT_ZERO;
 
-    bn_mat_print_guts(title, m, obuf, 1024);
-    bu_log("%s\n", obuf);
+    bn_mat_print_vls_guts(&obuf, title, m);
+    bu_log("%s\n", bu_vls_cstr(&obuf));
+    bu_vls_free(&obuf);
 }
 
 
@@ -97,10 +120,11 @@ bn_mat_print_vls(
     const mat_t m,
     struct bu_vls *vls)
 {
-    char obuf[1024];
+    struct bu_vls obuf = BU_VLS_INIT_ZERO;
 
-    bn_mat_print_guts(title, m, obuf, 1024);
-    bu_vls_printf(vls, "%s\n", obuf);
+    bn_mat_print_vls_guts(&obuf, title, m);
+    bu_vls_printf(vls, "%s\n", bu_vls_cstr(&obuf));
+    bu_vls_free(&obuf);
 }
 
 
