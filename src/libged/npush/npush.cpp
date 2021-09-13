@@ -689,10 +689,10 @@ tree_update_walk_subtree(
 	    if (dpii == s->instances.end()) {
 		char *ps = db_path_to_string(dfp);
 		if (s->msgs) {
-		    bu_vls_printf(s->msgs, "%s: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
+		    bu_vls_printf(s->msgs, "[%s]: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
 		    bn_mat_print_vls("Missing matrix", *curr_mat, s->msgs);
 		} else {
-		    bu_log("%s: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
+		    bu_log("[%s]: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
 		    bn_mat_print("curr_mat", *curr_mat);
 		}
 		for (i_it = s->instances.begin(); i_it != s->instances.end(); i_it++) {
