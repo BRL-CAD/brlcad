@@ -110,20 +110,17 @@ class dp_i {
 		if (oidn && !tidn) return false;
 
 		// If we don't have an IDN matrix involved, fall back on
-		// numerical sorting to order the instances.  Prefer larger
-		// differences on numbers further into the matrix, rather than
-		// fine differences in earlier numbers.
-		fastf_t tols[3] = {BN_TOL_DIST, VUNITIZE_TOL, SMALL_FASTF};
-		for (int ttype = 0; ttype < 3; ttype++) {
-		    for (int i = 0; i < 16; i++) {
-			if (NEAR_EQUAL(mat[i], o.mat[i], tols[ttype]))
-			    continue;
-			if (mat[i] < o.mat[i]) {
-			    return true;
-			}
-			if (mat[i] > o.mat[i]) {
-			    return false;
-			}
+		// numerical sorting to order the instances.  We want this to
+		// be consistent, so avoid comparing numbers that are closer
+		// than SMALL_FASTF in size
+		for (int i = 0; i < 16; i++) {
+		    if (NEAR_EQUAL(mat[i], o.mat[i], SMALL_FASTF))
+			continue;
+		    if (mat[i] < o.mat[i]) {
+			return true;
+		    }
+		    if (mat[i] > o.mat[i]) {
+			return false;
 		    }
 		}
 	    }
