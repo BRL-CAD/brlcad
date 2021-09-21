@@ -151,6 +151,55 @@ class dp_i {
 	}
 };
 
+// Slightly "looser" search operator, for use if a direct find lookup fails
+// https://stackoverflow.com/a/8054223/2037687
+struct mat_lfind
+{
+  mat_lfind( class dp_i *tdpi ) : test_dpi(tdpi) {}
+  bool operator()( const class dp_i& c ) const
+  {
+      // First, check dp
+      if (c.dp != test_dpi->dp) return false;
+
+      // Important for multiple tests to know if matrices are IDN
+      int oidn = bn_mat_is_equal(c.mat, bn_mat_identity, c.tol);
+      int tidn = bn_mat_is_equal(test_dpi->mat, bn_mat_identity, test_dpi->tol);
+      if (oidn && tidn)
+	  return true;
+
+      /* If the dp didn't resolve the question, check the matrix. */
+      if (!bn_mat_is_equal(test_dpi->mat, c.mat, test_dpi->tol)) {
+	  // We want IDN matrices to be less than any others, regardless
+	  // of the numerics.
+	  if (tidn && !oidn) return true;
+	  if (oidn && !tidn) return false;
+
+	  // If we don't have an IDN matrix involved, fall back on
+	  // numerical comparisons
+	  for (int i = 0; i < 16; i++) {
+	      if (!NEAR_EQUAL(test_dpi->mat[i], c.mat[i], VUNITIZE_TOL))
+		  return false;
+	  }
+      }
+
+      // The application of the matrix to the solid may matter
+      // when distinguishing dp_i instances, but only if one
+      // of the matrices involved is non-IDN - otherwise, the
+      // matrix applications are no-ops and we don't want them
+      // to prompt multiple instances of objects.
+      if (!(c.dp->d_flags & RT_DIR_COMB)) {
+	  if (test_dpi->apply_to_solid && !c.apply_to_solid)
+	      return false;
+      }
+
+      // All tests pass, looks equal
+      return true;
+  }
+private:
+  class dp_i *test_dpi;
+};
+
+
 /* Container to hold information during tree walk. */
 struct push_state {
 
@@ -691,6 +740,23 @@ tree_update_walk_subtree(
 	    }
 	    dpii = s->instances.find(ldpi);
 	    if (dpii == s->instances.end()) {
+		// See if a looser fallback search using
+		// https://stackoverflow.com/a/8054223/2037687 can find anything.
+		// At the moment this is mostly a test trying to diagnose issues...
+		std::set<dp_i>::iterator f_it;
+		f_it = std::find_if(s->instances.begin(), s->instances.end(), mat_lfind(&ldpi));
+		if (f_it != s->instances.end()) {
+		    if (s->msgs) {
+			struct bu_vls title = BU_VLS_INIT_ZERO;
+			bu_vls_sprintf(&title, "Have loose match %s matrix", f_it->dp->d_namep);
+			bn_mat_print_vls(bu_vls_cstr(&title), f_it->mat, s->msgs);
+			bu_vls_free(&title);
+		    } else {
+			bu_log("Loose match:\n");
+			bn_mat_print(tp->tr_l.tl_name, f_it->mat);
+		    }
+		}
+
 		char *ps = db_path_to_string(dfp);
 		if (s->msgs) {
 		    bu_vls_printf(s->msgs, "[%s]: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
