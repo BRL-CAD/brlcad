@@ -151,8 +151,12 @@ class dp_i {
 	}
 };
 
-// Slightly "looser" search operator, for use if a direct find lookup fails
-// https://stackoverflow.com/a/8054223/2037687
+// Slightly "looser" search operator, for use IFF a direct find lookup fails
+// using SMALL_FASTF tolerances - in that case, since the original tree walk
+// should have produced something we are supposed to use, try VUNITIZE_TOL
+// instead.  This can potentially happen with deep matrix application chains
+// and gnarly floating point math values.  std::find_if based approach learned
+// from https://stackoverflow.com/a/8054223/2037687
 struct mat_lfind
 {
   mat_lfind( class dp_i *tdpi ) : test_dpi(tdpi) {}
@@ -739,24 +743,26 @@ tree_update_walk_subtree(
 		ldpi.apply_to_solid = true;
 	    }
 	    dpii = s->instances.find(ldpi);
-	    if (dpii == s->instances.end()) {
-		// See if a looser fallback search using
-		// https://stackoverflow.com/a/8054223/2037687 can find anything.
-		// At the moment this is mostly a test trying to diagnose issues...
-		std::set<dp_i>::iterator f_it;
-		f_it = std::find_if(s->instances.begin(), s->instances.end(), mat_lfind(&ldpi));
-		if (f_it != s->instances.end()) {
+	    // If the lookup fails (possible if accumulated floating point uncertainties
+	    // in matrix accumulations in the two tree walks produce slightly different
+	    // matrix values) see if a looser fallback search using
+	    // https://stackoverflow.com/a/8054223/2037687 can find anything.
+	    if (dpii != s->instances.end()) {
+		dpii = std::find_if(s->instances.begin(), s->instances.end(), mat_lfind(&ldpi));
+		if (dpii != s->instances.end() && s->verbosity > 3) {
 		    if (s->msgs) {
 			struct bu_vls title = BU_VLS_INIT_ZERO;
-			bu_vls_sprintf(&title, "Have loose match %s matrix", f_it->dp->d_namep);
-			bn_mat_print_vls(bu_vls_cstr(&title), f_it->mat, s->msgs);
+			bu_vls_sprintf(&title, "Have loose match %s matrix", dpii->dp->d_namep);
+			bn_mat_print_vls(bu_vls_cstr(&title), dpii->mat, s->msgs);
 			bu_vls_free(&title);
 		    } else {
-			bu_log("Loose match:\n");
-			bn_mat_print(tp->tr_l.tl_name, f_it->mat);
+			bu_log("Loose matrix match:\n");
+			bn_mat_print(tp->tr_l.tl_name, dpii->mat);
 		    }
 		}
+	    }
 
+	    if (dpii == s->instances.end()) {
 		char *ps = db_path_to_string(dfp);
 		if (s->msgs) {
 		    bu_vls_printf(s->msgs, "[%s]: Error - no instance found: %s->%s!\n", ps, parent_dpi.dp->d_namep, dp->d_namep);
