@@ -747,6 +747,15 @@ tree_update_walk_subtree(
 	    // in matrix accumulations in the two tree walks produce slightly different
 	    // matrix values) see if a looser fallback search using
 	    // https://stackoverflow.com/a/8054223/2037687 can find anything.
+	    //
+	    // TODO - this can be refined by storing the instances in a map of
+	    // sets - we could then confine this more expensive lookup to just
+	    // the set of instances with matching dps.  Not clear yet if it is
+	    // warranted, since the if equality test should fail very quickly
+	    // on anything with a non-matching dp anyway... if we need this to
+	    // be logn order rather than n because it is more common in the
+	    // wild has been observed in early testing, we can redo the
+	    // instances container.
 	    if (dpii == s->instances.end()) {
 		dpii = std::find_if(s->instances.begin(), s->instances.end(), mat_lfind(&ldpi));
 		if (dpii != s->instances.end() && s->verbosity > 3) {
