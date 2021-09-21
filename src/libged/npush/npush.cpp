@@ -747,7 +747,7 @@ tree_update_walk_subtree(
 	    // in matrix accumulations in the two tree walks produce slightly different
 	    // matrix values) see if a looser fallback search using
 	    // https://stackoverflow.com/a/8054223/2037687 can find anything.
-	    if (dpii != s->instances.end()) {
+	    if (dpii == s->instances.end()) {
 		dpii = std::find_if(s->instances.begin(), s->instances.end(), mat_lfind(&ldpi));
 		if (dpii != s->instances.end() && s->verbosity > 3) {
 		    if (s->msgs) {
