@@ -23,6 +23,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <deque>
 #include <iostream>
 
 #include <array>
@@ -416,7 +417,7 @@ namespace quickhull {
 		MeshBuilder() = default;
 
 		// Create a mesh with initial tetrahedron ABCD. Dot product of AB with the normal of triangle ABC should be negative.
-		MeshBuilder(size_t a, size_t b, size_t c, size_t d) {
+		void setup(size_t a, size_t b, size_t c, size_t d) {
 		    // Create halfedges
 		    HalfEdge AB;
 		    AB.m_endVertex = b;
@@ -805,11 +806,20 @@ namespace quickhull {
 	    std::vector<size_t> m_newFaceIndices;
 	    std::vector<size_t> m_newHalfEdgeIndices;
 	    std::vector< std::shared_ptr<std::vector<size_t>> > m_disabledFacePointVectors;
+	    std::vector<size_t> m_visibleFaces;
+	    std::vector<size_t> m_horizonEdges;
+	    struct FaceData {
+		size_t m_faceIndex;
+		size_t m_enteredFromHalfEdge; // If the face turns out not to be visible, this half edge will be marked as horizon edge
+		FaceData(size_t fi, size_t he) : m_faceIndex(fi),m_enteredFromHalfEdge(he) {}
+	    };
+	    std::vector<FaceData> m_possiblyVisibleFaces;
+	    std::deque<size_t> m_faceList;
 
 	    // Create a half edge mesh representing the base tetrahedron from
 	    // which the QuickHull iteration proceeds. m_extremeValues must be
 	    // properly set up when this is called.
-	    MeshBuilder<FloatType> getInitialTetrahedron();
+	    void setupInitialTetrahedron();
 
 	    // Given a list of half edges, try to rearrange them so that they
 	    // form a loop. Return true on success.
