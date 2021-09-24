@@ -760,6 +760,7 @@ CMAKEFILES(
   dylib/plugin_1.cpp
   dylib/plugin_2.cpp
   dylib/run.c
+  path_match.in
   tests_bitv.cmake
   tests_vls.cmake
   )
