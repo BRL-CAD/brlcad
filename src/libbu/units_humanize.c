@@ -55,7 +55,7 @@
 #include "bu/units.h"
 #include "bu/vls.h"
 
-#define hn_maxscale 7
+#define hn_maxscale 6
 
 int
 bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, size_t scale, int flags)
@@ -76,7 +76,7 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, 
     /* validate args */
     if (buf == NULL || suffix == NULL)
 	return (-1);
-    else if (scale >= hn_maxscale &&
+    else if (scale > hn_maxscale &&
 	     ((scale & ~(BU_HN_AUTOSCALE|BU_HN_GETSCALE)) != 0))
 	return (-1);
     if ((flags & BU_HN_DIVISOR_1000) && (flags & BU_HN_IEC_PREFIXES))
