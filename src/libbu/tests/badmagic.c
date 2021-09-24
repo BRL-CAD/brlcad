@@ -60,7 +60,7 @@ main(int argc, char *argv[])
     uint32_t magic;
     char *str = (char *)bu_malloc(20, "bu_badmagic.c");
     char *expected_str = (char *)bu_malloc(512, "bu_badmagic.c");
-    char *file = "bu_badmagic.c";
+    const char *file = "bu_badmagic.c";
     int line = 42, testnum;
 
     bu_setprogname(argv[0]);

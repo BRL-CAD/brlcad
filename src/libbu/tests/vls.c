@@ -85,7 +85,7 @@ test_bu_vls_vlsinit(void)
 static int
 test_bu_vls_access(int argc, char *argv[])
 {
-    char *null_expected_string = "";
+    char *null_expected_string = bu_strdup("");
     char *null_actual_string;
 
     char *set_expected_string;
@@ -112,6 +112,7 @@ test_bu_vls_access(int argc, char *argv[])
     retval = !(bu_strcmp(null_actual_string, null_expected_string) == 0
 	       && bu_strcmp(set_actual_addr_string, set_expected_string) == 0);
 
+    bu_free(null_expected_string, "null_expected_string");
     bu_vls_free(&vls);
 
     return retval;

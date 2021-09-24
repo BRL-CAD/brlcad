@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 
+#include "bu/app.h"
 #include "bu/uuid.h"
 #include "bu/str.h"
 #include "bu/exit.h"
