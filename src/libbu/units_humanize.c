@@ -1,5 +1,6 @@
 /* bu_humanize_number is derived from FreeBSD's libutil implementation of
- * humanize_number.c, v 1.14 2008/04/28
+ * humanize_number.c - see the original sources at
+ * https://github.com/freebsd/freebsd-src/blob/main/lib/libutil/humanize_number.c
  *
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
  * Copyright 2013 John-Mark Gurney <jmg@FreeBSD.org>
@@ -28,7 +29,8 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE. */
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "common.h"
 
@@ -58,16 +60,16 @@
 #define hn_maxscale 6
 
 int
-bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, size_t scale, int flags)
+bu_humanize_number(char *buf, size_t len, int64_t quotient,
+	const char *suffix, size_t scale, int flags)
 {
     struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
     const char *prefixes, *sep;
-    size_t i;
-    size_t r;
-    int leftover, s1, s2, sign;
+    int	remainder, s1, s2, sign;
     int	divisordeccut;
     int64_t	divisor, max;
     size_t	baselen;
+    size_t 	i, r;
 
     /* Since so many callers don't check -1, NUL terminate the buffer */
     if (len > 0)
@@ -76,14 +78,14 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, 
     /* validate args */
     if (buf == NULL || suffix == NULL)
 	return (-1);
-    else if (scale > hn_maxscale &&
-	     ((scale & ~(BU_HN_AUTOSCALE|BU_HN_GETSCALE)) != 0))
+    if (scale > hn_maxscale &&
+	    ((scale & ~(BU_HN_AUTOSCALE|BU_HN_GETSCALE)) != 0))
 	return (-1);
     if ((flags & BU_HN_DIVISOR_1000) && (flags & BU_HN_IEC_PREFIXES))
 	return (-1);
 
     /* setup parameters */
-    leftover = 0;
+    remainder = 0;
 
     if (flags & BU_HN_IEC_PREFIXES) {
 	baselen = 2;
@@ -154,17 +156,18 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, 
 	 * divide once more.
 	 */
 	for (i = 0;
-	     (quotient >= max || (quotient == max - 1 &&
-				  leftover >= divisordeccut)) && i < hn_maxscale; i++) {
-	    leftover = quotient % divisor;
+		(quotient >= max || (quotient == max - 1 &&
+				     (remainder >= divisordeccut || remainder >=
+				      divisor / 2))) && i < hn_maxscale; i++) {
+	    remainder = quotient % divisor;
 	    quotient /= divisor;
 	}
 
 	if (scale & BU_HN_GETSCALE)
-	    return (int)i;
+	    return (i);
     } else {
 	for (i = 0; i < scale && i < hn_maxscale; i++) {
-	    leftover = quotient % divisor;
+	    remainder = quotient % divisor;
 	    quotient /= divisor;
 	}
     }
@@ -174,27 +177,25 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, 
      * XXX - should we make sure there is enough space for the decimal
      * place and if not, don't do BU_HN_DECIMAL?
      */
-    if (((quotient == 9 && leftover < divisordeccut) || quotient < 9) && i > 0 && flags & BU_HN_DECIMAL) {
-	size_t rcpy = 0;
-	s1 = (int)quotient + ((leftover * 10 + divisor / 2) / divisor / 10);
-	s2 = ((leftover * 10 + divisor / 2) / divisor) % 10;
-	bu_vls_sprintf(&tmpbuf, "%d%s%d%s%s%s", sign * s1, ".", s2, sep, SCALE2PREFIX(i), suffix);
-	bu_vls_trimspace(&tmpbuf);
-	r = bu_vls_strlen(&tmpbuf);
-	rcpy = FMIN(r + 1, len);
-	bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy);
-	bu_vls_free(&tmpbuf);
-	buf[len-1] = '\0';
+    if (((quotient == 9 && remainder < divisordeccut) || quotient < 9) &&
+	    i > 0 && flags & BU_HN_DECIMAL) {
+	s1 = (int)quotient + ((remainder * 10 + divisor / 2) /
+		divisor / 10);
+	s2 = ((remainder * 10 + divisor / 2) / divisor) % 10;
+	bu_vls_sprintf(&tmpbuf, "%d%s%d%s%s%s",
+		sign * s1, ".", s2,
+		sep, SCALE2PREFIX(i), suffix);
     } else {
-	size_t rcpy = 0;
-	bu_vls_sprintf(&tmpbuf, "%" PRId64 "%s%s%s", sign * (quotient + (leftover + divisor / 2) / divisor), sep, SCALE2PREFIX(i), suffix);
-	bu_vls_trimspace(&tmpbuf);
-	r = bu_vls_strlen(&tmpbuf);
-	rcpy = FMIN(r + 1, len);
-	bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy);
-	bu_vls_free(&tmpbuf);
-	buf[len-1] = '\0';
+	bu_vls_sprintf(&tmpbuf, "%" PRId64 "%s%s%s",
+		sign * (quotient + (remainder + divisor / 2) / divisor),
+		sep, SCALE2PREFIX(i), suffix);
     }
+    size_t rcpy = 0;
+    r = bu_vls_strlen(&tmpbuf);
+    rcpy = FMIN(r + 1, len);
+    bu_strlcpy(buf, bu_vls_addr(&tmpbuf), rcpy);
+    bu_vls_free(&tmpbuf);
+    buf[rcpy-1] = '\0';
 
     return (int)r;
 }
@@ -208,3 +209,4 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, 
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

@@ -54,327 +54,337 @@ static struct {
     int64_t num;
     int flags;
     int scale;
+    size_t buflen;
 } test_args[] = {
     /* tests 0-13 test 1000 suffixes */
-    { 1, "0", (int64_t)0L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "1 k", (int64_t)500L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "1 M", (int64_t)500*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "1 G", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "1 T", (int64_t)500*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "1 P", (int64_t)500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "1 E", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 1, "1", (int64_t)1L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "2 k", (int64_t)1500L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "2 M", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "2 G", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "2 T", (int64_t)1500*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "2 P", (int64_t)1500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "2 E", (int64_t)1500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
+    { 2, "0 ", (int64_t)0L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 k", (int64_t)500L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 M", (int64_t)500*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 G", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 T", (int64_t)500*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 P", (int64_t)500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 E", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 2, "1 ", (int64_t)1L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 k", (int64_t)1500L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 M", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 G", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 T", (int64_t)1500*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 P", (int64_t)1500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 E", (int64_t)1500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
 
     /* tests 14-27 test 1024 suffixes */
-    { 1, "0", (int64_t)0L, 0, BU_HN_AUTOSCALE },
-    { 3, "1 K", (int64_t)512L, 0, BU_HN_AUTOSCALE },
-    { 3, "1 M", (int64_t)512*1024L, 0, BU_HN_AUTOSCALE },
-    { 3, "1 G", (int64_t)512*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 3, "1 T", (int64_t)512*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 3, "1 P", (int64_t)512*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 3, "1 E", (int64_t)512*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 1, "1", (int64_t)1L, 0, BU_HN_AUTOSCALE },
-    { 3, "2 K", (int64_t)1536L, 0, BU_HN_AUTOSCALE },
-    { 3, "2 M", (int64_t)1536*1024L, 0, BU_HN_AUTOSCALE },
-    { 3, "2 G", (int64_t)1536*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 3, "2 T", (int64_t)1536*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 3, "2 P", (int64_t)1536*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 3, "2 E", (int64_t)1536*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
+    { 2, "0 ", (int64_t)0L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 K", (int64_t)512L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 M", (int64_t)512*1024L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 G", (int64_t)512*1024*1024L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 T", (int64_t)512*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 P", (int64_t)512*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 E", (int64_t)512*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 4 },
+    { 2, "1 ", (int64_t)1L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 K", (int64_t)1536L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 M", (int64_t)1536*1024L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 G", (int64_t)1536*1024*1024L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 T", (int64_t)1536*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 P", (int64_t)1536*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 E", (int64_t)1536*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 4 },
 
     /* tests 28-37 test rounding */
-    { 3, "0 M", (int64_t)500*1000L-1, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "1 M", (int64_t)500*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "1 M", (int64_t)1000*1000L + 500*1000L-1, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "2 M", (int64_t)1000*1000L + 500*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 3, "0 K", (int64_t)512L-1, 0, BU_HN_AUTOSCALE },
-    { 3, "1 K", (int64_t)512L, 0, BU_HN_AUTOSCALE },
-    { 3, "0 M", (int64_t)512*1024L-1, 0, BU_HN_AUTOSCALE },
-    { 3, "1 M", (int64_t)512*1024L, 0, BU_HN_AUTOSCALE },
-    { 3, "1 M", (int64_t)1024*1024L + 512*1024L-1, 0, BU_HN_AUTOSCALE },
-    { 3, "2 M", (int64_t)1024*1024L + 512*1024L, 0, BU_HN_AUTOSCALE },
+    { 3, "0 M", (int64_t)500*1000L-1, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 M", (int64_t)500*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 M", (int64_t)1000*1000L + 500*1000L-1, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 M", (int64_t)1000*1000L + 500*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 4 },
+    { 3, "0 K", (int64_t)512L-1, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 K", (int64_t)512L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "0 M", (int64_t)512*1024L-1, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 M", (int64_t)512*1024L, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "1 M", (int64_t)1024*1024L + 512*1024L-1, 0, BU_HN_AUTOSCALE, 4 },
+    { 3, "2 M", (int64_t)1024*1024L + 512*1024L, 0, BU_HN_AUTOSCALE, 4 },
 
     /* tests 38-61 test specific scale factors with 1000 divisor */
-    { 3, "0 k", (int64_t)0L, BU_HN_DIVISOR_1000, 1 },
-    { 3, "1 k", (int64_t)500L, BU_HN_DIVISOR_1000, 1 },
-    { 3, "0 M", (int64_t)500L, BU_HN_DIVISOR_1000, 2 },
-    { 3, "1 M", (int64_t)500*1000L, BU_HN_DIVISOR_1000, 2 },
-    { 3, "0 G", (int64_t)500*1000L, BU_HN_DIVISOR_1000, 3 },
-    { 3, "1 G", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, 3 },
-    { 3, "0 T", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, 4 },
-    { 3, "1 T", (int64_t)500*1000*1000*1000L, BU_HN_DIVISOR_1000, 4 },
-    { 3, "0 P", (int64_t)500*1000*1000*1000L, BU_HN_DIVISOR_1000, 5 },
-    { 3, "1 P", (int64_t)500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 5 },
-    { 3, "0 E", (int64_t)500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6 },
-    { 3, "1 E", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6 },
-    { 3, "0 k", (int64_t)1L, BU_HN_DIVISOR_1000, 1 },
-    { 3, "2 k", (int64_t)1500L, BU_HN_DIVISOR_1000, 1 },
-    { 3, "0 M", (int64_t)1500L, BU_HN_DIVISOR_1000, 2 },
-    { 3, "2 M", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, 2 },
-    { 3, "0 G", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, 3 },
-    { 3, "2 G", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, 3 },
-    { 3, "0 T", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, 4 },
-    { 3, "2 T", (int64_t)1500*1000*1000*1000L, BU_HN_DIVISOR_1000, 4 },
-    { 3, "0 P", (int64_t)1500*1000*1000*1000L, BU_HN_DIVISOR_1000, 5 },
-    { 3, "2 P", (int64_t)1500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 5 },
-    { 3, "0 E", (int64_t)1500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6 },
-    { 3, "2 E", (int64_t)1500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6 },
+    { 3, "0 k", (int64_t)0L, BU_HN_DIVISOR_1000, 1, 4 },
+    { 3, "1 k", (int64_t)500L, BU_HN_DIVISOR_1000, 1, 4 },
+    { 3, "0 M", (int64_t)500L, BU_HN_DIVISOR_1000, 2, 4 },
+    { 3, "1 M", (int64_t)500*1000L, BU_HN_DIVISOR_1000, 2, 4 },
+    { 3, "0 G", (int64_t)500*1000L, BU_HN_DIVISOR_1000, 3, 4 },
+    { 3, "1 G", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, 3, 4 },
+    { 3, "0 T", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, 4, 4 },
+    { 3, "1 T", (int64_t)500*1000*1000*1000L, BU_HN_DIVISOR_1000, 4, 4 },
+    { 3, "0 P", (int64_t)500*1000*1000*1000L, BU_HN_DIVISOR_1000, 5, 4 },
+    { 3, "1 P", (int64_t)500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 5, 4 },
+    { 3, "0 E", (int64_t)500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6, 4 },
+    { 3, "1 E", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6, 4 },
+    { 3, "0 k", (int64_t)1L, BU_HN_DIVISOR_1000, 1, 4 },
+    { 3, "2 k", (int64_t)1500L, BU_HN_DIVISOR_1000, 1, 4 },
+    { 3, "0 M", (int64_t)1500L, BU_HN_DIVISOR_1000, 2, 4 },
+    { 3, "2 M", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, 2, 4 },
+    { 3, "0 G", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, 3, 4 },
+    { 3, "2 G", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, 3, 4 },
+    { 3, "0 T", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, 4, 4 },
+    { 3, "2 T", (int64_t)1500*1000*1000*1000L, BU_HN_DIVISOR_1000, 4, 4 },
+    { 3, "0 P", (int64_t)1500*1000*1000*1000L, BU_HN_DIVISOR_1000, 5, 4 },
+    { 3, "2 P", (int64_t)1500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 5, 4 },
+    { 3, "0 E", (int64_t)1500*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6, 4 },
+    { 3, "2 E", (int64_t)1500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6, 4 },
 
     /* tests 62-85 test specific scale factors with 1024 divisor */
-    { 3, "0 K", (int64_t)0L, 0, 1 },
-    { 3, "1 K", (int64_t)512L, 0, 1 },
-    { 3, "0 M", (int64_t)512L, 0, 2 },
-    { 3, "1 M", (int64_t)512*1024L, 0, 2 },
-    { 3, "0 G", (int64_t)512*1024L, 0, 3 },
-    { 3, "1 G", (int64_t)512*1024*1024L, 0, 3 },
-    { 3, "0 T", (int64_t)512*1024*1024L, 0, 4 },
-    { 3, "1 T", (int64_t)512*1024*1024*1024L, 0, 4 },
-    { 3, "0 P", (int64_t)512*1024*1024*1024L, 0, 5 },
-    { 3, "1 P", (int64_t)512*1024*1024*1024*1024L, 0, 5 },
-    { 3, "0 E", (int64_t)512*1024*1024*1024*1024L, 0, 6 },
-    { 3, "1 E", (int64_t)512*1024*1024*1024*1024*1024L, 0, 6 },
-    { 3, "0 K", (int64_t)1L, 0, 1 },
-    { 3, "2 K", (int64_t)1536L, 0, 1 },
-    { 3, "0 M", (int64_t)1536L, 0, 2 },
-    { 3, "2 M", (int64_t)1536*1024L, 0, 2 },
-    { 3, "0 G", (int64_t)1536*1024L, 0, 3 },
-    { 3, "2 G", (int64_t)1536*1024*1024L, 0, 3 },
-    { 3, "0 T", (int64_t)1536*1024*1024L, 0, 4 },
-    { 3, "2 T", (int64_t)1536*1024*1024*1024L, 0, 4 },
-    { 3, "0 P", (int64_t)1536*1024*1024*1024L, 0, 5 },
-    { 3, "2 P", (int64_t)1536*1024*1024*1024*1024L, 0, 5 },
-    { 3, "0 E", (int64_t)1536*1024*1024*1024*1024L, 0, 6 },
-    { 3, "2 E", (int64_t)1536*1024*1024*1024*1024*1024L, 0, 6 },
+    { 3, "0 K", (int64_t)0L, 0, 1, 4 },
+    { 3, "1 K", (int64_t)512L, 0, 1, 4 },
+    { 3, "0 M", (int64_t)512L, 0, 2, 4 },
+    { 3, "1 M", (int64_t)512*1024L, 0, 2, 4 },
+    { 3, "0 G", (int64_t)512*1024L, 0, 3, 4 },
+    { 3, "1 G", (int64_t)512*1024*1024L, 0, 3, 4 },
+    { 3, "0 T", (int64_t)512*1024*1024L, 0, 4, 4 },
+    { 3, "1 T", (int64_t)512*1024*1024*1024L, 0, 4, 4 },
+    { 3, "0 P", (int64_t)512*1024*1024*1024L, 0, 5, 4 },
+    { 3, "1 P", (int64_t)512*1024*1024*1024*1024L, 0, 5, 4 },
+    { 3, "0 E", (int64_t)512*1024*1024*1024*1024L, 0, 6, 4 },
+    { 3, "1 E", (int64_t)512*1024*1024*1024*1024*1024L, 0, 6, 4 },
+    { 3, "0 K", (int64_t)1L, 0, 1, 4 },
+    { 3, "2 K", (int64_t)1536L, 0, 1, 4 },
+    { 3, "0 M", (int64_t)1536L, 0, 2, 4 },
+    { 3, "2 M", (int64_t)1536*1024L, 0, 2, 4 },
+    { 3, "0 G", (int64_t)1536*1024L, 0, 3, 4 },
+    { 3, "2 G", (int64_t)1536*1024*1024L, 0, 3, 4 },
+    { 3, "0 T", (int64_t)1536*1024*1024L, 0, 4, 4 },
+    { 3, "2 T", (int64_t)1536*1024*1024*1024L, 0, 4, 4 },
+    { 3, "0 P", (int64_t)1536*1024*1024*1024L, 0, 5, 4 },
+    { 3, "2 P", (int64_t)1536*1024*1024*1024*1024L, 0, 5, 4 },
+    { 3, "0 E", (int64_t)1536*1024*1024*1024*1024L, 0, 6, 4 },
+    { 3, "2 E", (int64_t)1536*1024*1024*1024*1024*1024L, 0, 6, 4 },
 
     /* tests 86-99 test invalid specific scale values of < 0 or >= 7 with
        and without BU_HN_DIVISOR_1000 set */
     /*  all should return errors with new code; with old, the latter 3
 	are instead processed as if having AUTOSCALE and/or GETSCALE set */
-    { -1, "", (int64_t)1L, 0, 7 },
-    { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, 7 },
-    { -1, "", (int64_t)1L, 0, 1000 },
-    { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, 1000 },
-    { -1, "", (int64_t)0L, 0, 1000*1000 },
-    { -1, "", (int64_t)0L, BU_HN_DIVISOR_1000, 1000*1000 },
-    { -1, "", (int64_t)0L, 0, INT_MAX },
-    { -1, "", (int64_t)0L, BU_HN_DIVISOR_1000, INT_MAX },
+    { -1, "", (int64_t)1L, 0, 7, 4 },
+    { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, 7, 4 },
+    { -1, "", (int64_t)1L, 0, 1000, 4 },
+    { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, 1000, 4 },
+    { -1, "", (int64_t)0L, 0, 1000*1000, 4 },
+    { -1, "", (int64_t)0L, BU_HN_DIVISOR_1000, 1000*1000, 4 },
+    { -1, "", (int64_t)0L, 0, INT_MAX, 4 },
+    { -1, "", (int64_t)0L, BU_HN_DIVISOR_1000, INT_MAX, 4 },
 
     /* Negative scale values are not handled well
        by the existing library routine - should report as error */
     /*  all should return errors with new code, fail assertion with old */
 
-    { -1, "", (int64_t)1L, 0, -1 },
-    { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, -1 },
-    { -1, "", (int64_t)1L, 0, -1000 },
-    { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, -1000 },
+    { -1, "", (int64_t)1L, 0, -1, 4 },
+    { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, -1, 4 },
+    { -1, "", (int64_t)1L, 0, -1000, 4 },
+    { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, -1000, 4 },
+
+    /* __INT_MIN doesn't print properly, skipped. */
+
+    { -1, "", (int64_t)1L, 0, -INT_MAX, 4 },
+    { -1, "", (int64_t)1L, BU_HN_DIVISOR_1000, -INT_MAX, 4 },
+
 
     /* tests for scale == 0, without autoscale */
     /* tests 100-114 test scale 0 with 1000 divisor - print first N digits */
-    { 1, "0", (int64_t)0L, BU_HN_DIVISOR_1000, 0 },
-    { 1, "1", (int64_t)1L, BU_HN_DIVISOR_1000, 0 },
-    { 2, "10", (int64_t)10L, BU_HN_DIVISOR_1000, 0 },
-    { 3, "0 M", (int64_t)150L, BU_HN_DIVISOR_1000, BU_HN_NOSPACE },
-    { 3, "0 M", (int64_t)500L, BU_HN_DIVISOR_1000, BU_HN_NOSPACE },
-    { 3, "0 M", (int64_t)999L, BU_HN_DIVISOR_1000, BU_HN_NOSPACE },
-    { 3, "150", (int64_t)150L, BU_HN_DIVISOR_1000, 0 },
-    { 3, "500", (int64_t)500L, BU_HN_DIVISOR_1000, 0 },
-    { 3, "999", (int64_t)999L, BU_HN_DIVISOR_1000, 0 },
-    { 4, "100", (int64_t)1000L, BU_HN_DIVISOR_1000, 0 },
-    { 4, "150", (int64_t)1500L, BU_HN_DIVISOR_1000, 0 },
-    { 6, "500", (int64_t)500*1000L, BU_HN_DIVISOR_1000, 0 },
-    { 7, "150", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, 0 },
-    { 9, "500", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, 0 },
-    { 10, "150", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, 0 },
+    { 2, "0 ", (int64_t)0L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 2, "1 ", (int64_t)1L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 3, "10 ", (int64_t)10L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 3, "0 M", (int64_t)150L, BU_HN_DIVISOR_1000, BU_HN_NOSPACE, 4 },
+    { 3, "0 M", (int64_t)500L, BU_HN_DIVISOR_1000, BU_HN_NOSPACE, 4 },
+    { 3, "0 M", (int64_t)999L, BU_HN_DIVISOR_1000, BU_HN_NOSPACE, 4 },
+    { 4, "150", (int64_t)150L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 4, "500", (int64_t)500L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 4, "999", (int64_t)999L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 5, "100", (int64_t)1000L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 5, "150", (int64_t)1500L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 7, "500", (int64_t)500*1000L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 8, "150", (int64_t)1500*1000L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 10, "500", (int64_t)500*1000*1000L, BU_HN_DIVISOR_1000, 0, 4 },
+    { 11, "150", (int64_t)1500*1000*1000L, BU_HN_DIVISOR_1000, 0, 4 },
 
     /* tests 115-126 test scale 0 with 1024 divisor - print first N digits */
-    { 1, "0", (int64_t)0L, 0, 0 },
-    { 1, "1", (int64_t)1L, 0, 0 },
-    { 2, "10", (int64_t)10L, 0, 0 },
-    { 3, "150", (int64_t)150L, 0, 0 },
-    { 3, "500", (int64_t)500L, 0, 0 },
-    { 3, "999", (int64_t)999L, 0, 0 },
-    { 4, "100", (int64_t)1000L, 0, 0 },
-    { 4, "150", (int64_t)1500L, 0, 0 },
-    { 6, "500", (int64_t)500*1000L, 0, 0 },
-    { 7, "150", (int64_t)1500*1000L, 0, 0 },
-    { 9, "500", (int64_t)500*1000*1000L, 0, 0 },
-    { 10, "150", (int64_t)1500*1000*1000L, 0, 0 },
+    { 2, "0 ", (int64_t)0L, 0, 0, 4 },
+    { 2, "1 ", (int64_t)1L, 0, 0, 4 },
+    { 3, "10 ", (int64_t)10L, 0, 0, 4 },
+    { 4, "150", (int64_t)150L, 0, 0, 4 },
+    { 4, "500", (int64_t)500L, 0, 0, 4 },
+    { 4, "999", (int64_t)999L, 0, 0, 4 },
+    { 5, "100", (int64_t)1000L, 0, 0, 4 },
+    { 5, "150", (int64_t)1500L, 0, 0, 4 },
+    { 7, "500", (int64_t)500*1000L, 0, 0, 4 },
+    { 8, "150", (int64_t)1500*1000L, 0, 0, 4 },
+    { 10, "500", (int64_t)500*1000*1000L, 0, 0, 4 },
+    { 11, "150", (int64_t)1500*1000*1000L, 0, 0, 4 },
+
+    /* Test case for rounding of edge numbers around 999.5+, see PR224498.
+     * Require buflen >= 5 */
+    { 4, "1.0M", (int64_t)1023500, BU_HN_DECIMAL|BU_HN_B|BU_HN_NOSPACE, BU_HN_AUTOSCALE, 5 },
 
     /* Test boundary cases for very large positive/negative number formatting */
     /* Explicit scale, divisor 1024 */
 
-    /* XXX = requires length 5 (buflen 6) for some cases*/
-    /* KLUDGE - test loop below will bump length 5 up to 5 */
-    { 3, "8 E",   INT64_MAX, 0, 6 },
-    { 4, "-8 E", -INT64_MAX, 0, 6 },
-    { 3, "0 E", (int64_t)92*1024*1024*1024*1024*1024L, 0, 6 },
-    { 3, "0 E", -(int64_t)92*1024*1024*1024*1024*1024L, 0, 6 },
-    { 3, "0 E", (int64_t)82*1024*1024*1024*1024*1024L, 0, 6 },
-    { 3, "0 E", -(int64_t)82*1024*1024*1024*1024*1024L, 0, 6 },
-    { 3, "0 E", (int64_t)81*1024*1024*1024*1024*1024L, 0, 6 },
-    { 3, "0 E", -(int64_t)81*1024*1024*1024*1024*1024L, 0, 6 },
-    { 4, "92 P", (int64_t)92*1024*1024*1024*1024*1024L, 0, 5 },
-    { 5, "-92 P", -(int64_t)92*1024*1024*1024*1024*1024L, 0, 5 },
-    { 4, "82 P", (int64_t)82*1024*1024*1024*1024*1024L, 0, 5 },
-    { 5, "-82 P", -(int64_t)82*1024*1024*1024*1024*1024L, 0, 5 },
-    { 4, "81 P", (int64_t)81*1024*1024*1024*1024*1024L, 0, 5 },
-    { 5, "-81 P", -(int64_t)81*1024*1024*1024*1024*1024L, 0, 5 },
+    /* Requires buflen >= 6 */
+    { 3, "8 E",   INT64_MAX, 0, 6, 6 },
+    { 4, "-8 E", -INT64_MAX, 0, 6, 6 },
+    { 3, "0 E", (int64_t)92*1024*1024*1024*1024*1024L, 0, 6, 6 },
+    { 3, "0 E", -(int64_t)92*1024*1024*1024*1024*1024L, 0, 6, 6 },
+    { 3, "0 E", (int64_t)82*1024*1024*1024*1024*1024L, 0, 6, 6 },
+    { 3, "0 E", -(int64_t)82*1024*1024*1024*1024*1024L, 0, 6, 6 },
+    { 3, "0 E", (int64_t)81*1024*1024*1024*1024*1024L, 0, 6, 6 },
+    { 3, "0 E", -(int64_t)81*1024*1024*1024*1024*1024L, 0, 6, 6 },
+    { 4, "92 P", (int64_t)92*1024*1024*1024*1024*1024L, 0, 5, 6 },
+    { 5, "-92 P", -(int64_t)92*1024*1024*1024*1024*1024L, 0, 5, 6 },
+    { 4, "82 P", (int64_t)82*1024*1024*1024*1024*1024L, 0, 5, 6 },
+    { 5, "-82 P", -(int64_t)82*1024*1024*1024*1024*1024L, 0, 5, 6 },
+    { 4, "81 P", (int64_t)81*1024*1024*1024*1024*1024L, 0, 5, 6 },
+    { 5, "-81 P", -(int64_t)81*1024*1024*1024*1024*1024L, 0, 5, 6 },
 
     /* Explicit scale, divisor 1000 */
-    { 3, "9 E",   INT64_MAX, BU_HN_DIVISOR_1000, 6 },
-    { 4, "-9 E", -INT64_MAX, BU_HN_DIVISOR_1000,  6 },
-    { 3, "0 E", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  6 },
-    { 3, "0 E", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  6 },
-    { 3, "0 E", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  6 },
-    { 3, "0 E", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  6 },
-    { 4, "92 P", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  5 },
-    { 5, "-92 P", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  5 },
-    { 4, "91 P", (int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  5 },
-    { 5, "-91 P", -(int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  5 },
+    { 3, "9 E",   INT64_MAX, BU_HN_DIVISOR_1000, 6, 6 },
+    { 4, "-9 E", -INT64_MAX, BU_HN_DIVISOR_1000,  6, 6 },
+    { 3, "0 E", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  6, 6 },
+    { 3, "0 E", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  6, 6 },
+    { 3, "0 E", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  6, 6 },
+    { 3, "0 E", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  6, 6 },
+    { 4, "92 P", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  5, 6 },
+    { 5, "-92 P", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  5, 6 },
+    { 4, "91 P", (int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  5, 6 },
+    { 5, "-91 P", -(int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  5, 6 },
 
     /* Autoscale, divisor 1024 */
-    { 3, "8 E",   INT64_MAX, 0, BU_HN_AUTOSCALE },
-    { 4, "-8 E", -INT64_MAX, 0, BU_HN_AUTOSCALE },
-    { 4, "92 P", (int64_t)92*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 5, "-92 P", -(int64_t)92*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 4, "82 P", (int64_t)82*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 5, "-82 P", -(int64_t)82*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 4, "81 P", (int64_t)81*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
-    { 5, "-81 P", -(int64_t)81*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE },
+    { 3, "8 E",   INT64_MAX, 0, BU_HN_AUTOSCALE, 6 },
+    { 4, "-8 E", -INT64_MAX, 0, BU_HN_AUTOSCALE, 6 },
+    { 4, "92 P", (int64_t)92*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 6 },
+    { 5, "-92 P", -(int64_t)92*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 6 },
+    { 4, "82 P", (int64_t)82*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 6 },
+    { 5, "-82 P", -(int64_t)82*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 6 },
+    { 4, "81 P", (int64_t)81*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 6 },
+    { 5, "-81 P", -(int64_t)81*1024*1024*1024*1024*1024L, 0, BU_HN_AUTOSCALE, 6 },
     /* Autoscale, divisor 1000 */
-    { 3, "9 E",   INT64_MAX, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 4, "-9 E", -INT64_MAX, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 4, "92 P", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "-92 P", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 4, "91 P", (int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "-91 P", -(int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
+    { 3, "9 E",   INT64_MAX, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 4, "-9 E", -INT64_MAX, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 4, "92 P", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "-92 P", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 4, "91 P", (int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "-91 P", -(int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
 
     /* 0 scale, divisor 1024 */
-    { 12, "skdj",  INT64_MAX, 0, 0 },
-    { 20, "-9223", -INT64_MAX, 0, 0 },
-    { 18, "10358", (int64_t)92*1024*1024*1024*1024*1024L, 0, 0 },
-    { 19, "-1035", -(int64_t)92*1024*1024*1024*1024*1024L, 0, 0 },
-    { 17, "92323", (int64_t)82*1024*1024*1024*1024*1024L, 0, 0 },
-    { 18, "-9232", -(int64_t)82*1024*1024*1024*1024*1024L, 0, 0 },
-    { 17, "91197", (int64_t)81*1024*1024*1024*1024*1024L, 0, 0 },
-    { 18, "-9119", -(int64_t)81*1024*1024*1024*1024*1024L, 0, 0 },
+    { 12, "skdj",  INT64_MAX, 0, 0, 6 },
+    { 21, "-9223", -INT64_MAX, 0, 0, 6 },
+    { 19, "10358", (int64_t)92*1024*1024*1024*1024*1024L, 0, 0, 6 },
+    { 20, "-1035", -(int64_t)92*1024*1024*1024*1024*1024L, 0, 0, 6 },
+    { 18, "92323", (int64_t)82*1024*1024*1024*1024*1024L, 0, 0, 6 },
+    { 19, "-9232", -(int64_t)82*1024*1024*1024*1024*1024L, 0, 0, 6 },
+    { 18, "91197", (int64_t)81*1024*1024*1024*1024*1024L, 0, 0, 6 },
+    { 19, "-9119", -(int64_t)81*1024*1024*1024*1024*1024L, 0, 0, 6 },
 
     /* 0 scale, divisor 1000 */
     /* XXX - why does this fail? */
-    { -1, "", INT64_MAX, BU_HN_DIVISOR_1000, 0 },
-    { 20, "-9223", -INT64_MAX, BU_HN_DIVISOR_1000,  0 },
-    { 18, "10358", (int64_t)92*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
-    { 19, "-1035", -(int64_t)92*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
-    { 17, "92323", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
-    { 18, "-9232", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
+    { -1, "", INT64_MAX, BU_HN_DIVISOR_1000, 0, 6 },
+    { 21, "-9223", -INT64_MAX, BU_HN_DIVISOR_1000,  0, 6 },
+    { 19, "10358", (int64_t)92*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0, 6 },
+    { 20, "-1035", -(int64_t)92*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0, 6 },
+    { 18, "92323", (int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0, 6 },
+    { 19, "-9232", -(int64_t)82*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0, 6 },
     /* Expected to pass */
-    { 17, "91197", (int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
-    { 18, "-9119", -(int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0 },
+    { 18, "91197", (int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0, 6 },
+    { 19, "-9119", -(int64_t)81*1024*1024*1024*1024*1024L, BU_HN_DIVISOR_1000,  0, 6 },
 
 
 
     /* Need to implement tests for GETSCALE */
-    /*	{ ?, "", (int64_t)0L, BU_HN_DIVISOR_1000, BU_HN_GETSCALE },
+    /*	{ ?, "", (int64_t)0L, BU_HN_DIVISOR_1000, BU_HN_GETSCALE, 6 },
 	...
-    */
+	*/
     /* Tests for BU_HN_DECIMAL */
     /* Positive, Autoscale */
-    { 5, "500 k", (int64_t)500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "994 k", (int64_t)994*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "995 k", (int64_t)995*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "999 k", (int64_t)999*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "1.0 M", (int64_t)1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "1.5 M", (int64_t)1500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "1.9 M", (int64_t)1949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "2.0 M", (int64_t)1950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "9.9 M", (int64_t)9949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 4, "10 M", (int64_t)9950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "500 M", (int64_t)500*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "994 M", (int64_t)994*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "995 M", (int64_t)995*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "999 M", (int64_t)999*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
+    { 5, "500 k", (int64_t)500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "994 k", (int64_t)994*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "995 k", (int64_t)995*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "999 k", (int64_t)999*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.0 M", (int64_t)1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.5 M", (int64_t)1500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.9 M", (int64_t)1949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "2.0 M", (int64_t)1950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "9.9 M", (int64_t)9949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 4, "10 M", (int64_t)9950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "500 M", (int64_t)500*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "994 M", (int64_t)994*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "995 M", (int64_t)995*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "999 M", (int64_t)999*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
 
-    { 5, "500 K", (int64_t)500*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "994 K", (int64_t)994*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "995 K", (int64_t)995*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "999 K", (int64_t)999*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "1.0 M", (int64_t)1000*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "1.0 M", (int64_t)1018*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "1.0 M", (int64_t)1019*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "1.5 M", (int64_t)1536*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "1.9 M", (int64_t)1996*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "2.0 M", (int64_t)1997*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "2.0 M", (int64_t)2047*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "2.0 M", (int64_t)2048*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "2.0 M", (int64_t)2099*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "2.1 M", (int64_t)2100*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "9.9 M", (int64_t)10188*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
+    { 5, "500 K", (int64_t)500*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "994 K", (int64_t)994*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "995 K", (int64_t)995*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "999 K", (int64_t)999*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.0 M", (int64_t)1000*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.0 M", (int64_t)1018*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.0 M", (int64_t)1019*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.5 M", (int64_t)1536*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.9 M", (int64_t)1996*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "2.0 M", (int64_t)1997*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "2.0 M", (int64_t)2047*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "2.0 M", (int64_t)2048*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "2.0 M", (int64_t)2099*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "2.1 M", (int64_t)2100*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "9.9 M", (int64_t)10188*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
     /* XXX - shouldn't the following two be "10. M"? */
-    { 4, "10 M", (int64_t)10189*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 4, "10 M", (int64_t)10240*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "500 M", (int64_t)500*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "994 M", (int64_t)994*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "995 M", (int64_t)995*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "999 M", (int64_t)999*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "1.0 G", (int64_t)1000*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "1.0 G", (int64_t)1023*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
+    { 4, "10 M", (int64_t)10189*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 4, "10 M", (int64_t)10240*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "500 M", (int64_t)500*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "994 M", (int64_t)994*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "995 M", (int64_t)995*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "999 M", (int64_t)999*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.0 G", (int64_t)1000*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.0 G", (int64_t)1023*1024*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
 
     /* Negative, Autoscale - should pass */
-    { 6, "-1.5 ", -(int64_t)1500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 6, "-1.9 ", -(int64_t)1949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 6, "-9.9 ", -(int64_t)9949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
+    { 6, "-1.5 ", -(int64_t)1500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 6, "-1.9 ", -(int64_t)1949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 6, "-9.9 ", -(int64_t)9949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
 
-    { 6, "-1.5 ", -(int64_t)1536*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 6, "-1.9 ", -(int64_t)1949*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 6, "-9.7 ", -(int64_t)9949*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
+    { 6, "-1.5 ", -(int64_t)1536*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 6, "-1.9 ", -(int64_t)1949*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 6, "-9.7 ", -(int64_t)9949*1024L, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
 
     /* Positive/negative, at maximum scale */
-    { 5, "500 P", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "1.9 E", (int64_t)1949*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "8.9 E", (int64_t)8949*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 5, "9.2 E", INT64_MAX, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
+    { 5, "500 P", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "1.9 E", (int64_t)1949*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "8.9 E", (int64_t)8949*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 5, "9.2 E", INT64_MAX, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
     /* Negatives work with latest rev only: */
-    { 6, "-9.2 ", -INT64_MAX, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
-    { 6, "-8.9 ", -(int64_t)8949*1000*1000*1000*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE },
+    { 6, "-9.2 ", -INT64_MAX, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
+    { 6, "-8.9 ", -(int64_t)8949*1000*1000*1000*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, BU_HN_AUTOSCALE, 6 },
 
-    { 5, "8.0 E",   INT64_MAX, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 5, "7.9 E",   INT64_MAX-(int64_t)100*1024*1024*1024*1024*1024LL, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 6, "-8.0 ", -INT64_MAX, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
-    { 6, "-7.9 ",   -INT64_MAX+(int64_t)100*1024*1024*1024*1024*1024LL, BU_HN_DECIMAL, BU_HN_AUTOSCALE },
+    { 5, "8.0 E",   INT64_MAX, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 5, "7.9 E",   INT64_MAX-(int64_t)100*1024*1024*1024*1024*1024LL, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 6, "-8.0 ", -INT64_MAX, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
+    { 6, "-7.9 ",   -INT64_MAX+(int64_t)100*1024*1024*1024*1024*1024LL, BU_HN_DECIMAL, BU_HN_AUTOSCALE, 6 },
 
     /* Positive, Fixed scales */
-    { 5, "500 k", (int64_t)500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 1 },
-    { 5, "0.5 M", (int64_t)500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 5, "949 k", (int64_t)949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 1 },
-    { 5, "0.9 M", (int64_t)949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 5, "950 k", (int64_t)950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 1 },
-    { 5, "1.0 M", (int64_t)950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 5, "999 k", (int64_t)999*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 1 },
-    { 5, "1.0 M", (int64_t)999*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 5, "1.5 M", (int64_t)1500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 5, "1.9 M", (int64_t)1949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 5, "2.0 M", (int64_t)1950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 5, "9.9 M", (int64_t)9949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 4, "10 M", (int64_t)9950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 5, "500 M", (int64_t)500*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 5, "0.5 G", (int64_t)500*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 3 },
-    { 5, "999 M", (int64_t)999*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2 },
-    { 5, "1.0 G", (int64_t)999*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 3 },
+    { 5, "500 k", (int64_t)500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 1, 6 },
+    { 5, "0.5 M", (int64_t)500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 5, "949 k", (int64_t)949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 1, 6 },
+    { 5, "0.9 M", (int64_t)949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 5, "950 k", (int64_t)950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 1, 6 },
+    { 5, "1.0 M", (int64_t)950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 5, "999 k", (int64_t)999*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 1, 6 },
+    { 5, "1.0 M", (int64_t)999*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 5, "1.5 M", (int64_t)1500*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 5, "1.9 M", (int64_t)1949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 5, "2.0 M", (int64_t)1950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 5, "9.9 M", (int64_t)9949*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 4, "10 M", (int64_t)9950*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 5, "500 M", (int64_t)500*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 5, "0.5 G", (int64_t)500*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 3, 6 },
+    { 5, "999 M", (int64_t)999*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 2, 6 },
+    { 5, "1.0 G", (int64_t)999*1000*1000L, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 3, 6 },
     /* Positive/negative, at maximum scale */
-    { 5, "500 P", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 5 },
-    { 5, "1.0 E", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6 },
-    { 5, "1.9 E", (int64_t)1949*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6 },
-    { 5, "8.9 E", (int64_t)8949*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6 },
-    { 5, "9.2 E", INT64_MAX, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 6 },
+    { 5, "500 P", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 5, 6 },
+    { 5, "1.0 E", (int64_t)500*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6, 6 },
+    { 5, "1.9 E", (int64_t)1949*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6, 6 },
+    { 5, "8.9 E", (int64_t)8949*1000*1000*1000*1000*1000L, BU_HN_DIVISOR_1000, 6, 6 },
+    { 5, "9.2 E", INT64_MAX, BU_HN_DECIMAL|BU_HN_DIVISOR_1000, 6, 6 },
 
     /* BU_HN_DECIMAL + binary + fixed scale cases not completed */
-    { 5, "512 K", (int64_t)512*1024L, BU_HN_DECIMAL, 1 },
-    { 5, "0.5 M", (int64_t)512*1024L, BU_HN_DECIMAL, 2 },
+    { 5, "512 K", (int64_t)512*1024L, BU_HN_DECIMAL, 1, 6 },
+    { 5, "0.5 M", (int64_t)512*1024L, BU_HN_DECIMAL, 2, 6 },
 
     /* Negative, Fixed scales */
     /* Not yet added, but should work with latest rev */
@@ -400,7 +410,7 @@ usage(char * progname) {
 /* Parse command line options */
 static void
 read_options(int argc, char * const argv[], size_t *bufLength,
-	     int *includeNegativeScale, int *includeExabytes, int *verbose) {
+	int *includeNegativeScale, int *includeExabytes, int *verbose) {
     int ch;
     size_t temp;
 
@@ -438,9 +448,9 @@ static struct {
 } flags[] = {
     { BU_HN_AUTOSCALE, "BU_HN_AUTOSCALE" },
     { BU_HN_GETSCALE, "BU_HN_GETSCALE" },
-    { BU_HN_DIVISOR_1000, "BU_HN_DIVISOR_1000"},
-    { BU_HN_B, "BU_HN_B"},
-    { BU_HN_DECIMAL, "BU_HN_DECIMAL"},
+    { BU_HN_DIVISOR_1000, "BU_HN_DIVISOR_1000" },
+    { BU_HN_B, "BU_HN_B" },
+    { BU_HN_DECIMAL, "BU_HN_DECIMAL" },
 };
 
 static const char *separator = "|";
@@ -491,97 +501,98 @@ testskipped(size_t i)
 }
 
 int
-main(int argc, char *argv[])
+main(int argc, char * const argv[])
 {
     char *buf;
     char *flag_str, *scale_str;
-    size_t i;
-    size_t errcnt, tested, skipped;
+    size_t blen, buflen, errcnt, i, skipped, tested;
     int r;
-    size_t buflen;
     int includeNegScale;
     int includeExabyteTests;
     int verbose;
 
     bu_setprogname(argv[0]);
 
-    buflen = 4;
+    buf = NULL;
+    buflen = 0;
     includeNegScale = 0;
     includeExabyteTests = 0;
     verbose = 0;
 
     read_options(argc, argv, &buflen, &includeNegScale,
-		 &includeExabyteTests, &verbose);
+	    &includeExabyteTests, &verbose);
 
-    buf = (char *)bu_malloc(buflen, NULL);
     errcnt = 0;
     tested = 0;
     skipped = 0;
 
     if (buflen != 4)
-	bu_log("Warning: buffer size %zu != 4, expect some results to differ.\n", buflen);
+	printf("Warning: buffer size %zu != 4, expect some results to differ.\n", buflen);
 
     printf("1..%lu\n", (long unsigned int)(sizeof test_args / sizeof *test_args));
     for (i = 0; i < sizeof test_args / sizeof *test_args; i++) {
-	/* KLUDGE */
-	if (test_args[i].num == INT64_MAX && buflen == 4) {
-	    /* Start final tests which require buffer of 6 */
-	    bu_free(buf, NULL);
-	    buflen = 6;
-	    buf = (char *)bu_malloc(buflen, NULL);
-	    if (verbose)
-		bu_log("Buffer length increased to %zu\n", buflen);
-	}
+	blen = (buflen > 0) ? buflen : test_args[i].buflen;
+	buf = (char *)realloc(buf, blen);
 
 	if (test_args[i].scale < 0 && ! includeNegScale) {
 	    skipped++;
-	    testskipped(i);
+	    testskipped(i + 1);
 	    continue;
 	}
 	if (test_args[i].num >= halfExabyte && ! includeExabyteTests) {
 	    skipped++;
-	    testskipped(i);
+	    testskipped(i + 1);
 	    continue;
 	}
 
-	r = bu_humanize_number(buf, buflen, test_args[i].num, "",
-			       test_args[i].scale, test_args[i].flags);
+	r = bu_humanize_number(buf, blen, test_args[i].num, "",
+		test_args[i].scale, test_args[i].flags);
 	flag_str = str_flags(test_args[i].flags, "[no flags]");
 	scale_str = str_scale(test_args[i].scale);
 
 	if (r != test_args[i].retval) {
 	    if (verbose)
-		bu_log("wrong return value on index %lu, buflen: %zu, got: %d + \"%s\", expected %d + \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
-		       i, buflen, r, buf, test_args[i].retval,
-		       test_args[i].res, test_args[i].num,
-		       scale_str, flag_str);
+		printf("wrong return value on index %zu, "
+			"buflen: %zu, got: %d + \"%s\", "
+			"expected %d + \"%s\"; num = %jd, "
+			"scale = %s, flags= %s.\n",
+			i, blen, r, buf, test_args[i].retval,
+			test_args[i].res,
+			(intmax_t)test_args[i].num,
+			scale_str, flag_str);
 	    else
-		printf("not ok %lu # return %d != %d\n", (long unsigned int)i, r,
-		       test_args[i].retval);
+		printf("not ok %zu # return %d != %d\n",
+			i + 1, r, test_args[i].retval);
 	    errcnt++;
 	} else if (bu_strcmp(buf, test_args[i].res) != 0) {
 	    if (verbose)
-		printf("result mismatch on index %lu, got: \"%s\", expected \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
-		       (long unsigned int)i, buf, test_args[i].res, test_args[i].num,
-		       scale_str, flag_str);
+		printf("result mismatch on index %zu, got: "
+			"\"%s\", expected \"%s\"; num = %jd, "
+			"buflen: %zu, scale = %s, flags= %s.\n",
+			i, buf, test_args[i].res,
+			(intmax_t)test_args[i].num,
+			blen, scale_str, flag_str);
 	    else
-		printf("not ok %lu # buf \"%s\" != \"%s\"\n", (long unsigned int)i,
-		       buf, test_args[i].res);
+		printf("not ok %zu # buf \"%s\" != \"%s\"\n",
+			i + 1, buf, test_args[i].res);
 	    errcnt++;
 	} else {
 	    if (verbose)
-		printf("successful result on index %lu, returned %d, got: \"%s\"; num = %" PRId64 ", scale = %s, flags= %s.\n",
-		       (long unsigned int)i, r, buf, test_args[i].num, scale_str,
-		       flag_str);
+		printf("successful result on index %zu, "
+			"returned %d, got: \"%s\"; num = %jd, "
+			"buflen = %zd, scale = %s, flags= %s.\n",
+			i, r, buf, (intmax_t)test_args[i].num,
+			blen, scale_str, flag_str);
 	    else
-		printf("ok %lu\n", (long unsigned int)i);
+		printf("ok %zu\n", i + 1);
 	}
 	tested++;
     }
+    free(buf);
 
     if (verbose)
-	printf("total errors: %lu/%lu tests, %lu skipped\n", (long unsigned int)errcnt,
-	       (long unsigned int)tested, (long unsigned int)skipped);
+	printf("total errors: %zu/%zu tests, %zu skipped\n", errcnt,
+		tested, skipped);
 
     if (errcnt)
 	return 1;
