@@ -445,7 +445,7 @@ read_options(int argc, char * const argv[], size_t *bufLength,
 static struct {
     int value;
     const char *name;
-} flags[] = {
+} path_flags[] = {
     { BU_HN_AUTOSCALE, "BU_HN_AUTOSCALE" },
     { BU_HN_GETSCALE, "BU_HN_GETSCALE" },
     { BU_HN_DIVISOR_1000, "BU_HN_DIVISOR_1000" },
@@ -464,12 +464,12 @@ str_flags(int hn_flags, char *noFlags) {
     result = (char *)bu_malloc(MAX_STR_FLAGS_RESULT, "result");
     result[0] = '\0';
 
-    for (i = 0; i < sizeof flags / sizeof *flags; i++) {
-	if (hn_flags & flags[i].value) {
+    for (i = 0; i < sizeof path_flags / sizeof *path_flags; i++) {
+	if (hn_flags & path_flags[i].value) {
 	    if (*result != 0)
 		bu_strlcat(result, separator,
 			   MAX_STR_FLAGS_RESULT);
-	    bu_strlcat(result, flags[i].name, MAX_STR_FLAGS_RESULT);
+	    bu_strlcat(result, path_flags[i].name, MAX_STR_FLAGS_RESULT);
 	}
     }
 
@@ -484,8 +484,12 @@ static char *
 str_scale(int scale) {
     char *result;
 
-    if (scale == BU_HN_AUTOSCALE || scale == BU_HN_GETSCALE)
-	return str_flags(scale, "");
+    if (scale == BU_HN_AUTOSCALE || scale == BU_HN_GETSCALE) {
+	char *tmpstr = bu_strdup("");
+	result = str_flags(scale, tmpstr);
+	bu_free(tmpstr, "tmpstr");
+	return result;
+    }
 
     result = (char *)bu_malloc(MAX_INT_STR_DIGITS, NULL);
     result[0] = '\0';
@@ -530,9 +534,10 @@ main(int argc, char * const argv[])
 	printf("Warning: buffer size %zu != 4, expect some results to differ.\n", buflen);
 
     printf("1..%lu\n", (long unsigned int)(sizeof test_args / sizeof *test_args));
+    char *nflags = bu_strdup("[no flags]");
     for (i = 0; i < sizeof test_args / sizeof *test_args; i++) {
 	blen = (buflen > 0) ? buflen : test_args[i].buflen;
-	buf = (char *)realloc(buf, blen);
+	buf = (char *)bu_realloc(buf, blen, "buf");
 
 	if (test_args[i].scale < 0 && ! includeNegScale) {
 	    skipped++;
@@ -547,7 +552,7 @@ main(int argc, char * const argv[])
 
 	r = bu_humanize_number(buf, blen, test_args[i].num, "",
 		test_args[i].scale, test_args[i].flags);
-	flag_str = str_flags(test_args[i].flags, "[no flags]");
+	flag_str = str_flags(test_args[i].flags, nflags);
 	scale_str = str_scale(test_args[i].scale);
 
 	if (r != test_args[i].retval) {
@@ -588,7 +593,8 @@ main(int argc, char * const argv[])
 	}
 	tested++;
     }
-    free(buf);
+    bu_free(nflags, "free nflags");
+    bu_free(buf, "free buf");
 
     if (verbose)
 	printf("total errors: %zu/%zu tests, %zu skipped\n", errcnt,

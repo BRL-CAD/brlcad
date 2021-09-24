@@ -186,6 +186,7 @@ BU_EXPORT extern int bu_path_component(struct bu_vls *component, const char *pat
  */
 BU_EXPORT extern char **bu_path_to_argv(const char *path, int *ac);
 
+#define BU_PATH_MATCH_NOMATCH     1
 
 #define BU_PATH_MATCH_NOESCAPE    0x01 /**< bu_path_match() flag:
 					* Backslash is ordinary
@@ -205,7 +206,12 @@ BU_EXPORT extern char **bu_path_to_argv(const char *path, int *ac);
 					* has to be matched exactly by
 					* a period in pattern.
 					*/
-#define BU_PATH_MATCH_CASEFOLD    0x08 /**< bu_path_match() flag:
+
+#define BU_PATH_MATCH_LEADING_DIR 0x08 /**< bu_path_match() flag:
+					* Ignore /<tail> after Imatch.
+					*/
+
+#define BU_PATH_MATCH_CASEFOLD    0x10 /**< bu_path_match() flag:
 					* Case-insensitive
 					* matching.
 					*/

@@ -25,6 +25,7 @@ set(bu_test_srcs
   opt.c
   parallel.c
   path_component.c
+  path_match.cpp
   process.c
   ptbl.c
   realpath.c
@@ -32,7 +33,6 @@ set(bu_test_srcs
   sort.c
   str.c
   str_isprint.c
-  uuid.c
   vls.c
   vls_vprintf.c
   )
@@ -49,11 +49,16 @@ foreach(srcfile ${bu_test_srcs})
   set(BU_TEST_LIST "${BU_TEST_LIST}\\n	${NAME_ROOT}")
 endforeach(srcfile ${bu_test_srcs})
 
-# Generate bu_test.c file and build it
+# Generate bu_test.cpp file and build it
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../..)
-configure_file(bu_test.c.in "${CMAKE_CURRENT_BINARY_DIR}/bu_test.c" @ONLY)
+configure_file(bu_test.cpp.in "${CMAKE_CURRENT_BINARY_DIR}/bu_test.cpp" @ONLY)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/bu_test.c")
-BRLCAD_ADDEXEC(bu_test "${CMAKE_CURRENT_BINARY_DIR}/bu_test.c" libbu TEST)
+BRLCAD_ADDEXEC(bu_test "${CMAKE_CURRENT_BINARY_DIR}/bu_test.cpp" libbu TEST)
+
+
+# The uuid code doesn't mix with C++ compilers - make a separate
+# C-only executable for this case
+BRLCAD_ADDEXEC(bu_test_uuid "uuid.c" libbu TEST)
 
 # Housekeeping for included source files
 CMAKEFILES(${bu_test_srcs})
@@ -111,6 +116,11 @@ BRLCAD_ADD_TEST(NAME bu_path_component_sl_usr_sl_dir_sl_file_base_core    COMMAN
 BRLCAD_ADD_TEST(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir          COMMAND bu_test path_component "/usr/dir/file.ext" "/usr/dir" 0)
 BRLCAD_ADD_TEST(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir_core     COMMAND bu_test path_component "/usr/dir/file.ext" "/usr/dir/file" 1)
 BRLCAD_ADD_TEST(NAME bu_path_component_c_sl_usr_sl_dir_sl_file_dir_core   COMMAND bu_test path_component "C:/usr/dir/file.ext" "C:/usr/dir/file" 1)
+
+################################################
+#      bu_path_match (i.e. fnmatch) testing    #
+################################################
+BRLCAD_ADD_TEST(NAME bu_path_match COMMAND bu_test path_match ${CMAKE_CURRENT_SOURCE_DIR}/path_match.in) # runs OpenBSD fnmatch tests
 
 
 #############################
@@ -664,7 +674,7 @@ BRLCAD_ADD_TEST(NAME bu_humanize_number_BSD COMMAND bu_test humanize_number)
 #  *********** uuid.c tests ************
 #
 
-BRLCAD_ADD_TEST(NAME bu_uuid_encode COMMAND bu_test uuid)
+BRLCAD_ADD_TEST(NAME bu_uuid_encode COMMAND bu_test_uuid)
 
 #BRLCAD_ADD_TEST(NAME bu_uuid_create  COMMAND bu_test uuid 0)
 #BRLCAD_ADD_TEST(NAME bu_uuid_compare COMMAND bu_test uuid 1)
@@ -742,7 +752,7 @@ add_subdirectory(dylib)
 
 CMAKEFILES(
   CMakeLists.txt
-  bu_test.c.in
+  bu_test.cpp.in
   dylib/CMakeLists.txt
   dylib/README.txt
   dylib/dylib.c
