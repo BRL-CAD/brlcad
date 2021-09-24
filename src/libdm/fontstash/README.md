@@ -1,3 +1,9 @@
+NOTE:  If we need the OpenGL3 implementation at some point in the future, start
+by looking at https://github.com/BastiaanOlij/fontstash which has an OpenGL3
+implementation.  (At the moment the original basic OpenGL implementation
+suffices for BRL-CAD (and the swrast backend only supports OpenGL 2.1, so we'll
+need to retain the older capabilities regardless.)
+
 Font Stash
 ==========
 
