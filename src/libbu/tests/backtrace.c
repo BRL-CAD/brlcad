@@ -173,7 +173,7 @@ go_deep(int depth, FILE *fp)
 #endif
 
 int
-main(int UNUSED(argc), char *UNUSED(argv[]))
+main(int UNUSED(argc), char **UNUSED(argv))
 {
 #if 0
     char *buffer = NULL;
