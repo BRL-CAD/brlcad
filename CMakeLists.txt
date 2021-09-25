@@ -1734,10 +1734,10 @@ if(NOT HAVE_SNPRINTF)
 endif(NOT HAVE_SNPRINTF)
 
 if(HAVE_REALPATH)
- #check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[PATH_MAX]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
- #if(HAVE_WORKING_REALPATH)
- #  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
- #endif(HAVE_WORKING_REALPATH)
+  check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[PATH_MAX]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
+  if(HAVE_WORKING_REALPATH)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
+  endif(HAVE_WORKING_REALPATH)
 endif(HAVE_REALPATH)
 
 # GetFullPathName
