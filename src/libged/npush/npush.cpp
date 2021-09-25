@@ -756,6 +756,12 @@ tree_update_walk_subtree(
 	    // be logn order rather than n because it is more common in the
 	    // wild has been observed in early testing, we can redo the
 	    // instances container.
+	    //
+	    // A more sophisticated possibility might be to investigate
+	    // Locality Sensitive Hashing (https://github.com/trendmicro/tlsh)
+	    // to see if we could bin similar matricies using their hashes.
+	    // That might even have potential to identify "similar" geometry
+	    // objects, depending on the details of their internal storage...
 	    if (dpii == s->instances.end()) {
 		dpii = std::find_if(s->instances.begin(), s->instances.end(), mat_lfind(&ldpi));
 		if (dpii != s->instances.end() && s->verbosity > 3) {
