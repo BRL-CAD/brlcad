@@ -290,7 +290,7 @@ end:
 	    val = bu_avs_get(&lavs, "ROTATION");
 	    if (val) {
 		quat_t quat;
-		char *av[4];
+		char *av[5] = {NULL};
 		char *lp = bu_strdup(val);
 		if (bu_argv_from_string(av, 4, lp) != 4) {
 		    have_view = 0;
@@ -310,7 +310,7 @@ end:
 	    val = bu_avs_get(&lavs, "CENTER");
 	    if (val) {
 		quat_t quat;
-		char *av[4];
+		char *av[5] = {NULL};
 		char *lp = bu_strdup(val);
 		if (bu_argv_from_string(av, 4, lp) != 4) {
 		    have_view = 0;

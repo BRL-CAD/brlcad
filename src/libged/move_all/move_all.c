@@ -238,7 +238,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 HIDDEN int
 move_all_file(struct ged *gedp, int nflag, const char *file)
 {
-    FILE *fp;
+    FILE *fp = NULL;
     char line[512];
 
     fp = fopen(file, "r");
@@ -248,8 +248,8 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
     }
 
     while (bu_fgets(line, sizeof(line), fp) != NULL) {
-	char *cp;
-	char *new_av[3];
+	char *cp = NULL;
+	char *new_av[3] = {NULL};
 
 	/* Skip comments */
 	if ((cp = strchr(line, '#')) != NULL)
