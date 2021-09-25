@@ -604,7 +604,7 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	    int i, j;
 	    char *str = bu_strdup(bu_vls_addr(GEDP->ged_result_str));
 	    size_t who_argc = (bu_vls_strlen(GEDP->ged_result_str) / 2) + 1;
-	    char **who_argv = (char **)bu_calloc(who_argc, sizeof(char *), "who_argv");
+	    char **who_argv = (char **)bu_calloc(who_argc+1, sizeof(char *), "who_argv");
 
 	    who_ret = bu_argv_from_string(who_argv, who_argc, str);
 	    for (i=0; i < who_ret; i++) {
