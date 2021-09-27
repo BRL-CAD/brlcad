@@ -64,7 +64,6 @@ const char title[] = "RT Weight";
 
 int noverlaps = 0;
 FILE *densityfp;
-struct bu_vls densityfile_vls = BU_VLS_INIT_ZERO;
 #define DENSITY_FILE ".density"
 
 struct analyze_densities *density = NULL;
@@ -202,23 +201,20 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	goto view_init_rtweight_fail;
     }
 
-
-    /* densityfile is global to this file and will be used later (and then freed) */
-    bu_vls_init(&densityfile_vls);
     if (analyze_densities_create(&density)) {
 	bu_log("INTERNAL ERROR: Unable to initialize density table\n");
     }
 
+    /* densityfile is global to this file and will be used later (and then freed) */
     if (densityfile) {
-	bu_vls_sprintf(&densityfile_vls, "%s", densityfile);
-	if (!bu_file_exists(bu_vls_cstr(&densityfile_vls), NULL)) {
-	    bu_log("Unable to load density file \"%s\" for reading\n", bu_vls_cstr(&densityfile_vls));
+	if (!bu_file_exists(densityfile, NULL)) {
+	    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
 	    goto view_init_rtweight_fail;
 	}
 
-	dfile = bu_open_mapped_file(bu_vls_cstr(&densityfile_vls), "densities file");
+	dfile = bu_open_mapped_file(densityfile, "densities file");
 	if (!dfile) {
-	    bu_log("Unable to open density file \"%s\" for reading\n", bu_vls_cstr(&densityfile_vls));
+	    bu_log("Unable to open density file \"%s\" for reading\n", densityfile);
 	    goto view_init_rtweight_fail;
 	}
 
@@ -227,7 +223,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 
 	/* Read in density */
 	if (analyze_densities_load(density, dbuff, &pbuff_msgs, NULL) ==  0) {
-	    bu_log("Unable to parse density file \"%s\":%s\n", bu_vls_cstr(&densityfile_vls), bu_vls_cstr(&pbuff_msgs));
+	    bu_log("Unable to parse density file \"%s\":%s\n", densityfile, bu_vls_cstr(&pbuff_msgs));
 	    bu_close_mapped_file(dfile);
 	    goto view_init_rtweight_fail;
 	}
@@ -269,23 +265,29 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 		goto view_init_rtweight_fail;
 	    }
 
-	    bu_vls_sprintf(&densityfile_vls, "%s", ap->a_rt_i->rti_dbip->dbi_filename);
+	    /* found a density table, so record the .g file */
+	    densityfile = ap->a_rt_i->rti_dbip->dbi_filename;
 
 	} else {
+	    static char densityfile_buf[MAXPATHLEN] = {0};
 
-	    /* If we still don't have density information, fall back on the pre-defined defaults */
-	    bu_vls_sprintf(&densityfile_vls, "%s%c%s", bu_dir(NULL, 0, BU_DIR_CURR, NULL), BU_DIR_SEPARATOR, DENSITY_FILE);
+	    /* If we still don't have density information, fall back
+	     * on pre-defined defaults.
+	     */
+	    bu_dir(densityfile_buf, MAXPATHLEN, BU_DIR_CURR, DENSITY_FILE, NULL);
+	    densityfile = densityfile_buf;
 
-	    if (!bu_file_exists(bu_vls_cstr(&densityfile_vls), NULL)) {
-		bu_vls_sprintf(&densityfile_vls, "%s%c%s", bu_dir(NULL, 0, BU_DIR_HOME, NULL), BU_DIR_SEPARATOR, DENSITY_FILE);
-		if (!bu_file_exists(bu_vls_cstr(&densityfile_vls), NULL)) {
-		    bu_log("Unable to load density file \"%s\" for reading\n", bu_vls_cstr(&densityfile_vls));
+	    if (!bu_file_exists(densityfile, NULL)) {
+		bu_dir(densityfile_buf, MAXPATHLEN, BU_DIR_HOME, DENSITY_FILE, NULL);
+		densityfile = densityfile_buf;
+		if (!bu_file_exists(densityfile, NULL)) {
+		    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
 		    goto view_init_rtweight_fail;
 		}
 	    }
-	    dfile = bu_open_mapped_file(bu_vls_cstr(&densityfile_vls), "densities file");
+	    dfile = bu_open_mapped_file(densityfile, "densities file");
 	    if (!dfile) {
-		bu_log("Unable to open density file \"%s\" for reading\n", bu_vls_cstr(&densityfile_vls));
+		bu_log("Unable to open density file \"%s\" for reading\n", densityfile);
 		goto view_init_rtweight_fail;
 	    }
 
@@ -294,7 +296,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 
 	    /* Read in density */
 	    if (analyze_densities_load(density, dbuff, &pbuff_msgs, NULL) ==  0) {
-		bu_log("Unable to parse density file \"%s\":%s\n", bu_vls_cstr(&densityfile_vls), bu_vls_cstr(&pbuff_msgs));
+		bu_log("Unable to parse density file \"%s\":%s\n", densityfile, bu_vls_cstr(&pbuff_msgs));
 		bu_close_mapped_file(dfile);
 		goto view_init_rtweight_fail;
 	    }
@@ -315,7 +317,6 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
     return 0;		/* no framebuffer needed */
 
 view_init_rtweight_fail:
-    bu_vls_free(&densityfile_vls);
     bu_vls_free(&pbuff_msgs);
     analyze_densities_destroy(density);
     if (minus_o && outfp) {
@@ -439,7 +440,7 @@ view_end(struct application *ap)
 
     fprintf(outfp, "RT Weight Program Output:\n");
     fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
-    fprintf(outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, bu_vls_cstr(&densityfile_vls));
+    fprintf(outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, densityfile);
     fprintf(outfp,
 	    "Material  Density(g/cm^3)  Name\n"
 	    "--------  ---------------  -------------\n");
@@ -618,9 +619,7 @@ view_end(struct application *ap)
     fprintf(outfp, "          Z = %g %s\n", sum_z, unit2);
     fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, units);
 
-    /* now finished with density file name*/
-    bu_vls_free(&densityfile_vls);
-
+    /* this frame is done, next could be different densities */
     analyze_densities_destroy(density);
 }
 
