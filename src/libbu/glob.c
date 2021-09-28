@@ -42,7 +42,7 @@ bu_glob(const char *pattern, int flags, struct bu_glob_context *gp)
 	return 1;
 
     g.gl_pathc = gp->gl_pathc;
-    g.gl_matchc = gp->gl_matchc;
+    //g.gl_matchc = gp->gl_matchc;
 /*
     if (gp->gl_pathv)
 	g.gl_pathv = bu_vls_argv(gp->gl_pathv);
