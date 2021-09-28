@@ -95,7 +95,7 @@ failingtest gcv_plugins
 cleantest libanalyze
 cleantest liboptical
 cleantest libicv
-failingtest libged
+cleantest libged
 cleantest libdm
 failingtest dm_plugins
 cleantest libfft
