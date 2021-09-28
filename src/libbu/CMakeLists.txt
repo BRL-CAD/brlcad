@@ -76,6 +76,7 @@ set(LIBBU_SOURCES
   getcwd.c
   gethostname.c
   getopt.c
+  glob.c
   globals.c
   hash.c
   heap.c
