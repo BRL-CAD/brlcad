@@ -919,6 +919,10 @@ arsbbld(struct ascv4_rstate *s)
     int i;
     int incr_ret;
 
+    // If arc_curves is null, we called this out of order
+    if (!s->ars_curves)
+	return;
+
     cp = bu_vls_addr(s->buf);
     cp = nxt_spc(cp);		/* skip the space */
     cp = nxt_spc(cp);
