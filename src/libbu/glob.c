@@ -25,7 +25,9 @@
 
 #include "common.h"
 
-#include <glob.h>
+#ifdef HAVE_GLOB_H
+# include <glob.h>
+#endif
 
 #include "bu/log.h"
 #include "bu/glob.h"
@@ -36,10 +38,11 @@
 int
 bu_glob(const char *pattern, int flags, struct bu_glob_context *gp)
 {
-    glob_t g;
-
     if (!pattern || !gp)
 	return 1;
+
+#ifdef HAVE_GLOB_H
+    glob_t g;
 
     g.gl_pathc = gp->gl_pathc;
     //g.gl_matchc = gp->gl_matchc;
@@ -47,11 +50,13 @@ bu_glob(const char *pattern, int flags, struct bu_glob_context *gp)
     if (gp->gl_pathv)
 	g.gl_pathv = bu_vls_argv(gp->gl_pathv);
 */
-
     if (flags)
 	bu_log("INTERNAL ERROR: glob flags unsupported\n");
 
     return glob(pattern, flags, NULL, &g);
+#else
+    return 1;
+#endif
 }
 
 
