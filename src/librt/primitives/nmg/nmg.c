@@ -71,7 +71,9 @@ HIDDEN void
 segs_error(const char *str) {
     bu_log("%s\n", str);
 #ifdef DO_LONGJMP
-    longjmp(nmg_longjump_env, -1);}
+    longjmp(nmg_longjump_env, -1);
+#else
+    bu_bomb("segs_error\n");
 #endif
 }
 
