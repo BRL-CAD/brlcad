@@ -2094,7 +2094,6 @@ nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
 	vu1 = second_new_eu->vu_p;
     } else {
 	second_new_eu = eu1;
-	BU_LIST_PPREV_CIRC(edgeuse, second_new_eu);
 	NMG_CK_EDGEUSE(second_new_eu);
     }
     /* second_new_eu is eu that departs from shared vertex */
