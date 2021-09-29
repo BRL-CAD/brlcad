@@ -7,6 +7,12 @@
 set -e
 set -o pipefail
 
+# Note: we set these variables to tell the ccc-analyzer script which compilers
+# to use, but it is not always enough - when some of the sub-builds are
+# triggered, they do not seem to inherit these settings and revert to the
+# default compiler.  The only way so far to avoid this issue reliably seems to
+# be to edit the ccc-analyzer script to use the compiler we want as the default
+# compiler.
 export CCC_CC=clang
 export CCC_CXX=clang++
 
@@ -24,7 +30,7 @@ new_failure=()
 # function for testing targets that are expected to be clean
 function cleantest {
 	echo $1
-	scan-build --use-analyzer=/usr/bin/clang -o ./scan-reports-$1 make -j12 $1
+	scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-$1 make -j12 $1
 	if [ "$(ls -A ./scan-reports-$1)" ]; then
 		new_failure+=("$1")
 		((failures ++))
@@ -34,7 +40,7 @@ function cleantest {
 }
 function failingtest {
 	echo "$1"
-	scan-build --use-analyzer=/usr/bin/clang -o ./scan-reports-$1 make -j12 $1
+	scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-$1 make -j12 $1
 	if [ "$(ls -A ./scan-reports-$1)" ]; then
 		#TODO - find some way to tell if new failures have been introduced...
 		report_cnt=$(ls -l ./scan-reports-$1/*/report* | wc -l)
@@ -51,7 +57,7 @@ function notest {
 
 # configure using the correct compiler and values.  We don't
 # need this report, so clear it after configure is done
-scan-build --use-analyzer=/usr/bin/clang -o ./scan-reports-config cmake .. -DBRLCAD_EXTRADOCS=OFF -DCMAKE_C_COMPILER=ccc-analyzer -DCMAKE_CXX_COMPILER=c++-analyzer
+scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-config cmake .. -DBRLCAD_EXTRADOCS=OFF -DCMAKE_C_COMPILER=ccc-analyzer -DCMAKE_CXX_COMPILER=c++-analyzer
 
 # clear out any old reports
 rm -rfv ./scan-reports-*
@@ -97,8 +103,9 @@ cleantest liboptical
 cleantest libicv
 cleantest libged
 cleantest libdm
-failingtest dm_plugins
+cleantest dm_plugins
 cleantest libfft
+failingtest ged_plugins
 failingtest libtclcad
 cleantest libtermio
 cleantest librender
