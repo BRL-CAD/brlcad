@@ -2279,9 +2279,11 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
     if (nmg_debug & NMG_DEBUG_MESH_EU) {
 	struct nmg_radial *next;
 
-	bu_log("amin=%g min_eu=%p, amax=%g max_eu=%p\n",
-	       rmin->ang * RAD2DEG, (void *)rmin->eu,
-	       rmax->ang * RAD2DEG, (void *)rmax->eu);
+	if (rmin && rmax) {
+	    bu_log("amin=%g min_eu=%p, amax=%g max_eu=%p\n",
+		    rmin->ang * RAD2DEG, (void *)rmin->eu,
+		    rmax->ang * RAD2DEG, (void *)rmax->eu);
+	}
 
 	for (BU_LIST_FOR(next, nmg_radial, hd))
 	    bu_log("%p: eu=%p, fu=%p, ang=%g\n", (void *)next, (void *)next->eu, (void *)next->fu, next->ang);
@@ -2292,16 +2294,21 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
     for (;;) {
 	struct nmg_radial *next;
 	next = rmax;
-	do {
-	    next = BU_LIST_PNEXT_CIRC(nmg_radial, next);
-	} while (next->fu == (struct faceuse *)NULL);
+	if (next) {
+	    do {
+		next = BU_LIST_PNEXT_CIRC(nmg_radial, next);
+	    } while (next->fu == (struct faceuse *)NULL);
 
-	if ((next->ang > amax) || (ZERO(next->ang - amax))) {
-	    rmax = next;		/* a repeated max */
-	    if (rmax == first)	/* we have gone all the way around (All angles are same) */
+	    if ((next->ang > amax) || (ZERO(next->ang - amax))) {
+		rmax = next;		/* a repeated max */
+		if (rmax == first)	/* we have gone all the way around (All angles are same) */
+		    break;
+	    } else {
 		break;
-	} else
-	    break;
+	    }
+	} else {
+	    bu_log("NMG: encountered null 'next' pointer at fuse.c line %d\n", __LINE__);
+	}
     }
     /* wires before min establish new rmin */
     first = rmin;

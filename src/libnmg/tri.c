@@ -1454,8 +1454,10 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 		non_consec_edgeuse_vert_count++;
 	    }
 	    if (edgeuse_vert_count > 1) {
-		bg_dist_pnt3_pnt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
-		pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
+		if (prev_v_p && curr_v_p) {
+		    bg_dist_pnt3_pnt3(prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
+		    pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
+		}
 	    }
 	    prev_v_p = curr_v_p;
 	    prev_eu = curr_eu;
@@ -2404,13 +2406,14 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfre
 	}
 
 	if (nmg_debug & NMG_DEBUG_TRI) {
-	    bu_log("%g %g\n", newpt->coord[X], newpt->coord[Y]);
+	    if (newpt)
+		bu_log("%g %g\n", newpt->coord[X], newpt->coord[Y]);
 	}
 
-	if (!min || P_LT_V(newpt, min)) {
+	if (!min || (newpt && P_LT_V(newpt, min))) {
 	    min = newpt;
 	}
-	if (!max || P_GT_V(newpt, max)) {
+	if (!max || (newpt && P_GT_V(newpt, max))) {
 	    max = newpt;
 	}
 	verts++;
@@ -2419,9 +2422,10 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfre
     first = max;
 
     if (nmg_debug & NMG_DEBUG_TRI) {
-	bu_log("cut_unimonotone(): %d verts, min: %g %g  max: %g %g first:%g %g %p\n", verts,
-	       min->coord[X], min->coord[Y], max->coord[X], max->coord[Y],
-	       first->coord[X], first->coord[Y], (void *)first);
+	if (min && max && first)
+	    bu_log("cut_unimonotone(): %d verts, min: %g %g  max: %g %g first:%g %g %p\n", verts,
+		    min->coord[X], min->coord[Y], max->coord[X], max->coord[Y],
+		    first->coord[X], first->coord[Y], (void *)first);
     }
 
     excess_loop_count = verts * verts;

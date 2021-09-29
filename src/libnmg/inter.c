@@ -3146,6 +3146,11 @@ nmg_isect_two_ptbls(struct nmg_inter_struct *is, const struct bu_ptbl *t1, const
 	struct vertex *v1a;
 	struct vertex *v1b;
 
+	if (!eu1) {
+	    bu_log("NMG: encountered null 'eu1' pointer at inter.c line %d\n", __LINE__);
+	    continue;
+	}
+
 	vu1a = (*eu1)->vu_p;
 	vu1b = BU_LIST_PNEXT_CIRC(edgeuse, (*eu1))->vu_p;
 	NMG_CK_VERTEXUSE(vu1a);
@@ -3158,6 +3163,11 @@ nmg_isect_two_ptbls(struct nmg_inter_struct *is, const struct bu_ptbl *t1, const
 	    ) {
 	    register struct vertexuse *vu2a;
 	    register struct vertexuse *vu2b;
+
+	    if (!eu2) {
+		bu_log("NMG: encountered null 'eu2' pointer at inter.c line %d\n", __LINE__);
+		continue;
+	    }
 
 	    vu2a = (*eu2)->vu_p;
 	    vu2b = BU_LIST_PNEXT_CIRC(edgeuse, (*eu2))->vu_p;
@@ -4405,12 +4415,14 @@ re_tabulate:
 	} else if (code < 0) {
 	    /* geometry says lines are parallel, but we have an intersection */
 	    bu_log("NOTICE: geom/topo mis-match, enlisting topo vu, hit_v=%p\n", (void *)hit_v);
-	    VPRINT("hit_v", hit_v->vg_p->coord);
+	    if (hit_v && hit_v->vg_p)
+		VPRINT("hit_v", hit_v->vg_p->coord);
 	    nmg_pr_eg(&(*eg1)->l.magic, 0);
 	    nmg_pr_eg(&is->on_eg->l.magic, 0);
-	    bu_log(" dist to eg1=%e, dist to on_eg=%e\n",
-		   bg_dist_line3_pnt3((*eg1)->e_pt, (*eg1)->e_dir, hit_v->vg_p->coord),
-		   bg_dist_line3_pnt3(is->on_eg->e_pt, is->on_eg->e_dir, hit_v->vg_p->coord));
+	    if (hit_v && hit_v->vg_p)
+		bu_log(" dist to eg1=%e, dist to on_eg=%e\n",
+			bg_dist_line3_pnt3((*eg1)->e_pt, (*eg1)->e_dir, hit_v->vg_p->coord),
+			bg_dist_line3_pnt3(is->on_eg->e_pt, is->on_eg->e_dir, hit_v->vg_p->coord));
 	    VPRINT("is->pt2d ", is->pt2d);
 	    VPRINT("is->dir2d", is->dir2d);
 	    VPRINT("eg_pt2d ", eg_pt2d);
@@ -4460,12 +4472,16 @@ re_tabulate:
 	if (hit_v) {
 	force_isect:
 	    /* Force things to be consistent, use geom from hit_v */
-	    VMOVE(hit3d, hit_v->vg_p->coord);
-	    nmg_get_2d_vertex(hit2d, hit_v, is, &fu1->l.magic);
-	    if (nmg_debug & NMG_DEBUG_POLYSECT) {
-		bu_log("hit_v=%p\n", (void *)hit_v);
-		VPRINT("hit3d", hit3d);
-		V2PRINT("hit2d", hit2d);
+	    if (hit_v && hit_v->vg_p) {
+		VMOVE(hit3d, hit_v->vg_p->coord);
+		nmg_get_2d_vertex(hit2d, hit_v, is, &fu1->l.magic);
+		if (nmg_debug & NMG_DEBUG_POLYSECT) {
+		    bu_log("hit_v=%p\n", (void *)hit_v);
+		    VPRINT("hit3d", hit3d);
+		    V2PRINT("hit2d", hit2d);
+		}
+	    } else {
+		bu_log("NMG: encountered problem with hit_v at inter.c line %d\n", __LINE__);
 	    }
 	}
 
@@ -5551,8 +5567,8 @@ nmg_check_radial_angles(char *str, struct shell *s, struct bu_list *vlfree, cons
     struct bu_ptbl edges;
     vect_t xvec, yvec, zvec;
     size_t i, j;
-    double angle[MAX_FACES];
-    struct faceuse *fus[MAX_FACES];
+    double angle[MAX_FACES] = {0.0};
+    struct faceuse *fus[MAX_FACES] = {NULL};
     size_t face_count;
     int increasing;
 

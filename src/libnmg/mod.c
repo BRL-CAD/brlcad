@@ -1879,35 +1879,39 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
     }
 
     /* Create duplicate, independently modifiable face geometry */
-    switch (*fu->f_p->g.magic_p) {
-	case NMG_FACE_G_PLANE_MAGIC:
-	    NMG_GET_FU_PLANE(pl, fu);
-	    nmg_face_g(new_fu, pl);
-	    break;
-	case NMG_FACE_G_SNURB_MAGIC: {
-	    struct face_g_snurb *old = fu->f_p->g.snurb_p;
-	    struct face_g_snurb *newface;
-	    /* Create a new, duplicate snurb */
-	    nmg_face_g_snurb(new_fu,
-			     old->order[0], old->order[1],
-			     old->u.k_size, old->v.k_size,
-			     NULL, NULL,
-			     old->s_size[0], old->s_size[1],
-			     old->pt_type,
-			     NULL);
-	    newface = new_fu->f_p->g.snurb_p;
-	    /* Copy knots */
-	    memcpy(newface->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t));
-	    memcpy(newface->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t));
-	    /* Copy mesh */
-	    memcpy(newface->ctl_points, old->ctl_points,
-		   old->s_size[0] * old->s_size[1] *
-		   RT_NURB_EXTRACT_COORDS(old->pt_type) *
-		   sizeof(fastf_t));
+    if (new_fu) {
+	switch (*fu->f_p->g.magic_p) {
+	    case NMG_FACE_G_PLANE_MAGIC:
+		NMG_GET_FU_PLANE(pl, fu);
+		nmg_face_g(new_fu, pl);
+		break;
+	    case NMG_FACE_G_SNURB_MAGIC: {
+		struct face_g_snurb *old = fu->f_p->g.snurb_p;
+		struct face_g_snurb *newface;
+		/* Create a new, duplicate snurb */
+		nmg_face_g_snurb(new_fu,
+			old->order[0], old->order[1],
+			old->u.k_size, old->v.k_size,
+			NULL, NULL,
+			old->s_size[0], old->s_size[1],
+			old->pt_type,
+			NULL);
+		newface = new_fu->f_p->g.snurb_p;
+		/* Copy knots */
+		memcpy(newface->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t));
+		memcpy(newface->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t));
+		/* Copy mesh */
+		memcpy(newface->ctl_points, old->ctl_points,
+			old->s_size[0] * old->s_size[1] *
+			RT_NURB_EXTRACT_COORDS(old->pt_type) *
+			sizeof(fastf_t));
+		}
 	}
+	new_fu->orientation = fu->orientation;
+	new_fu->fumate_p->orientation = fu->fumate_p->orientation;
+    } else {
+	bu_log("NMG: encountered null 'new_fu' pointer at mod.c line %d\n", __LINE__);
     }
-    new_fu->orientation = fu->orientation;
-    new_fu->fumate_p->orientation = fu->fumate_p->orientation;
 
     nmg_free((char *)trans_tbl, "nmg_dup_face trans_tbl");
 
@@ -3594,14 +3598,18 @@ nmg_dup_loop(struct loopuse *lu, uint32_t *parent, long int **trans_tbl)
      * XXX This ought to be optional, as most callers will immediately
      * XXX change the vertex geometry anyway (e.g. by extrusion dist).
      */
-    for (BU_LIST_FOR(new_eu, edgeuse, &new_lu->down_hd)) {
-	NMG_CK_EDGEUSE(new_eu);
-	NMG_CK_EDGE(new_eu->e_p);
-	if (new_eu->g.magic_p) continue;
-	nmg_edge_g(new_eu);
+    if (new_eu) {
+	for (BU_LIST_FOR(new_eu, edgeuse, &new_lu->down_hd)) {
+	    NMG_CK_EDGEUSE(new_eu);
+	    NMG_CK_EDGE(new_eu->e_p);
+	    if (new_eu->g.magic_p) continue;
+	    nmg_edge_g(new_eu);
+	}
+    } else {
+	bu_log("NMG: encountered null 'new_eu' pointer at mod.c line %d\n", __LINE__);
     }
 
-    if (nmg_debug & NMG_DEBUG_BASIC) {
+    if (nmg_debug & NMG_DEBUG_BASIC && new_lu) {
 	bu_log("nmg_dup_loop(lu=%p(%s), parent=%p, trans_tbl=%p) new_lu=%p(%s)\n",
 	       (void *)lu, nmg_orientation(lu->orientation),
 	       (void *)parent, (void *)trans_tbl,

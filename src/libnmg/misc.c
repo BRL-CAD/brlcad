@@ -2556,21 +2556,25 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 			break;
 		}
 
-		if (eu_new->radial_p == eu_new->eumate_p)
-		    bu_ptbl_ins(&eu_tbl, (long *)eu_new);
-		else {
-		    struct edgeuse *eu_tmp;
+		if (eu_new) {
+		    if (eu_new->radial_p == eu_new->eumate_p)
+			bu_ptbl_ins(&eu_tbl, (long *)eu_new);
+		    else {
+			struct edgeuse *eu_tmp;
 
-		    /* find third eu to be removed from eu_tbl */
-		    for (i=0; i<BU_PTBL_LEN(&eu_tbl); i++) {
-			eu_tmp = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, i);
-			if (eu_tmp->vu_p->v_p == eu_new->vu_p->v_p &&
-			    eu_tmp->eumate_p->vu_p->v_p == eu_new->eumate_p->vu_p->v_p)
-			{
-			    bu_ptbl_rm(&eu_tbl, (long *)eu_tmp);
-			    break;
+			/* find third eu to be removed from eu_tbl */
+			for (i=0; i<BU_PTBL_LEN(&eu_tbl); i++) {
+			    eu_tmp = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, i);
+			    if (eu_tmp->vu_p->v_p == eu_new->vu_p->v_p &&
+				    eu_tmp->eumate_p->vu_p->v_p == eu_new->eumate_p->vu_p->v_p)
+			    {
+				bu_ptbl_rm(&eu_tbl, (long *)eu_tmp);
+				break;
+			    }
 			}
 		    }
+		} else {
+		    bu_log("NMG: encountered null 'eu_new' pointer at misc.c line %d\n", __LINE__);
 		}
 	    }
 
@@ -5548,15 +5552,25 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
     /* Now take care of edges between two loops of same face */
     edge_no = 0;
     while (edge_no < BU_PTBL_LEN(int_faces)) {
-	size_t next_edge_no;
-	struct intersect_fus *i_fus, *j_fus;
 
-	next_edge_no = edge_no + 1;
+	size_t next_edge_no = edge_no + 1;
+	struct intersect_fus *i_fus = NULL;
+	struct intersect_fus *j_fus = NULL;
+
 	if (next_edge_no == BU_PTBL_LEN(int_faces))
 	    next_edge_no = 0;
 
 	i_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, edge_no);
+	if (!i_fus) {
+	    bu_log("NMG: encountered null 'i_fus' pointer at misc.c line %d\n", __LINE__);
+	    continue;
+	}
+
 	j_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, next_edge_no);
+	if (!j_fus) {
+	    bu_log("NMG: encountered null 'j_fus' pointer at misc.c line %d\n", __LINE__);
+	    continue;
+	}
 
 	/* look at all edges in the same face as i_fus->fu[1] */
 	while (j_fus->fu[0] && j_fus->fu[1] &&
@@ -5588,6 +5602,7 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
 
 	}
 	edge_no++;
+
     }
     if (nmg_debug & NMG_DEBUG_BASIC) {
 	bu_log("After loops of same face\n");
