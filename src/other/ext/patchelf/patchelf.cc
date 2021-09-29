@@ -1430,7 +1430,8 @@ void ElfFile<ElfFileParamNames>::modifyRPath(RPathOp op,
 
 
     if (newRPath.size() <= rpathSize) {
-        strcpy(rpath, newRPath.c_str());
+	if (rpath)
+           strcpy(rpath, newRPath.c_str());
         return;
     }
 
