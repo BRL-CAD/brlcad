@@ -1480,7 +1480,9 @@ f_exec(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(db
 						     sizeof(char *) * filled_len,
 						     "f_exec filleds[hole_i]");
 		memcpy(filleds[hole_i] + old_filled_len, originals[hole_i] + plain_begin, plain_len);
-		memcpy(filleds[hole_i] + old_filled_len + plain_len, name, name_len);
+		if (name) {
+		    memcpy(filleds[hole_i] + old_filled_len + plain_len, name, name_len);
+		}
 		plain_begin = char_i + 2;
 		plain_len = 0;
 		char_i++; /* skip closing brace */
