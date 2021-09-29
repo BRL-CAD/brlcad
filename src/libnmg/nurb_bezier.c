@@ -53,11 +53,12 @@ crossing_count(
 {
     int i;
     int n_crossings = 0;        /* Number of crossings */
-    int sign, old_sign;         /* Sign of coefficients */
+    int sign = 0;
+    int old_sign = 0;           /* Sign of coefficients */
     point2d_t to_pt;		/* vector from ray start to a control point */
 
     V2SUB2(to_pt, ray_start, V[0]);
-    sign = old_sign = SGN(V2DOT(to_pt, ray_perp));
+    old_sign = SGN(V2DOT(to_pt, ray_perp));
     for (i = 1; i <= degree; i++) {
 	V2SUB2(to_pt, ray_start, V[i]);
 	sign = SGN(V2DOT(to_pt, ray_perp));

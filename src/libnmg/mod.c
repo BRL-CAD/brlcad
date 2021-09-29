@@ -410,9 +410,14 @@ nmg_rm_redundancies(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 		 * kill them both
 		 */
 
+#if 0
+		// TODO - next_lu1 is a dead assign according to clang - are we
+		// supposed to be checking it to break on the same way we're
+		// checking next_lu below, or is there some bug in the nmg_klu
+		// logic below?
 		if (next_lu1 == lu)
 		    next_lu1 = BU_LIST_NEXT(loopuse, &next_lu1->l);
-
+#endif
 		if (next_lu == lu1)
 		    next_lu = BU_LIST_NEXT(loopuse, &next_lu->l);
 
@@ -791,8 +796,6 @@ nmg_js(register struct shell *s1, register struct shell *s2, struct bu_list *vlf
 	    if (nmg_debug & NMG_DEBUG_BASIC)
 		bu_log("nmg_js(): shared face_g_plane, doing nmg_jf()\n");
 	    nmg_jf(fu1, fu2);
-	    /* fu2 pointer is invalid here */
-	    fu2 = fu1;
 	} else {
 	    nmg_mv_fu_between_shells(s1, s2, fu2);
 	}
@@ -2091,7 +2094,7 @@ nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
 	vu1 = second_new_eu->vu_p;
     } else {
 	second_new_eu = eu1;
-	first_new_eu = BU_LIST_PPREV_CIRC(edgeuse, second_new_eu);
+	BU_LIST_PPREV_CIRC(edgeuse, second_new_eu);
 	NMG_CK_EDGEUSE(second_new_eu);
     }
     /* second_new_eu is eu that departs from shared vertex */

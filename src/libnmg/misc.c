@@ -2403,7 +2403,8 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 		/* if these three points make a plane, is it coplanar with
 		 * our first one??? */
 		if (!bg_make_plane_3pnts(pl2, pt[0], pt[1], pt[2], tol)) {
-		    if ((i=bg_coplanar(pl1, pl2, tol)) < 1)
+		    i = bg_coplanar(pl1, pl2, tol);
+		    if (i < 1)
 			coplanar = 0;
 		}
 	    }
@@ -2464,7 +2465,6 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 
 	    /* OK, so we have to do this one little-by-little */
 	    start_idx = -1;
-	    end_idx = -1;
 
 	    if (!found_face) {
 
@@ -2504,7 +2504,6 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 
 	    if (give_up_on_face) {
 		loop_size = 0;
-		start_loop = -1;
 		break;
 	    }
 
@@ -6623,7 +6622,6 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
     } else if (pl_count == 2) {
 	VCROSS(planes[2], planes[0], planes[1]);
 	planes[2][H] = VDOT(new_v->vg_p->coord, planes[2]);
-	pl_count = 3;
 	if (bg_make_pnt_3planes(new_v->vg_p->coord, planes[0], planes[1], planes[2])) {
 	    bu_log("nmg_cacl_new_v: 3 planes do not intersect at a point\n");
 	    nmg_free((char *)planes, "nmg_calc_new_v: planes");
@@ -7620,8 +7618,6 @@ nmg_make_connect_faces(struct shell *dst, struct vertex *vpa, struct vertex *vpb
 	plane_t pl;
 	fastf_t area;
 	int still_collinear=0;
-
-	made_face = 0;
 
 	/* if the current points are all collinear, add another vertex */
 	while (bg_3pnts_collinear(face_verts[0]->vg_p->coord,

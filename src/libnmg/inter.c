@@ -2583,7 +2583,6 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 			   ((dist[0] - 1.0 > SMALL_FASTF) && (dist[1] < -SMALL_FASTF))) {
 		    /* true when both p0 and p1 is within q0->q1 */
 		    /* eu1 is not cut */
-		    hit_count = 0; /* sanity */
 		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
 		    continue;
 
@@ -2591,7 +2590,6 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 			   (ZERO(dist[1]) && EQUAL(dist[0], 1.0))) {
 		    /* true when eu1 and eu2 shared the same vertices */
 		    /* eu1 is not cut */
-		    hit_count = 0; /* sanity */
 		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
 		    continue;
 		} else if (((dist[0] < -SMALL_FASTF) && ZERO(dist[1])) ||
@@ -2602,7 +2600,6 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		     * other eu2 vertex is outside p0->p1 (i.e. eu1)
 		     */
 		    /* eu1 is not cut */
-		    hit_count = 0; /* sanity */
 		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
 		    continue;
 		} else if ((ZERO(dist[0]) && (dist[1] > SMALL_FASTF) &&
@@ -2632,7 +2629,6 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		     * outside eu1 (i.e. p0->p1).
 		     */
 		    /* eu1 is not cut */
-		    hit_count = 0; /* sanity */
 		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
 		    continue;
 		} else {
@@ -4207,7 +4203,7 @@ re_tabulate:
 		eu_end = BU_LIST_PNEXT_CIRC(edgeuse, &eu1->l);
 		vg = eu_end->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		code = bg_dist_pnt3_line3(&distance, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
+		bg_dist_pnt3_line3(&distance, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
 		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
@@ -4231,7 +4227,7 @@ re_tabulate:
 
 		vg = eu2->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		code = bg_dist_pnt3_line3(&distance, pca, is->pt, is->dir, vg->coord, &(is->tol));
+		bg_dist_pnt3_line3(&distance, pca, is->pt, is->dir, vg->coord, &(is->tol));
 		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
@@ -4247,7 +4243,7 @@ re_tabulate:
 		eu_end = BU_LIST_PNEXT_CIRC(edgeuse, &eu2->l);
 		vg = eu_end->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		code = bg_dist_pnt3_line3(&distance, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
+		bg_dist_pnt3_line3(&distance, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
 		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
@@ -4393,12 +4389,13 @@ re_tabulate:
 		if (!NEAR_ZERO(dist1, is->tol.dist) || !NEAR_ZERO(dist2, is->tol.dist)) {
 		    continue;
 		}
-		if ((nmg_class=nmg_class_pnt_fu_except(hit_v->vg_p->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol))) == NMG_CLASS_AoutB) {
+		nmg_class=nmg_class_pnt_fu_except(hit_v->vg_p->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol));
+		if (nmg_class == NMG_CLASS_AoutB) {
 		    if (nmg_debug & NMG_DEBUG_POLYSECT) {
 			VPRINT("\t\tisect pt outside face fu1 (nmg_class_pnt_fu_except):", hit_v->vg_p->coord);
 		    }
 		    continue;
-		} else if ((nmg_class=nmg_class_pnt_fu_except(hit_v->vg_p->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol))) == NMG_CLASS_AoutB) {
+		} else if (nmg_class_pnt_fu_except(hit_v->vg_p->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol)) == NMG_CLASS_AoutB) {
 		    if (nmg_debug & NMG_DEBUG_POLYSECT) {
 			VPRINT("\t\tisect pt outside face fu2 (nmg_class_pnt_fu_except):", hit_v->vg_p->coord);
 		    }
@@ -4452,7 +4449,8 @@ re_tabulate:
 	    continue;
 	}
 
-	if ((nmg_class=nmg_class_pnt_fu_except(hit3d, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol))) == NMG_CLASS_AoutB) {
+	nmg_class = nmg_class_pnt_fu_except(hit3d, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, vlfree, &(is->tol));
+	if (nmg_class == NMG_CLASS_AoutB) {
 	    if (nmg_debug & NMG_DEBUG_POLYSECT) {
 		VPRINT("\t\tisect pt outside face fu1 (nmg_class_pnt_fu_except):", hit3d);
 	    }
@@ -5508,8 +5506,14 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, plane_t pl, struct nmg_inte
 		    if (dists[1] > 0.0 && dists[1] < 1.0) {
 			dist = dists[1]*len;
 			for (BU_LIST_FOR(vu, vertexuse, &eu1->eumate_p->vu_p->v_p->vu_hd)) {
-			    if (nmg_find_fu_of_vu(vu) == is->fu1)
-				nmg_enlist_one_vu(is, vu, len);
+			    if (nmg_find_fu_of_vu(vu) == is->fu1) {
+				// Note - this was using len rather than dist for the last
+				// parameter, and the dist calculation was unused.  Use of
+				// len dates back to SVN commit id 11890 by John Anderson
+				// in 1996, but the dist calculation was also added at
+				// that time.
+				nmg_enlist_one_vu(is, vu, dist);
+			    }
 			}
 		    }
 		    continue;
@@ -6710,9 +6714,7 @@ nmg_isect_2faceuse(point_t pt,
     cnt = 0;
     above_plane_count = 0;
     below_plane_count = 0;
-    avg_dist = 0.0;
     tot_dist = 0.0;
-    dist = 0.0;
     for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd)) {
 
 	if (parallel == 0) {
@@ -6765,9 +6767,7 @@ nmg_isect_2faceuse(point_t pt,
 	cnt = 0;
         above_plane_count = 0;
         below_plane_count = 0;
-	avg_dist = 0.0;
 	tot_dist = 0.0;
-	dist = 0.0;
 	for (BU_LIST_FOR(lu, loopuse, &fu2->lu_hd)) {
 	    if (parallel == 0) {
 		break;
