@@ -651,6 +651,15 @@ static const char *p_script[] = {
 };
 
 /**
+ * TODO:
+ * add support
+ */
+static const char *p_material[] = {
+    "Enter the material name: ",
+    "Enter the material density: "
+};
+
+/**
  * helper function that infers a boolean value from a given string
  * returning 0 or 1 for false and true respectively.
  *
@@ -1501,6 +1510,26 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 
     if (mk_sph(gedp->ged_wdbp, name, center, r) < 0)
 	return GED_ERROR;
+    return GED_OK;
+}
+
+static int
+material_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, const char *name)
+{
+//     struct rt_material_internal *material;
+
+//     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+//     intern->idb_type = ID_MATERIAL;
+//     intern->idb_meth = &OBJ[ID_MATERIAL];
+//     BU_ALLOC(intern->idb_ptr, struct rt_material_internal);
+//     material = (struct rt__internal *)intern->idb_ptr;
+//     material->magic = RT_MATERIAL_MAGIC;
+
+//     bu_vls_init(&material->name);
+//     bu_vls_strcpy(&material->name, cmd_argvs[3]);
+
+    mk_material(gedp->ged_wdbp, name);
+
     return GED_OK;
 }
 
@@ -3414,6 +3443,10 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	nvals = 1;
 	menu = p_script;
 	fn_in = script_in;
+    } else if (BU_STR_EQUAL(argv[2], "material")) {
+	nvals = 2;
+	menu = p_material;
+	fn_in = material_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:

@@ -119,6 +119,7 @@
 #define ID_BINUNIF      33      /**< @brief Uniform-array binary */
 #define ID_UNUSED2      34      /**< @brief UNUSED (placeholder) */
 #define ID_CONSTRAINT   39      /**< @brief Constraint object */
+#define ID_MATERIAL     47      /**< @brief Material object */
 
 /* - ADD_BELOW_HERE - */
 /* superellipsoid should be 31, but is not v5 compatible */

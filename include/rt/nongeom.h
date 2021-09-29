@@ -134,6 +134,18 @@ struct rt_constraint_internal {
 #define RT_CHECK_CONSTRAINT(_p) BU_CKMAG(_p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal")
 #define RT_CK_CONSTRAINT(_p) PC_CHECK_CONSTRAINT(_p)
 
+/**
+ * In-memory format for database "material" record
+ */
+struct rt_material_internal {
+	uint32_t magic; // ?
+	int id;
+	struct bu_vls name;
+	double density;
+};
+
+#define RT_CHECK_MATERIAL(_p) BU_CKMAG(_p, PC_MATERIAL_MAGIC, "pc_material_internal")
+#define RT_CK_MATERIAL(_p) PC_CHECK_MATERIAL(_p)
 
 __END_DECLS
 
