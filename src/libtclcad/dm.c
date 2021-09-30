@@ -2231,7 +2231,7 @@ dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    if (!dmop->dmo_dmp->i->dm_flush) {
+    if (dmop->dmo_dmp->i->dm_flush) {
 	dmop->dmo_dmp->i->dm_flush(dmop->dmo_dmp);
     }
 
@@ -2254,7 +2254,7 @@ dmo_sync_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    if (!dmop->dmo_dmp->i->dm_sync) {
+    if (dmop->dmo_dmp->i->dm_sync) {
 	dmop->dmo_dmp->i->dm_sync(dmop->dmo_dmp);
     }
 
