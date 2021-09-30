@@ -1210,9 +1210,10 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
     brep_get_plane_ray(ray, pr);
 
     //know use this as guess to iterate to closer solution
-    pt2d_t Rcurr;
-    pt2d_t new_uv;
-    ON_3dVector su, sv;
+    pt2d_t Rcurr = V2INIT_ZERO;
+    pt2d_t new_uv = V2INIT_ZERO;
+    ON_3dVector su = ON_3dVector::ZeroVector;
+    ON_3dVector sv = ON_3dVector::ZeroVector;
     bool found=false;
     fastf_t Dlast = MAX_FASTF;
     pt2d_t nuv;
