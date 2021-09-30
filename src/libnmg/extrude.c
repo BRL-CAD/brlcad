@@ -334,6 +334,7 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
 	    /* Are we back to the beginning? */
 	    if (eu->vu_p->v_p == start_eu->vu_p->v_p) {
 		/* done with this loop */
+		done = 1;
 		break;
 	    }
 
@@ -558,11 +559,11 @@ nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct 
 		    if (dist[1]>0.0 && dist[1]<1.0 && dist[0]>=0.0 && dist[0]<=1.0) {
 			point_t pt;
 
-			if (ZERO(dist[0])) {
-			    //v = eu1->vu_p->v_p;
-			} else if (EQUAL(dist[0], 1.0)) {/* i.e., == 1.0 */
-			    //v = eu2->eumate_p->vu_p->v_p;
-			} else {
+			if (ZERO(dist[0]))
+			    v = eu1->vu_p->v_p;
+			else if (EQUAL(dist[0], 1.0)) /* i.e., == 1.0 */
+			    v = eu2->eumate_p->vu_p->v_p;
+			else {
 			    VJOIN1(pt, eu2->vu_p->v_p->vg_p->coord, dist[1], v2);
 			    new_eu = nmg_esplit(v, eu2, 0);
 			    v = new_eu->vu_p->v_p;

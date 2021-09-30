@@ -1339,7 +1339,7 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
     /* need to save this so we can use it later to get
      * the new "next" edge/vertexuse
      */
-    //eu = BU_LIST_PPREV_CIRC(edgeuse, vu2->up.eu_p);
+    eu = BU_LIST_PPREV_CIRC(edgeuse, vu2->up.eu_p);
 
 
     if (nmg_debug & NMG_DEBUG_TRI) {
@@ -1454,10 +1454,8 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 		non_consec_edgeuse_vert_count++;
 	    }
 	    if (edgeuse_vert_count > 1) {
-		if (prev_v_p && curr_v_p) {
-		    bg_dist_pnt3_pnt3(prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
-		    pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
-		}
+		bg_dist_pnt3_pnt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+		pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
 	    }
 	    prev_v_p = curr_v_p;
 	    prev_eu = curr_eu;
@@ -1497,11 +1495,7 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
     vect_t p0_p2, p0_p1, p0_p;
     fastf_t p0_p2_magsq, p0_p1_magsq;
     fastf_t p0_p2__p0_p1, p0_p2__p0_p, p0_p1__p0_p;
-    fastf_t u = 0.0;
-    fastf_t v00 = 0.0;
-    fastf_t u_numerator = 0.0;
-    fastf_t v_numerator = 0.0;
-    fastf_t denom = 0.0;
+    fastf_t u, v00, u_numerator, v_numerator, denom;
     int degen_p0p1, degen_p0p2, degen_p1p2;
     int para_p0_p1__p0_p;
     int para_p0_p2__p0_p;
@@ -1624,12 +1618,14 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
     }
 
     if (NEAR_ZERO(u_numerator, tol->dist)) {
+	u_numerator = 0.0;
 	u = 0.0;
     } else {
 	u = u_numerator / denom;
     }
 
     if (NEAR_ZERO(v_numerator, tol->dist)) {
+	v_numerator = 0.0;
 	v00 = 0.0;
     } else {
 	v00 = v_numerator / denom;
@@ -1807,6 +1803,7 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, struct bu_li
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);
 
+    fast_exit = 0;
     holes = 0;
 
     for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
@@ -2095,6 +2092,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 			    match = 0;
 			    for (idx = 0 ; idx < unique_vertex_cnt ; idx++) {
 				if (book_keeping_array[idx] == (size_t)eu->vu_p->v_p->vg_p) {
+				    match = 1;
 				    {
 					struct edgeuse *eu1;
 					int cnt = 0;
@@ -2406,14 +2404,13 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfre
 	}
 
 	if (nmg_debug & NMG_DEBUG_TRI) {
-	    if (newpt)
-		bu_log("%g %g\n", newpt->coord[X], newpt->coord[Y]);
+	    bu_log("%g %g\n", newpt->coord[X], newpt->coord[Y]);
 	}
 
-	if (!min || (newpt && P_LT_V(newpt, min))) {
+	if (!min || P_LT_V(newpt, min)) {
 	    min = newpt;
 	}
-	if (!max || (newpt && P_GT_V(newpt, max))) {
+	if (!max || P_GT_V(newpt, max)) {
 	    max = newpt;
 	}
 	verts++;
@@ -2422,10 +2419,9 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfre
     first = max;
 
     if (nmg_debug & NMG_DEBUG_TRI) {
-	if (min && max && first)
-	    bu_log("cut_unimonotone(): %d verts, min: %g %g  max: %g %g first:%g %g %p\n", verts,
-		    min->coord[X], min->coord[Y], max->coord[X], max->coord[Y],
-		    first->coord[X], first->coord[Y], (void *)first);
+	bu_log("cut_unimonotone(): %d verts, min: %g %g  max: %g %g first:%g %g %p\n", verts,
+	       min->coord[X], min->coord[Y], max->coord[X], max->coord[Y],
+	       first->coord[X], first->coord[Y], (void *)first);
     }
 
     excess_loop_count = verts * verts;
@@ -2449,6 +2445,8 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfre
 	VSETALL(v0, 0.0);
 	VSETALL(v1, 0.0);
 	VSETALL(v2, 0.0);
+	dot00 = dot01 = dot02 = dot11 = dot12 = 0.0;
+	invDenom = u = v = 0.0;
 	prev_vg_p = (struct vertex_g *)NULL;
 
 	/* test if any of the loopuse vertices are within the triangle
@@ -3447,6 +3445,7 @@ nmg_triangulate_fu(struct faceuse *fu, struct bu_list *vlfree, const struct bn_t
      * within the faceuse after loopuse are cut.
      */
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+    vert_count = 0;
     while (BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
 	cut = 0;

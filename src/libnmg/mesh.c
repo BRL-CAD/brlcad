@@ -577,7 +577,6 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, struct bu_list *vlfree,
 
     if (nmg_debug & NMG_DEBUG_MESH_EU && nmg_debug & NMG_DEBUG_PLOTEM) {
 	nmg_pl_2fu("After_mesh%d.plot3", fu1, fu2, 1, vlfree);
-	bu_log("nmg_mes_faces count: %d\n", count);
     }
 }
 

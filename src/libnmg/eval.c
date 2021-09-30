@@ -191,7 +191,7 @@ static const int intersect_actions[8] = {
 void
 nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlist, struct bu_list *vlfree, const struct bn_tol *tol)
 {
-    int const *actions = NULL;
+    int const *actions;
     struct nmg_bool_state bool_state;
 
     NMG_CK_SHELL(sA);
@@ -215,6 +215,7 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
 	    actions = intersect_actions;
 	    break;
 	default:
+	    actions = union_actions;	/* shut up lint */
 	    bu_log("ERROR nmg_evaluate_boolean() op=%d.\n", op);
 	    bu_bomb("bad boolean\n");
     }

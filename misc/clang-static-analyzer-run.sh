@@ -92,7 +92,7 @@ cleantest libpkg
 cleantest libbn
 cleantest libbv
 failingtest libbg
-cleantest libnmg
+failingtest libnmg
 failingtest libbrep
 failingtest librt
 cleantest libwdb
