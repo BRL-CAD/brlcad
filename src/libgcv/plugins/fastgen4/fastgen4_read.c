@@ -1328,7 +1328,6 @@ f4_do_ccone1(struct conversion_state *pstate)
 	fastf_t length;
 	fastf_t sin_ang;
 	fastf_t slant_len;
-	fastf_t r1a, r2a;
 	vect_t height_dir;
 
 	/* make outside TGC */
@@ -1347,11 +1346,10 @@ f4_do_ccone1(struct conversion_state *pstate)
 	sin_ang = length/slant_len;
 
 	if (end1 == END_OPEN) {
-	    r1a = r1;
 	    inner_r1 = r1 - thick/sin_ang;
 	    VMOVE(base, pstate->grid_points[pt1]);
 	} else {
-	    r1a = r1 + (r2 - r1)*thick/length;
+	    fastf_t r1a = r1 + (r2 - r1)*thick/length;
 	    inner_r1 = r1a - thick/sin_ang;
 	    VJOIN1(base, pstate->grid_points[pt1], thick, height_dir);
 	}
@@ -1367,11 +1365,10 @@ f4_do_ccone1(struct conversion_state *pstate)
 	}
 
 	if (end2 == END_OPEN) {
-	    r2a = r2;
 	    inner_r2 = r2 - thick/sin_ang;
 	    VMOVE(top, pstate->grid_points[pt2]);
 	} else {
-	    r2a = r2 + (r1 - r2)*thick/length;
+	    fastf_t r2a = r2 + (r1 - r2)*thick/length;
 	    inner_r2 = r2a - thick/sin_ang;
 	    VJOIN1(top, pstate->grid_points[pt2], -thick, height_dir);
 	}
@@ -2136,6 +2133,9 @@ make_bot_object(struct conversion_state *pstate)
     bot_ip.bot_flags = 0;
 
     count = rt_bot_vertex_fuse(&bot_ip, &pstate->fpout->wdb_tol);
+    if (count)
+	bu_log("WARNING: %d duplicate vertices eliminated from group %d component %d\n", count, pstate->group_id, pstate->comp_id);
+
     count = rt_bot_face_fuse(&bot_ip);
     if (count)
 	bu_log("WARNING: %d duplicate faces eliminated from group %d component %d\n", count, pstate->group_id, pstate->comp_id);
