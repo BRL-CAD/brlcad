@@ -58,6 +58,13 @@ namespace brlcad {
 	explicit SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 	~SurfaceTree();
 
+	/* Report whether the tree is in a usable state */
+	bool Valid() const {
+	    if (!m_root)
+		return false;
+	    return true;
+	};
+
 	BBNode *getRootNode() const;
 
 	/**

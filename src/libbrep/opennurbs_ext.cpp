@@ -2138,6 +2138,15 @@ get_closest_point(ON_2dPoint& outpt,
 	a_tree = new SurfaceTree(&face);
 	delete_tree = true;
     }
+
+    // If we don't have a workable tree, there's
+    // no point in continuing
+    if (!a_tree->Valid()) {
+	if (delete_tree)
+	    delete a_tree;
+	return false;
+    }
+
     ON_Interval u, v;
     ON_2dPoint est = a_tree->getClosestPointEstimate(point, u, v);
     pt2d_t uv = {est[0], est[1]};
