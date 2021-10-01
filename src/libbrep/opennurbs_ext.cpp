@@ -1298,7 +1298,6 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 	    double dist = fp.DistanceTo(pt);
 	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
 		uv = curr_uv;
-		found = true;
 		return 1; //close enough to same point so no sense in looking for one closer
 	    } else if (NEAR_ZERO(dist, tolerance)) {
 		if (dist < min_dist) {
