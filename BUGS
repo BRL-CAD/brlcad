@@ -15,6 +15,13 @@ on-going issues.
 Recent Bugs
 -----------
 
+* killtree / crashes
+
+* killtree reports spurious db_lookup failures saying object does not
+  exist as it previously deleted it.  should keep track of what it
+  deletes to not output spuriously, or (better) delete transactionally
+  so it only attempts to lookup and delete once per object.
+
 * object names with a / or \ in them make ls or underlying directory
   parsing logic display them incorrectly.
 

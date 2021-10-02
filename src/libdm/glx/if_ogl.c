@@ -1042,7 +1042,7 @@ HIDDEN int
 fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 {
     static char title[128] = {0};
-    int mode, i, direct;
+    int mode, i;
     long valuemask;
     XSetWindowAttributes swa;
 
@@ -1111,11 +1111,11 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
      * addressed by WIN(ifp)->mi_xxx and OGL(ifp)->xxx
      */
 
-    if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo))) == NULL) {
+    if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo)/sizeof(char) * sizeof(char))) == NULL) {
 	fb_log("fb_ogl_open:  wininfo malloc failed\n");
 	return -1;
     }
-    if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo))) == NULL) {
+    if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo)/sizeof(char) * sizeof(char))) == NULL) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }
@@ -1182,9 +1182,8 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 	return -1;
     }
 
-    direct = glXIsDirect(OGL(ifp)->dispp, OGL(ifp)->glxc);
     if (FB_DEBUG)
-	printf("Framebuffer drawing context is %s.\n", direct ? "direct" : "indirect");
+	printf("Framebuffer drawing context is %s.\n", glXIsDirect(OGL(ifp)->dispp, OGL(ifp)->glxc) ? "direct" : "indirect");
 
     /* Create a colormap for this visual */
     WIN(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
@@ -1313,11 +1312,11 @@ open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
      * addressed by WIN(ifp)->mi_xxx and OGL(ifp)->xxx
      */
 
-    if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo))) == NULL) {
+    if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo)/sizeof(char) * sizeof(char))) == NULL) {
 	fb_log("fb_ogl_open:  wininfo malloc failed\n");
 	return -1;
     }
-    if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo))) == NULL) {
+    if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo)/sizeof(char) * sizeof(char))) == NULL) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }

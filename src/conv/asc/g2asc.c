@@ -393,7 +393,7 @@ top:
 	    case ID_IDENT:
 		idendump();
 		continue;
-	    case ID_MATERIAL:
+	    case ID_COLORTAB:
 		materdump();
 		continue;
 	    case DBID_PIPE:

@@ -148,7 +148,7 @@ set(conv_ignore_files
   patch/pull_comp.sh
   patch/pull_solidsub.sh
   patch/rpatch.f
-  shp/shapelib/LICENSE.LGPL
+  shp/shapelib/COPYING
   shp/shapelib/license.html
   shp/shapelib/shapefil.h
   shp/README

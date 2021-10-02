@@ -1531,6 +1531,10 @@ find_ccone_cutout(Section &section, db_i &db, const db_full_path &parent_path,
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&parent_path);
 
+    // Sanity.
+    if (parent_path.fp_len <= 0)
+	return false;
+
     const directory &parent_dir = *DB_FULL_PATH_CUR_DIR(&parent_path);
 
     if (completed.count(&parent_dir))
@@ -1594,6 +1598,10 @@ find_csphere_cutout(Section &section, db_i &db, const db_full_path &parent_path,
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&parent_path);
+
+    // Sanity.
+    if (parent_path.fp_len <= 0)
+	return false;
 
     const directory &parent_dir = *DB_FULL_PATH_CUR_DIR(&parent_path);
 
@@ -2141,6 +2149,10 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     RT_CK_FULL_PATH(&half_path);
     RT_HALF_CK_MAGIC(&half);
 
+    // Sanity.
+    if (half_path.fp_len <= 0)
+	return false;
+
     if (DB_FULL_PATH_CUR_DIR(&half_path)->d_nref < 2)
 	return false;
 
@@ -2321,6 +2333,10 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
     RT_CK_FULL_PATH(&path);
     RT_CK_DB_INTERNAL(&internal);
 
+    // Sanity.
+    if (path.fp_len <= 0)
+	return false;
+
     if (subtracted && path_is_subtracted(data.m_db, get_parent_path(path)))
 	return false; // parent is subtracted; not a cutout
 
@@ -2457,6 +2473,10 @@ convert_region_start(db_tree_state *tree_state, const db_full_path *path,
     RT_CK_DBTS(tree_state);
     RT_CK_FULL_PATH(path);
     RT_CK_COMB(comb);
+
+    // Sanity.
+    if (!path || path->fp_len <= 0)
+	return false;
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
     data.get_region(*DB_FULL_PATH_CUR_DIR(path)).create_section(*path);

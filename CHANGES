@@ -1650,4 +1650,5 @@ s/bn_vert_tree/bg_vert_tree/g
         moved vert_tree to libbg [7.32]
 s/(#[[:space:]]*include[[:space:]]+["<])bn\/vectfont\.h/\1bview\/vectfont.h/g
         moved vertfont.h header to bview[7.32]
-
+s/ID_MATERIAL/ID_COLORTAB/g
+        renamed to make room for material objects [7.32]

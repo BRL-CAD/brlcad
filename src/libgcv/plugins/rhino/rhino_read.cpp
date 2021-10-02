@@ -871,6 +871,11 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	db_full_path **entry;
 
 	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
+
+	    // Sanity
+	    if (!(*entry) || (*entry)->fp_len <= 0)
+		continue;
+
 	    std::string prefix = DB_FULL_PATH_CUR_DIR(*entry)->d_namep;
 	    std::string suffix = ".r";
 

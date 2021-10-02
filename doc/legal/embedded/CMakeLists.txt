@@ -50,7 +50,6 @@ set(embedded_licenses
   qsort.txt
   QFlowLayout.txt
   QuickHull.txt
-  realpath.txt
   rply.txt
   RTree.txt
   search.txt

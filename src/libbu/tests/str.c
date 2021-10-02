@@ -39,12 +39,13 @@ test_bu_strlcatm(int argc, char *argv[])
     int scanned_size;
     size_t size;
     size_t len;
+    char *empty_result = bu_strdup("");
 
     /* CMake won't pass empty strings as test parameters properly;
      * assume expected_result is supposed to be empty.
      */
     if (argc == 6) {
-	expected_result = "";
+	expected_result = empty_result;
 	argc++;
     }
 
@@ -69,8 +70,11 @@ test_bu_strlcatm(int argc, char *argv[])
 
     printf("Result: \"%s\" (return value %d)", dst, ret);
 
-    return !(BU_STR_EQUAL(expected_result, dst)
-	     && (expected_ret == ret)
+    int eqtest1 = BU_STR_EQUAL(expected_result, dst);
+    int eqtest2 = (expected_ret == ret);
+    bu_free(empty_result, "empty_result");
+
+    return !(eqtest1 && eqtest2
 	     && len <= size
 	     && dst[len] == '\0');
 }
@@ -84,12 +88,13 @@ test_bu_strlcpym(int argc, char *argv[])
     int scanned_size;
     size_t size;
     size_t len;
+    char *empty_result = bu_strdup("");
 
     /* CMake won't pass empty strings as test parameters properly;
      * assume expected_result is supposed to be empty.
      */
     if (argc == 5) {
-	expected_result = "";
+	expected_result = empty_result;
 	argc++;
     }
 
@@ -113,8 +118,11 @@ test_bu_strlcpym(int argc, char *argv[])
 
     printf("Result: \"%s\" (return value %d)", dst, ret);
 
-    return !(BU_STR_EQUAL(expected_result, dst)
-	     && (expected_ret == ret)
+    int eqtest1 = BU_STR_EQUAL(expected_result, dst);
+    int eqtest2 = (expected_ret == ret);
+    bu_free(empty_result, "empty_result");
+
+    return !(eqtest1 && eqtest2
 	     && len <= size
 	     && dst[len] == '\0');
 }

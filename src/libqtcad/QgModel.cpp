@@ -68,9 +68,13 @@
 struct QgItem_cmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
     {
+	if (!i1 && !i2)
+	    return false;
 	if (!i1 && i2)
 	    return true;
 	if (i1 && !i2)
+	    return false;
+	if (!i1->ihash && !i2->ihash)
 	    return false;
 	if (!i1->ihash && i2->ihash)
 	    return true;
@@ -86,15 +90,25 @@ struct QgItem_cmp {
 	    inst2 = (*i2->ctx->instances)[i2->ihash];
 	}
 
+	if (!inst1 && !inst2)
+	    return false;
 	if (!inst1 && inst2)
 	    return true;
 	if (inst1 && !inst2)
+	    return false;
+
+	if (!inst1->dp_name.length() && !inst2->dp_name.length())
+	    return false;
+	if (!inst1->dp_name.length() && inst2->dp_name.length())
+	    return true;
+	if (inst1->dp_name.length() && !inst2->dp_name.length())
 	    return false;
 
 	const char *n1 = inst1->dp_name.c_str();
 	const char *n2 = inst2->dp_name.c_str();
 	if (alphanum_impl(n1, n2, NULL) < 0)
 	    return true;
+
 	return false;
     }
 };

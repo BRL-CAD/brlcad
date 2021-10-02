@@ -99,7 +99,8 @@ void Square::EdgeCorners(int idx,int& c1,int& c2){
 }
 int Square::ReflectEdgeIndex(int idx,int edgeIndex){
 	int orientation=edgeIndex%2;
-	int o,i;
+	int o = -1;
+	int i = 0;
 	FactorEdgeIndex(idx,o,i);
 	if(o!=orientation){return idx;}
 	else{return EdgeIndex(o,(i+1)%2);}
@@ -180,7 +181,10 @@ bool Cube::IsFaceCorner( int cIndex , int f )
 
 int Cube::FaceAdjacentToEdges( int eIndex1 , int eIndex2 )
 {
-	int f1,f2,g1,g2;
+	int f1 = -1;
+	int f2 = -1;
+	int g1 = -1;
+	int g2 = -1;
 	FacesAdjacentToEdge(eIndex1,f1,f2);
 	FacesAdjacentToEdge(eIndex2,g1,g2);
 	if(f1==g1 || f1==g2){return f1;}
@@ -821,11 +825,15 @@ unsigned char MarchingCubes::GetIndex(const double v[Cube::CORNERS],double iso)
 }
 unsigned char MarchingCubes::GetFaceIndex( const double values[Cube::CORNERS] , double iso , int faceIndex )
 {
-	int i,j,x,y,z;
+	int i = -1;
+	int j = -1;
+	int x = -1;
+	int y = -1;
+	int z = -1;
 	unsigned char idx=0;
-	double v[2][2];
+	double v[2][2] = {{0.0, 0.0}, {0.0, 0.0}};
 	Cube::FactorFaceIndex(faceIndex,x,y,z);
-	if		(x<0){for(i=0;i<2;i++){for(j=0;j<2;j++){v[i][j]=values[Cube::CornerIndex(0,i,j)];}}}
+	if (x<0){for(i=0;i<2;i++){for(j=0;j<2;j++){v[i][j]=values[Cube::CornerIndex(0,i,j)];}}}
 	else if	(x>0){for(i=0;i<2;i++){for(j=0;j<2;j++){v[i][j]=values[Cube::CornerIndex(1,i,j)];}}}
 	else if	(y<0){for(i=0;i<2;i++){for(j=0;j<2;j++){v[i][j]=values[Cube::CornerIndex(i,0,j)];}}}
 	else if	(y>0){for(i=0;i<2;i++){for(j=0;j<2;j++){v[i][j]=values[Cube::CornerIndex(i,1,j)];}}}
@@ -929,7 +937,7 @@ unsigned char MarchingCubes::GetFaceIndex( const float values[Cube::CORNERS] , f
 {
 	int i,j,x,y,z;
 	unsigned char idx=0;
-	double v[2][2];
+	double v[2][2] = {{0.0, 0.0}, {0.0, 0.0}};
 	Cube::FactorFaceIndex(faceIndex,x,y,z);
 	if		(x<0){for(i=0;i<2;i++){for(j=0;j<2;j++){v[i][j]=values[Cube::CornerIndex(0,i,j)];}}}
 	else if	(x>0){for(i=0;i<2;i++){for(j=0;j<2;j++){v[i][j]=values[Cube::CornerIndex(1,i,j)];}}}
@@ -968,7 +976,8 @@ bool MarchingCubes::HasRoots( const float v[Cube::CORNERS] , float isoValue , in
 bool MarchingCubes::HasFaceRoots( unsigned char mcIndex , int faceIndex ){ return MarchingSquares::HasRoots( GetFaceIndex( mcIndex , faceIndex ) ); }
 bool MarchingCubes::HasEdgeRoots( unsigned char mcIndex , int edgeIndex )
 {
-	int c1 , c2;
+	int c1 = 0;
+        int c2 = 0;
 	Cube::EdgeCorners( edgeIndex , c1 , c2 );
 	return !(
 		( ( mcIndex&(1<<MarchingCubes::cornerMap[c1]) ) &&  ( mcIndex&(1<<MarchingCubes::cornerMap[c2])) )

@@ -1586,7 +1586,8 @@ namespace ClipperLib {
 	    m_SortedEdges = 0;
 
 	    succeeded = true;
-	    cInt botY, topY;
+	    cInt botY = 0;
+	    cInt topY = 0;
 	    if (!PopScanbeam(botY)) return false;
 	    InsertLocalMinimaIntoAEL(botY);
 	    while (PopScanbeam(topY) || LocalMinimaPending())
@@ -4135,7 +4136,6 @@ namespace ClipperLib {
 		}
 		else
 		{
-		    k = 1;
 		    m_sinA = 0;
 		    if (node.m_endtype == etOpenSquare)
 			DoSquare(0, 1);

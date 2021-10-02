@@ -174,7 +174,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 		next = bu_ftell(dbip->dbi_fp);
 		handler(dbip, record.ss.ss_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
-	    case ID_MATERIAL:
+	    case ID_COLORTAB:
 		if (do_old_matter) {
 		    short lo, hi;
 

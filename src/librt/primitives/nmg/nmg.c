@@ -53,9 +53,7 @@
 	bu_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
 	segs_error(ERR_MSG); }
 
-#ifdef DO_LONGJMP
 static jmp_buf nmg_longjump_env;
-#endif
 
 /* EDGE-FACE correlation data
  * used in edge_hit() for 3manifold case
@@ -70,9 +68,7 @@ struct ef_data {
 HIDDEN void
 segs_error(const char *str) {
     bu_log("%s\n", str);
-#ifdef DO_LONGJMP
-    longjmp(nmg_longjump_env, -1);}
-#endif
+    longjmp(nmg_longjump_env, -1);
 }
 
 
@@ -1247,11 +1243,9 @@ nmg_ray_segs(struct ray_data *rd, struct bu_list *vlfree)
     struct hitmiss *a_hit;
     static int last_miss=0;
 
-#ifdef DO_LONGJMP
     if (setjmp(nmg_longjump_env) != 0) {
 	return 0;
     }
-#endif
 
     NMG_CK_HITMISS_LISTS(rd);
 

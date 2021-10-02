@@ -589,7 +589,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 {
     struct bu_vls d_path_dir = BU_VLS_INIT_ZERO;
 
-    if (gedp == GED_NULL || gedp->ged_wdbp == RT_WDB_NULL || !dens) {
+    if (gedp == GED_NULL || gedp->dbip == DBI_NULL || !dens) {
 	return GED_ERROR;
     }
 
@@ -957,6 +957,11 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
     GED_CHECK_VIEW(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    if (!sf1 || !sf2 || !sf3) {
+	bu_vls_printf(gedp->ged_result_str, "%s: invalid input state", argv[0]);
+	return GED_ERROR;
+    }
+
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -972,27 +977,27 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
     }
 
     if (argc == 2) {
-	if (!sf1 || sscanf(argv[1], "%lf", &scan) != 1) {
+	if (!sf1 || bu_sscanf(argv[1], "%lf", &scan) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad scale factor '%s'", argv[1]);
 	    return GED_ERROR;
 	}
 	*sf1 = scan;
     } else {
-	args_read = sscanf(argv[1], "%lf", &scan);
+	args_read = bu_sscanf(argv[1], "%lf", &scan);
 	if (!sf1 || args_read != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad x scale factor '%s'", argv[1]);
 	    ret = GED_ERROR;
 	}
 	*sf1 = scan;
 
-	args_read = sscanf(argv[2], "%lf", &scan);
+	args_read = bu_sscanf(argv[2], "%lf", &scan);
 	if (!sf2 || args_read != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad y scale factor '%s'", argv[2]);
 	    ret = GED_ERROR;
 	}
 	*sf2 = scan;
 
-	args_read = sscanf(argv[3], "%lf", &scan);
+	args_read = bu_sscanf(argv[3], "%lf", &scan);
 	if (!sf3 || args_read != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad z scale factor '%s'", argv[3]);
 	    ret = GED_ERROR;
@@ -1898,7 +1903,8 @@ addmembers:
 
     for (i = 0; i < argc; ++i) {
 	if (validate) {
-	    if ((objp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    objp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY);
+	    if (objp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "skip member %s\n", argv[i]);
 		continue;
 	    }

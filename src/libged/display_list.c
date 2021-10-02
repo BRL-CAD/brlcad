@@ -854,7 +854,11 @@ append_solid_to_display_list(
 
     if (ip->idb_meth->ft_bbox) {
         if (ip->idb_meth->ft_bbox(ip, &min, &max, tsp->ts_tol) < 0) {
-            bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {
+		bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+	    } else {
+		bu_log("plot failure - invalid path\n");
+	    }
 
             return TREE_NULL;
         }
@@ -881,7 +885,11 @@ append_solid_to_display_list(
                 tsp->ts_tol, NULL);
 
         if (plot_status < 0) {
-            bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+	    if (pathp && DB_FULL_PATH_CUR_DIR(pathp)) {
+		bu_log("%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+	    } else {
+		bu_log("plot failure - invalid path\n");
+	    }
 
             return TREE_NULL;
         }
@@ -1954,7 +1962,8 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
 		if (lvl <= -2) {
 		    /* print only leaves */
-		    bu_vls_printf(vls, "%s ", LAST_SOLID(bdata)->d_namep);
+		    if (bdata && LAST_SOLID(bdata))
+			bu_vls_printf(vls, "%s ", LAST_SOLID(bdata)->d_namep);
 		    continue;
 		}
 

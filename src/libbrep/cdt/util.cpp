@@ -720,9 +720,9 @@ ON_Brep_CDT_Tol_Get(struct bg_tess_tol *t, const struct ON_Brep_CDT_State *s)
 	t->relmin = -1;
 	t->rel_lmax = -1;
 	t->rel_lmin = -1;
+    } else {
+	*t = s->tol;
     }
-
-    *t = s->tol;
 }
 
 static int

@@ -1210,9 +1210,10 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
     brep_get_plane_ray(ray, pr);
 
     //know use this as guess to iterate to closer solution
-    pt2d_t Rcurr;
-    pt2d_t new_uv;
-    ON_3dVector su, sv;
+    pt2d_t Rcurr = V2INIT_ZERO;
+    pt2d_t new_uv = V2INIT_ZERO;
+    ON_3dVector su = ON_3dVector::ZeroVector;
+    ON_3dVector sv = ON_3dVector::ZeroVector;
     bool found=false;
     fastf_t Dlast = MAX_FASTF;
     pt2d_t nuv;
@@ -1297,7 +1298,6 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 	    double dist = fp.DistanceTo(pt);
 	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
 		uv = curr_uv;
-		found = true;
 		return 1; //close enough to same point so no sense in looking for one closer
 	    } else if (NEAR_ZERO(dist, tolerance)) {
 		if (dist < min_dist) {
@@ -1321,7 +1321,6 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 	    double dist = fp.DistanceTo(pt);
 	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
 		uv = curr_uv;
-		found = true;
 		return 1; //close enough to same point so no sense in looking for one closer
 	    } else if (NEAR_ZERO(dist, tolerance)) {
 		if (dist < min_dist) {
@@ -1331,6 +1330,10 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 		}
 	    }
 	}
+    }
+
+    if (found) {
+	return 1;
     }
 
     return -1;
@@ -2135,6 +2138,15 @@ get_closest_point(ON_2dPoint& outpt,
 	a_tree = new SurfaceTree(&face);
 	delete_tree = true;
     }
+
+    // If we don't have a workable tree, there's
+    // no point in continuing
+    if (!a_tree->Valid()) {
+	if (delete_tree)
+	    delete a_tree;
+	return false;
+    }
+
     ON_Interval u, v;
     ON_2dPoint est = a_tree->getClosestPointEstimate(point, u, v);
     pt2d_t uv = {est[0], est[1]};

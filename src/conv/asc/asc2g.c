@@ -1137,7 +1137,7 @@ materbld(void)
     int r, g, b;
 
     cp = buf;
-    cp++;			/* skip ID_MATERIAL */
+    cp++;			/* skip ID_COLORTAB */
     cp = nxt_spc(cp);		/* skip the space */
 
     cp = nxt_spc(cp);
@@ -1698,7 +1698,7 @@ main(int argc, char *argv[])
 		identbld();
 		continue;
 
-	    case ID_MATERIAL:
+	    case ID_COLORTAB:
 		materbld();
 		continue;
 

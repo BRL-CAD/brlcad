@@ -17,15 +17,17 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 //
-// This version is based off of earcut.js 2.1.5
+// This version is based off of earcut.js 2.2.3
 
 #pragma once
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace mapbox {
@@ -255,7 +257,7 @@ Earcut<N>::filterPoints(Node* start, Node* end) {
     do {
         again = false;
 
-        if (!p->steiner && (equals(p, p->next) || area(p->prev, p, p->next) == 0)) {
+        if (p && !p->steiner && (equals(p, p->next) || ((p->prev && p->next) && area(p->prev, p, p->next) == 0))) {
             removeNode(p);
             p = end = p->prev;
 
@@ -263,7 +265,7 @@ Earcut<N>::filterPoints(Node* start, Node* end) {
             again = true;
 
         } else {
-            p = p->next;
+            p = (p) ? p->next : end;
         }
     } while (again || p != end);
 

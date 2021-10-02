@@ -2,11 +2,11 @@ The shapelib distribution has an LGPL COPYING file (see
 https://github.com/OSGeo/shapelib) but checking the sources the default license
 is actually an MIT style license with the option to use the LGPL if a project
 so chooses.  Since the MIT style is simpler for BRL-CAD to use it is the one we
-opt for, and the default license terms are reproduced below:
+opt for, and the default license terms are reproduced below.
 
-NOTE: the presence of the LICENSE.LGPL file in our source tree is for reference
-does not indicate that BRL-CAD has opted for LGPL rather than MIT licensing for
-our use of shapelib.
+NOTE: the presence of the COPYING file in our source tree is for reference does
+not indicate that BRL-CAD has opted for LGPL rather than MIT licensing for our
+use of shapelib.
 
 Copyright (c) 1999, Frank Warmerdam
 

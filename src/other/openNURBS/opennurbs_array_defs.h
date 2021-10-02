@@ -437,13 +437,15 @@ void ON_SimpleArray<T>::Append( const T& x )
         T temp;   // ON_*Array<> templates do not require robust copy constructor.
         temp = x; // ON_*Array<> templates require a robust operator=.
         Reserve( newcapacity );
-        m_a[m_count++] = temp;
+	if (m_a)
+           m_a[m_count++] = temp;
         return;
       }
     }
     Reserve(newcapacity);
   }
-  m_a[m_count++] = x;
+  if (m_a)
+     m_a[m_count++] = x;
 }
 
 template <class T>
@@ -1384,13 +1386,17 @@ void ON_ClassArray<T>::Append( const T& x )
         T temp;   // ON_*Array<> templates do not require robust copy constructor.
         temp = x; // ON_*Array<> templates require a robust operator=.
         Reserve( newcapacity );
-        m_a[m_count++] = temp;
+	if (m_a)
+           m_a[m_count++] = temp;
         return;
       }
     }
     Reserve(newcapacity);
   }
-  m_a[m_count++] = x;
+
+  // Only do this if we have a non-null m_a
+  if (m_a)
+      m_a[m_count++] = x;
 }
 
 template <class T>

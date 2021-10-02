@@ -376,7 +376,6 @@ bg_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 		      bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[LIndex][0], edge_unit_vects[LIndex][1]);
 		      bu_log("l_dot: %f\n", dot);*/
 		    if (dot > maxDot) {
-			maxDot = dot;
 			flag = F_LEFT;
 		    }
 

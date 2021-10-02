@@ -1488,7 +1488,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 	str1 = bu_strdup(bu_vls_cstr(&mvls));
 	bu_vls_free(&mvls);
 
-	av = (char **)bu_calloc(strlen(str1), sizeof(char *), "av");
+	av = (char **)bu_calloc(strlen(str1)+1, sizeof(char *), "av");
 	ac = bu_argv_from_string(av, strlen(str1), str1);
 	if (ac == 16) {
 	    // We have 16 elements - read each one to see if it's a valid fastf_t

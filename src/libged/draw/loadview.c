@@ -385,7 +385,7 @@ int
 _ged_cm_end(const int argc, const char **argv)
 {
     struct bu_vls eye = BU_VLS_INIT_ZERO;
-    char *eye_argv[5] = {"eye", NULL, NULL, NULL, NULL};
+    char *eye_argv[6] = {"eye", NULL, NULL, NULL, NULL, NULL};
 
     if (argc < 0 || argv == NULL)
 	return 1;

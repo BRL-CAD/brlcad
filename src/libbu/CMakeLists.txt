@@ -76,6 +76,7 @@ set(LIBBU_SOURCES
   getcwd.c
   gethostname.c
   getopt.c
+  glob.c
   globals.c
   hash.c
   heap.c
@@ -178,7 +179,6 @@ set(bu_ignore_files
   mime.cmake
   parallel.h
   process.h
-  realpath_bsd.c
   tests/semchk.cpp
   sha1.h
   vfont.h
