@@ -51,7 +51,7 @@ color_putrec(struct ged *gedp, struct mater *mp)
 
     /* we get here only if database is NOT read-only */
 
-    rec.md.md_id = ID_MATERIAL;
+    rec.md.md_id = ID_COLORTAB;
     rec.md.md_low = mp->mt_low;
     rec.md.md_hi = mp->mt_high;
     rec.md.md_r = mp->mt_r;

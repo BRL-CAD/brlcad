@@ -226,7 +226,7 @@ struct member {
 }; /* struct member */
 
 struct material_rec {		/* whole record is DEPRECATED */
-    char	md_id;		/* = ID_MATERIAL color override */
+    char	md_id;		/* = ID_COLORTAB color override */
     char	md_flags;	/* UNUSED */
     short	md_low;		/* lower end of region IDs affected */
     short	md_hi;		/* upper end of region IDs affected */
@@ -432,7 +432,7 @@ union record {
 #define ID_P_DATA	'Q'	/* Polygon data record */
 #define ID_BSOLID	'b'	/* B-spline solid.  multiple surfs */
 #define ID_BSURF	'D'     /* d_spline surface header */
-#define ID_MATERIAL	'm'	/* Material description record */
+#define ID_COLORTAB	'm'	/* Material "color table" record */
 #define DBID_STRSOL	's'	/* String solid description */
 #define DBID_ARBN	'n'	/* Convex polyhedron with N faces */
 #define DBID_PIPE	'w'	/* pipe (wire) solid */

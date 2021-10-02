@@ -1160,7 +1160,7 @@ materbld(struct ascv4_rstate *s)
     int r, g, b;
 
     cp = bu_vls_addr(s->buf);
-    cp++;			/* skip ID_MATERIAL */
+    cp++;			/* skip ID_COLORTAB */
     cp = nxt_spc(cp);		/* skip the space */
 
     cp = nxt_spc(cp);
@@ -1535,7 +1535,7 @@ after_read:
 		identbld(s);
 		continue;
 
-	    case ID_MATERIAL:
+	    case ID_COLORTAB:
 		materbld(s);
 		continue;
 
@@ -2613,7 +2613,7 @@ top:
 	    case ID_IDENT:
 		idendump(s);
 		continue;
-	    case ID_MATERIAL:
+	    case ID_COLORTAB:
 		materdump(s);
 		continue;
 	    case DBID_PIPE:
