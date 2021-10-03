@@ -2376,7 +2376,7 @@ const struct rt_functab OBJ[] = {
     },
 
     {
-	/* 47 */
+	/* 46 */
 	RT_FUNCTAB_MAGIC, "ID_MATERIAL", "material",
 	0, /* ft_use_rpp */
 	NULL, /* prep */

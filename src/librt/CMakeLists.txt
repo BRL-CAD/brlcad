@@ -140,6 +140,7 @@ set(LIBRT_SOURCES
   primitives/joint/joint.c
   primitives/joint/joint_brep.cpp
   primitives/joint/joint_mirror.c
+  primitives/material/material.c
   primitives/metaball/metaball.c
   primitives/metaball/metaball_tri.c
   primitives/mirror.c

@@ -1514,21 +1514,24 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 }
 
 static int
-material_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, const char *name)
+material_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 {
-//     struct rt_material_internal *material;
+    struct rt_material_internal *material;
 
-//     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-//     intern->idb_type = ID_MATERIAL;
-//     intern->idb_meth = &OBJ[ID_MATERIAL];
-//     BU_ALLOC(intern->idb_ptr, struct rt_material_internal);
-//     material = (struct rt__internal *)intern->idb_ptr;
-//     material->magic = RT_MATERIAL_MAGIC;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_minor_type = DB5_MINORTYPE_BRLCAD_MATERIAL;
+    intern->idb_meth = &OBJ[ID_MATERIAL];
+    intern->idb_magic = RT_MATERIAL_MAGIC;
+    BU_ALLOC(intern->idb_ptr, struct rt_material_internal);
 
-//     bu_vls_init(&material->name);
-//     bu_vls_strcpy(&material->name, cmd_argvs[3]);
+    material = (struct rt_material_internal *)intern->idb_ptr;
+    material->magic = RT_MATERIAL_MAGIC;
 
-    mk_material(gedp->ged_wdbp, name);
+    bu_vls_init(&material->name);
+    bu_vls_strcpy(&material->name, cmd_argvs[3]);
+
+    material->density = atof(cmd_argvs[4]) * gedp->dbip->dbi_local2base;
+    // mk_material(gedp->ged_wdbp, material->name.vls_str);
 
     return GED_OK;
 }

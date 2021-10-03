@@ -138,14 +138,14 @@ struct rt_constraint_internal {
  * In-memory format for database "material" record
  */
 struct rt_material_internal {
-	uint32_t magic; // ?
+	uint32_t magic;
 	int id;
 	struct bu_vls name;
 	double density;
 };
 
-#define RT_CHECK_MATERIAL(_p) BU_CKMAG(_p, PC_MATERIAL_MAGIC, "pc_material_internal")
-#define RT_CK_MATERIAL(_p) PC_CHECK_MATERIAL(_p)
+#define RT_CHECK_MATERIAL(_p) BU_CKMAG(_p, RT_MATERIAL_MAGIC, "rt_material_internal")
+#define RT_CK_MATERIAL(_p) RT_CHECK_MATERIAL(_p)
 
 __END_DECLS
 

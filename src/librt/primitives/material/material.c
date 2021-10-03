@@ -40,7 +40,7 @@
 
 static const struct bu_structparse rt_material_parse[] = {
     {"%d", 1, "ID", bu_offsetof(struct rt_material_internal, id), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%V", 1, "Ex", bu_offsetof(struct rt_material_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "N", bu_offsetof(struct rt_material_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "D", bu_offsetof(struct rt_material_internal, density), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
