@@ -131,8 +131,8 @@ struct rt_constraint_internal {
     struct bu_vls expression;
 };
 
-#define RT_CHECK_CONSTRAINT(_p) BU_CKMAG(_p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal")
-#define RT_CK_CONSTRAINT(_p) PC_CHECK_CONSTRAINT(_p)
+#define RT_CHECK_CONSTRAINT(_p) BU_CKMAG(_p, RT_CONSTRAINT_MAGIC, "rt_constraint_internal")
+#define RT_CK_CONSTRAINT(_p) RT_CHECK_CONSTRAINT(_p)
 
 /**
  * In-memory format for database "material" record
