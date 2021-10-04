@@ -1521,7 +1521,7 @@ material_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *int
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_minor_type = DB5_MINORTYPE_BRLCAD_MATERIAL;
     intern->idb_meth = &OBJ[ID_MATERIAL];
-    intern->idb_magic = RT_MATERIAL_MAGIC;
+    // intern->idb_magic = RT_MATERIAL_MAGIC;
     BU_ALLOC(intern->idb_ptr, struct rt_material_internal);
 
     material = (struct rt_material_internal *)intern->idb_ptr;
