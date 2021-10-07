@@ -739,8 +739,8 @@ rt_bot_free(struct soltab *stp)
 }
 
 
-vdsNode *
-build_vertex_tree(struct rt_bot_internal *bot)
+static vdsNode *
+build_vertex_tree(struct vdsState *s, struct rt_bot_internal *bot)
 {
     size_t i, node_indices, tri_indices;
     vect_t normal = {1.0, 0.0, 0.0};
@@ -751,21 +751,21 @@ build_vertex_tree(struct rt_bot_internal *bot)
     node_indices = bot->num_vertices * 3;
     tri_indices = bot->num_faces * 3;
 
-    vdsBeginVertexTree();
-    vdsBeginGeometry();
+    vdsBeginVertexTree(s);
+    vdsBeginGeometry(s);
 
     /* create nodes */
     for (i = 0; i < node_indices; i += 3) {
-	vdsAddNode(bot->vertices[i], bot->vertices[i + 1], bot->vertices[i + 2]);
+	vdsAddNode(s, bot->vertices[i], bot->vertices[i + 1], bot->vertices[i + 2]);
     }
 
     /* create triangles */
     for (i = 0; i < tri_indices; i += 3) {
-	vdsAddTri(bot->faces[i], bot->faces[i + 1], bot->faces[i + 2],
+	vdsAddTri(s, bot->faces[i], bot->faces[i + 1], bot->faces[i + 2],
 		  normal, normal, normal, color, color, color);
     }
 
-    leaf_nodes = vdsEndGeometry();
+    leaf_nodes = vdsEndGeometry(s);
 
     node_list = (vdsNode **)bu_malloc(bot->num_vertices * sizeof(vdsNode *), "node_list");
     for (i = 0; i < bot->num_vertices; ++i) {
@@ -775,7 +775,7 @@ build_vertex_tree(struct rt_bot_internal *bot)
     vdsClusterOctree(node_list, bot->num_vertices, 0);
     bu_free(node_list, "node_list");
 
-    return vdsEndVertexTree();
+    return vdsEndVertexTree(s);
 }
 
 
@@ -869,6 +869,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     point_t max;
 
     vdsNode *vertex_tree;
+    struct vdsState vdss = VDS_STATE_INIT_ZERO;
     struct rt_bot_internal *bot;
     struct bot_fold_data fold_data;
 
@@ -879,7 +880,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    vertex_tree = build_vertex_tree(bot);
+    vertex_tree = build_vertex_tree(&vdss, bot);
 
     fold_data.root = vertex_tree;
     fold_data.point_spacing = view_avg_sample_spacing(v);
