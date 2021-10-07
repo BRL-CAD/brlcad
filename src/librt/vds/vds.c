@@ -487,6 +487,9 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
     int whichtri, numchildren;
     vdsNode *newN, *child;
 
+    if (!N || !N->children)
+	return NULL;
+
     /* Reallocate node and adjust child pointers */
     newN = (vdsNode *) malloc(sizeof(vdsNode) + N->nsubtris * sizeof(vdsTri));
     memcpy(newN, N, sizeof(vdsNode));
@@ -565,11 +568,14 @@ vdsNode *vdsEndVertexTree(struct vdsState *s)
 #endif
     vdsNodeId *ids;
     int i;
+    int have_parent = 0;
 
     root = &s->nodearray[0];
     while (root->parent != NULL) {
 	root = root->parent;
+	have_parent = 1;
     }
+
     VDS_DEBUG(("Assigning node ids..."));
     ids = (vdsNodeId *) calloc(s->vdsNumnodes, sizeof(vdsNodeId));
 #ifdef VDS_DEBUGPRINT
@@ -609,7 +615,8 @@ vdsNode *vdsEndVertexTree(struct vdsState *s)
     VDS_DEBUG(("Reallocating nodes and copying triangles into node->subtris "
 		"fields..."));
     root = moveTrisToNodes(root);	/* Note: reallocates all nodes	    */
-    free(s->nodearray);
+    if (have_parent)
+	free(s->nodearray);
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Computing triangle container nodes..."));
     vdsComputeTriNodes(root, root);
@@ -892,6 +899,9 @@ void vdsFoldNode(vdsNode *node)
     vdsNode *prev, *next;
     vdsTri *t;
     int i;
+
+    if (!node || !node->children)
+	return;
 
     /* Activate node and deactivate children */
     node->status = Boundary;
