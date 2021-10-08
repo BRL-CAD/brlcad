@@ -24,6 +24,7 @@
 #include <set>
 #include <map>
 
+#include "bu/bitv.h"
 #include "bu/log.h"
 #include "bu/list.h"
 #include "bu/malloc.h"
@@ -793,6 +794,63 @@ int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, fastf_t *vertices,
 
     return hanging_nodes;
 }
+
+
+int
+bg_trimesh_aabb(point_t *min, point_t *max, int *faces, int num_faces, point_t *p, int num_pnts)
+{
+    /* If we can't produce any output, there's no point in continuing */
+    if (!min || !max)
+	return -1;
+
+    /* If something goes wrong with any bbox logic, we want to know it as soon
+     * as possible.  Make sure as soon as we can that the bbox output is set to
+     * invalid defaults, so we don't end up with something that accidentally
+     * looks reasonable if things fail. */
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
+    /* If inputs are insufficient, we can't produce a bbox */
+    if (!faces || num_faces <= 0 || !p || num_pnts <= 0)
+	return -1;
+
+    /* First Pass: coherently iterate through all faces of the BoT and
+     * mark vertices in a bit-vector that are referenced by a face. */
+    struct bu_bitv *visit_vert = bu_bitv_new(num_pnts);
+    for (size_t tri_index = 0; tri_index < (size_t)num_faces; tri_index++) {
+	BU_BITSET(visit_vert, faces[tri_index*3 + X]);
+	BU_BITSET(visit_vert, faces[tri_index*3 + Y]);
+	BU_BITSET(visit_vert, faces[tri_index*3 + Z]);
+    }
+
+    /* Second Pass: check max and min of vertices marked */
+    for(size_t vert_index = 0; vert_index < (size_t)num_pnts; vert_index++){
+	if(BU_BITTEST(visit_vert,vert_index)){
+	    VMINMAX((*min), (*max), p[vert_index]);
+	}
+    }
+
+    /* Done with bitv */
+    bu_bitv_free(visit_vert);
+
+    /* Make sure the RPP created is not of zero volume */
+    if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
+	(*min)[X] -= SMALL_FASTF;
+	(*max)[X] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Y], (*max)[Y], SMALL_FASTF)) {
+	(*min)[Y] -= SMALL_FASTF;
+	(*max)[Y] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Z], (*max)[Z], SMALL_FASTF)) {
+	(*min)[Z] -= SMALL_FASTF;
+	(*max)[Z] += SMALL_FASTF;
+    }
+
+    /* Success */
+    return 0;
+}
+
 
 int
 bg_trimesh_2d_gc(int **ofaces, point2d_t **opnts, int *n_opnts,

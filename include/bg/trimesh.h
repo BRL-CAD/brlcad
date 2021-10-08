@@ -122,6 +122,24 @@ BG_EXPORT extern int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, f
 
 BG_EXPORT extern struct bg_trimesh_halfedge * bg_trimesh_generate_edge_list(int fcnt, int *f);
 
+/**
+ * @brief
+ * Calculate an axis aligned bounding box (RPP) for a triangle mesh.
+ *
+ * NOTE:  This routine bounds only those points that are active in the triangle
+ * mesh, not all points present in the supplied points array.
+ *
+ * @param[out] min XYZ coordinate defining the minimum bbox point
+ * @param[out] max XYZ coordinate defining the maximum bbox point
+ * @param[in] faces array of trimesh faces
+ * @param[in] num_faces size of faces array
+ * @param[in] p array that holds the points defining the trimesh
+ * @param[in] num_pnts size of pnts array
+ */
+BG_EXPORT extern int
+bg_trimesh_aabb(point_t *min, point_t *max, int *faces, int num_faces, point_t *p, int num_pnts);
+
+
 /* Make an attempt at a trimesh intersection calculator that returns the sets
  * of faces intersecting and inside the other for each mesh. Doesn't attempt
  * a boolean evaluation, just characterizes faces */
@@ -131,7 +149,6 @@ bg_trimesh_isect(
     int **faces_isect_1, int *num_faces_isect_1, int **faces_isect_2, int *num_faces_isect_2,
     int *faces_1, int num_faces_1, point_t *vertices_1, int num_vertices_1,
     int *faces_2, int num_faces_2, point_t *vertices_2, int num_vertices_2);
-
 
 /**
  * @brief
