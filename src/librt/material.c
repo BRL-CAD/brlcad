@@ -40,8 +40,8 @@
 
 static const struct bu_structparse rt_material_parse[] = {
     {"%d", 1, "ID", bu_offsetof(struct rt_material_internal, id), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%V", 1, "N", bu_offsetof(struct rt_material_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "D", bu_offsetof(struct rt_material_internal, density), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "Name", bu_offsetof(struct rt_material_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "Density", bu_offsetof(struct rt_material_internal, density), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -73,8 +73,7 @@ rt_material_ifree(struct rt_db_internal *ip)
 int
 rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *UNUSED(dbip))
 {
-    struct rt_material_internal *material;
-    unsigned char *ptr;
+    struct rt_material_internal *material_ip;
 
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
@@ -84,15 +83,16 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     ip->idb_meth = &OBJ[ID_MATERIAL];
     BU_ALLOC(ip->idb_ptr, struct rt_material_internal);
 
-    material = (struct rt_material_internal *)ip->idb_ptr;
-    BU_VLS_INIT(&material->name);
-    material->magic = RT_MATERIAL_MAGIC;
+    material_ip = (struct rt_material_internal *)ip->idb_ptr;
+    BU_VLS_INIT(&material_ip->name);
+    material_ip->magic = RT_MATERIAL_MAGIC;
 
-    ptr = ep->ext_buf;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    unsigned char *ptr = ep->ext_buf;
+    bu_vls_init(&str);
+    bu_vls_strncpy(&str, (char *)ptr, ep->ext_nbytes - (ptr - (unsigned char *)ep->ext_buf));
 
-    bu_vls_init(&material->name);
-    bu_vls_strncpy(&material->name, (char *)ptr,
-           ep->ext_nbytes - (ptr - (unsigned char *)ep->ext_buf));
+    bu_struct_parse(&str, rt_material_parse, (const char *)material_ip, material_ip);
 
     return 0;			/* OK */
 }
@@ -104,17 +104,17 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 int
 rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *UNUSED(dbip))
 {
-    struct rt_material_internal *cip;
+    struct rt_material_internal *material_ip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
     RT_CK_DB_INTERNAL(ip);
 
     if (ip->idb_type != ID_MATERIAL) bu_bomb("rt_material_export() type not ID_MATERIAL");
-    cip = (struct rt_material_internal *) ip->idb_ptr;
+    material_ip = (struct rt_material_internal *) ip->idb_ptr;
 
     BU_EXTERNAL_INIT(ep);
 
-    bu_vls_struct_print(&str, rt_material_parse, (char *)cip);
+    bu_vls_struct_print(&str, rt_material_parse, (char *)material_ip);
 
     ep->ext_nbytes = bu_vls_strlen(&str);
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "material external");
@@ -123,6 +123,38 @@ rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     bu_vls_free(&str);
 
     return 0;	/* OK */
+}
+
+/**
+ * Make human-readable formatted presentation of this object.  First
+ * line describes type of object.  Additional lines are indented one
+ * tab, and give parameter values.
+ */
+int
+rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+{
+    register struct rt_material_internal *material_ip = (struct rt_material_internal *)ip->idb_ptr;
+
+    char buf[256];
+
+    RT_CHECK_MATERIAL(material_ip);
+    bu_vls_strcat(str, "material (MATERIAL)\n");
+
+    sprintf(buf, "\tID: %d\n",
+        material_ip->id);
+    bu_vls_strcat(str, buf);
+
+    sprintf(buf, "\tName: %s\n",
+        material_ip->name.vls_str);
+    bu_vls_strcat(str, buf);
+
+    sprintf(buf, "\tDensity: %f\n",
+        INTCLAMP(material_ip->density * mm2local));
+    bu_vls_strcat(str, buf);
+
+    if (!verbose) return 0;
+
+    return 0;
 }
 
 
