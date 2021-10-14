@@ -2400,7 +2400,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* import4 */
 	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_material_ifree),
-	NULL, /* describe */
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_material_describe),
 	NULL, /* xform */
 	NULL, /* parse */
 	0, /* sizeof(internal) */

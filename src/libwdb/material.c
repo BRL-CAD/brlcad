@@ -44,7 +44,6 @@ mk_material(struct rt_wdb *wdbp, const char *name) {
     /* Create a fresh new object for export */
     BU_ALLOC(material, struct rt_material_internal);
     material->magic = RT_MATERIAL_MAGIC;
-    material->id = 0;
     BU_VLS_INIT(&material->name);
 
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -53,8 +52,8 @@ mk_material(struct rt_wdb *wdbp, const char *name) {
     intern.idb_meth = &OBJ[ID_MATERIAL];
 
     /* Add data */
-    material->id = 1;
-    material->name.vls_str = "TEST";
+    material->id = 4;
+    bu_vls_strcpy(&material->name, "TEST");
     material->density = 123.456;
 
     /* The internal representation will be freed */
