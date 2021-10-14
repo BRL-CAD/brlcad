@@ -1533,6 +1533,12 @@ material_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *int
     material->density = atof(cmd_argvs[4]) * gedp->dbip->dbi_local2base;
     // mk_material(gedp->ged_wdbp, material->name.vls_str);
 
+    // Intialize AVS' 
+    material->physicalProperties = BU_AVS_INIT_ZERO;
+    material->mechanicalProperties = BU_AVS_INIT_ZERO;
+    material->opticalProperties = BU_AVS_INIT_ZERO;
+    material->thermalProperties = BU_AVS_INIT_ZERO;
+
     return GED_OK;
 }
 

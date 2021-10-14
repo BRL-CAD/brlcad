@@ -142,6 +142,11 @@ struct rt_material_internal {
 	int id;
 	struct bu_vls name;
 	double density;
+
+	struct bu_attribute_value_set physicalProperties;
+	struct bu_attribute_value_set mechanicalProperties;
+	struct bu_attribute_value_set opticalProperties;
+	struct bu_attribute_value_set thermalProperties;
 };
 
 #define RT_CHECK_MATERIAL(_p) BU_CKMAG(_p, RT_MATERIAL_MAGIC, "rt_material_internal")
