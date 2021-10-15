@@ -42,6 +42,7 @@ static const struct bu_structparse rt_material_parse[] = {
     {"%d", 1, "ID", bu_offsetof(struct rt_material_internal, id), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%V", 1, "Name", bu_offsetof(struct rt_material_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 1, "Density", bu_offsetof(struct rt_material_internal, density), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%v", 1, "physicalProperties", bu_offsetof(struct rt_material_internal, physicalProperties), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -114,7 +115,22 @@ rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_EXTERNAL_INIT(ep);
 
+    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_material_parse, (char *)material_ip);
+
+    // const char *physicalProperties = bu_avs_get_all(&material_ip->physicalProperties, "physicalProperties");
+    // bu_vls_strcat(&str, physicalProperties);
+
+    // const char *mechanicalProperties = bu_avs_get_all(&material_ip->mechanicalProperties, "mechanicalProperties");
+    // bu_vls_strcat(&str, mechanicalProperties);
+
+    // const char *opticalProperties = bu_avs_get_all(&material_ip->opticalProperties, "opticalProperties");
+    // bu_vls_strcat(&str, opticalProperties);
+
+    // const char *thermalProperties = bu_avs_get_all(&material_ip->thermalProperties, "thermalProperties");
+    // bu_vls_strcat(&str, thermalProperties);
+
+    // printf("Total vls string in export: %s", str.vls_str);
 
     ep->ext_nbytes = bu_vls_strlen(&str);
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "material external");
@@ -140,16 +156,17 @@ rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
     RT_CHECK_MATERIAL(material_ip);
     bu_vls_strcat(str, "material (MATERIAL)\n");
 
-    sprintf(buf, "\tID: %d\n",
-        material_ip->id);
+    sprintf(buf, "\tID: %d\n", material_ip->id);
     bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tName: %s\n",
-        material_ip->name.vls_str);
+    sprintf(buf, "\tName: %s\n", material_ip->name.vls_str);
     bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tDensity: %f\n",
-        INTCLAMP(material_ip->density * mm2local));
+    sprintf(buf, "\tDensity: %f\n", INTCLAMP(material_ip->density * mm2local));
+    bu_vls_strcat(str, buf);
+
+    const char *physicalProperties = bu_avs_get_all(&material_ip->physicalProperties, NULL);
+    sprintf(buf, "\tphysicalProperties: %s\n", physicalProperties);
     bu_vls_strcat(str, buf);
 
     if (!verbose) return 0;

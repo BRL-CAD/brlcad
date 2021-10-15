@@ -1517,6 +1517,7 @@ static int
 material_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_material_internal *material_ip;
+    struct bu_vls expression = BU_VLS_INIT_ZERO;
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_minor_type = DB5_MINORTYPE_BRLCAD_MATERIAL;
@@ -1534,11 +1535,20 @@ material_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *int
 
     material_ip->density = atof(cmd_argvs[4]) * gedp->dbip->dbi_local2base;
 
-    // Intialize AVS' 
-    material->physicalProperties = BU_AVS_INIT_ZERO;
-    material->mechanicalProperties = BU_AVS_INIT_ZERO;
-    material->opticalProperties = BU_AVS_INIT_ZERO;
-    material->thermalProperties = BU_AVS_INIT_ZERO;
+    // Intialize AVS
+    bu_avs_init_empty(&material_ip->physicalProperties);
+    // bu_avs_init_empty(&material_ip->mechanicalProperties);
+    // bu_avs_init_empty(&material_ip->opticalProperties);
+    // bu_avs_init_empty(&material_ip->thermalProperties);
+
+    // bu_vls_strcat(struct bu_vls *vp, const char *s);
+    // bu_vls_vlscat(struct bu_vls *dest, const struct bu_vls *src);
+
+    bu_vls_from_argv(&expression, 1, &cmd_argvs[6]);
+    (void)bu_avs_add(&material_ip->physicalProperties, cmd_argvs[5], bu_vls_addr(&expression));
+    bu_vls_free(&expression);
+
+    bu_avs_print(&material_ip->physicalProperties, "MaterialStore");
 
     return GED_OK;
 }
