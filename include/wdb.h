@@ -347,7 +347,15 @@ WDB_EXPORT extern int mk_ars(struct rt_wdb *fp, const char *name, size_t ncurves
 WDB_EXPORT extern int mk_constraint(struct rt_wdb *wdbp, const char *name, const char *expr);
 
 
-WDB_EXPORT extern int mk_material(struct rt_wdb *wdbp, const char *name);
+WDB_EXPORT extern int mk_material(struct rt_wdb *wdbp,
+                                    const char *db_name,
+                                    const char *name,
+                                    const char *parent,
+                                    const char *source,
+                                    struct bu_attribute_value_set *physicalProperties,
+                                    struct bu_attribute_value_set *mechanicalProperties,
+                                    struct bu_attribute_value_set *opticalProperties,
+                                    struct bu_attribute_value_set *thermalProperties);
 
 
 /* FIXME: are the variable-sized types actually necessary?  should be
