@@ -655,9 +655,13 @@ static const char *p_script[] = {
  * add support
  */
 static const char *p_material[] = {
-    "Please enter the key value pairs"
-    // "Enter the material ID: ",
-    // "Enter the material density: "
+    "Enter the material name: ",
+    "Enter the parent material name: ",
+    "Enter the material source: ",
+    "Enter key value pairs for physical properties as separate arguments (end or skip with .): ",
+    "Enter key value pairs for mechanical properties as separate arguments (end or skip with .): ",
+    "Enter key value pairs for optical properties as separate arguments (end or skip with .): ",
+    "Enter key value pairs for thermal properties as separate arguments (end or skip with .): ",
 };
 
 /**
@@ -1515,10 +1519,9 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 }
 
 static int
-material_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_internal *intern)
+material_in(struct ged *gedp, int argc, const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_material_internal *material_ip;
-    struct bu_vls expression = BU_VLS_INIT_ZERO;
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_minor_type = DB5_MINORTYPE_BRLCAD_MATERIAL;
@@ -1528,28 +1531,175 @@ material_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
     material_ip = (struct rt_material_internal *)intern->idb_ptr;
     material_ip->magic = RT_MATERIAL_MAGIC;
 
-
-    // material_ip->id = atoi(cmd_argvs[3]);
-
+    // name, parent, and source
     bu_vls_init(&material_ip->name);
-    bu_vls_strcpy(&material_ip->name, cmd_argvs[1]);
+    bu_vls_strcpy(&material_ip->name, cmd_argvs[3]);
 
-    // material_ip->density = atof(cmd_argvs[4]) * gedp->dbip->dbi_local2base;
+    bu_vls_init(&material_ip->parent);
+    bu_vls_strcpy(&material_ip->parent, cmd_argvs[4]);
 
-    // Intialize AVS
+    bu_vls_init(&material_ip->source);
+    bu_vls_strcpy(&material_ip->source, cmd_argvs[5]);
+
+    // Intialize AVS stores
     bu_avs_init_empty(&material_ip->physicalProperties);
     bu_avs_init_empty(&material_ip->mechanicalProperties);
     bu_avs_init_empty(&material_ip->opticalProperties);
     bu_avs_init_empty(&material_ip->thermalProperties);
 
-    // bu_vls_strcat(struct bu_vls *vp, const char *s);
-    // bu_vls_vlscat(struct bu_vls *dest, const struct bu_vls *src);
+    if (argc % 2 != 0) {
+	    bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	    return GED_ERROR;
+    }
 
-    bu_vls_from_argv(&expression, 1, &cmd_argvs[6]);
-    (void)bu_avs_add(&material_ip->physicalProperties, cmd_argvs[5], bu_vls_addr(&expression));
-    bu_vls_free(&expression);
+    int arg_idx = 6;
+    int arg_ptr = 7;
+    while (1) {
+        if (argc < arg_ptr) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
 
-    bu_avs_print(&material_ip->physicalProperties, "MaterialStore");
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx]) && arg_ptr % 2 == 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx])) {
+            // increment counters to get key values in next loop
+            arg_idx += 1;
+            arg_ptr += 1;
+            break;
+        }
+
+        // have to check the next arg after we know it is not '.'
+        if (argc < arg_ptr + 1) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx + 1]) && (arg_ptr + 1) % 2 != 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        // if we make it here we have a valid key value set for argv[arg_idx] and argv[arg_idx + 1]
+        (void)bu_avs_add(&material_ip->physicalProperties, cmd_argvs[arg_idx], cmd_argvs[arg_idx + 1]);
+
+        // increment the counters by two so we can get the next pair
+        arg_idx += 2;
+        arg_ptr += 2;
+    }
+
+    while (1) {
+        if (argc < arg_ptr) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx]) && arg_ptr % 2 != 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx])) {
+            // increment counters to get key values in next loop
+            arg_idx += 1;
+            arg_ptr += 1;
+            break;
+        }
+
+        // have to check the next arg after we know it is not '.'
+        if (argc < arg_ptr + 1) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx + 1]) && (arg_ptr + 1) % 2 == 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        // if we make it here we have a valid key value set for argv[arg_idx] and argv[arg_idx + 1]
+        (void)bu_avs_add(&material_ip->mechanicalProperties, cmd_argvs[arg_idx], cmd_argvs[arg_idx + 1]);
+
+        // increment the counters by two so we can get the next pair
+        arg_idx += 2;
+        arg_ptr += 2;
+    }
+
+    while (1) {
+        if (argc < arg_ptr) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx]) && arg_ptr % 2 == 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx])) {
+            // increment counters to get key values in next loop
+            arg_idx += 1;
+            arg_ptr += 1;
+            break;
+        }
+
+        // have to check the next arg after we know it is not '.'
+        if (argc < arg_ptr + 1) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx + 1]) && (arg_ptr + 1) % 2 != 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        // if we make it here we have a valid key value set for argv[arg_idx] and argv[arg_idx + 1]
+        (void)bu_avs_add(&material_ip->opticalProperties, cmd_argvs[arg_idx], cmd_argvs[arg_idx + 1]);
+
+        // increment the counters by two so we can get the next pair
+        arg_idx += 2;
+        arg_ptr += 2;
+    }
+
+    while (1) {
+        if (argc < arg_ptr) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx]) && arg_ptr % 2 != 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx])) {
+            arg_idx += 1;
+            arg_ptr += 1;
+            break;
+        }
+
+        // have to check the next arg after we know it is not '.'
+        if (argc < arg_ptr + 1) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", cmd_argvs[arg_idx + 1]) && (arg_ptr + 1) % 2 == 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        // if we make it here we have a valid key value set for argv[arg_idx] and argv[arg_idx + 1]
+        (void)bu_avs_add(&material_ip->thermalProperties, cmd_argvs[arg_idx], cmd_argvs[arg_idx + 1]);
+
+        // increment the counters by two so we can get the next pair
+        arg_idx += 2;
+        arg_ptr += 2;
+    }
 
     return GED_OK;
 }
@@ -3465,9 +3615,18 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	menu = p_script;
 	fn_in = script_in;
     } else if (BU_STR_EQUAL(argv[2], "material")) {
-	nvals = 2;
+	nvals = 7;
 	menu = p_material;
-	fn_in = material_in;
+	switch (material_in(gedp, argc, argv, &internal)) {
+        case GED_ERROR:
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, material not made!\n", argv[0]);
+		rt_db_free_internal(&internal);
+		return GED_ERROR;
+	    case GED_MORE:
+		return GED_MORE;
+    }
+
+    goto do_new_update;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:
