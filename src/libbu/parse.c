@@ -29,7 +29,6 @@
 #include <limits.h>
 #include "vmath.h"
 
-#include "bu/avs.h"
 #include "bu/cv.h"
 #include "bu/log.h"
 #include "bu/assert.h"
@@ -1488,19 +1487,6 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		    bu_vls_printf(vls, "%s%s=\"%s\"", (bu_vls_strlen(vls)?" ":""), sdp->sp_name, bu_vls_addr(vls_p));
 		}
 		break;
-		case 'v':
-		{
-		    struct bu_attribute_value_set *avs_p = (struct bu_attribute_value_set *)loc;
-			const char *keyValuePairs = bu_avs_get_all(avs_p, NULL);
-			struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
-			
-			bu_vls_init(&tmpstr);
-			bu_vls_strcat(&tmpstr, keyValuePairs);
-			printf("%s", tmpstr.vls_str);
-		    bu_vls_printf(vls, "%s%s=\"%s\"", (bu_vls_strlen(vls)?" ":""), sdp->sp_name, bu_vls_addr(&tmpstr));
-			bu_vls_free(&tmpstr);
-		}
-		break;
 	    case 'i':
 		{
 		    register size_t i = sdp->sp_count;
@@ -2426,8 +2412,7 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
 	/* These types are specified by lengths, e.g. %80s */
 	if (BU_STR_EQUAL(sp->sp_fmt, "%c") ||
 	    BU_STR_EQUAL(sp->sp_fmt, "%s") ||
-	    BU_STR_EQUAL(sp->sp_fmt, "%V") ||
-	    BU_STR_EQUAL(sp->sp_fmt, "%v")) {
+	    BU_STR_EQUAL(sp->sp_fmt, "%V")) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
 		bu_vls_printf(logstr, "%%%zus", sp->sp_count);

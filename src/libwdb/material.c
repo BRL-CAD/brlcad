@@ -52,9 +52,9 @@ mk_material(struct rt_wdb *wdbp, const char *name) {
     intern.idb_meth = &OBJ[ID_MATERIAL];
 
     /* Add data */
-    material->id = 4;
+    // material->id = 4;
     bu_vls_strcpy(&material->name, "TEST");
-    material->density = 123.456;
+    // material->density = 123.456;
 
     /* The internal representation will be freed */
     return wdb_put_internal(wdbp, name, &intern, mk_conv2mm);

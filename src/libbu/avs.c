@@ -209,19 +209,23 @@ bu_avs_get_all(const struct bu_attribute_value_set *avsp, const char *title) {
     bu_vls_init(&str);
     if (title) {
         bu_vls_strcat(&str, title);
-        bu_vls_strcat(&str, "=\t");
+        bu_vls_strcat(&str, "=\"");
     }
 
     avpp = avsp->avp;
     for (i = 0; i < avsp->count; i++, avpp++) {
         if (i > 0) {
-            bu_vls_strcat(&str, ", "); 
+            bu_vls_strcat(&str, ","); 
         }
         bu_vls_strcat(&str, "(");
         bu_vls_strcat(&str, avpp->name ? avpp->name : "NULL");
-        bu_vls_strcat(&str, " : ");
+        bu_vls_strcat(&str, ":");
         bu_vls_strcat(&str, avpp->value ? avpp->value : "NULL");
         bu_vls_strcat(&str, ")");
+    }
+
+    if (title) {
+        bu_vls_strcat(&str, "\"");
     }
 
     const char * attributes = bu_vls_strgrab(&str);

@@ -655,8 +655,9 @@ static const char *p_script[] = {
  * add support
  */
 static const char *p_material[] = {
-    "Enter the material ID: ",
-    "Enter the material density: "
+    "Please enter the key value pairs"
+    // "Enter the material ID: ",
+    // "Enter the material density: "
 };
 
 /**
@@ -1514,7 +1515,7 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 }
 
 static int
-material_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
+material_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_material_internal *material_ip;
     struct bu_vls expression = BU_VLS_INIT_ZERO;
@@ -1528,18 +1529,18 @@ material_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *int
     material_ip->magic = RT_MATERIAL_MAGIC;
 
 
-    material_ip->id = atoi(cmd_argvs[3]);
+    // material_ip->id = atoi(cmd_argvs[3]);
 
     bu_vls_init(&material_ip->name);
     bu_vls_strcpy(&material_ip->name, cmd_argvs[1]);
 
-    material_ip->density = atof(cmd_argvs[4]) * gedp->dbip->dbi_local2base;
+    // material_ip->density = atof(cmd_argvs[4]) * gedp->dbip->dbi_local2base;
 
     // Intialize AVS
     bu_avs_init_empty(&material_ip->physicalProperties);
-    // bu_avs_init_empty(&material_ip->mechanicalProperties);
-    // bu_avs_init_empty(&material_ip->opticalProperties);
-    // bu_avs_init_empty(&material_ip->thermalProperties);
+    bu_avs_init_empty(&material_ip->mechanicalProperties);
+    bu_avs_init_empty(&material_ip->opticalProperties);
+    bu_avs_init_empty(&material_ip->thermalProperties);
 
     // bu_vls_strcat(struct bu_vls *vp, const char *s);
     // bu_vls_vlscat(struct bu_vls *dest, const struct bu_vls *src);

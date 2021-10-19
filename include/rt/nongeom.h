@@ -139,9 +139,9 @@ struct rt_constraint_internal {
  */
 struct rt_material_internal {
 	uint32_t magic;
-	int id;
 	struct bu_vls name;
-	double density;
+	struct bu_vls parent;
+	struct bu_vls source;
 
 	struct bu_attribute_value_set physicalProperties;
 	struct bu_attribute_value_set mechanicalProperties;
