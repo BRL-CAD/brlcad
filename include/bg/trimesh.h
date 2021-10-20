@@ -122,6 +122,56 @@ BG_EXPORT extern int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, f
 
 BG_EXPORT extern struct bg_trimesh_halfedge * bg_trimesh_generate_edge_list(int fcnt, int *f);
 
+/**
+ * @brief
+ * Calculate an axis aligned bounding box (RPP) for a triangle mesh.
+ *
+ * NOTE:  This routine bounds only those points that are active in the triangle
+ * mesh, not all points present in the supplied points array.
+ *
+ * @param[out] min XYZ coordinate defining the minimum bbox point
+ * @param[out] max XYZ coordinate defining the maximum bbox point
+ * @param[in] faces array of trimesh faces
+ * @param[in] num_faces size of faces array
+ * @param[in] p array that holds the points defining the trimesh
+ * @param[in] num_pnts size of pnts array
+ */
+BG_EXPORT extern int
+bg_trimesh_aabb(point_t *min, point_t *max, int *faces, int num_faces, point_t *p, int num_pnts);
+
+
+
+/* Structure holding user-adjustable decimation settings */
+struct bg_trimesh_decimation_settings {
+    int method;            // Select decimation method to use
+    fastf_t feature_size;  // Smallest feature size (mm) to leave undecimated
+    fastf_t max_runtime;   // If the decimation takes more than max_runtime seconds, abort
+    size_t max_threads;    // Don't use more than max_threads when processing.
+};
+#define BG_TRIMESH_DECIMATION_METHOD_DEFAULT 0
+#define BG_TRIMESH_DECIMATION_SETTINGS_INIT {BG_TRIMESH_DECIMATION_METHOD_DEFAULT, 0.0, 0.0, 0}
+
+/**
+ * @brief
+ * Decimate a mesh and return the decimated faces.
+ *
+ * @param[out] ofaces faces array for the new output mesh
+ * @param[out] n_ofaces length of ofaces array
+ * @param[in] ifaces array of input trimesh
+ * @param[in] n_ifaces size of input faces array
+ * @param[in] p array that holds the points defining the trimesh
+ * @param[in] n_p size of points array
+ * @param[in] s decimation settings
+ *
+ * NOTE: This routine will not produce a points array that includes only the
+ * points used in the decimated mesh - to generate that output, use the
+ * bg_trimesh_3d_gc routine with the ofaces set produced by this function.
+ *
+ * @return -1 if error, 0 if successful */
+BG_EXPORT extern int bg_trimesh_decimate(int **ofaces, int *n_ofaces,
+    int *ifaces, int n_ifaces, point_t *p, int n_p, struct bg_trimesh_decimation_settings *s);
+
+
 /* Make an attempt at a trimesh intersection calculator that returns the sets
  * of faces intersecting and inside the other for each mesh. Doesn't attempt
  * a boolean evaluation, just characterizes faces */
@@ -131,6 +181,62 @@ bg_trimesh_isect(
     int **faces_isect_1, int *num_faces_isect_1, int **faces_isect_2, int *num_faces_isect_2,
     int *faces_1, int num_faces_1, point_t *vertices_1, int num_vertices_1,
     int *faces_2, int num_faces_2, point_t *vertices_2, int num_vertices_2);
+
+/**
+ * @brief
+ * Compute vertex normals for a mesh based on the connected faces.
+ *
+ * @param[out] onorms array of normals - will have the same length as the input points array
+ * @param[in] ifaces array of input trimesh
+ * @param[in] n_ifaces size of input faces array
+ * @param[in] p array that holds the points defining the trimesh
+ * @param[in] n_p size of points array
+ *
+ * NOTE: Any vertex point not used by the triangles in the trimesh will have a
+ * zero normal in the onorms array.  This routine does not repack the data to
+ * eliminate unused vertices - for that use bg_trimesh_optimize
+ *
+ * @return -1 if error, 0 if successful */
+BG_EXPORT extern int bg_trimesh_normals(vect_t **onorms, int *ifaces, int n_ifaces, point_t *p, int n_p);
+
+
+/* Various additional mesh optimization steps that can be enabled
+ * NOTE:  If we want to look at exposing the capabilities of something like
+ * https://github.com/zeux/meshoptimizer this would be the place to start... */
+struct bg_trimesh_optimization_settings {
+    int collapse_degenerate;  // Remove degenerate faces
+    fastf_t degenerate_edge_length;  // If near zero and collapse_degenerate is set, only collapse triangles with two or more uses of the exact same vertex
+    fastf_t max_runtime;   // If the optimization takes more than max_runtime seconds, abort
+    size_t max_threads;    // Don't use more than max_threads when processing.
+};
+
+#define BG_TRIMESH_OPTIMIZATION_SETTINGS_INIT {0, 0.0, 0.0, 0}
+
+/**
+ * @brief
+ * Return trimesh information for a 3D mesh that contains just the date needed
+ * to represent in the mesh.  Used to finalize intermediate processing meshes
+ * to generate a compact mesh for export or storage.
+ *
+ * @param[out] ofaces faces array for the new output mesh with new indices based on opnts array.
+ * @param[out] n_ofaces length of ofaces array
+ * @param[out] opnts compact points array for the new output mesh.
+ * @param[out] onorms (optional) compact normals array for the output mesh's points.
+ * @param[out] n_opnts length of opnts array.
+ * @param[in] ifaces array of input trimesh
+ * @param[in] n_ifaces size of input faces array
+ * @param[in] ipnts array that holds the points defining the original trimesh
+ * @param[in] inorms (optional) array that holds the normals for the mesh vertices
+ * @param[in] s (optional) settings to enable various additional processing steps
+ *
+ * @return -1 if error, number of faces in new trimesh if successful
+ */
+BG_EXPORT extern int bg_trimesh_optimize(
+	int **ofaces, int *n_ofaces,
+	point_t **opnts, vect_t **onorms, int *n_opnts,
+	const int *ifaces, int n_ifaces,
+	const point_t *ipnts, const vect_t *inorms,
+	struct bg_trimesh_optimization_settings *s);
 
 
 /**
