@@ -236,12 +236,8 @@ if(BRLCAD_ENABLE_GCT)
     primitives/bot/gct_decimation/auxiliary/mmbitmap.c
     primitives/bot/gct_decimation/auxiliary/mm.c
     primitives/bot/gct_decimation/auxiliary/mmhash.c
-    primitives/bot/gct_decimation/meshoptimization.c
     primitives/bot/gct_decimation/meshoptimizer.c
     primitives/bot/gct_decimation/meshdecimation.c
-    primitives/bot/gct_decimation/meshdecimationSSE2.c
-    primitives/bot/gct_decimation/meshdecimationSSE3.c
-    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
     )
 endif(BRLCAD_ENABLE_GCT)
 
@@ -261,7 +257,6 @@ set(librt_ignored_files
   primitives/bot/gct_decimation/auxiliary/mmhash.h
   primitives/bot/gct_decimation/auxiliary/mmthread.h
   primitives/bot/gct_decimation/meshdecimation.h
-  primitives/bot/gct_decimation/meshoptimization.h
   primitives/bot/gct_decimation/meshoptimizer.h
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
@@ -316,7 +311,6 @@ if(NOT BRLCAD_ENABLE_GCT)
     primitives/bot/gct_decimation/auxiliary/mmbitmap.c
     primitives/bot/gct_decimation/auxiliary/mm.c
     primitives/bot/gct_decimation/auxiliary/mmhash.c
-    primitives/bot/gct_decimation/meshoptimization.c
     primitives/bot/gct_decimation/meshoptimizer.c
     primitives/bot/gct_decimation/meshdecimation.c
     primitives/bot/gct_decimation/meshdecimationSSE2.c
