@@ -75,9 +75,6 @@ typedef struct {
 void mmHashInit(void *hashtable, mmHashAccess *access, size_t entrysize, uint32_t hashbits, uint32_t pageshift, uint32_t flags);
 size_t mmHashRequiredSize(size_t entrysize, uint32_t hashbits, uint32_t pageshift);
 
-int mmHashDirectAddEntry(void *hashtable, mmHashAccess *access, void *adddentry, int nodupflag);
-void mmHashDirectListEntry(void *hashtable, mmHashAccess *access, void *listentry, void *opaque);
-
 int mmHashLockCallEntry(void *hashtable, mmHashAccess *access, void *callentry, void (*callback)(void *opaque, void *entry, int newflag), void *opaque, int addflag);
 int mmHashLockDeleteEntry(void *hashtable, mmHashAccess *access, void *deleteentry, int readflag);
 int mmHashLockReadEntry(void *hashtable, mmHashAccess *access, void *readentry);
