@@ -42,6 +42,7 @@
 #include "auxiliary/mm.h"
 #include "bu/tc.h"
 
+#include "bu/exit.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 
