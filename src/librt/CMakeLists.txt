@@ -257,7 +257,6 @@ set(librt_ignored_files
   primitives/bot/gct_decimation/auxiliary/mmhash.h
   primitives/bot/gct_decimation/auxiliary/mmthread.h
   primitives/bot/gct_decimation/meshdecimation.h
-  primitives/bot/gct_decimation/meshoptimizer.h
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
   primitives/bot/tieprivate.h

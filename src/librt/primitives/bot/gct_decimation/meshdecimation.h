@@ -142,4 +142,12 @@ int mdMeshDecimation(mdOperation *operation, int flags);
 #define MD_FLAGS_NO_DECIMATION (0x20)
 
 
+/* Optimize the mesh */
+int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indiceswidth, size_t indicesstride, void (*shufflecallback)(void *opaquepointer, long newvertexindex, long oldvertexindex), void *shuffleopaquepointer, int vertexcachesize, int flags);
+
+#define MO_FLAGS_FIXED_CACHE_SIZE (0x1)
+#define MO_FLAGS_DISABLE_LOOK_AHEAD (0x2)
+#define MO_FLAGS_ENABLE_LAZY_SEARCH (0x4)
+#define MO_FLAGS_FAST_SEED_SELECT (0x8)
+
 #endif

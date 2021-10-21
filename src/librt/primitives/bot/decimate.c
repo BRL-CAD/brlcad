@@ -39,7 +39,6 @@
 
 #if !defined(BRLCAD_DISABLE_GCT)
 #  include "./gct_decimation/meshdecimation.h"
-#  include "./gct_decimation/meshoptimizer.h"
 #endif
 
 #include "./bot_edge.h"
