@@ -757,6 +757,8 @@ rt_joint_process_selection(
 
 	if (!member) {
 	    bu_log("couldn't lookup member to edit matrix\n");
+	    rt_db_free_internal(&path_ip);
+	    return 0;
 	}
 	if (!member->tr_l.tl_mat) {
 	    mat_t *new_mat;
