@@ -66,6 +66,8 @@
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
+#define GDIAM_QUIET 1
+
 /*--- Constants ---*/
 
 #define  HEAP_LIMIT  10000
