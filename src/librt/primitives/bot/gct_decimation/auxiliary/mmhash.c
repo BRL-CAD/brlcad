@@ -30,7 +30,6 @@
 #include "mmhash.h"
 
 #include "mm.h"
-#include "mmatomic.h"
 
 #include <string.h>
 

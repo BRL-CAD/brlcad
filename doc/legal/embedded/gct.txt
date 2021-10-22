@@ -24,12 +24,10 @@ DAMAGE.
 file:/src/librt/primitives/bot/gct_decimation/auxiliary/cc.h
 file:/src/librt/primitives/bot/gct_decimation/auxiliary/mm.c
 file:/src/librt/primitives/bot/gct_decimation/auxiliary/mm.h
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmatomic.h
 file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmbinsort.c
 file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmbinsort.h
 file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmhash.c
 file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmhash.h
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmthread.h
 file:/src/librt/primitives/bot/gct_decimation/meshdecimation.c
 file:/src/librt/primitives/bot/gct_decimation/meshdecimation.h
 file:/src/librt/primitives/bot/gct_decimation/meshoptimizer.c

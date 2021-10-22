@@ -250,10 +250,8 @@ set(librt_ignored_files
   primitives/bot/g_bot_include.c
   primitives/bot/gct_decimation/auxiliary/cc.h
   primitives/bot/gct_decimation/auxiliary/mm.h
-  primitives/bot/gct_decimation/auxiliary/mmatomic.h
   primitives/bot/gct_decimation/auxiliary/mmbinsort.h
   primitives/bot/gct_decimation/auxiliary/mmhash.h
-  primitives/bot/gct_decimation/auxiliary/mmthread.h
   primitives/bot/gct_decimation/meshdecimation.h
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
