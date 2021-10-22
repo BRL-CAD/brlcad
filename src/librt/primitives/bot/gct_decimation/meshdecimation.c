@@ -3950,7 +3950,7 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     for (threadid = 0; threadid < threadcount; threadid++, tinit++)
 	operation->decimationcount += tinit->decimationcount;
 
-    if (mesh.updatestatusflag && operation->statusopaquepointer) {
+    if (mesh.updatestatusflag && operation->statuscallback) {
 	mdUpdateStatus(&mesh, 0, MD_STATUS_STAGE_STORE, &status);
 	operation->statuscallback(operation->statusopaquepointer, &status);
     }
@@ -3966,7 +3966,7 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     operation->vertexcount = mesh.vertexpackcount;
     operation->tricount = mesh.tripackcount;
 
-    if (mesh.updatestatusflag && operation->statusopaquepointer) {
+    if (mesh.updatestatusflag && operation->statuscallback) {
 	mdUpdateStatus(&mesh, 0, MD_STATUS_STAGE_DONE, &status);
 	operation->statuscallback(operation->statusopaquepointer, &status);
     }
