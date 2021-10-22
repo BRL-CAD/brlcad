@@ -3023,9 +3023,11 @@ static int mdMeshVertexComputeNormal(mdMesh *mesh, mdi vertexindex, mdi *trirefl
 static mdi mdMeshCloneVertex(mdMesh *mesh, mdi cloneindex, mdf *point)
 {
     mdi vertexindex, retindex;
-    mdVertex *vertex;
-    mdOpAttrib *attrib, *attribend;
-    void *attrsrc, *attrdst;
+    mdVertex *vertex = NULL;
+    mdOpAttrib *attrib = NULL;
+    mdOpAttrib *attribend = NULL;
+    void *attrsrc = NULL;
+    void *attrdst = NULL;
 
     retindex = -1;
     vertex = &mesh->vertexlist[mesh->clonesearchindex];
@@ -3041,7 +3043,6 @@ static mdi mdMeshCloneVertex(mdMesh *mesh, mdi cloneindex, mdf *point)
 
 	/* Copy generic vertex attributes from the cloned vertex */
 	if (mesh->attribcount) {
-	    attrib = mesh->attrib;
 	    attribend = &mesh->attrib[mesh->attribcount];
 
 	    for (attrib = mesh->attrib; attrib < attribend; attrib++) {
@@ -3554,8 +3555,8 @@ static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, md
     int threadid, stageindex;
     long buildtricount, buildrefcount, populatecount, deletioncount;
     double progress, subprogress;
-    mdThreadInit *tinit;
-    mdThreadData *tdata;
+    mdThreadInit *tinit = NULL;
+    mdThreadData *tdata = NULL;
 
     subprogress = 0.0;
 
@@ -3564,8 +3565,6 @@ static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, md
     else {
 	tinit = &threadinit[0];
 	status->stage = tinit->stage;
-
-	tdata = tinit->tdata;
 
 	if ((unsigned)status->stage >= MD_STATUS_STAGE_COUNT)
 	    return;
