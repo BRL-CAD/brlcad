@@ -13,6 +13,7 @@ set(bu_test_srcs
   dir.c
   dirname.c
   encode.c
+  env.c
   escape.c
   file.c
   file_mime.c

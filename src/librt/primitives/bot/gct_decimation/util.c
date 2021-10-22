@@ -40,6 +40,7 @@
 
 #include "./util.h"
 
+#include "bu/env.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 
@@ -476,8 +477,6 @@ end:
 
 void mmInit()
 {
-    int64_t sysmemory;
-
     if (mmInitStatus)
 	return;
 
@@ -488,25 +487,8 @@ void mmInit()
 
     if (!(mmcontext.numaflag)) {
 	mmcontext.nodecount = 1;
-#if defined(_SC_PAGESIZE) && (defined(MM_LINUX) || defined(MM_UNIX))
-	mmcontext.pagesize = sysconf(_SC_PAGESIZE);
-#elif defined(MM_WIN32)
-	{
-	    SYSTEM_INFO sysinfo;
-	    GetSystemInfo(&sysinfo);
-	    mmcontext.pagesize = sysinfo.dwPageSize;
-	}
-#else
-	mmcontext.pagesize = BU_PAGE_SIZE;
-#endif
-#if defined(MM_UNIX) && defined(_SC_PHYS_PAGES)
-	sysmemory = sysconf(_SC_PHYS_PAGES);
-
-	if (sysmemory > 0)
-	    sysmemory *= mmcontext.pagesize;
-
-#endif
-	mmcontext.sysmemory = sysmemory;
+	mmcontext.pagesize = bu_mem(BU_MEM_PAGE_SIZE);
+	mmcontext.sysmemory = bu_mem(BU_MEM_ALL);
 	mmcontext.nodesize[0] = mmcontext.sysmemory;
     }
 

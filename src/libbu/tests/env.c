@@ -1,7 +1,7 @@
-/*                          E N V . H
+/*                            E N V . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2021 United States Government as represented by
+ * Copyright (c) 2011-2021 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,47 +18,35 @@
  * information.
  */
 
-#ifndef BU_ENV_H
-#define BU_ENV_H
-
 #include "common.h"
 
-#include "bu/defines.h"
+#include <stdio.h>
+#include <string.h>
 
-__BEGIN_DECLS
+#include "bu.h"
 
-/** @addtogroup bu_env
- *
- * @brief
- * Platform-independent methods for interacting with the parent operating
- * system environment.
- *
- */
-/** @{ */
-/** @file bu/env.h */
+int
+main(int UNUSED(ac), char *av[])
+{
+    bu_setprogname(av[0]);
 
-BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrite);
+    long int all_mem = bu_mem(BU_MEM_ALL);
+    long int avail_mem = bu_mem(BU_MEM_AVAIL);
+    long int page_mem = bu_mem(BU_MEM_PAGE_SIZE);
 
+    bu_log("MEM report: all(%ld) avail(%ld) page_size(%ld)\n", all_mem, avail_mem, page_mem);
 
-/* Specific types of machine memory information that may be requested */
-#define BU_MEM_ALL 0
-#define BU_MEM_AVAIL 1
-#define BU_MEM_PAGE_SIZE 2
+    if (all_mem < 0 || avail_mem < 0 || page_mem < 0)
+	return -1;
 
-/* Report information about system memory.  Returns value in bytes (>= 0) if
- * requested information is available, otherwise error. */
-BU_EXPORT extern long int bu_mem(int type);
+    return 0;
+}
 
-/** @} */
-
-__END_DECLS
-
-#endif /* BU_ENV_H */
 
 /*
  * Local Variables:
- * tab-width: 8
  * mode: C
+ * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
