@@ -89,14 +89,4 @@ static inline unsigned ccLog2Int(unsigned value)
     return result;
 }
 
-static void ccQuellPedantic(int var)
-{
-if (!var) {
-  (void)ccQuickRand32Seed(NULL, 0);
-  (void)ccPow2Round32(0);
-  (void)ccLog2Int(0);
-  (void)ccQuellPedantic(1);
-}
-}
-
 #endif
