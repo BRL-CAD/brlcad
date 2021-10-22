@@ -245,7 +245,11 @@ rt_comb_import4(
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
-	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
+	    if (dbip) {
+		flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
+	    } else {
+		flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, 0);
+	    }
 
 	    /* Verify that rotation part is pure rotation */
 	    if (fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 ||
@@ -646,21 +650,19 @@ db_tree_flatten_describe(
 	    fastf_t az, el;
 	    bn_ae_vec(&az, &el, itp->tr_l.tl_mat ?
 		      itp->tr_l.tl_mat : bn_mat_identity);
-	    bu_vls_printf(vls,
-			  " az=%g, el=%g, ",
-			  az, el);
+	    bu_vls_printf(vls, " az=%g, el=%g, ", az, el);
 	}
-	if (status & STAT_XLATE) {
+	if (status & STAT_XLATE && itp->tr_l.tl_mat) {
 	    bu_vls_printf(vls, " [%g, %g, %g]",
 			  itp->tr_l.tl_mat[MDX]*mm2local,
 			  itp->tr_l.tl_mat[MDY]*mm2local,
 			  itp->tr_l.tl_mat[MDZ]*mm2local);
 	}
-	if (status & STAT_SCALE) {
+	if (status & STAT_SCALE && itp->tr_l.tl_mat) {
 	    bu_vls_printf(vls, " scale %g",
 			  1.0/itp->tr_l.tl_mat[15]);
 	}
-	if (status & STAT_PERSP) {
+	if (status & STAT_PERSP && itp->tr_l.tl_mat) {
 	    bu_vls_printf(vls,
 			  " Perspective=[%g, %g, %g]??",
 			  itp->tr_l.tl_mat[12],
