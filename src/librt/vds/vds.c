@@ -493,7 +493,10 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
     }
     /* Don't try to free leaf nodes, which belong to nodearray */
     if (numchildren) {
+	N->children = NULL;
+	N->sibling = NULL;
 	free(N);
+	return NULL;
     }
     N = newN;
     /* Copy node->vistris list into node->subtris[]; clear linked list ptrs */
@@ -597,6 +600,8 @@ vdsNode *vdsEndVertexTree(struct vdsState *s)
 	free(s->nodearray);
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Computing triangle container nodes..."));
+    if (!root)
+	return NULL;
     vdsComputeTriNodes(root, root);
     free(s->triarray);			/* nodearray still holds leaf nodes */
     root->status = Boundary;		/* root initially on boundary	    */
