@@ -164,7 +164,7 @@ private:
 public:
     void  init( const gdiam_point  * _arr,
                 int  size ) {
-        arr = (gdiam_point *)malloc( sizeof( gdiam_point ) * size );
+        arr = (gdiam_point *)calloc(size, sizeof( gdiam_point ));
         assert( arr != NULL );
 
         for  ( int  ind = 0; ind < size; ind++ ) {
@@ -555,8 +555,7 @@ void  heap_init( heap_t  * pHeap, ptrCompareFunc  _pCompFunc )
 
     pHeap->pCompFunc = _pCompFunc;
     pHeap->max_size = 100;
-    pHeap->pArr = (voidPtr_t *)malloc( sizeof( void * )
-                                       * pHeap->max_size );
+    pHeap->pArr = (voidPtr_t *)calloc(pHeap->max_size, sizeof( void * ));
     assert( pHeap->pArr != NULL );
     pHeap->curr_size = 0;
 }
@@ -571,7 +570,7 @@ static void  resize( heap_t  * pHeap, int  size )
         return;
 
     max_sz = size * 2;
-    pTmp = (voidPtr_t *)malloc( max_sz * sizeof( void * ) );
+    pTmp = (voidPtr_t *)calloc( max_sz, sizeof( void * ) );
     assert( pTmp != NULL );
     memset( pTmp, 0, max_sz * sizeof( void * ) );
     memcpy( pTmp, pHeap->pArr, pHeap->curr_size * sizeof( void * ) );
@@ -1058,7 +1057,7 @@ gdiam_point  * gdiam_convert( gdiam_real  * start, int  size )
     assert( start != NULL );
     assert( size > 0 );
 
-    p_arr = (gdiam_point *)malloc( sizeof( gdiam_point ) * size );
+    p_arr = (gdiam_point *)calloc(size, sizeof( gdiam_point ));
     assert( p_arr != NULL );
 
     for  ( int  ind = 0; ind < size; ind++ )
@@ -1848,8 +1847,7 @@ public:
         gdiam_real     ang1, ang2, ang3, tmp_area;
         bbox_2d_info  tmp_bbox;
 
-        angles = (gdiam_real *)malloc( sizeof( gdiam_real )
-                                           * (int)ch.size() );
+        angles = (gdiam_real *)calloc(ch.size(), sizeof( gdiam_real ));
         assert( angles != NULL );
 
         /* Pre-computing all edge directions */
@@ -2006,7 +2004,7 @@ public:
         pnt_copy( base_proj, dir );
         gdiam_generate_orthonormal_base( base_proj, base_x, base_y );
 
-        arr = (point2d *)malloc( sizeof( point2d ) * size );
+        arr = (point2d *)calloc(size, sizeof( point2d ));
         assert( arr != 0 );
 
         for  ( int  ind = 0; ind < size; ind++ ) {
@@ -2308,16 +2306,16 @@ gdiam_point  * gdiam_convex_sample( gdiam_point  * start, int  size,
     grid_entries = grid_size * grid_size;
     mem_size = (int)( sizeof( gdiam_point ) * grid_size * grid_size );
 
-    bottoms = (gdiam_point *)malloc( mem_size );
-    tops = (gdiam_point *)malloc( mem_size );
-    out_arr = (gdiam_point *)malloc( sizeof( gdiam_point ) * sample_size );
+    bottoms = (gdiam_point *)calloc(1, mem_size );
+    tops = (gdiam_point *)calloc(1, mem_size );
+    out_arr = (gdiam_point *)calloc(sample_size, sizeof( gdiam_point ));
 
     assert( bottoms != NULL );
     assert( tops != NULL );
     assert( out_arr != NULL );
 
     for  ( int  ind = 0; ind < grid_entries; ind++ )
-        tops[ ind ] = bottoms[ ind ] = NULL;
+	 tops[ ind ] = bottoms[ ind ] = NULL;
 
     // Now we stream the points registering them with the relevant
     // shaft in the grid.
