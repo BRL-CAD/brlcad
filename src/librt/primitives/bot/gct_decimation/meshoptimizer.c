@@ -26,20 +26,11 @@
  */
 
 
-#if defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#  pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wunused-function"
-#endif
-
-
 #include "common.h"
 
 #include "meshdecimation.h"
 
-#include "auxiliary/cc.h"
-#include "auxiliary/mm.h"
+#include "./util.h"
 #include "bu/tc.h"
 
 #include "bu/exit.h"

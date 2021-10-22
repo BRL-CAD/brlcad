@@ -476,6 +476,122 @@ void mmListRemove(void *item, intptr_t offset);
 void mmThreadBindToCpu(int cpuindex);
 int mmCpuGetNode(int cpuindex);
 
+
+/* Quick Random numbers */
+
+typedef struct {
+    uint32_t a;
+    uint32_t b;
+    uint32_t c;
+    uint32_t d;
+} ccQuickRandState32;
+
+
+static inline uint32_t ccQuickRand32(ccQuickRandState32 *randstate)
+{
+    uint32_t e;
+    e = randstate->a - ((randstate->b << 27) | (randstate->b >> (32 - 27)));
+    randstate->a = randstate->b ^ ((randstate->c << 17) | (randstate->c >> (32 - 17)));
+    randstate->b = randstate->c + randstate->d;
+    randstate->c = randstate->d + e;
+    randstate->d = e + randstate->a;
+    return randstate->d;
+}
+
+
+static inline void ccQuickRand32Seed(ccQuickRandState32 *randstate, uint32_t seed)
+{
+    uint32_t i;
+    randstate->a = 0xf1ea5eed;
+    randstate->b = seed;
+    randstate->c = seed;
+    randstate->d = seed;
+
+    for (i = 0; i < 20; i++)
+	ccQuickRand32(randstate);
+}
+
+
+static inline uint32_t ccPow2Round32(uint32_t v)
+{
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
+
+
+static inline unsigned ccLog2Int(unsigned value)
+{
+    unsigned result = 0;
+
+    while (value /= 2)
+	++result;
+
+    return result;
+}
+
+/* Hash */
+enum {
+    MM_HASH_ENTRYCMP_INVALID,
+    MM_HASH_ENTRYCMP_FOUND,
+    MM_HASH_ENTRYCMP_SKIP
+};
+
+
+enum {
+    MM_HASH_ENTRYLIST_BREAK,
+    MM_HASH_ENTRYLIST_CONTINUE
+};
+
+
+enum {
+    MM_HASH_FAILURE,
+    MM_HASH_SUCCESS,
+    MM_HASH_TRYAGAIN /* Internal, can not be returned by any public call */
+};
+
+
+typedef struct {
+    /* Clear the entry so that entryvalid() returns zero */
+    void (*clearentry)(void *entry);
+    /* Returns non-zero if the entry is valid and existing */
+    int (*entryvalid)(void *entry);
+    /* Return key for an arbitrary set of user-defined data */
+    uint32_t (*entrykey)(void *entry);
+    /* Return MM_HASH_ENTRYCMP* to stop or continue the search */
+    int (*entrycmp)(void *entry, void *entryref);
+    /* Return MM_HASH_ENTRYLIST* to stop or continue the search */
+    int (*entrylist)(void *opaque, void *entry, void *entryref);
+} mmHashAccess;
+
+
+/* Do not keep track of entry count, table will not be able to say when it needs to shrink or grow */
+#define MM_HASH_FLAGS_NO_COUNT (0x1)
+
+void mmHashInit(void *hashtable, mmHashAccess *access, size_t entrysize, uint32_t hashbits, uint32_t pageshift, uint32_t flags);
+size_t mmHashRequiredSize(size_t entrysize, uint32_t hashbits, uint32_t pageshift);
+
+int mmHashLockCallEntry(void *hashtable, mmHashAccess *access, void *callentry, void (*callback)(void *opaque, void *entry, int newflag), void *opaque, int addflag);
+int mmHashLockDeleteEntry(void *hashtable, mmHashAccess *access, void *deleteentry, int readflag);
+int mmHashLockReadEntry(void *hashtable, mmHashAccess *access, void *readentry);
+int mmHashLockAddEntry(void *hashtable, mmHashAccess *access, void *adddentry, int nodupflag);
+void *mmHashLockFindEntry(void *hashtable, mmHashAccess *access, void *findentry);
+
+/* Bin sort */
+void *mmBinSortInit(size_t itemlistoffset, int rootbucketcount, int groupbucketcount, double rootmin, double rootmax, int groupthreshold, double(*itemvaluecallback)(void *item), int maxdepth, int numanodeindex);
+void mmBinSortFree(void *binsort);
+
+void mmBinSortAdd(void *binsort, void *item, double itemvalue);
+void mmBinSortRemove(void *binsort, void *item, double itemvalue);
+void mmBinSortUpdate(void *binsort, void *item, double olditemvalue, double newitemvalue);
+
+void *mmBinSortGetFirstItem(void *binsort, double failmax);
+
 #endif /* MM_H */
 
 /*

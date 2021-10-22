@@ -232,9 +232,7 @@ set(LIBRT_SOURCES
 if(BRLCAD_ENABLE_GCT)
   set(LIBRT_SOURCES
     ${LIBRT_SOURCES}
-    primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-    primitives/bot/gct_decimation/auxiliary/mm.c
-    primitives/bot/gct_decimation/auxiliary/mmhash.c
+    primitives/bot/gct_decimation/util.c
     primitives/bot/gct_decimation/meshoptimizer.c
     primitives/bot/gct_decimation/meshdecimation.c
     )
@@ -248,10 +246,7 @@ set(librt_ignored_files
   primitives/bot/bot_wireframe.cpp
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
-  primitives/bot/gct_decimation/auxiliary/cc.h
-  primitives/bot/gct_decimation/auxiliary/mm.h
-  primitives/bot/gct_decimation/auxiliary/mmbinsort.h
-  primitives/bot/gct_decimation/auxiliary/mmhash.h
+  primitives/bot/gct_decimation/util.h
   primitives/bot/gct_decimation/meshdecimation.h
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c

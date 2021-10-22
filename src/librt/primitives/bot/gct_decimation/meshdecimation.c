@@ -37,10 +37,7 @@
 
 #include "meshdecimation.h"
 
-#include "auxiliary/cc.h"
-#include "auxiliary/mm.h"
-#include "auxiliary/mmhash.h"
-#include "auxiliary/mmbinsort.h"
+#include "./util.h"
 #include "bu/tc.h"
 
 #include "bu/malloc.h"
