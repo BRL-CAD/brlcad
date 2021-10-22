@@ -45,6 +45,45 @@
 #include "bu/tc.h"
 #include "bu/exit.h"
 
+#define ADDRESS(p,o) ((void *)(((char *)p)+(o)))
+
+#define MM_CPU_COUNT_MAXIMUM (1024)
+#define MM_NODE_COUNT_MAXIMUM (256)
+
+#if defined(__GNUC__) && defined(CPUCONF_CACHE_LINE_SIZE)
+#define MM_CACHE_ALIGN __attribute__((aligned(CPUCONF_CACHE_LINE_SIZE)))
+#define MM_NOINLINE __attribute__((noinline))
+#else
+#define MM_CACHE_ALIGN
+#define MM_NOINLINE
+#endif
+
+
+#if defined(__linux__) || defined(__gnu_linux__) || defined(__linux) || defined(__linux)
+#define MM_LINUX (1)
+#define MM_UNIX (1)
+#elif defined(__APPLE__)
+#define MM_OSX (1)
+#define MM_UNIX (1)
+#elif defined(__unix__) || defined(__unix) || defined(unix)
+#define MM_UNIX (1)
+#elif defined(_WIN64) || defined(__WIN64__) || defined(WIN64)
+#define MM_WIN64 (1)
+#define MM_WIN32 (1)
+#define MM_WINDOWS (1)
+#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+#define MM_WIN32 (1)
+#define MM_WINDOWS (1)
+#endif
+
+#if defined(__MINGW64__) && __MINGW64__
+#define MM_MINGW32 (1)
+#define MM_MINGW64 (1)
+#elif defined(__MINGW32__) && __MINGW32__
+#define MM_MINGW32 (1)
+#endif
+
+
 #if (defined(__i386__) || defined(__x86_64__)) && defined(__GNUC__)
 #define MM_ATOMIC_SUPPORT
 
@@ -376,45 +415,6 @@ static inline void mtSpinUnlock(mtSpin *spin)
 
 #endif
 #endif
-
-#define ADDRESS(p,o) ((void *)(((char *)p)+(o)))
-
-#define MM_CPU_COUNT_MAXIMUM (1024)
-#define MM_NODE_COUNT_MAXIMUM (256)
-
-#if defined(__GNUC__) && defined(CPUCONF_CACHE_LINE_SIZE)
-#define MM_CACHE_ALIGN __attribute__((aligned(CPUCONF_CACHE_LINE_SIZE)))
-#define MM_NOINLINE __attribute__((noinline))
-#else
-#define MM_CACHE_ALIGN
-#define MM_NOINLINE
-#endif
-
-
-#if defined(__linux__) || defined(__gnu_linux__) || defined(__linux) || defined(__linux)
-#define MM_LINUX (1)
-#define MM_UNIX (1)
-#elif defined(__APPLE__)
-#define MM_OSX (1)
-#define MM_UNIX (1)
-#elif defined(__unix__) || defined(__unix) || defined(unix)
-#define MM_UNIX (1)
-#elif defined(_WIN64) || defined(__WIN64__) || defined(WIN64)
-#define MM_WIN64 (1)
-#define MM_WIN32 (1)
-#define MM_WINDOWS (1)
-#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-#define MM_WIN32 (1)
-#define MM_WINDOWS (1)
-#endif
-
-#if defined(__MINGW64__) && __MINGW64__
-#define MM_MINGW32 (1)
-#define MM_MINGW64 (1)
-#elif defined(__MINGW32__) && __MINGW32__
-#define MM_MINGW32 (1)
-#endif
-
 
 typedef struct {
     void *blocklist;
