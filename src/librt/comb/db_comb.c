@@ -331,7 +331,7 @@ rt_comb_import4(
     }
 
     if (comb->region_flag) {
-	if (dbip->dbi_version < 0) {
+	if (!dbip || dbip->dbi_version < 0) {
 	    comb->region_id = flip_short(rp[0].c.c_regionid);
 	    comb->aircode = flip_short(rp[0].c.c_aircode);
 	    comb->GIFTmater = flip_short(rp[0].c.c_material);
@@ -711,17 +711,17 @@ db_tree_describe(
 			      " az=%g, el=%g, ",
 			      az, el);
 	    }
-	    if (status & STAT_XLATE) {
+	    if (status & STAT_XLATE && tp->tr_l.tl_mat) {
 		bu_vls_printf(vls, " [%g, %g, %g]",
 			      tp->tr_l.tl_mat[MDX]*mm2local,
 			      tp->tr_l.tl_mat[MDY]*mm2local,
 			      tp->tr_l.tl_mat[MDZ]*mm2local);
 	    }
-	    if (status & STAT_SCALE) {
+	    if (status & STAT_SCALE && tp->tr_l.tl_mat) {
 		bu_vls_printf(vls, " scale %g",
 			      1.0/tp->tr_l.tl_mat[15]);
 	    }
-	    if (status & STAT_PERSP) {
+	    if (status & STAT_PERSP && tp->tr_l.tl_mat) {
 		bu_vls_printf(vls,
 			      " Perspective=[%g, %g, %g]??",
 			      tp->tr_l.tl_mat[12],
@@ -1257,6 +1257,9 @@ db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, struct direct
     RT_CK_DBI(dbip);
     RT_CK_COMB(comb);
 
+    if (!children)
+	return 0;
+
     node_count = db_tree_nleaves(comb->tree);
     if (!node_count) return 0;
 
@@ -1266,6 +1269,8 @@ db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, struct direct
 
     if (children) {
 	if (!*children) (*children) = (struct directory **)bu_calloc(node_count + 1, sizeof(struct directory *), "directory array");
+	if (!*children)
+	    return 0;
     }
     if (bool_ops) {
 	if (!*bool_ops) (*bool_ops) = (int *)bu_calloc(node_count + 1, sizeof(int), "bool ops");
