@@ -54,6 +54,7 @@
 #include  <vector>
 #include  <algorithm>
 
+#include  "bu/exit.h"
 #include  "gdiam.hpp"
 
 /* for g++ to quell warnings */
@@ -254,9 +255,7 @@ public:
     GFSPTreeNode  * build_node( gdiam_point  * left,
                                 gdiam_point  * right ) {
         if  ( left > right ) {
-            printf( "what!?\n" );
-            fflush( stdout );
-            assert( left <= right );
+	    bu_bomb("point ordering error - gdiam build_node\n");
         }
         while  ( ( right > left )
                  &&  ( pnt_isEqual( *right, *left ) ) )
@@ -2265,7 +2264,7 @@ static void   register_point( gdiam_point  pnt,
         y_ind = grid_size - 1;
 
     position = x_ind + y_ind * grid_size;
-    if  ( tops[ position ] == NULL ) {
+    if  ( tops[ position ] == NULL || bottoms[ position ] == NULL) {
         tops[ position ] = bottoms[ position ] = pnt;
         return;
     }
