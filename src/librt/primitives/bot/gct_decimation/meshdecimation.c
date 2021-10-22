@@ -3256,10 +3256,13 @@ static int mdMeshVertexCheckUse(mdMesh *mesh, mdi *trireflist, int trirefcount)
 static void mdMeshWriteVertices(mdMesh *mesh, mdOpAttrib *normalattrib, mdf *vertexnormal)
 {
     mdi vertexindex, writeindex;
-    mdf *point, *normal;
-    mdVertex *vertex;
-    mdOpAttrib *attrib, *attribend;
-    void *attrsrc, *attrdst;
+    mdf *point = NULL;
+    mdf *normal = NULL;
+    mdVertex *vertex = NULL;
+    mdOpAttrib *attrib = NULL;
+    mdOpAttrib *attribend = NULL;
+    void *attrsrc = NULL;
+    void *attrdst = NULL;
     void (*writenormal)(void *dst, mdf * src);
 
     writenormal = 0;
@@ -3274,7 +3277,6 @@ static void mdMeshWriteVertices(mdMesh *mesh, mdOpAttrib *normalattrib, mdf *ver
     point = mesh->point;
     writeindex = 0;
     vertex = mesh->vertexlist;
-    attrib = mesh->attrib;
     attribend = &mesh->attrib[mesh->attribcount];
 
     for (vertexindex = 0; vertexindex < mesh->vertexcount; vertexindex++, vertex++) {
@@ -3948,7 +3950,7 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     for (threadid = 0; threadid < threadcount; threadid++, tinit++)
 	operation->decimationcount += tinit->decimationcount;
 
-    if (mesh.updatestatusflag) {
+    if (mesh.updatestatusflag && operation->statusopaquepointer) {
 	mdUpdateStatus(&mesh, 0, MD_STATUS_STAGE_STORE, &status);
 	operation->statuscallback(operation->statusopaquepointer, &status);
     }
@@ -3964,7 +3966,7 @@ int mdMeshDecimation(mdOperation *operation, int flags)
     operation->vertexcount = mesh.vertexpackcount;
     operation->tricount = mesh.tripackcount;
 
-    if (mesh.updatestatusflag) {
+    if (mesh.updatestatusflag && operation->statusopaquepointer) {
 	mdUpdateStatus(&mesh, 0, MD_STATUS_STAGE_DONE, &status);
 	operation->statuscallback(operation->statusopaquepointer, &status);
     }
@@ -3985,3 +3987,13 @@ error:
     return 1;
 }
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
