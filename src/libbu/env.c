@@ -43,6 +43,15 @@
 #ifdef HAVE_SYS_SYSINFO_H
 #  include <sys/sysinfo.h>
 #endif
+#ifdef HAVE_SYS_SYSCTL_H
+#  include <sys/sysctl.h>
+#endif
+#ifdef HAVE_MACH_HOST_INFO_H
+#  include <mach/host_info.h>
+#endif
+#ifdef HAVE_MACH_MACH_HOST_H
+#  include <mach/mach_host.h>
+#endif
 
 #include "bu/env.h"
 #include "bu/malloc.h"
@@ -99,7 +108,7 @@ _bu_mem_sysconf(int type)
     if (type < 0)
 	return -2;
 
-#ifdef HAVE_SYSCONF
+#ifdef HAVE_SYSCONF_AVPHYS
 
     long int pagesize = (long int)sysconf(_SC_PAGESIZE);
     if (type == BU_MEM_PAGE_SIZE) {
@@ -120,6 +129,7 @@ _bu_mem_sysconf(int type)
 	return -1;
 
     return avail_bytes;
+
 #endif
 
     return -1;
@@ -156,6 +166,50 @@ _bu_mem_sysinfo(int type)
     return avail_bytes;
 
 #endif
+    return -1;
+}
+
+static long int
+_bu_mem_host_info(int type)
+{
+    if (type < 0)
+	return -2;
+
+#if defined(HAVE_SYS_SYSTCL_H) && defined(HAVE_MACH_HOST_INFO_H)
+    long int pagesize = 0;
+    size_t osize = sizeof(pagesize);
+    int sargs[2] = {CTL_HW, HW_PAGESIZE};
+    if (sysctl(sargs, 2, &pagesize, &osize, NULL, 0) < 0)
+	return -1;
+    if (type == BU_MEM_PAGE_SIZE) {
+	return pagesize;
+    }
+
+    long int sysmemory = 0;
+    if (type == BU_MEM_AVAIL) {
+	// See info at https://stackoverflow.com/a/6095158/2037687
+	mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+	vm_statistics_data_t vmstat;
+	if (host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count) != KERN_SUCCESS)
+	{
+	    return -1;
+	}
+	sysmemory = (long int) (vmstat.free_count * pagesize / (1024*1024));
+    } else {
+	sargs[1] = HW_MEMSIZE;
+	sysctl(sargs, 2, &sysmemory, &osize, NULL, 0);
+    }
+    if (sysmemory < 0)
+	return -1;
+
+    long int avail_bytes = pagesize * sysmemory;
+    if (avail_bytes < 0)
+	return -1;
+
+    return avail_bytes;
+
+#endif
+
     return -1;
 }
 
@@ -200,15 +254,19 @@ bu_mem(int type)
     if (getenv("BU_AVAILABLE_MEM_NOCHECK"))
 	return ret;
 
+    ret = _bu_mem_host_info(type);
+    if (ret >= 0)
+	return ret;
+
+    ret = _bu_mem_status(type);
+    if (ret >= 0)
+	return ret;
+
     ret = _bu_mem_sysconf(type);
     if (ret >= 0)
 	return ret;
 
     ret = _bu_mem_sysinfo(type);
-    if (ret >= 0)
-	return ret;
-
-    ret = _bu_mem_status(type);
     if (ret >= 0)
 	return ret;
 
