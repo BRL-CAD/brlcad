@@ -200,13 +200,12 @@ bu_avs_get(const struct bu_attribute_value_set *avsp, const char *name)
 
 const char *
 bu_avs_get_all(const struct bu_attribute_value_set *avsp, const char *title) {
+    BU_CK_AVS(avsp);
+
     struct bu_attribute_value_pair *avpp;
     size_t i;
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
-    BU_CK_AVS(avsp);
-
-    bu_vls_init(&str);
     if (title) {
         bu_vls_strcat(&str, title);
         bu_vls_strcat(&str, "=\"");

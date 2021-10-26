@@ -128,7 +128,6 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
         bu_avs_init_empty(&material_ip->physicalProperties);
     }
     cp += size;
-    bu_free_external(&physical_ep);
 
     // copy mechanical properties
     size = ntohl(*(uint32_t *)cp);
@@ -142,7 +141,6 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
         bu_avs_init_empty(&material_ip->mechanicalProperties);
     }
     cp += size;
-    bu_free_external(&mechanical_ep);
 
     // copy optical properties
     size = ntohl(*(uint32_t *)cp);
@@ -156,7 +154,6 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
         bu_avs_init_empty(&material_ip->opticalProperties);
     }
     cp += size;
-    bu_free_external(&optical_ep);
 
     // copy thermal properties
     size = ntohl(*(uint32_t *)cp);
@@ -170,7 +167,6 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
         bu_avs_init_empty(&material_ip->thermalProperties);
     }
     cp += size;
-    bu_free_external(&thermal_ep);
 
     return 0;			/* OK */
 }
@@ -183,6 +179,11 @@ int
 rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *UNUSED(dbip))
 {
     struct rt_material_internal *material_ip;
+    RT_CK_DB_INTERNAL(ip);
+
+    if (ip->idb_type != ID_MATERIAL) bu_bomb("rt_material_export() type not ID_MATERIAL");
+    material_ip = (struct rt_material_internal *)ip->idb_ptr;
+
     struct bu_vls name = BU_VLS_INIT_ZERO;
     struct bu_vls parent = BU_VLS_INIT_ZERO;
     struct bu_vls source = BU_VLS_INIT_ZERO;
@@ -191,11 +192,6 @@ rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     struct bu_external mechanical_ep = BU_EXTERNAL_INIT_ZERO;
     struct bu_external optical_ep = BU_EXTERNAL_INIT_ZERO;
     struct bu_external thermal_ep = BU_EXTERNAL_INIT_ZERO;
-
-    RT_CK_DB_INTERNAL(ip);
-
-    if (ip->idb_type != ID_MATERIAL) bu_bomb("rt_material_export() type not ID_MATERIAL");
-    material_ip = (struct rt_material_internal *)ip->idb_ptr;
 
     BU_EXTERNAL_INIT(ep);
 
@@ -275,16 +271,20 @@ rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 {
     register struct rt_material_internal *material_ip = (struct rt_material_internal *)ip->idb_ptr;
 
-    struct bu_vls buf = BU_VLS_INIT_ZERO;
-
     RT_CHECK_MATERIAL(material_ip);
+
+    struct bu_vls buf = BU_VLS_INIT_ZERO;
     bu_vls_strcat(str, "material (MATERIAL)\n");
 
     bu_vls_printf(&buf, "\tName: %s\n", material_ip->name.vls_str);
     bu_vls_printf(&buf, "\tParent: %s\n", material_ip->parent.vls_str);
     bu_vls_printf(&buf, "\tSource: %s\n", material_ip->source.vls_str);
 
-    if (!verbose) return 0;
+    if (!verbose) {
+        bu_vls_vlscat(str, &buf);
+        bu_vls_free(&buf);
+        return 0;
+    }
 
     const char *physicalProperties = bu_avs_get_all(&material_ip->physicalProperties, NULL);
     const char *mechanicalProperties = bu_avs_get_all(&material_ip->mechanicalProperties, NULL);
