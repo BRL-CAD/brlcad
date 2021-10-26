@@ -1358,7 +1358,7 @@ edit_translate(struct ged *gedp, const vect_t *from,
     VSCALE(delta, delta, gedp->dbip->dbi_local2base);
     d_obj = DB_FULL_PATH_CUR_DIR(path);
 
-    if (ged_path_validate(gedp, path) == GED_ERROR) {
+    if (ged_path_validate(gedp, path) & GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
 		      "the database", db_path_to_string(path));
 	return GED_ERROR;
@@ -1881,7 +1881,7 @@ convert_obj:
 			  " the path \"%s\" does not exist", str);
 	return GED_ERROR;
     }
-    if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
+    if (ged_path_validate(gedp, arg->object) & GED_ERROR) {
 	db_free_full_path(arg->object);
 	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
