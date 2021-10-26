@@ -86,7 +86,7 @@ struct ged_clone_state {
     int updpos;			/* Position of number to update (for -c) */
     struct bu_vls olist;        /* List of cloned object names */
 };
-
+#define GED_CLONE_STATE_INIT {NULL, NULL, 0, 0, HINIT_ZERO, HINIT_ZERO, HINIT_ZERO, 0, 0.0, 0, BU_VLS_INIT_ZERO}
 
 struct name {
     struct bu_vls src;		/* source object name */
@@ -989,7 +989,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 int
 ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_clone_state state;
+    struct ged_clone_state state = GED_CLONE_STATE_INIT;
     struct directory *copy;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
