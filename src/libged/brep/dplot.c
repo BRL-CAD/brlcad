@@ -724,7 +724,7 @@ ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
     info.brep1_surf_count = info.fdata.brep1_surface_count;
     info.brep2_surf_count = info.fdata.brep2_surface_count;
 
-    if (info.mode == DPLOT_ISOCSX_EVENTS) {
+    if (info.mode == DPLOT_ISOCSX_EVENTS && info.fdata.ssx_count > 0) {
 	int *isocsx_events = info.fdata.ssx[info.ssx_idx].isocsx_events;
 
 	info.event_count = 0;
