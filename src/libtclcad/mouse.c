@@ -1099,7 +1099,7 @@ to_mouse_joint_selection_translate(
 	ret = ged_how(gedp, cmd_argc, cmd_argv);
 
 	if (ret == GED_OK) {
-	    ret = bu_sscanf(bu_vls_cstr(gedp->ged_result_str), "%d", &dmode);
+	    bu_sscanf(bu_vls_cstr(gedp->ged_result_str), "%d", &dmode);
 	}
 	if (dmode == 4) {
 	    bu_vls_printf(&path_dmode, "-h");
