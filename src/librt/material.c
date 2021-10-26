@@ -53,6 +53,13 @@ rt_material_ifree(struct rt_db_internal *ip)
     if (material) {
 	material->magic = 0;			/* sanity */
 	bu_vls_free(&material->name);
+    bu_vls_free(&material->parent);
+    bu_vls_free(&material->source);
+
+    bu_avs_free(&material->physicalProperties);
+    bu_avs_free(&material->mechanicalProperties);
+    bu_avs_free(&material->opticalProperties);
+    bu_avs_free(&material->thermalProperties);
 	bu_free((void *)material, "material ifree");
     }
     ip->idb_ptr = ((void *)0);	/* sanity */
@@ -84,28 +91,35 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     struct bu_vls name = BU_VLS_INIT_ZERO;
     struct bu_vls parent = BU_VLS_INIT_ZERO;
     struct bu_vls source = BU_VLS_INIT_ZERO;
+
+    struct bu_external physical_ep = BU_EXTERNAL_INIT_ZERO;
+    struct bu_external mechanical_ep = BU_EXTERNAL_INIT_ZERO;
+    struct bu_external optical_ep = BU_EXTERNAL_INIT_ZERO;
+    struct bu_external thermal_ep = BU_EXTERNAL_INIT_ZERO;
     unsigned char *cp = ep->ext_buf;
 
     // copy name to internal format
     bu_vls_strcat(&name, (char *)cp);
     bu_vls_vlscat(&material_ip->name, &name);
     cp += strlen((const char *)cp) + 1;
+    bu_vls_free(&name);
 
     // copy parent to internal format
     bu_vls_strcat(&parent, (char *)cp);
     bu_vls_vlscat(&material_ip->parent, &parent);
     cp += strlen((const char *)cp) + 1;
+    bu_vls_free(&parent);
 
     // copy source to internal format
     bu_vls_strcat(&source, (char *)cp);
     bu_vls_vlscat(&material_ip->source, &source);
     cp += strlen((const char *)cp) + 1;
+    bu_vls_free(&source);
 
     // copy physical properties
     uint32_t size = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
 
-    struct bu_external physical_ep = BU_EXTERNAL_INIT_ZERO;
     physical_ep.ext_nbytes = size;
     physical_ep.ext_buf = cp;
     if (size > 0) {
@@ -114,12 +128,12 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
         bu_avs_init_empty(&material_ip->physicalProperties);
     }
     cp += size;
+    bu_free_external(&physical_ep);
 
     // copy mechanical properties
     size = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
 
-    struct bu_external mechanical_ep = BU_EXTERNAL_INIT_ZERO;
     mechanical_ep.ext_nbytes = size;
     mechanical_ep.ext_buf = cp;
     if (size > 0) {
@@ -128,12 +142,12 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
         bu_avs_init_empty(&material_ip->mechanicalProperties);
     }
     cp += size;
+    bu_free_external(&mechanical_ep);
 
     // copy optical properties
     size = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
 
-    struct bu_external optical_ep = BU_EXTERNAL_INIT_ZERO;
     optical_ep.ext_nbytes = size;
     optical_ep.ext_buf = cp;
     if (size > 0) {
@@ -142,12 +156,12 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
         bu_avs_init_empty(&material_ip->opticalProperties);
     }
     cp += size;
+    bu_free_external(&optical_ep);
 
     // copy thermal properties
     size = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
 
-    struct bu_external thermal_ep = BU_EXTERNAL_INIT_ZERO;
     thermal_ep.ext_nbytes = size;
     thermal_ep.ext_buf = cp;
     if (size > 0) {
@@ -156,6 +170,7 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
         bu_avs_init_empty(&material_ip->thermalProperties);
     }
     cp += size;
+    bu_free_external(&thermal_ep);
 
     return 0;			/* OK */
 }
@@ -171,6 +186,7 @@ rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     struct bu_vls name = BU_VLS_INIT_ZERO;
     struct bu_vls parent = BU_VLS_INIT_ZERO;
     struct bu_vls source = BU_VLS_INIT_ZERO;
+
     struct bu_external physical_ep = BU_EXTERNAL_INIT_ZERO;
     struct bu_external mechanical_ep = BU_EXTERNAL_INIT_ZERO;
     struct bu_external optical_ep = BU_EXTERNAL_INIT_ZERO;
@@ -223,24 +239,28 @@ rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     cp += SIZEOF_NETWORK_LONG;
     memcpy(cp, physical_ep.ext_buf, physical_ep.ext_nbytes);
 	cp += physical_ep.ext_nbytes;
+    bu_free_external(&physical_ep);
 
     // copy mechanical properties
     *(uint32_t *)cp = htonl(mechanical_ep.ext_nbytes);
     cp += SIZEOF_NETWORK_LONG;
     memcpy(cp, mechanical_ep.ext_buf, mechanical_ep.ext_nbytes);
 	cp += mechanical_ep.ext_nbytes;
+    bu_free_external(&mechanical_ep);
 
     // copy optical properties
     *(uint32_t *)cp = htonl(optical_ep.ext_nbytes);
     cp += SIZEOF_NETWORK_LONG;
     memcpy(cp, optical_ep.ext_buf, optical_ep.ext_nbytes);
 	cp += optical_ep.ext_nbytes;
+    bu_free_external(&optical_ep);
 
     // copy thermal properties
     *(uint32_t *)cp = htonl(thermal_ep.ext_nbytes);
     cp += SIZEOF_NETWORK_LONG;
     memcpy(cp, thermal_ep.ext_buf, thermal_ep.ext_nbytes);
 	cp += thermal_ep.ext_nbytes;
+    bu_free_external(&thermal_ep);
 
     return 0;	/* OK */
 }
@@ -275,7 +295,9 @@ rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
     bu_vls_printf(&buf, "\tmechanicalProperties: \n%s", mechanicalProperties);
     bu_vls_printf(&buf, "\topticalProperties: \n%s", opticalProperties);
     bu_vls_printf(&buf, "\tthermalProperties: \n%s", thermalProperties);
+
     bu_vls_vlscat(str, &buf);
+    bu_vls_free(&buf);
 
     return 0;
 }

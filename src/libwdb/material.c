@@ -51,6 +51,7 @@ mk_material(struct rt_wdb *wdbp,
     BU_VLS_INIT(&material_ip->name);
     BU_VLS_INIT(&material_ip->parent);
     BU_VLS_INIT(&material_ip->source);
+
     bu_avs_init_empty(&material_ip->physicalProperties);
     bu_avs_init_empty(&material_ip->mechanicalProperties);
     bu_avs_init_empty(&material_ip->opticalProperties);
