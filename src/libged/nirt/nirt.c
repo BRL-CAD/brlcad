@@ -296,7 +296,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 
     /* send commands down the pipe */
     for (i = 1; i < gd_rt_cmd_len - 2; i++) {
-	if (strstr(gd_rt_cmd[i], "-e") != NULL) {
+	if (gd_rt_cmd[i] && strstr(gd_rt_cmd[i], "-e") != NULL) {
 	    fprintf(fp_in, "%s\n", gd_rt_cmd[++i]);
 	}
     }
