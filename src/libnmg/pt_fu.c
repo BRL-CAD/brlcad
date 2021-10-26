@@ -762,7 +762,6 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
 		}
 
 		tmp = ei_p;
-		ei_p = BU_LIST_PLAST(edge_info, &ei_p->l);
 		BU_LIST_DEQUEUE(&tmp->l);
 		nmg_free((char *)tmp, "edge info struct");
 		tmp = ei;

@@ -53,11 +53,12 @@ crossing_count(
 {
     int i;
     int n_crossings = 0;        /* Number of crossings */
-    int sign, old_sign;         /* Sign of coefficients */
+    int sign = 0;
+    int old_sign = 0;           /* Sign of coefficients */
     point2d_t to_pt;		/* vector from ray start to a control point */
 
     V2SUB2(to_pt, ray_start, V[0]);
-    sign = old_sign = SGN(V2DOT(to_pt, ray_perp));
+    old_sign = SGN(V2DOT(to_pt, ray_perp));
     for (i = 1; i <= degree; i++) {
 	V2SUB2(to_pt, ray_start, V[i]);
 	sign = SGN(V2DOT(to_pt, ray_perp));
@@ -311,10 +312,10 @@ bezier_roots(
     fastf_t epsilon)		/* maximum allowable error */
 {
     int i;
-    point2d_t *Left,            /* New left and right */
-	*Right;                 /* control polygons */
-    int left_count,             /* Solution count from */
-	right_count;            /* children */
+    point2d_t *Left = NULL;     /* New left control polygons */
+    point2d_t *Right = NULL;    /* New right control polygons */
+    int left_count = 0;         /* Solution count from children */
+    int right_count = 0;        /* Solution count from children */
     point2d_t *left_t = NULL;   /* Solutions from kids */
     point2d_t *right_t = NULL;  /* Solutions from kids */
     point2d_t *left_n = NULL;	/* normals from kids */
@@ -372,13 +373,15 @@ bezier_roots(
     }
 
     /* Gather solutions together */
-    for (i = 0; i < left_count; i++) {
-	V2MOVE((*intercept)[i], left_t[i]);
-	V2MOVE((*normal)[i], left_n[i]);
-    }
-    for (i = 0; i < right_count; i++) {
-	V2MOVE((*intercept)[i+left_count], right_t[i]);
-	V2MOVE((*normal)[i+left_count], right_n[i]);
+    if (*intercept && *normal) {
+	for (i = 0; i < left_count; i++) {
+	    V2MOVE((*intercept)[i], left_t[i]);
+	    V2MOVE((*normal)[i], left_n[i]);
+	}
+	for (i = 0; i < right_count; i++) {
+	    V2MOVE((*intercept)[i+left_count], right_t[i]);
+	    V2MOVE((*normal)[i+left_count], right_n[i]);
+	}
     }
 
     if (left_count) {

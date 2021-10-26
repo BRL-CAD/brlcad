@@ -2279,9 +2279,11 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
     if (nmg_debug & NMG_DEBUG_MESH_EU) {
 	struct nmg_radial *next;
 
-	bu_log("amin=%g min_eu=%p, amax=%g max_eu=%p\n",
-	       rmin->ang * RAD2DEG, (void *)rmin->eu,
-	       rmax->ang * RAD2DEG, (void *)rmax->eu);
+	if (rmin && rmax) {
+	    bu_log("amin=%g min_eu=%p, amax=%g max_eu=%p\n",
+		    rmin->ang * RAD2DEG, (void *)rmin->eu,
+		    rmax->ang * RAD2DEG, (void *)rmax->eu);
+	}
 
 	for (BU_LIST_FOR(next, nmg_radial, hd))
 	    bu_log("%p: eu=%p, fu=%p, ang=%g\n", (void *)next, (void *)next->eu, (void *)next->fu, next->ang);
