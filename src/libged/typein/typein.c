@@ -658,10 +658,11 @@ static const char *p_material[] = {
     "Enter the material name: ",
     "Enter the parent material name: ",
     "Enter the material source: ",
-    "Enter key value pairs for physical properties as separate arguments (end or skip with .): ",
-    "Enter key value pairs for mechanical properties as separate arguments (end or skip with .): ",
-    "Enter key value pairs for optical properties as separate arguments (end or skip with .): ",
-    "Enter key value pairs for thermal properties as separate arguments (end or skip with .): ",
+    "Enter key value pairs for the following properties as follows:\n \
+    \tPhysical properties (end or skip with .)\n\
+    \tMechanical properties (end or skip with .)\n\
+    \tOptical properties (end or skip with .)\n\
+    \tThermal properties (end or skip with .)\nExample: key val key val . key val . . key val .\n"
 };
 
 /**
@@ -3349,6 +3350,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
     int nvals;
     int (*fn_in)(struct ged *, const char **, struct rt_db_internal *) = NULL;
     int (*fn_in_2)(struct ged *, const char **, struct rt_db_internal *, const char *) = NULL;
+    int (*fn_in_3)(struct ged *, int, const char **, struct rt_db_internal *) = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -3357,9 +3359,9 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* Get the name of the solid to be created */
+    /* Get the name of the object to be created */
     if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Enter name of solid: ");
+	bu_vls_printf(gedp->ged_result_str, "Enter name of object: ");
 	return GED_MORE;
     }
     if (db_lookup(gedp->dbip,  argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
@@ -3370,12 +3372,12 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s: ERROR, v4 names are limited to %d characters\n", argv[0], NAMESIZE);
 	return GED_ERROR;
     }
-    /* Save the solid name */
+    /* Save the object name */
     name = (char *)argv[1];
 
-    /* Get the solid type to be created and make it */
+    /* Get the object type to be created and make it */
     if (argc < 3) {
-	bu_vls_printf(gedp->ged_result_str, "Enter solid type: ");
+	bu_vls_printf(gedp->ged_result_str, "Enter object type: ");
 	return GED_MORE;
     }
 
@@ -3617,16 +3619,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "material")) {
 	nvals = 7;
 	menu = p_material;
-	switch (material_in(gedp, argc, argv, &internal)) {
-        case GED_ERROR:
-		bu_vls_printf(gedp->ged_result_str, "%s: ERROR, material not made!\n", argv[0]);
-		rt_db_free_internal(&internal);
-		return GED_ERROR;
-	    case GED_MORE:
-		return GED_MORE;
-    }
-
-    goto do_new_update;
+    fn_in_3 = material_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:
@@ -3680,6 +3673,17 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	}
     } else if (fn_in_2) {
 	if (fn_in_2(gedp, argv, &internal, name) != 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
+	    if (internal.idb_ptr) {
+		/* a few input functions do not use the internal pointer
+		 * only free it, if it has been used
+		 */
+		rt_db_free_internal(&internal);
+	    }
+	    return GED_ERROR;
+	}
+    } else if (fn_in_3) {
+	if (fn_in_3(gedp, argc, argv, &internal) != 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
 	    if (internal.idb_ptr) {
 		/* a few input functions do not use the internal pointer

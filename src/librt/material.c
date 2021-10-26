@@ -272,8 +272,8 @@ rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
     const char *thermalProperties = bu_avs_get_all(&material_ip->thermalProperties, NULL);
 
     bu_vls_printf(&buf, "\tphysicalProperties: \n%s", physicalProperties);
-    bu_vls_printf(&buf, "\topticalProperties: \n%s", opticalProperties);
     bu_vls_printf(&buf, "\tmechanicalProperties: \n%s", mechanicalProperties);
+    bu_vls_printf(&buf, "\topticalProperties: \n%s", opticalProperties);
     bu_vls_printf(&buf, "\tthermalProperties: \n%s", thermalProperties);
     bu_vls_vlscat(str, &buf);
 
