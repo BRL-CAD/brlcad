@@ -264,6 +264,11 @@ GED_EXPORT extern int ged_remove(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_unhide(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Read material properties from a file.
+ */
+GED_EXPORT extern int ged_rmater(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Write material properties to a file for specified combination(s).
  */
 GED_EXPORT extern int ged_wmater(struct ged *gedp, int argc, const char *argv[]);
