@@ -33,13 +33,43 @@
 #include "raytrace.h"
 
 #include "../ged_private.h"
-#include "analyze.h"
-#include "wdb.h"
 
-static const char *usage = "[verb] [options] object [args] \n";
+typedef enum {
+    MATERIAL_CREATE,
+    MATERIAL_DESTROY,
+    MATERIAL_GET,
+    MATERIAL_SET,
+    ATTR_UNKNOWN
+} material_cmd_t;
+
+static const char *usage = " [create] [destroy] [get] [set] [options] object [args] \n";
+
+HIDDEN material_cmd_t
+get_material_cmd(const char* arg)
+{
+    /* sub-commands */
+    const char CREATE[] = "create";
+    const char DESTROY[]   = "destroy";
+    const char GET[]    = "get";
+    const char SET[]    = "set";
+
+    /* alphabetical order */
+    if (BU_STR_EQUIV(CREATE, arg))
+	return MATERIAL_CREATE;
+    else if (BU_STR_EQUIV(DESTROY, arg))
+	return MATERIAL_DESTROY;
+    else if (BU_STR_EQUIV(SET, arg))
+	return MATERIAL_SET;
+    else if (BU_STR_EQUIV(GET, arg))
+	return MATERIAL_GET;
+    else
+    return ATTR_UNKNOWN;
+}
 
 int
 ged_material_core(struct ged *gedp, int argc, const char *argv[]){
+    material_cmd_t scmd;
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
@@ -50,9 +80,23 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     if (argc < 3) {
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
         return GED_HELP;
-    } else {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     }
+
+    scmd = get_material_cmd(argv[1]);
+
+    if (scmd == MATERIAL_CREATE){
+        // create routine
+        bu_vls_printf(gedp->ged_result_str, "Trying: create");
+    } else if (scmd == MATERIAL_DESTROY) {
+        // destroy routine
+        bu_vls_printf(gedp->ged_result_str, "Trying: destroy");
+    } else if (scmd == MATERIAL_GET) {
+        // get routine
+        bu_vls_printf(gedp->ged_result_str, "Trying: get");
+    } else if (scmd == MATERIAL_SET) {
+        // set routine
+        bu_vls_printf(gedp->ged_result_str, "Trying: set");
+    } 
 
     return 0;
 }
