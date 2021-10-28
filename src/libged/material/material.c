@@ -101,6 +101,11 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     return 0;
 }
 
+// Routine handles the creation of a material
+int create_material(struct ged *gedp, int argc, const char *argv[]){
+    return 0;
+}
+
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 struct ged_cmd_impl material_cmd_impl = {
