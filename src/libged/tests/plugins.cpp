@@ -220,6 +220,7 @@ main(int ac, char *av[]) {
 	    "mat_ae",
 	    "match",
 	    "mater",
+	    "material",
 	    "mat_mul",
 	    "mat_scale_about_pnt",
 	    "metaball_delete_pnt",
