@@ -198,6 +198,37 @@ bu_avs_get(const struct bu_attribute_value_set *avsp, const char *name)
     return NULL;
 }
 
+const char *
+bu_avs_get_all(const struct bu_attribute_value_set *avsp, const char *title) {
+    BU_CK_AVS(avsp);
+
+    struct bu_attribute_value_pair *avpp;
+    size_t i;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+
+    if (title) {
+        bu_vls_strcat(&str, title);
+        bu_vls_strcat(&str, "=\"");
+    }
+
+    avpp = avsp->avp;
+    for (i = 0; i < avsp->count; i++, avpp++) {
+        bu_vls_strcat(&str, "\t\t(");
+        bu_vls_strcat(&str, avpp->name ? avpp->name : "NULL");
+        bu_vls_strcat(&str, " : ");
+        bu_vls_strcat(&str, avpp->value ? avpp->value : "NULL");
+        bu_vls_strcat(&str, ")\n");
+    }
+
+    if (title) {
+        bu_vls_strcat(&str, "\"");
+    }
+
+    const char * attributes = bu_vls_strgrab(&str);
+
+    return attributes;
+}
+
 
 int
 bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
