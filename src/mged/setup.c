@@ -214,6 +214,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"make_pnts", cmd_ged_more_wrapper, ged_make_pnts},
     {"match", cmd_ged_plain_wrapper, ged_match},
     {"mater", cmd_ged_plain_wrapper, ged_mater},
+    {"material", cmd_ged_plain_wrapper, ged_material},
     {"matpick", f_matpick, GED_FUNC_PTR_NULL},
     {"mat_ae", cmd_ged_plain_wrapper, ged_mat_ae},
     {"mat_mul", cmd_ged_plain_wrapper, ged_mat_mul},
