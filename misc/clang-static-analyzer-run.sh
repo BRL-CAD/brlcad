@@ -105,7 +105,7 @@ cleantest libged
 cleantest libdm
 cleantest dm_plugins
 cleantest libfft
-failingtest ged_plugins
+cleantest ged_plugins
 cleantest libtclcad
 cleantest libtermio
 cleantest librender

@@ -116,7 +116,7 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
 	face_verts[idx] = &verts[idx].v;
     }
 
-    fu = nmg_cmface( s, face_verts, num_verts );
+    nmg_cmface( s, face_verts, num_verts );
     bu_free((char *) face_verts, "face_verts");
 
     /* assign geometry for entire vertex list (if we have one) */
