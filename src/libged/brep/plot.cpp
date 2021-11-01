@@ -184,7 +184,7 @@ void plotcurveonsurface(const ON_Curve *curve,
 void
 plotsurface(const ON_Surface &surf, struct bu_list *vlfree, struct bv_vlblock *vbp, int isocurveres, int gridres, const int red = 200, const int green = 200, const int blue = 200)
 {
-    struct bu_list *vhead;
+    struct bu_list *vhead = NULL;
     fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
     fastf_t hsv[3];
@@ -195,9 +195,6 @@ plotsurface(const ON_Surface &surf, struct bu_list *vlfree, struct bv_vlblock *v
     // simply fill with 50% lightness/value of outline
     hsv[2] = hsv[2] * 0.5;
     bu_hsv_to_rgb(hsv,fill_rgb);
-
-
-    vhead = bv_vlblock_find(vbp, red, green, blue);
 
     ON_Interval udom = surf.Domain(0);
     ON_Interval vdom = surf.Domain(1);
@@ -390,7 +387,6 @@ drawisoUCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
     trim_hits.unique(near_equal);
 
     int hit_cnt = trim_hits.size();
-    cnt = 1;
     //bu_log("\tdrawisoUCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, from, v , to, v);
 
     if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
@@ -518,7 +514,6 @@ drawisoVCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
     trim_hits.unique(near_equal);
 
     size_t hit_cnt = trim_hits.size();
-    cnt = 1;
 
     //bu_log("\tdrawisoVCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, u, from, u, to);
 
