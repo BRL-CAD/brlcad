@@ -1040,6 +1040,9 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 			       0,
 			       bot_dump_leaf,
 			       (void *)&gbdcdp);
+	    if (ret < 0) {
+		perror("db_walk_tree");
+	    }
 	}
     }
 
