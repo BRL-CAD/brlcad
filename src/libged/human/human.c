@@ -2467,7 +2467,6 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 	    bu_log("%s\n", body[0]);
 	    num++;
 	}
-	is_region = 0;
 	for (z=0; z<(troops*troops); z++) {
 	    char comber[MAXLENGTH];
 

@@ -584,7 +584,6 @@ parse_args(int ac, char *av[])
 	    case 'g':
 		{
 		    double value1, value2;
-		    i = 0;
 
 		    /* find out if we have two or one args; user can
 		     * separate them with , or - delimiter

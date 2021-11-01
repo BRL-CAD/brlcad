@@ -812,7 +812,6 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_PNTS) {
 	/* If we have a point cloud, there's no need to raytrace it */
 	pnts = (struct rt_pnts_internal *)in_intern.idb_ptr;
-	pl = (struct pnt_normal *)pnts->point;
 
     } else {
 	int max_pnts = (opts->max_pnts) ? opts->max_pnts : 200000;
@@ -1568,7 +1567,6 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    }
 
 	    if (_ged_nmg_obj(gedp, argc, argv, newname, opts) == GED_OK) {
-		done_trying = 1;
 		ret = GED_OK;
 		break;
 	    } else {
@@ -1587,8 +1585,8 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    } else {
 		struct _ged_facetize_report_info cinfo;
 		if (_ged_continuation_obj(&cinfo, gedp, argv[0], newname, opts) == GED_FACETIZE_SUCCESS) {
-		    done_trying = 1;
 		    ret = GED_OK;
+		    break;
 		} else {
 		    if (!opts->quiet) {
 			struct bu_vls lmsg = BU_VLS_INIT_ZERO;
@@ -1611,8 +1609,8 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    } else {
 		struct _ged_facetize_report_info cinfo;
 		if (_ged_spsr_obj(&cinfo, gedp, argv[0], newname, opts) == GED_FACETIZE_SUCCESS) {
-		    done_trying = 1;
 		    ret = GED_OK;
+		    break;
 		} else {
 		    if (!opts->quiet) {
 			struct bu_vls lmsg = BU_VLS_INIT_ZERO;
@@ -2912,6 +2910,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	if (argc < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Screened Poisson option parsing failed\n");
 	    ret = GED_ERROR;
+	    goto ged_facetize_memfree;
 	}
     }
 

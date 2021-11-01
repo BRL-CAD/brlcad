@@ -99,16 +99,16 @@ help_files(const char *dir, char ***files)
 HIDDEN size_t
 help_tokenize(size_t count, const char **files)
 {
-    size_t bytes;
-    size_t zeros;
-    struct bu_mapped_file *data;
+    size_t bytes = 0;
+    size_t zeros = 0;
+    struct bu_mapped_file *data = NULL;
 
 #define USE_ARRAY 0
 #define MAX_WORDS 820000
 #if USE_ARRAY
     struct bu_vls words[MAX_WORDS] = {BU_VLS_INIT_ZERO};
 #else
-    struct bu_hash_tbl *hash;
+    struct bu_hash_tbl *hash = NULL;
 #endif
     size_t cnt[MAX_WORDS] = {0};
     size_t words = 0;
@@ -127,7 +127,6 @@ help_tokenize(size_t count, const char **files)
 	}
 #endif
 
-	bytes = zeros = 0;
 	data = bu_open_mapped_file(files[count], NULL);
 	if (!data)
 	    continue;
