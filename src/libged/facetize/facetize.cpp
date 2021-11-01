@@ -1997,7 +1997,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     while (methods && BU_PTBL_LEN(ar2) > 0) {
 	struct bu_ptbl *tmp;
 	int cmethod = 0;
-	long int avail_mem = bu_mem(BU_MEM_AVAIL);
+	long int avail_mem = -1;
 	bu_ptbl_reset(ar);
 
 
@@ -2421,7 +2421,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     while (methods && BU_PTBL_LEN(ar) > 0) {
 	struct bu_ptbl *tmp;
 	int cmethod = 0;
-	long int avail_mem = bu_mem(BU_MEM_AVAIL);
+	long int avail_mem = -1;
 	bu_ptbl_reset(ar2);
 
 	if (!cmethod && (methods & GED_FACETIZE_NMGBOOL)) {

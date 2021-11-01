@@ -238,7 +238,6 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);

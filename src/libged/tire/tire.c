@@ -1850,7 +1850,7 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     fastf_t hub_width = 0;
     int pattern_type = 0;
     fastf_t zside1 = 0;
-    fastf_t tread_depth_float = tread_depth/32.0;
+    fastf_t tread_depth_float = 0.0;
     int print_help = 0;
     int ret_ac = 0;
     const char *cmd_name = argv[0];

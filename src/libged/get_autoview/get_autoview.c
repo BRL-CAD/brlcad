@@ -74,8 +74,6 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     }
-    argc -= bu_optind;
-    argv += bu_optind;
 
     is_empty = dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &min, &max, pflag);
 

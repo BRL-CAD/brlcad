@@ -777,7 +777,6 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	}
     }
 
-    argc -= bu_optind - 1;
     argv += bu_optind - 1;
 
     dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
