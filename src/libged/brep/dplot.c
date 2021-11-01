@@ -455,7 +455,7 @@ dplot_split_faces(
 
 	split_face = info->fdata.face[info->event_idx];
 	bu_vls_printf(&name, "_split_face%d_outerloop_curve", info->event_idx);
-	for (i = 0; i < info->fdata.face[info->event_idx].outerloop_curves; ++i) {
+	for (i = 0; i < split_face.outerloop_curves; ++i) {
 	    bu_vls_trunc(&short_name, 0);
 	    bu_vls_printf(&short_name, "sfo%d", i);
 
@@ -466,7 +466,7 @@ dplot_split_faces(
 
 	bu_vls_trunc(&name, 0);
 	bu_vls_printf(&name, "_split_face%d_innerloop_curve", info->event_idx);
-	for (i = 0; i < info->fdata.face[info->event_idx].innerloop_curves; ++i) {
+	for (i = 0; i < split_face.innerloop_curves; ++i) {
 	    bu_vls_trunc(&short_name, 0);
 	    bu_vls_printf(&short_name, "sfi%d", i);
 
