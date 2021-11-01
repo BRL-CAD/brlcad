@@ -609,7 +609,7 @@ int comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_
 int
 brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set *ito, const union tree *oldtree, union tree *newtree, int verify)
 {
-    int ret = 0;
+    int ret = 1;
     int brep_c;
     struct bu_vls tmpname = BU_VLS_INIT_ZERO;
     struct bu_vls newname = BU_VLS_INIT_ZERO;
@@ -703,7 +703,8 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 	    bu_log("huh??\n");
 	    break;
     }
-    return 1;
+
+    return ret;
 }
 
 
