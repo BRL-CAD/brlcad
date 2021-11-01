@@ -778,14 +778,17 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     point_t rpp_max;
     size_t i;
 
+    if (!path || path->fp_len <= 0)
+	return GED_ERROR;
+
     if (ged_path_validate(gedp, path) & GED_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
-		      "the database", db_path_to_string(path));
+	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in the database", db_path_to_string(path));
 	return GED_ERROR;
     }
 
     /* sum the transformation matrices of each object in path */
     d = DB_FULL_PATH_ROOT_DIR(path);
+
     for (i = (size_t)0; i < path->fp_len - (size_t)1; ++i) {
 	d_next = DB_FULL_PATH_GET(path, i + (size_t)1);
 
@@ -1356,11 +1359,14 @@ edit_translate(struct ged *gedp, const vect_t *from,
 
     VSUB2(delta, *to, *from);
     VSCALE(delta, delta, gedp->dbip->dbi_local2base);
+
+    if (!path || path->fp_len <= 0)
+	return GED_ERROR;
+
     d_obj = DB_FULL_PATH_CUR_DIR(path);
 
     if (ged_path_validate(gedp, path) & GED_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
-		      "the database", db_path_to_string(path));
+	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in the database", db_path_to_string(path));
 	return GED_ERROR;
     }
 
