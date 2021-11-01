@@ -114,6 +114,6 @@ index(I) ::= NONNEGATIVE_INT(N). {
     I = N.n;
 }
 
-%include {
+%code {
 #endif // clang static analyzer suppression
 }
