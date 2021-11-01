@@ -1,4 +1,16 @@
 %include {
+/* We get some dead store warnings from lemon output - there's not too much we
+ * can do about that, so we add the "ifndef __clang_analyzer__" disabler
+ * documented by https://clang-analyzer.llvm.org/faq.html to disable running
+ * the analyzer on the generated code.
+ *
+ * This is not ideal (clang devs discourages use of ifndef __clang_analyzer__)
+ * but even using bundled tools it's not clear to me that fixing dead store
+ * issues is doable - even in theory - without very sophisticated support from
+ * the tool itself.
+ */
+#ifndef __clang_analyzer__
+
 #include "bu.h"
 #include <assert.h>
 #include "dplot_reader.h"
@@ -100,4 +112,8 @@ count(C) ::= NONNEGATIVE_INT(N). {
 
 index(I) ::= NONNEGATIVE_INT(N). {
     I = N.n;
+}
+
+%include {
+#endif // clang static analyzer suppression
 }
