@@ -347,7 +347,6 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 	bu_log("%d sdist: %f\n", *a_it, sdist);
 
 	if (NEAR_ZERO(sdist, ON_ZERO_TOLERANCE)) {
-	    have_hit = true;
 	    double hdist = porigin.DistanceTo(s3d);
 	    bu_log("%d hdist: %f\n", *a_it, hdist);
 	    bu_log("center %f %f %f\n", s3d.x, s3d.y, s3d.z);
