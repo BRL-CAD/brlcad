@@ -852,7 +852,7 @@ get_token(struct ged *gedp, union bu_lex_token *token, FILE *fip, struct bu_vls 
     bu_vls_nibble(str, used);
 
     {
-	if (J_DEBUG & DEBUG_J_LEX) {
+	if (keys && J_DEBUG & DEBUG_J_LEX) {
 	    int i;
 	    switch (token->type) {
 		case BU_LEX_KEYWORD:
@@ -2221,8 +2221,9 @@ joint_adjust(struct ged *gedp, struct joint *jp)
 
 	if (J_DEBUG & DEBUG_J_MOVE) {
 	    sofar = db_path_to_string(&jp->anim->an_path);
-	    bu_vls_printf(gedp->ged_result_str, "joint move: %s added animate %s to %s(%p)\n",
-			  jp->name, sofar, dp->d_namep, (void *)dp);
+	    if (dp)
+		bu_vls_printf(gedp->ged_result_str, "joint move: %s added animate %s to %s(%p)\n",
+			jp->name, sofar, dp->d_namep, (void *)dp);
 	}
     }
 
