@@ -349,7 +349,10 @@ validate_walk_subtree(struct db_i *dbip,
 		    s->valid_push = false;
 		    if (s->msgs) {
 			char *ps = db_path_to_string(dfp);
-			bu_vls_printf(s->msgs, "W1[%s]: user specified push object %s is below user specified push object %s\n", ps, DB_FULL_PATH_CUR_DIR(dfp)->d_namep, dfp->fp_names[0]->d_namep);
+			struct directory *ldp = DB_FULL_PATH_CUR_DIR(dfp);
+			struct directory *rdp = dfp->fp_names[0];
+			if (ldp && rdp)
+			bu_vls_printf(s->msgs, "W1[%s]: user specified push object %s is below user specified push object %s\n", ps, ldp->d_namep, rdp->d_namep);
 			bu_free(ps, "path string");
 		    }
 		    s->problem_obj = std::string(dp->d_namep);
@@ -392,14 +395,19 @@ validate_walk(struct db_i *dbip,
     if (!dfp || !s->valid_push)
 	return; /* nothing to do */
 
-    if (DB_FULL_PATH_CUR_DIR(dfp)->d_flags & RT_DIR_COMB) {
+    struct directory *dp = DB_FULL_PATH_CUR_DIR(dfp);
+    if (!dp) {
+	return; /* nothing to do */
+    }
+
+    if (dp->d_flags & RT_DIR_COMB) {
 
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
 	// Load the comb.  In the validation stage, if we can't do this report
 	// an error.
-	if (rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(&in, dp, dbip, NULL, &rt_uniresource) < 0) {
 	    if (s->msgs) {
 		char *ps = db_path_to_string(dfp);
 		bu_vls_printf(s->msgs, "W1[%s]: rt_db_get_internal5 failure reading comb %s\n", ps, DB_FULL_PATH_CUR_DIR(dfp)->d_namep);
@@ -643,12 +651,17 @@ push_walk(struct db_full_path *dfp,
 	return; /* nothing to do */
     }
 
-    if (DB_FULL_PATH_CUR_DIR(dfp)->d_flags & RT_DIR_COMB) {
+    struct directory *dp = DB_FULL_PATH_CUR_DIR(dfp);
+    if (!dp) {
+	return; /* nothing to do */
+    }
+
+    if (dp->d_flags & RT_DIR_COMB) {
 
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(dfp), s->wdbp->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal5(&in, dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
