@@ -80,6 +80,7 @@ struct _ged_facetize_report_info {
     double bot_bbox_vol;
     int failure_mode;
 };
+#define GED_FACETIZE_REPORT_INFO_INIT {0.0, 0.0, 0.0, 0.0, 0.0, 0}
 
 void
 _ged_facetize_failure_msg(struct bu_vls *msg, int type, const char *prefix, struct _ged_facetize_report_info *r)
@@ -2438,6 +2439,11 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    methods = methods & ~(GED_FACETIZE_SPSR);
 	}
 
+	if (!cmethod) {
+	    bu_log("Error: methods isn't empty (%d), but no method selected??\n", methods);
+	    break;
+	}
+
 	for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	    struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	    const char *oname = n->d_namep;
@@ -2448,7 +2454,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    if (dp == RT_DIR_NULL) {
 		/* Before we try this (unless we're point sampling), check that all the objects in the specified tree(s) are valid solids */
 		struct directory *odp = db_lookup(gedp->dbip, oname, LOOKUP_QUIET);
-		struct _ged_facetize_report_info cinfo;
+		struct _ged_facetize_report_info cinfo = GED_FACETIZE_REPORT_INFO_INIT;
 
 		/* Regardless of the outcome, record what settings were tried. */
 		_ged_methodattr_set(gedp, opts, cname, cmethod, &cinfo);
