@@ -139,7 +139,6 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    argc -= bu_optind - 1;
     argv += bu_optind - 1;
 
     /* initialize result */
