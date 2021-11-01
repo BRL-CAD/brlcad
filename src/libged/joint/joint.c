@@ -3108,7 +3108,7 @@ Middle:
      * this are better or solve also.
      */
     ssp = (struct solve_stack *) solve_head.forw;
-    for (j=0; (i = system_solve(gedp, pri-1, delta, epsilon)) == 0; j++)
+    for (j=0; (system_solve(gedp, pri-1, delta, epsilon) == 0); j++)
 	;
 
     /*

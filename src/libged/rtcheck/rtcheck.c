@@ -112,8 +112,8 @@ rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 	     * this name ties proper stale drawing cleanup to the internals of the
 	     * current phony object drawing system.*/
 	    const char *sname_obj = "OVERLAPSffff00";
-	    struct directory *dp;
-	    if ((dp = db_lookup(gedp->dbip, sname_obj, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	    struct directory *dp = db_lookup(gedp->dbip, sname_obj, LOOKUP_QUIET);
+	    if (dp != RT_DIR_NULL) {
 		dl_erasePathFromDisplay(gedp, sname_obj, 0);
 	    }
 	}
