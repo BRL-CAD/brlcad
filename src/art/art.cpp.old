@@ -115,7 +115,6 @@
 #include "renderer/api/scene.h"
 #include "renderer/api/surfaceshader.h"
 #include "renderer/api/utility.h"
-#include "renderer/api/shadergroup.h"
 
 // appleseed.foundation headers.
 #include "foundation/core/appleseed.h"
@@ -272,10 +271,6 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     // Create an empty project.
     asf::auto_release_ptr<asr::Project> project(asr::ProjectFactory::create("test project"));
     project->search_paths().push_back_explicit_path("build/Debug");
-    // ***** add path for shaders
-    // todo: make this dynamic to the project
-    project->search_paths().push_back_explicit_path("/Users/christopher/Workspace/appleseed/shaders/appleseed");
-    project->search_paths().push_back_explicit_path("/Users/christopher/Workspace/appleseed/shaders/max");
 
     // Add default configurations to the project.
     project->add_default_configurations();
@@ -305,102 +300,34 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     //------------------------------------------------------------------------
 
     // Create a color called "gray" and insert it into the assembly.
-  //   static const float GrayReflectance[] = { 0.5f, 0.5f, 0.5f };
-  //   assembly->colors().insert(
-	// asr::ColorEntityFactory::create(
-	//     "gray",
-	//     asr::ParamArray()
-	//     .insert("color_space", "srgb"),
-	//     asr::ColorValueArray(3, GrayReflectance)));
+    static const float GrayReflectance[] = { 0.5f, 0.5f, 0.5f };
+    assembly->colors().insert(
+	asr::ColorEntityFactory::create(
+	    "gray",
+	    asr::ParamArray()
+	    .insert("color_space", "srgb"),
+	    asr::ColorValueArray(3, GrayReflectance)));
 
     // Create a BRDF called "diffuse_gray_brdf" and insert it into the assembly.
-  //   assembly->bsdfs().insert(
-	// asr::LambertianBRDFFactory().create(
-	//     "diffuse_gray_brdf",
-	//     asr::ParamArray()
-	//     .insert("reflectance", "gray")));
-
-  // create a shader group called "Material_tree"
-  asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
-      asr::ShaderGroupFactory().create(
-          "Material_tree",
-          asr::ParamArray()));
-
-  // THIS IS OUR INPUT SHADER - add to shader group
-  /* This uses an already created appleseed .oso shader
-  in the form of
-  type
-  shader name
-  layer
-  paramArray
-  */
-  shader_grp->add_shader(
-      "shader",
-      "as_metal",
-      "shader_in",
-      asr::ParamArray()
-  );
-
-  /* import generic .osl shader
-  in the form of
-  type
-  name
-  layer
-  source
-  paramArray
-  */
-  // shader_grp->add_source_shader(
-  //   "shader",
-  //   "toon",
-  //   "shader_in",
-  //   "as_toon",
-  //   asr::ParamArray()
-  // );
-
-  // add material2surface so we can see the shader in action
-  shader_grp->add_shader(
-    "surface",
-    "as_closure2surface",
-    "close",
-    asr::ParamArray()
-  );
-
-  // connect the two shader nodes
-  shader_grp->add_connection(
-    "shader_in",
-    "out_outColor",
-    "close",
-    "in_input"
-  );
-
-  // add the shader group to the assembly
-  assembly->shader_groups().insert(
-    shader_grp
-  );
+    assembly->bsdfs().insert(
+	asr::LambertianBRDFFactory().create(
+	    "diffuse_gray_brdf",
+	    asr::ParamArray()
+	    .insert("reflectance", "gray")));
 
     // Create a physical surface shader and insert it into the assembly.
     assembly->surface_shaders().insert(
 	asr::PhysicalSurfaceShaderFactory().create(
-	    "Material_mat_surface_shader",
-	    asr::ParamArray()
-        .insert("lighting_samples", "1")));
+	    "physical_surface_shader",
+	    asr::ParamArray()));
 
     // Create a material called "gray_material" and insert it into the assembly.
-  //   assembly->materials().insert(
-	// asr::GenericMaterialFactory().create(
-	//     "gray_material",
-	//     asr::ParamArray()
-	//     .insert("surface_shader", "physical_surface_shader")
-	//     .insert("bsdf", "diffuse_gray_brdf")));
-
-    // create a material called "Material_mat" with our shader_group
     assembly->materials().insert(
-        asr::OSLMaterialFactory().create(
-            "Material_mat",
-            asr::ParamArray()
-                .insert("osl_surface", "Material_tree")
-                .insert("surface_shader", "Material_mat_surface_shader")
-            ));
+	asr::GenericMaterialFactory().create(
+	    "gray_material",
+	    asr::ParamArray()
+	    .insert("surface_shader", "physical_surface_shader")
+	    .insert("bsdf", "diffuse_gray_brdf")));
 
     //------------------------------------------------------------------------
     // Geometry
@@ -415,27 +342,24 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 	std::string obj_num = std::string("object.") + std::to_string(i + 1);
 	std::string obj_name = std::string(objv[i]);
 	geometry_parameters.insert_path(obj_num, obj_name);
-}
+    }
+
     asf::auto_release_ptr<renderer::Object> brlcad_object(
-	// new BrlcadObject{obj_name.c_str(),
-  new BrlcadObject{"brlcad_object",
+	new BrlcadObject{"brlcad geometry",
 			 geometry_parameters,
 			 &APP, resources});
     assembly->objects().insert(brlcad_object);
 
-
-    // const std::string instance_name = obj_name + "_brlcad_inst";
-    const std::string instance_name = "_brlcad_inst";
+    const std::string instance_name = "brlcad_inst";
     assembly->object_instances().insert(
 	asr::ObjectInstanceFactory::create(
 	    instance_name.c_str(),
 	    asr::ParamArray(),
-	    // obj_name.c_str(),
-      "brlcad_object",
+	    "brlcad geometry",
 	    asf::Transformd::identity(),
 	    asf::StringDictionary()
-	    .insert("default", "Material_mat")
-	    .insert("default2", "Material_mat")));
+	    .insert("default", "gray_material")
+	    .insert("default2", "gray_material")));
 
 
     //------------------------------------------------------------------------
@@ -487,11 +411,8 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     // Environment
     //------------------------------------------------------------------------
 
-    // OPTIONAL: this creates a blue background color
     // Create a color called "sky_radiance" and insert it into the scene.
-    // static const float SkyRadiance[] = { 0.75f, 0.80f, 1.0f };
-    // statically making this 'white' for now so we don't blue wash the image
-    static const float SkyRadiance[] = { 1.0f, 1.0f, 1.0f };
+    static const float SkyRadiance[] = { 0.75f, 0.80f, 1.0f };
     scene->colors().insert(
 	asr::ColorEntityFactory::create(
 	    "sky_radiance",
@@ -687,13 +608,13 @@ main(int argc, char **argv)
     renderer->render(renderer_controller);
 
     // Save the frame to disk.
-    char *default_out = bu_strdup("output/art.png");
+    char *default_out = bu_strdup("art.png");
     outputfile = default_out;
     project->get_frame()->write_main_image(outputfile);
     bu_free(default_out, "default name");
 
     // Save the project to disk.
-    asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+    //asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
 
     // Make sure to delete the master renderer before the project and the logger / log target.
     renderer.reset();
