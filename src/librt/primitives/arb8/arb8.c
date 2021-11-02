@@ -2256,7 +2256,8 @@ void
 rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     const int arb_faces[5][24] = rt_arb_faces;
-    int i, a, b, c, type;
+    int i, a, b, c;
+    int type = 0;
     vect_t b_a, c_a, area_;
     plane_t plane;
     struct bn_tol tmp_tol, tol;
@@ -2270,7 +2271,10 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;
 
-    type = rt_arb_std_type(ip, &tol) - 4;
+    type = rt_arb_std_type(ip, &tol);
+    if (type < 4)
+	return;
+    type = type - 4;
 
     /* tol struct needed for bg_make_plane_3pnts,
      * can't be passed to the function since it
