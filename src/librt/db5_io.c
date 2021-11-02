@@ -202,7 +202,7 @@ crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 	    bu_log ("Concatenation of different database versions detected.\n");
 	    bu_log ("Run 'dbupgrade' on all databases before concatenation (cat command).\n");
 	}
-	return 0;
+	return -1;
     }
 
     /* hflags */
