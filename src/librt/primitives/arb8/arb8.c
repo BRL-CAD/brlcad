@@ -1251,7 +1251,8 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 8, dbip->dbi_version < 0 ? 1 : 0);
+    if (dbip)
+	flip_fastf_float(vec, rp->s.s_values, 8, dbip->dbi_version < 0 ? 1 : 0);
 
     /*
      * Convert from vector notation (in database) to point notation.
