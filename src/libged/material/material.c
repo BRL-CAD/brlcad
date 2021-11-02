@@ -33,6 +33,7 @@
 #include "raytrace.h"
 
 #include "../ged_private.h"
+#include "wdb.h"
 
 typedef enum {
     MATERIAL_CREATE,
@@ -66,6 +67,41 @@ get_material_cmd(const char* arg)
     return ATTR_UNKNOWN;
 }
 
+// Routine handles the creation of a material
+int create_material(struct ged *gedp, const char *argv[]){
+    const char* db_name;
+    const char* name;
+    const char* parent;
+    const char* source;
+    struct bu_attribute_value_set physicalProperties;
+    struct bu_attribute_value_set mechanicalProperties;
+    struct bu_attribute_value_set opticalProperties;
+    struct bu_attribute_value_set thermalProperties;
+
+    db_name = argv[2];
+    name = argv[3];
+    parent = argv[4];
+    source = argv[5];
+
+    // Intialize AVS stores
+    bu_avs_init_empty(&physicalProperties);
+    bu_avs_init_empty(&mechanicalProperties);
+    bu_avs_init_empty(&opticalProperties);
+    bu_avs_init_empty(&thermalProperties);
+    
+    mk_material(gedp->ged_wdbp,
+            db_name,
+            name,
+            parent,
+            source,
+            &physicalProperties,
+            &mechanicalProperties,
+            &opticalProperties,
+            &thermalProperties);
+
+    return 0;
+}
+
 int
 ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     material_cmd_t scmd;
@@ -87,6 +123,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     if (scmd == MATERIAL_CREATE){
         // create routine
         bu_vls_printf(gedp->ged_result_str, "Trying: create");
+        create_material(gedp, argv);
     } else if (scmd == MATERIAL_DESTROY) {
         // destroy routine
         bu_vls_printf(gedp->ged_result_str, "Trying: destroy");
@@ -98,11 +135,6 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
         bu_vls_printf(gedp->ged_result_str, "Trying: set");
     } 
 
-    return 0;
-}
-
-// Routine handles the creation of a material
-int create_material(struct ged *gedp, int argc, const char *argv[]){
     return 0;
 }
 
