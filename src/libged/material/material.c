@@ -68,7 +68,7 @@ get_material_cmd(const char* arg)
 }
 
 // Routine handles the creation of a material
-int create_material(struct ged *gedp, const char *argv[]){
+int create_material(struct ged *gedp, int argc, const char *argv[]){
     const char* db_name;
     const char* name;
     const char* parent;
@@ -88,6 +88,156 @@ int create_material(struct ged *gedp, const char *argv[]){
     bu_avs_init_empty(&mechanicalProperties);
     bu_avs_init_empty(&opticalProperties);
     bu_avs_init_empty(&thermalProperties);
+
+    int arg_idx = 6;
+    int arg_ptr = 7;
+    
+    while (1) {
+        if (argc < arg_ptr) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx]) && arg_ptr % 2 == 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx])) {
+            // increment counters to get key values in next loop
+            arg_idx += 1;
+            arg_ptr += 1;
+            break;
+        }
+
+        // have to check the next arg after we know it is not '.'
+        if (argc < arg_ptr + 1) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx + 1]) && (arg_ptr + 1) % 2 != 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        // if we make it here we have a valid key value set for argv[arg_idx] and argv[arg_idx + 1]
+        (void)bu_avs_add(&physicalProperties, argv[arg_idx], argv[arg_idx + 1]);
+
+        // increment the counters by two so we can get the next pair
+        arg_idx += 2;
+        arg_ptr += 2;
+    }
+
+    while (1) {
+        if (argc < arg_ptr) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx]) && arg_ptr % 2 != 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx])) {
+            // increment counters to get key values in next loop
+            arg_idx += 1;
+            arg_ptr += 1;
+            break;
+        }
+
+        // have to check the next arg after we know it is not '.'
+        if (argc < arg_ptr + 1) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx + 1]) && (arg_ptr + 1) % 2 == 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        // if we make it here we have a valid key value set for argv[arg_idx] and argv[arg_idx + 1]
+        (void)bu_avs_add(&mechanicalProperties, argv[arg_idx], argv[arg_idx + 1]);
+
+        // increment the counters by two so we can get the next pair
+        arg_idx += 2;
+        arg_ptr += 2;
+    }
+
+    while (1) {
+        if (argc < arg_ptr) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx]) && arg_ptr % 2 == 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx])) {
+            // increment counters to get key values in next loop
+            arg_idx += 1;
+            arg_ptr += 1;
+            break;
+        }
+
+        // have to check the next arg after we know it is not '.'
+        if (argc < arg_ptr + 1) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx + 1]) && (arg_ptr + 1) % 2 != 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        // if we make it here we have a valid key value set for argv[arg_idx] and argv[arg_idx + 1]
+        (void)bu_avs_add(&opticalProperties, argv[arg_idx], argv[arg_idx + 1]);
+
+        // increment the counters by two so we can get the next pair
+        arg_idx += 2;
+        arg_ptr += 2;
+    }
+
+    while (1) {
+        if (argc < arg_ptr) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx]) && arg_ptr % 2 != 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx])) {
+            arg_idx += 1;
+            arg_ptr += 1;
+            break;
+        }
+
+        // have to check the next arg after we know it is not '.'
+        if (argc < arg_ptr + 1) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+	        return GED_ERROR;
+        }
+
+        if (BU_STR_EQUAL(".", argv[arg_idx + 1]) && (arg_ptr + 1) % 2 == 0) {
+            bu_vls_printf(gedp->ged_result_str, "ERROR, key value pairs entered incorrectly!\n");
+	        return GED_ERROR;
+        }
+
+        // if we make it here we have a valid key value set for argv[arg_idx] and argv[arg_idx + 1]
+        (void)bu_avs_add(&thermalProperties, argv[arg_idx], argv[arg_idx + 1]);
+
+        // increment the counters by two so we can get the next pair
+        arg_idx += 2;
+        arg_ptr += 2;
+    }
     
     mk_material(gedp->ged_wdbp,
             db_name,
@@ -123,7 +273,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     if (scmd == MATERIAL_CREATE){
         // create routine
         bu_vls_printf(gedp->ged_result_str, "Trying: create");
-        create_material(gedp, argv);
+        create_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_DESTROY) {
         // destroy routine
         bu_vls_printf(gedp->ged_result_str, "Trying: destroy");
