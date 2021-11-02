@@ -78,6 +78,10 @@ int create_material(struct ged *gedp, int argc, const char *argv[]){
     struct bu_attribute_value_set opticalProperties;
     struct bu_attribute_value_set thermalProperties;
 
+    if (argc < 13){
+        bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+    }
+
     db_name = argv[2];
     name = argv[3];
     parent = argv[4];
@@ -272,7 +276,6 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
 
     if (scmd == MATERIAL_CREATE){
         // create routine
-        bu_vls_printf(gedp->ged_result_str, "Trying: create");
         create_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_DESTROY) {
         // destroy routine
