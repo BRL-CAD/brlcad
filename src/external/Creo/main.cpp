@@ -18,8 +18,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.cpp
- *
+/**
+ * @file main.cpp
  */
 
 #include "common.h"
@@ -794,7 +794,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     cinfo->local_tol_sq = cinfo->local_tol * cinfo->local_tol;
 
     /**
-     * Output the top level object
+     * Output the top-level object
      * this will recurse through the entire model
      */
     output_top_level_object(cinfo, model, type);
@@ -806,7 +806,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
 
     if (cinfo->warn_feature_unsuppress) {
         struct bu_vls errmsg = BU_VLS_INIT_ZERO;
-        bu_vls_sprintf(&errmsg, "During the conversion, one or more parts had features suppressed. After the conversion was complete, an\nattempt was made to unsuppress these same features.\nOne or more unsuppression operations failed, so some features are still\nsuppressed. Please exit CREO without saving any\nchanges so that this problem will not persist.");
+        bu_vls_sprintf(&errmsg, "During the conversion, one or more parts had features suppressed.\nAfter the conversion was complete, an attempt was made to unsuppress\nthese same features.  One or more unsuppression operations failed, so\nsome features are still  suppressed.  Please exit CREO without saving\nany changes so that this problem will not persist.");
         PopupMsg("Warning - Restoration Failure", bu_vls_addr(&errmsg));
         bu_vls_free(&errmsg);
     }
@@ -915,7 +915,7 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
                 ProUIInputpanelValueSet("creo_brl", "output_file", wgout);
                 bu_vls_free(&groot);
            }
-           /** suggest a default log file... */
+           /** Suggest a default log file... */
            if (bu_path_component(&lroot, name, BU_PATH_BASENAME_EXTLESS)) {
                /** Supply a sensible default for the .g file... */
                wchar_t wgout[CREO_NAME_MAX];
