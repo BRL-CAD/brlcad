@@ -1326,8 +1326,12 @@ void
 CPP_XGLUE(bot_uv_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct uvcoord *uvp)
 {
     size_t i;
+
+    if (!bot || !hitp || !uvp)
+	return;
     CPP_XGLUE(tri_specific_, TRI_TYPE) *trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
-    if (!trip || !uvp) return;
+    if (!trip)
+	return;
 
     if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) /* && trip->tri_uvs */) {
 	for (i = X; i <= Z; i++) {
