@@ -353,7 +353,10 @@ rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     vect_t tmp;
     fastf_t dot;
 
-    if (hitp) RT_CK_HIT(hitp);
+    if (!hitp || !rp)
+	return;
+
+    RT_CK_HIT(hitp);
 
     if (hitp->hit_surfno == 1 || hitp->hit_surfno == -1)
 	return;
@@ -372,9 +375,10 @@ rt_cline_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     }
 
     if (MAGNITUDE(hitp->hit_normal) < 0.9) {
-	bu_log("BAD normal for solid %s for ray -p %g %g %g -d %g %g %g\n",
-	       stp->st_name, V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
-	bu_bomb("BAD normal\n");
+	if (stp)
+	    bu_log("BAD normal for cline solid %s for ray -p %g %g %g -d %g %g %g\n",
+		    stp->st_name, V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
+	bu_bomb("BAD cline normal\n");
     }
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 }
@@ -613,9 +617,11 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	VJOIN2(base_outer[seg_no].pt, cline_ip->v, a, v1, b, v2);
 	VADD2(top_outer[seg_no].pt, base_outer[seg_no].pt, cline_ip->h);
 
-	if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
-	    VJOIN2(base_inner[seg_no].pt, cline_ip->v, c, v1, d, v2);
-	    VADD2(top_inner[seg_no].pt, base_inner[seg_no].pt, cline_ip->h);
+	if (base_inner && top_inner) {
+	    if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
+		VJOIN2(base_inner[seg_no].pt, cline_ip->v, c, v1, d, v2);
+		VADD2(top_inner[seg_no].pt, base_inner[seg_no].pt, cline_ip->h);
+	    }
 	}
     }
 
@@ -749,10 +755,12 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	nmg_vertex_gv(base_outer[seg_no].v, base_outer[seg_no].pt);
     }
 
-    if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
-	for (seg_no = 0; seg_no < nsegs; seg_no++) {
-	    nmg_vertex_gv(top_inner[seg_no].v, top_inner[seg_no].pt);
-	    nmg_vertex_gv(base_inner[seg_no].v, base_inner[seg_no].pt);
+    if (top_inner && base_inner) {
+	if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
+	    for (seg_no = 0; seg_no < nsegs; seg_no++) {
+		nmg_vertex_gv(top_inner[seg_no].v, top_inner[seg_no].pt);
+		nmg_vertex_gv(base_inner[seg_no].v, base_inner[seg_no].pt);
+	    }
 	}
     }
 
