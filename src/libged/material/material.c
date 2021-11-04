@@ -256,6 +256,39 @@ int create_material(struct ged *gedp, int argc, const char *argv[]){
     return 0;
 }
 
+// Routine handles the deletion of a material
+int destroy_material(struct ged *gedp, int argc, const char *argv[]){
+struct directory *dp;
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    _dl_eraseAllNamesFromDisplay(gedp, argv[2], 0);
+
+    if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
+	    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
+            bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[2]);
+		    return GED_ERROR;
+	    }
+
+        if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
+		/* Abort kill processing on first error */
+            bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[2]);
+            return GED_ERROR;
+	    }
+    }
+
+    /* Update references. */
+    db_update_nref(gedp->dbip, &rt_uniresource);
+
+    return GED_OK;
+    return 0;
+}
+
 int
 ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     material_cmd_t scmd;
@@ -279,7 +312,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
         create_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_DESTROY) {
         // destroy routine
-        bu_vls_printf(gedp->ged_result_str, "Trying: destroy");
+        destroy_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_GET) {
         // get routine
         bu_vls_printf(gedp->ged_result_str, "Trying: get");
