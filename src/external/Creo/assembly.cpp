@@ -352,7 +352,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     return PRO_TK_NO_ERROR;
 }
 
-/*
+/**
  * Local Variables:
  * mode: C
  * tab-width: 8
