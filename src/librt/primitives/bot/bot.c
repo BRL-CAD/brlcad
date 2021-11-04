@@ -664,9 +664,12 @@ void
 rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct bot_specific *bot;
-
     if (ap) RT_CK_APPLICATION(ap);
-    if (stp) RT_CK_SOLTAB(stp);
+
+    if (!stp)
+	return;
+    RT_CK_SOLTAB(stp);
+
     if (hitp) RT_CK_HIT(hitp);
     if (!uvp) return;
 
