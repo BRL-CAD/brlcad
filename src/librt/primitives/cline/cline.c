@@ -188,7 +188,10 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
     fastf_t distmin, distmax;
     fastf_t add_radius;
 
-    if (ap) RT_CK_APPLICATION(ap);
+    if (!ap || !rp)
+	return 0;
+
+    RT_CK_APPLICATION(ap);
 
     BU_LIST_INIT(&ref_seghead.l);
 
