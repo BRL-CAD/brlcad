@@ -1224,7 +1224,14 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
+    nseg = rip->skt->curve.count;
     nvert = rip->skt->vert_count;
+
+    if (nseg && !nvert) {
+	bu_log("Trying to plot a revolve with segments but no vertices??\n");
+	return -1;
+    }
+
     verts = rip->skt->verts;
     crv = &rip->skt->curve;
 
@@ -1284,7 +1291,6 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     if (nvert)
 	endcount = (int *)bu_calloc(nvert, sizeof(int), "endcount");
 
-    nseg = rip->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
 	uint32_t *lng;
