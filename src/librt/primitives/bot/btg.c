@@ -156,11 +156,6 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
     struct hitdata_s *h = (struct hitdata_s *)ptr;
     struct tri_specific *tsp;
     struct hit *hp;
-    fastf_t dn;		/* Direction dot Normal */
-    fastf_t abs_dn;
-    fastf_t alpha, beta;
-    vect_t wxb;		/* vertex - ray_start */
-    vect_t xp;		/* wxb cross ray_dir */
 
     if (h->nhits > (MAXHITS-1)) {
 	bu_log("Too many hits!\n");
@@ -175,38 +170,27 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
 
     hp->hit_magic = RT_HIT_MAGIC;
     hp->hit_dist = id->dist;
+
+    /* hit_vpriv is used later to clean up odd hits, exit before entrance, or
+     * dangling entrance in bot_makesegs_(). When TIE was leaving this
+     * unset, BOT hits were disappearing from the segment depending on the
+     * random hit_vpriv[X] uninitialized values - set it using id->norm and the
+     * ray direction. */
     VMOVE(tsp->tri_N, id->norm);
-
-    /* replicate hit_vpriv[] settings from original BOT code, used later to
-     * clean up odd hits, exit before entrance, or dangling entrance in
-     * make_bot_segment(). BOT hits were disappearing from the segment
-     * depending on hit_vpriv[X] uninitialized value.
-     */
-    dn = VDOT(tsp->tri_N, ray->dir);
-    abs_dn = dn >= 0.0 ? dn : (-dn);
-
-    /* TODO - where are these supposed to be set?  Static analysis indicates
-     * they are being used in the below logic unset... g_bot_include has
-     * similarly named variables, but I think that's a completely separate
-     * logic chain and none of the btg code seems to assign a value to tri_A
-     * anywhere... */
-    VSETALL(tsp->tri_A, 0.0);
-    VSETALL(tsp->tri_CA, 0.0);
-    VSETALL(tsp->tri_BA, 0.0);
-    tsp->tri_surfno = 0;
-
-    /* TODO - I don't think any values based on the above zero set tsp->tri_*
-     * values can be accurate - they were previously uninitialized according to
-     * static analysis.  Are we using them anywhere? */
-    VSUB2(wxb, tsp->tri_A, ray->pos);
-    VCROSS(xp, wxb, ray->dir);
-    alpha = VDOT(tsp->tri_CA, xp);
-    if (dn < 0.0) alpha = -alpha;
-    beta = VDOT(tsp->tri_BA, xp);
     hp->hit_vpriv[X] = VDOT(tsp->tri_N, ray->dir);
-    hp->hit_vpriv[Y] = alpha / abs_dn;
-    hp->hit_vpriv[Z] = beta / abs_dn;
-    hp->hit_surfno = tsp->tri_surfno;
+
+    /* Of the hit_vpriv assignments added in commit 50164, only hit_vpriv[X]
+     * was based on initialized calculations.  Rather than leaving the other
+     * assignments (which were based on calculations using uninitialized values
+     * in the tsp struct) we simply assign 0 values.
+     *
+     * NOTE: bot_norm_ does use Y and Z in the normal calculations, so those
+     * still won't work.  Likewise, bot_plate_segs_ uses hit_surfno which is
+     * also not set correctly.  Perhaps the currently unused tri would have
+     * the needed info? */
+    hp->hit_vpriv[Y] = 0.0;
+    hp->hit_vpriv[Z] = 0.0;
+    hp->hit_surfno = 0;
 
     /* add hitdist into array and add one to nhits */
     return NULL;	/* continue firing */
