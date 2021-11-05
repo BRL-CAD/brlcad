@@ -1200,6 +1200,7 @@ rt_revolve_free(struct soltab *stp)
     BU_PUT(revolve, struct revolve_specific);
 }
 
+#define VVECT_INIT16 {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
 
 int
 rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
@@ -1210,7 +1211,8 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     point2d_t *verts;
     struct rt_curve *crv;
 
-    vect_t ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
+    vect_t ell[16] = VVECT_INIT16;
+    vect_t cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t cos22_5 = 0.9238795325112867385;
     fastf_t cos67_5 = 0.3826834323650898373;
     int *endcount = NULL, ang_sign;
