@@ -184,6 +184,20 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
      */
     dn = VDOT(tsp->tri_N, ray->dir);
     abs_dn = dn >= 0.0 ? dn : (-dn);
+
+    /* TODO - where are these supposed to be set?  Static analysis indicates
+     * they are being used in the below logic unset... g_bot_include has
+     * similarly named variables, but I think that's a completely separate
+     * logic chain and none of the btg code seems to assign a value to tri_A
+     * anywhere... */
+    VSETALL(tsp->tri_A, 0.0);
+    VSETALL(tsp->tri_CA, 0.0);
+    VSETALL(tsp->tri_BA, 0.0);
+    tsp->tri_surfno = 0;
+
+    /* TODO - I don't think any values based on the above zero set tsp->tri_*
+     * values can be accurate - they were previously uninitialized according to
+     * static analysis.  Are we using them anywhere? */
     VSUB2(wxb, tsp->tri_A, ray->pos);
     VCROSS(xp, wxb, ray->dir);
     alpha = VDOT(tsp->tri_CA, xp);
@@ -193,7 +207,6 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
     hp->hit_vpriv[Y] = alpha / abs_dn;
     hp->hit_vpriv[Z] = beta / abs_dn;
     hp->hit_surfno = tsp->tri_surfno;
-
 
     /* add hitdist into array and add one to nhits */
     return NULL;	/* continue firing */
