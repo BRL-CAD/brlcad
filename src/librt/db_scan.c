@@ -79,9 +79,9 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 {
     union record record;	/* Initial record, holds name */
     union record rec2;		/* additional record(s) */
-    register b_off_t addr;	/* start of current rec */
-    register b_off_t here;		/* intermediate positions */
-    register b_off_t next;		/* start of next rec */
+    register b_off_t addr = 0;	/* start of current rec */
+    register b_off_t here = -1;	/* intermediate positions */
+    register b_off_t next;	/* start of next rec */
     register int nrec;		/* # records for this solid */
     register int totrec;	/* # records for database */
     register long j;
@@ -104,9 +104,6 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 	perror("ftell");
 	next = 0;
     }
-
-    here = -1;
-    addr = 0;
 
     totrec = 0;
     while (1) {
