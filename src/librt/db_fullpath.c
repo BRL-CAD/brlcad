@@ -650,7 +650,7 @@ db_full_path_cyclic(const struct db_full_path *fp, const char *lname, int full_c
     while (depth > 0) {
 	test_name = fp->fp_names[depth]->d_namep;
 	depth--;
-	if (cyclic_path(fp, lname, depth)) return 1;
+	if (cyclic_path(fp, test_name, depth)) return 1;
     }
 
     /* not cyclic */
