@@ -2539,14 +2539,14 @@ tesselate_pipe_linear(
     struct shell *s,
     const struct bn_tol *tol)
 {
-    struct vertex **new_outer_loop;
-    struct vertex **new_inner_loop;
-    struct vertex **verts[3];
-    struct faceuse *fu;
-    vect_t *norms;
-    vect_t n;
-    fastf_t slope;
-    fastf_t seg_len;
+    struct vertex **new_outer_loop = NULL;
+    struct vertex **new_inner_loop = NULL;
+    struct vertex **verts[3] = {NULL, NULL, NULL};
+    struct faceuse *fu = NULL;
+    vect_t *norms = NULL;
+    vect_t n = VINIT_ZERO;
+    fastf_t slope = 0.0;
+    fastf_t seg_len = 0.0;
     int i, j;
 
     NMG_CK_SHELL(s);
@@ -2557,15 +2557,11 @@ tesselate_pipe_linear(
     if (end_orad > tol->dist) {
 	new_outer_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
 						     "tesselate_pipe_linear: new_outer_loop");
-    } else {
-	new_outer_loop = (struct vertex **)NULL;
     }
 
     if (end_irad > tol->dist) {
 	new_inner_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
 						     "tesselate_pipe_linear: new_inner_loop");
-    } else {
-	new_inner_loop = (struct vertex **)NULL;
     }
 
     VSUB2(n, end_pt, start_pt);
