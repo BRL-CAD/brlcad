@@ -54,11 +54,11 @@ int
 rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring)
 {
     register struct xray *rayp = rp+1;
-    int ring;
+    int ring = 0;
     double fraction = 1.0;
-    double theta;
-    double delta;
-    double radial_scale;
+    double theta = 0.0;
+    double delta = 0.0;
+    double radial_scale = 0.0;
     int count = 0;
 
     rp[0].index = count++;
@@ -67,7 +67,6 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
     for (ring=0; ring < nring; ring++) {
 	register int i;
 
-	theta = 0;
 	delta = M_2PI / rays_per_ring;
 	fraction = ((double)(ring+1)) / nring;
 	theta = delta * fraction;	/* spiral skew */
@@ -412,10 +411,10 @@ HIDDEN int
 rt_pattern_circ_spiral(fastf_t **rays, size_t *ray_cnt, const point_t center_pt, const vect_t dir,
 	const double radius, const int rays_per_ring, const int nring, const double delta)
 {
-    int ring;
+    int ring = 0;
     double fraction = 1.0;
-    double theta;
-    double radial_scale;
+    double theta = 0.0;
+    double radial_scale = 0.0;
     vect_t avec, bvec;
     int ray_index = 0;
 
@@ -430,7 +429,6 @@ rt_pattern_circ_spiral(fastf_t **rays, size_t *ray_cnt, const point_t center_pt,
     for (ring = 0; ring < nring; ring++) {
 	register int i;
 
-	theta = 0;
 	fraction = ((double)(ring+1)) / nring;
 	theta = delta * fraction;       /* spiral skew */
 	radial_scale = radius * fraction;
