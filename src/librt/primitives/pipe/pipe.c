@@ -2552,24 +2552,24 @@ tesselate_pipe_linear(
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
 
-    norms = (vect_t *)bu_calloc(arc_segs, sizeof(vect_t), "tesselate_pipe_linear: new normals");
+    VSUB2(n, end_pt, start_pt);
+    seg_len = MAGNITUDE(n);
+    VSCALE(n, n, 1.0 / seg_len);
+    slope = (orad - end_orad) / seg_len;
 
-    if (end_orad > tol->dist) {
-	new_outer_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
-						     "tesselate_pipe_linear: new_outer_loop");
-    }
+    norms = (vect_t *)bu_calloc(arc_segs, sizeof(vect_t), "tesselate_pipe_linear: new normals");
 
     if (end_irad > tol->dist) {
 	new_inner_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
 						     "tesselate_pipe_linear: new_inner_loop");
     }
 
-    VSUB2(n, end_pt, start_pt);
-    seg_len = MAGNITUDE(n);
-    VSCALE(n, n, 1.0 / seg_len);
-    slope = (orad - end_orad) / seg_len;
+    if (end_orad > tol->dist) {
+	new_outer_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
+						     "tesselate_pipe_linear: new_outer_loop");
+    }
 
-    if (orad > tol->dist && end_orad > tol->dist) {
+    if (end_orad > tol->dist && orad > tol->dist) {
 	point_t pt;
 	fastf_t x, y, xnew, ynew;
 	struct faceuse *fu_prev = (struct faceuse *)NULL;
