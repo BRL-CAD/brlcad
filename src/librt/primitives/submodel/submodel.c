@@ -617,9 +617,12 @@ struct goodies {
 HIDDEN union tree *
 rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
-    union tree *curtree;
-    struct goodies *gp;
-    int ret;
+    union tree *curtree = NULL;
+    struct goodies *gp = NULL;
+    int ret = -1;
+
+    if (!tsp || !ip)
+	return TREE_NULL;
 
     BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -638,14 +641,14 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
 	bu_free((void *)sofar, "path string");
     }
 
-    ret = -1;
-    if (ip->idb_meth->ft_plot) {
+    if (gp && ip->idb_meth->ft_plot) {
 	ret = ip->idb_meth->ft_plot(gp->vheadp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
     }
     if (ret < 0) {
-	bu_log("rt_submodel_wireframe_leaf(%s): %s plot failure\n",
-	       ip->idb_meth->ft_name,
-	       DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+	if (pathp && pathp->fp_len > 0)
+	    bu_log("rt_submodel_wireframe_leaf(%s): %s plot failure\n",
+		    ip->idb_meth->ft_name,
+		    DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 	return TREE_NULL;		/* ERROR */
     }
 
