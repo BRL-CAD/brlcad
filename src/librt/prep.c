@@ -1906,7 +1906,6 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 		    rtip->Regions[j]->reg_bit = j;
 		}
 	    }
-	    nulls = 0;
 	} else {
 	    i++;
 	}
