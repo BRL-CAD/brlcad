@@ -2654,6 +2654,10 @@ tesselate_pipe_linear(
 		       i, orad , end_orad);
 		continue;
 	    }
+	    if (!new_outer_loop) {
+		bu_log("tesselate_pipe_linear (pipe.c:%d): unexpected NULL new_outer_loop\n", __LINE__);
+		continue;
+	    }
 	    if (!new_outer_loop[i]->vg_p) {
 		nmg_vertex_gv(new_outer_loop[i], pt);
 	    }
@@ -2832,6 +2836,10 @@ tesselate_pipe_linear(
 	    if (!(*outer_loop)[0]->vg_p) {
 		nmg_vertex_gv((*outer_loop)[0], start_pt);
 	    }
+	    if (!new_outer_loop) {
+		bu_log("tesselate_pipe_linear (pipe.c:%d): unexpected NULL new_outer_loop\n", __LINE__);
+		continue;
+	    }
 	    if (!new_outer_loop[i]->vg_p) {
 		nmg_vertex_gv(new_outer_loop[i], pt);
 	    }
@@ -2964,6 +2972,10 @@ tesselate_pipe_linear(
 	    if ((fu = nmg_cmface(s, verts, 3)) == NULL) {
 		bu_log("tesselate_pipe_linear: failed to make inner face #%d irad=%g, end_irad=%g\n",
 		       i, irad, end_irad);
+		continue;
+	    }
+	    if (!new_inner_loop) {
+		bu_log("tesselate_pipe_linear (pipe.c:%d): unexpected NULL new_inner_loop\n", __LINE__);
 		continue;
 	    }
 	    if (!new_inner_loop[i]->vg_p) {
@@ -3151,6 +3163,10 @@ tesselate_pipe_linear(
 	    }
 	    if (!(*inner_loop)[0]->vg_p) {
 		nmg_vertex_gv((*inner_loop)[0], start_pt);
+	    }
+	    if (!new_inner_loop) {
+		bu_log("tesselate_pipe_linear (pipe.c:%d): unexpected NULL new_inner_loop\n", __LINE__);
+		continue;
 	    }
 	    if (!new_inner_loop[i]->vg_p) {
 		nmg_vertex_gv(new_inner_loop[i], pt);
