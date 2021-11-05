@@ -588,6 +588,9 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     vect_t cor_pprime;	/* new ray origin */
     fastf_t *cor_proj;
 
+    if (!stp || !(*stp) || !rp || !segp || !ap)
+	return;
+
     /* Allocate space for polys and roots */
     C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
     val = (bn_complex_t (*)[4])bu_malloc(n * sizeof(bn_complex_t) * 4,
