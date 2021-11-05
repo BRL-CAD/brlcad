@@ -1417,7 +1417,7 @@ rt_hyp_surf_area(fastf_t *UNUSED(area), const struct rt_db_internal *UNUSED(ip))
 void
 rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-    if (volume != NULL || ip != NULL) {
+    if (volume != NULL && ip != NULL) {
 	struct rt_hyp_internal *hip;
 	struct hyp_specific *hyp;
 
