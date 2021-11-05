@@ -2552,6 +2552,8 @@ tesselate_pipe_linear(
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
 
+    fastf_t tdist = tol->dist;
+
     VSUB2(n, end_pt, start_pt);
     seg_len = MAGNITUDE(n);
     VSCALE(n, n, 1.0 / seg_len);
@@ -2559,17 +2561,17 @@ tesselate_pipe_linear(
 
     norms = (vect_t *)bu_calloc(arc_segs, sizeof(vect_t), "tesselate_pipe_linear: new normals");
 
-    if (end_irad > tol->dist) {
+    if (end_irad > tdist) {
 	new_inner_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
 						     "tesselate_pipe_linear: new_inner_loop");
     }
 
-    if (end_orad > tol->dist) {
+    if (end_orad > tdist) {
 	new_outer_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
 						     "tesselate_pipe_linear: new_outer_loop");
     }
 
-    if (end_orad > tol->dist && orad > tol->dist) {
+    if (end_orad > tdist && orad > tdist) {
 	point_t pt;
 	fastf_t x, y, xnew, ynew;
 	struct faceuse *fu_prev = (struct faceuse *)NULL;
@@ -2717,7 +2719,7 @@ tesselate_pipe_linear(
 	}
 	bu_free((char *)(*outer_loop), "tesselate_pipe_bend: outer_loop");
 	*outer_loop = new_outer_loop;
-    } else if (orad > tol->dist && end_orad <= tol->dist) {
+    } else if (orad > tdist && end_orad <= tdist) {
 	struct vertex *v = (struct vertex *)NULL;
 
 	VSUB2(norms[0], (*outer_loop)[0]->vg_p->coord, start_pt);
@@ -2790,7 +2792,7 @@ tesselate_pipe_linear(
 
 	bu_free((char *)(*outer_loop), "tesselate_pipe_linear: outer_loop");
 	outer_loop[0] = &v;
-    } else if (orad <= tol->dist && end_orad > tol->dist) {
+    } else if (orad <= tdist && end_orad > tdist) {
 	point_t pt, pt_next;
 	fastf_t x, y, xnew, ynew;
 
@@ -2881,7 +2883,7 @@ tesselate_pipe_linear(
 
     slope = (irad - end_irad) / seg_len;
 
-    if (irad > tol->dist && end_irad > tol->dist) {
+    if (irad > tdist && end_irad > tdist) {
 	point_t pt;
 	fastf_t x, y, xnew, ynew;
 	struct faceuse *fu_prev = (struct faceuse *)NULL;
@@ -3035,7 +3037,7 @@ tesselate_pipe_linear(
 	}
 	bu_free((char *)(*inner_loop), "tesselate_pipe_bend: inner_loop");
 	*inner_loop = new_inner_loop;
-    } else if (irad > tol->dist && end_irad <= tol->dist) {
+    } else if (irad > tdist && end_irad <= tdist) {
 	struct vertex *v = (struct vertex *)NULL;
 
 	VSUB2(norms[0], (*inner_loop)[0]->vg_p->coord, start_pt);
@@ -3110,7 +3112,7 @@ tesselate_pipe_linear(
 
 	bu_free((char *)(*inner_loop), "tesselate_pipe_linear: inner_loop");
 	inner_loop[0] = &v;
-    } else if (irad <= tol->dist && end_irad > tol->dist) {
+    } else if (irad <= tdist && end_irad > tdist) {
 	point_t pt, pt_next;
 	fastf_t x, y, xnew, ynew;
 
