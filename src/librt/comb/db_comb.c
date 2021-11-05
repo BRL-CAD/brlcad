@@ -408,7 +408,7 @@ rt_comb_export4(
 {
     struct rt_comb_internal *comb;
     size_t node_count;
-    size_t actual_count;
+    size_t actual_count = 0;
     struct rt_tree_array *rt_tree_array;
     union tree *tp;
     union record *rp;
@@ -445,7 +445,6 @@ rt_comb_export4(
 	comb->tree = TREE_NULL;
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
-	actual_count = 0;
     }
 
     /* Reformat the data into the necessary V4 granules */
@@ -1133,7 +1132,6 @@ db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, con
 	    }
 
 	    if (BU_PTBL_LEN(stack) < 1) {
-		done = 1;
 		break;
 	    }
 	    comb_leaf = (union tree *)BU_PTBL_GET(stack, BU_PTBL_LEN(stack)-1);
