@@ -918,7 +918,8 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;
     int *pts_dbl, i, j, nseg;
-    int jj, na, nb, nell, recalc_b;
+    int na = 0;
+    int jj, nb, nell, recalc_b;
     mat_t R;
     mat_t invR;
     struct rt_epa_internal *xip;
@@ -1001,7 +1002,6 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     /* see if any segments need further breaking up */
     recalc_b = 0;
-    na = 0;
     pos_a = pts_a;
     while (pos_a->next) {
 	na = rt_mk_parabola(pos_a, r1, mag_h, dtol, ntol);
@@ -1205,7 +1205,8 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t **ellipses, **normals, theta_new, theta_prev;
     int *pts_dbl, face, i, j, nseg;
     int *segs_per_ell;
-    int jj, na, nb, nell, recalc_b;
+    int na = 0;
+    int jj, nb, nell, recalc_b;
     mat_t R;
     mat_t invR;
     struct rt_epa_internal *xip;
@@ -1299,7 +1300,6 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* see if any segments need further breaking up */
     recalc_b = 0;
-    na = 0;
     pos_a = pts_a;
     while (pos_a->next) {
 	na = rt_mk_parabola(pos_a, r1, mag_h, dtol, ntol);
