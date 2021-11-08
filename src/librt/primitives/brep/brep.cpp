@@ -2296,6 +2296,8 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     model.m_dimstyle_table.Reserve(1);
     model.m_dimstyle_table.Append(default_style);
 
+    model.m_object_table.SetCapacity(1);
+
     ONX_Model_Object& mo = model.m_object_table.AppendNew();
     mo.m_object = bi->brep;
 
