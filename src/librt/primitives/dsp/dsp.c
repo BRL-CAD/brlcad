@@ -1760,7 +1760,6 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
     for (x = 0; x < 4; x++)
 	memset(hits+x, 0, sizeof(struct hit));
-    x = 0;
 
     dlog("isect_ray_cell_top\n");
     DSP_BB_CK(dsp_bb);
