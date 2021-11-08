@@ -1529,7 +1529,6 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     fastf_t magsq_a, magsq_b, magsq_c;
     fastf_t f;
     register int i;
-    fastf_t radius;
     struct rt_ell_internal *eip;
     struct vertex *verts[8];
     struct vertex **vertp[4];
@@ -1607,13 +1606,6 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     /* invRoS, for converting normals from unit sphere to model */
     bn_mat_mul(invRoS, invR, S);
-
-    /* Compute radius of bounding sphere */
-    radius = Alen;
-    if (Blen > radius)
-	radius = Blen;
-    if (Clen > radius)
-	radius = Clen;
 
     MAT_IDN(xlate);
     MAT_DELTAS_VEC(xlate, eip->v);
