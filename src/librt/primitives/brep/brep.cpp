@@ -1707,7 +1707,7 @@ plotisoVCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
     trim_hits.unique(near_equal);
 
     size_t hit_cnt = trim_hits.size();
-    cnt = 1;
+    //cnt = 1;
 
     //bu_log("\tplotisoVCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, u, from, u, to);
 
