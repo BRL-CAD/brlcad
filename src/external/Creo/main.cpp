@@ -401,7 +401,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
         while (tdp != RT_DIR_NULL) {
             (void)bu_vls_incr(&top_name, NULL, "0:0:0:0:-", NULL, NULL);
             if (count == LONG_MAX) {
-                creo_log(cinfo, MSG_FAIL, "%s: top level name gen failed\n", bu_vls_cstr(cinfo->output_file);
+                creo_log(cinfo, MSG_FAIL, "%s: top level name gen failed\n", bu_vls_cstr(cinfo->output_file));
                 break;
             }
         }
