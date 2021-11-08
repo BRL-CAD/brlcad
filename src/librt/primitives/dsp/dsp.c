@@ -680,9 +680,6 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
     dsp->layer[0].dim[Y] = dsp->ysiz;
     dsp->layer[0].p = dsp->bb_array;
 
-    xs = dsp->xsiz;
-    ys = dsp->ysiz;
-
     dsp_min = 0xffff;
     dsp_max = 0;
 
