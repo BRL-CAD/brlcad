@@ -2701,7 +2701,6 @@ rt_curve_order_segments(struct rt_curve *crv)
 		crv->reverse[j] = crv->reverse[k];
 		crv->reverse[k] = tmp_reverse;
 	    }
-	    fixed = 1;
 	    break;
 	}
     }
