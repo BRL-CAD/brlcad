@@ -358,7 +358,6 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     if (RT_G_DEBUG&RT_DEBUG_EBM)VPRINT("r_pt", rp->r_pt);
     if (RT_G_DEBUG&RT_DEBUG_EBM)VPRINT("P", P);
     if (RT_G_DEBUG&RT_DEBUG_EBM)VPRINT("cellsize", ebmp->ebm_cellsize);
-    t0 = rp->r_min;
     tmax = rp->r_max;
     if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r_max);
 
