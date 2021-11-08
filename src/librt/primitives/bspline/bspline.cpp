@@ -193,10 +193,6 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     struct rt_nurb_internal *sip;
     const struct bn_tol *tol = &rtip->rti_tol;
-    fastf_t los = tol->dist;
-
-    if (los < SMALL_FASTF)
-	los = SMALL_FASTF;
 
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
@@ -216,6 +212,10 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     return rt_brep_prep(stp, &di, rtip);
 #else
+    fastf_t los = tol->dist;
+
+    if (los < SMALL_FASTF)
+	los = SMALL_FASTF;
 
     for (i = 0; i < sip->nsrf; i++) {
 	struct face_g_snurb * s;
