@@ -1142,8 +1142,6 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
-    rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + tip->r_h));
-
     if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
 	rel = 0.0;		/* none */
     } else {
@@ -1151,6 +1149,9 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	 * by scaling w.r.t. the torus diameter.
 	 */
 	rel = ttol->rel * 2 * (tip->r_a+tip->r_h);
+
+	// TODO - should we be using this instead of the above?
+	// rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + tip->r_h));
     }
     /* Take tighter of two (absolute) tolerances */
     if (ttol->abs <= 0.0) {
