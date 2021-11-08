@@ -58,6 +58,7 @@ int DegreeReduction(int n, ON_3dPointArray &bezcurv, fastf_t tol, fastf_t &maxer
 	return -2;
 
     ON_3dPointArray left(n), right(n), tmpcurve(n);
+    tmpcurve.SetCapacity(n);
     left[0] = bezcurv[0];
     for (int i = 1; i < n; i++) {
 	left[i] = bezcurv[i] + (double)i / (n - i) * (bezcurv[i] - left[i - 1]);
