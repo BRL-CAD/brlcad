@@ -757,7 +757,9 @@ struct bot_fold_data {
 static int
 should_fold(const vdsNode *node, void *udata)
 {
-    int i, num_edges, short_edges, short_spaces;
+    int i;
+    int num_edges = 0;
+    int short_edges = 0;
     fastf_t dist_01, dist_12, dist_20;
     vdsNode *corner_nodes[3];
     struct bot_fold_data *fold_data = (struct bot_fold_data *)udata;
@@ -773,7 +775,6 @@ should_fold(const vdsNode *node, void *udata)
     if (fold_data->dmax/fold_data->dmin > 5.0 && node->nsubtris < 30) return 0;
 
     num_edges = node->nsubtris * 3;
-    short_edges = short_spaces = 0;
 
     for (i = 0; i < node->nsubtris; ++i) {
 	/* get the three nodes corresponding to the three corner */
