@@ -3291,12 +3291,10 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    } else {
 		MOVE(o_pt);
 		DRAW(s_pt);
-		drawing = 1;
 	    }
 	} else {
 	    if (drawing) {
 		DRAW(s_pt);
-		drawing = 0;
 	    }
 	}
 
