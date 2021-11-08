@@ -1615,7 +1615,7 @@ plotisoUCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 
     int hit_cnt = trim_hits.size();
 
-    cnt = 1;
+    //cnt = 1;
     //bu_log("\tplotisoUCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, from, v , to, v);
 
     if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
