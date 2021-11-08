@@ -731,22 +731,19 @@ static int
 get_vol_data(struct rt_vol_internal *vip, const mat_t mat, const struct db_i *dbip)
 {
   mat_t tmp;
-  char *p;
 
   /* Apply Modelling transform */
   bn_mat_mul(tmp, mat, vip->mat);
   MAT_COPY(vip->mat, tmp);
-  p = vip->name;
 
   switch (vip->datasrc) {
 case RT_VOL_SRC_FILE:
     /* Retrieve the data from an external file */
     if (RT_G_DEBUG & RT_DEBUG_HF)
-  bu_log("getting data from file \"%s\"\n", p);
+	bu_log("getting data from file \"%s\"\n", vip->name);
 
     if(vol_file_data(vip) != 0) {
       return 1;
-      p = "file";
     }
     else {
       return 0;
@@ -755,10 +752,9 @@ case RT_VOL_SRC_FILE:
 case RT_VOL_SRC_OBJ:
     /* Retrieve the data from an internal db object */
     if (RT_G_DEBUG & RT_DEBUG_HF)
-	bu_log("getting data from object \"%s\"\n", p);
+	bu_log("getting data from object \"%s\"\n", vip->name);
 
     if (get_obj_data(vip, dbip) != 0) {
-	p = "object";
 	return 1;
     } else {
 	RT_CK_DB_INTERNAL(vip->bip);
