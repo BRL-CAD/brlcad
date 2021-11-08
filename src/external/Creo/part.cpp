@@ -72,7 +72,8 @@ bad_triangle(struct creo_conv_info *cinfo,  int v1, int v2, int v3, struct bg_ve
 }
 
 
-/** If we have a CREO modeling feature that adds material, it can
+/**
+ * If we have a CREO modeling feature that adds material, it can
  * impact the decision on which conversion methods are practical
  */
 extern "C" int
@@ -139,18 +140,18 @@ feature_filter(ProFeature *feat, ProAppData data)
 
     if ((ret=ProFeatureTypeGet(feat, &pinfo->type)) != PRO_TK_NO_ERROR) return ret;
 
-    /** Handle holes, chamfers, and rounds only */
+    /* Handle holes, chamfers, and rounds only */
     if (pinfo->type == PRO_FEAT_HOLE || pinfo->type == PRO_FEAT_CHAMFER || pinfo->type == PRO_FEAT_ROUND) {
         return PRO_TK_NO_ERROR;
     }
 
-    /**
+    /*
      * If we encounter a protrusion (or any feature that adds material)
      * after a hole, we cannot convert previous holes to CSG
      */
     if (feat_adds_material(pinfo->type)) pinfo->csg_holes_supported = 0;
 
-    /** Skip everything else */
+    /* Skip everything else */
     return PRO_TK_CONTINUE;
 }
 
@@ -208,37 +209,37 @@ do_feature_visit(ProFeature *feat, ProError UNUSED(status), ProAppData data)
 
     if (pinfo->type ==  PRO_FEAT_HOLE) {
 
-        /** If the hole can be suppressed, do that */
+        /* If the hole can be suppressed, do that */
         if (pinfo->diameter < pinfo->cinfo->min_hole_diameter) {
             pinfo->suppressed_features->push_back(feat->id);
             return ret;
         }
 
-        /**
+        /*
          * If the hole is too large to suppress and we're not doing any CSG,
          * we're done - it's up to the facetizer.
          */
         if (pinfo->cinfo->do_facets_only) return ret;
 
-        /** If we can consider CSG, look into hole replacement */
+        /* If we can consider CSG, look into hole replacement */
         if (subtract_hole(pinfo)) pinfo->suppressed_features->push_back(feat->id);
 
         return ret;
     }
 
-    /** With rounds, suppress any with radius below user specified value */
+    /* With rounds, suppress any with radius below user specified value */
     if (pinfo->type == PRO_FEAT_ROUND) {
         if (pinfo->got_diameter && pinfo->radius < pinfo->cinfo->min_round_radius) pinfo->suppressed_features->push_back(feat->id);
         return ret;
     }
 
-    /**
+    /*
      * With chamfers, suppress any where both distances (if retrieved)
      * or the single distance are below the user specified value
      */
     if (pinfo->type == PRO_FEAT_CHAMFER) {
         if (pinfo->got_distance1 && pinfo->distance1 < pinfo->cinfo->min_chamfer_dim &&
-                pinfo->distance2 < pinfo->cinfo->min_chamfer_dim) {
+	    pinfo->distance2 < pinfo->cinfo->min_chamfer_dim) {
             pinfo->suppressed_features->push_back(feat->id);
         }
         return ret;
@@ -267,11 +268,11 @@ unsuppress_features(struct part_conv_info *pinfo)
         if (ProFeatureStatusGet(&feat, &feat_stat) != PRO_TK_NO_ERROR) continue;
         if (feat_stat != PRO_FEAT_SUPPRESSED) continue;
 
-        /** Unsuppress this one */
+        /* Unsuppress this one */
         creo_log(pinfo->cinfo, MSG_STATUS, "%s: unsuppressing feature %d", pname, pinfo->suppressed_features->at(i));
         int status = ProFeatureResume(ProMdlToSolid(pinfo->model), &(pinfo->suppressed_features->at(i)), 1, resume_opts, 1);
 
-        /** Tell the user what happened */
+        /* Tell the user what happened */
         switch (status) {
             case PRO_TK_NO_ERROR:
                 creo_log(pinfo->cinfo, MSG_STATUS, "%s: feature %d unsuppressed", pname, pinfo->suppressed_features->at(i));
@@ -286,15 +287,18 @@ unsuppress_features(struct part_conv_info *pinfo)
     }
 }
 
-/** TODO - will probably need maps from CREO data items to ON data items here... */
+
+/**
+ * TODO - will probably need maps from CREO data items to ON data items here...
+ */
 struct brep_data {
     ON_Brep *brep;
     ProSurface s;
     int curr_loop_id;
-    std::map<int,int> *cs_to_onf;
-    std::map<int,int> *ce_to_one;
-    std::map<int,int> *cc3d_to_on3dc;
-    std::map<int,int> *cc2d_to_on2dc;
+    std::map<int, int> *cs_to_onf;
+    std::map<int, int> *ce_to_one;
+    std::map<int, int> *cc3d_to_on3dc;
+    std::map<int, int> *cc2d_to_on2dc;
 };
 
 
@@ -304,15 +308,17 @@ edge_filter(ProEdge UNUSED(e), ProAppData UNUSED(app_data)) {
 }
 
 
-/** ProEdge appears to correspond to the ON_BrepEdge. */
+/**
+ * ProEdge appears to correspond to the ON_BrepEdge.
+ */
 extern "C" ProError
 edge_process(ProEdge UNUSED(e), ProError UNUSED(status), ProAppData app_data) {
     int current_surf_id;
     struct brep_data *bdata = (struct brep_data *)app_data;
     ProSurface s = bdata->s;
     ProSurfaceIdGet(s, &current_surf_id);
-    /** 
-     *
+
+    /*
      * //ON_BrepLoop &nl = bdata->brep->m_L[bdata->curr_loop_id];
      *
      * TODO - there appears to be no way to get at ProEdgedata from an
@@ -323,7 +329,7 @@ edge_process(ProEdge UNUSED(e), ProError UNUSED(status), ProAppData app_data) {
      * //ProGeomitemdata *edata;
      * //ProEdgeDataGet(e, &edata);
      *
-     */ 
+     */
 
     return PRO_TK_NO_ERROR;
 }
@@ -335,7 +341,9 @@ contour_filter(ProContour UNUSED(c), ProAppData UNUSED(app_data)) {
 }
 
 
-/** Contours appear to correspond to Loops in OpenNURBS. */
+/**
+ * Contours appear to correspond to Loops in OpenNURBS.
+ */
 extern "C" ProError
 contour_process(ProContour c, ProError UNUSED(status), ProAppData app_data) {
     struct brep_data *bdata = (struct brep_data *)app_data;
@@ -369,8 +377,8 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
     int c_id;
     ProSurfacedata *ndata;
     ProSrftype s_type;
-    ProUvParam uvmin = {DBL_MAX,DBL_MAX};
-    ProUvParam uvmax = {DBL_MIN,DBL_MIN};
+    ProUvParam uvmin = {DBL_MAX, DBL_MAX};
+    ProUvParam uvmax = {DBL_MIN, DBL_MIN};
     ProSurfaceOrient s_orient;
     ProSurfaceshapedata s_shape;
     struct brep_data *bdata = (struct brep_data *)app_data;
@@ -409,7 +417,7 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
                 for (int i = m - p; i < m; i++) {
                     ns->SetKnot(0, i, 1.0);
                 }
-                /** generate v-knots */
+                /* generate v-knots */
                 n = vcvmax+1;
                 p = degree[1];
                 m = n + p - 1;
@@ -433,7 +441,7 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
                             cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
                             cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
                             cv[3] = w_array[i];
-                            ns->SetCV(i,j,cv);
+                            ns->SetCV(i, j, cv);
                         }
                     }
                 } else {
@@ -443,7 +451,7 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
                             cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
                             cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
                             cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
-                            ns->SetCV(i,j,cv);
+                            ns->SetCV(i, j, cv);
                         }
                     }
                 }
@@ -469,18 +477,19 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
     ON_Brep *nbrep = ON_Brep::New();
     struct brep_data bdata;
     bdata.brep = nbrep;
-    bdata.cs_to_onf = new std::map<int,int>;
-    bdata.ce_to_one = new std::map<int,int>;
-    bdata.cc3d_to_on3dc = new std::map<int,int>;
-    bdata.cc2d_to_on2dc = new std::map<int,int>;
+    bdata.cs_to_onf = new std::map<int, int>;
+    bdata.ce_to_one = new std::map<int, int>;
+    bdata.cc3d_to_on3dc = new std::map<int, int>;
+    bdata.cc2d_to_on2dc = new std::map<int, int>;
 
     wchar_t wname[CREO_NAME_MAX];
     ProMdlMdlnameGet(model, wname);
     ProSolidSurfaceVisit(psol, surface_process, surface_filter, (ProAppData)&bdata);
 
-    /** Output the solid */
+    /* Output the solid */
     *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
     mk_brep(cinfo->wdbp, bu_vls_addr(*sname), nbrep);
+
     /*
      * Things to investigate:
      *
@@ -535,9 +544,9 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     double curr_angle;
     double factor = cinfo->creo_to_brl_conv;
 
-        // Note: The below code works, but we can't use model units - Creo
-        // "corrects" object sizes with matricies in the parent hierarchies
-        // and correcting it here results in problems with those matricies.
+    // Note: The below code works, but we can't use model units - Creo
+    // "corrects" object sizes with matricies in the parent hierarchies
+    // and correcting it here results in problems with those matricies.
     // ProError ustatus = creo_model_units(&factor, model);
 
     ProMdlMdlnameGet(model, wname);
@@ -545,7 +554,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
     creo_log(cinfo, MSG_DEBUG, "Tessellating part %s...\n", pname);
 
-    /** Tessellate part, going from coarse to fine tessellation */
+    /* Tessellate part, going from coarse to fine tessellation */
     for (int i = 0; i <= cinfo->max_to_min_steps; ++i) {
         curr_error = cinfo->max_error - (i * cinfo->error_increment);
         curr_angle = cinfo->min_angle_cntrl + (i * cinfo->angle_increment);
@@ -558,7 +567,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
         status = ProPartTessellate(ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv, curr_angle, PRO_B_TRUE, &tess);
         if (status != PRO_TK_NO_ERROR) {
             creo_log(cinfo, MSG_DEBUG, "%s: failed to tessellate using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
-            /**
+            /*
              * TODO -- Find out if these serve a purpose:
              * 
              * //creo_log(cinfo, MSG_DEBUG, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
@@ -570,16 +579,16 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
         }
 
 
-        /**  We got through the initial tests - how many surfaces do we have? */
+        /* We got through the initial tests - how many surfaces do we have? */
         status = ProArraySizeGet((ProArray)tess, &surface_count);
         if (status != PRO_TK_NO_ERROR) goto tess_cleanup;
         if (surface_count < 1) {
 
-            /**  Free the tessellation memory */
+            /* Free the tessellation memory */
             ProPartTessellationFree(&tess);
             tess = NULL;
 
-            /**  Free trees */
+            /* Free trees */
             bg_vert_tree_destroy(vert_tree);
             bg_vert_tree_destroy(norm_tree);
 
@@ -590,16 +599,16 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
         for (int surfno = 0; surfno < surface_count; surfno++) {
             for (int j = 0; j < tess[surfno].n_facets; j++) {
-                /**  Grab the triangle */
+                /* Grab the triangle */
                 vert_no = tess[surfno].facets[j][0];
                 v1 = bg_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-                        tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq);
+				      tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq);
                 vert_no = tess[surfno].facets[j][1];
                 v2 = bg_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-                        tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq);
+				      tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq);
                 vert_no = tess[surfno].facets[j][2];
                 v3 = bg_vert_tree_add(vert_tree, tess[surfno].vertices[vert_no][0], tess[surfno].vertices[vert_no][1],
-                        tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq);
+				      tess[surfno].vertices[vert_no][2], cinfo->local_tol_sq);
 
                 if (bad_triangle(cinfo, v1, v2, v3, vert_tree)) continue;
 
@@ -607,20 +616,20 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
                 faces.push_back(v3);
                 faces.push_back(v2);
 
-                /**  Grab the surface normals */
+                /* Grab the surface normals */
                 if (cinfo->get_normals) {
                     vert_no = tess[surfno].facets[j][0];
                     VUNITIZE(tess[surfno].normals[vert_no]);
                     n1 = bg_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-                            tess[surfno].normals[vert_no][2], cinfo->local_tol_sq);
+					  tess[surfno].normals[vert_no][2], cinfo->local_tol_sq);
                     vert_no = tess[surfno].facets[j][1];
                     VUNITIZE(tess[surfno].normals[vert_no]);
                     n2 = bg_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-                            tess[surfno].normals[vert_no][2], cinfo->local_tol_sq);
+					  tess[surfno].normals[vert_no][2], cinfo->local_tol_sq);
                     vert_no = tess[surfno].facets[j][2];
                     VUNITIZE(tess[surfno].normals[vert_no]);
                     n3 = bg_vert_tree_add(norm_tree, tess[surfno].normals[vert_no][0], tess[surfno].normals[vert_no][1],
-                            tess[surfno].normals[vert_no][2], cinfo->local_tol_sq);
+					  tess[surfno].normals[vert_no][2], cinfo->local_tol_sq);
 
                     face_normals.push_back(n1);
                     face_normals.push_back(n3);
@@ -629,17 +638,17 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
             }
         }
 
-        /**  Check solidity */
+        /* Check solidity */
         int bot_is_solid = !bg_trimesh_solid((int)vert_tree->curr_vert, (int)faces.size() / 3, vert_tree->the_array, &faces[0], NULL);
 
-        /**  If it's not solid and we're testing solidity, keep trying... */
+        /* If it's not solid and we're testing solidity, keep trying... */
         if (!bot_is_solid) {
             if (cinfo->check_solidity) {
-                /**  Free the tessellation memory */
+                /* Free the tessellation memory */
                 ProPartTessellationFree(&tess);
                 tess = NULL;
 
-                /**  Free trees */
+                /* Free trees */
                 bg_vert_tree_destroy(vert_tree);
                 bg_vert_tree_destroy(norm_tree);
 
@@ -663,7 +672,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
         status = PRO_TK_NO_ERROR;
     }
 
-    /**  Make sure we have non-zero faces (and if needed, face_normals) vectors */
+    /* Make sure we have non-zero faces (and if needed, face_normals) vectors */
     if (faces.size() == 0 || !vert_tree->curr_vert) {
         status = PRO_TK_NOT_EXIST;
         goto tess_cleanup;
@@ -679,7 +688,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
         vert_tree->the_array[i] = vert_tree->the_array[i] * factor;
     }
 
-    /**  Output the solid - TODO - what is the correct ordering??? does CCW always work? */
+    /* Output the solid - TODO - what is the correct ordering??? does CCW always work? */
     *sname = get_brlcad_name(cinfo, wname, "s", N_SOLID);
     if (cinfo->get_normals) {
         mk_bot_w_normals(cinfo->wdbp, bu_vls_addr(*sname), RT_BOT_SOLID, RT_BOT_CCW, 0, vert_tree->curr_vert, (size_t)(faces.size()/3), vert_tree->the_array, &faces[0], NULL, NULL, (size_t)(face_normals.size()/3), norm_tree->the_array, &face_normals[0]);
@@ -689,11 +698,11 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
 tess_cleanup:
 
-    /**  Free the tessellation memory */
+    /* Free the tessellation memory */
     ProPartTessellationFree(&tess);
     tess = NULL;
 
-    /**  Free trees */
+    /* Free trees */
     bg_vert_tree_destroy(vert_tree);
     bg_vert_tree_destroy(norm_tree);
 
@@ -771,23 +780,23 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     ProWstringToString(pname, wname);
     creo_log(cinfo, MSG_OK, "Processing %s:\n", pname);
 
-    /**
+    /*
      * TODO - add some up-front logic to detect parts with no
      * associated geometry.
      */
 
-    /** Collect info about things that might be eliminated */
+    /* Collect info about things that might be eliminated */
     if (cinfo->do_elims) {
-        /**
+        /*
          * Apply user supplied criteria to see if we have anything
          * to suppress
          */
         ProSolidFeatVisit(ProMdlToSolid(model), do_feature_visit, feature_filter, (ProAppData)pinfo);
 
-        /** If we've got anything to suppress, go ahead and do it. */
+        /* If we've got anything to suppress, go ahead and do it. */
         if (!pinfo->suppressed_features->empty()) {
             ret = ProFeatureSuppress(ProMdlToSolid(model), &(pinfo->suppressed_features->at(0)), pinfo->suppressed_features->size(), NULL, 0);
-            /** If something went wrong, need to undo just the suppressions we added */
+            /* If something went wrong, need to undo just the suppressions we added */
             if (ret != PRO_TK_NO_ERROR) {
                 creo_log(cinfo, MSG_DEBUG, "%s: failed to suppress features!!!\n", pname);
                 unsuppress_features(pinfo);
@@ -797,28 +806,27 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
         }
     }
 
-    /**
+    /*
      * Get bounding box of a solid using "ProSolidOutlineGet"
      * TODO - may want to use this to implement relative facetization tolerance...
      */
     if (ProSolidOutlineGet(ProMdlToSolid(model), bboxpnts) != PRO_TK_NO_ERROR) have_bbox = 0;
 
-    /**
+    /*
      * TODO - support an option to convert to ON_Brep
-     * 
+     *
      * //status = opennurbs_part(cinfo, model, &sname);
-     * 
      */
 
-    /** Tessellate */
+    /* Tessellate */
     status = tessellate_part(cinfo, model, &sname);
 
-    /** Deal with the solid conversion results */
+    /* Deal with the solid conversion results */
     if (status == PRO_TK_NOT_EXIST) {
-        /** Failed!!! */
+        /* Failed!!! */
         creo_log(cinfo, MSG_DEBUG, "%s: tessellation failed.\n", pname);
         if (cinfo->debug_bboxes && have_bbox) {
-            /**
+            /*
              * A failed solid conversion with a bounding box indicates a
              * problem.  Rather than ignore it, put the bbox in the .g file
              * as a placeholder.
@@ -849,36 +857,36 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     }
 
 have_part:
-    /**
-     * We've got a part - the output for a part is a parent region
-     * and the solid underneath it.
-     * 
+    /*
+     * We've got a part - the output for a part is a parent region and
+     * the solid underneath it.
      */
 
     BU_LIST_INIT(&wcomb.l);
     rname = get_brlcad_name(cinfo, wname, "r", N_REGION);
 
-    /** Add the solid to the region comb */
+    /* Add the solid to the region comb */
     (void)mk_addmember(bu_vls_addr(sname), &wcomb.l, NULL, WMOP_UNION);
 
-    /** Add any subtraction solids created by the hole handling */
+    /* Add any subtraction solids created by the hole handling */
     for (unsigned int i = 0; i < pinfo->subtractions->size(); i++) {
         (void)mk_addmember(pinfo->subtractions->at(i)->d_namep, &wcomb.l, NULL, WMOP_SUBTRACT);
     }
 
-    /** Get the surface properties from the part and output the region comb */
+    /* Get the surface properties from the part and output the region
+     * comb */
     ProMdlToModelitem(model, &mitm);
     if (ProSurfaceAppearancepropsGet(&mitm, &aprops) == PRO_TK_NO_ERROR) {
-        /** Use the colors, ... that were set in CREO */
+        /* Use the colors, ... that were set in CREO */
         rgbflts[0] = aprops.color_rgb[0];
         rgbflts[1] = aprops.color_rgb[1];
         rgbflts[2] = aprops.color_rgb[2];
         bu_color_from_rgb_floats(&color, rgbflts);
         bu_color_to_rgb_chars(&color, rgb);
 
-        /** Shader args */
-        /**
-         * TODO  Make exporting material optional
+        /* Shader args */
+        /*
+         * TODO Make exporting material optional
          */
         bu_vls_sprintf(&shader_args, "{");
         if (!NEAR_ZERO(aprops.transparency, SMALL_FASTF)) bu_vls_printf(&shader_args, " tr %g", aprops.transparency);
@@ -887,17 +895,17 @@ have_part:
         if (!NEAR_EQUAL(aprops.highlite, 0.7, SMALL_FASTF)) bu_vls_printf(&shader_args, " sp %g", aprops.highlite);
         bu_vls_printf(&shader_args, "}");
 
-        /** Make the region comb */
+        /* Make the region comb */
         mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1,
                 NULL, NULL, (const unsigned char *)rgb,
                 cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     } else {
-        /** Something is wrong, but just ignore the missing properties */
+        /* Something is wrong, but just ignore the missing properties */
         creo_log(cinfo, MSG_DEBUG, "Error getting surface properties for %s\n",        pname);
         mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1, NULL, NULL, NULL, cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     }
 
-    /** Set the CREO_NAME attribute for the solid/primitive */
+    /* Set the CREO_NAME attribute for the solid/primitive */
     creo_id = get_brlcad_name(cinfo, wname, NULL, N_CREO);
     sdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(sname), LOOKUP_QUIET);
     db5_get_attributes(cinfo->wdbp->dbip, &s_avs, sdp);
@@ -908,7 +916,7 @@ have_part:
     db5_standardize_avs(&s_avs);
     db5_update_attributes(sdp, &s_avs, cinfo->wdbp->dbip);
 
-    /** Set the CREO attributes for the region */
+    /* Set the CREO attributes for the region */
     rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
     db5_get_attributes(cinfo->wdbp->dbip, &r_avs, rdp);
     bu_avs_add(&r_avs, "CREO_NAME", bu_vls_addr(creo_id));
@@ -920,12 +928,12 @@ have_part:
         ProVerstampStringFree(&verstr);
     }
 
-    /** If the part has a material, add it as an attribute */
+    /* If the part has a material, add it as an attribute */
     if (ProPartMaterialNameGet(ProMdlToPart(model), material) == PRO_TK_NO_ERROR) {
         ProWstringToString(str, material);
         bu_avs_add(&r_avs, "material_name", str);
 
-        /** Get the density for this material */
+        /* Get the density for this material */
         if (ProPartMaterialdataGet(ProMdlToPart(model), material, &material_props) == PRO_TK_NO_ERROR) {
             got_density = 1;
             bu_vls_sprintf(&mdstr, "%g", material_props.mass_density);
@@ -934,7 +942,7 @@ have_part:
         }
     }
 
-    /** Calculate mass properties */
+    /* Calculate mass properties */
     if (ProSolidMassPropertyGet(ProMdlToSolid(model), NULL, &mass_prop) == PRO_TK_NO_ERROR) {
         if (!got_density && mass_prop.density > 0.0) {
             bu_vls_sprintf(&vstr, "%g", mass_prop.density);
@@ -951,7 +959,7 @@ have_part:
         bu_vls_free(&vstr);
     }
 
-    /** If we have a user supplied list of attributes to save, do it */
+    /* If we have a user supplied list of attributes to save, do it */
     if (cinfo->attrs->size() > 0) {
         for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
             char *attr_val = NULL;
@@ -964,16 +972,16 @@ have_part:
         }
     }
 
-    /** Update attributes stored on disk */
+    /* Update attributes stored on disk */
     db5_standardize_avs(&r_avs);
     db5_update_attributes(rdp, &r_avs, cinfo->wdbp->dbip);
 
-    /** Increment the region id - this is a concern if we move to multithreaded generation... */
+    /* Increment the region id - this is a concern if we move to multithreaded generation... */
     cinfo->reg_id++;
 
 cleanup:
 
-    /** Unsuppress anything we suppressed */
+    /* Unsuppress anything we suppressed */
     if (cinfo->do_elims && !pinfo->suppressed_features->empty()) {
         creo_log(cinfo, MSG_OK, "Unsuppressing %d features\n", pinfo->suppressed_features->size());
         ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features->at(0), pinfo->suppressed_features->size(), NULL, 0);
@@ -991,6 +999,7 @@ cleanup:
 
     return ret;
 }
+
 
 /**
  * Local Variables:

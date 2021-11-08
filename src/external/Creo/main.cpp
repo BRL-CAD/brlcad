@@ -30,24 +30,24 @@
 extern "C" void
 creo_conv_info_init(struct creo_conv_info *cinfo)
 {
-    /** Output file */
+    /* Output file */
     BU_GET(cinfo->output_file, struct bu_vls);
     bu_vls_init(cinfo->output_file);
 
-    /** Region ID */
+    /* Region ID */
     cinfo->reg_id = 1000;
 
-    /** File settings */
+    /* File settings */
     cinfo->logger = (FILE *)NULL;
     cinfo->logger_type=LOGGER_TYPE_NONE;
     cinfo->curr_msg_type = MSG_DEBUG;
 
-    /** Units - model */
-    cinfo->creo_to_brl_conv  = 25.4; /** inches to mm */
+    /* Units - model */
+    cinfo->creo_to_brl_conv  = 25.4; /* inches to mm */
     cinfo->local_tol         = 0.0;
     cinfo->local_tol_sq      = 0.0;
 
-    /** Facetization settings */
+    /* Facetization settings */
     cinfo->max_error         = 1.5;
     cinfo->min_error         = 1.5;
     cinfo->tol_dist          = 0.0005;
@@ -57,7 +57,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->error_increment   = 0.0;
     cinfo->angle_increment   = 0.0;
 
-    /** CSG settings */
+    /* CSG settings */
     cinfo->min_hole_diameter = 0.0;
     cinfo->min_chamfer_dim   = 0.0;
     cinfo->min_round_radius  = 0.0;
@@ -118,18 +118,18 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 
     delete cinfo->parts;
     delete cinfo->assems;
-    delete cinfo->empty; /** Entries in empty were freed in parts and assems */
+    delete cinfo->empty; /* Entries in empty were freed in parts and assems */
     delete cinfo->brlcad_names;
-    delete cinfo->region_name_map; /** Entries in name_map were freed in brlcad_names */
-    delete cinfo->assem_name_map; /** Entries in name_map were freed in brlcad_names */
-    delete cinfo->solid_name_map; /** Entries in name_map were freed in brlcad_names */
+    delete cinfo->region_name_map; /* Entries in name_map were freed in brlcad_names */
+    delete cinfo->assem_name_map; /* Entries in name_map were freed in brlcad_names */
+    delete cinfo->solid_name_map; /* Entries in name_map were freed in brlcad_names */
     delete cinfo->creo_name_map;
     delete cinfo->creo_names;
 
     if (cinfo->logger) fclose(cinfo->logger);
     wdb_close(cinfo->wdbp);
 
-    /** Finally, clear the container */
+    /* Finally, clear the container */
     //BU_PUT(cinfo, struct creo_conv_info);
 }
 
@@ -148,7 +148,7 @@ output_parts(struct creo_conv_info *cinfo)
         if (ProMdlnameInit(*d_it, PRO_MDLFILE_PART, &m) != PRO_TK_NO_ERROR) return;
         if (ProMdlNameGet(m, wname) != PRO_TK_NO_ERROR) return;
 
-        /**
+        /*
          * If the part:
          *  a) exists in the .g file already and...
          *  b) has the same CREO version stamp as the part in the current
@@ -164,7 +164,7 @@ output_parts(struct creo_conv_info *cinfo)
             db5_get_attributes(cinfo->wdbp->dbip, &r_avs, rdp);
             vs = bu_avs_get(&r_avs, "CREO_VERSION_STAMP");
             if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR && ProVerstampEqual(cstamp, gstamp) == PRO_B_TRUE) {
-                /**
+                /*
                  * Skip the .g object if it was created from the same
                  * version of the object that exists currently in the
                  * CREO file
@@ -172,7 +172,7 @@ output_parts(struct creo_conv_info *cinfo)
                 creo_log(cinfo, MSG_OK, "%s exists and is current - skipping\n", bu_vls_addr(rname));
                 continue;
             } else {
-                /**
+                /*
                  * Kill the existing object (region and child solid)
                  * it's out of sync with CREO
                  */
@@ -196,7 +196,7 @@ output_parts(struct creo_conv_info *cinfo)
             }
         }
 
-    /** All set - process the part */
+    /* All set - process the part */
     creo_log(cinfo, MSG_STATUS, "Processing part %d of %d", cnt++, cinfo->parts->size());
     if (output_part(cinfo, m) == PRO_TK_NOT_EXIST) cinfo->empty->insert(*d_it);
     }
@@ -217,7 +217,7 @@ output_assems(struct creo_conv_info *cinfo)
         ProMdlnameInit(*d_it, PRO_MDLFILE_ASSEMBLY, &parent);
         if (ProMdlNameGet(parent, wname) != PRO_TK_NO_ERROR) continue;
 
-        /**
+        /*
          * If the part:
          *  a) exists in the .g file already and...
          *  b) has the same CREO version stamp as the part in the current
@@ -232,7 +232,7 @@ output_assems(struct creo_conv_info *cinfo)
             db5_get_attributes(cinfo->wdbp->dbip, &a_avs, adp);
             vs = bu_avs_get(&a_avs, "CREO_VERSION_STAMP");
             if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR && ProVerstampEqual(cstamp, gstamp) == PRO_B_TRUE) {
-            /**
+            /*
              * Skip the .g object if it was created from the same
              * version of the object that exists currently in the
              * CREO file
@@ -240,17 +240,17 @@ output_assems(struct creo_conv_info *cinfo)
              creo_log(cinfo, MSG_OK, "%s exists and is current - skipping\n", bu_vls_addr(aname));
              continue;
         } else {
-            /** Kill the existing object - it's out of sync with CREO */
+            /* Kill the existing object - it's out of sync with CREO */
             db_delete(cinfo->wdbp->dbip, adp);
             db_dirdelete(cinfo->wdbp->dbip, adp);
             db_update_nref(cinfo->wdbp->dbip, &rt_uniresource);
         }
     }
 
-    /** Skip if we've determined this one is empty */
+    /* Skip if we've determined this one is empty */
     if (cinfo->empty->find(wname) != cinfo->empty->end()) continue;
 
-    /** All set - process the assembly */
+    /* All set - process the assembly */
     creo_log(cinfo, MSG_STATUS, "Processing assembly %d of %d", cnt++, cinfo->assems->size());
     output_assembly(cinfo, parent);
     }
@@ -278,7 +278,7 @@ objects_gather(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
     wchar_t *wname_saved;
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
 
-    /** Get feature name */
+    /* Get feature name */
     if ((loc_status = ProAsmcompMdlNameGet(feat, &type, wname)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "%s: failure getting name of child\n", name);
         return PRO_TK_NO_ERROR;
@@ -286,26 +286,26 @@ objects_gather(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
 
     (void)ProWstringToString(name, wname);
 
-    /** Get the model for this member */
+    /* Get the model for this member */
     if ((loc_status = ProAsmcompMdlGet(feat, &model)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "%s: failure getting model\n", name);
         return PRO_TK_NO_ERROR;
     }
 
-    /** Get its type (only a part or assembly should make it here) */
+    /* Get its type (only a part or assembly should make it here) */
     if ((loc_status = ProMdlTypeGet(model, &type)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "%s: failure getting type\n", name);
         return PRO_TK_NO_ERROR;
     }
 
-    /** If this is a skeleton, we're done */
+    /* If this is a skeleton, we're done */
     ProMdlIsSkeleton(model, &is_skel);
     if (is_skel) {
         creo_log(cinfo, MSG_FAIL, "%s: is skeleton, skipping\n", name);
         return PRO_TK_NO_ERROR;
     }
 
-    /** Log this member */
+    /* Log this member */
     switch (type) {
         case PRO_MDL_ASSEMBLY:
             if (cinfo->assems->find(wname) == cinfo->assems->end()) {
@@ -346,26 +346,26 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     wchar_t *wname_saved;
     struct directory *tdp = RT_DIR_NULL;
 
-    /** Get object name */
+    /* Get object name */
     if (ProMdlNameGet(model, wname) != PRO_TK_NO_ERROR) return;
     (void)ProWstringToString(name, wname);
 
-    /** Save name */
+    /* Save name */
     wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "CREO name");
     wcsncpy(wname_saved, wname, wcslen(wname)+1);
 
-    /**
+    /*
      * There are two possibilities - either we have a hierarchy,
      * in which case we need to walk it and collect the objects
      * to process, or we have a single part which we can process
      * directly.
      */
     if (type == PRO_MDL_PART) {
-        /** One part only */
+        /* One part only */
         cinfo->parts->insert(wname_saved);
         output_parts(cinfo);
     } else if (type == PRO_MDL_ASSEMBLY) {
-        /** Walk the hierarchy and process all necessary assemblies and parts */
+        /* Walk the hierarchy and process all necessary assemblies and parts */
         cinfo->assems->insert(wname_saved);
         ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, (ProAppData)cinfo);
         output_parts(cinfo);
@@ -377,7 +377,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
         return;
     }
 
-    /** Make a final toplevel comb based on the file name to hold the orientation matrix */
+    /* Make a final toplevel comb based on the file name to hold the orientation matrix */
     struct bu_vls *comb_name;
     struct bu_vls top_name = BU_VLS_INIT_ZERO;
     struct wmember wcomb;
@@ -391,7 +391,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     }
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
 
-    /** Guarantee we have a non-colliding top level name */
+    /* Guarantee we have a non-colliding top level name */
     bu_vls_sprintf(&top_name, "all.g");
     tdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(&top_name), LOOKUP_QUIET);
     if (tdp != RT_DIR_NULL) {
@@ -423,19 +423,19 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     int n_selected_names;
     char **selected_names;
 
-    /** This replaces the global variables used in the original Creo converter */
+    /* This replaces the global variables used in the original Creo converter */
     struct creo_conv_info *cinfo = new creo_conv_info;
     creo_conv_info_init(cinfo);
 
     ProStringToWstring(tmp_line, "Not processing");
     status = ProUILabelTextSet("creo_brl", "curr_proc", tmp_line);
 
-    /** Set up logging */
+    /* Set up logging */
     {
         char log_file[MAXPATHLEN];
         char logger_type_str[MAXPATHLEN];
 
-        /** Get the name of the log file */
+        /* Get the name of the log file */
         status = ProUIInputpanelValueGet("creo_brl", "log_file", &tmp_str);
         if (status != PRO_TK_NO_ERROR) {
             fprintf(stderr, "Failed to get log file name\n");
@@ -446,7 +446,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         ProWstringToString(log_file, tmp_str);
         ProWstringFree(tmp_str);
 
-        /** Set logger type */
+        /* Set logger type */
         status = ProUIRadiogroupSelectednamesGet("creo_brl", "log_file_type_rg", &n_selected_names, &selected_names);
         if (status != PRO_TK_NO_ERROR) {
             fprintf(stderr, "Failed to get log file type\n");
@@ -465,7 +465,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         else
             cinfo->logger_type = LOGGER_TYPE_ALL;
 
-        /** Open log file, if a name was provided */
+        /* Open log file, if a name was provided */
         if (strlen(log_file) > 0) {
             if ((cinfo->logger=fopen(log_file, "wb")) == NULL) {
                 creo_log(cinfo, MSG_FAIL, "Cannot open log file");
@@ -478,9 +478,9 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         }
     }
 
-    /** Set up the output file */
+    /* Set up the output file */
     {
-        /** Get string from dialog */
+        /* Get string from dialog */
         char output_file[128];
         wchar_t *w_output_file;
         status = ProUIInputpanelValueGet("creo_brl", "output_file", &w_output_file);
@@ -493,7 +493,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         ProWstringToString(output_file, w_output_file);
         ProWstringFree(w_output_file);
 
-        /**
+        /*
          * If there is a pre-existing file, open it - it may be we
          * only have to update some items in it.
          */
@@ -506,7 +506,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
                 return;
             }
         } else {
-            /** Open output file */
+            /* Open output file */
             if ((cinfo->dbip = db_create(output_file, 5)) == DBI_NULL) {
                 creo_log(cinfo, MSG_FAIL, "Cannot open output file: %s.\n", output_file);
                 creo_conv_info_free(cinfo);
@@ -516,13 +516,13 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
             cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
         }
 
-        /** Store the filename for later use */
+        /* Store the filename for later use */
         bu_vls_sprintf(cinfo->output_file, "%s", output_file);
     }
 
-    /** Read user supplied list of model parameters for naming info. */
+    /* Read user supplied list of model parameters for naming info. */
     {
-        /** Get string from dialog */
+        /* Get string from dialog */
         char attr_rename[MAXPATHLEN];
         wchar_t *w_attr_rename;
         status = ProUIInputpanelValueGet("creo_brl", "attr_rename", &w_attr_rename);
@@ -543,7 +543,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
                 std::string pkey;
                 std::istringstream ls(line);
                 while (std::getline(ls, pkey, ',')) {
-                    /** Scrub leading and trailing whitespace */
+                    /* Scrub leading and trailing whitespace */
                     size_t startpos = pkey.find_first_not_of(" \t\n\v\f\r");
                     if (std::string::npos != startpos) {
                         pkey = pkey.substr(startpos);
@@ -561,9 +561,9 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         }
     }
 
-    /** Read user-supplied list of model attributes for conversion */
+    /* Read user-supplied list of model attributes for conversion */
     {
-        /** Get string from dialog */
+        /* Get string from dialog */
         char attr_save[MAXPATHLEN];
         wchar_t *w_attr_save;
         status = ProUIInputpanelValueGet("creo_brl", "attr_save", &w_attr_save);
@@ -577,7 +577,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         ProWstringFree(w_attr_save);
 
         if (strlen(attr_save) > 0) {
-            /** Parse file contents into a list of parameter keys */
+            /* Parse file contents into a list of parameter keys */
             std::string afilestr(attr_save);
             std::istringstream ss(afilestr);
             std::string line;
@@ -585,7 +585,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
                 std::string pkey;
                 std::istringstream ls(line);
                 while (std::getline(ls, pkey, ',')) {
-                    /** Scrub leading and trailing whitespace */
+                    /* Scrub leading and trailing whitespace */
                     size_t startpos = pkey.find_first_not_of(" \t\n\v\f\r");
                     if (std::string::npos != startpos) {
                         pkey = pkey.substr(startpos);
@@ -603,7 +603,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         }
     }
 
-    /** Get starting ident */
+    /* Get starting ident */
     if ((status = ProUIInputpanelValueGet("creo_brl", "starting_ident", &tmp_str)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get starting ident.\n");
         creo_conv_info_free(cinfo);
@@ -615,7 +615,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         ProWstringFree(tmp_str);
     }
 
-    /** Get max error */
+    /* Get max error */
     if ((status = ProUIInputpanelValueGet("creo_brl", "max_error", &tmp_str)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get max tessellation error.\n");
         creo_conv_info_free(cinfo);
@@ -626,7 +626,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         ProWstringFree(tmp_str);
     }
 
-    /** Get min error */
+    /* Get min error */
     if ((status = ProUIInputpanelValueGet("creo_brl", "min_error", &tmp_str)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get min tessellation error.\n");
         creo_conv_info_free(cinfo);
@@ -638,7 +638,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         V_MAX(cinfo->max_error, cinfo->min_error);
     }
 
-    /** Get the max angle control */
+    /* Get the max angle control */
     if ((status = ProUIInputpanelValueGet("creo_brl", "max_angle_ctrl", &tmp_str)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get max angle control.\n");
         creo_conv_info_free(cinfo);
@@ -649,7 +649,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         ProWstringFree(tmp_str);
     }
 
-    /** Get the min angle control */
+    /* Get the min angle control */
     if ((status = ProUIInputpanelValueGet("creo_brl", "min_angle_ctrl", &tmp_str)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get min angle control.\n");
         creo_conv_info_free(cinfo);
@@ -661,7 +661,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         V_MAX(cinfo->max_angle_cntrl, cinfo->min_angle_cntrl);
     }
 
-    /** Get the max to min steps */
+    /* Get the max to min steps */
     if ((status = ProUIInputpanelValueGet("creo_brl", "isteps", &tmp_str)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get max to min steps.\n");
         creo_conv_info_free(cinfo);
@@ -679,7 +679,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         }
     }
 
-    /** Check if user wants to do any CSG */
+    /* Check if user wants to do any CSG */
     if ((status = ProUICheckbuttonGetState("creo_brl", "facets_only", &cinfo->do_facets_only)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (facetize only).\n");
         creo_conv_info_free(cinfo);
@@ -687,7 +687,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         return;
     }
 
-    /** Check if user wants to eliminate small features */
+    /* Check if user wants to eliminate small features */
     if ((status = ProUICheckbuttonGetState("creo_brl", "elim_small", &cinfo->do_elims)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (eliminate small features).\n");
         creo_conv_info_free(cinfo);
@@ -695,7 +695,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         return;
     }
 
-    /** Check if user wants to test solidity */
+    /* Check if user wants to test solidity */
     if ((status = ProUICheckbuttonGetState("creo_brl", "check_solidity", &cinfo->check_solidity)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (check solidity).\n");
         creo_conv_info_free(cinfo);
@@ -703,7 +703,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         return;
     }
 
-    /** Check if user wants surface normals in the BOT's */
+    /* Check if user wants surface normals in the BOT's */
     if ((status = ProUICheckbuttonGetState("creo_brl", "get_normals", &cinfo->get_normals)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (extract surface normals).\n");
         creo_conv_info_free(cinfo);
@@ -711,7 +711,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         return;
     }
 
-    /** Check for user selected log file type */
+    /* Check for user selected log file type */
     if ((status = ProUICheckbuttonGetState("creo_brl", "debug_bboxes", &cinfo->debug_bboxes)) != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_FAIL, "Failed to get checkbutton setting (debugging bboxes).\n");
         creo_conv_info_free(cinfo);
@@ -720,7 +720,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     }
 
     if (cinfo->do_elims) {
-        /** Get the minimum hole diameter */
+        /* Get the minimum hole diameter */
         if ((status = ProUIInputpanelValueGet("creo_brl", "min_hole", &tmp_str)) != PRO_TK_NO_ERROR) {
             creo_log(cinfo, MSG_FAIL, "Failed to get minimum hole diameter.\n");
             creo_conv_info_free(cinfo);
@@ -732,7 +732,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
             ProWstringFree(tmp_str);
         }
 
-        /** Get the minimum chamfer dimension */
+        /* Get the minimum chamfer dimension */
         if ((status = ProUIInputpanelValueGet("creo_brl", "min_chamfer", &tmp_str)) != PRO_TK_NO_ERROR) {
             creo_log(cinfo, MSG_FAIL, "Failed to get minimum chamfer diameter.\n");
             creo_conv_info_free(cinfo);
@@ -744,7 +744,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
             ProWstringFree(tmp_str);
         }
 
-        /** Get the minimum round radius */
+        /* Get the minimum round radius */
         if ((status = ProUIInputpanelValueGet("creo_brl", "min_round", &tmp_str)) != PRO_TK_NO_ERROR) {
             creo_log(cinfo, MSG_FAIL, "Failed to get minimum round radius.\n");
             creo_conv_info_free(cinfo);
@@ -762,7 +762,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         cinfo->min_chamfer_dim   = 0.0;
     }
 
-    /** Get currently displayed model in Creo */
+    /* Get currently displayed model in Creo */
     if ((status = ProMdlCurrentGet(&model)) == PRO_TK_BAD_CONTEXT) {
         creo_log(cinfo, MSG_FAIL, "No model is displayed!!\n");
         creo_conv_info_free(cinfo);
@@ -770,7 +770,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         return;
         }
 
-    /** Get model type */
+    /* Get model type */
     if ((status = ProMdlTypeGet(model, &type)) == PRO_TK_BAD_INPUTS) {
         creo_log(cinfo, MSG_FAIL, "Cannot get type of current model!!\n");
         creo_conv_info_free(cinfo);
@@ -778,7 +778,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         return;
     }
 
-    /** Limit scope to parts and assemblies, no drawings, etc. */
+    /* Limit scope to parts and assemblies, no drawings, etc. */
     if (type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART) {
         creo_log(cinfo, MSG_FAIL, "Current model is not a solid object.\n");
         creo_conv_info_free(cinfo);
@@ -786,20 +786,20 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         return;
     }
 
-    /** TODO - verify this is working correctly */
+    /* TODO - verify this is working correctly */
     creo_model_units(&(cinfo->creo_to_brl_conv), model);
 
-    /** Adjust tolerance for Creo units */
+    /* Adjust tolerance for Creo units */
     cinfo->local_tol = cinfo->tol_dist / cinfo->creo_to_brl_conv;
     cinfo->local_tol_sq = cinfo->local_tol * cinfo->local_tol;
 
-    /**
+    /*
      * Output the top-level object
      * this will recurse through the entire model
      */
     output_top_level_object(cinfo, model, type);
 
-    /** Let user know we are done */
+    /* Let user know we are done */
     ProStringToWstring(tmp_line, "Conversion complete");
     ProUILabelTextSet("creo_brl", "curr_proc", tmp_line);
     ProMessageClear();
@@ -872,7 +872,7 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 
     creo_log(NULL, MSG_STATUS, "Launching creo_brl...");
 
-    /** Use UI dialog */
+    /* Use UI dialog */
     if (ProUIDialogCreate("creo_brl", "creo_brl") != PRO_TK_NO_ERROR) {
         bu_vls_printf(&vls, "Failed to create dialog box for creo-brl\n");
         goto print_msg;
@@ -895,7 +895,7 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
         goto print_msg;
     }
 
-    /** File names may get longer than the default... */
+    /* File names may get longer than the default... */
     ProUIInputpanelMaxlenSet("creo_brl", "output_file", MAXPATHLEN - 1);
     ProUIInputpanelMaxlenSet("creo_brl", "log_file", MAXPATHLEN - 1);
 
@@ -907,7 +907,7 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
             struct bu_vls lroot = BU_VLS_INIT_ZERO;
             char name[CREO_NAME_MAX];
             (void)ProWstringToString(name, wname);
-            /** Supply a sensible default for the .g file... */
+            /* Supply a sensible default for the .g file... */
             if (bu_path_component(&groot, name, BU_PATH_BASENAME_EXTLESS)) {
                 wchar_t wgout[CREO_NAME_MAX];
                 bu_vls_printf(&groot, ".g");
@@ -915,9 +915,9 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
                 ProUIInputpanelValueSet("creo_brl", "output_file", wgout);
                 bu_vls_free(&groot);
            }
-           /** Suggest a default log file... */
+           /* Suggest a default log file... */
            if (bu_path_component(&lroot, name, BU_PATH_BASENAME_EXTLESS)) {
-               /** Supply a sensible default for the .g file... */
+               /* Supply a sensible default for the .g file... */
                wchar_t wgout[CREO_NAME_MAX];
                bu_vls_printf(&lroot, "-log.txt");
                (void)ProStringToWstring(wgout, bu_vls_addr(&lroot));
@@ -927,7 +927,7 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
        }
     }
 
-    /**
+    /*
      * Rather than files, (or in addition to?) should probably allow 
      * users to input lists directly... to do so, need to increase char
      * limit
@@ -954,7 +954,7 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
 extern "C" uiCmdAccessState
 creo_brl_access(uiCmdAccessMode UNUSED(access_mode))
 {
-    /** Doing the correct checks appears to be unreliable */
+    /* Doing the correct checks appears to be unreliable */
     return ACCESS_AVAILABLE;
 }
 
@@ -973,21 +973,21 @@ extern "C" int user_initialize()
     int i;
     uiCmdCmdId cmd_id;
 
-    /** Creo says always check the size of w_char */
+    /* Creo says always check the size of w_char */
     status = ProWcharSizeVerify (sizeof (wchar_t), &i);
     if (status != PRO_TK_NO_ERROR || (i != sizeof (wchar_t))) {
         creo_log(NULL, MSG_FAIL, "ERROR wchar_t Incorrect size (%d). Should be: %d", (int)sizeof(wchar_t), i);
         return -1;
     }
 
-    /** Add a command that calls our creo-brl routine */
+    /* Add a command that calls our creo-brl routine */
     status = ProCmdActionAdd("CREO-BRL", (uiCmdCmdActFn)creo_brl, uiProe2ndImmediate, creo_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id);
     if (status != PRO_TK_NO_ERROR) {
         creo_log(NULL, MSG_FAIL, "Failed to add creo-brl action");
         return -1;
     }
 
-    /** Add a menu item that runs the new command */
+    /* Add a menu item that runs the new command */
     ProFileName msgfil = {'\0'};
     ProStringToWstring(msgfil, CREO_BRL_MSG_FILE);
     status = ProMenubarmenuPushbuttonAdd("File", "CREO-BRL", "CREO-BRL", "CREO-BRL-HELP", "File.psh_exit", PRO_B_FALSE, cmd_id, msgfil);
@@ -997,7 +997,7 @@ extern "C" int user_initialize()
     }
 
 
-    /** Let user know we are here */
+    /* Let user know we are here */
     //PopupMsg("Plugin Successfully Loaded", "The CREO to BRL-CAD converter plugin Version 0.2 was successfully loaded.");
 
     return 0;

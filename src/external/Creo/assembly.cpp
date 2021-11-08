@@ -67,7 +67,7 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
         BU_GET(ada, struct adata);
         ada->cinfo = cinfo;
         for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
-            /**
+            /*
              * For each assem, verify at least one child is non-empty.
              * If all children are empty, add to empty set and unset
              * steady_state.
@@ -98,7 +98,9 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
 }
 
 
-/** Routine to check if xform is an identity */
+/**
+ * Routine to check if xform is an identity
+ */
 extern "C" int
 is_non_identity(ProMatrix xform)
 {
@@ -130,7 +132,7 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
 {
     if(!feat || !mat) return PRO_TK_GENERAL_ERROR;
 
-    /** Get strings in case we need to log */
+    /* Get strings in case we need to log */
     ProError status;
     ProMdlType type;
     wchar_t wpname[CREO_NAME_MAX];
@@ -142,25 +144,25 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     ProAsmcompMdlNameGet(feat, &type, wcname);
     (void)ProWstringToString(cname, wcname);
 
-    /** Find the CREO matrix */
+    /* Find the CREO matrix */
     ProAsmcomppath comp_path;
     ProMatrix xform;
     ProIdTable id_table;
     id_table[0] = feat->id;
-    /** Create the path */
+    /* Create the path */
     status = ProAsmcomppathInit((ProSolid)parent, id_table, 1, &comp_path);
     if (status != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_DEBUG, "%s: failed to get path from %s to %s, aborting\n", pname, pname, cname);
         return status;
     }
-    /** Accumulate the xform matrix along the path created above */
+    /* Accumulate the xform matrix along the path created above */
     status = ProAsmcomppathTrfGet(&comp_path, PRO_B_TRUE, xform);
     if (status != PRO_TK_NO_ERROR) {
         creo_log(cinfo, MSG_DEBUG, "%s: failed to get transformation matrix %s/%s, aborting\n", pname, pname, cname);
         return status;
     }
 
-    /**
+    /*
      * Write the matrix to BRL-CAD form. Note: apparently, one
      * of the functions of these matricies in Creo is to correct
      * the size of subcomponents using different units.
@@ -198,19 +200,19 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
     mat_t xform;
     MAT_IDN(xform);
 
-    /** Get name of current member */
+    /* Get name of current member */
     if ((lstatus = ProAsmcompMdlNameGet(feat, &mtype, wname)) != PRO_TK_NO_ERROR) return PRO_TK_NO_ERROR;
 
-    /** Skip this member if the object it refers to is empty */
+    /* Skip this member if the object it refers to is empty */
     if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
 
-    /** If this is a skeleton, skip */
+    /* If this is a skeleton, skip */
     if ((ProAsmcompMdlGet(feat, &model)) == PRO_TK_NO_ERROR) {
         ProMdlIsSkeleton(model, &is_skel);
         if (is_skel) return PRO_TK_NO_ERROR;
     }
 
-    /** Get BRL-CAD name */
+    /* Get BRL-CAD name */
     switch (mtype) {
         case PRO_MDL_PART:
             entry_name = get_brlcad_name(ainfo->cinfo, wname, "r", N_REGION);
@@ -223,13 +225,13 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
             break;
     }
 
-    /**
+    /*
      * In case the name routine failed for whatever reason, don't call
      * mk_addmember - all we'll get is a crash.  Just keep going.
      */
     if (!entry_name) return PRO_TK_NO_ERROR;
 
-    /**
+    /*
      * Get matrix relative to current parent (if any) and create the
      * comb entry
      */
@@ -255,7 +257,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     BU_GET(ainfo, struct assem_conv_info);
     ainfo->cinfo = cinfo;
 
-    /**
+    /*
      * Check for exploded assembly.
      *
      * TODO: This is causing a crash, can't enable???
@@ -265,28 +267,28 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     //ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded);
     //if (is_exploded) ProAssemblyUnexplode(*(ProAssembly *)model);
 
-    /** We'll need to assemble the list of children */
+    /* We'll need to assemble the list of children */
     struct wmember wcomb;
     BU_LIST_INIT(&wcomb.l);
 
-    /** Initial comb setup */
+    /* Initial comb setup */
     char cname[CREO_NAME_MAX];
     ProMdlMdlnameGet(model, wname);
     ProWstringToString(cname, wname);
     ainfo->curr_parent = model;
     ainfo->wcmb = &wcomb;
 
-    /** Add children */
+    /* Add children */
     ProSolidFeatVisit(ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
     creo_log(cinfo, MSG_DEBUG, "%s: All children of assembly visited.\n", cname);
 
-    /** Get BRL-CAD name */
+    /* Get BRL-CAD name */
     comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
 
-    /** Data sufficient - write the comb */
+    /* Data sufficient - write the comb */
     mk_lcomb(cinfo->wdbp, bu_vls_addr(comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
 
-    /**
+    /*
      * Set attributes, if the CREO object has any of the ones
      * on the user-supplied list.
      */
@@ -294,7 +296,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     struct bu_attribute_value_set avs;
     db5_get_attributes(cinfo->wdbp->dbip, &avs, dp);
 
-    /** Write the object ID as an attribute */
+    /* Write the object ID as an attribute */
     obj_name = get_brlcad_name(cinfo, wname, NULL, N_CREO);
     bu_avs_add(&avs, "CREO_NAME", bu_vls_addr(obj_name));
 
@@ -308,7 +310,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     }
 
 
-    /** If we have a user-supplied list of attributes to save, do it */
+    /* If we have a user-supplied list of attributes to save, do it */
     if (cinfo->attrs->size() > 0) {
         for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
             char *attr_val = NULL;
@@ -320,7 +322,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
             }
         }
     }
-    /**
+    /*
      * Solid mass properties are handled separately in CREO,
      * so deal with those as well...
      */
@@ -342,12 +344,12 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
         }
     }
 
-    /** Standardize and write */
+    /* Standardize and write */
     db5_standardize_avs(&avs);
     db5_update_attributes(dp, &avs, cinfo->wdbp->dbip);
 
     creo_log(cinfo, MSG_DEBUG, "%s: assembly conversion done.\n", cname);
-    /** Free local container */
+    /* Free local container */
     BU_PUT(ainfo, struct assem_conv_info);
     return PRO_TK_NO_ERROR;
 }
