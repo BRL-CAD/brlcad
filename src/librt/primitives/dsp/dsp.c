@@ -629,7 +629,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 {
     int idx, curr_layer, xs, ys, xv, yv, tot;
     unsigned int x, y, i, j, k;
-    unsigned short dsp_min, dsp_max, cell_min, cell_max;
+    unsigned short dsp_min, dsp_max;
     unsigned short elev;
     struct dsp_bb *dsp_bb;
     struct dsp_rpp *t;
@@ -688,8 +688,8 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 
     for (y = 0; y < YSIZ(dsp); y++) {
 
-	cell_min = 0xffff;
-	cell_max = 0;
+	unsigned short cell_min = 0xffff;
+	unsigned short cell_max = 0;
 
 	for (x = 0; x < XSIZ(dsp); x++) {
 
