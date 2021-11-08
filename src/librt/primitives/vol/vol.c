@@ -755,15 +755,15 @@ case RT_VOL_SRC_FILE:
 case RT_VOL_SRC_OBJ:
     /* Retrieve the data from an internal db object */
     if (RT_G_DEBUG & RT_DEBUG_HF)
-  bu_log("getting data from object \"%s\"\n", p);
+	bu_log("getting data from object \"%s\"\n", p);
 
     if (get_obj_data(vip, dbip) != 0) {
-  p = "object";
-  return 1;
+	p = "object";
+	return 1;
     } else {
-  RT_CK_DB_INTERNAL(vip->bip);
-  RT_CK_BINUNIF(vip->bip->idb_ptr);
-  return 0;
+	RT_CK_DB_INTERNAL(vip->bip);
+	RT_CK_BINUNIF(vip->bip->idb_ptr);
+	return 0;
     }
     break;
 default:
