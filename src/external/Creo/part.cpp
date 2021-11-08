@@ -983,7 +983,7 @@ cleanup:
 
     /* Unsuppress anything we suppressed */
     if (cinfo->do_elims && !pinfo->suppressed_features->empty()) {
-        creo_log(cinfo, MSG_OK, "Unsuppressing %d features\n", pinfo->suppressed_features->size());
+        creo_log(cinfo, MSG_OK, "Unsuppressing %u features\n", pinfo->suppressed_features->size());
         ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features->at(0), pinfo->suppressed_features->size(), NULL, 0);
         if (ret != PRO_TK_NO_ERROR) {
             creo_log(cinfo, MSG_DEBUG, "%s: failed to unsuppress features.\n", pname);
