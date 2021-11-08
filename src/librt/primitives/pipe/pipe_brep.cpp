@@ -88,7 +88,6 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
 	startinneredge->m_tolerance = 0.0;
 	ON_BrepEdge* endinneredge = &(*b)->NewEdge((*b)->m_V[vert4ind], (*b)->m_V[vert4ind], c4ind);
 	endinneredge->m_tolerance = 0.0;
-	startedge = (*b)->Edge(startedge->m_edge_index);
 	(*b)->NewRuledFace(*startinneredge, false, *endinneredge, false);
     }
     startinnercurves->Empty();
