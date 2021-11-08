@@ -1117,7 +1117,7 @@ bend_pipe_shot(
      * sufficiently close, then use the real part as one value of 't'
      * for the intersections
      */
-    for (j = 0, root_count = 0; j < 4; j++) {
+    for (j = 0; j < 4; j++) {
 	if (NEAR_ZERO(val[j].im, 0.0001)) {
 	    struct hit *hitp;
 	    fastf_t normalized_dist;
@@ -1156,14 +1156,7 @@ check_discont_radii:
     /* check for surfaces created by discontinuous changes in radii */
     prev = BU_LIST_BACK(id_pipe, &bp->l);
     if (prev->l.magic != BU_LIST_HEAD_MAGIC) {
-	if (prev->pipe_is_bend) {
-	    /* do not process previous bend
-	     * struct bend_pipe *bend = (struct bend_pipe *)prev;
-	     * or2_sq = bend->bend_or*bend->bend_or;
-	     * ir2_sq = bend->bend_ir*bend->bend_ir; */
-	    or2_sq = or_sq;
-	    ir2_sq = ir_sq;
-	} else {
+	if (!prev->pipe_is_bend) {
 	    struct lin_pipe *lin = (struct lin_pipe *)prev;
 	    or2_sq = lin->pipe_rotop_sq;
 	    ir2_sq = lin->pipe_ritop_sq;
@@ -3911,7 +3904,6 @@ rt_pipe_tess(
 	curr_id = pp2->pp_id;
 	curr_od = pp2->pp_od;
     next_pt:
-	pp1 = pp2;
 	pp2 = pp3;
 	pp3 = BU_LIST_NEXT(wdb_pipe_pnt, &pp3->l);
 	if (BU_LIST_IS_HEAD(&pp3->l, &(pip->pipe_segs_head))) {
@@ -4545,14 +4537,12 @@ rt_pipe_adjust(
 		ptp = BU_LIST_LAST(wdb_pipe_pnt, &pip->pipe_segs_head);
 		*new_pt = *ptp;		/* struct copy */
 		BU_LIST_INSERT(&pip->pipe_segs_head, &new_pt->l);
-		ptp = new_pt;
 	    } else {
 		VSETALL(new_pt->pp_coord, 0.0);
 		new_pt->pp_id = 0.0;
 		new_pt->pp_od = 10.0;
 		new_pt->pp_bendradius = 20.0;
 		BU_LIST_INSERT(&pip->pipe_segs_head, &new_pt->l);
-		ptp = new_pt;
 	    }
 	    num_segs++;
 	}
