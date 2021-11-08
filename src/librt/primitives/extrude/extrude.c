@@ -1160,7 +1160,6 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	if (hit_count&1) {
 	    struct seg *segp;
 
-	    hit_count = 2;
 	    hits[0].hit_magic = RT_HIT_MAGIC;
 	    hits[0].hit_dist = dist_bottom;
 	    hits[0].hit_surfno = bot_face;
@@ -1176,6 +1175,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    segp->seg_in = hits[0];	/* struct copy */
 	    segp->seg_out = hits[1];	/* struct copy */
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+
 	    return 2;
 	} else {
 	    return 0;
