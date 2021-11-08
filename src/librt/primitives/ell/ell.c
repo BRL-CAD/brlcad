@@ -1552,11 +1552,14 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     }
 
     /* Create unit length versions of A, B, C */
-    invAlen = 1.0/(Alen = sqrt(magsq_a));
+    Alen = sqrt(magsq_a);
+    Blen = sqrt(magsq_b);
+    Clen = sqrt(magsq_c);
+    invAlen = 1.0/Alen;
     VSCALE(Au, eip->a, invAlen);
-    invBlen = 1.0/(Blen = sqrt(magsq_b));
+    invBlen = 1.0/Blen;
     VSCALE(Bu, eip->b, invBlen);
-    invClen = 1.0/(Clen = sqrt(magsq_c));
+    invClen = 1.0/Clen;
     VSCALE(Cu, eip->c, invClen);
 
     /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
