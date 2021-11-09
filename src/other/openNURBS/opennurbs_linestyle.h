@@ -76,14 +76,26 @@ public:
   static const ON_UUID m_invisible_in_detail_id;
 };
 
+#if defined(ON_DLL_TEMPLATE)
 
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_DisplayMaterialRef>;
+
+#endif
 //////////////////////////////////////////////////////////////////////
 // class ON_LinetypeSegment
 
 class ON_CLASS ON_LinetypeSegment
 {
 public:
-  ON_LinetypeSegment();
+
+  static const ON_LinetypeSegment Unset;
+  static const ON_LinetypeSegment OneMillimeterLine; 
+
+public:
+  ON_LinetypeSegment() = default;
+  ~ON_LinetypeSegment() = default;
+  ON_LinetypeSegment(const ON_LinetypeSegment&) = default;
+  ON_LinetypeSegment& operator=(const ON_LinetypeSegment&) = default;
 
   bool operator==( const ON_LinetypeSegment& src) const;
   bool operator!=( const ON_LinetypeSegment& src) const;
@@ -91,18 +103,37 @@ public:
   // For a curve to be drawn starting at the start point
   // and ending at the endpoint, the first segment
   // in the pattern must be a stLine type
-  enum eSegType
+  enum class eSegType : unsigned int
   {
-    stLine,
-    stSpace
+    Unset = 0,
+    stLine = 1,
+    stSpace = 2
   };
+
+  static ON_LinetypeSegment::eSegType SegmentTypeFromUnsigned(
+    unsigned int segment_type_as_unsigned
+    );
+
+  ON_LinetypeSegment(
+    double segment_length,
+    ON_LinetypeSegment::eSegType segment_type
+    );
 
   void Dump( class ON_TextLog& ) const;
 
   // do not add read/write functions to this class
 
-  double m_length; // length in millimeters on printed output
-  eSegType m_seg_type;
+  double m_length = 0.0; // length in millimeters on printed output
+  eSegType m_seg_type = ON_LinetypeSegment::eSegType::Unset;
+
+private:
+  unsigned int m_reserved2 = 0;
 };
+
+#if defined(ON_DLL_TEMPLATE)
+
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_LinetypeSegment>;
+
+#endif
 
 #endif

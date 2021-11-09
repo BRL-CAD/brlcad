@@ -16,6 +16,14 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 // This source code is from 
 // http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
 // and its copyright and license are reproduced below.
@@ -84,15 +92,15 @@ void on_random_number_seed(ON__UINT32 s,ON_RANDOM_NUMBER_CONTEXT* randcontext)
   ON__UINT32 i, u;
 
 #if defined(ON_COMPILER_MSC)
-#pragma warning( push )
-#pragma warning( disable : 4127 ) // warning C4127: conditional expression is constant
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4127 ) // warning C4127: conditional expression is constant
 #endif
   if ( N*sizeof(randcontext->mt[0]) != sizeof(randcontext->mt) )
   {
     ON_ERROR("the mt[] array in struct ON_RANDOM_NUMBER_CONTEXT must have length N.");
   }
 #if defined(ON_COMPILER_MSC)
-#pragma warning( pop )
+#pragma ON_PRAGMA_WARNING_POP
 #endif
 
   randcontext->mt[0] = u = s & 0xffffffffUL;
@@ -256,10 +264,24 @@ ON_RandomNumberGenerator::ON_RandomNumberGenerator()
   m_rand_context.mti = 0xFFFFFFFF;
 }
 
+
+ON__UINT32 ON_RandomNumberGenerator::RandomSeed()
+{
+  ON_UUID id;
+  ON_CreateUuid(id);
+  return ON_CRC32(0, sizeof(id), &id);
+}
+
 void ON_RandomNumberGenerator::Seed( ON__UINT32 s )
 {
   on_random_number_seed(s,&m_rand_context);
 }
+
+void ON_RandomNumberGenerator::Seed()
+{
+  Seed(ON_RandomNumberGenerator::RandomSeed());
+}
+
 
 ON__UINT32 ON_RandomNumberGenerator::RandomNumber()
 {
@@ -275,6 +297,33 @@ double ON_RandomNumberGenerator::RandomDouble(double t0, double t1)
 {
   const double s = ((double)on_random_number(&m_rand_context))/4294967295.0;
   return ((1.0-s)*t0 + s*t1);
+}
+
+double ON_RandomNumberGenerator::RandomDouble(const class ON_Interval& range)
+{
+  return RandomDouble(range.m_t[0], range.m_t[1]);
+}
+
+int ON_RandomNumberGenerator::RandomSignedInteger(int i0, int i1)
+{
+  const ON__UINT32 r = RandomNumber();
+  const ON__UINT32 delta = (i0 < i1) ? ((unsigned)(i1 - i0)) : ((unsigned)(i0 - i1));
+  return
+    (0xFFFFFFFFU == delta)
+    ? ((int)r) // avoid delta+1 overflow and crash
+    : (((i0 < i1) ? i0 : i1) + ((int)(r % (delta + 1U))))
+    ;
+}
+
+unsigned int ON_RandomNumberGenerator::RandomUnsignedInteger(unsigned int i0, unsigned int i1)
+{
+  const ON__UINT32 r = RandomNumber();
+  const ON__UINT32 delta = (i0 < i1) ? (i1 - i0) : (i0 - i1);
+  return
+    (0xFFFFFFFFU == delta)
+    ? ((int)r) // avoid delta+1 overflow and crash
+    : (((i0 < i1) ? i0 : i1) + (r % (delta + 1U)))
+    ;
 }
 
 static void Swap1(size_t count, unsigned char* a, unsigned char* b)
@@ -323,7 +372,7 @@ void ON_RandomNumberGenerator::RandomPermutation(void* base, size_t nel, size_t 
   if ( 0 == base || nel <= 1 || sizeof_element <= 0 )
     return;
 
-#if defined(ON_64BIT_POINTER)
+#if ON_SIZEOF_POINTER > 4
   if ( nel > 0xFFFFFFFF || sizeof_element > 0xFFFFFFFF)
     return;
 #endif

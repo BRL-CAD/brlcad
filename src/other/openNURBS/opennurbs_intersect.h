@@ -98,6 +98,8 @@ Returns:
 See Also:
   ON_IntersectLineLine
 */
+
+/* 15 Sept 2016 - Already in opennurbs_math.h
 ON_DECL
 bool ON_Intersect(
           const ON_Line& lineA, 
@@ -105,6 +107,9 @@ bool ON_Intersect(
           double* a,
           double* b
           );
+          */
+
+/* 15 Sept 2016 - Already in opennurbs_math.h
 
 ON_DECL
 bool ON_Intersect( // Returns false unless intersection is a single point
@@ -115,12 +120,39 @@ bool ON_Intersect( // Returns false unless intersection is a single point
           const ON_Plane&, 
           double* // parameter on line
           );
+          */
+
+/*
+Parameters:
+  line - [in]
+  plane_equation - [in]
+  line_parameter - [out]
+    If the returned parameter is < 0 or > 1, then the
+    line segment between line.from and line.to
+    does not intersect the plane.
+Returns:
+  true if the interesection is a singe point.
+  and false otherwise.
+  If returned parameter is < 0 or > 1, then the line
+  segment between line.m_point[0] and line.m_point[1]
+  does not intersect the plane
+*/
+ON_DECL
+bool ON_Intersect(
+          const ON_Line& line, 
+          const ON_PlaneEquation& plane_equation, 
+          double* line_parameter
+          );
+/* 15 Sept 2016 - Already in opennurbs_math.h
 
 ON_DECL
 bool ON_Intersect( const ON_Plane&, 
                   const ON_Plane&, 
                    ON_Line& // intersection line is returned here
                    );
+*/
+
+/* 15 Sept 2016 - Already in opennurbs_math.h
 
 ON_DECL
 bool ON_Intersect( const ON_Plane&, 
@@ -128,6 +160,7 @@ bool ON_Intersect( const ON_Plane&,
                   const ON_Plane&,
                   ON_3dPoint& // intersection point is returned here
                   );
+                  */
 
 /*
 Description:
@@ -145,12 +178,17 @@ Returns:
   2: intersection is a circle
     circle radius > 0.
 */
+/* 15 Sept 2016 - Already in opennurbs_math.h
+
 ON_DECL
 int ON_Intersect(
           const ON_Plane& plane, 
           const ON_Sphere& sphere,
           ON_Circle& circle
           );
+*/
+
+/* 15 Sept 2016 - Already in opennurbs_math.h
 
 ON_DECL
 int ON_Intersect( // returns 0 = no intersections, 
@@ -165,6 +203,9 @@ int ON_Intersect( // returns 0 = no intersections,
                  const ON_Line&, const ON_Sphere&,
                   ON_3dPoint&, ON_3dPoint& // intersection point(s) returned here
                   );
+*/
+
+/* 15 Sept 2016 - Already in opennurbs_math.h
 
 ON_DECL
 int ON_Intersect( // returns 0 = no intersections, 
@@ -180,7 +221,7 @@ int ON_Intersect( // returns 0 = no intersections,
                   const ON_Line&, const ON_Cylinder&,
                   ON_3dPoint&, ON_3dPoint& // intersection point(s) returned here
                   );
-
+*/
 /*
 Description:
   Intersect an infinite line and an axis aligned bounding box.

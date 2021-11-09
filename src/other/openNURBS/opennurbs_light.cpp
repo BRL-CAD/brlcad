@@ -15,12 +15,20 @@
 */
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 ON_OBJECT_IMPLEMENT(ON_Light,ON_Geometry,"85A08513-F383-11d3-BFE7-0010830122F0");
 
 void ON_Light::Default()
 {
   m_light_name.Destroy();
-  m_bOn = 1;
+  m_bOn = true;
   m_intensity = 1.0;
   m_watts = 0.0;
   m_style =  ON::camera_directional_light;
@@ -49,7 +57,7 @@ ON_Light::~ON_Light()
 {
 }
 
-ON_BOOL32 ON_Light::IsValid( ON_TextLog* text_log ) const
+bool ON_Light::IsValid( ON_TextLog* text_log ) const
 {
   int s = Style();
   if ( s <= ON::unknown_light_style || s >= ON::light_style_count ) {
@@ -61,9 +69,9 @@ ON_BOOL32 ON_Light::IsValid( ON_TextLog* text_log ) const
 
 void ON_Light::Dump( ON_TextLog& dump ) const
 {
-  ON_BOOL32 bDumpDir = false;
-  ON_BOOL32 bDumpLength = false;
-  ON_BOOL32 bDumpWidth = false;
+  bool bDumpDir = false;
+  bool bDumpLength = false;
+  bool bDumpWidth = false;
 
   const char* sStyle = "unknown";
   switch(Style())
@@ -141,14 +149,14 @@ void ON_Light::Dump( ON_TextLog& dump ) const
   dump.Print("spot angle = %g degrees\n",SpotAngleDegrees());
 }
 
-ON_BOOL32 ON_Light::Write(
+bool ON_Light::Write(
        ON_BinaryArchive& file
      ) const
 {
   int i;
-  ON_BOOL32 rc = file.Write3dmChunkVersion(1,2);
+  bool rc = file.Write3dmChunkVersion(1,2);
   // version 1.0 fields
-  if ( rc ) rc = file.WriteInt( m_bOn );
+  if ( rc ) rc = file.WriteInt( m_bOn?1:0 );
   i = m_style;
   if ( rc ) rc = file.WriteInt( i );
   if ( rc ) rc = file.WriteDouble( m_intensity );
@@ -162,7 +170,7 @@ ON_BOOL32 ON_Light::Write(
   if ( rc ) rc = file.WriteDouble( m_spot_exponent );
   if ( rc ) rc = file.WriteVector( m_attenuation );
   if ( rc ) rc = file.WriteDouble( m_shadow_intensity );
-  if ( rc ) rc = file.WriteInt( m_light_index );
+  if ( rc ) rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::RenderLight, m_light_index );
   if ( rc ) rc = file.WriteUuid( m_light_id );
   if ( rc ) rc = file.WriteString( m_light_name );
   // version 1.1 added support for linear and rectangular
@@ -173,20 +181,20 @@ ON_BOOL32 ON_Light::Write(
   return rc;
 }
 
-ON_BOOL32 ON_Light::Read(
+bool ON_Light::Read(
        ON_BinaryArchive&  file
      )
 {
   Default();
   int major_version = 0;
   int minor_version = 0;
-  ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
+  bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if ( rc && major_version == 1 ) {
     int i;
     // version 1.0 fields
     i = 0;
     if ( rc ) rc = file.ReadInt( &i );
-    if ( rc ) Enable(i);
+    if ( rc ) Enable(0 != i);
     if ( rc ) rc = file.ReadInt( &i );
     if ( rc ) SetStyle(ON::LightStyle(i));
     if ( rc ) rc = file.ReadDouble( &m_intensity );
@@ -238,10 +246,10 @@ int ON_Light::Dimension() const
   return 3;
 }
 
-ON_BOOL32 ON_Light::GetBBox( // returns true if successful
+bool ON_Light::GetBBox( // returns true if successful
        double* boxmin,    // boxmin[dim]
        double* boxmax,    // boxmax[dim]
-       ON_BOOL32 bGrowBox
+       bool bGrowBox
        ) const
 {
   bool rc = true;
@@ -320,7 +328,7 @@ ON_BOOL32 ON_Light::GetBBox( // returns true if successful
   return rc;
 }
 
-ON_BOOL32 ON_Light::Transform( 
+bool ON_Light::Transform( 
        const ON_Xform& xform
        )
 {
@@ -349,14 +357,14 @@ ON_BOOL32 ON_Light::Transform(
   return true;
 }
 
-ON_BOOL32 ON_Light::Enable(ON_BOOL32 b)
+bool ON_Light::Enable(bool b)
 {
-  ON_BOOL32 oldb = m_bOn;
+  bool oldb = m_bOn;
   m_bOn = (b)?true:false;
   return oldb;
 }
 
-ON_BOOL32 ON_Light::IsEnabled() const
+bool ON_Light::IsEnabled() const
 {
   return m_bOn;
 }
@@ -366,9 +374,9 @@ ON::light_style ON_Light::Style() const
   return m_style;
 }
 
-ON_BOOL32 ON_Light::IsPointLight() const
+const bool ON_Light::IsPointLight() const
 {
-  ON_BOOL32 rc;
+  bool rc;
   switch(m_style)
   {
   //case ON::view_point_light:
@@ -383,9 +391,9 @@ ON_BOOL32 ON_Light::IsPointLight() const
   return rc;
 }
 
-ON_BOOL32 ON_Light::IsDirectionalLight() const
+const bool ON_Light::IsDirectionalLight() const
 {
-  ON_BOOL32 rc;
+  bool rc;
   switch(m_style)
   {
   //case ON::view_directional_light:
@@ -400,9 +408,9 @@ ON_BOOL32 ON_Light::IsDirectionalLight() const
   return rc;
 }
 
-ON_BOOL32 ON_Light::IsSpotLight() const
+const bool ON_Light::IsSpotLight() const
 {
-  ON_BOOL32 rc;
+  bool rc;
   switch(m_style)
   {
   //case ON::view_spot_light:
@@ -417,9 +425,9 @@ ON_BOOL32 ON_Light::IsSpotLight() const
   return rc;
 }
 
-ON_BOOL32 ON_Light::IsLinearLight() const
+const bool ON_Light::IsLinearLight() const
 {
-  ON_BOOL32 rc;
+  bool rc;
   switch(m_style)
   {
   //case ON::view_linear_light:
@@ -434,9 +442,9 @@ ON_BOOL32 ON_Light::IsLinearLight() const
   return rc;
 }
 
-ON_BOOL32 ON_Light::IsRectangularLight() const
+const bool ON_Light::IsRectangularLight() const
 {
-  ON_BOOL32 rc;
+  bool rc;
   switch(m_style)
   {
   //case ON::view_rectangular_light:
@@ -751,7 +759,7 @@ ON::coordinate_system ON_Light::CoordinateSystem() const // determined by style
   return cs;
 }
 
-ON_BOOL32 ON_Light::GetLightXform( 
+bool ON_Light::GetLightXform( 
          const ON_Viewport& vp,
          ON::coordinate_system dest_cs, 
          ON_Xform& xform 
@@ -790,7 +798,7 @@ ON_3dVector ON_Light::PerpindicularDirection() const
   // user interface display.
   ON_3dVector dir = m_direction;
   if ( !dir.IsValid() || !dir.Unitize() )
-    return ON_UNSET_VECTOR;
+    return ON_3dVector::UnsetVector;
 
   ON_3dVector xdir;
   if ( IsLinearLight() || IsRectangularLight() )
@@ -800,10 +808,10 @@ ON_3dVector ON_Light::PerpindicularDirection() const
       return xdir;
   }
 
-  if( dir.IsParallelTo( ON_zaxis, ON_DEGREES_TO_RADIANS * 3.0))
-    xdir = ON_CrossProduct( dir, ON_xaxis);
+  if( dir.IsParallelTo( ON_3dVector::ZAxis, ON_DEGREES_TO_RADIANS * 3.0))
+    xdir = ON_CrossProduct( dir, ON_3dVector::XAxis);
   else
-    xdir = ON_CrossProduct( dir, ON_zaxis);
+    xdir = ON_CrossProduct( dir, ON_3dVector::ZAxis);
   xdir.Unitize();
   ON_3dVector ydir = ON_CrossProduct(dir,xdir);
   ydir.Unitize();
@@ -813,22 +821,22 @@ ON_3dVector ON_Light::PerpindicularDirection() const
   {
   case 0:
     right = (fabs(xdir.y) > fabs(ydir.y)) ? xdir : ydir;
-    if ( right.y < 0.0 )
-      right.Reverse();
+    if (right.y < 0.0)
+      right = -right;
     break;
   case 1:
   case 2:
     right = (fabs(xdir.x) > fabs(ydir.x)) ? xdir : ydir;
-    if ( right.x < 0.0 )
-      right.Reverse();
+    if (right.x < 0.0)
+      right = -right;
     break;
   default:
     right = xdir;
     break;
   }
 
-  if ( right[right.MaximumCoordinateIndex()] < 0.0 )
-    right.Reverse();
+  if (right[right.MaximumCoordinateIndex()] < 0.0)
+    right = -right;
 
   return right;  
 }
@@ -860,18 +868,24 @@ bool ON_Light::GetSpotLightRadii( double* inner_radius, double* outer_radius ) c
 
 double ON_Light::Intensity() const
 {
-  // 0.0 = 0%  1.0 = 100%
+  // 0.0 = 0%  
+  // 1.0 = 100%
+  // > 1.0 is used by renderers that support high dynamic range inputs
   return m_intensity;
 }
 
 void ON_Light::SetIntensity(double v)
 {
-  if ( v <= 0.0 )
-    m_intensity = 0.0;
-  else if (v >= 1.0 )
-    m_intensity = 1.0;
-  else
-    m_intensity = v;
+  //ALB 2014.04.28
+  //Fixes http://mcneel.myjetbrains.com/youtrack/issue/RH-26585
+  //Lights should not be clamped to 1.0.  There is absolutely no reason to do so.
+  if ( ON_IsValid(v) )
+  {
+    if (v <= 0.0)
+      m_intensity = 0.0;
+    else
+      m_intensity = v;
+  }
 }
 
 double ON_Light::PowerWatts() const

@@ -25,208 +25,84 @@
 #if !defined(OPENNURBS_BITMAP_INC_)
 #define OPENNURBS_BITMAP_INC_
 
-class ON_CLASS ON_Bitmap : public ON_Object
+class ON_CLASS ON_Bitmap : public ON_ModelComponent
 {
-  // virtual base class for bitmap objects
   ON_OBJECT_DECLARE(ON_Bitmap);
+
 public:
-  ON_Bitmap();
-  ~ON_Bitmap();
+  ON_Bitmap()  ON_NOEXCEPT;
+  ~ON_Bitmap() = default;
+  ON_Bitmap(const ON_Bitmap&);
+  ON_Bitmap& operator=(const ON_Bitmap&) = default;
 
-  // C++ defaults work fine
-  //ON_Bitmap(const ON_Bitmap&);
-  //ON_Bitmap& operator=(const ON_Bitmap&);
+  static const ON_Bitmap Unset;
 
-  // virtual
-  ON_UUID ModelObjectId() const;
+  /*
+  Parameters:
+    model_component_reference - [in]
+    none_return_value - [in]
+      value to return if ON_Layer::Cast(model_component_ref.ModelComponent())
+      is nullptr
+  Returns:
+    If ON_Layer::Cast(model_component_ref.ModelComponent()) is not nullptr,
+    that pointer is returned.  Otherwise, none_return_value is returned. 
+  */
+  static const ON_Bitmap* FromModelComponentRef(
+    const class ON_ModelComponentReference& model_component_reference,
+    const ON_Bitmap* none_return_value
+    );
 
+  void Dump( 
+    ON_TextLog& 
+    ) const override;
 
-  void Dump( ON_TextLog& ) const; // for debugging
+  bool Write( class ON_BinaryArchive& ) const override;
+  bool Read( class ON_BinaryArchive& ) override;  
 
-  void EmergencyDestroy();
-  void Destroy();
-
-  void Defaults();
+  unsigned int SizeOf() const override;
+  
+  virtual
+  int Width() const;
 
   virtual
-  int Width() const = 0;
+  int Height() const; // >0 means it's a bottom-up bitmap with origin at lower right
+                      // <0 means it's a top-down bitmap with origin at upper left
   virtual
-  int Height() const = 0; // >0 means it's a bottom-up bitmap with origin at lower right
-                          // <0 means it's a top-down bitmap with origin at upper left
+  int BitsPerPixel() const; // bits per pixel
+
   virtual
-  int BitsPerPixel() const = 0; // bits per pixel
+  size_t SizeofScan() const;  // number of bytes per scan line
+
   virtual
-  int SizeofScan() const = 0;  // number of bytes per scan line
-  virtual
-  int SizeofImage() const = 0; // size of current map in bytes
+  size_t SizeofImage() const; // size of current map in bytes
 
   virtual
   unsigned char* Bits(
-    int // index of scan line 
-    ) = 0;
+    int scan_line_index
+    );
+
   virtual
   const unsigned char* Bits(
-    int // index of scan line 
-    ) const = 0;
-
-  ON_UUID    m_bitmap_id;
-  int        m_bitmap_index;
-  ON_wString m_bitmap_name;     // descriptive name
-  ON_wString m_bitmap_filename; // full path to file
-};
-
-/*
-  ON_EmbeddedFile is derived from ON_Bitmap so it can be stored 
-  in the Rhino document's CRhinoDoc::m_bitmap_table[] array.
-  The ON_EmbeddedFile class is used to embed any type of file
-  in a Rhino document.
-*/
-class ON_CLASS ON_EmbeddedFile : public ON_Object
-{
-  ON_OBJECT_DECLARE(ON_EmbeddedFile);
-public:
-  ON_EmbeddedFile();
-  ON_EmbeddedFile(const ON_EmbeddedFile& src);
-  ON_EmbeddedFile& operator=(const ON_EmbeddedFile& src);
-
-  virtual ~ON_EmbeddedFile();
-  void EmergencyDestroy();
-  void Destroy();
-  void DestroyBuffer();
-
-  /*
-  Description:
-    Store the specified file in an ON_EmbeddedFile class.
-  Parameters:
-    filename - [in]
-      full path to the file.
-    bCompress - [in]
-      true if the image of the file should be compressed.
-      (Pass false if the file is already in a compressed
-      format, like jpg, png, zip files.)
-  Returns:
-    true if successful.  When true is returned m_id is set to
-    a new unique id, m_full_file_name is set to filename,
-    and m_relative_file_name is empty.
-  */
-  bool Create( 
-    const wchar_t* filename, 
-    bool bCompress
-    );
-
-  /*
-  Description:
-    Store the specified file in an ON_EmbeddedFile class.
-  Parameters:
-    fp - [in]
-      Result of calling ON::OpenFile( ..., "rb" )
-    bCompress - [in]
-      true if the image of the file should be compressed.
-      (Pass false if the file is already in a compressed
-      format, like jpg, png, zip files.)
-  */
-  bool Create( 
-    FILE* fp,
-    bool bCompress 
-    );
-  
-  /*
-  Description:
-    Store the specified buffer in an ON_EmbeddedFile class.
-  Parameters:
-    source_buffer - [in]
-    source_buffer_size - [in]
-      number of bytes in source_buffer.
-    bCompress - [in]
-      true if the source_buffer should be compressed.
-      (Pass false if source_buffer is already in a compressed format.)
-  */
-  bool Create( 
-    const void* source_buffer,
-    ON__UINT64 sizeof_source_buffer,
-    bool bCompress 
-    );
-
-  bool Extract( 
-    const wchar_t* destination_filename
+    int scan_line_index
     ) const;
 
-  bool Extract( 
-    FILE* fp
-    ) const;
-
-  /*
-  Description:
-    Extracts the file into a buffer.
-  Parameters:
-    buffer - [out]
-      buffer must point to FileSize() bytes of memory.
-      The extracted file will be copied to this buffer.
-  Returns:
-    True if successful.
-    False if not successful.
-  */
-  bool Extract( 
-    void* buffer
-    ) const;
-        
-  /*
-  Returns
-    full path file name
-  */
-  const wchar_t* FullFileName() const;
-    
-  /*
-  Returns
-    Relative file name.  Usually relative to the directory
-    where the archive containing this embedded file was last
-    saved.
-  */
-  const wchar_t* RelativeFileName() const;
-
-  ON_UUID Id() const;
-
-  void SetId( ON_UUID id );
-
-  void SetFullFileName( const wchar_t* full_file_name );
-
-
-  void SetRelativeFileName( const wchar_t* relative_file_name );
-
-  ON__UINT64 FileSize() const;
-  ON__UINT64 FileLastModifiedTime() const;
-  ON__UINT32 FileCRC() const;
-  
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
-
-  ON_BOOL32 Write( ON_BinaryArchive& ) const;
-  ON_BOOL32 Read( ON_BinaryArchive& );
-
-  // The relative path is typically set when the .3dm file is
-  // saved and is the path to the file relative to the location
-  // of the saved file.
-  // (The full path to the file is in ON_Bitmap::m_bitmap_filename.)
-  ON_UUID    m_id;
-  ON_wString m_full_file_name; // full path file name
-  ON_wString m_relative_file_name; // relative path when the archive was last saved.
+  const ON_FileReference& FileReference() const;
+  void SetFileReference(
+    const ON_FileReference& file_reference
+    );
+  void SetFileFullPath(
+    const wchar_t* file_full_path,
+    bool bSetContentHash
+    );
 
 private:
-  void* m_reserved;
-
-public:
-  ON__UINT64 m_file_size;
-  ON__UINT64 m_file_time;  // last modified time returned by ON::GetFileStats()
-  ON__UINT32 m_file_crc;   // 32 bit crc of the file from ON_CRC32
-
-public:
-  ON__UINT32 m_buffer_crc; // will be different from m_file_crc if the buffer is compressed.
-  ON_Buffer m_buffer;
-  unsigned char m_bCompressedBuffer; // true if m_buffer is compressed.
-
-private:
-  unsigned char m_reserved3[7];
+  ON_FileReference m_file_reference;
 };
 
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Bitmap*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_Bitmap*>;
+#endif
 
 #if !defined(ON_OS_WINDOWS_GDI)
 
@@ -240,8 +116,30 @@ private:
 //#define BI_RLE4       2L
 //#define BI_BITFIELDS  3L
 
+// Windows sizeof(ON_WindowsRGBQUAD) = 4.
+struct ON_WindowsRGBQUAD {
+  // Mimics Windows RGBQUAD structure.
+  // For details searh for "RGBQUAD" at http://msdn.microsoft.com/default.asp 
+  unsigned char rgbBlue;      // BYTE
+  unsigned char rgbGreen;     // BYTE
+  unsigned char rgbRed;       // BYTE
+  unsigned char rgbReserved;  // BYTE
+};
+
+// Windows packs BITMAPFILEHEADER 
+#pragma pack(push,2)
+struct ON_WindowsBITMAPFILEHEADER { 
+  unsigned short  bfType;         // WORD  = file type, must be BM
+  unsigned int    bfSize;         // DWORD = size, in bytes, of the bitmap file
+  unsigned short  bfReserved1;    // WORD    Reserved; must be zero
+  unsigned short  bfReserved2;    // WORD    Reserved; must be zero
+  unsigned int    bfOffBits;      // DWORD = offset, in bytes, from the beginning of the BITMAPFILEHEADER structure to the bitmap bits
+};
+#pragma pack(pop)
+
 // Mimics Windows BITMAPINFOHEADER structure.
 // For details searh for "BITMAPINFOHEADER" at http://msdn.microsoft.com/default.asp 
+// Windows sizeof(BITMAPINFOHEADER) = 80.
 struct ON_WindowsBITMAPINFOHEADER
 {
   unsigned int   biSize;          // DWORD = sizeof(BITMAPINFOHEADER)
@@ -305,15 +203,6 @@ struct ON_WindowsBITMAPINFOHEADER
   unsigned int   biClrImportant;  // DWORD
 };
 
-struct ON_WindowsRGBQUAD {
-  // Mimics Windows RGBQUAD structure.
-  // For details searh for "RGBQUAD" at http://msdn.microsoft.com/default.asp 
-  unsigned char rgbBlue;      // BYTE
-  unsigned char rgbGreen;     // BYTE
-  unsigned char rgbRed;       // BYTE
-  unsigned char rgbReserved;  // BYTE
-};
-
 struct ON_WindowsBITMAPINFO
 {
   // Mimics Windows BITMAPINFO structure.
@@ -336,75 +225,64 @@ struct ON_WindowsBITMAPINFO
 
 #endif
 
-// OBSOLETE // class ON_OpenGLBitmap;
-
 class ON_CLASS ON_WindowsBitmap : public ON_Bitmap
 {
   ON_OBJECT_DECLARE(ON_WindowsBitmap);
   // Uncompressed 8 bpp, 24 bpp, or 32 bpp Windows device 
   // independent bitmaps (DIB)
 public:
-
-  ON_WindowsBitmap();
-  ON_WindowsBitmap( const ON_WindowsBitmap& );
+  ON_WindowsBitmap() = default;
   ~ON_WindowsBitmap();
+  ON_WindowsBitmap(const ON_WindowsBitmap&);
+  ON_WindowsBitmap& operator=(const ON_WindowsBitmap&);
 
-  ON_WindowsBitmap& operator=( const ON_WindowsBitmap& );
-
-  void EmergencyDestroy();
-  void Destroy();
-
-  bool Create( 
-         int, // width
-         int, // height
-         int  // bits per pixel ( 1, 2, 4, 8, 16, 24, or 32 )
-         );
+  static const ON_WindowsBitmap Unset;
 
   /*
-  Description:
-    Tests an object to see if its data members are correctly
-    initialized.
   Parameters:
-    text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
-        interface tool.
-  Returns:
-    @untitled table
-    true     object is valid
-    false    object is invalid, uninitialized, etc.
-  Remarks:
-    Overrides virtual ON_Object::IsValid
+    width - [in]
+    height - [in]
+    bits_per_pixel - [in]
+      1, 2, 4, 8, 16, 24, or 32
   */
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  bool Create( 
+         int width,
+         int height,
+         int bits_per_pixel
+         );
 
-  ON_BOOL32 Write( ON_BinaryArchive& ) const; // writes compressed image
-  ON_BOOL32 Read( ON_BinaryArchive& );        // reads compressed image
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
+
+  bool IsEmpty() const;
+
+  bool Write( ON_BinaryArchive& ) const override; // writes compressed image
+  bool Read( ON_BinaryArchive& ) override;        // reads compressed image
+  unsigned int SizeOf() const override;
+  
+public:
   bool WriteCompressed( ON_BinaryArchive& ) const;
   bool ReadCompressed( ON_BinaryArchive& );
   bool WriteUncompressed( ON_BinaryArchive& ) const;
   bool ReadUncompressed( ON_BinaryArchive& );
 
-  int Width() const;
-  int Height() const; // >0 means it's a bottom-up bitmap with origin at lower right
+public:
+  int Width() const override;
+  int Height() const override; // >0 means it's a bottom-up bitmap with origin at lower right
                       // <0 means it's a top-down bitmap with origin at upper left
 
   int PaletteColorCount() const; // number of colors in palette
   int SizeofPalette() const;     // number of bytes in palette
-  int BitsPerPixel() const;
-  //int SizeofPixel() const;       // number of bytes per pixel
-  int SizeofScan() const;        // number of bytes per scan line
-  int SizeofImage() const;       // number of bytes in image
+
+  int BitsPerPixel() const override;
+  size_t SizeofScan() const override;        // number of bytes per scan line
+  size_t SizeofImage() const override;       // number of bytes in image
 
   unsigned char* Bits(
     int // index of scan line 
-    );
+    ) override;
   const unsigned char* Bits(
     int // index of scan line 
-    ) const;
+    ) const override;
 
   //int PaletteIndex( ON_Color ) const; // for 8bpp bitmaps
 
@@ -417,7 +295,7 @@ public:
     const unsigned char* // value of Bits( j )
     ) const;
 
-  //ON_BOOL32 SetColor( // sets entire map to specified color 
+  //bool SetColor( // sets entire map to specified color 
   //       ON_Color
   //       );
 
@@ -511,7 +389,7 @@ public:
           // initialize palette
           ...
 
-          HBITMAP hbm = ::CreateDIBSection( NULL, bmi, ..., (LPVOID*)&bits, NULL, 0);
+          HBITMAP hbm = ::CreateDIBSection( nullptr, bmi, ..., (LPVOID*)&bits, nullptr, 0);
 
           {
             // Use ON_WindowsBitmap to write a compressed bitmap to 
@@ -522,10 +400,11 @@ public:
           }
 
   */
-  bool Create( const BITMAPINFO* bmi, 
-               const unsigned char* bits,
-               bool bCopy
-             );
+  bool Create(
+    const BITMAPINFO* bmi, 
+    const unsigned char* bits,
+    bool bCopy
+    );
 
 #endif
 
@@ -538,18 +417,43 @@ public:
   bool IsContiguous() const;
 
 #if defined(ON_OS_WINDOWS_GDI)
-  BITMAPINFO*                  m_bmi;
+  BITMAPINFO* m_bmi = nullptr;
 #else
-  struct ON_WindowsBITMAPINFO* m_bmi;
+  struct ON_WindowsBITMAPINFO* m_bmi = nullptr;
+  
+  /*
+Description:
+   Create an ON_WindowsBitmap from a contiguous bitmap ON_WindowsBITMAPINFO.
+   Parameters:
+     src - [in] 
+       A contiguous Windows device independent bitmap.  This means that the
+       "bits" in the bitmap begin at the memory location &m_bits->bmiColors[0].
+   See Also:
+   Remarks:
+     ~ON_WindowsBitmap will not delete src.
+   */
+  bool Create (
+    const struct ON_WindowsBITMAPINFO* src 
+    );
 #endif
 
-  unsigned char*               m_bits;
+  unsigned char* m_bits = nullptr;
 
 private:
-  int m_bFreeBMI; // 0 m_bmi and m_bits are not freed by ON_WindowsBitmap::Destroy
+  int m_bFreeBMI = 0; // 0 m_bmi and m_bits are not freed by ON_WindowsBitmap::Destroy
                   // 1 m_bmi  memory is freed by ON_WindowsBitmap::Destroy
                   // 2 m_bits memory is freed by ON_WindowsBitmap::Destroy
-                  // 3 m_bmi and m_bits memory is freed by ON_WindowsBitmap::Destroy                    
+                  // 3 m_bmi and m_bits memory is freed by ON_WindowsBitmap::Destroy     
+
+private:
+  bool Internal_WriteV5( ON_BinaryArchive& ) const;
+  bool Internal_ReadV5( ON_BinaryArchive& );
+
+protected:
+  void Internal_Destroy();
+  void Internal_Copy(
+    const ON_WindowsBitmap& src
+    );  
 };
 
 /*
@@ -561,40 +465,60 @@ class ON_CLASS ON_WindowsBitmapEx : public ON_WindowsBitmap
 {
   ON_OBJECT_DECLARE(ON_WindowsBitmapEx);
 public:
-  ON_WindowsBitmapEx();
-  ~ON_WindowsBitmapEx();
-  ON_BOOL32 Write( ON_BinaryArchive& ) const; // writes compressed image
-  ON_BOOL32 Read( ON_BinaryArchive& );        // reads compressed image
+  ON_WindowsBitmapEx() = default;
+  ~ON_WindowsBitmapEx() = default;
+  ON_WindowsBitmapEx(const ON_WindowsBitmapEx&) = default;
+  ON_WindowsBitmapEx& operator=(const ON_WindowsBitmapEx&) = default;
+
+  static const ON_WindowsBitmapEx Unset;
+  
+  bool Write( ON_BinaryArchive& ) const override; // writes compressed image
+  bool Read( ON_BinaryArchive& ) override;        // reads compressed image
+
+private:
+  bool Internal_WriteV5( ON_BinaryArchive& ) const; // writes compressed image
+  bool Internal_ReadV5( ON_BinaryArchive& );        // reads compressed image
 };
 
 class ON_CLASS ON_EmbeddedBitmap : public ON_Bitmap
 {
   ON_OBJECT_DECLARE(ON_EmbeddedBitmap);
 public:
-  ON_EmbeddedBitmap();
+  ON_EmbeddedBitmap() = default;
   ~ON_EmbeddedBitmap();
-  void EmergencyDestroy();
-  void Destroy();
-  void Create( int sizeof_buffer );
+  ON_EmbeddedBitmap(const ON_EmbeddedBitmap&);
+  ON_EmbeddedBitmap& operator=(const ON_EmbeddedBitmap&);
 
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  static const ON_EmbeddedBitmap Unset;
 
-  ON_BOOL32 Write( ON_BinaryArchive& ) const;
-  ON_BOOL32 Read( ON_BinaryArchive& );
+  void Create( 
+    size_t sizeof_buffer 
+    );
 
-  int Width() const;
-  int Height() const;
-  int BitsPerPixel() const;
-  int SizeofScan() const;
-  int SizeofImage() const;
-  unsigned char* Bits(int);
-  const unsigned char* Bits(int) const;
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
-  void* m_buffer;
-  size_t m_sizeof_buffer;
-  int m_free_buffer; // 1 = ~ON_EmbeddedBitmap will onfree m_buffer.
-  ON__UINT32 m_biffer_crc32; // 32 bit crc from ON_CRC32
+  bool Write( ON_BinaryArchive& ) const override;
+  bool Read( ON_BinaryArchive& ) override;
+  unsigned int SizeOf() const override;
+
+  size_t SizeofImage() const override;
+  unsigned char* Bits(int) override;
+  const unsigned char* Bits(int) const override;
+
+  const void* m_buffer = nullptr;
+  size_t m_sizeof_buffer = 0;
+  bool m_managed_buffer = false; // true means the ON_EmbeddedBitmap class manages m_buffer memory.
+  ON__UINT32 m_buffer_crc32 = 0; // 32 bit crc from ON_CRC32
+
+private:
+  bool Internal_WriteV5( ON_BinaryArchive& ) const;
+  bool Internal_ReadV5( ON_BinaryArchive& );
+
+private:
+  void Internal_Destroy();
+  void Internal_Copy(
+    const ON_EmbeddedBitmap& src
+    );  
 };
-
 
 #endif

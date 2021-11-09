@@ -18,8 +18,7 @@
 #define OPENNURBS_OPTIMIZE_INC_
 
 // find a local minimum of a 1 parameter function
-ON_DECL
-ON_BOOL32 ON_FindLocalMinimum( // returns 0 - failed to converge, 1 - success, 2 - failed to converge to requested tolerances
+int ON_FindLocalMinimum( // returns 0 - failed to converge, 1 - success, 2 - failed to converge to requested tolerances
         int (*)(void*,double,double*,double*), // f(void*, double t, double* value, double* derivative );
         void*, // passed as the void* argument to the above function
         double, double, double, // ax,bx,cx, 3 abcissa  ax<bx<cx or ax>bx>cx, and
@@ -38,16 +37,16 @@ public:
   virtual ~ON_LocalZero1();
 
   virtual
-  ON_BOOL32 Evaluate( // returns true if successful
+  bool Evaluate( // returns true if successful
      double,  // evaluation parameter
-     double*, // f(t) returned here - NULL never passed
-     double*, // If not NULL, then f'(t) returned here
+     double*, // f(t) returned here - nullptr never passed
+     double*, // If not nullptr, then f'(t) returned here
      int      // <  0: evaluate from below
               // >= 0: evaluate from above
   ) = 0;
 
 
-  ON_BOOL32 FindZero( double* );  // Searches domain between m_t0 and m_t1
+  bool FindZero( double* );  // Searches domain between m_t0 and m_t1
                              // domain for a root.  Returns true if
                              // a root is found.
 
@@ -67,7 +66,7 @@ public:
                         // the root is bracketed in a domain with width
                         // <= m_t_tolerance.
 
-  // m_k[] is either NULL or monotone increasing array of length m_k_count.
+  // m_k[] is either nullptr or monotone increasing array of length m_k_count.
   //
   // This zero finder works on continuous piecewise c2 functions.
   // If the function is c2 on the interior of the domain 
@@ -77,7 +76,7 @@ public:
   // then there is no need to initialize m_k[].  If the function
   // is not c2 on the domain in question, then the m_k[m_count] array
   // is a list of parameters that define the c2 domains.  When m_k[] 
-  // is not NULL, m_count must be >= 2 and m_k[] must be monotone 
+  // is not nullptr, m_count must be >= 2 and m_k[] must be monotone 
   // increasing and satisfy 
   //
   //          m_k[0] <= min(m_t0,m_t1) 
@@ -93,9 +92,9 @@ public:
 
 private:
   double m_s0, m_f0, m_s1, m_f1;
-  ON_BOOL32 BracketZero(double,double,double,double,int=0);
-  ON_BOOL32 BracketSpan(double,double,double,double);
-  ON_BOOL32 NewtonRaphson( double, double, double, double, int, double* );
+  bool BracketZero(double,double,double,double,int=0);
+  bool BracketSpan(double,double,double,double);
+  bool NewtonRaphson( double, double, double, double, int, double* );
 };
 
 #endif

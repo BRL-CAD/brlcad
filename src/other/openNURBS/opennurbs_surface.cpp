@@ -16,6 +16,14 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_Surface,ON_Geometry,"4ED7D4E1-E947-11d3-BFE5-0010830122F0");
 
 ON_Surface::ON_Surface()
@@ -66,7 +74,7 @@ ON::object_type ON_Surface::ObjectType() const
   return ON::surface_object;
 }
 
-ON_BOOL32 ON_Surface::GetDomain( int dir, double* t0, double* t1 ) const
+bool ON_Surface::GetDomain( int dir, double* t0, double* t1 ) const
 {
   ON_Interval d = Domain(dir);
   if ( t0 ) *t0 = d[0];
@@ -74,7 +82,7 @@ ON_BOOL32 ON_Surface::GetDomain( int dir, double* t0, double* t1 ) const
   return d.IsIncreasing();
 }
 
-ON_BOOL32 ON_Surface::GetSurfaceSize( 
+bool ON_Surface::GetSurfaceSize( 
     double* width, 
     double* height 
     ) const
@@ -94,7 +102,7 @@ bool ON_Surface::SetDomain( int dir, ON_Interval domain )
            && SetDomain( dir, domain[0], domain[1] )) ? true : false;
 }
 
-ON_BOOL32 ON_Surface::SetDomain( 
+bool ON_Surface::SetDomain( 
   int, // 0 sets first parameter's domain, 1 gets second parameter's domain
   double, double 
   )
@@ -110,7 +118,7 @@ ON_BOOL32 ON_Surface::SetDomain(
 // end of a span.
 //
 //virtual
-ON_BOOL32 ON_Surface::GetSpanVectorIndex(
+bool ON_Surface::GetSpanVectorIndex(
       int dir, // 0 gets first parameter's domain, 1 gets second parameter's domain
       double t,      // [IN] t = evaluation parameter
       int side,         // [IN] side 0 = default, -1 = from below, +1 = from above
@@ -118,7 +126,7 @@ ON_BOOL32 ON_Surface::GetSpanVectorIndex(
       ON_Interval* span_domain // [OUT] domain of the span containing "t"
       ) const
 {
-  ON_BOOL32 rc = false;
+  bool rc = false;
   int i;
   int span_count = SpanCount(dir);
   if ( span_count > 0 ) {
@@ -140,14 +148,14 @@ ON_BOOL32 ON_Surface::GetSpanVectorIndex(
   return rc;
 }
 
-ON_BOOL32 ON_Surface::GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
+bool ON_Surface::GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
        int dir,
        double t,       // t = parameter in domain
        double* tminus, // tminus
        double* tplus   // tplus
        ) const
 {
-  ON_BOOL32 rc = false;
+  bool rc = false;
   ON_Interval d = Domain( dir );
   if ( d.IsIncreasing() )
     rc = ON_GetParameterTolerance( d.Min(), d.Max(), t, tminus, tplus );
@@ -309,12 +317,12 @@ ON_Surface::IsIsoparametric( const ON_BoundingBox& bbox ) const
 }
 
 
-ON_BOOL32 ON_Surface::IsPlanar( ON_Plane* plane, double tolerance ) const
+bool ON_Surface::IsPlanar( ON_Plane* plane, double tolerance ) const
 {
   return false;
 }
 
-ON_BOOL32 
+bool 
 ON_Surface::IsClosed(int dir) const
 {
   ON_Interval d = Domain(dir);
@@ -327,9 +335,8 @@ ON_Surface::IsClosed(int dir) const
       s.SetCount(span_count+1);
       int n = 2*span_degree+1;
       double delta = 1.0/n;
-      ON_3dPoint P, Q;
-      P.Zero();
-      Q.Zero();
+      ON_3dPoint P(ON_3dPoint::Origin);
+      ON_3dPoint Q(ON_3dPoint::Origin);
       int hintP[2] = {0,0};
       int hintQ[2] = {0,0};
       double *u0, *u1, *v0, *v1;
@@ -369,7 +376,7 @@ ON_Surface::IsClosed(int dir) const
   return false;
 }
 
-ON_BOOL32 ON_Surface::IsPeriodic(int dir) const
+bool ON_Surface::IsPeriodic(int dir) const
 {
   return false;
 }
@@ -408,23 +415,23 @@ bool ON_Surface::GetNextDiscontinuity(
     bool bTestK = false;
     switch(c)
     {
-    case ON::C0_locus_continuous:
+    case ON::continuity::C0_locus_continuous:
       bTestC0 = true;
       break;
-    case ON::C1_locus_continuous:
+    case ON::continuity::C1_locus_continuous:
       bTestC0 = true;
       bTestD1 = true;
       break;
-    case ON::C2_locus_continuous:
+    case ON::continuity::C2_locus_continuous:
       bTestC0 = true;
       bTestD1 = true;
       bTestD2 = true;
       break;
-    case ON::G1_locus_continuous:
+    case ON::continuity::G1_locus_continuous:
       bTestC0 = true;
       bTestT  = true;
       break;
-    case ON::G2_locus_continuous:
+    case ON::continuity::G2_locus_continuous:
       bTestC0 = true;
       bTestT  = true;
       bTestK  = true;
@@ -543,6 +550,17 @@ bool ON_Surface::GetNextDiscontinuity(
   return rc;
 }
 
+
+void ON_IsG1Closed(const ON_Surface& Srf, bool closed[2])
+{
+	ON_Interval dom[2];
+	double t;
+	dom[0] = Srf.Domain(0);
+	dom[1] = Srf.Domain(1);
+	closed[0] = Srf.IsClosed(0) && !Srf.GetNextDiscontinuity(0, ON::continuity::G1_locus_continuous, dom[0][0], dom[0][1], &t);
+	closed[1] = Srf.IsClosed(1) && !Srf.GetNextDiscontinuity(1, ON::continuity::G1_locus_continuous, dom[1][0], dom[1][1], &t);
+}
+
 static 
 bool PrincipalCurvaturesAreContinuous( 
     bool bSmoothTest, 
@@ -578,7 +596,7 @@ bool ON_Surface::IsContinuous(
     ON::continuity desired_continuity,
     double s, 
     double t, 
-    int* hint, // default = NULL,
+    int* hint, // default = nullptr,
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
     double d2_tolerance, // default==ON_ZERO_TOLERANCE
@@ -599,11 +617,11 @@ bool ON_Surface::IsContinuous(
 
   switch ( desired_continuity )
   {
-  case ON::C0_locus_continuous:
-  case ON::C1_locus_continuous:
-  case ON::C2_locus_continuous:
-  case ON::G1_locus_continuous:
-  case ON::G2_locus_continuous:
+  case ON::continuity::C0_locus_continuous:
+  case ON::continuity::C1_locus_continuous:
+  case ON::continuity::C2_locus_continuous:
+  case ON::continuity::G1_locus_continuous:
+  case ON::continuity::G2_locus_continuous:
     {
       // 7 April 2005 Dale Lear
       //    This locus continuity test was added.  Prior to
@@ -651,7 +669,7 @@ bool ON_Surface::IsContinuous(
     break;
   }
 
-  desired_continuity = ON::ParametricContinuity(desired_continuity);
+  desired_continuity = ON::ParametricContinuity((int)desired_continuity);
 
   // this is slow and uses evaluation
   // virtual overrides on curve classes that can have multiple spans
@@ -659,7 +677,7 @@ bool ON_Surface::IsContinuous(
   switch ( desired_continuity )
   {
 
-  case ON::C0_continuous:  
+  case ON::continuity::C0_continuous:  
     for ( qi = 0; qi < 4; qi++ )
     {
       if ( !EvPoint( sq[qi], tq[qi], P[qi], qi+1 ) )
@@ -674,7 +692,7 @@ bool ON_Surface::IsContinuous(
       return false;
     break;
 
-  case ON::C1_continuous:
+  case ON::continuity::C1_continuous:
     for ( qi = 0; qi < 4; qi++ )
     {
       if ( !Ev1Der( sq[qi], tq[qi], P[qi], Ds[qi], Dt[qi], qi+1, hint ) )
@@ -697,7 +715,7 @@ bool ON_Surface::IsContinuous(
       return false;
     break;
 
-  case ON::C2_continuous:
+  case ON::continuity::C2_continuous:
     for ( qi = 0; qi < 4; qi++ )
     {
       if ( !Ev2Der( sq[qi], tq[qi], P[qi], Ds[qi], Dt[qi], 
@@ -734,7 +752,7 @@ bool ON_Surface::IsContinuous(
       return false;
     break;
 
-  case ON::G1_continuous:
+  case ON::continuity::G1_continuous:
     for ( qi = 0; qi < 4; qi++ )
     {
       if ( !EvNormal( sq[qi], tq[qi], P[qi], N[qi], qi+1 ) )
@@ -753,15 +771,17 @@ bool ON_Surface::IsContinuous(
       return false;
     break;
 
-  case ON::G2_continuous:
-  case ON::Gsmooth_continuous:
+  case ON::continuity::G2_continuous:
+  case ON::continuity::Gsmooth_continuous:
     {
-      bool bSmoothCon = (ON::Gsmooth_continuous == desired_continuity);
+      bool bSmoothCon = (ON::continuity::Gsmooth_continuous == desired_continuity);
       for ( qi = 0; qi < 4; qi++ )
       {
         if ( !Ev2Der( sq[qi], tq[qi], P[qi], Ds[qi], Dt[qi], 
                       Dss[qi], Dst[qi], Dtt[qi], 
                       qi+1, hint ) )
+          return false;
+        if (!ON_EvNormal(qi+1, Ds[qi], Dt[qi], Dss[qi], Dst[qi], Dtt[qi], N[qi]))
           return false;
         ON_EvPrincipalCurvatures( Ds[qi], Dt[qi], Dss[qi], Dst[qi], Dtt[qi], N[qi],
                                   &gauss[qi], &mean[qi], &kappa1[qi], &kappa2[qi], 
@@ -775,13 +795,13 @@ bool ON_Surface::IsContinuous(
           if ( !PrincipalCurvaturesAreContinuous(bSmoothCon,kappa1[qi],kappa2[qi],kappa1[qi-1],kappa2[qi-1],curvature_tolerance) )
             return false;
         }
-        if ( !(P[3]-P[0]).IsTiny(point_tolerance) )
-          return false;
-        if ( N[3]*N[0] < cos_angle_tolerance )
-          return false;
-        if ( !PrincipalCurvaturesAreContinuous(bSmoothCon,kappa1[3],kappa2[3],kappa1[0],kappa2[0],curvature_tolerance) )
-          return false;
       }
+      if ( !(P[3]-P[0]).IsTiny(point_tolerance) )
+        return false;
+      if ( N[3]*N[0] < cos_angle_tolerance )
+        return false;
+      if ( !PrincipalCurvaturesAreContinuous(bSmoothCon,kappa1[3],kappa2[3],kappa1[0],kappa2[0],curvature_tolerance) )
+        return false;
     }
     break;
 
@@ -794,7 +814,7 @@ bool ON_Surface::IsContinuous(
   return true;
 }
 
-ON_BOOL32 
+bool 
 ON_Surface::IsSingular(int side) const
 {
   return false;
@@ -908,38 +928,6 @@ int ON_Surface::IsAtSeam(double s, double t) const
 }
 
 
-#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
-void
-ON_Surface::UnwrapUV(double &u, double &v) const
-{
-    ON_2dPoint p2d(u,v);
-
-    for (int i = 0; i < 2; i++) {
-	if (!IsClosed(i))
-	    continue;
-
-	double length = Domain(i).Length();
-	double dom_min = Domain(i).Min() - ON_ZERO_TOLERANCE;
-	double dom_max = Domain(i).Max() + ON_ZERO_TOLERANCE; 
-
-	if (p2d[i] < dom_min) {
-	    int domains_away = (int)(((dom_min - p2d[i]) / length) + 1.0);
-	    p2d[i] += length * domains_away;
-	}
-	if (p2d[i] >= dom_max) {
-	    int domains_away = (int)(((p2d[i] - dom_max) / length) + 1.0);
-	    p2d[i] -= length * domains_away;
-	}
-	if (i == 0) {
-	    u = p2d[i];
-	} else {
-	    v = p2d[i];
-	}
-    }
-}
-#endif
-
-
 ON_3dPoint
 ON_Surface::PointAt( double s, double t ) const
 {
@@ -956,9 +944,9 @@ ON_Surface::NormalAt( double s, double t ) const
   return N;
 }
 
-ON_BOOL32 ON_Surface::FrameAt( double u, double v, ON_Plane& frame) const
+bool ON_Surface::FrameAt( double u, double v, ON_Plane& frame) const
 {
-  ON_BOOL32 rc = false;
+  bool rc = false;
   ON_3dPoint origin;
   ON_3dVector udir, vdir, normal;
   if( EvNormal( u, v, origin, udir, vdir, normal))
@@ -975,7 +963,7 @@ ON_BOOL32 ON_Surface::FrameAt( double u, double v, ON_Plane& frame) const
 
 
 
-ON_BOOL32 
+bool 
 ON_Surface::EvPoint( // returns false if unable to evaluate
        double s, double t, // evaluation parameters
        ON_3dPoint& point,
@@ -989,14 +977,9 @@ ON_Surface::EvPoint( // returns false if unable to evaluate
                        //            repeated evaluations
        ) const
 {
-  ON_BOOL32 rc = false;
+  bool rc = false;
   double ws[128];
   double* v;
-
-#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
-  UnwrapUV(s,t);
-#endif
-
   if ( Dimension() <= 3 ) {
     v = &point.x;
     point.x = 0.0;
@@ -1020,7 +1003,7 @@ ON_Surface::EvPoint( // returns false if unable to evaluate
   return rc;
 }
 
-ON_BOOL32
+bool
 ON_Surface::Ev1Der( // returns false if unable to evaluate
        double s, double t, // evaluation parameters
        ON_3dPoint& point,
@@ -1036,15 +1019,10 @@ ON_Surface::Ev1Der( // returns false if unable to evaluate
                        //            repeated evaluations
        ) const
 {
-  ON_BOOL32 rc = false;
+  bool rc = false;
   const int dim = Dimension();
   double ws[3*32];
   double* v;
-
-#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
-  UnwrapUV(s,t);
-#endif
-
   point.x = 0.0;
   point.y = 0.0;
   point.z = 0.0;
@@ -1080,7 +1058,7 @@ ON_Surface::Ev1Der( // returns false if unable to evaluate
   return rc;
 }
 
-ON_BOOL32 
+bool 
 ON_Surface::Ev2Der( // returns false if unable to evaluate
        double s, double t, // evaluation parameters
        ON_3dPoint& point,
@@ -1099,15 +1077,10 @@ ON_Surface::Ev2Der( // returns false if unable to evaluate
                        //            repeated evaluations
        ) const
 {
-  ON_BOOL32 rc = false;
+  bool rc = false;
   const int dim = Dimension();
   double ws[6*16];
   double* v;
-
-#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
-  UnwrapUV(s,t);
-#endif
-
   point.x = 0.0;
   point.y = 0.0;
   point.z = 0.0;
@@ -1162,7 +1135,7 @@ ON_Surface::Ev2Der( // returns false if unable to evaluate
 }
 
 
-ON_BOOL32
+bool
 ON_Surface::EvNormal( // returns false if unable to evaluate
          double s, double t, // evaluation parameters (s,t)
          ON_3dVector& normal, // unit normal
@@ -1181,7 +1154,7 @@ ON_Surface::EvNormal( // returns false if unable to evaluate
   return EvNormal( s, t, point, ds, dt, normal, side, hint );
 }
 
-ON_BOOL32
+bool
 ON_Surface::EvNormal( // returns false if unable to evaluate
          double s, double t, // evaluation parameters (s,t)
          ON_3dPoint& point,  // returns value of surface
@@ -1200,7 +1173,7 @@ ON_Surface::EvNormal( // returns false if unable to evaluate
   return EvNormal( s, t, point, ds, dt, normal, side, hint );
 }
 
-ON_BOOL32
+bool
 ON_Surface::EvNormal( // returns false if unable to evaluate
          double s, double t, // evaluation parameters (s,t)
          ON_3dPoint& point,  // returns value of surface
@@ -1217,13 +1190,8 @@ ON_Surface::EvNormal( // returns false if unable to evaluate
                          //            repeated evaluations
          ) const
 {
-
-#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
-  UnwrapUV(s,t);
-#endif
-
   // simple cross product normal - override to support singular surfaces
-  ON_BOOL32 rc = Ev1Der( s, t, point, ds, dt, side, hint );
+  bool rc = Ev1Der( s, t, point, ds, dt, side, hint );
   if ( rc ) {
     const double len_ds = ds.Length();
     const double len_dt = dt.Length();
@@ -1240,9 +1208,9 @@ ON_Surface::EvNormal( // returns false if unable to evaluate
     else 
     {
       // see if we have a singular point 
-      double v[6][3];
+      ON_3dVector v[6];
       int normal_side = side;
-      ON_BOOL32 bOnSide = false;
+      bool bOnSide = false;
       ON_Interval sdom = Domain(0);
       ON_Interval tdom = Domain(1);
 		  if (s == sdom.Min()) {
@@ -1278,15 +1246,16 @@ ON_Surface::EvNormal( // returns false if unable to evaluate
         }
       }
       else {
-        rc = Evaluate( s, t, 2, 3, &v[0][0], normal_side, hint );
+        rc = Evaluate( s, t, 2, 3, &v[0].x, normal_side, hint );
         if ( rc ) {
 	        rc = ON_EvNormal( normal_side, v[1], v[2], v[3], v[4], v[5], normal);
         }
       }
     }
   }
-  if ( !rc ) {
-    normal.Zero();
+  if ( !rc ) 
+  {
+    normal = ON_3dVector::ZeroVector;
   }
   return rc;
 }
@@ -1300,77 +1269,12 @@ ON_Curve* ON_Surface::IsoCurve(
        double c    // value of constant parameter 
        ) const
 {
-  return NULL;
+  return nullptr;
 }
 
-ON_Curve* ON_Surface::Pushup( const ON_Curve& curve_2d,
-                  double tolerance,
-                  const ON_Interval* curve_2d_subdomain
-                  ) const
-{
-  // virtual overrides do the real work
-
-  // if the 2d curve is an isocurve, then ON_Surface::Pushup
-  // will return the answer.  Otherwise, the virtual override
-  // will have to do the real work.
-  ON_Curve* curve = NULL;
-  ISO iso = IsIsoparametric(curve_2d,curve_2d_subdomain);
-  int dir = -1;
-  switch (iso)
-  {
-  case x_iso:
-  case W_iso:
-  case E_iso:
-    dir = 1;
-    break;
-  case y_iso:
-  case S_iso:
-  case N_iso:
-    dir = 0;
-    break;
-  default:
-    // intentionally ignoring other ON_Surface::ISO enum values
-    break;
-  }
-  if ( dir >= 0 )
-  {
-    double c;
-    ON_Interval c2_dom = curve_2d.Domain();
-    if ( !curve_2d_subdomain )
-      curve_2d_subdomain = &c2_dom;
-    ON_3dPoint p0 = curve_2d.PointAt( curve_2d_subdomain->Min() );
-    ON_3dPoint p1 = curve_2d.PointAt( curve_2d_subdomain->Max() );
-    ON_Interval c3_dom( p0[dir], p1[dir] );
-    ON_BOOL32 bRev = c3_dom.IsDecreasing();
-    if ( bRev )
-      c3_dom.Swap();
-    if ( c3_dom.IsIncreasing() )
-    {
-      if ( p0[1-dir] == p1[1-dir] )
-        c = p0[1-dir];
-      else
-        c = 0.5*(p0[1-dir] + p1[1-dir]);
-      curve = IsoCurve( dir, c );
-      if ( curve && curve->Domain() != c3_dom )
-      {
-        if ( !curve->Trim( c3_dom ) )
-        {
-          delete curve;
-          curve = 0;
-        }
-      }
-      if ( curve ) {
-        if ( bRev )
-          curve->Reverse();
-        curve->SetDomain( curve_2d_subdomain->Min(), curve_2d_subdomain->Max() );
-      }
-    }
-  }
-  return curve;
-}
 
 //virtual
-ON_BOOL32 ON_Surface::Trim(
+bool ON_Surface::Trim(
        int dir,
        const ON_Interval& domain
        )
@@ -1388,7 +1292,7 @@ bool ON_Surface::Extend(
 }
 
 //virtual
-ON_BOOL32 ON_Surface::Split(
+bool ON_Surface::Split(
        int dir,
        double c,
        ON_Surface*& west_or_south_side,
@@ -1398,16 +1302,6 @@ ON_BOOL32 ON_Surface::Split(
   return false;
 }
 
-//virtual
-ON_BOOL32 ON_Surface::GetLocalClosestPoint( const ON_3dPoint&, // test_point
-        double,double,     // seed_parameters
-        double*,double*,   // parameters of local closest point returned here
-        const ON_Interval*, // first parameter sub_domain
-        const ON_Interval*  // second parameter sub_domain
-        ) const
-{
-  return false;
-}
 
 // virtual
 int ON_Surface::GetNurbForm(
@@ -1462,7 +1356,7 @@ ON_NurbsSurface* ON_Surface::NurbsSurface(
   {
     if (!pNurbsSurface)
       delete nurbs_surface;
-    nurbs_surface = NULL;
+    nurbs_surface = nullptr;
   }
   return nurbs_surface;
 }
@@ -1484,13 +1378,13 @@ void ON_SurfaceArray::Destroy()
   while ( i-- > 0 ) {
     if ( m_a[i] ) {
       delete m_a[i];
-      m_a[i] = NULL;
+      m_a[i] = nullptr;
     }
   }
   Empty();
 }
 
-ON_BOOL32 ON_SurfaceArray::Duplicate( ON_SurfaceArray& dst ) const
+bool ON_SurfaceArray::Duplicate( ON_SurfaceArray& dst ) const
 {
   dst.Destroy();
   dst.SetCapacity( Capacity() );
@@ -1510,9 +1404,9 @@ ON_BOOL32 ON_SurfaceArray::Duplicate( ON_SurfaceArray& dst ) const
   return true;
 }
 
-ON_BOOL32 ON_SurfaceArray::Write( ON_BinaryArchive& file ) const
+bool ON_SurfaceArray::Write( ON_BinaryArchive& file ) const
 {
-  ON_BOOL32 rc = file.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 0 );
+  bool rc = file.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 0 );
   if (rc) rc = file.Write3dmChunkVersion(1,0);
   if (rc ) 
   {
@@ -1527,7 +1421,7 @@ ON_BOOL32 ON_SurfaceArray::Write( ON_BinaryArchive& file ) const
       }
       else 
       {
-        // NULL surface
+        // nullptr surface
         rc = file.WriteInt(0);
       }
     }
@@ -1538,7 +1432,7 @@ ON_BOOL32 ON_SurfaceArray::Write( ON_BinaryArchive& file ) const
 }
 
 
-ON_BOOL32 ON_SurfaceArray::Read( ON_BinaryArchive& file )
+bool ON_SurfaceArray::Read( ON_BinaryArchive& file )
 {
   int major_version = 0;
   int minor_version = 0;
@@ -1546,15 +1440,17 @@ ON_BOOL32 ON_SurfaceArray::Read( ON_BinaryArchive& file )
   ON__INT64 big_value = 0;
   int flag;
   Destroy();
-  ON_BOOL32 rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
+  bool rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
   if (rc) 
   {
     rc = ( tcode == TCODE_ANONYMOUS_CHUNK );
     if (rc) rc = file.Read3dmChunkVersion(&major_version,&minor_version);
     if (rc && major_version == 1) {
       ON_Object* p;
-      int count;
-      ON_BOOL32 rc = file.ReadInt( &count );
+      int count = 0;
+      rc = file.ReadInt( &count );
+      if (rc && count < 0)
+        rc = false;
       if (rc) {
         SetCapacity(count);
         SetCount(count);
@@ -1582,14 +1478,14 @@ ON_BOOL32 ON_SurfaceArray::Read( ON_BinaryArchive& file )
   return rc;
 }
 
-ON_BOOL32 ON_Surface::HasBrepForm() const
+bool ON_Surface::HasBrepForm() const
 {
   return true;
 }
 
 ON_Brep* ON_Surface::BrepForm( ON_Brep* brep ) const
 {
-  ON_Brep* pBrep = NULL;
+  ON_Brep* pBrep = nullptr;
   if ( brep )
     brep->Destroy();
   // 26 August 2008 Dale Lear - fixed bug
@@ -1607,11 +1503,11 @@ ON_Brep* ON_Surface::BrepForm( ON_Brep* brep ) const
       if ( pSurface )
       {
         delete pSurface;
-        pSurface = NULL;
+        pSurface = nullptr;
       }
       if ( !brep )
         delete pBrep;
-      pBrep = NULL;
+      pBrep = nullptr;
     }
   }
   return pBrep;
@@ -1621,6 +1517,7 @@ void ON_Surface::DestroySurfaceTree()
 {
   DestroyRuntimeCache(true);
 }
+
 
 ON_SurfaceProperties::ON_SurfaceProperties()
 {

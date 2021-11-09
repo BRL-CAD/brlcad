@@ -16,6 +16,14 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 ON_PlugInRef::ON_PlugInRef()
 {
   Default();
@@ -82,7 +90,13 @@ void ON_PlugInRef::Dump(ON_TextLog& text_log) const
   text_log.Print("id = ");text_log.Print(m_plugin_id);text_log.Print("\n");
   text_log.Print("type = %d\n",m_plugin_type);
   text_log.Print("platform = %d\n",m_plugin_platform);
-  text_log.Print("sdk version = %d.%d\n",m_plugin_sdk_version,m_plugin_sdk_service_release);
+
+  const ON_String plugin_sdk_version = ON_SdkVersionNumberToString(m_plugin_sdk_version,m_plugin_sdk_service_release);
+  text_log.Print(
+    "sdk version = %s\n",
+    static_cast<const char*>(plugin_sdk_version)
+  );
+
   text_log.Print("name = "); text_log.Print(m_plugin_name); text_log.Print("\n");
   text_log.Print("version = "); text_log.Print(m_plugin_version); text_log.Print("\n");
   text_log.Print("file name = "); text_log.Print(m_plugin_filename); text_log.Print("\n");

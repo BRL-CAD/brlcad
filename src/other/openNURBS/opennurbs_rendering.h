@@ -63,7 +63,7 @@ public:
     plugin_id - [in]
   Returns:
     A pointer to the plug-in's mapping reference, if there
-    is one. Otherwise NULL is returned.
+    is one. Otherwise nullptr is returned.
   */
   const ON_MappingRef* MappingRef( 
     const ON_UUID& plugin_id 
@@ -100,7 +100,7 @@ public:
       ON_TextureMapping id
   Returns:
     A pointer to the plug-in's mapping channel, if there
-    is one. Otherwise NULL is returned.
+    is one. Otherwise nullptr is returned.
   */
   const ON_MappingChannel* MappingChannel( 
     const ON_UUID& plugin_id, 
@@ -112,6 +112,12 @@ public:
     const ON_UUID& mapping_id
     ) const;
 
+  /*
+  Returns:
+    The mapping channel id to use when calling MappingChannel to retrieve the OCS mapping if there is one.
+    See CRhinoTextureMapping::OcsMappingTransformForObject for an easy helper function to get the transform per object
+  */
+  static int OCSMappingChannelId(void);
 
   /*
   Parameters:
@@ -203,14 +209,8 @@ private:
 };
 
 #if defined(ON_DLL_TEMPLATE)
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_RenderingAttributes>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_ObjectRenderingAttributes>;
-#pragma warning( pop )
 #endif
 
 

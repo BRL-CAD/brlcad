@@ -23,111 +23,83 @@ class ON_CLASS ON_LineCurve : public ON_Curve
   ON_OBJECT_DECLARE(ON_LineCurve);
 
 public:
-  ON_LineCurve();
+  ON_LineCurve() ON_NOEXCEPT;
+  virtual ~ON_LineCurve();
+  ON_LineCurve(const ON_LineCurve&);
+	ON_LineCurve& operator=(const ON_LineCurve&);
+
+#if defined(ON_HAS_RVALUEREF)
+  // rvalue copy constructor
+  ON_LineCurve( ON_LineCurve&& ) ON_NOEXCEPT;
+
+  // The rvalue assignment operator calls ON_Object::operator=(ON_Object&&)
+  // which could throw exceptions.  See the implementation of
+  // ON_Object::operator=(ON_Object&&) for details.
+  ON_LineCurve& operator=( ON_LineCurve&& );
+#endif
+
   ON_LineCurve(const ON_2dPoint&,const ON_2dPoint&); // creates a 2d line curve
   ON_LineCurve(const ON_3dPoint&,const ON_3dPoint&); // creates a 3d line curve
   ON_LineCurve(const ON_Line&);
   ON_LineCurve(const ON_Line&,
                 double,double    // domain
                 );
-  ON_LineCurve(const ON_LineCurve&);
 
-  virtual ~ON_LineCurve();
 
-	ON_LineCurve& operator=(const ON_LineCurve&);
+
 	ON_LineCurve& operator=(const ON_Line&);
   
   /////////////////////////////////////////////////////////////////
   // ON_Object overrides
 
   // virtual ON_Object::SizeOf override
-  unsigned int SizeOf() const;
+  unsigned int SizeOf() const override;
 
   // virtual ON_Object::DataCRC override
-  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const override;
 
-  /*
-  Description:
-    Tests an object to see if its data members are correctly
-    initialized.
-  Parameters:
-    text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
-        interface tool.
-  Returns:
-    @untitled table
-    true     object is valid
-    false    object is invalid, uninitialized, etc.
-  Remarks:
-    Overrides virtual ON_Object::IsValid
-  */
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
-  void Dump( ON_TextLog& ) const; // for debugging
+  void Dump( ON_TextLog& ) const override; // for debugging
 
-  ON_BOOL32 Write(
+  bool Write(
          ON_BinaryArchive&  // open binary file
-       ) const;
+       ) const override;
 
-  ON_BOOL32 Read(
+  bool Read(
          ON_BinaryArchive&  // open binary file
-       );
+       ) override;
 
   /////////////////////////////////////////////////////////////////
   // ON_Geometry overrides
 
-  int Dimension() const;
+  int Dimension() const override;
 
-  ON_BOOL32 GetBBox( // returns true if successful
-         double*,    // minimum
-         double*,    // maximum
-         ON_BOOL32 = false  // true means grow box
-         ) const;
+  // virtual ON_Geometry GetBBox override		
+  bool GetBBox( double* boxmin, double* boxmax, bool bGrowBox = false ) const override;
 
-  /*
-	Description:
-    Get tight bounding box of the line.
-	Parameters:
-		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
-      If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
-      line's tight bounding box.
-		xform -[in] (default=NULL)
-      If not NULL, the tight bounding box of the transformed
-      line is calculated.  The line is not modified.
-	Returns:
-    True if the returned tight_bbox is set to a valid 
-    bounding box.
-  */
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
-      int bGrowBox = false,
-			const ON_Xform* xform = 0
-      ) const;
+  // virtual ON_Geometry GetTightBoundingBox override		
+  bool GetTightBoundingBox( class ON_BoundingBox& tight_bbox, bool bGrowBox = false, const class ON_Xform* xform = nullptr ) const override;
 
-  ON_BOOL32 Transform( 
+  bool Transform( 
          const ON_Xform&
-         );
+         ) override;
 
   // virtual ON_Geometry::IsDeformable() override
-  bool IsDeformable() const;
+  bool IsDeformable() const override;
 
   // virtual ON_Geometry::MakeDeformable() override
-  bool MakeDeformable();
+  bool MakeDeformable() override;
 
-  ON_BOOL32 SwapCoordinates(
+  bool SwapCoordinates(
         int, int        // indices of coords to swap
-        );
+        ) override;
+
 
   /////////////////////////////////////////////////////////////////
   // ON_Curve overrides
 
-  ON_Interval Domain() const;
+  ON_Interval Domain() const override;
 
   // Description:
   //   Set the domain of the curve
@@ -136,29 +108,29 @@ public:
   //   t1 - [in] new domain will be [t0,t1]
   // Returns:
   //   true if successful.
-  ON_BOOL32 SetDomain( 
+  bool SetDomain( 
         double t0, 
         double t1 
-        );
+        ) override;
 
   bool ChangeDimension(
           int desired_dimension
-          );
+          ) override;
 
-  int SpanCount() const; // number of smooth spans in curve
+  int SpanCount() const override; // number of smooth spans in curve
 
-  ON_BOOL32 GetSpanVector( // span "knots" 
+  bool GetSpanVector( // span "knots" 
          double* // array of length SpanCount() + 1 
-         ) const; // 
+         ) const override; // 
 
   int Degree( // returns maximum algebraic degree of any span 
                   // ( or a good estimate if curve spans are not algebraic )
-    ) const; 
+    ) const override; 
 
-  ON_BOOL32 IsLinear( // true if curve locus is a line segment between
+  bool IsLinear( // true if curve locus is a line segment between
                  // between specified points
         double = ON_ZERO_TOLERANCE // tolerance to use when checking linearity
-        ) const;
+        ) const override;
 
   /*
   Description:
@@ -167,48 +139,48 @@ public:
     all of whose segments are some form of polyline.  IsPolyline tests
     a curve to see if it can be represented as a polyline.
   Parameters:
-    pline_points - [out] if not NULL and true is returned, then the
+    pline_points - [out] if not nullptr and true is returned, then the
         points of the polyline form are returned here.
-    t - [out] if not NULL and true is returned, then the parameters of
+    t - [out] if not nullptr and true is returned, then the parameters of
         the polyline points are returned here.
   Returns:
     @untitled table
     0        curve is not some form of a polyline
     >=2      number of points in polyline form
   */
-  virtual
+  //virtual
   int IsPolyline(
-        ON_SimpleArray<ON_3dPoint>* pline_points = NULL,
-        ON_SimpleArray<double>* pline_t = NULL
-        ) const;
+        ON_SimpleArray<ON_3dPoint>* pline_points = nullptr,
+        ON_SimpleArray<double>* pline_t = nullptr
+        ) const override;
 
-  ON_BOOL32 IsArc( // ON_Arc.m_angle > 0 if curve locus is an arc between
+  bool IsArc( // ON_Arc.m_angle > 0 if curve locus is an arc between
               // specified points
-        const ON_Plane* = NULL, // if not NULL, test is performed in this plane
-        ON_Arc* = NULL, // if not NULL and true is returned, then arc parameters
+        const ON_Plane* = nullptr, // if not nullptr, test is performed in this plane
+        ON_Arc* = nullptr, // if not nullptr and true is returned, then arc parameters
                          // are filled in
         double = ON_ZERO_TOLERANCE    // tolerance to use when checking
-        ) const;
+        ) const override;
 
-  ON_BOOL32 IsPlanar(
-        ON_Plane* = NULL, // if not NULL and true is returned, then plane parameters
+  bool IsPlanar(
+        ON_Plane* = nullptr, // if not nullptr and true is returned, then plane parameters
                            // are filled in
         double = ON_ZERO_TOLERANCE    // tolerance to use when checking
-        ) const;
+        ) const override;
 
-  ON_BOOL32 IsInPlane(
+  bool IsInPlane(
         const ON_Plane&, // plane to test
         double = ON_ZERO_TOLERANCE    // tolerance to use when checking
-        ) const;
+        ) const override;
 
-  ON_BOOL32 IsClosed(  // true if curve is closed (either curve has
+  bool IsClosed(  // true if curve is closed (either curve has
         void      // clamped end knots and euclidean location of start
-        ) const;  // CV = euclidean location of end CV, or curve is
+        ) const override;  // CV = euclidean location of end CV, or curve is
                   // periodic.)
 
-  ON_BOOL32 IsPeriodic(  // true if curve is a single periodic segment
+  bool IsPeriodic(  // true if curve is a single periodic segment
         void 
-        ) const;
+        ) const override;
   
   /*
   Description:
@@ -225,9 +197,9 @@ public:
     ON_Curve::PointAtStart
     ON_Curve::PointAtEnd
   */
-  ON_BOOL32 SetStartPoint(
+  bool SetStartPoint(
           ON_3dPoint start_point
-          );
+          ) override;
 
   /*
   Description:
@@ -244,14 +216,14 @@ public:
     ON_Curve::PointAtStart
     ON_Curve::PointAtEnd
   */
-  ON_BOOL32 SetEndPoint(
+  bool SetEndPoint(
           ON_3dPoint end_point
-          );
+          ) override;
 
-  ON_BOOL32 Reverse();       // reverse parameterizatrion
+  bool Reverse() override;       // reverse parameterizatrion
                         // Domain changes from [a,b] to [-b,-a]
 
-  ON_BOOL32 Evaluate( // returns false if unable to evaluate
+  bool Evaluate( // returns false if unable to evaluate
          double,         // evaluation parameter
          int,            // number of derivatives (>=0)
          int,            // array stride (>=Dimension())
@@ -262,15 +234,7 @@ public:
                          //      >  0 to evaluate from above
          int* = 0        // optional - evaluation hint (int) used to speed
                          //            repeated evaluations
-         ) const;
-
-
-  // virtual ON_Curve override
-  int IntersectSelf(
-          ON_SimpleArray<ON_X_EVENT>& x,
-          double intersection_tolerance = 0.0,
-          const ON_Interval* curve_domain = 0
-          ) const;
+         ) const override;
 
 
   // Description:
@@ -282,9 +246,9 @@ public:
   //      removed.
   // Returns:
   //   true if successful.
-  ON_BOOL32 Trim(
+  bool Trim(
     const ON_Interval& domain
-    );
+    ) override;
 
   // Description:
   //   Where possible, analytically extends curve to include domain.
@@ -297,14 +261,14 @@ public:
   //   true if successful.
   bool Extend(
     const ON_Interval& domain
-    );
+    ) override;
 
   // Description:
   //   virtual ON_Curve::Split override.
   //   Divide the curve at the specified parameter.  The parameter
   //   must be in the interior of the curve's domain.  The pointers
-  //   passed to Split must either be NULL or point to an ON_Curve
-  //   object of the same of the same type.  If the pointer is NULL,
+  //   passed to Split must either be nullptr or point to an ON_Curve
+  //   object of the same of the same type.  If the pointer is nullptr,
   //   then a curve will be created in Split().  You may pass "this"
   //   as one of the pointers to Split().
   // Parameters:
@@ -319,11 +283,11 @@ public:
   //
   //   would split crv at the parametric midpoint, put the left side
   //   in crv, and return the right side in right_side.
-  ON_BOOL32 Split(
+  bool Split(
       double t,    // t = curve parameter to split curve at
       ON_Curve*& left_side, // left portion returned here
       ON_Curve*& right_side // right portion returned here
-    ) const;
+    ) const override;
 
   // Description:
   //   virtual ON_Curve::GetNurbForm override.
@@ -332,7 +296,7 @@ public:
   //   nurbs_curve - [out] NURBS representation returned here
   //   tolerance - [in] tolerance to use when creating NURBS
   //       representation.
-  //   subdomain - [in] if not NULL, then the NURBS representation
+  //   subdomain - [in] if not nullptr, then the NURBS representation
   //       for this portion of the curve is returned.
   // Returns:
   //   0   unable to create NURBS representation
@@ -348,8 +312,8 @@ public:
   int GetNurbForm(
         ON_NurbsCurve&,
         double = 0.0,
-        const ON_Interval* = NULL
-        ) const;
+        const ON_Interval* = nullptr
+        ) const override;
 
   // Description:
   //   virtual ON_Curve::HasNurbForm override.
@@ -367,7 +331,7 @@ public:
   //       parameterization may not match to the 
   //       desired accuracy.
   int HasNurbForm(
-        ) const;
+        ) const override;
 
   // Description:
   //   virtual ON_Curve::GetCurveParameterFromNurbFormParameter override.
@@ -383,11 +347,11 @@ public:
   //
   // See Also:
   //   ON_Curve::GetNurbForm, ON_Curve::GetNurbFormParameterFromCurveParameter
-  virtual
-  ON_BOOL32 GetCurveParameterFromNurbFormParameter(
+  //virtual
+  bool GetCurveParameterFromNurbFormParameter(
         double nurbs_t,
         double* curve_t
-        ) const;
+        ) const override;
 
   // Description:
   //   virtual ON_Curve::GetNurbFormParameterFromCurveParameter override.
@@ -403,11 +367,11 @@ public:
   //
   // See Also:
   //   ON_Curve::GetNurbForm, ON_Curve::GetCurveParameterFromNurbFormParameter
-  virtual
-  ON_BOOL32 GetNurbFormParameterFromCurveParameter(
+  //virtual
+  bool GetNurbFormParameterFromCurveParameter(
         double curve_t,
         double* nurbs_t
-        ) const;
+        ) const override;
 
   /////////////////////////////////////////////////////////////////
   // Interface

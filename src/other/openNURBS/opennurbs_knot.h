@@ -336,7 +336,7 @@ bool ON_ClampKnotVector(
         int,       // order (>=2)
         int,       // cv_count,
         int,       // cv_stride, 
-        double*,   // cv[] NULL or array of order many cvs
+        double*,   // cv[] nullptr or array of order many cvs
         double*,   // knot[] array with room for at least knot_multiplicity new knots
         int        // end  0 = clamp start, 1 = clamp end, 2 = clamp both ends
         );
@@ -353,10 +353,10 @@ int ON_InsertKnot(
         int,       // order (>=2)
         int,       // cv_count,
         int,       // cv_stride (>=cv_dim)
-        double*,   // cv[]  NULL or cv array with room for at least knot_multiplicity new cvs
+        double*,   // cv[]  nullptr or cv array with room for at least knot_multiplicity new cvs
         double*,   // knot[] knot array with room for at least knot_multiplicity new knots
         int*       // hint, optional hint about where to search for span to add knots to
-                   // pass NULL if no hint is available
+                   // pass nullptr if no hint is available
         );
 
 /*

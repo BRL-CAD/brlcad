@@ -15,8 +15,18 @@
 */
 
 #include "opennurbs.h"
+#if defined(ON_RUNTIME_LINUX)
+#include "android_uuid/uuid.h"
+#endif
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
 
-#if defined(ON_UUID_DECLARED_AS_CLASS)
+#if !defined(UUID_DEFINED) && !defined(GUID_DEFINED)
 
 // When ON_UUID is a typdef for Microsoft 's UUID,
 // the Microsoft compiler handles == and !=.
@@ -24,14 +34,14 @@
 // it is declared as a class and operator== and operator!= 
 // need to be explicitly defined.
 
-bool ON_UUID::operator==(const ON_UUID& other) const
+bool operator==(const struct ON_UUID_struct& a, const struct ON_UUID_struct& b)
 {
-  return (0==memcmp(this,&other,sizeof(*this)));
+  return (0==memcmp(&a,&b,sizeof(struct ON_UUID_struct)));
 }
 
-bool ON_UUID::operator!=(const ON_UUID& other) const
+bool operator!=(const struct ON_UUID_struct& a, const struct ON_UUID_struct& b)
 {
-  return (0!=memcmp(this,&other,sizeof(*this)));
+  return (0!=memcmp(&a,&b,sizeof(struct ON_UUID_struct)));
 }
 
 #endif
@@ -46,6 +56,101 @@ static const int little_endian_rho[16] = {3,2,1,0, 5,4, 7,6, 8,9, 10,11,12,13,14
 static const int big_endian_rho[16] = {0,1,2,3, 4,5, 6,7, 8,9, 10,11,12,13,14,15};
 
  
+ON_UUID ON_CreateId()
+{
+  ON_UUID id;
+  ON_CreateUuid(id);
+  return id;
+}
+
+static const ON_UUID not_unique_id_base = {
+    0,                                        // unsigned long  Data1;
+    0,                                        // unsigned short Data2;
+    // The Data 3 and Data4 values are based on the MAC address of a
+    // network card that was destroyed circa 2000.
+    0x11dc,                                   // unsigned short Data3;
+    {0x98,0x85,0x00,0x13,0x72,0xc3,0x38,0x78} // unsigned char  Data4[8];
+  };
+
+static const ON_UUID ON_Internal_CreateNotUniqueSequentialId(
+  ON__UINT64 index_64_bit
+)
+{
+  // Creates a not unique and repeatable UUID value that has a valid format.
+  //
+  // It is based on the MAC address of a network card that
+  // was destroyed circa 2000. The Time portion of the UUID is generated
+  // from index_64_bit and will generall be well before the current time.
+  // The reason for using this complicated approach is to insure
+  // data structures usisg these i values will pass validty checking
+  // that tests to see if the UUID has a valid format.
+
+  if (0 == index_64_bit)
+  {
+    ON_ERROR("index_64_bit parameter cannot be zero.");
+    return ON_nil_uuid;
+  }
+
+  const ON__UINT64 d2 = 0x10000;
+  const ON__UINT64 data2 = index_64_bit % d2;
+  const ON__UINT64 data1 = index_64_bit / d2;
+  if ( data1 > 0xFFFFFFFF )
+  {
+    ON_ERROR("index_64_bit parameter is too large.");
+    return ON_nil_uuid;
+  }
+
+  ON_UUID not_unique_id = not_unique_id_base;
+  not_unique_id.Data1 = (ON__UINT32)data1;
+  not_unique_id.Data2 = (ON__UINT16)data2;
+  return not_unique_id;
+}
+
+ON_UUID ON_NotUniqueIdFromIndex(
+  ON__UINT64 index_64_bit
+)
+{
+  return ON_Internal_CreateNotUniqueSequentialId(index_64_bit);
+}
+
+ON_UUID ON_NotUniqueIdFromIndex(
+  ON__UINT32 index
+)
+{
+  return ON_Internal_CreateNotUniqueSequentialId((ON__UINT64)index);
+}
+
+ON_UUID ON_NextNotUniqueId(
+  ON_UUID current_not_unique_id
+)
+{
+  if (ON_nil_uuid == current_not_unique_id)
+    return ON_Internal_CreateNotUniqueSequentialId(1);
+
+  const ON__UINT64 current_not_unique_id_index = ON_IndexFromNotUniqueId(current_not_unique_id);
+  return ON_Internal_CreateNotUniqueSequentialId(current_not_unique_id_index+1);
+}
+
+ON__UINT64 ON_IndexFromNotUniqueId(
+  ON_UUID not_unique_id
+)
+{
+  if (
+    not_unique_id.Data3 == not_unique_id_base.Data3
+    && *((const ON__UINT32*)(&not_unique_id.Data4[0])) == *((const ON__UINT32*)(&not_unique_id_base.Data4[0]))
+    && *((const ON__UINT32*)(&not_unique_id.Data4[4])) == *((const ON__UINT32*)(&not_unique_id_base.Data4[4]))
+    )
+  {
+    const ON__UINT64 data1 = (ON__UINT64)not_unique_id.Data1;
+    const ON__UINT64 data2 = (ON__UINT64)not_unique_id.Data2;
+    const ON__UINT64 index = data1 * 0x10000 + data2;
+    return index;
+  }
+
+  ON_ERROR("not_unique_id was not created by ON_NotUniqueIdFromIndex().");
+  return (ON_nil_uuid == not_unique_id) ? 0 : 0xFFFF00000000;
+}
+
 bool ON_CreateUuid( ON_UUID& new_uuid )
 {
   // See http://www.faqs.org/rfcs/rfc4122.html for uuid details.
@@ -54,31 +159,27 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
   {
     // Use this code when testing reqires "repeatable uniqueness".
     // NEVER check in this code.
-    static ON_UUID blank = {
-      0,                                        // unsigned long  Data1;
-      0,                                        // unsigned short Data2;
-      0x11dc,                                   // unsigned short Data3;
-      {0x98,0x85,0x00,0x13,0x72,0xc3,0x38,0x78} // unsigned char  Data4[8];
-    };
-    if ( 0 == ++blank.Data1)
-      blank.Data2++;
-    new_uuid = blank;
+    static ON_UUID x = ON_nil_uid;
+    x = ON_NextNotUniqueId(x);
+    new_uuid = x;
+#pramga message("warning: NEVER COMMIT THIS CODE - ON_CreateUuid in TEST MODE.")
   }
   return true;
 
 #else
 
-#if defined(ON_OS_WINDOWS)
+#if defined(ON_COMPILER_MSC)
   // Header: Declared in Rpcdce.h.
   // Library: Use Rpcrt4.lib  
+#pragma comment(lib, "Rpcrt4.lib")
   ::UuidCreate(&new_uuid);
   //::UuidCreateSequential(&new_uuid); // faster but computer MAC address
                                        // identifies the user and some
                                        // customers may object.
   return true;
-#elif defined(ON_COMPILER_XCODE)
+#elif defined(ON_COMPILER_CLANG)
   // Header: #include <uuid/uuid.h>
-  if ( ON::little_endian == ON::Endian() )
+  if ( ON::endian::little_endian == ON::Endian() )
   {
     // Intel cpu mac
     // The uuid_generate() function returns a UUID in network or 
@@ -111,23 +212,132 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
     // Motorola cpu mac
     uuid_generate((unsigned char*)&new_uuid);
   }
+  
+#if defined (ON_DEBUG)
+  // OS X generates version 4 UUIDs.  Check that this is still true after changing the byte order.
+  if ((new_uuid.Data3 & 0xF000) != 0x4000)
+    ON_ERROR("ON_CreateUuid() failure 1");
+  if (new_uuid.Data4[0] < 0x80 || new_uuid.Data4[0] >= 0xC0)
+    ON_ERROR("ON_CreateUuid() failure 2");
+#endif
 
-  //#if defined (ON_DEBUG)
-  //  // OS X generates version 4 UUIDs.  Check that this is still true after mangling.
-  //  if ((new_uuid.Data3 & 0xF000) != 0x4000)
-  //    ON_ERROR("ON_CreateUuid() failure 1");
-  //  if (new_uuid.Data4[0] < 0x80 || new_uuid.Data4[0] >= 0xC0)
-  //    ON_ERROR("ON_CreateUuid() failure 2");
-  //#endif
   return true;
 #else
+
+#if defined(ON_RUNTIME_LINUX)
+  uuid_generate((unsigned char*)&new_uuid);
+  return true;
+#else
+
   // You must supply a way to create unique ids or you 
   // will not be able to write 3dm files.
+#error TODO - generate uuid
   memset(&new_uuid,0,sizeof(ON_UUID));
   return false;
 #endif
 
 #endif
+#endif
+}
+
+const char* ON_ParseUuidString(const char* sUUID, ON_UUID* uuid)
+{
+  // NOTE WELL: This code has to work on non-Windows OSs and on
+  //            both big and little endian CPUs.  On Windows OSs
+  //            is must return the same result as 
+  //            Windows's UuidFromString().
+  //
+
+  // string has format like "85A08515-F383-11d3-BFE7-0010830122F0"
+  // or like "85A08515-F383-11d3-BFE7-0010830122F0".
+  // Hyphens are optional and ignored.
+  //
+  // Windows users can use "guidgen" to create UUID strings.
+
+  /*
+  #if defined(ON_DEBUG) && defined(ON_RUNTIME_WIN)
+  RPC_STATUS st;
+  union
+  {
+  ON_UUID uuid;
+  unsigned char b[16];
+  } u1;
+  st = UuidFromString( (unsigned char*)sUUID, &u1.uuid );
+  #endif
+  */
+
+  static const int* rho = (ON::endian::big_endian == ON::Endian())
+    ? big_endian_rho
+    : little_endian_rho;
+
+  union
+  {
+    ON_UUID uuid;
+    unsigned char b[16];
+  } u;
+  bool bFailed;
+  int bi, ci;
+  unsigned char c;
+  unsigned char byte_value[2];
+
+  memset(&u, 0, sizeof(u));
+  //for ( bi = 0; bi < 16; bi++ ) 
+  //  u.b[bi] = 0;
+
+  bFailed = sUUID ? false : true;
+
+  if (!bFailed)
+  {
+    for (bi = 0; bi < 16; bi++)
+    {
+      ci = 0;
+      byte_value[0] = 0;
+      byte_value[1] = 0;
+      while (ci < 2)
+      {
+        c = *sUUID;
+        if (!c) {
+          bFailed = true;
+          break;
+        }
+        if (c >= 'A' && c <= 'F') {
+          byte_value[ci++] = (c - 'A' + 10);
+        }
+        else if (c >= '0' && c <= '9') {
+          byte_value[ci++] = (c - '0');
+        }
+        else if (c >= 'a' && c <= 'f') {
+          byte_value[ci++] = (c - 'a' + 10);
+        }
+        else if (c != '-') {
+          bFailed = true;
+          break;
+        }
+        sUUID++;
+      }
+      if (bFailed)
+        break;
+      u.b[rho[bi]] = 16 * byte_value[0] + byte_value[1];
+    }
+  }
+
+  if (bFailed) 
+  {
+    // 09 August 2006 John Morse
+    // There are times when Rhino is looking for a plug-in but the SDK or command
+    // allows the plug-in to be specified by name or UUID.  Rhino calls ON_UuidFromString()
+    // to see if the string is a plug-in UUID so it knows if it should be comparing the string
+    // or plug-in name when looking for a plug-in.  The ON_ERROR line makes the Rhino commands
+    // generate an OpenNURBS message box (in DEBUG builds) when the command completes and is
+    // a pain so I commented it out per Dale Lear.
+    //ON_ERROR("ON_UuidFromString(): bad string passed in");
+    u.uuid = ON_nil_uuid;
+  }
+
+  if (uuid)
+    *uuid = u.uuid;
+
+  return bFailed ? 0 : sUUID;
 }
 
  
@@ -146,7 +356,7 @@ ON_UUID ON_UuidFromString( const char* sUUID )
   // Windows users can use "guidgen" to create UUID strings.
 
   /*
-#if defined(ON_DEBUG) && defined(ON_OS_WINDOWS)
+#if defined(ON_DEBUG) && defined(ON_RUNTIME_WIN)
   RPC_STATUS st;
   union 
   {
@@ -157,7 +367,7 @@ ON_UUID ON_UuidFromString( const char* sUUID )
 #endif
 */
 
-  static const int* rho = ( ON::big_endian == ON::Endian() ) 
+  static const int* rho = (ON::endian::big_endian == ON::Endian())
                         ? big_endian_rho 
                         : little_endian_rho;
 
@@ -166,7 +376,7 @@ ON_UUID ON_UuidFromString( const char* sUUID )
     ON_UUID uuid;
     unsigned char b[16];
   } u;
-  ON_BOOL32 bFailed;
+  bool bFailed;
   int bi, ci;
   unsigned char c;
   unsigned char byte_value[2];
@@ -225,7 +435,7 @@ ON_UUID ON_UuidFromString( const char* sUUID )
   }
 
 /*
-#if defined(ON_DEBUG) && defined(ON_OS_WINDOWS)
+#if defined(ON_DEBUG) && defined(ON_RUNTIME_WIN)
   if ( memcmp( &u.uuid, &u1.uuid, 16 ) ) {
     ON_ERROR("ON_UuidFromString() failed");
   }
@@ -246,7 +456,7 @@ ON_UUID ON_UuidFromString( const wchar_t* sUUID )
   wchar_t w;
   char s[64];
   int i;
-  if( NULL == sUUID )
+  if( nullptr == sUUID )
     return ON_nil_uuid;
   while ( *sUUID && *sUUID <= ' ' ) // skip leading white space
     sUUID++;
@@ -271,11 +481,10 @@ ON_UUID ON_UuidFromString( const wchar_t* sUUID )
 
 }
  
-ON_UuidIndex::ON_UuidIndex()
-{
-  memset(this,0,sizeof(*this));
-}
-
+ON_UuidIndex::ON_UuidIndex(ON_UUID id, int index)
+  : m_id(id)
+  , m_i(index)
+{}
 int ON_UuidIndex::CompareIdAndIndex( const ON_UuidIndex* a, const ON_UuidIndex* b )
 {
   int i;
@@ -285,8 +494,13 @@ int ON_UuidIndex::CompareIdAndIndex( const ON_UuidIndex* a, const ON_UuidIndex* 
     return 1;
 
   // compare id first
-  if ( 0 == (i = ON_UuidCompare(&a->m_id,&b->m_id)) )
-    i = a->m_i - b->m_i;
+  if (0 == (i = ON_UuidCompare(&a->m_id, &b->m_id)))
+  {
+    if (a->m_i < b->m_i)
+      i = -1;
+    else if (a->m_i > b->m_i)
+      i = 1;
+  }
 
   return i;
 }
@@ -300,7 +514,11 @@ int ON_UuidIndex::CompareIndexAndId( const ON_UuidIndex* a, const ON_UuidIndex* 
     return 1;
 
   // compare index first
-  if ( 0 == (i = a->m_i - b->m_i) )
+  if (a->m_i < b->m_i)
+    i = -1;
+  else if (a->m_i > b->m_i)
+    i = 1;
+  else
     i = ON_UuidCompare(&a->m_id,&b->m_id);
 
   return i;
@@ -321,8 +539,74 @@ int ON_UuidIndex::CompareIndex( const ON_UuidIndex* a, const ON_UuidIndex* b )
     return (b ? -1 : 0 );
   if ( !b )
     return 1;
-  return a->m_i - b->m_i;
+  if (a->m_i < b->m_i)
+    return -1;
+  if (a->m_i > b->m_i)
+    return 1;
+  return 0;
 }
+
+ 
+int ON_UuidPtr::CompareIdAndPtr( const ON_UuidPtr* a, const ON_UuidPtr* b )
+{
+  int i;
+  if ( !a )
+    return (b ? -1 : 0 );
+  if ( !b )
+    return 1;
+
+  // compare id first
+  if (0 == (i = ON_UuidCompare(&a->m_id, &b->m_id)))
+  {
+    if (a->m_ptr < b->m_ptr)
+      i = -1;
+    else if (a->m_ptr > b->m_ptr)
+      i = 1;
+  }
+
+  return i;
+}
+
+int ON_UuidPtr::ComparePtrAndId( const ON_UuidPtr* a, const ON_UuidPtr* b )
+{
+  int i;
+  if ( !a )
+    return (b ? -1 : 0 );
+  if ( !b )
+    return 1;
+
+  if (a->m_ptr < b->m_ptr)
+    i = -1;
+  else if (a->m_ptr > b->m_ptr)
+    i = 1;
+  else
+    i = ON_UuidCompare(&a->m_id,&b->m_id);
+
+  return i;
+}
+
+int ON_UuidPtr::CompareId( const ON_UuidPtr* a, const ON_UuidPtr* b )
+{
+  if ( !a )
+    return (b ? -1 : 0 );
+  if ( !b )
+    return 1;
+  return ON_UuidCompare(&a->m_id,&b->m_id);
+}
+
+int ON_UuidPtr::ComparePtr( const ON_UuidPtr* a, const ON_UuidPtr* b )
+{
+  if ( !a )
+    return (b ? -1 : 0 );
+  if ( !b )
+    return 1;
+  if (a->m_ptr < b->m_ptr)
+    return -1;
+  if (a->m_ptr > b->m_ptr)
+    return 1;
+  return 0;
+}
+
 
 // Test code for ON_UuidCompare
 ////{
@@ -428,7 +712,7 @@ char* ON_UuidToString( const ON_UUID& uuid, char* s)
   char* p;
   int i;
   
-  static const int* rho = ( ON::big_endian == ON::Endian() ) 
+  static const int* rho = (ON::endian::big_endian == ON::Endian())
                         ? big_endian_rho 
                         : little_endian_rho;
 
@@ -506,4 +790,66 @@ const wchar_t* ON_UuidToString( const ON_UUID& uuid, ON_wString& s )
   wchar_t x[37];
   s = ON_UuidToString( uuid, x );
   return s.Array();
+}
+
+
+const ON_wString ON_IdToString(
+  ON_UUID id
+)
+{
+  ON_wString s;
+  ON_UuidToString(id, s);
+  return s;
+}
+
+const ON_wString ON_AddIdPrefixToString(
+  const ON_UUID id,
+  const wchar_t* separator,
+  const wchar_t* source
+)
+{
+  ON_wString s = ON_IdToString(id);
+  s += separator;
+  s += source;
+  return s;
+}
+
+ON_DECL
+const ON_wString ON_RemoveIdPrefixFromString(
+  const ON_UUID id,
+  const wchar_t* separator,
+  const wchar_t* source
+)
+{
+  ON_wString s(source);
+  ON_wString prefix = ON_IdToString(id);
+  prefix += separator;
+  return s.RemovePrefix(prefix,ON_Locale::Ordinal,true);
+}
+
+ON_DECL
+const ON_wString ON_AddIdSuffixToString(
+  const wchar_t* source,
+  const wchar_t* separator,
+  const ON_UUID id
+)
+{
+  ON_wString s(source);
+  s += separator;
+  s += ON_IdToString(id);
+  return s;
+
+}
+
+ON_DECL
+const ON_wString ON_RemoveIdSuffixFromString(
+  const wchar_t* source,
+  const wchar_t* separator,
+  const ON_UUID id
+)
+{
+  ON_wString s(source);
+  ON_wString suffix(separator);
+  suffix += ON_IdToString(id);
+  return s.RemoveSuffix(suffix,ON_Locale::Ordinal,true);
 }

@@ -8,13 +8,21 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
 */
 
 #include "opennurbs.h"
+
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
 
 ON_OBJECT_IMPLEMENT( ON_3dmObjectAttributes, ON_Object, "A828C015-09F5-477c-8665-F0482F5D6996" );
 
@@ -61,9 +69,9 @@ bool ON_3dmObjectAttributes::operator==(const ON_3dmObjectAttributes& other) con
 {
   if ( ON_UuidCompare( m_uuid, other.m_uuid ) )
     return false;
-  if ( m_name.Compare(other.m_name) )
+  if ( m_name.CompareOrdinal(other.m_name,false) )
     return false;
-  if ( m_url.Compare(other.m_url) )
+  if ( m_url.CompareOrdinal(other.m_url,false) )
     return false;
   if ( m_layer_index != other.m_layer_index )
     return false;
@@ -134,7 +142,7 @@ bool ON_3dmObjectAttributes::operator!=(const ON_3dmObjectAttributes& other) con
 /*
 ON_3dmObjectAttributes& ON_3dmObjectAttributes::operator=(const ON_3dmObjectAttributes& src )
 {
-  if ( this != &src )
+  if ( this != &src ) 
   {
     ON_Object::operator=(src);
     CopyHelper(src);
@@ -142,6 +150,88 @@ ON_3dmObjectAttributes& ON_3dmObjectAttributes::operator=(const ON_3dmObjectAttr
   return *this;
 }
 */
+
+bool ON_3dmObjectAttributes::UpdateReferencedComponents(
+  const class ON_ComponentManifest& source_manifest,
+  const class ON_ComponentManifest& destination_manifest,
+  const class ON_ManifestMap& manifest_map
+  )
+{
+  bool rc = true;
+
+  // Update layer reference
+  if (m_layer_index >= 0)
+  {
+    int destination_layer_index = ON_UNSET_INT_INDEX;
+    if (manifest_map.GetAndValidateDestinationIndex(ON_ModelComponent::Type::Layer, m_layer_index, destination_manifest, &destination_layer_index))
+    {
+      m_layer_index = destination_layer_index;
+    }
+    else
+    {
+      ON_ERROR("Unable to update layer reference.");
+      rc = false;
+      m_layer_index = ON_3dmObjectAttributes::DefaultAttributes.m_layer_index;
+    }
+  }
+
+  // Update render material reference
+  if (m_material_index >= 0)
+  {
+    int destination_material_index = ON_UNSET_INT_INDEX;
+    if (manifest_map.GetAndValidateDestinationIndex(ON_ModelComponent::Type::RenderMaterial, m_material_index, destination_manifest, &destination_material_index))
+    {
+      m_material_index = destination_material_index;
+    }
+    else
+    {
+      ON_ERROR("Unable to update render material reference.");
+      rc = false;
+      m_material_index = ON_3dmObjectAttributes::DefaultAttributes.m_material_index;
+    }
+  }
+
+  // Update line pattern reference
+  if (m_linetype_index >= 0)
+  {
+    int destination_line_pattern_index = ON_UNSET_INT_INDEX;
+    if (manifest_map.GetAndValidateDestinationIndex(ON_ModelComponent::Type::LinePattern, m_linetype_index, destination_manifest, &destination_line_pattern_index))
+    {
+      m_linetype_index = destination_line_pattern_index;
+    }
+    else
+    {
+      ON_ERROR("Unable to update line pattern reference.");
+      rc = false;
+      m_linetype_index = ON_3dmObjectAttributes::DefaultAttributes.m_linetype_index;
+    }
+  }
+
+  // Update group references
+  unsigned int group_count = 0;
+  for (unsigned int i = 0; i < m_group.UnsignedCount(); i++)
+  {
+    int group_index = m_group[i];
+    int destination_group_index_index = ON_UNSET_INT_INDEX;
+    if (!manifest_map.GetAndValidateDestinationIndex(ON_ModelComponent::Type::Group, group_index, destination_manifest, &destination_group_index_index))
+    {
+      ON_ERROR("Unable to update group reference.");
+      rc = false;
+      continue;
+    }
+    if (destination_group_index_index < 0)
+    {
+      ON_ERROR("Unable to update group reference.");
+      rc = false;
+      continue;
+    }
+    m_group[group_count] = destination_group_index_index;
+    group_count++;
+  }
+  m_group.SetCount(group_count);
+
+  return rc;
+}
 
 void ON_3dmObjectAttributes::Default()
 {
@@ -178,7 +268,7 @@ const ON_UUID ON_ObsoletePageSpaceObjectId =
 { 0x9bbb37e9, 0x2131, 0x4fb8, { 0xb9, 0xc6, 0x55, 0x24, 0x85, 0x9b, 0x98, 0xb8 } };
 
 
-bool ON_3dmObjectAttributes::ReadV5Helper( ON_BinaryArchive& file )
+bool ON_3dmObjectAttributes::Internal_ReadV5( ON_BinaryArchive& file )
 {
   unsigned char itemid, c;
   int major_version = 0;
@@ -194,7 +284,8 @@ bool ON_3dmObjectAttributes::ReadV5Helper( ON_BinaryArchive& file )
     if (!rc) break;
     rc = file.ReadUuid(m_uuid);
     if (!rc) break;
-    rc = file.ReadInt(&m_layer_index);
+    //rc = file.ReadInt(&m_layer_index);
+    rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::Layer, &m_layer_index);
     if (!rc) break;
 
     // read non-default settings - skip everything else
@@ -202,11 +293,14 @@ bool ON_3dmObjectAttributes::ReadV5Helper( ON_BinaryArchive& file )
     if (!rc) break;
     if ( 0 == itemid )
       break;
-
+    
     if ( 1 == itemid )
     {
-      rc = file.ReadString(m_name);
+      ON_wString name;
+      rc = file.ReadString(name);
       if (!rc) break;
+      SetName(name,true);
+
       rc = file.ReadChar(&itemid);
       if ( !rc || 0 == itemid ) break;
     }
@@ -219,14 +313,16 @@ bool ON_3dmObjectAttributes::ReadV5Helper( ON_BinaryArchive& file )
     }
     if ( 3 == itemid )
     {
-      rc = file.ReadInt(&m_linetype_index);
+      //rc = file.ReadInt(&m_linetype_index);
+      rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::LinePattern, &m_linetype_index);
       if (!rc) break;
       rc = file.ReadChar(&itemid);
       if ( !rc || 0 == itemid ) break;
     }
     if ( 4 == itemid )
     {
-      rc = file.ReadInt(&m_material_index);
+      //rc = file.ReadInt(&m_material_index);
+      rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::RenderMaterial, &m_material_index);
       if (!rc) break;
       rc = file.ReadChar(&itemid);
       if ( !rc || 0 == itemid ) break;
@@ -325,7 +421,7 @@ bool ON_3dmObjectAttributes::ReadV5Helper( ON_BinaryArchive& file )
     }
     if ( 18 == itemid )
     {
-      rc = file.ReadArray(m_group);
+      rc = file.Read3dmReferencedComponentIndexArray(ON_ModelComponent::Type::Group, m_group);
       if (!rc) break;
       rc = file.ReadChar(&itemid);
       if ( !rc || 0 == itemid ) break;
@@ -394,32 +490,32 @@ bool ON_3dmObjectAttributes::ReadV5Helper( ON_BinaryArchive& file )
   return rc;
 }
 
-ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
+bool ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
 {
   Default();
-  if (    file.Archive3dmVersion() >= 5
+  if (    file.Archive3dmVersion() >= 5 
        && file.ArchiveOpenNURBSVersion() >= 200712190 )
   {
-    return ReadV5Helper(file);
+    return Internal_ReadV5(file);
   }
   int i;
   int major_version = 0;
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if ( rc && major_version == 1 )
+  if ( rc && major_version == 1 ) 
   {
     if (rc) rc = file.ReadUuid(m_uuid);
-    if (rc) rc = file.ReadInt(&m_layer_index);
-    if (rc) rc = file.ReadInt(&m_material_index);
+    if (rc) rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::Layer,&m_layer_index);
+    if (rc) rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::RenderMaterial,&m_material_index);
     if (rc) rc = file.ReadColor(m_color);
-
+    
     while(rc)
     {
       // OBSOLETE if (rc) rc = file.ReadLineStyle(m_line_style); // 23 March 2005 Dale Lear
       // replaced with
       short s = 0;
       double x;
-      rc = file.ReadShort(&s);
+      rc = file.ReadShort(&s); 
       if (!rc) break;
       if ( file.Archive3dmVersion() < 4 || file.ArchiveOpenNURBSVersion() < 200503170 )
       {
@@ -448,20 +544,24 @@ ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
     if (rc) rc = file.ReadChar(&m_material_source);
     if (rc) m_material_source = (unsigned char)ON::ObjectMaterialSource(m_material_source);
 
-    if (rc) rc = file.ReadString(m_name);
+    ON_wString name;
+    if (rc) rc = file.ReadString(name);
+    if (rc)
+      SetName(name, true);
+
     if (rc) rc = file.ReadString(m_url);
 
     m_bVisible = (Mode() != ON::hidden_object);
-    if ( rc && minor_version >= 1 )
+    if ( rc && minor_version >= 1 ) 
     {
-      rc = file.ReadArray( m_group );
+      rc = file.Read3dmReferencedComponentIndexArray(ON_ModelComponent::Type::Group, m_group);
       if ( rc && minor_version >= 2 )
       {
         rc = file.ReadBool(&m_bVisible);
 
         if ( rc && minor_version >= 3 )
         {
-          rc = file.ReadArray(m_dmref);
+          rc = file.ReadArray(m_dmref);     
 
           if (rc && minor_version >= 4 )
           {
@@ -481,7 +581,7 @@ ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
             if (rc && minor_version >= 5 )
             {
               // version 1.5 fields 11 April 2005
-              if (rc) rc = file.ReadInt(&m_linetype_index);
+              if (rc) rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::LinePattern,&m_linetype_index);
 
               // version 1.6 fields 2 September 2005
               if (rc && minor_version >= 6 )
@@ -492,12 +592,12 @@ ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
                 {
                   m_space = (1 == uc) ? ON::page_space : ON::model_space;
                   m_dmref.Empty();
-                  int i, count=0;
+                  int i_local, count=0;
                   rc = file.ReadInt(&count);
                   if (rc && count > 0)
                   {
                     m_dmref.SetCapacity(count);
-                    for ( i = 0; i < count && rc; i++)
+                    for ( i_local = 0; i_local < count && rc; i_local++)
                     {
                       ON_DisplayMaterialRef& dmr = m_dmref.AppendNew();
                       rc = file.ReadUuid(dmr.m_viewport_id);
@@ -533,14 +633,14 @@ ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
       }
     }
   }
-  else
+  else 
   {
     rc = false;
   }
   return rc;
 }
 
-bool ON_3dmObjectAttributes::WriteV5Helper( ON_BinaryArchive& file ) const
+bool ON_3dmObjectAttributes::Internal_WriteV5( ON_BinaryArchive& file ) const
 {
   unsigned char c;
   // 29 Nov. 2009 S. Baer
@@ -551,7 +651,7 @@ bool ON_3dmObjectAttributes::WriteV5Helper( ON_BinaryArchive& file ) const
     if (!rc) break;
     rc = file.WriteUuid(m_uuid);
     if (!rc) break;
-    rc = file.WriteInt(m_layer_index);
+    rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::Layer, m_layer_index);
     if (!rc) break;
 
     // write non-default settings - skip everything else
@@ -576,15 +676,15 @@ bool ON_3dmObjectAttributes::WriteV5Helper( ON_BinaryArchive& file ) const
       c = 3;
       rc = file.WriteChar(c);
       if (!rc) break;
-      rc = file.WriteInt(m_linetype_index);
+      rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::LinePattern, m_linetype_index);
       if (!rc) break;
     }
-    if ( -1 != m_material_index )
+    if ( -1 != m_material_index && MaterialSource() == ON::material_from_object)
     {
       c = 4;
       rc = file.WriteChar(c);
       if (!rc) break;
-      rc = file.WriteInt(m_material_index);
+      rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::RenderMaterial, m_material_index);
       if (!rc) break;
     }
     if (    m_rendering_attributes.m_mappings.Count() > 0
@@ -702,7 +802,10 @@ bool ON_3dmObjectAttributes::WriteV5Helper( ON_BinaryArchive& file ) const
       c = 18;
       rc = file.WriteChar(c);
       if (!rc) break;
-      rc = file.WriteArray(m_group);
+      int count = m_group.Count();
+      rc = file.WriteInt(count);
+      for ( int i = 0; i < count && rc; i++)
+        rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::Group, m_group[i]);
       if (!rc) break;
     }
     if ( ON::model_space != m_space )
@@ -751,19 +854,19 @@ bool ON_3dmObjectAttributes::WriteV5Helper( ON_BinaryArchive& file ) const
   return rc;
 }
 
-ON_BOOL32 ON_3dmObjectAttributes::Write( ON_BinaryArchive& file ) const
+bool ON_3dmObjectAttributes::Write( ON_BinaryArchive& file ) const
 {
   if ( file.Archive3dmVersion() >= 5 )
   {
     // added at opennurbs version 200712190
-    return WriteV5Helper(file);
+    return Internal_WriteV5(file);
   }
 
   bool rc = file.Write3dmChunkVersion(1,7);
   // version 1.0 fields
   if (rc) rc = file.WriteUuid(m_uuid);
-  if (rc) rc = file.WriteInt(m_layer_index);
-  if (rc) rc = file.WriteInt(m_material_index);
+  if (rc) rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::Layer, m_layer_index);
+  if (rc) rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::RenderMaterial, m_material_index);
   if (rc) rc = file.WriteColor(m_color);
 
   if (rc)
@@ -787,7 +890,10 @@ ON_BOOL32 ON_3dmObjectAttributes::Write( ON_BinaryArchive& file ) const
   if (rc) rc = file.WriteString(m_url);
 
   // version 1.1 fields
-  if (rc) rc = file.WriteArray(m_group);
+  int count = m_group.Count();
+  rc = file.WriteInt(count);
+  for ( int i = 0; i < count && rc; i++)
+    rc = file.Write3dmReferencedComponentIndex(ON_ModelComponent::Type::Group, m_group[i]);
 
   // version 1.2 fields
   if (rc) rc = file.WriteBool(m_bVisible);
@@ -803,7 +909,7 @@ ON_BOOL32 ON_3dmObjectAttributes::Write( ON_BinaryArchive& file ) const
   if (rc) rc = file.WriteDouble(m_plot_weight_mm);
 
   // version 1.5 fields 11 April 2005
-  if (rc) rc = file.WriteInt(m_linetype_index);
+  if (rc) rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::LinePattern, m_linetype_index );
 
   // version 1.6 fields 2 September 2005
   if (rc)
@@ -825,18 +931,18 @@ ON_BOOL32 ON_3dmObjectAttributes::Write( ON_BinaryArchive& file ) const
     // m_space and m_viewport_id settings.  But the file format
     // cannot change at this point.  So, the bAddPagespaceDMR
     // is here to save the page info in the old dmr format.
-    int count = m_dmref.Count();
-    if ( count < 0 )
-      count = 0;
+    int count_local = m_dmref.Count();
+    if ( count_local < 0 )
+      count_local = 0;
     bool bAddPagespaceDMR = ( ON::page_space == m_space && !ON_UuidIsNil(m_viewport_id) );
-    rc = file.WriteInt( bAddPagespaceDMR ? (count+1) : count );
+    rc = file.WriteInt( bAddPagespaceDMR ? (count_local+1) : count_local );
     if ( rc && bAddPagespaceDMR )
     {
       rc = file.WriteUuid(m_viewport_id);
       if (rc) rc = file.WriteUuid(ON_ObsoletePageSpaceObjectId);
     }
     int i;
-    for ( i = 0; i < count && rc; i++ )
+    for ( i = 0; i < count_local && rc; i++ )
     {
       const ON_DisplayMaterialRef& dmr = m_dmref[i];
       rc = file.WriteUuid(dmr.m_viewport_id);
@@ -858,7 +964,7 @@ bool ON_3dmObjectAttributes::Transform( const ON_Xform& xform )
   return m_rendering_attributes.Transform(xform);
 }
 
-ON_BOOL32 ON_3dmObjectAttributes::IsValid( ON_TextLog* text_log ) const
+bool ON_3dmObjectAttributes::IsValid( ON_TextLog* text_log ) const
 {
   if ( ON_UuidIsNil(m_uuid) )
   {
@@ -883,7 +989,7 @@ ON_BOOL32 ON_3dmObjectAttributes::IsValid( ON_TextLog* text_log ) const
 
 unsigned int ON_3dmObjectAttributes::SizeOf() const
 {
-  unsigned int sz = sizeof(*this) - sizeof(ON_Object)
+  unsigned int sz = sizeof(*this) - sizeof(ON_Object) 
                   + m_name.Length()*sizeof(wchar_t)
                   + m_url.Length()*sizeof(wchar_t)
                   + m_group.SizeOfArray()
@@ -893,7 +999,7 @@ unsigned int ON_3dmObjectAttributes::SizeOf() const
 
 void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
 {
-  const wchar_t* wsName = m_name;
+  const wchar_t* wsName = static_cast< const wchar_t* >(m_name);
   if ( !wsName )
     wsName = L"";
   dump.Print("object name = \"%ls\"\n",wsName);
@@ -921,12 +1027,26 @@ void ON_3dmObjectAttributes::Dump( ON_TextLog& dump ) const
   dump.Print("object mode = %s\n",sMode); // sSMode is const char*
 
   dump.Print("object layer index = %d\n",m_layer_index);
-  dump.Print("object material index = %d\n",m_material_index);
+
+  const ON::object_material_source mat_source = MaterialSource();
+
+  if (ON::object_material_source::material_from_object == mat_source || false == dump.IsTextHash())
+  {
+    // Depending on when a 3dm file was written, m_material_index may get set to an implicit -1 
+    // during writing as part of an old attempt to reduce the size of attributes when saved in .3dm files.
+    // When mat_source is not (ON::object_material_source::material_from_object. This causes the
+    // 3dm content to vary in a way that content hashing must ignore. The sample file
+    // C:\dev\github\mcneel\rhino\src4\opennurbs\example_files\V5\v5_teacup.3dm is an example.
+    // It's old enough that it contians material index values >= 0 that are not saved
+    // by SaveAs V5 writing code since circa 2010 or earlier.
+    dump.Print("object material index = %d\n", m_material_index);
+  }
+
   const char* sMaterialSource = "unknown";
   switch(MaterialSource()) {
-  case ON::material_from_layer: sMaterialSource = "layer material"; break;
-  case ON::material_from_object: sMaterialSource = "object material"; break;
-  case ON::material_from_parent: sMaterialSource = "parent material"; break;
+  case ON::object_material_source::material_from_layer: sMaterialSource = "layer material"; break;
+  case ON::object_material_source::material_from_object: sMaterialSource = "object material"; break;
+  case ON::object_material_source::material_from_parent: sMaterialSource = "parent material"; break;
   }
   dump.Print("material source = %s\n",sMaterialSource); // sMaterialSource is const char*
   const int group_count = GroupCount();
@@ -952,8 +1072,9 @@ ON::object_mode ON_3dmObjectAttributes::Mode() const
 void ON_3dmObjectAttributes::SetMode( ON::object_mode m )
 {
   int om = ON::ObjectMode(m);
-  int dm = DisplayMode();
-  m_mode = (unsigned char)(16*dm+om);
+  if ( om >= 16 || om < 0 )
+    om = 0;
+  m_mode = (unsigned char)om;
 
   // temporary
   m_bVisible = (om != ON::hidden_object);
@@ -981,22 +1102,49 @@ void ON_3dmObjectAttributes::SetVisible( bool bVisible )
   }
 }
 
+bool ON_3dmObjectAttributes::SetName(
+  const wchar_t* candidate_name,
+  bool bFixInvalidName
 
-ON::display_mode ON_3dmObjectAttributes::DisplayMode() const
+)
 {
-  return ON::DisplayMode( m_mode/16 );
+  ON_wString name(candidate_name);
+  name.TrimLeftAndRight();
+  bool rc = name.IsEmpty() || ON_ModelComponent::IsValidComponentName(name);
+  if (false == rc && bFixInvalidName)
+  {
+    // Because ON_3dmObjectAttributes.m_name is public, it has been set to strings
+    // that are not valid names. Some of these strings begin with a bracket that
+    // is permitted to appear later in the name. Prepending a carrot makes the names
+    // unique while not turning them into something that the Rhino or python parsers
+    // keey off of in some other way.
+    // way to make these names
+    ON_wString prefixed_name = '^';
+    prefixed_name += name;
+    rc = ON_ModelComponent::IsValidComponentName(prefixed_name);
+    if (rc)
+      name = prefixed_name;
+  }
+  m_name = rc ? name : ON_wString::EmptyString;
+  return rc;
 }
 
-unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
-        const ON_3dmObjectAttributes& parents_attributes,
-        unsigned int control_limits
-        )
+const ON_wString ON_3dmObjectAttributes::Name() const
 {
-  ON_ERROR("Do not use deprecated version of ON_3dmObjectAttributes::ApplyParentalControl()");
-  ON_Layer bogus_layer;
-  bogus_layer.m_layer_index = -1;
-  return ApplyParentalControl(parents_attributes,bogus_layer,control_limits);
+  return m_name;
 }
+
+
+//unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
+//        const ON_3dmObjectAttributes& parents_attributes,
+//        unsigned int control_limits
+//        )
+//{
+//  ON_ERROR("Do not use deprecated version of ON_3dmObjectAttributes::ApplyParentalControl()");
+//  ON_Layer bogus_layer;
+//  bogus_layer.m_layer_index = -1;
+//  return ApplyParentalControl(parents_attributes,bogus_layer,control_limits);
+//}
 
 unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
         const ON_3dmObjectAttributes& parents_attributes,
@@ -1026,7 +1174,7 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       //   Changing the layer index is wrong!
       //   Color by parent means COLOR and not LAYER
       // WRONG! // m_layer_index = parents_attributes.m_layer_index;
-      if ( ON::color_from_layer == m_color_source && parent_layer.m_layer_index >= 0 )
+      if ( ON::color_from_layer == m_color_source && parent_layer.Index() >= 0 )
       {
         // this object will use the parent layer's color
         m_color_source = ON::color_from_object;
@@ -1046,7 +1194,7 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       //   Changing the layer index is wrong!
       //   Material by parent means MATERIAL and not LAYER
       // WRONG! // m_layer_index = parents_attributes.m_layer_index;
-      if ( ON::material_from_layer == m_material_source && parent_layer.m_layer_index >= 0 )
+      if ( ON::material_from_layer == m_material_source && parent_layer.Index() >= 0 )
       {
         // this object will use the parent layer's material
         m_material_source = ON::material_from_object;
@@ -1062,7 +1210,7 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       rc |= 0x08;
       m_plot_color_source = parents_attributes.m_plot_color_source;
       m_plot_color        = parents_attributes.m_plot_color;
-      if ( ON::plot_color_from_layer == m_plot_color_source && parent_layer.m_layer_index >= 0 )
+      if ( ON::plot_color_from_layer == m_plot_color_source && parent_layer.Index() >= 0 )
       {
         // this object will use the parent layer's plot color
         m_plot_color_source = ON::plot_color_from_object;
@@ -1078,7 +1226,7 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       rc |= 0x10;
       m_plot_weight_source = parents_attributes.m_plot_weight_source;
       m_plot_weight_mm     = parents_attributes.m_plot_weight_mm;
-      if ( ON::plot_weight_from_layer == m_plot_weight_source && parent_layer.m_layer_index >= 0 )
+      if ( ON::plot_weight_from_layer == m_plot_weight_source && parent_layer.Index() >= 0 )
       {
         // this object will use the parent layer's plot weight
         m_plot_weight_source = ON::plot_weight_from_object;
@@ -1094,7 +1242,7 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       rc |= 0x20;
       m_linetype_source = parents_attributes.m_linetype_source;
       m_linetype_index  = parents_attributes.m_linetype_index;
-      if ( ON::linetype_from_layer == m_linetype_source && parent_layer.m_layer_index >= 0 )
+      if ( ON::linetype_from_layer == m_linetype_source && parent_layer.Index() >= 0 )
       {
         // this object will use the parent layer's line type
         m_linetype_source = ON::linetype_from_object;
@@ -1102,7 +1250,7 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       }
     }
   }
-
+  
   if ( 0 != (0x40 & control_limits) )
   {
     rc |= 0x40;
@@ -1110,14 +1258,6 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
   }
 
   return rc;
-}
-
-
-void ON_3dmObjectAttributes::SetDisplayMode( ON::display_mode m )
-{
-  int om = Mode();
-  int dm = ON::DisplayMode(m);
-  m_mode = (unsigned char)(16*dm+om);
 }
 
 ON::object_color_source ON_3dmObjectAttributes::ColorSource() const
@@ -1192,11 +1332,11 @@ int ON_3dmObjectAttributes::GetGroupList(ON_SimpleArray<int>& group_list) const
 
 //////////
 // returns true if object is in group with specified index
-ON_BOOL32 ON_3dmObjectAttributes::IsInGroup(
+bool ON_3dmObjectAttributes::IsInGroup(
   int group_index // zero based group index
   ) const
 {
-  ON_BOOL32 rc = false;
+  bool rc = false;
   const int count = m_group.Count();
   int i;
   for ( i = 0; i < count; i++ ) {
@@ -1208,10 +1348,10 @@ ON_BOOL32 ON_3dmObjectAttributes::IsInGroup(
   return rc;
 }
 
-ON_BOOL32 ON_3dmObjectAttributes::IsInGroups( int group_count, const int* group_list ) const
+bool ON_3dmObjectAttributes::IsInGroups( int group_count, const int* group_list ) const
 {
   // returns true if object is in any of the groups in the list
-  ON_BOOL32 rc = false;
+  bool rc = false;
   if ( group_count > 0 && group_list ) {
     const int obj_group_count  = GroupCount();
     const int* obj_group_list = GroupList();
@@ -1225,7 +1365,7 @@ ON_BOOL32 ON_3dmObjectAttributes::IsInGroups( int group_count, const int* group_
   return rc;
 }
 
-ON_BOOL32 ON_3dmObjectAttributes::IsInGroups( const ON_SimpleArray<int>& group_list ) const
+bool ON_3dmObjectAttributes::IsInGroups( const ON_SimpleArray<int>& group_list ) const
 {
   return IsInGroups( group_list.Count(), group_list.Array() );
 }
@@ -1289,8 +1429,8 @@ void ON_3dmObjectAttributes::RemoveFromAllGroups()
 }
 
 
-bool ON_3dmObjectAttributes::FindDisplayMaterialId(
-      const ON_UUID& viewport_id,
+bool ON_3dmObjectAttributes::FindDisplayMaterialId( 
+      const ON_UUID& viewport_id, 
       ON_UUID* display_material_id
       ) const
 {
@@ -1478,7 +1618,7 @@ int ON_3dmObjectAttributes::DisplayMaterialRefCount() const
 }
 
 // {1403A7E4-E7AD-4a01-A2AA-41DAE6BE7ECB}
-const ON_UUID ON_DisplayMaterialRef::m_invisible_in_detail_id =
+const ON_UUID ON_DisplayMaterialRef::m_invisible_in_detail_id = 
 { 0x1403a7e4, 0xe7ad, 0x4a01, { 0xa2, 0xaa, 0x41, 0xda, 0xe6, 0xbe, 0x7e, 0xcb } };
 
 
@@ -1490,12 +1630,12 @@ ON_DisplayMaterialRef::ON_DisplayMaterialRef()
 
 bool ON_DisplayMaterialRef::operator==(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)==0);
+  return (Compare(other)==0); 
 }
 
 bool ON_DisplayMaterialRef::operator!=(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)!=0);
+  return (Compare(other)!=0); 
 }
 
 int ON_DisplayMaterialRef::Compare(const ON_DisplayMaterialRef& other) const
@@ -1508,21 +1648,21 @@ int ON_DisplayMaterialRef::Compare(const ON_DisplayMaterialRef& other) const
 
 bool ON_DisplayMaterialRef::operator<(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)<0);
+  return (Compare(other)<0); 
 }
 
 bool ON_DisplayMaterialRef::operator<=(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)<=0);
+  return (Compare(other)<=0); 
 }
 
 bool ON_DisplayMaterialRef::operator>(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)>0);
+  return (Compare(other)>0); 
 }
 
 bool ON_DisplayMaterialRef::operator>=(const ON_DisplayMaterialRef& other) const
 {
-  return (Compare(other)>=0);
+  return (Compare(other)>=0); 
 }
 

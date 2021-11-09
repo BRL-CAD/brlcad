@@ -14,10 +14,7 @@
 ////////////////////////////////////////////////////////////////
 */
 
-// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
-//#define ON_DLL_IMPORTS
-#include "../opennurbs.h"
-#include "../examples_linking_pragmas.h"
+#include "../opennurbs_public_examples.h"
 
 // This example demonstrates two things:
 //
@@ -615,12 +612,6 @@ int main()
 
   ONX_Model model;
 
-  ONX_Model_Object& mo = model.m_object_table.AppendNew();
-  mo.m_object = brep;
-  mo.m_bDeleteObject = true; // ~ONX_Model will delete brep
-  brep = 0;
-  mo.m_attributes.m_name = "Twisted b-rep";
-
   // OPTIONAL - change values from defaults
   model.m_properties.m_Notes.m_notes = "File created by OpenNURBS example_brep.cpp";
   model.m_properties.m_Notes.m_bVisible = true;
@@ -632,16 +623,22 @@ int main()
   model.m_properties.m_Application.m_application_details 
     = "OpenNURBS example showing how to create and write a simple b-rep";
 
+  model.AddDefaultLayer(L"brep", ON_Color::UnsetColor);
 
-  int version = 0; // version will be ON_BinaryArchive::CurrentArchiveVersion()
-  model.Polish();
+  ON_3dmObjectAttributes attributes;
+  attributes.m_name = "Twisted b-rep";
+  bool bResolveIdAndNameConflicts = true;
+
+  model.AddModelGeometryComponent(brep, &attributes, bResolveIdAndNameConflicts);
+
+  
+  const int version = 0; // version will be ON_BinaryArchive::CurrentArchiveVersion()
   const char* filename = "my_brep.3dm";
+  model.m_sStartSectionComments = __FILE__ " example_brep.cpp " __DATE__;
   bool rc = model.Write( filename, 
                version,
-               __FILE__ " example_brep.cpp " __DATE__,
                &error_log
                );
-
   if (rc)
     printf("Wrote %s.\n",filename);
   else
@@ -651,4 +648,3 @@ int main()
 
   return 0;
 }
-

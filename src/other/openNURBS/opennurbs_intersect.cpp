@@ -16,6 +16,13 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
 
 bool ON_IntersectLineLine(
           const ON_Line& lineA, 
@@ -349,43 +356,58 @@ bool ON_Intersect( const ON_Line& lineA, const ON_Line& lineB,
 }
 
 
-bool ON_Intersect( const ON_Line& line, const ON_Plane& plane,  
-                   double* line_parameter 
-                 )
+bool ON_Intersect( 
+  const ON_Line& line,
+  const ON_PlaneEquation& plane_equation,  
+  double* line_parameter 
+  )
 {
   bool rc = false;
   double a, b, d, fd, t;
 
-  a = plane.plane_equation.ValueAt(line[0]);
-  b = plane.plane_equation.ValueAt(line[1]);
+  a = plane_equation.ValueAt(line.from);
+  b = plane_equation.ValueAt(line.to);
   d = a-b;
-  if ( d == 0.0 ) {
-    if ( fabs(a) < fabs(b) ) {
+  if ( d == 0.0 )
+  {
+    if ( fabs(a) < fabs(b) )
       t = 0.0;
-    }
-    else if ( fabs(b) < fabs(a) ) {
+    else if ( fabs(b) < fabs(a) )
       t = 1.0;
-    }
-    else {
+    else
       t = 0.5;
-    }
   }
-  else {
+  else
+  {
     d = 1.0/d;
     fd = fabs(d);
-    if ( fd > 1.0 && (fabs(a) >= ON_DBL_MAX/fd || fabs(b) >= ON_DBL_MAX/fd ) ) {
-      // double overflow - line is probably parallel to plane
+    if ( fd > 1.0 && (fabs(a) >= ON_DBL_MAX/fd || fabs(b) >= ON_DBL_MAX/fd ) )
+    {
+      // double overflow - line may be (nearly) parallel to plane
       t = 0.5;
     }
-    else {
-      t = a*d;
+    else 
+    {
+      t = a/(a-b); // = a*d;  a/(a-b) has more precision than a*d
       rc = true;
     }
   }
+
   if ( line_parameter )
     *line_parameter = t;
+
   return rc;
 }
+
+bool ON_Intersect(
+  const ON_Line& line,
+  const ON_Plane& plane,  
+  double* line_parameter 
+  )
+{
+  return ON_Intersect( line, plane.plane_equation, line_parameter );
+}
+
 
 
 bool ON_Intersect( const ON_Plane& R, const ON_Plane& S,
@@ -544,7 +566,7 @@ int Intersect2dLineCircle(ON_2dPoint line_from, // 2d line from point
   // 2 = 2 intersections returned
   // 3 = 1 closest point returned
   int xcnt = 0;
-  ON_BOOL32 bRev;
+  bool bRev;
   double t, d, c, s, x, y, dx, dy;
   ON_2dVector v;
 
@@ -671,7 +693,7 @@ int ON_Intersect( // returns 0 = no intersections,
                   ON_3dPoint& A, ON_3dPoint& B // intersection point(s) returned here
                   )
 {
-  ON_BOOL32 bFiniteCyl = true;
+  bool bFiniteCyl = true;
   int rc = 0;
   const double cylinder_radius = fabs(cylinder.circle.radius);
   double tol = cylinder_radius*ON_SQRT_EPSILON;
@@ -687,7 +709,7 @@ int ON_Intersect( // returns 0 = no intersections,
   }
 
 
-  //ON_BOOL32 bIsParallel = false;
+  //bool bIsParallel = false;
   double line_t, axis_t;
   if ( !ON_Intersect(line,axis,&line_t,&axis_t) ) {
     axis.ClosestPointTo( cylinder.circle.plane.origin, &axis_t );
@@ -807,7 +829,7 @@ int ON_Intersect(
   }
   else
   {
-    xcnt = Intersect2dLineCircle( L.from, L.to, r, tol, line_t0, line_t1 );
+    xcnt = Intersect2dLineCircle( ON_2dPoint(L.from), ON_2dPoint(L.to), r, tol, line_t0, line_t1 );
     if ( xcnt == 3 )
       xcnt = 1;
   }
@@ -924,7 +946,7 @@ int ON_Intersect(
   ON_Circle c = arc;
   ON_3dPoint p[2];
   double t[2], a[2], s;
-  ON_BOOL32 b[2] = {false,false};
+  bool b[2] = {false,false};
   int i, xcnt = ON_Intersect( line, c, &t[0], p[0], &t[1], p[1] );
   if ( xcnt > 0 )
   {

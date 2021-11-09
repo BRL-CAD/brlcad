@@ -16,15 +16,30 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
+#pragma ON_PRAGMA_WARNING_PUSH
+#include <vector>
+#pragma ON_PRAGMA_WARNING_POP
+
+
+
 
 ////////////////////////////////////////////////////////////////////////
 
 bool ON_BezierCurve::GetTightBoundingBox( 
 		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
+    bool bGrowBox,
 		const ON_Xform* xform
     ) const
 {
+
   // The result from ON_GetPointListBoundingBox() is good enough
   // for file IO needs in the public souce code version.
   return ON_GetPointListBoundingBox(
@@ -45,7 +60,7 @@ ON_PolynomialCurve::ON_PolynomialCurve()
                    : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
 {}
 
-ON_PolynomialCurve::ON_PolynomialCurve( int dim, ON_BOOL32 is_rat, int order )
+ON_PolynomialCurve::ON_PolynomialCurve( int dim, bool is_rat, int order )
                    : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
 {
   Create( dim, is_rat, order );
@@ -68,9 +83,9 @@ ON_PolynomialCurve::ON_PolynomialCurve(const ON_BezierCurve& src)
   *this = src;
 }
 
-ON_BOOL32 ON_PolynomialCurve::Create( int dim, ON_BOOL32 is_rat, int order )
+bool ON_PolynomialCurve::Create( int dim, bool is_rat, int order )
 {
-  ON_BOOL32 rc = true;
+  bool rc = true;
   if ( dim > 0 ) m_dim = dim; else {m_dim = 0; rc = false;}
   m_is_rat = is_rat?1:0;
   if ( order >= 1 ) m_order = order; else {m_order = 0; rc = false;}
@@ -155,14 +170,14 @@ ON_PolynomialCurve& ON_PolynomialCurve::operator=(const ON_BezierCurve& src)
   return *this;
 }
 
-ON_BOOL32 ON_PolynomialCurve::Evaluate( // returns false if unable to evaluate
+bool ON_PolynomialCurve::Evaluate( // returns false if unable to evaluate
        double t,         // evaluation parameter
        int der_count,    // number of derivatives (>=0)
        int v_stride,     // array stride (>=Dimension())
        double* v         // array of length stride*(ndir+1)
        ) const
 {
-  ON_BOOL32 rc = false;
+  bool rc = false;
   if ( m_order >= 1 && m_cv.Count() == m_order )
   {
     if ( m_domain.m_t[0] != 0.0 || m_domain.m_t[1] != 1.0 ) 
@@ -226,7 +241,7 @@ ON_PolynomialSurface::ON_PolynomialSurface() : m_dim(0), m_is_rat(0)
   m_domain[1].m_t[1] = 1.0;
 }
 
-ON_PolynomialSurface::ON_PolynomialSurface( int dim, ON_BOOL32 is_rat, int order0, int order1 )
+ON_PolynomialSurface::ON_PolynomialSurface( int dim, bool is_rat, int order0, int order1 )
 {
   Create( dim, is_rat, order0, order1 );
 }
@@ -280,9 +295,9 @@ ON_PolynomialSurface& ON_PolynomialSurface::operator=(const ON_BezierSurface& sr
   return *this;
 }
 
-ON_BOOL32 ON_PolynomialSurface::Create( int dim, int is_rat, int order0, int order1 )
+bool ON_PolynomialSurface::Create( int dim, bool is_rat, int order0, int order1 )
 {
-  ON_BOOL32 rc = true;
+  bool rc = true;
   if ( dim > 0 ) m_dim = dim; else {m_dim = 0; rc = false;};
   m_is_rat = is_rat?1:0;
   if ( order0 > 0 ) m_order[0] = order0; else { m_order[0] = 0; rc = false;}
@@ -304,7 +319,7 @@ void ON_PolynomialSurface::Destroy()
   m_cv.Destroy();
 }
 
-ON_BOOL32 ON_PolynomialSurface::Evaluate( // returns false if unable to evaluate
+bool ON_PolynomialSurface::Evaluate( // returns false if unable to evaluate
        double s, 
        double t,           // evaluation parameter
        int der_count,      // number of derivatives (>=0)
@@ -329,7 +344,7 @@ ON_BezierCurve::ON_BezierCurve()
 #endif
 }
 
-ON_BezierCurve::ON_BezierCurve( int dim, ON_BOOL32 is_rat, int order )
+ON_BezierCurve::ON_BezierCurve( int dim, bool is_rat, int order )
                : m_dim(0), 
                  m_is_rat(0), 
                  m_order(0), 
@@ -505,7 +520,7 @@ ON_BezierCurve& ON_BezierCurve::operator=(const ON_PolynomialCurve& src)
       for ( i = 0; i < src.m_order; i++ )
         pt[i][src.m_dim] = pt[i].w;
     }
-    Loft( src.m_is_rat ? src.m_dim+1 : src.m_dim, src.m_order, 4, &pt[0].x, 0, NULL );
+    Loft( src.m_is_rat ? src.m_dim+1 : src.m_dim, src.m_order, 4, &pt[0].x, 0, nullptr );
     if ( IsValid() && src.m_is_rat ) {
       m_is_rat = 1;
       m_dim--;
@@ -521,7 +536,7 @@ ON_BezierCurve& ON_BezierCurve::operator=(const ON_PolynomialCurve& src)
 bool ON_BezierCurve::Loft( const ON_3dPointArray& pt )
 {
   const ON_3dPoint* p0 = pt.Array();
-  return Loft( 3, pt.Count(), 3, p0?&p0->x:0, 0, NULL );
+  return Loft( 3, pt.Count(), 3, p0?&p0->x:0, 0, nullptr );
 }
 
 
@@ -529,7 +544,7 @@ bool ON_BezierCurve::Loft( int pt_dim, int pt_count, int pt_stride, const double
                            int t_stride, const double* t )
 {
   bool rc = false;
-  if ( pt_dim >= 1 && pt_count >= 2 && pt_stride >= pt_dim && pt != NULL && (t_stride >= 1 || t == 0) ) {
+  if ( pt_dim >= 1 && pt_count >= 2 && pt_stride >= pt_dim && pt != nullptr && (t_stride >= 1 || t == 0) ) {
     int i, j;
     ON_SimpleArray<double> uniform_t;
     double s;
@@ -587,7 +602,7 @@ bool ON_BezierCurve::IsValid() const
     return false;
   if ( m_cv_capacity > 0 && m_cv_capacity < m_cv_stride*m_order )
     return false;
-  if ( m_cv == NULL )
+  if ( m_cv == nullptr )
     return false;
   return true;
 }
@@ -602,7 +617,7 @@ void ON_BezierCurve::Dump( ON_TextLog& dump ) const
                m_order, 
                (m_is_rat) ? "rational" : "non-rational" );
   if ( !m_cv ) {
-    dump.Print("  NULL cv array\n");
+    dump.Print("  nullptr cv array\n");
   }
   else {
     dump.PrintPointList( m_dim, m_is_rat, 
@@ -617,7 +632,7 @@ int ON_BezierCurve::Dimension() const
   return m_dim;
 }
 
-bool ON_BezierCurve::Create( int dim, int is_rat, int order )
+bool ON_BezierCurve::Create( int dim, bool is_rat, int order )
 {
   m_dim = (dim>0) ? dim : 0;
   m_is_rat = is_rat ? 1 : 0;
@@ -655,7 +670,7 @@ void ON_BezierCurve::EmergencyDestroy()
 bool ON_BezierCurve::GetBBox( // returns true if successful
        double* boxmin,    // minimum
        double* boxmax,    // maximum
-       int bGrowBox
+       bool bGrowBox
        ) const
 {
   return ON_GetPointListBoundingBox( m_dim, m_is_rat, m_order, m_cv_stride, m_cv, boxmin, boxmax, bGrowBox );
@@ -666,13 +681,17 @@ bool ON_BezierCurve::GetBoundingBox( // returns true if successful
        int bGrowBox             // true means grow box
        ) const
 {
+  void* heap_buffer = 0;
   double *boxmin, *boxmax;
+  
   if ( m_dim > 3 ) 
   {
-    boxmin = (double*)alloca(2*m_dim*sizeof(*boxmin));
+    heap_buffer = onmalloc(2*m_dim*sizeof(*boxmin));
+    boxmin = (double*)heap_buffer;
     memset( boxmin, 0, 2*m_dim*sizeof(*boxmin) );
     boxmax = boxmin + m_dim;
-    if ( bGrowBox ) {
+    if ( bGrowBox ) 
+    {
       boxmin[0] = bbox.m_min.x;
       boxmin[1] = bbox.m_min.y;
       boxmin[2] = bbox.m_min.z;
@@ -681,15 +700,23 @@ bool ON_BezierCurve::GetBoundingBox( // returns true if successful
       boxmax[2] = bbox.m_max.z;
     }
   }
-  else {
+  else 
+  {
     boxmin = &bbox.m_min.x;
     boxmax = &bbox.m_max.x;
   }
+  
   bool rc = GetBBox( boxmin, boxmax, bGrowBox );
-  if ( rc && m_dim > 3 ) {
+  
+  if ( rc && m_dim > 3 ) 
+  {
     bbox.m_min = boxmin;
     bbox.m_max = boxmax;
   }
+
+  if ( 0 != heap_buffer )
+    onfree(heap_buffer);
+
   return rc;
 }
 
@@ -735,7 +762,7 @@ bool ON_WorldBBoxIsInTightBBox(
 
 bool ON_Line::GetTightBoundingBox( 
 		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
+    bool bGrowBox,
 		const ON_Xform* xform
     ) const
 {
@@ -764,13 +791,13 @@ bool ON_Line::GetTightBoundingBox(
 
 bool ON_Arc::GetTightBoundingBox( 
 		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
+    bool bGrowBox,
 		const ON_Xform* xform
     ) const
 {
-  if ( IsCircle() && (0 == xform || xform->IsIdentity()) )
+  if ( IsCircle() && (nullptr == xform || xform->IsIdentity()) )
   {
-    return ON_Circle::GetTightBoundingBox(tight_bbox,bGrowBox,0);
+    return ON_Circle::GetTightBoundingBox(tight_bbox,bGrowBox,nullptr);
   }
 
   if ( bGrowBox && !tight_bbox.IsValid() )
@@ -820,7 +847,7 @@ bool ON_Arc::GetTightBoundingBox(
 
 bool ON_Circle::GetTightBoundingBox( 
 		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
+    bool bGrowBox,
 		const ON_Xform* xform
     ) const
 {
@@ -872,7 +899,7 @@ bool ON_Circle::GetTightBoundingBox(
 
 bool ON_ArcCurve::GetTightBoundingBox( 
 		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
+    bool bGrowBox,
 		const ON_Xform* xform
     ) const
 {
@@ -881,7 +908,7 @@ bool ON_ArcCurve::GetTightBoundingBox(
 
 bool ON_LineCurve::GetTightBoundingBox( 
 		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
+    bool bGrowBox,
 		const ON_Xform* xform
     ) const
 {
@@ -890,7 +917,7 @@ bool ON_LineCurve::GetTightBoundingBox(
 
 bool ON_PolylineCurve::GetTightBoundingBox( 
 		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
+    bool bGrowBox,
 		const ON_Xform* xform
     ) const
 {
@@ -899,7 +926,7 @@ bool ON_PolylineCurve::GetTightBoundingBox(
 
 bool ON_PolyCurve::GetTightBoundingBox( 
 		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
+    bool bGrowBox,
 		const ON_Xform* xform
     ) const
 {
@@ -908,7 +935,7 @@ bool ON_PolyCurve::GetTightBoundingBox(
 
 bool ON_CurveArray::GetTightBoundingBox( 
 		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
+    bool bGrowBox,
 		const ON_Xform* xform
     ) const
 {
@@ -961,7 +988,7 @@ bool ON_CurveArray::GetTightBoundingBox(
 
 bool ON_3dPointArray::GetTightBoundingBox( 
 			ON_BoundingBox& tight_bbox, 
-      int bGrowBox,
+      bool bGrowBox,
 			const ON_Xform* xform
       ) const
 {
@@ -1002,7 +1029,7 @@ bool ON_3dPointArray::GetTightBoundingBox(
 
 bool ON_PointCloud::GetTightBoundingBox( 
 			ON_BoundingBox& tight_bbox, 
-      int bGrowBox,
+      bool bGrowBox,
 			const ON_Xform* xform
       ) const
 {
@@ -1041,55 +1068,261 @@ bool ON_PointCloud::GetTightBoundingBox(
 }
 
 
-bool ON_Mesh::GetTightBoundingBox( 
-		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
-		const ON_Xform* xform 
-    ) const
+bool ON_Mesh::GetTightBoundingBox(
+	ON_BoundingBox& tight_bbox,
+	bool bGrowBox,
+	const ON_Xform* xform
+	) const
 {
-  if ( bGrowBox && !tight_bbox.IsValid() )
+	ON_SimpleArray<ON_PlaneEquation> NoCP;
+	return GetTightBoundingBox(tight_bbox, bGrowBox, NoCP, xform);
+}
+
+
+// return true if vertex vi is clipped out
+static
+bool GetClipData(int vi, const std::vector<bool>& ClipData, 
+									unsigned int* data, 
+									int n, 
+									int bpv)
+{
+	*data = 0;
+	int cdi = bpv*vi;
+	bool out = ClipData[cdi];
+	if (n == 1)
+		*data = out;
+	else
+	{
+		for (int j = 0; j <n; j++)
+		{
+			*data = *data << 1;
+			if (ClipData[cdi + 1 + j])
+				*data |= 1;
+		}
+	}
+	return out;
+}
+
+//GBA 12/20/16  rewrote this function
+bool ON_Mesh::GetTightBoundingBox(
+	ON_BoundingBox& Xtight_bbox,
+	bool bGrowBox,
+	const ON_SimpleArray<ON_PlaneEquation>& Clip,
+	const ON_Xform* xform
+) const
+{
+	if (bGrowBox && false == Xtight_bbox.IsNotEmpty() )
+		bGrowBox = false;
+
+	if (!bGrowBox)
+		Xtight_bbox = ON_BoundingBox::EmptyBoundingBox;
+
+	// Avoid applying the identity transformation repeatedly
+	if (xform && xform->IsIdentity())
+		xform = nullptr;
+
+  if (Clip.Count() <= 0 && xform == nullptr)
+    return (GetBBox(Xtight_bbox.m_min, Xtight_bbox.m_max, bGrowBox) ? true : false);
+
+  // Dale Lear
+  // Set hash = sha1 hash of information needed to get the tight bounding box.
+  // This does not include a hash of mesh vertex locations. These cached
+  // boxes are removed by ON_Mesh.InvalidateBoundingBoxes() so this hash
+  // does not need to include vertex locations or face information.
+  ON_SHA1 sha1;
+  if (nullptr != xform)
+    sha1.AccumulateTransformation(*xform);
+  for (unsigned int i = 0; i < Clip.UnsignedCount(); i++)
   {
-    bGrowBox = false;
+    sha1.AccumulateDoubleArray(4, &Clip[i].x);
+  }
+  const ON_SHA1_Hash hash = sha1.Hash();
+
+  ON_BoundingBox bbox;
+
+  if (m_tight_bbox_cache.GetBoundingBox(hash, bbox))
+  {
+    if (bGrowBox)
+      Xtight_bbox.Union(bbox);
+    else
+      Xtight_bbox = bbox;
+    return Xtight_bbox.IsNotEmpty();
   }
 
-  ON_BoundingBox mesh_bbox = BoundingBox();
-  if ( xform && !xform->IsIdentity() )
-  {
-    if ( ON_WorldBBoxIsInTightBBox( tight_bbox, mesh_bbox, xform ) )
+	// Perform clip test on cached bbox 
+	if (xform == nullptr && m_vertex_bbox.IsNotEmpty())
+	{
+		ON_3dPoint Corner[8];
+		m_vertex_bbox.GetCorners(Corner);
+
+		bool AllIn = true;
+		for( int i=0; AllIn && i<8; i++)
+			for (int j = 0; AllIn && j < Clip.Count(); j++)
+			{
+				AllIn = (Clip[j].ValueAt(Corner[i]) <= 0.0);
+			}
+
+    if (AllIn)
     {
-      return true;
+      bool rc = GetBBox(bbox.m_min, bbox.m_max, false) ? true : false;
+      m_tight_bbox_cache.AddBoundingBox(bbox, hash);
+      if (rc && bGrowBox)
+        Xtight_bbox.Union(bbox);
+      else
+        Xtight_bbox = bbox;
+      return Xtight_bbox.IsNotEmpty();
     }
+	}
 
-    const int vcount = m_V.Count();
-    if ( vcount > 0 )
-    {
-      // calculate bbox of transformed mesh
-      ON_3dPoint P(m_V[0]);
-      mesh_bbox.m_min = (*xform)*P;
-      mesh_bbox.m_max = mesh_bbox.m_min;
-      int i;
-      for ( i = 1; i < vcount; i++ )
-      {
-        P = m_V[i];
-        P = (*xform)*P;
-        if ( P.x < mesh_bbox.m_min.x ) mesh_bbox.m_min.x = P.x; else if (P.x > mesh_bbox.m_max.x) mesh_bbox.m_max.x = P.x;
-        if ( P.y < mesh_bbox.m_min.y ) mesh_bbox.m_min.y = P.y; else if (P.y > mesh_bbox.m_max.y) mesh_bbox.m_max.y = P.y;
-        if ( P.z < mesh_bbox.m_min.z ) mesh_bbox.m_min.z = P.z; else if (P.z > mesh_bbox.m_max.z) mesh_bbox.m_max.z = P.z;
-      }
-    }
-  }
+	// Now just add verticies of the clipped mesh
+	int vcnt = VertexCount();
+	
+	// n = number of clipping planes.  At most 32 clipping planes are allowed so that this function can use unsigned int
+	// to represent the 32 clip predicates.
+	int n = Clip.Count();
+	if (n > 32)
+		n = 32;
+	int bits = (n > 1) ? n + 1 : n;
+	int bpv = (n>0)?1<<int(ceil(log2(bits))) : 1;		// bits per vertex this is a power of 2
+	std::vector<bool> ClipData(vcnt*bpv, false);  // ClipData[ vi*bpv ] is true if vertex vi is clipped out of the view
+                                         // If n>1 then further information is provided by
+																				//    ClipData[vi*bpv + j+ 1] is true if Clip[j](m_V[vi])>0 that is
+																				//           vertex vi is clipped out by Clip[j]
+	// Compute ClipData for each vertex
+	for (int vi = 0; vi < vcnt; vi++)
+	{
+		ON_3dPoint P = m_V[vi];
+		if (xform)
+			P = (*xform)*P;
 
-  if ( !bGrowBox )
+		bool clipped = false;
+		if (n > 0)
+		{
+			int cdi0 = vi*bpv;
+			clipped = Clip[0].ValueAt(P) > 0;
+
+			if (n > 1)
+			{
+				int cdi1 = cdi0 + 1;
+				ClipData[cdi1++] = clipped;
+				for (int j = 1; j < n; j++)
+				{
+					bool out = Clip[j].ValueAt(P) > 0;
+					ClipData[cdi1++] = out;
+					clipped = clipped || out;
+				}
+			}
+			ClipData[cdi0] = clipped;
+		}
+		// If the vertex is not clipped add it to the boundingbox
+		if( !clipped)
+			bbox.Set(P, true);
+	}
+
+	if (n > 0)
+	{
+		// Now process each mesh face and look for intersections with the clipping region boundary
+		for (int fi = 0; fi < FaceCount(); fi++)
+		{
+			const ON_MeshFace& F = m_F[fi];
+			unsigned int LastData=0;
+			bool LastDataValid = false;
+			bool LastOut = ClipData[F.vi[0] * bpv];
+			if (LastOut)
+			{
+				GetClipData(F.vi[0], ClipData, &LastData, n, bpv);
+				LastDataValid = true;
+			}
+			for (int fvi = 0; fvi < 4; fvi++)
+			{
+				if (fvi == 2 && F.vi[fvi] == F.vi[fvi + 1])
+					continue;
+
+				unsigned int NextData=0;
+				bool NextDataValid=false;
+				bool NextOut = ClipData[F.vi[(fvi + 1) % 4] * bpv];
+				if (NextOut)
+				{
+					GetClipData(F.vi[(fvi + 1) % 4], ClipData, &NextData, n, bpv);
+					NextDataValid = true;
+				}
+
+				if (LastOut || NextOut)
+				{
+					// Make sure *Data is Valid
+					if (!LastDataValid)
+					{
+						GetClipData(F.vi[fvi], ClipData, &LastData, n, bpv);
+						LastDataValid = true;
+					}
+					if (!NextDataValid)
+					{
+						GetClipData(F.vi[fvi], ClipData, &NextData, n, bpv);
+						NextDataValid = true;
+					}
+				}
+				if ((LastOut || NextOut) && (LastData & NextData) == 0)
+				{
+					// Is there a segment of this edge that is not clipped out
+					ON_3dPoint Last = m_V[F.vi[fvi]];
+					ON_3dPoint Next = m_V[F.vi[(fvi + 1) % 4]];
+					if (xform)
+					{
+						Last = (*xform)*Last;
+						Next = (*xform)*Next;
+					}
+
+					ON_Interval Dom(0.0, 1.0);  // Dom parameterizes the line segment from Last to Next
+					for (int j = 0; j < n && Dom != ON_Interval::EmptyInterval; j++)
+					{
+						unsigned int mask = 1 << (n - 1 - j);
+						if (mask & LastData)
+						{
+							double cplast = Clip[j].ValueAt(Last);		// out >0
+							double cpnext = Clip[j].ValueAt(Next);		// in <0 
+							ON_Interval D(cplast / (cplast - cpnext), 1.0);
+							Dom.Intersection(D);
+						}
+						else if (mask & NextData)
+						{
+							double cplast = Clip[j].ValueAt(Last);
+							double cpnext = Clip[j].ValueAt(Next);
+							ON_Interval D(0.0, -cplast / (cpnext - cplast));
+							Dom.Intersection(D);
+						}
+					}
+					if (Dom != ON_Interval::EmptyInterval)
+					{
+						if (Dom[0] > 0.0)
+						{
+							ON_3dPoint Pt = (1 - Dom[0])*Last + Dom[0] * Next;
+							bbox.Set(Pt, true);
+						}
+						if (Dom[1] < 1.0)
+						{
+							ON_3dPoint Pt = (1 - Dom[1])*Last + Dom[1] * Next;
+							bbox.Set(Pt, true);
+						}
+					}
+				}
+
+				LastOut = NextOut;
+				LastDataValid = NextDataValid;
+				LastData = NextData;
+			}
+		}
+	}
+
+  m_tight_bbox_cache.AddBoundingBox(bbox, hash);
+  if (bbox.IsNotEmpty())
   {
-    tight_bbox = mesh_bbox;
-    bGrowBox = tight_bbox.IsValid();
-  }
-  else
-  {
-    tight_bbox.Union(mesh_bbox);
+    if (bGrowBox)
+      Xtight_bbox.Union(bbox);
+    else
+      Xtight_bbox = bbox;
   }
 
-  return (0!=bGrowBox);
+  return Xtight_bbox.IsNotEmpty();
 }
 
 
@@ -1131,15 +1364,13 @@ bool ON_BezierCurve::Rotate(
 
 bool ON_BezierCurve::Translate( const ON_3dVector& delta )
 {
-  ON_Xform tr;
-  tr.Translation( delta );
+  ON_Xform tr(ON_Xform::TranslationTransformation( delta ));
   return Transform( tr );
 }
 
 bool ON_BezierCurve::Scale( double x )
 {
-  ON_Xform s;
-  s.Scale( x, x, x );
+  ON_Xform s(ON_Xform::DiagonalTransformation( x ));
   return Transform( s );
 }
 
@@ -1170,9 +1401,9 @@ bool ON_BezierCurve::Evaluate( // returns false if unable to evaluate
                             der_count, t, v_stride, v )?true:false;
 }
 
-bool ON_BezierCurve::GetNurbForm( ON_NurbsCurve& n ) const
+int ON_BezierCurve::GetNurbForm( ON_NurbsCurve& n ) const
 {
-  bool rc = false;
+  int rc = 0;
   if ( n.Create( m_dim, m_is_rat, m_order, m_order ) ) {
     const int sizeof_cv = CVSize()*sizeof(m_cv[0]);
     int i;
@@ -1181,7 +1412,7 @@ bool ON_BezierCurve::GetNurbForm( ON_NurbsCurve& n ) const
     }
     n.m_knot[m_order-2] = 0.0;//m_domain.Min();
     n.m_knot[m_order-1] = 1.0;//m_domain.Max();
-    rc = ON_ClampKnotVector( n.m_order, n.m_cv_count, n.m_knot, 2 )?true:false;
+    rc = ON_ClampKnotVector(n.m_order, n.m_cv_count, n.m_knot, 2) ? 1 : 0;
   }
   return rc;
 }
@@ -1209,6 +1440,16 @@ int ON_BezierCurve::Degree() const
 double* ON_BezierCurve::CV( int i ) const
 {
   return m_cv ? m_cv + (i*m_cv_stride) : 0;
+}
+
+const ON_4dPoint ON_BezierCurve::ControlPoint(
+  int i
+) const
+{
+  ON_4dPoint cv;
+  if (false == GetCV(i, cv))
+    cv = ON_4dPoint::Nan;
+  return cv;
 }
 
 ON::point_style ON_BezierCurve::CVStyle() const
@@ -1385,6 +1626,10 @@ bool ON_BezierCurve::GetCV( int i, ON::point_style style, double* Point ) const
     Point[dim] = w;
     memcpy( Point, cv, dim*sizeof(*Point) );
     break;
+	case ON::intrinsic_point_style:
+		if (IsRational()) dim++;
+		memcpy(Point, cv, dim * sizeof(*Point));
+		break;
   default:
     return false;
   }
@@ -1415,17 +1660,20 @@ bool ON_BezierCurve::GetCV( int i, ON_3dPoint& point ) const
   return rc;
 }
 
-bool 
-ON_BezierCurve::GetCV( int i, ON_4dPoint& point ) const
+bool ON_BezierCurve::GetCV( int i, ON_4dPoint& point ) const
 {
   bool rc = false;
-  const double* cv = CV(i);
-  if ( cv ) {
-    point.x = cv[0];
-    point.y = (m_dim>1)? cv[1] : 0.0;
-    point.z = (m_dim>2)? cv[2] : 0.0;
-    point.w = (m_is_rat) ? cv[m_dim] : 1.0;
-    rc = true;
+  if (m_dim > 0 && i >= 0 && i < m_order)
+  {
+    const double* cv = CV(i);
+    if (cv)
+    {
+      point.x = cv[0];
+      point.y = (m_dim > 1) ? cv[1] : 0.0;
+      point.z = (m_dim > 2) ? cv[2] : 0.0;
+      point.w = (m_is_rat) ? cv[m_dim] : 1.0;
+      rc = true;
+    }
   }
   return rc;
 }
@@ -1628,12 +1876,21 @@ bool ON_BezierCurve::Split(
        ) const
 {
   bool rc = ( 0.0 < t && t < 1.0 && IsValid() ) ? true : false;
-  if ( rc ) {
+  if ( rc ) 
+  {
     const int cvdim = CVSize();
     int i,j,k,n;
     double *p, *r, s;
     const double* q;
-    double** b = (double**)alloca((2*m_order-1)*sizeof(*b));
+    
+    double** b;
+    double *stack_buffer[2*9-1];
+    void* heap_buffer = 0;
+    const size_t sizeof_buffer = (2*m_order-1)*sizeof(*b);
+
+    b = (sizeof_buffer <= sizeof(stack_buffer))
+      ? stack_buffer
+      : (double**)(heap_buffer = onmalloc(sizeof_buffer));
     
     if ( this != &left_bez )
     {
@@ -1736,7 +1993,11 @@ bool ON_BezierCurve::Split(
       j = cvdim;
       while(j--) *p++ = *q++;
     }
+
+    if ( 0 != heap_buffer )
+      onfree(heap_buffer);
   }
+
   return rc;
 }
 
@@ -1755,7 +2016,7 @@ ON_BezierSurface::ON_BezierSurface()
 #endif
 }
 
-ON_BezierSurface::ON_BezierSurface( int dim, ON_BOOL32 is_rat, int order0, int order1 )
+ON_BezierSurface::ON_BezierSurface( int dim, bool is_rat, int order0, int order1 )
                  : m_dim(0),
                    m_is_rat(0),
                    m_cv(0),
@@ -1853,7 +2114,7 @@ bool ON_BezierSurface::IsValid() const
   //  return false;
   //if ( !m_domain[1].IsIncreasing() )
   //  return false;
-  if ( m_cv == NULL )
+  if ( m_cv == nullptr )
     return false;
   return true;
 }
@@ -1868,18 +2129,18 @@ void ON_BezierSurface::Dump( ON_TextLog& dump ) const
                m_order[0]*m_order[1], 
                (m_is_rat) ? "rational" : "non-rational" );
   if ( !m_cv ) {
-    dump.Print("  NULL cv array\n");
+    dump.Print("  nullptr cv array\n");
   }
   else {
     int i;
-    char sPreamble[128]; 
-    memset(sPreamble,0,sizeof(sPreamble));
+    char sPreamble[128] = { 0 };
+    const size_t sPreamble_capacity = sizeof(sPreamble) / sizeof(sPreamble[0]);
     for ( i = 0; i < m_order[0]; i++ )
     {
       if ( i > 0 )
         dump.Print("\n");
       sPreamble[0] = 0;
-      sprintf(sPreamble,"  CV[%2d]",i);
+      ON_String::FormatIntoBuffer(sPreamble, sPreamble_capacity, "  CV[%2d]", i);
       dump.PrintPointList( m_dim, m_is_rat, 
                         m_order[1], m_cv_stride[1],
                         CV(i,0), 
@@ -1893,7 +2154,7 @@ int ON_BezierSurface::Dimension() const
   return m_dim;
 }
 
-bool ON_BezierSurface::Create( int dim, ON_BOOL32 is_rat, int order0, int order1 )
+bool ON_BezierSurface::Create( int dim, bool is_rat, int order0, int order1 )
 {
   if ( m_cv_capacity < 1 )
     m_cv = 0;
@@ -2001,11 +2262,11 @@ bool ON_BezierSurface::Loft(
         }
         shape = temp_shape;
       }
-      for ( int j = 0; j < shape->m_order; j++ )
+      for ( int j_for_loop = 0; j_for_loop < shape->m_order; j_for_loop++ )
       {
-        const double* cv = shape->CV(j);
-        for ( int k = 0; k < shape_cv_stride; k++ )
-          meta_point.Append(cv[k]);
+        const double* cv = shape->CV(j_for_loop);
+        for ( int k_for_loop = 0; k_for_loop < shape_cv_stride; k_for_loop++ )
+          meta_point.Append(cv[k_for_loop]);
       }
     }
     if ( 0 != temp_shape )
@@ -2049,7 +2310,7 @@ bool ON_BezierSurface::Loft(
 bool ON_BezierSurface::GetBBox( // returns true if successful
        double* boxmin,    // minimum
        double* boxmax,    // maximum
-       int bGrowBox  // true means grow box
+       bool bGrowBox  // true means grow box
        ) const
 {
   int i;
@@ -2068,9 +2329,11 @@ bool ON_BezierSurface::GetBoundingBox( // returns true if successful
        ) const
 {
   double *boxmin, *boxmax;
+  void* heap_buffer = 0;
+
   if ( m_dim > 3 ) 
   {
-    boxmin = (double*)alloca(2*m_dim*sizeof(*boxmin));
+    boxmin = (double*)(heap_buffer = onmalloc(2*m_dim*sizeof(*boxmin)));
     memset( boxmin, 0, 2*m_dim*sizeof(*boxmin) );
     boxmax = boxmin + m_dim;
     if ( bGrowBox ) {
@@ -2091,6 +2354,9 @@ bool ON_BezierSurface::GetBoundingBox( // returns true if successful
     bbox.m_min = boxmin;
     bbox.m_max = boxmax;
   }
+
+  if ( 0 != heap_buffer )
+    onfree(heap_buffer);
   return rc;
 }
 
@@ -2149,15 +2415,13 @@ bool ON_BezierSurface::Rotate(
 
 bool ON_BezierSurface::Translate( const ON_3dVector& delta )
 {
-  ON_Xform tr;
-  tr.Translation( delta );
+  ON_Xform tr(ON_Xform::TranslationTransformation( delta ));
   return Transform( tr );
 }
 
 bool ON_BezierSurface::Scale( double x )
 {
-  ON_Xform s;
-  s.Scale( x, x, x );
+  ON_Xform s(ON_Xform::DiagonalTransformation(x));
   return Transform( s );
 }
 
@@ -2206,23 +2470,36 @@ bool ON_BezierSurface::Evaluate( // returns false if unable to evaluate
 {
   // TODO: When time permits write a faster special case bezier surface evaluator.
   // For now, cook up some fake knot vectors and use NURBS surface span evaluator.
+  double stack_buffer[24];
   double *knot0, *knot1, *p;
   int deg0 = m_order[0]-1;
   int deg1 = m_order[1]-1;
   int i = (deg0<=deg1)?deg1 : deg0;
-  p = knot0 = (double*)alloca(i*2*sizeof(*knot0));
+  
+  void* heap_buffer = 0;
+  size_t sizeof_buffer = i*2*sizeof(*knot0);
+
+  knot0 = (sizeof_buffer <= sizeof(stack_buffer))
+        ? stack_buffer
+        : (double*)(heap_buffer=onmalloc(sizeof_buffer));
+
+  p = knot0;
   memset(p,0,i*sizeof(*p));
   p += i;
-  while (i--) *p++ = 1.0;
-  if ( deg0 >= deg1 ) {
+  while (i--) 
+    *p++ = 1.0;
+
+  if ( deg0 >= deg1 ) 
+  {
     knot1 = knot0 + (deg0-deg1);
   }
-  else {
+  else
+  {
     knot1 = knot0;
     knot0 = knot1 + (deg1-deg0);
   }
 
-  return ON_EvaluateNurbsSurfaceSpan(
+  bool rc = ON_EvaluateNurbsSurfaceSpan(
         m_dim,                          // dimension
         m_is_rat,                       // true if NURBS is rational
         m_order[0], m_order[1],         // order0, order1
@@ -2235,6 +2512,11 @@ bool ON_BezierSurface::Evaluate( // returns false if unable to evaluate
         v_stride,                       // answer_stride (>=dimension)
         v                               // answer[] array of length (ndir+1)*answer_stride
         );
+
+  if ( 0 != heap_buffer )
+    onfree(heap_buffer);
+
+  return rc;
 }
 
 ON_3dPoint ON_BezierSurface::PointAt(double s, double t) const
@@ -2246,7 +2528,7 @@ ON_3dPoint ON_BezierSurface::PointAt(double s, double t) const
 
 ON_BezierCurve* ON_BezierSurface::IsoCurve(int dir, double t, ON_BezierCurve* pCrv) const
 {
-	if( pCrv == NULL )
+	if( pCrv == nullptr )
   {
 		pCrv = new ON_BezierCurve(m_dim, m_is_rat, m_order[dir]);
 	}
@@ -2296,9 +2578,9 @@ ON_BezierCurve* ON_BezierSurface::IsoCurve(int dir, double t, ON_BezierCurve* pC
 	return pCrv;
 }
 
-bool ON_BezierSurface::GetNurbForm( ON_NurbsSurface& n ) const
+int ON_BezierSurface::GetNurbForm( ON_NurbsSurface& n ) const
 {
-  bool rc = false;
+  int rc = 0;
   if ( n.Create( m_dim, m_is_rat, m_order[0], m_order[1], m_order[0], m_order[1] ) ) 
   {
     if ( n.m_cv == m_cv )
@@ -2318,8 +2600,9 @@ bool ON_BezierSurface::GetNurbForm( ON_NurbsSurface& n ) const
     n.m_knot[0][m_order[0]-1] = 1.0;	//m_domain[0].Max();
     n.m_knot[1][m_order[1]-2] = 0.0;	//m_domain[1].Min();
     n.m_knot[1][m_order[1]-1] = 1.0;	//m_domain[1].Max();
-    rc = ON_ClampKnotVector( n.m_order[0], n.m_cv_count[0], n.m_knot[0], 2 );
-    rc = ON_ClampKnotVector( n.m_order[1], n.m_cv_count[1], n.m_knot[1], 2 );
+    bool b0 = ON_ClampKnotVector( n.m_order[0], n.m_cv_count[0], n.m_knot[0], 2 );
+    bool b1 = ON_ClampKnotVector( n.m_order[1], n.m_cv_count[1], n.m_knot[1], 2 );
+    rc = (b0 && b1) ? 1 : 0;
   }
   return rc;
 }
@@ -2347,7 +2630,7 @@ int ON_BezierSurface::Degree(int dir) const
 
 double* ON_BezierSurface::CV( int i, int j ) const
 {
-  return (m_cv) ? (m_cv + i*m_cv_stride[0] + j*m_cv_stride[1]) : NULL;
+  return (m_cv) ? (m_cv + i*m_cv_stride[0] + j*m_cv_stride[1]) : nullptr;
 }
 
 ON::point_style ON_BezierSurface::CVStyle() const
@@ -2513,6 +2796,10 @@ bool ON_BezierSurface::GetCV( int i, int j, ON::point_style style, double* Point
     Point[dim] = w;
     memcpy( Point, cv, dim*sizeof(*Point) );
     break;
+	case ON::intrinsic_point_style:
+		if (IsRational()) dim++;
+		memcpy(Point, cv, dim * sizeof(*Point));
+		break;
   default:
     return false;
   }
@@ -2727,7 +3014,7 @@ bool ON_BezierSurface::Trim(
 
     rc = crv.Trim(domain);
 
-    crv.m_cv = NULL;
+    crv.m_cv = nullptr;
     crv.m_dim = crv.m_order = crv.m_cv_stride = 0;
   }
 
@@ -2883,6 +3170,38 @@ bool ON_BezierSurface::IsSingular(		 // true if surface side is collapsed to a p
 
   return ON_PointsAreCoincident(m_dim,m_is_rat,point_count,point_stride,points);
 }
+
+static bool BezierControlPolygonLength(const ON_BezierSurface& Bez, int dir, double* length)
+{
+	bool rc = false;
+	if (length && dir >= 0 && dir <= 1 && Bez.m_order[0] >= 2 && Bez.m_order[1] >= 2 && Bez.m_cv != nullptr)
+	{
+		rc = true;
+		*length = 0.0;
+
+		for (int i = 0; i < Bez.m_order[1 - dir]; i++)
+		{
+			double len = 0.0;
+			const double*p = (dir) ? Bez.CV(i, 0) : Bez.CV(0, i);
+			ON_GetPolylineLength(Bez.m_dim, Bez.m_is_rat, Bez.m_order[dir], Bez.m_cv_stride[dir], p, &len);
+			if (len > *length)
+				*length = len;
+		}
+	}
+
+	return rc;
+}
+
+bool ON_BezierSurface::GetSurfaceSize(
+	double* width,
+	double* height
+) const
+{
+	bool	rc  =  BezierControlPolygonLength(*this, 0, width);
+	rc   =		rc &&  BezierControlPolygonLength(*this, 1, height);
+	return rc;
+}
+
 
 bool ON_ReparameterizeRationalBezierCurve(
           double c,
@@ -3155,7 +3474,7 @@ bool ON_BezierCurve::EvTangent(
        ) const
 {
   ON_3dVector D1, D2;//, K;
-  tangent.Zero();
+  tangent = ON_3dVector::ZeroVector;
   bool rc = Ev1Der( t, point, tangent );
   if ( rc && !tangent.Unitize() ) 
   {
@@ -3218,7 +3537,7 @@ bool ON_BezierCurve::EvTangent(
           {
             // all sampled d1od2 values were <= 0 
             // and at least one was strictly < 0.
-            tangent.Reverse();
+            tangent = -tangent;
           }
         }
       }

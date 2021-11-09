@@ -37,73 +37,96 @@ ON_DECL double ON_HairlinePrintWidth();
 //////////////////////////////////////////////////////////////////////
 // class ON_Linetype
 
-class ON_CLASS ON_Linetype : public ON_Object
+class ON_CLASS ON_Linetype : public ON_ModelComponent
 {
   ON_OBJECT_DECLARE(ON_Linetype);
 
 public:
+  // no attributes are set.
+  static const ON_Linetype Unset;
+
+  // index = -1, id, name and pattern are set.
+  static const ON_Linetype Continuous;
+
+  // index = -2, id, name and pattern are set.
+  static const ON_Linetype ByLayer;
+
+  // index = -3, id, name and pattern are set.
+  static const ON_Linetype ByParent;
+
+  // index = -4, id, name and pattern are set.
+  static const ON_Linetype Hidden;
+
+  // index = -5, id, name and pattern are set.
+  static const ON_Linetype Dashed;
+
+  // index = -6, id, name and pattern are set.
+  static const ON_Linetype DashDot;
+
+  // index = -7, id, name and pattern are set.
+  static const ON_Linetype Center;
+
+  // index = -8, id, name and pattern are set.
+  static const ON_Linetype Border;
+
+  // index = -9, id, name and pattern are set.
+  static const ON_Linetype Dots;
 
   /*
-  Description:
-    Sets index = -1.
+  Parameters:
+    model_component_reference - [in]
+    none_return_value - [in]
+      value to return if ON_Linetype::Cast(model_component_ref.ModelComponent())
+      is nullptr
+  Returns:
+    If ON_Linetype::Cast(model_component_ref.ModelComponent()) is not nullptr,
+    that pointer is returned.  Otherwise, none_return_value is returned. 
   */
-  ON_Linetype();
+  static const ON_Linetype* FromModelComponentRef(
+    const class ON_ModelComponentReference& model_component_reference,
+    const ON_Linetype* none_return_value
+    );
 
-  ~ON_Linetype();
+public:
 
-
-  /*
-  Description:
-    Sets index = -1 and emptys name and segment list.
-  */
-  void Default();
+  ON_Linetype() ON_NOEXCEPT;
+  ~ON_Linetype() = default;
+  ON_Linetype(const ON_Linetype&);
+  ON_Linetype& operator=(const ON_Linetype&) = default;
 
   /*
     Description:
       Tests that name is set and there is at least one non-zero length segment
   */
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
-  void Dump( ON_TextLog& ) const; // for debugging
+  void Dump( ON_TextLog& ) const override; // for debugging
 
   /*
     Description:
       Write to file
   */
-  ON_BOOL32 Write(
+  bool Write(
          ON_BinaryArchive&  // serialize definition to binary archive
-       ) const;
+       ) const override;
 
   /*
     Description:
       Read from file
   */
-  ON_BOOL32 Read(
+  bool Read(
          ON_BinaryArchive&  // restore definition from binary archive
-       );
-
-  // virtual
-  ON_UUID ModelObjectId() const;
+       ) override;
 
 
   //////////////////////////////////////////////////////////////////////
   //
   // Interface
 
-  /*
-    Unique name for each linetype
-  */
-  bool SetLinetypeName( const char*);
-  bool SetLinetypeName( const wchar_t*);
-	const wchar_t* LinetypeName() const;
-
-  /*
-    Index of each linetype
-    This index is used by geometry objects to 
-    reference a specific linetype
-  */
-  bool SetLinetypeIndex( int);
-  int LinetypeIndex() const;
+  bool PatternIsSet() const;
+  bool ClearPattern();
+  bool PatternIsLocked() const;
+  void LockPattern();
 
   /*
     Description:
@@ -150,6 +173,15 @@ public:
   bool SetSegment( int index, double length, ON_LinetypeSegment::eSegType type);
 
   /*
+  Description:
+    Set all segments
+  Parameters:
+    segments - [in]
+  */
+  bool SetSegments(const ON_SimpleArray<ON_LinetypeSegment>& segments);
+
+
+  /*
     Description:
       Returns a copy of the segment at index
   */
@@ -160,17 +192,28 @@ public:
       Expert user function to get access to the segment array
       for rapid calculations.
   */
-  ON_SimpleArray<ON_LinetypeSegment>& Segments();
+  // Returns nullptr if the line pattern is locked.
+  ON_SimpleArray<ON_LinetypeSegment>* ExpertSegments();
+
   const ON_SimpleArray<ON_LinetypeSegment>& Segments() const;
 
-public:
-  int m_linetype_index;
-  ON_UUID m_linetype_id;    // Set by Rhino - unique id of this linetype
-  ON_wString m_linetype_name;
-
 private:
+  enum : unsigned char
+  {
+    pattern_bit = 1
+  };
+  unsigned char m_is_set_bits = 0;
+  unsigned char m_is_locked_bits = 0;
+  unsigned short m_reserved1 = 0;
+  unsigned int m_reserved2 = 0;
   ON_SimpleArray<ON_LinetypeSegment> m_segments;
 };
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Linetype*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_Linetype*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_ObjectArray<ON_Linetype>;
+#endif
 
 #endif
 

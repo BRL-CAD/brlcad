@@ -31,6 +31,8 @@ to define type specific quick sort functions.
 #error Define ON_QSORT_FNAME macro before including opennurbs_qsort_template.c
 #endif
 
+#if !defined(ON_QSORT_GT) && !defined(ON_QSORT_LE) && !defined(ON_QSORT_EQ)
+
 #if defined(ON_SORT_TEMPLATE_COMPARE)
 // use a compare function like strcmp for char* strings
 #define ON_QSORT_GT(A,B) ON_SORT_TEMPLATE_COMPARE(A,B) > 0
@@ -43,14 +45,34 @@ to define type specific quick sort functions.
 #define ON_QSORT_EQ(A,B) *A == *B
 #endif
 
-#if defined(ON_SORT_TEMPLATE_USE_MEMCPY)
+#endif
+
+#if defined(ON_SORT_TEMPLATE_SWAP)
+#define ON_QSORT_SWAP ON_SORT_TEMPLATE_SWAP
+#elif defined(ON_SORT_TEMPLATE_USE_MEMCPY)
 #define ON_QSORT_SWAP(A,B) memcpy(&tmp,A,sizeof(tmp));memcpy(A,B,sizeof(tmp));memcpy(B,&tmp,sizeof(tmp))
 #else
 #define ON_QSORT_SWAP(A,B) tmp = *A; *A = *B; *B = tmp
 #endif
 
-static void ON_shortsort(ON_SORT_TEMPLATE_TYPE *, ON_SORT_TEMPLATE_TYPE *);
-static void ON_shortsort(ON_SORT_TEMPLATE_TYPE *lo, ON_SORT_TEMPLATE_TYPE *hi)
+
+// When opennurbs_qsort_template.h is included more than once
+// in the same file for sorting the same type with different
+// compare functions, then either 
+//   1) After the first include, define ON_SORT_TEMPLATE_HAVE_SHORT_SORT
+//      to prevent generation of an identical short-sort function
+// or
+//   2) Define different values of ON_QSORT_SHORT_SORT_FNAME to generate
+//      different short-sort helper functions.
+#if !defined(ON_SORT_TEMPLATE_HAVE_SHORT_SORT)
+
+#if !defined(ON_QSORT_SHORT_SORT_FNAME)
+// The default name for the short sort helper function is ON__shortsort
+#define ON_QSORT_SHORT_SORT_FNAME ON__shortsort
+#endif
+
+static void ON_QSORT_SHORT_SORT_FNAME(ON_SORT_TEMPLATE_TYPE *, ON_SORT_TEMPLATE_TYPE *);
+static void ON_QSORT_SHORT_SORT_FNAME(ON_SORT_TEMPLATE_TYPE *lo, ON_SORT_TEMPLATE_TYPE *hi)
 {
   ON_SORT_TEMPLATE_TYPE *p;
   ON_SORT_TEMPLATE_TYPE *max;
@@ -86,6 +108,7 @@ static void ON_shortsort(ON_SORT_TEMPLATE_TYPE *lo, ON_SORT_TEMPLATE_TYPE *hi)
   /* A[i] <= A[j] for i <= j, j > lo, which implies A[i] <= A[j] for i < j,
       so array is sorted */
 }
+#endif
 
 /* this parameter defines the cutoff between using quick sort and
    insertion sort for arrays; arrays with lengths shorter or equal to the
@@ -129,7 +152,7 @@ recurse:
   /* below a certain size, it is faster to use a O(n^2) sorting method */
   if (size <= ON_QSORT_CUTOFF) 
   {
-      ON_shortsort(lo, hi);
+      ON_QSORT_SHORT_SORT_FNAME(lo, hi);
   }
   else {
     /* First we pick a partitioning element.  The efficiency of the
@@ -295,3 +318,5 @@ recurse:
 #undef ON_QSORT_SWAP
 #undef ON_QSORT_CUTOFF
 #undef ON_QSORT_STKSIZ
+
+

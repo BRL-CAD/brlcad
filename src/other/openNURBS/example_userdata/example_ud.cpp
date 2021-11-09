@@ -1,6 +1,5 @@
-// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
-//#define ON_DLL_IMPORTS
-#include "../opennurbs.h"
+#include "../opennurbs_public_examples.h"
+
 #include "example_ud.h"
 
 CExampleWriteUserData::CExampleWriteUserData()
@@ -55,24 +54,24 @@ void CExampleWriteUserData::Dump( ON_TextLog& text_log ) const
   text_log.PopIndent();
 }
 
-ON_BOOL32 CExampleWriteUserData::GetDescription( ON_wString& description )
+bool CExampleWriteUserData::GetDescription( ON_wString& description )
 {
   description = L"example_write.exe user data";
   return true;
 }
 
 
-ON_BOOL32 CExampleWriteUserData::Archive() const
+bool CExampleWriteUserData::Archive() const
 {
   return true;
 }
 
-ON_BOOL32 CExampleWriteUserData::Write(ON_BinaryArchive& file) const
+bool CExampleWriteUserData::Write(ON_BinaryArchive& file) const
 {
   return file.WriteString(m_str);
 }
 
-ON_BOOL32 CExampleWriteUserData::Read(ON_BinaryArchive& file)
+bool CExampleWriteUserData::Read(ON_BinaryArchive& file)
 {
   return file.ReadString(m_str);
 }

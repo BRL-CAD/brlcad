@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -16,64 +16,56 @@
 
 #include "opennurbs.h"
 
-ON_Arc::ON_Arc() : m_angle(0.0,2.0*ON_PI)
-{
-  radius=1.0;
-}
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
 
-ON_Arc::ON_Arc( const ON_Circle& c, double angle_in_radians )
-       : m_angle(0.0,2.0*ON_PI)
+ON_Arc::ON_Arc( const ON_Circle& c, double angle_in_radians ) 
 {
   Create( c, angle_in_radians );
 }
 
-ON_Arc::ON_Arc( const ON_Circle& c, ON_Interval angle_interval_in_radians )
-       : m_angle(0.0,2.0*ON_PI)
+ON_Arc::ON_Arc( const ON_Circle& c, ON_Interval angle_interval_in_radians ) 
 {
   Create( c, angle_interval_in_radians );
 }
 
 ON_Arc::ON_Arc( const ON_Plane& p, double r, double angle_in_radians )
-       : m_angle(0.0,2.0*ON_PI)
 {
   Create( p, r, angle_in_radians );
 }
 
 ON_Arc::ON_Arc( const ON_3dPoint& C, double r, double angle_in_radians )
-       : m_angle(0.0,2.0*ON_PI)
 {
   Create( C, r, angle_in_radians );
 }
 
 ON_Arc::ON_Arc( const ON_Plane& pln, const ON_3dPoint& C, double r, double angle_in_radians )
-       : m_angle(0.0,2.0*ON_PI)
 {
   Create( pln, C, r, angle_in_radians );
 }
 
-ON_Arc::ON_Arc( const ON_2dPoint& P, const ON_2dPoint& Q, const ON_2dPoint& R )
-       : m_angle(0.0,2.0*ON_PI)
+ON_Arc::ON_Arc( const ON_2dPoint& P, const ON_2dPoint& Q, const ON_2dPoint& R ) 
 {
   Create( P, Q, R );
 }
 
 ON_Arc::ON_Arc( const ON_3dPoint& P, const ON_3dPoint& Q, const ON_3dPoint& R )
-       : m_angle(0.0,2.0*ON_PI)
 {
   Create( P, Q, R );
 }
 
-ON_Arc& ON_Arc::operator=( const ON_Circle& c )
+ON_Arc& ON_Arc::operator=( const ON_Circle& src )
 {
-
-#if defined(ON_COMPILER_IRIX)
-  plane = c.plane;
-  radius = c.radius;
-#else
-  ON_Circle::operator=(c);
-#endif
-
-  m_angle.Set(0.0,2.0*ON_PI);
+  if (this != &src)
+  {
+    ON_Circle::operator=(src);
+    m_angle = ON_Interval::ZeroToTwoPi;
+  }
   return *this;
 }
 
@@ -130,7 +122,7 @@ bool ON_Arc::Create( // arc is parallel to XY plane
   )
 {
   ON_Plane p;
-  p.CreateFromNormal( center, ON_zaxis );
+  p.CreateFromNormal( center, ON_3dVector::ZAxis );
   return Create( ON_Circle(p,r), ON_Interval( 0.0, angle_radians ) );
 }
 
@@ -155,7 +147,7 @@ bool ON_Arc::Create( // arc through 3 2d points
 {
   ON_Circle c(P,Q,R);
   double a = 0.0;
-  c.ClosestPointTo( R, &a );
+  c.ClosestPointTo( ON_3dPoint(R), &a );
   return Create( c, ON_Interval(0.0,a) );
 }
 
@@ -225,8 +217,7 @@ bool ON_Arc::Create(
 }
 
 
-ON_Arc::~ON_Arc()
-{}
+
 
 void ON_Arc::Dump( ON_TextLog& dump ) const
 {
@@ -264,10 +255,10 @@ ON_3dPoint ON_Arc::EndPoint() const
 
 bool ON_Arc::IsValid() const
 {
-  return (    ON_Circle::IsValid()
+  return (    ON_Circle::IsValid() 
            && m_angle.IsValid()
-           && AngleRadians() > ON_ZERO_TOLERANCE
-           && AngleRadians() <= 2.0*ON_PI+ON_ZERO_TOLERANCE)
+           && AngleRadians() > ON_ZERO_TOLERANCE 
+           && AngleRadians() <= 2.0*ON_PI+ON_ZERO_TOLERANCE) 
          ? true : false;
 }
 
@@ -304,7 +295,7 @@ bool ON_Arc::GetBoundingBox(
 
 bool ON_Arc::IsCircle() const
 {
-  return (fabs(fabs(AngleRadians()) - 2.0*ON_PI) <= ON_ZERO_TOLERANCE)
+  return (fabs(fabs(AngleRadians()) - 2.0*ON_PI) <= ON_ZERO_TOLERANCE) 
          ? true : false;
 }
 
@@ -339,7 +330,7 @@ ON_Interval ON_Arc::DomainDegrees() const
 
 bool ON_Arc::SetAngleRadians( double a )
 {
-  if ( a < 0.0 )
+  if ( a < 0.0 ) 
   {
     double a0 = m_angle.m_t[0];
     m_angle.Set(a0+a,a0);
@@ -354,7 +345,7 @@ bool ON_Arc::SetAngleRadians( double a )
 
 bool ON_Arc::SetAngleIntervalRadians( ON_Interval angle_in_radians )
 {
-  bool rc = angle_in_radians.IsIncreasing()
+  bool rc = angle_in_radians.IsIncreasing() 
             && angle_in_radians.Length() < (1.0+ON_SQRT_EPSILON)*2.0*ON_PI;
   if (rc)
   {
@@ -382,7 +373,7 @@ bool ON_Arc::Trim( ON_Interval domain)
 
 bool ON_ArcCurve::IsContinuous(
     ON::continuity c,
-    double t,
+    double t, 
     int*,   // hint                - formal parameter intentionally ignored in this virtual function
     double, // point_tolerance     - formal parameter intentionally ignored in this virtual function
     double, // d1_tolerance        - formal parameter intentionally ignored in this virtual function
@@ -402,22 +393,22 @@ bool ON_ArcCurve::IsContinuous(
   {
     switch(c)
     {
-    case ON::unknown_continuity:
-    case ON::C0_continuous:
-    case ON::C1_continuous:
-    case ON::C2_continuous:
-    case ON::G1_continuous:
-    case ON::G2_continuous:
-    case ON::Cinfinity_continuous:
-    case ON::Gsmooth_continuous:
+    case ON::continuity::unknown_continuity:
+    case ON::continuity::C0_continuous:
+    case ON::continuity::C1_continuous:
+    case ON::continuity::C2_continuous:
+    case ON::continuity::G1_continuous:
+    case ON::continuity::G2_continuous:
+    case ON::continuity::Cinfinity_continuous:
+    case ON::continuity::Gsmooth_continuous:
       // rc = true;
       break;
 
-    case ON::C0_locus_continuous:
-    case ON::C1_locus_continuous:
-    case ON::C2_locus_continuous:
-    case ON::G1_locus_continuous:
-    case ON::G2_locus_continuous:
+    case ON::continuity::C0_locus_continuous:
+    case ON::continuity::C1_locus_continuous:
+    case ON::continuity::C2_locus_continuous:
+    case ON::continuity::G1_locus_continuous:
+    case ON::continuity::G2_locus_continuous:
       // open arc is locus discontinuous at end parameter.
       // By convention (see ON::continuity comments) it
       // is locus continuous at start parameter.
@@ -539,7 +530,7 @@ int ON_Arc::GetNurbForm( ON_NurbsCurve& nurbscurve ) const
 		    CV[i].z +=  b * plane.origin.z;
 		    CV[i].w = a;
 	    }
-
+      
       //for ( i = 1; i < span_count; i += 2 ) {
       //  t = CV[i].w;
       //  c = 1.0/t;
@@ -555,8 +546,8 @@ int ON_Arc::GetNurbForm( ON_NurbsCurve& nurbscurve ) const
 */
 
 // returns parameters of point on arc that is closest to given point
-bool ON_Arc::ClosestPointTo(
-       const ON_3dPoint& pt,
+bool ON_Arc::ClosestPointTo( 
+       const ON_3dPoint& pt, 
        double* t
        ) const
 {
@@ -564,20 +555,20 @@ bool ON_Arc::ClosestPointTo(
   double tt, a;
   if ( !t )
     t =&tt;
-  ON_BOOL32 rc = ON_Circle::ClosestPointTo(pt,t);
+  bool rc = ON_Circle::ClosestPointTo(pt,t);
   if (rc) {
     if ( *t < m_angle[0] ) {
       a = 0.5*(m_angle[0] + m_angle[1] - 2.0*ON_PI);
       if ( *t < a )
         *t = m_angle[1];
-      else
+      else 
         *t = m_angle[0];
     }
     else if ( *t > m_angle[1] ) {
       a = 0.5*(m_angle[0] + m_angle[1] + 2.0*ON_PI);
       if ( *t > a )
         *t = m_angle[0];
-      else
+      else 
         *t = m_angle[1];
     }
   }
@@ -607,12 +598,12 @@ bool ON_Arc::ClosestPointTo(
       *t = m_angle[0] + s;
   }
 
-
+      
   return rc;
 }
 
 // returns point on circle that is arc to given point
-ON_3dPoint ON_Arc::ClosestPointTo(
+ON_3dPoint ON_Arc::ClosestPointTo( 
        const ON_3dPoint& pt
        ) const
 {

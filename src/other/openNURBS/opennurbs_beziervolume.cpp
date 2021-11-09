@@ -16,6 +16,14 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 bool ON_BezierCage::Read(ON_BinaryArchive& archive)
 {
   Destroy();
@@ -126,9 +134,7 @@ bool ON_BezierCage::Write(ON_BinaryArchive& archive) const
       rc = archive.WriteInt(m_order[2]);
     int i,j,k;
     const int cv_dim = m_is_rat?(m_dim+1):m_dim;
-    double* bogus_cv = (double*)alloca(cv_dim*sizeof(*bogus_cv));
-    for ( i = 0; i < cv_dim; i++ )
-      bogus_cv[i] = ON_UNSET_VALUE;
+    double* bogus_cv = 0;
     for(i = 0; i < m_order[0] && rc; i++)
     {
       for(j = 0; j < m_order[1] && rc; j++)
@@ -137,11 +143,22 @@ bool ON_BezierCage::Write(ON_BinaryArchive& archive) const
         {
           const double* cv = CV(i,j,k);
           if ( !cv )
+          {
+            if ( 0 == bogus_cv )
+            {
+              bogus_cv = (double*)onmalloc(cv_dim*sizeof(*bogus_cv));
+              for ( int n = 0; n < cv_dim; n++ )
+                bogus_cv[n] = ON_UNSET_VALUE;
+            }
             cv = bogus_cv;
+          }
           rc = archive.WriteDouble(cv_dim,cv);
         }
       }
     }
+
+    if ( 0 != bogus_cv )
+      onfree(bogus_cv);
 
     if ( !archive.EndWrite3dmChunk() )
     {
@@ -231,7 +248,7 @@ ON_BezierCage& ON_BezierCage::operator=(const ON_BezierCage& src)
 
 bool ON_BezierCage::IsValid() const
 {
-  if ( m_cv == NULL )
+  if ( m_cv == nullptr )
     return false;
 
   if ( m_order[0] < 2 )
@@ -291,21 +308,20 @@ void ON_BezierCage::Dump( ON_TextLog& dump ) const
                (m_is_rat) ? "rational" : "non-rational" );
   if ( !m_cv ) 
   {
-    dump.Print("  NULL cv array\n");
+    dump.Print("  nullptr cv array\n");
   }
   else 
   {
     int i,j;
-    char sPreamble[128]; 
-    memset(sPreamble,0,sizeof(sPreamble));
+    char sPreamble[128] = { 0 };
+    const size_t sPremable_capacity = sizeof(sPreamble) / sizeof(sPreamble[0]);
     for ( i = 0; i < m_order[0]; i++ )
     {
       for ( j = 0; j < m_order[1]; j++ )
       {
         if ( i > 0 || j > 0)
           dump.Print("\n");
-        sPreamble[0] = 0;
-        sprintf(sPreamble,"  CV[%2d][%2d]",i,j);
+        ON_String::FormatIntoBuffer(sPreamble, sPremable_capacity,"  CV[%2d][%2d]", i, j);
         dump.PrintPointList( m_dim, m_is_rat, 
                           m_order[2], m_cv_stride[2],
                           CV(i,j,0), 
@@ -462,7 +478,7 @@ void ON_BezierCage::EmergencyDestroy()
 bool ON_BezierCage::GetBBox( // returns true if successful
        double* boxmin,    // minimum
        double* boxmax,    // maximum
-       int bGrowBox  // true means grow box
+       bool bGrowBox  // true means grow box
        ) const
 {
   int i, j;
@@ -527,15 +543,13 @@ bool ON_BezierCage::Rotate(
 
 bool ON_BezierCage::Translate( const ON_3dVector& delta )
 {
-  ON_Xform tr;
-  tr.Translation( delta );
+  ON_Xform tr(ON_Xform::TranslationTransformation( delta ));
   return Transform( tr );
 }
 
 bool ON_BezierCage::Scale( double x )
 {
-  ON_Xform s;
-  s.Scale( x, x, x );
+  ON_Xform s(ON_Xform::DiagonalTransformation(x));
   return Transform( s );
 }
 
@@ -559,6 +573,9 @@ bool ON_BezierCage::Evaluate( // returns false if unable to evaluate
   const double* CVi;
   const double* CVij;
   const double* CVijk;
+  void* freeme1 = 0;
+  void* freeme2 = 0;
+  size_t sz;
 
   if ( der_count > 0 )
   {
@@ -566,14 +583,17 @@ bool ON_BezierCage::Evaluate( // returns false if unable to evaluate
     ON_ERROR("ON_BezierCage::Evaluate does not evaluate derivatives");
   }
 
-  i = cvdim*sizeof(*vtmp);
-  vtmp = m_is_rat ? (i < ((int)(10*4*sizeof(vtmparray[0]))) ? vtmparray : (double*)alloca(i)) : v;
-  memset(vtmp,0,i);
+  sz = cvdim*sizeof(*vtmp);
+  vtmp = m_is_rat 
+       ? (sz <= sizeof(vtmparray) ? vtmparray : (double*)(freeme1 = onmalloc(sz))) 
+       : v;
+  memset(vtmp,0,sz);
 
   // get arrays to hold values of Bernstein basis functions
-  Bj = ((m_order[1]+m_order[2]) <= 64) 
-    ? &Barray[0] 
-    : ((double*)alloca((m_order[1]+m_order[2])*sizeof(*Bj)));
+  sz = (m_order[1]+m_order[2])*sizeof(*Bj);
+  Bj = (sz <= sizeof(Barray))
+     ? Barray 
+     : ((double*)(freeme2=onmalloc( sz ) ));
   Bk = Bj + m_order[1];
 
   const int d2 = m_order[2]-1;
@@ -622,6 +642,12 @@ bool ON_BezierCage::Evaluate( // returns false if unable to evaluate
     }
   }
 
+  if ( 0 != freeme1 )
+    onfree(freeme1);
+  
+  if ( 0 != freeme2 )
+    onfree(freeme2);
+
   return (0 == der_count);
 }
 
@@ -641,7 +667,10 @@ ON_3dPoint ON_BezierCage::PointAt(
   }
   else
   {
-    double* v = (double*)alloca(m_dim*sizeof(*v));
+    double stack_buffer[16];
+    double* v;
+    size_t sizeof_buffer = m_dim*sizeof(*v);
+    v = (sizeof_buffer <= sizeof(stack_buffer)) ? stack_buffer : (double*)onmalloc(sizeof_buffer);
     v[0] = 0.0;
     v[1] = 0.0;
     v[2] = 0.0;
@@ -649,6 +678,8 @@ ON_3dPoint ON_BezierCage::PointAt(
     pt.x = v[0];
     pt.y = v[1];
     pt.z = v[2];
+    if ( v != stack_buffer )
+      onfree(v);
   }
   return pt;
 }
@@ -665,7 +696,10 @@ ON_3dPoint ON_BezierCage::PointAt( ON_3dPoint rst ) const
   }
   else
   {
-    double* v = (double*)alloca(m_dim*sizeof(*v));
+    double stack_buffer[16];
+    double* v;
+    size_t sizeof_buffer = m_dim*sizeof(*v);
+    v = (sizeof_buffer <= sizeof(stack_buffer)) ? stack_buffer : (double*)onmalloc(sizeof_buffer);
     v[0] = 0.0;
     v[1] = 0.0;
     v[2] = 0.0;
@@ -673,6 +707,8 @@ ON_3dPoint ON_BezierCage::PointAt( ON_3dPoint rst ) const
     pt.x = v[0];
     pt.y = v[1];
     pt.z = v[2];
+    if ( v != stack_buffer )
+      onfree(v);
   }
   return pt;
 }
@@ -703,7 +739,7 @@ double* ON_BezierCage::CV( int i, int j, int k ) const
 #if defined(ON_DEBUG)
   if ( 0 == m_cv )
   {
-    ON_ERROR("ON_BezierCage::CV - NULL m_cv");
+    ON_ERROR("ON_BezierCage::CV - nullptr m_cv");
     return 0;
   }
   if ( i < 0 || i >= m_order[0] || j< 0 || j >= m_order[1] || k < 0 || k >= m_order[2])
@@ -1158,6 +1194,7 @@ ON_BezierCageMorph::~ON_BezierCageMorph()
 {
 }
 
+
 bool ON_BezierCageMorph::Create(
     ON_3dPoint P0,
     ON_3dPoint P1,
@@ -1181,7 +1218,7 @@ bool ON_BezierCageMorph::Create(
   ON_3dVector X = P1-P0;
   ON_3dVector Y = P2-P0;
   ON_3dVector Z = P3-P0;
-  ON_Xform xform(1.0);
+  ON_Xform xform(ON_Xform::IdentityTransformation);
   xform[0][0] = X.x;
   xform[1][0] = X.y;
   xform[2][0] = X.z;

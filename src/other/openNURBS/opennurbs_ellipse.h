@@ -38,19 +38,19 @@ public:
 
   ON_Ellipse& operator=(const ON_Circle&);
 
-  ON_BOOL32 Create(
+  bool Create(
     const ON_Plane&,  // point on the plane
     double, double     // radii for x and y vectors
     );
 
-  ON_BOOL32 Create(
+  bool Create(
     const ON_Circle&
     );
 
-  ON_BOOL32 IsValid() const; // returns true if all fields contain reasonable
+  bool IsValid() const; // returns true if all fields contain reasonable
                         // information and equation jibes with point and Z.
 
-  ON_BOOL32 IsCircle() const; // returns true is ellipse is a circle
+  bool IsCircle() const; // returns true is ellipse is a circle
 
   double Radius( 
     int // 0 = x axis radius, 1 = y axis radius
@@ -80,7 +80,7 @@ public:
   ON_3dVector CurvatureAt( double ) const;  // returns curvature vector
 
   // returns parameters of point on ellipse that is closest to given point
-  ON_BOOL32 ClosestPointTo( 
+  bool ClosestPointTo( 
          const ON_3dPoint&, 
          double*
          ) const;
@@ -94,30 +94,30 @@ public:
   ON_2dVector GradientAt( const ON_2dPoint& ) const;
 
   // rotate ellipse about its center
-  ON_BOOL32 Rotate(
+  bool Rotate(
         double,              // sin(angle)
         double,              // cos(angle)
         const ON_3dVector&  // axis of rotation
         );
-  ON_BOOL32 Rotate(
+  bool Rotate(
         double,              // angle in radians
         const ON_3dVector&  // axis of rotation
         );
 
   // rotate ellipse about a point and axis
-  ON_BOOL32 Rotate(
+  bool Rotate(
         double,              // sin(angle)
         double,              // cos(angle)
         const ON_3dVector&, // axis of rotation
         const ON_3dPoint&   // center of rotation
         );
-  ON_BOOL32 Rotate(
+  bool Rotate(
         double,              // angle in radians
         const ON_3dVector&, // axis of rotation
         const ON_3dPoint&   // center of rotation
         );
 
-  ON_BOOL32 Translate(
+  bool Translate(
         const ON_3dVector&
         );
 

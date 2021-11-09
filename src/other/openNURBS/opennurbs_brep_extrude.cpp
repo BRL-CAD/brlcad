@@ -16,6 +16,14 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 static 
 void ON_BrepExtrudeHelper_ReserveSpace( 
           ON_Brep& brep, 
@@ -49,7 +57,7 @@ void ON_BrepExtrudeHelper_ReserveSpace(
 
 static
 ON_SumSurface* ON_BrepExtrudeHelper_MakeSumSrf( const ON_Curve& path_curve,
-                                                 const ON_BrepEdge& base_edge, ON_BOOL32 bRev )
+                                                 const ON_BrepEdge& base_edge, bool bRev )
 {
   ON_SumSurface* sum_srf = 0;
   // create side surface
@@ -71,7 +79,7 @@ ON_SumSurface* ON_BrepExtrudeHelper_MakeSumSrf( const ON_Curve& path_curve,
 
 static
 ON_NurbsSurface* ON_BrepExtrudeHelper_MakeConeSrf( const ON_3dPoint& apex_point,
-                                                 const ON_BrepEdge& edge, ON_BOOL32 bRev )
+                                                 const ON_BrepEdge& edge, bool bRev )
 {
   // The "s" parameter runs along the edge.
   // The "t" parameter is the ruling parameter;
@@ -110,15 +118,16 @@ ON_NurbsSurface* ON_BrepExtrudeHelper_MakeConeSrf( const ON_3dPoint& apex_point,
 }
 
 static
-ON_BOOL32 ON_BrepExtrudeHelper_MakeSides(
+bool ON_BrepExtrudeHelper_MakeSides(
           ON_Brep& brep,
           int loop_index,
           const ON_Curve& path_curve,
-          ON_BOOL32 bCap,
+          bool bCap,
           ON_SimpleArray<int>& side_face_index
           )
 {
-  int lti, ti, i, vid[4], eid[4], bRev3d[4];
+  int lti, ti, i, vid[4], eid[4];
+  bool bRev3d[4];
 
   // indices of new faces appended to the side_face_index[] array 
   // (1 face index for each trim, -1 is used for singular trims)
@@ -546,6 +555,9 @@ int ON_BrepExtrudeFace(
 {
   int rc = 0; // returns 1 for success with no cap, 2 for success with a cap
 
+  brep.DestroyMesh(ON::any_mesh);
+  brep.DestroyRegionTopology();
+
   if ( face_index < 0 || face_index >= brep.m_F.Count() )
     return false;
 
@@ -674,6 +686,9 @@ int ON_BrepExtrudeLoop(
   ON_SimpleArray<int> side_face_index; // index of new face above brep.m_L[loop_index].m_ti[lti]
   ON_3dVector path_vector;
 
+  brep.DestroyMesh(ON::any_mesh);
+  brep.DestroyRegionTopology();
+
   const int face_count0 = brep.m_F.Count();
 
   if ( loop_index < 0 || loop_index >= brep.m_L.Count() )
@@ -716,6 +731,9 @@ int ON_BrepExtrudeEdge(
 {
   ON_3dVector path_vector;
 
+  brep.DestroyMesh(ON::any_mesh);
+  brep.DestroyRegionTopology();
+
   if ( edge_index < 0 && edge_index >= brep.m_E.Count() )
     return false;
 
@@ -731,7 +749,8 @@ int ON_BrepExtrudeEdge(
   if ( !sum_srf )
     return false;
 
-  int vid[4], eid[4], bRev3d[4];
+  int vid[4], eid[4];
+  bool bRev3d[4];
 
   vid[0] = brep.m_E[edge_index].m_vi[bRev?0:1];
   vid[1] = brep.m_E[edge_index].m_vi[bRev?1:0];
@@ -743,10 +762,10 @@ int ON_BrepExtrudeEdge(
   eid[2] = -1;
   eid[3] = -1;
 
-  bRev3d[0] = bRev?0:1;
-  bRev3d[1] = 0;
-  bRev3d[2] = 0;
-  bRev3d[3] = 0;
+  bRev3d[0] = bRev ? false : true;
+  bRev3d[1] = false;
+  bRev3d[2] = false;
+  bRev3d[3] = false;
 
   return brep.NewFace( sum_srf, vid, eid, bRev3d ) ? true : false;
 }
@@ -765,6 +784,9 @@ bool ON_BrepExtrude(
   const int ecount0 = brep.m_E.Count();
   const int fcount0 = brep.m_F.Count();
 
+  brep.DestroyMesh(ON::any_mesh);
+  brep.DestroyRegionTopology();
+
   const ON_3dPoint PathStart = path_curve.PointAtStart();
   ON_3dPoint P = path_curve.PointAtEnd();
   if ( !PathStart.IsValid() || !P.IsValid() )
@@ -773,8 +795,7 @@ bool ON_BrepExtrude(
   if ( !height.IsValid() || height.Length() <= ON_ZERO_TOLERANCE )
     return false;
 
-  ON_Xform tr;
-  tr.Translation(height);
+  ON_Xform tr(ON_Xform::TranslationTransformation(height));
 
   // count number of new sides
   int side_count = 0;
@@ -800,6 +821,8 @@ bool ON_BrepExtrude(
   brep.m_C2.Reserve( brep.m_C2.Count() + i );
   brep.m_L.Reserve( lcount0 + side_count + (bCap?lcount0:0) );
   i = side_count + (bCap?ecount0:side_count);
+  if (side_count == 1)//NewFace(srf,vid,eid,bRev3d), down below, always reserves 4 edges.
+    i++;
   brep.m_E.Reserve( ecount0 + i );
   brep.m_C3.Reserve( brep.m_C3.Count() + i );
   i = side_count + (bCap?fcount0:0);
@@ -966,7 +989,7 @@ bool ON_BrepExtrude(
   }
 
   // build sides
-  int bRev3d[4] = {0,0,1,1};
+  bool bRev3d[4] = {false,false,true,true};
   int vid[4], eid[4];
   if( bOK ) for ( ei = 0; ei < ecount0; ei++ )
   {
@@ -1030,7 +1053,7 @@ bool ON_BrepExtrude(
 
   if ( !bOK )
   {
-    for ( vi = brep.m_V.Count(); vi >= vcount0; vi-- )
+    for ( vi = brep.m_V.Count()-1; vi >= vcount0; vi-- )
     {
       brep.DeleteVertex(brep.m_V[vi]);
     }
@@ -1136,7 +1159,8 @@ bool ON_BrepConeLoop(
   if ( loop_index < 0 && loop_index >= brep.m_L.Count() )
     return false;
 
-  int lti, ti, i, vid[4], eid[4], bRev3d[4];
+  int lti, ti, i, vid[4], eid[4];
+  bool bRev3d[4];
 
   // indices of new faces appended to the side_face_index[] array 
   // (1 face index for each trim, -1 is used for singular trims)
@@ -1242,7 +1266,8 @@ int ON_BrepConeEdge(
   if ( !cone_srf )
     return false;
 
-  int vid[4], eid[4], bRev3d[4];
+  int vid[4], eid[4];
+  bool bRev3d[4];
 
   vid[0] = brep.m_E[edge_index].m_vi[0];
   vid[1] = brep.m_E[edge_index].m_vi[1];
@@ -1254,10 +1279,10 @@ int ON_BrepConeEdge(
   eid[2] = -1;
   eid[3] = -1;
 
-  bRev3d[0] = 0;
-  bRev3d[1] = 0;
-  bRev3d[2] = 0;
-  bRev3d[3] = 0;
+  bRev3d[0] = false;
+  bRev3d[1] = false;
+  bRev3d[2] = false;
+  bRev3d[3] = false;
 
   return brep.NewFace( cone_srf, vid, eid, bRev3d ) ? true : false;
 }

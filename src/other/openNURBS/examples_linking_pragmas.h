@@ -1,67 +1,30 @@
-#if defined(_MSC_VER)
+#if defined(ON_COMPILER_MSC)
 
 // This file is specific to Micrsoft's compiler.
 // It contains linking pragmas for building the opennurbs examples.
 
 #pragma once
 
-#if defined(ON_DLL_EXPORTS)
+#if defined(OPENNURBS_EXPORTS) || defined(ON_COMPILING_OPENNURBS)
 // If you get the following error, your compiler settings
-// indicate you are building opennurbs as a DLL. This file
-// is used for linking with opennurbs.
-#error This file contains linking pragmas for using opennurbs.
+// indicate you are building an opennurbs library.
+// This file is used for linking with opennurbs libraries
+// that have been previously built.
+#error This file contains linking pragmas for using the opennurbs library.
 #endif
 
-#if !defined(ON_MSC_SOLUTION_DIR)
-#define ON_MSC_SOLUTION_DIR ".."
-#endif
-
-#if !defined(ON_MSC_LIB_DIR)
-
-#if defined(WIN64)
-
-// x64 (64 bit) static libraries
-
-#if defined(NDEBUG)
-
-// Release x64 (64 bit) libs
-#define ON_MSC_LIB_DIR "x64/Release"
-
-#else // _DEBUG
-
-// Debug x64 (64 bit) libs
-#define ON_MSC_LIB_DIR "x64/Debug"
-
-#endif // NDEBUG else _DEBUG
-
-#else // WIN32
-
-// x86 (32 bit) static libraries
-
-#if defined(NDEBUG)
-
-// Release x86 (32 bit) libs
-#define ON_MSC_LIB_DIR "Release"
-
-#else // _DEBUG
-
-// Debug x86 (32 bit) libs
-#define ON_MSC_LIB_DIR "Debug"
-
-#endif // NDEBUG else _DEBUG
-
-#endif // WIN64 else WIN32
-
-#endif //  !defined(ON_MSC_LIB_DIR)
-
-#if defined(ON_DLL_IMPORTS)
+#if defined(OPENNURBS_IMPORTS)
 #pragma message( " --- dynamically linking opennurbs (DLL)." )
-#pragma comment(lib, "\"" ON_MSC_SOLUTION_DIR "/" ON_MSC_LIB_DIR "/" "opennurbs.lib" "\"")
+#pragma comment(lib, "\"" OPENNURBS_OUTPUT_DIR "/" "opennurbs_public.lib" "\"")
 #else
 #pragma message( " --- statically linking opennurbs." )
-#pragma comment(lib, "\"" ON_MSC_SOLUTION_DIR "/" ON_MSC_LIB_DIR "/" "zlib.lib" "\"")
-#pragma comment(lib, "\"" ON_MSC_SOLUTION_DIR "/" ON_MSC_LIB_DIR "/" "opennurbs_staticlib.lib" "\"")
+#pragma comment(lib, "\"" OPENNURBS_OUTPUT_DIR "/" "opennurbs_public_staticlib.lib" "\"")
+#pragma comment(lib, "\"" OPENNURBS_OUTPUT_DIR "/" "zlib.lib" "\"")
+#if defined(OPENNURBS_FREETYPE_SUPPORT)
+#pragma comment(lib, "\"" OPENNURBS_OUTPUT_DIR "/" "freetype263.lib" "\"")
 #endif
-
+#pragma comment(lib, "rpcrt4.lib")
+#pragma comment(lib, "shlwapi.lib")
+#endif
 
 #endif

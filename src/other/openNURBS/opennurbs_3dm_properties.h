@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -22,17 +22,41 @@
 class ON_CLASS ON_3dmRevisionHistory
 {
 public:
+  /*
+    Default construction sets this = ON_3dmRevisionHistory::Empty
+  */
   ON_3dmRevisionHistory();
-  ~ON_3dmRevisionHistory();
-  // C++ default operator= and copy constructor work fine.
 
-  void Default();
-  ON_BOOL32 IsValid() const;
+  ~ON_3dmRevisionHistory() = default;
+
+  ON_3dmRevisionHistory(const ON_3dmRevisionHistory&) = default;
+  ON_3dmRevisionHistory& operator=(const ON_3dmRevisionHistory&) = default;
+
+  /*
+  Description:
+    The Empty revision has a revision number zero,
+    all time values set to zero and all string
+    values empty.
+  */
+  static const ON_3dmRevisionHistory Empty;
+
+  /*
+  Returns:
+    A revision history with
+      m_revision_count = 1
+      m_create_time = now
+      m_last_edit_time = now
+      m_sCreatedBy = current user
+      m_sLastEditedBy = current user
+  */
+  static ON_3dmRevisionHistory FirstRevision();
+
   int NewRevision(); // returns updated revision count
 
-  ON_BOOL32 Read( ON_BinaryArchive& );
-  ON_BOOL32 Write( ON_BinaryArchive& ) const;
-
+  bool IsValid() const;
+  bool IsEmpty() const;
+  bool Read( ON_BinaryArchive& );
+  bool Write( ON_BinaryArchive& ) const;
   void Dump( ON_TextLog& ) const;
 
   /*
@@ -51,9 +75,9 @@ public:
 
   ON_wString m_sCreatedBy;
   ON_wString m_sLastEditedBy;
-  struct tm  m_create_time;     // UCT create time
-  struct tm  m_last_edit_time;  // UCT las edited time
-  int        m_revision_count;
+  struct tm  m_create_time;        // UCT create time
+  struct tm  m_last_edit_time;     // UCT las edited time
+  int        m_revision_count = 0;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -62,15 +86,15 @@ class ON_CLASS ON_3dmNotes
 {
 public:
   ON_3dmNotes();
-  ON_3dmNotes( const ON_3dmNotes& );
   ~ON_3dmNotes();
-  ON_3dmNotes& operator=(const ON_3dmNotes&);
 
-  void Default();
-  ON_BOOL32 IsValid() const;
+  static const ON_3dmNotes Empty;
 
-  ON_BOOL32 Read( ON_BinaryArchive& );
-  ON_BOOL32 Write( ON_BinaryArchive& ) const;
+  bool IsValid() const;
+  bool IsEmpty() const;
+
+  bool Read( ON_BinaryArchive& );
+  bool Write( ON_BinaryArchive& ) const;
 
   void Dump(ON_TextLog&) const;
 
@@ -79,9 +103,10 @@ public:
   // Interface - this information is serialized.  Applications
   // may want to derive a runtime class that has additional
   // window and font information.
-  ON_wString m_notes; // UNICODE
-  ON_BOOL32 m_bVisible;    // true if notes window is showing
-  ON_BOOL32 m_bHTML;       // true if notes are in HTML
+  ON_wString m_notes;
+
+  bool m_bVisible;    // true if notes window is showing
+  bool m_bHTML;       // true if notes are in HTML
 
   // last window position
   int m_window_left;
@@ -97,15 +122,16 @@ class ON_CLASS ON_3dmApplication
   // application that created the 3dm file
 public:
   ON_3dmApplication();
-  ON_3dmApplication( const ON_3dmApplication& );
   ~ON_3dmApplication();
-  ON_3dmApplication& operator=(const ON_3dmApplication&);
 
-  void Default();
-  ON_BOOL32 IsValid() const;
+  static const ON_3dmApplication Empty;
 
-  ON_BOOL32 Read( ON_BinaryArchive& );
-  ON_BOOL32 Write( ON_BinaryArchive& ) const;
+  bool IsValid() const;
+
+  bool IsEmpty() const;
+
+  bool Read( ON_BinaryArchive& );
+  bool Write( ON_BinaryArchive& ) const;
 
   void Dump( ON_TextLog& ) const;
 
@@ -119,15 +145,29 @@ public:
 class ON_CLASS ON_3dmProperties
 {
 public:
-  ON_3dmProperties();
-  ~ON_3dmProperties();
-  ON_3dmProperties(const ON_3dmProperties&);
-  ON_3dmProperties& operator=(const ON_3dmProperties&);
+  ON_3dmProperties() = default;
+  ~ON_3dmProperties() = default;;
+  ON_3dmProperties(const ON_3dmProperties&) = default;
+  ON_3dmProperties& operator=(const ON_3dmProperties&) = default;
 
-  void Default();
+  static const ON_3dmProperties Empty;
 
-  ON_BOOL32 Read(ON_BinaryArchive&);
-  ON_BOOL32 Write(ON_BinaryArchive&) const;
+  bool IsEmpty() const;
+
+  bool Read(
+    ON_BinaryArchive& archive
+    );
+
+  /*
+  Remarks:
+    If archive.ArchiveFileName() is not empty, that value is 
+    written in place of m_3dmArchiveFullPathName in the 3dm archive.
+    If archive.ArchiveFileName() is empty, then m_3dmArchiveFullPathName
+    is written in the 3dm archive.
+  */
+  bool Write(
+    ON_BinaryArchive& archive
+    ) const;
 
   void Dump( ON_TextLog& ) const;
 
@@ -135,6 +175,10 @@ public:
   ON_3dmNotes            m_Notes;
   ON_WindowsBitmap       m_PreviewImage;     // preview image of model
   ON_3dmApplication      m_Application;      // application that created 3DM file
+  
+  // name of .3dm archive when it was written.  Used to find referenced files
+  // when the archive is moved or copied and then read.
+  ON_wString             m_3dmArchiveFullPathName; 
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////

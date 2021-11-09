@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2018 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -46,6 +45,87 @@ public:
   */
   ON_TextLog( ON_wString& s );
 
+
+  //////////////////////////////////////////////////////////////
+  //
+  // Level of detail interface
+  //
+
+  /// <summary>
+  /// ON_TextLog::LevelOfDetail determines ow much detail is printed. Functions that have an ON_TextLog
+  /// parameter, like the Dump() functions, may use the level of detail to tailor their output.
+  /// may use the level of detail to tailor their output.
+  /// </summary>
+  enum class LevelOfDetail : unsigned char
+  {
+    /// <summary>
+    /// A brief summary or synopsis.
+    /// </summary>
+    Minimum = 0,
+
+    /// <summary>
+    /// The default level of detail.
+    /// </summary>
+    Medium = 1,
+
+    /// <summary>
+    /// A verbose description that may be so long it obscures the important points.
+    /// </summary>
+    Maximum = 2
+  };
+
+  static ON_TextLog::LevelOfDetail LevelOfDetailFromUnsigned(
+    unsigned int level_of_detail
+  );
+
+  /*
+  Description:
+    Set the level of detail to print.
+  Parameters:
+    level_of_detail - [in]
+      (default = ON_TextLog::LevelOfDetail::Medium)
+  */
+  void SetLevelOfDetail(ON_TextLog::LevelOfDetail level_of_detail);
+
+  /*
+  Returns:
+    Level of detail to print
+    0 = minimum level of detail
+    4 = maximum level of detail
+  */
+  ON_TextLog::LevelOfDetail GetLevelOfDetail() const;
+
+  /*
+  Parameter:
+    level_of_detail - [in]
+  Returns:
+    True if this text log's level of detail the same or more detailed than
+    the amount specified by level_of_detail.
+  */
+  bool LevelOfDetailIsAtLeast(ON_TextLog::LevelOfDetail level_of_detail);
+
+  /*
+  Description:
+    ON_TextLog::Null is a silent text log and can be used when no output
+    is desired but an ON_TextLog parameter is required.
+  */
+  static ON_TextLog Null;
+
+  /*
+  Returns:
+    True if this is ON_TextLog::Null.
+  */
+  bool IsNull() const;
+
+  /*
+  Returns:
+    True if the text is being used to calculate a geometric content SHA1 hash
+    and non-geometry information that varies based on time, computer, or user 
+    should not be printed.
+  */
+  bool IsTextHash() const;
+
+public:
   virtual ~ON_TextLog();
 
   void SetDoubleFormat( const char* ); // default is %g
@@ -54,11 +134,33 @@ public:
   void SetFloatFormat( const char* ); // default is %g
   void GetFloatFormat( ON_String& ) const;
 
+  void SetColorFormat(ON_Color::TextFormat color_format);
+  ON_Color::TextFormat GetColorFormat();
+
+  /*
+  Description:
+    Returns color format to the default ON_Color::TextFormat::DecimalRGBa
+  */
+  void ClearColorFormat();
+
   void PushIndent();
   void PopIndent();
   int IndentSize() const; //  0: one tab per indent
                           // >0: number of spaces per indent
   void SetIndentSize(int);
+
+  /*
+  Returns:
+    Current indentation count
+  */
+  int IndentCount();
+  /*
+  Description:
+    Set indentation count.
+  */
+  void SetIndentCount(
+    int indent_count
+  );
   
   void PrintWrappedText( const char*, int = 60 );    // last arg is maximum line length
   void PrintWrappedText( const wchar_t*, int = 60 ); // last arg is maximum line length
@@ -67,27 +169,27 @@ public:
   Description:
     Print a formatted ASCII string of up to 2000 characters.
   Parameters:
-    format - [in] NULL terminated format control string 
+    format - [in] nullptr terminated format control string 
   Remarks:
     To print strings longer than 2000 characters, you must
     use ON_TextLog::PrintString.
   See Also:
     ON_TextLog::PrintString
   */
-  void Print( const char* format, ... );
+  void ON_VARGS_FUNC_CDECL Print(const char* format, ...);
 
   /*
   Description:
     Print a formatted INICODE string of up to 2000 characters.
   Parameters:
-    format - [in] NULL terminated format control string 
+    format - [in] nullptr terminated format control string 
   Remarks:
     To print strings longer than 2000 characters, you must
     use ON_TextLog::PrintString.
   See Also:
     ON_TextLog::PrintString
   */
-  void Print( const wchar_t* format, ... );
+  void ON_VARGS_FUNC_CDECL Print(const wchar_t* format, ...);
 
   void Print( float );
   void Print( double );
@@ -102,7 +204,7 @@ public:
 
   /*
   Description:
-    Print an unformatted UNICODE string of any length.
+    Print an unformatted wide char string of any length.
   Parameters:
     string - [in]
   */
@@ -110,16 +212,16 @@ public:
 
   /*
   Description:
-    Print an unformatted ASCII string of any length.
+    Print an unformatted UTF-8 string of any length.
   Parameters:
     string - [in]
   */
   void Print( const ON_String& string );
 
-  void Print( const ON_3dPointArray&, const char* = NULL );
+  void Print( const ON_3dPointArray&, const char* = nullptr );
   void Print( 
          const ON_Matrix&, 
-         const char* = NULL, // optional preamble
+         const char* = nullptr, // optional preamble
          int = 0             // optional number precision
     );
 
@@ -132,40 +234,82 @@ public:
 
   /*
   Description:
-    Print an unformatted ASCII string of any length.
-  Parameters:
-    s - [in] NULL terminated ASCII string.
+    Same as calling Print(" ");
   */
-  void PrintString( const char* s );
+  void PrintSpace();
 
   /*
   Description:
-    Print an unformatted UNICODE string of any length.
+    Same as calling Print("\t");
+  */
+  void PrintTab();
+
+  /*
+  Description:
+    Print an unformatted UTF-8 encoded null terminated string.
   Parameters:
-    s - [in] NULL terminated UNICODE string.
+    s - [in] UTF-8 encoded null terminated string.
+  */
+  void PrintString( const char* s );
+
+  void PrintString(ON_String s);
+  
+  /*
+  Description:
+    Print an unformatted UTF-16 or UTF-32 encoded null terminated string.
+  Parameters:
+    s - [in] UTF-16 or UTF-32 encoded null terminated string.
   */
   void PrintString( const wchar_t* s );
+  
+  void PrintString(ON_wString s);
 
-  void PrintRGB( const ON_Color& );
+  /*
+  Description:
+    Print color using the format ON_Color::TextFormat::DecimalRGB.
+  */
+  void PrintRGB( const ON_Color& color);
 
-  void PrintTime( const struct tm& );
+  /*
+  Description:
+    Print color using ON_Color::ToText(this->GetColorFormat(),0,true,*this);
+  */
+  void PrintColor(const ON_Color& color);
+
+  /*
+  Description:
+    Prints the time in the t parameter as Universal Coordinated Time in English.
+    weekday month date::hour::min::sec year
+  Parameters:
+    t - [in]
+  */
+  void PrintTime( 
+    const struct tm& t 
+  );
+
+  /*
+  Description:
+    Prints the current Universal Coordinated Time returned by the gmtime() function in English.
+    weekday month date::hour::min::sec year
+  */
+  void PrintCurrentTime();
 
   void PrintPointList( 
     int,               // dim
-    ON_BOOL32,              // true for rational points
+    bool,              // true for rational points
     int,               // count
     int,               // stride
     const double*,     // point[] array
-    const char* = NULL // optional preabmle
+    const char* = nullptr // optional preabmle
     );
 
   void PrintPointGrid( 
     int,               // dim
-    ON_BOOL32,              // true for rational points
+    bool,              // true for rational points
     int, int,          // point_count0, point_count1
     int, int,          // point_stride0, point_stride1
     const double*,     // point[] array
-    const char* = NULL // optional preabmle
+    const char* = nullptr // optional preabmle
     );
     
   void PrintKnotVector( 
@@ -188,9 +332,10 @@ public:
   ON_TextLog& operator<<( const ON_Xform& );
 
 protected:
-  FILE* m_pFile;
-  ON_wString* m_pString;
+  friend class ON_TextHash;
 
+  FILE* m_pFile = nullptr;
+  ON_wString* m_pString = nullptr;
   
   /*
   Description:
@@ -233,14 +378,193 @@ private:
 
   ON_String m_line;
 
-  int m_beginning_of_line; // 0
-  int m_indent_size;       // 0 use tabs, > 0 = number of spaces per indent level
+  int m_beginning_of_line = 1;
+
+  // size of a single indentation
+  int m_indent_size = 0;       // 0 use tabs, > 0 = number of spaces per indent level
+
+  // Number of indentations at the start of a new line
+  int m_indent_count = 0;
+
+  const bool m_bNullTextLog = false;
+  ON_TextLog::LevelOfDetail m_level_of_detail = ON_TextLog::LevelOfDetail::Medium;
+  ON_Color::TextFormat m_color_format = ON_Color::TextFormat::DecimalRGBa;
+  ON__UINT8 m_reserved1 = 0;
 
 private:
-  // no implementation
-  ON_TextLog( const ON_TextLog& );
-  ON_TextLog& operator=( const ON_TextLog& );
+  ON_TextLog( const ON_TextLog& ) = delete;
+  ON_TextLog& operator=( const ON_TextLog& ) = delete;
+};
 
+/*
+Description:
+  ON_TextLogIndent is a class used with ON_TextLog to
+  push and pop indentation.
+*/
+class ON_CLASS ON_TextLogIndent
+{
+public:
+    // The constructor calls text_log.PushIndent()
+    // and the destuctor calls text_log.PopIndent()
+  ON_TextLogIndent(
+    class ON_TextLog& text_log
+    );
+
+    // If bEnabled is true, the constructor calls text_log.PushIndent()
+    // and the destuctor calls text_log.PopIndent()
+    ON_TextLogIndent(
+      class ON_TextLog& text_log,
+      bool bEnabled
+    );
+
+  ~ON_TextLogIndent();
+
+private:
+  class ON_TextLog& m_text_log;
+  bool m_bEnabled;
+
+  // prevent use of copy construction and operator=
+  // (no implementations)
+  ON_TextLogIndent(const ON_TextLogIndent&);
+  ON_TextLogIndent& operator=(const ON_TextLogIndent&);
+};
+
+
+/*
+Description:
+  ON_TextLogLevelOfDetail is a class used with ON_TextLog to push and pop level of detail.
+*/
+class ON_CLASS ON_TextLogLevelOfDetail
+{
+public:
+
+  // The constructor saves the current level of detail and then sets the level of detail to level_of_detail.
+  ON_TextLogLevelOfDetail(
+    class ON_TextLog& text_log,
+    ON_TextLog::LevelOfDetail level_of_detail
+  );
+
+  // The destructor restores the level ot detail the saved value.
+  ~ON_TextLogLevelOfDetail();
+
+  /*
+  Returns:
+    Level of detail the text log had when the constructor was called.
+  */
+  ON_TextLog::LevelOfDetail SavedLevelOfDetail() const;
+
+private:
+  ON_TextLogLevelOfDetail() = delete;
+  ON_TextLogLevelOfDetail(const ON_TextLogLevelOfDetail&) = delete;
+  ON_TextLogLevelOfDetail& operator=(const ON_TextLogLevelOfDetail&) = delete;
+
+private:
+  class ON_TextLog& m_text_log;
+  const ON_TextLog::LevelOfDetail m_saved_level_of_detail;
+};
+
+class ON_CLASS ON_TextHash : public ON_TextLog
+{
+public:
+  ON_TextHash() = default;
+  ~ON_TextHash() = default;
+
+private:
+  ON_TextHash(const ON_TextHash&) = delete;
+  ON_TextHash& operator= (const ON_TextHash&) = delete;
+
+public:
+
+  ON_StringMapType StringMapType() const;
+
+  const class ON_Locale& StringMapLocale() const;
+
+  void SetStringMap(
+    const class ON_Locale& locale,
+    ON_StringMapType map_type
+  );
+
+  void SetStringMap(
+    ON_StringMapOrdinalType map_type
+  );
+
+  /*
+  Parameters:
+    bEnableIdRemap - [in]
+    if bEnableIdRemap is true, the sequences of
+    code points that match the format
+    XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+    where X is a hexadecimal digit (0-9, a-f, or A-F)
+    and the hyphen is literal.
+    will be replaced with an id created by 
+    ON_NextNotUniqueId(). 
+    This is used for comparing code that generates streams
+    containg new uuids.
+  */
+  void SetIdRemap(
+    bool bEnableIdRemap
+  );
+
+  /*
+  Returns:
+    True if id remap is available.
+  */
+  bool IdRemap() const;
+
+  /*
+  Description:
+    In some testing situations, the output text log can be set 
+    when it is necessary to see the text used to compute the 
+    SHA-1 hash. The has can be caluculate which no output text
+    log.
+
+  Parameters:
+    output_text_log - [in]
+      Destination text log for the mtext used to calculate the hash.
+  */
+  void SetOutputTextLog(
+    ON_TextLog* output_text_log
+  );
+
+  ON_TextLog* OutputTextLog() const;
+
+  /*
+  Returns:
+    Total number of bytes that have passed through this text log.
+  */
+  ON__UINT64 ByteCount() const;
+
+  /*
+  Returns:
+    SHA-1 hash value of the text sent to this text log.
+  */
+  ON_SHA1_Hash Hash() const;
+
+private:
+  void AppendText(const char* s) override;
+  void AppendText(const wchar_t* s) override;
+
+private:
+  bool m_bApplyStringMap = false;
+  bool m_bApplyIdRemap = false;
+  
+  ON_UUID m_remap_id = ON_nil_uuid;
+  ON_UuidPairList m_remap_id_list;
+
+  ON_StringMapType m_string_map_type = ON_StringMapType::Identity;
+  ON_StringMapOrdinalType m_string_map_ordinal_type = ON_StringMapOrdinalType::Identity;
+  ON_Locale m_string_map_local = ON_Locale::InvariantCulture;
+
+  ON_TextLog* m_output_text_log = nullptr;
+
+  static const char* Internal_ParseId(
+    const char* s,
+    ON_UUID* id
+  );
+
+  static bool Internal_IsHexDigit(char c);
+
+  ON_SHA1 m_sha1;
 };
 
 

@@ -1,5 +1,13 @@
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 static bool ON_ExtrusionPolyCurveProfileIsNotValid()
 {
   return false; // good place for a breakpoint
@@ -205,9 +213,9 @@ bool ON_GetEndCapTransformation(ON_3dPoint P, ON_3dVector T, ON_3dVector U,
                                 )
 {
   if ( scale2d )
-    scale2d->Identity();
+    *scale2d = ON_Xform::IdentityTransformation;
   if ( rot3d )
-    rot3d->Identity();
+    *rot3d = ON_Xform::IdentityTransformation;
   if ( !T.IsUnitVector() && !T.Unitize() )
     return false;
   if ( !U.IsUnitVector() && !U.Unitize() )
@@ -217,7 +225,7 @@ bool ON_GetEndCapTransformation(ON_3dPoint P, ON_3dVector T, ON_3dVector U,
   {
     N = *Normal;
     if ( !N.IsUnitVector() && !N.Unitize() )
-      N.Zero();
+      N = ON_3dVector::ZeroVector;
   }
 
   ON_Plane p0;
@@ -250,7 +258,7 @@ bool ON_GetEndCapTransformation(ON_3dPoint P, ON_3dVector T, ON_3dVector U,
       // The scale distorts the profile so that after it is rotated
       // into the miter plane, the projection of the rotated profile
       // onto the xy-plane matches the original profile.
-      ON_Xform S(0.0);
+      ON_Xform S(ON_Xform::ZeroTransformation);
       const double c = 1.0 - 1.0/cosa;
       S.m_xform[0][0] = 1.0 - c*A.y*A.y;
       S.m_xform[0][1] = c*A.x*A.y;
@@ -266,7 +274,7 @@ bool ON_GetEndCapTransformation(ON_3dPoint P, ON_3dVector T, ON_3dVector U,
 
       // R rotates the profile plane so its normal is equal to N
       ON_Xform R;
-      R.Rotation(sina,cosa,A,ON_origin);
+      R.Rotation(sina,cosa,A,ON_3dPoint::Origin);
       if ( rot3d )
         *rot3d = xform*R;
 
@@ -279,19 +287,19 @@ bool ON_GetEndCapTransformation(ON_3dPoint P, ON_3dVector T, ON_3dVector U,
 
 static void ON_ExtrusionInitializeHelper(ON_Extrusion& extrusion)
 {
-  extrusion.m_path.from.Zero();
-  extrusion.m_path.to.Zero();
+  extrusion.m_path.from = ON_3dPoint::Origin;
+  extrusion.m_path.to = ON_3dPoint::Origin;
   extrusion.m_t.m_t[0] = 0.0;
   extrusion.m_t.m_t[1] = 1.0;
-  extrusion.m_up.Zero();
+  extrusion.m_up = ON_3dVector::ZeroVector;
   extrusion.m_profile_count = 0;
   extrusion.m_profile = 0;
   extrusion.m_bCap[0] = false;
   extrusion.m_bCap[1] = false;
   extrusion.m_bHaveN[0] = false;
   extrusion.m_bHaveN[1] = false;
-  extrusion.m_N[0].Zero();
-  extrusion.m_N[1].Zero();
+  extrusion.m_N[0] = ON_3dVector::ZeroVector;
+  extrusion.m_N[1] = ON_3dVector::ZeroVector;
   extrusion.m_path_domain.m_t[0] = 0.0;
   extrusion.m_path_domain.m_t[1] = 1.0;
   extrusion.m_bTransposed = false;
@@ -321,6 +329,7 @@ static void ON_ExtrusionCopyHelper(const ON_Extrusion& src,ON_Extrusion& dst)
     dst.m_N[1] = src.m_N[1];
     dst.m_path_domain = src.m_path_domain;
     dst.m_bTransposed  = src.m_bTransposed;
+    dst.m_mesh_cache = src.m_mesh_cache;
   }
 }
 
@@ -391,7 +400,7 @@ int ON_Extrusion::ProfileParameter() const
 
 ON_3dPoint ON_Extrusion::PathStart() const
 {
-  ON_3dPoint P(ON_UNSET_POINT);
+  ON_3dPoint P(ON_3dPoint::UnsetPoint);
   const double t = m_t.m_t[0];
   if ( 0.0 <= t && t <= 1.0 && m_path.IsValid() )
     P = m_path.PointAt(t);
@@ -400,7 +409,7 @@ ON_3dPoint ON_Extrusion::PathStart() const
 
 ON_3dPoint ON_Extrusion::PathEnd() const
 {
-  ON_3dPoint P(ON_UNSET_POINT);
+  ON_3dPoint P(ON_3dPoint::UnsetPoint);
   const double t = m_t.m_t[1];
   if ( 0.0 <= t && t <= 1.0 && m_path.IsValid() )
     P = m_path.PointAt(t);
@@ -409,7 +418,7 @@ ON_3dPoint ON_Extrusion::PathEnd() const
 
 ON_3dVector ON_Extrusion::PathTangent() const
 {
-  ON_3dVector T(ON_UNSET_VECTOR);
+  ON_3dVector T(ON_3dVector::UnsetVector);
   if ( m_path.IsValid() )
     T = m_path.Tangent();
   return T;
@@ -443,7 +452,7 @@ bool ON_Extrusion::SetMiterPlaneNormal(ON_3dVector N, int end)
       m_bHaveN[end] = (N.z != 1.0);
       rc = true;
     }
-    else if ( N.IsZero() || ON_UNSET_VECTOR == N )
+    else if ( N.IsZero() || ON_3dVector::UnsetVector == N )
     {
       m_bHaveN[end] = false;
       rc = true;
@@ -996,7 +1005,7 @@ ON_Surface* ON_Extrusion::WallSurface( ON_COMPONENT_INDEX ci ) const
   if ( 0 == profile2d )
     return 0;
 
-  ON_Interval wall_profile2d_domain = m_path_domain;
+  ON_Interval wall_profile2d_domain = profile2d->Domain(); // 28 July, 2015 - Lowell - RH-29948
   if ( m_profile_count > 1 )
   {
     const ON_PolyCurve* polyprofile2d = PolyProfile();
@@ -1018,6 +1027,7 @@ ON_Surface* ON_Extrusion::WallSurface( ON_COMPONENT_INDEX ci ) const
 
   wall->m_path = m_path;
   wall->m_t    = m_t;
+  wall->m_path_domain = m_path_domain; // 28 July, 2015 - Lowell - RH-29948
   wall->m_up   = m_up;
   wall->m_bHaveN[0] = m_bHaveN[0];
   wall->m_bHaveN[1] = m_bHaveN[1];
@@ -1192,7 +1202,19 @@ static bool ON_ExtrusionIsNotValid()
   return ON_IsNotValid(); // good place for a breakpoint
 }
 
-ON_BOOL32 ON_Extrusion::IsValid( ON_TextLog* text_log ) const
+void ON_Extrusion::DestroyRuntimeCache( bool bDelete )
+{
+  if ( 0 != m_profile )
+  {
+    // profile curve clean up
+    m_profile->DestroyRuntimeCache(bDelete);
+  }
+
+  // surface clean up
+  ON_Surface::DestroyRuntimeCache(bDelete);
+}
+
+bool ON_Extrusion::IsValid( ON_TextLog* text_log ) const
 {
   // check m_profile
   if ( m_profile_count < 1 )
@@ -1202,7 +1224,7 @@ ON_BOOL32 ON_Extrusion::IsValid( ON_TextLog* text_log ) const
   }
   if ( !m_profile )
   {
-    ON_Extrusion_IsNotValidMessage(text_log,"m_profile is NULL.");
+    ON_Extrusion_IsNotValidMessage(text_log,"m_profile is nullptr.");
     return ON_ExtrusionIsNotValid();
   }
   if ( m_profile_count > 1 )
@@ -1326,35 +1348,39 @@ void ON_Extrusion::Dump( ON_TextLog& text_log ) const
   text_log.Print("ON_Extrusion: \n");
   {
     text_log.PushIndent();
-  text_log.Print("Path: ");
-  text_log.Print(m_path.PointAt(m_t[0]));
-  text_log.Print(" ");
-  text_log.Print(m_path.PointAt(m_t[1]));
-  text_log.Print("\n");
-  text_log.Print("Up: ");
-  text_log.Print(m_up);
-  text_log.Print("\n");
-  text_log.Print("m_bCap[] = (%d, %d)\n",m_bCap[0],m_bCap[1]);
-  text_log.Print("m_bHaveN[] = (%d, %d)\n",m_bHaveN[0],m_bHaveN[1]);
-  text_log.Print("m_N[] = (");
-  text_log.Print(m_N[0]);
-  text_log.Print(", ");
-  text_log.Print(m_N[1]);
-  text_log.Print("\n");
-  text_log.Print("m_path_domain = (%.17g, %.17g)\n",m_path_domain[0],m_path_domain[1]);
-  text_log.Print("m_bTransposed = %d\n",m_bTransposed);
-  text_log.Print("Profile Count: %d\n",m_profile_count);
-  text_log.Print("Profile:\n");
+    text_log.Print("Path: ");
+    text_log.Print(m_path.PointAt(m_t[0]));
+    text_log.Print(" ");
+    text_log.Print(m_path.PointAt(m_t[1]));
+    text_log.Print("\n");
+    text_log.Print("Up: ");
+    text_log.Print(m_up);
+    text_log.Print("\n");
+    text_log.Print("m_bCap[] = (%d, %d)\n",m_bCap[0],m_bCap[1]);
+    text_log.Print("m_bHaveN[] = (%d, %d)\n",m_bHaveN[0],m_bHaveN[1]);
+    text_log.Print("m_N[] = (");
+    text_log.Print(m_N[0]);
+    text_log.Print(", ");
+    text_log.Print(m_N[1]);
+    text_log.Print("\n");
+    text_log.Print("m_path_domain = (%.17g, %.17g)\n",m_path_domain[0],m_path_domain[1]);
+    text_log.Print("m_bTransposed = %d\n",m_bTransposed);
+    text_log.Print("Profile Count: %d\n",m_profile_count);
+    text_log.Print("Profile:\n");
     {
-  text_log.PushIndent();
-  if ( !m_profile )
-    text_log.Print("NULL");
-  else
-    m_profile->Dump(text_log);
-  text_log.PopIndent();
+      text_log.PushIndent();
+      if ( !m_profile )
+        text_log.Print("nullptr");
+      else
+        m_profile->Dump(text_log);
+      text_log.PopIndent();
     }
+
+    m_mesh_cache.Dump(text_log);
+
     text_log.PopIndent();
   }
+
   return;
 }
 
@@ -1387,11 +1413,64 @@ ON__UINT32 ON_Extrusion::DataCRC(ON__UINT32 current_remainder) const
   return current_remainder;
 }
 
-ON_BOOL32 ON_Extrusion::Write(
+// OBSOLETE - USED TO READ/WRITE V5 files
+class ON_V5ExtrusionDisplayMeshCache : public ON_UserData
+{
+  ON_OBJECT_DECLARE(ON_V5ExtrusionDisplayMeshCache);
+public:
+  ON_V5ExtrusionDisplayMeshCache();
+  ~ON_V5ExtrusionDisplayMeshCache();
+  ON_V5ExtrusionDisplayMeshCache(const ON_V5ExtrusionDisplayMeshCache&);
+  ON_V5ExtrusionDisplayMeshCache& operator=(const ON_V5ExtrusionDisplayMeshCache&);
+
+  static ON_V5ExtrusionDisplayMeshCache* CreateMeshCache(
+    const ON_Extrusion*
+    );
+
+  // virtual ON_Object::Write function
+  bool Write(ON_BinaryArchive& binary_archive) const override;
+
+  // virtual ON_Object::Read function
+  bool Read(ON_BinaryArchive& binary_archive) override;
+
+  // virtual ON_UserData::GetDescription
+  bool GetDescription( ON_wString& description ) override;
+
+  // virtual ON_UserData::Archive
+  bool Archive() const override; 
+
+  // virtual ON_UserData::DeleteAfterWrite
+  bool DeleteAfterWrite(
+    const class ON_BinaryArchive& archive,
+    const class ON_Object* parent_object
+    ) const override;
+
+  // virtual ON_UserData::DeleteAfterRead
+  bool DeleteAfterRead( 
+    const class ON_BinaryArchive& archive,
+    class ON_Object* parent_object
+    ) const override;
+
+private:
+  void DestroyHelper();
+  void CopyHelper(const ON_V5ExtrusionDisplayMeshCache&);
+
+  // Only extrusion objects use the obsolete ON_V5ExtrusionDisplayMeshCache.
+  //const ON::object_type m_object_type = ON::object_type::extrusion_object;
+  std::shared_ptr<ON_Mesh> m_render_mesh;
+  std::shared_ptr<ON_Mesh> m_analysis_mesh;
+};
+
+
+bool ON_Extrusion::Write(
        ON_BinaryArchive& binary_archive
      ) const
 {
-  bool rc = binary_archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,2);
+  // 2015-June-03 
+  //   chunk version 1.3 - added m_mesh_cache
+  const int minor_version = binary_archive.Archive3dmVersion() >= 60 ? 3 : 2;
+
+  bool rc = binary_archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,minor_version);
   if (!rc)
     return false;
   for (;;)
@@ -1419,11 +1498,27 @@ ON_BOOL32 ON_Extrusion::Write(
     // 1.1 
     rc = binary_archive.WriteInt(m_profile_count);
     if (!rc) break;
+
+
     // 1.2
     rc = binary_archive.WriteBool(m_bCap[0]);
     if (!rc) break;
     rc = binary_archive.WriteBool(m_bCap[1]);
     if (!rc) break;
+
+    if (2 == minor_version && binary_archive.Save3dmRenderMesh(ObjectType()))
+    {
+      // add temporary V5 user data cache
+      ON_V5ExtrusionDisplayMeshCache::CreateMeshCache(this);
+    }
+    else if (minor_version >= 3)
+    {
+      if (binary_archive.Save3dmRenderMesh(ObjectType()))
+        rc = m_mesh_cache.Write(binary_archive);
+      else
+        rc = ON_MeshCache::Empty.Write(binary_archive);
+      if (!rc) break;
+    }
 
     break;
   }
@@ -1433,7 +1528,7 @@ ON_BOOL32 ON_Extrusion::Write(
 }
 
 
-ON_BOOL32 ON_Extrusion::Read(
+bool ON_Extrusion::Read(
        ON_BinaryArchive& binary_archive
      )
 {
@@ -1495,6 +1590,12 @@ ON_BOOL32 ON_Extrusion::Read(
         if (!rc) break;
         rc = binary_archive.ReadBool(&m_bCap[1]);
         if (!rc) break;
+
+        if (minor_version >= 3)
+        {
+          rc = m_mesh_cache.Read(binary_archive);
+          if (!rc) break;
+        }
       }
     }
 
@@ -1509,8 +1610,10 @@ ON_BOOL32 ON_Extrusion::Read(
 
     break;
   }
+
   if ( !binary_archive.EndRead3dmChunk() )
     rc = false;
+
   return rc;
 }
 
@@ -1518,7 +1621,6 @@ ON::object_type ON_Extrusion::ObjectType() const
 {
   return ON::extrusion_object;
 }
-
 
 
 int ON_Extrusion::Dimension() const
@@ -1568,7 +1670,7 @@ bool GetBoundingBoxHelper(const ON_Extrusion& extrusion,
   return true;
 }
 
-ON_BOOL32 ON_Extrusion::GetBBox(double* boxmin,double* boxmax,int bGrowBox) const
+bool ON_Extrusion::GetBBox(double* boxmin,double* boxmax,bool bGrowBox) const
 {
   bool rc = false;
   if ( m_path.IsValid() && m_profile )
@@ -1610,7 +1712,7 @@ ON_BOOL32 ON_Extrusion::GetBBox(double* boxmin,double* boxmax,int bGrowBox) cons
 }
 
 
-bool ON_Extrusion::GetTightBoundingBox(ON_BoundingBox& tight_bbox, int bGrowBox, const ON_Xform* xform ) const
+bool ON_Extrusion::GetTightBoundingBox(ON_BoundingBox& tight_bbox, bool bGrowBox, const ON_Xform* xform ) const
 {
   bool rc = false;
   if ( m_path.IsValid() && m_profile )
@@ -1724,7 +1826,7 @@ static bool Profile2dTransform( ON_Extrusion& e, const ON_Xform& profile_xform, 
   return rc;
 }
 
-ON_BOOL32 ON_Extrusion::Transform( const ON_Xform& xform )
+bool ON_Extrusion::Transform( const ON_Xform& xform )
 {
   if ( !m_path.IsValid() || !m_up.IsUnitVector() || m_profile_count < 1 )
     return ON_Extrusion_TransformFailed();
@@ -1830,8 +1932,8 @@ ON_BOOL32 ON_Extrusion::Transform( const ON_Xform& xform )
     return ON_Extrusion_TransformFailed();
   if ( QXxQY*QT < 0.0 )
   {
-    QX.Reverse();
-    QXxQY.Reverse();
+    QX = -QX;
+    QXxQY = -QXxQY;
   }
 
   ON_3dVector path_shear(0.0,QU*QXxQY,QT*QXxQY);
@@ -1919,8 +2021,8 @@ ON_BOOL32 ON_Extrusion::Transform( const ON_Xform& xform )
       QN[i].x = QUxQT*QN3d;
       QN[i].y = QU*QN3d;
       QN[i].z = QT*QN3d;
-      if ( QN[i].z < 0.0 )
-        QN[i].Reverse(); // necessary for some mirror transformations
+      if (QN[i].z < 0.0)
+        QN[i] = -QN[i]; // necessary for some mirror transformations
       if ( !QN[i].Unitize() )
       {
          bHaveQN[i] = false;
@@ -1945,7 +2047,7 @@ ON_BOOL32 ON_Extrusion::Transform( const ON_Xform& xform )
   }
 
   // get 2d profile transformation
-  ON_Xform profile_xform(1.0);
+  ON_Xform profile_xform(ON_Xform::IdentityTransformation);
   // set 2d profile y scale
   const double profile_y_scale = QDY.Length(); // = QYoQDY "mathematically"
 
@@ -2110,12 +2212,32 @@ ON_BOOL32 ON_Extrusion::Transform( const ON_Xform& xform )
   //  m_N[1] = path_shear;
   //}
 
-  if ( profile_xform.IsIdentity() )
-    return true; // should happen on all rotations and translations.
   
   double profile_det = profile_xform[0][0]*profile_xform[1][1] - profile_xform[1][0]*profile_xform[0][1];
   bool bNeedReverse = (profile_det < 0.0);
-  return  Profile2dTransform( *this, profile_xform, bNeedReverse );
+
+  if (bNeedReverse)
+  {
+    // Delete meshes.  Flipping the mesh does not insure
+    // the correspondence between the mesh faces and the
+    // initial locations on the extrusion surface are preserved.
+    // A predictable way to convert a point on a mesh face to a 
+    // point on the extrusion is required for robust sub-object
+    // selection.
+    // Generating meshes of extrusion objects is fast enough that
+    // recreating meshes used for rendering is generally
+    // not noticed by users.
+    m_mesh_cache.ClearAllMeshes();
+  }
+  else
+  {
+    m_mesh_cache.Transform(xform);
+  }
+
+  if ( profile_xform.IsIdentity() )
+    return true; // should happen on all rotations and translations.
+
+  return Profile2dTransform( *this, profile_xform, bNeedReverse );
 }
 
 class CMyBrepIsSolidSetter : public ON_Brep
@@ -2166,7 +2288,7 @@ public:
   int m_face_index;
   int m_vid[4];
   int m_eid[4];
-  ON_BOOL32 m_bRev3d[4];
+  bool m_bRev3d[4];
 
   // capping information (bottom,top)
   int m_cap_trim_index[2]; // indices of wall trims
@@ -2240,11 +2362,6 @@ void ON_Extrusion_BrepForm_FaceInfo::Init()
   m_cap_trim_index[0] = m_cap_trim_index[1] = -1;
   m_cap_edge_index[0] = m_cap_edge_index[1] = -1;
   m_cap_c2[0] = m_cap_c2[1] = 0;
-}
-
-ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep ) const
-{
-  return BrepForm(brep,true);
 }
 
 static 
@@ -2484,7 +2601,7 @@ static bool GetNextProfileSegmentDiscontinuity(
   if ( 0 == profile_segment )
     return false;
   return profile_segment->GetNextDiscontinuity(
-                            ON::Gsmooth_continuous,
+                            ON::continuity::Gsmooth_continuous,
                             t0,t1,t,
                             0,0,
                             ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
@@ -2513,22 +2630,15 @@ int ON_Extrusion::ProfileSmoothSegmentCount( int profile_index ) const
 {
   if ( 0 == Profile(profile_index) )
     return 0;
-  ON_SimpleArray<double> * k  = 0;
-  // Note:
-  //    It looks like a null pointer is being dreferenced    
-  //    when "*k" is passed as the 2nd parameter
-  //    to GetProfileKinkParameters().  In fact, this is intentionally
-  //    done and is safe in this case because the 2nd parameter
-  //    is a reference and GetProfileKinkParameters() has code
-  //    to check to see if the reference is to a null.  The reason
-  //    for doing it this way is that the reference could not be changed 
-  //    to a pointer withou breaking part of the Rhino SDK used by
-  //    critical plug-ins.  In V6 this will be fixed because the SDK
-  //    can be changed.
-  return (1 + GetProfileKinkParameters(profile_index,*k));
+  return (1 + GetProfileKinkParameters(profile_index,nullptr));
 }
 
 int ON_Extrusion::GetProfileKinkParameters( int profile_index, ON_SimpleArray<double>& profile_kink_parameters ) const
+{
+  return GetProfileKinkParameters(profile_index, &profile_kink_parameters);
+}
+
+int ON_Extrusion::GetProfileKinkParameters( int profile_index, ON_SimpleArray<double>* profile_kink_parameters_ptr ) const
 {
   const ON_Curve* profile2d = Profile(profile_index);
   if ( 0 == profile2d )
@@ -2540,23 +2650,59 @@ int ON_Extrusion::GetProfileKinkParameters( int profile_index, ON_SimpleArray<do
     return 0;
   if ( !ON_IsValid(t0) || !(t0 < t1) )
     return 0;
-  ON_SimpleArray<double> * k = &profile_kink_parameters;
   int count = 0;
   while ( GetNextProfileSegmentDiscontinuity( profile2d, t0,t1, &t) )
   {
     if ( t0 < t && t < t1 )
     {
-      if ( 0 != k )
+      if ( nullptr != profile_kink_parameters_ptr )
       {
-        k->Append(t);
-        count++;
+        profile_kink_parameters_ptr->Append(t);
       }
       t0 = t;
+      count++;
     }
   }
   return count;
 }
 
+ON_Brep* ON_Extrusion::BrepForm(ON_Brep* brep) const
+{
+  return BrepForm(brep, true);
+}
+
+static int GetSmoothSideCount(const ON_Extrusion& E)
+
+{
+  ON_SimpleArray<const ON_Curve*> profile_curves;
+  const int profile_count = E.GetProfileCurves(profile_curves );
+  if ( profile_count < 1 || profile_count != profile_curves.Count() )
+    return profile_count;
+  int side_count = 0;
+  for ( int profile_index = 0; profile_index < profile_count; profile_index++ ){
+    const ON_Curve* profile_segment = profile_curves[profile_index];
+    double t0 = ON_UNSET_VALUE;
+    double t1 = ON_UNSET_VALUE;
+    if ( !profile_segment->GetDomain(&t0,&t1) 
+          || !ON_IsValid(t0)
+          || !ON_IsValid(t1) 
+          || !(t0 < t1)
+        )
+      return profile_count;
+    double t = t1;
+    while ( GetNextProfileSegmentDiscontinuity(profile_segment,t0,t1,&t) ){
+      if ( t0 < t && t < t1 ){
+        side_count++;
+        t0 = t;
+        t = t1;
+        continue;
+      }
+      break;
+    }
+    side_count++;
+  }
+  return side_count;
+}
 
 ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
 {
@@ -2566,25 +2712,46 @@ ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
   ON_SimpleArray<const ON_Curve*> profile_curves;
   const int profile_count = GetProfileCurves(profile_curves );
   if ( profile_count < 1 || profile_count != profile_curves.Count() )
+  {
+    ON_ERROR("extrusion has no profile curve.");
     return 0;
+  }
 
   // get end cap transformation information
 
   const ON_3dVector T = m_path.Tangent();
   if ( !T.IsUnitVector() )
+  {
+    ON_ERROR("extrusion direction is zero.");
     return 0;
+  }
 
-  ON_Xform xform0(1.0), xform1(1.0), scale0(1.0), scale1(1.0), rot0(1.0), rot1(1.0);
+  ON_Xform 
+    xform0(ON_Xform::IdentityTransformation), 
+    xform1(ON_Xform::IdentityTransformation), 
+    scale0(ON_Xform::IdentityTransformation), 
+    scale1(ON_Xform::IdentityTransformation), 
+    rot0(ON_Xform::IdentityTransformation), 
+    rot1(ON_Xform::IdentityTransformation);
   if ( !ON_GetEndCapTransformation(m_path.PointAt(m_t.m_t[0]),T,m_up,m_bHaveN[0]?&m_N[0]:0,xform0,&scale0,&rot0) )
+  {
+    ON_ERROR("Unable to get bottom cap location.");
     return 0;
+  }
 
   if ( !ON_GetEndCapTransformation(m_path.PointAt(m_t.m_t[1]),T,m_up,m_bHaveN[1]?&m_N[1]:0,xform1,&scale1,&rot1) )
+  {
+    ON_ERROR("Unable to get top cap location.");
     return 0;
+  }
 
   ON_Brep* newbrep = brep ? brep : ON_Brep::New();
 
   if ( 0 == newbrep )
+  {
+    ON_ERROR("Unable to get allocate brep.");
     return 0;
+  }
 
   int is_capped = IsCapped();
   if ( is_capped < 0 || is_capped > 3 )
@@ -2592,18 +2759,22 @@ ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
 
   int cap_count = (3==is_capped) ? 2 : (0 != is_capped ? 1 : 0);
 
-  newbrep->m_S.Reserve(profile_count + cap_count);
-  newbrep->m_F.Reserve(profile_count + cap_count);
-  newbrep->m_L.Reserve((1 + cap_count)*profile_count);
+  //27 Nov 2018 - Chuck - if a kinky profile gets split up, 
+  //there will be more than profile_count side faces. See RH-49655.
+  int side_count = (bSmoothFaces ) ? GetSmoothSideCount(*this) : profile_count;
+
+  newbrep->m_S.Reserve(side_count + cap_count);
+  newbrep->m_F.Reserve(side_count + cap_count);
+  newbrep->m_L.Reserve((1 + cap_count)*side_count);
 
   // Note: 
   //  If the profiles have kinks and bSplitKinkyFaces
   //  is true, then the m_C2, m_T, m_C3 and m_E arrays will
   //  generally be longer than these initial reservations.
-  newbrep->m_C2.Reserve((4 + cap_count)*profile_count);
-  newbrep->m_T.Reserve((4 + cap_count)*profile_count);
-  newbrep->m_C3.Reserve(4*profile_count);
-  newbrep->m_E.Reserve(4*profile_count);
+  newbrep->m_C2.Reserve((4 + cap_count)*side_count);
+  newbrep->m_T.Reserve((4 + cap_count)*side_count);
+  newbrep->m_C3.Reserve(4*side_count);
+  newbrep->m_E.Reserve(4*side_count);
 
 
   int vidmap[4] = {0,1,2,3};
@@ -2626,6 +2797,7 @@ ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
     const ON_Curve* profile_segment = profile_curves[profile_index];
     if ( 0 == profile_segment )
     {
+      ON_ERROR("null profile segment.");
       if (newbrep != brep )
         delete newbrep;
       return 0;
@@ -2638,10 +2810,12 @@ ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
       ON_Curve* newprofile = profile_segment->DuplicateCurve();
       if ( 0 == newprofile )
       {
+        ON_ERROR("unable to duplicate profile segment.");
         if (newbrep != brep )
           delete newbrep;
         return 0;
       }
+
 
       profile_fi.m_bClosedProfile = newprofile->IsClosed() ? true : false;
       profile_fi.m_profile_orientation = ( profile_fi.m_bClosedProfile )
@@ -2669,6 +2843,7 @@ ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
              || !(t0 < t1)
            )
         {
+          ON_ERROR("Corrupt profile domain.");
           delete newprofile;
           if (newbrep != brep )
             delete newbrep;
@@ -2710,6 +2885,7 @@ ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
 
     if ( fi1 <= fi0 )
     {
+      ON_ERROR("Corrupt extrusion cannot produce brep form.");
       if (newbrep != brep )
         delete newbrep;
       return 0;
@@ -2944,22 +3120,30 @@ ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSmoothFaces ) const
     break;
   }
 
-  if ( newbrep )
+  if ( 0 != newbrep )
   {
+    if (newbrep->m_F.Count() <= 0 || newbrep->m_E.Count() <= 2) 
+    {
+      ON_ERROR("corrupt extrusion cannot produce a brep form.");
+      if (newbrep != brep )
+        delete newbrep;
+      return 0;
+    }
+
     // set a tight bounding box
     ((CMyBrepIsSolidSetter*)newbrep)->SetBBox(*this);
     newbrep->SetTrimBoundingBoxes(true);
 
     if ( bSetEdgeTolerances )
       newbrep->SetEdgeTolerances(true);
-  }
 
 #if defined(ON_DEBUG)
-  if ( !newbrep->IsValid() )
-  {
-    newbrep->IsValid(); // breakpoint here
-  }
+    if ( !newbrep->IsValid() )
+    {
+      newbrep->IsValid(); // breakpoint here
+    }
 #endif
+  }
 
   return newbrep;
 }
@@ -2969,19 +3153,7 @@ bool ON_Extrusion::GetBrepFormComponentIndex(
   ON_COMPONENT_INDEX& brep_ci
   ) const
 {
-  const ON_Brep* null_brep_pointer = 0;
-  // Note:
-  //    It looks like a null pointer is being dreferenced    
-  //    when "*null_brep_pointer" is passed as the 3rd parameter
-  //    to GetBrepFormComponentIndex().  In fact, this is intentionally
-  //    done and is safe in this case because the 3rd parameter
-  //    is a reference and GetBrepFormComponentIndex() has code
-  //    to check to see if the reference is to a null.  The reason
-  //    for doing it this way is that the reference could not be changed 
-  //    to a pointer withou breaking part of the Rhino SDK used by
-  //    critical plug-ins.  In V6 this will be fixed because the SDK
-  //    can be changed.
-  return GetBrepFormComponentIndex(extrusion_ci,ON_UNSET_VALUE,*null_brep_pointer,brep_ci);
+  return GetBrepFormComponentIndex(extrusion_ci,ON_UNSET_VALUE,nullptr,brep_ci);
 }
 
 static bool GetBrepFormFaceIndex(
@@ -3081,12 +3253,26 @@ bool ON_Extrusion::GetBrepFormComponentIndex(
   double extrusion_profile_parameter,
   const ON_Brep& brep_form,
   ON_COMPONENT_INDEX& brep_ci
-  ) const
+) const
+{
+  return GetBrepFormComponentIndex(
+    extrusion_ci,
+    extrusion_profile_parameter,
+    &brep_form,
+    brep_ci
+  );
+}
+
+bool ON_Extrusion::GetBrepFormComponentIndex(
+  ON_COMPONENT_INDEX extrusion_ci,
+  double extrusion_profile_parameter,
+  const ON_Brep* brep,
+  ON_COMPONENT_INDEX& brep_ci
+) const
 {
   brep_ci.UnSet();
   int face_index = -1;
   ON_Interval face_profile_domain(ON_UNSET_VALUE,ON_UNSET_VALUE);
-  const ON_Brep* brep = &brep_form; // brep pointer can be null
 
   const int is_capped = IsCapped();
   if ( is_capped < 0 || is_capped > 3 )
@@ -3102,8 +3288,8 @@ bool ON_Extrusion::GetBrepFormComponentIndex(
     return false;
   const int edges_per_wall_face = bClosedProfile ? 3 : 4;
   const int cap_count = (0 == is_capped || !bClosedProfile) ? 0 : ((3==is_capped)?2:1);
-  int brep_face_count = ( 0 != brep ) ? brep->m_F.Count() : 0;
-  if ( 0 != brep && brep_face_count < profile_count + cap_count )
+  int brep_face_count = ( nullptr != brep ) ? brep->m_F.Count() : 0;
+  if ( nullptr != brep && brep_face_count < profile_count + cap_count )
   {
     ON_ERROR("brep_form parameter cannot be extrusion's BrepForm()");
     return false;
@@ -3182,7 +3368,8 @@ bool ON_Extrusion::GetBrepFormComponentIndex(
   return true;
 }
 
-ON_BOOL32 ON_Extrusion::SetDomain( 
+
+bool ON_Extrusion::SetDomain( 
   int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
   double t0, 
   double t1
@@ -3215,7 +3402,7 @@ ON_Interval ON_Extrusion::Domain(
          : ((1-path_dir == dir && m_profile) ? m_profile->Domain() : ON_Interval());
 }
 
-ON_BOOL32 ON_Extrusion::GetSurfaceSize( 
+bool ON_Extrusion::GetSurfaceSize( 
     double* width, 
     double* height 
     ) const
@@ -3279,7 +3466,7 @@ int ON_Extrusion::SpanCount(
   return 0;
 }
 
-ON_BOOL32 ON_Extrusion::GetSpanVector( // span "knots" 
+bool ON_Extrusion::GetSpanVector( // span "knots" 
       int dir, // 0 gets first parameter's domain, 1 gets second parameter's domain
       double* span_vector // array of length SpanCount() + 1 
       ) const  // 
@@ -3301,7 +3488,7 @@ ON_BOOL32 ON_Extrusion::GetSpanVector( // span "knots"
   return false;
 }
 
-ON_BOOL32 ON_Extrusion::GetSpanVectorIndex(
+bool ON_Extrusion::GetSpanVectorIndex(
       int dir , // 0 gets first parameter's domain, 1 gets second parameter's domain
       double t,      // [IN] t = evaluation parameter
       int side,         // [IN] side 0 = default, -1 = from below, +1 = from above
@@ -3338,7 +3525,7 @@ int ON_Extrusion::Degree( // returns maximum algebraic degree of any span
   return 0;
 }
 
-ON_BOOL32 ON_Extrusion::GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
+bool ON_Extrusion::GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
        int dir,        // 0 gets first parameter, 1 gets second parameter
        double t,       // t = parameter in domain
        double* tminus, // tminus
@@ -3361,7 +3548,7 @@ ON_Surface::ISO ON_Extrusion::IsIsoparametric(
   return ON_Surface::IsIsoparametric(curve,curve_domain);
 }
 
-ON_BOOL32 ON_Extrusion::IsPlanar(
+bool ON_Extrusion::IsPlanar(
       ON_Plane* plane,
       double tolerance
       ) const
@@ -3403,7 +3590,7 @@ ON_BOOL32 ON_Extrusion::IsPlanar(
   return false;
 }
 
-ON_BOOL32 ON_Extrusion::IsClosed(int dir) const
+bool ON_Extrusion::IsClosed(int dir) const
 {
   const int path_dir = PathParameter();
   if ( 1-path_dir == dir && m_profile )
@@ -3411,7 +3598,7 @@ ON_BOOL32 ON_Extrusion::IsClosed(int dir) const
   return false;
 }
 
-ON_BOOL32 ON_Extrusion::IsPeriodic( int dir ) const
+bool ON_Extrusion::IsPeriodic( int dir ) const
 {
   const int path_dir = PathParameter();
   if ( 1-path_dir == dir && m_profile )
@@ -3479,7 +3666,7 @@ ON_Surface::ISO ON_Extrusion::IsIsoparametric(
   return ON_Surface::IsIsoparametric(bbox);
 }
 
-ON_BOOL32 ON_Extrusion::Reverse( int dir )
+bool ON_Extrusion::Reverse( int dir )
 {
   if ( 0 == m_profile )
     return false;
@@ -3503,7 +3690,7 @@ ON_BOOL32 ON_Extrusion::Reverse( int dir )
     //   that checks for closed objects and makes
     //   a sequence changes that results in a valid
     //   final result.
-    ON_Xform profile_xform(1.0);
+    ON_Xform profile_xform(ON_Xform::IdentityTransformation);
     profile_xform.m_xform[0][0] = -1.0;
     bool bNeedReverse = false;
     return Profile2dTransform(*this,profile_xform,bNeedReverse);
@@ -3528,13 +3715,13 @@ ON_BOOL32 ON_Extrusion::Reverse( int dir )
   return false;
 }
 
-ON_BOOL32 ON_Extrusion::Transpose() // transpose surface parameterization (swap "s" and "t")
+bool ON_Extrusion::Transpose() // transpose surface parameterization (swap "s" and "t")
 {
   m_bTransposed = m_bTransposed?false:true;
   return true;
 }
 
-ON_BOOL32 ON_Extrusion::Evaluate( // returns false if unable to evaluate
+bool ON_Extrusion::Evaluate( // returns false if unable to evaluate
        double u, double v,   // evaluation parameters
        int num_der,          // number of derivatives (>=0)
        int array_stride,     // array stride (>=Dimension())
@@ -3578,6 +3765,7 @@ ON_BOOL32 ON_Extrusion::Evaluate( // returns false if unable to evaluate
   const double t0 = 1.0-t1;
   ON_Xform xform0, xform1;
   const ON_3dVector T = m_path.Tangent();
+
   if ( 0.0 != t0 || num_der > 0 )
   {
     if ( !ON_GetEndCapTransformation(m_path.PointAt(m_t.m_t[0]),T,m_up,m_bHaveN[0]?&m_N[0]:0,xform0,0,0) )
@@ -3585,8 +3773,9 @@ ON_BOOL32 ON_Extrusion::Evaluate( // returns false if unable to evaluate
   }
   else
   {
-    xform0.Zero();
+    xform0 = ON_Xform::Zero4x4;
   }
+
   if ( 0.0 != t1 || num_der > 0 )
   {
     if ( !ON_GetEndCapTransformation(m_path.PointAt(m_t.m_t[1]),T,m_up,m_bHaveN[1]?&m_N[1]:0,xform1,0,0) )
@@ -3594,7 +3783,7 @@ ON_BOOL32 ON_Extrusion::Evaluate( // returns false if unable to evaluate
   }
   else
   {
-    xform1.Zero();
+    xform1 = ON_Xform::Zero4x4;
   }
 
   double xformP[3][3], xformD[3][3];
@@ -3781,7 +3970,7 @@ ON_Curve* ON_Extrusion::IsoCurve(
   return isocurve;
 }
 
-ON_BOOL32 ON_Extrusion::Trim(
+bool ON_Extrusion::Trim(
        int dir,
        const ON_Interval& domain
        )
@@ -3907,7 +4096,7 @@ bool ON_Extrusion::Extend(
   return rc;
 }
 
-ON_BOOL32 ON_Extrusion::Split(
+bool ON_Extrusion::Split(
        int dir,
        double c,
        ON_Surface*& west_or_south_side,
@@ -4050,7 +4239,7 @@ ON_BOOL32 ON_Extrusion::Split(
     // Prevent this m_profile from being copied
     const_cast<ON_Extrusion*>(this)->m_profile = 0;
 
-    // Create new left and right sides with NULL profiles
+    // Create new left and right sides with nullptr profiles
     if ( !left )
       left = new ON_Extrusion(*this);
     else if ( left != this )
@@ -4075,99 +4264,18 @@ ON_BOOL32 ON_Extrusion::Split(
   return rc;
 }
 
-ON_BOOL32 ON_Extrusion::GetLocalClosestPoint(
-    const ON_3dPoint& test_point,
-    double s0, double t0,     // seed_parameters
-    double* s, double* t,   // parameters of local closest point returned here
-    const ON_Interval* sdomain, // first parameter sub_domain
-    const ON_Interval* tdomain  // second parameter sub_domain
-    ) const
-{
-  if ( s )
-    *s = s0;
-  if ( t )
-    *t = t0;
 
-  if ( 0 == m_profile || !ON_IsValid(s0) || !ON_IsValid(t0) )
-    return false;
-
-  ON_NurbsSurface NS;
-  const int rc = GetNurbForm(NS);
-  if ( rc <= 0 )
-    return false;
-
-  double a = s0;
-  double b = t0;
-
-        // Domain restrictions must be transformed to nurbs parameter space
-        const ON_Interval* pNdom[2]={sdomain,tdomain};
-        ON_Interval NSdom;
-        ON_Interval NTdom;
-
-  const int profile_index = PathParameter();
-
-  double profile_input_parameter = ON_UNSET_VALUE;
-  double* profile_local_parameter = 0;
-  double* profile_output_parameter = 0;
-  const ON_Interval* profile_input_domain = 0;
-  ON_Interval* profile_local_domain = 0;
-
-  if ( 2 == rc )
-  {
-    if ( 0 == profile_index )
-    {
-      profile_input_parameter = s0;
-      profile_output_parameter = s;
-      profile_local_parameter = &a;
-      profile_input_domain = sdomain;
-      profile_input_domain = &NSdom;
-    }
-    else if (1 == profile_index )
-    {
-      profile_input_parameter = t0;
-      profile_output_parameter = t;
-      profile_local_parameter = &b;
-      profile_input_domain = tdomain;
-      profile_local_domain = &NTdom;
-    }
-    else
-    {
-      return false;
-    }
-    *profile_local_parameter = profile_input_parameter;
-    if (!m_profile->GetNurbFormParameterFromCurveParameter(profile_input_parameter, profile_local_parameter))
-      return false;
-                if ( 0 != profile_input_domain && 0 != profile_local_domain )
-                {
-      *profile_local_domain = *profile_input_domain;
-                        if(!m_profile->GetNurbFormParameterFromCurveParameter(profile_input_domain->m_t[0], &profile_local_domain->m_t[0]))
-                                return false;
-                        if(!m_profile->GetNurbFormParameterFromCurveParameter(profile_input_domain->m_t[1], &profile_local_domain->m_t[1]))
-                                return false;
-      pNdom[profile_index] = profile_local_domain;
-                }
-  }
-
-  if (!NS.GetLocalClosestPoint(test_point, a, b, &a, &b, pNdom[0], pNdom[1]))
-    return false;
-
-  if ( s )
-    *s = a;
-  if ( t )
-    *t = b;
-
-  if ( 2 == rc
-       && 0 != profile_local_parameter
-       && 0 != profile_output_parameter
-     )
-  {
-    if (!m_profile->GetCurveParameterFromNurbFormParameter(*profile_local_parameter, profile_output_parameter))
-      return false;
-  }
-
-  return true;
-}
-
+//bool ON_Extrusion::GetLocalClosestPoint( const ON_3dPoint&, // test_point
+//        double,double,     // seed_parameters
+//        double*,double*,   // parameters of local closest point returned here
+//        const ON_Interval* = nullptr, // first parameter sub_domain
+//        const ON_Interval* = nullptr  // second parameter sub_domain
+//        ) const
+//ON_Surface* ON_Extrusion::Offset(
+//      double offset_distance, 
+//      double tolerance, 
+//      double* max_deviation = nullptr
+//      ) const
 int ON_Extrusion::GetNurbForm(
       ON_NurbsSurface& nurbs_surface,
       double tolerance
@@ -4527,86 +4635,367 @@ ON_Extrusion* ON_Extrusion::CreateFrom3dCurve(
     bool bCap,
     ON_Extrusion* extrusion
     )
-  {
-    if ( 0 != extrusion )
-      extrusion->Destroy();
+{
+  if ( 0 != extrusion )
+    extrusion->Destroy();
 
-    if ( ON_IsValid(height) && 0.0 == height )
-      return 0;
+  if ( ON_IsValid(height) && 0.0 == height )
+    return 0;
 
-    ON_Interval z(0.0,height);
-    if ( z.IsDecreasing() )
-      z.Swap();
-    if ( !z.IsIncreasing() )
-      return 0;
+  ON_Interval z(0.0,height);
+  if ( z.IsDecreasing() )
+    z.Swap();
+  if ( !z.IsIncreasing() )
+    return 0;
     
-    if ( !curve.IsValid() )
+  if ( !curve.IsValid() )
+    return 0;
+
+  ON_Plane curve_plane;
+  if ( 0 == plane )
+  {
+    if ( !curve.IsPlanar(&curve_plane) )
       return 0;
+    plane = &curve_plane;
+  }
 
-    ON_Plane curve_plane;
-    if ( 0 == plane )
-    {
-      if ( !curve.IsPlanar(&curve_plane) )
-        return 0;
-      plane = &curve_plane;
-    }
+  if ( !plane->IsValid() )
+    return 0;
 
-    if ( !plane->IsValid() )
-      return 0;
+  ON_Xform xform2d;
+  xform2d.ChangeBasis(ON_Plane::World_xy,*plane);
 
-    ON_Xform xform2d;
-    xform2d.ChangeBasis(ON_Plane::World_xy,*plane);
+  ON_Curve* curve2d = curve.DuplicateCurve();
+  if ( 0 == curve2d )
+    return 0;
 
-    ON_Curve* curve2d = curve.DuplicateCurve();
-    if ( 0 == curve2d )
-      return 0;
+  ON_Extrusion* result = 0;
 
-    ON_Extrusion* result = 0;
+  for (;;)
+  {
+    if ( !curve2d->Transform(xform2d) )
+      break;
+    curve2d->ChangeDimension(2);
 
-    for (;;)
-    {
-      if ( !curve2d->Transform(xform2d) )
-        break;
-      curve2d->ChangeDimension(2);
+    if ( 0 == extrusion )
+      result = new ON_Extrusion();
+    else
+      result = extrusion;
 
-      if ( 0 == extrusion )
-        result = new ON_Extrusion();
-      else
-        result = extrusion;
+    if ( !result->SetPathAndUp(
+                plane->PointAt(0.0,0.0,z[0]),
+                plane->PointAt(0.0,0.0,z[1]),
+                plane->yaxis
+                ) )
+      break;
 
-      if ( !result->SetPathAndUp(
-                  plane->PointAt(0.0,0.0,z[0]),
-                  plane->PointAt(0.0,0.0,z[1]),
-                  plane->yaxis
-                  ) )
-        break;
+    if ( !result->SetOuterProfile(curve2d,bCap) )
+      break;
 
-      if ( !result->SetOuterProfile(curve2d,bCap) )
-        break;
-
-      if ( !result->IsValid() )
-        break;
-
-      // success
-      curve2d = 0;
-
+    if ( !result->IsValid() ){
+      //28 Sept 2016 - Chuck. curve2d has been added to result in SetOuterProfile().
+      //It will be deleted below as curve2d, so it should be removed from result.
+      //See RH-35739
+      result->m_profile = 0;
       break;
     }
 
-    if ( 0 != curve2d )
-    {
-      // failure
-      delete curve2d;
-      curve2d = 0;
-      
-      if ( 0 != result && result != extrusion )
-        delete result;
+    // success
+    curve2d = 0;
 
-      if ( extrusion )
-        extrusion->Destroy();
-
-      result = 0;
-    }
-
-    return result;
+    break;
   }
+
+  if ( 0 != curve2d )
+  {
+    // failure
+    delete curve2d;
+    curve2d = 0;
+      
+    if ( 0 != result && result != extrusion )
+      delete result;
+
+    if ( extrusion )
+      extrusion->Destroy();
+
+    result = 0;
+  }
+
+  return result;
+}
+
+
+class ON_DisplayMesh
+{
+private:
+  ON_DisplayMesh();
+  ~ON_DisplayMesh();
+  ON_DisplayMesh(const ON_DisplayMesh&);
+  ON_DisplayMesh& operator=(const ON_DisplayMesh&);
+
+  /*
+  Description:
+    Use SetMesh(mesh) to set the fields in this class.
+  Parameters:
+    mesh - [in]
+      If mesh is null, the current settings are deleted.
+      Otherwise, mesh must be on the heap and this class
+      will manage it and delete it when appropriate.
+  Remarks:
+    The CRhExtrusionDisplayMesh class will delete the mesh
+    when it is no longer needed.
+  */
+  void SetMesh(
+    ON_Mesh* mesh,
+    bool bManageMesh,
+    bool bEnableSinglePrecision
+    );
+
+  // You must use SetMesh() to set the value of m_mesh.
+  // Do not change the value of m_mesh directly.
+  // Do not save the value of m_mesh in an ordinary pointer
+  // The mesh is points to may be deleted.
+  const ON_Mesh* m_mesh;
+
+  /*
+  Returns:
+    The serial number for this display mesh information
+    This number is unique for each display mesh setting
+    and is intended to be used to determine when cached
+    values, like those in a vertex object buffer (VBO),
+    need to be updated.
+  */
+  unsigned int DisplayMeshSerialNumber() const;
+
+  /*
+  Parameters:
+    model_view_xform - [in/out]
+      If model_view_xform is not null, its input value should be the
+      current "MODELVIEW" transform and its output value will be
+      the transformation to use with the returned vertices.
+    
+    mesh_V - [out]
+      If mesh_V is not null, then *mesh_V is set to an array of 
+      m_mesh.m_V.Count() vertices to use for drawing the mesh.
+
+  Returns:
+    0:
+       no mesh exists
+    1:
+       (*mesh_V) set to m_mesh.m_V[]
+       Tf model_view_xform is not null, it is not modified.
+       If mesh_V is not null, it is set to m_mesh->m_V.Array().
+    2: 
+       (*mesh_V) set to m_display_F[].
+       Tf model_view_xform is not null, it is multipied on the left
+       by m_display_F_xform.
+       If mesh_V is not null, it is set to m_display_F.Array().
+  */
+  int GetMeshDisplayVertices( ON_Xform* model_view_xform, ON_3fPoint const** mesh_V ) const;
+
+private:
+  // If m_bUse_display_F is true, then single
+  // precision display display code, like current
+  // OpenGL and Direct3D implementations, should 
+  // display the mesh triangles by
+  //   1.) Changing the "MODELVIEW" transform to
+  //       m_display_F_xform*current_model_xform;
+  //   2.) Draw the triangles using m_display_F in place of m_mesh->m_V[]
+  //   3.) Restore the "MODELVIEW" transform.
+  bool m_bUse_display_F;
+  ON_Xform m_display_F_xform;
+  ON_SimpleArray< ON_3fPoint > m_display_F;
+  unsigned int m_display_mesh_sn;
+};
+
+
+// OBSOLETE - USED TO READ/WRITE V5 files
+
+
+ON_OBJECT_IMPLEMENT(ON_V5ExtrusionDisplayMeshCache,ON_UserData,"A8130A3E-E4F3-4CB0-BB8A-F10A473912D0");
+
+ON_V5ExtrusionDisplayMeshCache::ON_V5ExtrusionDisplayMeshCache()
+  : ON_UserData()
+{
+  m_userdata_uuid = ON_CLASS_ID(ON_V5ExtrusionDisplayMeshCache);
+  m_application_uuid = ON_opennurbs5_id; // opennurbs.dll reads/writes this userdata
+                                         // The id must be the version 5 id because
+                                         // V6 SaveAs V5 needs to work.
+  m_userdata_copycount = 1;
+}
+
+ON_V5ExtrusionDisplayMeshCache::~ON_V5ExtrusionDisplayMeshCache()
+{
+  DestroyHelper();
+}
+
+ON_V5ExtrusionDisplayMeshCache::ON_V5ExtrusionDisplayMeshCache(const ON_V5ExtrusionDisplayMeshCache& src)
+  : ON_UserData(src)
+{
+  m_userdata_uuid = ON_CLASS_ID(ON_V5ExtrusionDisplayMeshCache);
+  m_application_uuid = ON_opennurbs5_id; // opennurbs.dll reads/writes this userdata
+                                         // The id must be the version 5 id because
+                                         // V6 SaveAs V5 needs to work.
+  CopyHelper(src);
+}
+
+ON_V5ExtrusionDisplayMeshCache& ON_V5ExtrusionDisplayMeshCache::operator=(const ON_V5ExtrusionDisplayMeshCache& src)
+{
+  if ( this != &src )
+  {
+    DestroyHelper();
+    ON_UserData::operator=(src);
+    CopyHelper(src);
+  }
+  return *this;
+}
+
+void ON_V5ExtrusionDisplayMeshCache::CopyHelper(const ON_V5ExtrusionDisplayMeshCache& src)
+{
+  m_render_mesh = src.m_render_mesh;
+  m_analysis_mesh = src.m_analysis_mesh;
+}
+
+void ON_V5ExtrusionDisplayMeshCache::DestroyHelper()
+{
+  m_render_mesh.reset();
+  m_analysis_mesh.reset();
+}
+
+// override virtual ON_Object::Write function
+bool ON_V5ExtrusionDisplayMeshCache::Write(ON_BinaryArchive& binary_archive) const
+{
+  bool rc = true;
+  bool bSaveMeshes = binary_archive.Save3dmRenderMesh(ON::extrusion_object);
+  const ON_Mesh* meshes[3] = { m_render_mesh.get(), m_analysis_mesh.get(), nullptr };
+  if (nullptr != meshes[0] && meshes[0]->IsEmpty())
+    meshes[0] = nullptr;
+  if (nullptr != meshes[1] && meshes[1]->IsEmpty())
+    meshes[1] = nullptr;
+  for(size_t i = 0; i < sizeof(meshes)/sizeof(meshes[0]) && rc; i++ )
+  {
+    const ON_Mesh* mesh = bSaveMeshes ? meshes[i] : nullptr;
+    rc = binary_archive.WriteObject(mesh);
+  }
+  return rc;
+}
+
+// override virtual ON_Object::Read function
+bool ON_V5ExtrusionDisplayMeshCache::Read(ON_BinaryArchive& binary_archive)
+{
+  DestroyHelper();
+  bool rc = true;
+  
+  ON_Mesh* meshes[3] = { 0 };
+  for(size_t i = 0; i < sizeof(meshes)/sizeof(meshes[0]) && rc; i++ )
+  {
+    ON_Object* p = 0;
+    rc = binary_archive.ReadObject(&p);
+    if (nullptr != p && i >= 2)
+    {
+      delete p;
+      p = nullptr;
+    }
+    if ( rc )
+      meshes[i] = ON_Mesh::Cast(p);
+    if ( 0 != p && 0 == meshes[i] )
+    {
+      delete p;
+      rc = false;
+    }
+  }
+
+  m_render_mesh = std::shared_ptr<ON_Mesh>(meshes[0]);
+  m_analysis_mesh = std::shared_ptr<ON_Mesh>(meshes[1]);
+
+  return rc;
+}
+
+bool ON_V5ExtrusionDisplayMeshCache::DeleteAfterWrite(
+  const class ON_BinaryArchive& archive,
+  const class ON_Object* parent_object
+  ) const
+{
+  return true;
+}
+
+bool ON_V5ExtrusionDisplayMeshCache::DeleteAfterRead(
+  const class ON_BinaryArchive& archive,
+  class ON_Object* parent_object
+  ) const
+{
+  ON_Extrusion* extrusion = ON_Extrusion::Cast(parent_object);
+  if (nullptr != extrusion)
+  {
+    if ( nullptr != m_analysis_mesh.get() )
+      extrusion->m_mesh_cache.SetMesh(ON_MeshCache::AnalysisMeshId, m_analysis_mesh);
+    if ( nullptr != m_render_mesh.get() )
+      extrusion->m_mesh_cache.SetMesh(ON_MeshCache::RenderMeshId, m_render_mesh);
+  }
+  return true;
+}
+
+//virtual 
+bool ON_V5ExtrusionDisplayMeshCache::GetDescription( ON_wString& description )
+{
+  description = L"Cached meshes";
+  return true;
+}
+
+//virtual 
+bool ON_V5ExtrusionDisplayMeshCache::Archive() const
+{
+  return (nullptr == m_render_mesh.get() && m_analysis_mesh.get()) ? false : true;
+}
+
+
+ON_V5ExtrusionDisplayMeshCache* ON_V5ExtrusionDisplayMeshCache::CreateMeshCache(const ON_Extrusion* p)
+{
+  if ( 0 == p )
+    return nullptr;
+
+  if (p->m_mesh_cache.MeshCount() <= 0)
+    return nullptr;
+
+  std::shared_ptr<ON_Mesh> render_mesh = p->m_mesh_cache.MeshSharedPtr(ON_MeshCache::RenderMeshId);
+  std::shared_ptr<ON_Mesh> analysis_mesh = p->m_mesh_cache.MeshSharedPtr(ON_MeshCache::AnalysisMeshId);
+
+  if (nullptr == render_mesh.get() && nullptr == analysis_mesh.get() )
+    return nullptr;
+
+  ON_V5ExtrusionDisplayMeshCache* mc = ON_V5ExtrusionDisplayMeshCache::Cast( p->GetUserData(ON_CLASS_ID(ON_V5ExtrusionDisplayMeshCache)) );
+  if ( nullptr == mc )
+  {
+    mc = new ON_V5ExtrusionDisplayMeshCache();
+    if ( false == const_cast<ON_Extrusion*>(p)->AttachUserData(mc) )
+    {
+      delete mc;
+      mc = nullptr;
+    }
+    else
+    {
+      mc->m_render_mesh = render_mesh;
+      mc->m_analysis_mesh = analysis_mesh;
+    }
+  }
+
+  return mc;
+}
+
+
+bool ON_Extrusion::SetMesh( ON::mesh_type mt, ON_Mesh* mesh )
+{
+  m_mesh_cache.SetMesh(mt,std::shared_ptr<ON_Mesh>(mesh));
+  return true;
+}
+
+const ON_Mesh* ON_Extrusion::Mesh( ON::mesh_type mt ) const
+{
+  return m_mesh_cache.MeshSharedPtr(mt).get();
+}
+
+void ON_Extrusion::DestroyMesh( ON::mesh_type mt )
+{
+  m_mesh_cache.ClearMesh(mt);
+}
+

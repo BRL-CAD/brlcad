@@ -14,10 +14,7 @@
 ////////////////////////////////////////////////////////////////
 */
 
-// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
-//#define ON_DLL_IMPORTS
-#include "../opennurbs.h"
-#include "../examples_linking_pragmas.h"
+#include "../opennurbs_public_examples.h"
 
 #include "../opennurbs_gl.h"
 
@@ -882,12 +879,12 @@ static void myDrawAxesSprite( const ON_Viewport& viewport, HDC hdc )
     y = (int)scr_coord[k][1];
     // use direction of screen vector to determine letter placement
     lx = x-x0; ly = y-y0;
-    if (abs(lx) > abs(ly)) {
+    if (std::abs(lx) > std::abs(ly)) {
       // center letter to right/left of axis end
       lx = (x >= x0) ? x + LXSIZE+LOFF : x - LXSIZE-LOFF;
       ly = y;
     }
-    else if (abs(ly) > abs(lx)) {
+    else if (std::abs(ly) > std::abs(lx)) {
       // center letter above/below axis end
       lx = x;
       ly = (y >= y0) ? y + LYSIZE+LOFF : y - LYSIZE-LOFF;

@@ -80,51 +80,69 @@ size_t ON_SimpleFixedSizePool<T>::TotalElementCount() const
 }
 
 template <class T>
-T* ON_SimpleFixedSizePool<T>::FirstElement()
-{
-  return (T *)ON_FixedSizePool::FirstElement();
-}
-
-template <class T>
-T* ON_SimpleFixedSizePool<T>::NextElement()
-{
-  return (T *)ON_FixedSizePool::NextElement();
-}
-
-template <class T>
-T* ON_SimpleFixedSizePool<T>::FirstBlock( size_t* block_element_count )
-{
-  return (T *)ON_FixedSizePool::FirstBlock(block_element_count);
-}
-
-template <class T>
-T* ON_SimpleFixedSizePool<T>::NextBlock( size_t* block_element_count )
-{
-  return (T *)ON_FixedSizePool::NextBlock(block_element_count);
-}
-
-template <class T>
 T* ON_SimpleFixedSizePool<T>::Element(size_t element_index) const
 {
   return (T *)ON_FixedSizePool::Element(element_index);
 }
 
 template <class T>
-void ON_SimpleFixedSizePool<T>::SetHeap( ON_MEMORY_POOL* heap )
+size_t ON_SimpleFixedSizePool<T>::ElementIndex(T* element_ptr) const
 {
-  ON_FixedSizePool::SetHeap(heap);
+  return ON_FixedSizePool::ElementIndex(element_ptr);
+}
+
+template <class T> 
+ON_SimpleFixedSizePoolIterator<T>::ON_SimpleFixedSizePoolIterator(const class ON_SimpleFixedSizePool<T>& fsp)
+: ON_FixedSizePoolIterator((ON_FixedSizePool&)fsp)
+{}
+
+template <class T> 
+ON_SimpleFixedSizePoolIterator<T>::ON_SimpleFixedSizePoolIterator(const class ON_SimpleFixedSizePoolIterator<T>& fsp_it)
+: ON_FixedSizePoolIterator(fsp_it)
+{}
+
+template <class T>
+T* ON_SimpleFixedSizePoolIterator<T>::FirstElement()
+{
+  return (T *)ON_FixedSizePoolIterator::FirstElement();
+}
+
+
+template <class T>
+T* ON_SimpleFixedSizePoolIterator<T>::FirstElement(size_t element_index)
+{
+  return (T *)ON_FixedSizePoolIterator::FirstElement(element_index);
 }
 
 template <class T>
-ON_MEMORY_POOL* ON_SimpleFixedSizePool<T>::Heap()
+T* ON_SimpleFixedSizePoolIterator<T>::NextElement()
 {
-  return ON_FixedSizePool::Heap();
+  return (T *)ON_FixedSizePoolIterator::NextElement();
 }
 
 template <class T>
-void ON_SimpleFixedSizePool<T>::EmergencyDestroy()
+T* ON_SimpleFixedSizePoolIterator<T>::CurrentElement()
 {
-  ON_FixedSizePool::EmergencyDestroy();
+  return (T *)ON_FixedSizePoolIterator::CurrentElement();
+}
+
+
+template <class T>
+void ON_SimpleFixedSizePoolIterator<T>::Reset()
+{
+  ON_FixedSizePoolIterator::Reset();
+}
+
+template <class T>
+T* ON_SimpleFixedSizePoolIterator<T>::FirstBlock( size_t* block_element_count )
+{
+  return (T *)ON_FixedSizePoolIterator::FirstBlock(block_element_count);
+}
+
+template <class T>
+T* ON_SimpleFixedSizePoolIterator<T>::NextBlock( size_t* block_element_count )
+{
+  return (T *)ON_FixedSizePoolIterator::NextBlock(block_element_count);
 }
 
 #endif

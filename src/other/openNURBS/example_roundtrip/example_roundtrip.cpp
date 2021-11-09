@@ -1,7 +1,4 @@
-// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
-//#define ON_DLL_IMPORTS
-#include "../opennurbs.h"
-#include "../examples_linking_pragmas.h"
+#include "../opennurbs_public_examples.h"
 
 int main( int argc, const char *argv[] )
 {
@@ -24,8 +21,6 @@ int main( int argc, const char *argv[] )
   ON_TextLog dump_to_stdout;
   ON_TextLog* dump = &dump_to_stdout;
   FILE* dump_fp = 0;
-
-  ONX_Model model;
 
   for ( argi = 1; argi < argc; argi++ ) 
   {
@@ -66,9 +61,10 @@ int main( int argc, const char *argv[] )
     dump->PushIndent();
 
     // create achive object from file pointer
-    ON_BinaryFile archive( ON::on_read3dm, archive_fp );
+    ON_BinaryFile archive( ON::archive_mode::read3dm, archive_fp );
 
     // read the contents of the file into "model"
+    ONX_Model model;
     bool rc = model.Read( archive, dump );
 
     // close the file
@@ -79,22 +75,6 @@ int main( int argc, const char *argv[] )
       dump->Print("Successfully read.\n");
     else
       dump->Print("Errors during reading.\n");
-
-    // see if everything is in good shape
-    if ( model.IsValid(dump) )
-      dump->Print("Model is valid.\n");
-    else
-    {
-      model.Polish();
-      if ( model.IsValid() )
-      {
-        dump->Print("Model is valid after calling Polish().\n");
-      }
-      else
-      {
-        dump->Print("Model is not valid.\n");
-      }
-    }
 
     /*
     int oi = 14;
@@ -113,7 +93,8 @@ int main( int argc, const char *argv[] )
     int len = outfile.Length() - 4;
     outfile.SetLength(len);
     outfile += "_roundtrip.3dm";
-    bool outrc = model.Write( outfile, version, "roundtrip", dump );
+    model.m_sStartSectionComments = "roundtrip";
+    bool outrc = model.Write( outfile, version, dump );
     if ( outrc )
     {
       dump->Print("model.Write(%s) succeeded.\n",outfile.Array());
@@ -121,14 +102,6 @@ int main( int argc, const char *argv[] )
       if ( model2.Read( outfile, dump ) )
       {
         dump->Print("model2.Read(%s) succeeded.\n",outfile.Array());
-        if ( model2.IsValid(dump) )
-        {
-          dump->Print("Model2 is valid.\n");
-        }
-        else
-        {
-          dump->Print("Model2 is not valid.\n");
-        }
         /*
         if ( oi >=0 && oi < model2.m_object_table.Count() )
         {
@@ -146,9 +119,6 @@ int main( int argc, const char *argv[] )
     }
     else
       dump->Print("model.Write(%s) failed.\n",outfile.Array());
-
-    // destroy this model
-    model.Destroy();
 
     dump->PopIndent();
   }

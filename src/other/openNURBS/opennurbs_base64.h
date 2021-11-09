@@ -266,7 +266,7 @@ public:
 
   // Returns true if an error occured during decoding because
   // invalid input was passed to Decode().
-  bool Error() const;
+  const bool Error() const;
 
 private:
   int m_status; // 1: error - decoding stopped

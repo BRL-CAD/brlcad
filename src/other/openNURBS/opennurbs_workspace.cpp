@@ -16,6 +16,14 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 ON_Workspace::ON_Workspace() 
 : m_pFileBlk(0)
 , m_pMemBlk(0)
@@ -25,6 +33,7 @@ ON_Workspace::~ON_Workspace()
 {
   Destroy();
 }
+
 
 struct ON_Workspace_FBLK 
 {
@@ -49,13 +58,13 @@ void ON_Workspace::Destroy()
   m_pFileBlk = 0;
 
   struct ON_Workspace_MBLK* pNext = m_pMemBlk;
-  struct ON_Workspace_MBLK* p = NULL;
+  struct ON_Workspace_MBLK* p = nullptr;
   while ( pNext ) {
     p = pNext;
     pNext = pNext->pNext;
     if ( p->pMem ) {
       onfree(p->pMem);
-      p->pMem = NULL;
+      p->pMem = nullptr;
     }
     onfree( p );
   }
@@ -64,7 +73,7 @@ void ON_Workspace::Destroy()
 
 void* ON_Workspace::GetMemory( size_t size )
 {
-  void* p = NULL;
+  void* p = nullptr;
   if ( size > 0 ) 
   {
     struct ON_Workspace_MBLK* pBlk = (struct ON_Workspace_MBLK*)onmalloc(sizeof(*pBlk));
@@ -80,7 +89,7 @@ void* ON_Workspace::GetMemory( size_t size )
 
 void* ON_Workspace::GrowMemory( void* p, size_t size )
 {
-  void* newp = NULL;
+  void* newp = nullptr;
   if ( !p ) {
     newp = GetMemory(size);
   }
@@ -117,18 +126,18 @@ void ON_Workspace::KeepAllMemory()
   }
 }
 
-int ON_Workspace::KeepMemory( void* p )
+bool ON_Workspace::KeepMemory( void* p )
 {
   int rc = false;
   if ( p ) {
-    struct ON_Workspace_MBLK* pPrevBlk = NULL;
+    struct ON_Workspace_MBLK* pPrevBlk = nullptr;
     struct ON_Workspace_MBLK* pBlk = m_pMemBlk;
     while ( pBlk ) {
       if ( pBlk->pMem == p ) {
         // Remove pBlk from list so ~ON_Workspace() won't onfree() its memory
         // and any future GrowMemory...() or KeepMemory() calls won't have
         // to search past it.
-        pBlk->pMem = NULL;
+        pBlk->pMem = nullptr;
         if ( pPrevBlk ) {
           pPrevBlk->pNext = pBlk->pNext;
         }
@@ -264,14 +273,14 @@ FILE* ON_Workspace::OpenFile( const wchar_t* sFileName, const wchar_t* sMode )
   return pFile;
 }
 
-int ON_Workspace::KeepFile( FILE* pFile )
+bool ON_Workspace::KeepFile( FILE* pFile )
 {
-  int rc = false;
+  bool rc = false;
   if ( pFile ) {
     struct ON_Workspace_FBLK* pFileBlk = m_pFileBlk;
     while ( pFileBlk ) {
       if ( pFileBlk->pFile == pFile ) {
-        pFileBlk->pFile = NULL;
+        pFileBlk->pFile = nullptr;
         rc = true;
         break;
       }

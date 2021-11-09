@@ -1,7 +1,4 @@
-// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
-//#define ON_DLL_IMPORTS
-#include "../opennurbs.h"
-#include "../examples_linking_pragmas.h"
+#include "../opennurbs_public_examples.h"
 
 // This example demonstrates how to attach customized "user data"
 // to any class derived from ON_Object.  In particular, you can
@@ -21,29 +18,29 @@ public:
   //    copied.
   // For more details, see comments in the constructor code below.
   MyUserData();
-  MyUserData(const MyUserData&);
+  virtual ~MyUserData();
 
+  MyUserData(const MyUserData&);
   MyUserData& operator=(const MyUserData&);
-  ~MyUserData();
 
   // In order to get your user data to persist in files, you must
   // override ON_UserData::Archive(), ON_Object::Write() and 
   // ON_Object::Read()
 
-  ON_BOOL32 Write(
-         ON_BinaryArchive&  // serialize definition to binary archive
-       ) const;
+  bool Write(
+    ON_BinaryArchive&
+  ) const override;
 
-  ON_BOOL32 Read(
-         ON_BinaryArchive&  // restore definition from binary archive
-       );
+  bool Read(
+    ON_BinaryArchive&
+  ) override;
 
   // Archive() must return true in order for user data to get saved
   // in a file.
-  ON_BOOL32 Archive() const;
+  bool Archive() const override;
   
   // You must override ON_UserData::GetDescription().
-  ON_BOOL32 GetDescription( ON_wString& );
+  bool GetDescription( ON_wString& ) override;
 
   // If your user data is attached to some type of ON_Geometry and you
   // want the user data to be transformed when the parent ON_Geometry
@@ -54,7 +51,7 @@ public:
   // At appropriate times, you can inspect ON_UserData::m_userdata_xform
   // and reset it to the identity after you've taken whatever actions
   // you deem to be appropriate.
-  ON_BOOL32 Transform( const ON_Xform& );
+  bool Transform( const ON_Xform& ) override;
 
   // possible information you might want to attach.
   int       m_my_int;
@@ -78,7 +75,7 @@ MyUserData::MyUserData()
   // attached to an object.
   //
   // In simple cases, the class UUID can be used as is shown below.
-  m_userdata_uuid = MyUserData::m_MyUserData_class_id.Uuid();
+  m_userdata_uuid = MyUserData::m_MyUserData_class_rtti.Uuid();
 
   // In order for user data to be saved in 3dm files, it must have
   // a non-nil application id.
@@ -125,15 +122,15 @@ MyUserData::~MyUserData()
 {
 }
 
-ON_BOOL32 MyUserData::Archive() const
+bool MyUserData::Archive() const
 {
   return true;
 }
 
 
-ON_BOOL32 MyUserData::Read( ON_BinaryArchive& file )
+bool MyUserData::Read( ON_BinaryArchive& file )
 {
-  ON_BOOL32 rc = true;
+  bool rc = true;
   if ( rc ) 
     rc = file.ReadInt(&m_my_int);
   if ( rc ) 
@@ -143,9 +140,9 @@ ON_BOOL32 MyUserData::Read( ON_BinaryArchive& file )
   return rc;
 }
 
-ON_BOOL32 MyUserData::Write( ON_BinaryArchive& file ) const
+bool MyUserData::Write( ON_BinaryArchive& file ) const
 {
-  ON_BOOL32 rc = true;
+  bool rc = true;
   if ( rc ) 
     rc = file.WriteInt(m_my_int);
   if ( rc ) 
@@ -155,13 +152,13 @@ ON_BOOL32 MyUserData::Write( ON_BinaryArchive& file ) const
   return rc;
 }
 
-ON_BOOL32 MyUserData::GetDescription( ON_wString& s )
+bool MyUserData::GetDescription( ON_wString& s )
 {
   s = L"my user data with point, line, and string";
   return true;
 }
 
-ON_BOOL32 MyUserData::Transform( const ON_Xform& xform )
+bool MyUserData::Transform( const ON_Xform& xform )
 {
   // Optional: call the ON_UserData::Transform() if you want the
   // ON_UserData::m_userdata_xform value to be updated.
@@ -169,49 +166,41 @@ ON_BOOL32 MyUserData::Transform( const ON_Xform& xform )
 
 
   // Transform any geometry you have in your class.
-  ON_BOOL32 rc = m_my_line.Transform(xform);
+  bool rc = m_my_line.Transform(xform);
   return rc;
 }
 
-static void write_file( const char* filename, const ON_Point& point )
-{
-  ONX_Model model;
-
-  ONX_Model_Object& mo = model.m_object_table.AppendNew();
-  mo.m_object = &point;
-  mo.m_bDeleteObject = false;
-
-  int version = 0; // version will be ON_BinaryArchive::CurrentArchiveVersion()
-
-  model.Polish();
-  model.Write( filename, version, "example_userdata.cpp file" );
-}
-
-static void read_file( const char* filename, ON_Object*& pObject )
+static ON_ModelGeometryComponent read_file( 
+  const wchar_t* filename,
+  bool bManageGeometryObject
+)
 {
   // see example_read.cpp for information about read 3dm files
   // This code will only read the file created by write_file().
   // This code should not be used as a model for reading general 3dm files.
-
-
+  
   ONX_Model model;
-  model.Read( filename );
+  ON_BinaryFile archive(ON::archive_mode::read3dm, filename);
+  if (!model.IncrementalReadBegin(archive, true, 0, nullptr))
+    return ON_ModelGeometryComponent::Unset;
 
-  if ( model.m_object_table.Count() > 0 )
-  {
-    pObject = const_cast<ON_Object*>(model.m_object_table[0].m_object);
-    model.m_object_table[0].m_object = 0; // so ~ONX_Model will not delete object
-  }
+  ON_ModelComponentReference mcr;
+  if (!model.IncrementalReadModelGeometry(archive, true, bManageGeometryObject, true, 0, mcr))
+    return ON_ModelGeometryComponent::Unset;
 
+  const ON_ModelGeometryComponent* mgc = ON_ModelGeometryComponent::Cast(mcr.ModelComponent());
+  if (nullptr == mgc)
+    return ON_ModelGeometryComponent::Unset;
+
+  return *mgc;
 }
-
 
 int main()
 {
   ON::Begin();
 
   // uuid used to get user data via ON_Object::GetUserData()
-  const ON_UUID my_user_data_uuid = MyUserData::m_MyUserData_class_id.Uuid();
+  const ON_UUID my_user_data_uuid = MyUserData::m_MyUserData_class_rtti.Uuid();
 
   // We'll attach a MyUserData user data to a point.  In general,
   // you can attach user data to any class derived from ON_Object.
@@ -253,24 +242,29 @@ int main()
 
   // When the point is saved to a file, the virtual ON_Object::Write() is
   // called to write the attached user data.
-  const char* filename = "my_point_with_user_data.3dm";
-  write_file( filename, point );
+  const wchar_t* filename = L"my_point_with_user_data.3dm";
+  ON_WriteOneObjectArchive(filename, point);
 
   // When the point is read from a file, the virtual ON_Object::Read() is
   // called to read the user data.
-  ON_Object* object_from_file = 0;
-  read_file( filename, object_from_file );
+  // If bManageGeometryObject is true, then the ON_ModelGeometryComponent destructor 
+  // will delete point_from_file.
+  bool bManageGeometryObject = true;
+  ON_ModelGeometryComponent mgr = read_file( filename, bManageGeometryObject );
+  const ON_Geometry* point_from_file = mgr.Geometry(nullptr);
 
-  if ( 0 != object_from_file )
+  if ( nullptr != point_from_file )
   {
     // Use ON_Object::GetUserData() to get user data.
-    MyUserData* ud_from_file = MyUserData::Cast( object_from_file->GetUserData( my_user_data_uuid ) );
+    MyUserData* ud_from_file = MyUserData::Cast( point_from_file->GetUserData( my_user_data_uuid ) );
 
     printf("ud_from_file->m_userdata_copycount = %d\n",ud_from_file->m_userdata_copycount);
 
-    // Clean up
-    delete object_from_file;
-    object_from_file = 0;
+    if (false == bManageGeometryObject)
+    {
+      // caller must manage point_from_file;
+      delete const_cast<ON_Geometry*>(point_from_file);
+    }
   }
 
   ON::End();

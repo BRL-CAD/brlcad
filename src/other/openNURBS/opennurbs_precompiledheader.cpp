@@ -14,12 +14,9 @@
 ////////////////////////////////////////////////////////////////
 */
 
-// Delete evertyhing this comment and everything below it except
-// the "#include "opennurbs.h"" for the public version of 
-// opennurbs source code.
-
-
 // CHECK SETTINGS BEFORE ANYTHING IS INCLUDED
+
+#if defined(_MSC_VER)
 
 #if defined(WIN32) && defined(WIN64)
 #error WIN32 and WIN64 defined.  This is wrong!
@@ -71,13 +68,31 @@
 
 #endif
 
-
+#endif
 
 #include "opennurbs.h"
 
-
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
 
 // CHECK SETTINGS AFTER EVERTHING IS INCLUDED
+
+#if defined(_MSC_VER)
+
+#if !defined(ON_COMPILER_MSC)
+#error _MSC_VER is defined and ON_COMPILER_MSC is NOT defined.
+#endif
+
+#if !defined(ON_RUNTIME_WIN)
+// if Microsfot C is used on another platfrom, then lots
+// of careful cleaning and checking will be required.
+#error _MSC_VER is defined and ON_RUNTIME_WIN is NOT defined.
+#endif
 
 #if defined(WIN32) && defined(WIN64)
 #error WIN32 and WIN64 defined.  This is wrong!
@@ -129,3 +144,4 @@
 
 #endif
 
+#endif

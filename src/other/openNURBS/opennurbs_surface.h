@@ -39,18 +39,27 @@ class ON_PolyCurve;
 class ON_CurveProxy;
 class ON_Surface;
 
+
+/* Return codes to be used in operations that attempt to fit to a tolerance.  
+   For example ON_Surface::Pullback() and ON_Surface::PushUp().
+*/
+
+enum class ON_FitResult: unsigned int
+
+{
+  unknown=0,
+  in_tolerance=1,
+  not_in_tolerance=2
+};
+
+
 class ON_CLASS ON_Surface : public ON_Geometry
 {
   ON_OBJECT_DECLARE(ON_Surface);
 
-#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
-private:
-  void UnwrapUV(double &u, double &v) const;
-#endif
-
 public:
   // virtual ON_Object::DestroyRuntimeCache override
-  void DestroyRuntimeCache( bool bDelete = true );
+  void DestroyRuntimeCache( bool bDelete = true ) override;
 
   // pure virtual class for surface objects
 public:
@@ -84,10 +93,10 @@ public:
   virtual ~ON_Surface();
 
   // virtual ON_Object::SizeOf override
-  unsigned int SizeOf() const;
+  unsigned int SizeOf() const override;
 
   // virtual ON_Geometry override
-  bool EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) const;
+  bool EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) const override;
 
   /*
   Description:
@@ -107,7 +116,7 @@ public:
 
   //////////
   // override ON_Object::ObjectType() - returns ON::surface_object
-  ON::object_type ObjectType() const;
+  ON::object_type ObjectType() const override;
 
 
   /////////////////////////////
@@ -123,7 +132,7 @@ public:
   See Also:
     ON_Brep::Create( ON_Surface&* )
   */
-  ON_BOOL32 HasBrepForm() const;
+  bool HasBrepForm() const override;
 
   /*
   Description:
@@ -132,22 +141,23 @@ public:
     form.  The surface is copied for use in the returned
     brep.
   Parameters:
-    brep - [in] if not NULL, brep is used to store the brep
+    brep - [in] if not nullptr, brep is used to store the brep
         form of the surface.
   Result:
-    Returns a pointer to on ON_Brep or NULL.  If the brep
-    parameter is not NULL, then brep is returned if the
-    surface has a brep form and NULL is returned if the
+    Returns a pointer to on ON_Brep or nullptr.  If the brep
+    parameter is not nullptr, then brep is returned if the
+    surface has a brep form and nullptr is returned if the
     geometry does not have a brep form.
   Remarks:
     The caller is responsible for managing the brep memory.
   */
-  ON_Brep* BrepForm( ON_Brep* brep = NULL ) const;
+  ON_Brep* BrepForm( ON_Brep* brep = nullptr ) const override;
 
   ////////////////////////////////////////////////////////////////////
   // surface interface
 
-  ON_BOOL32 GetDomain( 
+
+  bool GetDomain( 
          int dir,              // 0 gets first parameter, 1 gets second parameter
          double* t0,
          double* t1
@@ -159,7 +169,7 @@ public:
     );
 
   virtual
-  ON_BOOL32 SetDomain( 
+  bool SetDomain( 
     int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
     double t0, 
     double t1
@@ -193,7 +203,7 @@ public:
     true if successful.
   */
   virtual
-  ON_BOOL32 GetSurfaceSize( 
+  bool GetSurfaceSize( 
       double* width, 
       double* height 
       ) const;
@@ -205,7 +215,7 @@ public:
     ) const = 0; // number of smooth nonempty spans in the parameter direction
 
   virtual
-  ON_BOOL32 GetSpanVector( // span "knots" 
+  bool GetSpanVector( // span "knots" 
         int dir, // 0 gets first parameter's domain, 1 gets second parameter's domain
         double* span_vector // array of length SpanCount() + 1 
         ) const = 0; // 
@@ -216,7 +226,7 @@ public:
   // The "side" parameter determines which span is selected when t is at the
   // end of a span.
   virtual
-  ON_BOOL32 GetSpanVectorIndex(
+  bool GetSpanVectorIndex(
         int dir , // 0 gets first parameter's domain, 1 gets second parameter's domain
         double t,      // [IN] t = evaluation parameter
         int side,         // [IN] side 0 = default, -1 = from below, +1 = from above
@@ -230,7 +240,7 @@ public:
     int dir // 0 gets first parameter's domain, 1 gets second parameter's domain
     ) const = 0; 
 
-  virtual ON_BOOL32 GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
+  virtual bool GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
          int dir,        // 0 gets first parameter, 1 gets second parameter
          double t,       // t = parameter in domain
          double* tminus, // tminus
@@ -254,7 +264,7 @@ public:
   virtual
   ISO IsIsoparametric(
         const ON_Curve& curve,
-        const ON_Interval* curve_domain = NULL
+        const ON_Interval* curve_domain = nullptr
         ) const;
 
   /*
@@ -279,7 +289,7 @@ public:
   Description:
     Test a surface to see if it is planar.
   Parameters:
-    plane - [out] if not NULL and true is returned,
+    plane - [out] if not nullptr and true is returned,
                   the plane parameters are filled in.
     tolerance - [in] tolerance to use when checking
   Returns:
@@ -287,8 +297,8 @@ public:
     the surface to the plane is <= tolerance.
   */
   virtual
-  ON_BOOL32 IsPlanar(
-        ON_Plane* plane = NULL,
+  bool IsPlanar(
+        ON_Plane* plane = nullptr,
         double tolerance = ON_ZERO_TOLERANCE
         ) const;
 
@@ -296,7 +306,7 @@ public:
   Description:
     Determine if the surface is a portion of a sphere.
   Parameters:
-    sphere - [out] if not NULL and true is returned,
+    sphere - [out] if not nullptr and true is returned,
       then the sphere definition is returned.
     tolerance - [in]
       tolerance to use when checking
@@ -304,7 +314,7 @@ public:
     True if the surface is a portion of a sphere.                   
   */
   bool IsSphere(
-        ON_Sphere* sphere = NULL,
+        ON_Sphere* sphere = nullptr,
         double tolerance = ON_ZERO_TOLERANCE
         ) const;
 
@@ -312,7 +322,7 @@ public:
   Description:
     Determine if the surface is a portion of a cylinder.
   Parameters:
-    cylinder - [out] if not NULL and true is returned, 
+    cylinder - [out] if not nullptr and true is returned, 
       then the cylinder definition is returned.
     tolerance - [in]
       tolerance to use when checking
@@ -320,7 +330,7 @@ public:
     True if the surface is a portion of a cylinder.                   
   */
   bool IsCylinder(
-        ON_Cylinder* cylinder = NULL,
+        ON_Cylinder* cylinder = nullptr,
         double tolerance = ON_ZERO_TOLERANCE
         ) const;
 
@@ -328,7 +338,7 @@ public:
   Description:
     Determine if the surface is a portion of a cone.
   Parameters:
-    cone - [out] if not NULL and true is returned, 
+    cone - [out] if not nullptr and true is returned, 
       then the cone definition is returned.
     tolerance - [in]
       tolerance to use when checking
@@ -336,7 +346,7 @@ public:
     True if the surface is a portion of a cone.                   
   */
   bool IsCone(
-        ON_Cone* cone = NULL,
+        ON_Cone* cone = nullptr,
         double tolerance = ON_ZERO_TOLERANCE
         ) const;
 
@@ -344,7 +354,7 @@ public:
   Description:
     Determine if the surface is a portion of a torus.
   Parameters:
-    torus - [out] if not NULL and true is returned,
+    torus - [out] if not nullptr and true is returned,
       then the torus definition is returned.
     tolerance - [in]
       tolerance to use when checking
@@ -352,22 +362,22 @@ public:
     True if the surface is a portion of a torus.                   
   */
   bool IsTorus(
-        ON_Torus* torus = NULL,
+        ON_Torus* torus = nullptr,
         double tolerance = ON_ZERO_TOLERANCE
         ) const;
 
   virtual 
-  ON_BOOL32 IsClosed(   // true if surface is closed in direction
+  bool IsClosed(   // true if surface is closed in direction
         int        // dir  0 = "s", 1 = "t"
         ) const;
 
   virtual 
-  ON_BOOL32 IsPeriodic( // true if surface is periodic in direction (default is false)
+  bool IsPeriodic( // true if surface is periodic in direction (default is false)
         int        // dir  0 = "s", 1 = "t"
         ) const;
 
   virtual
-  ON_BOOL32 IsSingular( // true if surface side is collapsed to a point
+  bool IsSingular( // true if surface side is collapsed to a point
         int        // side of parameter space to test
                    // 0 = south, 1 = east, 2 = north, 3 = west
         ) const;
@@ -433,7 +443,7 @@ public:
     hint - [in/out] if GetNextDiscontinuity will be called 
        repeatedly, passing a "hint" with initial value *hint=0
        will increase the speed of the search.       
-    dtype - [out] if not NULL, *dtype reports the kind of 
+    dtype - [out] if not nullptr, *dtype reports the kind of 
         discontinuity found at *t.  A value of 1 means the first 
         derivative or unit tangent was discontinuous.  A value 
         of 2 means the second derivative or curvature was 
@@ -441,11 +451,11 @@ public:
         closed, a locus discontinuity test was applied, and
         t1 is at the start of end of the curve.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only
-        when c is ON::G1_continuous or ON::G2_continuous.  If the
+        when c is ON::continuity::G1_continuous or ON::continuity::G2_continuous.  If the
         cosine of the angle between two tangent vectors is 
         <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used 
-        only when c is ON::G2_continuous.  If K0 and K1 are 
+        only when c is ON::continuity::G2_continuous.  If K0 and K1 are 
         curvatures evaluated from above and below and 
         |K0 - K1| > curvature_tolerance, then a curvature 
         discontinuity is reported.
@@ -472,8 +482,8 @@ public:
                   double t0,
                   double t1,
                   double* t,
-                  int* hint=NULL,
-                  int* dtype=NULL,
+                  int* hint=nullptr,
+                  int* dtype=nullptr,
                   double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
                   ) const;
@@ -493,11 +503,11 @@ public:
     d2_tolerance - [in] if the difference between two second derivatives is
         greater than d2_tolerance, then the surface is not C2.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only when
-        c is ON::G1_continuous or ON::G2_continuous.  If the cosine
+        c is ON::continuity::G1_continuous or ON::continuity::G2_continuous.  If the cosine
         of the angle between two normal vectors 
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-        c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
+        c is ON::continuity::G2_continuous.  If K0 and K1 are curvatures evaluated
         from above and below and |K0 - K1| > curvature_tolerance,
         then a curvature discontinuity is reported.
   Returns:
@@ -508,7 +518,7 @@ public:
     ON::continuity c,
     double s, 
     double t, 
-    int* hint = NULL,
+    int* hint = nullptr,
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
@@ -517,19 +527,19 @@ public:
     ) const;
 
   virtual 
-  ON_BOOL32 Reverse(  // reverse parameterizatrion, Domain changes from [a,b] to [-b,-a]
+  bool Reverse(  // reverse parameterizatrion, Domain changes from [a,b] to [-b,-a]
     int // dir  0 = "s", 1 = "t"
     ) = 0;
 
   virtual 
-  ON_BOOL32 Transpose() = 0; // transpose surface parameterization (swap "s" and "t")
+  bool Transpose() = 0; // transpose surface parameterization (swap "s" and "t")
 
   // simple evaluation interface - no error handling
   ON_3dPoint  PointAt( double, double ) const;
   ON_3dVector NormalAt( double, double ) const;
-  ON_BOOL32 FrameAt( double u, double v, ON_Plane& frame) const;
+  bool FrameAt( double u, double v, ON_Plane& frame) const;
 
-  ON_BOOL32 EvPoint( // returns false if unable to evaluate
+  bool EvPoint( // returns false if unable to evaluate
          double u, double v,   // evaluation parameters
          ON_3dPoint& point,    // returns value of surface
          int quadrant = 0,     // optional - determines which side to evaluate from
@@ -542,7 +552,7 @@ public:
                                //            repeated evaluations
          ) const;
 
-  ON_BOOL32 Ev1Der( // returns false if unable to evaluate
+  bool Ev1Der( // returns false if unable to evaluate
          double u, double v,   // evaluation parameters (s,t)
          ON_3dPoint& point,    // returns value of surface
          ON_3dVector& du,      // first partial derivatives (Ds)
@@ -557,7 +567,7 @@ public:
                                //            repeated evaluations
          ) const;
 
-  ON_BOOL32 Ev2Der( // returns false if unable to evaluate
+  bool Ev2Der( // returns false if unable to evaluate
          double u, double v,   // evaluation parameters (s,t)
          ON_3dPoint& point,    // returns value of surface
          ON_3dVector& du,      // first partial derivatives (Ds)
@@ -575,7 +585,7 @@ public:
                                //            repeated evaluations
          ) const;
 
-  ON_BOOL32 EvNormal( // returns false if unable to evaluate
+  bool EvNormal( // returns false if unable to evaluate
          double u, double v,   // evaluation parameters (s,t)
          ON_3dPoint& point,    // returns value of surface
          ON_3dVector& normal,  // unit normal
@@ -589,7 +599,7 @@ public:
                                //            repeated evaluations
          ) const;
 
-  ON_BOOL32 EvNormal( // returns false if unable to evaluate
+  bool EvNormal( // returns false if unable to evaluate
          double u, double v,   // evaluation parameters (s,t)
          ON_3dVector& normal,  // unit normal
          int quadrant = 0,     // optional - determines which side to evaluate from
@@ -602,7 +612,7 @@ public:
                                //            repeated evaluations
          ) const;
 
-  ON_BOOL32 EvNormal( // returns false if unable to evaluate
+  bool EvNormal( // returns false if unable to evaluate
          double u, double v,   // evaluation parameters (s,t)
          ON_3dPoint& point,    // returns value of surface
          ON_3dVector& du,      // first partial derivatives (Ds)
@@ -620,7 +630,7 @@ public:
 
   // work horse evaluator
   virtual 
-  ON_BOOL32 Evaluate( // returns false if unable to evaluate
+  bool Evaluate( // returns false if unable to evaluate
          double u, double v,   // evaluation parameters
          int num_der,          // number of derivatives (>=0)
          int array_stride,     // array stride (>=Dimension())
@@ -664,28 +674,6 @@ public:
 
   /*
   Description:
-    Compute a 3d curve that is the composite of a 2d curve
-    and the surface map.
-  Parameters:
-    curve_2d - [in] a 2d curve whose image is in the surface's domain.
-    tolerance - [in] the maximum acceptable distance from the returned
-       3d curve to the image of curve_2d on the surface.
-    curve_2d_subdomain - [in] optional subdomain for curve_2d
-  Returns:
-    3d curve.
-  See Also:
-    ON_Surface::IsoCurve
-    ON_Surface::Pullback
-  */
-  virtual
-  ON_Curve* Pushup( const ON_Curve& curve_2d,
-                    double tolerance,
-                    const ON_Interval* curve_2d_subdomain = NULL
-                    ) const;
-
-
-  /*
-  Description:
     Removes the portions of the surface outside of the specified interval.
 
   Parameters:
@@ -701,7 +689,7 @@ public:
         are trimmed away.
   */
   virtual
-  ON_BOOL32 Trim(
+  bool Trim(
          int dir,
          const ON_Interval& domain
          );
@@ -757,28 +745,13 @@ public:
 
   */
   virtual
-  ON_BOOL32 Split(
+  bool Split(
          int dir,
          double c,
          ON_Surface*& west_or_south_side,
          ON_Surface*& east_or_north_side
          ) const;
 
-  //////////
-  // Find parameters of the point on a surface that is locally closest to
-  // the test_point.  The search for a local close point starts at
-  // seed parameters. If a sub_domain parameter is not NULL, then
-  // the search is restricted to the specified portion of the surface.
-  //
-  // true if returned if the search is successful.  false is returned if
-  // the search fails.
-  virtual
-  ON_BOOL32 GetLocalClosestPoint( const ON_3dPoint&, // test_point
-          double,double,     // seed_parameters
-          double*,double*,   // parameters of local closest point returned here
-          const ON_Interval* = NULL, // first parameter sub_domain
-          const ON_Interval* = NULL  // second parameter sub_domain
-          ) const;
 
   /*
   Description:
@@ -787,9 +760,9 @@ public:
     nurbs_surface - [out] NURBS representation returned here
     tolerance - [in] tolerance to use when creating NURBS
         representation.
-    s_subdomain - [in] if not NULL, then the NURBS representation
+    s_subdomain - [in] if not nullptr, then the NURBS representation
         for this portion of the surface is returned.
-    t_subdomain - [in] if not NULL, then the NURBS representation
+    t_subdomain - [in] if not nullptr, then the NURBS representation
         for this portion of the surface is returned.
   Returns:
     0   unable to create NURBS representation
@@ -849,27 +822,27 @@ public:
   // Description:
   //   Get a NURBS surface representation of this surface.
   // Parameters:
-  //   pNurbsSurface - [in/out] if not NULL, this pNurbsSurface
+  //   pNurbsSurface - [in/out] if not nullptr, this pNurbsSurface
   //   will be used to store the NURBS representation
   //   of the surface and will be returned.
   //   tolerance - [in] tolerance to use when creating NURBS
   //       surface representation.
-  //   s_subdomain - [in] if not NULL, then the NURBS representation
+  //   s_subdomain - [in] if not nullptr, then the NURBS representation
   //       for this portion of the surface is returned.
-  //   t_subdomain - [in] if not NULL, then the NURBS representation
+  //   t_subdomain - [in] if not nullptr, then the NURBS representation
   //       for this portion of the surface is returned.
   // Returns:
-  //   NULL or a NURBS representation of the surface.
+  //   nullptr or a NURBS representation of the surface.
   // Remarks:
   //   See ON_Surface::GetNurbForm for important details about
   //   the NURBS surface parameterization.
   // See Also:
   //   ON_Surface::GetNurbForm
   ON_NurbsSurface* NurbsSurface(
-        ON_NurbsSurface* pNurbsSurface = NULL,
+        ON_NurbsSurface* pNurbsSurface = nullptr,
         double tolerance = 0.0,
-        const ON_Interval* s_subdomain = NULL,
-        const ON_Interval* t_subdomain = NULL
+        const ON_Interval* s_subdomain = nullptr,
+        const ON_Interval* t_subdomain = nullptr
         ) const;
 
   virtual
@@ -889,264 +862,12 @@ public:
   // call DestroySurfaceTree().
   void DestroySurfaceTree();
 
-  virtual
-  ON_SurfaceTree* CreateSurfaceTree() const;
 
-  /*
-  Description:
-    Calculate area mass properties of the surface.
-  Parameters:
-    mp - [out]
-    bArea - [in] true to calculate area
-    bFirstMoments - [in] true to calculate area first moments,
-                         area and area centroid.
-    bSecondMoments - [in] true to calculate area second moments.
-    bProductMoments - [in] true to calculate area product moments.
-  Returns:
-    True if successful.
-  */
-  bool AreaMassProperties(
-    ON_MassProperties& mp,
-    bool bArea = true,
-    bool bFirstMoments = true,
-    bool bSecondMoments = true,
-    bool bProductMoments = true,
-    double rel_tol = 1.0e-6,
-    double abs_tol = 1.0e-6
-    ) const;
+private:
 
-  /*
-  Description:
-    Calculate volume mass properties of the surface.
-  Parameters:
-    mp - [out]
-    bVolume - [in] true to calculate volume
-    bFirstMoments - [in] true to calculate volume first moments,
-                         volume, and volume centroid.
-    bSecondMoments - [in] true to calculate volume second moments.
-    bProductMoments - [in] true to calculate volume product moments.
-    base_point - [in]
-      If the surface is closed, then pass ON_UNSET_VALUE.
+public:
 
-      This parameter is for expert users who are computing a
-      volume whose boundary is defined by several non-closed
-      breps, surfaces, and meshes.
-
-      When computing the volume, volume centroid, or volume
-      first moments of a volume whose boundary is defined by
-      several breps, surfaces, and meshes, pass the same
-      base_point to each call to VolumeMassProperties.
-
-      When computing the volume second moments or volume product
-      moments of a volume whose boundary is defined by several
-      breps, surfaces, and meshes, you MUST pass the entire
-      volume's centroid as the base_point and the input mp
-      parameter must contain the results of a previous call
-      to VolumeMassProperties(mp,true,true,false,false,base_point).
-      In particular, in this case, you need to make two sets of
-      calls; use first set to calculate the volume centroid and
-      the second set calculate the second moments and product
-      moments.
-  Returns:
-    True if successful.
-  */
-  bool VolumeMassProperties(
-    ON_MassProperties& mp,
-    bool bVolume = true,
-    bool bFirstMoments = true,
-    bool bSecondMoments = true,
-    bool bProductMoments = true,
-    ON_3dPoint base_point = ON_UNSET_POINT,
-    double rel_tol = 1.0e-6,
-    double abs_tol = 1.0e-6
-    ) const;
-
-  /*
-  Description:
-    Intersect this surface with surfaceB.
-
-  Parameters:
-    surfaceB - [in]
-
-    x - [out]
-      Intersection events are appended to this array.
-
-    intersection_tolerance - [in]
-      If the input intersection_tolerance <= 0.0, then 0.001 is used.
-
-    overlap_tolerance - [in]
-      If positive, then overlap_tolerance must be
-      >= intersection_tolerance and is used to test for
-      overlapping regions. If the input
-      overlap_tolerance <= 0.0, then 2*intersection_tolerance
-      is used.
-
-    fitting_tolerance - [in]
-      If fitting_tolerance is > 0 and >= intersection_tolerance,
-      then the intersection curves are fit to this tolerance.
-      If input fitting_tolerance <= 0.0 or < intersection_tolerance,
-      then intersection_tolerance is used.
-
-    surfaceA_udomain - [in]
-      optional restriction on surfaceA u domain
-    surfaceA_vdomain - [in]
-      optional restriction on surfaceA v domain
-
-    surfaceB_udomain - [in]
-      optional restriction on surfaceB u domain
-    surfaceB_vdomain - [in]
-      optional restriction on surfaceB v domain
-  Returns:
-     Number of intersection events appended to x.
-  */
-  int IntersectSurface(
-          const ON_Surface* surfaceB,
-          ON_ClassArray<ON_SSX_EVENT>& x,
-          double intersection_tolerance = 0.0,
-          double overlap_tolerance = 0.0,
-          double fitting_tolerance = 0.0,
-          const ON_Interval* surfaceA_udomain = 0,
-          const ON_Interval* surfaceA_vdomain = 0,
-          const ON_Interval* surfaceB_udomain = 0,
-          const ON_Interval* surfaceB_vdomain = 0
-          ) const;
-
-  /*
-  Description:
-    Create a cubic nurbs surface that interpolates a list of curves.
-
-  Parameters:
-    curve_count - [in]  >= 2
-      number of curves
-
-    curve_list - [in]
-      array of pointers to curves.  These curves define
-      the location of the The returned surface's "v" parameter
-
-    k - [in] (0.0 <= k) or k = ON_UNSET_VALUE
-      k determines how the surface's m_knot[0] values
-      are calculated. Most frequently, 0.0, 0.5, or 1.0 should be used.
-        0.0: uniform
-        0.5: sqrt(chord length)
-        1.0: chord length
-          In general, when k >= 0.0, then spacing is pow(d,k), where d is the
-          average distance between the curves defining the span.
-        ON_UNSET_VALUE: the intepolation knot vector is explicity specified.
-          The knots in the interpolated direction are specified.  You must
-          understand the mathematics of NURBS surfaces to use this option.
-          To specify an explicit knot vector for the interpolation, the
-          nurbs_suface parameter must be non-null, and nurbs_surface->m_knot[0]
-          must be an array of length 4+curve_count, and
-          (nurbs_surface->m_knot[0][2], ..., nurbs_surface->m_knot[0][curve_count+1])
-          must be a strictly increasing list of values.
-
-    is_closed - [in]
-      0: open
-      1: closed
-      2: periodic
-
-    start_shape - [in]
-    end_shape - [in]
-      The start_shape and end_shape paramters determine the
-      starting and ending shape of the lofted surface.
-      Simple shapes:
-        The simple end conditions calculate the rows of free
-        control points based on the locations of the input
-        curves and do not require additional input information.
-          ON::cubic_loft_ec_quadratic: quadratic
-          ON::cubic_loft_ec_linear: linear
-          ON::cubic_loft_ec_cubic: cubic
-          ON::cubic_loft_ec_natural: natrual (zero 2nd derivative)
-      Explicit shapes:
-        In order to specify explicit end conditions, curve_count must
-        be at least 3, is_closed must be 0 or 1, the nurbs_surface
-        parameter must be non-null, the nurbs_surface control
-        points must be allocated, nurbs_surface->m_cv_count[0]
-        must be curve_count+2, and the input curves must have nurbs
-        curve formats with the same number of control points as
-        nurbs_surface->m_cv_count[1]. The values of the starting
-        shape points are specified in nurbs_surface->CV(1,...) and
-        the values of ending shape points are specified in
-        nurbs_surface->CV(curve_count,...).
-        N = curve_count
-          ON::cubic_loft_ec_unit_tangent: unit tangent is specified
-          ON::cubic_loft_ec_1st_derivative: first derivative is specified
-          ON::cubic_loft_ec_2nd_derivative: second derivative is specified
-          ON::cubic_loft_ec_free_cv: free control vertex is specified
-
-    nurbs_surface - [in]
-      If not null, the result will returned in this ON_NurbsSurface.
-      Typically, this paramter is used when you want to store the
-      result in an ON_NurbsSurface that is on the stack.  This
-      paramter is also used when you want to specify the interpolation
-      knots or end conditions.
-
-  Returns:
-    If successful, a pointer to the surface is returned. If the input
-    nurbs_surface parameter was null, then this surface is on the heap
-    and will need to be deleted to avoid memory leaks.  If the input
-    is not valid, null is returned, even when nurbs_surface is not
-    null.
-
-  Example:
-
-    // EXAMPLE 1: Loft a surface through a list of curves
-      ON_SimpleArray< const ON_Curve* > curve_list = ....;
-      ON_NurbsSurface* srf = ON_Surface::CreateCubicLoft(
-                     curve_list.Count(),
-                     curve_list,
-                     0.5 // sqrt(chord length) spacing
-                     );
-
-    // EXAMPLE 2: Create adjacent surfaces with an identical shared edge.
-      // First make two curve lists with
-      // curve_listA.Count() == curve_listB.Count() and
-      // curve_listA[i]->PointAtEnd() == curve_listB[i]->PointAtStart()
-      ON_SimpleArray< const ON_Curve* > curve_listA = ....;
-      ON_SimpleArray< const ON_Curve* > curve_listB = ....;
-      curve_count = curve_listA.Count();
-      ON_NurbsSurface* srfA = 0;
-      ON_NurbsSurface* srfB = 0;
-      if ( curve_count == curve_listB.Count() )
-      {
-        srfA = ON_Surface::CreateCubicLoft(
-                       curve_count,
-                       curve_listA.Array(),
-                       1.0 // chord length spacing
-                       );
-        if (0 != srfA)
-        {
-          srfB = new ON_NurbsSurface();
-          int knot_count0 = srfA->KnotCount(0);
-          srfB->ReserveKnotCapacity(0,knot_count0);
-          memcpy(srfB->m_knot[0],srfA->m_knot[0],knot_count0*sizeof(srfB->m_knot[0][0]))
-          if ( 0 == ON_Surface::CreateCubicLoft(
-                         curve_count,
-                         curve_listB.Array(),
-                         ON_UNSET_VALUE, // knots specified in srfB->m_knot[0]
-                         0, // open loft
-                         ON::cubic_loft_ec_quadratic,
-                         ON::cubic_loft_ec_quadratic,
-                         srfB
-                         ) )
-            {
-           // clean up to prevent memory leaks
-           delete srfB;
-           srfB = 0;
-         }
-       }
-     }
-  */
-  static
-  class ON_NurbsSurface* CreateCubicLoft(
-    int curve_count,
-    const ON_Curve* const* curve_list,
-    double k,
-    int is_closed = 0,
-    ON::cubic_loft_end_condition start_shape = ON::cubic_loft_ec_quadratic,
-    ON::cubic_loft_end_condition end_shape   = ON::cubic_loft_ec_quadratic,
-    class ON_NurbsSurface* nurbs_surface = 0
-    );
+protected:
 };
 
 class ON_CLASS ON_SurfaceProperties
@@ -1193,13 +914,7 @@ public:
 };
 
 #if defined(ON_DLL_TEMPLATE)
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Surface*>;
-#pragma warning( pop )
 #endif
 
 class ON_CLASS ON_SurfaceArray : public ON_SimpleArray<ON_Surface*>
@@ -1208,14 +923,18 @@ public:
   ON_SurfaceArray( int = 0 );
   ~ON_SurfaceArray();
 
-  ON_BOOL32 Write( ON_BinaryArchive& ) const;
-  ON_BOOL32 Read( ON_BinaryArchive& );
+  bool Write( ON_BinaryArchive& ) const;
+  bool Read( ON_BinaryArchive& );
 
   void Destroy(); // deletes surfaces in array and sets count to 0
 
-  ON_BOOL32 Duplicate( ON_SurfaceArray& ) const; // operator= copies the pointer values
+  bool Duplicate( ON_SurfaceArray& ) const; // operator= copies the pointer values
                                      // duplicate copies the surfaces themselves
 };
 
+
+// Sets closed[di] if Surface if G1-closed in the di direction, i.e no 
+// G1-discontinuities on the interior or the seam.
+void ON_DECL ON_IsG1Closed(const ON_Surface& Srf, bool closed[2]);
 
 #endif

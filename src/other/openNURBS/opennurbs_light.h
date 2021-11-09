@@ -24,72 +24,51 @@ class ON_CLASS ON_Light : public ON_Geometry
 public:
   ON_Light();
   ~ON_Light();
-  // C++ defaults work fine
-  //ON_Light& operator=(const ON_Light&);
-  //ON_Light(const ON_Light&);
+  ON_Light& operator=(const ON_Light&) = default;
+  ON_Light(const ON_Light&) = default;
+
+  static const ON_Light Unset;
 
   /////////////////////////////////////////////////////////////////
   //
   // ON_Object virtual functions 
   //
 
-  /*
-  Description:
-    Tests an object to see if its data members are correctly
-    initialized.
-  Parameters:
-    text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
-        interface tool.
-  Returns:
-    @untitled table
-    true     object is valid
-    false    object is invalid, uninitialized, etc.
-  Remarks:
-    Overrides virtual ON_Object::IsValid
-  */
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
-  void Dump( ON_TextLog& ) const; // for debugging
+  void Dump( ON_TextLog& ) const override; // for debugging
 
   // Use ON_BinaryArchive::WriteObject() and ON_BinaryArchive::ReadObject()
   // for top level serialization.  These Read()/Write() members should just
   // write/read specific definitions.  In particular, they should not write/
   // read any chunk typecode or length information.  The default 
   // implementations return false and do nothing.
-  ON_BOOL32 Write(
+  bool Write(
          ON_BinaryArchive&  // serialize definition to binary archive
-       ) const;
+       ) const override;
 
-  ON_BOOL32 Read(
+  bool Read(
          ON_BinaryArchive&  // restore definition from binary archive
-       );
+       ) override;
 
-  ON::object_type ObjectType() const;
+  ON::object_type ObjectType() const override;
 
   // virtual
-  ON_UUID ModelObjectId() const;
+  ON_UUID ModelObjectId() const override;
 
 
   /////////////////////////////////////////////////////////////////
   //
   // ON_Geometry virtual functions 
   //
-  int Dimension() const;
+  int Dimension() const override;
 
-  ON_BOOL32 GetBBox( // returns true if successful
-         double*,    // boxmin[dim]
-         double*,    // boxmax[dim]
-         ON_BOOL32 = false  // true means grow box
-         ) const;
+  // virtual ON_Geometry GetBBox override		
+  bool GetBBox( double* boxmin, double* boxmax, bool bGrowBox = false ) const override;
 
-  ON_BOOL32 Transform( 
+  bool Transform( 
          const ON_Xform&
-         );
+         ) override;
  
   /////////////////////////////////////////////////////////
   //
@@ -102,8 +81,8 @@ public:
   //
   // turn light on/off
   //
-  ON_BOOL32 Enable( ON_BOOL32 = true ); // returns previous state
-  ON_BOOL32 IsEnabled() const;
+  bool Enable( bool = true ); // returns previous state
+  bool IsEnabled() const;
   
   /////////////////////////////////////////////////////////
   //
@@ -113,11 +92,11 @@ public:
   void SetStyle(ON::light_style);
   ON::light_style Style() const;
 
-  ON_BOOL32 IsPointLight() const;
-  ON_BOOL32 IsDirectionalLight() const;
-  ON_BOOL32 IsSpotLight() const;
-  ON_BOOL32 IsLinearLight() const;
-  ON_BOOL32 IsRectangularLight() const;
+  const bool IsPointLight() const;
+  const bool IsDirectionalLight() const;
+  const bool IsSpotLight() const;
+  const bool IsLinearLight() const;
+  const bool IsRectangularLight() const;
 
   ON::coordinate_system CoordinateSystem() const; // determined by style
 
@@ -136,7 +115,7 @@ public:
   Returns:
     true if successful.
   */
-  ON_BOOL32 GetLightXform( 
+  bool GetLightXform( 
            const ON_Viewport& vp,
            ON::coordinate_system dest_cs, 
            ON_Xform& xform 
@@ -149,7 +128,7 @@ public:
   ON_3dVector Direction() const;
   ON_3dVector PerpindicularDirection() const;
 
-  double Intensity() const; // 0.0 = 0%  1.0 = 100%
+  double Intensity() const; // 0.0 = 0%  1.0 = 100%  Only clamped above zero - no maximum.
   void SetIntensity(double);
 
   double PowerWatts() const;
@@ -262,7 +241,7 @@ public:
   ON_UUID       m_light_id;
   ON_wString    m_light_name;
 
-  ON_BOOL32                 m_bOn;   // true if light is on
+  bool                 m_bOn;   // true if light is on
   ON::light_style      m_style; // style of light
 
   ON_Color m_ambient;

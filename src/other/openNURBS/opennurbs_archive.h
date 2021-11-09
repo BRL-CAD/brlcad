@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2016 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -16,312 +15,6 @@
 
 #if !defined(ON_ARCHIVE_INC_)
 #define ON_ARCHIVE_INC_
-
-class ON_CLASS ON_FileStream
-{
-public:
-  /*
-  Description:
-    Portable wrapper for C runtime fopen().
-  Parameters:
-    filename - [in]
-    mode - [in]
-  Remarks:
-    Use the ON_FileStream static functions for reading, writing, 
-    seeking, position finding with the FILE pointer returned
-    by this function.
-  */
-  static FILE* Open( const wchar_t* filename, const wchar_t* mode );
-
-  /*
-  Description:
-    Portable wrapper for C runtime fopen().
-  Parameters:
-    filename - [in]
-    mode - [in]
-  Remarks:
-    Use the ON_FileStream static functions for reading, writing, 
-    seeking, position finding with the FILE pointer returned
-    by this function.
-  */
-  static FILE* Open( const char* filename, const char* mode );
-  
-  /*
-  Description:
-    Portable wrapper for C runtime fclose().
-  Parameters:
-    fp - [in]
-      FILE pointer returned by ON_FileStream::Open().
-  Returns:
-       0: successful
-      -1: null fp parameter
-    != 0: fclose() failure code
-  */
-  static int Close( FILE* fp );
-
-  /*
-  Description:
-    Portable wrapper for C runtime ftell().
-  Parameters:
-    fp - [in]
-      FILE pointer returned by ON_FileStream::Open().
-  Returns:
-    >= 0: current file position
-      -1: an error occured
-  */
-  static ON__INT64 CurrentPosition( FILE* fp );
-
-  /*
-  Description:
-    Portable wrapper for C runtime fseek(fp,offset,SEEK_CUR).
-  Parameters:
-    fp - [in]
-      FILE pointer returned by ON_FileStream::Open().
-    offset - [in]
-  */
-  static bool SeekFromCurrentPosition( FILE* fp, ON__INT64 offset );
-
-  /*
-  Description:
-    Portable wrapper for C runtime fseek(fp,offset,SEEK_SET).
-  Parameters:
-    fp - [in]
-      FILE pointer returned by ON_FileStream::Open().
-    offset - [in]
-  */
-  static bool SeekFromStart( FILE* fp, ON__INT64 offset );
-
-  /*
-  Description:
-    Portable wrapper for C runtime fseek(fp,offset,SEEK_END).
-  Parameters:
-    fp - [in]
-      FILE pointer returned by ON_FileStream::Open().
-    offset - [in]
-  */
-  static bool SeekFromEnd( FILE* fp, ON__INT64 offset );
-
-  /*
-  Description:
-    Portable wrapper for C runtime fseek(fp,offset,origin).
-  Parameters:
-    fp - [in]
-      FILE pointer returned by ON_FileStream::Open().
-    offset - [in]
-    origin - [in]
-      SEEK_SET (0): seek from beginning of file.  
-      SEEK_CUR (1): seek from current position of file pointer.
-      SEEK_END (2): seek from end of file.
-  */
-  static bool Seek( FILE* fp, ON__INT64 offset, int orgin );
-
-  /*
-  Description:
-    Portable wrapper for C runtime fread(buffer,1,count,fp).
-  Parameters:
-    fp - [in]
-      FILE pointer returned by ON_FileStream::Open()
-    count - [in]
-      number of bytes to read.
-    buffer - [out]
-      read bytes are stored in this buffer
-  Returns:
-    number of bytes read
-  */
-  static ON__UINT64 Read( FILE* fp, ON__UINT64 count, void* buffer );
-
-  /*
-  Description:
-    Portable wrapper for C runtime fwrite(buffer,1,count,fp).
-  Parameters:
-    fp - [in]
-      FILE pointer returned by ON_FileStream::Open()
-    count - [in]
-      number of bytes to write
-    buffer - [in]
-      data to be written
-  Returns:
-    number of bytes written.
-  */
-  static ON__UINT64 Write( FILE* fp, ON__UINT64 count, const void* buffer );
-
-  /*
-  Description:
-    Portable wrapper for C runtime fflush(fp).
-  Parameters:
-    fp - [in]
-      FILE pointer returned by ON_FileStream::Open().
-  Returns:
-    true if flush was successful.  False if an error occured.
-  */
-  static bool Flush( FILE* fp );
-
-  /*
-  Description:
-    Portable wrapper for C runtime fstat().
-  Parameters:
-    fp - [in]
-      FILE pointer returned by ON_FileStream::Open().
-    file_size - [out]
-      If file_size is not null, the the size of the file
-      in bytes returned here
-    file_creation_time - [out]
-      If file_creation_time is not null, then the time the file 
-      was created is returned here as the number of seconds since
-      midnight January 1, 1970.
-    file_last_modified_time - [out]
-      If file_last_modified_time is not null, then the time the file
-      was last modified is returned here as the number of seconds
-      since midnight January 1, 1970.
-  Returns:
-    true if the query was successful.  False if an error occured.
-  */
-  static bool GetFileInformation( 
-    FILE* fp,
-    ON__UINT64* file_size,
-    ON__UINT64* file_create_time,
-    ON__UINT64* file_last_modified_time
-    );
-};
-
-class ON_CLASS ON_FileIterator
-{
-public:
-  ON_FileIterator();
-  ~ON_FileIterator();
-  void Destroy();
-
-  /*
-  Description:
-    Find the first matching file in the directory.
-  Parameters:
-    directory_name - [in]
-      The directory to look in.
-    file_name_filter - [in]
-      If this paramter is null, then the iteration
-      includes all names in the directory.
-      The file name to search for. This parameter can 
-      include wildcard characters, such as an
-      asterisk (*) or a question mark (?). For example,
-      "\rootdir\subdir\*.*"  will iterate all files in
-      the \rootdir\subdir\ directory.
-
-  Example:
-          // Iterate through the files in a directory named "\rootdir\subdir"
-          FILE* fp = 0;
-          ON_FileIterator fit;
-          const char* directory = "\\rootdir\\subdir";
-          for ( const wchar_t* filename = fit.FirstFile( directory, "*.3dm" );
-                0 != filename;
-                filename = fit.NextFile()
-              )
-          {
-            if ( fit.CurrentFileIsDirectory() )
-              continue;
-            ON_String fullpath = directory;
-            fullpath += '\\';
-            fullpath += filename;
-            FILE* fp = ON_FileStream::Open(fullpath,"rb");
-            if ( 0 == fp )
-            {
-              continue;
-            }
-            ...
-            ON_FileStream::Close(fp);
-            fp = 0;
-          }
-        }
-
-  Returns:
-    NULL if no matching files are present in the directory.
-  */
-  const wchar_t* FirstFile( 
-    const wchar_t* directory_name, 
-    const wchar_t* file_name_filter
-    );
-
-  const wchar_t* FirstFile( 
-    const char* directory_name, 
-    const char* file_name_filter
-    );
-
-  /*
-  Description:
-    Find the next matching file in the directory.
-  Returns:
-    NULL if no more matching files are present in the directory.
-  */
-  const wchar_t* NextFile();
-
-  const wchar_t* CurrentFileName() const;
-
-  ON__UINT64 CurrentFileSize() const;
-
-  /*
-  Returns 
-    true if the current "file" is a directory.
-  */
-  bool CurrentFileIsDirectory() const;
-
-  /*
-  Returns 
-    true if the current file or directory is hidden.
-    This means its name begins with a '.' or it's
-    Windows hidden attribute is true.
-  */
-  bool CurrentFileIsHidden() const;
-
-  bool GetCurrentFullPathFileName( ON_wString& filename ) const;
-
-  /*
-  Returns:
-    File creation time in seconds since January 1, 1970
-  */
-  ON__UINT64 CurrentFileCreateTime() const;
-
-  /*
-  Returns:
-    File last modified time in seconds since January 1, 1970
-  */
-  ON__UINT64 CurrentFileLastModifiedTime() const;
-
-  /*
-  Returns:
-    File last access time in seconds since January 1, 1970
-  */
-  ON__UINT64 CurrentFileLastAccessTime() const;
-
-  /*
-  Returns:
-    Number of matching files returned so far.
-  */
-  ON__UINT64 Count() const;
-
-private:
-  // Used by Windows ::Find
-  ON__UINT64 m_count;
-  ON_wString m_directory;
-
-#if defined(ON_COMPILER_MSC)
-  ON__UINT32 m_file_attributes_mask;
-  HANDLE m_h;
-  WIN32_FIND_DATA m_fd;
-#else
-  ON_wString m_ws_file_name_filter;
-  ON_String m_utf8_file_name_filter;
-  DIR* m_dir;
-  struct dirent m_dirent;
-  char m_dirent_name_buffer[NAME_MAX+1]; // < this field provide storage for m_dirent.d_name[]
-
-  // information about the current file
-  wchar_t m_current_name[1024];
-  ON__UINT64 m_current_file_attributes; // 1 = regular file, 2 = directory
-  ON__UINT64 m_current_file_size;
-  ON__UINT64 m_current_file_create_time;
-  ON__UINT64 m_current_last_modified_time;
-  ON__UINT64 m_current_last_access_time;
-#endif
-};
 
 
 /////////////////////////////////////////////////////////////////////
@@ -631,7 +324,6 @@ private:
   bool SetCurrentSegment(bool);
   void Copy( const ON_Buffer& );
 
-  ON_MEMORY_POOL* m_heap;
   ON_Buffer_ErrorHandler m_error_handler;
 
   ON__UINT32 m_last_error;
@@ -648,16 +340,6 @@ private:
 //      includes optional CRC support
 //
 
-class ON_Object;
-class ON_Group;
-class ON_Font;
-class ON_DimStyle;
-class ON_Arc;
-class ON_ObjectAttributes;
-class ON_InstanceDefinition;
-class ON_HatchPattern;
-class ON_Linetype;
-
 struct ON_3DM_CHUNK
 {
   size_t m_offset; // In read or write_using_fseek mode, this is the
@@ -673,28 +355,76 @@ struct ON_3DM_CHUNK
   ON__UINT32 m_crc32;
 };
 
-struct ON_3DM_BIG_CHUNK
+class ON_CLASS ON_3DM_BIG_CHUNK
 {
-  ON__UINT64 m_big_offset; // In read or write_using_fseek mode, this is the
-                           // file position of first byte after chunk's length.
-                           // In write_using_buffer mode, this of the m_buffer[]
-                           // position of first byte after chunk's length.
+public:
+  ON_3DM_BIG_CHUNK() = default;
+  ~ON_3DM_BIG_CHUNK() = default;
+  ON_3DM_BIG_CHUNK(const ON_3DM_BIG_CHUNK&) = default;
+  ON_3DM_BIG_CHUNK& operator=(const ON_3DM_BIG_CHUNK&) = default;
 
-  ON__UINT64 Length() const; // 0 for short chunks
+public:
+  ON__UINT64 m_start_offset=0; // When reading or writing 3dm archives, this is the
+                             // archive offset (file position) of first byte of 
+                             // chunk information conent.
+  
+  ON__UINT64 m_end_offset=0; // When writing 3dm archives, this is the archive 
+                           // offset (file position) of the byte immediately after
+                           // the farthest successful write. 
+                           // When reading 3dm archives, this the archive offset
+                           // of the first byte after the chunk's information content.
+                           // When reading, a 16 bit or 32 bit CRC can follow the chunk
+                           // information content.
+                           // During ordinary reading and writing, valid seek target 
+                           // positions satisfy 
+                           // m_start_offset <= seek target pos <= m_end_offset.
 
-  ON__INT64 m_big_value;
-  ON__UINT32 m_typecode;
+  /*
+  Returns:
+    Number of bytes in the chunk, including bytes used to store CRC values.
+    0 for short chunks.
+    0 for chunks currently being written.
+  Remarks:
+    For chunks being read,
+     m_start_offset + Length() = m_end_offset + SizeofCRC().
+  */
+  ON__UINT64 Length() const;
 
-  ON__UINT8 m_bLongChunk; // true if chunk is a long chunk and m_big_value is a length.
-  ON__UINT8 m_reserved1;
-  ON__UINT8 m_reserved2;
-  ON__UINT8 m_reserved3;
+  /*
+  Parameters:
+    current_position - [in]
+      Value of ON_BinaryArchive.CurrentPosition()
 
+  Returns:
+    Number of bytes that can be read when ON_BinaryArchive ReadMode() is true.
+  */
+  ON__UINT64 LengthRemaining(
+    ON__UINT64 current_position
+  ) const;
+
+  /*
+  Returns:
+    0: no CRC
+    4: 32 bit CRC (4 bytes)
+    2: 16 bit CRC (2 bytes)
+  */
+  ON__UINT64 SizeofCRC() const;
+
+  ON__INT64 m_big_value=0;
+  ON__UINT32 m_typecode=0;  
+  ON__UINT8 m_bLongChunk=0; // true if chunk is a long chunk and m_big_value is a length.
+
+private:
+  ON__UINT8 m_reserved1=0;
+  ON__UINT8 m_reserved2=0;
+  ON__UINT8 m_reserved3=0;
+
+public:
   // CRC settings
-  ON__UINT8 m_do_crc16; // true (1) if we are calculating 16 bit CRC
-  ON__UINT8 m_do_crc32; // true (1) if we are calculating 32 bit CRC
-  ON__UINT16 m_crc16; // current 16 bit CRC value
-  ON__UINT32 m_crc32; // current 32 bit CRC value
+  ON__UINT8 m_do_crc16=0; // true (1) if we are calculating 16 bit CRC
+  ON__UINT8 m_do_crc32=0; // true (1) if we are calculating 32 bit CRC
+  ON__UINT16 m_crc16=0; // current 16 bit CRC value
+  ON__UINT32 m_crc32=0; // current 32 bit CRC value
 };
 
 bool ON_IsLongChunkTypecode(ON__UINT32 typecode);
@@ -702,31 +432,1466 @@ bool ON_IsLongChunkTypecode(ON__UINT32 typecode);
 bool ON_IsShortChunkTypecode(ON__UINT32 typecode);
 
 #if defined(ON_DLL_TEMPLATE)
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3DM_CHUNK>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3DM_BIG_CHUNK>;
-#pragma warning( pop )
 #endif
-
-class ON_Light;
-class ON_Bitmap;
-class ON_TextureMapping;
-class ON_Material;
-class ON_Layer;
-class ON_3dmProperties;
-class ON_3dmSettings;
-class ON_3dmObjectAttributes;
-class ON_3dmGoo;
-
-class ON_BinaryArchive;
 
 // Used int ON_3dmProperties::Read() to set ON_BinaryArchive.m_3dm_opennurbs_version
 // Do not call directly. 
-void ON_SetBinaryArchiveOpenNURBSVersion(ON_BinaryArchive&,int);
+void ON_SetBinaryArchiveOpenNURBSVersion(ON_BinaryArchive&,unsigned int);
+
+class ON_CLASS ON_UserDataItemFilter
+{
+public:
+  ON_UserDataItemFilter();
+
+  ON_UserDataItemFilter(
+    ON_UUID application_id,
+    bool bSerialize
+    );
+
+  ON_UserDataItemFilter(
+    ON_UUID application_id,
+    ON_UUID item_id,
+    bool bSerialize
+    );
+
+  static int Compare(
+    const class ON_UserDataItemFilter*,
+    const class ON_UserDataItemFilter*
+    );
+
+  // The application id can be the id for a plug-in, Rhino or opennurbs
+  ON_UUID m_application_id;
+
+  // The item id for object user data is the value of ON_UserData.m_userdata_uuid.
+  // The item id for user table is the application id.
+  // A nil item id indicates the setting is applied to all object user data 
+  // and user table information for the specified application.
+  ON_UUID m_item_id;
+
+  // If application id and item id match and m_bSerializeEnabled,
+  // does not match, then the ON_UserDataItemFilter with the
+  // largest value of m_precedence is used.
+  unsigned int m_precedence;
+
+  // bSerializationEnabled is true if reading and writing are permitted.
+  // bSerializationEnabled is false if reading and writing are prevented.
+  bool m_bSerialize;
+};
+
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UserDataItemFilter>;
+#endif
+
+class ON_CLASS ON_ComponentManifest
+{
+public:
+  // The default constructor would work prfectly,
+  // except there is a bug in Apple's CLANG that
+  // requires either an explicitly implemented constructor
+  // or an explicitly implemented copy constructor together
+  // with a hack to initialize the static ON_ComponentManifest::Empty.
+  // Apple CLANG BUG // ON_ComponentManifest() = default;
+  ON_ComponentManifest() ON_NOEXCEPT;
+
+  ~ON_ComponentManifest();
+
+  static const ON_ComponentManifest Empty;
+
+  void Reset();
+
+  enum : int
+  {
+    UnsetComponentIndex = ON_UNSET_INT_INDEX
+  };
+
+private:
+  ON_ComponentManifest(const ON_ComponentManifest&) = delete;
+  ON_ComponentManifest& operator=(const ON_ComponentManifest&) = delete;
+
+public:
+
+  /*
+    Total number of items in the manifest, including items referencing system components and deleted items.
+  */
+  unsigned int ItemCount() const;
+
+  /*
+  Parameters:
+    component_type - [in]
+      If component_type is ON_ModelComponent::Type::Unset or ON_ModelComponent::Type::Mixed,
+      then the every explict component type is counted.
+  Returns:
+    Total number of model components of the specified type in this manifest. 
+  Remarks:
+    The count includes active, deleted, and system components.
+  */
+  unsigned int TotalComponentCount(
+    ON_ModelComponent::Type component_type
+    ) const;
+
+  /*
+  Parameters:
+    component_type - [in]
+      If component_type is ON_ModelComponent::Type::Unset or ON_ModelComponent::Type::Mixed,
+      then the every explict component type is counted.
+  Returns:
+    Number of model components of the specified type in this manifest. 
+  Remarks:
+    The count includes active and deleted components.
+    The count does not include system components (those added by calling AddSystemComponentToManifest()).
+  */
+  unsigned int ActiveAndDeletedComponentCount(
+    ON_ModelComponent::Type component_type
+    ) const;
+
+  /*
+  Parameters:
+    component_type - [in]
+      If component_type is ON_ModelComponent::Type::Unset or ON_ModelComponent::Type::Mixed,
+      then the every explict component type is counted.
+  Returns:
+    Number of active model components of the specified type in this manifest. 
+  Remarks:
+    The count does not include deleted components (IsDeleted() = true).
+    The count does not include system components (those added by calling AddSystemComponentToManifest()).
+  */
+  unsigned int ActiveComponentCount(
+    ON_ModelComponent::Type component_type
+    ) const;
+
+  /*
+  Parameters:
+    component_type - [in]
+      If component_type is ON_ModelComponent::Type::Unset or ON_ModelComponent::Type::Mixed,
+      then the every explict component type is counted.
+  Returns:
+    Number of model components of the specified type in this manifest that have IsDeleted() = true.
+  Remarks:
+    System components cannot be deleted.
+  */
+  unsigned int DeletedComponentCount(
+    ON_ModelComponent::Type component_type
+    ) const;
+
+  unsigned int SystemComponentCount(
+    ON_ModelComponent::Type component_type
+    ) const;
+
+  /*
+  Parameters:
+    component_type - [in]
+  Returns:
+    If the component type is indexed, then all current manifest indices
+    for the component_type are >= 0 and < ComponentIndexLimit().
+    Otherwise 0 is returned.
+  */
+  int ComponentIndexLimit(
+    ON_ModelComponent::Type component_type
+    ) const;
+
+  /*
+  Description:
+    Add a component to this manifest.
+    If the id is not set or not unique, the component will not be added.
+    If a unique name is required and the name is not set or not unique,
+    the component will not be added.
+  Parameters:
+    component - [in]
+      If you want to update the component id, index and name values to 
+      match the ones assigned in the manifest, then call 
+      component.SetIdentification(manifest_item),
+      where manifest_item is the information returned by this function.
+    bResolveIdAndNameCollisions - [in]
+      If false, then the component parameter id must not be used in the
+      manifest and, when required, the name must be set and unique.
+      If true and a new id or name is required, one will be assigned.
+      Note that the component parameter is const and its id and name
+      are not modified.
+    assigned_name - [out]
+      If not null, the assigned name is returned here.
+  Returns:
+    If an item is added to this manifest, then the assigned
+    identification information is returned. 
+    Otherwise ON_ComponentManifestItem::Unset is returned.
+    Note the manifest index is generally different from component.Index().
+  Remarks:
+    Use 
+  */
+  const class ON_ComponentManifestItem& AddComponentToManifest(
+    const class ON_ModelComponent& component,
+    bool bResolveIdAndNameCollisions,
+    ON_wString* assigned_name
+    );
+
+  const class ON_ComponentManifestItem& AddSystemComponentToManifest(
+    const class ON_ModelComponent& component
+    );
+
+
+  /*
+  Description:
+    Add a component to this manifest.
+  Parameters:
+    component_type - [in]
+      Type of component.
+    component_serial_number - [in]
+      0 or the component's unique runtime serial number (ON_ModelComponent::RuntimeSerialNumber()).
+    component_id - [in]
+    component_name_hash - [in]
+      If the the component type requires a unique name and the name
+      is not valid or in use, the component will not be added.
+  Returns:
+    If an item is added to this manifest, then the identification
+    information is returned.
+    Otherwise ON_ComponentManifestItem::Unset is returned.
+    Note: 
+    The manifest index is assigned to components that require an index.
+  */
+  const class ON_ComponentManifestItem& AddComponentToManifest(
+    ON_ModelComponent::Type component_type,
+    ON__UINT64 component_serial_number,
+    ON_UUID component_id,
+    const ON_NameHash& component_name_hash
+    );
+
+  /*
+  Description:
+    Add a component to this manifest.  
+    If the id is not set or in use, then a new one will be assigned.
+    If the component type requires a unique name and the name is not set or in use,
+    then a new one will be assigned.
+  Parameters:
+    component_type - [in]
+      Type of component.
+    component_serial_number - [in]
+      0 or the component's unique runtime serial number (ON_ModelComponent::RuntimeSerialNumber()).
+    component_id - [in]
+      If the id is nil or in use, a new id will be assigned.
+    component_name_hash - [in]
+      If the the component type requires a unique name and the name
+      is not valid or in use, the component will not be added.
+    original_name - [in/out]
+      If a new name needs to be assigned, the input value will be used
+      as a candidate and then as the root. Passing in the current name
+      is a good choice. The output value is the final assigned name.
+  Returns:
+    If an item is added to this manifest, then the identification
+    information is returned.
+    Otherwise ON_ComponentManifestItem::Unset is returned.
+  */
+  const class ON_ComponentManifestItem& AddComponentToManifest(
+    ON_ModelComponent::Type component_type,
+    ON__UINT64 component_serial_number,
+    ON_UUID component_parent_id,
+    ON_UUID component_id,
+    const ON_NameHash& component_name_hash,
+    const wchar_t* candidate_name,
+    ON_wString& assigned_name
+    );
+
+  const class ON_ComponentManifestItem& AddComponentToManifest(
+    ON_ModelComponent::Type component_type,
+    ON__UINT64 component_serial_number,
+    ON_UUID component_parent_id,
+    ON_UUID component_id,
+    const wchar_t* original_name,
+    ON_wString& assigned_name
+    );
+
+
+  /*
+  Description:
+    Modify a manifest items's component name
+  Parameters:
+    item_id - [in]
+      Identifies the manifest item to modify.
+    component_parent_id - [in]
+      ON_ModelComponent.ParentId() value.
+      When ON_ModelComponent::UniqueNameIncludesParent(component_type) is true,
+      it is critical that component_parent_id be set correctly.
+    name - [in]
+      new name
+  Returns:
+    True if name was modified.
+  */
+  const class ON_ComponentManifestItem& ChangeComponentName(
+    ON_UUID item_id,
+    ON_ModelComponent::Type component_type,
+    ON_UUID component_parent_id,
+    const wchar_t* component_name
+    );
+
+  /*
+  Description:
+    Modify a manifest items's component name
+  Parameters:
+    component - [in]
+      The component that is in the manifest with the new name set.
+  Returns:
+    True if name was modified.
+  */
+  const class ON_ComponentManifestItem& ChangeComponentName(
+    const class ON_ModelComponent& component
+    );
+
+  /*
+  Description:
+    A function for expert users to directly set the
+    component's name hash. Generally, it is better
+    to use the ChangeComponentName() functions.
+  Parameters:
+    item_id - [in]
+      Identifies the manifest item to modify.
+    component_name_hash - [in]
+      new name hash
+  */
+  const class ON_ComponentManifestItem& ChangeComponentNameHash(
+    ON_UUID item_id,
+    const ON_NameHash& component_name_hash
+    );
+
+  /*
+  Description:
+    Modify a manifest items's component m_component_runtime_serial_number,
+    m_original_index, m_original_id, and m_name_hash values.
+  Parameters:
+    manifest_id - [in]
+      identifies the manifest item to modify
+    component_runtime_serial_number - [in]      
+  */
+  const class ON_ComponentManifestItem& ChangeComponentRuntimeSerialNumber(
+    ON_UUID item_id,
+    ON__UINT64 component_runtime_serial_number
+    );
+
+  /*
+  Description:
+    Set a component's status to deleted.
+  */
+  const class ON_ComponentManifestItem& DeleteComponent(
+    ON_UUID item_id
+    );
+
+  const class ON_ComponentManifestItem& DeleteComponent(
+    ON__UINT64 component_runtime_serial_number
+    );
+
+  /*
+  Description:
+    Undelete a previously deleted component.
+  */
+  const class ON_ComponentManifestItem& UndeleteComponent(
+    ON_UUID item_id,
+    ON_UUID parent_id,
+    const wchar_t* candidate_name,
+    ON_wString& assigned_name
+    );
+
+  /*
+  Description:
+    Undelete a previously deleted component with the same id and
+    change the serial number to new_component_runtime_serial_number.
+  Remarks:
+    Often when an object is modified, the original and new
+    object have the same id but different serial numbers. The original is
+    deleted. When the item is undeleted for the object, the runtime
+    serial number needs to be udated.
+  */
+  const class ON_ComponentManifestItem& UndeleteComponentAndChangeRuntimeSerialNumber(
+    ON_UUID item_id,
+    ON_UUID parent_id,
+    ON__UINT64 new_component_runtime_serial_number,
+    const wchar_t* candidate_name,
+    ON_wString& assigned_name
+    );
+
+  bool RemoveComponent(
+    const ON_ModelComponent& component
+    );
+
+  bool RemoveComponent(
+    ON__UINT64 component_runtime_serial_number
+    );
+
+  bool RemoveComponent(
+    ON_UUID item_id
+    );
+
+  bool RemoveIndexedComponent(
+    ON_ModelComponent::Type component_type,
+    int item_index
+    );
+
+  bool RemoveAllComponents(
+    ON_ModelComponent::Type component_type,
+    bool bResetManifestIndex
+    );
+  
+  /*
+  Description:
+    Get a name that is currently not used in this manifest as either a component
+    or manifest name.
+  Parameters:
+    component_type - [in]
+      ON_ModelComponent::ComponentTypeIsValidAndNotMixed(component_type) must be true.
+    component_parent_id - [in]
+      If ON_ModelComponent::UniqueNameIncludesParent(component_type) is true and
+      candidate_name is not empty, then the component parent id must be accurate.
+      This is the case for ON_Layer names. 
+      Otherwise, you may pass ON_nil_uuid.
+    candidate_name - [in]
+      If candidate_name is a valid and not it use,
+      then unused_component_name = candidate_name.
+      If ON_ModelComponent::UniqueNameIncludesParent(component_type) is true and
+      candidate_name is not empty, then component_parent_id must be accurate.
+      This is the case for ON_Layer names.
+    base_name - [in]
+      If base_name is empty or not valid, 
+      then ON_ModelComponent::ComponentTypeToString(component_type) is used as base_name
+    suffix_separator - [in]
+      empty or the string to place between base_name and the suffix when searching for an
+      unsued name.
+    suffix0 - [in]
+      If a suffix needs to be appended, the search for a 
+      unused name begins with the suffix values suffix0+1.
+    suffix_value - [out]
+      If nullptr != suffix_value, the value used to generate the 
+      unique name suffix is returned.
+  Returns:
+    An component name that is not used in this manifest.
+  Remarks:
+    If candidate_name could not be used, then it has the form 
+    base_name + suffix_separator + X, where X is an integer > suffix0.
+  */
+  const ON_wString UnusedName(
+    ON_ModelComponent::Type component_type,
+    ON_UUID component_parent_id,
+    const wchar_t* candidate_name,
+    const wchar_t* base_name,
+    const wchar_t* suffix_separator,
+    unsigned int suffix0,
+    unsigned int* suffix_value
+    ) const;
+
+  /*
+  Description:
+    Get a name that is currently not used in this manifest as either a component
+    or manifest name.
+  Parameters:
+    model_component - [in]
+      The component type, id, parent id, and candidate name parameters for the
+      more complicated version of UnusedName() are taken from this parameter.
+  Returns:
+    An component name that is not used in this manifest.
+  Remarks:
+    If candidate_name could not be used, then it has the form 
+    base_name + suffix_separator + X, where X is an integer > suffix0.
+  */
+  const ON_wString UnusedName(
+    const ON_ModelComponent& model_component
+    ) const;
+
+  /*
+  Parameters:
+    component_type - [in]
+      ON_ModelComponent::ComponentTypeIsValidAndNotMixed(component_type)
+      must be true or false will be returned.
+    candidate_name_hash - [in]
+      candidate_name_hash.IsValidAndNotEmpty()
+      must be true or false will be returned.
+  Returns:
+    True if the candidate_name_hash a hash of a valid, non-empty name and the
+    name is currently not used as either a component or manifest name value.
+  */
+  bool NameIsAvailable(
+    ON_ModelComponent::Type component_type,
+    const ON_NameHash& candidate_name_hash
+    ) const;
+
+  /*
+  Description:
+    Get an id that is not currently used in this manifest
+  Parameters:
+    component_type - [in]
+      ON_ModelComponent::ComponentTypeIsValidAndNotMixed(component_type) must be true.
+    candidate_id
+      If candidate_id is valid component id and not in use,
+      then its value is returned.
+  Returns:
+    An id that is valid and currently not used in this ON_Manifest as 
+    either a component or a manifest id value.
+  Remarks:
+    If candidate_id cannot be used, then ON_CreateId() is used to create a new id.
+  */
+  ON_UUID UnusedId(
+    ON_UUID candidate_id
+    ) const;
+
+  /*
+  Returns:
+    True if the id is valid and currently not used in this ON_Manifest as 
+    either a component or a manifest id value.
+  */
+  bool IdIsAvailable(
+    ON_UUID id
+    ) const;
+  
+  //////////////////////////////////////////////////////////////////
+  //
+  // Query tools to get item identificaion information
+  //
+  //    
+  const class ON_ComponentManifestItem& ItemFromId(
+    ON_UUID item_id
+    ) const;
+
+  const class ON_ComponentManifestItem& ItemFromComponentRuntimeSerialNumber(
+    ON__UINT64 component_runtime_serial_number
+    ) const;
+
+  /*
+  Description:
+    Returns the item if it has the required component type and id.
+  Remarks:
+    Every item has a unique manifest id.  The component_type
+    parameter is provided if an additional check needs to be
+    made on component type.
+  */
+  const class ON_ComponentManifestItem& ItemFromId(
+    ON_ModelComponent::Type component_type,
+    ON_UUID item_id
+    ) const;
+
+  /*
+  Parameters:
+    component_type - [in]
+    model_component - [in]
+      The value of ON_ModelComponent::UniqueNameIgnoresCase(component_type) must be used
+      when creating the name hash (group names are case sensitive).
+  */
+  const class ON_ComponentManifestItem& ItemFromName(
+    const class ON_ModelComponent* model_component
+    ) const;
+
+  /*
+  Parameters:
+    component_type - [in]
+    parent_id - [in]
+      If  ON_ModelComponent::UniqueNameIncludesParent(component_type) is true, 
+      then the parent_id must be used to calculate the name hash 
+      (layer names require parent ids).
+  */
+  const class ON_ComponentManifestItem& ItemFromName(
+    ON_ModelComponent::Type component_type,
+    ON_UUID parent_id,
+    const wchar_t* name
+    ) const;
+
+  /*
+  Parameters:
+    component_type - [in]
+    component_name_hash - [in]
+      The value of ON_ModelComponent::UniqueNameIgnoresCase(component_type) must be used
+      when creating the name hash (group names are case sensitive).
+
+      If  ON_ModelComponent::UniqueNameIncludesParent(component_type) is true, 
+      then the parent_id must be used to calculate the name hash 
+      (layer names require parent ids).
+  */
+  const class ON_ComponentManifestItem& ItemFromNameHash(
+    ON_ModelComponent::Type component_type,
+    const ON_NameHash& component_name_hash
+    ) const;
+
+  const class ON_ComponentManifestItem& ItemFromIndex(
+    ON_ModelComponent::Type component_type,
+    int item_index
+    ) const;
+
+  const class ON_ComponentManifestItem& ItemFromUnsignedIndex(
+    ON_ModelComponent::Type component_type,
+    unsigned int unsigned_item_index
+    ) const;
+
+  const class ON_ComponentManifestItem& SystemItemFromNameHash(
+    ON_ModelComponent::Type component_type,
+    const ON_NameHash& system_item_name_hash
+    ) const;
+
+  const class ON_ComponentManifestItem& SystemItemFromIndex(
+    ON_ModelComponent::Type component_type,
+    int system_item_index
+    ) const;
+
+  const class ON_ComponentManifestItem* FirstItem(
+    ON_ModelComponent::Type component_type
+    ) const;
+
+  const class ON_ComponentManifestItem* LastItem(
+    ON_ModelComponent::Type component_type
+    ) const;
+
+  /*
+  Returns:
+    Next item in the manifest with the same component type.
+  */
+  const class ON_ComponentManifestItem* NextItem(
+    const class ON_ComponentManifestItem* item
+    ) const;
+
+  /*
+  Returns:
+    Previous item in the manifest with the same component type.
+  */
+  const class ON_ComponentManifestItem* PreviousItem(
+    const class ON_ComponentManifestItem* item
+    ) const;
+
+  /*
+  Returns:
+    Next item in the manifest with the same component type.
+  */
+  const class ON_ComponentManifestItem* NextItem(
+    ON_UUID manifest_item_id
+    ) const;
+
+  /*
+  Returns:
+    Previous item in the manifest with the same component type.
+  */
+  const class ON_ComponentManifestItem* PreviousItem(
+    ON_UUID manifest_item_id
+    ) const;
+
+  /*
+  Description:
+    This number is incremented every time the manifest changes.
+  */
+  ON__UINT64 ManifestContentVersionNumber() const;
+
+private:
+  const class ON_ComponentManifestItem* Internal_AddItem(
+    class ON_ComponentManifestItem& item,
+    ON_UUID component_parent_id,
+    bool bResolveIdAndNameCollisions,
+    const wchar_t* candidate_name,
+    ON_wString* assigned_name
+    );
+
+private:
+  class ON_ComponentManifestImpl* Impl() const;
+  mutable class ON_ComponentManifestImpl* m_impl = nullptr;
+};
+
+class ON_CLASS ON_ComponentManifestItem
+{
+public:
+  static const ON_ComponentManifestItem UnsetItem;
+
+  static int CompareComponentType(
+    const ON_ComponentManifestItem* a, 
+    const ON_ComponentManifestItem* b
+    );
+
+  static int CompareId(
+    const ON_ComponentManifestItem*const* a, 
+    const ON_ComponentManifestItem*const* b
+    );
+
+  static int CompareNameHash(
+    const ON_ComponentManifestItem*const* a,
+    const ON_ComponentManifestItem*const* b
+    );
+
+  static int CompareIndex(
+    const ON_ComponentManifestItem*const* a, 
+    const ON_ComponentManifestItem*const* b
+    );
+
+public:
+  // Assigns component type, index, id and name hash
+  ON_ComponentManifestItem(
+    const class ON_ModelComponent& component
+    );
+
+  ON_ComponentManifestItem(
+    const class ON_ModelComponent& component,
+    const ON_UUID& manifest_id,
+    const class ON_NameHash& manifest_name_hash
+    );
+
+  ON_ComponentManifestItem(
+    ON_ModelComponent::Type component_type,
+    ON__UINT64 m_component_runtime_serial_number,
+    const ON_UUID& manifest_id,
+    const class ON_NameHash& manifest_name_hash
+    );
+
+  ON_ComponentManifestItem(
+    const class ON_ModelComponent& component,
+    int manifest_index,
+    const ON_UUID& manifest_id,
+    const class ON_NameHash& manifest_name_hash
+    );
+
+  ON_ComponentManifestItem(
+    ON_ModelComponent::Type component_type,
+    ON__UINT64 m_component_runtime_serial_number,
+    int manifest_index,
+    const ON_UUID& manifest_id,
+    const class ON_NameHash& manifest_name_hash
+    );
+
+  ON_ComponentManifestItem() = default;
+  ~ON_ComponentManifestItem() = default;
+  ON_ComponentManifestItem(const ON_ComponentManifestItem&) = default;
+  ON_ComponentManifestItem& operator=(const ON_ComponentManifestItem&) = default;
+
+public:
+  /*
+  Returns:
+    true if m_component_type is not ON_ModelComponent::Type::Unset
+    and the m_manifest_id is not nil.
+  */
+  bool IsValid() const;
+
+  /*
+  Returns:
+    true if m_component_type is ON_ModelComponent::Type::Unset
+    or the m_manifest_id is nil.
+  */
+  bool IsUnset() const;
+  
+  /*
+  Returns:
+    true if the item is in a deleted state.
+    Name is erased. 
+    The component can be found by component serial number, id, or index.
+  */
+  bool IsDeleted() const;
+
+  /*
+  Returns:
+    true if the item is a constant system component.
+  */
+  bool IsSystemComponent() const;
+
+public:
+  /*
+  Return:
+    item component type. ON_ModelComponent::Type::Unset if it is not set.
+  */
+  ON_ModelComponent::Type ComponentType() const;
+
+  void SetComponentType(
+    ON_ModelComponent::Type component_type
+  );
+
+public:
+  /*
+  Return:
+    item id. ON_nil_uuid if is not set.
+  */
+  ON_UUID Id() const;
+
+  void SetId(
+    ON_UUID id
+  );
+
+public:
+  /*
+  Return:
+    item component runtime serial number. 0 if it is not set.
+  */
+  ON__UINT64 ComponentRuntimeSerialNumber() const;
+
+  void SetComponentRuntimeSerialNumber(
+    ON__UINT64 component_runtime_serial_number
+  );
+
+public:
+  /*
+  Return:
+    item name hash. ON_NameHash::UnsetNameHash if is not set.
+  */
+  const ON_NameHash& NameHash() const;
+
+  void SetNameHash(
+    const ON_NameHash& name_hash
+  );
+
+public:
+  /*
+  Return:
+    item index. ON_UNSET_INT_INDEX if it is not set.
+  */
+  int Index() const;
+
+  void SetIndex(
+    int index
+  );
+
+private:
+  friend class ON_ComponentManifestImpl;
+
+  void Internal_SetDeletedState(
+    bool bDeleted
+    );
+
+private:
+  ON__UINT32 m_status_bits = 0;
+  ON_ModelComponent::Type m_component_type = ON_ModelComponent::Type::Unset;
+  ON__UINT8 m_reserved1 = 0;
+  ON__UINT16 m_reserved2 = 0;
+  ON__UINT32 m_reserved3 = 0;
+  int m_index = ON_UNSET_INT_INDEX;
+  ON__UINT64 m_component_runtime_serial_number = 0;
+  ON_UUID m_id = ON_nil_uuid;
+  ON_NameHash m_name_hash = ON_NameHash::UnsetNameHash;
+};
+
+class ON_CLASS ON_ManifestMapItem
+{
+public:
+  ON_ManifestMapItem() = default;
+  ~ON_ManifestMapItem() = default;
+  ON_ManifestMapItem(const ON_ManifestMapItem&) = default;
+  ON_ManifestMapItem& operator=(const ON_ManifestMapItem&) = default;
+
+public:
+  static const ON_ManifestMapItem Unset;
+  
+  /*
+  Description:
+    Compares type, indices and ids.
+  */
+  static int Compare(
+    const ON_ManifestMapItem& a,
+    const ON_ManifestMapItem& b
+  );
+
+  static int CompareTypeAndSourceId(
+    const ON_ManifestMapItem& a,
+    const ON_ManifestMapItem& b
+  );
+
+  static int CompareTypeAndDestinationId(
+    const ON_ManifestMapItem& a,
+    const ON_ManifestMapItem& b
+  );
+
+  static int CompareTypeAndSourceIdAndIndex(
+    const ON_ManifestMapItem& a,
+    const ON_ManifestMapItem& b
+  );
+
+  static int CompareTypeAndDestinationIdAndIndex(
+    const ON_ManifestMapItem& a,
+    const ON_ManifestMapItem& b
+  );
+
+  static int CompareTypeAndSourceIndex(
+    const ON_ManifestMapItem& a,
+    const ON_ManifestMapItem& b
+  );
+
+  static int CompareTypeAndDestinationIndex(
+    const ON_ManifestMapItem& a,
+    const ON_ManifestMapItem& b
+  );
+
+  /*
+  Description:
+    32-bit hash for use in source id hash tables
+  */
+  static ON__UINT32 SourceIdHash32(
+    const ON_UUID& source_component_id
+  );
+
+  /*
+  Description:
+    32-bit hash for use in source index hash tables
+  */
+  static ON__UINT32 SourceIndexHash32(
+    ON_ModelComponent::Type component_type,
+    int source_component_index
+  );
+
+  /*
+  Returns:
+    True if 
+    m_component_type is not ON_ModelComponent::Type::Unset
+    and m_source_component_id is not nil
+    and m_destination_component_id is not nil
+    and no index is required or m_source_component_index and m_destination_component_index
+    are not ON_UNSET_INT_INDEX.
+  */
+  bool SourceAndDestinationAreSet() const;
+
+  bool SourceOrDestinationIsUnset() const;
+
+  /*
+  Returns:
+    True if 
+    m_component_type is not ON_ModelComponent::Type::Unset
+    and m_source_component_id is not nil
+    and no index is required or m_source_component_index is not ON_UNSET_INT_INDEX.
+  */
+  bool SourceIsSet() const;
+
+  bool SourceIsUnset() const;
+
+  /*
+  Returns:
+    True if 
+    m_component_type is not ON_ModelComponent::Type::Unset
+    and m_destination_component_id is not nil
+    and no index is required or m_destination_component_index is not ON_UNSET_INT_INDEX.
+  */  
+  bool DestinationIsSet() const;
+
+  bool DestinationIsUnset() const;
+
+  /*
+  Returns:
+    True if destination_manifest contains a manifest item that matches
+    m_component_type, m_destination_component_id, and m_destination_component_index.
+  */
+  bool DestinationInManifest(
+    const ON_ComponentManifest& destination_manifest
+    ) const;
+
+  /*
+  Returns:
+    True if destination_manifest contains a manifest item that matches
+    m_component_type, m_source_component_id, and m_source_component_index.
+  */
+  bool SourceInManifest(
+    const ON_ComponentManifest& source_manifest
+    ) const;
+
+  ON_ManifestMapItem SwapSourceAndDestiation() const;
+
+  ON_ModelComponent::Type ComponentType() const;
+  const ON_UUID& SourceId() const;
+  const ON_UUID& DestinationId() const;
+  int SourceIndex() const;
+  int DestinationIndex() const;
+  
+  bool ClearSourceIdentification();
+
+  bool ClearDestinationIdentification();
+
+  /*
+  Description:
+    Set type and source identification.
+  Parameters:
+    component_type - [in]
+    source_id - [in]
+    source_index - [in]
+  Returns:
+    True if set.
+    False destination type is set and different from component_type.
+  */
+  bool SetSourceIdentification(
+    ON_ModelComponent::Type component_type,
+    ON_UUID source_id,
+    int source_index
+    );
+
+  /*
+  Description:
+    Set type and destination identification.
+  Parameters:
+    component_type - [in]
+    source_id - [in]
+    source_index - [in]
+  Returns:
+    True if set.
+    False destination type is set and different from component_type.
+  */  
+  bool SetDestinationIdentification(
+    ON_ModelComponent::Type component_type,
+    ON_UUID destination_id,
+    int destination_index
+    );
+
+  /*
+  Description:
+    Set type and source identification to model_component identification.
+  Parameters:
+    model_component - [in]
+  Returns:
+    True if set.
+    False destination type is set and different from model_component->ComponentType().
+  */
+  bool SetSourceIdentification(
+    const class ON_ModelComponent* model_component
+    );
+
+  /*
+  Description:
+    Set type and destination identification to model_component identification.
+  Parameters:
+    model_component - [in]
+  Returns:
+    True if set.
+    False source type is set and different from model_component->ComponentType().
+  */
+  bool SetDestinationIdentification(
+    const class ON_ModelComponent* model_component
+    );
+
+  /*
+  Description:
+    Set type and source identification to manifest_item identification.
+  Parameters:
+    manifest_item - [in]
+  Returns:
+    True if set.
+    False destination type is set and different from manifest_item->ComponentType().
+  */
+
+  bool SetSourceIdentification(
+    const class ON_ComponentManifestItem* manifest_item
+    );
+
+  /*
+  Description:
+    Set type and destination identification to manifest_item identification.
+  Parameters:
+    manifest_item - [in]
+  Returns:
+    True if set.
+    False source type is set and different from manifest_item->ComponentType().
+  */
+  bool SetDestinationIdentification(
+    const class ON_ComponentManifestItem* manifest_item
+    );
+
+  /*
+  Description:
+    Copy type and source identification from map_item.
+  Parameters:
+    map_item - [in]
+  Returns:
+    True if set.
+    False destination type is set and different from map_item->ComponentType().
+  */
+  bool SetSourceIdentification(
+    const class ON_ManifestMapItem* map_item
+    );
+
+  /*
+  Description:
+    Copy type and destination identification from map_item.
+  Parameters:
+    map_item - [in]
+  Returns:
+    True if set.
+    False source type is set and different from map_item->ComponentType().
+  */
+  bool SetDestinationIdentification(
+    const class ON_ManifestMapItem* map_item
+    );
+
+private:
+  bool Internal_SetSourceOrDestinationIdentification(
+    unsigned int which_identification, // 0 = source, 1 = destination
+    ON_ModelComponent::Type component_type,
+    ON_UUID id,
+    int index
+  );
+
+private:
+  ON_ModelComponent::Type m_component_type = ON_ModelComponent::Type::Unset;
+private:
+  unsigned int m_reserved = 0;
+private:
+  int m_source_index = ON_UNSET_INT_INDEX;
+  int m_destination_index = ON_UNSET_INT_INDEX;
+private:
+  ON_UUID m_source_id = ON_nil_uuid;
+  ON_UUID m_destination_id = ON_nil_uuid;
+};
+
+ON_DECL
+bool operator==(const ON_ManifestMapItem& lhs,const ON_ManifestMapItem& rhs);
+
+ON_DECL
+bool operator!=(const ON_ManifestMapItem& lhs,const ON_ManifestMapItem& rhs);
+
+
+/*
+Description:
+  ON_ManifestIdentificationMap is used to record a map from
+  a source manifest to a destination manifest when the index or id
+  values change. This is common when reading and writing archives
+  and when merging models.
+*/
+class ON_CLASS ON_ManifestMap
+{
+public:
+  // The default constructor would work prfectly,
+  // except there is a bug in Apple's CLANG that
+  // requires either an explicitly implemented constructor
+  // or an explicitly implemented copy constructor together
+  // with a hack to initialize the static ON_ComponentManifest::Empty.
+  // Apple CLANG BUG // ON_ManifestMap() = default;
+  ON_ManifestMap() ON_NOEXCEPT;
+
+  ~ON_ManifestMap();
+  ON_ManifestMap(const ON_ManifestMap&);
+  ON_ManifestMap& operator=(const ON_ManifestMap&);
+
+public:
+  static const ON_ManifestMap Empty;
+    
+public:
+  bool AddMapItem(
+    const class ON_ManifestMapItem& map_item
+    );
+
+  /*
+  Parameters:
+    map_item - [in]
+      The source settings must exacty match source settings of an existing map.
+      The destination settings are the new values to assign.
+  Return:
+    True if a mapping was successfully updated (even when the destation settings did not change).
+  */
+  bool UpdatetMapItemDestination(
+    const class ON_ManifestMapItem& map_item
+    );
+
+  /*
+  Parameters:
+    map_item - [in]
+      The source settings must exacty match source settings of an existing map.
+      The destination settings are the new values to assign.
+    bIgnoreSourceIndex - [in]
+      If true, the value of map_item.SourceIndex() is ignored.
+      Otherwise, it must exactly match the source index setting of an existing map.
+  Return:
+    True if a mapping was successfully updated (even when the destation settings did not change).
+  */
+  bool UpdatetMapItemDestination(
+    const class ON_ManifestMapItem& map_item,
+    bool bIgnoreSourceIndex
+    );
+
+  const class ON_ManifestMapItem& MapItemFromSourceId(
+    const ON_UUID& source_item_id
+    ) const;
+
+  const class ON_ManifestMapItem& MapItemFromSourceIndex(
+    ON_ModelComponent::Type component_type,
+    int source_component_index
+    ) const;
+
+  bool GetAndValidateDestinationIndex(
+    ON_ModelComponent::Type component_type,
+    int source_component_index,
+    const ON_ComponentManifest& destination_manifest,
+    int* destination_component_index
+    ) const;
+
+  bool GetAndValidateDestinationIndex(
+    ON_ModelComponent::Type component_type,
+    const ON_UUID& source_component_id,
+    const ON_ComponentManifest& destination_manifest,
+    int* destination_component_index
+    ) const;
+
+  bool GetAndValidateDestinationId(
+    ON_ModelComponent::Type component_type,
+    const ON_UUID& source_component_id,
+    const ON_ComponentManifest& destination_manifest,
+    ON_UUID* destination_component_id
+    ) const;
+
+  /*
+  Returns:
+    True if there are no ON_ManifestMapItem elements.
+  */
+  bool IsEmpty() const;
+
+  /*
+  Returns:
+    True if there is at least one ON_ManifestMapItem element.
+  */
+  bool IsNotEmpty() const;
+
+  /*
+  Returns:
+    Number of map items.
+  Remarks:
+    Some of these items may not change id or index.
+  */
+  unsigned int MapItemCount() const;
+
+private:
+  class ON_ManifestMapImpl* Impl();
+  class ON_ManifestMapImpl* m_impl = nullptr;
+};
+
+
+enum class ON_3dmArchiveTableType : unsigned int
+{
+  // The values of the table_type enums must increase in the order 
+  // the corresponding tables appear in well formed 3dm archives
+  // and the bitwise or of distinct values must be zero because
+  // bitfield filters are used in some reading operations.
+
+  Unset                     = 0,
+
+  // First section in any 3dm archive.
+  start_section             = 0x00000001U,
+
+  properties_table          = 0x00000002U,
+  settings_table            = 0x00000004U,
+  bitmap_table              = 0x00000008U,
+  texture_mapping_table     = 0x00000010U,
+  material_table            = 0x00000020U,
+  linetype_table            = 0x00000040U,
+  layer_table               = 0x00000080U,
+  group_table               = 0x00000100U,
+  text_style_table          = 0x00000200U,
+  leader_style_table        = 0x00000400U,
+  dimension_style_table     = 0x00000800U,
+  light_table               = 0x00001000U,
+  hatchpattern_table        = 0x00002000U,
+  instance_definition_table = 0x00004000U,
+  object_table              = 0x00008000U, 
+  historyrecord_table       = 0x00010000U,
+  user_table                = 0x00020000U,
+
+  // Last section in any 3dm archive.
+  end_mark                  = 0x40000000U
+};
+
+
+/*
+Description:
+  Context for an annotation object. This context is required when
+  converting current annotation objects to and from formats used
+  in earlier versions and is typically used when reading and 
+  writing 3dm archives.
+*/
+class ON_CLASS ON_3dmAnnotationContext
+{
+public:
+  ON_3dmAnnotationContext() = default;
+  ~ON_3dmAnnotationContext();
+  ON_3dmAnnotationContext(const ON_3dmAnnotationContext&);
+  ON_3dmAnnotationContext& operator=(const ON_3dmAnnotationContext&);
+
+public:
+  static const ON_3dmAnnotationContext Default;
+
+public:
+  ON::active_space ViewContext() const;
+  
+  void SetViewContext(
+    ON::active_space
+  );
+
+  ON::LengthUnitSystem ModelLengthUnitSystem() const;
+  
+  void SetModelLengthUnitSystem(
+    ON::LengthUnitSystem model_length_unit_system
+  );
+
+  ON::LengthUnitSystem PageLengthUnitSystem() const;
+  
+  void SetPageLengthUnitSystem(
+    ON::LengthUnitSystem page_length_unit_system
+  );
+
+  const class ON_3dmAnnotationSettings& AnnotationSettings() const;
+
+  /*
+  Parameters:
+    annotation_settings - [in]
+      Annotation settings that are externally managed and will exist
+      during the lifetime of the ON_3dmAnnotationContext class instance.
+  */
+  void SetReferencedAnnotationSettings(
+    const class ON_3dmAnnotationSettings* annotation_settings
+  );
+
+  /*
+  Parameters:
+    annotation_settings - [in]
+      A copy of annotation_settings is stored and manged by the ON_3dmAnnotationContext class instance.
+  */
+  void SetManagedAnnotationSettings(
+    const class ON_3dmAnnotationSettings& annotation_settings
+  );
+
+  /*
+  Returns:
+    True if the annotation settings have been explicitly set.
+  */
+  bool AnnotationSettingsAreSet() const;
+
+  /*
+  This is the dimstyle the annotation object is question is using.
+  It can be a "base" dimstyle from the dimstyle table or an
+  "override" style attached used by a single instance of an annnotation
+  object.
+  */
+  const class ON_DimStyle& DimStyle() const;
+  
+  const class ON_DimStyle& ParentDimStyle() const;
+
+  /*
+  Parameters:
+    dim_style - [in]
+      A dimension style that is externally managed and will exist
+      during the lifetime of the ON_3dmAnnotationContext class instance.
+  */
+  void SetReferencedDimStyle(
+    const class ON_DimStyle* parent_dim_style,
+    const class ON_DimStyle* override_dim_style,
+    int V5_3dm_archive_index
+  );
+
+  /*
+  Parameters:
+    dim_style - [in]
+      A copy of a dim_style is stored and manged by the ON_3dmAnnotationContext class instance.
+  */
+  void SetManagedDimStyle(
+    const class ON_DimStyle& parent_dim_style,
+    const class ON_DimStyle* override_dim_style,
+    int V5_3dm_archive_index
+  );
+
+  void UpdateReferencedDimStyle(
+    const class ON_DimStyle* old_pointer,
+    const class ON_DimStyle* new_pointer
+  );
+
+  /*
+  Returns:
+    True if the dimension style has been explicitly set.
+  */
+  bool DimStyleIsSet() const;
+  
+  /*
+  Returns:
+    If the dimstyle is not set or it has a nil parent id, then DimStyleId() is returned.
+    Otherwise the parent id is returned.
+  */
+  ON_UUID ParentDimStyleId() const;
+
+  /*
+  Returns:
+    3dm archive dimension style table index to use when writing a V5 3dm archive.
+    This is often different from DimStyle().Index().
+  */
+  int V5_ArchiveDimStyleIndex() const;
+
+  /*
+  Parameters:
+    bRequireSetOverrides - [in]
+      true if explicit overrides are required.
+  Returns:
+    true if the context dim style is an override style (parent id is not nil) and
+    it has overrides or bRequireSetOverrides is false.
+  */
+  bool IsOverrideDimStyle() const;
+
+  const class ON_BinaryArchive* BinaryArchive() const;
+  
+  /*
+  Parameters:
+    binary_archive - [in]
+      Binary archive that is externally managed and will exist
+      during the lifetime of the ON_3dmAnnotationContext class instance.
+  */
+  void SetReferencedBinaryArchive(
+    const class ON_BinaryArchive* binary_archive
+  );
+  
+  /*
+  Returns:
+    True if the the target binary archive is set.
+  */
+  bool BinaryArchiveIsSet() const;
+  
+private:
+  const class ON_BinaryArchive* m_binary_archive = nullptr;
+
+  // V6 table dimstyle. If an override dimstyle is in use,
+  // this is the "parent dimstyle" referenced by the override.
+  const class ON_DimStyle* m_parent_dim_style = nullptr;
+  class ON_DimStyle* m_managed_parent_dim_style = nullptr;
+
+  const class ON_DimStyle* m_override_dim_style = nullptr;
+  class ON_DimStyle* m_managed_override_dim_style = nullptr;
+
+  const class ON_3dmAnnotationSettings* m_annotation_settings = nullptr;
+  class ON_3dmAnnotationSettings* m_managed_annotation_settings = nullptr;
+  ON::active_space  m_view_context = ON::active_space::no_space;
+  ON::LengthUnitSystem m_model_length_unit_system = ON::LengthUnitSystem::None;
+  ON::LengthUnitSystem m_page_length_unit_system = ON::LengthUnitSystem::None;
+
+  // V5 archive dim style index
+  int m_V5_3dm_archive_dim_style_index = ON_UNSET_INT_INDEX;
+
+private:
+  void Internal_CopyFrom(const ON_3dmAnnotationContext& src);
+  void Internal_Destroy();
+};
+
+
+class ON_CLASS ON_3dmArchiveTableStatus
+{
+public:
+  ON_3dmArchiveTableStatus() = default;
+  ~ON_3dmArchiveTableStatus() = default;
+  ON_3dmArchiveTableStatus(const ON_3dmArchiveTableStatus&) = default;
+  ON_3dmArchiveTableStatus& operator=(const ON_3dmArchiveTableStatus&) = default;
+
+  static const ON_3dmArchiveTableStatus Unset;
+
+  ON_3dmArchiveTableType m_table_type = ON_3dmArchiveTableType::Unset;
+
+  // number of table items
+  unsigned int m_item_count = 0; 
+
+  // Number of crc errors found during archive reading.
+  // If > 0, then the archive is corrupt. See the table 
+  // status information below to determine where the 
+  // errors occured.
+  unsigned int m_crc_error_count = 0;
+
+  // Number of other types of serious errors found during archive reading
+  // or writing.
+  // If > 0, then the archive is corrupt. See the table status information
+  // below to determine where the errors occured.
+  unsigned int m_critical_error_count = 0;
+
+  // Number of other types of serious errors found during archive reading.
+  // If > 0, then the archive is corrupt. See the table status information
+  // below to determine where the errors occured.
+  unsigned int m_recoverable_error_count = 0;
+  
+  enum class TableState : unsigned int 
+  {
+    Unset      = 0U,
+    Started    = 1U, // began to read the table
+    InProgress = 2U,
+    Finished   = 3U, // finished reading the table
+    NotFound   = 4U  // the table could not be located during reading
+  };
+
+  ON_3dmArchiveTableStatus::TableState m_state = ON_3dmArchiveTableStatus::TableState::Unset;
+};
 
 class ON_CLASS ON_BinaryArchive // use for generic serialization of binary data
 {
@@ -734,24 +1899,83 @@ public:
   ON_BinaryArchive( ON::archive_mode );
   virtual ~ON_BinaryArchive();
 
-  virtual 
-  size_t CurrentPosition( // current offset (in bytes) into archive ( like ftell() )
-                ) const = 0; 
-  virtual 
-  bool SeekFromCurrentPosition( // seek from current position ( like fseek( ,SEEK_CUR) )
-                int // byte offset ( >= -CurrentPostion() )
-                ) = 0; 
-  virtual 
-  bool SeekFromStart(  // seek from current position ( like fseek( ,SEEK_SET) )
-                size_t // byte offset ( >= 0 )
-                ) = 0;
-  virtual 
-  bool AtEnd() const = 0; // true if at end of file
+protected:
+  virtual
+  ON__UINT64 Internal_CurrentPositionOverride( // current offset (in bytes) into archive ( like ftell() )
+    ) const = 0;
 
-  bool BigSeekFromStart( ON__UINT64 offset );
-  bool BigSeekForward( ON__UINT64 offset );
-  bool BigSeekBackward( ON__UINT64 offset );
-  bool BigSeekFromCurrentPosition( ON__INT64 offset );
+  virtual
+  bool Internal_SeekFromCurrentPositionOverride( // seek from current position ( like fseek( ,SEEK_CUR) )
+      int // byte offset ( >= -CurrentPostion() )
+    ) = 0;
+
+  virtual
+  bool Internal_SeekToStartOverride(  // seek from current position ( like fseek(0 ,SEEK_SET) )
+    ) = 0;
+
+public:
+  /*
+  Returns:
+    True if current position is at the end of the archive.
+  */
+  virtual
+  bool AtEnd() const = 0;
+
+public:
+  /*
+  Returns:
+    Number of bytes from start of archive to the current position.
+  */
+  ON__UINT64 CurrentPosition() const;
+
+  /*
+  Description:
+    Set current position to bytes_from_start many bytes from the start of the archive.
+  Parameters:
+    bytes_from_start - [in]
+  Returns:
+    True: successful
+    False: failure
+  Remarks:
+    Similar to fseek( ,SEEK_SET)
+  */
+  bool SeekFromStart(
+      ON__UINT64 bytes_from_start
+    );
+  
+  /*
+  Description:
+    Increase the archive's current position to bytes_forward from the current position.
+  Parameters:
+    bytes_forward - [in]
+  Returns:
+    True: successful
+    False: failure
+  */
+  bool SeekForward(
+    ON__UINT64 bytes_forward
+  );
+
+  /*
+  Description:
+    Reduce the archive's current position by bytes_backward from the current position.
+  Parameters:
+    bytes_backward - [in]
+  Returns:
+    True: successful
+    False: failure
+  */
+  bool SeekBackward(
+    ON__UINT64 bytes_backward
+  );
+
+private:
+  bool Internal_SeekCur(
+    bool bFowrard,
+    ON__UINT64 offset
+  );
+
+public:
 
   /*
   Description:
@@ -764,8 +1988,8 @@ public:
   */
   static
   bool ToggleByteOrder(
-    int, // number of elements
-    int, // size of element (2,4, or 8)
+    size_t, // number of elements
+    size_t, // size of element (2,4, or 8)
     const void*,  // source buffer
     void*         // destination buffer (can be same a source buffer)
     );
@@ -775,19 +1999,14 @@ public:
 
   static
   char* ON_TypecodeParse( unsigned int tcode, char* typecode_name, size_t max_length );
-
-  bool ReadMode() const;  // true if reading is permitted
-  bool WriteMode() const; // true if writing is permitted
   
   /*
   Returns:
      Endian-ness of the cpu reading this file.
   Remarks:
-    3dm files are alwasy saved with little endian byte order.
+    3dm files are always saved with little endian byte order.
   */
   ON::endian Endian() const; // endian-ness of cpu
-
-  int BadCRCCount() const; // number of chunks read with bad CRC 
 
   bool ReadByte( size_t, void* ); // must fail if mode is not read or readwrite
 
@@ -866,11 +2085,14 @@ public:
   Returns:
     True if read was successful.  You need to check the value
     of bFailedCRC to see if the information that was read is valid.
+  Remarks:
+    Write your archive write/read code as if compression is always enabled.
+    Do not vary what get written or read based on the value of UseBufferCompression().
   */
   bool ReadCompressedBuffer(
           size_t sizeof__outbuffer,
           void* outbuffer,
-          int* bFailedCRC
+          bool* bFailedCRC
           );
 
   /*
@@ -881,6 +2103,9 @@ public:
     inbuffer - [in] uncompressed buffer
   Returns:
     True if write was successful.
+  Remarks:
+    Write your archive write/read code as if compression is always enabled.
+    Do not vary what get written or read based on the value of UseBufferCompression().
   */
   bool WriteCompressedBuffer(
     size_t sizeof__inbuffer,
@@ -991,6 +2216,10 @@ public:
     ON_Color&
     );
 
+  bool ReadColor(
+    ON_4fColor&
+  );
+
   bool ReadPoint (
     ON_2dPoint&
     );
@@ -1045,7 +2274,8 @@ public:
     UTF-8 encoded strings and ReadStringUTF16ElementCount()
     when reading UTF-16 encoded strings.
   */
-  ON_DEPRECATED bool ReadStringSize(
+  ON_DEPRECATED_MSG("Use either ReadStringUTF8ElementCount() or ReadStringUTF16ElementCount()")
+  bool ReadStringSize(
       size_t* str_array_count
       );
 
@@ -1137,9 +2367,12 @@ public:
   bool ReadComponentIndex( ON_COMPONENT_INDEX& );
 
   bool ReadArray( ON_SimpleArray<bool>& );
-  bool ReadArray( ON_SimpleArray<char>& );
-  bool ReadArray( ON_SimpleArray<short>& );
-  bool ReadArray( ON_SimpleArray<int>& );
+  bool ReadArray(ON_SimpleArray<char>&);
+  bool ReadArray(ON_SimpleArray<short>&);
+  bool ReadArray(ON_SimpleArray<int>&);
+  bool ReadArray(ON_SimpleArray<unsigned char>&);
+  bool ReadArray(ON_SimpleArray<unsigned short>&);
+  bool ReadArray(ON_SimpleArray<unsigned int>&);
   bool ReadArray( ON_SimpleArray<float>& );
   bool ReadArray( ON_SimpleArray<double>& );
   bool ReadArray( ON_SimpleArray<ON_Color>& );
@@ -1156,6 +2389,7 @@ public:
   bool ReadArray( ON_SimpleArray<ON_3fVector>& );
   bool ReadArray( ON_SimpleArray<ON_UUID>& );
   bool ReadArray( ON_SimpleArray<ON_UuidIndex>& );
+  bool ReadArray( ON_SimpleArray<ON_UuidPtr>& );
   bool ReadArray( ON_SimpleArray<ON_SurfaceCurvature>& );
   bool ReadArray( ON_ClassArray<ON_String>& );
   bool ReadArray( ON_ClassArray<ON_wString>& );
@@ -1171,6 +2405,18 @@ public:
   bool ReadArray( ON_SimpleArray<class ON_Layer*>& );
 
   bool WriteBool( bool );
+
+#if defined(ON_COMPILER_MSC) && defined(NDEBUG)
+  // Work around Release build optimization bug in Visual Studio 2017.
+  __declspec(noinline)
+#endif
+  bool WriteBoolTrue();
+
+#if defined(ON_COMPILER_MSC) && defined(NDEBUG)
+  // Work around Release build optimization bug in Visual Studio 2017.
+  __declspec(noinline)
+#endif
+  bool WriteBoolFalse();
 
   bool WriteChar(    // Write an array of 8 bit chars
 			size_t,       // number of chars to write
@@ -1272,6 +2518,10 @@ public:
   bool WriteColor (
     const ON_Color&
     );
+
+  bool WriteColor(
+    const ON_4fColor&
+  );
 
   bool WritePoint (
     const ON_2dPoint&
@@ -1377,9 +2627,34 @@ public:
     value = strlen + 1 is written, followed by the string,
     followed by the null terminator.
   */
-  bool WriteString(
+  bool WriteUTF16String(
       const unsigned short* sUTF16
       );
+
+  /*
+  Description:
+    Write a wide string as a UTF-8 encoded string.
+  */
+  bool WriteWideString(
+    const wchar_t* sWideChar,
+    int sWideChar_count
+    );
+  
+  /*
+  Description:
+    Write a wide string as a UTF-8 encoded string.
+  */
+  bool WriteWideString(
+    const ON_wString& wide_string
+    );
+  
+  /*
+  Description:
+    Read a wide string written with the WriteWideString() function.
+  */
+  bool ReadWideString(
+    ON_wString& wide_string
+    );
   
   bool WriteString( const ON_String& sUTF8 );
 
@@ -1391,6 +2666,11 @@ public:
   bool WriteArray( const ON_SimpleArray<char>& );
   bool WriteArray( const ON_SimpleArray<short>& );
   bool WriteArray( const ON_SimpleArray<int>& );
+
+  bool WriteArray(const ON_SimpleArray<unsigned char>&);
+  bool WriteArray(const ON_SimpleArray<unsigned short>&);
+  bool WriteArray(const ON_SimpleArray<unsigned int>&);
+
   bool WriteArray( const ON_SimpleArray<float>& );
   bool WriteArray( const ON_SimpleArray<double>& );
 
@@ -1410,6 +2690,7 @@ public:
   bool WriteArray( const ON_SimpleArray<ON_Xform>& );
   bool WriteArray( const ON_SimpleArray<ON_UUID>& );
   bool WriteArray( const ON_SimpleArray<ON_UuidIndex>& );
+  bool WriteArray( const ON_SimpleArray<ON_UuidPtr>& );
   bool WriteArray( const ON_SimpleArray<ON_SurfaceCurvature>& );
   bool WriteArray( const ON_ClassArray<ON_String>& );
   bool WriteArray( const ON_ClassArray<ON_wString>& );
@@ -1467,6 +2748,20 @@ public:
   bool WriteObject( const ON_Object* ); // writes object definition
   bool WriteObject( const ON_Object& ); // writes object definition
 
+private:
+  bool Internal_WriteObject(
+    const ON_Object& model_object
+  );
+  bool Internal_WriteV5AnnotationObject(
+    const class ON_Annotation& V6_annotation,
+    const class ON_3dmAnnotationContext* annotation_context
+  );
+  bool Internal_WriteV2AnnotationObject(
+    const class ON_OBSOLETE_V5_Annotation& V5_annotation,
+    const class ON_3dmAnnotationContext* annotation_context
+  );
+public:
+
 
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
@@ -1476,33 +2771,339 @@ public:
   //                 for writing 3dm archives is available for
   //                 any type of serialization device.
   //
-  bool EnableSave3dmRenderMeshes( ON_BOOL32 = true ); // returns previous state
-  bool Save3dmRenderMeshes() const;
 
-  bool EnableSave3dmAnalysisMeshes( ON_BOOL32 = true ); // returns previous state
-  bool Save3dmAnalysisMeshes() const;
+  /*
+  Description:
+    Specify which types of objects (ON_Brep, ON_Extrusion, ON_SubD, ...)
+    save render meshes in the 3dm file.
+
+  Parameters:
+    object_type_flags - [in]
+      The bits in object_type_flags correspond to ON::object_type values
+      and identify the object types the setting will be applied to.
+
+  Remarks:
+    Saving render meshes increases file size, sometimes dramatically.
+
+    Creating ON_Brep analysis meshes is often slow. 
+    Disable saving ON_Brep analysis meshes when IO speed or file size is 
+    a critical issue, the time expense of recreating the ON_Brep meshes
+    when the file is read is acceptable, and the file will be read by Rhino. 
+    Enable when the file size is not an issue or the file will be used by other 
+    applications that may not be able to create meshes.
+
+    Creating ON_Extrusion meshes is fast. Disable when IO speed or file size
+    is an issue and the file will be read by Rhino.  Enable when the file
+    will be used by other applications that may not be able to create meshes.
+
+    Creating ON_SubD meshes is fast. Disable when IO speed or file size
+    is an issue and the file will be read by Rhino.  Enable when the file
+    will be used by other applications that may not be able to create meshes.
+  */
+  void EnableSave3dmRenderMeshes( 
+    unsigned int object_type_flags,
+    bool bSave3dmRenderMeshes 
+    );
+
+  /*
+  Description:
+    Specify which types of objects (ON_Brep, ON_Extrusion, ON_SubD, ...)
+    save render meshes in the 3dm file.
+  Returns:
+    The bits in the return value correspond to ON::object_type values
+    and identify the object types save analysis meshes in the 3dm file.
+  */  
+  unsigned int Save3dmRenderMeshObjectTypeFlags() const;
+
+  /*
+  Parameters:
+    object_type - [in]
+  Returns:
+    true if render meshes for the specified object type will be 
+    saved in the .3dm file.
+  */  
+  bool Save3dmRenderMesh(
+    ON::object_type object_type
+    ) const;
+
+  /*
+  Description:
+    Specify which types of objects (ON_Brep, ON_Extrusion, ON_SubD, ...)
+    save analysis meshes in the 3dm file.
   
-  bool EnableSaveUserData( ON_BOOL32 = true ); // returns previous state
-  bool SaveUserData() const;
+  Parameters:
+    object_type_flags - [in]
+      The bits in object_type_flags correspond to ON::object_type values
+      and identify the object types the setting will be applied to.
+
+  Remarks:
+    Saving analysis meshes increases file size, sometimes dramatically.
+
+    Creating ON_Brep analysis meshes is often slow. 
+    Disable saving ON_Brep analysis meshes when IO speed or file size is 
+    a critical issue, the time expense of recreating the ON_Brep meshes
+    when the file is read is acceptable, and the file will be read by Rhino. 
+    Enable when the file size is not an issue or the file will be used by other 
+    applications that may not be able to create meshes.
+
+    Creating ON_Extrusion meshes is fast. Disable when IO speed or file size
+    is an issue and the file will be read by Rhino.  Enable when the file
+    will be used by other applications that may not be able to create meshes.
+
+    Creating ON_SubD meshes is fast. Disable when IO speed or file size
+    is an issue and the file will be read by Rhino.  Enable when the file
+    will be used by other applications that may not be able to create meshes.
+  */
+  void EnableSave3dmAnalysisMeshes(
+    unsigned int object_type_flags,
+    bool bSave3dmAnalysisMeshes 
+    );
+  
+  void SetSave3dmPreviewImage(
+    bool bSave3dmPreviewImage
+  );
   
   /*
   Returns:
-    50 (The Rhino 5.0 opennurbs file version.)
-    This is the value of version to pass to ON_BinaryArchive
-    functions like Write3dmStartSection() when you want to use the 
-    the current opennurbs version number and you do not want to have
-    to update your code when this version number changes.    
+    true: (default)
+      If a preview image is included in the ON_3dmProperties information, it will be saved.
+    false: 
+      A preview imae, if it exists, will not be saved in the 3dm archive.
+      This reduces archive size. 
+      When Save3dmPreviewImage() is false, generating a preview image can be skipped.
+  */
+  bool Save3dmPreviewImage() const;
+
+  /*
+  Description:
+    Control when some information, like preview images and mesh information, is
+    compressed when writing 3dm archives. The default is true. 
+    In special situations when the storage media is extremely fast and large file size
+    is not a concern, disabling buffer compression can reduce file write time.
+  Parameters:
+    bUseBufferCompression - [in]
+  Remarks:
+    The default is true.
+  */
+  void SetUseBufferCompression(
+    bool bUseBufferCompression
+  );
+
+  /*
+  Returns:
+    true: (default)
+      Some information, including preview images and mesh information is compressed when
+      writing 3dm archives. This reduces, sometimes dramatically, the size
+      of the 3dm archive.
+    false: 
+      No compression is performed. This increases, sometimes dramatically, the size
+      of the 3dm archive.
+      In special situations when the storage media is extremely fast and large file size
+      is not a concern, disabling buffer compression can reduce file write time.
+  */
+  bool UseBufferCompression() const;
+
+
+  /*
+  Description:
+    Specify which types of objects (ON_Brep, ON_Extrusion, ON_SubD, ...)
+    save analysis meshes in the 3dm file.
+  Returns:
+    The bits in the return value correspond to ON::object_type values
+    and identify the object types save analysis meshes in the 3dm file.
+  */  
+  unsigned int Save3dmAnalysisMeshObjectTypeFlags() const;
+
+  /*
+  Parameters:
+    object_type - [in]
+  Returns:
+    true if analysis meshes for the specified object type will be 
+    saved in the .3dm file.
+  */  
+  bool Save3dmAnalysisMesh(
+    ON::object_type object_type
+    ) const;
+
+
+  /*
+  Returns:
+    True if all user data and user tables should be read or written.
+    False if some or no user data or user tables should be read or written.
+  Remarks:
+    AllUserDataSerializationIsEnabled() = (false == ShouldSerializeNoUserData() && false == ShouldSerializeSomeUserData())
+  */
+  bool ShouldSerializeAllUserData() const;
+
+  /*
+  Returns:
+    True if no user data and user tables should be read or written.
+    False if some or all user data or user tables should be read or written.
+  Remarks:
+    SerializeNoUserData() = (false == ShouldSerializeAllUserData() && false == ShouldSerializeSomeUserData())
+  */
+  bool ShouldSerializeNoUserData() const;
+
+  /*
+  Returns:
+    True if some but not all user data or user tables should be
+    read or written.
+    False if all user data or no user data should be read or written.
+  Remarks:
+    SerializeSomeUserData() = (false == ShouldSerializeAllUserData() && false == ShouldSerializeNoUserData())
+
+    Use ShouldSerializeUserDataItem(application_id,item_id) to
+    determine if a specific object user data or user table should 
+    be read or written.    
+  */
+  bool ShouldSerializeSomeUserData() const;
+
+  /*
+  Description:
+    Determine if an application's (plug-in's) object user data 
+    or user table should be read or written.
+  Parameters:
+    application_id - [in]
+      The application id (often a plug-in id) for the object user data
+      or user table.
+    item_id - [in]
+      item_id identifies which user data items should be read or written.
+      - To determine if a specific type of object user data should
+        be read or written, pass the value of ON_UserData.m_userdata_uuid.
+      - To determine if the user table for the application should
+        be read or written, pass application_id.
+      - To determine if all object user data and the user table
+        for the application should be read or written, pass nil.
+  Returns:
+    True if the identified user data or user table should be read or written.
+  */
+  bool ShouldSerializeUserDataItem(
+    ON_UUID application_id,
+    ON_UUID item_id
+    ) const;
+
+  /*
+  Description:
+    Specify the serialization option for object user data and user tables 
+    that are not explicity set by SetShouldSerializeUserDataItem().
+  Parameters:
+    bSerialize - [in]
+  Remarks:
+    If no setting is specified, all user data is read and written.
+  */
+  bool SetShouldSerializeUserDataDefault(
+    bool bSerialize
+    );
+
+  bool ShouldSerializeUserDataDefault() const;
+
+
+  /*
+  Description:
+    Specify if an application's (plug-in's) object user data
+    or user table should be read or written.
+  Parameters:
+    application_id - [in]
+      The application id (often a plug-in id) for the object user data
+      or user table.
+    item_id - [in]
+      item_id identifies which user data items should be read or written.
+      - To determine if a specific type of object user data should
+        be read or written, pass the value of ON_UserData.m_userdata_uuid.
+      - To determine if the user table for the application should
+        be read or written, pass application_id.
+      - To determine if all object user data and the user table
+        for the application should be read or written, pass nil.
+    bSerializeUserDataItem - [in]
+      True to enable reading and writing of the specified item. 
+      False to disable reading and writing of the specified item. 
+  Returns:
+    True if the input was valid and the setting was applied. 
+    This function will not apply any settings after reading 
+    or writing begins.
+  */
+  bool SetShouldSerializeUserDataItem(
+    ON_UUID application_id,
+    ON_UUID item_id,
+    bool bSerializeUserDataItem
+    );
+
+  /*
+  Description:
+    Determine if an object has user data that should be written.
+  Parameters:
+    object - [in]
+  Returns:
+    True if object has user data that should be written.
+  */
+  bool ObjectHasUserDataToWrite(
+    const class ON_Object* object
+    ) const;
+
+  bool ShouldWriteUserDataItem(
+    const class ON_Object* object,
+    const class ON_UserData* object_user_data
+    ) const;
+
+  /*
+  Remarks:
+    In a stable commercially released Rhino version N, CurrentArchiveVersion() = 10*N.
+    In "early" Rhino N WIP, CurrentArchiveVersion() = 10*(N-1).
+    In "later" Rhino N WIP, CurrentArchiveVersion() = 10*N.
+  Returns:
+    The current 3dm archive version that is saved by Rhino.
   */
   static int CurrentArchiveVersion();
+
+  /*
+  Description:
+    As time passes, more tables have been added to 3dm archives.
+  Parameters:
+    table - [in]
+  Returns:
+    True if this archive has the specified table
+  */
+  bool ArchiveContains3dmTable(
+    ON_3dmArchiveTableType table
+    ) const;
+
+  /*
+  Parameters:
+    archive_3dm_version - [in]
+      1,2,3,4,5,50,60,70,...
+    opennurbs_library_version - [in]
+      a number > 100000000
+  */
+  static bool ArchiveContains3dmTable(
+    ON_3dmArchiveTableType table,
+    unsigned int archive_3dm_version,
+    unsigned int opennurbs_library_version
+    );
+
+  bool WriteModelComponentName(
+    const ON_ModelComponent& model_component
+  );
 
   ///////////////////////////////////////////////////////////////////
   // Step 1: REQUIRED - Write/Read Start Section
   //
 
+  
+  /*
+  Description:
+    In rare cases, experts testing handling of corrupt 3dm files need to
+    write a 3dm archive that is corrupt. In this rare testing situation,
+    those experts should call IntentionallyWriteCorrupt3dmStartSectionForExpertTesting()
+    exactly one time before they begin writing the file. The 32 byte idendifier will
+    replace the 1st 3 spaces with a capital X to mimic a file that became corrupt
+    whle residing on storage media.
+  */
+  void IntentionallyWriteCorrupt3dmStartSectionForExpertTesting();
+
   /*
   Parameters:
     version - [in]
-       0, 2, 3, 4, 5 or 50 (5 is treated as 50)
+       0, 2, 3, 4, 5, 50 or 60 (5 is treated as 50)
        
        If version is 0, then the value of ON_BinaryArchive::CurrentArchiveVersion()
        is used.
@@ -1512,73 +3113,111 @@ public:
        up to date file version. 
 
     sStartSectionComment - [in]
-      NULL or ASCII string with application name, et cetera.
+      nullptr or a UTF-8 encoded string with application name, et cetera.
       This information is primarily used when debugging files
       that contain problems.  McNeel and Associates stores
       application name, application version, compile date, 
       and the OS in use when file was written.
   */
   bool Write3dmStartSection( 
-        int version,
-        const char* sStartSectionComment
-        );
+    int version,
+    const char* sStartSectionComment
+    );
 
   /*
   Parameters:
     version - [out]
-       .3dm file version (2, 3, 4, 5 or 50)
+       .3dm file version (2, 3, 4, 5, 50, 60)
     sStartSectionComment - [out]
-      string passed to Write3dmStartSection()
+      UTF-8 encoded string passed to Write3dmStartSection()
+    destination_manifest - [in]
+      manifest of the destination model
   */
   bool Read3dmStartSection( 
-        int* version,
-        ON_String& sStartSectionComment
-        );
+    int* version,
+    ON_String& sStartSectionComment
+    );
+
+  /*
+  Returns:
+    A copy of the start section comment written to or read from the archive.
+    If this function is called before Write3dmStartSection() or Read3dmStartSection(),
+    it returns ON_String:EmptyString;
+  */
+  const ON_String& Archive3dmStartSectionComment() const;
 
   ///////////////////////////////////////////////////////////////////
   // Step 2: REQUIRED - Write/Read properties table
   //
   bool Write3dmProperties(
-        const ON_3dmProperties&
+        const class ON_3dmProperties&
         );
   bool Read3dmProperties(
-        ON_3dmProperties&
+        class ON_3dmProperties&
         );
+
+  /*
+  Returns:
+    A copy of the ON_3dmProperties information written to or read from the archive.
+    If this function is called before Write3dmProperties() or Read3dmProperties(),
+    it returns ON_3dmProperties:Empty;
+  */
+  const class ON_3dmProperties& Archive3dmProperties() const;
 
   ///////////////////////////////////////////////////////////////////
   // Step 3: REQUIRED - Write/Read settings table
   //
   bool Write3dmSettings(
-        const ON_3dmSettings&
+        const class ON_3dmSettings&
         );
   bool Read3dmSettings(
-        ON_3dmSettings&
+        class ON_3dmSettings&
         );
+  
+  /*
+  Returns:
+    A copy of the ON_3dmSettings information written to or read from the archive.
+    If this function is called before Write3dmSettings() or Read3dmSettings(),
+    it returns ON_3dmSettings:Default;
+  */
+  const class ON_3dmSettings& Archive3dmSettings() const;
 
   ///////////////////////////////////////////////////////////////////
   // Step 4: REQUIRED - Write/Read bitmap table (it can be empty)
   //
   bool BeginWrite3dmBitmapTable();
-  bool Write3dmBitmap( const ON_Bitmap& );
+  bool Write3dmImageComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmImageComponent( 
+    const class ON_ModelComponent* model_component 
+    );
+  bool Write3dmBitmap( const class ON_Bitmap& );
   bool EndWrite3dmBitmapTable();
 
   bool BeginRead3dmBitmapTable();
-  int  Read3dmBitmap(   // returns 0 at end of light table
+  int  Read3dmBitmap(   // returns 0 at end of bitmap table
                         //         1 bitmap successfully read
-            ON_Bitmap** // bitmap returned here
+            class ON_Bitmap** // bitmap returned here
             );
   bool EndRead3dmBitmapTable();
 
   ///////////////////////////////////////////////////////////////////
-  // Step 5: REQUIRED - Write/Read render material table (it can be empty)
+  // Step 5: REQUIRED - Write/Read texture mapping table (it can be empty)
   //
   bool BeginWrite3dmTextureMappingTable();
-  bool Write3dmTextureMapping( const ON_TextureMapping& );
+  bool Write3dmTextureMappingComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmTextureMappingComponent( 
+    const class ON_ModelComponent* model_component 
+    );
+  bool Write3dmTextureMapping( const class ON_TextureMapping& );
   bool EndWrite3dmTextureMappingTable();
 
   bool BeginRead3dmTextureMappingTable();
   int  Read3dmTextureMapping( // returns 0 at end of table
-            ON_TextureMapping** // layer returned here
+            class ON_TextureMapping** // testuremapping returned here
             );
   bool EndRead3dmTextureMappingTable();
 
@@ -1586,12 +3225,18 @@ public:
   // Step 6: REQUIRED - Write/Read render material table (it can be empty)
   //
   bool BeginWrite3dmMaterialTable();
-  bool Write3dmMaterial( const ON_Material& );
+  bool Write3dmMaterialComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmMaterialComponent( 
+    const class ON_ModelComponent* model_component 
+    );
+  bool Write3dmMaterial( const class ON_Material& );
   bool EndWrite3dmMaterialTable();
 
   bool BeginRead3dmMaterialTable();
   int  Read3dmMaterial( // returns 0 at end of table
-            ON_Material** // layer returned here
+            class ON_Material** // material returned here
             );
   bool EndRead3dmMaterialTable();
 
@@ -1599,17 +3244,33 @@ public:
   // Step 7: REQUIRED - Write/Read linetype table (it can be empty)
   //
   bool BeginWrite3dmLinetypeTable();
-  bool Write3dmLinetype( const ON_Linetype&);
+  bool Write3dmLinePatternComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmLinePatternComponent( 
+    const class ON_ModelComponent* model_component 
+    );
+  bool Write3dmLinetype( 
+    const class ON_Linetype& line_pattern
+    );
   bool EndWrite3dmLinetypeTable();
 
   bool BeginRead3dmLinetypeTable();
-  int  Read3dmLinetype(ON_Linetype**);
+  int  Read3dmLinetype(
+  class ON_Linetype**
+    );
   bool EndRead3dmLinetypeTable();
 
   ///////////////////////////////////////////////////////////////////
   // Step 8: REQUIRED - Write/Read layer table (it can be empty)
   //
   bool BeginWrite3dmLayerTable();
+  bool Write3dmLayerComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmLayerComponent( 
+    const class ON_ModelComponent* model_component 
+    );
   bool Write3dmLayer( const ON_Layer& );
   bool EndWrite3dmLayerTable();
 
@@ -1623,7 +3284,13 @@ public:
   // Step 9: REQUIRED - Write/Read group table (it can be empty)
   //
   bool BeginWrite3dmGroupTable();
-  bool Write3dmGroup( const ON_Group& );
+  bool Write3dmGroupComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmGroupComponent( 
+    const class ON_ModelComponent* model_component 
+    );
+  bool Write3dmGroup( const class ON_Group& );
   bool EndWrite3dmGroupTable();
 
   bool BeginRead3dmGroupTable();
@@ -1664,69 +3331,74 @@ public:
   //           archive.EndRead3dmGroupTable();
   //      
   int  Read3dmGroup(
-            ON_Group** // ppGroup
+            class ON_Group** // ppGroup
             );
 
   bool EndRead3dmGroupTable();
 
 
-  ///////////////////////////////////////////////////////////////////
-  // Step 10: REQUIRED - Write/Read font table (it can be empty)
-  //
-  bool BeginWrite3dmFontTable();
-  bool Write3dmFont( const ON_Font& );
-  bool EndWrite3dmFontTable();
+  ///////////////////////////////////////////////////////////////////////
+  ////// Step 10: REQUIRED - Write/Read text_style table (it can be empty)
+  //////
+  ////ON_DEPRECATED_MSG("remove call. Text style information is now part of ON_DimStyle.")
+  ////bool BeginWrite3dmTextStyleTable();
+  ////////bool Write3dmTextStyleComponent( 
+  ////////  const class ON_ModelComponentReference& model_component_reference
+  ////////  );
+  ////////bool Write3dmTextStyleComponent( 
+  ////////  const class ON_ModelComponent* model_component 
+  ////////  );
+  ////ON_DEPRECATED_MSG("remove call. Text style information is now part of ON_DimStyle.")
+  ////bool Write3dmTextStyle( 
+  ////  const class ON_TextStyle& 
+  ////  );
+  ////ON_DEPRECATED_MSG("remove call. Text style information is now part of ON_DimStyle.")
+  ////bool EndWrite3dmTextStyleTable();
 
-  bool BeginRead3dmFontTable();
+private:
+  ////bool Internal_BeginWrite3dmTextStyleTable();
+  bool Internal_Write3dmTextStyle( 
+    const class ON_TextStyle& 
+    );
+  /////bool Internal_EndWrite3dmTextStyleTable();
 
-  // Description:
-  //   Reads fonts from font table.  If the font definition is
-  //   read, a font is created by calling new ON_Font(),
-  //   initialized with values stored in the archive, and 
-  //   returned.
-  //
-  // Parameters:
-  //   ppFont - If the font definition is
-  //   read, a font is created by calling new ON_Font(),
-  //   initialized with values stored in the archive, and 
-  //   a pointer to the new font is returned in *ppFont.
-  //
-  // Returns:
-  //
-  //   @untitled table
-  //   0     at the end of the font table
-  //   1     font definition was successfully read
-  //   -1    archive is corrupt at this point
-  //
-  // Example:
-  //   Calls to Read3dmFont need to be bracketed by calls
-  //   to BeginRead3dmFontTable() / EndRead3dmFontTable().
-  //
-  //           archive.BeginRead3dmFontTable();
-  //           int rc = 1;
-  //           ON_Font* pFont;
-  //           while(rc==1)
-  //           { //
-  //             pFont = 0;
-  //             archive.Read3dmFont(&pFont);
-  //             if ( pFont )
-  //               do something with pFont
-  //           } //
-  //           archive.EndRead3dmFontTable();
-  //      
-  int Read3dmFont(
-            ON_Font** // ppFont
-            );
+public:
 
-  bool EndRead3dmFontTable();
+  //////ON_DEPRECATED_MSG("remove call. Text style information is now part of ON_DimStyle.")
+  //////bool BeginRead3dmTextStyleTable();
 
+  //////ON_DEPRECATED_MSG("remove call. Text style information is now part of ON_DimStyle.")
+  //////int Read3dmTextStyle(
+  //////          class ON_TextStyle** // ppTextStyle
+  //////          );
+
+  //////ON_DEPRECATED_MSG("remove call. Text style information is now part of ON_DimStyle.")
+  //////bool EndRead3dmTextStyleTable();
+
+private:
+  int Internal_Read3dmTextStyle(
+    class ON_TextStyle** // ppTextStyle
+  );
+public:
 
   ///////////////////////////////////////////////////////////////////
   // Step 11: REQUIRED - Write/Read dimstyle table (it can be empty)
   //
   bool BeginWrite3dmDimStyleTable();
-  bool Write3dmDimStyle( const ON_DimStyle& );
+  
+  bool Write3dmDimStyleComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmDimStyleComponent( 
+    const class ON_ModelComponent* model_component 
+    );
+  bool Write3dmDimStyle( const class ON_DimStyle& );
+
   bool EndWrite3dmDimStyleTable();
+
+private:
+  bool Internal_Write3dmDimStyle( const class ON_DimStyle&, bool bUpdateManifest );
+public:
 
   bool BeginRead3dmDimStyleTable();
 
@@ -1767,29 +3439,87 @@ public:
   //           archive.EndRead3dmDimStyleTable();
   //      
   int Read3dmDimStyle(
-            ON_DimStyle** // ppDimStyle
-            );
+    class ON_DimStyle** ppDimStyle
+    );
 
+private:
+  int Internal_Read3dmDimStyle(
+    class ON_DimStyle** ppDimStyle
+    );
+
+  void Internal_ConvertTextStylesToDimStyles();
+
+  double Internal_ArchiveModelSpaceTextScale() const;
+
+  const ON_DimStyle* Internal_ArchiveCurrentDimStyle();
+
+public:
   bool EndRead3dmDimStyleTable();
 
+  /*
+    Internal_Read3dmDimStyleOverrides() is a public function on ON_BinaryArchive because 
+    it must be called from ON_Annotation::Internal_ReadAnnotation().
+    There is no other reason to call this function.
+  */
+public:
+  bool Internal_Read3dmDimStyleOverrides(
+    class ON_Annotation& annotation,
+    bool bFromDimStyleTable
+  );
 
+  /*
+    Internal_Write3dmDimStyleOverrides() is a public function on ON_BinaryArchive because 
+    it must be called from ON_Annotation::Internal_WriteAnnotation().
+    There is no other reason to call this function.
+  */
+public:
+  bool Internal_Write3dmDimStyleOverrides(
+    const class ON_Annotation& annotation,
+    const class ON_DimStyle* dim_style_overrides
+  );
+
+public:
   ///////////////////////////////////////////////////////////////////
   // Step 12: REQUIRED - Write/Read render light table (it can be empty)
   //
   bool BeginWrite3dmLightTable();
-  bool Write3dmLight( const ON_Light&,
-         const ON_3dmObjectAttributes* // optional
-         );
+  bool Write3dmModelLightComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmModelLightComponent( 
+    const class ON_ModelGeometryComponent* model_light
+    );
+  bool Write3dmLight(
+    const class ON_Light&,
+    const class ON_3dmObjectAttributes* // can be nullptr
+    );
   bool EndWrite3dmLightTable();
 
   bool BeginRead3dmLightTable();
-  int  Read3dmLight(  // returns 0 at end of light table
-                      //         1 light successfully read
-                      //        -1 if file is corrupt
-            ON_Light**, // light returned here
-            ON_3dmObjectAttributes* // optional - if NOT NULL, object attributes are
-                                    //            returned here
-            );
+
+  // Call either Read3dmModelLight or Read3dmLight
+  /*
+  Parameters:
+    model_light - [out]
+      ON_ModelGeometryComponent returned here.
+      nullptr returned at end of the table.
+    object_filter - [in]
+      optional filter made by setting ON::object_type bits
+  Returns:
+     0 at end of object table
+     1 if object is read
+     2 if object is skipped because it does not match filter
+    -1 if file is corrupt
+  */
+  int Read3dmModelLight(
+    class ON_ModelGeometryComponent** model_light
+    );
+
+  int  Read3dmLight(
+    class ON_Light** light,
+    class ON_3dmObjectAttributes* attributes
+    );
+
   bool EndRead3dmLightTable();
 
 
@@ -1797,18 +3527,30 @@ public:
   // Step 13: REQUIRED - Write/Read hatch pattern table (it can be empty)
   //
   bool BeginWrite3dmHatchPatternTable();
-  bool Write3dmHatchPattern( const ON_HatchPattern&);
+  bool Write3dmHatchPatternComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmHatchPatternComponent( 
+    const class ON_ModelComponent* model_component 
+    );
+  bool Write3dmHatchPattern( const class ON_HatchPattern&);
   bool EndWrite3dmHatchPatternTable();
 
   bool BeginRead3dmHatchPatternTable();
-  int  Read3dmHatchPattern(ON_HatchPattern**);
+  int  Read3dmHatchPattern(class ON_HatchPattern**);
   bool EndRead3dmHatchPatternTable();
 
   ///////////////////////////////////////////////////////////////////
   // Step 14: REQUIRED - Write/Read instance definition table (it can be empty)
   //
   bool BeginWrite3dmInstanceDefinitionTable();
-  bool Write3dmInstanceDefinition( const ON_InstanceDefinition& );
+  bool Write3dmInstanceDefinitionComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmInstanceDefinitionComponent( 
+    const class ON_ModelComponent* model_component 
+    );
+  bool Write3dmInstanceDefinition( const class ON_InstanceDefinition& );
   bool EndWrite3dmInstanceDefinitionTable();
 
   bool BeginRead3dmInstanceDefinitionTable();
@@ -1848,8 +3590,8 @@ public:
              archive.EndRead3dmInstanceDefinitionTable();
   */      
   int Read3dmInstanceDefinition(
-            ON_InstanceDefinition** // ppInstanceDefinition
-            );
+    class ON_InstanceDefinition** // ppInstanceDefinition
+    );
 
   bool EndRead3dmInstanceDefinitionTable();
 
@@ -1857,6 +3599,12 @@ public:
   // Step 15: REQUIRED - Write/Read geometry and annotation table (it can be empty)
   //
   bool BeginWrite3dmObjectTable();
+  bool Write3dmModelGeometryComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmModelGeometryComponent( 
+    const class ON_ModelGeometryComponent* model_geometry
+    );
   bool Write3dmObject( 
          const ON_Object&,
          const ON_3dmObjectAttributes* // optional
@@ -1864,21 +3612,100 @@ public:
   bool EndWrite3dmObjectTable();
 
   bool BeginRead3dmObjectTable();
-  int  Read3dmObject( // returns 0 at end of object table
-                      //         1 if object is read
-                      //         2 if object is skipped because it does not match filter
-                      //        -1 if file is corrupt
-          ON_Object**, // object returned here (NULL if skipped)
-          ON_3dmObjectAttributes*, // optional - if NOT NULL, object attributes are
-                                   //            returned here
-          unsigned int = 0 // optional filter made by setting ON::object_type bits
-          );  // returns NULL at end of object table
+
+  // Call either Read3dmModelGeometry or Read3dmObject
+  /*
+  Parameters:
+    model_geometry - [out]
+      ON_ModelGeometryComponent returned here.
+      nullptr returned at end of the table.
+    object_filter - [in]
+      optional filter made by setting ON::object_type bits
+  Returns:
+     0 at end of object table
+     1 if object is read
+     2 if object is skipped because it does not match filter
+    -1 if file is corrupt
+  */
+  int Read3dmModelGeometry(
+    class ON_ModelGeometryComponent** model_geometry,
+    unsigned int object_filter = 0
+    );
+
+  /*
+  Parameters:
+    bManageGeometry - [in]
+      true: model_geometry will reference count and delete the ON_Geometry pointer.
+      false: The caller must delete the ON_Geometry pointer.
+    bManageAttributes - [in]
+      true: model_geometry will reference count and delete the ON_3dmObjectAttributes pointer.
+      false: The caller must delete the ON_3dmObjectAttributes pointer.
+    model_geometry - [out]
+      ON_ModelGeometryComponent returned here.
+      nullptr returned at end of the table.
+    object_filter - [in]
+      optional filter made by setting ON::object_type bits
+      0 = no filter.
+  Returns:
+     0 at end of object table
+     1 if object is read
+     2 if object is skipped because it does not match filter
+    -1 if file is corrupt
+  */
+  int Read3dmModelGeometryForExperts(
+    bool bManageGeometry,
+    bool bManageAttributes,
+    class ON_ModelGeometryComponent** model_geometry,
+    unsigned int object_filter
+    );
+
+  /*
+  Parameters:
+    model_object - [out]
+      nullptr returned at end of the table.
+    attributes - [out]
+      If not nullptr, then attributes are returned here
+    object_filter - [in]
+      optional filter made by setting ON::object_type bits
+  Returns:
+     0 at end of object table
+     1 if object is read
+     2 if object is skipped because it does not match filter
+    -1 if file is corrupt
+  */
+  int Read3dmObject(
+    ON_Object** model_object,
+    ON_3dmObjectAttributes* attributes,
+    unsigned int object_filter = 0
+    );
+
+private:
+  /*
+  Description:
+    In rare cases one object must be converted into another.
+    Examples include reading obsolete objects and converting them into their 
+    current counterpart, converting WIP objects into a proxy for a commercial build, 
+    and converting a proxy object into a WIP object for a WIP build.
+  */
+  ON_Object* Internal_ConvertObject(
+    const ON_Object* archive_object,
+    const ON_3dmObjectAttributes* attributes
+  ) const;
+
+public:
+
   bool EndRead3dmObjectTable();
 
   ///////////////////////////////////////////////////////////////////
   // Step 16: REQUIRED - Write/Read history record table (it can be empty)
   //
   bool BeginWrite3dmHistoryRecordTable();
+  bool Write3dmHistoryRecordComponent( 
+    const class ON_ModelComponentReference& model_component_reference
+    );
+  bool Write3dmHistoryRecordComponent( 
+    const class ON_ModelComponent* model_component 
+    );
   bool Write3dmHistoryRecord( 
          const class ON_HistoryRecord&
          );
@@ -1925,17 +3752,17 @@ public:
       If bSavingGoo is false, this parameter must be zero and
       ON_BinaryArchive::ArchiveOpenNURBSVersion() will be used.
       If bSavingGoo is true, this parameter must be the version
-      of the opennurbs (YYYYMMDDN) the plug-in code used to 
-      write the user table.
+      of the opennurbs the plug-in code used to write the 
+      user table.
   Returns:
     True if the the user information can be written.
     False if user informtion should not be written.
   */
   bool BeginWrite3dmUserTable(
-    const ON_UUID& plugin_id,
+    ON_UUID plugin_id,
     bool bSavingGoo,
     int goo_3dm_version,
-    int goo_opennurbs_version
+    unsigned int goo_opennurbs_version
     );
 
   bool EndWrite3dmUserTable();
@@ -1958,21 +3785,21 @@ public:
       plug-in wrote the user table.
     goo - [in]
   Returns:
-    True if the goo was written or skipped because it could not be robustly
-    saved.  False if a catastrophic IO error occured.
+    True if the goo was written.
+    False if skipped because it could not be robustly saved.
   */
   bool Write3dmAnonymousUserTableRecord( 
-    const ON_UUID& plugin_id,
+    ON_UUID plugin_id,
     int goo_3dm_version,
-    int goo_opennurbs_version,
-    const ON_3dmGoo& goo
+    unsigned int goo_opennurbs_version,
+    const class ON_3dmGoo& goo
     );
 
-  // OBSOLETE - use BeginWrite3dmUserTable(plugin_id, bSavingGoo, 3dm_version, opennurbs_version )
-  ON_DEPRECATED bool BeginWrite3dmUserTable( const ON_UUID& );
+  ON_DEPRECATED_MSG("use BeginWrite3dmUserTable(plugin_id, bSavingGoo, 3dm_version, opennurbs_version)")
+  bool BeginWrite3dmUserTable( const ON_UUID& );
 
-  // OBSOLETE - use Write3dmAnonymousUserTableRecord(plugin_id, ..., goo)
-  ON_DEPRECATED bool Write3dmAnonymousUserTable( const ON_3dmGoo& );
+  ON_DEPRECATED_MSG("use Write3dmAnonymousUserTableRecord(plugin_id, ..., goo)")
+  bool Write3dmAnonymousUserTable( const class ON_3dmGoo& );
 
   /*
   Parameters:
@@ -1995,7 +3822,7 @@ public:
     ON_UUID& plugin_id,
     bool* bLastSavedAsGoo,
     int* archive_3dm_version,
-    int* archive_opennurbs_version
+    unsigned int* archive_opennurbs_version
     );
 
   /*
@@ -2008,22 +3835,11 @@ public:
   */
   bool Read3dmAnonymousUserTable( 
     int archive_3dm_version,
-    int archive_opennurbs_version,
+    unsigned int archive_opennurbs_version,
     ON_3dmGoo& goo
     );
 
   bool EndRead3dmUserTable();
-
-  // OBSOLETE - use BeginRead3dmUserTable( plugin_id, bLastSavedAsGoo, archive_3dm_version, ... )
-  ON_DEPRECATED bool BeginRead3dmUserTable(
-    ON_UUID&
-    );
-
-  // OBSOLETE - use Read3dmAnonymousUserTable( archive_3dm_version, archive_opennurbs_version, goo )
-  ON_DEPRECATED bool Read3dmAnonymousUserTable( ON_3dmGoo& );
-
-
-
 
   ///////////////////////////////////////////////////////////////////
   // Step 18: REQUIRED when writing / OPTIONAL when reading
@@ -2106,17 +3922,25 @@ public:
         int minor_version
         );
 
+  /*
+  Description:
+    If version >= 0, calls BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,version).
+  */
+  bool BeginWrite3dmAnonymousChunk(
+    int version
+    );
+
 
   // updates length in chunk header
   bool EndWrite3dmChunk();
 
   bool Write3dmGoo( const ON_3dmGoo& ); // call to write "goo"
 
-  // OBSOLETE - Use BeginRead3dmBigChunk()
-  ON_DEPRECATED bool BeginRead3dmChunk(
-        unsigned int*,   // typecode from opennurbs_3dm.h
-        int*             // value
-        );
+  //ON_DEPRECATED_MSG("use BeginRead3dmBigChunk")
+  //bool BeginRead3dmChunk(
+  //      unsigned int*,   // typecode from opennurbs_3dm.h
+  //      int*             // value
+  //      );
 
   // When the end of the 3dm file is reached, BeginReadChunk() will
   // return true with a typecode of TCODE_ENDOFFILE.
@@ -2145,6 +3969,18 @@ public:
 
   /*
   Description:
+    Calls BeginWRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version),
+    checks that 1 == major_version, minor_version >= 0 and returns the value
+    of minor_version as version.
+  Parameters:
+    version - [out]
+  */
+  bool BeginRead3dmAnonymousChunk(
+    int* version
+    );
+
+  /*
+  Description:
     Calling this will skip rest of stuff in chunk if it was only partially read.
   Parameters:
     bSupressPartiallyReadChunkWarning - [in]
@@ -2167,9 +4003,10 @@ public:
   Parameters:
     dictionary_id - [in]
     version - [in]
-      It is suggested that you use YYYYMMDD as the version number.
+      It is suggested that you use ON_VersionNumberConstruct() to create
+      a version number.
     dictionary_name - [in]
-      You may pass NULL.
+      You may pass nullptr.
   Remarks:
     Begins a new chunk with tcode TCODE_DICTIONARY and then writes
     a TCODE_DICTIONARY_ID chunk containing the id, version and name.
@@ -2253,8 +4090,8 @@ public:
 
   bool Read3dmGoo( ON_3dmGoo& ); // Call to read "goo"
 
-  // OBSOLETE - Use PeekAt3dmBigChunkType()
-  ON_DEPRECATED bool PeekAt3dmChunkType( // does not change file position
+  ON_DEPRECATED_MSG("use PeekAt3dmBigChunkType")
+  bool PeekAt3dmChunkType( // does not change file position
         unsigned int*,   // typecode from opennurbs_3dm.h
         int*             // value
         );
@@ -2323,7 +4160,7 @@ public:
   /*
   Description:
     If a 3dm archive is being read or written, then this is the
-    version of the 3dm archive format (1, 2, 3, 4 or 5).
+    version of the 3dm archive format (1, 2, 3, 4, 5, 50, 60, ...).
   Returns:
     @untitle table
     0     a 3dm archive is not being read/written
@@ -2333,6 +4170,9 @@ public:
     4     a version 4 3dm archive is being read/written
     5     an old version 5 3dm archive is being read
     50    a version 5 3dm archive is being read/written
+    60    a version 6 3dm archive is being read/written
+    70    a version 7 3dm archive is being read/written
+    ...
   See Also:
     ON_BinaryArchive::ArchiveOpenNURBSVersion
   */
@@ -2358,7 +4198,43 @@ public:
     This value is rarely needed.  You probably want to
     use ON_BinaryArchive::Archive3dmVersion.
   */
-  int ArchiveOpenNURBSVersion() const;
+  unsigned int ArchiveOpenNURBSVersion() const;
+  
+  /*
+  Returns:
+    The runtime environment where the archive was created.
+  Remarks:
+    When reading an archive, compare the values of 
+    ON_BinaryArchive::ArchiveRuntimeEnvironment()
+    and 
+    ON::CurrentRuntimeEnvironment() 
+    to determine if adjustments need to be made to resources provided
+    by runtime enviroments, like fonts.
+  */
+  ON::RuntimeEnvironment ArchiveRuntimeEnvironment() const;
+
+  const ON_DimStyle& ArchiveCurrentDimStyle() const;
+  const int ArchiveCurrentDimStyleIndex() const;
+  const ON_UUID ArchiveCurrentDimStyleId() const;
+
+  /*
+  Description:
+    If a 3dm archive is being written to a version 2,3,4 or 50 format,
+    then new format opennurbs version numbers need to be saved in the
+    old YYYYMMDDN format.  This function returns the value that should
+    be written in the file.
+  Parameters:
+    archive_3dm_version - [in]
+      Version of the file that is being written (2, 3, 4, 50, 60, ...)
+    opennurbs_version - [in]
+      opennurbs version number
+  Returns:
+    Value to save in the file.
+  */
+  static unsigned int ArchiveOpenNURBSVersionToWrite(
+    unsigned int archive_3dm_version,
+    unsigned int opennurbs_version
+    );
 
   /*
   Description:
@@ -2377,27 +4253,6 @@ public:
     a diagnostice tool that is used to analyzed damaged files.
   */
   size_t ArchiveStartOffset() const;
-
-  enum table_type
-  {
-    no_active_table = 0,
-    properties_table,
-    settings_table,
-    bitmap_table,
-    texture_mapping_table,
-    material_table,
-    linetype_table,
-    layer_table,
-    light_table,
-    object_table,
-    group_table,
-    font_table,
-    dimstyle_table,
-    hatchpattern_table,
-    instance_definition_table,
-    historyrecord_table,
-    user_table
-  };
 
   /*
   Description:
@@ -2454,26 +4309,63 @@ public:
         int recursion_depth = 0
         );
 
-protected:
+  enum class eStorageDeviceError : unsigned int
+  {
+    None = 0,
+    
+    // values from 1 through 0xFFFFFFF0 are used for IO device 
+    // specific exceptions that terminate reading or writing.
 
+    WriteFailed = 0xFFFFFFF1, // writing to device failed
+    SeekFailedDuringWriting = 0xFFFFFFF2, // virtual Seek() failed during writing
+    ReadFailed = 0xFFFFFFF8,  // reading from device failed
+    SeekFailedDuringReading = 0xFFFFFFF9,  // virtual Seek() failed during reading
+    UnknownDeviceError = 0xFFFFFFFFU
+  };
+
+  static ON_BinaryArchive::eStorageDeviceError StorageDeviceErrorFromUnsigned(
+    unsigned int storage_device_error_as_unsigned
+    );
+
+  /*
+  Description:
+    An error terminated reading or writing
+  Returns:
+    0: no error terminiated reading or writing
+    !=0: See the ON_BinaryArchive::DeviceErrorType for values
+  */
+  unsigned int StorageDeviceError() const;
+
+private:
   /*
   Description:
     Works like the C runtrim fread().
   Returns:
     actual number of bytes read (like fread())
   */
-  virtual
-  size_t Read( size_t, void* ) = 0; 
+  size_t Read(size_t, void*);
 
+protected:
+  /*
+  Remarks:
+    In some unusual situations when reading old or damaged files, a read may fail.
+    Call MaskReadError( ON__UINT64 sizeof_request, ON__UINT64 sizeof_read )
+    before calling ON_ERROR().
+  */
+  virtual size_t Internal_ReadOverride( size_t, void* ) = 0; 
+
+private:
   /*
   Description:
     Works like the C runtrim fwrite().
   Returns:
     actual number of bytes written (like fwrite())
   */
-  virtual
-  size_t Write( size_t, const void* ) = 0;
+  size_t Write( size_t, const void* );
+protected:
+  virtual size_t Internal_WriteOverride( size_t, const void* ) = 0;
 
+public:
   /*
   Description:
     Force Write() to flush any buffered data to physical archive.
@@ -2481,8 +4373,7 @@ protected:
     True if succesful or if there is nothing to flush.  False if
     information could not be flushed.
   */
-  virtual
-  bool Flush() = 0;
+  virtual bool Flush() = 0;
 
   /*
   Description:
@@ -2500,6 +4391,25 @@ protected:
     );
 
   bool SetArchive3dmVersion(int);
+
+  /*
+  Description:
+    A non-zero storage device error terminates reading or writing.
+    See the ON_BinaryArchive::eStorageDeviceError for values.
+  Parameter:
+    storage_device_error - [in]
+      A non-zero code that identifies an error the terminates 
+      reading or writing.  
+      See ON_BinaryArchive::CriticalErrorCodes for values
+  Remarks:
+    Once set, the storage_device_error value cannot be changed.
+  */
+  void SetStorageDeviceError(
+    ON_BinaryArchive::eStorageDeviceError storage_device_error
+    );
+  void SetStorageDeviceError(
+    unsigned int storage_device_error
+    );
 
 private:
   // 16 bit integer IO
@@ -2536,7 +4446,7 @@ private:
                       //         1 light successfully read
                       //        -1 if file is corrupt
             ON_Light**, // light returned here
-            ON_3dmObjectAttributes* // optional - if NOT NULL, object attributes are
+            ON_3dmObjectAttributes* // optional - if NOT nullptr, object attributes are
                                     //            returned here
             );
   int Read3dmV1Material( ON_Material** );
@@ -2544,16 +4454,16 @@ private:
                       //         1 if object is read
                       //         2 if object is skipped because it does not match filter
                       //        -1 if file is corrupt
-          ON_Object**, // object returned here (NULL if skipped)
-          ON_3dmObjectAttributes*, // optional - if NOT NULL, object attributes are
+          ON_Object**, // object returned here (nullptr if skipped)
+          ON_3dmObjectAttributes*, // optional - if NOT nullptr, object attributes are
                                    //            returned here
           unsigned int = 0 // optional filter made by setting ON::object_type bits
-          );  // returns NULL at end of object table
+          );  // returns nullptr at end of object table
 
   bool Read3dmV1AttributesOrMaterial( 
             ON_3dmObjectAttributes*,    // attributes,
             ON_Material*,      // material,
-            ON_BOOL32&,             // bHaveMat
+            bool&,             // bHaveMat
             unsigned int,      // end_mark_tcode 
             class ON__3dmV1_XDATA* = 0 // v1 "xdata"
             );
@@ -2573,33 +4483,18 @@ public:
   bool ReadV1_TCODE_ANNOTATION(unsigned int,ON_Object**,ON_3dmObjectAttributes*);
 
 private:
-  ON::archive_mode Mode() const; // current read/write mode
   void UpdateCRC( size_t, const void* );
   int ReadObjectHelper(ON_Object**);
 
-  int m_3dm_version;
-  int m_3dm_v1_layer_index;
-  int m_3dm_v1_material_index;
+  int m_3dm_version = 0; // 1,2,3,4,5 (obsolete 32-bit chunk sizes)
+                         // 50,60,70,... (64-bit chunk sizes)
 
-  // The bits in m_error_message_mask are used to mask errors
-  // when we know we are doing something that may generate an
-  // error.
-  //
-  // bit 0x00000001
-  //   V1 files do not have a table structure and are read using
-  //   multiple passes and there are valid situations where a 
-  //   4 byte read is attempted at the end of a file.
-  //
-  // bit 0x00000002
-  //   Some v1 files do not have an end mark.  When reading
-  //   these v1 files bit 0x02 is set.
-  //
-  // bit 0x00000004
-  //   Requested read may go beyond end of file.
-  //   One situation where this happens is when a table is not at the 
-  //   expected location in a file, 
+  int m_3dm_v1_layer_index = 0;
+  int m_3dm_v1_material_index = 0;
 
-  unsigned int m_error_message_mask;
+  
+
+
 protected:
   unsigned int ErrorMessageMask() const;
   /*
@@ -2614,6 +4509,7 @@ protected:
     is read and must be checked at each failure.
   */
   bool MaskReadError( ON__UINT64 sizeof_request, ON__UINT64 sizeof_read ) const;
+
 private:
 
 
@@ -2627,18 +4523,209 @@ private:
   //
   // Write3dmProperties() stores the value returned by ON::Version() in
   // the archive's properties table.
-  friend void ON_SetBinaryArchiveOpenNURBSVersion(ON_BinaryArchive&,int);
-  int m_3dm_opennurbs_version;
+  friend void ON_SetBinaryArchiveOpenNURBSVersion(ON_BinaryArchive&,unsigned int);
+  unsigned int m_3dm_opennurbs_version = 0;
+
+  ON::RuntimeEnvironment m_archive_runtime_environment = ON::RuntimeEnvironment::Unset;
 
   // When a 3dm archive is saved from an MFC application that supports
   // Windows linking/embedding, the first 5kb to 1mb of the file contains
   // information that is put there by MFC.  m_3dm_start_section_offset
   // records the offset into the file where the 3dm archive actually begins.
-  size_t m_3dm_start_section_offset;
+  size_t m_3dm_start_section_offset = 0;
 
-  table_type m_active_table;
+  /*Read3dmTableRecordBegin
+  m_3dm_previous_table = 3dm archive table that was most recently read/written.
+  m_3dm_active_table = 3dm archive table currently being read/written
+  */
+  ON_3dmArchiveTableType m_3dm_previous_table = ON_3dmArchiveTableType::Unset;
+  ON_3dmArchiveTableType m_3dm_active_table = ON_3dmArchiveTableType::Unset;
+  // If reading/writing a table fails, m_3dm_failed_table identifies the first failure.
+  ON_3dmArchiveTableType m_3dm_first_failed_table = ON_3dmArchiveTableType::Unset;
 
-  table_type TableTypeFromTypecode( unsigned int ); // table type from tcode
+  int m_user_data_depth = 0; // > 0 when user data is being read or written
+
+  // 3dm archive status information
+  class ON_3dmTableStatusLink* m_3dm_table_status_list = nullptr;
+
+private:
+  bool Internal_Write3dmUpdateManifest(
+    const ON_ModelComponent& model_component
+    );
+  bool Internal_Write3dmLightOrGeometryUpdateManifest(
+    ON_ModelComponent::Type component_type,
+    ON_UUID component_id,
+    int component_index,
+    const ON_wString & component_name
+    );
+  bool Internal_Read3dmUpdateManifest(
+    ON_ModelComponent& model_component
+    );
+  bool Internal_Read3dmLightOrGeometryUpdateManifest(
+    ON_ModelComponent::Type component_type,
+    ON_UUID component_id,
+    int component_index,
+    const ON_wString & component_name
+    );
+
+private:
+  bool Internal_IncrementCurrentPosition(
+    ON__UINT64 delta
+  );
+  bool Internal_DecrementCurrentPosition(
+    ON__UINT64 delta
+  );
+  ON__UINT64 m_current_positionX = 0;
+
+  /*
+  Description:
+    Increments m_crc_error_count and active table m_crc_error_count.
+  */
+  void Internal_ReportCRCError();
+  
+  unsigned int m_crc_error_count = 0; // number of chunks that have a bad crc
+  
+  /*
+  Description:
+    Increments m_critical_error_count and active table m_critical_error_count.
+  */
+  void Internal_ReportCriticalError();
+
+  // Number of critical errors.  These errors are more serious than a CRC error.
+  // If a critical error occurs, the information being read or written is 
+  // so corrupted that chunk accounting is failing or the calling code is deeply flawed. 
+  unsigned int m_critical_error_count = 0;
+
+  // ON_BinaryArchive::eStorageDeviceError values are used to set
+  // m_storage_device_error.
+  // ON_BinaryArchive::StorageDeviceError() returns the value.
+  unsigned int m_storage_device_error = 0;
+
+  // The bits in m_error_message_mask are used to mask errors
+  // when we know we are doing something that may generate an
+  // error.
+  //
+  // bit 0x00000001
+  //   Setting this bit masks an error when attempting to read 4 bytes
+  //   at the end of a file.
+  //   V1 files do not have a table structure and are read using
+  //   multiple passes and there are valid situations where a 
+  //   4 byte read is attempted at the end of a file.
+  //   This situation also occurs when a damaged file is missing a table
+  //   or contains tables in the wrong order and the table must be searched
+  //   for by typecode.
+  //
+  // bit 0x00000002
+  //   Some v1 files do not have an end mark.  When reading
+  //   these v1 files bit 0x02 is set.
+  //
+  // bit 0x00000004
+  //   Requested read may go beyond end of file.
+  //   One situation where this happens is when a table is not at the 
+  //   expected location in a file, 
+  unsigned int m_error_message_mask = 0;
+
+
+    
+  ON__UINT64 m_3dm_end_mark_length = 0;
+  
+  bool Begin3dmTable(
+    ON::archive_mode expected_mode,
+    ON_3dmArchiveTableType table
+    );
+  bool End3dmTable(
+    ON_3dmArchiveTableType table,
+    bool bSuccess
+    );
+  void Internal_Increment3dmTableItemCount();
+  bool Read3dmTableRecord(
+    ON_3dmArchiveTableType table,
+    void** ptr
+    );
+  bool Internal_Begin3dmTableRecord(
+    ON_3dmArchiveTableType table
+    );
+
+public:
+  /*
+  Returns:
+    Archive read/write mode
+  */
+  ON::archive_mode Mode() const;
+
+  /*
+  Returns:
+    True if Mode() is an archive reading mode.
+  */
+  bool ReadMode() const;
+
+  /*
+  Returns:
+    True if Mode() is an archive writing mode.
+  */
+  bool WriteMode() const;
+
+  /*
+  Returns:
+    True if Mode() is not set to a valid read or write mode.
+  */
+  bool UnsetMode() const;
+
+  /*
+  Returns:
+    If a 3dm archive is being read or written, the value of the archive 
+    section (table) being read is returned.
+    ON_3dmArchiveTableType::Unset is returned if a table is
+    not actively being read or written.
+  Remarks:
+    Use ON_BinaryArchive::Mode() to determine if a binary archive is being
+    read or written.
+    Use ON_BinaryArchive::Previous3dmTable() to determine the most recent
+    table that was successfully read and finished.
+  */
+  ON_3dmArchiveTableType Active3dmTable() const;
+
+  static ON_ModelComponent::Type TableComponentType(
+    ON_3dmArchiveTableType table_type
+  );
+
+  /*
+  Returns:
+    If a 3dm archive is being read or written, the value of the most
+    recently read or written archive section (table) is returned.
+  Remarks:
+    Use ON_BinaryArchive::Mode() to determine if a binary archive is being
+    read or written.
+  */
+  ON_3dmArchiveTableType Previous3dmTable() const;
+
+  /*
+  Returns:
+    If a 3dm archive is being read or written and a failure occurs,
+    the first archive section (table) that failed to read or write
+    is returned.
+  */
+  ON_3dmArchiveTableType FirstFailed3dmTable() const;
+
+  /*
+  Returns:
+    Number of chunks read with a bad CRC
+  */
+  unsigned int BadCRCCount() const;
+
+  /*
+  Returns:
+    Number of critical errors
+  */
+  unsigned int CriticalErrorCount() const;
+
+  const ON_3dmArchiveTableStatus Archive3dmTableStatus(
+    ON_3dmArchiveTableType table_type
+    );
+
+private:
+
+  ON_3dmArchiveTableType TableTypeFromTypecode( unsigned int ); // table type from tcode
 
   ON_SimpleArray<ON_3DM_BIG_CHUNK> m_chunk;
 
@@ -2661,7 +4748,7 @@ private:
   bool ReadObjectUserDataAnonymousChunk(
           const ON__UINT64 length_TCODE_ANONYMOUS_CHUNK,
           const int archive_3dm_version,
-          const int archive_opennurbs_version,
+          const unsigned int archive_opennurbs_version,
           class ON_UserData* ud );
 
 public:
@@ -2671,23 +4758,34 @@ private:
   bool WriteEOFSizeOfFile( ON__UINT64 );
   bool ReadEOFSizeOfFile( ON__UINT64* );
 
-  bool m_bDoChunkCRC; // true if active chunk crc status should be checked
+  bool m_bDoChunkCRC = false; // true if active chunk crc status should be checked
                       // and updated.
-  int m_bad_CRC_count; // number of chunks that have a bad crc
+  bool m_bChunkBoundaryCheck = false;
 
+public:
+  /*
+  Returns:
+    true:
+      All read, write, and seek operations check to make sure they stay within
+      the current chunk boundary.
+  */
+  bool ChunkBoundaryCheck() const;
 
+  /*
+  Parameters:
+    bChunkBoundaryCheck - [in]
+      true:
+        All read, write, and seek operations check to make sure they stay within
+        the current chunk boundary.
+  */
+  void SetChunkBoundaryCheck(
+    bool bChunkBoundaryCheck
+  );
+
+  
 private:
-  // compressed buffer I/O uses zlib 1.1.3 inflate()/deflate()
-  struct
-  {
-    ON::archive_mode mode; // ON::on_read = read and inflate,  ON::on_write = deflate and write
-    enum
-    {
-      sizeof_x_buffer = 16384
-    };
-    unsigned char    buffer[sizeof_x_buffer];
-    z_stream         strm;
-  } m_zlib;
+  class ON_CompressorImplementation* m_compressor = nullptr;
+  class ON_CompressorImplementation& Compressor();
 
   // returns number of bytes written
   size_t WriteDeflate(
@@ -2703,30 +4801,529 @@ private:
 
 private:
   // endian-ness of the cpu reading this file.
-  // 3dm files are alwasy saved with little endian byte order.
-  ON::endian m_endian;
+  // 3dm files are always saved with little endian byte order.
+  const ON::endian m_endian = ON::Endian();
 
-  ON::archive_mode m_mode;
+  const ON::archive_mode m_mode = ON::archive_mode::unset_archive_mode;
 
+  // user data and user table reading and writing filter
+  // If m_user_data_filter is empty, then all user data and user tables are read/written.
+  // If m_user_data_filter is not empty, then the first element has both ids=nil, precedence=0,
+  // and m_bSerialize = default setting. If there are any elements after the first element,
+  // the must have m_application_id != nil and the value of m_bSerialize overrides the 
+  // default setting.  If there are multiple elements with the same application and item id,
+  // the most recently added element is used.
+  ON_SimpleArray< ON_UserDataItemFilter > m_user_data_filter;
+  
+  /*
+  Description:
+    Sorts m_user_data_filter so items are ordered by 
+    application id (nil is first) and precedence (low to high)
+  */
+  void SortUserDataFilter();
+
+private:
   // 3dm write options
-  bool m_bSaveUserData; // true to save user data (increases file size)
-  bool m_bSavePreviewImage;    // true to save 200x200 preview bitmap (increases file size)
-  bool m_bEmbedTextureBitmaps; // true to embed texture, bump, trace, and wallpaper bitmaps (increases file size)
-  bool m_bSaveRenderMeshes;    // true to save meshes used to render B-rep objects (increases file size)
-  bool m_bSaveAnalysisMeshes;  // true to save meshes used in surface analysis (increases file size)
 
+  // bits corresponed to ON::object_type flags.
+  // If the bit is set, then the mesh will be saved in the 3dm file.
+  // (RhinoCommon: if default is changed, sync with File3dmWriteOptions.RenderMeshesFlags)
+  ON__UINT32 m_save_3dm_render_mesh_flags = 0xFFFFFFFFU;
+  ON__UINT32 m_save_3dm_analysis_mesh_flags = 0xFFFFFFFFU;
+
+  bool m_bSave3dmPreviewImage = true;
+
+  bool m_bUseBufferCompression = true;
+
+  bool m_bReservedA = false;
+  bool m_bReservedB = false;
+  bool m_bReservedC = false;
+  bool m_bReservedD = false;
+  bool m_bReservedE = false;
+  bool m_bReservedF = false;
+
+public:
+  /*
+  Description:
+    Specify model serial number attributes to assign to ON_ModelComponent
+    classes when they are read.
+  */
+  void SetModelSerialNumber(
+    unsigned int model_serial_number,
+    unsigned int reference_model_serial_number,
+    unsigned int instance_definition_model_serial_number
+    );
+
+  /*
+  Description:
+    Clear() information set by SetModelSerialNumber() do not modify
+    ON_ModelComponent model serial number information when the classes
+    are read.
+  */  
+  void ClearModelSerialNumber();
+
+  /*
+  Parameters:
+    bCheckForRemappedIds - [in]
+      true if the archive is reading in a situation where component ids may get remapped.
+  */
+  void SetCheckForRemappedIds(
+    bool bCheckForRemappedIds
+  );
+
+  /*
+  Returns:
+    True if the archive is reading in a situation where component ids may get remapped.
+  */
+  bool CheckForRemappedIds() const;
+
+  unsigned int ModelSerialNumber() const;
+  unsigned int ReferenceModelSerialNumber() const;
+  unsigned int InstanceDefinitionModelSerialNumber() const;
+  
+  /*
+  Description:
+    Writes the attributes identified by the component_filter parameter.
+  Parameters:
+    model_component - [in]
+    attributes_filter - [in]
+      A bitfield that determines which attributes will be written.
+  Returns:
+    false: critical failure.
+    true: writing can continue.
+  */
+  bool WriteModelComponentAttributes(
+    const class ON_ModelComponent& model_component,
+    unsigned int attributes_filter
+    );
+
+  /*
+  Description:
+    Reads the attributes the Write() function writes.
+  Parameters:
+    model_component - [in/out]
+    component_filter - [out]
+      A bitfield that reports which attributes were read.
+      If the corresponding component on model_component is locked,
+      the read value is discared.
+  Returns:
+    false: critical failure.
+    true: reading can continue.  
+  Remarks:
+    If locked attributes are read, thire values are ignored.
+  */
+  bool ReadModelComponentAttributes(
+    ON_ModelComponent& model_component,
+    unsigned int* attributes_filter
+    );
+
+  /*
+  Description:
+    When writing archives, the index of the component in the model is
+    often different than the index of the component in the archive.
+    WriteComponentIndex converts the model id or index into 
+    an archive index and writes the archive index value.
+  Remarks:
+    During writing, the m_manifest member stores 
+    the model id and index as the "Component" value and
+    the 3dm archive id index as the "Manifest" value.
+  */
+  bool Write3dmReferencedComponentIndex(
+    ON_ModelComponent::Type component_type,
+    int model_component_index
+    );
+
+  /*
+  Description:
+    When writing archives, the index of the component in the model is
+    often different than the index of the component in the archive.
+    WriteComponentIndex converts the model id or index into 
+    an archive index and writes the archive index value.
+  Remarks:
+    During writing, the m_manifest member stores 
+    the model id and index as the "Component" value and
+    the 3dm archive id index as the "Manifest" value.
+  */
+  bool Write3dmReferencedComponentIndex(
+    ON_ModelComponent::Type component_type,
+    ON_UUID model_component_id
+    );
+
+  /*
+  Description:
+    When writing archives, the index of the component in the model is
+    often different than the index of the component in the archive.
+    WriteComponentIndex converts the model id or index into 
+    an archive index and writes the archive index value.
+  Remarks:
+    During writing, the m_manifest member stores 
+    the model id and index as the "Component" value and
+    the 3dm archive id index as the "Manifest" value.
+  */
+  bool Write3dmReferencedComponentIndex(
+    const ON_ModelComponent& model_component
+    );
+
+  /*
+  Description:
+    When reading 3dm archives, model component indexes in the archive and
+    in the destination model are typically different.
+    This function basically reads and reverses the steps that WriteArchiveComponentIndex()
+    uses to adjust and write a model component index.
+  Parameters:
+    component_type - [in]
+      Type of the referenced component.
+    component_index - [out]
+      component reference index
+  Returns:
+    false - catestrophic read failure.
+  */
+  bool Read3dmReferencedComponentIndex(
+    ON_ModelComponent::Type component_type,
+    int* component_index
+    );
+
+  bool Read3dmReferencedComponentIndexArray(
+    ON_ModelComponent::Type component_type,
+    ON_SimpleArray<int>& component_index_array
+    );
+
+  /*
+  Returns:
+    True: (default state)
+      Read3dmReferencedComponentIndex() and Write3dmReferencedComponentIndex() will automatically
+      adjust compoents index references so they are valid.
+    False: (uncommon)
+      Read3dmReferencedComponentIndex() and Write3dmReferencedComponentIndex() will not
+      adjust compoents index references so they are valid.
+  */
+  bool ReferencedComponentIndexMapping() const;
+
+  /*
+  Description:
+    Set the archive's ReferencedComponentIndexMapping() state.
+  Parameters:
+    bEnableReferenceComponentIndexMapping - [in]
+    True: (default state)
+      Read3dmReferencedComponentIndex() and Write3dmReferencedComponentIndex() will automatically
+      adjust compoents index references so they are valid.
+    False: (uncommon)
+      Read3dmReferencedComponentIndex() and Write3dmReferencedComponentIndex() will not
+      adjust compoents index references so they are valid. This is only used with the
+      component being read or written is not the model but is a copy of one
+      in a different model (linked instance definitions being the common situation).
+  */
+  void SetReferencedComponentIndexMapping(
+    bool bEnableReferenceComponentIndexMapping
+    );
+
+  /*
+  Description:
+    WriteComponentId converts the model ID into 
+    an archive ID and writes the archive Id value.
+    Generally, the ID of the component in the model is 
+    identical to the ID of the component in the archive.
+    In rare situations this is not the case.
+  Remarks:
+    During writing, the m_manifest member stores 
+    the model ID as the "Component" value and
+    the 3dm archive ID as the "Manifest" value.
+  */
+  bool Write3dmReferencedComponentId(
+    ON_ModelComponent::Type component_type,
+    ON_UUID model_component_id
+    );
+
+  bool Write3dmReferencedComponentId(
+    const ON_ModelComponent& model_component
+    );
+
+  /*
+  Description:
+    When reading 3dm archives, the model component ID in the archive
+    and in the destination model are often identical, but sometimes
+    different. For example, the when the same template is used
+    to create multiple models and files and the models from those files
+    are merged into a single file, there will be ID collisions.
+    For components that are identified by name, like layers and dimension styles,
+    this is not a problem. For components like instance definitions that have
+    a more complicated set of merging rules, it is critical that
+    references to instance definition ids be updated from values in the arcive
+    to values in the model.
+    uses to adjust and write a model component Id.
+  Parameters:
+    component_type - [in]
+      Type of the referenced component.
+    component_id - [out]
+      component reference ID
+  Returns:
+    false - catestrophic read failure.
+  */
+  bool Read3dmReferencedComponentId(
+    ON_ModelComponent::Type component_type,
+    ON_UUID* component_id
+    );
+
+  /*
+  Returns:
+    True: (default state)
+      Read3dmReferencedComponentId() and Write3dmReferencedComponentId() will automatically
+      adjust compoents Id references so they are valid.
+    False: (uncommon)
+      Read3dmReferencedComponentId() and Write3dmReferencedComponentId() will not
+      adjust compoents Id references so they are valid.
+  */
+  bool ReferencedComponentIdMapping() const;
+
+  /*
+  Description:
+    Set the archive's ReferencedComponentIdMapping() state.
+  Parameters:
+    bEnableReferenceComponentIdMapping - [in]
+    True: (default state)
+      Read3dmReferencedComponentId() and Write3dmReferencedComponentId() will automatically
+      adjust compoents Id references so they are valid.
+    False: (uncommon)
+      Read3dmReferencedComponentId() and Write3dmReferencedComponentId() will not
+      adjust compoents Id references so they are valid. This is only used with the
+      component being read or written is not the model but is a copy of one
+      in a different model (linked instance definitions being the common situation).
+  */
+  void SetReferencedComponentIdMapping(
+    bool bEnableReferenceComponentIdMapping
+    );
+
+
+public:
+  // Reading and writing operations fill in the manifest.
+  // ON_ComponentManifest query tools can be used to look up
+  // model and archive index and id information.
+  //
+  // The component and manifest id values are always identical
+  // during reading and writing.
+  //
+  // When writing, the component indices are model indices
+  // and the manifest indices are the archive indices that
+  // were written in the file.
+  //
+  // When reading, the component indices are "index" values read
+  // from the archive and the manifest indices are the order they
+  // were read. When files are valid, these indices are the same.
+  //
+  // After reading is complete, the application can use 
+  // ON_ComponentManifest::UpdateManifestItem() to convert
+  // the component index and id values to model index and
+  // id values.
+  const class ON_ComponentManifest& Manifest() const;
+  const class ON_ManifestMap& ManifestMap() const;
+  bool AddManifestMapItem(
+    const class ON_ManifestMapItem& map_item
+    );
+
+  /*
+  Description:
+    When an application is reading an archive and changes the
+    index or id of a model component as it is added to the model,
+    then it needs to update the manifest map item destination settings.
+  Parameters:
+    map_item - [in]
+      The source type, index and id match what was read from the 3dm archive.
+      The destination index and id are the values assigned by the
+      application reading the 3dm archive.
+  */
+  bool UpdateManifestMapItemDestination(
+    const class ON_ManifestMapItem& map_item
+    );
+
+private:
+  // Reading:
+  //   m_manifest is a list of what has been read from the 3dm archive.
+  //   m_manifest_map is a map from the 3dm archive index and id to the
+  //   model index and id. The map is maintained by the application
+  //   reading the file calling AddManifestMapItem() when read items
+  //   are added to the model.
+  // Writing:
+  //   m_manifest is a list of what has been written to the 3dm archive.
+  //   m_manifest_map maps model index and id to 3dm archive index and id.
+  //   m_manifest_map is automatically maintained by the ON_BinaryArchive
+  //   writing code because the index and id changes happen internally
+  //   in 3dm archive writing functions.
+  ON_ComponentManifest m_manifest;
+  ON_ManifestMap m_manifest_map;
+
+  // True: (default state)
+  //  Read3dmReferencedComponentIndex() and Write3dmReferencedComponentIndex() will automatically
+  //  adjust component index references so they are valid.
+  // False: (uncommon)
+  //  Read3dmReferencedComponentIndex() and Write3dmReferencedComponentIndex() will not
+  //  adjust component index references so they are valid.
+  bool m_bReferencedComponentIndexMapping = true;
+
+  // True: (default state)
+  //  Read3dmReferencedComponentId() and Write3dmReferencedComponentId() will automatically
+  //  adjust component id references so they are valid.
+  // False: (uncommon)
+  //  Read3dmReferencedComponentId() and Write3dmReferencedComponentId() will not
+  //  adjust component id references so they are valid.
+  bool m_bReferencedComponentIdMapping = true;
+
+private:
+  // If the archive is a file system item (file), then
+  // these strings specify the name of the file
+  ON_wString m_archive_file_name;
+  ON_wString m_archive_directory_name;
+  ON_wString m_archive_full_path; // = archive_directory_name + path separator + archive_file_name
+
+  // If the archive is being read, this is the name
+  // of the file where it was written.
+  // If false = ON_wString::EqualPath(m_archive_full_path,m_archive_saved_as_full_path),
+  // then file has been moved or copied since it was saved.
+  // When reading a file, this value is set by ON_BinaryArchive::Read3dmProperties()
+  // When writing a file, this value is set by SetArchiveFullPath().
+  ON_wString m_archive_saved_as_full_path;
+
+  /*
+    ON_BinaryArchive::Read3dmProperties() sets m_bArchiveMoved to true if
+    the 3dm archive being read is not in the same file system location as where
+    it was written.  This piece of information is useful when attempting to find
+    referenced files that are not where they were when the 3dm archive was saved.
+  */
+  bool m_b3dmArchiveMoved = false;
+
+public:
+  const ON_wString& ArchiveFileName() const;
+  const ON_wString& ArchiveDirectoryName() const;
+  const ON_wString& ArchiveFullPath() const;
+  const ON_wString& ArchiveSavedAsFullPath() const;
+
+  const wchar_t* ArchiveFileNameAsPointer() const;
+  const wchar_t* ArchiveDirectoryNameAsPointer() const;
+  const wchar_t* ArchiveFullPathAsPointer() const;
+  const wchar_t* ArchiveSavedAsFullPathPointer() const;
+
+  /*
+  Returns:
+    true if the 3dm archive being read is not in the same file system 
+    location as where is was saved.
+  */
+  bool ArchiveFileMoved() const;
+
+  /*
+  Parameters:
+    archive_full_path - [in]
+      full path to file being read or written
+  */
+  void SetArchiveFullPath(
+    const wchar_t* archive_full_path
+    );
+
+  /*
+  Parameters:
+    archive_directory_name - [in]
+      full path file being written
+    archive_file_name - [in]
+      name of file being written
+  */
+  void SetArchiveFullPath(
+    const wchar_t* archive_directory_name,
+    const wchar_t* archive_file_name
+    );
+
+private:
+  bool m_SetModelComponentSerialNumbers = false;
+  bool m_bCheckForRemappedIds = false;
+  // Expert testers who need to create a corrupt 3dm file
+  // call IntentionallyWriteCorrupt3dmStartSectionForExpertTesting() before writing
+  // the 3dm file.
+  unsigned char m_IntentionallyWriteCorrupt3dmStartSection = 0;
+  bool m_reservedB = false;
+  unsigned int m_model_serial_number = 0;
+  unsigned int m_reference_model_serial_number = 0;
+  unsigned int m_instance_definition_model_serial_number = 0;
+  unsigned int m_reserved1 = 0;
+  ON__UINT_PTR m_reserved2 = 0;
+
+private:
   // ids of plug-ins that support saving older (V3) versions
   // of user data.  This information is filled in from the
   // list of plug-ins passed in whenteh settings are saved.
-  ON_SimpleArray< ON_UUID > m_V3_plugin_id_list;
+  ON_SimpleArray<ON_UUID> m_V3_plugin_id_list;
 
-  struct ON__3dmV1LayerIndex* m_V1_layer_list;
+  struct ON__3dmV1LayerIndex* m_V1_layer_list = nullptr;
 
+private:
+  // m_archive_text_style_table and m_archive_dim_style_table are private and not used by inline functions.
+  // No DLL interface is required.
+
+  mutable ON_3dmAnnotationContext m_annotation_context;
+
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4251 )
+  // The m_archive_text_style_table[] array is used when reading archives.
+  // It contains the text styles read from the archive
+  ON_SimpleArray< ON_TextStyle* > m_archive_text_style_table;
+
+  // The m_dim_style_index_text_style_index[] is used when reading archives.
+  // ON_2dex.i = text style archive index.
+  // ON_2dex.j = dimension style archive index.
+  ON_SimpleArray< ON_2dex > m_text_style_to_dim_style_archive_index_map;
+
+  // This m_archive_dim_style_table[] array is used when reading
+  // and writing archives. This information is required when reading
+  // and writing archives from previous versions.
+  // - When writing, the dimstyles are copies of the model dimstyles
+  //   and have model ids and indices.
+  // - When reading, the dimstyles are copies of the archive dimstyles
+  //   and have archive ids and indices.
+  ON_SimpleArray< ON_DimStyle* > m_archive_dim_style_table;
+  ON_SimpleArray< ON_DimStyle* > m_DELETE_ME_archive_dim_style_overrides;
+  bool m_bLegacyOverrideDimStylesInArchive = false;
+
+  const ON_DimStyle* m_archive_current_dim_style = nullptr;
+
+  // m_archive_dim_style_table_status values:
+  // READING:
+  // 0 = not started
+  //   1 = BeginWrite3dmDimStyle() has been called, 
+  //       m_archive_text_style_table[] is valid, 
+  //       and Read3dmDimStyle() can be called.
+  //   2 = All entries of m_archive_text_style_table[] have been read by Read3dmDimStyle().
+  //   3 = EndRead3dmDimStyle() has been called.
+  // WRITING:
+  //   0 = not started
+  //   1 = BeginWrite3dmDimStyle() has been called and Write3dmDimStyle() can be called.
+  //   2 = Write3dmDimStyle() has saved at least one dimstyle
+  //   3 = EndWrite3dmDimStyle() has been called.
+  unsigned int m_archive_dim_style_table_status = 0;
+
+  // index in m_archive_text_style_table[] where Read3dmDimStyle() should
+  // begin searching for the next dimstyle to "read".
+  unsigned int m_archive_dim_style_table_read_index = ON_UNSET_UINT_INDEX;
+
+#pragma ON_PRAGMA_WARNING_POP
+
+public:
+  /*
+  Description:
+    When reading version 5 and earlier files that contain a text style
+    table, this function can be used to get the archive text style from
+    the archive text style index. This function is used when reading
+    V5 and pre August 2016 V6 ON_DimStyle information.
+  */
+  const ON_TextStyle* ArchiveTextStyleFromArchiveTextStyleIndex(
+    int archive_text_style_index
+  ) const;
+
+private:
+  ON_String m_archive_3dm_start_section_comment = ON_String::EmptyString;
+  class ON_3dmProperties* m_archive_3dm_properties = nullptr;
+  class ON_3dmSettings* m_archive_3dm_settings = nullptr;
+
+private:
   // prohibit default construction, copy construction, and operator=
-  ON_BinaryArchive();
-  ON_BinaryArchive( const ON_BinaryArchive& ); // no implementation
-  ON_BinaryArchive& operator=( const ON_BinaryArchive& ); // no implementation
-
+  ON_BinaryArchive() = delete;
+  ON_BinaryArchive( const ON_BinaryArchive& ) = delete; // no implementation
+  ON_BinaryArchive& operator=( const ON_BinaryArchive& ) = delete; // no implementation
 };
 
 class ON_CLASS ON_3dmGoo
@@ -2751,31 +5348,74 @@ public:
 class ON_CLASS ON_BinaryFile : public ON_BinaryArchive
 {
 public:
-  ON_BinaryFile( ON::archive_mode );
+  ON_BinaryFile( 
+    ON::archive_mode archive_mode 
+    );
 
   /*
   Description:
     Create an ON_BinaryArchive that reads/writes from an ordinary file.
   Parameters:
-    mode - [in]
+    archive_mode - [in]
     fp - [in]
       If a file is being read, fp is the pointer returned 
       from ON_FileStream::Open(...,"rb").
       If a file is being written, fp is the pointer returned 
       from ON_FileStream::Open(...,"wb").
   */
-  ON_BinaryFile( ON::archive_mode, FILE* fp );
+  ON_BinaryFile( 
+    ON::archive_mode archive_mode, 
+    FILE* fp
+    );
 
-  virtual ~ON_BinaryFile();
+  /*
+  Description:
+    Create an ON_BinaryArchive that reads/writes from an ordinary file.
+  Parameters:
+    archive_mode - [in]
+    file_system_path - [in]
+      path to file being read or written.
+  */
+  ON_BinaryFile(
+    ON::archive_mode archive_mode, 
+    const wchar_t* file_system_path
+    );
 
+  /*
+  Description:
+    Create an ON_BinaryArchive that reads/writes from an ordinary file.
+  Parameters:
+    archive_mode - [in]
+    file_system_path - [in]
+      path to file being read or written.
+  */
+  ON_BinaryFile(
+    ON::archive_mode archive_mode, 
+    const char* file_system_path
+    );
+
+  ~ON_BinaryFile();
+
+protected:
   // ON_BinaryArchive overrides
-  size_t CurrentPosition() const; 
-  bool SeekFromCurrentPosition(int);
-  bool SeekFromStart(size_t);
-  bool AtEnd() const;
+  ON__UINT64 Internal_CurrentPositionOverride() const override;
+  bool Internal_SeekFromCurrentPositionOverride(int byte_offset) override;
+  bool Internal_SeekToStartOverride() override;
 
-  // fseek from end (since the file has an end)
-  bool SeekFromEnd( int ); 
+public:
+  // ON_BinaryArchive overrides
+  bool AtEnd() const override;
+
+protected:
+  // ON_BinaryArchive overrides
+  size_t Internal_ReadOverride( size_t, void* ) override; // return actual number of bytes read (like fread())
+  size_t Internal_WriteOverride( size_t, const void* ) override;
+  bool Flush() override;
+
+public:
+
+  //// fseek from end (since the file has an end)
+  //bool SeekFromEnd( int ); 
 
   //////////
   // To use custom memory buffering instead of relying
@@ -2789,14 +5429,18 @@ public:
          int=16384 // capacity of memory buffer
          );
 
-protected:
-  size_t Read( size_t, void* );
-  size_t Write( size_t, const void* );
-  bool Flush();
+  /*
+  Returns:
+    True if a file stream is open (nullptr != m_fp).
+  */
+  bool FileIsOpen() const;
+
+  void CloseFile();
 
 private:
   // Implementation
-  FILE* m_fp;
+  FILE* m_fp = nullptr;
+  bool m_bCloseFileInDestructor = false;
 
   // if m_memory_buffer_capacity is zero, then Write() uses
   // fwrite() directly.  If m_memory_buffer_capacity is
@@ -2804,16 +5448,16 @@ private:
   // into m_memory_buffer.  This is provided to work around
   // bugs in some networks that result in extremely slow
   // performance when seeking is used.
-  size_t m_memory_buffer_capacity;
-  size_t m_memory_buffer_size;
-  size_t m_memory_buffer_ptr;
-  unsigned char* m_memory_buffer;
+  size_t m_memory_buffer_capacity = 0;
+  size_t m_memory_buffer_size = 0;
+  size_t m_memory_buffer_ptr = 0;
+  unsigned char* m_memory_buffer = nullptr;
 
 private:
   // prohibit default construction, copy construction, and operator=
-  ON_BinaryFile( ); // no implementation
-  ON_BinaryFile( const ON_BinaryFile& ); // no implementation
-  ON_BinaryFile& operator=( const ON_BinaryFile& ); // no implementation
+  ON_BinaryFile() = delete;
+  ON_BinaryFile(const ON_BinaryFile&) = delete;
+  ON_BinaryFile& operator=(const ON_BinaryFile&) = delete;
 };
 
 class ON_CLASS ON_BinaryArchiveBuffer : public ON_BinaryArchive
@@ -2852,18 +5496,21 @@ public:
   */
   ON_Buffer* Buffer() const;
 
-  // virtual ON_BinaryArchive overrides
-  size_t CurrentPosition() const; 
-  bool SeekFromCurrentPosition(int);
-  bool SeekFromStart(size_t);
-  bool AtEnd() const;
+protected:
+  // ON_BinaryArchive overrides
+  ON__UINT64 Internal_CurrentPositionOverride() const override;
+  bool Internal_SeekFromCurrentPositionOverride(int byte_offset) override;
+  bool Internal_SeekToStartOverride() override;
 
-  bool SeekFromEnd( ON__INT64 ); 
+public:
+  // ON_BinaryArchive overrides
+  bool AtEnd() const override;
 
 protected:
-  size_t Read( size_t, void* );
-  size_t Write( size_t, const void* );
-  bool Flush();
+  // ON_BinaryArchive overrides
+  size_t Internal_ReadOverride( size_t, void* ) override; // return actual number of bytes read (like fread())
+  size_t Internal_WriteOverride( size_t, const void* ) override;
+  bool Flush() override;
 
 private:
   // Buffer being read/written.
@@ -2896,15 +5543,15 @@ public:
       false - Do not copy the input buffer.  
           In this case you are responsible for making certain the input buffer 
           is valid while this class is in use.
-    archive_3dm_version  - [in] (1,2,3,4 or 5)
-    archive_opennurbs_version - [in] YYYYMMDDn
+    archive_3dm_version  - [in] (1,2,3,4,5,50,60,70,...)
+    archive_opennurbs_version - [in] 
   */
   ON_Read3dmBufferArchive( 
     size_t sizeof_buffer, 
     const void* buffer,
     bool bCopyBuffer,
     int archive_3dm_version,
-    int archive_opennurbs_version
+    unsigned int archive_opennurbs_version
     );
 
   ~ON_Read3dmBufferArchive();
@@ -2921,17 +5568,21 @@ public:
   */
   const void* Buffer() const;
 
+protected:
   // ON_BinaryArchive overrides
-  size_t CurrentPosition() const; 
-  bool SeekFromCurrentPosition(int); 
-  bool SeekFromStart(size_t);
-  bool AtEnd() const;
+  ON__UINT64 Internal_CurrentPositionOverride() const override;
+  bool Internal_SeekFromCurrentPositionOverride(int byte_offset) override;
+  bool Internal_SeekToStartOverride() override;
+
+public:
+  // ON_BinaryArchive overrides
+  bool AtEnd() const override;
 
 protected:
   // ON_BinaryArchive overrides
-  size_t Read( size_t, void* ); // return actual number of bytes read (like fread())
-  size_t Write( size_t, const void* );
-  bool Flush();
+  size_t Internal_ReadOverride( size_t, void* ) override; // return actual number of bytes read (like fread())
+  size_t Internal_WriteOverride( size_t, const void* ) override;
+  bool Flush() override;
 
 private:
   void* m_p;
@@ -2966,16 +5617,16 @@ public:
       If max_sizeof_buffer > 0 and the amount of information saved 
       requires a buffer larger than this size, then writing fails. 
       If max_sizeof_buffer <= 0, then no buffer size limits are enforced.
-    archive_3dm_version  - [in] (0, ,2,3,4 or 50)
+    archive_3dm_version  - [in] (0, ,2,3,4,5,50,60,70,...)
       Pass 0 or ON_BinaryArchive::CurrentArchiveVersion() to write the
       version of opennurbs archives used by lastest version of Rhino.
-    archive_opennurbs_version - [in] YYYYMMDDn
+    archive_opennurbs_version - [in]
   */
   ON_Write3dmBufferArchive( 
     size_t initial_sizeof_buffer, 
     size_t max_sizeof_buffer, 
     int archive_3dm_version,
-    int archive_opennurbs_version
+    unsigned int archive_opennurbs_version
     );
 
   ~ON_Write3dmBufferArchive();
@@ -3012,17 +5663,21 @@ public:
   */
   void* HarvestBuffer();
 
+protected:
   // ON_BinaryArchive overrides
-  size_t CurrentPosition() const; 
-  bool SeekFromCurrentPosition(int); 
-  bool SeekFromStart(size_t);
-  bool AtEnd() const;
+  ON__UINT64 Internal_CurrentPositionOverride() const override;
+  bool Internal_SeekFromCurrentPositionOverride(int byte_offset) override;
+  bool Internal_SeekToStartOverride() override;
+
+public:
+  // ON_BinaryArchive overrides
+  bool AtEnd() const override;
 
 protected:
   // ON_BinaryArchive overrides
-  size_t Read( size_t, void* ); 
-  size_t Write( size_t, const void* ); // return actual number of bytes written (like fwrite())
-  bool Flush();
+  size_t Internal_ReadOverride( size_t, void* ) override; // return actual number of bytes read (like fread())
+  size_t Internal_WriteOverride( size_t, const void* ) override;
+  bool Flush() override;
 
 private:
   void AllocBuffer(size_t);
@@ -3046,10 +5701,10 @@ private:
 
 /*
 Description:
-  Create a simple archive that contains a single geometric object.
+  Create a simple archive that contains a single or multiple  geometric object(s).
 Parameters:
   archive - [in] destination archive.
-  version - [in] (0, 2, 3, 4, or 50) format version.archive version number.
+  version - [in] (0, 2, 3, 4,50,60,70,...) format version.archive version number.
       Version 2 format can be read by Rhino 2 and Rhino 3.  Version
       3 format can be read by Rhino 3.
       Pass 0 or ON_BinaryArchive::CurrentArchiveVersion() to write
@@ -3057,6 +5712,10 @@ Parameters:
   object - [in] object to be saved in the archive's object table.
       This is typically some type of ON_Curve, ON_Surface, ON_Mesh,
       or ON_Brep.
+	object_list - [in] objects to be saved in the archive's object table.
+      These are typically some type of ON_Curve, ON_Surface, ON_Mesh,
+      or ON_Brep.
+	object_list_count - [in] explicit count of number of objects in object_list.
 Returns:
   @untitled table
   true     archive successfully written.
@@ -3065,20 +5724,91 @@ Example:
 
           const char* filename = "myfile.3dm";
           FILE* fp = ON::OpenFile( filename, "wb" );
-          ON_BinaryFile file( fp, ON::on_write3dm );
-          ON_BOOL32 ok = ON_WriteArchive( archive, geometry );
+          ON_BinaryFile file( fp, ON::archive_mode::write3dm );
+          bool ok = ON_WriteArchive( archive, geometry );
           ON::CloseFile( fp );
 
 Remarks:
-  The object table in the archive will contain a single
+  For ON_WriteOneObjectArchive the  object table in the archive will contain a single
   object.
 */
 ON_DECL
 bool ON_WriteOneObjectArchive( 
-          ON_BinaryArchive& archive,
-          int version,
-          const ON_Object& object
-          );
+  ON_BinaryArchive& archive,
+  int version,
+  const ON_Object& object
+  );
+
+ON_DECL
+bool ON_WriteOneObjectArchive( 
+  const wchar_t* filename,
+  const ON_Object& object
+  );
+
+ON_DECL
+bool ON_WriteMultipleObjectArchive( 
+  ON_BinaryArchive& archive,
+  int version,
+  const ON_SimpleArray<const ON_Object* >& object_list
+  );
+
+ON_DECL
+bool ON_WriteMultipleObjectArchive( 
+  ON_BinaryArchive& archive,
+  int version,
+  size_t object_list_count,
+  const ON_Object* const* object_list
+  );
+
+bool ON_WriteMultipleObjectArchive( 
+  const wchar_t* filename,
+  int version,
+  size_t object_list_count,
+  const ON_Object* const* object_list
+  );
+
+
+/*
+Opens a debug archive file 
+	Uses directory set by ON_SetDebugWriteObjectDirectory(const wchar_t* ).
+	creates a file named "debug_file_nnnn.3dm"
+Example:
+	ON_DebugWriteArchive debug;
+	if(debug.m_Archive)
+		 ON_WriteArchive( *debug.m_Archive, geometry );
+
+*/
+class ON_CLASS ON_DebugWriteArchive
+{
+public:
+  /*
+    Creates a file in N_DebugWriteObjectDirectory() and allocates archive to write to
+    that file.
+  */
+  ON_DebugWriteArchive();
+	~ON_DebugWriteArchive();
+
+  // check for nullptr before using
+  // Destructor closes archive and deletes it.
+
+  ON_BinaryArchive* Archive() const;
+
+  // Name of the archive file.
+  // = .../debug_file_NNNNN.3dm where N = Number().
+  const ON_wString& FilePath() const;
+
+  // the number of the archive or 0 
+  unsigned int Number() const;
+
+private:
+  ON_BinaryArchive* m_archive = nullptr; 
+	FILE* m_fp = nullptr;
+  unsigned int m_N = 0;
+  ON_wString m_file_path;
+
+private:
+  ON_DebugWriteArchive(const ON_DebugWriteArchive&) = delete;
+  ON_DebugWriteArchive& operator=(const ON_DebugWriteArchive&) = delete;
+};
 
 #endif
-
