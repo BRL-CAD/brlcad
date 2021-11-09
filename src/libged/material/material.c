@@ -119,6 +119,16 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
     return 0;
 }
 
+void print_avs_value(struct ged *gedp, const struct bu_attribute_value_set * avp, const char * name, const char * avsName){
+    const char * val = bu_avs_get(avp, name);
+
+    if (val != NULL){
+        bu_vls_printf(gedp->ged_result_str, "%s", val);
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "Error: unable to find the %s property %s.", avsName, name);
+    }
+}
+
 // Routine handles the creation of a material
 int create_material(struct ged *gedp, int argc, const char *argv[]){
     const char* db_name;
@@ -310,7 +320,7 @@ int create_material(struct ged *gedp, int argc, const char *argv[]){
 
 // Routine handles the deletion of a material
 int destroy_material(struct ged *gedp, int argc, const char *argv[]){
-struct directory *dp;
+    struct directory *dp;
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -345,6 +355,56 @@ struct directory *dp;
     return GED_OK;
 }
 
+// routine handles getting individual properties of the material
+int get_material(struct ged *gedp, int argc, const char *argv[]){
+    struct directory *dp;
+    struct rt_db_internal intern;
+
+    if (argc < 4){
+        bu_vls_printf(gedp->ged_result_str, "you must provide at least four arguments.");
+        return GED_ERROR;
+    }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
+        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+
+        struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
+
+        if (BU_STR_EQUAL(argv[3], "name")){
+            bu_vls_printf(gedp->ged_result_str, "%s", material->name.vls_str);
+        } else if (BU_STR_EQUAL(argv[3], "parent")) {
+            bu_vls_printf(gedp->ged_result_str, "%s", material->parent.vls_str);
+        } else if (BU_STR_EQUAL(argv[3], "source")) {
+            bu_vls_printf(gedp->ged_result_str, "%s", material->source.vls_str);
+        } else {
+            if (argc == 4){
+                bu_vls_printf(gedp->ged_result_str, "the property you requested: %s, could not be found.", argv[3]);
+                return GED_ERROR;
+            } else if (BU_STR_EQUAL(argv[3], "physical")) {
+                print_avs_value(gedp, &material->physicalProperties, argv[4], argv[3]);
+            }  else if (BU_STR_EQUAL(argv[3], "mechanical")) {
+                print_avs_value(gedp, &material->mechanicalProperties, argv[4], argv[3]);
+            } else if (BU_STR_EQUAL(argv[3], "optical")) {
+                print_avs_value(gedp, &material->opticalProperties, argv[4], argv[3]);
+            } else if (BU_STR_EQUAL(argv[3], "thermal")) {
+                print_avs_value(gedp, &material->thermalProperties, argv[4], argv[3]);
+            } else {
+                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
+            }
+        }
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[2]);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
 int
 ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     material_cmd_t scmd;
@@ -374,11 +434,14 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
         import_materials(gedp, argc, argv);
     } else if (scmd == MATERIAL_GET) {
         // get routine
-        bu_vls_printf(gedp->ged_result_str, "Trying: get");
+        get_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_SET) {
         // set routine
         bu_vls_printf(gedp->ged_result_str, "Trying: set");
-    } 
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "Error: %s is not a valid subcommand.\n", argv[1]);
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    }
 
     return 0;
 }
