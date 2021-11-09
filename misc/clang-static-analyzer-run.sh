@@ -94,7 +94,7 @@ cleantest libbv
 failingtest libbg
 failingtest libnmg
 failingtest libbrep
-failingtest librt
+cleantest librt
 cleantest libwdb
 cleantest libgcv
 failingtest gcv_plugins
