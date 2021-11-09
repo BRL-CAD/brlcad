@@ -39,11 +39,12 @@ typedef enum {
     MATERIAL_CREATE,
     MATERIAL_DESTROY,
     MATERIAL_GET,
+    MATERIAL_IMPORT,
     MATERIAL_SET,
     ATTR_UNKNOWN
 } material_cmd_t;
 
-static const char *usage = " [create] [destroy] [get] [set] [options] object [args] \n";
+static const char *usage = " [create] [destroy] [get] [import] [set] [options] object [args] \n";
 
 HIDDEN material_cmd_t
 get_material_cmd(const char* arg)
@@ -52,6 +53,7 @@ get_material_cmd(const char* arg)
     const char CREATE[] = "create";
     const char DESTROY[]   = "destroy";
     const char GET[]    = "get";
+    const char IMPORT[] = "import";
     const char SET[]    = "set";
 
     /* alphabetical order */
@@ -63,8 +65,58 @@ get_material_cmd(const char* arg)
 	return MATERIAL_SET;
     else if (BU_STR_EQUIV(GET, arg))
 	return MATERIAL_GET;
+    else if (BU_STR_EQUIV(IMPORT, arg))
+    return MATERIAL_IMPORT;
     else
     return ATTR_UNKNOWN;
+}
+//Routine handles the import of a density table
+int import_materials(struct ged *gedp, int argc, const char *argv[]){
+    const char* fileName;
+
+    fileName = argv[2];
+
+    if (argc > 3){
+        bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
+    }
+
+    FILE *densityTable = fopen(fileName, "r");
+	if(densityTable != NULL){
+		char buffer[256];
+		while(fgets(buffer, 256, densityTable)){
+            struct bu_attribute_value_set physicalProperties;
+            struct bu_attribute_value_set mechanicalProperties;
+            struct bu_attribute_value_set opticalProperties;
+            struct bu_attribute_value_set thermalProperties;
+            bu_avs_init_empty(&physicalProperties);
+            bu_avs_init_empty(&mechanicalProperties);
+            bu_avs_init_empty(&opticalProperties);
+            bu_avs_init_empty(&thermalProperties);
+            if(buffer[strlen(buffer)-1] == '\n'){
+				buffer[strlen(buffer)-1] = '\0';
+                buffer[strlen(buffer)-1] = '\0';
+			}
+            char* num __attribute__((unused))= strtok(buffer, "\t");
+			char* material_name = strtok(NULL, "\t");
+			char* density = strtok(NULL, "\t");
+			(void)bu_avs_add(&physicalProperties, material_name, density);
+            mk_material(gedp->ged_wdbp,
+                material_name,
+                material_name,
+                "",
+                "",
+                &physicalProperties,
+                &mechanicalProperties,
+                &opticalProperties,
+                &thermalProperties);
+            memset(buffer, 0x00, 256);
+		}
+	}
+    else{
+        bu_vls_printf(gedp->ged_result_str, "ERROR: File does not exist.\n");
+        return GED_ERROR;
+    }
+    return 0;
 }
 
 // Routine handles the creation of a material
@@ -317,6 +369,9 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     } else if (scmd == MATERIAL_DESTROY) {
         // destroy routine
         destroy_material(gedp, argc, argv);
+    } else if(scmd == MATERIAL_IMPORT){
+        //import routine
+        import_materials(gedp, argc, argv);
     } else if (scmd == MATERIAL_GET) {
         // get routine
         bu_vls_printf(gedp->ged_result_str, "Trying: get");
