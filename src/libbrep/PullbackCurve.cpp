@@ -4431,6 +4431,10 @@ remove_consecutive_intersegment_duplicates(std::list<PBCData*> &pbcs)
 	    } else {
 		for (int i = 0; i < samples->Count() - 1; i++) {
 		    while ((i < (samples->Count() - 1)) && (*samples)[i].DistanceTo((*samples)[i + 1]) < 1e-9) {
+			if (2*samples->Capacity() < 0) {
+			    bu_log("Unable to manipulate samples array, line %d\n", __LINE__);
+			    return;
+			}
 			samples->Remove(i + 1);
 		    }
 		}
