@@ -2,6 +2,7 @@ set(ART_INCLUDE_DIRS
   ${OPTICAL_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
@@ -10,6 +11,7 @@ BRLCAD_INCLUDE_DIRS(ART_INCLUDE_DIRS)
 
 set(RT_STD_LIBS
   Threads::Threads
+  libged
   librt
   libnmg
   libdm

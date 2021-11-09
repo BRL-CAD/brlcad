@@ -142,6 +142,10 @@
 #include "bu/getopt.h"
 #include "bu/vls.h"
 #include "art.h"
+#include "rt/tree.h"
+#include "ged.h"
+#include "ged/commands.h"
+#include "ged/defines.h"
 
 struct application APP;
 struct resource* resources;
@@ -180,6 +184,234 @@ extern "C" {
     extern fastf_t aspect;
 
     void grid_setup();
+}
+
+// Define shorter namespaces for convenience.
+namespace asf = foundation;
+namespace asr = renderer;
+
+int register_region(struct db_tree_state* tsp __attribute__((unused)),
+                const struct db_full_path* pathp __attribute__((unused)),
+                const struct rt_comb_internal* combp __attribute__((unused)),
+                void* data)
+{
+
+  struct directory* dp = DB_FULL_PATH_CUR_DIR(pathp);
+  struct ged* ged;
+  ged = ged_open("db", APP.a_rt_i->rti_dbip->dbi_filename, 1);
+
+  // struct application local_app = APP; // struct copy
+  // struct rt_i* rtip = rt_new_rti(APP.a_rt_i->rti_dbip);
+
+  char* name;
+  name = dp->d_namep;
+
+  // char title[1024];
+  // rtip = rt_dirbuild(APP.a_rt_i->rti_dbip->dbi_filename, title, sizeof(title));
+  // rt_gettree(rtip, name);
+
+  // local_app.a_rt_i = rtip;
+  // rt_prep(rtip);
+
+  point_t min;
+  point_t max;
+  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
+  // int ac = 2;
+  // const char* av[3];
+  // av[0] = (const char*)"bb";
+  // av[1] = name;
+  // av[2] = NULL;
+  // ged_exec(&ged, ac, av);
+  bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
+
+  // struct bu_vls v = BU_VLS_INIT_ZERO;
+  // bu_vls_sprintf()
+  // std::string min = bu_vls_cstr(V3ARGS(min));
+
+  VMOVE(APP.a_uvec, min);
+  VMOVE(APP.a_vvec, max);
+
+
+  renderer::ParamArray geometry_parameters = asr::ParamArray()
+               .insert("database_path", name)
+               .insert("object_count", objc)
+               .insert("minX", min[0])
+               .insert("minY", min[1])
+               .insert("minZ", min[2])
+               .insert("maxX", max[0])
+               .insert("maxY", max[1])
+               .insert("maxZ", max[2]);
+
+  asf::auto_release_ptr<renderer::Object> brlcad_object(
+  new BrlcadObject{name,
+  // new BrlcadObject{"brlcad_object",
+     geometry_parameters,
+     &APP, resources});
+
+  asr::Scene* scene = static_cast<asr::Scene*>(data);
+  // asf::auto_release_ptr<asr::Assembly> assembly = static_cast<asf::auto_release_ptr<asr::Assembly>>(data);
+
+  std::string assembly_name = std::string(name) + "_object_assembly";
+  asf::auto_release_ptr<asr::Assembly> assembly(
+asr::AssemblyFactory().create(
+    assembly_name.c_str(),
+    asr::ParamArray()));
+
+    // create a shader group called "Material_tree"
+    std::string shader_name = std::string(name) + "_shader";
+    asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
+        asr::ShaderGroupFactory().create(
+            shader_name.c_str(),
+            asr::ParamArray()));
+
+    // THIS IS OUR INPUT SHADER - add to shader group
+    /* This uses an already created appleseed .oso shader
+    in the form of
+    type
+    shader name
+    layer
+    paramArray
+    */
+    struct bu_vls v=BU_VLS_INIT_ZERO;
+    bu_vls_printf(&v, "color %f %f %f", combp->rgb[0]/255.0, combp->rgb[1]/255.0, combp->rgb[2]/255.0);
+    const char* color = bu_vls_cstr(&v);
+    shader_grp->add_shader(
+        "shader",
+        "as_disney_material",
+        "shader_in",
+        asr::ParamArray()
+          .insert("in_color", color)
+    );
+    bu_vls_free(&v);
+
+    /* import generic .osl shader
+    in the form of
+    type
+    name
+    layer
+    source
+    paramArray
+    */
+    // shader_grp->add_source_shader(
+    //   "shader",
+    //   "toon",
+    //   "shader_in",
+    //   "as_toon",
+    //   asr::ParamArray()
+    // );
+
+    // add material2surface so we can see the shader in action
+    shader_grp->add_shader(
+      "surface",
+      "as_closure2surface",
+      "close",
+      asr::ParamArray()
+    );
+
+    // connect the two shader nodes
+    shader_grp->add_connection(
+      "shader_in",
+      "out_outColor",
+      "close",
+      "in_input"
+    );
+
+    // add the shader group to the assembly
+    assembly->shader_groups().insert(
+      shader_grp
+    );
+
+    // Create a physical surface shader and insert it into the assembly.
+    assembly->surface_shaders().insert(
+  asr::PhysicalSurfaceShaderFactory().create(
+      "Material_mat_surface_shader",
+      asr::ParamArray()
+        .insert("lighting_samples", "1")));
+
+      // Create a material called "gray_material" and insert it into the assembly.
+    //   assembly->materials().insert(
+    // asr::GenericMaterialFactory().create(
+    //     "gray_material",
+    //     asr::ParamArray()
+    //     .insert("surface_shader", "physical_surface_shader")
+    //     .insert("bsdf", "diffuse_gray_brdf")));
+
+      // create a material called "Material_mat" with our shader_group
+      std::string material_mat = shader_name + "_mat";
+      assembly->materials().insert(
+          asr::OSLMaterialFactory().create(
+              material_mat.c_str(),
+              asr::ParamArray()
+                  .insert("osl_surface", shader_name.c_str())
+                  .insert("surface_shader", "Material_mat_surface_shader")
+              ));
+
+
+  assembly->objects().insert(brlcad_object);
+
+  const std::string instance_name = std::string(assembly_name) + "_brlcad_inst";
+  assembly->object_instances().insert(
+    asr::ObjectInstanceFactory::create(
+    instance_name.c_str(),
+    asr::ParamArray(),
+    name,
+    // "brlcad_object",
+    asf::Transformd::identity(),
+    asf::StringDictionary()
+    .insert("default", material_mat.c_str())
+    .insert("default2", material_mat.c_str())
+  ));
+
+  // Create a color called "light_intensity" and insert it into the assembly.
+//   static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
+//   assembly->colors().insert(
+// asr::ColorEntityFactory::create(
+//     "light_intensity",
+//     asr::ParamArray()
+//     .insert("color_space", "srgb")
+//     .insert("multiplier", "30.0"),
+//     asr::ColorValueArray(3, LightRadiance)));
+//
+//   // Create a point light called "light" and insert it into the assembly.
+//   asf::auto_release_ptr<asr::Light> light(
+// asr::PointLightFactory().create(
+//     "light",
+//     asr::ParamArray()
+//     .insert("intensity", "light_intensity")));
+//   light->set_transform(
+// asf::Transformd::from_local_to_parent(
+//     asf::Matrix4d::make_translation(asf::Vector3d(0.6, 2.0, 1.0))));
+//   assembly->lights().insert(light);
+
+    scene->assemblies().insert(assembly);
+
+    std::string assembly_inst_name = assembly_name + "_inst";
+    asf::auto_release_ptr<asr::AssemblyInstance> assembly_instance(
+	asr::AssemblyInstanceFactory::create(
+	    assembly_inst_name.c_str(),
+	    asr::ParamArray(),
+	    assembly_name.c_str()
+    ));
+    assembly_instance
+    ->transform_sequence()
+    .set_transform(
+	0.0f,
+	asf::Transformd::identity());
+    scene->assembly_instances().insert(assembly_instance);
+
+
+
+
+
+  // char* name;
+  // name = db_path_to_string(pathp);
+  // bu_log("region_start %s\n", name);
+
+
+
+
+
+      return 0;
 }
 
 void
@@ -256,11 +488,7 @@ do_ae(double azim, double elev)
     MAT4X3PNT(eye_model, view2model, temp);
 }
 
-// Define shorter namespaces for convenience.
-namespace asf = foundation;
-namespace asr = renderer;
-
-asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* UNUSED(objects))
+asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), const char* UNUSED(objects))
 {
     /* If user gave no sizing info at all, use 512 as default */
     struct bu_vls dimensions = BU_VLS_INIT_ZERO;
@@ -293,6 +521,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 
     // Create a scene.
     asf::auto_release_ptr<asr::Scene> scene(asr::SceneFactory::create());
+    // asr::Scene scene(asr::SceneFactory::create());
 
     // Create an assembly.
     asf::auto_release_ptr<asr::Assembly> assembly(
@@ -321,122 +550,134 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 	//     .insert("reflectance", "gray")));
 
   // create a shader group called "Material_tree"
-  asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
-      asr::ShaderGroupFactory().create(
-          "Material_tree",
-          asr::ParamArray()));
-
-  // THIS IS OUR INPUT SHADER - add to shader group
-  /* This uses an already created appleseed .oso shader
-  in the form of
-  type
-  shader name
-  layer
-  paramArray
-  */
-  shader_grp->add_shader(
-      "shader",
-      "as_metal",
-      "shader_in",
-      asr::ParamArray()
-  );
-
-  /* import generic .osl shader
-  in the form of
-  type
-  name
-  layer
-  source
-  paramArray
-  */
-  // shader_grp->add_source_shader(
-  //   "shader",
-  //   "toon",
-  //   "shader_in",
-  //   "as_toon",
+  // asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
+  //     asr::ShaderGroupFactory().create(
+  //         "Material_tree",
+  //         asr::ParamArray()));
+  //
+  // // THIS IS OUR INPUT SHADER - add to shader group
+  // /* This uses an already created appleseed .oso shader
+  // in the form of
+  // type
+  // shader name
+  // layer
+  // paramArray
+  // */
+  // shader_grp->add_shader(
+  //     "shader",
+  //     "as_metal",
+  //     "shader_in",
+  //     asr::ParamArray()
+  // );
+  //
+  // /* import generic .osl shader
+  // in the form of
+  // type
+  // name
+  // layer
+  // source
+  // paramArray
+  // */
+  // // shader_grp->add_source_shader(
+  // //   "shader",
+  // //   "toon",
+  // //   "shader_in",
+  // //   "as_toon",
+  // //   asr::ParamArray()
+  // // );
+  //
+  // // add material2surface so we can see the shader in action
+  // shader_grp->add_shader(
+  //   "surface",
+  //   "as_closure2surface",
+  //   "close",
   //   asr::ParamArray()
   // );
-
-  // add material2surface so we can see the shader in action
-  shader_grp->add_shader(
-    "surface",
-    "as_closure2surface",
-    "close",
-    asr::ParamArray()
-  );
-
-  // connect the two shader nodes
-  shader_grp->add_connection(
-    "shader_in",
-    "out_outColor",
-    "close",
-    "in_input"
-  );
-
-  // add the shader group to the assembly
-  assembly->shader_groups().insert(
-    shader_grp
-  );
-
-    // Create a physical surface shader and insert it into the assembly.
-    assembly->surface_shaders().insert(
-	asr::PhysicalSurfaceShaderFactory().create(
-	    "Material_mat_surface_shader",
-	    asr::ParamArray()
-        .insert("lighting_samples", "1")));
-
-    // Create a material called "gray_material" and insert it into the assembly.
-  //   assembly->materials().insert(
-	// asr::GenericMaterialFactory().create(
-	//     "gray_material",
+  //
+  // // connect the two shader nodes
+  // shader_grp->add_connection(
+  //   "shader_in",
+  //   "out_outColor",
+  //   "close",
+  //   "in_input"
+  // );
+  //
+  // // add the shader group to the assembly
+  // assembly->shader_groups().insert(
+  //   shader_grp
+  // );
+  //
+  //   // Create a physical surface shader and insert it into the assembly.
+  //   assembly->surface_shaders().insert(
+	// asr::PhysicalSurfaceShaderFactory().create(
+	//     "Material_mat_surface_shader",
 	//     asr::ParamArray()
-	//     .insert("surface_shader", "physical_surface_shader")
-	//     .insert("bsdf", "diffuse_gray_brdf")));
-
-    // create a material called "Material_mat" with our shader_group
-    assembly->materials().insert(
-        asr::OSLMaterialFactory().create(
-            "Material_mat",
-            asr::ParamArray()
-                .insert("osl_surface", "Material_tree")
-                .insert("surface_shader", "Material_mat_surface_shader")
-            ));
+  //       .insert("lighting_samples", "1")));
+  //
+  //   // Create a material called "gray_material" and insert it into the assembly.
+  // //   assembly->materials().insert(
+	// // asr::GenericMaterialFactory().create(
+	// //     "gray_material",
+	// //     asr::ParamArray()
+	// //     .insert("surface_shader", "physical_surface_shader")
+	// //     .insert("bsdf", "diffuse_gray_brdf")));
+  //
+  //   // create a material called "Material_mat" with our shader_group
+  //   assembly->materials().insert(
+  //       asr::OSLMaterialFactory().create(
+  //           "Material_mat",
+  //           asr::ParamArray()
+  //               .insert("osl_surface", "Material_tree")
+  //               .insert("surface_shader", "Material_mat_surface_shader")
+  //           ));
 
     //------------------------------------------------------------------------
     // Geometry
     //------------------------------------------------------------------------
 
     // Load the brlcad geometry
-    renderer::ParamArray geometry_parameters = asr::ParamArray()
-					       .insert("database_path", file)
-					       .insert("object_count", objc);
-    for (int i = 0; i < objc; i++)
-    {
-	std::string obj_num = std::string("object.") + std::to_string(i + 1);
-	std::string obj_name = std::string(objv[i]);
-	geometry_parameters.insert_path(obj_num, obj_name);
-}
-    asf::auto_release_ptr<renderer::Object> brlcad_object(
-	// new BrlcadObject{obj_name.c_str(),
-  new BrlcadObject{"brlcad_object",
-			 geometry_parameters,
-			 &APP, resources});
-    assembly->objects().insert(brlcad_object);
+//     renderer::ParamArray geometry_parameters = asr::ParamArray()
+// 					       .insert("database_path", file)
+// 					       .insert("object_count", objc);
+//     for (int i = 0; i < objc; i++)
+//     {
+// 	std::string obj_num = std::string("object.") + std::to_string(i + 1);
+// 	std::string obj_name = std::string(objv[i]);
+// 	geometry_parameters.insert_path(obj_num, obj_name);
+// }
+
+    struct db_tree_state state = rt_initial_tree_state;
+    state.ts_dbip = APP.a_rt_i->rti_dbip;
+    state.ts_resp = resources;
+    // rt_init_resource(&rt_uniresource, 0, NULL);
+
+    db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void *>(scene.get()));
+
+
+
+
+
+  //   asf::auto_release_ptr<renderer::Object> brlcad_object(
+	// // new BrlcadObject{obj_name.c_str(),
+  // new BrlcadObject{"brlcad_object",
+	// 		 geometry_parameters,
+	// 		 &APP, resources});
+  //
+  //   assembly->objects().insert(brlcad_object);
 
 
     // const std::string instance_name = obj_name + "_brlcad_inst";
-    const std::string instance_name = "_brlcad_inst";
-    assembly->object_instances().insert(
-	asr::ObjectInstanceFactory::create(
-	    instance_name.c_str(),
-	    asr::ParamArray(),
-	    // obj_name.c_str(),
-      "brlcad_object",
-	    asf::Transformd::identity(),
-	    asf::StringDictionary()
-	    .insert("default", "Material_mat")
-	    .insert("default2", "Material_mat")));
-
+  //   const std::string instance_name = "_brlcad_inst";
+  //   assembly->object_instances().insert(
+	// asr::ObjectInstanceFactory::create(
+	//     instance_name.c_str(),
+	//     asr::ParamArray(),
+	//     // obj_name.c_str(),
+  //     "brlcad_object",
+	//     asf::Transformd::identity(),
+	//     asf::StringDictionary()
+	//     .insert("default", "Material_mat")
+	//     .insert("default2", "Material_mat")));
 
     //------------------------------------------------------------------------
     // Light
@@ -664,7 +905,7 @@ main(int argc, char **argv)
 
     /* configure raytrace application */
     APP.a_rt_i = rtip;
-    APP.a_onehit = -1;
+    APP.a_onehit = 1;
     APP.a_hit = brlcad_hit;
     APP.a_miss = brlcad_miss;
 
@@ -673,6 +914,7 @@ main(int argc, char **argv)
 
     // Build the project.
     asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
+
 
     // Create the master renderer.
     asr::DefaultRendererController renderer_controller;
@@ -697,6 +939,9 @@ main(int argc, char **argv)
 
     // Make sure to delete the master renderer before the project and the logger / log target.
     renderer.reset();
+
+    // clean up resources
+    bu_free(resources, "appleseed");
 
     return 0;
 }
