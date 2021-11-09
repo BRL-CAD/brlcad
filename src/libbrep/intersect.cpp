@@ -2431,6 +2431,11 @@ add_points_to_closed_seams(
     ON_2dPointArray &curve_uvB)
 {
 
+    if (!curve_uvA.Capacity() || !curve_uvB.Capacity()) {
+	bu_log("add_points_to_closed_seams called with unpopulated curve_uvA and/or curve_uvB arrays, line %d\n", __LINE__);
+	return;
+    }
+
     for (int i = 0; i < 4; ++i) {
 	int dir = i % 2;
 	bool doA = i < 2;
