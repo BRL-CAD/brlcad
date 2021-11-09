@@ -80,6 +80,10 @@ int DegreeReduction(int n, ON_3dPointArray &bezcurv, fastf_t tol, fastf_t &maxer
 	    lambda = 1.0;
 	newpt = (1 - lambda) * left[i] + lambda * right[i];
 	tmpcurve.Append(newpt);
+	if (!tmpcurve.Capacity()) {
+	    bu_log("DegreeReduction(): error appending newpt on line %d\n", __LINE__);
+	    return -2;
+	}
     }
     // Calculate the deviation
     int r = (n - 1) / 2;
