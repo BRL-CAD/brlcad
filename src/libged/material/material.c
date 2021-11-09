@@ -67,6 +67,16 @@ get_material_cmd(const char* arg)
     return ATTR_UNKNOWN;
 }
 
+void print_avs_value(struct ged *gedp, const struct bu_attribute_value_set * avp, const char * name, const char * avsName){
+    const char * val = bu_avs_get(avp, name);
+
+    if (val != NULL){
+        bu_vls_printf(gedp->ged_result_str, "%s", val);
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "Error: unable to find the %s property %s.", avsName, name);
+    }
+}
+
 // Routine handles the creation of a material
 int create_material(struct ged *gedp, int argc, const char *argv[]){
     const char* db_name;
@@ -293,6 +303,7 @@ int destroy_material(struct ged *gedp, int argc, const char *argv[]){
     return GED_OK;
 }
 
+// routine handles getting individual properties of the material
 int get_material(struct ged *gedp, int argc, const char *argv[]){
     struct directory *dp;
     struct rt_db_internal intern;
@@ -322,10 +333,18 @@ int get_material(struct ged *gedp, int argc, const char *argv[]){
             if (argc == 4){
                 bu_vls_printf(gedp->ged_result_str, "the property you requested: %s, could not be found.", argv[3]);
                 return GED_ERROR;
+            } else if (BU_STR_EQUAL(argv[3], "physical")) {
+                print_avs_value(gedp, &material->physicalProperties, argv[4], argv[3]);
+            }  else if (BU_STR_EQUAL(argv[3], "mechanical")) {
+                print_avs_value(gedp, &material->mechanicalProperties, argv[4], argv[3]);
+            } else if (BU_STR_EQUAL(argv[3], "optical")) {
+                print_avs_value(gedp, &material->opticalProperties, argv[4], argv[3]);
+            } else if (BU_STR_EQUAL(argv[3], "thermal")) {
+                print_avs_value(gedp, &material->thermalProperties, argv[4], argv[3]);
+            } else {
+                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
             }
         }
-        
-        
     } else {
         bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[2]);
         return GED_ERROR;
