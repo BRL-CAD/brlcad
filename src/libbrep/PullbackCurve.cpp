@@ -2863,8 +2863,14 @@ Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offse
 			}
 		    }
 		}
+	    } else {
+		rc = false;
 	    }
+	} else {
+	   rc = false;
 	}
+    } else {
+	rc = false;
     }
 
     return rc;
