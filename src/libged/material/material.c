@@ -395,6 +395,7 @@ int get_material(struct ged *gedp, int argc, const char *argv[]){
                 print_avs_value(gedp, &material->thermalProperties, argv[4], argv[3]);
             } else {
                 bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
+                return GED_ERROR;
             }
         }
     } else {
@@ -405,7 +406,7 @@ int get_material(struct ged *gedp, int argc, const char *argv[]){
     return GED_OK;
 }
 
-// Routine handles the creation of a material
+// Routine handles the setting of a material property to a value
 int set_material(struct ged *gedp, int argc, const char *argv[]){
     struct directory *dp;
     struct rt_db_internal intern;
@@ -439,15 +440,33 @@ int set_material(struct ged *gedp, int argc, const char *argv[]){
                 bu_vls_printf(gedp->ged_result_str, "the property you requested: %s, could not be found.", argv[3]);
                 return GED_ERROR;
             } else if (BU_STR_EQUAL(argv[3], "physical")) {
-                print_avs_value(gedp, &material->physicalProperties, argv[4], argv[3]);
+                if (bu_avs_get(&material->physicalProperties, argv[4]) != NULL) {
+                    bu_avs_remove(&material->physicalProperties, argv[4]);
+                }
+                
+                bu_avs_add(&material->physicalProperties, argv[4], argv[5]);
+
             }  else if (BU_STR_EQUAL(argv[3], "mechanical")) {
-                print_avs_value(gedp, &material->mechanicalProperties, argv[4], argv[3]);
+                if (bu_avs_get(&material->mechanicalProperties, argv[4]) != NULL) {
+                    bu_avs_remove(&material->mechanicalProperties, argv[4]);
+                }
+                
+                bu_avs_add(&material->mechanicalProperties, argv[4], argv[5]);
             } else if (BU_STR_EQUAL(argv[3], "optical")) {
-                print_avs_value(gedp, &material->opticalProperties, argv[4], argv[3]);
+                if (bu_avs_get(&material->opticalProperties, argv[4]) != NULL) {
+                    bu_avs_remove(&material->opticalProperties, argv[4]);
+                }
+                
+                bu_avs_add(&material->opticalProperties, argv[4], argv[5]);
             } else if (BU_STR_EQUAL(argv[3], "thermal")) {
-                print_avs_value(gedp, &material->thermalProperties, argv[4], argv[3]);
+                if (bu_avs_get(&material->thermalProperties, argv[4]) != NULL) {
+                    bu_avs_remove(&material->thermalProperties, argv[4]);
+                }
+                
+                bu_avs_add(&material->thermalProperties, argv[4], argv[5]);
             } else {
                 bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
+                return GED_ERROR;
             }
         }
     } else {
