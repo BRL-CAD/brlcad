@@ -2418,7 +2418,11 @@ triangle_intersection(const struct Triangle &triA, const struct Triangle &triB, 
 
 struct PointPair {
     int indexA, indexB;
-    double distance3d, dist_uA, dist_vA, dist_uB, dist_vB;
+    double distance3d = DBL_MAX;
+    double dist_uA = DBL_MAX;
+    double dist_vA = DBL_MAX;
+    double dist_uB = DBL_MAX;
+    double dist_vB = DBL_MAX;
     double tol;
     bool operator < (const PointPair &pp) const
     {

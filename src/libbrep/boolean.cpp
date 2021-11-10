@@ -2400,13 +2400,17 @@ append_faces_from_loops(
     const TrimmedFace *orig_face,
     const LoopBooleanResult &new_loops)
 {
+    std::vector<TrimmedFace *> o;
     LoopBooleanResult combined_loops = combine_loops(orig_face, new_loops);
 
     // make a face from each outerloop, using appropriate innerloops
     for (size_t i = 0; i < combined_loops.outerloops.size(); ++i) {
-	out.Append(make_face_from_loops(orig_face,
+	o.push_back(make_face_from_loops(orig_face,
 					combined_loops.outerloops[i],
 					combined_loops.innerloops));
+    }
+    for (size_t i = 0; i < o.size(); i++) {
+	out.Append(o[i]);
     }
 }
 
