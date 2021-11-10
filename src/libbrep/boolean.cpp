@@ -3438,6 +3438,7 @@ get_face_intersection_curves(
     const ON_Brep *brep2,
     op_type operation)
 {
+    std::vector<Subsurface *> st1, st2;
     std::set<int> unused1, unused2;
     std::set<int> finalform1, finalform2;
     ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array;
@@ -3538,10 +3539,12 @@ get_face_intersection_curves(
     }
 
     for (int i = 0; i < surf_count1; i++) {
-	surf_tree1.Append(new Subsurface(brep1->m_S[i]->Duplicate()));
+	Subsurface *ss = new Subsurface(brep1->m_S[i]->Duplicate());
+	st1.push_back(ss);
     }
     for (int i = 0; i < surf_count2; i++) {
-	surf_tree2.Append(new Subsurface(brep2->m_S[i]->Duplicate()));
+	Subsurface *ss = new Subsurface(brep2->m_S[i]->Duplicate());
+	st2.push_back(ss);
     }
 
     curves_array.SetCapacity(face_count1 + face_count2);
@@ -3553,7 +3556,7 @@ get_face_intersection_curves(
     // calculate intersection curves
     for (int i = 0; i < face_count1; i++) {
 
-	if (surf_tree1.Count() < brep1->m_F[i].m_si + 1)
+	if ((int)st1.size() < brep1->m_F[i].m_si + 1)
 	    continue;
 
 	for (int j = 0; j < face_count2; j++) {
@@ -3582,8 +3585,8 @@ get_face_intersection_curves(
 				       NULL,
 				       NULL,
 				       NULL,
-				       surf_tree1[brep1->m_F[i].m_si],
-				       surf_tree2[brep2->m_F[j].m_si]);
+				       st1[brep1->m_F[i].m_si],
+				       st2[brep2->m_F[j].m_si]);
 		if (results <= 0) {
 		    continue;
 		}
@@ -3634,6 +3637,14 @@ get_face_intersection_curves(
 
 	    }
 	}
+    }
+
+    for (size_t i = 0; i < st1.size(); i++) {
+	surf_tree1.Append(st1[i]);
+    }
+
+    for (size_t i = 0; i < st2.size(); i++) {
+	surf_tree2.Append(st2[i]);
     }
 
     return curves_array;
