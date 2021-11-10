@@ -2417,13 +2417,14 @@ triangle_intersection(const struct Triangle &triA, const struct Triangle &triB, 
 
 
 struct PointPair {
-    int indexA, indexB;
+    int indexA = -1;
+    int indexB = -1;
     double distance3d = DBL_MAX;
     double dist_uA = DBL_MAX;
     double dist_vA = DBL_MAX;
     double dist_uB = DBL_MAX;
     double dist_vB = DBL_MAX;
-    double tol;
+    double tol = DBL_MAX;
     bool operator < (const PointPair &pp) const
     {
 	if (ON_NearZero(distance3d - pp.distance3d, tol)) {
