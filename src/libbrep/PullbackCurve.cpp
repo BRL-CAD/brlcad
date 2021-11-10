@@ -716,6 +716,9 @@ bool surface_GetClosestPoint3dFirstOrder(
 
     current_distance = DBL_MAX;
 
+    if (!surf)
+	return rc;
+
     int prec = std::cerr.precision();
     std::cerr.precision(15);
 
