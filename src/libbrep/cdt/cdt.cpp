@@ -634,7 +634,7 @@ ON_Brep_CDT_Mesh(
 		    }
 		}
 	    }
-	    triangle_cnt++;;
+	    triangle_cnt++;
 	    ++tree_it;
 	}
     }
@@ -698,7 +698,6 @@ ON_Brep_CDT_Mesh(
     // Iterate over faces, adding points and faces to BoT container.  Note: all
     // 3D points should be geometrically unique in this final container.
     int face_cnt = 0;
-    triangle_cnt = 0;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
 	cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
 	RTree<size_t, double, 3>::Iterator tree_it;

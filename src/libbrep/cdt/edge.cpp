@@ -485,7 +485,7 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, ON_
 		//bu_log("Non-reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
 	    }
 	    if (dist > 10*tol) {
-		cpoint = ON_TrimCurve_GetClosestPoint(&tparam, &trim, edge_mid_3d, 0, &domain);
+		ON_TrimCurve_GetClosestPoint(&tparam, &trim, edge_mid_3d, 0, &domain);
 	    }
 	}
     }

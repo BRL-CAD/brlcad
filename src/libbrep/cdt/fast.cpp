@@ -304,8 +304,7 @@ getSurfacePoints(const ON_Surface *s,
     }
 
     if (udist > ldfactor * vdist) {
-	int isteps = (int)(udist / vdist);
-	isteps = (int)(udist / vdist / ldfactor * 2.0);
+	int isteps = (int)(udist / vdist / ldfactor * 2.0);
 	fastf_t step = udist / (fastf_t) isteps;
 
 	fastf_t step_u;
@@ -336,8 +335,7 @@ getSurfacePoints(const ON_Surface *s,
 	    }
 	}
     } else if (vdist > ldfactor * udist) {
-	int isteps = (int)(vdist / udist);
-	isteps = (int)(vdist / udist / ldfactor * 2.0);
+	int isteps = (int)(vdist / udist / ldfactor * 2.0);
 	fastf_t step = vdist / (fastf_t) isteps;
 	fastf_t step_v;
 	for (int i = 1; i <= isteps; i++) {
@@ -960,7 +958,8 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 	bool first_seam_pt = true;
 	for (i = 0; i < numpoints; i++) {
 	    btp = brep_loop_points[i];
-	    if ((seam = IsAtSeam(surf, btp.p2d, same_point_tolerance)) > 0) {
+	    seam = IsAtSeam(surf, btp.p2d, same_point_tolerance);
+	    if (seam > 0) {
 		if (first_seam_pt) {
 		    part1.Append(btp);
 		    first_seam_pt = false;
