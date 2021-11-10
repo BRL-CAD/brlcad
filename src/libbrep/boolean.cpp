@@ -3656,7 +3656,7 @@ HIDDEN ON_SimpleArray<ON_Curve *>get_face_trim_loop(const ON_Brep *brep, int fac
 HIDDEN ON_SimpleArray<TrimmedFace *>
 get_trimmed_faces(const ON_Brep *brep)
 {
-    ON_SimpleArray<TrimmedFace *> trimmed_faces;
+    std::vector<TrimmedFace *> trimmed_faces;
     int face_count = brep->m_F.Count();
     for (int i = 0; i < face_count; i++) {
 	const ON_BrepFace &face = brep->m_F[i];
@@ -3673,9 +3673,13 @@ get_trimmed_faces(const ON_Brep *brep)
 	    index_loop = get_face_trim_loop(brep, loop_index[j]);
 	    trimmed_face->m_innerloop.push_back(index_loop);
 	}
-	trimmed_faces.Append(trimmed_face);
+	trimmed_faces.push_back(trimmed_face);
     }
-    return trimmed_faces;
+    ON_SimpleArray<TrimmedFace *> tf;
+    for (size_t i = 0; i < trimmed_faces.size(); i++) {
+	tf.Append(trimmed_faces[i]);
+    }
+    return tf;
 }
 
 
