@@ -1685,6 +1685,7 @@ poly2tri_CDT(struct bu_list *vhead,
 
     if (outer) {
 	std::cerr << "Error: Face(" << fi << ") cannot evaluate its outer loop and will not be facetized." << std::endl;
+	delete pointmap;
 	return;
     }
 
