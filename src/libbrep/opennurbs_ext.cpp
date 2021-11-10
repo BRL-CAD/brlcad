@@ -471,7 +471,8 @@ trim_binary_search(fastf_t *tparam, const ON_BrepTrim *trim, double tstart, doub
 	double vdot = ON_DotProduct(v1,v2);
 
 	if (vdot < 0 && dist > ON_ZERO_TOLERANCE) {
-	    double tlparam, trparam;
+	    double tlparam = DBL_MAX;
+	    double trparam = DBL_MAX;
 	    double fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 0);
 	    double frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 0);
 	    if (fldist >= 0 && frdist < -1) {
