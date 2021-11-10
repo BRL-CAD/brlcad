@@ -3661,19 +3661,25 @@ get_trimmed_faces(const ON_Brep *brep)
     for (int i = 0; i < face_count; i++) {
 	const ON_BrepFace &face = brep->m_F[i];
 	const ON_SimpleArray<int> &loop_index = face.m_li;
+	if (loop_index.Count() <= 0) {
+	    continue;
+	}
 
 	TrimmedFace *trimmed_face = new TrimmedFace();
 	trimmed_face->m_face = &face;
-
-	if (loop_index.Count() > 0) {
-	    ON_SimpleArray<ON_Curve *> index_loop = get_face_trim_loop(brep, loop_index[0]);
-	    trimmed_face->m_outerloop = index_loop;
-	    for (int j = 1; j < loop_index.Count(); j++) {
-		index_loop = get_face_trim_loop(brep, loop_index[j]);
-		trimmed_face->m_innerloop.push_back(index_loop);
-	    }
-	}
+	ON_SimpleArray<ON_Curve *> index_loop = get_face_trim_loop(brep, loop_index[0]);
+	trimmed_face->m_outerloop = index_loop;
+	// NOTE - clang static analyzer warns about potential memory leaking
+	// if this Append happens after the m_innerloop growing logic in the for
+	// loop below.  Need to investigate what it is worried about - not
+	// immediately clear why doing this append after the for loop would
+	// change anything, since it should just be putting the trimmed_face
+	// pointer into the array...
 	trimmed_faces.Append(trimmed_face);
+	for (int j = 1; j < loop_index.Count(); j++) {
+	    index_loop = get_face_trim_loop(brep, loop_index[j]);
+	    trimmed_face->m_innerloop.push_back(index_loop);
+	}
     }
     return trimmed_faces;
 }
