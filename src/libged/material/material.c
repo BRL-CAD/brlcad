@@ -426,11 +426,14 @@ int set_material(struct ged *gedp, int argc, const char *argv[]){
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
         if (BU_STR_EQUAL(argv[3], "name")){
-            bu_vls_printf(gedp->ged_result_str, "%s", material->name.vls_str);
+            BU_VLS_INIT(&material->name);
+            bu_vls_strcpy(&material->name, argv[4]);
         } else if (BU_STR_EQUAL(argv[3], "parent")) {
-            bu_vls_printf(gedp->ged_result_str, "%s", material->parent.vls_str);
+            BU_VLS_INIT(&material->parent);
+            bu_vls_strcpy(&material->parent, argv[4]);
         } else if (BU_STR_EQUAL(argv[3], "source")) {
-            bu_vls_printf(gedp->ged_result_str, "%s", material->source.vls_str);
+            BU_VLS_INIT(&material->source);
+            bu_vls_strcpy(&material->source, argv[4]);
         } else {
             if (argc == 4){
                 bu_vls_printf(gedp->ged_result_str, "the property you requested: %s, could not be found.", argv[3]);
@@ -452,7 +455,7 @@ int set_material(struct ged *gedp, int argc, const char *argv[]){
         return GED_ERROR;
     }
 
-    return GED_OK;
+    return wdb_put_internal(gedp->ged_wdbp, argv[2], &intern, mk_conv2mm);
 }
 
 int
@@ -487,7 +490,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
         get_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_SET) {
         // set routine
-        bu_vls_printf(gedp->ged_result_str, "Trying: set");
+        set_material(gedp, argc, argv);
     } else {
         bu_vls_printf(gedp->ged_result_str, "Error: %s is not a valid subcommand.\n", argv[1]);
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
