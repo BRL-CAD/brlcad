@@ -195,6 +195,8 @@ BrlcadObject::BrlcadObject(
     // VMOVE(max, ap->a_vvec);
     VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
 
+    // fprintf(output, "constructor built here \n");
+    // fflush(output);
 }
 
 
@@ -210,6 +212,9 @@ BrlcadObject:: BrlcadObject(
     this->resources = p_resources;
     VMOVE(this->min, ap->a_uvec);
     VMOVE(this->max, ap->a_vvec);
+
+    // fprintf(output, "other constructor built here \n");
+    // fflush(output);
 }
 
 

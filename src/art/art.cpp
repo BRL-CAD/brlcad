@@ -147,6 +147,11 @@
 #include "ged/commands.h"
 #include "ged/defines.h"
 
+struct name_color {
+  char* name;
+  char* color;
+};
+
 struct application APP;
 struct resource* resources;
 extern "C" {
@@ -206,6 +211,12 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   char* name;
   name = dp->d_namep;
 
+  const char* name_char;
+  std::string name_test = "all.g/" + std::string(name);
+  name_char = name_test.c_str();
+  //
+  // bu_log("name: %s\n", name_test.c_str());
+
   // char title[1024];
   // rtip = rt_dirbuild(APP.a_rt_i->rti_dbip->dbi_filename, title, sizeof(title));
   // rt_gettree(rtip, name);
@@ -215,13 +226,10 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
 
   point_t min;
   point_t max;
-  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
-  // int ac = 2;
-  // const char* av[3];
-  // av[0] = (const char*)"bb";
-  // av[1] = name;
-  // av[2] = NULL;
-  // ged_exec(&ged, ac, av);
+  // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
+  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name_char, 1, min, max);
+  // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
+
   bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
 
   // struct bu_vls v = BU_VLS_INIT_ZERO;
@@ -233,7 +241,8 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
 
 
   renderer::ParamArray geometry_parameters = asr::ParamArray()
-               .insert("database_path", name)
+               // .insert("database_path", name)
+               .insert("database_path", name_char)
                .insert("object_count", objc)
                .insert("minX", min[0])
                .insert("minY", min[1])
@@ -242,8 +251,16 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
                .insert("maxY", max[1])
                .insert("maxZ", max[2]);
 
+
+  // name = "/all.g/" + name;
+  // char* name_test = "/all.g/" + name;
+
+
   asf::auto_release_ptr<renderer::Object> brlcad_object(
-  new BrlcadObject{name,
+  new BrlcadObject{
+     name,
+     // name_test.c_str(),
+     // name_char,
   // new BrlcadObject{"brlcad_object",
      geometry_parameters,
      &APP, resources});
@@ -252,6 +269,7 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   // asf::auto_release_ptr<asr::Assembly> assembly = static_cast<asf::auto_release_ptr<asr::Assembly>>(data);
 
   std::string assembly_name = std::string(name) + "_object_assembly";
+  // std::string assembly_name = std::string(name_test) + "_object_assembly";
   asf::auto_release_ptr<asr::Assembly> assembly(
 asr::AssemblyFactory().create(
     assembly_name.c_str(),
@@ -259,6 +277,7 @@ asr::AssemblyFactory().create(
 
     // create a shader group called "Material_tree"
     std::string shader_name = std::string(name) + "_shader";
+    // std::string shader_name = std::string(name_test) + "_shader";
     asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
         asr::ShaderGroupFactory().create(
             shader_name.c_str(),
@@ -355,6 +374,8 @@ asr::AssemblyFactory().create(
     instance_name.c_str(),
     asr::ParamArray(),
     name,
+    // name_char,
+    // name_test.c_str(),
     // "brlcad_object",
     asf::Transformd::identity(),
     asf::StringDictionary()
@@ -406,7 +427,6 @@ asr::AssemblyFactory().create(
   // char* name;
   // name = db_path_to_string(pathp);
   // bu_log("region_start %s\n", name);
-
 
 
 
@@ -652,8 +672,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     // rt_init_resource(&rt_uniresource, 0, NULL);
 
     db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void *>(scene.get()));
-
-
+    // db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, );
 
 
 
