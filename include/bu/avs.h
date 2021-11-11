@@ -223,13 +223,6 @@ BU_EXPORT extern const char *bu_avs_get(const struct bu_attribute_value_set *avp
 					const char *attribute);
 
 /**
- * gets all attributes in an attribute set in "name = value" form,
- * using the provided title.
- */
-BU_EXPORT extern const char *bu_avs_get_all(const struct bu_attribute_value_set *avp,
-				   const char *title);
-
-/**
  * Remove all occurrences of an attribute from the provided attribute
  * set.
  *
