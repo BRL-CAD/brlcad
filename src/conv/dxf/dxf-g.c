@@ -916,7 +916,7 @@ process_entities_polyline_code(int code)
 			if (polyline_flag & POLY_CLOSED) {
 			    v2 = v0;
 			    (void)nmg_me(v1, v2, layers[curr_layer]->s);
-			    if (verbose) {
+			    if (verbose && v1 && v1->vg_p && v2 && v2->vg_p) {
 				bu_log("Wire edge (closing polyline): (%g %g %g) <-> (%g %g %g)\n",
 				       V3ARGS(v1->vg_p->coord),
 				       V3ARGS(v2->vg_p->coord));
@@ -1422,7 +1422,7 @@ process_lwpolyline_entities_code(int code)
 		if (polyline_flag & POLY_CLOSED) {
 		    v2 = v0;
 		    (void)nmg_me(v1, v2, layers[curr_layer]->s);
-		    if (verbose) {
+		    if (verbose && v1 && v1->vg_p && v2 && v2->vg_p) {
 			bu_log("Wire edge (closing lwpolyline): (%g %g %g) <-> (%g %g %g)\n",
 			       V3ARGS(v1->vg_p->coord),
 			       V3ARGS(v2->vg_p->coord));
@@ -2325,7 +2325,8 @@ process_mtext_entities_code(int code)
 		    bu_free(t, "temp char buf");
 	    }
 	    bu_vls_free(vls);
-	    BU_PUT(vls, struct bu_vls);
+	    if (vls)
+		BU_PUT(vls, struct bu_vls);
 
 	    attachPoint = 0;
 	    textHeight = 0.0;
@@ -2716,7 +2717,8 @@ process_spline_entities_code(int code)
 	case 210:
 	case 220:
 	case 230:
-	    coord = code / 10 - 21;
+	    /* coord assignment is unread - unimplemented? */
+	    // coord = code / 10 - 21;
 	    break;
 	case 70:
 	    flag = atoi(line);
@@ -2759,25 +2761,31 @@ process_spline_entities_code(int code)
 	case 12:
 	case 22:
 	case 32:
-	    coord = code / 10 - 1;
 	    /* start tangent, unimplemented */
+	    // coord = code / 10 - 1;
 	    break;
 	case 13:
 	case 23:
 	case 33:
-	    coord = code / 10 - 1;
 	    /* end tangent, unimplemented */
+	    // coord = code / 10 - 1;
 	    break;
 	case 40:
+	    if (!knots)
+		bu_exit(BRLCAD_ERROR, "dxf-g - trying to access knots array before allocation at dxf-g.c line %d\n", __LINE__);
 	    knots[knotCount++] = atof(line);
 	    break;
 	case 41:
+	    if (!weights)
+		bu_exit(BRLCAD_ERROR, "dxf-g - trying to access weights array before allocation at dxf-g.c line %d\n", __LINE__);
 	    weights[weightCount++] = atof(line);
 	    break;
 	case 10:
 	case 20:
 	case 30:
 	    coord = (code / 10) - 1 + ctlPtCount*3;
+	    if (!ctlPts)
+		bu_exit(BRLCAD_ERROR, "dxf-g - trying to access ctlPts[%d] before allocation at dxf-g.c line %d\n", coord, __LINE__);
 	    ctlPts[coord] = atof(line) * units_conv[units] * scale_factor;
 	    subCounter++;
 	    if (subCounter > 2) {
@@ -2789,6 +2797,8 @@ process_spline_entities_code(int code)
 	case 21:
 	case 31:
 	    coord = (code / 10) - 1 + fitPtCount*3;
+	    if (!fitPts)
+		bu_exit(BRLCAD_ERROR, "dxf-g - trying to access fitPts[%d] before allocation at dxf-g.c line %d\n", coord, __LINE__);
 	    fitPts[coord] = atof(line) * units_conv[units] * scale_factor;
 	    subCounter2++;
 	    if (subCounter2 > 2) {
@@ -2801,6 +2811,8 @@ process_spline_entities_code(int code)
 	    break;
 	case 0:
 	    /* draw the spline */
+	    if (!knots)
+		bu_exit(BRLCAD_ERROR, "dxf-g - trying to draw spline with no knots at dxf-g.c line %d\n", __LINE__);
 	    get_layer();
 	    layers[curr_layer]->spline_count++;
 
