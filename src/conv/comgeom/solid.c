@@ -197,7 +197,8 @@ getsolid(void)
 #define D(_i)	(&(dd[_i*3]))
 #define T(_i)	(&(tmp[_i][0]))
 
-    if ((i = get_line(scard, sizeof(scard), "solid card")) == EOF) {
+    i = get_line(scard, sizeof(scard), "solid card");
+    if (i == EOF) {
 	printf("getsolid: unexpected EOF\n");
 	return 1;
     }
@@ -696,7 +697,6 @@ getsolid(void)
 	}
 
     ell1:
-	m2 = 0.0;
 	r1 = dd[6];		/* R */
 	VMOVE(work, D(0));
 	work[0] += M_PI;
@@ -752,6 +752,7 @@ getsolid(void)
     if (BU_STR_EQUAL(solid_type, "arbn")) {
 	ret = read_arbn(name);
 	bu_free(name, "name");
+	return ret;
     }
 
     /*

@@ -49,8 +49,11 @@ void
 strappend(char *s, char *t)	/* === */
 {
     s = endstr(s);
+    if (!s || !t)
+	return;
     while ((*s++ = *t++) != '\0');
-    *s = '\0';
+    if (s)
+	*s = '\0';
 }
 
 
