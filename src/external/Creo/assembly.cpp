@@ -201,7 +201,9 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
     MAT_IDN(xform);
 
     /* Get name of current member */
-    if ((lstatus = ProAsmcompMdlNameGet(feat, &mtype, wname)) != PRO_TK_NO_ERROR) return PRO_TK_NO_ERROR;
+    lstatus = ProAsmcompMdlNameGet(feat, &mtype, wname);
+    if (lstatus != PRO_TK_NO_ERROR)
+	return PRO_TK_NO_ERROR;
 
     /* Skip this member if the object it refers to is empty */
     if (ainfo->cinfo->empty->find(wname) != ainfo->cinfo->empty->end()) return PRO_TK_NO_ERROR;
@@ -235,7 +237,8 @@ assembly_write_entry(ProFeature *feat, ProError UNUSED(status), ProAppData app_d
      * Get matrix relative to current parent (if any) and create the
      * comb entry
      */
-    if ((lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform)) == PRO_TK_NO_ERROR) {
+    lstatus = assembly_entry_matrix(ainfo->cinfo, ainfo->curr_parent, feat, &xform);
+    if (lstatus == PRO_TK_NO_ERROR) {
         (void)mk_addmember(bu_vls_addr(entry_name), &(ainfo->wcmb->l), xform, WMOP_UNION);
     } else {
         (void)mk_addmember(bu_vls_addr(entry_name), &(ainfo->wcmb->l), NULL, WMOP_UNION);

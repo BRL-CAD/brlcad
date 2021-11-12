@@ -154,7 +154,8 @@ tgc_hole_name(struct creo_conv_info *cinfo, wchar_t *wname, const char *suffix)
     bu_vls_init(hname);
     cname = get_brlcad_name(cinfo, wname, NULL, N_CREO);
     bu_vls_sprintf(hname, "%s_hole_0.%s", bu_vls_addr(cname), suffix);
-    while ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) {
+    dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET);
+    while (dp != RT_DIR_NULL) {
         (void)bu_vls_incr(hname, NULL, "0:0:0:0:-", NULL, NULL);
         count++;
         creo_log(cinfo, MSG_DEBUG, "\t trying hole name : %s\n", bu_vls_addr(hname));
@@ -201,8 +202,10 @@ subtract_hole(struct part_conv_info *pinfo)
     hinfo->diameter = pinfo->diameter;
 
     /* Do a more detailed characterization of the hole elements */
-    if ((ret=ProFeatureElemtreeExtract(hinfo->feat, NULL, PRO_FEAT_EXTRACT_NO_OPTS, &elem_tree)) == PRO_TK_NO_ERROR) {
-        if ((ret=ProElemtreeElementVisit(elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)hinfo)) != PRO_TK_NO_ERROR) {
+    ret = ProFeatureElemtreeExtract(hinfo->feat, NULL, PRO_FEAT_EXTRACT_NO_OPTS, &elem_tree);
+    if (ret == PRO_TK_NO_ERROR) {
+	ret=ProElemtreeElementVisit(elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)hinfo);
+	if (ret != PRO_TK_NO_ERROR) {
             if (ProElementFree(&elem_tree) != PRO_TK_NO_ERROR) {fprintf(stderr, "Error freeing element tree\n");}
             BU_PUT(hinfo, struct hole_info);
             return ret;
@@ -211,7 +214,9 @@ subtract_hole(struct part_conv_info *pinfo)
     }
 
     /* Need more info to recreate holes */
-    if ((ret=ProFeatureGeomitemVisit(pinfo->feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo)) != PRO_TK_NO_ERROR) return ret;
+    ret = ProFeatureGeomitemVisit(pinfo->feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo);
+    if (ret != PRO_TK_NO_ERROR)
+	return ret;
 
     /* Will need parent object name for naming */
     ProMdlMdlnameGet(pinfo->model, wname);

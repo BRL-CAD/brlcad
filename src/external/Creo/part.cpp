@@ -440,7 +440,7 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
                             cv[0] = cntl_pnts[i*(vcvmax+1)+j][0];
                             cv[1] = cntl_pnts[i*(vcvmax+1)+j][1];
                             cv[2] = cntl_pnts[i*(vcvmax+1)+j][2];
-                            cv[3] = w_array[i];
+                            cv[3] = (w_array) ? w_array[i] : 0;
                             ns->SetCV(i, j, cv);
                         }
                     }
@@ -581,9 +581,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
 
         /* We got through the initial tests - how many surfaces do we have? */
         status = ProArraySizeGet((ProArray)tess, &surface_count);
-        if (status != PRO_TK_NO_ERROR) goto tess_cleanup;
-        if (surface_count < 1) {
-
+        if (status != PRO_TK_NO_ERROR || surface_count < 1) {
             /* Free the tessellation memory */
             ProPartTessellationFree(&tess);
             tess = NULL;
@@ -751,9 +749,9 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     ProSurfaceAppearanceProps aprops;
 
     struct wmember wcomb;
-    struct bu_vls *rname;
-    struct bu_vls *sname;
-    struct bu_vls *creo_id;
+    struct bu_vls *rname = NULL;
+    struct bu_vls *sname = NULL;
+    struct bu_vls *creo_id = NULL;
 
     ProWVerstamp cstamp;
     char *verstr;
