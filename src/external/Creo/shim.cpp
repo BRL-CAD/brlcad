@@ -1,22 +1,37 @@
-/*                        S H I M . C P P
+/**
+ *                        S H I M . C P P
  * BRL-CAD
  *
- * Published in 2020 by the United States Government.
- * This work is in the public domain.
+ * Copyright (c) 2017-2021 United States Government as represented by
+ * the U.S. Army Research Laboratory.
  *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
  */
-/** @file shim.cpp
- *
+/**
+ * @file shim.cpp
+ */
+/**
  * This file is provided as a compilation stub to ensure ongoing build testing
- * of CREO to BRL-CAD conversion source code.  This file does not necessarily
- * reflect the CREO api, its values, or type constructs and any similarity is
+ * of Creo to BRL-CAD conversion source code.  This file does not necessarily
+ * reflect the Creo api, its values, or type constructs and any similarity is
  * either coincidental or necessary for compilation.
  */
 
 #include "common.h"
 #include "shim.h"
 
-/* Functions */
+/** Pro Toolkit Functions */
 extern "C" int ProArrayAlloc(int,int,int,void**) {return 0;}
 extern "C" int ProArrayFree(void**) {return 0;}
 extern "C" int ProArraySizeGet(ProArray,int*) {return 0;}

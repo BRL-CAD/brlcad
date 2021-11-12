@@ -347,7 +347,7 @@ contour_process(ProContour c, ProError UNUSED(status), ProAppData app_data) {
     if (f_id == -1) return PRO_TK_GENERAL_ERROR;
     ON_BrepLoop &nl = bdata->brep->NewLoop(ON_BrepLoop::outer, bdata->brep->m_F[f_id]);
     bdata->curr_loop_id = nl.m_loop_index;
-    // Does ProContourTraversal indicate inner vs outer loop?
+    /** Does ProContourTraversal indicate inner vs outer loop? */
     ProContourTraversal tv;
     ProContourTraversalGet(c, &tv);
     if (tv == PRO_CONTOUR_TRAV_INTERNAL) nl.m_type = ON_BrepLoop::inner;
@@ -393,8 +393,8 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
 
                 ON_NurbsSurface *ns = ON_NurbsSurface::New(3, (w_array) ? 1 : 0, degree[0]+1, degree[1]+1, ucvmax+1, vcvmax+1);
 
-                // knot index (>= 0 and < Order + CV_count - 2)
-                // generate u-knots
+                /** Knot index (>= 0 and < Order + CV_count - 2) */
+                /** Generate u-knots */
                 int n = ucvmax+1;
                 int p = degree[0];
                 int m = n + p - 1;
@@ -409,7 +409,7 @@ surface_process(ProSurface s, ProError UNUSED(status), ProAppData app_data) {
                 for (int i = m - p; i < m; i++) {
                     ns->SetKnot(0, i, 1.0);
                 }
-                /** generate v-knots */
+                /** Generate v-knots */
                 n = vcvmax+1;
                 p = degree[1];
                 m = n + p - 1;
@@ -481,7 +481,7 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
     /** Output the solid */
     *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
     mk_brep(cinfo->wdbp, bu_vls_addr(*sname), nbrep);
-    /*
+    /**
      * Things to investigate:
      *
      * ProFeatureElemtreeExtract()
@@ -535,10 +535,14 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
     double curr_angle;
     double factor = cinfo->creo_to_brl_conv;
 
-        // Note: The below code works, but we can't use model units - Creo
-        // "corrects" object sizes with matricies in the parent hierarchies
-        // and correcting it here results in problems with those matricies.
-    // ProError ustatus = creo_model_units(&factor, model);
+    /**
+     * Note: The below code works, but we can't use model units - Creo
+     * "corrects" object sizes with matricies in the parent hierarchies
+     * and correcting it here results in problems with those matricies.
+     *
+     * //ProError ustatus = creo_model_units(&factor, model);
+     *
+     */
 
     ProMdlMdlnameGet(model, wname);
     ProWstringToString(pname, wname);
@@ -553,13 +557,18 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
         vert_tree = bg_vert_tree_create();
         norm_tree = bg_vert_tree_create();
 
-        //creo_log(cinfo, MSG_OK, "\tTessellating %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
+        /**
+         * TODO - Find out if this serves a purpose:
+         *
+         * //creo_log(cinfo, MSG_OK, "\tTessellating %s using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
+         *
+         */
 
         status = ProPartTessellate(ProMdlToPart(model), curr_error/cinfo->creo_to_brl_conv, curr_angle, PRO_B_TRUE, &tess);
         if (status != PRO_TK_NO_ERROR) {
             creo_log(cinfo, MSG_DEBUG, "%s: failed to tessellate using:  error - %g, angle - %g\n", pname, curr_error, curr_angle);
             /**
-             * TODO -- Find out if these serve a purpose:
+             * TODO - Find out if these serve a purpose:
              * 
              * //creo_log(cinfo, MSG_DEBUG, "\tmax_error = %g, min_error - %g, error_increment - %g\n", cinfo->max_error, cinfo->min_error, cinfo->error_increment);
              * //creo_log(cinfo, MSG_DEBUG, "\tmax_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", cinfo->max_angle_cntrl, cinfo->min_angle_cntrl, cinfo->angle_increment);
@@ -703,7 +712,7 @@ tess_cleanup:
 
 /**
  * Routine to output a part as a BRL-CAD region with one BOT solid
- * The region will have the name from Pro/E with a .r suffix.
+ * The region will have the name from Creo with a .r suffix.
  * The solid will have the same name with ".bot" prefix.
  *
  *     returns:
@@ -869,7 +878,7 @@ have_part:
     /** Get the surface properties from the part and output the region comb */
     ProMdlToModelitem(model, &mitm);
     if (ProSurfaceAppearancepropsGet(&mitm, &aprops) == PRO_TK_NO_ERROR) {
-        /** Use the colors, ... that were set in CREO */
+        /** Use the colors, ... that were set in Creo */
         rgbflts[0] = aprops.color_rgb[0];
         rgbflts[1] = aprops.color_rgb[1];
         rgbflts[2] = aprops.color_rgb[2];
@@ -878,7 +887,7 @@ have_part:
 
         /** Shader args */
         /**
-         * TODO  Make exporting material optional
+         * TODO - Make exporting material optional
          */
         bu_vls_sprintf(&shader_args, "{");
         if (!NEAR_ZERO(aprops.transparency, SMALL_FASTF)) bu_vls_printf(&shader_args, " tr %g", aprops.transparency);

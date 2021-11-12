@@ -118,11 +118,11 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
 
     delete cinfo->parts;
     delete cinfo->assems;
-    delete cinfo->empty; /** Entries in empty were freed in parts and assems */
+    delete cinfo->empty;           /** Entries in empty were freed in parts and assems */
     delete cinfo->brlcad_names;
     delete cinfo->region_name_map; /** Entries in name_map were freed in brlcad_names */
-    delete cinfo->assem_name_map; /** Entries in name_map were freed in brlcad_names */
-    delete cinfo->solid_name_map; /** Entries in name_map were freed in brlcad_names */
+    delete cinfo->assem_name_map;  /** Entries in name_map were freed in brlcad_names */
+    delete cinfo->solid_name_map;  /** Entries in name_map were freed in brlcad_names */
     delete cinfo->creo_name_map;
     delete cinfo->creo_names;
 
@@ -130,7 +130,12 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
     wdb_close(cinfo->wdbp);
 
     /** Finally, clear the container */
-    //BU_PUT(cinfo, struct creo_conv_info);
+    /**
+     * TODO - Find out if this serves a purpose:
+     *
+     * //BU_PUT(cinfo, struct creo_conv_info);
+     */
+    
 }
 
 
@@ -151,8 +156,8 @@ output_parts(struct creo_conv_info *cinfo)
         /**
          * If the part:
          *  a) exists in the .g file already and...
-         *  b) has the same CREO version stamp as the part in the current
-         *     CREO file
+         *  b) has the same Creo version stamp as the part in the current
+         *     Creo file
          * then we don't need to re-export it to the .g file
          */
 
@@ -167,14 +172,14 @@ output_parts(struct creo_conv_info *cinfo)
                 /**
                  * Skip the .g object if it was created from the same
                  * version of the object that exists currently in the
-                 * CREO file
+                 * Creo file
                  */
                 creo_log(cinfo, MSG_OK, "%s exists and is current - skipping\n", bu_vls_addr(rname));
                 continue;
             } else {
                 /**
                  * Kill the existing object (region and child solid)
-                 * it's out of sync with CREO
+                 * it's out of sync with Creo
                  */
                 struct directory **children = NULL;
                 struct rt_db_internal in;
@@ -220,8 +225,8 @@ output_assems(struct creo_conv_info *cinfo)
         /**
          * If the part:
          *  a) exists in the .g file already and...
-         *  b) has the same CREO version stamp as the part in the current
-         *     CREO file
+         *  b) has the same Creo version stamp as the part in the current
+         *     Creo file
          * then we don't need to re-export it to the .g file
          */
         aname = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
@@ -235,12 +240,12 @@ output_assems(struct creo_conv_info *cinfo)
             /**
              * Skip the .g object if it was created from the same
              * version of the object that exists currently in the
-             * CREO file
+             * Creo file
              */
              creo_log(cinfo, MSG_OK, "%s exists and is current - skipping\n", bu_vls_addr(aname));
              continue;
         } else {
-            /** Kill the existing object - it's out of sync with CREO */
+            /** Kill the existing object - it's out of sync with Creo */
             db_delete(cinfo->wdbp->dbip, adp);
             db_dirdelete(cinfo->wdbp->dbip, adp);
             db_update_nref(cinfo->wdbp->dbip, &rt_uniresource);
@@ -334,7 +339,7 @@ objects_gather(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
 
 
 /**
- * Routine to output the top level object that is currently displayed in CREO.
+ * Routine to output the top level object that is currently displayed in Creo.
  * This is the real beginning of the processing code - doit collects user
  * settings and calls this function.
  */
@@ -377,7 +382,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
         return;
     }
 
-    /** Make a final toplevel comb based on the file name to hold the orientation matrix */
+    /** Make a final top-level comb based on the file name to hold the orientation matrix */
     struct bu_vls *comb_name;
     struct bu_vls top_name = BU_VLS_INIT_ZERO;
     struct wmember wcomb;
@@ -391,7 +396,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType t
     }
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), m, WMOP_UNION);
 
-    /** Guarantee we have a non-colliding top level name */
+    /** Guarantee we have a non-colliding top-level name */
     bu_vls_sprintf(&top_name, "all.g");
     tdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(&top_name), LOOKUP_QUIET);
     if (tdp != RT_DIR_NULL) {
@@ -862,7 +867,7 @@ do_quit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata)
 }
 
 
-/** Driver routine for converting CREO to BRL-CAD */
+/** Driver routine for converting Creo to BRL-CAD */
 extern "C" int
 creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p_push_cmd_data))
 {
@@ -959,10 +964,10 @@ creo_brl_access(uiCmdAccessMode UNUSED(access_mode))
 }
 
 
-/*
+/**
  * IMPORTANT - the names of the next two functions - user_initialize
- * and user_terminate - are dictated by the CREO API.  These are the
- * hooks that tie the rest of the code into the CREO system.  Both
+ * and user_terminate - are dictated by the Creo API.  These are the
+ * hooks that tie the rest of the code into the Creo system.  Both
  * are *required* to be present, even if the user_terminate function
  * doesn't do any actual work.
  */
@@ -980,7 +985,7 @@ extern "C" int user_initialize()
         return -1;
     }
 
-    /** Add a command that calls our creo-brl routine */
+    /** Add a command that calls our Creo-BRL routine */
     status = ProCmdActionAdd("CREO-BRL", (uiCmdCmdActFn)creo_brl, uiProe2ndImmediate, creo_brl_access, PRO_B_FALSE, PRO_B_FALSE, &cmd_id);
     if (status != PRO_TK_NO_ERROR) {
         creo_log(NULL, MSG_FAIL, "Failed to add creo-brl action");
@@ -998,10 +1003,15 @@ extern "C" int user_initialize()
 
 
     /** Let user know we are here */
-    //PopupMsg("Plugin Successfully Loaded", "The CREO to BRL-CAD converter plugin Version 0.2 was successfully loaded.");
+    /**
+     * TODO - Find out if this serves a purpose:
+     * 
+     * //PopupMsg("Plugin Successfully Loaded", "The Creo to BRL-CAD converter plugin Version 0.2 was successfully loaded.");
+     *
+     */
 
     return 0;
-}
+/* } */
 
 
 extern "C" void user_terminate()
@@ -1009,7 +1019,7 @@ extern "C" void user_terminate()
     ProMessageClear();
 }
 
-/*
+/**
  * Local Variables:
  * mode: C
  * tab-width: 8

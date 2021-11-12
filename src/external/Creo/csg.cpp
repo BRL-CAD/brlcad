@@ -25,7 +25,7 @@
 #include "common.h"
 #include "creo-brl.h"
 
-#define MIN_RADIUS      1.0e-7          /** BRL-CAD does not allow tgc's with zero radius */
+#define MIN_RADIUS      1.0e-7   /** BRL-CAD does not allow tgc's with zero radius */
 
 /** Information needed to replace holes with CSG */
 struct hole_info {

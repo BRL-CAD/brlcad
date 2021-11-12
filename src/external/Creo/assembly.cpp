@@ -1,4 +1,4 @@
-/*
+/**
  *                  A S S E M B L Y . C P P
  * BRL-CAD
  *
@@ -28,7 +28,7 @@
 
 /** Assembly processing container */
 struct assem_conv_info {
-    struct creo_conv_info *cinfo; /** global state */
+    struct creo_conv_info *cinfo; /** Global state */
     ProMdl curr_parent;
     struct wmember *wcmb;
 };
@@ -142,7 +142,7 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     ProAsmcompMdlNameGet(feat, &type, wcname);
     (void)ProWstringToString(cname, wcname);
 
-    /** Find the CREO matrix */
+    /** Find the Creo matrix */
     ProAsmcomppath comp_path;
     ProMatrix xform;
     ProIdTable id_table;
@@ -260,10 +260,11 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
      *
      * TODO: This is causing a crash, can't enable???
      *
+     * //ProBoolean is_exploded = PRO_B_FALSE;
+     * //ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded);
+     * //if (is_exploded) ProAssemblyUnexplode(*(ProAssembly *)model);
+     *
      */
-    //ProBoolean is_exploded = PRO_B_FALSE;
-    //ProAssemblyIsExploded(*(ProAssembly *)model, &is_exploded);
-    //if (is_exploded) ProAssemblyUnexplode(*(ProAssembly *)model);
 
     /** We'll need to assemble the list of children */
     struct wmember wcomb;
@@ -321,7 +322,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
         }
     }
     /**
-     * Solid mass properties are handled separately in CREO,
+     * Solid mass properties are handled separately in Creo,
      * so deal with those as well...
      */
     ProMassProperty mass_prop;
