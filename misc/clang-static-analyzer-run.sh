@@ -112,6 +112,14 @@ cleantest librender
 
 # Executables
 
+# TODO - once we have a fully clean build, look at using this instead
+# of the explicit executable list:
+#
+# while IFS="" read -r p || [ -n "$p" ]
+# do
+#   failingtest "$p"
+# done < "brlcadexec.cmake"
+
 if [ "0" -eq "1" ]; then
  cleantest 3dm-g
  cleantest a-d
