@@ -495,16 +495,16 @@ int desc_1(const char *cgy, int test_num)
 	if (INT_MAX != LONG_MAX) {
 	    switch(test_num) {
 		case 1:
-		    ac = 2;
-		    av[0] = "-l";
-		    av[1] = "214748364800";
+		    //ac = 2;
+		    //av[0] = "-l";
+		    //av[1] = "214748364800";
 		    /* TODO - how to prevent out-of-bounds errors on 32 bit platforms... */
 		    /*EXPECT_SUCCESS_INT("long_num", l, 214748364800);*/
 		    break;
 		case 2:
-		    ac = 2;
-		    av[0] = "-l";
-		    av[1] = "-214748364800";
+		    //ac = 2;
+		    //av[0] = "-l";
+		    //av[1] = "-214748364800";
 		    /* TODO - how to prevent out-of-bounds errors on 32 bit platforms... */
 		    /*EXPECT_SUCCESS_INT("long_num", l, -214748364800);*/
 		    break;
@@ -839,28 +839,24 @@ int desc_3(int test_num)
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "2,10,30";
-	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
 	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 1:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "2/10/30";
-	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
 	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 2:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "30.3,2,-10.1";
-	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
 	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 3:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "30.3, 2, -10.1";
-	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
 	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 4:
@@ -869,7 +865,6 @@ int desc_3(int test_num)
 	    av[1] = "30.3";
 	    av[2] = "2";
 	    av[3] = "-10.1";
-	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
 	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 
@@ -927,16 +922,16 @@ main(int argc, char *argv[])
 
     switch (desc_num) {
 	case 0:
-	    ret = bu_opt_parse(NULL, 0, NULL, NULL);
-	    /* fall through */
+	    return !(bu_opt_parse(NULL, 0, NULL, NULL) == -1);
+	    break;
 	case 1:
-	    ret = desc_1(cgy, test_num);
+	    return desc_1(cgy, test_num);
 	    break;
 	case 2:
-	    ret = desc_2(test_num);
+	    return desc_2(test_num);
 	    break;
 	case 3:
-	    ret = desc_3(test_num);
+	    return desc_3(test_num);
 	    break;
     }
 
