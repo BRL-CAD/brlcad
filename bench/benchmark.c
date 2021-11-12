@@ -479,6 +479,10 @@ main(int ac, char *av[])
 	    j = bu_argv_from_string(pattern, 4, bu_vls_addr(&pattern_str));
 	    while (j > 0) {
 		num = bu_file_glob(pattern[j-1], paths);
+		if (!num || !paths || !paths[0]) {
+		    j--;
+		    continue;
+		}
 		cnt = num;
 		while (num > 0) {
 		    bu_file_delete(paths[num-1]);

@@ -404,8 +404,12 @@ main(int argc, char *argv[])
     /* iterate over the pixels/bytes in the files */
     while (bytes < stop_after) {
 	enum diff result;
-	int r1, r2, g1, g2, b1, b2;
-	r1 = r2 = g1 = g2 = b1 = b2 = -1;
+	int r1 = -1;
+	int r2 = -1;
+	int g1 = -1;
+	int g2 = -1;
+	int b1 = -1;
+	int b2 = -1;
 
 	/* bu_log("\tbytes[%zu] < stop[%zu\n", bytes, stop_after); */
 
