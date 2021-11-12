@@ -716,8 +716,6 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
     }
-    argc -= bu_optind;
-    argv += bu_optind;
 
     master_init(port, obs_port, list, exec, comp_host, verbose);
 
