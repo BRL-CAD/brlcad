@@ -1011,7 +1011,7 @@ extern "C" int user_initialize()
      */
 
     return 0;
-/* } */
+}
 
 
 extern "C" void user_terminate()
