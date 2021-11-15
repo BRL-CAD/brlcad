@@ -5005,6 +5005,9 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     gtd.gtd_gedp = &ged;
     gtd.gtd_flag = 0;
     gtd.gtd_prflag = 0;
+    for (i = 0; i < _GED_MAX_LEVELS; i++) {
+	gtd.gtd_obj[i] = NULL;
+    }
 
     /* check if new solid name already exists in description */
     if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
