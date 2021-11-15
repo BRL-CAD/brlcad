@@ -4504,7 +4504,6 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 		    }
 
 		    if (BU_PTBL_LEN(&stack) < 1) {
-			done = 1;
 			break;
 		    }
 		    comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_LEN(&stack)-1);
