@@ -191,7 +191,7 @@ void sb_append(stringbuf *sb, const char *str)
 
 void sb_append_len(stringbuf *sb, const char *str, int len)
 {
-	if (sb->remaining < len + 1) {
+	if (!sb->data || sb->remaining < len + 1) {
 		sb_realloc(sb, sb->last + len + 1 + SB_INCREMENT);
 	}
 	memcpy(sb->data + sb->last, str, len);
@@ -208,6 +208,7 @@ char *sb_to_string(stringbuf *sb)
 {
 	if (sb->data == NULL) {
 		/* Return an allocated empty string, not null */
+		free(sb);
 		return strdup("");
 	}
 	else {
