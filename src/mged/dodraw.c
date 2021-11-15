@@ -283,8 +283,9 @@ replot_modified_solid(
 	if (!sp->s_u_data)
 	    return -1;
 	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-	Tcl_AppendResult(INTERP, LAST_SOLID(bdata)->d_namep,
-			 ": re-plot failure\n", (char *)NULL);
+	if (bdata->s_fullpath.fp_len > 0)
+	    Tcl_AppendResult(INTERP, LAST_SOLID(bdata)->d_namep,
+		    ": re-plot failure\n", (char *)NULL);
 	return -1;
     }
     rt_db_free_internal(&intern);
