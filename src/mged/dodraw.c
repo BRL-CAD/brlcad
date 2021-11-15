@@ -304,7 +304,7 @@ add_solid_path_to_result(
     struct bv_scene_obj *sp)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    if (!sp->s_u_data)
+    if (!sp || !sp->s_u_data)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
     db_path_to_vls(&str, &bdata->s_fullpath);
