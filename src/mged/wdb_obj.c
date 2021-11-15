@@ -2864,9 +2864,6 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
 	}
     }
 
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
-
     /* Can this be executed only sometimes?
        Perhaps a "dirty bit" on the database? */
     db_update_nref(wdbp->dbip, &rt_uniresource);
@@ -3648,6 +3645,9 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
     gtd.gtd_gedp = &ged;
     gtd.gtd_flag = 0;
     gtd.gtd_prflag = 0;
+    for (i = 0; i < _GED_MAX_LEVELS; i++) {
+	gtd.gtd_obj[i] = NULL;
+    }
 
     pos_in = 1;
 
