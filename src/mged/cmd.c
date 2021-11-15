@@ -238,10 +238,12 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	    av[0] = (const char *)argv[0];
 	    if (illump && illump->s_u_data) {
 		bdata = (struct ged_bv_data *)illump->s_u_data;
-		av[1] = (const char *)LAST_SOLID(bdata)->d_namep;
-		av[argc] = (const char *)NULL;
-		(void)(*ctp->ged_func)(GEDP, argc, (const char **)av);
-		Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
+		if (bdata->s_fullpath.fp_len > 0) {
+		    av[1] = (const char *)LAST_SOLID(bdata)->d_namep;
+		    av[argc] = (const char *)NULL;
+		    (void)(*ctp->ged_func)(GEDP, argc, (const char **)av);
+		    Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
+		}
 	    }
 	    bu_free((void *)av, "cmd_ged_info_wrapper: av");
 	} else {
@@ -461,7 +463,11 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	}
 
 	arg = 1;
-	ret = ged_inside_internal(GEDP, &intern, argc, argv, arg, outdp->d_namep);
+	if (outdp) {
+	    ret = ged_inside_internal(GEDP, &intern, argc, argv, arg, outdp->d_namep);
+	} else {
+	    ret = TCL_ERROR;
+	}
     }  else if (STATE == ST_O_EDIT) {
 	mat_t newmat;
 	struct directory *outdp = RT_DIR_NULL;
@@ -482,14 +488,18 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	    outdp = LAST_SOLID(bdata);
 	}
 
-	if (argc < 2) {
+	if (illump && argc < 2) {
 	    Tcl_AppendResult(interpreter, "You are in Object Edit mode, using key solid as outside solid: ", (char *)NULL);
 	    add_solid_path_to_result(interpreter, illump);
 	    Tcl_AppendResult(interpreter, "\n", (char *)NULL);
 	}
 
 	arg = 1;
-	ret = ged_inside_internal(GEDP, &intern, argc, argv, arg, outdp->d_namep);
+	if (outdp) {
+	    ret = ged_inside_internal(GEDP, &intern, argc, argv, arg, outdp->d_namep);
+	} else {
+	    ret = TCL_ERROR;
+	}
     } else {
 	arg = 2;
 	ret = ged_inside(GEDP, argc, (const char **)argv);
