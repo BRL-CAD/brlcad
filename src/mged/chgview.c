@@ -1927,6 +1927,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				default:
 				    bu_log("unknown mv_coords\n");
 				    arp = larp = NULL;
+				    return TCL_ERROR;
 			    }
 
 			    if (arp[X] < -180.0) {
@@ -2033,6 +2034,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				default:
 				    bu_log("unknown mv_transform\n");
 				    arp = larp = NULL;
+				    return TCL_ERROR;
 			    }
 
 			    if (arp[Y] < -180.0) {
@@ -2139,6 +2141,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				default:
 				    bu_log("unknown mv_coords\n");
 				    arp = larp = NULL;
+				    return TCL_ERROR;
 			    }
 
 			    if (arp[Z] < -180.0) {
