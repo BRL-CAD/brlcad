@@ -490,10 +490,8 @@ MakeLoops(
 	     */
 	    ON_LineCurve search_line = ON_LineCurve((*loop.Last())->PointAtEnd(), (*loop.First())->PointAtStart());
 	    ON_Curve *search_curve = (ON_Curve *) &search_line;
-	    int next_curve; /* -1 is the not found value */
-
+	    int next_curve = -1; /* -1 is the not found value */
 	    for (i = 0; i < 2; i++) {
-		next_curve = -1;
 		next_curve = new_trims.BinarySearch(&search_curve, Curve_Compare_start);
 		if (next_curve != -1) {
 		    loop.Append(trims[i][next_curve]);

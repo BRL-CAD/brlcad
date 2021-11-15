@@ -395,11 +395,10 @@ main(int ac, char *av[])
 	    }
 	    case 'r':
 	    case 'R': {
-		long val = repeat;
 		if (!bu_optarg)
 		    bu_exit(3, "ERROR: missing repeat count after -r option\n");
 
-		val = strtol(bu_optarg, NULL, 0);
+		long val = strtol(bu_optarg, NULL, 0);
 		if (val <= 0)
 		    bu_exit(3, "ERROR: invalid repeat specification [%ld <= 0]\n", val);
 

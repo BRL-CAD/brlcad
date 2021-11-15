@@ -121,7 +121,6 @@ process_parts(std::ifstream &infile, int offset, struct dyna_world *world)
     while (std::getline(infile, line) && !end_part) {
 	if (line.c_str()[0] == '$') continue;
 	if (line_cnt == 2 || line.c_str()[0] == '*') {
-	    end_part = 1;
 	    break;
 	}
 	if (line_cnt == 0) {
@@ -180,7 +179,6 @@ process_nodes(std::ifstream &infile, int offset, struct dyna_world *world)
     while (std::getline(infile, line) && !end_nodes) {
 	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
-	    end_nodes = 1;
 	    break;
 	}
 	int i = 0;
@@ -236,14 +234,12 @@ void
 process_element_solid(std::ifstream &infile, int offset, struct dyna_world *world)
 {
     std::string line;
-    int end_es = 0;
     infile.clear();
     infile.seekg(offset);
     char *endptr;
-    while (std::getline(infile, line) && !end_es) {
+    while (std::getline(infile, line)) {
 	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
-	    end_es = 1;
 	    break;
 	}
 	int i = 0;
@@ -327,13 +323,11 @@ void
 process_element_shell(std::ifstream &infile, int offset, struct dyna_world *world)
 {
     std::string line;
-    int end_es = 0;
     infile.clear();
     infile.seekg(offset);
-    while (std::getline(infile, line) && !end_es) {
+    while (std::getline(infile, line)) {
 	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
-	    end_es = 1;
 	    break;
 	}
 	int i = 0;

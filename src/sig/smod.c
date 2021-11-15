@@ -63,8 +63,6 @@ static unsigned char clip_l[BUFLEN];	/* map of values which clip low */
 static int
 get_args(int argc, char *argv[])
 {
-    char *file_name;
-    char hyphen[] = "-";
     int c;
     double d;
 
@@ -115,10 +113,9 @@ get_args(int argc, char *argv[])
     if (bu_optind >= argc) {
 	if (isatty((int)fileno(stdin)))
 	    return 0;
-	file_name = hyphen;
     } else {
 	char *ifname;
-	file_name = argv[bu_optind];
+	char *file_name = argv[bu_optind];
 	ifname = bu_file_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
 	    fprintf(stderr,

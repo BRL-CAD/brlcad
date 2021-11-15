@@ -478,14 +478,12 @@ main(int argc, char *argv[])
 			use_mc?NULL:nmg_booltree_leaf_tess,
 			(void *)&gcvwriter);
 
-    percent = 0;
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100) / regions_tried;
 	if (verbose)
 	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 		   regions_tried, regions_converted, percent);
     }
-    percent = 0;
 
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;

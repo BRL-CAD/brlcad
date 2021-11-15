@@ -156,7 +156,6 @@ main(int argc, char **argv)
 	    usage(argv);
 	    return 1;
 	}
-	file_name = "-";
 	fp = stdin;
 	setmode(fileno(stdin), O_BINARY);
     } else {

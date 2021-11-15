@@ -581,7 +581,6 @@ vert_cmp(struct cell *downp, struct cell *upp, int mem_width)
 	}
 
 	pdv_3line(outfp, start, stop);
-	state = SEEKING_START_PT;
     }
 }
 
