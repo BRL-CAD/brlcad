@@ -1882,7 +1882,7 @@ void
 get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t *mat)
 {
     char *cp = *strp;
-    point_t mpt;
+    point_t mpt = VINIT_ZERO;
     static char buf[BUFSIZ];
 
     RT_CK_DB_INTERNAL(ip);
@@ -2547,9 +2547,13 @@ init_sedit(void)
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
-	Tcl_AppendResult(INTERP, "init_sedit(",
-			 LAST_SOLID(bdata)->d_namep,
-			 "):  solid import failure\n", (char *)NULL);
+	if (bdata->s_fullpath.fp_len > 0) {
+	    Tcl_AppendResult(INTERP, "init_sedit(",
+		    LAST_SOLID(bdata)->d_namep,
+		    "):  solid import failure\n", (char *)NULL);
+	} else {
+	    Tcl_AppendResult(INTERP, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+	}
 	rt_db_free_internal(&es_int);
 	return;				/* FAIL */
     }
@@ -6664,7 +6668,10 @@ sedit(void)
 		struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
 
 		if (inpara != 3) {
-		    bu_log("Must provide x y z"); break; }
+		    bu_log("Must provide x y z");
+		    bu_free(n, "wdb_metaball_pnt n");
+		    break;
+		}
 
 		es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
 		VMOVE(n->coord, es_para);
@@ -7163,14 +7170,13 @@ sedit_abs_scale(void)
 void
 objedit_mouse(const vect_t mousevec)
 {
-    fastf_t scale;
+    fastf_t scale = 1.0;
     vect_t pos_view;	 	/* Unrotated view space pos */
     vect_t pos_model;	/* Rotated screen space pos */
     vect_t tr_temp;		/* temp translation vector */
     vect_t temp;
 
     MAT_IDN(incr_change);
-    scale = 1;
     if (movedir & SARROW) {
 	/* scaling option is in effect */
 	scale = 1.0 + (fastf_t)(mousevec[Y]>0 ?
@@ -7404,9 +7410,13 @@ init_oedit_guts(void)
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
-	Tcl_AppendResult(INTERP, "init_oedit(",
-			 LAST_SOLID(bdata)->d_namep,
-			 "):  solid import failure\n", (char *)NULL);
+	if (bdata->s_fullpath.fp_len > 0) {
+	    Tcl_AppendResult(INTERP, "init_oedit(",
+		    LAST_SOLID(bdata)->d_namep,
+		    "):  solid import failure\n", (char *)NULL);
+	} else {
+	    Tcl_AppendResult(INTERP, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+	}
 	rt_db_free_internal(&es_int);
 	button(BE_REJECT);
 	return;				/* FAIL */
@@ -9111,9 +9121,14 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
     if (rt_db_get_internal(&es_int, LAST_SOLID(bdata),
 			   DBIP, NULL, &rt_uniresource) < 0) {
-	Tcl_AppendResult(interp, "sedit_reset(",
-			 LAST_SOLID(bdata)->d_namep,
-			 "):  solid import failure\n", (char *)NULL);
+	if (bdata->s_fullpath.fp_len > 0) {
+	    Tcl_AppendResult(interp, "sedit_reset(",
+		    LAST_SOLID(bdata)->d_namep,
+		    "):  solid import failure\n", (char *)NULL);
+	} else {
+	    Tcl_AppendResult(interp, "sedit_reset(NULL):  solid import failure\n", (char *)NULL);
+
+	}
 	return TCL_ERROR;				/* FAIL */
     }
     RT_CK_DB_INTERNAL(&es_int);
