@@ -37,40 +37,72 @@
 #include "pc.h"
 #include "raytrace.h"
 
+const char *
+get_all_avs_keys(const struct bu_attribute_value_set *avsp, const char *title)
+{
+    BU_CK_AVS(avsp);
+
+    struct bu_attribute_value_pair *avpp;
+    size_t i;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+
+    if (title)
+    {
+        bu_vls_strcat(&str, title);
+        bu_vls_strcat(&str, "=\"");
+    }
+
+    avpp = avsp->avp;
+    for (i = 0; i < avsp->count; i++, avpp++)
+    {
+        bu_vls_strcat(&str, "        ");
+        bu_vls_strcat(&str, avpp->name ? avpp->name : "NULL");
+        bu_vls_strcat(&str, ":");
+        bu_vls_strcat(&str, avpp->value ? avpp->value : "NULL");
+        bu_vls_strcat(&str, "\n");
+    }
+
+    if (title)
+    {
+        bu_vls_strcat(&str, "\"");
+    }
+
+    const char *attributes = bu_vls_strgrab(&str);
+
+    return attributes;
+}
 
 /**
  * Free the storage associated with the rt_db_internal version of
  * material object.
  */
-void
-rt_material_ifree(struct rt_db_internal *ip)
+void rt_material_ifree(struct rt_db_internal *ip)
 {
     register struct rt_material_internal *material;
 
     RT_CK_DB_INTERNAL(ip);
     material = (struct rt_material_internal *)ip->idb_ptr;
 
-    if (material) {
-	material->magic = 0;			/* sanity */
-	bu_vls_free(&material->name);
-    bu_vls_free(&material->parent);
-    bu_vls_free(&material->source);
+    if (material)
+    {
+        material->magic = 0; /* sanity */
+        bu_vls_free(&material->name);
+        bu_vls_free(&material->parent);
+        bu_vls_free(&material->source);
 
-    bu_avs_free(&material->physicalProperties);
-    bu_avs_free(&material->mechanicalProperties);
-    bu_avs_free(&material->opticalProperties);
-    bu_avs_free(&material->thermalProperties);
-	bu_free((void *)material, "material ifree");
+        bu_avs_free(&material->physicalProperties);
+        bu_avs_free(&material->mechanicalProperties);
+        bu_avs_free(&material->opticalProperties);
+        bu_avs_free(&material->thermalProperties);
+        bu_free((void *)material, "material ifree");
     }
-    ip->idb_ptr = ((void *)0);	/* sanity */
+    ip->idb_ptr = ((void *)0); /* sanity */
 }
-
 
 /**
  * Import a material from the database format to the internal format.
  */
-int
-rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *UNUSED(dbip))
+int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *UNUSED(dbip))
 {
     struct rt_material_internal *material_ip;
 
@@ -122,9 +154,12 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     physical_ep.ext_nbytes = size;
     physical_ep.ext_buf = cp;
-    if (size > 0) {
+    if (size > 0)
+    {
         db5_import_attributes(&material_ip->physicalProperties, &physical_ep);
-    } else {
+    }
+    else
+    {
         bu_avs_init_empty(&material_ip->physicalProperties);
     }
     cp += size;
@@ -135,9 +170,12 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     mechanical_ep.ext_nbytes = size;
     mechanical_ep.ext_buf = cp;
-    if (size > 0) {
+    if (size > 0)
+    {
         db5_import_attributes(&material_ip->mechanicalProperties, &mechanical_ep);
-    } else {
+    }
+    else
+    {
         bu_avs_init_empty(&material_ip->mechanicalProperties);
     }
     cp += size;
@@ -148,9 +186,12 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     optical_ep.ext_nbytes = size;
     optical_ep.ext_buf = cp;
-    if (size > 0) {
+    if (size > 0)
+    {
         db5_import_attributes(&material_ip->opticalProperties, &optical_ep);
-    } else {
+    }
+    else
+    {
         bu_avs_init_empty(&material_ip->opticalProperties);
     }
     cp += size;
@@ -161,27 +202,29 @@ rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     thermal_ep.ext_nbytes = size;
     thermal_ep.ext_buf = cp;
-    if (size > 0) {
+    if (size > 0)
+    {
         db5_import_attributes(&material_ip->thermalProperties, &thermal_ep);
-    } else {
+    }
+    else
+    {
         bu_avs_init_empty(&material_ip->thermalProperties);
     }
     cp += size;
 
-    return 0;			/* OK */
+    return 0; /* OK */
 }
-
 
 /**
  * Export a material from the internal format to the database format.
  */
-int
-rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *UNUSED(dbip))
+int rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *UNUSED(dbip))
 {
     struct rt_material_internal *material_ip;
     RT_CK_DB_INTERNAL(ip);
 
-    if (ip->idb_type != ID_MATERIAL) bu_bomb("rt_material_export() type not ID_MATERIAL");
+    if (ip->idb_type != ID_MATERIAL)
+        bu_bomb("rt_material_export() type not ID_MATERIAL");
     material_ip = (struct rt_material_internal *)ip->idb_ptr;
 
     struct bu_vls name = BU_VLS_INIT_ZERO;
@@ -201,14 +244,7 @@ rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     db5_export_attributes(&thermal_ep, &material_ip->thermalProperties);
 
     // initialize entire buffer
-    ep->ext_nbytes = bu_vls_strlen(&material_ip->name) + 1
-                        + bu_vls_strlen(&material_ip->parent) + 1
-                        + bu_vls_strlen(&material_ip->source) + 1
-                        + (4 * SIZEOF_NETWORK_LONG)
-                        + physical_ep.ext_nbytes
-                        + mechanical_ep.ext_nbytes
-                        + optical_ep.ext_nbytes
-                        + thermal_ep.ext_nbytes;
+    ep->ext_nbytes = bu_vls_strlen(&material_ip->name) + 1 + bu_vls_strlen(&material_ip->parent) + 1 + bu_vls_strlen(&material_ip->source) + 1 + (4 * SIZEOF_NETWORK_LONG) + physical_ep.ext_nbytes + mechanical_ep.ext_nbytes + optical_ep.ext_nbytes + thermal_ep.ext_nbytes;
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "material external");
     unsigned char *cp = ep->ext_buf;
 
@@ -234,31 +270,31 @@ rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     *(uint32_t *)cp = htonl(physical_ep.ext_nbytes);
     cp += SIZEOF_NETWORK_LONG;
     memcpy(cp, physical_ep.ext_buf, physical_ep.ext_nbytes);
-	cp += physical_ep.ext_nbytes;
+    cp += physical_ep.ext_nbytes;
     bu_free_external(&physical_ep);
 
     // copy mechanical properties
     *(uint32_t *)cp = htonl(mechanical_ep.ext_nbytes);
     cp += SIZEOF_NETWORK_LONG;
     memcpy(cp, mechanical_ep.ext_buf, mechanical_ep.ext_nbytes);
-	cp += mechanical_ep.ext_nbytes;
+    cp += mechanical_ep.ext_nbytes;
     bu_free_external(&mechanical_ep);
 
     // copy optical properties
     *(uint32_t *)cp = htonl(optical_ep.ext_nbytes);
     cp += SIZEOF_NETWORK_LONG;
     memcpy(cp, optical_ep.ext_buf, optical_ep.ext_nbytes);
-	cp += optical_ep.ext_nbytes;
+    cp += optical_ep.ext_nbytes;
     bu_free_external(&optical_ep);
 
     // copy thermal properties
     *(uint32_t *)cp = htonl(thermal_ep.ext_nbytes);
     cp += SIZEOF_NETWORK_LONG;
     memcpy(cp, thermal_ep.ext_buf, thermal_ep.ext_nbytes);
-	cp += thermal_ep.ext_nbytes;
+    cp += thermal_ep.ext_nbytes;
     bu_free_external(&thermal_ep);
 
-    return 0;	/* OK */
+    return 0; /* OK */
 }
 
 /**
@@ -266,8 +302,7 @@ rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
  * line describes type of object.  Additional lines are indented one
  * tab, and give parameter values.
  */
-int
-rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
+int rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     register struct rt_material_internal *material_ip = (struct rt_material_internal *)ip->idb_ptr;
 
@@ -276,32 +311,32 @@ rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
     struct bu_vls buf = BU_VLS_INIT_ZERO;
     bu_vls_strcat(str, "material (MATERIAL)\n");
 
-    bu_vls_printf(&buf, "\tName: %s\n", material_ip->name.vls_str);
-    bu_vls_printf(&buf, "\tParent: %s\n", material_ip->parent.vls_str);
-    bu_vls_printf(&buf, "\tSource: %s\n", material_ip->source.vls_str);
+    bu_vls_printf(&buf, "    name: %s\n", material_ip->name.vls_str);
+    bu_vls_printf(&buf, "    parent: %s\n", material_ip->parent.vls_str);
+    bu_vls_printf(&buf, "    source: %s\n", material_ip->source.vls_str);
 
-    if (!verbose) {
+    if (!verbose)
+    {
         bu_vls_vlscat(str, &buf);
         bu_vls_free(&buf);
         return 0;
     }
 
-    const char *physicalProperties = bu_avs_get_all(&material_ip->physicalProperties, NULL);
-    const char *mechanicalProperties = bu_avs_get_all(&material_ip->mechanicalProperties, NULL);
-    const char *opticalProperties = bu_avs_get_all(&material_ip->opticalProperties, NULL);
-    const char *thermalProperties = bu_avs_get_all(&material_ip->thermalProperties, NULL);
+    const char *physicalProperties = get_all_avs_keys(&material_ip->physicalProperties, NULL);
+    const char *mechanicalProperties = get_all_avs_keys(&material_ip->mechanicalProperties, NULL);
+    const char *opticalProperties = get_all_avs_keys(&material_ip->opticalProperties, NULL);
+    const char *thermalProperties = get_all_avs_keys(&material_ip->thermalProperties, NULL);
 
-    bu_vls_printf(&buf, "\tphysicalProperties: \n%s", physicalProperties);
-    bu_vls_printf(&buf, "\tmechanicalProperties: \n%s", mechanicalProperties);
-    bu_vls_printf(&buf, "\topticalProperties: \n%s", opticalProperties);
-    bu_vls_printf(&buf, "\tthermalProperties: \n%s", thermalProperties);
+    bu_vls_printf(&buf, "    physical properties\n%s", physicalProperties);
+    bu_vls_printf(&buf, "    mechanical properties\n%s", mechanicalProperties);
+    bu_vls_printf(&buf, "    optical properties\n%s", opticalProperties);
+    bu_vls_printf(&buf, "    thermal properties\n%s", thermalProperties);
 
     bu_vls_vlscat(str, &buf);
     bu_vls_free(&buf);
 
     return 0;
 }
-
 
 /** @} */
 /*
