@@ -74,12 +74,13 @@ get_material_cmd(const char* arg)
 // Routine handles the import of a density table
 int import_materials(struct ged *gedp, int argc, const char *argv[]){
     const char* fileName;
-
-    fileName = argv[2];
-
-    if (argc > 3){
+    const char* flag;
+    if (argc < 3){
         bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
     }
+
+    flag = argv[2];
+    fileName = argv[3];
 
     FILE *densityTable = fopen(fileName, "r");
 	if(densityTable != NULL){
@@ -97,19 +98,37 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
 				buffer[strlen(buffer)-1] = '\0';
                 buffer[strlen(buffer)-1] = '\0';
 			}
-            char* num __attribute__((unused))= strtok(buffer, "\t");
+            char* num = strtok(buffer, "\t");
 			char* material_name = strtok(NULL, "\t");
 			char* density = strtok(NULL, "\t");
-			(void)bu_avs_add(&physicalProperties, material_name, density);
-            mk_material(gedp->ged_wdbp,
-                material_name,
-                material_name,
-                "",
-                "",
-                &physicalProperties,
-                &mechanicalProperties,
-                &opticalProperties,
-                &thermalProperties);
+			(void)bu_avs_add(&physicalProperties, "density", density);
+            (void)bu_avs_add(&physicalProperties, "id", num);
+            if(strcmp("--asid", flag)==0){
+                char mat_with_id[40];
+                strcat(mat_with_id, "matl");
+                strcat(mat_with_id, num);
+                mk_material(gedp->ged_wdbp,
+                    mat_with_id,
+                    material_name,
+                    "",
+                    "",
+                    &physicalProperties,
+                    &mechanicalProperties,
+                    &opticalProperties,
+                    &thermalProperties);
+                memset(mat_with_id, 0x00, 40);
+            }
+            else{
+                mk_material(gedp->ged_wdbp,
+                    material_name,
+                    material_name,
+                    "",
+                    "",
+                    &physicalProperties,
+                    &mechanicalProperties,
+                    &opticalProperties,
+                    &thermalProperties);
+            }
             memset(buffer, 0x00, 256);
 		}
 	}
