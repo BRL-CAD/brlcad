@@ -414,6 +414,7 @@ int get_material(struct ged *gedp, int argc, const char *argv[]){
                 print_avs_value(gedp, &material->thermalProperties, argv[4], argv[3]);
             } else {
                 bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
+                return GED_ERROR;
             }
         }
     } else {
@@ -422,6 +423,77 @@ int get_material(struct ged *gedp, int argc, const char *argv[]){
     }
 
     return GED_OK;
+}
+
+// Routine handles the setting of a material property to a value
+int set_material(struct ged *gedp, int argc, const char *argv[]){
+    struct directory *dp;
+    struct rt_db_internal intern;
+
+    if (argc < 5){
+        bu_vls_printf(gedp->ged_result_str, "you must provide at least five arguments.");
+        return GED_ERROR;
+    }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
+        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+
+        struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
+
+        if (BU_STR_EQUAL(argv[3], "name")){
+            BU_VLS_INIT(&material->name);
+            bu_vls_strcpy(&material->name, argv[4]);
+        } else if (BU_STR_EQUAL(argv[3], "parent")) {
+            BU_VLS_INIT(&material->parent);
+            bu_vls_strcpy(&material->parent, argv[4]);
+        } else if (BU_STR_EQUAL(argv[3], "source")) {
+            BU_VLS_INIT(&material->source);
+            bu_vls_strcpy(&material->source, argv[4]);
+        } else {
+            if (argc == 4){
+                bu_vls_printf(gedp->ged_result_str, "the property you requested: %s, could not be found.", argv[3]);
+                return GED_ERROR;
+            } else if (BU_STR_EQUAL(argv[3], "physical")) {
+                if (bu_avs_get(&material->physicalProperties, argv[4]) != NULL) {
+                    bu_avs_remove(&material->physicalProperties, argv[4]);
+                }
+                
+                bu_avs_add(&material->physicalProperties, argv[4], argv[5]);
+
+            }  else if (BU_STR_EQUAL(argv[3], "mechanical")) {
+                if (bu_avs_get(&material->mechanicalProperties, argv[4]) != NULL) {
+                    bu_avs_remove(&material->mechanicalProperties, argv[4]);
+                }
+                
+                bu_avs_add(&material->mechanicalProperties, argv[4], argv[5]);
+            } else if (BU_STR_EQUAL(argv[3], "optical")) {
+                if (bu_avs_get(&material->opticalProperties, argv[4]) != NULL) {
+                    bu_avs_remove(&material->opticalProperties, argv[4]);
+                }
+                
+                bu_avs_add(&material->opticalProperties, argv[4], argv[5]);
+            } else if (BU_STR_EQUAL(argv[3], "thermal")) {
+                if (bu_avs_get(&material->thermalProperties, argv[4]) != NULL) {
+                    bu_avs_remove(&material->thermalProperties, argv[4]);
+                }
+                
+                bu_avs_add(&material->thermalProperties, argv[4], argv[5]);
+            } else {
+                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
+                return GED_ERROR;
+            }
+        }
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[2]);
+        return GED_ERROR;
+    }
+
+    return wdb_put_internal(gedp->ged_wdbp, argv[2], &intern, mk_conv2mm);
 }
 
 int
@@ -456,7 +528,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
         get_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_SET) {
         // set routine
-        bu_vls_printf(gedp->ged_result_str, "Trying: set");
+        set_material(gedp, argc, argv);
     } else {
         bu_vls_printf(gedp->ged_result_str, "Error: %s is not a valid subcommand.\n", argv[1]);
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
