@@ -44,7 +44,20 @@ typedef enum {
     ATTR_UNKNOWN
 } material_cmd_t;
 
-static const char *usage = " [create] [destroy] [get] [import] [set] [options] object [args] \n";
+static const char *usage = " [-h] \n\n"
+    "material create {objectName} {materialName} [parentName] [source] [[physicalProperties] . [mechanicalProperties] . [opticalProperties] . [thermalProperties] .]\n\n"
+    "material destroy {object}\n\n"
+    "material import {fileName} [--asid {materialId} ]\n"
+    "material import {fileName} [--asname {materialName} ]\n\n"
+    "material get {object} {propertyName}\n"
+    "material get {object} {propertyGroupName} {propertyName}\n\n"
+    "material set [-r] {object} {propertyName} [newPropertyValue]\n"
+    "material set [-r] {object} {propertyGroupName} {propertyName} [newPropertyValue]\n\n"
+    "- h          - Prints this help message.\n\n"
+    "--asid         - Specifies the id the material will be imported with\n\n"
+    "--asname  - Specifies the name the material will be imported with\n\n"
+    "- r         - Removes a property from the object. (In the case of name, source, parent it merely sets the value to null.\n\n"
+    "* Property arguments passed to the material commands are case sensitive.";
 
 HIDDEN material_cmd_t
 get_material_cmd(const char* arg)
