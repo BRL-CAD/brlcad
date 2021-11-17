@@ -210,7 +210,6 @@ int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     {
         bu_avs_init_empty(&material_ip->thermalProperties);
     }
-    cp += size;
 
     return 0; /* OK */
 }
@@ -291,7 +290,6 @@ int rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip,
     *(uint32_t *)cp = htonl(thermal_ep.ext_nbytes);
     cp += SIZEOF_NETWORK_LONG;
     memcpy(cp, thermal_ep.ext_buf, thermal_ep.ext_nbytes);
-    cp += thermal_ep.ext_nbytes;
     bu_free_external(&thermal_ep);
 
     return 0; /* OK */
