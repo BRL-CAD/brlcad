@@ -303,6 +303,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (curtree->tr_op == OP_NOP)
 	return curtree;
 
+    if (pathp->fp_len <= 0)
+	return curtree;
+
     regions_tried++;
 
     ret_tree = process_boolean(curtree, tsp, pathp);
@@ -314,7 +317,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     regions_done++;
 
-    if (r && !no_file_output)  {
+    if (r && !no_file_output) {
 	FILE	*fp_psurf;
 	size_t	i;
 	struct bu_vls	file_base = BU_VLS_INIT_ZERO;
@@ -397,10 +400,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	}
 	bu_vls_free(&file_base);
     }
-    if (no_file_output)  {
-	if (verbose) bu_log("*** Completed %s\n",
-			    DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-    }
+
+    if (no_file_output && verbose)
+	bu_log("*** Completed %s\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 
     /*
      *  Dispose of original tree, so that all associated dynamic
