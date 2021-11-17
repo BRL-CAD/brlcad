@@ -2849,6 +2849,7 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
     path_line.to = extrusion_endpnt;
     ON_3dVector path_vector = path_line.Direction();
     if (path_vector.IsZero()) {
+	delete l;
 	return false;
     }
 
@@ -2861,6 +2862,7 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
     sum_srf = new ON_SumSurface();
 
     if (!sum_srf) {
+	delete l;
 	return false;
     }
     sum_srf->m_curve[0] = srf_base_curve;
