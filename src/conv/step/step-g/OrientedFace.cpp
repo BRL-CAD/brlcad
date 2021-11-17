@@ -80,6 +80,8 @@ OrientedFace::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		return false;
 	    }
 	} else {
+	    std::cout << CLASSNAME << ":Error unable to find face_element entity attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
