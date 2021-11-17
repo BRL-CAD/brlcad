@@ -781,6 +781,9 @@ finish:
 	if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_MATERIAL_ID))) != NULL) {
 	    comb->GIFTmater = atol(ap);
 	}
+	if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_MATERIAL_NAME))) != NULL) {
+	    bu_vls_strcpy(&comb->material, ap);
+	}
 	if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_LOS))) != NULL) {
 	    comb->los = atol(ap);
 	}
