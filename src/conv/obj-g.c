@@ -1935,6 +1935,9 @@ remove_duplicates_and_sort(size_t **list, size_t *count)
     size_t unique_count = 0;
     size_t *unique_arr = (size_t *)NULL;
 
+    if (!list || !(*list) || !count || !(*count))
+	return;
+
     bu_sort(*list, *count, sizeof(size_t), comp_b_sort, NULL);
 
     /* process list, count sorted and unique list elements */
