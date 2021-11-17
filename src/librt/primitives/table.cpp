@@ -117,6 +117,7 @@ RT_DECLARE_INTERFACE(metaball);
 RT_DECLARE_INTERFACE(hyp);
 RT_DECLARE_INTERFACE(revolve);
 RT_DECLARE_INTERFACE(constraint);
+RT_DECLARE_INTERFACE(material);
 /* RT_DECLARE_INTERFACE(binunif); */
 RT_DECLARE_INTERFACE(pnts);
 RT_DECLARE_INTERFACE(hrt);
@@ -2362,6 +2363,53 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FORM_CAST(rt_script_form), 
 	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_script_params), 
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL, /* serialize */
+	NULL  /* label */
+    },
+
+    {
+	/* 46 */
+	RT_FUNCTAB_MAGIC, "ID_MATERIAL", "material",
+	0, /* ft_use_rpp */
+	NULL, /* prep */
+	NULL, /* shot */
+	NULL, /* print */
+	NULL, /* norm */
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	NULL, /* uv */
+	NULL, /* curve */
+	NULL, /* classify */
+	NULL, /* free */
+	NULL, /* plot */
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
+	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_material_import5),
+	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_material_export5),
+	NULL, /* import4 */
+	NULL, /* export4 */
+	RTFUNCTAB_FUNC_IFREE_CAST(rt_material_ifree),
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_material_describe),
+	NULL, /* xform */
+	NULL, /* parse */
+	0, /* sizeof(internal) */
+	0, /* magic */
+	NULL, /* get */
+	NULL, /* adjust */
+	NULL, /* form */
+	NULL, /* make */
+	NULL, /* params */
 	NULL, /* bbox */
 	NULL, /* volume */
 	NULL, /* surf_area */
