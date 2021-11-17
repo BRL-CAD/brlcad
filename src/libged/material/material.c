@@ -48,14 +48,23 @@ typedef enum {
 static const char *usage = " help \n\n"
     "material create {objectName} {materialName}\n\n"
     "material destroy {object}\n\n"
-    "material import {fileName} [-id {materialId} ]  [--name {materialName} ]\n\n"
+    "material import {fileName} [-id {materialId}]  [--name {materialName}]\n\n"
     "material get {object} [propertyGroupName] {propertyName}\n\n"
     "material set [-r] {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
-    "--id                 - Specifies the id the material will be imported with\n\n"
-    "--name               - Specifies the name the material will be imported with\n\n"
-    "- r                  - Removes a property from the object. (In the case of name, source, parent it merely sets the value to null.\n\n"
-    "[propertyGroupName]  - is one of the following groups of properties: physical, mechanical, optical, thermal.\n\n"
+    "--id       - Specifies the id the material will be imported with\n\n"
+    "--name     - Specifies the name the material will be imported with\n\n"
+    "- r        - Removes a property from the object. (In the case of name, source, parent it merely sets the value to null.)\n\n"
     "* Property arguments passed to the material commands are case sensitive.";
+
+static const char *possibleProperties = "The following are properties of material objects that can be set/modified: \n"
+    "- name\n"
+    "- source\n"
+    "- parent\n\n"
+    "The following are property groups (utilizable in [propertyGroupName] for materials): \n"
+    "- physical\n"
+    "- mechanical\n"
+    "- optical\n"
+    "- thermal\n";
 
 HIDDEN material_cmd_t
 get_material_cmd(const char* arg)
@@ -405,7 +414,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* incorrect arguments */
-    if (argc < 3) {
+    if (argc < 2) {
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
         return GED_HELP;
     }
@@ -425,7 +434,8 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
         // get routine
         get_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_HELP) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n\n", argv[0], usage);
+        bu_vls_printf(gedp->ged_result_str, "%s", possibleProperties);
     } 
     else if (scmd == MATERIAL_SET) {
         // set routine
