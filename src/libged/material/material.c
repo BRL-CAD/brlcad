@@ -39,35 +39,34 @@ typedef enum {
     MATERIAL_CREATE,
     MATERIAL_DESTROY,
     MATERIAL_GET,
+    MATERIAL_HELP,
     MATERIAL_IMPORT,
     MATERIAL_SET,
     ATTR_UNKNOWN
 } material_cmd_t;
 
-static const char *usage = " [-h] \n\n"
-    "material create {objectName} {materialName} [parentName] [source] [[physicalProperties] . [mechanicalProperties] . [opticalProperties] . [thermalProperties] .]\n\n"
+static const char *usage = " help \n\n"
+    "material create {objectName} {materialName}\n\n"
     "material destroy {object}\n\n"
-    "material import {fileName} [--asid {materialId} ]\n"
-    "material import {fileName} [--asname {materialName} ]\n\n"
-    "material get {object} {propertyName}\n"
-    "material get {object} {propertyGroupName} {propertyName}\n\n"
-    "material set [-r] {object} {propertyName} [newPropertyValue]\n"
-    "material set [-r] {object} {propertyGroupName} {propertyName} [newPropertyValue]\n\n"
-    "- h         - Prints this help message.\n\n"
-    "--asid      - Specifies the id the material will be imported with\n\n"
-    "--asname    - Specifies the name the material will be imported with\n\n"
-    "- r         - Removes a property from the object. (In the case of name, source, parent it merely sets the value to null.\n\n"
+    "material import {fileName} [-id {materialId} ]  [--name {materialName} ]\n\n"
+    "material get {object} [propertyGroupName] {propertyName}\n\n"
+    "material set [-r] {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
+    "--id                 - Specifies the id the material will be imported with\n\n"
+    "--name               - Specifies the name the material will be imported with\n\n"
+    "- r                  - Removes a property from the object. (In the case of name, source, parent it merely sets the value to null.\n\n"
+    "[propertyGroupName]  - is one of the following groups of properties: physical, mechanical, optical, thermal.\n\n"
     "* Property arguments passed to the material commands are case sensitive.";
 
 HIDDEN material_cmd_t
 get_material_cmd(const char* arg)
 {
     /* sub-commands */
-    const char CREATE[] = "create";
-    const char DESTROY[]   = "destroy";
-    const char GET[]    = "get";
-    const char IMPORT[] = "import";
-    const char SET[]    = "set";
+    const char CREATE[]   = "create";
+    const char DESTROY[]  = "destroy";
+    const char GET[]      = "get";
+    const char HELP[]     = "help";
+    const char IMPORT[]   = "import";
+    const char SET[]      = "set";
 
     /* alphabetical order */
     if (BU_STR_EQUIV(CREATE, arg))
@@ -78,6 +77,8 @@ get_material_cmd(const char* arg)
 	return MATERIAL_SET;
     else if (BU_STR_EQUIV(GET, arg))
 	return MATERIAL_GET;
+    else if (BU_STR_EQUIV(HELP, arg))
+    return MATERIAL_HELP;
     else if (BU_STR_EQUIV(IMPORT, arg))
     return MATERIAL_IMPORT;
     else
@@ -423,7 +424,10 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     } else if (scmd == MATERIAL_GET) {
         // get routine
         get_material(gedp, argc, argv);
-    } else if (scmd == MATERIAL_SET) {
+    } else if (scmd == MATERIAL_HELP) {
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    } 
+    else if (scmd == MATERIAL_SET) {
         // set routine
         set_material(gedp, argc, argv);
     } else {
