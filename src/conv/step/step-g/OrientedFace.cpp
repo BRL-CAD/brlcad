@@ -79,6 +79,8 @@ OrientedFace::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
+	} else {
+	    return false;
 	}
     }
 
