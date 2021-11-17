@@ -35,7 +35,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   # CREO Definitions (see example nmake file in your CREO install to
   # double check these and modify if needed)
-  set(CREO_DEFS "-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK71_")
+  set(CREO_DEFS "-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V110_SDK71_")
 
   # BRL-CAD definitions
   set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS -DNMG_DLL_IMPORTS -DBG_DLL_IMPORTS -DBREP_DLL_IMPORTS -DRT_DLL_IMPORTS -DWDB_DLL_IMPORTS -DTIE_DLL_IMPORTS -DDB5_DLL_IMPORTS -DON_DLL_IMPORTS")
@@ -48,10 +48,10 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   # User must locate CREO and BRL-CAD
   if(NOT DEFINED BRLCAD_ROOT_DIR)
-    set(BRLCAD_ROOT_DIR "C:/Program Files/BRLCAD X.XX.X" CACHE PATH "BRL-CAD root directory")
+    set(BRLCAD_ROOT_DIR "C:/Workspace/BRL-CAD/Source/Build/x64-Release" CACHE PATH "BRL-CAD root directory")
   endif(NOT DEFINED BRLCAD_ROOT_DIR)
   if(NOT DEFINED CREO_ROOT_DIR)
-    set(CREO_ROOT_DIR "C:/Program Files/PTC/Creo XXX" CACHE PATH "CREO root directory")
+    set(CREO_ROOT_DIR "C:/Program Files/PTC/Creo 6.0.5.1" CACHE PATH "CREO root directory")
   endif(NOT DEFINED CREO_ROOT_DIR)
 
   # If paths haven't been set, hault configure immediately so the user
@@ -89,10 +89,10 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO_OS_VERSION x86e_win64)
 
   # Unlocker script
-  set(CREO_PTK_UNLOCKER "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/protk_unlock.bat")
+  set(CREO_PTK_UNLOCKER "${CREO_ROOT_DIR}/Parametric/bin/protk_unlock.bat")
 
   # CREO libraries
-  set(CREO_LIB_PATH "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/${CREO_OS_VERSION}/obj/")
+  set(CREO_LIB_PATH "${CREO_ROOT_DIR}/Common Files/protoolkit/${CREO_OS_VERSION}/obj/")
   find_file(CREO_PTK_DLL_LIBS NAMES "protk_dll_NU.lib" "protk_dll.lib" PATHS "${CREO_LIB_PATH}")
   find_file(CREO_PTK_EXE_LIBS NAMES "protoolkit_NU.lib" "protoolkit.lib" PATHS "${CREO_LIB_PATH}")
 
@@ -105,8 +105,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   endforeach(libname "ucore.lib" "udata.lib")
 
   # CREO include directories
-  set(CREO_PTK_INCDIR "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/includes")
-  set(CREO_PTK_APPLS_INCDIR "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/protk_appls/includes")
+  set(CREO_PTK_INCDIR "${CREO_ROOT_DIR}/Common Files/protoolkit/includes")
+  set(CREO_PTK_APPLS_INCDIR "${CREO_ROOT_DIR}/Common Files/protoolkit/protk_appls/includes")
 
 
   # Check that the expected directories and files in the CREO installation
@@ -142,10 +142,10 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     CREO_DAT_DIR
     )
   foreach(reqpath ${CREO_REQUIRED_PATHS_REL})
-    if(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${${reqpath}}")
+    if(NOT EXISTS "${CREO_ROOT_DIR}/${${reqpath}}")
       set(have_creo_paths 0)
-      message(WARNING "Required CREO path variable ${reqpath} contains ${${reqpath}}, which is not found at ${CREO_ROOT_DIR}/${MDIR}/${${reqpath}} - update ${reqpath} to reflect the correct path for this installation of CREO.")
-    endif(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${${reqpath}}")
+      message(WARNING "Required CREO path variable ${reqpath} contains ${${reqpath}}, which is not found at ${CREO_ROOT_DIR}/${${reqpath}} - update ${reqpath} to reflect the correct path for this installation of CREO.")
+    endif(NOT EXISTS "${CREO_ROOT_DIR}/${${reqpath}}")
   endforeach(reqpath ${CREO_REQUIRED_PATHS_REL})
 
   if(NOT have_creo_paths)
@@ -161,8 +161,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # prior to distribution in any case.)  Since it is not always needed,
   # we will check and print a warning to alert developers but will not
   # hault the configure process.
-  if(EXISTS "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/parametric.psf")
-    file(STRINGS "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/parametric.psf" psf_strs)
+  if(EXISTS "${CREO_ROOT_DIR}/Parametric/bin/parametric.psf")
+    file(STRINGS "${CREO_ROOT_DIR}/Parametric/bin/parametric.psf" psf_strs)
     foreach(pstr ${psf_strs})
       if("${pstr}" MATCHES ".*CREOPMA_FEATURE_NAME.*")
 	set(CFN_STR "${pstr}")
@@ -170,11 +170,11 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 	string(REGEX REPLACE "[)].*" "" CFN_STR "${CFN_STR}")
 	string(STRIP "${CFN_STR}" CFN_STR)
 	if("${CFN_STR}" STREQUAL "")
-	  message(WARNING "The CREOPMA_FEATURE_NAME variable in ${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/parametric.psf has no arguments.  This means it is not set up to load a Pro/Toolkit license when started, and the plugin built by this project must be unlocked before it can be tested.  See https://www.ptcusercommunity.com/message/399253#399253 for more info.  This is a concern only for developers wanting to do iterative development without repeating the unlock step every time.  If you are only looking to compile and use the plugin, this warning may be safely ignored as long as the UNLOCK step is performed.")
+	  message(WARNING "The CREOPMA_FEATURE_NAME variable in ${CREO_ROOT_DIR}/Parametric/bin/parametric.psf has no arguments.  This means it is not set up to load a Pro/Toolkit license when started, and the plugin built by this project must be unlocked before it can be tested.  See https://www.ptcusercommunity.com/message/399253#399253 for more info.  This is a concern only for developers wanting to do iterative development without repeating the unlock step every time.  If you are only looking to compile and use the plugin, this warning may be safely ignored as long as the UNLOCK step is performed.")
 	endif("${CFN_STR}" STREQUAL "")
       endif("${pstr}" MATCHES ".*CREOPMA_FEATURE_NAME.*")
     endforeach(pstr ${psf_strs})
-  endif(EXISTS "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/parametric.psf")
+  endif(EXISTS "${CREO_ROOT_DIR}/Parametric/bin/parametric.psf")
 
 
   # Win32 libraries
@@ -210,7 +210,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     openNURBS
     poly2tri
     regex_brl
-    z_brl1
+    z_brl
     )
   set(BRLCAD_STATIC_LIBS)
   set(brlcadlibs_notinstalled)
@@ -221,18 +221,18 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     configure_file(${BRLCAD_ROOT_DIR}/bin/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
     # Sigh - zlib doesn't follow the general pattern
-    if("${blib}" STREQUAL "z_brl1")
+    if("${blib}" STREQUAL "z_brl")
       set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/z_brl.lib")
-    else("${blib}" STREQUAL "z_brl1")
+    else("${blib}" STREQUAL "z_brl")
       set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_ROOT_DIR}/lib/${blib}.lib")
-    endif("${blib}" STREQUAL "z_brl1")
+    endif("${blib}" STREQUAL "z_brl")
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll DESTINATION "${MDIR}/${CREO_OBJ_DIR}")
-    if(NOT EXISTS ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/${blib}.dll)
+    if(NOT EXISTS ${CREO_ROOT_DIR}/${CREO_OBJ_DIR}/${blib}.dll)
       set(brlcadlibs_notinstalled "${brlcadlibs_notinstalled}\n     ${blib}.dll")
-    endif(NOT EXISTS ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/${blib}.dll)
+    endif(NOT EXISTS ${CREO_ROOT_DIR}/${CREO_OBJ_DIR}/${blib}.dll)
   endforeach(blib ${BRLCAD_LIBS})
   if(brlcadlibs_notinstalled)
-    message("Note: The following BRL-CAD dll(s) is/are not present in ${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}:\n${brlcadlibs_notinstalled}\n\nBe aware that attempting to load the DLL version of the plugin without these files in place will\ncause the loading process to silently fail: *NO* messages indicating why the loading failed will\nbe generated.  Be sure to run the INSTALL command after building but before testing.\n")
+    message("Note: The following BRL-CAD dll(s) is/are not present in ${CREO_ROOT_DIR}/${CREO_OBJ_DIR}:\n${brlcadlibs_notinstalled}\n\nBe aware that attempting to load the DLL version of the plugin without these files in place will\ncause the loading process to silently fail: *NO* messages indicating why the loading failed will\nbe generated.  Be sure to run the INSTALL command after building but before testing.\n")
   endif(brlcadlibs_notinstalled)
 
 
@@ -271,8 +271,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     RUNTIME DESTINATION "${MDIR}/${CREO_OBJ_DIR}"
     )
   set(DAT_STARTUP "dll")
-  set(DAT_EXEC_FILE "${CREO_ROOT_DIR}/${MDIR}/${CREO_OBJ_DIR}/creo-brl.dll")
-  set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
+  set(DAT_EXEC_FILE "${CREO_ROOT_DIR}/${CREO_OBJ_DIR}/creo-brl.dll")
+  set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${CREO_MSG_DIR}")
   configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat DESTINATION "${MDIR}/${CREO_DAT_DIR}")
 
@@ -288,7 +288,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
       set(DAT_STARTUP "spawn")
       set(DAT_EXEC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-exe.exe")
-      set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
+      set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${CREO_MSG_DIR}")
       configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-debug.dat @ONLY)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
@@ -300,20 +300,20 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   foreach(rfile ${RESOURCE_FILES})
     install(FILES ${rfile} DESTINATION "${MDIR}/${CREO_RESOURCE_DIR}")
     get_filename_component(rfilename "${rfile}" NAME)
-    if(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${CREO_RESOURCE_DIR}/${rfilename}")
+    if(NOT EXISTS "${CREO_ROOT_DIR}/${CREO_RESOURCE_DIR}/${rfilename}")
       set(rfiles_installed 0)
-    endif(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${CREO_RESOURCE_DIR}/${rfilename}")
+    endif(NOT EXISTS "${CREO_ROOT_DIR}/${CREO_RESOURCE_DIR}/${rfilename}")
   endforeach(rfile ${RESOURCE_FILES})
 
   # Install the messages file
   install(FILES resources/creo-brl-msg.txt DESTINATION "${MDIR}/${CREO_MSG_DIR}")
 
-  if(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}/creo-brl-msg.txt" OR NOT rfiles_installed)
+  if(NOT EXISTS "${CREO_ROOT_DIR}/${CREO_MSG_DIR}/creo-brl-msg.txt" OR NOT rfiles_installed)
     message("\nNote that even with the exe version of the plugin, the resource files\nmust be present in the correct locations within the CREO tree in order\nto successfully run the plugin.  Be sure to run the INSTALL target\nbefore starting a testing session.\n")
-  endif(NOT EXISTS "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}/creo-brl-msg.txt" OR NOT rfiles_installed)
+  endif(NOT EXISTS "${CREO_ROOT_DIR}/${CREO_MSG_DIR}/creo-brl-msg.txt" OR NOT rfiles_installed)
 
   add_custom_target(UNLOCK
-    COMMAND "${CREO_PTK_UNLOCKER}" ${CMAKE_CURRENT_BINARY_DIR}/$(Configuration)/creo-brl.dll
+    COMMAND "${CREO_PTK_UNLOCKER}" ${CMAKE_CURRENT_BINARY_DIR}/${Configuration}/creo-brl.dll
     DEPENDS creo-brl
     COMMENT "Unlocking CREO-G dll..."
     )
