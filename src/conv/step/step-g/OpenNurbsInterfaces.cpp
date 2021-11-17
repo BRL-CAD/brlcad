@@ -1929,10 +1929,6 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 
     ON_RevSurface *s = c.RevSurfaceForm();
     if (s) {
-	double r = fabs(c.radius);
-	if (r <= ON_SQRT_EPSILON) {
-	    r = 1.0;
-	}
 	s->SetDomain(0, 0.0, 2.0 * ON_PI);
     }
 
