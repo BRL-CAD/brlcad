@@ -1602,7 +1602,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	PBCData *ndata = (*next_cs);
 	list<ON_2dPointArray *>::iterator nsi;
 	nsi = ndata->segments->begin();
-	ON_2dPointArray *nsamples = (*nsi);
+	ON_2dPointArray *nsamples = NULL;
 
 	while (si != data->segments->end()) {
 	    nsi = si;
