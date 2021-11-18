@@ -141,7 +141,7 @@ SplitTrim(ON_BrepTrim *trim, double t)
  * itself and drops the pieces into an array
  */
 void
-ShatterLoop(ON_BrepLoop *loop, ON_SimpleArray<ON_Curve*> curves)
+ShatterLoop(ON_BrepLoop *loop, ON_ClassArray<ON_Curve*> curves)
 {
     int i;
     for (i = 0; i < loop->TrimCount(); i++) {
@@ -310,7 +310,7 @@ int
 CurveCurveIntersect(
     const ON_Curve *curve1,
     const ON_Curve *curve2,
-    ON_ClassArray<ON_X_EVENT>& x,
+    ON_SimpleArray<ON_X_EVENT>& x,
     double tol
     )
 {
@@ -347,6 +347,7 @@ CurveCurveIntersect(
 	     newx.m_x_eventsn = ; this one we could do, but it doesn't seem worth the trouble.
 	    */
 	    x.Append(*newx);
+	    delete newx;
 	    rv++;
 	}
     }
@@ -413,7 +414,7 @@ SetCurveCurveIntersectionDir(
 int
 Face_X_Event::Get_ON_X_Events(double tol)
 {
-    ON_ClassArray<ON_X_EVENT> out;
+    ON_SimpleArray<ON_X_EVENT> out;
     x.Empty();
     ON_BrepFace *faces[2] = {face1, face2};
     ON_Curve *curves[2] = {curve1, curve2};
@@ -467,13 +468,13 @@ Face_X_Event::Get_ON_X_Events(double tol)
 int
 MakeLoops(
     ON_BrepFace *face,
-    ON_SimpleArray<ON_Curve*>& new_trims,
-    ON_SimpleArray<ON_Curve*>& old_trims,
+    ON_ClassArray<ON_Curve*>& new_trims,
+    ON_ClassArray<ON_Curve*>& old_trims,
     double tol
     )
 {
     int i;
-    ON_SimpleArray<ON_Curve*> trims[2] = {new_trims, old_trims};
+    ON_ClassArray<ON_Curve*> trims[2] = {new_trims, old_trims};
     for (i = 0; i < 2; i++) {
 	trims[i].QuickSort(Curve_Compare_start);
     }
@@ -827,10 +828,10 @@ BrepBrepIntersect(
     int i, j, k, l;
 
     /* the new curves we get from the actual intersection */
-    ON_ClassArray<ON_SimpleArray<ON_Curve*> > intersection_curves1, intersection_curves2;
+    ON_ClassArray<ON_ClassArray<ON_Curve*> > intersection_curves1, intersection_curves2;
 
     /* the new curves we get from destroying the old trim_loops */
-    ON_ClassArray<ON_SimpleArray<ON_Curve*> > trim_curves1, trim_curves2;
+    ON_ClassArray<ON_ClassArray<ON_Curve*> > trim_curves1, trim_curves2;
 
     /* initialization for brep1's arrays */
     intersection_curves1.SetCapacity(brep1->m_F.Count());
@@ -1010,7 +1011,7 @@ main(int UNUSED(argc), const char **argv)
     ON_BezierCurve *bezier2 = new ON_BezierCurve(pts2);
     ON_Curve *curve1 = ON_NurbsCurve::New(*bezier1);
     ON_Curve *curve2 = ON_NurbsCurve::New(*bezier2);
-    ON_ClassArray<ON_X_EVENT> x;
+    ON_SimpleArray<ON_X_EVENT> x;
     CurveCurveIntersect(curve1, curve2, x, 1e-9);
     ON_Brep brep1 = ON_Brep(), brep2 = ON_Brep();
     ON_Surface *surf1 = TwistedCubeSideSurface(ON_3dPoint(1, 1, 1), ON_3dPoint(-1, -1, 1), ON_3dPoint(-1, -1, -1), ON_3dPoint(1, 1, -1));
