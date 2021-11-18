@@ -22,7 +22,6 @@ BRLCAD_ADDEXEC(brep_invalid "brep_invalid.cpp" "libwdb;${OPENNURBS_LIBRARIES}" N
 BRLCAD_ADDEXEC(brep_simple "brep_simple.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL) # NOTE: has manual page
 BRLCAD_ADDEXEC(brep_surface "brep_surface.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(brep_trimmed "brep_trimmed.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(csgbrep csgbrep.cpp "libwdb;libnmg" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(donuts donuts.c "libwdb" NO_STRICT NO_INSTALL)
@@ -72,7 +71,6 @@ BRLCAD_ADDEXEC(wavy wavy.c "libwdb;libnmg" NO_INSTALL)
 set(proc-db_ignore_files
   CMakeLists.txt
   twistedcube.h
-  brepintersect.h
   metaballs.pl
   mkbuilding.h
   sgi.sh
