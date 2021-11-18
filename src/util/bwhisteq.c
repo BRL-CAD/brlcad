@@ -46,23 +46,23 @@ main(int argc, char **argv)
     int verbose = 0;
     FILE *fp = NULL;
 
-    double havg;
-    double hint;
-    int i;
-    int n;
-    long r;
-    size_t ret;
-    unsigned char *bp;
+    double havg = 0.0;
+    double hint = 0.0;
+    int i = 0;
+    int n = 0;
+    long r = 0;
+    size_t ret = 0;
+    unsigned char *bp = NULL;
 
 #define BUFSIZE 512
-    unsigned char buf[BUFSIZE];
-    unsigned char obuf[BUFSIZE];
+    unsigned char buf[BUFSIZE] = {0};
+    unsigned char obuf[BUFSIZE] = {0};
 
 #define BINSIZE 256
-    long bin[BINSIZE];
-    unsigned char result[BINSIZE];
-    int left[BINSIZE];
-    int right[BINSIZE];
+    long bin[BINSIZE] = {0};
+    unsigned char result[BINSIZE] = {0};
+    int left[BINSIZE] = {0};
+    int right[BINSIZE] = {0};
 
     bu_setprogname(argv[0]);
 
