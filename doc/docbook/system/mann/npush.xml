@@ -53,10 +53,10 @@
   </para>
   <literallayout>
     sph3/
-	u sph3_1.r/R
-		u sph3.s
-	u sph3_2.r/R
-		u sph3.s
+        u sph3_1.r/R
+                u sph3.s
+        u sph3_2.r/R
+                u sph3.s
   </literallayout>
   <para>
     appears at first glance to define an overlap, since it includes two different regions both of which
@@ -109,12 +109,12 @@ sph3:  --
   </para>
   <literallayout>
 sph_009/
-	u [M1] sph9_g1/
-		u [M2] sph9_g2/
-			u [M3] sph9_g3/
-				u [M4] sph9_g4/
-					u [M5] sph9.r/R
-						u [M6] sph9.s
+        u [M1] sph9_g1/
+                u [M2] sph9_g2/
+                        u [M3] sph9_g3/
+                                u [M4] sph9_g4/
+                                        u [M5] sph9.r/R
+                                                u [M6] sph9.s
   </literallayout>
   <para>
     M1, M2, etc. are matrices applied at each level of the hierarchy.  When discussing M1, we would refer
@@ -128,12 +128,12 @@ sph_009/
   </para>
   <literallayout>
 sph_009/
-	u sph9_g1/
-		u sph9_g2/
-			u sph9_g3/
-				u [M1234] sph9_g4/
-					u [M5] sph9.r/R
-						u [M6] sph9.s
+        u sph9_g1/
+                u sph9_g2/
+                        u sph9_g3/
+                                u [M1234] sph9_g4/
+                                        u [M5] sph9.r/R
+                                                u [M6] sph9.s
   </literallayout>
   <para>
     where M1234 is the accumulated application of M1, M2, M3 and M4.  Note the new matrix is applied at
@@ -142,12 +142,12 @@ sph_009/
   </para>
   <literallayout>
 sph_009/
-	u sph9_g1/
-		u sph9_g2/
-			u sph9_g3/
-				u sph9_g4/
-					u sph9.r/R
-						u [M123456] sph9.s
+        u sph9_g1/
+                u sph9_g2/
+                        u sph9_g3/
+                                u sph9_g4/
+                                        u sph9.r/R
+                                                u [M123456] sph9.s
   </literallayout>
   <para>
     where M123456 is the accumulated application of M1, M2, M3, M4, M5 and M6.  Note that the final step
@@ -157,12 +157,12 @@ sph_009/
   </para>
   <literallayout>
 sph_009/
-	u sph9_g1/
-		u sph9_g2/
-			u sph9_g3/
-				u sph9_g4/
-					u sph9.r/R
-						u sph9.s (updated)
+        u sph9_g1/
+                u sph9_g2/
+                        u sph9_g3/
+                                u sph9_g4/
+                                        u sph9.r/R
+                                                u sph9.s (updated)
   </literallayout>
   <para>
     Note that if an object or comb exists at different levels of the hierarchy, depth limits may produce
@@ -171,12 +171,12 @@ sph_009/
   </para>
   <literallayout>
 sph_010/
-	u [M1] sph10_f/
-		u [M1] sph10_g/
-			u [M1] sph10.r/R
-				u [M2] sph10.s
-	u [M3] sph10_a.r/R
-		u [M3] sph10.s
+        u [M1] sph10_f/
+                u [M1] sph10_g/
+                        u [M1] sph10.r/R
+                                u [M2] sph10.s
+        u [M3] sph10_a.r/R
+                u [M3] sph10.s
   </literallayout>
   <para>
     where 3*M1+M2 = 2*M3 (i.e., the matricies on each branch of sph_010's tree individually evaluate out
@@ -186,12 +186,12 @@ sph_010/
   </para>
   <literallayout>
 sph_010/
-	u sph10_f/
-		u sph10_g/
-			u [M1*3] sph10.r/R
-				u [M2] sph10.s
-	u sph10_a.r/R
-		u sph10.s_01 (updated sph10.s copy)
+        u sph10_f/
+                u sph10_g/
+                        u [M1*3] sph10.r/R
+                                u [M2] sph10.s
+        u sph10_a.r/R
+                u sph10.s_01 (updated sph10.s copy)
   </literallayout>   
   <para>
     Depth 3 is deep enough that the parameters of sph10.s in the second branch should be updated.  However,
@@ -206,12 +206,12 @@ sph_010/
   </para>
   <literallayout>
 sph_011/
-	u sph11_f/
-		u [M1] sph11_g/
-			u sph11.s
-	u sph11_h/
-		u [M2] sph11_g/
-			u sph11.s
+        u sph11_f/
+                u [M1] sph11_g/
+                        u sph11.s
+        u sph11_h/
+                u [M2] sph11_g/
+                        u sph11.s
   </literallayout>
   <para>
     If sph_011 is pushed to depth 3, the matrices will be pushed to the level of sph11_g's instance
@@ -221,12 +221,12 @@ sph_011/
   </para>
   <literallayout>
 sph_011/
-	u sph11_f/
-		u sph11_g/
-			u [M1] sph11.s
-	u sph11_h/
-		u sph11_g_01/ (updated sph11_g copy)
-			u [M2] sph11.s
+        u sph11_f/
+                u sph11_g/
+                        u [M1] sph11.s
+        u sph11_h/
+                u sph11_g_01/ (updated sph11_g copy)
+                        u [M2] sph11.s
   </literallayout>
   
   </refsection>
@@ -241,36 +241,36 @@ sph_011/
   </para>
   <literallayout>
 sph_010/
-	u [M1] sph10_f/
-		u [M1] sph10_g/
-			u [M1] sph10.r/R
-				u [M2] sph10.s
-	u [M3] sph10_a.r/R
-		u [M3] sph10.s
+        u [M1] sph10_f/
+                u [M1] sph10_g/
+                        u [M1] sph10.r/R
+                                u [M2] sph10.s
+        u [M3] sph10_a.r/R
+                u [M3] sph10.s
   </literallayout>
   <para>
     a <option>r</option> push would result in the following:
   </para>
   <literallayout>
 sph_010/
-	u sph10_f/
-		u sph10_g/
-			u [M1*3] sph10.r/R
-				u [M2] sph10.s
-	u [M3] sph10_a.r/R
-		u [M3] sph10.s
+        u sph10_f/
+                u sph10_g/
+                        u [M1*3] sph10.r/R
+                                u [M2] sph10.s
+        u [M3] sph10_a.r/R
+                u [M3] sph10.s
   </literallayout>
   <para>
     A <option>s</option> push, on the other hand, will take the matrices in both branches deeper:
   </para>
   <literallayout>
 sph_010/
-	u sph10_f/
-		u sph10_g/
-			u sph10.r/R
-				u [M1*3+M2] sph10.s
-	u sph10_a.r/R
-		u [M3*2] sph10.s
+        u sph10_f/
+                u sph10_g/
+                        u sph10.r/R
+                                u [M1*3+M2] sph10.s
+        u sph10_a.r/R
+                u [M3*2] sph10.s
   </literallayout>
   <para>
     Note that neither option alters the parameters of primitive shapes.
@@ -282,60 +282,60 @@ sph_010/
   </para>
   <literallayout>
 sph_016/
-	u [M1] sph16a/R
-		u [M2] sph16_1/
-			u sph16.c/
-				u sph16.s
-		u sph16_1/
-			u sph16.c/
-				u sph16.s
-	u [M3] sph16a/R
-		u [M4] sph16_1/
-			u sph16.c/
-				u sph16.s
-		u sph16_1/
-			u sph16.c/
-				u sph16.s
+        u [M1] sph16a/R
+                u [M2] sph16_1/
+                        u sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u sph16.c/
+                                u sph16.s
+        u [M3] sph16a/R
+                u [M4] sph16_1/
+                        u sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u sph16.c/
+                                u sph16.s
   </literallayout>
   <para>
     If we push to depth 3, we end up with four different versions of the sph16.c tree: 
   </para>
   <literallayout>
 sph_016/
-	u sph16a/R
-		u sph16_1/
-			u [M12] sph16.c/
-				u sph16.s
-		u sph16_1/
-			u [M1] sph16.c/
-				u sph16.s
-	u sph16a/R
-		u sph16_1/
-			u [M34] sph16.c/
-				u sph16.s
-		u sph16_1/
-			u [M3] sph16.c/
-				u sph16.s
+        u sph16a/R
+                u sph16_1/
+                        u [M12] sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u [M1] sph16.c/
+                                u sph16.s
+        u sph16a/R
+                u sph16_1/
+                        u [M34] sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u [M3] sph16.c/
+                                u sph16.s
   </literallayout>
   <para>
     The first stage of the answer is to create three new combinations and redefine the sph16a tree:
   </para>
   <literallayout>
 sph_016/
-	u sph16a/R
-		u sph16_1_01/
-			u [M12] sph16.c/
-				u sph16.s
-		u sph16_1/
-			u [M1] sph16.c/
-				u sph16.s
-	u sph16a/R
-		u sph16_1_02/
-			u [M34] sph16.c/
-				u sph16.s
-		u sph16_1_03/
-			u [M3] sph16.c/
-				u sph16.s
+        u sph16a/R
+                u sph16_1_01/
+                        u [M12] sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u [M1] sph16.c/
+                                u sph16.s
+        u sph16a/R
+                u sph16_1_02/
+                        u [M34] sph16.c/
+                                u sph16.s
+                u sph16_1_03/
+                        u [M3] sph16.c/
+                                u sph16.s
   </literallayout>
   <para>
     That addresses sph16_1, but the tree updates to sph16a created a new problem:   now we have
@@ -344,20 +344,20 @@ sph_016/
   </para>
   <literallayout>
 sph_016/
-	u sph16a/R
-		u sph16_1_01/
-			u [M12] sph16.c/
-				u sph16.s
-		u sph16_1/
-			u [M1] sph16.c/
-				u sph16.s
-	u sph16a_01/R
-		u sph16_1_02/
-			u [M34] sph16.c/
-				u sph16.s
-		u sph16_1_03/
-			u [M3] sph16.c/
-				u sph16.s
+        u sph16a/R
+                u sph16_1_01/
+                        u [M12] sph16.c/
+                                u sph16.s
+                u sph16_1/
+                        u [M1] sph16.c/
+                                u sph16.s
+        u sph16a_01/R
+                u sph16_1_02/
+                        u [M34] sph16.c/
+                                u sph16.s
+                u sph16_1_03/
+                        u [M3] sph16.c/
+                                u sph16.s
   </literallayout>
   <para>
     Unlike sph16a and sph16_1, sph_016 has not seen any changes to its volumetric definition.  sph_016

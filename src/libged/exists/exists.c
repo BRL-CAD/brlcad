@@ -370,7 +370,8 @@ binop(struct exists_data *ed)
     (void) t_lex(*++(ed->t_wp), ed);
     op = ed->t_wp_op;
 
-    if ((opnd2 = *++(ed->t_wp)) == NULL) {
+    opnd2 = *++(ed->t_wp);
+    if (opnd2 == NULL) {
 	bu_vls_printf(ed->message , "argument expected");
 	return 0;
     }

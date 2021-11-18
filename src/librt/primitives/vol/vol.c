@@ -138,9 +138,9 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     int igrid[3];/* Grid cell coordinates of cell (integerized) */
     vect_t P;	/* hit point */
     int inside;	/* inside/outside a solid flag */
-    int in_axis;
+    int in_axis = -INT_MAX;
     int axis_set = 0;
-    int out_axis;
+    int out_axis = -INT_MAX;
     int j;
     struct xray ideal_ray;
 
@@ -276,7 +276,8 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     if (!axis_set) bu_log("ERROR vol: no valid entry face found\n");
 
-    if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
+    if (RT_G_DEBUG&RT_DEBUG_VOL && in_axis != -INT_MAX)
+	bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
 
     /* Advance to next exits */
     t[X] += delta[X];
@@ -650,6 +651,9 @@ get_obj_data(struct rt_vol_internal *vip, const struct db_i *dbip)
     int ret;
     int nbytes;
 
+    if (!vip || !dbip)
+	return -1;
+
     BU_ALLOC(vip->bip, struct rt_db_internal);
 
     ret = rt_retrieve_binunif(vip->bip, dbip, vip->name);
@@ -727,22 +731,19 @@ static int
 get_vol_data(struct rt_vol_internal *vip, const mat_t mat, const struct db_i *dbip)
 {
   mat_t tmp;
-  char *p;
 
   /* Apply Modelling transform */
   bn_mat_mul(tmp, mat, vip->mat);
   MAT_COPY(vip->mat, tmp);
-  p = vip->name;
 
   switch (vip->datasrc) {
 case RT_VOL_SRC_FILE:
     /* Retrieve the data from an external file */
     if (RT_G_DEBUG & RT_DEBUG_HF)
-  bu_log("getting data from file \"%s\"\n", p);
+	bu_log("getting data from file \"%s\"\n", vip->name);
 
     if(vol_file_data(vip) != 0) {
       return 1;
-      p = "file";
     }
     else {
       return 0;
@@ -751,15 +752,14 @@ case RT_VOL_SRC_FILE:
 case RT_VOL_SRC_OBJ:
     /* Retrieve the data from an internal db object */
     if (RT_G_DEBUG & RT_DEBUG_HF)
-  bu_log("getting data from object \"%s\"\n", p);
+	bu_log("getting data from object \"%s\"\n", vip->name);
 
     if (get_obj_data(vip, dbip) != 0) {
-  p = "object";
-  return 1;
+	return 1;
     } else {
-  RT_CK_DB_INTERNAL(vip->bip);
-  RT_CK_BINUNIF(vip->bip->idb_ptr);
-  return 0;
+	RT_CK_DB_INTERNAL(vip->bip);
+	RT_CK_BINUNIF(vip->bip->idb_ptr);
+	return 0;
     }
     break;
 default:
@@ -768,7 +768,8 @@ bu_log("%s:%d Odd vol data src '%c' s/b '%c' or '%c'\n",
   RT_VOL_SRC_FILE, RT_VOL_SRC_OBJ);
   }
 
-  bu_log("%s", dbip->dbi_filename);
+  if (dbip)
+      bu_log("%s", dbip->dbi_filename);
   return 0; //temporary
 }
 

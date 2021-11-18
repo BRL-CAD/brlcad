@@ -566,12 +566,10 @@ main(int ac, const char **av)
 	    bu_vls_sprintf(&in_path_raw, "%s", av[ac - 2]);
 	    bu_vls_sprintf(&out_path_raw, "%s", av[ac - 1]);
 	    av[ac - 1] = av[ac - 2] = NULL;
-	    ac -= 2;
 	    unknown_ac -= 2;
 	} else if (ac == 1) {
 	    bu_vls_sprintf(&in_path_raw, "%s", av[ac - 1]);
 	    av[ac - 1] = NULL;
-	    ac--;
 	    unknown_ac--;
 	}
     }

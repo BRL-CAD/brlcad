@@ -1296,7 +1296,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     eip->magic = RT_ELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1529,7 +1529,6 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     fastf_t magsq_a, magsq_b, magsq_c;
     fastf_t f;
     register int i;
-    fastf_t radius;
     struct rt_ell_internal *eip;
     struct vertex *verts[8];
     struct vertex **vertp[4];
@@ -1553,11 +1552,14 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     }
 
     /* Create unit length versions of A, B, C */
-    invAlen = 1.0/(Alen = sqrt(magsq_a));
+    Alen = sqrt(magsq_a);
+    Blen = sqrt(magsq_b);
+    Clen = sqrt(magsq_c);
+    invAlen = 1.0/Alen;
     VSCALE(Au, eip->a, invAlen);
-    invBlen = 1.0/(Blen = sqrt(magsq_b));
+    invBlen = 1.0/Blen;
     VSCALE(Bu, eip->b, invBlen);
-    invClen = 1.0/(Clen = sqrt(magsq_c));
+    invClen = 1.0/Clen;
     VSCALE(Cu, eip->c, invClen);
 
     /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
@@ -1607,13 +1609,6 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     /* invRoS, for converting normals from unit sphere to model */
     bn_mat_mul(invRoS, invR, S);
-
-    /* Compute radius of bounding sphere */
-    radius = Alen;
-    if (Blen > radius)
-	radius = Blen;
-    if (Clen > radius)
-	radius = Clen;
 
     MAT_IDN(xlate);
     MAT_DELTAS_VEC(xlate, eip->v);

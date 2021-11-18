@@ -171,6 +171,10 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 		new_model = nmg_mm();
 		nmg_mrsv(new_model);
 		new_s = BU_LIST_FIRST(shell, &r->s_hd);
+		if (!new_s || !new_s->vu_p) {
+		    bu_log("ERROR: nmg structural problem, fracture.c(%d)\n", __LINE__);
+		    return GED_ERROR;
+		}
 		v_new = new_s->vu_p->v_p;
 		if (v->vg_p) {
 		    nmg_vertex_gv(v_new, v->vg_p->coord);

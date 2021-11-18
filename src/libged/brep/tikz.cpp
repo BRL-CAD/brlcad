@@ -42,13 +42,13 @@ tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, stru
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    /* convert right */
-	    ret = tikz_tree(gedp, tikz, oldtree->tr_b.tb_right, color, cnt);
+	    ret |= tikz_tree(gedp, tikz, oldtree->tr_b.tb_right, color, cnt);
 	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
 	    /* convert left */
-	    ret = tikz_tree(gedp, tikz, oldtree->tr_b.tb_left, color, cnt);
+	    ret |= tikz_tree(gedp, tikz, oldtree->tr_b.tb_left, color, cnt);
 	    break;
 	case OP_DB_LEAF:
 	    {

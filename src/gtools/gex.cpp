@@ -507,7 +507,6 @@ main(int argc, char** argv)
     }
     if (wattrs) {
         if (!sepr) {
-            sepr = true;
             printf("\n");
         }
         printf("%d objects have one or more attributes.\n",

@@ -1674,7 +1674,7 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Warning:  type conversion */
     if (mat == NULL) mat = bn_mat_identity;
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
 	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
 	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
@@ -1690,7 +1690,7 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     VUNITIZE(xip->ehy_Au);
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
 	v1[Y] = flip_dbfloat(rp->s.s_values[3*3+1]);
 	v1[Z] = flip_dbfloat(rp->s.s_values[3*3+2]);

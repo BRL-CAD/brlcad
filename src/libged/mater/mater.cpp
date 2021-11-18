@@ -1059,7 +1059,8 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
+    dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
+    if (dp != RT_DIR_NULL) {
 	if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != GED_OK) {
 	    return GED_ERROR;
 	}
@@ -1426,7 +1427,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     if (!bu_vls_strlen(&dfilename)) {
 	// If we don't have a density file, we can't proceed
 	// unless the database has density information.
-	if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
+	if (dp != RT_DIR_NULL) {
 	    if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != GED_OK) {
 		bu_vls_printf(gedp->ged_result_str, "No density information found and no density file specified, cannot proceed.");
 		goto ged_mater_mat_id_fail;

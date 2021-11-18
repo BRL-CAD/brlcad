@@ -1275,7 +1275,6 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 * between the planes truncating the cone.
 	 */
 	intersect = 0;
-	tgc = (struct tgc_specific *)stp[ix]->st_specific;
 	for (i=0; i < npts; i++) {
 	    /* segp[ix].seg_in.hit_normal holds dprime */
 	    /* segp[ix].seg_out.hit_normal holds pprime */
@@ -1656,7 +1655,7 @@ rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 6, dbip->dbi_version < 0 ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 6, (dbip && dbip->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -2233,7 +2232,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu, *fu_top, *fu_base;
     struct rt_tgc_internal *tip;
     fastf_t radius;		/* bounding sphere radius */
-    fastf_t max_radius, min_radius; /* max/min of a, b, c, d */
+    fastf_t max_radius; /* max of a, b, c, d */
     fastf_t h, a, b, c, d;	/* lengths of TGC vectors */
     fastf_t inv_length;	/* 1.0/length of a vector */
     vect_t unit_a, unit_b, unit_c, unit_d; /* units vectors in a, b, c, d directions */
@@ -2326,16 +2325,6 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     if (max_radius > radius)
 	radius = max_radius;
-
-    min_radius = MAX_FASTF;
-    if (a < min_radius && a > 0.0)
-	min_radius = a;
-    if (b < min_radius && b > 0.0)
-	min_radius = b;
-    if (c < min_radius && c > 0.0)
-	min_radius = c;
-    if (d < min_radius && d > 0.0)
-	min_radius = d;
 
     if (abs_tol <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0) {
 	/* no tolerances specified, use 10% relative tolerance */
@@ -2982,7 +2971,6 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     nmg_vertexuse_a_cnurb(eu->vu_p, uvw);
     VSET(uvw, 1, 0, 0);
     nmg_vertexuse_a_cnurb(eu->eumate_p->vu_p, uvw);
-    eu = BU_LIST_NEXT(edgeuse, &eu->l);
 
     /* Top cap surface */
     nmg_tgc_disk(top_fu, top_mat, 0.0, 0);
@@ -3302,7 +3290,6 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
     nmg_vertexuse_a_cnurb(eu->vu_p, uvw);
     VSET(uvw, 0, 0, 0);
     nmg_vertexuse_a_cnurb(eu->eumate_p->vu_p, uvw);
-    eu = BU_LIST_NEXT(edgeuse, &eu->l);
 
     /* Create the edge loop geometry */
 

@@ -171,6 +171,8 @@ int main(int argc, char **argv)
 
     /* create the initial id */
     i = mk_id_units(fp, "SphereFlake", "mm");
+    if (i < 0)
+	bu_log("mk_id_units error - sphflake.c:%d\n", __LINE__);
 
     /* initialize the wmember structs...
        this is for creating the regions */

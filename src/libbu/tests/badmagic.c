@@ -55,10 +55,10 @@ bomb_callback(const void *data, const char *str)
 int
 main(int argc, char *argv[])
 {
-    unsigned char *misalign = (unsigned char *)bu_malloc(1, "bu_badmagic.c");
+    unsigned char *misalign = NULL;
     uint32_t *ptr = (uint32_t *)bu_malloc(sizeof(uint32_t), "bu_badmagic.c");
     uint32_t magic;
-    char *str = (char *)bu_malloc(20, "bu_badmagic.c");
+    char *str = NULL;
     char *expected_str = (char *)bu_malloc(512, "bu_badmagic.c");
     const char *file = "bu_badmagic.c";
     int line = 42, testnum;

@@ -2403,7 +2403,8 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 		/* if these three points make a plane, is it coplanar with
 		 * our first one??? */
 		if (!bg_make_plane_3pnts(pl2, pt[0], pt[1], pt[2], tol)) {
-		    if ((i=bg_coplanar(pl1, pl2, tol)) < 1)
+		    i = bg_coplanar(pl1, pl2, tol);
+		    if (i < 1)
 			coplanar = 0;
 		}
 	    }
@@ -2464,7 +2465,6 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 
 	    /* OK, so we have to do this one little-by-little */
 	    start_idx = -1;
-	    end_idx = -1;
 
 	    if (!found_face) {
 
@@ -2504,7 +2504,6 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 
 	    if (give_up_on_face) {
 		loop_size = 0;
-		start_loop = -1;
 		break;
 	    }
 
@@ -2556,21 +2555,25 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 			break;
 		}
 
-		if (eu_new->radial_p == eu_new->eumate_p)
-		    bu_ptbl_ins(&eu_tbl, (long *)eu_new);
-		else {
-		    struct edgeuse *eu_tmp;
+		if (eu_new) {
+		    if (eu_new->radial_p == eu_new->eumate_p)
+			bu_ptbl_ins(&eu_tbl, (long *)eu_new);
+		    else {
+			struct edgeuse *eu_tmp;
 
-		    /* find third eu to be removed from eu_tbl */
-		    for (i=0; i<BU_PTBL_LEN(&eu_tbl); i++) {
-			eu_tmp = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, i);
-			if (eu_tmp->vu_p->v_p == eu_new->vu_p->v_p &&
-			    eu_tmp->eumate_p->vu_p->v_p == eu_new->eumate_p->vu_p->v_p)
-			{
-			    bu_ptbl_rm(&eu_tbl, (long *)eu_tmp);
-			    break;
+			/* find third eu to be removed from eu_tbl */
+			for (i=0; i<BU_PTBL_LEN(&eu_tbl); i++) {
+			    eu_tmp = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, i);
+			    if (eu_tmp->vu_p->v_p == eu_new->vu_p->v_p &&
+				    eu_tmp->eumate_p->vu_p->v_p == eu_new->eumate_p->vu_p->v_p)
+			    {
+				bu_ptbl_rm(&eu_tbl, (long *)eu_tmp);
+				break;
+			    }
 			}
 		    }
+		} else {
+		    bu_log("NMG: encountered null 'eu_new' pointer at misc.c line %d\n", __LINE__);
 		}
 	    }
 
@@ -5548,15 +5551,25 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
     /* Now take care of edges between two loops of same face */
     edge_no = 0;
     while (edge_no < BU_PTBL_LEN(int_faces)) {
-	size_t next_edge_no;
-	struct intersect_fus *i_fus, *j_fus;
 
-	next_edge_no = edge_no + 1;
+	size_t next_edge_no = edge_no + 1;
+	struct intersect_fus *i_fus = NULL;
+	struct intersect_fus *j_fus = NULL;
+
 	if (next_edge_no == BU_PTBL_LEN(int_faces))
 	    next_edge_no = 0;
 
 	i_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, edge_no);
+	if (!i_fus) {
+	    bu_log("NMG: encountered null 'i_fus' pointer at misc.c line %d\n", __LINE__);
+	    continue;
+	}
+
 	j_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, next_edge_no);
+	if (!j_fus) {
+	    bu_log("NMG: encountered null 'j_fus' pointer at misc.c line %d\n", __LINE__);
+	    continue;
+	}
 
 	/* look at all edges in the same face as i_fus->fu[1] */
 	while (j_fus->fu[0] && j_fus->fu[1] &&
@@ -5588,6 +5601,7 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
 
 	}
 	edge_no++;
+
     }
     if (nmg_debug & NMG_DEBUG_BASIC) {
 	bu_log("After loops of same face\n");
@@ -6608,7 +6622,6 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
     } else if (pl_count == 2) {
 	VCROSS(planes[2], planes[0], planes[1]);
 	planes[2][H] = VDOT(new_v->vg_p->coord, planes[2]);
-	pl_count = 3;
 	if (bg_make_pnt_3planes(new_v->vg_p->coord, planes[0], planes[1], planes[2])) {
 	    bu_log("nmg_cacl_new_v: 3 planes do not intersect at a point\n");
 	    nmg_free((char *)planes, "nmg_calc_new_v: planes");
@@ -7605,8 +7618,6 @@ nmg_make_connect_faces(struct shell *dst, struct vertex *vpa, struct vertex *vpb
 	plane_t pl;
 	fastf_t area;
 	int still_collinear=0;
-
-	made_face = 0;
 
 	/* if the current points are all collinear, add another vertex */
 	while (bg_3pnts_collinear(face_verts[0]->vg_p->coord,

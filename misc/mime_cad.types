@@ -30,6 +30,7 @@ image/spm					spm
 image/sun					sun
 image/yuv					yuv
 model/dxf					dxf
+model/gltf        gltf
 model/obj					obj
 model/ply					ply
 model/shp					shp

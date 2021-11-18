@@ -136,7 +136,6 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (nflag) {
 		union tree *comb_leaf;
-		int done=0;
 
 		if (!(dp->d_flags & RT_DIR_COMB))
 		    continue;
@@ -149,7 +148,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		/* visit each leaf in the combination */
 		comb_leaf = comb->tree;
 		if (comb_leaf) {
-		    while (!done) {
+		    while (1) {
 			while (comb_leaf->tr_op != OP_DB_LEAF) {
 			    bu_ptbl_ins(&stack, (long *)comb_leaf);
 			    comb_leaf = comb_leaf->tr_b.tb_left;
@@ -160,7 +159,6 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 			}
 
 			if (BU_PTBL_LEN(&stack) < 1) {
-			    done = 1;
 			    break;
 			}
 			comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_LEN(&stack)-1);

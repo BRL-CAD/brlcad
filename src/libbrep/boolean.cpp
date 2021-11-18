@@ -1070,11 +1070,11 @@ get_subcurves_inside_faces(
     }
 
     // get the face loops
-    if (face_i1 < 0 || face_i1 >= brep1->m_F.Count()) {
+    if (face_i1 < 0 || face_i1 >= brep1->m_F.Count() || brep1->m_F[face_i1].m_li.Count() <= 0) {
 	bu_log("get_subcurves_inside_faces(): invalid face_i1 (%d).\n", face_i1);
 	return;
     }
-    if (face_i2 < 0 || face_i2 >= brep2->m_F.Count()) {
+    if (face_i2 < 0 || face_i2 >= brep2->m_F.Count() || brep2->m_F[face_i2].m_li.Count() <= 0) {
 	bu_log("get_subcurves_inside_faces(): invalid face_i2 (%d).\n", face_i2);
 	return;
     }
@@ -1564,6 +1564,10 @@ public:
 	CurveSegment::Location l)
 	: orig_loop(loop), from(f), to(t), location(l)
     {
+	if (!orig_loop.Capacity()) {
+	    size_t c = (from.loop_index > to.loop_index) ? from.loop_index : to.loop_index;
+	    orig_loop.SetCapacity(c + 1);
+	}
     }
 
     void
@@ -2062,6 +2066,9 @@ get_loop_points(
 {
     std::multiset<CurvePoint> out;
 
+    if (loop1.Count() <= 0)
+	return out;
+
     ON_Curve *loop1_seg = loop1[0];
     out.insert(CurvePoint(source_loop, 0, loop1_seg->Domain().m_t[0], loop1_seg,
 			  loop2));
@@ -2121,6 +2128,11 @@ loop_boolean(
 	op != BOOLEAN_UNION)
     {
 	bu_log("loop_boolean: unsupported operation\n");
+	return out;
+    }
+
+    if (l1.Count() <= 0 || l2.Count() <= 0) {
+	bu_log("loop_boolean: one or more empty loops\n");
 	return out;
     }
 
@@ -2388,13 +2400,17 @@ append_faces_from_loops(
     const TrimmedFace *orig_face,
     const LoopBooleanResult &new_loops)
 {
+    std::vector<TrimmedFace *> o;
     LoopBooleanResult combined_loops = combine_loops(orig_face, new_loops);
 
     // make a face from each outerloop, using appropriate innerloops
     for (size_t i = 0; i < combined_loops.outerloops.size(); ++i) {
-	out.Append(make_face_from_loops(orig_face,
+	o.push_back(make_face_from_loops(orig_face,
 					combined_loops.outerloops[i],
 					combined_loops.innerloops));
+    }
+    for (size_t i = 0; i < o.size(); i++) {
+	out.Append(o[i]);
     }
 }
 
@@ -2546,7 +2562,7 @@ split_face_into_loops(
 	ON_Curve *remainder = orig_face->m_outerloop[loop_seg]->Duplicate();
 	if (remainder == NULL) {
 	    bu_log("ON_Curve::Duplicate() failed.\n");
-	    continue;
+	    return out;
 	}
 	for (; clx_i < clx_points.Count() && clx_points[clx_i].m_loop_seg == loop_seg; clx_i++) {
 	    IntersectPoint &ipt = clx_points[clx_i];
@@ -2573,9 +2589,7 @@ split_face_into_loops(
 	    }
 	    ipt.m_split_li = outerloop_segs.Count() - 1;
 	}
-	if (remainder) {
-	    outerloop_segs.Append(remainder);
-	}
+	outerloop_segs.Append(remainder);
     }
 
     // Append the first element at the last to handle some special cases.
@@ -3428,10 +3442,22 @@ get_face_intersection_curves(
     const ON_Brep *brep2,
     op_type operation)
 {
+    std::vector<Subsurface *> st1, st2;
     std::set<int> unused1, unused2;
     std::set<int> finalform1, finalform2;
+    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array;
     int face_count1 = brep1->m_F.Count();
     int face_count2 = brep2->m_F.Count();
+    int surf_count1 = brep1->m_S.Count();
+    int surf_count2 = brep2->m_S.Count();
+
+    // We're not well set up currently to handle a situation where
+    // one of the breps has no faces - don't try.  Also make sure
+    // we don't have too many faces.
+    if (!face_count1 || !face_count2 || ((face_count1 + face_count2) < 0))
+	return curves_array;
+    if (!surf_count1 || !surf_count2 || ((surf_count1 + surf_count2) < 0))
+	return curves_array;
 
     /* Depending on the operation type and the bounding box behaviors, we
      * can sometimes decide immediately whether a face will end up in the
@@ -3516,16 +3542,16 @@ get_face_intersection_curves(
 	}
     }
 
-    int surf_count1 = brep1->m_S.Count();
-    int surf_count2 = brep2->m_S.Count();
     for (int i = 0; i < surf_count1; i++) {
-	surf_tree1.Append(new Subsurface(brep1->m_S[i]->Duplicate()));
+	Subsurface *ss = new Subsurface(brep1->m_S[i]->Duplicate());
+	st1.push_back(ss);
     }
     for (int i = 0; i < surf_count2; i++) {
-	surf_tree2.Append(new Subsurface(brep2->m_S[i]->Duplicate()));
+	Subsurface *ss = new Subsurface(brep2->m_S[i]->Duplicate());
+	st2.push_back(ss);
     }
 
-    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array(face_count1 + face_count2);
+    curves_array.SetCapacity(face_count1 + face_count2);
 
     // count must equal capacity for array copy to work as expected
     // when the result of the function is assigned
@@ -3533,6 +3559,10 @@ get_face_intersection_curves(
 
     // calculate intersection curves
     for (int i = 0; i < face_count1; i++) {
+
+	if ((int)st1.size() < brep1->m_F[i].m_si + 1)
+	    continue;
+
 	for (int j = 0; j < face_count2; j++) {
 	    if (intersection_candidates.find(std::pair<int, int>(i, j)) != intersection_candidates.end()) {
 		ON_Surface *surf1, *surf2;
@@ -3543,6 +3573,9 @@ get_face_intersection_curves(
 		if (is_same_surface(surf1, surf2)) {
 		    continue;
 		}
+
+		if (surf_tree2.Count() < brep2->m_F[j].m_si + 1)
+		    continue;
 
 		// Possible enhancement: Some faces may share the same surface.
 		// We can store the result of SSI to avoid re-computation.
@@ -3556,8 +3589,8 @@ get_face_intersection_curves(
 				       NULL,
 				       NULL,
 				       NULL,
-				       surf_tree1[brep1->m_F[i].m_si],
-				       surf_tree2[brep2->m_F[j].m_si]);
+				       st1[brep1->m_F[i].m_si],
+				       st2[brep2->m_F[j].m_si]);
 		if (results <= 0) {
 		    continue;
 		}
@@ -3610,6 +3643,14 @@ get_face_intersection_curves(
 	}
     }
 
+    for (size_t i = 0; i < st1.size(); i++) {
+	surf_tree1.Append(st1[i]);
+    }
+
+    for (size_t i = 0; i < st2.size(); i++) {
+	surf_tree2.Append(st2[i]);
+    }
+
     return curves_array;
 }
 
@@ -3630,26 +3671,30 @@ HIDDEN ON_SimpleArray<ON_Curve *>get_face_trim_loop(const ON_Brep *brep, int fac
 HIDDEN ON_SimpleArray<TrimmedFace *>
 get_trimmed_faces(const ON_Brep *brep)
 {
-    ON_SimpleArray<TrimmedFace *> trimmed_faces;
+    std::vector<TrimmedFace *> trimmed_faces;
     int face_count = brep->m_F.Count();
     for (int i = 0; i < face_count; i++) {
 	const ON_BrepFace &face = brep->m_F[i];
 	const ON_SimpleArray<int> &loop_index = face.m_li;
+	if (loop_index.Count() <= 0) {
+	    continue;
+	}
 
 	TrimmedFace *trimmed_face = new TrimmedFace();
 	trimmed_face->m_face = &face;
-
-	if (loop_index.Count() > 0) {
-	    ON_SimpleArray<ON_Curve *> index_loop = get_face_trim_loop(brep, loop_index[0]);
-	    trimmed_face->m_outerloop = index_loop;
-	    for (int j = 1; j < loop_index.Count(); j++) {
-		index_loop = get_face_trim_loop(brep, loop_index[j]);
-		trimmed_face->m_innerloop.push_back(index_loop);
-	    }
+	ON_SimpleArray<ON_Curve *> index_loop = get_face_trim_loop(brep, loop_index[0]);
+	trimmed_face->m_outerloop = index_loop;
+	for (int j = 1; j < loop_index.Count(); j++) {
+	    index_loop = get_face_trim_loop(brep, loop_index[j]);
+	    trimmed_face->m_innerloop.push_back(index_loop);
 	}
-	trimmed_faces.Append(trimmed_face);
+	trimmed_faces.push_back(trimmed_face);
     }
-    return trimmed_faces;
+    ON_SimpleArray<TrimmedFace *> tf;
+    for (size_t i = 0; i < trimmed_faces.size(); i++) {
+	tf.Append(trimmed_faces[i]);
+    }
+    return tf;
 }
 
 
@@ -3777,11 +3822,15 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 {
     ON_SimpleArray<Subsurface *> surf_tree1, surf_tree2;
 
-    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array =
-	get_face_intersection_curves(surf_tree1, surf_tree2, brep1, brep2, operation);
-
     int face_count1 = brep1->m_F.Count();
     int face_count2 = brep2->m_F.Count();
+
+    // check for face counts high enough to cause overflow
+    if ((face_count1 + face_count2) < 0)
+	return ON_ClassArray<ON_SimpleArray<TrimmedFace *> > ();
+
+    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array =
+	get_face_intersection_curves(surf_tree1, surf_tree2, brep1, brep2, operation);
 
     ON_SimpleArray<TrimmedFace *> brep1_faces, brep2_faces;
     brep1_faces = get_trimmed_faces(brep1);
@@ -3967,6 +4016,11 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
 
     int face_count1 = brep1->m_F.Count();
     int face_count2 = brep2->m_F.Count();
+
+    // check for face counts high enough to cause overflow
+    if ((face_count1 + face_count2) < 0)
+	return -1;
+
     for (int i = 0; i < trimmed_faces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace *> &splitted = trimmed_faces[i];
 	const ON_Surface *surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;

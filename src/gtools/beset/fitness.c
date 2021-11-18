@@ -325,8 +325,6 @@ rt_worker(int UNUSED(cpu), void *g)
     ap.a_ray.r_dir[Z] = 1.0;
     ap.a_uptr = (void *) g;
 
-    u = -1;
-
     while ((v = get_next_row(fstate))) {
 	for (u = 1; u <= fstate->res[X]; u++) {
 	    ap.a_ray.r_pt[X] = fstate->min[X] + u * fstate->gridSpacing[X];

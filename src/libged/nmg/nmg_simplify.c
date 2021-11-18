@@ -95,7 +95,6 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	nmg_name = (char *)argv[3];
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	success = 0;
 	ret = GED_ERROR;
 	goto out3;
     }
@@ -177,7 +176,6 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (nmg_to_arb(m, arb_int)) {
 	    success = 1;
-	    ret = GED_OK;
 	    goto out1;
 	} else {
 	    rt_db_free_internal(&new_intern);
@@ -202,7 +200,6 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (nmg_to_tgc(m, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
-	    ret = GED_OK;
 	    goto out1;
 	} else {
 	    rt_db_free_internal(&new_intern);
@@ -227,7 +224,6 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (nmg_to_poly(m, poly_int, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
-	    ret = GED_OK;
 	    goto out1;
 	} else {
 	    rt_db_free_internal(&new_intern);

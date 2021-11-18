@@ -88,7 +88,6 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
 	startinneredge->m_tolerance = 0.0;
 	ON_BrepEdge* endinneredge = &(*b)->NewEdge((*b)->m_V[vert4ind], (*b)->m_V[vert4ind], c4ind);
 	endinneredge->m_tolerance = 0.0;
-	startedge = (*b)->Edge(startedge->m_edge_index);
 	(*b)->NewRuledFace(*startinneredge, false, *endinneredge, false);
     }
     startinnercurves->Empty();
@@ -149,6 +148,8 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
+
+    startoutercurves.SetCapacity(1);
 
     // delete duplicated points
     curp = BU_LIST_FIRST(wdb_pipe_pnt, &pip->pipe_segs_head);

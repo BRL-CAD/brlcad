@@ -80,6 +80,7 @@ struct _ged_facetize_report_info {
     double bot_bbox_vol;
     int failure_mode;
 };
+#define GED_FACETIZE_REPORT_INFO_INIT {0.0, 0.0, 0.0, 0.0, 0.0, 0}
 
 void
 _ged_facetize_failure_msg(struct bu_vls *msg, int type, const char *prefix, struct _ged_facetize_report_info *r)
@@ -811,7 +812,6 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_PNTS) {
 	/* If we have a point cloud, there's no need to raytrace it */
 	pnts = (struct rt_pnts_internal *)in_intern.idb_ptr;
-	pl = (struct pnt_normal *)pnts->point;
 
     } else {
 	int max_pnts = (opts->max_pnts) ? opts->max_pnts : 200000;
@@ -1567,7 +1567,6 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    }
 
 	    if (_ged_nmg_obj(gedp, argc, argv, newname, opts) == GED_OK) {
-		done_trying = 1;
 		ret = GED_OK;
 		break;
 	    } else {
@@ -1586,8 +1585,8 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    } else {
 		struct _ged_facetize_report_info cinfo;
 		if (_ged_continuation_obj(&cinfo, gedp, argv[0], newname, opts) == GED_FACETIZE_SUCCESS) {
-		    done_trying = 1;
 		    ret = GED_OK;
+		    break;
 		} else {
 		    if (!opts->quiet) {
 			struct bu_vls lmsg = BU_VLS_INIT_ZERO;
@@ -1610,8 +1609,8 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    } else {
 		struct _ged_facetize_report_info cinfo;
 		if (_ged_spsr_obj(&cinfo, gedp, argv[0], newname, opts) == GED_FACETIZE_SUCCESS) {
-		    done_trying = 1;
 		    ret = GED_OK;
+		    break;
 		} else {
 		    if (!opts->quiet) {
 			struct bu_vls lmsg = BU_VLS_INIT_ZERO;
@@ -1996,7 +1995,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     while (methods && BU_PTBL_LEN(ar2) > 0) {
 	struct bu_ptbl *tmp;
 	int cmethod = 0;
-	long int avail_mem = bu_avail_mem();
+	long int avail_mem = -1;
 	bu_ptbl_reset(ar);
 
 
@@ -2043,7 +2042,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 		    if (_ged_facetize_region_obj(gedp, oname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod, &cinfo) == GED_FACETIZE_FAILURE) {
 			bu_ptbl_ins(ar, (long *)n);
 
-			avail_mem = bu_avail_mem();
+			avail_mem = bu_mem(BU_MEM_AVAIL);
 			if (avail_mem >= 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
 			    bu_log("Too little available memory to continue, aborting\n");
 			    ret = GED_ERROR;
@@ -2420,7 +2419,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     while (methods && BU_PTBL_LEN(ar) > 0) {
 	struct bu_ptbl *tmp;
 	int cmethod = 0;
-	long int avail_mem = bu_avail_mem();
+	long int avail_mem = -1;
 	bu_ptbl_reset(ar2);
 
 	if (!cmethod && (methods & GED_FACETIZE_NMGBOOL)) {
@@ -2438,6 +2437,11 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    methods = methods & ~(GED_FACETIZE_SPSR);
 	}
 
+	if (!cmethod) {
+	    bu_log("Error: methods isn't empty (%d), but no method selected??\n", methods);
+	    break;
+	}
+
 	for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	    struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
 	    const char *oname = n->d_namep;
@@ -2448,7 +2452,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    if (dp == RT_DIR_NULL) {
 		/* Before we try this (unless we're point sampling), check that all the objects in the specified tree(s) are valid solids */
 		struct directory *odp = db_lookup(gedp->dbip, oname, LOOKUP_QUIET);
-		struct _ged_facetize_report_info cinfo;
+		struct _ged_facetize_report_info cinfo = GED_FACETIZE_REPORT_INFO_INIT;
 
 		/* Regardless of the outcome, record what settings were tried. */
 		_ged_methodattr_set(gedp, opts, cname, cmethod, &cinfo);
@@ -2464,7 +2468,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		if (_ged_facetize_region_obj(gedp, oname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod, &cinfo) == GED_FACETIZE_FAILURE) {
 		    bu_ptbl_ins(ar2, (long *)n);
 
-		    avail_mem = bu_avail_mem();
+		    avail_mem = bu_mem(BU_MEM_AVAIL);
 		    if (avail_mem >= 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
 			bu_log("Too little available memory to continue, aborting\n");
 			ret = GED_ERROR;
@@ -2906,6 +2910,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	if (argc < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Screened Poisson option parsing failed\n");
 	    ret = GED_ERROR;
+	    goto ged_facetize_memfree;
 	}
     }
 

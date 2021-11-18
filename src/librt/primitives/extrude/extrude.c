@@ -1160,7 +1160,6 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	if (hit_count&1) {
 	    struct seg *segp;
 
-	    hit_count = 2;
 	    hits[0].hit_magic = RT_HIT_MAGIC;
 	    hits[0].hit_dist = dist_bottom;
 	    hits[0].hit_surfno = bot_face;
@@ -1176,6 +1175,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    segp->seg_in = hits[0];	/* struct copy */
 	    segp->seg_out = hits[1];	/* struct copy */
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+
 	    return 2;
 	} else {
 	    return 0;
@@ -1533,7 +1533,7 @@ get_indices(void *seg, int *start, int *end)
 }
 
 
-static void
+static int
 get_seg_midpoint(void *seg, struct rt_sketch_internal *skt, point2d_t pt)
 {
     struct edge_g_cnurb eg;
@@ -1581,12 +1581,12 @@ get_seg_midpoint(void *seg, struct rt_sketch_internal *skt, point2d_t pt)
 		s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
 		if (s2m_len_sq <= SMALL_FASTF) {
 		    bu_log("start and end points are too close together in circular arc of sketch\n");
-		    break;
+		    return -1;
 		}
 		len_sq = csg->radius*csg->radius - s2m_len_sq;
 		if (len_sq < 0.0) {
 		    bu_log("Impossible radius for specified start and end points in circular arc\n");
-		    break;
+		    return -1;
 		}
 		tmp_len = sqrt(dir[0]*dir[0] + dir[1]*dir[1]);
 		dir[0] = dir[0] / tmp_len;
@@ -1666,6 +1666,8 @@ get_seg_midpoint(void *seg, struct rt_sketch_internal *skt, point2d_t pt)
 	    bu_bomb("Unrecognized segment type in sketch\n");
 	    break;
     }
+
+    return 0;
 }
 
 
@@ -2010,9 +2012,11 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
 
     /* find points on a midpoint of a segment for each loop */
     seg = (void *)BU_PTBL_GET(loopa, 0);
-    get_seg_midpoint(seg, ip, pta);
+    if (get_seg_midpoint(seg, ip, pta) < 0)
+	return ret;
     seg = (void *)BU_PTBL_GET(loopb, 0);
-    get_seg_midpoint(seg, ip, ptb);
+    if (get_seg_midpoint(seg, ip, ptb) < 0)
+	return ret;
 
     V2SUB2(dir, ptb, pta);
     inv_len = 1.0 / sqrt(MAG2SQ(dir));

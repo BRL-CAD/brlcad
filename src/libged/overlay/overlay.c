@@ -202,7 +202,6 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		}
 	    }
 	    bu_argv_free(count, files);
-	    ret = 0;
 	} else {
 	    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
 	    ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);

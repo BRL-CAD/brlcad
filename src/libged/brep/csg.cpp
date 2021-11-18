@@ -606,7 +606,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 
 int comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set *ito, struct directory *dp, int verify);
 
-int
+static int
 brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set *ito, const union tree *oldtree, union tree *newtree, int verify)
 {
     int ret = 0;
@@ -624,13 +624,7 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 	    //bu_log("convert right\n");
 	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
-	    ret = brep_csg_conversion_tree(gedp, log, ito, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, verify);
-#if 0
-	    if (ret) {
-		delete newtree->tr_b.tb_right;
-		break;
-	    }
-#endif
+	    ret |= brep_csg_conversion_tree(gedp, log, ito, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, verify);
 	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
@@ -639,13 +633,7 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 	    //bu_log("convert left\n");
 	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
-	    ret = brep_csg_conversion_tree(gedp, log, ito, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, verify);
-#if 0
-	    if (ret) {
-		delete newtree->tr_b.tb_left;
-		delete newtree->tr_b.tb_right;
-	    }
-#endif
+	    ret |= brep_csg_conversion_tree(gedp, log, ito, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, verify);
 	    break;
 	case OP_DB_LEAF:
 	    oldname = oldtree->tr_l.tl_name;
@@ -690,7 +678,7 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 		} else {
 		    bu_vls_printf(log, "Cannot find %s.\n", oldname);
 		    newtree = NULL;
-		    ret = -1;
+		    ret |= GED_ERROR;
 		}
 	    } else {
 		bu_vls_printf(log, "%s already exists.\n", bu_vls_addr(&tmpname));
@@ -703,7 +691,8 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 	    bu_log("huh??\n");
 	    break;
     }
-    return 1;
+
+    return ret;
 }
 
 
@@ -742,7 +731,9 @@ comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set 
 
     union tree *newtree = new_internal->tree;
 
-    (void)brep_csg_conversion_tree(gedp, log, ito, oldtree, newtree, verify);
+    if (brep_csg_conversion_tree(gedp, log, ito, oldtree, newtree, verify) & GED_ERROR)
+	bu_log("Error (brep/csg.cpp:%d) brep_csg_conversion_tree\n", __LINE__);
+
     (void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
 
     return 0;

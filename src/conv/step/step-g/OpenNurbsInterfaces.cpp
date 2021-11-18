@@ -1602,7 +1602,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	PBCData *ndata = (*next_cs);
 	list<ON_2dPointArray *>::iterator nsi;
 	nsi = ndata->segments->begin();
-	ON_2dPointArray *nsamples = (*nsi);
+	ON_2dPointArray *nsamples = NULL;
 
 	while (si != data->segments->end()) {
 	    nsi = si;
@@ -1929,10 +1929,6 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 
     ON_RevSurface *s = c.RevSurfaceForm();
     if (s) {
-	double r = fabs(c.radius);
-	if (r <= ON_SQRT_EPSILON) {
-	    r = 1.0;
-	}
 	s->SetDomain(0, 0.0, 2.0 * ON_PI);
     }
 
@@ -2849,6 +2845,7 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
     path_line.to = extrusion_endpnt;
     ON_3dVector path_vector = path_line.Direction();
     if (path_vector.IsZero()) {
+	delete l;
 	return false;
     }
 
@@ -2861,6 +2858,7 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
     sum_srf = new ON_SumSurface();
 
     if (!sum_srf) {
+	delete l;
 	return false;
     }
     sum_srf->m_curve[0] = srf_base_curve;

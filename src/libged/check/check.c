@@ -558,6 +558,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
     options.overlaps_overlay_flag = 0;
     options.plot_files = 0;
     options.debug = 0;
+    options.ncpu = bu_avail_cpus();
     options.verbose = 0;
     options.rpt_overlap_flag = 1;
 

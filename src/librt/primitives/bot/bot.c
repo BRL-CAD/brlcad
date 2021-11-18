@@ -38,6 +38,7 @@
 
 #include "bu/cv.h"
 #include "bg/polygon.h"
+#include "bg/trimesh.h"
 #include "vmath.h"
 #include "rt/db4.h"
 #include "nmg.h"
@@ -423,50 +424,13 @@ rt_bot_prep_pieces(struct bot_specific *bot,
  */
 int
 rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
-    struct rt_bot_internal *bot_ip;
-    size_t vert_index;
-    size_t tri_index;
 
     RT_CK_DB_INTERNAL(ip);
-    bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
+    struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    struct bu_bitv *visit_vert = bu_bitv_new(bot_ip->num_vertices);
+    return bg_trimesh_aabb(min, max, bot_ip->faces, bot_ip->num_faces, (point_t *)bot_ip->vertices, bot_ip->num_vertices);
 
-    VSETALL((*min), INFINITY);
-    VSETALL((*max), -INFINITY);
-
-    /* First Pass: coherently iterate through all faces of the BoT and
-     * mark vertices in a bit-vector that are referenced by a face.
-     */
-    for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++) {
-	BU_BITSET(visit_vert, bot_ip->faces[tri_index*3 + X]);
-	BU_BITSET(visit_vert, bot_ip->faces[tri_index*3 + Y]);
-	BU_BITSET(visit_vert, bot_ip->faces[tri_index*3 + Z]);
-     }
-    /* Second Pass: check max and min of vertices marked */
-    for(vert_index = 0; vert_index < bot_ip->num_vertices; vert_index++){
-        if(BU_BITTEST(visit_vert,vert_index)){
-	    VMINMAX((*min), (*max), &bot_ip->vertices[vert_index*3]);
-	}
-    }
-    bu_bitv_free(visit_vert);
-
-    /* Make sure the RPP created is not of zero volume */
-    if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
-	(*min)[X] -= SMALL_FASTF;
-	(*max)[X] += SMALL_FASTF;
-    }
-    if (NEAR_EQUAL((*min)[Y], (*max)[Y], SMALL_FASTF)) {
-	(*min)[Y] -= SMALL_FASTF;
-	(*max)[Y] += SMALL_FASTF;
-    }
-    if (NEAR_EQUAL((*min)[Z], (*max)[Z], SMALL_FASTF)) {
-	(*min)[Z] -= SMALL_FASTF;
-	(*max)[Z] += SMALL_FASTF;
-    }
-
-    return 0;
 }
 
 
@@ -700,9 +664,12 @@ void
 rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct bot_specific *bot;
-
     if (ap) RT_CK_APPLICATION(ap);
-    if (stp) RT_CK_SOLTAB(stp);
+
+    if (!stp)
+	return;
+    RT_CK_SOLTAB(stp);
+
     if (hitp) RT_CK_HIT(hitp);
     if (!uvp) return;
 
@@ -739,8 +706,8 @@ rt_bot_free(struct soltab *stp)
 }
 
 
-vdsNode *
-build_vertex_tree(struct rt_bot_internal *bot)
+static vdsNode *
+build_vertex_tree(struct vdsState *s, struct rt_bot_internal *bot)
 {
     size_t i, node_indices, tri_indices;
     vect_t normal = {1.0, 0.0, 0.0};
@@ -751,21 +718,21 @@ build_vertex_tree(struct rt_bot_internal *bot)
     node_indices = bot->num_vertices * 3;
     tri_indices = bot->num_faces * 3;
 
-    vdsBeginVertexTree();
-    vdsBeginGeometry();
+    vdsBeginVertexTree(s);
+    vdsBeginGeometry(s);
 
     /* create nodes */
     for (i = 0; i < node_indices; i += 3) {
-	vdsAddNode(bot->vertices[i], bot->vertices[i + 1], bot->vertices[i + 2]);
+	vdsAddNode(s, bot->vertices[i], bot->vertices[i + 1], bot->vertices[i + 2]);
     }
 
     /* create triangles */
     for (i = 0; i < tri_indices; i += 3) {
-	vdsAddTri(bot->faces[i], bot->faces[i + 1], bot->faces[i + 2],
+	vdsAddTri(s, bot->faces[i], bot->faces[i + 1], bot->faces[i + 2],
 		  normal, normal, normal, color, color, color);
     }
 
-    leaf_nodes = vdsEndGeometry();
+    leaf_nodes = vdsEndGeometry(s);
 
     node_list = (vdsNode **)bu_malloc(bot->num_vertices * sizeof(vdsNode *), "node_list");
     for (i = 0; i < bot->num_vertices; ++i) {
@@ -775,7 +742,7 @@ build_vertex_tree(struct rt_bot_internal *bot)
     vdsClusterOctree(node_list, bot->num_vertices, 0);
     bu_free(node_list, "node_list");
 
-    return vdsEndVertexTree();
+    return vdsEndVertexTree(s);
 }
 
 
@@ -790,7 +757,9 @@ struct bot_fold_data {
 static int
 should_fold(const vdsNode *node, void *udata)
 {
-    int i, num_edges, short_edges, short_spaces;
+    int i;
+    int num_edges = 0;
+    int short_edges = 0;
     fastf_t dist_01, dist_12, dist_20;
     vdsNode *corner_nodes[3];
     struct bot_fold_data *fold_data = (struct bot_fold_data *)udata;
@@ -806,7 +775,6 @@ should_fold(const vdsNode *node, void *udata)
     if (fold_data->dmax/fold_data->dmin > 5.0 && node->nsubtris < 30) return 0;
 
     num_edges = node->nsubtris * 3;
-    short_edges = short_spaces = 0;
 
     for (i = 0; i < node->nsubtris; ++i) {
 	/* get the three nodes corresponding to the three corner */
@@ -869,6 +837,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     point_t max;
 
     vdsNode *vertex_tree;
+    struct vdsState vdss = VDS_STATE_INIT_ZERO;
     struct rt_bot_internal *bot;
     struct bot_fold_data fold_data;
 
@@ -879,7 +848,7 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
     bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    vertex_tree = build_vertex_tree(bot);
+    vertex_tree = build_vertex_tree(&vdss, bot);
 
     fold_data.root = vertex_tree;
     fold_data.point_spacing = view_avg_sample_spacing(v);

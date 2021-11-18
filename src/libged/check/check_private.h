@@ -225,25 +225,25 @@ typedef int check_functions_t(struct current_state *state,
 			      int tnobjs,
 			      struct check_parameters *options);
 
-GED_EXPORT extern check_functions_t check_adj_air;
+extern check_functions_t check_adj_air;
 
-GED_EXPORT extern check_functions_t check_centroid;
+extern check_functions_t check_centroid;
 
-GED_EXPORT extern check_functions_t check_exp_air;
+extern check_functions_t check_exp_air;
 
-GED_EXPORT extern check_functions_t check_gap;
+extern check_functions_t check_gap;
 
-GED_EXPORT extern check_functions_t check_mass;
+extern check_functions_t check_mass;
 
-GED_EXPORT extern check_functions_t check_moments;
+extern check_functions_t check_moments;
 
-GED_EXPORT extern check_functions_t check_overlaps;
+extern check_functions_t check_overlaps;
 
-GED_EXPORT extern check_functions_t check_surf_area;
+extern check_functions_t check_surf_area;
 
-GED_EXPORT extern check_functions_t check_unconf_air;
+extern check_functions_t check_unconf_air;
 
-GED_EXPORT extern check_functions_t check_volume;
+extern check_functions_t check_volume;
 __END_DECLS
 
 #endif /* LIBGED_CHECK_PRIVATE_H */

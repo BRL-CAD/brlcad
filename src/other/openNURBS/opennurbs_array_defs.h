@@ -17,6 +17,8 @@
 #if !defined(ON_ARRAY_DEFS_INC_)
 #define ON_ARRAY_DEFS_INC_
 
+#include <iostream>
+
 #if defined(ON_COMPILER_MSC)
 
 // When this file is parsed with /W4 warnings, two bogus warnings
@@ -838,11 +840,13 @@ void ON_SimpleArray<T>::SetCapacity( int capacity )
         // out of memory
         m_count = m_capacity = 0;
       }
-    }
-    else if (m_a) {
+    } else if (capacity == 0 && m_a) {
       Realloc(m_a,0);
       m_a = 0;
       m_count = m_capacity = 0;
+    } else {
+      std::cerr << "Negative capacity supplied to ON_SimpleArray SetCapacity: " << capacity << "\n";
+      exit(-1);
     }
   }
 }

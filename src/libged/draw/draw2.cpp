@@ -953,8 +953,16 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
     if (cv) {
 	return _ged_redraw_view(gedp, cv, argc, argv);
     } else {
+	if (!BU_PTBL_LEN(&gedp->ged_views)) {
+	    bu_vls_printf(gedp->ged_result_str, "No views defined\n");
+	    return GED_OK;
+	}
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    if (!v) {
+		bu_log("WARNING, draw2.cpp:%d - null view stored in ged_views index %zu, skipping\n", __LINE__, i);
+		continue;
+	    }
 	    int nret = _ged_redraw_view(gedp, v, argc, argv);
 	    if (nret != GED_OK)
 		ret = nret;

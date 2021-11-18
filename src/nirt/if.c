@@ -322,7 +322,6 @@ get_obliq(fastf_t *ray, fastf_t *normal)
     } else {
 	fflush(stdout);
 	fprintf (stderr, "Error:  cos(obliquity) > 1 (%g)\n", cos_obl);
-	obliquity = 0;
 	bu_exit(1, NULL);
     }
 

@@ -334,7 +334,6 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
 	    /* Are we back to the beginning? */
 	    if (eu->vu_p->v_p == start_eu->vu_p->v_p) {
 		/* done with this loop */
-		done = 1;
 		break;
 	    }
 

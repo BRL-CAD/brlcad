@@ -234,40 +234,27 @@ extern "C" {
 }
 #endif
 
-
-/*
- * Globals
- */
-vdsNode *nodearray = NULL;
-int vdsNumnodes;
-static int maxnodes;
-vdsTri *triarray = NULL;
-int vdsNumtris;
-static int maxtris;
-static int curroffset;
-static int openflag = 0;
-
 /** Initializes the builder.
  * Note:	Currently nothing to do here.
  */
-void vdsBeginVertexTree()
+void vdsBeginVertexTree(struct vdsState *s)
 {
-    openflag = 1;
+    s->openflag = 1;
 }
 
 /** Initialize the geometry structures.
  * 		Must be called before calling vdsAddNode() and vdsAddTri(),
  *		and must be followed by vdsEndGeometry().
  */
-void vdsBeginGeometry()
+void vdsBeginGeometry(struct vdsState *s)
 {
-    maxnodes = 1024;
-    nodearray = (vdsNode *) calloc(maxnodes, sizeof(vdsNode));
-    vdsNumnodes = 0;
-    maxtris = 1024;
-    triarray = (vdsTri *) calloc(maxtris, sizeof(vdsTri));
-    vdsNumtris = 0;
-    curroffset = 0;
+    s->maxnodes = 1024;
+    s->nodearray = (vdsNode *) calloc(s->maxnodes, sizeof(vdsNode));
+    s->vdsNumnodes = 0;
+    s->maxtris = 1024;
+    s->triarray = (vdsTri *) calloc(s->maxtris, sizeof(vdsTri));
+    s->vdsNumtris = 0;
+    s->curroffset = 0;
 }
 
 /** When all geometry has been added, prepares VDSlib for node clustering.
@@ -280,34 +267,12 @@ void vdsBeginGeometry()
  *		application wants to use this information during clustering.
  *		Leaf nodes in the array are in the order they were given.
  */
-vdsNode *vdsEndGeometry()
+vdsNode *vdsEndGeometry(struct vdsState *s)
 {
     /* Tighten nodearray and triarray to free up unused memory */
-    nodearray = (vdsNode *) realloc(nodearray, vdsNumnodes * sizeof(vdsNode));
-    triarray = (vdsTri *) realloc(triarray, vdsNumtris * sizeof(vdsTri));
-    return nodearray;
-}
-
-/** Start a new object, with separate vertex and triangle lists.
- * 		Models are often organized into "objects", where each object
- *		consists of vertex and triangle lists.  An object's triangles
- *		index corners in that object's vertex list, rather than a
- *		global vertex list.  VDSlib, however, relies on combining
- *		object vertices into such a global vertex list.  This utility
- *		function allows the user to specify triangles without
- *		renumbering the corner indices.  For example, to load two
- *		objects into VDSlib, call vdsAddNode() on the vertices of
- *		object 1, vdsAddTri() on the triangles of object 1, then
- *		call vdsNewObject().  Finally, add the vertices and triangles
- *		of object 2.  VDSlib will automatically offset the indices
- *		of object 2's triangle corners. <p>
- *
- * <b>Note:</b>	vdsNewObject() must be called between vdsBeginGeometry()
- *		and vdsEndGeometry().
- */
-void vdsNewObject()
-{
-    curroffset = vdsNumnodes;
+    s->nodearray = (vdsNode *) realloc(s->nodearray, s->vdsNumnodes * sizeof(vdsNode));
+    s->triarray = (vdsTri *) realloc(s->triarray, s->vdsNumtris * sizeof(vdsTri));
+    return s->nodearray;
 }
 
 /** Add a vertex of the original model as a leaf node of the VDS vertex tree.
@@ -324,22 +289,22 @@ void vdsNewObject()
  * <b>Note:</b>	vdsAddNode() must be called between vdsBeginGeometry()
  *		and vdsEndGeometry().
  */
-vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z)
+vdsNode *vdsAddNode(struct vdsState *s, vdsFloat x, vdsFloat y, vdsFloat z)
 {
-    nodearray[vdsNumnodes].coord[0] = x;
-    nodearray[vdsNumnodes].coord[1] = y;
-    nodearray[vdsNumnodes].coord[2] = z;
-    vdsNumnodes++;
+    s->nodearray[s->vdsNumnodes].coord[0] = x;
+    s->nodearray[s->vdsNumnodes].coord[1] = y;
+    s->nodearray[s->vdsNumnodes].coord[2] = z;
+    s->vdsNumnodes++;
     /* Resize array if necessary */
-    if (vdsNumnodes == maxnodes) {
-	vdsNode *tmparray = (vdsNode *) calloc(maxnodes * 2, sizeof(vdsNode));
+    if (s->vdsNumnodes == s->maxnodes) {
+	vdsNode *tmparray = (vdsNode *) calloc(s->maxnodes * 2, sizeof(vdsNode));
 
-	memcpy(tmparray, nodearray, vdsNumnodes * sizeof(vdsNode));
-	free(nodearray);
-	nodearray = tmparray;
-	maxnodes *= 2;
+	memcpy(tmparray, s->nodearray, s->vdsNumnodes * sizeof(vdsNode));
+	free(s->nodearray);
+	s->nodearray = tmparray;
+	s->maxnodes *= 2;
     }
-    return &nodearray[vdsNumnodes - 1];
+    return &s->nodearray[s->vdsNumnodes - 1];
 }
 
 /** Add a triangle of the original model.
@@ -357,30 +322,30 @@ vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z)
  * <b>Note:</b>	vdsAddTri() must be called between vdsBeginGeometry()
  *		and vdsEndGeometry().
  */
-vdsTri *vdsAddTri(int v0, int v1, int v2,
+vdsTri *vdsAddTri(struct vdsState *s, int v0, int v1, int v2,
 	vdsVec3 n0, vdsVec3 n1, vdsVec3 n2,
 	vdsByte3 c0, vdsByte3 c1, vdsByte3 c2)
 {
-    triarray[vdsNumtris].corners[0].index = v0 + curroffset;
-    triarray[vdsNumtris].corners[1].index = v1 + curroffset;
-    triarray[vdsNumtris].corners[2].index = v2 + curroffset;
-    VEC3_COPY(triarray[vdsNumtris].normal[0], n0);
-    VEC3_COPY(triarray[vdsNumtris].normal[1], n1);
-    VEC3_COPY(triarray[vdsNumtris].normal[2], n2);
-    BYTE3_COPY(triarray[vdsNumtris].color[0], c0);
-    BYTE3_COPY(triarray[vdsNumtris].color[1], c1);
-    BYTE3_COPY(triarray[vdsNumtris].color[2], c2);
-    vdsNumtris ++;
+    s->triarray[s->vdsNumtris].corners[0].index = v0 + s->curroffset;
+    s->triarray[s->vdsNumtris].corners[1].index = v1 + s->curroffset;
+    s->triarray[s->vdsNumtris].corners[2].index = v2 + s->curroffset;
+    VEC3_COPY(s->triarray[s->vdsNumtris].normal[0], n0);
+    VEC3_COPY(s->triarray[s->vdsNumtris].normal[1], n1);
+    VEC3_COPY(s->triarray[s->vdsNumtris].normal[2], n2);
+    BYTE3_COPY(s->triarray[s->vdsNumtris].color[0], c0);
+    BYTE3_COPY(s->triarray[s->vdsNumtris].color[1], c1);
+    BYTE3_COPY(s->triarray[s->vdsNumtris].color[2], c2);
+    s->vdsNumtris ++;
     /* Resize array if necessary */
-    if (vdsNumtris == maxtris) {
-	vdsTri *tmparray = (vdsTri *) calloc(maxtris * 2, sizeof(vdsTri));
+    if (s->vdsNumtris == s->maxtris) {
+	vdsTri *tmparray = (vdsTri *) calloc(s->maxtris * 2, sizeof(vdsTri));
 
-	memcpy(tmparray, triarray, vdsNumtris * sizeof(vdsTri));
-	free(triarray);
-	triarray = tmparray;
-	maxtris *= 2;
+	memcpy(tmparray, s->triarray, s->vdsNumtris * sizeof(vdsTri));
+	free(s->triarray);
+	s->triarray = tmparray;
+	s->maxtris *= 2;
     }
-    return &triarray[vdsNumtris - 1];
+    return &s->triarray[s->vdsNumtris - 1];
 }
 
 /** Cluster a set of nodes under a single new node.
@@ -420,13 +385,13 @@ vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
  * Description:	Verifies that all the leaf nodes in nodearray belong to a
  *		tree rooted at root.  Must be called after assignNodeIds().
  */
-static void verifyRootedTree(vdsNode *root)
+static void verifyRootedTree(struct vdsState *s, vdsNode *root)
 {
     int i;
     vdsNode *node;
 
-    for (i = 0; i < vdsNumnodes; i++) {
-	node = &nodearray[i];
+    for (i = 0; i < s->vdsNumnodes; i++) {
+	node = &s->nodearray[i];
 	if (node->depth == 0 && node != root) {
 	    fprintf(stderr, "\tError: leaf node #%d is not part of the same\n"
 		    "\trooted tree as previous nodes\n", i);
@@ -442,12 +407,12 @@ static void verifyRootedTree(vdsNode *root)
  *		corners of the triangle.  Subtris are stored temporarily in
  *		the node->vistris linked list.
  */
-static void computeSubtris(vdsNode *root)
+static void computeSubtris(struct vdsState *s, vdsNode *root)
 {
     int i;
 
-    for (i = 0; i < vdsNumtris; i++) {
-	vdsTri *t = &triarray[i];
+    for (i = 0; i < s->vdsNumtris; i++) {
+	vdsTri *t = &s->triarray[i];
 	vdsNodeId c0, c1, c2;		/* The 3 corners of the triangle */
 	vdsNodeId com01, com02, com12;	/* Common ancestor of c0c1,c1c2,c0c2*/
 	vdsNode *N = NULL;		/* The node t is a subtri of	 */
@@ -500,6 +465,9 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
     int whichtri, numchildren;
     vdsNode *newN, *child;
 
+    if (!N || !N->children)
+	return NULL;
+
     /* Reallocate node and adjust child pointers */
     newN = (vdsNode *) malloc(sizeof(vdsNode) + N->nsubtris * sizeof(vdsTri));
     memcpy(newN, N, sizeof(vdsNode));
@@ -525,7 +493,10 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
     }
     /* Don't try to free leaf nodes, which belong to nodearray */
     if (numchildren) {
+	N->children = NULL;
+	N->sibling = NULL;
 	free(N);
+	return NULL;
     }
     N = newN;
     /* Copy node->vistris list into node->subtris[]; clear linked list ptrs */
@@ -570,7 +541,7 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
  *		<li> Labels root node Boundary			</ll>
  * @return	Pointer to the root node of the new vertex tree.
  */
-vdsNode *vdsEndVertexTree()
+vdsNode *vdsEndVertexTree(struct vdsState *s)
 {
     vdsNode *root;
 #ifdef VDS_DEBUGPRINT
@@ -578,19 +549,22 @@ vdsNode *vdsEndVertexTree()
 #endif
     vdsNodeId *ids;
     int i;
+    int have_parent = 0;
 
-    root = &nodearray[0];
+    root = &s->nodearray[0];
     while (root->parent != NULL) {
 	root = root->parent;
+	have_parent = 1;
     }
+
     VDS_DEBUG(("Assigning node ids..."));
-    ids = (vdsNodeId *) calloc(vdsNumnodes, sizeof(vdsNodeId));
+    ids = (vdsNodeId *) calloc(s->vdsNumnodes, sizeof(vdsNodeId));
 #ifdef VDS_DEBUGPRINT
     int maxdepth = assignNodeIds(root, rootId, ids);
 #endif
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Verifying that all nodes form a single rooted tree..."));
-    verifyRootedTree(root);
+    verifyRootedTree(s, root);
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Assigning node->bound for all nodes..."));
 #if 0
@@ -602,8 +576,8 @@ vdsNode *vdsEndVertexTree()
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Converting triangles to reference nodes by ID..."));
     /* Convert tris to reference node IDs, rather than indices */
-    for (i = 0; i < vdsNumtris; i++) {
-	vdsTri *T = &triarray[i];
+    for (i = 0; i < s->vdsNumtris; i++) {
+	vdsTri *T = &s->triarray[i];
 	int c0, c1, c2;
 
 	c0 = T->corners[0].index;
@@ -617,22 +591,25 @@ vdsNode *vdsEndVertexTree()
     free(ids);
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Computing subtris..."));
-    computeSubtris(root);
+    computeSubtris(s, root);
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Reallocating nodes and copying triangles into node->subtris "
 		"fields..."));
     root = moveTrisToNodes(root);	/* Note: reallocates all nodes	    */
-    free(nodearray);
+    if (have_parent)
+	free(s->nodearray);
     VDS_DEBUG(("Done.\n"));
     VDS_DEBUG(("Computing triangle container nodes..."));
+    if (!root)
+	return NULL;
     vdsComputeTriNodes(root, root);
-    free(triarray);			/* nodearray still holds leaf nodes */
+    free(s->triarray);			/* nodearray still holds leaf nodes */
     root->status = Boundary;		/* root initially on boundary	    */
     root->next = root->prev = root;	/* root always on boundary path	    */
 #ifdef VDS_DEBUGPRINT
     VDS_DEBUG(("Done.\nVertex tree complete! Maximum depth = %d\n", maxdepth));
 #endif
-    openflag = 0;
+    s->openflag = 0;
     return root;
 }
 
@@ -906,6 +883,9 @@ void vdsFoldNode(vdsNode *node)
     vdsTri *t;
     int i;
 
+    if (!node || !node->children)
+	return;
+
     /* Activate node and deactivate children */
     node->status = Boundary;
     child = node->children;
@@ -1021,55 +1001,6 @@ void vdsUnfoldAncestors(vdsNode *node)
     }
     /* We've unfolded the parent, so node should now be on the boundary */
     vdsUnfoldNode(node);
-}
-
-/** Adjust the active boundary of the vertex tree.
- *
- * Walks the boundary of the active tree from left to right,
- * calling a user-specified function to determine whether to
- * unfold boundary nodes, lowering the boundary, or fold parents
- * of boundary nodes, raising the boundary.
- *
- * @param	root 		root of tree whose boundary is to be adjusted
- * @param	foldtest	returns 1 if node should be folded, 0 otherwise
- */
-void vdsAdjustTreeBoundary(vdsNode *root, vdsFoldCriterion foldtest, void *udata)
-{
-    vdsNode *current;			/* node currently being tested	*/
-    vdsNode *parent = NULL;		/* parent of current node	*/
-    vdsNode *lastparent = NULL;		/* parent node last iteration	*/
-
-    current = root->next;
-    do {
-	parent = current->parent;
-	/*
-	 * If we haven't already, test parent: should it be folded?
-	 * Note: if current is root node, parent == lastparent == NULL, so
-	 * we won't attempt to fold (or even access) the NULL root->parent.
-	 */
-	if (parent != lastparent) {
-	    lastparent = parent;
-	    /* Test parent: should it be folded? */
-	    if (foldtest(parent, udata)) {
-		vdsFoldSubtree(parent);
-		/* Now parent is on the boundary; check it next */
-		current = parent;
-		continue;
-	    }
-	}
-	/*
-	 * Don't need to fold parent.  If current node can be unfolded,
-	 * should we do so, or leave on the boundary?
-	 */
-	if (current->children != NULL && foldtest(current, udata) == 0) {
-	    vdsUnfoldNode(current);
-	    /* Now node->children are on the boundary; check them */
-	    current = current->children;
-	} else {
-	    /* No folds or unfolds, move on to next node on the boundary */
-	    current = current->next;
-	}
-    } while (current != root);
 }
 
 /** Traverse given vertex tree top-down, adjusting the boundary.
@@ -1392,27 +1323,6 @@ void vdsComputeTriNodes(vdsNode *node, vdsNode *root)
     }
 }
 
-/** Print a vdsNodeId to stdout.
- * 		Prints the node ID (depth & path down the vertex tree) in
- *		human-readable form to stdout.
- *
- */
-void vdsPrintNodeId(const vdsNodeId *id)
-{
-    int i;
-    vdsNodePath tmppath = id->path;
-
-    if (id->depth == 0) {
-	printf("<root>\n");
-    } else {
-	for (i = 0; i < id->depth; i++) {
-	    putchar((char) (tmppath & VDS_BITMASK) + '0');
-	    tmppath >>= VDS_NUMBITS;
-	}
-	putchar('\n');
-    }
-}
-
 /** Gather statistics for a vertex tree.
  * 		Recursively counts the number of nodes, the number of
  *		leaf nodes (i.e., vertices from the original model), and the
@@ -1446,30 +1356,11 @@ void vdsStatTree(vdsNode *root, int *nodes, int *leaves, int *tris)
     }
 }
 
-/** Calculate a triangle's current normal.
- * 		Calculates a triangle's normal, say for flat-shading, by
- *		taking the cross product of two of its edges.  Places the
- *		result in <b>normal</b>. <p>
- *
- * <b>Note</b>:	This calculates the normal of the triangle as currently
- *		simplified!  Triangles that don't exist in the current
- *		simplification will produce undefined behavior.
- */
-void vdsCalcTriNormal(vdsTri *t, vdsVec3 normal)
-{
-    vdsVec3 tmp1, tmp2;
-
-    VEC3_SUBTRACT(tmp1, t->proxies[1]->coord, t->proxies[0]->coord);
-    VEC3_SUBTRACT(tmp2, t->proxies[2]->coord, t->proxies[0]->coord);
-    VEC3_CROSS(normal, tmp1, tmp2);
-    VEC3_NORMALIZE(normal);
-}
-
 /** Free all memory used by a vertex tree.
- * 		Recursively frees the given VDS vertex tree and all associated
- *		vdsTri structs.<p>
- * <b>Note</b>:	Does NOT free anything pointed at by the node->data field;
- *		this is left to application.
+ *             Recursively frees the given VDS vertex tree and all associated
+ *             vdsTri structs.<p>
+ * <b>Note</b>:        Does NOT free anything pointed at by the node->data field;
+ *             this is left to application.
  */
 void vdsFreeTree(vdsNode *node)
 {
@@ -1484,254 +1375,6 @@ void vdsFreeTree(vdsNode *node)
     /* I think just freeing node will free up all its subtris correctly... */
     free(node);
 }
-
-/*@}*/
-/***************************************************************************\
-
-  Copyright 1999 The University of Virginia.
-  All Rights Reserved.
-
-  Permission to use, copy, modify and distribute this software and its
-  documentation without fee, and without a written agreement, is
-  hereby granted, provided that the above copyright notice and the
-  complete text of this comment appear in all copies, and provided that
-  the University of Virginia and the original authors are credited in
-  any publications arising from the use of this software.
-
-  IN NO EVENT SHALL THE UNIVERSITY OF VIRGINIA
-  OR THE AUTHOR OF THIS SOFTWARE BE LIABLE TO ANY PARTY FOR DIRECT,
-  INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
-  LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-  DOCUMENTATION, EVEN IF THE UNIVERSITY OF VIRGINIA AND/OR THE
-  AUTHOR OF THIS SOFTWARE HAVE BEEN ADVISED OF THE POSSIBILITY OF
-  SUCH DAMAGES.
-
-  The author of the vdslib software library may be contacted at:
-
-  US Mail:             Dr. David Patrick Luebke
-  Department of Computer Science
-  Thornton Hall, University of Virginia
-  Charlottesville, VA 22903
-
-Phone:               (804)924-1021
-
-EMail:               luebke@cs.virginia.edu
-
-\*****************************************************************************/
-/**
- * @memo	Routines for reading and writing vertex trees.
- * @name 	Vertex tree file I/O
- *
- * These routines provide a mechanism for saving a VDS vertex tree to a
- * terse binary file format, and reading it back.  This file format is a
- * bit rough at the moment.  For example, it does not deal with differences
- * between big-endian and little-endian machines, so files created on one
- * architecture may not run on another architecture.  Expect file I/O to
- * change and improve with following versions of the library.<p>
- *
- * @see file.c */
-/*@{*/
-
-static void writeNode(FILE *f, vdsNode *node, vdsNodeDataWriter putdata);
-static vdsNode *readNode(FILE *f, vdsNodeDataReader getdata);
-static vdsNode *readChildren(FILE *f, vdsNode *parent, vdsNodeDataReader get);
-static void writeChildren(FILE *f, vdsNode *parent, vdsNodeDataWriter put);
-
-/** Read a vertex tree from a VDS binary file.
- * 		The user may specify a vdsNodeDataReader function
- *		<b>readdata()</b> if the vertex tree was written with
- *		custom data in the node->data field.  If <b>readdata()</b>
- *		is NULL, the node->data field is simply copied
- *		byte-for-byte into memory.
- * @param	f 		The file to be read.
- * @param	readdata	A vdsNodeDataReader function callback to read
- *				the contents of the node->data field, or NULL
- *				to simply read node->data byte-for-byte.
- * @return	A pointer to the root node of the new tree.
- */
-vdsNode *vdsReadTree(FILE *f, vdsNodeDataReader readdata)
-{
-    int major, minor;
-    int numnodes, numverts, numtris;
-    vdsNode *root;
-
-    if (fscanf(f, "VDS Vertex Tree file format version %d.%d\n",
-		&major, &minor) != 2) {
-	fprintf(stderr, "Error reading line 1 of input file.\n");
-	exit(1);
-    }
-    if (fscanf(f, "Total nodes: %d\nVertices: %d\nTriangles: %d\n",
-		&numnodes, &numverts, &numtris) != 3) {
-	fprintf(stderr, "Error reading lines 2-4 of input file.\n");
-	exit(1);
-    }
-    /* Read the tree, starting with the root node */
-    root = readNode(f, readdata);
-    root->parent = NULL;
-    root->depth = 0;
-    root->children = readChildren(f, root, readdata);
-    vdsComputeTriNodes(root, root);
-    root->status = Boundary;
-    root->next = root->prev = root;
-    return root;
-}
-
-/*
- * Function:	readChildren
- * Description:	Reads a group of nodes, which are sibling children of <parent>
- *		stored adjacently in a VDS binary file.  Then, recursively
- *		reads THEIR children in depth-first order.
- * Returns: 	The address of the first node in the group of siblings.
- */
-static vdsNode *readChildren(FILE *f, vdsNode *parent, vdsNodeDataReader get)
-{
-    vdsNode *node, *firstnode;
-
-    firstnode = readNode(f, get);
-    node = firstnode;
-    while (node != NULL) {
-	node->parent = parent;
-	node->depth = parent->depth + 1;
-	/* Unless its NULL, overwrite node->sibling (which is garbage) */
-	if (node->sibling != NULL) {
-	    node->sibling = readNode(f, get);
-	}
-	node = node->sibling;
-    }
-    node = firstnode;
-    while (node != NULL) {
-	if (node->children != NULL) {
-	    node->children = readChildren(f, node, get);
-	}
-	node = node->sibling;
-    }
-    return firstnode;
-}
-
-/*
- * Function:	readNode
- * Description:	Reads a single node from the VDS binary file, leaving
- *		information like parent and depth to be filled in by the
- *		caller.
- */
-static vdsNode *readNode(FILE *f, vdsNodeDataReader getdata)
-{
-    vdsNode *node;
-    int numchildren, numsubtris;
-
-    node = (vdsNode *) calloc(1, sizeof(vdsNode));
-    node->status = Inactive;
-    if (!fread(&node->bound, sizeof(vdsBoundingVolume), 1, f)) return node;
-    if (!fread(&node->coord, sizeof(vdsVec3), 1, f)) return node;
-    if (!fread(&numchildren, sizeof(numchildren), 1, f)) return node;
-    /* if numchildren is 0, set node->children NULL, otherwise to non-NULL */
-    node->children = (numchildren == 0 ? NULL : (vdsNode *) 0x1);
-    /* Read sibling pointer (actually we just care if it's NULL or not) */
-    if (!fread(&node->sibling, sizeof(node->sibling), 1, f)) return node;
-    /*
-     * We can read and write the triangles directly to the binary file, at
-     * the expense of re-running vdsComputeTriNodes() afterwards.  Also,
-     * writing the entire structure (versus each field separately) means
-     * that we are locked to a particular architecture/compiler's memory
-     * alignment...not very portable.
-     */
-    if (!fread(&numsubtris, sizeof(numsubtris), 1, f)) return node;
-    node->nsubtris = numsubtris;
-    node = (vdsNode *) realloc(node, sizeof(vdsNode) +
-	    numsubtris * sizeof(vdsTri));
-    if (!fread(&node->subtris[0], sizeof(vdsTri), numsubtris, f)) return node;
-    /* Now get the associated node data if user has provided a function */
-    if (getdata == NULL) {
-	if (!fread(&node->data, sizeof(vdsNodeData), 1, f)) return node;
-    } else {
-	node->data = getdata(f);
-    }
-    return node;
-}
-
-/** Writes a vertex tree to a VDS binary file.
- * 		Writes a vertex tree to the specified file.  The user may
- *		specify a vdsNodeDataWriter function <b>writedata()</b> if the
- *		vertex tree was written with custom data in the node->data
- *		field.  If <b>writedata()</b> is NULL, the contents of the
- *		node->data field are simply copied byte-for-byte into the file.
- * @param	f 	The file to which the tree is written
- * @param	root		The root of the vertex tree to be written.
- * @param	writedata	A vdsNodeDataReader function callback to read
- *				the contents of the node->data field, or NULL
- *				to simply read node->data byte-for-byte.
- */
-void vdsWriteTree(FILE *f, vdsNode *root, vdsNodeDataWriter writedata)
-{
-    int numnodes, numverts, numtris;
-
-    fprintf(f, "VDS Vertex Tree file format version %d.%d\n", MAJOR, MINOR);
-    vdsStatTree(root, &numnodes, &numverts, &numtris);
-    fprintf(f, "Total nodes: %d\n", numnodes);
-    fprintf(f, "Vertices: %d\n", numverts);
-    fprintf(f, "Triangles: %d\n", numtris);
-    fflush(f);
-    /* Save the root node to disk */
-    writeNode(f, root, writedata);
-    /* Now recursively save its children, grouping siblings together on disk */
-    writeChildren(f, root, writedata);
-}
-
-/*
- * Function:	writeChildren
- * Description:	Writes all of the given node's children to disk, then
- *		recursively writes their children in depth-first order.
- */
-static void writeChildren(FILE *f, vdsNode *parent, vdsNodeDataWriter put)
-{
-    vdsNode *child;
-
-    child = parent->children;
-    while (child != NULL) {
-	writeNode(f, child, put);
-	child = child->sibling;
-    }
-    child = parent->children;
-    while (child != NULL) {
-	if (child->children != NULL) {
-	    writeChildren(f, child, put);
-	}
-	child = child->sibling;
-    }
-}
-
-/*
- * Function:	writeNode
- * Description:	Writes the essential fields of a single vdsNode to a
- * VDS binary file.
- */
-static void writeNode(FILE *f, vdsNode *node, vdsNodeDataWriter putdata)
-{
-    vdsNode *child;
-    int numchildren = 0, numsubtris = node->nsubtris;
-
-    fwrite(&node->bound, sizeof(vdsBoundingVolume), 1, f);
-    fwrite(&node->coord, sizeof(vdsVec3), 1, f);
-    child = node->children;
-    while (child != NULL) {
-	numchildren ++;
-	child = child->sibling;
-    }
-    fwrite(&numchildren, sizeof(numchildren), 1, f);
-    /* Write the sibling pointer (actually we just care if it's NULL or not) */
-    fwrite(&node->sibling, sizeof(node->sibling), 1, f);
-    /* Write all the subtris (if any) associated with this node */
-    fwrite(&numsubtris, sizeof(numsubtris), 1, f);
-    fwrite(&node->subtris[0], sizeof(vdsTri), numsubtris, f);
-    /* Now write associated node data using user-supplied function (if any) */
-    if (putdata == NULL) {
-	fwrite(&node->data, sizeof(vdsNodeData), 1, f);
-    } else {
-	putdata(f, node);
-    }
-}
-
-/*@}*/
 
 /*
  * Local Variables:

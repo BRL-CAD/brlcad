@@ -235,7 +235,6 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     *(uint16_t *)buf = htons((unsigned short)pnts->type);
     buf += SIZEOF_NETWORK_SHORT;
     *(uint32_t *)buf = htonl(pnts->count);
-    buf += SIZEOF_NETWORK_LONG;
 
     if (pnts->count <= 0) {
 	/* no points to stash, we're done */

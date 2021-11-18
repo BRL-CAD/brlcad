@@ -833,7 +833,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -842,7 +842,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     MAT4X3VEC(eip->b, mat, &vec[2*3]);
     MAT4X3VEC(eip->c, mat, &vec[3*3]);
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	eip->n = flip_dbfloat(rp->s.s_values[12]);
 	eip->e = flip_dbfloat(rp->s.s_values[13]);
     } else {

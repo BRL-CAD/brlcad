@@ -39,20 +39,18 @@ void
 analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 {
     struct rt_superell_internal *superell = (struct rt_superell_internal *)ip->idb_ptr;
-    fastf_t ma, mb, mc;
-    fastf_t ecc, major_mag, minor_mag;
-    fastf_t vol, sur_area;
-    int type;
 
     RT_SUPERELL_CK_MAGIC(superell);
 
-    ma = MAGNITUDE(superell->a);
-    mb = MAGNITUDE(superell->b);
-    mc = MAGNITUDE(superell->c);
-
-    type = 0;
-
-    vol = 4.0 * M_PI * ma * mb * mc / 3.0;
+    fastf_t ma = MAGNITUDE(superell->a);
+    fastf_t mb = MAGNITUDE(superell->b);
+    fastf_t mc = MAGNITUDE(superell->c);
+    fastf_t vol = 4.0 * M_PI * ma * mb * mc / 3.0;
+    fastf_t ecc = 0.0;
+    fastf_t major_mag = 0.0;
+    fastf_t minor_mag = 0.0;
+    fastf_t sur_area = 0.0;
+    int type = 0;
 
     if (fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001) {
 	/* have a sphere */

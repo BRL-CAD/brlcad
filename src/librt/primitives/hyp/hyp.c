@@ -755,7 +755,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct rt_pnt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct shell *s;
     struct faceuse **outfaceuses = NULL;
-    struct faceuse *fu_top;
+    struct faceuse *fu_top, *fu_bottom;
     struct loopuse *lu;
     struct edgeuse *eu;
     struct vertex *vertp[3];
@@ -957,8 +957,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* vertices of ellipses of hyp */
-    vells = (struct vertex ***)
-	bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
+    vells = (struct vertex ***)bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
     j = nseg;
     for (i = 0; i < nell; i++) {
 	vells[i] = (struct vertex **)bu_malloc(j*sizeof(struct vertex *), "vertex []");
@@ -1091,10 +1090,10 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     BU_ASSERT(outfaceuses != NULL);
     if ((outfaceuses[face++] = nmg_cface(s, vells[0], nseg)) == 0) {
-	bu_log("rt_hyp_tess() failure, top face\n");
+	bu_log("rt_hyp_tess() failure, bottom face\n");
 	goto fail;
     }
-    fu_top = outfaceuses[face-1];
+    fu_bottom = outfaceuses[face-1];
 
     /* Mark edges of this face as real, this is the only real edge */
     for (BU_LIST_FOR (lu, loopuse, &outfaceuses[face-1]->lu_hd)) {
@@ -1181,8 +1180,10 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    NMG_CK_VERTEXUSE(vu);
 	    fu = nmg_find_fu_of_vu(vu);
 
-	    /* don't assign vertexuse normals to top face (flat) */
+	    /* don't assign vertexuse normals to top or bottom faces (flat) */
 	    if (fu == fu_top || fu->fumate_p == fu_top)
+		continue;
+	    if (fu == fu_bottom || fu->fumate_p == fu_bottom)
 		continue;
 
 	    NMG_CK_FACEUSE(fu);
@@ -1417,7 +1418,7 @@ rt_hyp_surf_area(fastf_t *UNUSED(area), const struct rt_db_internal *UNUSED(ip))
 void
 rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
-    if (volume != NULL || ip != NULL) {
+    if (volume != NULL && ip != NULL) {
 	struct rt_hyp_internal *hip;
 	struct hyp_specific *hyp;
 

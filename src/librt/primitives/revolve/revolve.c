@@ -1200,6 +1200,7 @@ rt_revolve_free(struct soltab *stp)
     BU_PUT(revolve, struct revolve_specific);
 }
 
+#define VVECT_INIT16 {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
 
 int
 rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
@@ -1210,7 +1211,8 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     point2d_t *verts;
     struct rt_curve *crv;
 
-    vect_t ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
+    vect_t ell[16] = VVECT_INIT16;
+    vect_t cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t cos22_5 = 0.9238795325112867385;
     fastf_t cos67_5 = 0.3826834323650898373;
     int *endcount = NULL, ang_sign;
@@ -1222,7 +1224,14 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
+    nseg = rip->skt->curve.count;
     nvert = rip->skt->vert_count;
+
+    if (nseg && !nvert) {
+	bu_log("Trying to plot a revolve with segments but no vertices??\n");
+	return -1;
+    }
+
     verts = rip->skt->verts;
     crv = &rip->skt->curve;
 
@@ -1282,7 +1291,6 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct b
     if (nvert)
 	endcount = (int *)bu_calloc(nvert, sizeof(int), "endcount");
 
-    nseg = rip->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
 	uint32_t *lng;

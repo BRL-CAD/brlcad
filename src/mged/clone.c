@@ -984,7 +984,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     /* Prepare vert list *****************************/
     n_links = ((argc-3)/2)>1?((argc-3)/2):1;
-    verts = (vect_t *)malloc(sizeof(vect_t) * n_verts * (n_links+2));
+    verts = (vect_t *)bu_calloc(n_verts * (n_links+2), sizeof(vect_t), "verts");
 
     /* Read in links names and link lengths **********/
     links = (struct link *)malloc(sizeof(struct link)*n_links);
@@ -1053,8 +1053,6 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	fflush(stdout);
 	for (j = 0; j < n_links; j++) /* set length of each link based on current track length */
 	    links[j].len = len * links[j].pct;
-	min = 0;
-	max = s.t[s.n_segs];
 	mid = 0;
 
 	for (j = 0; j < n_verts+1; j++) /* around the track once */
@@ -1088,6 +1086,10 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	len = totlen/(n_verts-1);
     }
     fprintf(stdout, "\n");
+    if (!i) {
+	fprintf(stdout, "Failed to interpolate any link vertices\n");
+	return TCL_ERROR;
+    }
 
     /* Write out interpolation info ******************/
     fprintf(stdout, "%ld Iterations; Final link lengths:\n", (unsigned long)i);

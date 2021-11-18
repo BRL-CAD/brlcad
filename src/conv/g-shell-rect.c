@@ -530,7 +530,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
 	(void)Get_extremes(s, &ap2, sd->hitmiss, sd->manifolds, hit1, hit2);
 
-	if (debug) {
+	if (debug && hit1_v && hit2_v) {
 	    bu_log("shrink_hit:\n\thit1_v=(%g %g %g), hit2_v=(%g %g %g)\n",
 		   V3ARGS(hit1_v->vg_p->coord),
 		   V3ARGS(hit2_v->vg_p->coord));
@@ -542,17 +542,18 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 		   V3ARGS(mhit2));
 	}
 
-	VSUB2(diff1, hit1_v->vg_p->coord, hit1);
-	VSUB2(diff2, hit2_v->vg_p->coord, hit2);
-
-	len1_sq = MAGSQ(diff1);
-	len2_sq = MAGSQ(diff2);
-
-	if (!NEAR_ZERO(len1_sq, tol.dist_sq))
-	    hit1_v = (struct vertex *)NULL;
-
-	if (!NEAR_ZERO(len2_sq, tol.dist_sq))
-	    hit2_v = (struct vertex *)NULL;
+	if (hit1_v) {
+	    VSUB2(diff1, hit1_v->vg_p->coord, hit1);
+	    len1_sq = MAGSQ(diff1);
+	    if (!NEAR_ZERO(len1_sq, tol.dist_sq))
+		hit1_v = (struct vertex *)NULL;
+	}
+	if (hit2_v) {
+	    VSUB2(diff2, hit2_v->vg_p->coord, hit2);
+	    len2_sq = MAGSQ(diff2);
+	    if (!NEAR_ZERO(len2_sq, tol.dist_sq))
+		hit2_v = (struct vertex *)NULL;
+	}
     }
 
     if (hit1_v && hit1_v == hit2_v) {
@@ -889,7 +890,6 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		cut_pt[cur_dir] = cut_value;
 		nmg_vertex_gv(eu1->vu_p->v_p, cut_pt);
 		bu_ptbl_ins(tab, (long *)eu1->vu_p->v_p);
-		vg1a = eu1->vu_p->v_p->vg_p;
 		vu1_cut = eu1->vu_p;
 	    } else if (EQUAL(vg1a->coord[cur_dir], cut_value))
 		vu1_cut = eu1->vu_p;
@@ -905,7 +905,6 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		cut_pt[cur_dir] = cut_value;
 		nmg_vertex_gv(eu2->vu_p->v_p, cut_pt);
 		bu_ptbl_ins(tab, (long *)eu2->vu_p->v_p);
-		vg2a = eu2->vu_p->v_p->vg_p;
 		vu_cut = (struct vertexuse *)NULL;
 		for (BU_LIST_FOR(vu_cut, vertexuse, &eu2->vu_p->v_p->vu_hd)) {
 		    if (nmg_find_lu_of_vu(vu_cut) == lu) {
@@ -1679,8 +1678,6 @@ main(int argc, char **argv)
 		char *ptr;
 		struct refine_rpp *rpp;
 		int bad_opt = 0;
-
-		ptr = bu_optarg;
 
 		rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp), "add refine rpp");
 		ptr = strtok(bu_optarg, token_seps);

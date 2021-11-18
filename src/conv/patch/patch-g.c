@@ -1673,7 +1673,6 @@ proc_wedge(size_t cnt)
 	proc_region(name);
 
     /* Mirror Processing - duplicates above code! */
-    ret = 0;
     for (k=0; k <= (cnt-1) && in[k].mirror != 0; k+=4) {
 
 	VSET(pt8[0], in[k].x, -in[k].y, in[k].z);
@@ -3633,7 +3632,6 @@ main(int argc, char **argv)
 		}
 	    }
 	}
-	done = 1;
     }
 
     /* Read the material codes file, which is a component code list

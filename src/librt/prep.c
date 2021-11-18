@@ -1840,6 +1840,8 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	 * appropriate tree_state.  unprep solids and regions along
 	 * the way
 	 */
+	if (!path || path->fp_len <= 0)
+	    return -1;
 	obj_name = DB_FULL_PATH_CUR_DIR(path)->d_namep;
 	if (!obj_name)
 	    return 1;
@@ -1904,7 +1906,6 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 		    rtip->Regions[j]->reg_bit = j;
 		}
 	    }
-	    nulls = 0;
 	} else {
 	    i++;
 	}

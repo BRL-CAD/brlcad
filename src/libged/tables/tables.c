@@ -336,7 +336,6 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		    }
 		    if (rt_db_get_internal(&sol_intern, sol_dp, gedp->dbip, temp_mat, &rt_uniresource) < 0) {
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
-			nsoltemp = 0;
 		    }
 		    nsoltemp = tables_sol_number((matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		    bu_vls_printf(tobj->tree, "   %c [%d] ", op, nsoltemp);

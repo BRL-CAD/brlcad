@@ -584,7 +584,6 @@ parse_args(int ac, char *av[])
 	    case 'g':
 		{
 		    double value1, value2;
-		    i = 0;
 
 		    /* find out if we have two or one args; user can
 		     * separate them with , or - delimiter
@@ -1080,8 +1079,8 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		    VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
 
 		    if (analysis_flags & ANALYSIS_MOMENTS) {
-			vectp_t moi;
-			vectp_t poi = &state->m_poi[state->i_axis*3];
+			vectp_t moi = NULL;
+			vectp_t poi = NULL;
 			fastf_t dx_sq = cmass[X]*cmass[X];
 			fastf_t dy_sq = cmass[Y]*cmass[Y];
 			fastf_t dz_sq = cmass[Z]*cmass[Z];

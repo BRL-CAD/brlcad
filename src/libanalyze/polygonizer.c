@@ -857,7 +857,7 @@ analyze_polygonize(
 	}
 
 	if (params && params->minimum_free_mem > 0) {
-	    avail_mem = bu_avail_mem();
+	    avail_mem = bu_mem(BU_MEM_AVAIL);
 	    if (avail_mem >= 0 && avail_mem < params->minimum_free_mem) {
 		/* memory too tight, bail */
 		ret = 3;

@@ -1678,8 +1678,6 @@ material_in(struct ged *gedp, int argc, const char **cmd_argvs, struct rt_db_int
         }
 
         if (BU_STR_EQUAL(".", cmd_argvs[arg_idx])) {
-            arg_idx += 1;
-            arg_ptr += 1;
             break;
         }
 

@@ -61,7 +61,6 @@ main(int ac, char *av[])
         return 1;
     }
   }
-  ac -= bu_optind;
   av += bu_optind;
 
   if (!bu_file_exists(av[0], NULL)) {

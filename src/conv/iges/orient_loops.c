@@ -150,6 +150,10 @@ Orient_face_loops(struct faceuse *fu)
 	}
     }
 
+    if (!lu_outer) {
+	bu_exit(BRLCAD_ERROR, "No outer loop found, orient_loops.c:%d\n", __LINE__);
+    }
+
     BU_ALLOC(loop_root, struct loop_list);
     loop_root->lu = lu_outer;
     loop_root->next = (struct loop_list *)NULL;

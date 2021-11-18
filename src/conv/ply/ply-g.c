@@ -298,7 +298,8 @@ main(int argc, char *argv[])
     }
 
     BU_LIST_INIT(&head);
-    if ((wmp=mk_addmember(bu_vls_addr(&bot_name), &head, NULL, WMOP_UNION)) == WMEMBER_NULL) {
+    wmp = mk_addmember(bu_vls_addr(&bot_name), &head, NULL, WMOP_UNION);
+    if (wmp == WMEMBER_NULL) {
 	bu_log("ERROR: Failed to add %s to region\n", bu_vls_addr(&bot_name));
 	goto free_bot;
     }

@@ -74,19 +74,20 @@ Getstrg(char **str, char *id)
     num[++i] = '\0';
     length = atoi(num);
 
-    if (length < 1)
+    if (length < 1) {
 	(*str) = NULL;
-    else
+    } else {
 	(*str) = (char *)bu_malloc(sizeof(char) * length + 1, "Getstrg: str");
-    for (i = 0; i < length; i++) {
-	if (counter > lencard)
-	    Readrec(++currec);
-	(*str)[i] = card[counter];
-	if (*id != '\0')
-	    bu_log("%c", card[counter]);
-	counter++;
+	for (i = 0; i < length; i++) {
+	    if (counter > lencard)
+		Readrec(++currec);
+	    (*str)[i] = card[counter];
+	    if (*id != '\0')
+		bu_log("%c", card[counter]);
+	    counter++;
+	}
+	(*str)[length] = '\0';
     }
-    (*str)[length] = '\0';
     if (*id != '\0')
 	bu_log("%c", '\n');
 
@@ -149,6 +150,9 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 	Readcnv(&tmp[Y], "");
 	Readcnv(&tmp[Z], "");
 	Getstrg(&str, "");
+	if (str_len > 0 && !str) {
+	    bu_exit(BRLCAD_ERROR, "str_len is %d, but no str read!  conv_drawings.c: %d\n", str_len, __LINE__);
+	}
 
 	/* apply any transform */
 	MAT4X3PNT(loc, *dir[entno]->rot, tmp);

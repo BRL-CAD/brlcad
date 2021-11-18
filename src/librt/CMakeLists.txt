@@ -40,8 +40,8 @@ set(LIBRT_SOURCES
   comb/comb_brep.cpp
   comb/comb_mirror.c
   comb/db_comb.c
+  material/material.c
   constraint.c
-  material.c
   cut.c
   cut_hlbvh.c
   db5_alloc.c
@@ -233,16 +233,9 @@ set(LIBRT_SOURCES
 if(BRLCAD_ENABLE_GCT)
   set(LIBRT_SOURCES
     ${LIBRT_SOURCES}
-    primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-    primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-    primitives/bot/gct_decimation/auxiliary/mm.c
-    primitives/bot/gct_decimation/auxiliary/mmhash.c
-    primitives/bot/gct_decimation/meshoptimization.c
+    primitives/bot/gct_decimation/util.c
     primitives/bot/gct_decimation/meshoptimizer.c
     primitives/bot/gct_decimation/meshdecimation.c
-    primitives/bot/gct_decimation/meshdecimationSSE2.c
-    primitives/bot/gct_decimation/meshdecimationSSE3.c
-    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
     )
 endif(BRLCAD_ENABLE_GCT)
 
@@ -254,16 +247,8 @@ set(librt_ignored_files
   primitives/bot/bot_wireframe.cpp
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
-  primitives/bot/gct_decimation/auxiliary/cc.h
-  primitives/bot/gct_decimation/auxiliary/mm.h
-  primitives/bot/gct_decimation/auxiliary/mmatomic.h
-  primitives/bot/gct_decimation/auxiliary/mmbinsort.h
-  primitives/bot/gct_decimation/auxiliary/mmbitmap.h
-  primitives/bot/gct_decimation/auxiliary/mmhash.h
-  primitives/bot/gct_decimation/auxiliary/mmthread.h
+  primitives/bot/gct_decimation/util.h
   primitives/bot/gct_decimation/meshdecimation.h
-  primitives/bot/gct_decimation/meshoptimization.h
-  primitives/bot/gct_decimation/meshoptimizer.h
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
   primitives/bot/tieprivate.h
@@ -314,15 +299,10 @@ if(NOT BRLCAD_ENABLE_GCT)
   set(librt_ignored_files
     ${librt_ignored_files}
     primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-    primitives/bot/gct_decimation/auxiliary/mmbitmap.c
     primitives/bot/gct_decimation/auxiliary/mm.c
     primitives/bot/gct_decimation/auxiliary/mmhash.c
-    primitives/bot/gct_decimation/meshoptimization.c
     primitives/bot/gct_decimation/meshoptimizer.c
     primitives/bot/gct_decimation/meshdecimation.c
-    primitives/bot/gct_decimation/meshdecimationSSE2.c
-    primitives/bot/gct_decimation/meshdecimationSSE3.c
-    primitives/bot/gct_decimation/meshdecimationSSE4p1.c
     )
 endif(NOT BRLCAD_ENABLE_GCT)
 CMAKEFILES(${librt_ignored_files})

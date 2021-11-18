@@ -92,7 +92,7 @@ main(int argc, char **argv)
     int n, m;
     int height;
 
-    unsigned char *scanline;    /* 1 scanline pixel buffer */
+    unsigned char *scanline = NULL;    /* 1 scanline pixel buffer */
     int scanbytes;              /* # of bytes of scanline */
     int scanpix;                /* # of pixels of scanline */
     int streamline;             /* # scanlines to do at once */
@@ -159,6 +159,8 @@ main(int argc, char **argv)
     }
     fb_close(in_fbp);
     fb_close(out_fbp);
+    if (scanline)
+	bu_free(scanline, "scanline");
     return 0;
 }
 

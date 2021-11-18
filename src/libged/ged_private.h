@@ -703,7 +703,6 @@ void
 _ged_facetize_log_default(struct _ged_facetize_opts *o);
 
 
-GED_EXPORT extern int ged_view_snap(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
 
 
