@@ -310,7 +310,7 @@ int
 CurveCurveIntersect(
     const ON_Curve *curve1,
     const ON_Curve *curve2,
-    ON_SimpleArray<ON_X_EVENT>& x,
+    ON_ClassArray<ON_X_EVENT>& x,
     double tol
     )
 {
@@ -413,7 +413,7 @@ SetCurveCurveIntersectionDir(
 int
 Face_X_Event::Get_ON_X_Events(double tol)
 {
-    ON_SimpleArray<ON_X_EVENT> out;
+    ON_ClassArray<ON_X_EVENT> out;
     x.Empty();
     ON_BrepFace *faces[2] = {face1, face2};
     ON_Curve *curves[2] = {curve1, curve2};
@@ -1010,7 +1010,7 @@ main(int UNUSED(argc), const char **argv)
     ON_BezierCurve *bezier2 = new ON_BezierCurve(pts2);
     ON_Curve *curve1 = ON_NurbsCurve::New(*bezier1);
     ON_Curve *curve2 = ON_NurbsCurve::New(*bezier2);
-    ON_SimpleArray<ON_X_EVENT> x;
+    ON_ClassArray<ON_X_EVENT> x;
     CurveCurveIntersect(curve1, curve2, x, 1e-9);
     ON_Brep brep1 = ON_Brep(), brep2 = ON_Brep();
     ON_Surface *surf1 = TwistedCubeSideSurface(ON_3dPoint(1, 1, 1), ON_3dPoint(-1, -1, 1), ON_3dPoint(-1, -1, -1), ON_3dPoint(1, 1, -1));
