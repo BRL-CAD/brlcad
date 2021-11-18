@@ -48,7 +48,7 @@ typedef enum {
 static const char *usage = " help \n\n"
     "material create {objectName} {materialName}\n\n"
     "material destroy {object}\n\n"
-    "material import {fileName} [-id {materialId}]  [--name {materialName}]\n\n"
+    "material import [--id | --name] {fileName}\n\n"
     "material get {object} [propertyGroupName] {propertyName}\n\n"
     "material set [-r] {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
     "--id       - Specifies the id the material will be imported with\n\n"
@@ -126,7 +126,7 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
 			char* density = strtok(NULL, "\t");
 			(void)bu_avs_add(&physicalProperties, "density", density);
             (void)bu_avs_add(&physicalProperties, "id", num);
-            if(strcmp("--asid", flag)==0){
+            if(strcmp("--id", flag)==0){
                 char mat_with_id[40];
                 strcat(mat_with_id, "matl");
                 strcat(mat_with_id, num);
