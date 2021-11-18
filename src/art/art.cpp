@@ -149,6 +149,8 @@
 
 struct application APP;
 struct resource* resources;
+int samples = 0;
+
 extern "C" {
     FILE* outfp = NULL;
     int	save_overlaps = 1;
@@ -166,7 +168,8 @@ extern "C" {
  * extract that functionality into a library... */
 
 extern "C" {
-    struct command_tab rt_do_tab[] = { {NULL, NULL, NULL, 0, 0, 0} };
+    // struct command_tab rt_do_tab[] = { {NULL, NULL, NULL, 0, 0, 0} };
+    void option(const char *cat, const char *opt, const char *des, int verbose);
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
 
@@ -184,6 +187,56 @@ extern "C" {
     extern fastf_t aspect;
 
     void grid_setup();
+}
+
+struct bu_structparse view_parse[] = {
+    {"%d", 1, "samples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "s", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+struct bu_structparse set_parse[] = {
+    {"%d",	1, "samples",			bu_byteoffset(samples),			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%p",	1, "Application-Specific Parameters", bu_byteoffset(view_parse[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+int cm_set(const int argc, const char **argv)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+
+    if (argc <= 1) {
+	bu_struct_print("Generic and Application-Specific Parameter Values",
+			set_parse, (char *)0);
+	return 0;
+    }
+
+    bu_vls_from_argv(&str, argc-1, (const char **)argv+1);
+    if (bu_struct_parse(&str, set_parse, (char *)0, NULL) < 0) {
+	bu_vls_free(&str);
+	return -1;
+    }
+    bu_vls_free(&str);
+    return 0;
+}
+
+struct command_tab rt_do_tab[] = {
+    {"set", 	"", "show or set parameters",
+     cm_set,		1, 999},
+    {(char *)0, (char *)0, (char *)0,
+     0,		0, 0	/* END */}
+};
+
+void init_options(void) {
+  /* Set the byte offsets at run time */
+  view_parse[ 0].sp_offset = bu_byteoffset(samples);
+  view_parse[ 1].sp_offset = bu_byteoffset(samples);
+
+
+  // for now, just support -c set samples=x and -?
+  // TODO: update to support most of what rt/usage.cpp has
+  option("", "-c \"command\"", "Customize behavior (see rtedge manual)", 1);
+  option("", "-? or -h", "Display help", 1);
 }
 
 // Define shorter namespaces for convenience.
@@ -642,6 +695,10 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
 int
 main(int argc, char **argv)
 {
+
+    init_options();
+    // usage(argv[0], 0);
+
     // Create a log target that outputs to stderr, and binds it to the renderer's global logger.
     // Eventually you will probably want to redirect log messages to your own target. For this
     // you will need to implement foundation::ILogTarget (foundation/utility/log/ilogtarget.h).
