@@ -54,37 +54,37 @@
 
 /* convenient macro for building regions */
 #define MK_REGION(fp, headp, name, r_id, rgb) {\
-	if (mode == 1) {\
-	    if (!quiet)\
+	if (s->mode == 1) {\
+	    if (!s->quiet)\
 		bu_log("Making region: %s (PLATE)\n", name); \
 	    mk_comb(fp, name, &((headp)->l), 'P', (char *)NULL, (char *)NULL, rgb, r_id, 0, 1, 100, 0, 0, 0); \
-	} else if (mode == 2) {\
-	    if (!quiet) \
+	} else if (s->mode == 2) {\
+	    if (!s->quiet) \
 		bu_log("Making region: %s (VOLUME)\n", name); \
 	    mk_comb(fp, name, &((headp)->l), 'V', (char *)NULL, (char *)NULL, rgb, r_id, 0, 1, 100, 0, 0, 0); \
 	} else {\
-	    bu_log("Illegal mode (%d), while trying to make region (%s)\n", mode, name);\
+	    bu_log("Illegal mode (%d), while trying to make region (%s)\n", s->mode, name);\
 	    bu_log("\tRegion not made!\n");\
 	}\
     }
 
 
-#define PUSH(ptr) bu_ptbl_ins(&stack, (long *)ptr)
+#define PUSH(ptr) bu_ptbl_ins(s->stack, (long *)ptr)
 #define POP(structure, ptr) { \
-	if (BU_PTBL_LEN(&stack) == 0) \
+	if (BU_PTBL_LEN(s->stack) == 0) \
 	    ptr = (struct structure *)NULL; \
 	else { \
-	    ptr = (struct structure *)BU_PTBL_GET(&stack, BU_PTBL_LEN(&stack)-1); \
-	    bu_ptbl_rm(&stack, (long *)ptr); \
+	    ptr = (struct structure *)BU_PTBL_GET(s->stack, BU_PTBL_LEN(s->stack)-1); \
+	    bu_ptbl_rm(s->stack, (long *)ptr); \
 	} \
     }
-#define PUSH2(ptr) bu_ptbl_ins(&stack2, (long *)ptr)
+#define PUSH2(ptr) bu_ptbl_ins(s->stack2, (long *)ptr)
 #define POP2(structure, ptr) { \
-	if (BU_PTBL_LEN(&stack2) == 0) \
+	if (BU_PTBL_LEN(s->stack2) == 0) \
 	    ptr = (struct structure *)NULL; \
 	else { \
-	    ptr = (struct structure *)BU_PTBL_GET(&stack2, BU_PTBL_LEN(&stack2)-1); \
-	    bu_ptbl_rm(&stack2, (long *)ptr); \
+	    ptr = (struct structure *)BU_PTBL_GET(s->stack2, BU_PTBL_LEN(s->stack2)-1); \
+	    bu_ptbl_rm(s->stack2, (long *)ptr); \
 	} \
     }
 
@@ -194,50 +194,107 @@ static int hex_faces[12][3]={
     { 0, 2, 3 }  /* 12 */
 };
 
+struct f4g_state {
+    struct fast4_color HeadColor;
+    char line[MAX_LINE_SIZE+1];	/* Space for input line */
+    FILE *fpin;			/* Input FASTGEN4 file pointer */
+    struct rt_wdb *fpout;	/* Output BRL-CAD file pointer */
+    FILE *fp_plot;		/* file for plot output */
+    FILE *fp_muves;		/* file for MUVES data, output CHGCOMP and CBACKING data */
+    int grid_size;		/* Number of points that will fit in current grid_pts array */
+    int max_grid_no;		/* Maximum grid number used */
+    int mode;			/* Plate mode (1) or volume mode (2), of current component */
+    int group_id;		/* Group identification number from SECTION card */
+    int comp_id;		/* Component identification number from SECTION card */
+    int region_id;		/* Region id number (group id no X 1000 + component id no) */
+    int region_id_max;
+    char field[9];		/* Space for storing one field from an input line */
+    char vehicle[17];		/* Title for BRL-CAD model from VEHICLE card */
+    int name_count;		/* Count of number of times this name_name has been used */
+    int pass;			/* Pass number (0 -> only make names, 1-> do geometry) */
+    int bot;			/* Flag: >0 -> There are BOT's in current component */
+    int warnings;		/* Flag: >0 -> Print warning messages */
+    int debug;			/* Debug flag */
+    int frt_debug;		/* RT_G_DEBUG */
+    int quiet;			/* flag to not blather */
+    int comp_count;		/* Count of components in FASTGEN4 file */
+    int f4_do_skips;		/* flag indicating that not all components will be processed */
+    int *region_list;		/* array of region_ids to be processed */
+    int region_list_len;	/* actual length of the malloc'd region_list array */
+    int f4_do_plot;		/* flag indicating plot file should be created */
+    struct wmember *group_head; /* Lists of regions for groups */
+    ssize_t group_head_cnt;
+    struct wmember hole_head;	/* List of regions used as holes (not solid parts of model) */
+    struct bu_ptbl *stack;	/* Stack for traversing name_tree */
+    struct bu_ptbl *stack2;	/* Stack for traversing name_tree */
+    fastf_t min_radius;		/* minimum radius for TGC solids */
 
-static struct fast4_color HeadColor;
+    int *faces;			/* one triplet per face indexing three grid points */
+    fastf_t *thickness;		/* thickness of each face */
+    char *facemode;		/* mode for each face */
+    int face_size;		/* actual length of above arrays */
+    int face_count;		/* number of faces in above arrays */
 
-static char line[MAX_LINE_SIZE+1];		/* Space for input line */
-static FILE *fpin;			/* Input FASTGEN4 file pointer */
-static struct rt_wdb *fpout;		/* Output BRL-CAD file pointer */
-static FILE *fp_plot=NULL;		/* file for plot output */
-static FILE *fp_muves=NULL;		/* file for MUVES data, output CHGCOMP and CBACKING data */
-static int grid_size;		/* Number of points that will fit in current grid_pts array */
-static int max_grid_no=0;		/* Maximum grid number used */
-static int mode=0;			/* Plate mode (1) or volume mode (2), of current component */
-static int group_id=(-1);		/* Group identification number from SECTION card */
-static int comp_id=(-1);		/* Component identification number from SECTION card */
-static int region_id=0;		/* Region id number (group id no X 1000 + component id no) */
-static int region_id_max=0;
-static char field[9];		/* Space for storing one field from an input line */
-static char vehicle[17];		/* Title for BRL-CAD model from VEHICLE card */
-static int name_count;		/* Count of number of times this name_name has been used */
-static int pass;			/* Pass number (0 -> only make names, 1-> do geometry) */
-static int bot=0;			/* Flag: >0 -> There are BOT's in current component */
-static int warnings=0;		/* Flag: >0 -> Print warning messages */
-static int debug=0;		/* Debug flag */
-static int frt_debug=0;		/* RT_G_DEBUG */
-static int quiet=0;		/* flag to not blather */
-static int comp_count=0;		/* Count of components in FASTGEN4 file */
-static int f4_do_skips=0;		/* flag indicating that not all components will be processed */
-static int *region_list;		/* array of region_ids to be processed */
-static int region_list_len=0;	/* actual length of the malloc'd region_list array */
-static int f4_do_plot=0;		/* flag indicating plot file should be created */
-static struct wmember *group_head = (struct wmember *)NULL; /* Lists of regions for groups */
-static ssize_t group_head_cnt=0;
-static struct wmember hole_head;	/* List of regions used as holes (not solid parts of model) */
-static struct bu_ptbl stack;		/* Stack for traversing name_tree */
-static struct bu_ptbl stack2;		/* Stack for traversing name_tree */
-static fastf_t min_radius;		/* minimum radius for TGC solids */
+    point_t *grid_points;
+};
 
-static int *faces=NULL;	/* one triplet per face indexing three grid points */
-static fastf_t *thickness;	/* thickness of each face */
-static char *facemode;	/* mode for each face */
-static int face_size=0;	/* actual length of above arrays */
-static int face_count=0;	/* number of faces in above arrays */
+void f4g_init(struct f4g_state *s)
+{
 
+    BU_LIST_INIT(&s->HeadColor.l);
 
-static point_t *grid_points = NULL;
+    for (size_t i = 0; i < MAX_LINE_SIZE+1; i++) {
+	s->line[i] = '\0';
+    }
+    s->fpin = NULL;
+    s->fpout = NULL;
+    s->fp_plot = NULL;
+    s->fp_muves = NULL;
+    s->max_grid_no = 0;
+    s->mode = 0;
+    s->group_id = -1;
+    s->comp_id = -1;
+    s->region_id = 0;
+    s->region_id_max = 0;
+    for (size_t i = 0; i < 9; i++) {
+	s->field[i] = '\0';
+    }
+    for (size_t i = 0; i < 17; i++) {
+	s->vehicle[i] = '\0';
+    }
+    s->name_count = 0;
+    s->pass = 0;
+    s->bot = 0;
+    s->warnings = 0;
+    s->debug = 0;
+    s->frt_debug = 0;
+    s->quiet = 0;
+    s->comp_count = 0;
+    s->f4_do_skips = 0;
+    s->region_list = NULL;
+    s->region_list_len = 0;
+    s->f4_do_plot = 0;
+    s->group_head = NULL;
+    s->group_head_cnt=0;
+
+    BU_LIST_INIT(&s->hole_head.l);
+
+    BU_GET(s->stack, struct bu_ptbl);
+    bu_ptbl_init(s->stack, 64, "stack");
+    BU_GET(s->stack2, struct bu_ptbl);
+    bu_ptbl_init(s->stack2, 64, "stack2");
+
+    s->min_radius = 2.0 * sqrt(SQRT_SMALL_FASTF);
+
+    s->faces = NULL;
+    s->thickness = NULL;
+    s->facemode = NULL;
+    s->face_size = 0;
+    s->face_count = 0;
+
+    s->grid_size = GRID_BLOCK;
+    s->grid_points = (point_t *)bu_calloc(s->grid_size, sizeof(point_t), "fast4-g: grid_points");
+}
 
 static void
 usage() {
@@ -256,14 +313,14 @@ usage() {
 
 
 static int
-get_line(void)
+get_line(struct f4g_state *s)
 {
     int len, done;
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
     done = 0;
     while (!done) {
-	len = bu_vls_gets(&buffer, fpin);
+	len = bu_vls_gets(&buffer, s->fpin);
 	if (len < 0) goto out; /* eof or error */
 	if (len == 0) continue;
 	bu_vls_trimspace(&buffer);
@@ -275,8 +332,8 @@ get_line(void)
     if (len > MAX_LINE_SIZE)
 	bu_log("WARNING: long line truncated\n");
 
-    memset((void *)line, 0, MAX_LINE_SIZE);
-    snprintf(line, MAX_LINE_SIZE, "%s", bu_vls_addr(&buffer));
+    memset((void *)s->line, 0, MAX_LINE_SIZE);
+    snprintf(s->line, MAX_LINE_SIZE, "%s", bu_vls_addr(&buffer));
 
 out:
     bu_vls_free(&buffer);
@@ -286,10 +343,10 @@ out:
 
 
 static unsigned char *
-get_fast4_color(int r_id) {
+get_fast4_color(struct f4g_state *s, int r_id) {
     struct fast4_color *fcp;
 
-    for (BU_LIST_FOR(fcp, fast4_color, &HeadColor.l)) {
+    for (BU_LIST_FOR(fcp, fast4_color, &s->HeadColor.l)) {
 	if (fcp->low <= r_id && r_id <= fcp->high)
 	    return fcp->rgb;
     }
@@ -332,24 +389,24 @@ is_a_hole(int id)
 
 
 static void
-plot_tri(int pt1, int pt2, int pt3)
+plot_tri(struct f4g_state *s, int pt1, int pt2, int pt3)
 {
-    pdv_3move(fp_plot, grid_points[pt1]);
-    pdv_3cont(fp_plot, grid_points[pt2]);
-    pdv_3cont(fp_plot, grid_points[pt3]);
-    pdv_3cont(fp_plot, grid_points[pt1]);
+    pdv_3move(s->fp_plot, s->grid_points[pt1]);
+    pdv_3cont(s->fp_plot, s->grid_points[pt2]);
+    pdv_3cont(s->fp_plot, s->grid_points[pt3]);
+    pdv_3cont(s->fp_plot, s->grid_points[pt1]);
 }
 
 
 static void
-Check_names(void)
+Check_names(struct f4g_state *s)
 {
     struct name_tree *ptr;
 
     if (!name_root)
 	return;
 
-    bu_ptbl_reset(&stack);
+    bu_ptbl_reset(s->stack);
 
     CK_TREE_MAGIC(name_root);
     /* ident order */
@@ -454,11 +511,11 @@ Search_ident(struct name_tree *root, int reg_id, int *found)
 
 
 static void
-List_names(void)
+List_names(struct f4g_state *s)
 {
     struct name_tree *ptr;
 
-    bu_ptbl_reset(&stack);
+    bu_ptbl_reset(s->stack);
 
     bu_log("\nNames in ident order:\n");
     ptr = name_root;
@@ -496,13 +553,13 @@ List_names(void)
 
 
 static void
-Insert_region_name(const char *name, int reg_id)
+Insert_region_name(struct f4g_state *s, const char *name, int reg_id)
 {
     struct name_tree *nptr_model, *rptr_model;
     struct name_tree *new_ptr;
     int foundn, foundr;
 
-    if (debug)
+    if (s->debug)
 	bu_log("Insert_region_name(name=%s, reg_id=%d\n", name, reg_id);
 
     rptr_model = Search_ident(name_root, reg_id, &foundr);
@@ -514,7 +571,7 @@ Insert_region_name(const char *name, int reg_id)
     if (foundn != foundr) {
 	bu_log("Insert_region_name: name %s ident %d\n\tfound name is %d\n\tfound ident is %d\n",
 	       name, reg_id, foundn, foundr);
-	List_names();
+	List_names(s);
 	bu_exit(1, "\tCannot insert new node\n");
     }
 
@@ -525,13 +582,13 @@ Insert_region_name(const char *name, int reg_id)
     new_ptr->nleft = (struct name_tree *)NULL;
     new_ptr->nright = (struct name_tree *)NULL;
     new_ptr->region_id = reg_id;
-    new_ptr->mode = mode;
+    new_ptr->mode = s->mode;
     new_ptr->inner = -1;
     new_ptr->in_comp_group = 0;
     new_ptr->name = bu_strdup(name);
     new_ptr->magic = NAME_TREE_MAGIC;
 
-    V_MAX(region_id_max, reg_id);
+    V_MAX(s->region_id_max, reg_id);
 
     if (!name_root) {
 	name_root = new_ptr;
@@ -571,12 +628,12 @@ Insert_region_name(const char *name, int reg_id)
 	    rptr_model->rleft = new_ptr;
 	}
     }
-    Check_names();
+    Check_names(s);
 }
 
 
 static char *
-find_region_name(int g_id, int c_id)
+find_region_name(struct f4g_state *s, int g_id, int c_id)
 {
     struct name_tree *ptr;
     int reg_id;
@@ -584,7 +641,7 @@ find_region_name(int g_id, int c_id)
 
     reg_id = g_id * 1000 + c_id;
 
-    if (debug)
+    if (s->debug)
 	bu_log("find_region_name(g_id=%d, c_id=%d), reg_id=%d\n", g_id, c_id, reg_id);
 
     ptr = Search_ident(name_root, reg_id, &found);
@@ -597,7 +654,7 @@ find_region_name(int g_id, int c_id)
 
 
 static void
-make_unique_name(struct bu_vls *name)
+make_unique_name(struct f4g_state *s, struct bu_vls *name)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int found;
@@ -610,9 +667,9 @@ make_unique_name(struct bu_vls *name)
 
     while (found) {
 	bu_vls_trunc(&vls, 0);
-	bu_vls_printf(&vls, "%s_%d", bu_vls_cstr(name), name_count);
+	bu_vls_printf(&vls, "%s_%d", bu_vls_cstr(name), s->name_count);
 	(void)Search_names(name_root, bu_vls_addr(&vls), &found);
-	name_count++;
+	s->name_count++;
     }
 
     bu_vls_sprintf(name, "%s", bu_vls_cstr(&vls));
@@ -621,7 +678,7 @@ make_unique_name(struct bu_vls *name)
 
 
 static void
-make_region_name(int g_id, int c_id)
+make_region_name(struct f4g_state *s,int g_id, int c_id)
 {
     int r_id;
     const char *tmp_name;
@@ -629,19 +686,19 @@ make_region_name(int g_id, int c_id)
 
     r_id = g_id * 1000 + c_id;
 
-    if (debug)
+    if (s->debug)
 	bu_log("make_region_name(g_id=%d, c_id=%d)\n", g_id, c_id);
 
-    tmp_name = find_region_name(g_id, c_id);
+    tmp_name = find_region_name(s, g_id, c_id);
     if (tmp_name)
 	return;
 
     /* create a new name */
     bu_vls_sprintf(&name, "comp_%04d.r", r_id);
 
-    make_unique_name(&name);
+    make_unique_name(s, &name);
 
-    Insert_region_name(bu_vls_cstr(&name), r_id);
+    Insert_region_name(s, bu_vls_cstr(&name), r_id);
     bu_vls_free(&name);
 }
 
@@ -661,7 +718,7 @@ get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 
 
 static void
-Insert_name(struct name_tree **root, char *name, int inner)
+Insert_name(struct f4g_state *s, struct name_tree **root, char *name, int inner)
 {
     struct name_tree *ptr;
     struct name_tree *new_ptr;
@@ -682,7 +739,7 @@ Insert_name(struct name_tree **root, char *name, int inner)
     new_ptr->nright = (struct name_tree *)NULL;
     new_ptr->rleft = (struct name_tree *)NULL;
     new_ptr->rright = (struct name_tree *)NULL;
-    new_ptr->region_id = (-region_id);
+    new_ptr->region_id = (-s->region_id);
     new_ptr->in_comp_group = 0;
     new_ptr->inner = inner;
     new_ptr->magic = NAME_TREE_MAGIC;
@@ -710,39 +767,39 @@ Insert_name(struct name_tree **root, char *name, int inner)
 
 
 static char *
-make_solid_name(char type, int element_id, int c_id, int g_id, int inner)
+make_solid_name(struct f4g_state *s, char type, int element_id, int c_id, int g_id, int inner)
 {
     char *name;
 
     name = get_solid_name(type, element_id, c_id, g_id, inner);
 
-    Insert_name(&name_root, name, inner);
+    Insert_name(s, &name_root, name, inner);
 
     return name;
 }
 
 
 static void
-f4_do_compsplt(void)
+f4_do_compsplt(struct f4g_state *s)
 {
     int gr, co, gr1,  co1;
     fastf_t z;
     struct compsplt *splt;
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    gr = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    gr = atoi(s->field);
 
-    bu_strlcpy(field, &line[16], sizeof(field));
-    co = atoi(field);
+    bu_strlcpy(s->field, &s->line[16], sizeof(s->field));
+    co = atoi(s->field);
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    gr1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    gr1 = atoi(s->field);
 
-    bu_strlcpy(field, &line[32], sizeof(field));
-    co1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[32], sizeof(s->field));
+    co1 = atoi(s->field);
 
-    bu_strlcpy(field, &line[40], sizeof(field));
-    z = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[40], sizeof(s->field));
+    z = atof(s->field) * 25.4;
 
     if (compsplt_root == NULL) {
 	BU_ALLOC(compsplt_root, struct compsplt);
@@ -758,7 +815,7 @@ f4_do_compsplt(void)
     splt->ident_to_split = gr * 1000 + co;
     splt->new_ident = gr1 * 1000 + co1;
     splt->z = z;
-    make_region_name(gr1, co1);
+    make_region_name(s, gr1, co1);
 }
 
 
@@ -783,7 +840,7 @@ List_holes(void)
 
 
 static void
-Add_stragglers_to_groups(void)
+Add_stragglers_to_groups(struct f4g_state *s)
 {
     struct name_tree *ptr;
 
@@ -808,33 +865,33 @@ Add_stragglers_to_groups(void)
 	if (!ptr->in_comp_group && ptr->region_id > 0 && !is_a_hole(ptr->region_id)) {
 	    /* add this component to a series */
 
-	    if (!group_head || ptr->region_id > region_id_max) {
+	    if (!s->group_head || ptr->region_id > s->region_id_max) {
 		struct wmember *new_head;
 		ssize_t new_cnt, i;
 		struct bu_list *list_first;
 
-		new_cnt = lrint(ceil(region_id_max/1000.0));
+		new_cnt = lrint(ceil(s->region_id_max/1000.0));
 		new_head = (struct wmember *)bu_calloc(new_cnt, sizeof(struct wmember), "group_head list");
-		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%ld\n", ptr->region_id, region_id_max, new_cnt);
+		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%ld\n", ptr->region_id, s->region_id_max, new_cnt);
 
 		for (i = 0 ; i < new_cnt ; i++) {
 		    BU_LIST_INIT(&new_head[i].l);
-		    if (i < group_head_cnt) {
-			if (BU_LIST_NON_EMPTY(&group_head[i].l)) {
-			    list_first = BU_LIST_FIRST(bu_list, &group_head[i].l);
-			    BU_LIST_DEQUEUE(&group_head[i].l);
+		    if (i < s->group_head_cnt) {
+			if (BU_LIST_NON_EMPTY(&s->group_head[i].l)) {
+			    list_first = BU_LIST_FIRST(bu_list, &s->group_head[i].l);
+			    BU_LIST_DEQUEUE(&s->group_head[i].l);
 			    BU_LIST_INSERT(list_first, &new_head[i].l);
 			}
 		    }
 		}
-		if (group_head) {
-		    bu_free(group_head, "old group_head");
+		if (s->group_head) {
+		    bu_free(s->group_head, "old group_head");
 		}
-		group_head = new_head;
-		group_head_cnt = new_cnt;
+		s->group_head = new_head;
+		s->group_head_cnt = new_cnt;
 	    }
 
-	    (void)mk_addmember(ptr->name, &group_head[ptr->region_id/1000].l, NULL, WMOP_UNION);
+	    (void)mk_addmember(ptr->name, &s->group_head[ptr->region_id/1000].l, NULL, WMOP_UNION);
 	    ptr->in_comp_group = 1;
 	}
 
@@ -844,73 +901,73 @@ Add_stragglers_to_groups(void)
 
 
 static void
-f4_do_groups(void)
+f4_do_groups(struct f4g_state *s)
 {
     int group_no;
     struct wmember head_all;
 
-    if (debug)
+    if (s->debug)
 	bu_log("f4_do_groups\n");
 
     BU_LIST_INIT(&head_all.l);
 
-    Add_stragglers_to_groups();
+    Add_stragglers_to_groups(s);
 
-    for (group_no=0; group_no < group_head_cnt; group_no++) {
+    for (group_no=0; group_no < s->group_head_cnt; group_no++) {
 	char name[MAX_LINE_SIZE] = {0};
 
-	if (BU_LIST_IS_EMPTY(&group_head[group_no].l))
+	if (BU_LIST_IS_EMPTY(&s->group_head[group_no].l))
 	    continue;
 
 	snprintf(name, MAX_LINE_SIZE, "%dxxx_series", group_no);
-	mk_lfcomb(fpout, name, &group_head[group_no], 0);
+	mk_lfcomb(s->fpout, name, &s->group_head[group_no], 0);
 
 	if (mk_addmember(name, &head_all.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 	    bu_log("f4_do_groups: mk_addmember failed to add %s to group all\n", name);
     }
 
     if (BU_LIST_NON_EMPTY(&head_all.l))
-	mk_lfcomb(fpout, "all", &head_all, 0);
+	mk_lfcomb(s->fpout, "all", &head_all, 0);
 
-    if (BU_LIST_NON_EMPTY(&hole_head.l))
-	mk_lfcomb(fpout, "holes", &hole_head, 0);
+    if (BU_LIST_NON_EMPTY(&s->hole_head.l))
+	mk_lfcomb(s->fpout, "holes", &s->hole_head, 0);
 }
 
 
 static void
-f4_do_name(void)
+f4_do_name(struct f4g_state *s)
 {
     int foundr = 0;
     int g_id;
     int c_id;
     struct bu_vls comp_name = BU_VLS_INIT_ZERO;
 
-    if (pass)
+    if (s->pass)
 	return;
 
-    if (debug)
-	bu_log("f4_do_name: %s\n", line);
+    if (s->debug)
+	bu_log("f4_do_name: %s\n", s->line);
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    g_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    g_id = atoi(s->field);
 
-    if (g_id != group_id) {
-	bu_log("$NAME card for group %d in section for group %d ignored\n", g_id, group_id);
-	bu_log("%s\n", line);
+    if (g_id != s->group_id) {
+	bu_log("$NAME card for group %d in section for group %d ignored\n", g_id, s->group_id);
+	bu_log("%s\n", s->line);
 	return;
     }
 
-    bu_strlcpy(field, &line[16], sizeof(field));
-    c_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[16], sizeof(s->field));
+    c_id = atoi(s->field);
 
-    if (c_id != comp_id) {
-	bu_log("$NAME card for component %d in section for component %d ignored\n", c_id, comp_id);
-	bu_log("%s\n", line);
+    if (c_id != s->comp_id) {
+	bu_log("$NAME card for component %d in section for component %d ignored\n", c_id, s->comp_id);
+	bu_log("%s\n", s->line);
 	return;
     }
 
     /* Eliminate leading and trailing blanks */
-    bu_vls_sprintf(&comp_name, "%s", &line[56]);
+    bu_vls_sprintf(&comp_name, "%s", &s->line[56]);
     bu_vls_trimspace(&comp_name);
     if (!bu_vls_strlen(&comp_name)) {
 	bu_vls_free(&comp_name);
@@ -921,58 +978,58 @@ f4_do_name(void)
     bu_vls_simplify(&comp_name, NULL, NULL, NULL);
 
     /* reserve this name for group name */
-    Search_ident(name_root, region_id, &foundr);
+    Search_ident(name_root, s->region_id, &foundr);
     if (!foundr) {
-	make_unique_name(&comp_name);
+	make_unique_name(s, &comp_name);
     } else {
-	bu_log("Already encountered region id %d - reusing name\n", region_id);
+	bu_log("Already encountered region id %d - reusing name\n", s->region_id);
     }
 
-    Insert_region_name(bu_vls_cstr(&comp_name), region_id);
+    Insert_region_name(s, bu_vls_cstr(&comp_name), s->region_id);
 
-    name_count = 0;
+    s->name_count = 0;
 
     bu_vls_free(&comp_name);
 }
 
 
 static void
-f4_do_grid(void)
+f4_do_grid(struct f4g_state *s)
 {
     int grid_no;
     fastf_t x, y, z;
 
-    if (!pass)	/* not doing geometry yet */
+    if (!s->pass)	/* not doing geometry yet */
 	return;
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    grid_no = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    grid_no = atoi(s->field);
 
     if (grid_no < 1) {
 	bu_exit(1, "ERROR: bad grid id number = %d\n", grid_no);
     }
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    x = atof(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    x = atof(s->field);
 
-    bu_strlcpy(field, &line[32], sizeof(field));
-    y = atof(field);
+    bu_strlcpy(s->field, &s->line[32], sizeof(s->field));
+    y = atof(s->field);
 
-    bu_strlcpy(field, &line[40], sizeof(field));
-    z = atof(field);
+    bu_strlcpy(s->field, &s->line[40], sizeof(s->field));
+    z = atof(s->field);
 
-    while (grid_no > grid_size - 1) {
-	grid_size += GRID_BLOCK;
-	grid_points = (point_t *)bu_realloc((char *)grid_points, grid_size * sizeof(point_t), "fast4-g: grid_points");
+    while (grid_no > s->grid_size - 1) {
+	s->grid_size += GRID_BLOCK;
+	s->grid_points = (point_t *)bu_realloc((char *)s->grid_points, s->grid_size * sizeof(point_t), "fast4-g: grid_points");
     }
 
-    VSET(grid_points[grid_no], x*25.4, y*25.4, z*25.4);
-    V_MAX(max_grid_no, grid_no);
+    VSET(s->grid_points[grid_no], x*25.4, y*25.4, z*25.4);
+    V_MAX(s->max_grid_no, grid_no);
 }
 
 
 static void
-f4_do_sphere(void)
+f4_do_sphere(struct f4g_state *s)
 {
     int element_id;
     int center_pt;
@@ -982,44 +1039,44 @@ f4_do_sphere(void)
     char *name = (char *)NULL;
     struct wmember sphere_group;
 
-    if (!pass) {
-	make_region_name(group_id, comp_id);
+    if (!s->pass) {
+	make_region_name(s, s->group_id, s->comp_id);
 	return;
     }
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    element_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    element_id = atoi(s->field);
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    center_pt = atoi(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    center_pt = atoi(s->field);
 
-    bu_strlcpy(field, &line[56], sizeof(field));
-    thick = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[56], sizeof(s->field));
+    thick = atof(s->field) * 25.4;
 
-    bu_strlcpy(field, &line[64], sizeof(field));
-    radius = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[64], sizeof(s->field));
+    radius = atof(s->field) * 25.4;
 
     if (radius <= 0.0) {
 	bu_log("f4_do_sphere: illegal radius (%f), skipping sphere\n", radius);
-	bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
+	bu_log("\telement %d, component %d, group %d\n", element_id, s->comp_id, s->group_id);
 	return;
     }
 
-    if (center_pt < 1 || center_pt > max_grid_no) {
+    if (center_pt < 1 || center_pt > s->max_grid_no) {
 	bu_log("f4_do_sphere: illegal grid number for center point %d, skipping sphere\n", center_pt);
-	bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
+	bu_log("\telement %d, component %d, group %d\n", element_id, s->comp_id, s->group_id);
 	return;
     }
 
     BU_LIST_INIT(&sphere_group.l);
 
-    if (mode == VOLUME_MODE) {
-	name = make_solid_name(CSPHERE, element_id, comp_id, group_id, 0);
-	mk_sph(fpout, name, grid_points[center_pt], radius);
+    if (s->mode == VOLUME_MODE) {
+	name = make_solid_name(s, CSPHERE, element_id, s->comp_id, s->group_id, 0);
+	mk_sph(s->fpout, name, s->grid_points[center_pt], radius);
 	bu_free(name, "solid_name");
-    } else if (mode == PLATE_MODE) {
-	name = make_solid_name(CSPHERE, element_id, comp_id, group_id, 1);
-	mk_sph(fpout, name, grid_points[center_pt], radius);
+    } else if (s->mode == PLATE_MODE) {
+	name = make_solid_name(s, CSPHERE, element_id, s->comp_id, s->group_id, 1);
+	mk_sph(s->fpout, name, s->grid_points[center_pt], radius);
 
 	BU_LIST_INIT(&sphere_group.l);
 
@@ -1031,38 +1088,38 @@ f4_do_sphere(void)
 	inner_radius = radius - thick;
 	if (thick > 0.0 && inner_radius <= 0.0) {
 	    bu_log("f4_do_sphere: illegal thickness (%f), skipping inner sphere\n", thick);
-	    bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
+	    bu_log("\telement %d, component %d, group %d\n", element_id, s->comp_id, s->group_id);
 	    return;
 	}
 
-	name = make_solid_name(CSPHERE, element_id, comp_id, group_id, 2);
-	mk_sph(fpout, name, grid_points[center_pt], inner_radius);
+	name = make_solid_name(s, CSPHERE, element_id, s->comp_id, s->group_id, 2);
+	mk_sph(s->fpout, name, s->grid_points[center_pt], inner_radius);
 
 	if (mk_addmember(name, &sphere_group.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL) {
 	    bu_exit(1, "f4_do_sphere: Error in subtracting %s from sphere region\n", name);
 	}
 	bu_free(name, "solid_name");
 
-	name = make_solid_name(CSPHERE, element_id, comp_id, group_id, 0);
-	mk_comb(fpout, name, &sphere_group.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
+	name = make_solid_name(s, CSPHERE, element_id, s->comp_id, s->group_id, 0);
+	mk_comb(s->fpout, name, &sphere_group.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
 	bu_free(name, "solid_name");
     }
 }
 
 
 static void
-f4_do_vehicle(void)
+f4_do_vehicle(struct f4g_state *s)
 {
-    if (pass)
+    if (s->pass)
 	return;
 
-    bu_strlcpy(vehicle, &line[8], sizeof(vehicle));
-    mk_id_units(fpout, vehicle, "in");
+    bu_strlcpy(s->vehicle, &s->line[8], sizeof(s->vehicle));
+    mk_id_units(s->fpout, s->vehicle, "in");
 }
 
 
 static void
-f4_do_cline(void)
+f4_do_cline(struct f4g_state *s)
 {
     int element_id;
     int pt1, pt2;
@@ -1071,57 +1128,57 @@ f4_do_cline(void)
     vect_t height;
     char *name;
 
-    if (debug)
-	bu_log("f4_do_cline: %s\n", line);
+    if (s->debug)
+	bu_log("f4_do_cline: %s\n", s->line);
 
-    if (!pass) {
-	make_region_name(group_id, comp_id);
+    if (!s->pass) {
+	make_region_name(s, s->group_id, s->comp_id);
 	return;
     }
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    element_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    element_id = atoi(s->field);
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    pt1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    pt1 = atoi(s->field);
 
-    if (pass && (pt1 < 1 || pt1 > max_grid_no)) {
+    if (s->pass && (pt1 < 1 || pt1 > s->max_grid_no)) {
 	bu_log("Illegal grid point (%d) in CLINE, skipping\n", pt1);
-	bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
+	bu_log("\telement %d, component %d, group %d\n", element_id, s->comp_id, s->group_id);
 	return;
     }
 
-    bu_strlcpy(field, &line[32], sizeof(field));
-    pt2 = atoi(field);
+    bu_strlcpy(s->field, &s->line[32], sizeof(s->field));
+    pt2 = atoi(s->field);
 
-    if (pass && (pt2 < 1 || pt2 > max_grid_no)) {
+    if (s->pass && (pt2 < 1 || pt2 > s->max_grid_no)) {
 	bu_log("Illegal grid point in CLINE (%d), skipping\n", pt2);
-	bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
+	bu_log("\telement %d, component %d, group %d\n", element_id, s->comp_id, s->group_id);
 	return;
     }
 
     if (pt1 == pt2) {
 	bu_log("Illegal grid points in CLINE (%d and %d), skipping\n", pt1, pt2);
-	bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
+	bu_log("\telement %d, component %d, group %d\n", element_id, s->comp_id, s->group_id);
 	return;
     }
 
-    bu_strlcpy(field, &line[56], sizeof(field));
-    thick = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[56], sizeof(s->field));
+    thick = atof(s->field) * 25.4;
 
-    bu_strlcpy(field, &line[64], sizeof(field));
-    radius = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[64], sizeof(s->field));
+    radius = atof(s->field) * 25.4;
 
-    VSUB2(height, grid_points[pt2], grid_points[pt1]);
+    VSUB2(height, s->grid_points[pt2], s->grid_points[pt1]);
 
-    name = make_solid_name(CLINE, element_id, comp_id, group_id, 0);
-    mk_cline(fpout, name, grid_points[pt1], height, radius, thick);
+    name = make_solid_name(s, CLINE, element_id, s->comp_id, s->group_id, 0);
+    mk_cline(s->fpout, name, s->grid_points[pt1], height, radius, thick);
     bu_free(name, "solid_name");
 }
 
 
 static void
-f4_do_ccone1(void)
+f4_do_ccone1(struct f4g_state *s)
 {
     int element_id;
     int pt1, pt2;
@@ -1135,107 +1192,107 @@ f4_do_ccone1(void)
     char *name = (char *)NULL;
     struct wmember r_head;
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    element_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    element_id = atoi(s->field);
 
-    if (!pass) {
-	make_region_name(group_id, comp_id);
-	if (!get_line()) {
+    if (!s->pass) {
+	make_region_name(s, s->group_id, s->comp_id);
+	if (!get_line(s)) {
 	    bu_log("Unexpected EOF while reading continuation card for CCONE1\n");
-	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		   group_id, comp_id, element_id);
+	    bu_log("\ts->group_id = %d, comp_id = %d, element_id = %d\n",
+		   s->group_id, s->comp_id, element_id);
 	    bu_exit(1, "ERROR: unexpected end-of-file");
 	}
 	return;
     }
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    pt1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    pt1 = atoi(s->field);
 
-    bu_strlcpy(field, &line[32], sizeof(field));
-    pt2 = atoi(field);
+    bu_strlcpy(s->field, &s->line[32], sizeof(s->field));
+    pt2 = atoi(s->field);
 
-    bu_strlcpy(field, &line[56], sizeof(field));
-    thick = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[56], sizeof(s->field));
+    thick = atof(s->field) * 25.4;
 
-    bu_strlcpy(field, &line[64], sizeof(field));
-    r1 = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[64], sizeof(s->field));
+    r1 = atof(s->field) * 25.4;
 
-    bu_strlcpy(field, &line[72], sizeof(field));
-    c1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[72], sizeof(s->field));
+    c1 = atoi(s->field);
 
-    if (!get_line()) {
+    if (!get_line(s)) {
 	bu_log("Unexpected EOF while reading continuation card for CCONE1\n");
-	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-	       group_id, comp_id, element_id, c1);
+	bu_log("\ts->group_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+	       s->group_id, s->comp_id, element_id, c1);
 	bu_exit(1, "ERROR: unexpected end-of-file");
     }
 
-    bu_strlcpy(field, line, sizeof(field));
-    c2 = atoi(field);
+    bu_strlcpy(s->field, s->line, sizeof(s->field));
+    c2 = atoi(s->field);
 
     if (c1 != c2) {
 	bu_log("WARNING: CCONE1 continuation flags disagree, %d vs %d\n", c1, c2);
-	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-	       group_id, comp_id, element_id);
+	bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d\n",
+	       s->group_id, s->comp_id, element_id);
     }
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    r2 = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    r2 = atof(s->field) * 25.4;
 
-    bu_strlcpy(field, &line[16], sizeof(field));
-    end1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[16], sizeof(s->field));
+    end1 = atoi(s->field);
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    end2 = atoi(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    end2 = atoi(s->field);
 
     if (r1 < 0.0 || r2 < 0.0) {
 	bu_log("ERROR: CCONE1 has illegal radii, %f and %f\n", r1/25.4, r2/25.4);
-	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-	       group_id, comp_id, element_id);
+	bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d\n",
+	       s->group_id, s->comp_id, element_id);
 	bu_log("\tCCONE1 solid ignored\n");
 	return;
     }
 
-    if (mode == PLATE_MODE) {
+    if (s->mode == PLATE_MODE) {
 	if (thick <= 0.0) {
 	    bu_log("WARNING: Plate mode CCONE1 has illegal thickness (%f)\n", thick/25.4);
-	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		   group_id, comp_id, element_id);
+	    bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d\n",
+		   s->group_id, s->comp_id, element_id);
 	    bu_log("\tCCONE1 solid plate mode overridden, now being treated as volume mode\n");
-	    mode = VOLUME_MODE;
+	    s->mode = VOLUME_MODE;
 	}
     }
 
-    if (mode == PLATE_MODE) {
-	if (r1-thick < min_radius && r2-thick < min_radius) {
-	    bu_log("ERROR: Plate mode CCONE1 has too large thickness (%f)\n", thick/25.4);
-	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		   group_id, comp_id, element_id);
+    if (s->mode == PLATE_MODE) {
+	if (r1-thick < s->min_radius && r2-thick < s->min_radius) {
+	    bu_log("ERROR: Plate s->mode CCONE1 has too large thickness (%f)\n", thick/25.4);
+	    bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d\n",
+		   s->group_id, s->comp_id, element_id);
 	    bu_log("\tCCONE1 solid ignored\n");
 	    return;
 	}
     }
 
-    if (pt1 < 1 || pt1 > max_grid_no || pt2 < 1 || pt2 > max_grid_no || pt1 == pt2) {
+    if (pt1 < 1 || pt1 > s->max_grid_no || pt2 < 1 || pt2 > s->max_grid_no || pt1 == pt2) {
 	bu_log("ERROR: CCONE1 has illegal grid points (%d and %d)\n", pt1, pt2);
-	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-	       group_id, comp_id, element_id);
+	bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d\n",
+	       s->group_id, s->comp_id, element_id);
 	bu_log("\tCCONE1 solid ignored\n");
 	return;
     }
 
     /* BRL_CAD doesn't allow zero radius, so use a very small radius */
-    V_MAX(r1, min_radius);
-    V_MAX(r2, min_radius);
+    V_MAX(r1, s->min_radius);
+    V_MAX(r2, s->min_radius);
 
-    VSUB2(height, grid_points[pt2], grid_points[pt1]);
+    VSUB2(height, s->grid_points[pt2], s->grid_points[pt1]);
 
-    if (mode == VOLUME_MODE) {
-	outer_name = make_solid_name(CCONE1, element_id, comp_id, group_id, 0);
-	mk_trc_h(fpout, outer_name, grid_points[pt1], height, r1, r2);
+    if (s->mode == VOLUME_MODE) {
+	outer_name = make_solid_name(s, CCONE1, element_id, s->comp_id, s->group_id, 0);
+	mk_trc_h(s->fpout, outer_name, s->grid_points[pt1], height, r1, r2);
 	bu_free(outer_name, "solid_name");
-    } else if (mode == PLATE_MODE) {
+    } else if (s->mode == PLATE_MODE) {
 	/* make inside TGC */
 
 	point_t base;
@@ -1248,8 +1305,8 @@ f4_do_ccone1(void)
 	vect_t height_dir;
 
 	/* make outside TGC */
-	outer_name = make_solid_name(CCONE1, element_id, comp_id, group_id, 1);
-	mk_trc_h(fpout, outer_name, grid_points[pt1], height, r1, r2);
+	outer_name = make_solid_name(s, CCONE1, element_id, s->comp_id, s->group_id, 1);
+	mk_trc_h(s->fpout, outer_name, s->grid_points[pt1], height, r1, r2);
 
 	BU_LIST_INIT(&r_head.l);
 	if (mk_addmember(outer_name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
@@ -1264,61 +1321,61 @@ f4_do_ccone1(void)
 
 	if (end1 == END_OPEN) {
 	    inner_r1 = r1 - thick/sin_ang;
-	    VMOVE(base, grid_points[pt1]);
+	    VMOVE(base, s->grid_points[pt1]);
 	} else {
 	    fastf_t r1a = r1 + (r2 - r1)*thick/length;
 	    inner_r1 = r1a - thick/sin_ang;
-	    VJOIN1(base, grid_points[pt1], thick, height_dir);
+	    VJOIN1(base, s->grid_points[pt1], thick, height_dir);
 	}
 
 	if (inner_r1 < 0.0) {
 	    fastf_t dist_to_new_base;
 
 	    dist_to_new_base = inner_r1 * length/(r1 - r2);
-	    inner_r1 = min_radius;
+	    inner_r1 = s->min_radius;
 	    VJOIN1(base, base, dist_to_new_base, height_dir);
 	} else {
-	    V_MAX(inner_r1, min_radius);
+	    V_MAX(inner_r1, s->min_radius);
 	}
 
 	if (end2 == END_OPEN) {
 	    inner_r2 = r2 - thick/sin_ang;
-	    VMOVE(top, grid_points[pt2]);
+	    VMOVE(top, s->grid_points[pt2]);
 	} else {
 	    fastf_t r2a = r2 + (r1 - r2)*thick/length;
 	    inner_r2 = r2a - thick/sin_ang;
-	    VJOIN1(top, grid_points[pt2], -thick, height_dir);
+	    VJOIN1(top, s->grid_points[pt2], -thick, height_dir);
 	}
 
 	if (inner_r2 < 0.0) {
 	    fastf_t dist_to_new_top;
 
 	    dist_to_new_top = inner_r2 * length/(r2 - r1);
-	    inner_r2 = min_radius;
+	    inner_r2 = s->min_radius;
 	    VJOIN1(top, top, -dist_to_new_top, height_dir);
 	} else {
-	    V_MAX(inner_r2, min_radius);
+	    V_MAX(inner_r2, s->min_radius);
 	}
 
 	VSUB2(inner_height, top, base);
 	if (VDOT(inner_height, height) <= 0.0) {
 	    bu_log("ERROR: CCONE1 height (%f) too small for thickness (%f)\n", length/25.4, thick/25.4);
-	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		   group_id, comp_id, element_id);
+	    bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d\n",
+		   s->group_id, s->comp_id, element_id);
 	    bu_log("\tCCONE1 inner solid ignored\n");
 	} else {
 	    /* make inner tgc */
 
-	    inner_name = make_solid_name(CCONE1, element_id, comp_id, group_id, 2);
-	    mk_trc_h(fpout, inner_name, base, inner_height, inner_r1, inner_r2);
+	    inner_name = make_solid_name(s, CCONE1, element_id, s->comp_id, s->group_id, 2);
+	    mk_trc_h(s->fpout, inner_name, base, inner_height, inner_r1, inner_r2);
 
 	    if (mk_addmember(inner_name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
 		bu_exit(1, "CCONE1: mk_addmember failed\n");
 	    bu_free(inner_name, "solid_name");
 	}
 
-	name = make_solid_name(CCONE1, element_id, comp_id, group_id, 0);
-	mk_comb(fpout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
+	name = make_solid_name(s, CCONE1, element_id, s->comp_id, s->group_id, 0);
+	mk_comb(s->fpout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
 	bu_free(name, "solid_name");
     }
 
@@ -1326,7 +1383,7 @@ f4_do_ccone1(void)
 
 
 static void
-f4_do_ccone2(void)
+f4_do_ccone2(struct f4g_state *s)
 {
     int element_id;
     int pt1, pt2;
@@ -1336,109 +1393,109 @@ f4_do_ccone2(void)
     char *name = (char *)NULL;
     struct wmember r_head;
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    element_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    element_id = atoi(s->field);
 
-    if (!pass) {
-	make_region_name(group_id, comp_id);
-	if (!get_line()) {
+    if (!s->pass) {
+	make_region_name(s, s->group_id, s->comp_id);
+	if (!get_line(s)) {
 	    bu_log("Unexpected EOF while reading continuation card for CCONE2\n");
-	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		   group_id, comp_id, element_id);
+	    bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d\n",
+		   s->group_id, s->comp_id, element_id);
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 	return;
     }
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    pt1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    pt1 = atoi(s->field);
 
-    bu_strlcpy(field, &line[32], sizeof(field));
-    pt2 = atoi(field);
+    bu_strlcpy(s->field, &s->line[32], sizeof(s->field));
+    pt2 = atoi(s->field);
 
-    bu_strlcpy(field, &line[64], sizeof(field));
-    ro1 = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[64], sizeof(s->field));
+    ro1 = atof(s->field) * 25.4;
 
-    bu_strlcpy(field, &line[72], sizeof(field));
-    c1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[72], sizeof(s->field));
+    c1 = atoi(s->field);
 
-    if (!get_line()) {
+    if (!get_line(s)) {
 	bu_log("Unexpected EOF while reading continuation card for CCONE2\n");
-	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-	       group_id, comp_id, element_id, c1);
+	bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d, c1 = %d\n",
+	       s->group_id, s->comp_id, element_id, c1);
 	bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
     }
 
-    bu_strlcpy(field, line, sizeof(field));
-    c2 = atoi(field);
+    bu_strlcpy(s->field, s->line, sizeof(s->field));
+    c2 = atoi(s->field);
 
     if (c1 != c2) {
 	bu_log("WARNING: CCONE2 continuation flags disagree, %d vs %d\n", c1, c2);
-	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-	       group_id, comp_id, element_id);
+	bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d\n",
+	       s->group_id, s->comp_id, element_id);
     }
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    ro2 = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    ro2 = atof(s->field) * 25.4;
 
-    bu_strlcpy(field, &line[16], sizeof(field));
-    ri1 = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[16], sizeof(s->field));
+    ri1 = atof(s->field) * 25.4;
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    ri2 = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    ri2 = atof(s->field) * 25.4;
 
     if (pt1 == pt2) {
 	bu_log("ERROR: CCONE2 has same endpoints %d and %d\n", pt1, pt2);
-	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-	       group_id, comp_id, element_id);
+	bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d\n",
+	       s->group_id, s->comp_id, element_id);
 	return;
     }
 
     if (ro1 < 0.0 || ro2 < 0.0 || ri1 < 0.0 || ri2 < 0.0) {
 	bu_log("ERROR: CCONE2 has illegal radii %f %f %f %f\n", ro1, ro2, ri1, ri2);
-	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-	       group_id, comp_id, element_id);
+	bu_log("\ts->group_id = %d, s->comp_id = %d, element_id = %d\n",
+	       s->group_id, s->comp_id, element_id);
 	return;
     }
 
-    V_MAX(ro1, min_radius);
-    V_MAX(ro2, min_radius);
+    V_MAX(ro1, s->min_radius);
+    V_MAX(ro2, s->min_radius);
 
     BU_LIST_INIT(&r_head.l);
 
-    VSUB2(height, grid_points[pt2], grid_points[pt1]);
+    VSUB2(height, s->grid_points[pt2], s->grid_points[pt1]);
 
     if (ri1 <= 0.0 && ri2 <= 0.0) {
-	name = make_solid_name(CCONE2, element_id, comp_id, group_id, 0);
-	mk_trc_h(fpout, name, grid_points[pt1], height, ro1, ro2);
+	name = make_solid_name(s, CCONE2, element_id, s->comp_id, s->group_id, 0);
+	mk_trc_h(s->fpout, name, s->grid_points[pt1], height, ro1, ro2);
 	bu_free(name, "solid_name");
     } else {
-	name = make_solid_name(CCONE2, element_id, comp_id, group_id, 1);
-	mk_trc_h(fpout, name, grid_points[pt1], height, ro1, ro2);
+	name = make_solid_name(s, CCONE2, element_id, s->comp_id, s->group_id, 1);
+	mk_trc_h(s->fpout, name, s->grid_points[pt1], height, ro1, ro2);
 
 	if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 	    bu_exit(1, "mk_addmember failed!\n");
 	bu_free(name, "solid_name");
 
-	V_MAX(ri1, min_radius);
-	V_MAX(ri2, min_radius);
+	V_MAX(ri1, s->min_radius);
+	V_MAX(ri2, s->min_radius);
 
-	name = make_solid_name(CCONE2, element_id, comp_id, group_id, 2);
-	mk_trc_h(fpout, name, grid_points[pt1], height, ri1, ri2);
+	name = make_solid_name(s, CCONE2, element_id, s->comp_id, s->group_id, 2);
+	mk_trc_h(s->fpout, name, s->grid_points[pt1], height, ri1, ri2);
 
 	if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
 	    bu_exit(1, "mk_addmember failed!\n");
 	bu_free(name, "solid_name");
 
-	name = make_solid_name(CCONE2, element_id, comp_id, group_id, 0);
-	mk_comb(fpout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
+	name = make_solid_name(s, CCONE2, element_id, s->comp_id, s->group_id, 0);
+	mk_comb(s->fpout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
 	bu_free(name, "solid_name");
     }
 }
 
 
 static void
-f4_do_ccone3(void)
+f4_do_ccone3(struct f4g_state *s)
 {
     int element_id;
     int pt1, pt2, pt3, pt4, i;
@@ -1447,76 +1504,76 @@ f4_do_ccone3(void)
     vect_t diff, diff2, diff3, diff4;
     struct wmember r_head;
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    element_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    element_id = atoi(s->field);
 
-    if (!pass) {
-	make_region_name(group_id, comp_id);
-	if (!get_line()) {
+    if (!s->pass) {
+	make_region_name(s, s->group_id, s->comp_id);
+	if (!get_line(s)) {
 	    bu_log("Unexpected EOF while reading continuation card for CCONE3\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		   group_id, comp_id, element_id);
+		   s->group_id, s->comp_id, element_id);
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 	return;
     }
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    pt1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    pt1 = atoi(s->field);
 
-    bu_strlcpy(field, &line[32], sizeof(field));
-    pt2 = atoi(field);
+    bu_strlcpy(s->field, &s->line[32], sizeof(s->field));
+    pt2 = atoi(s->field);
 
-    bu_strlcpy(field, &line[40], sizeof(field));
-    pt3 = atoi(field);
+    bu_strlcpy(s->field, &s->line[40], sizeof(s->field));
+    pt3 = atoi(s->field);
 
-    bu_strlcpy(field, &line[48], sizeof(field));
-    pt4 = atoi(field);
+    bu_strlcpy(s->field, &s->line[48], sizeof(s->field));
+    pt4 = atoi(s->field);
 
-    bu_strlcpy(field, &line[72], sizeof(field));
+    bu_strlcpy(s->field, &s->line[72], sizeof(s->field));
 
-    if (!get_line()) {
+    if (!get_line(s)) {
 	bu_log("Unexpected EOF while reading continuation card for CCONE3\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %8.8s\n",
-	       group_id, comp_id, element_id, field);
+	       s->group_id, s->comp_id, element_id, s->field);
 	bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
     }
 
-    if (bu_strncmp(field, line, 8)) {
-	bu_log("WARNING: CCONE3 continuation flags disagree, %8.8s vs %8.8s\n", field, line);
-	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-	       group_id, comp_id, element_id);
+    if (bu_strncmp(s->field, s->line, 8)) {
+	bu_log("WARNING: CCONE3 continuation flags disagree, %8.8s vs %8.8s\n", s->field, s->line);
+	bu_log("\ts->group_id = %d, comp_id = %d, element_id = %d\n",
+	       s->group_id, s->comp_id, element_id);
     }
 
     for (i=0; i<4; i++) {
-	bu_strlcpy(field, &line[8*(i+1)], sizeof(field));
-	ro[i] = atof(field) * 25.4;
+	bu_strlcpy(s->field, &s->line[8*(i+1)], sizeof(s->field));
+	ro[i] = atof(s->field) * 25.4;
 	if (ro[i] < 0.0) {
 	    bu_log("ERROR: CCONE3 has illegal radius %f\n", ro[i]);
-	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		   group_id, comp_id, element_id);
+	    bu_log("\ts->group_id = %d, comp_id = %d, element_id = %d\n",
+		   s->group_id, s->comp_id, element_id);
 	    return;
 	}
-	if (BU_STR_EQUAL(field, "        "))
+	if (BU_STR_EQUAL(s->field, "        "))
 	    ro[i] = -1.0;
     }
 
     for (i=0; i<4; i++) {
-	bu_strlcpy(field, &line[32 + 8*(i+1)], sizeof(field));
-	ri[i] = atof(field) * 25.4;
+	bu_strlcpy(s->field, &s->line[32 + 8*(i+1)], sizeof(s->field));
+	ri[i] = atof(s->field) * 25.4;
 	if (ri[i] < 0.0) {
 	    bu_log("ERROR: CCONE3 has illegal radius %f\n", ri[i]);
-	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		   group_id, comp_id, element_id);
+	    bu_log("\ts->group_id = %d, comp_id = %d, element_id = %d\n",
+		   s->group_id, s->comp_id, element_id);
 	    return;
 	}
-	if (BU_STR_EQUAL(field, "        "))
+	if (BU_STR_EQUAL(s->field, "        "))
 	    ri[i] = -1.0;
     }
 
-    VSUB2(diff4, grid_points[pt4], grid_points[pt1]);
-    VSUB2(diff3, grid_points[pt3], grid_points[pt1]);
-    VSUB2(diff2, grid_points[pt2], grid_points[pt1]);
+    VSUB2(diff4, s->grid_points[pt4], s->grid_points[pt1]);
+    VSUB2(diff3, s->grid_points[pt3], s->grid_points[pt1]);
+    VSUB2(diff2, s->grid_points[pt2], s->grid_points[pt1]);
 
     len03 = MAGNITUDE(diff4);
     len01 = MAGNITUDE(diff2);
@@ -1527,8 +1584,8 @@ f4_do_ccone3(void)
 	if (EQUAL(ro[i], -1.0)) {
 	    if (EQUAL(ri[i], -1.0)) {
 		bu_log("ERROR: both inner and outer radii at g%d of a CCONE3 are undefined\n", i+1);
-		bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		       group_id, comp_id, element_id);
+		bu_log("\ts->group_id = %d, comp_id = %d, element_id = %d\n",
+		       s->group_id, s->comp_id, element_id);
 		return;
 	    } else {
 		ro[i] = ri[i];
@@ -1565,27 +1622,27 @@ f4_do_ccone3(void)
     }
 
     for (i=0; i<4; i++) {
-	V_MAX(ro[i], min_radius);
-	V_MAX(ri[i], min_radius);
+	V_MAX(ro[i], s->min_radius);
+	V_MAX(ri[i], s->min_radius);
     }
 
     BU_LIST_INIT(&r_head.l);
 
     if (pt1 != pt2) {
-	VSUB2(diff, grid_points[pt2], grid_points[pt1]);
+	VSUB2(diff, s->grid_points[pt2], s->grid_points[pt1]);
 
 	/* make first cone */
-	if (!EQUAL(ro[0], min_radius) || !EQUAL(ro[1], min_radius)) {
-	    name = make_solid_name(CCONE3, element_id, comp_id, group_id, 1);
-	    mk_trc_h(fpout, name, grid_points[pt1], diff, ro[0], ro[1]);
+	if (!EQUAL(ro[0], s->min_radius) || !EQUAL(ro[1], s->min_radius)) {
+	    name = make_solid_name(s, CCONE3, element_id, s->comp_id, s->group_id, 1);
+	    mk_trc_h(s->fpout, name, s->grid_points[pt1], diff, ro[0], ro[1]);
 	    if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 		bu_exit(1, "mk_addmember failed!\n");
 	    bu_free(name, "solid_name");
 
 	    /* and the inner cone */
-	    if (!EQUAL(ri[0], min_radius) || !EQUAL(ri[1], min_radius)) {
-		name = make_solid_name(CCONE3, element_id, comp_id, group_id, 11);
-		mk_trc_h(fpout, name, grid_points[pt1], diff, ri[0], ri[1]);
+	    if (!EQUAL(ri[0], s->min_radius) || !EQUAL(ri[1], s->min_radius)) {
+		name = make_solid_name(s, CCONE3, element_id, s->comp_id, s->group_id, 11);
+		mk_trc_h(s->fpout, name, s->grid_points[pt1], diff, ri[0], ri[1]);
 		if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
 		    bu_exit(1, "mk_addmember failed!\n");
 		bu_free(name, "solid_name");
@@ -1594,20 +1651,20 @@ f4_do_ccone3(void)
     }
 
     if (pt2 != pt3) {
-	VSUB2(diff, grid_points[pt3], grid_points[pt2]);
+	VSUB2(diff, s->grid_points[pt3], s->grid_points[pt2]);
 
 	/* make second cone */
-	if (!EQUAL(ro[1], min_radius) || !EQUAL(ro[2], min_radius)) {
-	    name = make_solid_name(CCONE3, element_id, comp_id, group_id, 2);
-	    mk_trc_h(fpout, name, grid_points[pt2], diff, ro[1], ro[2]);
+	if (!EQUAL(ro[1], s->min_radius) || !EQUAL(ro[2], s->min_radius)) {
+	    name = make_solid_name(s, CCONE3, element_id, s->comp_id, s->group_id, 2);
+	    mk_trc_h(s->fpout, name, s->grid_points[pt2], diff, ro[1], ro[2]);
 	    if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 		bu_exit(1, "mk_addmember failed!\n");
 	    bu_free(name, "solid_name");
 
 	    /* and the inner cone */
-	    if (!EQUAL(ri[1], min_radius) || !EQUAL(ri[2], min_radius)) {
-		name = make_solid_name(CCONE3, element_id, comp_id, group_id, 22);
-		mk_trc_h(fpout, name, grid_points[pt2], diff, ri[1], ri[2]);
+	    if (!EQUAL(ri[1], s->min_radius) || !EQUAL(ri[2], s->min_radius)) {
+		name = make_solid_name(s, CCONE3, element_id, s->comp_id, s->group_id, 22);
+		mk_trc_h(s->fpout, name, s->grid_points[pt2], diff, ri[1], ri[2]);
 		if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
 		    bu_exit(1, "mk_addmember failed!\n");
 		bu_free(name, "solid_name");
@@ -1616,20 +1673,20 @@ f4_do_ccone3(void)
     }
 
     if (pt3 != pt4) {
-	VSUB2(diff, grid_points[pt4], grid_points[pt3]);
+	VSUB2(diff, s->grid_points[pt4], s->grid_points[pt3]);
 
 	/* make third cone */
-	if (!EQUAL(ro[2], min_radius) || !EQUAL(ro[3], min_radius)) {
-	    name = make_solid_name(CCONE3, element_id, comp_id, group_id, 3);
-	    mk_trc_h(fpout, name, grid_points[pt3], diff, ro[2], ro[3]);
+	if (!EQUAL(ro[2], s->min_radius) || !EQUAL(ro[3], s->min_radius)) {
+	    name = make_solid_name(s, CCONE3, element_id, s->comp_id, s->group_id, 3);
+	    mk_trc_h(s->fpout, name, s->grid_points[pt3], diff, ro[2], ro[3]);
 	    if (mk_addmember(name, &r_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 		bu_exit(1, "mk_addmember failed!\n");
 	    bu_free(name, "solid_name");
 
 	    /* and the inner cone */
-	    if (!EQUAL(ri[2], min_radius) || !EQUAL(ri[3], min_radius)) {
-		name = make_solid_name(CCONE3, element_id, comp_id, group_id, 33);
-		mk_trc_h(fpout, name, grid_points[pt3], diff, ri[2], ri[3]);
+	    if (!EQUAL(ri[2], s->min_radius) || !EQUAL(ri[3], s->min_radius)) {
+		name = make_solid_name(s, CCONE3, element_id, s->comp_id, s->group_id, 33);
+		mk_trc_h(s->fpout, name, s->grid_points[pt3], diff, ri[2], ri[3]);
 		if (mk_addmember(name, &r_head.l, NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
 		    bu_exit(1, "mk_addmember failed!\n");
 		bu_free(name, "solid_name");
@@ -1637,22 +1694,22 @@ f4_do_ccone3(void)
 	}
     }
 
-    name = make_solid_name(CCONE3, element_id, comp_id, group_id, 0);
-    mk_comb(fpout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
+    name = make_solid_name(s, CCONE3, element_id, s->comp_id, s->group_id, 0);
+    mk_comb(s->fpout, name, &r_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1);
     bu_free(name, "solid_name");
 }
 
 
 static int
-skip_region(int id)
+skip_region(struct f4g_state *s, int id)
 {
     int i;
 
-    if (!f4_do_skips)
+    if (!s->f4_do_skips)
 	return 0;
 
-    for (i=0; i<f4_do_skips; i++) {
-	if (id == region_list[i])
+    for (i=0; i<s->f4_do_skips; i++) {
+	if (id == s->region_list[i])
 	    return 0;
     }
 
@@ -1661,13 +1718,13 @@ skip_region(int id)
 
 
 static void
-Add_holes(int type, int gr, int comp, struct hole_list *ptr)
+Add_holes(struct f4g_state *s, int type, int gr, int comp, struct hole_list *ptr)
 {
     struct holes *hole_ptr = (struct holes *)NULL;
     struct holes *prev = (struct holes *)NULL;
     struct hole_list *hptr= (struct hole_list *)NULL;
 
-    if (debug) {
+    if (s->debug) {
 	bu_log("Adding holes for group %d, component %d:\n", gr, comp);
 	hptr = ptr;
 	while (hptr) {
@@ -1676,16 +1733,16 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
 	}
     }
 
-    if (f4_do_skips) {
-	if (!skip_region(gr*1000 + comp)) {
+    if (s->f4_do_skips) {
+	if (!skip_region(s, gr*1000 + comp)) {
 	    /* add holes for this region to the list of regions to process */
 	    hptr = ptr;
 	    while (hptr) {
-		if (f4_do_skips == region_list_len) {
-		    region_list_len += REGION_LIST_BLOCK;
-		    region_list = (int *)bu_realloc((char *)region_list, region_list_len*sizeof(int), "region_list");
+		if (s->f4_do_skips == s->region_list_len) {
+		    s->region_list_len += REGION_LIST_BLOCK;
+		    s->region_list = (int *)bu_realloc((char *)s->region_list, s->region_list_len*sizeof(int), "region_list");
 		}
-		region_list[f4_do_skips++] = 1000*hptr->group + hptr->component;
+		s->region_list[s->f4_do_skips++] = 1000*hptr->group + hptr->component;
 		hptr = hptr->next;
 	    }
 	}
@@ -1736,7 +1793,7 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
 
 
 static void
-f4_do_hole_wall(int type)
+f4_do_hole_wall(struct f4g_state *s, int type)
 {
     struct hole_list *list_ptr;
     struct hole_list *list_start;
@@ -1745,10 +1802,10 @@ f4_do_hole_wall(int type)
     size_t s_len;
     size_t col;
 
-    if (debug)
-	bu_log("f4_do_hole_wall: %s\n", line);
+    if (s->debug)
+	bu_log("f4_do_hole_wall: %s\n", s->line);
 
-    if (pass)
+    if (s->pass)
 	return;
 
     if (type != HOLE && type != WALL) {
@@ -1756,37 +1813,37 @@ f4_do_hole_wall(int type)
     }
 
     /* eliminate trailing blanks */
-    s_len = strlen(line);
-    while (isspace((int)line[--s_len]))
-	line[s_len] = '\0';
+    s_len = strlen(s->line);
+    while (isspace((int)s->line[--s_len]))
+	s->line[s_len] = '\0';
 
-    s_len = strlen(line);
+    s_len = strlen(s->line);
     V_MIN(s_len, 80);
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    group = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    group = atoi(s->field);
 
-    bu_strlcpy(field, &line[16], sizeof(field));
-    comp = atoi(field);
+    bu_strlcpy(s->field, &s->line[16], sizeof(s->field));
+    comp = atoi(s->field);
 
     list_start = (struct hole_list *)NULL;
     list_ptr = (struct hole_list *)NULL;
     col = 24;
 
     while (col < s_len) {
-	bu_strlcpy(field, &line[col], sizeof(field));
-	igrp = atoi(field);
+	bu_strlcpy(s->field, &s->line[col], sizeof(s->field));
+	igrp = atoi(s->field);
 
 	col += 8;
 	if (col >= s_len)
 	    break;
 
-	bu_strlcpy(field, &line[col], sizeof(field));
-	icmp = atoi(field);
+	bu_strlcpy(s->field, &s->line[col], sizeof(s->field));
+	icmp = atoi(s->field);
 
 	if (igrp >= 0 && icmp > 0) {
 	    if (igrp == group && comp == icmp) {
-		bu_log("Hole or wall card references itself (ignoring): (%s)\n", line);
+		bu_log("Hole or wall card references itself (ignoring): (%s)\n", s->line);
 	    } else {
 		if (list_ptr) {
 		    BU_ALLOC(list_ptr->next, struct hole_list);
@@ -1805,179 +1862,179 @@ f4_do_hole_wall(int type)
 	col += 8;
     }
 
-    Add_holes(type, group, comp, list_start);
+    Add_holes(s, type, group, comp, list_start);
 }
 
 
 static void
-f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
+f4_Add_bot_face(struct f4g_state *s, int pt1, int pt2, int pt3, fastf_t thick, int pos)
 {
 
     if (pt1 == pt2 || pt2 == pt3 || pt1 == pt3) {
-	bu_log("f4_Add_bot_face: ignoring degenerate triangle in group %d component %d\n", group_id, comp_id);
+	bu_log("f4_Add_bot_face: ignoring degenerate triangle in group %d component %d\n", s->group_id, s->comp_id);
 	return;
     }
 
     if (pos == 0)	/* use default */
 	pos = POS_FRONT;
 
-    if (mode == PLATE_MODE) {
+    if (s->mode == PLATE_MODE) {
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("f4_Add_bot_face: illegal position parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id);
+	    bu_log("f4_Add_bot_face: illegal position parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, s->group_id, s->comp_id);
 	    return;
 	}
     }
 
-    if (face_count >= face_size) {
-	face_size += GRID_BLOCK;
-	faces = (int *)bu_realloc((void *)faces,  face_size*3*sizeof(int), "faces");
-	thickness = (fastf_t *)bu_realloc((void *)thickness, face_size*sizeof(fastf_t), "thickness");
-	facemode = (char *)bu_realloc((void *)facemode, face_size*sizeof(char), "facemode");
+    if (s->face_count >= s->face_size) {
+	s->face_size += GRID_BLOCK;
+	s->faces = (int *)bu_realloc((void *)s->faces,  s->face_size*3*sizeof(int), "faces");
+	s->thickness = (fastf_t *)bu_realloc((void *)s->thickness, s->face_size*sizeof(fastf_t), "thickness");
+	s->facemode = (char *)bu_realloc((void *)s->facemode, s->face_size*sizeof(char), "facemode");
     }
-    if (!faces || !thickness || !facemode)
+    if (!s->faces || !s->thickness || !s->facemode)
 	bu_exit(BRLCAD_ERROR, "fast4-g memory allocation error, fast4-g.c:%d\n", __LINE__);
 
-    faces[face_count*3] = pt1;
-    faces[face_count*3+1] = pt2;
-    faces[face_count*3+2] = pt3;
+    s->faces[s->face_count*3] = pt1;
+    s->faces[s->face_count*3+1] = pt2;
+    s->faces[s->face_count*3+2] = pt3;
 
-    if (mode == PLATE_MODE) {
-	thickness[face_count] = thick;
-	facemode[face_count] = pos;
+    if (s->mode == PLATE_MODE) {
+	s->thickness[s->face_count] = thick;
+	s->facemode[s->face_count] = pos;
     } else {
-	thickness[face_count] = 0.0;
-	facemode[face_count] = 0;
+	s->thickness[s->face_count] = 0.0;
+	s->facemode[s->face_count] = 0;
     }
 
-    face_count++;
+    s->face_count++;
 }
 
 
 static void
-f4_do_tri(void)
+f4_do_tri(struct f4g_state *s)
 {
     int element_id;
     int pt1, pt2, pt3;
     fastf_t thick;
     int pos;
 
-    if (debug)
-	bu_log("f4_do_tri: %s\n", line);
+    if (s->debug)
+	bu_log("f4_do_tri: %s\n", s->line);
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    element_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    element_id = atoi(s->field);
 
-    if (!bot)
-	bot = element_id;
+    if (!s->bot)
+	s->bot = element_id;
 
-    if (!pass)
+    if (!s->pass)
 	return;
 
-    if (faces == NULL) {
-	faces = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
-	thickness = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
-	facemode = (char *)bu_malloc(GRID_BLOCK*sizeof(char), "facemode");
-	face_size = GRID_BLOCK;
-	face_count = 0;
+    if (s->faces == NULL) {
+	s->faces = (int *)bu_calloc(GRID_BLOCK*3, sizeof(int), "faces");
+	s->thickness = (fastf_t *)bu_calloc(GRID_BLOCK, sizeof(fastf_t), "thickness");
+	s->facemode = (char *)bu_calloc(GRID_BLOCK, sizeof(char), "facemode");
+	s->face_size = GRID_BLOCK;
+	s->face_count = 0;
     }
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    pt1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    pt1 = atoi(s->field);
 
-    bu_strlcpy(field, &line[32], sizeof(field));
-    pt2 = atoi(field);
+    bu_strlcpy(s->field, &s->line[32], sizeof(s->field));
+    pt2 = atoi(s->field);
 
-    bu_strlcpy(field, &line[40], sizeof(field));
-    pt3 = atoi(field);
+    bu_strlcpy(s->field, &s->line[40], sizeof(s->field));
+    pt3 = atoi(s->field);
 
     thick = 0.0;
     pos = 0;
 
-    if (mode == PLATE_MODE) {
-	bu_strlcpy(field, &line[56], sizeof(field));
-	thick = atof(field) * 25.4;
+    if (s->mode == PLATE_MODE) {
+	bu_strlcpy(s->field, &s->line[56], sizeof(s->field));
+	thick = atof(s->field) * 25.4;
 
-	bu_strlcpy(field, &line[64], sizeof(field));
-	pos = atoi(field);
+	bu_strlcpy(s->field, &s->line[64], sizeof(s->field));
+	pos = atoi(s->field);
 	if (pos == 0)
 	    pos = POS_FRONT;
 
-	if (debug)
+	if (s->debug)
 	    bu_log("\tplate mode: thickness = %f\n", thick);
 
     }
 
-    if (f4_do_plot)
-	plot_tri(pt1, pt2, pt3);
+    if (s->f4_do_plot)
+	plot_tri(s, pt1, pt2, pt3);
 
-    f4_Add_bot_face(pt1, pt2, pt3, thick, pos);
+    f4_Add_bot_face(s, pt1, pt2, pt3, thick, pos);
 }
 
 
 static void
-f4_do_quad(void)
+f4_do_quad(struct f4g_state *s)
 {
     int element_id;
     int pt1, pt2, pt3, pt4;
     fastf_t thick = 0.0;
     int pos = 0;
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    element_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    element_id = atoi(s->field);
 
-    if (debug)
-	bu_log("f4_do_quad: %s\n", line);
+    if (s->debug)
+	bu_log("f4_do_quad: %s\n", s->line);
 
-    if (!bot)
-	bot = element_id;
+    if (!s->bot)
+	s->bot = element_id;
 
-    if (!pass)
+    if (!s->pass)
 	return;
 
-    if (faces == NULL) {
-	faces = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
-	thickness = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
-	facemode = (char *)bu_malloc(GRID_BLOCK*sizeof(char), "facemode");
-	face_size = GRID_BLOCK;
-	face_count = 0;
+    if (s->faces == NULL) {
+	s->faces = (int *)bu_calloc(GRID_BLOCK*3,sizeof(int), "faces");
+	s->thickness = (fastf_t *)bu_calloc(GRID_BLOCK,sizeof(fastf_t), "thickness");
+	s->facemode = (char *)bu_calloc(GRID_BLOCK,sizeof(char), "facemode");
+	s->face_size = GRID_BLOCK;
+	s->face_count = 0;
     }
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    pt1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    pt1 = atoi(s->field);
 
-    bu_strlcpy(field, &line[32], sizeof(field));
-    pt2 = atoi(field);
+    bu_strlcpy(s->field, &s->line[32], sizeof(s->field));
+    pt2 = atoi(s->field);
 
-    bu_strlcpy(field, &line[40], sizeof(field));
-    pt3 = atoi(field);
+    bu_strlcpy(s->field, &s->line[40], sizeof(s->field));
+    pt3 = atoi(s->field);
 
-    bu_strlcpy(field, &line[48], sizeof(field));
-    pt4 = atoi(field);
+    bu_strlcpy(s->field, &s->line[48], sizeof(s->field));
+    pt4 = atoi(s->field);
 
-    if (mode == PLATE_MODE) {
-	bu_strlcpy(field, &line[56], sizeof(field));
-	thick = atof(field) * 25.4;
+    if (s->mode == PLATE_MODE) {
+	bu_strlcpy(s->field, &s->line[56], sizeof(s->field));
+	thick = atof(s->field) * 25.4;
 
-	bu_strlcpy(field, &line[64], sizeof(field));
-	pos = atoi(field);
+	bu_strlcpy(s->field, &s->line[64], sizeof(s->field));
+	pos = atoi(s->field);
 
 	if (pos == 0)	/* use default */
 	    pos = POS_FRONT;
 
 	if (pos != POS_CENTER && pos != POS_FRONT) {
 	    bu_log("f4_do_quad: illegal position parameter (%d), must be one or two\n", pos);
-	    bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
+	    bu_log("\telement %d, component %d, group %d\n", element_id, s->comp_id, s->group_id);
 	    return;
 	}
     }
 
-    f4_Add_bot_face(pt1, pt2, pt3, thick, pos);
-    f4_Add_bot_face(pt1, pt3, pt4, thick, pos);
+    f4_Add_bot_face(s, pt1, pt2, pt3, thick, pos);
+    f4_Add_bot_face(s, pt1, pt3, pt4, thick, pos);
 }
 
 
 static void
-make_bot_object(void)
+make_bot_object(struct f4g_state *s)
 {
     int i;
     int max_pt = 0;
@@ -1986,51 +2043,51 @@ make_bot_object(void)
     struct bu_bitv *bv = (struct bu_bitv *)NULL;
     int bot_mode;
     char *name = (char *)NULL;
-    int element_id = bot;
+    int element_id = s->bot;
     int count;
     struct rt_bot_internal bot_ip;
 
-    if (!pass) {
-	make_region_name(group_id, comp_id);
+    if (!s->pass) {
+	make_region_name(s, s->group_id, s->comp_id);
 	return;
     }
 
     bot_ip.magic = RT_BOT_INTERNAL_MAGIC;
-    for (i=0; i<face_count; i++) {
-	V_MIN(min_pt, faces[i*3]);
-	V_MAX(max_pt, faces[i*3]);
-	V_MIN(min_pt, faces[i*3+1]);
-	V_MAX(max_pt, faces[i*3+1]);
-	V_MIN(min_pt, faces[i*3+2]);
-	V_MAX(max_pt, faces[i*3+2]);
+    for (i=0; i<s->face_count; i++) {
+	V_MIN(min_pt, s->faces[i*3]);
+	V_MAX(max_pt, s->faces[i*3]);
+	V_MIN(min_pt, s->faces[i*3+1]);
+	V_MAX(max_pt, s->faces[i*3+1]);
+	V_MIN(min_pt, s->faces[i*3+2]);
+	V_MAX(max_pt, s->faces[i*3+2]);
     }
 
     num_vertices = max_pt - min_pt + 1;
     bot_ip.num_vertices = num_vertices;
     bot_ip.vertices = (fastf_t *)bu_calloc(num_vertices*3, sizeof(fastf_t), "BOT vertices");
     for (i=0; i<num_vertices; i++)
-	VMOVE(&bot_ip.vertices[i*3], grid_points[min_pt+i]);
+	VMOVE(&bot_ip.vertices[i*3], s->grid_points[min_pt+i]);
 
-    for (i=0; i<face_count*3; i++)
-	faces[i] -= min_pt;
-    bot_ip.num_faces = face_count;
-    bot_ip.faces = (int *)bu_calloc(face_count*3, sizeof(int), "BOT faces");
-    for (i=0; i<face_count*3; i++)
-	bot_ip.faces[i] = faces[i];
+    for (i=0; i<s->face_count*3; i++)
+	s->faces[i] -= min_pt;
+    bot_ip.num_faces = s->face_count;
+    bot_ip.faces = (int *)bu_calloc(s->face_count*3, sizeof(int), "BOT faces");
+    for (i=0; i<s->face_count*3; i++)
+	bot_ip.faces[i] = s->faces[i];
 
     bot_ip.face_mode = (struct bu_bitv *)NULL;
     bot_ip.thickness = (fastf_t *)NULL;
-    if (mode == PLATE_MODE) {
+    if (s->mode == PLATE_MODE) {
 	bot_mode = RT_BOT_PLATE;
-	bv = bu_bitv_new(face_count);
-	for (i=0; i<face_count; i++) {
-	    if (facemode[i] == POS_FRONT)
+	bv = bu_bitv_new(s->face_count);
+	for (i=0; i<s->face_count; i++) {
+	    if (s->facemode[i] == POS_FRONT)
 		BU_BITSET(bv, i);
 	}
 	bot_ip.face_mode = bv;
-	bot_ip.thickness = (fastf_t *)bu_calloc(face_count, sizeof(fastf_t), "BOT thickness");
-	for (i=0; i<face_count; i++)
-	    bot_ip.thickness[i] = thickness[i];
+	bot_ip.thickness = (fastf_t *)bu_calloc(s->face_count, sizeof(fastf_t), "BOT thickness");
+	for (i=0; i<s->face_count; i++)
+	    bot_ip.thickness[i] = s->thickness[i];
     } else {
 	bot_mode = RT_BOT_SOLID;
     }
@@ -2039,20 +2096,20 @@ make_bot_object(void)
     bot_ip.orientation = RT_BOT_UNORIENTED;
     bot_ip.bot_flags = 0;
 
-    count = rt_bot_vertex_fuse(&bot_ip, &fpout->wdb_tol);
+    count = rt_bot_vertex_fuse(&bot_ip, &s->fpout->wdb_tol);
     if (count)
-	bu_log("WARNING: %d duplicate vertices eliminated from group %d component %d\n", count, group_id, comp_id);
+	bu_log("WARNING: %d duplicate vertices eliminated from group %d component %d\n", count, s->group_id, s->comp_id);
 
     count = rt_bot_face_fuse(&bot_ip);
     if (count)
-	bu_log("WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id);
+	bu_log("WARNING: %d duplicate faces eliminated from group %d component %d\n", count, s->group_id, s->comp_id);
 
-    name = make_solid_name(BOT, element_id, comp_id, group_id, 0);
-    mk_bot(fpout, name, bot_mode, RT_BOT_UNORIENTED, 0, bot_ip.num_vertices, bot_ip.num_faces, bot_ip.vertices,
+    name = make_solid_name(s, BOT, element_id, s->comp_id, s->group_id, 0);
+    mk_bot(s->fpout, name, bot_mode, RT_BOT_UNORIENTED, 0, bot_ip.num_vertices, bot_ip.num_faces, bot_ip.vertices,
 	   bot_ip.faces, bot_ip.thickness, bot_ip.face_mode);
     bu_free(name, "solid_name");
 
-    if (mode == PLATE_MODE) {
+    if (s->mode == PLATE_MODE) {
 	bu_free((char *)bot_ip.thickness, "BOT thickness");
 	bu_free((char *)bot_ip.face_mode, "BOT face_mode");
     }
@@ -2063,32 +2120,32 @@ make_bot_object(void)
 
 
 static void
-skip_section(void)
+skip_section(struct f4g_state *s)
 {
     b_off_t section_start;
 
     /* skip to start of next section */
-    section_start = bu_ftell(fpin);
+    section_start = bu_ftell(s->fpin);
     if (section_start < 0) {
 	bu_exit(1, "Error: couldn't get input file's current file position.\n");
     }
 
-    if (get_line()) {
-	while (line[0] && bu_strncmp(line, "SECTION", 7) &&
-	       bu_strncmp(line, "HOLE", 4) &&
-	       bu_strncmp(line, "WALL", 4) &&
-	       bu_strncmp(line, "VEHICLE", 7))
+    if (get_line(s)) {
+	while (s->line[0] && bu_strncmp(s->line, "SECTION", 7) &&
+	       bu_strncmp(s->line, "HOLE", 4) &&
+	       bu_strncmp(s->line, "WALL", 4) &&
+	       bu_strncmp(s->line, "VEHICLE", 7))
 	{
-	    section_start = bu_ftell(fpin);
+	    section_start = bu_ftell(s->fpin);
 	    if (section_start < 0) {
 		bu_exit(1, "Error: couldn't get input file's current file position.\n");
 	    }
-	    if (!get_line())
+	    if (!get_line(s))
 		break;
 	}
     }
     /* seek to start of the section */
-    bu_fseek(fpin, section_start, SEEK_SET);
+    bu_fseek(s->fpin, section_start, SEEK_SET);
 }
 
 
@@ -2096,70 +2153,70 @@ skip_section(void)
  * This is called with final == 1 when ENDDATA is found
  */
 static void
-f4_do_section(int final)
+f4_do_section(struct f4g_state *s, int final)
 {
     int found;
     struct name_tree *nm_ptr;
 
-    if (debug)
-	bu_log("f4_do_section(%d): %s\n", final, line);
+    if (s->debug)
+	bu_log("f4_do_section(%d): %s\n", final, s->line);
 
-    if (pass)	/* doing geometry */ {
-	if (region_id && !skip_region(region_id)) {
-	    comp_count++;
+    if (s->pass)	/* doing geometry */ {
+	if (s->region_id && !skip_region(s, s->region_id)) {
+	    s->comp_count++;
 
-	    if (bot)
-		make_bot_object();
+	    if (s->bot)
+		make_bot_object(s);
 	}
-	if (final && debug) /* The ENDATA card has been found */
-	    List_names();
-    } else if (bot) {
-	make_region_name(group_id, comp_id);
+	if (final && s->debug) /* The ENDATA card has been found */
+	    List_names(s);
+    } else if (s->bot) {
+	make_region_name(s, s->group_id, s->comp_id);
     }
 
     if (!final) {
-	bu_strlcpy(field, &line[8], sizeof(field));
-	group_id = atoi(field);
+	bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+	s->group_id = atoi(s->field);
 
-	bu_strlcpy(field, &line[16], sizeof(field));
-	comp_id = atoi(field);
+	bu_strlcpy(s->field, &s->line[16], sizeof(s->field));
+	s->comp_id = atoi(s->field);
 
-	region_id = group_id * 1000 + comp_id;
+	s->region_id = s->group_id * 1000 + s->comp_id;
 
-	if (skip_region(region_id)) /* do not process this component */ {
-	    skip_section();
+	if (skip_region(s, s->region_id)) /* do not process this component */ {
+	    skip_section(s);
 	    return;
 	}
 
-	if (comp_id > 999) {
-	    bu_log("Illegal component id number %d, changed to 999\n", comp_id);
-	    comp_id = 999;
+	if (s->comp_id > 999) {
+	    bu_log("Illegal component id number %d, changed to 999\n", s->comp_id);
+	    s->comp_id = 999;
 	}
 
-	bu_strlcpy(field, &line[24], sizeof(field));
-	mode = atoi(field);
-	if (mode != 1 && mode != 2) {
+	bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+	s->mode = atoi(s->field);
+	if (s->mode != 1 && s->mode != 2) {
 	    bu_log("Illegal mode (%d) for group %d component %d, using volume mode\n",
-		   mode, group_id, comp_id);
-	    mode = 2;
+		   s->mode, s->group_id, s->comp_id);
+	    s->mode = 2;
 	}
 
-	if (!pass) {
-	    nm_ptr = Search_ident(name_root, region_id, &found);
-	    if (found && nm_ptr->mode != mode) {
+	if (!s->pass) {
+	    nm_ptr = Search_ident(name_root, s->region_id, &found);
+	    if (found && nm_ptr->mode != s->mode) {
 		bu_log("ERROR: second SECTION card found with different mode for component (group=%d, component=%d), conversion of this component will be incorrect!\n",
-		       group_id, comp_id);
+		       s->group_id, s->comp_id);
 	    }
 	}
     }
 
-    bot = 0;
-    face_count = 0;
+    s->bot = 0;
+    s->face_count = 0;
 }
 
 
 static void
-f4_do_hex1(void)
+f4_do_hex1(struct f4g_state *s)
 {
     fastf_t thick=0.0;
     int pos;
@@ -2168,79 +2225,79 @@ f4_do_hex1(void)
     int i;
     int cont1, cont2;
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    element_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    element_id = atoi(s->field);
 
-    if (!bot)
-	bot = element_id;
+    if (!s->bot)
+	s->bot = element_id;
 
-    if (!pass) {
-	if (!get_line()) {
+    if (!s->pass) {
+	if (!get_line(s)) {
 	    bu_log("Unexpected EOF while reading continuation card for CHEX1\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		   group_id, comp_id, element_id);
+		   s->group_id, s->comp_id, element_id);
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 	return;
     }
 
-    if (faces == NULL) {
-	faces = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
-	thickness = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
-	facemode = (char *)bu_malloc(GRID_BLOCK*sizeof(char), "facemode");
-	face_size = GRID_BLOCK;
-	face_count = 0;
+    if (s->faces == NULL) {
+	s->faces = (int *)bu_calloc(GRID_BLOCK*3, sizeof(int), "faces");
+	s->thickness = (fastf_t *)bu_calloc(GRID_BLOCK, sizeof(fastf_t), "thickness");
+	s->facemode = (char *)bu_calloc(GRID_BLOCK, sizeof(char), "facemode");
+	s->face_size = GRID_BLOCK;
+	s->face_count = 0;
     }
 
     for (i=0; i<6; i++) {
-	bu_strlcpy(field, &line[24 + i*8], sizeof(field));
-	pts[i] = atoi(field);
+	bu_strlcpy(s->field, &s->line[24 + i*8], sizeof(s->field));
+	pts[i] = atoi(s->field);
     }
 
-    bu_strlcpy(field, &line[72], sizeof(field));
-    cont1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[72], sizeof(s->field));
+    cont1 = atoi(s->field);
 
-    if (!get_line()) {
+    if (!get_line(s)) {
 	bu_log("Unexpected EOF while reading continuation card for CHEX1\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-	       group_id, comp_id, element_id, cont1);
+	       s->group_id, s->comp_id, element_id, cont1);
 	bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
     }
 
-    bu_strlcpy(field, line, sizeof(field));
-    cont2 = atoi(field);
+    bu_strlcpy(s->field, s->line, sizeof(s->field));
+    cont2 = atoi(s->field);
 
     if (cont1 != cont2) {
 	bu_log("Continuation card numbers do not match for CHEX1 element (%d vs %d)\n", cont1, cont2);
 	bu_log("\tskipping CHEX1 element: group_id = %d, comp_id = %d, element_id = %d\n",
-	       group_id, comp_id, element_id);
+	       s->group_id, s->comp_id, element_id);
 	return;
     }
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    pts[6] = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    pts[6] = atoi(s->field);
 
-    bu_strlcpy(field, &line[16], sizeof(field));
-    pts[7] = atoi(field);
+    bu_strlcpy(s->field, &s->line[16], sizeof(s->field));
+    pts[7] = atoi(s->field);
 
-    if (mode == PLATE_MODE) {
-	bu_strlcpy(field, &line[56], sizeof(field));
-	thick = atof(field) * 25.4;
+    if (s->mode == PLATE_MODE) {
+	bu_strlcpy(s->field, &s->line[56], sizeof(s->field));
+	thick = atof(s->field) * 25.4;
 	if (thick <= 0.0) {
 	    bu_log("f4_do_hex1: illegal thickness (%f), skipping CHEX1 element\n", thick);
-	    bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
+	    bu_log("\telement %d, component %d, group %d\n", element_id, s->comp_id, s->group_id);
 	    return;
 	}
 
-	bu_strlcpy(field, &line[64], sizeof(field));
-	pos = atoi(field);
+	bu_strlcpy(s->field, &s->line[64], sizeof(s->field));
+	pos = atoi(s->field);
 
 	if (pos == 0)	/* use default */
 	    pos = POS_FRONT;
 
 	if (pos != POS_CENTER && pos != POS_FRONT) {
 	    bu_log("f4_do_hex1: illegal position parameter (%d), must be 1 or 2, skipping CHEX1 element\n", pos);
-	    bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
+	    bu_log("\telement %d, component %d, group %d\n", element_id, s->comp_id, s->group_id);
 	    return;
 	}
     } else {
@@ -2249,12 +2306,12 @@ f4_do_hex1(void)
     }
 
     for (i=0; i<12; i++)
-	f4_Add_bot_face(pts[hex_faces[i][0]], pts[hex_faces[i][1]], pts[hex_faces[i][2]], thick, pos);
+	f4_Add_bot_face(s, pts[hex_faces[i][0]], pts[hex_faces[i][1]], pts[hex_faces[i][2]], thick, pos);
 }
 
 
 static void
-f4_do_hex2(void)
+f4_do_hex2(struct f4g_state *s)
 {
     int pts[8];
     int element_id;
@@ -2263,92 +2320,92 @@ f4_do_hex2(void)
     point_t points[8];
     char *name = (char *)NULL;
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    element_id = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    element_id = atoi(s->field);
 
-    if (!pass) {
-	make_region_name(group_id, comp_id);
-	if (!get_line()) {
+    if (!s->pass) {
+	make_region_name(s, s->group_id, s->comp_id);
+	if (!get_line(s)) {
 	    bu_log("Unexpected EOF while reading continuation card for CHEX2\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		   group_id, comp_id, element_id);
+		   s->group_id, s->comp_id, element_id);
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 	return;
     }
 
     for (i=0; i<6; i++) {
-	bu_strlcpy(field, &line[24 + i*8], sizeof(field));
-	pts[i] = atoi(field);
+	bu_strlcpy(s->field, &s->line[24 + i*8], sizeof(s->field));
+	pts[i] = atoi(s->field);
     }
 
-    bu_strlcpy(field, &line[72], sizeof(field));
-    cont1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[72], sizeof(s->field));
+    cont1 = atoi(s->field);
 
-    if (!get_line()) {
+    if (!get_line(s)) {
 	bu_log("Unexpected EOF while reading continuation card for CHEX2\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-	       group_id, comp_id, element_id, cont1);
+	       s->group_id, s->comp_id, element_id, cont1);
 	bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
     }
 
-    bu_strlcpy(field, line, sizeof(field));
-    cont2 = atoi(field);
+    bu_strlcpy(s->field, s->line, sizeof(s->field));
+    cont2 = atoi(s->field);
 
     if (cont1 != cont2) {
 	bu_log("Continuation card numbers do not match for CHEX2 element (%d vs %d)\n", cont1, cont2);
 	bu_log("\tskipping CHEX2 element: group_id = %d, comp_id = %d, element_id = %d\n",
-	       group_id, comp_id, element_id);
+	       s->group_id, s->comp_id, element_id);
 	return;
     }
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    pts[6] = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    pts[6] = atoi(s->field);
 
-    bu_strlcpy(field, &line[16], sizeof(field));
-    pts[7] = atoi(field);
+    bu_strlcpy(s->field, &s->line[16], sizeof(s->field));
+    pts[7] = atoi(s->field);
 
     for (i=0; i<8; i++)
-	VMOVE(points[i], grid_points[pts[i]]);
+	VMOVE(points[i], s->grid_points[pts[i]]);
 
-    name = make_solid_name(CHEX2, element_id, comp_id, group_id, 0);
-    mk_arb8(fpout, name, &points[0][X]);
+    name = make_solid_name(s, CHEX2, element_id, s->comp_id, s->group_id, 0);
+    mk_arb8(s->fpout, name, &points[0][X]);
     bu_free(name, "solid_name");
 
 }
 
 
 static void
-Process_hole_wall(void)
+Process_hole_wall(struct f4g_state *s)
 {
-    if (debug)
+    if (s->debug)
 	bu_log("Process_hole_wall\n");
 
-    rewind(fpin);
+    rewind(s->fpin);
     while (1) {
-	if (!bu_strncmp(line, "HOLE", 4)) {
-	    f4_do_hole_wall(HOLE);
-	} else if (!bu_strncmp(line, "WALL", 4)) {
-	    f4_do_hole_wall(WALL);
-	} else if (!bu_strncmp(line, "COMPSPLT", 8)) {
-	    f4_do_compsplt();
-	} else if (!bu_strncmp(line, "SECTION", 7)) {
-	    bu_strlcpy(field, &line[24], sizeof(field));
-	    mode = atoi(field);
-	    if (mode != 1 && mode != 2) {
+	if (!bu_strncmp(s->line, "HOLE", 4)) {
+	    f4_do_hole_wall(s, HOLE);
+	} else if (!bu_strncmp(s->line, "WALL", 4)) {
+	    f4_do_hole_wall(s, WALL);
+	} else if (!bu_strncmp(s->line, "COMPSPLT", 8)) {
+	    f4_do_compsplt(s);
+	} else if (!bu_strncmp(s->line, "SECTION", 7)) {
+	    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+	    s->mode = atoi(s->field);
+	    if (s->mode != 1 && s->mode != 2) {
 		bu_log("Illegal mode (%d) for group %d component %d, using volume mode\n",
-		       mode, group_id, comp_id);
-		mode = 2;
+		       s->mode, s->group_id, s->comp_id);
+		s->mode = 2;
 	    }
-	} else if (!bu_strncmp(line, "ENDDATA", 7)) {
+	} else if (!bu_strncmp(s->line, "ENDDATA", 7)) {
 	    break;
 	}
 
-	if (!get_line() || !line[0])
+	if (!get_line(s) || !s->line[0])
 	    break;
     }
 
-    if (debug) {
+    if (s->debug) {
 	bu_log("At end of Process_hole_wall:\n");
 	List_holes();
     }
@@ -2356,124 +2413,124 @@ Process_hole_wall(void)
 
 
 static void
-f4_do_chgcomp(void)
+f4_do_chgcomp(struct f4g_state *s)
 {
 
-    if (!pass)
+    if (!s->pass)
 	return;
 
-    if (!fp_muves)
+    if (!s->fp_muves)
 	return;
 
-    fprintf(fp_muves, "%s", line);
+    fprintf(s->fp_muves, "%s", s->line);
 }
 
 
 static void
-f4_do_cbacking(void)
+f4_do_cbacking(struct f4g_state *s)
 {
     int gr1, co1, gr2, co2, material;
     fastf_t inthickness, probability;
 
-    if (!pass)
+    if (!s->pass)
 	return;
 
-    if (!fp_muves)
+    if (!s->fp_muves)
 	return;
 
-    bu_strlcpy(field, &line[8], sizeof(field));
-    gr1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[8], sizeof(s->field));
+    gr1 = atoi(s->field);
 
-    bu_strlcpy(field, &line[16], sizeof(field));
-    co1 = atoi(field);
+    bu_strlcpy(s->field, &s->line[16], sizeof(s->field));
+    co1 = atoi(s->field);
 
-    bu_strlcpy(field, &line[24], sizeof(field));
-    gr2 = atoi(field);
+    bu_strlcpy(s->field, &s->line[24], sizeof(s->field));
+    gr2 = atoi(s->field);
 
-    bu_strlcpy(field, &line[32], sizeof(field));
-    co2 = atoi(field);
+    bu_strlcpy(s->field, &s->line[32], sizeof(s->field));
+    co2 = atoi(s->field);
 
-    bu_strlcpy(field, &line[40], sizeof(field));
-    inthickness = atof(field) * 25.4;
+    bu_strlcpy(s->field, &s->line[40], sizeof(s->field));
+    inthickness = atof(s->field) * 25.4;
 
-    bu_strlcpy(field, &line[48], sizeof(field));
-    probability = atof(field);
+    bu_strlcpy(s->field, &s->line[48], sizeof(s->field));
+    probability = atof(s->field);
 
-    bu_strlcpy(field, &line[56], sizeof(field));
-    material = atoi(field);
+    bu_strlcpy(s->field, &s->line[56], sizeof(s->field));
+    material = atoi(s->field);
 
-    fprintf(fp_muves, "CBACKING %d %d %g %g %d\n", gr1*1000+co1, gr2*1000+co2, inthickness, probability, material);
+    fprintf(s->fp_muves, "CBACKING %d %d %g %g %d\n", gr1*1000+co1, gr2*1000+co2, inthickness, probability, material);
 }
 
 
 static int
-Process_input(int pass_number)
+Process_input(struct f4g_state *s, int pass_number)
 {
 
-    if (debug)
+    if (s->debug)
 	bu_log("\n\nProcess_input(pass = %d)\n", pass_number);
 
     if (pass_number != 0 && pass_number != 1) {
 	bu_exit(1, "Process_input: illegal pass number %d\n", pass_number);
     }
 
-    region_id = 0;
-    pass = pass_number;
-    if (!get_line() || !line[0])
-	bu_strlcpy(line, "ENDDATA", sizeof(line));
+    s->region_id = 0;
+    s->pass = pass_number;
+    if (!get_line(s) || !s->line[0])
+	bu_strlcpy(s->line, "ENDDATA", sizeof(s->line));
     while (1) {
-	if (!bu_strncmp(line, "VEHICLE", 7))
-	    f4_do_vehicle();
-	else if (!bu_strncmp(line, "HOLE", 4))
+	if (!bu_strncmp(s->line, "VEHICLE", 7))
+	    f4_do_vehicle(s);
+	else if (!bu_strncmp(s->line, "HOLE", 4))
 	    ;
-	else if (!bu_strncmp(line, "WALL", 4))
+	else if (!bu_strncmp(s->line, "WALL", 4))
 	    ;
-	else if (!bu_strncmp(line, "COMPSPLT", 8))
+	else if (!bu_strncmp(s->line, "COMPSPLT", 8))
 	    ;
-	else if (!bu_strncmp(line, "CBACKING", 8))
-	    f4_do_cbacking();
-	else if (!bu_strncmp(line, "CHGCOMP", 7))
-	    f4_do_chgcomp();
-	else if (!bu_strncmp(line, "SECTION", 7))
-	    f4_do_section(0);
-	else if (!bu_strncmp(line, "$NAME", 5))
-	    f4_do_name();
-	else if (!bu_strncmp(line, "$COMMENT", 8))
+	else if (!bu_strncmp(s->line, "CBACKING", 8))
+	    f4_do_cbacking(s);
+	else if (!bu_strncmp(s->line, "CHGCOMP", 7))
+	    f4_do_chgcomp(s);
+	else if (!bu_strncmp(s->line, "SECTION", 7))
+	    f4_do_section(s, 0);
+	else if (!bu_strncmp(s->line, "$NAME", 5))
+	    f4_do_name(s);
+	else if (!bu_strncmp(s->line, "$COMMENT", 8))
 	    ;
-	else if (!bu_strncmp(line, "GRID", 4))
-	    f4_do_grid();
-	else if (!bu_strncmp(line, "CLINE", 5))
-	    f4_do_cline();
-	else if (!bu_strncmp(line, "CHEX1", 5))
-	    f4_do_hex1();
-	else if (!bu_strncmp(line, "CHEX2", 5))
-	    f4_do_hex2();
-	else if (!bu_strncmp(line, "CTRI", 4))
-	    f4_do_tri();
-	else if (!bu_strncmp(line, "CQUAD", 5))
-	    f4_do_quad();
-	else if (!bu_strncmp(line, "CCONE1", 6))
-	    f4_do_ccone1();
-	else if (!bu_strncmp(line, "CCONE2", 6))
-	    f4_do_ccone2();
-	else if (!bu_strncmp(line, "CCONE3", 6))
-	    f4_do_ccone3();
-	else if (!bu_strncmp(line, "CSPHERE", 7))
-	    f4_do_sphere();
-	else if (!bu_strncmp(line, "ENDDATA", 7)) {
-	    f4_do_section(1);
+	else if (!bu_strncmp(s->line, "GRID", 4))
+	    f4_do_grid(s);
+	else if (!bu_strncmp(s->line, "CLINE", 5))
+	    f4_do_cline(s);
+	else if (!bu_strncmp(s->line, "CHEX1", 5))
+	    f4_do_hex1(s);
+	else if (!bu_strncmp(s->line, "CHEX2", 5))
+	    f4_do_hex2(s);
+	else if (!bu_strncmp(s->line, "CTRI", 4))
+	    f4_do_tri(s);
+	else if (!bu_strncmp(s->line, "CQUAD", 5))
+	    f4_do_quad(s);
+	else if (!bu_strncmp(s->line, "CCONE1", 6))
+	    f4_do_ccone1(s);
+	else if (!bu_strncmp(s->line, "CCONE2", 6))
+	    f4_do_ccone2(s);
+	else if (!bu_strncmp(s->line, "CCONE3", 6))
+	    f4_do_ccone3(s);
+	else if (!bu_strncmp(s->line, "CSPHERE", 7))
+	    f4_do_sphere(s);
+	else if (!bu_strncmp(s->line, "ENDDATA", 7)) {
+	    f4_do_section(s, 1);
 	    break;
 	} else {
-	    bu_log("ERROR: skipping unrecognized data type\n%s\n", line);
+	    bu_log("ERROR: skipping unrecognized data type\n%s\n", s->line);
 	}
 
-	if (!get_line() || !line[0])
-	    bu_strlcpy(line, "ENDDATA", sizeof(line));
+	if (!get_line(s) || !s->line[0])
+	    bu_strlcpy(s->line, "ENDDATA", sizeof(s->line));
     }
 
-    if (debug) {
-	bu_log("At pass %d:\n", pass);
-	List_names();
+    if (s->debug) {
+	bu_log("At pass %d:\n", s->pass);
+	List_names(s);
     }
 
     return 0;
@@ -2481,13 +2538,13 @@ Process_input(int pass_number)
 
 
 static void
-make_region_list(char *str)
+make_region_list(struct f4g_state *s, char *str)
 {
     char *ptr, *ptr2;
 
-    region_list = (int *)bu_calloc(REGION_LIST_BLOCK, sizeof(int), "region_list");
-    region_list_len = REGION_LIST_BLOCK;
-    f4_do_skips = 0;
+    s->region_list = (int *)bu_calloc(REGION_LIST_BLOCK, sizeof(int), "region_list");
+    s->region_list_len = REGION_LIST_BLOCK;
+    s->f4_do_skips = 0;
 
     ptr = strtok(str, CPP_XSTR(COMMA));
     while (ptr) {
@@ -2499,18 +2556,18 @@ make_region_list(char *str)
 	    start = atoi(ptr);
 	    stop = atoi(ptr2);
 	    for (i=start; i<=stop; i++) {
-		if (f4_do_skips == region_list_len) {
-		    region_list_len += REGION_LIST_BLOCK;
-		    region_list = (int *)bu_realloc((char *)region_list, region_list_len*sizeof(int), "region_list");
+		if (s->f4_do_skips == s->region_list_len) {
+		    s->region_list_len += REGION_LIST_BLOCK;
+		    s->region_list = (int *)bu_realloc((char *)s->region_list, s->region_list_len*sizeof(int), "region_list");
 		}
-		region_list[f4_do_skips++] = i;
+		s->region_list[s->f4_do_skips++] = i;
 	    }
 	} else {
-	    if (f4_do_skips == region_list_len) {
-		region_list_len += REGION_LIST_BLOCK;
-		region_list = (int *)bu_realloc((char *)region_list, region_list_len*sizeof(int), "region_list");
+	    if (s->f4_do_skips == s->region_list_len) {
+		s->region_list_len += REGION_LIST_BLOCK;
+		s->region_list = (int *)bu_realloc((char *)s->region_list, s->region_list_len*sizeof(int), "region_list");
 	    }
-	    region_list[f4_do_skips++] = atoi(ptr);
+	    s->region_list[s->f4_do_skips++] = atoi(ptr);
 	}
 	ptr = strtok((char *)NULL, ", ");
     }
@@ -2518,7 +2575,7 @@ make_region_list(char *str)
 
 
 static void
-make_regions(void)
+make_regions(struct f4g_state *s)
 {
     struct name_tree *ptr1, *ptr2;
     struct holes *hptr;
@@ -2535,7 +2592,7 @@ make_regions(void)
     BU_LIST_INIT(&holes.l);
 
     /* loop through the list of region names (by ident) */
-    bu_ptbl_reset(&stack);
+    bu_ptbl_reset(s->stack);
     ptr1 = name_root;
     while (1) {
 	while (ptr1) {
@@ -2547,12 +2604,12 @@ make_regions(void)
 	    break;
 
 	/* check if we are skipping some regions (but we might need all the holes) */
-	if (skip_region(ptr1->region_id) && !is_a_hole(ptr1->region_id))
+	if (skip_region(s, ptr1->region_id) && !is_a_hole(ptr1->region_id))
 	    goto cont1;
 
 	/* place all the solids for this ident in a "solids" combination */
 	BU_LIST_INIT(&solids.l);
-	bu_ptbl_reset(&stack2);
+	bu_ptbl_reset(s->stack2);
 	ptr2 = name_root;
 	while (1) {
 	    while (ptr2) {
@@ -2575,7 +2632,7 @@ make_regions(void)
 	    goto cont1;
 
 	snprintf(solids_name, MAX_LINE_SIZE, "solids_%d.s", ptr1->region_id);
-	if (mk_comb(fpout, solids_name, &solids.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1))
+	if (mk_comb(s->fpout, solids_name, &solids.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1))
 	    bu_log("Failed to make combination of solids (%s)!\n\tRegion %s is in ERROR!\n",
 		   solids_name, ptr1->name);
 
@@ -2600,9 +2657,9 @@ make_regions(void)
 	while (splt && splt->ident_to_split != ptr1->region_id)
 	    splt = splt->next;
 
-	mode = ptr1->mode;
-	if (debug)
-	    bu_log("Build region for %s %d, mode = %d\n", ptr1->name, ptr1->region_id, mode);
+	s->mode = ptr1->mode;
+	if (s->debug)
+	    bu_log("Build region for %s %d, mode = %d\n", ptr1->name, ptr1->region_id, s->mode);
 
 	if (splt) {
 	    vect_t norm;
@@ -2611,7 +2668,7 @@ make_regions(void)
 	    /* make a halfspace */
 	    VSET(norm, 0.0, 0.0, 1.0);
 	    snprintf(splt_name, MAX_LINE_SIZE, "splt_%d.s", ptr1->region_id);
-	    mk_half(fpout, splt_name, norm, splt->z);
+	    mk_half(s->fpout, splt_name, norm, splt->z);
 
 	    /* intersect halfspace with current region */
 	    BU_LIST_INIT(&region.l);
@@ -2627,7 +2684,7 @@ make_regions(void)
 		    bu_log("make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name);
 		lptr = lptr->next;
 	    }
-	    MK_REGION(fpout, &region, ptr1->name, ptr1->region_id, get_fast4_color(ptr1->region_id));
+	    MK_REGION(s->fpout, &region, ptr1->name, ptr1->region_id, get_fast4_color(s, ptr1->region_id));
 
 	    /* create new region by subtracting halfspace */
 	    BU_LIST_INIT(&region.l);
@@ -2650,10 +2707,10 @@ make_regions(void)
 	    }
 	    ptr2 = Search_ident(name_root, splt->new_ident, &found);
 	    if (found) {
-		MK_REGION(fpout, &region, ptr2->name, splt->new_ident, get_fast4_color(splt->new_ident));
+		MK_REGION(s->fpout, &region, ptr2->name, splt->new_ident, get_fast4_color(s, splt->new_ident));
 	    } else {
 		sprintf(reg_name, "comp_%d.r", splt->new_ident);
-		MK_REGION(fpout, &region, reg_name, splt->new_ident, get_fast4_color(splt->new_ident));
+		MK_REGION(s->fpout, &region, reg_name, splt->new_ident, get_fast4_color(s, splt->new_ident));
 	    }
 	} else {
 	    BU_LIST_INIT(&region.l);
@@ -2666,7 +2723,7 @@ make_regions(void)
 		    bu_log("make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name);
 		lptr = lptr->next;
 	    }
-	    MK_REGION(fpout, &region, ptr1->name, ptr1->region_id, get_fast4_color(ptr1->region_id));
+	    MK_REGION(s->fpout, &region, ptr1->name, ptr1->region_id, get_fast4_color(s, ptr1->region_id));
 	}
     cont1:
 	ptr1 = ptr1->rright;
@@ -2674,7 +2731,7 @@ make_regions(void)
 
     if (BU_LIST_NON_EMPTY(&holes.l)) {
 	/* build a "holes" group */
-	if (mk_comb(fpout, "holes", &holes.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1))
+	if (mk_comb(s->fpout, "holes", &holes.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 1, 1))
 	    bu_log("Failed to make holes group!\n");
     }
 }
@@ -2683,7 +2740,7 @@ make_regions(void)
 #define COLOR_LINE_LEN 256
 
 static void
-read_fast4_colors(char *color_file)
+read_fast4_colors(struct f4g_state *s, char *color_file)
 {
     FILE *fp;
     char colorline[COLOR_LINE_LEN] = {0};
@@ -2716,7 +2773,7 @@ read_fast4_colors(char *color_file)
 	color->rgb[0] = r;
 	color->rgb[1] = g;
 	color->rgb[2] = b;
-	BU_LIST_APPEND(&HeadColor.l, &color->l);
+	BU_LIST_APPEND(&s->HeadColor.l, &color->l);
     }
     fclose(fp);
 }
@@ -2728,36 +2785,39 @@ main(int argc, char **argv)
     int c;
     char *plot_file = NULL;
     char *color_file = NULL;
+    struct f4g_state s;
 
     bu_setprogname(argv[0]);
+
+    f4g_init(&s);
 
     while ((c=bu_getopt(argc, argv, "qm:o:c:dwx:b:X:C:h?")) != -1) {
 	switch (c) {
 	    case 'q':	/* quiet mode */
-		quiet = 1;
+		s.quiet = 1;
 		break;
 	    case 'm':
-		if ((fp_muves=fopen(bu_optarg, "wb")) == (FILE *)NULL) {
+		if ((s.fp_muves=fopen(bu_optarg, "wb")) == (FILE *)NULL) {
 		    bu_log("Unable to open MUVES file (%s)\n\tno MUVES file created\n",
 			   bu_optarg);
 		}
 		break;
 	    case 'o':	/* output a plotfile of original FASTGEN4 elements */
-		f4_do_plot = 1;
+		s.f4_do_plot = 1;
 		plot_file = bu_optarg;
 		break;
 	    case 'c':	/* convert only the specified components */
-		make_region_list(bu_optarg);
+		make_region_list(&s, bu_optarg);
 		break;
 	    case 'd':	/* debug option */
-		debug = 1;
+		s.debug = 1;
 		break;
 	    case 'w':	/* print warnings */
-		warnings = 1;
+		s.warnings = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&frt_debug);
-		bu_debug = frt_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&s.frt_debug);
+		bu_debug = s.frt_debug;
 		break;
 	    case 'b':
 		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
@@ -2775,18 +2835,18 @@ main(int argc, char **argv)
 	usage();
     }
 
-    if ((fpin=fopen(argv[bu_optind], "rb")) == (FILE *)NULL) {
+    if ((s.fpin=fopen(argv[bu_optind], "rb")) == (FILE *)NULL) {
 	perror("fast4-g");
 	bu_exit(1, "Cannot open FASTGEN4 file (%s)\n", argv[bu_optind]);
     }
 
-    if ((fpout=wdb_fopen(argv[bu_optind+1])) == NULL) {
+    if ((s.fpout=wdb_fopen(argv[bu_optind+1])) == NULL) {
 	perror("fast4-g");
 	bu_exit(1, "Cannot open file for output (%s)\n", argv[bu_optind+1]);
     }
 
     if (plot_file) {
-	if ((fp_plot=fopen(plot_file, "wb")) == NULL) {
+	if ((s.fp_plot=fopen(plot_file, "wb")) == NULL) {
 	    bu_log("Cannot open plot file (%s)\n", plot_file);
 	    usage();
 	}
@@ -2801,12 +2861,9 @@ main(int argc, char **argv)
 	bu_log("\n");
     }
 
-    BU_LIST_INIT(&HeadColor.l);
     if (color_file)
-	read_fast4_colors(color_file);
+	read_fast4_colors(&s, color_file);
 
-    grid_size = GRID_BLOCK;
-    grid_points = (point_t *)bu_malloc(grid_size * sizeof(point_t), "fast4-g: grid_points");
 
     cline_root = (struct cline *)NULL;
 
@@ -2816,62 +2873,56 @@ main(int argc, char **argv)
 
     compsplt_root = (struct compsplt *)NULL;
 
-    min_radius = 2.0 * sqrt(SQRT_SMALL_FASTF);
-
-    name_count = 0;
-
-    vehicle[0] = '\0';
-
-    bu_ptbl_init(&stack, 64, " &stack ");
-    bu_ptbl_init(&stack2, 64, " &stack2 ");
-
-    BU_LIST_INIT(&hole_head.l);
-
-    if (!quiet)
+    if (!s.quiet)
 	bu_log("Scanning for HOLE, WALL, and COMPSPLT cards...\n");
 
-    Process_hole_wall();
+    Process_hole_wall(&s);
 
-    rewind(fpin);
+    rewind(s.fpin);
 
-    if (!quiet)
+    if (!s.quiet)
 	bu_log("Building component names....\n");
 
-    Process_input(0);
+    Process_input(&s, 0);
 
-    rewind(fpin);
+    rewind(s.fpin);
 
     /* Make an ID record if no vehicle card was found */
-    if (!vehicle[0]) {
+    if (!s.vehicle[0]) {
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_path_component(&fname, argv[bu_optind], BU_PATH_BASENAME);
-	mk_id_units(fpout, bu_vls_cstr(&fname), "in");
+	mk_id_units(s.fpout, bu_vls_cstr(&fname), "in");
 	bu_vls_free(&fname);
     }
 
-    if (!quiet)
+    if (!s.quiet)
 	bu_log("Building components....\n");
 
-    while (Process_input(1));
+    while (Process_input(&s, 1));
 
-    if (!quiet)
+    if (!s.quiet)
 	bu_log("Building regions and groups....\n");
 
     /* make regions */
-    make_regions();
+    make_regions(&s);
 
     /* make groups */
-    f4_do_groups();
+    f4_do_groups(&s);
 
-    if (debug)
+    if (s.debug)
 	List_holes();
 
-    wdb_close(fpout);
+    wdb_close(s.fpout);
 
-    if (!quiet)
-	bu_log("%d components converted\n", comp_count);
+    if (!s.quiet)
+	bu_log("%d components converted\n", s.comp_count);
 
-    bu_free(group_head, "group_head");
+    bu_free(s.group_head, "group_head");
+    bu_ptbl_free(s.stack2);
+    BU_PUT(s.stack2, struct bu_ptbl);
+    bu_ptbl_free(s.stack);
+    BU_PUT(s.stack, struct bu_ptbl);
+    bu_free(s.grid_points, "grid_points");
 
     return 0;
 }
