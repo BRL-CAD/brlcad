@@ -106,7 +106,8 @@ main(int argc, char **argv)
 
     /* malloc buffer for pixel lines */
     len = (xsize > ysize) ? xsize : ysize;
-    if ((line = (unsigned char *)malloc(len*sizeof(RGBpixel))) == RGBPIXEL_NULL) {
+    line = (unsigned char *)bu_calloc(len, sizeof(RGBpixel), "line");
+    if (line == RGBPIXEL_NULL) {
 	fprintf(stderr, "fbframe:  malloc failure\n");
 	return 1;
     }
@@ -129,6 +130,9 @@ main(int argc, char **argv)
     fb_writerect(fbp, 0, 1, 1, ysize-1, line);
 
     fb_close(fbp);
+
+    bu_free(line, "line");
+
     return 0;
 }
 
