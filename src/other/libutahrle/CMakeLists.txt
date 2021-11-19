@@ -89,14 +89,9 @@ set(LIBUTAHRLE_PUBLIC_HDRS
   ${CMAKE_CURRENT_SOURCE_DIR}/include/rle_raw.h
   )
 
-set(LIBUTAHRLE_PRIVATE_HDRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/colorquant.h
-  )
-
 set(LIBUTAHRLE_SOURCES
   Runput.c
   cmd_name.c
-  colorquant.c
   dither.c
   float_to_exp.c
   hilbert.c

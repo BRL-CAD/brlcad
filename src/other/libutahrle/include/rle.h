@@ -448,16 +448,6 @@ RLE_EXPORT extern rle_hdr rle_dflt_hdr;
     RLE_EXPORT extern void
     rle_close_f( FILE *fd );
 
-    /* From colorquant.c. */
-    /*****************************************************************
-     * TAG( colorquant )
-     * Compute a colormap for quantizing an image to a limited set of colors.
-     */
-    RLE_EXPORT extern int colorquant( rle_pixel *red, rle_pixel *green, rle_pixel *blue,
-			   unsigned long pixels, rle_pixel *colormap[3],
-			   int colors, int bits,
-			 rle_pixel *rgbmap, int fast, int otherimages );
-
     /* From rle_addhist.c. */
     /*****************************************************************
      * TAG( rle_addhist )
@@ -566,9 +556,6 @@ RLE_EXPORT extern rle_hdr rle_dflt_hdr;
     RLE_EXPORT extern FILE *rle_open_f();
     RLE_EXPORT extern FILE *rle_open_f_noexit();
     RLE_EXPORT extern void rle_close_f( );
-
-    /* From colorquant.c. */
-    RLE_EXPORT extern int colorquant();
 
     /* From rle_addhist.c. */
     RLE_EXPORT extern void rle_addhist();
