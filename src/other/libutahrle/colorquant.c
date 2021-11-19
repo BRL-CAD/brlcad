@@ -267,7 +267,7 @@ int flags, accum_hist;
 
     if (! accum_hist || accum_hist == INIT_HIST) {
 	Histogram = (unsigned long *)calloc(ColormaxI*ColormaxI*ColormaxI,
-					    sizeof(long));
+					    sizeof(unsigned long));
 	Boxes = (Box *)malloc(colors * sizeof(Box));
 	/*
 	 * Zero-out the projected frequency arrays of the largest box.
@@ -444,9 +444,16 @@ static int
 CutBox(box, newbox)
 Box *box, *newbox;
 {
-	int i;
+	int i, j;
 	double totalvar[3];
 	Box newboxes[3][2];
+
+	// Initialize weightedvar for clang
+	for (i = 0; i < 3; i++) {
+	    for (j = 0; j < 2; j++) {
+		newboxes[i][j].weightedvar = 0.;
+	    }
+	}
 
 	if (box->weightedvar == 0. || box->weight == 0)
 		/*

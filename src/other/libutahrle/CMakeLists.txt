@@ -95,7 +95,6 @@ set(LIBUTAHRLE_PRIVATE_HDRS
 
 set(LIBUTAHRLE_SOURCES
   Runput.c
-  buildmap.c
   cmd_name.c
   colorquant.c
   dither.c

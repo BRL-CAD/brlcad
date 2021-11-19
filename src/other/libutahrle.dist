@@ -1,7 +1,6 @@
 set(libutahrle_ignore_files
 CMakeLists.txt
 Runput.c
-buildmap.c
 cmd_name.c
 colorquant.c
 dither.c

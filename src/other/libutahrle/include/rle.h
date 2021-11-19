@@ -354,15 +354,6 @@ RLE_EXPORT extern rle_hdr rle_dflt_hdr;
      */
     RLE_EXPORT extern void rle_row_free( rle_hdr *the_hdr, rle_pixel **scanp );
 
-    /* From buildmap.c. */
-    /*
-     * buildmap - build a more usable colormap from data in the_hdr struct.
-     */
-    RLE_EXPORT extern rle_pixel **buildmap( rle_hdr *the_hdr,
-				 int minmap,
-				 double orig_gamma,
-				 double new_gamma );
-
     /* From rle_getcom.c. */
     /*****************************************************************
      * TAG( rle_getcom )
@@ -552,9 +543,6 @@ RLE_EXPORT extern rle_hdr rle_dflt_hdr;
     /* From rle_row_alc.c. */
     RLE_EXPORT extern int rle_row_alloc();
     RLE_EXPORT extern void rle_row_free();
-
-    /* From buildmap.c. */
-    RLE_EXPORT extern rle_pixel **buildmap();
 
     /* From rle_getcom.c. */
     RLE_EXPORT extern char *rle_getcom();
