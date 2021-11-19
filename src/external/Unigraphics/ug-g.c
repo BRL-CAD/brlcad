@@ -87,9 +87,10 @@ char *progname = "(noname)";
 #define TRI_BLOCK 512			/* number of triangles to malloc per call */
 #define NORM_BLOCK 512			/* number of normals to malloc per call */
 
+int debug = 0;
+
 struct ug_state {
     char *output_file;
-    int debug;
     int show_all_features;
 
     /* count of how parts were converted */
@@ -135,7 +136,6 @@ struct ug_state {
 void ug_state_init(struct ug_state *s)
 {
     s->output_file = NULL;
-    s->debug = 0;
     s->show_all_features= 0;
 
     s->parts_facetized = 0;
@@ -5379,7 +5379,7 @@ parse_args(struct ug_state *s, int ac, char *av[])
 	switch (c) {
 	    case 'i'	: s->ident = atoi( bu_optarg ); break;
 	    case 'o'	: s->output_file = bu_strdup( bu_optarg ); break;
-	    case 'd'	: s->debug = atoi(bu_optarg); break;
+	    case 'd'	: debug = atoi(bu_optarg); break;
 	    case 't'	: s->surf_tol = atof( bu_optarg ); break;
 	    case 'a'	: s->ang_tol = atof( bu_optarg ) * DEG2RAD; break;
 	    case 'n'	: s->part_name_file = bu_optarg; s->use_part_name_hash = 1; break;
