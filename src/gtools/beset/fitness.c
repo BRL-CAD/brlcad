@@ -243,7 +243,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     }
 
     /* if there are a different # of partitions in source and individual */
-    while (mp != fstate->ray[ap->a_user]) {
+    while (mp && mp != fstate->ray[ap->a_user]) {
 	fstate->diff += mp->outhit_dist - mp->inhit_dist;
 	lastpt = mp->outhit_dist;
 	mp = BU_LIST_FORW(part, &mp->l);
