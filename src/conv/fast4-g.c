@@ -1834,6 +1834,8 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 	thickness = (fastf_t *)bu_realloc((void *)thickness, face_size*sizeof(fastf_t), "thickness");
 	facemode = (char *)bu_realloc((void *)facemode, face_size*sizeof(char), "facemode");
     }
+    if (!faces || !thickness || !facemode)
+	bu_exit(BRLCAD_ERROR, "fast4-g memory allocation error, fast4-g.c:%d\n", __LINE__);
 
     faces[face_count*3] = pt1;
     faces[face_count*3+1] = pt2;
