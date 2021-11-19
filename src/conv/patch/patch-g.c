@@ -3414,6 +3414,9 @@ main(int argc, char **argv)
     thk = (fastf_t *)bu_calloc(MAX_INPUTS, sizeof(fastf_t), "thk");
     mirror = (int *)bu_calloc(MAX_INPUTS, sizeof(int), "mirror");
 
+    if (!in || !nm || !list || !XVAL || !YVAL || !ZVAL || !thicks || !RADIUS || !thk || !mirror)
+	bu_exit(BRLCAD_ERROR, "Memory allocation failure\n");
+
     /* initialize tolerance structure */
     TOL.magic = BN_TOL_MAGIC;
     TOL.dist = 0.01;
