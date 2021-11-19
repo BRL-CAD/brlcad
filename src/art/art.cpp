@@ -149,6 +149,8 @@
 
 struct application APP;
 struct resource* resources;
+size_t samples = 25;
+
 extern "C" {
     FILE* outfp = NULL;
     int	save_overlaps = 1;
@@ -166,9 +168,11 @@ extern "C" {
  * extract that functionality into a library... */
 
 extern "C" {
-    struct command_tab rt_do_tab[] = { {NULL, NULL, NULL, 0, 0, 0} };
+    // struct command_tab rt_do_tab[] = { {NULL, NULL, NULL, 0, 0, 0} };
+    void option(const char *cat, const char *opt, const char *des, int verbose);
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
+
 
     extern char* outputfile;
     extern int objc;
@@ -186,10 +190,109 @@ extern "C" {
     void grid_setup();
 }
 
+// holds application specific paramaters
+struct bu_structparse view_parse[] = {
+    {"%d", 1, "samples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "s", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+// holds regular parse variables
+struct bu_structparse set_parse[] = {
+    /* daisy-chain to additional app-specific parameters */
+    {"%p",	1, "Application-Specific Parameters", bu_byteoffset(view_parse[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+// set callback function
+int cm_set(const int argc, const char **argv)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+
+    if (argc <= 1) {
+	bu_struct_print("Generic and Application-Specific Parameter Values",
+			set_parse, (char *)0);
+	return 0;
+    }
+
+    bu_vls_from_argv(&str, argc-1, (const char **)argv+1);
+    if (bu_struct_parse(&str, set_parse, (char *)0, NULL) < 0) {
+	bu_vls_free(&str);
+  bu_log("ERROR HERE");
+	return -1;
+    }
+    // bu_log("str: %s", bu_vls_cstr(&str));
+    bu_vls_free(&str);
+    return 0;
+}
+
+struct command_tab rt_do_tab[] = {
+    {"set", 	"", "show or set parameters",
+     cm_set,		1, 999},
+    {(char *)0, (char *)0, (char *)0,
+     0,		0, 0	/* END */}
+};
+
+/* Initializes module specific options
+ * NOTE: to have an accurate usage() menu, we overwrite the indexes of all the
+ * options from rt/usage.cpp which we don't support
+ */
+void init_options(void) {
+  /* Set the byte offsets at run time */
+  view_parse[ 0].sp_offset = bu_byteoffset(samples);
+  view_parse[ 1].sp_offset = bu_byteoffset(samples);
+
+
+  // for now, just support -c set samples=x
+  // TODO: update to support more options
+  option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
+  option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
+  option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
+  option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
+  // option("", "-C #/#/#", "Set background image color to R/G/B values (default: 0/0/1)", 0);
+  // option("", "-W", "Set background image color to white", 0);
+  option("", "-R", "Disable reporting of overlaps", 100);
+  option("", "-? or -h", "Display help", 1);
+
+  option("Raytrace", "-a # -e #", "Azimuth and elevation in degrees (default: -a 35 -e 25)", 100);
+  option("Raytrace", "-p #", "Perspective angle, degrees side to side (0 <= # < 180)", 100);
+  option("Raytrace", "-E #", "Set perspective eye distance from model (default: 1.414)", 100);
+  option("Raytrace", "-H #", "Specify number of hypersample rays per pixel (default: 0)", 100);
+  option("Raytrace", "-J #", "Specify a \"jitter\" pattern (default: 0 - no jitter)", 100);
+  option("Raytrace", "-P #", "Specify number of processors to use (default: all available)", 100);
+  option("Raytrace", "-T # or -T #/#", "Tolerance as distance or distance/angular", 100);
+
+  option("Advanced", "-c \"command\"", "[eventually will] Run a semicolon-separated list of commands (just samples for now)", 0);
+  option("Advanced", "-M", "Read matrix + commands on stdin (RT 'saveview' scripts)", 100);
+  option("Advanced", "-D #", "Specify starting frame number (ending is specified via -K #)", 100);
+  option("Advanced", "-K #", "Specify ending frame number (starting is specified via -D #)", 100);
+  option("Advanced", "-g #", "Specify grid cell (pixel) width, in millimeters", 100);
+  option("Advanced", "-G #", "Specify grid cell (pixel) height, in millimeters", 100);
+  option("Advanced", "-S", "Enable stereo rendering", 100);
+  option("Advanced", "-U #", "Turn on air region rendering (default: 0 - off)", 100);
+  option("Advanced", "-V #", "View (pixel) aspect ratio (width/height)", 100);
+  option("Advanced", "-j xmin,xmax,ymin,ymax", "Only render pixels within the specified sub-rectangle", 100);
+  option("Advanced", "-k xdir,ydir,zdir,dist", "Specify a cutting plane for the entire render scene", 100);
+
+  option("Developer", "-v [#]", "Specify or increase RT verbosity", 100);
+  option("Developer", "-X #", "Specify RT debugging flags", 100);
+  option("Developer", "-x #", "Specify librt debugging flags", 100);
+  option("Developer", "-N #", "Specify libnmg debugging flags", 100);
+  option("Developer", "-! #", "Specify libbu debugging flags", 100);
+  option("Developer", "-, #", "Specify space partitioning algorithm", 100);
+  option("Developer", "-B", "Disable randomness for \"benchmark\"-style repeatability", 100);
+  option("Developer", "-b \"x y\"", "Only shoot one ray at pixel coordinates (quotes required)", 100);
+  option("Developer", "-Q x,y", "Shoot one pixel with debugging; compute others without", 100);
+}
+
 // Define shorter namespaces for convenience.
 namespace asf = foundation;
 namespace asr = renderer;
 
+/* db_walk_tree() callback to register all regions within the scene
+ * using either legacy rgb sets and phong shaders or specified material OSL
+ * optical shader
+ */
 int register_region(struct db_tree_state* tsp __attribute__((unused)),
                 const struct db_full_path* pathp __attribute__((unused)),
                 const struct rt_comb_internal* combp __attribute__((unused)),
@@ -226,7 +329,7 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
 
   /*
   create object paramArray to pass to constructor
-  note: we can likely remove min/max values from here if the above bounding box calculation works
+  NOTE: we can likely remove min/max values from here if the above bounding box calculation works
   */
   renderer::ParamArray geometry_parameters = asr::ParamArray()
                .insert("database_path", name)
@@ -478,10 +581,10 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
 
     // Set the number of samples. This is the main quality parameter: the higher the
     // number of samples, the smoother the image but the longer the rendering time.
-    // TODO: create -samples flag on run to update this without recompiling
+    // we overwrite via command line -c "set"
     project->configurations()
     .get_by_name("final")->get_parameters()
-    .insert_path("uniform_pixel_renderer.samples", "25")
+    .insert_path("uniform_pixel_renderer.samples", samples)
     .insert_path("rendering_threads", "1"); /* multithreading not supported yet */
 
     project->configurations()
@@ -659,20 +762,24 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    // initialize options and overload menu before parsing
+    init_options();
+
     /* Process command line options */
     int i = get_args(argc, (const char**)argv);
     if (i < 0) {
-	//usage(argv[0], 0);
+	usage(argv[0], 0);
 	return 1;
     }
+    // explicitly asking for help
     else if (i == 0) {
-	//usage(argv[0], 100);
+	usage(argv[0], 99);
 	return 0;
     }
 
     if (bu_optind >= argc) {
 	RENDERER_LOG_INFO("%s: BRL-CAD geometry database not specified\n", argv[0]);
-	//usage(argv[0], 0);
+	usage(argv[0], 0);
 	return 1;
     }
 
