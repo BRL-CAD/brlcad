@@ -226,7 +226,7 @@ main(int argc, const char **argv)
 
 	/* Looks like we'll be running a GED command - stash the state
 	 * of the view info */
-	if (gedp->ged_dmp) {
+	if (gedp && gedp->ged_dmp) {
 	    prev_dhash = (gedp->ged_dmp) ? dm_hash((struct dm *)gedp->ged_dmp) : 0;
 	    prev_vhash = bv_hash(gedp->ged_gvp);
 	    prev_lhash = dl_name_hash(gedp);
