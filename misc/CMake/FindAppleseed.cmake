@@ -70,6 +70,7 @@ find_package_handle_standard_args (Appleseed DEFAULT_MSG
 if (Appleseed_FOUND)
     set (Appleseed_INCLUDE_DIRS ${Appleseed_INCLUDE_DIR})
     set (Appleseed_LIBRARIES ${Appleseed_LIBRARY})
+		CONFIG_H_APPEND(BRLCAD "#define APPLESEED_ROOT \"${Appleseed_ROOT}\"\n")
 else ()
     set (Appleseed_INCLUDE_DIRS)
     set (Appleseed_LIBRARIES)

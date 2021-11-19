@@ -571,10 +571,10 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     // Create an empty project.
     asf::auto_release_ptr<asr::Project> project(asr::ProjectFactory::create("test project"));
     project->search_paths().push_back_explicit_path("build/Debug");
-    // ***** add precompiled shaders path
-    // TODO: make this dynamic to the project
-    project->search_paths().push_back_explicit_path("/Users/christopher/Workspace/appleseed/shaders/appleseed");
-    project->search_paths().push_back_explicit_path("/Users/christopher/Workspace/appleseed/shaders/max");
+    // ***** add precompiled shaders from appleseed
+    char root[MAXPATHLEN];
+    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL));
+    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL));
 
     // Add default configurations to the project.
     project->add_default_configurations();
