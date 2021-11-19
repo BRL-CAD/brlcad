@@ -307,6 +307,9 @@ bad_triangle(struct ug_state *s, int v1, int v2, int v3 )
     double coord;
     int i;
 
+    if (v1 < 0 || v2 < 0 || v3 < 0)
+	return 1;
+
     if ( v1 == v2 || v2 == v3 || v1 == v3 )
 	return 1;
 
@@ -370,6 +373,9 @@ add_triangle(struct ug_state *s, int v1, int v2, int v3 )
 void
 add_face_normals(struct ug_state *s, int v1, int v2, int v3 )
 {
+    if (v1 < 0 || v2 < 0 || v3 < 0)
+	return;
+
     if ( s->curr_norm >= s->max_norm ) {
 	/* allocate more memory for triangles */
 	s->max_norm += NORM_BLOCK;
@@ -4471,7 +4477,8 @@ facetize(struct ug_state *s, tag_t solid_tag, char *part_name, char *refset_name
     for (UF_FACET_cycle_facets(model, &facet_id );
 	 facet_id != UF_FACET_NULL_FACET_ID;
 	 UF_FACET_cycle_facets (model, &facet_id ) ) {
-	int vindex[3], nindex[3];
+	int vindex[3] = {-1};
+	int nindex[3] = {-1};
 
 
 	/* XXX Could we intuit something useful
@@ -5188,7 +5195,8 @@ check_features_for_suppression(struct ug_state *s, tag_t solid_tag, char *part_n
 
 	    add_to_suppress_list(s, feat_tag );
 	} else if ( BU_STR_EQUAL( feat_type, "CHAMFER" ) ) {
-	    double offset1, offset2;
+	    double offset1 = 0.0;
+	    double offset2 = 0.0;
 
 	    DO_INDENT;
 	    bu_log( "\tChecking a chamfer (%d) for suppression\n", feat_tag );
