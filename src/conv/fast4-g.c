@@ -877,7 +877,7 @@ Add_stragglers_to_groups(struct f4g_state *s)
 		for (i = 0 ; i < new_cnt ; i++) {
 		    BU_LIST_INIT(&new_head[i].l);
 		    if (i < s->group_head_cnt) {
-			if (BU_LIST_NON_EMPTY(&s->group_head[i].l)) {
+			if (s->group_head && BU_LIST_NON_EMPTY(&s->group_head[i].l)) {
 			    list_first = BU_LIST_FIRST(bu_list, &s->group_head[i].l);
 			    BU_LIST_DEQUEUE(&s->group_head[i].l);
 			    BU_LIST_INSERT(list_first, &new_head[i].l);
