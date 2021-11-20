@@ -158,6 +158,7 @@ rle_hdr * the_hdr;
 		     the_hdr->cmd,
 		     the_hdr->ncmap, (1 << the_hdr->cmaplen),
 		     the_hdr->file_name );
+	    free(maptemp);
 	    return RLE_NO_SPACE;
 	}
 	fread( maptemp, 2, maplen, infile );
@@ -501,8 +502,10 @@ rle_pixel *scanline[];
 	    if ( debug_f && RLE_BIT( *the_hdr, channel ) )
 	    {
 		rle_pixel * cp = scanc - nc;
-		for ( ; nc > 0; nc-- )
-		    fprintf( stderr, "%02x", *cp++ );
+		if (cp) {
+		   for ( ; nc > 0; nc-- )
+		       fprintf( stderr, "%02x", *cp++ );
+		}
 		putc( '\n', stderr );
 	    }
 	    break;
@@ -528,8 +531,6 @@ rle_pixel *scanline[];
 		    ns = scan_x - max_x - 1;
 		    nc -= ns;
 		}
-		else
-		    ns = 0;
 		if ( nc >= 10 )		/* break point for 785, anyway */
 		{
 		    bfill( (char *)scanc, nc, word );
