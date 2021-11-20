@@ -536,8 +536,11 @@ rle_pixel *scanline[];
 		    scanc += nc;
 		}
 		else
-		    for ( nc--; nc >= 0; nc--, scanc++ )
-			*scanc = word;
+		{
+		    if (scanc)
+		       for ( nc--; nc >= 0; nc--, scanc++ )
+			   *scanc = word;
+		}
 	    }
 	    break;
 
