@@ -106,10 +106,7 @@ namespace p2t {
     void Sweep::FinalizationPolygon(SweepContext& tcx)
     {
 	// Get an Internal triangle to start with
-	Triangle* t = tcx.front()->head()->next->triangle;
-	Point* p = tcx.front()->head()->next->point;
-	t = FindInternalTriangle(tcx.af_tail_->triangle);
-
+	Triangle* t = FindInternalTriangle(tcx.af_tail_->triangle);
 	if (!t) return;
 
 	// Collect interior triangles constrained by edges
@@ -893,7 +890,8 @@ namespace p2t {
 	} else {
 	    Point *np = NextFlipPoint(ep, eq, ot, op);
 	    ret += FlipScanEdgeEvent(tcx, ep, eq, *t, ot, np);
-	    return EdgeEvent(tcx, ep, eq, t, p);
+	    ret += EdgeEvent(tcx, ep, eq, t, p);
+	    return (ret) ? 1 : 0;
 	}
 	return ret;
     }
