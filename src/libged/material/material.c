@@ -109,6 +109,78 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
 	if(densityTable != NULL){
 		char buffer[256];
 		while(fgets(buffer, 256, densityTable)){
+            char *p = buffer;
+            char *q;
+            buffer[strlen(buffer)] = '\0';
+            char *last __attribute((unused)) = &buffer[strlen(buffer)];
+            char name[30];
+            double density = -1;
+            int have_density = 0;
+            int idx = 0;
+            p = buffer;
+            /* Skip initial whitespace */
+            while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
+            /* Skip initial comments */
+            while (*p == '#') {
+                /* Skip comment */
+                while (*p && *p != '\n') p++;
+            }
+
+            /* Skip whitespace */
+            while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
+            
+            while(*p){
+                if(*p == '#'){
+                    while(*p && *p != '\n') p++;
+
+                    /* Skip whitespace */
+	                while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
+                    continue;
+                }
+
+                if(have_density){
+                    bu_free(buffer, "free buffer copy");
+                    bu_free(name, "free name copy");
+                    bu_vls_printf(gedp->ged_result_str, "Error processing: Extra content after density entry\n");
+                    return GED_ERROR;
+                }
+                idx = strtol(p, &q, 10);
+                if(idx < 0){
+                    bu_free(buffer, "free buffer copy");
+                    bu_vls_printf(gedp->ged_result_str, "Error processing: Bad density index\n");
+                    return GED_ERROR;
+                }
+                density = strtod(q, &p);
+                if(q == p){
+                    bu_free(buffer, "free buffer copy");
+                    bu_vls_printf(gedp->ged_result_str, "Error processing: Could not convert density\n");
+                    return GED_ERROR;
+                }
+                
+                if(density < 0.0){
+                    bu_free(buffer, "Free buffer copy");
+                    bu_vls_printf(gedp->ged_result_str, "Error processing: Bad Density\n");
+                    return GED_ERROR;
+                }
+                while (*p && (*p == '\t' || *p == ' ')) p++;
+                if(!*p){
+                    bu_vls_printf(gedp->ged_result_str, "Error processing: Missing name\n");
+                    return GED_ERROR;
+                }
+                int len = 0;
+                while(*(p + len) && !(*(p + len) == '\n' || *(p+len) == '#')){
+                    len++;
+                }
+                while(!((*(p + len) >= 'A' && *(p + len) <= 'Z') ||  (*(p + len) >= 'a' && *(p + len) <= 'z') || (*(p + len) >= '1' && *(p + len) <= '9'))){
+                    len--;
+                }
+                strncpy(name, p, len+1);
+                break;
+                
+            }
+            if(idx == 0){
+                continue;
+            }
             struct bu_attribute_value_set physicalProperties;
             struct bu_attribute_value_set mechanicalProperties;
             struct bu_attribute_value_set opticalProperties;
@@ -117,22 +189,19 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
             bu_avs_init_empty(&mechanicalProperties);
             bu_avs_init_empty(&opticalProperties);
             bu_avs_init_empty(&thermalProperties);
-            if(buffer[strlen(buffer)-1] == '\n'){
-				buffer[strlen(buffer)-1] = '\0';
-                buffer[strlen(buffer)-1] = '\0';
-			}
-            char* num = strtok(buffer, "\t");
-			char* material_name = strtok(NULL, "\t");
-			char* density = strtok(NULL, "\t");
-			(void)bu_avs_add(&physicalProperties, "density", density);
-            (void)bu_avs_add(&physicalProperties, "id", num);
+            char idxChar[6];
+            sprintf(idxChar, "%d", idx);
+            char densityChar[50];
+            sprintf(densityChar, "%.3f", density);
+            bu_avs_add(&physicalProperties, "density", densityChar);
+            bu_avs_add(&physicalProperties, "id", idxChar);
             if(strcmp("--id", flag)==0){
                 char mat_with_id[40];
                 strcat(mat_with_id, "matl");
-                strcat(mat_with_id, num);
+                strcat(mat_with_id, idxChar);
                 mk_material(gedp->ged_wdbp,
                     mat_with_id,
-                    material_name,
+                    name,
                     "",
                     "",
                     &physicalProperties,
@@ -143,8 +212,8 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
             }
             else{
                 mk_material(gedp->ged_wdbp,
-                    material_name,
-                    material_name,
+                    name,
+                    name,
                     "",
                     "",
                     &physicalProperties,
@@ -153,6 +222,7 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
                     &thermalProperties);
             }
             memset(buffer, 0x00, 256);
+            memset(name, 0x00, 30);
 		}
 	}
     else{
