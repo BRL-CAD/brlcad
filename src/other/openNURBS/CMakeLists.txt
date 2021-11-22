@@ -258,8 +258,8 @@ set(OPENNURBS_SOURCES
 	opennurbs_text_style.cpp
 	opennurbs_topology.cpp
 	opennurbs_torus.cpp
-	opennurbs_unicode_cp932.cpp
-	opennurbs_unicode_cp949.cpp
+	#opennurbs_unicode_cp932.cpp
+	#opennurbs_unicode_cp949.cpp
 	opennurbs_unicode.cpp
 	opennurbs_unicode_cpsb.cpp
 	opennurbs_units.cpp
