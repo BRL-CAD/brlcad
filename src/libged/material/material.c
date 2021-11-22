@@ -374,19 +374,10 @@ int get_material(struct ged *gedp, int argc, const char *argv[]){
 int set_material(struct ged *gedp, int argc, const char *argv[]){
     struct directory *dp;
     struct rt_db_internal intern;
-    int removeProperty = 0;
-    int propertyArg = 3;
-    int subpropertyArg = 4;
 
     if (argc < 5){
         bu_vls_printf(gedp->ged_result_str, "you must provide at least five arguments.");
         return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(argv[3], "-r")){
-        removeProperty = 1;
-        propertyArg++;
-        subpropertyArg++;
     }
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -399,69 +390,30 @@ int set_material(struct ged *gedp, int argc, const char *argv[]){
 
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
-        if (BU_STR_EQUAL(argv[propertyArg], "name")){
+        if (BU_STR_EQUAL(argv[3], "name")){
             BU_VLS_INIT(&material->name);
-
-            if (removeProperty) {
-                bu_vls_strcpy(&material->name, NULL);
-            } else {
-                bu_vls_strcpy(&material->name, argv[4]);
-            }
-            
-        } else if (BU_STR_EQUAL(argv[propertyArg], "parent")) {
+            bu_vls_strcpy(&material->name, argv[4]);
+        } else if (BU_STR_EQUAL(argv[3], "parent")) {
             BU_VLS_INIT(&material->parent);
-
-            if (removeProperty) {
-                bu_vls_strcpy(&material->parent, NULL);
-            } else {
-                bu_vls_strcpy(&material->parent, argv[4]);
-            }
-        } else if (BU_STR_EQUAL(argv[propertyArg], "source")) {
+            bu_vls_strcpy(&material->parent, argv[4]);
+        } else if (BU_STR_EQUAL(argv[3], "source")) {
             BU_VLS_INIT(&material->source);
-
-            if (removeProperty) {
-                bu_vls_strcpy(&material->source, NULL);
-            } else {
-                bu_vls_strcpy(&material->source, argv[4]);
-            }
+            bu_vls_strcpy(&material->source, argv[4]);
         } else {
-            if (argc == 4 && !removeProperty){
-                bu_vls_printf(gedp->ged_result_str, "the property you requested: %s, could not be found.", argv[3]);
-                return GED_ERROR;
-            } else if (BU_STR_EQUAL(argv[propertyArg], "physical")) {
-                if (bu_avs_get(&material->physicalProperties, argv[subpropertyArg]) != NULL) {
-                    bu_avs_remove(&material->physicalProperties, argv[subpropertyArg]);
-                }
-                
-                if (!removeProperty) {
-                    bu_avs_add(&material->physicalProperties, argv[4], argv[5]);
-                }
-            }  else if (BU_STR_EQUAL(argv[propertyArg], "mechanical")) {
-                if (bu_avs_get(&material->mechanicalProperties, argv[subpropertyArg]) != NULL) {
-                    bu_avs_remove(&material->mechanicalProperties, argv[subpropertyArg]);
-                }
-
-                if (!removeProperty) {
-                    bu_avs_add(&material->mechanicalProperties, argv[4], argv[5]);
-                }
-            } else if (BU_STR_EQUAL(argv[propertyArg], "optical")) {
-                if (bu_avs_get(&material->opticalProperties, argv[subpropertyArg]) != NULL) {
-                    bu_avs_remove(&material->opticalProperties, argv[subpropertyArg]);
-                }
-                
-                if (!removeProperty) {
-                    bu_avs_add(&material->opticalProperties, argv[4], argv[5]);
-                }
-            } else if (BU_STR_EQUAL(argv[propertyArg], "thermal")) {
-                if (bu_avs_get(&material->thermalProperties, argv[subpropertyArg]) != NULL) {
-                    bu_avs_remove(&material->thermalProperties, argv[subpropertyArg]);
-                }
-
-                if (!removeProperty) {
-                    bu_avs_add(&material->thermalProperties, argv[4], argv[5]);
-                }
+            if (BU_STR_EQUAL(argv[3], "physical")) {
+                bu_avs_remove(&material->physicalProperties, argv[4]);
+                bu_avs_add(&material->physicalProperties, argv[4], argv[5]);
+            }  else if (BU_STR_EQUAL(argv[3], "mechanical")) {
+                bu_avs_remove(&material->mechanicalProperties, argv[4]);
+                bu_avs_add(&material->mechanicalProperties, argv[4], argv[5]);
+            } else if (BU_STR_EQUAL(argv[3], "optical")) {
+                bu_avs_remove(&material->opticalProperties, argv[4]);
+                bu_avs_add(&material->opticalProperties, argv[4], argv[5]);
+            } else if (BU_STR_EQUAL(argv[3], "thermal")) {
+                bu_avs_remove(&material->thermalProperties, argv[4]);
+                bu_avs_add(&material->thermalProperties, argv[4], argv[5]);
             } else {
-                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[propertyArg]);
+                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
                 return GED_ERROR;
             }
         }
