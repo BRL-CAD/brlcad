@@ -40,7 +40,7 @@
 #endif
 
 #pragma ON_PRAGMA_WARNING_BEFORE_DIRTY_INCLUDE
-#include "./zlib/zlib.h"
+#include "zlib.h"
 #pragma ON_PRAGMA_WARNING_AFTER_DIRTY_INCLUDE
 
 ON_BEGIN_EXTERNC
