@@ -62,6 +62,17 @@ scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-config cmake .. -DB
 # clear out any old reports
 rm -rfv ./scan-reports-*
 
+# The following test should ideally generate empty directories (i.e. their
+# report directory should not be present at the end of the test.
+failures="0"
+
+# These are src/other libs that are either forked or don't have significant
+# upstream activity - since we are effectively maintaining these ourselves,
+# check them
+cleantest osmesa
+cleantest poly2tri
+cleantest utahrle
+
 # we don't care about reports for src/other or misc tools
 # we don't maintain ourselves - build those without recording
 # the analyzer output
@@ -74,14 +85,6 @@ cd ../../../
 cd misc/tools
 make -j12
 cd ../../
-
-
-# The following targets should generate empty directories (i.e. their report
-# directory should not be present at the end of the test.
-
-failures="0"
-
-rm -rf ./scan-reports*
 
 # Libraries - order is important here.  We want to build all of
 # a library's dependencies before we build the library so the
