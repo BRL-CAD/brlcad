@@ -33,6 +33,11 @@ cmake_minimum_required(VERSION 3.12)
 
 project(OPENNURBS)
 
+# Latest OpenNURBS requires C++14
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Generate position independent code by default (i.e. -fPIC)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
@@ -146,7 +151,6 @@ set(OPENNURBS_SOURCES
 	opennurbs_fsp.cpp
 	opennurbs_function_list.cpp
 	opennurbs_geometry.cpp
-	opennurbs_gl.cpp
 	opennurbs_glyph_outline.cpp
 	opennurbs_group.cpp
 	opennurbs_hash_table.cpp
@@ -205,7 +209,6 @@ set(OPENNURBS_SOURCES
 	opennurbs_polyedgecurve.cpp
 	opennurbs_polyline.cpp
 	opennurbs_polylinecurve.cpp
-	opennurbs_precompiledheader.cpp
 	opennurbs_progress_reporter.cpp
 	opennurbs_public_memory.cpp
 	opennurbs_quaternion.cpp
@@ -274,7 +277,6 @@ set(OPENNURBS_SOURCES
 	opennurbs_wstring.cpp
 	opennurbs_xform.cpp
 	opennurbs_zlib.cpp
-	opennurbs_zlib_memory.cpp
 	)
 
 set(OPENNURBS_HEADERS
