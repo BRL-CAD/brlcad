@@ -600,7 +600,7 @@ void ON_GL( const ON_Material* pMat )
     ON_GL( pMat->Diffuse(), alpha, diffuse );
     ON_GL( pMat->Specular(), alpha, specular );
     ON_GL( pMat->Emission(), alpha, emission );
-    GLint shine = (GLint)(128.0*(pMat->Shine() / ON_Material::MaxShine()));
+    GLint shine = (GLint)(128.0*(pMat->Shine() / ON_Material::MaxShine));
     if ( shine == 0 ) {
       specular[0]=specular[1]=specular[2]=(GLfloat)0.0;
     }
