@@ -236,6 +236,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "librt rt_comb_internal";
 	case RT_CONSTRAINT_MAGIC:
 	    return "librt rt_constraint_internal";
+	case RT_MATERIAL_MAGIC:
+	    return "librt rt_material_internal";
 	case RT_CTS_MAGIC:
 	    return "librt combined_tree_state";
 	case RT_DB_TRAVERSE_MAGIC:
