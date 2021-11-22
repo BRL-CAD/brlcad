@@ -390,6 +390,9 @@ nodeRemoveChild (HtmlElementNode *pElem, HtmlNode *pChild)
     int eSeen = 0;
     int ii;
 
+    if (!pElem || !pChild)
+       return eSeen;
+
     for (ii = 0; ii < pElem->nChild; ii++) {
         if (eSeen) {
             pElem->apChildren[ii - 1] = pElem->apChildren[ii];
