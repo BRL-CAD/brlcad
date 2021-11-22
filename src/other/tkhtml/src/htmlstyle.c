@@ -202,6 +202,8 @@ static int
 scoreStack (HtmlNodeStack *pParentStack, HtmlNodeStack *pStack, int eStack)
 {
     int z;
+    if (!pStack || !pStack->pElem)
+       return -1;
     if (pStack == pParentStack) {
         return eStack;
     }
@@ -301,11 +303,11 @@ stackCompare (const void *pVoidLeft, const void *pVoidRight)
         pR = pParentR;
         assert(pL && pR);
     }
-    while (pR->pStack->pElem != pR) {
+    while (pR && pR->pStack && pR->pStack->pElem != pR) {
         pR = HtmlElemParent(pR);
         assert(pR);
     }
-    pParentStack = pR->pStack;
+    pParentStack = (pR) ? pR->pStack : NULL;
 
     iLeft = scoreStack(pParentStack, pLeftStack, pLeft->eStack);
     iRight = scoreStack(pParentStack, pRightStack, pRight->eStack);
