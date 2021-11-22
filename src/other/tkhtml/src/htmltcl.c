@@ -449,7 +449,7 @@ INSTRUMENTED(runLayoutEngine, HTML_INSTRUMENT_LAYOUT_ENGINE)
 
     pD = pTree->cb.pDamage;
     HtmlLayout(pTree);
-    if (0 && pTree->cb.isForce) {
+    if (pD && pTree->cb.isForce) {
         pTree->cb.flags |= HTML_SCROLL;
     }
     if (!pTree->cb.pSnapshot) {
@@ -1810,20 +1810,17 @@ viewCommon(
     int iOffScreen;            /* Current scroll position */
     double aRet[2];
     Tcl_Obj *pRet;
-    Tcl_Obj *pScrollCommand;
 
     if (isXview) { 
         iPagePixels = Tk_Width(win);
         iUnitPixels = pTree->options.xscrollincrement;
         iMovePixels = pTree->canvas.right;
         iOffScreen = pTree->iScrollX;
-        pScrollCommand = pTree->options.xscrollcommand;
     } else {
         iPagePixels = Tk_Height(win);
         iUnitPixels = pTree->options.yscrollincrement;
         iMovePixels = pTree->canvas.bottom;
         iOffScreen = pTree->iScrollY;
-        pScrollCommand = pTree->options.yscrollcommand;
     }
 
     if (objc > 2) {
