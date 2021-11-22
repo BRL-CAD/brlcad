@@ -112,13 +112,10 @@ private:
   //         needs to have dll-interface to be used by clients of class 'ON_Lock'
   // m_lock_value is private and all code that manages m_lock_value is explicitly implemented in the DLL.
 private:
-#if defined(ON_COMPILER_CLANG)
-    std::atomic<int> m_lock_value;
+#if defined(ON_CLANG_CONSTRUCTOR_BUG_INIT)
+  std::atomic<int> m_lock_value;
 #else
-  //std::atomic<int> m_lock_value = ON_Lock::UnlockedValue;
-
-  // https://discourse.mcneel.com/t/on-compiler-gnu-support-for-opennurbs/77308
-  std::atomic<int> m_lock_value { ON_Lock::UnlockedValue };
+  std::atomic<int> m_lock_value = ON_Lock::UnlockedValue;
 #endif
 #pragma ON_PRAGMA_WARNING_POP
 };

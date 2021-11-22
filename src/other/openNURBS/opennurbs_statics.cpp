@@ -515,7 +515,7 @@ static ON_SHA1_Hash ON_SHA1_Hash_EmptyContentHash()
 const ON_SHA1_Hash ON_SHA1_Hash::EmptyContentHash = ON_SHA1_Hash_EmptyContentHash();
 const ON_SHA1_Hash ON_SHA1_Hash::ZeroDigest ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_SHA1_Hash);
 
-const ONX_ModelTest ONX_ModelTest::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ONX_ModelTest);
+const ONX_ModelTest ONX_ModelTest::Unset = ONX_ModelTest();
 
 // Works with Microsoft's CL, fails for Apple's CLang
 ////   const struct ON_UnicodeErrorParameters ON_UnicodeErrorParameters::MaskErrors   = { 0, 0xFFFFFFFF, ON_UnicodeCodePoint::ON_ReplacementCharacter };
@@ -744,7 +744,7 @@ const ON_AngleUnitName ON_AngleUnitName::None ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_A
 const ON_LengthValue ON_LengthValue::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_LengthValue);
 const ON_LengthValue ON_LengthValue::Zero = ON_LengthValue::Create(0.0, ON::LengthUnitSystem::None, 0, ON_LengthValue::StringFormat::CleanDecimal);
 
-const ON_AngleValue ON_AngleValue::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_AngleValue);
+const ON_AngleValue ON_AngleValue::Unset = ON_AngleValue();
 const ON_AngleValue ON_AngleValue::Zero = ON_AngleValue::Create(0.0, ON::AngleUnitSystem::None, 0, ON_AngleValue::StringFormat::CleanDecimal );
 
 const ON_ScaleValue ON_ScaleValue::Unset ON_CLANG_CONSTRUCTOR_BUG_INIT(ON_ScaleValue);

@@ -31,7 +31,7 @@ public:
   // The VALUE_TYPE enum values must never be changed
   // because the values are used to determine the parameter
   // type during file reading.  Additions can be made.
-  enum VALUE_TYPE
+  enum VALUE_TYPE: unsigned int
   {
     no_value_type         =  0,
 

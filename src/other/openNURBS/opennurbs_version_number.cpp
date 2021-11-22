@@ -375,7 +375,7 @@ const ON_String ON_VersionNumberToString(
     str_version =
       (0 != version_number)
       ? ON_String::FormatToString("0x%08X", version_number)
-      : "0";
+      : static_cast<ON_String>("0");
   }
 
   return str_version;

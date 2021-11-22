@@ -3302,13 +3302,13 @@ void ON_ContentHash::Dump(
 
     const ON_wString content_time
       = ( m_content_time <= 0 )
-      ? L"unknown"
+      ? static_cast<ON_wString>(L"unknown")
       : SecondsSinceJanOne1970UTCToString(m_content_time);
     text_log.Print(L"Content last modified time = %ls\n",static_cast<const wchar_t*>(content_time));
 
     const ON_wString hash_time
       = ( m_hash_time <= 0 )
-      ? L"unknown"
+      ? static_cast<ON_wString>(L"unknown")
       : SecondsSinceJanOne1970UTCToString(m_hash_time);
     text_log.Print(L"Content hash calculated time = %ls\n",static_cast<const wchar_t*>(content_time));
 

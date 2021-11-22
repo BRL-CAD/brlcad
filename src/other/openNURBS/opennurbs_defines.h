@@ -2133,7 +2133,7 @@ public:
   // the values.  The reason for the gaps between the enum
   // values is to leave room for future snaps with prededence
   // falling between existing snaps
-  enum osnap_mode
+  enum osnap_mode: unsigned int
   {
     os_none          =          0,
     os_near          =          2,
@@ -2409,7 +2409,7 @@ public:
   // Do not change these values; they are stored in 3dm archives
   // and provide a persistent way to indentify components of
   // complex objects.
-  enum TYPE
+  enum TYPE: unsigned int
   {
     invalid_type       =   0,
 
