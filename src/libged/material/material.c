@@ -41,6 +41,7 @@ typedef enum {
     MATERIAL_GET,
     MATERIAL_HELP,
     MATERIAL_IMPORT,
+    MATERIAL_REMOVE,
     MATERIAL_SET,
     ATTR_UNKNOWN
 } material_cmd_t;
@@ -50,10 +51,10 @@ static const char *usage = " help \n\n"
     "material destroy {object}\n\n"
     "material import [--id | --name] {fileName}\n\n"
     "material get {object} [propertyGroupName] {propertyName}\n\n"
-    "material set [-r] {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
+    "material set {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
+    "material remove {object} [propertyGroupName] {propertyName}\n\n"
     "--id       - Specifies the id the material will be imported with\n\n"
     "--name     - Specifies the name the material will be imported with\n\n"
-    "- r        - Removes a property from the object. (In the case of name, source, parent it merely sets the value to null.)\n\n"
     "* Property arguments passed to the material commands are case sensitive.";
 
 static const char *possibleProperties = "The following are properties of material objects that can be set/modified: \n"
@@ -75,6 +76,7 @@ get_material_cmd(const char* arg)
     const char GET[]      = "get";
     const char HELP[]     = "help";
     const char IMPORT[]   = "import";
+    const char REMOVE[]   = "remove";
     const char SET[]      = "set";
 
     /* alphabetical order */
@@ -90,6 +92,8 @@ get_material_cmd(const char* arg)
     return MATERIAL_HELP;
     else if (BU_STR_EQUIV(IMPORT, arg))
     return MATERIAL_IMPORT;
+    else if (BU_STR_EQUIV(REMOVE, arg))
+    return MATERIAL_REMOVE;
     else
     return ATTR_UNKNOWN;
 }
@@ -425,6 +429,57 @@ int set_material(struct ged *gedp, int argc, const char *argv[]){
     return wdb_put_internal(gedp->ged_wdbp, argv[2], &intern, mk_conv2mm);
 }
 
+// Routine handles the removal  of a material property 
+int remove_material(struct ged *gedp, int argc, const char *argv[]){
+    struct directory *dp;
+    struct rt_db_internal intern;
+
+    if (argc < 4){
+        bu_vls_printf(gedp->ged_result_str, "you must provide at least four arguments.");
+        return GED_ERROR;
+    }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
+        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+
+        struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
+
+        if (BU_STR_EQUAL(argv[3], "name")){
+            BU_VLS_INIT(&material->name);
+            bu_vls_strcpy(&material->name, NULL);
+        } else if (BU_STR_EQUAL(argv[3], "parent")) {
+            BU_VLS_INIT(&material->parent);
+            bu_vls_strcpy(&material->parent, NULL);
+        } else if (BU_STR_EQUAL(argv[3], "source")) {
+            BU_VLS_INIT(&material->source);
+            bu_vls_strcpy(&material->source, NULL);
+        } else {
+            if (BU_STR_EQUAL(argv[3], "physical")) {
+                bu_avs_remove(&material->physicalProperties, argv[4]);
+            }  else if (BU_STR_EQUAL(argv[3], "mechanical")) {
+                bu_avs_remove(&material->mechanicalProperties, argv[4]);
+            } else if (BU_STR_EQUAL(argv[3], "optical")) {
+                bu_avs_remove(&material->opticalProperties, argv[4]);
+            } else if (BU_STR_EQUAL(argv[3], "thermal")) {
+                bu_avs_remove(&material->thermalProperties, argv[4]);
+            } else {
+                bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
+                return GED_ERROR;
+            }
+        }
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[2]);
+        return GED_ERROR;
+    }
+
+    return wdb_put_internal(gedp->ged_wdbp, argv[2], &intern, mk_conv2mm);
+}
+
 int
 ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     material_cmd_t scmd;
@@ -459,6 +514,10 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n\n", argv[0], usage);
         bu_vls_printf(gedp->ged_result_str, "%s", possibleProperties);
     } 
+    else if (scmd == MATERIAL_REMOVE) {
+        // set routine
+        remove_material(gedp, argc, argv);
+    }
     else if (scmd == MATERIAL_SET) {
         // set routine
         set_material(gedp, argc, argv);
