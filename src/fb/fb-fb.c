@@ -32,6 +32,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "dm.h"
 
 

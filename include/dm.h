@@ -31,6 +31,7 @@
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn.h"
+#include "bv.h"
 #include "icv.h"
 #include "raytrace.h"
 

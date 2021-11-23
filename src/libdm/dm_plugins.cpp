@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <map>
 #include <set>
 #include <string>
@@ -37,6 +38,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/ptbl.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 
 #include "dm.h"

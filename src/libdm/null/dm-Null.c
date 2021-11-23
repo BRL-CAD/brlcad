@@ -28,6 +28,7 @@
 #endif
 
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
 #include "../include/private.h"
