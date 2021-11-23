@@ -102,6 +102,11 @@
 #define ON_DECL __attribute__ ((visibility ("default")))
 #define ON_EXTERN_DECL __attribute__ ((visibility ("default")))
 
+#elif defined(__GNUC__)
+#define ON_CLASS __attribute__ ((visibility ("default")))
+#define ON_DECL __attribute__ ((visibility ("default")))
+#define ON_EXTERN_DECL __attribute__ ((visibility ("default")))
+
 #else
 #error fill in your compiler dynamic linking decorations
 #endif
