@@ -2178,13 +2178,13 @@ private:
 
 
 RT_MemoryArchive::RT_MemoryArchive()
-    : ON_BinaryArchive(ON::on_write3dm), pos(0), m_buffer()
+    : ON_BinaryArchive(ON::archive_mode::write3dm), pos(0), m_buffer()
 {
 }
 
 
 RT_MemoryArchive::RT_MemoryArchive(const void *memory, size_t len)
-    : ON_BinaryArchive(ON::on_read3dm), pos(0),
+    : ON_BinaryArchive(ON::archive_mode::read3dm), pos(0),
       m_buffer((char *)memory, (char *)memory + len)
 {
 }
