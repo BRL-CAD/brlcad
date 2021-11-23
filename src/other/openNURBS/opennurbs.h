@@ -164,6 +164,8 @@
 #include "opennurbs_dimension.h"
 #include "opennurbs_dimensionformat.h" // Formatting dimension measurements to strings
 
+#include "opennurbs_x.h"               // intersection events
+
 #include "opennurbs_photogrammetry.h"
 
 #include "opennurbs_extensions.h"
