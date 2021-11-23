@@ -556,12 +556,75 @@ ON_TrimCurve_GetClosestPoint(
     return true;
 }
 
-
-
-
-
-
-
+// Extraction of the old Pushup method from openNURBS - not
+// present in newer code?
+ON_Curve*
+ON_Surface_Pushup(
+	const ON_Surface *s,
+	const ON_Curve& curve_2d,
+	const ON_Interval* curve_2d_subdomain
+	)
+{
+    if (!s)
+	return NULL;
+    // if the 2d curve is an isocurve, then ON_Surface::Pushup
+    // will return the answer.  Otherwise, the virtual override
+    // will have to do the real work.
+    ON_Curve* curve = NULL;
+    ON_Surface::ISO iso = s->IsIsoparametric(curve_2d,curve_2d_subdomain);
+    int dir = -1;
+    switch (iso)
+    {
+	case ON_Surface::x_iso:
+	case ON_Surface::W_iso:
+	case ON_Surface::E_iso:
+	    dir = 1;
+	    break;
+	case ON_Surface::y_iso:
+	case ON_Surface::S_iso:
+	case ON_Surface::N_iso:
+	    dir = 0;
+	    break;
+	default:
+	    // intentionally ignoring other ON_Surface::ISO enum values
+	    break;
+    }
+    if ( dir >= 0 )
+    {
+	double c;
+	ON_Interval c2_dom = curve_2d.Domain();
+	if ( !curve_2d_subdomain )
+	    curve_2d_subdomain = &c2_dom;
+	ON_3dPoint p0 = curve_2d.PointAt( curve_2d_subdomain->Min() );
+	ON_3dPoint p1 = curve_2d.PointAt( curve_2d_subdomain->Max() );
+	ON_Interval c3_dom( p0[dir], p1[dir] );
+	bool bRev = c3_dom.IsDecreasing();
+	if ( bRev )
+	    c3_dom.Swap();
+	if ( c3_dom.IsIncreasing() )
+	{
+	    if ( NEAR_EQUAL(p0[1-dir], p1[1-dir], SMALL_FASTF) )
+		c = p0[1-dir];
+	    else
+		c = 0.5*(p0[1-dir] + p1[1-dir]);
+	    curve = s->IsoCurve( dir, c );
+	    if ( curve && curve->Domain() != c3_dom )
+	    {
+		if ( !curve->Trim( c3_dom ) )
+		{
+		    delete curve;
+		    curve = 0;
+		}
+	    }
+	    if ( curve ) {
+		if ( bRev )
+		    curve->Reverse();
+		curve->SetDomain( curve_2d_subdomain->Min(), curve_2d_subdomain->Max() );
+	    }
+	}
+    }
+    return curve;
+}
 
 namespace brlcad {
 

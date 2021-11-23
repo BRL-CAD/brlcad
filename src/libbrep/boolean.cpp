@@ -3108,7 +3108,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve *> 
 	ON_Curve *c3d = NULL;
 	// First, try the ON_Surface::Pushup() method.
 	// If Pushup() does not succeed, use sampling method.
-	c3d = face.SurfaceOf()->Pushup(*(loop[k]), INTERSECTION_TOL);
+	c3d = ON_Surface_Pushup(face.SurfaceOf(), *(loop[k]), NULL);
 	if (!c3d) {
 	    ON_3dPointArray ptarray(101);
 	    for (int l = 0; l <= 100; l++) {
@@ -3192,7 +3192,7 @@ is_point_on_brep_surface(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArr
     // Decide whether a point is on a brep's surface.
     // Basic approach: use PSI on the point with all the surfaces.
 
-    if (brep == NULL || pt.IsUnsetPoint()) {
+    if (brep == NULL || pt.IsUnset()) {
 	bu_log("is_point_on_brep_surface(): brep == NULL || pt.IsUnsetPoint()\n");
 	return false;
     }
@@ -3247,7 +3247,7 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
     // Returns true (inside) or false (outside) provided the pt is not on the
     // surfaces. (See also is_point_on_brep_surface())
 
-    if (brep == NULL || pt.IsUnsetPoint()) {
+    if (brep == NULL || pt.IsUnset()) {
 	bu_log("is_point_inside_brep(): brep == NULL || pt.IsUnsetPoint()\n");
 	return false;
     }

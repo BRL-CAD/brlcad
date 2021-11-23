@@ -72,6 +72,12 @@ interpolateLocalCubicCurve(const ON_3dPointArray &Q);
 extern BREP_EXPORT int
 ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, double tol);
 
+extern BREP_EXPORT ON_Curve*
+ON_Surface_Pushup(
+	const ON_Surface *s,
+	const ON_Curve& curve_2d,
+	const ON_Interval* curve_2d_subdomain
+	);
 
 /* Experimental function to generate Tikz plotting information
  * from B-Rep objects.  This may or may not be something we

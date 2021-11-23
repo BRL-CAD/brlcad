@@ -3172,8 +3172,11 @@ split_overlaps_at_intersections(
 	    uv1 = uv2 = subcurveA->PointAt(subcurveA->Domain().Mid());
 	    ON_3dVector normal = ON_CrossProduct(subcurveA->TangentAt(subcurveA->Domain().Mid()), ON_3dVector::ZAxis);
 	    normal.Unitize();
-	    uv1 -= normal * test_distance;	// left
-	    uv2 += normal * test_distance;	// right
+	    ON_3dVector nd = normal * test_distance;
+	    uv1.x -= nd.x;	// left
+	    uv1.y -= nd.y;	// left
+	    uv2.x += nd.x;	// right
+	    uv2.y += nd.y;	// right
 	    bool in1 = is_pt_in_surf_overlap(uv1, surfA, surfB, treeB, isect_tol);
 	    bool in2 = is_pt_in_surf_overlap(uv2, surfA, surfB, treeB, isect_tol);
 	    if (in1 && !in2) {
@@ -3955,11 +3958,11 @@ ON_Intersect(const ON_Surface *surfA,
 
 	// find a point with a single tangent
 	double start_t = overlap_events[i].m_event->m_curveA->Domain().Mid();
-	if (!overlap_events[i].m_event->m_curveA->IsContinuous(ON::G1_continuous, start_t)) {
+	if (!overlap_events[i].m_event->m_curveA->IsContinuous(ON::continuity::G1_continuous, start_t)) {
 	    // if mid point doesn't work, try a couple other points
 	    // TODO: what happens if none of them work?
 	    start_t = overlap_events[i].m_event->m_curveA->Domain().NormalizedParameterAt(1.0 / 3.0);
-	    if (!overlap_events[i].m_event->m_curveA->IsContinuous(ON::G1_continuous, start_t)) {
+	    if (!overlap_events[i].m_event->m_curveA->IsContinuous(ON::continuity::G1_continuous, start_t)) {
 		start_t = overlap_events[i].m_event->m_curveA->Domain().NormalizedParameterAt(2.0 / 3.0);
 	    }
 	}
