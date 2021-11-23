@@ -581,8 +581,6 @@ surface_GetClosestPoint3dFirstOrderByRange(
     ON_3dVector ds, dt, dss, dst, dtt;
     ON_2dPoint working_p2d;
     ON_3dPoint working_p3d;
-    ON_3dPoint P;
-    ON_3dVector Ds, Dt, Dss, Dst, Dtt;
     bool notdone = true;
     double previous_distance = DBL_MAX;
     double distance;
@@ -696,10 +694,6 @@ bool surface_GetClosestPoint3dFirstOrder(
     double within_distance_tol
     )
 {
-    ON_3dPoint p0;
-    ON_2dPoint p2d0;
-    ON_3dVector ds, dt, dss, dst, dtt;
-    ON_3dVector T, K;
     bool rc = false;
 
     static const ON_Surface *prev_surface = NULL;
@@ -1756,8 +1750,6 @@ bool trim_GetClosestPoint3dFirstOrder(
 
     double t0;
     ON_3dPoint p3d;
-    ON_3dPoint p0;
-    ON_3dVector ds, dt, dss, dst, dtt;
     ON_3dVector T, K;
     int prec = std::cerr.precision();
     ON_BoundingBox tight_bbox;
@@ -3247,7 +3239,6 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
     } else {
 	samplesperknotinterval = 18 * degree;
     }
-    ON_2dPoint pt;
     double t = 0.0;
     ON_3dPoint pointOnCurve;
     ON_3dPoint knudgedPointOnCurve;
