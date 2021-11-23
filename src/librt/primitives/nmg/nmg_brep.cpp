@@ -72,7 +72,8 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 
     for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
 	if (brepi[(*pt)->vg_p->index] == -INT_MAX) {
-	    ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
+	    ON_3dPoint vp((*pt)->vg_p->coord);
+	    ON_BrepVertex& vert = (*b)->NewVertex(vp, SMALL_FASTF);
 	    brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
 	}
 	pnt_cnt++;

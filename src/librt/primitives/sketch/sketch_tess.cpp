@@ -319,7 +319,8 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    std::vector<ON_Arc> carcs;
 	    // convert struct bezier_seg into ON_BezierCurve
 	    for (j = 0; j < bsg->degree + 1; j++) {
-		bez_pts.Append(SKETCH_PT(bsg->ctl_points[j]));
+		ON_2dPoint p2d(SKETCH_PT(bsg->ctl_points[j]));
+		bez_pts.Append(p2d);
 	    }
 	    // approximate bezier curve by a set of circular arcs
 	    bezier_to_carcs(ON_BezierCurve(bez_pts), &tol, carcs);

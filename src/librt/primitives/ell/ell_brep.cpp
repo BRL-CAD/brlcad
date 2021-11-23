@@ -89,7 +89,8 @@ rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     point_t origin;
     VSET(origin, 0, 0, 0);
-    ON_Sphere sph(origin, 1);
+    ON_3dPoint oo(origin);
+    ON_Sphere sph(oo, 1);
 
     // Get the NURBS form of the surface
     ON_NurbsSurface *ellcurvedsurf = ON_NurbsSurface::New();
