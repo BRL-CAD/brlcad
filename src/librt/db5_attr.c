@@ -370,6 +370,7 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_MATERIAL_NAME)));
     bu_vls_trimspace(&newval);
     if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
+  endptr = bu_vls_addr(&newval) +  strlen(bu_vls_addr(&newval));
 	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 		char *newvalchar = bu_vls_strdup(&newval);
 		bu_vls_strcpy(&comb->material, newvalchar);

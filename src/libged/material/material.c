@@ -128,7 +128,7 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
 
             /* Skip whitespace */
             while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
-            
+
             while(*p){
                 if(*p == '#'){
                     while(*p && *p != '\n') p++;
@@ -156,7 +156,7 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
                     bu_vls_printf(gedp->ged_result_str, "Error processing: Could not convert density\n");
                     return GED_ERROR;
                 }
-                
+
                 if(density < 0.0){
                     bu_free(buffer, "Free buffer copy");
                     bu_vls_printf(gedp->ged_result_str, "Error processing: Bad Density\n");
@@ -176,7 +176,7 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
                 }
                 strncpy(name, p, len+1);
                 break;
-                
+
             }
             if(idx == 0){
                 continue;
@@ -268,7 +268,7 @@ int create_material(struct ged *gedp, int argc, const char *argv[]){
     name = argv[3];
     parent = NULL;
     source = NULL;
-    
+
     mk_material(gedp->ged_wdbp,
             db_name,
             name,
@@ -407,7 +407,7 @@ int set_material(struct ged *gedp, int argc, const char *argv[]){
             } else {
                 bu_vls_strcpy(&material->name, argv[4]);
             }
-            
+
         } else if (BU_STR_EQUAL(argv[propertyArg], "parent")) {
             BU_VLS_INIT(&material->parent);
 
@@ -432,7 +432,7 @@ int set_material(struct ged *gedp, int argc, const char *argv[]){
                 if (bu_avs_get(&material->physicalProperties, argv[subpropertyArg]) != NULL) {
                     bu_avs_remove(&material->physicalProperties, argv[subpropertyArg]);
                 }
-                
+
                 if (!removeProperty) {
                     bu_avs_add(&material->physicalProperties, argv[4], argv[5]);
                 }
@@ -448,7 +448,7 @@ int set_material(struct ged *gedp, int argc, const char *argv[]){
                 if (bu_avs_get(&material->opticalProperties, argv[subpropertyArg]) != NULL) {
                     bu_avs_remove(&material->opticalProperties, argv[subpropertyArg]);
                 }
-                
+
                 if (!removeProperty) {
                     bu_avs_add(&material->opticalProperties, argv[4], argv[5]);
                 }
@@ -506,7 +506,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     } else if (scmd == MATERIAL_HELP) {
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n\n", argv[0], usage);
         bu_vls_printf(gedp->ged_result_str, "%s", possibleProperties);
-    } 
+    }
     else if (scmd == MATERIAL_SET) {
         // set routine
         set_material(gedp, argc, argv);

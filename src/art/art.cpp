@@ -369,23 +369,89 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
           shader_name.c_str(),
           asr::ParamArray()));
 
-  // THIS IS OUR INPUT SHADER - add to shader group
-  /* This uses an already created appleseed .oso shader
-  in the form of
+  // choose input shader
+  // we use disney material as default
+  const char* shader = (char*)"as_disney_material";
+  asr::ParamArray shader_params = asr::ParamArray();
+
+  // check if shader was set new way
+  // extract material if set and check for shader in optical properties
+  struct directory* dp1;
+  char* mat_name = bu_vls_strdup(&combp->material);
+  dp1 = db_lookup(APP.a_rt_i->rti_dbip, mat_name, LOOKUP_QUIET);
+  struct bu_vls m = BU_VLS_INIT_ZERO;
+  struct rt_db_internal intern;
+  struct rt_material_internal* material_ip;
+  if (dp1 != RT_DIR_NULL) {
+    if (rt_db_get_internal(&intern, dp1, APP.a_rt_i->rti_dbip, NULL, &rt_uniresource) >= 0) {
+      if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+        material_ip = (struct rt_material_internal*)intern.idb_ptr;
+        bu_vls_printf(&m, "%s", bu_avs_get(&material_ip->opticalProperties, "OSL"));
+        if (!BU_STR_EQUAL(bu_vls_cstr(&m), "(null)")) {
+          shader = bu_vls_cstr(&m);
+          bu_log("material->optical->OSL: %s\n", shader);
+        }
+      }
+    }
+  }
+
+  // check for color assignment, if set add to param array
+  struct bu_vls v=BU_VLS_INIT_ZERO;
+  if (combp->rgb_valid) {
+    bu_vls_printf(&v, "color %f %f %f\n", combp->rgb[0]/255.0, combp->rgb[1]/255.0, combp->rgb[2]/255.0);
+    const char* color = bu_vls_cstr(&v);
+    shader_params.insert("in_color", color);
+  }
+
+  // check if shader was set old way
+  // send this to mapping function -> disney params
+  /* values acceptable with phong implementation:
+   * specular reflectance sp
+   * diffuse reflectance di
+   * roughness rms
+   * transparency tr
+   * transmission re
+   * refraction index ri
+   * extinction ex
+   */
+  char* ptr;
+  char* temp_in = (char*)"   ";
+  if (bu_vls_strlen(&combp->shader) > 0) {
+    if ((ptr=strstr(bu_vls_addr(&combp->shader), "plastic")) != NULL) {
+	    // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
+      shader = "as_plastic";
+    }
+    if ((ptr=strstr(bu_vls_addr(&combp->shader), "glass")) != NULL) {
+	    // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
+      shader = "as_glass";
+    }
+    // check for override paramaters
+    if (((ptr=strstr(bu_vls_addr(&combp->shader), "{")) != NULL)) {
+      if (((ptr=strstr(bu_vls_addr(&combp->shader), "tr")) != NULL)) {
+        int i = 3;
+  	    while (ptr != NULL && ptr[i] != ' ') {
+          temp_in[i-3] = ptr[i];
+          i++;
+        }
+        struct bu_vls t=BU_VLS_INIT_ZERO;
+        bu_vls_printf(&t, "tr %s\n", temp_in);
+        const char* tr = bu_vls_cstr(&t);
+        shader_params.insert("in_tr", tr);
+      }
+    }
+	}
+
+  /* This uses an already compiled .oso shader in the form of
   type
   shader name
   layer
   paramArray
   */
-  struct bu_vls v=BU_VLS_INIT_ZERO;
-  bu_vls_printf(&v, "color %f %f %f", combp->rgb[0]/255.0, combp->rgb[1]/255.0, combp->rgb[2]/255.0);
-  const char* color = bu_vls_cstr(&v);
   shader_grp->add_shader(
       "shader",
-      "as_disney_material",
+      shader,
       "shader_in",
-      asr::ParamArray()
-        .insert("in_color", color)
+      shader_params
   );
   bu_vls_free(&v);
 
@@ -571,10 +637,12 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     // Create an empty project.
     asf::auto_release_ptr<asr::Project> project(asr::ProjectFactory::create("test project"));
     project->search_paths().push_back_explicit_path("build/Debug");
-    // ***** add precompiled shaders from appleseed
+    // add precompiled shaders from appleseed
     char root[MAXPATHLEN];
     project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL));
     project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL));
+    // add path for materialX converted shaders
+    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, BU_DIR_INIT, "output/shaders", NULL));
 
     // Add default configurations to the project.
     project->add_default_configurations();
