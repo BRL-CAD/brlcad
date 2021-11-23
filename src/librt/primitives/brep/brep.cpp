@@ -2284,6 +2284,9 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
+    // TODO - this logic has changed quite a bit - will need to look at
+    // the current openNURBS examples to see what the new pattern is.
+
     ON_Layer default_layer;
     default_layer.Default();
     default_layer.SetLayerIndex(0);
@@ -2323,6 +2326,10 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	brep_dbi2on(intern, model);
 
 	/* Create a serialized version for base-64 encoding */
+
+	// TODO - RT_MemoryArchive has been removed.  Current best guess is to look at
+	// ON_BinaryArchiveBuffer to replace it.
+
 	RT_MemoryArchive archive;
 	ON_TextLog err(stderr);
 	bool ok = model.Write(archive, 4, "export5", &err);
