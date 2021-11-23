@@ -184,7 +184,7 @@ CModel* glb_model = 0;
 //
 //////////////////////////////////////////////////////////////////////
 
-ON_BOOL32 myInitGL( const ON_Viewport&, GLUnurbsObj*& );
+bool myInitGL( const ON_Viewport&, GLUnurbsObj*& );
 
 void myBuildDisplayList( 
       GLuint,                  // display_list_number,
@@ -248,7 +248,7 @@ int main( int argc, const char *argv[] )
 
   ON_TextLog error_log;
 
-  ON_BOOL32 bOK;
+  bool bOK;
   int window_width  = 500;
   int window_height = 500;
   //double port_aspect = ((double)window_width)/((double)window_height);
@@ -412,7 +412,7 @@ void SetGLProjectionMatrix( ON_Viewport& viewport )
   ON_GL( viewport, pl, pr, pb, pt ); // updates GL projection matrix
 }
 
-ON_BOOL32 myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
+bool myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
 {
   // set the model view transform
   SetGLModelViewMatrix( viewport );
@@ -595,7 +595,7 @@ void MY_GL_CALLBACK myKeyViewExtents( void )
 
 static void myGLAUX_MouseEvent( GLint button, const AUX_EVENTREC* event )
 {
-  static ON_BOOL32 bMouseActive = false;
+  static bool bMouseActive = false;
   static int mx0, my0;
   int mx, my;
 

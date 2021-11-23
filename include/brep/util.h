@@ -61,9 +61,9 @@ extern BREP_EXPORT void ON_Plane_Plot(FILE *pf, ON_Plane &plane);
 extern BREP_EXPORT void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
 extern BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
-extern BREP_EXPORT ON_BOOL32 face_GetBoundingBox(const ON_BrepFace &face,ON_BoundingBox& bbox,ON_BOOL32 bGrowBox);
-extern BREP_EXPORT ON_BOOL32 surface_GetBoundingBox(const ON_Surface *surf,const ON_Interval &u_interval,const ON_Interval &v_interval,ON_BoundingBox& bbox,ON_BOOL32 bGrowBox);
-extern BREP_EXPORT ON_BOOL32 surface_EvNormal(const ON_Surface *surf,double s,double t,ON_3dPoint& point,ON_3dVector& normal,int side=0,int* hint=0);
+extern BREP_EXPORT bool face_GetBoundingBox(const ON_BrepFace &face,ON_BoundingBox& bbox,bool bGrowBox);
+extern BREP_EXPORT bool surface_GetBoundingBox(const ON_Surface *surf,const ON_Interval &u_interval,const ON_Interval &v_interval,ON_BoundingBox& bbox,bool bGrowBox);
+extern BREP_EXPORT bool surface_EvNormal(const ON_Surface *surf,double s,double t,ON_3dPoint& point,ON_3dVector& normal,int side=0,int* hint=0);
 
 extern BREP_EXPORT ON_Curve *interpolateCurve(ON_2dPointArray &samples);
 extern BREP_EXPORT ON_NurbsCurve *

@@ -3019,7 +3019,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve *> 
     // Determine whether a segment should be a seam trim, according to the
     // requirements in ON_Brep::IsValid() (See opennurbs_brep.cpp)
     for (int k = 0; k < loop.Count(); k++) {
-	ON_BOOL32 bClosed[2];
+	bool bClosed[2];
 	bClosed[0] = srf->IsClosed(0);
 	bClosed[1] = srf->IsClosed(1);
 	if (bClosed[0] || bClosed[1]) {

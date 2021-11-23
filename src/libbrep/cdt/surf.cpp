@@ -852,8 +852,8 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	 * right top    = uMvM
 	 */
 
-	ON_BOOL32 uclosed = s->IsClosed(0);
-	ON_BOOL32 vclosed = s->IsClosed(1);
+	bool uclosed = s->IsClosed(0);
+	bool vclosed = s->IsClosed(1);
 	double midx = (min.x + max.x) / 2.0;
 	double midy = (min.y + max.y) / 2.0;
 

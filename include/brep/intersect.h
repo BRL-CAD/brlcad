@@ -54,7 +54,7 @@ public:
     ON_Curve *m_curve;
     ON_Interval m_t;
     Subcurve *m_children[2];
-    ON_BOOL32 m_islinear;
+    bool m_islinear;
 
     Subcurve();
     Subcurve(ON_Curve *curve);
@@ -79,7 +79,7 @@ public:
     ON_Surface *m_surf;
     ON_Interval m_u, m_v;
     Subsurface *m_children[4];
-    ON_BOOL32 m_isplanar;
+    bool m_isplanar;
 
     Subsurface();
     Subsurface(ON_Surface *surf);

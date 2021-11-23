@@ -83,7 +83,7 @@ Torus_RevSurfaceForm(const ON_Torus& torus )
 ON_Brep*
 Torus_Brep( const ON_Torus& torus)
 {
-    ON_BOOL32 bArcLengthParameterization = true;
+    bool bArcLengthParameterization = true;
     ON_Brep* brep = NULL;
     ON_RevSurface* pRevSurface = Torus_RevSurfaceForm(torus);
     if ( pRevSurface )

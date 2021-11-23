@@ -589,9 +589,9 @@ static ON_Brep* MakeTwistedCube( ON_TextLog& error_log )
     brep = NULL;
   }
 
-  //ON_BOOL32 bIsManifold;
-  //ON_BOOL32 bHasBoundary;
-  //ON_BOOL32 b = brep->IsManifold( &bIsManifold,&bHasBoundary );
+  //bool bIsManifold;
+  //bool bHasBoundary;
+  //bool b = brep->IsManifold( &bIsManifold,&bHasBoundary );
 
   return brep;
 }

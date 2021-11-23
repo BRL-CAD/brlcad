@@ -2453,7 +2453,7 @@ add_points_to_closed_seams(
 	int dir = i % 2;
 	bool doA = i < 2;
 
-	ON_BOOL32 is_closed = (doA ? surfA : surfB)->IsClosed(dir);
+	bool is_closed = (doA ? surfA : surfB)->IsClosed(dir);
 	if (!is_closed) {
 	    continue;
 	}

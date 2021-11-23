@@ -122,7 +122,7 @@ void
 SplitTrim(ON_BrepTrim *trim, double t)
 {
     ON_Curve *left, *right;
-    ON_BOOL32 rv = trim->Split(t, left, right);
+    bool rv = trim->Split(t, left, right);
 
     if (rv != 0) {
 	int lefti = trim->Brep()->AddTrimCurve(left);

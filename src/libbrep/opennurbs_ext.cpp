@@ -2078,7 +2078,7 @@ typedef struct _gcp_data {
 bool
 gcp_gradient(pt2d_t out_grad, GCPData& data, pt2d_t uv)
 {
-    ON_BOOL32 evaluated = data.surf->Ev2Der(uv[0],
+    bool evaluated = data.surf->Ev2Der(uv[0],
 					    uv[1],
 					    data.S,
 					    data.du,
