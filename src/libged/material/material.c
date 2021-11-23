@@ -132,7 +132,7 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
 
             /* Skip whitespace */
             while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
-            
+
             while(*p){
                 if(*p == '#'){
                     while(*p && *p != '\n') p++;
@@ -160,7 +160,7 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
                     bu_vls_printf(gedp->ged_result_str, "Error processing: Could not convert density\n");
                     return GED_ERROR;
                 }
-                
+
                 if(density < 0.0){
                     bu_free(buffer, "Free buffer copy");
                     bu_vls_printf(gedp->ged_result_str, "Error processing: Bad Density\n");
@@ -180,7 +180,7 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
                 }
                 strncpy(name, p, len+1);
                 break;
-                
+
             }
             if(idx == 0){
                 continue;
@@ -272,7 +272,7 @@ int create_material(struct ged *gedp, int argc, const char *argv[]){
     name = argv[3];
     parent = NULL;
     source = NULL;
-    
+
     mk_material(gedp->ged_wdbp,
             db_name,
             name,
