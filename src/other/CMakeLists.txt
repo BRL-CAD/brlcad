@@ -125,6 +125,9 @@ set(OPENNURBS_LIBRARY openNURBS CACHE STRING "Require opennurbs libraries" FORCE
 set(OPENNURBS_LIBRARIES openNURBS CACHE STRING "Require opennurbs libraries" FORCE)
 set(OPENNURBS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Require opennurbs header includes" FORCE)
 set(OPENNURBS_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Require opennurbs header includes" FORCE)
+# openNURBS headers trigger a number of warnings - treat them the same way we
+# do the ext headers
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS CACHE STRING "Bundled system include dirs" FORCE)
 mark_as_advanced(OPENNURBS_LIBRARY)
 mark_as_advanced(OPENNURBS_LIBRARIES)
 mark_as_advanced(OPENNURBS_INCLUDE_DIR)
