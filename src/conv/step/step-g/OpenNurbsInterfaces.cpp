@@ -2151,7 +2151,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     ON_3dPointArray cpts(2 * narcs + 1);
     double angle = t;
     double W[2 * 4 + 1]; /* 2 * max narcs + 1 */
-    ON_3dPoint circleP1, isect, circleP2, PM, PT;
+    ON_3dPoint circleP1, isect, circleP2;
     ON_3dVector tangentP1, tangentP2;
 
     circleP1 = circle.PointAt(angle); // was using 'startpt' from edge_curve but found case where not in tol
@@ -2353,7 +2353,6 @@ Ellipse::LoadONBrep(ON_Brep *brep)
     double angle = t;
     double W[2 * 4 + 1]; // 2 * max narcs + 1
     ON_3dPoint Pnt[2 * 4 + 1];
-    ON_3dPoint MP0, MP1, MP2, MPM, MPT, MPX;
     ON_3dVector Tangent1, Tangent2;
     ON_3dPoint P0, PX, P2, P1;
 

@@ -135,7 +135,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     point_t p_origin, p2, p3;
     point_t p_temp = VINIT_ZERO;
-    ON_3dPoint plane_origin, plane_x_dir, plane_y_dir, pt2, pt3, pt4;
+    ON_3dPoint plane_origin, plane_x_dir, plane_y_dir;
 
     MOVEPT(p_origin);
     plane_origin = ON_3dPoint(p_origin);

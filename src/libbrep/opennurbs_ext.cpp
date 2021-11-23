@@ -526,8 +526,6 @@ ON_TrimCurve_GetClosestPoint(
 	const ON_Interval *sub_domain
 	)
 {
-    ON_3dPoint trim_2d;
-    ON_3dPoint trim_3d;
     if (!t || !trim) {
 	return false;
     }
@@ -537,7 +535,7 @@ ON_TrimCurve_GetClosestPoint(
     if (trim->m_type == ON_BrepTrim::singular) {
 	// If the trim is singular, there's only one point to check.
 	if (maximum_distance > 0) {
-	    trim_3d = trim->Brep()->m_V[trim->m_vi[0]].Point();
+	    ON_3dPoint trim_3d = trim->Brep()->m_V[trim->m_vi[0]].Point();
 	    if (trim_3d.DistanceTo(p) > maximum_distance) {
 		return false;
 	    }
