@@ -173,7 +173,7 @@ extern "C" {
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
 
-
+    extern float background[3];
     extern char* outputfile;
     extern int objc;
     extern char** objv;
@@ -190,10 +190,30 @@ extern "C" {
     void grid_setup();
 }
 
+void
+color_hook(const struct bu_structparse *sp, const char *name, void *UNUSED(base), const char *value, void *UNUSED(data))
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+
+    BU_CK_STRUCTPARSE(sp);
+
+    if (!sp || !name || !value || sp->sp_count != 3 || bu_strcmp("%f", sp->sp_fmt))
+	bu_bomb("color_hook(): invalid arguments");
+
+    if (!bu_color_from_str(&color, value)) {
+	bu_log("ERROR: invalid color string: '%s'\n", value);
+	VSETALL(color.buc_rgb, 0.0);
+    }
+
+    VMOVE(background, color.buc_rgb);
+}
+
 // holds application specific paramaters
 struct bu_structparse view_parse[] = {
     {"%d", 1, "samples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "s", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "background", 0, color_hook, NULL, NULL},
+    {"%f", 3, "bg", 0, color_hook, NULL, NULL},
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -239,12 +259,20 @@ struct command_tab rt_do_tab[] = {
  */
 void init_options(void) {
   /* Set the byte offsets at run time */
-  view_parse[ 0].sp_offset = bu_byteoffset(samples);
-  view_parse[ 1].sp_offset = bu_byteoffset(samples);
+  view_parse[0].sp_offset = bu_byteoffset(samples);
+  view_parse[1].sp_offset = bu_byteoffset(samples);
+  view_parse[2].sp_offset = bu_byteoffset(background[0]);
+  view_parse[3].sp_offset = bu_byteoffset(background[0]);
 
+  // default output file name
+  outputfile = (char*)"art.png";
+
+  // blue background of scene
+  background[0] = 0.75;
+  background[1] = 0.80;
+  background[2] = 1.0;
 
   // for now, just support -c set samples=x
-  // TODO: update to support more options
   option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
   option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
   option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
@@ -290,8 +318,8 @@ namespace asf = foundation;
 namespace asr = renderer;
 
 /* db_walk_tree() callback to register all regions within the scene
- * using either legacy rgb sets and phong shaders or specified material OSL
- * optical shader
+ * using either legacy rgb sets and phong shaders mapped to a disney material
+ * or specified material OSL optical shader
  */
 int register_region(struct db_tree_state* tsp __attribute__((unused)),
                 const struct db_full_path* pathp __attribute__((unused)),
@@ -729,18 +757,17 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     // Environment
     //------------------------------------------------------------------------
 
-    // OPTIONAL: this creates a background color
-    // static const float SkyRadiance[] = { 0.75f, 0.80f, 1.0f };
-    // statically making this 'white' for now so we don't blue wash the image
-    // Create a color called "sky_radiance" and insert it into the scene.
-    static const float SkyRadiance[] = { 1.0f, 1.0f, 1.0f };
+    // Create a color called "sky_radiance" and insert it into the scene
+    // to set the background color. By default we use a blue
+    // background { 0.75f, 0.80f, 1.0f } *see line 153*. This can be
+    // updated while running using -C and -W
     scene->colors().insert(
 	asr::ColorEntityFactory::create(
 	    "sky_radiance",
 	    asr::ParamArray()
 	    .insert("color_space", "srgb")
 	    .insert("multiplier", "0.5"),
-	    asr::ColorValueArray(3, SkyRadiance)));
+	    asr::ColorValueArray(3, background)));
 
     // Create an environment EDF called "sky_edf" and insert it into the scene.
     scene->environment_edfs().insert(
@@ -933,11 +960,10 @@ main(int argc, char **argv)
     // Render the frame.
     renderer->render(renderer_controller);
 
-    // Save the frame to disk.
-    char *default_out = bu_strdup("output/art.png");
-    outputfile = default_out;
-    project->get_frame()->write_main_image(outputfile);
-    bu_free(default_out, "default name");
+    // Save the frame to disk using outputfile name
+    // we append output/ directory to it for sorting
+    std::string add_base = "output/" + std::string(outputfile);
+    project->get_frame()->write_main_image(add_base.c_str());
 
     // Save the project to disk.
     asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
