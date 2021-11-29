@@ -37,7 +37,9 @@
 __BEGIN_DECLS
 
 #include "tclcad/defines.h"
+#include "tclcad/draw.h"
 #include "tclcad/misc.h"
+#include "tclcad/setup.h"
 
 __END_DECLS
 

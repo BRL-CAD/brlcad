@@ -1,4 +1,4 @@
-/*                        T C L C A D . H
+/*                  T C L C A D / D E F I N E S . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2021 United States Government as represented by

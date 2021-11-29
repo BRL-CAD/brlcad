@@ -1,4 +1,4 @@
-/*                        T C L C A D . H
+/*                   T C L C A D / M I S C . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2021 United States Government as represented by
@@ -30,7 +30,6 @@
 #define TCLCAD_MISC_H
 
 #include "common.h"
-#include "bu/cmd.h"
 #include "bu/process.h"
 #include "tcl.h"
 #include "dm.h"
@@ -52,17 +51,6 @@ struct tclcad_ged_data {
     struct dm_view_data go_dmv;
 };
 
-// Data specific to an individual view rather than the geometry database
-// instance.
-struct tclcad_view_data {
-    struct ged		*gedp;
-    struct bu_vls	gdv_edit_motion_delta_callback;
-    int                 gdv_edit_motion_delta_callback_cnt;
-    struct bu_vls	gdv_callback;
-    int			gdv_callback_cnt;
-    struct fbserv_obj	gdv_fbs;
-};
-
 struct tclcad_obj {
     struct bu_list	l;
     struct ged		*to_gedp;
@@ -71,13 +59,7 @@ struct tclcad_obj {
 
 #define TCLCAD_OBJ_NULL (struct tclcad_obj *)0
 
-
-TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
-TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
-TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
-TCLCAD_EXPORT extern void tclcad_bn_setup(Tcl_Interp *interp);
 TCLCAD_EXPORT extern void tclcad_bn_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
-
 
 /**
  * Allow specification of a ray to trace, in two convenient formats.
@@ -160,33 +142,6 @@ TCLCAD_EXPORT extern int tclcad_rt_import_from_path(Tcl_Interp *interp,
 						    struct rt_wdb *wdb);
 
 /**
- * Add all the supported Tcl interfaces to LIBRT routines to the list
- * of commands known by the given interpreter.
- *
- * wdb_open creates database "objects" which appear as Tcl procs,
- * which respond to many operations.
- *
- * The "db rt_gettrees" operation in turn creates a ray-traceable
- * object as yet another Tcl proc, which responds to additional
- * operations.
- *
- * Note that the MGED mainline C code automatically runs "wdb_open db"
- * and "wdb_open .inmem" on behalf of the MGED user, which exposes all
- * of this power.
- */
-TCLCAD_EXPORT extern void tclcad_rt_setup(Tcl_Interp *interp);
-
-
-/**
- * Allows LIBRT to be dynamically loaded to a vanilla tclsh/wish with
- * "load /usr/brlcad/lib/libbu.so"
- * "load /usr/brlcad/lib/libbn.so"
- * "load /usr/brlcad/lib/librt.so"
- */
-TCLCAD_EXPORT extern int Rt_Init(Tcl_Interp *interp);
-
-
-/**
  * Take a db_full_path and append it to the TCL result string.
  *
  * NOT moving to db_fullpath.h because it is evil Tcl_Interp api
@@ -252,167 +207,6 @@ TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
 TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *gedp,
 								    int argc,
 								    const char *argv[]);
-TCLCAD_EXPORT extern void go_refresh(struct ged *gedp,
-				     struct bview *gdvp);
-TCLCAD_EXPORT extern void go_refresh_draw(struct ged *gedp,
-					  struct bview *gdvp,
-					  int restore_zbuffer);
-TCLCAD_EXPORT extern int go_view_axes(struct ged *gedp,
-				      struct bview *gdvp,
-				      int argc,
-				      const char *argv[],
-				      const char *usage);
-TCLCAD_EXPORT extern int go_data_labels(Tcl_Interp *interp,
-					struct ged *gedp,
-					struct bview *gdvp,
-					int argc,
-					const char *argv[],
-					const char *usage);
-TCLCAD_EXPORT extern int go_data_arrows(Tcl_Interp *interp,
-					struct ged *gedp,
-					struct bview *gdvp,
-					int argc,
-					const char *argv[],
-					const char *usage);
-TCLCAD_EXPORT extern int go_data_pick(struct ged *gedp,
-				      struct bview *gdvp,
-				      int argc,
-				      const char *argv[],
-				      const char *usage);
-TCLCAD_EXPORT extern int go_data_axes(Tcl_Interp *interp,
-				      struct ged *gedp,
-				      struct bview *gdvp,
-				      int argc,
-				      const char *argv[],
-				      const char *usage);
-TCLCAD_EXPORT extern int go_data_lines(Tcl_Interp *interp,
-				       struct ged *gedp,
-				       struct bview *gdvp,
-				       int argc,
-				       const char *argv[],
-				       const char *usage);
-TCLCAD_EXPORT extern int go_data_move(Tcl_Interp *interp,
-				      struct ged *gedp,
-				      struct bview *gdvp,
-				      int argc,
-				      const char *argv[],
-				      const char *usage);
-TCLCAD_EXPORT extern int go_data_move_object_mode(Tcl_Interp *interp,
-						  struct ged *gedp,
-						  struct bview *gdvp,
-						  int argc,
-						  const char *argv[],
-						  const char *usage);
-TCLCAD_EXPORT extern int go_data_move_point_mode(Tcl_Interp *interp,
-						 struct ged *gedp,
-						 struct bview *gdvp,
-						 int argc,
-						 const char *argv[],
-						 const char *usage);
-TCLCAD_EXPORT extern int go_data_polygons(Tcl_Interp *interp,
-					  struct ged *gedp,
-					  struct bview *gdvp,
-					  int argc,
-					  const char *argv[],
-					  const char *usage);
-TCLCAD_EXPORT extern int go_mouse_poly_circ(Tcl_Interp *interp,
-					    struct ged *gedp,
-					    struct bview *gdvp,
-					    int argc,
-					    const char *argv[],
-					    const char *usage);
-TCLCAD_EXPORT extern int go_mouse_poly_cont(Tcl_Interp *interp,
-					    struct ged *gedp,
-					    struct bview *gdvp,
-					    int argc,
-					    const char *argv[],
-					    const char *usage);
-TCLCAD_EXPORT extern int go_mouse_poly_ell(Tcl_Interp *interp,
-					   struct ged *gedp,
-					   struct bview *gdvp,
-					   int argc,
-					   const char *argv[],
-					   const char *usage);
-TCLCAD_EXPORT extern int go_mouse_poly_rect(Tcl_Interp *interp,
-					    struct ged *gedp,
-					    struct bview *gdvp,
-					    int argc,
-					    const char *argv[],
-					    const char *usage);
-TCLCAD_EXPORT extern int go_poly_circ_mode(Tcl_Interp *interp,
-					   struct ged *gedp,
-					   struct bview *gdvp,
-					   int argc,
-					   const char *argv[],
-					   const char *usage);
-TCLCAD_EXPORT extern int go_poly_ell_mode(Tcl_Interp *interp,
-					  struct ged *gedp,
-					  struct bview *gdvp,
-					  int argc,
-					  const char *argv[],
-					  const char *usage);
-TCLCAD_EXPORT extern int go_poly_rect_mode(Tcl_Interp *interp,
-					   struct ged *gedp,
-					   struct bview *gdvp,
-					   int argc,
-					   const char *argv[],
-					   const char *usage);
-TCLCAD_EXPORT extern int go_run_tclscript(Tcl_Interp *interp,
-					  const char *tclscript,
-					  struct bu_vls *result_str);
-TCLCAD_EXPORT extern int go_poly_cont_build(Tcl_Interp *interp,
-					    struct ged *gedp,
-					    struct bview *gdvp,
-					    int argc,
-					    const char *argv[],
-					    const char *usage);
-TCLCAD_EXPORT extern int go_poly_cont_build_end(Tcl_Interp *UNUSED(interp),
-						struct ged *gedp,
-						struct bview *gdvp,
-						int argc,
-						const char *argv[],
-						const char *usage);
-
-/* defined in cmdhist_obj.c */
-TCLCAD_EXPORT extern int Cho_Init(Tcl_Interp *interp);
-
-/**
- * Open a command history object.
- *
- * USAGE:
- * ch_open name
- */
-TCLCAD_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
-
-
-/**
- * This is a convenience routine for registering an array of commands
- * with a Tcl interpreter. Note - this is not intended for use by
- * commands with associated state (i.e. ClientData).  The interp is
- * passed to the bu_cmdtab function as clientdata instead of the
- * bu_cmdtab entry.
- *
- * @param interp - Tcl interpreter wherein to register the commands
- * @param cmds	 - commands and related function pointers
- */
-TCLCAD_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds);
-
-
-/**
- * Set the variables "argc" and "argv" in interp.
- */
-TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const char **argv);
-
-/**
- * This is the "all-in-one" initialization intended for use by
- * applications that are providing a Tcl_Interp and want to initialize
- * all of the BRL-CAD Tcl/Tk interfaces.
- *
- * libbu, libbn, librt, libged, and Itcl are always initialized.
- *
- * To initialize graphical elements (Tk/Itk), set init_gui to 1.
- */
-TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog);
 
 /**
  * Tcl specific I/O handlers
@@ -431,11 +225,6 @@ TCLCAD_EXPORT void
 tclcad_create_io_handler(struct ged_subprocess *p, bu_process_io_t d, ged_io_func_t callback, void *data);
 TCLCAD_EXPORT void
 tclcad_delete_io_handler(struct ged_subprocess *p, bu_process_io_t d);
-
-
-/* dm_tcl.c */
-/* The presence of Tcl_Interp as an arg prevents giving arg list */
-TCLCAD_EXPORT extern void fb_tcl_setup(void);
 
 __END_DECLS
 

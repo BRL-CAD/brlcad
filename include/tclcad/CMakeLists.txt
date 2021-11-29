@@ -1,6 +1,8 @@
 set(tclcad_headers
   defines.h
+  draw.h
   misc.h
+  setup.h
   )
 BRLCAD_MANAGE_FILES(tclcad_headers ${INCLUDE_DIR}/brlcad/tclcad)
 
