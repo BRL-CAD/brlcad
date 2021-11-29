@@ -2279,15 +2279,11 @@ RT_MemoryArchive::Flush()
 
 
 static void
-brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& UNUSED(model))
+brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
 {
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    // TODO - this logic has changed quite a bit - will need to look at
-    // the current openNURBS examples to see what the new pattern is.
-
-#if 0
     ON_Layer default_layer;
     default_layer.Default();
     default_layer.SetLayerIndex(0);
@@ -2313,7 +2309,6 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& UNUSED(model))
     model.m_properties.m_RevisionHistory.NewRevision();
     model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
     model.Polish();
-#endif
 }
 
 
@@ -2327,11 +2322,6 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	brep_dbi2on(intern, model);
 
 	/* Create a serialized version for base-64 encoding */
-
-	// TODO - RT_MemoryArchive isn't working. Could ON_BinaryArchiveBuffer
-	// replace it?
-
-#if 0
 	RT_MemoryArchive archive;
 	ON_TextLog err(stderr);
 	bool ok = model.Write(archive, 4, "export5", &err);
@@ -2343,21 +2333,18 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	    bu_free(brep64, "free encoded brep string");
 	    return 0;
 	}
-#endif
     }
     return -1;
 }
 
 
 extern "C" int
-rt_brep_adjust(struct bu_vls *UNUSED(logstr), struct rt_db_internal *intern, int argc, const char **argv)
+rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
-    RT_BREP_CK_MAGIC(bi);
+    signed char *decoded;
+    ONX_Model model;
     if (argc == 1 && argv[0]) {
-#if 0
-	signed char *decoded;
-	ONX_Model model;
 	int decoded_size = bu_b64_decode(&decoded, (const signed char *)argv[0]);
 	RT_MemoryArchive archive(decoded, decoded_size);
 	ON_wString wonstr;
@@ -2368,7 +2355,6 @@ rt_brep_adjust(struct bu_vls *UNUSED(logstr), struct rt_db_internal *intern, int
 	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
 	ONX_Model_Object mo = model.m_object_table[0];
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
-#endif
 	return 0;
     }
     return -1;
@@ -2390,7 +2376,7 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     ONX_Model model;
     brep_dbi2on(ip, model);
-#if 0
+
     RT_MemoryArchive archive;
     ON_TextLog err(stderr);
     bool ok = model.Write(archive, 4, "export5", &err);
@@ -2401,13 +2387,11 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     } else {
 	return -1;
     }
-#endif
-    return -1;
 }
 
 
 int
-rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *UNUSED(mat), const struct db_i *dbip)
+rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     ON::Begin();
     TRACE1("rt_brep_import5");
@@ -2424,7 +2408,6 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     bi->magic = RT_BREP_INTERNAL_MAGIC;
 
-#if 0
     RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
     ONX_Model model;
     ON_TextLog err(stderr);
@@ -2440,7 +2423,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    bi->brep->Transform(xform);
 	}
     }
-#endif
+
     return 0;
 }
 
