@@ -33,7 +33,6 @@
 #include "bn.h"
 #include "bv.h"
 #include "icv.h"
-#include "raytrace.h"
 
 #include "./dm/defines.h"
 #include "./dm/fbserv.h"
@@ -137,6 +136,8 @@ DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
 				   fastf_t base2local);
 
 /* labels.c */
+#ifdef DM_WITH_RT
+#include "raytrace.h"
 DM_EXPORT extern int dm_draw_prim_labels(struct dm *dmp,
 				    struct rt_wdb *wdbp,
 				    const char *name,
@@ -146,6 +147,7 @@ DM_EXPORT extern int dm_draw_prim_labels(struct dm *dmp,
 						      const char *name_arg, mat_t viewmat_arg,
 						      int *labelsColor_arg, void *labelsHookClientdata_arg),
 				    void *labelsHookClientdata);
+#endif
 
 /* rect.c */
 DM_EXPORT extern void dm_draw_rect(struct dm *dmp,
