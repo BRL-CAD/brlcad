@@ -304,6 +304,44 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	}
     }
 
+    // iterate through the db and find all materials
+    for (int i = 0; i < RT_DBNHASH; i++) {
+        struct directory *dp = ap->a_rt_i->rti_dbip->dbi_Head[i];
+        if (dp != NULL) {
+            struct rt_db_internal intern;
+            struct rt_material_internal *material_ip;
+            if (rt_db_get_internal(&intern, dp, ap->a_rt_i->rti_dbip, NULL, &rt_uniresource) >= 0) {
+                if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+                    // if the material has an id and density, add it to the density table
+                    material_ip = (struct rt_material_internal *)intern.idb_ptr;
+
+                    const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
+                    if (id_string == NULL) {
+                        continue;
+                    }
+                    int id = strtol(id_string, NULL, 10);
+
+                    const char *density_string = bu_avs_get(&material_ip->physicalProperties, "density");
+                    if (density_string == NULL) {
+                        continue;
+                    }
+                    double density_double = strtod(density_string, NULL);
+                    /* since BRL-CAD does computation in mm, but the table is in
+                    * grams / (cm^3) we convert the table on input
+                    */
+                    density_double = density_double / 1000.0;
+
+                    char *name = bu_vls_strdup(&material_ip->name);
+                    struct bu_vls result_str = BU_VLS_INIT_ZERO;
+                    if (analyze_densities_set(density, id, density_double, name, &result_str) < 0) {
+                        bu_vls_printf(&result_str, "Error inserting density %d,%g,%s\n", id, density_double, name);
+                    }
+                    bu_vls_free(&result_str);
+                }
+            }
+        }
+    }
+
     ap->a_hit = hit;
     ap->a_miss = miss;
     ap->a_overlap = overlap;
