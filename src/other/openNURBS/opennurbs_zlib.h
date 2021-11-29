@@ -28,12 +28,6 @@
 // and statically link with the zlib library. All the necessary
 // header files are included by opennurbs.h.
 
-
-#if !defined(Z_PREFIX)
-/* decorates zlib functions with a "z_" prefix to prevent symbol collision. */
-#define Z_PREFIX
-#endif
-
 #if !defined(MY_ZCALLOC)
 /* have zlib use oncalloc() and onfree() for memory managment*/
 #define MY_ZCALLOC

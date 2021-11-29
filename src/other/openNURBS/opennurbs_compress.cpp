@@ -131,7 +131,7 @@ bool ON_CompressStream::In( ON__UINT64 size, const void* uncompressed_buffer )
     // compressed output in m_zlib.strm.next_out[], or do both.
 
     // provide storage for compressed stream output
-    strm.next_out  = (z_Bytef*)out_buffer;
+    strm.next_out  = (Bytef*)out_buffer;
     strm.avail_out = sizeof_out_buffer;
 
     if ( strm.avail_in <= 0 )
@@ -145,7 +145,7 @@ bool ON_CompressStream::In( ON__UINT64 size, const void* uncompressed_buffer )
       ON__UINT64 sz = (size > max_sz) ? max_sz : size;
       m_in_size += sz;
       m_in_crc = ON_CRC32(m_in_crc,(size_t)sz,uncompressed_buffer); // (size_t) cast is safe because sz <= max_sz = 0x7FFFFFF0
-      strm.next_in = (z_Bytef*)uncompressed_buffer;
+      strm.next_in = (Bytef*)uncompressed_buffer;
       strm.avail_in = (ON__UINT32)sz;
       uncompressed_buffer = ((const unsigned char*)uncompressed_buffer) + sz;
       size -= sz;
@@ -155,7 +155,7 @@ bool ON_CompressStream::In( ON__UINT64 size, const void* uncompressed_buffer )
     // calculate compression
     ON__UINT32 avail_in0 = strm.avail_in;
     ON__UINT32 avail_out0 = strm.avail_out;
-    zrc = z_deflate( &strm, Z_NO_FLUSH ); 
+    zrc = deflate( &strm, Z_NO_FLUSH );
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
@@ -238,11 +238,11 @@ bool ON_CompressStream::End()
     // provide storage for compressed stream output
     strm.avail_in = 0;
     strm.next_in = 0;
-    strm.next_out  = (z_Bytef*)out_buffer;
+    strm.next_out  = (Bytef*)out_buffer;
     strm.avail_out = sizeof_out_buffer;
 
     // finish compression calculation
-    zrc = z_deflate( &strm, Z_FINISH ); 
+    zrc = deflate( &strm, Z_FINISH );
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
@@ -449,7 +449,7 @@ bool ON_UncompressStream::In( ON__UINT64 size, const void* compressed_buffer )
     // uncompressed output in strm.next_out[], or do both.
 
     // provide storage for uncompressed stream output
-    strm.next_out  = (z_Bytef*)out_buffer;
+    strm.next_out  = (Bytef*)out_buffer;
     strm.avail_out = sizeof_out_buffer;
 
     if ( strm.avail_in <= 0 )
@@ -463,7 +463,7 @@ bool ON_UncompressStream::In( ON__UINT64 size, const void* compressed_buffer )
       ON__UINT64 sz = (size > max_sz) ? max_sz : size;
       m_in_size += sz;
       m_in_crc = ON_CRC32(m_in_crc,(size_t)sz,compressed_buffer); // (size_t) cast is safe because sz <= max_sz = 0x7FFFFFF0
-      strm.next_in = (z_Bytef*)compressed_buffer;
+      strm.next_in = (Bytef*)compressed_buffer;
       strm.avail_in = (ON__UINT32)sz;
       compressed_buffer = ((const unsigned char*)compressed_buffer) + sz;
       size -= sz;
@@ -473,7 +473,7 @@ bool ON_UncompressStream::In( ON__UINT64 size, const void* compressed_buffer )
     // calculate compression
     ON__UINT32 avail_in0 = strm.avail_in;
     ON__UINT32 avail_out0 = strm.avail_out;
-    zrc = z_inflate( &strm, Z_NO_FLUSH ); 
+    zrc = inflate( &strm, Z_NO_FLUSH );
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
@@ -556,11 +556,11 @@ bool ON_UncompressStream::End()
     // provide storage for compressed stream output
     strm.avail_in = 0;
     strm.next_in = 0;
-    strm.next_out  = (z_Bytef*)out_buffer;
+    strm.next_out  = (Bytef*)out_buffer;
     strm.avail_out = sizeof_out_buffer;
 
     // finish compression calculation
-    zrc = z_inflate( &strm, Z_FINISH ); 
+    zrc = inflate( &strm, Z_FINISH );
     if ( zrc < 0 ) 
     {
       // Something went haywire - bail out.
