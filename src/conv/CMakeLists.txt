@@ -52,7 +52,7 @@ BRLCAD_ADDEXEC(k-g k-g.cpp "libwdb;librt;libbu;${M_LIBRARY}" FOLDER Conv)
 BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}" FOLDER Conv)
 
 if(BRLCAD_ENABLE_TCL)
-  include_directories(${TCLCAD_INCLUDE_DIRS})
+  BRLCAD_INCLUDE_DIRS(TCLCAD_INCLUDE_DIRS)
   BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}" FOLDER Conv)
 else(BRLCAD_ENABLE_TCL)
   CMAKEFILES(enf-g.c)
@@ -101,9 +101,9 @@ BRLCAD_ADDEXEC(obj-g "${obj-g_SRCS}" "libbu;libbn;librt;libnmg;libwdb;libwfobj" 
 BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;" FOLDER Conv)
 
 if (BRLCAD_ENABLE_OPENVDB)
-  include_directories(${OpenVDB_INCLUDE_DIRS})
-  include_directories(${Tbb_INCLUDE_DIRS})
-  include_directories(${IlmBase_INCLUDE_DIRS})
+  include_directories(SYSTEM ${OpenVDB_INCLUDE_DIRS})
+  include_directories(SYSTEM ${Tbb_INCLUDE_DIRS})
+  include_directories(SYSTEM ${IlmBase_INCLUDE_DIRS})
   BRLCAD_ADDEXEC(g-vdb g-vdb.cpp "librt;libbu;libwdb;libanalyze;${OpenVDB_LIBRARIES};${IlmBase_LIBRARIES};${Tbb_LIBRARIES}" FOLDER Conv)
   # warnings off due to unfixable errors in boost and Ilmbase/half headers
   set_property(SOURCE g-vdb.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
