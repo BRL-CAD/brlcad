@@ -3464,6 +3464,10 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
     }   
   }
 
+  // BRL-CAD uses this for a tolerance check below
+  const ON_Surface *surf = loop.Face()->SurfaceOf();
+  double urange = (surf) ? (surf->Domain(0)[1] - surf->Domain(0)[0]) : DBL_MAX;
+  double vrange = (surf) ? (surf->Domain(1)[1] - surf->Domain(1)[0]) : DBL_MAX;
 
   // make sure ends of trims jibe
   int ci0, ci1, next_lti;
@@ -3492,6 +3496,12 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
       //    didn't get flagged as bad.
       double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;
       double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
+
+      // Oct 12 2009 Rather than using the above check, BRL-CAD uses
+      // relative uv size if it is available
+      xtol = (urange < DBL_MAX) ? urange * trim0.m_tolerance[0] : xtol;
+      ytol = (vrange < DBL_MAX) ? vrange * trim0.m_tolerance[1] : ytol;
+
       if ( xtol < ON_ZERO_TOLERANCE )
         xtol = ON_ZERO_TOLERANCE;
       if ( ytol < ON_ZERO_TOLERANCE )
