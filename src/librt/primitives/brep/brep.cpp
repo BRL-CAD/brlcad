@@ -2298,6 +2298,8 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
 
     model.m_object_table.SetCapacity(1);
 
+    // TODO - ONX_Model_Object replaced by ON_ModelGeometryComponent
+    // per https://discourse.mcneel.com/t/on5-on6-differences/116007
     ONX_Model_Object& mo = model.m_object_table.AppendNew();
     mo.m_object = bi->brep;
 
@@ -2353,6 +2355,8 @@ rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	RT_BREP_CK_MAGIC(bi);
 	model.Read(archive, &log);
 	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
+	// TODO - ONX_Model_Object replaced by ON_ModelGeometryComponent
+	// per https://discourse.mcneel.com/t/on5-on6-differences/116007
 	ONX_Model_Object mo = model.m_object_table[0];
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
 	return 0;
@@ -2414,6 +2418,8 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     //archive.Dump3dmChunk(err);
     model.Read(archive, &err);
 
+    // TODO - ONX_Model_Object replaced by ON_ModelGeometryComponent
+    // per https://discourse.mcneel.com/t/on5-on6-differences/116007
     ONX_Model_Object mo = model.m_object_table[0];
     bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
     if (mat) {
