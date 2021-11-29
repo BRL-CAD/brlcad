@@ -40,6 +40,7 @@
 extern "C" {
 #include "bu/ptbl.h"
 #include "bv.h"
+#define DM_WITH_RT
 #include "dm.h"
 }
 

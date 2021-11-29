@@ -36,12 +36,6 @@
 #include "bv/defines.h"
 #include "dm/defines.h"
 
-/* TODO - needed for dm_draw_labels, which cracks the database
- * objects to generate label info.  Need to think about how to
- * better handle this... - ideally should be a callback of some
- * sort on a bv scene object... */
-#include "rt/wdb.h"
-
 #ifndef DM_VIEW_H
 #define DM_VIEW_H
 
@@ -63,10 +57,23 @@ struct dm_view_data {
 };
 
 DM_EXPORT extern void dm_draw_faceplate(struct bview *v, double base2local, double local2base);
+
+/* As a temporary measure, require client codes to specifically ask to enable
+ * the bits that require librt in the headers if they're not going to be
+ * calling them.  Not ideal, but pulling in rt also pulls in openNURBS, which
+ * can have significant implications. */
+#ifdef DM_WITH_RT
+/* TODO - needed for dm_draw_labels, which cracks the database
+ * objects to generate label info.  Need to think about how to
+ * better handle this... - ideally should be a callback of some
+ * sort on a bv scene object... */
+#include "rt/wdb.h"
+
 DM_EXPORT extern void dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *d, double base2local, double local2base);
 
 /* Stripped down form of dm_draw_viewobjs that does just what's needed for the new setup */
 DM_EXPORT extern void dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_draw_custom)(struct bview *, double, double, void *), void *u_data);
+#endif /* DM_NO_RT */
 
 __END_DECLS
 

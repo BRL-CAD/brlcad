@@ -27,6 +27,7 @@
 #include "common.h"
 #include "bu/units.h"
 #include "ged.h"
+#define DM_WITH_RT
 #include "tclcad.h"
 
 /* Private headers */
