@@ -54,7 +54,6 @@ void
 plottrim(const ON_BrepTrim &trim, struct bu_list *vlfree, struct bv_vlblock *vbp, int plotres, bool dim3d, const int red = 255, const int green = 255, const int blue = 0)
 {
     struct bu_list *vhead;
-    ON_2dPoint from, to;
     const ON_Surface *surf = trim.SurfaceOf();
 
     ON_TextLog tl(stderr);
@@ -107,7 +106,6 @@ plotcurve(const ON_Curve &curve, struct bu_list *vlfree, struct bv_vlblock *vbp,
 {
     struct bu_list *vhead;
     fastf_t pt1[3], pt2[3];
-    ON_2dPoint from, to;
 
     vhead = bv_vlblock_find(vbp, red, green, blue);
 
@@ -186,7 +184,6 @@ plotsurface(const ON_Surface &surf, struct bu_list *vlfree, struct bv_vlblock *v
 {
     struct bu_list *vhead = NULL;
     fastf_t pt1[3], pt2[3];
-    ON_2dPoint from, to;
     fastf_t hsv[3];
     unsigned char fill_rgb[3];
 
@@ -240,7 +237,6 @@ plotface(const ON_BrepFace &face, struct bu_list *vlfree, struct bv_vlblock *vbp
     const ON_Surface* surf = face.SurfaceOf();
     fastf_t umin, umax;
     fastf_t pt1[3], pt2[3];
-    ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
 
@@ -283,7 +279,6 @@ plotUVDomain2d(ON_BrepFace *face, struct bu_list *vlfree, struct bv_vlblock *vbp
     fastf_t umin, umax, urange;
     fastf_t vmin, vmax, vrange;
     fastf_t pt1[3], pt2[3];
-    ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
 
@@ -829,7 +824,6 @@ plottrimdirection(const ON_BrepFace &face, struct bu_list *vlfree, struct bv_vlb
     const ON_Surface* surf = face.SurfaceOf();
     fastf_t umin, umax;
     fastf_t pt1[3], pt2[3];
-    ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
 
@@ -887,7 +881,6 @@ plotsurfacenormals(const ON_Surface &surf, struct bu_list *vlfree, struct bv_vlb
 {
     struct bu_list *vhead;
     fastf_t pt1[3], pt2[3];
-    ON_2dPoint from, to;
 
     vhead = bv_vlblock_find(vbp, GREEN);
 
@@ -915,7 +908,6 @@ plotsurfaceknots(ON_Surface &surf, struct bu_list *vlfree, struct bv_vlblock *vb
 {
     struct bu_list *vhead;
     fastf_t pt1[3], pt2[3];
-    ON_2dPoint from, to;
     int spanu_cnt = surf.SpanCount(0);
     int spanv_cnt = surf.SpanCount(1);
     fastf_t *spanu = NULL;
