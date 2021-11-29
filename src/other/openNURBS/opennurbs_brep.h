@@ -4092,6 +4092,7 @@ protected:
         );
 
   // helpers for validation checking
+public:
   bool IsValidTrim(int trim_index,ON_TextLog* text_log) const;
   bool IsValidTrimTopology(int trim_index,ON_TextLog* text_log) const;
   bool IsValidTrimGeometry(int trim_index,ON_TextLog* text_log) const;
@@ -4117,6 +4118,7 @@ protected:
   bool IsValidVertexGeometry(int vertex_index,ON_TextLog* text_log) const;
   bool IsValidVertexTolerancesAndFlags(int vertex_index,ON_TextLog* text_log) const;
 
+protected:
   void SetTolsFromLegacyValues();
 
   // read helpers to support various versions
