@@ -12,6 +12,7 @@ add_subdirectory(nmg)
 add_subdirectory(optical)
 add_subdirectory(qtcad)
 add_subdirectory(rt)
+add_subdirectory(tclcad)
 
 set(public_hdrs
   RtServerImpl.h
