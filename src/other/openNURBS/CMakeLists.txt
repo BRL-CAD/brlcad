@@ -77,9 +77,9 @@ mark_as_advanced(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
 
 # these are files no longer in upstream openNURBS but retained for reference
 set(OPENNURBS_REF
-  opennurbs_basic.cpp
-  opennurbs_brep_changesrf.cpp
-  opennurbs_brep_kinky.cpp
+  #opennurbs_basic.cpp
+  #opennurbs_brep_changesrf.cpp
+  #opennurbs_brep_kinky.cpp
   opennurbs_x.cpp
   )
 
@@ -90,11 +90,10 @@ set(OPENNURBS_OFF
   opennurbs_gl.h
   opennurbs_precompiledheader.cpp
   opennurbs_zlib_memory.cpp
-  opennurbs_x.h
   )
 
 set(OPENNURBS_SOURCES
-	#${OPENNURBS_REF}
+	${OPENNURBS_REF}
 	opennurbs_3dm_attributes.cpp
 	opennurbs_3dm_properties.cpp
 	opennurbs_3dm_settings.cpp
@@ -441,6 +440,7 @@ set(OPENNURBS_HEADERS
 	opennurbs_win_dwrite.h
 	opennurbs_wip.h
 	opennurbs_workspace.h
+	opennurbs_x.h
 	opennurbs_xform.h
 	opennurbs_zlib.h
 	)
