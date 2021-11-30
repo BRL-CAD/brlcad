@@ -546,4 +546,5 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {
     return &pinfo;
 }
+
 #endif /* GED_PLUGIN */

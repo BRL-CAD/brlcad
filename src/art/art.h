@@ -139,6 +139,8 @@ private:
     struct application* ap;
     struct rt_i* rtip;
     struct resource* resources;
+    point_t min;
+    point_t max;
 
     static int get_id();
 
