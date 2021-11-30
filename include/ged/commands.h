@@ -234,6 +234,11 @@ GED_EXPORT extern int ged_mat_scale_about_pnt(struct ged *gedp, int argc, const 
 GED_EXPORT extern int ged_mater(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Apply and modify material properties to a specific object.
+ */
+GED_EXPORT extern int ged_material(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Globs expression against database objects, does not return tokens that match nothing
  */
 GED_EXPORT extern int ged_match(struct ged *gedp, int argc, const char *argv[]);

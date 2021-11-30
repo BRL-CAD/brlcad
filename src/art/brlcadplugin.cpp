@@ -190,6 +190,10 @@ BrlcadObject::BrlcadObject(
     : asr::ProceduralObject(name, params)
 {
     configure_raytrace_application(get_database().c_str(), get_object_count(), get_objects());
+    VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
+    VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
+    // VMOVE(min, ap->a_uvec);
+    // VMOVE(max, ap->a_vvec);
 }
 
 
@@ -203,6 +207,8 @@ BrlcadObject:: BrlcadObject(
     this->ap = p_ap;
     this->rtip = p_ap->a_rt_i;
     this->resources = p_resources;
+    VMOVE(this->min, ap->a_uvec);
+    VMOVE(this->max, ap->a_vvec);
 }
 
 
@@ -210,8 +216,8 @@ BrlcadObject:: BrlcadObject(
 void
 BrlcadObject::release()
 {
-    bu_free(resources, "appleseed");
-    //bu_free(ap, "appleseed");
+    // bu_free(resources, "appleseed");
+    // bu_free(ap, "appleseed");
     delete this;
 }
 
@@ -248,10 +254,17 @@ BrlcadObject::compute_local_bbox() const
     if (l_rtip->needprep)
 	rt_prep_parallel(l_rtip, 1);
 
-    fprintf(output, "Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", l_rtip->mdl_min[X], -l_rtip->mdl_min[Z], l_rtip->mdl_min[Y], l_rtip->mdl_max[X], -l_rtip->mdl_max[Z], l_rtip->mdl_max[Y]);
+    // point_t min;
+    // VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
+    // VMOVE(min, ap->a_uvec);
+    // point_t max;
+    // VMOVE(max, ap->a_vvec);
+    // VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
+
+    fprintf(output, "Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
     fflush(output);
 
-    return asr::GAABB3(asr::GVector3(l_rtip->mdl_min[X], -l_rtip->mdl_min[Z], l_rtip->mdl_min[Y]), asr::GVector3(l_rtip->mdl_max[X], -l_rtip->mdl_max[Z], l_rtip->mdl_max[Y]));
+    return asr::GAABB3(asr::GVector3(V3ARGS(min)), asr::GVector3(V3ARGS(max)));
     // return asr::GAABB3(asr::GVector3(-r), asr::GVector3(r));
 }
 
@@ -328,7 +341,7 @@ BrlcadObject::intersect(const asr::ShadingRay& ray) const
 
 // Compute a front point, a back point and the geometric normal in object
 // instance space for a given ray with origin being a point on the surface
-void 
+void
 BrlcadObject::refine_and_offset(
     const asf::Ray3d& obj_inst_ray,
     asf::Vector3d& obj_inst_front_point,
