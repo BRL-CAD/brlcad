@@ -9,7 +9,7 @@ link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
 BRLCAD_INCLUDE_DIRS(IFC_INCLUDE_DIRS)
 
-set(IFC_SCHEMA_FILE ${STEPCODE_DIR}/data/ifc4/IFC4.exp)
+set(IFC_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ifc4/IFC4.exp)
 
 GENERATE_SCHEMA_INPUTS(${IFC_SCHEMA_FILE} ifcg)
 

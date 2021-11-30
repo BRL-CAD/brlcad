@@ -918,7 +918,8 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;
     int *pts_dbl, i, j, nseg;
-    int jj, na, nb, nell, recalc_b;
+    int na = 0;
+    int jj, nb, nell, recalc_b;
     mat_t R;
     mat_t invR;
     struct rt_epa_internal *xip;
@@ -1001,7 +1002,6 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     /* see if any segments need further breaking up */
     recalc_b = 0;
-    na = 0;
     pos_a = pts_a;
     while (pos_a->next) {
 	na = rt_mk_parabola(pos_a, r1, mag_h, dtol, ntol);
@@ -1205,7 +1205,8 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t **ellipses, **normals, theta_new, theta_prev;
     int *pts_dbl, face, i, j, nseg;
     int *segs_per_ell;
-    int jj, na, nb, nell, recalc_b;
+    int na = 0;
+    int jj, nb, nell, recalc_b;
     mat_t R;
     mat_t invR;
     struct rt_epa_internal *xip;
@@ -1299,7 +1300,6 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* see if any segments need further breaking up */
     recalc_b = 0;
-    na = 0;
     pos_a = pts_a;
     while (pos_a->next) {
 	na = rt_mk_parabola(pos_a, r1, mag_h, dtol, ntol);
@@ -1651,7 +1651,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Warning:  type conversion */
     if (mat == NULL) mat = bn_mat_identity;
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	flip_fastf_float(v1, &rp->s.s_values[0*3], 1, 1);
 	flip_fastf_float(v2, &rp->s.s_values[1*3], 1, 1);
 	flip_fastf_float(v3, &rp->s.s_values[2*3], 1, 1);
@@ -1667,7 +1667,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     VUNITIZE(xip->epa_Au);
 
-    if (dbip->dbi_version < 0) {
+    if (dbip && dbip->dbi_version < 0) {
 	v1[X] = flip_dbfloat(rp->s.s_values[3*3+0]);
 	v1[Y] = flip_dbfloat(rp->s.s_values[3*3+1]);
     } else {

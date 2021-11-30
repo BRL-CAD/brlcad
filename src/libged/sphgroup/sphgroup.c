@@ -100,7 +100,6 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
 		if (DIST_PNT_PNT(centerpt, bsph->v) <= MAGNITUDE(bsph->a)) inside_flag = 1;
 		if (inside_flag == 1) {
 		    if (_ged_combadd(gedp, dp, (char *)argv[1], 0, WMOP_UNION, 0, 0) == RT_DIR_NULL) return GED_ERROR;
-		    inside_flag = 0;
 		}
 	    }
 	}

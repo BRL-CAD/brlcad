@@ -588,6 +588,9 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     vect_t cor_pprime;	/* new ray origin */
     fastf_t *cor_proj;
 
+    if (!stp || !(*stp) || !rp || !segp || !ap)
+	return;
+
     /* Allocate space for polys and roots */
     C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
     val = (bn_complex_t (*)[4])bu_malloc(n * sizeof(bn_complex_t) * 4,
@@ -1139,8 +1142,6 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
-    rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + tip->r_h));
-
     if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
 	rel = 0.0;		/* none */
     } else {
@@ -1148,6 +1149,9 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	 * by scaling w.r.t. the torus diameter.
 	 */
 	rel = ttol->rel * 2 * (tip->r_a+tip->r_h);
+
+	// TODO - should we be using this instead of the above?
+	// rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + tip->r_h));
     }
     /* Take tighter of two (absolute) tolerances */
     if (ttol->abs <= 0.0) {
@@ -1440,7 +1444,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    flip_fastf_float(vec, rp->s.s_values, 4, dbip->dbi_version < 0 ? 1 : 0);
+    flip_fastf_float(vec, rp->s.s_values, 4, (dbip && dbip->dbi_version < 0) ? 1 : 0);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;

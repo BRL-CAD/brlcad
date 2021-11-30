@@ -213,7 +213,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 HIDDEN int
 build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 {
-    struct rt_comb_internal *comb;
+    struct rt_comb_internal *comb = NULL;
     size_t node_count=0;
     int nonsubs=0;
     union tree *tp;
@@ -546,14 +546,16 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	tp = (union tree *)NULL;
 
     if (comb) {
-	db_free_tree(comb->tree, &rt_uniresource);
-	comb->tree = NULL;
-    }
-    comb->tree = tp;
+	if (comb->tree) {
+	    db_free_tree(comb->tree, &rt_uniresource);
+	    comb->tree = NULL;
+	}
+	comb->tree = tp;
 
-    db5_standardize_avs(&avs);
-    db5_sync_attr_to_comb(comb, &avs, dp);
-    db5_sync_comb_to_attr(&avs, comb);
+	db5_standardize_avs(&avs);
+	db5_sync_attr_to_comb(comb, &avs, dp);
+	db5_sync_comb_to_attr(&avs, comb);
+    }
 
     if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
@@ -775,7 +777,6 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	}
     }
 
-    argc -= bu_optind - 1;
     argv += bu_optind - 1;
 
     dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);

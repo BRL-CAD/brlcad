@@ -170,17 +170,14 @@ ged_find_metaball_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[]
 struct wdb_metaball_pnt *
 _ged_metaball_add_pnt(struct rt_metaball_internal *mbip, struct wdb_metaball_pnt *mbp, const point_t new_pt)
 {
-    struct wdb_metaball_pnt *last;
-    struct wdb_metaball_pnt *newmbp;
-
+    struct wdb_metaball_pnt *newmbp = NULL;
     RT_METABALL_CK_MAGIC(mbip);
 
     if (mbp) {
 	BU_CKMAG(mbp, WDB_METABALLPT_MAGIC, "metaball point");
-	last = mbp;
     } else {
 	/* add new point to end of metaball solid */
-	last = BU_LIST_LAST(wdb_metaball_pnt, &mbip->metaball_ctrl_head);
+	struct wdb_metaball_pnt *last = BU_LIST_LAST(wdb_metaball_pnt, &mbip->metaball_ctrl_head);
 
 	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
 	    BU_GET(newmbp, struct wdb_metaball_pnt);

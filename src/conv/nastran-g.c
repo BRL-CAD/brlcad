@@ -424,10 +424,8 @@ HIDDEN int
 get_next_record(FILE *fp, int call_input, int write_flag)
 {
     char *tmp;
-    int form;
+    int form = UNKNOWN;
     int i;
-
-    form = UNKNOWN;
 
     /* read next line of input, skipping comments */
     while (1) {
@@ -498,7 +496,6 @@ get_next_record(FILE *fp, int call_input, int write_flag)
     }
 
     /* default is SMALL_FIELD */
-    form = SMALL_FIELD;
     get_small_field_input(fp, write_flag);
     return 1;
 

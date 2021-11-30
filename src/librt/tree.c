@@ -475,6 +475,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 	mat = (matp_t)tsp->ts_mat;
     } else {
 	/* Identity matrix */
+	// TODO - should this be mat = (matp_t)bn_mat_identity; instead?
 	mat = (matp_t)0;
     }
 
@@ -504,11 +505,6 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 
     stp->st_id = ip->idb_type;
     stp->st_meth = &OBJ[ip->idb_type];
-    if (mat) {
-	mat = stp->st_matp;
-    } else {
-	mat = (matp_t)bn_mat_identity;
-    }
 
     RT_CK_DB_INTERNAL(ip);
 

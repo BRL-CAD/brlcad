@@ -209,14 +209,12 @@ rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
 
 
 void
-rt_cut_it(register struct rt_i *rtip, int ncpu)
+rt_cut_it(register struct rt_i *rtip, int UNUSED(ncpu))
 {
     register struct soltab *stp;
     union cutter *finp;	/* holds the finite solids */
     FILE *plotfp;
     int num_splits=0;
-
-    if (ncpu < 1) ncpu = 1; /* sanity */
 
     /* Make a list of all solids into one special boxnode, then refine. */
     BU_ALLOC(finp, union cutter);
@@ -1166,18 +1164,14 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 void
 remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 {
-    size_t idx;
-    size_t i;
-
     switch (cutp->cut_type) {
 	case CUT_BOXNODE:
 	    if (stp->st_npieces) {
 		int remove_count, new_count;
 		struct rt_piecelist *new_piece_list;
 
-		idx = 0;
 		remove_count = 0;
-		for (idx=0; idx<cutp->bn.bn_piecelen; idx++) {
+		for (size_t idx = 0; idx<cutp->bn.bn_piecelen; idx++) {
 		    if (cutp->bn.bn_piecelist[idx].stp == stp) {
 			remove_count++;
 		    }
@@ -1191,8 +1185,8 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 			    sizeof(struct rt_piecelist),
 			    "bn_piecelist");
 
-			i = 0;
-			for (idx=0; idx<cutp->bn.bn_piecelen; idx++) {
+			size_t i = 0;
+			for (size_t idx = 0; idx<cutp->bn.bn_piecelen; idx++) {
 			    if (cutp->bn.bn_piecelist[idx].stp != stp) {
 				new_piece_list[i] = cutp->bn.bn_piecelist[idx];
 				i++;
@@ -1203,7 +1197,7 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 			new_piece_list = NULL;
 		    }
 
-		    for (idx=0; idx<cutp->bn.bn_piecelen; idx++) {
+		    for (size_t idx = 0; idx<cutp->bn.bn_piecelen; idx++) {
 			if (cutp->bn.bn_piecelist[idx].stp == stp) {
 			    bu_free(cutp->bn.bn_piecelist[idx].pieces, "pieces");
 			}
@@ -1214,11 +1208,11 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 		    cutp->bn.bn_maxpiecelen = new_count;
 		}
 	    } else {
-		for (idx=0; idx < cutp->bn.bn_len; idx++) {
+		for (size_t idx = 0; idx < cutp->bn.bn_len; idx++) {
 		    if (cutp->bn.bn_list[idx] == stp) {
 			/* found it, now remove it */
 			cutp->bn.bn_len--;
-			for (i=idx; i < cutp->bn.bn_len; i++) {
+			for (size_t i = idx; i < cutp->bn.bn_len; i++) {
 			    cutp->bn.bn_list[i] = cutp->bn.bn_list[i+1];
 			}
 			return;

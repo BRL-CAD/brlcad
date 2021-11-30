@@ -212,7 +212,7 @@ revolve(int entityno)
     }
 
     /* Eliminate last struct if not used */
-    if (trcptr->name[0] == '\0') {
+    if (trcptr && trcptr->name[0] == '\0') {
       if (trcptr->prev) trcptr->prev->next = NULL;
       bu_free((char *)trcptr, "Revolve: trcptr");
     }
@@ -290,14 +290,17 @@ revolve(int entityno)
 
     if (fract < 1.0) {
 	/* Must calculate a cutting solid */
-	vect_t pdir, enddir, startdir;
-	fastf_t len, theta;
+	vect_t pdir = VINIT_ZERO;
+	vect_t enddir = VINIT_ZERO;
+	vect_t startdir = VINIT_ZERO;
+	fastf_t len = 0.0;
+	fastf_t theta = 0.0;
 	point_t pts[8];
 
 	/* Calculate direction from axis to curve */
 	len = 0.0;
 	ptr = curv_pts;
-	while (ZERO(len)) {
+	while (ptr && ZERO(len)) {
 	    VSUB2(pdir, ptr->pt, pt);
 	    VJOIN1(startdir, pdir, -VDOT(pdir, adir), adir);
 	    len = MAGNITUDE(startdir);

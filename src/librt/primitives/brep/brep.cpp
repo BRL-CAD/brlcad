@@ -1615,7 +1615,7 @@ plotisoUCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
 
     int hit_cnt = trim_hits.size();
 
-    cnt = 1;
+    //cnt = 1;
     //bu_log("\tplotisoUCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, from, v , to, v);
 
     if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
@@ -1707,7 +1707,7 @@ plotisoVCheckForTrim(struct bu_list *vlfree, struct bu_list *vhead, const Surfac
     trim_hits.unique(near_equal);
 
     size_t hit_cnt = trim_hits.size();
-    cnt = 1;
+    //cnt = 1;
 
     //bu_log("\tplotisoVCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, u, from, u, to);
 
@@ -2295,6 +2295,8 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     default_style.SetDefaults();
     model.m_dimstyle_table.Reserve(1);
     model.m_dimstyle_table.Append(default_style);
+
+    model.m_object_table.SetCapacity(1);
 
     ONX_Model_Object& mo = model.m_object_table.AppendNew();
     mo.m_object = bi->brep;
@@ -2951,6 +2953,10 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 		      const struct bview *UNUSED(info))
 {
     TRACE1("rt_brep_plot");
+
+    if (!vhead || !pathp || pathp->fp_len <= 0 || !ip || !ttol || !tol)
+	return -1;
+
     struct rt_brep_internal* bi;
     const char *solid_name =  DB_FULL_PATH_CUR_DIR(pathp)->d_namep;
     ON_wString wstr;

@@ -125,7 +125,9 @@ getTrie(char *name, Trie *triep)
     /* Clobber key-stroke, and return it. */
     --name;
     *name = NUL;
-    assert(curp != TRIE_NULL);
+    if (curp == TRIE_NULL) {
+	bu_exit(BRLCAD_ERROR, "curp == TRIE_NULL, trie.c line %d\n", __LINE__);
+    }
     return curp->l.t_func;
 }
 
@@ -185,13 +187,15 @@ int
 writeTrie(Trie *triep, int level, FILE *fp)
 {
     Trie *tp = triep;
-    static char name_buf[MAX_TRIE_LEVEL+1], *namep;
+    static char name_buf[MAX_TRIE_LEVEL+1], *namep = NULL;
     if (tp == TRIE_NULL)
 	return 1;
     if (tp->n.t_altr != TRIE_NULL)
 	(void) writeTrie(tp->n.t_altr, level, fp);
     if (level == 0)
 	namep = name_buf;
+    if (!namep)
+	return 1;
     *namep = tp->n.t_char;
     if (tp->n.t_next == TRIE_NULL) {
 	/* At end of name, so print it out. */

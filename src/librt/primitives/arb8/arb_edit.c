@@ -638,7 +638,6 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
 	    /* edge direction comes from edgedir() in pos_model */
 	    VMOVE(edge_dir, pos_model);
 	    VMOVE(pos_model, arb->pt[pt1]);
-	    newedge = 0;
 	} else {
 	    /* must calculate edge direction */
 	    VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);

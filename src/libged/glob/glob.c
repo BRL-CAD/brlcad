@@ -108,7 +108,7 @@ _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, 
 
     src = bu_strdup(input);
 
-    start = end = src;
+    end = src;
     while (*end != '\0') {
 	/* Run through entire string */
 

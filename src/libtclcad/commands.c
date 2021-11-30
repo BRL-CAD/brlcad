@@ -2454,7 +2454,6 @@ to_data_pick_func(struct ged *gedp,
     static const char *data_polygons_str = "data_polygons";
     static const char *data_labels_str = "data_labels";
     static const char *sdata_labels_str = "sdata_labels";
-    static const char *data_lines_str = "data_lines";
     static const char *sdata_lines_str = "sdata_lines";
     static const char *data_arrows_str = "data_arrows";
     static const char *sdata_arrows_str = "sdata_arrows";
@@ -2606,13 +2605,6 @@ to_data_pick_func(struct ged *gedp,
 	    maxY = vpoint[Y] + tol;
 	    if (minX < vx && vx < maxX &&
 		    minY < vy && vy < maxY) {
-		if (top_z < vpoint[Z]) {
-		    top_z = vpoint[Z];
-		    top_data_str = data_lines_str;
-		    top_i = i;
-		    VMOVE(top_point, dpoint);
-		    found_top = 1;
-		}
 		bu_vls_printf(gedp->ged_result_str, "data_lines %d {%lf %lf %lf}", i, V3ARGS(dpoint));
 		return GED_OK;
 	    }
@@ -3169,7 +3161,7 @@ to_dplot(struct ged *gedp,
 	aflag = 1;
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    while ((ret = (*func)(gedp, ac, (const char **)av)) & GED_MORE) {
+    while ((*func)(gedp, ac, (const char **)av) & GED_MORE) {
 	int ac_more;
 	const char **avmp;
 	const char **av_more = NULL;
@@ -3645,7 +3637,7 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 	av[2] = NULL;
 	ret = ged_how(data->gedp, 2, av);
 	if (ret == GED_OK) {
-	    ret = bu_sscanf(bu_vls_cstr(data->gedp->ged_result_str), "%d", &dmode);
+	    bu_sscanf(bu_vls_cstr(data->gedp->ged_result_str), "%d", &dmode);
 	}
 	if (dmode == 5) {
 	    bu_vls_printf(&path_dmode, "-h");

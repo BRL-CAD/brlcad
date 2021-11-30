@@ -1022,8 +1022,8 @@ main(int argc, char *argv[])
      * initialization.
      */
 #ifdef HAVE_PIPE
-    int pipe_out[2];
-    int pipe_err[2];
+    int pipe_out[2] = {-1, -1};
+    int pipe_err[2] = {-1, -1};
 #endif
 
     int rateflag = 0;

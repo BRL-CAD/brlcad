@@ -54,7 +54,8 @@ main(int ac, char *av[])
 	bu_exit(1, "Usage: %s {extension} {context} {expected}\n", av[0]);
 
     sscanf(av[2], "%d", &context);
-    sscanf(av[3], "%d", &expected);
+
+    expected = bu_file_mime_int(av[3]);
 
     if (context >= BU_MIME_UNKNOWN)
 	return -1;

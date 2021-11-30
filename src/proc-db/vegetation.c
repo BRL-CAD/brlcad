@@ -105,8 +105,8 @@ segmentToSegmentDistance(const point_t S1P0, const point_t S1P1, const point_t S
     d = VDOT(u, w);
     e = VDOT(v, w);
     D = a*c - b*b;  /* always >= 0 */
-    sc = sN = sD = D;  /* sc = sN / sD, default sD = D >= 0 */
-    tc = tN = tD = D;  /* tc = tN / tD, default tD = D >= 0 */
+    sD = D;  /* default sD = D >= 0 */
+    tD = D;  /* default tD = D >= 0 */
 
 
     /* compute the line parameters of the two closest points */
@@ -443,9 +443,11 @@ branchGrowthPoints(plant_t *plant)
 	    }
 	    printf("age: %d\nsegmentCount: %d\nsegmentProbabilty: %f\n", plant->structure->age, totalSegments, segmentProbability);
 
-	    totalSegments = branchWithProbability(plant, plant->structure, plant->characteristic->minBranchingAge, plant->characteristic->maxBranchingAge, segmentProbability);
+	    branchWithProbability(plant, plant->structure, plant->characteristic->minBranchingAge, plant->characteristic->maxBranchingAge, segmentProbability);
 	    /*
-	      printf("branched %d times\n", totalSegments);
+	     * If we need to print out branching, comment out above line and uncomment below
+	       totalSegments = branchWithProbability(plant, plant->structure, plant->characteristic->minBranchingAge, plant->characteristic->maxBranchingAge, segmentProbability);
+	       printf("branched %d times\n", totalSegments);
 	    */
 	}
     }
@@ -931,12 +933,13 @@ main(int argc, char *argv[])
     if (branchingRate < SMALL_FASTF)
 	branchingRate = SMALL_FASTF;
 
-    if (argc > 5)
+    if (argc > 5) {
 	seed = atol(argv[5]);
-
-    /* save the seed just in case we want to know it */
-    seed=time(0);
+    } else {
+	seed=time(0);
+    }
     bn_randmt_seed(seed);
+    /* report the seed just in case we want to know it */
     printf("Vegetation seed is %ld\n", seed);
 
     fp=wdb_fopen("vegetation.g");

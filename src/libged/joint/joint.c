@@ -263,7 +263,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     topc = ged_who_argv(gedp, topv, (const char **)(topv+2000));
     dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
-    i = db_walk_tree(gedp->dbip, topc, (const char **)topv,
+    (void)db_walk_tree(gedp->dbip, topc, (const char **)topv,
 		     1,			/* Number of cpus */
 		     &mesh_initial_tree_state,
 		     0,			/* Begin region */
@@ -852,7 +852,7 @@ get_token(struct ged *gedp, union bu_lex_token *token, FILE *fip, struct bu_vls 
     bu_vls_nibble(str, used);
 
     {
-	if (J_DEBUG & DEBUG_J_LEX) {
+	if (keys && J_DEBUG & DEBUG_J_LEX) {
 	    int i;
 	    switch (token->type) {
 		case BU_LEX_KEYWORD:
@@ -2221,8 +2221,9 @@ joint_adjust(struct ged *gedp, struct joint *jp)
 
 	if (J_DEBUG & DEBUG_J_MOVE) {
 	    sofar = db_path_to_string(&jp->anim->an_path);
-	    bu_vls_printf(gedp->ged_result_str, "joint move: %s added animate %s to %s(%p)\n",
-			  jp->name, sofar, dp->d_namep, (void *)dp);
+	    if (dp)
+		bu_vls_printf(gedp->ged_result_str, "joint move: %s added animate %s to %s(%p)\n",
+			jp->name, sofar, dp->d_namep, (void *)dp);
 	}
     }
 
@@ -3107,7 +3108,7 @@ Middle:
      * this are better or solve also.
      */
     ssp = (struct solve_stack *) solve_head.forw;
-    for (j=0; (i = system_solve(gedp, pri-1, delta, epsilon)) == 0; j++)
+    for (j=0; (system_solve(gedp, pri-1, delta, epsilon) == 0); j++)
 	;
 
     /*

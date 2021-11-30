@@ -217,8 +217,10 @@ Getcurve(int curve, struct ptlist **curv_pts)
 			ptr->next = NULL;
 		    }
 		    ptr = ptr->prev;
-		    bu_free((char *)ptr->next, "Getcurve: ptr->next");
-		    ptr->next = NULL;
+		    if (ptr) {
+			bu_free((char *)ptr->next, "Getcurve: ptr->next");
+			ptr->next = NULL;
+		    }
 		    npts = ntuples;
 		    break;
 		}
@@ -247,8 +249,10 @@ Getcurve(int curve, struct ptlist **curv_pts)
 			ptr->prev = prev;
 		    }
 		    ptr = ptr->prev;
-		    bu_free((char *)ptr->next, "Getcurve: ptr->next");
-		    ptr->next = NULL;
+		    if (ptr) {
+			bu_free((char *)ptr->next, "Getcurve: ptr->next");
+			ptr->next = NULL;
+		    }
 		    npts = ntuples;
 		    break;
 		}
@@ -285,6 +289,17 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    Readint(&splroot->ndim, ""); /* 2->planar, 3->3d */
 	    Readint(&splroot->nsegs, ""); /* Number of segments */
 	    Readdbl(&a, "");	/* first breakpoint */
+
+	    if (splroot->ndim != 2 && splroot->ndim != 3) {
+		bu_log("Error in Getcurve, read invalid ndim: %d\n", splroot->ndim);
+		npts = 0;
+		break;
+	    }
+	    if (!splroot->nsegs) {
+		bu_log("Getcurve: nsegs == 0\n");
+		npts = 0;
+		break;
+	    }
 
 	    /* start a linked list of segments */
 	    seg = splroot->start;
@@ -348,8 +363,10 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		seg = seg->next;
 	    }
 	    ptr = ptr->prev;
-	    bu_free((char *)ptr->next, "Getcurve: ptr->next");
-	    ptr->next = NULL;
+	    if (ptr) {
+		bu_free((char *)ptr->next, "Getcurve: ptr->next");
+		ptr->next = NULL;
+	    }
 
 	    /* free the used memory */
 	    seg = splroot->start;
@@ -552,9 +569,13 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		case 1:	/* ellipse */
 		case 2: {
 		    /* hyperbola */
-		    double A1, C1, F1, alpha, beta;
+		    double A1 = 0.0;
+		    double C1 = 0.0;
+		    double F1 = 0.0;
+		    double alpha = 0.0;
+		    double beta = 0.0;
+		    point_t v3 = VINIT_ZERO;
 		    mat_t rot2;
-		    point_t v3;
 
 		    /* calculate center of ellipse or hyperbola */
 		    xc = (B*E/4.0 - D*C/2.0)/a;
@@ -606,7 +627,6 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    beta = 0.0;
 		    if (EQUAL(v2[0], v1[0]) && EQUAL(v2[1], v1[1])) {
 			/* full circle */
-			alpha = 0.0;
 			beta = 2.0*pi;
 		    }
 		    a = sqrt(fabs(F1/A1)); /* semi-axis length */

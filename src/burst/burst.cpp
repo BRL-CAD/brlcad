@@ -730,7 +730,7 @@ _burst_cmd_histogram_file(void *bs, int argc, const char **argv)
     brst_log(s, MSG_OUT, "%s\t\t%s\n", argv[0], bu_vls_cstr(&s->histfile));
 
 
-    return BRLCAD_OK;
+    return ret;
 }
 
 extern "C" int

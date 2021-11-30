@@ -696,7 +696,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	    point_t pnt;
 	    vect_t vec;
 
-	    if (dbip->dbi_version < 0) {
+	    if (dbip && dbip->dbi_version < 0) {
 		flip_fastf_float(pnt, rp[rno].q.q_verts[i], 1, 1);
 		flip_fastf_float(vec, rp[rno].q.q_norms[i], 1, 1);
 	    } else {

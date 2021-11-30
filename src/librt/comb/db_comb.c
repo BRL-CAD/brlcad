@@ -245,7 +245,11 @@ rt_comb_import4(
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
-	    flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
+	    if (dbip) {
+		flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, dbip->dbi_version < 0 ? 1 : 0);
+	    } else {
+		flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, 0);
+	    }
 
 	    /* Verify that rotation part is pure rotation */
 	    if (fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 ||
@@ -327,7 +331,7 @@ rt_comb_import4(
     }
 
     if (comb->region_flag) {
-	if (dbip->dbi_version < 0) {
+	if (!dbip || dbip->dbi_version < 0) {
 	    comb->region_id = flip_short(rp[0].c.c_regionid);
 	    comb->aircode = flip_short(rp[0].c.c_aircode);
 	    comb->GIFTmater = flip_short(rp[0].c.c_material);
@@ -404,7 +408,7 @@ rt_comb_export4(
 {
     struct rt_comb_internal *comb;
     size_t node_count;
-    size_t actual_count;
+    size_t actual_count = 0;
     struct rt_tree_array *rt_tree_array;
     union tree *tp;
     union record *rp;
@@ -441,7 +445,6 @@ rt_comb_export4(
 	comb->tree = TREE_NULL;
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
-	actual_count = 0;
     }
 
     /* Reformat the data into the necessary V4 granules */
@@ -646,21 +649,19 @@ db_tree_flatten_describe(
 	    fastf_t az, el;
 	    bn_ae_vec(&az, &el, itp->tr_l.tl_mat ?
 		      itp->tr_l.tl_mat : bn_mat_identity);
-	    bu_vls_printf(vls,
-			  " az=%g, el=%g, ",
-			  az, el);
+	    bu_vls_printf(vls, " az=%g, el=%g, ", az, el);
 	}
-	if (status & STAT_XLATE) {
+	if (status & STAT_XLATE && itp->tr_l.tl_mat) {
 	    bu_vls_printf(vls, " [%g, %g, %g]",
 			  itp->tr_l.tl_mat[MDX]*mm2local,
 			  itp->tr_l.tl_mat[MDY]*mm2local,
 			  itp->tr_l.tl_mat[MDZ]*mm2local);
 	}
-	if (status & STAT_SCALE) {
+	if (status & STAT_SCALE && itp->tr_l.tl_mat) {
 	    bu_vls_printf(vls, " scale %g",
 			  1.0/itp->tr_l.tl_mat[15]);
 	}
-	if (status & STAT_PERSP) {
+	if (status & STAT_PERSP && itp->tr_l.tl_mat) {
 	    bu_vls_printf(vls,
 			  " Perspective=[%g, %g, %g]??",
 			  itp->tr_l.tl_mat[12],
@@ -709,17 +710,17 @@ db_tree_describe(
 			      " az=%g, el=%g, ",
 			      az, el);
 	    }
-	    if (status & STAT_XLATE) {
+	    if (status & STAT_XLATE && tp->tr_l.tl_mat) {
 		bu_vls_printf(vls, " [%g, %g, %g]",
 			      tp->tr_l.tl_mat[MDX]*mm2local,
 			      tp->tr_l.tl_mat[MDY]*mm2local,
 			      tp->tr_l.tl_mat[MDZ]*mm2local);
 	    }
-	    if (status & STAT_SCALE) {
+	    if (status & STAT_SCALE && tp->tr_l.tl_mat) {
 		bu_vls_printf(vls, " scale %g",
 			      1.0/tp->tr_l.tl_mat[15]);
 	    }
-	    if (status & STAT_PERSP) {
+	    if (status & STAT_PERSP && tp->tr_l.tl_mat) {
 		bu_vls_printf(vls,
 			      " Perspective=[%g, %g, %g]??",
 			      tp->tr_l.tl_mat[12],
@@ -1131,7 +1132,6 @@ db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, con
 	    }
 
 	    if (BU_PTBL_LEN(stack) < 1) {
-		done = 1;
 		break;
 	    }
 	    comb_leaf = (union tree *)BU_PTBL_GET(stack, BU_PTBL_LEN(stack)-1);
@@ -1255,6 +1255,9 @@ db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, struct direct
     RT_CK_DBI(dbip);
     RT_CK_COMB(comb);
 
+    if (!children)
+	return 0;
+
     node_count = db_tree_nleaves(comb->tree);
     if (!node_count) return 0;
 
@@ -1264,6 +1267,8 @@ db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, struct direct
 
     if (children) {
 	if (!*children) (*children) = (struct directory **)bu_calloc(node_count + 1, sizeof(struct directory *), "directory array");
+	if (!*children)
+	    return 0;
     }
     if (bool_ops) {
 	if (!*bool_ops) (*bool_ops) = (int *)bu_calloc(node_count + 1, sizeof(int), "bool ops");

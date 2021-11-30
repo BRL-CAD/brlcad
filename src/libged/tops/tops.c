@@ -76,9 +76,6 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
-
     /* Can this be executed only sometimes?
        Perhaps a "dirty bit" on the database? */
     db_update_nref(gedp->dbip, &rt_uniresource);

@@ -122,7 +122,7 @@ struct jointInfo
     point_t kneeJoint;
     point_t ankleJoint;
 };
-
+#define JOINT_INFO_INIT {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
 
 /** Information for building the head */
 struct headInfo
@@ -133,6 +133,7 @@ struct headInfo
     vect_t headVector;
     vect_t neckVector;
 };
+#define HEAD_INFO_INIT {0.0, 0.0, 0.0, VINIT_ZERO, VINIT_ZERO}
 
 
 /** All information needed to build the torso lies here */
@@ -150,7 +151,7 @@ struct torsoInfo
     vect_t topTorsoVector;
     vect_t lowTorsoVector;
 };
-
+#define TORSO_INFO_INIT {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, VINIT_ZERO, VINIT_ZERO}
 
 /** All information needed to build the arms lie here */
 struct armInfo
@@ -170,7 +171,7 @@ struct armInfo
     vect_t lWristDirection;
     vect_t rWristDirection;
 };
-
+#define ARM_INFO_INIT {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
 
 /** All information needed to build the legs lies here */
 struct legInfo
@@ -191,7 +192,7 @@ struct legInfo
     vect_t lFootDirection;
     vect_t rFootDirection;
 };
-
+#define LEG_INFO_INIT {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
 
 enum sexes { male, female };
 enum ethnicities { generic, white, black, hispanic, asian, other }; /* divisions taken from army demographic sheet */
@@ -218,7 +219,7 @@ struct human_data_t
     int verbwrite;
 
 };
-
+#define HUMAN_DATA_INIT_ZERO {0.0, 0, male, generic, HEAD_INFO_INIT, TORSO_INFO_INIT, ARM_INFO_INIT, LEG_INFO_INIT, JOINT_INFO_INIT, 0, 0, 0, 0}
 
 HIDDEN void Auto(struct human_data_t *dude);
 HIDDEN void RandAuto(struct human_data_t *dude);
@@ -2188,7 +2189,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
     struct wmember crowd;
     struct bu_vls name = BU_VLS_INIT_ZERO;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    struct human_data_t human_data;
+    struct human_data_t human_data = HUMAN_DATA_INIT_ZERO;
     int showBoxes = 0, troops = 0, stance = 0;
     fastf_t percentile = (fastf_t)50.0;
     char suffix[MAXLENGTH]="";
@@ -2466,7 +2467,6 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
 	    bu_log("%s\n", body[0]);
 	    num++;
 	}
-	is_region = 0;
 	for (z=0; z<(troops*troops); z++) {
 	    char comber[MAXLENGTH];
 

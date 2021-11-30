@@ -136,9 +136,9 @@ Sig_Catcher(int sig)
 static void
 Skip(void)					/* skip over raster data */
 {
-    int c;
+    int c = getc(gfp);
 
-    if ((c = getc(gfp)) == EOF)
+    if (c == EOF)
 	Fatal(fbp, "Error reading code size");
 
     while ((c = getc(gfp)) != 0) {
@@ -405,15 +405,16 @@ LZW(void)
 	Message("Warning: unused raster data present");
 
 	do {
-	    if ((c = getc(gfp)) == EOF) {
+	    c = getc(gfp);
+	    if (c == EOF) {
 		Fatal(fbp, "Error reading extra raster data");
 	    }
 	} while (--bytecnt > 0);
     }
 
     /* Strange data format in the GIF spec! */
-
-    if ((c = getc(gfp)) != 0)
+    c = getc(gfp);
+    if (c != 0)
 	Fatal(fbp, "Zero byte count missing");
 }
 

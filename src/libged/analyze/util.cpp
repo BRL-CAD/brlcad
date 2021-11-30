@@ -274,7 +274,7 @@ print_faces_table(struct ged *gedp, table_t *table)
     int h2a, h2b, h2c;
     int c2, c2a, c2b, c2c;
     int f7, f7a, f7b, f7c;
-    int nd, tnd;
+    int nd;
     field_t dashes;
     char ROT[] = {"ROT"};
     char FB[]  = {"FB"};
@@ -322,22 +322,22 @@ print_faces_table(struct ged *gedp, table_t *table)
 
     /* header row 1 */
     bu_vls_printf(gedp->ged_result_str, "+-");
-    nd = c0; tnd = nd;
+    nd = c0;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%-*.*s",
 		  nd, nd, dashes.buf);
     bu_vls_printf(gedp->ged_result_str, "-+-");
-    nd = h1a + h1b + h1c + 1 + h2a + h2b + h2c; tnd += nd + 3;
+    nd = h1a + h1b + h1c + 1 + h2a + h2b + h2c;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%*.*s",
 		  nd, nd, dashes.buf);
     bu_vls_printf(gedp->ged_result_str, "-+-");
-    nd = c2a + c2b + c2c; tnd += nd + 3;
+    nd = c2a + c2b + c2c;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%*.*s",
 		  nd, nd, dashes.buf);
     bu_vls_printf(gedp->ged_result_str, "-+-");
-    nd = f7a + f7b + f7c; tnd += nd + 3;
+    nd = f7a + f7b + f7c;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%*.*s",
 		  nd, nd, dashes.buf);
@@ -384,22 +384,22 @@ print_faces_table(struct ged *gedp, table_t *table)
 
     /* header row 3 */
     bu_vls_printf(gedp->ged_result_str, "+-");
-    nd = c0; tnd = nd;
+    nd = c0;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%-*.*s",
 		  nd, nd, dashes.buf);
     bu_vls_printf(gedp->ged_result_str, "-+-");
-    nd = h1a + h1b + h1c + 1 + h2a + h2b + h2c; tnd += nd + 3;
+    nd = h1a + h1b + h1c + 1 + h2a + h2b + h2c;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%*.*s",
 		  nd, nd, dashes.buf);
     bu_vls_printf(gedp->ged_result_str, "-+-");
-    nd = c2a + c2b + c2c; tnd += nd + 3;
+    nd = c2a + c2b + c2c;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%*.*s",
 		  nd, nd, dashes.buf);
     bu_vls_printf(gedp->ged_result_str, "-+-");
-    nd = f7a + f7b + f7c; tnd += nd + 3;
+    nd = f7a + f7b + f7c;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%*.*s",
 		  nd, nd, dashes.buf);
@@ -429,22 +429,22 @@ print_faces_table(struct ged *gedp, table_t *table)
 
     /* close the table with the ender row */
     bu_vls_printf(gedp->ged_result_str, "+-");
-    nd = c0; tnd = nd;
+    nd = c0;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%-*.*s",
 		  nd, nd, dashes.buf);
     bu_vls_printf(gedp->ged_result_str, "-+-");
-    nd = h1a + h1b + h1c + 1 + h2a + h2b + h2c; tnd += nd + 3;
+    nd = h1a + h1b + h1c + 1 + h2a + h2b + h2c;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%*.*s",
 		  nd, nd, dashes.buf);
     bu_vls_printf(gedp->ged_result_str, "-+-");
-    nd = c2a + c2b + c2c; tnd += nd + 3;
+    nd = c2a + c2b + c2c;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%*.*s",
 		  nd, nd, dashes.buf);
     bu_vls_printf(gedp->ged_result_str, "-+-");
-    nd = f7a + f7b + f7c; tnd += nd + 3;
+    nd = f7a + f7b + f7c;
     get_dashes(&dashes, nd);
     bu_vls_printf(gedp->ged_result_str, "%*.*s",
 		  nd, nd, dashes.buf);

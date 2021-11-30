@@ -328,7 +328,6 @@ main(int argc, char **argv)
 
     if (verbose)printf("\nRegion table\n");
 
-    i = sizeof(struct wmember) * (reg_total+2);
     wmp = (struct wmember *)bu_calloc(reg_total+2, sizeof(struct wmember), "wmp");
 
     for (i = reg_total + 1; i >= 0; i--) {

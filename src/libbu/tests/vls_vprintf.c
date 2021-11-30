@@ -230,10 +230,10 @@ main(int argc, char *argv[])
 	    f = p = 2;
 	    return vls_vs_sys("|%-*.*s|%*.*s|", f, p, "t", f, p, "t");
 	case 35:
-	    f = p = 2;
+	    f = 2;
 	    return vls_vs_sys("|%*s|%-*s|", f, "test", f, "test");
 	case 36:
-	    f = p = 2;
+	    f = 2;
 	    return vls_vs_sys("|%*s|%-*s|", f, word, f, word);
 	    /* min field width; max string length ('precision'); string */
 	case 37:
@@ -258,7 +258,7 @@ main(int argc, char *argv[])
 	    return vls_vs_sys("%*.*s", f, p, word);
 	case 42:
 	    /* mged bug at rev 48989 */
-	    f = 8; p = 0;
+	    f = 8;
 	    printf("fw=%d, '%s': '%%%ds'\n", f, word, f);
 	    return vls_vs_sys("%*s", f, word);
 	    /* same but left justify */

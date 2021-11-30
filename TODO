@@ -25,6 +25,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * snap grid mode is failing in Archer (user report, most likely related
   to one of the code refactorings breaking something.)
 
+* Overlap tool in MGED is not handling no overlaps reporting correctly.
+
+* gqa is crashing when supplied all.g/box.r as an object argument
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------

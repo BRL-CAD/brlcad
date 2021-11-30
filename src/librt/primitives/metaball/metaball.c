@@ -577,11 +577,12 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
     vect_t work, pprime;
     fastf_t r;
 
-    if (ap) RT_CK_APPLICATION(ap);
-    if (stp) RT_CK_SOLTAB(stp);
-    if (hitp) RT_CK_HIT(hitp);
-    if (!uvp) return;
-    if (!metaball) return;
+    if (!ap || !hitp || !uvp || !metaball || !stp)
+	return;
+
+    RT_CK_APPLICATION(ap);
+    RT_CK_HIT(hitp);
+    RT_CK_SOLTAB(stp);
 
     /* stuff stolen from sph */
     VSUB2(work, hitp->hit_point, stp->st_center);

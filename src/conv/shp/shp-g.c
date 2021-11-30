@@ -309,7 +309,6 @@ main(int argc, char *argv[])
 
 	bu_free(verts, "free point array");
 	verts = NULL;
-	num_verts = 0;
 
 	SHPDestroyObject(object);
 	object = NULL;

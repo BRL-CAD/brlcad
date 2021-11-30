@@ -202,7 +202,7 @@ crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 	    bu_log ("Concatenation of different database versions detected.\n");
 	    bu_log ("Run 'dbupgrade' on all databases before concatenation (cat command).\n");
 	}
-	return 0;
+	return -1;
     }
 
     /* hflags */
@@ -291,7 +291,6 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     if (rip->b_present) {
 	cp += db5_decode_length(&rip->body.ext_nbytes, cp, rip->b_width);
 	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
-	cp += rip->body.ext_nbytes;
     }
 
     rip->buf = NULL;	/* no buffer needs freeing */
@@ -405,7 +404,6 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     if (rip->b_present) {
 	cp += db5_decode_length(&rip->body.ext_nbytes, cp, rip->b_width);
 	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
-	cp += rip->body.ext_nbytes;
     }
 
     return 0;		/* success */

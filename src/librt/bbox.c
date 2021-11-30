@@ -40,6 +40,9 @@ rt_bound_tree(const union tree *tp, vect_t tree_min, vect_t tree_max)
 {
     vect_t r_min, r_max;		/* rpp for right side of tree */
 
+    VSETALL(r_min, INFINITY);
+    VSETALL(r_max, -INFINITY);
+
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {

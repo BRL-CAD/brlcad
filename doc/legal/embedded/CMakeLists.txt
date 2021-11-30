@@ -36,7 +36,6 @@ set(embedded_licenses
   marching_cubes.txt
   msinttypes.txt
   mt19937ar.txt
-  naca.txt
   normalize.txt
   obr.txt
   OpenNURBS.txt

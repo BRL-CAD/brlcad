@@ -21,24 +21,9 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
 ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
 
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/cc.h
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mm.c
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mm.h
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmatomic.h
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmbinsort.c
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmbinsort.h
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmbitmap.c
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmbitmap.h
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmhash.c
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmhash.h
-file:/src/librt/primitives/bot/gct_decimation/auxiliary/mmthread.h
+file:/src/librt/primitives/bot/gct_decimation/util.c
+file:/src/librt/primitives/bot/gct_decimation/util.h
 file:/src/librt/primitives/bot/gct_decimation/meshdecimation.c
 file:/src/librt/primitives/bot/gct_decimation/meshdecimation.h
-file:/src/librt/primitives/bot/gct_decimation/meshdecimationSSE2.c
-file:/src/librt/primitives/bot/gct_decimation/meshdecimationSSE3.c
-file:/src/librt/primitives/bot/gct_decimation/meshdecimationSSE4p1.c
-file:/src/librt/primitives/bot/gct_decimation/meshoptimization.c
-file:/src/librt/primitives/bot/gct_decimation/meshoptimization.h
 file:/src/librt/primitives/bot/gct_decimation/meshoptimizer.c
-file:/src/librt/primitives/bot/gct_decimation/meshoptimizer.h
 

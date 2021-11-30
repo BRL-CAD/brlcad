@@ -71,13 +71,13 @@ struct poly_face
     fastf_t area;
 };
 
-GED_EXPORT extern void
+extern void
 print_edges_table(struct ged *gedp, table_t *table);
 
-GED_EXPORT extern void
+extern void
 print_faces_table(struct ged *gedp, table_t *table);
 
-GED_EXPORT extern void
+extern void
 print_volume_table(
 	struct ged *gedp,
        	const fastf_t tot_vol,
@@ -87,29 +87,29 @@ print_volume_table(
 
 #define POLY_FACE_INIT_ZERO { { 0, 0, 0, 0, 0 }, 0, NULL, HINIT_ZERO, 0.0 }
 
-GED_EXPORT extern void
+extern void
 analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row);
 
-GED_EXPORT extern void
+extern void
 print_faces_table(struct ged *gedp, table_t *table);
 
 
-GED_EXPORT extern void
+extern void
 analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip);
 
-GED_EXPORT extern void
+extern void
 analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip);
 
-GED_EXPORT extern void
+extern void
 analyze_ars(struct ged *gedp, const struct rt_db_internal *ip);
 
-GED_EXPORT extern void
+extern void
 analyze_superell(struct ged *gedp, const struct rt_db_internal *ip);
 
-GED_EXPORT extern void
+extern void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip);
 
-GED_EXPORT extern void
+extern void
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip);
 
 
@@ -131,7 +131,7 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip);
 
 typedef long (*op_func_ptr)(const char *, struct ged *, db_op_t, const char *, const char *);
 
-GED_EXPORT extern long
+extern long
 op_pnts_vol(
 	const char *output_obj,
 	struct ged *gedp,

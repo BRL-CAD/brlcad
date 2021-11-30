@@ -651,9 +651,13 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 
     tree_index = 0;
     for (i = 2; i < (size_t)argc; i += 8) {
-	mat_t mat;
-	double az, el, tw;
-	double kx, ky, kz;
+	mat_t mat = MAT_INIT_ZERO;
+	double az = 0.0;
+	double el = 0.0;
+	double tw = 0.0;
+	double kx = 0.0;
+	double ky = 0.0;
+	double kz = 0.0;
 	point_t key_pt = VINIT_ZERO;
 
 	COMBMEM_SET_PART_II(gedp, argv[i], rt_tree_array[tree_index], mat);
@@ -877,15 +881,18 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 
     tree_index = 0;
     for (i = 2; i < (size_t)argc; i += 9) {
-	mat_t mat;
-	double sa, sx, sy, sz;
-	double kx, ky, kz;
+	mat_t mat = MAT_INIT_ZERO;
+	double sa = 0.0;
+	double sx = 0.0;
+	double sy = 0.0;
+	double sz = 0.0;
+	double kx = 0.0;
+	double ky = 0.0;
+	double kz = 0.0;
 	hvect_t svec = HINIT_ZERO;
 	point_t key_pt = VINIT_ZERO;
 	vect_t aetvec = VINIT_ZERO;
 	vect_t tvec = VINIT_ZERO;
-
-	HSETALL(svec, 0);
 
 	COMBMEM_SET_PART_II(gedp, argv[i], rt_tree_array[tree_index], mat);
 

@@ -210,7 +210,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	struct rt_db_internal new_intern;
 
 	db_full_path_init(&path);
-	if (db_string_to_path(&path, gedp->dbip, argv[0])) {
+	if (db_string_to_path(&path, gedp->dbip, argv[0]) || !DB_FULL_PATH_CUR_DIR(&path)) {
 	    bu_vls_printf(gedp->ged_result_str, "db_string_to_path failed for %s\n", argv[0]);
 	    db_free_full_path(&path);
 	    return GED_ERROR;

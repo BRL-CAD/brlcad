@@ -683,6 +683,9 @@ dm_commands(int argc,
 		void *data = set_hook_data(&global_hs);
 
 		ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
+		if (ret < 0) {
+		    bu_log("Warning - failed to set dm hook - dm-generic.c:%d\n", __LINE__);
+		}
 
 		bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 		bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);

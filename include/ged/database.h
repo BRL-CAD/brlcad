@@ -195,11 +195,6 @@ GED_EXPORT extern int ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_regdef(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Read material properties from a file.
- */
-GED_EXPORT extern int ged_rmater(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Interface to search functionality (i.e. Unix find for geometry)
  */
 GED_EXPORT extern int ged_search(struct ged *gedp, int argc, const char *argv[]);

@@ -520,7 +520,8 @@ int tienet_master_listener(void *UNUSED(ptr))
 			 */
 			if (sock->prev)
 			    sock->prev->next = sock->next;
-			sock->next->prev = sock->prev;
+			if (sock->next)
+			    sock->next->prev = sock->prev;
 
 			/* Store ptr to sock before we modify it */
 			tmp = sock;
@@ -546,6 +547,10 @@ int tienet_master_listener(void *UNUSED(ptr))
 			}
 
 			tienet_master_socket_num--;
+
+			if (!sock)
+			    break;
+
 		    } else {
 			/*
 			 * Slave Op Instructions

@@ -272,7 +272,6 @@ main(int argc, char **argv)
 	/* get space code */
 	work = hold * 10.0;
 	ity1 = work;
-	hold = work - ity1;
 
 	/* write output */
 	printf("%8.3f %8.3f %9.3f %c %2d %2d %1d %4d %11d ",

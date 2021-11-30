@@ -128,7 +128,6 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    argc -= bu_optind;
     argv += bu_optind;
 
     /* make sure new solid does not already exist */

@@ -283,8 +283,9 @@ replot_modified_solid(
 	if (!sp->s_u_data)
 	    return -1;
 	struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
-	Tcl_AppendResult(INTERP, LAST_SOLID(bdata)->d_namep,
-			 ": re-plot failure\n", (char *)NULL);
+	if (bdata->s_fullpath.fp_len > 0)
+	    Tcl_AppendResult(INTERP, LAST_SOLID(bdata)->d_namep,
+		    ": re-plot failure\n", (char *)NULL);
 	return -1;
     }
     rt_db_free_internal(&intern);
@@ -304,7 +305,7 @@ add_solid_path_to_result(
     struct bv_scene_obj *sp)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    if (!sp->s_u_data)
+    if (!sp || !sp->s_u_data)
 	return;
     struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
     db_path_to_vls(&str, &bdata->s_fullpath);

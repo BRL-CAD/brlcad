@@ -586,7 +586,6 @@ stl_write_bot_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 	VMOVE(flt_ptr, B);
 	flt_ptr += 3;
 	VMOVE(flt_ptr, C);
-	flt_ptr += 3;
 
 	bu_cv_htonf(vert_buffer, (const unsigned char *)flts, 12);
 	for (j = 0; j < 12; j++) {
@@ -1040,6 +1039,9 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 			       0,
 			       bot_dump_leaf,
 			       (void *)&gbdcdp);
+	    if (ret < 0) {
+		perror("db_walk_tree");
+	    }
 	}
     }
 

@@ -129,6 +129,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	    return TCL_ERROR;
 	}
     } else {
+	if (illump == NULL)
+	    return TCL_ERROR;
 	gdlp = illum_gdlp;
 	sp = illump;
 	sp->s_iflag = DOWN;

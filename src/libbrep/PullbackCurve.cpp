@@ -654,7 +654,6 @@ surface_GetClosestPoint3dFirstOrderByRange(
 		///////////////////////////
 		// Subdivide and go again
 		///////////////////////////
-		notdone = false;
 		distance =
 		    surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
 								   u_range, u_range.Mid(), v_range, v_range.Mid(),
@@ -668,7 +667,6 @@ surface_GetClosestPoint3dFirstOrderByRange(
 	    }
 	} else {
 	    // can't get any closer
-	    notdone = false;
 	    break;
 	}
     }
@@ -717,6 +715,9 @@ bool surface_GetClosestPoint3dFirstOrder(
     static int vmid_index = 0;
 
     current_distance = DBL_MAX;
+
+    if (!surf)
+	return rc;
 
     int prec = std::cerr.precision();
     std::cerr.precision(15);
@@ -2830,7 +2831,8 @@ Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offse
 			    double distance;
 
 			    if (surface_GetClosestPoint3dFirstOrder(surf, p_3d, p_2d, check_pt_3d, distance, 0, same_point_tol, within_distance_tol)) {
-				if ((seam=IsAtSeam(surf, p_2d, tol)) > 0) {
+				seam = IsAtSeam(surf, p_2d, tol);
+				if (seam > 0) {
 				    ForceToClosestSeam(surf, p_2d, tol);
 				    from = to = p_2d;
 				    seam_t = t;
@@ -2863,8 +2865,14 @@ Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offse
 			}
 		    }
 		}
+	    } else {
+		rc = false;
 	    }
+	} else {
+	   rc = false;
 	}
+    } else {
+	rc = false;
     }
 
     return rc;
@@ -2925,7 +2933,8 @@ FindTrimSeamCrossing(const ON_BrepTrim &trim, double t0, double t1, double &seam
 			double t = t0 + (t1 - t0)*(d0/(d0+d1));
 			int seam;
 			p = trim.PointAt(t);
-			if ((seam=IsAtSeam(surf, p, tol)) > 0) {
+			seam = IsAtSeam(surf, p, tol);
+			if (seam > 0) {
 			    ForceToClosestSeam(surf, p, tol);
 			    from = to = p;
 			    seam_t = t;
@@ -2978,12 +2987,12 @@ pullback_samples_from_closed_surface(PBCData* data,
     const ON_Curve* curve= data->curve;
     const ON_Surface *surf = data->surf;
 
-    ON_2dPointArray *samples= new ON_2dPointArray();
     size_t numKnots = curve->SpanCount();
     if (numKnots > INT_MAX - 1) {
 	bu_log("Error - more than INT_MAX - 1 knots in curve\n");
 	return;
     }
+    ON_2dPointArray *samples= new ON_2dPointArray();
     double *knots = new double[(unsigned int)(numKnots+1)];
 
     curve->GetSpanVector(knots);
@@ -3014,11 +3023,6 @@ pullback_samples_from_closed_surface(PBCData* data,
     double delta;
     for (size_t i=istart; i<istop; i++) {
 	delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
-	if (i <= numKnots/2) {
-	    offset = PBC_FROM_OFFSET;
-	} else {
-	    offset = -PBC_FROM_OFFSET;
-	}
 	for (size_t j=0; j<=samplesperknotinterval; j++) {
 	    if ((j == samplesperknotinterval) && (i < istop - 1))
 		continue;
@@ -3085,7 +3089,6 @@ pullback_samples_from_closed_surface(PBCData* data,
 			    samples= new ON_2dPointArray();
 			    samples->Append(to);
 			    prev_pt = to;
-			    prev_t = seam_t;
 			} else {
 			    std::cout << "Can not find seam crossing...." << std::endl;
 			}

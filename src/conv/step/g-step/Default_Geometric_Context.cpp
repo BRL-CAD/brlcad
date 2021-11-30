@@ -57,11 +57,13 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
 	stepcomplex = stepcomplex->sc;
     }
 
-    SdaiUnit *new_unit = new SdaiUnit((SdaiNamed_unit *)unit_complex);
     uncertainty->ResetAttributes();
     {
 	while ((attr = uncertainty->NextAttribute()) != NULL) {
-	    if (!bu_strcmp(attr->Name(), "unit_component")) attr->ptr.sh = new_unit;
+	    if (!bu_strcmp(attr->Name(), "unit_component")) {
+		SdaiUnit *new_unit = new SdaiUnit((SdaiNamed_unit *)unit_complex);
+		attr->ptr.sh = new_unit;
+	    }
 	    if (!bu_strcmp(attr->Name(), "value_component")) attr->StrToVal("0.05");
 	}
     }

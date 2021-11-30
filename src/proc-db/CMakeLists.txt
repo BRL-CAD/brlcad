@@ -35,8 +35,6 @@ BRLCAD_ADDEXEC(tea_nmg tea_nmg.c "libwdb;libnmg" NO_INSTALL)
 BRLCAD_ADDEXEC(tube tube.c "libwdb;libnmg;${M_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb NO_INSTALL) # NOTE: has manual page
 
-add_subdirectory(naca)
-
 # MORE THAN DEVELOPMENT TESTING
 #
 # these have reached a level of maturity where they could provide some

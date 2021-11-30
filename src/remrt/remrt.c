@@ -560,7 +560,10 @@ interactive_cmd(FILE *fp)
 	/* The rest happens when the connections close */
 	return;
     }
-    if ((i=strlen(buf)) <= 0) return;
+
+    i = strlen(buf);
+    if (i <= 0)
+	return;
 
     /* Feeble allowance for comments */
     if (buf[0] == '#') return;
@@ -639,7 +642,8 @@ check_input(int waittime)
     for (i = 0; i <(int)MAXSERVERS; i++) {
 	pc = servers[i].sr_pc;
 	if (pc == PKC_NULL) continue;
-	if ((val = pkg_process(pc)) < 0)
+	val = pkg_process(pc);
+	if (val < 0)
 	    drop_server(&servers[i], "pkg_process() error");
     }
 
@@ -3170,7 +3174,6 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 	drop_server(sp, "bu_struct_import error");
 	goto out;
     }
-    i = (size_t)cnt;
 
     if (rem_debug) {
 	bu_log("%s %s %d/%d..%d, ray=%d, cpu=%.2g, el=%g\n",
@@ -3227,7 +3230,6 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     if (pc->pkc_len - ext.ext_nbytes < i) {
 	bu_log("short scanline, s/b=%zu, was=%zu\n",
 	       i, pc->pkc_len - ext.ext_nbytes);
-	i = pc->pkc_len - ext.ext_nbytes;
 	drop_server(sp, "short scanline");
 	goto out;
     }

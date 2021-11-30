@@ -43,6 +43,15 @@
 #ifdef HAVE_SYS_SYSINFO_H
 #  include <sys/sysinfo.h>
 #endif
+#ifdef HAVE_SYS_SYSCTL_H
+#  include <sys/sysctl.h>
+#endif
+#ifdef HAVE_MACH_HOST_INFO_H
+#  include <mach/host_info.h>
+#endif
+#ifdef HAVE_MACH_MACH_HOST_H
+#  include <mach/mach_host.h>
+#endif
 
 #include "bu/env.h"
 #include "bu/malloc.h"
@@ -92,26 +101,177 @@ bu_setenv(const char *name, const char *value, int overwrite)
 #endif
 }
 
-long int
-bu_avail_mem()
-{
-#ifdef HAVE_SYS_SYSINFO_H
-    if (!getenv("BU_AVAILABLE_MEM_NOCHECK")) {
-	struct sysinfo s;
-	long int avail_ram;
-	long int used_swap;
-	sysinfo(&s);
-	avail_ram = s.freeram + s.bufferram + s.sharedram;
-	used_swap = s.totalswap - s.freeswap;
-	return (avail_ram - used_swap > 0) ? (avail_ram - used_swap) * s.mem_unit : 0;
-    }
-#endif
-    /* TODO - Use GlobalMemoryStatusEx on Windows, see
-     * https://msdn.microsoft.com/en-us/library/windows/desktop/aa366589 */
 
-    /* Don't know how to figure this out if the above haven't worked, and/or
-     * checking is suppressed by the environment variable. */
+static long int
+_bu_mem_sysconf(int type)
+{
+    if (type < 0)
+	return -2;
+
+#ifdef HAVE_SYSCONF_AVPHYS
+
+    long int pagesize = (long int)sysconf(_SC_PAGESIZE);
+    if (type == BU_MEM_PAGE_SIZE) {
+	return pagesize;
+    }
+
+    long int sysmemory = 0;
+    if (type == BU_MEM_AVAIL) {
+	sysmemory = (long int)sysconf(_SC_AVPHYS_PAGES);
+    } else {
+	sysmemory = (long int)sysconf(_SC_PHYS_PAGES);
+    }
+    if (sysmemory < 0)
+	return -1;
+
+    long int avail_bytes = pagesize * sysmemory;
+    if (avail_bytes < 0)
+	return -1;
+
+    return avail_bytes;
+
+#endif
+
     return -1;
+}
+
+static long int
+_bu_mem_sysinfo(int type)
+{
+    if (type < 0)
+	return -2;
+#if defined(HAVE_SYS_SYSINFO_H)
+
+    struct sysinfo s;
+    if (sysinfo(&s))
+	return -1;
+
+    // sysinfo doesn't provide this
+    if (type == BU_MEM_PAGE_SIZE)
+	return BU_PAGE_SIZE;
+
+    long int sysmemory = 0;
+    if (type == BU_MEM_AVAIL) {
+	sysmemory = (long int)s.freeram;
+    } else {
+	sysmemory = (long int)s.totalram;
+    }
+    if (sysmemory < 0)
+	return -1;
+
+    long int avail_bytes = s.mem_unit * sysmemory;
+    if (avail_bytes < 0)
+	return -1;
+
+    return avail_bytes;
+
+#endif
+    return -1;
+}
+
+static long int
+_bu_mem_host_info(int type)
+{
+    if (type < 0)
+	return -2;
+
+#if defined(HAVE_SYS_SYSTCL_H) && defined(HAVE_MACH_HOST_INFO_H)
+    long int pagesize = 0;
+    size_t osize = sizeof(pagesize);
+    int sargs[2] = {CTL_HW, HW_PAGESIZE};
+    if (sysctl(sargs, 2, &pagesize, &osize, NULL, 0) < 0)
+	return -1;
+    if (type == BU_MEM_PAGE_SIZE) {
+	return pagesize;
+    }
+
+    long int sysmemory = 0;
+    if (type == BU_MEM_AVAIL) {
+	// See info at https://stackoverflow.com/a/6095158/2037687
+	mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+	vm_statistics_data_t vmstat;
+	if (host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count) != KERN_SUCCESS)
+	{
+	    return -1;
+	}
+	sysmemory = (long int) (vmstat.free_count * pagesize / (1024*1024));
+    } else {
+	sargs[1] = HW_MEMSIZE;
+	sysctl(sargs, 2, &sysmemory, &osize, NULL, 0);
+    }
+    if (sysmemory < 0)
+	return -1;
+
+    long int avail_bytes = pagesize * sysmemory;
+    if (avail_bytes < 0)
+	return -1;
+
+    return avail_bytes;
+
+#endif
+
+    return -1;
+}
+
+static long int
+_bu_mem_status(int type)
+{
+    if (type < 0)
+	return -2;
+#if defined(HAVE_WINDOWS_H)
+
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo(&sysinfo);
+    long int pagesize = (long int)sysinfo.dwPageSize;
+    if (pagesize < 0)
+	return -1;
+
+    if (type == BU_MEM_PAGE_SIZE)
+	return pagesize;
+
+    long int sysmemory = 0;
+    MEMORYSTATUSEX mavail;
+    GlobalMemoryStatusEx(&mavail);
+    if (type == BU_MEM_AVAIL) {
+	sysmemory = (long int)mavail.ullAvailPhys;
+    } else {
+	sysmemory = (long int)mavail.ullTotalPhys;
+    }
+    if (sysmemory < 0)
+	return -1;
+
+    return sysmemory;
+
+#endif
+    return -1;
+}
+
+long int
+bu_mem(int type)
+{
+    long int ret = -1;
+
+    if (getenv("BU_AVAILABLE_MEM_NOCHECK"))
+	return ret;
+
+    ret = _bu_mem_host_info(type);
+    if (ret >= 0)
+	return ret;
+
+    ret = _bu_mem_status(type);
+    if (ret >= 0)
+	return ret;
+
+    ret = _bu_mem_sysconf(type);
+    if (ret >= 0)
+	return ret;
+
+    ret = _bu_mem_sysinfo(type);
+    if (ret >= 0)
+	return ret;
+
+    /* Don't know how to figure this out if the above haven't worked. */
+    return -3;
 }
 
 /*

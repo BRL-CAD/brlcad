@@ -172,11 +172,10 @@ checkReturnsEqual(int ret, int bu_ret)
 
 static void
 test_sscanf(int type, const char *src, const char *fmt) {
-    int ret, bu_ret;
-    void *val, *bu_val;
-
-    ret = bu_ret = 0;
-    val = bu_val = NULL;
+    int ret = 0;
+    int bu_ret = 0;
+    void *val = NULL;
+    void *bu_val = NULL;
 
     print_src_and_fmt(src, fmt);
 
@@ -395,10 +394,9 @@ doNumericTests(void)
 static void
 test_sscanf_s(const char *src, const char *fmt)
 {
-    int ret, bu_ret;
+    int ret = 0;
+    int bu_ret = 0;
     char dest[TS_STR_SIZE], bu_dest[TS_STR_SIZE];
-
-    ret = bu_ret = 0;
 
     /* ensure NULL termination even for c and [...] */
     memset(dest, '\0', TS_STR_SIZE);

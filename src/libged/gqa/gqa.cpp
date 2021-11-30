@@ -584,7 +584,6 @@ parse_args(int ac, char *av[])
 	    case 'g':
 		{
 		    double value1, value2;
-		    i = 0;
 
 		    /* find out if we have two or one args; user can
 		     * separate them with , or - delimiter
@@ -1080,8 +1079,8 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		    VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
 
 		    if (analysis_flags & ANALYSIS_MOMENTS) {
-			vectp_t moi;
-			vectp_t poi = &state->m_poi[state->i_axis*3];
+			vectp_t moi = NULL;
+			vectp_t poi = NULL;
 			fastf_t dx_sq = cmass[X]*cmass[X];
 			fastf_t dy_sq = cmass[Y]*cmass[Y];
 			fastf_t dz_sq = cmass[Z]*cmass[Z];
@@ -1527,6 +1526,43 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 		return GED_ERROR;
 	    }
 	}
+	// iterate through the db and find all materials
+    for (int i = 0; i < RT_DBNHASH; i++) {
+        struct directory *dp = _ged_current_gedp->ged_wdbp->dbip->dbi_Head[i];
+        if (dp != NULL) {
+            struct rt_db_internal intern;
+            struct rt_material_internal *material_ip;
+            if (rt_db_get_internal(&intern, dp, _ged_current_gedp->ged_wdbp->dbip, NULL, &rt_uniresource) >= 0) {
+                if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+                    // if the material has an id and density, add it to the density table
+                    material_ip = (struct rt_material_internal *)intern.idb_ptr;
+
+                    const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
+                    if (id_string == NULL) {
+                        continue;
+                    }
+                    int id = strtol(id_string, NULL, 10);
+
+                    const char *density_string = bu_avs_get(&material_ip->physicalProperties, "density");
+                    if (density_string == NULL) {
+                        continue;
+                    }
+                    double density_double = strtod(density_string, NULL);
+                    /* since BRL-CAD does computation in mm, but the table is in
+                    * grams / (cm^3) we convert the table on input
+                    */
+                    density_double = density_double / 1000.0;
+
+                    char *name = bu_vls_strdup(&material_ip->name);
+                    struct bu_vls result_str = BU_VLS_INIT_ZERO;
+                    if (analyze_densities_set(_gd_densities, id, density_double, name, &result_str) < 0) {
+                        bu_vls_printf(&result_str, "Error inserting density %d,%g,%s\n", id, density_double, name);
+                    }
+                    bu_vls_free(&result_str);
+                }
+            }
+        }
+    }
     }
     /* refine the grid spacing if the user has set a lower bound on
      * the number of rays per model axis

@@ -206,6 +206,9 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
     }
 
     status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);	/* Get 1st token. */
+    if (status == EOF)
+	bu_exit(EXIT_FAILURE, "asc-nmg: failed to get first token\n");
+
     do {
 	switch (token[0]) {
 	    case 'e':		/* Extrude face. */
@@ -354,7 +357,6 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 	for (i = 0; i < n; i++)
 	    if (lu_verts[i] < 0)
 		nmg_jv(verts[-lu_verts[i]], cur_loop[i]);
-	n = 0;
     }
 }
 

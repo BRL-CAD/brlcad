@@ -2118,13 +2118,12 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
 HIDDEN int
 reindex(void *p, struct nmg_exp_counts *ecnt)
 {
-    long idx;
+    long idx = 0;
     long ret=0;	/* zero is NOT the default value, this is just to satisfy cray compilers */
 
     /* If null pointer, return new subscript of zero */
     if (p == 0) {
 	ret = 0;
-	idx = 0;	/* sanity */
     } else {
 	idx = nmg_index_of_struct((uint32_t *)(p));
 	if (idx == -1) {
@@ -4302,14 +4301,15 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 void
 rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    struct model *m;
-    struct nmgregion* r;
-    struct shell* s;
-    struct poly_face *faces;
-    struct bu_ptbl nmg_faces;
+    struct model *m = NULL;
+    struct nmgregion* r = NULL;
+    struct shell* s = NULL;
+    struct poly_face *faces = NULL;
+    struct bu_ptbl nmg_faces = BU_PTBL_INIT_ZERO;
     fastf_t volume = 0.0;
     point_t arbit_point = VINIT_ZERO;
-    size_t num_faces, i;
+    size_t num_faces = 0;
+    size_t i = 0;
 
     *cent[0] = 0.0;
     *cent[1] = 0.0;
@@ -4321,6 +4321,11 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     /*get faces*/
     nmg_face_tabulate(&nmg_faces, &s->l.magic, &RTG.rtg_vlfree);
     num_faces = BU_PTBL_LEN(&nmg_faces);
+
+    /* If we have no faces, there's nothing to do */
+    if (!num_faces)
+	return;
+
     faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_centroid: faces");
 
     for (i = 0; i < num_faces; i++) {
@@ -4415,7 +4420,6 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     struct rt_wdb *fp;
     struct rt_db_internal intern;
     struct bu_external ext;
-    int ret;
     int flags;
     char *name="error.s";
 
@@ -4437,11 +4441,10 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 
     if (db_version(fp->dbip) < 5) {
 	BU_EXTERNAL_INIT(&ext);
-	ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
+	int ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
 	if (ret < 0) {
 	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
 		   name);
-	    ret = -1;
 	    goto out;
 	}
 	db_wrap_v4_external(&ext, name);
@@ -4449,14 +4452,15 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 	if (rt_db_cvt_to_external5(&ext, name, &intern, 1.0, fp->dbip, &rt_uniresource, intern.idb_major_type) < 0) {
 	    bu_log("wdb_export4(%s): solid export failure\n",
 		   name);
-	    ret = -2;
 	    goto out;
 	}
     }
     BU_CK_EXTERNAL(&ext);
 
     flags = db_flags_internal(&intern);
-    ret = wdb_export_external(fp, &ext, name, flags, intern.idb_type);
+    if (wdb_export_external(fp, &ext, name, flags, intern.idb_type) < 0)
+	bu_log("wdb_export_external failure(%s)\n", name);
+
 out:
     bu_free_external(&ext);
     wdb_close(fp);

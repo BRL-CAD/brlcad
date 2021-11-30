@@ -478,12 +478,13 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
     struct _ged_lint_opts *opts;
     struct directory **dpa = NULL;
     int nonexist_obj_cnt = 0;
-    struct _ged_cyclic_data *cdata = NULL;
-    struct _ged_missing_data *mdata = new struct _ged_missing_data;
-    struct _ged_invalid_data *idata = new struct _ged_invalid_data;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    struct _ged_cyclic_data *cdata = NULL;
+    struct _ged_missing_data *mdata = new struct _ged_missing_data;
+    struct _ged_invalid_data *idata = new struct _ged_invalid_data;
 
     opts = _ged_lint_opts_create();
 
@@ -597,6 +598,7 @@ ged_lint_memfree:
     }
 
     delete mdata;
+    delete idata;
 
     if (dpa) bu_free(dpa, "dp array");
 

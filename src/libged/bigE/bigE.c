@@ -877,7 +877,6 @@ eval_op(struct bu_list *A,
 			/* eliminate sega */
 			BU_LIST_DEQUEUE(&sega->l);
 			RT_FREE_SEG(sega, dgcdp->ap->a_resource);
-			sega = next;
 			break;
 		    }
 
@@ -1562,9 +1561,7 @@ Eplot(union E_tree *eptr,
 
 		    /* sort the hits on face 2 */
 		    min_dist = MAX_FASTF;
-		    min_hit = -1;
 		    max_dist = -min_dist;
-		    max_hit = -1;
 		    for (i = 0; i < hit_count2; i++) {
 			VSUB2(vdiff, hits2[i], start_pt);
 			dists2[i] = MAGNITUDE(vdiff);
@@ -1572,11 +1569,9 @@ Eplot(union E_tree *eptr,
 			    dists2[i] = -dists2[i];
 			if (dists2[i] > max_dist) {
 			    max_dist = dists2[i];
-			    max_hit = i;
 			}
 			if (dists2[i] < min_dist) {
 			    min_dist = dists2[i];
-			    min_hit = i;
 			}
 		    }
 

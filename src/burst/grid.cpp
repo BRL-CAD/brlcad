@@ -599,6 +599,7 @@ f_BurstHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSE
 	    if (cpp->pt_forw != pt_headp) {
 		if (! qAdd(cpp, &qshield)) {
 		    s->fatalerror = 1;
+		    qFree(qshield);
 		    return -1;
 		}
 		nbar++;

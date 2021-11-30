@@ -130,7 +130,7 @@ struct cell {
     vect_t c_normal;	/* surface normal at the hit point */
     vect_t c_rdir;	/* ray direction, permits perspective */
 };
-
+#define CELL_INIT {0, NULL, 0.0, 0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO}
 
 #define MISS_DIST MAX_FASTF
 #define MISS_ID -1
@@ -382,6 +382,9 @@ void choose_color(RGBpixel col, double intensity, struct cell *me,
 
 	if (use_this == (struct cell *)NULL)
 	    bu_exit(EXIT_FAILURE, "Error: use_this is NULL.\n");
+
+	if (!use_this->c_region)
+	    bu_exit(EXIT_FAILURE, "Error: use_this->c_region is NULL.\n");
 
 	col[RED] = 255 * use_this->c_region->reg_mater.ma_color[RED];
 	col[GRN] = 255 * use_this->c_region->reg_mater.ma_color[GRN];
@@ -1222,12 +1225,12 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     register struct hit *hitp; /* which hit */
 
     struct application a2;
-    struct cell me;
-    struct cell below;
-    struct cell left;
+    struct cell me = CELL_INIT;
+    struct cell below = CELL_INIT;
+    struct cell left = CELL_INIT;
 
-    struct cell above;
-    struct cell right;
+    struct cell above = CELL_INIT;
+    struct cell right = CELL_INIT;
 
     double intensity = 1.0;
 

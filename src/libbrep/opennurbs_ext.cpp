@@ -57,7 +57,7 @@
 /// another arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
 #define TOL2 0.00001
 
-void
+int
 brep_get_plane_ray(const ON_Ray& r, plane_ray& pr)
 {
     vect_t v1;
@@ -71,6 +71,10 @@ brep_get_plane_ray(const ON_Ray& r, plane_ray& pr)
 	    index = i;
 	}
     }
+    if (index == -1) {
+	bu_log("brep_get_plane_ray: error finding smallest component\n");
+	return -1;
+    }
     v1[index] += 1; // alter the smallest component
     VCROSS(pr.n1, v1, r.m_dir); // n1 is perpendicular to v1
     VUNITIZE(pr.n1);
@@ -79,6 +83,7 @@ brep_get_plane_ray(const ON_Ray& r, plane_ray& pr)
     pr.d1 = VDOT(pr.n1, r.m_origin);
     pr.d2 = VDOT(pr.n2, r.m_origin);
     TRACE1("n1:" << ON_PRINT3(pr.n1) << " n2:" << ON_PRINT3(pr.n2) << " d1:" << pr.d1 << " d2:" << pr.d2);
+    return 0;
 }
 
 
@@ -466,7 +471,8 @@ trim_binary_search(fastf_t *tparam, const ON_BrepTrim *trim, double tstart, doub
 	double vdot = ON_DotProduct(v1,v2);
 
 	if (vdot < 0 && dist > ON_ZERO_TOLERANCE) {
-	    double tlparam, trparam;
+	    double tlparam = DBL_MAX;
+	    double trparam = DBL_MAX;
 	    double fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 0);
 	    double frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 0);
 	    if (fldist >= 0 && frdist < -1) {
@@ -1207,7 +1213,8 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
     ON_3dVector dir = node->m_normal;
     dir.Reverse();
     ON_Ray ray(const_cast<ON_3dPoint &>(pt), dir);
-    brep_get_plane_ray(ray, pr);
+    if (brep_get_plane_ray(ray, pr) < 0)
+	return -1;
 
     //know use this as guess to iterate to closer solution
     pt2d_t Rcurr = V2INIT_ZERO;

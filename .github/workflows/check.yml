@@ -44,8 +44,17 @@ jobs:
       - name: Setup - Ninja
         uses: seanmiddleditch/gha-setup-ninja@master
 
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1  # not v2!
+        with:
+          path: ../Qt
+          key: ${{ runner.os }}-QtCache
+
       - name: Setup - Qt
         uses: jurplel/install-qt-action@v2
+        with:
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -62,7 +71,7 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -S . -B build -G Ninja -D CMAKE_C_COMPILER="cl.exe" -D CMAKE_CXX_COMPILER="cl.exe" -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -D BRLCAD_ENABLE_QT=ON
+          cmake -S . -B build -G Ninja -D CMAKE_C_COMPILER="cl.exe" -D CMAKE_CXX_COMPILER="cl.exe" -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON
           # We do the following in order to help ensure files are "flushed"
           # to disk before compilation is attempted
           # https://superuser.com/a/1553374/1286142
@@ -109,8 +118,17 @@ jobs:
           sudo apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev libglu1-mesa-dev
           sudo apt-get clean
 
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1  # not v2!
+        with:
+          path: ../Qt
+          key: ${{ runner.os }}-QtCache
+
       - name: Setup - Qt
         uses: jurplel/install-qt-action@v2
+        with:
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -118,7 +136,7 @@ jobs:
       - name: Configure
         run: |
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
-          cmake -S . -G Ninja -B build -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -D BRLCAD_ENABLE_QT=ON
+          cmake -S . -G Ninja -B build -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
         run: |
@@ -147,8 +165,17 @@ jobs:
       - name: Setup - Ninja
         uses: seanmiddleditch/gha-setup-ninja@master
 
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1  # not v2!
+        with:
+          path: ../Qt
+          key: ${{ runner.os }}-QtCache
+
       - name: Setup - Qt
         uses: jurplel/install-qt-action@v2
+        with:
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -158,7 +185,7 @@ jobs:
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
           export CC=clang
           export CXX=clang++
-          cmake -S . -G Ninja -B build -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -D BRLCAD_ENABLE_QT=ON
+          cmake -S . -G Ninja -B build -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON
 
       - name: Build
         run: |

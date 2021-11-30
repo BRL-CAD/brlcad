@@ -629,7 +629,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 {
     int idx, curr_layer, xs, ys, xv, yv, tot;
     unsigned int x, y, i, j, k;
-    unsigned short dsp_min, dsp_max, cell_min, cell_max;
+    unsigned short dsp_min, dsp_max;
     unsigned short elev;
     struct dsp_bb *dsp_bb;
     struct dsp_rpp *t;
@@ -680,16 +680,13 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
     dsp->layer[0].dim[Y] = dsp->ysiz;
     dsp->layer[0].p = dsp->bb_array;
 
-    xs = dsp->xsiz;
-    ys = dsp->ysiz;
-
     dsp_min = 0xffff;
     dsp_max = 0;
 
     for (y = 0; y < YSIZ(dsp); y++) {
 
-	cell_min = 0xffff;
-	cell_max = 0;
+	unsigned short cell_min = 0xffff;
+	unsigned short cell_max = 0;
 
 	for (x = 0; x < XSIZ(dsp); x++) {
 
@@ -1760,7 +1757,6 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
     for (x = 0; x < 4; x++)
 	memset(hits+x, 0, sizeof(struct hit));
-    x = 0;
 
     dlog("isect_ray_cell_top\n");
     DSP_BB_CK(dsp_bb);
@@ -3291,12 +3287,10 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    } else {
 		MOVE(o_pt);
 		DRAW(s_pt);
-		drawing = 1;
 	    }
 	} else {
 	    if (drawing) {
 		DRAW(s_pt);
-		drawing = 0;
 	    }
 	}
 
@@ -3343,12 +3337,10 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	    } else {
 		MOVE(o_pt);
 		DRAW(s_pt);
-		drawing = 1;
 	    }
 	} else {
 	    if (drawing) {
 		DRAW(s_pt);
-		drawing = 0;
 	    }
 	}
     }

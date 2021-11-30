@@ -2262,7 +2262,6 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, struct 
 	for (BU_LIST_FOR(eu, edgeuse, &lu2->down_hd))
 	    lu2_eu_count++;
 
-	share_edges = 1;
 	eu1_start = BU_LIST_FIRST(edgeuse, &lu1->down_hd);
 	NMG_CK_EDGEUSE(eu1_start);
 	eu2_start = BU_LIST_FIRST(edgeuse, &lu2->down_hd);

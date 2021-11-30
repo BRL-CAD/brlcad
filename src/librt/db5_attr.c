@@ -67,6 +67,15 @@ const struct db5_attr_ctype db5_attr_std[] = {
 	/* long_description, if any: */
 	"The Material ID Number corresponds to an entry in a DENSITIES table, usually contained in a text file.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'."
     },
+	{ ATTR_MATERIAL_NAME, 0, ATTR_STANDARD,
+	"material_name",
+	"empty or content-filled string (user-defined)",
+	"", /* examples */
+	"material",  /* aliases, if any */
+	"Material Name",  /* property, if any */
+	/* long_description, if any: */
+	"The Material Name corresponds to an entry in a DENSITIES table, usually contained in a text file that are imported through the material command.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'."
+    },
     { ATTR_AIR, 0, ATTR_STANDARD,
 	"aircode",
 	"an integer (application defined)",
@@ -350,11 +359,26 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
 	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 	    comb->GIFTmater = attr_num_val;
 	} else {
-	    bu_log("WARNING: [%s] has invalid material_id value [%s]\nmateriel_id remains at %ld\n", name, bu_vls_addr(&newval), comb->GIFTmater);
+	    bu_log("WARNING: [%s] has invalid material_id value [%s]\nmaterial_id remains at %ld\n", name, bu_vls_addr(&newval), comb->GIFTmater);
 	}
     } else {
 	/* empty - set to zero */
 	comb->GIFTmater = 0;
+    }
+
+	/* material_name */
+    bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_MATERIAL_NAME)));
+    bu_vls_trimspace(&newval);
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
+	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
+		char *newvalchar = bu_vls_strdup(&newval);
+		bu_vls_strcpy(&comb->material, newvalchar);
+	} else {
+	    bu_log("WARNING: [%s] has invalid material_name value [%s]\nmaterial_name remains at %s\n", name, bu_vls_addr(&newval), bu_vls_strdup(&comb->material));
+	}
+    } else {
+	/* empty - set to zero */
+	bu_vls_trunc(&comb->material, 0);
     }
 
     /* aircode */
@@ -472,6 +496,14 @@ db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, const struct rt_comb_i
 	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_MATERIAL_ID), &newval);
     } else {
 	bu_avs_remove(avs, db5_standard_attribute(ATTR_MATERIAL_ID));
+    }
+
+	/* Material Name */
+    if (bu_vls_strlen(&comb->material) != 0) {
+	bu_vls_sprintf(&newval, "%s", bu_vls_strdup(&comb->material));
+	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_MATERIAL_NAME), &newval);
+    } else {
+	bu_avs_remove(avs, db5_standard_attribute(ATTR_MATERIAL_NAME));
     }
 
     /* Air */

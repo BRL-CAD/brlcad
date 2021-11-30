@@ -265,7 +265,6 @@ rt_script_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     cp += SIZEOF_NETWORK_LONG;
 
     bu_strlcpy((char *)cp, bu_vls_addr(&script_ip->s_type), rem);
-    cp += bu_vls_strlen(&script_ip->s_type) + 1;
  
     return 0;
 }

@@ -458,7 +458,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 {
     struct nmgregion *r;
     struct bu_list vhead;
-    int failed;
+    int failed = 1;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
     BG_CK_TESS_TOL(tsp->ts_ttol);
@@ -482,7 +482,6 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
     if (curtree->tr_op == OP_NOP) return curtree;
 
-    failed = 1;
     if (!dgcdp->draw_nmg_only) {
 
 	failed = process_boolean(curtree, tsp, pathp, dgcdp);
@@ -832,7 +831,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			}
 			/* if evaluated shading failed, fall back to "all" mode */
 			dgcdp.gedp->ged_gdp->gd_shaded_mode = 0;
-			shaded_mode_override = _GED_SHADED_MODE_ALL;
 			dgcdp.vs.s_dmode = _GED_SHADED_MODE_ALL;
 		    }
 

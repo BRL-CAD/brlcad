@@ -253,9 +253,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    APPEND_PT(pp, PartHdp);
 	    if (RT_G_DEBUG&RT_DEBUG_PARTITION) bu_log("No partitions yet, segment forms first partition\n");
 	} else if (ap->a_no_booleans) {
-	    lastseg = segp;
 	    lasthit = &segp->seg_in;
-	    lastflip = 0;
 	    /* Just sort in ascending in-dist order */
 	    for (pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw) {
 		if (lasthit->hit_dist < pp->pt_inhit->hit_dist) {
@@ -962,8 +960,6 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
 	if (regp == REGION_NULL) continue;	/* empty slot in table */
 	RT_CK_REGION(regp);
-
-	code = -1;				/* For debug out in policy */
 
 	/*
 	 * Two or more regions claim this partition
