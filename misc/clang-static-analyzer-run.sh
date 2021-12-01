@@ -22,14 +22,15 @@ export CCC_CXX=clang++
 # quickly complete) if we completely pre-build src/other
 #export CCC_ANALYZER_CONSTRAINTS_MODEL=z3
 
-failure=()
+declare -i failure num
+declare -i report_cnt num
 
 function runtest {
 	echo "$1"
 	scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-$1 make -j12 $1
 	if [ "$(ls -A ./scan-reports-$1)" ]; then
 		report_cnt=$(ls -l ./scan-reports-$1/*/report* | wc -l)
-		failure+=("$report_cnt")
+		failure=$(($failure + $report_cnt))
 	else
 		rm -rf ./scan-reports-$1
 	fi
@@ -40,11 +41,11 @@ function runtest {
 scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-config cmake .. -DBRLCAD_EXTRADOCS=OFF -DCMAKE_C_COMPILER=ccc-analyzer -DCMAKE_CXX_COMPILER=c++-analyzer
 
 # clear out any old reports
-#rm -rfv ./scan-reports-*
+rm -rfv ./scan-reports-*
 
 # The following test should ideally generate empty directories (i.e. their
 # report directory should not be present at the end of the test.
-failures="0"
+failure="0"
 
 # These are src/other libs that are either forked or don't have significant
 # upstream activity - since we are effectively maintaining these ourselves,
@@ -70,7 +71,7 @@ cd ../../
 runtest all
 
 # Report results
-echo "Summary: $failures failures found."
+echo "Summary: $failure failures found."
 
 # If we have more than the expected failure count, error out
 if [ "$failures" -gt "20" ]; then
