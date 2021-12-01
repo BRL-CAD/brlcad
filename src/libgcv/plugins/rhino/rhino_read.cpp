@@ -367,14 +367,14 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 
 HIDDEN bool
 write_geometry(rt_wdb &wdb, const std::string &name,
-	       const ON_Geometry &geometry)
+	       const ON_Geometry *geometry)
 {
-    if (const ON_Brep * const brep = ON_Brep::Cast(&geometry)) {
+    if (const ON_Brep * const brep = ON_Brep::Cast(geometry)) {
 	write_geometry(wdb, name, *brep);
-    } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(&geometry)) {
+    } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(geometry)) {
 	write_geometry(wdb, name, *mesh);
-    } else if (geometry.HasBrepForm()) {
-	AutoPtr<ON_Brep, autoptr_wrap_delete> temp(geometry.BrepForm());
+    } else if (geometry->HasBrepForm()) {
+	AutoPtr<ON_Brep, autoptr_wrap_delete> temp(geometry->BrepForm());
 	write_geometry(wdb, name, *temp.ptr);
     } else
 	return false;
@@ -407,22 +407,22 @@ get_shader(const ON_Material *material)
 
 
 HIDDEN void
-get_object_material(const ON_3dmObjectAttributes &attributes,
+get_object_material(const ON_3dmObjectAttributes *attributes,
 		    const ONX_Model &model, Shader &out_shader, unsigned char *out_rgb,
 		    bool &out_own_shader, bool &out_own_rgb)
 {
-    const ON_Material *temp = ON_Material::Cast(model.RenderMaterialFromAttributes(attributes).ModelComponent());
+    const ON_Material *temp = ON_Material::Cast(model.RenderMaterialFromAttributes(*attributes).ModelComponent());
     out_shader = get_shader(temp);
-    out_own_shader = attributes.MaterialSource() != ON::material_from_parent;
+    out_own_shader = attributes->MaterialSource() != ON::material_from_parent;
 
-    ON_Color wc = model.WireframeColorFromAttributes(attributes);
+    ON_Color wc = model.WireframeColorFromAttributes(*attributes);
     out_rgb[0] = static_cast<unsigned char>(wc.Red());
     out_rgb[1] = static_cast<unsigned char>(wc.Green());
     out_rgb[2] = static_cast<unsigned char>(wc.Blue());
-    out_own_rgb = attributes.ColorSource() != ON::color_from_parent;
+    out_own_rgb = attributes->ColorSource() != ON::color_from_parent;
 
     if (!out_rgb[0] && !out_rgb[1] && !out_rgb[2]) {
-	const ON_Material *material= ON_Material::Cast(model.RenderMaterialFromAttributes(attributes).ModelComponent());
+	const ON_Material *material= ON_Material::Cast(model.RenderMaterialFromAttributes(*attributes).ModelComponent());
 
 	out_rgb[0] = static_cast<unsigned char>(material->m_diffuse.Red());
 	out_rgb[1] = static_cast<unsigned char>(material->m_diffuse.Green());
@@ -476,7 +476,7 @@ import_object(rt_wdb &wdb, const std::string &name,
 
 
 HIDDEN void
-write_attributes(rt_wdb &wdb, const std::string &name, const ON_Object &object,
+write_attributes(rt_wdb &wdb, const std::string &name, const ON_ModelGeometryComponent *object,
 		 const ON_UUID &uuid)
 {
     // ON_UuidToString() buffers must be >= 37 chars
@@ -484,7 +484,7 @@ write_attributes(rt_wdb &wdb, const std::string &name, const ON_Object &object,
     char temp[uuid_string_length];
 
     if (db5_update_attribute(name.c_str(), "rhino::type",
-			     object.ClassId()->ClassName(), wdb.dbip)
+			     object->ClassId()->ClassName(), wdb.dbip)
 	|| db5_update_attribute(name.c_str(), "rhino::uuid", ON_UuidToString(uuid,
 				temp), wdb.dbip))
 	bu_bomb("db5_update_attribute() failed");
@@ -497,43 +497,46 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 {
     std::size_t success_count = 0;
 
-    for (std::size_t i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
-	const ONX_Model_Object &object = at(model.m_object_table, i);
-	const std::string name = ON_String(object.m_attributes.m_name).Array();
+    ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
+    for ( ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
+    {
+	const ON_ModelGeometryComponent *mg = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
+	if (!mg)
+	    continue;
+	const ON_3dmObjectAttributes* attributes = mg->Attributes(nullptr);
+	const std::string name = ON_String(attributes->Name()).Array();
 	const std::string member_name = name + ".s";
 
 	Shader shader;
 	unsigned char rgb[3];
 	bool own_shader, own_rgb;
+	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb);
 
-	get_object_material(object.m_attributes, model, shader, rgb, own_shader,
-			    own_rgb);
-
-	if (const ON_InstanceRef * const iref = ON_InstanceRef::Cast(object.m_object))
+	const ON_Geometry *geometry = ON_Geometry::Cast(mg);
+	const ON_InstanceRef * const iref = ON_InstanceRef::Cast(mg);
+	if (iref) {
 	    import_object(wdb, name, *iref, model, own_shader ? shader.first.c_str() : NULL,
 			  own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-	else if (write_geometry(wdb, member_name,
-				*ON_Geometry::Cast(object.m_object))) {
+	} else if (write_geometry(wdb, member_name, geometry)) {
 	    std::set<std::string> members;
 	    members.insert(member_name);
 	    write_comb(wdb, name, members, NULL, own_shader ? shader.first.c_str() : NULL,
 		       own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
 	} else {
 	    if (gcv_options.verbosity_level)
-		std::cerr << "skipped " << object.m_object->ClassId()->ClassName() <<
+		std::cerr << "skipped " << mg->ClassId()->ClassName() <<
 			  " model object '" << name << "'\n";
-
 	    continue;
 	}
 
-	write_attributes(wdb, name, *object.m_object, object.m_attributes.m_uuid);
+	write_attributes(wdb, name, mg, attributes->m_uuid);
 	++success_count;
     }
-
-    if (gcv_options.verbosity_level)
-	if (success_count != model.m_object_table.UnsignedCount())
-	    std::cerr << "imported " << success_count << " of " <<
-		      model.m_object_table.UnsignedCount() << " objects\n";
+    if (gcv_options.verbosity_level) {
+	unsigned int ac = model.ActiveComponentCount(ON_ModelComponent::Type::ModelGeometry);
+	if (success_count != ac)
+	    std::cerr << "imported " << success_count << " of " << ac << " objects\n";
+    }
 }
 
 
