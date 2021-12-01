@@ -457,9 +457,9 @@ import_object(rt_wdb &wdb, const std::string &name,
 	      const ON_InstanceRef &instance_ref, const ONX_Model &model,
 	      const char *shader_name, const char *shader_options, const unsigned char *rgb)
 {
-    const ON_InstanceDefinition &idef = at(model.m_idef_table,
-					   static_cast<std::size_t>(model.IDefIndex(
-						   instance_ref.m_instance_definition_uuid)));
+    ON_UUID id = instance_ref.m_instance_definition_uuid;
+    ON_ModelComponentReference idr = model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, id);
+    const ON_InstanceDefinition *idef= ON_InstanceDefinition::FromModelComponentRef(idr, nullptr);
 
     mat_t matrix;
 
@@ -468,7 +468,8 @@ import_object(rt_wdb &wdb, const std::string &name,
 	    matrix[4 * i + j] = instance_ref.m_xform[i][j];
 
     std::set<std::string> members;
-    members.insert(ON_String(idef.m_name).Array());
+    // TODO - should this be URL or URL_Tag?
+    members.insert(ON_String(idef->URL()).Array());
 
     write_comb(wdb, name, members, matrix, shader_name, shader_options, rgb);
 }
