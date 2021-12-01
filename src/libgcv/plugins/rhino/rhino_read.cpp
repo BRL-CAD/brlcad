@@ -234,50 +234,6 @@ generate_uuid()
     return result;
 }
 
-
-// ONX_Model::Audit() fails to repair UUID issues on platforms
-// where ON_CreateUuid() is not implemented.
-HIDDEN std::size_t
-replace_invalid_uuids(ONX_Model &model)
-{
-    std::size_t num_repairs = 0;
-    std::set<ON_UUID, UuidCompare> seen;
-    seen.insert(ON_nil_uuid); // UUIDs can't be nil
-    srand48(time(NULL));
-
-#define REPLACE_UUIDS(array, member) \
-    do { \
-	for (std::size_t i = 0; i < (array).UnsignedCount(); ++i) { \
-	    while (!seen.insert(at((array), i)member).second) { \
-		at((array), i)member = generate_uuid(); \
-		++num_repairs; \
-	    } \
-	} \
-    } while (false)
-
-    REPLACE_UUIDS(model.m_object_table, .m_attributes.m_uuid);
-    REPLACE_UUIDS(model.m_layer_table, .m_layer_id);
-    REPLACE_UUIDS(model.m_idef_table, .m_uuid);
-    REPLACE_UUIDS(model.m_bitmap_table, ->m_bitmap_id);
-    REPLACE_UUIDS(model.m_mapping_table, .m_mapping_id);
-    REPLACE_UUIDS(model.m_linetype_table, .m_linetype_id);
-    REPLACE_UUIDS(model.m_group_table, .m_group_id);
-    REPLACE_UUIDS(model.m_font_table, .m_font_id);
-    REPLACE_UUIDS(model.m_dimstyle_table, .m_dimstyle_id);
-    REPLACE_UUIDS(model.m_light_table, .m_attributes.m_uuid);
-    REPLACE_UUIDS(model.m_hatch_pattern_table, .m_hatchpattern_id);
-    REPLACE_UUIDS(model.m_history_record_table, ->m_record_id);
-    REPLACE_UUIDS(model.m_userdata_table, .m_uuid);
-
-#undef REPLACE_UUIDS
-
-    if (num_repairs)
-	model.DestroyCache();
-
-    return num_repairs;
-}
-
-
 HIDDEN void
 clean_name(std::map<ON_wString, std::size_t> &seen,
 	   const std::string &default_name, ON_wString &name)
@@ -293,51 +249,6 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
     if (const std::size_t number = seen[name]++)
 	name += ('_' + lexical_cast<std::string>(number + 1)).c_str();
 }
-
-
-HIDDEN void
-load_model(const gcv_opts &gcv_options, const std::string &path,
-	   ONX_Model &model, std::string &root_name)
-{
-    if (!model.Read(path.c_str()))
-	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
-
-    std::size_t num_problems;
-    std::size_t num_repairs = replace_invalid_uuids(model);
-
-    {
-	int temp;
-	num_problems = static_cast<std::size_t>(model.Audit(true, &temp, NULL, NULL));
-	num_repairs += static_cast<std::size_t>(temp);
-    }
-
-    if (num_problems)
-	throw InvalidRhinoModelError("repair failed");
-    else if (num_repairs && gcv_options.verbosity_level)
-	std::cerr << "repaired " << num_repairs << " model issues\n";
-
-    // clean and remove duplicate names
-    std::map<ON_wString, std::size_t> seen;
-    {
-	ON_wString temp = root_name.c_str();
-	clean_name(seen, gcv_options.default_name, temp);
-	root_name = ON_String(temp).Array();
-    }
-
-#define REPLACE_NAMES(array, member) \
-    do { \
-	for (std::size_t i = 0; i < (array).UnsignedCount(); ++i) \
-	    clean_name(seen, gcv_options.default_name, at((array), i).member); \
-    } while (false)
-
-    REPLACE_NAMES(model.m_layer_table, m_name);
-    REPLACE_NAMES(model.m_idef_table, m_name);
-    REPLACE_NAMES(model.m_object_table, m_attributes.m_name);
-    REPLACE_NAMES(model.m_light_table, m_attributes.m_name);
-
-#undef REPLACE_NAMES
-}
-
 
 HIDDEN void
 write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
@@ -476,19 +387,19 @@ typedef std::pair<std::string, std::string> Shader;
 
 
 HIDDEN Shader
-get_shader(const ON_Material &material)
+get_shader(const ON_Material *material)
 {
     std::ostringstream sstream;
 
     sstream << "{"
-	    << " tr " << material.m_transparency
-	    << " re " << material.m_reflectivity
+	    << " tr " << material->m_transparency
+	    << " re " << material->m_reflectivity
 	    << " sp " << 0
 	    << " di " << 0.3
-	    << " ri " << material.m_index_of_refraction
+	    << " ri " << material->m_index_of_refraction
 	    << " ex " << 0
-	    << " sh " << material.m_shine
-	    << " em " << material.m_emission
+	    << " sh " << material->m_shine
+	    << " em " << material->m_emission
 	    << " }";
 
     return std::make_pair("plastic", sstream.str());
@@ -500,8 +411,7 @@ get_object_material(const ON_3dmObjectAttributes &attributes,
 		    const ONX_Model &model, Shader &out_shader, unsigned char *out_rgb,
 		    bool &out_own_shader, bool &out_own_rgb)
 {
-    ON_Material temp;
-    model.GetRenderMaterial(attributes, temp);
+    const ON_Material *temp = ON_Material::Cast(model.RenderMaterialFromAttributes(attributes).ModelComponent());
     out_shader = get_shader(temp);
     out_own_shader = attributes.MaterialSource() != ON::material_from_parent;
 
@@ -958,7 +868,8 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 
     try {
 	ONX_Model model;
-	load_model(*gcv_options, source_path, model, root_name);
+	if (!model.Read(path.c_str()))
+	    throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
 	import_model_layers(*context->dbip->dbi_wdbp, model, root_name);
 	import_model_idefs(*context->dbip->dbi_wdbp, model);
 	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
@@ -981,7 +892,7 @@ rhino_can_read(const char *source_path)
     if (!source_path) return 0;
     FILE *fp = ON::OpenFile(source_path,"rb");
     if (!fp) return 0;
-    ON_BinaryFile file(ON::on_read3dm,fp);
+    ON_BinaryFile file(ON::archive_mode::read3dm,fp);
     if (!file.Read3dmStartSection(&fv, mSC)) return 0;
     if (!file.Read3dmProperties(mprop)) return 0;
     return 1;
