@@ -1111,11 +1111,13 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
      * addressed by WIN(ifp)->mi_xxx and OGL(ifp)->xxx
      */
 
-    if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo)/sizeof(char) * sizeof(char))) == NULL) {
+    struct wininfo *winfo = (struct wininfo *)calloc(1, sizeof(struct wininfo));
+    if ((WINL(ifp) = (char *)winfo) == NULL) {
 	fb_log("fb_ogl_open:  wininfo malloc failed\n");
 	return -1;
     }
-    if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo)/sizeof(char) * sizeof(char))) == NULL) {
+    struct oglinfo *oinfo = (struct oglinfo *)calloc(1, sizeof(struct oglinfo));
+    if ((OGLL(ifp) = (char *)oinfo) == NULL) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }
@@ -1312,11 +1314,13 @@ open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
      * addressed by WIN(ifp)->mi_xxx and OGL(ifp)->xxx
      */
 
-    if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo)/sizeof(char) * sizeof(char))) == NULL) {
+    struct wininfo *winfo = (struct wininfo *)calloc(1, sizeof(struct wininfo));
+    if ((WINL(ifp) = (char *)winfo) == NULL) {
 	fb_log("fb_ogl_open:  wininfo malloc failed\n");
 	return -1;
     }
-    if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo)/sizeof(char) * sizeof(char))) == NULL) {
+    struct oglinfo *oinfo = (struct oglinfo *)calloc(1, sizeof(struct oglinfo));
+    if ((OGLL(ifp) = (char *)oinfo) == NULL) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }
