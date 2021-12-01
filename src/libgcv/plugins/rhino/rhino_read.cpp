@@ -415,20 +415,18 @@ get_object_material(const ON_3dmObjectAttributes &attributes,
     out_shader = get_shader(temp);
     out_own_shader = attributes.MaterialSource() != ON::material_from_parent;
 
-    out_rgb[0] = static_cast<unsigned char>(model.WireframeColor(attributes).Red());
-    out_rgb[1] = static_cast<unsigned char>(model.WireframeColor(
-	    attributes).Green());
-    out_rgb[2] = static_cast<unsigned char>(model.WireframeColor(
-	    attributes).Blue());
+    ON_Color wc = model.WireframeColorFromAttributes(attributes);
+    out_rgb[0] = static_cast<unsigned char>(wc.Red());
+    out_rgb[1] = static_cast<unsigned char>(wc.Green());
+    out_rgb[2] = static_cast<unsigned char>(wc.Blue());
     out_own_rgb = attributes.ColorSource() != ON::color_from_parent;
 
     if (!out_rgb[0] && !out_rgb[1] && !out_rgb[2]) {
-	ON_Material material;
-	model.GetRenderMaterial(attributes, material);
+	const ON_Material *material= ON_Material::Cast(model.RenderMaterialFromAttributes(attributes).ModelComponent());
 
-	out_rgb[0] = static_cast<unsigned char>(material.m_diffuse.Red());
-	out_rgb[1] = static_cast<unsigned char>(material.m_diffuse.Green());
-	out_rgb[2] = static_cast<unsigned char>(material.m_diffuse.Blue());
+	out_rgb[0] = static_cast<unsigned char>(material->m_diffuse.Red());
+	out_rgb[1] = static_cast<unsigned char>(material->m_diffuse.Green());
+	out_rgb[2] = static_cast<unsigned char>(material->m_diffuse.Blue());
 	out_own_rgb = out_own_shader;
     }
 }
