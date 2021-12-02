@@ -24,9 +24,38 @@
 #include <bu.h>
 #include <ged.h>
 
+void
+material_creation_test(struct ged *ged){
+    //Create test material with whatever you want it called.
+    char* material_name = "Material";
+    char* object_name = "TestMaterial";
+    const char* argv[] = {"material", "create", object_name, material_name};
+    ged_exec(ged, 4, argv);
+}
+
+void
+property_set_test(){
+   
+}
+
+void
+property_get_test(){
+}
+
+void
+material_destroy_test(){
+}
+
+void
+material_import_test(){
+
+}
+
 int
-main(int argc, char **argv) {
-    
+main() {
+    struct ged g;
+    ged_init(&g);
+
     return 0;
 }
 
