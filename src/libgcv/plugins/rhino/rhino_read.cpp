@@ -541,32 +541,38 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 
 
 HIDDEN void
-import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
+import_idef(rt_wdb &wdb, std::string name, const ON_InstanceDefinition *idef,
 	    const ONX_Model &model)
 {
     std::set<std::string> members;
 
-    for (std::size_t i = 0; i < idef.m_object_uuid.UnsignedCount(); ++i) {
-	const ONX_Model_Object &object = at(model.m_object_table,
-					    model.ObjectIndex(at(idef.m_object_uuid, i)));
-
-	members.insert(ON_String(object.m_attributes.m_name).Array());
+    for (unsigned int i = 0; i < idef->InstanceGeometryIdList().UnsignedCount(); ++i) {
+	ON_UUID id = *idef->InstanceGeometryIdList().At(i);
+	ON_ModelComponentReference idr = model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, id);
+	const ON_InstanceDefinition *nd = ON_InstanceDefinition::FromModelComponentRef(idr, nullptr);
+	members.insert(ON_String(nd->URL()).Array());
     }
 
-    const std::string name = ON_String(idef.m_name).Array();
-
     write_comb(wdb, name, members);
-    write_attributes(wdb, name, idef, idef.m_uuid);
 }
 
 
 HIDDEN void
-import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
+import_model_instances(rt_wdb &wdb, const ONX_Model &model)
 {
-    for (std::size_t i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
-	import_idef(wdb, at(model.m_idef_table, i), model);
+    ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
+    for ( ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
+    {
+	const ON_ModelGeometryComponent *mg = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
+	if (!mg)
+	    continue;
+	const ON_3dmObjectAttributes* attributes = mg->Attributes(nullptr);
+	const std::string name = ON_String(attributes->Name()).Array();
+	const ON_InstanceDefinition *idef= ON_InstanceDefinition::FromModelComponentRef(cr, nullptr);
+	import_idef(wdb, name, idef, model);
+	write_attributes(wdb, name, mg, attributes->m_uuid);
+    }
 }
-
 
 HIDDEN std::set<std::string>
 get_all_idef_members(const ONX_Model &model)
@@ -873,7 +879,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	if (!model.Read(path.c_str()))
 	    throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
 	import_model_layers(*context->dbip->dbi_wdbp, model, root_name);
-	import_model_idefs(*context->dbip->dbi_wdbp, model);
+	import_model_instances(*context->dbip->dbi_wdbp, model);
 	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
