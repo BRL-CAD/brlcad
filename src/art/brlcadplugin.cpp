@@ -190,6 +190,9 @@ BrlcadObject::BrlcadObject(
     VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
     // VMOVE(min, ap->a_uvec);
     // VMOVE(max, ap->a_vvec);
+
+    fprintf(output, "appleseed const: Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
+    fflush(output);
 }
 
 
@@ -203,8 +206,18 @@ BrlcadObject:: BrlcadObject(
     this->ap = p_ap;
     this->rtip = p_ap->a_rt_i;
     this->resources = p_resources;
-    VMOVE(this->min, ap->a_uvec);
-    VMOVE(this->max, ap->a_vvec);
+    // VMOVE(this->min, ap->a_uvec);
+    // VMOVE(this->max, ap->a_vvec);
+
+    VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
+    VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
+
+
+    // VSETALL(ap->a_uvec, 0);
+    // VSETALL(ap->a_vvec, 0);
+
+    fprintf(output, "art.cpp const: Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
+    fflush(output);
 }
 
 
