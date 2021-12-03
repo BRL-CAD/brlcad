@@ -696,7 +696,7 @@ GetStartPointsEdges(
     const ON_Surface *surf2,
     ON_2dPointArray& start_points1,
     ON_2dPointArray& start_points2,
-    double tol
+    double UNUSED(tol)
     )
 {
     bool rv = false;
@@ -706,10 +706,15 @@ GetStartPointsEdges(
     intervals[2] = surf2->Domain(0);
     intervals[3] = surf2->Domain(1);
 
-    const ON_Surface *surfaces[2] = {surf1, surf2};
     ON_2dPointArray out[2] = {start_points1, start_points2};
     ON_SimpleArray<ON_X_EVENT> x;
 
+#if 0
+    // TODO - as far as I can tell, these methods were never implemented in
+    // openNURBS - they were part of the RhinoSDK and just stubs.  Newer
+    // openNURBS has removed them completely, so this code no longer compiles.
+    // Commenting out, but leaving to document the intent of the logic in case
+    // someone wants to adapt this to other BRL-CAD logic in the future.
     surf1->IsoCurve(1, intervals[0].Min())->IntersectSurface(surf2, x, tol, tol);
     surf1->IsoCurve(1, intervals[0].Max())->IntersectSurface(surf2, x, tol, tol);
     surf1->IsoCurve(0, intervals[1].Min())->IntersectSurface(surf2, x, tol, tol);
@@ -718,6 +723,7 @@ GetStartPointsEdges(
     surf2->IsoCurve(1, intervals[2].Max())->IntersectSurface(surf1, x, tol, tol);
     surf2->IsoCurve(0, intervals[3].Min())->IntersectSurface(surf1, x, tol, tol);
     surf2->IsoCurve(0, intervals[3].Max())->IntersectSurface(surf1, x, tol, tol);
+#endif
 
     int curve; /* the surface the curves come from */
     int dir; /* the parameter that varies in the iso curve */
@@ -726,12 +732,19 @@ GetStartPointsEdges(
     for (curve = 0; curve < 2; curve++) {
 	for (dir = 0; dir < 2; dir++) {
 	    for (min_or_max = 0; min_or_max < 2; min_or_max++) {
+#if 0
+		// TODO - as far as I can tell, these methods were never implemented in
+		// openNURBS - they were part of the RhinoSDK and just stubs.  Newer
+		// openNURBS has removed them completely, so this code no longer compiles.
+		// Commenting out, but leaving to document the intent of the logic in case
+		// someone wants to adapt this to other BRL-CAD logic in the future.
+		const ON_Surface *surfaces[2] = {surf1, surf2};
 		if (min_or_max == 0) {
 		    surfaces[curve]->IsoCurve(1 - dir, intervals[dir + (2 * curve)].Min())->IntersectSurface(surfaces[curve], x, tol, tol);
 		} else {
 		    surfaces[curve]->IsoCurve(1 - dir, intervals[dir + (2 * curve)].Max())->IntersectSurface(surfaces[curve], x, tol, tol);
 		}
-
+#endif
 		int i;
 		for (i = 0; i < x.Count(); i++) {
 		    rv = true; /* if we get here it means we've found a point */
@@ -796,6 +809,12 @@ FaceFaceIntersect(
 	start_points2.Remove(0);
 
 	for (j = 0; j < start_points1.Count(); j++) {
+#if 0
+	    // TODO - as far as I can tell, these methods were never implemented in
+	    // openNURBS - they were part of the RhinoSDK and just stubs.  Newer
+	    // openNURBS has removed them completely, so this code no longer compiles.
+	    // Commenting out, but leaving to document the intent of the logic in case
+	    // someone wants to adapt this to other BRL-CAD logic in the future.
 	    double dummy;
 	    if (out1->GetClosestPoint(ON_3dPoint(start_points1[j]), &dummy, stepsize) && out2->GetClosestPoint(ON_3dPoint(start_points2[j]), &dummy, stepsize)) {
 		/* start points j lie on the curve so we delete them */
@@ -803,6 +822,7 @@ FaceFaceIntersect(
 		start_points2.Remove(j);
 		j--;
 	    }
+#endif
 	}
 	Face_X_Event newevent = Face_X_Event(face1, face2, out1, out2);
 	x.Append(newevent);
