@@ -86,14 +86,14 @@ private:
 
 
 template <typename T, std::size_t length>
-HIDDEN std::size_t array_length(const T(&)[length])
+std::size_t array_length(const T(&)[length])
 {
     return length;
 }
 
 
 template <typename Target, typename Source>
-HIDDEN Target lexical_cast(const Source &value)
+Target lexical_cast(const Source &value)
 {
     std::stringstream interpreter;
     Target result;
@@ -107,7 +107,7 @@ HIDDEN Target lexical_cast(const Source &value)
 }
 
 
-HIDDEN void
+void
 comb_to_region(db_i &db, const std::string &name)
 {
     RT_CK_DBI(&db);
@@ -124,7 +124,7 @@ comb_to_region(db_i &db, const std::string &name)
 	bu_bomb("db_lookup() failed");
 }
 
-static void
+void
 comb_region_name_check(std::map<const directory *, std::string> &renamed, db_i &db, const std::string &name)
 {
     RT_CK_DBI(&db);
@@ -181,7 +181,7 @@ public:
 
 
 template <template<typename> class Array, typename T>
-HIDDEN const T &at(const Array<T> &array, std::size_t index)
+const T &at(const Array<T> &array, std::size_t index)
 {
     if (const T * const result = array.At(static_cast<unsigned>(index)))
 	return *result;
@@ -191,14 +191,14 @@ HIDDEN const T &at(const Array<T> &array, std::size_t index)
 
 
 template <template<typename> class Array, typename T>
-HIDDEN T &at(Array<T> &array, std::size_t index)
+T &at(Array<T> &array, std::size_t index)
 {
     return const_cast<T &>(at(const_cast<const Array<T> &>(array), index));
 }
 
 
 template <typename T, typename Array>
-HIDDEN const T &at(const Array &array, std::size_t index)
+const T &at(const Array &array, std::size_t index)
 {
     if (const T * const result = array.At(static_cast<unsigned>(index)))
 	return *result;
@@ -209,7 +209,7 @@ HIDDEN const T &at(const Array &array, std::size_t index)
 
 // ON_CreateUuid() is not implemented for all platforms.
 // When it fails, we create a UUIDv4.
-HIDDEN ON_UUID
+ON_UUID
 generate_uuid()
 {
     ON_UUID result;
@@ -234,7 +234,7 @@ generate_uuid()
     return result;
 }
 
-HIDDEN void
+void
 clean_name(std::map<ON_wString, std::size_t> &seen,
 	   const std::string &default_name, ON_wString &name)
 {
@@ -250,7 +250,7 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
 	name += ('_' + lexical_cast<std::string>(number + 1)).c_str();
 }
 
-HIDDEN void
+void
 write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 {
     ON_Brep *b = const_cast<ON_Brep *>(&brep);
@@ -259,7 +259,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 }
 
 
-HIDDEN void
+void
 write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 {
     ON_Mesh mesh = in_mesh;
@@ -365,7 +365,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 }
 
 
-HIDDEN bool
+bool
 write_geometry(rt_wdb &wdb, const std::string &name,
 	       const ON_Geometry *geometry)
 {
@@ -386,7 +386,7 @@ write_geometry(rt_wdb &wdb, const std::string &name,
 typedef std::pair<std::string, std::string> Shader;
 
 
-HIDDEN Shader
+Shader
 get_shader(const ON_Material *material)
 {
     std::ostringstream sstream;
@@ -406,7 +406,7 @@ get_shader(const ON_Material *material)
 }
 
 
-HIDDEN void
+void
 get_object_material(const ON_3dmObjectAttributes *attributes,
 		    const ONX_Model &model, Shader &out_shader, unsigned char *out_rgb,
 		    bool &out_own_shader, bool &out_own_rgb)
@@ -432,7 +432,7 @@ get_object_material(const ON_3dmObjectAttributes *attributes,
 }
 
 
-HIDDEN void
+void
 write_comb(rt_wdb &wdb, const std::string &name,
 	   const std::set<std::string> &members, const mat_t matrix = NULL,
 	   const char *shader_name = NULL, const char *shader_options = NULL,
@@ -451,415 +451,123 @@ write_comb(rt_wdb &wdb, const std::string &name,
 	bu_bomb("mk_comb() failed");
 }
 
-
-HIDDEN void
+#if 0
+void
 import_object(rt_wdb &wdb, const std::string &name,
 	      const ON_InstanceRef &instance_ref, const ONX_Model &model,
 	      const char *shader_name, const char *shader_options, const unsigned char *rgb)
 {
-    ON_UUID id = instance_ref.m_instance_definition_uuid;
-    ON_ModelComponentReference idr = model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, id);
-    const ON_InstanceDefinition *idef= ON_InstanceDefinition::FromModelComponentRef(idr, nullptr);
-
-    mat_t matrix;
-
-    for (std::size_t i = 0; i < 4; ++i)
-	for (std::size_t j = 0; j < 4; ++j)
-	    matrix[4 * i + j] = instance_ref.m_xform[i][j];
-
-    std::set<std::string> members;
-    // TODO - should this be URL or URL_Tag?
-    members.insert(ON_String(idef->URL()).Array());
-
-    write_comb(wdb, name, members, matrix, shader_name, shader_options, rgb);
 }
+#endif
 
-
-HIDDEN void
-write_attributes(rt_wdb &wdb, const std::string &name, const ON_ModelGeometryComponent *object,
-		 const ON_UUID &uuid)
+void
+write_attributes(rt_wdb &UNUSED(wdb), const std::string &UNUSED(name), const ON_ModelGeometryComponent *UNUSED(object),
+		 const ON_UUID &UNUSED(uuid))
 {
-    // ON_UuidToString() buffers must be >= 37 chars
-    const std::size_t uuid_string_length = 37;
-    char temp[uuid_string_length];
-
-    if (db5_update_attribute(name.c_str(), "rhino::type",
-			     object->ClassId()->ClassName(), wdb.dbip)
-	|| db5_update_attribute(name.c_str(), "rhino::uuid", ON_UuidToString(uuid,
-				temp), wdb.dbip))
-	bu_bomb("db5_update_attribute() failed");
 }
 
 
-HIDDEN void
-import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
-		     const ONX_Model &model)
+void
+import_model_objects(const gcv_opts &UNUSED(gcv_options), rt_wdb &UNUSED(wdb),
+		     const ONX_Model &UNUSED(model))
 {
-    std::size_t success_count = 0;
-
-    ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
-    for ( ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
-    {
-	const ON_ModelGeometryComponent *mg = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
-	if (!mg)
-	    continue;
-	const ON_3dmObjectAttributes* attributes = mg->Attributes(nullptr);
-	const std::string name = ON_String(attributes->Name()).Array();
-	const std::string member_name = name + ".s";
-
-	Shader shader;
-	unsigned char rgb[3];
-	bool own_shader, own_rgb;
-	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb);
-
-	const ON_Geometry *geometry = ON_Geometry::Cast(mg);
-	const ON_InstanceRef * const iref = ON_InstanceRef::Cast(mg);
-	if (iref) {
-	    import_object(wdb, name, *iref, model, own_shader ? shader.first.c_str() : NULL,
-			  own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-	} else if (write_geometry(wdb, member_name, geometry)) {
-	    std::set<std::string> members;
-	    members.insert(member_name);
-	    write_comb(wdb, name, members, NULL, own_shader ? shader.first.c_str() : NULL,
-		       own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-	} else {
-	    if (gcv_options.verbosity_level)
-		std::cerr << "skipped " << mg->ClassId()->ClassName() <<
-			  " model object '" << name << "'\n";
-	    continue;
-	}
-
-	write_attributes(wdb, name, mg, attributes->m_uuid);
-	++success_count;
-    }
-    if (gcv_options.verbosity_level) {
-	unsigned int ac = model.ActiveComponentCount(ON_ModelComponent::Type::ModelGeometry);
-	if (success_count != ac)
-	    std::cerr << "imported " << success_count << " of " << ac << " objects\n";
-    }
 }
 
 
-HIDDEN void
-import_idef(rt_wdb &wdb, std::string name, const ON_InstanceDefinition *idef,
-	    const ONX_Model &model)
+void
+import_idef(rt_wdb &UNUSED(wdb), std::string UNUSED(name), const ON_InstanceDefinition *UNUSED(idef),
+	    const ONX_Model &UNUSED(model))
 {
-    std::set<std::string> members;
-
-    for (unsigned int i = 0; i < idef->InstanceGeometryIdList().UnsignedCount(); ++i) {
-	ON_UUID id = *idef->InstanceGeometryIdList().At(i);
-	ON_ModelComponentReference idr = model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, id);
-	const ON_InstanceDefinition *nd = ON_InstanceDefinition::FromModelComponentRef(idr, nullptr);
-	members.insert(ON_String(nd->URL()).Array());
-    }
-
-    write_comb(wdb, name, members);
 }
 
 
-HIDDEN void
-import_model_instances(rt_wdb &wdb, const ONX_Model &model)
+void
+import_model_idefs(rt_wdb &UNUSED(wdb), const ONX_Model &UNUSED(model))
 {
-    ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
-    for ( ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
-    {
-	const ON_ModelGeometryComponent *mg = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
-	if (!mg)
-	    continue;
-	const ON_3dmObjectAttributes* attributes = mg->Attributes(nullptr);
-	const std::string name = ON_String(attributes->Name()).Array();
-	const ON_InstanceDefinition *idef= ON_InstanceDefinition::FromModelComponentRef(cr, nullptr);
-	import_idef(wdb, name, idef, model);
-	write_attributes(wdb, name, mg, attributes->m_uuid);
-    }
+
 }
 
-HIDDEN std::set<std::string>
-get_all_idef_members(const ONX_Model &model)
+std::set<std::string>
+get_all_idef_members(const ONX_Model &UNUSED(model))
 {
     std::set<std::string> result;
-
-    for (std::size_t i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
-	const ON_InstanceDefinition &idef = at(model.m_idef_table, i);
-
-	for (std::size_t j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j) {
-	    const ONX_Model_Object &object = at(model.m_object_table,
-						model.ObjectIndex(at(idef.m_object_uuid, j)));
-	    result.insert(ON_String(object.m_attributes.m_name).Array());
-	}
-    }
-
     return result;
 }
 
 
-HIDDEN std::set<std::string>
-get_layer_members(const ON_Layer &layer, const ONX_Model &model)
+std::set<std::string>
+get_layer_members(const ON_Layer &UNUSED(layer), const ONX_Model &UNUSED(model))
 {
-    std::set<std::string> members;
-
-    for (std::size_t i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	const ON_Layer &current_layer = at(model.m_layer_table, i);
-
-	if (current_layer.m_parent_layer_id == layer.ModelObjectId())
-	    members.insert(ON_String(current_layer.m_name).Array());
-    }
-
-    for (std::size_t i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
-	const ONX_Model_Object &object = at(model.m_object_table, i);
-
-	if (object.m_attributes.m_layer_index == layer.m_layer_index)
-	    members.insert(ON_String(object.m_attributes.m_name).Array());
-    }
-
-    const std::set<std::string> model_idef_members = get_all_idef_members(model);
     std::set<std::string> result;
-    std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
-			model_idef_members.end(), std::inserter(result, result.end()));
-
     return result;
 }
 
 
-HIDDEN void
-import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
+void
+import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &UNUSED(model))
 {
-    const std::string name = ON_String(layer.m_name).Array();
+    ON_String lname = ON_String(l->Name());
+    const char *lstr = lname.Array();
+    std::cout << "Layer: " << lstr << "\n";
 
-    unsigned char rgb[3];
-    rgb[0] = static_cast<unsigned char>(layer.Color().Red());
-    rgb[1] = static_cast<unsigned char>(layer.Color().Green());
-    rgb[2] = static_cast<unsigned char>(layer.Color().Blue());
+    ON_String ltype = ON_ModelComponent::ComponentTypeToString(l->ComponentType());
+    const char *ltype_str = ltype.Array();
+    std::cout << " Type: " << ltype_str << "\n";
 
-    const Shader shader = get_shader(layer.RenderMaterialIndex() != -1 ?
-				     at(model.m_material_table, layer.RenderMaterialIndex()) : ON_Material());
+    ON_String lid;
+    const char *lid_str = ON_UuidToString(l->Id(), lid);
+    std::cout << "   Id: " << lid_str << "\n";
 
-    write_comb(wdb, name, get_layer_members(layer, model), NULL,
-	       shader.first.c_str(), shader.second.c_str(), rgb);
-    write_attributes(wdb, name, layer, layer.m_layer_id);
+    const ON__UINT64 content_version_number = l->ContentVersionNumber();
+    std::cout << "   V#: " << content_version_number << "\n";
+
+    ON_Color wc = (l->Color() == ON_UNSET_COLOR) ? l->PlotColor() : l->Color();
+    if (wc != ON_UNSET_COLOR) {
+	int lrgba[4] = {0};
+	lrgba[0] = wc.Red();
+	lrgba[1] = wc.Green();
+	lrgba[2] = wc.Blue();
+	lrgba[3] = wc.Alpha(); // (0 = opaque, 255 = transparent)
+	std::cout << "  RGBA: " << lrgba[0] << "," << lrgba[1] << "," << lrgba[2] << "," << lrgba[3] << "\n";
+    }
+
+    ON_wString wonstr;
+    ON_TextLog log(wonstr);
+    l->Dump(log);
+    ON_String onstr = ON_String(wonstr);
+    const char *ldesc = onstr.Array();
+    bu_log("%s\n", ldesc);
+
 }
 
 
-HIDDEN void
+void
 import_model_layers(rt_wdb &wdb, const ONX_Model &model,
-		    const std::string &root_name)
+		    const std::string &UNUSED(root_name))
 {
-    for (std::size_t i = 0; i < model.m_layer_table.UnsignedCount(); ++i)
-	import_layer(wdb, at(model.m_layer_table, i), model);
-
+    ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::Layer);
+    for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
+    {
+	const ON_Layer *p = ON_Layer::Cast(cr.ModelComponent());
+	if (!p)
+	    continue;
+	import_layer(wdb, p, model);
+    }
+#if 0
     ON_Layer root_layer;
     root_layer.SetLayerName(root_name.c_str());
     import_layer(wdb, root_layer, model);
+#endif
 }
 
 
-HIDDEN void
-polish_output(const gcv_opts &gcv_options, db_i &db)
+void
+polish_output(const gcv_opts &UNUSED(gcv_options), db_i &UNUSED(db))
 {
-    std::map<const directory *, std::string> renamed;
-    bu_ptbl found = BU_PTBL_INIT_ZERO;
-    AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
-
-    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
-		      (std::string() +
-		       "-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
-		       + gcv_options.default_name + "* )").c_str(), 0, NULL, &db, NULL))
-	bu_bomb("db_search() failed");
-
-    const char * const ignored_attributes[] = {"rhino::type", "rhino::uuid"};
-    rt_reduce_db(&db, array_length(ignored_attributes), ignored_attributes, &found);
-
-    // apply region flag
-    db_search_free(&found);
-    BU_PTBL_INIT(&found);
-
-    // Set region flags, add .r suffix to regions if not already present
-    renamed.clear();
-    const char *reg_search = "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader";
-    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL))
-	bu_bomb("db_search() failed");
-    bu_ptbl found_instances = BU_PTBL_INIT_ZERO;
-    AutoPtr<bu_ptbl, db_search_free> autofree_found_instances(&found_instances);
-    if (0 > db_search(&found_instances, DB_SEARCH_TREE, reg_search, 0, NULL, &db, NULL))
-	bu_bomb("db_search() failed");
-
-    if (BU_PTBL_LEN(&found)) {
-	directory **entry;
-
-	for (BU_PTBL_FOR(entry, (directory **), &found)) {
-
-	    comb_to_region(db, (*entry)->d_namep);
-
-	    comb_region_name_check(renamed, db, (*entry)->d_namep);
-
-	    if (gcv_options.randomize_colors) {
-		// random colors mode: TODO: move this into a filter after 7.26.0
-		std::string rgb;
-
-		// TODO - use bu_color for this...
-		for (std::size_t i = 0; i < 3; ++i)
-		    rgb.append(lexical_cast<std::string>(static_cast<unsigned>
-							 (drand48() * 255.0 + 0.5)) + (i != 2 ? "/" : ""));
-
-		if (db5_update_attribute((*entry)->d_namep, "rgb", rgb.c_str(), &db)
-		    || db5_update_attribute((*entry)->d_namep, "color", rgb.c_str(), &db))
-		    bu_bomb("db5_update_attribute() failed");
-	    }
-	}
-    }
-
-    // Update any combs that referred to old region names to reference the new ones instead
-    if (BU_PTBL_LEN(&found_instances)) {
-	db_full_path **entry;
-	for (BU_PTBL_FOR(entry, (db_full_path **), &found_instances)) {
-	    struct directory *ec = DB_FULL_PATH_CUR_DIR(*entry);
-	    struct directory *ep = (*entry)->fp_names[(*entry)->fp_len - 2];
-	    std::map<const directory *, std::string>::iterator rentry = renamed.find(ec);
-	    if (rentry == renamed.end()) {
-		continue;
-	    }
-	    bu_ptbl stack = BU_PTBL_INIT_ZERO;
-	    AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
-	    if (!db_comb_mvall(ep, &db, rentry->second.c_str(), ec->d_namep, &stack))
-		bu_bomb("db_comb_mvall() failed");
-	}
-    }
-    db_search_free(&found_instances);
-
-    // rename shapes after their parent layers
-    db_search_free(&found);
-    BU_PTBL_INIT(&found);
-
-    renamed.clear();
-    if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db, NULL))
-	bu_bomb("db_search() failed");
-
-    if (BU_PTBL_LEN(&found)) {
-	const std::string unnamed_pattern = std::string() + gcv_options.default_name +
-					    "*";
-	db_full_path **entry;
-
-	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
-	    if (!renamed.count(DB_FULL_PATH_CUR_DIR(*entry)))
-		for (ssize_t i = (*entry)->fp_len - 2; i >= 0; --i) {
-		    bu_attribute_value_set avs;
-		    AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
-
-		    if (db5_get_attributes(&db, &avs, (*entry)->fp_names[i]))
-			bu_bomb("db5_get_attributes() failed");
-
-		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")
-			|| (bu_path_match(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
-			    && bu_path_match("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
-			const std::string prefix = (*entry)->fp_names[i]->d_namep;
-			std::string suffix = ".s";
-			std::size_t num = 1;
-
-			while ((prefix + suffix) != DB_FULL_PATH_CUR_DIR(*entry)->d_namep
-			       && db_lookup(&db, (prefix + suffix).c_str(), false))
-			    suffix = "_" + lexical_cast<std::string>(++num) + ".s";
-
-			renamed.insert(std::make_pair(DB_FULL_PATH_CUR_DIR(*entry),
-						      DB_FULL_PATH_CUR_DIR(*entry)->d_namep));
-
-			if (db_rename(&db, DB_FULL_PATH_CUR_DIR(*entry), (prefix + suffix).c_str()))
-			    bu_bomb("db_rename() failed");
-
-			break;
-		    }
-		}
-
-	    if (renamed.count(DB_FULL_PATH_CUR_DIR(*entry)) && (*entry)->fp_len > 1) {
-		bu_ptbl stack = BU_PTBL_INIT_ZERO;
-		AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
-
-		if (!db_comb_mvall((*entry)->fp_names[(*entry)->fp_len - 2], &db,
-				   renamed.at(DB_FULL_PATH_CUR_DIR(*entry)).c_str(),
-				   DB_FULL_PATH_CUR_DIR(*entry)->d_namep, &stack))
-		    bu_bomb("db_comb_mvall() failed");
-	    }
-	}
-    }
-
-    // ensure that all solids are below regions
-    db_search_free(&found);
-    BU_PTBL_INIT(&found);
-
-    if (0 > db_search(&found, DB_SEARCH_TREE,
-		      "-type shape -not -below -type region", 0, NULL, &db, NULL))
-	bu_bomb("db_search() failed");
-
-    if (BU_PTBL_LEN(&found)) {
-	db_full_path **entry;
-
-	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
-
-	    // Sanity
-	    if (!(*entry) || (*entry)->fp_len <= 0)
-		continue;
-
-	    std::string prefix = DB_FULL_PATH_CUR_DIR(*entry)->d_namep;
-	    std::string suffix = ".r";
-
-	    if (prefix.size() >= 2 && prefix.at(prefix.size() - 2) == '.'
-		&& prefix.at(prefix.size() - 1) == 's')
-		prefix.resize(prefix.size() - 2);
-
-	    std::size_t num = 1;
-
-	    while (db_lookup(&db, (prefix + suffix).c_str(), false))
-		suffix = "_" + lexical_cast<std::string>(++num) + ".r";
-
-	    const std::string region_name = prefix + suffix;
-
-	    if ((*entry)->fp_len >= 2) {
-		bu_ptbl stack = BU_PTBL_INIT_ZERO;
-		AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
-
-		if (!db_comb_mvall((*entry)->fp_names[(*entry)->fp_len - 2], &db,
-				   DB_FULL_PATH_CUR_DIR(*entry)->d_namep, region_name.c_str(), &stack))
-		    bu_bomb("db_comb_mvall() failed");
-	    }
-
-	    std::set<std::string> members;
-	    members.insert(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
-	    write_comb(*db.dbi_wdbp, region_name, members);
-
-	    comb_to_region(db, region_name);
-
-	    bool has_rgb = false, has_shader = false;
-
-	    for (ssize_t i = (*entry)->fp_len - 2; i >= 0; --i) {
-		bu_attribute_value_set avs;
-		AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
-
-		if (db5_get_attributes(&db, &avs, (*entry)->fp_names[i]))
-		    bu_bomb("db5_get_attributes() failed");
-
-		if (!has_rgb)
-		    if (const char * const rgb_attr = bu_avs_get(&avs, "rgb")) {
-			has_rgb = true;
-
-			if (db5_update_attribute(region_name.c_str(), "rgb", rgb_attr, &db)
-			    || db5_update_attribute(region_name.c_str(), "color", rgb_attr, &db))
-			    bu_bomb("db5_update_attribute() failed");
-		    }
-
-		if (!has_shader)
-		    if (const char * const shader_attr = bu_avs_get(&avs, "shader")) {
-			has_shader = true;
-
-			if (db5_update_attribute(region_name.c_str(), "shader", shader_attr, &db)
-			    || db5_update_attribute(region_name.c_str(), "oshader", shader_attr, &db))
-			    bu_bomb("db5_update_attribute() failed");
-		    }
-	    }
-	}
-    }
 }
 
 
-HIDDEN int
+int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
 {
@@ -876,10 +584,10 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 
     try {
 	ONX_Model model;
-	if (!model.Read(path.c_str()))
+	if (!model.Read(source_path))
 	    throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
 	import_model_layers(*context->dbip->dbi_wdbp, model, root_name);
-	import_model_instances(*context->dbip->dbi_wdbp, model);
+	import_model_idefs(*context->dbip->dbi_wdbp, model);
 	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
@@ -891,7 +599,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     return 1;
 }
 
-HIDDEN int
+int
 rhino_can_read(const char *source_path)
 {
     int fv;
