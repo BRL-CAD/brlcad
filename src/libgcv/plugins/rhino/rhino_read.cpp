@@ -387,9 +387,11 @@ typedef std::pair<std::string, std::string> Shader;
 
 
 Shader
-get_shader(const ON_Material *material)
+get_shader(const ON_Material *im)
 {
     std::ostringstream sstream;
+    ON_Material dm;
+    const ON_Material *material = (im) ? im : &dm;
 
     sstream << "{"
 	    << " tr " << material->m_transparency
@@ -494,17 +496,67 @@ get_all_idef_members(const ONX_Model &UNUSED(model))
     return result;
 }
 
-
+// Layer members (translated to comb children in BRL-CAD terms) may be either
+// other layers (additional combs) or objects.
+//
+// Unlike instance definitions, layer hierarchies are only used to group
+// objects that are not otherwise the children of a comb.  An object is only
+// assigned as a layer member if it is a member of the layer AND it is not used
+// as a reference object for an instance elsewhere in the model.
+//
+// This avoids generating large combs for layers, while at the same time
+// grouping objects that would otherwise be ungrouped top level objects in the
+// .g file
+//
+// TODO - should we also be doing something for the Group type?
 std::set<std::string>
-get_layer_members(const ON_Layer &UNUSED(layer), const ONX_Model &UNUSED(model))
+get_layer_members(const ON_Layer *layer, const ONX_Model &model)
 {
     std::set<std::string> result;
+    {
+	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::Layer);
+	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
+	{
+	    const ON_Layer *cl = ON_Layer::Cast(cr.ModelComponent());
+	    if (!cl)
+		continue;
+	    if (cl->ParentLayerId() == layer->ModelObjectId()) {
+		std::cout << "Layer " << ON_String(cl->Name()).Array() << " is a child of " << ON_String(layer->Name()).Array() << "\n";
+	    }
+	}
+    }
+
+    {
+	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
+	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
+	{
+	    const ON_ModelGeometryComponent *mg = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
+	    if (!mg)
+		continue;
+	    const ON_3dmObjectAttributes* attributes = mg->Attributes(nullptr);
+	    if (!attributes)
+		continue;
+	    ON_String ns(attributes->Name());
+	    const char *gname = ns.Array();
+	    const char *dname = "unnamed";
+	    if (!gname)
+		gname = dname;
+	    if (attributes->m_layer_index == layer->Index()) {
+		std::cout << "Object " << gname << " is a child of " << ON_String(layer->Name()).Array() << "\n";
+	    }
+	}
+    }
+
+    // TODO - build up sets and then do set_difference with instance defs
+
+
     return result;
 }
 
 
+// Each openNURBS layer is imported into the .g file as a comb
 void
-import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &UNUSED(model))
+import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &model)
 {
     ON_String lname = ON_String(l->Name());
     const char *lstr = lname.Array();
@@ -530,6 +582,20 @@ import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &UNUSED(mod
 	lrgba[3] = wc.Alpha(); // (0 = opaque, 255 = transparent)
 	std::cout << "  RGBA: " << lrgba[0] << "," << lrgba[1] << "," << lrgba[2] << "," << lrgba[3] << "\n";
     }
+
+
+    ON_ModelComponentReference mref = model.RenderMaterialFromIndex(l->RenderMaterialIndex());
+    const ON_Material *mp = ON_Material::Cast(mref.ModelComponent());
+    const Shader shader = get_shader(mp);
+
+    std::cout << "Shader: " << shader.first.c_str() << "," << shader.second.c_str() << "\n";
+
+    std::set<std::string> layer_children = get_layer_members(l, model);
+
+    //write_comb(wdb, name, get_layer_members(layer, model), NULL,
+	    //shader.first.c_str(), shader.second.c_str(), rgb);
+    //write_attributes(wdb, name, layer, layer.m_layer_id);
+
 
     ON_wString wonstr;
     ON_TextLog log(wonstr);
