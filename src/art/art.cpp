@@ -146,6 +146,7 @@
 #include "ged.h"
 #include "ged/commands.h"
 #include "ged/defines.h"
+#include "rt/db_fullpath.h"
 
 struct application APP;
 struct resource* resources;
@@ -257,7 +258,7 @@ struct command_tab rt_do_tab[] = {
  * NOTE: to have an accurate usage() menu, we overwrite the indexes of all the
  * options from rt/usage.cpp which we don't support
  */
-void init_options(void) {
+void init_defaults(void) {
   /* Set the byte offsets at run time */
   view_parse[0].sp_offset = bu_byteoffset(samples);
   view_parse[1].sp_offset = bu_byteoffset(samples);
@@ -273,18 +274,18 @@ void init_options(void) {
   background[2] = 1.0;
 
   // for now, just support -c set samples=x
-  option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
+  // option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
   option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
   option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
   option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
-  // option("", "-C #/#/#", "Set background image color to R/G/B values (default: 0/0/1)", 0);
+  option("", "-C #/#/#", "Set background image color to R/G/B values (default: 191/204/255)", 0);
   // option("", "-W", "Set background image color to white", 0);
   option("", "-R", "Disable reporting of overlaps", 100);
-  option("", "-? or -h", "Display help", 1);
+  // option("", "-? or -h", "Display help", 1);
 
-  option("Raytrace", "-a # -e #", "Azimuth and elevation in degrees (default: -a 35 -e 25)", 100);
+  option("Raytrace", "-a # -e #", "Azimuth and elevation in degrees (default: -a 0 -e 0)", 0);
   option("Raytrace", "-p #", "Perspective angle, degrees side to side (0 <= # < 180)", 100);
-  option("Raytrace", "-E #", "Set perspective eye distance from model (default: 1.414)", 100);
+  // option("Raytrace", "-E #", "Set perspective eye distance from model (default: 1.414)", 100);
   option("Raytrace", "-H #", "Specify number of hypersample rays per pixel (default: 0)", 100);
   option("Raytrace", "-J #", "Specify a \"jitter\" pattern (default: 0 - no jitter)", 100);
   option("Raytrace", "-P #", "Specify number of processors to use (default: all available)", 100);
@@ -322,53 +323,57 @@ namespace asr = renderer;
  * or specified material OSL optical shader
  */
 int register_region(struct db_tree_state* tsp __attribute__((unused)),
-                const struct db_full_path* pathp __attribute__((unused)),
-                const struct rt_comb_internal* combp __attribute__((unused)),
+                const struct db_full_path* pathp,
+                const struct rt_comb_internal* combp,
                 void* data)
 {
   // We open the db using the region path to get objects name
   struct directory* dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-  char* name;
+  const char* name;
   name = dp->d_namep;
 
   /*
   this is for testing bounding box with the parent directory - using build/share/db/moss.g
   eventually all comments using this will be deleted
   */
-  // const char* name_char;
-  // std::string name_test = "all.g/" + std::string(name);
-  // name_char = name_test.c_str();
-  // bu_log("name: %s\n", APP.a_rt_i->rti_dbip->dbi_filename);
+  struct bu_vls path = BU_VLS_INIT_ZERO;
+  db_path_to_vls(&path, pathp);
+  const char* name_char;
+  std::string name_test = bu_vls_cstr(&path);
+  bu_vls_free(&path);
+  // name = name_test.c_str();
+  name_char = name_test.c_str();
+  bu_log("name: %s\n", name_test.c_str());
 
   // get objects bounding box
   struct ged* ged;
   ged = ged_open("db", APP.a_rt_i->rti_dbip->dbi_filename, 1);
   point_t min;
   point_t max;
-  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
-  // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name_char, 1, min, max);
+  // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
+  int ret = ged_get_obj_bounds(ged, 1, (const char**)name_char, 1, min, max);
 
   bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
 
-  VMOVE(APP.a_uvec, min);
-  VMOVE(APP.a_vvec, max);
+  // VMOVE(APP.a_uvec, min);
+  // VMOVE(APP.a_vvec, max);
 
 
   /*
   create object paramArray to pass to constructor
-  NOTE: we can likely remove min/max values from here if the above bounding box calculation works
+  NOTE: we flip y and z to match brl geometry to appleseed plugin
   */
   renderer::ParamArray geometry_parameters = asr::ParamArray()
                .insert("database_path", name)
                // .insert("database_path", name_char)
                .insert("object_count", objc)
-               .insert("minX", min[0])
-               .insert("minY", min[1])
-               .insert("minZ", min[2])
-               .insert("maxX", max[0])
-               .insert("maxY", max[1])
-               .insert("maxZ", max[2]);
+               .insert("minX", min[X])
+               .insert("minY", min[Z])
+               .insert("minZ", min[Y])
+               .insert("maxX", max[X])
+               .insert("maxY", max[Z])
+               .insert("maxZ", max[Y]);
 
 
   asf::auto_release_ptr<renderer::Object> brlcad_object(
@@ -442,32 +447,32 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
    * refraction index ri
    * extinction ex
    */
-  char* ptr;
-  char* temp_in = (char*)"   ";
-  if (bu_vls_strlen(&combp->shader) > 0) {
-    if ((ptr=strstr(bu_vls_addr(&combp->shader), "plastic")) != NULL) {
-	    // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
-      shader = "as_plastic";
-    }
-    if ((ptr=strstr(bu_vls_addr(&combp->shader), "glass")) != NULL) {
-	    // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
-      shader = "as_glass";
-    }
-    // check for override paramaters
-    if (((ptr=strstr(bu_vls_addr(&combp->shader), "{")) != NULL)) {
-      if (((ptr=strstr(bu_vls_addr(&combp->shader), "tr")) != NULL)) {
-        int i = 3;
-  	    while (ptr != NULL && ptr[i] != ' ') {
-          temp_in[i-3] = ptr[i];
-          i++;
-        }
-        struct bu_vls t=BU_VLS_INIT_ZERO;
-        bu_vls_printf(&t, "tr %s\n", temp_in);
-        const char* tr = bu_vls_cstr(&t);
-        shader_params.insert("in_tr", tr);
-      }
-    }
-	}
+  // char* ptr;
+  // char* temp_in = (char*)"   ";
+  // if (bu_vls_strlen(&combp->shader) > 0) {
+  //   if ((ptr=strstr(bu_vls_addr(&combp->shader), "plastic")) != NULL) {
+	//     // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
+  //     shader = "as_plastic";
+  //   }
+  //   if ((ptr=strstr(bu_vls_addr(&combp->shader), "glass")) != NULL) {
+	//     // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
+  //     shader = "as_glass";
+  //   }
+  //   // check for override paramaters
+  //   if (((ptr=strstr(bu_vls_addr(&combp->shader), "{")) != NULL)) {
+  //     if (((ptr=strstr(bu_vls_addr(&combp->shader), "tr")) != NULL)) {
+  //       int i = 3;
+  // 	    while (ptr != NULL && ptr[i] != ' ') {
+  //         temp_in[i-3] = ptr[i];
+  //         i++;
+  //       }
+  //       struct bu_vls t=BU_VLS_INIT_ZERO;
+  //       bu_vls_printf(&t, "tr %s\n", temp_in);
+  //       const char* tr = bu_vls_cstr(&t);
+  //       shader_params.insert("in_tr", tr);
+  //     }
+  //   }
+	// }
 
   /* This uses an already compiled .oso shader in the form of
   type
@@ -858,7 +863,7 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
 
     // initialize options and overload menu before parsing
-    init_options();
+    init_defaults();
 
     /* Process command line options */
     int i = get_args(argc, (const char**)argv);
@@ -942,7 +947,7 @@ main(int argc, char **argv)
     APP.a_miss = brlcad_miss;
 
     do_ae(azimuth, elevation);
-    RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], -eye_model[2], eye_model[1]);
+    RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
 
     // Build the project.
     asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
