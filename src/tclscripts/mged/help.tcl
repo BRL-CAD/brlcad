@@ -210,6 +210,22 @@ set mged_help_data(make)	{{-t | name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|
 set mged_help_data(make_pnts)	{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
 set mged_help_data(match)	$helplib_data(wdb_match)
 set mged_help_data(mater)	{{comb [material]}	{assign/delete material to combination}}
+set mged_help_data(material)	{{[options]} {Creates materials and allows assigning of properties.
+
+Options:
+	
+import [--id|--name] fileName					-Imports materials from a density table.
+	--id - Specifies that the material will be imported with the id.
+	--name - Specifies that the material will be imported with the name.
+
+create objectName materialName			    	-Stores a material with name db_name.
+
+destroy objectName					    	-Deletes material from database.
+
+set objectName propertyGroup propertyName propertyValue 	-Sets a property in specified group with name and value.
+
+get objectName propertyGroup propertyName		    	-Gets a property value based on name and group.
+	propertyGroup : [physical | mechanical | optical | thermal]}}
 set mged_help_data(matpick)	{{# | a/b}	{select arc which has matrix to be edited, in O_PATH state}}
 set mged_help_data(mirface)	{{#### of axis}	{mirror an ARB face}}
 set mged_help_data(mirror)	{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror primitive or combination along the specified axis}}
