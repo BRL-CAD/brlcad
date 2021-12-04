@@ -29,8 +29,11 @@ material_creation_test(struct ged *ged){
     //Create test material with whatever you want it called.
     char* material_name = "Material";
     char* object_name = "TestMaterial";
-    const char* argv[] = {"material", "create", object_name, material_name};
-    ged_exec(ged, 4, argv);
+    const char *av[4] = {"material", "create", object_name, material_name};
+    ged_exec(ged, 4, (const char **)av);
+    printf("%s\n", bu_vls_cstr(ged->ged_result_str));
+    const char* argv2[] = {"ls"};
+    ged_exec(ged, 1, argv2);
 }
 
 void
