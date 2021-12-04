@@ -49,16 +49,15 @@ find_path (Appleseed_INCLUDE_DIR renderer/api/project.h
 	${Appleseed_ROOT}
 	PATH_SUFFIXES
    include
-	appleseed/include
 	)
 
 find_library (Appleseed_LIBRARY
-  	NAMES appleseed
+  	NAMES Appleseed
 	HINTS
 	${Appleseed_ROOT}
 	PATH_SUFFIXES
-  	lib64
   	lib
+		lib64
 	)
 
 # Handle the QUIETLY and REQUIRED arguments and set Appleseed_FOUND.
@@ -71,6 +70,7 @@ find_package_handle_standard_args (Appleseed DEFAULT_MSG
 if (Appleseed_FOUND)
     set (Appleseed_INCLUDE_DIRS ${Appleseed_INCLUDE_DIR})
     set (Appleseed_LIBRARIES ${Appleseed_LIBRARY})
+		CONFIG_H_APPEND(BRLCAD "#define APPLESEED_ROOT \"${Appleseed_ROOT}\"\n")
 else ()
     set (Appleseed_INCLUDE_DIRS)
     set (Appleseed_LIBRARIES)

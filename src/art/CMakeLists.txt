@@ -2,6 +2,7 @@ set(ART_INCLUDE_DIRS
   ${OPTICAL_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
@@ -10,6 +11,7 @@ BRLCAD_INCLUDE_DIRS(ART_INCLUDE_DIRS)
 
 set(RT_STD_LIBS
   Threads::Threads
+  libged
   librt
   libnmg
   libdm
@@ -44,6 +46,7 @@ if(Appleseed_FOUND)
     art.cpp
     brlcadplugin.cpp
     ../rt/opt.c
+    ../rt/usage.cpp
     )
 
   BRLCAD_ADDEXEC(art "${ART_SRCS}" "${RT_STD_LIBS};${Appleseed_LIBRARIES};${Appleseed_BOOST_SYSTEM_LIB};${Appleseed_OPENIMAGEIO_LIB}" TEST_USESDATA)
