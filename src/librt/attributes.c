@@ -331,6 +331,27 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 	}
     }
 
+    const char *material_name = bu_avs_get(avsp, "material_name");
+    const char *material_id = bu_avs_get(&old_avs, "material_id");
+    if (material_name != NULL && !BU_STR_EQUAL(material_name, "(null)") && !BU_STR_EQUAL(material_name, "del")) {
+        struct directory *material_dp = db_lookup(dbip, material_name, LOOKUP_QUIET);
+        if (material_dp != RT_DIR_NULL) {
+            struct rt_db_internal intern;
+            struct rt_material_internal *material_ip;
+            if (rt_db_get_internal(&intern, material_dp, dbip, NULL, NULL) >= 0) {
+                if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+                    material_ip = (struct rt_material_internal *) intern.idb_ptr;
+                    const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
+                    if (id_string == NULL) {
+                        bu_log("WARNING: [%s] has invalid material_name value [%s]\nmaterial_id remains at %s\n", dp->d_namep, material_name, material_id);
+                    } else {
+                        bu_avs_add(avsp, "material_id", id_string);
+                    }
+                }
+            }
+        }
+    }
+
     bu_avs_merge(&old_avs, avsp);
 
     db5_export_attributes(&attr, &old_avs);
