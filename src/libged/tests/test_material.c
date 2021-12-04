@@ -34,28 +34,47 @@ material_creation_test(struct ged *ged){
 }
 
 void
-property_set_test(){
-   
+property_set_test(struct ged *ged){
+   char* object_name = "TestMaterial";
+   char* property_group = "physicalProperties";
+   char* property_name = "density";
+   char* property_value = "12.5";
+   const char* argv[] = {"material", "set", object_name, property_group, property_name, property_value};
+   ged_exec(ged, 6, argv);
 }
 
 void
-property_get_test(){
+property_get_test(struct ged *ged){
+    char* object_name = "TestMaterial";
+    char* property_group = "physicalProperties";
+    char* property_name = "density";
+    const char* argv[] = {"material", "get", object_name, property_group, property_name};
+    ged_exec(ged, 5, argv);
 }
 
 void
-material_destroy_test(){
+material_destroy_test(struct ged *ged){
+    char* object_name = "TestMaterial";
+    const char* argv[] = {"material", "destroy", object_name};
+    ged_exec(ged, 3, argv);
 }
 
 void
-material_import_test(){
-
+material_import_test(struct ged *ged){
+    char* file_name = "GQA_SAMPLE_DENSITIES";
+    const char* argv[] = {"material", "import", "--id", file_name};
+    ged_exec(ged, 4, argv);
 }
 
 int
 main() {
     struct ged g;
     ged_init(&g);
-
+    material_creation_test(&g);
+    property_set_test(&g);
+    property_get_test(&g);
+    material_destroy_test(&g);
+    material_import_test(&g);
     return 0;
 }
 
