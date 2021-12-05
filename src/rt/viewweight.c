@@ -449,6 +449,11 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	// we need to be able to read/write to the rt_i
 	struct rt_i *rtip = densities_prep(file, minus_o);
 
+	if (rtip == RTI_NULL) {
+		bu_log("Error: failed to open database %s\n", file);
+		bu_exit(-1, NULL);
+	}
+
 	// copy the old values possibly set in main before view_init was called
 	rtip->rti_space_partition = APP.a_rt_i->rti_space_partition;
     rtip->useair = APP.a_rt_i->useair;
