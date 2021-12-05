@@ -1694,7 +1694,8 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 
 
 int
-densities_prep(struct db_i *dbip) {
+densities_prep(struct db_i *dbip)
+{
 	analyze_densities_init(_gd_densities);
 	int found_densities = 0;
 
@@ -1725,7 +1726,7 @@ densities_prep(struct db_i *dbip) {
 					if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) >= 0) {
 						if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 							// if the material has a density, add it to the density table
-							material_ip = (struct rt_material_internal *)intern.idb_ptr;
+							material_ip = (struct rt_material_internal *) intern.idb_ptr;
 
 							const char *density_string = bu_avs_get(&material_ip->physicalProperties, "density");
 							if (density_string == NULL) {
@@ -1743,7 +1744,7 @@ densities_prep(struct db_i *dbip) {
 							int id;
 							if (id_string == NULL) {
 								// assign id for materials without ids in the density table
-								// start from max material id and work backwards
+								// start from the max material id and work backwards
 								id = next_available_id;
 								next_available_id--;
 							} else {
@@ -1779,17 +1780,20 @@ densities_prep(struct db_i *dbip) {
 						const char *material_name = bu_avs_get(&avs, "material_name");
 
 						if (material_name != NULL && !BU_STR_EQUAL(material_name, "(null)") && !BU_STR_EQUAL(material_name, "del")) {
-							long int wids[1];
-
 							struct directory *material_dp = db_lookup(dbip, material_name, LOOKUP_QUIET);
+
 							if (material_dp != NULL) {
 								struct rt_db_internal material_intern;
 								struct rt_material_internal *material_ip;
 								if (rt_db_get_internal(&material_intern, material_dp, dbip, NULL, &rt_uniresource) >= 0) {
 									if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
-										material_ip = (struct rt_material_internal *)material_intern.idb_ptr;
+										// the material_ip->name field is the name in the density table
+										// not just the material_name (they could be different)
+										material_ip = (struct rt_material_internal *) material_intern.idb_ptr;
 										char *density_table_name = bu_vls_strdup(&material_ip->name);
+										long int wids[1];
 
+										// get the id from the density table
 										analyze_densities_id((long int *)wids, 1, _gd_densities, density_table_name);
 
 										struct bu_vls id_vls = BU_VLS_INIT_ZERO;
@@ -1797,9 +1801,10 @@ densities_prep(struct db_i *dbip) {
 										char *id_string = bu_vls_strdup(&id_vls);
 										bu_vls_free(&id_vls);
 
+										// update attributes will set the reg_gmater field on the region
 										bu_avs_add(&avs, "material_id", id_string);
 										if (db5_update_attributes(dp, &avs, dbip) != 0) {
-											bu_vls_printf(_ged_current_gedp->ged_result_str, "Error: failed to update attributes\n");
+											bu_vls_printf(_ged_current_gedp->ged_result_str, "Error: failed to update attributes for %s\n", dp->d_namep);
 											analyze_densities_clear(_gd_densities);
 											return GED_ERROR;
 										}
@@ -1810,7 +1815,7 @@ densities_prep(struct db_i *dbip) {
 							}
 						}
 					} else {
-						bu_vls_printf(_ged_current_gedp->ged_result_str, "Error: failed to load attributes\n");
+						bu_vls_printf(_ged_current_gedp->ged_result_str, "Error: failed to load attributes for %s\n", dp->d_namep);
 						analyze_densities_clear(_gd_densities);
 						return GED_ERROR;
 					}
