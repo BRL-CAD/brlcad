@@ -1,0 +1,199 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="attr">
+<refmeta>
+  <refentrytitle>ATTR</refentrytitle>
+  <manvolnum>nged</manvolnum>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD MGED Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv xml:id="name">
+  <refname>material</refname>
+  <refpurpose> Used to create, change, retrieve, assign, import, or view materials and their properties.
+   </refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
+    <command>material assign</command>
+    <arg choice="req" rep="norepeat"><replaceable>object_name_pattern</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>material_name</replaceable></arg>
+  </cmdsynopsis>
+  <cmdsynopsis sepchar=" ">
+    <command>material create</command>
+    <arg choice="req" rep="norepeat"><replaceable>object_name_pattern</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>material_name</replaceable></arg>
+  </cmdsynopsis>
+  <cmdsynopsis sepchar=" ">
+    <command>material import</command>
+    <arg choice="opt" rep="norepeat"><replaceable>--id | --name</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>file_name</replaceable></arg>
+  </cmdsynopsis>
+  <cmdsynopsis sepchar=" ">
+    <command>material get</command>
+    <arg choice="req" rep="norepeat"><replaceable>object_name_pattern</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>property_group_name</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>property_name</replaceable></arg>
+  </cmdsynopsis>
+  <cmdsynopsis sepchar=" ">
+    <command>material remove</command>
+    <arg choice="req" rep="norepeat"><replaceable>object_name_pattern</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>property_group_name</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>property_name</replaceable></arg>
+  </cmdsynopsis>
+  <cmdsynopsis sepchar=" ">
+    <command>material set</command>
+    <arg choice="req" rep="norepeat"><replaceable>object_name_pattern</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>property_group_name</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>property_name</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>property_value</replaceable></arg>
+  </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection xml:id="description"><title>DESCRIPTION</title>
+
+  <para>
+    Used to create, change, retrieve, assign, import, or view materials and their properties.
+    Note that properties and property materials are cases sensitive and should not contain whitespace.
+  </para>
+
+  <para>A newly formed material will have a minimum of the following data set on creation:</para>
+  <para>
+  <itemizedlist>
+    <listitem><para>name</para></listitem>
+  </itemizedlist>
+  </para>
+
+  <para>
+    Material objects are made up of a name (seperate from the object name), parent value, and source value. All of which are variable length strings.  
+  </para>
+
+  <para>
+    In addition to the three variable length string properties, material objects also contain four key-value lists used for storing additional material information:
+    <itemizedlist>
+    <listitem><para>physical</para></listitem>
+    <listitem><para>mechanical</para></listitem>
+    <listitem><para>optical</para></listitem>
+    <listitem><para>thermal</para></listitem>
+  </itemizedlist>   
+  </para>
+
+</refsection>
+
+<refsection xml:id="attr_subcommands"><title>SUB-COMMANDS</title>
+
+  <variablelist remap="TP">
+        <varlistentry>
+          <term><emphasis remap="B" role="bold">assign</emphasis></term>
+          <listitem>
+                <para>
+                  Set the material_name property of the specified object to the specified material. Operates similarly to attr set.
+                </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><emphasis remap="B" role="bold">create</emphasis></term>
+          <listitem>
+                <para>
+                  Initalize a new material and sets the name property to the value specified.
+                </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><emphasis remap="B" role="bold">destroy</emphasis></term>
+          <listitem>
+                <para>
+                  Destroy the material object.
+                </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><emphasis remap="B" role="bold">get</emphasis></term>
+          <listitem>
+                <para>
+                  Retrieve a property of the material, optionally from one of the material's four material groups.
+                </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><emphasis remap="B" role="bold">import</emphasis></term>
+          <listitem>
+                <para>
+                  Import a density file's entries into material objects. --id denotes the material object names will be the id of the entry in the density table, --name the name of the
+                  entry in the density file.
+                </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><emphasis remap="B" role="bold">remove</emphasis></term>
+          <listitem>
+                <para>
+                  Remove a material property from the object. (In the case of name, parent, and source this merely sets those values to NULL).
+                </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><emphasis remap="B" role="bold">set</emphasis></term>
+          <listitem>
+                <para>
+                  Set a material property on the object, optionally from one of the material's four material groups.
+                </para>
+          </listitem>
+        </varlistentry>
+  </variablelist>
+
+</refsection>
+
+
+<refsection xml:id="examples"><title>EXAMPLES</title>
+
+  <para>
+    The examples demonstrate the use of the <command>material</command> command and subcommands.
+  </para>
+
+  <example><title>Import a density file to material objects.</title>
+    <variablelist>
+      <varlistentry>
+	<term><prompt>mged&gt;</prompt> <userinput>material import --id .density</userinput></term>
+	<listitem>
+	  <para>
+	    Imports the density file <emphasis>.density</emphasis> to material objects and names the objects based on the file's ids.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
+
+  <example><title>Get the density attribute of the material "copper" within the physical property group.</title>
+    <variablelist>
+      <varlistentry>
+	<term><prompt>mged&gt;</prompt> <userinput>material get copper physical density</userinput></term>
+    <listitem>
+	<para>Outputs the value of density. 
+	</para>
+</listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
+
+</refsection>
+
+<refsection xml:id="author"><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+</refsection>
+
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
+    <para>
+      This software is Copyright (c) 2008-2021 United States
+      Government as represented by the U.S. Army Research Laboratory.
+    </para>
+</refsection>
+
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to <email>devs@brlcad.org</email>
+  </para>
+</refsection>
+</refentry>
