@@ -1,5 +1,5 @@
 #!/bin/sh
-#                         G - D O T . S H
+#                         A R T . S H
 # BRL-CAD
 #
 # Copyright (c) 2010-2021 United States Government as represented by
@@ -128,9 +128,9 @@ rm `pwd`/output/test.png
 # EOF
 
 if [ X$STATUS = X0 ] ; then
-    log "-> material.sh succeeded"
+    log "-> art.sh succeeded"
 else
-    log "-> material.sh FAILED, see $LOGFILE"
+    log "-> art.sh FAILED, see $LOGFILE"
     cat "$LOGFILE"
 fi
 
