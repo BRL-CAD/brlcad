@@ -27,6 +27,7 @@
 #include "common.h"
 
 #include "bu/path.h"
+#include "bu/units.h"
 #include "bg/trimesh.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
@@ -217,6 +218,8 @@ generate_uuid()
     if (ON_CreateUuid(result))
 	return result;
 
+    // TODO - our fallback here should probably be based on bu_uuid_create (and
+    // use this logic there if any of its details constitute improvements...)
     result.Data1 = static_cast<ON__UINT32>(drand48() *
 					   std::numeric_limits<ON__UINT32>::max() + 0.5);
     result.Data2 = static_cast<ON__UINT16>(drand48() *
@@ -471,28 +474,65 @@ write_attributes(rt_wdb &UNUSED(wdb), const std::string &UNUSED(name), const ON_
 
 void
 import_model_objects(const gcv_opts &UNUSED(gcv_options), rt_wdb &UNUSED(wdb),
-		     const ONX_Model &UNUSED(model))
+		     const ONX_Model &UNUSED(model), const std::set<std::string> &UNUSED(model_idef_members))
 {
 }
 
 
 void
 import_idef(rt_wdb &UNUSED(wdb), std::string UNUSED(name), const ON_InstanceDefinition *UNUSED(idef),
-	    const ONX_Model &UNUSED(model))
+	    const ONX_Model &UNUSED(model), const std::set<std::string> &UNUSED(model_idef_members))
 {
 }
 
 
 void
-import_model_idefs(rt_wdb &UNUSED(wdb), const ONX_Model &UNUSED(model))
+import_model_idefs(rt_wdb &UNUSED(wdb), const ONX_Model &UNUSED(model), const std::set<std::string> &UNUSED(model_idef_members))
 {
-
 }
 
 std::set<std::string>
-get_all_idef_members(const ONX_Model &UNUSED(model))
+get_all_idef_members(const ONX_Model &model)
 {
     std::set<std::string> result;
+    ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::InstanceDefinition);
+    for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
+    {
+	const ON_InstanceDefinition *idef = ON_InstanceDefinition::Cast(cr.ModelComponent());
+	if (!idef)
+	    continue;
+	ON_String iname = ON_String(idef->Name());
+	const char *istr = iname.Array();
+	std::cout << "Reading idef instance: " << istr << "\n";
+
+	if (idef->IsLinkedType()) {
+	    std::cout << "Warning - instance " << istr << " defined using external file\n";
+	    //continue;
+	}
+#if 0
+	if (idef->URL() != ON_wString()) {
+	    ON_wString wonstr = idef->URL();
+	    ON_String onstr = ON_String(wonstr);
+	    const char *url = onstr.Array();
+	    std::cout << "Instance def URL: " << url << "\n";
+	}
+	if (idef->URL_Tag() != ON_wString()) {
+	    ON_wString wonstr = idef->URL_Tag();
+	    ON_String onstr = ON_String(wonstr);
+	    const char *url = onstr.Array();
+	    std::cout << "Instance def URL Tag: " << url << "\n";
+	}
+#endif
+
+	double munit = idef->UnitSystem().MillimetersPerUnit(ON_DBL_QNAN);
+	std::cout << "Units: " << bu_units_string(munit) << "\n";
+
+	ON_SHA1_Hash chash = idef->ContentHash();
+	ON_wString whstr = chash.ToString(false);
+	ON_String hstr = ON_String(whstr);
+	const char *ch = hstr.Array();
+	std::cout << "Content hash: " << ch << "\n";
+    }
     return result;
 }
 
@@ -510,9 +550,9 @@ get_all_idef_members(const ONX_Model &UNUSED(model))
 //
 // TODO - should we also be doing something for the Group type?
 std::set<std::string>
-get_layer_members(const ON_Layer *layer, const ONX_Model &model)
+get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<std::string> &UNUSED(model_idef_members))
 {
-    std::set<std::string> result;
+    std::set<std::string> members;
     {
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::Layer);
 	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
@@ -521,6 +561,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model)
 	    if (!cl)
 		continue;
 	    if (cl->ParentLayerId() == layer->ModelObjectId()) {
+		members.insert(std::string(ON_String(cl->Name()).Array()));
 		std::cout << "Layer " << ON_String(cl->Name()).Array() << " is a child of " << ON_String(layer->Name()).Array() << "\n";
 	    }
 	}
@@ -538,17 +579,20 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model)
 		continue;
 	    ON_String ns(attributes->Name());
 	    const char *gname = ns.Array();
-	    const char *dname = "unnamed";
-	    if (!gname)
-		gname = dname;
+	    ON_String nsu;
+	    const char *uuidstr = ON_UuidToString(attributes->m_uuid, nsu);
+	    if (!gname) {
+		gname = uuidstr;
+	    }
 	    if (attributes->m_layer_index == layer->Index()) {
+		members.insert(std::string(gname));
 		std::cout << "Object " << gname << " is a child of " << ON_String(layer->Name()).Array() << "\n";
 	    }
 	}
     }
 
     // TODO - build up sets and then do set_difference with instance defs
-
+    std::set<std::string> result;
 
     return result;
 }
@@ -556,7 +600,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model)
 
 // Each openNURBS layer is imported into the .g file as a comb
 void
-import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &model)
+import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &model, const std::set<std::string> &model_idef_members)
 {
     ON_String lname = ON_String(l->Name());
     const char *lstr = lname.Array();
@@ -590,7 +634,7 @@ import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &model)
 
     std::cout << "Shader: " << shader.first.c_str() << "," << shader.second.c_str() << "\n";
 
-    std::set<std::string> layer_children = get_layer_members(l, model);
+    std::set<std::string> layer_children = get_layer_members(l, model, model_idef_members);
 
     //write_comb(wdb, name, get_layer_members(layer, model), NULL,
 	    //shader.first.c_str(), shader.second.c_str(), rgb);
@@ -609,15 +653,18 @@ import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &model)
 
 void
 import_model_layers(rt_wdb &wdb, const ONX_Model &model,
-		    const std::string &UNUSED(root_name))
+		    const std::string &UNUSED(root_name),
+	            const std::set<std::string> &model_idef_members
+       	            )
 {
+
     ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::Layer);
     for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
     {
 	const ON_Layer *p = ON_Layer::Cast(cr.ModelComponent());
 	if (!p)
 	    continue;
-	import_layer(wdb, p, model);
+	import_layer(wdb, p, model, model_idef_members);
     }
 #if 0
     ON_Layer root_layer;
@@ -652,9 +699,11 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	ONX_Model model;
 	if (!model.Read(source_path))
 	    throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
-	import_model_layers(*context->dbip->dbi_wdbp, model, root_name);
-	import_model_idefs(*context->dbip->dbi_wdbp, model);
-	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
+	// The idef member set is static, but is used many times - generate it once up front
+	const std::set<std::string> model_idef_members = get_all_idef_members(model);
+	//import_model_layers(*context->dbip->dbi_wdbp, model, root_name, model_idef_members);
+	//import_model_idefs(*context->dbip->dbi_wdbp, model, model_idef_members);
+	//import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model, model_idef_members);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
 	return 0;
