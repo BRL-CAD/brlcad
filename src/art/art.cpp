@@ -369,11 +369,11 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
                .insert("object_path", name_char)
                .insert("object_count", objc)
                .insert("minX", min[X])
-               .insert("minY", min[Y])
-               .insert("minZ", min[Z])
+               .insert("minY", min[Z])
+               .insert("minZ", min[Y])
                .insert("maxX", max[X])
-               .insert("maxY", max[Y])
-               .insert("maxZ", max[Z]);
+               .insert("maxY", max[Z])
+               .insert("maxZ", max[Y]);
 
 
   asf::auto_release_ptr<renderer::Object> brlcad_object(
@@ -815,7 +815,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     camera->transform_sequence().set_transform(
 	0.0f,
 	asf::Transformd::from_local_to_parent(
-	    asf::Matrix4d::make_translation(asf::Vector3d(eye_model[0], eye_model[1], eye_model[2])) * /* camera location */
+	    asf::Matrix4d::make_translation(asf::Vector3d(eye_model[0], eye_model[2], -eye_model[1])) * /* camera location */
 	    asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(azimuth - 270)) * /* azimuth */
 	    asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-elevation)) /* elevation */
 	));
