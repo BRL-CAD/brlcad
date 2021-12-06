@@ -43,7 +43,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 . "$1/regress/library.sh"
 
 if test "x$LOGFILE" = "x" ; then
-    LOGFILE=`pwd`/g-dot.log
+    LOGFILE=`pwd`/art_output.log
     rm -f $LOGFILE
 fi
 log "=== TESTING 'art' ==="
@@ -54,36 +54,78 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
+ART="`ensearch art`"
+if test ! -f "$ART" ; then
+    log "Unable to find art, aborting"
+    exit 1
+fi
+
+rm -f `pwd`/test.g
+
+# initialize test number
+TEST_NO=1
+
+# manually set status before running commands
+STATUS=0
+
 # Test 1: Make Sure Art Can Render an Exisitng Item
 log "... making sure art renders existing"
-<< EOF
-art -o test1.pix share/db/moss.g all.g
-EOF
+$ART -o test.png -c "set samples=0" share/db/moss.g all.g &> $LOGFILE.$TEST_NO
+if grep -q 'FAILED\|error' $LOGFILE.$TEST_NO; then STATUS=1; fi
+cat $LOGFILE.$TEST_NO >> $LOGFILE
+rm $LOGFILE.$TEST_NO
+((++TEST_NO))
 
-# Test 2: Make Sure Art Can Renders a New OSL
-log "... making sure art renders new OSL"
-$MGED -c >> $LOGFILE 2>&1 << EOF
-test.g make sph sph
-test.g r sph.r u sph
-test.g material create glass
-test.g material set glass optical.shader path/to/disney_shader.osl
-test.g material set glass optical.shader_properties ... transparency 0.8
-test.g material set sph.r glass
-art -o test2.pix test.g sph.r
+# Test 2: Intentional fail as 'scene.g' doesnt exist
+log "... rainy day - art not called correctly"
+$ART -o test.png -c "set samples=0" share/db/moss.g scene.g &> $LOGFILE.$TEST_NO
+if ! grep -q 'FAILED\|error' $LOGFILE.$TEST_NO; then STATUS=1; fi
+cat $LOGFILE.$TEST_NO >> $LOGFILE
+rm $LOGFILE.$TEST_NO
+((++TEST_NO))
+
+# Test 3: Make Sure Art Can Renders a New OSL
+log "... making sure art renders OSL from material"
+$MGED -c test.g >> $LOGFILE 2>&1 << EOF
+make sph sph
+r sph.r u sph
+material create glass glass
+material set glass optical OSL as_glass.oso
+material assign sph.r glass
 q
 EOF
+$ART -o test.png -c "set samples=0" test.g sph.r &> $LOGFILE.$TEST_NO
+if grep -q 'FAILED\|error' $LOGFILE.$TEST_NO; then STATUS=1; fi
+cat $LOGFILE.$TEST_NO >> $LOGFILE
+rm $LOGFILE.$TEST_NO
+((++TEST_NO))
+
+# Test 4: Make Sure Art Can Renders a New OSL
+log "... rainy day - bad OSL name from material"
+$MGED -c test.g >> $LOGFILE 2>&1 << EOF
+material set glass optical OSL doest_exist.oso
+q
+EOF
+$ART -o test.png -c "set samples=0" test.g sph.r &> $LOGFILE.$TEST_NO
+if ! grep -q error $LOGFILE.$TEST_NO; then STATUS=1; fi
+cat $LOGFILE.$TEST_NO >> $LOGFILE
+rm $LOGFILE.$TEST_NO
+
+
+# cleanup
+rm `pwd`/output/test.png
 
 # Test 3: Make Sure Art Can Renders a New MTLX
-log "... making sure art renders new MTLX"
-$MGED -c >> $LOGFILE 2>&1 <<EOF
-test.g make tor tor
-test.g r tor.r u tor
-test.g material create plastic
-test.g material set plastic optical.shader path/to/adobe.mtlx
-test.g material set tor.r plastic
-art -o test3.pix test.g tor.r
-q
-EOF
+# log "... making sure art renders new MTLX"
+# $MGED -c >> $LOGFILE 2>&1 <<EOF
+#   make tor tor
+#   r tor.r u tor
+#   material create plastic
+#   material set plastic optical.shader path/to/adobe.mtlx
+#   material set tor.r plastic
+# q
+# $ART -o test3.pix test.g tor.r
+# EOF
 
 if [ X$STATUS = X0 ] ; then
     log "-> material.sh succeeded"
