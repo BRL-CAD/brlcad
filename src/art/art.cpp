@@ -342,7 +342,7 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   point_t min;
   point_t max;
   // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
-  int ret = ged_get_obj_bounds(ged, 1, (const char**)name_char, 1, min, max);
+  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name_char, 1, min, max);
 
   bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
 
@@ -356,14 +356,14 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   */
   renderer::ParamArray geometry_parameters = asr::ParamArray()
                .insert("database_path", name)
-               // .insert("database_path", name_char)
+               .insert("object_path", name_char)
                .insert("object_count", objc)
                .insert("minX", min[X])
-               .insert("minY", min[Z])
-               .insert("minZ", min[Y])
+               .insert("minY", min[Y])
+               .insert("minZ", min[Z])
                .insert("maxX", max[X])
-               .insert("maxY", max[Z])
-               .insert("maxZ", max[Y]);
+               .insert("maxY", max[Y])
+               .insert("maxZ", max[Z]);
 
 
   asf::auto_release_ptr<renderer::Object> brlcad_object(
@@ -709,6 +709,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
 
     // Create a color called "light_intensity" and insert it into the assembly.
     static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
+    // FIXME
     assembly->colors().insert(
 	asr::ColorEntityFactory::create(
 	    "light_intensity",
@@ -804,10 +805,15 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     camera->transform_sequence().set_transform(
 	0.0f,
 	asf::Transformd::from_local_to_parent(
-	    asf::Matrix4d::make_translation(asf::Vector3d(eye_model[0], eye_model[2], -eye_model[1])) * /* camera location */
+	    asf::Matrix4d::make_translation(asf::Vector3d(eye_model[0], eye_model[1], eye_model[2])) * /* camera location */
 	    asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(azimuth - 270)) * /* azimuth */
 	    asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-elevation)) /* elevation */
 	));
+  // camera->transform_sequence().set_transform(
+  //     0.0f,
+  //     asf::Transformd::from_local_to_parent(
+  //         asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-20.0)) *
+  //         asf::Matrix4d::make_translation(asf::Vector3d(0.0, 0.8, 11.0))));
 
     // Bind the camera to the scene.
     scene->cameras().insert(camera);
