@@ -79,6 +79,10 @@ ON_Surface_Pushup(
 	const ON_Interval* curve_2d_subdomain
 	);
 
+/* Report the object type as a string */
+extern BREP_EXPORT const char *
+ON_ObjectTypeToString(ON::object_type t);
+
 /* Experimental function to generate Tikz plotting information
  * from B-Rep objects.  This may or may not be something we
  * expose as a feature long term - probably should be a more
