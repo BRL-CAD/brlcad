@@ -491,6 +491,9 @@ import_model_idefs(rt_wdb &UNUSED(wdb), const ONX_Model &UNUSED(model), const st
 {
 }
 
+// In OpenNURBS, an instance definition is a unique grouping of objects,
+// essentially analogous to the grouping structure provided by BRL-CAD's comb.
+// https://developer.rhino3d.com/guides/opennurbs/traverse-instance-definitions/
 std::set<std::string>
 get_all_idef_members(const ONX_Model &model)
 {
@@ -503,26 +506,14 @@ get_all_idef_members(const ONX_Model &model)
 	    continue;
 	ON_String iname = ON_String(idef->Name());
 	const char *istr = iname.Array();
-	std::cout << "Reading idef instance: " << istr << "\n";
+	ON_String nsu;
+	const char *uuidstr = ON_UuidToString(idef->Id(), nsu);
+	std::cout << "Reading idef instance " << uuidstr << ": " << istr << "\n";
 
 	if (idef->IsLinkedType()) {
-	    std::cout << "Warning - instance " << istr << " defined using external file\n";
-	    //continue;
+	    std::cout << "Warning - instance " << istr << " is defined using external file, unsupported\n";
+	    continue;
 	}
-#if 0
-	if (idef->URL() != ON_wString()) {
-	    ON_wString wonstr = idef->URL();
-	    ON_String onstr = ON_String(wonstr);
-	    const char *url = onstr.Array();
-	    std::cout << "Instance def URL: " << url << "\n";
-	}
-	if (idef->URL_Tag() != ON_wString()) {
-	    ON_wString wonstr = idef->URL_Tag();
-	    ON_String onstr = ON_String(wonstr);
-	    const char *url = onstr.Array();
-	    std::cout << "Instance def URL Tag: " << url << "\n";
-	}
-#endif
 
 	double munit = idef->UnitSystem().MillimetersPerUnit(ON_DBL_QNAN);
 	std::cout << "Units: " << bu_units_string(munit) << "\n";
@@ -532,6 +523,40 @@ get_all_idef_members(const ONX_Model &model)
 	ON_String hstr = ON_String(whstr);
 	const char *ch = hstr.Array();
 	std::cout << "Content hash: " << ch << "\n";
+
+	const ON_SimpleArray<ON_UUID>& g_ids = idef->InstanceGeometryIdList();
+	for (int i = 0; i < g_ids.Count(); i++) {
+	    const ON_ModelComponentReference& m_cr = model.ComponentFromId(ON_ModelComponent::Type::ModelGeometry, g_ids[i]);
+	    const ON_ModelGeometryComponent* mg = ON_ModelGeometryComponent::Cast(m_cr.ModelComponent());
+	    if (!mg)
+		continue;
+	    const ON_Geometry* g = mg->Geometry(nullptr);
+	    if (!g)
+		continue;
+	    const ON_InstanceRef* iref = ON_InstanceRef::Cast(g);
+	    if (iref) {
+		const ON_ModelComponentReference& chr = model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, iref->m_instance_definition_uuid);
+		const ON_InstanceDefinition* cdef = ON_InstanceDefinition::Cast(chr.ModelComponent());
+		ON_String cname = ON_String(cdef->Name());
+		const char *cstr = cname.Array();
+		ON_String cnsu;
+		const char *cuuidstr = ON_UuidToString(cdef->Id(), cnsu);
+		if (cstr) {
+		    std::cout << "	Child idef instance " << cuuidstr << ": " << cstr << "\n";
+		} else {
+		    std::cout << "	Child idef instance " << cuuidstr << "\n";
+		}
+	    } else {
+		ON_String cname = ON_String(mg->Name());
+		const char *cstr = cname.Array();
+		if (cstr) {
+		    std::cout << "	Child idef object " << cstr << ": " << ON_ObjectTypeToString(g->ObjectType()) << "\n";
+		} else {
+		    std::cout << "	Child idef object, type: " << ON_ObjectTypeToString(g->ObjectType()) << "\n";
+		}
+	    }
+	}
+
     }
     return result;
 }
