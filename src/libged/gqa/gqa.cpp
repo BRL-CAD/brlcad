@@ -1641,9 +1641,9 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 
 
 int
-densities_prep(struct db_i *dbip)
+densities_prep(struct rt_i *rtip)
 {
-	analyze_densities_init(_gd_densities);
+	analyze_densities_create(&_gd_densities);
 	int found_densities = 0;
 
 	/* figure out where the density values are coming from and get
@@ -1665,12 +1665,12 @@ densities_prep(struct db_i *dbip)
 		// iterate through the db and find all materials
 		int next_available_id = MAX_MATERIAL_ID - 1;
 		for (int i = 0; i < RT_DBNHASH; i++) {
-			struct directory *dp = dbip->dbi_Head[i];
+			struct directory *dp = rtip->rti_dbip->dbi_Head[i];
 			if (dp != NULL) {
 				struct rt_db_internal intern;
 				struct rt_material_internal *material_ip;
 				if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
-					if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) >= 0) {
+					if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
 						if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 							// if the material has a density, add it to the density table
 							material_ip = (struct rt_material_internal *) intern.idb_ptr;
@@ -1718,21 +1718,21 @@ densities_prep(struct db_i *dbip)
 		// look for objects with material_name set and set the material_id
 		// analyze_densities_get
 		for (int i = 0; i < RT_DBNHASH; i++) {
-			struct directory *dp = dbip->dbi_Head[i];
+			struct directory *dp = rtip->rti_dbip->dbi_Head[i];
 			if (dp != NULL) {
 				if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
 					struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
 
-					if (db5_get_attributes(dbip, &avs, dp) == 0) {
+					if (db5_get_attributes(rtip->rti_dbip, &avs, dp) == 0) {
 						const char *material_name = bu_avs_get(&avs, "material_name");
 
 						if (material_name != NULL && !BU_STR_EQUAL(material_name, "(null)") && !BU_STR_EQUAL(material_name, "del")) {
-							struct directory *material_dp = db_lookup(dbip, material_name, LOOKUP_QUIET);
+							struct directory *material_dp = db_lookup(rtip->rti_dbip, material_name, LOOKUP_QUIET);
 
 							if (material_dp != NULL) {
 								struct rt_db_internal material_intern;
 								struct rt_material_internal *material_ip;
-								if (rt_db_get_internal(&material_intern, material_dp, dbip, NULL, &rt_uniresource) >= 0) {
+								if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
 									if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 										// the material_ip->name field is the name in the density table
 										// not just the material_name (they could be different)
@@ -1743,17 +1743,32 @@ densities_prep(struct db_i *dbip)
 										// get the id from the density table
 										analyze_densities_id((long int *)wids, 1, _gd_densities, density_table_name);
 
-										struct bu_vls id_vls = BU_VLS_INIT_ZERO;
-										bu_vls_printf(&id_vls, "%ld", wids[0]);
-										char *id_string = bu_vls_strdup(&id_vls);
-										bu_vls_free(&id_vls);
+										// update the region->reg_mater field for the given region
+										struct region *regp = REGION_NULL;
+										for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+											RT_CK_REGION(regp);
 
-										// update attributes will set the reg_gmater field on the region
-										bu_avs_add(&avs, "material_id", id_string);
-										if (db5_update_attributes(dp, &avs, dbip) != 0) {
-											bu_vls_printf(_ged_current_gedp->ged_result_str, "Error: failed to update attributes for %s\n", dp->d_namep);
-											analyze_densities_clear(_gd_densities);
-											return GED_ERROR;
+											// by default the regp->reg_name holds the path to the region
+											// we just want the name so we remove the path before the name
+											struct bu_vls reg_name_path = BU_VLS_INIT_ZERO;
+											bu_vls_printf(&reg_name_path, "%s", regp->reg_name);
+
+											size_t start_reg_name_idx = 0;
+											for (size_t j = bu_vls_strlen(&reg_name_path) - 1; j > 0; j--) {
+												if (reg_name_path.vls_str[j] == '/') {
+													start_reg_name_idx = j;
+													break;
+												}
+											}
+
+											size_t num_chars = bu_vls_strlen(&reg_name_path) - start_reg_name_idx;
+											struct bu_vls reg_name = BU_VLS_INIT_ZERO;
+											bu_vls_substr(&reg_name, &reg_name_path, start_reg_name_idx+1, num_chars);
+
+											// if its the region we're looking for, set teh reg_mater field
+											if (BU_STR_EQUAL(bu_vls_cstr(&reg_name), dp->d_namep)) {
+												regp->reg_gmater = wids[0];
+											}
 										}
 									}
 								}
@@ -2473,8 +2488,6 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	ged_gqa_plot.vhead = bv_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 
-	if (densities_prep(gedp->dbip) != GED_OK) return GED_ERROR;
-
     rtip = rt_new_rti(gedp->dbip);
     rtip->useair = use_air;
 
@@ -2499,6 +2512,8 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     }
+
+	if (densities_prep(rtip) != GED_OK) return GED_ERROR;
 
     /* This gets the database ready for ray tracing.  (it precomputes
      * some values, sets up space partitioning, etc.)
