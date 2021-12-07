@@ -527,7 +527,7 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 		    own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
 	    if (attributes) {
 		ON_String uuid;
-		const char *uuid_str = ON_UuidToString(mg->Id(), uuid);
+		const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
 		int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
 		int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
 		if (ret1 || ret2)
@@ -546,7 +546,7 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 			own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
 		if (attributes) {
 		    ON_String uuid;
-		    const char *uuid_str = ON_UuidToString(mg->Id(), uuid);
+		    const char *uuid_str = ON_UuidToString(attributes->m_uuid, uuid);
 		    int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
 		    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
 		    if (ret1 || ret2)
