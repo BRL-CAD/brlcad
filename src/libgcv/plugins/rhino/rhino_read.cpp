@@ -495,12 +495,6 @@ import_object(rt_wdb &wdb, const std::string &name,
 }
 
 void
-write_attributes(rt_wdb &UNUSED(wdb), const std::string &UNUSED(name), const ON_ModelGeometryComponent *UNUSED(object),
-		 const ON_UUID &UNUSED(uuid))
-{
-}
-
-void
 import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 		     const ONX_Model &model)
 {
@@ -531,8 +525,14 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	if (iref) {
 	    import_object(wdb, name, iref, model, own_shader ? shader.first.c_str() : NULL,
 		    own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-	    if (attributes)
-		write_attributes(wdb, name, mg, attributes->m_uuid);
+	    if (attributes) {
+		ON_String uuid;
+		const char *uuid_str = ON_UuidToString(mg->Id(), uuid);
+		int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
+		int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
+		if (ret1 || ret2)
+		    bu_bomb("db5_update_attribute() failed");
+	    }
 	    ++success_count;
 	    continue;
 	}
@@ -544,8 +544,14 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 		members.insert(member_name);
 		write_comb(wdb, name, members, NULL, own_shader ? shader.first.c_str() : NULL,
 			own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-		if (attributes)
-		    write_attributes(wdb, name, mg, attributes->m_uuid);
+		if (attributes) {
+		    ON_String uuid;
+		    const char *uuid_str = ON_UuidToString(mg->Id(), uuid);
+		    int ret1 = db5_update_attribute(name.c_str(), "rhino::type", mg->ClassId()->ClassName(), wdb.dbip);
+		    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuid_str, wdb.dbip);
+		    if (ret1 || ret2)
+			bu_bomb("db5_update_attribute() failed");
+		}
 		++success_count;
 		continue;
 	    } else {
