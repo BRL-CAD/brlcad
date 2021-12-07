@@ -113,9 +113,8 @@ __BEGIN_DECLS
 DM_EXPORT extern struct fb remote_interface; /* not in list[] */
 
 /* Always included */
-DM_EXPORT extern struct fb debug_interface, disk_interface, stk_interface;
-DM_EXPORT extern struct fb memory_interface, fb_null_interface;
-
+extern struct fb debug_interface, disk_interface, stk_interface;
+extern struct fb memory_interface, fb_null_interface;
 
 /* Shared memory (shmget et. al.) key common to multiple framebuffers */
 #define SHMEM_KEY 42
