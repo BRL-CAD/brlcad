@@ -36,6 +36,7 @@
 #include "wdb.h"
 
 typedef enum {
+    MATERIAL_ASSIGN,
     MATERIAL_CREATE,
     MATERIAL_DESTROY,
     MATERIAL_GET,
@@ -50,6 +51,7 @@ static const char *usage = " help \n\n"
     "material create {objectName} {materialName}\n\n"
     "material destroy {object}\n\n"
     "material import [--id | --name] {fileName}\n\n"
+    "material assign {object} {materialName}\n\n"
     "material get {object} [propertyGroupName] {propertyName}\n\n"
     "material set {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
     "material remove {object} [propertyGroupName] {propertyName}\n\n"
@@ -71,6 +73,7 @@ HIDDEN material_cmd_t
 get_material_cmd(const char* arg)
 {
     /* sub-commands */
+    const char ASSIGN[]   = "assign";
     const char CREATE[]   = "create";
     const char DESTROY[]  = "destroy";
     const char GET[]      = "get";
@@ -80,7 +83,9 @@ get_material_cmd(const char* arg)
     const char SET[]      = "set";
 
     /* alphabetical order */
-    if (BU_STR_EQUIV(CREATE, arg))
+    if (BU_STR_EQUIV(ASSIGN, arg))
+	return MATERIAL_ASSIGN;
+    else if (BU_STR_EQUIV(CREATE, arg))
 	return MATERIAL_CREATE;
     else if (BU_STR_EQUIV(DESTROY, arg))
 	return MATERIAL_DESTROY;
@@ -96,6 +101,43 @@ get_material_cmd(const char* arg)
     return MATERIAL_REMOVE;
     else
     return ATTR_UNKNOWN;
+}
+
+int assign_material(struct ged *gedp, int argc, const char *argv[]) {
+    struct directory *dp;
+    struct bu_attribute_value_set avs;
+
+    if (argc < 4) {
+        bu_vls_printf(gedp->ged_result_str, "you must provide at least four arguments.");
+        return GED_ERROR;
+    }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
+        bu_avs_init_empty(&avs);
+
+        if (db5_get_attributes(gedp->dbip, &avs, dp)) {
+            bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+            return GED_ERROR;
+        } else {
+            bu_avs_add(&avs, "material_name", argv[3]);
+            bu_avs_add(&avs, "material_id", "1");
+        }
+
+        if (db5_update_attributes(dp, &avs, gedp->dbip)) {
+            bu_vls_printf(gedp->ged_result_str, "Error: failed to update attributes\n");
+            return GED_ERROR;
+        }
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "Cannot get object %s\n", argv[2]);
+        return GED_ERROR;
+    }
+
+    return GED_OK;
 }
 
 // Routine handles the import of a density table
@@ -498,7 +540,10 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
 
     scmd = get_material_cmd(argv[1]);
 
-    if (scmd == MATERIAL_CREATE) {
+    if (scmd == MATERIAL_ASSIGN) {
+        // assign routine
+        assign_material(gedp, argc, argv);
+    } else if (scmd == MATERIAL_CREATE) {
         // create routine
         create_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_DESTROY) {
