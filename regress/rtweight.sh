@@ -44,7 +44,9 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 if test "x$LOGFILE" = "x" ; then
     LOGFILE=`pwd`/rtweight_output.log
+    LOGFILE2=`pwd`/rtweight_output.log
     rm -f $LOGFILE
+    rm -f $LOGFILE2
 fi
 log "=== TESTING 'rtweight' ==="
 
@@ -65,15 +67,33 @@ rm -f `pwd`/test.g
 STATUS=0
 
 # Test 1: Make Sure RTWEIGHT imports and uses material objects
+log "... making sure RTWEIGHT imports and uses material objects"
 $MGED -c test.g >> $LOGFILE 2>&1 << EOF
 make rpp rpp
 r rpp.r u rpp
-material import .density
-remat rpp.r 5
+material import --name ../misc/GQA_SAMPLE_DENSITIES
 material assign rpp.r "Carbon Tool Steel"
 EOF
-$RTWEIGHT test.g rpp.r &> $LOGFILE
-if grep -q 'FAILED\|error' $LOGFILE; then STATUS=1; fi
+
+$RTWEIGHT -o $LOGFILE test.g rpp.r
+
+if ! grep -q 'Total mass = 7819.98 kg' $LOGFILE; then STATUS=1; fi
+
+rm -f `pwd`/test.g
+
+# Test 2: rainy day, mged fails
+log "... rainy day - mged fails"
+$MGED -c test.g >> $LOGFILE 2>&1 << EOF
+make rpp rpp
+r rpp.r u rpp
+material import --name .density55
+material assign rpp.r "Carbon Tool Steel"
+EOF
+
+$RTWEIGHT -o $LOGFILE2 test.g rpp.r
+
+if grep -q 'Total mass = 7819.98 kg' $LOGFILE2; then STATUS=1; fi
+cat $LOGFILE2 >> $LOGFILE
 
 if [ X$STATUS = X0 ] ; then
     log "-> rt-weight.sh succeeded"
