@@ -19,7 +19,7 @@
  */
 /** @file rhino_read.cpp
  *
- * Brief description
+ * Import Rhino 3DM files into BRL-CAD
  *
  */
 
@@ -618,6 +618,12 @@ get_all_idef_members(const ONX_Model &model)
 	    const ON_ModelGeometryComponent* mg = ON_ModelGeometryComponent::Cast(m_cr.ModelComponent());
 	    if (!mg)
 		continue;
+	    result.insert(std::string(ON_String(mg->Name()).Array()));
+	}
+    }
+
+    return result;
+#if 0
 	    const ON_Geometry* g = mg->Geometry(nullptr);
 	    if (!g)
 		continue;
@@ -643,10 +649,7 @@ get_all_idef_members(const ONX_Model &model)
 		    std::cout << "	Child idef object, type: " << ON_ObjectTypeToString(g->ObjectType()) << "\n";
 		}
 	    }
-	}
-
-    }
-    return result;
+#endif
 }
 
 // Layer members (translated to comb children in BRL-CAD terms) may be either
@@ -716,24 +719,40 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<
 
 // Each openNURBS layer is imported into the .g file as a comb
 void
-import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &model, const std::set<std::string> &model_idef_members)
+import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model, const std::set<std::string> &model_idef_members)
 {
-    ON_String lname = ON_String(l->Name());
-    const char *lstr = lname.Array();
-    std::cout << "Layer: " << lstr << "\n";
-
-    ON_String ltype = ON_ModelComponent::ComponentTypeToString(l->ComponentType());
-    const char *ltype_str = ltype.Array();
-    std::cout << " Type: " << ltype_str << "\n";
-
+    const std::string name = std::string(ON_String(l->Name().Array()));
     ON_String lid;
     const char *lid_str = ON_UuidToString(l->Id(), lid);
-    std::cout << "   Id: " << lid_str << "\n";
+    ON_Color wc = (l->Color() == ON_UNSET_COLOR) ? l->PlotColor() : l->Color();
+    ON_ModelComponentReference mref = model.RenderMaterialFromIndex(l->RenderMaterialIndex());
+    const ON_Material *mp = ON_Material::Cast(mref.ModelComponent());
 
+    // TODO - there's also wc.Alpha() - should translate that to shader settings if not 0
+    unsigned char rgb[3];
+    rgb[0] = static_cast<unsigned char>(wc.Red());
+    rgb[1] = static_cast<unsigned char>(wc.Green());
+    rgb[2] = static_cast<unsigned char>(wc.Blue());
+
+    const Shader shader = get_shader(mp);
+
+    std::set<std::string> layer_children = get_layer_members(l, model, model_idef_members);
+
+    write_comb(wdb, name, layer_children, NULL, shader.first.c_str(), shader.second.c_str(), rgb);
+    int ret1 = db5_update_attribute(name.c_str(), "rhino::type", l->ClassId()->ClassName(), wdb.dbip);
+    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", lid_str, wdb.dbip);
+    if (ret1 || ret2)
+	bu_bomb("db5_update_attribute() failed");
+
+#if 0
+    ON_String ltype = ON_ModelComponent::ComponentTypeToString(l->ComponentType());
+    const char *ltype_str = ltype.Array();
     const ON__UINT64 content_version_number = l->ContentVersionNumber();
+    std::cout << "Layer: " << name << "\n";
+    std::cout << " Type: " << ltype_str << "\n";
+    std::cout << "   Id: " << lid_str << "\n";
     std::cout << "   V#: " << content_version_number << "\n";
 
-    ON_Color wc = (l->Color() == ON_UNSET_COLOR) ? l->PlotColor() : l->Color();
     if (wc != ON_UNSET_COLOR) {
 	int lrgba[4] = {0};
 	lrgba[0] = wc.Red();
@@ -743,19 +762,7 @@ import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &model, con
 	std::cout << "  RGBA: " << lrgba[0] << "," << lrgba[1] << "," << lrgba[2] << "," << lrgba[3] << "\n";
     }
 
-
-    ON_ModelComponentReference mref = model.RenderMaterialFromIndex(l->RenderMaterialIndex());
-    const ON_Material *mp = ON_Material::Cast(mref.ModelComponent());
-    const Shader shader = get_shader(mp);
-
     std::cout << "Shader: " << shader.first.c_str() << "," << shader.second.c_str() << "\n";
-
-    std::set<std::string> layer_children = get_layer_members(l, model, model_idef_members);
-
-    //write_comb(wdb, name, get_layer_members(layer, model), NULL,
-	    //shader.first.c_str(), shader.second.c_str(), rgb);
-    //write_attributes(wdb, name, layer, layer.m_layer_id);
-
 
     ON_wString wonstr;
     ON_TextLog log(wonstr);
@@ -763,13 +770,14 @@ import_layer(rt_wdb &UNUSED(wdb), const ON_Layer *l, const ONX_Model &model, con
     ON_String onstr = ON_String(wonstr);
     const char *ldesc = onstr.Array();
     bu_log("%s\n", ldesc);
+#endif
 
 }
 
 
 void
 import_model_layers(rt_wdb &wdb, const ONX_Model &model,
-		    const std::string &UNUSED(root_name),
+		    const std::string &root_name,
 	            const std::set<std::string> &model_idef_members
        	            )
 {
@@ -782,11 +790,11 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 	    continue;
 	import_layer(wdb, p, model, model_idef_members);
     }
-#if 0
+
     ON_Layer root_layer;
-    root_layer.SetLayerName(root_name.c_str());
-    import_layer(wdb, root_layer, model);
-#endif
+    ON_wString rname(root_name.c_str());
+    root_layer.SetName(rname.Array());
+    import_layer(wdb, &root_layer, model, model_idef_members);
 }
 
 
@@ -823,9 +831,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	// The idef member set is static, but is used many times - generate it
 	// once up front.
 	const std::set<std::string> model_idef_members; // = get_all_idef_members(model);
-
-
-	//import_model_layers(*context->dbip->dbi_wdbp, model, root_name, model_idef_members);
+	import_model_layers(*context->dbip->dbi_wdbp, model, root_name, model_idef_members);
 	//import_model_idefs(*context->dbip->dbi_wdbp, model, model_idef_members);
 	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
