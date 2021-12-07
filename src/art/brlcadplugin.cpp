@@ -176,8 +176,8 @@ brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUS
     RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
     brlcad_ray_info.normal[0] = inormal[0];
-    brlcad_ray_info.normal[1] = inormal[2];
-    brlcad_ray_info.normal[2] = -inormal[1];
+    brlcad_ray_info.normal[1] = inormal[1];
+    brlcad_ray_info.normal[2] = inormal[2];
 
     return 1;
 }
@@ -318,8 +318,8 @@ BrlcadObject::intersect(
     ap->a_resource = &resources[cpu];
 
     const asf::Vector3d dir = asf::normalize(ray.m_dir);
-    VSET(ap->a_ray.r_dir, dir[0], -dir[2], dir[1]);
-    VSET(ap->a_ray.r_pt, ray.m_org[0], -ray.m_org[2], ray.m_org[1]);
+    VSET(ap->a_ray.r_dir, dir[0], dir[1], dir[2]);
+    VSET(ap->a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
 
     ap->a_uptr = (void*)this->name.c_str();
 
@@ -363,8 +363,8 @@ BrlcadObject::intersect(const asr::ShadingRay& ray) const
     ap->a_resource = &resources[cpu];
 
     const asf::Vector3d dir = asf::normalize(ray.m_dir);
-    VSET(ap->a_ray.r_dir, dir[0], -dir[2], dir[1]);
-    VSET(ap->a_ray.r_pt, ray.m_org[0], -ray.m_org[2], ray.m_org[1]);
+    VSET(ap->a_ray.r_dir, dir[0], dir[1], dir[2]);
+    VSET(ap->a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
 
     return (rt_shootray(ap) == 1);
 }
