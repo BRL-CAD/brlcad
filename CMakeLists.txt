@@ -1055,13 +1055,11 @@ if(NOT MSVC)
   # See https://code.google.com/p/address-sanitizer/ for more info.
   # This typically is reported to cause a 2x slowdown.
   if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
-    #cmake_push_check_state()
-    #set(CMAKE_REQUIRED_LINK_OPTIONS "-lasan")
+    #set(CMAKE_REQUIRED_LINK_OPTIONS "${CMAKE_REQUIRED_LINK_OPTIONS};-lasan")
     CHECK_C_FLAG(fsanitize=address)
     CHECK_C_FLAG(fno-omit-frame-pointer)
     CHECK_CXX_FLAG(fsanitize=address)
     CHECK_CXX_FLAG(fno-omit-frame-pointer)
-    #cmake_pop_check_state()
   endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 
   # Differently, enable the ThreadSanitizer race condition detector
