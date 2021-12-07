@@ -507,7 +507,28 @@ int main(int argc, char *argv[])
     if (objv && !matflag) {
 	int frame_retval;
 
-#ifndef RT_TXT_OUTPUT
+	def_tree(APP.a_rt_i);		/* Load the default trees */
+	
+	/*
+     *  Initialize application.
+     *  Note that width & height may not have been set yet,
+     *  since they may change from frame to frame.
+     */
+    need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
+    if ((outputfile == (char *)0) && !need_fb) {
+	/* If not going to framebuffer, or to a file, then use stdout */
+	if (outfp == NULL) outfp = stdout;
+	/* output_is_binary is changed by view_init, as appropriate */
+	if (output_is_binary && isatty(fileno(outfp))) {
+	    fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
+#ifdef MPI_ENABLED
+	    MPI_Finalize();
+#endif
+	    return 14;
+	}
+    }
+
+	#ifndef RT_TXT_OUTPUT
 	if (need_fb != 0 && !fbp)  {
 	    int fb_status = fb_setup();
 	    if (fb_status) {
@@ -519,7 +540,23 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	def_tree(APP.a_rt_i);		/* Load the default trees */
+	/* orientation command has not been used */
+	if (!orientflag)
+	    do_ae(azimuth, elevation);
+	frame_retval = do_frame(curframe);
+	if (frame_retval != 0) {
+#ifndef RT_TXT_OUTPUT
+	    /* Release the framebuffer, if any */
+	    if (fbp != FB_NULL) {
+		fb_close(fbp);
+	    }
+#endif
+	    ret = 1;
+	    goto rt_cleanup;
+	}
+    } else {
+	register char	*buf;
+	register int	nret;
 
 	/*
      *  Initialize application.
@@ -540,23 +577,6 @@ int main(int argc, char *argv[])
 	}
     }
 
-	/* orientation command has not been used */
-	if (!orientflag)
-	    do_ae(azimuth, elevation);
-	frame_retval = do_frame(curframe);
-	if (frame_retval != 0) {
-#ifndef RT_TXT_OUTPUT
-	    /* Release the framebuffer, if any */
-	    if (fbp != FB_NULL) {
-		fb_close(fbp);
-	    }
-#endif
-	    ret = 1;
-	    goto rt_cleanup;
-	}
-    } else {
-	register char	*buf;
-	register int	nret;
 	/*
 	 * New way - command driven.
 	 * Process sequence of input commands.
