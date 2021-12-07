@@ -416,23 +416,38 @@ get_object_material(const ON_3dmObjectAttributes *attributes,
 		    const ONX_Model &model, Shader &out_shader, unsigned char *out_rgb,
 		    bool &out_own_shader, bool &out_own_rgb)
 {
-    const ON_Material *temp = ON_Material::Cast(model.RenderMaterialFromAttributes(*attributes).ModelComponent());
-    out_shader = get_shader(temp);
-    out_own_shader = attributes->MaterialSource() != ON::material_from_parent;
+    if (attributes) {
+	const ON_Material *temp = ON_Material::Cast(model.RenderMaterialFromAttributes(*attributes).ModelComponent());
+	out_shader = get_shader(temp);
+	out_own_shader = attributes->MaterialSource() != ON::material_from_parent;
 
-    ON_Color wc = model.WireframeColorFromAttributes(*attributes);
-    out_rgb[0] = static_cast<unsigned char>(wc.Red());
-    out_rgb[1] = static_cast<unsigned char>(wc.Green());
-    out_rgb[2] = static_cast<unsigned char>(wc.Blue());
-    out_own_rgb = attributes->ColorSource() != ON::color_from_parent;
+	ON_Color wc = model.WireframeColorFromAttributes(*attributes);
+	out_rgb[0] = static_cast<unsigned char>(wc.Red());
+	out_rgb[1] = static_cast<unsigned char>(wc.Green());
+	out_rgb[2] = static_cast<unsigned char>(wc.Blue());
+	out_own_rgb = attributes->ColorSource() != ON::color_from_parent;
 
-    if (!out_rgb[0] && !out_rgb[1] && !out_rgb[2]) {
-	const ON_Material *material= ON_Material::Cast(model.RenderMaterialFromAttributes(*attributes).ModelComponent());
-
-	out_rgb[0] = static_cast<unsigned char>(material->m_diffuse.Red());
-	out_rgb[1] = static_cast<unsigned char>(material->m_diffuse.Green());
-	out_rgb[2] = static_cast<unsigned char>(material->m_diffuse.Blue());
-	out_own_rgb = out_own_shader;
+	if (!out_rgb[0] && !out_rgb[1] && !out_rgb[2]) {
+	    const ON_Material *material= ON_Material::Cast(model.RenderMaterialFromAttributes(*attributes).ModelComponent());
+	    if (material) {
+		out_rgb[0] = static_cast<unsigned char>(material->m_diffuse.Red());
+		out_rgb[1] = static_cast<unsigned char>(material->m_diffuse.Green());
+		out_rgb[2] = static_cast<unsigned char>(material->m_diffuse.Blue());
+		out_own_rgb = out_own_shader;
+	    } else {
+		out_rgb[0] = static_cast<unsigned char>(0);
+		out_rgb[1] = static_cast<unsigned char>(0);
+		out_rgb[2] = static_cast<unsigned char>(0);
+		out_own_rgb = false;
+	    }
+	}
+    } else {
+	out_shader = get_shader(NULL);
+	out_rgb[0] = static_cast<unsigned char>(0);
+	out_rgb[1] = static_cast<unsigned char>(0);
+	out_rgb[2] = static_cast<unsigned char>(0);
+	out_own_rgb = false;
+	out_own_shader = false;
     }
 }
 
@@ -456,14 +471,28 @@ write_comb(rt_wdb &wdb, const std::string &name,
 	bu_bomb("mk_comb() failed");
 }
 
-#if 0
 void
 import_object(rt_wdb &wdb, const std::string &name,
-	      const ON_InstanceRef &instance_ref, const ONX_Model &model,
+	      const ON_InstanceRef * const iref,
+	      const ONX_Model &model,
 	      const char *shader_name, const char *shader_options, const unsigned char *rgb)
 {
+    ON_ModelComponentReference idef_reference = model.ComponentFromId(ON_ModelComponent::Type::InstanceDefinition, iref->m_instance_definition_uuid);
+    const ON_InstanceDefinition* idef = ON_InstanceDefinition::FromModelComponentRef(idef_reference,nullptr);
+    if (!idef)
+	return;
+
+    mat_t matrix;
+
+    for (std::size_t i = 0; i < 4; ++i)
+	for (std::size_t j = 0; j < 4; ++j)
+	    matrix[4 * i + j] = iref->m_xform[i][j];
+
+    std::set<std::string> members;
+    members.insert(ON_String(idef->Name()).Array());
+
+    write_comb(wdb, name, members, matrix, shader_name, shader_options, rgb);
 }
-#endif
 
 void
 write_attributes(rt_wdb &UNUSED(wdb), const std::string &UNUSED(name), const ON_ModelGeometryComponent *UNUSED(object),
@@ -471,11 +500,70 @@ write_attributes(rt_wdb &UNUSED(wdb), const std::string &UNUSED(name), const ON_
 {
 }
 
-
 void
-import_model_objects(const gcv_opts &UNUSED(gcv_options), rt_wdb &UNUSED(wdb),
-		     const ONX_Model &UNUSED(model), const std::set<std::string> &UNUSED(model_idef_members))
+import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
+		     const ONX_Model &model)
 {
+    size_t total_count = 0;
+    size_t success_count = 0;
+
+    ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::ModelGeometry);
+    for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
+    {
+	total_count++;
+
+	const ON_ModelGeometryComponent *mg = ON_ModelGeometryComponent::Cast(cr.ModelComponent());
+	if (!mg)
+	    continue;
+	ON_String cname = ON_String(mg->Name());
+	const std::string name = (cname.Array()) ? std::string(cname.Array()) : std::string("unnamed");
+	const std::string member_name = name + ".s";
+
+
+	Shader shader;
+	unsigned char rgb[3];
+	bool own_shader, own_rgb;
+
+	const ON_3dmObjectAttributes *attributes = mg->Attributes(nullptr);
+	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb);
+
+	const ON_InstanceRef * const iref = ON_InstanceRef::Cast(mg);
+	if (iref) {
+	    import_object(wdb, name, iref, model, own_shader ? shader.first.c_str() : NULL,
+		    own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
+	    if (attributes)
+		write_attributes(wdb, name, mg, attributes->m_uuid);
+	    ++success_count;
+	    continue;
+	}
+
+	const ON_Geometry *g = mg->Geometry(nullptr);
+	if (g) {
+	    if (write_geometry(wdb, member_name, g)) {
+		std::set<std::string> members;
+		members.insert(member_name);
+		write_comb(wdb, name, members, NULL, own_shader ? shader.first.c_str() : NULL,
+			own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
+		if (attributes)
+		    write_attributes(wdb, name, mg, attributes->m_uuid);
+		++success_count;
+		continue;
+	    } else {
+		//if (gcv_options.verbosity_level) {
+		ON_String ctype = ON_ModelComponent::ComponentTypeToString(mg->ComponentType());
+		const std::string ctname = (ctype.Array()) ? std::string(ctype.Array()) : std::string("unknown");
+		std::cerr << "skipped " << name << ", type '" << ON_ObjectTypeToString(g->ObjectType()) << "' geometry object\n";
+		//}
+	    }
+	} else {
+	    //if (gcv_options.verbosity_level) {
+	    std::cerr << "skipped " << name << ", no geometry associated with ModelGeometryComponent (?)\n";
+	    //}
+	}
+    }
+
+    if (gcv_options.verbosity_level && (success_count != total_count))
+	std::cerr << "imported " << success_count << " of " << total_count << " objects\n";
 }
 
 
@@ -571,7 +659,10 @@ get_all_idef_members(const ONX_Model &model)
 //
 // This avoids generating large combs for layers, while at the same time
 // grouping objects that would otherwise be ungrouped top level objects in the
-// .g file
+// .g file.
+//
+// TODO - should probably assign an attribute in the .g so we can re-assemble
+// a full layer definition if that becomes desirable at some point...
 //
 // TODO - should we also be doing something for the Group type?
 std::set<std::string>
@@ -711,6 +802,8 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 {
     std::string root_name;
     {
+	// Extract the root filename from the supplied path.  This will
+	// be used to create the top level comb name in the .g file
 	bu_vls temp = BU_VLS_INIT_ZERO;
 	AutoPtr<bu_vls, bu_vls_free> autofree_temp(&temp);
 
@@ -721,14 +814,20 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     }
 
     try {
+	// Use the openNURBS extenstion to read the whole 3dm file into memory.
 	ONX_Model model;
 	if (!model.Read(source_path))
 	    throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
-	// The idef member set is static, but is used many times - generate it once up front
-	const std::set<std::string> model_idef_members = get_all_idef_members(model);
+	
+	
+	// The idef member set is static, but is used many times - generate it
+	// once up front.
+	const std::set<std::string> model_idef_members; // = get_all_idef_members(model);
+
+
 	//import_model_layers(*context->dbip->dbi_wdbp, model, root_name, model_idef_members);
 	//import_model_idefs(*context->dbip->dbi_wdbp, model, model_idef_members);
-	//import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model, model_idef_members);
+	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
 	return 0;
