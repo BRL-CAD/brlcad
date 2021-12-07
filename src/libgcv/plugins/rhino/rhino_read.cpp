@@ -555,16 +555,15 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 		++success_count;
 		continue;
 	    } else {
-		//if (gcv_options.verbosity_level) {
-		ON_String ctype = ON_ModelComponent::ComponentTypeToString(mg->ComponentType());
-		const std::string ctname = (ctype.Array()) ? std::string(ctype.Array()) : std::string("unknown");
-		std::cerr << "skipped " << name << ", type '" << ON_ObjectTypeToString(g->ObjectType()) << "' geometry object\n";
-		//}
+		if (gcv_options.verbosity_level) {
+		    ON_String ctype = ON_ModelComponent::ComponentTypeToString(mg->ComponentType());
+		    const std::string ctname = (ctype.Array()) ? std::string(ctype.Array()) : std::string("unknown");
+		    std::cerr << "skipped " << name << ", type '" << ON_ObjectTypeToString(g->ObjectType()) << "' geometry object\n";
+		}
 	    }
 	} else {
-	    //if (gcv_options.verbosity_level) {
-	    std::cerr << "skipped " << name << ", no geometry associated with ModelGeometryComponent (?)\n";
-	    //}
+	    if (gcv_options.verbosity_level)
+		std::cerr << "skipped " << name << ", no geometry associated with ModelGeometryComponent (?)\n";
 	}
     }
 
@@ -572,17 +571,56 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	std::cerr << "imported " << success_count << " of " << total_count << " objects\n";
 }
 
-
 void
-import_idef(rt_wdb &UNUSED(wdb), std::string UNUSED(name), const ON_InstanceDefinition *UNUSED(idef),
-	    const ONX_Model &UNUSED(model), const std::set<std::string> &UNUSED(model_idef_members))
+import_idef(rt_wdb &wdb, std::string &name, const ON_InstanceDefinition *idef, const ONX_Model &model)
 {
+    // TODO - I think this needs to eventually be translated into a scale
+    // matrix component over the members, if we have anything other than the
+    // global unit...
+    //double munit = idef->UnitSystem().MillimetersPerUnit(ON_DBL_QNAN);
+    //std::cout << name << " units: " << bu_units_string(munit) << "\n";
+
+    std::set<std::string> members;
+    const ON_SimpleArray<ON_UUID>& g_ids = idef->InstanceGeometryIdList();
+    for (int i = 0; i < g_ids.Count(); i++) {
+	const ON_ModelComponentReference& m_cr = model.ComponentFromId(ON_ModelComponent::Type::ModelGeometry, g_ids[i]);
+	const ON_ModelGeometryComponent* mg = ON_ModelGeometryComponent::Cast(m_cr.ModelComponent());
+	if (!mg)
+	    continue;
+	const ON_3dmObjectAttributes* attributes = mg->Attributes(nullptr);
+	if (!attributes)
+	    continue;
+	const char *nstr = ON_String(attributes->Name()).Array();
+	members.insert(std::string(nstr));
+    }
+
+    write_comb(wdb, name, members);
+    ON_String nsu;
+    const char *uuidstr = ON_UuidToString(idef->Id(), nsu);
+    int ret1 = db5_update_attribute(name.c_str(), "rhino::type", idef->ClassId()->ClassName(), wdb.dbip);
+    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuidstr, wdb.dbip);
+    if (ret1 || ret2)
+	bu_bomb("db5_update_attribute() failed");
 }
 
-
 void
-import_model_idefs(rt_wdb &UNUSED(wdb), const ONX_Model &UNUSED(model), const std::set<std::string> &UNUSED(model_idef_members))
+import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 {
+    ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::InstanceDefinition);
+    for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
+    {
+	const ON_InstanceDefinition *idef = ON_InstanceDefinition::Cast(cr.ModelComponent());
+	if (!idef)
+	    continue;
+
+	if (idef->IsLinkedType()) {
+	    std::cout << "Warning - instance " << idef->Name().Array() << " is defined using external file, unsupported\n";
+	    continue;
+	}
+
+	std::string name(ON_String(idef->Name().Array()));
+	import_idef(wdb, name, idef, model);
+    }
 }
 
 // In OpenNURBS, an instance definition is a unique grouping of objects,
@@ -603,14 +641,6 @@ get_all_idef_members(const ONX_Model &model)
 	ON_String nsu;
 	const char *uuidstr = ON_UuidToString(idef->Id(), nsu);
 	std::cout << "Reading idef instance " << uuidstr << ": " << istr << "\n";
-
-	if (idef->IsLinkedType()) {
-	    std::cout << "Warning - instance " << istr << " is defined using external file, unsupported\n";
-	    continue;
-	}
-
-	double munit = idef->UnitSystem().MillimetersPerUnit(ON_DBL_QNAN);
-	std::cout << "Units: " << bu_units_string(munit) << "\n";
 
 	ON_SHA1_Hash chash = idef->ContentHash();
 	ON_wString whstr = chash.ToString(false);
