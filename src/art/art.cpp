@@ -151,6 +151,7 @@
 struct application APP;
 struct resource* resources;
 size_t samples = 25;
+size_t light_intensity = 30.0;
 
 extern "C" {
     FILE* outfp = NULL;
@@ -215,6 +216,8 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "s", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", 3, "background", 0, color_hook, NULL, NULL},
     {"%f", 3, "bg", 0, color_hook, NULL, NULL},
+    {"%d", 1, "light_intensity", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "li", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -264,6 +267,8 @@ void init_defaults(void) {
   view_parse[1].sp_offset = bu_byteoffset(samples);
   view_parse[2].sp_offset = bu_byteoffset(background[0]);
   view_parse[3].sp_offset = bu_byteoffset(background[0]);
+  view_parse[4].sp_offset = bu_byteoffset(light_intensity);
+  view_parse[5].sp_offset = bu_byteoffset(light_intensity);
 
   // default output file name
   outputfile = (char*)"art.png";
@@ -276,8 +281,8 @@ void init_defaults(void) {
   // for now, just support -c set samples=x
   // option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
   option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
-  option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
-  option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
+  // option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
+  // option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
   option("", "-C #/#/#", "Set background image color to R/G/B values (default: 191/204/255)", 0);
   // option("", "-W", "Set background image color to white", 0);
   option("", "-R", "Disable reporting of overlaps", 100);
@@ -725,7 +730,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
 	    "light_intensity",
 	    asr::ParamArray()
 	    .insert("color_space", "srgb")
-	    .insert("multiplier", "30.0"),
+	    .insert("multiplier", light_intensity),
 	    asr::ColorValueArray(3, LightRadiance)));
 
     // Create a point light called "light" and insert it into the assembly.
