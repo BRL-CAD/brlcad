@@ -196,6 +196,7 @@ dot_header(FILE *outfp, const char *label)
     fprintf(outfp, "\tgraph [ rankdir=LR ];\n");
     fprintf(outfp, "\tnode [ style=filled ];\n");
     fprintf(outfp, "\tnode [ shape=box ];\n"); /* try Mrecord */
+    bu_vls_free(&vp);
 }
 
 
