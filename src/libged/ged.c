@@ -84,6 +84,9 @@ ged_close(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
+    if (gedp->ged_fbs)
+	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
+
     if (gedp->ged_wdbp) {
 	wdb_close(gedp->ged_wdbp);
 	gedp->ged_wdbp = RT_WDB_NULL;
