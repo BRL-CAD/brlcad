@@ -700,12 +700,9 @@ get_all_idef_members(const ONX_Model &model)
 // grouping objects that would otherwise be ungrouped top level objects in the
 // .g file.
 //
-// TODO - should probably assign an attribute in the .g so we can re-assemble
-// a full layer definition if that becomes desirable at some point...
-//
 // TODO - should we also be doing something for the Group type?
 std::set<std::string>
-get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<std::string> &UNUSED(model_idef_members))
+get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<std::string> &model_idef_members)
 {
     std::set<std::string> members;
     {
@@ -717,7 +714,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<
 		continue;
 	    if (cl->ParentLayerId() == layer->ModelObjectId()) {
 		members.insert(std::string(ON_String(cl->Name()).Array()));
-		std::cout << "Layer " << ON_String(cl->Name()).Array() << " is a child of " << ON_String(layer->Name()).Array() << "\n";
+		//std::cout << "Layer " << ON_String(cl->Name()).Array() << " is a child of " << ON_String(layer->Name()).Array() << "\n";
 	    }
 	}
     }
@@ -741,13 +738,14 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model, const std::set<
 	    }
 	    if (attributes->m_layer_index == layer->Index()) {
 		members.insert(std::string(gname));
-		std::cout << "Object " << gname << " is a child of " << ON_String(layer->Name()).Array() << "\n";
+		//std::cout << "Object " << gname << " is a child of " << ON_String(layer->Name()).Array() << "\n";
 	    }
 	}
     }
 
-    // TODO - build up sets and then do set_difference with instance defs
     std::set<std::string> result;
+    std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
+	    model_idef_members.end(), std::inserter(result, result.end()));
 
     return result;
 }
