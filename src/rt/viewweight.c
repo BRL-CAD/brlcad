@@ -93,6 +93,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
     struct bu_vls pbuff_msgs = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *dfile = NULL;
     char *dbuff = NULL;
+	int found_densities = 0;
 
     if (!minus_o) {
 	outfp = stdout;
@@ -134,6 +135,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 	    goto densities_prep_rtweight_fail;
 	}
 	bu_close_mapped_file(dfile);
+	found_densities = 1;
 
 
     } else {
@@ -173,6 +175,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 
 	    /* found a density table, so record the .g file */
 	    densityfile = rtip->rti_dbip->dbi_filename;
+		found_densities = 1;
 
 	} else {
 	    static char densityfile_buf[MAXPATHLEN] = {0};
@@ -199,6 +202,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 		goto densities_prep_rtweight_fail;
 	    }
 	    bu_close_mapped_file(dfile);
+		found_densities = 1;
 	    }
 	}
     }
@@ -226,6 +230,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 						* grams / (cm^3) we convert the table on input
 						*/
 						density_double = density_double / 1000.0;
+						found_densities = 1;
 
 						const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
 						int id;
@@ -249,6 +254,11 @@ densities_prep(struct rt_i * rtip, int minus_o)
 		}
 	}
 
+	if (!found_densities) {
+		bu_log("Could not find any density information.\n");
+		goto densities_prep_rtweight_fail;
+	}
+
 	// look for objects with material_name set and set the material_id
 	for (int i = 0; i < RT_DBNHASH; i++) {
 		struct directory *dp = rtip->rti_dbip->dbi_Head[i];
@@ -269,7 +279,7 @@ densities_prep(struct rt_i * rtip, int minus_o)
 								if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 									// the material_ip->name field is the name in the density table
 									// not just the material_name (they could be different)
-									material_ip = (struct rt_material_internal *) material_intern.idb_ptr;
+									material_ip = (struct rt_material_internal *)material_intern.idb_ptr;
 									char *density_table_name = bu_vls_strdup(&material_ip->name);
 									long int wids[1];
 
@@ -283,23 +293,10 @@ densities_prep(struct rt_i * rtip, int minus_o)
 
 										// by default the regp->reg_name holds the path to the region
 										// we just want the name so we remove the path before the name
-										struct bu_vls reg_name_path = BU_VLS_INIT_ZERO;
-										bu_vls_printf(&reg_name_path, "%s", regp->reg_name);
-
-										size_t start_reg_name_idx = 0;
-										for (size_t j = bu_vls_strlen(&reg_name_path) - 1; j > 0; j--) {
-											if (reg_name_path.vls_str[j] == '/') {
-												start_reg_name_idx = j;
-												break;
-											}
-										}
-
-										size_t num_chars = bu_vls_strlen(&reg_name_path) - start_reg_name_idx;
-										struct bu_vls reg_name = BU_VLS_INIT_ZERO;
-										bu_vls_substr(&reg_name, &reg_name_path, start_reg_name_idx+1, num_chars);
+										const char *reg_name = strrchr(regp->reg_name, '/') + 1;
 
 										// if its the region we're looking for, set teh reg_mater field
-										if (BU_STR_EQUAL(bu_vls_cstr(&reg_name), dp->d_namep)) {
+										if (BU_STR_EQUAL(reg_name, dp->d_namep)) {
 											regp->reg_gmater = wids[0];
 										}
 									}

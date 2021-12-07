@@ -1705,12 +1705,12 @@ densities_prep(struct rt_i *rtip)
     if (analysis_flags & ANALYSIS_WEIGHTS) {
 		if (densityFileName) {
 			DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
-			if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) != GED_OK) {
+			if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) == GED_OK) {
 				found_densities = 1;
 			}
 		} else {
 			DLOG(_ged_current_gedp->ged_result_str, "density from db\n");
-			if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) != GED_OK) {
+			if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) == GED_OK) {
 				found_densities = 1;
 			}
 		}
@@ -1733,12 +1733,12 @@ densities_prep(struct rt_i *rtip)
 								continue;
 							}
 
-							found_densities = 1;
 							double density_double = strtod(density_string, NULL);
 							/* since BRL-CAD does computation in mm, but the table is in
 							* grams / (cm^3) we convert the table on input
 							*/
 							density_double = density_double / 1000.0;
+							found_densities = 1;
 
 							const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
 							int id;
@@ -1764,6 +1764,7 @@ densities_prep(struct rt_i *rtip)
 		}
 
 		if (!found_densities) {
+			bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not find any density information.\n");
 			analyze_densities_clear(_gd_densities);
 			return GED_ERROR;
 		}
@@ -1803,23 +1804,10 @@ densities_prep(struct rt_i *rtip)
 
 											// by default the regp->reg_name holds the path to the region
 											// we just want the name so we remove the path before the name
-											struct bu_vls reg_name_path = BU_VLS_INIT_ZERO;
-											bu_vls_printf(&reg_name_path, "%s", regp->reg_name);
-
-											size_t start_reg_name_idx = 0;
-											for (size_t j = bu_vls_strlen(&reg_name_path) - 1; j > 0; j--) {
-												if (reg_name_path.vls_str[j] == '/') {
-													start_reg_name_idx = j;
-													break;
-												}
-											}
-
-											size_t num_chars = bu_vls_strlen(&reg_name_path) - start_reg_name_idx;
-											struct bu_vls reg_name = BU_VLS_INIT_ZERO;
-											bu_vls_substr(&reg_name, &reg_name_path, start_reg_name_idx+1, num_chars);
+											const char *reg_name = strrchr(regp->reg_name, '/') + 1;
 
 											// if its the region we're looking for, set teh reg_mater field
-											if (BU_STR_EQUAL(bu_vls_cstr(&reg_name), dp->d_namep)) {
+											if (BU_STR_EQUAL(reg_name, dp->d_namep)) {
 												regp->reg_gmater = wids[0];
 											}
 										}
