@@ -23,6 +23,15 @@ BRLCAD_ADDEXEC(rt_nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" TEST)
 # disabled prior to 7.22.2 release due to unresolved failures in the implementation
 #BRLCAD_ADD_TEST(NAME NURBS-get_closest_point-distinct_points nurbs_tester ${CMAKE_CURRENT_SOURCE_DIR}/nurbs_surfaces.g 1)
 
+# materialX testing
+#set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
+set(USING_MATERIALX yes)
+if(USING_MATERIALX)
+BRLCAD_ADDEXEC(materialx_test materialx_test.cpp "librt;" TEST)
+BRLCAD_ADD_TEST(NAME rt_mtlx_test COMMAND materialx_test)
+endif(USING_MATERIALX)
+
+
 # diff testing
 BRLCAD_ADDEXEC(rt_diff diff.c "librt" TEST)
 
