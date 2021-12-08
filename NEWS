@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2021-XX-XX  Release 7.32.6                                     ---
 ----------------------------------------------------------------------
 
+* fixed bot_merge crash when bots are of different types - Cliff Yapp
 * fixed nirt -L to not require database and objects - Sean Morrison
 * fixed bug reading older VOL objects with file data - Sean Morrison
 * fixed pixscale bug when scaling images down - Sean Morrison
