@@ -390,6 +390,8 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 	bu_vls_free(&pattern);
 	bu_argv_free(num_filenames, filenames);
     }
+
+    bu_free((void *)plugins_path, "plugins_path");
 }
 
 
@@ -405,8 +407,9 @@ void
 gcv_context_destroy(struct gcv_context *context)
 {
     _gcv_context_check(context);
-
-    db_close(context->dbip);
+    // TODO - clean up the inmem db so db_close will
+    // do the job correctly here...
+    wdb_close(context->dbip->dbi_wdbp);
     bu_avs_free(&context->messages);
 }
 
