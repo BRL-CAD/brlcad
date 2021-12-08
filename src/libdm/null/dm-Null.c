@@ -38,7 +38,7 @@ null_open(void *UNUSED(ctx), void *interp, int UNUSED(argc), const char **UNUSED
 {
     struct dm *dmp = DM_NULL;
 
-    BU_ALLOC(dmp, struct dm);
+    BU_GET(dmp, struct dm);
     dmp->magic = DM_MAGIC;
     dmp->start_time = 0;
 
@@ -51,8 +51,10 @@ null_open(void *UNUSED(ctx), void *interp, int UNUSED(argc), const char **UNUSED
 }
 
 int
-null_close(struct dm *UNUSED(dmp))
+null_close(struct dm *dmp)
 {
+    bu_free(dmp->i, "dm_impl");
+    BU_PUT(dmp, struct dm);
     return 0;
 }
 
