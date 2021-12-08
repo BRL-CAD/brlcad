@@ -1770,6 +1770,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    delete data->segments->front();
 	    data->segments->pop_front();
 	}
+	delete data->segments;
 	delete data;
 	curve_pullback_samples.pop_front();
     }
