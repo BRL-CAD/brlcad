@@ -171,6 +171,7 @@ libdm_init(void)
 
     }
     bu_argv_free(nfiles, filenames);
+    bu_free(filenames, "filename array");
     bu_vls_free(&plugin_pattern);
 
     dm_backends = (void *)&dm_map;

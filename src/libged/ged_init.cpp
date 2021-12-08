@@ -246,6 +246,7 @@ libged_init(void)
 	}
     }
     bu_argv_free(nfiles, filenames);
+    bu_free(filenames, "filename array");
     bu_vls_free(&plugin_pattern);
 
     ged_cmds = (void *)&cmd_map;
