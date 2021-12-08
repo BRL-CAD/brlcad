@@ -1054,8 +1054,8 @@ if(NOT MSVC)
   # Similarly, enable the AddressSanitizer memory address sanitizer.
   # See https://code.google.com/p/address-sanitizer/ for more info.
   # This typically is reported to cause a 2x slowdown.
-  if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
-    #set(CMAKE_REQUIRED_LINK_OPTIONS "${CMAKE_REQUIRED_LINK_OPTIONS};-lasan")
+  if(BRLCAD_ENABLE_ADDRESS_SANITIZER && ${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
+    set(CMAKE_REQUIRED_LINK_OPTIONS "${CMAKE_REQUIRED_LINK_OPTIONS};-lasan")
     CHECK_C_FLAG(fsanitize=address)
     CHECK_C_FLAG(fsanitize-address-use-after-return=always)
     CHECK_C_FLAG(fsanitize-address-use-after-scope)
@@ -1064,7 +1064,7 @@ if(NOT MSVC)
     CHECK_CXX_FLAG(fsanitize-address-use-after-return=always)
     CHECK_CXX_FLAG(fsanitize-address-use-after-scope)
     CHECK_CXX_FLAG(fno-omit-frame-pointer)
-  endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
+  endif(BRLCAD_ENABLE_ADDRESS_SANITIZER && ${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 
   # Differently, enable the ThreadSanitizer race condition detector
   # only as requested since it can incur a 5x-15x slowdown.  See
