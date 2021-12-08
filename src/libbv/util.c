@@ -107,6 +107,18 @@ bv_init(struct bview *gvp)
 }
 
 void
+bv_free(struct bview *gvp)
+{
+    if (!gvp)
+	return;
+
+    bu_vls_free(&gvp->gv_name);
+    bu_ptbl_free(gvp->gv_view_grps);
+    BU_PUT(gvp->gv_view_grps, struct bu_ptbl);
+    bu_ptbl_free(gvp->gv_view_objs);
+    BU_PUT(gvp->gv_view_objs, struct bu_ptbl);
+}
+void
 bv_settings_init(struct bview_settings *s)
 {
     struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
