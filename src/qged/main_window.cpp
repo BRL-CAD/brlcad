@@ -246,7 +246,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	    }
 	}
 	bu_argv_free(nfiles, filenames);
-	bu_free(filenames, "filename array");
 	bu_vls_free(&plugin_pattern);
 
 	std::map<int, std::set<QToolPaletteElement *>>::iterator e_it;
