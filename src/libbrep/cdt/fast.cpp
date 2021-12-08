@@ -1050,7 +1050,6 @@ get_loop_sample_points(
 	    //ON_2dPoint p2d_begin = trim->PointAt(trim->Domain().m_t[0]);
 	    //ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
 	    double delta =  trim->Domain().Length() / 10.0;
-	    ON_Interval trim_dom = trim->Domain();
 
 	    for (int i = 1; i <= 10; i++) {
 		btp.p3d = p3d;

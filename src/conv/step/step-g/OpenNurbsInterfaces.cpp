@@ -1530,7 +1530,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	// grab the curve for this edge, face and surface
 	const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
 	const ON_Curve *curve = edge->EdgeCurveOf();
-	ON_BoundingBox bb = curve->BoundingBox();
 	bool orientWithCurve = (*i)->OrientWithEdge();
 
 	if ((false) && (id == 34193)) {

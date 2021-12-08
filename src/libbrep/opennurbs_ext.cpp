@@ -965,7 +965,6 @@ CurveTree::initialLoopBBox(const ON_BrepFace &face)
 BRNode*
 CurveTree::subdivideCurve(const ON_Curve* curve, int trim_index, int adj_face_index, double min, double max, bool innerTrim, int divDepth) const
 {
-    ON_Interval dom = curve->Domain();
     ON_3dPoint points[2];
     points[0] = curve->PointAt(min);
     points[1] = curve->PointAt(max);
