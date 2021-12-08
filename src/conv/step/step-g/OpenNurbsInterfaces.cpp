@@ -2935,7 +2935,7 @@ SphericalSurface::LoadONBrep(ON_Brep *brep)
     // Creates a sphere with given center and radius.
     ON_Sphere sphere(center, radius * LocalUnits::length);
 
-    ON_RevSurface *s = sphere.RevSurfaceForm();
+    ON_RevSurface *s = sphere.RevSurfaceForm(false, nullptr);
     if (s) {
 	double r = fabs(sphere.radius);
 	if (r <= ON_SQRT_EPSILON) {
