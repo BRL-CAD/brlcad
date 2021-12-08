@@ -2344,7 +2344,9 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     attributes->m_uuid = ON_opennurbs4_id;
     attributes->m_name = "brep";
     ON_ModelGeometryComponent *gc = ON_ModelGeometryComponent::CreateForExperts(true, ON_Geometry::Cast(bi->brep), true, attributes, NULL);
-    model.AddModelComponent(*gc);
+    ON_ModelGeometryComponent ngc(*gc);
+    delete gc;
+    model.AddModelComponent(ngc);
 
     model.m_properties.m_RevisionHistory.NewRevision();
     model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
@@ -2478,8 +2480,6 @@ rt_brep_ifree(struct rt_db_internal *ip)
 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
-    if (bi->brep != NULL)
-	delete bi->brep;
     bu_free(bi, "rt_brep_internal free");
     ip->idb_ptr = ((void *)0);
 }
