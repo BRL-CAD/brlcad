@@ -465,22 +465,12 @@ fb_open(const char *file, int width, int height)
     }
 
 found_interface:
-    /* Copy over the name it was opened by. */
-    ifp->i->if_name = (char*)malloc((unsigned) strlen(file) + 1);
-    if (!ifp->i->if_name) {
-        Malloc_Bomb(strlen(file) + 1);
-        free((void *) ifp);
-        return FB_NULL;
-    }
-    bu_strlcpy(ifp->i->if_name, file, strlen(file)+1);
-
     /* Mark OK by filling in magic number */
     ifp->i->if_magic = FB_MAGIC;
 
     i = (*ifp->i->if_open)(ifp, file, width, height);
     if (i != 0) {
         ifp->i->if_magic = 0;           /* sanity */
-        free((void *) ifp->i->if_name);
         free((void *) ifp);
 
         if (i < 0)

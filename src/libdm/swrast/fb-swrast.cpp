@@ -965,10 +965,10 @@ struct fb_impl swrast_interface_impl =
     swrast_flush,		/* flush output */
     swrast_free,		/* free resources */
     swrast_help,		/* help message */
-    bu_strdup("OSMesa swrast OpenGL"),	/* device description */
+    "OSMesa swrast OpenGL",	/* device description */
     FB_XMAXSCREEN,		/* max width */
     FB_YMAXSCREEN,		/* max height */
-    bu_strdup("/dev/swrast"),		/* short device name */
+    "/dev/swrast",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */
     -1,			/* select file desc */

@@ -983,10 +983,10 @@ struct fb_impl qtgl_interface_impl =
     qtgl_flush,		/* flush output */
     qtgl_free,		/* free resources */
     qtgl_help,		/* help message */
-    bu_strdup("Qt OpenGL"),	/* device description */
+    "Qt OpenGL",	/* device description */
     FB_XMAXSCREEN,		/* max width */
     FB_YMAXSCREEN,		/* max height */
-    bu_strdup("/dev/qtgl"),		/* short device name */
+    "/dev/qtgl",		/* short device name */
     512,		/* default/current width */
     512,		/* default/current height */
     -1,			/* select file desc */
