@@ -68,7 +68,7 @@ extern "C" {
 int
 main(int argc, const char **argv)
 {
-    struct ged *gedp = NULL;
+    struct ged *gedp = GED_NULL;
     void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);
     int ret = EXIT_SUCCESS;
     char *line = NULL;
@@ -130,12 +130,16 @@ main(int argc, const char **argv)
     if (argc) {
 	if (!bu_file_exists(argv[0], NULL)) {
 	    bu_vls_free(&msg);
+	    bv_free(gsh_view);
+	    BU_PUT(gsh_view, struct bview);
 	    bu_dlclose(libged);
 	    bu_exit(EXIT_FAILURE, "File %s does not exist, expecting .g file\n", argv[0]) ;
 	}
 	gedp = ged_open("db", argv[0], 1);
 	if (!gedp) {
 	    bu_vls_free(&msg);
+	    bv_free(gsh_view);
+	    BU_PUT(gsh_view, struct bview);
 	    bu_dlclose(libged);
 	    bu_exit(EXIT_FAILURE, "Could not open %s as a .g file\n", argv[0]) ;
 	} else {
@@ -171,7 +175,8 @@ main(int argc, const char **argv)
 	fprintf(stdout, "%s", bu_vls_addr(gedp->ged_result_str));
 
 	ged_close(gedp);
-
+	bv_free(gsh_view);
+	BU_PUT(gsh_view, struct bview);
 	return ret;
     }
 
@@ -355,9 +360,10 @@ main(int argc, const char **argv)
     }
 
 done:
+    bv_free(gsh_view);
     BU_PUT(gsh_view, struct bv);
+    ged_close(gedp);
     bu_dlclose(libged);
-    if (gedp) ged_close(gedp);
     linenoiseHistoryFree();
     bu_vls_free(&msg);
     bu_vls_free(&open_gfile);
