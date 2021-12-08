@@ -225,8 +225,6 @@ surface_EvNormal(// returns false if unable to evaluate
 	    /*
 	     * brute force and try to solve from each side of the surface domain
 	     */
-	    ON_Interval u = surf->Domain(0);
-	    ON_Interval v = surf->Domain(1);
 	    for(int iside=1; iside <= 4; iside++) {
 		rc=surf->EvNormal(s, t, point, normal, iside, hint);
 		if (rc)
@@ -1812,7 +1810,6 @@ bool trim_GetClosestPoint3dFirstOrder(
 
 	    if (!N.ConvertSpanToBezier(span_index, B))
 		continue;
-	    ON_Interval bi = B.Domain();
 	    if (!B.GetTightBoundingBox(tight_bbox, bGrowBox, NULL))
 		continue;
 	    bbox[span_index] = tight_bbox;
@@ -4090,8 +4087,6 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 	    return false;
 
 	const ON_Surface *surf = data->surf;
-	ON_Interval udom = surf->Domain(0);
-	ON_Interval vdom = surf->Domain(1);
 	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	ON_2dPoint pt;
 	ON_2dPoint prev_pt;

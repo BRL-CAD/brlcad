@@ -100,7 +100,6 @@ getEdgePoints(const ON_BrepTrim &trim,
 	      std::map<double, BrepTrimPoint *> &param_points)
 {
     const ON_Surface *s = trim.SurfaceOf();
-    ON_Interval range = trim.Domain();
     ON_3dPoint mid_2d = ON_3dPoint::UnsetPoint;
     ON_3dPoint mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector mid_norm = ON_3dVector::UnsetVector;

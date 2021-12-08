@@ -929,9 +929,6 @@ plotsurfaceknots(ON_Surface &surf, struct bu_list *vlfree, struct bv_vlblock *vb
 
     vhead = bv_vlblock_find(vbp, GREEN);
 
-    ON_Interval udom = surf.Domain(0);
-    ON_Interval vdom = surf.Domain(1);
-
     if (dim3d) {
 	for (int u = 0; u <= spanu_cnt; u++) {
 	    for (int v = 0; v <= spanv_cnt; v++) {
