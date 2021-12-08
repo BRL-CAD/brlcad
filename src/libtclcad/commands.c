@@ -1149,8 +1149,6 @@ to_deleteProc(ClientData clientData)
 
 	// Got the libtclcad cleanup done, have libged do its up.
 	ged_close(top->to_gedp);
-
-	BU_PUT(top->to_gedp, struct ged);
     }
 
     bu_free((void *)top, "struct ged_obj");

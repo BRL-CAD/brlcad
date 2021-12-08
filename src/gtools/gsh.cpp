@@ -172,8 +172,6 @@ main(int argc, const char **argv)
 
 	ged_close(gedp);
 
-	BU_PUT(gedp, struct ged);
-
 	return ret;
     }
 

@@ -2542,12 +2542,11 @@ mged_finish(int exitcode)
     Tcl_Eval(INTERP, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
     Tcl_Release((ClientData)INTERP);
 
+    struct tclcad_io_data *giod = (struct tclcad_io_data *)GEDP->ged_io_data;
     ged_close(GEDP);
-    if (GEDP->ged_io_data) {
-	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
+    if (giod) {
+	tclcad_destroy_io_data(giod);
     }
-    if (GEDP)
-	BU_PUT(GEDP, struct ged);
 
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;
@@ -2999,7 +2998,6 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
     }
     ged_close(GEDP);
-    BU_PUT(GEDP, struct ged);
 
     // initialize a new blank ged structure
     BU_GET(GEDP, struct ged);
