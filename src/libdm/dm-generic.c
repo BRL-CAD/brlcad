@@ -204,6 +204,18 @@ void
 dm_set_null(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return;
+
+    bu_vls_free(&dmp->i->dm_pathName);
+    bu_vls_free(&dmp->i->dm_tkName);
+    bu_vls_free(&dmp->i->dm_dName);
+    bu_vls_free(&dmp->i->dm_log);
+
+    if (dmp->i->fbp)
+	fb_put(dmp->i->fbp);
+    if (dmp->i->dm_put_internal)
+	dmp->i->dm_put_internal(dmp);
+    BU_PUT(dmp->i, struct dm_impl);
+
     *dmp = dm_null;
 }
 
