@@ -16,6 +16,7 @@ changes made.  See document footer for additional details.
 * fixed librt handling of object names with '/' chars - Cliff Yapp
 * changed fast4-g to not make references to empty regions - Cliff Yapp
 * fixed gcv option handling - Cliff Yapp
+* fixed bot_merge crash when bots are of different types - Cliff Yapp
 * fixed nirt -L to not require database and objects - Sean Morrison
 * fixed bug reading older VOL objects with file data - Sean Morrison
 * fixed pixscale bug when scaling images down - Sean Morrison
