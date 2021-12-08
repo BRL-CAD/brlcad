@@ -84,9 +84,6 @@ ged_close(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
-    if (gedp->ged_fbs)
-	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
-
     if (gedp->ged_wdbp) {
 	wdb_close(gedp->ged_wdbp);
 	gedp->ged_wdbp = RT_WDB_NULL;
@@ -253,6 +250,9 @@ ged_free(struct ged *gedp)
 
     bu_ptbl_free(&gedp->ged_subp);
 
+    if (gedp->ged_fbs)
+	BU_PUT(gedp->ged_fbs, struct fbserv_obj);
+
     gedp->ged_wdbp = RT_WDB_NULL;
 }
 
@@ -266,8 +266,6 @@ ged_init(struct ged *gedp)
 
     // TODO - rename to ged_name
     bu_vls_init(&gedp->go_name);
-
-
 
     // View related containers
     BU_PTBL_INIT(&gedp->ged_views);

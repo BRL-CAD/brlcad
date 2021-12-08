@@ -467,9 +467,9 @@ mged_setup(Tcl_Interp **interpreter)
     if (GEDP) {
 	/* release any allocated memory */
 	ged_free(GEDP);
-    } else {
-	BU_ALLOC(GEDP, struct ged);
+	BU_PUT(GEDP, struct ged);
     }
+    BU_GET(GEDP, struct ged);
     GED_INIT(GEDP, NULL);
 
     /* register commands */
