@@ -2917,6 +2917,9 @@ main(int argc, char **argv)
     if (!s.quiet)
 	bu_log("%d components converted\n", s.comp_count);
 
+    bu_free(s.faces, "faces");
+    bu_free(s.thickness, "thickness");
+    bu_free(s.facemode, "facemode");
     bu_free(s.group_head, "group_head");
     bu_ptbl_free(s.stack2);
     BU_PUT(s.stack2, struct bu_ptbl);
