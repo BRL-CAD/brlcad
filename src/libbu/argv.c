@@ -167,7 +167,11 @@ bu_argv_free(size_t argc, char *argv[])
 {
     register size_t i;
 
-    if (UNLIKELY(!argv || (ssize_t)argc < 1)) {
+    if (UNLIKELY(!argv))
+	return;
+
+    if ((ssize_t)argc < 1) {
+	bu_free((void *)argv, "bu_argv_free");
 	return;
     }
 
