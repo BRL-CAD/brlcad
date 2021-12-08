@@ -5124,8 +5124,10 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 		result->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3+2] + avail_vert;
 
 		if (result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) {
-		    result->thickness[avail_face+face] = bots[i]->thickness[face];
-		    result->face_mode[avail_face+face] = bots[i]->face_mode[face];
+		    if (bots[i]->thickness)
+			result->thickness[avail_face+face] = bots[i]->thickness[face];
+		    if (bots[i]->face_mode)
+			result->face_mode[avail_face+face] = bots[i]->face_mode[face];
 		}
 	    }
 	}
