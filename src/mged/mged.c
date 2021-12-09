@@ -1287,8 +1287,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
     predictor_init();
 
-    DMP = dm_get();
-    dm_set_null(DMP);
+    DMP = dm_open(NULL, INTERP, "nu", 0, NULL);
     struct bu_vls *dpvp = dm_get_pathname(DMP);
     if (dpvp) {
 	bu_vls_strcpy(dpvp, "nu");

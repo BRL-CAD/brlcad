@@ -90,7 +90,7 @@ if (TARGET mged)
     DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}")
 
     set(TARGET_NAME ${tname})
-    set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-mged_${TNAME}.log")
+    set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-mged_${TARGET_NAME}.log")
 
     BRLCAD_REGRESSION_TEST(regress-mged_${tname} "mged;rtarea;rt;rtcheck" TEST_SCRIPT "${TSCRIPT}" EXEC mged)
     DISTCLEAN("${LOG_FILE}")
