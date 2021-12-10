@@ -574,14 +574,14 @@ static void yy_reduce(
   yymsp = &yypParser->yystack[yypParser->yyidx];
 
   /* Don't run off the end of the array */
-  if ( yyruleno >= (int)(sizeof(yyRuleName)/sizeof(yyRuleName[0]))) {
 #ifndef NDEBUG
+  if ( yyruleno >= (int)(sizeof(yyRuleName)/sizeof(yyRuleName[0]))) {
     if (yyTraceFILE) {
       fprintf(yyTraceFILE, "Out of bounds yyruleno index: %d\n", yyruleno);
     }
-#endif /* NDEBUG */
     return;
   }
+#endif /* NDEBUG */
 
   if( yyruleno>=0 ) {
 #ifndef NDEBUG
