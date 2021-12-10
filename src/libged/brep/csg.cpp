@@ -266,14 +266,14 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
     }
 }
 
-#define BOOL_RESOLVE(_a, _b) (_b == '+') ? &isect : ((_a == '-' && _b == '-') || (_a == 'u' && _b == 'u')) ? &un : &sub
+#define BOOL_RESOLVE(_a, _b) (_b == '+') ? isect : ((_a == '-' && _b == '-') || (_a == 'u' && _b == 'u')) ? un : sub
 
 HIDDEN int
 make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *wdbp, const char *rname)
 {
-    char un = 'u';
-    char sub = '-';
-    char isect = '+';
+    const char *un = "u\0";
+    const char *sub = "-\0";
+    const char *isect = "+\0";
 
     struct wmember wcomb;
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
@@ -297,7 +297,7 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
 	(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(data->params->bool_op)));
 	for (unsigned int i = 0; i < BU_PTBL_LEN(data->shoal_children); i++) {
 	    struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->shoal_children, i);
-	    char *bool_op = BOOL_RESOLVE(data->params->bool_op, c->bool_op);
+	    const char *bool_op = BOOL_RESOLVE(data->params->bool_op, c->bool_op);
 	    csg_obj_process(msgs, c, wdbp, rname);
 	    bu_vls_trunc(&prim_name, 0);
 	    subbrep_obj_name(c->csg_type, c->csg_id, rname, &prim_name);
@@ -322,9 +322,9 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     struct wmember scomb;
 
     int failed = 0;
-    char un = 'u';
-    char sub = '-';
-    char isect = '+'; // UNUSED here, for BOOL_RESOLVE macro.
+    const char *un = "u\0";
+    const char *sub = "-\0";
+    const char *isect = "+\0"; // UNUSED here, for BOOL_RESOLVE macro.
 
     char *n_bool_op;
     if (data->island_type == BREP) {
@@ -365,8 +365,8 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 
     // In a comb, the first element is always unioned.  The nucleus bool op is applied
     // to the overall shoal in the pcomb assembly.
-    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(&un));
-    char *bool_op;
+    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(un));
+    const char *bool_op;
     int union_shoal_cnt = 1;
     int subtraction_shoal_cnt = 0;
 
@@ -402,7 +402,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 		//bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
 	    //}
 	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
-	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, db_str2op(&un));
+	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, db_str2op(un));
 	    subtraction_shoal_cnt++;
 	}
     }
@@ -414,7 +414,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	//if (*n_bool_op == 'u') {
 	//  bu_log("  subtraction found for %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&subtraction_name));
 	//}
-	(void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, db_str2op(&un));
+	(void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, db_str2op(un));
 	bu_vls_free(&subtraction_name);
 	subtraction_shoal_cnt++;
     }
@@ -422,10 +422,10 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     if (union_shoal_cnt > 1) {
 	mk_lcomb(wdbp, bu_vls_addr(&union_name), &ucomb, 0, NULL, NULL, NULL, 0);
     }
-    (void)mk_addmember(bu_vls_addr(&union_name), &(icomb.l), NULL, db_str2op(&un));
+    (void)mk_addmember(bu_vls_addr(&union_name), &(icomb.l), NULL, db_str2op(un));
     if (subtraction_shoal_cnt) {
 	mk_lcomb(wdbp, bu_vls_addr(&sub_name), &scomb, 0, NULL, NULL, NULL, 0);
-	(void)mk_addmember(bu_vls_addr(&sub_name), &(icomb.l), NULL, db_str2op(&sub));
+	(void)mk_addmember(bu_vls_addr(&sub_name), &(icomb.l), NULL, db_str2op(sub));
     }
     mk_lcomb(wdbp, bu_vls_addr(&island_name), &icomb, 0, NULL, NULL, NULL, 0);
     set_attr_key(wdbp, bu_vls_addr(&island_name), "loops", data->island_loops_cnt, data->island_loops);
