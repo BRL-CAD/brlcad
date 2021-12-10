@@ -580,7 +580,7 @@ void TYPEprint_descriptions(const Type type, FILES *files, Schema schema)
 
 void TYPEprint_init(const Type type, FILE *header, FILE *impl, Schema schema)
 {
-    char tdnm [BUFSIZ];
+    char tdnm [BUFSIZ+1];
     char typename_buf[MAX_LEN];
 
     strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
