@@ -572,6 +572,10 @@ fxt1_lloyd(GLfloat vec[][MAX_COMP], GLint nv,
 
     GLint i, j, k, rep;
 
+    /* Sanity */
+    if (nv < 0 || nc < 0 || n < 0)
+	return 0;
+
     /* the quantizer */
     for (rep = 0; rep < LL_N_REP; rep++) {
 	/* reset sums & counters */
