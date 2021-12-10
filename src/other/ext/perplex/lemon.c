@@ -3241,25 +3241,33 @@ PRIVATE FILE *tplt_open(struct lemon *lemp)
   }else{
     lemon_sprintf(buf,"%s.lt",lemp->filename);
   }
+  int free_tpltname = 0;
   if( access(buf,004)==0 ){
     tpltname = buf;
   }else if( access(templatename,004)==0 ){
     tpltname = templatename;
   }else{
     tpltname = pathsearch(lemp->argv0,templatename,0);
+    free_tpltname = 1;
   }
   if( tpltname==0 ){
     fprintf(stderr,"Can't find the parser driver template file \"%s\".\n",
     templatename);
     lemp->errorcnt++;
+    if (free_tpltname)
+       free(tpltname);
     return 0;
   }
   in = fopen(tpltname,"rb");
   if( in==0 ){
     fprintf(stderr,"Can't open the template file \"%s\".\n",templatename);
     lemp->errorcnt++;
+    if (free_tpltname)
+       free(tpltname);
     return 0;
   }
+  if (free_tpltname)
+     free(tpltname);
   return in;
 }
 
@@ -3727,7 +3735,7 @@ void ReportTable(
   struct state *stp;
   struct action *ap;
   struct rule *rp;
-  struct acttab *pActtab;
+  struct acttab *pActtab = NULL;
   int i, j, n;
   const char *name;
   int mnTknOfst, mxTknOfst;
@@ -4153,6 +4161,9 @@ void ReportTable(
 
   /* Append any addition code the user desires */
   tplt_print(out,lemp,lemp->extracode,&lineno);
+
+  /* Done with pActtab */
+  free(pActtab);
 
   fclose(in);
   fclose(out);
