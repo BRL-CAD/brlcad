@@ -2662,9 +2662,15 @@ void Parse(struct lemon *gp)
   fseek(fp,0,2);
   filesize = ftell(fp);
   rewind(fp);
-  filebuf = (char *)malloc( filesize+1 );
-  if( filesize>100000000 || filebuf==0 ){
+  if( filesize>100000000 ){
     ErrorMsg(ps.filename,0,"Input file too large.");
+    gp->errorcnt++;
+    fclose(fp);
+    return;
+  }
+  filebuf = (char *)malloc( filesize+1 );
+  if( !filebuf ){
+    ErrorMsg(ps.filename,0,"filebuf allocation failed.");
     gp->errorcnt++;
     fclose(fp);
     return;
