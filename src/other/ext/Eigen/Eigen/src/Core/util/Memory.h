@@ -586,6 +586,7 @@ template<typename T> EIGEN_DEVICE_FUNC T* smart_move(T* start, T* end, T* target
 // to the appropriate stack allocation function
 #if ! defined EIGEN_ALLOCA && ! defined EIGEN_GPU_COMPILE_PHASE
   #if EIGEN_OS_LINUX || EIGEN_OS_MAC || (defined alloca)
+#include <alloca.h>
     #define EIGEN_ALLOCA alloca
   #elif EIGEN_COMP_MSVC
     #define EIGEN_ALLOCA _alloca
