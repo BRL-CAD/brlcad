@@ -329,7 +329,7 @@ bn_mat_inverse(mat_t output, const mat_t input)
 
 
 void
-bn_vtoh_move(vect_t h, const vect_t v)
+bn_vtoh_move(hvect_t h, const vect_t v)
 {
     VMOVE(h, v);
     h[W] = 1.0;

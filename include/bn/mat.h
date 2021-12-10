@@ -186,7 +186,7 @@ BN_EXPORT extern int bn_mat_inverse(mat_t output,
  * Takes a pointer to a [x, y, z] vector, and a pointer to space for a
  * homogeneous vector [x, y, z, w], and builds [x, y, z, 1].
  */
-BN_EXPORT extern void bn_vtoh_move(vect_t h,
+BN_EXPORT extern void bn_vtoh_move(hvect_t h,
 				   const vect_t v);
 
 /**
