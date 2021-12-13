@@ -436,6 +436,7 @@ dm_configure_win(struct dm *dmp, int force)
 struct bu_vls *
 dm_get_pathname(struct dm *dmp)
 {
+    if (UNLIKELY(!dmp)) return NULL;
     BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return &(dmp->i->dm_pathName);
 }
@@ -443,6 +444,7 @@ dm_get_pathname(struct dm *dmp)
 void
 dm_set_pathname(struct dm *dmp, const char *pname)
 {
+    if (UNLIKELY(!dmp)) return;
     BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     bu_vls_sprintf(&(dmp->i->dm_pathName), "%s", pname);
 }
@@ -457,6 +459,7 @@ dm_get_name(const struct dm *dmp)
 struct bu_vls *
 dm_get_dname(struct dm *dmp)
 {
+    if (UNLIKELY(!dmp)) return NULL;
     BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return &(dmp->i->dm_dName);
 }
@@ -471,6 +474,7 @@ dm_get_graphics_system(const struct dm *dmp)
 struct bu_vls *
 dm_get_tkname(struct dm *dmp)
 {
+    if (UNLIKELY(!dmp)) return NULL;
     BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return &(dmp->i->dm_tkName);
 }
@@ -818,6 +822,7 @@ dm_set_hook(const struct bu_structparse_map *map,
 struct bu_structparse *
 dm_get_vparse(struct dm *dmp)
 {
+    if (UNLIKELY(!dmp)) return NULL;
     BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     return dmp->i->vparse;
 }
@@ -825,6 +830,7 @@ dm_get_vparse(struct dm *dmp)
 void *
 dm_get_mvars(struct dm *dmp)
 {
+    if (UNLIKELY(!dmp)) return NULL;
     BU_CKMAG(dmp, DM_MAGIC, "dm internal");
     if (!dmp->i->m_vars) return (void *)dmp;
     return dmp->i->m_vars;
@@ -981,6 +987,9 @@ dm_drawSolid(struct dm *dmp,
 {
     int ndrawn = 0;
 
+    if (UNLIKELY(!dmp))
+	return ndrawn;
+
     if (sp->s_old.s_cflag) {
 	if (!DM_SAME_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2])) {
 	    dm_set_fg(dmp, (short)gdc[0], (short)gdc[1], (short)gdc[2], 0, sp->s_os.transparency);
@@ -1036,6 +1045,9 @@ dm_draw_display_list(struct dm *dmp,
     int ndrawn = 0;
     int opaque = 0;
     int opaque_only = EQUAL(transparency_threshold, 1.0);
+
+    if (UNLIKELY(!dmp))
+	return 0;
 
     gdlp = BU_LIST_NEXT(display_list, dl);
     while (BU_LIST_NOT_HEAD(gdlp, dl)) {
