@@ -365,7 +365,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 
     // In a comb, the first element is always unioned.  The nucleus bool op is applied
     // to the overall shoal in the pcomb assembly.
-    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(un));
+    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, WMOP_UNION);
     const char *bool_op;
     int union_shoal_cnt = 1;
     int subtraction_shoal_cnt = 0;
@@ -402,7 +402,8 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 		//bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
 	    //}
 	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
-	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, db_str2op(un));
+	    /* FIXME: should this be WMOP_SUBTRACT */
+	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, WMOP_UNION);
 	    subtraction_shoal_cnt++;
 	}
     }
@@ -414,7 +415,8 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	//if (*n_bool_op == 'u') {
 	//  bu_log("  subtraction found for %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&subtraction_name));
 	//}
-	(void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, db_str2op(un));
+	/* FIXME: should this be WMOP_SUBTRACT */
+	(void)mk_addmember(bu_vls_addr(&subtraction_name), &(scomb.l), NULL, WMOP_UNION);
 	bu_vls_free(&subtraction_name);
 	subtraction_shoal_cnt++;
     }
@@ -422,17 +424,17 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     if (union_shoal_cnt > 1) {
 	mk_lcomb(wdbp, bu_vls_addr(&union_name), &ucomb, 0, NULL, NULL, NULL, 0);
     }
-    (void)mk_addmember(bu_vls_addr(&union_name), &(icomb.l), NULL, db_str2op(un));
+    (void)mk_addmember(bu_vls_addr(&union_name), &(icomb.l), NULL, WMOP_UNION);
     if (subtraction_shoal_cnt) {
 	mk_lcomb(wdbp, bu_vls_addr(&sub_name), &scomb, 0, NULL, NULL, NULL, 0);
-	(void)mk_addmember(bu_vls_addr(&sub_name), &(icomb.l), NULL, db_str2op(sub));
+	(void)mk_addmember(bu_vls_addr(&sub_name), &(icomb.l), NULL, WMOP_SUBTRACT);
     }
     mk_lcomb(wdbp, bu_vls_addr(&island_name), &icomb, 0, NULL, NULL, NULL, 0);
     set_attr_key(wdbp, bu_vls_addr(&island_name), "loops", data->island_loops_cnt, data->island_loops);
     set_attr_key(wdbp, bu_vls_addr(&island_name), "faces", data->island_faces_cnt, data->island_faces);
 
     if (*n_bool_op == 'u')
-	(void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(n_bool_op));
+	(void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, WMOP_UNION);
 
     // Debugging B-Reps - generates a B-Rep object for each island
 #if 0
@@ -459,7 +461,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	bu_vls_sprintf(&brep_name, "%s-brep_obj_%d.s", rname, data->island_id);
 	mk_brep(wdbp, bu_vls_addr(&brep_name), (void *)(data->local_brep));
 
-	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, db_str2op(un));
+	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, WMOP_UNION);
 	mk_lcomb(wdbp, bu_vls_addr(&bcomb_name), &bcomb, 1, "plastic", "di=.8 sp=.2", rgb, 0);
 
 	bu_vls_free(&brep_name);
