@@ -539,6 +539,9 @@ main(int ac, const char **av)
 	goto cleanup;
     }
 
+    // Remaining av handling will use the ac count from bu_opt_parse
+    ac = unknown_ac;
+
     /* Did we get explicit options for an input and/or output file? */
     if (in_str) {
 	bu_vls_sprintf(&in_path_raw, "%s", in_str);
