@@ -65,6 +65,7 @@ Add_Shape_Definition_Representation(struct directory *dp, AP203_Contents *sc, Sd
     SdaiCharacterized_product_definition *char_def_prod = new SdaiCharacterized_product_definition(prod_def);
     SdaiCharacterized_definition *char_def= new SdaiCharacterized_definition(char_def_prod);
     prod_def_shape->definition_(char_def);
+    delete char_def;
     prod_def->id_("''");
     prod_def->description_("''");
 
