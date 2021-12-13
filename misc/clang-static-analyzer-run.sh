@@ -74,7 +74,7 @@ runtest all
 echo "Summary: $failure failures found."
 
 # If we have more than the expected failure count, error out
-if [ "$failure" -gt "20" ]; then
+if [ "$failure" -gt "19" ]; then
 	exit 1
 fi
 
