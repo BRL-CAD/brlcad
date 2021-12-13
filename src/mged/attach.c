@@ -411,7 +411,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	/* look for "-d display_string" and use it if provided */
-	tmp_dmp = dm_get();
+	tmp_dmp = dm_open(NULL, INTERP, "nu", 0, NULL);
 
 	opt_argc = argc - 1;
 	opt_argv = bu_argv_dup(opt_argc, argv + 1);
@@ -424,19 +424,19 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 		bu_free((void *)mged_curr_dm, "f_attach: dm_list");
 		set_curr_dm(o_dm);
 		bu_vls_free(&tmp_vls);
-		dm_put(tmp_dmp);
+		dm_close(tmp_dmp);
 		return TCL_ERROR;
 	    }
 	} else if (gui_setup((char *)NULL) == TCL_ERROR) {
 	    bu_free((void *)mged_curr_dm, "f_attach: dm_list");
 	    set_curr_dm(o_dm);
 	    bu_vls_free(&tmp_vls);
-	    dm_put(tmp_dmp);
+	    dm_close(tmp_dmp);
 	    return TCL_ERROR;
 	}
 
 	bu_vls_free(&tmp_vls);
-	dm_put(tmp_dmp);
+	dm_close(tmp_dmp);
     }
 
     bu_ptbl_ins(&active_dm_set, (long *)mged_curr_dm);

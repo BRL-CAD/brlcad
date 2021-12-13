@@ -183,8 +183,6 @@ DM_EXPORT extern const char *dm_graphics_system(const char *dmtype);
 /* functions to make a dm struct hideable - will need to
  * sort these out later */
 
-DM_EXPORT extern struct dm *dm_get();
-DM_EXPORT extern void dm_put(struct dm *dmp);
 DM_EXPORT extern const char *dm_get_dm_name(const struct dm *dmp);
 DM_EXPORT extern const char *dm_get_dm_lname(struct dm *dmp);
 DM_EXPORT extern const char *dm_get_graphics_system(const struct dm *dmp);

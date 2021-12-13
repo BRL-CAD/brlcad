@@ -163,43 +163,6 @@ dm_Normal2Xy(struct dm *dmp, fastf_t f, int use_aspect)
 	return (0.5 - f * 0.5) * dmp->i->dm_height;
 }
 
-
-struct dm *
-dm_get()
-{
-    struct dm *new_dm = DM_NULL;
-    BU_GET(new_dm, struct dm);
-    new_dm->magic = DM_MAGIC;
-    BU_GET(new_dm->i, struct dm_impl);
-
-    /* have to manually initialize all internal structs */
-    bu_vls_init(&new_dm->i->dm_pathName);
-    bu_vls_init(&new_dm->i->dm_tkName);
-    bu_vls_init(&new_dm->i->dm_dName);
-    bu_vls_init(&new_dm->i->dm_log);
-
-    return new_dm;
-}
-
-void
-dm_put(struct dm *dmp)
-{
-    if (dmp && dmp != DM_NULL) {
-	/* have to manually de-initialize all internal structs */
-	bu_vls_free(&dmp->i->dm_pathName);
-	bu_vls_free(&dmp->i->dm_tkName);
-	bu_vls_free(&dmp->i->dm_dName);
-	bu_vls_free(&dmp->i->dm_log);
-
-	if (dmp->i->fbp)
-	    fb_put(dmp->i->fbp);
-	if (dmp->i->dm_put_internal)
-	    dmp->i->dm_put_internal(dmp);
-	BU_PUT(dmp->i, struct dm_impl);
-	BU_PUT(dmp, struct dm);
-    }
-}
-
 struct fb *
 dm_get_fb(struct dm *dmp)
 {
