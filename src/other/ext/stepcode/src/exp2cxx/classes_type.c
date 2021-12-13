@@ -1324,7 +1324,9 @@ void AGGRprint_bound(FILE *header, FILE *impl, const char *var_name, const char 
 {
     if(bound->symbol.resolved) {
         if(bound->type == Type_Funcall) {
-            fprintf(impl, "        %s->SetBound%dFromExpressFuncall( \"%s\" );\n", var_name, boundNr, EXPRto_string(bound));
+	    char *bound_str = EXPRto_string(bound);
+            fprintf(impl, "        %s->SetBound%dFromExpressFuncall( \"%s\" );\n", var_name, boundNr, bound_str);
+	    sc_free(bound_str);
         } else {
             fprintf(impl, "        %s->SetBound%d( %d );\n", var_name, boundNr, bound->u.integer);
         }
