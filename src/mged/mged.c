@@ -1287,11 +1287,17 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
     predictor_init();
 
+    /* register application provided routines */
+
     DMP = dm_open(NULL, INTERP, "nu", 0, NULL);
     struct bu_vls *dpvp = dm_get_pathname(DMP);
     if (dpvp) {
 	bu_vls_strcpy(dpvp, "nu");
     }
+
+    /* If we're only doing the 'nu' dm we don't need most of mged_dm_init, but
+     * we do still need to register the dm_commands */
+    mged_curr_dm->dm_cmd_hook = dm_commands;
 
     struct bu_vls *tnvp = dm_get_tkname(mged_curr_dm->dm_dmp);
     if (tnvp) {
