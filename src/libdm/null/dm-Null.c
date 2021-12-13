@@ -42,10 +42,15 @@ null_open(void *UNUSED(ctx), void *interp, int UNUSED(argc), const char **UNUSED
     dmp->magic = DM_MAGIC;
     dmp->start_time = 0;
 
-    BU_ALLOC(dmp->i, struct dm_impl);
+    BU_GET(dmp->i, struct dm_impl);
 
     *dmp->i = *dm_null.i;
     dmp->i->dm_interp = interp;
+
+    bu_vls_init(&dmp->i->dm_pathName);
+    bu_vls_init(&dmp->i->dm_tkName);
+    bu_vls_init(&dmp->i->dm_dName);
+    bu_vls_init(&dmp->i->dm_log);
 
     return dmp;
 }
@@ -53,6 +58,10 @@ null_open(void *UNUSED(ctx), void *interp, int UNUSED(argc), const char **UNUSED
 int
 null_close(struct dm *dmp)
 {
+    bu_vls_free(&dmp->i->dm_pathName);
+    bu_vls_free(&dmp->i->dm_tkName);
+    bu_vls_free(&dmp->i->dm_dName);
+    bu_vls_free(&dmp->i->dm_log);
     bu_free(dmp->i, "dm_impl");
     BU_PUT(dmp, struct dm);
     return 0;
