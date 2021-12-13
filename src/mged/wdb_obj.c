@@ -196,6 +196,7 @@ wdb_free_tokens(struct bu_list *hp)
 	BU_LIST_DEQUEUE(&tok->l);
 	if (tok->type == WDB_TOK_TREE) {
 	    db_free_tree(tok->tp, &rt_uniresource);
+	    tok->tp = NULL;
 	}
     }
 }
