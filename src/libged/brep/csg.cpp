@@ -271,9 +271,9 @@ csg_obj_process(struct bu_vls *msgs, struct csg_object_params *data, struct rt_w
 HIDDEN int
 make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *wdbp, const char *rname)
 {
-    const char *un = "u\0";
-    const char *sub = "-\0";
-    const char *isect = "+\0";
+    const char *un = "u";
+    const char *sub = "-";
+    const char *isect = "+";
 
     struct wmember wcomb;
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
@@ -322,9 +322,9 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     struct wmember scomb;
 
     int failed = 0;
-    const char *un = "u\0";
-    const char *sub = "-\0";
-    const char *isect = "+\0"; // UNUSED here, for BOOL_RESOLVE macro.
+    const char *un = "u";
+    const char *sub = "-";
+    const char *isect = "+"; // UNUSED here, for BOOL_RESOLVE macro.
 
     char *n_bool_op;
     if (data->island_type == BREP) {
