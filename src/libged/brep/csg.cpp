@@ -459,7 +459,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	bu_vls_sprintf(&brep_name, "%s-brep_obj_%d.s", rname, data->island_id);
 	mk_brep(wdbp, bu_vls_addr(&brep_name), (void *)(data->local_brep));
 
-	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, db_str2op((const char *)&un));
+	(void)mk_addmember(bu_vls_addr(&brep_name), &(bcomb.l), NULL, db_str2op(un));
 	mk_lcomb(wdbp, bu_vls_addr(&bcomb_name), &bcomb, 1, "plastic", "di=.8 sp=.2", rgb, 0);
 
 	bu_vls_free(&brep_name);
