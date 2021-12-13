@@ -3920,7 +3920,7 @@ convert_a_feature( struct ug_state *s,
     char **descs;
     tag_t *exps;
     int n_exps;
-    UF_FEATURE_SIGN sign;
+    UF_FEATURE_SIGN sign = UF_NULLSIGN;
 
     UF_func( UF_MODL_ask_feature_sign( feat_tag, &sign ) );
     switch ( sign ) {
