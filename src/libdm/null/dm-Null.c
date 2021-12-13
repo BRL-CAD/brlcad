@@ -58,12 +58,19 @@ null_open(void *UNUSED(ctx), void *interp, int UNUSED(argc), const char **UNUSED
 int
 null_close(struct dm *dmp)
 {
-    bu_vls_free(&dmp->i->dm_pathName);
-    bu_vls_free(&dmp->i->dm_tkName);
-    bu_vls_free(&dmp->i->dm_dName);
-    bu_vls_free(&dmp->i->dm_log);
-    bu_free(dmp->i, "dm_impl");
+    if (UNLIKELY(!dmp))
+	return 0;
+
+    if (dmp->i) {
+	bu_vls_free(&dmp->i->dm_pathName);
+	bu_vls_free(&dmp->i->dm_tkName);
+	bu_vls_free(&dmp->i->dm_dName);
+	bu_vls_free(&dmp->i->dm_log);
+	bu_free(dmp->i, "dm_impl");
+    }
+
     BU_PUT(dmp, struct dm);
+
     return 0;
 }
 
