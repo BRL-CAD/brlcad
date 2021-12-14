@@ -277,13 +277,30 @@ _nirt_segs_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_
 
 class diff_segment {
     public:
-	bool done = false;
+	bool done;
 	n_origin_t origin;
 	n_seg_t type;
-	struct nirt_seg *seg = NULL;
+	struct nirt_seg *seg;
 	std::pair<long, long> trans_start = {LONG_MAX, LONG_MAX};
 	std::pair<long, long> trans_end = {LONG_MAX, LONG_MAX};
-	bool operator<(diff_segment other) const
+
+	diff_segment()
+	{
+	    done = false;
+	    seg = NULL;
+	}
+
+	diff_segment(const diff_segment &other)
+	{
+	    done = other.done;
+	    origin = other.origin;
+	    type = other.type;
+	    seg = other.seg;
+	    trans_start = other.trans_start;
+	    trans_end = other.trans_end;
+	}
+
+	bool operator<(diff_segment &other) const
 	{
 	    if ((type == NIRT_SEG_HIT) && (other.type != NIRT_SEG_HIT)) {
 		return true;
@@ -304,7 +321,7 @@ class diff_segment {
 
 	// Define an equality check that doesn't involve the origin type and
 	// uses geometry tolerances.
-	bool operator==(diff_segment other) const
+	bool operator==(diff_segment &other) const
 	{
 	    if (type != other.type) {
 		return false;
@@ -316,6 +333,17 @@ class diff_segment {
 		return false;
 	    }
 	    return _nirt_segs_diff(nds, seg, other.seg);
+	}
+
+	diff_segment& operator=(const diff_segment &other)
+	{
+	    done = other.done;
+	    origin = other.origin;
+	    type = other.type;
+	    seg = other.seg;
+	    trans_start = other.trans_start;
+	    trans_end = other.trans_end;
+	    return *this;
 	}
 };
 
