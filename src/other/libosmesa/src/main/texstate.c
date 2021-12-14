@@ -1094,7 +1094,9 @@ _mesa_validate_texture_wrap_mode(GLcontext * ctx,
 void GLAPIENTRY
 _mesa_TexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
-    _mesa_TexParameterfv(target, pname, &param);
+    GLfloat p[4] = {0.0};
+    p[0] = param;
+    _mesa_TexParameterfv(target, pname, p);
 }
 
 
@@ -2262,14 +2264,18 @@ _mesa_TexGendv(GLenum coord, GLenum pname, const GLdouble *params)
 void GLAPIENTRY
 _mesa_TexGenf(GLenum coord, GLenum pname, GLfloat param)
 {
-    _mesa_TexGenfv(coord, pname, &param);
+    GLfloat p[4] = {0.0};
+    p[0] = param;
+    _mesa_TexGenfv(coord, pname, p);
 }
 
 
 void GLAPIENTRY
 _mesa_TexGeni(GLenum coord, GLenum pname, GLint param)
 {
-    _mesa_TexGeniv(coord, pname, &param);
+    GLint p[4] = {0};
+    p[0] = param;
+    _mesa_TexGeniv(coord, pname, p);
 }
 
 
