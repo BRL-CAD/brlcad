@@ -77,6 +77,17 @@ CmdMgr::CmdMgr()
     replicateList = new ReplicateList();
 }
 
+CmdMgr::~CmdMgr()
+{
+    delete completeList;
+    delete incompleteList;
+    delete deleteList;
+    delete mappedWriteList;
+    delete mappedViewList;
+    delete closeList;
+    delete replicateList;
+}
+
 void CmdMgr::ReplicateCmdList(MgrNode *mn)
 {
     if(!(replicateList->IsOnList(mn))) {
