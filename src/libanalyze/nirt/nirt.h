@@ -284,7 +284,7 @@ struct nirt_output_record {
     fastf_t a;
     fastf_t e;
     struct nirt_overlap ovlp_list;
-    struct nirt_seg *seg;
+    nirt_seg *seg;
 };
 
 
@@ -420,7 +420,7 @@ int _nirt_raytrace_prep(struct nirt_state *nss);
 
 void _nirt_diff_create(struct nirt_state *nss);
 void _nirt_diff_destroy(struct nirt_state *nss);
-void _nirt_diff_add_seg(struct nirt_state *nss, struct nirt_seg *nseg);
+void _nirt_diff_add_seg(struct nirt_state *nss, nirt_seg *nseg);
 extern "C" int _nirt_cmd_diff(void *ns, int argc, const char *argv[]);
 
 
