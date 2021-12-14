@@ -1841,7 +1841,9 @@ save_Fogfv(GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_Fogf(GLenum pname, GLfloat param)
 {
-    save_Fogfv(pname, &param);
+    GLfloat p[4] = {0.0};
+    p[0] = param;
+    save_Fogfv(pname, p);
 }
 
 
@@ -1874,7 +1876,9 @@ save_Fogiv(GLenum pname, const GLint *params)
 static void GLAPIENTRY
 save_Fogi(GLenum pname, GLint param)
 {
-    save_Fogiv(pname, &param);
+    GLint p[4] = {0};
+    p[0] = param;
+    save_Fogiv(pname, p);
 }
 
 
@@ -2040,7 +2044,9 @@ save_Lightfv(GLenum light, GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_Lightf(GLenum light, GLenum pname, GLfloat params)
 {
-    save_Lightfv(light, pname, &params);
+    GLfloat p[4] = {0.0};
+    p[0] = params;
+    save_Lightfv(light, pname, p);
 }
 
 
@@ -2086,7 +2092,9 @@ save_Lightiv(GLenum light, GLenum pname, const GLint *params)
 static void GLAPIENTRY
 save_Lighti(GLenum light, GLenum pname, GLint param)
 {
-    save_Lightiv(light, pname, &param);
+    GLint p[4] = {0};
+    p[0] = param;
+    save_Lightiv(light, pname, p);
 }
 
 
@@ -2113,7 +2121,9 @@ save_LightModelfv(GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_LightModelf(GLenum pname, GLfloat param)
 {
-    save_LightModelfv(pname, &param);
+    GLfloat p[4] = {0.0};
+    p[0] = param;
+    save_LightModelfv(pname, p);
 }
 
 
@@ -2144,7 +2154,9 @@ save_LightModeliv(GLenum pname, const GLint *params)
 static void GLAPIENTRY
 save_LightModeli(GLenum pname, GLint param)
 {
-    save_LightModeliv(pname, &param);
+    GLint p[4] = {0};
+    p[0] = param;
+    save_LightModeliv(pname, p);
 }
 
 
@@ -2657,7 +2669,9 @@ save_PointParameterfvEXT(GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_PointParameterfEXT(GLenum pname, GLfloat param)
 {
-    save_PointParameterfvEXT(pname, &param);
+    GLfloat p[4] = {0};
+    p[0] = (GLfloat) param;
+    save_PointParameterfvEXT(pname, p);
 }
 
 static void GLAPIENTRY
@@ -3333,7 +3347,9 @@ save_TexEnvfv(GLenum target, GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_TexEnvf(GLenum target, GLenum pname, GLfloat param)
 {
-    save_TexEnvfv(target, pname, &param);
+    GLfloat p[4] = {0.0};
+    p[0] = param;
+    save_TexEnvfv(target, pname, p);
 }
 
 
@@ -3421,14 +3437,18 @@ save_TexGendv(GLenum coord, GLenum pname, const GLdouble *params)
 static void GLAPIENTRY
 save_TexGenf(GLenum coord, GLenum pname, GLfloat param)
 {
-    save_TexGenfv(coord, pname, &param);
+    GLfloat p[4] = {0.0};
+    p[0] = param;
+    save_TexGenfv(coord, pname, p);
 }
 
 
 static void GLAPIENTRY
 save_TexGeni(GLenum coord, GLenum pname, GLint param)
 {
-    save_TexGeniv(coord, pname, &param);
+    GLint p[4] = {0};
+    p[0] = param;
+    save_TexGeniv(coord, pname, p);
 }
 
 
@@ -3456,7 +3476,9 @@ save_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 save_TexParameterf(GLenum target, GLenum pname, GLfloat param)
 {
-    save_TexParameterfv(target, pname, &param);
+    GLfloat p[4] = {0.0};
+    p[0] = param;
+    save_TexParameterfv(target, pname, p);
 }
 
 
