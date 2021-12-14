@@ -3158,8 +3158,8 @@ PRIVATE char *pathsearch(char *argv0, char *name, int modemask)
         else pathbuf = &cp[1];
         if( access(path,modemask)==0 ) break;
       }
-      free(pathbufptr);
     }
+    free(pathbuf);
   }
   return path;
 }
