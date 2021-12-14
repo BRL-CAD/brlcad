@@ -135,14 +135,15 @@ write_plot_to_file(
     const unsigned char *color)
 {
     FILE *fp = fopen(filename, "w");
+    const unsigned char *lcolor = color;
+    unsigned char clr[] = {255, 0, 0};
 
-    if (!color) {
-	unsigned char clr[] = {255, 0, 0};
-	color = clr;
+    if (!lcolor) {
+	lcolor = clr;
     }
 
     pl_linmod(fp, "solid");
-    pl_color(fp, color[0], color[1], color[2]);
+    pl_color(fp, lcolor[0], lcolor[1], lcolor[2]);
     rt_vlist_to_uplot(fp, vhead);
 
     fclose(fp);
