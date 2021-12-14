@@ -337,7 +337,7 @@ bn_vtoh_move(hvect_t h, const vect_t v)
 
 
 void
-bn_htov_move(vect_t v, const vect_t h)
+bn_htov_move(vect_t v, const hvect_t h)
 {
     register fastf_t inv;
 

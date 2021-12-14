@@ -197,7 +197,7 @@ BN_EXPORT extern void bn_vtoh_move(hvect_t h,
  * FIXME: make tolerance configurable
  */
 BN_EXPORT extern void bn_htov_move(vect_t v,
-				   const vect_t h);
+				   const hvect_t h);
 
 BN_EXPORT extern void bn_mat_trn(mat_t om,
 				 const mat_t im);
