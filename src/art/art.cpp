@@ -115,6 +115,7 @@
 #include "renderer/api/scene.h"
 #include "renderer/api/surfaceshader.h"
 #include "renderer/api/utility.h"
+#include "renderer/api/shadergroup.h"
 
 // appleseed.foundation headers.
 #include "foundation/core/appleseed.h"
@@ -141,9 +142,15 @@
 #include "bu/getopt.h"
 #include "bu/vls.h"
 #include "art.h"
+#include "rt/tree.h"
+#include "ged.h"
+#include "ged/commands.h"
+#include "ged/defines.h"
 
 struct application APP;
 struct resource* resources;
+size_t samples = 25;
+
 extern "C" {
     FILE* outfp = NULL;
     int	save_overlaps = 1;
@@ -161,9 +168,11 @@ extern "C" {
  * extract that functionality into a library... */
 
 extern "C" {
-    struct command_tab rt_do_tab[] = { {NULL, NULL, NULL, 0, 0, 0} };
+    // struct command_tab rt_do_tab[] = { {NULL, NULL, NULL, 0, 0, 0} };
+    void option(const char *cat, const char *opt, const char *des, int verbose);
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
+
 
     extern char* outputfile;
     extern int objc;
@@ -179,6 +188,301 @@ extern "C" {
     extern fastf_t aspect;
 
     void grid_setup();
+}
+
+// holds application specific paramaters
+struct bu_structparse view_parse[] = {
+    {"%d", 1, "samples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "s", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+// holds regular parse variables
+struct bu_structparse set_parse[] = {
+    /* daisy-chain to additional app-specific parameters */
+    {"%p",	1, "Application-Specific Parameters", bu_byteoffset(view_parse[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+// set callback function
+int cm_set(const int argc, const char **argv)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+
+    if (argc <= 1) {
+	bu_struct_print("Generic and Application-Specific Parameter Values",
+			set_parse, (char *)0);
+	return 0;
+    }
+
+    bu_vls_from_argv(&str, argc-1, (const char **)argv+1);
+    if (bu_struct_parse(&str, set_parse, (char *)0, NULL) < 0) {
+	bu_vls_free(&str);
+  bu_log("ERROR HERE");
+	return -1;
+    }
+    // bu_log("str: %s", bu_vls_cstr(&str));
+    bu_vls_free(&str);
+    return 0;
+}
+
+struct command_tab rt_do_tab[] = {
+    {"set", 	"", "show or set parameters",
+     cm_set,		1, 999},
+    {(char *)0, (char *)0, (char *)0,
+     0,		0, 0	/* END */}
+};
+
+/* Initializes module specific options
+ * NOTE: to have an accurate usage() menu, we overwrite the indexes of all the
+ * options from rt/usage.cpp which we don't support
+ */
+void init_options(void) {
+  /* Set the byte offsets at run time */
+  view_parse[ 0].sp_offset = bu_byteoffset(samples);
+  view_parse[ 1].sp_offset = bu_byteoffset(samples);
+
+
+  // for now, just support -c set samples=x
+  // TODO: update to support more options
+  option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
+  option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
+  option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
+  option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
+  // option("", "-C #/#/#", "Set background image color to R/G/B values (default: 0/0/1)", 0);
+  // option("", "-W", "Set background image color to white", 0);
+  option("", "-R", "Disable reporting of overlaps", 100);
+  option("", "-? or -h", "Display help", 1);
+
+  option("Raytrace", "-a # -e #", "Azimuth and elevation in degrees (default: -a 35 -e 25)", 100);
+  option("Raytrace", "-p #", "Perspective angle, degrees side to side (0 <= # < 180)", 100);
+  option("Raytrace", "-E #", "Set perspective eye distance from model (default: 1.414)", 100);
+  option("Raytrace", "-H #", "Specify number of hypersample rays per pixel (default: 0)", 100);
+  option("Raytrace", "-J #", "Specify a \"jitter\" pattern (default: 0 - no jitter)", 100);
+  option("Raytrace", "-P #", "Specify number of processors to use (default: all available)", 100);
+  option("Raytrace", "-T # or -T #/#", "Tolerance as distance or distance/angular", 100);
+
+  option("Advanced", "-c \"command\"", "[eventually will] Run a semicolon-separated list of commands (just samples for now)", 0);
+  option("Advanced", "-M", "Read matrix + commands on stdin (RT 'saveview' scripts)", 100);
+  option("Advanced", "-D #", "Specify starting frame number (ending is specified via -K #)", 100);
+  option("Advanced", "-K #", "Specify ending frame number (starting is specified via -D #)", 100);
+  option("Advanced", "-g #", "Specify grid cell (pixel) width, in millimeters", 100);
+  option("Advanced", "-G #", "Specify grid cell (pixel) height, in millimeters", 100);
+  option("Advanced", "-S", "Enable stereo rendering", 100);
+  option("Advanced", "-U #", "Turn on air region rendering (default: 0 - off)", 100);
+  option("Advanced", "-V #", "View (pixel) aspect ratio (width/height)", 100);
+  option("Advanced", "-j xmin,xmax,ymin,ymax", "Only render pixels within the specified sub-rectangle", 100);
+  option("Advanced", "-k xdir,ydir,zdir,dist", "Specify a cutting plane for the entire render scene", 100);
+
+  option("Developer", "-v [#]", "Specify or increase RT verbosity", 100);
+  option("Developer", "-X #", "Specify RT debugging flags", 100);
+  option("Developer", "-x #", "Specify librt debugging flags", 100);
+  option("Developer", "-N #", "Specify libnmg debugging flags", 100);
+  option("Developer", "-! #", "Specify libbu debugging flags", 100);
+  option("Developer", "-, #", "Specify space partitioning algorithm", 100);
+  option("Developer", "-B", "Disable randomness for \"benchmark\"-style repeatability", 100);
+  option("Developer", "-b \"x y\"", "Only shoot one ray at pixel coordinates (quotes required)", 100);
+  option("Developer", "-Q x,y", "Shoot one pixel with debugging; compute others without", 100);
+}
+
+// Define shorter namespaces for convenience.
+namespace asf = foundation;
+namespace asr = renderer;
+
+/* db_walk_tree() callback to register all regions within the scene
+ * using either legacy rgb sets and phong shaders or specified material OSL
+ * optical shader
+ */
+int register_region(struct db_tree_state* tsp __attribute__((unused)),
+                const struct db_full_path* pathp __attribute__((unused)),
+                const struct rt_comb_internal* combp __attribute__((unused)),
+                void* data)
+{
+  // We open the db using the region path to get objects name
+  struct directory* dp = DB_FULL_PATH_CUR_DIR(pathp);
+
+  char* name;
+  name = dp->d_namep;
+
+  /*
+  this is for testing bounding box with the parent directory - using build/share/db/moss.g
+  eventually all comments using this will be deleted
+  */
+  // const char* name_char;
+  // std::string name_test = "all.g/" + std::string(name);
+  // name_char = name_test.c_str();
+  // bu_log("name: %s\n", APP.a_rt_i->rti_dbip->dbi_filename);
+
+  // get objects bounding box
+  struct ged* ged;
+  ged = ged_open("db", APP.a_rt_i->rti_dbip->dbi_filename, 1);
+  point_t min;
+  point_t max;
+  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
+  // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name_char, 1, min, max);
+
+  bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
+
+  VMOVE(APP.a_uvec, min);
+  VMOVE(APP.a_vvec, max);
+
+
+  /*
+  create object paramArray to pass to constructor
+  NOTE: we can likely remove min/max values from here if the above bounding box calculation works
+  */
+  renderer::ParamArray geometry_parameters = asr::ParamArray()
+               .insert("database_path", name)
+               // .insert("database_path", name_char)
+               .insert("object_count", objc)
+               .insert("minX", min[0])
+               .insert("minY", min[1])
+               .insert("minZ", min[2])
+               .insert("maxX", max[0])
+               .insert("maxY", max[1])
+               .insert("maxZ", max[2]);
+
+
+  asf::auto_release_ptr<renderer::Object> brlcad_object(
+  new BrlcadObject{
+     name,
+     // name_char,
+     geometry_parameters,
+     &APP, resources});
+
+  // typecast our scene using the callback function 'data'
+  asr::Scene* scene = static_cast<asr::Scene*>(data);
+
+  // create assembly for current object
+  std::string assembly_name = std::string(name) + "_object_assembly";
+  // std::string assembly_name = std::string(name_test) + "_object_assembly";
+  asf::auto_release_ptr<asr::Assembly> assembly(
+    asr::AssemblyFactory().create(
+      assembly_name.c_str(),
+      asr::ParamArray()));
+
+  // create a shader group
+  std::string shader_name = std::string(name) + "_shader";
+  // std::string shader_name = std::string(name_test) + "_shader";
+  asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
+      asr::ShaderGroupFactory().create(
+          shader_name.c_str(),
+          asr::ParamArray()));
+
+  // THIS IS OUR INPUT SHADER - add to shader group
+  /* This uses an already created appleseed .oso shader
+  in the form of
+  type
+  shader name
+  layer
+  paramArray
+  */
+  struct bu_vls v=BU_VLS_INIT_ZERO;
+  bu_vls_printf(&v, "color %f %f %f", combp->rgb[0]/255.0, combp->rgb[1]/255.0, combp->rgb[2]/255.0);
+  const char* color = bu_vls_cstr(&v);
+  shader_grp->add_shader(
+      "shader",
+      "as_disney_material",
+      "shader_in",
+      asr::ParamArray()
+        .insert("in_color", color)
+  );
+  bu_vls_free(&v);
+
+  /* import non compiled .osl shader in the form of
+  type
+  name
+  layer
+  source
+  paramArray
+  note: this relies on appleseed triggering on osl compiler
+  */
+  // shader_grp->add_source_shader(
+  //   "shader",
+  //   shader_name.c_str(),
+  //   "shader_in",
+  //   "shader_in",
+  //   asr::ParamArray()
+  // );
+
+  // add material2surface so we can map input shader to object surface
+  shader_grp->add_shader(
+    "surface",
+    "as_closure2surface",
+    "close",
+    asr::ParamArray()
+  );
+
+  // connect the two shader nodes within the group
+  shader_grp->add_connection(
+    "shader_in",
+    "out_outColor",
+    "close",
+    "in_input"
+  );
+
+  // add the shader group to the assembly
+  assembly->shader_groups().insert(
+    shader_grp
+  );
+
+  // Create a physical surface shader and insert it into the assembly.
+  // This is technically not needed with the current shader implementation
+  assembly->surface_shaders().insert(
+    asr::PhysicalSurfaceShaderFactory().create(
+    "Material_mat_surface_shader",
+    asr::ParamArray()
+      .insert("lighting_samples", "1")
+    )
+  );
+
+  // create a material with our shader_group
+  std::string material_mat = shader_name + "_mat";
+  assembly->materials().insert(
+      asr::OSLMaterialFactory().create(
+          material_mat.c_str(),
+          asr::ParamArray()
+              .insert("osl_surface", shader_name.c_str())
+              .insert("surface_shader", "Material_mat_surface_shader")
+      )
+  );
+
+  // insert object into object array in assembly
+  assembly->objects().insert(brlcad_object);
+
+  // create an instance for our newly created object within the assembly
+  const std::string instance_name = std::string(assembly_name) + "_brlcad_inst";
+  assembly->object_instances().insert(
+    asr::ObjectInstanceFactory::create(
+    instance_name.c_str(),
+    asr::ParamArray(),
+    name,
+    // name_char,
+    asf::Transformd::identity(),
+    asf::StringDictionary()
+    .insert("default", material_mat.c_str())
+    .insert("default2", material_mat.c_str())
+  ));
+
+  // add assembly to assemblies array in scene
+  scene->assemblies().insert(assembly);
+
+  // finally, we add an instance to use the assembly in the render
+  std::string assembly_inst_name = assembly_name + "_inst";
+  asf::auto_release_ptr<asr::AssemblyInstance> assembly_instance(
+    asr::AssemblyInstanceFactory::create(
+    assembly_inst_name.c_str(),
+    asr::ParamArray(),
+    assembly_name.c_str()
+    )
+  );
+  assembly_instance->transform_sequence()
+    .set_transform(
+      0.0f,
+      asf::Transformd::identity());
+  scene->assembly_instances().insert(assembly_instance);
+
+  return 0;
 }
 
 void
@@ -255,11 +559,7 @@ do_ae(double azim, double elev)
     MAT4X3PNT(eye_model, view2model, temp);
 }
 
-// Define shorter namespaces for convenience.
-namespace asf = foundation;
-namespace asr = renderer;
-
-asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* UNUSED(objects))
+asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), const char* UNUSED(objects))
 {
     /* If user gave no sizing info at all, use 512 as default */
     struct bu_vls dimensions = BU_VLS_INIT_ZERO;
@@ -271,15 +571,20 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     // Create an empty project.
     asf::auto_release_ptr<asr::Project> project(asr::ProjectFactory::create("test project"));
     project->search_paths().push_back_explicit_path("build/Debug");
+    // ***** add precompiled shaders from appleseed
+    char root[MAXPATHLEN];
+    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL));
+    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL));
 
     // Add default configurations to the project.
     project->add_default_configurations();
 
     // Set the number of samples. This is the main quality parameter: the higher the
     // number of samples, the smoother the image but the longer the rendering time.
+    // we overwrite via command line -c "set"
     project->configurations()
     .get_by_name("final")->get_parameters()
-    .insert_path("uniform_pixel_renderer.samples", "25")
+    .insert_path("uniform_pixel_renderer.samples", samples)
     .insert_path("rendering_threads", "1"); /* multithreading not supported yet */
 
     project->configurations()
@@ -288,6 +593,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
 
     // Create a scene.
     asf::auto_release_ptr<asr::Scene> scene(asr::SceneFactory::create());
+    // asr::Scene scene(asr::SceneFactory::create());
 
     // Create an assembly.
     asf::auto_release_ptr<asr::Assembly> assembly(
@@ -299,68 +605,12 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     // Materials
     //------------------------------------------------------------------------
 
-    // Create a color called "gray" and insert it into the assembly.
-    static const float GrayReflectance[] = { 0.5f, 0.5f, 0.5f };
-    assembly->colors().insert(
-	asr::ColorEntityFactory::create(
-	    "gray",
-	    asr::ParamArray()
-	    .insert("color_space", "srgb"),
-	    asr::ColorValueArray(3, GrayReflectance)));
+    // walk the db to register all regions
+    struct db_tree_state state = rt_initial_tree_state;
+    state.ts_dbip = APP.a_rt_i->rti_dbip;
+    state.ts_resp = resources;
 
-    // Create a BRDF called "diffuse_gray_brdf" and insert it into the assembly.
-    assembly->bsdfs().insert(
-	asr::LambertianBRDFFactory().create(
-	    "diffuse_gray_brdf",
-	    asr::ParamArray()
-	    .insert("reflectance", "gray")));
-
-    // Create a physical surface shader and insert it into the assembly.
-    assembly->surface_shaders().insert(
-	asr::PhysicalSurfaceShaderFactory().create(
-	    "physical_surface_shader",
-	    asr::ParamArray()));
-
-    // Create a material called "gray_material" and insert it into the assembly.
-    assembly->materials().insert(
-	asr::GenericMaterialFactory().create(
-	    "gray_material",
-	    asr::ParamArray()
-	    .insert("surface_shader", "physical_surface_shader")
-	    .insert("bsdf", "diffuse_gray_brdf")));
-
-    //------------------------------------------------------------------------
-    // Geometry
-    //------------------------------------------------------------------------
-
-    // Load the brlcad geometry
-    renderer::ParamArray geometry_parameters = asr::ParamArray()
-					       .insert("database_path", file)
-					       .insert("object_count", objc);
-    for (int i = 0; i < objc; i++)
-    {
-	std::string obj_num = std::string("object.") + std::to_string(i + 1);
-	std::string obj_name = std::string(objv[i]);
-	geometry_parameters.insert_path(obj_num, obj_name);
-    }
-
-    asf::auto_release_ptr<renderer::Object> brlcad_object(
-	new BrlcadObject{"brlcad geometry",
-			 geometry_parameters,
-			 &APP, resources});
-    assembly->objects().insert(brlcad_object);
-
-    const std::string instance_name = "brlcad_inst";
-    assembly->object_instances().insert(
-	asr::ObjectInstanceFactory::create(
-	    instance_name.c_str(),
-	    asr::ParamArray(),
-	    "brlcad geometry",
-	    asf::Transformd::identity(),
-	    asf::StringDictionary()
-	    .insert("default", "gray_material")
-	    .insert("default2", "gray_material")));
-
+    db_walk_tree(APP.a_rt_i->rti_dbip, objc, (const char**)objv, 1, &state, register_region, NULL, NULL, reinterpret_cast<void *>(scene.get()));
 
     //------------------------------------------------------------------------
     // Light
@@ -411,8 +661,11 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     // Environment
     //------------------------------------------------------------------------
 
+    // OPTIONAL: this creates a background color
+    // static const float SkyRadiance[] = { 0.75f, 0.80f, 1.0f };
+    // statically making this 'white' for now so we don't blue wash the image
     // Create a color called "sky_radiance" and insert it into the scene.
-    static const float SkyRadiance[] = { 0.75f, 0.80f, 1.0f };
+    static const float SkyRadiance[] = { 1.0f, 1.0f, 1.0f };
     scene->colors().insert(
 	asr::ColorEntityFactory::create(
 	    "sky_radiance",
@@ -509,20 +762,24 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    // initialize options and overload menu before parsing
+    init_options();
+
     /* Process command line options */
     int i = get_args(argc, (const char**)argv);
     if (i < 0) {
-	//usage(argv[0], 0);
+	usage(argv[0], 0);
 	return 1;
     }
+    // explicitly asking for help
     else if (i == 0) {
-	//usage(argv[0], 100);
+	usage(argv[0], 99);
 	return 0;
     }
 
     if (bu_optind >= argc) {
 	RENDERER_LOG_INFO("%s: BRL-CAD geometry database not specified\n", argv[0]);
-	//usage(argv[0], 0);
+	usage(argv[0], 0);
 	return 1;
     }
 
@@ -537,6 +794,9 @@ main(int argc, char **argv)
 	     * command processing.  Initialize the table. */
 	    BU_GET(cmd_objs, struct bu_ptbl);
 	    bu_ptbl_init(cmd_objs, 8, "initialize cmdobjs table");
+
+      // log and gracefully exit for now
+      bu_exit(EXIT_FAILURE, "No Region specified\n");
 	}
     } else {
 	//objs_free_argv = 1;
@@ -582,7 +842,7 @@ main(int argc, char **argv)
 
     /* configure raytrace application */
     APP.a_rt_i = rtip;
-    APP.a_onehit = -1;
+    APP.a_onehit = 1;
     APP.a_hit = brlcad_hit;
     APP.a_miss = brlcad_miss;
 
@@ -591,6 +851,7 @@ main(int argc, char **argv)
 
     // Build the project.
     asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
+
 
     // Create the master renderer.
     asr::DefaultRendererController renderer_controller;
@@ -605,16 +866,19 @@ main(int argc, char **argv)
     renderer->render(renderer_controller);
 
     // Save the frame to disk.
-    char *default_out = bu_strdup("art.png");
+    char *default_out = bu_strdup("output/art.png");
     outputfile = default_out;
     project->get_frame()->write_main_image(outputfile);
     bu_free(default_out, "default name");
 
     // Save the project to disk.
-    //asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+    asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
 
     // Make sure to delete the master renderer before the project and the logger / log target.
     renderer.reset();
+
+    // clean up resources
+    bu_free(resources, "appleseed");
 
     return 0;
 }
