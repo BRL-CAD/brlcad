@@ -1362,6 +1362,7 @@ Path::GetEdgeBounds(ON_Brep *brep)
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	    delete u;
 	    return NULL;
 	}
 	if (u == NULL) {
