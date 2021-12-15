@@ -430,6 +430,7 @@ bu_file_delete(const char *path)
 #endif
 
     if (!bu_file_exists(path, &fd)) {
+	close(fd);
 	return 1;
     }
 
