@@ -81,7 +81,6 @@ check_result_len(FILE *result_fd)
 {
     size_t ret;
     char result_buf[BUFFER_SIZE+1];
-    memset(result_buf, 0, BUFFER_SIZE+1);
 
     rewind(result_fd);
     ret = fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
@@ -89,7 +88,7 @@ check_result_len(FILE *result_fd)
 	perror("fread");
     fclose(result_fd);
 
-    return strlen(result_buf);
+    return ret;
 }
 
 /* Converts an array of doubles to integers */
