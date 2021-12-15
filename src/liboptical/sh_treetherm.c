@@ -472,7 +472,6 @@ tthrm_free(void *cp)
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)cp;
 
     bu_free(tthrm_sp->tt_segs, "thermal segs");
-    bu_free(tthrm_sp->tt_name, "bu_vls_strdup");
 
     tthrm_sp->tt_segs = (struct thrm_seg *)NULL;
     tthrm_sp->tt_name[0] = '\0';
