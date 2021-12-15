@@ -369,7 +369,7 @@ LZW(void)
 	    next_code = compress_code;	/* empty code table */
 	    w = -1;		/* we use -1 for "nil" */
 	} else {
-	    if (c > next_code)
+	    if (c >= next_code)
 		Fatal(fbp, "LZW code impossibly large (%x > %x, diff: %d)", c, next_code, c-next_code);
 
 	    if (c == next_code) {
