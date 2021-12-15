@@ -2024,6 +2024,9 @@ X24_getmem(struct fb *ifp)
 		    break;
 		}
 
+		// fd tests over
+		close(fd);
+
 		/* Change it to local */
 		xi->xi_mode = (xi->xi_mode & ~MODE10_MASK) | MODE10_MALLOC;
 #endif
