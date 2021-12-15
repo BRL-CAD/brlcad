@@ -294,7 +294,7 @@ make_shoal(struct bu_vls *msgs, struct subbrep_shoal_data *data, struct rt_wdb *
 	csg_obj_process(msgs, data->params, wdbp, rname);
 	subbrep_obj_name(data->params->csg_type, data->params->csg_id, rname, &prim_name);
 	//bu_log("  %c %s\n", data->params->bool_op, bu_vls_addr(&prim_name));
-	(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_str2op(&(data->params->bool_op)));
+	(void)mk_addmember(bu_vls_addr(&prim_name), &(wcomb.l), NULL, db_char2op(data->params->bool_op));
 	for (unsigned int i = 0; i < BU_PTBL_LEN(data->shoal_children); i++) {
 	    struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->shoal_children, i);
 	    const char *bool_op = BOOL_RESOLVE(data->params->bool_op, c->bool_op);
