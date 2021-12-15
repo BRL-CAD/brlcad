@@ -22,13 +22,12 @@ add_subdirectory(asc)
 add_subdirectory(decimate)
 add_subdirectory(fastgen4)
 add_subdirectory(gdal)
-add_subdirectory(gltf)
+# add_subdirectory(gltf)
 add_subdirectory(obj)
 add_subdirectory(rhino)
 add_subdirectory(stl)
 add_subdirectory(vol)
 add_subdirectory(vrml)
-add_subdirectory(gltf)
 
 CMAKEFILES(
   CMakeLists.txt
