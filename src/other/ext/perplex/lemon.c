@@ -3142,7 +3142,8 @@ PRIVATE char *pathsearch(char *argv0, char *name, int modemask)
   }else{
     pathlist = getenv("PATH");
     if( pathlist==0 ) pathlist = ".:/bin:/usr/bin";
-    pathbuf = (char *) malloc( lemonStrlen(pathlist) + 1 );
+    char *lpathbuf = (char *) malloc( lemonStrlen(pathlist) + 1 );
+    pathbuf = lpathbuf;
     path = (char *)malloc( lemonStrlen(pathlist)+lemonStrlen(name)+2 );
     if( (pathbuf != 0) && (path!=0) ){
       pathbufptr = pathbuf;
@@ -3159,7 +3160,7 @@ PRIVATE char *pathsearch(char *argv0, char *name, int modemask)
         if( access(path,modemask)==0 ) break;
       }
     }
-    free(pathbuf);
+    free(lpathbuf);
   }
   return path;
 }
