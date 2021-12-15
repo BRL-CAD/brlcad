@@ -347,7 +347,7 @@ plant_scale(struct plant *pl, double w)
 	CLAMP(pl->blades, 1, BLADE_LAST);
     }
 
-    for (blade=0; blade < pl->blades; blade++) {
+    for (blade=0; (blade < pl->blades && blade < BLADE_MAX); blade++) {
 	pl->b[blade].tot_len = 0.0;
 	if (blade != BLADE_LAST)
 	    pl->b[blade].width *= d;
