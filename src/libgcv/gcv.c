@@ -119,9 +119,15 @@ _gcv_brlcad_can_read(const char *data)
 {
     union record record; /* GED database record */
     FILE *ifp = fopen(data, "rb");
-    if (fread((char *)&record, sizeof record, 1, ifp) != 1) return 0;
+    if (!ifp)
+	return 0;
+    if (fread((char *)&record, sizeof record, 1, ifp) != 1) {
+	fclose(ifp);
+	return 0;
+    }
     fclose(ifp);
-    if (db5_header_is_valid((unsigned char *)&record)) return 1;
+    if (db5_header_is_valid((unsigned char *)&record))
+	return 1;
     return 0;
 }
 
