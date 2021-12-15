@@ -155,7 +155,7 @@ infix_to_postfix(std::string str)
 
 
 static int
-parse_args(const char **output_file, int ac, char **av)
+parse_args(struct bu_vls *output_file, int ac, char **av)
 {
     int c;
 
@@ -177,7 +177,7 @@ parse_args(const char **output_file, int ac, char **av)
 		/* fall through */
 	    case 'o':               /* Output file name */
 		/* grab output file name */
-		(*output_file) = bu_optarg;
+		bu_vls_sprintf(output_file, "%s", bu_optarg);
 		break;
 	    case 'v':               /* verbosity */
 		verbose++;
@@ -1127,18 +1127,15 @@ main(int argc, char *argv[])
     ttol.norm = 0.0;
 
     /* parse command line arguments. */
-    const char *output_file = NULL;
-    int free_output_file = 0;
+    struct bu_vls output_file = BU_VLS_INIT_ZERO;
     arg_count = parse_args(&output_file, argc, argv);
 
-    if (!output_file) {
-	std::string output = std::string(argv[bu_optind]) + std::string(".sat");
-	output_file = bu_strdup(output.c_str());
-	free_output_file = 1;
+    if (!bu_vls_strlen(&output_file)) {
+	bu_vls_printf(&output_file, "%s.sat", argv[bu_optind]);
     }
 
     if ((argc - arg_count) < MIN_NUM_OF_ARGS) {
-	if (free_output_file) bu_free((void *)output_file, "output_file");
+	bu_vls_free(&output_file);
 	bu_exit(1, "[g-sat] Error: Must specify model and objects on the command line\n");
     }
 
@@ -1175,7 +1172,7 @@ main(int argc, char *argv[])
     rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
 
     if (rtip == RTI_NULL) {
-	if (free_output_file) bu_free((void *)output_file, "output_file");
+	bu_vls_free(&output_file);
 	bu_exit(1, "[g-sat]: rt_dirbuild failure\n");
     }
 
@@ -1214,7 +1211,7 @@ main(int argc, char *argv[])
 
     // Export geometry
     if (g_body_cnt == 0) {
-	if (free_output_file) bu_free((void *)output_file, "output_file");
+	bu_vls_free(&output_file);
 	bu_exit(1, "[g-sat]: No geometry to convert.\n");
     }
 
@@ -1304,9 +1301,9 @@ main(int argc, char *argv[])
 
     // Export geometry
     if (size != 0) {
-	(void)gqt->export_solid_model(parent_entities, output_file, ACIS_SAT, size, version);
+	(void)gqt->export_solid_model(parent_entities, bu_vls_cstr(&output_file), ACIS_SAT, size, version);
     } else {
-	if (free_output_file) bu_free((void *)output_file, "output_file");
+	bu_vls_free(&output_file);
 	bu_exit(1, "[g-sat]: No geometry to convert.\n");
     }
 
@@ -1314,8 +1311,7 @@ main(int argc, char *argv[])
 
     std::cout << "Number of primitives processed: " << g_body_cnt << std::endl;
 
-    if (free_output_file)
-	bu_free((void *)output_file, "output_file");
+    bu_vls_free(&output_file);
     return 0;
 }
 
