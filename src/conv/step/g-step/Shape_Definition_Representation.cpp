@@ -67,6 +67,7 @@ Add_Shape_Definition_Representation(struct directory *dp, AP203_Contents *sc, Sd
     prod_def_shape->definition_(&char_def);
     prod_def->id_("''");
     prod_def->description_("''");
+    delete char_def_prod;
 
     // PRODUCT_DEFINITION_FORMATION
     SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)sc->registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");
