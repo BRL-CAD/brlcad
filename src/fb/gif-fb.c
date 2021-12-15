@@ -369,8 +369,13 @@ LZW(void)
 	    next_code = compress_code;	/* empty code table */
 	    w = -1;		/* we use -1 for "nil" */
 	} else {
-	    if (c > next_code)
-		Fatal(fbp, "LZW code impossibly large (%x > %x, diff: %d)", c, next_code, c-next_code);
+	    if (c > next_code) {
+		bu_log("LZW code impossibly large (%d > %d, diff: %d)\n", c, next_code, c-next_code);
+		if (fbp != FB_NULL && fb_close(fbp) == -1) {
+		    bu_log("Error closing frame buffer\n");
+		}
+		bu_exit(EXIT_FAILURE, NULL);
+	    }
 
 	    if (c == next_code) {
 		/* KwKwK special case */
@@ -766,7 +771,7 @@ main(int argc, char **argv)
 		if ((i = getc(gfp)) == EOF)
 		    Fatal(fbp, "Error reading extension function code");
 
-		bu_log("gif-fb: Extension function code %d unknown", i);
+		bu_log("gif-fb: Extension function code %d unknown\n", i);
 
 		while ((i = getc(gfp)) != 0) {
 		    if (i == EOF) {
