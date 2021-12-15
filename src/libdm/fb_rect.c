@@ -135,7 +135,7 @@ fb_sim_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, co
     register int tot;
     int got;
     size_t xlen;
-    unsigned char buf[SIMBUF_SIZE];
+    unsigned char buf[SIMBUF_SIZE*3];
 
     if (width > SIMBUF_SIZE) {
 	fb_log("fb_sim_bwwriterect() width of %d exceeds internal buffer, aborting\n", width);
