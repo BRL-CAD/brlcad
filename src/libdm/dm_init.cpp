@@ -122,6 +122,7 @@ libdm_init(void)
 	    const char *dname = dm_get_name(d);
 	    if (!dname) {
 		bu_vls_printf(dm_init_msg_str, "Warning - file '%s' does not provide a display manager name (?), skipping\n", pfile);
+		bu_dlclose(dl_handle);
 		continue;
 	    }
 	    std::string key(dname);
