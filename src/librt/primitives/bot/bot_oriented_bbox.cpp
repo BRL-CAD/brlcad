@@ -65,6 +65,8 @@ rt_bot_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, co
     /* 1, 0, 1 */
     bb.get_vertex(1, 0, 1, &(bbox->pt[7][0]), &(bbox->pt[7][1]), &(bbox->pt[7][2]));
 
+    /* Done with gdiam array */
+    free(pnt_arr);
     return 0;
 }
 
