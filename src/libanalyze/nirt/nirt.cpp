@@ -1095,7 +1095,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     int ev_odd = 1; /* first partition is colored as "odd" */
     point_t out_old = VINIT_ZERO;
     double d_out_old = 0.0;
-    struct nirt_seg *s = new struct nirt_seg;
+    nirt_seg *s = new nirt_seg;
     if (vals->seg) {
 	delete vals->seg;
 	vals->seg = NULL;
@@ -1149,7 +1149,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		s->type = NIRT_GAP_SEG;
 		_nirt_report(nss, 'g', vals);
 		{
-		    struct nirt_seg gseg;
+		    nirt_seg gseg;
 		    gseg.type = NIRT_GAP_SEG;
 		    VMOVE(gseg.in, out_old);
 		    VMOVE(gseg.out, s->in);
@@ -1277,7 +1277,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	    /* Diff */
 	    {
-		struct nirt_seg novlp = *s;
+		nirt_seg novlp = *s;
 		VMOVE(novlp.in, s->ov_in);
 		VMOVE(novlp.out, s->ov_out);
 		_nirt_diff_add_seg(nss, &novlp);

@@ -119,8 +119,8 @@ struct nirt_diff_state;
 struct nirt_diff_ray_state {
     point_t orig;
     vect_t dir;
-    std::vector<struct nirt_seg> old_segs;
-    std::vector<struct nirt_seg> new_segs;
+    std::vector<nirt_seg> old_segs;
+    std::vector<nirt_seg> new_segs;
     struct nirt_diff_state *nds;
 };
 
@@ -160,7 +160,7 @@ class half_segment {
 	n_transition_t type;
 	double dist;
 	double obliq;
-	struct nirt_seg *seg;
+	nirt_seg *seg;
 	bool operator<(half_segment other) const
 	{
 	    if (origin == NIRT_LEFT && other.origin == NIRT_RIGHT) {
@@ -198,7 +198,7 @@ class half_segment {
 };
 
 static bool
-_nirt_partition_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
+_nirt_partition_diff(struct nirt_diff_state *nds, nirt_seg *left, nirt_seg *right)
 {
     if (!nds) return false;
 
@@ -223,7 +223,7 @@ _nirt_partition_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct 
 
 
 static bool
-_nirt_overlap_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
+_nirt_overlap_diff(struct nirt_diff_state *nds, nirt_seg *left, nirt_seg *right)
 {
     if (!nds) return false;
 
@@ -245,7 +245,7 @@ _nirt_overlap_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct ni
 }
 
 static bool
-_nirt_segs_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
+_nirt_segs_diff(struct nirt_diff_state *nds, nirt_seg *left, nirt_seg *right)
 {
     /* Sanity */
     if (!nds || (!left && !right)) return false;
@@ -277,13 +277,30 @@ _nirt_segs_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_
 
 class diff_segment {
     public:
-	bool done = false;
+	bool done;
 	n_origin_t origin;
 	n_seg_t type;
-	struct nirt_seg *seg = NULL;
+	nirt_seg *seg;
 	std::pair<long, long> trans_start = {LONG_MAX, LONG_MAX};
 	std::pair<long, long> trans_end = {LONG_MAX, LONG_MAX};
-	bool operator<(diff_segment other) const
+
+	diff_segment()
+	{
+	    done = false;
+	    seg = NULL;
+	}
+
+	diff_segment(const diff_segment &other)
+	{
+	    done = other.done;
+	    origin = other.origin;
+	    type = other.type;
+	    seg = other.seg;
+	    trans_start = other.trans_start;
+	    trans_end = other.trans_end;
+	}
+
+	bool operator<(diff_segment &other) const
 	{
 	    if ((type == NIRT_SEG_HIT) && (other.type != NIRT_SEG_HIT)) {
 		return true;
@@ -304,7 +321,7 @@ class diff_segment {
 
 	// Define an equality check that doesn't involve the origin type and
 	// uses geometry tolerances.
-	bool operator==(diff_segment other) const
+	bool operator==(diff_segment &other) const
 	{
 	    if (type != other.type) {
 		return false;
@@ -316,6 +333,17 @@ class diff_segment {
 		return false;
 	    }
 	    return _nirt_segs_diff(nds, seg, other.seg);
+	}
+
+	diff_segment& operator=(const diff_segment &other)
+	{
+	    done = other.done;
+	    origin = other.origin;
+	    type = other.type;
+	    seg = other.seg;
+	    trans_start = other.trans_start;
+	    trans_end = other.trans_end;
+	    return *this;
 	}
 };
 
@@ -420,7 +448,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	std::pair<long, long> key;
 	// Map the segments into ordered transitions
 	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
-	    struct nirt_seg *curr = &rstate->old_segs[j];
+	    nirt_seg *curr = &rstate->old_segs[j];
 	    half_segment in_seg;
 	    in_seg.dist = DIST_PNT_PNT(rstate->orig, curr->in);
 	    in_seg.origin = NIRT_LEFT;
@@ -442,7 +470,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
 	}
 	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
-	    struct nirt_seg *curr = &rstate->new_segs[j];
+	    nirt_seg *curr = &rstate->new_segs[j];
 	    half_segment in_seg;
 	    in_seg.dist = DIST_PNT_PNT(rstate->orig, curr->in);
 	    in_seg.origin = NIRT_RIGHT;
@@ -649,7 +677,7 @@ _nirt_diff_destroy(struct nirt_state *nss)
 
 
 void
-_nirt_diff_add_seg(struct nirt_state *nss, struct nirt_seg *nseg)
+_nirt_diff_add_seg(struct nirt_state *nss, nirt_seg *nseg)
 {
     if (nss->i->diff_state && nss->i->diff_state->cdiff) {
 	nss->i->diff_state->cdiff->new_segs.push_back(*nseg);
@@ -726,7 +754,7 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 	    return -1;
 	}
 
-	struct nirt_seg *segp = new struct nirt_seg;
+	nirt_seg *segp = new nirt_seg;
 	segp->type = NIRT_PARTITION_SEG;
 	struct bu_vls rdecode = BU_VLS_INIT_ZERO;
 	bu_vls_decode(&rdecode, substrs[0].c_str());
@@ -779,7 +807,7 @@ parse_overlap(struct nirt_diff_state *nds, std::string &line)
 	    nerr(nds->nss, "Error processing overlap line \"%s\"!\nExpected 11 elements, found %zu\n", overlap_data.c_str(), substrs.size());
 	    return false;
 	}
-	struct nirt_seg *segp = new struct nirt_seg;
+	nirt_seg *segp = new nirt_seg;
 	segp->type = NIRT_OVERLAP_SEG;
 	struct bu_vls r1decode = BU_VLS_INIT_ZERO;
 	bu_vls_decode(&r1decode, substrs[0].c_str());

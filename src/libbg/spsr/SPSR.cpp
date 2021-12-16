@@ -145,6 +145,7 @@ spsr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
         (*faces)[i*3+2] = (polygon[2].inCore) ? polygon[2].idx : polygon[2].idx + int(mesh.inCorePoints.size());
     }
     // Cleanup
+    free(solution);
     Reset< double>();
     return 0;
 }

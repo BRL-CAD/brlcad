@@ -169,13 +169,13 @@ extern "C" void
 libged_init(void)
 {
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "ged", NULL);
-    char **filenames;
+    char **ged_filenames;
     struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&plugin_pattern, "*%s", GED_PLUGIN_SUFFIX);
-    size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
-    for (size_t i = 0; i < nfiles; i++) {
+    size_t ged_nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &ged_filenames);
+    for (size_t i = 0; i < ged_nfiles; i++) {
 	char pfile[MAXPATHLEN] = {0};
-	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "ged", filenames[i], NULL);
+	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "ged", ged_filenames[i], NULL);
 	void *dl_handle;
 	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
 	if (!dl_handle) {
@@ -245,7 +245,7 @@ libged_init(void)
 	    cmd_funcs.insert(dl_handle);
 	}
     }
-    bu_argv_free(nfiles, filenames);
+    bu_argv_free(ged_nfiles, ged_filenames);
     bu_vls_free(&plugin_pattern);
 
     ged_cmds = (void *)&cmd_map;

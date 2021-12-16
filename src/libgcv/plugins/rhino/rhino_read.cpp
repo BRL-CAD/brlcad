@@ -151,13 +151,16 @@ comb_region_name_check(std::map<const directory *, std::string> &renamed, db_i &
 
     directory * const dir = db_lookup(&db, name.c_str(), true);
     if (dir == RT_DIR_NULL) {
+	bu_vls_free(&nname);
 	return;
     }
     std::pair<const directory *, std::string> rpair = std::make_pair(dir, name);
     if (db_rename(&db, dir, bu_vls_cstr(&nname))){
+	bu_vls_free(&nname);
 	return;
     }
     renamed.insert(rpair);
+    bu_vls_free(&nname);
 }
 
 struct UuidCompare {

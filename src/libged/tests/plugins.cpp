@@ -465,7 +465,6 @@ main(int ac, char *av[]) {
     }
 
     ged_close(gbp);
-    BU_PUT(gbp, struct ged);
     return 0;
 }
 

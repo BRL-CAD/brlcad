@@ -494,12 +494,15 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
 static GLboolean
 Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
 {
+    GLfloat values[4];
     /* "{" was already consumed */
 
     ASSIGN_4V(vec, 0.0, 0.0, 0.0, 1.0);
+    ASSIGN_4V(values, 0.0, 0.0, 0.0, 1.0);
 
-    if (!Parse_ScalarConstant(parseState, vec+0))  /* X */
+    if (!Parse_ScalarConstant(parseState, values))  /* X */
 	return GL_FALSE;
+    vec[0] = values[0];
 
     if (Parse_String(parseState, "}")) {
 	return GL_TRUE;
@@ -508,8 +511,10 @@ Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
     if (!Parse_String(parseState, ","))
 	RETURN_ERROR1("Expected comma in vector constant");
 
-    if (!Parse_ScalarConstant(parseState, vec+1))  /* Y */
+    values[0] = vec[1];
+    if (!Parse_ScalarConstant(parseState, values))  /* Y */
 	return GL_FALSE;
+    vec[1] = values[0];
 
     if (Parse_String(parseState, "}")) {
 	return GL_TRUE;
@@ -518,8 +523,10 @@ Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
     if (!Parse_String(parseState, ","))
 	RETURN_ERROR1("Expected comma in vector constant");
 
-    if (!Parse_ScalarConstant(parseState, vec+2))  /* Z */
+    values[0] = vec[2];
+    if (!Parse_ScalarConstant(parseState, values))  /* Z */
 	return GL_FALSE;
+    vec[2] = values[0];
 
     if (Parse_String(parseState, "}")) {
 	return GL_TRUE;
@@ -528,8 +535,10 @@ Parse_VectorConstant(struct parse_state *parseState, GLfloat *vec)
     if (!Parse_String(parseState, ","))
 	RETURN_ERROR1("Expected comma in vector constant");
 
-    if (!Parse_ScalarConstant(parseState, vec+3))  /* W */
+    values[0] = vec[3];
+    if (!Parse_ScalarConstant(parseState, values))  /* W */
 	return GL_FALSE;
+    vec[3] = values[0];
 
     if (!Parse_String(parseState, "}"))
 	RETURN_ERROR1("Expected closing brace in vector constant");

@@ -81,7 +81,6 @@ check_result_len(FILE *result_fd)
 {
     size_t ret;
     char result_buf[BUFFER_SIZE+1];
-    memset(result_buf, 0, BUFFER_SIZE+1);
 
     rewind(result_fd);
     ret = fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
@@ -89,7 +88,7 @@ check_result_len(FILE *result_fd)
 	perror("fread");
     fclose(result_fd);
 
-    return strlen(result_buf);
+    return ret;
 }
 
 /* Converts an array of doubles to integers */
@@ -338,7 +337,8 @@ test_tp_3list(double *x, double *y, double *z, int npoints)
 int
 automatic_2d_test(double *double_x, double *double_y, int npoints)
 {
-    int int_x[MAX_POINTS], int_y[MAX_POINTS];
+    int int_x[MAX_POINTS] = {0};
+    int int_y[MAX_POINTS] = {0};
 
     convert_points(double_x, int_x, npoints);
     convert_points(double_y, int_y, npoints);
@@ -375,9 +375,9 @@ automatic_3d_test(double *double_x, double *double_y, double *double_z, int npoi
 int
 list_main(int argc, char *argv[])
 {
-    double x_data[MAX_POINTS];
-    double y_data[MAX_POINTS];
-    double z_data[MAX_POINTS];
+    double x_data[MAX_POINTS] = {0.0};
+    double y_data[MAX_POINTS] = {0.0};
+    double z_data[MAX_POINTS] = {0.0};
 
     int i = 0;
     double x, y, z;

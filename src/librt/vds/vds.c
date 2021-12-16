@@ -495,7 +495,6 @@ static vdsNode *moveTrisToNodes(vdsNode *N)
     if (numchildren) {
 	N->children = NULL;
 	N->sibling = NULL;
-	free(N);
 	return NULL;
     }
     N = newN;

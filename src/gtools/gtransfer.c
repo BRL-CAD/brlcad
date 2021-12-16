@@ -390,6 +390,7 @@ send_to_server(struct db_i *dbip, struct directory *dp, void *connection)
     bytes_sent = pkg_send(MSG_GEOM, (const char *)ext.ext_buf, ext.ext_nbytes, stash->connection);
     if (bytes_sent < 0) {
 	pkg_close(stash->connection);
+	stash->connection = NULL;
 	bu_log("Unable to successfully send %s to %s, port %d.\n", dp->d_namep, stash->server, stash->port);
 	return;
     }
@@ -475,14 +476,16 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	} FOR_ALL_DIRECTORY_END;
     }
 
-    /* let the server know we're done.  not necessary, but polite. */
-    bytes_sent = pkg_send(MSG_CIAO, "BYE", 4, stash.connection);
-    if (bytes_sent < 0) {
-	bu_log("Unable to cleanly disconnect from %s, port %d.\n", server, port);
-    }
+    if (stash.connection) {
+	/* let the server know we're done.  not necessary, but polite. */
+	bytes_sent = pkg_send(MSG_CIAO, "BYE", 4, stash.connection);
+	if (bytes_sent < 0) {
+	    bu_log("Unable to cleanly disconnect from %s, port %d.\n", server, port);
+	}
 
-    /* flush output and close */
-    pkg_close(stash.connection);
+	/* flush output and close */
+	pkg_close(stash.connection);
+    }
 
     return;
 }

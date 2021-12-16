@@ -573,14 +573,22 @@ static void yy_reduce(
 
   yymsp = &yypParser->yystack[yypParser->yyidx];
 
+  /* Don't run off the end of the array */
+#ifndef NDEBUG
+  if ( yyruleno >= (int)(sizeof(yyRuleName)/sizeof(yyRuleName[0]))) {
+    if (yyTraceFILE) {
+      fprintf(yyTraceFILE, "Out of bounds yyruleno index: %d\n", yyruleno);
+    }
+    return;
+  }
+#endif /* NDEBUG */
+
   if( yyruleno>=0 ) {
 #ifndef NDEBUG
-      if ( yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0]))) {
-         if (yyTraceFILE) {
+    if (yyTraceFILE) {
       fprintf(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
               yyRuleName[yyruleno]);
     }
-   }
 #endif /* NDEBUG */
   } else {
     /* invalid rule number range */

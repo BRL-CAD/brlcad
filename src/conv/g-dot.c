@@ -196,6 +196,7 @@ dot_header(FILE *outfp, const char *label)
     fprintf(outfp, "\tgraph [ rankdir=LR ];\n");
     fprintf(outfp, "\tnode [ style=filled ];\n");
     fprintf(outfp, "\tnode [ shape=box ];\n"); /* try Mrecord */
+    bu_vls_free(&vp);
 }
 
 
@@ -394,8 +395,6 @@ main(int ac, char *av[])
     bu_ptbl_free(&o.groups);
 
     ged_close(gp);
-    if (gp)
-	BU_PUT(gp, struct ged);
 
     bu_argv_free(c, objs);
 

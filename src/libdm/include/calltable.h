@@ -188,11 +188,11 @@ struct fb_impl {
     int (*if_flush)(struct fb *ifp);         /**< @brief flush output */
     int (*if_free)(struct fb *ifp);          /**< @brief free resources */
     int (*if_help)(struct fb *ifp);          /**< @brief print useful info */
-    char *if_type;      /**< @brief what "open" calls it */
+    const char *if_type;      /**< @brief what "open" calls it */
     int if_max_width;   /**< @brief max device width */
     int if_max_height;  /**< @brief max device height */
     /* Dynamic information: per device INSTANCE. */
-    char *if_name;      /**< @brief what the user called it */
+    const char *if_name;      /**< @brief what the user called it */
     int if_width;       /**< @brief current values */
     int if_height;
     int if_selfd;       /**< @brief select(fd) for input events if >= 0 */

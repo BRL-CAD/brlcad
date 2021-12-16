@@ -180,7 +180,6 @@ struct frame {
     struct bu_vls fr_after_cmd;	/* local commands, after frame done */
 };
 
-
 struct servers {
     struct pkg_conn *sr_pc;		/* PKC_NULL means slot not in use */
     struct bu_list sr_work;
@@ -278,6 +277,23 @@ struct frame *FreeFrame;
 /*
  * Macros to manage lists of frames
  */
+
+#define INIT_FRAME(p) { \
+	(p)->fr_magic = FRAME_MAGIC; \
+	bu_vls_init(&(p)->fr_cmd); \
+	bu_vls_init(&(p)->fr_after_cmd); \
+	(p)->fr_forw = NULL; \
+	(p)->fr_back = NULL; \
+	(p)->fr_number = 0; \
+	(p)->fr_server = 0; \
+	(p)->fr_filename = NULL; \
+	(p)->fr_tempfile = 0; \
+	(p)->fr_width = 0; \
+	(p)->fr_height = 0; \
+	(p)->fr_nrays = 0; \
+	(p)->fr_cpu = 0.0; \
+	(p)->fr_needgettree = 0; \
+    }
 
 #define GET_FRAME(p) { \
 	if (((p)=FreeFrame) == FRAME_NULL) {\
@@ -2125,6 +2141,7 @@ cd_movie(const int argc, const char **argv)
     int a, b;
     int i;
 
+
     if (argc < 4)
 	return 1;
 
@@ -2143,6 +2160,9 @@ cd_movie(const int argc, const char **argv)
 	perror(argv[1]);
 	return -1;
     }
+
+    INIT_FRAME(&dummy_frame);
+
     /* Skip over unwanted beginning frames */
     for (i = 0; i < a; i++) {
 	if (read_matrix(fp, &dummy_frame) <= 0) {

@@ -59,6 +59,7 @@ extern "C" {
 
 #include "bu.h"
 #include "bv.h"
+#define DM_WITH_RT
 #include "dm.h"
 #include "ged.h"
 
@@ -67,7 +68,7 @@ extern "C" {
 int
 main(int argc, const char **argv)
 {
-    struct ged *gedp = NULL;
+    struct ged *gedp = GED_NULL;
     void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);
     int ret = EXIT_SUCCESS;
     char *line = NULL;
@@ -129,12 +130,16 @@ main(int argc, const char **argv)
     if (argc) {
 	if (!bu_file_exists(argv[0], NULL)) {
 	    bu_vls_free(&msg);
+	    bv_free(gsh_view);
+	    BU_PUT(gsh_view, struct bview);
 	    bu_dlclose(libged);
 	    bu_exit(EXIT_FAILURE, "File %s does not exist, expecting .g file\n", argv[0]) ;
 	}
 	gedp = ged_open("db", argv[0], 1);
 	if (!gedp) {
 	    bu_vls_free(&msg);
+	    bv_free(gsh_view);
+	    BU_PUT(gsh_view, struct bview);
 	    bu_dlclose(libged);
 	    bu_exit(EXIT_FAILURE, "Could not open %s as a .g file\n", argv[0]) ;
 	} else {
@@ -170,9 +175,8 @@ main(int argc, const char **argv)
 	fprintf(stdout, "%s", bu_vls_addr(gedp->ged_result_str));
 
 	ged_close(gedp);
-
-	BU_PUT(gedp, struct ged);
-
+	bv_free(gsh_view);
+	BU_PUT(gsh_view, struct bview);
 	return ret;
     }
 
@@ -226,7 +230,7 @@ main(int argc, const char **argv)
 
 	/* Looks like we'll be running a GED command - stash the state
 	 * of the view info */
-	if (gedp->ged_dmp) {
+	if (gedp && gedp->ged_dmp) {
 	    prev_dhash = (gedp->ged_dmp) ? dm_hash((struct dm *)gedp->ged_dmp) : 0;
 	    prev_vhash = bv_hash(gedp->ged_gvp);
 	    prev_lhash = dl_name_hash(gedp);
@@ -356,9 +360,10 @@ main(int argc, const char **argv)
     }
 
 done:
+    bv_free(gsh_view);
     BU_PUT(gsh_view, struct bv);
+    ged_close(gedp);
     bu_dlclose(libged);
-    if (gedp) ged_close(gedp);
     linenoiseHistoryFree();
     bu_vls_free(&msg);
     bu_vls_free(&open_gfile);

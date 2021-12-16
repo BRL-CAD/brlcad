@@ -57,7 +57,8 @@ rle_row_alloc( the_hdr, scanp )
 rle_hdr *the_hdr;
 rle_pixel ***scanp;
 {
-    rle_pixel ** scanbuf, * pixbuf;
+    rle_pixel **scanbuf = NULL;
+    rle_pixel *pixbuf = NULL;
     int rowlen, nchan = 0, i, ncol;
 
     rowlen = the_hdr->xmax + 1;
@@ -90,7 +91,7 @@ rle_pixel ***scanp;
 	else
 	    scanbuf[i] = 0;
     *scanp = scanbuf;
-
+    free(pixbuf);
     return 0;
 }
 

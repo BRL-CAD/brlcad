@@ -414,7 +414,7 @@ print_faces_table(struct ged *gedp, table_t *table)
 	    bu_vls_printf(gedp->ged_result_str, "***NOT A PLANE ***");
 
 	bu_vls_printf(gedp->ged_result_str, "|");
-	for (j = 0; j < table->rows[i].nfields; ++j) {
+	for (j = 0; j < table->rows[i].nfields - 1; ++j) {
 	    assert(table->rows[i].fields[j].buf);
 	    bu_vls_printf(gedp->ged_result_str, " %*.*s",
 			  maxwidth[j], maxwidth[j],

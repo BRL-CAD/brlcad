@@ -53,7 +53,7 @@ endforeach(srcfile ${bu_test_srcs})
 # Generate bu_test.cpp file and build it
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../..)
 configure_file(bu_test.cpp.in "${CMAKE_CURRENT_BINARY_DIR}/bu_test.cpp" @ONLY)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/bu_test.c")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/bu_test.cpp")
 BRLCAD_ADDEXEC(bu_test "${CMAKE_CURRENT_BINARY_DIR}/bu_test.cpp" libbu TEST)
 
 

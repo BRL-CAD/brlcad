@@ -81,55 +81,98 @@ ug_tol ugtol = {
     6.350	/* radius = .25in */
 };
 
-static time_t start_time;
-
-int debug = 0;
-int show_all_features = 0;
-
 char *options = "sufd:o:i:t:a:n:c:r:R:h?";
 char *progname = "(noname)";
 
-/* count of how parts were converted */
-static int parts_facetized=0;
-static int parts_bool=0;
-static int parts_brep=0;
-
-static char *output_file=NULL;		/* name of BRL-CAD output database */
-static struct rt_wdb *wdb_fd=NULL;	/* rt_wdb structure for output database */
-static char *use_refset_name=NULL;	/* if set, always use this reference set name */
-static int only_facetize=0;		/* if set, do not attempt any feature processing, just facetize everything */
-static char **subparts=NULL;		/* list of subparts to be converted */
-static int curr_level=0;
-static int use_normals=0;		/* if set, obtain normals from database */
-
-static int *part_tris=NULL;		/* list of triangles for current part */
-static int max_tri=0;			/* number of triangles currently malloced */
-static int curr_tri=0;			/* number of triangles currently being used */
-
 #define TRI_BLOCK 512			/* number of triangles to malloc per call */
-
-static int *part_norms=NULL;		/* list of normals for current part */
-static int max_norm=0;			/* number of normals currently malloced */
-static int curr_norm=0;			/* number of normals currently being used */
-
 #define NORM_BLOCK 512			/* number of normals to malloc per call */
 
-static int prim_no=0;			/* count of BRL-CAD primitive objects, used to build names */
+int debug = 0;
 
-static int ident=1000;			/* ident number for BRL-CAD regions */
+struct ug_state {
+    char *output_file;
+    int show_all_features;
 
-static double tol_dist=0.0005;	/* (mm) minimum distance between two distinct vertices */
-static double tol_dist_sq;
-static double surf_tol=3.175;	/* (mm) allowable surface tessellation tolerance (default is 1/8 inch) */
-static double ang_tol=0.0;
-static double min_chamfer=0.0;	/* (mm) chamfers smaller than this are ignored */
-static double min_round=0.0;	/* (mm) rounds smaller than this are ignored */
-static uf_list_t *suppress_list;	/* list of features to be suppressed */
+    /* count of how parts were converted */
+    int parts_facetized;
+    int parts_bool;
+    int parts_brep;
 
-static	Tcl_HashTable htbl;
-static	int use_part_name_hash=0;
-static char *part_name_file=NULL;
-static struct bn_tol tol;
+    struct rt_wdb *wdb_fd;	/* rt_wdb structure for output database */
+    char *use_refset_name;	/* if set, always use this reference set name */
+    int only_facetize;		/* if set, do not attempt any feature processing, just facetize everything */
+    char **subparts;		/* list of subparts to be converted */
+    int curr_level;
+    int use_normals;		/* if set, obtain normals from database */
+
+    int *part_tris;		/* list of triangles for current part */
+    int max_tri;		/* number of triangles currently malloced */
+    int curr_tri;		/* number of triangles currently being used */
+
+
+    int *part_norms;		/* list of normals for current part */
+    int max_norm;		/* number of normals currently malloced */
+    int curr_norm;		/* number of normals currently being used */
+
+
+    int prim_no;		/* count of BRL-CAD primitive objects, used to build names */
+
+    int ident;			/* ident number for BRL-CAD regions */
+
+    double tol_dist;		/* (mm) minimum distance between two distinct vertices */
+    double tol_dist_sq;
+    double surf_tol;		/* (mm) allowable surface tessellation tolerance (default is 1/8 inch) */
+    double ang_tol;
+    double min_chamfer;		/* (mm) chamfers smaller than this are ignored */
+    double min_round;		/* (mm) rounds smaller than this are ignored */
+    uf_list_t *suppress_list;	/* list of features to be suppressed */
+
+    Tcl_HashTable htbl;
+    int use_part_name_hash;
+    char *part_name_file;
+    struct bn_tol tol;
+};
+
+void ug_state_init(struct ug_state *s)
+{
+    s->output_file = NULL;
+    s->show_all_features= 0;
+
+    s->parts_facetized = 0;
+    s->parts_bool = 0;
+    s->parts_brep = 0;
+    s->wdb_fd = NULL;
+    s->use_refset_name = NULL;
+    s->only_facetize = 0;
+    s->subparts = NULL;
+    s->curr_level = 0;
+    s->use_normals = 0;
+    s->part_tris = NULL;
+    s->max_tri = 0;
+    s->curr_tri = 0;
+    s->part_norms = NULL;
+    s->max_norm = 0;
+    s->curr_norm = 0;
+    s->prim_no = 0;
+    s->ident = 1000;
+    s->min_chamfer = 0.0;
+    s->min_round = 0.0;
+    s->suppress_list  =  NULL;
+    Tcl_InitHashTable( &s->htbl, TCL_STRING_KEYS );
+    s->use_part_name_hash = 0;
+    s->part_name_file = NULL;
+
+    s->tol_dist = 0.0005;
+    s->tol_dist_sq = s->tol_dist * s->tol_dist;
+    s->surf_tol = 3.175;
+    s->ang_tol = 0.0;
+
+    BN_TOL_INIT(&s->tol);
+    s->tol.dist = s->surf_tol;
+    s->tol.dist_sq = s->tol.dist * s->tol.dist;
+    s->tol.perp = 1e-6;
+    s->tol.para = 1.0 - s->tol.perp;
+}
 
 static char *feat_sign[]={
     "Nullsign",
@@ -163,17 +206,16 @@ static int indent_delta=4;
 
 #define DO_INDENT { \
 	int _i; \
-	for ( _i=0; _i<curr_level*indent_delta; _i++ ) { \
+	for ( _i=0; _i<s->curr_level*indent_delta; _i++ ) { \
 		bu_log( " " ); \
 	} \
 }
 
-char *process_part( tag_t node, const mat_t curr_xform, char *p_name, char *ref_set, char *inst_name );
-char *convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv );
-char *facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv, int make_region );
-char *conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, const mat_t curr_xform,
-		     double units_conv, int make_region );
-static void do_suppressions( tag_t node );
+char *process_part(struct ug_state *s, tag_t node, const mat_t curr_xform, char *p_name, char *ref_set, char *inst_name );
+char *convert_entire_part(struct ug_state *s, tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv );
+char *facetize(struct ug_state *s, tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv, int make_region );
+char *conv_features( struct ug_state *s, tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv, int make_region );
+static void do_suppressions(struct ug_state *s, tag_t node );
 
 
 void
@@ -190,7 +232,7 @@ add_to_obj_list( char *name )
     ptr->name = name;
 }
 
-double get_ug_double(char *p)
+double get_ug_double(struct ug_state *s, char *p)
 {
     char *lhs, *rhs;
     tag_t exp_tag;
@@ -223,13 +265,11 @@ lower_case( char *name )
 }
 
 void
-create_name_hash( FILE *fd )
+create_name_hash(struct ug_state *s, FILE *fd )
 {
     char line[MAX_LINE_LEN];
     Tcl_HashEntry *hash_entry=NULL;
     int new_entry=0;
-
-    Tcl_InitHashTable( &htbl, TCL_STRING_KEYS );
 
     while ( bu_fgets( line, MAX_LINE_LEN, fd ) ) {
 	char *part_no, *desc, *ptr;
@@ -247,7 +287,7 @@ create_name_hash( FILE *fd )
 	desc = bu_strdup( ptr );
 	lower_case( desc );
 
-	hash_entry = Tcl_CreateHashEntry( &htbl, part_no, &new_entry );
+	hash_entry = Tcl_CreateHashEntry( &s->htbl, part_no, &new_entry );
 	if ( new_entry ) {
 	    Tcl_SetHashValue( hash_entry, desc );
 	} else {
@@ -261,11 +301,14 @@ create_name_hash( FILE *fd )
  * only checks for triangles with duplicate vertices
  */
 int
-bad_triangle( int v1, int v2, int v3 )
+bad_triangle(struct ug_state *s, int v1, int v2, int v3 )
 {
     double dist;
     double coord;
     int i;
+
+    if (v1 < 0 || v2 < 0 || v3 < 0)
+	return 1;
 
     if ( v1 == v2 || v2 == v3 || v1 == v3 )
 	return 1;
@@ -276,7 +319,7 @@ bad_triangle( int v1, int v2, int v3 )
 	dist += coord * coord;
     }
     dist = sqrt( dist );
-    if ( dist < tol_dist ) {
+    if ( dist < s->tol_dist ) {
 	return 1;
     }
 
@@ -286,7 +329,7 @@ bad_triangle( int v1, int v2, int v3 )
 	dist += coord * coord;
     }
     dist = sqrt( dist );
-    if ( dist < tol_dist ) {
+    if ( dist < s->tol_dist ) {
 	return 1;
     }
 
@@ -296,7 +339,7 @@ bad_triangle( int v1, int v2, int v3 )
 	dist += coord * coord;
     }
     dist = sqrt( dist );
-    if ( dist < tol_dist ) {
+    if ( dist < s->tol_dist ) {
 	return 1;
     }
 
@@ -306,69 +349,72 @@ bad_triangle( int v1, int v2, int v3 )
 
 /* routine to add a new triangle to the current part */
 void
-add_triangle( int v1, int v2, int v3 )
+add_triangle(struct ug_state *s, int v1, int v2, int v3 )
 {
-    if ( curr_tri >= max_tri ) {
+    if ( s->curr_tri >= s->max_tri ) {
 	/* allocate more memory for triangles */
-	max_tri += TRI_BLOCK;
-	part_tris = (int *)realloc( part_tris, sizeof( int ) * max_tri * 3 );
-	if ( !part_tris ) {
+	s->max_tri += TRI_BLOCK;
+	s->part_tris = (int *)realloc( s->part_tris, sizeof( int ) * s->max_tri * 3 );
+	if ( !s->part_tris ) {
 	    bu_exit(1, "ERROR: Failed to allocate memory for part triangles\n" );
 	}
     }
 
     /* fill in triangle info */
-    part_tris[curr_tri*3 + 0] = v1;
-    part_tris[curr_tri*3 + 1] = v2;
-    part_tris[curr_tri*3 + 2] = v3;
+    s->part_tris[s->curr_tri*3 + 0] = v1;
+    s->part_tris[s->curr_tri*3 + 1] = v2;
+    s->part_tris[s->curr_tri*3 + 2] = v3;
 
     /* increment count */
-    curr_tri++;
+    s->curr_tri++;
 }
 
 /* routine to add a new triangle to the current part */
 void
-add_face_normals( int v1, int v2, int v3 )
+add_face_normals(struct ug_state *s, int v1, int v2, int v3 )
 {
-    if ( curr_norm >= max_norm ) {
+    if (v1 < 0 || v2 < 0 || v3 < 0)
+	return;
+
+    if ( s->curr_norm >= s->max_norm ) {
 	/* allocate more memory for triangles */
-	max_norm += NORM_BLOCK;
-	part_norms = (int *)realloc( part_norms, sizeof( int ) * max_norm * 3 );
-	if ( !part_norms ) {
+	s->max_norm += NORM_BLOCK;
+	s->part_norms = (int *)realloc( s->part_norms, sizeof( int ) * s->max_norm * 3 );
+	if ( !s->part_norms ) {
 	    bu_exit(1, "ERROR: Failed to allocate memory for part triangles\n" );
 	}
     }
 
     /* fill in triangle info */
-    part_norms[curr_norm*3 + 0] = v1;
-    part_norms[curr_norm*3 + 1] = v2;
-    part_norms[curr_norm*3 + 2] = v3;
+    s->part_norms[s->curr_norm*3 + 0] = v1;
+    s->part_norms[s->curr_norm*3 + 1] = v2;
+    s->part_norms[s->curr_norm*3 + 2] = v3;
 
     /* increment count */
-    curr_norm++;
+    s->curr_norm++;
 }
 
 
 void
-get_part_name( struct bu_vls *name )
+get_part_name(struct ug_state *s, struct bu_vls *name )
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *ptr;
     Tcl_HashEntry *hash_entry=NULL;
 
-    if ( !use_part_name_hash )
+    if ( !s->use_part_name_hash )
 	return;
 
     lower_case( bu_vls_addr( name ) );
 
-    hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( name ) );
+    hash_entry = Tcl_FindHashEntry( &s->htbl, bu_vls_addr( name ) );
     if ( !hash_entry ) {
 	/* try without final name extension after a _ */
 	if ( (ptr=strrchr( bu_vls_addr( name ), '_' )) != NULL ) {
 	    bu_vls_trunc( &vls, 0 );
 	    bu_vls_vlscat( &vls, name );
 	    bu_vls_trunc( &vls, ptr - bu_vls_addr( name ) );
-	    hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( &vls ) );
+	    hash_entry = Tcl_FindHashEntry( &s->htbl, bu_vls_addr( &vls ) );
 	}
     }
 
@@ -378,7 +424,7 @@ get_part_name( struct bu_vls *name )
 	    bu_vls_trunc( &vls, 0 );
 	    bu_vls_vlscat( &vls, name );
 	    bu_vls_trunc( &vls, ptr - bu_vls_addr( name ) );
-	    hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( &vls ) );
+	    hash_entry = Tcl_FindHashEntry( &s->htbl, bu_vls_addr( &vls ) );
 	}
     }
 
@@ -388,7 +434,7 @@ get_part_name( struct bu_vls *name )
 	    bu_vls_trunc( &vls, 0 );
 	    bu_vls_vlscat( &vls, name );
 	    bu_vls_trunc( &vls, ptr - bu_vls_addr( name ) );
-	    hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( &vls ) );
+	    hash_entry = Tcl_FindHashEntry( &s->htbl, bu_vls_addr( &vls ) );
 	}
     }
 
@@ -398,7 +444,7 @@ get_part_name( struct bu_vls *name )
 	    bu_vls_trunc( &vls, 0 );
 	    bu_vls_vlscat( &vls, name );
 	    bu_vls_trunc( &vls, ptr - bu_vls_addr( name ) );
-	    hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( &vls ) );
+	    hash_entry = Tcl_FindHashEntry( &s->htbl, bu_vls_addr( &vls ) );
 	}
     }
 
@@ -410,7 +456,7 @@ get_part_name( struct bu_vls *name )
 	    bu_vls_trunc( &vls, ptr - bu_vls_addr( name ) );
 	}
 	bu_vls_strcat( &vls, "-011" );
-	hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( &vls ) );
+	hash_entry = Tcl_FindHashEntry( &s->htbl, bu_vls_addr( &vls ) );
     }
 
     if ( !hash_entry ) {
@@ -421,7 +467,7 @@ get_part_name( struct bu_vls *name )
 	    bu_vls_trunc( &vls, ptr - bu_vls_addr( name ) );
 	}
 	bu_vls_strcat( &vls, "-001" );
-	hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( &vls ) );
+	hash_entry = Tcl_FindHashEntry( &s->htbl, bu_vls_addr( &vls ) );
     }
 
     bu_vls_free( &vls );
@@ -443,7 +489,7 @@ get_part_name( struct bu_vls *name )
 }
 
 char *
-create_unique_brlcad_name( struct bu_vls *name_vls )
+create_unique_brlcad_name(struct ug_state *s, struct bu_vls *name_vls )
 {
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     int count=0;
@@ -451,7 +497,7 @@ create_unique_brlcad_name( struct bu_vls *name_vls )
 
     bu_vls_vlscat( &tmp_vls, name_vls );
     len = bu_vls_strlen( &tmp_vls );
-    while ( db_lookup( wdb_fd->dbip, bu_vls_addr( &tmp_vls ), LOOKUP_QUIET ) != RT_DIR_NULL ) {
+    while ( db_lookup( s->wdb_fd->dbip, bu_vls_addr( &tmp_vls ), LOOKUP_QUIET ) != RT_DIR_NULL ) {
 	count++;
 	bu_vls_trunc( &tmp_vls, len );
 	bu_vls_printf( &tmp_vls, ".%d", count );
@@ -462,38 +508,38 @@ create_unique_brlcad_name( struct bu_vls *name_vls )
 }
 
 char *
-create_unique_brlcad_solid_name()
+create_unique_brlcad_solid_name(struct ug_state *s)
 {
     struct bu_vls solid_name_vls = BU_VLS_INIT_ZERO;
-    char *solid_name;
+    char *solid_name = NULL;
 
-    prim_no++;
-    bu_vls_printf( &solid_name_vls, "s.%d", prim_no );
-    solid_name = create_unique_brlcad_name( &solid_name_vls );
+    s->prim_no++;
+    bu_vls_printf( &solid_name_vls, "s.%d", s->prim_no );
+    solid_name = create_unique_brlcad_name(s, &solid_name_vls );
     bu_vls_free( &solid_name_vls );
 
     return solid_name;
 }
 
 char *
-create_unique_brlcad_combination_name()
+create_unique_brlcad_combination_name(struct ug_state *s)
 {
     struct bu_vls solid_name_vls = BU_VLS_INIT_ZERO;
-    char *solid_name;
+    char *solid_name = NULL;
 
-    prim_no++;
-    bu_vls_printf( &solid_name_vls, "c.%d", prim_no );
-    solid_name = create_unique_brlcad_name( &solid_name_vls );
+    s->prim_no++;
+    bu_vls_printf( &solid_name_vls, "c.%d", s->prim_no );
+    solid_name = create_unique_brlcad_name(s, &solid_name_vls );
     bu_vls_free( &solid_name_vls );
 
     return solid_name;
 }
 
 char *
-build_region( struct wmember *head, char *part_name, char *refset_name, char *inst_name, unsigned char *rgb )
+build_region(struct ug_state *s, struct wmember *head, char *part_name, char *refset_name, char *inst_name, unsigned char *rgb )
 {
     struct bu_vls region_name_vls = BU_VLS_INIT_ZERO;
-    char *region_name;
+    char *region_name = NULL;
 
     /* make the region */
     if ( inst_name ) {
@@ -510,17 +556,17 @@ build_region( struct wmember *head, char *part_name, char *refset_name, char *in
 	}
     }
 
-    get_part_name( &region_name_vls );
+    get_part_name(s, &region_name_vls );
 
     if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	bu_vls_strcat( &region_name_vls, "_" );
 	bu_vls_strcat( &region_name_vls, refset_name );
     }
     bu_vls_strcat( &region_name_vls, ".r" );
-    region_name = create_unique_brlcad_name( &region_name_vls );
+    region_name = create_unique_brlcad_name(s, &region_name_vls );
     bu_vls_free( &region_name_vls );
 
-    (void)mk_comb( wdb_fd, region_name, &head->l, 1, NULL, NULL, rgb, ident++, 0, 1, 100, 0, 0, 0 );
+    (void)mk_comb( s->wdb_fd, region_name, &head->l, 1, NULL, NULL, rgb, s->ident++, 0, 1, 100, 0, 0, 0 );
 
     return region_name;
 }
@@ -535,7 +581,7 @@ struct pt_list {
 #define INITIAL_APPROX_PTS	5
 
 int
-make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam, int is_start, int is_end,
+make_curve_particles(struct ug_state *s, tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam, int is_start, int is_end,
 		      struct wmember *outer_head, struct wmember *inner_head, const mat_t curr_xform, double units_conv )
 {
     UF_EVAL_p_t evaluator;
@@ -588,7 +634,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	while ( BU_LIST_NOT_HEAD( &next->l, &pt_head.l ) ) {
 
 	    /* check for collinearity */
-	    if ( bg_3pnts_collinear( prev->pt, pt->pt, next->pt, &tol ) ) {
+	    if ( bg_3pnts_collinear( prev->pt, pt->pt, next->pt, &s->tol ) ) {
 		/* remove middle point */
 		BU_LIST_DEQUEUE( &pt->l );
 		bu_free( (char *)pt, "pt_list" );
@@ -620,7 +666,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	    VSCALE( tmp_pt, tmp_pt, units_conv );
 	    MAT4X3PNT( this_pt, curr_xform, tmp_pt );
 
-	    if ( bg_3pnts_collinear( cur->pt, this_pt, next->pt, &tol ) ) {
+	    if ( bg_3pnts_collinear( cur->pt, this_pt, next->pt, &s->tol ) ) {
 		continue;
 	    }
 
@@ -646,14 +692,14 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 
 	VSUB2( height, next->pt, pt->pt );
 
-	prim_no++;
-	bu_vls_printf( &name_vls, "s.%d", prim_no );
+	s->prim_no++;
+	bu_vls_printf( &name_vls, "s.%d", s->prim_no );
 
-	outer_solid_name = create_unique_brlcad_name( &name_vls );
+	outer_solid_name = create_unique_brlcad_name(s, &name_vls );
 
 	if ( inner_radius > 0.0 ) {
 	    bu_vls_strcat( &name_vls, ".i" );
-	    inner_solid_name = create_unique_brlcad_name( &name_vls );
+	    inner_solid_name = create_unique_brlcad_name(s, &name_vls );
 	} else {
 	    inner_solid_name = (char *)NULL;
 	}
@@ -661,7 +707,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 
 	if ( (is_start && BU_LIST_PREV_IS_HEAD( &pt->l, &pt_head.l )) ||
 	     (is_end && BU_LIST_NEXT_IS_HEAD( &pt->l, &pt_head.l )) ) {
-	    if ( mk_rcc( wdb_fd, outer_solid_name, pt->pt, height, outer_radius ) ) {
+	    if ( mk_rcc( s->wdb_fd, outer_solid_name, pt->pt, height, outer_radius ) ) {
 		UF_EVAL_free( evaluator );
 		bu_log( "Failed to make RCC primitive!\n" );
 		bu_free( outer_solid_name, "outer_solid_name" );
@@ -672,7 +718,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	    }
 	    add_to_obj_list( outer_solid_name );
 	    if ( inner_solid_name ) {
-		if ( mk_rcc( wdb_fd, inner_solid_name, pt->pt, height, inner_radius ) ) {
+		if ( mk_rcc( s->wdb_fd, inner_solid_name, pt->pt, height, inner_radius ) ) {
 		    UF_EVAL_free( evaluator );
 		    bu_log( "Failed to make RCC primitive!\n" );
 		    bu_free( outer_solid_name, "outer_solid_name" );
@@ -682,7 +728,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 		add_to_obj_list( inner_solid_name );
 	    }
 	} else {
-	    if ( mk_particle( wdb_fd, outer_solid_name, pt->pt, height, outer_radius, outer_radius ) ) {
+	    if ( mk_particle( s->wdb_fd, outer_solid_name, pt->pt, height, outer_radius, outer_radius ) ) {
 		UF_EVAL_free( evaluator );
 		bu_log( "Failed to make particle primitive!\n" );
 		bu_free( outer_solid_name, "outer_solid_name" );
@@ -693,7 +739,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	    }
 	    add_to_obj_list( outer_solid_name );
 	    if ( inner_solid_name ) {
-		if ( mk_particle( wdb_fd, inner_solid_name, pt->pt, height, inner_radius, inner_radius ) ) {
+		if ( mk_particle( s->wdb_fd, inner_solid_name, pt->pt, height, inner_radius, inner_radius ) ) {
 		    UF_EVAL_free( evaluator );
 		    bu_log( "Failed to make particle primitive!\n" );
 		    bu_free( outer_solid_name, "outer_solid_name" );
@@ -718,7 +764,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 }
 
 int
-make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam, int is_start, int is_end,
+make_linear_particle(struct ug_state *s, tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam, int is_start, int is_end,
 		      struct wmember *outer_head, struct wmember *inner_head, const mat_t curr_xform, double units_conv )
 {
     UF_EVAL_p_t evaluator;
@@ -745,21 +791,21 @@ make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
     MAT4X3PNT( end_f, curr_xform, end );
     VSUB2( height, end_f, start_f );
 
-    prim_no++;
-    bu_vls_printf( &name_vls, "s.%d", prim_no );
+    s->prim_no++;
+    bu_vls_printf( &name_vls, "s.%d", s->prim_no );
 
-    outer_solid_name = create_unique_brlcad_name( &name_vls );
+    outer_solid_name = create_unique_brlcad_name(s, &name_vls );
 
     if ( inner_radius > 0.0 ) {
 	bu_vls_strcat( &name_vls, ".i" );
-	inner_solid_name = create_unique_brlcad_name( &name_vls );
+	inner_solid_name = create_unique_brlcad_name(s, &name_vls );
     } else {
 	inner_solid_name = (char *)NULL;
     }
     bu_vls_free( &name_vls );
 
     if ( is_start || is_end ) {
-	if ( mk_rcc( wdb_fd, outer_solid_name, start_f, height, outer_radius ) ) {
+	if ( mk_rcc( s->wdb_fd, outer_solid_name, start_f, height, outer_radius ) ) {
 	    UF_EVAL_free( evaluator );
 	    bu_log( "Failed to make RCC primitive!\n" );
 	    bu_free( outer_solid_name, "outer_solid_name" );
@@ -770,7 +816,7 @@ make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	}
 	add_to_obj_list( outer_solid_name );
 	if ( inner_solid_name ) {
-	    if ( mk_rcc( wdb_fd, inner_solid_name, start_f, height, inner_radius ) ) {
+	    if ( mk_rcc( s->wdb_fd, inner_solid_name, start_f, height, inner_radius ) ) {
 		UF_EVAL_free( evaluator );
 		bu_log( "Failed to make RCC primitive!\n" );
 		bu_free( outer_solid_name, "outer_solid_name" );
@@ -780,7 +826,7 @@ make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	    add_to_obj_list( inner_solid_name );
 	}
     } else {
-	if ( mk_particle( wdb_fd, outer_solid_name, start_f, height, outer_radius, outer_radius ) ) {
+	if ( mk_particle( s->wdb_fd, outer_solid_name, start_f, height, outer_radius, outer_radius ) ) {
 	    UF_EVAL_free( evaluator );
 	    bu_log( "Failed to make particle primitive!\n" );
 	    bu_free( outer_solid_name, "outer_solid_name" );
@@ -791,7 +837,7 @@ make_linear_particle( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	}
 	add_to_obj_list( outer_solid_name );
 	if ( inner_solid_name ) {
-	    if ( mk_particle( wdb_fd, inner_solid_name, start_f, height, inner_radius, inner_radius ) ) {
+	    if ( mk_particle( s->wdb_fd, inner_solid_name, start_f, height, inner_radius, inner_radius ) ) {
 		UF_EVAL_free( evaluator );
 		bu_log( "Failed to make particle primitive!\n" );
 		bu_free( outer_solid_name, "outer_solid_name" );
@@ -831,7 +877,7 @@ get_exp_value( char *want, int n_exps, tag_t *exps, char **descs, double *value 
 
 
 static void
-get_chamfer_offsets( tag_t feat_tag, char *UNUSED(part_name), double units_conv, double *offset1, double *offset2 )
+get_chamfer_offsets(struct ug_state *s, tag_t feat_tag, char *UNUSED(part_name), double units_conv, double *offset1, double *offset2 )
 {
     int n_exps;
     tag_t *exps;
@@ -851,7 +897,7 @@ get_chamfer_offsets( tag_t feat_tag, char *UNUSED(part_name), double units_conv,
 	    /* must be an offset and angle chamfer
 	     * we do not handle this, so fake a value to avoid suppression
 	     */
-	    *offset2 = min_chamfer + 1.0;
+	    *offset2 = s->min_chamfer + 1.0;
 	} else {
 	    *offset2 = *offset1;
 	}
@@ -1073,7 +1119,7 @@ add_sketch_vert( double pt[3], struct rt_sketch_internal *skt, int *verts_alloce
 }
 
 static char *
-conv_extrusion( tag_t feat_tag, char *part_name, char *UNUSED(refset_name), char *UNUSED(inst_name), unsigned char *UNUSED(rgb), const mat_t curr_xform,
+conv_extrusion(struct ug_state *s, tag_t feat_tag, char *part_name, char *UNUSED(refset_name), char *UNUSED(inst_name), unsigned char *UNUSED(rgb), const mat_t curr_xform,
 		double units_conv, int UNUSED(make_region), int num_exp, tag_t *exps, char **descs,
 		int UNUSED(n_guide_curves), tag_t *UNUSED(guide_curves), int UNUSED(n_profile_curves), tag_t *UNUSED(profile_curves), double l_tol_dist )
 {
@@ -1300,7 +1346,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *UNUSED(refset_name), char
 		VSCALE( pt, pt, units_conv );
 		z2 = pt[Z];
 		lsg->end = add_sketch_vert( pt, skt, &verts_alloced, tol_sq );
-		if ( !NEAR_ZERO( fabs( z1 - z2 ), tol_dist ) ) {
+		if ( !NEAR_ZERO( fabs( z1 - z2 ), s->tol_dist ) ) {
 		    bu_log( "Sketch (%s) for part %s is not planar, cannot handle this",
 			    skt_name, part_name );
 		    /* for simplicity, malloc up the rest of a sketch internal object for freeing */
@@ -1373,7 +1419,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *UNUSED(refset_name), char
 		    csg->end = add_sketch_vert( end, skt, &verts_alloced, tol_sq );
 		}
 		skt->curve.segment[j] = (void *)csg;
-		if ( !NEAR_ZERO( fabs( z1 - z2 ), tol_dist ) ) {
+		if ( !NEAR_ZERO( fabs( z1 - z2 ), s->tol_dist ) ) {
 		    bu_log( "Sketch (%s) for part %s is not planar, cannot handle this",
 			    skt_name, part_name );
 		    /* for simplicity, malloc up the rest of a sketch internal object for freeing */
@@ -1427,7 +1473,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *UNUSED(refset_name), char
 
 	i = j - 1;
 
-	if ( !NEAR_ZERO( fabs( z_coords[i] - z_coords[j] ), tol_dist ) ) {
+	if ( !NEAR_ZERO( fabs( z_coords[i] - z_coords[j] ), s->tol_dist ) ) {
 	    bu_log( "Sketch (%s) for part %s is not planar, cannot handle this",
 		    skt_name, part_name );
 	    /* for simplicity, malloc up the rest of a sketch internal object for freeing */
@@ -1462,7 +1508,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *UNUSED(refset_name), char
     rt_curve_order_segments( &skt->curve );
 
     bu_vls_strcat( &sketch_vls, skt_name );
-    sketch_name = create_unique_brlcad_name( &sketch_vls );
+    sketch_name = create_unique_brlcad_name(s, &sketch_vls );
     c = sketch_name;
     while ( *c ) {
 	if ( isspace( *c ) || *c == '/' ) {
@@ -1474,7 +1520,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *UNUSED(refset_name), char
     VMOVE( extrude_uvec, skt->u_vec );
     VMOVE( extrude_vvec, skt->v_vec );
 
-    if ( mk_sketch( wdb_fd, sketch_name, skt ) ) {
+    if ( mk_sketch( s->wdb_fd, sketch_name, skt ) ) {
 	bu_log( "Failed to create sketch for extrusion (%s)\n", part_name );
 	bu_free( (char *)z_coords, "z_coords" );
 	bu_free( ( char *)sketch_name, "sketch name" );
@@ -1491,8 +1537,8 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *UNUSED(refset_name), char
 
     VJOIN1( extrude_base, extrude_base, dist1, extrude_dir );
     VSCALE( extrude_vect, extrude_dir, (dist2 - dist1 ) );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_extrusion( wdb_fd, solid_name, sketch_name, extrude_base, extrude_vect, extrude_uvec, extrude_vvec, 0 ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_extrusion( s->wdb_fd, solid_name, sketch_name, extrude_base, extrude_vect, extrude_uvec, extrude_vvec, 0 ) ) {
 	bu_free( (char *)z_coords, "z_coords" );
 	bu_log( "Failed to create extrusion for part %s\n", part_name );
 	bu_free( sketch_name, "sketch name" );
@@ -1510,7 +1556,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *UNUSED(refset_name), char
 }
 
 static char *
-conv_cable( char *part_name, char *refset_name, char *inst_name, unsigned char *rgb, const mat_t curr_xform,
+conv_cable(struct ug_state *s, char *part_name, char *refset_name, char *inst_name, unsigned char *rgb, const mat_t curr_xform,
 	    double units_conv, int make_region, int num_exp, tag_t *exps,
 	    int n_guide_curves, tag_t *guide_curves)
 {
@@ -1549,13 +1595,13 @@ conv_cable( char *part_name, char *refset_name, char *inst_name, unsigned char *
 
 	switch ( type ) {
 	    case UF_line_type:
-		if ( make_linear_particle( guide_curves[i], outer_diam, inner_diam, start, end,
+		if ( make_linear_particle(s, guide_curves[i], outer_diam, inner_diam, start, end,
 					   &head_outer, &head_inner, curr_xform, units_conv ) ) {
 		    return (char *)NULL;
 		}
 		break;
 	    default:
-		if ( make_curve_particles( guide_curves[i], outer_diam, inner_diam, start, end,
+		if ( make_curve_particles(s, guide_curves[i], outer_diam, inner_diam, start, end,
 					   &head_outer, &head_inner, curr_xform, units_conv ) ) {
 		    return (char *)NULL;
 		}
@@ -1577,7 +1623,7 @@ conv_cable( char *part_name, char *refset_name, char *inst_name, unsigned char *
 	}
     }
 
-    get_part_name( &region_name_vls );
+    get_part_name(s, &region_name_vls );
     if ( inner_diam > 0.0 ) {
 	bu_vls_vlscat( &outer_name_vls, &region_name_vls );
 	bu_vls_strcat( &outer_name_vls, "_outer" );
@@ -1590,41 +1636,41 @@ conv_cable( char *part_name, char *refset_name, char *inst_name, unsigned char *
 	bu_vls_strcat( &region_name_vls, refset_name );
     }
     bu_vls_strcat( &region_name_vls, ".r" );
-    region_name = create_unique_brlcad_name( &region_name_vls );
+    region_name = create_unique_brlcad_name(s, &region_name_vls );
     bu_vls_free( &region_name_vls );
 
     if ( inner_diam > 0.0 ) {
 	struct wmember head_region;
 
-	outer_name = create_unique_brlcad_name( &outer_name_vls );
+	outer_name = create_unique_brlcad_name(s, &outer_name_vls );
 	bu_vls_free( &outer_name_vls );
 	if (!outer_name)
 	    return NULL;
-	inner_name = create_unique_brlcad_name( &inner_name_vls );
+	inner_name = create_unique_brlcad_name(s, &inner_name_vls );
 	bu_vls_free( &inner_name_vls );
 	if (!inner_name)
 	    return NULL;
 
 	/* make outer and inner combinations, and do the subtraction in the region */
-	(void)mk_comb( wdb_fd, outer_name, &head_outer.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
+	(void)mk_comb( s->wdb_fd, outer_name, &head_outer.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 	add_to_obj_list( outer_name );
-	(void)mk_comb( wdb_fd, inner_name, &head_inner.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
+	(void)mk_comb( s->wdb_fd, inner_name, &head_inner.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 	add_to_obj_list( inner_name );
 
 	BU_LIST_INIT( &head_region.l );
 	(void)mk_addmember( outer_name, &head_region.l, NULL, WMOP_UNION );
 	(void)mk_addmember( inner_name, &head_region.l, NULL, WMOP_SUBTRACT );
 	if ( make_region ) {
-	    (void)mk_comb( wdb_fd, region_name, &head_region.l, 1, NULL, NULL, rgb, ident++, 0, 1, 100, 0, 0, 0 );
+	    (void)mk_comb( s->wdb_fd, region_name, &head_region.l, 1, NULL, NULL, rgb, s->ident++, 0, 1, 100, 0, 0, 0 );
 	} else {
-	    (void)mk_comb( wdb_fd, region_name, &head_region.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
+	    (void)mk_comb( s->wdb_fd, region_name, &head_region.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 	}
     } else {
 	/* cable is solid, no need for intermediate combinations */
 	if ( make_region ) {
-	    (void)mk_comb( wdb_fd, region_name, &head_outer.l, 1, NULL, NULL, rgb, ident++, 0, 1, 100, 0, 0, 0 );
+	    (void)mk_comb( s->wdb_fd, region_name, &head_outer.l, 1, NULL, NULL, rgb, s->ident++, 0, 1, 100, 0, 0, 0 );
 	} else {
-	    (void)mk_comb( wdb_fd, region_name, &head_outer.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
+	    (void)mk_comb( s->wdb_fd, region_name, &head_outer.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 	}
     }
 
@@ -1632,7 +1678,7 @@ conv_cable( char *part_name, char *refset_name, char *inst_name, unsigned char *
 }
 
 static char *
-convert_sweep( tag_t feat_tag, char *part_name, char *refset_name, char *inst_name, unsigned char *rgb,
+convert_sweep(struct ug_state *s, tag_t feat_tag, char *part_name, char *refset_name, char *inst_name, unsigned char *rgb,
 	       const mat_t curr_xform, double units_conv, int make_region )
 {
     int n_profile_curves, n_guide_curves;
@@ -1660,12 +1706,12 @@ convert_sweep( tag_t feat_tag, char *part_name, char *refset_name, char *inst_na
     if ( num_exp == 2 && n_profile_curves == 0 ) {
 	/* this is a tube or cable */
 
-	solid_name = conv_cable( part_name, refset_name, inst_name, rgb, curr_xform, units_conv, make_region,
+	solid_name = conv_cable(s, part_name, refset_name, inst_name, rgb, curr_xform, units_conv, make_region,
 				 num_exp, exps, n_guide_curves, guide_curves);
     } else if ( n_guide_curves == 0 ) {
 	/* this may be a linear extrusion */
-	solid_name = conv_extrusion( feat_tag, part_name, refset_name, inst_name, rgb, curr_xform, units_conv, make_region,
-				     num_exp, exps, descs, n_guide_curves, guide_curves, n_profile_curves, profile_curves, tol_dist );
+	solid_name = conv_extrusion(s, feat_tag, part_name, refset_name, inst_name, rgb, curr_xform, units_conv, make_region,
+				     num_exp, exps, descs, n_guide_curves, guide_curves, n_profile_curves, profile_curves, s->tol_dist );
     }
 
     UF_free( exps );
@@ -1681,7 +1727,7 @@ convert_sweep( tag_t feat_tag, char *part_name, char *refset_name, char *inst_na
 }
 
 static fastf_t
-get_thru_faces_length( tag_t feat_tag,
+get_thru_faces_length(struct ug_state *s, tag_t feat_tag,
 		       double base[3],
 		       double dir[3] )
 {
@@ -1722,7 +1768,7 @@ get_thru_faces_length( tag_t feat_tag,
 	pl[W] = bb[i+3];
 	DO_INDENT;
 	bu_log( "\tChecking plane (%g %g %g %g)\n", V4ARGS( pl ) );
-	ret = bg_isect_line3_plane( &dist, base, dir, pl, &tol );
+	ret = bg_isect_line3_plane( &dist, base, dir, pl, &s->tol );
 	DO_INDENT;
 	bu_log( "ret = %d, dist = %g\n", ret, dist );
 	/* 1 - exit, 2 - entrance, else miss */
@@ -1737,7 +1783,7 @@ get_thru_faces_length( tag_t feat_tag,
 	pl[W] = -bb[i];
 	DO_INDENT;
 	bu_log( "\tChecking plane (%g %g %g %g)\n", V4ARGS( pl ) );
-	ret = bg_isect_line3_plane( &dist, base, dir, pl, &tol );
+	ret = bg_isect_line3_plane( &dist, base, dir, pl, &s->tol );
 	DO_INDENT;
 	bu_log( "ret = %d, dist = %g\n", ret, dist );
 	/* 1 - exit, 2 - entrance, else miss */
@@ -1770,7 +1816,7 @@ get_thru_faces_length( tag_t feat_tag,
 
 	    pl[i] = 1.0;
 	    pl[W] = bb[i+3];
-	    ret = bg_isect_line3_plane( &dist, base, dir, pl, &tol );
+	    ret = bg_isect_line3_plane( &dist, base, dir, pl, &s->tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {
 		V_MIN(min_exit, dist);
@@ -1781,7 +1827,7 @@ get_thru_faces_length( tag_t feat_tag,
 	    VSETALLN( pl, 0.0, 4 );
 	    pl[i] = -1.0;
 	    pl[W] = -bb[i];
-	    ret = bg_isect_line3_plane( &dist, base, dir, pl, &tol );
+	    ret = bg_isect_line3_plane( &dist, base, dir, pl, &s->tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {
 		V_MIN(min_exit, dist);
@@ -1813,7 +1859,7 @@ get_thru_faces_length( tag_t feat_tag,
 }
 
 int
-do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, double units_conv,
+do_hole(struct ug_state *s, int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, double units_conv,
 	 const mat_t curr_xform, struct wmember *head )
 {
     char *diam, *depth, *angle, *cb_diam, *cb_depth, *cs_diam, *cs_angle;
@@ -1957,7 +2003,7 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
     DO_INDENT;
     bu_log( "\tradius = %g\n", Radius );
     if ( thru_flag ) {
-	Depth = get_thru_faces_length( feat_tag, loc_orig, dir1 ) * units_conv;
+	Depth = get_thru_faces_length(s, feat_tag, loc_orig, dir1 ) * units_conv;
 	if ( Depth < SQRT_SMALL_FASTF ) {
 	    bu_log( "Failed to get hole depth\n" );
 	    return 1;
@@ -1968,8 +2014,8 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
     if ( hole_type == COUNTER_BORE_HOLE_TYPE ) {
 
 	VSCALE( height, dir, CB_depth );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_rcc( wdb_fd, solid_name, base, height, CB_radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_rcc( s->wdb_fd, solid_name, base, height, CB_radius ) ) {
 	    bu_log( "Failed to make RCC for simple hole feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -1983,8 +2029,8 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
 	CS_depth = (CS_radius - Radius) / tan( CS_angle );
 
 	VSCALE( height, dir, CS_depth );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, base, height, CS_radius, Radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, base, height, CS_radius, Radius ) ) {
 	    bu_log( "Failed to make TRC for conter sink feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -1995,8 +2041,8 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
     }
 
     VSCALE( height, dir, Depth );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, base, height, Radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, base, height, Radius ) ) {
 	bu_log( "Failed to make RCC for simple hole feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -2011,9 +2057,9 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
 	tip_depth = (Radius - MIN_RADIUS) / tan( Tip_angle );
 	VADD2( base, base, height );
 	VSCALE( height, dir, tip_depth );
-	solid_name = create_unique_brlcad_solid_name();
+	solid_name = create_unique_brlcad_solid_name(s);
 	DO_INDENT;
-	if ( mk_trc_h( wdb_fd, solid_name, base, height, Radius, MIN_RADIUS ) ) {
+	if ( mk_trc_h( s->wdb_fd, solid_name, base, height, Radius, MIN_RADIUS ) ) {
 	    bu_log( "Failed to make TRC for simple hole (tip) feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2027,6 +2073,7 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
 
 static int
 do_rect_pocket(
+    struct ug_state *s,
     tag_t feat_tag,
     int n_exps,
     tag_t *exps,
@@ -2126,8 +2173,8 @@ do_rect_pocket(
 	VJOIN1( &pts[18], &pts[15], zlen_bottom, dirz );
 	VJOIN1( &pts[21], &pts[12], zlen_bottom, dirz );
 
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2144,8 +2191,8 @@ do_rect_pocket(
 	VJOIN1( &pts[18], &pts[15], zlen_bottom-2.0*c_radius_bottom, dirz );
 	VJOIN1( &pts[21], &pts[12], zlen_bottom-2.0*c_radius_bottom, dirz );
 
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2157,8 +2204,8 @@ do_rect_pocket(
 	VJOIN2( trc_base, base, -ylen/2.0+c_radius, diry, -zlen/2.0+c_radius, dirz );
 	VJOIN1( trc_top, trc_base, depth-f_radius, dirx );
 	VSUB2( trc_height, trc_top, trc_base );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2167,8 +2214,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VJOIN2( trc_base, base, ylen/2.0-c_radius, diry, -zlen/2.0+c_radius, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2177,8 +2224,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VJOIN2( trc_base, base, -ylen/2.0+c_radius, diry, zlen/2.0-c_radius, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2187,8 +2234,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VJOIN2( trc_base, base, ylen/2.0-c_radius, diry, zlen/2.0-c_radius, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2206,8 +2253,8 @@ do_rect_pocket(
 	VJOIN1( &pts[18], &pts[6], f_radius, dirx );
 	VJOIN1( &pts[21], &pts[9], f_radius, dirx );
 
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2217,8 +2264,8 @@ do_rect_pocket(
 
 	/* 4 particle solids for rounded floor edges */
 	VSUB2( part_height, &pts[3], &pts[0] );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_particle( wdb_fd, solid_name, &pts[0], part_height, f_radius, f_radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_particle( s->wdb_fd, solid_name, &pts[0], part_height, f_radius, f_radius ) ) {
 	    bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2227,8 +2274,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VSUB2( part_height, &pts[6], &pts[3] );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_particle( wdb_fd, solid_name, &pts[3], part_height, f_radius, f_radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_particle( s->wdb_fd, solid_name, &pts[3], part_height, f_radius, f_radius ) ) {
 	    bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2237,8 +2284,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VSUB2( part_height, &pts[9], &pts[6] );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_particle( wdb_fd, solid_name, &pts[6], part_height, f_radius, f_radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_particle( s->wdb_fd, solid_name, &pts[6], part_height, f_radius, f_radius ) ) {
 	    bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2247,8 +2294,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VSUB2( part_height, &pts[0], &pts[9] );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_particle( wdb_fd, solid_name, &pts[9], part_height, f_radius, f_radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_particle( s->wdb_fd, solid_name, &pts[9], part_height, f_radius, f_radius ) ) {
 	    bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2270,8 +2317,8 @@ do_rect_pocket(
 	VJOIN1( &pts[18], &pts[15], zlen_bottom, dirz );
 	VJOIN1( &pts[21], &pts[12], zlen_bottom, dirz );
 
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2289,8 +2336,8 @@ do_rect_pocket(
 	VJOIN1( &pts[18], &pts[6], f_radius, dirx );
 	VJOIN1( &pts[21], &pts[9], f_radius, dirx );
 
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2300,8 +2347,8 @@ do_rect_pocket(
 
 	/* 4 particle solids for rounded floor edges */
 	VSUB2( part_height, &pts[3], &pts[0] );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_particle( wdb_fd, solid_name, &pts[0], part_height, f_radius, f_radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_particle( s->wdb_fd, solid_name, &pts[0], part_height, f_radius, f_radius ) ) {
 	    bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2310,8 +2357,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VSUB2( part_height, &pts[6], &pts[3] );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_particle( wdb_fd, solid_name, &pts[3], part_height, f_radius, f_radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_particle( s->wdb_fd, solid_name, &pts[3], part_height, f_radius, f_radius ) ) {
 	    bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2320,8 +2367,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VSUB2( part_height, &pts[9], &pts[6] );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_particle( wdb_fd, solid_name, &pts[6], part_height, f_radius, f_radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_particle( s->wdb_fd, solid_name, &pts[6], part_height, f_radius, f_radius ) ) {
 	    bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2330,8 +2377,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VSUB2( part_height, &pts[0], &pts[9] );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_particle( wdb_fd, solid_name, &pts[9], part_height, f_radius, f_radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_particle( s->wdb_fd, solid_name, &pts[9], part_height, f_radius, f_radius ) ) {
 	    bu_log( "Failed to make Particle for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2343,8 +2390,8 @@ do_rect_pocket(
 	VJOIN1( trc_base, &pts[0], -f_radius, diry );
 	VJOIN1( trc_top, &pts[3], f_radius, diry );
 	VSUB2( trc_height, trc_top, trc_base );
-	rcc1 = create_unique_brlcad_solid_name();
-	if ( mk_rcc( wdb_fd, rcc1, trc_base, trc_height, f_radius ) ) {
+	rcc1 = create_unique_brlcad_solid_name(s);
+	if ( mk_rcc( s->wdb_fd, rcc1, trc_base, trc_height, f_radius ) ) {
 	    bu_log( "Failed to make RCC for Rectangular Pocket feature!\n" );
 	    bu_free( rcc1, "rcc1" );
 	    return 1;
@@ -2354,8 +2401,8 @@ do_rect_pocket(
 	VJOIN1( trc_base, &pts[3], -f_radius, dirz );
 	VJOIN1( trc_top, &pts[6], f_radius, dirz );
 	VSUB2( trc_height, trc_top, trc_base );
-	rcc2 = create_unique_brlcad_solid_name();
-	if ( mk_rcc( wdb_fd, rcc2, trc_base, trc_height, f_radius ) ) {
+	rcc2 = create_unique_brlcad_solid_name(s);
+	if ( mk_rcc( s->wdb_fd, rcc2, trc_base, trc_height, f_radius ) ) {
 	    bu_log( "Failed to make RCC for Rectangular Pocket feature!\n" );
 	    bu_free( rcc2, "rcc2" );
 	    return 1;
@@ -2365,8 +2412,8 @@ do_rect_pocket(
 	VJOIN1( trc_base, &pts[6], f_radius, diry );
 	VJOIN1( trc_top, &pts[9], -f_radius, diry );
 	VSUB2( trc_height, trc_top, trc_base );
-	rcc3 = create_unique_brlcad_solid_name();
-	if ( mk_rcc( wdb_fd, rcc3, trc_base, trc_height, f_radius ) ) {
+	rcc3 = create_unique_brlcad_solid_name(s);
+	if ( mk_rcc( s->wdb_fd, rcc3, trc_base, trc_height, f_radius ) ) {
 	    bu_log( "Failed to make RCC for Rectangular Pocket feature!\n" );
 	    bu_free( rcc3, "rcc3" );
 	    return 1;
@@ -2376,8 +2423,8 @@ do_rect_pocket(
 	VJOIN1( trc_base, &pts[9], f_radius, dirz );
 	VJOIN1( trc_top, &pts[0], -f_radius, dirz );
 	VSUB2( trc_height, trc_top, trc_base );
-	rcc4 = create_unique_brlcad_solid_name();
-	if ( mk_rcc( wdb_fd, rcc4, trc_base, trc_height, f_radius ) ) {
+	rcc4 = create_unique_brlcad_solid_name(s);
+	if ( mk_rcc( s->wdb_fd, rcc4, trc_base, trc_height, f_radius ) ) {
 	    bu_log( "Failed to make RCC for Rectangular Pocket feature!\n" );
 	    bu_free( rcc4, "rcc4" );
 	    return 1;
@@ -2385,35 +2432,35 @@ do_rect_pocket(
 	add_to_obj_list( rcc4 );
 
 	/* intersect these RCC's at the corners, and subtract those intersections to get the dorners right */
-	solid_name = create_unique_brlcad_solid_name();
+	solid_name = create_unique_brlcad_solid_name(s);
 	BU_LIST_INIT( &corner.l );
 	(void)mk_addmember( rcc1, &corner.l, NULL, WMOP_UNION );
 	(void)mk_addmember( rcc2, &corner.l, NULL, WMOP_INTERSECT );
-	mk_comb( wdb_fd, solid_name, &corner.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
+	mk_comb( s->wdb_fd, solid_name, &corner.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 	add_to_obj_list( solid_name );
 
-	solid_name = create_unique_brlcad_solid_name();
+	solid_name = create_unique_brlcad_solid_name(s);
 	BU_LIST_INIT( &corner.l );
 	(void)mk_addmember( rcc2, &corner.l, NULL, WMOP_UNION );
 	(void)mk_addmember( rcc3, &corner.l, NULL, WMOP_INTERSECT );
-	mk_comb( wdb_fd, solid_name, &corner.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
+	mk_comb( s->wdb_fd, solid_name, &corner.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 	add_to_obj_list( solid_name );
 
-	solid_name = create_unique_brlcad_solid_name();
+	solid_name = create_unique_brlcad_solid_name(s);
 	BU_LIST_INIT( &corner.l );
 	(void)mk_addmember( rcc3, &corner.l, NULL, WMOP_UNION );
 	(void)mk_addmember( rcc4, &corner.l, NULL, WMOP_INTERSECT );
-	mk_comb( wdb_fd, solid_name, &corner.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
+	mk_comb( s->wdb_fd, solid_name, &corner.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 	add_to_obj_list( solid_name );
 
-	solid_name = create_unique_brlcad_solid_name();
+	solid_name = create_unique_brlcad_solid_name(s);
 	BU_LIST_INIT( &corner.l );
 	(void)mk_addmember( rcc4, &corner.l, NULL, WMOP_UNION );
 	(void)mk_addmember( rcc1, &corner.l, NULL, WMOP_INTERSECT );
-	mk_comb( wdb_fd, solid_name, &corner.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
+	mk_comb( s->wdb_fd, solid_name, &corner.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 	add_to_obj_list( solid_name );
 
@@ -2427,8 +2474,8 @@ do_rect_pocket(
 	VJOIN1( &pts[18], &pts[15], zlen_bottom, dirz );
 	VJOIN1( &pts[21], &pts[12], zlen_bottom, dirz );
 
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2445,8 +2492,8 @@ do_rect_pocket(
 	VJOIN1( &pts[18], &pts[15], zlen_bottom-2.0*c_radius_bottom, dirz );
 	VJOIN1( &pts[21], &pts[12], zlen_bottom-2.0*c_radius_bottom, dirz );
 
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2458,8 +2505,8 @@ do_rect_pocket(
 	VJOIN2( trc_base, base, -ylen/2.0+c_radius, diry, -zlen/2.0+c_radius, dirz );
 	VJOIN1( trc_top, trc_base, depth, dirx );
 	VSUB2( trc_height, trc_top, trc_base );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2468,8 +2515,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VJOIN2( trc_base, base, ylen/2.0-c_radius, diry, -zlen/2.0+c_radius, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2478,8 +2525,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VJOIN2( trc_base, base, -ylen/2.0+c_radius, diry, zlen/2.0-c_radius, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2488,8 +2535,8 @@ do_rect_pocket(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VJOIN2( trc_base, base, ylen/2.0-c_radius, diry, zlen/2.0-c_radius, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, trc_height, c_radius, c_radius_bottom ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2508,8 +2555,8 @@ do_rect_pocket(
 	VJOIN1( &pts[18], &pts[15], zlen_bottom, dirz );
 	VJOIN1( &pts[21], &pts[12], zlen_bottom, dirz );
 
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2523,6 +2570,7 @@ do_rect_pocket(
 
 static int
 do_cyl_pocket(
+    struct ug_state *s,
     tag_t feat_tag,
     int n_exps,
     tag_t *exps,
@@ -2594,8 +2642,8 @@ do_cyl_pocket(
 	    /* bottom is spherical */
 	    point_t center;
 
-	    solid_name = create_unique_brlcad_solid_name();
-	    if ( mk_trc_h( wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
+	    solid_name = create_unique_brlcad_solid_name(s);
+	    if ( mk_trc_h( s->wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
 		bu_log( "Failed to make TRC for Cylindrical Pocket feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return 1;
@@ -2605,8 +2653,8 @@ do_cyl_pocket(
 
 	    /* use sphere to round bottom */
 	    VADD2( center, base, height );
-	    solid_name = create_unique_brlcad_solid_name();
-	    if ( mk_sph( wdb_fd, solid_name, center, radius2 ) ) {
+	    solid_name = create_unique_brlcad_solid_name(s);
+	    if ( mk_sph( s->wdb_fd, solid_name, center, radius2 ) ) {
 		bu_log( "Failed to make SPH for Cylindrical Pocket feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return 1;
@@ -2620,8 +2668,8 @@ do_cyl_pocket(
 		VSCALE( height, dir, ht );
 		radius3 = radius1 - ht * tan( angle );
 
-		solid_name = create_unique_brlcad_solid_name();
-		if ( mk_trc_h( wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
+		solid_name = create_unique_brlcad_solid_name(s);
+		if ( mk_trc_h( s->wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
 		    bu_log( "Failed to make TRC for Cylindrical Pocket feature!\n" );
 		    bu_free( solid_name, "solid_name" );
 		    return 1;
@@ -2630,8 +2678,8 @@ do_cyl_pocket(
 		(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 		return 0;
 	    }
-	    solid_name = create_unique_brlcad_solid_name();
-	    if ( mk_trc_h( wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
+	    solid_name = create_unique_brlcad_solid_name(s);
+	    if ( mk_trc_h( s->wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
 		bu_log( "Failed to make TRC for Cylindrical Pocket feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return 1;
@@ -2642,8 +2690,8 @@ do_cyl_pocket(
 	    /* use torus to round bottom edges */
 	    VJOIN1( base2, base, tmp_ht, dir );
 	    VSCALE( height, dir, ht - tmp_ht );
-	    solid_name = create_unique_brlcad_solid_name();
-	    if ( mk_rcc( wdb_fd, solid_name, base2, height, radius4 ) ) {
+	    solid_name = create_unique_brlcad_solid_name(s);
+	    if ( mk_rcc( s->wdb_fd, solid_name, base2, height, radius4 ) ) {
 		bu_log( "Failed to make RCC for cylindrical pocket feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return 1;
@@ -2652,8 +2700,8 @@ do_cyl_pocket(
 	    (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	    VJOIN1( base2, base, ht - round_rad, dir );
-	    solid_name = create_unique_brlcad_solid_name();
-	    if ( mk_tor( wdb_fd, solid_name, base2, dir, radius4, round_rad ) ) {
+	    solid_name = create_unique_brlcad_solid_name(s);
+	    if ( mk_tor( s->wdb_fd, solid_name, base2, dir, radius4, round_rad ) ) {
 		bu_log( "Failed to make TOR for cylindrical pocket feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return 1;
@@ -2667,8 +2715,8 @@ do_cyl_pocket(
 	V_MAX(radius3, MIN_RADIUS);
 
 	VSCALE( height, dir, ht );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
 	    bu_log( "Failed to make TRC for Cylindrical Pocket feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2682,6 +2730,7 @@ do_cyl_pocket(
 
 static int
 do_rect_slot(
+    struct ug_state *s,
     tag_t feat_tag,
     int n_exps,
     tag_t *exps,
@@ -2732,7 +2781,7 @@ do_rect_slot(
 	}
 	length = tmp * units_conv;
     } else {
-	length = get_thru_faces_length( feat_tag, loc_orig, dir2 ) * units_conv;
+	length = get_thru_faces_length(s, feat_tag, loc_orig, dir2 ) * units_conv;
 	if ( length < SQRT_SMALL_FASTF ) {
 	    bu_log( "Failed to get slot length\n" );
 	    return 1;
@@ -2751,8 +2800,8 @@ do_rect_slot(
     VJOIN1( &pts[18], &pts[6], -depth, dirx );
     VJOIN1( &pts[21], &pts[9], -depth, dirx );
 
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	bu_log( "Failed to make ARB8 for Rectangular Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -2765,6 +2814,7 @@ do_rect_slot(
 
 static int
 do_rect_pad(
+    struct ug_state *s,
     tag_t feat_tag,
     int n_exps,
     tag_t *exps,
@@ -2840,8 +2890,8 @@ do_rect_pad(
 	VJOIN3( &pts[15], &pts[3], depth, dirx, -d, diry, d, dirz );
 	VJOIN3( &pts[18], &pts[6], depth, dirx, -d, diry, -d, dirz );
 	VJOIN3( &pts[21], &pts[9], depth, dirx, d, diry, -d, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pad feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2860,8 +2910,8 @@ do_rect_pad(
 	VJOIN2( &pts[15], &pts[3], depth, dirx, d, dirz );
 	VJOIN2( &pts[18], &pts[6], depth, dirx, -d, dirz );
 	VJOIN2( &pts[21], &pts[9], depth, dirx, -d, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pad feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2877,8 +2927,8 @@ do_rect_pad(
 	VJOIN2( &pts[15], &pts[3], depth, dirx, -d, diry );
 	VJOIN2( &pts[18], &pts[6], depth, dirx, -d, diry );
 	VJOIN2( &pts[21], &pts[9], depth, dirx, d, diry );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Rectangular Pad feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2889,8 +2939,8 @@ do_rect_pad(
 	/* make four TRC's */
 	VJOIN2( trc_base, base, -ylen/2.0 + c_radius, diry, -zlen/2.0 + c_radius, dirz );
 	VSCALE( height, dirx, depth );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pad feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2899,8 +2949,8 @@ do_rect_pad(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_UNION );
 
 	VJOIN2( trc_base, base, ylen/2.0 - c_radius, diry, -zlen/2.0 + c_radius, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pad feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2909,8 +2959,8 @@ do_rect_pad(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_UNION );
 
 	VJOIN2( trc_base, base, ylen/2.0 - c_radius, diry, zlen/2.0 - c_radius, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pad feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2919,8 +2969,8 @@ do_rect_pad(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_UNION );
 
 	VJOIN2( trc_base, base, -ylen/2.0 + c_radius, diry, zlen/2.0 - c_radius, dirz );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, height, c_radius, c_radius_end ) ) {
 	    bu_log( "Failed to make TRC for Rectangular Pad feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -2935,6 +2985,7 @@ do_rect_pad(
 
 static int
 do_ball_end_slot(
+    struct ug_state *s,
     tag_t feat_tag,
     int n_exps,
     tag_t *exps,
@@ -2985,7 +3036,7 @@ do_ball_end_slot(
 	}
 	length = tmp * units_conv;
     } else {
-	length = get_thru_faces_length( feat_tag, loc_orig, dir2 ) * units_conv;
+	length = get_thru_faces_length(s, feat_tag, loc_orig, dir2 ) * units_conv;
 	if ( length < SQRT_SMALL_FASTF ) {
 	    bu_log( "Failed to get slot length\n" );
 	    return 1;
@@ -3011,8 +3062,8 @@ do_ball_end_slot(
 	VJOIN1( &pts[18], &pts[6], -depth+radius, dirx );
 	VJOIN1( &pts[21], &pts[9], -depth+radius, dirx );
 
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for Ball End Slot feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -3023,8 +3074,8 @@ do_ball_end_slot(
 	/* build the particle for the bottom */
 	VJOIN2( part_base, base, -length/2.0 + radius, diry, -depth+radius, dirx );
 	VSCALE( part_height, diry, length-radius*2.0 );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_particle( wdb_fd, solid_name, part_base, part_height, radius, radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_particle( s->wdb_fd, solid_name, part_base, part_height, radius, radius ) ) {
 	    bu_log( "Failed to make particle solid for Ball End Slot feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -3035,10 +3086,10 @@ do_ball_end_slot(
 	/* now the RCC's for each end */
 	VJOIN1( rcc_base, base, -length/2.0 + radius, diry );
 	VSCALE( rcc_height, dirx, -depth+radius );
-	solid_name = create_unique_brlcad_solid_name();
+	solid_name = create_unique_brlcad_solid_name(s);
 	bu_log( "Creating RCC (%s): base = (%g %g %g), height = (%g %g %g), radius = %g\n",
 		solid_name, V3ARGS( rcc_base ), V3ARGS( rcc_height ), radius );
-	if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
+	if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
 	    bu_log( "Failed to make RCC for Ball End Slot feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -3047,10 +3098,10 @@ do_ball_end_slot(
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	VJOIN1( rcc_base, base, length/2.0 - radius, diry );
-	solid_name = create_unique_brlcad_solid_name();
+	solid_name = create_unique_brlcad_solid_name(s);
 	bu_log( "Creating RCC (%s): base = (%g %g %g), height = (%g %g %g), radius = %g\n",
 		solid_name, V3ARGS( rcc_base ), V3ARGS( rcc_height ), radius );
-	if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
+	if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
 	    bu_log( "Failed to make RCC for Ball End Slot feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -3060,8 +3111,8 @@ do_ball_end_slot(
     } else {
 	/* this is just a drill hole, use a single particle primitive */
 	VSCALE( part_height, dirx, -depth+radius );
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_particle( wdb_fd, solid_name, base, part_height, radius, radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_particle( s->wdb_fd, solid_name, base, part_height, radius, radius ) ) {
 	    bu_log( "Failed to make particle solid for Ball End Slot feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    return 1;
@@ -3075,7 +3126,8 @@ do_ball_end_slot(
 
 
 static int
-do_t_slot( tag_t feat_tag,
+do_t_slot( struct ug_state *s,
+	   tag_t feat_tag,
 	   int n_exps,
 	   tag_t *exps,
 	   char **descs,
@@ -3140,7 +3192,7 @@ do_t_slot( tag_t feat_tag,
 	}
 	length = tmp * units_conv;
     } else {
-	length = get_thru_faces_length( feat_tag, loc_orig, dir2 ) * units_conv;
+	length = get_thru_faces_length(s, feat_tag, loc_orig, dir2 ) * units_conv;
 	if ( length < SQRT_SMALL_FASTF ) {
 	    bu_log( "Failed to get slot length\n" );
 	    return 1;
@@ -3161,8 +3213,8 @@ do_t_slot( tag_t feat_tag,
     VJOIN1( &pts[18], &pts[6], -top_depth, dirx );
     VJOIN1( &pts[21], &pts[9], -top_depth, dirx );
 
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	bu_log( "Failed to make ARB8 for T Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3179,8 +3231,8 @@ do_t_slot( tag_t feat_tag,
     VJOIN1( &pts[18], &pts[6], -bottom_depth, dirx );
     VJOIN1( &pts[21], &pts[9], -bottom_depth, dirx );
 
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	bu_log( "Failed to make ARB8 for T Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3190,8 +3242,8 @@ do_t_slot( tag_t feat_tag,
 
     VJOIN1( rcc_base, base, length/2.0 - bottom_radius, diry );
     VSCALE( rcc_height, dirx, -top_depth );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, top_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, top_radius ) ) {
 	bu_log( "Failed to make RCC for T Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3200,8 +3252,8 @@ do_t_slot( tag_t feat_tag,
     (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
     VJOIN1( rcc_base, base, -length/2.0 + bottom_radius, diry );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, top_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, top_radius ) ) {
 	bu_log( "Failed to make RCC for T Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3211,8 +3263,8 @@ do_t_slot( tag_t feat_tag,
 
     VJOIN2( rcc_base, base, length/2.0 - bottom_radius, diry, -top_depth, dirx );
     VSCALE( rcc_height, dirx, -bottom_depth );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, bottom_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, bottom_radius ) ) {
 	bu_log( "Failed to make RCC for T Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3222,8 +3274,8 @@ do_t_slot( tag_t feat_tag,
 
     VJOIN2( rcc_base, base, -length/2.0 + bottom_radius, diry, -top_depth, dirx );
     VSCALE( rcc_height, dirx, -bottom_depth );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, bottom_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, bottom_radius ) ) {
 	bu_log( "Failed to make RCC for T Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3235,7 +3287,8 @@ do_t_slot( tag_t feat_tag,
 }
 
 static int
-do_u_slot( tag_t feat_tag,
+do_u_slot( struct ug_state *s,
+	   tag_t feat_tag,
 	   int n_exps,
 	   tag_t *exps,
 	   char **descs,
@@ -3294,7 +3347,7 @@ do_u_slot( tag_t feat_tag,
 	}
 	length = tmp * units_conv;
     } else {
-	length = get_thru_faces_length( feat_tag, loc_orig, dir2 ) * units_conv;
+	length = get_thru_faces_length(s, feat_tag, loc_orig, dir2 ) * units_conv;
 	if ( length < SQRT_SMALL_FASTF ) {
 	    bu_log( "failed to get slot length\n" );
 	    return 1;
@@ -3324,8 +3377,8 @@ do_u_slot( tag_t feat_tag,
     VJOIN1( &pts[18], &pts[6], -depth+corner_radius, dirx );
     VJOIN1( &pts[21], &pts[9], -depth+corner_radius, dirx );
 
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	bu_log( "Failed to make ARB8 for U Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3342,8 +3395,8 @@ do_u_slot( tag_t feat_tag,
     VJOIN1( &pts[18], &pts[6], -corner_radius, dirx );
     VJOIN1( &pts[21], &pts[9], -corner_radius, dirx );
 
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	bu_log( "Failed to make ARB8 for U Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3354,8 +3407,8 @@ do_u_slot( tag_t feat_tag,
     /* the two RCC's for the ends of the slot */
     VJOIN1( rcc_base, base, -length/2.0 + radius, diry );
     VSCALE( rcc_height, dirx, -depth+corner_radius );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
 	bu_log( "Failed to make RCC for U Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3364,8 +3417,8 @@ do_u_slot( tag_t feat_tag,
     (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
     VJOIN1( rcc_base, base, +length/2.0 - radius, diry );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, radius ) ) {
 	bu_log( "Failed to make RCC for U Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3376,8 +3429,8 @@ do_u_slot( tag_t feat_tag,
     /* two smaller RCC's for the end bottoms */
     VJOIN1( rcc_base, rcc_base, -depth+corner_radius, dirx );
     VSCALE( rcc_height, dirx, -corner_radius );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius-corner_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, radius-corner_radius ) ) {
 	bu_log( "Failed to make RCC for U Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3386,8 +3439,8 @@ do_u_slot( tag_t feat_tag,
     (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
     VJOIN1( rcc_base, rcc_base, -length+radius*2.0, diry );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, radius-corner_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, radius-corner_radius ) ) {
 	bu_log( "Failed to make RCC for U Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3396,8 +3449,8 @@ do_u_slot( tag_t feat_tag,
     (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
     /* Two torii for the rounded edges on the bottom ends */
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_tor( wdb_fd, solid_name, rcc_base, dirx, radius-corner_radius, corner_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_tor( s->wdb_fd, solid_name, rcc_base, dirx, radius-corner_radius, corner_radius ) ) {
 	bu_log( "Failed to make Torus for U Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3406,8 +3459,8 @@ do_u_slot( tag_t feat_tag,
     (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
     VJOIN1( rcc_base, rcc_base, +length-radius*2.0, diry );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_tor( wdb_fd, solid_name, rcc_base, dirx, radius-corner_radius, corner_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_tor( s->wdb_fd, solid_name, rcc_base, dirx, radius-corner_radius, corner_radius ) ) {
 	bu_log( "Failed to make Torus for U Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3419,8 +3472,8 @@ do_u_slot( tag_t feat_tag,
     /* and two RCC's for the rounded straight edges of the bottom floor */
     VJOIN3( rcc_base, base, -radius+corner_radius, dirz, -length/2.0+radius, diry, -depth+corner_radius, dirx );
     VSCALE( rcc_height, diry, length - radius*2.0 );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, corner_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, corner_radius ) ) {
 	bu_log( "Failed to make RCC for U Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3429,8 +3482,8 @@ do_u_slot( tag_t feat_tag,
     (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
     VJOIN1( rcc_base, rcc_base, (radius-corner_radius)*2.0, dirz );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, corner_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, corner_radius ) ) {
 	bu_log( "Failed to make RCC for U Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3442,7 +3495,8 @@ do_u_slot( tag_t feat_tag,
 }
 
 static int
-do_dove_tail_slot( tag_t feat_tag,
+do_dove_tail_slot( struct ug_state *s,
+	           tag_t feat_tag,
 		   int n_exps,
 		   tag_t *exps,
 		   char **descs,
@@ -3499,7 +3553,7 @@ do_dove_tail_slot( tag_t feat_tag,
 	}
 	length = tmp * units_conv;
     } else {
-	length = get_thru_faces_length( feat_tag, loc_orig, dir2 ) * units_conv;
+	length = get_thru_faces_length(s, feat_tag, loc_orig, dir2 ) * units_conv;
 	if ( length < SQRT_SMALL_FASTF ) {
 	    bu_log( "failed to get slot length\n" );
 	    return 1;
@@ -3522,8 +3576,8 @@ do_dove_tail_slot( tag_t feat_tag,
     VJOIN1( &pts[18], &pts[15], length - top_radius*2.0, diry );
     VJOIN1( &pts[21], &pts[12], length - top_radius*2.0, diry );
 
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	bu_log( "Failed to make ARB8 for Dovetail Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3533,8 +3587,8 @@ do_dove_tail_slot( tag_t feat_tag,
 
     VJOIN1( trc_base, base, length/2.0-top_radius, diry );
     VSCALE( trc_height, dirx, -depth );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, top_radius, bottom_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, trc_height, top_radius, bottom_radius ) ) {
 	bu_log( "Failed to make TRC for Dovetail Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3543,8 +3597,8 @@ do_dove_tail_slot( tag_t feat_tag,
     (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
     VJOIN1( trc_base, base, -length/2.0+top_radius, diry );
-    solid_name = create_unique_brlcad_solid_name();
-    if ( mk_trc_h( wdb_fd, solid_name, trc_base, trc_height, top_radius, bottom_radius ) ) {
+    solid_name = create_unique_brlcad_solid_name(s);
+    if ( mk_trc_h( s->wdb_fd, solid_name, trc_base, trc_height, top_radius, bottom_radius ) ) {
 	bu_log( "Failed to make TRC for Dovetail Slot feature!\n" );
 	bu_free( solid_name, "solid_name" );
 	return 1;
@@ -3556,7 +3610,8 @@ do_dove_tail_slot( tag_t feat_tag,
 }
 
 static char *
-build_rect_torus( point_t rcc_base,
+build_rect_torus( struct ug_state *s,
+	          point_t rcc_base,
 		  vect_t rcc_height,
 		  fastf_t inner_radius,
 		  fastf_t outer_radius )
@@ -3568,10 +3623,10 @@ build_rect_torus( point_t rcc_base,
     BU_LIST_INIT( &head.l );
 
     bu_log( "In build_rect_torus():\n" );
-    solid_name = create_unique_brlcad_solid_name();
+    solid_name = create_unique_brlcad_solid_name(s);
     bu_log( "\tbuilding RCC (%s): base = (%g %g %g), height = (%g %g %g), radius = %g\n",
 	    solid_name, V3ARGS( rcc_base ), V3ARGS( rcc_height ), outer_radius );
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, outer_radius ) ) {
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, outer_radius ) ) {
 	bu_log( "Failed to make RCC for rectangular torus!\n" );
 	bu_free( solid_name, "solid_name" );
 	return (char *)NULL;
@@ -3579,10 +3634,10 @@ build_rect_torus( point_t rcc_base,
     add_to_obj_list( solid_name );
     (void)mk_addmember( solid_name, &head.l, NULL, WMOP_UNION );
 
-    solid_name = create_unique_brlcad_solid_name();
+    solid_name = create_unique_brlcad_solid_name(s);
     bu_log( "\tbuilding RCC (%s): base = (%g %g %g), height = (%g %g %g), radius = %g\n",
 	    solid_name, V3ARGS( rcc_base ), V3ARGS( rcc_height ), inner_radius );
-    if ( mk_rcc( wdb_fd, solid_name, rcc_base, rcc_height, inner_radius ) ) {
+    if ( mk_rcc( s->wdb_fd, solid_name, rcc_base, rcc_height, inner_radius ) ) {
 	bu_log( "Failed to make RCC for rectangular torus!\n" );
 	bu_free( solid_name, "solid_name" );
 	return (char *)NULL;
@@ -3590,8 +3645,8 @@ build_rect_torus( point_t rcc_base,
     add_to_obj_list( solid_name );
     (void)mk_addmember( solid_name, &head.l, NULL, WMOP_SUBTRACT );
 
-    solid_name = create_unique_brlcad_combination_name();
-    (void)mk_comb( wdb_fd, solid_name, &head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
+    solid_name = create_unique_brlcad_combination_name(s);
+    (void)mk_comb( s->wdb_fd, solid_name, &head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 
     return solid_name;
 }
@@ -3601,7 +3656,8 @@ build_rect_torus( point_t rcc_base,
 #define U_GROOVE	3
 
 static int
-do_groove( int groove_type,
+do_groove( struct ug_state *s,
+	   int groove_type,
 	   tag_t feat_tag,
 	   int n_exps,
 	   tag_t *exps,
@@ -3755,7 +3811,7 @@ do_groove( int groove_type,
 	    }
 	    VJOIN1( rcc_base, base, -groove_width/2.0, dirx );
 	    VSCALE( rcc_height, dirx, groove_width );
-	    solid_name = build_rect_torus( rcc_base, rcc_height, groove_radius, outer_radius );
+	    solid_name = build_rect_torus(s, rcc_base, rcc_height, groove_radius, outer_radius );
 	    add_to_obj_list( solid_name );
 	    (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 	    break;
@@ -3763,19 +3819,19 @@ do_groove( int groove_type,
 	    if ( outer_radius > 0.0 ) {
 		VJOIN1( rcc_base, base, -ball_radius, dirx );
 		VSCALE( rcc_height, dirx, ball_radius*2.0 );
-		solid_name = build_rect_torus( rcc_base, rcc_height, inner_radius, outer_radius );
+		solid_name = build_rect_torus(s, rcc_base, rcc_height, inner_radius, outer_radius );
 		add_to_obj_list( solid_name );
 		(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 	    }
-	    solid_name = create_unique_brlcad_solid_name();
+	    solid_name = create_unique_brlcad_solid_name(s);
 	    if ( internal_groove ) {
-		if ( mk_tor( wdb_fd, solid_name, base, dirx, groove_radius - ball_radius, ball_radius ) ) {
+		if ( mk_tor( s->wdb_fd, solid_name, base, dirx, groove_radius - ball_radius, ball_radius ) ) {
 		    bu_log( "Failed to make TOR for Ball End Groove feature!\n" );
 		    bu_free( solid_name, "solid_name" );
 		    return 1;
 		}
 	    } else {
-		if ( mk_tor( wdb_fd, solid_name, base, dirx, groove_radius + ball_radius, ball_radius ) ) {
+		if ( mk_tor( s->wdb_fd, solid_name, base, dirx, groove_radius + ball_radius, ball_radius ) ) {
 		    bu_log( "Failed to make TOR for Ball End Groove feature!\n" );
 		    bu_free( solid_name, "solid_name" );
 		    return 1;
@@ -3788,32 +3844,32 @@ do_groove( int groove_type,
 	    if ( outer_radius > 0.0 ) {
 		VJOIN1( rcc_base, base, -groove_width/2.0, dirx );
 		VSCALE( rcc_height, dirx, groove_width );
-		solid_name = build_rect_torus( rcc_base, rcc_height, inner_radius, outer_radius );
+		solid_name = build_rect_torus(s, rcc_base, rcc_height, inner_radius, outer_radius );
 		add_to_obj_list( solid_name );
 		(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 	    }
 	    VJOIN1( rcc_base, base, -groove_width/2.0 + corner_radius, dirx );
 	    VSCALE( rcc_height, dirx, groove_width - 2.0*corner_radius );
 	    if ( internal_groove ) {
-		solid_name = build_rect_torus( rcc_base, rcc_height, groove_radius - corner_radius,
+		solid_name = build_rect_torus(s, rcc_base, rcc_height, groove_radius - corner_radius,
 					       groove_radius );
 	    } else {
-		solid_name = build_rect_torus( rcc_base, rcc_height, groove_radius,
+		solid_name = build_rect_torus(s, rcc_base, rcc_height, groove_radius,
 					       groove_radius + corner_radius );
 	    }
 	    add_to_obj_list( solid_name );
 	    (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	    VJOIN1( rcc_base, base, groove_width/2.0 - corner_radius, dirx );
-	    solid_name = create_unique_brlcad_solid_name();
+	    solid_name = create_unique_brlcad_solid_name(s);
 	    if ( internal_groove ) {
-		if ( mk_tor( wdb_fd, solid_name, rcc_base, dirx, groove_radius-corner_radius, corner_radius ) ) {
+		if ( mk_tor( s->wdb_fd, solid_name, rcc_base, dirx, groove_radius-corner_radius, corner_radius ) ) {
 		    bu_log( "Failed to make TOR for U Groove feature!\n" );
 		    bu_free( solid_name, "solid_name" );
 		    return 1;
 		}
 	    } else {
-		if ( mk_tor( wdb_fd, solid_name, rcc_base, dirx, groove_radius+corner_radius, corner_radius ) ) {
+		if ( mk_tor( s->wdb_fd, solid_name, rcc_base, dirx, groove_radius+corner_radius, corner_radius ) ) {
 		    bu_log( "Failed to make TOR for U Groove feature!\n" );
 		    bu_free( solid_name, "solid_name" );
 		    return 1;
@@ -3823,15 +3879,15 @@ do_groove( int groove_type,
 	    (void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
 	    VJOIN1( rcc_base, base, -groove_width/2.0 + corner_radius, dirx );
-	    solid_name = create_unique_brlcad_solid_name();
+	    solid_name = create_unique_brlcad_solid_name(s);
 	    if ( internal_groove ) {
-		if ( mk_tor( wdb_fd, solid_name, rcc_base, dirx, groove_radius-corner_radius, corner_radius ) ) {
+		if ( mk_tor( s->wdb_fd, solid_name, rcc_base, dirx, groove_radius-corner_radius, corner_radius ) ) {
 		    bu_log( "Failed to make TOR for U Groove feature!\n" );
 		    bu_free( solid_name, "solid_name" );
 		    return 1;
 		}
 	    } else {
-		if ( mk_tor( wdb_fd, solid_name, rcc_base, dirx, groove_radius+corner_radius, corner_radius ) ) {
+		if ( mk_tor( s->wdb_fd, solid_name, rcc_base, dirx, groove_radius+corner_radius, corner_radius ) ) {
 		    bu_log( "Failed to make TOR for U Groove feature!\n" );
 		    bu_free( solid_name, "solid_name" );
 		    return 1;
@@ -3847,7 +3903,8 @@ do_groove( int groove_type,
 }
 
 static int
-convert_a_feature( tag_t feat_tag,
+convert_a_feature( struct ug_state *s,
+	           tag_t feat_tag,
 		   char *part_name,
 		   char *refset_name,
 		   char *inst_name,
@@ -3863,7 +3920,7 @@ convert_a_feature( tag_t feat_tag,
     char **descs;
     tag_t *exps;
     int n_exps;
-    UF_FEATURE_SIGN sign;
+    UF_FEATURE_SIGN sign = UF_NULLSIGN;
 
     UF_func( UF_MODL_ask_feature_sign( feat_tag, &sign ) );
     switch ( sign ) {
@@ -3900,7 +3957,7 @@ convert_a_feature( tag_t feat_tag,
     UF_func( UF_MODL_ask_feat_type( feat_tag, &feat_type ) );
     DO_INDENT;
     bu_log( "Feature %s is type %s, sign is %s, starting prim number is %d\n",
-	    feat_name, feat_type, feat_sign[sign], prim_no );
+	    feat_name, feat_type, feat_sign[sign], s->prim_no );
 
     if ( debug ) {
 	int i;
@@ -3926,8 +3983,8 @@ convert_a_feature( tag_t feat_tag,
 	    failed = 1;
 	    goto out;
 	}
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_rcc( wdb_fd, solid_name, base, height, radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_rcc( s->wdb_fd, solid_name, base, height, radius ) ) {
 	    bu_log( "Failed to make RCC for cylinder feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    failed = 1;
@@ -3945,8 +4002,8 @@ convert_a_feature( tag_t feat_tag,
 	    failed = 1;
 	    goto out;
 	}
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_arb8( wdb_fd, solid_name, pts ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_arb8( s->wdb_fd, solid_name, pts ) ) {
 	    bu_log( "Failed to make ARB8 for block feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    failed = 1;
@@ -3966,8 +4023,8 @@ convert_a_feature( tag_t feat_tag,
 	    failed = 1;
 	    goto out;
 	}
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_sph( wdb_fd, solid_name, center, radius ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_sph( s->wdb_fd, solid_name, center, radius ) ) {
 	    bu_log( "Failed to make SPHERE for sphere feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    failed = 1;
@@ -3988,8 +4045,8 @@ convert_a_feature( tag_t feat_tag,
 	    failed = 1;
 	    goto out;
 	}
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_cone( wdb_fd, solid_name, base, dirv, height, radbase, radtop ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_cone( s->wdb_fd, solid_name, base, dirv, height, radbase, radtop ) ) {
 	    bu_log( "Failed to make TRC for cone feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    failed = 1;
@@ -4000,7 +4057,7 @@ convert_a_feature( tag_t feat_tag,
     } else if ( BU_STR_EQUAL( feat_type, "SWP104" ) ) {
 	char *solid_name;
 
-	solid_name = convert_sweep( feat_tag, part_name, refset_name, inst_name, rgb, curr_xform,
+	solid_name = convert_sweep(s, feat_tag, part_name, refset_name, inst_name, rgb, curr_xform,
 				    units_conv, 0 );
 	if ( !solid_name ) {
 	    failed = 1;
@@ -4009,72 +4066,72 @@ convert_a_feature( tag_t feat_tag,
 	add_to_obj_list( solid_name );
 	(void)mk_addmember( solid_name, &head->l, NULL, brlcad_op );
     } else if ( BU_STR_EQUAL( feat_type, "SIMPLE HOLE" ) ) {
-	if ( do_hole( SIMPLE_HOLE_TYPE, feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_hole(s, SIMPLE_HOLE_TYPE, feat_tag, n_exps, exps, descs, units_conv,
 		      curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "CBORE_HOLE" ) ) {
-	if ( do_hole( COUNTER_BORE_HOLE_TYPE, feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_hole(s, COUNTER_BORE_HOLE_TYPE, feat_tag, n_exps, exps, descs, units_conv,
 		      curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "CSUNK_HOLE" ) ) {
-	if ( do_hole( COUNTER_SINK_HOLE_TYPE, feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_hole(s, COUNTER_SINK_HOLE_TYPE, feat_tag, n_exps, exps, descs, units_conv,
 		      curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "RECT_POCKET" ) ) {
-	if ( do_rect_pocket( feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_rect_pocket(s, feat_tag, n_exps, exps, descs, units_conv,
 			     curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "CYL_POCKET" ) ) {
-	if ( do_cyl_pocket( feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_cyl_pocket(s, feat_tag, n_exps, exps, descs, units_conv,
 			    curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "RECT_PAD" ) ) {
-	if ( do_rect_pad( feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_rect_pad(s, feat_tag, n_exps, exps, descs, units_conv,
 			  curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "RECT_SLOT" ) ) {
-	if ( do_rect_slot( feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_rect_slot(s, feat_tag, n_exps, exps, descs, units_conv,
 			   curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "BALL_END_SLOT" ) ) {
-	if ( do_ball_end_slot( feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_ball_end_slot(s, feat_tag, n_exps, exps, descs, units_conv,
 			       curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "U_SLOT" ) ) {
-	if ( do_u_slot( feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_u_slot(s, feat_tag, n_exps, exps, descs, units_conv,
 			curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "T_SLOT" ) ) {
-	if ( do_t_slot( feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_t_slot(s, feat_tag, n_exps, exps, descs, units_conv,
 			curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "DOVE_TAIL_SLOT" ) ) {
-	if ( do_dove_tail_slot( feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_dove_tail_slot(s, feat_tag, n_exps, exps, descs, units_conv,
 				curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "RECT_GROOVE" ) ) {
-	if ( do_groove( RECT_GROOVE, feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_groove(s, RECT_GROOVE, feat_tag, n_exps, exps, descs, units_conv,
 			curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "BALL_END_GROOVE" ) ) {
-	if ( do_groove( BALL_END_GROOVE, feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_groove(s, BALL_END_GROOVE, feat_tag, n_exps, exps, descs, units_conv,
 			curr_xform, head ) ) {
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "U_GROOVE" ) ) {
-	if ( do_groove( U_GROOVE, feat_tag, n_exps, exps, descs, units_conv,
+	if ( do_groove(s, U_GROOVE, feat_tag, n_exps, exps, descs, units_conv,
 			curr_xform, head ) ) {
 	    failed = 1;
 	}
@@ -4145,8 +4202,8 @@ convert_a_feature( tag_t feat_tag,
 	radius2 = radius1 - ht * tan( ang );
 	V_MAX(radius2, MIN_RADIUS);
 
-	solid_name = create_unique_brlcad_solid_name();
-	if ( mk_trc_h( wdb_fd, solid_name, base, Height, radius1, radius2 ) ) {
+	solid_name = create_unique_brlcad_solid_name(s);
+	if ( mk_trc_h( s->wdb_fd, solid_name, base, Height, radius1, radius2 ) ) {
 	    bu_log( "Failed to make TRC for BOSS feature!\n" );
 	    bu_free( solid_name, "solid_name" );
 	    failed = 1;
@@ -4161,35 +4218,35 @@ convert_a_feature( tag_t feat_tag,
 	failed = 1;
 #else
     } else if ( BU_STR_EQUAL( feat_type, "CHAMFER" ) ) {
-	if ( min_chamfer <= 0.0 ) {
+	if ( s->min_chamfer <= 0.0 ) {
 	    failed = 1;
 	} else {
 	    double offset1 = 0.0;
 	    double offset2 = 0.0;
 
-	    get_chamfer_offsets( feat_tag, part_name, units_conv, &offset1, &offset2 );
-	    if ( offset1 >= min_chamfer || offset2 >= min_chamfer ) {
+	    get_chamfer_offsets(s, feat_tag, part_name, units_conv, &offset1, &offset2 );
+	    if ( offset1 >= s->min_chamfer || offset2 >= s->min_chamfer ) {
 		DO_INDENT;
-		bu_log( "chamfer offsets of %g or %g is greater than minimum of %g\n", offset1, offset2, min_chamfer );
+		bu_log( "chamfer offsets of %g or %g is greater than minimum of %g\n", offset1, offset2, s->min_chamfer );
 		failed = 1;
 	    }
 	}
     } else if ( BU_STR_EQUAL( feat_type, "BLEND" ) ) {
-	if ( min_round <= 0.0 ) {
+	if ( s->min_round <= 0.0 ) {
 	    failed = 1;
 	} else {
 	    double blend_radius;
 
-	    get_blend_radius( feat_tag, part_name, units_conv, &blend_radius );
-	    if ( blend_radius >= min_round ) {
+	    get_blend_radius(feat_tag, part_name, units_conv, &blend_radius );
+	    if ( blend_radius >= s->min_round ) {
 		DO_INDENT;
-		bu_log( "blend radius of %g is greater than minimum of %g\n", blend_radius, min_round );
+		bu_log( "blend radius of %g is greater than minimum of %g\n", blend_radius, s->min_round );
 		failed = 1;
 	    }
 	}
 #endif
     } else if ( BU_STR_EQUAL( feat_type, "BREP" ) ) {
-	parts_brep++;
+	s->parts_brep++;
 	failed = 1;
     } else {
 	DO_INDENT;
@@ -4207,7 +4264,7 @@ convert_a_feature( tag_t feat_tag,
 }
 
 char *
-conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, const mat_t curr_xform,
+conv_features( struct ug_state *s, tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, const mat_t curr_xform,
 	       double units_conv, int make_region )
 {
     uf_list_p_t feat_list;
@@ -4250,10 +4307,10 @@ conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *inst_n
 	    continue;
 	}
 
-	if ( convert_a_feature( feat_tag, part_name, refset_name, inst_name, units_conv, curr_xform, rgb, &head ) ) {
+	if ( convert_a_feature(s, feat_tag, part_name, refset_name, inst_name, units_conv, curr_xform, rgb, &head ) ) {
 	    failed = 1;
 
-	    if ( !show_all_features ) {
+	    if ( !s->show_all_features ) {
 		break;
 	    }
 	}
@@ -4270,10 +4327,10 @@ conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *inst_n
 	fprintf( stderr, "\t%s\n", ptr->name );
 	tmp = ptr->next;
 	if ( failed ) {
-	    dp = db_lookup( wdb_fd->dbip, ptr->name, LOOKUP_QUIET );
+	    dp = db_lookup( s->wdb_fd->dbip, ptr->name, LOOKUP_QUIET );
 	    if ( dp != RT_DIR_NULL ) {
-		db_delete( wdb_fd->dbip, dp );
-		db_dirdelete( wdb_fd->dbip, dp );
+		db_delete( s->wdb_fd->dbip, dp );
+		db_dirdelete( s->wdb_fd->dbip, dp );
 	    }
 	}
 
@@ -4304,12 +4361,12 @@ conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *inst_n
 
     if ( BU_LIST_NON_EMPTY( &head.l ) ) {
 	if ( make_region ) {
-	    return build_region( &head, part_name, refset_name, inst_name, rgb );
+	    return build_region(s, &head, part_name, refset_name, inst_name, rgb );
 	} else {
 	    char *comb_name;
 
-	    comb_name = create_unique_brlcad_combination_name();
-	    (void)mk_comb( wdb_fd, comb_name, &head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
+	    comb_name = create_unique_brlcad_combination_name(s);
+	    (void)mk_comb( s->wdb_fd, comb_name, &head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
 
 	    return comb_name;
 	}
@@ -4319,7 +4376,7 @@ conv_features( tag_t solid_tag, char *part_name, char *refset_name, char *inst_n
 }
 
 char *
-facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv, int make_region ) {
+facetize(struct ug_state *s, tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv, int make_region ) {
     int type, subtype;
     tag_t model;	/* The facetized solid */
     int facet_id;
@@ -4373,14 +4430,14 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	if (facet_params.max_facet_edges != MAX_VERT_PER_FACET ||
 	    facet_params.number_storage_type != UF_FACET_TYPE_DOUBLE ||
 	    !facet_params.specify_surface_tolerance ||
-	    !EQUAL(facet_params.surface_dist_tolerance, surf_tol) ||
-	    !EQUAL(facet_params.surface_angular_tolerance, ang_tol)) {
+	    !EQUAL(facet_params.surface_dist_tolerance, s->surf_tol) ||
+	    !EQUAL(facet_params.surface_angular_tolerance, s->ang_tol)) {
 
 	    facet_params.number_storage_type = UF_FACET_TYPE_DOUBLE;
 	    facet_params.max_facet_edges = MAX_VERT_PER_FACET;
 	    facet_params.specify_surface_tolerance = 1;
-	    facet_params.surface_dist_tolerance = surf_tol;
-	    facet_params.surface_angular_tolerance = ang_tol;
+	    facet_params.surface_dist_tolerance = s->surf_tol;
+	    facet_params.surface_angular_tolerance = s->ang_tol;
 	    UF_func(UF_FACET_set_default_parameters (&facet_params));
 
 	    UF_func(UF_FACET_ask_default_parameters( &facet_params ));
@@ -4420,7 +4477,8 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
     for (UF_FACET_cycle_facets(model, &facet_id );
 	 facet_id != UF_FACET_NULL_FACET_ID;
 	 UF_FACET_cycle_facets (model, &facet_id ) ) {
-	int vindex[3], nindex[3];
+	int vindex[3] = {-1};
+	int nindex[3] = {-1};
 
 
 	/* XXX Could we intuit something useful
@@ -4442,47 +4500,47 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 		VSCALE(v[vn], v[vn], units_conv);
 	    }
 	    MAT4X3PNT( xformed_pt, curr_xform, v[vn] );
-	    vindex[vn] = bg_vert_tree_add( vert_tree, xformed_pt[0], xformed_pt[1], xformed_pt[2], tol_dist_sq );
+	    vindex[vn] = bg_vert_tree_add( vert_tree, xformed_pt[0], xformed_pt[1], xformed_pt[2], s->tol_dist_sq );
 
-	    if ( use_normals ) {
+	    if ( s->use_normals ) {
 		MAT4X3VEC( xformed_pt, curr_xform, normals[vn] );
-		nindex[vn] = bg_vert_tree_add( norm_tree, xformed_pt[0], xformed_pt[1], xformed_pt[2], tol_dist_sq );
+		nindex[vn] = bg_vert_tree_add( norm_tree, xformed_pt[0], xformed_pt[1], xformed_pt[2], s->tol_dist_sq );
 	    }
 	}
-	if ( !bad_triangle( vindex[0], vindex[1], vindex[2] ) ) {
-	    add_triangle( vindex[0], vindex[1], vindex[2] );
-	    if ( use_normals ) {
-		add_face_normals( nindex[0], nindex[1], nindex[2] );
+	if ( !bad_triangle(s, vindex[0], vindex[1], vindex[2] ) ) {
+	    add_triangle(s, vindex[0], vindex[1], vindex[2] );
+	    if ( s->use_normals ) {
+		add_face_normals(s, nindex[0], nindex[1], nindex[2] );
 	    }
 	}
     }
 
-    if ( curr_tri > 0 && vert_tree->curr_vert > 0 ) {
-	prim_no++;
-	bu_vls_printf( &name_vls, "s.%d", prim_no );
+    if ( s->curr_tri > 0 && vert_tree->curr_vert > 0 ) {
+	s->prim_no++;
+	bu_vls_printf( &name_vls, "s.%d", s->prim_no );
 
-	solid_name = create_unique_brlcad_name( &name_vls );
+	solid_name = create_unique_brlcad_name(s, &name_vls );
 	bu_vls_free( &name_vls );
 
-	if ( use_normals && norm_tree->curr_vert > 0 ) {
-	    if ( mk_bot_w_normals( wdb_fd, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED,
+	if ( s->use_normals && norm_tree->curr_vert > 0 ) {
+	    if ( mk_bot_w_normals( s->wdb_fd, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED,
 				   RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
-				   vert_tree->curr_vert, curr_tri, vert_tree->the_array, part_tris,
+				   vert_tree->curr_vert, s->curr_tri, vert_tree->the_array, s->part_tris,
 				   (fastf_t *)NULL, (struct bu_bitv *)NULL, norm_tree->curr_vert,
-				   norm_tree->the_array, part_norms  ) ) {
+				   norm_tree->the_array, s->part_norms  ) ) {
 		bu_log( "ERROR: Failed to create BOT (%s)\n", solid_name );
 	    }
 	} else {
-	    if ( mk_bot( wdb_fd, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree->curr_vert, curr_tri,
-			 vert_tree->the_array, part_tris, (fastf_t *)NULL, (struct bu_bitv *)NULL ) ) {
+	    if ( mk_bot( s->wdb_fd, solid_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, vert_tree->curr_vert, s->curr_tri,
+			 vert_tree->the_array, s->part_tris, (fastf_t *)NULL, (struct bu_bitv *)NULL ) ) {
 		bu_log( "ERROR: Failed to create BOT (%s)\n", solid_name );
 	    }
 	}
 
 	bg_vert_tree_clean( vert_tree );
 	bg_vert_tree_clean( norm_tree );
-	curr_tri = 0;
-	curr_norm = 0;
+	s->curr_tri = 0;
+	s->curr_norm = 0;
 
 	if ( make_region ) {
 	    if ( inst_name ) {
@@ -4499,14 +4557,14 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 		}
 	    }
 
-	    get_part_name( &name_vls );
+	    get_part_name(s, &name_vls );
 
 	    if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 		bu_vls_strcat( &name_vls, "_" );
 		bu_vls_strcat( &name_vls, refset_name );
 	    }
 	    bu_vls_strcat( &name_vls, ".r" );
-	    region_name = create_unique_brlcad_name( &name_vls );
+	    region_name = create_unique_brlcad_name(s, &name_vls );
 	    bu_vls_free( &name_vls );
 
 	    BU_LIST_INIT( &head.l );
@@ -4519,9 +4577,9 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 		for ( i=0; i<3; i++ ) {
 		    rgb[i] = (int)(255.0 * rgb_double[i]);
 		}
-		(void)mk_comb( wdb_fd, region_name, &head.l, 1, NULL, NULL, rgb, ident++, 0, 1, 100, 0, 0, 0 );
+		(void)mk_comb( s->wdb_fd, region_name, &head.l, 1, NULL, NULL, rgb, s->ident++, 0, 1, 100, 0, 0, 0 );
 	    } else {
-		(void)mk_comb( wdb_fd, region_name, &head.l, 1, NULL, NULL, NULL, ident++, 0, 1, 100, 0, 0, 0 );
+		(void)mk_comb( s->wdb_fd, region_name, &head.l, 1, NULL, NULL, NULL, s->ident++, 0, 1, 100, 0, 0, 0 );
 	    }
 	    DO_INDENT;
 	    bu_log( "wrote region: %s, solid %s\n", region_name, solid_name );
@@ -4536,15 +4594,15 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
     } else {
 	bg_vert_tree_clean( vert_tree );
 	bg_vert_tree_clean( norm_tree );
-	curr_tri = 0;
-	curr_norm = 0;
+	s->curr_tri = 0;
+	s->curr_norm = 0;
 
 	return (char *)NULL;
     }
 }
 
 char *
-process_instance( tag_t comp_obj_tag, const mat_t curr_xform, double units_conv, char *part_name )
+process_instance(struct ug_state *s, tag_t comp_obj_tag, const mat_t curr_xform, double units_conv, char *part_name )
 {
     tag_t child_tag;
     int i, j;
@@ -4608,7 +4666,7 @@ process_instance( tag_t comp_obj_tag, const mat_t curr_xform, double units_conv,
     }
 
     /* check if this subpart_name is on the list to be converted */
-    if ( subparts && curr_level == 0 ) {
+    if ( s->subparts && s->curr_level == 0 ) {
 	char *ptr;
 	int do_this_one=0;
 
@@ -4622,8 +4680,8 @@ process_instance( tag_t comp_obj_tag, const mat_t curr_xform, double units_conv,
 	}
 
 	i = -1;
-	while ( subparts[++i] ) {
-	    if ( BU_STR_EQUAL( ptr, subparts[i] ) ) {
+	while ( s->subparts[++i] ) {
+	    if ( BU_STR_EQUAL( ptr, s->subparts[i] ) ) {
 		do_this_one = 1;
 		break;
 	    }
@@ -4653,17 +4711,17 @@ process_instance( tag_t comp_obj_tag, const mat_t curr_xform, double units_conv,
     if ( child_tag == NULL_TAG ) {
 	bu_log( "Child is not loaded!\n" );
     } else {
-	curr_level++;
-	comp_name = process_part( child_tag, new_xform, subpart_name,
+	s->curr_level++;
+	comp_name = process_part(s, child_tag, new_xform, subpart_name,
 				  refset_name, instance_name );
-	curr_level--;
+	s->curr_level--;
     }
 
     return comp_name;
 }
 
 char *
-convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv )
+convert_entire_part(struct ug_state *s, tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv )
 {
     tag_t solid_tag;
     tag_t comp_obj_tag=NULL_TAG;
@@ -4697,23 +4755,23 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
 	    continue;
 	}
 
-	if ( only_facetize ) {
+	if ( s->only_facetize ) {
 	    member_name = (char *)NULL;
 	} else {
-	    member_name = conv_features( solid_tag, p_name,
+	    member_name = conv_features(s, solid_tag, p_name,
 					 refset_name, inst_name, curr_xform, units_conv, 1 );
 	}
 
 	if ( !member_name ) {
-	    parts_facetized++;
-	    if ( !only_facetize ) {
+	    s->parts_facetized++;
+	    if ( !s->only_facetize ) {
 		DO_INDENT;
 		bu_log( "\tfailed to convert features, using facetization\n" );
 	    }
-	    member_name = facetize( solid_tag, p_name,
+	    member_name = facetize(s, solid_tag, p_name,
 				    refset_name, inst_name, curr_xform, units_conv, 1 );
 	} else {
-	    parts_bool++;
+	    s->parts_bool++;
 	}
 
 	if ( member_name ) {
@@ -4730,7 +4788,7 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
 	DO_INDENT;
 	bu_log( "Checking instances in %s instance tag = %d\n", p_name, comp_obj_tag );
 
-	member_name = process_instance( comp_obj_tag, curr_xform, units_conv, p_name );
+	member_name = process_instance(s, comp_obj_tag, curr_xform, units_conv, p_name );
 	if ( member_name ) {
 	    (void)mk_addmember( member_name, &head.l, NULL, WMOP_UNION );
 	    bu_free( member_name, "member_name" );
@@ -4752,17 +4810,17 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
 	    }
 	}
 
-	get_part_name( &name_vls );
+	get_part_name(s, &name_vls );
 
 	if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	    bu_vls_strcat( &name_vls, "_" );
 	    bu_vls_strcat( &name_vls, refset_name );
 	}
 
-	assy_name = create_unique_brlcad_name( &name_vls );
+	assy_name = create_unique_brlcad_name(s, &name_vls );
 	bu_vls_free( &name_vls );
 
-	mk_lcomb( wdb_fd, assy_name, &head, 0 ,
+	mk_lcomb( s->wdb_fd, assy_name, &head, 0 ,
 		  (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
     }
 
@@ -4770,7 +4828,7 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
 }
 
 char *
-convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv )
+convert_reference_set(struct ug_state *s, tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv )
 {
     tag_t ref_tag = NULL_TAG;
     char ref_set_name[REFSET_NAME_LEN];
@@ -4884,7 +4942,7 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
     }
 
     if ( do_entire_part ) {
-	return ( convert_entire_part( node, p_name, refset_name,
+	return ( convert_entire_part(s, node, p_name, refset_name,
 				     inst_name, curr_xform, units_conv ) );
     }
 
@@ -4905,28 +4963,28 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
     for (i=0; i < num_members; i++ ) {
 	UF_func(UF_OBJ_ask_type_and_subtype(members[i], &type, &subtype));
 	if (type == UF_solid_type && subtype == UF_solid_body_subtype) {
-	    if ( only_facetize ) {
+	    if ( s->only_facetize ) {
 		member_name = (char *)NULL;
 	    } else {
-		member_name = conv_features( members[i], p_name,
+		member_name = conv_features(s, members[i], p_name,
 					     refset_name, inst_name, curr_xform, units_conv, 1 );
 	    }
 
 	    if ( !member_name ) {
-		parts_facetized++;
-		if ( !only_facetize ) {
+		s->parts_facetized++;
+		if ( !s->only_facetize ) {
 		    DO_INDENT;
 		    bu_log( "\tfailed to convert features, using facetization\n" );
 		}
-		member_name = facetize( members[i], p_name,
+		member_name = facetize(s, members[i], p_name,
 					refset_name, inst_name, curr_xform, units_conv, 1 );
 	    } else {
-		parts_bool++;
+		s->parts_bool++;
 	    }
 	} else if ( type == UF_occ_instance_type && subtype == UF_occ_instance_subtype ) {
-	    member_name = process_instance( members[i], curr_xform, units_conv, p_name );
+	    member_name = process_instance(s, members[i], curr_xform, units_conv, p_name );
 	} else if ( type == UF_faceted_model_type && subtype == UF_faceted_model_normal_subtype ) {
-	    member_name = facetize( members[i], p_name,
+	    member_name = facetize(s, members[i], p_name,
 				    refset_name, inst_name, curr_xform, units_conv, 1 );
 	} else {
 	    DO_INDENT;
@@ -4957,17 +5015,17 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 	    }
 	}
 
-	get_part_name( &name_vls );
+	get_part_name(s, &name_vls );
 
 	if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	    bu_vls_strcat( &name_vls, "_" );
 	    bu_vls_strcat( &name_vls, refset_name );
 	}
 
-	assy_name = create_unique_brlcad_name( &name_vls );
+	assy_name = create_unique_brlcad_name(s, &name_vls );
 	bu_vls_free( &name_vls );
 
-	mk_lcomb( wdb_fd, assy_name, &head, 0 ,
+	mk_lcomb( s->wdb_fd, assy_name, &head, 0 ,
 		  (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
     }
 
@@ -4975,36 +5033,36 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 }
 
 char *
-convert_geom( tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv )
+convert_geom(struct ug_state *s, tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv )
 {
     DO_INDENT;
     bu_log( "Converting part %s (refset=%s)\n", p_name, refset_name );
-    if ( use_refset_name ) {
+    if ( s->use_refset_name ) {
 	DO_INDENT;
 	bu_log( "Using user specified reference set name (%s) in place of (%s)\n",
-		use_refset_name, refset_name );
-	if ( BU_STR_EQUAL( use_refset_name, "Entire Part" ) || BU_STR_EQUAL( use_refset_name, "None" ) ) {
-	    return ( convert_entire_part( node, p_name, refset_name, inst_name,
+		s->use_refset_name, refset_name );
+	if ( BU_STR_EQUAL( s->use_refset_name, "Entire Part" ) || BU_STR_EQUAL( s->use_refset_name, "None" ) ) {
+	    return ( convert_entire_part(s, node, p_name, refset_name, inst_name,
 					 curr_xform, units_conv ) );
 	} else {
-	    return ( convert_reference_set( node, p_name, use_refset_name, inst_name,
+	    return ( convert_reference_set(s, node, p_name, s->use_refset_name, inst_name,
 					   curr_xform, units_conv ) );
 	}
     }
     if ( refset_name && !BU_STR_EQUAL( refset_name, "None" ) ) {
 	/* convert reference set */
-	return ( convert_reference_set( node, p_name, refset_name, inst_name,
+	return ( convert_reference_set(s, node, p_name, refset_name, inst_name,
 				       curr_xform, units_conv ) );
     } else {
 	/* convert entire part */
-	return ( convert_entire_part( node, p_name, refset_name, inst_name,
+	return ( convert_entire_part(s, node, p_name, refset_name, inst_name,
 				     curr_xform, units_conv ) );
     }
 
 }
 
 char *
-process_part( tag_t node, const mat_t curr_xform, char *p_name, char *ref_set, char *inst_name )
+process_part(struct ug_state *s, tag_t node, const mat_t curr_xform, char *p_name, char *ref_set, char *inst_name )
 {
     char part_name[PART_NAME_LEN ];		/* name of current part */
     int units;
@@ -5047,7 +5105,7 @@ process_part( tag_t node, const mat_t curr_xform, char *p_name, char *ref_set, c
     }
 
     /* get any geometry at this level */
-    assy_name = convert_geom( node, p_name, ref_set, inst_name, curr_xform, units_conv );
+    assy_name = convert_geom(s, node, p_name, ref_set, inst_name, curr_xform, units_conv );
 
     UF_func( UF_PART_set_display_part( node ) );
 
@@ -5059,7 +5117,7 @@ process_part( tag_t node, const mat_t curr_xform, char *p_name, char *ref_set, c
 }
 
 static void
-add_to_suppress_list( tag_t feat_tag )
+add_to_suppress_list(struct ug_state *s, tag_t feat_tag )
 {
     tag_t *parents, *children;
     int num_parents, num_children;
@@ -5081,10 +5139,10 @@ add_to_suppress_list( tag_t feat_tag )
     }
 
     /* make sure this feature is not already on the list */
-    UF_func( UF_MODL_ask_list_count( suppress_list, &list_len ) );
+    UF_func( UF_MODL_ask_list_count( s->suppress_list, &list_len ) );
     DO_INDENT;
     for ( i=0; i<list_len; i++ ) {
-	UF_func( UF_MODL_ask_list_item( suppress_list, i, &list_member ) );
+	UF_func( UF_MODL_ask_list_item( s->suppress_list, i, &list_member ) );
 	DO_INDENT;
 	if ( list_member == feat_tag ) {
 	    DO_INDENT;
@@ -5093,12 +5151,12 @@ add_to_suppress_list( tag_t feat_tag )
     }
 
     /* add this feature to the list */
-    UF_func( UF_MODL_put_list_item( suppress_list, feat_tag ) );
+    UF_func( UF_MODL_put_list_item( s->suppress_list, feat_tag ) );
     DO_INDENT;
 }
 
 static void
-check_features_for_suppression( tag_t solid_tag, char *part_name, double units_conv )
+check_features_for_suppression(struct ug_state *s, tag_t solid_tag, char *part_name, double units_conv )
 {
     uf_list_p_t feat_list;
     int feat_count=0;
@@ -5131,23 +5189,24 @@ check_features_for_suppression( tag_t solid_tag, char *part_name, double units_c
 	    DO_INDENT;
 	    bu_log( "\tChecking a blend (%d) for suppression\n", feat_tag );
 	    get_blend_radius( feat_tag, part_name, units_conv, &blend_radius );
-	    if ( blend_radius >= min_round ) {
+	    if ( blend_radius >= s->min_round ) {
 		continue;
 	    }
 
-	    add_to_suppress_list( feat_tag );
+	    add_to_suppress_list(s, feat_tag );
 	} else if ( BU_STR_EQUAL( feat_type, "CHAMFER" ) ) {
-	    double offset1, offset2;
+	    double offset1 = 0.0;
+	    double offset2 = 0.0;
 
 	    DO_INDENT;
 	    bu_log( "\tChecking a chamfer (%d) for suppression\n", feat_tag );
-	    get_chamfer_offsets( feat_tag, part_name, units_conv, &offset1, &offset2 );
+	    get_chamfer_offsets(s, feat_tag, part_name, units_conv, &offset1, &offset2 );
 
-	    if ( offset1 >= min_chamfer || offset2 >= min_chamfer ) {
+	    if ( offset1 >= s->min_chamfer || offset2 >= s->min_chamfer ) {
 		continue;
 	    }
 
-	    add_to_suppress_list( feat_tag );
+	    add_to_suppress_list(s, feat_tag );
 	}
 
 	UF_free( feat_type );
@@ -5159,7 +5218,7 @@ check_features_for_suppression( tag_t solid_tag, char *part_name, double units_c
 }
 
 static void
-do_suppressions_in_instance( tag_t comp_obj_tag )
+do_suppressions_in_instance(struct ug_state *s, tag_t comp_obj_tag )
 {
     logical is_suppressed;
     tag_t child_tag;
@@ -5183,13 +5242,13 @@ do_suppressions_in_instance( tag_t comp_obj_tag )
      * this eliminates some confusion about units.
      */
     UF_func( UF_PART_set_display_part( child_tag ) );
-    do_suppressions( child_tag );
+    do_suppressions(s, child_tag );
     UF_func( UF_PART_set_display_part( child_tag ) );
 }
 
 
 static void
-do_suppressions( tag_t node )
+do_suppressions(struct ug_state *s, tag_t node )
 {
     char part_name[PART_NAME_LEN ];		/* name of current part */
     int units;
@@ -5231,7 +5290,7 @@ do_suppressions( tag_t node )
 	if ( !UF_ASSEM_is_occurrence(solid_tag) &&
 	     (type == UF_solid_type) &&
 	     (subtype == UF_solid_body_subtype) ) {
-	    check_features_for_suppression( solid_tag, part_name, units_conv );
+	    check_features_for_suppression(s, solid_tag, part_name, units_conv );
 	}
 
 	UF_func( UF_OBJ_cycle_objs_in_part(node, UF_solid_type, &solid_tag ) );
@@ -5246,14 +5305,14 @@ do_suppressions( tag_t node )
 	DO_INDENT;
 	bu_log( "Checking for suppressable features in %s instance tag = %d\n", part_name, comp_obj_tag );
 
-	curr_level++;
-	do_suppressions_in_instance( comp_obj_tag );
-	curr_level--;
+	s->curr_level++;
+	do_suppressions_in_instance(s, comp_obj_tag );
+	s->curr_level--;
     }
 }
 
 static void
-get_it_all_loaded( tag_t node )
+get_it_all_loaded(struct ug_state *s, tag_t node )
 {
     char part_name[PART_NAME_LEN ];		/* name of current part */
     tag_t comp_obj_tag, child_tag;
@@ -5292,16 +5351,16 @@ get_it_all_loaded( tag_t node )
 	    continue;
 	}
 
-	curr_level++;
-	get_it_all_loaded( child_tag );
-	curr_level--;
+	s->curr_level++;
+	get_it_all_loaded(s, child_tag );
+	s->curr_level--;
     }
 }
 
 static const char *usage="Usage: %s [-d level] [-i starting_ident_number] [-n part_no_to_part_name_mapping_file] [-t surface_tolerance] [-a surface_normal_tolerance] [-R use_refset_name] [-c min_chamfer] [-r min_round] [-f] [-s] [-u] -o output_file.g part_filename [subpart1 subpart2 ...]\n";
 
 int
-parse_args(int ac, char *av[])
+parse_args(struct ug_state *s, int ac, char *av[])
 {
     int  c;
     char *strrchr();
@@ -5318,18 +5377,18 @@ parse_args(int ac, char *av[])
     while ((c=bu_getopt(ac, av, options)) != -1) {
 	if (bu_optopt == '?') c='h';
 	switch (c) {
-	    case 'i'	: ident = atoi( bu_optarg ); break;
-	    case 'o'	: output_file = bu_strdup( bu_optarg ); break;
+	    case 'i'	: s->ident = atoi( bu_optarg ); break;
+	    case 'o'	: s->output_file = bu_strdup( bu_optarg ); break;
 	    case 'd'	: debug = atoi(bu_optarg); break;
-	    case 't'	: surf_tol = atof( bu_optarg ); break;
-	    case 'a'	: ang_tol = atof( bu_optarg ) * DEG2RAD; break;
-	    case 'n'	: part_name_file = bu_optarg; use_part_name_hash = 1; break;
-	    case 'R'	: use_refset_name = bu_optarg; break;
-	    case 'c'	: min_chamfer = atof( bu_optarg ); break;
-	    case 'r'	: min_round = atof( bu_optarg ); break;
-	    case 'f'	: only_facetize = 1; break;
-	    case 's'	: show_all_features = 1; break;
-	    case 'u'	: use_normals = 1; break;
+	    case 't'	: s->surf_tol = atof( bu_optarg ); break;
+	    case 'a'	: s->ang_tol = atof( bu_optarg ) * DEG2RAD; break;
+	    case 'n'	: s->part_name_file = bu_optarg; s->use_part_name_hash = 1; break;
+	    case 'R'	: s->use_refset_name = bu_optarg; break;
+	    case 'c'	: s->min_chamfer = atof( bu_optarg ); break;
+	    case 'r'	: s->min_round = atof( bu_optarg ); break;
+	    case 'f'	: s->only_facetize = 1; break;
+	    case 's'	: s->show_all_features = 1; break;
+	    case 'u'	: s->use_normals = 1; break;
 	    case 'h'	: bu_exit(1, usage, av[0]);
 			  break;
 	    default	: fprintf(stderr, "Bad flag specified\n");
@@ -5344,6 +5403,7 @@ parse_args(int ac, char *av[])
 int
 main(int ac, char *av[])
 {
+    struct ug_state s;
     tag_t displayed_part = NULL_TAG;
     char part_name[PART_NAME_LEN];		/* name of current part */
     tag_t ugpart = NULL_TAG;
@@ -5352,21 +5412,15 @@ main(int ac, char *av[])
     char *comp_name;
     FILE *fd_parts;
     UF_ASSEM_options_t assem_options;
-    time_t elapsed_time, end_time;
+    time_t start_time, elapsed_time, end_time;
+
+    ug_state_init(&s);
 
     bu_setprogname(av[0]);
 
     time( &start_time );
 
-    tol_dist_sq = tol_dist * tol_dist;
-
-    i = parse_args(ac, av);
-
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = surf_tol;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1.0 - tol.perp;
+    i = parse_args(&s, ac, av);
 
     if (i+1 > ac) {
 	bu_exit(1, usage, av[0]);
@@ -5376,7 +5430,7 @@ main(int ac, char *av[])
     norm_tree = bg_vert_tree_create();
 
     if ( ac > i+1 ) {
-	subparts = (char **)bu_calloc( ac - i + 1, sizeof(char *), "subparts" );
+	s.subparts = (char **)bu_calloc( ac - i + 1, sizeof(char *), "subparts" );
 	for ( j=i+1; j<ac; j++ ) {
 	    char *ptr;
 
@@ -5387,28 +5441,28 @@ main(int ac, char *av[])
 		ptr++;
 	    }
 
-	    subparts[j-i-1] = bu_strdup( ptr );
-	    bu_log( "subpart specified: %s\n", subparts[j-i-1] );
+	    s.subparts[j-i-1] = bu_strdup( ptr );
+	    bu_log( "subpart specified: %s\n", s.subparts[j-i-1] );
 	}
     }
 
-    if ( use_part_name_hash ) {
-	if ( (fd_parts=fopen( part_name_file, "rb" )) == NULL ) {
+    if ( s.use_part_name_hash ) {
+	if ( (fd_parts=fopen( s.part_name_file, "rb" )) == NULL ) {
 	    perror( av[0] );
-	    bu_exit(1, "Cannot open part name file (%s)\n", part_name_file );
+	    bu_exit(1, "Cannot open part name file (%s)\n", s.part_name_file );
 	}
-	create_name_hash( fd_parts );
+	create_name_hash(&s, fd_parts );
     }
 
-    if ( !output_file ) {
+    if ( !s.output_file ) {
 	printf( "ERROR: Output file name is required!\n" );
 	bu_exit(1, usage, av[0]);
     }
 
     /* open BRL-CAD database */
-    if ( (wdb_fd=wdb_fopen( output_file ) ) == NULL ) {
+    if ( (s.wdb_fd=wdb_fopen( s.output_file ) ) == NULL ) {
 	perror( *av );
-	bu_exit(1, "ERROR: Cannot open output file (%s)\n", output_file );
+	bu_exit(1, "ERROR: Cannot open output file (%s)\n", s.output_file );
     }
 
     /* start up UG interface */
@@ -5433,9 +5487,9 @@ main(int ac, char *av[])
     assem_options.maintain_work_part = UF_ASSEM_dont_maintain_work_part;
     UF_func( UF_ASSEM_set_assem_options( &assem_options ) );
 
-    if ( only_facetize ) {
-	curr_level = 0;
-	comp_name = process_part( displayed_part, bn_mat_identity, part_name, NULL, NULL );
+    if ( s.only_facetize ) {
+	s.curr_level = 0;
+	comp_name = process_part(&s, displayed_part, bn_mat_identity, part_name, NULL, NULL );
 	if ( comp_name ) {
 	    bu_free( comp_name, "comp_name" );
 	}
@@ -5447,17 +5501,17 @@ main(int ac, char *av[])
 
 	UF_terminate();
 
-	bu_log( "\n\n\t%d parts facetized\n\t%d parts converted to Boolean form\n", parts_facetized, parts_bool );
+	bu_log( "\n\n\t%d parts facetized\n\t%d parts converted to Boolean form\n", s.parts_facetized, s.parts_bool );
 	return 0;
     }
 
-    if ( !only_facetize ) {
-	curr_level = 0;
-	get_it_all_loaded( displayed_part );
+    if ( !s.only_facetize ) {
+	s.curr_level = 0;
+	get_it_all_loaded(&s, displayed_part );
     }
 
 #if DO_SUPPRESSIONS
-    if ( min_chamfer > 0.0 || min_round > 0.0 ) {
+    if ( s.min_chamfer > 0.0 || s.min_round > 0.0 ) {
 	int list_len=0;
 
 	/* create a list of features to be suppressed */
@@ -5481,8 +5535,8 @@ main(int ac, char *av[])
     }
 #endif
 
-    curr_level = 0;
-    comp_name = process_part( displayed_part, bn_mat_identity, part_name, NULL, NULL );
+    s.curr_level = 0;
+    comp_name = process_part(&s, displayed_part, bn_mat_identity, part_name, NULL, NULL );
     if ( comp_name ) {
 	bu_free( comp_name, "comp_name" );
     }
@@ -5494,8 +5548,8 @@ main(int ac, char *av[])
 
     UF_terminate();
 
-    bu_log( "\n\n\t%d parts facetized\n\t%d parts converted to Boolean form\n", parts_facetized, parts_bool );
-    bu_log( "\t\t%d of the facetized parts were BREP models\n", parts_brep );
+    bu_log( "\n\n\t%d parts facetized\n\t%d parts converted to Boolean form\n", s.parts_facetized, s.parts_bool );
+    bu_log( "\t\t%d of the facetized parts were BREP models\n", s.parts_brep );
 
     elapsed_time = time( &end_time ) - start_time;
     bu_log( "Elapsed time: %02lld:%02lld:%02lld\n", (long long)elapsed_time/3600, (long long)(elapsed_time%3600)/60, (long long)(elapsed_time%60) );

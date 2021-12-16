@@ -1339,6 +1339,8 @@ static void
 initHtmlText_Elem (HtmlTree *pTree, HtmlElementNode *pElem, HtmlTextInit *pInit)
 {
     HtmlNode *pNode = &pElem->node;
+    if (!pNode)
+       return;
     int eDisplay = HtmlNodeComputedValues(pNode)->eDisplay; 
     int ii;
 
@@ -1942,7 +1944,7 @@ populateTextNode (
             zCsr = &zCsr[nThisText];
 
             if (nThisText > 255) {
-                if (pText) {
+                if (pText && pText->zText) {
                     pText->aToken[nToken].eType = HTML_TEXT_TOKEN_LONGTEXT;
                     pText->aToken[nToken+1].eType = HTML_TEXT_TOKEN_LONGTEXT;
                     pText->aToken[nToken+2].eType = HTML_TEXT_TOKEN_LONGTEXT;
@@ -1953,7 +1955,7 @@ populateTextNode (
                 }
                 nToken += 3;
             } else {
-                if (pText) {
+                if (pText && pText->zText) {
                     pText->aToken[nToken].eType = HTML_TEXT_TOKEN_TEXT;
                     pText->aToken[nToken].n = nThisText;
                     memcpy(&pText->zText[nText], zStart, nThisText);

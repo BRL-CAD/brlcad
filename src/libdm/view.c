@@ -25,6 +25,7 @@
 #include "bu/vls.h"
 #include "bv/defines.h"
 #include "bv/util.h"
+#define DM_WITH_RT
 #include "dm.h"
 
 void

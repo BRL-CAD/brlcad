@@ -60,7 +60,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #if !defined(USE_QT) && defined(HAVE_TK)
-#  include "tclcad.h"
+#  include "tclcad/setup.h"
 #endif
 
 /* Confine the constraining build conditions here - ultimately, we care

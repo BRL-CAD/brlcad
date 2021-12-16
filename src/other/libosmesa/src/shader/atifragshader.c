@@ -289,7 +289,7 @@ _mesa_DeleteFragmentShaderATI(GLuint id)
 
 	/* The ID is immediately available for re-use now */
 	_mesa_HashRemove(ctx->Shared->ATIShaders, id);
-	if (prog) {
+	if (prog && (prog != &DummyShader)) {
 	    prog->RefCount--;
 	    if (prog->RefCount <= 0) {
 		_mesa_free(prog);

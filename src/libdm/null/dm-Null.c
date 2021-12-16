@@ -28,6 +28,7 @@
 #endif
 
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
 #include "../include/private.h"
@@ -37,21 +38,39 @@ null_open(void *UNUSED(ctx), void *interp, int UNUSED(argc), const char **UNUSED
 {
     struct dm *dmp = DM_NULL;
 
-    BU_ALLOC(dmp, struct dm);
+    BU_GET(dmp, struct dm);
     dmp->magic = DM_MAGIC;
     dmp->start_time = 0;
 
-    BU_ALLOC(dmp->i, struct dm_impl);
+    BU_GET(dmp->i, struct dm_impl);
 
     *dmp->i = *dm_null.i;
     dmp->i->dm_interp = interp;
+
+    bu_vls_init(&dmp->i->dm_pathName);
+    bu_vls_init(&dmp->i->dm_tkName);
+    bu_vls_init(&dmp->i->dm_dName);
+    bu_vls_init(&dmp->i->dm_log);
 
     return dmp;
 }
 
 int
-null_close(struct dm *UNUSED(dmp))
+null_close(struct dm *dmp)
 {
+    if (UNLIKELY(!dmp))
+	return 0;
+
+    if (dmp->i) {
+	bu_vls_free(&dmp->i->dm_pathName);
+	bu_vls_free(&dmp->i->dm_tkName);
+	bu_vls_free(&dmp->i->dm_dName);
+	bu_vls_free(&dmp->i->dm_log);
+	bu_free(dmp->i, "dm_impl");
+    }
+
+    BU_PUT(dmp, struct dm);
+
     return 0;
 }
 

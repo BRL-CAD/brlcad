@@ -390,6 +390,9 @@ nodeRemoveChild (HtmlElementNode *pElem, HtmlNode *pChild)
     int eSeen = 0;
     int ii;
 
+    if (!pElem || !pChild)
+       return eSeen;
+
     for (ii = 0; ii < pElem->nChild; ii++) {
         if (eSeen) {
             pElem->apChildren[ii - 1] = pElem->apChildren[ii];
@@ -1146,7 +1149,6 @@ treeAddTableComponent (HtmlTree *pTree, int eTag, HtmlAttributes *pAttr)
         int n2 = HtmlNodeAddChild((HtmlElementNode *)pParent, Html_TR, 0, 0);
         pParent = HtmlNodeChild(pParent, n2);
         pParent->iNode = pTree->iNextNode++;
-        eParentTag = Html_TR;
     }
     
     /* Add the new node to pParent */
@@ -2508,12 +2510,10 @@ node_attr_usage:
                 char *zArg0 = Tcl_GetString(aArg[0]);
                 if (0 == strcmp(zArg0, "-before")) {
                     p = pElem ? pElem->pBefore : 0;
-                    aArg = &aArg[1];
                     nArg--;
                 }
                 else if (0 == strcmp(zArg0, "-after")) {
                     p = pElem ? pElem->pAfter : 0;
-                    aArg = &aArg[1];
                     nArg--;
                 }
             }

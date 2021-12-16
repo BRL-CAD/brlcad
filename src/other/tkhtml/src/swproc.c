@@ -255,6 +255,8 @@ swproc_rtCmd(
                         for (ii = 0; ii < nConf; ii++) {
                             const char *zVar = aScriptConf[ii].zSwitch;
                             const char *zVal = Tcl_GetString(apVars[ii]);
+			    if (!apVars[ii])
+			       return TCL_ERROR;
                             Tcl_SetVar(interp, zVar, zVal, 0);
                             Tcl_DecrRefCount(apVars[ii]);
                         }

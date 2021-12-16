@@ -1388,7 +1388,7 @@ fix_swizzle(GLuint swizzle)
     GLuint swz[4] = {0}, i;
     for (i = 0; i < 4; i++) {
 	swz[i] = GET_SWZ(swizzle, i);
-	if (swz[i] == SWIZZLE_NIL) {
+	if (swz[i] == SWIZZLE_NIL && i > 0) {
 	    swz[i] = swz[i - 1];
 	}
     }

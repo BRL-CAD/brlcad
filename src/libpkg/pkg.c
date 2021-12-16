@@ -1899,10 +1899,9 @@ pkg_suckin(struct pkg_conn *pc)
 	}
 #ifndef HAVE_WINSOCK_H
 	_pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_suckin: read(%d, x%lx, %ld) ret=%d inbuf=x%lx, inend=%d\n",
-		 pc->pkc_fd, (long)(&pc->pkc_inbuf[pc->pkc_inend]), (long)avail,
-		 got,
-		 (long)(pc->pkc_inbuf), pc->pkc_inend);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_suckin: read(%d, %p, %ld) ret=%d inbuf=%p, inend=%d\n",
+		 pc->pkc_fd, (void *)(&pc->pkc_inbuf[pc->pkc_inend]), (long)avail,
+		 got, (void *)pc->pkc_inbuf, pc->pkc_inend);
 	if (pc->pkc_errlog) {
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	} else {

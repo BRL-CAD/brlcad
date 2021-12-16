@@ -35,10 +35,10 @@
 
 
 static const struct gcv_filter *
-find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const char *data)
+find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const char *data, struct gcv_context *context)
 {
     const struct gcv_filter * const *entry;
-    const struct bu_ptbl * const filters = gcv_list_filters();
+    const struct bu_ptbl * const filters = gcv_list_filters(context);
 
     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
 	bu_mime_model_t emt = (*entry)->mime_type;
@@ -95,18 +95,22 @@ main(int argc, char **argv)
 
     input_path = argv[bu_optind];
 
-    in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO, input_path);
-    out_filter = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL);
+    gcv_context_init(&context);
 
-    if (!out_filter)
+    in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO, input_path, &context);
+    out_filter = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, &context);
+
+    if (!out_filter) {
+	gcv_context_destroy(&context);
 	bu_bomb("could not find the BRL-CAD writer filter");
+    }
 
     if (!in_filter) {
 	bu_log("could not find the Rhino reader filter");
+	gcv_context_destroy(&context);
 	return 1;
     }
 
-    gcv_context_init(&context);
 
     if (!gcv_execute(&context, in_filter, &gcv_options, 0, NULL, input_path)) {
 	gcv_context_destroy(&context);

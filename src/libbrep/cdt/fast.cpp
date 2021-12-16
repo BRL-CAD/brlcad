@@ -100,7 +100,6 @@ getEdgePoints(const ON_BrepTrim &trim,
 	      std::map<double, BrepTrimPoint *> &param_points)
 {
     const ON_Surface *s = trim.SurfaceOf();
-    ON_Interval range = trim.Domain();
     ON_3dPoint mid_2d = ON_3dPoint::UnsetPoint;
     ON_3dPoint mid_3d = ON_3dPoint::UnsetPoint;
     ON_3dVector mid_norm = ON_3dVector::UnsetVector;
@@ -1050,7 +1049,6 @@ get_loop_sample_points(
 	    //ON_2dPoint p2d_begin = trim->PointAt(trim->Domain().m_t[0]);
 	    //ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
 	    double delta =  trim->Domain().Length() / 10.0;
-	    ON_Interval trim_dom = trim->Domain();
 
 	    for (int i = 1; i <= 10; i++) {
 		btp.p3d = p3d;

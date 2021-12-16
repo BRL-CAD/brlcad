@@ -33,9 +33,6 @@
 extern "C" {
 
 #include "tcl.h"
-#ifdef HAVE_TK
-#  include "tk.h"
-#endif
 
 #include "bu/malloc.h"
 #include "tclcad.h"

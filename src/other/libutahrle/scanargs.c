@@ -141,7 +141,7 @@ va_list argl;
     char    tmpflg,			/* temp flag */
 	    typchr;			/* type char from format string */
     char    c;
-    bool  * arg_used;			/* array of flags */
+    bool  * arg_used = NULL;		/* array of flags */
     ptr	    aptr = 0;			/* pointer to return loc */
 
     bool    required;
@@ -190,6 +190,7 @@ va_list argl;
 	    if ( argc == 2 )
 	    {
 		scan_usage( argv, format );
+		free(arg_used);
 		return 0;
 	    }
 	    else
@@ -677,6 +678,7 @@ reswitch:				/* after finding '*' or ',' */
 		    default: 		/* error */
 			fprintf (stderr,
 				 "scanargs: Corrupt or invalid format spec\n");
+			free(arg_used);
 			return 0;
 		}
 	}

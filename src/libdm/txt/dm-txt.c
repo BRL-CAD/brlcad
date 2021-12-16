@@ -29,6 +29,7 @@
 
 #include "tcl.h"
 #include "vmath.h"
+#include "bu/malloc.h"
 #include "dm.h"
 #include "../include/private.h"
 

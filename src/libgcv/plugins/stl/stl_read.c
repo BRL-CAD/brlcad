@@ -645,9 +645,15 @@ stl_can_read(const char *data)
     {
 	uint32_t tri_cnt;
 	unsigned char buffer[1000];
-	if (!fread(buffer, 80, 1, fp)) return 0;
+	if (fread(buffer, 80, 1, fp) != 1) {
+	    fclose(fp);
+	    return 0;
+	}
 	/* Note: we're assuming little-endian... */
-	if (!fread(((void *)&tri_cnt), 4, 1, fp)) return 0;
+	if (fread(((void *)&tri_cnt), 4, 1, fp) != 1) {
+	    fclose(fp);
+	    return 0;
+	}
 	if ((size_t)stat_buf.st_size == (84 + (tri_cnt * fsize))) {
 	    fclose(fp);
 	    return 1;

@@ -127,7 +127,10 @@ _mesa_get_attachment(GLcontext *ctx, struct gl_framebuffer *fb,
 	case GL_COLOR_ATTACHMENT14_EXT:
 	case GL_COLOR_ATTACHMENT15_EXT:
 	    i = attachment - GL_COLOR_ATTACHMENT0_EXT;
-	    if (i >= ctx->Const.MaxColorAttachments) {
+	    if (i >= ctx->Const.MaxColorAttachments ||
+		    ((BUFFER_COLOR0 + i) >= BUFFER_COUNT)) {
+		// TODO - need to check the relationship between BUFFER_COUNT,
+		// BUFFER_COLOR0, and GL_COLOR_ATTACHMENT* values
 		return NULL;
 	    }
 	    return &fb->Attachment[BUFFER_COLOR0 + i];

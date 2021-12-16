@@ -345,14 +345,14 @@ arbin(struct ged *gedp,
 	/* rebound model */
 	nmg_rebound(m, &gedp->ged_wdbp->wdb_tol);
 
-	nmg_extrude_cleanup(s, 0, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
-
 	/* free old ip pointer */
 	rt_db_free_internal(ip);
 
 	/* convert the NMG to a BOT */
 	bot = (struct rt_bot_internal *)nmg_bot(s, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 	nmg_km(m);
+
+	nmg_extrude_cleanup(s, 0, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
 
 	/* put new solid in "ip" */
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;

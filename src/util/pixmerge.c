@@ -38,6 +38,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -201,10 +202,10 @@ main(int argc, char **argv)
 	fprintf(stderr, " bg\n");
     }
 
-    if ((b1 = (char *)malloc(width*CHUNK)) == (char *)0 ||
-	(b2 = (char *)malloc(width*CHUNK)) == (char *)0 ||
-	(b3 = (char *)malloc(width*CHUNK)) == (char *)0) {
-	fprintf(stderr, "pixmerge:  malloc failure\n");
+    if ((b1 = (char *)bu_calloc(width,CHUNK,"b1")) == (char *)0 ||
+	(b2 = (char *)bu_calloc(width,CHUNK,"b2")) == (char *)0 ||
+	(b3 = (char *)bu_calloc(width,CHUNK,"b3")) == (char *)0) {
+	fprintf(stderr, "pixmerge:  bu_calloc failure\n");
 	bu_exit (3, NULL);
     }
 
@@ -247,8 +248,9 @@ main(int argc, char **argv)
 	     * Stated condition must hold for all input bytes
 	     * to select the foreground for output
 	     */
-	    unsigned char *ap, *bp;
-	    unsigned char *ep;		/* end ptr */
+	    unsigned char *ap = NULL;
+	    unsigned char *bp = NULL;
+	    unsigned char *ep = NULL;		/* end ptr */
 
 	    ap = cb1;
 	    if (seen_const)

@@ -31,8 +31,8 @@
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn.h"
+#include "bv.h"
 #include "icv.h"
-#include "raytrace.h"
 
 #include "./dm/defines.h"
 #include "./dm/fbserv.h"
@@ -136,6 +136,8 @@ DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
 				   fastf_t base2local);
 
 /* labels.c */
+#ifdef DM_WITH_RT
+#include "raytrace.h"
 DM_EXPORT extern int dm_draw_prim_labels(struct dm *dmp,
 				    struct rt_wdb *wdbp,
 				    const char *name,
@@ -145,6 +147,7 @@ DM_EXPORT extern int dm_draw_prim_labels(struct dm *dmp,
 						      const char *name_arg, mat_t viewmat_arg,
 						      int *labelsColor_arg, void *labelsHookClientdata_arg),
 				    void *labelsHookClientdata);
+#endif
 
 /* rect.c */
 DM_EXPORT extern void dm_draw_rect(struct dm *dmp,
@@ -180,9 +183,6 @@ DM_EXPORT extern const char *dm_graphics_system(const char *dmtype);
 /* functions to make a dm struct hideable - will need to
  * sort these out later */
 
-DM_EXPORT extern struct dm *dm_get();
-DM_EXPORT extern void dm_put(struct dm *dmp);
-DM_EXPORT extern void dm_set_null(struct dm *dmp); /* TODO - HACK, need general set mechanism */
 DM_EXPORT extern const char *dm_get_dm_name(const struct dm *dmp);
 DM_EXPORT extern const char *dm_get_dm_lname(struct dm *dmp);
 DM_EXPORT extern const char *dm_get_graphics_system(const struct dm *dmp);
@@ -369,7 +369,7 @@ DM_EXPORT struct fb *fb_get();
 DM_EXPORT struct fb *fb_raw(const char *type);
 DM_EXPORT void  fb_put(struct fb *ifp);
 DM_EXPORT struct dm *fb_get_dm(struct fb *ifp);
-DM_EXPORT extern char *fb_gettype(struct fb *ifp);
+DM_EXPORT extern const char *fb_gettype(struct fb *ifp);
 DM_EXPORT extern void fb_set_standalone(struct fb *ifp, int val);
 DM_EXPORT extern int fb_get_standalone(struct fb *ifp);
 DM_EXPORT extern int fb_get_max_width(struct fb *ifp);
@@ -428,7 +428,6 @@ DM_EXPORT extern icv_image_t *fb_write_icv(struct fb *ifp, int scr_xoff, int scr
 DM_EXPORT extern int fb_read_png(struct fb *ifp, FILE *fp_in, int file_xoff, int file_yoff, int scr_xoff, int scr_yoff, int clear, int zoom, int inverse, int one_line_only, int multiple_lines, int verbose, int header_only, double def_screen_gamma, struct bu_vls *result);
 
 DM_EXPORT extern int fb_set_interface(struct fb *ifp, const char *interface_type);
-DM_EXPORT extern void fb_set_name(struct fb *ifp, const char *name);
 DM_EXPORT extern const char *fb_get_name(const struct fb *ifp);
 DM_EXPORT extern void fb_set_magic(struct fb *ifp, uint32_t magic);
 DM_EXPORT extern long fb_get_pagebuffer_pixel_size(struct fb *ifp);

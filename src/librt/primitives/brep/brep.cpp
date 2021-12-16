@@ -2503,7 +2503,6 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     ON_Brep *brep_out;
     brep1 = bip1->brep;
     brep2 = bip2->brep;
-    brep_out = ON_Brep::New();
 
     op_type operation_type;
     switch (operation) {
@@ -2519,6 +2518,8 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	default:
 	    return -1;
     }
+
+    brep_out = ON_Brep::New();
 
     int ret;
     if ((ret = ON_Boolean(brep_out, brep1, brep2, operation_type)) < 0)

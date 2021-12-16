@@ -95,7 +95,6 @@ std::vector <std::string> g_CsgBoolExp;
 const char *usage_msg = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 const char *options = "t:a:n:o:r:vx:X:";
 char *prog_name = NULL;
-const char *output_file = NULL;
 
 
 static void
@@ -155,19 +154,8 @@ infix_to_postfix(std::string str)
 }
 
 
-static void
-usage(const char *s)
-{
-    if (s) {
-	fputs(s, stderr);
-    }
-
-    bu_exit(1, usage_msg, prog_name);
-}
-
-
 static int
-parse_args(int ac, char **av)
+parse_args(struct bu_vls *output_file, int ac, char **av)
 {
     int c;
 
@@ -189,7 +177,7 @@ parse_args(int ac, char **av)
 		/* fall through */
 	    case 'o':               /* Output file name */
 		/* grab output file name */
-		output_file = bu_optarg;
+		bu_vls_sprintf(output_file, "%s", bu_optarg);
 		break;
 	    case 'v':               /* verbosity */
 		verbose++;
@@ -205,7 +193,7 @@ parse_args(int ac, char **av)
 		bu_log("\n");
 		break;
 	    default:
-		usage("Bad or help flag specified\n");
+		bu_exit(1, "[g-sat]: Bad or help flag specified\n");
 		break;
 	}
 
@@ -1139,17 +1127,16 @@ main(int argc, char *argv[])
     ttol.norm = 0.0;
 
     /* parse command line arguments. */
-    arg_count = parse_args(argc, argv);
+    struct bu_vls output_file = BU_VLS_INIT_ZERO;
+    arg_count = parse_args(&output_file, argc, argv);
 
-    std::string output;
-    if (!output_file) {
-	output = argv[bu_optind];
-	output += ".sat";
-	output_file = output.c_str();
+    if (!bu_vls_strlen(&output_file)) {
+	bu_vls_printf(&output_file, "%s.sat", argv[bu_optind]);
     }
 
     if ((argc - arg_count) < MIN_NUM_OF_ARGS) {
-	usage("Error: Must specify model and objects on the command line\n");
+	bu_vls_free(&output_file);
+	bu_exit(1, "[g-sat] Error: Must specify model and objects on the command line\n");
     }
 
     // ***********************************************************************************
@@ -1185,7 +1172,8 @@ main(int argc, char *argv[])
     rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
 
     if (rtip == RTI_NULL) {
-	usage("rt_dirbuild failure\n");
+	bu_vls_free(&output_file);
+	bu_exit(1, "[g-sat]: rt_dirbuild failure\n");
     }
 
     init_state = rt_initial_tree_state;
@@ -1223,7 +1211,8 @@ main(int argc, char *argv[])
 
     // Export geometry
     if (g_body_cnt == 0) {
-	usage("No geometry to convert.\n");
+	bu_vls_free(&output_file);
+	bu_exit(1, "[g-sat]: No geometry to convert.\n");
     }
 
     std::cout << "*** CSG DEBUG BEGIN ***" << std::endl;
@@ -1312,15 +1301,17 @@ main(int argc, char *argv[])
 
     // Export geometry
     if (size != 0) {
-	(void)gqt->export_solid_model(parent_entities, output_file, ACIS_SAT, size, version);
+	(void)gqt->export_solid_model(parent_entities, bu_vls_cstr(&output_file), ACIS_SAT, size, version);
     } else {
-	usage("No geometry to convert.\n");
+	bu_vls_free(&output_file);
+	bu_exit(1, "[g-sat]: No geometry to convert.\n");
     }
 
     CGMApp::instance()->shutdown();
 
     std::cout << "Number of primitives processed: " << g_body_cnt << std::endl;
 
+    bu_vls_free(&output_file);
     return 0;
 }
 

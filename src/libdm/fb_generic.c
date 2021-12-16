@@ -59,7 +59,6 @@ struct fb *fb_get()
     struct fb *new_fb = FB_NULL;
     BU_GET(new_fb, struct fb);
     BU_GET(new_fb->i, struct fb_impl);
-    new_fb->i->if_name = NULL;
     return new_fb;
 }
 
@@ -133,13 +132,6 @@ fb_configure_window(struct fb *ifp, int width, int height)
     return ifp->i->if_configure_window(ifp, width, height);
 }
 
-void fb_set_name(struct fb *ifp, const char *name)
-{
-    if (!ifp) return;
-    ifp->i->if_name = (char *)bu_malloc((unsigned)strlen(name)+1, "if_name");
-    bu_strlcpy(ifp->i->if_name, name, strlen(name)+1);
-}
-
 const char *fb_get_name(const struct fb *ifp)
 {
     if (!ifp) return NULL;
@@ -194,7 +186,7 @@ struct dm *fb_get_dm(struct fb *ifp)
     return ifp->i->dmp;
 }
 
-char *fb_gettype(struct fb *ifp)
+const char *fb_gettype(struct fb *ifp)
 {
     return ifp->i->if_type;
 }
@@ -345,7 +337,6 @@ fb_close(struct fb *ifp)
     }
     if (ifp->i->if_pbase != PIXEL_NULL)
 	free((void *) ifp->i->if_pbase);
-    free((void *) ifp->i->if_name);
     free((void *) ifp->i);
     free((void *) ifp);
     return 0;

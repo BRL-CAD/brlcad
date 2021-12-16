@@ -584,6 +584,7 @@ void TYPEprint_init(const Type type, FILE *header, FILE *impl, Schema schema)
     char typename_buf[MAX_LEN];
 
     strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
+    tdnm[BUFSIZ - 1] = '\0';
 
     if(isAggregateType(type)) {
         AGGRprint_init(header, impl, type, tdnm, type->symbol.name);
@@ -1323,7 +1324,9 @@ void AGGRprint_bound(FILE *header, FILE *impl, const char *var_name, const char 
 {
     if(bound->symbol.resolved) {
         if(bound->type == Type_Funcall) {
-            fprintf(impl, "        %s->SetBound%dFromExpressFuncall( \"%s\" );\n", var_name, boundNr, EXPRto_string(bound));
+	    char *bound_str = EXPRto_string(bound);
+            fprintf(impl, "        %s->SetBound%dFromExpressFuncall( \"%s\" );\n", var_name, boundNr, bound_str);
+	    sc_free(bound_str);
         } else {
             fprintf(impl, "        %s->SetBound%d( %d );\n", var_name, boundNr, bound->u.integer);
         }

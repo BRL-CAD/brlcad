@@ -225,8 +225,6 @@ surface_EvNormal(// returns false if unable to evaluate
 	    /*
 	     * brute force and try to solve from each side of the surface domain
 	     */
-	    ON_Interval u = surf->Domain(0);
-	    ON_Interval v = surf->Domain(1);
 	    for(int iside=1; iside <= 4; iside++) {
 		rc=surf->EvNormal(s, t, point, normal, iside, hint);
 		if (rc)
@@ -581,8 +579,6 @@ surface_GetClosestPoint3dFirstOrderByRange(
     ON_3dVector ds, dt, dss, dst, dtt;
     ON_2dPoint working_p2d;
     ON_3dPoint working_p3d;
-    ON_3dPoint P;
-    ON_3dVector Ds, Dt, Dss, Dst, Dtt;
     bool notdone = true;
     double previous_distance = DBL_MAX;
     double distance;
@@ -696,10 +692,6 @@ bool surface_GetClosestPoint3dFirstOrder(
     double within_distance_tol
     )
 {
-    ON_3dPoint p0;
-    ON_2dPoint p2d0;
-    ON_3dVector ds, dt, dss, dst, dtt;
-    ON_3dVector T, K;
     bool rc = false;
 
     static const ON_Surface *prev_surface = NULL;
@@ -1756,8 +1748,6 @@ bool trim_GetClosestPoint3dFirstOrder(
 
     double t0;
     ON_3dPoint p3d;
-    ON_3dPoint p0;
-    ON_3dVector ds, dt, dss, dst, dtt;
     ON_3dVector T, K;
     int prec = std::cerr.precision();
     ON_BoundingBox tight_bbox;
@@ -1820,7 +1810,6 @@ bool trim_GetClosestPoint3dFirstOrder(
 
 	    if (!N.ConvertSpanToBezier(span_index, B))
 		continue;
-	    ON_Interval bi = B.Domain();
 	    if (!B.GetTightBoundingBox(tight_bbox, bGrowBox, NULL))
 		continue;
 	    bbox[span_index] = tight_bbox;
@@ -3247,7 +3236,6 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
     } else {
 	samplesperknotinterval = 18 * degree;
     }
-    ON_2dPoint pt;
     double t = 0.0;
     ON_3dPoint pointOnCurve;
     ON_3dPoint knudgedPointOnCurve;
@@ -4099,8 +4087,6 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 	    return false;
 
 	const ON_Surface *surf = data->surf;
-	ON_Interval udom = surf->Domain(0);
-	ON_Interval vdom = surf->Domain(1);
 	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	ON_2dPoint pt;
 	ON_2dPoint prev_pt;

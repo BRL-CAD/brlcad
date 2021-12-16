@@ -7,12 +7,10 @@ if (NOT WIN32)
     ${PKG_INCLUDE_DIRS}
     )
   LIST(REMOVE_DUPLICATES REMRTBIN_INCLUDE_DIRS)
-  include_directories(${REMRTBIN_INCLUDE_DIRS})
+  BRLCAD_INCLUDE_DIRS(REMRTBIN_INCLUDE_DIRS)
 
-  include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${TCL_INCLUDE_PATH}
-    )
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+  include_directories(SYSTEM ${TCL_INCLUDE_PATH})
 
   BRLCAD_ADDEXEC(remrt "../rt/opt.c;ihost.c;remrt.c" "liboptical;libdm")
   ADD_TARGET_DEPS(remrt dm_plugins)

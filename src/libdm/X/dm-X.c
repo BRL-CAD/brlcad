@@ -57,6 +57,8 @@
 
 #include "vmath.h"
 #include "bu/endian.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "bn.h"
 #include "dm.h"
 #include "../null/dm-Null.h"

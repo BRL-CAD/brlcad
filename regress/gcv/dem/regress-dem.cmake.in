@@ -28,7 +28,7 @@ execute_process(COMMAND "@CMAKE_COMMAND@" -E tar xjf "${CSDIR}/hawaii-c.tar.bz2"
 
 # Run the converter
 execute_process(
-  COMMAND "${GCV_EXEC}" "${CBDIR}/hawaii-c" "${CBDIR}/hawaii-c.g"
+  COMMAND "${GCV_EXEC}" --input-format gdal "${CBDIR}/hawaii-c" "${CBDIR}/hawaii-c.g"
   RESULT_VARIABLE dem_g_result OUTPUT_VARIABLE dem_g_log ERROR_VARIABLE dem_g_log
   )
 file(APPEND "${CBDIR}/regress-dem.log" "${dem_g_log}")

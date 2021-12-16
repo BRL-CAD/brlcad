@@ -2498,7 +2498,6 @@ int
 rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_bot_internal *bot;
-    const char **obj_array = NULL;
     int len;
     size_t i;
     long li;
@@ -2569,6 +2568,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *f_str;
 
 	    if (argv[0][2] == '\0') {
+		const char **obj_array = NULL;
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
@@ -2680,6 +2680,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *v_str;
 
 	    if (argv[0][1] == '\0') {
+		const char **obj_array = NULL;
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
@@ -2749,6 +2750,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *v_str;
 
 	    if (argv[0][1] == '\0') {
+		const char **obj_array = NULL;
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
@@ -2813,6 +2815,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *f_str;
 
 	    if (argv[0][1] == '\0') {
+		const char **obj_array = NULL;
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
@@ -2936,6 +2939,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *t_str;
 
 	    if (argv[0][1] == '\0') {
+		const char **obj_array = NULL;
 		if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		    bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		    return BRLCAD_ERROR;
@@ -2960,7 +2964,6 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		li = atol(&argv[0][1]);
 		if (li < 0 || (size_t)li >= bot->num_faces) {
 		    bu_vls_printf(logstr, "face number [%ld] out of range!!!", li);
-		    bu_free((char *)obj_array, "obj_array");
 		    return BRLCAD_ERROR;
 		}
 		if (!bot->thickness) {
@@ -3023,6 +3026,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "flags")) {
+	    const char **obj_array = NULL;
 	    if (bu_argv_from_tcl_list(argv[1], &len, (const char ***)&obj_array) != 0) {
 		bu_vls_printf(logstr, "tcl list parse error: %d.", len);
 		return BRLCAD_ERROR;
@@ -5124,8 +5128,10 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 		result->faces[avail_face*3+face*3+2] = bots[i]->faces[face*3+2] + avail_vert;
 
 		if (result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) {
-		    result->thickness[avail_face+face] = bots[i]->thickness[face];
-		    result->face_mode[avail_face+face] = bots[i]->face_mode[face];
+		    if (bots[i]->thickness)
+			result->thickness[avail_face+face] = bots[i]->thickness[face];
+		    if (bots[i]->face_mode)
+			result->face_mode[avail_face+face] = bots[i]->face_mode[face];
 		}
 	    }
 	}

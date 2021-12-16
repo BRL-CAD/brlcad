@@ -207,18 +207,14 @@ print_representation(unsigned char *chars, size_t length)
 static void
 hexdump(const unsigned char *from, const unsigned char *to)
 {
-    long i;
-    long ii; // starting offset
-    int	j;
-    int jj;
-    int k;
-    unsigned char c;
+    long i = 0L;
+    long ii = 0L; // starting offset
+    int	j = 0;
+    int jj = 0;
+    int k = 0;
+    unsigned char c = 0;
     static const int PERLINE = 16;
-    unsigned char chars[PERLINE];
-
-    i = 0L;
-    ii = 0L;
-    j = 0;
+    unsigned char chars[PERLINE] = {0};
 
     if (from > to)
 	return;

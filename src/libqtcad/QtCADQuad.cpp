@@ -41,6 +41,8 @@
 #include "common.h"
 
 #include <QGridLayout>
+
+#include "bu/str.h"
 #include "qtcad/QtCADQuad.h"
 
 QtCADQuad::QtCADQuad(QWidget *parent, int type)

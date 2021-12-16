@@ -73,6 +73,10 @@ bv_init(struct bview *gvp)
 
     /* Initialize local settings */
     bv_settings_init(&gvp->gv_ls);
+
+    // TODO - unimplemented
+    gvp->gv_ls.gv_selected = NULL;
+
     /* Out of the gate we don't have any shared settings */
     gvp->gv_s = &gvp->gv_ls;
 
@@ -104,6 +108,25 @@ bv_init(struct bview *gvp)
     gvp->vlfree = &gvp->gv_vlfree;
 
     bv_update(gvp);
+}
+
+void
+bv_free(struct bview *gvp)
+{
+    if (!gvp)
+	return;
+
+    bu_vls_free(&gvp->gv_name);
+    bu_ptbl_free(gvp->gv_view_grps);
+    BU_PUT(gvp->gv_view_grps, struct bu_ptbl);
+    bu_ptbl_free(gvp->gv_view_objs);
+    BU_PUT(gvp->gv_view_objs, struct bu_ptbl);
+
+    if (gvp->gv_ls.gv_selected) {
+	bu_ptbl_free(gvp->gv_ls.gv_selected);
+	BU_PUT(gvp->gv_ls.gv_selected, struct bu_ptbl);
+	gvp->gv_ls.gv_selected = NULL;
+    }
 }
 
 void
@@ -186,12 +209,6 @@ bv_settings_init(struct bview_settings *s)
     // Higher values indicate more aggressive behavior (i.e. points further away will be snapped).
     s->gv_snap_tol_factor = 10;
     s->gv_snap_lines = 0;
-
-
-    // TODO - unimplemented
-    BU_GET(s->gv_selected, struct bu_ptbl);
-    bu_ptbl_init(s->gv_selected, 8, "scene_objs init");
-
 }
 
 // TODO - investigate saveview/loadview logic, see if anything

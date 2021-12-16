@@ -464,7 +464,7 @@ int MarchingSquares::AddEdges(const double v[Square::CORNERS],double iso,Edge* i
 
 	/* Find the vertices where the surface intersects the cube */
 	int i,j,ii=1;
-	for(i=0;i<12;i++){
+	for(i=0;i<4;i++){
 		if(edgeMask[idx] & ii){SetVertex(i,v,iso);}
 		ii<<=1;
 	}

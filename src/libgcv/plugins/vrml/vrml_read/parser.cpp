@@ -157,9 +157,9 @@ PARSER::parsekwuse(char *instring, NODE *node)
     for (i = userdeftypes.size() - 1; i >= 0 ; i--) {
 	if (stringcompare(userdeftypes[i], instring) == 0) { //Search for node in userdeftype vector
 	    NODETYPE tnode;
+	    NODE tmpnode;
 	    ntype = tnode.findNodeType(defnodelist[i]);
-	    node = new NODE;
-	    node = node->createNewNode(ntype, node);  //Create instances of node and copies node data
+	    node = tmpnode.createNewNode(ntype);  //Create instances of node and copies node data
 	    node->copyNodeData(node, defnodelist[i], ntype);
 	    node->copyNode(node, defnodelist[i]);
 	    return node;
@@ -190,7 +190,7 @@ PARSER::parseNode(char *instring, NODE *node)
 
     if (!nodeid) return NULL;
 
-    node = tempnode.createNewNode(nodeid, node);
+    node = tempnode.createNewNode(nodeid);
     getNextWord(nextstr);
 
 
@@ -257,8 +257,8 @@ PARSER::parseProtoNode(char *instring, NODE *node)
     for (i = protodeftypes.size() - 1; i >= 0 ; i--) {  //Searches for node in protodeftypes vector
 	if (stringcompare(protodeftypes[i], instring) == 0) {
 	    NODETYPE tnode;
-	    node = new NODE;
-	    node = node->createNewNode(tnode.findNodeType(protonodelist[i]), node);
+	    NODE tmpnode;
+	    node = tmpnode.createNewNode(tnode.findNodeType(protonodelist[i]));
 	    node->copyNode(node, protonodelist[i]);
 	    return node;
 	}

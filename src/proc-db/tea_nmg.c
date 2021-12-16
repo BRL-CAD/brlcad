@@ -147,7 +147,6 @@ dump_patch(int (*patch)[4])
     }
 
     /* set eu geometry */
-    pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, 0); /* see nurb.h for details */
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
     NMG_CK_LOOPUSE(lu);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {

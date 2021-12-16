@@ -366,10 +366,11 @@ do_conversion(
     size_t in_argc, const char **in_argv,
     size_t out_argc, const char **out_argv)
 {
-    const struct bu_ptbl * const filters = gcv_list_filters();
+    struct gcv_context context;
+    gcv_context_init(&context);
+    const struct bu_ptbl * const filters = gcv_list_filters(&context);
     const struct gcv_filter * const *entry;
     const struct gcv_filter *in_filter = NULL, *out_filter = NULL;
-    struct gcv_context context;
 
     for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
 	bu_mime_model_t emt = (*entry)->mime_type;
@@ -395,10 +396,11 @@ do_conversion(
 	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(in_type, BU_MIME_MODEL));
     if (!out_filter)
 	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(out_type, BU_MIME_MODEL));
-    if (!in_filter || !out_filter)
+    if (!in_filter || !out_filter) {
+	gcv_context_destroy(&context);
 	return 0;
+    }
 
-    gcv_context_init(&context);
 
     if (!gcv_execute(&context, in_filter, NULL, in_argc, in_argv, in_path)) {
 	bu_vls_printf(messages, "Read filter ('%s') failed for '%s'\n", in_filter->name, in_path);
@@ -538,6 +540,9 @@ main(int ac, const char **av)
 
 	goto cleanup;
     }
+
+    // Remaining av handling will use the ac count from bu_opt_parse
+    ac = unknown_ac;
 
     /* Did we get explicit options for an input and/or output file? */
     if (in_str) {

@@ -1362,6 +1362,7 @@ Path::GetEdgeBounds(ON_Brep *brep)
     for (i = edge_list.begin(); i != edge_list.end(); i++) {
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	    delete u;
 	    return NULL;
 	}
 	if (u == NULL) {
@@ -1530,7 +1531,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	// grab the curve for this edge, face and surface
 	const ON_BrepEdge *edge = &brep->m_E[(*i)->GetONId()];
 	const ON_Curve *curve = edge->EdgeCurveOf();
-	ON_BoundingBox bb = curve->BoundingBox();
 	bool orientWithCurve = (*i)->OrientWithEdge();
 
 	if ((false) && (id == 34193)) {
@@ -1770,6 +1770,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    delete data->segments->front();
 	    data->segments->pop_front();
 	}
+	delete data->segments;
 	delete data;
 	curve_pullback_samples.pop_front();
     }
@@ -2151,7 +2152,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     ON_3dPointArray cpts(2 * narcs + 1);
     double angle = t;
     double W[2 * 4 + 1]; /* 2 * max narcs + 1 */
-    ON_3dPoint circleP1, isect, circleP2, PM, PT;
+    ON_3dPoint circleP1, isect, circleP2;
     ON_3dVector tangentP1, tangentP2;
 
     circleP1 = circle.PointAt(angle); // was using 'startpt' from edge_curve but found case where not in tol
@@ -2353,7 +2354,6 @@ Ellipse::LoadONBrep(ON_Brep *brep)
     double angle = t;
     double W[2 * 4 + 1]; // 2 * max narcs + 1
     ON_3dPoint Pnt[2 * 4 + 1];
-    ON_3dPoint MP0, MP1, MP2, MPM, MPT, MPX;
     ON_3dVector Tangent1, Tangent2;
     ON_3dPoint P0, PX, P2, P1;
 

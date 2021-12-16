@@ -49,7 +49,6 @@ main(int ac, char *av[]) {
     ged_tops(dbp, 2, tops);
     printf("%s\n", bu_vls_addr(dbp->ged_result_str));
     ged_close(dbp);
-    BU_PUT(dbp, struct ged);
 
     return 0;
 }
