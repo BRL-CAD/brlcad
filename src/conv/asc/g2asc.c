@@ -990,7 +990,8 @@ combdump(void)	/* Print out Combination record information */
     /*
      *  Output the member records now
      */
-    while (BU_LIST_WHILE(mp, mchain, &head)) {
+    while (head.forw != &head) {
+	mp = (struct mchain *)head.forw;
 	membdump(&mp->r);
 	BU_LIST_DEQUEUE(&mp->l);
 	BU_PUT(mp, struct mchain);

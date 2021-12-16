@@ -92,11 +92,11 @@ function(THIRD_PARTY_HEADERS dir vroot)
   # 0. Whether or not we're building the sources, we are tracking the files
   # that are supposed to be in the directory
   get_filename_component(DIR_NAME "${dir}" NAME)
-  #if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
-  #  message(FATAL_ERROR "Third party component ${DIR_NAME} does not have a dist file at \"${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist\"")
-  #endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
-  #include("${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
-  #CMAKEFILES_IN_DIR(${DIR_NAME}_ignore_files ${dir})
+  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+    message(FATAL_ERROR "Third party component ${DIR_NAME} does not have a dist file at \"${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist\"")
+  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME}.dist")
+  CMAKEFILES_IN_DIR(${DIR_NAME}_ignore_files ${dir})
 
   # 1. If any of the required flags are off, this is a no-op.
   set(DISABLE_STR "")
@@ -234,8 +234,6 @@ function(THIRD_PARTY_HEADERS dir vroot)
   # After all that, we know now what to do about this particular dependency
   set(BRLCAD_${vroot}_BUILD "${BRLCAD_${vroot}_BUILD}" PARENT_SCOPE)
 
-  message("BRLCAD_${vroot}_BUILD: ${BRLCAD_${vroot}_BUILD}")
-
   if(${BRLCAD_${vroot}_BUILD})
     set(${vroot}_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${TP_SUBDIR}" CACHE STRING "enabling local copy" FORCE)
     set(${vroot}_INCLUDE_DIRS "${${vroot}_INCLUDE_DIR}" CACHE STRING "enabling local copy" FORCE)
@@ -243,8 +241,6 @@ function(THIRD_PARTY_HEADERS dir vroot)
 
   # For drop-down menus in CMake gui - set STRINGS property
   set_property(CACHE BRLCAD_${vroot} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
-
-  message("${vroot}_INCLUDE_DIR: ${${vroot}_INCLUDE_DIR}")
 
   mark_as_advanced(${vroot}_INCLUDE_DIR)
   mark_as_advanced(${vroot}_INCLUDE_DIRS)

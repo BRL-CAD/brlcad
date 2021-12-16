@@ -200,10 +200,10 @@ void tienet_master_free()
     TIENET_BUFFER_FREE(tienet_master_result_buffer);
     TIENET_BUFFER_FREE(tienet_master_result_buffer_comp);
 
-    bu_free(tienet_master_buffer, "tienet master buffer");
-
     for (i = 0; i < tienet_master_buffer_size; i++)
 	bu_free(tienet_master_buffer[i].data, "tienet master buffer data");
+
+    bu_free(tienet_master_buffer, "tienet master buffer");
 
     for (sock = tienet_master_socket_list->next; sock; sock = sock->next)
 	bu_free(sock->prev, "master socket");
@@ -348,12 +348,14 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
 		    if (bind(daemon_socket, (struct sockaddr *)&tdaemon, sizeof(tdaemon)) < 0) {
 			fprintf(stderr, "unable to bind socket, exiting.\n");
+			close(daemon_socket);
 			exit(1);
 		    }
 
 		    /* Make an attempt to connect to this host and initiate work */
 		    if (connect(daemon_socket, (struct sockaddr *)&slave, sizeof(slave)) < 0) {
 			fprintf(stderr, "cannot connect to slave: %s:%d, skipping.\n", host, port);
+			close(daemon_socket);
 		    } else {
 			/* Send endian to slave */
 			op = 1;
