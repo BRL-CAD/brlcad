@@ -343,11 +343,8 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
                     material_ip = (struct rt_material_internal *) intern.idb_ptr;
                     const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
                     // the material_id will only be set if the material object has an id field set
-                    // otherwise, material_id is set to the default value of 1
                     if (id_string != NULL) {
                         bu_avs_add(avsp, "material_id", id_string);
-                    } else {
-                        bu_avs_add(avsp, "material_id", "1");
                     }
                 }
             }
