@@ -97,6 +97,11 @@ if (POLICY CMP0110)
   cmake_policy(SET CMP0110 OLD)
 endif (POLICY CMP0110)
 
+# cmake_dependent_option() supports full Condition Syntax
+if (POLICY CMP0127)
+  cmake_policy(SET CMP0127 NEW)
+endif (POLICY CMP0127)
+
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.  If we
