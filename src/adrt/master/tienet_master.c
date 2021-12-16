@@ -348,12 +348,14 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
 		    if (bind(daemon_socket, (struct sockaddr *)&tdaemon, sizeof(tdaemon)) < 0) {
 			fprintf(stderr, "unable to bind socket, exiting.\n");
+			close(daemon_socket);
 			exit(1);
 		    }
 
 		    /* Make an attempt to connect to this host and initiate work */
 		    if (connect(daemon_socket, (struct sockaddr *)&slave, sizeof(slave)) < 0) {
 			fprintf(stderr, "cannot connect to slave: %s:%d, skipping.\n", host, port);
+			close(daemon_socket);
 		    } else {
 			/* Send endian to slave */
 			op = 1;
