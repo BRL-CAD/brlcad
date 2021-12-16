@@ -102,7 +102,7 @@ register rle_hdr * the_hdr;
     int nrun;
     register rle_pixel *row;
     int mask;
-    char bits[256];
+    char bits[256] = {0};
     short   state,		/* State of run-finding state machine. */
 	    dstart,		/* Starting point for current data segment. */
     	    dend,		/* Ending point of current data segment. */

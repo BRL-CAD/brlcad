@@ -879,10 +879,13 @@ x24_setup(struct fb *ifp, int width, int height)
     XFlush(xi->xi_dpy);
 
     /* Allocate image buffer, and make our X11 Image */
+    unsigned int sratio = sizeof(unsigned int)/sizeof(unsigned char);
+
     switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VD24:
 	case FLG_VT24:
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned char), width*height)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned char),
+						       sratio*width*height)) == NULL) {
 		fb_log("X24_open: pix32 malloc failed\n");
 		return -1;
 	    }
@@ -909,7 +912,8 @@ x24_setup(struct fb *ifp, int width, int height)
 	case FLG_VP8:
 	case FLG_VS8:
 	case FLG_VG8:
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned char), width*height)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned char),
+						       width*height)) == NULL) {
 		fb_log("X24_open: pix8 malloc failed\n");
 		return -1;
 	    }
@@ -2020,6 +2024,9 @@ X24_getmem(struct fb *ifp)
 		    break;
 		}
 
+		// fd tests over
+		close(fd);
+
 		/* Change it to local */
 		xi->xi_mode = (xi->xi_mode & ~MODE10_MASK) | MODE10_MALLOC;
 #endif
@@ -2580,6 +2587,8 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 
     X24_updstate(ifp);
 
+    unsigned int sratio = sizeof(unsigned int)/sizeof(unsigned char);
+
     switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VD24:
 	case FLG_VT24:
@@ -2588,7 +2597,7 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 
 	    /* Make new buffer and new image */
 	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(unsigned char),
-						      xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+						      sratio*xi->xi_xwidth*xi->xi_xheight)) == NULL) {
 		fb_log("X24: pix32 malloc failed in resize!\n");
 		return 1;
 	    }

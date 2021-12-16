@@ -1356,6 +1356,9 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
 		(void)bu_argv_from_tcl_list(srf_array[srf_no], &n_params, (const char ***)&srf_param_array);
 
+		if (!srf_param_array)
+		    continue;
+
 		for (i=0; i<n_params; i+= 2) {
 		    int tmp_len;
 
@@ -1390,22 +1393,19 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 			    bu_free((char *)srf_param_array, "srf_param_array");
 			    return BRLCAD_ERROR;
 			}
-			nurb->srfs[srf_no] = (struct face_g_snurb *) nmg_nurb_new_snurb(
-				order[0], order[1],
-				u_size, v_size,
-				s_size[0], s_size[1],
-				pt_type);
+			nurb->srfs[srf_no] = (struct face_g_snurb *) nmg_nurb_new_snurb(order[0], order[1], u_size, v_size, s_size[0], s_size[1], pt_type);
 			srf = nurb->srfs[srf_no];
 			bu_free((char *)order, "order");
+			order = NULL;
 			bu_free((char *)s_size, "s_size");
-			(void)memcpy(srf->u.knots, u_pts,
-				srf->u.k_size * sizeof(fastf_t));
-			(void)memcpy(srf->v.knots, v_pts,
-				srf->v.k_size * sizeof(fastf_t));
+			s_size = NULL;
+			(void)memcpy(srf->u.knots, u_pts, srf->u.k_size * sizeof(fastf_t));
+			(void)memcpy(srf->v.knots, v_pts, srf->v.k_size * sizeof(fastf_t));
 			bu_free((char *)u_pts, "u_pts");
+			u_pts = NULL;
 			bu_free((char *)v_pts, "v_pts");
-			tmp_len = srf->s_size[0] * srf->s_size[1] *
-			    RT_NURB_EXTRACT_COORDS(srf->pt_type);
+			v_pts = NULL;
+			tmp_len = srf->s_size[0] * srf->s_size[1] * RT_NURB_EXTRACT_COORDS(srf->pt_type);
 			tmp2 = tmp_len;
 			if (_rt_tcl_list_to_fastf_array(srf_param_array[i+1], &srf->ctl_points, &tmp_len) != tmp2) {
 			    bu_vls_printf(logstr, "ERROR: unable to parse surface\n");
@@ -1416,6 +1416,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		    }
 		}
 		bu_free((char *)srf_param_array, "srf_param_array");
+		srf_param_array = NULL;
 	    }
 	}
 

@@ -270,6 +270,10 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *fa
 		    edg->v = -1;
 		    edg->next = NULL;
 		    bu_free(edg, "bot edge");
+		    // TODO - Just freed edg, so we can't use that to test in
+		    // the while loop - is this our terminating case?  Not 100%
+		    // sure what the correct behavior is here...
+		    edg = NULL;
 		}
 	    } else {
 		/* unaffected edge, just continue */

@@ -10,7 +10,7 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2021 United States Government as represented by
+# Copyright (c) 2010-2020 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -122,7 +122,7 @@ mark_as_advanced(PERPLEX_TEMPLATE)
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2021 United States Government as represented by
+# Copyright (c) 2010-2020 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -229,6 +229,8 @@ if(NOT COMMAND PERPLEX_TARGET)
     add_custom_command(
       OUTPUT ${re2c_src} ${${PVAR_PREFIX}_OUT_HDR_FILE} ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE}
       COMMAND ${CMAKE_COMMAND} -E copy ${perplex_in_file} ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE}
+      COMMAND ${CMAKE_COMMAND} -E touch ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE}_cpy.done
+      COMMAND ${CMAKE_COMMAND} -E remove ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE}_cpy.done
       COMMAND ${PERPLEX_EXECUTABLE} -c -o ${re2c_src} -i ${${PVAR_PREFIX}_OUT_HDR_FILE} -t ${${PVAR_PREFIX}_TEMPLATE} ${${PVAR_PREFIX}_WORKING_DIR}/${IN_FILE}
       DEPENDS ${Input} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET} ${DEP_TARGET}
       WORKING_DIRECTORY ${${PVAR_PREFIX}_WORKING_DIR}

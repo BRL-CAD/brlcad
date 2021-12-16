@@ -273,7 +273,6 @@ inlineBoxMetrics (
 
     iContentHeight = pFont->metrics.ascent + pFont->metrics.descent;
     iBottomLeading = (iLineHeight - iContentHeight) / 2;
-    iTopLeading = (iLineHeight - iContentHeight) - iBottomLeading;
 
     pMetrics->iLogical = iLineHeight;
     pMetrics->iFontBottom = pMetrics->iLogical - iBottomLeading;
@@ -684,7 +683,6 @@ inlineContextAddNewLine (InlineContext *p, int nHeight, int isLast)
 {
     InlineBox *pBox;
     inlineContextAddInlineCanvas(p, INLINE_NEWLINE, 0);
-    pBox = &p->aInline[p->nInline - 1];
 
     /* This inline-box is added only to account for space that may come
      * after the new line box.
@@ -1299,7 +1297,6 @@ HtmlInlineContextGetLineBox (
          * active borders list now. Remember the current x-coordinate and
          * inline-box for when we have to go back and draw the border.
          */
-        pBorder = pBox->pBorderStart;
         x1 = x + extra_pixels + pBox->nLeftPixels;
         for (pBorder=pBox->pBorderStart; pBorder; pBorder=pBorder->pNext) {
             x1 -= pBorder->margin.margin_left;
@@ -1649,7 +1646,6 @@ HtmlInlineContextAddText (InlineContext *pContext, HtmlNode *pNode)
 {
     HtmlTextIter sIter;
 
-    XColor *color;                 /* Color to render in */
     HtmlFont *pFont;               /* Font to render in */
     Tk_Font tkfont;                /* Copy of pFont->tkfont */
     int eWhitespace;               /* Value of 'white-space' property */
@@ -1667,7 +1663,6 @@ HtmlInlineContextAddText (InlineContext *pContext, HtmlNode *pNode)
     eWhitespace = pValues->eWhitespace;
 
     tkfont = pFont->tkfont;
-    color = pValues->cColor->xcolor;
 
     sw = pFont->space_pixels;
     nh = pFont->metrics.ascent + pFont->metrics.descent;

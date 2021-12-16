@@ -161,6 +161,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
 	GLint lines;	/* number of lines to be sampled on this edge */
     } EdgeT;
+#define EDGET_INIT_ZERO {NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0}
 
     const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 #ifdef INTERP_Z
@@ -169,14 +170,14 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
     const GLfloat maxDepth = ctx->DrawBuffer->_DepthMaxF;
 #define FixedToDepth(F)  ((F) >> fixedToDepthShift)
 #endif
-    EdgeT eMaj, eTop, eBot;
-    GLfloat oneOverArea;
-    const SWvertex *vMin, *vMid, *vMax;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
+    EdgeT eMaj = EDGET_INIT_ZERO, eTop = EDGET_INIT_ZERO, eBot = EDGET_INIT_ZERO;
+    GLfloat oneOverArea = 0.0;
+    const SWvertex *vMin = NULL, *vMid = NULL, *vMax = NULL;  /* Y(vMin)<=Y(vMid)<=Y(vMax) */
     GLfloat bf = SWRAST_CONTEXT(ctx)->_BackfaceSign;
 #if !TRIANGLE_WALK_DOUBLE
     const GLint snapMask = ~((FIXED_ONE / (1 << SUB_PIXEL_BITS)) - 1); /* for x/y coord snapping */
 #endif
-    GLinterp vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
+    GLinterp vMin_fx = 0, vMin_fy = 0, vMid_fx = 0, vMid_fy = 0, vMax_fx = 0, vMax_fy = 0;
 
     SWspan span;
 

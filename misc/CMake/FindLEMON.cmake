@@ -10,7 +10,7 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2021 United States Government as represented by
+# Copyright (c) 2010-2020 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -190,6 +190,8 @@ if(NOT COMMAND LEMON_TARGET)
     add_custom_command(
       OUTPUT ${LEMON_GEN_OUT} ${LEMON_GEN_SOURCE} ${LEMON_GEN_HEADER}
       COMMAND ${CMAKE_COMMAND} -E copy ${lemon_in_file} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME}
+      COMMAND ${CMAKE_COMMAND} -E touch ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME}-tmp_cpy.done
+      COMMAND ${CMAKE_COMMAND} -E remove ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME}-tmp_cpy.done
       COMMAND ${LEMON_EXECUTABLE} -T${LEMON_TEMPLATE} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME} ${${LVAR_PREFIX}__EXTRA_ARGS}
       DEPENDS ${Input} ${LEMON_EXECUTABLE_TARGET} ${DEPS_TARGET}
       WORKING_DIRECTORY ${${LVAR_PREFIX}_WORKING_DIR}
@@ -199,19 +201,21 @@ if(NOT COMMAND LEMON_TARGET)
     # rename generated outputs
     if(NOT "${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "${LEMON_GEN_SOURCE}")
       add_custom_command(
-	OUTPUT ${${LVAR_PREFIX}_OUT_SRC_FILE}
+	OUTPUT ${${LVAR_PREFIX}_OUT_SRC_FILE} ${${LVAR_PREFIX}_OUT_SRC_FILE}-src_cpy.done
 	COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_SOURCE} ${${LVAR_PREFIX}_OUT_SRC_FILE}
+	COMMAND ${CMAKE_COMMAND} -E touch ${${LVAR_PREFIX}_OUT_SRC_FILE}-src_cpy.done
 	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_SOURCE} ${DEPS_TARGET}
 	)
-      set(LEMON_${Name}_OUTPUTS ${${LVAR_PREFIX}_OUT_SRC_FILE} ${LEMON_${Name}_OUTPUTS})
+      set(LEMON_${Name}_OUTPUTS ${${LVAR_PREFIX}_OUT_SRC_FILE} ${LEMON_${Name}_OUTPUTS} ${${LVAR_PREFIX}_OUT_SRC_FILE}-src_cpy.done)
     endif(NOT "${${LVAR_PREFIX}_OUT_SRC_FILE}" STREQUAL "${LEMON_GEN_SOURCE}")
     if(NOT "${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "${LEMON_GEN_HEADER}")
       add_custom_command(
-	OUTPUT ${${LVAR_PREFIX}_OUT_HDR_FILE}
+	OUTPUT ${${LVAR_PREFIX}_OUT_HDR_FILE} ${${LVAR_PREFIX}_OUT_HDR_FILE}-hdr_cpy.done
 	COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_HEADER} ${${LVAR_PREFIX}_OUT_HDR_FILE}
+	COMMAND ${CMAKE_COMMAND} -E touch ${${LVAR_PREFIX}_OUT_HDR_FILE}-hdr_cpy.done
 	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_HEADER} ${DEPS_TARGET}
 	)
-      set(LEMON_${Name}_OUTPUTS ${${LVAR_PREFIX}_OUT_HDR_FILE} ${LEMON_${Name}_OUTPUTS})
+      set(LEMON_${Name}_OUTPUTS ${${LVAR_PREFIX}_OUT_HDR_FILE} ${LEMON_${Name}_OUTPUTS} ${${LVAR_PREFIX}_OUT_HDR_FILE}-hdr_cpy.done)
     endif(NOT "${${LVAR_PREFIX}_OUT_HDR_FILE}" STREQUAL "${LEMON_GEN_HEADER}")
 
     set(LEMON_${Name}_OUTPUTS ${LEMON_${Name}_OUTPUTS} ${LEMON_GEN_OUT})

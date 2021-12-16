@@ -116,10 +116,15 @@ dpix_read(const char *filename, size_t width, size_t height)
     if (ret != (ssize_t)size) {
 	bu_log("dpix_read : Error while reading\n");
 	icv_destroy(bif);
+	if (fd != fileno(stdin))
+	    close(fd);
 	return NULL;
     }
 
     icv_normalize(bif);
+
+    if (fd != fileno(stdin))
+	close(fd);
 
     return bif;
 }

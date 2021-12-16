@@ -37,6 +37,8 @@
 #include "bu/app.h"
 #include "bu/dylib.h"
 #include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 
 #include "./include/private.h"
@@ -64,13 +66,13 @@ libdm_init(void)
     bu_vls_init(dm_init_msg_str);
 
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "dm", NULL);
-    char **filenames;
+    char **dm_filenames;
     struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&plugin_pattern, "*%s", DM_PLUGIN_SUFFIX);
-    size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
-    for (size_t i = 0; i < nfiles; i++) {
+    size_t dm_nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &dm_filenames);
+    for (size_t i = 0; i < dm_nfiles; i++) {
 	char pfile[MAXPATHLEN] = {0};
-	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "dm", filenames[i], NULL);
+	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "dm", dm_filenames[i], NULL);
 	void *dl_handle;
 	if (!(dl_handle = bu_dlopen(pfile, BU_RTLD_NOW))) {
 	    const char * const error_msg = bu_dlerror();
@@ -120,6 +122,7 @@ libdm_init(void)
 	    const char *dname = dm_get_name(d);
 	    if (!dname) {
 		bu_vls_printf(dm_init_msg_str, "Warning - file '%s' does not provide a display manager name (?), skipping\n", pfile);
+		bu_dlclose(dl_handle);
 		continue;
 	    }
 	    std::string key(dname);
@@ -168,7 +171,7 @@ libdm_init(void)
 
 
     }
-    bu_argv_free(nfiles, filenames);
+    bu_argv_free(dm_nfiles, dm_filenames);
     bu_vls_free(&plugin_pattern);
 
     dm_backends = (void *)&dm_map;

@@ -43,10 +43,12 @@ __BEGIN_DECLS
 /**
  * The big kahuna.
  */
+struct gcv_context_internal;
 struct gcv_context
 {
     struct db_i *dbip;
     bu_avs_t messages;
+    struct gcv_context_internal *i;  // Internal information
 };
 
 
@@ -192,6 +194,7 @@ struct gcv_filter {
      * 'options_data' is NULL if and only if 'create_opts_fn' is NULL.
      */
     int (* const filter_fn)(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *target);
+
 };
 
 
@@ -204,7 +207,7 @@ struct gcv_plugin {
  * Return a pointer to a bu_ptbl listing all registered filters as
  * const struct gcv_filter pointers.
  */
-GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);
+GCV_EXPORT const struct bu_ptbl *gcv_list_filters(struct gcv_context *context);
 
 /**
  * Perform a filtering operation on a gcv_context.

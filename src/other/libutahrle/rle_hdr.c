@@ -116,12 +116,14 @@ static int no_recurse = 0;
  * 	referred to by all non-null pointers.
  */
 rle_hdr *
-rle_hdr_cp( from_hdr, to_hdr )
-rle_hdr *from_hdr, *to_hdr;
+rle_hdr_cp(rle_hdr *from_hdr, rle_hdr *to_hdr )
 {
     static rle_hdr dflt_hdr;
     CONST_DECL char *cmd, *file;
     int num;
+
+    if (from_hdr == to_hdr)
+       return to_hdr;
 
     /* Save command, file name, and image number if already initialized. */
     if ( to_hdr &&  to_hdr->is_init == RLE_INIT_MAGIC )
@@ -148,17 +150,17 @@ rle_hdr *from_hdr, *to_hdr;
 
     *to_hdr = *from_hdr;
 
-    if ( to_hdr->bg_color )
+    if ( from_hdr->bg_color )
     {
-	int size = to_hdr->ncolors * sizeof(int);
+	int size = from_hdr->ncolors * sizeof(int);
 	to_hdr->bg_color = (int *)malloc( size );
 	RLE_CHECK_ALLOC( to_hdr->cmd, to_hdr->bg_color, "background color" );
 	bcopy( from_hdr->bg_color, to_hdr->bg_color, size );
     }
 
-    if ( to_hdr->cmap )
+    if ( from_hdr->cmap )
     {
-	int size = to_hdr->ncmap * (1 << to_hdr->cmaplen) * sizeof(rle_map);
+	int size = from_hdr->ncmap * (1 << to_hdr->cmaplen) * sizeof(rle_map);
 	to_hdr->cmap = (rle_map *)malloc( size );
 	RLE_CHECK_ALLOC( to_hdr->cmd, to_hdr->cmap, "color map" );
 	bcopy( from_hdr->cmap, to_hdr->cmap, size );
@@ -167,11 +169,11 @@ rle_hdr *from_hdr, *to_hdr;
     /* Only copy array of pointers, as the original comment memory
      * never gets overwritten.
      */
-    if ( to_hdr->comments )
+    if ( from_hdr->comments )
     {
 	int size = 0;
 	CONST_DECL char **cp;
-	for ( cp=to_hdr->comments; *cp; cp++ )
+	for ( cp=from_hdr->comments; *cp; cp++ )
 	    size++;		/* Count the comments. */
 	/* Check if there are really any comments. */
 	if ( size )
@@ -237,7 +239,7 @@ rle_hdr *the_hdr;
 	/* Unfortunately, we don't know how to free the comment memory. */
 	if ( the_hdr->comments )
            free( (void *)the_hdr->comments );
-	the_hdr->comments = 0;
+	the_hdr->comments = NULL;
     }
 }
 

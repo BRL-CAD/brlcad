@@ -283,7 +283,11 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 	output = gedp->ged_result_str;
     }
 
-    if (error_cnt > 0) { return GED_ERROR; }
+    if (error_cnt > 0) {
+	if (outfile)
+	    fclose(outfile);
+	return GED_ERROR;
+    }
 
     /* Update references once before we start all of this - db_search
      * needs nref to be current to work correctly. */

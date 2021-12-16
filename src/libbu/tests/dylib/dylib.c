@@ -44,9 +44,7 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
 	    bu_log("Unable to dynamically load '%s' (skipping)\n", pfile);
 	    continue;
 	}
-	if (dl_handles) {
-	    bu_ptbl_ins(dl_handles, (long *)dl_handle);
-	}
+
 	info_val = bu_dlsym(dl_handle, psymbol);
 	const struct dylib_plugin *(*plugin_info)() = (const struct dylib_plugin *(*)())(intptr_t)info_val;
 	if (!plugin_info) {
@@ -55,6 +53,7 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
 	    if (error_msg)
 		bu_log("%s\n", error_msg);
 
+	    bu_dlclose(dl_handle);
 	    bu_log("Unable to load symbols from '%s' (skipping)\n", pfile);
 	    bu_log("Could not find '%s' symbol in plugin\n", psymbol);
 	    continue;
@@ -63,8 +62,13 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
 	const struct dylib_plugin *plugin = plugin_info();
 
 	if (!plugin || !plugin->i) {
+	    bu_dlclose(dl_handle);
 	    bu_log("Invalid plugin encountered from '%s' (skipping)\n", pfile);
 	    continue;
+	}
+
+	if (dl_handles) {
+	    bu_ptbl_ins(dl_handles, (long *)dl_handle);
 	}
 
 	const struct dylib_contents *pcontents = plugin->i;

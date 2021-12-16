@@ -1287,12 +1287,17 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
     predictor_init();
 
-    DMP = dm_get();
-    dm_set_null(DMP);
+    /* register application provided routines */
+
+    DMP = dm_open(NULL, INTERP, "nu", 0, NULL);
     struct bu_vls *dpvp = dm_get_pathname(DMP);
     if (dpvp) {
 	bu_vls_strcpy(dpvp, "nu");
     }
+
+    /* If we're only doing the 'nu' dm we don't need most of mged_dm_init, but
+     * we do still need to register the dm_commands */
+    mged_curr_dm->dm_cmd_hook = dm_commands;
 
     struct bu_vls *tnvp = dm_get_tkname(mged_curr_dm->dm_dmp);
     if (tnvp) {
@@ -2542,12 +2547,11 @@ mged_finish(int exitcode)
     Tcl_Eval(INTERP, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
     Tcl_Release((ClientData)INTERP);
 
+    struct tclcad_io_data *giod = (struct tclcad_io_data *)GEDP->ged_io_data;
     ged_close(GEDP);
-    if (GEDP->ged_io_data) {
-	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
+    if (giod) {
+	tclcad_destroy_io_data(giod);
     }
-    if (GEDP)
-	BU_PUT(GEDP, struct ged);
 
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;
@@ -2837,8 +2841,9 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
     if (GEDP) {
 	ged_free(GEDP);
-	BU_ALLOC(GEDP, struct ged);
+	BU_PUT(GEDP, struct ged);
     }
+    BU_GET(GEDP, struct ged);
     GED_INIT(GEDP, ged_wdbp);
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
@@ -2999,7 +3004,6 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
     }
     ged_close(GEDP);
-    BU_PUT(GEDP, struct ged);
 
     // initialize a new blank ged structure
     BU_GET(GEDP, struct ged);

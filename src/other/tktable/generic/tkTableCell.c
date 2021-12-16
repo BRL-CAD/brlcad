@@ -1325,7 +1325,8 @@ Table_HiddenCmd(ClientData clientData, register Tcl_Interp *interp,
 
 	for (entryPtr = Tcl_FirstHashEntry(tablePtr->spanAffTbl, &search);
 	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	    if ((span = (char *) Tcl_GetHashValue(entryPtr)) == NULL) {
+            span = (char *) Tcl_GetHashValue(entryPtr);
+	    if (span == NULL) {
 		/* this is actually a spanning cell */
 		continue;
 	    }
@@ -1415,6 +1416,8 @@ TableSpanSanCheck(register Table *tablePtr)
 	}
 	if (reset) {
 	    Table_SpanSet(tablePtr, row, col, rs, cs);
+	    if (!tablePtr->spanTbl)
+	       return;
 	}
     }
 }

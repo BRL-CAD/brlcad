@@ -61,12 +61,10 @@ main(int ac, char *av[]) {
     }
 
     ged_close(gedp);
-    BU_PUT(gedp, struct ged);
     return 0;
 
 user_test_fail:
     ged_close(gedp);
-    BU_PUT(gedp, struct ged);
     return 1;
 }
 

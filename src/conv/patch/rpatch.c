@@ -51,14 +51,14 @@ static int fast3;
 double
 get_ftn_float(char *str, unsigned int start_col, char *format)
 {
-    char *ptr;
-    char tmp_str[MAXLINELEN];
-    int width, precision;
+    char *ptr = format;
+    char tmp_str[MAXLINELEN] = {0};
+    int width = 0;
+    int precision = 0;
     int leading_spaces=1;
-    int i;
+    int i = 0;
 
     /* Check that format is legal for floating point or double */
-    ptr = format;
     if (*ptr != 'F' && *ptr != 'f' && *ptr != 'E' && *ptr != 'e' && *ptr != 'D' && *ptr != 'd') {
 	fprintf(stderr, "Get_ftn_float(str=%s\n, start_col=%d, format=%s)\n",
 		str, start_col, ptr);

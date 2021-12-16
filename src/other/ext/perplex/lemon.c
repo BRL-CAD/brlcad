@@ -2662,9 +2662,15 @@ void Parse(struct lemon *gp)
   fseek(fp,0,2);
   filesize = ftell(fp);
   rewind(fp);
-  filebuf = (char *)malloc( filesize+1 );
-  if( filesize>100000000 || filebuf==0 ){
+  if( filesize>100000000 ){
     ErrorMsg(ps.filename,0,"Input file too large.");
+    gp->errorcnt++;
+    fclose(fp);
+    return;
+  }
+  filebuf = (char *)malloc( filesize+1 );
+  if( !filebuf ){
+    ErrorMsg(ps.filename,0,"filebuf allocation failed.");
     gp->errorcnt++;
     fclose(fp);
     return;
@@ -3136,7 +3142,8 @@ PRIVATE char *pathsearch(char *argv0, char *name, int modemask)
   }else{
     pathlist = getenv("PATH");
     if( pathlist==0 ) pathlist = ".:/bin:/usr/bin";
-    pathbuf = (char *) malloc( lemonStrlen(pathlist) + 1 );
+    char *lpathbuf = (char *) malloc( lemonStrlen(pathlist) + 1 );
+    pathbuf = lpathbuf;
     path = (char *)malloc( lemonStrlen(pathlist)+lemonStrlen(name)+2 );
     if( (pathbuf != 0) && (path!=0) ){
       pathbufptr = pathbuf;
@@ -3152,8 +3159,8 @@ PRIVATE char *pathsearch(char *argv0, char *name, int modemask)
         else pathbuf = &cp[1];
         if( access(path,modemask)==0 ) break;
       }
-      free(pathbufptr);
     }
+    free(lpathbuf);
   }
   return path;
 }
@@ -3241,25 +3248,33 @@ PRIVATE FILE *tplt_open(struct lemon *lemp)
   }else{
     lemon_sprintf(buf,"%s.lt",lemp->filename);
   }
+  int free_tpltname = 0;
   if( access(buf,004)==0 ){
     tpltname = buf;
   }else if( access(templatename,004)==0 ){
     tpltname = templatename;
   }else{
     tpltname = pathsearch(lemp->argv0,templatename,0);
+    free_tpltname = 1;
   }
   if( tpltname==0 ){
     fprintf(stderr,"Can't find the parser driver template file \"%s\".\n",
     templatename);
     lemp->errorcnt++;
+    if (free_tpltname)
+       free(tpltname);
     return 0;
   }
   in = fopen(tpltname,"rb");
   if( in==0 ){
     fprintf(stderr,"Can't open the template file \"%s\".\n",templatename);
     lemp->errorcnt++;
+    if (free_tpltname)
+       free(tpltname);
     return 0;
   }
+  if (free_tpltname)
+     free(tpltname);
   return in;
 }
 
@@ -3727,7 +3742,7 @@ void ReportTable(
   struct state *stp;
   struct action *ap;
   struct rule *rp;
-  struct acttab *pActtab;
+  struct acttab *pActtab = NULL;
   int i, j, n;
   const char *name;
   int mnTknOfst, mxTknOfst;
@@ -4153,6 +4168,9 @@ void ReportTable(
 
   /* Append any addition code the user desires */
   tplt_print(out,lemp,lemp->extracode,&lineno);
+
+  /* Done with pActtab */
+  free(pActtab);
 
   fclose(in);
   fclose(out);

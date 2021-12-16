@@ -141,7 +141,7 @@ SplitTrim(ON_BrepTrim *trim, double t)
  * itself and drops the pieces into an array
  */
 void
-ShatterLoop(ON_BrepLoop *loop, ON_SimpleArray<ON_Curve*> curves)
+ShatterLoop(ON_BrepLoop *loop, ON_ClassArray<ON_Curve*> curves)
 {
     int i;
     for (i = 0; i < loop->TrimCount(); i++) {
@@ -347,6 +347,7 @@ CurveCurveIntersect(
 	     newx.m_x_eventsn = ; this one we could do, but it doesn't seem worth the trouble.
 	    */
 	    x.Append(*newx);
+	    delete newx;
 	    rv++;
 	}
     }
@@ -467,13 +468,13 @@ Face_X_Event::Get_ON_X_Events(double tol)
 int
 MakeLoops(
     ON_BrepFace *face,
-    ON_SimpleArray<ON_Curve*>& new_trims,
-    ON_SimpleArray<ON_Curve*>& old_trims,
+    ON_ClassArray<ON_Curve*>& new_trims,
+    ON_ClassArray<ON_Curve*>& old_trims,
     double tol
     )
 {
     int i;
-    ON_SimpleArray<ON_Curve*> trims[2] = {new_trims, old_trims};
+    ON_ClassArray<ON_Curve*> trims[2] = {new_trims, old_trims};
     for (i = 0; i < 2; i++) {
 	trims[i].QuickSort(Curve_Compare_start);
     }
@@ -827,10 +828,10 @@ BrepBrepIntersect(
     int i, j, k, l;
 
     /* the new curves we get from the actual intersection */
-    ON_ClassArray<ON_SimpleArray<ON_Curve*> > intersection_curves1, intersection_curves2;
+    ON_ClassArray<ON_ClassArray<ON_Curve*> > intersection_curves1, intersection_curves2;
 
     /* the new curves we get from destroying the old trim_loops */
-    ON_ClassArray<ON_SimpleArray<ON_Curve*> > trim_curves1, trim_curves2;
+    ON_ClassArray<ON_ClassArray<ON_Curve*> > trim_curves1, trim_curves2;
 
     /* initialization for brep1's arrays */
     intersection_curves1.SetCapacity(brep1->m_F.Count());

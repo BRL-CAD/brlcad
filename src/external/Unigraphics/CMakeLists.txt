@@ -11,7 +11,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
   if (BRLCAD_ENABLE_TCL)
 
-    include_directories(
+    set(UG_DIRS
       "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
       "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
@@ -19,6 +19,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       ${REGEX_INCLUDE_DIRS}
       ${TCL_INCLUDE_PATH}
       )
+    BRLCAD_INCLUDE_DIRS(UG_DIRS)
 
     # The build shims aren't so great at mocking the initialization
     # behavior of the real code.
@@ -40,7 +41,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_IMPORTS")
       set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "WDB_DLL_IMPORTS")
       set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_IMPORTS")
-      set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
+      set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
       set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
     endif(HIDE_INTERNAL_SYMBOLS)
 

@@ -62,13 +62,14 @@ size_t wpad;
 int
 main(int argc, char **argv)
 {
-    size_t i;
-    size_t j;
-    size_t nh, nw;
-    size_t dh, dw;
-    size_t todo;
-
-    int failure;
+    size_t i = 0;
+    size_t j = 0;
+    size_t nh = 0;
+    size_t nw = 0;
+    size_t dh = 0;
+    size_t dw = 0;
+    size_t todo = 0;
+    int failure = 0;
 
     bu_setprogname(argv[0]);
 

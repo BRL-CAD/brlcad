@@ -1,5 +1,6 @@
 add_subdirectory(dem)
 add_subdirectory(fastgen)
+add_subdirectory(vrml)
 
 CMAKEFILES(
   CMakeLists.txt

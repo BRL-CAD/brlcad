@@ -34,6 +34,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "dm.h"
 

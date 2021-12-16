@@ -2357,7 +2357,6 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     *vol /= 6.0;
 }
 
-
 int
 rt_arb_get_edge_list(const struct rt_db_internal *ip, const short (*edge_list[])[2])
 {
@@ -2365,10 +2364,13 @@ rt_arb_get_edge_list(const struct rt_db_internal *ip, const short (*edge_list[])
     int arb_type;
     struct bn_tol tmp_tol;
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
-    const short arb8_evm[12][2] = arb8_edge_vertex_mapping;
-    const short arb7_evm[12][2] = arb7_edge_vertex_mapping;
-    const short arb5_evm[9][2] = arb5_edge_vertex_mapping;
-    const short arb4_evm[5][2] = arb4_edge_vertex_mapping;
+
+    /* rt_arb_get_edge_list is returning pointers to arrays.  To avoid returning
+     * a pointer to a locally scoped array, we define static arrays */
+    static const short arb8_evm[12][2] = arb8_edge_vertex_mapping;
+    static const short arb7_evm[12][2] = arb7_edge_vertex_mapping;
+    static const short arb5_evm[9][2] = arb5_edge_vertex_mapping;
+    static const short arb4_evm[5][2] = arb4_edge_vertex_mapping;
 
     RT_ARB_CK_MAGIC(aip);
 

@@ -10,7 +10,7 @@ set(GTOOLS_INCLUDE_DIRS
   ${LDIR}
   )
 list(REMOVE_DUPLICATES GTOOLS_INCLUDE_DIRS)
-include_directories(${GTOOLS_INCLUDE_DIRS})
+BRLCAD_INCLUDE_DIRS(GTOOLS_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(gtransfer.c sample_applications)
 BRLCAD_ADDEXEC(gex "gex.cpp" "libbu;librt")

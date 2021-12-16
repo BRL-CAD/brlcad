@@ -1747,7 +1747,7 @@ struct gl_evaluators {
     struct gl_1d_map Map1Texture2;
     struct gl_1d_map Map1Texture3;
     struct gl_1d_map Map1Texture4;
-    struct gl_1d_map Map1Attrib[16];  /**< GL_NV_vertex_program */
+    struct gl_1d_map Map1Attrib[32];  /**< GL_NV_vertex_program */
     /*@}*/
 
     /**
@@ -1763,7 +1763,7 @@ struct gl_evaluators {
     struct gl_2d_map Map2Texture2;
     struct gl_2d_map Map2Texture3;
     struct gl_2d_map Map2Texture4;
-    struct gl_2d_map Map2Attrib[16];  /**< GL_NV_vertex_program */
+    struct gl_2d_map Map2Attrib[32];  /**< GL_NV_vertex_program */
     /*@}*/
 };
 

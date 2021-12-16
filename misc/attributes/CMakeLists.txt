@@ -4,13 +4,14 @@ add_definitions(
   )
 
 # locally used but not needed by users of the library
-include_directories(
+set(GENATTRS_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BRLCAD_SOURCE_DIR}/src/librt
   ${OPENNURBS_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   )
+BRLCAD_INCLUDE_DIRS(GENATTRS_DIRS)
 
 # a new html and xml generation file
 BRLCAD_ADDEXEC(gen-attributes-file gen-attributes-file.cpp "libbu;librt" NO_INSTALL NO_STRICT)

@@ -22,7 +22,9 @@
 
 #include "common.h"
 #include <string.h>
+#include "bu/malloc.h"
 #include "bn.h"
+#include "bg.h"
 #include "dm.h"
 
 #include "./include/private.h"

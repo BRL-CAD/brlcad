@@ -109,7 +109,6 @@ main(int ac, char *av[])
 	fail++;
     }
 
-    bu_free(tbasename, "bu_progname basename");
     /* CASE 4: set full, then get */
     label = "CASE 4";
     bu_setprogname(av[0]);
@@ -177,8 +176,10 @@ main(int ac, char *av[])
 	    fail++;
 	}
     }
+
     bu_free(tbasename, "bu_progname basename");
     bu_free(plhs, "wai Executable Path");
+
     return fail;
 }
 

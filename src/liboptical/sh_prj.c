@@ -600,7 +600,7 @@ prj_free(void *cp)
 	img_sp->i_data = (struct bu_mapped_file *)NULL; /* sanity */
 	if (img_sp->i_binunifp) rt_binunif_free(img_sp->i_binunifp);
 	img_sp->i_binunifp = (struct rt_binunif_internal *)NULL; /* sanity */
-	bu_vls_vlsfree(&img_sp->i_name);
+	bu_vls_free(&img_sp->i_name);
 
 	BU_LIST_DEQUEUE(&img_sp->l);
 	BU_PUT(img_sp, struct img_specific);

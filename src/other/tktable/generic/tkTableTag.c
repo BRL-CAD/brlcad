@@ -870,7 +870,7 @@ Table_TagCmd(ClientData clientData, register Tcl_Interp *interp,
 			TableParseArrayIndex(&row, &col,
 				Tcl_GetHashKey(hashTblPtr, scanPtr));
 			value = forRows ? row : col;
-			entryPtr = Tcl_CreateHashEntry(cacheTblPtr,
+			Tcl_CreateHashEntry(cacheTblPtr,
 				(char *)value, &newEntry);
 			if (newEntry) {
 			    Tcl_ListObjAppendElement(NULL, resultPtr,

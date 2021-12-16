@@ -1209,7 +1209,6 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
     size_t i = 0;
     size_t j = 0;
     long val = 0;
-    fastf_t *new_planes = NULL;
     fastf_t *array = NULL;
 
     RT_CK_DB_INTERNAL(intern);
@@ -1246,7 +1245,13 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		c++;
 	    }
 	    len = 0;
+
+	    fastf_t *new_planes = NULL;
 	    (void)_rt_tcl_list_to_fastf_array(argv[1], &new_planes, &len);
+	    if (!new_planes) {
+		bu_vls_printf(logstr, "ERROR: failed to unpack new_planes, arbn.c:%d\n", __LINE__);
+		return BRLCAD_ERROR;
+	    }
 
 	    if (len%ELEMENTS_PER_PLANE) {
 		bu_vls_printf(logstr,

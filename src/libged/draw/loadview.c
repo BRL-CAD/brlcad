@@ -163,8 +163,6 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 	    /* the next read is the file name, the objects come
 	     * after that
 	     */
-
-	    memset(dbName, 0, MAX_DBNAME);
 	    ret = fscanf(fp, "%2048s", dbName); /* MAX_DBNAME */
 	    if (ret != 1) {
 		bu_log("Failed to read database name\n");

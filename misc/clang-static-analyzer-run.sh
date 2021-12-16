@@ -22,37 +22,18 @@ export CCC_CXX=clang++
 # quickly complete) if we completely pre-build src/other
 #export CCC_ANALYZER_CONSTRAINTS_MODEL=z3
 
-expected_success=()
-declare -A expected_failure
-new_success=()
-new_failure=()
+declare -i failure num
+declare -i report_cnt num
 
-# function for testing targets that are expected to be clean
-function cleantest {
-	echo $1
-	scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-$1 make -j12 $1
-	if [ "$(ls -A ./scan-reports-$1)" ]; then
-		new_failure+=("$1")
-		((failures ++))
-	else
-		expected_success+=("$1")
-	fi
-}
-function failingtest {
+function runtest {
 	echo "$1"
 	scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-$1 make -j12 $1
 	if [ "$(ls -A ./scan-reports-$1)" ]; then
-		#TODO - find some way to tell if new failures have been introduced...
 		report_cnt=$(ls -l ./scan-reports-$1/*/report* | wc -l)
-		expected_failure[$1]="$report_cnt"
+		failure=$(($failure + $report_cnt))
 	else
-		new_success+=("$1")
+		rm -rf ./scan-reports-$1
 	fi
-}
-
-function notest {
-	echo "$1"
-	make -j12 $1
 }
 
 # configure using the correct compiler and values.  We don't
@@ -61,6 +42,17 @@ scan-build --use-analyzer=/usr/bin/$CCC_CC -o ./scan-reports-config cmake .. -DB
 
 # clear out any old reports
 rm -rfv ./scan-reports-*
+
+# The following test should ideally generate empty directories (i.e. their
+# report directory should not be present at the end of the test.
+failure="0"
+
+# These are src/other libs that are either forked or don't have significant
+# upstream activity - since we are effectively maintaining these ourselves,
+# check them
+runtest osmesa
+runtest poly2tri
+runtest utahrle
 
 # we don't care about reports for src/other or misc tools
 # we don't maintain ourselves - build those without recording
@@ -75,65 +67,14 @@ cd misc/tools
 make -j12
 cd ../../
 
+# Do primary build
+runtest all
 
-# The following targets should generate empty directories (i.e. their report
-# directory should not be present at the end of the test.
+# Report results
+echo "Summary: $failure failures found."
 
-failures="0"
-
-rm -rf ./scan-reports*
-
-# Libraries - order is important here.  We want to build all of
-# a library's dependencies before we build the library so the
-# problem reports (if any) are specific to that library
-
-cleantest libbu
-cleantest libpkg
-cleantest libbn
-cleantest libbv
-failingtest libbg
-failingtest libnmg
-failingtest libbrep
-cleantest librt
-cleantest libwdb
-cleantest libgcv
-failingtest gcv_plugins
-cleantest libanalyze
-cleantest liboptical
-cleantest libicv
-cleantest libged
-cleantest libdm
-cleantest dm_plugins
-cleantest libfft
-cleantest ged_plugins
-cleantest libtclcad
-cleantest libtermio
-cleantest librender
-
-# Executables and anything else we haven't checked yet
-failingtest all
-
-echo "Summary:"
-if [ "${#new_failure[@]}" -ne "0" ]; then
-	echo "   new failures: ${new_failure[@]}"
-fi
-if [ "${#new_success[@]}" -ne "0" ]; then
-	echo "   new successes: ${new_success[@]}"
-fi
-if [ "${#expected_success[@]}" -ne "0" ]; then
-	echo "   successes(expected): ${expected_success[@]}"
-fi
-if [ "${#expected_failure[@]}" -ne "0" ]; then
-	echo "   failures(expected):"
-for f in "${!expected_failure[@]}"; do
-	echo "                       $f(${expected_failure["$f"]} bugs)";
-done
-fi
-
-# Clean up empty scan-* output dirs
-find . -type d -empty -name scan-\* |xargs rmdir
-
-if [ "$failures" -ne "0" ]; then
+# If we have more than the expected failure count, error out
+if [ "$failure" -gt "19" ]; then
 	exit 1
 fi
 

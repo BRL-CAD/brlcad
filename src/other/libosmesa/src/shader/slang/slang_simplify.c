@@ -70,10 +70,10 @@ _slang_lookup_constant(const char *name)
     for (i = 0; info[i].Name; i++) {
 	if (strcmp(info[i].Name, name) == 0) {
 	    /* found */
-	    GLint value = -1.0;
-	    _mesa_GetIntegerv(info[i].Token, &value);
-	    ASSERT(value >= 0);  /* sanity check that glGetFloatv worked */
-	    return value;
+	    GLint value[16] = {-1.0};
+	    _mesa_GetIntegerv(info[i].Token, value);
+	    ASSERT(value[0] >= 0);  /* sanity check that glGetFloatv worked */
+	    return value[0];
 	}
     }
     return -1;

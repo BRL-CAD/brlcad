@@ -275,6 +275,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (curtree->tr_op == OP_NOP)
 	return curtree;
 
+    if (!pathp || pathp->fp_len <= 0)
+	return TREE_NULL;
+
     regions_tried++;
 
     ret_tree = process_boolean(curtree, tsp, pathp);

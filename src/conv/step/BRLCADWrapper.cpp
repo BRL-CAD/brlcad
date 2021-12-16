@@ -224,7 +224,9 @@ BRLCADWrapper::GetBRLCADName(std::string &name)
     }
     while (db_lookup(outfp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != RT_DIR_NULL);
 
-    return bu_vls_addr(&obj_name);
+    std::string rstr(bu_vls_cstr(&obj_name));
+    bu_vls_free(&obj_name);
+    return rstr;
 }
 
 static MAP_OF_BU_LIST_HEADS heads;
