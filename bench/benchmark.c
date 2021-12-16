@@ -97,6 +97,7 @@ record(const char *fmt, ...)
     if (!BU_STR_EQUAL(LOGFILE, "")) {
 	FILE *fp = fopen(LOGFILE, "a");
 	fprintf(fp, "%s", bu_vls_addr(&str));
+	fclose(fp);
     }
     if (bu_str_false(QUIET)) {
 	bu_log("%s", bu_vls_addr(&str));
@@ -684,11 +685,6 @@ main(int ac, char *av[])
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
     look_for(verbose_echo, script, "a time elapsed utility", "ELP", (const char **)argv);
     bu_vls_trunc(&vp, 0);
-
-    bu_free(root, "strdup root");
-    bu_free(db, "strdup db");
-    bu_free(pix, "strdup pix");
-
 
     /*********************
      * output parameters *
