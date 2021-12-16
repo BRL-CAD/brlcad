@@ -87,34 +87,13 @@ extern char *densityfile;     	/* name of density file */
 extern int output_is_binary;	/* !0 means output is binary */
 
 
-// by default, rt opens the rt_i as read only so we need a way to write the
-// material_id field back onto the regions that have the material_name field set
-struct rt_i *
-densities_prep(const char *filename, int minus_o)
+int
+densities_prep(struct rt_i * rtip, int minus_o)
 {
-	register struct rt_i *rtip;
-    register struct db_i *dbip;		/* Database instance ptr */
-
-    if (rt_uniresource.re_magic == 0)
-	rt_init_resource(&rt_uniresource, 0, NULL);
-
-	// open a read/write database pointer
-    if ((dbip = db_open(filename, DB_OPEN_READWRITE)) == DBI_NULL)
-	return RTI_NULL;		/* FAIL */
-    RT_CK_DBI(dbip);
-
-    if (db_dirbuild(dbip) < 0) {
-	db_close(dbip);
-	return RTI_NULL;		/* FAIL */
-    }
-
-	// we will return this later if everything goes okay
-    rtip = rt_new_rti(dbip);		/* clones dbip */
-    db_close(dbip);				/* releases original dbip */
-
     struct bu_vls pbuff_msgs = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *dfile = NULL;
     char *dbuff = NULL;
+	int found_densities = 0;
 
     if (!minus_o) {
 	outfp = stdout;
@@ -156,6 +135,7 @@ densities_prep(const char *filename, int minus_o)
 	    goto densities_prep_rtweight_fail;
 	}
 	bu_close_mapped_file(dfile);
+	found_densities = 1;
 
 
     } else {
@@ -195,6 +175,7 @@ densities_prep(const char *filename, int minus_o)
 
 	    /* found a density table, so record the .g file */
 	    densityfile = rtip->rti_dbip->dbi_filename;
+		found_densities = 1;
 
 	} else {
 	    static char densityfile_buf[MAXPATHLEN] = {0};
@@ -205,30 +186,24 @@ densities_prep(const char *filename, int minus_o)
 	    bu_dir(densityfile_buf, MAXPATHLEN, BU_DIR_CURR, DENSITY_FILE, NULL);
 	    densityfile = densityfile_buf;
 
-	    if (!bu_file_exists(densityfile, NULL)) {
-		bu_dir(densityfile_buf, MAXPATHLEN, BU_DIR_HOME, DENSITY_FILE, NULL);
-		densityfile = densityfile_buf;
-		if (!bu_file_exists(densityfile, NULL)) {
-		    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
-		    goto densities_prep_rtweight_fail;
-		}
-	    }
-	    dfile = bu_open_mapped_file(densityfile, "densities file");
+	    if (bu_file_exists(densityfile, NULL)) {
+		dfile = bu_open_mapped_file(densityfile, "densities file");
 	    if (!dfile) {
 		bu_log("Unable to open density file \"%s\" for reading\n", densityfile);
 		goto densities_prep_rtweight_fail;
 	    }
 
-	    dbuff = (char *)(dfile->buf);
+		dbuff = (char *)(dfile->buf);
 
-
-	    /* Read in density */
+		/* Read in density */
 	    if (analyze_densities_load(density, dbuff, &pbuff_msgs, NULL) ==  0) {
 		bu_log("Unable to parse density file \"%s\":%s\n", densityfile, bu_vls_cstr(&pbuff_msgs));
 		bu_close_mapped_file(dfile);
 		goto densities_prep_rtweight_fail;
 	    }
 	    bu_close_mapped_file(dfile);
+		found_densities = 1;
+	    }
 	}
     }
 
@@ -255,6 +230,7 @@ densities_prep(const char *filename, int minus_o)
 						* grams / (cm^3) we convert the table on input
 						*/
 						density_double = density_double / 1000.0;
+						found_densities = 1;
 
 						const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
 						int id;
@@ -278,6 +254,11 @@ densities_prep(const char *filename, int minus_o)
 		}
 	}
 
+	if (!found_densities) {
+		bu_log("Could not find any density information.\n");
+		goto densities_prep_rtweight_fail;
+	}
+
 	// look for objects with material_name set and set the material_id
 	for (int i = 0; i < RT_DBNHASH; i++) {
 		struct directory *dp = rtip->rti_dbip->dbi_Head[i];
@@ -298,23 +279,26 @@ densities_prep(const char *filename, int minus_o)
 								if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
 									// the material_ip->name field is the name in the density table
 									// not just the material_name (they could be different)
-									material_ip = (struct rt_material_internal *) material_intern.idb_ptr;
+									material_ip = (struct rt_material_internal *)material_intern.idb_ptr;
 									char *density_table_name = bu_vls_strdup(&material_ip->name);
 									long int wids[1];
 
 									// get the id from the density table
 									analyze_densities_id((long int *)wids, 1, density, density_table_name);
 
-									struct bu_vls id_vls = BU_VLS_INIT_ZERO;
-									bu_vls_printf(&id_vls, "%ld", wids[0]);
-									char *id_string = bu_vls_strdup(&id_vls);
-									bu_vls_free(&id_vls);
+									// update the region->reg_mater field for the given region
+									struct region *regp = REGION_NULL;
+									for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+										RT_CK_REGION(regp);
 
-									// update attributes will set the reg_gmater field on the region
-									bu_avs_add(&avs, "material_id", id_string);
-									if (db5_update_attributes(dp, &avs, rtip->rti_dbip) != 0) {
-										bu_log("Error: failed to update attributes for %s\n", dp->d_namep);
-										goto densities_prep_rtweight_fail;
+										// by default the regp->reg_name holds the path to the region
+										// we just want the name so we remove the path before the name
+										const char *reg_name = strrchr(regp->reg_name, '/') + 1;
+
+										// if its the region we're looking for, set teh reg_mater field
+										if (BU_STR_EQUAL(reg_name, dp->d_namep)) {
+											regp->reg_gmater = wids[0];
+										}
 									}
 								}
 							}
@@ -334,7 +318,7 @@ densities_prep(const char *filename, int minus_o)
     if (minus_o) {
 	fclose(outfp);
     }
-	return rtip;
+	return 0;
 
 densities_prep_rtweight_fail:
     bu_vls_free(&pbuff_msgs);
@@ -343,7 +327,7 @@ densities_prep_rtweight_fail:
 	fclose(outfp);
     }
 
-    bu_exit(-1, NULL);
+    return 1;
 }
 
 
@@ -444,28 +428,12 @@ overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct reg
  * Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
+view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
-	// we need to be able to read/write to the rt_i
-	struct rt_i *rtip = densities_prep(file, minus_o);
-
-	if (rtip == RTI_NULL) {
-		bu_log("Error: failed to open database %s\n", file);
+	if (densities_prep(ap->a_rt_i, minus_o)) {
+		bu_log("ERROR: Problem prepping densities\n");
 		bu_exit(-1, NULL);
 	}
-
-	// copy the old values possibly set in main before view_init was called
-	rtip->rti_space_partition = APP.a_rt_i->rti_space_partition;
-    rtip->useair = APP.a_rt_i->useair;
-    rtip->rti_save_overlaps = APP.a_rt_i->rti_save_overlaps;
-	rtip->rti_tol.dist = APP.a_rt_i->rti_tol.dist;
-	rtip->rti_tol.dist_sq = APP.a_rt_i->rti_tol.dist_sq;
-	rtip->rti_tol.perp = APP.a_rt_i->rti_tol.perp;
-	rtip->rti_tol.para = APP.a_rt_i->rti_tol.para;
-
-	// free the old rt_i and set equal to the new one
-	rt_free_rti(ap->a_rt_i);
-	ap->a_rt_i = rtip;
 
     ap->a_hit = hit;
     ap->a_miss = miss;

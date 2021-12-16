@@ -74,7 +74,7 @@ const struct db5_attr_ctype db5_attr_std[] = {
 	"material",  /* aliases, if any */
 	"Material Name",  /* property, if any */
 	/* long_description, if any: */
-	"The Material Name corresponds to an entry in a DENSITIES table, usually contained in a text file that are imported through the material command.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'."
+	"The Material Name corresponds to an entry in a DENSITIES table or material objects, usually contained in a text file that are imported through the material command.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'."
     },
     { ATTR_AIR, 0, ATTR_STANDARD,
 	"aircode",
