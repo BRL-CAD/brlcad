@@ -28,7 +28,6 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/vls.h"
-#include "bu/avs.h"
 
 __BEGIN_DECLS
 
