@@ -131,6 +131,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "brlcadplugin.h"
+#include "bu/str.h"
 
 namespace asf = foundation;
 namespace asr = renderer;
@@ -139,19 +140,30 @@ FILE* output = fopen("print_statements.txt", "wb");
 
 /* brlcad raytrace hit callback */
 int
-brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct seg* UNUSED(segs))
+brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUSED(segs))
 {
     struct partition* pp;
     struct hit* hitp;
     struct soltab* stp;
 
+    // struct curvature cur = RT_CURVATURE_INIT_ZERO;
+
     //point_t pt;
     vect_t inormal;
+
+    // vect_t onormal;
 
     pp = PartHeadp->pt_forw;
 
     /* entry hit point, so we type less */
     hitp = pp->pt_inhit;
+
+    // fprintf(output, "names: %s | %s\n", (const char*)ap->a_uptr, pp->pt_regionp->reg_name);
+    // fflush(output);
+
+    if(!BU_STR_EQUAL((const char*)ap->a_uptr, pp->pt_regionp->reg_name)) {
+      return 0;
+    }
 
     /* construct the actual (entry) hit-point from the ray and the
 	* distance to the intersection point (i.e., the 't' value).
@@ -168,8 +180,8 @@ brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct s
     RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
     brlcad_ray_info.normal[0] = inormal[0];
-    brlcad_ray_info.normal[1] = inormal[2];
-    brlcad_ray_info.normal[2] = -inormal[1];
+    brlcad_ray_info.normal[1] = inormal[1];
+    brlcad_ray_info.normal[2] = inormal[2];
 
     return 1;
 }
@@ -194,6 +206,10 @@ BrlcadObject::BrlcadObject(
     VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
     // VMOVE(min, ap->a_uvec);
     // VMOVE(max, ap->a_vvec);
+
+    this->name = m_params.get_required<std::string>("object_path");
+    fprintf(output, "appleseed const: Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
+    fflush(output);
 }
 
 
@@ -207,8 +223,19 @@ BrlcadObject:: BrlcadObject(
     this->ap = p_ap;
     this->rtip = p_ap->a_rt_i;
     this->resources = p_resources;
-    VMOVE(this->min, ap->a_uvec);
-    VMOVE(this->max, ap->a_vvec);
+    // VMOVE(this->min, ap->a_uvec);
+    // VMOVE(this->max, ap->a_vvec);
+
+    this->name = m_params.get_required<std::string>("object_path");
+    VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
+    VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
+
+
+    // VSETALL(ap->a_uvec, 0);
+    // VSETALL(ap->a_vvec, 0);
+
+    fprintf(output, "art.cpp const: Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
+    fflush(output);
 }
 
 
@@ -295,8 +322,10 @@ BrlcadObject::intersect(
     ap->a_resource = &resources[cpu];
 
     const asf::Vector3d dir = asf::normalize(ray.m_dir);
-    VSET(ap->a_ray.r_dir, dir[0], -dir[2], dir[1]);
-    VSET(ap->a_ray.r_pt, ray.m_org[0], -ray.m_org[2], ray.m_org[1]);
+    VSET(ap->a_ray.r_dir, dir[0], dir[1], dir[2]);
+    VSET(ap->a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
+
+    ap->a_uptr = (void*)this->name.c_str();
 
     if (rt_shootray(ap) == 0)
     {
@@ -310,6 +339,12 @@ BrlcadObject::intersect(
 
 	const asf::Vector3d n = asf::normalize(brlcad_ray_info.normal);
 	result.m_geometric_normal = n;
+
+  // const asf::Vector3d n_flip (n[0], n[2], n[1]);
+  // double temp;
+  // temp = n_flip[2];
+  // n_flip.set(2) = n_flip[1];
+  // n_flip.set(1) = temp;
 	result.m_shading_normal = n;
 
 	// const asf::Vector3f p(brlcad_ray_info.normal * m_rcp_radius);
@@ -332,8 +367,8 @@ BrlcadObject::intersect(const asr::ShadingRay& ray) const
     ap->a_resource = &resources[cpu];
 
     const asf::Vector3d dir = asf::normalize(ray.m_dir);
-    VSET(ap->a_ray.r_dir, dir[0], -dir[2], dir[1]);
-    VSET(ap->a_ray.r_pt, ray.m_org[0], -ray.m_org[2], ray.m_org[1]);
+    VSET(ap->a_ray.r_dir, dir[0], dir[1], dir[2]);
+    VSET(ap->a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
 
     return (rt_shootray(ap) == 1);
 }
