@@ -60,6 +60,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
+ * SHADER IMPLEMENTATION NOTES:
+ * default shader "as_disney_material" is pathed from appleseed root specified
+ * when building and pulled from default .oso folder
+ * user specified shaders are pathed from build/output/shaders
  */
 
 #include "common.h"
@@ -278,7 +282,6 @@ void init_defaults(void) {
   background[1] = 0.80;
   background[2] = 1.0;
 
-  // for now, just support -c set samples=x
   // option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
   option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
   // option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
@@ -324,7 +327,7 @@ namespace asf = foundation;
 namespace asr = renderer;
 
 /* db_walk_tree() callback to register all regions within the scene
- * using either legacy rgb sets and phong shaders mapped to a disney material
+ * using either a disney shader with rgb color set on combination regions
  * or specified material OSL optical shader
  */
 int register_region(struct db_tree_state* tsp __attribute__((unused)),
@@ -338,18 +341,14 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   const char* name;
   name = dp->d_namep;
 
-  /*
-  this is for testing bounding box with the parent directory - using build/share/db/moss.g
-  eventually all comments using this will be deleted
-  */
+  // Strip the objects name to get correct bounding box
   struct bu_vls path = BU_VLS_INIT_ZERO;
   db_path_to_vls(&path, pathp);
-  const char* name_char;
-  std::string name_test = bu_vls_cstr(&path);
+  const char* name_full;
+  std::string conversion_temp = bu_vls_cstr(&path);
   bu_vls_free(&path);
-  // name = name_test.c_str();
-  name_char = name_test.c_str();
-  bu_log("name: %s\n", name_test.c_str());
+  name_full = conversion_temp.c_str();
+  bu_log("name: %s\n", conversion_temp.c_str());
 
   // get objects bounding box
   struct ged* ged;
@@ -357,21 +356,17 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   point_t min;
   point_t max;
   // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
-  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name_char, 1, min, max);
+  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name_full, 1, min, max);
 
   bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
 
-  // VMOVE(APP.a_uvec, min);
-  // VMOVE(APP.a_vvec, max);
-
-
   /*
   create object paramArray to pass to constructor
-  NOTE: we flip y and z to match brl geometry to appleseed plugin
+  NOTE: we will need to eventually match brl geometry to appleseed plugin
   */
   renderer::ParamArray geometry_parameters = asr::ParamArray()
                .insert("database_path", name)
-               .insert("object_path", name_char)
+               .insert("object_path", name_full)
                .insert("object_count", objc)
                .insert("minX", min[X])
                .insert("minY", min[Y])
@@ -384,7 +379,6 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   asf::auto_release_ptr<renderer::Object> brlcad_object(
   new BrlcadObject{
      name,
-     // name_char,
      geometry_parameters,
      &APP, resources});
 
@@ -393,7 +387,6 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
 
   // create assembly for current object
   std::string assembly_name = std::string(name) + "_object_assembly";
-  // std::string assembly_name = std::string(name_test) + "_object_assembly";
   asf::auto_release_ptr<asr::Assembly> assembly(
     asr::AssemblyFactory().create(
       assembly_name.c_str(),
@@ -401,7 +394,6 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
 
   // create a shader group
   std::string shader_name = std::string(name) + "_shader";
-  // std::string shader_name = std::string(name_test) + "_shader";
   asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
       asr::ShaderGroupFactory().create(
           shader_name.c_str(),
@@ -561,7 +553,6 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
     instance_name.c_str(),
     asr::ParamArray(),
     name,
-    // name_char,
     asf::Transformd::identity(),
     asf::StringDictionary()
     .insert("default", material_mat.c_str())
@@ -958,7 +949,7 @@ main(int argc, char **argv)
     APP.a_miss = brlcad_miss;
 
     do_ae(azimuth, elevation);
-    RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
+    // RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
 
     // Build the project.
     asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
