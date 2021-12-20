@@ -93,10 +93,11 @@ mged_bound_solid(struct bv_scene_obj *sp)
     point_t bmin, bmax;
     size_t length = 0;
     int cmd;
+    int dispmode;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
-    cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, &length);
+    cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, &length, &dispmode);
     if (cmd) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", cmd);
@@ -112,6 +113,7 @@ mged_bound_solid(struct bv_scene_obj *sp)
     sp->s_size = bmax[X] - bmin[X];
     V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
     V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
+    sp->s_displayobj = dispmode;
 }
 
 

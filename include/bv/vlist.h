@@ -182,7 +182,7 @@ struct bv_vlist  {
 
 
 BV_EXPORT extern size_t bv_vlist_cmd_cnt(struct bv_vlist *vlist);
-BV_EXPORT extern int bv_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, size_t *length);
+BV_EXPORT extern int bv_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, size_t *length, int *dispmode);
 
 
 

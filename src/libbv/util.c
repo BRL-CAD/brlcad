@@ -531,9 +531,10 @@ bv_scene_obj_bound(struct bv_scene_obj *sp)
 {
     point_t bmin, bmax;
     int cmd;
+    int dispmode;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
-    cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL);
+    cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL, &dispmode);
     if (cmd) {
 	bu_log("unknown vlist op %d\n", cmd);
     }
@@ -544,6 +545,7 @@ bv_scene_obj_bound(struct bv_scene_obj *sp)
     sp->s_size = bmax[X] - bmin[X];
     V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
     V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
+    sp->s_displayobj = dispmode;
 }
 
 fastf_t

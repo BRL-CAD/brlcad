@@ -53,7 +53,7 @@ bv_vlist_cmd_cnt(struct bv_vlist *vlist)
 }
 
 static int
-bv_vlist_bbox_internal(struct bv_vlist *vp, point_t *bmin, point_t *bmax, int *disp_mode)
+bv_vlist_bbox_internal(struct bv_vlist *vp, point_t *bmin, point_t *bmax, int *disp_mode, int *dispmode_used)
 {
     size_t i;
     size_t nused = vp->nused;
@@ -91,6 +91,7 @@ bv_vlist_bbox_internal(struct bv_vlist *vp, point_t *bmin, point_t *bmax, int *d
 		break;
 	    case BV_VLIST_DISPLAY_MAT:
 		*disp_mode = 1;
+                *dispmode_used = 1;
 		/* fall through */
 	    case BV_VLIST_POINT_DRAW:
 		V_MIN((*bmin)[X], (*pt)[X]-1.0);
@@ -109,14 +110,15 @@ bv_vlist_bbox_internal(struct bv_vlist *vp, point_t *bmin, point_t *bmax, int *d
 }
 
 int
-bv_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, size_t *length)
+bv_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, size_t *length, int *dispmode)
 {
     struct bv_vlist* vp;
     int cmd = 0;
     int disp_mode = 0;
+    int dispmode_used = 0;
     size_t len = 0;
     for (BU_LIST_FOR(vp, bv_vlist, vlistp)) {
-	cmd = bv_vlist_bbox_internal(vp, bmin, bmax, &disp_mode);
+	cmd = bv_vlist_bbox_internal(vp, bmin, bmax, &disp_mode, &dispmode_used);
 	if (cmd) {
 	    break;
 	}
@@ -124,6 +126,9 @@ bv_vlist_bbox(struct bu_list *vlistp, point_t *bmin, point_t *bmax, size_t *leng
     }
     if (length){
 	*length = len;
+    }
+    if (dispmode){
+	*dispmode = dispmode_used;
     }
     return cmd;
 }

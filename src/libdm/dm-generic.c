@@ -1016,7 +1016,7 @@ dm_draw_display_list(struct dm *dmp,
 		}
 	    }
 
-	    if (dm_get_bound_flag(dmp)) {
+	    if (dm_get_bound_flag(dmp) && !sp->s_displayobj) {
 		ratio = sp->s_size * inv_viewsize;
 
 		/*

@@ -152,7 +152,7 @@ ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fast
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
     bv_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], 5, 0);
-    bv_vlist_bbox(&vhead, &bmin, &bmax, NULL);
+    bv_vlist_bbox(&vhead, &bmin, &bmax, NULL, NULL);
 
     *length = bmax[0] - ref_pt[0];
     *hight = bmax[1] - ref_pt[1];
