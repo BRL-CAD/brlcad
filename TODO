@@ -2325,10 +2325,6 @@ INFRASTRUCTURE
 * ensure it's possible to set global CFLAGS/CPPFLAGS/LDFLAGS that are
   in addition to any/all that we automatically set
 
-* fix failure disabling IF_X when X11 headers are not found.
-  include/fb.h still ends up entering the IF_X section and declaring a
-  function that takes a Display and other X11 objects
-
 
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 (i.e., v6 database format)
