@@ -928,8 +928,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * struct rt_bot_internal should be using "size_t *" instead of "int *"
   for the faces and face_normals members
 
-* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc.)
-
 * pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
   .bw input files.  cause is due to tool assuming input is rgb triplets
   (even though output is bytes, wtf?).  should probably report pixels
@@ -1059,9 +1057,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * mged inconsistently ignores signals.  initially allowing mged to be
   backgrounded, but then later ignores them.  needs to consistently
   ignore or not ignore them, ideally the latter.
-
-* libfb needs to have the fb_open/close_existing functions refactored
-  into the function table and have the #ifdef sections removed.
 
 * integrate library tester into regression suite that validates
   exported library symbols published in headers.  make sure they at
