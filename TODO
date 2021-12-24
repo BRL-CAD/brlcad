@@ -2195,11 +2195,6 @@ BREP/NURBS
 
 * implement boolean evaluation of nurbs surfaces
 
-* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
-  mode BoTs, 'brep' objects need the ability to have a thickness
-  described so you could automatically handle non-solid NURBS and
-  sheet-metal style geometry without requiring surface solidity.
-
 * NURBS editing command, let you interactively
   add/update/join/split/remove component points, edges, surfaces.
 
