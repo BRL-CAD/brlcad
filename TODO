@@ -120,10 +120,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
 
-* investigate problems with struct parsing running the MGED
-  "vars" command - most visible on OpenBSD, but Linux valgrind can
-  also see issues.
-
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
@@ -206,13 +202,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * bot -V check solid bot.s visualizations don't show up if bot.s is
   first drawn in MGED - should properly "overlay" them so the user
   doesn't have to first erase the solid from the scene visual.
-
-* MGED's startup directory is inconsistent and sometimes problematic.
-  If the current working directory is read-only (e.g., a default
-  system install and opening one of the sample .g files), then
-  numerous commands the write out to the current path will fail (e.g.,
-  "idents file.log").  Review startup path behavior and consider using
-  $HOME or some other system path, unless started on the command-line.
 
 * rtwizard's reopening of the database is causing db_dircheck
   "Duplicate of..." errors when opening read-only .g files.
@@ -326,8 +315,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * optimize mged interactive loop command processing.  creating 10k
   objects: 40 sec, via inmem: 2 sec
-
-* rtwizard unit test legitimately failing on mac/windows
 
 * implement a bu_exec wrapper and investigate something like capnproto
   to build up a process-isolated command execution system for libged.
@@ -448,10 +435,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * V&V bwcrop, pixembed are behaving correctly, as documented
 
-* need routine that returns a color given a path, similar to
-  rt_comb_get_color() but full path so that inheritance is taken into
-  account and colors set correctly.
-
 * implement unit tests for bu dirent / stat API
 
 * convert src/util/terrain.c to src/shapes/terrain.c writing out the
@@ -499,10 +482,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * investigate merging functionality from the sig tools into libicv
   and removing the tools themselves.  Also, need some documentation
   for the sig functionality (currently none??)
-
-* investigate updating our fnmatch code to use OpenBSD's non-recursive
-  implementation, added starting at revision 1.16:
-  http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/fnmatch.c
 
 * start making use of the CMakePushCheckState macros - we are doing
   this manually in several places
@@ -945,9 +924,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add support for a zoom/viewsize and twist options to rt so you can
   adjust the image without having to feed a view script.
-
-* provide pkgIndex.tcl files for bu, bn, rt, fb, dm so we can properly
-  package require the libs without an explicit 'load'
 
 * struct rt_bot_internal should be using "size_t *" instead of "int *"
   for the faces and face_normals members
