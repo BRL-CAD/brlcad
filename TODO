@@ -2035,24 +2035,12 @@ The following binaries are not yet available on Windows.  The reason
 is identified in parentheses.
 
 bombardier (possibly just a problem with the build logic)
-enigma     (not ported)
 fbcolor    (TERMLIB)
-fbed       (TERMLIB)
 fbpoint    (TERMLIB)
 fbzoom     (TERMLIB)
-ir-X       (X11 specific)
-irdisp     (X11 specific)
-lgt        (TERMLIB)
-pl-X       (X11 specific)
-pl-dm      (possibly X11 specific)
-pp-fb      (TERMLIB)
 remrt      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
 rtsrv      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
-scriptsort (lex)
 ttcp       (not ported)
-
-The MGED points support doesn't appear as an executable, but it is
-missing on Windows due to needing lex.
 
 
 CONVERTERS
