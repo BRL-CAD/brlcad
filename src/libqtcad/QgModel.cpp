@@ -723,11 +723,23 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 }
 
 
-QgModel_ctx::QgModel_ctx(QgModel *pmdl, struct ged *ngedp)
-    : mdl(pmdl), gedp(ngedp)
+QgModel_ctx::QgModel_ctx(QgModel *pmdl, const char *npath)
+    : mdl(pmdl)
 {
+    // Make sure NULL is our default.
+    gedp = NULL;
+
+    // If there's no path, at least for the moment we have nothing to model.
+    // In the future we may want to consider setting up a default environment
+    // backed by a temp file...
+    if (!npath)
+	return;
+
+    // See if npath is valid - if so, do model setup
+    gedp = ged_open("db", (const char *)npath, 1);
     if (!gedp)
 	return;
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     struct db_i *dbip = gedp->dbip;
 
@@ -819,6 +831,15 @@ QgModel_ctx::~QgModel_ctx()
 
     if (tops_instances)
 	delete tops_instances;
+}
+
+bool
+QgModel_ctx::IsValid()
+{
+    if (gedp)
+	return true;
+
+    return false;
 }
 
 void
@@ -1112,9 +1133,9 @@ QgModel_ctx::update_instances(struct directory *dp)
 }
 
 
-QgModel::QgModel(QObject *, struct ged *ngedp)
+QgModel::QgModel(QObject *, const char *npath)
 {
-    ctx = new QgModel_ctx(this, ngedp);
+    ctx = new QgModel_ctx(this, npath);
 }
 
 QgModel::~QgModel()
@@ -1258,15 +1279,19 @@ QgModel::opendb(QString filename)
       closedb();
 
       char *npath = bu_strdup(filename.toLocal8Bit().data());
-      struct ged *n = ged_open("db", (const char *)npath, 1);
-
-      if (n) {
-	  db_update_nref(n->ged_wdbp->dbip, &rt_uniresource);
-	  ctx = new QgModel_ctx(this, n);
-      }
+      ctx = new QgModel_ctx(this, npath);
       bu_free(npath, "path");
 
       return 0;
+}
+
+bool
+QgModel::IsValid()
+{
+    if (ctx && ctx->IsValid())
+	return true;
+
+    return false;
 }
 
 // Local Variables:

@@ -126,31 +126,12 @@ int main(int argc, char *argv[])
     if (argc != 1)
 	bu_exit(-1, "need to specify .g file\n");
 
-    struct db_i *dbip = db_open(argv[0], DB_OPEN_READWRITE);
-    if (dbip == DBI_NULL)
-	bu_exit(-1, "db_open failed on geometry database file %s\n", argv[0]);
+    QgModel_ctx s(NULL, argv[0]);
 
-    RT_CK_DBI(dbip);
-
-    dbip->dbi_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-
-    if (db_dirbuild(dbip) < 0) {
-	db_close(dbip);
-	bu_exit(-1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
-    }
-    db_update_nref(dbip, &rt_uniresource);
-
-    struct ged g;
-    GED_INIT(&g, dbip->dbi_wdbp);
-
-    QgModel_ctx s(NULL, &g);
+    if (!s.IsValid())
+	bu_exit(-1, "failed to open .g file at %s\n", argv[0]);
 
     bu_log("Hierarchy instance cnt: %zd\n", s.instances->size());
-
-    // The above logic will create hierarchy instances, but it won't create the
-    // top level instances (which, by definition, aren't under anything.)  Make
-    // a second pass using db_ls to create those instances (this depends on
-    // db_update_nref being up to date.)
     bu_log("Top instance cnt: %zd\n", s.tops_instances->size());
 
     // 2.  Implement "open" and "close" routines for the items that will exercise
@@ -198,6 +179,8 @@ int main(int argc, char *argv[])
     open_tops(&s, 2);
     print_tops(&s);
 
+    struct ged *g = s.gedp;
+
     // Perform edit operations to trigger callbacks.  assuming
     // moss.g example
     int ac = 3;
@@ -206,7 +189,7 @@ int main(int argc, char *argv[])
     av[1] = "all.g";
     av[2] = "ellipse.r";
     av[3] = NULL;
-    ged_exec(&g, ac, (const char **)av);
+    ged_exec(g, ac, (const char **)av);
 
     std::cout << "\nRemoved ellipse.r from all.g:\n";
     print_tops(&s);
@@ -215,7 +198,7 @@ int main(int argc, char *argv[])
     av[1] = "all.g";
     av[2] = "ellipse.r";
     av[3] = NULL;
-    ged_exec(&g, ac, (const char **)av);
+    ged_exec(g, ac, (const char **)av);
 
     std::cout << "\nAdded ellipse.r back to the end of all.g, no call to open:\n";
     print_tops(&s);
@@ -229,7 +212,7 @@ int main(int argc, char *argv[])
     av[1] = "tor.r";
     av[2] = "tor";
     av[3] = NULL;
-    ged_exec(&g, ac, (const char **)av);
+    ged_exec(g, ac, (const char **)av);
     std::cout << "\ntops tree after removing tor from tor.r:\n";
     print_tops(&s);
 
@@ -237,7 +220,7 @@ int main(int argc, char *argv[])
     av[1] = "-f";
     av[2] = "all.g";
     av[3] = NULL;
-    ged_exec(&g, ac, (const char **)av);
+    ged_exec(g, ac, (const char **)av);
     std::cout << "\ntops tree after deleting all.g:\n";
     print_tops(&s);
 
@@ -253,7 +236,7 @@ int main(int argc, char *argv[])
 	av[1] = "-f";
 	av[2] = obj;
 	av[3] = NULL;
-	ged_exec(&g, ac, (const char **)av);
+	ged_exec(g, ac, (const char **)av);
 	i++;
 	obj = objs[i];
     }

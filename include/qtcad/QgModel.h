@@ -251,7 +251,7 @@ class QTCAD_EXPORT QgModel;
 class QgModel_ctx
 {
     public:
-	explicit QgModel_ctx(QgModel *pmdl = NULL, struct ged *ngedp = NULL);
+	explicit QgModel_ctx(QgModel *pmdl = NULL, const char *npath = NULL);
 	~QgModel_ctx();
 
 	// QgModel associated with this context
@@ -259,6 +259,7 @@ class QgModel_ctx
 
 	// .g Db interface and containers
 	struct ged *gedp;
+	bool IsValid();
 
 	// Certain .g objects (comb, extrude, etc.) will define one or more
 	// implicit instances.  We need to create those instances both on
@@ -336,7 +337,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
     Q_OBJECT
 
     public:
-	explicit QgModel(QObject *p = NULL, struct ged *ngedp = NULL);
+	explicit QgModel(QObject *p = NULL, const char *npath = NULL);
 	~QgModel();
 
 	// Qt Model interface
@@ -360,6 +361,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	bool run_cmd(struct bu_vls *msg, int argc, const char **argv);
 	int opendb(QString filename);
 	void closedb();
+	bool IsValid();
 
 	QgModel_ctx *ctx;
 	bool need_update_nref = false;
