@@ -455,7 +455,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 struct db_i *
 _ged_open_dbip(const char *filename, int existing_only)
 {
-    struct db_i *dbip;
+    struct db_i *dbip = DBI_NULL;
 
     /* open database */
     if (((dbip = db_open(filename, DB_OPEN_READWRITE)) == DBI_NULL) &&
@@ -479,10 +479,16 @@ _ged_open_dbip(const char *filename, int existing_only)
 
 	    return DBI_NULL;
 	}
-    } else
-	/* --- Scan geometry database and build in-memory directory --- */
-	db_dirbuild(dbip);
 
+	return dbip;
+    }
+
+    /* --- Scan geometry database and build in-memory directory --- */
+    if (db_dirbuild(dbip) < 0) {
+	db_close(dbip);
+	bu_log("_ged_open_dbip: db_dirbuild failed on database file %s", filename);
+	dbip = DBI_NULL;
+    }
 
     return dbip;
 }
