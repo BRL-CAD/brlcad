@@ -300,6 +300,7 @@ QgItem::QgItem()
 
 QgItem::~QgItem()
 {
+    remove_children();
 }
 
 void
@@ -418,7 +419,6 @@ QgItem::update_children()
 	while (!oc_it->second.empty()) {
 	    QgItem *itm = oc_it->second.front();
 	    oc_it->second.pop();
-	    itm->remove_children();
 	    delete itm;
 	}
     }
@@ -431,8 +431,10 @@ QgItem::update_children()
     }
 
     // If anything changed, we need to replace children's contents with the new
-    // vector.  TODO - this is also the point were an actual Qt model update is
-    // needed, so we'll have to figure out how to trigger that...
+    // vector.  TODO - this is another point were an actual Qt model update
+    // should be triggered, so we'll have to figure out how to trigger that.
+    // It may be that this is always triggered from a tops invocation, but I'm
+    // not sure we want to depend on that...
     if (nc != children) {
 	children.clear();
 	children = nc;
@@ -446,6 +448,12 @@ QgItem::update_children()
 void
 QgItem::remove_children()
 {
+   std::cout << "remove children: " << childCount() << "\n";
+    for (int i = 0; i < childCount(); i++) {
+	QgItem *qii = child(i);
+	std::cout << qii->ihash << "\n";
+    }
+    children.clear();
 }
 
 void
@@ -520,6 +528,12 @@ find_similar_qgitem(QgItem *c, std::vector<QgItem *> &v)
 extern "C" void
 qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
 {
+    // If all the input parameters other than dbip/op are NULL and op is set to
+    // subtraction, the update_nref logic has completed its work and is making
+    // its final callback call.  Because in this use case we need a fully
+    // updated data state before doing our processing (as opposed to, for
+    // example, triggering events during the update treewalk) we only process
+    // when the termination conditions are fully set.
     if (!parent_dp && !child_dp && !child_name && m == NULL && op == DB_OP_SUBTRACT) {
 	std::unordered_map<unsigned long long, QgInstance *>::iterator i_it;
 
@@ -527,13 +541,6 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 
 	// Cycle complete, nref count is current.  Start analyzing.
 	QgModel_ctx *ctx = (QgModel_ctx *)u_data;
-
-#if 0
-	if (!ctx->mdl) {
-	    // If we don't have a model there's not much we can do...
-	    return;
-	}
-#endif
 
 	// 1.  Rebuild top instances
 	{
@@ -597,6 +604,8 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	// the difficulties of updating.  We will create a "full" new QgItems tops vector,
 	// but the set_difference comparison will be based on comparison of the
 	// directory pointers.
+	std::vector<QgItem *> modded_tops_items;
+	std::vector<QgItem *> removed, added;
 	{
 	    // Build up a "candidate" vector of new QgItems based on the now-updated tops_instances data.
 	    std::vector<QgItem *> ntops_items;
@@ -611,7 +620,6 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 
 	    // Compare the context's current tops_items array with the proposed new array, using QgItem_cmp.
 	    // Build up sets of both added and removed items.
-	    std::vector<QgItem *> removed, added;
 	    std::set_difference(ctx->tops_items.begin(), ctx->tops_items.end(), ntops_items.begin(), ntops_items.end(), std::back_inserter(removed), QgItem_cmp());
 	    std::set_difference(ntops_items.begin(), ntops_items.end(), ctx->tops_items.begin(), ctx->tops_items.end(), std::back_inserter(added), QgItem_cmp());
 
@@ -624,8 +632,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	    }
 
 	    // Assemble the new composite tops vector, combining the original
-	    // QgItems that aren't being obsolete and any new additions
-	    std::vector<QgItem *> modded_tops_items;
+	    // QgItems that aren't being obsoleted and any new additions
 	    std::unordered_set<QgItem *> removed_set(removed.begin(), removed.end());
 	    for (size_t i = 0; i < ctx->tops_items.size(); i++) {
 		if (removed_set.find(ctx->tops_items[i]) == removed_set.end())
@@ -637,19 +644,21 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 
 	    // Make sure what will become the final tops list is alphanum sorted
 	    std::sort(modded_tops_items.begin(), modded_tops_items.end(), QgItem_cmp());
+	}
 
-	    // TODO - this is probably about where we would need to start doing the
-	    // proper steps for updating a Qt model (see Qt docs).  Up until this step
-	    // we've not been modding the QtItem data exposed to the model - once we
-	    // update the tops list and start walking any open children to validate
-	    // them, we're modding the Qt data
-	    ctx->tops_items.clear();
-	    ctx->tops_items = modded_tops_items;
+	// Replace the original tops_items vector contents with the new data.
+	// TODO - this is probably about where we would need to start doing the
+	// proper steps for updating a Qt model (see Qt docs).  Up until this
+	// step we've not been modding the QtItem data exposed to the model -
+	// once we update the tops list and start walking any open QgItem
+	// children to validate them, we're modding the data directly exposed
+	// to Qt
+	ctx->tops_items.clear();
+	ctx->tops_items = modded_tops_items;
 
-	    // We've updated the tops array now - delete the old QgItems that were removed.
-	    for (size_t i = 0; i < removed.size(); i++) {
-		delete removed[i];
-	    }
+	// We've updated the tops array now - delete the old QgItems that were removed.
+	for (size_t i = 0; i < removed.size(); i++) {
+	    delete removed[i];
 	}
 
 	// 3.  With the tops array updated, now we must walk the child items and
@@ -658,7 +667,6 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	    QgItem *itm = ctx->tops_items[i];
 	    itm->update_children();
 	}
-
 
 	// Activity flag values are selection based, but even if the
 	// selection hasn't changed since the last cycle the parent/child
