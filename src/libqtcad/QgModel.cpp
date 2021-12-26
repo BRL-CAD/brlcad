@@ -22,14 +22,12 @@
  * QAbstractItemModel of a BRL-CAD .g database.
  *
  *
- * TODO: Replace intermediate instance creation in update_ref callback with a
- * processing step at the end that iterates over the array of all dps twice.
- * The first to get instances for tops objects, and the second to get all
- * immediate children of all combs, sketches, etc.  and make instances from
- * them.  We store these in an unordered map with their hash as the key.  The
- * old and new tops lists become the seed vectors used to check what has changed
- * in the tree.  QgItems will store hashes to their instances, and we can tell
- * via a failed lookup whether a particular instance in the QgItem is still valid.
+ * We make instances from the tops objects, as well as all immediate children
+ * of all combs, sketches, etc.  We store these in an unordered map with their
+ * hash as the key.  The old and new tops lists become the seed vectors used to
+ * check what has changed in the tree.  QgItems will store hashes to their
+ * instances, and we can tell via a failed lookup whether a particular instance
+ * in the QgItem is still valid.
  *
  * QgItems form the explicit hierarchical representation implied by the QgInstances,
  * which means QgInstance changes have potentially global impacts on the QgItems
@@ -37,16 +35,6 @@
  * after each cycle.  A validity check would be something like:  1) check the hash
  * of the QgItem against the QgInstance array to see if it is still a valid instance.
  * If not, it must be either removed or replaced
- *
- * To achieve a minimal-disruption tree update, we literally need a diffing
- * algorithm for the vector holding the child instances of an item.  We have to
- * find the minimal editing operation (insert two items here and shift the rest
- * down, for example) that will move from the old vector to the new, so we can
- * minimize the number of rows changed.  I this this is related to the
- * Levenshtein editing distance sequence needed to translate the original
- * vector into the new, with the insertions, deletions and substitutions being
- * QgInstances instead of characters. We need to actually do the translations,
- * not just calculate the distance, but the idea is similar. 
  */
 
 #include "common.h"
@@ -137,7 +125,8 @@ qg_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_l
 
     // We need to do the lookup to see if we already have this instance stored
     // - to do the lookup we need the hash, so create a (potentially) temporary
-    // version of the QgInstance and generate it.
+    // version of the QgInstance and generate it.  (TODO - this begs for a memory
+    // pool...)
     QgInstance *ninst = new QgInstance();
     ninst->ctx = ctx;
     ninst->parent = parent_dp;
@@ -288,6 +277,15 @@ QgInstance::children()
 	    return chash;
 	}
 
+	// We do NOT want to entangle the details of the .g comb tree storage
+	// into the model logic; instead we use the librt tree walkers to
+	// populate data containers more friendly to the Qt data model.  This
+	// does introduce resource overhead, and someday we may be able figure
+	// out something more clever to be leaner, but at least in the early
+	// stages Qt models offer enough complexity without trying to do
+	// anything cute with the librt comb data containers.  Because we are
+	// only concerned with the immediate comb's children and not the full
+	// tree, all objects are leaves and we can use db_tree_funcleaf
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
 	db_tree_funcleaf(dbip, comb, comb->tree, qg_instance, (void *)dp, (void *)ctx, (void *)&chash, NULL);
 	rt_db_free_internal(&intern);
@@ -364,23 +362,44 @@ QgItem::update_children()
     std::vector<unsigned long long> nh = (*ctx->instances)[ihash]->children();
 
     // Since we will be popping items off the queues, to get a similar order to
-    // the original usage when we extract them we go backwards here and push
-    // the "last" child items onto the queue first.
+    // the original usage when we extract into the new vector we go backwards
+    // here and push the "last" child items onto the queues first.
     std::unordered_map<unsigned long long, std::queue<QgItem *>> oc;
     for (int i = childCount()-1; i >= 0; i--) {
 	QgItem *qii = child(i);
 	oc[qii->ihash].push(qii);
     }
 
-    // Iterate the QgInstance's array of hashes, building up a QgItems array
-    // using either the stored QgItems from the previous state or new items.
+    // Iterate the QgInstance's array of child hashes, building up  the
+    // corresponding QgItems array using either the stored QgItems from the
+    // previous state or new items.  Remember, all QgItems in a queue
+    // correspond to the same QgInstance (i.e. their parent, bool op, matrix
+    // and child obj are all identical) so if there are multiple QgItems in the
+    // same queue it doesn't matter what "order" the QgItems are re-added in as
+    // far as the correctness of the tree is concerned.  We are attempting to
+    // preserve the "open/closed" state of the items via the queue ordering,
+    // but that won't always be possible. "Preserving" an existing open state
+    // after a tree change isn't always well defined - if, for example, we have
+    // two QgItems that both point to the same instance and were duplicated in
+    // the same child list, but only one of them was opened, if the tree
+    // rebuild now only has one QgItem being produced you could make the case
+    // that either of the previous QgItems was the one being removed.  So if we
+    // do hit that duplicate case, the QgItems that are left over in the queues
+    // once the new state is built up are the ones removed.  This is arbitrary,
+    // but that arbitrariness is an accurate reflection of the underlying data
+    // model.
     std::vector<QgItem *> nc;
     for (size_t i = 0; i < nh.size(); i++) {
+	// For each new child, look up its instance in the original data to see
+	// if we have a corresponding QgItem available.
 	if (oc.find(nh[i]) != oc.end() && !oc[nh[i]].empty()) {
+	    // We have a viable QgItem from the previous state - reuse it
 	    QgItem *itm = oc[nh[i]].front();
 	    oc[nh[i]].pop();
 	    nc.push_back(itm);
 	} else {
+	    // Previous tree did not have an appropriate QgItem -
+	    // make a new one
 	    QgItem *nitem = new QgItem();
 	    nitem->parent = this;
 	    nitem->ihash = nh[i];
@@ -389,7 +408,11 @@ QgItem::update_children()
 	}
     }
 
-    // Anything still left in the queues is now obsolete
+    // Anything still left in the queues is now obsolete - we reused or created
+    // above all the QgItems we needed for the current state, and we need to
+    // clear out whatever remains (both the items themselves and any populated
+    // QgItem subtrees they may have had populated below them, since their
+    // parent is being removed.)
     std::unordered_map<unsigned long long, std::queue<QgItem *>>::iterator oc_it;
     for (oc_it = oc.begin(); oc_it != oc.end(); oc_it++) {
 	while (!oc_it->second.empty()) {
@@ -400,21 +423,23 @@ QgItem::update_children()
 	}
     }
 
-    // If any prior existing children were open, propagate down the tree
+    // If any reused QgItems were were in the open state, propagate the
+    // update process down the tree
     for (size_t i = 0; i < nc.size(); i++) {
 	QgItem *itm = nc[i];
 	itm->update_children();
     }
 
-    // If nothing changed, we can skip the assignment and return false - otherwise,
-    // we have a new child vector.  TODO - this is the point were an actual Qt model
-    // update is needed...
+    // If anything changed, we need to replace children's contents with the new
+    // vector.  TODO - this is also the point were an actual Qt model update is
+    // needed, so we'll have to figure out how to trigger that...
     if (nc != children) {
 	children.clear();
 	children = nc;
 	return true;
-    } 
+    }
 
+    // We were able to avoid any changes, so no updates were needed
     return false;
 }
 
