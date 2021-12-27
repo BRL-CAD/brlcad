@@ -53,6 +53,49 @@
 #include "raytrace.h"
 #include "qtcad/QgModel.h"
 
+unsigned long long
+qginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, db_op_t op, mat_t c_m)
+{
+    if (!h_state)
+	return 0;
+
+    XXH64_hash_t hash_val;
+
+    if (parent)
+	XXH64_update(h_state, parent->d_namep, strlen(parent->d_namep));
+    // We use dp_name instead of the dp because we want the same hash
+    // whether we have a dp or an invalid comb entry - the hash lookup
+    // should return both with the same key.
+    if (dp_name.length())
+	XXH64_update(h_state, dp_name.c_str(), dp_name.length());
+
+    int int_op = 0;
+    switch (op) {
+	case DB_OP_UNION:
+	    int_op = 1;
+	    break;
+	case DB_OP_SUBTRACT:
+	    int_op = 2;
+	    break;
+	case DB_OP_INTERSECT:
+	    int_op = 3;
+	    break;
+	default:
+	    int_op = 0;
+	    break;
+    }
+    if (mode == 1 || mode == 3)
+	XXH64_update(h_state, &int_op, sizeof(int));
+
+    if (mode == 2 || mode == 3)
+	XXH64_update(h_state, c_m, sizeof(mat_t));
+
+    hash_val = XXH64_digest(h_state);
+    XXH64_reset(h_state, 0);
+
+    return (unsigned long long)hash_val;
+}
+
 struct QgItem_cmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
     {
@@ -124,28 +167,29 @@ qg_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_l
     }
 
     // We need to do the lookup to see if we already have this instance stored
-    // - to do the lookup we need the hash, so create a (potentially) temporary
-    // version of the QgInstance and generate it.  (TODO - this begs for a memory
-    // pool...)
-    QgInstance *ninst = new QgInstance();
-    ninst->ctx = ctx;
-    ninst->parent = parent_dp;
-    ninst->dp = dp;
-    ninst->dp_name = std::string(comb_leaf->tr_l.tl_name);
+    // - to do the lookup we need the hash.
+    mat_t c_m;
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    std::string dp_name(comb_leaf->tr_l.tl_name);
     if (comb_leaf->tr_l.tl_mat) {
-	MAT_COPY(ninst->c_m, comb_leaf->tr_l.tl_mat);
+	MAT_COPY(c_m, comb_leaf->tr_l.tl_mat);
     } else {
-	MAT_IDN(ninst->c_m);
+	MAT_IDN(c_m);
     }
-    ninst->op = op;
-    unsigned long long nhash = ninst->hash();
+    unsigned long long nhash = qginstance_hash(&h_state, 3, parent_dp, dp_name, op, c_m);
 
-    // See if we already have this or not.  If not, add it.
+    // See if we already have this QgInstance hash or not.  If not,
+    // create and add a new QgInstance.
     if (ctx->instances->find(nhash) == ctx->instances->end()) {
+	QgInstance *ninst = new QgInstance();
+	ninst->ctx = ctx;
+	ninst->parent = parent_dp;
+	ninst->dp = dp;
+	ninst->dp_name = std::string(comb_leaf->tr_l.tl_name);
+	ninst->op = op;
+	MAT_COPY(ninst->c_m, c_m);
 	(*ctx->instances)[nhash] = ninst;
-    } else {
-	// Already got it, don't need this copy
-	delete ninst;
     }
 
     // If we're collecting child hashes of the dp, push the hash onto the
@@ -217,44 +261,7 @@ QgInstance::print()
 unsigned long long
 QgInstance::hash(int mode)
 {
-    if (!h_state)
-	return 0;
-
-    XXH64_hash_t hash_val;
-
-    if (parent)
-	XXH64_update(h_state, parent->d_namep, strlen(parent->d_namep));
-    // We use dp_name instead of the dp because we want the same hash
-    // whether we have a dp or an invalid comb entry - the hash lookup
-    // should return both with the same key.
-    if (dp_name.length())
-	XXH64_update(h_state, dp_name.c_str(), dp_name.length());
-
-    int int_op = 0;
-    switch (op) {
-	case DB_OP_UNION:
-	    int_op = 1;
-	    break;
-	case DB_OP_SUBTRACT:
-	    int_op = 2;
-	    break;
-	case DB_OP_INTERSECT:
-	    int_op = 3;
-	    break;
-	default:
-	    int_op = 0;
-	    break;
-    }
-    if (mode == 1 || mode == 3)
-	XXH64_update(h_state, &int_op, sizeof(int));
-
-    if (mode == 2 || mode == 3)
-	XXH64_update(h_state, c_m, sizeof(mat_t));
-
-    hash_val = XXH64_digest(h_state);
-    XXH64_reset(h_state, 0);
-
-    return (unsigned long long)hash_val;
+    return qginstance_hash(h_state, mode, parent, dp_name, op, c_m);
 }
 
 std::vector<unsigned long long>
