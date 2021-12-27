@@ -995,6 +995,9 @@ QgModel_ctx::add_instances(struct directory *dp)
 void
 QgModel_ctx::update_instances(struct directory *dp)
 {
+    mat_t c_m;
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
     struct db_i *dbip = gedp->dbip;
     std::unordered_map<unsigned long long, QgInstance *>::iterator i_it;
     QgInstance *inst = NULL;
@@ -1024,30 +1027,33 @@ QgModel_ctx::update_instances(struct directory *dp)
 	    struct rt_extrude_internal *extr = (struct rt_extrude_internal *)intern.idb_ptr;
 	    RT_EXTRUDE_CK_MAGIC(extr);
 	    if (extr->sketch_name) {
-		QgInstance *ninst = new QgInstance();
-		ninst->ctx = this;
-		ninst->parent = dp;
-		ninst->dp = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
-		ninst->dp_name = std::string(extr->sketch_name);
-		MAT_IDN(ninst->c_m);
-		ninst->op = DB_OP_UNION;
-		unsigned long long nhash = ninst->hash();
+		std::string sk_name(extr->sketch_name);
+		MAT_IDN(c_m);
+		unsigned long long nhash = qginstance_hash(&h_state, 3, dp, sk_name, DB_OP_UNION, c_m);
 		if (nhash != ohash) {
 		    // Old and new hashes do not match - mod changed contents.
 		    // Remove old instance, add new.
-		    if (ohash)
+		    if (ohash) {
+			delete (*instances)[ohash];
 			(*instances).erase(ohash);
+		    }
+		    QgInstance *ninst = new QgInstance();
+		    ninst->ctx = this;
+		    ninst->parent = dp;
+		    ninst->dp = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET);
+		    ninst->dp_name = std::string(extr->sketch_name);
+		    MAT_IDN(ninst->c_m);
+		    ninst->op = DB_OP_UNION;
 		    (*instances)[nhash] = ninst;
 		    return;
-		} else {
-		    // Same - no action needed
-		    delete ninst;
 		}
 	    } else {
 		// There was an instance, but now there isn't a sketch name.
 		// Just remove the old instance.
-		if (ohash)
+		if (ohash) {
+		    delete (*instances)[ohash];
 		    (*instances).erase(i_it->first);
+		}
 	    }
 	    rt_db_free_internal(&intern);
 	    return;
@@ -1061,30 +1067,33 @@ QgModel_ctx::update_instances(struct directory *dp)
 	    struct rt_revolve_internal *revolve = (struct rt_revolve_internal *)intern.idb_ptr;
 	    RT_REVOLVE_CK_MAGIC(revolve);
 	    if (bu_vls_strlen(&revolve->sketch_name) > 0) {
-		QgInstance *ninst = new QgInstance();
-		ninst->ctx = this;
-		ninst->parent = dp;
-		ninst->dp = db_lookup(dbip, bu_vls_cstr(&revolve->sketch_name), LOOKUP_QUIET);
-		ninst->dp_name = std::string(bu_vls_cstr(&revolve->sketch_name));
-		MAT_IDN(ninst->c_m);
-		ninst->op = DB_OP_UNION;
-		unsigned long long nhash = ninst->hash();
+		std::string sk_name(bu_vls_cstr(&revolve->sketch_name));
+		MAT_IDN(c_m);
+		unsigned long long nhash = qginstance_hash(&h_state, 3, dp, sk_name, DB_OP_UNION, c_m);
 		if (nhash != ohash) {
 		    // Old and new hashes do not match - mod changed contents.
 		    // Remove old instance, add new.
-		    if (ohash)
+		    if (ohash) {
+			delete (*instances)[ohash];
 			(*instances).erase(ohash);
+		    }
+		    QgInstance *ninst = new QgInstance();
+		    ninst->ctx = this;
+		    ninst->parent = dp;
+		    ninst->dp = db_lookup(dbip, bu_vls_cstr(&revolve->sketch_name), LOOKUP_QUIET);
+		    ninst->dp_name = std::string(bu_vls_cstr(&revolve->sketch_name));
+		    MAT_IDN(ninst->c_m);
+		    ninst->op = DB_OP_UNION;
 		    (*instances)[nhash] = ninst;
 		    return;
-		} else {
-		    // Same - no action needed
-		    delete ninst;
 		}
 	    } else {
 		// There was an instance, but now there isn't a sketch name.
 		// Just remove the old instance.
-		if (ohash)
+		if (ohash) {
+		    delete (*instances)[ohash];
 		    (*instances).erase(ohash);
+		}
 	    }
 	    rt_db_free_internal(&intern);
 	    return;
@@ -1098,30 +1107,33 @@ QgModel_ctx::update_instances(struct directory *dp)
 	    struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)intern.idb_ptr;
 	    RT_DSP_CK_MAGIC(dsp);
 	    if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
-		QgInstance *ninst = new QgInstance();
-		ninst->ctx = this;
-		ninst->parent = dp;
-		ninst->dp = db_lookup(dbip, bu_vls_cstr(&dsp->dsp_name), LOOKUP_QUIET);
-		ninst->dp_name = std::string(bu_vls_cstr(&dsp->dsp_name));
-		MAT_IDN(ninst->c_m);
-		ninst->op = DB_OP_UNION;
-		unsigned long long nhash = ninst->hash();
+		std::string dsp_name(bu_vls_cstr(&dsp->dsp_name));
+		MAT_IDN(c_m);
+		unsigned long long nhash = qginstance_hash(&h_state, 3, dp, dsp_name, DB_OP_UNION, c_m);
 		if (nhash != ohash) {
 		    // Old and new hashes do not match - mod changed contents.
 		    // Remove old instance, add new.
-		    if (ohash)
+		    if (ohash) {
+			delete (*instances)[ohash];
 			(*instances).erase(ohash);
+		    }
+		    QgInstance *ninst = new QgInstance();
+		    ninst->ctx = this;
+		    ninst->parent = dp;
+		    ninst->dp = db_lookup(dbip, bu_vls_cstr(&dsp->dsp_name), LOOKUP_QUIET);
+		    ninst->dp_name = std::string(bu_vls_cstr(&dsp->dsp_name));
+		    MAT_IDN(ninst->c_m);
+		    ninst->op = DB_OP_UNION;
 		    (*instances)[nhash] = ninst;
 		    return;
-		} else {
-		    // Same - no action needed
-		    delete ninst;
 		}
 	    } else {
 		// There was an instance, but now there isn't a sketch name.
 		// Just remove the old instance.
-		if (ohash)
+		if (ohash) {
+		    delete (*instances)[ohash];
 		    (*instances).erase(ohash);
+		}
 	    }
 
 	    rt_db_free_internal(&intern);
@@ -1130,7 +1142,6 @@ QgModel_ctx::update_instances(struct directory *dp)
 
 	return;
     }
-
 
     // Combs are a little different.  Unlike the rest, we have (potentially)
     // multiple instances derived from a comb.
