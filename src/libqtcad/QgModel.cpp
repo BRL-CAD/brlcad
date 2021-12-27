@@ -315,11 +315,6 @@ QgItem::open()
 {
     if (!ctx)
 	return;
-    if (ctx->instances->find(ihash) == ctx->instances->end()) {
-	bu_log("Invalid ihash\n");
-	return;
-    }
-
     open_itm = true;
     update_children();
 }
@@ -359,8 +354,8 @@ QgItem::update_children()
     // array, queueing up the old items in a manner that allows us to look them
     // up using their hash and pop the item closest to the "top" of the tree
     // off the queue.  This way, whenever we need a particular item, we are
-    // trying to minimize its change in the child ordering relative to its
-    // previous position.
+    // trying to keep the ordering of the childern close to the previous
+    // positions.
 
     // We depend on the instance's set of child hashes being current, either
     // from initialization or from the per-object editing callback.  If this
@@ -885,6 +880,9 @@ QgModel_ctx::IsValid()
 void
 QgModel_ctx::add_instances(struct directory *dp)
 {
+    mat_t c_m;
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
     struct db_i *dbip = gedp->dbip;
 
     if (dp->d_flags & RT_DIR_HIDDEN)
@@ -898,6 +896,13 @@ QgModel_ctx::add_instances(struct directory *dp)
 	struct rt_extrude_internal *extr = (struct rt_extrude_internal *)intern.idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extr);
 	if (extr->sketch_name) {
+	    std::string sk_name(extr->sketch_name);
+	    MAT_IDN(c_m);
+	    unsigned long long nhash = qginstance_hash(&h_state, 3, dp, sk_name, DB_OP_UNION, c_m);
+	    if (instances->find(nhash) != instances->end()) {
+		rt_db_free_internal(&intern);
+		return;
+	    }
 	    QgInstance *ninst = new QgInstance();
 	    ninst->ctx = this;
 	    ninst->parent = dp;
@@ -905,12 +910,6 @@ QgModel_ctx::add_instances(struct directory *dp)
 	    ninst->dp_name = std::string(extr->sketch_name);
 	    MAT_IDN(ninst->c_m);
 	    ninst->op = DB_OP_UNION;
-	    unsigned long long nhash = ninst->hash();
-	    if (instances->find(nhash) != instances->end()) {
-		delete ninst;
-		rt_db_free_internal(&intern);
-		return;
-	    }
 	    (*instances)[nhash] = ninst;
 	}
 	rt_db_free_internal(&intern);
@@ -925,6 +924,13 @@ QgModel_ctx::add_instances(struct directory *dp)
 	struct rt_revolve_internal *revolve = (struct rt_revolve_internal *)intern.idb_ptr;
 	RT_REVOLVE_CK_MAGIC(revolve);
 	if (bu_vls_strlen(&revolve->sketch_name) > 0) {
+	    std::string sk_name(bu_vls_cstr(&revolve->sketch_name));
+	    MAT_IDN(c_m);
+	    unsigned long long nhash = qginstance_hash(&h_state, 3, dp, sk_name, DB_OP_UNION, c_m);
+	    if (instances->find(nhash) != instances->end()) {
+		rt_db_free_internal(&intern);
+		return;
+	    }
 	    QgInstance *ninst = new QgInstance();
 	    ninst->ctx = this;
 	    ninst->parent = dp;
@@ -932,12 +938,6 @@ QgModel_ctx::add_instances(struct directory *dp)
 	    ninst->dp_name = std::string(bu_vls_cstr(&revolve->sketch_name));
 	    MAT_IDN(ninst->c_m);
 	    ninst->op = DB_OP_UNION;
-	    unsigned long long nhash = ninst->hash();
-	    if (instances->find(nhash) != instances->end()) {
-		delete ninst;
-		rt_db_free_internal(&intern);
-		return;
-	    }
 	    (*instances)[nhash] = ninst;
 	}
 	rt_db_free_internal(&intern);
@@ -952,6 +952,13 @@ QgModel_ctx::add_instances(struct directory *dp)
 	struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)intern.idb_ptr;
 	RT_DSP_CK_MAGIC(dsp);
 	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
+	    std::string dsp_name(bu_vls_cstr(&dsp->dsp_name));
+	    MAT_IDN(c_m);
+	    unsigned long long nhash = qginstance_hash(&h_state, 3, dp, dsp_name, DB_OP_UNION, c_m);
+	    if (instances->find(nhash) != instances->end()) {
+		rt_db_free_internal(&intern);
+		return;
+	    }
 	    QgInstance *ninst = new QgInstance();
 	    ninst->ctx = this;
 	    ninst->parent = dp;
@@ -959,12 +966,6 @@ QgModel_ctx::add_instances(struct directory *dp)
 	    ninst->dp_name = std::string(bu_vls_cstr(&dsp->dsp_name));
 	    MAT_IDN(ninst->c_m);
 	    ninst->op = DB_OP_UNION;
-	    unsigned long long nhash = ninst->hash();
-	    if (instances->find(nhash) != instances->end()) {
-		delete ninst;
-		rt_db_free_internal(&intern);
-		return;
-	    }
 	    (*instances)[nhash] = ninst;
 	}
 	rt_db_free_internal(&intern);
