@@ -36,6 +36,7 @@ set(LIBRT_SOURCES
   cache.c
   cache_lz4.c
   cmd.c
+  cyclic.c
   comb/comb.c
   comb/comb_brep.cpp
   comb/comb_mirror.c

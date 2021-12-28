@@ -188,6 +188,22 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
    #define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
 					globbing rules (default) */
 
+/* cyclic.c */
+/**
+ * db_cyclic_paths takes a database instance pointer and searches for cyclic
+ * paths in the database.  It will return the number of "minimal" paths
+ * identified - a minimal path here referring to a path where they root dp in
+ * the cycle matches the leaf dp. (The comb definiing that cycle may be used
+ * elsewhere in the database, and hence be the source of more than one cyclic
+ * path in the hierarchy, but fixing the minimal cycle will address those
+ * problems as well.)  If a cyclic_paths bu_ptbl is supplied it will return
+ * db_fullpath entries for the cyclic paths found.
+ *
+ * If sdp is non-NULL, the search will check only that portion of the database
+ * - otherwise, all combs will be checked.
+ */
+RT_EXPORT extern int db_cyclic_paths(struct bu_ptbl *cyclic_paths, struct db_i *dbip, struct directory *sdp);
+
 
 __END_DECLS
 
