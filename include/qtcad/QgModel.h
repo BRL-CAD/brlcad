@@ -310,9 +310,20 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// after each database edit, but there will always be at least one object
 	// in a valid .g hierarchy that has no parent.
 	//
-	// TODO - check what tops does about a database with a cyclic definition
-	// of an otherwise top level comb...  I suspect in that case we may have
-	// to break the cycle to generate a pseudo-tops object...
+	// TODO - tops does not work if we have a database with a cyclic definition
+	// of an otherwise top level comb.  There are a couple of possible options
+	// for that case:  1) fall back on a straight-up listing of all objects
+	// IFF tops is empty 2) fall back on the all-objs listing if a cyclic path
+	// is detected in the database 3) do a more sophisticated analysis of the
+	// database trees and generate a "pseudo-tops" list with the cycles broken
+	// #1 is the simplest but will result in some portion of the .g file not
+	// being visible in the tree view at all if we do have some tops objects
+	// but one or more cyclic cases.  #2 requires cyclic path detection and
+	// could result in an unusably large listing of objects for big .g files.
+	// #3 would be the best answer but has a currently unknown implementation
+	// difficulty and performance cost (remember the tops set has to be
+	// regenerated after every database edit since each edit hast the potential
+	// to alter the tops set.)
 	std::vector<QgItem *> tops_items;
 
 	// Activity flags (used for relevance highlighting) need to be updated
