@@ -153,7 +153,7 @@ void
 QPolyCreate::finalize(bool)
 {
     QgModel *mdl = ((CADApp *)qApp)->mdl;
-    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -293,7 +293,7 @@ void
 QPolyCreate::do_vpoly_copy()
 {
     QgModel *mdl = ((CADApp *)qApp)->mdl;
-    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -366,7 +366,7 @@ void
 QPolyCreate::do_import_sketch()
 {
     QgModel *mdl = ((CADApp *)qApp)->mdl;
-    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -445,7 +445,7 @@ void
 QPolyCreate::sketch_sync()
 {
     QgModel *mdl = ((CADApp *)qApp)->mdl;
-    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp) {
 	ps->sketch_name->setPlaceholderText("No .g file open");
 	ps->sketch_name->setStyleSheet("color: rgba(200,200,200)");
@@ -505,7 +505,7 @@ void
 QPolyCreate::view_sync()
 {
     QgModel *mdl = ((CADApp *)qApp)->mdl;
-    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -538,7 +538,7 @@ QPolyCreate::toplevel_config(bool)
 {
     // Initialize
     QgModel *mdl = ((CADApp *)qApp)->mdl;
-    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -575,7 +575,7 @@ bool
 QPolyCreate::eventFilter(QObject *, QEvent *e)
 {
     QgModel *mdl = ((CADApp *)qApp)->mdl;
-    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return false;
 

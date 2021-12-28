@@ -177,7 +177,7 @@ void
 CADAttributesModel::refresh(const QModelIndex &idx)
 {
     QgModel *mdl = ((CADApp *)qApp)->mdl;
-    struct ged *gedp = (mdl && mdl->ctx) ? mdl->ctx->gedp : NULL;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 

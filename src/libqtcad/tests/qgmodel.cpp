@@ -33,7 +33,7 @@
 #include "qtcad/QgModel.h"
 
 void
-open_children(QgItem *itm, QgModel_ctx *s, int depth, int max_depth)
+open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 {
     if (!itm || !itm->ihash)
 	return;
@@ -51,7 +51,7 @@ open_children(QgItem *itm, QgModel_ctx *s, int depth, int max_depth)
 }
 
 void
-open_tops(QgModel_ctx *s, int depth)
+open_tops(QgModel *s, int depth)
 {
     for (size_t i = 0; i < s->tops_items.size(); i++) {
 	QgItem *itm = s->tops_items[i];
@@ -72,7 +72,7 @@ close_children(QgItem *itm)
 }
 
 void
-print_children(QgItem *itm, QgModel_ctx *s, int depth)
+print_children(QgItem *itm, QgModel *s, int depth)
 {
     if (!itm || !itm->ihash)
 	return;
@@ -106,7 +106,7 @@ print_children(QgItem *itm, QgModel_ctx *s, int depth)
 }
 
 void
-print_tops(QgModel_ctx *s)
+print_tops(QgModel *s)
 {
     for (size_t i = 0; i < s->tops_items.size(); i++) {
 	QgItem *itm = s->tops_items[i];
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     if (argc != 1)
 	bu_exit(-1, "need to specify .g file\n");
 
-    QgModel_ctx s(NULL, argv[0]);
+    QgModel s(NULL, argv[0]);
 
     if (!s.IsValid())
 	bu_exit(-1, "failed to open .g file at %s\n", argv[0]);

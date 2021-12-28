@@ -152,7 +152,7 @@ qg_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_l
     RT_CK_TREE(comb_leaf);
 
     // Unpack
-    QgModel_ctx *ctx = (QgModel_ctx *)vctx;
+    QgModel *ctx = (QgModel *)vctx;
     struct directory *parent_dp = (struct directory *)pdp;
     std::vector<unsigned long long> *chash = (std::vector<unsigned long long> *)vchash;
 
@@ -542,7 +542,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	std::cout << "update nref callback\n";
 
 	// Cycle complete, nref count is current.  Start analyzing.
-	QgModel_ctx *ctx = (QgModel_ctx *)u_data;
+	QgModel *ctx = (QgModel *)u_data;
 
 	// 1.  Rebuild top instances
 	{
@@ -686,7 +686,7 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 {
     std::queue<std::unordered_map<unsigned long long, QgInstance *>::iterator> rmq;
     std::unordered_map<unsigned long long, QgInstance *>::iterator i_it, trm_it;
-    QgModel_ctx *ctx = (QgModel_ctx *)u_data;
+    QgModel *ctx = (QgModel *)u_data;
     QgInstance *inst = NULL;
 
     switch(mode) {
@@ -694,8 +694,7 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    bu_log("MOD: %s\n", dp->d_namep);
 
 	    // TODO - don't know if we'll actually need this in the end...
-	    if (ctx->mdl)
-		ctx->mdl->changed_dp.insert(dp);
+	    ctx->changed_dp.insert(dp);
 
 	    // Need to handle edits to comb/extrude/revolve/dsp, which have potential
 	    // implications for QgInstances.
@@ -712,9 +711,7 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    ctx->add_instances(dp);
 
 	    // TODO - don't know if we'll actually need this in the end...
-	    if (ctx->mdl) {
-		ctx->mdl->need_update_nref = true;
-	    }
+	    ctx->need_update_nref = true;
 
 	    // If we have any invalid instances that are now valid, update them
 	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
@@ -748,8 +745,7 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    }
 
 	    // TODO - don't know if we'll actually need this in the end...
-	    if (ctx->mdl)
-		ctx->mdl->need_update_nref = true;
+	    ctx->need_update_nref = true;
 
 	    break;
 	default:
@@ -758,8 +754,8 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 }
 
 
-QgModel_ctx::QgModel_ctx(QgModel *pmdl, const char *npath)
-    : mdl(pmdl)
+QgModel::QgModel(QObject *p, const char *npath)
+: QAbstractItemModel(p)
 {
     // Make sure NULL is our default.
     gedp = NULL;
@@ -770,106 +766,16 @@ QgModel_ctx::QgModel_ctx(QgModel *pmdl, const char *npath)
     if (!npath)
 	return;
 
-    // See if npath is valid - if so, do model setup
-    gedp = ged_open("db", (const char *)npath, 1);
-    if (!gedp)
-	return;
-    db_update_nref(gedp->dbip, &rt_uniresource);
-
-    struct db_i *dbip = gedp->dbip;
-
-    // Primary driver of model updates is when individual objects are changed
-    db_add_changed_clbk(dbip, &qgmodel_changed_callback, (void *)this);
-
-    // If the tops list changes, we need to update that vector as well.  Unlike
-    // local dp changes, we can only (re)build the tops list after an
-    // update_nref pass is complete.
-    db_add_update_nref_clbk(dbip, &qgmodel_update_nref_callback, (void *)this);
-
-    // Initialize the instance containers
-    tops_instances = new std::unordered_map<unsigned long long, QgInstance *>;
-    tops_instances->clear();
-    instances = new std::unordered_map<unsigned long long, QgInstance *>;
-    instances->clear();
-
-    // tops objects in the .g file are "instances" beneath the .g itself, which
-    // is the analogy to Qt's hidden "root" node in a model.  To handle them,
-    // we define "NULL root" instances.
-    struct directory **db_objects = NULL;
-    int path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &db_objects);
-
-    if (path_cnt) {
-
-	// Sort so the top level ordering is correct for listing in tree views
-	bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
-
-	for (int i = 0; i < path_cnt; i++) {
-	    struct directory *curr_dp = db_objects[i];
-	    QgInstance *ninst = new QgInstance();
-	    ninst->ctx = this;
-	    ninst->parent = NULL;
-	    ninst->dp = curr_dp;
-	    ninst->dp_name = std::string(curr_dp->d_namep);
-	    ninst->op = DB_OP_UNION;
-	    MAT_IDN(ninst->c_m);
-	    unsigned long long nhash = ninst->hash();
-
-	    // We store the tops instances in both maps so we can always use
-	    // instances to look up any QgInstance.  When we rebuild tops_instances
-	    // we must be sure to remove the obsolete QgInstances from instances
-	    // as well as tops_instances.
-	    (*tops_instances)[nhash] = ninst;
-	    (*instances)[nhash] = ninst;
-
-	    // tops entries get a QgItem by default
-	    QgItem *nitem = new QgItem();
-	    nitem->parent = NULL;
-	    nitem->ihash = nhash;
-	    nitem->ctx = this;
-	    tops_items.push_back(nitem);
-	}
-    }
-    bu_free(db_objects, "tops obj list");
-
-    // Sort tops_items according to alphanum
-    std::sort(tops_items.begin(), tops_items.end(), QgItem_cmp());
-
-
-    // TODO - need to decide what to do about cyclic paths...
-
-
-    // Run through the objects and crack the non-leaf objects to define
-    // non-tops instances (i.e. all comb instances and some primitive
-    // types that reference other objects).
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    add_instances(dp);
-	}
-    }
-
+    opendb((const char *)npath);
 }
 
-QgModel_ctx::~QgModel_ctx()
+QgModel::~QgModel()
 {
-    if (gedp)
-	ged_close(gedp);
-
-    if (instances) {
-	std::unordered_map<unsigned long long, QgInstance *>::iterator i_it;
-	for (i_it = (*instances).begin(); i_it != (*instances).end(); i_it++) {
-	    QgInstance *inst = i_it->second;
-	    delete inst;
-	}
-	delete instances;
-    }
-
-    if (tops_instances)
-	delete tops_instances;
+    closedb();
 }
 
 bool
-QgModel_ctx::IsValid()
+QgModel::IsValid()
 {
     if (gedp)
 	return true;
@@ -878,7 +784,7 @@ QgModel_ctx::IsValid()
 }
 
 void
-QgModel_ctx::add_instances(struct directory *dp)
+QgModel::add_instances(struct directory *dp)
 {
     mat_t c_m;
     XXH64_state_t h_state;
@@ -993,7 +899,7 @@ QgModel_ctx::add_instances(struct directory *dp)
 }
 
 void
-QgModel_ctx::update_instances(struct directory *dp)
+QgModel::update_instances(struct directory *dp)
 {
     mat_t c_m;
     XXH64_state_t h_state;
@@ -1184,17 +1090,6 @@ QgModel_ctx::update_instances(struct directory *dp)
 
 }
 
-
-QgModel::QgModel(QObject *, const char *npath)
-{
-    ctx = new QgModel_ctx(this, npath);
-}
-
-QgModel::~QgModel()
-{
-    delete ctx;
-}
-
 ///////////////////////////////////////////////////////////////////////
 //          Qt abstract model interface implementation
 ///////////////////////////////////////////////////////////////////////
@@ -1280,7 +1175,7 @@ bool QgModel::removeColumns(int UNUSED(column), int UNUSED(count), const QModelI
 ///////////////////////////////////////////////////////////////////////
 bool QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
-    if (!ctx || !ctx->gedp)
+    if (!gedp)
 	return false;
 
     changed_dp.clear();
@@ -1297,15 +1192,15 @@ bool QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	return false;
     }
 
-    ged_exec(ctx->gedp, argc, argv);
-    if (msg && ctx->gedp)
-	bu_vls_printf(msg, "%s", bu_vls_cstr(ctx->gedp->ged_result_str));
+    ged_exec(gedp, argc, argv);
+    if (msg && gedp)
+	bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
 
     // If we have the need_update_nref flag set, we need to do db_update_nref
     // ourselves - the backend logic made a dp add/remove but didn't do the
     // nref updates.
-    if (ctx->gedp && need_update_nref)
-	db_update_nref(ctx->gedp->dbip, &rt_uniresource);
+    if (gedp && need_update_nref)
+	db_update_nref(gedp->dbip, &rt_uniresource);
 
     return true;
 }
@@ -1313,9 +1208,20 @@ bool QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 void
 QgModel::closedb()
 {
-    // Close an old context, if we have one
-    if (ctx)
-	delete ctx;
+    if (gedp)
+	ged_close(gedp);
+
+    if (instances) {
+	std::unordered_map<unsigned long long, QgInstance *>::iterator i_it;
+	for (i_it = (*instances).begin(); i_it != (*instances).end(); i_it++) {
+	    QgInstance *inst = i_it->second;
+	    delete inst;
+	}
+	delete instances;
+    }
+
+    if (tops_instances)
+	delete tops_instances;
 
     // Clear changed dps - we're starting over
     changed_dp.clear();
@@ -1325,25 +1231,104 @@ int
 QgModel::opendb(QString filename)
 {
     /* First, make sure the file is actually there */
-      QFileInfo fileinfo(filename);
-      if (!fileinfo.exists()) return 1;
+    QFileInfo fileinfo(filename);
+    if (!fileinfo.exists()) return 1;
 
-      closedb();
 
-      char *npath = bu_strdup(filename.toLocal8Bit().data());
-      ctx = new QgModel_ctx(this, npath);
-      bu_free(npath, "path");
+    char *npath = bu_strdup(filename.toLocal8Bit().data());
+    int ret = opendb((const char *)npath);
+    bu_free(npath, "path");
 
-      return 0;
+    return ret;
 }
 
-bool
-QgModel::IsValid()
+int
+QgModel::opendb(const char *npath)
 {
-    if (ctx && ctx->IsValid())
-	return true;
+    closedb();
 
-    return false;
+    if (!npath)
+	return 1;
+
+    // See if npath is valid - if so, do model setup
+    gedp = ged_open("db", npath, 1);
+    if (!gedp)
+	return 1;
+    db_update_nref(gedp->dbip, &rt_uniresource);
+
+    struct db_i *dbip = gedp->dbip;
+
+    // Primary driver of model updates is when individual objects are changed
+    db_add_changed_clbk(dbip, &qgmodel_changed_callback, (void *)this);
+
+    // If the tops list changes, we need to update that vector as well.  Unlike
+    // local dp changes, we can only (re)build the tops list after an
+    // update_nref pass is complete.
+    db_add_update_nref_clbk(dbip, &qgmodel_update_nref_callback, (void *)this);
+
+    // Initialize the instance containers
+    tops_instances = new std::unordered_map<unsigned long long, QgInstance *>;
+    tops_instances->clear();
+    instances = new std::unordered_map<unsigned long long, QgInstance *>;
+    instances->clear();
+
+    // tops objects in the .g file are "instances" beneath the .g itself, which
+    // is the analogy to Qt's hidden "root" node in a model.  To handle them,
+    // we define "NULL root" instances.
+    struct directory **db_objects = NULL;
+    int path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &db_objects);
+
+    if (path_cnt) {
+
+	// Sort so the top level ordering is correct for listing in tree views
+	bu_sort(db_objects, path_cnt, sizeof(struct directory *), dp_cmp, NULL);
+
+	for (int i = 0; i < path_cnt; i++) {
+	    struct directory *curr_dp = db_objects[i];
+	    QgInstance *ninst = new QgInstance();
+	    ninst->ctx = this;
+	    ninst->parent = NULL;
+	    ninst->dp = curr_dp;
+	    ninst->dp_name = std::string(curr_dp->d_namep);
+	    ninst->op = DB_OP_UNION;
+	    MAT_IDN(ninst->c_m);
+	    unsigned long long nhash = ninst->hash();
+
+	    // We store the tops instances in both maps so we can always use
+	    // instances to look up any QgInstance.  When we rebuild tops_instances
+	    // we must be sure to remove the obsolete QgInstances from instances
+	    // as well as tops_instances.
+	    (*tops_instances)[nhash] = ninst;
+	    (*instances)[nhash] = ninst;
+
+	    // tops entries get a QgItem by default
+	    QgItem *nitem = new QgItem();
+	    nitem->parent = NULL;
+	    nitem->ihash = nhash;
+	    nitem->ctx = this;
+	    tops_items.push_back(nitem);
+	}
+    }
+    bu_free(db_objects, "tops obj list");
+
+    // Sort tops_items according to alphanum
+    std::sort(tops_items.begin(), tops_items.end(), QgItem_cmp());
+
+
+    // TODO - need to decide what to do about cyclic paths...
+
+
+    // Run through the objects and crack the non-leaf objects to define
+    // non-tops instances (i.e. all comb instances and some primitive
+    // types that reference other objects).
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	struct directory *dp;
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    add_instances(dp);
+	}
+    }
+
+    return 0;
 }
 
 // Local Variables:

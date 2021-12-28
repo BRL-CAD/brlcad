@@ -209,8 +209,8 @@ CADApp::initialize()
 void
 CADApp::do_quad_view_change(QtCADView *cv)
 {
-    if (mdl && mdl->ctx && mdl->ctx->gedp && cv) {
-	mdl->ctx->gedp->ged_gvp = cv->view();
+    if (mdl && mdl->gedp && cv) {
+	mdl->gedp->ged_gvp = cv->view();
     }
     do_gui_update_from_view_change();
 }
@@ -218,8 +218,8 @@ CADApp::do_quad_view_change(QtCADView *cv)
 void
 CADApp::do_view_update_from_gui_change(struct bview **nv)
 {
-    if (mdl && mdl->ctx && mdl->ctx->gedp && nv) {
-	mdl->ctx->gedp->ged_gvp = *nv;
+    if (mdl && mdl->gedp && nv) {
+	mdl->gedp->ged_gvp = *nv;
     }
     emit gui_changed_view(NULL);
 }
@@ -233,8 +233,8 @@ CADApp::do_db_update_from_gui_change()
 void
 CADApp::do_gui_update_from_view_change()
 {
-    if (mdl && mdl->ctx && mdl->ctx->gedp) {
-	emit view_change(&mdl->ctx->gedp->ged_gvp);
+    if (mdl && mdl->gedp) {
+	emit view_change(&mdl->gedp->ged_gvp);
     }
 }
 
@@ -298,7 +298,7 @@ CADApp::opendb(QString filename)
     db_filename = QString(fp);
 
     // Connect the wires with the view(s)
-    struct ged *gedp = mdl->ctx->gedp;
+    struct ged *gedp = mdl->gedp;
     if (w->canvas) {
 	BU_GET(gedp->ged_gvp, struct bview);
 	bv_init(gedp->ged_gvp);
@@ -497,11 +497,11 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     bool ret = false;
 
-    if (!mdl || !mdl->ctx)
+    if (!mdl)
 	return false;
 
-    struct ged *prev_gedp = mdl->ctx->gedp;
-    struct ged *gedp = mdl->ctx->gedp;
+    struct ged *prev_gedp = mdl->gedp;
+    struct ged *gedp = mdl->gedp;
 
     if (gedp) {
 	gedp->ged_create_io_handler = &qt_create_io_handler;
@@ -521,7 +521,7 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	return false;
 
     // It's possible that a ged_exec will introduce a new gedp - set up accordingly
-    gedp = mdl->ctx->gedp;
+    gedp = mdl->gedp;
     if (gedp && prev_gedp != gedp) {
 	bu_ptbl_reset(gedp->ged_all_dmp);
 	if (w->canvas) {
@@ -621,12 +621,12 @@ CADApp::run_cmd(const QString &command)
 	if (bu_vls_strlen(&msg) > 0 && console) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
-	if (ret && mdl && mdl->ctx && mdl->ctx->gedp)
-	    emit view_change(&mdl->ctx->gedp->ged_gvp);
+	if (ret && mdl && mdl->gedp)
+	    emit view_change(&mdl->gedp->ged_gvp);
     }
 
-    if (mdl && mdl->ctx && mdl->ctx->gedp) {
-	bu_vls_trunc(mdl->ctx->gedp->ged_result_str, 0);
+    if (mdl && mdl->gedp) {
+	bu_vls_trunc(mdl->gedp->ged_result_str, 0);
     }
 
     bu_vls_free(&msg);
