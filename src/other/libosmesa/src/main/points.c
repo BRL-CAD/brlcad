@@ -77,7 +77,7 @@ _mesa_PointParameteriNV(GLenum pname, GLint param)
 {
     GLfloat value[3] = {0.0};
     value[0] = (GLfloat)param;
-    _mesa_PointParameterfvEXT(pname, &value);
+    _mesa_PointParameterfvEXT(pname, value);
 }
 
 
