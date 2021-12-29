@@ -51,6 +51,7 @@ set(distcheck_files
   CMakeLists.txt
   arb_intersect.g
   brep_boolean_tests.g
+  cyclic_tests.g
   nurbs_surfaces.g
   extreme_ssi_test.g
   binary_attribute.c

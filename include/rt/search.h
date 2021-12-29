@@ -191,16 +191,23 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 /* cyclic.c */
 /**
  * db_cyclic_paths takes a database instance pointer and searches for cyclic
- * paths in the database.  It will return the number of "minimal" paths
- * identified - a minimal path here referring to a path where they root dp in
+ * paths in the database.
+ *
+ * If sdp is NULL, this routine will return the number of "minimal" paths
+ * identified - a minimal path here referring to a path where the root dp in
  * the cycle matches the leaf dp. (The comb definiing that cycle may be used
  * elsewhere in the database, and hence be the source of more than one cyclic
  * path in the hierarchy, but fixing the minimal cycle will address those
- * problems as well.)  If a cyclic_paths bu_ptbl is supplied it will return
+ * problems as well.)  If a cyclic_paths is non-NULL it will be used to return
  * db_fullpath entries for the cyclic paths found.
  *
- * If sdp is non-NULL, the search will check only that portion of the database
- * - otherwise, all combs will be checked.
+ * If sdp is non-NULL, the search will check only the tree below sdp.  Unlike
+ * the general search, the returns will be all cyclic paths found, not just
+ * minimal paths.  (Client codes looking to identify cyclic paths for reporting
+ * problems to users for repair are advised to use the sdp==NULL results to get
+ * the minimum paths - use sdp != NULL only if it is crucial that the check be
+ * confined to a specific sub-tree for performance or a specific, focused used
+ * case (e.g. an explicitly user-specified lint tree check.)
  */
 RT_EXPORT extern int db_cyclic_paths(struct bu_ptbl *cyclic_paths, struct db_i *dbip, struct directory *sdp);
 
