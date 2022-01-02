@@ -1,4 +1,6 @@
-DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get -qy install cmake git build-essential ninja-build swig doxygen libpng-dev libgl1-mesa-dev libopenmpi-dev libqt5opengl5-dev libeigen3-dev itk3-dev time
+DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get -qy install cmake git build-essential ninja-build swig doxygen libpng-dev libgl1-mesa-dev libopenmpi-dev libqt5opengl5-dev libeigen3-dev itk3-dev time npm
+npm install -g @antora/cli @antora/site-generator-default
+npm install -g antora-site-generator-lunr
 
 mkdir -m 755 /brlcad
 chown -R cadling /brlcad
