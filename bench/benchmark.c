@@ -921,8 +921,6 @@ main(int ac, char *av[])
 		  thisp, thisp, thisp, thisp, thisp, thisp);
     bu_argv_from_string(argv, 32, bu_vls_addr(&vp));
 
-    bu_free(thisp, "dirname this");
-
     look_for(NULL, file, "BENCHMARK_TR", "benchmark", (const char **)argv);
     bu_vls_trunc(&vp, 0);
 
