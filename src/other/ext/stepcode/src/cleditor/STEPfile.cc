@@ -174,7 +174,7 @@ Severity STEPfile::ReadHeader(istream &in)
                 delete im;
                 return SEVERITY_EXIT;
             } else {
-                strncpy(buf, const_cast<char *>(keywd.c_str()), BUFSIZ);
+                strncpy(buf, const_cast<char *>(keywd.c_str()), BUFSIZ-1);
             }
 
             if(userDefined) {
