@@ -464,16 +464,6 @@ RLE_EXPORT extern rle_hdr rle_dflt_hdr;
      */
     RLE_EXPORT extern char *cmd_name( char **argv );
 
-    /* From scanargs.c. */
-    /*****************************************************************
-     * TAG( scanargs )
-     * Scan command argument list and parse arguments.
-     */
-    RLE_EXPORT extern int scanargs( int argc,
-			 char **argv,
-			 CONST_DECL char *format,
-			 ... );
-
     /* From hilbert.c */
     /*****************************************************************
      * TAG( hilbert_i2c )

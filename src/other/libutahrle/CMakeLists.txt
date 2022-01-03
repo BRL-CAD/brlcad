@@ -112,7 +112,6 @@ set(LIBUTAHRLE_SOURCES
   rle_raw_alc.c
   rle_rawrow.c
   rle_row_alc.c
-  scanargs.c
   vaxshort.c
   )
 
