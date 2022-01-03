@@ -253,7 +253,7 @@ main(int argc, char **argv)
     if (clear) {
 	fb_clear(fbp, PIXEL_NULL);
     }
-    if (zoom) {
+    if (zoom && xout && yout) {
 	/* Zoom in, and center the file */
 	fb_zoom(fbp, scr_width/xout, scr_height/yout);
 	if (inverse)
