@@ -212,6 +212,7 @@ CMAKEFILES(
   STARTERS
   STRATEGY
   git/check.yml
+  git/diffing.txt
   git/gitconfig
   git/gitk
   git/git2gource.cpp
