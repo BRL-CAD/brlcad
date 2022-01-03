@@ -1093,12 +1093,12 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
 
 static void moRebuildMesh(moMesh *mesh, moThreadData *tdata, moi seedindex)
 {
-    int axisindex, cacheorder, caheorderaddglobal;
-    uint32_t hashkey;
+    int axisindex=0, cacheorder=0, caheorderaddglobal=0;
+    uint32_t hashkey=0;
     moi besttriindex = -1;
-    moCacheEntry *cache;
-    moTriangle *tri, *trilast;
-    int cacheorderadd[MO_VERTEX_CACHE_SIZE_MAX];
+    moCacheEntry *cache=NULL;
+    moTriangle *tri=NULL, *trilast=NULL;
+    int cacheorderadd[MO_VERTEX_CACHE_SIZE_MAX] = {0};
     moi delindex, delcount;
     moi delbuffer[8];
     moi(*findnextstep)(moMesh * mesh, moThreadData * tdata);
