@@ -2364,6 +2364,8 @@ gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_point  * start, int  size,
     for  ( int  ind = 0; ind < size; ind++ )
         bb_new.bound( start[ ind ] );
 
+    free(sample);
+
     return  bb_new;
 }
 
