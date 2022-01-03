@@ -27,6 +27,10 @@ sectionReader::sectionReader(lazyFileReader *parent, std::ifstream &file, std::s
     _error = new ErrorDescriptor();
 }
 
+sectionReader::~sectionReader()
+{
+     delete _error;
+}
 
 std::streampos sectionReader::findNormalString(const std::string &str, bool semicolon)
 {

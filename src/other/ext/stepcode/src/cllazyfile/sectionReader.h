@@ -39,6 +39,7 @@ class SC_LAZYFILE_EXPORT sectionReader
         // protected member functions
 
         sectionReader(lazyFileReader *parent, std::ifstream &file, std::streampos start, sectionID sid);
+	~sectionReader();
 
         /** Find a string, ignoring occurrences in comments or Part 21 strings (i.e. 'string with \S\' control directive' )
          * \param str string to find
