@@ -463,6 +463,7 @@ namespace p2t {
 		Point* op = ot->OppositePoint(t, p);
 		if (!op) return false;
 		int oi = ot->Index(op);
+		if (oi < 0) return false;
 
 		// If this is a Constrained Edge or a Delaunay Edge(only during recursive legalization)
 		// then we should not try to legalize
