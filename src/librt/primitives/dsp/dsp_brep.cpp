@@ -424,8 +424,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    point_t p_ctrl;
 	    VSET(p_temp, x, y, DSP(dsp_ip, x, y));
 	    MOVEPT(p_ctrl);
-	    ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
-	    bezsurf->SetCV(x, y, *ctrlpt);
+	    ON_3dPoint ctrlpt(p_ctrl);
+	    bezsurf->SetCV(x, y, ctrlpt);
 	}
     }
 
