@@ -86,6 +86,7 @@ rt_regionfix(struct rt_i *rtip)
 	 */
 	if ((tabp = strchr(line, '\t')) == (char *)0) {
 	    bu_log("%s: missing TAB on line %d:\n%s\n", file, linenum, line);
+	    bu_free(line, "reg_expr line");
 	    continue;		/* just ignore it */
 	}
 
@@ -93,6 +94,7 @@ rt_regionfix(struct rt_i *rtip)
 	while (*tabp && isspace((int)*tabp)) tabp++;
 	if ((ret = regcomp(&re_space, line, 0)) != 0) {
 	    bu_log("%s: line %d, regcomp error '%d'\n", file, linenum, ret);
+	    bu_free(line, "reg_expr line");
 	    continue;		/* just ignore it */
 	}
 
