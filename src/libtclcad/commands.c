@@ -4554,7 +4554,6 @@ to_new_view(struct ged *gedp,
 	    bu_ptbl_free(new_gdvp->callbacks);
 	    BU_PUT(new_gdvp->callbacks, struct bu_ptbl);
 	    bu_free((void *)new_gdvp, "ged_view");
-	    bu_free((void *)new_gdvp, "bv");
 	    bu_free((void *)av, "to_new_view: av");
 
 	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", argv[1]);
