@@ -502,12 +502,14 @@ nirt_app_exec(struct nirt_state *ns, struct bu_vls *iline, struct bu_vls *state_
 		if (ret < 0) {
 		    fprintf(io_data->err, "Error: failed to execute nirt script:\n\n%s\n\nwhen reading from statefile %s\n", bu_vls_addr(&fl), bu_vls_addr(state_file));
 		    bu_vls_free(&fl);
+		    fclose(sfPtr);
 		    return ret;
 		}
 		bu_vls_trunc(&fl, 0);
 	    }
 	    bu_vls_free(&fl);
 	}
+	fclose(sfPtr);
 	return 0;
     }
     if (BU_STR_EQUAL(bu_vls_addr(iline), "statefile") || !bu_path_match("statefile *", bu_vls_addr(iline), 0)) {
