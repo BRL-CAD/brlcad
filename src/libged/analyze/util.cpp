@@ -415,13 +415,20 @@ print_faces_table(struct ged *gedp, table_t *table)
 
 	bu_vls_printf(gedp->ged_result_str, "|");
 	for (j = 0; j < table->rows[i].nfields - 1; ++j) {
+
+	    // For Coverity - check to ensure we never overrun maxwidth
+	    if (j == 8) {
+		bu_log("util.cpp:%d - trying to print more than 8 columns (?)\n", __LINE__);
+		break;
+	    }
 	    assert(table->rows[i].fields[j].buf);
-	    bu_vls_printf(gedp->ged_result_str, " %*.*s",
-			  maxwidth[j], maxwidth[j],
-			  table->rows[i].fields[j].buf);
+
+	    bu_vls_printf(gedp->ged_result_str, " %*.*s", maxwidth[j], maxwidth[j], table->rows[i].fields[j].buf);
+
 	    /* do we need a separator? */
 	    if (j == 0 || j == 2 || j == 6 || j == 7)
 		bu_vls_printf(gedp->ged_result_str, " |");
+
 	}
 	/* close the row */
 	bu_vls_printf(gedp->ged_result_str, "\n");
