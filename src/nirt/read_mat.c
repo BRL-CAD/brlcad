@@ -97,6 +97,8 @@ void read_mat (struct rt_i *rtip)
 	    elevation() = atan2(m[10], m[6]) / DEG2RAD;
 	    status |= RMAT_SAW_VR;
 	}
+
+	bu_free(buf, "read_mat buf");
     }
 
     if ((status & RMAT_SAW_EYE) == 0) {
