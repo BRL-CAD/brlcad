@@ -202,7 +202,7 @@ main(int argc, char **argv)
 		/* START # 6 */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
 		    /* START # 7 */
 		    filemged[k] = temp[j];
 		    j++;
@@ -217,7 +217,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
 		    /* START # 9 */
 		    temp1[k] = temp[j];
 		    j++;
@@ -233,7 +233,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
 		    /* START # 11 */
 		    temp1[k] = temp[j];
 		    j++;
