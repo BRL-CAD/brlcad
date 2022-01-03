@@ -26,6 +26,9 @@
 int
 dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
 {
+    if (!plugins || !dl_handles)
+	return -1;
+
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "dylib", NULL);
     char **filenames;
     const char *psymbol = "dylib_plugin_info";
@@ -67,9 +70,7 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
 	    continue;
 	}
 
-	if (dl_handles) {
-	    bu_ptbl_ins(dl_handles, (long *)dl_handle);
-	}
+	bu_ptbl_ins(dl_handles, (long *)dl_handle);
 
 	const struct dylib_contents *pcontents = plugin->i;
 	bu_ptbl_ins(plugins, (long *)pcontents);
