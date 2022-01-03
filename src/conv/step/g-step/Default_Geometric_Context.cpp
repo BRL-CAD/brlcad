@@ -206,6 +206,9 @@ Add_Default_Geometric_Context(AP203_Contents *sc)
 
     sc->instance_list->Append((STEPentity *)complex_entity, completeSE);
 
+    delete p_ang_unit;
+    delete p_ang_measure_value;
+
     return complex_entity;
 }
 
