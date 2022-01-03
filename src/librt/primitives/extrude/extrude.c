@@ -1544,7 +1544,7 @@ get_seg_midpoint(void *seg, struct rt_sketch_internal *skt, point2d_t pt)
     struct bezier_seg *bsg;
     uint32_t *lng;
     point2d_t *V;
-    point2d_t pta;
+    point2d_t pta = V2INIT_ZERO;
     int i;
     int coords;
 
@@ -1991,12 +1991,13 @@ sort_intersections(struct loop_inter **root, struct bn_tol *tol)
 static int
 classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sketch_internal *ip)
 {
-    struct loop_inter *inter_root=NULL, *ptr, *tmp;
+    struct loop_inter *inter_root=NULL, *ptr=NULL, *tmp=NULL;
     struct bn_tol tol;
-    point2d_t pta, ptb;
-    point2d_t dir;
-    void *seg;
-    fastf_t inv_len;
+    point2d_t pta = V2INIT_ZERO;
+    point2d_t ptb = V2INIT_ZERO;
+    point2d_t dir = V2INIT_ZERO;
+    void *seg = NULL;
+    fastf_t inv_len = 0.0;
     int loopa_count = 0, loopb_count = 0;
     int ret=UNKNOWN;
 

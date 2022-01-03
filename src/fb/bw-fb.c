@@ -185,9 +185,9 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int x, y, n;
-    long xout, yout;		/* number of screen output lines */
-    long xstart, xskip;
+    int x=0, y=0, n=0;
+    long xout=1, yout=1;		/* number of screen output lines */
+    long xstart=0, xskip=0;
 
     bu_setprogname(argv[0]);
 
