@@ -605,6 +605,11 @@ fxt1_lloyd(GLfloat vec[][MAX_COMP], GLint nv,
 		    best = j;
 		}
 	    }
+
+	    if (best < 0) {
+		error += err;
+		continue;
+	    }
 #else
 	    GLint best = fxt1_bestcol(vec, nv, input[k], nc, &err);
 #endif
