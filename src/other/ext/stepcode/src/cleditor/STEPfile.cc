@@ -1564,9 +1564,11 @@ void STEPfile::WriteHeaderInstanceFileName(ostream &out)
 {
 // Get the FileName instance from _headerInstances
     SDAI_Application_instance *se = 0;
+    bool del_se = false;
     se = _headerInstances->GetApplication_instance("File_Name");
     if(se == ENTITY_NULL) {
         se = (SDAI_Application_instance *)HeaderDefaultFileName();
+	del_se = true;
     }
 
 //set some of the attribute values at time of output
@@ -1586,6 +1588,9 @@ void STEPfile::WriteHeaderInstanceFileName(ostream &out)
 
 //output the values to the file
     WriteHeaderInstance(se, out);
+
+    if (del_se)
+       delete se;
 }
 
 void STEPfile::WriteHeaderInstanceFileDescription(ostream &out)
