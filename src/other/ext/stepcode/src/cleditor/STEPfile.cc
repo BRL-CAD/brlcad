@@ -904,6 +904,10 @@ SDAI_Application_instance *STEPfile::CreateInstance(istream &in, ostream &out)
     SkipInstance(in, tmpbuf);
 
     ReadTokenSeparator(in);
+
+    if (scopelist)
+       delete scopelist;
+
     return obj;
 }
 
