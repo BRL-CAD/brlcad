@@ -1609,8 +1609,11 @@ void STEPfile::WriteHeaderInstanceFileSchema(ostream &out)
         // ERROR: no File_Name instance in _headerInstances
         // create a File_Name instance
         se = (SDAI_Application_instance *) HeaderDefaultFileSchema();
+        WriteHeaderInstance(se, out);
+	delete se;
+    } else {
+        WriteHeaderInstance(se, out);
     }
-    WriteHeaderInstance(se, out);
 }
 
 void STEPfile::WriteData(ostream &out, int writeComments)
