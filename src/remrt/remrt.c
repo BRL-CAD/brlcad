@@ -2858,7 +2858,7 @@ eat_script(FILE *fp)
 {
     char *buf;
     char *ebuf;
-    char *nsbuf;
+    char *nsbuf = NULL;
     int argc;
     char *argv[64+1];
     struct bu_vls prelude = BU_VLS_INIT_ZERO;
@@ -2960,7 +2960,8 @@ out:
     bu_vls_free(&prelude);
     bu_vls_free(&body);
     bu_vls_free(&finish);
-    bu_free(nsbuf, "script start line");
+    if (nsbuf)
+	bu_free(nsbuf, "script start line");
 
     /* For a few hundred frames, it all can take a little while */
     bu_log("%s Animation script loaded\n", stamp());
