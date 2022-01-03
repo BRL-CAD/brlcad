@@ -252,13 +252,13 @@ void Registry::RemoveType(const char *n)
 void Registry::RemoveClones(const EntityDescriptor &e)
 {
     const SchRename *alts = e.AltNameList();
-    struct Element *tmp;
 
     while(alts) {
-        tmp = new Element;
+        struct Element *tmp = new Element;
         tmp->key = (char *) alts->objName();
         SC_HASHsearch(primordialSwamp, tmp, HASH_DELETE);
         alts = alts->next;
+	delete tmp;
     }
 }
 
