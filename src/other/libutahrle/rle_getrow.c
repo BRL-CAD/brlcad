@@ -201,6 +201,7 @@ rle_hdr * the_hdr;
 		fprintf( stderr,
  "%s: Malloc failed for %d comment pointers in rle_get_setup, reading %s\n",
 			 the_hdr->cmd, i, the_hdr->file_name );
+		free(comment_buf);
 		return RLE_NO_SPACE;
 	    }
 	    /* Get pointers to the comments */
