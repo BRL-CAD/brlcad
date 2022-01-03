@@ -87,7 +87,7 @@ icv_image_t *
 dpix_read(const char *filename, size_t width, size_t height)
 {
     icv_image_t *bif;
-    int fd;
+    int fd = -1;
     size_t size;
     ssize_t ret;
 
@@ -100,7 +100,7 @@ dpix_read(const char *filename, size_t width, size_t height)
     if (filename == NULL) {
 	fd = fileno(stdin);
 	setmode(fd, O_BINARY);
-    } else if ((fd = open(filename, O_RDONLY|O_BINARY, WRMODE)) <0) {
+    } else if ((fd = open(filename, O_RDONLY|O_BINARY, WRMODE)) < 0) {
 	bu_log("dpix_read : Cannot open file %s for reading\n, ", filename);
 	return NULL;
     }
@@ -116,14 +116,14 @@ dpix_read(const char *filename, size_t width, size_t height)
     if (ret != (ssize_t)size) {
 	bu_log("dpix_read : Error while reading\n");
 	icv_destroy(bif);
-	if (fd != fileno(stdin))
+	if (filename)
 	    close(fd);
 	return NULL;
     }
 
     icv_normalize(bif);
 
-    if (fd != fileno(stdin))
+    if (filename)
 	close(fd);
 
     return bif;
