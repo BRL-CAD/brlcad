@@ -314,7 +314,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 			pts[3*vert_num+2] = z;
 			/* Save vertex number. */
 			lu_verts[n] = vert_num;
-			if (++n > MAXV)
+			if (++n >= MAXV)
 			    bu_exit(EXIT_FAILURE, "descr_to_nmg: too many points in loop\n");
 			/* Get token for next trip through loop. */
 			status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
