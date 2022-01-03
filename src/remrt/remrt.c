@@ -2871,8 +2871,10 @@ eat_script(FILE *fp)
 
     /* Once only, collect up any prelude */
     while ((buf = rt_read_cmd(fp)) != (char *)0) {
-	if (bu_strncmp(buf, "start", 5) == 0) break;
-
+	if (bu_strncmp(buf, "start", 5) == 0) {
+	    bu_free(buf, "prelude line");
+	    break;
+	}
 	bu_vls_strcat(&prelude, buf);
 	bu_vls_strcat(&prelude, ";");
 	bu_free(buf, "prelude line");
@@ -2911,6 +2913,7 @@ eat_script(FILE *fp)
 	/* Gobble trailer until next "start" keyword seen */
 	while ((nsbuf = rt_read_cmd(fp)) != (char *)0) {
 	    if (bu_strncmp(nsbuf, "start", 5) == 0) {
+		bu_free(nsbuf, "script trailer line");
 		break;
 	    }
 	    bu_vls_strcat(&finish, nsbuf);
