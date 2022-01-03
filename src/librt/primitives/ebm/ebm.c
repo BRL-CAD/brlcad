@@ -1493,7 +1493,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
 	start_y = from_y;
 	loop_length = 1;
 	while (!done) {
-	    struct ebm_edge *e, *e_poss[2];
+	    struct ebm_edge *e, *e_poss[3];
 	    int poss;
 
 	    /* now find an edge that starts where this one stops (at to_x, to_y) */
