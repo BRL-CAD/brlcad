@@ -250,7 +250,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 3;
 		k = 0;
-		while ((temp[j] != '\0') && (k < NAME_LEN)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN - 1)) {
 		    /* START # 13 */
 		    temp1[k] = temp[j];
 		    j++;
