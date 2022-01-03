@@ -184,6 +184,7 @@ rle_hdr * the_hdr;
 		fprintf( stderr,
 "%s: Malloc failed for comment buffer of size %d in rle_get_setup, reading %s\n",
 			 the_hdr->cmd, comlen, the_hdr->file_name );
+		free(comment_buf);
 		return RLE_NO_SPACE;
 	    }
 	    fread( comment_buf, 1, evenlen, infile );
