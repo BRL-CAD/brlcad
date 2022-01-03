@@ -1034,7 +1034,7 @@ SDAI_Application_instance *STEPfile::CreateSubSuperInstance(istream &in, int fil
     in >> ws;
     in.get(c);   // read the open paren
     c = in.peek(); // see if you have closed paren (ending the record)
-    while(in.good() && (c != ')') && (enaIndex < enaSize)) {
+    while(in.good() && (c != ')') && (enaIndex < enaSize - 1)) {
         entNmArr[enaIndex] = new std::string("");
         ReadStdKeyword(in, *(entNmArr[enaIndex]), 1);     // read the type name
         if(entNmArr[enaIndex]->empty()) {
