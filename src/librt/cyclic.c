@@ -222,8 +222,6 @@ db_cyclic_paths(struct bu_ptbl *cyclic_paths, struct db_i *dbip, struct director
 	ccd.full_search = 1;
 	for (int i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (dp == RT_DIR_NULL)
-		    continue;
 		if (!(dp->d_flags & RT_DIR_COMB))
 		    continue;
 
