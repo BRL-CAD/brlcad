@@ -135,7 +135,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 
 	arg_ptr = NULL;
 
-	for (i = 0; i < BUFF_LEN; i++) {
+	for (i = 0; i < BUFF_LEN - 1; i++) {
 	    /* Check to make sure the first char. is not a NULL;
 	     * if it is, go back for a new line.
 	     */
