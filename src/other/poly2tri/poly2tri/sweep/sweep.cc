@@ -902,7 +902,8 @@ namespace p2t {
 	if (o == CCW) {
 	    // ot is not crossing edge after flip
 	    int edge_index = ot.EdgeIndex(p, op);
-	    ot.delaunay_edge[edge_index] = true;
+	    if (edge_index >= 0)
+		ot.delaunay_edge[edge_index] = true;
 	    Legalize(tcx, ot);
 	    ot.ClearDelunayEdges();
 	    return t;
@@ -910,8 +911,8 @@ namespace p2t {
 
 	// t is not crossing edge after flip
 	int edge_index = t.EdgeIndex(p, op);
-
-	t.delaunay_edge[edge_index] = true;
+	if (edge_index >= 0)
+	    t.delaunay_edge[edge_index] = true;
 	Legalize(tcx, t);
 	t.ClearDelunayEdges();
 	return ot;
