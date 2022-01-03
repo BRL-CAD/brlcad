@@ -274,23 +274,24 @@ bu_process_exec(
 
     /* fork + exec */
     if ((pid = fork()) == 0) {
+	int d1, d2, d3;
 	/* make this a process group leader */
 	setpgid(0, 0);
 
 	/* Redirect stdin and stderr */
 	(void)close(BU_PROCESS_STDIN);
-	pret = dup(pipe_in[0]);
-	if (pret < 0) {
+	d1 = dup(pipe_in[0]);
+	if (d1 < 0) {
 	    perror("dup");
 	}
 	(void)close(BU_PROCESS_STDOUT);
-	pret = dup(pipe_out[1]);
-	if (pret < 0) {
+	d2 = dup(pipe_out[1]);
+	if (d2 < 0) {
 	    perror("dup");
 	}
 	(void)close(BU_PROCESS_STDERR);
-	pret = dup(pipe_err[1]);
-	if (pret < 0) {
+	d3 = dup(pipe_err[1]);
+	if (d3 < 0) {
 	    perror("dup");
 	}
 
@@ -310,6 +311,13 @@ bu_process_exec(
 
 	(void)execvp(cmd, (char * const*)av);
 	perror(cmd);
+#if 0
+	// TODO - do we need to close the dup handles?
+	fflush(NULL);
+	close(d1);
+	close(d2);
+	close(d3);
+#endif
 	exit(16);
     }
 
