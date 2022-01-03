@@ -1017,6 +1017,7 @@ _mesa_PopAttrib(void)
 		    _math_matrix_analyse(ctx->ModelviewMatrixStack.Top);
 
 		for (i = 0; i < ctx->Const.MaxLights; i++) {
+		    GLfloat params[2] = {0.0};
 		    const struct gl_light *l = &light->Light[i];
 		    _mesa_set_enable(ctx, GL_LIGHT0 + i, l->Enabled);
 		    _mesa_light(ctx, i, GL_AMBIENT, l->Ambient);
@@ -1024,14 +1025,16 @@ _mesa_PopAttrib(void)
 		    _mesa_light(ctx, i, GL_SPECULAR, l->Specular);
 		    _mesa_light(ctx, i, GL_POSITION, l->EyePosition);
 		    _mesa_light(ctx, i, GL_SPOT_DIRECTION, l->EyeDirection);
-		    _mesa_light(ctx, i, GL_SPOT_EXPONENT, &l->SpotExponent);
-		    _mesa_light(ctx, i, GL_SPOT_CUTOFF, &l->SpotCutoff);
-		    _mesa_light(ctx, i, GL_CONSTANT_ATTENUATION,
-				&l->ConstantAttenuation);
-		    _mesa_light(ctx, i, GL_LINEAR_ATTENUATION,
-				&l->LinearAttenuation);
-		    _mesa_light(ctx, i, GL_QUADRATIC_ATTENUATION,
-				&l->QuadraticAttenuation);
+		    params[0] = l->SpotExponent;
+		    _mesa_light(ctx, i, GL_SPOT_EXPONENT, (const GLfloat *)params);
+		    params[0] = l->SpotCutoff;
+		    _mesa_light(ctx, i, GL_SPOT_CUTOFF, (const GLfloat *)params);
+		    params[0] = l->ConstantAttenuation;
+		    _mesa_light(ctx, i, GL_CONSTANT_ATTENUATION, (const GLfloat *)params);
+		    params[0] = l->LinearAttenuation;
+		    _mesa_light(ctx, i, GL_LINEAR_ATTENUATION, (const GLfloat *)params);
+		    params[0] = l->QuadraticAttenuation;
+		    _mesa_light(ctx, i, GL_QUADRATIC_ATTENUATION, (const GLfloat *)params);
 		}
 		/* light model */
 		_mesa_LightModelfv(GL_LIGHT_MODEL_AMBIENT,
