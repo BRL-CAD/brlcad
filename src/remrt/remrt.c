@@ -2913,7 +2913,8 @@ eat_script(FILE *fp)
 	/* Gobble trailer until next "start" keyword seen */
 	while ((nsbuf = rt_read_cmd(fp)) != (char *)0) {
 	    if (bu_strncmp(nsbuf, "start", 5) == 0) {
-		bu_free(nsbuf, "script trailer line");
+		// Note - deliberately keeping nsbuf in this case
+		// for later use
 		break;
 	    }
 	    bu_vls_strcat(&finish, nsbuf);
@@ -2959,6 +2960,7 @@ out:
     bu_vls_free(&prelude);
     bu_vls_free(&body);
     bu_vls_free(&finish);
+    bu_free(nsbuf, "script start line");
 
     /* For a few hundred frames, it all can take a little while */
     bu_log("%s Animation script loaded\n", stamp());
