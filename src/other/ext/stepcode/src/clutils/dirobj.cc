@@ -338,8 +338,8 @@ void DirObj::InsertFile(const char *f, int index)
 void DirObj::RemoveFile(int index)
 {
     if(index < --fileCount) {
+	free(fileList[index]);
         const char **spot = (const char **)&fileList[index];
-	free(spot);
         memmove(spot, spot + 1, (fileCount - index)*sizeof(char *));
     }
 }
