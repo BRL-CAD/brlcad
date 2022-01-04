@@ -339,7 +339,7 @@ void DirObj::RemoveFile(int index)
 {
     if(index < --fileCount) {
         const char **spot = (const char **)&fileList[index];
-        delete spot;
+	free(spot);
         memmove(spot, spot + 1, (fileCount - index)*sizeof(char *));
     }
 }
