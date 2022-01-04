@@ -628,7 +628,7 @@ static void addUseRefNames(Schema schema, FILE *create)
     Dictionary useRefDict;
     DictionaryEntry de;
     Rename *rnm;
-    char *oldnm, schNm[BUFSIZ];
+    char *oldnm, schNm[BUFSIZ+1];
     static int firsttime = TRUE;
 
     if((useRefDict = schema->u.schema->usedict) != NULL) {

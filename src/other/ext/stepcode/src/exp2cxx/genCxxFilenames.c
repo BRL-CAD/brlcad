@@ -17,8 +17,8 @@
  */
 
 /* these buffers are shared amongst (and potentially overwritten by) all functions in this file */
-char impl[ BUFSIZ ] = {0};
-char header[ BUFSIZ ] = {0};
+char impl[BUFSIZ+1] = {0};
+char header[BUFSIZ+1] = {0};
 
 /* struct containing pointers to above buffers. pointers are 'const char *' */
 filenames_t fnames = { impl, header };
@@ -27,15 +27,15 @@ filenames_t fnames = { impl, header };
 filenames_t getEntityFilenames(Entity e)
 {
     const char *name = ENTITYget_classname(e);
-    snprintf(header, BUFSIZ - 1, "entity/%s.h", name);
-    snprintf(impl, BUFSIZ - 1, "entity/%s.cc", name);
+    snprintf(header, BUFSIZ, "entity/%s.h", name);
+    snprintf(impl, BUFSIZ, "entity/%s.cc", name);
     return fnames;
 }
 
 filenames_t getTypeFilenames(Type t)
 {
     const char *name = TYPEget_ctype(t);
-    snprintf(header, BUFSIZ - 1, "type/%s.h", name);
-    snprintf(impl, BUFSIZ - 1, "type/%s.cc", name);
+    snprintf(header, BUFSIZ, "type/%s.h", name);
+    snprintf(impl, BUFSIZ, "type/%s.cc", name);
     return fnames;
 }

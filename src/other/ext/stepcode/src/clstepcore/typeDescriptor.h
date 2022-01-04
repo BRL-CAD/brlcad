@@ -112,7 +112,7 @@ class SC_CORE_EXPORT TypeDescriptor
         /// schema which USEs/ REFERENCEs this.  (A complete list of
         /// alternate names is stored in altNames below.  _altname pro-
         /// vides storage space for the currently used one.)
-        char _altname[BUFSIZ];
+        char _altname[BUFSIZ+1];
 
         /// contains list of renamings of type - used by other schemas
         /// which USE/ REFERENCE this

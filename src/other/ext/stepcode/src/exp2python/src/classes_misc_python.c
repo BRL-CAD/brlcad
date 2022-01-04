@@ -207,7 +207,7 @@ int isAggregateType(const Type t)
 const char *ClassName(const char *oldname)
 {
     int i = 0, j = 0;
-    static char newname [BUFSIZ];
+    static char newname [BUFSIZ+1];
     if(!oldname) {
         return ("");
     }
@@ -236,7 +236,7 @@ const char *ENTITYget_classname(Entity ent)
 const char *PrettyTmpName(const char *oldname)
 {
     int i = 0;
-    static char newname [BUFSIZ];
+    static char newname [BUFSIZ+1];
     newname [0] = '\0';
     while((oldname [i] != '\0') && (i < BUFSIZ)) {
         newname [i] = ToLower(oldname [i]);
@@ -352,7 +352,7 @@ const char *FundamentalType(const Type t, int report_reftypes)
  */
 const char *TypeDescriptorName(Type t)
 {
-    static char b [BUFSIZ];
+    static char b [BUFSIZ+1];
     Schema parent = t->superscope;
     /* NOTE - I corrected a prev bug here in which the *current* schema was
     ** passed to this function.  Now we take "parent" - the schema in which

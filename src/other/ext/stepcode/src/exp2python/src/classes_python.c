@@ -579,7 +579,7 @@ void
 LIBdescribe_entity(Entity entity, FILE *file)
 {
     int attr_count_tmp = attr_count;
-    char attrnm [BUFSIZ], parent_attrnm[BUFSIZ];
+    char attrnm [BUFSIZ+1], parent_attrnm[BUFSIZ+1];
     char *attr_type;
     bool generate_constructor = true; /*by default, generates a python constructor */
     bool single_inheritance = false;
@@ -2016,23 +2016,23 @@ int TYPEget_RefTypeVarNm(const Type t, char *buf, Schema schema)
 void
 TYPEprint_descriptions(const Type type, FILES *files, Schema schema)
 {
-    char tdnm [BUFSIZ],
+    char tdnm [BUFSIZ+1],
          typename_buf [MAX_LEN],
-         base [BUFSIZ],
-         nm [BUFSIZ];
+         base [BUFSIZ+1],
+         nm [BUFSIZ+1];
     Type i;
 
     int where_rule_number = 0;
     strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
-    tdnm[BUFSIZ - 1] = '\0';
+    tdnm[BUFSIZ] = '\0';
 
     if(TYPEis_enumeration(type) && (i = TYPEget_ancestor(type)) != NULL) {
         /* If we're a renamed enum type, just print a few typedef's to the
            original and some specialized create functions: */
         strncpy(base, StrToLower(EnumName(TYPEget_name(i))), BUFSIZ);
-        base[BUFSIZ - 1] = '\0';
+        base[BUFSIZ] = '\0';
         strncpy(nm, StrToLower(EnumName(TYPEget_name(type))), BUFSIZ);
-        nm[BUFSIZ - 1] = '\0';
+        nm[BUFSIZ] = '\0';
         fprintf(files->lib, "%s = %s\n", nm, base);
         return;
     }

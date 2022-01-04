@@ -106,7 +106,7 @@ bool attrIsObj(Type t)
  */
 void ATTRnames_print(Entity entity, FILE *file)
 {
-    char attrnm [BUFSIZ];
+    char attrnm [BUFSIZ+1];
 
     LISTdo(ENTITYget_attributes(entity), v, Variable) {
         generate_attribute_name(v, attrnm);
@@ -127,7 +127,7 @@ void ATTRnames_print(Entity entity, FILE *file)
  */
 void DataMemberPrintAttr(Entity entity, Variable a, FILE *file)
 {
-    char attrnm [BUFSIZ];
+    char attrnm [BUFSIZ+1];
     const char *ctype, * etype;
     if(!VARget_inverse(a) && (VARget_initializer(a) == EXPRESSION_NULL)) {
         ctype = TYPEget_ctype(VARget_type(a));
@@ -172,13 +172,13 @@ void ATTRsign_access_methods(Variable a, FILE *file)
 {
 
     Type t = VARget_type(a);
-    char ctype [BUFSIZ];
-    char attrnm [BUFSIZ];
+    char ctype [BUFSIZ+1];
+    char attrnm [BUFSIZ+1];
 
     generate_attribute_func_name(a, attrnm);
 
     strncpy(ctype, AccessType(t), BUFSIZ);
-    ctype[BUFSIZ - 1] = '\0';
+    ctype[BUFSIZ] = '\0';
 
     if(attrIsObj(t)) {
         /* object or pointer, so provide const and non-const methods */
@@ -216,11 +216,11 @@ void ATTRsign_access_methods(Variable a, FILE *file)
 void ATTRprint_access_methods_get_head(const char *classnm, Variable a, FILE *file, bool returnsConst)
 {
     Type t = VARget_type(a);
-    char ctype [BUFSIZ];   /*  return type of the get function  */
-    char funcnm [BUFSIZ];  /*  name of member function  */
+    char ctype [BUFSIZ+1];   /*  return type of the get function  */
+    char funcnm [BUFSIZ+1];  /*  name of member function  */
     generate_attribute_func_name(a, funcnm);
     strncpy(ctype, AccessType(t), BUFSIZ);
-    ctype[BUFSIZ - 1] = '\0';
+    ctype[BUFSIZ] = '\0';
     if(TYPEis_entity(t) || TYPEis_select(t) || TYPEis_aggregate(t)) {
         fprintf(file, "\n%s%s %s::%s() ", ctype, (returnsConst ? "_c" : ""), classnm, funcnm);
     } else {
@@ -249,13 +249,13 @@ void ATTRprint_access_methods_put_head(const char *entnm, Variable a, FILE *file
 {
 
     Type t = VARget_type(a);
-    char ctype [BUFSIZ];
-    char funcnm [BUFSIZ];
+    char ctype [BUFSIZ+1];
+    char funcnm [BUFSIZ+1];
 
     generate_attribute_func_name(a, funcnm);
 
     strncpy(ctype, AccessType(t), BUFSIZ);
-    ctype[BUFSIZ - 1] = '\0';
+    ctype[BUFSIZ] = '\0';
     fprintf(file, "\nvoid %s::%s( const %s x ) ", entnm, funcnm, ctype);
 
     return;
@@ -461,8 +461,8 @@ void ATTRprint_access_methods_log_bool(const char *entnm, const char *attrnm, co
 void INVprint_access_methods(const char *entnm, const char *attrnm, const char *funcnm, const char *nm,
                              const char *ctype, Variable a, FILE *file, Schema schema)
 {
-    char iaName[BUFSIZ] = {0};
-    snprintf(iaName, BUFSIZ - 1, "%s::%s%d%s%s", SCHEMAget_name(schema), ATTR_PREFIX, a->idx,
+    char iaName[BUFSIZ+1] = {0};
+    snprintf(iaName, BUFSIZ, "%s::%s%d%s%s", SCHEMAget_name(schema), ATTR_PREFIX, a->idx,
              /* can it ever be anything but "I"? */
              (VARis_derived(a) ? "D" : (VARis_type_shifter(a) ? "R" : (VARget_inverse(a) ? "I" : ""))), attrnm);
 
@@ -510,15 +510,15 @@ void ATTRprint_access_methods(const char *entnm, Variable a, FILE *file, Schema 
 {
     Type t = VARget_type(a);
     Class_Of_Type classType;
-    char ctype [BUFSIZ];  /*  type of data member  */
-    char attrnm [BUFSIZ];
-    char membernm[BUFSIZ];
-    char funcnm [BUFSIZ];  /*  name of member function  */
+    char ctype [BUFSIZ+1];  /*  type of data member  */
+    char attrnm [BUFSIZ+1];
+    char membernm[BUFSIZ+1];
+    char funcnm [BUFSIZ+1];  /*  name of member function  */
 
-    char nm [BUFSIZ];
+    char nm [BUFSIZ+1];
     /* I believe nm has the name of the underlying type without Sdai in front of it */
     if(TYPEget_name(t)) {
-        strncpy(nm, FirstToUpper(TYPEget_name(t)), BUFSIZ - 1);
+        strncpy(nm, FirstToUpper(TYPEget_name(t)), BUFSIZ);
     }
 
     generate_attribute_func_name(a, funcnm);

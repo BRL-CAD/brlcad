@@ -151,7 +151,7 @@ compareOrigTypes(Type a, Type b)
 const char *
 utype_member(const Linked_List list, const Type check, int rename)
 {
-    static char r [BUFSIZ];
+    static char r [BUFSIZ+1];
 
     LISTdo(list, t, Type)
     strncpy(r, TYPEget_utype(t), BUFSIZ);
@@ -256,7 +256,7 @@ determines if the given "link's" C++ representation is used again in the list.
 int
 duplicate_utype_member(const Linked_List list, const Type check)
 {
-    char b [BUFSIZ];
+    char b [BUFSIZ+1];
 
     if(TYPEis_entity(check)) {
         return FALSE;
@@ -490,8 +490,8 @@ non_unique_types_string(const Type type)
 Variable
 ATTR_LISTmember(Linked_List l, Variable check)
 {
-    char nm [BUFSIZ];
-    char cur [BUFSIZ];
+    char nm [BUFSIZ+1];
+    char cur [BUFSIZ+1];
 
     generate_attribute_name(check, nm);
     LISTdo(l, a, Variable)

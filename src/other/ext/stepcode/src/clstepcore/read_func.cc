@@ -482,7 +482,7 @@ void PushPastString(istream &in, std::string &s, ErrorDescriptor *err)
  */
 void PushPastImbedAggr(istream &in, std::string &s, ErrorDescriptor *err)
 {
-    char messageBuf[BUFSIZ];
+    char messageBuf[BUFSIZ+1];
     messageBuf[0] = '\0';
 
     char c;
@@ -522,7 +522,7 @@ void PushPastImbedAggr(istream &in, std::string &s, ErrorDescriptor *err)
  */
 void PushPastAggr1Dim(istream &in, std::string &s, ErrorDescriptor *err)
 {
-    char messageBuf[BUFSIZ];
+    char messageBuf[BUFSIZ+1];
     messageBuf[0] = '\0';
 
     char c;

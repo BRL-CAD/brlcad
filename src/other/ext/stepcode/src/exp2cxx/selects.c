@@ -128,7 +128,7 @@ static int compareOrigTypes(Type a, Type b)
  */
 const char *utype_member(const Linked_List list, const Type check, int rename)
 {
-    static char r [BUFSIZ];
+    static char r [BUFSIZ+1];
     bool checkIsEntity = TYPEis_entity(check);
 
     LISTdo(list, t, Type) {
@@ -255,7 +255,7 @@ int unique_types(const Linked_List list)
 */
 int duplicate_utype_member(const Linked_List list, const Type check)
 {
-    char b [BUFSIZ];
+    char b [BUFSIZ+1];
 
     if(TYPEis_entity(check)) {
         return FALSE;
@@ -466,8 +466,8 @@ char *non_unique_types_string(const Type type)
  */
 Variable ATTR_LISTmember(Linked_List l, Variable check)
 {
-    char nm [BUFSIZ];
-    char cur [BUFSIZ];
+    char nm [BUFSIZ+1];
+    char cur [BUFSIZ+1];
 
     generate_attribute_name(check, nm);
     LISTdo(l, a, Variable) {
@@ -515,14 +515,14 @@ void TYPEselect_inc_print_vars(const Type type, FILE *f, Linked_List dups)
 {
     int size, j;
     Linked_List data_members = SELgetnew_dmlist(type);
-    char dmname [BUFSIZ],
-         classnm [BUFSIZ],
-         tdnm [BUFSIZ];
+    char dmname [BUFSIZ+1],
+         classnm [BUFSIZ+1],
+         tdnm [BUFSIZ+1];
 
     strncpy(classnm, SelectName(TYPEget_name(type)), BUFSIZ);
-    classnm[BUFSIZ - 1] = '\0';
+    classnm[BUFSIZ] = '\0';
     strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
-    tdnm[BUFSIZ - 1] = '\0';
+    tdnm[BUFSIZ] = '\0';
     size = strlen(classnm) + 2;   /* for formatting output */
 
     fprintf(f, "\n//////////  SELECT TYPE %s\n", SelectName(TYPEget_name(type)));
@@ -605,8 +605,8 @@ void TYPEselect_inc_print_vars(const Type type, FILE *f, Linked_List dups)
 */
 void TYPEselect_inc_print(const Type type, FILE *f)
 {
-    char n[BUFSIZ];   /*  class name  */
-    char tdnm [BUFSIZ];  /*  TypeDescriptor name  */
+    char n[BUFSIZ+1];   /*  class name  */
+    char tdnm [BUFSIZ+1];  /*  TypeDescriptor name  */
     Linked_List dups;
     int dup_result;
     Linked_List attrs;
@@ -731,8 +731,8 @@ void TYPEselect_lib_print_part_one(const Type type, FILE *f,
                                    Linked_List dups, char *n)
 {
 #define schema_name SCHEMAget_name(schema)
-    char tdnm[BUFSIZ],
-         nm[BUFSIZ];
+    char tdnm[BUFSIZ+1],
+         nm[BUFSIZ+1];
     int size = strlen(n) * 2 + 4, j;   /* size - for formatting output */
 
     strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
@@ -1084,10 +1084,10 @@ void TYPEselect_lib_print_part_three(const Type type, FILE *f, char *classnm)
 {
 #define ENTITYget_type(e)  ((e)->u.entity->type)
 
-    char uent[BUFSIZ],  /*  name of underlying entity type  */
-         utype[BUFSIZ],    /*  underlying type name  */
-         attrnm [BUFSIZ],  /*  attribute name ->  data member = _attrnm  */
-         funcnm[BUFSIZ];   /*  access function name = Attrnm  */
+    char uent[BUFSIZ+1],  /*  name of underlying entity type  */
+         utype[BUFSIZ+1],    /*  underlying type name  */
+         attrnm [BUFSIZ+1],  /*  attribute name ->  data member = _attrnm  */
+         funcnm[BUFSIZ+1];   /*  access function name = Attrnm  */
     Linked_List items = SEL_TYPEget_items(type);
     /* all the items in the select type  */
     Linked_List attrs = SEL_TYPEgetnew_attribute_list(type);
@@ -1192,7 +1192,7 @@ void TYPEselect_lib_print_part_three(const Type type, FILE *f, char *classnm)
  */
 void TYPEselect_lib_print_part_four(const Type type, FILE *f, Linked_List dups, char *n)
 {
-    char x[BUFSIZ];
+    char x[BUFSIZ+1];
 
     fprintf(f, "\n    //  part 4\n");
 
@@ -1274,7 +1274,7 @@ void TYPEselect_lib_print_part_four(const Type type, FILE *f, Linked_List dups, 
 
     LISTdo(SEL_TYPEget_items(type), t, Type) {
         strncpy(x, TYPEget_name(t), BUFSIZ);
-        x[BUFSIZ - 1] = '\0';
+        x[BUFSIZ] = '\0';
         fprintf(f, "    if ( o.CurrentUnderlyingType() == %s ) {\n",
                 TYPEtd_name(t));
         if(TYPEis_select(t)) {
@@ -1327,12 +1327,12 @@ void TYPEselect_init_print(const Type type, FILE *f)
 
 void TYPEselect_lib_part21(const Type type, FILE *f)
 {
-    char n[BUFSIZ];       /*  pointers to class name(s)  */
+    char n[BUFSIZ+1];       /*  pointers to class name(s)  */
     const char *dm;   /*  data member name */
     Linked_List data_members = SELgetnew_dmlist(type);
 
     strncpy(n, SelectName(TYPEget_name(type)), BUFSIZ);
-    n[BUFSIZ - 1] = '\0';
+    n[BUFSIZ] = '\0';
 
     fprintf(f, "\n\n// STEP Part 21\n");
     /*  write part 21   */
@@ -1602,12 +1602,12 @@ void TYPEselect_lib_part21(const Type type, FILE *f)
 
 void TYPEselect_lib_StrToVal(const Type type, FILE *f)
 {
-    char n[BUFSIZ];       /*  pointers to class name  */
+    char n[BUFSIZ+1];       /*  pointers to class name  */
     Linked_List data_members = SELgetnew_dmlist(type);
     int enum_cnt = 0;
 
     strncpy(n, SelectName(TYPEget_name(type)), BUFSIZ);
-    n[BUFSIZ - 1] = '\0';
+    n[BUFSIZ] = '\0';
 
     /*  read StrToVal_content   */
     fprintf(f, "\nSeverity\n%s::StrToVal_content "
@@ -1764,7 +1764,7 @@ void SELlib_print_protected(const Type type,  FILE *f)
 */
 void TYPEselect_lib_print(const Type type, FILE *f)
 {
-    char n[BUFSIZ], m[BUFSIZ];
+    char n[BUFSIZ+1], m[BUFSIZ+1];
     const char *z;  /*  pointers to class name(s)  */
     Linked_List dups;
     int dup_result;
@@ -1905,7 +1905,7 @@ void TYPEselect_print(Type t, FILES *files, Schema schema)
 {
     SelectTag tag, tmp;
     Type i, bt;  /*  type of elements in an aggregate  */
-    char nm[BUFSIZ], tdnm[BUFSIZ];
+    char nm[BUFSIZ+1], tdnm[BUFSIZ+1];
     FILE *inc = files->inc;
 
     /*  if type is already marked, return  */

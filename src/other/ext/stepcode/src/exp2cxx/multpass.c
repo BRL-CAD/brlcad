@@ -619,7 +619,7 @@ static void addRenameTypedefs(Schema schema, FILE *classes)
 {
     DictionaryEntry de;
     Type i;
-    char nm[BUFSIZ], basenm[BUFSIZ];
+    char nm[BUFSIZ+1], basenm[BUFSIZ+1];
     static bool firsttime = true;
 
     SCOPEdo_types(schema, t, de) {
@@ -633,16 +633,16 @@ static void addRenameTypedefs(Schema schema, FILE *classes)
                 firsttime = false;
             }
             if(TYPEis_enumeration(t)) {
-                strncpy(nm, TYPEget_ctype(t), BUFSIZ - 1);
-                nm[BUFSIZ - 1] = '\0';
-                strncpy(basenm, TYPEget_ctype(i), BUFSIZ - 1);
-                basenm[BUFSIZ - 1] = '\0';
+                strncpy(nm, TYPEget_ctype(t), BUFSIZ);
+                nm[BUFSIZ] = '\0';
+                strncpy(basenm, TYPEget_ctype(i), BUFSIZ);
+                basenm[BUFSIZ] = '\0';
                 fprintf(classes, "typedef %s_agg        %s_agg;\n", basenm, nm);
             } else {
-                strncpy(nm, SelectName(TYPEget_name(t)), BUFSIZ - 1);
-                nm[BUFSIZ - 1] = '\0';
-                strncpy(basenm, SelectName(TYPEget_name(i)), BUFSIZ - 1);
-                basenm[BUFSIZ - 1] = '\0';
+                strncpy(nm, SelectName(TYPEget_name(t)), BUFSIZ);
+                nm[BUFSIZ] = '\0';
+                strncpy(basenm, SelectName(TYPEget_name(i)), BUFSIZ);
+                basenm[BUFSIZ] = '\0';
                 fprintf(classes, "typedef       %s         %s;\n", basenm, nm);
                 fprintf(classes, "typedef       %s_agg     %s_agg;\n\n", basenm, nm);
                 fprintf(classes, "typedef       %s *       %s_ptr;\n", nm, nm);
@@ -667,7 +667,7 @@ static void addAggrTypedefs(Schema schema, FILE *classes)
     DictionaryEntry de;
     Type i;
     static bool firsttime = true;
-    char nm[BUFSIZ];
+    char nm[BUFSIZ+1];
 
     SCOPEdo_types(schema, t, de) {
         if(TYPEis_aggregate(t)) {
@@ -682,7 +682,7 @@ static void addAggrTypedefs(Schema schema, FILE *classes)
                     firsttime = false;
                 }
                 strncpy(nm, ClassName(TYPEget_name(t)), BUFSIZ);
-                nm[BUFSIZ - 1] = '\0';
+                nm[BUFSIZ] = '\0';
                 fprintf(classes, "typedef %s        %s;\n", TYPEget_ctype(t), nm);
                 fprintf(classes, "typedef       %s *   %sH;\n", nm, nm);
                 fprintf(classes, "typedef       %s *   %s_ptr;\n", nm, nm);
@@ -706,7 +706,7 @@ static void addUseRefNames(Schema schema, FILE *create)
     Dictionary useRefDict;
     DictionaryEntry de;
     Rename *rnm;
-    char *oldnm, schNm[BUFSIZ];
+    char *oldnm, schNm[BUFSIZ+1];
     static bool firsttime = true;
 
     if((useRefDict = schema->u.schema->usedict) != NULL) {

@@ -220,7 +220,7 @@ void writeLists( const char * schemaName, stringstream & eh, stringstream & ei, 
 
     cmLists.close();
 
-    char pwd[BUFSIZ] = {0};
+    char pwd[BUFSIZ+1] = {0};
     if( getcwd( pwd, BUFSIZ ) ) {
         cout << pwd << "/" << shortName << endl;
     } else {

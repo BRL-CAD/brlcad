@@ -108,7 +108,7 @@ void SDAI_Application_instance::InitIAttrs()
 
 SDAI_Application_instance *SDAI_Application_instance::Replicate()
 {
-    char errStr[BUFSIZ];
+    char errStr[BUFSIZ+1];
     if(IsComplex()) {
         cerr << "STEPcomplex::Replicate() should be called:  " << __FILE__
              <<  __LINE__ << "\n" << _POC_ "\n";
@@ -443,7 +443,7 @@ const char *SDAI_Application_instance::STEPwrite(std::string &buf, const char *c
 {
     buf.clear();
 
-    char instanceInfo[BUFSIZ];
+    char instanceInfo[BUFSIZ+1];
 
     std::string tmp;
     sprintf(instanceInfo, "#%d=%s(", STEPfile_id, StrToUpper(EntityName(currSch), tmp));
@@ -466,7 +466,7 @@ const char *SDAI_Application_instance::STEPwrite(std::string &buf, const char *c
 
 void SDAI_Application_instance::PrependEntityErrMsg()
 {
-    char errStr[BUFSIZ];
+    char errStr[BUFSIZ+1];
     errStr[0] = '\0';
 
     if(_error.severity() == SEVERITY_NULL) {
@@ -488,7 +488,7 @@ void SDAI_Application_instance::PrependEntityErrMsg()
 void SDAI_Application_instance::STEPread_error(char c, int i, istream &in, const char *schnm)
 {
     (void) in;
-    char errStr[BUFSIZ];
+    char errStr[BUFSIZ+1];
     errStr[0] = '\0';
 
     if(_error.severity() == SEVERITY_NULL) {
@@ -541,7 +541,7 @@ Severity SDAI_Application_instance::STEPread(int id,  int idIncr,
 {
     STEPfile_id = id;
     char c = '\0';
-    char errStr[BUFSIZ];
+    char errStr[BUFSIZ+1];
     errStr[0] = '\0';
     Severity severe;
     int i = 0;
@@ -694,7 +694,7 @@ SDAI_Application_instance *ReadEntityRef(istream &in, ErrorDescriptor *err, cons
         InstMgrBase *instances, int addFileId)
 {
     char c;
-    char errStr[BUFSIZ];
+    char errStr[BUFSIZ+1];
     errStr[0] = '\0';
 
     in >> ws;
@@ -789,7 +789,7 @@ Severity EntityValidLevel(SDAI_Application_instance *se,
                           // EntityDescriptor)
                           ErrorDescriptor *err)
 {
-    char messageBuf [BUFSIZ];
+    char messageBuf [BUFSIZ+1];
     messageBuf[0] = '\0';
 
     if(!ed || (ed->NonRefType() != ENTITY_TYPE)) {
@@ -859,7 +859,7 @@ Severity EntityValidLevel(SDAI_Application_instance *se,
  */
 int SetErrOnNull(const char *attrValue, ErrorDescriptor *error)
 {
-    char scanBuf[BUFSIZ];
+    char scanBuf[BUFSIZ+1];
     scanBuf[0] = '\0';
 
     std::stringstream fmtstr;
@@ -888,9 +888,9 @@ Severity EntityValidLevel(const char *attrValue,   // string contain entity ref
                           // EntityDescriptor)
                           ErrorDescriptor *err, InstMgrBase *im, int clearError)
 {
-    char tmp [BUFSIZ];
+    char tmp [BUFSIZ+1];
     tmp[0] = '\0';
-    char messageBuf [BUFSIZ];
+    char messageBuf [BUFSIZ+1];
     messageBuf[0] = '\0';
     std::stringstream fmtstr1, fmtstr2;
 

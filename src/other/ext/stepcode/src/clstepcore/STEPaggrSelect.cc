@@ -22,7 +22,7 @@ Severity SelectAggregate::ReadValue(istream &in, ErrorDescriptor *err,
                                     int exchangeFileFormat, const char *currSch)
 {
     ErrorDescriptor errdesc;
-    char errmsg[BUFSIZ];
+    char errmsg[BUFSIZ+1];
     int value_cnt = 0;
     std::string buf;
 

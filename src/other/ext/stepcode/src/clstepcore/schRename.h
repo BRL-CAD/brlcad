@@ -46,8 +46,8 @@ class SC_CORE_EXPORT SchRename
         SchRename *next;
 
     private:
-        char schName[BUFSIZ];
-        char newName[BUFSIZ];
+        char schName[BUFSIZ+1];
+        char newName[BUFSIZ+1];
 };
 
 

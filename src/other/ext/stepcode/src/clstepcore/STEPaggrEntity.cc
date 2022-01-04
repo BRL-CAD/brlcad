@@ -24,7 +24,7 @@ Severity EntityAggregate::ReadValue(istream &in, ErrorDescriptor *err,
                                     int exchangeFileFormat, const char *)
 {
     ErrorDescriptor errdesc;
-    char errmsg[BUFSIZ];
+    char errmsg[BUFSIZ+1];
     int value_cnt = 0;
     std::string buf;
     bool free_item = false;

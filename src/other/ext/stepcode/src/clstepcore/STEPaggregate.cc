@@ -112,7 +112,7 @@ Severity STEPaggregate::ReadValue(istream &in, ErrorDescriptor *err,
     (void) addFileId; //not used in ReadValue() for this class
 
     ErrorDescriptor errdesc;
-    char errmsg[BUFSIZ];
+    char errmsg[BUFSIZ+1];
     int value_cnt = 0;
     std::string buf;
 

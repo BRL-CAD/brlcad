@@ -61,7 +61,7 @@ void ENTITYnames_print(Entity entity, FILE *file)
  */
 void LIBdescribe_entity(Entity entity, FILE *file, Schema schema)
 {
-    char attrnm [BUFSIZ];
+    char attrnm [BUFSIZ+1];
 
     fprintf(file, "EntityDescriptor * %s::%s%s = 0;\n", SCHEMAget_name(schema), ENT_PREFIX, ENTITYget_name(entity));
     LISTdo(ENTITYget_attributes(entity), v, Variable) {
@@ -85,7 +85,7 @@ void LIBmemberFunctionPrint(Entity entity, Linked_List neededAttr, FILE *file, S
 {
 
     Linked_List attr_list;
-    char entnm [BUFSIZ];
+    char entnm [BUFSIZ+1];
 
     strncpy(entnm, ENTITYget_classname(entity), BUFSIZ);     /*  assign entnm */
 
@@ -159,12 +159,12 @@ int get_attribute_number(Entity entity)
  */
 void ENTITYhead_print(Entity entity, FILE *file)
 {
-    char entnm [BUFSIZ];
+    char entnm [BUFSIZ+1];
     Linked_List list;
     Entity super = 0;
 
     strncpy(entnm, ENTITYget_classname(entity), BUFSIZ);
-    entnm[BUFSIZ - 1] = '\0';
+    entnm[BUFSIZ] = '\0';
 
     /* inherit from either supertype entity class or root class of
        all - i.e. SDAI_Application_instance */
@@ -191,7 +191,7 @@ void ENTITYhead_print(Entity entity, FILE *file)
  */
 void DataMemberInit(bool *first, Variable a, FILE *lib)
 {
-    char attrnm [BUFSIZ];
+    char attrnm [BUFSIZ+1];
     if(VARis_derived(a) || VARget_inverse(a)) {
         return;
     }
@@ -260,10 +260,10 @@ void MemberFunctionSign(Entity entity, Linked_List neededAttr, FILE *file)
 
     Linked_List attr_list;
     static int entcode = 0;
-    char entnm [BUFSIZ];
+    char entnm [BUFSIZ+1];
 
     strncpy(entnm, ENTITYget_classname(entity), BUFSIZ);     /*  assign entnm  */
-    entnm[BUFSIZ - 1] = '\0';
+    entnm[BUFSIZ] = '\0';
 
     fprintf(file, "    public: \n");
 
@@ -349,7 +349,7 @@ void LIBstructor_print(Entity entity, Linked_List neededAttr, FILE *file, Schema
 {
     Linked_List attr_list;
     Type t;
-    char attrnm [BUFSIZ];
+    char attrnm [BUFSIZ+1];
 
     Linked_List list;
     Entity principalSuper = 0;
@@ -513,13 +513,13 @@ void LIBstructor_print_w_args(Entity entity, Linked_List neededAttr, FILE *file,
 {
     Linked_List attr_list;
     Type t;
-    char attrnm [BUFSIZ];
+    char attrnm [BUFSIZ+1];
 
     Linked_List list;
     int super_cnt = 0;
 
     /* added for calling parents constructor if there is one */
-    char parentnm [BUFSIZ];
+    char parentnm [BUFSIZ+1];
     char *parent = 0;
 
     const char *entnm;
@@ -718,8 +718,8 @@ void ENTITYincode_print(Entity entity, FILE *header, FILE *impl, Schema schema)
 {
 #define entity_name ENTITYget_name(entity)
 #define schema_name SCHEMAget_name(schema)
-    char attrnm [BUFSIZ];
-    char dict_attrnm [BUFSIZ];
+    char attrnm [BUFSIZ+1];
+    char dict_attrnm [BUFSIZ+1];
     const char *super_schema;
     char *tmp, *tmp2;
     bool hasInverse = false;

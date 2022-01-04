@@ -57,7 +57,7 @@ char *StrToLower(const char *strOld, char *strNew)
 
 const char *StrToLower(const char *word, std::string &s)
 {
-    char newword [BUFSIZ];
+    char newword [BUFSIZ+1];
     int i = 0;
 
     while(word [i] != '\0') {
@@ -71,7 +71,7 @@ const char *StrToLower(const char *word, std::string &s)
 
 const char *StrToUpper(const char *word, std::string &s)
 {
-    char newword [BUFSIZ];
+    char newword [BUFSIZ+1];
     int i = 0;
 
     while(word [i] != '\0') {
@@ -85,7 +85,7 @@ const char *StrToUpper(const char *word, std::string &s)
 
 const char *StrToConstant(const char *word, std::string &s)
 {
-    char newword [BUFSIZ];
+    char newword [BUFSIZ+1];
     int i = 0;
 
     while(word [i] != '\0') {
@@ -189,7 +189,7 @@ std::string GetLiteralStr(istream &in, ErrorDescriptor *err)
 const char *PrettyTmpName(const char *oldname)
 {
     int i = 0;
-    static char newname [BUFSIZ];
+    static char newname [BUFSIZ+1];
     newname [0] = '\0';
     while((oldname [i] != '\0') && (i < BUFSIZ-2)) {
         newname [i] = ToLower(oldname [i]);

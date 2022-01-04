@@ -111,7 +111,7 @@ class SC_CORE_EXPORT EntNode
         EntNode &operator= (EntNode &ent);
         void Name(const char *nm)
         {
-            strncpy(name, nm, BUFSIZ - 1);
+            strncpy(name, nm, BUFSIZ);
         }
         const char *Name()
         {
@@ -146,7 +146,7 @@ class SC_CORE_EXPORT EntNode
 
     private:
         MarkType mark;
-        char name[BUFSIZ];
+        char name[BUFSIZ+1];
         bool multSupers;  ///< do I correspond to an entity with >1 supertype?
         EntNode *lastSmaller(EntNode *);    ///< used by ::sort()
 };
@@ -269,7 +269,7 @@ class SC_CORE_EXPORT SimpleList : public EntList
         }
 
     private:
-        char name[BUFSIZ];    ///< Name of entity we correspond to.
+        char name[BUFSIZ+1];    ///< Name of entity we correspond to.
         MarkType I_marked; ///< Did I mark, and with what type of mark.
 };
 

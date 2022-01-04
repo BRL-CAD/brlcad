@@ -145,7 +145,7 @@ void TypeDescriptor::AttrTypeName(std::string &buf, const char *schnm) const
 
 const char *TypeDescriptor::GenerateExpress(std::string &buf) const
 {
-    char tmp[BUFSIZ];
+    char tmp[BUFSIZ+1];
     buf = "TYPE ";
     buf.append(StrToLower(Name(), tmp));
     buf.append(" = ");

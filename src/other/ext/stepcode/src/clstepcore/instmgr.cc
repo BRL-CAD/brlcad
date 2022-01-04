@@ -99,7 +99,7 @@ void InstMgr::DeleteInstances()
 enum Severity
 InstMgr::VerifyInstances(ErrorDescriptor &err) {
     int errorCount = 0;
-    char errbuf[BUFSIZ];
+    char errbuf[BUFSIZ+1];
 
     int n = InstanceCount();
     MgrNode *mn;

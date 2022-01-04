@@ -22,7 +22,7 @@ STEPcomplex::STEPcomplex(Registry *registry, const std::string **names,
                          int fileid, const char *schnm)
     : SDAI_Application_instance(fileid, true),  sc(0), _registry(registry), visited(0)
 {
-    char *nms[BUFSIZ];
+    char *nms[BUFSIZ+1];
     int j, k;
 
     head = this;
@@ -65,7 +65,7 @@ void STEPcomplex::Initialize(const char **names, const char *schnm)
     EntNode *ents = new EntNode(names),
     *eptr = ents, *prev = NULL, *enext;
     const EntityDescriptor *enDesc;
-    char nm[BUFSIZ];
+    char nm[BUFSIZ+1];
     bool invalid = false, outOfOrder = false;
 
     // Splice out the invalid names from our list:
@@ -680,7 +680,7 @@ const char *STEPcomplex::WriteExtMapEntities(std::string &buf, const char *currS
 void STEPcomplex::CopyAs(SDAI_Application_instance *se)
 {
     if(!se->IsComplex()) {
-        char errStr[BUFSIZ];
+        char errStr[BUFSIZ+1];
         cerr << "STEPcomplex::CopyAs() called with non-complex entity:  "
              << __FILE__ <<  __LINE__ << "\n" << _POC_ "\n";
         sprintf(errStr,
@@ -722,7 +722,7 @@ SDAI_Application_instance *STEPcomplex::Replicate()
         }
         nameList[i] = (std::string *)0;
         if(i == 63) {
-            char errStr[BUFSIZ];
+            char errStr[BUFSIZ+1];
             cerr << "STEPcomplex::Replicate() name buffer too small:  "
                  << __FILE__ <<  __LINE__ << "\n" << _POC_ "\n";
             sprintf(errStr,

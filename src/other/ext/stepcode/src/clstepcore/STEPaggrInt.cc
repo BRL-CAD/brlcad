@@ -108,7 +108,7 @@ const char *IntNode::asStr(std::string &s)
 
 const char *IntNode::STEPwrite(std::string &s, const char *)
 {
-    char tmp[BUFSIZ];
+    char tmp[BUFSIZ+1];
     if(value != S_INT_NULL) {
         sprintf(tmp, "%ld", value);
         s = tmp;

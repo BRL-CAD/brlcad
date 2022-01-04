@@ -7,7 +7,7 @@
 const char *ClassName(const char *oldname)
 {
     int i = 0, j = 0;
-    static char newname [BUFSIZ];
+    static char newname [BUFSIZ+1];
     if(!oldname) {
         return ("");
     }
@@ -156,13 +156,13 @@ const char *TYPE_get_ctype(const Type t, char *retval, size_t buf_siz)
 
 const char *TYPEget_ctype(const Type t)
 {
-    static char retval [BUFSIZ] = {0};
+    static char retval [BUFSIZ+1] = {0};
     return TYPE_get_ctype(t, retval, BUFSIZ);
 }
 
 const char *TypeName(Type t)
 {
-    static char name [BUFSIZ];
+    static char name [BUFSIZ+1];
     strcpy(name, TYPE_PREFIX);
     if(TYPEget_name(t)) {
         strncat(name, FirstToUpper(TYPEget_name(t)), BUFSIZ - strlen(TYPE_PREFIX) - 1);

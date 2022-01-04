@@ -104,7 +104,7 @@ void strcat_bounds(TypeBody b, char *buf)
  ******************************************************************/
 const char *EnumCElementName(Type type, Expression expr)
 {
-    static char buf [BUFSIZ];
+    static char buf [BUFSIZ+1];
     sprintf(buf, "%s__",
             EnumName(TYPEget_name(type)));
     strcat(buf, StrToLower(EXPget_name(expr)));
@@ -114,7 +114,7 @@ const char *EnumCElementName(Type type, Expression expr)
 
 char *CheckEnumSymbol(char *s)
 {
-    static char b [BUFSIZ];
+    static char b [BUFSIZ+1];
     if(strcmp(s, "sdaiTRUE")
             && strcmp(s, "sdaiFALSE")
             && strcmp(s, "sdaiUNKNOWN")) {
@@ -159,8 +159,8 @@ void TYPEenum_inc_print(const Type type, FILE *inc)
 {
     Expression expr;
 
-    char tdnm[BUFSIZ],
-         enumAggrNm[BUFSIZ];
+    char tdnm[BUFSIZ+1],
+         enumAggrNm[BUFSIZ+1];
     const char *n;   /*  pointer to class name  */
     int cnt = 0;
 
@@ -188,7 +188,7 @@ void TYPEenum_inc_print(const Type type, FILE *inc)
 
     /*  constructors    */
     strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
-    tdnm[BUFSIZ - 1] = '\0';
+    tdnm[BUFSIZ] = '\0';
     fprintf(inc, "  public:\n        %s (const char * n =0, EnumTypeDescriptor *et =%s);\n", n, tdnm);
     fprintf(inc, "        %s (%s e, EnumTypeDescriptor *et =%s)\n"
             "                : type(et) {  set_value (e);  }\n",
@@ -257,7 +257,7 @@ void TYPEenum_lib_print(const Type type, FILE *f)
     DictionaryEntry de;
     Expression expr;
     const char *n;    /*  pointer to class name  */
-    char c_enum_ele [BUFSIZ];
+    char c_enum_ele [BUFSIZ+1];
 
     n = TYPEget_ctype(type);
 
@@ -268,7 +268,7 @@ void TYPEenum_lib_print(const Type type, FILE *f)
     DICTdo_type_init(ENUM_TYPEget_items(type), &de, OBJ_ENUM);
     while(0 != (expr = (Expression)DICTdo(&de))) {
         strncpy(c_enum_ele, EnumCElementName(type, expr), BUFSIZ);
-        c_enum_ele[BUFSIZ - 1] = '\0';
+        c_enum_ele[BUFSIZ] = '\0';
         fprintf(f, "  case %s:  return \"%s\";\n",
                 c_enum_ele,
                 StrToUpper(EXPget_name(expr)));
@@ -392,11 +392,11 @@ static void printEnumCreateHdr(FILE *inc, const Type type)
 static void printEnumCreateBody(FILE *lib, const Type type)
 {
     const char *nm = TYPEget_ctype(type);
-    char tdnm[BUFSIZ];
-    tdnm[BUFSIZ - 1] = '\0';
+    char tdnm[BUFSIZ+1];
+    tdnm[BUFSIZ] = '\0';
 
     strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
-    tdnm[BUFSIZ - 1] = '\0';
+    tdnm[BUFSIZ] = '\0';
 
     fprintf(lib, "\nSDAI_Enum *\ncreate_%s ()\n{\n", nm);
     fprintf(lib, "    return new %s( \"\", %s );\n}\n\n", nm, tdnm);
@@ -413,10 +413,10 @@ static void printEnumAggrCrHdr(FILE *inc, const Type type)
 static void printEnumAggrCrBody(FILE *lib, const Type type)
 {
     const char *n = TYPEget_ctype(type);
-    char tdnm[BUFSIZ];
+    char tdnm[BUFSIZ+1];
 
     strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
-    tdnm[BUFSIZ - 1] = '\0';
+    tdnm[BUFSIZ] = '\0';
 
     fprintf(lib, "\nSTEPaggregate *\ncreate_%s_agg ()\n{\n", n);
     fprintf(lib, "    return new %s_agg( %s );\n}\n", n, tdnm);
@@ -439,7 +439,7 @@ static void printEnumAggrCrBody(FILE *lib, const Type type)
  **************************************************************************/
 void TYPEprint_typedefs(Type t, FILE *classes)
 {
-    char nm [BUFSIZ];
+    char nm [BUFSIZ+1];
     Type i;
     bool aggrNot1d = true;  /* added so I can get rid of a goto */
 
@@ -460,14 +460,14 @@ void TYPEprint_typedefs(Type t, FILE *classes)
               printed last since they depend on the others.)
              */
             strncpy(nm, TYPEget_ctype(t), BUFSIZ);
-            nm[BUFSIZ - 1] = '\0';
+            nm[BUFSIZ] = '\0';
             fprintf(classes, "class %s_agg;\n", nm);
         }
     } else if(TYPEis_select(t)) {
         if(!TYPEget_head(t)) {
             /* Same comment as above. */
             strncpy(nm, SelectName(TYPEget_name(t)), BUFSIZ);
-            nm[BUFSIZ - 1] = '\0';
+            nm[BUFSIZ] = '\0';
             fprintf(classes, "class %s;\n", nm);
             fprintf(classes, "typedef       %s *   %s_ptr;\n", nm, nm);
             fprintf(classes, "typedef const %s *   %s_ptr_c;\n", nm, nm);
@@ -495,7 +495,7 @@ void TYPEprint_typedefs(Type t, FILE *classes)
                gates of aggregates) of enum's and selects.
              */
             strncpy(nm, ClassName(TYPEget_name(t)), BUFSIZ);
-            nm[BUFSIZ - 1] = '\0';
+            nm[BUFSIZ] = '\0';
             fprintf(classes, "typedef       %s       %s;\n", TYPEget_ctype(t), nm);
             if(TYPEis_aggregate(t)) {
                 fprintf(classes, "typedef       %s *     %sH;\n", nm, nm);
@@ -522,14 +522,14 @@ void TYPEprint_typedefs(Type t, FILE *classes)
 *****/
 void TYPEprint_descriptions(const Type type, FILES *files, Schema schema)
 {
-    char tdnm [BUFSIZ],
+    char tdnm [BUFSIZ+1],
          typename_buf [MAX_LEN],
-         base [BUFSIZ],
-         nm [BUFSIZ];
+         base [BUFSIZ+1],
+         nm [BUFSIZ+1];
     Type i;
 
     strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
-    tdnm[BUFSIZ - 1] = '\0';
+    tdnm[BUFSIZ] = '\0';
 
     /* define type descriptor pointer */
     /*  in source - declare the real definition of the pointer */
@@ -580,11 +580,11 @@ void TYPEprint_descriptions(const Type type, FILES *files, Schema schema)
 
 void TYPEprint_init(const Type type, FILE *header, FILE *impl, Schema schema)
 {
-    char tdnm [BUFSIZ];
+    char tdnm [BUFSIZ+1];
     char typename_buf[MAX_LEN];
 
     strncpy(tdnm, TYPEtd_name(type), BUFSIZ);
-    tdnm[BUFSIZ - 1] = '\0';
+    tdnm[BUFSIZ] = '\0';
 
     if(isAggregateType(type)) {
         AGGRprint_init(header, impl, type, tdnm, type->symbol.name);
@@ -1052,7 +1052,7 @@ void TypeBody_Description(TypeBody body, char *buf)
 
 const char *IdlEntityTypeName(Type t)
 {
-    static char name [BUFSIZ];
+    static char name [BUFSIZ+1];
     strcpy(name, TYPE_PREFIX);
     if(TYPEget_name(t)) {
         strcpy(name, FirstToUpper(TYPEget_name(t)));
@@ -1066,7 +1066,7 @@ const char *GetAggrElemType(const Type type)
 {
     Class_Of_Type class;
     Type bt;
-    static char retval [BUFSIZ];
+    static char retval [BUFSIZ+1];
 
     if(isAggregateType(type)) {
         bt = TYPEget_nonaggregate_base_type(type);
@@ -1125,7 +1125,7 @@ const char *GetAggrElemType(const Type type)
 const char *TYPEget_idl_type(const Type t)
 {
     Class_Of_Type class;
-    static char retval [BUFSIZ];
+    static char retval [BUFSIZ+1];
 
     /*  aggregates are based on their base type
     case TYPE_ARRAY:
@@ -1231,7 +1231,7 @@ char *TYPEget_express_type(const Type t)
 {
     Class_Of_Type class;
     Type bt;
-    char retval [BUFSIZ];
+    char retval [BUFSIZ+1];
     char *n, * permval, * aggr_type;
 
 
