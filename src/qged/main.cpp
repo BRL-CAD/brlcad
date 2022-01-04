@@ -163,9 +163,12 @@ int main(int argc, char *argv[])
 
     // (Debugging) Report settings filename
     QSettings dmsettings("BRL-CAD", "QGED");
-    if (bu_file_exists(dmsettings.fileName().toStdString().c_str(), NULL)) {
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fname, "%s", dmsettings.fileName().toStdString().c_str());
+    if (bu_file_exists(bu_vls_cstr(&fname), NULL)) {
 	std::cout << "Reading settings from " << dmsettings.fileName().toStdString() << "\n";
     }
+    bu_vls_free(&fname);
 
     // Disable animated redrawing to minimize performance issues
     app.w->setAnimated(false);
