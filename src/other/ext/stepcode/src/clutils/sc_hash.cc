@@ -266,6 +266,9 @@ struct Element *SC_HASHsearch(Hash_TableP table, const struct Element *item, Act
             /*STRINGfree(deleteme->key);*/
             SC_HASH_Element_destroy(deleteme);
             --table->KeyCount;
+	    // TODO - returning this triggers a Coverity USE_AFTER_FREE error.
+	    // Could we just replace SC_HASH completely with one of the C++
+	    // containers?
             return(deleteme);   /* of course, user shouldn't deref this! */
         case HASH_INSERT:
             /* if trying to insert it (twice), let them know */
