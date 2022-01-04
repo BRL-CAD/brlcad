@@ -20,7 +20,9 @@ void EXPRESSusage(int _exit)
     fprintf(stderr, "\t-i warning ignore\n");
     fprintf(stderr, "and <warning> is one of:\n");
     fprintf(stderr, "\tnone\n\tall\n");
-    fprintf(stderr, "%s", ERRORget_warnings_help("\t", "\n"));
+    char *hwarn = ERRORget_warnings_help("\t", "\n");
+    fprintf(stderr, "%s", hwarn);
+    free(hwarn);
     fprintf(stderr, "and <object_type> is one or more of:\n");
     fprintf(stderr, "  e   entity\n");
     fprintf(stderr, "  p   procedure\n");
