@@ -191,7 +191,7 @@ const char *PrettyTmpName(const char *oldname)
     int i = 0;
     static char newname [BUFSIZ];
     newname [0] = '\0';
-    while((oldname [i] != '\0') && (i < BUFSIZ)) {
+    while((oldname [i] != '\0') && (i < BUFSIZ-2)) {
         newname [i] = ToLower(oldname [i]);
         if(oldname [i] == '_') {   /*  character is '_'   */
             ++i;
