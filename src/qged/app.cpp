@@ -587,10 +587,11 @@ CADApp::run_cmd(const QString &command)
 	return;
 
     QtConsole *console = w->console;
-    if (BU_STR_EQUAL(command.toStdString().c_str(), "q"))
+    const char *cmd = command.toLocal8Bit();
+    if (BU_STR_EQUAL(cmd, "q"))
 	bu_exit(0, "exit");
 
-    if (BU_STR_EQUAL(command.toStdString().c_str(), "clear")) {
+    if (BU_STR_EQUAL(cmd, "clear")) {
 	if (console) {
 	    console->clear();
 	    console->prompt("$ ");
@@ -600,7 +601,7 @@ CADApp::run_cmd(const QString &command)
 
     // make an argv array
     struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&ged_prefixed, "%s", command.toStdString().c_str());
+    bu_vls_sprintf(&ged_prefixed, "%s", cmd);
     char *input = bu_strdup(bu_vls_addr(&ged_prefixed));
     bu_vls_free(&ged_prefixed);
     char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
