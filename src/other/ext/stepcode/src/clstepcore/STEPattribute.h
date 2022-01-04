@@ -217,7 +217,7 @@ class SC_CORE_EXPORT STEPattribute
         }
 
         const char    *Name() const;
-        const char    *TypeName() const;
+	std::string TypeName() const;
         BASE_TYPE   Type() const;
         BASE_TYPE   NonRefType() const;
         BASE_TYPE   BaseType() const;

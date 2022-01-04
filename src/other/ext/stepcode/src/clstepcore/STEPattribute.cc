@@ -1307,15 +1307,15 @@ void STEPattribute::AddErrorInfo()
     if(SEVERITY_INPUT_ERROR < _error.severity() &&
             _error.severity() < SEVERITY_NULL) {
         sprintf(errStr, " Warning: ATTRIBUTE '%s : %s : %d' - ",
-                Name(), TypeName(), Type());
+                Name(), TypeName().c_str(), Type());
         _error.PrependToDetailMsg(errStr);
     } else if(_error.severity() == SEVERITY_INPUT_ERROR) {
         sprintf(errStr, " Error: ATTRIBUTE '%s : %s : %d' - ",
-                Name(), TypeName(), Type());
+                Name(), TypeName().c_str(), Type());
         _error.PrependToDetailMsg(errStr);
     } else if(_error.severity() <= SEVERITY_BUG) {
         sprintf(errStr, " BUG: ATTRIBUTE '%s : %s : %d' - ",
-                Name(), TypeName(), Type());
+                Name(), TypeName().c_str(), Type());
         _error.PrependToDetailMsg(errStr);
     }
 }
@@ -1344,12 +1344,12 @@ char STEPattribute::SkipBadAttr(istream &in, char *StopChars)
     if(in.eof()) {
         _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
         sprintf(errStr, " Error: attribute '%s : %s : %d' - %s.\n",
-                Name(), TypeName(), Type(),
+                Name(), TypeName().c_str(), Type(),
                 "Unexpected EOF when skipping bad attr value");
         _error.AppendToDetailMsg(errStr);
     } else {
         sprintf(errStr, " Error: attribute '%s : %s : %d' - %s.\n",
-                Name(), TypeName(), Type(), "Invalid value");
+                Name(), TypeName().c_str(), Type(), "Invalid value");
         _error.AppendToDetailMsg(errStr);
     }
     in.putback(c);
@@ -1517,12 +1517,12 @@ const char *STEPattribute::Name() const
     return aDesc->Name();
 }
 
-const char *STEPattribute::TypeName() const
+std::string STEPattribute::TypeName() const
 {
     if(_redefAttr)  {
         return _redefAttr->TypeName();
     }
-    return aDesc->TypeName().c_str();
+    return aDesc->TypeName();
 }
 
 BASE_TYPE STEPattribute::Type() const

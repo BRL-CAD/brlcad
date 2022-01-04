@@ -501,7 +501,7 @@ void SDAI_Application_instance::STEPread_error(char c, int i, istream &in, const
     if((i >= 0) && (i < attributes.list_length())) {       // i is an attribute
         Error().GreaterSeverity(SEVERITY_WARNING);
         sprintf(errStr, "  invalid data before type \'%s\'\n",
-                attributes[i].TypeName());
+                attributes[i].TypeName().c_str());
         _error.AppendToDetailMsg(errStr);
     } else {
         Error().GreaterSeverity(SEVERITY_INPUT_ERROR);
