@@ -240,7 +240,7 @@ const char *StrToConstant(const char *word)
 
 const char *FirstToUpper(const char *word)
 {
-    static char newword [MAX_LEN];
+    static char newword [MAX_LEN+1] = {'\0'};
 
     strncpy(newword, word, MAX_LEN);
     newword[0] = ToUpper(newword[0]);
