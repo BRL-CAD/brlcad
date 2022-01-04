@@ -230,10 +230,10 @@ static void EXPRESS_PATHinit()
             /* if slash present at end, don't add another */
             slash = strrchr(start, '/');
             if(slash && (slash[1] == '\0')) {
-                strcpy(dir->full, start);
+                strncpy(dir->full, start, MAX_SCHEMA_FILENAME_SIZE-1);
                 dir->leaf = dir->full + length;
             } else {
-                sprintf(dir->full, "%s/", start);
+                snprintf(dir->full, MAX_SCHEMA_FILENAME_SIZE-1, "%s/", start);
                 dir->leaf = dir->full + length + 1;
             }
             LISTadd_last(EXPRESS_path, dir);
