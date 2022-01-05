@@ -79,6 +79,9 @@ slang_operation_copy(slang_operation * x, const slang_operation * y)
     slang_operation z;
     GLuint i;
 
+    /* Initialize */
+    z.label = NULL;
+
     if (!slang_operation_construct(&z))
 	return GL_FALSE;
     z.type = y->type;
