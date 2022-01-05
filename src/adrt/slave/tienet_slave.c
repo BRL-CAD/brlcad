@@ -97,14 +97,16 @@ void tienet_slave_free()
 
 
 void tienet_slave_worker(int port, char *host) {
-    tienet_buffer_t result, buffer;
-    struct sockaddr_in master, slave;
-    struct hostent h;
-    short op;
-    uint32_t size;
-    int slave_socket;
-    tienet_buffer_t buffer_comp;
-    unsigned long dest_len;
+    tienet_buffer_t result = {0};
+    tienet_buffer_t buffer = {0};
+    struct sockaddr_in master = {0};
+    struct sockaddr_in slave = {0};
+    struct hostent h = {0};
+    short op = 0;
+    uint32_t size = 0;
+    int slave_socket = 0;
+    tienet_buffer_t buffer_comp = {0};
+    unsigned long dest_len = 0;
 
 
     /* Initialize res_buf to NULL for realloc'ing */
