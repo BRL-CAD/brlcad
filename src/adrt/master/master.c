@@ -323,13 +323,14 @@ master_result(tienet_buffer_t *result)
 int
 master_networking(void *ptr)
 {
-    master_socket_t *sock, *tmp;
-    struct sockaddr_in master_addr, observer_addr;
+    master_socket_t *sock = NULL, *tmp = NULL;
+    struct sockaddr_in master_addr = {0};
+    struct sockaddr_in observer_addr = {0};
     fd_set readfds;
-    int port, master_socket, highest_fd, new_socket, error;
-    unsigned int addrlen;
-    uint8_t op;
-    uint16_t endian;
+    int port=0, master_socket=0, highest_fd=0, new_socket=0, error=0;
+    unsigned int addrlen = 0;
+    uint8_t op = 0;
+    uint16_t endian = 0;
 
 
     port = *(int *) ptr;
