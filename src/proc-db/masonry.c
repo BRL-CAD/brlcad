@@ -927,12 +927,12 @@ mortar_brick(struct rt_wdb *fd)
 void
 brick(struct rt_wdb *fd)
 {
-    struct wmember wm_hd;
-    int horiz_bricks;
-    double mortar_height;
-    double mortar_width;
-    point_t pts[8];
-    char proto_brick[64];
+    struct wmember wm_hd = WMEMBER_INIT_ZERO;
+    int horiz_bricks = 0;
+    double mortar_height = 0.0;
+    double mortar_width = 0.0;
+    point_t pts[8] = {VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO};
+    char proto_brick[64] = {'\0'};
 
     bu_log("WARNING: the brick type option is untested\n");
 
