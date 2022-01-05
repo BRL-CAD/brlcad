@@ -2761,7 +2761,7 @@ save_PolygonStipple(const GLubyte * pattern)
     GLvoid *image = unpack_image(2, 32, 32, 1, GL_COLOR_INDEX, GL_BITMAP,
 				 pattern, &ctx->Unpack);
     Node *n;
-    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+    ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_POLYGON_STIPPLE, 1);
     if (n) {
 	n[1].data = image;
