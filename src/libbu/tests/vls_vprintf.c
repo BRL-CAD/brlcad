@@ -99,7 +99,7 @@ check_format_chars(void)
 {
     int status = BRLCAD_OK; /* assume okay */
     int i, cflags;
-    vflags_t f;
+    vflags_t f = VFLAGS_INIT_ZERO;
 
     for (i = 0; i < 255; ++i) {
 	unsigned char c = (unsigned char)i;
