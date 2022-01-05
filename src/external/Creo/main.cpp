@@ -521,7 +521,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
                 cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
                 creo_log(cinfo, MSG_OK, "Note: %s exists - opening to update.\n", output_file);
             } else {
-                creo_log(cinfo, MSG_FAIL, "Cannot open existing file: \n", output_file);
+                creo_log(cinfo, MSG_FAIL, "Cannot open existing file: %s\n", output_file);
 		creo_conv_info_free(cinfo);
 		ProUIDialogDestroy("creo_brl");
 		delete cinfo;
