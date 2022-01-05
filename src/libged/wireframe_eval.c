@@ -187,7 +187,6 @@ add_solid(const struct directory *dp,
     eptr->l.stp->st_matp = mat;
 
     struct rt_bot_internal *bot = NULL;
-    struct rt_db_internal intern2 = RT_DB_INTERNAL_INIT_ZERO;
 
     if (dgcdp->do_polysolids) {
 	struct shell *s=(struct shell *)NULL;
@@ -206,6 +205,7 @@ add_solid(const struct directory *dp,
 	    eptr->l.stp->st_meth = &OBJ[id];
 	    rt_obj_prep(eptr->l.stp, &intern, dgcdp->rtip);
 	} else {
+	    struct rt_db_internal intern2;
 	    RT_DB_INTERNAL_INIT(&intern2);
 	    intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern2.idb_type = ID_BOT;
@@ -214,9 +214,9 @@ add_solid(const struct directory *dp,
 	    eptr->l.stp->st_id = ID_BOT;
 	    eptr->l.stp->st_meth = &OBJ[ID_BOT];
 	    rt_obj_prep(eptr->l.stp, &intern2, dgcdp->rtip);
+	    rt_db_free_internal(&intern2);
 	}
 
-	rt_db_free_internal(&intern2);
     } else {
 	/* prep this solid */
 
