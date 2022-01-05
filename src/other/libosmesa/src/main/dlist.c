@@ -4709,7 +4709,7 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
     }
     _mesa_memcpy(programCopy, string, len);
 
-    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+    ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, programCopy);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_PROGRAM_STRING_ARB, 4);
     if (n) {
 	n[1].e = target;
