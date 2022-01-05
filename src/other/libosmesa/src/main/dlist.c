@@ -3658,7 +3658,7 @@ save_TexSubImage1D(GLenum target, GLint level, GLint xoffset,
     Node *n;
     GLvoid *image = unpack_image(1, width, 1, 1, format, type,
 				 pixels, &ctx->Unpack);
-    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+    ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_TEX_SUB_IMAGE1D, 7);
     if (n) {
 	n[1].e = target;
