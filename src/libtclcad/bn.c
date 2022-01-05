@@ -65,10 +65,10 @@ static int
 tclcad_bg_dist_pnt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    point_t ptA, ptB, pca;
-    point_t pt;
-    fastf_t dist;
-    int ret;
+    point_t ptA=VINIT_ZERO, ptB=VINIT_ZERO, pca=VINIT_ZERO;
+    point_t pt = VINIT_ZERO;
+    fastf_t dist = 0.0;
+    int ret = 0;
     static const struct bn_tol tol = BG_TOL_INIT;
 
     if (argc != 4) {
@@ -114,18 +114,18 @@ error:
     bu_vls_free(&result);
     return TCL_ERROR;
 
-} 
+}
 
 static int
 tclcad_bg_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    fastf_t dist[2];
+    fastf_t dist[2] = {0.0, 0.0};
     point_t pt = VINIT_ZERO;
     point_t a = VINIT_ZERO;
     vect_t dir = VINIT_ZERO;
     vect_t c = VINIT_ZERO;
-    int i;
+    int i = 0;
     static const struct bn_tol tol = BG_TOL_INIT;
 
     if (argc != 5) {
@@ -177,9 +177,9 @@ tclcad_bg_isect_line3_line3(ClientData UNUSED(clientData), Tcl_Interp *interp, i
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
 
-    fastf_t t, u;
-    point_t pt, a;
-    vect_t dir, c;
+    fastf_t t=0.0, u=0.0;
+    point_t pt=VINIT_ZERO, a=VINIT_ZERO;
+    vect_t dir=VINIT_ZERO, c=VINIT_ZERO;
     int i;
     static const struct bn_tol tol = BG_TOL_INIT;
 
@@ -231,7 +231,8 @@ tclcad_bn_mat_inv(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, c
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
 
-    mat_t o, a;
+    mat_t o = MAT_INIT_ZERO;
+    mat_t a = MAT_INIT_ZERO;
 
     if (argc < 2 || bn_decode_mat(a, argv[1]) < 16) {
 	bu_vls_printf(&result, "usage: %s mat", argv[0]);
@@ -256,7 +257,8 @@ tclcad_bn_mat_trn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, c
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
 
-    mat_t o, a;
+    mat_t o = MAT_INIT_ZERO;
+    mat_t a = MAT_INIT_ZERO;
 
     if (argc < 2 || bn_decode_mat(a, argv[1]) < 16) {
 	bu_vls_printf(&result, "usage: %s mat", argv[0]);
@@ -281,8 +283,8 @@ tclcad_bn_matXvec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, c
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
 
-    mat_t m;
-    hvect_t i, o;
+    mat_t m = MAT_INIT_ZERO;
+    hvect_t i=HINIT_ZERO, o=HINIT_ZERO;
     if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
 	    bn_decode_hvect(i, argv[2]) < 4) {
 	bu_vls_printf(&result, "usage: %s mat hvect", argv[0]);
@@ -305,9 +307,8 @@ static int
 tclcad_bn_mat4x3vec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t m;
-    vect_t i, o;
-    MAT_ZERO(m);
+    mat_t m = MAT_INIT_ZERO;
+    vect_t i=VINIT_ZERO, o=VINIT_ZERO;
     if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
 	    bn_decode_vect(i, argv[2]) < 3) {
 	bu_vls_printf(&result, "usage: %s mat vect", argv[0]);
@@ -331,8 +332,8 @@ static int
 tclcad_bn_hdivide(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    hvect_t i;
-    vect_t o;
+    hvect_t i = HINIT_ZERO;
+    vect_t o = VINIT_ZERO;
     if (argc < 2 || bn_decode_hvect(i, argv[1]) < 4) {
 	bu_vls_printf(&result, "usage: %s hvect", argv[0]);
 	goto error;
@@ -354,8 +355,9 @@ static int
 tclcad_bn_vjoin1(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    point_t o;
-    point_t b, d;
+    point_t o = VINIT_ZERO;
+    point_t b = VINIT_ZERO;
+    point_t d = VINIT_ZERO;
     double c;
 
     if (argc < 4) {
@@ -383,8 +385,8 @@ static int
 tclcad_bn_vblend(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    point_t a, c, e;
-    double b, d;
+    point_t a=VINIT_ZERO, c=VINIT_ZERO, e=VINIT_ZERO;
+    double b=0.0, d=0.0;
 
     if (argc < 5) {
 	bu_vls_printf(&result, "usage: %s scale pnt scale pnt", argv[0]);
@@ -413,8 +415,8 @@ static int
 tclcad_bn_ae_vec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    fastf_t az, el;
-    vect_t v;
+    fastf_t az=0.0, el=0.0;
+    vect_t v = VINIT_ZERO;
 
     if (argc < 2 || bn_decode_vect(v, argv[1]) < 3) {
 	bu_vls_printf(&result, "usage: %s vect", argv[0]);
@@ -438,9 +440,9 @@ static int
 tclcad_bn_aet_vec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    double acc;
-    fastf_t az, el, twist, accuracy;
-    vect_t vec_ae, vec_twist;
+    double acc = 0.0;
+    fastf_t az=0.0, el=0.0, twist=0.0, accuracy=0.0;
+    vect_t vec_ae=VINIT_ZERO, vec_twist=VINIT_ZERO;
 
     if (argc < 4 || bn_decode_vect(vec_ae, argv[1]) < 3 ||
 	    bn_decode_vect(vec_twist, argv[2]) < 3 ||
@@ -468,8 +470,8 @@ static int
 tclcad_bn_mat_angles(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    double alpha, beta, ggamma;
+    mat_t o = MAT_INIT_ZERO;
+    double alpha=0.0, beta=0.0, ggamma=0.0;
 
     if (argc < 4) {
 	bu_vls_printf(&result, "usage: %s alpha beta gamma", argv[0]);
@@ -496,9 +498,9 @@ static int
 tclcad_bn_eigen2x2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    fastf_t val1, val2;
-    vect_t vec1, vec2;
-    double a, b, c;
+    fastf_t val1=0.0, val2=0.0;
+    vect_t vec1=VINIT_ZERO, vec2=VINIT_ZERO;
+    double a=0.0, b=0.0, c=0.0;
 
     if (argc < 4) {
 	bu_vls_printf(&result, "usage: %s a b c", argv[0]);
@@ -527,8 +529,8 @@ static int
 tclcad_bn_mat_fromto(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    vect_t from, to;
+    mat_t o = MAT_INIT_ZERO;
+    vect_t from=VINIT_ZERO, to=VINIT_ZERO;
     static const struct bn_tol tol = BG_TOL_INIT;
 
     if (argc < 3 || bn_decode_vect(from, argv[1]) < 3 ||
@@ -554,8 +556,8 @@ static int
 tclcad_bn_mat_xrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    double s, c;
+    mat_t o = MAT_INIT_ZERO;
+    double s=0.0, c=0.0;
 
     if (argc < 3) {
 	bu_vls_printf(&result, "usage: %s sinAngle cosAngle", argv[0]);
@@ -582,8 +584,8 @@ static int
 tclcad_bn_mat_yrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    double s, c;
+    mat_t o = MAT_INIT_ZERO;
+    double s=0.0, c=0.0;
 
     if (argc < 3) {
 	bu_vls_printf(&result, "usage: %s sinAngle cosAngle", argv[0]);
@@ -610,8 +612,8 @@ static int
 tclcad_bn_mat_zrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    double s, c;
+    mat_t o = MAT_INIT_ZERO;
+    double s=0.0, c=0.0;
 
     if (argc < 3) {
 	bu_vls_printf(&result, "usage: %s sinAngle cosAngle", argv[0]);
@@ -638,9 +640,9 @@ static int
 tclcad_bn_mat_lookat(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    vect_t dir;
-    int yflip;
+    mat_t o = MAT_INIT_ZERO;
+    vect_t dir = VINIT_ZERO;
+    int yflip = 0;
     if (argc < 3 || bn_decode_vect(dir, argv[1]) < 3) {
 	bu_vls_printf(&result, "usage: %s dir yflip", argv[0]);
 	goto error;
@@ -665,7 +667,8 @@ static int
 tclcad_bn_vec_ortho(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    vect_t ov, vec;
+    vect_t ov = VINIT_ZERO;
+    vect_t vec = VINIT_ZERO;
 
     if (argc < 2 || bn_decode_vect(vec, argv[1]) < 3) {
 	bu_vls_printf(&result, "usage: %s vec", argv[0]);
@@ -690,7 +693,8 @@ static int
 tclcad_bn_vec_perp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    vect_t ov, vec;
+    vect_t ov = VINIT_ZERO;
+    vect_t vec = VINIT_ZERO;
 
     if (argc < 2 || bn_decode_vect(vec, argv[1]) < 3) {
 	bu_vls_printf(&result, "usage: %s vec", argv[0]);
@@ -715,8 +719,9 @@ static int
 tclcad_bn_mat_xform_about_pnt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o, xform;
-    vect_t v;
+    mat_t o = MAT_INIT_ZERO;
+    mat_t xform = MAT_INIT_ZERO;
+    vect_t v = VINIT_ZERO;
 
     if (argc < 3 || bn_decode_mat(xform, argv[1]) < 16 ||
 	    bn_decode_vect(v, argv[2]) < 3) {
@@ -742,10 +747,10 @@ static int
 tclcad_bn_mat_arb_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    point_t pt;
-    vect_t dir;
-    double angle;
+    mat_t o = MAT_INIT_ZERO;
+    point_t pt = VINIT_ZERO;
+    vect_t dir = VINIT_ZERO;
+    double angle = 0.0;
 
     if (argc < 4 || bn_decode_vect(pt, argv[1]) < 3 ||
 	    bn_decode_vect(dir, argv[2]) < 3) {
@@ -773,8 +778,8 @@ static int
 tclcad_bn_quat_mat2quat(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t mat;
-    quat_t quat;
+    mat_t mat = MAT_INIT_ZERO;
+    quat_t quat = HINIT_ZERO;
 
     if (argc < 2 || bn_decode_mat(mat, argv[1]) < 16) {
 	bu_vls_printf(&result, "usage: %s mat", argv[0]);
@@ -799,8 +804,8 @@ static int
 tclcad_bn_quat_quat2mat(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t mat;
-    quat_t quat;
+    mat_t mat = MAT_INIT_ZERO;
+    quat_t quat = HINIT_ZERO;
 
     if (argc < 2 || bn_decode_quat(quat, argv[1]) < 4) {
 	bu_vls_printf(&result, "usage: %s quat", argv[0]);
@@ -824,8 +829,9 @@ static int
 tclcad_bn_quat_distance(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    quat_t q1, q2;
-    double d;
+    quat_t q1 = HINIT_ZERO;
+    quat_t q2 = HINIT_ZERO;
+    double d = 0.0;
 
     if (argc < 3 || bn_decode_quat(q1, argv[1]) < 4 ||
 	    bn_decode_quat(q2, argv[2]) < 4) {
@@ -850,7 +856,9 @@ static int
 tclcad_bn_quat_double(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    quat_t oqot, q1, q2;
+    quat_t oqot = HINIT_ZERO;
+    quat_t q1 = HINIT_ZERO;
+    quat_t q2 = HINIT_ZERO;
 
     if (argc < 3 || bn_decode_quat(q1, argv[1]) < 4 ||
 	    bn_decode_quat(q2, argv[2]) < 4) {
@@ -877,7 +885,9 @@ static int
 tclcad_bn_quat_bisect(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    quat_t oqot, q1, q2;
+    quat_t oqot = HINIT_ZERO;
+    quat_t q1 = HINIT_ZERO;
+    quat_t q2 = HINIT_ZERO;
 
     if (argc < 3 || bn_decode_quat(q1, argv[1]) < 4 ||
 	    bn_decode_quat(q2, argv[2]) < 4) {
@@ -904,7 +914,8 @@ static int
 tclcad_bn_quat_make_nearest(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    quat_t oqot, q1;
+    quat_t oqot = HINIT_ZERO;
+    quat_t q1 = HINIT_ZERO;
 
     if (argc < 2 || bn_decode_quat(oqot, argv[1]) < 4) {
 	bu_vls_printf(&result, "usage: %s orig_quat", argv[0]);
@@ -928,8 +939,10 @@ static int
 tclcad_bn_quat_slerp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    quat_t oq, q1, q2;
-    double d;
+    quat_t oq = HINIT_ZERO;
+    quat_t q1 = HINIT_ZERO;
+    quat_t q2 = HINIT_ZERO;
+    double d = 0.0;
 
     if (argc < 4 || bn_decode_quat(q1, argv[1]) < 4 ||
 	    bn_decode_quat(q2, argv[2]) < 4) {
@@ -957,8 +970,12 @@ static int
 tclcad_bn_quat_sberp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    quat_t oq, q1, qa, qb, q2;
-    double d;
+    quat_t oq = HINIT_ZERO;
+    quat_t q1 = HINIT_ZERO;
+    quat_t q2 = HINIT_ZERO;
+    quat_t qa = HINIT_ZERO;
+    quat_t qb = HINIT_ZERO;
+    double d = 0.0;
 
     if (argc < 6 || bn_decode_quat(q1, argv[1]) < 4 ||
 	    bn_decode_quat(qa, argv[2]) < 4 || bn_decode_quat(qb, argv[3]) < 4 ||
@@ -988,7 +1005,8 @@ static int
 tclcad_bn_quat_exp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    quat_t qout, qin;
+    quat_t qout = HINIT_ZERO;
+    quat_t qin = HINIT_ZERO;
 
     if (argc < 2 || bn_decode_quat(qin, argv[1]) < 4) {
 	bu_vls_printf(&result, "usage: %s quat", argv[0]);
@@ -1013,7 +1031,8 @@ static int
 tclcad_bn_quat_log(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
-    quat_t qout, qin;
+    quat_t qout = HINIT_ZERO;
+    quat_t qin = HINIT_ZERO;
 
     if (argc < 2 || bn_decode_quat(qin, argv[1]) < 4) {
 	bu_vls_printf(&result, "usage: %s quat", argv[0]);
