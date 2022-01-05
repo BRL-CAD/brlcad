@@ -987,7 +987,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     verts = (vect_t *)bu_calloc(n_verts * (n_links+2), sizeof(vect_t), "verts");
 
     /* Read in links names and link lengths **********/
-    links = (struct link *)malloc(sizeof(struct link)*n_links);
+    links = (struct link *)calloc(n_links, sizeof(struct link));
     for (i = arg; i < (size_t)argc; i+=2) {
 	double scan;
 
