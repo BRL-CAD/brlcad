@@ -68,7 +68,7 @@ void
 BrlcadMesh::initVertices()
 {
     unsigned int num_vertices = this->getNumVertices();
-    DCEL_Vertex vertex;
+    DCEL_Vertex vertex = DCEL_VERTEX_NULL;
 
     for (unsigned int i = 0; i < num_vertices; i++) {
 
@@ -81,7 +81,7 @@ BrlcadMesh::initVertices()
     }
 }
 
-/* DCEL_Face record functions 
+/* DCEL_Face record functions
  * Note: The unbounded DCEL_Face will have face_id = 0. Its start_edge will be set to NULL.
  */
 
