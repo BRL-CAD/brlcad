@@ -961,6 +961,10 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 
 	    if (!dstImage->Data) {
 		_mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
+		if (srcData)
+		    _mesa_free((void *)srcData);
+		if (dstData)
+		    _mesa_free(dstData);
 		return;
 	    }
 
