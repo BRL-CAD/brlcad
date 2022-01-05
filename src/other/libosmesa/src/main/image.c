@@ -2489,10 +2489,14 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 	    GLuint i;
 	    for (i = 0; i < n; i ++) {
 		GLubyte p = ubsrc[i];
-		rgba[i][rComp] = ((p >> 5)) * (1.0F / 7.0F);
-		rgba[i][gComp] = ((p >> 2) & 0x7) * (1.0F / 7.0F);
-		rgba[i][bComp] = ((p) & 0x3) * (1.0F / 3.0F);
-		rgba[i][aComp] = 1.0F;
+		if (rComp > -1)
+		    rgba[i][rComp] = ((p >> 5)) * (1.0F / 7.0F);
+		if (gComp > -1)
+		    rgba[i][gComp] = ((p >> 2) & 0x7) * (1.0F / 7.0F);
+		if (bComp > -1)
+		    rgba[i][bComp] = ((p) & 0x3) * (1.0F / 3.0F);
+		if (aComp > -1)
+		    rgba[i][aComp] = 1.0F;
 	    }
 	}
 	break;
@@ -2501,10 +2505,14 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 	    GLuint i;
 	    for (i = 0; i < n; i ++) {
 		GLubyte p = ubsrc[i];
-		rgba[i][rComp] = ((p) & 0x7) * (1.0F / 7.0F);
-		rgba[i][gComp] = ((p >> 3) & 0x7) * (1.0F / 7.0F);
-		rgba[i][bComp] = ((p >> 6)) * (1.0F / 3.0F);
-		rgba[i][aComp] = 1.0F;
+		if (rComp > -1)
+		    rgba[i][rComp] = ((p) & 0x7) * (1.0F / 7.0F);
+		if (gComp > -1)
+		    rgba[i][gComp] = ((p >> 3) & 0x7) * (1.0F / 7.0F);
+		if (bComp > -1)
+		    rgba[i][bComp] = ((p >> 6)) * (1.0F / 3.0F);
+		if (aComp > -1)
+		    rgba[i][aComp] = 1.0F;
 	    }
 	}
 	break;
@@ -2515,20 +2523,28 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
 		    SWAP2BYTE(p);
-		    rgba[i][rComp] = ((p >> 11)) * (1.0F / 31.0F);
-		    rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
-		    rgba[i][bComp] = ((p) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][aComp] = 1.0F;
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p >> 11)) * (1.0F / 31.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p) & 0x1f) * (1.0F / 31.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = 1.0F;
 		}
 	    } else {
 		const GLushort *ussrc = (const GLushort *) src;
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
-		    rgba[i][rComp] = ((p >> 11)) * (1.0F / 31.0F);
-		    rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
-		    rgba[i][bComp] = ((p) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][aComp] = 1.0F;
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p >> 11)) * (1.0F / 31.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p) & 0x1f) * (1.0F / 31.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = 1.0F;
 		}
 	    }
 	    break;
@@ -2539,20 +2555,28 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
 		    SWAP2BYTE(p);
-		    rgba[i][rComp] = ((p) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
-		    rgba[i][bComp] = ((p >> 11)) * (1.0F / 31.0F);
-		    rgba[i][aComp] = 1.0F;
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p) & 0x1f) * (1.0F / 31.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >> 11)) * (1.0F / 31.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = 1.0F;
 		}
 	    } else {
 		const GLushort *ussrc = (const GLushort *) src;
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
-		    rgba[i][rComp] = ((p) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
-		    rgba[i][bComp] = ((p >> 11)) * (1.0F / 31.0F);
-		    rgba[i][aComp] = 1.0F;
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p) & 0x1f) * (1.0F / 31.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  5) & 0x3f) * (1.0F / 63.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >> 11)) * (1.0F / 31.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = 1.0F;
 		}
 	    }
 	    break;
@@ -2563,20 +2587,28 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
 		    SWAP2BYTE(p);
-		    rgba[i][rComp] = ((p >> 12)) * (1.0F / 15.0F);
-		    rgba[i][gComp] = ((p >>  8) & 0xf) * (1.0F / 15.0F);
-		    rgba[i][bComp] = ((p >>  4) & 0xf) * (1.0F / 15.0F);
-		    rgba[i][aComp] = ((p) & 0xf) * (1.0F / 15.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p >> 12)) * (1.0F / 15.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  8) & 0xf) * (1.0F / 15.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >>  4) & 0xf) * (1.0F / 15.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p) & 0xf) * (1.0F / 15.0F);
 		}
 	    } else {
 		const GLushort *ussrc = (const GLushort *) src;
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
-		    rgba[i][rComp] = ((p >> 12)) * (1.0F / 15.0F);
-		    rgba[i][gComp] = ((p >>  8) & 0xf) * (1.0F / 15.0F);
-		    rgba[i][bComp] = ((p >>  4) & 0xf) * (1.0F / 15.0F);
-		    rgba[i][aComp] = ((p) & 0xf) * (1.0F / 15.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p >> 12)) * (1.0F / 15.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  8) & 0xf) * (1.0F / 15.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >>  4) & 0xf) * (1.0F / 15.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p) & 0xf) * (1.0F / 15.0F);
 		}
 	    }
 	    break;
@@ -2587,20 +2619,28 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
 		    SWAP2BYTE(p);
-		    rgba[i][rComp] = ((p) & 0xf) * (1.0F / 15.0F);
-		    rgba[i][gComp] = ((p >>  4) & 0xf) * (1.0F / 15.0F);
-		    rgba[i][bComp] = ((p >>  8) & 0xf) * (1.0F / 15.0F);
-		    rgba[i][aComp] = ((p >> 12)) * (1.0F / 15.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p) & 0xf) * (1.0F / 15.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  4) & 0xf) * (1.0F / 15.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >>  8) & 0xf) * (1.0F / 15.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p >> 12)) * (1.0F / 15.0F);
 		}
 	    } else {
 		const GLushort *ussrc = (const GLushort *) src;
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
-		    rgba[i][rComp] = ((p) & 0xf) * (1.0F / 15.0F);
-		    rgba[i][gComp] = ((p >>  4) & 0xf) * (1.0F / 15.0F);
-		    rgba[i][bComp] = ((p >>  8) & 0xf) * (1.0F / 15.0F);
-		    rgba[i][aComp] = ((p >> 12)) * (1.0F / 15.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p) & 0xf) * (1.0F / 15.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  4) & 0xf) * (1.0F / 15.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >>  8) & 0xf) * (1.0F / 15.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p >> 12)) * (1.0F / 15.0F);
 		}
 	    }
 	    break;
@@ -2611,20 +2651,28 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
 		    SWAP2BYTE(p);
-		    rgba[i][rComp] = ((p >> 11)) * (1.0F / 31.0F);
-		    rgba[i][gComp] = ((p >>  6) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][bComp] = ((p >>  1) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][aComp] = ((p) & 0x1)  * (1.0F /  1.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p >> 11)) * (1.0F / 31.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  6) & 0x1f) * (1.0F / 31.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >>  1) & 0x1f) * (1.0F / 31.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p) & 0x1)  * (1.0F /  1.0F);
 		}
 	    } else {
 		const GLushort *ussrc = (const GLushort *) src;
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
-		    rgba[i][rComp] = ((p >> 11)) * (1.0F / 31.0F);
-		    rgba[i][gComp] = ((p >>  6) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][bComp] = ((p >>  1) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][aComp] = ((p) & 0x1)  * (1.0F /  1.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p >> 11)) * (1.0F / 31.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  6) & 0x1f) * (1.0F / 31.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >>  1) & 0x1f) * (1.0F / 31.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p) & 0x1)  * (1.0F /  1.0F);
 		}
 	    }
 	    break;
@@ -2635,20 +2683,28 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
 		    SWAP2BYTE(p);
-		    rgba[i][rComp] = ((p) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][gComp] = ((p >>  5) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][bComp] = ((p >> 10) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][aComp] = ((p >> 15)) * (1.0F /  1.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p) & 0x1f) * (1.0F / 31.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  5) & 0x1f) * (1.0F / 31.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >> 10) & 0x1f) * (1.0F / 31.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p >> 15)) * (1.0F /  1.0F);
 		}
 	    } else {
 		const GLushort *ussrc = (const GLushort *) src;
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLushort p = ussrc[i];
-		    rgba[i][rComp] = ((p) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][gComp] = ((p >>  5) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][bComp] = ((p >> 10) & 0x1f) * (1.0F / 31.0F);
-		    rgba[i][aComp] = ((p >> 15)) * (1.0F /  1.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p) & 0x1f) * (1.0F / 31.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >>  5) & 0x1f) * (1.0F / 31.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >> 10) & 0x1f) * (1.0F / 31.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p >> 15)) * (1.0F /  1.0F);
 		}
 	    }
 	    break;
@@ -2658,20 +2714,28 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLuint p = uisrc[i];
-		    rgba[i][rComp] = UBYTE_TO_FLOAT((p) & 0xff);
-		    rgba[i][gComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
-		    rgba[i][bComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
-		    rgba[i][aComp] = UBYTE_TO_FLOAT((p >> 24));
+		    if (rComp > -1)
+			rgba[i][rComp] = UBYTE_TO_FLOAT((p) & 0xff);
+		    if (gComp > -1)
+			rgba[i][gComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
+		    if (bComp > -1)
+			rgba[i][bComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
+		    if (aComp > -1)
+			rgba[i][aComp] = UBYTE_TO_FLOAT((p >> 24));
 		}
 	    } else {
 		const GLuint *uisrc = (const GLuint *) src;
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLuint p = uisrc[i];
-		    rgba[i][rComp] = UBYTE_TO_FLOAT((p >> 24));
-		    rgba[i][gComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
-		    rgba[i][bComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
-		    rgba[i][aComp] = UBYTE_TO_FLOAT((p) & 0xff);
+		    if (rComp > -1)
+			rgba[i][rComp] = UBYTE_TO_FLOAT((p >> 24));
+		    if (gComp > -1)
+			rgba[i][gComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
+		    if (bComp > -1)
+			rgba[i][bComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
+		    if (aComp > -1)
+			rgba[i][aComp] = UBYTE_TO_FLOAT((p) & 0xff);
 		}
 	    }
 	    break;
@@ -2681,20 +2745,28 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLuint p = uisrc[i];
-		    rgba[i][rComp] = UBYTE_TO_FLOAT((p >> 24));
-		    rgba[i][gComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
-		    rgba[i][bComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
-		    rgba[i][aComp] = UBYTE_TO_FLOAT((p) & 0xff);
+		    if (rComp > -1)
+			rgba[i][rComp] = UBYTE_TO_FLOAT((p >> 24));
+		    if (gComp > -1)
+			rgba[i][gComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
+		    if (bComp > -1)
+			rgba[i][bComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
+		    if (aComp > -1)
+			rgba[i][aComp] = UBYTE_TO_FLOAT((p) & 0xff);
 		}
 	    } else {
 		const GLuint *uisrc = (const GLuint *) src;
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLuint p = uisrc[i];
-		    rgba[i][rComp] = UBYTE_TO_FLOAT((p) & 0xff);
-		    rgba[i][gComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
-		    rgba[i][bComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
-		    rgba[i][aComp] = UBYTE_TO_FLOAT((p >> 24));
+		    if (rComp > -1)
+			rgba[i][rComp] = UBYTE_TO_FLOAT((p) & 0xff);
+		    if (gComp > -1)
+			rgba[i][gComp] = UBYTE_TO_FLOAT((p >>  8) & 0xff);
+		    if (bComp > -1)
+			rgba[i][bComp] = UBYTE_TO_FLOAT((p >> 16) & 0xff);
+		    if (aComp > -1)
+			rgba[i][aComp] = UBYTE_TO_FLOAT((p >> 24));
 		}
 	    }
 	    break;
@@ -2705,20 +2777,28 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 		for (i = 0; i < n; i ++) {
 		    GLuint p = uisrc[i];
 		    SWAP4BYTE(p);
-		    rgba[i][rComp] = ((p >> 22)) * (1.0F / 1023.0F);
-		    rgba[i][gComp] = ((p >> 12) & 0x3ff) * (1.0F / 1023.0F);
-		    rgba[i][bComp] = ((p >>  2) & 0x3ff) * (1.0F / 1023.0F);
-		    rgba[i][aComp] = ((p) & 0x3) * (1.0F /    3.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p >> 22)) * (1.0F / 1023.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >> 12) & 0x3ff) * (1.0F / 1023.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >>  2) & 0x3ff) * (1.0F / 1023.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p) & 0x3) * (1.0F /    3.0F);
 		}
 	    } else {
 		const GLuint *uisrc = (const GLuint *) src;
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLuint p = uisrc[i];
-		    rgba[i][rComp] = ((p >> 22)) * (1.0F / 1023.0F);
-		    rgba[i][gComp] = ((p >> 12) & 0x3ff) * (1.0F / 1023.0F);
-		    rgba[i][bComp] = ((p >>  2) & 0x3ff) * (1.0F / 1023.0F);
-		    rgba[i][aComp] = ((p) & 0x3) * (1.0F /    3.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p >> 22)) * (1.0F / 1023.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >> 12) & 0x3ff) * (1.0F / 1023.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >>  2) & 0x3ff) * (1.0F / 1023.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p) & 0x3) * (1.0F /    3.0F);
 		}
 	    }
 	    break;
@@ -2729,20 +2809,28 @@ extract_float_rgba(GLuint n, GLfloat rgba[][4],
 		for (i = 0; i < n; i ++) {
 		    GLuint p = uisrc[i];
 		    SWAP4BYTE(p);
-		    rgba[i][rComp] = ((p) & 0x3ff) * (1.0F / 1023.0F);
-		    rgba[i][gComp] = ((p >> 10) & 0x3ff) * (1.0F / 1023.0F);
-		    rgba[i][bComp] = ((p >> 20) & 0x3ff) * (1.0F / 1023.0F);
-		    rgba[i][aComp] = ((p >> 30)) * (1.0F /    3.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p) & 0x3ff) * (1.0F / 1023.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >> 10) & 0x3ff) * (1.0F / 1023.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >> 20) & 0x3ff) * (1.0F / 1023.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p >> 30)) * (1.0F /    3.0F);
 		}
 	    } else {
 		const GLuint *uisrc = (const GLuint *) src;
 		GLuint i;
 		for (i = 0; i < n; i ++) {
 		    GLuint p = uisrc[i];
-		    rgba[i][rComp] = ((p) & 0x3ff) * (1.0F / 1023.0F);
-		    rgba[i][gComp] = ((p >> 10) & 0x3ff) * (1.0F / 1023.0F);
-		    rgba[i][bComp] = ((p >> 20) & 0x3ff) * (1.0F / 1023.0F);
-		    rgba[i][aComp] = ((p >> 30)) * (1.0F /    3.0F);
+		    if (rComp > -1)
+			rgba[i][rComp] = ((p) & 0x3ff) * (1.0F / 1023.0F);
+		    if (gComp > -1)
+			rgba[i][gComp] = ((p >> 10) & 0x3ff) * (1.0F / 1023.0F);
+		    if (bComp > -1)
+			rgba[i][bComp] = ((p >> 20) & 0x3ff) * (1.0F / 1023.0F);
+		    if (aComp > -1)
+			rgba[i][aComp] = ((p >> 30)) * (1.0F /    3.0F);
 		}
 	    }
 	    break;
