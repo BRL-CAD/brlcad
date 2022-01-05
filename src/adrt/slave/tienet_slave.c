@@ -101,7 +101,7 @@ void tienet_slave_worker(int port, char *host) {
     tienet_buffer_t buffer = {0};
     struct sockaddr_in master = {0};
     struct sockaddr_in slave = {0};
-    struct hostent h = {0};
+    struct hostent h;
     short op = 0;
     uint32_t size = 0;
     int slave_socket = 0;

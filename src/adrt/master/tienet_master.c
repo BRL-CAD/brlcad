@@ -301,7 +301,7 @@ void tienet_master_connect_slaves(fd_set *readfds)
     FILE *fh;
     struct sockaddr_in tdaemon = {0};
     struct sockaddr_in slave = {0};
-    struct hostent slave_ent = {0};
+    struct hostent slave_ent;
     tienet_master_socket_t *tmp = NULL;
     short op = 0;
     char host[64] = {'\0'};

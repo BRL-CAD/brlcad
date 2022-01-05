@@ -61,7 +61,7 @@ int master_compserv_active;
  * Establish a connection to the component server.
  */
 void compnet_connect(char *host, int port) {
-    struct hostent hostent = {0};
+    struct hostent hostent;
     struct sockaddr_in compserv = {0};
     struct sockaddr_in master = {0};
 
