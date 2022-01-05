@@ -181,8 +181,8 @@ wraypts(vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FIL
 void
 wraypaint(vect_t start, vect_t norm, int paint, struct application *ap, FILE *fp)
 {
-    struct vldray vldray;
-    size_t ret;
+    struct vldray vldray = {0};
+    size_t ret = 0;
 
     VMOVE(&(vldray.ox), start);
     VSETALL(&(vldray.rx), 0);
