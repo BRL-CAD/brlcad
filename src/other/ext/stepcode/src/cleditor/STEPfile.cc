@@ -868,7 +868,9 @@ SDAI_Application_instance *STEPfile::CreateInstance(istream &in, ostream &out)
                 << " User Defined Entity in DATA section ignored.\n"
                 << "\tData lost: \'!" << objnm << "\': " << tmpbuf
                 << endl;
-            return ENTITY_NULL;
+	    if (scopelist)
+	       delete scopelist;
+	    return ENTITY_NULL;
         } else {
             schnm = schemaName();
             obj = reg().ObjCreate(objnm.c_str(), schnm.c_str());
@@ -896,7 +898,9 @@ SDAI_Application_instance *STEPfile::CreateInstance(istream &in, ostream &out)
         out << "ERROR: instance #" << fileid << " \'" << objnm
             << "\': " << result.UserMsg()
             << ".\n\tData lost: " << tmpbuf << "\n\n";
-        return ENTITY_NULL;
+	if (scopelist)
+	   delete scopelist;
+	return ENTITY_NULL;
     }
     obj -> STEPfile_id = fileid;
 
