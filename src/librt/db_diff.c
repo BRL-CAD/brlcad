@@ -512,13 +512,14 @@ db_diff(const struct db_i *dbip1,
 	struct bu_ptbl *results)
 {
     int state = DIFF_EMPTY;
-    struct directory *dp1, *dp2;
+    struct directory *dp1=RT_DIR_NULL, *dp2=RT_DIR_NULL;
 
     /* look at all objects in this database */
     FOR_ALL_DIRECTORY_START(dp1, dbip1) {
-	struct bu_external ext1, ext2;
+	struct bu_external ext1 = BU_EXTERNAL_INIT_ZERO;
+	struct bu_external ext2 = BU_EXTERNAL_INIT_ZERO;
 	int extern_state = DIFF_UNCHANGED;
-	struct diff_result *result;
+	struct diff_result *result = NULL;
 	BU_GET(result, struct diff_result);
 	diff_init_result(result, diff_tol, dp1->d_namep);
 
@@ -881,12 +882,14 @@ db_diff3(const struct db_i *dbip_left,
 	struct bu_ptbl *results)
 {
     int state = DIFF_EMPTY;
-    struct directory *dp_ancestor, *dp_left, *dp_right;
+    struct directory *dp_ancestor=RT_DIR_NULL, *dp_left=RT_DIR_NULL, *dp_right=RT_DIR_NULL;
 
     /* Step 1: look at all objects in the ancestor database */
     FOR_ALL_DIRECTORY_START(dp_ancestor, dbip_ancestor) {
-	struct bu_external ext_left, ext_ancestor, ext_right;
-	struct diff_result *result;
+	struct bu_external ext_left = BU_EXTERNAL_INIT_ZERO;
+	struct bu_external ext_ancestor = BU_EXTERNAL_INIT_ZERO;
+	struct bu_external ext_right = BU_EXTERNAL_INIT_ZERO;
+	struct diff_result *result = NULL;
 	int ancestor_state = DIFF_EMPTY;
 	int extern_state = DIFF_UNCHANGED;
 	BU_GET(result, struct diff_result);
