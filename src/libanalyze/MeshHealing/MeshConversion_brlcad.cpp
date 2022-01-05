@@ -144,6 +144,12 @@ BrlcadMesh::initEdges()
     for (unsigned int i = 0; i < num_faces; ++i) {
 
 	DCEL_Edge temp;
+	temp.edge_id = std::make_pair(-1,-1);
+	temp.origin = NULL;
+	temp.twin = NULL;
+	temp.incident_face = NULL;
+	temp.next = NULL;
+	temp.previous = NULL;
 
 	for (unsigned int j = 0; j < VERTICES_PER_FACE; ++j){
 	    v1 = bot->faces[VERTICES_PER_FACE * i + j];
