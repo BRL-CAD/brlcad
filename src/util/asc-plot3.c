@@ -62,15 +62,15 @@ check_syntax (char cmd, int needed, int got, int line)
 int
 main (int argc, char **argv)
 {
-    char *bp;
-    char buf[BUF_LEN];
-    char sarg[BUF_LEN];
+    char *bp = NULL;
+    char buf[BUF_LEN] = {'\0'};
+    char sarg[BUF_LEN] = {'\0'};
     static char *fm[] = { "rb", "wb" };
     double darg[6] = {0.0};
     static FILE *fp[2];
-    int i;
+    int i =0;
     int iarg[6] = {0};
-    int line_nm;
+    int line_nm = 0;
     int nm_args = 0;
 
     bu_setprogname(argv[0]);
