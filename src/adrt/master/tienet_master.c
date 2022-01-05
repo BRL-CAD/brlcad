@@ -299,12 +299,14 @@ void tienet_master_wait()
 void tienet_master_connect_slaves(fd_set *readfds)
 {
     FILE *fh;
-    struct sockaddr_in tdaemon, slave;
-    struct hostent slave_ent;
-    tienet_master_socket_t *tmp;
-    short op;
-    char host[64], *temp;
-    int slave_ver_key;
+    struct sockaddr_in tdaemon = {0};
+    struct sockaddr_in slave = {0};
+    struct hostent slave_ent = {0};
+    tienet_master_socket_t *tmp = NULL;
+    short op = 0;
+    char host[64] = {'\0'};
+    char *temp = NULL;
+    int slave_ver_key = 0;
 
     fh = fopen(tienet_master_list, "rb");
     if (fh) {
