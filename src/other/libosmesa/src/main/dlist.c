@@ -3720,7 +3720,7 @@ save_TexSubImage3D(GLenum target, GLint level,
     Node *n;
     GLvoid *image = unpack_image(3, width, height, depth, format, type,
 				 pixels, &ctx->Unpack);
-    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+    ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_TEX_SUB_IMAGE3D, 11);
     if (n) {
 	n[1].e = target;
