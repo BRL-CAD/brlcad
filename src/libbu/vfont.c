@@ -127,7 +127,7 @@ vfont_get(char *font)
     register struct vfont *vfp = VFONT_NULL;
     register FILE *fp = NULL;
     register int i;
-    char fname[FONTNAMESZ];
+    char fname[FONTNAMESZ] = {'\0'};
     unsigned char header[2*5];		/* 5 16-bit vax shorts */
     unsigned char dispatch[10*256];	/* 256 10-byte structs */
     uint16_t magic;
