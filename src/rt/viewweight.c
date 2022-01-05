@@ -236,10 +236,10 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	struct directory *dp;
 	dp = db_lookup(ap->a_rt_i->rti_dbip, "_DENSITIES", LOOKUP_QUIET);
 	if (dp != (struct directory *)NULL) {
-	    int ret, ecnt;
-	    char *buf;
-	    struct rt_db_internal intern;
-	    struct rt_binunif_internal *bip;
+	    int ret=0, ecnt=0;
+	    char *buf = NULL;
+	    struct rt_db_internal intern = RT_DB_INTERNAL_INIT_ZERO;
+	    struct rt_binunif_internal *bip = NULL;
 	    struct bu_vls msgs = BU_VLS_INIT_ZERO;
 	    if (rt_db_get_internal(&intern, dp, ap->a_rt_i->rti_dbip, NULL, &rt_uniresource) < 0) {
 		bu_log("Could not import %s\n", dp->d_namep);
@@ -249,7 +249,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 		goto view_init_rtweight_fail;
 
 	    bip = (struct rt_binunif_internal *)intern.idb_ptr;
-	    RT_CHECK_BINUNIF (bip);
+	    RT_CHECK_BINUNIF(bip);
 
 	    buf = (char *)bu_calloc(bip->count+1, sizeof(char), "density buffer");
 	    memcpy(buf, bip->u.int8, bip->count);
