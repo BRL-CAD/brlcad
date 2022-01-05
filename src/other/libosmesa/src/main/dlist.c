@@ -883,7 +883,7 @@ save_Bitmap(GLsizei width, GLsizei height,
     GET_CURRENT_CONTEXT(ctx);
     GLvoid *image = _mesa_unpack_bitmap(width, height, pixels, &ctx->Unpack);
     Node *n;
-    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+    ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_BITMAP, 7);
     if (n) {
 	n[1].i = (GLint) width;
