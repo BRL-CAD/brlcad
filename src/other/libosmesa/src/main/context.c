@@ -1118,8 +1118,10 @@ _mesa_initialize_context(GLcontext *ctx,
     ctx->Save = alloc_dispatch_table();
     if (!ctx->Exec || !ctx->Save) {
 	free_shared_state(ctx, ctx->Shared);
-	if (ctx->Exec)
+	if (ctx->Exec) {
 	    _mesa_free(ctx->Exec);
+	    ctx->Exec = NULL;
+	}
     }
     _mesa_init_exec_table(ctx->Exec);
     ctx->CurrentDispatch = ctx->Exec;

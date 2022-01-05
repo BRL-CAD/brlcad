@@ -113,6 +113,9 @@
 void
 _mesa_init_exec_table(struct _glapi_table *exec)
 {
+    if (!exec)
+	return;
+
 #if _HAVE_FULL_GL
     _mesa_loopback_init_api_table(exec);
 #endif
