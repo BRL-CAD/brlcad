@@ -483,7 +483,7 @@ _mesa_LightModelfv(GLenum pname, const GLfloat *params)
 void GLAPIENTRY
 _mesa_LightModeliv(GLenum pname, const GLint *params)
 {
-    GLfloat fparam[4];
+    GLfloat fparam[4] = {0.0};
 
     switch (pname) {
 	case GL_LIGHT_MODEL_AMBIENT:

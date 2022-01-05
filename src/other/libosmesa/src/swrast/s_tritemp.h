@@ -693,59 +693,58 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 	 */
 
 	{
-	    GLint subTriangle;
+	    GLint subTriangle = 0;
 	    GLinterp fxLeftEdge = 0, fxRightEdge = 0;
 	    GLinterp fdxLeftEdge = 0, fdxRightEdge = 0;
 	    GLinterp fError = 0, fdError = 0;
 #ifdef PIXEL_ADDRESS
 	    PIXEL_TYPE *pRow = NULL;
-	    GLint dPRowOuter = 0, dPRowInner;  /* offset in bytes */
+	    GLint dPRowOuter = 0, dPRowInner = 0;  /* offset in bytes */
 #endif
 #ifdef INTERP_Z
 #  ifdef DEPTH_TYPE
-	    struct gl_renderbuffer *zrb
-		    = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+	    struct gl_renderbuffer *zrb = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
 	    DEPTH_TYPE *zRow = NULL;
-	    GLint dZRowOuter = 0, dZRowInner;  /* offset in bytes */
+	    GLint dZRowOuter = 0, dZRowInner = 0;  /* offset in bytes */
 #  endif
 	    GLuint zLeft = 0;
-	    GLfixed fdzOuter = 0, fdzInner;
+	    GLfixed fdzOuter = 0, fdzInner = 0;
 #endif
 #ifdef INTERP_W
-	    GLfloat wLeft = 0, dwOuter = 0, dwInner;
+	    GLfloat wLeft = 0, dwOuter = 0, dwInner = 0;
 #endif
 #ifdef INTERP_FOG
-	    GLfloat fogLeft = 0, dfogOuter = 0, dfogInner;
+	    GLfloat fogLeft = 0, dfogOuter = 0, dfogInner = 0;
 #endif
 #ifdef INTERP_RGB
-	    ColorTemp rLeft = 0, fdrOuter = 0, fdrInner;
-	    ColorTemp gLeft = 0, fdgOuter = 0, fdgInner;
-	    ColorTemp bLeft = 0, fdbOuter = 0, fdbInner;
+	    ColorTemp rLeft = 0, fdrOuter = 0, fdrInner = 0;
+	    ColorTemp gLeft = 0, fdgOuter = 0, fdgInner = 0;
+	    ColorTemp bLeft = 0, fdbOuter = 0, fdbInner = 0;
 #endif
 #ifdef INTERP_ALPHA
-	    ColorTemp aLeft = 0, fdaOuter = 0, fdaInner;
+	    ColorTemp aLeft = 0, fdaOuter = 0, fdaInner = 0;
 #endif
 #ifdef INTERP_SPEC
-	    ColorTemp srLeft=0, dsrOuter=0, dsrInner;
-	    ColorTemp sgLeft=0, dsgOuter=0, dsgInner;
-	    ColorTemp sbLeft=0, dsbOuter=0, dsbInner;
+	    ColorTemp srLeft=0, dsrOuter=0, dsrInner = 0;
+	    ColorTemp sgLeft=0, dsgOuter=0, dsgInner = 0;
+	    ColorTemp sbLeft=0, dsbOuter=0, dsbInner = 0;
 #endif
 #ifdef INTERP_INDEX
-	    GLfixed iLeft=0, diOuter=0, diInner;
+	    GLfixed iLeft=0, diOuter=0, diInner = 0;
 #endif
 #ifdef INTERP_INT_TEX
-	    GLfixed sLeft=0, dsOuter=0, dsInner;
-	    GLfixed tLeft=0, dtOuter=0, dtInner;
+	    GLfixed sLeft=0, dsOuter=0, dsInner=0;
+	    GLfixed tLeft=0, dtOuter=0, dtInner=0;
 #endif
 #ifdef INTERP_ATTRIBS
-	    GLfloat sLeft[FRAG_ATTRIB_MAX];
-	    GLfloat tLeft[FRAG_ATTRIB_MAX];
-	    GLfloat uLeft[FRAG_ATTRIB_MAX];
-	    GLfloat vLeft[FRAG_ATTRIB_MAX];
-	    GLfloat dsOuter[FRAG_ATTRIB_MAX], dsInner[FRAG_ATTRIB_MAX];
-	    GLfloat dtOuter[FRAG_ATTRIB_MAX], dtInner[FRAG_ATTRIB_MAX];
-	    GLfloat duOuter[FRAG_ATTRIB_MAX], duInner[FRAG_ATTRIB_MAX];
-	    GLfloat dvOuter[FRAG_ATTRIB_MAX], dvInner[FRAG_ATTRIB_MAX];
+	    GLfloat sLeft[FRAG_ATTRIB_MAX] = {0.0};
+	    GLfloat tLeft[FRAG_ATTRIB_MAX] = {0.0};
+	    GLfloat uLeft[FRAG_ATTRIB_MAX] = {0.0};
+	    GLfloat vLeft[FRAG_ATTRIB_MAX] = {0.0};
+	    GLfloat dsOuter[FRAG_ATTRIB_MAX] = {0.0}, dsInner[FRAG_ATTRIB_MAX] = {0.0};
+	    GLfloat dtOuter[FRAG_ATTRIB_MAX] = {0.0}, dtInner[FRAG_ATTRIB_MAX] = {0.0};
+	    GLfloat duOuter[FRAG_ATTRIB_MAX] = {0.0}, duInner[FRAG_ATTRIB_MAX] = {0.0};
+	    GLfloat dvOuter[FRAG_ATTRIB_MAX] = {0.0}, dvInner[FRAG_ATTRIB_MAX] = {0.0};
 #endif
 
 	    for (subTriangle=0; subTriangle<=1; subTriangle++) {

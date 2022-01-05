@@ -52,7 +52,7 @@ _mesa_Fogi(GLenum pname, GLint param)
 void GLAPIENTRY
 _mesa_Fogiv(GLenum pname, const GLint *params)
 {
-    GLfloat p[4];
+    GLfloat p[4] = {0};
     switch (pname) {
 	case GL_FOG_MODE:
 	case GL_FOG_DENSITY:
