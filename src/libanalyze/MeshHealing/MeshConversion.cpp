@@ -402,7 +402,7 @@ int
 PolygonalMesh::addVertexRecord(double coordinates[3])
 {
     int last_vertex_id = vertexlist[vertexlist.size() - 1].vertex_id;
-    DCEL_Vertex new_vertex;
+    DCEL_Vertex new_vertex = DCEL_VERTEX_NULL;
     new_vertex.vertex_id = last_vertex_id + 1;
 
     new_vertex.coordinates[0] = coordinates[0];

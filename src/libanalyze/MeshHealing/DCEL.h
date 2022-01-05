@@ -42,6 +42,7 @@ struct DCEL_Vertex {
     double coordinates[3];
     DCEL_Edge* incident_edge;
 };
+#define DCEL_VERTEX_NULL {0, {0.0, 0.0, 0.0}, NULL}
 
 /* DCEL_Face record of a doubly-connected DCEL_Edge list includes:
     1. DCEL_Face ID,
