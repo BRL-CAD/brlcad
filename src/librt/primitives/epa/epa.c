@@ -396,7 +396,7 @@ rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     vect_t pprime;		/* P' */
     fastf_t k1, k2;		/* distance constants of solution */
     vect_t xlated;		/* translated vector */
-    struct hit hits[3];		/* 2 potential hit points */
+    struct hit hits[3] = {RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO}; /* 2 potential hit points */
     struct hit *hitp;	/* pointer to hit point */
 
     hitp = &hits[0];
