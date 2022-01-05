@@ -71,9 +71,9 @@ mult(double *o, double *b, int n)
 int
 main(int argc, char *argv[])
 {
-    double savebuffer[BU_PAGE_SIZE];
-    double xbuf[2 * (BU_PAGE_SIZE + 1)];
-    double ibuf[2 * (BU_PAGE_SIZE + 1)];		/* impulse response */
+    double savebuffer[BU_PAGE_SIZE] = {0.0};
+    double xbuf[2 * (BU_PAGE_SIZE + 1)] = {0.0};
+    double ibuf[2 * (BU_PAGE_SIZE + 1)] = {0.0};		/* impulse response */
 
     int i;
     int M = 128;	/* kernel size */
