@@ -4439,7 +4439,7 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
 	return;
     }
     _mesa_memcpy(idCopy, ids, num * sizeof(GLuint));
-    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+    ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, idCopy);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_TRACK_MATRIX_NV, 2);
     if (n) {
 	n[1].i = num;
