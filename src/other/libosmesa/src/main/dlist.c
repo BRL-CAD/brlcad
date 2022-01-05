@@ -1773,7 +1773,7 @@ save_DrawPixels(GLsizei width, GLsizei height,
     GLvoid *image = unpack_image(2, width, height, 1, format, type,
 				 pixels, &ctx->Unpack);
     Node *n;
-    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+    ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_DRAW_PIXELS, 5);
     if (n) {
 	n[1].i = width;
