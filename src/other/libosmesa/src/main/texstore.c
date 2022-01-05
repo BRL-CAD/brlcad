@@ -539,6 +539,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
     GLboolean freeSrcImage = GL_FALSE;
     GLint img, row;
     GLchan *tempImage, *dst;
+    GLfloat *convImage = NULL;
 
     ASSERT(dims >= 1 && dims <= 3);
 
@@ -560,7 +561,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
 	(dims >= 2 && ctx->Pixel.Convolution2DEnabled) ||
 	(dims >= 2 && ctx->Pixel.Separable2DEnabled)) {
 	/* get convolved image */
-	GLfloat *convImage = make_temp_float_image(ctx, dims,
+	convImage = make_temp_float_image(ctx, dims,
 			     logicalBaseFormat,
 			     logicalBaseFormat,
 			     srcWidth, srcHeight, srcDepth,
@@ -581,8 +582,11 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
     /* unpack and transfer the source image */
     tempImage = (GLchan *) _mesa_malloc(srcWidth * srcHeight * srcDepth
 					* components * sizeof(GLchan));
-    if (!tempImage)
+    if (!tempImage) {
+	if (convImage)
+	    _mesa_free(convImage);
 	return NULL;
+    }
 
     dst = tempImage;
     for (img = 0; img < srcDepth; img++) {
