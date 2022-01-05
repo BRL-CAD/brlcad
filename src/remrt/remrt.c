@@ -2856,8 +2856,8 @@ start_servers(struct timeval *nowp)
 static void
 eat_script(FILE *fp)
 {
-    char *buf;
-    char *ebuf;
+    char *buf = NULL;
+    char *ebuf = NULL;
     char *nsbuf = NULL;
     int argc;
     char *argv[64+1];
@@ -2870,16 +2870,15 @@ eat_script(FILE *fp)
     bu_log("%s Starting to scan animation script\n", stamp());
 
     /* Once only, collect up any prelude */
-    while ((buf = rt_read_cmd(fp)) != (char *)0) {
+    while ((buf = rt_read_cmd(fp)) != NULL) {
 	if (bu_strncmp(buf, "start", 5) == 0) {
-	    bu_free(buf, "prelude line");
 	    break;
 	}
 	bu_vls_strcat(&prelude, buf);
 	bu_vls_strcat(&prelude, ";");
 	bu_free(buf, "prelude line");
     }
-    if (buf == (char *)0) {
+    if (buf == NULL) {
 	bu_log("unexpected EOF while reading script for first frame 'start'\n");
 	bu_vls_free(&prelude);
 	return;
@@ -2890,7 +2889,7 @@ eat_script(FILE *fp)
 	int needtree;
 	needtree = 0;
 	/* Gobble until "end" keyword seen */
-	while ((ebuf = rt_read_cmd(fp)) != (char *)0) {
+	while ((ebuf = rt_read_cmd(fp)) != NULL) {
 	    if (bu_strncmp(ebuf, "end", 3) == 0) {
 		bu_free(ebuf, "end line");
 		break;
@@ -2962,6 +2961,8 @@ out:
     bu_vls_free(&finish);
     if (nsbuf)
 	bu_free(nsbuf, "script start line");
+    if (buf)
+	bu_free(buf, "buf");
 
     /* For a few hundred frames, it all can take a little while */
     bu_log("%s Animation script loaded\n", stamp());
