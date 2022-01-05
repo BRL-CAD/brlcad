@@ -139,6 +139,23 @@ do {									\
 
 /**
  * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair, plus freeing a resource.
+ *
+ * \param ctx GL context.
+ */
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE(ctx, _tofree)			\
+do {									\
+   if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
+       ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
+      _mesa_compile_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
+      _mesa_free(_tofree);						\
+      return;								\
+   }									\
+} while (0)
+
+
+/**
+ * Macro to assert that the API call was made outside the
  * glBegin()/glEnd() pair and flush the vertices.
  *
  * \param ctx GL context.
@@ -148,6 +165,20 @@ do {									\
    ASSERT_OUTSIDE_SAVE_BEGIN_END(ctx);					\
    SAVE_FLUSH_VERTICES(ctx);						\
 } while (0)
+
+/**
+ * Macro to assert that the API call was made outside the
+ * glBegin()/glEnd() pair and flush the vertices.
+ *
+ * \param ctx GL context.
+ */
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, _tofree)	\
+do {									\
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE(ctx, _tofree);			\
+   SAVE_FLUSH_VERTICES(ctx);						\
+} while (0)
+
+
 
 /**
  * Macro to assert that the API call was made outside the
@@ -161,7 +192,6 @@ do {									\
    ASSERT_OUTSIDE_SAVE_BEGIN_END_WITH_RETVAL(ctx, retval);		\
    SAVE_FLUSH_VERTICES(ctx);						\
 } while (0)
-
 
 
 /**
@@ -4384,7 +4414,7 @@ save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
     }
     _mesa_memcpy(programCopy, program, len);
 
-    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+    ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, programCopy);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_LOAD_PROGRAM_NV, 4);
     if (n) {
 	n[1].e = target;
