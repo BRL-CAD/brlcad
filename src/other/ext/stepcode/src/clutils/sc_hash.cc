@@ -51,6 +51,7 @@ void *SC_HASHfind(Hash_TableP t, char *s)
 
     e.key = s;
     e.symbol = 0; /*  initialize to 0 - 25-Apr-1994 - kcm */
+    e.type = '*';
     ep = SC_HASHsearch(t, &e, HASH_FIND);
     return(ep ? ep->data : 0);
 }
@@ -63,6 +64,7 @@ void SC_HASHinsert(Hash_TableP t, char *s, void *data)
     e.key = s;
     e.data = data;
     e.symbol = 0;
+    e.type = '*';
     e2 = SC_HASHsearch(t, &e, HASH_INSERT);
     if(e2) {
         fprintf(stderr, "%s: Redeclaration of %s\n", __func__, s);
