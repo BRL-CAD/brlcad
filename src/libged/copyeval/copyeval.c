@@ -39,7 +39,8 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     struct _ged_trace_data gtd;
     struct directory *dp;
     struct rt_db_internal *ip;
-    struct rt_db_internal internal, new_int;
+    struct rt_db_internal internal = RT_DB_INTERNAL_INIT_ZERO;
+    struct rt_db_internal new_int = RT_DB_INTERNAL_INIT_ZERO;
 
     char *tok;
     int endpos = 0;
