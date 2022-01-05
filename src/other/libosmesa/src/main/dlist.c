@@ -1218,7 +1218,7 @@ save_ColorTable(GLenum target, GLenum internalFormat,
 	GLvoid *image = unpack_image(1, width, 1, 1, format, type, table,
 				     &ctx->Unpack);
 	Node *n;
-	ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+	ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_COLOR_TABLE, 6);
 	if (n) {
 	    n[1].e = target;
