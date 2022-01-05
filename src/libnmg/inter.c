@@ -4116,22 +4116,22 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
 void
 nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list, struct bu_list *vlfree)
 {
-    struct bu_ptbl eg_list;
-    struct edge_g_lseg **eg1;
-    struct edgeuse *eu1;
-    struct edgeuse *eu2;
-    fastf_t dist[2];
+    struct bu_ptbl eg_list = BU_PTBL_INIT_ZERO;
+    struct edge_g_lseg **eg1 = NULL;
+    struct edgeuse *eu1 = NULL;
+    struct edgeuse *eu2 = NULL;
+    fastf_t dist[2] = {0.0, 0.0};
     int code = 0;
-    point_t eg_pt2d;	/* 2D */
-    vect_t eg_dir2d;	/* 2D */
-    struct loopuse *lu1;
-    point_t hit3d;
-    point_t hit2d;		/* 2D */
-    struct edgeuse *new_eu;
-    size_t eu1_index;
-    size_t eu2_index;
-    int nmg_class;
-    fastf_t distance;
+    point_t eg_pt2d = VINIT_ZERO;	/* 2D */
+    vect_t eg_dir2d = VINIT_ZERO;	/* 2D */
+    struct loopuse *lu1 = NULL;
+    point_t hit3d = VINIT_ZERO;
+    point_t hit2d = VINIT_ZERO;		/* 2D */
+    struct edgeuse *new_eu = NULL;
+    size_t eu1_index = 0;
+    size_t eu2_index = 0;
+    int nmg_class = 0;
+    fastf_t distance = 0.0;
 
     NMG_CK_INTER_STRUCT(is);
     NMG_CK_FACEUSE(fu1);
