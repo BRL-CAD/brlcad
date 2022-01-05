@@ -1231,8 +1231,8 @@ char *TYPEget_express_type(const Type t)
 {
     Class_Of_Type class;
     Type bt;
-    char retval [BUFSIZ+1];
-    char *n, * permval, * aggr_type;
+    char retval [BUFSIZ+1] = {'\0'};
+    char *n=NULL, *permval=NULL, *aggr_type=NULL;
 
 
     /*  1.  "DEFINED" types */
