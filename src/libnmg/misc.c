@@ -295,16 +295,16 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 {
     fastf_t extreme_value=(-MAX_FASTF);
     fastf_t extreme_slope=(-MAX_FASTF);
-    vect_t edge;
-    vect_t normal;
-    struct face *f_top=(struct face *)NULL;
-    struct edge *e_top=(struct edge *)NULL;
-    struct vertex *vp_top=(struct vertex *)NULL;
-    struct loopuse *lu;
-    struct faceuse *fu;
-    struct edgeuse *eu, *eu1;
-    struct vertexuse *vu;
-    struct vertex *v1, *v2;
+    vect_t edge = VINIT_ZERO;
+    vect_t normal = VINIT_ZERO;
+    struct face *f_top = NULL;
+    struct edge *e_top = NULL;
+    struct vertex *vp_top = NULL;
+    struct loopuse *lu = NULL;
+    struct faceuse *fu = NULL;
+    struct edgeuse *eu=NULL, *eu1=NULL;
+    struct vertexuse *vu = NULL;
+    struct vertex *v1=NULL, *v2=NULL;
 
     if (nmg_debug & NMG_DEBUG_BASIC)
 	bu_log("nmg_find_top_face_in_dir(s = %p, dir=%d, flags = %p)\n",
@@ -6956,16 +6956,16 @@ nmg_faces_are_radial(const struct faceuse *fu1, const struct faceuse *fu2)
 int
 nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const point_t pt, const struct bn_tol *tol)
 {
-    struct faceuse *fu, *fu1;
-    struct edgeuse *eu, *eu1;
-    struct edge_g_lseg *eg;
-    struct vertex *v1, *v2;
-    struct model *m;
+    struct faceuse *fu=NULL, *fu1=NULL;
+    struct edgeuse *eu=NULL, *eu1 = NULL;
+    struct edge_g_lseg *eg = NULL;
+    struct vertex *v1=NULL, *v2=NULL;
+    struct model *m = NULL;
     vect_t e_dir = VINIT_ZERO;
-    struct bu_ptbl tmp_faces[2];
-    struct bu_ptbl faces;
-    int count;
-    long *flags;
+    struct bu_ptbl tmp_faces[2] = {BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO};
+    struct bu_ptbl faces = BU_PTBL_INIT_ZERO;
+    int count = 0;
+    long *flags = NULL;
 
     if (nmg_debug & NMG_DEBUG_BASIC)
 	bu_log("nmg_move_edge_thru_pnt(mv_eu=%p, pt=(%f %f %f))\n", (void *)mv_eu, V3ARGS(pt));
