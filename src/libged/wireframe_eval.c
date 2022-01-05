@@ -186,8 +186,8 @@ add_solid(const struct directory *dp,
     eptr->l.stp->st_dp = dp;
     eptr->l.stp->st_matp = mat;
 
-    struct rt_bot_internal *bot;
-    struct rt_db_internal intern2;
+    struct rt_bot_internal *bot = NULL;
+    struct rt_db_internal intern2 = RT_DB_INTERNAL_INIT_ZERO;
 
     if (dgcdp->do_polysolids) {
 	struct shell *s=(struct shell *)NULL;
