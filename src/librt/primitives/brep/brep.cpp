@@ -2073,8 +2073,8 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_t
 int
 rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
-    int ret;
-    struct rt_brep_internal *bi;
+    int ret = 0;
+    struct rt_brep_internal *bi = NULL;
 
     if (!r || !m || !ip || !ttol || !tol)
 	return -1;
@@ -2083,13 +2083,13 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     bi = (struct rt_brep_internal *)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    int fcnt, fncnt, ncnt, vcnt;
+    int fcnt=0, fncnt=0, ncnt=0, vcnt=0;
     int *faces = NULL;
     fastf_t *vertices = NULL;
     int *face_normals = NULL;
     fastf_t *normals = NULL;
 
-    struct bg_tess_tol cdttol;
+    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
     cdttol.abs = ttol->abs;
     cdttol.rel = ttol->rel;
     cdttol.norm = ttol->norm;
@@ -2103,7 +2103,6 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt, 0, NULL);
     ON_Brep_CDT_Destroy(s_cdt);
 
-    struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     BU_GET(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -2121,6 +2120,7 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     bot->normals = normals;
     bot->face_normals = face_normals;
 
+    struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_BOT;
