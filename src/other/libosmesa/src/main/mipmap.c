@@ -888,10 +888,10 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	    dstHeight == srcHeight &&
 	    dstDepth == srcDepth) {
 	    /* all done */
-	    if (srcImage->IsCompressed) {
-		_mesa_free((void *) srcData);
+	    if (srcData)
+		_mesa_free((void *)srcData);
+	    if (dstData)
 		_mesa_free(dstData);
-	    }
 	    return;
 	}
 
@@ -937,6 +937,10 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	    dstImage->Data = _mesa_alloc_texmemory(dstImage->CompressedSize);
 	    if (!dstImage->Data) {
 		_mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
+		if (srcData)
+		    _mesa_free((void *)srcData);
+		if (dstData)
+		    _mesa_free(dstData);
 		return;
 	    }
 	    /* srcData and dstData are already set */
@@ -949,6 +953,10 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 						   * dstDepth * bytesPerTexel);
 	    if (!dstImage->Data) {
 		_mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
+		if (srcData)
+		    _mesa_free((void *)srcData);
+		if (dstData)
+		    _mesa_free(dstData);
 		return;
 	    }
 	    srcData = (const GLubyte *) srcImage->Data;
@@ -985,6 +993,10 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 		break;
 	    default:
 		_mesa_problem(ctx, "bad dimensions in _mesa_generate_mipmaps");
+		if (srcData)
+		    _mesa_free((void *)srcData);
+		if (dstData)
+		    _mesa_free(dstData);
 		return;
 	}
 
@@ -1011,6 +1023,11 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	}
 
     } /* loop over mipmap levels */
+
+    if (srcData)
+	_mesa_free((void *)srcData);
+    if (dstData)
+	_mesa_free(dstData);
 }
 
 
