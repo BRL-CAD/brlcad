@@ -1472,6 +1472,9 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
     slang_operation op_id, op_assign;
     GLboolean result;
 
+    /* Initialize */
+    op_id.label = NULL;
+
     /* construct the left side of assignment */
     if (!slang_operation_construct(&op_id))
 	return GL_FALSE;
