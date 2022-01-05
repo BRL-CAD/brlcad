@@ -226,9 +226,10 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
 		    sprintf(str, "uniform[%d]", index);
 		    break;
 		case PROGRAM_STATE_VAR: {
-		    struct gl_program_parameter *param
-			    = prog->Parameters->Parameters + index;
-		    sprintf(str, "%s", _mesa_program_state_string(param->StateIndexes));
+		    struct gl_program_parameter *param = prog->Parameters->Parameters + index;
+		    char *sstr = _mesa_program_state_string(param->StateIndexes);
+		    sprintf(str, "%s", sstr);
+		    _mesa_free(sstr);
 		}
 		break;
 		case PROGRAM_ADDRESS:
