@@ -277,9 +277,9 @@ objects_gather(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
     ProMdl model;
     ProMdlType type;
     ProBoolean is_skel = PRO_B_FALSE;
-    wchar_t wname[CREO_NAME_MAX];
-    char name[CREO_NAME_MAX];
-    wchar_t *wname_saved;
+    wchar_t wname[CREO_NAME_MAX] = {'\0'};
+    char name[CREO_NAME_MAX] = {'\0'};
+    wchar_t *wname_saved = NULL;
     struct creo_conv_info *cinfo = (struct creo_conv_info *)app_data;
 
     /* Get feature name */
