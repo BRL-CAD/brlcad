@@ -249,7 +249,7 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
     int *face_normals = NULL;
     fastf_t *normals = NULL;
 
-    struct bg_tess_tol cdttol;
+    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
     cdttol.abs = ttol->abs;
     cdttol.rel = ttol->rel;
     cdttol.norm = ttol->norm;
@@ -323,7 +323,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
     double ovlp_max_smallest = DBL_MAX;
 
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol;
-    struct bg_tess_tol cdttol;
+    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
     cdttol.abs = ttol->abs;
     cdttol.rel = ttol->rel;
     cdttol.norm = ttol->norm;
