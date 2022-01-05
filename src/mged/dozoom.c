@@ -50,8 +50,8 @@ void
 dozoom(int which_eye)
 {
     int ndrawn = 0;
-    fastf_t inv_viewsize;
-    mat_t newmat;
+    fastf_t inv_viewsize = 0.0;
+    mat_t newmat = MAT_INIT_ZERO;
     matp_t mat = newmat;
     short r = -1;
     short g = -1;
