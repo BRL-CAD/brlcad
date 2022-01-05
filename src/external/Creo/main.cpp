@@ -34,6 +34,8 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     BU_GET(cinfo->output_file, struct bu_vls);
     bu_vls_init(cinfo->output_file);
 
+    cinfo->wdbp = NULL;
+
     /* Region ID */
     cinfo->reg_id = 1000;
 
@@ -126,8 +128,10 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
     delete cinfo->creo_name_map;
     delete cinfo->creo_names;
 
-    if (cinfo->logger) fclose(cinfo->logger);
-    wdb_close(cinfo->wdbp);
+    if (cinfo->logger)
+	fclose(cinfo->logger);
+    if (cinfo->wdbp)
+	wdb_close(cinfo->wdbp);
 
     /* Finally, clear the container */
     //BU_PUT(cinfo, struct creo_conv_info);
