@@ -116,7 +116,7 @@ struct vldray
 void
 wray(struct partition *pp, struct application *ap, FILE *fp, const vect_t inormal)
 {
-    struct vldray vldray;
+    struct vldray vldray = {0};
     register struct hit *hitp= pp->pt_inhit;
 
     VMOVE(&(vldray.ox), hitp->hit_point);
