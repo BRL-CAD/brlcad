@@ -1307,7 +1307,7 @@ save_ColorSubTable(GLenum target, GLsizei start, GLsizei count,
     GLvoid *image = unpack_image(1, count, 1, 1, format, type, table,
 				 &ctx->Unpack);
     Node *n;
-    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+    ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_COLOR_SUB_TABLE, 6);
     if (n) {
 	n[1].e = target;
