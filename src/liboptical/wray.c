@@ -153,9 +153,9 @@ wray(struct partition *pp, struct application *ap, FILE *fp, const vect_t inorma
 void
 wraypts(vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FILE *fp)
 {
-    struct vldray vldray;
-    vect_t norm;
-    size_t ret;
+    struct vldray vldray = {0};
+    vect_t norm = VINIT_ZERO;
+    size_t ret = 0;
 
     VMOVE(&(vldray.ox), in);
     VSUB2(&(vldray.rx), out, in);
