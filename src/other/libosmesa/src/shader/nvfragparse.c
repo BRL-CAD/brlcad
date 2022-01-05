@@ -214,7 +214,7 @@ static struct instruction_pattern
     MatchInstruction(const GLubyte *token)
 {
     const struct instruction_pattern *inst;
-    struct instruction_pattern result;
+    struct instruction_pattern result = {NULL, (enum prog_opcode) -1, 0, 0, 0};
 
     for (inst = Instructions; inst->name; inst++) {
 	if (_mesa_strncmp((const char *) token, inst->name, 3) == 0) {
