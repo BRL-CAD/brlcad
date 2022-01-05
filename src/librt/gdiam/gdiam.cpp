@@ -1847,6 +1847,7 @@ public:
         int        u, v, s, t;
         gdiam_real     ang1, ang2, ang3, tmp_area;
         bbox_2d_info  tmp_bbox;
+	tmp_bbox.area = 0.0;
 
         angles = (gdiam_real *)calloc(ch.size(), sizeof( gdiam_real ));
         assert( angles != NULL );
