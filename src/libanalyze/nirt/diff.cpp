@@ -283,11 +283,13 @@ class diff_segment {
 	nirt_seg *seg;
 	std::pair<long, long> trans_start = {LONG_MAX, LONG_MAX};
 	std::pair<long, long> trans_end = {LONG_MAX, LONG_MAX};
+	struct nirt_diff_state *nds;
 
 	diff_segment()
 	{
 	    done = false;
 	    seg = NULL;
+	    nds = NULL;
 	}
 
 	diff_segment(const diff_segment &other)
@@ -317,7 +319,6 @@ class diff_segment {
 	    return (seg < other.seg);
 	}
 
-	struct nirt_diff_state *nds;
 
 	// Define an equality check that doesn't involve the origin type and
 	// uses geometry tolerances.
