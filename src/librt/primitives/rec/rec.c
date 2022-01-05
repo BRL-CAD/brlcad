@@ -673,7 +673,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     vect_t pprime;		/* P' */
     fastf_t k1, k2;		/* distance constants of solution */
     vect_t xlated;		/* translated vector */
-    struct hit hits[3];	/* 4 potential hit points */
+    struct hit hits[4] = {RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO};	/* 4 potential hit points */
     struct hit *hitp;	/* pointer to hit point */
     fastf_t b;		/* coeff of polynomial */
     fastf_t root;		/* root of radical */
