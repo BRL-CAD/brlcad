@@ -151,7 +151,7 @@ ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fast
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
 
-    bv_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], 5, 0);
+    bv_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], tsg->txt_rot_angle);
     bv_vlist_bbox(&vhead, &bmin, &bmax, NULL, NULL);
 
     *length = bmax[0] - ref_pt[0];
@@ -453,7 +453,7 @@ seg_to_vlist(struct bu_list *vlfree, struct bu_list *vhead, const struct bg_tess
 	    }
 	    ant_pos_adjs(tsg, annot_ip);
 	    V2ADD2(pt, V, annot_ip->verts[tsg->ref_pt]);
-	    bv_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], 5, 0);
+	    bv_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], tsg->txt_rot_angle);
 	    break;
 	case CURVE_CARC_MAGIC:
 	    {
@@ -951,6 +951,10 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 		bu_vls_init(&tsg->label);
 		bu_vls_strcpy(&tsg->label, (const char*)ptr);
 		ptr += bu_vls_strlen(&tsg->label) + 1;
+		tsg->txt_size = ntohl(*(uint32_t*)ptr);
+		ptr += SIZEOF_NETWORK_DOUBLE;
+		tsg->txt_rot_angle = ntohl(*(uint32_t*)ptr);
+		ptr += SIZEOF_NETWORK_DOUBLE;
 		annot_ip->ant.segments[seg_no] = (void *)tsg;
 		break;
 	    case CURVE_CARC_MAGIC:
@@ -1089,11 +1093,11 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		break;
 	    case ANN_TSEG_MAGIC:
 		tseg = (struct txt_seg*)lng;
-		/* magic + ref_pt + pt_rel_pos + label->vls_str length + 1 for the null terminator*/
-		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG + bu_vls_strlen(&tseg->label) + 1;
+		/* magic + pt_rel_pos + (double) txt_size + (double) txt_rot_angle + label->vls_str length + 1 for the null terminator */
+		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG + 2 * SIZEOF_NETWORK_DOUBLE + bu_vls_strlen(&tseg->label) + 1;
 		break;
 	    case CURVE_CARC_MAGIC:
-		/* magic + start + end + orientation + center_is_left + (double)radius*/
+		/* magic + start + end + orientation + center_is_left + (double)radius */
 		ep->ext_nbytes += 5 * SIZEOF_NETWORK_LONG + SIZEOF_NETWORK_DOUBLE;
 		break;
 	    case CURVE_NURB_MAGIC:
@@ -1181,6 +1185,10 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		bu_strlcpy((char *)cp, bu_vls_addr(&tseg->label), bu_vls_strlen(&tseg->label) + 1);
 
 		cp += bu_vls_strlen(&tseg->label) + 1;
+		*(uint32_t*)cp = htonl(tseg->txt_size);
+		cp += SIZEOF_NETWORK_DOUBLE;
+		*(uint32_t*)cp = htonl(tseg->txt_rot_angle);
+		cp += SIZEOF_NETWORK_DOUBLE;
 		break;
 	    case CURVE_CARC_MAGIC:
 		cseg = (struct carc_seg *)lng;
@@ -1346,6 +1354,10 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 		sprintf(buf, "\t\tRelative position: %s\n", rel_pos);
 		bu_vls_strcat(str, buf);
 		sprintf(buf, "\tLabel text: %s\n", bu_vls_addr(&tsg->label));
+		bu_vls_strcat(str, buf);
+		sprintf(buf, "\tText size: %.1f\n", tsg->txt_size);
+		bu_vls_strcat(str, buf);
+		sprintf(buf, "\tText rotation angle: %.1f\n", tsg->txt_rot_angle);
 		bu_vls_strcat(str, buf);
 		break;
 	    case CURVE_CARC_MAGIC:
@@ -1677,7 +1689,7 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 		{
 		    struct txt_seg *tsg = (struct txt_seg *)ant->segments[j];
 		    ant_check_pos(tsg, &rel_pos);
-		    bu_vls_printf(vls, " { label %s ref_pt %d position %s }", bu_vls_addr(&tsg->label), tsg->ref_pt, rel_pos);
+		    bu_vls_printf(vls, " { label %s ref_pt %d position %s txt_size %.25g txt_rot_angle %.25g }", bu_vls_addr(&tsg->label), tsg->ref_pt, rel_pos, tsg->txt_size, tsg->txt_rot_angle);
 		}
 		break;
 	    case CURVE_CARC_MAGIC:
