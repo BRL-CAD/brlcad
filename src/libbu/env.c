@@ -61,9 +61,22 @@
 extern int setenv(const char *, const char *, int);
 #endif
 
+/* Modern environments will technically allow much longer strings, but for
+ * BRL-CAD's environment variable use cases if we're getting longer than this
+ * something is probably wrong.  Revisit if this proves too short in practice,
+ * but definitely want to see a valid real-world need before going bigger.
+ * (https://stackoverflow.com/q/1078031/2037687) */
+#define BU_ENV_MAXLEN 2047
+
 int
 bu_setenv(const char *name, const char *value, int overwrite)
 {
+    /* Sanity check setenv inputs */
+    if (name && strlen(name) > BU_ENV_MAXLEN)
+	return ENOMEM;
+    if (value && strlen(value) > BU_ENV_MAXLEN)
+	return ENOMEM;
+
 #ifdef HAVE_SETENV
     return setenv(name, value, overwrite);
 #else
