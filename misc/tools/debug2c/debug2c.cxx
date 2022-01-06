@@ -60,40 +60,46 @@ struct dentry {
 int
 process_file(std::string f, std::map<std::string, std::vector<struct dentry>> &entries, int verbose)
 {
-    std::regex srcfile_regex(".*debug[.](h|hpp|hxx)(\\.in)*$");
-    if (std::regex_match(std::string(f), srcfile_regex)) {
-	std::regex debug_regex("#define\\s+.*_DEBUG_.*\\s+0x.*");
-	std::string sline;
-	std::ifstream fs;
-	fs.open(f);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << f << " for reading, skipping\n";
-	    return -1;
-	}
-	while (std::getline(fs, sline)) {
-	    if (std::regex_match(sline, debug_regex)) {
-		std::regex unused_regex(".*UNUSED.*");
-		if (std::regex_match(sline, unused_regex)) {
-		    continue;
-		}
-		std::regex parse_regex("#define\\s+([A-Z]+)_DEBUG_([A-Z_0-9]+)\\s+([0-9x]+)[/(< \t*]*([^*]*).*");
-		std::smatch parsevar;
-		if (!std::regex_search(sline, parsevar, parse_regex)) {
-		    std::cerr << "Error, debug2c could not parse debug variable definition:\n";
-		    std::cerr << sline << "\n";
-		    return -1;
-		} else {
-		    struct dentry nentry;
-		    nentry.key = std::string(parsevar[2]);
-		    nentry.hex = std::string(parsevar[3]);
-		    nentry.info = std::string(parsevar[4]);
-		    entries[std::string(parsevar[1])].push_back(nentry);
+    try {
+	std::regex srcfile_regex(".*debug[.](h|hpp|hxx)(\\.in)*$");
+
+	if (std::regex_match(std::string(f), srcfile_regex)) {
+	    std::regex debug_regex("#define\\s+.*_DEBUG_.*\\s+0x.*");
+	    std::string sline;
+	    std::ifstream fs;
+	    fs.open(f);
+	    if (!fs.is_open()) {
+		std::cerr << "Unable to open " << f << " for reading, skipping\n";
+		return -1;
+	    }
+	    while (std::getline(fs, sline)) {
+		if (std::regex_match(sline, debug_regex)) {
+		    std::regex unused_regex(".*UNUSED.*");
+		    if (std::regex_match(sline, unused_regex)) {
+			continue;
+		    }
+		    std::regex parse_regex("#define\\s+([A-Z]+)_DEBUG_([A-Z_0-9]+)\\s+([0-9x]+)[/(< \t*]*([^*]*).*");
+		    std::smatch parsevar;
+		    if (!std::regex_search(sline, parsevar, parse_regex)) {
+			std::cerr << "Error, debug2c could not parse debug variable definition:\n";
+			std::cerr << sline << "\n";
+			return -1;
+		    } else {
+			struct dentry nentry;
+			nentry.key = std::string(parsevar[2]);
+			nentry.hex = std::string(parsevar[3]);
+			nentry.info = std::string(parsevar[4]);
+			entries[std::string(parsevar[1])].push_back(nentry);
+		    }
 		}
 	    }
+	    fs.close();
 	}
-	fs.close();
     }
-
+    catch (const std::regex_error& e) {
+	std::cout << "regex error: " << e.what() << '\n';
+	return -1;
+    }
     return 0;
 }
 
