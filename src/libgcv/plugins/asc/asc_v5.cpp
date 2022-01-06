@@ -357,6 +357,8 @@ asc_write_v5(
 	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END;
 
+    fclose(v5ofp);
+
     return 1;
 }
 
