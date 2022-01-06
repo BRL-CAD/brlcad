@@ -899,7 +899,7 @@ SDAI_Application_instance *STEPfile::CreateInstance(istream &in, ostream &out)
             << "\': " << result.UserMsg()
             << ".\n\tData lost: " << tmpbuf << "\n\n";
 	if (scopelist)
-	   delete scopelist;
+	   delete[] scopelist;
 	return ENTITY_NULL;
     }
     obj -> STEPfile_id = fileid;
@@ -910,7 +910,7 @@ SDAI_Application_instance *STEPfile::CreateInstance(istream &in, ostream &out)
     ReadTokenSeparator(in);
 
     if (scopelist)
-       delete scopelist;
+       delete[] scopelist;
 
     return obj;
 }
