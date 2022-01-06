@@ -217,14 +217,16 @@ look_for(void (*verbose)(const char *, ...), look_for_type_t type, const char *l
 static void
 set_if_unset(void (*echo)(const char *, ...), void (*verbose)(const char *, ...), const char *var, const char *val)
 {
-    const char *setval = getenv(var);
-
     if (!var || !val) {
 	return;
     }
+
+    const char *setval = getenv(var);
+
     if (!echo) {
 	echo = sink;
     }
+
     if (!verbose) {
 	verbose = sink;
     }
