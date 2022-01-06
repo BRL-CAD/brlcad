@@ -36,6 +36,7 @@
 #endif
 #include "bio.h"
 
+#include <errno.h>
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
@@ -324,8 +325,14 @@ main(int argc, char *argv[])
 	bu_exit(OPTS_ERROR, "ERROR: cannot skip the same input stream by different amounts\n");
     }
 
-    fstat(fileno(f1), &sf1);
-    fstat(fileno(f2), &sf2);
+    errno = 0;
+    if (fstat(fileno(f1), &sf1)) {
+	bu_log("Warning - f1 fstat failed: %s\n", strerror(errno));
+    }
+    errno = 0;
+    if (fstat(fileno(f2), &sf2)) {
+	bu_log("Warning - f2 fstat failed: %s\n", strerror(errno));
+    }
 
     bu_log("FILE1_size(%zu) FILE1_skip(%zu) FILE2_size(%zu) FILE2_skip(%zu)\n", (size_t)sf1.st_size, f1_skip, (size_t)sf2.st_size, f2_skip);
 
