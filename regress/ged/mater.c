@@ -46,6 +46,10 @@ int
 check_for_data_exported(const char *filename, const char *key)
 {
     struct bu_mapped_file *efile = bu_open_mapped_file(filename, "exported densities data");
+    if (!efile) {
+	bu_log("Error opening file %s\n", filename);
+	return -1;
+    }
     if (!strstr((char *)efile->buf, key)) {
 	bu_log("Error: 'mater -d export' file %s does not contain all expected data\n", filename);
 	bu_close_mapped_file(efile);
