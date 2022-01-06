@@ -662,14 +662,16 @@ osmesa_choose_line_function(GLcontext *ctx)
 #define RENDER_SPAN( span ) {				\
    GLuint i;						\
    GLuint *img = (GLuint *) PIXELADDR4(span.x, span.y);	\
-   for (i = 0; i < span.end; i++) {			\
-      const GLuint z = FixedToDepth(span.z);		\
-      if (z < zRow[i]) {				\
-         img[i] = pixel;				\
-         zRow[i] = z;					\
-      }							\
-      span.z += span.zStep;				\
-   }                                                    \
+   if (zRow) {						\
+      for (i = 0; i < span.end; i++) {			\
+         const GLuint z = FixedToDepth(span.z);		\
+         if (z < zRow[i]) {				\
+            img[i] = pixel;				\
+            zRow[i] = z;				\
+         }						\
+         span.z += span.zStep;				\
+      }                                                 \
+   }							\
 }
 #ifdef WIN32
 #include "..\swrast\s_tritemp.h"
