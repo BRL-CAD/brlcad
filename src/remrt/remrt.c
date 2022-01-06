@@ -2892,6 +2892,7 @@ eat_script(FILE *fp)
 	while ((ebuf = rt_read_cmd(fp)) != NULL) {
 	    if (bu_strncmp(ebuf, "end", 3) == 0) {
 		bu_free(ebuf, "end line");
+		ebuf = NULL;
 		break;
 	    }
 	    if (bu_strncmp(ebuf, "clean", 5) == 0) {
@@ -2926,6 +2927,7 @@ eat_script(FILE *fp)
 	if (argc < 2) {
 	    bu_log("bad 'start' line\n");
 	    bu_free(buf, "bad start line");
+	    buf = NULL;
 	    goto out;
 	}
 	frame = atoi(argv[1]);
