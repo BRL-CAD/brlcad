@@ -72,9 +72,11 @@ int
 bu_setenv(const char *name, const char *value, int overwrite)
 {
     /* Sanity check setenv inputs */
-    if (name && strlen(name) > BU_ENV_MAXLEN)
+    if (!name || !value)
+	return EINVAL;
+    if (strlen(name) > BU_ENV_MAXLEN)
 	return ENOMEM;
-    if (value && strlen(value) > BU_ENV_MAXLEN)
+    if (strlen(value) > BU_ENV_MAXLEN)
 	return ENOMEM;
 
 #ifdef HAVE_SETENV
