@@ -58,7 +58,7 @@ class SC_CORE_EXPORT AggrTypeDescriptor  :    public TypeDescriptor
         AggrTypeDescriptor(const char *nm, PrimitiveType ft,
                            Schema *origSchema, const char *d,
                            AggregateCreator f = 0)
-            : TypeDescriptor(nm, ft, origSchema, d), _bound1(0), _bound2(0), _uniqueElements(0), _aggrDomainType(NULL), CreateNewAggr(f) { }
+            : TypeDescriptor(nm, ft, origSchema, d), _bound1(0), _bound2(0), _uniqueElements(0), _aggrDomainType(NULL), CreateNewAggr(f), _bound1_type(bound_unset), _bound2_type(bound_unset), _bound1_callback(NULL), _bound2_callback(NULL) { }
         virtual ~AggrTypeDescriptor();
 
 
