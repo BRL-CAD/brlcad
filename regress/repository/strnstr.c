@@ -41,7 +41,7 @@ twobyte_strstr(const unsigned char *h, const unsigned char *n, size_t hlen)
 {
     size_t hpos = 0;
     uint16_t nw = n[0]<<8 | n[1], hw = h[0]<<8 | h[1];
-    for (h++; *h && hpos++ && hpos < hlen && hw != nw; hw = hw<<8 | *++h);
+    for (h++; *h && hpos < hlen && hw != nw; hw = hw<<8 | *++h) {hpos++;};
     return *h ? (char *)h-1 : 0;
 }
 
@@ -51,7 +51,7 @@ threebyte_strstr(const unsigned char *h, const unsigned char *n, size_t hlen)
     size_t hpos = 0;
     uint32_t nw = n[0]<<24 | n[1]<<16 | n[2]<<8;
     uint32_t hw = h[0]<<24 | h[1]<<16 | h[2]<<8;
-    for (h+=2; *h && hpos++ && hpos < hlen && hw != nw; hw = (hw|*++h)<<8);
+    for (h+=2; *h && hpos < hlen && hw != nw; hw = (hw|*++h)<<8) {hpos += 2;};
     return *h ? (char *)h-2 : 0;
 }
 
@@ -61,7 +61,7 @@ fourbyte_strstr(const unsigned char *h, const unsigned char *n, size_t hlen)
     size_t hpos = 0;
     uint32_t nw = n[0]<<24 | n[1]<<16 | n[2]<<8 | n[3];
     uint32_t hw = h[0]<<24 | h[1]<<16 | h[2]<<8 | h[3];
-    for (h+=3; *h && hpos++ && hpos < hlen && hw != nw; hw = hw<<8 | *++h);
+    for (h+=3; *h && hpos < hlen && hw != nw; hw = hw<<8 | *++h) {hpos += 3;};
     return *h ? (char *)h-3 : 0;
 }
 
