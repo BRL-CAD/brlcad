@@ -506,8 +506,10 @@ main(int ac, char *av[])
 	    num = bu_file_glob("benchmark-[0-9]*-run.log", paths);
 	    cnt = num;
 	    while (num > 0) {
-		bu_log("rm -f %s\n", paths[num-1]);
-		bu_file_delete(paths[num-1]);
+		if (paths) {
+		    bu_log("rm -f %s\n", paths[num-1]);
+		    bu_file_delete(paths[num-1]);
+		}
 		num--;
 	    }
 	    bu_argv_free(cnt, paths);
@@ -528,7 +530,8 @@ main(int ac, char *av[])
 		bu_log("\nThe following files must be removed manually:\n");
 		printed=1;
 	    }
-	    bu_log("%s ", paths[num-1]);
+	    if (paths)
+		bu_log("%s ", paths[num-1]);
 	    num--;
 	}
 	bu_argv_free(cnt, paths);
