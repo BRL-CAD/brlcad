@@ -194,26 +194,29 @@ tclify_name(const char *name)
 
 int
 asc_write_v5(
-	    struct gcv_context *UNUSED(c),
+	    struct gcv_context *c,
 	    const struct gcv_opts *UNUSED(o),
 	    const char *dest_path
 	    )
 {
-    FILE    *v5ofp = NULL;
+    FILE *v5ofp = NULL;
     if (!dest_path) return 0;
 
-    struct db_i	*dbip;
+    struct db_i	*dbip = c->dbip;
     struct directory *dp;
     const char *u;
 
-    if ((dbip = db_open(dest_path, DB_OPEN_READONLY)) == NULL) {
-	bu_log("Unable to open geometry database file '%s', aborting\n", dest_path);
-	return 1;
+    // TODO - eventually we should be able to do this behind the scenes, but
+    // for a first cut don't add the extra complication
+    if (db_version(dbip) == 4) {
+	bu_log("Attempting to write v5 asc output with a v4 database - first run db_upgrade to produce a v5 file\n");
+	return 0;
     }
 
-    RT_CK_DBI(dbip);
-    if (db_dirbuild(dbip)) {
-	bu_exit(1, "db_dirbuild failed\n");
+    v5ofp = fopen(dest_path, "wb");
+    if (!v5ofp) {
+	bu_log("Could not open %s for writing.\n", dest_path);
+	return 0;
     }
 
     /* write out the title and units special */
