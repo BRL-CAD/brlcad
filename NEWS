@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2021-XX-XX  Release 7.32.6                                     ---
 ----------------------------------------------------------------------
 
+* replaced original burst implementation with nburst - Cliff Yapp
 * fixed gcv option handling - Cliff Yapp
 * updated bundled Eigen dependency to v3.4.0 - Cliff Yapp
 * fixed bot_merge crash when bots are of different types - Cliff Yapp
