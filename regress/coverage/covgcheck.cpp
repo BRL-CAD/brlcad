@@ -178,81 +178,89 @@ cmd_cnt(regress_info_t &r, std::string &tfile, int verbosity)
 int
 main(int argc, const char *argv[])
 {
-    int verbosity = 0;
+    try {
 
-    if (argc < 3 || argc > 5) {
-	std::cerr << "Usage: covgcheck [-v] prog_list source_list\n";
-	return -1;
-    }
+	int verbosity = 0;
 
-    bu_setprogname(argv[0]);
-
-    const char *f1, *f2;
-
-    if (argc == 4) {
-	if (BU_STR_EQUAL(argv[1], "-v")) {
-	    verbosity = 1;
-	    f1 = argv[2];
-	    f2 = argv[3];
-	} else {
-	    bu_exit(-1, "invalid option %s", argv[1]);
-	}
-    } else {
-	f1 = argv[1];
-	f2 = argv[2];
-
-    }
-
-    regress_info_t r;
-    regex_init(r, f1, verbosity);
-
-    std::string sfile;
-    std::ifstream src_file_stream;
-    src_file_stream.open(f2);
-    if (!src_file_stream.is_open()) {
-	std::cerr << "Unable to open file list file " << argv[1] << "\n";
-	return -1;
-    }
-
-    while (std::getline(src_file_stream, sfile)) {
-	cmd_cnt(r, sfile, verbosity);
-    }
-
-    std::set<std::string> tested;
-    std::set<std::string> untested;
-    std::map<std::string, int>::iterator c_it;
-    for (c_it = r.cmd_cnts.begin(); c_it != r.cmd_cnts.end(); c_it++) {
-	std::string ename(c_it->first);
-	std::transform(ename.begin(), ename.end(), ename.begin(), [](unsigned char c){ return std::tolower(c); });
-	if (c_it->second) {
-	    //std::cout << ename << ": " << r.r_cnts[c_it->first] << "," << c_it->second << "\n";
-	    std::cout << ename << ": " << c_it->second << "\n";
-	    tested.insert(ename);
-	} else {
-	    untested.insert(ename);
-	}
-    }
-    if (untested.size()) {
-	std::cout << "Untested: ";
-	std::set<std::string>::iterator u_it;
-	size_t ucnt = 1;
-	for (u_it = untested.begin(); u_it != untested.end(); u_it++) {
-	    if (ucnt < untested.size()) {
-		std::cout << *u_it << ",";
-	    } else {
-		std::cout << *u_it << "\n";
-	    }
-	    ucnt++;
-	}
-    }
-
-    if (tested.size() != TESTED_EXPECTED) {
-	if (tested.size() < TESTED_EXPECTED) {
-	    std::cerr << "Tested executable set is less than expected!\n";
+	if (argc < 3 || argc > 5) {
+	    std::cerr << "Usage: covgcheck [-v] prog_list source_list\n";
 	    return -1;
-	} else {
-	    std::cerr << "NOTE: update tested executables count. Expected " << TESTED_EXPECTED << ", found " << tested.size() << "\n";
 	}
+
+	bu_setprogname(argv[0]);
+
+	const char *f1, *f2;
+
+	if (argc == 4) {
+	    if (BU_STR_EQUAL(argv[1], "-v")) {
+		verbosity = 1;
+		f1 = argv[2];
+		f2 = argv[3];
+	    } else {
+		bu_exit(-1, "invalid option %s", argv[1]);
+	    }
+	} else {
+	    f1 = argv[1];
+	    f2 = argv[2];
+
+	}
+
+	regress_info_t r;
+	regex_init(r, f1, verbosity);
+
+	std::string sfile;
+	std::ifstream src_file_stream;
+	src_file_stream.open(f2);
+	if (!src_file_stream.is_open()) {
+	    std::cerr << "Unable to open file list file " << argv[1] << "\n";
+	    return -1;
+	}
+
+	while (std::getline(src_file_stream, sfile)) {
+	    cmd_cnt(r, sfile, verbosity);
+	}
+
+	std::set<std::string> tested;
+	std::set<std::string> untested;
+	std::map<std::string, int>::iterator c_it;
+	for (c_it = r.cmd_cnts.begin(); c_it != r.cmd_cnts.end(); c_it++) {
+	    std::string ename(c_it->first);
+	    std::transform(ename.begin(), ename.end(), ename.begin(), [](unsigned char c){ return std::tolower(c); });
+	    if (c_it->second) {
+		//std::cout << ename << ": " << r.r_cnts[c_it->first] << "," << c_it->second << "\n";
+		std::cout << ename << ": " << c_it->second << "\n";
+		tested.insert(ename);
+	    } else {
+		untested.insert(ename);
+	    }
+	}
+	if (untested.size()) {
+	    std::cout << "Untested: ";
+	    std::set<std::string>::iterator u_it;
+	    size_t ucnt = 1;
+	    for (u_it = untested.begin(); u_it != untested.end(); u_it++) {
+		if (ucnt < untested.size()) {
+		    std::cout << *u_it << ",";
+		} else {
+		    std::cout << *u_it << "\n";
+		}
+		ucnt++;
+	    }
+	}
+
+	if (tested.size() != TESTED_EXPECTED) {
+	    if (tested.size() < TESTED_EXPECTED) {
+		std::cerr << "Tested executable set is less than expected!\n";
+		return -1;
+	    } else {
+		std::cerr << "NOTE: update tested executables count. Expected " << TESTED_EXPECTED << ", found " << tested.size() << "\n";
+	    }
+	}
+    }
+
+    catch (const std::regex_error& e) {
+	std::cout << "regex error: " << e.what() << '\n';
+	return -1;
     }
 
     return 0;

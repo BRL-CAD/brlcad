@@ -52,97 +52,106 @@
 int
 main(int argc, const char *argv[])
 {
-    if (argc < 3) {
-	std::cerr << "Usage: other_check [-v] licenses_list file_list\n";
-	return -1;
-    }
+    int ret = 0;
 
-    std::regex o_regex(".*[\\/]other[\\/](.*).dist$");
-    std::regex o_e_regex(".*[\\/]other[\\/]ext[\\/](.*).dist$");
-    std::regex txt_regex(".*[\\/](.*).txt$");
+    try {
 
-    std::set<std::string> dists;
-    std::set<std::string> licenses;
-
-    std::string lfile;
-    std::ifstream license_file_stream;
-    license_file_stream.open(argv[1]);
-    if (!license_file_stream.is_open()) {
-	std::cerr << "Unable to open license file list " << argv[1] << "\n";
-    }
-    while (std::getline(license_file_stream, lfile)) {
-	if (!std::regex_match(std::string(lfile), txt_regex)) {
-	    continue;
+	if (argc < 3) {
+	    std::cerr << "Usage: other_check [-v] licenses_list file_list\n";
+	    return -1;
 	}
-	std::smatch lfile_ref;
-	if (!std::regex_search(lfile, lfile_ref, txt_regex)) {
-	    continue;
-	}
-	std::string lroot = std::string(lfile_ref[1]);
-	licenses.insert(lroot);
-    }
-    license_file_stream.close();
 
-    std::string dfile;
-    std::ifstream dist_file_stream;
-    dist_file_stream.open(argv[2]);
-    if (!dist_file_stream.is_open()) {
-	std::cerr << "Unable to open dist file list " << argv[2] << "\n";
-    }
-    while (std::getline(dist_file_stream, dfile)) {
-	if (!std::regex_match(dfile, o_regex) && !std::regex_match(dfile, o_e_regex)) {
-	    continue;
+	std::regex o_regex(".*[\\/]other[\\/](.*).dist$");
+	std::regex o_e_regex(".*[\\/]other[\\/]ext[\\/](.*).dist$");
+	std::regex txt_regex(".*[\\/](.*).txt$");
+
+	std::set<std::string> dists;
+	std::set<std::string> licenses;
+
+	std::string lfile;
+	std::ifstream license_file_stream;
+	license_file_stream.open(argv[1]);
+	if (!license_file_stream.is_open()) {
+	    std::cerr << "Unable to open license file list " << argv[1] << "\n";
 	}
-	std::smatch dfile_ref;
-	if (std::regex_search(dfile, dfile_ref, o_e_regex)) {
-	    std::string droot = std::string(dfile_ref[1]);
-	    if (droot == std::string("perplex")) {
-		// perplex is a BRL-CAD developed tool, but is present in
-		// src/other/ext to support the stepcode build and simplify
-		// other build logic.  We don't need a separate license file
-		// for it, so we skip inserting it here.
+	while (std::getline(license_file_stream, lfile)) {
+	    if (!std::regex_match(std::string(lfile), txt_regex)) {
 		continue;
 	    }
-	    dists.insert(droot);
-	    continue;
+	    std::smatch lfile_ref;
+	    if (!std::regex_search(lfile, lfile_ref, txt_regex)) {
+		continue;
+	    }
+	    std::string lroot = std::string(lfile_ref[1]);
+	    licenses.insert(lroot);
 	}
-	if (std::regex_search(dfile, dfile_ref, o_regex)) {
-	    std::string droot = std::string(dfile_ref[1]);
-	    dists.insert(droot);
-	    continue;
+	license_file_stream.close();
+
+	std::string dfile;
+	std::ifstream dist_file_stream;
+	dist_file_stream.open(argv[2]);
+	if (!dist_file_stream.is_open()) {
+	    std::cerr << "Unable to open dist file list " << argv[2] << "\n";
+	}
+	while (std::getline(dist_file_stream, dfile)) {
+	    if (!std::regex_match(dfile, o_regex) && !std::regex_match(dfile, o_e_regex)) {
+		continue;
+	    }
+	    std::smatch dfile_ref;
+	    if (std::regex_search(dfile, dfile_ref, o_e_regex)) {
+		std::string droot = std::string(dfile_ref[1]);
+		if (droot == std::string("perplex")) {
+		    // perplex is a BRL-CAD developed tool, but is present in
+		    // src/other/ext to support the stepcode build and simplify
+		    // other build logic.  We don't need a separate license file
+		    // for it, so we skip inserting it here.
+		    continue;
+		}
+		dists.insert(droot);
+		continue;
+	    }
+	    if (std::regex_search(dfile, dfile_ref, o_regex)) {
+		std::string droot = std::string(dfile_ref[1]);
+		dists.insert(droot);
+		continue;
+	    }
+	}
+	dist_file_stream.close();
+
+	std::set<std::string> unmatched_licenses;
+
+	while (licenses.size() && dists.size()) {
+	    std::string l = *licenses.begin();
+	    licenses.erase(l);
+	    if (dists.find(l) != dists.end()) {
+		dists.erase(l);
+	    } else {
+		unmatched_licenses.insert(l);
+	    }
+	}
+
+	if (unmatched_licenses.size() || dists.size()) {
+	    ret = -1;
+	}
+
+	std::set<std::string>::iterator s_it;
+	if (unmatched_licenses.size()) {
+	    std::cout << "License files present in doc/legal/other with no corresponding dist file:\n";
+	    for (s_it = unmatched_licenses.begin(); s_it != unmatched_licenses.end(); s_it++) {
+		std::cout << *s_it << "\n";
+	    }
+	}
+	if (dists.size()) {
+	    std::cout << "Dist files present in src/other or src/other/ext with no corresponding license file:\n";
+	    for (s_it = dists.begin(); s_it != dists.end(); s_it++) {
+		std::cout << *s_it << "\n";
+	    }
 	}
     }
-    dist_file_stream.close();
 
-    std::set<std::string> unmatched_licenses;
-
-    while (licenses.size() && dists.size()) {
-	std::string l = *licenses.begin();
-	licenses.erase(l);
-	if (dists.find(l) != dists.end()) {
-	    dists.erase(l);
-	} else {
-	    unmatched_licenses.insert(l);
-	}
-    }
-
-    int ret = 0;
-    if (unmatched_licenses.size() || dists.size()) {
-	ret = -1;
-    }
-
-    std::set<std::string>::iterator s_it;
-    if (unmatched_licenses.size()) {
-	std::cout << "License files present in doc/legal/other with no corresponding dist file:\n";
-	for (s_it = unmatched_licenses.begin(); s_it != unmatched_licenses.end(); s_it++) {
-	    std::cout << *s_it << "\n";
-	}
-    }
-    if (dists.size()) {
-	std::cout << "Dist files present in src/other or src/other/ext with no corresponding license file:\n";
-	for (s_it = dists.begin(); s_it != dists.end(); s_it++) {
-	    std::cout << *s_it << "\n";
-	}
+    catch (const std::regex_error& e) {
+	std::cout << "regex error: " << e.what() << '\n';
+	return -1;
     }
 
     return ret;

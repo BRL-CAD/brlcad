@@ -139,98 +139,107 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 int
 main(int argc, const char *argv[])
 {
-    if (argc < 4) {
-	std::cerr << "Usage: embedded_check [-v] licenses_list file_list src_root\n";
-	return -1;
-    }
+    try {
 
-    std::regex f_regex("file:/(.*)");
-    std::regex o_regex(".*[\\/]other[\\/].*");
-    std::regex t_regex(".*[\\/]misc/tools[\\/].*");
-    std::regex c_regex(".*[\\/]misc/CMake[\\/].*");
-    std::regex r_regex(".*[\\/]misc/repoconv[\\/].*");
-    std::regex rw_regex(".*[\\/]misc/repowork[\\/].*");
-    std::regex d_regex(".*[\\/]doc[\\/].*");
-    std::regex l_regex(".*[\\/]embedded_check.cpp");
-    std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
-    std::regex svn_regex(".*[\\/][.]svn[\\/].*");
-    std::string root_path(argv[3]);
-
-    std::map<std::string, std::string> file_to_license;
-    std::set<std::string> unused_licenses;
-
-    int bad_ref_cnt = 0;
-    std::string lfile;
-    std::ifstream license_file_stream;
-    license_file_stream.open(argv[1]);
-    if (!license_file_stream.is_open()) {
-	std::cerr << "Unable to open license file list " << argv[1] << "\n";
-    }
-    while (std::getline(license_file_stream, lfile)) {
-	if (std::regex_match(lfile, svn_regex)) {
-	    std::cerr << "Skipping .svn file " << lfile << "\n";
-	    continue;
+	if (argc < 4) {
+	    std::cerr << "Usage: embedded_check [-v] licenses_list file_list src_root\n";
+	    return -1;
 	}
-	int valid_ref_cnt = 0;
-	std::string lline;
-	std::ifstream license_stream;
-	license_stream.open(lfile);
-	if (!license_stream.is_open()) {
-	    std::cerr << "Unable to open license file " << lfile << "\n";
-	    continue;
+
+	std::regex f_regex("file:/(.*)");
+	std::regex o_regex(".*[\\/]other[\\/].*");
+	std::regex t_regex(".*[\\/]misc/tools[\\/].*");
+	std::regex c_regex(".*[\\/]misc/CMake[\\/].*");
+	std::regex r_regex(".*[\\/]misc/repoconv[\\/].*");
+	std::regex rw_regex(".*[\\/]misc/repowork[\\/].*");
+	std::regex d_regex(".*[\\/]doc[\\/].*");
+	std::regex l_regex(".*[\\/]embedded_check.cpp");
+	std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
+	std::regex svn_regex(".*[\\/][.]svn[\\/].*");
+	std::string root_path(argv[3]);
+
+	std::map<std::string, std::string> file_to_license;
+	std::set<std::string> unused_licenses;
+
+	int bad_ref_cnt = 0;
+	std::string lfile;
+	std::ifstream license_file_stream;
+	license_file_stream.open(argv[1]);
+	if (!license_file_stream.is_open()) {
+	    std::cerr << "Unable to open license file list " << argv[1] << "\n";
 	}
-	while (std::getline(license_stream, lline)) {
-	    if (!std::regex_match(std::string(lline), f_regex)) {
+	while (std::getline(license_file_stream, lfile)) {
+	    if (std::regex_match(lfile, svn_regex)) {
+		std::cerr << "Skipping .svn file " << lfile << "\n";
 		continue;
 	    }
-	    std::smatch lfile_ref;
-	    if (!std::regex_search(lline, lfile_ref, f_regex)) {
+	    int valid_ref_cnt = 0;
+	    std::string lline;
+	    std::ifstream license_stream;
+	    license_stream.open(lfile);
+	    if (!license_stream.is_open()) {
+		std::cerr << "Unable to open license file " << lfile << "\n";
 		continue;
 	    }
-	    std::string lfile_id =  root_path + std::string("/") + std::string(lfile_ref[1]);
-	    std::ifstream lfile_s(lfile_id);
-	    if (!lfile_s.good()) {
-		std::cout << "Bad reference in license file " << lfile << ": " << lline << "\n";
-		std::cout << "    file \"" << lfile_id << "\" not found on filesystem.\n";
-		bad_ref_cnt++;
+	    while (std::getline(license_stream, lline)) {
+		if (!std::regex_match(std::string(lline), f_regex)) {
+		    continue;
+		}
+		std::smatch lfile_ref;
+		if (!std::regex_search(lline, lfile_ref, f_regex)) {
+		    continue;
+		}
+		std::string lfile_id =  root_path + std::string("/") + std::string(lfile_ref[1]);
+		std::ifstream lfile_s(lfile_id);
+		if (!lfile_s.good()) {
+		    std::cout << "Bad reference in license file " << lfile << ": " << lline << "\n";
+		    std::cout << "    file \"" << lfile_id << "\" not found on filesystem.\n";
+		    bad_ref_cnt++;
+		    continue;
+		}
+		lfile_s.close();
+		//std::cout << "License file reference: " << lfile_id << "\n";
+		file_to_license[lfile_id] = lfile;
+		valid_ref_cnt++;
+	    }
+	    license_stream.close();
+	    if (!valid_ref_cnt) {
+		std::cout << "Unused license: " << lfile << "\n";
+		unused_licenses.insert(lfile);
+	    }
+	}
+	license_file_stream.close();
+
+	int process_fail_cnt = 0;
+	std::string sfile;
+	std::ifstream src_file_stream;
+	src_file_stream.open(argv[2]);
+	if (!src_file_stream.is_open()) {
+	    std::cerr << "Unable to open source file list " << argv[2] << "\n";
+	}
+	while (std::getline(src_file_stream, sfile)) {
+	    if (std::regex_match(sfile, o_regex) || std::regex_match(sfile, t_regex)
+		    || std::regex_match(sfile, r_regex) || std::regex_match(sfile, c_regex)
+		    || std::regex_match(sfile, d_regex) ||  std::regex_match(sfile, l_regex)
+		    || std::regex_match(sfile, rw_regex)) {
 		continue;
 	    }
-	    lfile_s.close();
-	    //std::cout << "License file reference: " << lfile_id << "\n";
-	    file_to_license[lfile_id] = lfile;
-	    valid_ref_cnt++;
+	    if (!std::regex_match(std::string(sfile), srcfile_regex)) {
+		continue;
+	    }
+	    //std::cout << "Checking " << sfile << "\n";
+	    process_fail_cnt += process_file(sfile, file_to_license);
 	}
-	license_stream.close();
-	if (!valid_ref_cnt) {
-	    std::cout << "Unused license: " << lfile << "\n";
-	    unused_licenses.insert(lfile);
-	}
-    }
-    license_file_stream.close();
+	src_file_stream.close();
 
-    int process_fail_cnt = 0;
-    std::string sfile;
-    std::ifstream src_file_stream;
-    src_file_stream.open(argv[2]);
-    if (!src_file_stream.is_open()) {
-	std::cerr << "Unable to open source file list " << argv[2] << "\n";
-    }
-    while (std::getline(src_file_stream, sfile)) {
-	if (std::regex_match(sfile, o_regex) || std::regex_match(sfile, t_regex)
-	       	|| std::regex_match(sfile, r_regex) || std::regex_match(sfile, c_regex)
-		 || std::regex_match(sfile, d_regex) ||  std::regex_match(sfile, l_regex)
-		 || std::regex_match(sfile, rw_regex)) {
-	    continue;
+	if (unused_licenses.size() || bad_ref_cnt || process_fail_cnt) {
+	    return -1;
 	}
-	if (!std::regex_match(std::string(sfile), srcfile_regex)) {
-	    continue;
-	}
-	//std::cout << "Checking " << sfile << "\n";
-	process_fail_cnt += process_file(sfile, file_to_license);
-    }
-    src_file_stream.close();
 
-    if (unused_licenses.size() || bad_ref_cnt || process_fail_cnt) {
+    }
+
+    catch (const std::regex_error& e) {
+	std::cout << "regex error: " << e.what() << '\n';
 	return -1;
     }
 
