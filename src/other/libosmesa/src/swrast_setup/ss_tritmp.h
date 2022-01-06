@@ -25,24 +25,6 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-static void
-TAG(chan_init)(GLchan *s[3][4])
-{
-    for (int i = 0; i < 3; i++) {
-	for (int j = 0; j < 4; j++) {
-	    (*s)[i][j] = 0;
-	}
-    }
-}
-
-static void
-TAG(index_init)(GLfloat *s[3])
-{
-    for (int i = 0; i < 3; i++) {
-	(*s)[i] = 0.0;
-    }
-}
-
 static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
 {
     SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
@@ -51,17 +33,16 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2)
     GLfloat offset = 0.0;
     GLenum mode = GL_FILL;
     GLuint facing = 0;
+#ifdef __clang_analyzer__
     GLchan saved_color[3][4];
     GLchan saved_spec[3][4];
     GLfloat saved_index[3];
-
-    // Work-around for Clang and Coverity disagreeing about whether
-    // initializing these arrays is necessary - instead of just assigning
-    // zeros during initialization, which Clang sees as a dead store, use
-    // function calls to assign them.
-    TAG(chan_init)(&saved_color);
-    TAG(chan_init)(&saved_spec);
-    TAG(index_init)(&saved_index);
+#else
+    /* Clang thinks these are dead stores, but Coverity disagrees. */
+    GLchan saved_color[3][4] = {0};
+    GLchan saved_spec[3][4] = {0};
+    GLfloat saved_index[3] = {0};
+#endif
 
     v[0] = &verts[e0];
     v[1] = &verts[e1];
