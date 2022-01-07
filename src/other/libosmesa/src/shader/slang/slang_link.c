@@ -198,9 +198,17 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 		    j = _mesa_add_state_reference(shProg->Uniforms, p->StateIndexes);
 		    break;
 		case PROGRAM_UNIFORM:
+		    if (!p->Name) {
+			_mesa_problem(NULL, "bad p->Name in link_uniform_vars()");
+			return GL_FALSE;
+		    }
 		    j = _mesa_add_uniform(shProg->Uniforms, p->Name, p->Size, p->DataType);
 		    break;
 		case PROGRAM_SAMPLER:
+		    if (!p->Name) {
+			_mesa_problem(NULL, "bad p->Name in link_uniform_vars()");
+			return GL_FALSE;
+		    }
 		    j = _mesa_add_sampler(shProg->Uniforms, p->Name, p->DataType);
 		    break;
 		default:
