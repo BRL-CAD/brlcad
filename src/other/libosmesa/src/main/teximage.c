@@ -1529,7 +1529,7 @@ texture_error_check(GLcontext *ctx, GLenum target,
 	if (border != 0) {
 	    if (!isProxy) {
 		_mesa_error(ctx, GL_INVALID_OPERATION,
-			    "glTexImage%D(border!=0)", dimensions);
+			    "glTexImage%d(border!=0)", dimensions);
 	    }
 	    return GL_TRUE;
 	}
@@ -1696,24 +1696,24 @@ subtexture_error_check2(GLcontext *ctx, GLuint dimensions,
     if (destTex->IsCompressed) {
 	if (!target_can_be_compressed(ctx, target)) {
 	    _mesa_error(ctx, GL_INVALID_ENUM,
-			"glTexSubImage%D(target)", dimensions);
+			"glTexSubImage%d(target)", dimensions);
 	    return GL_TRUE;
 	}
 	/* offset must be multiple of 4 */
 	if ((xoffset & 3) || (yoffset & 3)) {
 	    _mesa_error(ctx, GL_INVALID_OPERATION,
-			"glTexSubImage%D(xoffset or yoffset)", dimensions);
+			"glTexSubImage%d(xoffset or yoffset)", dimensions);
 	    return GL_TRUE;
 	}
 	/* size must be multiple of 4 or equal to whole texture size */
 	if ((width & 3) && (GLuint) width != destTex->Width) {
 	    _mesa_error(ctx, GL_INVALID_OPERATION,
-			"glTexSubImage%D(width)", dimensions);
+			"glTexSubImage%d(width)", dimensions);
 	    return GL_TRUE;
 	}
 	if ((height & 3) && (GLuint) height != destTex->Height) {
 	    _mesa_error(ctx, GL_INVALID_OPERATION,
-			"glTexSubImage%D(width)", dimensions);
+			"glTexSubImage%d(width)", dimensions);
 	    return GL_TRUE;
 	}
     }
@@ -1860,21 +1860,21 @@ copytexture_error_check(GLcontext *ctx, GLuint dimensions,
 	}
 	if (border != 0) {
 	    _mesa_error(ctx, GL_INVALID_OPERATION,
-			"glCopyTexImage%D(border!=0)", dimensions);
+			"glCopyTexImage%d(border!=0)", dimensions);
 	    return GL_TRUE;
 	}
     } else if (is_depth_format(internalFormat)) {
 	/* make sure we have depth/stencil buffers */
 	if (!ctx->ReadBuffer->_DepthBuffer) {
 	    _mesa_error(ctx, GL_INVALID_OPERATION,
-			"glCopyTexImage%D(no depth)", dimensions);
+			"glCopyTexImage%d(no depth)", dimensions);
 	    return GL_TRUE;
 	}
     } else if (is_depthstencil_format(internalFormat)) {
 	/* make sure we have depth/stencil buffers */
 	if (!ctx->ReadBuffer->_DepthBuffer || !ctx->ReadBuffer->_StencilBuffer) {
 	    _mesa_error(ctx, GL_INVALID_OPERATION,
-			"glCopyTexImage%D(no depth/stencil buffer)", dimensions);
+			"glCopyTexImage%d(no depth/stencil buffer)", dimensions);
 	    return GL_TRUE;
 	}
     }
@@ -2030,18 +2030,18 @@ copytexsubimage_error_check2(GLcontext *ctx, GLuint dimensions,
 	/* offset must be multiple of 4 */
 	if ((xoffset & 3) || (yoffset & 3)) {
 	    _mesa_error(ctx, GL_INVALID_VALUE,
-			"glCopyTexSubImage%D(xoffset or yoffset)", dimensions);
+			"glCopyTexSubImage%d(xoffset or yoffset)", dimensions);
 	    return GL_TRUE;
 	}
 	/* size must be multiple of 4 */
 	if ((width & 3) != 0 && (GLuint) width != teximage->Width) {
 	    _mesa_error(ctx, GL_INVALID_VALUE,
-			"glCopyTexSubImage%D(width)", dimensions);
+			"glCopyTexSubImage%d(width)", dimensions);
 	    return GL_TRUE;
 	}
 	if ((height & 3) != 0 && (GLuint) height != teximage->Height) {
 	    _mesa_error(ctx, GL_INVALID_VALUE,
-			"glCopyTexSubImage%D(height)", dimensions);
+			"glCopyTexSubImage%d(height)", dimensions);
 	    return GL_TRUE;
 	}
     }
@@ -2060,14 +2060,14 @@ copytexsubimage_error_check2(GLcontext *ctx, GLuint dimensions,
     if (teximage->_BaseFormat == GL_DEPTH_COMPONENT) {
 	if (!ctx->ReadBuffer->_DepthBuffer) {
 	    _mesa_error(ctx, GL_INVALID_OPERATION,
-			"glCopyTexSubImage%D(no depth buffer)",
+			"glCopyTexSubImage%d(no depth buffer)",
 			dimensions);
 	    return GL_TRUE;
 	}
     } else if (teximage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
 	if (!ctx->ReadBuffer->_DepthBuffer || !ctx->ReadBuffer->_StencilBuffer) {
 	    _mesa_error(ctx, GL_INVALID_OPERATION,
-			"glCopyTexSubImage%D(no depth/stencil buffer)",
+			"glCopyTexSubImage%d(no depth/stencil buffer)",
 			dimensions);
 	    return GL_TRUE;
 	}
