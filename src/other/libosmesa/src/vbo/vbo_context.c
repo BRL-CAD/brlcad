@@ -137,11 +137,7 @@ static void init_mat_currval(GLcontext *ctx)
 		break;
 	}
 
-	if (i < MAT_ATTRIB_MAX)
-	    cl->Ptr = (const void *)ctx->Light.Material.Attrib[i];
-	else
-	    cl->Ptr = (const void *)ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + i];
-
+	cl->Ptr = (const void *)ctx->Light.Material.Attrib[i];
 	cl->Type = GL_FLOAT;
 	cl->Stride = 0;
 	cl->StrideB = 0;
