@@ -236,8 +236,14 @@ _swrast_logicop_rgba_span(GLcontext *ctx, struct gl_renderbuffer *rb,
 		      (GLuint *) span->array->color.sz2.rgba,
 		      (const GLuint *) rbPixels, span->array->mask);
     } else {
+	GLuint crgba[MAX_WIDTH][4];
+	for (int i = 0; i < MAX_WIDTH; i++) {
+	    for (int j = 0; j < 4; j++) {
+		crgba[i][j] = (GLuint) span->array->attribs[FRAG_ATTRIB_COL0][i][j];
+	    }
+	}
 	logicop_uint4(ctx, 4 * span->end,
-		      (GLuint *) span->array->attribs[FRAG_ATTRIB_COL0],
+		      (GLuint *)crgba,
 		      (const GLuint *) rbPixels, span->array->mask);
     }
 }
