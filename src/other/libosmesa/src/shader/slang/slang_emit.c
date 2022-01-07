@@ -1408,7 +1408,7 @@ swizzle_size(GLuint swizzle)
     GLuint size = 0, i;
     for (i = 0; i < 4; i++) {
 	GLuint swz = GET_SWZ(swizzle, i);
-	size += (swz >= 0 && swz <= 3);
+	size += (swz <= 3);
     }
     return size;
 }
