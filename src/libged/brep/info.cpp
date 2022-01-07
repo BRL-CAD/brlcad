@@ -206,7 +206,7 @@ _brep_cmd_edge_info(void *bs, int argc, const char **argv)
 	    dump.Print("trim[%2d] ", edge.m_ti[i]);
 	}
 	dump.Print("\n");
-	dump.Print("v0(%2d) v1(%2d) 3d_curve(%2d) tolerance(%g, %g)\n", ei, edge.m_vi[0], edge.m_vi[1], edge.m_c3i, edge.m_tolerance);
+	dump.Print("v0(%2d) v1(%2d) 3d_curve(%2d) tolerance(%d, %g)\n", ei, edge.m_vi[0], edge.m_vi[1], edge.m_c3i, edge.m_tolerance);
 	dump.PushIndent();
 	if (c3) {
 	    edge_start = edge.PointAtStart();
