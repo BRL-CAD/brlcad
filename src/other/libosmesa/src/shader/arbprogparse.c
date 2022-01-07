@@ -628,6 +628,7 @@ static void
 program_error2(GLcontext *ctx, GLint position, const char *descrip,
 	       const char *var)
 {
+    char *str = NULL;
     if (descrip) {
 	const char *prefix = "glProgramString(", *suffix = ")";
 	char *str = (char *) _mesa_malloc(_mesa_strlen(descrip) +
@@ -640,18 +641,17 @@ program_error2(GLcontext *ctx, GLint position, const char *descrip,
 	    _mesa_error(ctx, GL_INVALID_OPERATION, str);
 	    _mesa_free(str);
 	}
-    }
-    {
-	char *str = (char *) _mesa_malloc(_mesa_strlen(descrip) +
+
+	str = (char *) _mesa_malloc(_mesa_strlen(descrip) +
 					  _mesa_strlen(": ") +
 					  _mesa_strlen(var) + 1);
 	if (str) {
 	    _mesa_sprintf(str, "%s: %s", descrip, var);
 	}
-	_mesa_set_program_error(ctx, position, str);
-	if (str) {
-	    _mesa_free(str);
-	}
+    }
+    _mesa_set_program_error(ctx, position, str);
+    if (str) {
+	_mesa_free(str);
     }
 }
 
