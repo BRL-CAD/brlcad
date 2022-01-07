@@ -432,12 +432,13 @@ main(int argc, char *argv[])
     /* Walk the trees named on the command line
      * outputting combinations and primitives
      */
+    int ret = 0;
     for (i=bu_optind; i<argc; i++) {
-	db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], 1 /* bu_avail_cpus() */,
+	ret += db_walk_tree(rtip->rti_dbip, argc - i, (const char **)&argv[i], 1 /* bu_avail_cpus() */,
 		     &init_state, region_start, region_end, primitive_func, (void *) &your_data);
     }
 
-    return 0;
+    return ret;
 }
 
 
