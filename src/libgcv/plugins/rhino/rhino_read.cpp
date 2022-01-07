@@ -349,8 +349,9 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 
 
 HIDDEN void
-write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
+write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 {
+    ON_Mesh mesh = in_mesh;
     mesh.ConvertQuadsToTriangles();
     mesh.CombineIdenticalVertices();
     mesh.Compact();
