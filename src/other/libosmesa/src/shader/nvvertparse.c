@@ -1468,7 +1468,7 @@ _mesa_print_nv_vertex_instruction(const struct prog_instruction *inst)
 	    _mesa_printf(";\n");
 	    break;
 	case OPCODE_PRINT:
-	    _mesa_printf("PRINT '%s'", inst->Data);
+	    _mesa_printf("PRINT '%p'", inst->Data);
 	    if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
 		_mesa_printf(", ");
 		PrintSrcReg(&inst->SrcReg[0]);
