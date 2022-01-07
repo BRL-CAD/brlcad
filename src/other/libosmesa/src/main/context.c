@@ -1596,12 +1596,16 @@ GLboolean
 _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare)
 {
     if (ctx && ctxToShare && ctx->Shared && ctxToShare->Shared) {
+	_glthread_LOCK_MUTEX(ctx->Shared->Mutex);
 	ctx->Shared->RefCount--;
+	_glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 	if (ctx->Shared->RefCount == 0) {
 	    free_shared_state(ctx, ctx->Shared);
 	}
 	ctx->Shared = ctxToShare->Shared;
+	_glthread_LOCK_MUTEX(ctx->Shared->Mutex);
 	ctx->Shared->RefCount++;
+	_glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 	return GL_TRUE;
     } else {
 	return GL_FALSE;
