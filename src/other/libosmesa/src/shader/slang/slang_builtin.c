@@ -89,6 +89,10 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
     GLuint i;
     GLboolean isMatrix = GL_FALSE;
 
+    /* Sanity */
+    if (!field)
+	return -1;
+
     for (i = 0; i < STATE_LENGTH; i++) {
 	tokens[i] = 0;
     }
