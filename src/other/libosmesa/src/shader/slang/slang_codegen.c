@@ -2141,7 +2141,7 @@ swizzle_to_writemask(GLuint swizzle,
 	    /* end */
 	    break;
 	}
-	assert(swz >= 0 && swz <= 3);
+	assert(swz <= 3);
 	mask |= (1 << swz);
     }
     assert(mask <= 0xf);
