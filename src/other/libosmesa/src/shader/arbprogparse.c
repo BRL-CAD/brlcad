@@ -1611,9 +1611,12 @@ parse_result_binding(GLcontext *ctx, const GLubyte **inst,
 {
     const GLubyte token = *(*inst)++;
 
+    // Sanity
+    if (!outputReg)
+	return 1;
+
     // Initialize
-    if (outputReg)
-	*outputReg = -1;
+    *outputReg = -1;
 
     switch (token) {
 	case FRAGMENT_RESULT_COLOR:
