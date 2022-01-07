@@ -2801,7 +2801,6 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
     const char *varName = (char *) var->a_name;
     GLboolean success = GL_TRUE;
     slang_ir_storage *store = NULL;
-    int dbg = 0;
     const GLenum datatype = _slang_gltype_from_specifier(&var->type.specifier);
     const GLint texIndex = sampler_to_texture_index(var->type.specifier.type);
 
@@ -2814,7 +2813,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 	GLint samplerUniform
 	    = _mesa_add_sampler(prog->Parameters, varName, datatype);
 	store = _slang_new_ir_storage(PROGRAM_SAMPLER, samplerUniform, texIndex);
-	if (dbg) printf("SAMPLER ");
+#ifdef SCGV_DBG
+	printf("SAMPLER ");
+#endif
     } else if (var->type.qualifier == SLANG_QUAL_UNIFORM) {
 	/* Uniform variable */
 	const GLint size = _slang_sizeof_type_specifier(&var->type.specifier)
@@ -2855,7 +2856,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 	     */
 	    store = _slang_new_ir_storage(PROGRAM_STATE_VAR, -1, size);
 	}
-	if (dbg) printf("UNIFORM (sz %d) ", size);
+#ifdef SCGV_DBG
+	printf("UNIFORM (sz %d) ", size);
+#endif
     } else if (var->type.qualifier == SLANG_QUAL_VARYING) {
 	const GLint size = 4; /* XXX fix */
 	if (prog) {
@@ -2879,9 +2882,13 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 		store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
 		assert(index < VERT_RESULT_MAX);
 	    }
-	    if (dbg) printf("V/F ");
+#ifdef SCGV_DBG
+	    printf("V/F ");
+#endif
 	}
-	if (dbg) printf("VARYING ");
+#ifdef SCGV_DBG
+	printf("VARYING ");
+#endif
     } else if (var->type.qualifier == SLANG_QUAL_ATTRIBUTE) {
 	if (prog) {
 	    /* user-defined vertex attribute */
@@ -2902,7 +2909,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 	    store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
 	    store->Swizzle = swizzle;
 	}
-	if (dbg) printf("ATTRIB ");
+#ifdef SCGV_DBG
+	printf("ATTRIB ");
+#endif
     } else if (var->type.qualifier == SLANG_QUAL_FIXEDINPUT) {
 	GLuint swizzle = SWIZZLE_XYZW; /* silence compiler warning */
 	GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
@@ -2910,7 +2919,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 	GLint size = 4; /* XXX? */
 	store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
 	store->Swizzle = swizzle;
-	if (dbg) printf("INPUT ");
+#ifdef SCGV_DBG
+	printf("INPUT ");
+#endif
     } else if (var->type.qualifier == SLANG_QUAL_FIXEDOUTPUT) {
 	if (type == SLANG_UNIT_VERTEX_BUILTIN) {
 	    GLint index = _slang_output_index(varName, GL_VERTEX_PROGRAM_ARB);
@@ -2922,12 +2933,16 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 	    assert(type == SLANG_UNIT_FRAGMENT_BUILTIN);
 	    store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
 	}
-	if (dbg) printf("OUTPUT ");
+#ifdef SCGV_DBG
+	printf("OUTPUT ");
+#endif
     } else if (var->type.qualifier == SLANG_QUAL_CONST && !prog) {
 	/* pre-defined global constant, like gl_MaxLights */
 	const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
 	store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
-	if (dbg) printf("CONST ");
+#ifdef SCGV_DBG
+	printf("CONST ");
+#endif
     } else {
 	/* ordinary variable (may be const) */
 	slang_ir_node *n;
@@ -2958,8 +2973,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 	_slang_free_ir_tree(n);
     }
 
-    if (dbg) printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name,
-			store ? store->Index : -2);
+#ifdef SCGV_DBG
+    printf("GLOBAL VAR %s  idx %d\n", (char*) var->a_name, store ? store->Index : -2);
+#endif
 
     if (store)
 	var->aux = store;  /* save var's storage info */
