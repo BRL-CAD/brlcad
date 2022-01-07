@@ -552,7 +552,7 @@ _mesa_BindBufferARB(GLenum target, GLuint buffer)
     newBufObj->RefCount++;
 
     /* Pass BindBuffer call to device driver */
-    if (ctx->Driver.BindBuffer && newBufObj)
+    if (ctx->Driver.BindBuffer)
 	ctx->Driver.BindBuffer(ctx, target, newBufObj);
 
     /* decr ref count on old buffer obj, delete if needed */
