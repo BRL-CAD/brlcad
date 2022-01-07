@@ -734,7 +734,9 @@ emit_clamp(slang_emit_info *emitInfo, slang_ir_node *n)
      * the intermediate result.  Use a temp register instead.
      */
     _mesa_bzero(&tmpNode, sizeof(tmpNode));
-    alloc_temp_storage(emitInfo, &tmpNode, n->Store->Size);
+    if (!alloc_temp_storage(emitInfo, &tmpNode, n->Store->Size)) {
+	return NULL;
+    }
 
     /* tmp = max(ch[0], ch[1]) */
     inst = new_instruction(emitInfo, OPCODE_MAX);
