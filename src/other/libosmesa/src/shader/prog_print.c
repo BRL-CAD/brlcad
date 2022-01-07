@@ -512,7 +512,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
 
     switch (inst->Opcode) {
 	case OPCODE_PRINT:
-	    _mesa_printf("PRINT '%s'", inst->Data);
+	    _mesa_printf("PRINT '%p'", inst->Data);
 	    if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
 		_mesa_printf(", ");
 		_mesa_printf("%s[%d]%s",
