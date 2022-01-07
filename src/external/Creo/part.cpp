@@ -653,7 +653,7 @@ tessellate_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **snam
                 creo_log(cinfo, MSG_DEBUG, "%s tessellation using error - %g, angle - %g failed solidity test, trying next level...\n", pname, curr_error, curr_angle);
 
             } else {
-                creo_log(cinfo, MSG_DEBUG, "%s tessellation failed solidity test, but solidity requirement is not enabled... continuing...\n", pname, curr_error, curr_angle);
+                creo_log(cinfo, MSG_DEBUG, "%s tessellation failed solidity test, but solidity requirement is not enabled... continuing...\n", pname);
                 success = 1;
                 break;
             }
@@ -981,7 +981,7 @@ cleanup:
 
     /* Unsuppress anything we suppressed */
     if (cinfo->do_elims && !pinfo->suppressed_features->empty()) {
-        creo_log(cinfo, MSG_OK, "Unsuppressing %u features\n", pinfo->suppressed_features->size());
+        creo_log(cinfo, MSG_OK, "Unsuppressing %zu features\n", pinfo->suppressed_features->size());
         ret = ProFeatureResume(ProMdlToSolid(model), &pinfo->suppressed_features->at(0), pinfo->suppressed_features->size(), NULL, 0);
         if (ret != PRO_TK_NO_ERROR) {
             creo_log(cinfo, MSG_DEBUG, "%s: failed to unsuppress features.\n", pname);
