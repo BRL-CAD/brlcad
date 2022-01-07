@@ -3613,7 +3613,8 @@ enable_parser_extensions(GLcontext *ctx, grammar id)
 
 #if 1
     /* hack for Warcraft (see bug 8060) */
-    enable_ext(ctx, id, "vertex_blend");
+    if (!enable_ext(ctx, id, "vertex_blend"))
+	_mesa_error(ctx, GL_INVALID_OPERATION, "Failed to enable vertex_blend");
 #endif
 
     return GL_TRUE;
