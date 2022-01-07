@@ -3300,7 +3300,6 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     tsg->txt_size = atof(cmd_argvs[11]);
     tsg->txt_rot_angle = atof(cmd_argvs[12]);
 
-
     BU_ALLOC(lsg, struct line_seg);
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = 0;
