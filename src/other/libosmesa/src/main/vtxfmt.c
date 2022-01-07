@@ -158,6 +158,8 @@ install_vtxfmt(struct _glapi_table *tab, const GLvertexformat *vfmt)
 
 void _mesa_init_exec_vtxfmt(GLcontext *ctx)
 {
+    if (!ctx || !ctx->Exec)
+	return;
     install_vtxfmt(ctx->Exec, &neutral_vtxfmt);
     ctx->TnlModule.SwapCount = 0;
 }
