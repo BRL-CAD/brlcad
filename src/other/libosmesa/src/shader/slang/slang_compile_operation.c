@@ -136,8 +136,18 @@ slang_operation_new(GLuint count)
     assert(count > 0);
     if (ops) {
 	GLuint i;
-	for (i = 0; i < count; i++)
-	    slang_operation_construct(ops + i);
+	for (i = 0; i < count; i++) {
+	    if (!slang_operation_construct(ops + i)) {
+		// Previously the return value wasn't checked.  Finish the
+		// non-allocation initialization if slang_operation_construct
+		// fails, since that will have the least overall impact on
+		// existing logic flows.  TODO - find out what the behavior
+		// *should* be if slang_operation_construct fails here...
+		slang_operation * oper = (ops+i);
+		oper->fun = NULL;
+		oper->var = NULL;
+	    }
+	}
     }
     return ops;
 }
