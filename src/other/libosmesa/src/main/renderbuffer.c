@@ -1654,13 +1654,8 @@ _mesa_add_color_index_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
 	    return GL_FALSE;
 	}
 
-	if (indexBits <= 8) {
-	    /* only support GLuint for now */
-	    /*rb->InternalFormat = GL_COLOR_INDEX8_EXT;*/
-	    rb->_ActualFormat = COLOR_INDEX32;
-	} else {
-	    rb->_ActualFormat = COLOR_INDEX32;
-	}
+	/* only support GLuint for now */
+	rb->_ActualFormat = COLOR_INDEX32;
 	rb->InternalFormat = rb->_ActualFormat;
 
 	rb->AllocStorage = _mesa_soft_renderbuffer_storage;
