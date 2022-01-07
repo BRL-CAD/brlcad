@@ -660,7 +660,7 @@ _mesa_GetPixelMapusv(GLenum map, GLushort *values)
 	_mesa_error(ctx, GL_INVALID_ENUM, "glGetPixelMapusv(map)");
 	return;
     }
-    mapsize = pm ? pm->Size : 0;
+    mapsize = pm->Size;
 
     if (ctx->Pack.BufferObj->Name) {
 	/* pack pixelmap into PBO */
