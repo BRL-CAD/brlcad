@@ -2959,6 +2959,7 @@ _mesa_unpack_color_span_chan(GLcontext *ctx,
 	 * Common situation, loading 8bit RGBA/RGB source images
 	 * into 16/32 bit destination. (OSMesa16/32)
 	 */
+#if CHAN_TYPE != GL_UNSIGNED_BYTE
 	else if (srcType == GL_UNSIGNED_BYTE) {
 	    if (dstFormat == GL_RGBA) {
 		if (srcFormat == GL_RGB) {
@@ -3016,6 +3017,7 @@ _mesa_unpack_color_span_chan(GLcontext *ctx,
 		}
 	    }
 	}
+#endif
     }
 
 
