@@ -733,7 +733,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
 		/* found it */
 		copy_string(nameOut, maxLength, length,
 			    shProg->Uniforms->Parameters[j].Name);
-		if (size) {
+		if (size && sizeof_glsl_type(uType)) {
 		    /* convert from floats to 'type' (eg: sizeof(mat4x4)=1) */
 		    *size = uSize / sizeof_glsl_type(uType);
 		}
