@@ -235,12 +235,15 @@ void
 _mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
 			       GLenum attachment, struct gl_renderbuffer *rb)
 {
-    struct gl_renderbuffer_attachment *att;
 
     _glthread_LOCK_MUTEX(fb->Mutex);
 
-    att = _mesa_get_attachment(ctx, fb, attachment);
-    ASSERT(att);
+    struct gl_renderbuffer_attachment *att = _mesa_get_attachment(ctx, fb, attachment);
+    if (!att) {
+	_glthread_UNLOCK_MUTEX(fb->Mutex);
+	return;
+    }
+
     if (rb) {
 	_mesa_set_renderbuffer_attachment(ctx, att, rb);
     } else {
