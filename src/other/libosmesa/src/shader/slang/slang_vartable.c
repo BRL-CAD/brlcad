@@ -288,7 +288,6 @@ _slang_free_temp(slang_var_table *vt, slang_ir_storage *store)
     GLuint i;
     GLuint r = store->Index;
     assert(store->Size > 0);
-    assert(r >= 0);
     assert(r + store->Size <= vt->MaxRegisters * 4);
     if (dbg) printf("Free temp sz %d at %d (level %d)\n", store->Size, r, t->Level);
     if (store->Size == 1) {
