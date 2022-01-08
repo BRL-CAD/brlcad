@@ -765,8 +765,12 @@ void TYPEselect_lib_print_part_one(const Type type, FILE *f,
         if((TYPEis_entity(t)) || (!utype_member(dups, t, 1))) {
             if(isAggregateType(t)  && (t->u.type->body->base)) {
                 fprintf(f, "   _%s = new %s;\n", SEL_ITEMget_dmname(t), TYPEget_utype(t));
-            }
-        }
+	    } else if (TYPEis_entity(t)) {
+		// Per TYPEget_utype, any TYPEis_entity is an
+		// SDAI_Application_instance_ptr - initialize it here.
+                fprintf(f, "   _%s = NULL;\n", SEL_ITEMget_dmname(t));
+	    }
+	}
     }
     LISTod
     fprintf(f, "   nullify();\n");
