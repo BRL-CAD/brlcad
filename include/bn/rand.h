@@ -46,6 +46,10 @@
 /** @{ */
 /** @file rand.h */
 
+/* TODO - investigate whether it makes sense to incorporate the T258 code from
+ * ARL-TR-7928 Section 9.1 by Joseph C Collins into libbn
+ * (https://apps.dtic.mil/sti/pdfs/AD1024837.pdf) */
+
 #ifndef BN_RAND_H
 #define BN_RAND_H
 
