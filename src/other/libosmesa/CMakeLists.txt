@@ -31,10 +31,6 @@ if (HAVE_ENDIAN_H)
   add_definitions(-DPTHREADS)
 endif (HAVE_ENDIAN_H)
 
-include(CheckFunctionExists)
-# TODO - check for the following
-add_definitions(-DHAVE_TIMESPEC_GET=1)
-
 # The point is to be separate from system OpenGL,
 # so define the mangling headers to produce mgl_
 # prefixing
