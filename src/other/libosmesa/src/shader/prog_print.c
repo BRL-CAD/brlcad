@@ -227,9 +227,9 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
 		    break;
 		case PROGRAM_STATE_VAR: {
 		    struct gl_program_parameter *param = prog->Parameters->Parameters + index;
-		    char *sstr = _mesa_program_state_string(param->StateIndexes);
+		    const char *sstr = _mesa_program_state_string(param->StateIndexes);
 		    sprintf(str, "%s", sstr);
-		    _mesa_free(sstr);
+		    _mesa_free((void *)sstr);
 		}
 		break;
 		case PROGRAM_ADDRESS:
