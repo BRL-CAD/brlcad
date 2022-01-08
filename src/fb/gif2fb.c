@@ -286,7 +286,7 @@ main(int argc, char **argv)
 	int ih_height = WORD(Im.IH_Height);
 	int ih_width = WORD(Im.IH_Width);
 
-	if (ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
+	if (ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_width > 0xffff)
 	    bu_exit(1, "Invalid height in GIF Header\n");
 
 	/*
