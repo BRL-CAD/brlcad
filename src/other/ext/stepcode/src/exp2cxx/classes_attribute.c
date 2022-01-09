@@ -136,9 +136,9 @@ void DataMemberPrintAttr(Entity entity, Variable a, FILE *file)
             fprintf(stderr, "Warning: in entity %s, the type for attribute %s is not fully implemented\n", ENTITYget_name(entity), attrnm);
         }
         if(TYPEis_entity(VARget_type(a))) {
-            fprintf(file, "        SDAI_Application_instance_ptr _%s;", attrnm);
+            fprintf(file, "        SDAI_Application_instance_ptr _%s = NULL;", attrnm);
         } else if(TYPEis_aggregate(VARget_type(a))) {
-            fprintf(file, "        %s_ptr _%s;", ctype, attrnm);
+            fprintf(file, "        %s_ptr _%s = NULL;", ctype, attrnm);
         } else {
             fprintf(file, "        %s _%s;", ctype, attrnm);
         }
