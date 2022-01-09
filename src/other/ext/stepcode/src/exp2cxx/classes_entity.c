@@ -623,8 +623,8 @@ void LIBstructor_print_w_args(Entity entity, Linked_List neededAttr, FILE *file,
                     fprintf(file, "        /* Put attribute on this class' attributes list so the access functions still work. */\n");
                     fprintf(file, "    attributes.push( a );\n");
 
-                    fprintf(file, "        /* Put attribute on the attributes list for the main inheritance hierarchy.  **\n");
-                    fprintf(file, "        ** The push method rejects duplicates found by comparing attrDescriptor's.   */\n");
+                    fprintf(file, "        /* Put attribute on the attributes list for the main inheritance hierarchy.  */\n");
+                    fprintf(file, "        /* The push method rejects duplicates found by comparing attrDescriptor's.   */\n");
                     fprintf(file, "    if( addAttrs ) {\n");
                     fprintf(file, "        se->attributes.push( a );\n    }\n");
 
