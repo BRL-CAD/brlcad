@@ -140,7 +140,20 @@ void DataMemberPrintAttr(Entity entity, Variable a, FILE *file)
         } else if(TYPEis_aggregate(VARget_type(a))) {
             fprintf(file, "        %s_ptr _%s = NULL;", ctype, attrnm);
         } else {
-            fprintf(file, "        %s _%s;", ctype, attrnm);
+            Class_Of_Type class = TYPEget_type(VARget_type(a));
+	    switch (class) {
+                case boolean_:
+		    fprintf(file, "        %s _%s = false;", ctype, attrnm);
+		    break;
+                case integer_:
+		    fprintf(file, "        %s _%s = 0;", ctype, attrnm);
+		    break;
+                case real_:
+		    fprintf(file, "        %s _%s = 0.0;", ctype, attrnm);
+		    break;
+		default:
+		    fprintf(file, "        %s _%s;", ctype, attrnm);
+	    }
         }
         if(VARget_optional(a)) {
             fprintf(file, "    //  OPTIONAL");
