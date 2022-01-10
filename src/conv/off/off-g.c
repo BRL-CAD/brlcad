@@ -51,9 +51,9 @@ static struct bn_tol tol;
 
 int read_faces(struct model *m, FILE *fgeom)
 {
-    int 		   nverts, nfaces, nedges;
-    int 	   i, j, fail=0;
-    fastf_t 	  *pts;
+    int nverts = -1, nfaces = -1, nedges = -1;
+    int i, j, fail=0;
+    fastf_t *pts;
     struct vertex 	 **verts;
     struct faceuse 	 **outfaceuses;
     struct nmgregion  *r;
@@ -63,6 +63,13 @@ int read_faces(struct model *m, FILE *fgeom)
     /* Get numbers of vertices and faces, and grab the appropriate amount of memory */
     if (fscanf(fgeom, "%d %d %d", &nverts, &nfaces, &nedges) != 3)
 	bu_exit(1, "Cannot read number of vertices, faces, edges.\n");
+
+    if (nverts < 1 || nverts > INT_MAX - 1)
+	bu_exit(1, "Invalid vertex count: %d\n", nverts);
+
+    if (nfaces < 1 || nfaces > INT_MAX - 1)
+	bu_exit(1, "Invalid face count: %d\n", nfaces);
+
 
     pts = (fastf_t *) bu_malloc(sizeof(fastf_t) * 3 * nverts, "points list");
     verts = (struct vertex **) bu_malloc(sizeof(struct vertex *) * nverts, "vertices");
