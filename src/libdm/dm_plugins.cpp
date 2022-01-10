@@ -109,7 +109,7 @@ dm_graphics_system(const char *dmtype)
 }
 
 
-static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", NULL};
+static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", NULL};
 
 
 extern "C" void
