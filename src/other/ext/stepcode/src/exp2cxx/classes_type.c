@@ -107,7 +107,7 @@ const char *EnumCElementName(Type type, Expression expr)
     static char buf [BUFSIZ+1];
     sprintf(buf, "%s__",
             EnumName(TYPEget_name(type)));
-    strcat(buf, StrToLower(EXPget_name(expr)));
+    strncat(buf, StrToLower(EXPget_name(expr)), BUFSIZ);
 
     return buf;
 }
