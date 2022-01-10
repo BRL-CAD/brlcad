@@ -122,7 +122,7 @@ char *CheckEnumSymbol(char *s)
         return (s);
 
     } else {
-        strcpy(b, s);
+        strncpy(b, s, BUFSIZ-1);
         strcat(b, "_");
         fprintf(stderr, "Warning in %s: the enumerated value %s is already being used and has been changed to %s\n", __func__, s, b);
         return (b);
@@ -1053,9 +1053,9 @@ void TypeBody_Description(TypeBody body, char *buf)
 const char *IdlEntityTypeName(Type t)
 {
     static char name [BUFSIZ+1];
-    strcpy(name, TYPE_PREFIX);
+    strncpy(name, TYPE_PREFIX, BUFSIZ);
     if(TYPEget_name(t)) {
-        strcpy(name, FirstToUpper(TYPEget_name(t)));
+        strncpy(name, FirstToUpper(TYPEget_name(t)), BUFSIZ);
     } else {
         return TYPEget_ctype(t);
     }
@@ -1089,14 +1089,14 @@ const char *GetAggrElemType(const Type type)
 
         /*      case TYPE_ENTITY:   */
         if(class == entity_) {
-            strcpy(retval, IdlEntityTypeName(bt));
+            strncpy(retval, IdlEntityTypeName(bt), BUFSIZ);
         }
 
         /*      case TYPE_ENUM:     */
         /*  case TYPE_SELECT:   */
         if((class == enumeration_)
                 || (class == select_))  {
-            strcpy(retval, TYPEget_ctype(bt));
+            strncpy(retval, TYPEget_ctype(bt), BUFSIZ);
         }
 
         /*  case TYPE_LOGICAL:  */
