@@ -240,7 +240,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 		}
 		break;
 	    case DBID_ARBN:
-		j = ntohl(*(uint32_t *)record.n.n_grans);
+		j = bu_ntohl(*(uint32_t *)record.n.n_grans, 0, UINT_MAX - 1);
 		nrec += j;
 		while (j-- > 0) {
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
@@ -253,7 +253,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 		handler(dbip, record.part.p_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case DBID_PIPE:
-		j = ntohl(*(uint32_t *)record.pwr.pwr_count);
+		j = bu_ntohl(*(uint32_t *)record.pwr.pwr_count, 0, UINT_MAX - 1);
 		nrec += j;
 		while (j-- > 0) {
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
@@ -263,7 +263,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 		handler(dbip, record.pwr.pwr_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case DBID_NMG:
-		j = ntohl(*(uint32_t *)record.nmg.N_count);
+		j = bu_ntohl(*(uint32_t *)record.nmg.N_count, 0, UINT_MAX - 1);
 		nrec += j;
 		while (j-- > 0) {
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
@@ -273,7 +273,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 		handler(dbip, record.nmg.N_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case DBID_SKETCH:
-		j = ntohl(*(uint32_t *)record.skt.skt_count);
+		j = bu_ntohl(*(uint32_t *)record.skt.skt_count, 0, UINT_MAX - 1);
 		nrec += j;
 		while (j-- > 0) {
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
@@ -283,7 +283,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 		handler(dbip, record.skt.skt_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case DBID_EXTR:
-		j = ntohl(*(uint32_t *)record.extr.ex_count);
+		j = bu_ntohl(*(uint32_t *)record.extr.ex_count, 0, UINT_MAX - 1);
 		nrec += j;
 		while (j-- > 0) {
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
@@ -296,7 +296,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 		handler(dbip, record.s.s_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case DBID_BOT:
-		j = ntohl(*(uint32_t *)record.bot.bot_nrec);
+		j = bu_ntohl(*(uint32_t *)record.bot.bot_nrec, 0, UINT_MAX - 1);
 		nrec += j;
 		while (j-- > 0) {
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)

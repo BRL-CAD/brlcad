@@ -1171,8 +1171,8 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
 
-    bot_ip->num_vertices = ntohl(*(uint32_t *)&rp->bot.bot_num_verts[0]);
-    bot_ip->num_faces = ntohl(*(uint32_t *)&rp->bot.bot_num_triangles[0]);
+    bot_ip->num_vertices = bu_ntohl(*(uint32_t *)&rp->bot.bot_num_verts[0], 0, UINT_MAX - 1);
+    bot_ip->num_faces = bu_ntohl(*(uint32_t *)&rp->bot.bot_num_triangles[0], 0, UINT_MAX - 1);
     bot_ip->orientation = rp->bot.bot_orientation;
     bot_ip->mode = rp->bot.bot_mode;
     bot_ip->bot_flags = 0;
@@ -1193,9 +1193,9 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     for (i = 0; i < bot_ip->num_faces; i++) {
 	size_t idx=chars_used + i * 12;
 
-	bot_ip->faces[i*ELEMENTS_PER_POINT + 0] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 0]);
-	bot_ip->faces[i*ELEMENTS_PER_POINT + 1] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 4]);
-	bot_ip->faces[i*ELEMENTS_PER_POINT + 2] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 8]);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 0] = bu_ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 0], 0, UINT_MAX - 1);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 1] = bu_ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 4], 0, UINT_MAX - 1);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 2] = bu_ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 8], 0, UINT_MAX - 1);
     }
 
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
@@ -1340,9 +1340,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bip->magic = RT_BOT_INTERNAL_MAGIC;
 
     cp = ep->ext_buf;
-    bip->num_vertices = ntohl(*(uint32_t *)&cp[0]);
+    bip->num_vertices = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
-    bip->num_faces = ntohl(*(uint32_t *)&cp[0]);
+    bip->num_faces = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
     bip->orientation = *cp++;
     bip->mode = *cp++;
@@ -1378,11 +1378,11 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
 
     for (i = 0; i < bip->num_faces; i++) {
-	bip->faces[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
+	bip->faces[i*3 + 0] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->faces[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
+	bip->faces[i*3 + 1] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->faces[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
+	bip->faces[i*3 + 2] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
     }
 
@@ -1405,9 +1405,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	/* must be double for import and export */
 	double tmp[ELEMENTS_PER_VECT];
 
-	bip->num_normals = ntohl(*(uint32_t *)&cp[0]);
+	bip->num_normals = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->num_face_normals = ntohl(*(uint32_t *)&cp[0]);
+	bip->num_face_normals = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
 
 	if (bip->num_normals <= 0) {
@@ -1429,11 +1429,11 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bip->face_normals = (int *)bu_calloc(bip->num_face_normals * 3, sizeof(int), "BOT face normals");
 
 	    for (i = 0; i < bip->num_face_normals; i++) {
-		bip->face_normals[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_normals[i*3 + 0] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_normals[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_normals[i*3 + 1] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_normals[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_normals[i*3 + 2] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
 	    }
 	}
@@ -1448,9 +1448,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	/* must be double for import and export */
 	double tmp[ELEMENTS_PER_VECT];
 
-	bip->num_uvs = ntohl(*(uint32_t *)&cp[0]);
+	bip->num_uvs = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->num_face_uvs = ntohl(*(uint32_t *)&cp[0]);
+	bip->num_face_uvs = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 	cp += SIZEOF_NETWORK_LONG;
 
 	if (bip->num_uvs <= 0) {
@@ -1472,11 +1472,11 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bip->face_uvs = (int *)bu_calloc(bip->num_face_uvs * 3, sizeof(int), "BOT face UVs");
 
 	    for (i = 0; i < bip->num_face_uvs; i++) {
-		bip->face_uvs[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_uvs[i*3 + 0] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_uvs[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_uvs[i*3 + 1] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_uvs[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
+		bip->face_uvs[i*3 + 2] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
 		cp += SIZEOF_NETWORK_LONG;
 	    }
 	}

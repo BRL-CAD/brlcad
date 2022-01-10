@@ -149,7 +149,7 @@ int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     bu_vls_free(&source);
 
     // copy physical properties
-    uint32_t size = ntohl(*(uint32_t *)cp);
+    uint32_t size = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
 
     physical_ep.ext_nbytes = size;
@@ -165,7 +165,7 @@ int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     cp += size;
 
     // copy mechanical properties
-    size = ntohl(*(uint32_t *)cp);
+    size = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
 
     mechanical_ep.ext_nbytes = size;
@@ -181,7 +181,7 @@ int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     cp += size;
 
     // copy optical properties
-    size = ntohl(*(uint32_t *)cp);
+    size = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
 
     optical_ep.ext_nbytes = size;
@@ -197,7 +197,7 @@ int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     cp += size;
 
     // copy thermal properties
-    size = ntohl(*(uint32_t *)cp);
+    size = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
     cp += SIZEOF_NETWORK_LONG;
 
     thermal_ep.ext_nbytes = size;

@@ -160,7 +160,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    srcp = (unsigned char *) ep->ext_buf;
 	    ldestp = (unsigned long *) bip->u.uint8;
 	    for (i = 0; i < bip->count; ++i, ++ldestp, srcp += 4) {
-		*ldestp = ntohl(*(uint32_t *)&srcp[0]);
+		*ldestp = bu_ntohl(*(uint32_t *)&srcp[0], 0, UINT_MAX - 1);
 	    }
 	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:

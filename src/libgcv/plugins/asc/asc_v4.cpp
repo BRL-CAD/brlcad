@@ -1738,11 +1738,11 @@ nmg_dump(struct ascv4_wstate *s)
     }
 
     /* get number of granules needed for this NMG */
-    granules = ntohl(*(uint32_t *)s->record.nmg.N_count);
+    granules = bu_ntohl(*(uint32_t *)s->record.nmg.N_count, 0, UINT_MAX - 1);
 
     /* get the array of structure counts */
     for (j = 0; j < 26; j++)
-	struct_count[j] = ntohl(*(uint32_t *)&s->record.nmg.N_structs[j*4]);
+	struct_count[j] = bu_ntohl(*(uint32_t *)&s->record.nmg.N_structs[j*4], 0, UINT_MAX - 1);
 
     /* output some header info */
     fprintf(s->ofp,  "%c %d %.16s %lu\n",
@@ -1920,7 +1920,7 @@ bot_dump(struct ascv4_wstate *s)
     size_t i;
 
     name = s->record.bot.bot_name;
-    ngranules = ntohl(*(uint32_t *)s->record.bot.bot_nrec) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)s->record.bot.bot_nrec, 0, UINT_MAX - 1) + 1;
     get_ext(s, &ext, ngranules);
 
     /* Hand off to librt's import() routine */
@@ -1971,7 +1971,7 @@ pipe_dump(struct ascv4_wstate *s)	/* Print out Pipe record information */
     struct bu_external ext;
     struct rt_db_internal intern;
 
-    ngranules = ntohl(*(uint32_t *)s->record.pwr.pwr_count) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)s->record.pwr.pwr_count, 0, UINT_MAX - 1) + 1;
     name = s->record.pwr.pwr_name;
 
     get_ext(s, &ext, ngranules);
@@ -2078,7 +2078,7 @@ arbn_dump(struct ascv4_wstate *s)
     struct bu_external ext;
     struct rt_db_internal intern;
 
-    ngranules = ntohl(*(uint32_t *)s->record.n.n_grans) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)s->record.n.n_grans, 0, UINT_MAX - 1) + 1;
     name = s->record.n.n_name;
 
     get_ext(s, &ext, ngranules);
@@ -2450,7 +2450,7 @@ extrdump(struct ascv4_wstate *s)
     struct rt_db_internal		intern;
 
     myname = s->record.extr.ex_name;
-    ngranules = ntohl(*(uint32_t *)s->record.extr.ex_count) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)s->record.extr.ex_count, 0, UINT_MAX - 1) + 1;
     get_ext(s, &ext, ngranules);
 
     /* Hand off to librt's import() routine */
@@ -2488,7 +2488,7 @@ sketchdump(struct ascv4_wstate *s)
     struct rt_curve *crv;
 
     myname = s->record.skt.skt_name;
-    ngranules = ntohl(*(uint32_t *)s->record.skt.skt_count) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)s->record.skt.skt_count, 0, UINT_MAX - 1) + 1;
     get_ext(s, &ext, ngranules);
 
     /* Hand off to librt's import() routine */

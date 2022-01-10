@@ -27,7 +27,7 @@
  * server (fbserv).
  *
  * Note that internal errors are returned as -2 and below, because
- * most remote errors (unpacked by ntohl) will be -1 (although they
+ * most remote errors (unpacked by bu_ntohl) will be -1 (although they
  * could be anything).
  *
  */
@@ -48,6 +48,7 @@
 #include "bnetwork.h"
 
 #include "bu/color.h"
+#include "bu/cv.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/log.h"
@@ -272,12 +273,12 @@ rem_open(register struct fb *ifp, const char *file, int width, int height)
     if (pkg_waitfor (MSG_RETURN, buf, sizeof(buf), pc) < 5*NET_LONG_LEN)
 	return -6;
 
-    ifp->i->if_max_width = ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN]);
-    ifp->i->if_max_height = ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN]);
-    ifp->i->if_width = ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN]);
-    ifp->i->if_height = ntohl(*(uint32_t *)&buf[4*NET_LONG_LEN]);
+    ifp->i->if_max_width = bu_ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN], 0, UINT_MAX - 1);
+    ifp->i->if_max_height = bu_ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN], 0, UINT_MAX - 1);
+    ifp->i->if_width = bu_ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN], 0, UINT_MAX - 1);
+    ifp->i->if_height = bu_ntohl(*(uint32_t *)&buf[4*NET_LONG_LEN], 0, UINT_MAX - 1);
 
-    if (ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]) != 0)
+    if (bu_ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN], 0, UINT_MAX - 1) != 0)
 	return -7;		/* fail */
 
     return 0;		/* OK */
@@ -342,7 +343,7 @@ rem_close(struct fb *ifp)
 	return 0;
     }
     pkg_close(PCP(ifp));
-    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
+    return bu_ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN], 0, UINT_MAX - 1);
 }
 
 
@@ -357,7 +358,7 @@ rem_free(struct fb *ifp)
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
     pkg_close(PCP(ifp));
-    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
+    return bu_ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN], 0, UINT_MAX - 1);
 }
 
 
@@ -378,7 +379,7 @@ rem_clear(struct fb *ifp, unsigned char *bgpp)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
-    return ntohl(*(uint32_t *)buf);
+    return bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
 }
 
 
@@ -572,7 +573,7 @@ rem_cursor(struct fb *ifp, int mode, int x, int y)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
-    return ntohl(*(uint32_t *)buf);
+    return bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
 }
 
 
@@ -588,10 +589,10 @@ rem_getcursor(struct fb *ifp, int *mode, int *x, int *y)
     /* return code, xcenter, ycenter, xzoom, yzoom as longs */
     if (pkg_waitfor (MSG_RETURN, (char *)buf, sizeof(buf), PCP(ifp)) < 4*NET_LONG_LEN)
 	return -3;
-    *mode = ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN]);
-    *x = ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN]);
-    *y = ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN]);
-    if (ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]) != 0)
+    *mode = bu_ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN], 0, UINT_MAX - 1);
+    *x = bu_ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN], 0, UINT_MAX - 1);
+    *y = bu_ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN], 0, UINT_MAX - 1);
+    if (bu_ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN], 0, UINT_MAX - 1) != 0)
 	return -4;		/* fail */
     return 0;			/* OK */
 }
@@ -647,7 +648,7 @@ rem_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
-    return ntohl(*(uint32_t *)buf);
+    return bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
 }
 
 
@@ -663,11 +664,11 @@ rem_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
     /* return code, xcenter, ycenter, xzoom, yzoom as longs */
     if (pkg_waitfor (MSG_RETURN, (char *)buf, sizeof(buf), PCP(ifp)) < 5*NET_LONG_LEN)
 	return -3;
-    *xcenter = ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN]);
-    *ycenter = ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN]);
-    *xzoom = ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN]);
-    *yzoom = ntohl(*(uint32_t *)&buf[4*NET_LONG_LEN]);
-    if (ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]) != 0)
+    *xcenter = bu_ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN], 0, UINT_MAX - 1);
+    *ycenter = bu_ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN], 0, UINT_MAX - 1);
+    *xzoom = bu_ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN], 0, UINT_MAX - 1);
+    *yzoom = bu_ntohl(*(uint32_t *)&buf[4*NET_LONG_LEN], 0, UINT_MAX - 1);
+    if (bu_ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN], 0, UINT_MAX - 1) != 0)
 	return -4;		/* fail */
     return 0;			/* OK */
 }
@@ -687,13 +688,13 @@ rem_rmap(register struct fb *ifp, register ColorMap *cmap)
     if (pkg_waitfor (MSG_DATA, (char *)cm, REM_CMAP_BYTES, PCP(ifp)) < REM_CMAP_BYTES)
 	return -3;
     for (i = 0; i < 256; i++) {
-	cmap->cm_red[i] = ntohs(*(uint32_t *)(cm+2*(0+i)));
-	cmap->cm_green[i] = ntohs(*(uint32_t *)(cm+2*(256+i)));
-	cmap->cm_blue[i] = ntohs(*(uint16_t *)(cm+2*(512+i)));
+	cmap->cm_red[i] = bu_ntohs(*(uint32_t *)(cm+2*(0+i)), 0, INT_MAX - 1);
+	cmap->cm_green[i] = bu_ntohs(*(uint32_t *)(cm+2*(256+i)), 0, INT_MAX - 1);
+	cmap->cm_blue[i] = bu_ntohs(*(uint16_t *)(cm+2*(512+i)), 0, INT_MAX - 1);
     }
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -4;
-    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
+    return bu_ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN], 0, UINT_MAX - 1);
 }
 
 
@@ -718,7 +719,7 @@ rem_wmap(register struct fb *ifp, const ColorMap *cmap)
     }
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -4;
-    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
+    return bu_ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN], 0, UINT_MAX - 1);
 }
 
 
@@ -747,7 +748,7 @@ rem_flush(struct fb *ifp)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
-    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
+    return bu_ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN], 0, UINT_MAX - 1);
 }
 
 
@@ -764,7 +765,7 @@ rem_help(struct fb *ifp)
 	return -2;
     if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
 	return -3;
-    return ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]);
+    return bu_ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN], 0, UINT_MAX - 1);
 }
 
 

@@ -66,7 +66,7 @@ __BEGIN_DECLS
 /* db_flip.c */
 
 /**
- * function similar to ntohs() but always flips the bytes.
+ * function similar to bu_ntohs() but always flips the bytes.
  * used for v4 compatibility.
  */
 extern short flip_short(short s);

@@ -385,7 +385,7 @@ Convert_part_binary(struct conversion_state *pstate)
     stl_read_lswap((unsigned int *)buf);
 
     /* now use our network to native host format conversion tools */
-    num_facets = ntohl(*(uint32_t *)buf);
+    num_facets = bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
 
     bu_log("\t%ld facets\n", num_facets);
     while (fread(buf, 48, 1, pstate->fd_in)) {

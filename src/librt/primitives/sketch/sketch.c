@@ -1128,8 +1128,8 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
     MAT4X3VEC(sketch_ip->u_vec, mat, v);
     bu_cv_ntohd((unsigned char *)v, rp->skt.skt_vvec, ELEMENTS_PER_VECT);
     MAT4X3VEC(sketch_ip->v_vec, mat, v);
-    sketch_ip->vert_count = ntohl(*(uint32_t *)rp->skt.skt_vert_count);
-    sketch_ip->curve.count = ntohl(*(uint32_t *)rp->skt.skt_count);
+    sketch_ip->vert_count = bu_ntohl(*(uint32_t *)rp->skt.skt_vert_count, 0, UINT_MAX - 1);
+    sketch_ip->curve.count = bu_ntohl(*(uint32_t *)rp->skt.skt_count, 0, UINT_MAX - 1);
 
     ptr = (unsigned char *)rp;
     ptr += sizeof(struct sketch_rec);
@@ -1163,28 +1163,28 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 	double scan;
 	double *scanp;
 
-	magic = ntohl(*(uint32_t *)ptr);
+	magic = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 	ptr += SIZEOF_NETWORK_LONG;
 	switch (magic) {
 	    case CURVE_LSEG_MAGIC:
 		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = magic;
-		lsg->start = ntohl(*(uint32_t *)ptr);
+		lsg->start = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		lsg->end = ntohl(*(uint32_t *)ptr);
+		lsg->end = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		sketch_ip->curve.segment[seg_no] = (void *)lsg;
 		break;
 	    case CURVE_CARC_MAGIC:
 		BU_ALLOC(csg, struct carc_seg);
 		csg->magic = magic;
-		csg->start = ntohl(*(uint32_t *)ptr);
+		csg->start = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->end = ntohl(*(uint32_t *)ptr);
+		csg->end = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->orientation = ntohl(*(uint32_t *)ptr);
+		csg->orientation = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->center_is_left = ntohl(*(uint32_t *)ptr);
+		csg->center_is_left = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		bu_cv_ntohd((unsigned char *)&scan, ptr, 1);
 		csg->radius = scan; /* convert double to fastf_t */
@@ -1194,11 +1194,11 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 	    case CURVE_NURB_MAGIC:
 		BU_ALLOC(nsg, struct nurb_seg);
 		nsg->magic = magic;
-		nsg->order = ntohl(*(uint32_t *)ptr);
+		nsg->order = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		nsg->pt_type = ntohl(*(uint32_t *)ptr);
+		nsg->pt_type = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		nsg->k.k_size = ntohl(*(uint32_t *)ptr);
+		nsg->k.k_size = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 
 		nsg->k.knots = (fastf_t *)bu_malloc(nsg->k.k_size * sizeof(fastf_t), "nsg->k.knots");
@@ -1212,11 +1212,11 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		bu_free(scanp, "scanp");
 
 		ptr += SIZEOF_NETWORK_DOUBLE * nsg->k.k_size;
-		nsg->c_size = ntohl(*(uint32_t *)ptr);
+		nsg->c_size = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		nsg->ctl_points = (int *)bu_malloc(nsg->c_size * sizeof(int), "nsg->ctl_points");
 		for (i=0; i<(size_t)nsg->c_size; i++) {
-		    nsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
+		    nsg->ctl_points[i] = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
 		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
@@ -1239,11 +1239,11 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 	    case CURVE_BEZIER_MAGIC:
 		BU_ALLOC(bsg, struct bezier_seg);
 		bsg->magic = magic;
-		bsg->degree = ntohl(*(uint32_t *)ptr);
+		bsg->degree = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		bsg->ctl_points = (int *)bu_calloc(bsg->degree + 1, sizeof(int), "bsg->ctl_points");
 		for (i=0; i<=(size_t)bsg->degree; i++) {
-		    bsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
+		    bsg->ctl_points[i] = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
 		sketch_ip->curve.segment[seg_no] = (void *)bsg;
@@ -1259,7 +1259,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
     if (crv->count)
 	crv->reverse = (int *)bu_calloc(crv->count, sizeof(int), "crv->reverse");
     for (i=0; i<crv->count; i++) {
-	crv->reverse[i] = ntohl(*(uint32_t *)ptr);
+	crv->reverse[i] = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 	ptr += SIZEOF_NETWORK_LONG;
     }
 
@@ -1499,9 +1499,9 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     bu_cv_ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
     MAT4X3VEC(sketch_ip->v_vec, mat, v);
     ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
-    sketch_ip->vert_count = ntohl(*(uint32_t *)ptr);
+    sketch_ip->vert_count = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
     ptr += SIZEOF_NETWORK_LONG;
-    sketch_ip->curve.count = ntohl(*(uint32_t *)ptr);
+    sketch_ip->curve.count = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
     ptr += SIZEOF_NETWORK_LONG;
 
     if (sketch_ip->vert_count) {
@@ -1534,28 +1534,28 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 	double scan;
 	double *scanp;
 
-	magic = ntohl(*(uint32_t *)ptr);
+	magic = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 	ptr += SIZEOF_NETWORK_LONG;
 	switch (magic) {
 	    case CURVE_LSEG_MAGIC:
 		BU_ALLOC(lsg, struct line_seg);
 		lsg->magic = magic;
-		lsg->start = ntohl(*(uint32_t *)ptr);
+		lsg->start = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		lsg->end = ntohl(*(uint32_t *)ptr);
+		lsg->end = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		sketch_ip->curve.segment[seg_no] = (void *)lsg;
 		break;
 	    case CURVE_CARC_MAGIC:
 		BU_ALLOC(csg, struct carc_seg);
 		csg->magic = magic;
-		csg->start = ntohl(*(uint32_t *)ptr);
+		csg->start = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->end = ntohl(*(uint32_t *)ptr);
+		csg->end = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->orientation = ntohl(*(uint32_t *)ptr);
+		csg->orientation = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		csg->center_is_left = ntohl(*(uint32_t *)ptr);
+		csg->center_is_left = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		bu_cv_ntohd((unsigned char *)&scan, ptr, 1);
 		csg->radius = scan; /* double to fastf_t */
@@ -1565,11 +1565,11 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 	    case CURVE_NURB_MAGIC:
 		BU_ALLOC(nsg, struct nurb_seg);
 		nsg->magic = magic;
-		nsg->order = ntohl(*(uint32_t *)ptr);
+		nsg->order = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		nsg->pt_type = ntohl(*(uint32_t *)ptr);
+		nsg->pt_type = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
-		nsg->k.k_size = ntohl(*(uint32_t *)ptr);
+		nsg->k.k_size = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 
 		nsg->k.knots = (fastf_t *)bu_malloc(nsg->k.k_size * sizeof(fastf_t), "nsg->k.knots");
@@ -1583,11 +1583,11 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		bu_free(scanp, "scanp");
 
 		ptr += SIZEOF_NETWORK_DOUBLE * nsg->k.k_size;
-		nsg->c_size = ntohl(*(uint32_t *)ptr);
+		nsg->c_size = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		nsg->ctl_points = (int *)bu_malloc(nsg->c_size * sizeof(int), "nsg->ctl_points");
 		for (i=0; i<(size_t)nsg->c_size; i++) {
-		    nsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
+		    nsg->ctl_points[i] = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
 		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
@@ -1609,11 +1609,11 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 	    case CURVE_BEZIER_MAGIC:
 		BU_ALLOC(bsg, struct bezier_seg);
 		bsg->magic = magic;
-		bsg->degree = ntohl(*(uint32_t *)ptr);
+		bsg->degree = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		ptr += SIZEOF_NETWORK_LONG;
 		bsg->ctl_points = (int *)bu_calloc(bsg->degree+1, sizeof(int), "bsg->ctl_points");
 		for (i=0; i<=(size_t)bsg->degree; i++) {
-		    bsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
+		    bsg->ctl_points[i] = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
 		sketch_ip->curve.segment[seg_no] = (void *)bsg;
@@ -1631,7 +1631,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     }
 
     for (i=0; i<crv->count; i++) {
-	crv->reverse[i] = ntohl(*(uint32_t *)ptr);
+	crv->reverse[i] = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
 	ptr += SIZEOF_NETWORK_LONG;
     }
 

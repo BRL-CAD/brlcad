@@ -526,11 +526,11 @@ nmg_dump(void)
     }
 
     /* get number of granules needed for this NMG */
-    granules = ntohl(*(uint32_t *)record.nmg.N_count);
+    granules = bu_ntohl(*(uint32_t *)record.nmg.N_count, 0, UINT_MAX - 1);
 
     /* get the array of structure counts */
     for (j = 0; j < 26; j++)
-	struct_count[j] = ntohl(*(uint32_t *)&record.nmg.N_structs[j*4]);
+	struct_count[j] = bu_ntohl(*(uint32_t *)&record.nmg.N_structs[j*4], 0, UINT_MAX - 1);
 
     /* output some header info */
     fprintf(ofp,  "%c %d %.16s %lu\n",
@@ -702,7 +702,7 @@ bot_dump(void)
     size_t i;
 
     name = record.bot.bot_name;
-    ngranules = ntohl(*(uint32_t *)record.bot.bot_nrec) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)record.bot.bot_nrec, 0, UINT_MAX - 1) + 1;
     get_ext(&ext, ngranules);
 
     /* Hand off to librt's import() routine */
@@ -753,7 +753,7 @@ pipe_dump(void)	/* Print out Pipe record information */
     struct bu_external ext;
     struct rt_db_internal intern;
 
-    ngranules = ntohl(*(uint32_t *)record.pwr.pwr_count) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)record.pwr.pwr_count, 0, UINT_MAX - 1) + 1;
     name = record.pwr.pwr_name;
 
     get_ext(&ext, ngranules);
@@ -860,7 +860,7 @@ arbn_dump(void)
     struct bu_external ext;
     struct rt_db_internal intern;
 
-    ngranules = ntohl(*(uint32_t *)record.n.n_grans) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)record.n.n_grans, 0, UINT_MAX - 1) + 1;
     name = record.n.n_name;
 
     get_ext(&ext, ngranules);
@@ -1215,7 +1215,7 @@ extrdump(void)
     struct rt_db_internal		intern;
 
     myname = record.extr.ex_name;
-    ngranules = ntohl(*(uint32_t *)record.extr.ex_count) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)record.extr.ex_count, 0, INT_MAX - 1) + 1;
     get_ext(&ext, ngranules);
 
     /* Hand off to librt's import() routine */
@@ -1250,7 +1250,7 @@ sketchdump(void)
     struct rt_curve *crv;
 
     myname = record.skt.skt_name;
-    ngranules = ntohl(*(uint32_t *)record.skt.skt_count) + 1;
+    ngranules = bu_ntohl(*(uint32_t *)record.skt.skt_count, 0, UINT_MAX - 1) + 1;
     get_ext(&ext, ngranules);
 
     /* Hand off to librt's import() routine */

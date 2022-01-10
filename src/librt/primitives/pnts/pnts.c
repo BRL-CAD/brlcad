@@ -480,10 +480,10 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     bu_cv_ntohd((unsigned char *)&scan, buf, 1);
     pnts->scale = scan; /* convert double to fastf_t */
     buf += SIZEOF_NETWORK_DOUBLE;
-    type = ntohs(*(uint16_t *)buf);
+    type = bu_ntohs(*(uint16_t *)buf, 0, UINT_MAX - 1);
     pnts->type = (rt_pnt_type)type; /* intentional enum coercion */
     buf += SIZEOF_NETWORK_SHORT;
-    pnts->count = ntohl(*(uint32_t *)buf);
+    pnts->count = bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
     buf += SIZEOF_NETWORK_LONG;
 
     if (pnts->count <= 0) {

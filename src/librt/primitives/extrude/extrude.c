@@ -2433,7 +2433,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     MAT4X3VEC(extrude_ip->u_vec, mat, tmp_vec);
     bu_cv_ntohd((unsigned char *)tmp_vec, rp->extr.ex_vvec, ELEMENTS_PER_VECT);
     MAT4X3VEC(extrude_ip->v_vec, mat, tmp_vec);
-    extrude_ip->keypoint = ntohl(*(uint32_t *)&rp->extr.ex_key[0]);
+    extrude_ip->keypoint = bu_ntohl(*(uint32_t *)&rp->extr.ex_key[0], 0, UINT_MAX - 1);
 
     ptr = (char *)rp;
     ptr += sizeof(struct extr_rec);
@@ -2597,7 +2597,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     MAT4X3VEC(extrude_ip->u_vec, mat, tmp_vec[2]);
     MAT4X3VEC(extrude_ip->v_vec, mat, tmp_vec[3]);
     ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
-    extrude_ip->keypoint = ntohl(*(uint32_t *)ptr);
+    extrude_ip->keypoint = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
     ptr += SIZEOF_NETWORK_LONG;
     extrude_ip->sketch_name = bu_strdup((const char *)ptr);
 

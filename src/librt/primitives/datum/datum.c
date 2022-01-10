@@ -393,13 +393,13 @@ rt_datum_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
     buf = (unsigned char *)ep->ext_buf;
 
     /* unpack our datum set count */
-    count = ntohl(*(uint32_t *)buf);
+    count = bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
     buf += SIZEOF_NETWORK_LONG;
 
     while (count-- > 0) {
 	struct rt_datum_internal *datum_ip;
 
-	size_t vals = ntohl(*(uint32_t *)buf);
+	size_t vals = bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
 	buf += SIZEOF_NETWORK_LONG;
 
 	if (vals > MAX_VALS)

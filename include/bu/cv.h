@@ -162,6 +162,12 @@ __BEGIN_DECLS
 #  define htonll(_val) ntohll(_val)
 #endif
 
+BU_EXPORT extern uint32_t
+bu_ntohl(uint32_t netlong, uint32_t n_min, uint32_t n_max);
+
+
+BU_EXPORT extern uint16_t
+bu_ntohs(uint16_t netshort, uint32_t n_min, uint32_t n_max);
 
 /**
  * convert from one format to another.

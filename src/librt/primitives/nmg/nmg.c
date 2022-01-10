@@ -1532,9 +1532,9 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 #define NMG_CK_DISKMAGIC(_cp, _magic)	\
-    if (ntohl(*(uint32_t*)_cp) != _magic) { \
+    if (bu_ntohl(*(uint32_t*)_cp, 0, UINT_MAX - 1) != _magic) { \
 	bu_log("NMG_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
-	       ntohl(*(uint32_t*)_cp), _magic, __FILE__, __LINE__); \
+	       bu_ntohl(*(uint32_t*)_cp, 0, UINT_MAX - 1), _magic, __FILE__, __LINE__); \
 	bu_bomb("bad magic\n"); \
     }
 
@@ -2047,9 +2047,9 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
 
 
     cp = base + ecnt[subscript].byte_offset;
-    if (ntohl(*(uint32_t*)cp) != DISK_DOUBLE_ARRAY_MAGIC) {
+    if (bu_ntohl(*(uint32_t*)cp, 0, UINT_MAX - 1) != DISK_DOUBLE_ARRAY_MAGIC) {
 	bu_log("magic mis-match, got x%x, s/b x%x, file %s, line %d\n",
-	       ntohl(*(uint32_t*)cp), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
+	       bu_ntohl(*(uint32_t*)cp, 0, UINT_MAX - 1), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
 	bu_log("subscript=%ld, byte_offset=%ld\n",
 	       subscript, ecnt[subscript].byte_offset);
 	bu_bomb("rt_nmg_import4_fastf() bad magic\n");
@@ -2058,7 +2058,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
     if (pt_type)
 	len *= RT_NURB_EXTRACT_COORDS(pt_type);
 
-    count = ntohl(*(uint32_t*)(cp + 4));
+    count = bu_ntohl(*(uint32_t*)(cp + 4), 0, UINT_MAX - 1);
     if (count != len || count < 0) {
 	bu_log("rt_nmg_import4_fastf() subscript=%ld, expected len=%d, got=%d\n",
 	       subscript, len, count);
@@ -2536,13 +2536,13 @@ rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double lo
  *
  * NOTE that the "< 0" test here is a comparison with DISK_INDEX_LISTHEAD.
  */
-#define INDEX(o, i, ty, elem)	(i)->elem = (struct ty *)ptrs[ntohl(*(uint32_t*)((o)->elem))]
+#define INDEX(o, i, ty, elem)	(i)->elem = (struct ty *)ptrs[bu_ntohl(*(uint32_t*)((o)->elem), 0, UINT_MAX - 1)]
 #define INDEXL_HD(oo, ii, elem, hd) { \
 	int sub; \
-	if ((sub = ntohl(*(uint32_t*)((oo)->elem.forw))) < 0) \
+	if ((sub = bu_ntohl(*(uint32_t*)((oo)->elem.forw), 0, UINT_MAX - 1)) < 0) \
 	    (ii)->elem.forw = &(hd); \
 	else (ii)->elem.forw = (struct bu_list *)ptrs[sub]; \
-	if ((sub = ntohl(*(uint32_t*)((oo)->elem.back))) < 0) \
+	if ((sub = bu_ntohl(*(uint32_t*)((oo)->elem.back), 0, UINT_MAX - 1)) < 0) \
 	    (ii)->elem.back = &(hd); \
 	else (ii)->elem.back = (struct bu_list *)ptrs[sub]; }
 
@@ -2551,14 +2551,14 @@ rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double lo
 #define INDEXL_HD2(oo, ii, elem, hd) { \
 	int sub; \
 	struct edgeuse *eu2; \
-	if ((sub = ntohl(*(uint32_t*)((oo)->elem.forw))) < 0) { \
+	if ((sub = bu_ntohl(*(uint32_t*)((oo)->elem.forw), 0, UINT_MAX - 1)) < 0) { \
 	    (ii)->elem.forw = &(hd); \
 	} else { \
 	    eu2 = (struct edgeuse *)ptrs[sub]; \
 	    NMG_CK_EDGEUSE(eu2); \
 	    (ii)->elem.forw = &eu2->l2; \
 	} \
-	if ((sub = ntohl(*(uint32_t*)((oo)->elem.back))) < 0) { \
+	if ((sub = bu_ntohl(*(uint32_t*)((oo)->elem.back), 0, UINT_MAX - 1)) < 0) { \
 	    (ii)->elem.back = &(hd); \
 	} else { \
 	    eu2 = (struct edgeuse *)ptrs[sub]; \
@@ -2670,7 +2670,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    NMG_CK_DISKMAGIC(d->magic, DISK_FACEUSE_MAGIC);
 	    INDEX(d, fu, shell, s_p);
 	    INDEX(d, fu, faceuse, fumate_p);
-	    fu->orientation = ntohl(*(uint32_t*)(d->orientation));
+	    fu->orientation = bu_ntohl(*(uint32_t*)(d->orientation), 0, UINT_MAX - 1);
 	    INDEX(d, fu, face, f_p);
 	    INDEXL_HD(d, fu, lu_hd, fu->lu_hd);
 	    INDEXL_HD(d, fu, l, fu->s_p->fu_hd); /* after fu->s_p */
@@ -2687,9 +2687,9 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    NMG_CK_FACE(f);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_FACE_MAGIC);
 	    INDEX(d, f, faceuse, fu_p);
-	    g_index = ntohl(*(uint32_t*)(d->g));
+	    g_index = bu_ntohl(*(uint32_t*)(d->g), 0, UINT_MAX - 1);
 	    f->g.magic_p = (uint32_t *)ptrs[g_index];
-	    f->flip = ntohl(*(uint32_t*)(d->flip));
+	    f->flip = bu_ntohl(*(uint32_t*)(d->flip), 0, UINT_MAX - 1);
 	    /* Enroll this face on fg's list of users */
 	    NMG_CK_FACE_G_EITHER(f->g.magic_p);
 	    INDEXL_HD(d, f, l, f->g.plane_p->f_hd); /* after fu->fg_p set */
@@ -2720,29 +2720,29 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    NMG_CK_FACE_G_SNURB(fg);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_FACE_G_SNURB_MAGIC);
 	    INDEXL_HD(d, fg, f_hd, fg->f_hd);
-	    fg->order[0] = ntohl(*(uint32_t*)(d->u_order));
-	    fg->order[1] = ntohl(*(uint32_t*)(d->v_order));
-	    fg->u.k_size = ntohl(*(uint32_t*)(d->u_size));
+	    fg->order[0] = bu_ntohl(*(uint32_t*)(d->u_order), 0, UINT_MAX - 1);
+	    fg->order[1] = bu_ntohl(*(uint32_t*)(d->v_order), 0, UINT_MAX - 1);
+	    fg->u.k_size = bu_ntohl(*(uint32_t*)(d->u_size), 0, UINT_MAX - 1);
 	    fg->u.knots = rt_nmg_import4_fastf(basep,
 					       ecnt,
-					       ntohl(*(uint32_t*)(d->u_knots)),
+					       bu_ntohl(*(uint32_t*)(d->u_knots), 0, UINT_MAX - 1),
 					       NULL,
 					       fg->u.k_size,
 					       0);
-	    fg->v.k_size = ntohl(*(uint32_t*)(d->v_size));
+	    fg->v.k_size = bu_ntohl(*(uint32_t*)(d->v_size), 0, UINT_MAX - 1);
 	    fg->v.knots = rt_nmg_import4_fastf(basep,
 					       ecnt,
-					       ntohl(*(uint32_t*)(d->v_knots)),
+					       bu_ntohl(*(uint32_t*)(d->v_knots), 0, UINT_MAX - 1),
 					       NULL,
 					       fg->v.k_size,
 					       0);
-	    fg->s_size[0] = ntohl(*(uint32_t*)(d->us_size));
-	    fg->s_size[1] = ntohl(*(uint32_t*)(d->vs_size));
-	    fg->pt_type = ntohl(*(uint32_t*)(d->pt_type));
+	    fg->s_size[0] = bu_ntohl(*(uint32_t*)(d->us_size), 0, UINT_MAX - 1);
+	    fg->s_size[1] = bu_ntohl(*(uint32_t*)(d->vs_size), 0, UINT_MAX - 1);
+	    fg->pt_type = bu_ntohl(*(uint32_t*)(d->pt_type), 0, UINT_MAX - 1);
 	    /* Transform ctl_points by 'mat' */
 	    fg->ctl_points = rt_nmg_import4_fastf(basep,
 						  ecnt,
-						  ntohl(*(uint32_t*)(d->ctl_points)),
+						  bu_ntohl(*(uint32_t*)(d->ctl_points), 0, UINT_MAX - 1),
 						  (matp_t)mat,
 						  fg->s_size[0] * fg->s_size[1],
 						  fg->pt_type);
@@ -2757,10 +2757,10 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    d = &((struct disk_loopuse *)ip)[iindex];
 	    NMG_CK_LOOPUSE(lu);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_LOOPUSE_MAGIC);
-	    up_index = ntohl(*(uint32_t*)(d->up));
+	    up_index = bu_ntohl(*(uint32_t*)(d->up), 0, UINT_MAX - 1);
 	    lu->up.magic_p = ptrs[up_index];
 	    INDEX(d, lu, loopuse, lumate_p);
-	    lu->orientation = ntohl(*(uint32_t*)(d->orientation));
+	    lu->orientation = bu_ntohl(*(uint32_t*)(d->orientation), 0, UINT_MAX - 1);
 	    INDEX(d, lu, loop, l_p);
 	    up_kind = ecnt[up_index].kind;
 	    if (up_kind == NMG_KIND_FACEUSE) {
@@ -2814,12 +2814,12 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    d = &((struct disk_edgeuse *)ip)[iindex];
 	    NMG_CK_EDGEUSE(eu);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_EDGEUSE_MAGIC);
-	    up_index = ntohl(*(uint32_t*)(d->up));
+	    up_index = bu_ntohl(*(uint32_t*)(d->up), 0, UINT_MAX - 1);
 	    eu->up.magic_p = ptrs[up_index];
 	    INDEX(d, eu, edgeuse, eumate_p);
 	    INDEX(d, eu, edgeuse, radial_p);
 	    INDEX(d, eu, edge, e_p);
-	    eu->orientation = ntohl(*(uint32_t*)(d->orientation));
+	    eu->orientation = bu_ntohl(*(uint32_t*)(d->orientation), 0, UINT_MAX - 1);
 	    INDEX(d, eu, vertexuse, vu_p);
 	    up_kind = ecnt[up_index].kind;
 	    if (up_kind == NMG_KIND_LOOPUSE) {
@@ -2827,7 +2827,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    } else if (up_kind == NMG_KIND_SHELL) {
 		INDEXL_HD(d, eu, l, eu->up.s_p->eu_hd);
 	    } else bu_log("bad edgeuse up, index=%d, kind=%d\n", up_index, up_kind);
-	    eu->g.magic_p = ptrs[ntohl(*(uint32_t*)(d->g))];
+	    eu->g.magic_p = ptrs[bu_ntohl(*(uint32_t*)(d->g), 0, UINT_MAX - 1)];
 	    NMG_CK_EDGE(eu->e_p);
 	    NMG_CK_EDGEUSE(eu->eumate_p);
 	    NMG_CK_EDGEUSE(eu->radial_p);
@@ -2850,7 +2850,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    d = &((struct disk_edge *)ip)[iindex];
 	    NMG_CK_EDGE(e);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_EDGE_MAGIC);
-	    e->is_real = ntohl(*(uint32_t*)(d->is_real));
+	    e->is_real = bu_ntohl(*(uint32_t*)(d->is_real), 0, UINT_MAX - 1);
 	    INDEX(d, e, edgeuse, eu_p);
 	    NMG_CK_EDGEUSE(e->eu_p);
 	}
@@ -2885,20 +2885,20 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    NMG_CK_EDGE_G_CNURB(eg);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_EDGE_G_CNURB_MAGIC);
 	    INDEXL_HD2(d, eg, eu_hd2, eg->eu_hd2);
-	    eg->order = ntohl(*(uint32_t*)(d->order));
+	    eg->order = bu_ntohl(*(uint32_t*)(d->order), 0, UINT_MAX - 1);
 
 	    /* If order is zero, so is everything else */
 	    if (eg->order == 0) return 0;
 
-	    eg->k.k_size = ntohl(*(uint32_t*)(d->k_size));
+	    eg->k.k_size = bu_ntohl(*(uint32_t*)(d->k_size), 0, UINT_MAX - 1);
 	    eg->k.knots = rt_nmg_import4_fastf(basep,
 					       ecnt,
-					       ntohl(*(uint32_t*)(d->knots)),
+					       bu_ntohl(*(uint32_t*)(d->knots), 0, UINT_MAX - 1),
 					       NULL,
 					       eg->k.k_size,
 					       0);
-	    eg->c_size = ntohl(*(uint32_t*)(d->c_size));
-	    eg->pt_type = ntohl(*(uint32_t*)(d->pt_type));
+	    eg->c_size = bu_ntohl(*(uint32_t*)(d->c_size), 0, UINT_MAX - 1);
+	    eg->pt_type = bu_ntohl(*(uint32_t*)(d->pt_type), 0, UINT_MAX - 1);
 	    /*
 	     * The curve's control points are in parameter space.
 	     * They do NOT get transformed!
@@ -2907,7 +2907,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 		/* UV coords on snurb surface don't get xformed */
 		eg->ctl_points = rt_nmg_import4_fastf(basep,
 						      ecnt,
-						      ntohl(*(uint32_t*)(d->ctl_points)),
+						      bu_ntohl(*(uint32_t*)(d->ctl_points), 0, UINT_MAX - 1),
 						      NULL,
 						      eg->c_size,
 						      eg->pt_type);
@@ -2915,7 +2915,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 		/* XYZ coords on planar face DO get xformed */
 		eg->ctl_points = rt_nmg_import4_fastf(basep,
 						      ecnt,
-						      ntohl(*(uint32_t*)(d->ctl_points)),
+						      bu_ntohl(*(uint32_t*)(d->ctl_points), 0, UINT_MAX - 1),
 						      (matp_t)mat,
 						      eg->c_size,
 						      eg->pt_type);
@@ -2928,9 +2928,9 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    d = &((struct disk_vertexuse *)ip)[iindex];
 	    NMG_CK_VERTEXUSE(vu);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_VERTEXUSE_MAGIC);
-	    vu->up.magic_p = ptrs[ntohl(*(uint32_t*)(d->up))];
+	    vu->up.magic_p = ptrs[bu_ntohl(*(uint32_t*)(d->up), 0, UINT_MAX - 1)];
 	    INDEX(d, vu, vertex, v_p);
-	    vu->a.magic_p = ptrs[ntohl(*(uint32_t*)(d->a))];
+	    vu->a.magic_p = ptrs[bu_ntohl(*(uint32_t*)(d->a), 0, UINT_MAX - 1)];
 	    NMG_CK_VERTEX(vu->v_p);
 	    if (vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
 	    INDEXL_HD(d, vu, l, vu->v_p->vu_hd);
@@ -3223,7 +3223,7 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts)
     for (i=0; i < nkind; i++) {
 	int ndouble;
 	NMG_CK_DISKMAGIC(cp + offset, DISK_DOUBLE_ARRAY_MAGIC);
-	ndouble = ntohl(*(uint32_t*)(cp + offset + 4));
+	ndouble = bu_ntohl(*(uint32_t*)(cp + offset + 4), 0, UINT_MAX - 1);
 	ecnt[subscript].kind = NMG_KIND_DOUBLE_ARRAY;
 	/* Stored byte offset is from beginning of disk record */
 	ecnt[subscript].byte_offset = offset;
@@ -3280,7 +3280,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     /* Obtain counts of each kind of structure */
     maxindex = 1;
     for (kind = 0; kind < NMG_N_KINDS; kind++) {
-	kind_counts[kind] = ntohl(*(uint32_t*)(rp->nmg.N_structs+4*kind));
+	kind_counts[kind] = bu_ntohl(*(uint32_t*)(rp->nmg.N_structs+4*kind), 0, UINT_MAX - 1);
 	maxindex += kind_counts[kind];
     }
 
@@ -3634,7 +3634,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
 
     {
 	int version;
-	version = ntohl(*(uint32_t*)dp);
+	version = bu_ntohl(*(uint32_t*)dp, 0, UINT_MAX - 1);
 	dp+= SIZEOF_NETWORK_LONG;
 	if (version != DISK_MODEL_VERSION) {
 	    bu_log("rt_nmg_import4: expected NMG '.g' format version %d, got %d, aborting nmg solid import\n",
@@ -3644,7 +3644,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     }
     maxindex = 1;
     for (kind =0; kind < NMG_N_KINDS; kind++) {
-	kind_counts[kind] = ntohl(*(uint32_t*)dp);
+	kind_counts[kind] = bu_ntohl(*(uint32_t*)dp, 0, UINT_MAX - 1);
 	dp+= SIZEOF_NETWORK_LONG;
 	maxindex += kind_counts[kind];
     }

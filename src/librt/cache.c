@@ -387,7 +387,7 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
 
     BU_EXTERNAL_INIT(dest);
 
-    dest->ext_nbytes = ntohl(*(uint32_t *)external->ext_buf);
+    dest->ext_nbytes = bu_ntohl(*(uint32_t *)external->ext_buf, 0, UINT_MAX - 1);
     buffer = (uint8_t *)bu_malloc(dest->ext_nbytes, "buffer");
 
     BU_ASSERT(dest->ext_nbytes < INT_MAX);

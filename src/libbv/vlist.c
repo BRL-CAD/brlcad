@@ -316,7 +316,7 @@ bv_vlist_import(struct bu_list *vlists, struct bu_list *hp, struct bu_vls *namev
 
     BU_CK_VLS(namevls);
 
-    nelem = ntohl(*(uint32_t *)buf);
+    nelem = (size_t)bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
     bp = buf+4;
 
     namelen = strlen((char *)bp)+1;
