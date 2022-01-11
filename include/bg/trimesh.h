@@ -278,6 +278,21 @@ BG_EXPORT extern int bg_trimesh_3d_gc(int **ofaces, int *n_ofaces, point_t **opn
 	const int *ifaces, int n_ifaces, const point_t *ipnts);
 
 
+/**
+ * @brief
+ * Return a face set where all topologically connected faces are oriented
+ * consistently relative to their neighbors.
+ *
+ * @param[out] of   faces array for the new output mesh (of==f is valid).
+ * @param[in]  f    input set of faces.
+ * @param[in]  fcnt input face count
+ *
+ * @return -1 if error, otherwise return the number of times a face flipping
+ * operation was performed
+ */
+BG_EXPORT extern int
+bg_trimesh_sync(int *of, int *f, int fcnt);
+
 __END_DECLS
 
 #endif  /* BG_TRIMESH_H */

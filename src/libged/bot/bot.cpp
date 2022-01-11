@@ -382,6 +382,43 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+extern "C" int
+_bot_cmd_sync(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "bot sync <objname>";
+    const char *purpose_string = "Synchronize connected BoT triangle orientations";
+    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+
+    argc--; argv++;
+
+    if (argc != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return GED_ERROR;
+    }
+
+    if (_bot_obj_setup(gb, argv[0]) & GED_ERROR) {
+	return GED_ERROR;
+    }
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+    int flip_cnt = bg_trimesh_sync(bot->faces, bot->faces, bot->num_faces);
+    if (flip_cnt < 0) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Failed to perform BoT sync");
+	return GED_ERROR;
+    }
+
+    if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern, &rt_uniresource) < 0) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Failed to update BoT");
+	return GED_ERROR;
+    }
+
+    bu_vls_printf(gb->gedp->ged_result_str, "Performed %d face flipping operations", flip_cnt);
+    return GED_OK;
+}
 
 const struct bu_cmdtab _bot_cmds[] = {
     { "extrude",    _bot_cmd_extrude},
@@ -391,6 +428,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "isect",      _bot_cmd_isect},
     { "remesh",     _bot_cmd_remesh},
     { "set",        _bot_cmd_set},
+    { "sync",       _bot_cmd_sync},
     { (char *)NULL,      NULL}
 };
 
