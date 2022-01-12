@@ -48,6 +48,13 @@ class oedge {
 	int v2;
 	int f_ind;
 
+	void flip()
+	{
+	    int tmp = v2;
+	    v2 = v1;
+	    v1 = tmp;
+	}
+
 	bool operator==(oedge other) const
 	{
 	    bool c1 = (v1 == other.v1);
@@ -117,10 +124,14 @@ check_flip(
     //bu_log("curr: %d,%d ne: %d,%d\n", curr.v1, curr.v2, ne.v1, ne.v2);
     if (curr.v1 == ne.v1) {
 	// Yes
+	ordered_edges[synced_faces[ne.f_ind].e1].flip();
+	ordered_edges[synced_faces[ne.f_ind].e2].flip();
+	ordered_edges[synced_faces[ne.f_ind].e3].flip();
+
 	oedge tmp = ordered_edges[synced_faces[ne.f_ind].e3];
 	ordered_edges[synced_faces[ne.f_ind].e3] = ordered_edges[synced_faces[ne.f_ind].e2];
 	ordered_edges[synced_faces[ne.f_ind].e2] = tmp;
-	//bu_log("flip %d\n", ordered_edges[n1].f_ind);
+	bu_log("flip %d\n", ordered_edges[n1].f_ind);
 	return 1;
     }
     //bu_log("no flip %d\n", ordered_edges[synced_faces[ne.f_ind].e1].f_ind);

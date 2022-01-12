@@ -106,7 +106,11 @@ int arb4_faces_ctrl[] = {
     INT_MAX
 };
 
-
+// TODO - check needs to get more sophisticated.  As long as the three verts
+// for a face are in the same relative order, it doesn't matter which one comes
+// first.  Also, a sync is valid if ALL of the faces are reversed relative to
+// the ctrl - sync doesn't guarantee which way the mesh ends up facing, so
+// "all triangles inside out" is also a valid answer.
 int
 fcheck(const char *tname, int *ff, int *ctrl)
 {
