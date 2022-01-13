@@ -185,7 +185,7 @@ jobs:
           export PATH=$ENV{GITHUB_WORKSPACE}:$PATH
           export CC=clang
           export CXX=clang++
-          cmake -S . -G Ninja -B build -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON
+          cmake -S . -G Ninja -B build -D ENABLE_ALL=ON -D CMAKE_BUILD_TYPE=Release -DBRLCAD_ENABLE_QT=ON -D BRLCAD_ENABLE_X11=OFF
 
       - name: Build
         run: |
