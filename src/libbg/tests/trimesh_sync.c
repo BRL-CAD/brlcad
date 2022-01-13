@@ -146,9 +146,11 @@ fcheck(const char *tname, int *ff, int *ctrl)
 
 
 int
-main()
+main(int UNUSED(argc), const char *argv[])
 {
     int ret = 0;
+
+    bu_setprogname(argv[0]);
 
     int arb4_faces_flipped_f1[13] = {0,2,1,  2,1,3,  0,3,1,  0,2,3,  INT_MAX};
     if (bg_trimesh_sync(arb4_faces_flipped_f1, arb4_faces_flipped_f1, 4) < 0)
