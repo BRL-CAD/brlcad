@@ -106,6 +106,30 @@ int arb4_faces_ctrl[] = {
     INT_MAX
 };
 
+void
+parrays(int *ff, int *ctrl)
+{
+    int j = 0;
+    struct bu_vls faces = BU_VLS_INIT_ZERO;
+    while (ctrl[j] != INT_MAX) {
+	bu_vls_printf(&faces, "%d,", ctrl[j]);
+	if ((j+1) % 3 == 0)
+	    bu_vls_printf(&faces, "  ");
+	j++;
+    }
+    bu_vls_printf(&faces, "INT_MAX\n");
+    j = 0;
+    while (ff[j] != INT_MAX) {
+	bu_vls_printf(&faces, "%d,", ff[j]);
+	if ((j+1) % 3 == 0)
+	    bu_vls_printf(&faces, "  ");
+	j++;
+    }
+    bu_vls_printf(&faces, "INT_MAX");
+    bu_log("%s\n", bu_vls_cstr(&faces));
+    bu_vls_free(&faces);
+}
+
 // TODO - check needs to get more sophisticated.  As long as the three verts
 // for a face are in the same relative order, it doesn't matter which one comes
 // first.  Also, a sync is valid if ALL of the faces are reversed relative to
@@ -114,34 +138,77 @@ int arb4_faces_ctrl[] = {
 int
 fcheck(const char *tname, int *ff, int *ctrl)
 {
+    int ret = 0;
     int i = 0;
+    if (!ff || !ctrl || !tname)
+	return -1;
+
     while (ctrl[i] != INT_MAX) {
-	if (ff[i] != ctrl[i]) {
-	    bu_log("%s: test faces and ctrl differ at position %d\n", tname, i);
-	    int j = 0;
-	    struct bu_vls faces = BU_VLS_INIT_ZERO;
-	    while (ctrl[j] != INT_MAX) {
-		bu_vls_printf(&faces, "%d,", ctrl[j]);
-		if ((j+1) % 3 == 0)
-		    bu_vls_printf(&faces, "  ");
-		j++;
-	    }
-	    bu_vls_printf(&faces, "INT_MAX\n");
-	    j = 0;
-	    while (ff[j] != INT_MAX) {
-		bu_vls_printf(&faces, "%d,", ff[j]);
-		if ((j+1) % 3 == 0)
-		    bu_vls_printf(&faces, "  ");
-		j++;
-	    }
-	    bu_vls_printf(&faces, "INT_MAX");
-	    bu_log("%s\n", bu_vls_cstr(&faces));
-	    bu_vls_free(&faces);
-	    return -1;
-	}
 	i++;
     }
-    return 0;
+    if (!i || i % 3) {
+	bu_log("%s: error - ff array doesn't have an index count evenly dividsible by 3\n", tname);
+	return -1;
+    }
+    int tri_cnt = i / 3;
+    int misaligned = 0;
+    int matched = 0;
+
+    int ctrl_tri[3];
+    int test_tri[3];
+    i = 0;
+    while (ctrl[i] != INT_MAX) {
+	int tind[3] = {-1};
+	ctrl_tri[0] = ctrl[i+0];
+	ctrl_tri[1] = ctrl[i+1];
+	ctrl_tri[2] = ctrl[i+2];
+	test_tri[0] = ff[i+0];
+	test_tri[1] = ff[i+1];
+	test_tri[2] = ff[i+2];
+
+	for (int j = 0; j < 3; j++) {
+	    if (ctrl_tri[0] == test_tri[j]) {
+		tind[0] = j;
+		break;
+	    }
+	}
+	if (tind[0] == -1) {
+	    bu_log("%s: completely disjoint triangles at position %d\n", tname, i);
+	    ret = -1;
+	    goto done;
+	}
+	tind[1] = (tind[0]+1) % 3;
+	tind[2] = (tind[0]+2) % 3;
+	//bu_log("ctrl: %d %d %d\n", ctrl_tri[0], ctrl_tri[1], ctrl_tri[2]);
+	//bu_log("test: %d %d %d\n", test_tri[tind[0]], test_tri[tind[1]], test_tri[tind[2]]);
+
+	if (ctrl_tri[1] == test_tri[tind[2]] && ctrl_tri[2] == test_tri[tind[1]]) {
+	    misaligned++;
+	    i = i+3;
+	    continue;
+	}
+	if (ctrl_tri[1] == test_tri[tind[1]] && ctrl_tri[2] == test_tri[tind[2]]) {
+	    matched++;
+	    i = i+3;
+	    continue;
+	}
+
+	bu_log("%s: completely disjoint triangles at position %d\n", tname, i);
+	ret = -1;
+	goto done;
+    }
+
+    if (matched != tri_cnt && misaligned != tri_cnt) {
+	bu_log("%s: triangle sets did not match\n", tname);
+	ret = -1;
+    }
+
+done:
+    if (ret == -1) {
+	parrays(ff, ctrl);
+    }
+
+    return ret;
 }
 
 
