@@ -192,7 +192,7 @@ bg_trimesh_sync(int *of, int *f, int fcnt)
 	    // them is unvisited, process it
 	    int f_ind = -1;
 	    for (size_t j = 0; j < ue_fmap[cedge].size(); j++) {
-		if (active_tris.find(f_ind) == active_tris.end()) {
+		if (active_tris.find(ue_fmap[cedge][j]) == active_tris.end()) {
 		    continue;
 		}
 		f_ind = ue_fmap[cedge][j];
