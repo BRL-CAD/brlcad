@@ -190,13 +190,19 @@ bg_trimesh_sync(int *of, int *f, int fcnt)
 	    }
 	    // Get the two triangles associated with this uedge.  If one of
 	    // them is unvisited, process it
-	    size_t f_ind = 0;
+	    int f_ind = -1;
 	    for (size_t j = 0; j < ue_fmap[cedge].size(); j++) {
 		if (active_tris.find(f_ind) == active_tris.end()) {
 		    continue;
 		}
 		f_ind = ue_fmap[cedge][j];
 		break;
+	    }
+
+	    // If neither face is unvisited, there's no work to do
+	    if (f_ind == -1) {
+		wavefront_edges.erase(wavefront_edges.begin());
+		continue;
 	    }
 
 	    sface &bface = synced_faces[f_ind];
@@ -215,7 +221,8 @@ bg_trimesh_sync(int *of, int *f, int fcnt)
 		if (ue_flag[k]) {
 		    interior_edges.insert(ue[k]);
 		    wavefront_edges.erase(ue[k]);
-		    tedge_ind = k;
+		    if (ue_emap[ue[k]].size() == 2)
+			tedge_ind = k;
 		} else {
 		    // If another part of the walk hasn't already reached
 		    // this area of the mesh, extend the wavefront
