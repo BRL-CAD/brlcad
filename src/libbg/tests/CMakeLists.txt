@@ -377,7 +377,7 @@ BRLCAD_ADD_TEST(NAME bg_polygon_op_basic   COMMAND bg_polygon_op)
 
 BRLCAD_ADDEXEC(bg_trimesh_sync trimesh_sync.c "libbg;libbn;libbu" TEST)
 
-#BRLCAD_ADD_TEST(NAME bg_trimesh_sync  COMMAND bg_trimesh_sync)
+BRLCAD_ADD_TEST(NAME bg_trimesh_sync  COMMAND bg_trimesh_sync)
 
 
 CMAKEFILES(

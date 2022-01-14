@@ -130,11 +130,11 @@ parrays(int *ff, int *ctrl)
     bu_vls_free(&faces);
 }
 
-// TODO - check needs to get more sophisticated.  As long as the three verts
-// for a face are in the same relative order, it doesn't matter which one comes
-// first.  Also, a sync is valid if ALL of the faces are reversed relative to
-// the ctrl - sync doesn't guarantee which way the mesh ends up facing, so
-// "all triangles inside out" is also a valid answer.
+// As long as the three verts for a face are in the same relative order, it
+// doesn't matter which one comes first.  Also, a sync is valid if ALL of the
+// faces are reversed relative to the ctrl - sync doesn't guarantee which way
+// the mesh ends up facing, so "all triangles inside out" is also a valid
+// answer.
 int
 fcheck(const char *tname, int *ff, int *ctrl)
 {
@@ -147,7 +147,7 @@ fcheck(const char *tname, int *ff, int *ctrl)
 	i++;
     }
     if (!i || i % 3) {
-	bu_log("%s: error - ff array doesn't have an index count evenly dividsible by 3\n", tname);
+	bu_log("%s: error - ff array doesn't have an index count evenly divisible by 3\n", tname);
 	return -1;
     }
     int tri_cnt = i / 3;

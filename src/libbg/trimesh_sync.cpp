@@ -28,11 +28,10 @@
 #include "common.h"
 
 #include <map>
-#include <queue>
 #include <set>
-//#include <functional>
-//#include <unordered_map>
-//#include <unordered_set>
+#include <functional>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "bu/log.h"
@@ -91,7 +90,6 @@ class uedge {
 
 };
 
-#if 0
 // https://stackoverflow.com/a/27952689/2037687
 class uedge_hash {
     public:
@@ -102,98 +100,21 @@ class uedge_hash {
 	    return hout;
 	}
 };
-#endif
 
 class sface {
     public:
-	size_t e1;
-	size_t e2;
-	size_t e3;
+	size_t v1;
+	size_t v2;
+	size_t v3;
+	size_t e[3];
+	void flip()
+	{
+	    int tmp = v2;
+	    v2 = v1;
+	    v1 = tmp;
+	}
 };
 
-int
-check_flip(
-	size_t c1,
-	size_t n1,
-	std::vector<oedge> &ordered_edges,
-	std::vector<sface> &synced_faces)
-{
-    oedge &curr = ordered_edges[c1];
-    oedge &ne = ordered_edges[n1];
-
-    //bu_log("curr: %d,%d ne: %d,%d\n", curr.v1, curr.v2, ne.v1, ne.v2);
-    if (curr.v1 == ne.v1) {
-	// Yes
-	ordered_edges[synced_faces[ne.f_ind].e1].flip();
-	ordered_edges[synced_faces[ne.f_ind].e2].flip();
-	ordered_edges[synced_faces[ne.f_ind].e3].flip();
-
-	oedge tmp = ordered_edges[synced_faces[ne.f_ind].e3];
-	ordered_edges[synced_faces[ne.f_ind].e3] = ordered_edges[synced_faces[ne.f_ind].e2];
-	ordered_edges[synced_faces[ne.f_ind].e2] = tmp;
-	bu_log("flip %d\n", ordered_edges[n1].f_ind);
-	return 1;
-    }
-    //bu_log("no flip %d\n", ordered_edges[synced_faces[ne.f_ind].e1].f_ind);
-    return 0;
-}
-
-
-/* First, we take the first edge from that set and add it to our processing
- * queue.  We find the two associated oriented edges, and use the edge with the
- * lowest associated face id as the canonical "syncing" ordering to use for all
- * connected faces.  We then sync the other face, if necessary, and queue up
- * all other unordered edges associated with either face for further
- * processing. */
-int
-do_seeding(
-	std::queue<size_t> &to_process,
-	std::set<uedge> &to_check,
-	std::map<uedge, std::vector<size_t>> &ue_emap,
-	std::vector<oedge> &ordered_edges,
-	std::vector<sface> &synced_faces)
-{
-    int ret = 0;
-
-    if (!to_check.size())
-	return ret;
-
-    uedge seed = *to_check.begin();
-    to_check.erase(to_check.begin());
-    size_t s1 = ue_emap[seed][0];
-    size_t s2 = ue_emap[seed][1];
-    oedge e1 = ordered_edges[s1];
-    oedge e2 = ordered_edges[s2];
-    size_t eseed_ind = (e1.f_ind < e2.f_ind) ? s1 : s2;
-    size_t esync_ind = (e1.f_ind > e2.f_ind) ? s1 : s2;
-    oedge eseed = ordered_edges[eseed_ind];
-    oedge esync = ordered_edges[esync_ind];
-
-    // First step - do flip if needed
-    ret = check_flip(eseed_ind, esync_ind, ordered_edges, synced_faces);
-
-    // Get the 2 unprocessed edges from the seed face - they are
-    // the beginnings of our processing
-    {
-	uedge se1(ordered_edges[synced_faces[eseed.f_ind].e1].v1, ordered_edges[synced_faces[eseed.f_ind].e1].v2);
-	uedge se2(ordered_edges[synced_faces[eseed.f_ind].e2].v1, ordered_edges[synced_faces[eseed.f_ind].e2].v2);
-	uedge se3(ordered_edges[synced_faces[eseed.f_ind].e3].v1, ordered_edges[synced_faces[eseed.f_ind].e3].v2);
-	if (to_check.find(se1) != to_check.end()) {
-	    to_process.push(synced_faces[eseed.f_ind].e1);
-	    to_check.erase(se1);
-	}
-	if (to_check.find(se2) != to_check.end()) {
-	    to_process.push(synced_faces[eseed.f_ind].e2);
-	    to_check.erase(se2);
-	}
-	if (to_check.find(se3) != to_check.end()) {
-	    to_process.push(synced_faces[eseed.f_ind].e3);
-	    to_check.erase(se3);
-	}
-    }
-
-    return ret;
-}
 
 extern "C" int
 bg_trimesh_sync(int *of, int *f, int fcnt)
@@ -207,104 +128,126 @@ bg_trimesh_sync(int *of, int *f, int fcnt)
     std::vector<sface> synced_faces;
 
     for (int i = 0; i < fcnt; ++i) {
-	int v1 = f[i*3+0];
-	int v2 = f[i*3+1];
-	int v3 = f[i*3+2];
 	sface nface;
-	ordered_edges.push_back(oedge(v1, v2, i));
-	ue_emap[uedge(v1,v2)].push_back(ordered_edges.size()-1);
-	nface.e1 = ordered_edges.size()-1;
-	ordered_edges.push_back(oedge(v2, v3, i));
-	ue_emap[uedge(v2,v3)].push_back(ordered_edges.size()-1);
-	nface.e2 = ordered_edges.size()-1;
-	ordered_edges.push_back(oedge(v3, v1, i));
-	ue_emap[uedge(v3,v1)].push_back(ordered_edges.size()-1);
-	nface.e3 = ordered_edges.size()-1;
+	nface.v1 = f[i*3+0];
+	nface.v2 = f[i*3+1];
+	nface.v3 = f[i*3+2];
+	ordered_edges.push_back(oedge(nface.v1, nface.v2, i));
+	nface.e[0] = ordered_edges.size()-1;
+	ue_emap[uedge(nface.v1,nface.v2)].push_back(nface.e[0]);
+	ordered_edges.push_back(oedge(nface.v2, nface.v3, i));
+	nface.e[1] = ordered_edges.size()-1;
+	ue_emap[uedge(nface.v2,nface.v3)].push_back(nface.e[1]);
+	ordered_edges.push_back(oedge(nface.v3, nface.v1, i));
+	nface.e[2] = ordered_edges.size()-1;
+	ue_emap[uedge(nface.v3,nface.v1)].push_back(nface.e[2]);
 	synced_faces.push_back(nface);
-	ue_fmap[uedge(v1,v2)].push_back(i);
-	ue_fmap[uedge(v2,v3)].push_back(i);
-	ue_fmap[uedge(v3,v1)].push_back(i);
+	ue_fmap[uedge(nface.v1,nface.v2)].push_back(i);
+	ue_fmap[uedge(nface.v2,nface.v3)].push_back(i);
+	ue_fmap[uedge(nface.v3,nface.v1)].push_back(i);
     }
 
-    /* Any unordered edge with less than or more than two associated faces
-     * can't be used to trigger a sync operation.  Check the others.
-     *
-     * Because we are syncing, we must begin with a seed and "walk outward"
-     * from there along the topology.  Because there is no guarantee that all
-     * faces will be topologically connected to the seed, we need to be able to
-     * re-start the process if we run out of queued edges but have not yet
-     * processed all valid edges. We want topologically connected subsets of
-     * the face set to be synced, even if "synced" is not well defined for
-     * the entire face set.
-     *
-     * To support this, we first build up a set of all the edges we must check.
-     */
-    std::set<uedge> to_check;
-    std::map<uedge, std::vector<size_t>>::iterator ue_it;
-    for (ue_it = ue_emap.begin(); ue_it != ue_emap.end(); ue_it++) {
-	if (ue_it->second.size() == 2)
-	    to_check.insert(ue_it->first);
+    /* Any unordered edge with more than two associated faces rules out those
+     * faces being associated with a sync - all others are in play. */
+    std::unordered_set<size_t> active_tris;
+    for (int i = 0; i < fcnt; ++i) {
+	sface &cface = synced_faces[i];
+	uedge ue1(cface.v1, cface.v2);
+	uedge ue2(cface.v1, cface.v2);
+	uedge ue3(cface.v1, cface.v2);
+	if (ue_fmap[ue1].size() > 2)
+	    continue;
+	if (ue_fmap[ue2].size() > 2)
+	    continue;
+	if (ue_fmap[ue3].size() > 2)
+	    continue;
+	active_tris.insert(i);
     }
 
-    /* Find the first seed edge to use for syncing, and prepare the data
-     * structures */
-    std::queue<size_t> to_process;
+    // Because a set of triangles may contain more than one topologically
+    // distinct mesh, we make sure the process continues (by re-seeding as
+    // needed) until all active triangles have been considered.
     int flip_cnt = 0;
-    flip_cnt += do_seeding(to_process, to_check, ue_emap, ordered_edges, synced_faces);
+    while (active_tris.size()) {
+	// Seed the wavefront with three edges from an active triangle.  This triangle
+	// sets the orientation for the mesh - all other triangles will be flipped as
+	// needed so the orientations are all consistent
+	std::unordered_set<uedge, uedge_hash> wavefront_edges;
+	std::unordered_set<uedge, uedge_hash> interior_edges;
+	sface &f_seed= synced_faces[*active_tris.begin()];
+	active_tris.erase(active_tris.begin());
+	wavefront_edges.insert(uedge(f_seed.v1, f_seed.v2));
+	wavefront_edges.insert(uedge(f_seed.v2, f_seed.v3));
+	wavefront_edges.insert(uedge(f_seed.v3, f_seed.v1));
+	while (wavefront_edges.size()) {
+	    uedge cedge = *wavefront_edges.begin();
+	    // If we have a boundary edge, mark it as interior (i.e. not part
+	    // of the wavefront)
+	    if (ue_fmap[cedge].size() == 1) {
+		interior_edges.insert(cedge);
+		wavefront_edges.erase(wavefront_edges.begin());
+		continue;
+	    }
+	    // Get the two triangles associated with this uedge.  If one of
+	    // them is unvisited, process it
+	    size_t f_ind = 0;
+	    for (size_t j = 0; j < ue_fmap[cedge].size(); j++) {
+		if (active_tris.find(f_ind) == active_tris.end()) {
+		    continue;
+		}
+		f_ind = ue_fmap[cedge][j];
+		break;
+	    }
 
-    while (to_process.size()) {
+	    sface &bface = synced_faces[f_ind];
+	    uedge ue[3] = {uedge(bface.v1, bface.v2), uedge(bface.v2, bface.v3), uedge(bface.v3, bface.v1)};
+	    // For the new face, any edges that aren't already wavefront
+	    // edges and aren't part of the interior set get added, and any
+	    // that are already in the wavefront get moved to the interior set.
+	    int ue_flag[3] = {0};
+	    int tedge_ind = -1;
+	    for (size_t k = 0; k < 3; k++) {
+		if (wavefront_edges.find(ue[k]) != wavefront_edges.end()) {
+		    ue_flag[k] = 1;
+		}
+	    }
+	    for (size_t k = 0; k < 3; k++) {
+		if (ue_flag[k]) {
+		    interior_edges.insert(ue[k]);
+		    wavefront_edges.erase(ue[k]);
+		    tedge_ind = k;
+		} else {
+		    // If another part of the walk hasn't already reached
+		    // this area of the mesh, extend the wavefront
+		    if (interior_edges.find(ue[k]) == interior_edges.end()) {
+			wavefront_edges.insert(ue[k]);
+		    }
+		}
+	    }
 
-	size_t curr_ind = to_process.front();
-	to_process.pop();
+	    // If we have all interior edges, no action to take
+	    if (tedge_ind == -1)
+		continue;
 
-	oedge curr = ordered_edges[curr_ind];
-	uedge uc(curr.v1, curr.v2);
-	to_check.erase(uc);
-
-	// Look up the other edge, flip the associated face if needed, and queue up
-	// any not-yet-processed edges
-	size_t e1_ind = ue_emap[uc][0];
-	size_t e2_ind = ue_emap[uc][1];
-	oedge e1 = ordered_edges[e1_ind];
-	oedge e2 = ordered_edges[e2_ind];
-	oedge ne = (e1 == curr) ? e2 : e1;
-	size_t ne_ind = (e1 == curr) ? e2_ind : e1_ind;
-
-	// First step - do edge flips if needed to reverse face
-	flip_cnt += check_flip(curr_ind, ne_ind, ordered_edges, synced_faces);
-
-	// Get the 2 unprocessed edges from the new face - queue them up unless
-	// we have already see them
-	uedge ue_ne1(ordered_edges[synced_faces[ne.f_ind].e1].v1, ordered_edges[synced_faces[ne.f_ind].e1].v2);
-	uedge ue_ne2(ordered_edges[synced_faces[ne.f_ind].e2].v1, ordered_edges[synced_faces[ne.f_ind].e2].v2);
-	uedge ue_ne3(ordered_edges[synced_faces[ne.f_ind].e3].v1, ordered_edges[synced_faces[ne.f_ind].e3].v2);
-	if (to_check.find(ue_ne1) != to_check.end()) {
-	    to_process.push(synced_faces[ne.f_ind].e1);
-	    to_check.erase(ue_ne1);
-	}
-	if (to_check.find(ue_ne2) != to_check.end()) {
-	    to_process.push(synced_faces[ne.f_ind].e2);
-	    to_check.erase(ue_ne2);
-	}
-	if (to_check.find(ue_ne3) != to_check.end()) {
-	    to_process.push(synced_faces[ne.f_ind].e3);
-	    to_check.erase(ue_ne3);
-	}
-
-	if (!to_process.size()) {
-	    // If we've cleared the queue, see if there are any other topological
-	    // islands that we need to seed
-	    flip_cnt += do_seeding(to_process, to_check, ue_emap, ordered_edges, synced_faces);
+	    // If both the oriented edges assigned to ue[tedge_ind] are the same, then
+	    // the new face needs to be flipped
+	    if (ordered_edges[ue_emap[ue[tedge_ind]][0]] == ordered_edges[ue_emap[ue[tedge_ind]][1]]) {
+		synced_faces[f_ind].flip();
+		flip_cnt++;
+		for (size_t k = 0; k < 3; k++) {
+		    ordered_edges[synced_faces[f_ind].e[k]].flip();
+		}
+	    }
 	}
     }
 
     // Once syncing operations are complete, make the final vertex assignments to
     // the face array.
     for (int i = 0; i < fcnt; ++i) {
-	//bu_log("old: %d %d %d new: %d %d %d\n", of[i*3+0], of[i*3+1], of[i*3+2], ordered_edges[synced_faces[i].e1].v1, ordered_edges[synced_faces[i].e2].v1, ordered_edges[synced_faces[i].e3].v1);
-	of[i*3+0] = ordered_edges[synced_faces[i].e1].v1;
-	of[i*3+1] = ordered_edges[synced_faces[i].e2].v1;
-	of[i*3+2] = ordered_edges[synced_faces[i].e3].v1;
+	//bu_log("old: %d %d %d new: %d %d %d\n", of[i*3+0], of[i*3+1], of[i*3+2], synced_faces[i].v1, ordered_edges[synced_faces[i].e2].v1, ordered_edges[synced_faces[i].e3].v1);
+	of[i*3+0] = synced_faces[i].v1;
+	of[i*3+1] = synced_faces[i].v2;
+	of[i*3+2] = synced_faces[i].v3;
     }
 
     return flip_cnt;
