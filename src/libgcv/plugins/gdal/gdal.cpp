@@ -2,7 +2,7 @@
  * BRL-CAD
  *
  * Copyright (c) 2013 Tom Browder
- * Copyright (c) 2017-2021 United States Government as represented by the U.S. Army
+ * Copyright (c) 2017-2022 United States Government as represented by the U.S. Army
  * Research Laboratory.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy

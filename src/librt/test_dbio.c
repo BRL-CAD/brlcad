@@ -1,7 +1,7 @@
 /*                     T E S T _ D B I O . C
  * BRL-CAD
  *
- * Copyright (c) 2019-2021 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without

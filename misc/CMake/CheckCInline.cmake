@@ -1,7 +1,7 @@
 #              C H E C K C I N L I N E . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2021 United States Government as represented by
+# Copyright (c) 2012-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
