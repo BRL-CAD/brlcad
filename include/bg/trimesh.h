@@ -274,9 +274,8 @@ BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, int *n_ofaces, point2d_t **o
  * @return -1 if error, number of faces in new trimesh if successful (should
  * match the original face count)
  */
-BG_EXPORT extern int bg_trimesh_3d_gc(int **ofaces, int *n_ofaces, point_t **opnts, int *n_opnts,
-	const int *ifaces, int n_ifaces, const point_t *ipnts);
-
+BG_EXPORT extern int bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnts,
+	const int *faces, int num_faces, const point_t *in_pts);
 
 /**
  * @brief
@@ -292,6 +291,22 @@ BG_EXPORT extern int bg_trimesh_3d_gc(int **ofaces, int *n_ofaces, point_t **opn
  */
 BG_EXPORT extern int
 bg_trimesh_sync(int *of, int *f, int fcnt);
+
+/**
+ * @brief
+ * Return a set of face sets where all topologically connected faces are
+ * grouped into common sets.
+ *
+ * @param[out] ofs  array of faces arrays containing the new output face sets.
+ * @param[out] ofc  array of face counts for the new output face sets.
+ * @param[in]  f    input set of faces.
+ * @param[in]  fcnt input face count
+ *
+ * @return -1 if error, otherwise return the number of face sets created
+ */
+BG_EXPORT extern int
+bg_trimesh_split(int ***ofs, int **nfs, int *f, int fcnt);
+
 
 __END_DECLS
 

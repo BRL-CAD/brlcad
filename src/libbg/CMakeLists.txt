@@ -81,6 +81,7 @@ set(LIBBG_SOURCES
   trimesh.cpp
   trimesh_isect.cpp
   trimesh_sync.cpp
+  trimesh_split.cpp
   vert_tree.c
   util.c
   )
