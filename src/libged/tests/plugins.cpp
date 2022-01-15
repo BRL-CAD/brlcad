@@ -46,12 +46,16 @@ main(int ac, char *av[]) {
 	return (strlen(imsgs) > 0) ? BRLCAD_ERROR : BRLCAD_OK;
     }
 
-    if (!bu_file_exists(av[1], NULL)) {
+    if (!bu_file_exists(av[0], NULL)) {
 	printf("ERROR: [%s] does not exist, expecting .g file\n", av[1]);
 	return 2;
     }
 
-    gbp = ged_open("db", av[1], 1);
+    gbp = ged_open("db", av[0], 1);
+    if (!gbp) {
+	bu_log("ged_open failed on %s\n", av[0]);
+	return 2;
+    }
 
     const char * const *cmds = NULL;
     size_t cmds_cnt = ged_cmd_list(&cmds);
