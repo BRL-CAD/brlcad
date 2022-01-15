@@ -927,7 +927,7 @@ bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnts,
     int nind = 0;
     std::set<int>::iterator ap;
     for (ap = active_pnts.begin(); ap != active_pnts.end(); ap++) {
-	V2MOVE(op[nind], in_pts[*ap]);
+	VMOVE(op[nind], in_pts[*ap]);
 	o2n[*ap] = nind;
 	nind++;
     }
