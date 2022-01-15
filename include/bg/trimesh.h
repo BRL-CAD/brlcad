@@ -304,7 +304,7 @@ bg_trimesh_sync(int *of, int *f, int fcnt);
  * @return -1 if error, otherwise return the number of face sets created
  */
 BG_EXPORT extern int
-bg_trimesh_split(int ***ofs, int **nfs, int *f, int fcnt);
+bg_trimesh_split(int ***ofs, int **ofc, int *f, int fcnt);
 
 
 __END_DECLS
