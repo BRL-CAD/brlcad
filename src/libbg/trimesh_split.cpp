@@ -159,7 +159,10 @@ bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
 		    interior_edges.insert(ue[k]);
 		    wavefront_edges.erase(ue[k]);
 		} else {
-		    wavefront_edges.insert(ue[k]);
+		    // If the mesh loops back on itself, the wavefront might hit
+		    // edges it has already seen.  Let's not infinite loop...
+		    if (interior_edges.find(ue[k]) == interior_edges.end())
+			wavefront_edges.insert(ue[k]);
 		}
 	    }
 
