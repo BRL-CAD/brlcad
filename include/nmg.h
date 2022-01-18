@@ -86,6 +86,7 @@ __BEGIN_DECLS
 #include "nmg/defines.h"
 
 #include "nmg/debug.h"
+#include "nmg/vertex.h"
 #include "nmg/nurb.h"
 
 /**
@@ -107,11 +108,6 @@ __BEGIN_DECLS
 #define NMG_CK_EDGE(_p)               NMG_CKMAG(_p, NMG_EDGE_MAGIC, "edge")
 #define NMG_CK_EDGE_G_LSEG(_p)        NMG_CKMAG(_p, NMG_EDGE_G_LSEG_MAGIC, "edge_g_lseg")
 #define NMG_CK_EDGEUSE(_p)            NMG_CKMAG(_p, NMG_EDGEUSE_MAGIC, "edgeuse")
-#define NMG_CK_VERTEX(_p)             NMG_CKMAG(_p, NMG_VERTEX_MAGIC, "vertex")
-#define NMG_CK_VERTEX_G(_p)           NMG_CKMAG(_p, NMG_VERTEX_G_MAGIC, "vertex_g")
-#define NMG_CK_VERTEXUSE(_p)          NMG_CKMAG(_p, NMG_VERTEXUSE_MAGIC, "vertexuse")
-#define NMG_CK_VERTEXUSE_A_PLANE(_p)  NMG_CKMAG(_p, NMG_VERTEXUSE_A_PLANE_MAGIC, "vertexuse_a_plane")
-
 /*
  * NOTE: We rely on the fact that the first 32 bits in a struct is the
  * magic number (which is used to identify the struct type).  This may
@@ -371,54 +367,6 @@ struct edgeuse {
 };
 
 /**
- * The vertex and vertexuse structures are connected in a way
- * different from the superior kinds of topology elements.  The vertex
- * structure heads a linked list that all vertexuse's that use the
- * vertex are linked onto.
- */
-struct vertex {
-    uint32_t magic;
-    struct bu_list vu_hd;	/**< @brief heads list of vu's of this vertex */
-    struct vertex_g *vg_p;	/**< @brief geometry */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct vertex_g {
-    uint32_t magic;
-    point_t coord;		/**< @brief coordinates of vertex in space */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct vertexuse {
-    struct bu_list l;		/**< @brief list of all vu's on a vertex */
-    union {
-	struct shell *s_p;	/**< @brief no fu's or eu's on shell */
-	struct loopuse *lu_p;	/**< @brief loopuse contains single vertex */
-	struct edgeuse *eu_p;	/**< @brief eu causing this vu */
-	uint32_t *magic_p; /**< @brief for those times when we're not sure */
-    } up;
-    struct vertex *v_p;		/**< @brief vertex definition and attributes */
-    union {
-	uint32_t *magic_p;
-	struct vertexuse_a_plane *plane_p;
-	struct vertexuse_a_cnurb *cnurb_p;
-    } a;			/**< @brief Attributes */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct vertexuse_a_plane {
-    uint32_t magic;
-    vect_t N;			/**< @brief (opt) surface Normal at vertexuse */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct vertexuse_a_cnurb {
-    uint32_t magic;
-    fastf_t param[3];		/**< @brief (u, v, w) of vu on eu's cnurb */
-    long index;			/**< @brief struct # in this model */
-};
-
-/**
  * storage allocation/deallocation support
  */
 #define NMG_GETSTRUCT(p, str) p = (struct str *)bu_calloc(1, sizeof(struct str), "NMG_GETSTRUCT")
@@ -454,12 +402,6 @@ struct vertexuse_a_cnurb {
 #define GET_EDGE_G_LSEG(p, m)       {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p, m);}
 #define GET_EDGE_G_CNURB(p, m)      {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p, m);}
 #define GET_EDGEUSE(p, m)           {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEX(p, m)            {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEX_G(p, m)          {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE(p, m)         {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE_A_PLANE(p, m) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p, m);}
-#define GET_VERTEXUSE_A_CNURB(p, m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p, m);}
-
 
 #define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
 #define FREE_REGION(p)            NMG_FREESTRUCT(p, nmgregion)
@@ -478,12 +420,6 @@ struct vertexuse_a_cnurb {
 #define FREE_EDGE_G_LSEG(p)       NMG_FREESTRUCT(p, edge_g_lseg)
 #define FREE_EDGE_G_CNURB(p)      NMG_FREESTRUCT(p, edge_g_cnurb)
 #define FREE_EDGEUSE(p)           NMG_FREESTRUCT(p, edgeuse)
-#define FREE_VERTEX(p)            NMG_FREESTRUCT(p, vertex)
-#define FREE_VERTEX_G(p)          NMG_FREESTRUCT(p, vertex_g)
-#define FREE_VERTEXUSE(p)         NMG_FREESTRUCT(p, vertexuse)
-#define FREE_VERTEXUSE_A_PLANE(p) NMG_FREESTRUCT(p, vertexuse_a_plane)
-#define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
-
 
 /**
  * Do two edgeuses share the same two vertices? If yes, eu's should be
@@ -717,114 +653,6 @@ struct nmg_inter_struct {
 };
 #define NMG_CK_INTER_STRUCT(_p) NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
 
-
-
-/*NURBS*/
-
-#define RT_NURB_SPLIT_ROW 0
-#define RT_NURB_SPLIT_COL 1
-#define RT_NURB_SPLIT_FLAT 2
-
-/* Definition of NURB point types and coordinates
- * Bit:	  8765 4321 0
- *       |nnnn|tttt|h
- *			h     - 1 if Homogeneous
- *			tttt  - point type
- *				1 = XY
- *				2 = XYZ
- *				3 = UV
- *				4 = Random data
- *				5 = Projected surface
- *			nnnnn - number of coordinates per point
- *				includes the rational coordinate
- */
-
-/* point types */
-#define RT_NURB_PT_XY 	1			/**< @brief x, y coordinates */
-#define RT_NURB_PT_XYZ	2			/**< @brief x, y, z coordinates */
-#define RT_NURB_PT_UV	3			/**< @brief trim u, v parameter space */
-#define RT_NURB_PT_DATA 4			/**< @brief random data */
-#define RT_NURB_PT_PROJ	5			/**< @brief Projected Surface */
-
-#define RT_NURB_PT_RATIONAL	1
-#define RT_NURB_PT_NONRAT 	0
-
-#define RT_NURB_MAKE_PT_TYPE(n, t, h)	((n<<5) | (t<<1) | h)
-#define RT_NURB_EXTRACT_COORDS(pt)	(pt>>5)
-#define RT_NURB_EXTRACT_PT_TYPE(pt)		((pt>>1) & 0x0f)
-#define RT_NURB_IS_PT_RATIONAL(pt)		(pt & 0x1)
-#define RT_NURB_STRIDE(pt)		(RT_NURB_EXTRACT_COORDS(pt) * sizeof( fastf_t))
-
-#define DEBUG_NMG_SPLINE	0x00000100	/**< @brief 9 Splines */
-
-/* macros to check/validate a structure pointer
- */
-#define NMG_CK_KNOT(_p)		BU_CKMAG(_p, RT_KNOT_VECTOR_MAGIC, "knot_vector")
-#define NMG_CK_CNURB(_p)	BU_CKMAG(_p, NMG_EDGE_G_CNURB_MAGIC, "cnurb")
-#define NMG_CK_SNURB(_p)	BU_CKMAG(_p, NMG_FACE_G_SNURB_MAGIC, "snurb")
-
-/* DEPRECATED */
-#define GET_CNURB(p/*, m*/) { \
-	BU_ALLOC((p), struct edge_g_cnurb); \
-	/* NMG_INCR_INDEX(p, m); */ \
-	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_EDGE_G_CNURB_MAGIC; \
-    }
-
-/* DEPRECATED */
-#define GET_SNURB(p/*, m*/) { \
-	BU_ALLOC((p), struct face_g_snurb); \
-	/* NMG_INCR_INDEX(p, m); */ \
-	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_FACE_G_SNURB_MAGIC; \
-    }
-
-
-/* ----- Internal structures ----- */
-
-struct nmg_nurb_poly {
-    struct nmg_nurb_poly * next;
-    point_t		ply[3];		/**< @brief Vertices */
-    fastf_t		uv[3][2];	/**< @brief U, V parametric values */
-};
-
-struct nmg_nurb_uv_hit {
-    struct nmg_nurb_uv_hit * next;
-    int		sub;
-    fastf_t		u;
-    fastf_t		v;
-};
-
-
-struct oslo_mat {
-    struct oslo_mat * next;
-    int		offset;
-    int		osize;
-    fastf_t		* o_vec;
-};
-
-/* --- new way */
-
-struct bezier_2d_list {
-    struct bu_list	l;
-    point2d_t	*ctl;
-};
-
-/**
- *  * Evaluate a Bezier curve at a particular parameter value. Fill in
- *   * control points for resulting sub-curves if "Left" and "Right" are
- *    * non-null.
- *     */
-NMG_EXPORT extern void bezier(point2d_t *V, int degree, double t, point2d_t *Left, point2d_t *Right, point2d_t eval_pt, point2d_t normal );
-
-/**
- *  * Given an equation in Bernstein-Bezier form, find all of the roots
- *   * in the interval [0, 1].  Return the number of roots found.
- *    */
-NMG_EXPORT extern int bezier_roots(point2d_t *w, int degree, point2d_t **intercept, point2d_t **normal, point2d_t ray_start, point2d_t ray_dir, point2d_t ray_perp, int depth, fastf_t epsilon);
-
-/**
- *  * subdivide a 2D bezier curve at t=0.5
- *   */
-NMG_EXPORT extern struct bezier_2d_list *bezier_subdivide(struct bezier_2d_list *bezier_hd, int degree, fastf_t epsilon, int depth);
 
 
 /* TODO - these structs and ray_in_rpp are versions of librt functionality,

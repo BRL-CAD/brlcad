@@ -2,6 +2,7 @@ set(nmg_headers
   debug.h
   defines.h
   nurb.h
+  vertex.h
   )
 BRLCAD_MANAGE_FILES(nmg_headers ${INCLUDE_DIR}/brlcad/nmg)
 
