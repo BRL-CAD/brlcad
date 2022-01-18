@@ -88,6 +88,9 @@ __BEGIN_DECLS
 #include "nmg/debug.h"
 #include "nmg/vertex.h"
 #include "nmg/edge.h"
+#include "nmg/loop.h"
+#include "nmg/face.h"
+#include "nmg/shell.h"
 #include "nmg/nurb.h"
 #include "nmg/ray.h"
 
@@ -97,16 +100,6 @@ __BEGIN_DECLS
 #define NMG_CK_MODEL(_p)              NMG_CKMAG(_p, NMG_MODEL_MAGIC, "model")
 #define NMG_CK_REGION(_p)             NMG_CKMAG(_p, NMG_REGION_MAGIC, "region")
 #define NMG_CK_REGION_A(_p)           NMG_CKMAG(_p, NMG_REGION_A_MAGIC, "region_a")
-#define NMG_CK_SHELL(_p)              NMG_CKMAG(_p, NMG_SHELL_MAGIC, "shell")
-#define NMG_CK_SHELL_A(_p)            NMG_CKMAG(_p, NMG_SHELL_A_MAGIC, "shell_a")
-#define NMG_CK_FACE(_p)               NMG_CKMAG(_p, NMG_FACE_MAGIC, "face")
-#define NMG_CK_FACE_G_PLANE(_p)       NMG_CKMAG(_p, NMG_FACE_G_PLANE_MAGIC, "face_g_plane")
-#define NMG_CK_FACE_G_SNURB(_p)       NMG_CKMAG(_p, NMG_FACE_G_SNURB_MAGIC, "face_g_snurb")
-#define NMG_CK_FACE_G_EITHER(_p)      NMG_CK2MAG(_p, NMG_FACE_G_PLANE_MAGIC, NMG_FACE_G_SNURB_MAGIC, "face_g_plane|face_g_snurb")
-#define NMG_CK_FACEUSE(_p)            NMG_CKMAG(_p, NMG_FACEUSE_MAGIC, "faceuse")
-#define NMG_CK_LOOP(_p)               NMG_CKMAG(_p, NMG_LOOP_MAGIC, "loop")
-#define NMG_CK_LOOP_G(_p)             NMG_CKMAG(_p, NMG_LOOP_G_MAGIC, "loop_g")
-#define NMG_CK_LOOPUSE(_p)            NMG_CKMAG(_p, NMG_LOOPUSE_MAGIC, "loopuse")
 
 /*
  * NOTE: We rely on the fact that the first 32 bits in a struct is the
@@ -150,94 +143,6 @@ struct nmgregion_a {
 };
 
 /**
- * When a shell encloses volume, it's done entirely by the list of
- * faceuses.
- *
- * The wire loopuses (each of which heads a list of edges) define a
- * set of connected line segments which form a closed path, but do not
- * enclose either volume or surface area.
- *
- * The wire edgeuses are disconnected line segments.  There is a
- * special interpretation to the eu_hd list of wire edgeuses.  Unlike
- * edgeuses seen in loops, the eu_hd list contains eu1, eu1mate, eu2,
- * eu2mate, ..., where each edgeuse and its mate comprise a
- * *non-connected* "wire" edge which starts at eu1->vu_p->v_p and ends
- * at eu1mate->vu_p->v_p.  There is no relationship between the pairs
- * of edgeuses at all, other than that they all live on the same
- * linked list.
- */
-struct shell {
-    struct bu_list l;		/**< @brief shells, in region's s_hd list */
-    struct nmgregion *r_p;	/**< @brief owning region */
-    struct shell_a *sa_p;	/**< @brief attribs */
-
-    struct bu_list fu_hd;	/**< @brief list of face uses in shell */
-    struct bu_list lu_hd;	/**< @brief wire loopuses (edge groups) */
-    struct bu_list eu_hd;	/**< @brief wire list (shell has wires) */
-    struct vertexuse *vu_p;	/**< @brief internal ptr to single vertexuse */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct shell_a {
-    uint32_t magic;
-    point_t min_pt;		/**< @brief minimums of bounding box */
-    point_t max_pt;		/**< @brief maximums of bounding box */
-    long index;			/**< @brief struct # in this model */
-};
-
-/**
- * Note: there will always be exactly two faceuse's using a face.  To
- * find them, go up fu_p for one, then across fumate_p to other.
- */
-struct face {
-    struct bu_list l;		/**< @brief faces in face_g's f_hd list */
-    struct faceuse *fu_p;	/**< @brief Ptr up to one use of this face */
-    union {
-	uint32_t *magic_p;
-	struct face_g_plane *plane_p;
-	struct face_g_snurb *snurb_p;
-    } g;			/**< @brief geometry */
-    int flip;			/**< @brief !0 ==> flip normal of fg */
-    /* These might be better stored in a face_a (not faceuse_a!) */
-    /* These are not stored on disk */
-    point_t min_pt;		/**< @brief minimums of bounding box */
-    point_t max_pt;		/**< @brief maximums of bounding box */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct face_g_plane {
-    uint32_t magic;
-    struct bu_list f_hd;	/**< @brief list of faces sharing this surface */
-    plane_t N;			/**< @brief Plane equation (incl normal) */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct faceuse {
-    struct bu_list l;		/**< @brief fu's, in shell's fu_hd list */
-    struct shell *s_p;		/**< @brief owning shell */
-    struct faceuse *fumate_p;	/**< @brief opposite side of face */
-    int orientation;		/**< @brief rel to face geom defn */
-    int outside;		/**< @brief RESERVED for future:  See Lee Butler */
-    struct face *f_p;		/**< @brief face definition and attributes */
-    struct bu_list lu_hd;	/**< @brief list of loops in face-use */
-    long index;			/**< @brief struct # in this model */
-};
-
-/** Returns a 3-tuple (vect_t), given faceuse and state of flip flags */
-#define NMG_GET_FU_NORMAL(_N, _fu) { \
-	register const struct faceuse *_fu1 = (_fu); \
-	register const struct face_g_plane *_fg; \
-	NMG_CK_FACEUSE(_fu1); \
-	NMG_CK_FACE(_fu1->f_p); \
-	_fg = _fu1->f_p->g.plane_p; \
-	NMG_CK_FACE_G_PLANE(_fg); \
-	if ((_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0)) { \
-	    VREVERSE(_N, _fg->N); \
-	} else { \
-	    VMOVE(_N, _fg->N); \
-	} }
-
-/**
  * Returns a 4-tuple (plane_t), given faceuse and state of flip flags.
  */
 #define NMG_GET_FU_PLANE(_N, _fu) { \
@@ -252,60 +157,6 @@ struct faceuse {
 	} else { \
 	    HMOVE(_N, _fg->N); \
 	} }
-
-/**
- * To find all the uses of this loop, use lu_p for one loopuse, then
- * go down and find an edge, then wander around either eumate_p or
- * radial_p from there.
- *
- * Normally, down_hd heads a doubly linked list of edgeuses.  But,
- * before using it, check BU_LIST_FIRST_MAGIC(&lu->down_hd) for the
- * magic number type.  If this is a self-loop on a single vertexuse,
- * then get the vertex pointer with vu = BU_LIST_FIRST(vertexuse,
- * &lu->down_hd)
- *
- * This is an especially dangerous storage efficiency measure
- * ("hack"), because the list that the vertexuse structure belongs to
- * is headed, not by a superior element type, but by the vertex
- * structure.  When a loopuse needs to point down to a vertexuse, rip
- * off the forw pointer.  Take careful note that this is just a
- * pointer, **not** the head of a linked list (single, double, or
- * otherwise)!  Exercise great care!
- *
- * The edges of an exterior (OT_SAME) loop occur in counter-clockwise
- * order, as viewed from the normalward side (outside).
- */
-#define RT_LIST_SET_DOWN_TO_VERT(_hp, _vu) { \
-	(_hp)->forw = &((_vu)->l); (_hp)->back = (struct bu_list *)NULL; }
-
-struct loop {
-    uint32_t magic;
-    struct loopuse *lu_p;	/**< @brief Ptr to one use of this loop */
-    struct loop_g *lg_p;	/**< @brief Geometry */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct loop_g {
-    uint32_t magic;
-    point_t min_pt;		/**< @brief minimums of bounding box */
-    point_t max_pt;		/**< @brief maximums of bounding box */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct loopuse {
-    struct bu_list l;		/**< @brief lu's, in fu's lu_hd, or shell's lu_hd */
-    union {
-	struct faceuse *fu_p;	/**< @brief owning face-use */
-	struct shell *s_p;
-	uint32_t *magic_p;
-    } up;
-    struct loopuse *lumate_p;	/**< @brief loopuse on other side of face */
-    int orientation;		/**< @brief OT_SAME=outside loop */
-    struct loop *l_p;		/**< @brief loop definition and attributes */
-    struct bu_list down_hd;	/**< @brief eu list or vu pointer */
-    long index;			/**< @brief struct # in this model */
-};
-
 
 /**
  * storage allocation/deallocation support
@@ -329,30 +180,10 @@ struct loopuse {
 #define GET_MODEL(p, m)             {NMG_GETSTRUCT(p, model); NMG_INCR_INDEX(p, m);}
 #define GET_REGION(p, m)            {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p, m);}
 #define GET_REGION_A(p, m)          {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p, m);}
-#define GET_SHELL(p, m)             {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p, m);}
-#define GET_SHELL_A(p, m)           {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p, m);}
-#define GET_FACE(p, m)              {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p, m);}
-#define GET_FACE_G_PLANE(p, m)      {NMG_GETSTRUCT(p, face_g_plane); NMG_INCR_INDEX(p, m);}
-#define GET_FACE_G_SNURB(p, m)      {NMG_GETSTRUCT(p, face_g_snurb); NMG_INCR_INDEX(p, m);}
-#define GET_FACEUSE(p, m)           {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP(p, m)              {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP_G(p, m)            {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p, m);}
-#define GET_LOOPUSE(p, m)           {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p, m);}
-#define GET_LOOPUSE_A(p, m)         {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p, m);}
 
 #define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
 #define FREE_REGION(p)            NMG_FREESTRUCT(p, nmgregion)
 #define FREE_REGION_A(p)          NMG_FREESTRUCT(p, nmgregion_a)
-#define FREE_SHELL(p)             NMG_FREESTRUCT(p, shell)
-#define FREE_SHELL_A(p)           NMG_FREESTRUCT(p, shell_a)
-#define FREE_FACE(p)              NMG_FREESTRUCT(p, face)
-#define FREE_FACE_G_PLANE(p)      NMG_FREESTRUCT(p, face_g_plane)
-#define FREE_FACE_G_SNURB(p)      NMG_FREESTRUCT(p, face_g_snurb)
-#define FREE_FACEUSE(p)           NMG_FREESTRUCT(p, faceuse)
-#define FREE_LOOP(p)              NMG_FREESTRUCT(p, loop)
-#define FREE_LOOP_G(p)            NMG_FREESTRUCT(p, loop_g)
-#define FREE_LOOPUSE(p)           NMG_FREESTRUCT(p, loopuse)
-#define FREE_LOOPUSE_A(p)         NMG_FREESTRUCT(p, loopuse_a)
 
 /** Print a plane equation. */
 #define PLPRINT(_s, _pl) bu_log("%s %gx + %gy + %gz = %g\n", (_s), \
@@ -664,6 +495,13 @@ NMG_EXPORT extern void nmg_jfg(struct face *f1,
 NMG_EXPORT extern void nmg_jeg(struct edge_g_lseg *dest_eg,
 			       struct edge_g_lseg *src_eg);
 
+
+
+NMG_EXPORT extern void nmg_count_shell_kids(const struct model *m,
+                                            size_t *total_wires,
+                                            size_t *total_faces,
+                                            size_t *total_points);
+
 /* From nmg_mod.c */
 /*      REGION Routines */
 NMG_EXPORT extern void nmg_merge_regions(struct nmgregion *r1,
@@ -718,63 +556,7 @@ NMG_EXPORT extern void nmg_jf(struct faceuse *dest_fu,
 			      struct faceuse *src_fu);
 NMG_EXPORT extern struct faceuse *nmg_dup_face(struct faceuse *fu,
 					       struct shell *s);
-/*      LOOP Routines */
-NMG_EXPORT extern void nmg_jl(struct loopuse *lu,
-			      struct edgeuse *eu);
-NMG_EXPORT extern struct vertexuse *nmg_join_2loops(struct vertexuse *vu1,
-						    struct vertexuse *vu2);
-NMG_EXPORT extern struct vertexuse *nmg_join_singvu_loop(struct vertexuse *vu1,
-							 struct vertexuse *vu2);
-NMG_EXPORT extern struct vertexuse *nmg_join_2singvu_loops(struct vertexuse *vu1,
-							   struct vertexuse *vu2);
-NMG_EXPORT extern struct loopuse *nmg_cut_loop(struct vertexuse *vu1,
-					       struct vertexuse *vu2,
-					       struct bu_list *vlfree);
-NMG_EXPORT extern struct loopuse *nmg_split_lu_at_vu(struct loopuse *lu,
-						     struct vertexuse *vu);
-NMG_EXPORT extern struct vertexuse *nmg_find_repeated_v_in_lu(struct vertexuse *vu);
-NMG_EXPORT extern void nmg_split_touchingloops(struct loopuse *lu,
-					       const struct bn_tol *tol);
-NMG_EXPORT extern int nmg_join_touchingloops(struct loopuse *lu);
-NMG_EXPORT extern int nmg_get_touching_jaunts(const struct loopuse *lu,
-					      struct bu_ptbl *tbl,
-					      int *need_init);
-NMG_EXPORT extern void nmg_kill_accordions(struct loopuse *lu);
-NMG_EXPORT extern int nmg_loop_split_at_touching_jaunt(struct loopuse            *lu,
-						       const struct bn_tol       *tol);
-NMG_EXPORT extern void nmg_simplify_loop(struct loopuse *lu, struct bu_list *vlfree);
-NMG_EXPORT extern int nmg_kill_snakes(struct loopuse *lu, struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_mv_lu_between_shells(struct shell *dest,
-						struct shell *src,
-						struct loopuse *lu);
-NMG_EXPORT extern void nmg_moveltof(struct faceuse *fu,
-				    struct shell *s);
-NMG_EXPORT extern struct loopuse *nmg_dup_loop(struct loopuse *lu,
-					       uint32_t *parent,
-					       long **trans_tbl);
-NMG_EXPORT extern void nmg_set_lu_orientation(struct loopuse *lu,
-					      int is_opposite);
-NMG_EXPORT extern void nmg_lu_reorient(struct loopuse *lu);
-/*      EDGE Routines */
-NMG_EXPORT extern struct edgeuse *nmg_eusplit(struct vertex *v,
-					      struct edgeuse *oldeu,
-					      int share_geom);
-NMG_EXPORT extern struct edgeuse *nmg_esplit(struct vertex *v,
-					     struct edgeuse *eu,
-					     int share_geom);
-NMG_EXPORT extern struct edgeuse *nmg_ebreak(struct vertex *v,
-					     struct edgeuse *eu);
-NMG_EXPORT extern struct edgeuse *nmg_ebreaker(struct vertex *v,
-					       struct edgeuse *eu,
-					       const struct bn_tol *tol);
-NMG_EXPORT extern struct vertex *nmg_e2break(struct edgeuse *eu1,
-					     struct edgeuse *eu2);
-NMG_EXPORT extern int nmg_unbreak_edge(struct edgeuse *eu1_first);
-NMG_EXPORT extern int nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first);
-NMG_EXPORT extern struct edgeuse *nmg_eins(struct edgeuse *eu);
-NMG_EXPORT extern void nmg_mv_eu_between_shells(struct shell *dest,
-						struct shell *src,
-						struct edgeuse *eu);
+
 /*      VERTEX Routines */
 NMG_EXPORT extern void nmg_mv_vu_between_shells(struct shell *dest,
 						struct shell *src,
@@ -788,33 +570,6 @@ NMG_EXPORT extern void nmg_model_bb(point_t min_pt,
 				    point_t max_pt,
 				    const struct model *m);
 
-
-/* Shell routines */
-NMG_EXPORT extern int nmg_shell_is_empty(const struct shell *s);
-NMG_EXPORT extern struct shell *nmg_find_s_of_lu(const struct loopuse *lu);
-NMG_EXPORT extern struct shell *nmg_find_s_of_eu(const struct edgeuse *eu);
-NMG_EXPORT extern struct shell *nmg_find_s_of_vu(const struct vertexuse *vu);
-
-/* Face routines */
-NMG_EXPORT extern struct faceuse *nmg_find_fu_of_eu(const struct edgeuse *eu);
-NMG_EXPORT extern struct faceuse *nmg_find_fu_of_lu(const struct loopuse *lu);
-NMG_EXPORT extern struct faceuse *nmg_find_fu_of_vu(const struct vertexuse *vu);
-NMG_EXPORT extern struct faceuse *nmg_find_fu_with_fg_in_s(const struct shell *s1,
-							   const struct faceuse *fu2);
-NMG_EXPORT extern double nmg_measure_fu_angle(const struct edgeuse *eu,
-					      const vect_t xvec,
-					      const vect_t yvec,
-					      const vect_t zvec);
-
-/* Loop routines */
-NMG_EXPORT extern struct loopuse*nmg_find_lu_of_vu(const struct vertexuse *vu);
-NMG_EXPORT extern int nmg_loop_is_a_crack(const struct loopuse *lu);
-NMG_EXPORT extern int    nmg_loop_is_ccw(const struct loopuse *lu,
-					 const vect_t norm,
-					 const struct bn_tol *tol);
-NMG_EXPORT extern const struct vertexuse *nmg_loop_touches_self(const struct loopuse *lu);
-NMG_EXPORT extern int nmg_2lu_identical(const struct edgeuse *eu1,
-					const struct edgeuse *eu2);
 
 /* Edge routines */
 NMG_EXPORT extern struct edgeuse *nmg_find_matching_eu_in_s(const struct edgeuse *eu1,
@@ -1080,16 +835,6 @@ NMG_EXPORT extern int nmg_in_or_ref(struct vertexuse *vu,
 				    struct bu_ptbl *b);
 NMG_EXPORT extern void nmg_rebound(struct model *m,
 				   const struct bn_tol *tol);
-NMG_EXPORT extern void nmg_count_shell_kids(const struct model *m,
-					    size_t *total_wires,
-					    size_t *total_faces,
-					    size_t *total_points);
-NMG_EXPORT extern void nmg_close_shell(struct shell *s, struct bu_list *vlfree,
-				       const struct bn_tol *tol);
-NMG_EXPORT extern struct shell *nmg_dup_shell(struct shell *s,
-					      long ***copy_tbl,
-					      struct bu_list *vlfree,
-					      const struct bn_tol *tol);
 NMG_EXPORT extern struct edgeuse *nmg_pop_eu(struct bu_ptbl *stack);
 NMG_EXPORT extern void nmg_reverse_radials(struct faceuse *fu,
 					   const struct bn_tol *tol);
@@ -1155,14 +900,6 @@ NMG_EXPORT extern void nmg_follow_free_edges_to_vertex(const struct vertex *vpa,
 						       const struct edgeuse *eu,
 						       struct bu_ptbl *verts,
 						       int *found);
-NMG_EXPORT extern void nmg_glue_face_in_shell(const struct faceuse *fu,
-					      struct shell *s,
-					      const struct bn_tol *tol);
-NMG_EXPORT extern int nmg_open_shells_connect(struct shell *dst,
-					      struct shell *src,
-					      const long **copy_tbl,
-					      struct bu_list *vlfree,
-					      const struct bn_tol *tol);
 NMG_EXPORT extern int nmg_in_vert(struct vertex *new_v,
 				  const int approximate,
 				  struct bu_list *vlfree,
@@ -1191,8 +928,6 @@ NMG_EXPORT extern int nmg_break_edges(uint32_t *magic_p, struct bu_list *vlfree,
 NMG_EXPORT extern int nmg_lu_is_convex(struct loopuse *lu,
 				       struct bu_list *vlfree,
 				       const struct bn_tol *tol);
-NMG_EXPORT extern int nmg_simplify_shell_edges(struct shell *s,
-					       const struct bn_tol *tol);
 NMG_EXPORT extern int nmg_edge_collapse(struct model *m,
 					const struct bn_tol *tol,
 					const fastf_t tol_coll,
@@ -1223,8 +958,6 @@ NMG_EXPORT extern int nmg_dangling_face(const struct faceuse *fu,
 /* static set_edge_sub_manifold */
 /* static set_loop_sub_manifold */
 /* static set_face_sub_manifold */
-NMG_EXPORT extern char *nmg_shell_manifolds(struct shell *sp,
-					    char *tbl);
 NMG_EXPORT extern char *nmg_manifolds(struct model *m);
 
 /* From nmg_fuse.c */
