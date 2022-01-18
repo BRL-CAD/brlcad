@@ -91,6 +91,15 @@ struct vertexuse {
 #define FREE_VERTEXUSE_A_PLANE(p) NMG_FREESTRUCT(p, vertexuse_a_plane)
 #define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
 
+#define PREEXIST 1
+#define NEWEXIST 2
+
+
+#define VU_PREEXISTS(_bs, _vu) { chkidxlist((_bs), (_vu)); \
+        (_bs)->vertlist[(_vu)->index] = PREEXIST; }
+
+#define VU_NEW(_bs, _vu) { chkidxlist((_bs), (_vu)); \
+        (_bs)->vertlist[(_vu)->index] = NEWEXIST; }
 
 
 __END_DECLS

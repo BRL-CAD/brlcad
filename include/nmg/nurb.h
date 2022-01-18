@@ -215,6 +215,170 @@ NMG_EXPORT extern int bezier_roots(point2d_t *w, int degree, point2d_t **interce
 NMG_EXPORT extern struct bezier_2d_list *bezier_subdivide(struct bezier_2d_list *bezier_hd, int degree, fastf_t epsilon, int depth);
 
 
+/* TODO - this is another one of those data concepts common to librt and libnmg */
+struct nmg_curvature {
+    vect_t      crv_pdir;       /**< @brief Principle direction */
+    fastf_t     crv_c1;         /**< @brief curvature in principle dir */
+    fastf_t     crv_c2;         /**< @brief curvature in other direction */
+};
+
+/* nurb_basis.c */
+NMG_EXPORT extern fastf_t nmg_nurb_basis_eval(struct knot_vector *knts, int interval,
+                                              int order, fastf_t mu);
+
+/* nurb_bezier.c */
+NMG_EXPORT extern int nmg_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb * srf);
+NMG_EXPORT extern int nmg_bez_check(const struct face_g_snurb * srf);
+NMG_EXPORT extern int nurb_crv_is_bezier(const struct edge_g_cnurb *crv);
+NMG_EXPORT extern void nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv);
+
+/* nurb_bound.c */
+NMG_EXPORT extern int nmg_nurb_s_bound(struct face_g_snurb *srf, point_t bmin, point_t bmax);
+NMG_EXPORT extern int nmg_nurb_c_bound(struct edge_g_cnurb *crv, point_t bmin, point_t bmax);
+NMG_EXPORT extern int nmg_nurb_s_check(struct face_g_snurb *srf);
+NMG_EXPORT extern int nmg_nurb_c_check(struct edge_g_cnurb *crv);
+
+/* nurb_copy.c */
+NMG_EXPORT extern struct face_g_snurb *nmg_nurb_scopy(const struct face_g_snurb *srf);
+NMG_EXPORT extern struct edge_g_cnurb *nmg_nurb_crv_copy(const struct edge_g_cnurb * crv);
+
+/* nurb_diff.c */
+NMG_EXPORT extern struct face_g_snurb *nmg_nurb_s_diff(const struct face_g_snurb *srf, int dir);
+NMG_EXPORT extern struct edge_g_cnurb *nmg_nurb_c_diff(const struct edge_g_cnurb *crv);
+NMG_EXPORT extern void nmg_nurb_mesh_diff(int order, const fastf_t *o_pts,
+                                          fastf_t *n_pts,
+                                          const fastf_t *knots, int o_stride, int n_stride,
+                                          int o_size, int pt_type);
+
+/* nurb_eval.c */
+NMG_EXPORT extern void nmg_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t * final_value);
+NMG_EXPORT extern void nmg_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t * final_value);
+NMG_EXPORT extern fastf_t *nmg_nurb_eval_crv(fastf_t *crv, int order,
+                                             fastf_t param,
+                                             const struct knot_vector *k_vec, int k_index, int coords);
+NMG_EXPORT extern void nmg_nurb_pr_crv(fastf_t *crv, int c_size, int coords);
+
+/* nurb_flat.c */
+NMG_EXPORT extern int nmg_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon);
+NMG_EXPORT extern fastf_t nmg_nurb_crv_flat(fastf_t *crv, int   size, int pt_type);
+
+/* nurb_knot.c */
+NMG_EXPORT extern void nmg_nurb_kvknot(struct knot_vector *new_knots, int order,
+                                       fastf_t lower, fastf_t upper, int num);
+NMG_EXPORT extern void nmg_nurb_kvmult(struct knot_vector *new_kv,
+                                       const struct knot_vector *kv,
+                                       int num, fastf_t val);
+NMG_EXPORT extern void nmg_nurb_kvgen(struct knot_vector *kv,
+                                      fastf_t lower, fastf_t upper, int num);
+NMG_EXPORT extern void nmg_nurb_kvmerge(struct knot_vector *new_knots,
+                                        const struct knot_vector *kv1,
+                                        const struct knot_vector *kv2);
+NMG_EXPORT extern int nmg_nurb_kvcheck(fastf_t val, const struct knot_vector *kv);
+NMG_EXPORT extern void nmg_nurb_kvextract(struct knot_vector *new_kv,
+                                          const struct knot_vector *kv,
+                                          int lower, int upper);
+NMG_EXPORT extern void nmg_nurb_kvcopy(struct knot_vector *new_kv,
+                                       const struct knot_vector *old_kv);
+NMG_EXPORT extern void nmg_nurb_kvnorm(struct knot_vector *kv);
+NMG_EXPORT extern int nmg_nurb_knot_index(const struct knot_vector *kv, fastf_t k_value, int order);
+NMG_EXPORT extern void nmg_nurb_gen_knot_vector(struct knot_vector *new_knots,
+                                                int order, fastf_t lower, fastf_t upper);
+
+/* nurb_norm.c */
+NMG_EXPORT extern void nmg_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t * norm);
+
+/* nurb_c2.c */
+NMG_EXPORT extern void nmg_nurb_curvature(struct nmg_curvature *cvp,
+                                          const struct face_g_snurb *srf, fastf_t u, fastf_t v);
+
+/* nurb_plot.c */
+NMG_EXPORT extern void nmg_nurb_plot_snurb(FILE *fp, const struct face_g_snurb *srf);
+NMG_EXPORT extern void nmg_nurb_plot_cnurb(FILE *fp, const struct edge_g_cnurb *crv);
+NMG_EXPORT extern void nmg_nurb_s_plot(const struct face_g_snurb *srf);
+
+/* nurb_interp.c */
+NMG_EXPORT extern void nmg_nurb_cinterp(struct edge_g_cnurb *crv, int order,
+                                        const fastf_t *data, int n);
+NMG_EXPORT extern void nmg_nurb_sinterp(struct face_g_snurb *srf, int order,
+                                        const fastf_t *data, int ymax, int xmax);
+
+/* nurb_poly.c */
+NMG_EXPORT extern struct nmg_nurb_poly *nmg_nurb_to_poly(struct face_g_snurb *srf);
+NMG_EXPORT extern struct nmg_nurb_poly *nmg_nurb_mk_poly(fastf_t *v1, fastf_t *v2, fastf_t *v3,
+                                                         fastf_t uv1[2], fastf_t uv2[2], fastf_t uv3[2]);
+
+/* nurb_ray.c */
+NMG_EXPORT extern struct face_g_snurb *nmg_nurb_project_srf(const struct face_g_snurb *srf,
+                                                            plane_t plane1, plane_t plane2);
+NMG_EXPORT extern void nmg_nurb_clip_srf(const struct face_g_snurb *srf,
+                                         int dir, fastf_t *min, fastf_t *max);
+NMG_EXPORT extern struct face_g_snurb *nmg_nurb_region_from_srf(const struct face_g_snurb *srf,
+                                                                int dir, fastf_t param1, fastf_t param2);
+NMG_EXPORT extern struct nmg_nurb_uv_hit *nmg_nurb_intersect(const struct face_g_snurb * srf,
+                                                             plane_t plane1, plane_t plane2, double uv_tol, struct bu_list *plist);
+
+/* nurb_refine.c */
+NMG_EXPORT extern struct face_g_snurb *nmg_nurb_s_refine(const struct face_g_snurb *srf,
+                                                         int dir, struct knot_vector *kv);
+NMG_EXPORT extern struct edge_g_cnurb *nmg_nurb_c_refine(const struct edge_g_cnurb * crv,
+                                                         struct knot_vector *kv);
+
+/* nurb_solve.c */
+NMG_EXPORT extern void nmg_nurb_solve(fastf_t *mat_1, fastf_t *mat_2,
+                                      fastf_t *solution, int dim, int coords);
+NMG_EXPORT extern void nmg_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2,
+                                          int row, int coords);
+NMG_EXPORT extern void nmg_nurb_forw_solve(const fastf_t *lu, const fastf_t *b,
+                                           fastf_t *y, int n);
+NMG_EXPORT extern void nmg_nurb_back_solve(const fastf_t *lu, const fastf_t *y,
+                                           fastf_t *x, int n);
+NMG_EXPORT extern void nmg_nurb_p_mat(const fastf_t * mat, int dim);
+
+/* nurb_split.c */
+NMG_EXPORT extern void nmg_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf,
+                                        int dir);
+NMG_EXPORT extern void nmg_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv);
+
+/* nurb_trim.c */
+NMG_EXPORT extern int nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu);
+
+/* nurb_util.c */
+NMG_EXPORT extern struct face_g_snurb *nmg_nurb_new_snurb(int u_order, int v_order,
+                                                          int n_u_knots, int n_v_knots,
+                                                          int n_rows, int n_cols, int pt_type);
+NMG_EXPORT extern struct edge_g_cnurb *nmg_nurb_new_cnurb(int order, int n_knots,
+                                                          int n_pts, int pt_type);
+NMG_EXPORT extern void nmg_nurb_free_snurb(struct face_g_snurb *srf);
+NMG_EXPORT extern void nmg_nurb_free_cnurb(struct edge_g_cnurb * crv);
+NMG_EXPORT extern void nmg_nurb_c_print(const struct edge_g_cnurb *crv);
+NMG_EXPORT extern void nmg_nurb_s_print(char *c, const struct face_g_snurb *srf);
+NMG_EXPORT extern void nmg_nurb_pr_kv(const struct knot_vector *kv);
+NMG_EXPORT extern void nmg_nurb_pr_mesh(const struct face_g_snurb *m);
+NMG_EXPORT extern void nmg_nurb_print_pnt_type(int c);
+NMG_EXPORT extern void nmg_nurb_clean_cnurb(struct edge_g_cnurb *crv);
+
+/* nurb_xsplit.c */
+NMG_EXPORT extern struct face_g_snurb *nmg_nurb_s_xsplit(struct face_g_snurb *srf,
+                                                         fastf_t param, int dir);
+NMG_EXPORT extern struct edge_g_cnurb *nmg_nurb_c_xsplit(struct edge_g_cnurb *crv, fastf_t param);
+
+/* oslo_calc.c */
+NMG_EXPORT extern struct oslo_mat *nmg_nurb_calc_oslo(int order,
+                                                      const struct knot_vector *tau_kv,
+                                                      struct knot_vector *t_kv);
+NMG_EXPORT extern void nmg_nurb_pr_oslo(struct oslo_mat *om);
+NMG_EXPORT extern void nmg_nurb_free_oslo(struct oslo_mat *om);
+
+/* oslo_map.c */
+NMG_EXPORT extern void nmg_nurb_map_oslo(struct oslo_mat *oslo,
+                                         fastf_t *old_pts, fastf_t *new_pts,
+                                         int o_stride, int n_stride,
+                                         int lower, int upper, int pt_type);
+
+/* nurb_tess.c */
+NMG_EXPORT extern fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
+
+
 __END_DECLS
 
 #endif  /* NMG_NURB_H */

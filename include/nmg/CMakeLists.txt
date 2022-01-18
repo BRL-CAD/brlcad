@@ -1,6 +1,7 @@
 set(nmg_headers
   debug.h
   defines.h
+  edge.h
   nurb.h
   vertex.h
   )
