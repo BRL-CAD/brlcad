@@ -1193,10 +1193,9 @@ nmg_kfg(uint32_t *magic_p)
 /**
  * Kill Faceuse
  *
- * delete a faceuse and its mate from the parent shell.
- *
- * Any children found are brutally murdered as well.  The faceuses are
- * dequeued from the parent shell's list here.
+ * Delete the "guts" of a faceuse and its mate from the parent shell.
+ * We don't delete the structs themselves, as they are needed for
+ * bu_list iterations until preliminary operations are complete.
  *
  * Returns -
  * 0 If all is well
@@ -1226,10 +1225,12 @@ nmg_kfu(struct faceuse *fu1)
     s = fu1->s_p;
     NMG_CK_SHELL(s);
 
-    /* kill off the children (infanticide?)*/
-    while (BU_LIST_NON_EMPTY(&fu1->lu_hd)) {
-	(void)nmg_klu(BU_LIST_FIRST(loopuse, &fu1->lu_hd));
+    struct loopuse *lu;
+    while (BU_LIST_WHILE(lu, loopuse, &fu1->lu_hd)) {
+	BU_LIST_DEQUEUE(&(lu->l));
+	(void)nmg_klu(lu);
     }
+    bu_list_free(&(fu1->lu_hd));
 
     /* Release the face geometry */
     if (f1->g.magic_p) {
@@ -1252,8 +1253,10 @@ nmg_kfu(struct faceuse *fu1)
 	bu_log("nmg_kfu(fu1=%p) fu2=%p ret=%d\n", (void *)fu1, (void *)fu2, ret);
     }
 
-    FREE_FACEUSE(fu1);
-    FREE_FACEUSE(fu2);
+    // TODO - I don't think we can free these yet?  bu_list iterations
+    // may still be in progress...
+    //FREE_FACEUSE(fu1);
+    //FREE_FACEUSE(fu2);
 
     return ret;
 }
@@ -1554,12 +1557,27 @@ nmg_ks(struct shell *s)
     if (r)
 	NMG_CK_REGION(r);
 
-    while (BU_LIST_NON_EMPTY(&s->fu_hd))
-	(void)nmg_kfu(BU_LIST_FIRST(faceuse, &s->fu_hd));
-    while (BU_LIST_NON_EMPTY(&s->lu_hd))
-	(void)nmg_klu(BU_LIST_FIRST(loopuse, &s->lu_hd));
-    while (BU_LIST_NON_EMPTY(&s->eu_hd))
-	(void)nmg_keu(BU_LIST_FIRST(edgeuse, &s->eu_hd));
+    struct faceuse *fu;
+    while (BU_LIST_WHILE(fu, faceuse, &s->fu_hd)) {
+	BU_LIST_DEQUEUE(&(fu->l));
+	(void)nmg_kfu(fu);
+    }
+    bu_list_free(&(s->fu_hd));
+
+    struct loopuse *lu;
+    while (BU_LIST_WHILE(lu, loopuse, &s->lu_hd)) {
+	BU_LIST_DEQUEUE(&(lu->l));
+	(void)nmg_klu(lu);
+    }
+    bu_list_free(&(s->lu_hd));
+
+    struct edgeuse *eu;
+    while (BU_LIST_WHILE(eu, edgeuse, &s->eu_hd)) {
+	BU_LIST_DEQUEUE(&(eu->l));
+	(void)nmg_keu(eu);
+    }
+    bu_list_free(&(s->eu_hd));
+
     if (s->vu_p)
 	nmg_kvu(s->vu_p);
 
