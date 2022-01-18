@@ -30,6 +30,13 @@
 
 #include "common.h"
 
+#include "nmg/defines.h"
+
+/**
+ * @brief  debug bits for NMG's
+ */
+NMG_EXPORT extern uint32_t nmg_debug;
+
 #define NMG_DEBUG_PL_ANIM     0x00000001	/* 1 mged: animated evaluation */
 #define NMG_DEBUG_PL_SLOW     0x00000002	/* 2 mged: add delays to animation */
 #define NMG_DEBUG_GRAPHCL     0x00000004	/* 3 mged: graphic classification */

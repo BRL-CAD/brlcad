@@ -139,11 +139,6 @@ __BEGIN_DECLS
 
 
 /**
- * @brief  debug bits for NMG's see nmg.h
- */
-NMG_EXPORT extern uint32_t nmg_debug;
-
-/**
  * @brief
  * Definition of a knot vector.
  *
