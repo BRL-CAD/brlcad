@@ -22,6 +22,7 @@ set(bu_test_srcs
   humanize_number.c
   vls_incr.c
   vls_simplify.c
+  list.c
   mappedfile.c
   opt.c
   parallel.c
