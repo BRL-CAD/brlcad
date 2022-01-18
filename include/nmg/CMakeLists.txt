@@ -3,6 +3,7 @@ set(nmg_headers
   defines.h
   edge.h
   nurb.h
+  ray.h
   vertex.h
   )
 BRLCAD_MANAGE_FILES(nmg_headers ${INCLUDE_DIR}/brlcad/nmg)
