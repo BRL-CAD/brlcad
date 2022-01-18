@@ -686,6 +686,8 @@ main(int argc, char *argv[])
     }
 
     sscanf(argv[1], "%d", &function_num);
+    if (function_num < 0 || function_num > INT_MAX - 1)
+	bu_exit(1, "Invalid function number specified\n");
 
     switch (function_num) {
 	case 1:
