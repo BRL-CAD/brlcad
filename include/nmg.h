@@ -86,16 +86,11 @@ __BEGIN_DECLS
 #include "nmg/defines.h"
 
 #include "nmg/debug.h"
+#include "nmg/nurb.h"
 
 /**
  * macros to check/validate a structure pointer
  */
-#define NMG_CKMAG(_ptr, _magic, _str)	BU_CKMAG(_ptr, _magic, _str)
-#define NMG_CK2MAG(_ptr, _magic1, _magic2, _str) \
-    if (!(_ptr) || (*((uint32_t *)(_ptr)) != (_magic1) && *((uint32_t *)(_ptr)) != (_magic2))) { \
-	bu_badmagic((uint32_t *)(_ptr), _magic1, _str, __FILE__, __LINE__); \
-    }
-
 #define NMG_CK_MODEL(_p)              NMG_CKMAG(_p, NMG_MODEL_MAGIC, "model")
 #define NMG_CK_REGION(_p)             NMG_CKMAG(_p, NMG_REGION_MAGIC, "region")
 #define NMG_CK_REGION_A(_p)           NMG_CKMAG(_p, NMG_REGION_A_MAGIC, "region_a")
@@ -111,45 +106,11 @@ __BEGIN_DECLS
 #define NMG_CK_LOOPUSE(_p)            NMG_CKMAG(_p, NMG_LOOPUSE_MAGIC, "loopuse")
 #define NMG_CK_EDGE(_p)               NMG_CKMAG(_p, NMG_EDGE_MAGIC, "edge")
 #define NMG_CK_EDGE_G_LSEG(_p)        NMG_CKMAG(_p, NMG_EDGE_G_LSEG_MAGIC, "edge_g_lseg")
-#define NMG_CK_EDGE_G_CNURB(_p)       NMG_CKMAG(_p, NMG_EDGE_G_CNURB_MAGIC, "edge_g_cnurb")
-#define NMG_CK_EDGE_G_EITHER(_p)      NMG_CK2MAG(_p, NMG_EDGE_G_LSEG_MAGIC, NMG_EDGE_G_CNURB_MAGIC, "edge_g_lseg|edge_g_cnurb")
 #define NMG_CK_EDGEUSE(_p)            NMG_CKMAG(_p, NMG_EDGEUSE_MAGIC, "edgeuse")
 #define NMG_CK_VERTEX(_p)             NMG_CKMAG(_p, NMG_VERTEX_MAGIC, "vertex")
 #define NMG_CK_VERTEX_G(_p)           NMG_CKMAG(_p, NMG_VERTEX_G_MAGIC, "vertex_g")
 #define NMG_CK_VERTEXUSE(_p)          NMG_CKMAG(_p, NMG_VERTEXUSE_MAGIC, "vertexuse")
 #define NMG_CK_VERTEXUSE_A_PLANE(_p)  NMG_CKMAG(_p, NMG_VERTEXUSE_A_PLANE_MAGIC, "vertexuse_a_plane")
-#define NMG_CK_VERTEXUSE_A_CNURB(_p)  NMG_CKMAG(_p, NMG_VERTEXUSE_A_CNURB_MAGIC, "vertexuse_a_cnurb")
-#define NMG_CK_VERTEXUSE_A_EITHER(_p) NMG_CK2MAG(_p, NMG_VERTEXUSE_A_PLANE_MAGIC, NMG_VERTEXUSE_A_CNURB_MAGIC, "vertexuse_a_plane|vertexuse_a_cnurb")
-#define NMG_CK_LIST(_p)               BU_CKMAG(_p, BU_LIST_HEAD_MAGIC, "bu_list")
-
-/* Used only in nmg_mod.c */
-#define NMG_TEST_EDGEUSE(_p) do { \
-    if (!(_p)->l.forw || !(_p)->l.back || !(_p)->eumate_p || \
-	!(_p)->radial_p || !(_p)->e_p || !(_p)->vu_p || \
-	!(_p)->up.magic_p) { \
-	bu_log("in %s at %d, Bad edgeuse member pointer\n", \
-	       __FILE__, __LINE__);  nmg_pr_eu(_p, (char *)NULL); \
-	bu_bomb("NULL pointer\n"); \
-    } else if ((_p)->vu_p->up.eu_p != (_p) || \
-	       (_p)->eumate_p->vu_p->up.eu_p != (_p)->eumate_p) {\
-	bu_log("in %s at %d, edgeuse lost vertexuse\n", \
-	       __FILE__, __LINE__); \
-	bu_bomb("bye"); \
-    } } while (0)
-
-
-/**
- * @brief
- * Definition of a knot vector.
- *
- * Not found independently, but used in the cnurb and snurb
- * structures.  (Exactly the same as the definition in nurb.h)
- */
-struct knot_vector {
-    uint32_t magic;
-    int k_size;		/**< @brief knot vector size */
-    fastf_t * knots;	/**< @brief pointer to knot vector */
-};
 
 /*
  * NOTE: We rely on the fact that the first 32 bits in a struct is the
@@ -252,27 +213,6 @@ struct face_g_plane {
     uint32_t magic;
     struct bu_list f_hd;	/**< @brief list of faces sharing this surface */
     plane_t N;			/**< @brief Plane equation (incl normal) */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct face_g_snurb {
-    /* NOTICE: l.forw & l.back *not* stored in database.  They are for
-     * bspline primitive internal use only.
-     */
-    struct bu_list l;
-    struct bu_list f_hd;	/**< @brief list of faces sharing this surface */
-    int order[2];		/**< @brief surface order [0] = u, [1] = v */
-    struct knot_vector u;	/**< @brief surface knot vectors */
-    struct knot_vector v;	/**< @brief surface knot vectors */
-    /* surface control points */
-    int s_size[2];		/**< @brief mesh size, u, v */
-    int pt_type;		/**< @brief surface point type */
-    fastf_t *ctl_points;	/**< @brief array [size[0]*size[1]] */
-    /* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
-    int dir;			/**< @brief direction of last refinement */
-    point_t min_pt;		/**< @brief min corner of bounding box */
-    point_t max_pt;		/**< @brief max corner of bounding box */
-    /* END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
     long index;			/**< @brief struct # in this model */
 };
 
@@ -405,26 +345,6 @@ struct edge_g_lseg {
     struct bu_list eu_hd2;	/**< @brief heads l2 list of edgeuses on this line */
     point_t e_pt;		/**< @brief parametric equation of the line */
     vect_t e_dir;
-    long index;			/**< @brief struct # in this model */
-};
-
-/**
- * The ctl_points on this curve are (u, v) values on the face's
- * surface.  As a storage and performance efficiency measure, if order
- * <= 0, then the cnurb is a straight line segment in parameter space,
- * and the k.knots and ctl_points pointers will be NULL.  In this
- * case, the vertexuse_a_cnurb's at both ends of the edgeuse define
- * the path through parameter space.
- */
-struct edge_g_cnurb {
-    struct bu_list l;		/**< @brief NOTICE: l.forw & l.back are NOT stored in database.  For bspline primitive internal use only. */
-    struct bu_list eu_hd2;	/**< @brief heads l2 list of edgeuses on this curve */
-    int order;			/**< @brief Curve Order */
-    struct knot_vector k;	/**< @brief curve knot vector */
-    /* curve control polygon */
-    int c_size;			/**< @brief number of ctl points */
-    int pt_type;		/**< @brief curve point type */
-    fastf_t *ctl_points;	/**< @brief array [c_size] */
     long index;			/**< @brief struct # in this model */
 };
 

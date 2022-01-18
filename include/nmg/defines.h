@@ -66,6 +66,17 @@
 #define OT_UNSPEC    3 /**< @brief orientation unspecified */
 #define OT_BOOLPLACE 4 /**< @brief object is intermediate data for boolean ops */
 
+/**
+ * macros to check/validate a structure pointer
+ */
+#define NMG_CKMAG(_ptr, _magic, _str)   BU_CKMAG(_ptr, _magic, _str)
+#define NMG_CK2MAG(_ptr, _magic1, _magic2, _str) \
+    if (!(_ptr) || (*((uint32_t *)(_ptr)) != (_magic1) && *((uint32_t *)(_ptr)) != (_magic2))) { \
+        bu_badmagic((uint32_t *)(_ptr), _magic1, _str, __FILE__, __LINE__); \
+    }
+
+#define NMG_CK_LIST(_p)               BU_CKMAG(_p, BU_LIST_HEAD_MAGIC, "bu_list")
+
 #endif  /* NMG_DEFINES_H */
 /** @} */
 /*

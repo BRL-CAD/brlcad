@@ -36,6 +36,20 @@
 #include "bu/malloc.h"
 #include "nmg.h"
 
+#define NMG_TEST_EDGEUSE(_p) do { \
+    if (!(_p)->l.forw || !(_p)->l.back || !(_p)->eumate_p || \
+        !(_p)->radial_p || !(_p)->e_p || !(_p)->vu_p || \
+        !(_p)->up.magic_p) { \
+        bu_log("in %s at %d, Bad edgeuse member pointer\n", \
+               __FILE__, __LINE__);  nmg_pr_eu(_p, (char *)NULL); \
+        bu_bomb("NULL pointer\n"); \
+    } else if ((_p)->vu_p->up.eu_p != (_p) || \
+               (_p)->eumate_p->vu_p->up.eu_p != (_p)->eumate_p) {\
+        bu_log("in %s at %d, edgeuse lost vertexuse\n", \
+               __FILE__, __LINE__); \
+        bu_bomb("bye"); \
+    } } while (0)
+
 void
 nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_tol *tol)
 {
