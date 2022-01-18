@@ -37,24 +37,24 @@
 #include "bu/malloc.h"
 #include "bg/trimesh.h"
 
-class uedge {
+class tm_split_uedge {
     public:
-	uedge(int vert1, int vert2) {
+	tm_split_uedge(int vert1, int vert2) {
 	    v1 = (vert1 < vert2) ? vert1 : vert2;
 	    v2 = (vert2 < vert1) ? vert1 : vert2;
 	}
-	~uedge() {};
+	~tm_split_uedge() {};
 	int v1;
 	int v2;
 
-	bool operator==(uedge other) const
+	bool operator==(tm_split_uedge other) const
 	{
 	    bool c1 = (v1 == other.v1);
 	    bool c2 = (v2 == other.v2);
 	    return (c1 && c2);
 	}
 
-	bool operator<(uedge other) const
+	bool operator<(tm_split_uedge other) const
 	{
 	    bool c1 = (v1 < other.v1);
 	    bool c1e = (v1 == other.v1);
@@ -65,9 +65,9 @@ class uedge {
 };
 
 // https://stackoverflow.com/a/27952689/2037687
-class uedge_hash {
+class tm_split_uedge_hash {
     public:
-	size_t operator()(const uedge& p) const
+	size_t operator()(const tm_split_uedge& p) const
 	{
 	    size_t hout = p.v1;
 	    hout ^= p.v1 + 0x9e3779b97f4a7c16 + (p.v2 << 6) + (p.v2 >> 2);
@@ -75,7 +75,7 @@ class uedge_hash {
 	}
 };
 
-class sface {
+class tm_split_sface {
     public:
 	size_t v1;
 	size_t v2;
@@ -88,18 +88,18 @@ bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
     if (!of || !f || fcnt < 0)
 	return -1;
 
-    std::map<uedge, std::vector<size_t>> ue_fmap;
-    std::vector<sface> afaces;
+    std::map<tm_split_uedge, std::vector<size_t>> ue_fmap;
+    std::vector<tm_split_sface> afaces;
 
     for (int i = 0; i < fcnt; ++i) {
-	sface nface;
+	tm_split_sface nface;
 	nface.v1 = f[i*3+0];
 	nface.v2 = f[i*3+1];
 	nface.v3 = f[i*3+2];
 	afaces.push_back(nface);
-	ue_fmap[uedge(nface.v1,nface.v2)].push_back(i);
-	ue_fmap[uedge(nface.v2,nface.v3)].push_back(i);
-	ue_fmap[uedge(nface.v3,nface.v1)].push_back(i);
+	ue_fmap[tm_split_uedge(nface.v1,nface.v2)].push_back(i);
+	ue_fmap[tm_split_uedge(nface.v2,nface.v3)].push_back(i);
+	ue_fmap[tm_split_uedge(nface.v3,nface.v1)].push_back(i);
     }
 
     // All triangles go somewhere.
@@ -113,16 +113,16 @@ bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
     while (active_tris.size()) {
 	std::unordered_set<size_t> new_mesh;
 	// Seed the wavefront with a triangle
-	std::unordered_set<uedge, uedge_hash> wavefront_edges;
-	std::unordered_set<uedge, uedge_hash> interior_edges;
-	sface &f_seed= afaces[*active_tris.begin()];
+	std::unordered_set<tm_split_uedge, tm_split_uedge_hash> wavefront_edges;
+	std::unordered_set<tm_split_uedge, tm_split_uedge_hash> interior_edges;
+	tm_split_sface &f_seed= afaces[*active_tris.begin()];
 	new_mesh.insert(*active_tris.begin());
 	active_tris.erase(active_tris.begin());
-	wavefront_edges.insert(uedge(f_seed.v1, f_seed.v2));
-	wavefront_edges.insert(uedge(f_seed.v2, f_seed.v3));
-	wavefront_edges.insert(uedge(f_seed.v3, f_seed.v1));
+	wavefront_edges.insert(tm_split_uedge(f_seed.v1, f_seed.v2));
+	wavefront_edges.insert(tm_split_uedge(f_seed.v2, f_seed.v3));
+	wavefront_edges.insert(tm_split_uedge(f_seed.v3, f_seed.v1));
 	while (wavefront_edges.size()) {
-	    uedge cedge = *wavefront_edges.begin();
+	    tm_split_uedge cedge = *wavefront_edges.begin();
 	    // If we have a boundary edge, mark it as interior (i.e. not part
 	    // of the wavefront)
 	    if (ue_fmap[cedge].size() == 1) {
@@ -130,7 +130,7 @@ bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
 		wavefront_edges.erase(wavefront_edges.begin());
 		continue;
 	    }
-	    // Get the two triangles associated with this uedge.  If one of
+	    // Get the two triangles associated with this tm_split_uedge.  If one of
 	    // them is unvisited, process it
 	    int f_ind = -1;
 	    for (size_t j = 0; j < ue_fmap[cedge].size(); j++) {
@@ -149,8 +149,8 @@ bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
 		continue;
 	    }
 
-	    sface &bface = afaces[f_ind];
-	    uedge ue[3] = {uedge(bface.v1, bface.v2), uedge(bface.v2, bface.v3), uedge(bface.v3, bface.v1)};
+	    tm_split_sface &bface = afaces[f_ind];
+	    tm_split_uedge ue[3] = {tm_split_uedge(bface.v1, bface.v2), tm_split_uedge(bface.v2, bface.v3), tm_split_uedge(bface.v3, bface.v1)};
 	    // For the new face, any edges that aren't already wavefront
 	    // edges and aren't part of the interior set get added, and any
 	    // that are already in the wavefront get moved to the interior set.
