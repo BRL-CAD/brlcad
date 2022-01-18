@@ -148,6 +148,10 @@ fb_common_name_size(size_t *widthp, size_t *heightp, const char *name)
 	cp = strchr(cp, '-');		/* Find a minus sign */
 	if (cp == NULL) break;
 	if (sscanf(cp, "-w%lu-n%lu", &w, &h) == 2) {
+	    // Sanity
+	    if (w > LONG_MAX || h > LONG_MAX) {
+		continue;
+	    }
 	    *widthp = w;
 	    *heightp = h;
 	    return 1;
