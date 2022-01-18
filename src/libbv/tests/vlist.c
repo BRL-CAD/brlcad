@@ -49,7 +49,7 @@ vlist_main(int argc, char* argv[])
 
     BU_LIST_INIT(&head);
     BU_LIST_INIT(&vlfree);
-    if (expected_length < 0) {
+    if (expected_length < 0 || expected_length > INT_MAX - 1) {
 	return (int)bv_vlist_cmd_cnt(NULL);
     }
 
