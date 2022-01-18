@@ -478,8 +478,8 @@ clear_list(struct regions_list *list)
 	bu_free(rp->region1, "reg1 name");
 	if (rp->region2 != (char*)NULL)
 	    bu_free(rp->region2, "reg1 name");
-	bu_free(rp, "overlap_list");
     }
+    bu_list_free(&list->l);
 }
 
 
