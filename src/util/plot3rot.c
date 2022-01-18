@@ -543,10 +543,16 @@ dofile(FILE *fp)
 void
 copy_string(FILE *fp)
 {
-    int c;
+    int c = 1;
 
-    while ((c = putchar(getc(fp))) != '\n' && c != EOF)
-	;
+    while (c != '\n' && c != EOF) {
+	int tc = getc(fp);
+	if (tc < 0) {
+	    bu_log("getc error: plot3rot.c:%d\n", __LINE__);
+	    break;
+	}
+	c = putchar(tc);
+    }
 }
 
 
