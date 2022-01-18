@@ -994,7 +994,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu, struct bu_list *vlfree)
 	return;
     }
 
-    b = (long *)nmg_calloc(nmg_find_model((uint32_t *)eu)->maxindex, sizeof(long),
+    b = (long *)bu_calloc(nmg_find_model((uint32_t *)eu)->maxindex, sizeof(long),
 			  "nmg_pl_lu_around_eu flag[]");
 
     /* To go correct way around, start with arg's mate,
@@ -1017,7 +1017,7 @@ nmg_pl_lu_around_eu(const struct edgeuse *eu, struct bu_list *vlfree)
 	eu1 = eu1->radial_p;
     } while (eu1 != eu);
 
-    nmg_free((char *)b, "nmg_pl_lu_around_eu flag[]");
+    bu_free((char *)b, "nmg_pl_lu_around_eu flag[]");
     fclose(fp);
     bu_log("Wrote %s\n", buf);
 }

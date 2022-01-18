@@ -95,7 +95,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 		   num_pts, num_facets);
 
 
-    v = (struct vertex **) nmg_calloc(num_pts, sizeof (struct vertex *),
+    v = (struct vertex **) bu_calloc(num_pts, sizeof (struct vertex *),
 				     "vertices");
 
     /* build the vertices */
@@ -116,7 +116,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 	nmg_vertex_gv(v[i], p);
     }
 
-    vl = (struct vertex **)nmg_calloc(vl_len=8, sizeof (struct vertex *),
+    vl = (struct vertex **)bu_calloc(vl_len=8, sizeof (struct vertex *),
 				     "vertex parameter list");
 
     for (facet = 0; facet < num_facets; ++facet) {
@@ -129,7 +129,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 
 	if (pts_this_face > vl_len) {
 	    while (vl_len < pts_this_face) vl_len *= 2;
-	    vl = (struct vertex **)nmg_realloc((char *)vl,
+	    vl = (struct vertex **)bu_realloc((char *)vl,
 					      vl_len*sizeof(struct vertex *),
 					      "vertex parameter list (realloc)");
 	}
@@ -158,7 +158,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 	if (BU_LIST_IS_EMPTY(&v[i]->vu_hd)) continue;
 	FREE_VERTEX(v[i]);
     }
-    nmg_free((char *)v, "vertex array");
+    bu_free((char *)v, "vertex array");
     return s;
 }
 

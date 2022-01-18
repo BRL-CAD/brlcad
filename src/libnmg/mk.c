@@ -1178,9 +1178,9 @@ nmg_kfg(uint32_t *magic_p)
 	    struct face_g_snurb *sp;
 	    sp = (struct face_g_snurb *)magic_p;
 	    if (BU_LIST_NON_EMPTY(&(sp->f_hd))) return;
-	    nmg_free((char *)sp->u.knots, "nmg_kfg snurb u knots[]");
-	    nmg_free((char *)sp->v.knots, "nmg_kfg snurb v knots[]");
-	    nmg_free((char *)sp->ctl_points, "nmg_kfg snurb ctl_points[]");
+	    bu_free((char *)sp->u.knots, "nmg_kfg snurb u knots[]");
+	    bu_free((char *)sp->v.knots, "nmg_kfg snurb v knots[]");
+	    bu_free((char *)sp->ctl_points, "nmg_kfg snurb ctl_points[]");
 	    FREE_FACE_G_SNURB(sp);
 	}
 	    break;
@@ -1390,8 +1390,8 @@ nmg_keg(struct edgeuse *eu)
 	    eu->g.magic_p = NULL;
 	    if (BU_LIST_NON_EMPTY(&eg->eu_hd2)) return 0;
 	    if (eg->order != 0) {
-		nmg_free((char *)eg->k.knots, "nmg_keg cnurb knots[]");
-		nmg_free((char *)eg->ctl_points, "nmg_keg cnurb ctl_points[]");
+		bu_free((char *)eg->k.knots, "nmg_keg cnurb knots[]");
+		bu_free((char *)eg->ctl_points, "nmg_keg cnurb ctl_points[]");
 	    }
 	    FREE_EDGE_G_CNURB(eg);
 	    break;
@@ -1659,7 +1659,7 @@ nmg_km(struct model *m)
 	(void)nmg_kr(BU_LIST_FIRST(nmgregion, &m->r_hd));
 
     if (m->manifolds) {
-	nmg_free((char *)m->manifolds, "free manifolds table");
+	bu_free((char *)m->manifolds, "free manifolds table");
 	m->manifolds = (char *)NULL;
     }
 
@@ -1961,7 +1961,7 @@ nmg_edge_g_cnurb(struct edgeuse *eu, int order, int n_knots, fastf_t *kv, int n_
     } else {
 	int ncoord = RT_NURB_EXTRACT_COORDS(pt_type);
 
-	eg->ctl_points = (fastf_t *)nmg_calloc(
+	eg->ctl_points = (fastf_t *)bu_calloc(
 	    ncoord * n_pts,
 	    sizeof(fastf_t),
 	    "cnurb ctl_points[]");
@@ -2354,7 +2354,7 @@ nmg_face_new_g(struct faceuse *fu, const plane_t pl)
  *
  * If either of the knot vector arrays or the ctl_points arrays are
  * given as non-null, then simply swipe the caller's arrays.  The
- * caller must have allocated them with nmg_malloc() or malloc().  If
+ * caller must have allocated them with bu_malloc() or malloc().  If
  * the pointers are NULL, then the necessary storage is allocated
  * here.
  *
@@ -2396,12 +2396,12 @@ nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots,
     if (ukv) {
 	fg->u.knots = ukv;
     } else {
-	fg->u.knots = (fastf_t *)nmg_calloc(n_u_knots, sizeof(fastf_t), "u.knots[]");
+	fg->u.knots = (fastf_t *)bu_calloc(n_u_knots, sizeof(fastf_t), "u.knots[]");
     }
     if (vkv) {
 	fg->v.knots = vkv;
     } else {
-	fg->v.knots = (fastf_t *)nmg_calloc(n_v_knots, sizeof(fastf_t), "v.knots[]");
+	fg->v.knots = (fastf_t *)bu_calloc(n_v_knots, sizeof(fastf_t), "v.knots[]");
     }
 
     fg->s_size[0] = n_rows;
@@ -2413,7 +2413,7 @@ nmg_face_g_snurb(struct faceuse *fu, int u_order, int v_order, int n_u_knots,
     } else {
 	int nwords;
 	nwords = n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
-	fg->ctl_points = (fastf_t *)nmg_calloc(
+	fg->ctl_points = (fastf_t *)bu_calloc(
 	    nwords, sizeof(fastf_t), "snurb ctl_points[]");
     }
 

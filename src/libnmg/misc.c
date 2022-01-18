@@ -88,7 +88,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
     }
 
     /* allocate memory for "pseudo-vertices" */
-    pts = (point_t *)nmg_calloc(edge_count, sizeof(point_t), "Orient_nurb_face_loops: pts");
+    pts = (point_t *)bu_calloc(edge_count, sizeof(point_t), "Orient_nurb_face_loops: pts");
 
     /* Assign uv geometry to each "pseudo-vertex" */
     edge_no = 0;
@@ -149,7 +149,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 	VADD2(area, area, cross);
     }
 
-    nmg_free((char *)pts, "nmg_snurb_calc_lu_uv_orient: pts");
+    bu_free((char *)pts, "nmg_snurb_calc_lu_uv_orient: pts");
 
     if (area[Z] > 0.0)
 	return OT_SAME;
@@ -588,10 +588,10 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, struct 
 	total_shells++;
 
     /* make an array of shells and top faces */
-    top_faces = (struct top_face *)nmg_calloc(total_shells, sizeof(struct top_face), "nmg_assoc_void_shells: top_faces");
+    top_faces = (struct top_face *)bu_calloc(total_shells, sizeof(struct top_face), "nmg_assoc_void_shells: top_faces");
 
     /* make flags array for use by "nmg_find_top_face" */
-    flags = (long *)nmg_calloc(r->m_p->maxindex, sizeof(long), "nmg_find_outer_and_void_shells: flags");
+    flags = (long *)bu_calloc(r->m_p->maxindex, sizeof(long), "nmg_find_outer_and_void_shells: flags");
 
     top_faces[0].s = outer_shell;
     top_faces[0].f = nmg_find_top_face(outer_shell, &dir, flags);
@@ -743,7 +743,7 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, struct 
 	    bu_ptbl_ins(shells, (long *)void_s);
 	}
     }
-    nmg_free((char *)flags, "nmg_assoc_void_shells: flags");
+    bu_free((char *)flags, "nmg_assoc_void_shells: flags");
 }
 
 
@@ -772,7 +772,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, st
     BN_CK_TOL(tol);
 
     /* Decompose shells */
-    outer_shells = (struct bu_ptbl *)nmg_malloc(sizeof(struct bu_ptbl), "nmg_find_outer_and_void_shells: outer_shells");
+    outer_shells = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "nmg_find_outer_and_void_shells: outer_shells");
     bu_ptbl_init(outer_shells, 64, " outer_shells ");
     for (BU_LIST_FOR (s, shell, &r->s_hd)) {
 	NMG_CK_SHELL(s);
@@ -791,7 +791,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, st
     for (BU_LIST_FOR (s, shell, &r->s_hd))
 	total_shells++;
 
-    flags = (long *)nmg_calloc(r->m_p->maxindex, sizeof(long), "nmg_find_outer_and_void_shells: flags");
+    flags = (long *)bu_calloc(r->m_p->maxindex, sizeof(long), "nmg_find_outer_and_void_shells: flags");
 
     for (BU_LIST_FOR (s, shell, &r->s_hd)) {
 	struct face *f;
@@ -824,7 +824,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, st
     /* outer_shells is now a list of all the outer shells in the region */
     outer_shell_count = BU_PTBL_LEN(outer_shells);
 
-    *shells = (struct bu_ptbl **)nmg_calloc(BU_PTBL_LEN(outer_shells), sizeof(struct bu_ptbl *) ,
+    *shells = (struct bu_ptbl **)bu_calloc(BU_PTBL_LEN(outer_shells), sizeof(struct bu_ptbl *) ,
 					   "nmg_find_outer_and_void_shells: shells");
     for (i=0; i<BU_PTBL_LEN(outer_shells); i++) {
 	NMG_ALLOC((*shells)[i], struct bu_ptbl);
@@ -836,7 +836,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, st
 	    nmg_assoc_void_shells(r, (*shells)[i], vlfree, tol);
     }
 
-    nmg_free((char *)flags, "nmg_find_outer_and_void_shells: flags");
+    bu_free((char *)flags, "nmg_find_outer_and_void_shells: flags");
     bu_ptbl_free(outer_shells);
     return outer_shell_count;
 }
@@ -2085,7 +2085,7 @@ nmg_rebound(struct model *m, const struct bn_tol *tol)
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
 
-    flags = (int *)nmg_calloc(m->maxindex*2, sizeof(int), "rebound flags[]");
+    flags = (int *)bu_calloc(m->maxindex*2, sizeof(int), "rebound flags[]");
 
     for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
 	NMG_CK_REGION(r);
@@ -2136,7 +2136,7 @@ nmg_rebound(struct model *m, const struct bn_tol *tol)
 	nmg_region_a(r, tol);
     }
 
-    nmg_free((char *)flags, "rebound flags[]");
+    bu_free((char *)flags, "rebound flags[]");
 }
 
 
@@ -2153,7 +2153,7 @@ nmg_count_shell_kids(const struct model *m, size_t *total_faces, size_t *total_w
 
     NMG_CK_MODEL(m);
 
-    tbl = (short *)nmg_calloc(m->maxindex+1, sizeof(char),
+    tbl = (short *)bu_calloc(m->maxindex+1, sizeof(char),
 			     "face/wire/point counted table");
 
     *total_faces = *total_wires = *total_points = 0;
@@ -2178,7 +2178,7 @@ nmg_count_shell_kids(const struct model *m, size_t *total_faces, size_t *total_w
 	}
     }
 
-    nmg_free((char *)tbl, "face/wire/point counted table");
+    bu_free((char *)tbl, "face/wire/point counted table");
 }
 
 
@@ -2203,7 +2203,7 @@ order_tbl(struct bu_ptbl *tbl, int start_idx, int **idx, size_t tbl_size, size_t
 
     /* create an index into the table, ordered to create a loop */
     if (*idx == NULL)
-	(*idx) = (int *)nmg_calloc(tbl_size, sizeof(int), "Table index");
+	(*idx) = (int *)bu_calloc(tbl_size, sizeof(int), "Table index");
 
     for (i=0; i<tbl_size; i++)
 	(*idx)[i] = (-1);
@@ -2435,14 +2435,14 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 		}
 
 		/* now eliminate loop from table */
-		eu_used = (struct edgeuse **)nmg_calloc(loop_size, sizeof(struct edgeuse *), "edges used list");
+		eu_used = (struct edgeuse **)bu_calloc(loop_size, sizeof(struct edgeuse *), "edges used list");
 		for (i=0; i<loop_size; i++)
 		    eu_used[i] = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[i]);
 
 		for (i=0; i<loop_size; i++)
 		    bu_ptbl_rm(&eu_tbl, (long *)eu_used[i]);
 
-		nmg_free((char *)eu_used, "edge used list");
+		bu_free((char *)eu_used, "edge used list");
 
 		/* may need to remove one more edgeuse from table */
 		eu_tmp = nmg_find_e((*(struct vertex **)BU_PTBL_GET(&vert_tbl, 0)), (*(struct vertex **)BU_PTBL_GET(&vert_tbl, loop_size-1)), (struct shell *)NULL, (struct edge *)NULL);
@@ -2511,7 +2511,7 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 	    bu_ptbl_ins(&vert_tbl, (long *)&eu2->eumate_p->vu_p->v_p);
 
 	    /* save list of used edges to be removed later */
-	    eu_used = (struct edgeuse **)nmg_calloc(edges_used, sizeof(struct edgeuse *), "edges used list");
+	    eu_used = (struct edgeuse **)bu_calloc(edges_used, sizeof(struct edgeuse *), "edges used list");
 	    for (i=0; i<edges_used; i++)
 		eu_used[i] = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[i]);
 
@@ -2577,7 +2577,7 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
 		}
 	    }
 
-	    nmg_free((char *)eu_used, "edge used list");
+	    bu_free((char *)eu_used, "edge used list");
 
 	    /* re-order loop */
 	    loop_size = 0;
@@ -2663,7 +2663,7 @@ nmg_close_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol *to
     }
 
     /* Free up all the memory */
-    nmg_free((char *)idx, "idx");
+    bu_free((char *)idx, "idx");
     bu_ptbl_free(&eu_tbl);
     bu_ptbl_free(&vert_tbl);
 
@@ -2708,7 +2708,7 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, struct bu_list *vlfree, co
 
     /* create translation table double size to accommodate both copies */
     tbl_size = m->maxindex * 3;
-    (*trans_tbl) = (long **)nmg_calloc(tbl_size, sizeof(long *),
+    (*trans_tbl) = (long **)bu_calloc(tbl_size, sizeof(long *),
 				      "nmg_dup_shell trans_tbl");
 
     bu_ptbl_init(&faces, 64, " &faces ");
@@ -3002,11 +3002,11 @@ nmg_shell_is_void(const struct shell *s)
     m = nmg_find_model(&s->l.magic);
     NMG_CK_MODEL(m);
 
-    flags = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_shell_is_void: flags ");
+    flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_shell_is_void: flags ");
 
     f = nmg_find_top_face(s, &dir, flags);
 
-    nmg_free((char *)flags, "nmg_shell_is_void: flags");
+    bu_free((char *)flags, "nmg_shell_is_void: flags");
 
     if (f == (struct face *)NULL)
 	return -1;
@@ -3330,7 +3330,7 @@ nmg_fix_decomposed_shell_normals(struct shell *s, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     m = s->r_p->m_p;
-    flags = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_fix_decomposed_shell_normals: flags");
+    flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_fix_decomposed_shell_normals: flags");
 
 missed:
     /* find the top face */
@@ -3338,7 +3338,7 @@ missed:
     if (f_top == (struct face *)NULL) {
 	bu_log("nmg_fix_decomposed_shell_normals: Could not get a top face from nmg_find_top_face()\n");
 	bu_log("\tWARNING: continuing without fixing normals!\n");
-	nmg_free((char *)flags, "nmg_fix_decomposed_shell_normals: flags");
+	bu_free((char *)flags, "nmg_fix_decomposed_shell_normals: flags");
 	return;
     }
     if (*f_top->g.magic_p != NMG_FACE_G_PLANE_MAGIC) {
@@ -3356,7 +3356,7 @@ missed:
 	fu = fu->fumate_p;
     if (fu->orientation != OT_SAME) {
 	bu_log("nmg_fix_decomposed_shell_normals: no OT_SAME use of top face\n");
-	nmg_free((char *)flags, "nmg_fix_decomposed_shell_normals: flags");
+	bu_free((char *)flags, "nmg_fix_decomposed_shell_normals: flags");
 	return;
     }
     NMG_GET_FU_NORMAL(normal, fu);
@@ -3413,7 +3413,7 @@ missed:
 	bu_bomb("nmg_fix_decomposed_shell_normals: missed faces in shell (was it decomposed?)\n");
     }
 
-    nmg_free((char *)flags, "flags");
+    bu_free((char *)flags, "flags");
 }
 
 
@@ -3585,7 +3585,7 @@ nmg_fix_normals(struct shell *s_orig, struct bu_list *vlfree, const struct bn_to
     if (shell_count == 1) {
 	/* just one shell, so fix it and return */
 	(void)nmg_km(tmp_m);
-	nmg_free((char *)trans_tbl, "translate table");
+	bu_free((char *)trans_tbl, "translate table");
 	nmg_connect_same_fu_orients(s_orig);
 	nmg_fix_decomposed_shell_normals(s_orig, tol);
 	return;
@@ -3682,7 +3682,7 @@ nmg_fix_normals(struct shell *s_orig, struct bu_list *vlfree, const struct bn_to
     }
 
     bu_ptbl_free(&reverse);
-    nmg_free((char *)trans_tbl, "translation table");
+    bu_free((char *)trans_tbl, "translation table");
 
     nmg_km(tmp_m);
 }
@@ -4071,14 +4071,14 @@ nmg_split_loops_into_faces(uint32_t *magic_p, struct bu_list *vlfree, const stru
     BN_CK_TOL(tol);
 
     sl_state.split = 0;
-    sl_state.flags = (long *)nmg_calloc(m->maxindex*2, sizeof(long), "nmg_split_loops_into_faces: flags");
+    sl_state.flags = (long *)bu_calloc(m->maxindex*2, sizeof(long), "nmg_split_loops_into_faces: flags");
     sl_state.tol = tol;
 
     nmg_visit(magic_p, &htab, (void *)&sl_state, vlfree);
 
     count = sl_state.split;
 
-    nmg_free((char *)sl_state.flags, "nmg_split_loops_into_faces: flags");
+    bu_free((char *)sl_state.flags, "nmg_split_loops_into_faces: flags");
 
     return count;
 }
@@ -4125,7 +4125,7 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
     NMG_CK_REGION(r);
     m = r->m_p;
     NMG_CK_MODEL(m);
-    flags = (long *)nmg_calloc(m->maxindex*2, sizeof(long), "nmg_decompose_shell: flags");
+    flags = (long *)bu_calloc(m->maxindex*2, sizeof(long), "nmg_decompose_shell: flags");
 
     bu_ptbl_init(&stack, 64, " &stack ");
     bu_ptbl_init(&shared_edges, 64, " &shared_edges ");
@@ -4218,7 +4218,7 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 
     if (!missed_faces) {
 	/* nothing to do, just one shell */
-	nmg_free((char *)flags, "nmg_decompose_shell: flags ");
+	bu_free((char *)flags, "nmg_decompose_shell: flags ");
 	bu_ptbl_free(&stack);
 	bu_ptbl_free(&shared_edges);
 	return no_of_shells;
@@ -4232,7 +4232,7 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 	bu_ptbl_reset(&stack);
 
 	/* Look at the list of shared edges to see if anything can be deduced */
-	shells_at_edge = (int *)nmg_calloc(no_of_shells+1, sizeof(int), "nmg_decompose_shell: shells_at_edge");
+	shells_at_edge = (int *)bu_calloc(no_of_shells+1, sizeof(int), "nmg_decompose_shell: shells_at_edge");
 
 	for (i=0; i<BU_PTBL_LEN(&shared_edges); i++) {
 	    int faces_at_edge=0;
@@ -4362,7 +4362,7 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 	    }
 	}
 
-	nmg_free((char *)shells_at_edge, "nmg_decompose_shell: shells_at_edge");
+	bu_free((char *)shells_at_edge, "nmg_decompose_shell: shells_at_edge");
 
 	/* make a new shell number */
 	if (new_shell_no) {
@@ -4493,7 +4493,7 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 	bu_ptbl_free(&faces);
 	nmg_shell_a(new_s, tol);
     }
-    nmg_free((char *)flags, "nmg_decompose_shell: flags ");
+    bu_free((char *)flags, "nmg_decompose_shell: flags ");
     bu_ptbl_free(&stack);
     bu_ptbl_free(&shared_edges);
 
@@ -4619,13 +4619,13 @@ nmg_unbreak_region_edges(uint32_t *magic_p, struct bu_list *vlfree)
     NMG_CK_MODEL(m);
 
     ub_state.unbroken = 0;
-    ub_state.flags = (long *)nmg_calloc(m->maxindex*2, sizeof(long), "nmg_unbreak_region_edges: flags");
+    ub_state.flags = (long *)bu_calloc(m->maxindex*2, sizeof(long), "nmg_unbreak_region_edges: flags");
 
     nmg_visit(magic_p, &htab, (void *)&ub_state, vlfree);
 
     count = ub_state.unbroken;
 
-    nmg_free((char *)ub_state.flags, "nmg_unbreak_region_edges: flags");
+    bu_free((char *)ub_state.flags, "nmg_unbreak_region_edges: flags");
 
     return count;
 }
@@ -5164,7 +5164,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 	    for (edge_no=0; edge_no<BU_PTBL_LEN(int_faces); edge_no++) {
 		i_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, edge_no);
 
-		nmg_free((char *)i_fus, "nmg_get_edge_lines: i_fus");
+		bu_free((char *)i_fus, "nmg_get_edge_lines: i_fus");
 	    }
 	    return 1;
 	}
@@ -5487,7 +5487,7 @@ nmg_fuse_inters(struct intersect_fus *i_fus, struct intersect_fus *j_fus, struct
 	i_fus->free_edge = 1;
 
     bu_ptbl_rm(int_faces, (long *)j_fus);
-    nmg_free((char *)j_fus, "nmg_split_edges_at_pts: j_fus ");
+    bu_free((char *)j_fus, "nmg_split_edges_at_pts: j_fus ");
 
 }
 
@@ -6573,7 +6573,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
     i = BU_PTBL_LEN(int_faces);
     if (i < 3)
 	i = 3;
-    planes = (plane_t *)nmg_calloc(i, sizeof(plane_t), "nmg_calc_new_v: planes");
+    planes = (plane_t *)bu_calloc(i, sizeof(plane_t), "nmg_calc_new_v: planes");
 
     pl_count = 0;
 
@@ -6610,7 +6610,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
 	if (bg_isect_planes(new_v->vg_p->coord, (const plane_t *)planes, pl_count)) {
 	    bu_log("nmg_cacl_new_v: Cannot solve for new geometry at (%f %f %f)\n",
 		   V3ARGS(new_v->vg_p->coord));
-	    nmg_free((char *)planes, "nmg_calc_new_v: planes");
+	    bu_free((char *)planes, "nmg_calc_new_v: planes");
 	    return 1;
 	}
     } else if (pl_count == 1) {
@@ -6624,20 +6624,20 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
 	planes[2][H] = VDOT(new_v->vg_p->coord, planes[2]);
 	if (bg_make_pnt_3planes(new_v->vg_p->coord, planes[0], planes[1], planes[2])) {
 	    bu_log("nmg_cacl_new_v: 3 planes do not intersect at a point\n");
-	    nmg_free((char *)planes, "nmg_calc_new_v: planes");
+	    bu_free((char *)planes, "nmg_calc_new_v: planes");
 	    return 1;
 	}
     } else {
 	bu_log("nmg_calc_new_v: No face planes at vertex %p (%f %f %f)\n",
 	       (void *)new_v, V3ARGS(new_v->vg_p->coord));
-	nmg_free((char *)planes, "nmg_calc_new_v: planes");
+	bu_free((char *)planes, "nmg_calc_new_v: planes");
 	return 1;
     }
 
     if (nmg_debug & NMG_DEBUG_BASIC)
 	bu_log("\tnew_v = (%f %f %f)\n", V3ARGS(new_v->vg_p->coord));
 
-    nmg_free((char *)planes, "nmg_calc_new_v: planes");
+    bu_free((char *)planes, "nmg_calc_new_v: planes");
 
     for (i = 0; i < BU_PTBL_LEN(int_faces); i++) {
 	struct intersect_fus *fus;
@@ -6698,7 +6698,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 
 	plane_count = BU_PTBL_LEN(faces);
 
-	planes = (plane_t *)nmg_calloc(plane_count+free_edges, sizeof(plane_t), "nmg_complex_vertex_solve: planes");
+	planes = (plane_t *)bu_calloc(plane_count+free_edges, sizeof(plane_t), "nmg_complex_vertex_solve: planes");
 
 
 	for (i=0; i<BU_PTBL_LEN(faces); i++) {
@@ -6771,10 +6771,10 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 	if (bg_isect_planes(new_v->vg_p->coord, (const plane_t *)planes, plane_count)) {
 	    bu_log("nmg_complex_vertex_solve: Could not calculate new geometry at (%f %f %f)\n",
 		   V3ARGS(new_v->vg_p->coord));
-	    nmg_free((char *) planes, "nmg_complex_vertex_solve: planes");
+	    bu_free((char *) planes, "nmg_complex_vertex_solve: planes");
 	    return 1;
 	}
-	nmg_free((char *) planes, "nmg_complex_vertex_solve: planes");
+	bu_free((char *) planes, "nmg_complex_vertex_solve: planes");
 
 	if (nmg_debug & NMG_DEBUG_BASIC)
 	    bu_log("nmg_complex_vertex_solve: new coords = (%f %f %f)\n",
@@ -6829,7 +6829,7 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
 	struct intersect_fus *i_fus;
 
 	i_fus = (struct intersect_fus *)BU_PTBL_GET(&int_faces, i);
-	nmg_free((char *)i_fus, "nmg_complex_vertex_solve: intersect_fus struct\n");
+	bu_free((char *)i_fus, "nmg_complex_vertex_solve: intersect_fus struct\n");
     }
     bu_ptbl_free(&int_faces);
 
@@ -7164,7 +7164,7 @@ nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const point_t pt, const struct bn_
      * could be lots of them
      */
 
-    flags = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_move_edge_thru_pnt: flags");
+    flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_move_edge_thru_pnt: flags");
     bu_ptbl_init(&faces, 64, " &faces ");
 
     eu1 = mv_eu;
@@ -7186,7 +7186,7 @@ nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const point_t pt, const struct bn_
 		    if (nmg_find_isect_faces(vu->v_p, &faces, &count, tol) > 3) {
 			bu_log("mg_move_edge_thru_pt: Cannot handle complex vertices\n");
 			bu_ptbl_free(&faces);
-			nmg_free((char *)flags, "mg_move_edge_thru_pt: flags");
+			bu_free((char *)flags, "mg_move_edge_thru_pt: flags");
 			return 1;
 		    }
 
@@ -7194,7 +7194,7 @@ nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const point_t pt, const struct bn_
 			/* failed */
 			bu_log("nmg_move_edge_thru_pnt: Could not solve simple vertex\n");
 			bu_ptbl_free(&faces);
-			nmg_free((char *)flags, "mg_move_edge_thru_pt: flags");
+			bu_free((char *)flags, "mg_move_edge_thru_pt: flags");
 			return 1;
 		    }
 		}
@@ -7213,7 +7213,7 @@ nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const point_t pt, const struct bn_
 		    if (nmg_find_isect_faces(vu->v_p, &faces, &count, tol) > 3) {
 			bu_log("mg_move_edge_thru_pt: Cannot handle complex vertices\n");
 			bu_ptbl_free(&faces);
-			nmg_free((char *)flags, "mg_move_edge_thru_pt: flags");
+			bu_free((char *)flags, "mg_move_edge_thru_pt: flags");
 			return 1;
 		    }
 
@@ -7237,7 +7237,7 @@ nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const point_t pt, const struct bn_
 			    /* failed */
 			    bu_log("nmg_move_edge_thru_pnt: Could not solve simple vertex\n");
 			    bu_ptbl_free(&faces);
-			    nmg_free((char *)flags, "mg_move_edge_thru_pt: flags");
+			    bu_free((char *)flags, "mg_move_edge_thru_pt: flags");
 			    return 1;
 			}
 		    }
@@ -7263,7 +7263,7 @@ nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const point_t pt, const struct bn_
     }
     while (fu != fu1 && fu != fu1->fumate_p);
 
-    nmg_free((char *)flags, "mg_move_edge_thru_pt: flags");
+    bu_free((char *)flags, "mg_move_edge_thru_pt: flags");
     bu_ptbl_free(&faces);
 
     return 0;
@@ -7860,7 +7860,7 @@ nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **c
 		    struct vertex *vpbad1, *vpbada;
 
 		    /* found a dangling edge, put it in the list */
-		    dang = (struct dangle *)nmg_malloc(sizeof(struct dangle) ,
+		    dang = (struct dangle *)bu_malloc(sizeof(struct dangle) ,
 						      "nmg_open_shells_connect: dang");
 
 		    dang->needs_edge_breaking = 0;
@@ -8020,7 +8020,7 @@ nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **c
 	    }
 	}
 	bu_ptbl_rm(&dangles, (long *)dang);
-	nmg_free((char *)dang, "nmg_open_shells_connect: dang");
+	bu_free((char *)dang, "nmg_open_shells_connect: dang");
     }
 
     bu_ptbl_free(&dangles);
@@ -8123,7 +8123,7 @@ nmg_mirror_model(struct model *m, struct bu_list *vlfree)
     (void)bu_ptbl_free(&vertices);
 
     /* adjust the direction of all the faces */
-    flags = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_mirror_model: flags");
+    flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_mirror_model: flags");
     for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
 	struct shell *s;
 
@@ -8149,7 +8149,7 @@ nmg_mirror_model(struct model *m, struct bu_list *vlfree)
 	}
     }
 
-    nmg_free((char *)flags, "nmg_mirror_model: flags ");
+    bu_free((char *)flags, "nmg_mirror_model: flags ");
 }
 
 

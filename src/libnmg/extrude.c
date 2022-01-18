@@ -107,7 +107,7 @@ nmg_translate_face(struct faceuse *fu, const vect_t Vec, struct bu_list *vlfree)
     cur = 0;
     cnt = verts_in_nmg_face(fu);
     verts = (struct vertex **)
-	nmg_malloc(cnt * sizeof(struct vertex *), "verts");
+	bu_malloc(cnt * sizeof(struct vertex *), "verts");
     for (i = 0; i < cnt; i++)
 	verts[i] = NULL;
 
@@ -165,7 +165,7 @@ nmg_translate_face(struct faceuse *fu, const vect_t Vec, struct bu_list *vlfree)
 	bu_bomb("nmg_translate_face: Cannot calculate plane equation for face\n");
     }
     nmg_face_g(fu_tmp, pl);
-    nmg_free((char *)verts, "verts");
+    bu_free((char *)verts, "verts");
 }
 
 
@@ -211,7 +211,7 @@ nmg_extrude_face(struct faceuse *fu, const vect_t Vec, struct bu_list *vlfree, c
 	nmg_translate_face(fu2->fumate_p, Vec, vlfree);
 
     nfaces = verts_in_nmg_face(fu);
-    outfaces = (struct faceuse **)nmg_calloc(nfaces+2, sizeof(struct faceuse *) ,
+    outfaces = (struct faceuse **)bu_calloc(nfaces+2, sizeof(struct faceuse *) ,
 					    "nmg_extrude_face: outfaces");
 
     outfaces[0] = fu;
@@ -251,7 +251,7 @@ nmg_extrude_face(struct faceuse *fu, const vect_t Vec, struct bu_list *vlfree, c
 
     nmg_gluefaces(outfaces, face_count, vlfree, tol);
 
-    nmg_free((char *)outfaces, "nmg_extrude_face: outfaces");
+    bu_free((char *)outfaces, "nmg_extrude_face: outfaces");
 
     return 0;
 }
@@ -663,7 +663,7 @@ nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct 
 		}
 
 		bu_ptbl_free(loop_tab);
-		nmg_free((char *)loop_tab, "nmg_fix_overlapping_loops: loop_tab");
+		bu_free((char *)loop_tab, "nmg_fix_overlapping_loops: loop_tab");
 	    }
 	}
 
@@ -1043,7 +1043,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, st
 	is = nmg_dup_shell(s_tmp, &copy_tbl, vlfree, tol);
 
 	/* make a translation table for this model */
-	flags = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
+	flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
 
 	/* now adjust all the planes, first move them inward by distance "thick" */
 	for (BU_LIST_FOR(fu, faceuse, &is->fu_hd)) {
@@ -1140,8 +1140,8 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, st
 	nmg_region_a(s_tmp->r_p, tol);
 
 	/* free memory */
-	nmg_free((char *)flags, "nmg_extrude_shell: flags");
-	nmg_free((char *)copy_tbl, "nmg_extrude_shell: copy_tbl");
+	bu_free((char *)flags, "nmg_extrude_shell: flags");
+	bu_free((char *)copy_tbl, "nmg_extrude_shell: copy_tbl");
     }
 
     /* put it all back together */
@@ -1240,7 +1240,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	is_void = nmg_shell_is_void(s_tmp);
 
 	/* make a translation table for this model */
-	flags = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
+	flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
 
 	/* now adjust all the planes, first move them by distance "thick" */
 	for (BU_LIST_FOR(fu, faceuse, &s_tmp->fu_hd)) {
@@ -1260,7 +1260,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	    }
 	}
 
-	nmg_free((char *)flags, "nmg_extrude_shell flags");
+	bu_free((char *)flags, "nmg_extrude_shell flags");
 
 	/* get table of vertices in this shell */
 	nmg_vertex_tabulate(&verts, &s_tmp->l.magic, vlfree);

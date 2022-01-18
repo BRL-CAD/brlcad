@@ -34,7 +34,6 @@ set(LIBNMG_SOURCES
   nurb_trim_util.c
   nurb_util.c
   nurb_xsplit.c
-  alloc.cpp
   bool.c
   ck.c
   class.c
@@ -61,7 +60,6 @@ set(LIBNMG_SOURCES
 
 CMAKEFILES(
   CMakeLists.txt
-  alloc.cpp
   junk.c
 )
 

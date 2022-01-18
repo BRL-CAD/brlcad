@@ -140,7 +140,7 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt, struct bu_
     }
 
     bu_log("overlay %s\n", name);
-    b = (long *)nmg_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec");
 
 	pl_erase(fp);
@@ -157,7 +157,7 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt, struct bu_
     pl_color(fp, 255, 50, 50);
     pdv_3line(fp, pt, plane_pt);
 
-    nmg_free((char *)b, "bit vec");
+    bu_free((char *)b, "bit vec");
     fclose(fp);
 }
 
@@ -181,7 +181,7 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
 
     bu_log("overlay %s\n", name);
     m = nmg_find_model(eu->up.magic_p);
-    b = (long *)nmg_calloc(m->maxindex, sizeof(long), "bit vec");
+    b = (long *)bu_calloc(m->maxindex, sizeof(long), "bit vec");
 
     pl_erase(fp);
 
@@ -202,7 +202,7 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
     nmg_pl_eu(fp, eu, b, 255, 255, 255);
     pl_color(fp, 255, 50, 50);
     pdv_3line(fp, pt, plane_pt);
-    nmg_free((char *)b, "bit vec");
+    bu_free((char *)b, "bit vec");
     fclose(fp);
 }
 
@@ -1953,7 +1953,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 		if (nmg_debug & NMG_DEBUG_RT_ISECT)
 		    bu_log("\tNot a hit\n");
 
-		nmg_free((char *)hp, "hit");
+		bu_free((char *)hp, "hit");
 		hp = next;
 		continue;
 	    }
@@ -2047,7 +2047,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 
 	    hit_ins(rd, myhit);
 
-	    nmg_free((char *)hp, "hit");
+	    bu_free((char *)hp, "hit");
 	    hp = next;
 	}
 	nmg_nurb_free_snurb(srf);
@@ -2701,7 +2701,7 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
     rd.stp = NULL;
     rd.seghead = NULL;
     rd.magic = NMG_RAY_DATA_MAGIC;
-    rd.hitmiss = (struct nmg_hitmiss **)nmg_calloc(rd.rd_m->maxindex,
+    rd.hitmiss = (struct nmg_hitmiss **)bu_calloc(rd.rd_m->maxindex,
 					      sizeof(struct nmg_hitmiss *), "nmg geom hit list");
     rd.classifying_ray = 1;
 
@@ -2758,12 +2758,12 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
 	while (BU_LIST_WHILE(hitp, nmg_hitmiss, &re_nmgfree)) {
 	    NMG_CK_HITMISS(hitp);
 	    BU_LIST_DEQUEUE((struct bu_list *)hitp);
-	    nmg_free((void *)hitp, "struct nmg_hitmiss");
+	    bu_free((void *)hitp, "struct nmg_hitmiss");
 	}
     }
 
     /* free the hitmiss table */
-    nmg_free((char *)rd.hitmiss, "free nmg geom hit list");
+    bu_free((char *)rd.hitmiss, "free nmg geom hit list");
 
     if (!rd.rd_m->manifolds) {
 	/* If there is no manifolds list attached to the model
@@ -2774,7 +2774,7 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
 	 * function and should be freed in the nmg_bool
 	 * function.
 	 */
-	nmg_free((char *)rd.manifolds, "free local manifolds table");
+	bu_free((char *)rd.manifolds, "free local manifolds table");
 	rd.manifolds = NULL; /* sanity */
     }
 

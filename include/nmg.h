@@ -541,16 +541,9 @@ struct vertexuse_a_cnurb {
 /**
  * storage allocation/deallocation support
  */
-
-NMG_EXPORT extern int nmg_memtrack;
-NMG_EXPORT void *nmg_malloc(size_t s, const char *msg);
-NMG_EXPORT void *nmg_calloc(int cnt, size_t s, const char *msg);
-NMG_EXPORT void *nmg_realloc(void *ptr, size_t s, const char *msg);
-NMG_EXPORT void nmg_free(void *, const char *str);
-NMG_EXPORT void nmg_destroy();
-#define NMG_GETSTRUCT(p, str) p = (struct str *)nmg_calloc(1, sizeof(struct str), "NMG_GETSTRUCT")
-#define NMG_FREESTRUCT(p, str) nmg_free(p, "NMG_FREESTRUCT")
-#define NMG_ALLOC(_ptr, _type) _ptr = (_type *)nmg_calloc(1, sizeof(_type), #_type " (NMG_ALLOC) " CPP_FILELINE)
+#define NMG_GETSTRUCT(p, str) p = (struct str *)bu_calloc(1, sizeof(struct str), "NMG_GETSTRUCT")
+#define NMG_FREESTRUCT(p, str) bu_free(p, "NMG_FREESTRUCT")
+#define NMG_ALLOC(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (NMG_ALLOC) " CPP_FILELINE)
 
 
 /*

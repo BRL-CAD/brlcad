@@ -1141,7 +1141,7 @@ nmg_vlblock_s(struct bv_vlblock *vbp, const struct shell *s, int fancy, struct b
     NMG_CK_MODEL(m);
 
     /* get space for list of items processed */
-    tab = (long *)nmg_calloc(m->maxindex+1, sizeof(long), "nmg_vlblock_s tab[]");
+    tab = (long *)bu_calloc(m->maxindex+1, sizeof(long), "nmg_vlblock_s tab[]");
 
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
@@ -1173,7 +1173,7 @@ nmg_vlblock_s(struct bv_vlblock *vbp, const struct shell *s, int fancy, struct b
 	nmg_vlblock_v(vbp, s->vu_p->v_p, tab, vlfree);
     }
 
-    nmg_free((char *)tab, "nmg_vlblock_s tab[]");
+    bu_free((char *)tab, "nmg_vlblock_s tab[]");
 }
 
 
@@ -1267,7 +1267,7 @@ nmg_pl_isect(const char *filename, const struct shell *s, struct bu_list *vlfree
 	bu_bomb("unable to open file for writing");
     }
 
-    b = (long *)nmg_calloc(s->r_p->m_p->maxindex+1, sizeof(long),
+    b = (long *)bu_calloc(s->r_p->m_p->maxindex+1, sizeof(long),
 			  "nmg_pl_isect flags[]");
 
     vbp = bv_vlblock_init(vlfree, 32);
@@ -1298,7 +1298,7 @@ nmg_pl_isect(const char *filename, const struct shell *s, struct bu_list *vlfree
     bv_plot_vlblock(fp, vbp);
     bv_vlblock_free(vbp);
 
-    nmg_free((char *)b, "nmg_pl_isect flags[]");
+    bu_free((char *)b, "nmg_pl_isect flags[]");
 
     (void)fclose(fp);
 }
@@ -1327,7 +1327,7 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1, struct bu_list *vl
     m = nmg_find_model(&fu1->l.magic);
     NMG_CK_MODEL(m);
     /* get space for list of items processed */
-    tab = (long *)nmg_calloc(m->maxindex+1, sizeof(long),
+    tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
 			    "nmg_pl_comb_fu tab[]");
 
     vbp = bv_vlblock_init(vlfree, 32);
@@ -1361,7 +1361,7 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1, struct bu_list *vl
 	}
     }
     bv_vlblock_free(vbp);
-    nmg_free((char *)tab, "nmg_pl_comb_fu tab[]");
+    bu_free((char *)tab, "nmg_pl_comb_fu tab[]");
 }
 
 
@@ -1386,7 +1386,7 @@ nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2
     m = nmg_find_model(&fu1->l.magic);
     NMG_CK_MODEL(m);
     /* get space for list of items processed */
-    tab = (long *)nmg_calloc(m->maxindex+1, sizeof(long),
+    tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
 			    "nmg_pl_comb_fu tab[]");
 
     /* Create the vlblock */
@@ -1425,7 +1425,7 @@ nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2
     }
 
     bv_vlblock_free(vbp);
-    nmg_free((char *)tab, "nmg_pl_2fu tab[]");
+    bu_free((char *)tab, "nmg_pl_2fu tab[]");
 }
 
 
@@ -1747,14 +1747,14 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
     m = nmg_find_model(p);
     /* get space for list of items processed */
     if (!broken_tab) {
-	broken_tab = (long *)nmg_calloc(m->maxindex+1, sizeof(long),
+	broken_tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
 				       "nmg_vlblock_s tab[]");
 	broken_tab_len = m->maxindex+1;
     } else {
 	if (broken_tab_len < m->maxindex+1) {
 	    bu_log("nmg_show_broken_classifier_stuff() maxindex increased! was %d, now %ld\n",
 		   broken_tab_len, m->maxindex+1);
-	    broken_tab = (long *)nmg_realloc((char *)broken_tab,
+	    broken_tab = (long *)bu_realloc((char *)broken_tab,
 					    (m->maxindex+1) * sizeof(long),
 					    "nmg_vlblock_s tab[] enlargement");
 	    broken_tab_len = m->maxindex+1;
@@ -1846,7 +1846,7 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
 
 	bv_vlblock_free(vbp);
 	vbp = (struct bv_vlblock *)NULL;
-	nmg_free((char *)broken_tab, "broken_tab");
+	bu_free((char *)broken_tab, "broken_tab");
 	broken_tab = (long *)NULL;
 	broken_tab_len = 0;
     }
@@ -1872,7 +1872,7 @@ nmg_face_plot(const struct faceuse *fu, struct bu_list *vlfree)
     NMG_CK_MODEL(m);
 
     /* get space for list of items processed */
-    tab = (long *)nmg_calloc(m->maxindex+1, sizeof(long),
+    tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
 			    "nmg_face_plot tab[]");
 
     vbp = bv_vlblock_init(vlfree, 32);
@@ -1907,7 +1907,7 @@ nmg_face_plot(const struct faceuse *fu, struct bu_list *vlfree)
 	}
     }
     bv_vlblock_free(vbp);
-    nmg_free((char *)tab, "nmg_face_plot tab[]");
+    bu_free((char *)tab, "nmg_face_plot tab[]");
 
 }
 
@@ -1932,7 +1932,7 @@ nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2, struct bu_l
     NMG_CK_MODEL(m);
 
     /* get space for list of items processed */
-    tab = (long *)nmg_calloc(m->maxindex+1, sizeof(long),
+    tab = (long *)bu_calloc(m->maxindex+1, sizeof(long),
 			    "nmg_2face_plot tab[]");
 
     vbp = bv_vlblock_init(vlfree, 32);
@@ -1954,7 +1954,7 @@ nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2, struct bu_l
 	bu_log("null nmg_vlblock_anim_upcall, no animation\n");
     }
     bv_vlblock_free(vbp);
-    nmg_free((char *)tab, "nmg_2face_plot tab[]");
+    bu_free((char *)tab, "nmg_2face_plot tab[]");
 
 }
 
@@ -1987,7 +1987,7 @@ nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const st
 	perror(buf);
 	return;
     }
-    b = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_face_lu_plot flag[]");
+    b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_face_lu_plot flag[]");
     nmg_pl_lu(fp, lu, b, 255, 0, 0, vlfree);
 
     /*
@@ -2004,7 +2004,7 @@ nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const st
 
     fclose(fp);
     bu_log("overlay %s\n", buf);
-    nmg_free((char *)b, "nmg_face_lu_plot flag[]");
+    bu_free((char *)b, "nmg_face_lu_plot flag[]");
 }
 
 
@@ -2037,7 +2037,7 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
 	perror(buf);
 	return;
     }
-    b = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_plot_lu_ray flag[]");
+    b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_plot_lu_ray flag[]");
     nmg_pl_lu(fp, lu, b, 255, 0, 0, vlfree);
 
     /*
@@ -2059,7 +2059,7 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
 
     fclose(fp);
     bu_log("overlay %s\n", buf);
-    nmg_free((char *)b, "nmg_plot_lu_ray flag[]");
+    bu_free((char *)b, "nmg_plot_lu_ray flag[]");
 }
 
 
@@ -2083,11 +2083,11 @@ nmg_plot_ray_face(const char *fname, point_t pt, const vect_t dir, const struct 
 	bu_bomb("aborting");
     }
 
-    b = (long *)nmg_calloc(fu->s_p->r_p->m_p->maxindex, sizeof(long), "bit vec");
+    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex, sizeof(long), "bit vec");
 
     nmg_pl_fu(fp, fu, b, 200, 200, 200, vlfree);
 
-    nmg_free((char *)b, "bit vec");
+    bu_free((char *)b, "bit vec");
 
     VSCALE(pp, dir, 1000.0);
     VADD2(pp, pt, pp);
@@ -2126,7 +2126,7 @@ nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, struct bu_li
 
     m = nmg_find_model((uint32_t *)eu);
     NMG_CK_MODEL(m);
-    tab = (long *)nmg_calloc(m->maxindex, sizeof(long), "bit vec");
+    tab = (long *)bu_calloc(m->maxindex, sizeof(long), "bit vec");
 
     vbp = bv_vlblock_init(vlfree, 32);
 
@@ -2147,7 +2147,7 @@ nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, struct bu_li
     bv_plot_vlblock(fp, vbp);
     (void)fclose(fp);
     bv_vlblock_free(vbp);
-    nmg_free((char *)tab, "bit vec");
+    bu_free((char *)tab, "bit vec");
 }
 
 
@@ -2229,10 +2229,10 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
     nmg_nurb_free_snurb(c);
     nmg_nurb_free_snurb(r);
 
-    nmg_free((char *) tau1.knots, "rt_nurb_plot:tau1.knots");
-    nmg_free((char *) tau2.knots, "rt_nurb_plot:tau2.knots");
-    nmg_free((char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
-    nmg_free((char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
+    bu_free((char *) tau1.knots, "rt_nurb_plot:tau1.knots");
+    bu_free((char *) tau2.knots, "rt_nurb_plot:tau2.knots");
+    bu_free((char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
+    bu_free((char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
 
     return 0;
 }
@@ -2287,7 +2287,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	n.c_size = 2;
 	nmg_nurb_gen_knot_vector(&n.k, n.order, 0.0, 1.0);
 	n.pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT);
-	n.ctl_points = (fastf_t *)nmg_malloc(
+	n.ctl_points = (fastf_t *)bu_malloc(
 	    sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(n.pt_type) *
 	    n.c_size, "nmg_cnurb_to_vlist() order0 ctl_points[]");
 	/* Set ctl points to parametric values */
@@ -2362,8 +2362,8 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
     }
 
     if (eg->order <= 0) {
-	nmg_free((char *)n.k.knots, "nmg_cnurb_to_vlist() n.knot.knots");
-	nmg_free((char *)n.ctl_points, "nmg_cnurb_to_vlist() ctl_points");
+	bu_free((char *)n.k.knots, "nmg_cnurb_to_vlist() n.knot.knots");
+	bu_free((char *)n.ctl_points, "nmg_cnurb_to_vlist() ctl_points");
     }
 }
 

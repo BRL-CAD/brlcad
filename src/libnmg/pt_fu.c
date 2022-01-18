@@ -763,11 +763,11 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
 
 		tmp = ei_p;
 		BU_LIST_DEQUEUE(&tmp->l);
-		nmg_free((char *)tmp, "edge info struct");
+		bu_free((char *)tmp, "edge info struct");
 		tmp = ei;
 		ei = BU_LIST_PLAST(edge_info, &ei->l);
 		BU_LIST_DEQUEUE(&tmp->l);
-		nmg_free((char *)tmp, "edge info struct");
+		bu_free((char *)tmp, "edge info struct");
 		break;
 	    }
 	    ei_p = BU_LIST_PNEXT(edge_info, &ei_p->l);
@@ -839,7 +839,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei, struct
     }
 
     bu_log("\toverlay %s\n", name);
-    b = (long *)nmg_calloc(fpi->fu_p->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fpi->fu_p->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec");
 
 	pl_erase(fp);
@@ -876,7 +876,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei, struct
 	pdv_3line(fp, p1, p2);
     }
 
-    nmg_free((char *)b, "bit vec");
+    bu_free((char *)b, "bit vec");
     fclose(fp);
 }
 
@@ -978,7 +978,7 @@ compute_loop_class(struct fpi *fpi,
      */
     while (BU_LIST_WHILE(ei, edge_info, &near1)) {
 	BU_LIST_DEQUEUE(&ei->l);
-	nmg_free((char *)ei, "edge_info struct");
+	bu_free((char *)ei, "edge_info struct");
     }
 
     if (UNLIKELY(nmg_debug & NMG_DEBUG_PNT_FU)) {
@@ -1102,7 +1102,7 @@ nmg_class_pnt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, 
 	/* free up the edge_list elements */
 	while (BU_LIST_WHILE(ei, edge_info, &edge_list.l)) {
 	    BU_LIST_DEQUEUE(&ei->l);
-	    nmg_free((char *)ei, "edge info struct");
+	    bu_free((char *)ei, "edge info struct");
 	}
     } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 	register struct vertexuse *vu;
@@ -1162,7 +1162,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *v
 
     bu_log("overlay pt_fu_parity_error.plot3\n");
 
-    b = (long *)nmg_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec");
 
 	pl_erase(fp);
@@ -1186,7 +1186,7 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt, struct bu_list *v
 	pdv_3line(fp, p1, p2);
     }
 
-    nmg_free((char *)b, "plot table");
+    bu_free((char *)b, "plot table");
     fclose(fp);
 
 }
@@ -1360,7 +1360,7 @@ nmg_class_pnt_fu_except(const point_t pt, const struct faceuse *fu, const struct
 
     while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 	BU_LIST_DEQUEUE(&ved_p->l);
-	nmg_free((char *)ved_p, "ve_dist struct");
+	bu_free((char *)ved_p, "ve_dist struct");
     }
 
 
@@ -1473,12 +1473,12 @@ nmg_class_pnt_lu_except(point_t pt, const struct loopuse *lu, const struct edge 
     /* free up the edge_list elements */
     while (BU_LIST_WHILE(ei, edge_info, &edge_list.l)) {
 	BU_LIST_DEQUEUE(&ei->l);
-	nmg_free((char *)ei, "edge info struct");
+	bu_free((char *)ei, "edge info struct");
     }
 
     while (BU_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
 	BU_LIST_DEQUEUE(&ved_p->l);
-	nmg_free((char *)ved_p, "ve_dist struct");
+	bu_free((char *)ved_p, "ve_dist struct");
     }
 
     if (nmg_debug & NMG_DEBUG_PNT_FU)

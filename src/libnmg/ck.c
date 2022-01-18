@@ -664,7 +664,7 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
     struct edgeuse *eparent;
     int len = (int)strlen(str)+128;
 
-    errstr = (char *)nmg_calloc(len, sizeof(char), "nmg_ck_e error str");
+    errstr = (char *)bu_calloc(len, sizeof(char), "nmg_ck_e error str");
     snprintf(errstr, len, "%sedge %p\n", str, (void *)e);
 
     NMG_CK_EDGE(e);
@@ -685,7 +685,7 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
 	bu_bomb(errstr);
     }
 
-    nmg_free(errstr, "nmg_ck_e error str");
+    bu_free(errstr, "nmg_ck_e error str");
 }
 
 
@@ -695,7 +695,7 @@ nmg_ck_vu(const uint32_t *parent, const struct vertexuse *vu, const char *str)
     char *errstr;
     int len = (int)strlen(str)+128;
 
-    errstr = (char *)nmg_calloc(len, sizeof(char), "nmg_ck_vu error str");
+    errstr = (char *)bu_calloc(len, sizeof(char), "nmg_ck_vu error str");
     snprintf(errstr, len, "%svertexuse %p\n", str, (void *)vu);
 
     if (vu->up.magic_p != parent) {
@@ -703,7 +703,7 @@ nmg_ck_vu(const uint32_t *parent, const struct vertexuse *vu, const char *str)
 	bu_bomb(errstr);
     }
 
-    nmg_free(errstr, "nmg_ck_vu error str");
+    bu_free(errstr, "nmg_ck_vu error str");
 }
 
 
@@ -714,7 +714,7 @@ nmg_ck_eu(const uint32_t *parent, const struct edgeuse *eu, const char *str)
     struct edgeuse *eur, *eu_next, *eu_last;
     int len = (int)strlen(str)+128;
 
-    errstr = (char *)nmg_calloc(len, sizeof(char), "nmg_ck_eu error str");
+    errstr = (char *)bu_calloc(len, sizeof(char), "nmg_ck_eu error str");
     snprintf(errstr, len, "%sedgeuse %p\n", str, (void *)eu);
 
     NMG_CK_EDGEUSE(eu);
@@ -781,7 +781,7 @@ nmg_ck_eu(const uint32_t *parent, const struct edgeuse *eu, const char *str)
     NMG_CK_VERTEXUSE(eu->vu_p);
     nmg_ck_vu(&eu->l.magic, eu->vu_p, errstr);
 
-    nmg_free(errstr, "nmg_ck_eu error str");
+    bu_free(errstr, "nmg_ck_eu error str");
 }
 
 
@@ -791,13 +791,13 @@ nmg_ck_lg(const struct loop *l, const struct loop_g *lg, const char *str)
     char *errstr;
     int len = (int)strlen(str)+128;
 
-    errstr = (char *)nmg_calloc(len, sizeof(char), "nmg_ck_lg error str");
+    errstr = (char *)bu_calloc(len, sizeof(char), "nmg_ck_lg error str");
     snprintf(errstr, len, "%sloop_g %p\n", str, (void *)lg);
 
     NMG_CK_LOOP_G(lg);
     NMG_CK_LOOP(l);
 
-    nmg_free(errstr, "nmg_ck_lg error str");
+    bu_free(errstr, "nmg_ck_lg error str");
 }
 
 
@@ -807,7 +807,7 @@ nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
     char *errstr;
     int len = (int)strlen(str)+128;
 
-    errstr = (char *)nmg_calloc(len, sizeof(char), "nmg_ck_l error str");
+    errstr = (char *)bu_calloc(len, sizeof(char), "nmg_ck_l error str");
     snprintf(errstr, len, "%sloop %p\n", str, (void *)l);
 
     NMG_CK_LOOP(l);
@@ -820,7 +820,7 @@ nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
 
     if (l->lg_p) nmg_ck_lg(l, l->lg_p, errstr);
 
-    nmg_free(errstr, "");
+    bu_free(errstr, "");
 }
 
 
@@ -835,7 +835,7 @@ nmg_ck_lu(const uint32_t *parent, const struct loopuse *lu, const char *str)
     uint32_t magic1;
     int len = (int)strlen(str)+128;
 
-    errstr = (char *)nmg_calloc(len, sizeof(char), "nmg_ck_lu error str");
+    errstr = (char *)bu_calloc(len, sizeof(char), "nmg_ck_lu error str");
     snprintf(errstr, len, "%sloopuse %p\n", str, (void *)lu);
 
     NMG_CK_LOOPUSE(lu);
@@ -888,7 +888,7 @@ nmg_ck_lu(const uint32_t *parent, const struct loopuse *lu, const char *str)
 	bu_strlcat(errstr, "nmg_ck_lu() Bad loopuse down pointer\n", len);
 	bu_bomb(errstr);
     }
-    nmg_free(errstr, "nmg_ck_lu error str");
+    bu_free(errstr, "nmg_ck_lu error str");
 }
 
 
@@ -898,7 +898,7 @@ nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
     char *errstr;
     int len = (int)strlen(str)+128;
 
-    errstr = (char *)nmg_calloc(len, sizeof(char), "nmg_ck_fg error str");
+    errstr = (char *)bu_calloc(len, sizeof(char), "nmg_ck_fg error str");
     snprintf(errstr, len, "%sFace_g %p\n", str, (void *)f);
 
     NMG_CK_FACE_G_PLANE(fg);
@@ -909,7 +909,7 @@ nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
 	bu_bomb(errstr);
     }
 
-    nmg_free(errstr, "nmg_ck_fg error str");
+    bu_free(errstr, "nmg_ck_fg error str");
 }
 
 
@@ -919,7 +919,7 @@ nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
     char *errstr;
     int len = (int)strlen(str)+128;
 
-    errstr = (char *)nmg_calloc(len, sizeof(char), "nmg_ck_f error str");
+    errstr = (char *)bu_calloc(len, sizeof(char), "nmg_ck_f error str");
     snprintf(errstr, len, "%sFace %p\n", str, (void *)f);
 
     NMG_CK_FACE(f);
@@ -932,7 +932,7 @@ nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
 
     if (f->g.plane_p) nmg_ck_fg(f, f->g.plane_p, errstr);
 
-    nmg_free(errstr, "nmg_ck_f error str");
+    bu_free(errstr, "nmg_ck_f error str");
 }
 
 
@@ -948,7 +948,7 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
     NMG_CK_FACEUSE(fu);
     NMG_CK_SHELL(s);
 
-    errstr = (char *)nmg_calloc(len, sizeof(char), "nmg_ck_fu error str");
+    errstr = (char *)bu_calloc(len, sizeof(char), "nmg_ck_fu error str");
     snprintf(errstr, len, "%sFaceuse %p\n", str, (void *)fu);
 
     if (fu->s_p != s) {
@@ -986,7 +986,7 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 		 errstr, loop_number++, (void *)lu);
 	nmg_ck_lu(&fu->l.magic, lu, errstr);
     }
-    nmg_free(errstr, "nmg_ck_fu error str");
+    bu_free(errstr, "nmg_ck_fu error str");
 }
 
 
@@ -1648,7 +1648,7 @@ nmg_ck_vs_in_region(const struct nmgregion *r, struct bu_list *vlfree, const str
     m = r->m_p;
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = &tab;
     st.tol = (struct bn_tol *)tol;
 
@@ -1658,7 +1658,7 @@ nmg_ck_vs_in_region(const struct nmgregion *r, struct bu_list *vlfree, const str
 
     bu_ptbl_free(&tab);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
 }
 
 

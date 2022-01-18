@@ -56,11 +56,11 @@ nmg_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n
 
     pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
 
-    srf->u.knots = (fastf_t *) nmg_malloc (
+    srf->u.knots = (fastf_t *) bu_malloc (
 	n_u * sizeof (fastf_t), "nmg_nurb_new_snurb: u kv knot values");
-    srf->v.knots = (fastf_t *) nmg_malloc (
+    srf->v.knots = (fastf_t *) bu_malloc (
 	n_v * sizeof (fastf_t), "nmg_nurb_new_snurb: v kv knot values");
-    srf->ctl_points = (fastf_t *) nmg_malloc(
+    srf->ctl_points = (fastf_t *) bu_malloc(
 	pnum, "nmg_nurb_new_snurb: control mesh points");
 
     return srf;
@@ -80,14 +80,14 @@ nmg_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
 
     crv->k.k_size = n_knots;
     crv->k.knots = (fastf_t *)
-	nmg_malloc(n_knots * sizeof(fastf_t),
+	bu_malloc(n_knots * sizeof(fastf_t),
 		  "nmg_nurb_new_cnurb: knot values");
 
     crv->c_size = n_pts;
     crv->pt_type = pt_type;
 
     crv->ctl_points = (fastf_t *)
-	nmg_malloc(sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
+	bu_malloc(sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
 		  n_pts,
 		  "nmg_nurb_new_cnurb: mesh point values");
 
@@ -105,9 +105,9 @@ rt_nurb_clean_snurb(struct face_g_snurb *srf)
 {
     NMG_CK_SNURB(srf);
 
-    nmg_free((char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots");
-    nmg_free((char *)srf->v.knots, "nmg_nurb_free_snurb() v.knots");
-    nmg_free((char *)srf->ctl_points, "nmg_nurb_free_snurb() ctl_points");
+    bu_free((char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots");
+    bu_free((char *)srf->v.knots, "nmg_nurb_free_snurb() v.knots");
+    bu_free((char *)srf->ctl_points, "nmg_nurb_free_snurb() ctl_points");
 
     /* Invalidate the structure */
     srf->u.knots = (fastf_t *)NULL;
@@ -127,12 +127,12 @@ nmg_nurb_free_snurb(struct face_g_snurb *srf)
      * deleted.
      */
 
-    nmg_free((char *)srf->u.knots, "nmg_nurb_free_snurb: u kv knots");
-    nmg_free((char *)srf->v.knots, "nmg_nurb_free_snurb: v kv knots");
-    nmg_free((char *)srf->ctl_points, "nmg_nurb_free_snurb: mesh points");
+    bu_free((char *)srf->u.knots, "nmg_nurb_free_snurb: u kv knots");
+    bu_free((char *)srf->v.knots, "nmg_nurb_free_snurb: v kv knots");
+    bu_free((char *)srf->ctl_points, "nmg_nurb_free_snurb: mesh points");
 
     srf->l.magic = 0;
-    nmg_free((char *)srf, "nmg_nurb_free_snurb: snurb struct");
+    bu_free((char *)srf, "nmg_nurb_free_snurb: snurb struct");
 }
 
 
@@ -145,8 +145,8 @@ void
 nmg_nurb_clean_cnurb(struct edge_g_cnurb *crv)
 {
     NMG_CK_CNURB(crv);
-    nmg_free((char*)crv->k.knots, "nmg_nurb_free_cnurb: knots");
-    nmg_free((char*)crv->ctl_points, "nmg_nurb_free_cnurb: control points");
+    bu_free((char*)crv->k.knots, "nmg_nurb_free_cnurb: knots");
+    bu_free((char*)crv->ctl_points, "nmg_nurb_free_cnurb: control points");
     /* Invalidate the structure */
     crv->k.knots = (fastf_t *)NULL;
     crv->ctl_points = (fastf_t *)NULL;
@@ -163,10 +163,10 @@ void
 nmg_nurb_free_cnurb(struct edge_g_cnurb *crv)
 {
     NMG_CK_CNURB(crv);
-    nmg_free((char*)crv->k.knots, "nmg_nurb_free_cnurb: knots");
-    nmg_free((char*)crv->ctl_points, "nmg_nurb_free_cnurb: control points");
+    bu_free((char*)crv->k.knots, "nmg_nurb_free_cnurb: knots");
+    bu_free((char*)crv->ctl_points, "nmg_nurb_free_cnurb: control points");
     crv->l.magic = 0;		/* sanity */
-    nmg_free((char*)crv, "nmg_nurb_free_cnurb: cnurb struct");
+    bu_free((char*)crv, "nmg_nurb_free_cnurb: cnurb struct");
 }
 
 

@@ -1110,7 +1110,7 @@ nmg_edge_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_t
     if (nelem == 0)
 	return 0;
 
-    edgeuse_vert_list = (edgeuse_vert_list_t)nmg_calloc(nelem, 2 * sizeof(size_t), "edgeuse_vert_list");
+    edgeuse_vert_list = (edgeuse_vert_list_t)bu_calloc(nelem, 2 * sizeof(size_t), "edgeuse_vert_list");
 
     j = 0;
     for (i = 0; i < (size_t)BU_PTBL_LEN(eu_list) ; i++) {
@@ -1165,7 +1165,7 @@ nmg_edge_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_t
 	}
     }
 
-    nmg_free((char *)edgeuse_vert_list, "edgeuse_vert_list");
+    bu_free((char *)edgeuse_vert_list, "edgeuse_vert_list");
 
     /* if bu_ptbl was passed into this function don't free it here */
     if (*magic_p != BU_PTBL_MAGIC) {
@@ -1228,9 +1228,9 @@ nmg_edge_g_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn
 	return 0;
     }
 
-    sort_idx_xyp = (size_t *)nmg_calloc(etab_cnt, sizeof(size_t), "sort_idx_xyp");
+    sort_idx_xyp = (size_t *)bu_calloc(etab_cnt, sizeof(size_t), "sort_idx_xyp");
 
-    edge_rr = (fastf_t *)nmg_calloc(etab_cnt * 3, sizeof(fastf_t), "edge_rr_xyp");
+    edge_rr = (fastf_t *)bu_calloc(etab_cnt * 3, sizeof(fastf_t), "edge_rr_xyp");
     /* rise over run in xy plane */
     edge_rr_xyp = edge_rr;
     /* rise over run in xz plane */
@@ -1238,7 +1238,7 @@ nmg_edge_g_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn
     /* rise over run in yz plane */
     edge_rr_yzp = edge_rr + (etab_cnt * 2);
 
-    edge_sc = (char *)nmg_calloc(etab_cnt * 3, sizeof(char), "edge_sc_xyp");
+    edge_sc = (char *)bu_calloc(etab_cnt * 3, sizeof(char), "edge_sc_xyp");
     /* special cases in xy plane */
     edge_sc_xyp = edge_sc;
     /* special cases in xz plane */
@@ -1390,8 +1390,8 @@ nmg_edge_g_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn
     }
 
     bu_ptbl_free(&etab);
-    nmg_free(edge_rr, "edge_rr,");
-    nmg_free(edge_sc, "edge_sc");
+    bu_free(edge_rr, "edge_rr,");
+    bu_free(edge_sc, "edge_sc");
 
     if (UNLIKELY(nmg_debug & NMG_DEBUG_BASIC && total > 0))
 	bu_log("nmg_edge_g_fuse(): %d edge_g_lseg's fused\n", total);

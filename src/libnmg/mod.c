@@ -96,7 +96,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
     struct faceuse *prev_fu;
     struct face_g_plane *fg1, *fg2;
 
-    flags = (char *)nmg_calloc((s->r_p->m_p->maxindex) * 2, sizeof(char),
+    flags = (char *)bu_calloc((s->r_p->m_p->maxindex) * 2, sizeof(char),
 			      "nmg_shell_coplanar_face_merge flags[]");
 
     /* Visit each face in the shell */
@@ -184,7 +184,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 	}
     }
 
-    nmg_free((char *)flags, "nmg_shell_coplanar_face_merge flags[]");
+    bu_free((char *)flags, "nmg_shell_coplanar_face_merge flags[]");
 
     nmg_shell_a(s, tol);
 
@@ -902,7 +902,7 @@ nmg_invert_shell(struct shell *s)
     }
 
     /* Allocate map of faces visited */
-    tags = (char *)nmg_calloc(m->maxindex+1, 1, "nmg_invert_shell() tags[]");
+    tags = (char *)bu_calloc(m->maxindex+1, 1, "nmg_invert_shell() tags[]");
 
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
@@ -912,7 +912,7 @@ nmg_invert_shell(struct shell *s)
 	/* Process fu and fumate together */
 	nmg_reverse_face(fu);
     }
-    nmg_free(tags, "nmg_invert_shell() tags[]");
+    bu_free(tags, "nmg_invert_shell() tags[]");
 }
 
 
@@ -1849,7 +1849,7 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 	tbl_size += m_f->maxindex;
 
     /* Needs double space, because model will grow as dup proceeds */
-    trans_tbl = (long **)nmg_calloc(tbl_size*2, sizeof(long *),
+    trans_tbl = (long **)bu_calloc(tbl_size*2, sizeof(long *),
 				   "nmg_dup_face trans_tbl");
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
@@ -1915,7 +1915,7 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 	bu_log("NMG: encountered null 'new_fu' pointer at mod.c line %d\n", __LINE__);
     }
 
-    nmg_free((char *)trans_tbl, "nmg_dup_face trans_tbl");
+    bu_free((char *)trans_tbl, "nmg_dup_face trans_tbl");
 
     if (nmg_debug & NMG_DEBUG_BASIC) {
 	bu_log("nmg_dup_face(fu=%p, s=%p) new_fu=%p\n",
@@ -2328,7 +2328,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2, struct bu_list *vlfre
 	bu_log("\tnmg_cut_loop\n");
 	if (nmg_debug & NMG_DEBUG_PLOTEM) {
 	    long *tab;
-	    tab = (long *)nmg_calloc(m->maxindex, sizeof(long),
+	    tab = (long *)bu_calloc(m->maxindex, sizeof(long),
 				    "nmg_cut_loop flag[] 1");
 
 	    (void)sprintf(name, "Before_cutloop%d.plot3", ++i);
@@ -2341,7 +2341,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2, struct bu_list *vlfre
 	    nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100, vlfree);
 	    nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, tab, 100, 100, 100, vlfree);
 	    (void)fclose(fd);
-	    nmg_free((char *)tab, "nmg_cut_loop flag[] 1");
+	    bu_free((char *)tab, "nmg_cut_loop flag[] 1");
 	}
     }
 
@@ -2400,7 +2400,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2, struct bu_list *vlfre
 
     if (nmg_debug & NMG_DEBUG_CUTLOOP && nmg_debug & NMG_DEBUG_PLOTEM) {
 	long *tab;
-	tab = (long *)nmg_calloc(m->maxindex, sizeof(long),
+	tab = (long *)bu_calloc(m->maxindex, sizeof(long),
 				"nmg_cut_loop flag[] 2");
 
 	(void)sprintf(name, "After_cutloop%d.plot3", i);
@@ -2413,7 +2413,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2, struct bu_list *vlfre
 	nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100, vlfree);
 	nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, tab, 100, 100, 100, vlfree);
 	(void)fclose(fd);
-	nmg_free((char *)tab, "nmg_cut_loop flag[] 2");
+	bu_free((char *)tab, "nmg_cut_loop flag[] 2");
     }
 out:
     if (nmg_debug & NMG_DEBUG_BASIC) {
@@ -2767,7 +2767,7 @@ top:
  *
  * The passed pointer to an bu_ptbl structure may not be
  * initialized. If no touching jaunts are found, it will still not be
- * initialized upon return (to avoid nmg_malloc/nmg_free pairs for loops
+ * initialized upon return (to avoid bu_malloc/bu_free pairs for loops
  * with no touching jaunts. The flag (need_init) lets this routine
  * know whether the ptbl structure has been initialized
  */
@@ -3049,9 +3049,9 @@ top:
 
     if (jaunt_count == 0) {
 	if (visit_count)
-	    nmg_free((char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n");
+	    bu_free((char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n");
 	if (jaunt_status)
-	    nmg_free((char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n");
+	    bu_free((char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n");
 	if (!need_init)
 	    bu_ptbl_free(&jaunt_tbl);
 
@@ -3078,9 +3078,9 @@ top:
 
 	bu_ptbl_free(&jaunt_tbl);
 	if (visit_count)
-	    nmg_free((char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n");
+	    bu_free((char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n");
 	if (jaunt_status)
-	    nmg_free((char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n");
+	    bu_free((char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n");
 
 	if ((nmg_debug & NMG_DEBUG_BASIC) || (nmg_debug & NMG_DEBUG_CUTLOOP)) {
 	    bu_log("nmg_loop_split_at_touching_jaunt(lu=%p) END count=%zu\n",
@@ -3110,13 +3110,13 @@ top:
     BU_CK_PTBL(&jaunt_tbl);
 
     if (visit_count)
-	nmg_free((char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n");
+	bu_free((char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n");
     if (jaunt_status)
-	nmg_free((char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n");
+	bu_free((char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n");
 
-    visit_count = (int *)nmg_calloc(BU_PTBL_LEN(&jaunt_tbl), sizeof(int),
+    visit_count = (int *)bu_calloc(BU_PTBL_LEN(&jaunt_tbl), sizeof(int),
 				   "nmg_loop_split_at_touching_jaunt: visit_count[]");
-    jaunt_status = (int *)nmg_calloc(BU_PTBL_LEN(&jaunt_tbl), sizeof(int),
+    jaunt_status = (int *)bu_calloc(BU_PTBL_LEN(&jaunt_tbl), sizeof(int),
 				    "nmg_loop_split_at_touching_jaunt: jaunt_status[]");
 
     /* consider each jaunt as a possible location for splitting the loop */

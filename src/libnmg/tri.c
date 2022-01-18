@@ -164,7 +164,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d, struct bu_list *vlfree)
     }
 
     bu_log("\tplotting %s\n", name);
-    b = (long *)nmg_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec"),
 
 	pl_erase(fp);
@@ -212,7 +212,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d, struct bu_list *vlfree)
     }
 
 
-    nmg_free((char *)b, "plot table");
+    bu_free((char *)b, "plot table");
     fclose(fp);
 }
 
@@ -372,7 +372,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
  *			|     struct pt2d.{magic, coord[3]} |
  *			-----------------------------------
  *
- * When the caller is done, nmg_free_2d_map() should be called to dispose
+ * When the caller is done, bu_free_2d_map() should be called to dispose
  * of the map
  */
 struct bu_list *
@@ -2010,7 +2010,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);
 
-    book_keeping_array = (size_t *)nmg_calloc(book_keeping_array_alloc_cnt, sizeof(size_t),
+    book_keeping_array = (size_t *)bu_calloc(book_keeping_array_alloc_cnt, sizeof(size_t),
 					     "book_keeping_array");
 
     /* remove loopuse with < 3 vertices */
@@ -2116,7 +2116,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 				if (unique_vertex_cnt >= book_keeping_array_alloc_cnt) {
 				    book_keeping_array_alloc_cnt = unique_vertex_cnt;
 				    book_keeping_array_alloc_cnt += 10;
-				    book_keeping_array_tmp = (size_t *)nmg_realloc((void *)book_keeping_array,
+				    book_keeping_array_tmp = (size_t *)bu_realloc((void *)book_keeping_array,
 										  book_keeping_array_alloc_cnt * sizeof(size_t),
 										  "book_keeping_array realloc");
 				    book_keeping_array = book_keeping_array_tmp;
@@ -2160,7 +2160,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
     }
 
 out:
-    nmg_free(book_keeping_array, "book_keeping_array");
+    bu_free(book_keeping_array, "book_keeping_array");
     return ret;
 }
 
@@ -3546,10 +3546,10 @@ nmg_triangulate_fu(struct faceuse *fu, struct bu_list *vlfree, const struct bn_t
 out1:
     while (BU_LIST_WHILE(pt, pt2d, tbl2d)) {
 	BU_LIST_DEQUEUE(&pt->l);
-	nmg_free((char *)pt, "pt2d free");
+	bu_free((char *)pt, "pt2d free");
     }
 
-    nmg_free((char *)tbl2d, "discard tbl2d");
+    bu_free((char *)tbl2d, "discard tbl2d");
 
 out2:
     return ret;
@@ -3727,14 +3727,14 @@ triangulate:
 
     while (BU_LIST_WHILE(tp, trap, &tlist)) {
 	BU_LIST_DEQUEUE(&tp->l);
-	nmg_free((char *)tp, "trapezoid free");
+	bu_free((char *)tp, "trapezoid free");
     }
 
     while (BU_LIST_WHILE(pt, pt2d, tbl2d)) {
 	BU_LIST_DEQUEUE(&pt->l);
-	nmg_free((char *)pt, "pt2d free");
+	bu_free((char *)pt, "pt2d free");
     }
-    nmg_free((char *)tbl2d, "discard tbl2d");
+    bu_free((char *)tbl2d, "discard tbl2d");
 
     return;
 }

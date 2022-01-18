@@ -568,7 +568,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
     NMG_CK_MODEL(m);
     memset((char *)ctr, 0, sizeof(*ctr));
 
-    ptrs = (uint32_t **)nmg_calloc(m->maxindex+1, sizeof(uint32_t *), "nmg_m_count ptrs[]");
+    ptrs = (uint32_t **)bu_calloc(m->maxindex+1, sizeof(uint32_t *), "nmg_m_count ptrs[]");
 
     NMG_UNIQ_INDEX(m, model);
     ctr->max_structs = m->maxindex;
@@ -724,7 +724,7 @@ nmg_pr_m_struct_counts(const struct model *m, const char *str)
     NMG_CK_MODEL(m);
 
     tab = nmg_m_struct_count(&cnts, m);
-    nmg_free((void *)tab, "nmg_m_struct_count");
+    bu_free((void *)tab, "nmg_m_struct_count");
     nmg_pr_struct_counts(&cnts, str);
 }
 
@@ -774,11 +774,11 @@ nmg_merge_models(struct model *m1, struct model *m2)
      * need to be regenerated.
      */
     if (m1->manifolds) {
-	nmg_free((char *)m1->manifolds, "free manifolds table");
+	bu_free((char *)m1->manifolds, "free manifolds table");
 	m1->manifolds = (char *)NULL;
     }
     if (m2->manifolds) {
-	nmg_free((char *)m2->manifolds, "free manifolds table");
+	bu_free((char *)m2->manifolds, "free manifolds table");
 	m2->manifolds = (char *)NULL;
     }
 

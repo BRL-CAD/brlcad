@@ -1535,7 +1535,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 
 	/* Plot all the loops that touch here. */
 	m = nmg_find_model((uint32_t *)vs[start].vu);
-	b = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]");
+	b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]");
 	vbp = bv_vlblock_init(vlfree, 32);
 	for (i=start; i < end; i++) {
 	    struct loopuse *lu;
@@ -1553,7 +1553,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	bv_plot_vlblock(fp, vbp);
 	fclose(fp);
 	bu_log("wrote %s\n", buf);
-	nmg_free((char *)b, "nmg_special_wedge_processing flag[]");
+	bu_free((char *)b, "nmg_special_wedge_processing flag[]");
 	bv_vlblock_free(vbp);
     }
 
@@ -1687,9 +1687,9 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end, struct
     NMG_CK_RAYSTATE(rs);
 
     num = end - start;
-    vs = (struct nmg_vu_stuff *)nmg_malloc(sizeof(struct nmg_vu_stuff)*num,
+    vs = (struct nmg_vu_stuff *)bu_malloc(sizeof(struct nmg_vu_stuff)*num,
 					  "nmg_vu_stuff");
-    ls = (struct nmg_loop_stuff *)nmg_malloc(sizeof(struct nmg_loop_stuff)*num,
+    ls = (struct nmg_loop_stuff *)bu_malloc(sizeof(struct nmg_loop_stuff)*num,
 					    "nmg_loop_stuff");
 
 top:
@@ -1856,8 +1856,8 @@ top:
 	}
     }
 
-    nmg_free((char *)vs, "nmg_vu_stuff");
-    nmg_free((char *)ls, "nmg_loop_stuff");
+    bu_free((char *)vs, "nmg_vu_stuff");
+    bu_free((char *)ls, "nmg_loop_stuff");
 
     if (nmg_debug&NMG_DEBUG_VU_SORT)
 	bu_log("nmg_face_coincident_vu_sort(, %d, %d) END, ret=%d\n", start, end, start+nvu);
@@ -2787,7 +2787,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 		rs->vu[prior_end-1-cut_no] = eu_tmp->vu_p;
 	    }
 	    bu_ptbl_free(cuts);
-	    nmg_free((char *)cuts, "cuts");
+	    bu_free((char *)cuts, "cuts");
 
 	    continue;
 	}

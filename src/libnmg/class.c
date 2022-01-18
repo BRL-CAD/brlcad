@@ -374,7 +374,7 @@ out:
 	point_t mid_pt;
 	point_t left_pt;
 	fu = eu->up.lu_p->up.fu_p;
-	bits = (long *)nmg_calloc(nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
+	bits = (long *)bu_calloc(nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
 	sprintf(buf, "faceclass%d.plot3", num++);
 	if ((fp = fopen(buf, "wb")) == NULL)
 	    bu_bomb(buf);
@@ -386,7 +386,7 @@ out:
 	VJOIN1(left_pt, mid_pt, 500, left);
 	pdv_3line(fp, mid_pt, left_pt);
 	fclose(fp);
-	nmg_free((char *)bits, "bits[]");
+	bu_free((char *)bits, "bits[]");
 	bu_log("wrote %s\n", buf);
     }
 }
@@ -653,7 +653,7 @@ nmg_class_pnt_s(const point_t pt, const struct shell *s, const int in_or_out_onl
     }
 
     if (!in_or_out_only) {
-	faces_seen = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_class_pnt_s faces_seen[]");
+	faces_seen = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_class_pnt_s faces_seen[]");
 	/*
 	 * First pass:  Try hard to see if point is ON a face.
 	 */
@@ -764,7 +764,7 @@ retry:
 
 out:
     if (!in_or_out_only) {
-	nmg_free((char *)faces_seen, "nmg_class_pnt_s faces_seen[]");
+	bu_free((char *)faces_seen, "nmg_class_pnt_s faces_seen[]");
     }
 
     if (nmg_debug & NMG_DEBUG_CLASSIFY) {
@@ -1618,7 +1618,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, struct bu_l
 		struct model *m;
 
 		m = nmg_find_model(lu->up.magic_p);
-		b = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
+		b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
 		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 		    if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
 			nmg_euprint("In:  edgeuse", eu);
@@ -1639,7 +1639,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, struct bu_l
 		    bu_log("wrote %s\n", buf);
 		}
 		nmg_pr_lu(lu, "");
-		nmg_free((char *)b, "nmg_pl_lu flag[]");
+		bu_free((char *)b, "nmg_pl_lu flag[]");
 	    }
 
 	    if (seen_error > 3) {

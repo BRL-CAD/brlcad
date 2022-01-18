@@ -95,7 +95,7 @@ control_polygon_flat_enough(
     /* Find the perpendicular distance */
     /* from each interior control point to */
     /* line connecting V[0] and V[degree] */
-    distance = (double *)nmg_malloc((unsigned)(degree + 1) * sizeof(double), "control_polygon_flat_enough");
+    distance = (double *)bu_malloc((unsigned)(degree + 1) * sizeof(double), "control_polygon_flat_enough");
     {
 	double abSquared;
 
@@ -131,7 +131,7 @@ control_polygon_flat_enough(
 	    max_distance_above = FMAX(max_distance_above, distance[i]);
 	}
     }
-    nmg_free((char *)distance, "control_polygon_flat_enough");
+    bu_free((char *)distance, "control_polygon_flat_enough");
 
     {
 	double det, dInv;
@@ -199,9 +199,9 @@ bezier(
     point2d_t **Vtemp;
 
 
-    Vtemp = (point2d_t **)nmg_calloc(degree+1, sizeof(point2d_t *), "bezier: Vtemp array");
+    Vtemp = (point2d_t **)bu_calloc(degree+1, sizeof(point2d_t *), "bezier: Vtemp array");
     for (i=0; i<=degree; i++)
-	Vtemp[i] = (point2d_t *)nmg_calloc(degree+1, sizeof(point2d_t),
+	Vtemp[i] = (point2d_t *)bu_calloc(degree+1, sizeof(point2d_t),
 					  "bezier: Vtemp[i] array");
     /* Copy control points */
     for (j =0; j <= degree; j++) {
@@ -241,8 +241,8 @@ bezier(
     }
 
     for (i=0; i<=degree; i++)
-	nmg_free((char *)Vtemp[i], "bezier: Vtemp[i]");
-    nmg_free((char *)Vtemp, "bezier: Vtemp");
+	bu_free((char *)Vtemp[i], "bezier: Vtemp[i]");
+    bu_free((char *)Vtemp, "bezier: Vtemp");
 
     return;
 }
@@ -342,8 +342,8 @@ bezier_roots(
 		NMG_ALLOC(*intercept, point2d_t);
 		NMG_ALLOC(*normal, point2d_t);
 		if (!compute_x_intercept(w, degree, ray_start, ray_dir, *intercept[0], *normal[0])) {
-		    nmg_free((char *)(*intercept), "bezier_roots: no solution");
-		    nmg_free((char *)(*normal), "bezier_roots: no solution");
+		    bu_free((char *)(*intercept), "bezier_roots: no solution");
+		    bu_free((char *)(*normal), "bezier_roots: no solution");
 		    return 0;
 		}
 		return 1;
@@ -354,8 +354,8 @@ bezier_roots(
 
     /* Otherwise, solve recursively after */
     /* subdividing control polygon */
-    Left = (point2d_t *)nmg_calloc(degree+1, sizeof(point2d_t), "bezier_roots: Left");
-    Right = (point2d_t *)nmg_calloc(degree+1, sizeof(point2d_t), "bezier_roots: Right");
+    Left = (point2d_t *)bu_calloc(degree+1, sizeof(point2d_t), "bezier_roots: Left");
+    Right = (point2d_t *)bu_calloc(degree+1, sizeof(point2d_t), "bezier_roots: Right");
     bezier(w, degree, 0.5, Left, Right, eval_pt, NULL);
 
     left_count  = bezier_roots(Left,  degree, &left_t, &left_n, ray_start, ray_dir, ray_perp, depth+1, epsilon);
@@ -363,12 +363,12 @@ bezier_roots(
 
     total_count = left_count + right_count;
 
-    nmg_free((char *)Left, "bezier_roots: Left");
-    nmg_free((char *)Right, "bezier_roots: Right");
+    bu_free((char *)Left, "bezier_roots: Left");
+    bu_free((char *)Right, "bezier_roots: Right");
     if (total_count) {
-	*intercept = (point2d_t *)nmg_calloc(total_count, sizeof(point2d_t),
+	*intercept = (point2d_t *)bu_calloc(total_count, sizeof(point2d_t),
 					    "bezier_roots: roots compilation");
-	*normal = (point2d_t *)nmg_calloc(total_count, sizeof(point2d_t),
+	*normal = (point2d_t *)bu_calloc(total_count, sizeof(point2d_t),
 					 "bezier_roots: normal compilation");
     }
 
@@ -385,12 +385,12 @@ bezier_roots(
     }
 
     if (left_count) {
-	nmg_free((char *)left_t, "Left roots");
-	nmg_free((char *)left_n, "Left normals");
+	bu_free((char *)left_t, "Left roots");
+	bu_free((char *)left_n, "Left normals");
     }
     if (right_count) {
-	nmg_free((char *)right_t, "Right roots");
-	nmg_free((char *)right_n, "Right normals");
+	bu_free((char *)right_t, "Right roots");
+	bu_free((char *)right_n, "Right normals");
     }
 
     /* Send back total number of solutions */
@@ -424,9 +424,9 @@ bezier_subdivide(struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, 
     BU_LIST_INIT(&bz_l->l);
     NMG_ALLOC(bz_r, struct bezier_2d_list);
     BU_LIST_INIT(&bz_r->l);
-    bz_l->ctl = (point2d_t *)nmg_calloc(degree + 1, sizeof(point2d_t),
+    bz_l->ctl = (point2d_t *)bu_calloc(degree + 1, sizeof(point2d_t),
 				       "bezier_subdivide: bz_l->ctl");
-    bz_r->ctl = (point2d_t *)nmg_calloc(degree + 1, sizeof(point2d_t),
+    bz_r->ctl = (point2d_t *)bu_calloc(degree + 1, sizeof(point2d_t),
 				       "bezier_subdivide: bz_r->ctl");
 
     /* subdivide at t = 0.5 */
@@ -434,8 +434,8 @@ bezier_subdivide(struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, 
 
     /* eliminate original */
     BU_LIST_DEQUEUE(&bezier_in->l);
-    nmg_free((char *)bezier_in->ctl, "bezier_subdivide: bezier_in->ctl");
-    nmg_free((char *)bezier_in, "bezier_subdivide: bezier_in");
+    bu_free((char *)bezier_in->ctl, "bezier_subdivide: bezier_in->ctl");
+    bu_free((char *)bezier_in, "bezier_subdivide: bezier_in");
 
     /* recurse on left curve */
     left_rtrn = bezier_subdivide(bz_l, degree, epsilon, depth+1);
@@ -445,8 +445,8 @@ bezier_subdivide(struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, 
 
     BU_LIST_APPEND_LIST(&new_head->l, &left_rtrn->l);
     BU_LIST_APPEND_LIST(&new_head->l, &rt_rtrn->l);
-    nmg_free((char *)left_rtrn, "bezier_subdivide: left_rtrn (head)");
-    nmg_free((char *)rt_rtrn, "bezier_subdivide: rt_rtrn (head)");
+    bu_free((char *)left_rtrn, "bezier_subdivide: left_rtrn (head)");
+    bu_free((char *)rt_rtrn, "bezier_subdivide: rt_rtrn (head)");
 
     return new_head;
 }

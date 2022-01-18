@@ -581,7 +581,6 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 
     } else {
 	failed = 1;
-	nmg_destroy();
     }
 
     if (!failed && facetize_tree) {
@@ -1439,8 +1438,6 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
     struct model *nmg_model = NULL;
     struct rt_bot_internal *bot = NULL;
 
-    nmg_memtrack = 1;
-
     nmg_model = _try_nmg_facetize(gedp, argc, argv, opts->nmg_use_tnurbs, opts);
     if (nmg_model == NULL) {
 	if (opts->verbosity > 1) {
@@ -1486,9 +1483,6 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
 ged_nmg_obj_memfree:
     if (!opts->quiet && ret != GED_OK) {
 	bu_log("NMG: failed to generate %s\n", newname);
-    }
-    if (!opts->make_nmg) {
-	nmg_destroy();
     }
 
     return ret;
