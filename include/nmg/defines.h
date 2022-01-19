@@ -66,6 +66,26 @@
 #define OT_UNSPEC    3 /**< @brief orientation unspecified */
 #define OT_BOOLPLACE 4 /**< @brief object is intermediate data for boolean ops */
 
+/** values for the "allhits" argument to mg_class_pt_fu_except() */
+#define NMG_FPI_FIRST   0       /**< @brief return after finding first
+                                 * touch
+                                 */
+#define NMG_FPI_PERGEOM 1       /**< @brief find all touches, call
+                                 * user funcs once for each geometry
+                                 * element touched.
+                                 */
+#define NMG_FPI_PERUSE  2       /**< @brief find all touches, call
+                                 * user funcs once for each use of
+                                 * geom elements touched.
+                                 */
+
+/**
+ * storage allocation/deallocation support
+ */
+#define NMG_GETSTRUCT(p, str) p = (struct str *)bu_calloc(1, sizeof(struct str), "NMG_GETSTRUCT")
+#define NMG_FREESTRUCT(p, str) bu_free(p, "NMG_FREESTRUCT")
+#define NMG_ALLOC(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (NMG_ALLOC) " CPP_FILELINE)
+
 /**
  * macros to check/validate a structure pointer
  */
@@ -76,6 +96,17 @@
     }
 
 #define NMG_CK_LIST(_p)               BU_CKMAG(_p, BU_LIST_HEAD_MAGIC, "bu_list")
+
+/*
+ * Macros to create and destroy storage for the NMG data structures.
+ * Since nmg_mk.c and g_nmg.c are the only source file which should
+ * perform these most fundamental operations, the macros do not belong
+ * in nmg.h In particular, application code should NEVER do these
+ * things.  Any need to do so should be handled by extending nmg_mk.c
+ */
+#define NMG_INCR_INDEX(_p, _m)  \
+    NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
+
 
 #endif  /* NMG_DEFINES_H */
 /** @} */

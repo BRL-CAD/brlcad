@@ -38,6 +38,10 @@
 
 __BEGIN_DECLS
 
+/** Print a plane equation. */
+#define PLPRINT(_s, _pl) bu_log("%s %gx + %gy + %gz = %g\n", (_s), \
+                                (_pl)[0], (_pl)[1], (_pl)[2], (_pl)[3])
+
 NMG_EXPORT extern char *nmg_orientation(int orientation);
 NMG_EXPORT extern void nmg_pr_orient(int orientation,
 				     const char *h);
