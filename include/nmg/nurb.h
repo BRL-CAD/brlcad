@@ -379,6 +379,89 @@ NMG_EXPORT extern void nmg_nurb_map_oslo(struct oslo_mat *oslo,
 NMG_EXPORT extern fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
 
 
+NMG_EXPORT extern void nmg_face_g_snurb(struct faceuse *fu,
+                                        int u_order,
+                                        int v_order,
+                                        int n_u_knots,
+                                        int n_v_knots,
+                                        fastf_t *ukv,
+                                        fastf_t *vkv,
+                                        int n_rows,
+                                        int n_cols,
+                                        int pt_type,
+                                        fastf_t *mesh);
+
+/* From nmg_misc.c */
+NMG_EXPORT extern int nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu);
+NMG_EXPORT extern void nmg_snurb_fu_eval(const struct faceuse *fu,
+                                         const fastf_t u,
+                                         const fastf_t v,
+                                         point_t pt_on_srf);
+NMG_EXPORT extern void nmg_snurb_fu_get_norm(const struct faceuse *fu,
+                                             const fastf_t u,
+                                             const fastf_t v,
+                                             vect_t norm);
+NMG_EXPORT extern void nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu,
+                                                   const struct vertexuse *vu,
+                                                   vect_t norm);
+
+
+NMG_EXPORT extern void nmg_vertexuse_a_cnurb(struct vertexuse *vu,
+                                             const fastf_t *uvw);
+NMG_EXPORT extern void nmg_edge_g_cnurb(struct edgeuse *eu,
+                                        int order,
+                                        int n_knots,
+                                        fastf_t *kv,
+                                        int n_pts,
+                                        int pt_type,
+                                        fastf_t *points);
+NMG_EXPORT extern void nmg_edge_g_cnurb_plinear(struct edgeuse *eu);
+NMG_EXPORT extern struct edge_g_cnurb *nmg_join_cnurbs(struct bu_list *crv_head);
+NMG_EXPORT extern struct edge_g_cnurb *nmg_arc2d_to_cnurb(point_t i_center,
+                                                          point_t i_start,
+                                                          point_t i_end,
+                                                          int point_type,
+                                                          const struct bn_tol *tol);
+NMG_EXPORT extern int nmg_cnurb_is_linear(const struct edge_g_cnurb *cnrb);
+
+
+NMG_EXPORT extern int nmg_snurb_is_planar(const struct face_g_snurb *srf,
+                                          const struct bn_tol *tol);
+NMG_EXPORT extern void nmg_eval_linear_trim_curve(const struct face_g_snurb *snrb,
+                                                  const fastf_t uvw[3],
+                                                  point_t xyz);
+
+
+NMG_EXPORT extern void nmg_eval_trim_curve(const struct edge_g_cnurb *cnrb,
+                                           const struct face_g_snurb *snrb,
+                                           const fastf_t t, point_t xyz);
+/* nmg_split_trim */
+NMG_EXPORT extern void nmg_eval_trim_to_tol(const struct edge_g_cnurb *cnrb,
+                                            const struct face_g_snurb *snrb,
+                                            const fastf_t t0,
+                                            const fastf_t t1,
+                                            struct bu_list *head,
+                                            const struct bn_tol *tol);
+/* nmg_split_linear_trim */
+NMG_EXPORT extern void nmg_eval_linear_trim_to_tol(const struct edge_g_cnurb *cnrb,
+                                                   const struct face_g_snurb *snrb,
+                                                   const fastf_t uvw1[3],
+                                                   const fastf_t uvw2[3],
+                                                   struct bu_list *head,
+                                                   const struct bn_tol *tol);
+NMG_EXPORT extern int nmg_cnurb_lseg_coincident(const struct edgeuse *eu1,
+                                                const struct edge_g_cnurb *cnrb,
+                                                const struct face_g_snurb *snrb,
+                                                const point_t pt1,
+                                                const point_t pt2,
+                                                const struct bn_tol *tol);
+NMG_EXPORT extern int   nmg_cnurb_is_on_crv(const struct edgeuse *eu,
+                                            const struct edge_g_cnurb *cnrb,
+                                            const struct face_g_snurb *snrb,
+                                            const struct bu_list *head,
+                                            const struct bn_tol *tol);
+
+
 __END_DECLS
 
 #endif  /* NMG_NURB_H */
