@@ -65,6 +65,12 @@ NMG_EXPORT extern void nmg_merge_regions(struct nmgregion *r1,
                                          struct nmgregion *r2,
                                          const struct bn_tol *tol);
 
+/* From file nmg_mk.c */
+/*      MAKE routines */
+NMG_EXPORT extern struct nmgregion *nmg_mrsv(struct model *m);
+NMG_EXPORT extern struct shell *nmg_msv(struct nmgregion *r_p);
+NMG_EXPORT extern int nmg_kr(struct nmgregion *r);
+
 
 __END_DECLS
 

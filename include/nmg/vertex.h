@@ -91,6 +91,9 @@ struct vertexuse {
 #define FREE_VERTEXUSE_A_PLANE(p) NMG_FREESTRUCT(p, vertexuse_a_plane)
 #define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
 
+NMG_EXPORT extern int nmg_kvu(struct vertexuse *vu);
+
+
 #define PREEXIST 1
 #define NEWEXIST 2
 

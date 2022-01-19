@@ -111,6 +111,15 @@ struct edgeuse {
 #define FREE_EDGE_G_CNURB(p)      NMG_FREESTRUCT(p, edge_g_cnurb)
 #define FREE_EDGEUSE(p)           NMG_FREESTRUCT(p, edgeuse)
 
+/* From file nmg_mk.c */
+/*      MAKE routines */
+NMG_EXPORT extern struct edgeuse *nmg_me(struct vertex *v1,
+                                         struct vertex *v2,
+                                         struct shell *s);
+NMG_EXPORT extern struct edgeuse *nmg_meonvu(struct vertexuse *vu);
+NMG_EXPORT extern int nmg_keg(struct edgeuse *eu);
+NMG_EXPORT extern int nmg_keu(struct edgeuse *eu);
+
 /**
  * Do two edgeuses share the same two vertices? If yes, eu's should be
  * joined.

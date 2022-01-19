@@ -104,6 +104,14 @@ struct loopuse {
 #define FREE_LOOPUSE(p)           NMG_FREESTRUCT(p, loopuse)
 #define FREE_LOOPUSE_A(p)         NMG_FREESTRUCT(p, loopuse_a)
 
+/* From file nmg_mk.c */
+/*      MAKE routines */
+NMG_EXPORT extern struct loopuse *nmg_mlv(uint32_t *magic,
+                                          struct vertex *v,
+                                          int orientation);
+NMG_EXPORT extern int nmg_klu(struct loopuse *lu1);
+
+
 NMG_EXPORT extern void nmg_jl(struct loopuse *lu,
                               struct edgeuse *eu);
 NMG_EXPORT extern struct vertexuse *nmg_join_2loops(struct vertexuse *vu1,

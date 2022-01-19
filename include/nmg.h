@@ -123,32 +123,6 @@ __BEGIN_DECLS
  */
 
 
-/* From file nmg_mk.c */
-/*      MAKE routines */
-NMG_EXPORT extern struct model *nmg_mm(void);
-NMG_EXPORT extern struct model *nmg_mmr(void);
-NMG_EXPORT extern struct nmgregion *nmg_mrsv(struct model *m);
-NMG_EXPORT extern struct shell *nmg_msv(struct nmgregion *r_p);
-NMG_EXPORT extern struct faceuse *nmg_mf(struct loopuse *lu1);
-NMG_EXPORT extern struct loopuse *nmg_mlv(uint32_t *magic,
-					  struct vertex *v,
-					  int orientation);
-NMG_EXPORT extern struct edgeuse *nmg_me(struct vertex *v1,
-					 struct vertex *v2,
-					 struct shell *s);
-NMG_EXPORT extern struct edgeuse *nmg_meonvu(struct vertexuse *vu);
-NMG_EXPORT extern struct loopuse *nmg_ml(struct shell *s);
-/*      KILL routines */
-NMG_EXPORT extern int nmg_keg(struct edgeuse *eu);
-NMG_EXPORT extern int nmg_kvu(struct vertexuse *vu);
-NMG_EXPORT extern int nmg_kfu(struct faceuse *fu1);
-NMG_EXPORT extern int nmg_klu(struct loopuse *lu1);
-NMG_EXPORT extern int nmg_keu(struct edgeuse *eu);
-NMG_EXPORT extern int nmg_keu_zl(struct shell *s,
-				 const struct bn_tol *tol);
-NMG_EXPORT extern int nmg_ks(struct shell *s);
-NMG_EXPORT extern int nmg_kr(struct nmgregion *r);
-NMG_EXPORT extern void nmg_km(struct model *m);
 /*      Geometry and Attribute routines */
 NMG_EXPORT extern void nmg_vertex_gv(struct vertex *v,
 				     const point_t pt);

@@ -51,6 +51,14 @@ struct model {
 #define GET_MODEL(p, m)             {NMG_GETSTRUCT(p, model); NMG_INCR_INDEX(p, m);}
 #define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
 
+/* From file nmg_mk.c */
+/*      MAKE & KILL routines */
+NMG_EXPORT extern struct model *nmg_mm(void);
+NMG_EXPORT extern struct model *nmg_mmr(void);
+NMG_EXPORT extern struct nmgregion *nmg_mrsv(struct model *m);
+NMG_EXPORT extern void nmg_km(struct model *m);
+
+
 __END_DECLS
 
 #endif  /* NMG_MODEL_H */

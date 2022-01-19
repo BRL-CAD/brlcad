@@ -148,6 +148,11 @@ NMG_EXPORT extern double nmg_measure_fu_angle(const struct edgeuse *eu,
                                               const vect_t yvec,
                                               const vect_t zvec);
 
+/* From file nmg_mk.c */
+/*      MAKE routines */
+NMG_EXPORT extern struct faceuse *nmg_mf(struct loopuse *lu1);
+NMG_EXPORT extern int nmg_kfu(struct faceuse *fu1);
+
 
 __END_DECLS
 

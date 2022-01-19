@@ -82,6 +82,14 @@ struct shell_a {
 #define FREE_SHELL(p)             NMG_FREESTRUCT(p, shell)
 #define FREE_SHELL_A(p)           NMG_FREESTRUCT(p, shell_a)
 
+/* From file nmg_mk.c */
+/*      MAKE routines */
+NMG_EXPORT extern struct loopuse *nmg_ml(struct shell *s);
+NMG_EXPORT extern int nmg_keu_zl(struct shell *s,
+                                 const struct bn_tol *tol);
+NMG_EXPORT extern int nmg_ks(struct shell *s);
+
+
 NMG_EXPORT extern int nmg_shell_is_empty(const struct shell *s);
 NMG_EXPORT extern struct shell *nmg_find_s_of_lu(const struct loopuse *lu);
 NMG_EXPORT extern struct shell *nmg_find_s_of_eu(const struct edgeuse *eu);
