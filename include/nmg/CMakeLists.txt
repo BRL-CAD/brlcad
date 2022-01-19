@@ -4,6 +4,8 @@ set(nmg_headers
   edge.h
   face.h
   loop.h
+  region.h
+  model.h
   nurb.h
   ray.h
   shell.h

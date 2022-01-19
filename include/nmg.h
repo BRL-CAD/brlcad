@@ -91,15 +91,16 @@ __BEGIN_DECLS
 #include "nmg/loop.h"
 #include "nmg/face.h"
 #include "nmg/shell.h"
+#include "nmg/region.h"
+#include "nmg/model.h"
 #include "nmg/nurb.h"
 #include "nmg/ray.h"
 
 /**
- * macros to check/validate a structure pointer
+ * @brief  debug bits for NMG's
  */
-#define NMG_CK_MODEL(_p)              NMG_CKMAG(_p, NMG_MODEL_MAGIC, "model")
-#define NMG_CK_REGION(_p)             NMG_CKMAG(_p, NMG_REGION_MAGIC, "region")
-#define NMG_CK_REGION_A(_p)           NMG_CKMAG(_p, NMG_REGION_A_MAGIC, "region_a")
+NMG_EXPORT extern uint32_t nmg_debug;
+
 
 /*
  * NOTE: We rely on the fact that the first 32 bits in a struct is the
@@ -117,30 +118,6 @@ __BEGIN_DECLS
  *   7) pointer to attributes
  *   8) pointer to child(ren)
  */
-
-
-struct model {
-    uint32_t magic;
-    struct bu_list r_hd;	/**< @brief list of regions */
-    char *manifolds;            /**< @brief structure 1-3manifold table */
-    long index;			/**< @brief struct # in this model */
-    long maxindex;		/**< @brief # of structs so far */
-};
-
-struct nmgregion {
-    struct bu_list l;		/**< @brief regions, in model's r_hd list */
-    struct model *m_p;		/**< @brief owning model */
-    struct nmgregion_a *ra_p;	/**< @brief attributes */
-    struct bu_list s_hd;	/**< @brief list of shells in region */
-    long index;			/**< @brief struct # in this model */
-};
-
-struct nmgregion_a {
-    uint32_t magic;
-    point_t min_pt;		/**< @brief minimums of bounding box */
-    point_t max_pt;		/**< @brief maximums of bounding box */
-    long index;			/**< @brief struct # in this model */
-};
 
 /**
  * Returns a 4-tuple (plane_t), given faceuse and state of flip flags.
@@ -176,14 +153,6 @@ struct nmgregion_a {
 #define NMG_INCR_INDEX(_p, _m)	\
     NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
 
-
-#define GET_MODEL(p, m)             {NMG_GETSTRUCT(p, model); NMG_INCR_INDEX(p, m);}
-#define GET_REGION(p, m)            {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p, m);}
-#define GET_REGION_A(p, m)          {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p, m);}
-
-#define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
-#define FREE_REGION(p)            NMG_FREESTRUCT(p, nmgregion)
-#define FREE_REGION_A(p)          NMG_FREESTRUCT(p, nmgregion_a)
 
 /** Print a plane equation. */
 #define PLPRINT(_s, _pl) bu_log("%s %gx + %gy + %gz = %g\n", (_s), \
@@ -503,10 +472,6 @@ NMG_EXPORT extern void nmg_count_shell_kids(const struct model *m,
                                             size_t *total_points);
 
 /* From nmg_mod.c */
-/*      REGION Routines */
-NMG_EXPORT extern void nmg_merge_regions(struct nmgregion *r1,
-					 struct nmgregion *r2,
-					 const struct bn_tol *tol);
 
 /*      SHELL Routines */
 NMG_EXPORT extern void nmg_shell_coplanar_face_merge(struct shell *s,
