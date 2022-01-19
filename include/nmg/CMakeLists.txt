@@ -3,6 +3,7 @@ set(nmg_headers
   defines.h
   edge.h
   face.h
+  globals.h
   loop.h
   region.h
   model.h

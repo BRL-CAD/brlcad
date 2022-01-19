@@ -86,6 +86,7 @@ __BEGIN_DECLS
 #include "nmg/defines.h"
 
 #include "nmg/debug.h"
+#include "nmg/globals.h"
 #include "nmg/vertex.h"
 #include "nmg/edge.h"
 #include "nmg/loop.h"
@@ -97,11 +98,6 @@ __BEGIN_DECLS
 #include "nmg/ray.h"
 #include "nmg/plot.h"
 #include "nmg/print.h"
-
-/**
- * @brief  debug bits for NMG's
- */
-NMG_EXPORT extern uint32_t nmg_debug;
 
 
 /*
@@ -120,22 +116,6 @@ NMG_EXPORT extern uint32_t nmg_debug;
  *   7) pointer to attributes
  *   8) pointer to child(ren)
  */
-
-/**
- * Returns a 4-tuple (plane_t), given faceuse and state of flip flags.
- */
-#define NMG_GET_FU_PLANE(_N, _fu) { \
-	register const struct faceuse *_fu1 = (_fu); \
-	register const struct face_g_plane *_fg; \
-	NMG_CK_FACEUSE(_fu1); \
-	NMG_CK_FACE(_fu1->f_p); \
-	_fg = _fu1->f_p->g.plane_p; \
-	NMG_CK_FACE_G_PLANE(_fg); \
-	if ((_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0)) { \
-	    HREVERSE(_N, _fg->N); \
-	} else { \
-	    HMOVE(_N, _fg->N); \
-	} }
 
 /**
  * storage allocation/deallocation support
@@ -364,19 +344,6 @@ struct nmg_inter_struct {
     const uint32_t      *twod;          /**< @brief  ptr to face/edge of 2d projection */
 };
 #define NMG_CK_INTER_STRUCT(_p) NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
-
-
-/**
- * global nmg animation vblock callback
- */
-NMG_EXPORT extern void (*nmg_vlblock_anim_upcall)(void);
-
-/**
- * global nmg mged display debug callback (ew)
- */
-NMG_EXPORT extern void (*nmg_mged_debug_display_hack)(void);
-
-
 
 
 /* From file nmg_mk.c */
@@ -1095,12 +1062,6 @@ NMG_EXPORT extern int nmg_class_pnt_fu_except(const point_t pt,
 					     const int in_or_out_only,
 					     struct bu_list *vlfree,
 					     const struct bn_tol *tol);
-
-/**
- * edge use distance tolerance
- */
-NMG_EXPORT extern double nmg_eue_dist;
-
 
 /* from nmg_mesh.c */
 NMG_EXPORT extern int nmg_mesh_two_faces(struct faceuse *fu1,

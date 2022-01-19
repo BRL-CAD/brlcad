@@ -44,6 +44,23 @@ __BEGIN_DECLS
 #define NMG_CK_FACEUSE(_p)            NMG_CKMAG(_p, NMG_FACEUSE_MAGIC, "faceuse")
 
 /**
+ * Returns a 4-tuple (plane_t), given faceuse and state of flip flags.
+ */
+#define NMG_GET_FU_PLANE(_N, _fu) { \
+        register const struct faceuse *_fu1 = (_fu); \
+        register const struct face_g_plane *_fg; \
+        NMG_CK_FACEUSE(_fu1); \
+        NMG_CK_FACE(_fu1->f_p); \
+        _fg = _fu1->f_p->g.plane_p; \
+        NMG_CK_FACE_G_PLANE(_fg); \
+        if ((_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0)) { \
+            HREVERSE(_N, _fg->N); \
+        } else { \
+            HMOVE(_N, _fg->N); \
+        } }
+
+
+/**
  * Note: there will always be exactly two faceuse's using a face.  To
  * find them, go up fu_p for one, then across fumate_p to other.
  */
