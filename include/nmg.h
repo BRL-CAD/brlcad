@@ -98,6 +98,8 @@ __BEGIN_DECLS
 #include "nmg/ray.h"
 #include "nmg/plot.h"
 #include "nmg/print.h"
+#include "nmg/index.h"
+#include "nmg/radial.h"
 
 
 /*
@@ -116,92 +118,6 @@ __BEGIN_DECLS
  *   7) pointer to attributes
  *   8) pointer to child(ren)
  */
-
-struct nmg_struct_counts {
-    /* Actual structure counts (Xuse, then X) */
-    long model;
-    long region;
-    long region_a;
-    long shell;
-    long shell_a;
-    long faceuse;
-    long face;
-    long face_g_plane;
-    long face_g_snurb;
-    long loopuse;
-    long loop;
-    long loop_g;
-    long edgeuse;
-    long edge;
-    long edge_g_lseg;
-    long edge_g_cnurb;
-    long vertexuse;
-    long vertexuse_a_plane;
-    long vertexuse_a_cnurb;
-    long vertex;
-    long vertex_g;
-    /* Abstractions */
-    long max_structs;
-    long face_loops;
-    long face_edges;
-    long face_lone_verts;
-    long wire_loops;
-    long wire_loop_edges;
-    long wire_edges;
-    long wire_lone_verts;
-    long shells_of_lone_vert;
-};
-
-/*
- * For use with tables subscripted by NMG structure "index" values,
- * traditional test and set macros.
- *
- * A value of zero indicates unset, a value of one indicates set.
- * test-and-set returns TRUE if value was unset; in the process, value
- * has become set.  This is often used to detect the first time an
- * item is used, so an alternative name is given, for clarity.
- *
- * Note that the somewhat simpler auto-increment form:
- *	((tab)[(p)->index]++ == 0)
- * is not used, to avoid the possibility of integer overflow from
- * repeated test-and-set operations on one item.
- */
-#define NMG_INDEX_VALUE(_tab, _index)		((_tab)[_index])
-#define NMG_INDEX_TEST(_tab, _p)		((_tab)[(_p)->index])
-#define NMG_INDEX_SET(_tab, _p) {(_tab)[(_p)->index] = 1;}
-#define NMG_INDEX_CLEAR(_tab, _p) {(_tab)[(_p)->index] = 0;}
-#define NMG_INDEX_TEST_AND_SET(_tab, _p)	((_tab)[(_p)->index] == 0 ? ((_tab)[(_p)->index] = 1) : 0)
-#define NMG_INDEX_IS_SET(_tab, _p)		NMG_INDEX_TEST(_tab, _p)
-#define NMG_INDEX_FIRST_TIME(_tab, _p)		NMG_INDEX_TEST_AND_SET(_tab, _p)
-#define NMG_INDEX_ASSIGN(_tab, _p, _val) {(_tab)[(_p)->index] = _val;}
-#define NMG_INDEX_GET(_tab, _p)			((_tab)[(_p)->index])
-#define NMG_INDEX_GETP(_ty, _tab, _p)		((struct _ty *)((_tab)[(_p)->index]))
-#define NMG_INDEX_OR(_tab, _p, _val) {(_tab)[(_p)->index] |= _val;}
-#define NMG_INDEX_AND(_tab, _p, _val) {(_tab)[(_p)->index] &= _val;}
-#define NMG_INDEX_RETURN_IF_SET_ELSE_SET(_tab, _index) { \
-	if ((_tab)[_index]) return; \
-	else (_tab)[_index] = 1; \
-    }
-
-/* flags for manifold-ness */
-#define NMG_0MANIFOLD  1
-#define NMG_1MANIFOLD  2
-#define NMG_2MANIFOLD  4
-#define NMG_DANGLING   8 /* NMG_2MANIFOLD + 4th bit for special cond (UNUSED) */
-#define NMG_3MANIFOLD 16
-
-#define NMG_SET_MANIFOLD(_t, _p, _v) NMG_INDEX_OR(_t, _p, _v)
-#define NMG_MANIFOLDS(_t, _p)        NMG_INDEX_VALUE(_t, (_p)->index)
-#define NMG_CP_MANIFOLD(_t, _p, _q)  (_t)[(_p)->index] = (_t)[(_q)->index]
-
-/*
- * Bit-parameters for nmg_lu_to_vlist() poly_markers code.
- */
-#define NMG_VLIST_STYLE_VECTOR            0
-#define NMG_VLIST_STYLE_POLYGON           1
-#define NMG_VLIST_STYLE_VISUALIZE_NORMALS 2
-#define NMG_VLIST_STYLE_USE_VU_NORMALS    4
-#define NMG_VLIST_STYLE_NO_SURFACES       8
 
 /**
  * Function table, for use with nmg_visit().
@@ -257,18 +173,6 @@ struct nmg_visit_handlers {
     void (*vis_vertex_g)(uint32_t *, void *, int);
 };
 
-struct nmg_radial {
-    struct bu_list      l;
-    struct edgeuse      *eu;
-    struct faceuse      *fu;            /**< @brief  Derived from eu */
-    struct shell        *s;             /**< @brief  Derived from eu */
-    int                 existing_flag;  /**< @brief  !0 if this eu exists on dest edge */
-    int                 is_crack;       /**< @brief  This eu is part of a crack. */
-    int                 is_outie;       /**< @brief  This crack is an "outie" */
-    int                 needs_flip;     /**< @brief  Insert eumate, not eu */
-    fastf_t             ang;            /**< @brief  angle, in radians.  0 to 2pi */
-};
-#define NMG_CK_RADIAL(_p) NMG_CKMAG(_p, NMG_RADIAL_MAGIC, "nmg_radial")
 
 struct nmg_inter_struct {
     uint32_t            magic;
@@ -847,78 +751,6 @@ NMG_EXPORT extern int nmg_model_fuse(struct model *m,
 				     struct bu_list *vlfree,
 				     const struct bn_tol *tol);
 
-/* radial routines */
-NMG_EXPORT extern void nmg_radial_sorted_list_insert(struct bu_list *hd,
-						     struct nmg_radial *rad);
-NMG_EXPORT extern void nmg_radial_verify_pointers(const struct bu_list *hd,
-						  const struct bn_tol *tol);
-NMG_EXPORT extern void nmg_radial_verify_monotone(const struct bu_list	*hd,
-						  const struct bn_tol	*tol);
-NMG_EXPORT extern void nmg_insure_radial_list_is_increasing(struct bu_list	*hd,
-							    fastf_t amin, fastf_t amax);
-NMG_EXPORT extern void nmg_radial_build_list(struct bu_list		*hd,
-					     struct bu_ptbl		*shell_tbl,
-					     int			existing,
-					     struct edgeuse		*eu,
-					     const vect_t		xvec,
-					     const vect_t		yvec,
-					     const vect_t		zvec,
-					     const struct bn_tol	*tol);
-NMG_EXPORT extern void nmg_radial_merge_lists(struct bu_list		*dest,
-					      struct bu_list		*src,
-					      const struct bn_tol	*tol);
-NMG_EXPORT extern int	 nmg_is_crack_outie(const struct edgeuse	*eu,
-					    struct bu_list *vlfree,
-					    const struct bn_tol	*tol);
-NMG_EXPORT extern struct nmg_radial	*nmg_find_radial_eu(const struct bu_list *hd,
-							    const struct edgeuse *eu);
-NMG_EXPORT extern const struct edgeuse *nmg_find_next_use_of_2e_in_lu(const struct edgeuse	*eu,
-								      const struct edge	*e1,
-								      const struct edge	*e2);
-NMG_EXPORT extern void nmg_radial_mark_cracks(struct bu_list	*hd,
-					      const struct edge	*e1,
-					      const struct edge	*e2,
-					      struct bu_list *vlfree,
-					      const struct bn_tol	*tol);
-NMG_EXPORT extern struct nmg_radial *nmg_radial_find_an_original(const struct bu_list	*hd,
-								 const struct shell	*s,
-								 const struct bn_tol	*tol);
-NMG_EXPORT extern int nmg_radial_mark_flips(struct bu_list		*hd,
-					    const struct shell	*s,
-					    const struct bn_tol	*tol);
-NMG_EXPORT extern int nmg_radial_check_parity(const struct bu_list	*hd,
-					      const struct bu_ptbl	*shells,
-					      const struct bn_tol	*tol);
-NMG_EXPORT extern void nmg_radial_implement_decisions(struct bu_list		*hd,
-						      const struct bn_tol	*tol,
-						      struct edgeuse		*eu1,
-						      vect_t xvec,
-						      vect_t yvec,
-						      vect_t zvec);
-NMG_EXPORT extern void nmg_pr_radial(const char *title,
-				     const struct nmg_radial	*rad);
-NMG_EXPORT extern void nmg_pr_radial_list(const struct bu_list *hd,
-					  const struct bn_tol *tol);
-NMG_EXPORT extern void nmg_do_radial_flips(struct bu_list *hd);
-NMG_EXPORT extern void nmg_do_radial_join(struct bu_list *hd,
-					  struct edgeuse *eu1ref,
-					  vect_t xvec, vect_t yvec, vect_t zvec,
-					  const struct bn_tol *tol);
-NMG_EXPORT extern void nmg_radial_join_eu_NEW(struct edgeuse *eu1,
-					      struct edgeuse *eu2,
-					      const struct bn_tol *tol);
-NMG_EXPORT extern void nmg_radial_exchange_marked(struct bu_list		*hd,
-						  const struct bn_tol	*tol);
-NMG_EXPORT extern void nmg_s_radial_harmonize(struct shell		*s,
-					      struct bu_list *vlfree,
-					      const struct bn_tol	*tol);
-NMG_EXPORT extern void nmg_s_radial_check(struct shell		*s,
-					  struct bu_list *vlfree,
-					  const struct bn_tol	*tol);
-NMG_EXPORT extern void nmg_r_radial_check(const struct nmgregion	*r,
-					  struct bu_list *vlfree,
-					  const struct bn_tol	*tol);
-
 
 NMG_EXPORT extern struct edge_g_lseg	*nmg_pick_best_edge_g(struct edgeuse *eu1,
 							      struct edgeuse *eu2,
@@ -1343,7 +1175,6 @@ NMG_EXPORT extern int nmg_fu_touchingloops(const struct faceuse *fu);
 
 
 /* From nmg_index.c */
-NMG_EXPORT extern int nmg_index_of_struct(const uint32_t *p);
 NMG_EXPORT extern void nmg_m_set_high_bit(struct model *m);
 NMG_EXPORT extern void nmg_m_reindex(struct model *m, long newindex);
 NMG_EXPORT extern void nmg_vls_struct_counts(struct bu_vls *str,

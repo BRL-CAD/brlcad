@@ -38,6 +38,15 @@
 
 __BEGIN_DECLS
 
+/*
+ * Bit-parameters for nmg_lu_to_vlist() poly_markers code.
+ */
+#define NMG_VLIST_STYLE_VECTOR            0
+#define NMG_VLIST_STYLE_POLYGON           1
+#define NMG_VLIST_STYLE_VISUALIZE_NORMALS 2
+#define NMG_VLIST_STYLE_USE_VU_NORMALS    4
+#define NMG_VLIST_STYLE_NO_SURFACES       8
+
 NMG_EXPORT extern void nmg_pl_shell(FILE *fp,
 				    const struct shell *s,
 				    int fancy,

@@ -96,6 +96,7 @@
     }
 
 #define NMG_CK_LIST(_p)               BU_CKMAG(_p, BU_LIST_HEAD_MAGIC, "bu_list")
+#define NMG_CK_RADIAL(_p) NMG_CKMAG(_p, NMG_RADIAL_MAGIC, "nmg_radial")
 
 /*
  * Macros to create and destroy storage for the NMG data structures.

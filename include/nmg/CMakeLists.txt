@@ -4,12 +4,14 @@ set(nmg_headers
   edge.h
   face.h
   globals.h
+  index.h
   loop.h
   region.h
   model.h
   nurb.h
   plot.h
   print.h
+  radial.h
   ray.h
   shell.h
   vertex.h
