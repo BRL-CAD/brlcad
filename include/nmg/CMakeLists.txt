@@ -1,4 +1,5 @@
 set(nmg_headers
+  check.h
   debug.h
   defines.h
   edge.h
