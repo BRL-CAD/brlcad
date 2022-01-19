@@ -100,6 +100,7 @@ __BEGIN_DECLS
 #include "nmg/print.h"
 #include "nmg/index.h"
 #include "nmg/radial.h"
+#include "nmg/visit.h"
 
 
 /*
@@ -118,60 +119,6 @@ __BEGIN_DECLS
  *   7) pointer to attributes
  *   8) pointer to child(ren)
  */
-
-/**
- * Function table, for use with nmg_visit().
- *
- * Intended to have same generally the organization as
- * nmg_struct_counts.  The handler's args are long* to allow generic
- * handlers to be written, in which case the magic number at long*
- * specifies the object type.
- *
- * The "vis_" prefix means the handler is visited only once.  The
- * "bef_" and "aft_" prefixes are called (respectively) before and
- * after recursing into subsidiary structures.  The 3rd arg is 0 for a
- * "bef_" call, and 1 for an "aft_" call, to allow generic handlers to
- * be written, if desired.
- */
-struct nmg_visit_handlers {
-    void (*bef_model)(uint32_t *, void *, int);
-    void (*aft_model)(uint32_t *, void *, int);
-
-    void (*bef_region)(uint32_t *, void *, int);
-    void (*aft_region)(uint32_t *, void *, int);
-
-    void (*vis_region_a)(uint32_t *, void *, int);
-
-    void (*bef_shell)(uint32_t *, void *, int);
-    void (*aft_shell)(uint32_t *, void *, int);
-
-    void (*vis_shell_a)(uint32_t *, void *, int);
-
-    void (*bef_faceuse)(uint32_t *, void *, int);
-    void (*aft_faceuse)(uint32_t *, void *, int, struct bu_list *);
-
-    void (*vis_face)(uint32_t *, void *, int);
-    void (*vis_face_g)(uint32_t *, void *, int);
-
-    void (*bef_loopuse)(uint32_t *, void *, int);
-    void (*aft_loopuse)(uint32_t *, void *, int);
-
-    void (*vis_loop)(uint32_t *, void *, int);
-    void (*vis_loop_g)(uint32_t *, void *, int);
-
-    void (*bef_edgeuse)(uint32_t *, void *, int);
-    void (*aft_edgeuse)(uint32_t *, void *, int);
-
-    void (*vis_edge)(uint32_t *, void *, int);
-    void (*vis_edge_g)(uint32_t *, void *, int);
-
-    void (*bef_vertexuse)(uint32_t *, void *, int);
-    void (*aft_vertexuse)(uint32_t *, void *, int);
-
-    void (*vis_vertexuse_a)(uint32_t *, void *, int);
-    void (*vis_vertex)(uint32_t *, void *, int);
-    void (*vis_vertex_g)(uint32_t *, void *, int);
-};
 
 
 struct nmg_inter_struct {
@@ -755,50 +702,6 @@ NMG_EXPORT extern int nmg_model_fuse(struct model *m,
 NMG_EXPORT extern struct edge_g_lseg	*nmg_pick_best_edge_g(struct edgeuse *eu1,
 							      struct edgeuse *eu2,
 							      const struct bn_tol *tol);
-
-/* nmg_visit.c */
-NMG_EXPORT extern void nmg_visit_vertex(struct vertex			*v,
-					const struct nmg_visit_handlers	*htab,
-					void *			state);
-NMG_EXPORT extern void nmg_visit_vertexuse(struct vertexuse		*vu,
-					   const struct nmg_visit_handlers	*htab,
-					   void *			state);
-NMG_EXPORT extern void nmg_visit_edge(struct edge			*e,
-				      const struct nmg_visit_handlers	*htab,
-				      void *			state);
-NMG_EXPORT extern void nmg_visit_edgeuse(struct edgeuse			*eu,
-					 const struct nmg_visit_handlers	*htab,
-					 void *			state);
-NMG_EXPORT extern void nmg_visit_loop(struct loop			*l,
-				      const struct nmg_visit_handlers	*htab,
-				      void *			state);
-NMG_EXPORT extern void nmg_visit_loopuse(struct loopuse			*lu,
-					 const struct nmg_visit_handlers	*htab,
-					 void *			state);
-NMG_EXPORT extern void nmg_visit_face(struct face			*f,
-				      const struct nmg_visit_handlers	*htab,
-				      void *			state);
-NMG_EXPORT extern void nmg_visit_faceuse(struct faceuse			*fu,
-					 const struct nmg_visit_handlers	*htab,
-					 void *			state,
-					 struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_visit_shell(struct shell			*s,
-				       const struct nmg_visit_handlers	*htab,
-				       void *			state,
-				       struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_visit_region(struct nmgregion		*r,
-					const struct nmg_visit_handlers	*htab,
-					void *			state,
-					struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_visit_model(struct model			*model,
-				       const struct nmg_visit_handlers	*htab,
-				       void *			state,
-				       struct bu_list *vlfree);
-NMG_EXPORT extern void nmg_visit(const uint32_t		*magicp,
-				 const struct nmg_visit_handlers	*htab,
-				 void *			state,
-				 struct bu_list *vlfree);
-
 
 /* nmg_class.c */
 NMG_EXPORT extern int nmg_classify_pnt_loop(const point_t pt,
