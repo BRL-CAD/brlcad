@@ -32,6 +32,8 @@
 
 #include "nmg/defines.h"
 
+__BEGIN_DECLS
+
 #define NMG_DEBUG_PL_ANIM     0x00000001	/* 1 mged: animated evaluation */
 #define NMG_DEBUG_PL_SLOW     0x00000002	/* 2 mged: add delays to animation */
 #define NMG_DEBUG_GRAPHCL     0x00000004	/* 3 mged: graphic classification */
@@ -97,6 +99,8 @@
     "\3GRAPHCL" \
     "\2PL_SLOW" \
     "\1PL_ANIM"
+
+__END_DECLS
 
 #endif /* NMG_H */
 

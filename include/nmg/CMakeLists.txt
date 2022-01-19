@@ -7,6 +7,8 @@ set(nmg_headers
   region.h
   model.h
   nurb.h
+  plot.h
+  print.h
   ray.h
   shell.h
   vertex.h
