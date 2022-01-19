@@ -34,47 +34,12 @@
 #include "vmath.h"
 #include "bu/list.h"
 #include "nmg/defines.h"
+#include "nmg/topology.h"
 
 __BEGIN_DECLS
 
 #define NMG_CK_SHELL(_p)              NMG_CKMAG(_p, NMG_SHELL_MAGIC, "shell")
 #define NMG_CK_SHELL_A(_p)            NMG_CKMAG(_p, NMG_SHELL_A_MAGIC, "shell_a")
-
-/**
- * When a shell encloses volume, it's done entirely by the list of
- * faceuses.
- *
- * The wire loopuses (each of which heads a list of edges) define a
- * set of connected line segments which form a closed path, but do not
- * enclose either volume or surface area.
- *
- * The wire edgeuses are disconnected line segments.  There is a
- * special interpretation to the eu_hd list of wire edgeuses.  Unlike
- * edgeuses seen in loops, the eu_hd list contains eu1, eu1mate, eu2,
- * eu2mate, ..., where each edgeuse and its mate comprise a
- * *non-connected* "wire" edge which starts at eu1->vu_p->v_p and ends
- * at eu1mate->vu_p->v_p.  There is no relationship between the pairs
- * of edgeuses at all, other than that they all live on the same
- * linked list.
- */
-struct shell {
-    struct bu_list l;           /**< @brief shells, in region's s_hd list */
-    struct nmgregion *r_p;      /**< @brief owning region */
-    struct shell_a *sa_p;       /**< @brief attribs */
-
-    struct bu_list fu_hd;       /**< @brief list of face uses in shell */
-    struct bu_list lu_hd;       /**< @brief wire loopuses (edge groups) */
-    struct bu_list eu_hd;       /**< @brief wire list (shell has wires) */
-    struct vertexuse *vu_p;     /**< @brief internal ptr to single vertexuse */
-    long index;                 /**< @brief struct # in this model */
-};
-
-struct shell_a {
-    uint32_t magic;
-    point_t min_pt;             /**< @brief minimums of bounding box */
-    point_t max_pt;             /**< @brief maximums of bounding box */
-    long index;                 /**< @brief struct # in this model */
-};
 
 #define GET_SHELL(p, m)             {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p, m);}
 #define GET_SHELL_A(p, m)           {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p, m);}

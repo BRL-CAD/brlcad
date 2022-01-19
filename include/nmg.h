@@ -19,8 +19,8 @@
  */
 /** @addtogroup libnmg
  *
- * Definition of data structures for "Non-Manifold Geometry
- * Modelling."  Developed from "Non-Manifold Geometric Boundary
+ * Definition of data structures for "Non-Manifold Geometry" (NMG)
+ * modelling.  Developed from "Non-Manifold Geometric Boundary
  * Modeling" by Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
  * See also "Topological Structures for Geometric Modeling"
@@ -83,7 +83,12 @@
 
 __BEGIN_DECLS
 
+/* Standard BRL-CAD definitions for libraries, and common definitions used
+ * broadly in libnmg logic. */
 #include "nmg/defines.h"
+
+/* Fundamental data structures used to represent NMG information */
+#include "nmg/topology.h"
 
 #include "nmg/debug.h"
 #include "nmg/globals.h"

@@ -34,6 +34,7 @@
 #include "vmath.h"
 #include "bu/list.h"
 #include "nmg/defines.h"
+#include "nmg/topology.h"
 
 __BEGIN_DECLS
 
@@ -58,45 +59,6 @@ __BEGIN_DECLS
         } else { \
             HMOVE(_N, _fg->N); \
         } }
-
-
-/**
- * Note: there will always be exactly two faceuse's using a face.  To
- * find them, go up fu_p for one, then across fumate_p to other.
- */
-struct face {
-    struct bu_list l;           /**< @brief faces in face_g's f_hd list */
-    struct faceuse *fu_p;       /**< @brief Ptr up to one use of this face */
-    union {
-        uint32_t *magic_p;
-        struct face_g_plane *plane_p;
-        struct face_g_snurb *snurb_p;
-    } g;                        /**< @brief geometry */
-    int flip;                   /**< @brief !0 ==> flip normal of fg */
-    /* These might be better stored in a face_a (not faceuse_a!) */
-    /* These are not stored on disk */
-    point_t min_pt;             /**< @brief minimums of bounding box */
-    point_t max_pt;             /**< @brief maximums of bounding box */
-    long index;                 /**< @brief struct # in this model */
-};
-
-struct face_g_plane {
-    uint32_t magic;
-    struct bu_list f_hd;        /**< @brief list of faces sharing this surface */
-    plane_t N;                  /**< @brief Plane equation (incl normal) */
-    long index;                 /**< @brief struct # in this model */
-};
-
-struct faceuse {
-    struct bu_list l;           /**< @brief fu's, in shell's fu_hd list */
-    struct shell *s_p;          /**< @brief owning shell */
-    struct faceuse *fumate_p;   /**< @brief opposite side of face */
-    int orientation;            /**< @brief rel to face geom defn */
-    int outside;                /**< @brief RESERVED for future:  See Lee Butler */
-    struct face *f_p;           /**< @brief face definition and attributes */
-    struct bu_list lu_hd;       /**< @brief list of loops in face-use */
-    long index;                 /**< @brief struct # in this model */
-};
 
 /** Returns a 3-tuple (vect_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_NORMAL(_N, _fu) { \

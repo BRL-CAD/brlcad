@@ -34,6 +34,7 @@
 #include "vmath.h"
 #include "bu/list.h"
 #include "nmg/defines.h"
+#include "nmg/topology.h"
 
 __BEGIN_DECLS
 
@@ -65,34 +66,6 @@ __BEGIN_DECLS
  */
 #define RT_LIST_SET_DOWN_TO_VERT(_hp, _vu) { \
         (_hp)->forw = &((_vu)->l); (_hp)->back = (struct bu_list *)NULL; }
-
-struct loop {
-    uint32_t magic;
-    struct loopuse *lu_p;       /**< @brief Ptr to one use of this loop */
-    struct loop_g *lg_p;        /**< @brief Geometry */
-    long index;                 /**< @brief struct # in this model */
-};
-
-struct loop_g {
-    uint32_t magic;
-    point_t min_pt;             /**< @brief minimums of bounding box */
-    point_t max_pt;             /**< @brief maximums of bounding box */
-    long index;                 /**< @brief struct # in this model */
-};
-
-struct loopuse {
-    struct bu_list l;           /**< @brief lu's, in fu's lu_hd, or shell's lu_hd */
-    union {
-        struct faceuse *fu_p;   /**< @brief owning face-use */
-        struct shell *s_p;
-        uint32_t *magic_p;
-    } up;
-    struct loopuse *lumate_p;   /**< @brief loopuse on other side of face */
-    int orientation;            /**< @brief OT_SAME=outside loop */
-    struct loop *l_p;           /**< @brief loop definition and attributes */
-    struct bu_list down_hd;     /**< @brief eu list or vu pointer */
-    long index;                 /**< @brief struct # in this model */
-};
 
 #define GET_LOOP(p, m)              {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, m);}
 #define GET_LOOP_G(p, m)            {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p, m);}

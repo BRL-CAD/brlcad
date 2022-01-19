@@ -16,6 +16,7 @@ set(nmg_headers
   ray.h
   region.h
   shell.h
+  topology.h
   vertex.h
   visit.h
   )

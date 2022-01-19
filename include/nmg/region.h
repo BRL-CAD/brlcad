@@ -34,26 +34,12 @@
 #include "vmath.h"
 #include "bu/list.h"
 #include "nmg/defines.h"
+#include "nmg/topology.h"
 
 __BEGIN_DECLS
 
 #define NMG_CK_REGION(_p)             NMG_CKMAG(_p, NMG_REGION_MAGIC, "region")
 #define NMG_CK_REGION_A(_p)           NMG_CKMAG(_p, NMG_REGION_A_MAGIC, "region_a")
-
-struct nmgregion {
-    struct bu_list l;           /**< @brief regions, in model's r_hd list */
-    struct model *m_p;          /**< @brief owning model */
-    struct nmgregion_a *ra_p;   /**< @brief attributes */
-    struct bu_list s_hd;        /**< @brief list of shells in region */
-    long index;                 /**< @brief struct # in this model */
-};
-
-struct nmgregion_a {
-    uint32_t magic;
-    point_t min_pt;             /**< @brief minimums of bounding box */
-    point_t max_pt;             /**< @brief maximums of bounding box */
-    long index;                 /**< @brief struct # in this model */
-};
 
 #define GET_REGION(p, m)            {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p, m);}
 #define GET_REGION_A(p, m)          {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p, m);}

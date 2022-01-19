@@ -34,19 +34,11 @@
 #include "vmath.h"
 #include "bu/list.h"
 #include "nmg/defines.h"
+#include "nmg/topology.h"
 
 __BEGIN_DECLS
 
 #define NMG_CK_MODEL(_p)              NMG_CKMAG(_p, NMG_MODEL_MAGIC, "model")
-
-struct model {
-    uint32_t magic;
-    struct bu_list r_hd;        /**< @brief list of regions */
-    char *manifolds;            /**< @brief structure 1-3manifold table */
-    long index;                 /**< @brief struct # in this model */
-    long maxindex;              /**< @brief # of structs so far */
-};
-
 
 #define GET_MODEL(p, m)             {NMG_GETSTRUCT(p, model); NMG_INCR_INDEX(p, m);}
 #define FREE_MODEL(p)             NMG_FREESTRUCT(p, model)
