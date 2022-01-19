@@ -5,6 +5,7 @@ set(nmg_headers
   face.h
   globals.h
   index.h
+  isect.h
   loop.h
   model.h
   nurb.h
