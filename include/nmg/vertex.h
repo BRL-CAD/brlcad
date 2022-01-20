@@ -54,7 +54,6 @@ __BEGIN_DECLS
 #define FREE_VERTEXUSE_A_PLANE(p) NMG_FREESTRUCT(p, vertexuse_a_plane)
 #define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
 
-NMG_EXPORT extern int nmg_kvu(struct vertexuse *vu);
 
 
 #define PREEXIST 1
@@ -67,6 +66,49 @@ NMG_EXPORT extern int nmg_kvu(struct vertexuse *vu);
 #define VU_NEW(_bs, _vu) { chkidxlist((_bs), (_vu)); \
         (_bs)->vertlist[(_vu)->index] = NEWEXIST; }
 
+
+NMG_EXPORT extern void nmg_vertex_gv(struct vertex *v,
+                                     const point_t pt);
+NMG_EXPORT extern void nmg_vertex_g(struct vertex *v,
+                                    fastf_t x,
+                                    fastf_t y,
+                                    fastf_t z);
+NMG_EXPORT extern void nmg_vertexuse_nv(struct vertexuse *vu,
+                                        const vect_t norm);
+
+NMG_EXPORT extern void nmg_movevu(struct vertexuse *vu,
+                                  struct vertex *v);
+
+NMG_EXPORT extern int nmg_kvu(struct vertexuse *vu);
+
+NMG_EXPORT extern void nmg_jv(struct vertex *v1,
+                              struct vertex *v2);
+NMG_EXPORT extern void nmg_vertex_tabulate(struct bu_ptbl *tab,
+                                           const uint32_t *magic_p,
+                                           struct bu_list *vlfree);
+NMG_EXPORT extern void nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab,
+                                                     const uint32_t *magic_p,
+                                                     struct bu_list *vlfree);
+
+NMG_EXPORT extern int nmg_in_or_ref(struct vertexuse *vu,
+                                    struct bu_ptbl *b);
+NMG_EXPORT extern int nmg_simple_vertex_solve(struct vertex *new_v,
+                                              const struct bu_ptbl *faces,
+                                              const struct bn_tol *tol);
+NMG_EXPORT extern int nmg_in_vert(struct vertex *new_v,
+                                  const int approximate,
+                                  struct bu_list *vlfree,
+                                  const struct bn_tol *tol);
+
+NMG_EXPORT extern int nmg_ptbl_vfuse(struct bu_ptbl *t,
+                                     const struct bn_tol *tol);
+
+NMG_EXPORT extern int nmg_vertex_fuse(const uint32_t *magic_p,struct bu_list *vlfree,
+                                      const struct bn_tol *tol);
+
+NMG_EXPORT extern void nmg_unlist_v(struct bu_ptbl       *b,
+                                    fastf_t *mag,
+                                    struct vertex        *v);
 
 __END_DECLS
 

@@ -77,13 +77,16 @@ __BEGIN_DECLS
 #define FREE_LOOPUSE(p)           NMG_FREESTRUCT(p, loopuse)
 #define FREE_LOOPUSE_A(p)         NMG_FREESTRUCT(p, loopuse_a)
 
+NMG_EXPORT extern void nmg_loop_g(struct loop *l,
+                                  const struct bn_tol *tol);
+NMG_EXPORT extern int nmg_demote_lu(struct loopuse *lu);
+
 /* From file nmg_mk.c */
 /*      MAKE routines */
 NMG_EXPORT extern struct loopuse *nmg_mlv(uint32_t *magic,
                                           struct vertex *v,
                                           int orientation);
 NMG_EXPORT extern int nmg_klu(struct loopuse *lu1);
-
 
 NMG_EXPORT extern void nmg_jl(struct loopuse *lu,
                               struct edgeuse *eu);
@@ -150,6 +153,49 @@ NMG_EXPORT extern int    nmg_loop_is_ccw(const struct loopuse *lu,
 NMG_EXPORT extern const struct vertexuse *nmg_loop_touches_self(const struct loopuse *lu);
 NMG_EXPORT extern int nmg_2lu_identical(const struct edgeuse *eu1,
                                         const struct edgeuse *eu2);
+
+NMG_EXPORT extern struct vertexuse *nmg_find_pnt_in_lu(const struct loopuse *lu,
+                                                      const point_t pt,
+                                                      const struct bn_tol *tol);
+NMG_EXPORT extern int nmg_is_vertex_in_looplist(const struct vertex *v,
+                                                const struct bu_list *hd,
+                                                int singletons);
+
+NMG_EXPORT extern int nmg_is_edge_in_looplist(const struct edge *e,
+                                              const struct bu_list *hd);
+
+NMG_EXPORT extern struct vertexuse *nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu);
+NMG_EXPORT extern void nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol);
+NMG_EXPORT extern void nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol);
+
+NMG_EXPORT extern void nmg_loop_plane_newell(const struct loopuse *lu,
+                                             plane_t pl);
+NMG_EXPORT extern fastf_t nmg_loop_plane_area(const struct loopuse *lu,
+                                              plane_t pl);
+NMG_EXPORT extern fastf_t nmg_loop_plane_area2(const struct loopuse *lu,
+                                               plane_t pl,
+                                               const struct bn_tol *tol);
+NMG_EXPORT extern fastf_t nmg_loop_plane_area(const struct loopuse *lu,
+                                              plane_t pl);
+NMG_EXPORT extern int nmg_lu_is_convex(struct loopuse *lu,
+                                       struct bu_list *vlfree,
+                                       const struct bn_tol *tol);
+NMG_EXPORT extern int nmg_classify_pnt_loop(const point_t pt,
+                                           const struct loopuse *lu,
+                                           struct bu_list *vlfree,
+                                           const struct bn_tol *tol);
+
+NMG_EXPORT extern int nmg_classify_lu_lu(const struct loopuse *lu1,
+                                         const struct loopuse *lu2,
+                                         struct bu_list *vlfree,
+                                         const struct bn_tol *tol);
+NMG_EXPORT extern int nmg_class_pnt_lu_except(point_t             pt,
+                                             const struct loopuse        *lu,
+                                             const struct edge           *e_p,
+                                             struct bu_list *vlfree,
+                                             const struct bn_tol *tol);
+NMG_EXPORT extern void nmg_ck_lu_orientation(struct loopuse *lu,
+                                             const struct bn_tol *tolp);
 
 
 __END_DECLS

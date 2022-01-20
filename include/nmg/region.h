@@ -47,6 +47,9 @@ __BEGIN_DECLS
 #define FREE_REGION(p)            NMG_FREESTRUCT(p, nmgregion)
 #define FREE_REGION_A(p)          NMG_FREESTRUCT(p, nmgregion_a)
 
+NMG_EXPORT extern void nmg_region_a(struct nmgregion *r,
+                                    const struct bn_tol *tol);
+
 NMG_EXPORT extern void nmg_merge_regions(struct nmgregion *r1,
                                          struct nmgregion *r2,
                                          const struct bn_tol *tol);
@@ -57,6 +60,19 @@ NMG_EXPORT extern struct nmgregion *nmg_mrsv(struct model *m);
 NMG_EXPORT extern struct shell *nmg_msv(struct nmgregion *r_p);
 NMG_EXPORT extern int nmg_kr(struct nmgregion *r);
 
+NMG_EXPORT extern fastf_t nmg_region_area(const struct nmgregion *r);
+NMG_EXPORT extern int nmg_unbreak_region_edges(uint32_t *magic_p, struct bu_list *vlfree);
+NMG_EXPORT extern void nmg_region_v_unique(struct nmgregion *r1, struct bu_list *vlfree,
+                                           const struct bn_tol *tol);
+NMG_EXPORT extern int   nmg_region_both_vfuse(struct bu_ptbl *t1,
+                                              struct bu_ptbl *t2,
+                                              const struct bn_tol *tol);
+NMG_EXPORT extern struct nmgregion *nmg_do_bool(struct nmgregion *s1,
+                                                struct nmgregion *s2,
+                                                const int oper, struct bu_list *vlfree, const struct bn_tol *tol);
+NMG_EXPORT extern int nmg_two_region_vertex_fuse(struct nmgregion *r1,
+                                                 struct nmgregion *r2,
+                                                 const struct bn_tol *tol);
 
 __END_DECLS
 

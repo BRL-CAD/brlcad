@@ -271,6 +271,13 @@ ray_in_rpp(struct nmg_ray *rp,
            const fastf_t *min,
            const fastf_t *max);
 
+NMG_EXPORT extern int nmg_class_ray_vs_shell(struct nmg_ray *rp,
+                                             const struct shell *s,
+                                             const int in_or_out_only,
+                                             struct bu_list *vlfree,
+                                             const struct bn_tol *tol);
+
+NMG_EXPORT extern void nmg_isect_ray_model(struct nmg_ray_data *rd, struct bu_list *vlfree);
 
 __END_DECLS
 

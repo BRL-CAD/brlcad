@@ -116,6 +116,15 @@ struct nmg_struct_counts {
 
 NMG_EXPORT extern int nmg_index_of_struct(const uint32_t *p);
 
+NMG_EXPORT extern uint32_t **nmg_m_struct_count(struct nmg_struct_counts *ctr,
+                                                const struct model *m);
+NMG_EXPORT extern void nmg_pr_m_struct_counts(const struct model *m,
+                                              const char         *str);
+
+NMG_EXPORT extern void nmg_vls_struct_counts(struct bu_vls *str,
+                                             const struct nmg_struct_counts *ctr);
+NMG_EXPORT extern void nmg_pr_struct_counts(const struct nmg_struct_counts *ctr,
+                                            const char *str);
 __END_DECLS
 
 #endif  /* NMG_INDEX_H */
