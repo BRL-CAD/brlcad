@@ -23,7 +23,7 @@
 #include <string.h>
 
 #include "bu/app.h"
-#include "raytrace.h"
+#include "nmg.h"
 
 int
 nmg_compare_vertexuse(struct vertexuse *vu1, struct vertexuse *vu2)

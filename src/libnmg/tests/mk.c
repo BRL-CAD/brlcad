@@ -23,7 +23,7 @@
 #include <string.h>
 
 #include "bu/app.h"
-#include "raytrace.h"
+#include "nmg.h"
 
 int
 test_nmg_mm(void)
