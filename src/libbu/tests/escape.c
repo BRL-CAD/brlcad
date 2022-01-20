@@ -79,7 +79,10 @@ main(int ac, char *av[])
     int test_num = 0;
     char buffer[32];
 
-    bu_setprogname(av[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
 
     if (ac < 3)
 	bu_exit(1, "Usage: %s {function_number} {test_number}\n", av[0]);

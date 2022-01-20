@@ -142,7 +142,10 @@ main(int argc, char *argv[])
     int p = 0;
     const char *word = "Lawyer";
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	fprintf(stderr, "Usage: %s {test_num}\n", argv[0]);

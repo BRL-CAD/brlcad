@@ -48,7 +48,10 @@ main(int ac, char *av[])
     int context = 0;
     int expected = 0;
 
-    bu_setprogname(av[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
 
     if (ac != 4)
 	bu_exit(1, "Usage: %s {extension} {context} {expected}\n", av[0]);

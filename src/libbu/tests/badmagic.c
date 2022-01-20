@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "bu/defines.h"
+#include "bu/app.h"
 
 /* Normally, we mark bu_badmagic as a non-returning function for
  * static analyzers.  In this case, because we *do* return after
@@ -63,7 +64,10 @@ main(int argc, char *argv[])
     const char *file = "bu_badmagic.c";
     int line = 42, testnum;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	bu_exit(1, "Usage: %s {number}\nMust specify a function number.\n", argv[0]);

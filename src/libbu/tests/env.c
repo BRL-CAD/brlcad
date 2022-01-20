@@ -28,7 +28,10 @@
 int
 main(int UNUSED(ac), char *av[])
 {
-    bu_setprogname(av[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
 
     long int all_mem = bu_mem(BU_MEM_ALL);
     long int avail_mem = bu_mem(BU_MEM_AVAIL);

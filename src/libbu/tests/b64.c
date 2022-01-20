@@ -65,7 +65,10 @@ main(int ac, char *av[])
     if (ac != 1)
 	bu_exit(1, "Usage: %s\n", av[0]);
 
-    bu_setprogname(av[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
 
     test_b64_encode((const signed char *)"hello world!");
     test_b64_encode((const signed char *)"!@#&#$%@&#$^@(*&^%(#$@&^#*$nasty_string!<>?");

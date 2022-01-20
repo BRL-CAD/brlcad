@@ -38,7 +38,10 @@ main(int argc, char *argv[])
     const char *dedup_chars = NULL;
     const char *trim_chars = NULL;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     /* Sanity check */
     if (argc < 3)

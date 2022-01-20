@@ -209,7 +209,10 @@ main(int argc, char *argv[])
     int ret = BRLCAD_ERROR;
     size_t ptbl_size;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	bu_exit(1, "Usage: %s (init|reset|ins|locate|rm|cat|trunc) [test_args...]\n", argv[0]);

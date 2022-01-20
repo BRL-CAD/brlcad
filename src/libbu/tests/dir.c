@@ -123,7 +123,10 @@ main(int argc, char *argv[])
     const char *currp;
     char path[MAXPATHLEN] = {0};
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     /* explicit init to proof against enum reordering */
     enum2str[BU_DIR_CURR] = CPP_STR(BU_DIR_CURR);
