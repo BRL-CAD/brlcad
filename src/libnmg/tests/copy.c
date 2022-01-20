@@ -456,7 +456,10 @@ testcase_nmg_mrsv()
 int
 main(int argc, char **argv)
 {
-    bu_setprogname(argv[0]);
+    // Normally this file is part of nmg_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     if (argc > 1) {
 	bu_exit(1, "Usage: %s\n", argv[0]);
