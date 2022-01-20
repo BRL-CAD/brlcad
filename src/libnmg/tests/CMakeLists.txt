@@ -30,7 +30,11 @@ BRLCAD_ADD_TEST(NAME nmg_mk COMMAND nmg_test mk)
 # nmg_copy testing
 BRLCAD_ADD_TEST(NAME nmg_copy COMMAND nmg_test copy)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${nmg_test_srcs}
+  nmg_test.cpp.in
+  )
 
 # Local Variables:
 # tab-width: 8
