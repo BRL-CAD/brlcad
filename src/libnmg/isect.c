@@ -1605,7 +1605,7 @@ isect_ray_loopuse(struct nmg_ray_data *rd, struct loopuse *lu_p, struct bu_list 
 
     NMG_CK_LOOPUSE(lu_p);
     NMG_CK_LOOP(lu_p->l_p);
-    NMG_CK_LOOP_A(lu_p->l_p->lg_p);
+    NMG_CK_LOOP_A(lu_p->l_p->la_p);
 
     if (BU_LIST_FIRST_MAGIC(&lu_p->down_hd) == NMG_EDGEUSE_MAGIC) {
 	for (BU_LIST_FOR(eu_p, edgeuse, &lu_p->down_hd)) {

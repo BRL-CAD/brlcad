@@ -419,7 +419,7 @@ nmg_class_pnt_l(struct neighbor *closest, const point_t pt, const struct loopuse
 
     NMG_CK_LOOPUSE(lu);
     NMG_CK_LOOP(lu->l_p);
-    lg = lu->l_p->lg_p;
+    lg = lu->l_p->la_p;
     NMG_CK_LOOP_A(lg);
 
     if (nmg_debug & NMG_DEBUG_CLASSIFY) {

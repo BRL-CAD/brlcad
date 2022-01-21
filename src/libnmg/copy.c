@@ -490,15 +490,15 @@ nmg_construct_loop(struct loopuse *parent, const struct loop *original, void **s
 
     ret->magic              = NMG_LOOP_MAGIC;
     ret->lu_p               = parent;
-    ret->lg_p               = (struct loop_a*)NULL;
+    ret->la_p               = (struct loop_a*)NULL;
     ret->index              = original->index;
     structArray[ret->index] = ret;
 
-    if (original->lg_p != NULL) {
-	ret->lg_p = (struct loop_a *)structArray[original->lg_p->index];
+    if (original->la_p != NULL) {
+	ret->la_p = (struct loop_a *)structArray[original->la_p->index];
 
-	if (ret->lg_p == NULL)
-	    ret->lg_p = nmg_construct_loop_a(original->lg_p, structArray);
+	if (ret->la_p == NULL)
+	    ret->la_p = nmg_construct_loop_a(original->la_p, structArray);
     }
 
     return ret;

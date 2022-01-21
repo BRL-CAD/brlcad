@@ -592,7 +592,7 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
     GET_LOOPUSE(lu1, m);
     GET_LOOPUSE(lu2, m);
 
-    l->lg_p = (struct loop_a *)NULL;
+    l->la_p = (struct loop_a *)NULL;
     l->lu_p = lu1;
     l->magic = NMG_LOOP_MAGIC;	/* Loop struct is GOOD */
 
@@ -952,7 +952,7 @@ nmg_ml(struct shell *s)
     GET_LOOPUSE(lu1, m);
     GET_LOOPUSE(lu2, m);
 
-    l->lg_p = (struct loop_a *)NULL;
+    l->la_p = (struct loop_a *)NULL;
     l->lu_p = lu1;
     l->magic = NMG_LOOP_MAGIC;	/* loop struct is GOOD */
 
@@ -1331,9 +1331,9 @@ nmg_klu(struct loopuse *lu1)
     }
 
     NMG_CK_LOOP(lu1->l_p);
-    if (lu1->l_p->lg_p) {
-	NMG_CK_LOOP_A(lu1->l_p->lg_p);
-	FREE_LOOP_A(lu1->l_p->lg_p);
+    if (lu1->l_p->la_p) {
+	NMG_CK_LOOP_A(lu1->l_p->la_p);
+	FREE_LOOP_A(lu1->l_p->la_p);
     }
     FREE_LOOP(lu1->l_p);
     if (nmg_debug & NMG_DEBUG_BASIC) {
@@ -2181,13 +2181,13 @@ nmg_loop_a(struct loop *l, const struct bn_tol *tol)
     lu = l->lu_p;
     NMG_CK_LOOPUSE(lu);
 
-    lg = l->lg_p;
+    lg = l->la_p;
     if (lg) {
 	NMG_CK_LOOP_A(lg);
     } else {
 	m = nmg_find_model(lu->up.magic_p);
-	GET_LOOP_A(l->lg_p, m);
-	lg = l->lg_p;
+	GET_LOOP_A(l->la_p, m);
+	lg = l->la_p;
 	lg->magic = NMG_LOOP_A_MAGIC;
     }
     VSETALL(lg->max_pt, -INFINITY);
@@ -2457,8 +2457,8 @@ nmg_face_bb(struct face *f, const struct bn_tol *tol)
 	nmg_loop_a(lu->l_p, tol);
 
 	if (lu->orientation != OT_BOOLPLACE) {
-	    VMIN(f->min_pt, lu->l_p->lg_p->min_pt);
-	    VMAX(f->max_pt, lu->l_p->lg_p->max_pt);
+	    VMIN(f->min_pt, lu->l_p->la_p->min_pt);
+	    VMAX(f->max_pt, lu->l_p->la_p->max_pt);
 	}
     }
 
@@ -2531,8 +2531,8 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
     for (BU_LIST_FOR (lu, loopuse, &s->lu_hd)) {
 	nmg_loop_a(lu->l_p, tol);
 
-	VMIN(sa->min_pt, lu->l_p->lg_p->min_pt);
-	VMAX(sa->max_pt, lu->l_p->lg_p->max_pt);
+	VMIN(sa->min_pt, lu->l_p->la_p->min_pt);
+	VMAX(sa->max_pt, lu->l_p->la_p->max_pt);
     }
     for (BU_LIST_FOR (eu, edgeuse, &s->eu_hd)) {
 	NMG_CK_EDGEUSE(eu);

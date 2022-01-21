@@ -1659,7 +1659,7 @@ struct disk_faceuse {
 struct disk_loop {
     unsigned char magic[4];
     disk_index_t lu_p;
-    disk_index_t lg_p;
+    disk_index_t la_p;
 };
 
 
@@ -2347,7 +2347,7 @@ rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double lo
 	    NMG_CK_LOOP(loop);
 	    PUTMAGIC(DISK_LOOP_MAGIC);
 	    INDEX(d, loop, lu_p);
-	    INDEX(d, loop, lg_p);
+	    INDEX(d, loop, la_p);
 	}
 	    return;
 	case NMG_KIND_LOOP_A: {
@@ -2781,7 +2781,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    NMG_CK_LOOP(loop);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_LOOP_MAGIC);
 	    INDEX(d, loop, loopuse, lu_p);
-	    INDEX(d, loop, loop_a, lg_p);
+	    INDEX(d, loop, loop_a, la_p);
 	    NMG_CK_LOOPUSE(loop->lu_p);
 	}
 	    return 0;

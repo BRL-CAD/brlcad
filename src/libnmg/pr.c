@@ -393,9 +393,9 @@ nmg_pr_l(const struct loop *l, char *h)
 	Return;
     }
     bu_log("%s%p lu_p\n", h, (void *)l->lu_p);
-    bu_log("%s%p lg_p\n", h, (void *)l->lg_p);
-    if (l->lg_p)
-	nmg_pr_lg(l->lg_p, h);
+    bu_log("%s%p lg_p\n", h, (void *)l->la_p);
+    if (l->la_p)
+	nmg_pr_lg(l->la_p, h);
 
     Return;
 }

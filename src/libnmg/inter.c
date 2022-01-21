@@ -1955,7 +1955,7 @@ nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, str
     NMG_CK_INTER_STRUCT(bs);
     NMG_CK_LOOPUSE(lu);
     NMG_CK_LOOP(lu->l_p);
-    NMG_CK_LOOP_A(lu->l_p->lg_p);
+    NMG_CK_LOOP_A(lu->l_p->la_p);
 
     NMG_CK_FACEUSE(fu);
 

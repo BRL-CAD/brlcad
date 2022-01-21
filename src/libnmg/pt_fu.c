@@ -1033,17 +1033,17 @@ nmg_class_pnt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, 
     NMG_CK_FPI(fpi);
     NMG_CK_LOOPUSE(lu);
     NMG_CK_LOOP(lu->l_p);
-    NMG_CK_LOOP_A(lu->l_p->lg_p);
+    NMG_CK_LOOP_A(lu->l_p->la_p);
 
 
-    if (V3PNT_OUT_RPP_TOL(fpi->pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, fpi->tol->dist)) {
+    if (V3PNT_OUT_RPP_TOL(fpi->pt, lu->l_p->la_p->min_pt, lu->l_p->la_p->max_pt, fpi->tol->dist)) {
 	/* point is not in RPP of loop */
 
 	if (nmg_debug & NMG_DEBUG_PNT_FU) {
 	    bu_log("nmg_class_pnt_lu(pt(%g %g %g) outside loop RPP\n",
 		   V3ARGS(fpi->pt));
 	    bu_log("   lu RPP: (%g %g %g) <-> (%g %g %g)\n",
-		   V3ARGS(lu->l_p->lg_p->min_pt), V3ARGS(lu->l_p->lg_p->max_pt));
+		   V3ARGS(lu->l_p->la_p->min_pt), V3ARGS(lu->l_p->la_p->max_pt));
 	}
 
 	if (lu->orientation == OT_SAME)
@@ -1413,7 +1413,7 @@ nmg_class_pnt_lu_except(point_t pt, const struct loopuse *lu, const struct edge 
 	       V3ARGS(pt), V4ARGS(fpi.norm), dist);
     }
 
-    if (V3PNT_OUT_RPP_TOL(pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, tol->dist)) {
+    if (V3PNT_OUT_RPP_TOL(pt, lu->l_p->la_p->min_pt, lu->l_p->la_p->max_pt, tol->dist)) {
 	/* point is not in RPP of loop */
 
 	if (nmg_debug & NMG_DEBUG_PNT_FU)

@@ -372,7 +372,7 @@ nmg_vloop(const struct loop *l, const struct loopuse *lup)
 
     if (!l->lu_p) bu_bomb("nmg_vloop() null loopuse pointer\n");
 
-    if (l->lg_p) nmg_vlg(l->lg_p);
+    if (l->la_p) nmg_vlg(l->la_p);
 }
 
 
@@ -818,7 +818,7 @@ nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
 	bu_bomb(errstr);
     }
 
-    if (l->lg_p) nmg_ck_lg(l, l->lg_p, errstr);
+    if (l->la_p) nmg_ck_lg(l, l->la_p, errstr);
 
     bu_free(errstr, "");
 }

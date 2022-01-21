@@ -165,7 +165,7 @@ struct edgeuse {
 struct loop {
     uint32_t magic;
     struct loopuse *lu_p;       /**< @brief Ptr to one use of this loop */
-    struct loop_a *lg_p;        /**< @brief Geometry */
+    struct loop_a *la_p;        /**< @brief Geometry */
     long index;                 /**< @brief struct # in this model */
 };
 

@@ -1943,7 +1943,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	NMG_CK_VERTEXUSE(vu);
 	lu = nmg_find_lu_of_vu(vu);
 	NMG_CK_LOOPUSE(lu);
-	lg = lu->l_p->lg_p;
+	lg = lu->l_p->la_p;
 	NMG_CK_LOOP_A(lg);
 
 	if (nmg_debug & NMG_DEBUG_POLYSECT) {
@@ -1991,7 +1991,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 		    break;
 	    }
 
-	    fu2lg = fu2lu->l_p->lg_p;
+	    fu2lg = fu2lu->l_p->la_p;
 	    NMG_CK_LOOP_A(fu2lg);
 
 	    if (nmg_debug & NMG_DEBUG_POLYSECT) {
@@ -9083,7 +9083,7 @@ nmg_lu_is_convex(struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 	return 1;
 
-    if (!lu->l_p->lg_p)
+    if (!lu->l_p->la_p)
 	nmg_loop_a(lu->l_p, tol);
 
     eu1 = BU_LIST_FIRST(edgeuse, &lu->down_hd);
