@@ -20,7 +20,7 @@
 
 
 /**
- * @addtogroup noise
+ * @addtogroup bn_noise
  *
  * @brief
  * These noise functions provide mostly random noise at the integer
