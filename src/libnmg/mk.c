@@ -102,13 +102,13 @@
  * 	faceuse, loopuse, edgeuse and vertexuse.
  * Geometry can optionally be associated with the abstract objects:
  *	face_g		(plane equation, bounding box)
- *	loop_g		(just a bounding box, for planar faces)
  *	edge_g		(to track edge subdivision heritage, for linear edges)
  *	vertex_g	(Cartesian coordinates)
  * The uses of those objects can optionally have attributes:
+ *	vertexuse_a	(special surface normal, for normal interpolation)
+ *	loop_a		(loop bounding box)
  *	nmgregion_a	(region bounding box)	[nmgregions have no uses]
  *	shell_a		(shell bounding box)	[shells have no uses]
- *	vertexuse_a	(special surface normal, for normal interpolation)
  *
  * Consider for example a simple cube.
  *
@@ -197,8 +197,8 @@
  *		In a simple case the point would be the same as one of
  *		the vertex_g points and the direction would be the normalized
  *		(unit) vector of the difference between the two vertex_g points.
- * 6 loop_g structures
- *		Each loop_g structure contains a bounding box for the loop.
+ * 6 loop_a structures
+ *		Each loop_a structure contains a bounding box for the loop.
  *		It is referenced by 1 loop structure.
  * 6 face_g_plane structures
  *		Each face_g_plane structure contains a plane equation and
@@ -592,7 +592,7 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
     GET_LOOPUSE(lu1, m);
     GET_LOOPUSE(lu2, m);
 
-    l->lg_p = (struct loop_g *)NULL;
+    l->lg_p = (struct loop_a *)NULL;
     l->lu_p = lu1;
     l->magic = NMG_LOOP_MAGIC;	/* Loop struct is GOOD */
 
@@ -952,7 +952,7 @@ nmg_ml(struct shell *s)
     GET_LOOPUSE(lu1, m);
     GET_LOOPUSE(lu2, m);
 
-    l->lg_p = (struct loop_g *)NULL;
+    l->lg_p = (struct loop_a *)NULL;
     l->lu_p = lu1;
     l->magic = NMG_LOOP_MAGIC;	/* loop struct is GOOD */
 
@@ -1332,8 +1332,8 @@ nmg_klu(struct loopuse *lu1)
 
     NMG_CK_LOOP(lu1->l_p);
     if (lu1->l_p->lg_p) {
-	NMG_CK_LOOP_G(lu1->l_p->lg_p);
-	FREE_LOOP_G(lu1->l_p->lg_p);
+	NMG_CK_LOOP_A(lu1->l_p->lg_p);
+	FREE_LOOP_A(lu1->l_p->lg_p);
     }
     FREE_LOOP(lu1->l_p);
     if (nmg_debug & NMG_DEBUG_BASIC) {
@@ -2166,11 +2166,11 @@ nmg_use_edge_g(struct edgeuse *eu, uint32_t *magic_p)
  * something more to do.
  */
 void
-nmg_loop_g(struct loop *l, const struct bn_tol *tol)
+nmg_loop_a(struct loop *l, const struct bn_tol *tol)
 {
     struct edgeuse *eu;
     struct vertex_g *vg;
-    struct loop_g *lg;
+    struct loop_a *lg;
     struct loopuse *lu;
     struct model *m;
     uint32_t magic1;
@@ -2183,12 +2183,12 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 
     lg = l->lg_p;
     if (lg) {
-	NMG_CK_LOOP_G(lg);
+	NMG_CK_LOOP_A(lg);
     } else {
 	m = nmg_find_model(lu->up.magic_p);
-	GET_LOOP_G(l->lg_p, m);
+	GET_LOOP_A(l->lg_p, m);
 	lg = l->lg_p;
-	lg->magic = NMG_LOOP_G_MAGIC;
+	lg->magic = NMG_LOOP_A_MAGIC;
     }
     VSETALL(lg->max_pt, -INFINITY);
     VSETALL(lg->min_pt,  INFINITY);
@@ -2212,9 +2212,9 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 	VMOVE(lg->min_pt, vg->coord);
 	VMOVE(lg->max_pt, vg->coord);
     } else {
-	bu_log("nmg_loop_g() loopuse down is %s (%x)\n",
+	bu_log("nmg_loop_a() loopuse down is %s (%x)\n",
 	       bu_identify_magic(magic1), magic1);
-	bu_bomb("nmg_loop_g() loopuse has bad child\n");
+	bu_bomb("nmg_loop_a() loopuse has bad child\n");
     }
 
     /* Pad the dimension of the loop bounding box which is less than
@@ -2236,7 +2236,7 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
     }
 
     if (nmg_debug & NMG_DEBUG_BASIC) {
-	bu_log("nmg_loop_g(l=%p, tol=%p)\n", (void *)l, (void *)tol);
+	bu_log("nmg_loop_a(l=%p, tol=%p)\n", (void *)l, (void *)tol);
     }
 
 }
@@ -2454,7 +2454,7 @@ nmg_face_bb(struct face *f, const struct bn_tol *tol)
      * each of the loop children.
      */
     for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-	nmg_loop_g(lu->l_p, tol);
+	nmg_loop_a(lu->l_p, tol);
 
 	if (lu->orientation != OT_BOOLPLACE) {
 	    VMIN(f->min_pt, lu->l_p->lg_p->min_pt);
@@ -2529,7 +2529,7 @@ nmg_shell_a(struct shell *s, const struct bn_tol *tol)
 	}
     }
     for (BU_LIST_FOR (lu, loopuse, &s->lu_hd)) {
-	nmg_loop_g(lu->l_p, tol);
+	nmg_loop_a(lu->l_p, tol);
 
 	VMIN(sa->min_pt, lu->l_p->lg_p->min_pt);
 	VMAX(sa->max_pt, lu->l_p->lg_p->max_pt);

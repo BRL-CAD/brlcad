@@ -51,7 +51,7 @@ NMG_EXPORT extern void nmg_vedge(const struct edge *e,
                                  const struct edgeuse *eup);
 NMG_EXPORT extern void nmg_veu(const struct bu_list      *hp,
                                const uint32_t *up_magic_p);
-NMG_EXPORT extern void nmg_vlg(const struct loop_g *lg);
+NMG_EXPORT extern void nmg_vlg(const struct loop_a *lg);
 NMG_EXPORT extern void nmg_vloop(const struct loop *l,
                                  const struct loopuse *lup);
 NMG_EXPORT extern void nmg_vlu(const struct bu_list      *hp,
@@ -80,7 +80,7 @@ NMG_EXPORT extern void nmg_ck_eu(const uint32_t *parent,
                                  const struct edgeuse *eu,
                                  const char *str);
 NMG_EXPORT extern void nmg_ck_lg(const struct loop *l,
-                                 const struct loop_g *lg,
+                                 const struct loop_a *lg,
                                  const char *str);
 NMG_EXPORT extern void nmg_ck_l(const struct loopuse *lu,
                                 const struct loop *l,

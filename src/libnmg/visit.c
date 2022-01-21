@@ -119,8 +119,8 @@ nmg_visit_loop(struct loop *l, const struct nmg_visit_handlers *htab, void *stat
 
     if (htab->vis_loop) htab->vis_loop((uint32_t *)l, state, 0);
 
-    if (htab->vis_loop_g && l->lg_p)
-	htab->vis_loop_g((uint32_t *)l->lg_p, state, 0);
+    if (htab->vis_loop_a && l->lg_p)
+	htab->vis_loop_a((uint32_t *)l->lg_p, state, 0);
 }
 
 

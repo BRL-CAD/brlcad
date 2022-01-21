@@ -190,8 +190,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "knot_vector";
 	case NMG_LOOPUSE_MAGIC:
 	    return "loopuse";
-	case NMG_LOOP_G_MAGIC:
-	    return "loop_g";
+	case NMG_LOOP_A_MAGIC:
+	    return "loop_a";
 	case NMG_LOOP_MAGIC:
 	    return "loop";
 	case NMG_MODEL_MAGIC:

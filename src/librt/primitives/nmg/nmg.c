@@ -1663,8 +1663,8 @@ struct disk_loop {
 };
 
 
-#define DISK_LOOP_G_MAGIC 0x4e6c5f67	/* Nl_g */
-struct disk_loop_g {
+#define DISK_LOOP_A_MAGIC 0x4e6c5f67	/* Nl_g */
+struct disk_loop_a {
     unsigned char magic[4];
     unsigned char min_pt[3*8];
     unsigned char max_pt[3*8];
@@ -1792,7 +1792,7 @@ struct disk_double_array {
 #define NMG_KIND_FACE_G_SNURB       8
 #define NMG_KIND_LOOPUSE            9
 #define NMG_KIND_LOOP              10
-#define NMG_KIND_LOOP_G            11
+#define NMG_KIND_LOOP_A            11
 #define NMG_KIND_EDGEUSE           12
 #define NMG_KIND_EDGE              13
 #define NMG_KIND_EDGE_G_LSEG       14
@@ -1825,7 +1825,7 @@ const int rt_nmg_disk_sizes[NMG_N_KINDS] = {
     sizeof(struct disk_face_g_snurb),
     sizeof(struct disk_loopuse),
     sizeof(struct disk_loop),		/* 10 */
-    sizeof(struct disk_loop_g),
+    sizeof(struct disk_loop_a),
     sizeof(struct disk_edgeuse),
     sizeof(struct disk_edge),
     sizeof(struct disk_edge_g_lseg),
@@ -1853,7 +1853,7 @@ const char rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
     "face_g_snurb",
     "loopuse",
     "loop",					/* 10 */
-    "loop_g",
+    "loop_a",
     "edgeuse",
     "edge",
     "edge_g_lseg",
@@ -1901,8 +1901,8 @@ rt_nmg_magic_to_kind(uint32_t magic)
 	    return NMG_KIND_FACE_G_SNURB;
 	case NMG_LOOPUSE_MAGIC:
 	    return NMG_KIND_LOOPUSE;
-	case NMG_LOOP_G_MAGIC:
-	    return NMG_KIND_LOOP_G;
+	case NMG_LOOP_A_MAGIC:
+	    return NMG_KIND_LOOP_A;
 	case NMG_LOOP_MAGIC:
 	    return NMG_KIND_LOOP;
 	case NMG_EDGEUSE_MAGIC:
@@ -2136,7 +2136,7 @@ reindex(void *p, struct nmg_exp_counts *ecnt)
 		bu_log("reindex(p=%p), p->index=%ld, ret=%ld, kind=%d\n", p, idx, ret, ecnt[idx].kind);
 		bu_bomb("reindex() This index not found in ecnt[]\n");
 	    }
-	    /* ret == 0 on suppressed loop_g ptrs, etc. */
+	    /* ret == 0 on suppressed loop_a ptrs, etc. */
 	    if (ret < 0 || ret > ecnt[0].byte_offset) {
 		bu_log("reindex(p=%p) %s, p->index=%ld, ret=%ld, maxindex=%ld\n",
 		       p,
@@ -2350,17 +2350,17 @@ rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double lo
 	    INDEX(d, loop, lg_p);
 	}
 	    return;
-	case NMG_KIND_LOOP_G: {
-	    struct loop_g *lg = (struct loop_g *)ip;
-	    struct disk_loop_g *d;
+	case NMG_KIND_LOOP_A: {
+	    struct loop_a *lg = (struct loop_a *)ip;
+	    struct disk_loop_a *d;
 
 	    /* must be double for import and export */
 	    double min[ELEMENTS_PER_POINT];
 	    double max[ELEMENTS_PER_POINT];
 
-	    d = &((struct disk_loop_g *)op)[oindex];
-	    NMG_CK_LOOP_G(lg);
-	    PUTMAGIC(DISK_LOOP_G_MAGIC);
+	    d = &((struct disk_loop_a *)op)[oindex];
+	    NMG_CK_LOOP_A(lg);
+	    PUTMAGIC(DISK_LOOP_A_MAGIC);
 
 	    VSCALE(min, lg->min_pt, local2mm);
 	    VSCALE(max, lg->max_pt, local2mm);
@@ -2781,13 +2781,13 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    NMG_CK_LOOP(loop);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_LOOP_MAGIC);
 	    INDEX(d, loop, loopuse, lu_p);
-	    INDEX(d, loop, loop_g, lg_p);
+	    INDEX(d, loop, loop_a, lg_p);
 	    NMG_CK_LOOPUSE(loop->lu_p);
 	}
 	    return 0;
-	case NMG_KIND_LOOP_G: {
-	    struct loop_g *lg = (struct loop_g *)op;
-	    struct disk_loop_g *d;
+	case NMG_KIND_LOOP_A: {
+	    struct loop_a *lg = (struct loop_a *)op;
+	    struct disk_loop_a *d;
 	    point_t min;
 	    point_t max;
 
@@ -2795,9 +2795,9 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 	    double scanmin[ELEMENTS_PER_POINT];
 	    double scanmax[ELEMENTS_PER_POINT];
 
-	    d = &((struct disk_loop_g *)ip)[iindex];
-	    NMG_CK_LOOP_G(lg);
-	    NMG_CK_DISKMAGIC(d->magic, DISK_LOOP_G_MAGIC);
+	    d = &((struct disk_loop_a *)ip)[iindex];
+	    NMG_CK_LOOP_A(lg);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_LOOP_A_MAGIC);
 	    bu_cv_ntohd((unsigned char *)scanmin, d->min_pt, ELEMENTS_PER_POINT);
 	    VMOVE(min, scanmin); /* convert double to fastf_t */
 	    bu_cv_ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
@@ -3098,10 +3098,10 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 		    ptrs[subscript] = (uint32_t *)l;
 		}
 		    break;
-		case NMG_KIND_LOOP_G: {
-		    struct loop_g *lg;
-		    GET_LOOP_G(lg, m);
-		    lg->magic = NMG_LOOP_G_MAGIC;
+		case NMG_KIND_LOOP_A: {
+		    struct loop_a *lg;
+		    GET_LOOP_A(lg, m);
+		    lg->magic = NMG_LOOP_A_MAGIC;
 		    ptrs[subscript] = (uint32_t *)lg;
 		}
 		    break;
@@ -3347,7 +3347,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
  * When the "compact" flag is set, bounding boxes from (at present)
  * nmgregion_a
  * shell_a
- * loop_g
+ * loop_a
  * are not converted for storage in the database.
  * They should be re-generated at import time.
  *
@@ -3462,14 +3462,14 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     if (compact) {
 	kind_counts[NMG_KIND_NMGREGION_A] = 0;
 	kind_counts[NMG_KIND_SHELL_A] = 0;
-	kind_counts[NMG_KIND_LOOP_G] = 0;
+	kind_counts[NMG_KIND_LOOP_A] = 0;
     }
 
     /* Assign new subscripts to ascending guys of same kind */
     for (kind = 0; kind < NMG_N_KINDS; kind++) {
 	if (compact && (kind == NMG_KIND_NMGREGION_A ||
 			kind == NMG_KIND_SHELL_A ||
-			kind == NMG_KIND_LOOP_G)) {
+			kind == NMG_KIND_LOOP_A)) {
 	    /*
 	     * Don't assign any new subscripts for them.
 	     * Instead, use DISK_INDEX_NULL, yielding null ptrs.
@@ -3803,14 +3803,14 @@ rt_nmg_export5(
     /* Compacting wanted */
     kind_counts[NMG_KIND_NMGREGION_A] = 0;
     kind_counts[NMG_KIND_SHELL_A] = 0;
-    kind_counts[NMG_KIND_LOOP_G] = 0;
+    kind_counts[NMG_KIND_LOOP_A] = 0;
 
     /* Assign new subscripts to ascending struts of the same kind */
     for (kind=0; kind < NMG_N_KINDS; kind++) {
 	/* Compacting */
 	if (kind == NMG_KIND_NMGREGION_A ||
 	    kind == NMG_KIND_SHELL_A ||
-	    kind == NMG_KIND_LOOP_G) {
+	    kind == NMG_KIND_LOOP_A) {
 	    for (i=0; i<m->maxindex; i++) {
 		if (ptrs[i] == NULL) continue;
 		if (ecnt[i].kind != kind) continue;

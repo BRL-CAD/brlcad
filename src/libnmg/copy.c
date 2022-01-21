@@ -462,14 +462,14 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, void **struc
 }
 
 
-static struct loop_g *
-nmg_construct_loop_g(const struct loop_g *original, void **structArray)
+static struct loop_a *
+nmg_construct_loop_a(const struct loop_a *original, void **structArray)
 {
-    struct loop_g *ret;
+    struct loop_a *ret;
 
-    NMG_GETSTRUCT(ret, loop_g);
+    NMG_GETSTRUCT(ret, loop_a);
 
-    ret->magic = NMG_LOOP_G_MAGIC;
+    ret->magic = NMG_LOOP_A_MAGIC;
 
     VMOVE(ret->min_pt, original->min_pt);
     VMOVE(ret->max_pt, original->max_pt);
@@ -490,15 +490,15 @@ nmg_construct_loop(struct loopuse *parent, const struct loop *original, void **s
 
     ret->magic              = NMG_LOOP_MAGIC;
     ret->lu_p               = parent;
-    ret->lg_p               = (struct loop_g*)NULL;
+    ret->lg_p               = (struct loop_a*)NULL;
     ret->index              = original->index;
     structArray[ret->index] = ret;
 
     if (original->lg_p != NULL) {
-	ret->lg_p = (struct loop_g *)structArray[original->lg_p->index];
+	ret->lg_p = (struct loop_a *)structArray[original->lg_p->index];
 
 	if (ret->lg_p == NULL)
-	    ret->lg_p = nmg_construct_loop_g(original->lg_p, structArray);
+	    ret->lg_p = nmg_construct_loop_a(original->lg_p, structArray);
     }
 
     return ret;

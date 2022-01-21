@@ -50,7 +50,7 @@ struct nmg_struct_counts {
     long face_g_snurb;
     long loopuse;
     long loop;
-    long loop_g;
+    long loop_a;
     long edgeuse;
     long edge;
     long edge_g_lseg;

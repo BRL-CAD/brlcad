@@ -2654,7 +2654,7 @@ top:
 	newlu = nmg_split_lu_at_vu(lu, vu);
 	NMG_CK_LOOPUSE(newlu);
 	NMG_CK_LOOP(newlu->l_p);
-	nmg_loop_g(newlu->l_p, tol);
+	nmg_loop_a(newlu->l_p, tol);
 
 	/* Ensure there are no duplications in new loop */
 	nmg_split_touchingloops(newlu, tol);
@@ -2670,7 +2670,7 @@ top:
 	newlu = nmg_split_lu_at_vu(lu, vu_save);
 	NMG_CK_LOOPUSE(newlu);
 	NMG_CK_LOOP(newlu->l_p);
-	nmg_loop_g(newlu->l_p, tol);
+	nmg_loop_a(newlu->l_p, tol);
 
 	/* Ensure there are no duplications in new loop */
 	nmg_split_touchingloops(newlu, tol);
@@ -3088,7 +3088,7 @@ top:
 	count++;
 	NMG_CK_LOOPUSE(new_lu);
 	NMG_CK_LOOP(new_lu->l_p);
-	nmg_loop_g(new_lu->l_p, tol);
+	nmg_loop_a(new_lu->l_p, tol);
 
 	bu_ptbl_free(&jaunt_tbl);
 	if (visit_count)
@@ -3221,7 +3221,7 @@ top:
 	count++;
 	NMG_CK_LOOPUSE(new_lu);
 	NMG_CK_LOOP(new_lu->l_p);
-	nmg_loop_g(new_lu->l_p, tol);
+	nmg_loop_a(new_lu->l_p, tol);
 	bu_ptbl_reset(&jaunt_tbl);
 
 	/* recurse on the new loop */

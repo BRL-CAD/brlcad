@@ -1911,9 +1911,9 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
     size_t j;
     struct vertexuse *vu;
     struct loopuse *lu;
-    const struct loop_g *lg;
+    const struct loop_a *lg;
     const struct loopuse *fu2lu;
-    const struct loop_g *fu2lg = (const struct loop_g *)NULL;
+    const struct loop_a *fu2lg = (const struct loop_a *)NULL;
     int overlap = 0;
 
     NMG_CK_FACEUSE(fu);
@@ -1944,7 +1944,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	lu = nmg_find_lu_of_vu(vu);
 	NMG_CK_LOOPUSE(lu);
 	lg = lu->l_p->lg_p;
-	NMG_CK_LOOP_G(lg);
+	NMG_CK_LOOP_A(lg);
 
 	if (nmg_debug & NMG_DEBUG_POLYSECT) {
 	    bu_log("vu[%zd]: %p (%g %g %g) lu: %p %s\n",
@@ -1992,7 +1992,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 	    }
 
 	    fu2lg = fu2lu->l_p->lg_p;
-	    NMG_CK_LOOP_G(fu2lg);
+	    NMG_CK_LOOP_A(fu2lg);
 
 	    if (nmg_debug & NMG_DEBUG_POLYSECT) {
 		bu_log("\tfu2lu BBox: (%g %g %g)  (%g %g %g) %s\n",
@@ -2064,7 +2064,7 @@ nmg_in_or_ref(struct vertexuse *vu, struct bu_ptbl *b)
 /**
  * Re-compute all the bounding boxes in the NMG model.
  * Bounding boxes are presently found in these structures:
- *	loop_g
+ *	loop_a
  *	face_g
  *	shell_a
  *	nmgregion_a
@@ -2101,7 +2101,7 @@ nmg_rebound(struct model *m, const struct bn_tol *tol)
 		    l = lu->l_p;
 		    NMG_CK_LOOP(l);
 		    if (NMG_INDEX_FIRST_TIME(flags, l))
-			nmg_loop_g(l, tol);
+			nmg_loop_a(l, tol);
 		}
 	    }
 	    /* Faces in shell */
@@ -2121,7 +2121,7 @@ nmg_rebound(struct model *m, const struct bn_tol *tol)
 		l = lu->l_p;
 		NMG_CK_LOOP(l);
 		if (NMG_INDEX_FIRST_TIME(flags, l))
-		    nmg_loop_g(l, tol);
+		    nmg_loop_a(l, tol);
 	    }
 
 	    /*
@@ -7665,7 +7665,7 @@ nmg_make_connect_faces(struct shell *dst, struct vertex *vpa, struct vertex *vpb
 		faces_made++;
 
 		nmg_face_g(new_fu, pl);
-		nmg_loop_g(lu->l_p, tol);
+		nmg_loop_a(lu->l_p, tol);
 
 		/* glue this face in */
 		nmg_glue_face_in_shell(new_fu, dst, tol);
@@ -9084,7 +9084,7 @@ nmg_lu_is_convex(struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol
 	return 1;
 
     if (!lu->l_p->lg_p)
-	nmg_loop_g(lu->l_p, tol);
+	nmg_loop_a(lu->l_p, tol);
 
     eu1 = BU_LIST_FIRST(edgeuse, &lu->down_hd);
     eu_start = eu1;

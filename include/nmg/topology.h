@@ -165,7 +165,7 @@ struct edgeuse {
 struct loop {
     uint32_t magic;
     struct loopuse *lu_p;       /**< @brief Ptr to one use of this loop */
-    struct loop_g *lg_p;        /**< @brief Geometry */
+    struct loop_a *lg_p;        /**< @brief Geometry */
     long index;                 /**< @brief struct # in this model */
 };
 
@@ -292,7 +292,7 @@ struct edge_g_lseg {
     long index;                 /**< @brief struct # in this model */
 };
 
-struct loop_g {
+struct loop_a {
     uint32_t magic;
     point_t min_pt;             /**< @brief minimums of bounding box */
     point_t max_pt;             /**< @brief maximums of bounding box */

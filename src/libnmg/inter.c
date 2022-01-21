@@ -162,7 +162,7 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
 	bu_log("nmg_make_dualvu is making a self_loop (lu=%p, vu=%p) for v=%p\n",
 	       (void *)lu, (void *)BU_LIST_FIRST(vertexuse, &lu->down_hd),
 	       (void *)v);
-    nmg_loop_g(lu->l_p, tol);
+    nmg_loop_a(lu->l_p, tol);
     return BU_LIST_FIRST(vertexuse, &lu->down_hd);
 }
 
@@ -311,7 +311,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	    if (!dualvu) {
 		/* Not found, make self-loop in dual shell */
 		lu = nmg_mlv(&duals->l.magic, vu->v_p, OT_BOOLPLACE);
-		nmg_loop_g(lu->l_p, &(is->tol));
+		nmg_loop_a(lu->l_p, &(is->tol));
 		dualvu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	    }
 	}
@@ -733,7 +733,7 @@ nmg_isect_vert2p_face2p(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
 	    VPRINT("Making vertexloop", pt);
 
 	lu2 = nmg_mlv(&fu2->l.magic, vu1->v_p, OT_BOOLPLACE);
-	nmg_loop_g(lu2->l_p, &is->tol);
+	nmg_loop_a(lu2->l_p, &is->tol);
 	vu2 = BU_LIST_FIRST(vertexuse, &lu2->down_hd);
 	if (is->l1) nmg_enlist_vu(is, vu1, vu2, MAX_FASTF);
     }
@@ -953,7 +953,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	plu2 = nmg_mlv(&fu2->l.magic, vu1_final->v_p, OT_BOOLPLACE);
 	vu2_final = BU_LIST_FIRST(vertexuse, &plu2->down_hd);
 	NMG_CK_VERTEXUSE(vu2_final);
-	nmg_loop_g(plu2->l_p, &is->tol);
+	nmg_loop_a(plu2->l_p, &is->tol);
 
 	if (nmg_debug & NMG_DEBUG_POLYSECT) {
 	    bu_log("Made vertexloop in other face. lu=%p vu=%p on v=%p\n",
@@ -1955,7 +1955,7 @@ nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, str
     NMG_CK_INTER_STRUCT(bs);
     NMG_CK_LOOPUSE(lu);
     NMG_CK_LOOP(lu->l_p);
-    NMG_CK_LOOP_G(lu->l_p->lg_p);
+    NMG_CK_LOOP_A(lu->l_p->lg_p);
 
     NMG_CK_FACEUSE(fu);
 
@@ -2122,7 +2122,7 @@ nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
     VUNITIZE(line.r_dir);
     VINVDIR(invdir, line.r_dir);
 
-    /* nmg_loop_g() makes sure there are no 0-thickness faces */
+    /* nmg_loop_a() makes sure there are no 0-thickness faces */
     if (!ray_in_rpp(&line, invdir, fu2->f_p->min_pt, fu2->f_p->max_pt)) {
 	/* The edge ray missed the face RPP, nothing to do. */
 	if (nmg_debug & NMG_DEBUG_POLYSECT) {
@@ -5309,8 +5309,8 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, plane_t pl, struct nmg_inte
 			new_lu = nmg_split_lu_at_vu(lu1, vu1);
 			nmg_lu_reorient(lu1);
 			nmg_lu_reorient(new_lu);
-			nmg_loop_g(new_lu->l_p, &is->tol);
-			nmg_loop_g(lu1->l_p, &is->tol);
+			nmg_loop_a(new_lu->l_p, &is->tol);
+			nmg_loop_a(lu1->l_p, &is->tol);
 			bu_ptbl_ins(&lus, (long *)new_lu);
 			did_split = 1;
 			break;
@@ -6368,7 +6368,7 @@ nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct 
 	nmg_radial_join_eu(eu1, neu2, &is->tol);
 	nmg_radial_join_eu(eu1, neu1, &is->tol);
     }
-    nmg_loop_g(lu2->l_p, &is->tol);
+    nmg_loop_a(lu2->l_p, &is->tol);
     if (nmg_debug & NMG_DEBUG_POLYSECT) {
 	bu_log("nmg_isect_edge3p_shell(, eu1=%p, s2=%p) Added wire lu=%p\n",
 	       (void *)eu1, (void *)s2, (void *)lu2);

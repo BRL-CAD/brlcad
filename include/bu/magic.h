@@ -144,7 +144,7 @@ __BEGIN_DECLS
 #define NMG_INTER_STRUCT_MAGIC		0x99912120 /**< ??!  */
 #define NMG_KNOT_VECTOR_MAGIC		0x6b6e6f74 /**< knot */
 #define NMG_LOOPUSE_MAGIC		0x78787878 /**< xxxx */
-#define NMG_LOOP_G_MAGIC		0x6420224c /**< d "L */
+#define NMG_LOOP_A_MAGIC		0x6420224c /**< d "L */
 #define NMG_LOOP_MAGIC			0x67676767 /**< gggg */
 #define NMG_MODEL_MAGIC 		0x12121212 /**< ???? */
 #define NMG_RADIAL_MAGIC		0x52614421 /**< RaD! */

@@ -1613,8 +1613,8 @@ again_inner:
 	new_lu = nmg_cut_loop(vs[outer_wedge].vu, vs[inner_wedge].vu, vlfree);
 	NMG_CK_LOOPUSE(new_lu);
 	NMG_CK_LOOPUSE(inner_lu);
-	nmg_loop_g(inner_lu->l_p, tol);
-	nmg_loop_g(new_lu->l_p, tol);
+	nmg_loop_a(inner_lu->l_p, tol);
+	nmg_loop_a(new_lu->l_p, tol);
 	nmg_lu_reorient(inner_lu);
 	nmg_lu_reorient(new_lu);
 	return 1;		/* cutjoin was done */
@@ -1634,7 +1634,7 @@ again_inner:
 	    bu_log("joining loops\n");
 	vs[inner_wedge].vu = nmg_join_2loops(vs[outer_wedge].vu,
 					     vs[inner_wedge].vu);
-	nmg_loop_g(outer_lu->l_p, tol);
+	nmg_loop_a(outer_lu->l_p, tol);
 	return 1;		/* cutjoin was done */
     }
 
@@ -1655,7 +1655,7 @@ again_inner:
 
     vs[inner_wedge].vu = nmg_join_2loops(vs[outer_wedge].vu,
 					 vs[inner_wedge].vu);
-    nmg_loop_g(outer_lu->l_p, tol);
+    nmg_loop_a(outer_lu->l_p, tol);
     return 1;		/* cutjoin was done */
 }
 
@@ -2760,8 +2760,8 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 		/* make intersection edges real */
 		new_eu1->e_p->is_real = 1;
 
-		nmg_loop_g(lu1->l_p, rs->tol);
-		nmg_loop_g(new_lu->l_p, rs->tol);
+		nmg_loop_a(lu1->l_p, rs->tol);
+		nmg_loop_a(new_lu->l_p, rs->tol);
 
 		nmg_lu_reorient(lu1);
 		nmg_lu_reorient(new_lu);
@@ -2805,7 +2805,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	    /* make intersection edges real */
 	    new_eu1->e_p->is_real = 1;
 
-	    nmg_loop_g(lu1->l_p, rs->tol);
+	    nmg_loop_a(lu1->l_p, rs->tol);
 	    lu1->orientation = OT_SAME;
 	    lu1->lumate_p->orientation = OT_SAME;
 
@@ -2839,7 +2839,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	    /* make intersection edges real */
 	    new_eu1->e_p->is_real = 1;
 
-	    nmg_loop_g(lu2->l_p, rs->tol);
+	    nmg_loop_a(lu2->l_p, rs->tol);
 	    lu2->orientation = orient2;
 	    lu2->lumate_p->orientation = orient2;
 
@@ -2877,7 +2877,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	    /* make intersection edges real */
 	    new_eu1->e_p->is_real = 1;
 
-	    nmg_loop_g(lu1->l_p, rs->tol);
+	    nmg_loop_a(lu1->l_p, rs->tol);
 	    lu1->orientation = orient1;
 	    lu1->lumate_p->orientation = orient1;
 
@@ -2910,7 +2910,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	    /* make intersection edges real */
 	    new_eu1->e_p->is_real = 1;
 
-	    nmg_loop_g(lu1->l_p, rs->tol);
+	    nmg_loop_a(lu1->l_p, rs->tol);
 
 	    if (nmg_debug&NMG_DEBUG_FCUT) {
 		bu_log("\t join 2 loops\n");
@@ -3643,7 +3643,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	    /* Fusing to this new edge will happen in nmg_face_cutjoin() */
 
 	    /* Recompute loop geometry.  Bounding box may have expanded */
-	    nmg_loop_g(nmg_find_lu_of_vu(rs->vu[pos])->l_p, rs->tol);
+	    nmg_loop_a(nmg_find_lu_of_vu(rs->vu[pos])->l_p, rs->tol);
 
 	    if (nmg_debug&NMG_DEBUG_FCUT) {
 		bu_log("After LONE_V_JAUNT, the final loop:\n");
@@ -3708,8 +3708,8 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 		    if (old_eu) nmg_radial_join_eu(old_eu, first_new_eu, rs->tol);
 		}
 
-		nmg_loop_g(lu->l_p, rs->tol);
-		nmg_loop_g(prev_lu->l_p, rs->tol);
+		nmg_loop_a(lu->l_p, rs->tol);
+		nmg_loop_a(prev_lu->l_p, rs->tol);
 
 		nmg_lu_reorient(lu);
 		nmg_lu_reorient(prev_lu);
@@ -3787,7 +3787,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	    }
 
 	    /* Recompute loop geometry.  Bounding box may have expanded */
-	    nmg_loop_g(lu->l_p, rs->tol);
+	    nmg_loop_a(lu->l_p, rs->tol);
 
 	    if (nmg_debug&NMG_DEBUG_FCUT) {
 		bu_log("After JOIN, the final loop:\n");

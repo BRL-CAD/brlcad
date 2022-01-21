@@ -1652,3 +1652,5 @@ s/(#[[:space:]]*include[[:space:]]+["<])bn\/vectfont\.h/\1bview\/vectfont.h/g
         moved vertfont.h header to bview[7.32]
 s/ID_MATERIAL/ID_COLORTAB/g
         renamed to make room for material objects [7.32]
+s/loop_g/loop_a/g
+s/LOOP_G/LOOP_A/g

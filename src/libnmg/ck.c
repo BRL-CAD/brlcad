@@ -348,11 +348,11 @@ nmg_veu(const struct bu_list *hp, const uint32_t *up_magic_p)
  * Verify loop geometry
  */
 void
-nmg_vlg(const struct loop_g *lg)
+nmg_vlg(const struct loop_a *lg)
 {
     int i;
 
-    NMG_CK_LOOP_G(lg);
+    NMG_CK_LOOP_A(lg);
 
     for (i=0; i < ELEMENTS_PER_POINT; ++i)
 	if (lg->min_pt[i] > lg->max_pt[i])
@@ -786,15 +786,15 @@ nmg_ck_eu(const uint32_t *parent, const struct edgeuse *eu, const char *str)
 
 
 void
-nmg_ck_lg(const struct loop *l, const struct loop_g *lg, const char *str)
+nmg_ck_lg(const struct loop *l, const struct loop_a *lg, const char *str)
 {
     char *errstr;
     int len = (int)strlen(str)+128;
 
     errstr = (char *)bu_calloc(len, sizeof(char), "nmg_ck_lg error str");
-    snprintf(errstr, len, "%sloop_g %p\n", str, (void *)lg);
+    snprintf(errstr, len, "%sloop_a %p\n", str, (void *)lg);
 
-    NMG_CK_LOOP_G(lg);
+    NMG_CK_LOOP_A(lg);
     NMG_CK_LOOP(l);
 
     bu_free(errstr, "nmg_ck_lg error str");

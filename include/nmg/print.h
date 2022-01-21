@@ -50,7 +50,7 @@ NMG_EXPORT extern void nmg_pr_r(const struct nmgregion *r,
 				char *h);
 NMG_EXPORT extern void nmg_pr_sa(const struct shell_a *sa,
 				 char *h);
-NMG_EXPORT extern void nmg_pr_lg(const struct loop_g *lg,
+NMG_EXPORT extern void nmg_pr_lg(const struct loop_a *lg,
 				 char *h);
 NMG_EXPORT extern void nmg_pr_fg(const uint32_t *magic,
 				 char *h);

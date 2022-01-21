@@ -39,7 +39,7 @@
 __BEGIN_DECLS
 
 #define NMG_CK_LOOP(_p)               NMG_CKMAG(_p, NMG_LOOP_MAGIC, "loop")
-#define NMG_CK_LOOP_G(_p)             NMG_CKMAG(_p, NMG_LOOP_G_MAGIC, "loop_g")
+#define NMG_CK_LOOP_A(_p)             NMG_CKMAG(_p, NMG_LOOP_A_MAGIC, "loop_a")
 #define NMG_CK_LOOPUSE(_p)            NMG_CKMAG(_p, NMG_LOOPUSE_MAGIC, "loopuse")
 
 /**
@@ -68,16 +68,16 @@ __BEGIN_DECLS
         (_hp)->forw = &((_vu)->l); (_hp)->back = (struct bu_list *)NULL; }
 
 #define GET_LOOP(p, m)              {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, m);}
-#define GET_LOOP_G(p, m)            {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p, m);}
+#define GET_LOOP_A(p, m)            {NMG_GETSTRUCT(p, loop_a); NMG_INCR_INDEX(p, m);}
 #define GET_LOOPUSE(p, m)           {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p, m);}
 #define GET_LOOPUSE_A(p, m)         {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p, m);}
 
 #define FREE_LOOP(p)              NMG_FREESTRUCT(p, loop)
-#define FREE_LOOP_G(p)            NMG_FREESTRUCT(p, loop_g)
+#define FREE_LOOP_A(p)            NMG_FREESTRUCT(p, loop_a)
 #define FREE_LOOPUSE(p)           NMG_FREESTRUCT(p, loopuse)
 #define FREE_LOOPUSE_A(p)         NMG_FREESTRUCT(p, loopuse_a)
 
-NMG_EXPORT extern void nmg_loop_g(struct loop *l,
+NMG_EXPORT extern void nmg_loop_a(struct loop *l,
                                   const struct bn_tol *tol);
 NMG_EXPORT extern int nmg_demote_lu(struct loopuse *lu);
 

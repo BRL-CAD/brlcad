@@ -73,7 +73,7 @@ struct nmg_visit_handlers {
     void (*aft_loopuse)(uint32_t *, void *, int);
 
     void (*vis_loop)(uint32_t *, void *, int);
-    void (*vis_loop_g)(uint32_t *, void *, int);
+    void (*vis_loop_a)(uint32_t *, void *, int);
 
     void (*bef_edgeuse)(uint32_t *, void *, int);
     void (*aft_edgeuse)(uint32_t *, void *, int);

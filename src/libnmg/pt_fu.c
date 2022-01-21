@@ -1033,7 +1033,7 @@ nmg_class_pnt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only, 
     NMG_CK_FPI(fpi);
     NMG_CK_LOOPUSE(lu);
     NMG_CK_LOOP(lu->l_p);
-    NMG_CK_LOOP_G(lu->l_p->lg_p);
+    NMG_CK_LOOP_A(lu->l_p->lg_p);
 
 
     if (V3PNT_OUT_RPP_TOL(fpi->pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, fpi->tol->dist)) {

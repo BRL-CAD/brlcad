@@ -84,7 +84,7 @@ void move_vertex(const struct model* m, point_t v_old, point_t v_new)
 		    NMG_CK_LOOP(l);
 
 		    if (l->lg_p) {
-			NMG_CK_LOOP_G(l->lg_p);
+			NMG_CK_LOOP_A(l->lg_p);
 		    }
 
 		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
@@ -151,7 +151,7 @@ void move_vertex(const struct model* m, point_t v_old, point_t v_new)
 		NMG_CK_LOOP(l);
 
 		if (l->lg_p) {
-		    NMG_CK_LOOP_G(l->lg_p);
+		    NMG_CK_LOOP_A(l->lg_p);
 		}
 
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {

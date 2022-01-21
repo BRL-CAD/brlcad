@@ -162,12 +162,12 @@ nmg_pr_sa(const struct shell_a *sa, char *h)
 
 
 void
-nmg_pr_lg(const struct loop_g *lg, char *h)
+nmg_pr_lg(const struct loop_a *lg, char *h)
 {
     MKPAD(h);
-    NMG_CK_LOOP_G(lg);
+    NMG_CK_LOOP_A(lg);
 
-    bu_log("%sLOOP_G %p\n", h, (void *)lg);
+    bu_log("%sLOOP_A %p\n", h, (void *)lg);
     bu_log("%s%f %f %f Min\n", h, lg->min_pt[X], lg->min_pt[Y],
 	   lg->min_pt[Z]);
     bu_log("%s%f %f %f Max\n", h, lg->max_pt[X], lg->max_pt[Y],
