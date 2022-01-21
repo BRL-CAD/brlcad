@@ -208,7 +208,7 @@ BU_EXPORT extern char **bu_path_to_argv(const char *path, int *ac);
 					*/
 
 #define BU_PATH_MATCH_LEADING_DIR 0x08 /**< bu_path_match() flag:
-					* Ignore /<tail> after Imatch.
+					* Ignore /[tail] after Imatch.
 					*/
 
 #define BU_PATH_MATCH_CASEFOLD    0x10 /**< bu_path_match() flag:

@@ -10,7 +10,7 @@ INPUT += \"${CMAKE_SOURCE_DIR}/include/vmath.h\"")
 set(lib_inputs "${lib_inputs}
 INPUT += \"${CMAKE_SOURCE_DIR}/misc/doxygen/bview.dox\"")
 set(lib_inputs "${lib_inputs}
-INPUT += \"${CMAKE_SOURCE_DIR}/include/dm/bview.h\"")
+INPUT += \"${CMAKE_SOURCE_DIR}/include//bv.h\"")
 set(lib_inputs "${lib_inputs}
 INPUT += \"${CMAKE_SOURCE_DIR}/include/bio.h\"")
 set(lib_inputs "${lib_inputs}
