@@ -19,10 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
- * @brief
- * NMG model definitions
- */
+/** @addtogroup nmg_model */
 /** @{ */
 /** @file nmg/model.h */
 

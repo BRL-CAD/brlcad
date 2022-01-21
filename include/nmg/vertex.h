@@ -19,10 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
- * @brief
- * NMG vertex definitions
- */
+/** @addtogroup nmg_vertex */
 /** @{ */
 /** @file nmg/vertex.h */
 

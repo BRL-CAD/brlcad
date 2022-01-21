@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
+/** @addtogroup libnmg
  * @brief
  * NMG logic related to ray intersections
  *

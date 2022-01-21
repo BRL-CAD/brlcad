@@ -19,10 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
- * @brief
- * NMG region definitions
- */
+/** @addtogroup nmg_region */
 /** @{ */
 /** @file nmg/region.h */
 

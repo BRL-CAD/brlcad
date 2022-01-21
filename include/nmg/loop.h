@@ -19,10 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
- * @brief
- * NMG loop definitions
- */
+/** @addtogroup nmg_loop */
 /** @{ */
 /** @file nmg/loop.h */
 

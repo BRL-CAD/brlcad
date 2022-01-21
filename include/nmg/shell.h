@@ -19,10 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
- * @brief
- * NMG shell definitions
- */
+/** @addtogroup nmg_shell */
 /** @{ */
 /** @file nmg/shell.h */
 

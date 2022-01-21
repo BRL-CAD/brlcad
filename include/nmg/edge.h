@@ -19,10 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
- * @brief
- * NMG edge definitions
- */
+/** @addtogroup nmg_edge */
 /** @{ */
 /** @file nmg/edge.h */
 

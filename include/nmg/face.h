@@ -19,10 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
- * @brief
- * NMG face definitions
- */
+/** @addtogroup nmg_face */
 /** @{ */
 /** @file nmg/face.h */
 

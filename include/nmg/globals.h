@@ -19,7 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
+/** @addtogroup libnmg
  * @brief
  * NMG global variables
  */
@@ -43,16 +43,19 @@ __BEGIN_DECLS
 NMG_EXPORT extern uint32_t nmg_debug;
 
 /**
+ * @brief
  * global nmg animation vblock callback
  */
 NMG_EXPORT extern void (*nmg_vlblock_anim_upcall)(void);
 
 /**
+ * @brief
  * global nmg mged display debug callback (ew)
  */
 NMG_EXPORT extern void (*nmg_mged_debug_display_hack)(void);
 
 /**
+ * @brief
  * edge use distance tolerance
  */
 NMG_EXPORT extern double nmg_eue_dist;

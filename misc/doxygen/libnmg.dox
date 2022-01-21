@@ -11,9 +11,39 @@
      @brief Basic NMG structural hierarchy definitions, including the necessary geometric definitions.
  */
 /** @ingroup libnmg */
+/**  @defgroup nmg_vertex Vertex */
+/**  @addtogroup nmg_vertex
+     @brief Routines for working with NMG Vertices and Vertex Uses.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_edge Edge */
+/**  @addtogroup nmg_edge
+     @brief Routines for working with NMG Edges and Edge Uses.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_loop Loop */
+/**  @addtogroup nmg_loop
+     @brief Routines for working with NMG Loops and Loop Uses.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_face Face */
+/**  @addtogroup nmg_face
+     @brief Routines for working with NMG Faces and Face Uses.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_shell Shell */
+/**  @addtogroup nmg_shell
+     @brief Routines for working with NMG Shells.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_region Region */
+/**  @addtogroup nmg_region
+     @brief Routines for working with NMG Regions.
+ */
+/** @ingroup libnmg */
 /**  @defgroup nmg_model Model */
 /**  @addtogroup nmg_model
-     @brief Routines for manipulation of NMG Models.
+     @brief Routines for working with NMG Models.
  */
 /** @ingroup libnmg */
 /**  @defgroup nmg_debug Debugging */
