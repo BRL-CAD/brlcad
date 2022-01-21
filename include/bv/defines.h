@@ -17,11 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bv
- *
- * @brief
- * Types and definitions related to display lists, angle distance cursor,
- * and other generic view constructs.
+/** @addtogroup bv_defines
  *
  * This header is intended to be independent of any one BRL-CAD library and is
  * specifically intended to allow the easy definition of common display list

@@ -17,24 +17,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup plot
+/** @addtogroup bv_plot
  *
- * @brief
- * The basic UNIX-plot routines.
+ * The calling sequence is the same as the original Bell Labs routines, with
+ * the exception of the pl_ prefix on the name.
  *
- * The calling sequence is the same as
- * the original Bell Labs routines, with the exception of the pl_
- * prefix on the name.
- *
- * Of interest:  the Plan 9 sources (recently MIT licensed) appear
- * to be related to the original code that would have formed the
- * conceptual basis for these routines:
+ * Of interest:  the Plan 9 sources (recently MIT licensed) appear to be
+ * related to the original code that would have formed the conceptual basis for
+ * these routines:
  *
  * https://plan9.io/sources/plan9/sys/src/cmd/plot/libplot/
  *
- * Don't know if there would be any improvements that could be retrofitted
- * onto this version, but might be worth looking.  In particular, curious
- * if the spline routine might be useful...
+ * Don't know if there would be any improvements that could be retrofitted onto
+ * this version, but might be worth looking.  In particular, curious if the
+ * spline routine might be useful...
  */
 /** @{ */
 /** @file plot3.h */

@@ -21,7 +21,6 @@
 /*----------------------------------------------------------------------*/
 /** @addtogroup bg_plane
  *
- * @brief
  * Plane structures (from src/librt/plane.h) and plane/line/point calculations
  *
  * TODO - this API may need to be simplified.  A lot of the closest point

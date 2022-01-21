@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bv
- *
- * @brief
- * Functions related to bv.h
+/** @addtogroup bv_util
  *
  */
+/** @{ */
+/** @file bv/util.h */
+
 #ifndef BV_UTIL_H
 #define BV_UTIL_H
 
@@ -30,9 +30,6 @@
 #include "bn/tol.h"
 #include "dm/defines.h"
 #include "bv/defines.h"
-
-/** @{ */
-/** @file bv/util.h */
 
 __BEGIN_DECLS
 

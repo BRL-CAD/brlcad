@@ -7,7 +7,13 @@
 /** @ingroup libbg */
 /**  @defgroup bg_pointgen Point Generation*/
 /** @ingroup libbg */
+/**  @defgroup bg_vert_tree Vertex binary search tree */
+/** @ingroup libbg */
+/**  @defgroup bg_clip View related geometric clipping */
+/** @ingroup libbg */
 /**  @defgroup bg_lseg Line Segments */
+/** @ingroup libbg */
+/**  @defgroup bg_plane Plane/line/point calculations */
 /** @ingroup libbg */
 /**  @defgroup bg_tri Triangles */
 /**   @ingroup bg_tri */

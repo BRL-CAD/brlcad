@@ -17,14 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup plot
+/** @addtogroup bv_plot
  *
  *  The following routines are taken from the BRL TIG-PACK
  *  (Terminal Independent Plotting Package).
  *  These routines create plots by using the pl_() and pd_() routines
  *  declared in plot3.h.
  *
- * @brief
  */
 /** @{ */
 /** @file tig.h */

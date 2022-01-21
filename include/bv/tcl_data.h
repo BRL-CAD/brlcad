@@ -17,11 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bv
+/** @addtogroup bv_tcl
  *
- * @brief
- *
- * Definitions specific to the non-view-obj drawing logic in libtclcad
+ * We're retaining these for libtclcad - don't use elsewhere
  */
 #ifndef DM_BV_TCL_DATA_H
 #define DM_BV_TCL_DATA_H

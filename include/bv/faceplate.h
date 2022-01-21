@@ -17,19 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bv
+/** @addtogroup bv_faceplate
  *
- * @brief
- * Types and definitions specific to faceplate view objects *
  */
+/** @{ */
+/** @file bv/faceplate.h */
+
 #ifndef DM_BV_FACEPLATE_H
 #define DM_BV_FACEPLATE_H
 
 #include "common.h"
 #include "vmath.h"
-
-/** @{ */
-/** @file bv/faceplate.h */
 
 struct bv_adc_state {
     int         draw;

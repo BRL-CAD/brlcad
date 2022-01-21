@@ -21,9 +21,6 @@
 /*----------------------------------------------------------------------*/
 /** @addtogroup bg_vert_tree
  *
- * @brief
- * Vertex tree support
- *
  * Routines to manage a binary search tree of vertices.
  *
  * The actual vertices are stored in an array

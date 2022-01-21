@@ -17,6 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup bv_adc
+ */
+/** @{ */
+/** @file bv/adc.h */
 
 #ifndef BG_ADC_H
 #define BG_ADC_H
@@ -36,6 +40,7 @@ __END_DECLS
 
 #endif  /* BG_ADC_H */
 
+/** @} */
 /*
  * Local Variables:
  * mode: C

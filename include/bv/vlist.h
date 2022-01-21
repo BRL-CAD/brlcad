@@ -17,21 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-#ifndef BV_VLIST_H
-#define BV_VLIST_H
-
-#include "common.h"
-#include <stdio.h> /* for FILE */
-#include "vmath.h"
-#include "bu/magic.h"
-#include "bu/list.h"
-#include "bu/vls.h"
-#include "bv/defines.h"
-
-__BEGIN_DECLS
-
-/*----------------------------------------------------------------------*/
 /** @addtogroup bv_vlist
  *
  * @brief
@@ -59,8 +44,20 @@ __BEGIN_DECLS
  *	}
  */
 /** @{ */
-/** @file bn/vlist.h */
+/** @file bv/vlist.h */
 
+#ifndef BV_VLIST_H
+#define BV_VLIST_H
+
+#include "common.h"
+#include <stdio.h> /* for FILE */
+#include "vmath.h"
+#include "bu/magic.h"
+#include "bu/list.h"
+#include "bu/vls.h"
+#include "bv/defines.h"
+
+__BEGIN_DECLS
 
 #define BV_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
 

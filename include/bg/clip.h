@@ -20,8 +20,9 @@
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup bg_clip
- * @brief
- * Clipping functions
+ *
+ * Clipping functions for comment geometric operations needed when drawing
+ * wireframes in a view window.
  */
 /** @{ */
 /** @file clip.h */

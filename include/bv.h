@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbv */
-/** @{ */
-/** @file bv.h
- *
- */
 
 // TODO - bv currently conflates scene and camera concepts - for example,
 // data axes and polygons are properly scene objects being viewed by the
@@ -29,6 +24,12 @@
 //
 // The plan is to address this, so until this notice is removed the bv data
 // structure and related data structures should be considered in flux.
+
+/** @addtogroup libbv */
+/** @{ */
+/** @file bv.h
+ *
+ */
 
 #ifndef BV_H
 #define BV_H
