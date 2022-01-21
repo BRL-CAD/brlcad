@@ -96,3 +96,9 @@
 /**  @addtogroup nmg_radial
      @brief ???.
  */
+/** @ingroup libnmg */
+/**  @defgroup nmg_debug Debugging */
+/**  @addtogroup nmg_debug
+     @brief NMG debugging definitions.
+ */
+
