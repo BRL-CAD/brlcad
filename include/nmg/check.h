@@ -19,9 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
- * @brief
- * NMG checking and validation routines
+/** @addtogroup nmg_check
  */
 /** @{ */
 /** @file nmg/check.h */

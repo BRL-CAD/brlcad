@@ -47,6 +47,11 @@
      @brief Routines for working with NMG Models.
  */
 /** @ingroup libnmg */
+/**  @defgroup nmg_check Checking */
+/**  @addtogroup nmg_check
+     @brief NMG validation routines.
+ */
+/** @ingroup libnmg */
 /**  @defgroup nmg_debug Debugging */
 /**  @addtogroup nmg_debug
      @brief NMG debugging definitions.
