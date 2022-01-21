@@ -19,9 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup libnmg
- * @brief
- * NMG printing
+/** @addtogroup nmg_print
  */
 /** @{ */
 /** @file nmg/print.h */

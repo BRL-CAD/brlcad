@@ -19,9 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup libnmg
- * @brief
- * NMG index definitions
+/** @addtogroup nmg_index
  */
 /** @{ */
 /** @file nmg/index.h */

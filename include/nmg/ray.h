@@ -19,9 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup libnmg
- * @brief
- * NMG logic related to ray intersections
+/** @addtogroup nmg_ray
  *
  * TODO - these structs and ray_in_rpp are versions of librt functionality,
  * and we need to think about how/where to merge them into a common function

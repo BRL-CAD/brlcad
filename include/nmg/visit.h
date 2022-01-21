@@ -17,9 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libnmg
- * @brief
- * NMG visit definitions
+/** @addtogroup nmg_visit
  */
 /** @{ */
 /** @file nmg/visit.h */

@@ -19,9 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup libnmg
- * @brief
- * NMG plotting
+/** @addtogroup nmg_plot
  */
 /** @{ */
 /** @file nmg/plot.h */

@@ -19,9 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup libnmg
- * @brief
- * NMG NURBS definitions
+/** @addtogroup nmg_nurbs
  *
  * Note that some of the NURBS specific data structures currently live in
  * topology.h - this is less than ideal, but the original implementation

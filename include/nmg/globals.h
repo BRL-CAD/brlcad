@@ -19,9 +19,8 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup libnmg
- * @brief
- * NMG global variables
+/** @addtogroup nmg_global
+ *
  */
 /** @{ */
 /** @file nmg/globals.h */

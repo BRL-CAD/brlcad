@@ -19,9 +19,7 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup libnmg
- * @brief
- * NMG intersection definitions
+/** @addtogroup nmg_isect
  */
 /** @{ */
 /** @file nmg/isect.h */
