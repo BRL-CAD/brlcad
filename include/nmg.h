@@ -19,16 +19,30 @@
  */
 /** @addtogroup libnmg
  *
- * Definition of data structures for "Non-Manifold Geometry" (NMG)
- * modelling.  Developed from "Non-Manifold Geometric Boundary
+ * @brief
+ * "Non-Manifold Geometry" (NMG) models are BRL-CAD's primary mechanism
+ * for storing and manipulating planar mesh geometry.  The design is
+ * based on work from the 1980s by Kevin J. Weiler.
+ *
+ * Original development was based on "Non-Manifold Geometric Boundary
  * Modeling" by Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
  * See also "Topological Structures for Geometric Modeling"
- * by Kevin J. Weiler - RPI Phd thesis from 1986.
+ * by Kevin J. Weiler - RPI Phd thesis from 1986:
+ * https://www.scorec.rpi.edu/REPORTS/1986-1.pdf
  *
+ * Documentation of BRL-CAD's implementation was published as part of
+ * Combinatorial Solid Geometry, Boundary Representations, and Non-Manifold
+ * Geometry by Michael John Muuss and Lee A. Butler, originally published in
+ * State of the Art in Computer Graphics: Visualization and Modeling D. F.
+ * Rogers, R. A. Earnshaw editors, Springer-Verlag, New York, 1991, pages
+ * 185-223:
+ * https://ftp.arl.army.mil/~mike/papers/90nmg/joined.html
  */
 /** @{ */
-/** @file include/nmg.h */
+/** @brief Main header file for the BRL-CAD Non-Manifold Geometry Library, LIBNMG. */
+/** @file nmg.h */
+/** @} */
 
 /*
  * TODO: since this original work, there have been a number of subsequent
@@ -82,22 +96,6 @@
 #include "vmath.h"
 
 __BEGIN_DECLS
-/*
- * NOTE: We rely on the fact that the first 32 bits in a struct is the
- * magic number (which is used to identify the struct type).  This may
- * be either a magic value, or an rt_list structure, which starts with
- * a magic number.
- *
- * To these ends, there is a standard ordering for fields in
- * "object-use" structures.  That ordering is:
- *
- *   1) magic number, or rt_list structure
- *   2) pointer to parent
- *   5) pointer to mate
- *   6) pointer to geometry
- *   7) pointer to attributes
- *   8) pointer to child(ren)
- */
 
 /* Standard BRL-CAD definitions for libraries, and common definitions used
  * broadly in libnmg logic. */
@@ -129,7 +127,6 @@ __END_DECLS
 
 #endif /* NMG_H */
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -19,17 +19,13 @@
  */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup nmg
- * @brief
- * The basic NMG structural hierarchy definitions, including the necessary
- * geometric definitions.
+/** @addtogroup nmg_topology
  *
  * This is the interconnected hierarchical data scheme proposed by Weiler and
  * documented by Muuss and Butler in: Combinatorial Solid Geometry, Boundary
  * Representations, and Non-Manifold Geometry, State of the Art in Computer
  * Graphics: Visualization and Modeling D. F. Rogers, R. A. Earnshaw editors,
- * Springer-Verlag, New York, 1991, pages 185-223.
- *
+ * Springer-Verlag, New York, 1991, pages 185-223:
  * https://ftp.arl.army.mil/~mike/papers/90nmg/joined.html
  *
  * Because of the interconnectedness of these containers, they are defined
@@ -37,22 +33,22 @@
  * need to know about other use container types, as seen in Figure 4 from the
  * Muuss/Butler paper:
  *
- * @verbatim
- * Model
- *   |
- * Region
- *   |
- * Shell
- * ||||
- * |||*--> Faceuse <--------> Face
- * |||          |
- * ||*---> Loopuse <--------> Loop
- * ||      |    |
- * |*------|--> Edgeuse <---> Edge
- * |       |    |
- * |       *--> Vertexuse <-> Vertex
- * *------------^
- * @endverbatim
+   @verbatim
+   Model
+     |
+   Region
+     |
+   Shell
+   ||||
+   |||*--> Faceuse <--------> Face
+   |||          |
+   ||*---> Loopuse <--------> Loop
+   ||      |    |
+   |*------|--> Edgeuse <---> Edge
+   |       |    |
+   |       *--> Vertexuse <-> Vertex
+   *------------^
+   @endverbatim
  *
  * Each element has a direct connection to its parent and child types.  The
  * elements are defined thusly:
@@ -87,99 +83,21 @@
 
 __BEGIN_DECLS
 
-/*****************************************************************************/
-/* NURBS specific data containers.  Unfortunately, these are currently
- * part of the public topology data structure definitions. It would probably
- * be better, if it is possible to do so, to make the topology data structures
- * generic and have the specific geometry be hidden implementation details... */
-
-struct vertexuse_a_cnurb {
-    uint32_t magic;
-    fastf_t param[3];           /**< @brief (u, v, w) of vu on eu's cnurb */
-    long index;                 /**< @brief struct # in this model */
-};
-
 /**
- * @brief
- * Definition of a knot vector.
+ * @brief Vertex - the simplest element of the topology system.
  *
- * Not found independently, but used in the cnurb and snurb
- * structures.  (Exactly the same as the definition in nurb.h)
- */
-struct knot_vector {
-    uint32_t magic;
-    int k_size;         /**< @brief knot vector size */
-    fastf_t * knots;    /**< @brief pointer to knot vector */
-};
-
-/* The ctl_points on this curve are (u, v) values on the face's
- * surface.  As a storage and performance efficiency measure, if order
- * <= 0, then the cnurb is a straight line segment in parameter space,
- * and the k.knots and ctl_points pointers will be NULL.  In this
- * case, the vertexuse_a_cnurb's at both ends of the edgeuse define
- * the path through parameter space.
+ * A vertex stores knowledge of all the places in the model topology where it
+ * is used, via a list of "vertexuse" containers stored in the vu_hd list.
+ * Each vertex has its own unique associated geometric point, vg_p;
  *
- * IMPORTANT: First two items in edge_g_lseg and edge_g_cnurb (or any other
- * segment type added) must be identical structures, so pointers are puns for
- * both.  eu_hd2 list must be in same place for both.
- */
-struct edge_g_cnurb {
-    struct bu_list l;           /**< @brief NOTICE: l.forw & l.back are NOT stored in database.  For bspline primitive   internal use only. */
-    struct bu_list eu_hd2;      /**< @brief heads l2 list of edgeuses on this curve */
-    int order;                  /**< @brief Curve Order */
-    struct knot_vector k;       /**< @brief curve knot vector */
-    /* curve control polygon */
-    int c_size;                 /**< @brief number of ctl points */
-    int pt_type;                /**< @brief curve point type */
-    fastf_t *ctl_points;        /**< @brief array [c_size] */
-    long index;                 /**< @brief struct # in this model */
-};
-
-struct face_g_snurb {
-    /* NOTICE: l.forw & l.back *not* stored in database.  They are for
-     * bspline primitive internal use only.
-     */
-    struct bu_list l;
-    struct bu_list f_hd;        /**< @brief list of faces sharing this surface */
-    int order[2];               /**< @brief surface order [0] = u, [1] = v */
-    struct knot_vector u;       /**< @brief surface knot vectors */
-    struct knot_vector v;       /**< @brief surface knot vectors */
-    /* surface control points */
-    int s_size[2];              /**< @brief mesh size, u, v */
-    int pt_type;                /**< @brief surface point type */
-    fastf_t *ctl_points;        /**< @brief array [size[0]*size[1]] */
-    /* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
-    int dir;                    /**< @brief direction of last refinement */
-    point_t min_pt;             /**< @brief min corner of bounding box */
-    point_t max_pt;             /**< @brief max corner of bounding box */
-    /* END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
-    long index;                 /**< @brief struct # in this model */
-};
-
-/*****************************************************************************/
-
-/**
- * The vertex and vertexuse structures are connected in a way
- * different from the superior kinds of topology elements.  The vertex
- * structure heads a linked list that all vertexuse's that use the
- * vertex are linked onto.
+ * Neither vertex_g nor vertex structures are the primary topological unit used
+ * in describing more complex structures - it is the "use" of a vertex (i.e.
+ * the vertexuse structure) that manifests an active vertex point in the model.
  */
 struct vertex {
     uint32_t magic;
     struct bu_list vu_hd;       /**< @brief heads list of vu's of this vertex */
     struct vertex_g *vg_p;      /**< @brief geometry */
-    long index;                 /**< @brief struct # in this model */
-};
-
-struct vertex_g {
-    uint32_t magic;
-    point_t coord;              /**< @brief coordinates of vertex in space */
-    long index;                 /**< @brief struct # in this model */
-};
-
-struct vertexuse_a_plane {
-    uint32_t magic;
-    vect_t N;                   /**< @brief (opt) surface Normal at vertexuse */
     long index;                 /**< @brief struct # in this model */
 };
 
@@ -222,23 +140,6 @@ struct edge {
     long index;                 /**< @brief struct # in this model */
 };
 
-/**
- * An edge_g_lseg structure represents a line in 3-space.  All edges on that
- * line should share the same edge_g.
- *
- * IMPORTANT: First two items in edge_g_lseg and edge_g_cnurb (or any other
- * segment type added) must be identical structures, so pointers are puns for
- * both.  eu_hd2 list must be in same place for both.
- */
-struct edge_g_lseg {
-    struct bu_list l;           /**< @brief NOTICE:  l.forw & l.back *not* stored in database.  For alignment only. */
-    struct bu_list eu_hd2;      /**< @brief heads l2 list of edgeuses on this line */
-    point_t e_pt;               /**< @brief parametric equation of the line */
-    vect_t e_dir;
-    long index;                 /**< @brief struct # in this model */
-};
-
-
 struct edgeuse {
     struct bu_list l;           /**< @brief cw/ccw edges in loop or wire edges in shell */
     struct bu_list l2;          /**< @brief member of edge_g's eu_hd2 list */
@@ -268,13 +169,6 @@ struct loop {
     long index;                 /**< @brief struct # in this model */
 };
 
-struct loop_g {
-    uint32_t magic;
-    point_t min_pt;             /**< @brief minimums of bounding box */
-    point_t max_pt;             /**< @brief maximums of bounding box */
-    long index;                 /**< @brief struct # in this model */
-};
-
 struct loopuse {
     struct bu_list l;           /**< @brief lu's, in fu's lu_hd, or shell's lu_hd */
     union {
@@ -286,18 +180,6 @@ struct loopuse {
     int orientation;            /**< @brief OT_SAME=outside loop */
     struct loop *l_p;           /**< @brief loop definition and attributes */
     struct bu_list down_hd;     /**< @brief eu list or vu pointer */
-    long index;                 /**< @brief struct # in this model */
-};
-
-/**
- * Note: there will always be exactly two faceuse's using a face.  To
- * find them, go up fu_p for one, then across fumate_p to other.
- */
-
-struct face_g_plane {
-    uint32_t magic;
-    struct bu_list f_hd;        /**< @brief list of faces sharing this surface */
-    plane_t N;                  /**< @brief Plane equation (incl normal) */
     long index;                 /**< @brief struct # in this model */
 };
 
@@ -357,26 +239,12 @@ struct shell {
     long index;                 /**< @brief struct # in this model */
 };
 
-struct shell_a {
-    uint32_t magic;
-    point_t min_pt;             /**< @brief minimums of bounding box */
-    point_t max_pt;             /**< @brief maximums of bounding box */
-    long index;                 /**< @brief struct # in this model */
-};
-
 
 struct nmgregion {
     struct bu_list l;           /**< @brief regions, in model's r_hd list */
     struct model *m_p;          /**< @brief owning model */
     struct nmgregion_a *ra_p;   /**< @brief attributes */
     struct bu_list s_hd;        /**< @brief list of shells in region */
-    long index;                 /**< @brief struct # in this model */
-};
-
-struct nmgregion_a {
-    uint32_t magic;
-    point_t min_pt;             /**< @brief minimums of bounding box */
-    point_t max_pt;             /**< @brief maximums of bounding box */
     long index;                 /**< @brief struct # in this model */
 };
 
@@ -388,6 +256,150 @@ struct model {
     long index;                 /**< @brief struct # in this model */
     long maxindex;              /**< @brief # of structs so far */
 };
+
+/*****************************************************************************/
+/*****************************************************************************/
+/* Geometric data containers - referenced by the topological containers to
+ * describe geometric information in 3D space. */
+
+/**
+ * @brief Point in 3D space.
+ *
+ * Note that this container is responsible ONLY for geometric information, and
+ * has no knowledge of topological relationships.
+ */
+struct vertex_g {
+    uint32_t magic;
+    point_t coord;              /**< @brief coordinates of vertex in space */
+    long index;                 /**< @brief struct # in this model */
+};
+
+/**
+ * @brief Line in 3D space.
+ *
+ * An edge_g_lseg structure represents a line in 3-space.  All edges on that
+ * line should share the same edge_g.
+ *
+ * IMPORTANT: First two items in edge_g_lseg and edge_g_cnurb (or any other
+ * segment type added) must be identical structures, so pointers are puns for
+ * both.  eu_hd2 list must be in same place for both.
+ */
+struct edge_g_lseg {
+    struct bu_list l;           /**< @brief NOTICE:  l.forw & l.back *not* stored in database.  For alignment only. */
+    struct bu_list eu_hd2;      /**< @brief heads l2 list of edgeuses on this line */
+    point_t e_pt;               /**< @brief parametric equation of the line */
+    vect_t e_dir;
+    long index;                 /**< @brief struct # in this model */
+};
+
+struct loop_g {
+    uint32_t magic;
+    point_t min_pt;             /**< @brief minimums of bounding box */
+    point_t max_pt;             /**< @brief maximums of bounding box */
+    long index;                 /**< @brief struct # in this model */
+};
+
+/**
+ * Note: there will always be exactly two faceuse's using a face.  To
+ * find them, go up fu_p for one, then across fumate_p to other.
+ */
+
+struct face_g_plane {
+    uint32_t magic;
+    struct bu_list f_hd;        /**< @brief list of faces sharing this surface */
+    plane_t N;                  /**< @brief Plane equation (incl normal) */
+    long index;                 /**< @brief struct # in this model */
+};
+
+/**
+ * @brief
+ * Definition of a knot vector.
+ *
+ * Not found independently, but used in the cnurb and snurb
+ * structures.  (Exactly the same as the definition in nurb.h)
+ */
+struct knot_vector {
+    uint32_t magic;
+    int k_size;         /**< @brief knot vector size */
+    fastf_t * knots;    /**< @brief pointer to knot vector */
+};
+
+/* The ctl_points on this curve are (u, v) values on the face's
+ * surface.  As a storage and performance efficiency measure, if order
+ * <= 0, then the cnurb is a straight line segment in parameter space,
+ * and the k.knots and ctl_points pointers will be NULL.  In this
+ * case, the vertexuse_a_cnurb's at both ends of the edgeuse define
+ * the path through parameter space.
+ *
+ * IMPORTANT: First two items in edge_g_lseg and edge_g_cnurb (or any other
+ * segment type added) must be identical structures, so pointers are puns for
+ * both.  eu_hd2 list must be in same place for both.
+ */
+struct edge_g_cnurb {
+    struct bu_list l;           /**< @brief NOTICE: l.forw & l.back are NOT stored in database.  For bspline primitive   internal use only. */
+    struct bu_list eu_hd2;      /**< @brief heads l2 list of edgeuses on this curve */
+    int order;                  /**< @brief Curve Order */
+    struct knot_vector k;       /**< @brief curve knot vector */
+    /* curve control polygon */
+    int c_size;                 /**< @brief number of ctl points */
+    int pt_type;                /**< @brief curve point type */
+    fastf_t *ctl_points;        /**< @brief array [c_size] */
+    long index;                 /**< @brief struct # in this model */
+};
+
+struct face_g_snurb {
+    /* NOTICE: l.forw & l.back *not* stored in database.  They are for
+     * bspline primitive internal use only.
+     */
+    struct bu_list l;
+    struct bu_list f_hd;        /**< @brief list of faces sharing this surface */
+    int order[2];               /**< @brief surface order [0] = u, [1] = v */
+    struct knot_vector u;       /**< @brief surface knot vectors */
+    struct knot_vector v;       /**< @brief surface knot vectors */
+    /* surface control points */
+    int s_size[2];              /**< @brief mesh size, u, v */
+    int pt_type;                /**< @brief surface point type */
+    fastf_t *ctl_points;        /**< @brief array [size[0]*size[1]] */
+    /* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
+    int dir;                    /**< @brief direction of last refinement */
+    point_t min_pt;             /**< @brief min corner of bounding box */
+    point_t max_pt;             /**< @brief max corner of bounding box */
+    /* END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
+    long index;                 /**< @brief struct # in this model */
+};
+/*****************************************************************************/
+
+/*****************************************************************************/
+/* Attribute data containers - storing additional information about topological
+ * elements over and above their basic geometry definitions. */
+struct vertexuse_a_plane {
+    uint32_t magic;
+    vect_t N;                   /**< @brief (opt) surface Normal at vertexuse */
+    long index;                 /**< @brief struct # in this model */
+};
+
+struct vertexuse_a_cnurb {
+    uint32_t magic;
+    fastf_t param[3];           /**< @brief (u, v, w) of vu on eu's cnurb */
+    long index;                 /**< @brief struct # in this model */
+};
+
+
+struct shell_a {
+    uint32_t magic;
+    point_t min_pt;             /**< @brief minimums of bounding box */
+    point_t max_pt;             /**< @brief maximums of bounding box */
+    long index;                 /**< @brief struct # in this model */
+};
+
+struct nmgregion_a {
+    uint32_t magic;
+    point_t min_pt;             /**< @brief minimums of bounding box */
+    point_t max_pt;             /**< @brief maximums of bounding box */
+    long index;                 /**< @brief struct # in this model */
+};
+/*****************************************************************************/
+
 
 
 __END_DECLS

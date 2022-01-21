@@ -22,6 +22,21 @@
 /** @addtogroup nmg_defines
  * @brief
  * Common definitions for the headers used in nmg.h (i.e. the headers found in include/nmg)
+ *
+ *  * NOTE: We rely on the fact that the first 32 bits in a struct is the
+ * magic number (which is used to identify the struct type).  This may
+ * be either a magic value, or an rt_list structure, which starts with
+ * a magic number.
+ *
+ * To these ends, there is a standard ordering for fields in
+ * "object-use" structures.  That ordering is:
+ *
+ *   1) magic number, or rt_list structure
+ *   2) pointer to parent
+ *   5) pointer to mate
+ *   6) pointer to geometry
+ *   7) pointer to attributes
+ *   8) pointer to child(ren)
  */
 /** @{ */
 /** @file nmg/defines.h */

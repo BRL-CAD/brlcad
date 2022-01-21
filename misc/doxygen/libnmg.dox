@@ -1,2 +1,17 @@
 /* Top level library group */
 /** @defgroup libnmg libnmg (Non-Manifold Geometry) */
+
+/* Second tier groups */
+/** @ingroup libnmg */
+/**  @defgroup nmg_defines Definitions*/
+
+/** @ingroup libnmg */
+/**  @defgroup nmg_topology Topology */
+/**  @addtogroup nmg_topology
+     @brief Basic NMG structural hierarchy definitions, including the necessary geometric definitions.
+ */
+/** @ingroup libnmg */
+/**  @defgroup nmg_model Model */
+/**  @addtogroup nmg_model
+     @brief Routines for manipulation of NMG Models.
+ */
