@@ -15,3 +15,9 @@
 /**  @addtogroup nmg_model
      @brief Routines for manipulation of NMG Models.
  */
+/** @ingroup libnmg */
+/**  @defgroup nmg_debug Debugging */
+/**  @addtogroup nmg_debug
+     @brief NMG debugging definitions.
+ */
+
