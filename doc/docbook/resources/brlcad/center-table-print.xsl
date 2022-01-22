@@ -137,7 +137,7 @@
 
               <!-- we wrap our table to be centered in the center table cell -->
               <fo:table-cell>
-                <fo:table>
+                <fo:table table-layout="fixed">
                   <fo:table-body start-indent="0pt">
                     <fo:table-row>
                       <fo:table-cell><fo:block>

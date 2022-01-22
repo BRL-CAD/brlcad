@@ -267,7 +267,7 @@
 
               <fo:table-cell>
 
-                <fo:table>
+                <fo:table table-layout="fixed">
                   <fo:table-body start-indent="0pt">
                     <fo:table-row><fo:table-cell><fo:block>
                           <xsl:copy-of select="$table.content"/>
