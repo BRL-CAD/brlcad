@@ -951,9 +951,12 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 		bu_vls_init(&tsg->label);
 		bu_vls_strcpy(&tsg->label, (const char*)ptr);
 		ptr += bu_vls_strlen(&tsg->label) + 1;
-		tsg->txt_size = ntohl(*(uint32_t*)ptr);
+		bu_cv_ntohd((unsigned char*)&scan, ptr, 1);
+		tsg->txt_size = scan;	/* double to fastf_t */
 		ptr += SIZEOF_NETWORK_DOUBLE;
-		tsg->txt_rot_angle = ntohl(*(uint32_t*)ptr);
+		scan = 0.0;
+		bu_cv_ntohd((unsigned char*)&scan, ptr, 1);
+		tsg->txt_rot_angle = scan;	/* double to fastf_t */
 		ptr += SIZEOF_NETWORK_DOUBLE;
 		annot_ip->ant.segments[seg_no] = (void *)tsg;
 		break;
@@ -1185,9 +1188,11 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		bu_strlcpy((char *)cp, bu_vls_addr(&tseg->label), bu_vls_strlen(&tseg->label) + 1);
 
 		cp += bu_vls_strlen(&tseg->label) + 1;
-		*(uint32_t*)cp = htonl(tseg->txt_size);
+		scan = tseg->txt_size;
+		bu_cv_htond(cp, (unsigned char*)&scan, 1);
 		cp += SIZEOF_NETWORK_DOUBLE;
-		*(uint32_t*)cp = htonl(tseg->txt_rot_angle);
+		scan = tseg->txt_rot_angle;
+		bu_cv_htond(cp, (unsigned char*)&scan, 1);
 		cp += SIZEOF_NETWORK_DOUBLE;
 		break;
 	    case CURVE_CARC_MAGIC:
