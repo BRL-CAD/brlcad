@@ -97,10 +97,10 @@ Options:
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig01.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig01.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig01.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig01.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -553,10 +553,10 @@ mged&gt;
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig02.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig02.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig02.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig02.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -571,10 +571,10 @@ mged&gt;
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig03.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig03.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig03.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig03.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -628,10 +628,10 @@ mged&gt;
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig04.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig04.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig04.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig04.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -662,10 +662,10 @@ mged&gt; ae 90 0
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig05.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig05.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig05.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig05.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -722,10 +722,10 @@ mged&gt; ae 90 0
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig06.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig06.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig06.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig06.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -768,10 +768,10 @@ mged&gt; ae 90 0
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig07.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig07.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig07.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig07.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -814,10 +814,10 @@ mged&gt; ae 90 0
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig08.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig08.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig08.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig08.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -849,10 +849,10 @@ mged&gt; ae 90 0
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig09.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig09.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig09.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig09.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -891,10 +891,10 @@ mged&gt;
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig10.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig10.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig10.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig10.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -982,10 +982,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig11.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig11.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig11.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig11.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1007,10 +1007,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig12.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig12.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig12.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig12.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1030,10 +1030,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig13.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig13.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig13.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig13.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1052,10 +1052,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig14.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig14.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig14.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig14.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1080,10 +1080,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig08.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig08.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig08.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig08.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1122,10 +1122,10 @@ mged&gt; erase query_rayff00ff
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig15.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig15.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig15.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig15.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1152,10 +1152,10 @@ mged&gt; who p
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig16.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig16.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig16.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig16.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1178,10 +1178,10 @@ mged&gt; who p
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig17.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig17.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig17.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig17.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1236,10 +1236,10 @@ left_cube.r          (   -1.000     0.022     0.011)     2.00    0.000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig18.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig18.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig18.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig18.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1320,7 +1320,7 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 	test.csv) and imported into a spreadsheet:
 
 	<screenshot>
-	  <mediaobject><imageobject role="html"><imagedata align="center" fileref="../../articles/images/nirt_fig19.png"/></imageobject><imageobject role="fo"><imagedata align="center" fileref="../../articles/images/nirt_fig19.png"/></imageobject></mediaobject>
+	  <mediaobject><imageobject role="html"><imagedata align="center" fileref="../articles/images/nirt_fig19.png"/></imageobject><imageobject role="fo"><imagedata align="center" fileref="../articles/images/nirt_fig19.png"/></imageobject></mediaobject>
 	</screenshot>
 
       </para>
@@ -1593,10 +1593,10 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
 <informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig20.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig20.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig20.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig20.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1816,7 +1816,7 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 	As before, this format is trivially imported into a spreadsheet:
 
 	<screenshot>
-	  <mediaobject><imageobject role="html"><imagedata align="center" fileref="../../articles/images/nirt_fig21.png"/></imageobject><imageobject role="fo"><imagedata align="center" fileref="../../articles/images/nirt_fig21.png"/></imageobject></mediaobject>
+	  <mediaobject><imageobject role="html"><imagedata align="center" fileref="../articles/images/nirt_fig21.png"/></imageobject><imageobject role="fo"><imagedata align="center" fileref="../articles/images/nirt_fig21.png"/></imageobject></mediaobject>
 	</screenshot>
 
       </para>
@@ -1912,10 +1912,10 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig22.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig22.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig22.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig22.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1957,10 +1957,10 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig23.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig23.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig23.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig23.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>
@@ -1981,10 +1981,10 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig24.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig24.png" format="PNG"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="center" fileref="../../articles/images/nirt_fig24.png" format="PNG"/>
+	      <imagedata align="center" fileref="../articles/images/nirt_fig24.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
 	      <para>

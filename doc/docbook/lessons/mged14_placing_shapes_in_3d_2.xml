@@ -49,10 +49,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_candle_base_sphere_topview.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_candle_base_sphere_topview.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_candle_base_sphere_topview.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_candle_base_sphere_topview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -87,10 +87,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_candle_multipane.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_candle_multipane.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_candle_multipane.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_candle_multipane.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -127,10 +127,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_primitive_editor.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_primitive_editor.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_primitive_editor.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_primitive_editor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -150,10 +150,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_primitive_selection_dropdown.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_primitive_selection_dropdown.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_primitive_selection_dropdown.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_primitive_selection_dropdown.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -174,12 +174,12 @@
 	    <tbody>
 	      <row>
 		<entry><inlinemediaobject>
-                       <imageobject role="html"><imagedata fileref="../../lessons/images/mged14_candle_spheres_topview.png"/></imageobject>
-                       <imageobject role="fo"><imagedata fileref="../../lessons/images/mged14_candle_spheres_topview.png"/></imageobject>
+                       <imageobject role="html"><imagedata fileref="../lessons/images/mged14_candle_spheres_topview.png"/></imageobject>
+                       <imageobject role="fo"><imagedata fileref="../lessons/images/mged14_candle_spheres_topview.png"/></imageobject>
                 </inlinemediaobject></entry>
 		<entry><inlinemediaobject>
-                       <imageobject role="html"><imagedata fileref="../../lessons/images/mged14_candle_spheres_frontview.png"/></imageobject>
-                       <imageobject role="fo"><imagedata fileref="../../lessons/images/mged14_candle_spheres_frontview.png"/></imageobject>
+                       <imageobject role="html"><imagedata fileref="../lessons/images/mged14_candle_spheres_frontview.png"/></imageobject>
+                       <imageobject role="fo"><imagedata fileref="../lessons/images/mged14_candle_spheres_frontview.png"/></imageobject>
                 </inlinemediaobject></entry>
 	      </row>
 	      <row>
@@ -204,10 +204,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_candle_spheres_az35el25.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_candle_spheres_az35el25.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_candle_spheres_az35el25.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_candle_spheres_az35el25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -535,10 +535,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_candle_spheres_raytraced.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_candle_spheres_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged14_candle_spheres_raytraced.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged14_candle_spheres_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>

@@ -106,10 +106,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged11_mug_raytraced_norim.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged11_mug_raytraced_norim.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged11_mug_raytraced_norim.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged11_mug_raytraced_norim.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -194,10 +194,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged11_mug_raytraced_rim.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged11_mug_raytraced_rim.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged11_mug_raytraced_rim.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged11_mug_raytraced_rim.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>

@@ -114,10 +114,10 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_unionspheres.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_unionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_unionspheres.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_unionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -149,10 +149,10 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_subtractionspheres.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_subtractionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_subtractionspheres.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_subtractionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -192,10 +192,10 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_intersectionspheres.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_intersectionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_intersectionspheres.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_intersectionspheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -231,10 +231,10 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_twoprimitivespheres.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_twoprimitivespheres.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_twoprimitivespheres.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_twoprimitivespheres.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -299,10 +299,10 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_combinationeditor.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_combinationeditor.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_combinationeditor.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_combinationeditor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -342,8 +342,8 @@
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged05_raytracedpart1.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged05_raytracedpart1.png"/></imageobject></inlinemediaobject></entry>
-	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/images/mged05_raytracedpart2.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/images/mged05_raytracedpart2.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged05_raytracedpart1.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged05_raytracedpart1.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../lessons/images/mged05_raytracedpart2.png"/></imageobject><imageobject role="fo"><imagedata fileref="../lessons/images/mged05_raytracedpart2.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Raytraced part1.r</entry>
@@ -422,10 +422,10 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_raytracedpart3.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_raytracedpart3.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_raytracedpart3.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_raytracedpart3.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -492,10 +492,10 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_raytraceddome.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_raytraceddome.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged05_raytraceddome.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged05_raytraceddome.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>

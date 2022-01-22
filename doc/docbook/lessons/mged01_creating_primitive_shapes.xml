@@ -137,10 +137,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" contentwidth="3.9in" scalefit="1" fileref="../../lessons/images/mged01_terminal.png" format="PNG"/>
+	    <imagedata align="center" contentwidth="3.9in" scalefit="1" fileref="../lessons/images/mged01_terminal.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" width="3.9in" scalefit="1" fileref="../../lessons/images/mged01_terminal.png" format="PNG"/>
+	    <imagedata align="center" width="3.9in" scalefit="1" fileref="../lessons/images/mged01_terminal.png" format="PNG"/>
 	  </imageobject>
 
 
@@ -180,10 +180,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged01_commandwindow.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged01_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged01_commandwindow.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged01_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -196,10 +196,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged01_graphicswindow.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged01_graphicswindow.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged01_graphicswindow.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged01_graphicswindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
