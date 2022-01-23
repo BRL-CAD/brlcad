@@ -954,7 +954,6 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 		bu_cv_ntohd((unsigned char*)&scan, ptr, 1);
 		tsg->txt_size = scan;	/* double to fastf_t */
 		ptr += SIZEOF_NETWORK_DOUBLE;
-		scan = 0.0;
 		bu_cv_ntohd((unsigned char*)&scan, ptr, 1);
 		tsg->txt_rot_angle = scan;	/* double to fastf_t */
 		ptr += SIZEOF_NETWORK_DOUBLE;
