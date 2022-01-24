@@ -30,6 +30,7 @@
 #include "bu/malloc.h"
 #include "bn/tol.h"
 #include "nmg.h"
+#include "rt/db4.h" /* Needed for the definition of union record, which we call sizeof() on */
 
 struct nmg_exp_counts {
     long new_subscript;
@@ -908,7 +909,7 @@ nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long i
 	bu_log("subscript=%ld, byte_offset=%ld, kind=%d (expected %d)\n",
 	       subscript, ecnt[subscript].byte_offset,
 	       ecnt[subscript].kind, NMG_KIND_DOUBLE_ARRAY);
-	bu_bomb("rt_nmg_import4_fastf() bad ecnt table\n");
+	bu_bomb("nmg_import4_fastf() bad ecnt table\n");
     }
 
 
@@ -918,7 +919,7 @@ nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long i
 	       bu_ntohl(*(uint32_t*)cp, 0, UINT_MAX - 1), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
 	bu_log("subscript=%ld, byte_offset=%ld\n",
 	       subscript, ecnt[subscript].byte_offset);
-	bu_bomb("rt_nmg_import4_fastf() bad magic\n");
+	bu_bomb("nmg_import4_fastf() bad magic\n");
     }
 
     if (pt_type)
@@ -926,11 +927,11 @@ nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long i
 
     count = bu_ntohl(*(uint32_t*)(cp + 4), 0, UINT_MAX - 1);
     if (count != len || count < 0) {
-	bu_log("rt_nmg_import4_fastf() subscript=%ld, expected len=%d, got=%d\n",
+	bu_log("nmg_import4_fastf() subscript=%ld, expected len=%d, got=%d\n",
 	       subscript, len, count);
-	bu_bomb("rt_nmg_import4_fastf()\n");
+	bu_bomb("nmg_import4_fastf()\n");
     }
-    ret = (fastf_t *)bu_malloc(count * sizeof(fastf_t), "rt_nmg_import4_fastf[]");
+    ret = (fastf_t *)bu_malloc(count * sizeof(fastf_t), "nmg_import4_fastf[]");
     if (!mat) {
 	scanp = (double *)bu_malloc(count * sizeof(double), "scanp");
 	bu_cv_ntohd((unsigned char *)scanp, cp + (4+4), count);
@@ -947,27 +948,27 @@ nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long i
      * Need to know width of data points, may be 3, or 4-tuples.
      * The vector times matrix calculation can't be done in place.
      */
-    tmp = (double *)bu_malloc(count * sizeof(double), "rt_nmg_import4_fastf tmp[]");
+    tmp = (double *)bu_malloc(count * sizeof(double), "nmg_import4_fastf tmp[]");
     bu_cv_ntohd((unsigned char *)tmp, cp + (4+4), count);
 
     switch (RT_NURB_EXTRACT_COORDS(pt_type)) {
 	case 3:
-	    if (RT_NURB_IS_PT_RATIONAL(pt_type)) bu_bomb("rt_nmg_import4_fastf() Rational 3-tuple?\n");
+	    if (RT_NURB_IS_PT_RATIONAL(pt_type)) bu_bomb("nmg_import4_fastf() Rational 3-tuple?\n");
 	    for (count -= 3; count >= 0; count -= 3) {
 		MAT4X3PNT(&ret[count], mat, &tmp[count]);
 	    }
 	    break;
 	case 4:
-	    if (!RT_NURB_IS_PT_RATIONAL(pt_type)) bu_bomb("rt_nmg_import4_fastf() non-rational 4-tuple?\n");
+	    if (!RT_NURB_IS_PT_RATIONAL(pt_type)) bu_bomb("nmg_import4_fastf() non-rational 4-tuple?\n");
 	    for (count -= 4; count >= 0; count -= 4) {
 		MAT4X4PNT(&ret[count], mat, &tmp[count]);
 	    }
 	    break;
 	default:
-	    bu_bomb("rt_nmg_import4_fastf() unsupported # of coords in ctl_point\n");
+	    bu_bomb("nmg_import4_fastf() unsupported # of coords in ctl_point\n");
     }
 
-    bu_free(tmp, "rt_nmg_import4_fastf tmp[]");
+    bu_free(tmp, "nmg_import4_fastf tmp[]");
 
     return ret;
 }
@@ -1209,7 +1210,7 @@ nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t **p
 	    } else bu_log("bad loopuse up, index=%d, kind=%d\n", up_index, up_kind);
 	    INDEXL_HD(d, lu, down_hd, lu->down_hd);
 	    if (lu->down_hd.forw == BU_LIST_NULL)
-		bu_bomb("rt_nmg_idisk: null loopuse down_hd.forw\n");
+		bu_bomb("nmg_idisk: null loopuse down_hd.forw\n");
 	    NMG_CK_LOOP(lu->l_p);
 	}
 	    return 0;
@@ -1427,21 +1428,120 @@ nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t **p
 	}
 	    return 0;
     }
-    bu_log("rt_nmg_idisk kind=%d unknown\n", ecnt[idx].kind);
+    bu_log("nmg_idisk kind=%d unknown\n", ecnt[idx].kind);
     return -1;
 }
 #undef INDEX
 #undef INDEXL
 
+/**
+ * Import an NMG from the database format to the internal format.
+ * Apply modeling transformations as well.
+ *
+ * Special subscripts are used in the disk file:
+ * -1 indicates a pointer to the rt_list structure which
+ * heads a linked list, and is not the first struct element.
+ * 0 indicates that a null pointer should be used.
+ */
+static struct model *
+nmg_import4(const struct bu_external *ep, const fastf_t *mat)
+{
+    struct model *m;
+    union record *rp;
+    int kind_counts[NMG_N_KINDS];
+    unsigned char *cp;
+    uint32_t **real_ptrs;
+    uint32_t **ptrs;
+    struct nmg_exp_counts *ecnt;
+    int i;
+    int maxindex;
+    int kind;
+    static uint32_t bad_magic = 0x999;
+
+    BU_CK_EXTERNAL(ep);
+    rp = (union record *)ep->ext_buf;
+    /* Check record type */
+    if (rp->u_id != DBID_NMG) {
+	bu_log("nmg_import4: defective record\n");
+	return NULL;
+    }
+
+    /*
+     * Check for proper version.
+     * In the future, this will be the backwards-compatibility hook.
+     */
+    if (rp->nmg.N_version != DISK_MODEL_VERSION) {
+	bu_log("nmg_import4:  expected NMG '.g' format version %d, got version %d, aborting.\n",
+	       DISK_MODEL_VERSION,
+	       rp->nmg.N_version);
+	return NULL;
+    }
+
+    /* Obtain counts of each kind of structure */
+    maxindex = 1;
+    for (kind = 0; kind < NMG_N_KINDS; kind++) {
+	kind_counts[kind] = bu_ntohl(*(uint32_t*)(rp->nmg.N_structs+4*kind), 0, UINT_MAX - 1);
+	maxindex += kind_counts[kind];
+    }
+
+    /* Collect overall new subscripts, and structure-specific indices */
+    ecnt = (struct nmg_exp_counts *)bu_calloc(maxindex+3,
+					      sizeof(struct nmg_exp_counts), "ecnt[]");
+    real_ptrs = (uint32_t **)bu_calloc(maxindex+3,
+				       sizeof(uint32_t *), "ptrs[]");
+    /* So that indexing [-1] gives an appropriately bogus magic # */
+    ptrs = real_ptrs+1;
+    ptrs[-1] = &bad_magic;		/* [-1] gives bad magic */
+    ptrs[0] = NULL;	/* [0] gives NULL */
+    ptrs[maxindex] = &bad_magic;	/* [maxindex] gives bad magic */
+    ptrs[maxindex+1] = &bad_magic;	/* [maxindex+1] gives bad magic */
+
+    /* Allocate storage for all the NMG structs, in ptrs[] */
+    m = nmg_ialloc(ptrs, ecnt, kind_counts);
+
+    /* Locate the variably sized fastf_t arrays.  ecnt[] has room. */
+    cp = (unsigned char *)(rp+1);	/* start at first granule in */
+    nmg_i2alloc(ecnt, cp, kind_counts);
+
+    /* Import each structure, in turn */
+    for (i=1; i < maxindex; i++) {
+	/* If we made it to the last kind, stop.  Nothing follows */
+	if (ecnt[i].kind == NMG_KIND_DOUBLE_ARRAY) break;
+	if (nmg_idisk((void *)(ptrs[i]), (void *)cp,
+			 ecnt, i, ptrs, mat, (unsigned char *)(rp+1)) < 0)
+	    return NULL;	/* FAIL */
+	cp += nmg_disk_sizes[ecnt[i].kind];
+    }
+
+    /* XXX The bounding box routines need a tolerance.
+     * XXX This is sheer guesswork here.
+     * As long as this NMG is going to be turned into vlist, or
+     * handed off to the boolean evaluator, any non-zero numbers are fine.
+     */
+    struct bn_tol tol;
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-6;
+    tol.para = 1 - tol.perp;
+
+    /* Recompute all bounding boxes in model */
+    nmg_rebound(m, &tol);
+
+    bu_free((char *)ecnt, "ecnt[]");
+    bu_free((char *)real_ptrs, "ptrs[]");
+
+    return m;			/* OK */
+}
 
 struct model *
-nmg_import(struct bu_external *ep, const mat_t mat, int ver)
+nmg_import(const struct bu_external *ep, const mat_t mat, int ver)
 {
     if (!ep || !(ver == 4 || ver == 5))
 	return NULL;
 
     if (ver == 4)
-	return NULL;
+	return nmg_import4(ep, mat);
 
     struct model *m;
     struct bn_tol tol;
@@ -1523,6 +1623,220 @@ nmg_import(struct bu_external *ep, const mat_t mat, int ver)
     return m;
 }
 
+/**
+ * The name is added by the caller, in the usual place.
+ *
+ * When the "compact" flag is set, bounding boxes from (at present)
+ * nmgregion_a
+ * shell_a
+ * loop_a
+ * are not converted for storage in the database.
+ * They should be re-generated at import time.
+ *
+ * If the "compact" flag is not set, then the NMG model is saved,
+ * verbatim.
+ *
+ * The overall layout of the on-disk NMG is like this:
+ *
+ *	+---------------------------+
+ *	|  NMG header granule       |
+ *	|    solid name             |
+ *	|    # additional granules  |
+ *	|    format version         |
+ *	|    kind_count[] array     |
+ *	+---------------------------+
+ *	|                           |
+ *	|                           |
+ *	~     N_count granules      ~
+ *	~              :            ~
+ *	|              :            |
+ *	|                           |
+ *	+---------------------------+
+ *
+ * In the additional granules, all structures of "kind" 0 (model) go
+ * first, followed by all structures of kind 1 (nmgregion), etc.  As
+ * each structure is output, it is assigned a subscript number,
+ * starting with #1 for the model structure.  All pointers are
+ * converted to the matching subscript numbers.  An on-disk subscript
+ * of zero indicates a corresponding NULL pointer in memory.  All
+ * integers are converted to network (Big-Endian) byte order.  All
+ * floating point values are stored in network (Big-Endian IEEE)
+ * format.
+ */
+static int
+nmg_export4(struct bu_external *ep, struct model *m, double local2mm)
+{
+    union record *rp;
+    struct nmg_struct_counts cntbuf;
+    uint32_t **ptrs;
+    struct nmg_exp_counts *ecnt;
+    int i;
+    int subscript;
+    int kind_counts[NMG_N_KINDS];
+    void *disk_arrays[NMG_N_KINDS];
+    int additional_grans;
+    int tot_size;
+    int kind;
+    char *cp;
+    int double_count;
+    int fastf_byte_count;
+
+    NMG_CK_MODEL(m);
+
+    /* As a by-product, this fills in the ptrs[] array! */
+    memset((char *)&cntbuf, 0, sizeof(cntbuf));
+    ptrs = nmg_m_struct_count(&cntbuf, m);
+
+    /* Collect overall new subscripts, and structure-specific indices */
+    ecnt = (struct nmg_exp_counts *)bu_calloc(m->maxindex+1,
+					      sizeof(struct nmg_exp_counts), "ecnt[]");
+    for (i = 0; i < NMG_N_KINDS; i++)
+	kind_counts[i] = 0;
+    subscript = 1;		/* must be larger than DISK_INDEX_NULL */
+    double_count = 0;
+    fastf_byte_count = 0;
+    for (i=0; i < m->maxindex; i++) {
+	if (ptrs[i] == NULL) {
+	    ecnt[i].kind = -1;
+	    continue;
+	}
+	kind = nmg_magic_to_kind(*(ptrs[i]));
+	ecnt[i].per_struct_index = kind_counts[kind]++;
+	ecnt[i].kind = kind;
+	/* Handle the variable sized kinds */
+	switch (kind) {
+	    case NMG_KIND_FACE_G_SNURB: {
+		struct face_g_snurb *fg;
+		int ndouble;
+		fg = (struct face_g_snurb *)ptrs[i];
+		ecnt[i].first_fastf_relpos = kind_counts[NMG_KIND_DOUBLE_ARRAY];
+		kind_counts[NMG_KIND_DOUBLE_ARRAY] += 3;
+		ndouble =  fg->u.k_size +
+		    fg->v.k_size +
+		    fg->s_size[0] * fg->s_size[1] *
+		    RT_NURB_EXTRACT_COORDS(fg->pt_type);
+		double_count += ndouble;
+		ecnt[i].byte_offset = fastf_byte_count;
+		fastf_byte_count += 3*(4+4) + 8*ndouble;
+	    }
+		break;
+	    case NMG_KIND_EDGE_G_CNURB: {
+		struct edge_g_cnurb *eg;
+		int ndouble;
+		eg = (struct edge_g_cnurb *)ptrs[i];
+		ecnt[i].first_fastf_relpos = kind_counts[NMG_KIND_DOUBLE_ARRAY];
+		/* If order is zero, no knots or ctl_points */
+		if (eg->order == 0) break;
+		kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
+		ndouble = eg->k.k_size + eg->c_size *
+		    RT_NURB_EXTRACT_COORDS(eg->pt_type);
+		double_count += ndouble;
+		ecnt[i].byte_offset = fastf_byte_count;
+		fastf_byte_count += 2*(4+4) + 8*ndouble;
+	    }
+		break;
+	}
+    }
+
+    kind_counts[NMG_KIND_NMGREGION_A] = 0;
+    kind_counts[NMG_KIND_SHELL_A] = 0;
+    kind_counts[NMG_KIND_LOOP_A] = 0;
+
+    /* Assign new subscripts to ascending guys of same kind */
+    for (kind = 0; kind < NMG_N_KINDS; kind++) {
+	if ((kind == NMG_KIND_NMGREGION_A ||
+			kind == NMG_KIND_SHELL_A ||
+			kind == NMG_KIND_LOOP_A)) {
+	    /*
+	     * Don't assign any new subscripts for them.
+	     * Instead, use DISK_INDEX_NULL, yielding null ptrs.
+	     */
+	    for (i=0; i < m->maxindex; i++) {
+		if (ptrs[i] == NULL) continue;
+		if (ecnt[i].kind != kind) continue;
+		ecnt[i].new_subscript = DISK_INDEX_NULL;
+	    }
+	    continue;
+	}
+	for (i=0; i < m->maxindex; i++) {
+	    if (ptrs[i] == NULL) continue;
+	    if (ecnt[i].kind != kind) continue;
+	    ecnt[i].new_subscript = subscript++;
+	}
+    }
+    /* Tack on the variable sized fastf_t arrays at the end */
+    nmg_cur_fastf_subscript = subscript;
+    subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
+
+    /* Sanity checking */
+    for (i=0; i < m->maxindex; i++) {
+	if (ptrs[i] == NULL) continue;
+	if (nmg_index_of_struct(ptrs[i]) != i) {
+	    bu_log("***ERROR, ptrs[%d]->index = %d\n",
+		   i, nmg_index_of_struct((uint32_t *)ptrs[i]));
+	}
+	if (nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind) {
+	    bu_log("@@@ERROR, ptrs[%d] kind(%d) != %d\n",
+		   i, nmg_magic_to_kind(*ptrs[i]),
+		   ecnt[i].kind);
+	}
+    }
+
+    tot_size = 0;
+    for (i = 0; i < NMG_N_KINDS; i++) {
+	if (kind_counts[i] <= 0) {
+	    disk_arrays[i] = ((void *)0);
+	    continue;
+	}
+	tot_size += kind_counts[i] * nmg_disk_sizes[i];
+    }
+    /* Account for variable sized double arrays, at the end */
+    tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) +
+	double_count * 8;
+
+    ecnt[0].byte_offset = subscript; /* implicit arg to reindex() */
+
+    /* TODO - needing the size of union record is chaining us to the librt
+     * definition of a db4 record - is there any solution to this that could
+     * avoid the need for knowledge of the definition of union record? */
+    additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = (1 + additional_grans) * sizeof(union record);
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "nmg external");
+    rp = (union record *)ep->ext_buf;
+    rp->nmg.N_id = DBID_NMG;
+    rp->nmg.N_version = DISK_MODEL_VERSION;
+    *(uint32_t *)rp->nmg.N_count = htonl((uint32_t)additional_grans);
+
+    /* Record counts of each kind of structure */
+    for (kind = 0; kind < NMG_N_KINDS; kind++) {
+	*(uint32_t *)(rp->nmg.N_structs+4*kind) = htonl(kind_counts[kind]);
+    }
+
+    cp = (char *)(rp+1);	/* advance one granule */
+    for (i=0; i < NMG_N_KINDS; i++) {
+	disk_arrays[i] = (void *)cp;
+	cp += kind_counts[i] * nmg_disk_sizes[i];
+    }
+    /* disk_arrays[NMG_KIND_DOUBLE_ARRAY] is set properly because it is last */
+    nmg_fastf_p = (unsigned char *)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
+
+    /* Convert all the structures to their disk versions */
+    for (i = m->maxindex-1; i >= 0; i--) {
+	if (ptrs[i] == NULL) continue;
+	kind = ecnt[i].kind;
+	if (kind_counts[kind] <= 0) continue;
+	nmg_edisk((void *)(disk_arrays[kind]),
+		     (void *)(ptrs[i]), ecnt, i, local2mm);
+    }
+
+    bu_free((void *)ptrs, "ptrs[]");
+    bu_free((void *)ecnt, "ecnt[]");
+
+    return 0;
+}
+
+
 
 int
 nmg_export(struct bu_external *ep, struct model *m, double local2mm, int ver)
@@ -1533,8 +1847,7 @@ nmg_export(struct bu_external *ep, struct model *m, double local2mm, int ver)
 	return -1;
 
     if (ver == 4)
-	// TODO - old export
-	return -1;
+	return nmg_export4(ep, m, local2mm);
 
     struct nmg_struct_counts cntbuf;
     struct nmg_exp_counts *ecnt;

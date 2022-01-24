@@ -42,7 +42,6 @@ __BEGIN_DECLS
 	bu_bomb("bad magic\n"); \
     }
 
-
 /* ----------------------------------------------------------------------
  *
  * Definitions for the binary, machine-independent format of the NMG
@@ -318,7 +317,7 @@ struct disk_double_array {
 
 
 NMG_EXPORT extern struct model *
-nmg_import(struct bu_external *ep, const mat_t mat, int ver);
+nmg_import(const struct bu_external *ep, const mat_t mat, int ver);
 
 NMG_EXPORT extern int
 nmg_export(struct bu_external *ep, struct model *m, double local2mm, int ver);
