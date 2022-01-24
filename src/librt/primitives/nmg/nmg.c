@@ -65,7 +65,7 @@ struct ef_data {
     struct edgeuse *eu;
 };
 
-HIDDEN void
+static void
 segs_error(const char *str) {
     bu_log("%s\n", str);
     longjmp(nmg_longjump_env, -1);
@@ -158,7 +158,7 @@ rt_nmg_print(const struct soltab *stp)
     nmg_pr_m(m);
 }
 
-HIDDEN void
+static void
 visitor(uint32_t *l_p, void *tbl, int UNUSED(unused))
 {
     (void)bu_ptbl_ins_unique((struct bu_ptbl *)tbl, (long *)l_p);
@@ -167,7 +167,7 @@ visitor(uint32_t *l_p, void *tbl, int UNUSED(unused))
 /**
  * Add an element provided by nmg_visit to a bu_ptbl struct.
  */
-HIDDEN void
+static void
 build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl, struct bu_list *vlfree)
 {
     struct loopuse *lu;
@@ -255,7 +255,7 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl, struct bu_list *vlfree)
  * If a_tbl and next_tbl have an element in common, return it.
  * Otherwise return a NULL pointer.
  */
-HIDDEN long *
+static long *
 common_topo(struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl)
 {
     long **p;
@@ -268,7 +268,7 @@ common_topo(struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl)
     return (long *)NULL;
 }
 
-HIDDEN void
+static void
 pl_ray(struct ray_data *rd)
 {
     FILE *fp;
@@ -344,7 +344,7 @@ pl_ray(struct ray_data *rd)
 
 
 
-HIDDEN void
+static void
 unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl, struct bu_list *hd, struct ray_data *rd)
 {
 
@@ -385,7 +385,7 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
 }
 
 
-HIDDEN int
+static int
 check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
 {
     struct hitmiss *a_hit;
@@ -498,7 +498,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd, struct bu_list *vlfree)
 
 
 
-HIDDEN void
+static void
 print_seg_list(struct seg *seghead, int seg_count, char *s)
 {
     struct seg *seg_p;
@@ -573,7 +573,7 @@ print_seg_list(struct seg *seghead, int seg_count, char *s)
  */
 
 
-HIDDEN void
+static void
 set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struct application *ap)
 /* The segment we're building */
 /* The input hit point */
@@ -611,7 +611,7 @@ set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struc
 }
 
 
-HIDDEN void
+static void
 set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 /* The segment we're building */
 /* The input hit point */
@@ -653,7 +653,7 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 }
 
 
-HIDDEN int
+static int
 state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *UNUSED(tol))
 /* intersection w/ ray */
 /* The segment we're building */
@@ -705,7 +705,7 @@ state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 }
 
 
-HIDDEN int
+static int
 state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *UNUSED(tol))
 /* intersection w/ ray */
 /* The segment we're building */
@@ -752,7 +752,7 @@ state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 }
 
 
-HIDDEN int
+static int
 state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
 /* intersection w/ ray */
 /* The segment we're building */
@@ -846,7 +846,7 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 }
 
 
-HIDDEN int
+static int
 state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
 /* intersection w/ ray */
 /* The segment we're building */
@@ -947,7 +947,7 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 }
 
 
-HIDDEN int
+static int
 state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
 /* intersection w/ ray */
 /* The segment we're building */
@@ -1032,7 +1032,7 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
     return ret_val;
 }
 
-HIDDEN int
+static int
 state5and6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol, int ret_val_7)
 {
     int ret_val = -1;
@@ -1118,7 +1118,7 @@ state5and6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmi
     return ret_val;
 }
 
-HIDDEN int
+static int
 state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
 /* intersection w/ ray */
 /* The segment we're building */
@@ -1130,7 +1130,7 @@ state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 }
 
 
-HIDDEN int
+static int
 state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
 /* intersection w/ ray */
 /* The segment we're building */
@@ -1152,7 +1152,7 @@ static int (*state_table[7])(struct seg *, struct seg **, int *, struct hitmiss 
 };
 
 
-HIDDEN int
+static int
 nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, struct soltab *stp)
 
 
@@ -1613,7 +1613,7 @@ const char rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
  * Given the magic number for an NMG structure, return the
  * manifest constant which identifies that structure kind.
  */
-HIDDEN int
+static int
 rt_nmg_magic_to_kind(uint32_t magic)
 {
     switch (magic) {
@@ -1851,7 +1851,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
  * 0 substitute a null pointer when imported.
  * -1 substitute pointer to within-struct list head when imported.
  */
-HIDDEN int
+static int
 reindex(void *p, struct nmg_exp_counts *ecnt)
 {
     long idx = 0;
@@ -1903,7 +1903,7 @@ reindex(void *p, struct nmg_exp_counts *ecnt)
  *
  * Scale geometry by 'local2mm'
  */
-HIDDEN void
+static void
 rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double local2mm)
 /* base of disk array */
 /* ptr to in-memory structure */
@@ -2308,7 +2308,7 @@ rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double lo
  *
  * Transform geometry by given matrix.
  */
-HIDDEN int
+static int
 rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t **ptrs, const fastf_t *mat, const unsigned char *basep)
 /* ptr to in-memory structure */
 /* base of disk array */
@@ -2734,7 +2734,7 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
  * preparation for the importation operation, using the GET_xxx()
  * macros, so that m->maxindex, etc., are all appropriately handled.
  */
-HIDDEN struct model *
+static struct model *
 rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 {
     struct model *m = (struct model *)0;
@@ -2933,7 +2933,7 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
  * will be used, so that nmg_keg(), etc., can kill each array as
  * appropriate.
  */
-HIDDEN void
+static void
 rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts)
 {
     int kind;
@@ -2978,7 +2978,7 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts)
  * heads a linked list, and is not the first struct element.
  * 0 indicates that a null pointer should be used.
  */
-HIDDEN int
+static int
 rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, int rebound, const struct bn_tol *tol)
 {
     struct model *m;
@@ -3117,7 +3117,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
  * floating point values are stored in network (Big-Endian IEEE)
  * format.
  */
-HIDDEN int
+static int
 rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, int compact)
 {
     struct model *m;
@@ -3344,90 +3344,22 @@ rt_nmg_import5(struct rt_db_internal *ip,
 	       const mat_t mat,
 	       const struct db_i *dbip)
 {
-    struct model *m;
-    struct bn_tol tol;
-    int maxindex;
-    int kind;
-    int kind_counts[NMG_N_KINDS];
-    unsigned char *dp;		/* data pointer */
-    void *startdata;	/* data pointer */
-    uint32_t **real_ptrs;
-    uint32_t **ptrs;
-    struct nmg_exp_counts *ecnt;
-    int i;
-    static uint32_t bad_magic = 0x999;
 
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    dp = (unsigned char *)ep->ext_buf;
-
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
-
-    {
-	int version;
-	version = bu_ntohl(*(uint32_t*)dp, 0, UINT_MAX - 1);
-	dp+= SIZEOF_NETWORK_LONG;
-	if (version != DISK_MODEL_VERSION) {
-	    bu_log("rt_nmg_import4: expected NMG '.g' format version %d, got %d, aborting nmg solid import\n",
-		   DISK_MODEL_VERSION, version);
-	    return -1;
-	}
-    }
-    maxindex = 1;
-    for (kind =0; kind < NMG_N_KINDS; kind++) {
-	kind_counts[kind] = bu_ntohl(*(uint32_t*)dp, 0, UINT_MAX - 1);
-	dp+= SIZEOF_NETWORK_LONG;
-	maxindex += kind_counts[kind];
-    }
-
-    startdata = dp;
-
-    /* Collect overall new subscripts, and structure-specific indices */
-    ecnt = (struct nmg_exp_counts *) bu_calloc(maxindex+3,
-					       sizeof(struct nmg_exp_counts), "ecnt[]");
-    real_ptrs = (uint32_t **)bu_calloc(maxindex+3, sizeof(uint32_t *), "ptrs[]");
-    /* some safety checking.  Indexing by, -1, 0, n+1, N+2 give interesting results */
-    ptrs = real_ptrs+1;
-    ptrs[-1] = &bad_magic;
-    ptrs[0] = NULL;
-    ptrs[maxindex] = &bad_magic;
-    ptrs[maxindex+1] = &bad_magic;
-
-    m = rt_nmg_ialloc(ptrs, ecnt, kind_counts);
-
-    rt_nmg_i2alloc(ecnt, dp, kind_counts);
-
-    /* Now import each structure, in turn */
-    for (i=1; i < maxindex; i++) {
-	/* We know that the DOUBLE_ARRAY is the last thing to process */
-	if (ecnt[i].kind == NMG_KIND_DOUBLE_ARRAY) break;
-	if (rt_nmg_idisk((void *)(ptrs[i]), (void *)dp, ecnt,
-			 i, ptrs, mat, (unsigned char *)startdata) < 0) {
-	    return -1;
-	}
-	dp += rt_nmg_disk_sizes[ecnt[i].kind];
-    }
-
-    /* Face min_pt and max_pt are not stored, so this is mandatory. */
-    nmg_rebound(m, &tol);
-
     RT_CK_DB_INTERNAL(ip);
+    struct model *m = nmg_import(ep, mat, 5);
+
+    if (RT_G_DEBUG || !nmg_debug) {
+	nmg_vmodel(m);
+    }
+
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_NMG;
     ip->idb_meth = &OBJ[ ID_NMG ];
     ip->idb_ptr = (void *)m;
-    NMG_CK_MODEL(m);
-    bu_free((char *)ecnt, "ecnt[]");
-    bu_free((char *)real_ptrs, "ptrs[]");
 
-    if (RT_G_DEBUG || nmg_debug) {
-	nmg_vmodel(m);
-    }
     return 0;		/* OK */
 }
 
@@ -3463,167 +3395,15 @@ rt_nmg_export5(
     const struct db_i *dbip)
 {
     struct model *m;
-    unsigned char *dp;
-    uint32_t **ptrs;
-    struct nmg_struct_counts cntbuf;
-    struct nmg_exp_counts *ecnt;
-    int kind_counts[NMG_N_KINDS];
-    void *disk_arrays[NMG_N_KINDS];
-    int tot_size;
-    int kind;
-    int double_count;
-    int i;
-    int subscript, fastf_byte_count;
-
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_NMG) return -1;
     m = (struct model *)ip->idb_ptr;
-    NMG_CK_MODEL(m);
 
-    memset((char *)&cntbuf, 0, sizeof(cntbuf));
-    ptrs = nmg_m_struct_count(&cntbuf, m);
-
-    ecnt = (struct nmg_exp_counts *)bu_calloc(m->maxindex+1,
-					      sizeof(struct nmg_exp_counts), "ecnt[]");
-    for (i=0; i<NMG_N_KINDS; i++) {
-	kind_counts[i] = 0;
-    }
-    subscript = 1;
-    double_count = 0;
-    fastf_byte_count = 0;
-    for (i=0; i< m->maxindex; i++) {
-	if (ptrs[i] == NULL) {
-	    ecnt[i].kind = -1;
-	    continue;
-	}
-
-	kind = rt_nmg_magic_to_kind(*(ptrs[i]));
-	ecnt[i].per_struct_index = kind_counts[kind]++;
-	ecnt[i].kind = kind;
-
-	/*
-	 * SNURB and CNURBS are variable sized and as such need
-	 * special handling
-	 */
-	if (kind == NMG_KIND_FACE_G_SNURB) {
-	    struct face_g_snurb *fg;
-	    int ndouble;
-	    fg = (struct face_g_snurb *)ptrs[i];
-	    ecnt[i].first_fastf_relpos = kind_counts[NMG_KIND_DOUBLE_ARRAY];
-	    kind_counts[NMG_KIND_DOUBLE_ARRAY] += 3;
-	    ndouble = fg->u.k_size +
-		fg->v.k_size +
-		fg->s_size[0] * fg->s_size[1] *
-		RT_NURB_EXTRACT_COORDS(fg->pt_type);
-	    double_count += ndouble;
-	    ecnt[i].byte_offset = fastf_byte_count;
-	    fastf_byte_count += 3*(4*4) + 89*ndouble;
-	} else if (kind == NMG_KIND_EDGE_G_CNURB) {
-	    struct edge_g_cnurb *eg;
-	    int ndouble;
-	    eg = (struct edge_g_cnurb *)ptrs[i];
-	    ecnt[i].first_fastf_relpos =
-		kind_counts[NMG_KIND_DOUBLE_ARRAY];
-	    if (eg->order != 0) {
-		kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
-		ndouble = eg->k.k_size +eg->c_size *
-		    RT_NURB_EXTRACT_COORDS(eg->pt_type);
-		double_count += ndouble;
-		ecnt[i].byte_offset = fastf_byte_count;
-		fastf_byte_count += 2*(4+4) + 8*ndouble;
-	    }
-	}
-    }
-    /* Compacting wanted */
-    kind_counts[NMG_KIND_NMGREGION_A] = 0;
-    kind_counts[NMG_KIND_SHELL_A] = 0;
-    kind_counts[NMG_KIND_LOOP_A] = 0;
-
-    /* Assign new subscripts to ascending struts of the same kind */
-    for (kind=0; kind < NMG_N_KINDS; kind++) {
-	/* Compacting */
-	if (kind == NMG_KIND_NMGREGION_A ||
-	    kind == NMG_KIND_SHELL_A ||
-	    kind == NMG_KIND_LOOP_A) {
-	    for (i=0; i<m->maxindex; i++) {
-		if (ptrs[i] == NULL) continue;
-		if (ecnt[i].kind != kind) continue;
-		ecnt[i].new_subscript = DISK_INDEX_NULL;
-	    }
-	    continue;
-	}
-
-	for (i=0; i< m->maxindex;i++) {
-	    if (ptrs[i] == NULL) continue;
-	    if (ecnt[i].kind != kind) continue;
-	    ecnt[i].new_subscript = subscript++;
-	}
-    }
-    /* Tack on the variable sized fastf_t arrays at the end */
-    rt_nmg_cur_fastf_subscript = subscript;
-    subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
-
-    /* Now do some checking to make sure the world is not totally mad */
-    for (i=0; i<m->maxindex; i++) {
-	if (ptrs[i] == NULL) continue;
-
-	if (nmg_index_of_struct(ptrs[i]) != i) {
-	    bu_log("***ERROR, ptrs[%d]->index = %d\n",
-		   i, nmg_index_of_struct(ptrs[i]));
-	}
-	if (rt_nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind) {
-	    bu_log("***ERROR, ptrs[%d] kind(%d) != %d\n",
-		   i, rt_nmg_magic_to_kind(*ptrs[i]),
-		   ecnt[i].kind);
-	}
-
-    }
-
-    tot_size = 0;
-    for (i=0; i< NMG_N_KINDS; i++) {
-	if (kind_counts[i] <= 0) {
-	    disk_arrays[i] = ((void *)0);
-	    continue;
-	}
-	tot_size += kind_counts[i] * rt_nmg_disk_sizes[i];
-    }
-
-    /* Account for variable sized double arrays, at the end */
-    tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) +
-	double_count*8;
-
-    ecnt[0].byte_offset = subscript; /* implicit arg to reindex() */
-    tot_size += SIZEOF_NETWORK_LONG*(NMG_N_KINDS + 1); /* one for magic */
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = tot_size;
-    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "nmg external5");
-    dp = ep->ext_buf;
-    *(uint32_t *)dp = htonl(DISK_MODEL_VERSION);
-    dp+=SIZEOF_NETWORK_LONG;
 
-    for (kind=0; kind <NMG_N_KINDS; kind++) {
-	*(uint32_t *)dp = htonl(kind_counts[kind]);
-	dp+=SIZEOF_NETWORK_LONG;
-    }
-    for (i=0; i< NMG_N_KINDS; i++) {
-	disk_arrays[i] = dp;
-	dp += kind_counts[i] * rt_nmg_disk_sizes[i];
-    }
-    rt_nmg_fastf_p = (unsigned char*)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
-
-    for (i = m->maxindex-1;i >=0; i--) {
-	if (ptrs[i] == NULL) continue;
-	kind = ecnt[i].kind;
-	if (kind_counts[kind] <= 0) continue;
-	rt_nmg_edisk((void *)(disk_arrays[kind]),
-		     (void *)(ptrs[i]), ecnt, i, local2mm);
-    }
-
-    bu_free((char *)ptrs, "ptrs[]");
-    bu_free((char *)ecnt, "ecnt[]");
-    return 0;		/* OK */
+    return nmg_export(ep, m, local2mm, 5);
 }
 
 
@@ -3962,7 +3742,7 @@ struct poly_face
 };
 
 
-HIDDEN void
+static void
 rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
 {
     struct bu_ptbl nmg_faces;
@@ -4732,7 +4512,7 @@ out:
     return ret;
 }
 
-HIDDEN int
+static int
 Shell_is_arb(struct shell *s, struct bu_ptbl *tab, struct bu_list *vlfree)
 {
     struct faceuse *fu;
@@ -5549,7 +5329,7 @@ nmg_to_poly(const struct model *m, struct rt_pg_internal *poly_int, struct bu_li
 }
 
 
-HIDDEN int
+static int
 _nmg_shell_append(struct rt_bot_internal *bot, struct bu_ptbl *nmg_vertices, struct bu_ptbl *nmg_faces, int *voffset, int *foffset)
 {
     unsigned int i;
@@ -5708,7 +5488,7 @@ nmg_bot(struct shell *s, struct bu_list *vlfree, const struct bn_tol *tol)
     return bot;
 }
 
-HIDDEN void
+static void
 _nmg_shell_tabulate(struct bu_ptbl *va, struct bu_ptbl *fa, struct shell *s, struct bu_list *vlfree)
 {
     struct bu_ptbl *nmg_vertices, *nmg_faces;

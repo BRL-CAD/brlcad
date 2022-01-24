@@ -1520,21 +1520,21 @@ nmg_import(struct bu_external *ep, const mat_t mat, int ver)
     if (nmg_debug) {
 	nmg_vmodel(m);
     }
-    return 0;		/* OK */
+    return m;
 }
 
 
-struct bu_external *
-nmg_export(struct model *m, double local2mm, int ver)
+int
+nmg_export(struct bu_external *ep, struct model *m, double local2mm, int ver)
 {
     if (!m || local2mm < 0)
-	return NULL;
+	return -1;
     if (ver != 4 && ver != 5)
-	return NULL;
+	return -1;
 
     if (ver == 4)
 	// TODO - old export
-	return NULL;
+	return -1;
 
     struct nmg_struct_counts cntbuf;
     struct nmg_exp_counts *ecnt;
@@ -1663,10 +1663,7 @@ nmg_export(struct model *m, double local2mm, int ver)
     ecnt[0].byte_offset = subscript; /* implicit arg to reindex() */
     tot_size += SIZEOF_NETWORK_LONG*(NMG_N_KINDS + 1); /* one for magic */
 
-    struct bu_external *ep;
     unsigned char *dp;
-    BU_GET(ep, struct bu_external);
-    BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = tot_size;
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "nmg external5");
     dp = ep->ext_buf;
@@ -1694,7 +1691,7 @@ nmg_export(struct model *m, double local2mm, int ver)
     bu_free((char *)ptrs, "ptrs[]");
     bu_free((char *)ecnt, "ecnt[]");
 
-    return ep;
+    return 0;
 }
 
 

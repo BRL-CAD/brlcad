@@ -320,8 +320,8 @@ struct disk_double_array {
 NMG_EXPORT extern struct model *
 nmg_import(struct bu_external *ep, const mat_t mat, int ver);
 
-NMG_EXPORT extern struct bu_external *
-nmg_export(struct model *m, double local2mm, int ver);
+NMG_EXPORT extern int
+nmg_export(struct bu_external *ep, struct model *m, double local2mm, int ver);
 
 __END_DECLS
 
