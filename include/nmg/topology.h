@@ -415,14 +415,21 @@ struct face_g_snurb {
 /* Attribute data containers - storing additional information about topological
  * elements over and above their basic geometry definitions.
  *
- * TODO - it's a bit questionable to me (CY) whether the added complexity of
- * these structures being separate entities is warranted, instead of just
- * including these fields directly in the struct definitions.  Presumably this
- * was originally done to allow applications that didn't need to store these
- * data to avoid the space overhead, but hardware constraints in 2022 are a bit
- * different than in the 1980s... Unless there's another motivation for this
- * separation I've not found yet, should look at merging these in to simplify
+ * It questionable to me (CY) whether the added complexity of these structures
+ * being separate entities is warranted, instead of just including these fields
+ * directly in the struct definitions.  Presumably this was originally done to
+ * allow applications that didn't need to store these data to avoid the space
+ * overhead, but hardware constraints in 2022 are a bit different than in the
+ * 1980s... Unless there's another motivation for this separation I've not
+ * found yet, we should just fold these into their parent structs to simplify
  * the data management logic.
+ *
+ * Unfortunately, there is a complication - the serialization logic in librt
+ * that writes NMGs out to disk has awareness of these data types.  To remove
+ * these cleanly would also mean changing the on-disk storage format of the
+ * NMG primitives, or doing some VERY careful analysis to determine if we can
+ * change the in-memory containers while still making it possible to retain
+ * the existing on-disk serialization.
  */
 
 /**
