@@ -45,6 +45,7 @@ set(LIBNMG_SOURCES
   index.c
   info.c
   inter.c
+  io.c
   manif.c
   mesh.c
   misc.c

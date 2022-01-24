@@ -122,6 +122,7 @@ __BEGIN_DECLS
 #include "nmg/visit.h"
 #include "nmg/isect.h"
 #include "nmg/check.h"
+#include "nmg/io.h"
 
 __END_DECLS
 
