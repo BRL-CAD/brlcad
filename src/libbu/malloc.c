@@ -193,7 +193,7 @@ bu_free(void *ptr, const char *str)
 	 * user time to attach the debugger. */
 	msg_sleep_time_str = getenv("BU_NIL_FREE_SLEEP_SEC");
 	if (msg_sleep_time_str) {
-	    long stime = 0;
+	    unsigned long stime = 0;
 	    char *end;
 	    errno = 0;
 	    stime = strtol(msg_sleep_time_str, &end, 10);
