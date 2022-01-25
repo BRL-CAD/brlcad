@@ -1677,10 +1677,6 @@ nmg_km(struct model *m)
  *									*
  ************************************************************************/
 
-
-/**
- * Associate point_t ("vector") coordinates with a vertex
- */
 void
 nmg_vertex_gv(struct vertex *v, const point_t pt)
 {
@@ -1707,11 +1703,6 @@ nmg_vertex_gv(struct vertex *v, const point_t pt)
     }
 }
 
-
-/**
- * a version that can take x, y, z coords and doesn't need a point
- * array.  Mostly useful for quick and dirty programs.
- */
 void
 nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
 {
@@ -1728,10 +1719,6 @@ nmg_vertex_g(register struct vertex *v, fastf_t x, fastf_t y, fastf_t z)
     nmg_vertex_gv(v, pt);
 }
 
-
-/**
- * Assign a normal vector to a vertexuse
- */
 void
 nmg_vertexuse_nv(struct vertexuse *vu, const vect_t norm)
 {

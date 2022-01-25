@@ -51,27 +51,42 @@ __BEGIN_DECLS
 #define FREE_VERTEXUSE_A_PLANE(p) NMG_FREESTRUCT(p, vertexuse_a_plane)
 #define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
 
-
-
-#define PREEXIST 1
-#define NEWEXIST 2
-
-
-#define VU_PREEXISTS(_bs, _vu) { chkidxlist((_bs), (_vu)); \
-        (_bs)->vertlist[(_vu)->index] = PREEXIST; }
-
-#define VU_NEW(_bs, _vu) { chkidxlist((_bs), (_vu)); \
-        (_bs)->vertlist[(_vu)->index] = NEWEXIST; }
-
-
+/**
+ * @brief Given a vertex \b v, set the coordinates of the vertex geometry
+ * associated with \b v to \b pt
+ *
+ * If a vertex has no associated vertex_g structure, one is created, associated
+ * with v and added to v's parent nmg model.
+ */
 NMG_EXPORT extern void nmg_vertex_gv(struct vertex *v,
                                      const point_t pt);
+
+/**
+ * @brief Given a vertex \b v, set the coordinates of the vertex geometry
+ * associated with \b v to (\b x,\b y,\b z)
+ *
+ * Works like nmg_vertex_gv, except it doesn't require the data to be in a
+ * point_t container.  (Mostly useful for quick and dirty programs.)
+ */
 NMG_EXPORT extern void nmg_vertex_g(struct vertex *v,
                                     fastf_t x,
                                     fastf_t y,
                                     fastf_t z);
+/**
+ * @brief Given a vertex use \b vu, associate a normal vector \b norm with that use
+ *
+ * If the vertexuse does not already have a vertexuse_a_plane attribute associated
+ * with it, this routine will add one.
+ *
+ * Remember that only vertexuse instances may have an associated normal -
+ * because a vertex may be used multiple times in different faces with
+ * different normals, we cannot reliably associate a normal uniquely with a
+ * vertex definition.  Only when the vertex is used in some particular
+ * application (i.e. a vertexuse as part of a face) can we associate a normal.
+ */
 NMG_EXPORT extern void nmg_vertexuse_nv(struct vertexuse *vu,
                                         const vect_t norm);
+
 
 NMG_EXPORT extern void nmg_movevu(struct vertexuse *vu,
                                   struct vertex *v);
