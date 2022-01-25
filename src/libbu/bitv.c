@@ -131,9 +131,9 @@ bu_bitv_clear(struct bu_bitv *bv)
 void
 bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
-    register bitv_t *out;
-    register const bitv_t *in;
-    register size_t words;
+    bitv_t *out;
+    const bitv_t *in;
+    size_t words;
 
     if (UNLIKELY(ov->nbits != iv->nbits))
 	bu_bomb("bu_bitv_or: length mis-match");
@@ -154,9 +154,9 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
 void
 bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
-    register bitv_t *out;
-    register const bitv_t *in;
-    register size_t words;
+    bitv_t *out;
+    const bitv_t *in;
+    size_t words;
 
     if (UNLIKELY(ov->nbits != iv->nbits))
 	bu_bomb("bu_bitv_and: length mis-match");
@@ -175,10 +175,10 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
 
 
 void
-bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
+bu_bitv_vls(struct bu_vls *v, const struct bu_bitv *bv)
 {
     int seen = 0;
-    register size_t i;
+    size_t i;
     size_t len;
 
     BU_CK_VLS(v);
@@ -202,7 +202,7 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
 
 
 void
-bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
+bu_pr_bitv(const char *str, const struct bu_bitv *bv)
 {
     struct bu_vls v = BU_VLS_INIT_ZERO;
 
@@ -331,7 +331,7 @@ ERROR_RETURN:
 
 
 struct bu_bitv *
-bu_bitv_dup(register const struct bu_bitv *bv)
+bu_bitv_dup(const struct bu_bitv *bv)
 {
     struct bu_bitv *bv2;
 
