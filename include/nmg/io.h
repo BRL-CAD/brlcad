@@ -35,6 +35,36 @@
 
 __BEGIN_DECLS
 
+#define V4_NAMESIZE 16
+struct nmg_rec {
+    char        N_id;                   /* DBID_NMG */
+    char        N_version;              /* Version indicator */
+    char        N_name[V4_NAMESIZE];
+    char        N_pad2[2];              /* neatness */
+    unsigned char       N_count[4];     /* # additional granules */
+    unsigned char       N_structs[26*4];/* # of structs needed */
+}; /* struct nmg_rec */
+
+/* The following is a "stand-in" for the librt v4 record union - we need only
+ * the nmg form of that union, so rather than pull in the full librt header
+ * (which breaks separation and defines a lot of things we don't otherwise
+ * need) we define just the part used for NMG I/O as an nmg_record union using
+ * the same nmg_rec struct used by db4.h.
+ *
+ * Note that there is an additional wrinkle here - because the v4 export
+ * routine uses the size of the librt union record, the v4 version of export
+ * must know the caller's sizeof() value for union record in order to do the
+ * math correctly.  We're deliberately NOT defining a union identical to that
+ * in librt because we don't have knowledge of all the librt types, but that
+ * also means there is zero guarantee the sizeof() calculations on the two
+ * unions will match.  Since this logic was written with the librt sizeof()
+ * result in mind, we need to use that size, and NOT the size of this cut-down
+ * form of the union, when doing that calculation.
+ */
+union nmg_record {
+    struct nmg_rec nmg;
+};
+
 #define NMG_CK_DISKMAGIC(_cp, _magic)	\
     if (bu_ntohl(*(uint32_t*)_cp, 0, UINT_MAX - 1) != _magic) { \
 	bu_log("NMG_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
@@ -316,8 +346,10 @@ struct disk_double_array {
 #define NMG_N_KINDS                26
 
 
+/* The last parameter is either sizeof(union record) (for v4 .g files) or
+ * 0 (for v5 and later.) */
 NMG_EXPORT extern struct model *
-nmg_import(const struct bu_external *ep, const mat_t mat, int ver);
+nmg_import(const struct bu_external *ep, const mat_t mat, int record_sizeof);
 
 NMG_EXPORT extern int
 nmg_export(struct bu_external *ep, struct model *m, double local2mm, int ver);

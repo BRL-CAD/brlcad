@@ -1908,7 +1908,7 @@ rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     nmg_vmodel(m);
 
     /* The "compact" flag is used to save space in the database */
-    return nmg_export(ep, m, local2mm, 4);
+    return nmg_export(ep, m, local2mm, sizeof(union record));
 }
 
 
@@ -1928,7 +1928,7 @@ rt_nmg_export5(
 
     BU_CK_EXTERNAL(ep);
 
-    return nmg_export(ep, m, local2mm, 5);
+    return nmg_export(ep, m, local2mm, 0);
 }
 
 

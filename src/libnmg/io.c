@@ -30,7 +30,8 @@
 #include "bu/malloc.h"
 #include "bn/tol.h"
 #include "nmg.h"
-#include "rt/db4.h" /* Needed for the definition of union record, which we call sizeof() on */
+
+#define DBID_NMG 'N' /* from db4.h */
 
 struct nmg_exp_counts {
     long new_subscript;
@@ -1447,7 +1448,7 @@ static struct model *
 nmg_import4(const struct bu_external *ep, const fastf_t *mat)
 {
     struct model *m;
-    union record *rp;
+    union nmg_record *rp;
     int kind_counts[NMG_N_KINDS];
     unsigned char *cp;
     uint32_t **real_ptrs;
@@ -1459,12 +1460,7 @@ nmg_import4(const struct bu_external *ep, const fastf_t *mat)
     static uint32_t bad_magic = 0x999;
 
     BU_CK_EXTERNAL(ep);
-    rp = (union record *)ep->ext_buf;
-    /* Check record type */
-    if (rp->u_id != DBID_NMG) {
-	bu_log("nmg_import4: defective record\n");
-	return NULL;
-    }
+    rp = (union nmg_record *)ep->ext_buf;
 
     /*
      * Check for proper version.
@@ -1664,9 +1660,9 @@ nmg_import(const struct bu_external *ep, const mat_t mat, int ver)
  * format.
  */
 static int
-nmg_export4(struct bu_external *ep, struct model *m, double local2mm)
+nmg_export4(struct bu_external *ep, struct model *m, double local2mm, int sizeof_union)
 {
-    union record *rp;
+    union nmg_record *rp;
     struct nmg_struct_counts cntbuf;
     uint32_t **ptrs;
     struct nmg_exp_counts *ecnt;
@@ -1796,14 +1792,11 @@ nmg_export4(struct bu_external *ep, struct model *m, double local2mm)
 
     ecnt[0].byte_offset = subscript; /* implicit arg to reindex() */
 
-    /* TODO - needing the size of union record is chaining us to the librt
-     * definition of a db4 record - is there any solution to this that could
-     * avoid the need for knowledge of the definition of union record? */
-    additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
+    additional_grans = (tot_size + sizeof_union-1) / sizeof_union;
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = (1 + additional_grans) * sizeof(union record);
+    ep->ext_nbytes = (1 + additional_grans) * sizeof_union;
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "nmg external");
-    rp = (union record *)ep->ext_buf;
+    rp = (union nmg_record *)ep->ext_buf;
     rp->nmg.N_id = DBID_NMG;
     rp->nmg.N_version = DISK_MODEL_VERSION;
     *(uint32_t *)rp->nmg.N_count = htonl((uint32_t)additional_grans);
@@ -1839,15 +1832,13 @@ nmg_export4(struct bu_external *ep, struct model *m, double local2mm)
 
 
 int
-nmg_export(struct bu_external *ep, struct model *m, double local2mm, int ver)
+nmg_export(struct bu_external *ep, struct model *m, double local2mm, int record_sizeof)
 {
     if (!m || local2mm < 0)
 	return -1;
-    if (ver != 4 && ver != 5)
-	return -1;
 
-    if (ver == 4)
-	return nmg_export4(ep, m, local2mm);
+    if (record_sizeof != 0)
+	return nmg_export4(ep, m, local2mm, record_sizeof);
 
     struct nmg_struct_counts cntbuf;
     struct nmg_exp_counts *ecnt;

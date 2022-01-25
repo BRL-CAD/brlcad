@@ -67,6 +67,7 @@
 #include "common.h"
 
 #include "vmath.h"  /* Needed only for the deprecated functions below using fastf_t */
+#include "nmg.h"    /* for struct nmg_rec */
 
 __BEGIN_DECLS
 
@@ -339,15 +340,6 @@ struct particle_rec {
     unsigned char	p_vrad[8];	/* radius at vertex */
     unsigned char	p_hrad[8];	/* radius at end of height */
 }; /* struct particle_rec */
-
-struct nmg_rec {
-    char	N_id;			/* DBID_NMG */
-    char	N_version;		/* Version indicator */
-    char	N_name[NAMESIZE];
-    char	N_pad2[2];		/* neatness */
-    unsigned char	N_count[4];	/* # additional granules */
-    unsigned char	N_structs[26*4];/* # of structs needed */
-}; /* struct nmg_rec */
 
 struct extr_rec	{
     char	ex_id;			/* DBID_EXTR */
