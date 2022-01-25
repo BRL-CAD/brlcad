@@ -820,9 +820,9 @@ enum ft_color {
     FT_COLOR_LIGHT_GREEN    = 11, /**< Light green color */
     FT_COLOR_LIGHT_YELLOW   = 12, /**< Light yellow color */
     FT_COLOR_LIGHT_BLUE     = 13, /**< Light blue color */
-    FT_COLOR_LIGHT_MAGENTA  = 15, /**< Light magenta color */
-    FT_COLOR_LIGHT_CYAN     = 16, /**< Light cyan color */
-    FT_COLOR_LIGHT_WHYTE    = 17  /**< Light whyte color */
+    FT_COLOR_LIGHT_MAGENTA  = 14, /**< Light magenta color */
+    FT_COLOR_LIGHT_CYAN     = 15, /**< Light cyan color */
+    FT_COLOR_LIGHT_WHYTE    = 16  /**< Light whyte color */
 };
 
 /**
