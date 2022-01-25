@@ -87,12 +87,54 @@ NMG_EXPORT extern void nmg_vertex_g(struct vertex *v,
 NMG_EXPORT extern void nmg_vertexuse_nv(struct vertexuse *vu,
                                         const vect_t norm);
 
-
+/**
+ * @brief Given a vertex use \b vu, change its vertex association from it's
+ * current vertex to \b v
+ *
+ * This has the effect of "relocating" the vertexuse to the position associated
+ * with \b v.
+ *
+ * If the vertex previously used by \b vu has no more associated vertexuse
+ * structures (i.e. the vertex is no longer referenced by the NMG model), this
+ * routine will free the old vertex structure.
+ */
 NMG_EXPORT extern void nmg_movevu(struct vertexuse *vu,
                                   struct vertex *v);
 
+/**
+ * @brief Kill vertexuse \b vu, and null out parent's vu_p.
+ *
+ * This routine is not intended for general use by applications, because it
+ * requires cooperation on the part of the caller to properly dispose of or fix
+ * the now *quite* illegal parent.  (Illegal because the parent's vu_p is
+ * NULL).  It exists primarily as a support routine for "mopping up" after
+ * nmg_klu(), nmg_keu(), nmg_ks(), and nmg_mv_vu_between_shells().
+ *
+ * It is also used in a particularly ugly way in nmg_cut_loop() and
+ * nmg_split_lu_at_vu() as part of their method for obtaining an "empty"
+ * loopuse/loop set.
+ *
+ * It is worth noting that all these callers ignore the return code, because
+ * they *all* exist to intentionally empty out the parent, but the return code
+ * is provided anyway, in the name of [CTJ] symmetry.
+ *
+ * @retval 0 If all is well in the parent
+ * @retval 1 If parent is empty, and is thus "illegal"
+ */
 NMG_EXPORT extern int nmg_kvu(struct vertexuse *vu);
 
+/**
+ * @brief Join two vertexes into one.
+ *
+ * \b v1 inherits all the vertexuses presently pointing to \b v2, and \b v2 is
+ * then destroyed.
+ *
+ * Note that this is not a "joining" in the geometric sense; the position of v1
+ * is not adjusted in any way to make it closer to that of v2.  The merge is
+ * strictly topological, and all vertexuses that referenced v2 will now have a
+ * new geometric position, if the x,y,z coordinates of v1 differed from those
+ * of v2.
+ */
 NMG_EXPORT extern void nmg_jv(struct vertex *v1,
                               struct vertex *v2);
 
@@ -123,6 +165,30 @@ NMG_EXPORT extern void nmg_vertex_tabulate(struct bu_ptbl *tab,
                                            const uint32_t *magic_p,
                                            struct bu_list *vlfree);
 
+/**
+ * @brief Build the set of pointers to all vertexuse normal structures in an
+ * NMG model that are "below" the data structure pointed to by magic_p, where
+ * magic_p is a pointer to the magic entry of any NMG data structure in the
+ * model.
+ *
+ * The return type for vertexuse normals in the output table is struct
+ * vertexuse_a_plane *
+ *
+ * For "raw" geometric struts, the magic entry will be the first entry in the
+ * struct - for example, a loop pointed to by l would have a magic_p key of
+ * &l->magic.  For the use structures, the magic key is found within the leading
+ * bu_list - for example, a faceuse pointed to by *fu would have a magic_p key
+ * at &fu->l.magic
+ *
+ * Each vertexuse_a_plane pointer will be listed exactly once - i.e. uniqueness
+ * within the table may be assumed.
+ *
+ * @param[out] tab a bu_ptbl holding struct vertexuse_plane_a pointers.
+ *
+ * @param magic_p pointer to an NMG data structure's magic entry.
+ *
+ * @param vlfree list of available vlist segments to be reused by debug drawing routines.
+ */
 NMG_EXPORT extern void nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab,
                                                      const uint32_t *magic_p,
                                                      struct bu_list *vlfree);

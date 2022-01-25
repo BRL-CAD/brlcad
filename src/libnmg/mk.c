@@ -1067,29 +1067,6 @@ nmg_ml(struct shell *s)
  *									*
  ************************************************************************/
 
-
-/**
- * Kill vertexuse, and null out parent's vu_p.
- *
- * This routine is not intended for general use by applications,
- * because it requires cooperation on the part of the caller to
- * properly dispose of or fix the now *quite* illegal parent.
- * (Illegal because the parent's vu_p is NULL).  It exists primarily
- * as a support routine for "mopping up" after nmg_klu(), nmg_keu(),
- * nmg_ks(), and nmg_mv_vu_between_shells().
- *
- * It is also used in a particularly ugly way in nmg_cut_loop() and
- * nmg_split_lu_at_vu() as part of their method for obtaining an
- * "empty" loopuse/loop set.
- *
- * It is worth noting that all these callers ignore the return code,
- * because they *all* exist to intentionally empty out the parent, but
- * the return code is provided anyway, in the name of [CTJ] symmetry.
- *
- * Returns -
- * 0 If all is well in the parent
- * 1 If parent is empty, and is thus "illegal"
- */
 int
 nmg_kvu(struct vertexuse *vu)
 {
@@ -2722,13 +2699,6 @@ nmg_demote_eu(struct edgeuse *eu)
  *									*
  ************************************************************************/
 
-
-/**
- * Move a vertexuse from an old vertex to a new vertex.  If this was
- * the last use, the old vertex is destroyed.
- *
- * XXX nmg_jvu() as a better name?
- */
 void
 nmg_movevu(struct vertexuse *vu, struct vertex *v)
 {
@@ -2911,12 +2881,6 @@ nmg_unglueedge(struct edgeuse *eu)
 }
 
 
-/**
- * Join two vertexes into one.
- *
- * v1 inherits all the vertexuses presently pointing to v2, and v2 is
- * then destroyed.
- */
 void
 nmg_jv(register struct vertex *v1, register struct vertex *v2)
 {

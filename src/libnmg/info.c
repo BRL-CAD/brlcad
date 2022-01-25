@@ -1976,9 +1976,6 @@ nmg_2rvf_handler(uint32_t *vp, void *state, int UNUSED(unused))
 }
 
 
-/* Given a pointer to any nmg data structure, build an bu_ptbl list which has
- * every vertex pointer from there on "down" in the model, each one listed
- * exactly once. */
 void
 nmg_vertex_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *vlfree)
 {
@@ -2026,12 +2023,6 @@ nmg_vert_a_handler(uint32_t *vp, void *state, int UNUSED(unused))
     bu_ptbl_ins(sp->tabl, (long *)vp);
 }
 
-
-/**
- * Given a pointer to any nmg data structure,
- * build an bu_ptbl list which has every vertexuse normal
- * pointer from there on "down" in the model, each one listed exactly once.
- */
 void
 nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *vlfree)
 {
