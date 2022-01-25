@@ -148,7 +148,7 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 
 	    /* Either used the supplied incrementing specification or initialize with the default */
 	    if (!incr_spec) {
-		bu_vls_sprintf(&ispec, "%lu:%d:%d:%d", strlen(bu_vls_cstr(&num_str)), 0, 0, 1);
+		bu_vls_sprintf(&ispec, "%zu:%d:%d:%d", strlen(bu_vls_cstr(&num_str)), 0, 0, 1);
 	    } else {
 		bu_vls_sprintf(&ispec, "%s", incr_spec);
 	    }
