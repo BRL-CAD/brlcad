@@ -2037,11 +2037,6 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 }
 
 
-/**
- * if the given vertexuse "vu" is in the table given by "b" or if "vu"
- * references a vertex which is referenced by a vertexuse in the table,
- * then we return 1.  Otherwise, we return 0.
- */
 int
 nmg_in_or_ref(struct vertexuse *vu, struct bu_ptbl *b)
 {
@@ -4744,17 +4739,6 @@ nmg_find_isect_faces(const struct vertex *new_v, struct bu_ptbl *faces, int *fre
 }
 
 
-/**
- * given a vertex and a list of faces (not more than three) that
- * should intersect at the vertex, calculate a new location for the
- * vertex.
- *
- * returns:
- *   0 - if everything is OK
- *   1 - failure
- *
- * and modifies the geometry of the vertex to the new location
- */
 int
 nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const struct bn_tol *tol)
 {

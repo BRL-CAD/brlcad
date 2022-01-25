@@ -160,8 +160,54 @@ nmg_region_v_unique(struct nmgregion *r1, struct bu_list *vlfree, const struct b
 }
 
 
+/**
+ * For every element in t1, scan t2 for geometric duplications.
+ *
+ * Deleted elements in t2 are marked by a null vertex pointer,
+ * rather than bothering to do a BU_PTBL_RM, which will re-copy the
+ * list to compress it.
+ *
+ * Exists as a support routine for nmg_two_region_vertex_fuse()
+ */
+int
+nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_tol *tol)
+{
+    int count = 0;
+    int i;
+    int j;
+
+    /* Verify t2 is good to start with */
+    for (j = BU_PTBL_LEN(t2)-1; j >= 0; j--) {
+	register struct vertex *vj;
+	vj = (struct vertex *)BU_PTBL_GET(t2, j);
+	NMG_CK_VERTEX(vj);
+    }
+
+    for (i = BU_PTBL_LEN(t1)-1; i >= 0; i--) {
+	register struct vertex *vi;
+	vi = (struct vertex *)BU_PTBL_GET(t1, i);
+	NMG_CK_VERTEX(vi);
+	if (!vi->vg_p) continue;
+
+	for (j = BU_PTBL_LEN(t2)-1; j >= 0; j--) {
+	    register struct vertex *vj;
+	    vj = (struct vertex *)BU_PTBL_GET(t2, j);
+	    if (!vj) continue;
+	    NMG_CK_VERTEX(vj);
+	    if (!vj->vg_p) continue;
+	    if (!bg_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
+		continue;
+	    /* They are the same, fuse vj into vi */
+	    nmg_jv(vi, vj);
+	    BU_PTBL_GET(t2, j) = 0;
+	    count++;
+	}
+    }
+    return count;
+}
+
 /* compare function for bu_sort within function nmg_ptbl_vfuse */
-HIDDEN int
+static int
 x_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     fastf_t i, j;
@@ -183,7 +229,7 @@ x_comp(const void *p1, const void *p2, void *UNUSED(arg))
  *
  * Exists primarily as a support routine for nmg_vertex_fuse().
  */
-int
+static int
 nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
 {
     int count, fuse;
@@ -248,61 +294,6 @@ nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
     return count;
 }
 
-
-/**
- * For every element in t1, scan t2 for geometric duplications.
- *
- * Deleted elements in t2 are marked by a null vertex pointer,
- * rather than bothering to do a BU_PTBL_RM, which will re-copy the
- * list to compress it.
- *
- * Exists as a support routine for nmg_two_region_vertex_fuse()
- */
-int
-nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_tol *tol)
-{
-    int count = 0;
-    int i;
-    int j;
-
-    /* Verify t2 is good to start with */
-    for (j = BU_PTBL_LEN(t2)-1; j >= 0; j--) {
-	register struct vertex *vj;
-	vj = (struct vertex *)BU_PTBL_GET(t2, j);
-	NMG_CK_VERTEX(vj);
-    }
-
-    for (i = BU_PTBL_LEN(t1)-1; i >= 0; i--) {
-	register struct vertex *vi;
-	vi = (struct vertex *)BU_PTBL_GET(t1, i);
-	NMG_CK_VERTEX(vi);
-	if (!vi->vg_p) continue;
-
-	for (j = BU_PTBL_LEN(t2)-1; j >= 0; j--) {
-	    register struct vertex *vj;
-	    vj = (struct vertex *)BU_PTBL_GET(t2, j);
-	    if (!vj) continue;
-	    NMG_CK_VERTEX(vj);
-	    if (!vj->vg_p) continue;
-	    if (!bg_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
-		continue;
-	    /* They are the same, fuse vj into vi */
-	    nmg_jv(vi, vj);
-	    BU_PTBL_GET(t2, j) = 0;
-	    count++;
-	}
-    }
-    return count;
-}
-
-
-/**
- * Fuse together any vertices that are geometrically identical, within
- * distance tolerance. This function may be passed a pointer to an NMG
- * object or a pointer to a bu_ptbl structure containing a list of
- * pointers to NMG vertex structures. If a bu_ptbl structure was passed
- * into this function, the calling function must free this structure.
- */
 int
 nmg_vertex_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {

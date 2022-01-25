@@ -193,25 +193,74 @@ NMG_EXPORT extern void nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab,
                                                      const uint32_t *magic_p,
                                                      struct bu_list *vlfree);
 
+/**
+ * @brief Check if the given vertexuse \b vu is in the table given by \b b or if \b vu
+ * references a vertex which is referenced by a vertexuse in the table
+ *
+ * @retval 1 Match found
+ * @retval 0 No match found
+ */
 NMG_EXPORT extern int nmg_in_or_ref(struct vertexuse *vu,
                                     struct bu_ptbl *b);
+
+
+/**
+ * @brief Given a vertex and a list of faces (not more than three) that should
+ * intersect at the vertex, calculate a new location for the vertex and modify
+ * the vertex_g geometry associated with the vertex to the new location.
+ *
+ * @retval  0 Success
+ * @retval  1 Failure
+ */
 NMG_EXPORT extern int nmg_simple_vertex_solve(struct vertex *new_v,
                                               const struct bu_ptbl *faces,
                                               const struct bn_tol *tol);
+
+/**
+ * @brief Move vertex so it is at the intersection of the newly created faces.
+ *
+ * This routine is used by "nmg_extrude_shell" to move vertices. Each plane has
+ * already been moved a distance inward and the surface normals have been
+ * reversed.
+ *
+ * If approximate is non-zero, then the coordinates of the new vertex may be
+ * calculated as the point with minimum distance to all the faces that
+ * intersect at the vertex for vertices where more than three faces intersect.
+ *
+ * @retval  0 Success
+ * @retval  1 Failure
+ */
 NMG_EXPORT extern int nmg_in_vert(struct vertex *new_v,
                                   const int approximate,
                                   struct bu_list *vlfree,
                                   const struct bn_tol *tol);
 
-NMG_EXPORT extern int nmg_ptbl_vfuse(struct bu_ptbl *t,
-                                     const struct bn_tol *tol);
-
-NMG_EXPORT extern int nmg_vertex_fuse(const uint32_t *magic_p,struct bu_list *vlfree,
+/**
+ * @brief Fuse together any vertices that are geometrically identical, within
+ * distance tolerance.
+ *
+ * This function may be passed a pointer to an NMG object's magic entry or a
+ * pointer to a bu_ptbl structure containing a list of pointers to NMG vertex
+ * structures.
+ *
+ * For "raw" geometric struts, the magic entry will be the first entry in the
+ * struct - for example, a loop pointed to by l would have a magic_p key of
+ * &l->magic.  For the use structures, the magic key is found within the leading
+ * bu_list - for example, a faceuse pointed to by *fu would have a magic_p key
+ * at &fu->l.magic
+ *
+ * If a pointer to a bu_ptbl structure was passed into this function, the
+ * calling function is responsible for freeing the table.
+ *
+ * @param magic_p pointer to either an NMG data structure's magic entry or to a bu_ptbl.
+ *
+ * @param vlfree list of available vlist segments to be reused by debug drawing routines.
+ *
+ * @param tol distance tolerances to use when fusing vertices.
+ */
+NMG_EXPORT extern int nmg_vertex_fuse(const uint32_t *magic_p, struct bu_list *vlfree,
                                       const struct bn_tol *tol);
 
-NMG_EXPORT extern void nmg_unlist_v(struct bu_ptbl       *b,
-                                    fastf_t *mag,
-                                    struct vertex        *v);
 
 __END_DECLS
 
