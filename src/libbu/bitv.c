@@ -194,7 +194,7 @@ bu_bitv_vls(struct bu_vls *v, const struct bu_bitv *bv)
 	    continue;
 	if (seen)
 	    bu_vls_strcat(v, ", ");
-	bu_vls_printf(v, "%lu", i);
+	bu_vls_printf(v, "%zu", i);
 	seen = 1;
     }
     bu_vls_strcat(v, ")");
