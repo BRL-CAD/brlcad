@@ -80,9 +80,34 @@ NMG_EXPORT extern int nmg_kvu(struct vertexuse *vu);
 
 NMG_EXPORT extern void nmg_jv(struct vertex *v1,
                               struct vertex *v2);
+
+/**
+ * @brief Build the set of pointers to all vertex structures in an NMG model
+ * that are "below" the data structure pointed to by magic_p, where magic_p is
+ * a pointer to the magic entry of any NMG data structure in the model.
+ *
+ * For "raw" geometric struts, the magic entry will be the first entry in the
+ * struct - for example, a loop pointed to by l would have a magic_p key of
+ * &l->magic.  For the use structures, the magic key is found within the leading
+ * bu_list - for example, a faceuse pointed to by *fu would have a magic_p key
+ * at &fu->l.magic
+ *
+ * Each vertex pointer will be listed exactly once - i.e. uniqueness within
+ * the table may be assumed.
+ *
+ * This set provides the caller with an easy way to answer the question "which
+ * vertices are used by this part of the model".
+ *
+ * @param[out] tab a bu_ptbl holding struct vertex pointers.
+ *
+ * @param magic_p pointer to an NMG data structure's magic entry.
+ *
+ * @param vlfree list of available vlist segments to be reused by debug drawing routines.
+ */
 NMG_EXPORT extern void nmg_vertex_tabulate(struct bu_ptbl *tab,
                                            const uint32_t *magic_p,
                                            struct bu_list *vlfree);
+
 NMG_EXPORT extern void nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab,
                                                      const uint32_t *magic_p,
                                                      struct bu_list *vlfree);
