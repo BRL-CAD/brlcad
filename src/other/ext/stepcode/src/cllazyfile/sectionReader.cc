@@ -91,7 +91,7 @@ std::streampos sectionReader::findNormalString(const std::string &str, bool semi
 const char *sectionReader::getDelimitedKeyword(const char *delimiters)
 {
     static std::string str;
-    char c;
+    int c;
     str.clear();
     str.reserve(100);
     skipWS();
