@@ -20,7 +20,8 @@
 #endif
 
 char *exppp_output_filename = (char *)0;    /* if this is set, override default output filename */
-char exppp_filename_buffer[1000];           /* output file name */
+#define EXPPP_FILENAME_LENGTH 1000
+char exppp_filename_buffer[EXPPP_FILENAME_LENGTH];           /* output file name */
 
 /* Only the first line is compared to an existing file, so putting a
  * version number in here won't cause problems. The actual version must
@@ -60,7 +61,7 @@ char *SCHEMAout(Schema s)
                 fprintf(stderr, "Error: input filename and output filename are the same (%s)", exppp_output_filename);
                 exit(EXIT_FAILURE);
             }
-            strcpy(exppp_filename_buffer, exppp_output_filename);
+            strncpy(exppp_filename_buffer, exppp_output_filename, EXPPP_FILENAME_LENGTH);
         } else {
             /* when there is only a single file, allow user to find */
             /* out what it is */
