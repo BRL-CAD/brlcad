@@ -186,7 +186,7 @@ void sectionReader::locateAllInstances()
 
 instanceID sectionReader::readInstanceNumber()
 {
-    char c;
+    int c;
     size_t digits = 0;
     instanceID id = 0;
 
