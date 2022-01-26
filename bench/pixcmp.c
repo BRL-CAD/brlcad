@@ -449,9 +449,9 @@ main(int argc, char *argv[])
 		    break;
 	    }
 	    if (print_bytes) {
-		printf("%ld %3d %3d %s\n", bytes, r1, r2, label);
+		printf("%zu %3d %3d %s\n", bytes, r1, r2, label);
 	    } else {
-		printf("%ld\t(%3d, %3d, %3d)\t(%3d, %3d, %3d) %s\n", bytes / 3, r1, g1, b1, r2, g2, b2, label);
+		printf("%zu\t(%3d, %3d, %3d)\t(%3d, %3d, %3d) %s\n", bytes / 3, r1, g1, b1, r2, g2, b2, label);
 	    }
 	}
     }
