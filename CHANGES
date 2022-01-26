@@ -177,9 +177,6 @@ include/bu/redblack.h
 	bu_rb_search, bu_rb_walk
 	Use C++ containers set/map from std [deprecated 7.30]
 
-nirt
-	Behavior available under the --old flag [deprecated 7.30]
-
 7.28
 ----
 include/bu/malloc.h
@@ -389,7 +386,12 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
-        
+
+7.34.0
+------
+nirt
+	Behavior available under the --old flag [deprecated 7.30]
+
 7.30.2
 ------
 ray tracing tools
