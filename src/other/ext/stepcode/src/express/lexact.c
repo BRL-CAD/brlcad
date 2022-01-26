@@ -386,8 +386,8 @@ int SCANprocess_encoded_string(const char *yytext)
 int SCANprocess_semicolon(const char *yytext, int commentp)
 {
 
-    if(commentp) {
-        strcpy(last_comment_, strchr(yytext, '-'));
+    if(commentp && yytext) {
+        strncpy(last_comment_, strchr(yytext, '-'), SCAN_COMMENT_LENGTH);
         yylval.string = last_comment_;
     } else {
         yylval.string = last_comment;
