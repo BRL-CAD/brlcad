@@ -266,10 +266,11 @@ const char *DirObj::ValidDirectories(const char *path)
 {
 #ifdef _WIN32
     static char buf[MAX_PATH + 1];
+    strncpy(buf, path, MAX_PATH);
 #else
     static char buf[MAXPATHLEN + 1];
+    strncpy(buf, path, MAXPATHLEN);
 #endif
-    strcpy(buf, path);
     int i = strlen(path);
 
     while(!IsADirectory(RealPath(buf)) && i >= 0) {
