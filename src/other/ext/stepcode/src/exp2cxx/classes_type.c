@@ -1194,7 +1194,7 @@ const char *TYPEget_idl_type(const Type t)
     /*      case TYPE_ENTITY:   */
     if(class == entity_) {
         /* better do this because the return type might go away */
-        strcpy(retval, IdlEntityTypeName(t));
+        strncpy(retval, IdlEntityTypeName(t), BUFSIZ - 4);
         strcat(retval, "_ptr");
         return retval;
     }
