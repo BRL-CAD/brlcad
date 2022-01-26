@@ -286,7 +286,7 @@ void ComplexList::addImplicitSubs(Linked_List subs, ComplexCollect *col)
     AndOrList *ao = 0;
 
     LISTdo(subs, subEnt, Entity)
-    strcpy(node.name, ENTITYget_name(subEnt));
+    strncpy(node.name, ENTITYget_name(subEnt), BUFSIZ);
     if(!contains(&node)) {
         // We've found an implicit subtype.
 #ifdef COMPLEX_INFO
