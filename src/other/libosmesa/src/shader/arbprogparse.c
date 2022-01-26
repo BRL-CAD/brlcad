@@ -647,11 +647,9 @@ program_error2(GLcontext *ctx, GLint position, const char *descrip,
 					  _mesa_strlen(var) + 1);
 	if (str) {
 	    _mesa_sprintf(str, "%s: %s", descrip, var);
+	    _mesa_set_program_error(ctx, position, str);
+	    _mesa_free(str);
 	}
-    }
-    _mesa_set_program_error(ctx, position, str);
-    if (str) {
-	_mesa_free(str);
     }
 }
 
