@@ -831,24 +831,6 @@ nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
 	   WEDGECLASS2STR(vs->wedge_class));
 }
 
-
-/**
- * 0 degrees is to the rear (ON_REV), 90 degrees is to the RIGHT,
- * 180 is ON_FORW, 270 is to the LEFT.
- * Determine if the given wedge is entirely to the left or right of
- * the ray, or if it crosses.
- *
- * "halfway X" (ha, hb) have these properties:
- * < 0 (==> X < 180) RIGHT
- * > 0 (==> X > 180) LEFT
- *	==0	(==> X == 180) ON_FORW
- *
- * Returns -
- * WEDGE_LEFT
- * WEDGE_CROSSING
- * WEDGE_RIGHT
- * WEDGE_ON
- */
 int
 nmg_wedge_class(int ass, double a, double b)
 /* assessment of two edges forming wedge */

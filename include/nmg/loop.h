@@ -39,31 +39,6 @@ __BEGIN_DECLS
 #define NMG_CK_LOOP_A(_p)             NMG_CKMAG(_p, NMG_LOOP_A_MAGIC, "loop_a")
 #define NMG_CK_LOOPUSE(_p)            NMG_CKMAG(_p, NMG_LOOPUSE_MAGIC, "loopuse")
 
-/**
- * To find all the uses of this loop, use lu_p for one loopuse, then
- * go down and find an edge, then wander around either eumate_p or
- * radial_p from there.
- *
- * Normally, down_hd heads a doubly linked list of edgeuses.  But,
- * before using it, check BU_LIST_FIRST_MAGIC(&lu->down_hd) for the
- * magic number type.  If this is a self-loop on a single vertexuse,
- * then get the vertex pointer with vu = BU_LIST_FIRST(vertexuse,
- * &lu->down_hd)
- *
- * This is an especially dangerous storage efficiency measure
- * ("hack"), because the list that the vertexuse structure belongs to
- * is headed, not by a superior element type, but by the vertex
- * structure.  When a loopuse needs to point down to a vertexuse, rip
- * off the forw pointer.  Take careful note that this is just a
- * pointer, **not** the head of a linked list (single, double, or
- * otherwise)!  Exercise great care!
- *
- * The edges of an exterior (OT_SAME) loop occur in counter-clockwise
- * order, as viewed from the normalward side (outside).
- */
-#define RT_LIST_SET_DOWN_TO_VERT(_hp, _vu) { \
-        (_hp)->forw = &((_vu)->l); (_hp)->back = (struct bu_list *)NULL; }
-
 #define GET_LOOP(p, m)              {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, m);}
 #define GET_LOOP_A(p, m)            {NMG_GETSTRUCT(p, loop_a); NMG_INCR_INDEX(p, m);}
 #define GET_LOOPUSE(p, m)           {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p, m);}

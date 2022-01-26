@@ -67,6 +67,32 @@
 #include "nmg.h"
 #include "./nmg_private.h"
 
+/*
+ * To find all the uses of this loop, use lu_p for one loopuse, then
+ * go down and find an edge, then wander around either eumate_p or
+ * radial_p from there.
+ *
+ * Normally, down_hd heads a doubly linked list of edgeuses.  But,
+ * before using it, check BU_LIST_FIRST_MAGIC(&lu->down_hd) for the
+ * magic number type.  If this is a self-loop on a single vertexuse,
+ * then get the vertex pointer with vu = BU_LIST_FIRST(vertexuse,
+ * &lu->down_hd)
+ *
+ * This is an especially dangerous storage efficiency measure
+ * ("hack"), because the list that the vertexuse structure belongs to
+ * is headed, not by a superior element type, but by the vertex
+ * structure.  When a loopuse needs to point down to a vertexuse, rip
+ * off the forw pointer.  Take careful note that this is just a
+ * pointer, **not** the head of a linked list (single, double, or
+ * otherwise)!  Exercise great care!
+ *
+ * The edges of an exterior (OT_SAME) loop occur in counter-clockwise
+ * order, as viewed from the normalward side (outside).
+ */
+#define LIST_SET_DOWN_TO_VERT(_hp, _vu) { \
+        (_hp)->forw = &((_vu)->l); (_hp)->back = (struct bu_list *)NULL; }
+
+
 
 /************************************************************************
  *									*
@@ -632,12 +658,12 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	    else vu1 = nmg_mvvu(&lu1->l.magic, m);
 	}
 	NMG_CK_VERTEXUSE(vu1);
-	RT_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
+	LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
 	/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
 	vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, m);
 	NMG_CK_VERTEXUSE(vu2);
-	RT_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
+	LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
 	/* vu2->up.lu_p = lu2; done by nmg_mvu() */
     } else if (*p.magic_p == NMG_FACEUSE_MAGIC) {
 	/* First, finish setting up the loopuses */
@@ -652,11 +678,11 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 	/* Second, build the vertices */
 	if (v) vu1 = nmg_mvu(v, &lu1->l.magic, m);
 	else vu1 = nmg_mvvu(&lu1->l.magic, m);
-	RT_LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
+	LIST_SET_DOWN_TO_VERT(&lu1->down_hd, vu1);
 	/* vu1->up.lu_p = lu1; done by nmg_mvu/nmg_mvvu */
 
 	vu2 = nmg_mvu(vu1->v_p, &lu2->l.magic, m);
-	RT_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
+	LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
 	/* vu2->up.lu_p = lu2; done by nmg_mvu() */
     } else {
 	bu_bomb("nmg_mlv() unknown parent for loopuse!\n");
