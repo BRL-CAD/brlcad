@@ -29,6 +29,7 @@
  */
 
 #include "common.h"
+#include "vmath.h"
 #include "nmg/defines.h"
 
 /**
@@ -47,6 +48,14 @@
  * However, it is not unique to mk.c - mod.c needs it for nmg_eusplit().
  */
 NMG_EXPORT extern int nmg_keg(struct edgeuse *eu);
+
+
+/* Currently commented out */
+NMG_EXPORT extern double nmg_vu_angle_measure(struct vertexuse   *vu,
+                                              vect_t x_dir,
+                                              vect_t y_dir,
+                                              int assessment,
+                                              int in);
 
 
 /*

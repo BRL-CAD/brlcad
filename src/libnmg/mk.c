@@ -1367,15 +1367,6 @@ nmg_keg(struct edgeuse *eu)
 }
 
 
-/**
- * Delete an edgeuse & its mate from a shell or loop.
- *
- * Returns -
- * 0 If all is well
- * 1 If the parent now has no edgeuses, and is thus "illegal" and in
- * need of being deleted.  (The lu / shell deletion can't be handled
- * at this level, and must be done by the caller).
- */
 int
 nmg_keu(register struct edgeuse *eu1)
 {

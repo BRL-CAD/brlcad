@@ -841,11 +841,6 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, st
     return outer_shell_count;
 }
 
-
-/**
- * Sets the "is_real" flag on all edges at or below the pointer
- * passed. Returns the number of flags set.
- */
 int
 nmg_mark_edges_real(const uint32_t *magic_p, struct bu_list *vlfree)
 {
@@ -6923,20 +6918,6 @@ nmg_faces_are_radial(const struct faceuse *fu1, const struct faceuse *fu2)
     return 0;
 }
 
-
-/**
- * moves indicated edgeuse (mv_eu) so that it passes thru the given
- * point (pt). The direction of the edgeuse is not changed, so new
- * edgeuse is parallel to the original.
- *
- * plane equations of all radial faces on this edge are changed and
- * all vertices (except one anchor point) in radial loops are adjusted
- * Note that the anchor point is chosen arbitrarily.
- *
- * returns:
- * 	1 - failure
- * 	0 - success
- */
 int
 nmg_move_edge_thru_pnt(struct edgeuse *mv_eu, const point_t pt, const struct bn_tol *tol)
 {
@@ -8941,13 +8922,6 @@ nmg_arc2d_to_cnurb(point_t i_center, point_t i_start, point_t i_end, int point_t
     return crv;
 }
 
-
-/**
- * split an edge into multiple edges at specified vertices if they
- * are within tolerance distance.
- *
- * Returns the number of additional edges that were created.
- */
 int
 nmg_break_edge_at_verts(struct edge *e, struct bu_ptbl *verts, const struct bn_tol *tol)
 {

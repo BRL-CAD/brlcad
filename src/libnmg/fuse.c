@@ -1025,7 +1025,7 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
 }
 
 /* compare function for bu_sort within function nmg_edge_fuse */
-HIDDEN int
+static int
 v_ptr_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     size_t i, j;
@@ -1040,16 +1040,6 @@ v_ptr_comp(const void *p1, const void *p2, void *UNUSED(arg))
     return -1;
 }
 
-
-/**
- * Note: If a bu_ptbl structure is passed into this function, the
- *       structure must contain edgeuse. Vertices will then be fused
- *       at the shell level. If an NMG structure is passed into this
- *       function, if the structure is an NMG region or model, vertices
- *       will be fused at the model level. If the NMG structure passed
- *       in is a shell or anything lower, vertices will be fused at the
- *       shell level.
- */
 int
 nmg_edge_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {

@@ -77,56 +77,6 @@ nmg_is_angle_in_wedge(double a, double b, double t)
 }
 #endif
 
-
-/**
- * Given two edgeuses with different edge geometry but
- * running between the same two vertices,
- * select the proper edge geometry to associate with.
- *
- * Really, there are 3 geometries to be compared here:
- * the vector between the two endpoints of this edge,
- * and the two edge_g structures.
- * Rather than always taking eu2 or eu1,
- * select the one that best fits this one edge.
- *
- * Consider fu1:
- *		         B
- *		         *
- *		        /|
- *		    eg2/ |
- *		      /  |
- *		    D/   |
- *		    *    |
- *		   /     |
- *		A *-*----* C
- *		    E eg1
- *
- * At the start of a face/face intersection, eg1 runs from A to C,
- * and eg2 runs ADB.  The line of intersection with the other face
- * (fu2, not drawn) lies along eg1.
- * Assume that edge AC needs to be broken at E,
- * where E is just a little more than tol->dist away from A.
- * Existing point D is found because it *is* within tol->dist of E,
- * thanks to the cosine of angle BAC.
- * So, edge AC is broken on vertex D, and the intersection list
- * contains vertexuses A, E, and C.
- *
- * Because D and E are the same point, fu1 has become a triangle with
- * a little "spike" on the end.  If this is handled simply by re-homing
- * edge AE to eg2, it may cause trouble, because eg1 now runs EC,
- * but the geometry for eg1 runs AC.  If there are other vertices on
- * edge eg1, the problem can not be resolved simply by recomputing the
- * geometry of eg1.
- * Since E (D) is within tolerance of eg1, it is not unreasonable
- * just to leave eg1 alone.
- *
- * The issue boils down to selecting whether the existing eg1 or eg2
- * best represents the direction of the little stub edge AD (shared with AE).
- * In this case, eg2 is the correct choice, as AD (and AE) lie on line AB.
- *
- * It would be disastrous to force *all* of eg1 to use the edge geometry
- * of eg2, as the two lines are very different.
- */
 struct edge_g_lseg *
 nmg_pick_best_edge_g(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol *tol)
 {
@@ -174,27 +124,6 @@ nmg_pick_best_edge_g(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_t
 }
 
 
-/**
- * Make all the edgeuses around eu2's edge to refer to eu1's edge,
- * taking care to organize them into the proper angular orientation,
- * so that the attached faces are correctly arranged radially
- * around the edge.
- *
- * This depends on both edges being part of face loops,
- * with vertex and face geometry already associated.
- *
- * The two edgeuses being joined might well be from separate shells,
- * so the issue of preserving (simple) faceuse orientation parity
- * (SAME, OPPOSITE, OPPOSITE, SAME, ...)
- * can't be used here -- that only applies to faceuses from the same shell.
- *
- * Some of the edgeuses around both edges may be wires.
- *
- * Call to nmg_check_radial at end has been deleted.
- * Note that after two radial EU's have been joined
- * a third cannot be joined to them without creating
- * unclosed space that nmg_check_radial will find.
- */
 void
 nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol *tol)
 {
