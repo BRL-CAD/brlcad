@@ -75,7 +75,7 @@ class EntNode
         EntNode(const char *nm = "") : next(0), mark(NOMARK),
             multSupers(0)
         {
-            strcpy(name, nm);
+            strncpy(name, nm, BUFSIZ);
         }
         EntNode(char *[]);    // given a list, create a linked list of EntNodes
         ~EntNode()
