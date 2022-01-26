@@ -782,19 +782,6 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 }
 
 
-/**
- * Make an edge on vertexuse.
- *
- * The new edge runs from and to that vertex.
- *
- * If the vertexuse was the shell's sole vertexuse, then the new edge
- * is a wire edge in the shell's eu_hd list.
- *
- * If the vertexuse was part of a loop-of-a-single-vertex, either as a
- * loop in a face or as a wire-loop in the shell, the loop becomes a
- * regular loop with one edge that runs from and to the original
- * vertex.
- */
 struct edgeuse *
 nmg_meonvu(struct vertexuse *vu)
 {
@@ -1760,12 +1747,7 @@ nmg_vertexuse_a_cnurb(struct vertexuse *vu, const fastf_t *uvw)
 }
 
 
-/**
- * Compute the equation of the line formed by the endpoints of the
- * edge.
- *
- * XXX This isn't the best name.  nmg_edge_g_lseg() ?
- */
+/* XXX This isn't the best name.  nmg_edge_g_lseg() ? */
 void
 nmg_edge_g(struct edgeuse *eu)
 {
@@ -2052,18 +2034,6 @@ nmg_edge_g_cnurb_plinear(struct edgeuse *eu)
 }
 
 
-/**
- * Associate edgeuse 'eu' with the edge_g_X structure given as
- * 'magic_p'.  If the edgeuse is already associated with some
- * geometry, release that first.  Note that, to start with, the two
- * edgeuses may be using different original geometries.
- *
- * Also do the edgeuse mate.
- *
- * Returns -
- * 0 If the old edge geometry (eu->g.magic_p) has other uses.
- * 1 If the old edge geometry has been destroyed. Caller beware!
- */
 int
 nmg_use_edge_g(struct edgeuse *eu, uint32_t *magic_p)
 {
@@ -2645,14 +2615,6 @@ nmg_demote_lu(struct loopuse *lu1)
 }
 
 
-/**
- * Demote a wire edge into a pair of self-loop vertices
- *
- *
- * Returns -
- * 0 If all is well
- * 1 If shell is empty, and is thus "illegal".
- */
 int
 nmg_demote_eu(struct edgeuse *eu)
 {
@@ -2725,16 +2687,6 @@ nmg_movevu(struct vertexuse *vu, struct vertex *v)
 }
 
 
-/**
- * Move a pair of edgeuses onto a single edge (glue edgeuse).  The
- * edgeuse eusrc and its mate are moved to the edge used by eudst.
- * eusrc is made to be immediately radial to eudst.  if eusrc does not
- * share the same vertices as eudst, we bomb.
- *
- * The edgeuse geometry pointers are not changed by this operation.
- *
- * This routine was formerly called nmg_moveeu().
- */
 void
 nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 {
@@ -2823,19 +2775,6 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 }
 
 
-/**
- * If edgeuse is part of a shared edge (more than one pair of edgeuses
- * on the edge), it and its mate are "unglued" from the edge, and
- * associated with a new edge structure.
- *
- * Primarily a support routine for nmg_eusplit()
- *
- * If the original edge had edge geometry, that is *not* duplicated
- * here, because it is not easy (or appropriate) for nmg_eusplit() to
- * know whether the new vertex lies on the previous edge geometry or
- * not.  Hence having the nmg_ebreak() interface, which preserves the
- * ege geometry across a split, and nmg_esplit() which does not.
- */
 void
 nmg_unglueedge(struct edgeuse *eu)
 {
@@ -2996,21 +2935,6 @@ nmg_jfg(struct face *f1, struct face *f2)
     }
 }
 
-
-/**
- * Join two edge geometries.
- *
- * For all edges in the model which refer to 'src_eg', change them to
- * refer to 'dest_eg'.  The source is destroyed.
- *
- * It is the responsibility of the caller to make certain that the
- * 'dest_eg' is the best one for these edges.  Outrageously wrong
- * requests will cause this routine to abort.
- *
- * This algorithm does not make sense if dest_eg is an edge_g_cnurb;
- * those only make sense in the parameter space of their associated
- * face.
- */
 void
 nmg_jeg(struct edge_g_lseg *dest_eg, struct edge_g_lseg *src_eg)
 {
