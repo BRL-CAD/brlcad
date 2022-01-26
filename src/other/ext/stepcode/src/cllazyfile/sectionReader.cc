@@ -122,7 +122,7 @@ const char *sectionReader::getDelimitedKeyword(const char *delimiters)
 ///NOTE *must* check return value!
 std::streampos sectionReader::seekInstanceEnd(instanceRefs **refs)
 {
-    char c;
+    int c;
     int parenDepth = 0;
     while(c = _file.get(), _file.good()) {
         switch(c) {
