@@ -1947,19 +1947,6 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
  *									*
  ************************************************************************/
 
-
-/**
- * Join two loops together which share a common edge, such that both
- * occurrences of the common edge are deleted.  This routine always
- * leaves "lu" intact, and kills the loop radial to "eu" (after
- * stealing all its edges).
- *
- * Either both loops must be of the same orientation, or then first
- * loop must be OT_SAME, and the second loop must be OT_OPPOSITE.
- * Joining OT_SAME & OT_OPPOSITE always gives an OT_SAME result.
- * Above statement is not true!!!! I have added nmg_lu_reorient() -JRA
- * Since "lu" must survive, it must be the OT_SAME one.
- */
 void
 nmg_jl(struct loopuse *lu, struct edgeuse *eu)
 {
@@ -2043,21 +2030,6 @@ nmg_jl(struct loopuse *lu, struct edgeuse *eu)
 }
 
 
-/**
- * Intended to join an interior and exterior loop together, by
- * building a bridge between the two indicated vertices.
- *
- * This routine can be used to join two exterior loops which do not
- * overlap, and it can also be used to join an exterior loop with a
- * loop of opposite orientation that lies entirely within it.  This
- * restriction is important, but not checked for.
- *
- * If the two vertexuses reference distinct vertices, then two new
- * edges are built to bridge the loops together.  If the two
- * vertexuses share the same vertex, then it is even easier.
- *
- * Returns the replacement for vu2.
- */
 struct vertexuse *
 nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
 {
@@ -2144,14 +2116,6 @@ nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
 
 /* XXX These should be included in nmg_join_2loops, or be called by it */
 
-
-/**
- * vu1 is in a regular loop, vu2 is in a loop of a single vertex A
- * jaunt is taken from vu1 to vu2 and back to vu1, and the old loop at
- * vu2 is destroyed.
- *
- * Return is the new vu that replaces vu2.
- */
 struct vertexuse *
 nmg_join_singvu_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 {
@@ -2192,15 +2156,6 @@ nmg_join_singvu_loop(struct vertexuse *vu1, struct vertexuse *vu2)
     return second_new_eu->vu_p;
 }
 
-
-/**
- * Both vertices are part of single vertex loops.  Converts loop on
- * vu1 into a real loop that connects them together, with a single
- * edge (two edgeuses).  Loop on vu2 is killed.
- *
- * Returns replacement vu for vu2.
- * Does not change the orientation.
- */
 struct vertexuse *
 nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
 {
@@ -2240,64 +2195,6 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
     return second_new_eu->vu_p;
 }
 
-
-/**
- * Divide a loop of edges between two vertexuses.
- *
- * Make a new loop between the two vertexes, and split it and the loop
- * of the vertexuses at the same time.
- *
- *		BEFORE					AFTER
- *
- *
- *     Va    eu1  vu1		Vb	       Va   eu1  vu1             Vb
- *	* <---------* <---------*		* <--------*  * <--------*
- *	|					|	      |
- *	|			^		|	   ^  |		 ^
- *	|	 Original	|		| Original |  |	   New   |
- *	|	   Loopuse	|		| Loopuse  |  |	 Loopuse |
- *	V			|		V          |  V	/	 |
- *				|		           |   /	 |
- *	*----------> *--------> *		*--------> *  *--------> *
- *     Vd	     vu2 eu2	Vc	       Vd             vu2  eu2   Vc
- *
- * Returns the new loopuse pointer.  The new loopuse will contain
- * "vu2" and the edgeuse associated with "vu2" as the FIRST edgeuse on
- * the list of edgeuses.  The edgeuse for the new edge (connecting the
- * vertices indicated by vu1 and vu2) will be the LAST edgeuse on the
- * new loopuse's list of edgeuses.
- *
- * It is the caller's responsibility to re-bound the loops.
- *
- * Both old and new loopuse will have orientation OT_UNSPEC.  It is
- * the callers responsibility to determine what the orientations
- * should be.  This can be conveniently done with nmg_lu_reorient().
- *
- * Here is a simple example of how the new loopuse might have a
- * different orientation than the original one:
- *
- *		F<----------------E
- *		|                 ^
- *		|                 |
- *		|      C--------->D
- *		|      ^          .
- *		|      |          .
- *		|      |          .
- *		|      B<---------A
- *		|                 ^
- *		v                 |
- *		G---------------->H
- *
- * When nmg_cut_loop(A, D) is called, the new loop ABCD is clockwise,
- * even though the original loop was counter-clockwise.  There is no
- * way to determine this without referring to the face normal and
- * vertex geometry, which being a topology routine this routine
- * shouldn't do.
- *
- * Returns -
- * NULL on Error
- * lu is loopuse of new loop, on success.
- */
 struct loopuse *
 nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2, struct bu_list *vlfree)
 {

@@ -49,28 +49,194 @@ __BEGIN_DECLS
 #define FREE_LOOPUSE(p)           NMG_FREESTRUCT(p, loopuse)
 #define FREE_LOOPUSE_A(p)         NMG_FREESTRUCT(p, loopuse_a)
 
+/**
+ * @brief Build the bounding box for a loop.
+ *
+ * The bounding box is guaranteed never to have zero thickness.
+ *
+ * XXX This really isn't loop geometry, this is a loop attribute.  This routine
+ * really should be called nmg_loop_bb(), unless it gets something more to do.
+ */
 NMG_EXPORT extern void nmg_loop_a(struct loop *l,
                                   const struct bn_tol *tol);
+
+/**
+ * @brief Demote a loopuse of edgeuses to a bunch of wire edges in the shell.
+ *
+ * @retval 0 If all is well (edges moved to shell, loopuse deleted).
+ * @retval 1 If parent is empty, and is thus "illegal".  Still successful.
+ */
 NMG_EXPORT extern int nmg_demote_lu(struct loopuse *lu);
 
-/* From file nmg_mk.c */
-/*      MAKE routines */
+/**
+ * @brief Make a new loop (with specified orientation) and vertex, in a shell
+ * or face.
+ * XXX - vertex or vertexuse? or both? ctj
+ *
+ * If the vertex 'v' is NULL, the shell's lone vertex is used, or a new vertex
+ * is created.
+ *
+ * "magic" must point to the magic number of a faceuse or shell.
+ *
+ * If the shell has a lone vertex in it, that lone vertex *will* be used.  If a
+ * non-NULL 'v' is provided, the lone vertex and 'v' will be fused together.
+ * XXX Why is this good?
+ *
+ * If a convenient shell does not exist, use s=nmg_msv() to make the shell and
+ * vertex, then call lu=nmg_mlv(s, s->vu_p->v_p, OT_SAME), followed by
+ * nmg_kvu(s->vu_p).
+ *
+ * Implicit returns -
+ * The new vertexuse can be had by:
+ * BU_LIST_FIRST(vertexuse, &lu->down_hd);
+ *
+ * In case the returned loopuse isn't retained, the new loopuse was
+ * inserted at the +head+ of the appropriate list, e.g.:
+ * lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+ * or
+ * lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
+ *
+ * N.B.  This function is made more complex than warranted by using the "hack"
+ * of stealing a vertexuse structure from the shell if at all possible.  A
+ * future enhancement to this function would be to remove the vertexuse steal
+ * and have the caller pass in the vertex from the shell followed by a call to
+ * nmg_kvu(s->vu_p).  The v==NULL convention is used only in nmg_mod.c.
+ */
 NMG_EXPORT extern struct loopuse *nmg_mlv(uint32_t *magic,
                                           struct vertex *v,
                                           int orientation);
+
+/**
+ * @brief Kill loopuse, loopuse mate, and loop.
+ *
+ * if the loop contains any edgeuses or vertexuses they are killed
+ * before the loop is deleted.
+ *
+ * We support the concept of killing a loop with no children to
+ * support the routine "nmg_demote_lu"
+ *
+ * @retval 0 If all is well
+ * @retval 1 If parent is empty, and is thus "illegal"
+ */
 NMG_EXPORT extern int nmg_klu(struct loopuse *lu1);
 
+/**
+ * @brief Join two loops together which share a common edge, such that both
+ * occurrences of the common edge are deleted.
+ *
+ * This routine always leaves "lu" intact, and kills the loop radial to "eu"
+ * (after stealing all its edges).
+ *
+ * Either both loops must be of the same orientation, or then first
+ * loop must be OT_SAME, and the second loop must be OT_OPPOSITE.
+ * Joining OT_SAME & OT_OPPOSITE always gives an OT_SAME result.
+ * Above statement is not true!!!! I have added nmg_lu_reorient() -JRA
+ * Since "lu" must survive, it must be the OT_SAME one.
+ */
 NMG_EXPORT extern void nmg_jl(struct loopuse *lu,
                               struct edgeuse *eu);
+
+/**
+ * @brief Intended to join an interior and exterior loop together, by
+ * building a bridge between the two indicated vertices.
+ *
+ * This routine can be used to join two exterior loops which do not
+ * overlap, and it can also be used to join an exterior loop with a
+ * loop of opposite orientation that lies entirely within it.  This
+ * restriction is important, but not checked for.
+ *
+ * If the two vertexuses reference distinct vertices, then two new
+ * edges are built to bridge the loops together.  If the two
+ * vertexuses share the same vertex, then it is even easier.
+ *
+ * Returns the replacement for vu2.
+ */
 NMG_EXPORT extern struct vertexuse *nmg_join_2loops(struct vertexuse *vu1,
                                                     struct vertexuse *vu2);
+
+/**
+ * @brief vu1 is in a regular loop, vu2 is in a loop of a single vertex A
+ * jaunt is taken from vu1 to vu2 and back to vu1, and the old loop at
+ * vu2 is destroyed.
+ *
+ * Return is the new vu that replaces vu2.
+ */
 NMG_EXPORT extern struct vertexuse *nmg_join_singvu_loop(struct vertexuse *vu1,
                                                          struct vertexuse *vu2);
+
+/**
+ * @brief Both vertices are part of single vertex loops.  Converts loop on
+ * vu1 into a real loop that connects them together, with a single
+ * edge (two edgeuses).  Loop on vu2 is killed.
+ *
+ * Returns replacement vu for vu2.
+ * Does not change the orientation.
+ */
 NMG_EXPORT extern struct vertexuse *nmg_join_2singvu_loops(struct vertexuse *vu1,
                                                            struct vertexuse *vu2);
+
+/**
+ * @brief Divide a loop of edges between two vertexuses.
+ *
+ * Make a new loop between the two vertexes, and split it and the loop of the
+ * vertexuses at the same time.
+ *
+ * @verbatim
+                BEFORE                                  AFTER
+
+
+       Va    eu1  vu1           Vb             Va   eu1  vu1             Vb
+        * <---------* <---------*               * <--------*  * <--------*
+        |                                       |             |
+        |                       ^               |          ^  |          ^
+        |        Original       |               | Original |  |    New   |
+        |          Loopuse      |               | Loopuse  |  |  Loopuse |
+        V                       |               V          |  V /        |
+                                |                          |   /         |
+        *----------> *--------> *               *--------> *  *--------> *
+       Vd            vu2 eu2    Vc             Vd             vu2  eu2   Vc
+   @endverbatim
+ *
+ * Returns the new loopuse pointer.  The new loopuse will contain "vu2" and the
+ * edgeuse associated with "vu2" as the FIRST edgeuse on the list of edgeuses.
+ * The edgeuse for the new edge (connecting the vertices indicated by vu1 and
+ * vu2) will be the LAST edgeuse on the new loopuse's list of edgeuses.
+ *
+ * It is the caller's responsibility to re-bound the loops.
+ *
+ * Both old and new loopuse will have orientation OT_UNSPEC.  It is the callers
+ * responsibility to determine what the orientations should be.  This can be
+ * conveniently done with nmg_lu_reorient().
+ *
+ * Here is a simple example of how the new loopuse might have a different
+ * orientation than the original one:
+ *
+ * @verbatim
+                F<----------------E
+                |                 ^
+                |                 |
+                |      C--------->D
+                |      ^          .
+                |      |          .
+                |      |          .
+                |      B<---------A
+                |                 ^
+                v                 |
+                G---------------->H
+   @endverbatim
+ *
+ * When nmg_cut_loop(A, D) is called, the new loop ABCD is clockwise, even
+ * though the original loop was counter-clockwise.  There is no way to
+ * determine this without referring to the face normal and vertex geometry,
+ * which being a topology routine this routine shouldn't do.
+ *
+ * @retval NULL on error
+ * @retval lu on success, loopuse of new loop.
+ */
 NMG_EXPORT extern struct loopuse *nmg_cut_loop(struct vertexuse *vu1,
                                                struct vertexuse *vu2,
                                                struct bu_list *vlfree);
+
 NMG_EXPORT extern struct loopuse *nmg_split_lu_at_vu(struct loopuse *lu,
                                                      struct vertexuse *vu);
 NMG_EXPORT extern struct vertexuse *nmg_find_repeated_v_in_lu(struct vertexuse *vu);

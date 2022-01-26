@@ -558,41 +558,6 @@ nmg_mf(struct loopuse *lu1)
 }
 
 
-/**
- * Make a new loop (with specified orientation) and vertex, in a shell
- * or face.
- * XXX - vertex or vertexuse? or both? ctj
- *
- * If the vertex 'v' is NULL, the shell's lone vertex is used, or a
- * new vertex is created.
- *
- * "magic" must point to the magic number of a faceuse or shell.
- *
- * If the shell has a lone vertex in it, that lone vertex *will* be
- * used.  If a non-NULL 'v' is provided, the lone vertex and 'v' will
- * be fused together.  XXX Why is this good?
- *
- * If a convenient shell does not exist, use s=nmg_msv() to make the
- * shell and vertex, then call lu=nmg_mlv(s, s->vu_p->v_p, OT_SAME),
- * followed by nmg_kvu(s->vu_p).
- *
- * Implicit returns -
- * The new vertexuse can be had by:
- * BU_LIST_FIRST(vertexuse, &lu->down_hd);
- *
- * In case the returned loopuse isn't retained, the new loopuse was
- * inserted at the +head+ of the appropriate list, e.g.:
- * lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
- * or
- * lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
- *
- * N.B.  This function is made more complex than warranted by using
- * the "hack" of stealing a vertexuse structure from the shell if at
- * all possible.  A future enhancement to this function would be to
- * remove the vertexuse steal and have the caller pass in the vertex
- * from the shell followed by a call to nmg_kvu(s->vu_p).  The v==NULL
- * convention is used only in nmg_mod.c.
- */
 struct loopuse *
 nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
 {
@@ -696,30 +661,6 @@ nmg_mlv(uint32_t *magic, struct vertex *v, int orientation)
     return lu1;
 }
 
-
-/**
- * Make wire edge.
- *
- * Make a new edge between a pair of vertices in a shell.
- *
- * A new vertex will be made for any NULL vertex pointer parameters.
- * If we need to make a new vertex and the shell still has its
- * vertexuse we re-use that vertex rather than freeing and
- * re-allocating.
- *
- * If both vertices were specified, and the shell also had a vertexuse
- * pointer, the vertexuse in the shell is killed.  XXX Why?
- *
- * Explicit Return -
- * An edgeuse in shell "s" whose vertexuse refers to vertex v1.
- * The edgeuse mate's vertexuse refers to vertex v2
- *
- * Implicit Returns -
- * 1) If the shell had a lone vertex in vu_p, it is destroyed,
- * even if both vertices were specified.
- * 2) The returned edgeuse is the first item on the shell's
- * eu_hd list, followed immediately by the mate.
- */
 struct edgeuse *
 nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 {
@@ -1252,20 +1193,6 @@ nmg_kfu(struct faceuse *fu1)
     return ret;
 }
 
-
-/**
- * Kill loopuse, loopuse mate, and loop.
- *
- * if the loop contains any edgeuses or vertexuses they are killed
- * before the loop is deleted.
- *
- * We support the concept of killing a loop with no children to
- * support the routine "nmg_demote_lu"
- *
- * Returns -
- * 0 If all is well
- * 1 If parent is empty, and is thus "illegal"
- */
 int
 nmg_klu(struct loopuse *lu1)
 {
@@ -2107,16 +2034,6 @@ nmg_use_edge_g(struct edgeuse *eu, uint32_t *magic_p)
     return ndead;
 }
 
-
-/**
- * Build the bounding box for a loop.
- *
- * The bounding box is guaranteed never to have zero thickness.
- *
- * XXX This really isn't loop geometry, this is a loop attribute.
- * This routine really should be called nmg_loop_bb(), unless it gets
- * something more to do.
- */
 void
 nmg_loop_a(struct loop *l, const struct bn_tol *tol)
 {
@@ -2567,14 +2484,6 @@ nmg_region_a(struct nmgregion *r, const struct bn_tol *tol)
  *									*
  ************************************************************************/
 
-
-/**
- * Demote a loopuse of edgeuses to a bunch of wire edges in the shell.
- *
- * Returns -
- * 0 If all is well (edges moved to shell, loopuse deleted).
- * 1 If parent is empty, and is thus "illegal".  Still successful.
- */
 int
 nmg_demote_lu(struct loopuse *lu1)
 {
