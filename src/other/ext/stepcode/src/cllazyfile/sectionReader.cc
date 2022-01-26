@@ -36,7 +36,7 @@ std::streampos sectionReader::findNormalString(const std::string &str, bool semi
 {
     std::streampos found = -1, startPos = _file.tellg(), nextTry = startPos;
     int i = 0, l = str.length();
-    char c;
+    int c;
 
     //i is reset every time a character doesn't match; if i == l, this means that we've found the entire string
     while(i < l || semicolon) {
