@@ -62,6 +62,7 @@ set(LIBNMG_SOURCES
 CMAKEFILES(
   CMakeLists.txt
   junk.c
+  nmg_private.h
 )
 
 BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "libbg;libbv;libbn;libbu;${STDCXX_LIBRARIES}")

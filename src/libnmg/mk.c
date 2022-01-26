@@ -65,6 +65,7 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "nmg.h"
+#include "./nmg_private.h"
 
 
 /************************************************************************
@@ -1327,7 +1328,7 @@ nmg_klu(struct loopuse *lu1)
  * NOT INTENDED FOR GENERAL USE!
  * However, nmg_mod.c needs it for nmg_eusplit().  (Drat!)
  */
-/* static */ int
+int
 nmg_keg(struct edgeuse *eu)
 {
     if (!eu)

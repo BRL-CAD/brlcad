@@ -169,7 +169,7 @@ NMG_EXPORT extern struct edgeuse *nmg_me(struct vertex *v1,
  */
 NMG_EXPORT extern struct edgeuse *nmg_meonvu(struct vertexuse *vu);
 
-NMG_EXPORT extern int nmg_keg(struct edgeuse *eu);
+
 NMG_EXPORT extern int nmg_keu(struct edgeuse *eu);
 
 /**
