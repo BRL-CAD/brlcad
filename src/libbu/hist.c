@@ -39,8 +39,8 @@ bu_hist_free(struct bu_hist *histp)
 
     BU_CK_HIST(histp);
 
-    if (histp->hg_bins)
-	bu_free((char *)histp->hg_bins, "old bu_hist bins");
+    bu_free((char *)histp->hg_bins, "old bu_hist bins");
+
     histp->hg_bins = NULL;
     histp->hg_nbins = 0;
     histp->magic = (unsigned int)-1;	/* sanity */

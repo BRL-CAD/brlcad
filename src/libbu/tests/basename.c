@@ -42,9 +42,8 @@ get_system_output(const char *input)
     char *in = input ? bu_strdup(input) : NULL;
     char *out = bu_strdup(basename(in));
 
-    if (in) {
-	bu_free(in, "input copy");
-    }
+    bu_free(in, "input copy");
+
     return out;
 }
 #endif
