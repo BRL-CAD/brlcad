@@ -173,9 +173,7 @@ bu_argv_free(size_t argc, char *argv[])
 
     for (i = 0; i < argc; ++i) {
 	bu_free((void *)argv[i], "bu_argv_free");
-	if (argv[i]) {
-	    argv[i] = NULL; /* sanity */
-	}
+	argv[i] = NULL; /* sanity */
     }
 
     bu_free((void *)argv, "bu_argv_free");
@@ -194,9 +192,7 @@ bu_free_args(size_t argc, char *argv[], const char *str)
 
     while (count < argc) {
 	bu_free(argv[count], str);
-	if (argv[count]) {
-	    argv[count] = NULL;
-	}
+	argv[count] = NULL;
 	count++;
     }
 
