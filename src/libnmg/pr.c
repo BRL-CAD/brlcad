@@ -778,7 +778,7 @@ nmg_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
     register long **lp;
 
     BU_CK_PTBL(tbl);
-    bu_log("%s: bu_ptbl array with %ld entries\n",
+    bu_log("%s: bu_ptbl array with %zu entries\n",
 	   title, tbl->end);
 
     if (!verbose) return;

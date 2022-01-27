@@ -3921,7 +3921,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 				      "nmg_isect_eu_fu: inter_dist");
 
     if (UNLIKELY(nmg_debug & NMG_DEBUG_POLYSECT))
-	bu_log("%ld intersect vertices along eu (%p)\n", BU_PTBL_LEN(&inters), (void *)eu);
+	bu_log("%zu intersect vertices along eu (%p)\n", BU_PTBL_LEN(&inters), (void *)eu);
 
     for (i=0; i<BU_PTBL_LEN(&inters); i++) {
 	struct vertex *v;
@@ -5229,7 +5229,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, plane_t pl, struct nmg_inte
 
     if (nmg_debug & NMG_DEBUG_POLYSECT) {
 	bu_log("\t pl=(%g %g %g %g)\n", V4ARGS(pl));
-	bu_log("\tcut_lists=%ld, on=%zu, in=%zu, out=%zu\n", BU_PTBL_LEN(&cut_list), on, in, out);
+	bu_log("\tcut_lists=%zu, on=%zu, in=%zu, out=%zu\n", BU_PTBL_LEN(&cut_list), on, in, out);
 	if (BU_PTBL_LEN(&cut_list)) {
 	    bu_log("\tcut_lists:\n");
 	    for (i=0; i<BU_PTBL_LEN(&cut_list); i++) {
@@ -5326,7 +5326,7 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, plane_t pl, struct nmg_inte
     }
 
     if (BU_PTBL_LEN(&cut_list)%2) {
-	bu_log("Uneven number (%ld) of vertices on cut list\n", BU_PTBL_LEN(&cut_list));
+	bu_log("Uneven number (%zu) of vertices on cut list\n", BU_PTBL_LEN(&cut_list));
 	bu_bomb("Uneven number of vertices on cut list");
     }
 
