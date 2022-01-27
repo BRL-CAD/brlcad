@@ -185,7 +185,7 @@ bg_2d_chull2(int **hull, const point2d_t *points_2d, int n)
 	(*hull)[i] = p2int[pointers[pchull[i]]];
     }
 
-    bu_argv_free(n, pointers);
+    bu_argv_free(n, (char **)pointers);
     bu_free(psorted, "free sorted points");
     bu_free(pchull, "free unmapped hull");
 
