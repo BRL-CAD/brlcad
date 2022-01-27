@@ -1420,8 +1420,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 		    }
 
 		    bu_free(str1, "str1");
-		    if (av)
-			bu_free((char *)av, "av");
+		    bu_free((char *)av, "av");
 		    return -1;
 		}
 		mtmp[i] = mi;
@@ -1433,8 +1432,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
 	    // Cleanup
 	    bu_free(str1, "str1");
-	    if (av)
-		bu_free((char *)av, "av");
+	    bu_free((char *)av, "av");
 
 	    // Used 1 arg to read in the matrix
 	    return 1;
@@ -1442,8 +1440,7 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
 	// Done with string copy
 	bu_free(str1, "str1");
-	if (av)
-	    bu_free((char *)av, "av");
+	bu_free((char *)av, "av");
     }
 
     // If we didn't have a single arg matrix, see if we
