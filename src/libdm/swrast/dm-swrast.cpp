@@ -204,18 +204,9 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     bu_vls_init(&(dmp->i->dm_log));
 
     BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_swvars);
-    if (dmp->i->dm_vars.pub_vars == (void *)NULL) {
-	bu_free(dmp, "swrast_open: dmp");
-	return DM_NULL;
-    }
     pubvars = (struct dm_swvars *)dmp->i->dm_vars.pub_vars;
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct swrast_vars);
-    if (dmp->i->dm_vars.priv_vars == (void *)NULL) {
-	bu_free(dmp->i->dm_vars.pub_vars, "swrast_open: dmp->i->dm_vars.pub_vars");
-	bu_free(dmp, "swrast_open: dmp");
-	return DM_NULL;
-    }
     privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
     privars->v = (struct bview *)ctx;
     // Note - for Qt, dealing with GL_RGB data display was something of a pain.  This backend

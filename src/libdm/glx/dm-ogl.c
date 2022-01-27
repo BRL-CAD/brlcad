@@ -575,18 +575,9 @@ ogl_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
     bu_vls_init(&(dmp->i->dm_log));
 
     BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_glxvars);
-    if (dmp->i->dm_vars.pub_vars == (void *)NULL) {
-	bu_free(dmp, "ogl_open: dmp");
-	return DM_NULL;
-    }
     pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct pogl_vars);
-    if (dmp->i->dm_vars.priv_vars == (void *)NULL) {
-	bu_free(dmp->i->dm_vars.pub_vars, "ogl_open: dmp->i->dm_vars.pub_vars");
-	bu_free(dmp, "ogl_open: dmp");
-	return DM_NULL;
-    }
     privvars = (struct pogl_vars *)dmp->i->dm_vars.priv_vars;
 
     dmp->i->dm_get_internal(dmp);
