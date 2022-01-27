@@ -182,7 +182,13 @@ bu_free(void *ptr, const char *str)
     if (!str)
 	str = nul;
 
-    if (UNLIKELY(ptr == (char *)0 || ptr == (char *)(-1L))) {
+    /* silently ignore NULL pointers */
+    if (UNLIKELY(ptr == (char *)0)) {
+	return;
+    }
+
+    /* noisily report "marked" pointers */
+    if (ptr == (char *)(-1L)) {
 	fprintf(stderr, "%p free ERROR %s\n", ptr, str);
 	return;
     }
@@ -191,12 +197,10 @@ bu_free(void *ptr, const char *str)
     bu_semaphore_acquire(BU_SEM_MALLOC);
 #endif
 
-    /* Here we wipe out the first four bytes before the actual free()
-     * as a basic memory safeguard.  This should wipe out any magic
-     * number in structures and provide a distinct memory signature if
-     * the address happens to be accessed via some other pointer or
-     * the program crashes.  While we're not guaranteed anything after
-     * free(), some implementations leave the zapped value intact.
+    /* Here we intentionally wipe out the first four bytes before the
+     * actual free() as a basic memory safeguard.  While we're not
+     * guaranteed anything after free(), some implementations leave
+     * the zapped value intact and it can help with debugging.
      */
     *((uint32_t *)ptr) = 0xFFFFFFFF;	/* zappo! */
 
