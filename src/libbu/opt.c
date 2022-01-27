@@ -281,8 +281,8 @@ opt_describe_internal_ascii(const struct bu_opt_desc *ds, struct bu_opt_desc_opt
 	i++;
     }
     finalized = bu_strdup(bu_vls_addr(&description));
-    if (input)
-	bu_free(input, "free filter copy");
+
+    bu_free(input, "free filter copy");
     bu_vls_free(&description);
     return finalized;
 }

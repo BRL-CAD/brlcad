@@ -514,14 +514,11 @@ bu_process_wait(
     bu_process_close(pinfo, BU_PROCESS_STDERR);
 
     /* Free copy of exec args */
-    if (pinfo->cmd) {
-	bu_free((void *)pinfo->cmd, "pinfo cmd copy");
-    }
+    bu_free((void *)pinfo->cmd, "pinfo cmd copy");
+
     if (pinfo->argv) {
 	for (int i = 0; i < pinfo->argc; i++) {
-	    if (pinfo->argv[i]) {
-		bu_free((void *)pinfo->argv[i], "pinfo argv member");
-	    }
+	    bu_free((void *)pinfo->argv[i], "pinfo argv member");
 	}
 	bu_free((void *)pinfo->argv, "pinfo argv array");
     }

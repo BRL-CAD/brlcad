@@ -260,12 +260,13 @@ test_sscanf(int type, const char *src, const char *fmt) {
 	default:
 	    bu_exit(1, "Error: test_sscanf was given an unrecognized pointer type.\n");
     }
+
+    bu_free(val, "test_sscanf val");
     if (val != NULL) {
-	bu_free(val, "test_sscanf val");
 	val = NULL;
     }
+    bu_free(bu_val, "test_sscanf bu_val");
     if (bu_val != NULL) {
-	bu_free(bu_val, "test_sscanf bu_val");
 	bu_val = NULL;
     }
 } /* test_sscanf */

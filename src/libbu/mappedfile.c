@@ -201,8 +201,7 @@ mapped_file_invalidate(struct bu_mapped_file *mp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
-    if (mp->appl)
-	bu_free(mp->appl, "appl");
+    bu_free(mp->appl, "appl");
     mp->appl = NULL;
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
@@ -432,14 +431,12 @@ fail:
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
-    if (mp->name) {
-	bu_free(mp->name, "mp->name");
-	mp->name = NULL;
-    }
-    if (mp->appl) {
-	bu_free(mp->appl, "mp->appl");
-	mp->appl = NULL;
-    }
+    bu_free(mp->name, "mp->name");
+    mp->name = NULL;
+
+    bu_free(mp->appl, "mp->appl");
+    mp->appl = NULL;
+
     if (mp->buf) {
 	if (mp->is_mapped) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -536,8 +533,7 @@ bu_free_mapped_files(int verbose)
 	mp->buf = (void *)NULL;		/* sanity */
 	bu_free((void *)mp->name, "bu_mapped_file.name");
 
-	if (mp->appl)
-	    bu_free((void *)mp->appl, "bu_mapped_file.appl");
+	bu_free((void *)mp->appl, "bu_mapped_file.appl");
 
 	/* release this one */
 	memset(mp, 0, sizeof(struct bu_mapped_file)); /* sanity */
