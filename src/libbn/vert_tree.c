@@ -170,9 +170,7 @@ bn_vert_tree_destroy( struct bn_vert_tree *tree )
 
     free_vert_tree_recurse( ptr );
 
-    if ( tree->the_array ) {
-	bu_free( (char *)tree->the_array, "vertex array" );
-    }
+    bu_free( (char *)tree->the_array, "vertex array" );
 
     tree->the_tree = (union vert_tree *)NULL;
     tree->the_array = (fastf_t *)NULL;

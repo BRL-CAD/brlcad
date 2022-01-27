@@ -29,6 +29,39 @@
 #include "bn/tol.h"
 #include "bg/polygon.h"
 
+void
+bg_polygon_free(struct bg_polygon *gpp)
+{
+    if (gpp->num_contours == 0)
+	return;
+
+    for (size_t j = 0; j < gpp->num_contours; ++j) {
+	if (gpp->contour[j].num_points > 0) {
+	    bu_free((void *)gpp->contour[j].point, "contour points");
+	}
+    }
+
+    bu_free((void *)gpp->contour, "contour");
+    bu_free((void *)gpp->hole, "hole");
+    gpp->num_contours = 0;
+}
+
+void
+bg_polygons_free(struct bg_polygons *gpp)
+{
+    if (gpp->num_polygons == 0)
+	return;
+
+    for (size_t i = 0; i < gpp->num_polygons; ++i) {
+	bg_polygon_free(&gpp->polygon[i]);
+    }
+
+    bu_free((void *)gpp->polygon, "data polygons");
+    gpp->polygon = (struct bg_polygon *)0;
+    gpp->num_polygons = 0;
+}
+
+
 int
 bg_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
 {
@@ -219,8 +252,7 @@ bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices)
     }
 
     /* clean up and evaluate results */
-    if (tmp_pt_order)
-	bu_free(tmp_pt_order, "free tmp_pt_order");
+    bu_free(tmp_pt_order, "free tmp_pt_order");
     if (NEAR_ZERO(sum, SMALL_FASTF))
 	return 0;
     return (sum > 0) ? BG_CW : BG_CCW;

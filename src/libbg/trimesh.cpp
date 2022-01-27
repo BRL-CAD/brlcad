@@ -328,9 +328,7 @@ bg_free_trimesh_edges(struct bg_trimesh_edges *edges)
 {
     if (!edges) return;
 
-    if (edges->edges) {
-	bu_free(edges->edges, "bg trimesh edges");
-    }
+    bu_free(edges->edges, "bg trimesh edges");
     edges->count = 0;
 }
 
@@ -339,9 +337,7 @@ bg_free_trimesh_faces(struct bg_trimesh_faces *faces)
 {
     if (!faces) return;
 
-    if (faces->faces) {
-	bu_free(faces->faces, "bg trimesh faces");
-    }
+    bu_free(faces->faces, "bg trimesh faces");
     faces->count = 0;
 }
 
