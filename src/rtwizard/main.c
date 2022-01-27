@@ -854,9 +854,8 @@ rtwizard_help(struct bu_opt_desc *d)
 	bu_vls_printf(&str, "Image Generation Options:\n%s\n", option_help);
     }
 
-    if (option_help) {
-	bu_free(option_help, "help str");
-    }
+    bu_free(option_help, "help str");
+
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
     bu_vls_free(&filtered);
@@ -880,8 +879,8 @@ rtwizard_help_dev(struct bu_opt_desc *d)
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Options for developers:\n%s\n", option_help);
-	bu_free(option_help, "help str");
     }
+    bu_free(option_help, "help str");
 
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
