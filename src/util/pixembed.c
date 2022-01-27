@@ -168,7 +168,8 @@ main(int argc, char **argv)
     }
 
     /* For the remaining lines, Write out duplicates of last line read */
-    for (y = 0; y < ydup; y++) write_buffer();
+    for (y = 0; y < ydup; y++)
+	write_buffer();
 
     bu_free(obuf, "obuf");
 

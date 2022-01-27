@@ -105,7 +105,8 @@ main(int argc, char **argv)
 	snprintf(name, 128, "%s.%ld", base_name, (unsigned long)framenumber);
 
 	ifname = bu_file_realpath(name, NULL);
-	if ((fd=creat(ifname, 0444))<0) {
+	fd = creat(ifname, 0444);
+	if (fd < 0) {
 	    perror(ifname);
 	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    continue;
