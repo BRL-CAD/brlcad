@@ -676,13 +676,11 @@ QPolyMod::sketch_name_update()
     if (!ps->sketch_name->text().length()) {
 	if (ps->view_name->text().length()) {
 	    ps->sketch_name->setPlaceholderText(ps->view_name->text());
-	    if (sk_name)
-		bu_free(sk_name, "sk_name");
+	    bu_free(sk_name, "sk_name");
 	    sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	}
     } else {
-	if (sk_name)
-	    bu_free(sk_name, "sk_name");
+	bu_free(sk_name, "sk_name");
 	sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
     }
 
@@ -742,8 +740,7 @@ QPolyMod::view_name_edit()
 	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
     }
     if (ps->view_name->text().length()) {
-	if (!vname)
-	    bu_free(vname, "vname");
+	bu_free(vname, "vname");
 	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
     bool colliding = false;
@@ -759,8 +756,7 @@ QPolyMod::view_name_edit()
 	ps->view_name->setStyleSheet("");
     }
 
-    if (vname)
-	bu_free(vname, "vname");
+    bu_free(vname, "vname");
 }
 
 void
@@ -776,8 +772,7 @@ QPolyMod::view_name_update()
 	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
     }
     if (ps->view_name->text().length()) {
-	if (vname)
-	    bu_free(vname, "vname");
+	bu_free(vname, "vname");
 	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
 

@@ -218,8 +218,7 @@ QPolyCreate::finalize(bool)
 	    vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
 	}
 	if (ps->view_name->text().length()) {
-	    if (vname)
-		bu_free(vname, "vname");
+	    bu_free(vname, "vname");
 	    vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
 	}
 	bool colliding = false;
@@ -264,16 +263,14 @@ QPolyCreate::finalize(bool)
 		sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	    }
 	    if (ps->sketch_name->text().length()) {
-		if (sk_name)
-		    bu_free(sk_name, "sk_name");
+		bu_free(sk_name, "sk_name");
 		sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
 	    }
 	    if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
 		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
 		emit db_updated();
 	    }
-	    if (sk_name)
-		bu_free(sk_name, "name cpy");
+	    bu_free(sk_name, "name cpy");
 	} else {
 	    ip->u_data = NULL;
 	}
@@ -303,8 +300,7 @@ QPolyCreate::do_vpoly_copy()
 	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
     }
     if (ps->view_name->text().length()) {
-	if (vname)
-	    bu_free(vname, "vname");
+	bu_free(vname, "vname");
 	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
     bool colliding = false;
@@ -376,8 +372,7 @@ QPolyCreate::do_import_sketch()
 	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
     }
     if (ps->view_name->text().length()) {
-	if (vname)
-	    bu_free(vname, "vname");
+	bu_free(vname, "vname");
 	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
     bool colliding = false;
@@ -466,13 +461,11 @@ QPolyCreate::sketch_sync()
 	if (!ps->sketch_name->text().length()) {
 	    if (ps->view_name->text().length()) {
 		ps->sketch_name->setPlaceholderText(ps->view_name->text());
-		if (sname)
-		    bu_free(sname, "sname");
+		bu_free(sname, "sname");
 		sname = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	    }
 	} else {
-	    if (sname)
-		bu_free(sname, "sname");
+	    bu_free(sname, "sname");
 	    sname = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
 	}
 
@@ -514,8 +507,7 @@ QPolyCreate::view_sync()
 	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
     }
     if (ps->view_name->text().length()) {
-	if (!vname)
-	    bu_free(vname, "vname");
+	bu_free(vname, "vname");
 	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
     bool colliding = false;

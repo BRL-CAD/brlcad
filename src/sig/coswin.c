@@ -50,10 +50,9 @@ init_coswintab(int size)
     double theta;
 
     if (size > maxinitlen) {
-	if (coswintab != NULL) {
-	    bu_free(coswintab, "coswintab");
-	    maxinitlen = 0;
-	}
+	bu_free(coswintab, "coswintab");
+	maxinitlen = 0;
+
 	coswintab = (double *)bu_malloc(size*sizeof(double), "coswintab");
 	maxinitlen = size;
     }

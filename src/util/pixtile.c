@@ -189,7 +189,8 @@ main(int argc, char **argv)
 		}
 
 		ifname = bu_file_realpath(name, NULL);
-		if ((fd=open(ifname, O_RDONLY|O_BINARY))<0) {
+		fd = open(ifname, O_RDONLY|O_BINARY);
+		if (fd < 0) {
 		    perror(ifname);
 		    bu_free(ifname, "ifname alloc from bu_file_realpath");
 		    goto done;

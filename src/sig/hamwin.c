@@ -51,10 +51,9 @@ init_hamwintab(int size)
     double theta;
 
     if (size > maxinitlen) {
-	if (hamwintab != NULL) {
-	    bu_free(hamwintab, "free hamwintab");
-	    maxinitlen = 0;
-	}
+	bu_free(hamwintab, "free hamwintab");
+	maxinitlen = 0;
+
 	hamwintab = (double *)bu_malloc(size*sizeof(double), "alloc hamwintab");
 	if (!hamwintab) {
 	    fprintf(stderr, "coswin: couldn't malloc space for %d elements\n", size);

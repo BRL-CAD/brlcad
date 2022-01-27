@@ -130,7 +130,7 @@ main(int ac, const char **av)
     if (ac == 0) {
 	char *help = bu_opt_describe(icv_opt_desc, NULL);
 	bu_log("%s\n", help);
-	if (help) bu_free(help, "help str");
+	bu_free(help, "help str");
 	/* TODO - print some help */
 	goto cleanup;
     }
@@ -148,7 +148,7 @@ main(int ac, const char **av)
 	char *help = bu_opt_describe(icv_opt_desc, NULL);
 	bu_log("Options:\n");
 	bu_log("%s\n", help);
-	if (help) bu_free(help, "help str");
+	bu_free(help, "help str");
 #if 0
 
 	/* TODO - figure out how to get this info from each plugin to construct this table */
@@ -269,9 +269,10 @@ main(int ac, const char **av)
 
     /* Clean up */
 cleanup:
-    if (bu_vls_strlen(&slog) > 0) bu_log("%s", bu_vls_addr(&slog));
-    if (in_fmt) bu_free((char *)in_fmt, "input format string");
-    if (out_fmt) bu_free((char *)out_fmt, "output format string");
+    if (bu_vls_strlen(&slog) > 0)
+	bu_log("%s", bu_vls_addr(&slog));
+    bu_free((char *)in_fmt, "input format string");
+    bu_free((char *)out_fmt, "output format string");
     bu_vls_free(&in_format);
     bu_vls_free(&in_path);
     bu_vls_free(&out_format);

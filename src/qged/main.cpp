@@ -48,8 +48,8 @@ qged_usage(const char *cmd, struct bu_opt_desc *d) {
     bu_vls_sprintf(&str, "Usage: %s [options] [file.g]\n", cmd);
     if (option_help) {
 	bu_vls_printf(&str, "Options:\n%s\n", option_help);
-	bu_free(option_help, "help str");
     }
+    bu_free(option_help, "help str");
     bu_log("%s", bu_vls_cstr(&str));
     bu_vls_free(&str);
 }
