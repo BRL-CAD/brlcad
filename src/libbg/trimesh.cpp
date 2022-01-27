@@ -245,7 +245,7 @@ bg_trimesh_misoriented_edges(int num_edges, struct bg_trimesh_halfedge *edge_lis
 
 int
 bg_trimesh_excess_edges(int num_edges, struct bg_trimesh_halfedge *edge_list, bg_edge_error_funct_t error_edge_func, void *data)
-{  
+{
     return trimesh_count_error_edges(num_edges, edge_list, edge_overmatched, error_edge_func, data);
 }
 
@@ -284,14 +284,14 @@ bg_trimesh_solid2(int vcnt, int fcnt, fastf_t *v, int *f, struct bg_trimesh_soli
     if (!(edge_list = bg_trimesh_generate_edge_list(fcnt, f))) return 1;
 
     bad_edge_func = errors ? bg_trimesh_edge_continue : bg_trimesh_edge_exit;
-    
+
     if ((unmatched_edges = bg_trimesh_unmatched_edges(num_edges, edge_list, bad_edge_func, NULL)) ||
 	(misoriented_edges = bg_trimesh_misoriented_edges(num_edges, edge_list, bad_edge_func, NULL)) ||
 	(excess_edges = bg_trimesh_excess_edges(num_edges, edge_list, bad_edge_func, NULL)))
     {
-	if (!errors) { 
-	    bu_free(edge_list, "edge_list"); 
-	    return 1; 
+	if (!errors) {
+	    bu_free(edge_list, "edge_list");
+	    return 1;
 	}
     }
 
