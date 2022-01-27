@@ -2408,7 +2408,7 @@ find_loop_to_cut(int *index1, int *index2, size_t prior_start, size_t prior_end,
     }
 
     if (nmg_debug&NMG_DEBUG_FCUT)
-	bu_log("\tfind_loop_to_cut: returning %ld cuts (index1=%d, index2=%d)\n",
+	bu_log("\tfind_loop_to_cut: returning %zu cuts (index1=%d, index2=%d)\n",
 	       BU_PTBL_LEN(cuts), *index1, *index2);
 
     return cuts;
