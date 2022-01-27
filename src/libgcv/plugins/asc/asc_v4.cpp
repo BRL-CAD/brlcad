@@ -883,8 +883,7 @@ arsabld(struct ascv4_rstate *s)
     char *np;
     int i;
 
-    if (s->ars_name)
-	bu_free((char *)s->ars_name, "ars_name");
+    bu_free((char *)s->ars_name, "ars_name");
     cp = bu_vls_addr(s->buf);
     cp = nxt_spc(cp);
     cp = nxt_spc(cp);

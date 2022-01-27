@@ -590,8 +590,8 @@ BRLMAN_MAIN(
 	bu_log("Usage: brlman [options] [man_page]\n");
 	if (option_help) {
 	    bu_log("Options:\n%s\n", option_help);
-	    bu_free(option_help, "help str");
 	}
+	bu_free(option_help, "help str");
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
