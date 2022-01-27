@@ -142,6 +142,12 @@ if (BRLCAD_ENABLE_TK)
 
   endif (DO_IWIDGETS_BUILD)
 
+else (BRLCAD_ENABLE_TK)
+
+    # If we don't have a Tk enabled build, there's never any point in building
+    # Iwidgets - note it is off for the configure summary
+    set(BRLCAD_IWIDGETS_BUILD "OFF" CACHE STRING "Disable Iwidgets build" FORCE)
+
 endif (BRLCAD_ENABLE_TK)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.dist")
