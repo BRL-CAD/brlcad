@@ -27,6 +27,7 @@
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/sort.h"
+#include "bu/str.h"
 #include "bg/chull.h"
 
 #include "./bg_private.h"
