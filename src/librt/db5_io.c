@@ -256,7 +256,7 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
-	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database possibly corrupted\n", rip->object_length);
+	bu_log("db5_get_raw_internal_ptr(): object_length=%zu is too short, database possibly corrupted\n", rip->object_length);
 	return NULL;
     }
 
@@ -354,7 +354,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if (rip->object_length < sizeof(struct db5_ondisk_header) || rip->object_length < used) {
-	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database possibly corrupted\n",
+	bu_log("db5_get_raw_internal_fp(): object_length=%zu is too short, database possibly corrupted\n",
 	       rip->object_length);
 	return -1;
     }
@@ -369,7 +369,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     want = rip->object_length - used;
 
     if ((got = fread(cp, 1, want, fp)) != want) {
-	bu_log("db5_get_raw_internal_fp(): database is too short, want=%ld, got=%ld\n", want, got);
+	bu_log("db5_get_raw_internal_fp(): database is too short, want=%zu, got=%zu\n", want, got);
 	return -2;
     }
 

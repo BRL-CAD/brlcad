@@ -2372,7 +2372,7 @@ test_closure(struct ga_t *ga,
 		}
 		if ((plot_mode == PLOT_ON) && (open_edges == 0)) {
 		    bu_vls_sprintf(&plot_file_name, "%s.%zu.%d.o.pl",
-				   bu_vls_addr(gfi->raw_grouping_name), (long unsigned)gfi->grouping_index + 1,
+				   bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1,
 				   gfi->face_type);
 		    cleanup_name(&plot_file_name);
 		    if ((plotfp = fopen(bu_vls_addr(&plot_file_name), "wb")) == (FILE *)NULL) {
@@ -2808,7 +2808,7 @@ output_to_nmg(struct ga_t *ga,
     } else {
 	/* run nmg_model_fuse */
 	if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
-	    bu_log("Running nmg_model_fuse on (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+	    bu_log("Running nmg_model_fuse on (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
 	num_entities_fused = nmg_model_fuse(m, &RTG.rtg_vlfree, tol);
 	if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
@@ -2819,7 +2819,7 @@ output_to_nmg(struct ga_t *ga,
 
 	/* run nmg_gluefaces, run nmg_vertex_fuse before nmg_gluefaces */
 	if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
-	    bu_log("Running nmg_gluefaces on (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+	    bu_log("Running nmg_gluefaces on (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
 	nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &RTG.rtg_vlfree, tol);
 	if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
@@ -2828,7 +2828,7 @@ output_to_nmg(struct ga_t *ga,
 
 	/* mark edges as real */
 	if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
-	    bu_log("Running nmg_mark_edges_real with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+	    bu_log("Running nmg_mark_edges_real with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
 	(void)nmg_mark_edges_real(&s->l.magic,&RTG.rtg_vlfree);
 	if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
@@ -2836,14 +2836,14 @@ output_to_nmg(struct ga_t *ga,
 	}
 	/* compute geometry for region and shell */
 	if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
-	    bu_log("Running nmg_region_a with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+	    bu_log("Running nmg_region_a with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
 	nmg_region_a(r, tol);
 	if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
 	    bu_log("Completed nmg_region_a for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
 	if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
-	    bu_log("Running nmg_kill_cracks with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+	    bu_log("Running nmg_kill_cracks with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
 	if (nmg_kill_cracks(s)) {
 	    if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
@@ -2855,7 +2855,7 @@ output_to_nmg(struct ga_t *ga,
 		bu_log("Completed nmg_kill_cracks for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    }
 	    if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
-		bu_log("Running nmg_rebound with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+		bu_log("Running nmg_rebound with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    }
 	    nmg_rebound(m, tol);
 	    if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
@@ -2863,7 +2863,7 @@ output_to_nmg(struct ga_t *ga,
 	    }
 	    /* run nmg_vertex_fuse before nmg_check_closed_shell */
 	    if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
-		bu_log("Running nmg_check_closed_shell with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+		bu_log("Running nmg_check_closed_shell with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    }
 	    if (!nmg_check_closed_shell(s, tol)) {
 		/* true when surface is closed */
@@ -2871,7 +2871,7 @@ output_to_nmg(struct ga_t *ga,
 		    bu_log("Completed nmg_check_closed_shell for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 		}
 		if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
-		    bu_log("Running nmg_fix_normals with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+		    bu_log("Running nmg_fix_normals with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 		}
 		nmg_fix_normals(s, &RTG.rtg_vlfree, tol);
 		if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
@@ -2888,7 +2888,7 @@ output_to_nmg(struct ga_t *ga,
 				   bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1, gfi->face_type);
 		    cleanup_name(gfi->primitive_name);
 		    if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
-			bu_log("Running mk_nmg with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+			bu_log("Running mk_nmg with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 		    }
 		    /* the model (m) is freed when mk_nmg completes */
 		    if (mk_nmg(outfp, bu_vls_addr(gfi->primitive_name), m) < 0) {
@@ -2913,7 +2913,7 @@ output_to_nmg(struct ga_t *ga,
 				   bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1, gfi->face_type);
 		    cleanup_name(gfi->primitive_name);
 		    if ((ga->gcv_options->verbosity_level > 1) || ga->gcv_options->debug_mode) {
-			bu_log("Running mk_bot_from_nmg with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+			bu_log("Running mk_bot_from_nmg with approx (%zu) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_LEN(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 		    }
 		    if (mk_bot_from_nmg(outfp, bu_vls_addr(gfi->primitive_name), s) < 0) {
 			bu_log("ERROR: Completed mk_bot_from_nmg but FAILED for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);

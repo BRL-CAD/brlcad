@@ -325,7 +325,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 	    }
 	    break;
 	default:
-	    bu_log("a long int is %lu bytes on this machine\n", sizeof(long));
+	    bu_log("a long int is %zu bytes on this machine\n", sizeof(long));
 	    bu_bomb("I can only handle 4 or 8 byte longs\n");
 	    break;
     }

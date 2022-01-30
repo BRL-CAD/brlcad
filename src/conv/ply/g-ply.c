@@ -69,9 +69,9 @@ static int regions_tried = 0;
 static int regions_converted = 0;
 static int regions_written = 0;
 static int cur_region = 0;
-static int tot_regions = 0;
-static long tot_polygons = 0;
-static long tot_vertices = 0;
+static size_t tot_regions = 0;
+static size_t tot_polygons = 0;
+static size_t tot_vertices = 0;
 
 
 static struct bu_hash_entry *
@@ -110,8 +110,8 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     struct shell *s;
     struct vertex *v;
     char *region_name = NULL;
-    long nvertices = 0;
-    long nfaces = 0;
+    size_t nvertices = 0;
+    size_t nfaces = 0;
     int color[3];
     int reg_faces_pos = 0;
     p_ply ply_fp = NULL;
@@ -221,7 +221,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
      */
     if (nfaces >= INT_MAX) {
 	bu_hash_destroy(v_tbl_regs[cur_region]);
-	bu_log("ERROR: Number of faces (%ld) exceeds integer limit!\n", nfaces);
+	bu_log("ERROR: Number of faces (%zu) exceeds integer limit!\n", nfaces);
 	goto free_nmg;
     }
 
@@ -276,7 +276,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    f_regs[cur_region][reg_faces_pos][v_ind_pos] = v->index;
 		    v_ind_pos++;
 		}
-		if (reg_faces_pos >= nfaces) {
+		if ((size_t)reg_faces_pos >= nfaces) {
 		    bu_log("ERROR: More loopuses than faces!\n");
 		    goto free_nmg;
 		}
@@ -287,13 +287,13 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
     if (nvertices >= INT_MAX) {
 	bu_hash_destroy(v_tbl_regs[cur_region]);
-	bu_log("ERROR: Number of vertices (%ld) exceeds integer limit!\n", nvertices);
+	bu_log("ERROR: Number of vertices (%zu) exceeds integer limit!\n", nvertices);
 	goto free_nmg;
     }
 
     if (!merge_all) {
-	int fi;
-	int vi;
+	size_t fi;
+	size_t vi;
 	double *coords;
 
 	ply_add_element(ply_fp, "vertex", nvertices);
@@ -314,7 +314,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    bu_log("ERROR: No coordinates found for vertex!\n");
 	    goto free_nmg;
 	}
-	for (fi = 0; fi < (int) nfaces; fi++) {
+	for (fi = 0; fi < nfaces; fi++) {
 	    ply_write(ply_fp, 3);
 	    for (vi = 0; vi < 3; vi++) {
 		coords = (double *)bu_hash_get(v_tbl_regs[cur_region], (const unsigned char *)(f_regs[cur_region][fi] + vi), sizeof(long));
@@ -767,7 +767,7 @@ Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default
 			leaf_stub,
 			(void *)NULL);	/* in librt/nmg_bool.c */
     if (verbose)
-	bu_log("Found %d total regions.\n", tot_regions);
+	bu_log("Found %zu total regions.\n", tot_regions);
 
     f_regs = (long ***) bu_calloc(tot_regions, sizeof(long**), "f_regs");
     f_sizes = (int *) bu_calloc(tot_regions, sizeof(int), "f_sizes");
@@ -858,7 +858,7 @@ Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default
 	       regions_written, percent);
     }
 
-    bu_log("%zd triangles written\n", tot_polygons);
+    bu_log("%zu triangles written\n", tot_polygons);
 
     bu_log("Tessellation parameters used:\n");
     bu_log("  abs  [-a]    %g\n", ttol.abs);

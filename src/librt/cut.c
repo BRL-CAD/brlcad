@@ -997,7 +997,7 @@ rt_pr_cut(const union cutter *cutp, int lvl)
 		bu_log("        ");
 		for (j=lvl; j>0; j--)
 		    bu_log("   ");
-		bu_log("    %s, %ld pieces: ",
+		bu_log("    %s, %zu pieces: ",
 		       stp->st_name, plp->npieces);
 
 		/* Loop for every piece of this solid */
@@ -1139,7 +1139,7 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 {
     RT_CK_RTI(rtip);
 
-    bu_log("%s %s: %d cut, %d box (%ld empty)\n",
+    bu_log("%s %s: %d cut, %d box (%zu empty)\n",
 	   str,
 	   rtip->rti_space_partition == RT_PART_NUBSPT ?
 	   "NUBSP" : "unknown",

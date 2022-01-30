@@ -135,7 +135,7 @@ HIDDEN ssize_t
 deb_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FB(ifp->i);
-    fb_log("fb_read(%p, %4d, %4d, %p, %lu)\n",
+    fb_log("fb_read(%p, %4d, %4d, %p, %zu)\n",
 	   (void *)ifp, x, y,
 	   (void *)pixelp, count);
     return count;

@@ -116,7 +116,7 @@ img_source_hook(const struct bu_structparse *UNUSED(sdp),
  * either from a file or from a db object.
  */
 HIDDEN int
-img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const unsigned long int size)
+img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const size_t size)
 {
     struct directory *dirEntry;
 
@@ -188,9 +188,9 @@ img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const u
 	    return -1;				/* FAIL */
 
 	if (image->i_data->buflen < size) {
-	    bu_log("\nWARNING: %s needs %lu bytes, file only has %lu\n", bu_vls_addr(&image->i_name), size, image->i_data->buflen);
+	    bu_log("\nWARNING: %s needs %zu bytes, file only has %zu\n", bu_vls_addr(&image->i_name), size, image->i_data->buflen);
 	} else if (image->i_data->buflen > size) {
-	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %zu pixels\n\tSpecified Image Size: %lu pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
+	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %zu pixels\n\tSpecified Image Size: %zu pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
 	}
 
 	image->i_img = (unsigned char *) image->i_data->buf;

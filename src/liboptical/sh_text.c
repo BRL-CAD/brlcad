@@ -130,7 +130,7 @@ txt_transp_hook(const struct bu_structparse *sdp,
  * (there is no specific unload_datasource function).
  */
 HIDDEN int
-txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const unsigned long int size)
+txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const size_t size)
 {
     struct directory *dirEntry;
 

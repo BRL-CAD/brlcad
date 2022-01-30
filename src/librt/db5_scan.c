@@ -148,7 +148,7 @@ db5_scan_inmem(
 	}
 	dp_copy = bu_malloc(raw.object_length, "db5_scan_inmem raw dp data");
 	memcpy(dp_copy, current_data, raw.object_length);
-	(*handler)(dbip, &raw, (b_off_t)dp_copy, client_data);
+	(*handler)(dbip, &raw, (b_off_t)(intptr_t)dp_copy, client_data);
 	nrec++;
 	addr += (b_off_t)raw.object_length;
     }

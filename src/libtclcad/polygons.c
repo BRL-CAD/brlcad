@@ -172,7 +172,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 
     if (BU_STR_EQUAL(argv[1], "target_poly")) {
 	if (argc == 2) {
-	    bu_vls_printf(gedp->ged_result_str, "%lu", gdpsp->gdps_target_polygon_i);
+	    bu_vls_printf(gedp->ged_result_str, "%zu", gdpsp->gdps_target_polygon_i);
 	    return GED_OK;
 	}
 
@@ -638,7 +638,7 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    goto bad;
 
 	if ((ret = ged_export_polygon(gedp, gdpsp, i, argv[3])) != GED_OK)
-	    bu_vls_printf(gedp->ged_result_str, "%s: failed to export polygon %lu to %s", argv[0], i, argv[3]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: failed to export polygon %zu to %s", argv[0], i, argv[3]);
 
 	return ret;
     }

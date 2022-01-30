@@ -1759,7 +1759,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
      */
     bu_ptbl_init(&stps, 8, "soltabs to delete");
     if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT)
-	bu_log("deleting %lu invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
+	bu_log("deleting %zu invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
 
     for (i=0; i<BU_PTBL_LEN(&ap->a_rt_i->delete_regs); i++) {
 	struct region *rp;
@@ -1778,7 +1778,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	 * structs.
 	 */
 	if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT)
-	    bu_log("Removing invisible light region pointers from %lu soltabs\n",
+	    bu_log("Removing invisible light region pointers from %zu soltabs\n",
 		   BU_PTBL_LEN(&stps));
 
 	for (j=0; j<BU_PTBL_LEN(&stps); j++) {

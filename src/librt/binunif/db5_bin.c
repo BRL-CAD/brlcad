@@ -178,7 +178,7 @@ rt_binunif_dump(struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
     bu_log("rt_binunif_internal <%p>...\n", (void *)bip);
     bu_log("  type = x%x = %d", bip->type, bip->type);
-    bu_log("  count = %ld  first = 0x%02x", bip->count,
+    bu_log("  count = %zu  first = 0x%02x", bip->count,
 	   bip->u.uint8[0] & 0x0ff);
     bu_log("- - - - -\n");
 }

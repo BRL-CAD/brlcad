@@ -186,7 +186,7 @@ openFbDevice(struct burst_state *s, struct bu_vls *fbdev)
     }
     if (((s->fbiop != FB_NULL && fb_getwidth(s->fbiop) != s->devwid) || s->pixgrid == NULL)
 	&& (s->pixgrid = (unsigned char *) calloc(s->devwid*3, sizeof(unsigned char))) == (unsigned char *) NULL) {
-	bu_exit(EXIT_FAILURE, "Memory allocation of %ld bytes failed.", sizeof(unsigned char)*s->devwid);
+	bu_exit(EXIT_FAILURE, "Memory allocation of %zu bytes failed.", sizeof(unsigned char)*(size_t)s->devwid);
     }
     (void) memset((char *) s->pixgrid, 0, sizeof(unsigned char)*s->devwid*3);
     if (s->fbiop != FB_NULL && fb_close(s->fbiop) == -1) {

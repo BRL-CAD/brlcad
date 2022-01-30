@@ -346,7 +346,7 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
 
 
 #define Malloc_Bomb(_bytes_)                                    \
-    fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",    \
+    fb_log("\"%s\"(%d) : allocation of %zu bytes failed.\n",    \
            __FILE__, __LINE__, _bytes_)
 
 /**

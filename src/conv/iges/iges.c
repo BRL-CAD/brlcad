@@ -531,7 +531,7 @@ write_attribute_definition(FILE *fp_dir, FILE *fp_param)
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
-    bu_vls_printf(&str, "322,%ldH%s,5001,9", strlen(att_string), att_string);
+    bu_vls_printf(&str, "322,%zuH%s,5001,9", strlen(att_string), att_string);
     bu_vls_printf(&str, ",1,3,1"); /* material name */
     bu_vls_printf(&str, ",2,3,1"); /* material parameters */
     bu_vls_printf(&str, ",3,6,1"); /* region flag (logical value) */

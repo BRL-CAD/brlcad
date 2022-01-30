@@ -173,7 +173,7 @@ light_cvt_visible(const struct bu_structparse *sdp,
 
     if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	bu_log("light_cvt_visible(%s, %zu)\n", name, sdp->sp_offset);
-	bu_log("visible: %lu invisible: %lu\n",
+	bu_log("visible: %zu invisible: %zu\n",
 	       LIGHT_O(lt_visible),
 	       LIGHT_O(lt_invisible));
     }
