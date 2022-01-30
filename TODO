@@ -18,6 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* asc2g is failing on "puts" command (maybe specific to 32-bit),
+  resulting in "unknown command" on an uninstalled build.  title and
+  units commands work, but puts fails inside ged_exec().
+
 * On some Windows machine Tcl script commands using "puts" to write to
   stdout are intermittently failing with:
   Error: error writing "stdout": invalid argument
@@ -28,6 +32,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * Overlap tool in MGED is not handling no overlaps reporting correctly.
 
 * gqa is crashing when supplied all.g/box.r as an object argument
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
