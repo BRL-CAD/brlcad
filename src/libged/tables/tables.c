@@ -565,14 +565,14 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&tabvls, "\n\nNumber Primitives = %zu  Number Regions = %zu\n",
 		      numsol, numreg);
 
-	bu_vls_printf(gedp->ged_result_str, "Processed %lu Primitives and %lu Regions\n",
+	bu_vls_printf(gedp->ged_result_str, "Processed %zu Primitives and %zu Regions\n",
 		      numsol, numreg);
     } else {
 	bu_vls_printf(&tabvls, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 
 	tables_header(&tabvls, argc, argv, gedp, timep);
 
-	bu_vls_printf(gedp->ged_result_str, "Processed %lu Regions\n", numreg);
+	bu_vls_printf(gedp->ged_result_str, "Processed %zu Regions\n", numreg);
 
 	/* make ordered idents and re-print */
 	bu_sort(BU_PTBL_BASEADDR(&tabobjs), BU_PTBL_LEN(&tabobjs), sizeof(struct table_obj *), sort_table_objs, NULL);

@@ -2350,7 +2350,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	cdp = (struct directory *)BU_PTBL_GET(pc, i);
 	nparent = bu_avs_get(opts->c_map, cdp->d_namep);
 	if (!opts->quiet) {
-	    bu_log("Duplicating assembly (%d of %ld) %s -> %s\n", i+1, BU_PTBL_LEN(pc), cdp->d_namep, nparent);
+	    bu_log("Duplicating assembly (%d of %zu) %s -> %s\n", i+1, BU_PTBL_LEN(pc), cdp->d_namep, nparent);
 	}
 	if (_ged_facetize_add_children(gedp, cdp, opts) != GED_OK) {
 	    if (!opts->quiet) {

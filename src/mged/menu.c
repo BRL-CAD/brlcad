@@ -75,7 +75,7 @@ cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
 	bu_vls_strcat(&result, "list");
 	for (m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++)
-	    bu_vls_printf(&result, " [%s %ld]", argv[0], m-menu_state->ms_menus);
+	    bu_vls_printf(&result, " [%s %d]", argv[0], m-menu_state->ms_menus);
 
 	status = Tcl_Eval(interp, bu_vls_addr(&result));
 	bu_vls_free(&result);

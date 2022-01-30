@@ -295,7 +295,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 	bu_vls_sprintf(&name_prefix, "open_edges.%s", argv[i]);
 	bu_log("%s: running show_dangling_edges\n", argv[0]);
 	open_cnt = show_dangling_edges(gedp, &m->magic, bu_vls_addr(&name_prefix), out_type);
-	bu_log("%s: WARNING %ld open edges, new BOT may be invalid!!!\n", argv[0], open_cnt);
+	bu_log("%s: WARNING %zu open edges, new BOT may be invalid!!!\n", argv[0], open_cnt);
 	bu_vls_free(&name_prefix);
 
 	/* free the nmg model structure */
