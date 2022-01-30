@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* asc2g is failing on "puts" command (maybe specific to 32-bit),
+  resulting in "unknown command" on an uninstalled build.  title and
+  units commands work, but puts fails inside ged_exec().
+
 * killtree / crashes
 
 * killtree reports spurious db_lookup failures saying object does not
