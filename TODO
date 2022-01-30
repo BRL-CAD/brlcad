@@ -18,10 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* Mac OS X build failure with BRLCAD_BUNDLED_LIBS=ON.  Appears to be
-  the src/other/ext builds not finding typical system headers (e.g.,
-  string.h)
-
 * asc2g is failing on "puts" command (maybe specific to 32-bit),
   resulting in "unknown command" on an uninstalled build.  title and
   units commands work, but puts fails inside ged_exec().
