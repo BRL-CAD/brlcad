@@ -987,6 +987,8 @@ struct txt_seg {
     int ref_pt;				/** reference point */
     int rel_pos;			/** flag describing position relative to ref_pt */
     struct bu_vls label;
+    fastf_t txt_size;           /** text size */
+    fastf_t txt_rot_angle;      /** text rotation angle */
 };
 
 /**

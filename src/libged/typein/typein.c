@@ -638,7 +638,9 @@ static const char *p_annot[] = {
     "Enter X, Y for the text placement: ",
     "Enter Y: ",
     "Enter relative horizontal position (1->left, 2->center, 3->right): ",
-    "Enter relative vertical position (1->bottom, 2->middle, 3->top): "
+    "Enter relative vertical position (1->bottom, 2->middle, 3->top): ",
+    "Enter text size: ",
+    "Enter text angle: "
 };
 
 
@@ -3295,6 +3297,8 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     tsg->ref_pt = 0;
     bu_vls_init(&tsg->label);
     bu_vls_strcpy(&tsg->label, cmd_argvs[6]);
+    tsg->txt_size = atof(cmd_argvs[11]);
+    tsg->txt_rot_angle = atof(cmd_argvs[12]);
 
     BU_ALLOC(lsg, struct line_seg);
     lsg->magic = CURVE_LSEG_MAGIC;
@@ -3607,7 +3611,7 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	menu = p_joint;
 	fn_in = joint_in;
     } else if (BU_STR_EQUAL(argv[2], "annot")) {
-	nvals = 3 + 1+ 2 + 2;
+	nvals = 3 + 1 + 2 + 2 + 2;
 	menu = p_annot;
 	fn_in = annot_in;
     } else if (BU_STR_EQUAL(argv[2], "script")) {
