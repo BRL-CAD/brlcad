@@ -339,7 +339,7 @@ else
 fi
 
 if test "x$KEEP" = "x1" ; then
-    $VERBOSE_ECHO "Converted geometry file will be retained"
+    $VERBOSE_ECHO "Converted geometry and debugging file(s) will be retained"
 fi
 
 ###
@@ -402,15 +402,27 @@ $ECHO "Using [${MGED}] for GED"
 $ECHO "Using [${MAXTIME}] for MAXTIME"
 $ECHO
 
-# iterate over every specified geometry file
-files=0
-count=0
+# aggregate stats
+obj_count=0
+file_count=0
+pass_count=0
+fail_count=0
+time_count=0
+
+# breakdown stats
 nmg_count=0
 bot_count=0
 brep_count=0
+
+# labels defined in one place
+pass=ok
+fail=FAIL
+time=time
+
 $ECHO "%s" "-=-"
 begin=`elapsed` # start elapsed runtime timer
 while test $# -gt 0 ; do
+    # iterates over every specified geometry file
     file="$1"
     if ! test -f "$file" ; then
 	echo "Unable to read file [$file]"
@@ -447,6 +459,14 @@ EOF
 	    $ECHO "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
 	    continue
 	fi
+	object_type=`$SGED -c "$work" db get_type \"${obj}\" 2>&1 | grep -v Using`
+	if test "x$object_type" = "xcomb" ; then
+	    # identify regions specifically
+	    region=`$SGED -c "$work" get \"${obj}\" region 2>&1 | grep -v Using`
+	    if test "x$region" = "xyes" ; then
+		object_type="region"
+	    fi
+	fi
 
 	# start the limit timer.  this will kill the upcoming facetize
 	# job if more than MAXTIME seconds have elapsed.  in order for
@@ -454,11 +474,11 @@ EOF
 	# leaving orphaned 'sleep' processes that accumulate, this
 	# method had to be executed in the current shell environment.
 
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && touch "./${obj}.nmg.extl" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && touch "./${obj}.nmg.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
 	spid=$!
 
 	# convert NMG
-	nmg=fail
+	nmg=$fail
 	cmd="$GED -c \"$work\" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
@@ -484,20 +504,19 @@ EOF
 	# verify NMG
 	found=`$SGED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.nmg" ; then
-	    nmg=pass
+	    nmg=$pass
 	    nmg_count=`expr $nmg_count + 1`
-	fi
-	if [ -e "./${obj}.nmg.extl" ] ; then
-	    rm "./${obj}.nmg.extl"
-	    nmg=extl
+	elif [ -e "./${obj}.nmg.timeout" ] ; then
+	    rm "./${obj}.nmg.timeout"
+	    nmg=$time
 	fi
 
 	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && touch "./${obj}.bot.extl" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && touch "./${obj}.bot.timeout" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
 	spid=$!
 
 	# convert BoT
-	bot=fail
+	bot=$fail
 	cmd="$GED -c \"$work\" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
@@ -518,20 +537,19 @@ EOF
 	# verify BoT
 	found=`$SGED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.bot" ; then
-	    bot=pass
+	    bot=$pass
 	    bot_count=`expr $bot_count + 1`
-	fi
-	if [ -e "./${obj}.bot.extl" ] ; then
-	    rm "./${obj}.bot.extl"
-	    bot=extl
+	elif [ -e "./${obj}.bot.timeout" ] ; then
+	    rm "./${obj}.bot.timeout"
+	    bot=$time
 	fi
 
 	# start the limit timer, same as above.
-	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && touch "./${obj}.brep.extl" && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && touch "./${obj}.brep.timeout" && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
 	spid=$!
 
 	# convert Brep
-	brep=fail
+	brep=$fail
 	cmd="$GED -c \"$work\" brep \"${obj}\" brep \"${obj}.brep\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
@@ -552,39 +570,47 @@ EOF
 	# verify Brep
 	found=`$SGED -c "$work" search . -name \"${obj}.brep\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.brep" ; then
-	    brep=pass
+	    brep=$pass
 	    brep_count=`expr $brep_count + 1`
 	else
+	    # (unconfirmed) what results when brep-evaluating comb objects
 	    found2=`$SGED -c "$work" search . -name \"${obj}.${obj}.brep\" 2>&1 | grep -v Using`
 	    if test "x$found2" = "x${object}.${object}.brep" ; then
-		brep=pass
+		brep=$pass
 		brep_count=`expr $brep_count + 1`
 	    fi
 	fi
-	if [ -e "./${obj}.brep.extl" ] ; then
-	    rm "./${obj}.brep.extl"
-	    brep=extl
+	if [ -e "./${obj}.brep.timeout" ] ; then
+	    rm "./${obj}.brep.timeout"
+	    brep=$time
 	fi
 
 	# print result for this object
-	status=fail
-	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" && test "x$brep" = "xpass" ; then
-	    status=ok
+	if test "x$nmg" = "x$pass" && test "x$bot" = "x$pass" && test "x$brep" = "x$pass" ; then
+	    status=$pass
+	    pass_count=`expr $pass_count + 1`
+	elif test "x$nmg" = "x$fail" || test "x$bot" = "x$fail" || test "x$brep" = "x$fail" ; then
+	    status=$fail
+	    fail_count=`expr $fail_count + 1`
+	elif test "x$nmg" = "x$time" || test "x$bot" = "x$time" || test "x$brep" = "x$time" ; then
+	    status=$time
+	    time_count=`expr $time_count + 1`
 	fi
 
-	count=`expr $count + 1`
+	obj_count=`expr $obj_count + 1`
 
-	SECONDS=`echo $real_nmg $real_bot $real_brep | awk '{print ($1+$2+$3)}'`
-	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss\tbrep: %s %ss %6.2fs %*s%.0f %s:%s" \
-	       \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$brep\" \"$real_brep\" \"$SECONDS\" \
-	       \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+	# | awk '{print ($1+$2+$3)}'`
+	
+	seconds=`echo "$real_nmg $real_bot $real_brep" | awk '{print ($1+$2+$3)}'`
+	$ECHO "%-4s %6.1fs  nmg: %-4s %2.1fs  bot: %-4s %2.1fs  brep: %-4s %2.1fs %*s%.0f %-7s %s:%s" \
+	       \"$status\" \"$seconds\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$brep\" \"$real_brep\" \"`expr 7 - $obj_count : '.*'`\" \"#\" $obj_count \"$object_type\" \"$file\" \"$object\"
 
     done
 
     # restore stdin
     exec 0<&3
 
-    files=`expr $files + 1`
+    file_count=`expr $file_count + 1`
 
     # remove the file if so directed
     if test "x$KEEP" = "x0" ; then
@@ -598,39 +624,40 @@ $ECHO "%s" "-=-"
 
 # calculate summary statistics
 elp=`echo $begin $end | awk '{print $2-$1}'`
-nmg_fail=`echo $nmg_count $count | awk '{print $2-$1}'`
-bot_fail=`echo $bot_count $count | awk '{print $2-$1}'`
-brep_fail=`echo $brep_count $count | awk '{print $2-$1}'`
-if test $count -eq 0 ; then
+nmg_fail=`echo $nmg_count $obj_count | awk '{print $2-$1}'`
+bot_fail=`echo $bot_count $obj_count | awk '{print $2-$1}'`
+brep_fail=`echo $brep_count $obj_count | awk '{print $2-$1}'`
+if test $obj_count -eq 0 ; then
     nmg_percent=0
     bot_percent=0
     brep_percent=0
     rate=0
     avg=0
 else
-    nmg_percent=`echo $nmg_count $count | awk '{print ($1/$2)*100.0}'`
-    bot_percent=`echo $bot_count $count | awk '{print ($1/$2)*100.0}'`
-    brep_percent=`echo $brep_count $count | awk '{print ($1/$2)*100.0}'`
-    rate=`echo $nmg_count $bot_count $brep_count $count | awk '{print ($1+$2+$3)/($4+$4+$4)*100.0}'`
-    avg=`echo $elp $count | awk '{print $1/$2}'`
+    nmg_percent=`echo $nmg_count $obj_count | awk '{print ($1/$2)*100.0}'`
+    bot_percent=`echo $bot_count $obj_count | awk '{print ($1/$2)*100.0}'`
+    brep_percent=`echo $brep_count $obj_count | awk '{print ($1/$2)*100.0}'`
+    # rate=`echo $nmg_count $bot_count $brep_count $obj_count | awk '{print ($1+$2+$3)/($4+$4+$4)*100.0}'`
+    rate=`echo $pass_count $obj_count | awk '{print ($1/$2)*100.0}'`
+    avg=`echo $elp $obj_count | awk '{print $1/$2}'`
 fi
 
 # print summary
 $ECHO
 $ECHO "... Done."
 $ECHO
-$ECHO "Summary:"
+$ECHO "Summary"
+$ECHO "======="
+$ECHO "Converted: %2.lf%%  ( %0.f of %.0f objects, %0.f files )" $rate $pass_count $obj_count $file_count
+$ECHO " Failures: %2.0f   ( %.0f NMG, %.0f BoT, %.0f Brep )" $fail_count $nmg_fail $bot_fail $brep_fail
+$ECHO " Timeouts: %2.0f" $time_count
 $ECHO
-$ECHO "   Files:  %.0f" $files
-$ECHO " Objects:  %.0f" $count
-$ECHO "Failures:  %.0f NMG, %.0f BoT, %.0f Brep" $nmg_fail $bot_fail $brep_fail
-$ECHO "NMG conversion:  %.1f%%  (%.0f of %.0f objects)" $nmg_percent $nmg_count $count
-$ECHO "BoT conversion:  %.1f%%  (%.0f of %.0f objects)" $bot_percent $bot_count $count
-$ECHO "Brep conversion:  %.1f%%  (%.0f of %.0f objects)" $brep_percent $brep_count $count
-$ECHO "  Success rate:  %.1f%%" $rate
+$ECHO " NMG rate: %3.1f%%  ( %.0f of %.0f )" $nmg_percent $nmg_count $obj_count
+$ECHO " BoT rate: %3.1f%%  ( %.0f of %.0f )" $bot_percent $bot_count $obj_count
+$ECHO "Brep rate: %3.1f%%  ( %.0f of %.0f )" $brep_percent $brep_count $obj_count
 $ECHO
-$ECHO "Elapsed:  %.0f seconds" $elp
-$ECHO "Average:  %.1f seconds per object" $avg
+$ECHO "  Elapsed: %2.1f seconds" $elp
+$ECHO "  Average: %2.1f seconds per object" $avg
 $ECHO
 $ECHO "Finished running $THIS on `date`"
 $ECHO "Output was saved to $LOGFILE from `pwd`"
