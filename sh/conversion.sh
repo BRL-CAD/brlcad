@@ -532,7 +532,7 @@ EOF
 
 	# convert Brep
 	brep=fail
-	cmd="$GED -c \"$work\" brep \"${obj}\" \"${obj}.brep\""
+	cmd="$GED -c \"$work\" brep \"${obj}\" brep \"${obj}.brep\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time -p "$cmd" 2>&1 | grep -v Using`
 
