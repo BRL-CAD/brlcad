@@ -161,6 +161,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"g", cmd_ged_plain_wrapper, ged_group},
     {"gdiff", cmd_ged_plain_wrapper, ged_gdiff},
     {"get", cmd_ged_plain_wrapper, ged_get},
+    {"get_type", cmd_ged_plain_wrapper, ged_get_type},
     {"get_autoview", cmd_ged_plain_wrapper, ged_get_autoview},
     {"get_comb", cmd_ged_plain_wrapper, ged_get_comb},
     {"get_dbip", cmd_ged_plain_wrapper, ged_dbip},
