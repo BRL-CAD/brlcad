@@ -606,14 +606,17 @@ stl_can_read(const char *data)
     FILE *fp;
     size_t fsize = 3*sizeof(float) + 3*3*sizeof(float) + sizeof(uint16_t);
     if(!data) return 0;
-    if (stat(data, &stat_buf)) return 0;
-
-    /* If it's too small, don't bother */
-    if (stat_buf.st_size < 15) return 0;
 
     /* First, try an ASCII file */
     fp = fopen(data, "r");
     if (!fp) return 0;
+
+    /* If it's too small, don't bother */
+    if (fstat(fileno(fp), &stat_buf) || stat_buf.st_size < 15) {
+	fclose(fp);
+	return 0;
+    }
+
     if (bu_fgets(ascii_header, 5, fp) != NULL && BU_STR_EQUAL(ascii_header, "solid")) {
 	/* We've got solid at the beginning, so look for "endsolid" later in the file.
 	 * If we find it, this is probably an ASCII file. */
