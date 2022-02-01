@@ -71,7 +71,9 @@ void tienet_sem_init(tienet_sem_t *sem, int val)
 {
     bu_mtx_init(&sem->mut);
     bu_cnd_init(&sem->cond);
+    bu_mtx_lock(&sem->mut);
     sem->val = val;
+    bu_mtx_unlock(&sem->mut);
 }
 
 
