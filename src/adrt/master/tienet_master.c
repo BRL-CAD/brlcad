@@ -611,6 +611,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 	/* if no work units are out, allow the shutdown to proceed. */
 	if (!tienet_master_sem_out.val)
 	    tienet_sem_post(&tienet_master_sem_shutdown);
+	bu_mtx_unlock(&tienet_master_send_mut);
 	return;
     }
 
