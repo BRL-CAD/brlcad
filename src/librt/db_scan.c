@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include <string.h>
+#include <errno.h> /* for errno */
 #include "bio.h" /* for b_off_t */
 #include "bnetwork.h"
 
@@ -148,8 +149,14 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 			      1, dbip->dbi_fp) != 1)
 			break;
 		    RT_DEBUG_PR(here, rec2);
+		    if (here == -1) {
+			bu_log("bu_ftell error %d - db_scan.c:%d\n", errno, __LINE__);
+			break;
+		    }
 		    if (rec2.u_id != ID_ARS_B) {
-			bu_fseek(dbip->dbi_fp, here, 0);
+			if (bu_fseek(dbip->dbi_fp, here, 0) == -1) {
+			    bu_log("bu_fseek error - db_scan.c:%d\n", __LINE__);
+			};
 			break;
 		    }
 		    nrec++;
@@ -193,8 +200,14 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		    RT_DEBUG_PR(here, rec2);
+		    if (here == -1) {
+			bu_log("bu_ftell error - db_scan.c:%d\n", __LINE__);
+			break;
+		    }
 		    if (rec2.u_id != ID_P_DATA) {
-			bu_fseek(dbip->dbi_fp, here, 0);
+			if (bu_fseek(dbip->dbi_fp, here, 0) == -1) {
+			    bu_log("bu_fseek error - db_scan.c:%d\n", __LINE__);
+			};
 			break;
 		    }
 		    nrec++;
@@ -212,8 +225,14 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		    RT_DEBUG_PR(here, rec2);
+		    if (here == -1) {
+			bu_log("bu_ftell error - db_scan.c:%d\n", __LINE__);
+			break;
+		    }
 		    if (rec2.u_id != ID_BSURF) {
-			bu_fseek(dbip->dbi_fp, here, 0);
+			if (bu_fseek(dbip->dbi_fp, here, 0) == -1) {
+			    bu_log("bu_fseek error - db_scan.c:%d\n", __LINE__);
+			};
 			break;
 		    }
 
@@ -314,8 +333,14 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, b_off_t,
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		    RT_DEBUG_PR(here, rec2);
+		    if (here == -1) {
+			bu_log("bu_ftell error - db_scan.c:%d\n", __LINE__);
+			break;
+		    }
 		    if (rec2.u_id != ID_MEMB) {
-			bu_fseek(dbip->dbi_fp, here, 0);
+			if (bu_fseek(dbip->dbi_fp, here, 0) == -1) {
+			    bu_log("bu_fseek error - db_scan.c:%d\n", __LINE__);
+			};
 			break;
 		    }
 		    nrec++;
