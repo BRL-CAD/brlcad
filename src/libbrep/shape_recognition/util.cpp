@@ -372,6 +372,7 @@ subbrep_bbox(struct subbrep_island_data *obj)
 	}
 	if (loop_ind == -1) {
 	    bu_log("Error - could not find fil loop!\n");
+	    continue;
 	}
 	const ON_BrepLoop *loop= &(obj->brep->m_L[loop_ind]);
 	for (int ti = 0; ti < loop->TrimCount(); ti++) {
