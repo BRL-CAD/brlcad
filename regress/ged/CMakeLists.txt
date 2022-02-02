@@ -14,10 +14,12 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/regress-ged_push.log")
 
 CMAKEFILES(
   CMakeLists.txt
+  ged_mater_test.g
+  ged_push.g
+  ppush_tests.g
+  push_tests.g
   regress-ged_mater.cmake.in
   regress-ged_push.cmake.in
-  push_tests.g
-  ppush_tests.g
   xpush_tests.g
   )
 
