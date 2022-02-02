@@ -638,7 +638,14 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Process command line args into vs with bu_opt */
-    opt_ret = bu_opt_parse(NULL, argc, argv, d);
+    struct bu_vls omsg = BU_VLS_INIT_ZERO;
+    opt_ret = bu_opt_parse(&omsg, argc, argv, d);
+    if (opt_ret < 0) {
+	bu_vls_printf(gedp->ged_result_str, "option parsing error: %s\n", bu_vls_cstr(&omsg));
+	bu_vls_free(&omsg);
+	return GED_ERROR;
+    }
+    bu_vls_free(&omsg);
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);

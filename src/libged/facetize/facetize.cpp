@@ -2862,12 +2862,15 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* parse standard options */
-    argc = bu_opt_parse(NULL, argc, argv, d);
+    struct bu_vls omsg = BU_VLS_INIT_ZERO;
+    argc = bu_opt_parse(&omsg, argc, argv, d);
     if (argc < 0) {
-	bu_vls_printf(gedp->ged_result_str, "facetize option parsing failed\n");
+	bu_vls_printf(gedp->ged_result_str, "option parsing failed: %s\n", bu_vls_cstr(&omsg));
 	ret = GED_ERROR;
+	bu_vls_free(&omsg);
 	goto ged_facetize_memfree;
     }
+    bu_vls_free(&omsg);
 
     /* It is known that libnmg will (as of 2018 anyway) throw a lot of
      * bu_bomb calls during operation. Because we need facetize to run
