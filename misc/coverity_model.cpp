@@ -16,3 +16,15 @@ void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const cha
   __coverity_panic__();
 }
 
+
+/* BRL-CAD doesn't implement cryptographic functions for security
+ * purposes - don't DC.WEAK_CRYPTO flag the random functions */
+
+int rand(void) {
+  /* ignore */
+}
+
+double drand48(void) {
+  /* ignore */
+}
+

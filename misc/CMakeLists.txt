@@ -79,7 +79,7 @@ set(misc_ignore_files
   check/volume.sh
   check/gap.sh
   clang-static-analyzer-run.sh
-  coverity_model.txt
+  coverity_model.cpp
   flawfinder
   hawaii_islands.sh
   jove.emacs
