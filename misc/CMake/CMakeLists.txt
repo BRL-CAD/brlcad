@@ -55,7 +55,6 @@ set(cmake_ignore_files
   FindUTAHRLE.cmake
   FindUUID.cmake
   FindWix.cmake
-  FindX11.cmake
   FindXMLLINT.cmake
   FindXSLTPROC.cmake
   NSIS.template.in
