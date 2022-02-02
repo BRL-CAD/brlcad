@@ -136,7 +136,7 @@ test_bu_vls_strncpy(int argc, char *argv[])
 
     string_orig = argv[2];
     string_new = argv[3];
-    sscanf(argv[4], "%d", &n);
+    bu_sscanf(argv[4], "%d", &n);
     expected_result_string = argv[5];
 
     bu_vls_strcpy(&vls, string_orig);
@@ -230,7 +230,7 @@ test_bu_vls_trunc(int argc, char *argv[])
     }
 
     in_string = argv[2];
-    sscanf(argv[3], "%d", &trunc_len);
+    bu_sscanf(argv[3], "%d", &trunc_len);
     expected_out_string = argv[4];
 
     bu_vls_strcpy(&vls, in_string);
@@ -263,7 +263,7 @@ test_bu_vls_nibble(int argc, char *argv[])
     }
 
     in_string = argv[2];
-    sscanf(argv[3], "%d", &nibble_len);
+    bu_sscanf(argv[3], "%d", &nibble_len);
     expected_out_string = argv[4];
 
     bu_vls_strcpy(&vls, in_string);
