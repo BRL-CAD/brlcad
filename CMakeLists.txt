@@ -82,7 +82,8 @@
 cmake_minimum_required(VERSION 3.12)
 
 # set CMake project name
-project(BRLCAD)
+project(BRLCAD DESCRIPTION "Open Source Solid Modeling" HOMEPAGE_URL "https://brlcad.org" LANGUAGES C CXX) # ISPC support added in 3.18
+
 
 # Test name character check - need to look into this one...
 if (POLICY CMP0110)
@@ -1281,7 +1282,8 @@ mark_as_advanced(CMAKE_USE_WIN32_THREADS_INIT)
 find_package(STL)
 
 # Check for an MPI library
-find_package(MPI)
+set(CMAKE_Fortran_COMPILER_LOADED 0 CACHED) # silence find_package(MPI) warning
+find_package(MPI COMPONENTS C)
 
 # Check for the daemon function in -lbsd and/or -lc for adrt
 BRLCAD_CHECK_LIBRARY(BSD bsd daemon)
