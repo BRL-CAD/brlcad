@@ -11,6 +11,7 @@ set(BOT_SRCS
   bot.cpp
   bot_decimate.c
   bot_dump.c
+  bot_exterior.c
   bot_face_fuse.c
   bot_face_sort.c
   bot_flip.c
