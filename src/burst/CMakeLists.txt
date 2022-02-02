@@ -1,3 +1,7 @@
+# Until the new code is proved out, keep the original around
+# as burst and name the new binary nburst
+add_subdirectory(old)
+
 set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/linenoise")
 
 set(BURST_INCLUDE_DIRS
