@@ -1053,11 +1053,15 @@ initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepTrim *trim1 = edge.Trim(0);
 	ON_BrepTrim *trim2 = edge.Trim(1);
 	int t1cind = trim1->TrimCurveIndexOf();
-	if (t1cind < 0)
+	if (t1cind < 0) {
+	    delete bseg;
 	    continue;
+	}
 	int t2cind = trim2->TrimCurveIndexOf();
-	if (t2cind < 0)
+	if (t2cind < 0) {
+	    delete bseg;
 	    continue;
+	}
 	s_cdt->brep->m_T[t1cind].SetDomain(bseg->edge_start, bseg->edge_end);
 	s_cdt->brep->m_T[t2cind].SetDomain(bseg->edge_start, bseg->edge_end);
 
