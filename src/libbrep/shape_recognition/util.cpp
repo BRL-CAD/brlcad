@@ -414,11 +414,11 @@ subbrep_brep_boolean(struct subbrep_island_data *data)
 	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    if (trim->m_ei == -1)
+		continue;
 	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	    if (trim->m_ei != -1) {
-		ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
-		mid_points.Append(midpt);
-	    }
+	    ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
+	    mid_points.Append(midpt);
 	}
     }
 
