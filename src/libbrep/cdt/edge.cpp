@@ -1052,8 +1052,14 @@ initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt)
 	// NOTE - another point where this won't work if we don't have a 1->2 edge to trims relationship
 	ON_BrepTrim *trim1 = edge.Trim(0);
 	ON_BrepTrim *trim2 = edge.Trim(1);
-	s_cdt->brep->m_T[trim1->TrimCurveIndexOf()].SetDomain(bseg->edge_start, bseg->edge_end);
-	s_cdt->brep->m_T[trim2->TrimCurveIndexOf()].SetDomain(bseg->edge_start, bseg->edge_end);
+	int t1cind = trim1->TrimCurveIndexOf();
+	if (t1cind < 0)
+	    continue;
+	int t2cind = trim2->TrimCurveIndexOf();
+	if (t2cind < 0)
+	    continue;
+	s_cdt->brep->m_T[t1cind].SetDomain(bseg->edge_start, bseg->edge_end);
+	s_cdt->brep->m_T[t2cind].SetDomain(bseg->edge_start, bseg->edge_end);
 
 	// The 3D start and endpoints will be vertex points (they are shared with other edges).
 	bseg->e_start = (*s_cdt->vert_pnts)[edge.Vertex(0)->m_vertex_index];
