@@ -455,8 +455,10 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 	    todo.pop();
 	    for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 		const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+		if (trim->m_ei == -1)
+		    continue;
 		const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-		if (trim->m_ei != -1 && edge->TrimCount() > 0) {
+		if (edge->TrimCount() > 0) {
 		    for (int j = 0; j < edge->TrimCount(); j++) {
 			int li = edge->Trim(j)->Loop()->m_loop_index;
 			if (loops.find(li) == loops.end()) {
