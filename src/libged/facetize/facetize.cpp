@@ -2858,6 +2858,17 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
 
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* parse standard options */
+    argc = bu_opt_parse(NULL, argc, argv, d);
+    if (argc < 0) {
+	bu_vls_printf(gedp->ged_result_str, "facetize option parsing failed\n");
+	ret = GED_ERROR;
+	goto ged_facetize_memfree;
+    }
+
     /* It is known that libnmg will (as of 2018 anyway) throw a lot of
      * bu_bomb calls during operation. Because we need facetize to run
      * to completion and potentially try multiple ways to convert before
@@ -2868,12 +2879,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
      * use, while still bu_logging our own status updates. Cache the
      * current bu_log hooks so they can be restored at need */
     bu_log_hook_save_all(opts->saved_log_hooks);
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* parse standard options */
-    argc = bu_opt_parse(NULL, argc, argv, d);
 
     /* Sync -q and -v options */
     if (opts->quiet && opts->verbosity) opts->verbosity = 0;
