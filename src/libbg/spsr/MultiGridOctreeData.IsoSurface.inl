@@ -810,7 +810,11 @@ void Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< 
 					}
 					else
 					{
-						int fIdx = xValues.xSliceData.faceIndices(i)[ Square::EdgeIndex( 1-d , o ) ];
+						int eind = Square::EdgeIndex( 1-d , o );
+						if (eind < 0) {
+							fprintf( stderr , "[ERROR] MultiGridOctreeData.IsoSurface.inl:%d - invalid index: %d\n" , __LINE__, eind ) , exit( 0 );
+						}
+						int fIdx = xValues.xSliceData.faceIndices(i)[ eind ];
 						if( xValues.faceSet[fIdx] )
 						{
 							const FaceEdges& fe = xValues.faceEdges[ fIdx ];
