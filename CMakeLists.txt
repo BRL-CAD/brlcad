@@ -36,23 +36,16 @@
 #       BRL-CAD's build system is under the BSD license.
 #       See the COPYING file for more details.
 #
-# ******************************************************************
-#
-# Early versions of this CMakeLists.txt file were based on the VTK
-# CMakeLists.txt file, also licensed under Modified BSD.
 
 # *******************************************************************
 # ***                 BRL-CAD's CMakeLists.txt                    ***
 # *******************************************************************
 #
-# This file defines the toplevel CMake build logic for BRL-CAD.
-# As best as is reasonably possible, proper ordering and
-# separation of tests and settings should be maintained per the
-# recommended standard layout.  The tests should be added to the
-# labeled sections below so that they are organized in stages as
-# follows:
+# This file defines the toplevel build logic for BRL-CAD.  As
+# reasonably possible, proper ordering and separation of tests should
+# be added to the labeled sections below as follows:
 #
-#   Stage 0 - information on the package and toplevel CMake settings
+#   Stage 0 - project information 
 #   Stage 1 - define top level options
 #   Stage 2 - check programs
 #   Stage 3 - check compiler characteristics
@@ -63,26 +56,38 @@
 #   Stage 8 - check system services
 #   Stage 9 - define the BRL-CAD build targets
 #
-# The output summary should report key information about the final
-# configuration of the build.  Comprehensive information is available
-# in the CMake cache file in the build directory, so just hit the
-# high points in the summary.
+# There is an output summary printed at the end to report key info
+# about the final build configuration.  Details are available in the
+# CMakeCache.txt file in the build directory.
 #
-# After the main configure process is finished, a summary is printed
-# and various settings and configuration files that require full
-# knowledge of the main configure results are handled.
-#
-# *******************************************************************
-# ***                 Top Level Settings                          ***
-# *******************************************************************
-# This file contains the top level CMakeLists.txt logic for the
-# BRL-CAD software package.
 
-# Minimum required version of CMake
+
+# ***********************************************************
+# *               Stage 0 of 9 - Project Info               *
+# ***********************************************************
+
 cmake_minimum_required(VERSION 3.12)
 
-# set CMake project name
-project(BRLCAD DESCRIPTION "Open Source Solid Modeling" HOMEPAGE_URL "https://brlcad.org" LANGUAGES C CXX) # ISPC support added in 3.18
+#---------------------------------------------------------------------
+# BRL-CAD's version is centrally stored in include/conf/.  See HACKING
+# for details on updating the version.
+
+file(READ "${BRLCAD_SOURCE_DIR}/include/conf/MAJOR" BRLCAD_VERSION_MAJOR)
+string(STRIP ${BRLCAD_VERSION_MAJOR} BRLCAD_VERSION_MAJOR)
+file(READ "${BRLCAD_SOURCE_DIR}/include/conf/MINOR" BRLCAD_VERSION_MINOR)
+string(STRIP ${BRLCAD_VERSION_MINOR} BRLCAD_VERSION_MINOR)
+file(READ "${BRLCAD_SOURCE_DIR}/include/conf/PATCH" BRLCAD_VERSION_PATCH)
+string(STRIP ${BRLCAD_VERSION_PATCH} BRLCAD_VERSION_PATCH)
+
+set(BRLCAD_VERSION "${BRLCAD_VERSION_MAJOR}.${BRLCAD_VERSION_MINOR}.${BRLCAD_VERSION_PATCH}")
+if(DEFINED BRLCAD_VERSION_AMEND)
+  set(BRLCAD_VERSION "${BRLCAD_VERSION}-${BRLCAD_VERSION_AMEND}")
+endif(DEFINED BRLCAD_VERSION_AMEND)
+
+
+#######
+project(BRLCAD VERSION ${BRLCAD_VERSION} DESCRIPTION "Open Source Solid Modeling" HOMEPAGE_URL "https://brlcad.org" LANGUAGES C CXX)
+#######
 
 
 # Test name character check - need to look into this one...
@@ -114,34 +119,6 @@ endif (EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
 
 
 #---------------------------------------------------------------------
-# Setup and checks related to system environment settings.  Some of
-# these impact search results needed to set default options, so we
-# do this early in the process.
-include(BRLCAD_Environment_Setup)
-
-
-#---------------------------------------------------------------------
-# Define various utilities.
-include(BRLCAD_Util)
-
-
-#---------------------------------------------------------------------
-# Define the current BRL-CAD version.
-# See HACKING for details on how to properly update the version
-
-file(READ "${BRLCAD_SOURCE_DIR}/include/conf/MAJOR" BRLCAD_VERSION_MAJOR)
-string(STRIP ${BRLCAD_VERSION_MAJOR} BRLCAD_VERSION_MAJOR)
-file(READ "${BRLCAD_SOURCE_DIR}/include/conf/MINOR" BRLCAD_VERSION_MINOR)
-string(STRIP ${BRLCAD_VERSION_MINOR} BRLCAD_VERSION_MINOR)
-file(READ "${BRLCAD_SOURCE_DIR}/include/conf/PATCH" BRLCAD_VERSION_PATCH)
-string(STRIP ${BRLCAD_VERSION_PATCH} BRLCAD_VERSION_PATCH)
-
-set(BRLCAD_VERSION "${BRLCAD_VERSION_MAJOR}.${BRLCAD_VERSION_MINOR}.${BRLCAD_VERSION_PATCH}")
-if(DEFINED BRLCAD_VERSION_AMEND)
-  set(BRLCAD_VERSION "${BRLCAD_VERSION}-${BRLCAD_VERSION_AMEND}")
-endif(DEFINED BRLCAD_VERSION_AMEND)
-
-#---------------------------------------------------------------------
 # Let CMake know where to look for our counting file for configuration
 # passes.  It will impact whether we print certain messages
 set(BRLCAD_CNT_FILE "${BRLCAD_BINARY_DIR}/CMakeTmp/BRLCAD_BUILD_COUNT")
@@ -155,6 +132,19 @@ endif(NOT EXISTS ${BRLCAD_CNT_FILE})
 if(BRLCAD_PRINT_MSGS)
   message(STATUS "CMake version: ${CMAKE_VERSION}")
 endif(BRLCAD_PRINT_MSGS)
+
+
+#---------------------------------------------------------------------
+# Setup and checks related to system environment settings.  Some of
+# these impact search results needed to set default options, so we
+# do this early in the process.
+include(BRLCAD_Environment_Setup)
+
+
+#---------------------------------------------------------------------
+# Define various utilities.
+include(BRLCAD_Util)
+
 
 #---------------------------------------------------------------------
 # Define an option to use OBJECT libraries.  If we are building with object
