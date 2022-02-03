@@ -59,13 +59,14 @@ asc_read(
 {
     struct bu_vls vline = BU_VLS_INIT_ZERO;
     int fmt = -1;
+    int ret = 1;
     if (!c || !o || !spath) return 0;
     std::string sline;
     std::ifstream fs;
     fs.open(spath);
     if (!fs.is_open()) {
 	std::cerr << "Unable to open " << spath << " for reading, skipping\n";
-	return 0;
+	return 1;
     }
 
     // asc2g checked for either title or put as the first line to denote a new
@@ -96,22 +97,27 @@ asc_read(
 	    switch (fmt) {
 		case 4:
 		    fs.seekg(0);
-		    asc_read_v4(c, o, fs);
+		    ret = asc_read_v4(c, o, fs);
+		    goto asc_cleanup;
 		    break;
 		case 5:
 		    fs.seekg(0);
-		    asc_read_v5(c, o, fs);
+		    ret = asc_read_v5(c, o, fs);
+		    goto asc_cleanup;
 		    break;
 		default:
 		    std::cerr << "Unknown asc format version: " << fmt << "\n";
-		    return 0;
 		    break;
 	    }
 	}
     }
 
+asc_cleanup:
     // Not yet implemented - always return failure until we have something working...
-    return 1;
+    bu_vls_free(&str_title);
+    bu_vls_free(&str_put);
+    bu_vls_free(&vline);
+    return ret;
 }
 
 static int
