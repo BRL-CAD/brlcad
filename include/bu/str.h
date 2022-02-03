@@ -306,6 +306,13 @@ BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
  * libbu replacement for Tcl's ascii list to argc/argv functionality
  * (Note: function signature duplicates that of Tcl_SplitList)
  *
+ * Caller is responsible for freeing output argv array with bu_free(),
+ * but NOT the strings within argv.
+ *
+ * @param       list_str input string from caller
+ * @param[out]  argc pointer to variable that will hold number of entries in argv
+ * @param[out]  argv pointer to the parsed array of list items
+ *
  * Returns 0 if parsing was successful
  */
 BU_EXPORT extern int bu_argv_from_tcl_list(const char *list_str,
