@@ -475,7 +475,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
     static const char *regionusage = "comb_name color shader inherit boolean_expr y regionID airID materialID los%";
 
     const char *cmd_name = argv[0];
-    const char *comb_name = argv[1];
+    const char *comb_name = (argc > 1) ? argv[1] : NULL;
     const char *dir_name = NULL;
     const char *saved_name = NULL;
 
