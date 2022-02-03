@@ -88,7 +88,7 @@ if (TARGET mged)
     if (tname STREQUAL "")
       message("INTERNAL ERROR: regex replaced to empty test from [$testfile]")
       continue()
-    endif (tname)
+    endif (tname STREQUAL "")
 
     file(READ "${CMAKE_CURRENT_SOURCE_DIR}/${testfile}" TEST_CONTENTS)
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/regress_${testfile}" "source ${CMAKE_CURRENT_SOURCE_DIR}/regression_resources.tcl\n\n${TEST_CONTENTS}")
