@@ -51,7 +51,6 @@ int
 ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "nmg object subcommand [V|F|R|S] [suffix]";
-    const char *subcmd = argv[2];
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
@@ -100,6 +99,7 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
     --argc;
     ++argv;
 
+    const char *subcmd = argv[0];
     if( BU_STR_EQUAL( "mm", subcmd ) ) {
 	ged_nmg_mm_core(gedp, argc, argv);
     }
