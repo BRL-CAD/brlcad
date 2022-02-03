@@ -1741,20 +1741,6 @@ prntAspectInit(struct burst_state *s)
     /* Convert to user units before squaring cell size. */
     projarea = s->cellsz*s->unitconv;
     projarea *= projarea;
-    if (bu_vls_strlen(&s->outfile)
-	&&      fprintf(s->outfp,
-			"%c % 9.4f % 8.4f % 5.2f % 10.2f %-6s % 9.6f\n",
-			PB_ASPECT_INIT,
-			s->viewazim*RAD2DEG, /* attack azimuth in degrees */
-			s->viewelev*RAD2DEG, /* attack elevation in degrees */
-			s->bdist*s->unitconv,  /* BDIST */
-			projarea, /* projected area associated with burst pt. */
-			bu_units_string(s->unitconv),
-			s->raysolidangle
-		       ) < 0
-       ) {
-	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
-    }
 
     // For the original burst units, report back using the same string
     // burst would originally have used (for compatibility).  Eventually
@@ -1774,6 +1760,21 @@ prntAspectInit(struct burst_state *s)
     }
     if (BU_STR_EQUAL(ustr, "m")) {
 	ustr = "meters";
+    }
+
+    if (bu_vls_strlen(&s->outfile)
+	&&      fprintf(s->outfp,
+			"%c % 9.4f % 8.4f % 5.2f % 10.2f %-6s % 9.6f\n",
+			PB_ASPECT_INIT,
+			s->viewazim*RAD2DEG, /* attack azimuth in degrees */
+			s->viewelev*RAD2DEG, /* attack elevation in degrees */
+			s->bdist*s->unitconv,  /* BDIST */
+			projarea, /* projected area associated with burst pt. */
+			ustr,
+			s->raysolidangle
+		       ) < 0
+       ) {
+	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
     }
 
     if (bu_vls_strlen(&s->shotlnfile)
