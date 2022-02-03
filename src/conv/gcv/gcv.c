@@ -700,8 +700,10 @@ cleanup:
 
     bu_vls_free(&in_format);
     bu_vls_free(&in_path);
+    bu_vls_free(&in_path_raw);
     bu_vls_free(&out_format);
     bu_vls_free(&out_path);
+    bu_vls_free(&out_path_raw);
     bu_vls_free(&slog);
 
     bu_ptbl_free(&in_opts);
