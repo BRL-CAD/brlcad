@@ -1737,6 +1737,10 @@ burst_process_line(struct burst_state *s, const char *line)
 {
     int ret = BRLCAD_OK;
 
+    /* Ignore empty lines */
+    if (!line || line[0] == '\0')
+	return BRLCAD_OK;
+
     /* Skip a line if it is a comment */
     if (line[0] == '#') {
 	// Echo comment
