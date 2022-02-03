@@ -128,17 +128,51 @@ bu_vls_free(&str_put);
 fclose(ifp);
 
 Tcl_Exit(0);
-#endif	
+#endif
+
+
 
 int
 asc_read_v5(
-	struct gcv_context *UNUSED(c),
+	struct gcv_context *c,
        	const struct gcv_opts *UNUSED(o),
 	std::ifstream &fs
 	)
 {
     std::string sline;
     bu_log("Reading v5...\n");
+    if (!c)
+	return -1;
+#if 0
+    // TODO - attempting to run the libged commands corresponding to the Tcl
+    // commands exposes a limitation in the way libgcv and libged can interact.
+    // Both are using dynamically loaded plugins, and if we have a libgcv
+    // plugin call libged, at least on Linux, something about the way the
+    // libged dynamic libraries are loaded causes problems for the OS - the
+    // application ends up segfaulting on exit.  It will go through all the
+    // steps I can see in gdb (apparently) successfully, but something about
+    // the libged cleanup for the GED commands eventually results in a low
+    // level segfault in OS level process clean up code.
+    //
+    // As near as I can tell, it is the dlclose call when the application is
+    // exiting that triggers the problem.  gdb backtraces are uninformative
+    // about the actual crash, so I don't know what precisely is unhappy.  Thus
+    // far the only solution I've been able to think of is to refactor the guts
+    // of the logic for the four or five commands needed for ascv5 parsing down
+    // into librt (either as their own functions or as part of the rt_do_cmd
+    // mechanism) so we won't need to load the libged plugins at the GCV plugin
+    // level.  That's probably reasonable in this case, since the way the v5
+    // asc format has been defined those commands ARE the .g serialization
+    // format, but the problem hints at a broader issue.
+    //
+    // If this IS a general OS limitation and not some mistake on my part - no
+    // loading plugin systems via dlopen/dlclose from shared objects that are
+    // themselves loaded in via dlopen/dlclose - we should probably document
+    // that as a general rule.  If that is the case substantive logic in libged
+    // that may need to be called from gcv plugins should be moved to lower
+    // level libraries, with just the GED command superstructure living in the
+    // GED plugin itself...
+#endif
     /* Commands to handle:
      *
      * title
@@ -146,9 +180,45 @@ asc_read_v5(
      * attr
      * put
      */
+    struct bu_vls cur_line = BU_VLS_INIT_ZERO;
     while (std::getline(fs, sline)) {
 	std::cout << sline << "\n";
+	bu_vls_sprintf(&cur_line, "%s", sline.c_str());
+	int list_c = 0;
+	char **list_v = NULL;
+	if (bu_argv_from_tcl_list(bu_vls_cstr(&cur_line), &list_c, (const char ***)&list_v) != 0 || list_c < 1) {
+	    bu_free(list_v, "tcl argv list");
+	    continue;
+	}
+
+	if (BU_STR_EQUAL(list_v[0], "title")) {
+	    std::cout << "Found title\n";
+	    //rt_cmd_title(c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    continue;
+	}
+	if (BU_STR_EQUAL(list_v[0], "units")) {
+	    std::cout << "Found units\n";
+	    //rt_cmd_units(c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    continue;
+	}
+	if (BU_STR_EQUAL(list_v[0], "attr")) {
+	    std::cout << "Found attr\n";
+	    //rt_cmd_attr(c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    continue;
+	}
+	if (BU_STR_EQUAL(list_v[0], "put")) {
+	    std::cout << "Found put\n";
+	    //rt_cmd_put(c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    continue;
+	}
+	std::cout << "Unknown command: " << list_v[0] << "\n";
+	bu_free(list_v, "tcl argv list");
     }
+    bu_vls_free(&cur_line);
     return 1;
 }
 
