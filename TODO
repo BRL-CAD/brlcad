@@ -135,6 +135,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* nburst appears to be missing logging output (bounding volume lines)
+  and isn't outputting units (outputs NULL).  can run regress-burst
+  and regress-nburst to compare (have to manually save files).  the
+  ktank test isn't comprehensive, really should tests all the primary
+  options.
+
 * add metaball scaling feature (presently in a tclscript)
 
 * ability to visualize metaball centerpoints and with/without
