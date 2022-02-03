@@ -242,6 +242,7 @@ main(int argc, char **argv)
 		/* get _GLOBAL attributes */
 		if (db5_get_attributes(dbip, &g_avs, dp)) {
 		    bu_log("Failed to find any attributes on _GLOBAL\n");
+		    bu_avs_free(&g_avs);
 		    continue;
 		}
 
@@ -273,25 +274,26 @@ main(int argc, char **argv)
 		}
 
 		value = bu_avs_get(&g_avs, "regionid_colortable");
-		if (!value)
+		if (!value) {
+		    bu_avs_free(&g_avs);
 		    continue;
+		}
 		list = Tcl_NewStringObj(value, -1);
 		{
 		    int llen;
 		    if (Tcl_ListObjLength(interp, list, &llen) != TCL_OK) {
 			bu_log("Failed to get length of region color table!!\n");
+			bu_avs_free(&g_avs);
 			continue;
 		    }
 		    list_len = (size_t)llen;
 		}
 		for (i = 0; i < list_len; i++) {
 		    if (Tcl_ListObjIndex(interp, list, i, &obj) != TCL_OK) {
-			bu_log("Cannot get entry %d from the color table!!\n",
-				i);
+			bu_log("Cannot get entry %d from the color table!!\n", i);
 			continue;
 		    }
-		    fprintf(ofp, "color %s\n",
-			     Tcl_GetStringFromObj(obj, NULL));
+		    fprintf(ofp, "color %s\n", Tcl_GetStringFromObj(obj, NULL));
 		}
 		bu_avs_free(&g_avs);
 		continue;
