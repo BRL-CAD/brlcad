@@ -990,18 +990,26 @@ combdump(void)	/* Print out Combination record information */
     /*
      *  Output the member records now
      */
-    while (head.forw != &head) {
-	mp = (struct mchain *)head.forw;
+    struct bu_list *p;
+    for (BU_LIST_FOR(p, bu_list, &head)) {
+	mp = (struct mchain *)p;
 	membdump(&mp->r);
-	BU_LIST_DEQUEUE(&mp->l);
-	BU_PUT(mp, struct mchain);
     }
 
+    /* Clean up (in the style of bu_list_free, but using BU_PUT since the
+     * memory was allocated with BU_GET) */
+    while (BU_LIST_WHILE(p, bu_list, &head)) {
+	BU_LIST_DEQUEUE(p);
+	BU_PUT(p, struct mchain);
+    }
+
+    /* ret_mp, if we have it, is not part of the list */
     if (ret_mp) {
 	memcpy((char *)&record, (char *)&ret_mp->r, sizeof(record));
 	BU_PUT(ret_mp, struct mchain);
 	return 1;
     }
+
     return 0;
 }
 
