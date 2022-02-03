@@ -48,9 +48,9 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
     const char *primitive = NULL;
     static const char *usage = "<obj> [command]\n";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -61,18 +61,18 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "commands:\n");
 	bu_vls_printf(gedp->ged_result_str, "\txy x y                  - report the height value at (x,y)\n");
 	bu_vls_printf(gedp->ged_result_str, "\tdiff obj [min_diff_val] - report height differences at x,y coordinates between two dsp objects\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* get dsp */
     primitive = argv[1];
-    GED_DB_LOOKUP(gedp, dsp_dp, primitive, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, dsp_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dsp_dp, primitive, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, dsp_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_DSP) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a DSP solid!", cmd, primitive);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dsp = (struct rt_dsp_internal *)intern.idb_ptr;
@@ -89,13 +89,13 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	if (gx > dsp->dsp_xcnt || gy > dsp->dsp_ycnt) {
 	    bu_vls_printf(gedp->ged_result_str, "Error - xy coordinate (%d,%d) is outside max data bounds of dsp: (%d,%d)", gx, gy, dsp->dsp_xcnt, dsp->dsp_ycnt);
 	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    elev = DSP(dsp, gx, gy);
 	    bu_vls_printf(gedp->ged_result_str, "%d", elev);
 	}
 	rt_db_free_internal(&intern);
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (BU_STR_EQUAL(sub, "diff")) {
 	struct directory *dsp_dp2;
@@ -104,16 +104,16 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	if (argc < 4) {
 	    bu_vls_printf(gedp->ged_result_str, "Error - diff subcommand specified, but not the object to diff against.");
 	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
-	GED_DB_LOOKUP(gedp, dsp_dp2, argv[3], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-	GED_DB_GET_INTERNAL(gedp, &intern2, dsp_dp2, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	GED_DB_LOOKUP(gedp, dsp_dp2, argv[3], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+	GED_DB_GET_INTERNAL(gedp, &intern2, dsp_dp2, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
 	if (intern2.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern2.idb_minor_type != DB5_MINORTYPE_BRLCAD_DSP) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a DSP solid!", cmd, argv[3]);
 	    rt_db_free_internal(&intern);
 	    rt_db_free_internal(&intern2);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	dsp2 = (struct rt_dsp_internal *)intern.idb_ptr;
@@ -123,7 +123,7 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s xy grid size (%d,%d) differs from that of %s: (%d,%d)", dsp_dp2->d_namep, dsp2->dsp_xcnt, dsp2->dsp_ycnt, dsp_dp->d_namep, dsp->dsp_xcnt, dsp->dsp_ycnt);
 	    rt_db_free_internal(&intern);
 	    rt_db_free_internal(&intern2);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else {
 	    uint32_t i, j;
 	    for (i = 0; i < dsp->dsp_xcnt; i++) {
@@ -140,12 +140,12 @@ ged_dsp_core(struct ged *gedp, int argc, const char *argv[])
 
 	rt_db_free_internal(&intern);
 	rt_db_free_internal(&intern2);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "Error - unknown dsp subcommand: %s", sub);
     rt_db_free_internal(&intern);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

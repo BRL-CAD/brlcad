@@ -46,7 +46,7 @@ _line_cmd_create(void *bs, int argc, const char **argv)
     const char *usage_string = "view obj <objname> line create x y z";
     const char *purpose_string = "start a polyline at point x,y,z";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -56,25 +56,25 @@ _line_cmd_create(void *bs, int argc, const char **argv)
     struct bv_scene_obj *s = gd->s;
     if (s) {
         bu_vls_printf(gedp->ged_result_str, "View object named %s already exists\n", gd->vobj);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     point_t p;
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&(p[0])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&(p[1])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[2], (void *)&(p[2])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     BU_GET(s, struct bv_scene_obj);
@@ -87,7 +87,7 @@ _line_cmd_create(void *bs, int argc, const char **argv)
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
     bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)s);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -98,7 +98,7 @@ _line_cmd_append(void *bs, int argc, const char **argv)
     const char *usage_string = "view obj <objname> line append x y z";
     const char *purpose_string = "append point to a polyline";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -108,31 +108,31 @@ _line_cmd_append(void *bs, int argc, const char **argv)
     struct bv_scene_obj *s = gd->s;
     if (!s) {
         bu_vls_printf(gedp->ged_result_str, "no view object named %s\n", gd->vobj);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     point_t p;
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&(p[0])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&(p[1])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[2], (void *)&(p[2])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_DRAW);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 const struct bu_cmdtab _line_cmds[] = {
@@ -152,11 +152,11 @@ _view_cmd_lines(void *bs, int argc, const char **argv)
     const char *usage_string = "view obj [options] line [options] [args]";
     const char *purpose_string = "manipulate view lines";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 

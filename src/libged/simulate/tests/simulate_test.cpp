@@ -147,7 +147,7 @@ test_basic()
 
     const char *argv[] = {"simulate", "scene.c", "3.0"};
 
-    if (GED_OK != ged_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+    if (BRLCAD_OK != ged_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 	bu_bomb("ged_simulate() failed");
 
     {
@@ -232,7 +232,7 @@ test_matrices()
 
     const char *argv[] = {"simulate", "scene.c", "3.0"};
 
-    if (GED_OK != ged_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+    if (BRLCAD_OK != ged_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 	bu_bomb("ged_simulate() failed");
 
     const mat_t expected_falling_matrix = {
@@ -314,7 +314,7 @@ test_tutorial()
 
     const char *argv[] = {"simulate", "scene.c", "10.0"};
 
-    if (GED_OK != ged_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
+    if (BRLCAD_OK != ged_simulate(&ged_instance, sizeof(argv) / sizeof(argv[0]), argv))
 	bu_bomb("ged_simulate() failed");
 
     {

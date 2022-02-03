@@ -40,11 +40,11 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
     struct rt_comb_internal *comb;
 
     if (!(dp->d_flags & RT_DIR_COMB))
-	return GED_OK;
+	return BRLCAD_OK;
 
     if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -58,7 +58,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
 	    db_non_union_push(comb->tree, &rt_uniresource);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for listing");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 	node_count = db_tree_nleaves(comb->tree);
@@ -111,7 +111,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
     }
     rt_db_free_internal(&intern);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -124,8 +124,8 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
     int c_sep = -1;
     const char *cmd_name = argv[0];
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -133,7 +133,7 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
@@ -144,7 +144,7 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", opt);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -153,12 +153,12 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return list_children(gedp, dp, c_sep);

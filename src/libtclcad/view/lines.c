@@ -50,12 +50,12 @@ go_data_lines(Tcl_Interp *UNUSED(interp),
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 2 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Don't allow go_refresh() to be called */
@@ -73,7 +73,7 @@ go_data_lines(Tcl_Interp *UNUSED(interp),
     gedp->ged_gvp = btmp;
 
     to_refresh_view(gdvp);
-    if (ret & GED_ERROR)
+    if (ret & BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;
@@ -97,18 +97,18 @@ to_data_lines(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* turn the argv into a ged command */
@@ -124,7 +124,7 @@ to_data_lines(struct ged *gedp,
 
     to_refresh_view(gdvp);
 
-    if (ret == GED_ERROR)
+    if (ret == BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;

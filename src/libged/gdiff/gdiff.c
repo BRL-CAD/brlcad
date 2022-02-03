@@ -220,8 +220,8 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[7], "v", "verbosity",      "",  &bu_opt_incr_long, &verbosity,   "Increase output verbosity.");
     BU_OPT_NULL(d[8]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     ret_ac = bu_opt_parse(NULL, ac, av, d);
 
@@ -235,14 +235,14 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "When visualizing raytrace based diff results, red segments are those generated\nonly from intersections with \"left_obj\" while blue segments represent\nintersections unique to \"right_obj\".  White segments represent intersections\ncommon to both objects. By default, in raytracing mode, segments unique to left and right objects are displayed.  ");
 	bu_vls_printf(gedp->ged_result_str, "If no tolerance is given, a default of 100mm is used.\n\n Be careful of using too fine a grid - finer grides will (up to a point) yield better visuals, but too fine a grid can cause very long raytracing times.");
 	bu_free(usage, "help str");
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (ret_ac != 2) {
 	const char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
 	bu_vls_printf(gedp->ged_result_str, "wrong number of args.\nUsage: gdiff [opts] left_obj right_obj\nOptions:\n%s", usage);
 	bu_free((char *)usage, "help str");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else {
 	left_obj = av[0];
 	right_obj = av[1];
@@ -259,10 +259,10 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 
 	struct directory *dp1, *dp2;
 	if ((dp1 = db_lookup(gedp->dbip, left_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if ((dp2 = db_lookup(gedp->dbip, right_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	db_add_node_to_full_path(lp, dp1);
@@ -282,7 +282,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(gedp->ged_result_str, "%d", diff);
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* There are possible convention-based interpretations of 1, 2, 3, 4 and n args
@@ -320,10 +320,10 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
      */
 
     if (db_lookup(gedp->dbip, left_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (db_lookup(gedp->dbip, right_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* If we don't have a tolerance, try to guess something sane from the bbox */
@@ -426,7 +426,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     }
     analyze_raydiff_results_free(results);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

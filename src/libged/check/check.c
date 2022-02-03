@@ -522,8 +522,8 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
     state = analyze_current_state_init();
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     _ged_current_gedp = gedp;
 
@@ -531,7 +531,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
    if (argc < 2) {
 	check_show_help(gedp);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* See if we have any options to deal with.  Once we hit a subcommand, we're done */
@@ -550,7 +550,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
     if (opt_argc >= argc) {
 	check_show_help(gedp);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     options.getfromview = 0;
@@ -570,7 +570,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
     if (arg_count < 0 ) {
 	check_show_help(gedp);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     nobjs = argc - arg_count;
@@ -586,7 +586,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str,"no objects specified or in view -- raytrace aborted\n");
 	analyze_free_current_state(state);
 	state = NULL;
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     tobjtab = (char **)bu_calloc(tnobjs, sizeof(char *), "alloc tobjtab");
@@ -681,7 +681,7 @@ freemem:
     state = NULL;
     if (options.verbose) bu_vls_free(options.verbose_str);
     if (options.debug) bu_vls_free(options.debug_str);
-    return (error) ? GED_ERROR : GED_OK;
+    return (error) ? BRLCAD_ERROR : BRLCAD_OK;
 }
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"

@@ -58,7 +58,7 @@ to_autoview_func(struct ged *gedp,
 	}
     }
 
-    if (!rflag && ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
+    if (!rflag && ret == BRLCAD_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
 
     for (i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
@@ -71,7 +71,7 @@ to_autoview_func(struct ged *gedp,
 
     ret = (*func)(gedp, argc, (const char **)argv);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	if (aflag)
 	    to_autoview_all_views(current_top);
 	else
@@ -116,7 +116,7 @@ to_more_args_func(struct ged *gedp,
 	av[i] = bu_strdup((char *)argv[i]);
     av[ac] = (char *)0;
 
-    while ((ret = (*func)(gedp, ac, (const char **)av)) & GED_MORE) {
+    while ((ret = (*func)(gedp, ac, (const char **)av)) & BRLCAD_MORE) {
 	int ac_more;
 	const char **avmp;
 	const char **av_more = NULL;
@@ -131,7 +131,7 @@ to_more_args_func(struct ged *gedp,
 		bu_vls_trunc(gedp->ged_result_str, 0);
 		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
 		Tcl_ResetResult(current_top->to_interp);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto end;
 	    }
 
@@ -227,7 +227,7 @@ to_pass_through_and_refresh_func(struct ged *gedp,
 
     ret = (*func)(gedp, argc, argv);
 
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	to_refresh_all_views(current_top);
 
     return ret;
@@ -256,18 +256,18 @@ to_view_func_common(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (maxargs != TO_UNLIMITED && maxargs < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gedp->ged_dmp = (struct dm *)gdvp->dmp;
@@ -298,7 +298,7 @@ to_view_func_common(struct ged *gedp,
 	gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
     }
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	if (cflag && 0 < bu_vls_strlen(&tvd->gdv_callback)) {
 	    struct bu_vls save_result = BU_VLS_INIT_ZERO;
@@ -376,18 +376,18 @@ to_dm_func(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (maxargs != TO_UNLIMITED && maxargs < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */

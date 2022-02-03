@@ -862,9 +862,9 @@ wdb_track_cmd(void *data,
     }
 
     switch (retval) {
-	case GED_OK:
+	case BRLCAD_OK:
 	    return TCL_OK;
-	case GED_ERROR:
+	case BRLCAD_ERROR:
 	    return TCL_ERROR;
     }
 
@@ -2168,7 +2168,7 @@ int
 wdb_decode_dbip(const char *dbip_string, struct db_i **dbipp)
 {
     if (sscanf(dbip_string, "%p", (void **)dbipp) != 1) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Could core dump */
@@ -2646,7 +2646,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 
 	bu_vls_init(&logstr);
 
-	if (!ftp->ft_adjust || ftp->ft_adjust(&logstr, &intern, argc-3, argv+3) & GED_ERROR) {
+	if (!ftp->ft_adjust || ftp->ft_adjust(&logstr, &intern, argc-3, argv+3) & BRLCAD_ERROR) {
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&logstr), (char *)NULL);
 	    bu_vls_free(&logstr);
 	    rt_db_free_internal(&intern);
@@ -2726,7 +2726,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
 
 	status = intern.idb_meth->ft_adjust(&logstr, &intern, argc-2, argv+2);
 
-	if (status == GED_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
+	if (status == BRLCAD_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&logstr), (char *)NULL);
 	    bu_vls_free(&logstr);
 	    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "wdb_export(", name,
@@ -7168,7 +7168,7 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
 
     /* get directory pointer for arg */
     if ((dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     /* Checks whether the object is a primitive.*/
     if (dp->d_flags & RT_DIR_SOLID) {
@@ -10189,7 +10189,7 @@ wdb_newcmds_tcl(void *clientData,
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
     struct bu_vls vls;
-    int ret = GED_ERROR;
+    int ret = BRLCAD_ERROR;
 
     if (argc-1 <= 0)
 	return TCL_ERROR;
@@ -10204,12 +10204,12 @@ wdb_newcmds_tcl(void *clientData,
 	bu_vls_trunc(ged.ged_result_str, 0);
 	bu_vls_printf(ged.ged_result_str, "%s not found", argv[1]);
 
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
     }
 
     bu_vls_init(&vls);
 
-    if (ret & GED_HELP)
+    if (ret & BRLCAD_HELP)
 	bu_vls_strcat(&vls, "1 ");
     else
 	bu_vls_strcat(&vls, "0 ");
@@ -10225,7 +10225,7 @@ wdb_newcmds_tcl(void *clientData,
     /* release any allocated memory */
     ged_free(&ged);
 
-    if (ret == GED_ERROR)
+    if (ret == BRLCAD_ERROR)
 	return TCL_ERROR;
 
     return TCL_OK;

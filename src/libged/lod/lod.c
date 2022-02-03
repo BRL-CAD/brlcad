@@ -47,9 +47,9 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 			       "lod scale (points|curves) <factor>\n"
 			       "lod redraw (off|onzoom)\n";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -57,12 +57,12 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc >= 2 && BU_STR_EQUAL(argv[1], "-h")) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     gvp = gedp->ged_gvp;
     if (gvp == NULL) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* Print current state if no args are supplied */
@@ -80,7 +80,7 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", gvp->gv_s->point_scale);
 	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", gvp->gv_s->curve_scale);
 	bu_vls_printf(gedp->ged_result_str, "BoT face threshold: %zd\n", gvp->gv_s->bot_threshold);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* determine subcommand */
@@ -147,10 +147,10 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 
     if (printUsage) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

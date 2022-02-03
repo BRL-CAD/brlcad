@@ -233,7 +233,7 @@ copy_object(struct ged *gedp,
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to get internal form of object (%s) - aborting!!!\n",
 		      input_dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD) {
@@ -280,7 +280,7 @@ copy_object(struct ged *gedp,
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      new_name.c_str());
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* db_diradd doesn't produce the correct major type for binary objects -
@@ -291,10 +291,10 @@ copy_object(struct ged *gedp,
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      new_name.c_str());
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -318,16 +318,16 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     int c;
     const char *commandName;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_init(&cc_data.affix);
@@ -357,7 +357,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	    default: {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
 		    bu_vls_free(&cc_data.affix);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	}
     }
@@ -366,7 +366,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     oldfile = argv[0];
@@ -398,7 +398,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    bu_vls_free(&cc_data.affix);
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
     } else {
@@ -419,7 +419,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	if (bu_vls_strlen(&cc_data.affix) > _GED_V4_MAXNAME-1) {
 	    bu_log("ERROR: affix [%s] is too long for v%d\n", bu_vls_addr(&cc_data.affix), db_version(gedp->dbip));
 	    bu_vls_free(&cc_data.affix);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -428,14 +428,14 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&cc_data.affix);
 	perror(oldfile);
 	bu_vls_printf(gedp->ged_result_str, "%s: Can't open geometry database file %s", commandName, oldfile);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (db_version(newdbp) > 4 && db_version(gedp->dbip) < 5) {
 	bu_vls_free(&cc_data.affix);
 	bu_vls_printf(gedp->ged_result_str, "%s: databases are incompatible, use dbupgrade on %s first",
 		      commandName, gedp->dbip->dbi_filename);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     db_dirbuild(newdbp);
@@ -452,7 +452,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	    if (saveGlobalAttrs) {
 		if (db5_get_attributes(newdbp, &g_avs, dp)) {
 		    bu_vls_printf(gedp->ged_result_str, "%s: Can't get global attributes from %s", commandName, oldfile);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    }
 	    continue;
@@ -525,7 +525,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     /* Update references. */
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

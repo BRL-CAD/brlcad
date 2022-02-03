@@ -79,17 +79,17 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[2], "",  "format",         "fmt",  &image_mime,      &type,             "output image file format");
     BU_OPT_NULL(d[3]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (!gedp->ged_dmp) {
 	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dmp = (struct dm *)gedp->ged_dmp;
@@ -97,7 +97,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
@@ -106,7 +106,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     argc = opt_ret;
@@ -115,14 +115,14 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	fbp = dm_get_fb(dmp);
 	if (!fbp) {
 	    bu_vls_printf(gedp->ged_result_str, ": display manager does not have a framebuffer");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
     /* must be wanting help */
     if (!argc) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* create image file */
@@ -134,12 +134,12 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	dm_get_display_image(dmp, &idata, 1, 0);
 	if (!idata) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: display manager did not return image data.", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	bif = icv_create(dm_get_width(dmp), dm_get_height(dmp), ICV_COLOR_SPACE_RGB);
 	if (bif == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, ": could not create icv_image write structure.");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	rows = (unsigned char **)bu_calloc(dm_get_height(dmp), sizeof(unsigned char *), "rows");
 	for (i = 0; i < dm_get_height(dmp); ++i) {
@@ -154,14 +154,14 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	bif = fb_write_icv(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
 	if (bif == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, ": could not create icv_image from framebuffer.");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
     icv_write(bif, argv[0], type);
     icv_destroy(bif);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

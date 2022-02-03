@@ -120,8 +120,8 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     int c;
     int flag_R = 0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -129,7 +129,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* check for options */
@@ -142,7 +142,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
     /* skip options processed plus command name */
@@ -152,7 +152,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: missing file or object names\n");
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* First, clear any existing counts */
@@ -169,13 +169,13 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 	if (db_version(new_dbip) != db_version(gedp->dbip)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: File format mismatch between '%s' and '%s'\n",
 			  cmd, argv[0], gedp->dbip->dbi_filename);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK);
 	if (keepfp == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s:  Error opening '%s'\n", cmd, argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%s:  Appending to '%s'\n", cmd, argv[0]);
 
@@ -188,7 +188,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (keepfp == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s command was unable to create file '%s'\n", cmd, argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -206,7 +206,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "db_update_ident() failed\n");
 	wdb_close(keepfp);
 	bu_vls_free(&title);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&title);
 
@@ -224,7 +224,7 @@ ged_keep_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     wdb_close(keepfp);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -175,9 +175,9 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     static const char *bot_fuse_options = "sp";
     static const char *bot_fuse_options_str = "[-s|-p]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -185,7 +185,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     /* must be wanting help */
     if (argc != 3 && argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], bot_fuse_options_str, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* Turn off getopt's error messages */
@@ -208,7 +208,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 	    default :
 		{
 		    bu_vls_printf(gedp->ged_result_str, "Unknown option: '%c'", c);
-		    return GED_HELP;
+		    return BRLCAD_HELP;
 		}
 	}
     }
@@ -217,12 +217,12 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 
     bu_log("%s: start\n", argv[0]);
 
-    GED_DB_LOOKUP(gedp, old_dp, argv[i+1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, old_dp, argv[i+1], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i+1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* create nmg model structure */
@@ -238,7 +238,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     if (ret != 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (1).\n", argv[0], argv[i+1]);
 	nmg_km(m);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     total = 0;
@@ -304,7 +304,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 	/* catch */
 	BU_UNSETJUMP;
 	bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (2).\n", argv[0], argv[i+1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } BU_UNSETJUMP;
 
     RT_DB_INTERNAL_INIT(&intern2);
@@ -313,13 +313,13 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     intern2.idb_meth = &OBJ[ID_BOT];
     intern2.idb_ptr = (void *)bot;
 
-    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern2.idb_type, GED_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, new_dp, &intern2, &rt_uniresource, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern2.idb_type, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, new_dp, &intern2, &rt_uniresource, BRLCAD_ERROR);
 
     bu_log("%s: Created new BOT (%s)\n", argv[0], argv[i]);
     bu_log("%s: Done.\n", argv[0]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

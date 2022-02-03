@@ -433,9 +433,9 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     static const char *usage = "object";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -443,21 +443,21 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* get directory pointer for arg */
     if ((old_dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     if (old_dp->d_flags & RT_DIR_SOLID) {
 	bu_log("Attempt to xpush a primitive, aborting.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Initialize use and reference counts of all directory entries */
@@ -489,7 +489,7 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    if (comb->tree)
@@ -549,13 +549,13 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "ERROR: cannot load %s feom the database!!!\n", old_dp->d_namep);
 	bu_vls_printf(gedp->ged_result_str, "\tNothing has been changed!!\n");
 	Free_uses(gedp->dbip);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     if (!comb->tree) {
 	Free_uses(gedp->dbip);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_copy_membs,
@@ -565,12 +565,12 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", old_dp->d_namep);
 	rt_db_free_internal(&intern);
 	Free_uses(gedp->dbip);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Free use lists and delete unused directory entries */
     Free_uses(gedp->dbip);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

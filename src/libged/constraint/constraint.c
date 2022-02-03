@@ -36,7 +36,7 @@ constraint_set(void *datap, int argc, const char *argv[])
     if (!gedp || argc < 3 || !argv)
 	return BRLCAD_ERROR;
 
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     dp = db_lookup(gedp->dbip, argv[2], LOOKUP_QUIET);
     if (!dp) {
@@ -57,7 +57,7 @@ constraint_set(void *datap, int argc, const char *argv[])
     if (db5_update_attributes(dp, &avs, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to set constraints on %s\n", dp->d_namep);
 	bu_avs_free(&avs);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_avs_free(&avs);
@@ -165,7 +165,7 @@ constraint_eval(void *datap, int argc, const char *argv[])
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* multiple arguments assumed to be multiple objects */
     for (obj = 0; 2+obj < (size_t)argc; obj++) {
@@ -317,42 +317,42 @@ ged_constraint_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if (argc < 2) {
 	/* must be wanting help */
 	constraint_usage(gedp->ged_result_str, argv[0]);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
     if (BU_STR_EQUIV(argv[1], "help")) {
 	constraint_help(gedp, argc, argv);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc < 3) {
 	/* must be confused */
 	constraint_usage(gedp->ged_result_str, argv[0]);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
     /* this is only valid for v5 databases */
     if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* run our command */
     ret = bu_cmd(pc_cmds, argc, argv, 1, gedp, &cmdret);
     if (ret != BRLCAD_OK) {
 	constraint_usage(gedp->ged_result_str, argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (cmdret != BRLCAD_OK)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

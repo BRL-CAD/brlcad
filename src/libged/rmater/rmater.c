@@ -50,7 +50,7 @@ extract_mater_from_line(char *line,
 	    ++j;
 
 	if (line[j] == '\0')
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 
 	/* We found a double quote, so use everything between the quotes */
 	if (line[j] == '"') {
@@ -62,7 +62,7 @@ extract_mater_from_line(char *line,
 	}
 
 	if (line[j] == '\0')
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 
 	str[i][k] = '\0';
 	++j;
@@ -70,9 +70,9 @@ extract_mater_from_line(char *line,
 
     /* character and/or whitespace delimited numbers */
     if ((sscanf(line + j, "%d%*c%d%*c%d%*c%d%*c%d", r, g, b, override, inherit)) != 5)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -82,7 +82,7 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 #ifndef LINELEN
 #define LINELEN 256
 #endif
-    int status = GED_OK;
+    int status = BRLCAD_OK;
     FILE *fp;
     struct directory *dp;
     struct rt_db_internal intern;
@@ -95,9 +95,9 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
     int inherit;
     static const char *usage = "filename";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -105,34 +105,34 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fp = fopen(argv[1], "r");
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "ged_rmater: Failed to read file - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     while (bu_fgets(line, LINELEN, fp) != NULL) {
 	if ((extract_mater_from_line(line, name, shader,
-				     &r, &g, &b, &override, &inherit)) & GED_ERROR)
+				     &r, &g, &b, &override, &inherit)) & BRLCAD_ERROR)
 	    continue;
 
 	if ((dp = db_lookup(gedp->dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_rmater: Failed to find %s\n", name);
-	    status = GED_ERROR;
+	    status = BRLCAD_ERROR;
 	    continue;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
-	    status = GED_ERROR;
+	    status = BRLCAD_ERROR;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
@@ -152,7 +152,7 @@ ged_rmater_core(struct ged *gedp, int argc, const char *argv[])
 	/* Write new values to database */
 	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting\n");
-	    status = GED_ERROR;
+	    status = BRLCAD_ERROR;
 	}
     }
 

@@ -62,9 +62,9 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 
     static const char *usage = "arb face pt rvec";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -72,12 +72,12 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((last = strrchr(argv[1], '/')) == NULL)
@@ -87,30 +87,30 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 
     if (last[0] == '\0') {
 	bu_vls_printf(gedp->ged_result_str, "illegal input - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s not found", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & GED_ERROR)
-	return GED_ERROR;
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & BRLCAD_ERROR)
+	return BRLCAD_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "Object not an ARB");
 	rt_db_free_internal(&intern);
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (sscanf(argv[2], "%d", &face) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "bad face - %s", argv[2]);
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /*XXX need better checking of the face */
@@ -119,14 +119,14 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "bad face - %s", argv[2]);
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%d", &vi) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "bad vertex index - %s", argv[2]);
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
@@ -136,14 +136,14 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "bad vertex - %s", argv[2]);
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[4], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "bad point - %s", argv[3]);
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
@@ -154,7 +154,7 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
     if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* special case for arb4 */
@@ -213,11 +213,11 @@ ged_rotate_arb_face_core(struct ged *gedp, int argc, const char *argv[])
 	    VMOVE(arb->pt[i], arb_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     }
 
     rt_db_free_internal(&intern);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

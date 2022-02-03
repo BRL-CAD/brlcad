@@ -451,8 +451,8 @@ ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
     int result;
     char **argv = bu_argv_dup(argc, argv_orig);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -460,7 +460,7 @@ ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     ed.t_wp = &argv[1];
@@ -477,14 +477,14 @@ ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
     if (bu_vls_strlen(ed.message) > 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(ed.message));
 	bu_vls_free(&message);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_free(&message);
     if (*(ed.t_wp) != NULL && *++(ed.t_wp) != NULL) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 }
 

@@ -49,12 +49,12 @@ go_data_arrows(Tcl_Interp *interp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 2 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Don't allow go_refresh() to be called */
@@ -64,7 +64,7 @@ go_data_arrows(Tcl_Interp *interp,
     }
 
     ret = to_data_arrows_func(interp, gedp, gdvp, argc, argv);
-    if (ret & GED_ERROR)
+    if (ret & BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;
@@ -88,24 +88,24 @@ to_data_arrows(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* shift the command name to argv[1] before calling to_data_arrows_func */
     argv[1] = argv[0];
     ret = to_data_arrows_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1);
-    if (ret == GED_ERROR)
+    if (ret == BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;
@@ -129,7 +129,7 @@ to_data_arrows_func(Tcl_Interp *interp,
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_draw);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -144,7 +144,7 @@ to_data_arrows_func(Tcl_Interp *interp,
 		gdasp->gdas_draw = 0;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -154,7 +154,7 @@ to_data_arrows_func(Tcl_Interp *interp,
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdasp->gdas_color));
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 5) {
@@ -175,7 +175,7 @@ to_data_arrows_func(Tcl_Interp *interp,
 	    VSET(gdasp->gdas_color, r, g, b);
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -184,7 +184,7 @@ to_data_arrows_func(Tcl_Interp *interp,
     if (BU_STR_EQUAL(argv[1], "line_width")) {
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_line_width);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -196,7 +196,7 @@ to_data_arrows_func(Tcl_Interp *interp,
 	    gdasp->gdas_line_width = line_width;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -210,7 +210,7 @@ to_data_arrows_func(Tcl_Interp *interp,
 		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
 			      V3ARGS(gdasp->gdas_points[i]));
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -219,12 +219,12 @@ to_data_arrows_func(Tcl_Interp *interp,
 
 	    if (Tcl_SplitList(interp, argv[2], &ac, &av) != TCL_OK) {
 		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    if (ac % 2) {
 		bu_vls_printf(gedp->ged_result_str, "%s: must be an even number of points", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    bu_free((void *)gdasp->gdas_points, "data points");
@@ -235,7 +235,7 @@ to_data_arrows_func(Tcl_Interp *interp,
 	    if (ac < 1) {
 		to_refresh_view(gdvp);
 		Tcl_Free((char *)av);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 
 	    gdasp->gdas_num_points = ac;
@@ -253,7 +253,7 @@ to_data_arrows_func(Tcl_Interp *interp,
 
 		    to_refresh_view(gdvp);
 		    Tcl_Free((char *)av);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		/* convert double to fastf_t */
 		VMOVE(gdasp->gdas_points[i], scan);
@@ -261,14 +261,14 @@ to_data_arrows_func(Tcl_Interp *interp,
 
 	    to_refresh_view(gdvp);
 	    Tcl_Free((char *)av);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
     if (BU_STR_EQUAL(argv[1], "tip_length")) {
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_tip_length);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -280,7 +280,7 @@ to_data_arrows_func(Tcl_Interp *interp,
 	    gdasp->gdas_tip_length = tip_length;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -289,7 +289,7 @@ to_data_arrows_func(Tcl_Interp *interp,
     if (BU_STR_EQUAL(argv[1], "tip_width")) {
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_tip_width);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -301,14 +301,14 @@ to_data_arrows_func(Tcl_Interp *interp,
 	    gdasp->gdas_tip_width = tip_width;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
     }
 
 bad:
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 /*

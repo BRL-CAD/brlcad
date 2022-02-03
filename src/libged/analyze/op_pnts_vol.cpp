@@ -206,7 +206,7 @@ op_pnts_vol(
     // Unpack the points object
     struct directory *dp = db_lookup(gedp->dbip, pnts_obj, LOOKUP_QUIET);
     struct rt_db_internal tpnts_intern;
-    GED_DB_GET_INTERNAL(gedp, &tpnts_intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &tpnts_intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
     if (tpnts_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a pnts object, aborting", pnts_obj);
 	rt_db_free_internal(&tpnts_intern);
@@ -400,8 +400,8 @@ op_pnts_vol(
 
     if (output_pnts_obj) {
 	opnts->count = pntcnt;
-	GED_DB_DIRADD(gedp, dp, output_pnts_obj, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
-	GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp, output_pnts_obj, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
 
 	bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s\n", output_pnts_obj);
     }

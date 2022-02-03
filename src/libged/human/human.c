@@ -2203,13 +2203,13 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
     human_data.height = DEFAULT_HEIGHT_INCHES;
     VSET(location, 0, 0, 0); /* Default standing location */
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* Process command line arguments */
     read_args(ac, av, topLevel, &human_data, &percentile, location, &stance, &troops, &showBoxes);
 
-    GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, bu_vls_addr(&name), LOOKUP_QUIET, BRLCAD_ERROR);
 
     bu_log("Center Location: ");
     bu_log("%.2f %.2f %.2f\n", location[X], location[Y], location[Z]);
@@ -2486,7 +2486,7 @@ ged_human_core(struct ged *gedp, int ac, const char *av[])
     bu_vls_free(&name);
     bu_vls_free(&str);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

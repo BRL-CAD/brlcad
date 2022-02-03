@@ -61,7 +61,7 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
     const char *usage_string = "view gedit name create";
     const char *purpose_string = "create an editing view obj from a database solid/comb";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -71,7 +71,7 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
     struct bv_scene_obj *s = gd->s;
     if (s) {
 	bu_vls_printf(gedp->ged_result_str, "View object for %s already exists\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Make sure we have a valid db object as an argument */
@@ -84,7 +84,7 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
 	db_free_full_path(fp);
 	BU_PUT(fp, struct db_full_path);
 	bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     mat_t mat;
     MAT_IDN(mat);
@@ -92,7 +92,7 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
 	db_free_full_path(fp);
 	BU_PUT(fp, struct db_full_path);
 	bu_vls_printf(gedp->ged_result_str, "Invalid path matrix: %s\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 #if 0
@@ -142,7 +142,7 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
 	db_free_full_path(fp);
 	BU_PUT(fp, struct db_full_path);
 	bv_scene_obj_free(g, gedp->free_scene_obj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     g->s_i_data = (void *)ip;
 
@@ -152,7 +152,7 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
     // the only difference is we won't be unpacking and writing the rt_db_internal.
 #endif
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -163,7 +163,7 @@ _gedit_cmd_delete(void *bs, int argc, const char **argv)
     const char *usage_string = "view gedit name delete";
     const char *purpose_string = "delete view object";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -173,13 +173,13 @@ _gedit_cmd_delete(void *bs, int argc, const char **argv)
     struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     // TODO may need gv_view_shared_objs depending on view type
     bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
     bv_scene_obj_free(s, gedp->free_scene_obj);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 const struct bu_cmdtab _gedit_cmds[] = {
@@ -198,11 +198,11 @@ _view_cmd_gedit(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] gedit [options] [args]";
     const char *purpose_string = "interactively edit geometry solids/combs";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // See if we have any high level options set
@@ -243,14 +243,14 @@ _view_cmd_gedit(void *bs, int argc, const char **argv)
 		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	    }
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // We need a name, even if it doesn't exist yet.  Check if it does, since subcommands
     // will react differently based on that status.
     if (ac != 1) {
 	bu_vls_printf(gd->gedp->ged_result_str, "need database object name");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     gd->vobj = argv[0];
     gd->s = NULL;

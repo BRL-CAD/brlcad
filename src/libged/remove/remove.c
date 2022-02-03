@@ -43,10 +43,10 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
     int ret;
     static const char *usage = "comb object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -54,25 +54,25 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     if ((dp->d_flags & RT_DIR_COMB) == 0) {
 	bu_vls_printf(gedp->ged_result_str, "rm: %s is not a combination", dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -80,11 +80,11 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Process each argument */
     num_deleted = 0;
-    ret = GED_OK;
+    ret = BRLCAD_OK;
     for (i = 2; i < argc; i++) {
 	if (db_tree_del_dbleaf(&(comb->tree), argv[i], &rt_uniresource, 0) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	} else {
 	    struct bu_vls path = BU_VLS_INIT_ZERO;
 
@@ -98,7 +98,7 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
 
     if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // Comb changed, need to update nref count

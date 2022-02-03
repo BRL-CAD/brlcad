@@ -150,9 +150,9 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     struct killtree_data gktd;
     static const char *usage = "[-a|-f|-n] object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -160,7 +160,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     gktd.gedp = gedp;
@@ -194,7 +194,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		bu_free(gktd.av, "free av (error)");
 		gktd.av = NULL;
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -254,7 +254,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     /* Done removing stuff - update references. */
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -60,9 +60,9 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     double oriented_bbox_tol = BN_TOL_DIST;
     char bbname[64];
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -70,7 +70,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
@@ -101,7 +101,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -118,7 +118,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: bb %s", usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (!oriented_bb) {
@@ -126,8 +126,8 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	VSETALL(rpp_min, INFINITY);
 	VSETALL(rpp_max, -INFINITY);
 	for (i = 0; i < argc; i++) {
-	    if (ged_get_obj_bounds(gedp, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) & GED_ERROR)
-		return GED_ERROR;
+	    if (ged_get_obj_bounds(gedp, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) & BRLCAD_ERROR)
+		return BRLCAD_ERROR;
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 	}
@@ -192,7 +192,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	    dp = db_diradd(gedp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 	    if (dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, gedp->ged_wdbp->wdb_resp) < 0) {
@@ -213,25 +213,25 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	if (db_string_to_path(&path, gedp->dbip, argv[0]) || !DB_FULL_PATH_CUR_DIR(&path)) {
 	    bu_vls_printf(gedp->ged_result_str, "db_string_to_path failed for %s\n", argv[0]);
 	    db_free_full_path(&path);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	obj_dp = db_lookup(gedp->dbip, DB_FULL_PATH_CUR_DIR(&path)->d_namep, LOOKUP_QUIET);
 	if (obj_dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "db_lookup failed for %s\n", DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 	    db_free_full_path(&path);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (rt_db_get_internal(&intern, obj_dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "get_internal failed for %s\n", DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 	    db_free_full_path(&path);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: Oriented bounding box calculation is currently supported only for BoT objects\n");
 	    rt_db_free_internal(&intern);
 	    db_free_full_path(&path);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	BU_ALLOC(arb, struct rt_arb_internal);
@@ -249,7 +249,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Error: Oriented bounding box calculation failed.\n");
 		rt_db_free_internal(&intern);
 		db_free_full_path(&path);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 
@@ -295,20 +295,20 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	    dp = db_diradd(gedp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 	    if (dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, gedp->ged_wdbp->wdb_resp) < 0) {
 		rt_db_free_internal(&new_intern);
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    rt_db_free_internal(&new_intern);
 
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

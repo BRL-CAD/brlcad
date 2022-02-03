@@ -49,8 +49,8 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
 
     /* static const char *usage = "[-a|-h|-n|-p]"; */
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -123,7 +123,7 @@ ged_tops_core(struct ged *gedp, int argc, const char *argv[])
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), no_decorate, 0);
     bu_free((void *)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

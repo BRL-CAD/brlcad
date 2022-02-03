@@ -50,10 +50,10 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret & GED_HELP)
+    if (ret & BRLCAD_HELP)
 	return TCL_OK;
 
-    if (ret != GED_OK)
+    if (ret != BRLCAD_OK)
 	return TCL_ERROR;
 
     update_views = 1;
@@ -211,19 +211,19 @@ f_labelface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     if ( (dp=db_lookup(GEDP->ged_wdbp->dbip, name, LOOKUP_QUIET))
         == RT_DIR_NULL ) {
         bu_vls_printf(GEDP->ged_result_str, "%s does not exist\n", name);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     if (rt_db_get_internal(&internal, dp, GEDP->ged_wdbp->dbip,
         bn_mat_identity, &rt_uniresource) < 0) {
         bu_vls_printf(GEDP->ged_result_str, "rt_db_get_internal() error\n");
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     if (internal.idb_type != ID_NMG) {
         bu_vls_printf(GEDP->ged_result_str, "%s is not an NMG solid\n", name);
         rt_db_free_internal(&internal);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     m = (struct model *)internal.idb_ptr;

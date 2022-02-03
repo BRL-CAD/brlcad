@@ -68,13 +68,13 @@ int
 ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
 {
     if (sscanf(dbip_string, "%p", (void **)dbipp) != 1) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Could core dump */
     RT_CK_DBI(*dbipp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -57,7 +57,7 @@ int
 _ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv)
 {
     if (!gedp || !gopts || !cmds || !cmdname)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s\n", cmdname, cmdargs);
@@ -99,14 +99,14 @@ _ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
 	return ret;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
 _ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds, const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv, int help, int cmd_pos)
 {
     if (!gedp || !gopts || !cmds || !cmdname)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     if (help) {
 	if (cmd_pos >= 0) {
@@ -116,14 +116,14 @@ _ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
 	} else {
 	    _ged_subcmd_help(gedp, gopts, cmds, cmdname, cmdargs, gd, 0, NULL);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Must have a subcommand
     if (cmd_pos == -1) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
 	_ged_subcmd_help(gedp, gopts, cmds, cmdname, cmdargs, gd, 0, NULL);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int ret;
@@ -134,7 +134,7 @@ _ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
     }
 
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 struct bview *
@@ -231,10 +231,10 @@ int
 _ged_results_init(struct ged_results *results)
 {
     if (UNLIKELY(!results))
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     BU_ALLOC(results->results_tbl, struct bu_ptbl);
     BU_PTBL_INIT(results->results_tbl);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -243,20 +243,20 @@ _ged_results_add(struct ged_results *results, const char *result_string)
 {
     /* If there isn't a string, we can live with that */
     if (UNLIKELY(!result_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     /* If we have nowhere to insert into and we *do* have a string, trouble */
     if (UNLIKELY(!results))
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     if (UNLIKELY(!(results->results_tbl)))
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     if (UNLIKELY(!(BU_PTBL_IS_INITIALIZED(results->results_tbl))))
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     /* We're good to go - copy the string and stuff it in. */
     bu_ptbl_ins(results->results_tbl, (long *)bu_strdup(result_string));
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 size_t
@@ -487,7 +487,7 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct d
     struct directory *dp;
     const char **exists = (const char **)bu_calloc(argc, sizeof(const char *), "obj exists array");
     const char **nonexists = (const char **)bu_calloc(argc, sizeof(const char *), "obj nonexists array");
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     for (i = 0; i < argc; i++) {
 	dp = db_lookup(gedp->dbip, argv[i], LOOKUP_QUIET);
 	if (dp == RT_DIR_NULL) {
@@ -530,18 +530,18 @@ _ged_densities_from_file(struct analyze_densities **dens, char **den_src, struct
     int ecnt = 0;
 
     if (gedp == GED_NULL || gedp->ged_wdbp == RT_WDB_NULL || !dens) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!bu_file_exists(name, NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "Could not find density file - %s\n", name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dfile = bu_open_mapped_file(name, "densities file");
     if (!dfile) {
 	bu_vls_printf(gedp->ged_result_str, "Could not open density file - %s\n", name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     buf = (char *)(dfile->buf);
@@ -557,7 +557,7 @@ _ged_densities_from_file(struct analyze_densities **dens, char **den_src, struct
 	}
 	bu_vls_free(&msgs);
 	bu_close_mapped_file(dfile);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_free(&msgs);
@@ -574,7 +574,7 @@ _ged_densities_from_file(struct analyze_densities **dens, char **den_src, struct
 	}
     }
 
-    return (ret == 0) ? GED_ERROR : GED_OK;
+    return (ret == 0) ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 /**
@@ -590,7 +590,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
     struct bu_vls d_path_dir = BU_VLS_INIT_ZERO;
 
     if (gedp == GED_NULL || gedp->dbip == DBI_NULL || !dens) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* If we've explicitly been given a file, read that */
@@ -616,11 +616,11 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 
 	    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 
 	    bip = (struct rt_binunif_internal *)intern.idb_ptr;
 
@@ -642,7 +642,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 		if (densities) {
 		    analyze_densities_destroy(densities);
 		}
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    bu_vls_free(&msgs);
@@ -657,7 +657,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 		    analyze_densities_destroy(densities);
 		}
 	    }
-	    return (ret == 0) ? GED_ERROR : GED_OK;
+	    return (ret == 0) ? BRLCAD_ERROR : BRLCAD_OK;
 	}
     }
 
@@ -688,7 +688,7 @@ _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged 
 	}
     }
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 int
@@ -697,24 +697,24 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
     struct directory *from_dp;
     struct bu_external external;
 
-    GED_CHECK_DATABASE_OPEN(from_gedp, GED_ERROR);
-    GED_CHECK_DATABASE_OPEN(to_gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(to_gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(from_gedp, BRLCAD_ERROR);
+    GED_CHECK_DATABASE_OPEN(to_gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(to_gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(from_gedp->ged_result_str, 0);
     bu_vls_trunc(to_gedp->ged_result_str, 0);
 
-    GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+    GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
 
     if (!fflag && db_lookup(to_gedp->dbip, to, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(from_gedp->ged_result_str, "%s already exists.", to);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (db_get_external(&external, from_dp, from_gedp->dbip)) {
 	bu_vls_printf(from_gedp->ged_result_str, "Database read error, aborting\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (wdb_export_external(to_gedp->ged_wdbp, &external, to,
@@ -723,7 +723,7 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	bu_vls_printf(from_gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      to);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_free_external(&external);
@@ -734,12 +734,12 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	struct bu_attribute_value_set avs;
 	const char *val;
 
-	GED_DB_LOOKUP(to_gedp, to_dp, to, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+	GED_DB_LOOKUP(to_gedp, to_dp, to, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
 
 	bu_avs_init_empty(&avs);
 	if (db5_get_attributes(to_gedp->dbip, &avs, to_dp)) {
 	    bu_vls_printf(from_gedp->ged_result_str, "Cannot get attributes for object %s\n", to_dp->d_namep);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if ((val = bu_avs_get(&avs, "title")) != NULL)
@@ -762,7 +762,7 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	bu_avs_free(&avs);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -772,9 +772,9 @@ ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t 
     vect_t rvec;
     static const char *usage = "[-m|-v] x y z";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -782,7 +782,7 @@ ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t 
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* process possible coord flag */
@@ -795,30 +795,30 @@ ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t 
 
     if (argc != 2 && argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 2) {
 	if (bn_decode_vect(rvec, argv[1]) != 3) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } else {
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad X value %s\n", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad Y value %s\n", argv[2]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad Z value %s\n", argv[3]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* convert from double to fastf_t */
@@ -828,7 +828,7 @@ ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t 
     VSCALE(rvec, rvec, -1.0);
     bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -840,9 +840,9 @@ ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
     double angle; /* not fastf_t due to sscanf */
     static const char *usage = "x y z angle";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -850,39 +850,39 @@ ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &axis[X]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad X value - %s\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &axis[Y]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad Y value - %s\n", argv[0], argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &axis[Z]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad Z value - %s\n", argv[0], argv[3]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &angle) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad angle - %s\n", argv[0], argv[4]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     VUNITIZE(axis);
     VMOVE(axisv, axis);
     bn_mat_arb_rot(rmat, pt, axisv, angle*DEG2RAD);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -890,9 +890,9 @@ ged_tra_args(struct ged *gedp, int argc, const char *argv[], char *coord, vect_t
 {
     static const char *usage = "[-m|-v] x y z";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -900,7 +900,7 @@ ged_tra_args(struct ged *gedp, int argc, const char *argv[], char *coord, vect_t
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* process possible coord flag */
@@ -913,53 +913,53 @@ ged_tra_args(struct ged *gedp, int argc, const char *argv[], char *coord, vect_t
 
     if (argc != 2 && argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 2) {
 	if (bn_decode_vect(tvec, argv[1]) != 3) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } else {
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad X value %s\n", argv[0], argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad Y value %s\n", argv[0], argv[2]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad Z value %s\n", argv[0], argv[3]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* convert from double to fastf_t */
 	VMOVE(tvec, scan);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
 ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fastf_t *sf2, fastf_t *sf3)
 {
     static const char *usage = "sf (or) sfx sfy sfz";
-    int ret = GED_OK, args_read;
+    int ret = BRLCAD_OK, args_read;
     double scan;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if (!sf1 || !sf2 || !sf3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: invalid input state", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* initialize result */
@@ -968,39 +968,39 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2 && argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 2) {
 	if (!sf1 || bu_sscanf(argv[1], "%lf", &scan) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad scale factor '%s'", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	*sf1 = scan;
     } else {
 	args_read = bu_sscanf(argv[1], "%lf", &scan);
 	if (!sf1 || args_read != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad x scale factor '%s'", argv[1]);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	}
 	*sf1 = scan;
 
 	args_read = bu_sscanf(argv[2], "%lf", &scan);
 	if (!sf2 || args_read != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad y scale factor '%s'", argv[2]);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	}
 	*sf2 = scan;
 
 	args_read = bu_sscanf(argv[3], "%lf", &scan);
 	if (!sf3 || args_read != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad z scale factor '%s'", argv[3]);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	}
 	*sf3 = scan;
     }
@@ -1696,7 +1696,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[i]);
 	}
 	bu_vls_printf(gedp->ged_result_str, "\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fp_in = bu_process_open(p, BU_PROCESS_STDIN);
@@ -1721,7 +1721,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     if (gedp->ged_create_io_handler) {
 	(*gedp->ged_create_io_handler)(run_rtp, BU_PROCESS_STDERR, _ged_rt_output_handler, (void *)run_rtp);
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 struct rt_object_selections *
@@ -1780,7 +1780,7 @@ _ged_combadd(struct ged *gedp,
     av[0] = objp->d_namep;
     av[1] = NULL;
 
-    if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air, NULL, 1) & GED_ERROR)
+    if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air, NULL, 1) & BRLCAD_ERROR)
 	return RT_DIR_NULL;
 
     /* Done changing stuff - update nref. */
@@ -1821,7 +1821,7 @@ _ged_combadd2(struct ged *gedp,
     int i;
 
     if (argc < 1)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     /*
      * Check to see if we have to create a new combination
@@ -1865,7 +1865,7 @@ _ged_combadd2(struct ged *gedp,
 	goto addmembers;
     } else if (!(dp->d_flags & RT_DIR_COMB)) {
 	bu_vls_printf(gedp->ged_result_str, "%s exists, but is not a combination\n", dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* combination exists, add a new member */
@@ -1876,7 +1876,7 @@ _ged_combadd2(struct ged *gedp,
 
     if (region_flag && !comb->region_flag) {
 	bu_vls_printf(gedp->ged_result_str, "%s: not a region\n", dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 addmembers:
@@ -1885,7 +1885,7 @@ addmembers:
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
 	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -1953,7 +1953,7 @@ addmembers:
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 void
@@ -2112,10 +2112,10 @@ _ged_set_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const cha
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -2128,8 +2128,8 @@ _ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, d
     fastf_t vmax_x = 0.0;
     fastf_t vmax_y = 0.0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     if (rflag) {
 	vr = vwidth;
@@ -2189,7 +2189,7 @@ _ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, d
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*
@@ -2236,7 +2236,7 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 		mbp_i = 0;
 
 	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 
 	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
 	    GED_METABALL_SCALE(mbpp->fldstr, sf);
@@ -2248,7 +2248,7 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 		mbp_i = 0;
 
 	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 
 	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
 	    GED_METABALL_SCALE(mbpp->sweat, sf);
@@ -2256,10 +2256,10 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad metaball attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 #if 0

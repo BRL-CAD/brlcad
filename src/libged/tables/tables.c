@@ -480,8 +480,8 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     time_t now;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -489,18 +489,18 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_ptbl_init(&cur_path, 8, "f_tables: cur_path");
     bu_ptbl_init(&tabobjs, 8, "f_tables: objects");
 
-    status = GED_OK;
+    status = BRLCAD_OK;
 
     /* find out which ascii table is desired */
     if (BU_STR_EQUAL(argv[0], "solids")) {
@@ -515,7 +515,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     } else {
 	/* should never reach here */
 	bu_vls_printf(gedp->ged_result_str, "%s:  input error\n", argv[0]);
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 	goto end;
     }
 
@@ -523,7 +523,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     test_f = fopen(argv[1], "w+");
     if (test_f == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open file [%s]\n\tMake sure the directory and file are writable.\n", argv[0], argv[1]);
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 	goto end;
     }
     fclose(test_f);
@@ -533,7 +533,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 	/* !!! this needs to be a bu_temp_file() */
 	if ((idfd = creat("/tmp/mged_discr", 0600)) < 0) {
 	    perror("/tmp/mged_discr");
-	    status = GED_ERROR;
+	    status = BRLCAD_ERROR;
 	    goto end;
 	}
 	rd_idfd = open("/tmp/mged_discr", 2);
@@ -585,7 +585,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     ftabvls = fopen(argv[1], "w+");
     if (ftabvls == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open file [%s]\n\tMake sure the directory and file are still writable.\n", argv[0], argv[1]);
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 	goto end;
     }
     bu_vls_fwrite(ftabvls, &tabvls);

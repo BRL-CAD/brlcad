@@ -34,7 +34,7 @@ int check_centroid(struct current_state *state,
     int i;
     point_t centroid;
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS|ANALYSIS_CENTROIDS)) return GED_ERROR;
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS|ANALYSIS_CENTROIDS)) return BRLCAD_ERROR;
 
     print_verbose_debug(options);
     bu_vls_printf(_ged_current_gedp->ged_result_str, "Centroid:\n");
@@ -48,7 +48,7 @@ int check_centroid(struct current_state *state,
     VSCALE(centroid, centroid, 1/options->units[LINE]->val);
     bu_vls_printf(_ged_current_gedp->ged_result_str, "\n  Average centroid: (%g %g %g) %s\n", V3ARGS(centroid), options->units[LINE]->name);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

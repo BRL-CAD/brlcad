@@ -275,7 +275,7 @@ _ged_ls_attr_objs(struct ged *gedp, struct _ged_ls_data *ls, int argc, const cha
     if ((argc < 2) || (argc%2 != 0)) {
 	/* should be even number of name/value pairs */
 	bu_log("Error: ls -A option expects even number of 'name value' pairs\n\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     op = (ls->or_flag) ? 2 : 1;
@@ -292,7 +292,7 @@ _ged_ls_attr_objs(struct ged *gedp, struct _ged_ls_data *ls, int argc, const cha
     ls->results_obj = db_lookup_by_attr(gedp->dbip, ls->dir_flags, &avs, op);
     bu_avs_free(&avs);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -377,8 +377,8 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[11], "o", "or",             "",  NULL, &(ls.or_flag), "In attribute mode, match if one or more attribute patterns match");
     BU_OPT_NULL(d[12]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize */
     _ged_ls_data_init(&ls);
@@ -393,12 +393,12 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
     if (ret_ac < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
 	bu_vls_free(&str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (print_help) {
 	_ged_ls_show_help(gedp, d);
 	bu_vls_free(&str);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* object patterns are whatever is left in argv (none is OK) */
@@ -417,8 +417,8 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* In this scenario we're only going to get object names, and db_lookup_by_attr will provide
 	 * the table for us, so don't init either of them.  */
-	if (_ged_ls_attr_objs(gedp, &ls, argc, argv) != GED_OK) {
-	    return GED_ERROR;
+	if (_ged_ls_attr_objs(gedp, &ls, argc, argv) != BRLCAD_OK) {
+	    return BRLCAD_ERROR;
 	}
 
     } else {
@@ -473,7 +473,7 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 	bu_free((void *)ls.results_fullpath, "full path results");
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

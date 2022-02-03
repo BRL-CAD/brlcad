@@ -51,17 +51,17 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
     /* less than or near zero uses default, 0.5 model scale == 2.0 view factor */
     fastf_t factor = -1.0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s [scale]", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* parse the optional scale argument */
@@ -70,7 +70,7 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 	int ret = sscanf(argv[1], "%lf", &scale);
 	if (ret != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Expecting floating point scale value after %s\n", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (scale > 0.0) {
 	    factor = 1.0 / scale;
@@ -111,7 +111,7 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
     bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

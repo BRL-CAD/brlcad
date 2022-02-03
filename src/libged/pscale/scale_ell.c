@@ -62,13 +62,13 @@ _ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attrib
 			VSCALE(ell->c, ell->c, ma/mb);
 		    } else {
 			bu_vls_printf(gedp->ged_result_str, "bad ell attribute - %s", attribute);
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 
 		    break;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "bad ell attribute - %s", attribute);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 	    }
 
 	    break;
@@ -88,10 +88,10 @@ _ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attrib
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad ell attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

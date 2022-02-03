@@ -52,7 +52,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
     if (dp && db_lookup(gedp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: already exists", new_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* if this was a sketch, we need to look for all the extrude
@@ -113,18 +113,18 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	/* Change object name in the directory. */
 	if (db_rename(gedp->dbip, dp, new_name) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "error in rename to %s, aborting", new_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* Change object name on disk */
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	moved++;
     }
@@ -176,7 +176,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		if (comb_mvall_status == 2) {
 		    bu_ptbl_free(&stack);
 		    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    }
 	    moved++;
@@ -226,10 +226,10 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
     if (!moved) {
 	bu_log("ERROR: move %s to %s: no such object or reference\n", old_name, new_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -242,7 +242,7 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
     fp = fopen(file, "r");
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "cannot open %s\n", file);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     while (bu_fgets(line, sizeof(line), fp) != NULL) {
@@ -261,7 +261,7 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
 
     fclose(fp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -273,9 +273,9 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
     int nflag = 0;
     static const char *usage = "[-n] {-f <mapping_file>|<from> <to>}";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -283,17 +283,17 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3 || 4 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (db_version(gedp->dbip) < 5 && (int)strlen(argv[2]) > NAMESIZE) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: name length limited to %zu characters in v4 databases\n", strlen(argv[2]));
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_optind = 1;
@@ -307,7 +307,7 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -317,7 +317,7 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
     if (fflag) {
 	if (argc != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	return move_all_file(gedp, nflag, argv[0]);
@@ -325,7 +325,7 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return move_all_func(gedp, nflag, argv[0], argv[1]);

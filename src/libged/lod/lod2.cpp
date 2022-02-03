@@ -41,9 +41,9 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 			       "lod scale (points|curves) <factor>\n"
 			       "lod redraw (off|onzoom)\n";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -68,19 +68,19 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	if (!found_match) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_free(&cvls);
 
     if (!cv && !BU_PTBL_LEN(&gedp->ged_views)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* must be wanting help */
     if (argc >= 2 && BU_STR_EQUAL(argv[1], "-h")) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* Print current state if no args are supplied */
@@ -89,7 +89,7 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	if (!gvp)
 	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
 	if (!gvp)
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	if (gvp->gv_s->adaptive_plot) {
 	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: enabled\n");
 	} else {
@@ -103,7 +103,7 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", gvp->gv_s->point_scale);
 	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", gvp->gv_s->curve_scale);
 	bu_vls_printf(gedp->ged_result_str, "BoT face threshold: %zd\n", gvp->gv_s->bot_threshold);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* determine subcommand */
@@ -165,14 +165,14 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	if (!gvp)
 	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
 	if (!gvp)
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_s->adaptive_plot);
     } else if (BU_STR_EQUAL(argv[0], "scale")) {
 	struct bview *gvp = cv;
 	if (!gvp)
 	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
 	if (!gvp)
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	if (argc == 2 || argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "points")) {
 		if (argc == 2) {
@@ -201,7 +201,7 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	if (!gvp)
 	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
 	if (!gvp)
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	printUsage = 1;
 	if (argc == 1) {
 	    /* lod redraw - return current value */
@@ -228,10 +228,10 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 
     if (printUsage) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

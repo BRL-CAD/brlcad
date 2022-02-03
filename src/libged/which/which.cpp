@@ -69,8 +69,8 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[5], "",  "root",      "<root_name>",  &bu_opt_vls, &root,         "Search only in the tree below 'root_name'");
     BU_OPT_NULL(d[6]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -88,7 +88,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
 	bu_vls_free(&usage);
 	bu_vls_free(&root);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* parse standard options */
@@ -98,7 +98,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
 	bu_vls_free(&usage);
 	bu_vls_free(&root);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* adjust argc to match the leftovers of the options parsing */
@@ -109,7 +109,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
 	bu_vls_free(&usage);
 	bu_vls_free(&root);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_free(&usage);
@@ -145,7 +145,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Error: invalid range specification \"%s\"", argv[j]);
 		bu_vls_free(&root);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -157,7 +157,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	if (sdp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: no object named %s in database.", bu_vls_cstr(&root));
 	    bu_vls_free(&root);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	struct bu_ptbl comb_objs = BU_PTBL_INIT_ZERO;
 	(void)db_search(&comb_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, sstring, 1, &sdp, gedp->dbip, NULL);
@@ -167,7 +167,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 		bu_vls_free(&root);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    /* check to see if the region id or air code matches one in our list */
@@ -188,7 +188,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 		if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 		    bu_vls_free(&root);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		/* check to see if the region id or air code matches one in our list */
@@ -218,7 +218,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "No unused %s found\n", isAir ? "air codes" : "idents");
 		bu_vls_free(&root);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	}
 	if (sflag) {
@@ -264,7 +264,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 	bu_vls_free(&root);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     std::set<int>::iterator i_it;
@@ -289,7 +289,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_free(&root);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

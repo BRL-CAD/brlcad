@@ -235,7 +235,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    db_free_full_path(fp);
 	    BU_PUT(fp, struct db_full_path);
 	}
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Bot threshold a per-view setting. */
@@ -509,7 +509,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     // object's update callback to generate wireframes, triangles, etc. for
     // that object based on current settings.  It is then the job of the dm to
     // display the scene objects supplied by the view.
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static void
@@ -551,9 +551,9 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     int bot_threshold = -1;
     int no_autoview = 0;
     static const char *usage = "[options] path1 [path2 ...]";
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -586,13 +586,13 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	if (!found_match) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!cv->independent) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support specifying db objects for display in only this view.  To change the view's status, he command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_free(&cvls);
@@ -600,7 +600,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // We need a current view, either from gedp or from the options
     if (!cv) {
 	bu_vls_printf(gedp->ged_result_str, "No current GED view defined");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* User settings may override various options - set up to collect them.
@@ -634,7 +634,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     /* If no args, must be wanting help */
     if (!argc) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* Process command line args into vs with bu_opt */
@@ -643,13 +643,13 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     if (opt_ret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "option parsing error: %s\n", bu_vls_cstr(&omsg));
 	bu_vls_free(&omsg);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&omsg);
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Whatever is left after argument processing are the potential draw paths
@@ -665,7 +665,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
     if (have_override > 1 || (have_override &&  drawing_modes[0] > -1)) {
 	bu_vls_printf(gedp->ged_result_str, "Multiple view modes specified\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (have_override) {
 	for (int i = 1; i < 6; i++) {
@@ -777,10 +777,10 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // If we have non-adaptive view(s) to handle, do that first
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     if (non_adaptive_view) {
 	int aret = ged_draw_view(gedp, non_adaptive_view, &vs, argc, argv, bot_threshold, no_autoview);
-	if (aret & GED_ERROR)
+	if (aret & BRLCAD_ERROR)
 	    ret = aret;
 	_ged_shared_autoview(gedp, cv, shared_blank_slate, no_autoview);
     }
@@ -789,7 +789,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     for (v_it = adaptive_views.begin(); v_it != adaptive_views.end(); v_it++) {
 	struct bview *v = *v_it;
 	int aret = ged_draw_view(gedp, v, &vs, argc, argv, bot_threshold, no_autoview);
-	if (aret & GED_ERROR)
+	if (aret & BRLCAD_ERROR)
 	    ret = aret;
 
     }
@@ -830,7 +830,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		ged_exec(gedp, ac, (const char **)av);
 	    }
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (!v->gv_s->adaptive_plot && !BU_PTBL_LEN(v->gv_db_grps) && BU_PTBL_LEN(v->gv_view_grps)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_grps); i++) {
@@ -855,7 +855,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		ged_exec(gedp, ac, (const char **)av);
 	    }
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // If we're not transitioning, it's a garden variety redraw.
@@ -888,7 +888,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		ged_exec(gedp, ac, (const char **)av);
 	    }
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     } else {
 	if (v->independent) {
 	    for (int i = 0; i < argc; i++) {
@@ -913,16 +913,16 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		ged_exec(gedp, ac, (const char **)av);
 	    }
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 }
 
 extern "C" int
 ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     RT_CHECK_DBI(gedp->dbip);
 
     argc--;argv++;
@@ -951,18 +951,18 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
 	if (!found_match) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_free(&cvls);
 
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     if (cv) {
 	return _ged_redraw_view(gedp, cv, argc, argv);
     } else {
 	if (!BU_PTBL_LEN(&gedp->ged_views)) {
 	    bu_vls_printf(gedp->ged_result_str, "No views defined\n");
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
@@ -971,7 +971,7 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    }
 	    int nret = _ged_redraw_view(gedp, v, argc, argv);
-	    if (nret != GED_OK)
+	    if (nret != BRLCAD_OK)
 		ret = nret;
 	}
     }

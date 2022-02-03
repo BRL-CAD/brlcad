@@ -371,7 +371,7 @@ main(int ac, char *av[]) {
 	while (ccmd) {
 	    bu_log("\nTest %d: ged_execing app command %s\n", app_cmd_cnt, ccmd);
 	    int ret = ged_exec(gbp, 1, (const char **)&ccmd);
-	    if (ret != GED_OK && ret != GED_HELP) {
+	    if (ret != BRLCAD_OK && ret != BRLCAD_HELP) {
 		bu_log("%s\n", bu_vls_cstr(gbp->ged_result_str));
 	    }
 	    bu_vls_trunc(gbp->ged_result_str, 0);
@@ -387,11 +387,11 @@ main(int ac, char *av[]) {
 	wav[0] = wav0;
 	wav[1] = NULL;
 	int ret = ged_ls(gbp, 1, (const char **)wav);
-	if (ret & GED_UNKNOWN && wav[0] != wav0) {
-	    bu_log("\nged_ls called with command name \"%s\" correctly returned with GED_UNKNOWN set\n", wav0);
+	if (ret & BRLCAD_UNKNOWN && wav[0] != wav0) {
+	    bu_log("\nged_ls called with command name \"%s\" correctly returned with BRLCAD_UNKNOWN set\n", wav0);
 	} else {
-	    if (!(ret & GED_UNKNOWN)) {
-		bu_log("\nged_ls called with command name \"%s\" did not return with GED_UNKNOWN set\n", wav0);
+	    if (!(ret & BRLCAD_UNKNOWN)) {
+		bu_log("\nged_ls called with command name \"%s\" did not return with BRLCAD_UNKNOWN set\n", wav0);
 	    }
 	    if (wav[0] == wav0) {
 		bu_log("\nged_ls called with command name \"%s\" did not override wav[0]\n", wav0);
@@ -407,11 +407,11 @@ main(int ac, char *av[]) {
 	wav[0] = wav1;
 	wav[1] = NULL;
 	int ret = ged_ls(gbp, 1, (const char **)wav);
-	if (ret & GED_UNKNOWN && wav[0] != wav1) {
-	    bu_log("\nged_ls called with command name \"%s\" correctly returned with GED_UNKNOWN set\n", wav1);
+	if (ret & BRLCAD_UNKNOWN && wav[0] != wav1) {
+	    bu_log("\nged_ls called with command name \"%s\" correctly returned with BRLCAD_UNKNOWN set\n", wav1);
 	} else {
-	    if (!(ret & GED_UNKNOWN)) {
-		bu_log("\nged_ls called with command name \"%s\" did not return with GED_UNKNOWN set\n", wav1);
+	    if (!(ret & BRLCAD_UNKNOWN)) {
+		bu_log("\nged_ls called with command name \"%s\" did not return with BRLCAD_UNKNOWN set\n", wav1);
 	    }
 	    if (wav[0] == wav1) {
 		bu_log("\nged_ls called with command name \"%s\" did not override wav[0]\n", wav1);

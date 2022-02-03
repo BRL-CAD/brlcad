@@ -53,7 +53,7 @@ _fp_axes_cmd_size(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes size [#]";
     const char *purpose_string = "adjust axes size";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -63,22 +63,22 @@ _fp_axes_cmd_size(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
      if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%f\n", a->axes_size);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     fastf_t val;
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     a->axes_size = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -91,7 +91,7 @@ _fp_axes_cmd_linewidth(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes linewidth [#]";
     const char *purpose_string = "adjust axes line width";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -101,27 +101,27 @@ _fp_axes_cmd_linewidth(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->line_width);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (val < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 1\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     a->line_width = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -134,7 +134,7 @@ _fp_axes_cmd_pos_only(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes pos_only [0|1]";
     const char *purpose_string = "enable/disable axes decorations";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -144,25 +144,25 @@ _fp_axes_cmd_pos_only(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->pos_only);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
      if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     val = (val) ? 1 : 0;
 
     a->pos_only = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -175,7 +175,7 @@ _fp_axes_cmd_fp_axes_color(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes color [r/g/b]";
     const char *purpose_string = "get/set color of axes";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -185,25 +185,25 @@ _fp_axes_cmd_fp_axes_color(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->axes_color[0], a->axes_color[1], a->axes_color[2]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // For color need either 1 or 3 non-subcommand args
     if (argc != 1 && argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bu_color c;
     int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_color_to_rgb_ints(&c, &a->axes_color[0], &a->axes_color[1], &a->axes_color[2]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -216,7 +216,7 @@ _fp_axes_cmd_label(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes label [0|1]";
     const char *purpose_string = "enable/disable text labels for axes";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -226,24 +226,24 @@ _fp_axes_cmd_label(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->label_flag);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     val = (val) ? 1 : 0;
 
     a->label_flag = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -256,7 +256,7 @@ _fp_axes_cmd_label_color(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes label_color [r/g/b]";
     const char *purpose_string = "get/set color of text labels for axes";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -266,26 +266,26 @@ _fp_axes_cmd_label_color(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->label_color[0], a->label_color[1], a->label_color[2]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // For color need either 1 or 3 non-subcommand args
     if (argc != 1 && argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bu_color c;
     int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_color_to_rgb_ints(&c, &a->label_color[0], &a->label_color[1], &a->label_color[2]);
 
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -298,7 +298,7 @@ _fp_axes_cmd_triple_color(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes triple_color [0|1]";
     const char *purpose_string = "enable/disable tri-color mode for axes coloring";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -308,24 +308,24 @@ _fp_axes_cmd_triple_color(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->triple_color);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     val = (val) ? 1 : 0;
 
     a->triple_color = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -338,7 +338,7 @@ _fp_axes_cmd_tick(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes tick [0|1]";
     const char *purpose_string = "enable/disable axes tick drawing";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -348,24 +348,24 @@ _fp_axes_cmd_tick(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_enabled);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     val = (val) ? 1 : 0;
 
     a->tick_enabled = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -378,7 +378,7 @@ _fp_axes_cmd_tick_length(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes tick_length [#]";
     const char *purpose_string = "get/set tick length";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -388,27 +388,27 @@ _fp_axes_cmd_tick_length(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_length);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (val < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 1\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     a->tick_length = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -421,7 +421,7 @@ _fp_axes_cmd_tick_major_length(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes tick_major_length [#]";
     const char *purpose_string = "get/set tick major length";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -431,27 +431,27 @@ _fp_axes_cmd_tick_major_length(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_major_length);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (val < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 1\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     a->tick_major_length = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -464,7 +464,7 @@ _fp_axes_cmd_tick_interval(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes tick_interval [#]";
     const char *purpose_string = "get/set tick interval";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -474,22 +474,22 @@ _fp_axes_cmd_tick_interval(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%f\n", a->tick_interval);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     fastf_t val;
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     a->tick_interval = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -502,7 +502,7 @@ _fp_axes_cmd_ticks_per_major(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes ticks_per_major [#]";
     const char *purpose_string = "get/set ticks per major";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -512,27 +512,27 @@ _fp_axes_cmd_ticks_per_major(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->ticks_per_major);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (val < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 0\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     a->ticks_per_major = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -545,7 +545,7 @@ _fp_axes_cmd_tick_threshold(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes tick_threshold [#]";
     const char *purpose_string = "get/set tick threshold";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -555,27 +555,27 @@ _fp_axes_cmd_tick_threshold(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", a->tick_threshold);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (val < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 0\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     a->tick_threshold = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -588,7 +588,7 @@ _fp_axes_cmd_tick_color(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes tick_color [r/g/b]";
     const char *purpose_string = "get/set color of ticks";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -598,26 +598,26 @@ _fp_axes_cmd_tick_color(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->tick_color[0], a->tick_color[1], a->tick_color[2]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // For color need either 1 or 3 non-subcommand args
     if (argc != 1 && argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bu_color c;
     int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_color_to_rgb_ints(&c, &a->tick_color[0], &a->tick_color[1], &a->tick_color[2]);
 
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -630,7 +630,7 @@ _fp_axes_cmd_tick_major_color(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_axes tick_major_color [r/g/b]";
     const char *purpose_string = "get/set tick_major_color";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -640,25 +640,25 @@ _fp_axes_cmd_tick_major_color(void *bs, int argc, const char **argv)
     struct bv_axes *a = ainfo->a;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", a->tick_major_color[0], a->tick_major_color[1], a->tick_major_color[2]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // For color need either 1 or 3 non-subcommand args
     if (argc != 1 && argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bu_color c;
     int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_color_to_rgb_ints(&c, &a->tick_major_color[0], &a->tick_major_color[1], &a->tick_major_color[2]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 const struct bu_cmdtab _fp_axes_cmds[] = {
@@ -691,11 +691,11 @@ _fp_cmd_model_axes(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate model_axes subcmd [args]";
     const char *purpose_string = "manipulate view axes";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // We know we're the axes command - start processing args
@@ -704,11 +704,11 @@ _fp_cmd_model_axes(void *bs, int argc, const char **argv)
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
 	    v->gv_s->gv_model_axes.draw = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
 	    v->gv_s->gv_model_axes.draw = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
@@ -749,11 +749,11 @@ _fp_cmd_view_axes(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate view_axes subcmd [args]";
     const char *purpose_string = "manipulate view axes";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
@@ -763,11 +763,11 @@ _fp_cmd_view_axes(void *bs, int argc, const char **argv)
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
 	    v->gv_s->gv_view_axes.draw = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
 	    v->gv_s->gv_view_axes.draw = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 

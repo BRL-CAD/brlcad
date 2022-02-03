@@ -39,21 +39,21 @@ ged_set_output_script_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[script]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Get the output handler script */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", gedp->ged_output_script);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* We're now going to set the output handler script */
@@ -66,7 +66,7 @@ ged_set_output_script_core(struct ged *gedp, int argc, const char *argv[])
     if (argv[1] != NULL && argv[1][0] != '\0')
 	gedp->ged_output_script = bu_strdup(argv[1]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -240,9 +240,9 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 
     /* Standard sanity checks */
     if (gedp->dbip == DBI_NULL)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     if (comb) {
@@ -254,7 +254,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     redtmpfile = bu_open_mapped_file(_ged_tmpfil, (char *)NULL);
     if (!redtmpfile) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot open temporary file %s\n", _ged_tmpfil);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Set up the regular expressions */
@@ -267,7 +267,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 
     if (reti) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to compile regular expression.\n");
-     return GED_ERROR;
+     return BRLCAD_ERROR;
     }
 
     /* Need somewhere to hold the results - initially, size according to attribute regex */
@@ -297,7 +297,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	    bu_free(result_locations, "free regex results array\n");
 	    bu_close_mapped_file(redtmpfile);
 
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } else {
 	bu_vls_printf(gedp->ged_result_str, "cannot locate comb tree, aborting\n");
@@ -309,7 +309,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	bu_free(result_locations, "free regex results array\n");
 	bu_close_mapped_file(redtmpfile);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Parsing the file is handled in two stages - attributes and combination tree.  Start with attributes */
@@ -331,7 +331,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	    bu_free(result_locations, "free regex results array\n");
 	    bu_close_mapped_file(redtmpfile);
 
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    /* matched */
 
@@ -408,7 +408,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	    bu_free(result_locations, "free regex results array\n");
 	    bu_close_mapped_file(redtmpfile);
 
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub, result_locations, 0);
 	bu_vls_trunc(&next_op_vls, 0);
@@ -446,7 +446,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 		bu_free(result_locations, "free regex results array\n");
 		bu_close_mapped_file(redtmpfile);
 
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 
 	    }
 	    /* We have a string - now check for a matrix and build it if present
@@ -466,7 +466,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 		    bu_avs_free(&avs);
 		    bu_free(result_locations, "free regex results array\n");
 		    bu_close_mapped_file(redtmpfile);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    }
 	    bu_vls_trunc(&current_substring, 0);
@@ -520,7 +520,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	    bu_free(result_locations, "free regex results array\n");
 	    bu_close_mapped_file(redtmpfile);
 
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_free(&current_substring);
@@ -537,7 +537,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     if (nonsubs == 0 && node_count) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
 	bu_avs_free(&avs);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (tree_index)
@@ -560,14 +560,14 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (db5_replace_attributes(dp, &avs, gedp->dbip))
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Failed to update attributes\n", dp->d_namep);
 
     bu_avs_free(&avs);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -592,7 +592,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
       bu_vls_free(&spacer);
-      return GED_ERROR;
+      return BRLCAD_ERROR;
     }
 
     if (comb)
@@ -604,7 +604,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	perror("fopen");
 	bu_vls_printf(gedp->ged_result_str, "ERROR: Cannot open temporary file [%s] for writing\n", _ged_tmpfil);
 	bu_vls_free(&spacer);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     maxlength = 0;
@@ -629,7 +629,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	fprintf(fp, "%s\n", combseparator);
 	fclose(fp);
 	bu_vls_free(&spacer);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
@@ -638,7 +638,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Cannot prepare tree for editing\n");
 	    bu_vls_free(&spacer);
 	    fclose(fp);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     node_count = db_tree_nleaves(comb->tree);
@@ -709,21 +709,21 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 		bu_vls_printf(gedp->ged_result_str, "ERROR: Encountered illegal op code in tree\n");
 		fclose(fp);
 		bu_avs_free(&avs);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
 	if (fprintf(fp, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name) <= 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Cannot write to temporary file [%s].\nAborting edit.\n",
 			  _ged_tmpfil);
 	    fclose(fp);
 	    bu_avs_free(&avs);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	_ged_print_matrix(fp, rt_tree_array[i].tl_tree->tr_l.tl_mat);
 	fprintf(fp, "\n");
     }
     fclose(fp);
     bu_avs_free(&avs);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -732,7 +732,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 {
     FILE *fp;
     int c, counter;
-    int ret = GED_ERROR; /* needs to be error */
+    int ret = BRLCAD_ERROR; /* needs to be error */
     int have_tmp_name = 0;
     struct directory *dp, *tmp_dp;
     struct rt_db_internal intern;
@@ -746,8 +746,8 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
     struct bu_vls tmp_ged_result_str = BU_VLS_INIT_ZERO;
     int force_flag = 0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -755,12 +755,12 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
     /* must be wanting help */
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", "red", usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc > 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", "red", usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_optind = 1;
@@ -807,10 +807,10 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "%s must be a combination\n", argv[1]);
 	    bu_vls_free(&comb_name);
 	    bu_vls_free(&temp_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     } else {
@@ -827,7 +827,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Unable to create %s\n", _ged_tmpfil);
 	bu_vls_free(&comb_name);
 	bu_vls_free(&temp_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Close the temp file since 'write_comb' opens it. */
@@ -891,7 +891,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	}
 
 	/* reconstitute the new combination */
-	if ((ret = build_comb(gedp, tmp_dp, &final_name)) != GED_OK) {
+	if ((ret = build_comb(gedp, tmp_dp, &final_name)) != BRLCAD_OK) {
 
 	    /* Something went wrong - kill the temporary comb */
 
@@ -979,7 +979,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
     }
     /* if we have reached cleanup by now, everything was fine */
-    ret = GED_OK;
+    ret = BRLCAD_OK;
 
 cleanup:
     bu_file_delete(_ged_tmpfil);

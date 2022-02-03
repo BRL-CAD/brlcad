@@ -93,21 +93,21 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     const char *usage_string = "bot [options] extrude <objname> [output_obj]";
     const char *purpose_string = "generate an ARB6 representation of the specified plate mode BoT object";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
     argc--; argv++;
 
-    if (_bot_obj_setup(gb, argv[0]) & GED_ERROR) {
-	return GED_ERROR;
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
     if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
         bu_vls_printf(gb->gedp->ged_result_str, "Object %s is not a plate mode bot\n", gb->solid_name.c_str());
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // Check for at least 1 non-zero thickness, or there's no volume to define
@@ -119,7 +119,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     }
     if (!have_solid) {
         bu_vls_printf(gb->gedp->ged_result_str, "bot %s does not have any non-degenerate face thicknesses\n", gb->solid_name.c_str());
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Make a comb to hold the union of the new solid primitives
@@ -134,7 +134,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     if (db_lookup(gb->gedp->dbip, bu_vls_cstr(&comb_name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&comb_name));
 	bu_vls_free(&comb_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     BU_LIST_INIT(&wcomb.l);
@@ -199,7 +199,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     bu_vls_free(&comb_name);
     bu_vls_free(&prim_name);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

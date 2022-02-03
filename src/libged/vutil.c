@@ -100,7 +100,7 @@ _ged_do_rot(struct ged *gedp,
 		MAT4X3PNT(rot_pt, gedp->ged_gvp->gv_model2view, new_origin);
 		break;
 	    default:
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
 
 	bn_mat_xform_about_pnt(viewchg, rmat, rot_pt);
@@ -117,7 +117,7 @@ _ged_do_rot(struct ged *gedp,
     bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
     bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -130,7 +130,7 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
     bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -165,7 +165,7 @@ _ged_do_tra(struct ged *gedp,
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
     bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 unsigned long long

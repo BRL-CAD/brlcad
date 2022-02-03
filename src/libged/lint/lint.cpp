@@ -197,10 +197,10 @@ _ged_cyclic_check(struct _ged_cyclic_data *cdata, struct ged *gedp, int argc, st
 {
     int i;
     struct db_full_path *start_path = NULL;
-    int ret = GED_OK;
-    if (!gedp) return GED_ERROR;
+    int ret = BRLCAD_OK;
+    if (!gedp) return BRLCAD_ERROR;
     if (argc) {
-	if (!dpa) return GED_ERROR;
+	if (!dpa) return BRLCAD_ERROR;
 	BU_GET(start_path, struct db_full_path);
 	db_full_path_init(start_path);
 	for (i = 0; i < argc; i++) {
@@ -326,16 +326,16 @@ int
 _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, struct directory **dpa)
 {
     struct directory *dp;
-    int ret = GED_OK;
-    if (!gedp) return GED_ERROR;
+    int ret = BRLCAD_OK;
+    if (!gedp) return BRLCAD_ERROR;
     if (argc) {
 	unsigned int i;
 	struct bu_ptbl *pc = NULL;
 	const char *osearch = "-type comb";
-	if (!dpa) return GED_ERROR;
+	if (!dpa) return BRLCAD_ERROR;
 	BU_ALLOC(pc, struct bu_ptbl);
 	if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, argc, dpa, gedp->dbip, NULL) < 0) {
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    bu_ptbl_free(pc);
 	    bu_free(pc, "pc table");
 	} else {
@@ -445,7 +445,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 int
 _ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int argc, struct directory **dpa)
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     struct directory *dp;
     struct _ged_lint_opts *opts = (struct _ged_lint_opts *)idata->o;
     unsigned int i;
@@ -454,7 +454,7 @@ _ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int 
     bu_vls_sprintf(&sopts, "! -type comb %s", bu_vls_cstr(&opts->filter));
     BU_ALLOC(pc, struct bu_ptbl);
     if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), argc, dpa, gedp->dbip, NULL) < 0) {
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	bu_free(pc, "pc table");
     } else {
 	for (i = 0; i < BU_PTBL_LEN(pc); i++) {
@@ -472,15 +472,15 @@ extern "C" int
 ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 {
     size_t pc;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     static const char *usage = "Usage: lint [ -CMS ] [obj1] [obj2] [...]\n";
     int print_help = 0;
     struct _ged_lint_opts *opts;
     struct directory **dpa = NULL;
     int nonexist_obj_cnt = 0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     struct _ged_cyclic_data *cdata = NULL;
     struct _ged_missing_data *mdata = new struct _ged_missing_data;
@@ -508,7 +508,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
-	ret = GED_OK;
+	ret = BRLCAD_OK;
 	goto ged_lint_memfree;
     }
 
@@ -521,7 +521,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	    for (i = argc - nonexist_obj_cnt - 1; i < argc; i++) {
 		bu_vls_printf(gedp->ged_result_str, " %s\n", argv[i]);
 	    }
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    goto ged_lint_memfree;
 	}
     }
@@ -536,7 +536,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	BU_GET(cdata->paths, struct bu_ptbl);
 	bu_ptbl_init(cdata->paths, 0, "path table");
 	ret = _ged_cyclic_check(cdata, gedp, argc, dpa);
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    goto ged_lint_memfree;
 	}
 	if (BU_PTBL_LEN(cdata->paths)) {
@@ -552,7 +552,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_log("Checking for references to non-extant objects...\n");
 	mdata->gedp = gedp;
 	ret = _ged_missing_check(mdata, gedp, argc, dpa);
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    goto ged_lint_memfree;
 	}
 	if (mdata->missing.size()) {
@@ -569,7 +569,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_log("Checking for invalid objects...\n");
 	idata->o = opts;
 	ret = _ged_invalid_shape_check(idata, gedp, argc, dpa);
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    goto ged_lint_memfree;
 	}
 	if (idata->invalid_dps.size()) {

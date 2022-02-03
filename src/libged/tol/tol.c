@@ -38,8 +38,8 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
     double f;
     static const char *usage = "([abs|rel|norm|dist|perp] [tolerance]) ...";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -122,7 +122,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* get the specified tolerance */
@@ -134,7 +134,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    else {
 		bu_vls_printf(gedp->ged_result_str, "None");
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "rel")) {
@@ -143,7 +143,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "None");
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "norm")) {
@@ -152,7 +152,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "None");
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "absmax")) {
@@ -161,7 +161,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\tabsmax None\n");
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "absmin")) {
@@ -170,7 +170,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\tabsmin None\n");
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 
@@ -180,7 +180,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\trelmax None\n");
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 
@@ -190,7 +190,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\trelmin None\n");
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 
@@ -200,7 +200,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\tlmax None\n");
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 
@@ -210,27 +210,27 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "\tlmin None\n");
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "dist")) {
 	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->wdb_tol.dist);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "perp")) {
 	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_wdbp->wdb_tol.perp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "unrecognized tolerance type - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     }
 
     if ((argc-1)%2 != 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* skip the command name */
@@ -244,7 +244,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	/* set the specified tolerance(s) */
 	if (sscanf(argv[1], "%lf", &f) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "bad tolerance - %s", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* clamp negative to zero */
@@ -266,7 +266,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    if (f >= 1.0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"relative tolerance must be between 0 and 1, not changed\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 will disable relative tolerance */
 	    gedp->ged_wdbp->wdb_ttol.rel = f;
@@ -277,7 +277,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    if (f > 90.0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"Normal tolerance must be less than 90.0 degrees\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 or 360.0 will disable this tol */
 	    gedp->ged_wdbp->wdb_ttol.norm = f * DEG2RAD;
@@ -309,7 +309,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    if (f >= 1.0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"relative tolerance must be between 0 and 1, not changed\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 will disable relative tolerance */
 	    gedp->ged_wdbp->wdb_ttol.relmax = f;
@@ -320,7 +320,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    if (f >= 1.0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"relative tolerance must be between 0 and 1, not changed\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 will disable relative tolerance */
 	    gedp->ged_wdbp->wdb_ttol.relmin = f;
@@ -331,7 +331,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    if (f >= 1.0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"relative tolerance must be between 0 and 1, not changed\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 will disable relative tolerance */
 	    gedp->ged_wdbp->wdb_ttol.rel_lmax = f;
@@ -342,7 +342,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    if (f >= 1.0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"relative tolerance must be between 0 and 1, not changed\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    /* Note that a value of 0.0 will disable relative tolerance */
 	    gedp->ged_wdbp->wdb_ttol.rel_lmin = f;
@@ -360,7 +360,7 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 	    if (f > 1.0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"Calculational perpendicular tolerance must be from 0 to 1\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    gedp->ged_wdbp->wdb_tol.perp = f;
 	    gedp->ged_wdbp->wdb_tol.para = 1.0 - f;
@@ -369,14 +369,14 @@ ged_tol_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (!valid_tol) {
 	    bu_vls_printf(gedp->ged_result_str, "unrecognized tolerance type - %s", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	argc-=2;
 	argv+=2;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

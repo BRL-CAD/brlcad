@@ -1033,7 +1033,7 @@ _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot C2 [[index][index-index]]";
     const char *purpose_string = "2D parameter space geometric curves";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1046,8 +1046,8 @@ _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1084,7 +1084,7 @@ _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // C3 - 3D edge curves
@@ -1094,7 +1094,7 @@ _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot C3 [[index][index-index]]";
     const char *purpose_string = "3D parameter space geometric curves";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1107,8 +1107,8 @@ _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1143,7 +1143,7 @@ _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // E - topological edges
@@ -1153,7 +1153,7 @@ _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot E [[index][index-index]]";
     const char *purpose_string = "topological 3D edges";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1166,8 +1166,8 @@ _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1206,7 +1206,7 @@ _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 
 }
 
@@ -1217,7 +1217,7 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot F [[index][index-index]]";
     const char *purpose_string = "topological faces";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1230,8 +1230,8 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1266,7 +1266,7 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // F2d - topological faces in parametric space
@@ -1276,7 +1276,7 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot F2d [[index][index-index]]";
     const char *purpose_string = "topological faces in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1289,8 +1289,8 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1326,7 +1326,7 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // FSBB - face surface bounding boxes
@@ -1336,7 +1336,7 @@ _brep_cmd_face_surface_bbox_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot FSBB [[index][index-index]]";
     const char *purpose_string = "face surface bounding boxes";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1348,8 +1348,8 @@ _brep_cmd_face_surface_bbox_plot(void *bs, int argc, const char **argv)
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1392,7 +1392,7 @@ _brep_cmd_face_surface_bbox_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // FSBB2d - surface bounding boxes in parametric space
@@ -1402,7 +1402,7 @@ _brep_cmd_face_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot FSBB2d [[index][index-index]]";
     const char *purpose_string = "2D parameter space surface bounding boxes";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1414,8 +1414,8 @@ _brep_cmd_face_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1458,7 +1458,7 @@ _brep_cmd_face_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // FTBB - trim bboxes in 3D
@@ -1468,7 +1468,7 @@ _brep_cmd_face_trim_bbox_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot FTBB [[index][index-index]]";
     const char *purpose_string = "face trim bounding boxes in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1480,8 +1480,8 @@ _brep_cmd_face_trim_bbox_plot(void *bs, int argc, const char **argv)
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1514,7 +1514,7 @@ _brep_cmd_face_trim_bbox_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // FTBB2d - face trim bboxes in 2D 
@@ -1524,7 +1524,7 @@ _brep_cmd_face_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot FTBB2d [[index][index-index]]";
     const char *purpose_string = "trim bounding boxes in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1536,8 +1536,8 @@ _brep_cmd_face_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1571,7 +1571,7 @@ _brep_cmd_face_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // FTD - trim direction
@@ -1581,7 +1581,7 @@ _brep_cmd_face_trim_direction_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot FTD [[index][index-index]]";
     const char *purpose_string = "face trim direction";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1594,8 +1594,8 @@ _brep_cmd_face_trim_direction_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1626,7 +1626,7 @@ _brep_cmd_face_trim_direction_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 
 }
 
@@ -1637,7 +1637,7 @@ _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot I [[index][index-index]]";
     const char *purpose_string = "isosurfaces";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1650,8 +1650,8 @@ _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1684,7 +1684,7 @@ _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // L - topological trimming loops in 3D
@@ -1694,7 +1694,7 @@ _brep_cmd_loop_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot L [[index][index-index]]";
     const char *purpose_string = "topological trimming loops in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1707,8 +1707,8 @@ _brep_cmd_loop_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1748,7 +1748,7 @@ _brep_cmd_loop_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // L2d - 2D parameter space topological trimming loops
@@ -1758,7 +1758,7 @@ _brep_cmd_loop_2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot L2d [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trimming loops";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1771,8 +1771,8 @@ _brep_cmd_loop_2d_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1811,7 +1811,7 @@ _brep_cmd_loop_2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // S - surfaces
@@ -1821,7 +1821,7 @@ _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot S [[index][index-index]]";
     const char *purpose_string = "untrimmed surfaces";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1834,8 +1834,8 @@ _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1870,7 +1870,7 @@ _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1882,7 +1882,7 @@ _brep_cmd_surface_control_verts_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot SCV [[index][index-index]]";
     const char *purpose_string = "surface control vertex mesh";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1894,8 +1894,8 @@ _brep_cmd_surface_control_verts_plot(void *bs, int argc, const char **argv)
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1932,7 +1932,7 @@ _brep_cmd_surface_control_verts_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // SK - surface knots in 3D
@@ -1942,7 +1942,7 @@ _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot SK [[index][index-index]]";
     const char *purpose_string = "surface knots in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -1954,8 +1954,8 @@ _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -1986,7 +1986,7 @@ _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // SK2d - surface knots in parametric space
@@ -1996,7 +1996,7 @@ _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot SK2d [[index][index-index]]";
     const char *purpose_string = "surface knots in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2008,8 +2008,8 @@ _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2040,7 +2040,7 @@ _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // SN - surface normals
@@ -2050,7 +2050,7 @@ _brep_cmd_surface_normal_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot SN [[index][index-index]]";
     const char *purpose_string = "surface normals";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2063,8 +2063,8 @@ _brep_cmd_surface_normal_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2097,7 +2097,7 @@ _brep_cmd_surface_normal_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // SUV - surface uv bounds plot
@@ -2107,7 +2107,7 @@ _brep_cmd_surface_uv_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot SUV [options] [[index][index-index]]";
     const char *purpose_string = "surface uv bounds";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2121,8 +2121,8 @@ _brep_cmd_surface_uv_plot(void *bs, int argc, const char **argv)
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2195,7 +2195,7 @@ _brep_cmd_surface_uv_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // SUVP - surface uv point plot
@@ -2205,7 +2205,7 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot SUVP index u v";
     const char *purpose_string = "surface 3D point at uv coordinates";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2218,7 +2218,7 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
 
     if (argc != 3) {
 	bu_vls_printf(gib->vls, "%s", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int si;
@@ -2229,22 +2229,22 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
 
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&si) < 0) {
 	bu_vls_printf(gib->vls, "invalid surface specifier: %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (si < 0 || si >= brep->m_S.Count()) {
 	bu_vls_printf(gib->vls, "surface id %d is not valid", si);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&u) < 0) {
 	bu_vls_printf(gib->vls, "invalid u coordinate specifier: %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[2], (void *)&v) < 0) {
 	bu_vls_printf(gib->vls, "invalid u coordinate specifier: %s", argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     unsigned char rgb[3];
@@ -2253,7 +2253,7 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
     const ON_Surface *surf = brep->m_S[si];
     if (!surf->IsValid(NULL)) {
 	bu_vls_printf(gib->vls, "surface %d is not valid, skipping", si);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (color) {
@@ -2268,7 +2268,7 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // T - topological trims in 3D
@@ -2278,7 +2278,7 @@ _brep_cmd_trim_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot T [[index][index-index]]";
     const char *purpose_string = "topological trims in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2291,8 +2291,8 @@ _brep_cmd_trim_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2328,7 +2328,7 @@ _brep_cmd_trim_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // T2d - 2D topological trims
@@ -2338,7 +2338,7 @@ _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot T2d [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trims";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2351,8 +2351,8 @@ _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
     int plotres = gib->gb->plotres;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2388,7 +2388,7 @@ _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // V - 3D vertices
@@ -2398,7 +2398,7 @@ _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot V [[index][index-index]]";
     const char *purpose_string = "3D vertices";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2410,8 +2410,8 @@ _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2446,7 +2446,7 @@ _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // CDT - face triangulation
@@ -2456,7 +2456,7 @@ _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot CDT [[index][index-index]]";
     const char *purpose_string = "triangulation of face in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2471,8 +2471,8 @@ _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
     const struct bn_tol *tol = &gib->gb->gedp->ged_wdbp->wdb_tol;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2491,7 +2491,7 @@ _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // CDT2d - face triangulation in parametric space
@@ -2501,7 +2501,7 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot CDT2d [[index][index-index]]";
     const char *purpose_string = "triangulation of face in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2516,8 +2516,8 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
     const struct bn_tol *tol = &gib->gb->gedp->ged_wdbp->wdb_tol;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2536,7 +2536,7 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // CDTM2d - face triangulation ??
@@ -2546,7 +2546,7 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot CDTM2d [[index][index-index]]";
     const char *purpose_string = "Triangulation of face ??";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2561,8 +2561,8 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
     const struct bn_tol *tol = &gib->gb->gedp->ged_wdbp->wdb_tol;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2581,7 +2581,7 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // CDTP2d - face triangulation points?
@@ -2591,7 +2591,7 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot CDTP2d [[index][index-index]]";
     const char *purpose_string = "face triangulation points?";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2606,8 +2606,8 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
     const struct bn_tol *tol = &gib->gb->gedp->ged_wdbp->wdb_tol;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2626,7 +2626,7 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // CDTW - face triangulation wireframe in 3D
@@ -2636,7 +2636,7 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot CDTW [[index][index-index]]";
     const char *purpose_string = "face triangulation wireframe in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2651,8 +2651,8 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
     const struct bn_tol *tol = &gib->gb->gedp->ged_wdbp->wdb_tol;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2671,7 +2671,7 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // CDTN - new face triangulation
@@ -2681,7 +2681,7 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot CDTN [[index][index-index]]";
     const char *purpose_string = "(Debug) new triangulation of face in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2695,8 +2695,8 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
 
     struct bu_color c;
@@ -2733,7 +2733,7 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // CDTN2d - new face triangulation in parametric space
@@ -2743,7 +2743,7 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot CDTN2d [[index][index-index]]";
     const char *purpose_string = "(Debug) new triangulation of face in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2757,8 +2757,8 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2794,7 +2794,7 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // CDTNW - new face triangulation wireframe in 3D
@@ -2804,7 +2804,7 @@ _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
     const char *usage_string = "brep [options] <objname1> plot CDTNW [[index][index-index]]";
     const char *purpose_string = "(Debug) new face triangulation wireframe in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--;argv++;
@@ -2818,8 +2818,8 @@ _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
 
     std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
+    if (_brep_indices(elements, gib->vls, argc, argv) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
     // If we have nothing, report all
     if (!elements.size()) {
@@ -2855,7 +2855,7 @@ _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
     _brep_vlblock_plot(gib->gb->gedp, vbp, bu_vls_cstr(&sname));
     bu_vls_free(&sname);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static void
@@ -2929,33 +2929,33 @@ brep_plot(struct _ged_brep_info *gb, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gb->intern.idb_ptr))->brep;
     if (brep == NULL) {
 	bu_vls_printf(gib.vls, "attempting to plot, but no ON_Brep data present\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!argc) {
 	_brep_plot_help(&gib, 0, NULL);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc > 1 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
 	argc--;argv++;
 	argc--;argv++;
 	_brep_plot_help(&gib, argc, argv);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Must have valid subcommand to process
     if (bu_cmd_valid(_brep_plot_cmds, argv[0]) != BRLCAD_OK) {
 	bu_vls_printf(gib.vls, "invalid subcommand \"%s\" specified\n", argv[0]);
 	_brep_plot_help(&gib, 0, NULL);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int ret;
     if (bu_cmd(_brep_plot_cmds, argc, argv, 0, (void *)&gib, &ret) == BRLCAD_OK) {
 	return ret;
     }
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

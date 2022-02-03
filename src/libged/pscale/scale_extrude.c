@@ -57,10 +57,10 @@ _ged_scale_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const 
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

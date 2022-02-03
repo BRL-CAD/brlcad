@@ -54,7 +54,7 @@ _fp_grid_cmd_draw(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate grid draw [0|1]";
     const char *purpose_string = "enable/disable grid drawing";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -64,24 +64,24 @@ _fp_grid_cmd_draw(void *bs, int argc, const char **argv)
     struct bv_grid_state *g = ginfo->g;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", g->draw);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     val = (val) ? 1 : 0;
 
     g->draw = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -94,7 +94,7 @@ _fp_grid_cmd_snap(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate grid snap [0|1]";
     const char *purpose_string = "enable/disable grid snapping";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -104,24 +104,24 @@ _fp_grid_cmd_snap(void *bs, int argc, const char **argv)
     struct bv_grid_state *g = ginfo->g;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", g->snap);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     val = (val) ? 1 : 0;
 
     g->snap = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -133,7 +133,7 @@ _fp_grid_cmd_anchor(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate grid anchor [# # #]";
     const char *purpose_string = "adjust grid size";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -143,23 +143,23 @@ _fp_grid_cmd_anchor(void *bs, int argc, const char **argv)
     struct bv_grid_state *g = ginfo->g;
      if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%g %g %g\n", V3ARGS(g->anchor));
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     vect_t val;
     int ret = bu_opt_vect_t(NULL, argc, (const char **)&argv[0], (void *)&val);
     if (ret != 1 && ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid specification\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     VMOVE(g->anchor, val);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -172,7 +172,7 @@ _fp_grid_cmd_res_h(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate grid res_ [#]";
     const char *purpose_string = "adjust grid line width";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -182,27 +182,27 @@ _fp_grid_cmd_res_h(void *bs, int argc, const char **argv)
     struct bv_grid_state *g = ginfo->g;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%g\n", g->res_h);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     fastf_t val;
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (val < BN_TOL_DIST) {
 	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is %f\n", BN_TOL_DIST);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     g->res_h = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -215,7 +215,7 @@ _fp_grid_cmd_res_v(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate grid res_ [#]";
     const char *purpose_string = "adjust grid line width";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -225,27 +225,27 @@ _fp_grid_cmd_res_v(void *bs, int argc, const char **argv)
     struct bv_grid_state *g = ginfo->g;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%g\n", g->res_v);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     fastf_t val;
     if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (val < BN_TOL_DIST) {
 	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is %f\n", BN_TOL_DIST);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     g->res_v = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -258,7 +258,7 @@ _fp_grid_cmd_res_major_h(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate grid res_ [#]";
     const char *purpose_string = "adjust grid line width";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -268,27 +268,27 @@ _fp_grid_cmd_res_major_h(void *bs, int argc, const char **argv)
     struct bv_grid_state *g = ginfo->g;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", g->res_major_h);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (val < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 1\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     g->res_major_h = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -301,7 +301,7 @@ _fp_grid_cmd_res_major_v(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate grid res_major_v [#]";
     const char *purpose_string = "adjust grid line width";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -311,27 +311,27 @@ _fp_grid_cmd_res_major_v(void *bs, int argc, const char **argv)
     struct bv_grid_state *g = ginfo->g;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", g->res_major_v);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (val < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Smallest supported value is 1\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     g->res_major_v = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -344,7 +344,7 @@ _fp_grid_cmd_color(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_grid color [r/g/b]";
     const char *purpose_string = "get/set color of grid";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -354,25 +354,25 @@ _fp_grid_cmd_color(void *bs, int argc, const char **argv)
     struct bv_grid_state *g = ginfo->g;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", g->color[0], g->color[1], g->color[2]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // For color need either 1 or 3 non-subcommand args
     if (argc != 1 && argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bu_color c;
     int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_color_to_rgb_ints(&c, &g->color[0], &g->color[1], &g->color[2]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 const struct bu_cmdtab _fp_grid_cmds[] = {
@@ -398,11 +398,11 @@ _fp_cmd_grid(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate grid subcmd [args]";
     const char *purpose_string = "manipulate faceplate grid overlay";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // We know we're the grid command - start processing args
@@ -411,11 +411,11 @@ _fp_cmd_grid(void *bs, int argc, const char **argv)
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
 	    v->gv_s->gv_grid.draw = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
 	    v->gv_s->gv_grid.draw = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 

@@ -979,31 +979,31 @@ to_set_fb_mode(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (3 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Get fb mode */
     if (argc == 2) {
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_mode);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* Set fb mode */
     if (bu_sscanf(argv[2], "%d", &mode) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "set_fb_mode: bad value - %s\n", argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (mode < 0)
@@ -1017,7 +1017,7 @@ to_set_fb_mode(struct ged *gedp,
     }
     to_refresh_view(gdvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1035,30 +1035,30 @@ to_listen(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (3 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     if (tvd->gdv_fbs.fbs_fbp == FB_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* return the port number */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc == 3) {
@@ -1066,7 +1066,7 @@ to_listen(struct ged *gedp,
 
 	if (bu_sscanf(argv[2], "%d", &port) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "listen: bad value - %s\n", argv[2]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (port >= 0) {
@@ -1082,11 +1082,11 @@ to_listen(struct ged *gedp,
 	    fbs_close(&tvd->gdv_fbs);
 	}
 	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

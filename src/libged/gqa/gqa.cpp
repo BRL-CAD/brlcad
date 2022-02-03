@@ -992,7 +992,7 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 			      pp->pt_regionp->reg_gmater,
 			      pp->pt_regionp->reg_name);
 		bu_semaphore_release(state->sem_worker);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    } else {
 
 		struct per_region_data *prd;
@@ -1517,13 +1517,13 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
     if (analysis_flags & ANALYSIS_WEIGHTS) {
 	if (densityFileName) {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
-	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) != GED_OK) {
-		return GED_ERROR;
+	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) != BRLCAD_OK) {
+		return BRLCAD_ERROR;
 	    }
 	} else {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from db\n");
-	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) != GED_OK) {
-		return GED_ERROR;
+	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) != BRLCAD_OK) {
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -1647,10 +1647,10 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 
     if ((analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! use_air) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Error:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2283,8 +2283,8 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "object [object ...]";
     struct resource resp[MAX_PSW];	/* memory resources for multi-cpu processing */
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2292,7 +2292,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     _ged_current_gedp = gedp;
@@ -2344,7 +2344,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 
     if (arg_count < 0 || (argc-arg_count) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
@@ -2373,7 +2373,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     for (; arg_count < argc; arg_count++) {
 	if (rt_gettree(rtip, argv[arg_count]) < 0) {
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[arg_count]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -2426,7 +2426,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     bu_log("Using grid spacing lower limit: %g %s\n",
 	    gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 
-    if (options_prep(rtip, state.span) != GED_OK) return GED_ERROR;
+    if (options_prep(rtip, state.span) != BRLCAD_OK) return BRLCAD_ERROR;
 
     /* initialize some stuff */
     state.sem_worker = bu_semaphore_register("gqa_sem_worker");
@@ -2579,7 +2579,7 @@ aborted:
 
     rt_free_rti(rtip);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

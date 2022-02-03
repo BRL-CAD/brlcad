@@ -48,7 +48,7 @@ extern int env_cmd(struct bu_vls *s_out, int argc, const char **argv);
 int
 ged_env_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,10 +56,10 @@ ged_env_core(struct ged *gedp, int argc, const char *argv[])
     ret = env_cmd(gedp->ged_result_str, argc, argv);
 
     if (ret == 2) {
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
-    ret = (!ret) ? GED_OK : GED_ERROR;
+    ret = (!ret) ? BRLCAD_OK : BRLCAD_ERROR;
 
     return ret;
 }

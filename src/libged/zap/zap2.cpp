@@ -76,7 +76,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 
     // If we're not processing view objects, we're done
     if (!clear_view_objs)
-	return GED_OK;
+	return BRLCAD_OK;
 
     // If the options indicate it, clear view objects as well
     sv = v->gv_view_objs;
@@ -108,7 +108,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*
@@ -126,9 +126,9 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     int clear_view_objs = 0;
     int clear_solid_objs = 0;
     int clear_all_views = 0;
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     const char *usage = "zap [options]\n";
     struct bview *v = gedp->ged_gvp;
 
@@ -151,12 +151,12 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!clear_all_views && bu_vls_strlen(&cvls)) {
@@ -172,13 +172,13 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	if (!found_match) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!v->independent) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support clearing db objects in only this view.  To change the view's status, the command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_free(&cvls);
@@ -194,13 +194,13 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Clear everything
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
 	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
 	if (v->independent && !clear_all_views)
 	    continue;
 	int nret = ged_clear_view(gedp, v, clear_solid_objs, clear_view_objs);
-	if (nret & GED_ERROR)
+	if (nret & BRLCAD_ERROR)
 	    ret = nret;
     }
 

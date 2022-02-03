@@ -39,7 +39,7 @@ extern "C" int
 ged_exec(struct ged *gedp, int argc, const char *argv[])
 {
     if (!gedp || !argc || !argv) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     double start = 0.0;
@@ -72,7 +72,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap->find(std::string(argv[0]));
     if (c_it == cmap->end()) {
 	bu_vls_printf(gedp->ged_result_str, "unknown command: %s", argv[0]);
-	return (GED_ERROR | GED_UNKNOWN);
+	return (BRLCAD_ERROR | BRLCAD_UNKNOWN);
     }
 
     const struct ged_cmd *cmd = c_it->second;

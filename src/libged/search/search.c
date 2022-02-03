@@ -345,7 +345,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 		break;
 	    default:
 		bu_vls_sprintf(gedp->ged_result_str, "Error: option %s is unknown.\nUsage: %s", argv_orig[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -358,7 +358,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	} else {
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* COPY argv_orig to argv; */
@@ -409,7 +409,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 		    bu_vls_free(&argvls);
 		    bu_argv_free(argc, argv);
 		    _ged_free_search_set(search_set);
-		    return (wflag) ? GED_OK : GED_ERROR;
+		    return (wflag) ? BRLCAD_OK : BRLCAD_ERROR;
 		}
 
 		if (!is_specific) {
@@ -477,7 +477,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
 	bu_argv_free(argc, argv);
 	_ged_free_search_set(search_set);
 	bu_vls_trunc(gedp->ged_result_str, 0);
-	return (wflag) ? GED_OK : GED_ERROR;
+	return (wflag) ? BRLCAD_OK : BRLCAD_ERROR;
     }
 
     /* Check if all of our searches are local or not */
@@ -629,7 +629,7 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     bu_argv_free(argc, argv);
     db_search_context_destroy(ctx);
     _ged_free_search_set(search_set);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

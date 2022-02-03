@@ -45,10 +45,10 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
     int nflag = 0;
     static const char *usage = "[-f|-n] object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,7 +56,7 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     bu_optind = 1;
@@ -73,13 +73,13 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
     if ((force + nflag) > 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     argc -= (bu_optind - 1);
@@ -91,7 +91,7 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s ", argv[i]);
 	bu_vls_printf(gedp->ged_result_str, "} {}");
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     for (i = 1; i < argc; i++) {
@@ -115,7 +115,7 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
 	    if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 		/* Abort kill processing on first error */
 		bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[i]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -123,7 +123,7 @@ ged_kill_core(struct ged *gedp, int argc, const char *argv[])
     /* Update references. */
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

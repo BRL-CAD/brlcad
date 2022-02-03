@@ -40,9 +40,9 @@ ged_ypr_core(struct ged *gedp, int argc, const char *argv[])
     double scan[3];
     static const char *usage = "yaw pitch roll";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,18 +56,18 @@ ged_ypr_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (anim_mat2ypr(mat, pt) == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "view %s - matrix is not a rotation matrix", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	VSCALE(pt, pt, RAD2DEG);
 	bu_vls_printf(gedp->ged_result_str, "%.12g %.12g %.12g", V3ARGS(pt));
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: view %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* attempt to set Viewrot given yaw, pitch and roll */
@@ -78,7 +78,7 @@ ged_ypr_core(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(gedp->ged_result_str, "view %s: bad value detected - %s %s %s",
 		      argv[0], argv[1], argv[2], argv[3]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     /* convert double to fastf_t */
     VMOVE(ypr, scan);
@@ -88,7 +88,7 @@ ged_ypr_core(struct ged *gedp, int argc, const char *argv[])
     bn_mat_trn(gedp->ged_gvp->gv_rotation, mat);
     bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

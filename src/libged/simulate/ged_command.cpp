@@ -36,14 +36,14 @@
 extern "C" int
 ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     bu_vls_sprintf(gedp->ged_result_str,
 		   "%s: This build of BRL-CAD was not compiled with Bullet support", argv[0]);
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -95,9 +95,9 @@ get_debug_mode(const std::string &debug_mode_string)
 extern "C" int
 ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     const char *debug_mode_string = "";
     const bu_opt_desc options_description[] = {
@@ -111,7 +111,7 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
 						const_cast<bu_opt_desc *>(options_description), NULL)));
 	bu_vls_printf(gedp->ged_result_str,
 		      "USAGE: %s [OPTIONS] path duration\nOptions:\n%s\n", argv[0], usage.ptr);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     rt_wdb * const orig_wdbp = gedp->dbip->dbi_wdbp;
@@ -138,11 +138,11 @@ ged_simulate_core(ged * const gedp, const int argc, const char ** const argv)
     } catch (const simulate::InvalidSimulationError &exception) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s", exception.what());
 	gedp->dbip->dbi_wdbp = orig_wdbp;
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gedp->dbip->dbi_wdbp = orig_wdbp;
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 #endif

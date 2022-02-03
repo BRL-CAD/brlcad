@@ -236,7 +236,7 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     av[2] = bu_vls_addr(&editstring);
     av[3] = argv[1];
 
-    if ( ged_red(GEDP, 4, (const char **)av) & GED_ERROR ) {
+    if ( ged_red(GEDP, 4, (const char **)av) & BRLCAD_ERROR ) {
 	Tcl_AppendResult(interpreter, "Error: ", bu_vls_addr(GEDP->ged_result_str), (char *)NULL);
     } else {
 	Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), (char *)NULL);

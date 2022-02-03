@@ -54,9 +54,9 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 
     static const char *usage = "name pX pY pZ rA fbA c X Y c X Y c X Y th";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -64,17 +64,17 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 16) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s already exists\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &known_pt[X]) != 1 ||
@@ -82,17 +82,17 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 	sscanf(argv[4], "%lf", &known_pt[Z]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad value - %s %s %s",
 		      argv[0], argv[2], argv[3], argv[4]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[5], "%lf", &rota) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad rotation angle - %s", argv[0], argv[5]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[6], "%lf", &fba) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad fallback angle - %s", argv[0], argv[6]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     rota *= DEG2RAD;
@@ -108,7 +108,7 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 	    case 'x':
 		if (ZERO(norm[0])) {
 		    bu_vls_printf(gedp->ged_result_str, "X not unique in this face\n");
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		solve[i] = X;
 
@@ -125,7 +125,7 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 	    case 'y':
 		if (ZERO(norm[1])) {
 		    bu_vls_printf(gedp->ged_result_str, "Y not unique in this face\n");
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		solve[i] = Y;
 
@@ -142,7 +142,7 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 	    case 'z':
 		if (ZERO(norm[2])) {
 		    bu_vls_printf(gedp->ged_result_str, "Z not unique in this face\n");
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		solve[i] = Z;
 
@@ -158,13 +158,13 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "coordinate must be x, y, or z\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
     if (sscanf(argv[7+3*3], "%lf", &thick) != 1 || ZERO(thick)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad thickness - %s", argv[0], argv[7+3*3]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     thick *= gedp->dbip->dbi_local2base;
 
@@ -216,7 +216,7 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 
 	    default:
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -228,7 +228,7 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
     dp = db_diradd(gedp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Cannot add %s to the directory\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(dp, gedp->dbip, &internal, &rt_uniresource) < 0) {
@@ -236,7 +236,7 @@ ged_rfarb_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting.\n", argv[0]);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

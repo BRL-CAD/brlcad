@@ -100,9 +100,9 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
     size_t tw, tf, tp;
     static const char *usage = "nmg_solid [prefix]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -110,12 +110,12 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (3 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str, "fracture:");
@@ -124,17 +124,17 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\n");
 
     if ((old_dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     if (rt_db_get_internal(&old_intern, old_dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (old_intern.idb_type != ID_NMG) {
 	bu_vls_printf(gedp->ged_result_str, " is not an NMG solid!!\n");
 	rt_db_free_internal(&old_intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     m = (struct model *)old_intern.idb_ptr;
@@ -173,7 +173,7 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 		new_s = BU_LIST_FIRST(shell, &r->s_hd);
 		if (!new_s || !new_s->vu_p) {
 		    bu_log("ERROR: nmg structural problem, fracture.c(%d)\n", __LINE__);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		v_new = new_s->vu_p->v_p;
 		if (v->vg_p) {
@@ -183,7 +183,7 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 
 		fracture_add_nmg_part(gedp, newname, new_model);
-		if (frac_stat) return GED_ERROR;
+		if (frac_stat) return BRLCAD_ERROR;
 		continue;
 	    }
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -203,12 +203,12 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 
 		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 		fracture_add_nmg_part(gedp, newname, new_model);
-		if (frac_stat) return GED_ERROR;
+		if (frac_stat) return BRLCAD_ERROR;
 	    }
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

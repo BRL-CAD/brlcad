@@ -55,7 +55,7 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
     const char *usage_string = "view obj name draw [0|1]";
     const char *purpose_string = "toggle view polygons";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -65,7 +65,7 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
     struct bv_scene_obj *s = gd->s;
     if (!gd->s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 0) {
@@ -74,20 +74,20 @@ _objs_cmd_draw(void *bs, int argc, const char **argv)
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "DOWN\n");
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "DOWN")) {
 	s->s_flag = DOWN;
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (BU_STR_EQUAL(argv[0], "UP")) {
 	s->s_flag = UP;
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 int
@@ -98,7 +98,7 @@ _objs_cmd_delete(void *bs, int argc, const char **argv)
     const char *usage_string = "view obj name delete";
     const char *purpose_string = "delete view object";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -108,16 +108,16 @@ _objs_cmd_delete(void *bs, int argc, const char **argv)
     struct bv_scene_obj *s = gd->s;
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (!(s->s_type_flags & BV_VIEWONLY)) {
 	bu_vls_printf(gedp->ged_result_str, "View object %s is associated with a database object - use 'erase' cmd to clear\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
     bv_scene_obj_free(s, gedp->free_scene_obj);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -128,7 +128,7 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
     const char *usage_string = "view obj name color [r/g/b]";
     const char *purpose_string = "show/set obj color";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -138,22 +138,22 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
     struct bv_scene_obj *s = gd->s;
     if (!gd->s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", s->s_color[0], s->s_color[1], s->s_color[2]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
     struct bu_color val;
     if (bu_opt_color(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_color_to_rgb_chars(&val, s->s_color);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -164,7 +164,7 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
     const char *usage_string = "view obj name arrow [0|1] [width [#]] [length [#]]";
     const char *purpose_string = "toggle arrow drawing, for those objects that support it";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -174,32 +174,32 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
     struct bv_scene_obj *s = gd->s;
     if (!gd->s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", s->s_arrow);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "0")) {
 	s->s_arrow = 0;
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (BU_STR_EQUAL(argv[0], "1")) {
 	s->s_arrow = 1;
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (BU_STR_EQUAL(argv[0], "width"))  {
 	if (argc == 2) {
 	    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&s->s_os.s_arrow_tip_width) != 1) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%f\n", s->s_os.s_arrow_tip_width);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
@@ -207,17 +207,17 @@ _objs_cmd_arrow(void *bs, int argc, const char **argv)
 	if (argc == 2) {
 	    if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&s->s_os.s_arrow_tip_length) != 1) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%f\n", s->s_os.s_arrow_tip_length);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
     bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 int
@@ -228,7 +228,7 @@ _objs_cmd_lcnt(void *bs, int argc, const char **argv)
     const char *usage_string = "view obj name lcnt";
     const char *purpose_string = "print the number of vlist entities";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -238,10 +238,10 @@ _objs_cmd_lcnt(void *bs, int argc, const char **argv)
     struct bv_scene_obj *s = gd->s;
     if (!gd->s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_printf(gedp->ged_result_str, "%d\n", bu_list_len(&s->s_vlist));
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -252,7 +252,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
     const char *usage_string = "view obj update name [x y]";
     const char *purpose_string = "update object";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -262,13 +262,13 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
     struct bv_scene_obj *s = gd->s;
     if (!gd->s) {
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
     if (argc && (argc != 2)) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *v = gedp->ged_gvp;
@@ -276,11 +276,11 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 	int x, y;
 	if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&x) != 1 || x < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&y) != 1 || y < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	v->gv_mouse_x = x;
 	v->gv_mouse_y = y;
@@ -290,7 +290,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
     s->s_v = v;
     (*s->s_update_callback)(s, 0);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 const struct bu_cmdtab _obj_cmds[] = {
@@ -320,11 +320,11 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] obj [options] [args]";
     const char *purpose_string = "manipulate view objects";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // See if we have any high level options set
@@ -383,14 +383,14 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 		}
 	    }
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // We need a name, even if it doesn't exist yet.  Check if it does, since subcommands
     // will react differently based on that status.
     if (ac != 1) {
 	bu_vls_printf(gd->gedp->ged_result_str, "need view object name");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     gd->vobj = argv[0];
     gd->s = NULL;

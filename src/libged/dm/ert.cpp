@@ -49,12 +49,12 @@ extern "C" int
 ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 {
 
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -62,18 +62,18 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     struct dm *dmp = (struct dm *)gedp->ged_dmp;
     if (!dmp) {
 	bu_vls_printf(gedp->ged_result_str, "no current display manager set\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct fb *fbp = dm_get_fb(dmp);
     if (!fbp) {
     	bu_vls_printf(gedp->ged_result_str, "attached display manager has no embedded framebuffer\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!ged_who_argc(gedp)) {
 	bu_vls_printf(gedp->ged_result_str, "no objects displayed\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // Have a framebuffer to target and objects to raytrace.  Next we need a
@@ -88,7 +88,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     fbs->fbs_close_client_handler = gedp->fbs_close_client_handler;
     if (!fbs->fbs_is_listening || fbs_open(fbs, 0) != BRLCAD_OK) {
     	bu_vls_printf(gedp->ged_result_str, "could not open fb server\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // Assemble the arguments

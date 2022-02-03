@@ -54,7 +54,7 @@ _fp_irect_cmd_draw(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect draw [0|1]";
     const char *purpose_string = "enable/disable irect rubber band drawing";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -64,24 +64,24 @@ _fp_irect_cmd_draw(void *bs, int argc, const char **argv)
     struct bv_interactive_rect_state *r = rinfo->r;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", r->draw);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     val = (val) ? 1 : 0;
 
     r->draw = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -94,7 +94,7 @@ _fp_irect_cmd_line_width(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect line_width [#]";
     const char *purpose_string = "irect line width";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -104,24 +104,24 @@ _fp_irect_cmd_line_width(void *bs, int argc, const char **argv)
     struct bv_interactive_rect_state *r = rinfo->r;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", r->line_width);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     val = (val <= 0) ? 1 : val;
 
     r->line_width = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -134,7 +134,7 @@ _fp_irect_cmd_line_style(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect line_style [#]";
     const char *purpose_string = "irect line style";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -144,24 +144,24 @@ _fp_irect_cmd_line_style(void *bs, int argc, const char **argv)
     struct bv_interactive_rect_state *r = rinfo->r;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", r->line_style);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     int val;
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&val) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     val = (val <= 0) ? 1 : val;
 
     r->line_style = val;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -173,7 +173,7 @@ _fp_irect_cmd_pos(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect pos [# #]";
     const char *purpose_string = "report/adjust irect position ";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -183,27 +183,27 @@ _fp_irect_cmd_pos(void *bs, int argc, const char **argv)
     struct bv_interactive_rect_state *r = rinfo->r;
      if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d\n", r->pos[0], r->pos[1]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int pos[2];
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&(pos[0])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&(pos[1])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     V2MOVE(r->pos, pos);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -215,7 +215,7 @@ _fp_irect_cmd_dim(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect dim [# #]";
     const char *purdime_string = "report/adjust irect size";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purdime_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -225,27 +225,27 @@ _fp_irect_cmd_dim(void *bs, int argc, const char **argv)
     struct bv_interactive_rect_state *r = rinfo->r;
      if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d\n", r->dim[0], r->dim[1]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int dim[2];
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&(dim[0])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&(dim[1])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     V2MOVE(r->dim, dim);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -258,7 +258,7 @@ _fp_irect_cmd_x(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect x";
     const char *purpose_string = "report irect x position in normalized (+-1.0) view coords";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -267,7 +267,7 @@ _fp_irect_cmd_x(void *bs, int argc, const char **argv)
 
     struct bv_interactive_rect_state *r = rinfo->r;
     bu_vls_printf(gedp->ged_result_str, "%g\n", r->x);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -280,7 +280,7 @@ _fp_irect_cmd_y(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect y";
     const char *purpose_string = "report irect y position in normalized (+-1.0) view coords";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -289,7 +289,7 @@ _fp_irect_cmd_y(void *bs, int argc, const char **argv)
 
     struct bv_interactive_rect_state *r = rinfo->r;
     bu_vls_printf(gedp->ged_result_str, "%g\n", r->y);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -302,7 +302,7 @@ _fp_irect_cmd_width(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect width";
     const char *purpose_string = "report irect width position in normalized view coords";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -311,7 +311,7 @@ _fp_irect_cmd_width(void *bs, int argc, const char **argv)
 
     struct bv_interactive_rect_state *r = rinfo->r;
     bu_vls_printf(gedp->ged_result_str, "%g\n", r->width);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -324,7 +324,7 @@ _fp_irect_cmd_height(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect height";
     const char *purpose_string = "report irect height position in normalized view coords";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -333,7 +333,7 @@ _fp_irect_cmd_height(void *bs, int argc, const char **argv)
 
     struct bv_interactive_rect_state *r = rinfo->r;
     bu_vls_printf(gedp->ged_result_str, "%g\n", r->height);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -346,7 +346,7 @@ _fp_irect_cmd_bg(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_irect bg [r/g/b]";
     const char *purpose_string = "get/set color of irect background";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -356,25 +356,25 @@ _fp_irect_cmd_bg(void *bs, int argc, const char **argv)
     struct bv_interactive_rect_state *r = rinfo->r;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", V3ARGS(r->bg));
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // For color need either 1 or 3 non-subcommand args
     if (argc != 1 && argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bu_color c;
     int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_color_to_rgb_ints(&c, &r->bg[0], &r->bg[1], &r->bg[2]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -387,7 +387,7 @@ _fp_irect_cmd_color(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate [model|view]_irect color [r/g/b]";
     const char *purpose_string = "get/set color of irect";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -397,25 +397,25 @@ _fp_irect_cmd_color(void *bs, int argc, const char **argv)
     struct bv_interactive_rect_state *r = rinfo->r;
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d\n", V3ARGS(r->color));
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // For color need either 1 or 3 non-subcommand args
     if (argc != 1 && argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bu_color c;
     int opt_ret = bu_opt_color(NULL, argc, (const char **)argv, (void *)&c);
     if (opt_ret != 1 && opt_ret != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid color specifier\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_color_to_rgb_ints(&c, &r->color[0], &r->color[1], &r->color[2]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // TODO - shouldn't this just be gv_width/gv_height?
@@ -428,7 +428,7 @@ _fp_irect_cmd_cdim(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect cdim [# #]";
     const char *purcdime_string = "report/adjust irect canvas dimension";
     if (_view_cmd_msgs((void *)gd, argc, argv, usage_string, purcdime_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     argc--; argv++;
 
@@ -438,29 +438,29 @@ _fp_irect_cmd_cdim(void *bs, int argc, const char **argv)
     struct bv_interactive_rect_state *r = rinfo->r;
      if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d\n", r->cdim[0], r->cdim[1]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int cdim[2];
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&(cdim[0])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&(cdim[1])) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     cdim[0] = (cdim[0] < 0) ? 0 : cdim[0];
     cdim[1] = (cdim[1] < 0) ? 0 : cdim[1];
     V2MOVE(r->cdim, cdim);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 const struct bu_cmdtab _fp_irect_cmds[] = {
@@ -490,11 +490,11 @@ _fp_cmd_irect(void *bs, int argc, const char **argv)
     const char *usage_string = "view faceplate irect subcmd [args]";
     const char *purpose_string = "manipulate faceplate interactive rectangle";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // We know we're the irect command - start processing args
@@ -503,11 +503,11 @@ _fp_cmd_irect(void *bs, int argc, const char **argv)
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
 	    v->gv_s->gv_rect.draw = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
 	    v->gv_s->gv_rect.draw = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 

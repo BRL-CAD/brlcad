@@ -195,7 +195,7 @@ go_draw_dlist(struct bview *gdvp)
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 void
@@ -220,10 +220,10 @@ to_edit_redraw(struct ged *gedp,
     register struct display_list *gdlp;
     register struct display_list *next_gdlp;
     struct db_full_path subpath;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
 
     if (argc != 2)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
@@ -320,12 +320,12 @@ to_redraw(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return to_edit_redraw(gedp, argc, argv);
@@ -343,7 +343,7 @@ to_blast(struct ged *gedp,
 
     ret = ged_blast(gedp, argc, argv);
 
-    if (ret != GED_OK)
+    if (ret != BRLCAD_OK)
 	return ret;
 
     to_autoview_all_views(current_top);

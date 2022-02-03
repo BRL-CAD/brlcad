@@ -76,9 +76,9 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
     int len = NAMESIZE+1;
     static const char *usage = "new_prefix object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -86,12 +86,12 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_log("!!! ged_prefix_core: step 1\n");
@@ -132,18 +132,18 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	if (db_rename(gedp->dbip, dp, tempstring) < 0) {
 	    bu_vls_free(&tempstring_v5);
 	    bu_vls_printf(gedp->ged_result_str, "error in rename to %s, aborting\n", tempstring);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* Change object name on disk. */
 	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	bu_log("XXXged_prefix_core: changed name from %s to %s\n", argv[i], tempstring);
     }
@@ -157,7 +157,7 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -166,11 +166,11 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 			     (void *)argv[1], (void *)argv[k], (void *)NULL, (void *)NULL);
 	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } FOR_ALL_DIRECTORY_END;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

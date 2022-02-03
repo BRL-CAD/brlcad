@@ -54,16 +54,16 @@ ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[])
     int num_verts;
     static const char *usage = "make V x0 y0 z0 ... xn yn zn";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     num_verts = (argc - 3) / 3;
 
     /* check for less than three vertices or incomplete vertex coordinates */
     if (argc < ELEMENTS_PER_POINT + 3 || (argc - 3) % 3 != 0) {
        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-       return GED_HELP;
+       return BRLCAD_HELP;
     }
 
     /* attempt to resolve and verify */
@@ -72,19 +72,19 @@ ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[])
     dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
        bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", name);
-       return GED_ERROR;
+       return BRLCAD_ERROR;
     }
 
     if (rt_db_get_internal(&internal, dp, gedp->dbip,
        bn_mat_identity, &rt_uniresource) < 0) {
        bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
-       return GED_ERROR;
+       return BRLCAD_ERROR;
     }
 
     if (internal.idb_type != ID_NMG) {
        bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", name);
        rt_db_free_internal(&internal);
-       return GED_ERROR;
+       return BRLCAD_ERROR;
     }
 
     m = (struct model *)internal.idb_ptr;
@@ -126,13 +126,13 @@ ged_nmg_make_v_core(struct ged *gedp, int argc, const char *argv[])
     if ( wdb_put_internal(gedp->ged_wdbp, name, &internal, 1.0) < 0 ) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
 	rt_db_free_internal(&internal);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     rt_db_free_internal(&internal);
     bu_free(verts, "new verts");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

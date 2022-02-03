@@ -192,9 +192,9 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
     int push_error;
     static const char *usage = "object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -202,7 +202,7 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     BU_GET(gpdp, struct push_data);
@@ -265,7 +265,7 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
 	rt_debug = old_debug;
 	BU_PUT(gpdp, struct push_data);
 	bu_vls_printf(gedp->ged_result_str, "ged_push_core:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 /*
  * We've built the push solid list, now all we need to do is apply
@@ -317,7 +317,7 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
     push_error = gpdp->push_error;
     BU_PUT(gpdp, struct push_data);
 
-    return push_error ? GED_ERROR : GED_OK;
+    return push_error ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 

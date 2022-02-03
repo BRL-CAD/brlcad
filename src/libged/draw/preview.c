@@ -262,9 +262,9 @@ _loadframe(struct ged *gedp, FILE *fp)
     }
 
     if (end) {
-	return GED_OK; /* possible more frames */
+	return BRLCAD_OK; /* possible more frames */
     }
-    return GED_ERROR; /* end of frames */
+    return BRLCAD_ERROR; /* end of frames */
 }
 
 
@@ -293,9 +293,9 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls name = BU_VLS_INIT_ZERO;
     char *dot;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -303,12 +303,12 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     preview_delay = 0;			/* Full speed, by default */
@@ -349,7 +349,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "        -D#     desired starting frame\n");
 		bu_vls_printf(gedp->ged_result_str, "        -K#     final frame\n");
 		bu_vls_printf(gedp->ged_result_str, "        -o image_name.ext     output frame to file typed by extension(defaults to PIX)\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 		break;
@@ -361,7 +361,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     fp = fopen(argv[1], "r");
     if (fp == NULL) {
 	perror(argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     args = argc + 2 + ged_who_argc(gedp);
@@ -401,7 +401,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_strcpy(&name, image_name);
 	}
     }
-    while (_loadframe(gedp, fp) == GED_OK) {
+    while (_loadframe(gedp, fp) == BRLCAD_OK) {
 	if (image_name) {
 	    struct bu_vls fullname = BU_VLS_INIT_ZERO;
 	    const char *screengrab_args[3];
@@ -444,7 +444,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     }
     db_free_anim(gedp->dbip);	/* Forget any anim commands */
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

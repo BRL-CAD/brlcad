@@ -355,7 +355,7 @@ _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], struct _
 	    bu_vls_printf(gedp->ged_result_str, "	%s\n", argv[i]);
 	}
 	bu_vls_printf(gedp->ged_result_str, "\nAborting.  When performing an in-place facetization, a single pre-existing object must be specified.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     }
 
@@ -365,13 +365,13 @@ _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], struct _
 	    bu_vls_printf(gedp->ged_result_str, "	%s\n", argv[i]);
 	}
 	bu_vls_printf(gedp->ged_result_str, "\nAborting.  An in-place conversion replaces the specified object (or regions in a hierarchy in -r mode) with a faceted approximation.  Because a single object is generated, in-place conversion has no clear interpretation when multiple input objects are specified.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!o->in_place) {
 	if (newobj_cnt < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "all objects listed already exist, aborting.  (Need new object name to write out results to.)\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (newobj_cnt > 1) {
@@ -380,15 +380,15 @@ _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], struct _
 		bu_vls_printf(gedp->ged_result_str, "	%s\n", argv[i]);
 	    }
 	    bu_vls_printf(gedp->ged_result_str, "\nAborting.  Need to specify exactly one object name that does not exist to hold facetization output.\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (argc - newobj_cnt == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "No existing objects specified, nothing to facetize.  Aborting.\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static
@@ -425,7 +425,7 @@ _ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, str
 	struct rt_bot_internal *bot;
 	int not_solid;
 	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
-	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
 	if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
@@ -451,7 +451,7 @@ ged_facetize_solid_objs_memfree:
 static int
 _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n)
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     const char *mav[3];
     const char *cmdname = "facetize";
     /* o or n may point to a d_namep location, which will change with
@@ -466,20 +466,20 @@ _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n)
     bu_vls_incr(&tname, NULL, "0:0:0:0:-", &_db_uniq_test, (void *)gedp);
     mav[1] = bu_vls_addr(&oname);
     mav[2] = bu_vls_addr(&tname);
-    if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
-	ret = GED_ERROR;
+    if (ged_move(gedp, 3, (const char **)mav) != BRLCAD_OK) {
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_obj_swap_memfree;
     }
     mav[1] = bu_vls_addr(&nname);
     mav[2] = bu_vls_addr(&oname);
-    if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
-	ret = GED_ERROR;
+    if (ged_move(gedp, 3, (const char **)mav) != BRLCAD_OK) {
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_obj_swap_memfree;
     }
     mav[1] = bu_vls_addr(&tname);
     mav[2] = bu_vls_addr(&nname);
-    if (ged_move(gedp, 3, (const char **)mav) != GED_OK) {
-	ret = GED_ERROR;
+    if (ged_move(gedp, 3, (const char **)mav) != BRLCAD_OK) {
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_obj_swap_memfree;
     }
 
@@ -609,10 +609,10 @@ _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_face
 	BU_UNSETJUMP;
 	bu_log("WARNING: triangulation failed!!!\n");
 	_ged_facetize_log_default(o);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } BU_UNSETJUMP;
     _ged_facetize_log_default(o);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static struct rt_bot_internal *
@@ -709,7 +709,7 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, stru
 	if (opts->verbosity) {
 	    bu_log("Cannot add %s to directory\n", name);
 	}
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
@@ -717,10 +717,10 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, stru
 	    bu_log("Failed to write %s to database\n", name);
 	}
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static int
@@ -742,7 +742,7 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _
 	if (opts->verbosity) {
 	    bu_log("Cannot add %s to directory\n", name);
 	}
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
@@ -750,16 +750,16 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _
 	    bu_log("Failed to write %s to database\n", name);
 	}
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static int
 _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     struct directory *dp;
     int decimation_succeeded = 0;
     struct db_i *dbip = gedp->dbip;
@@ -937,7 +937,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
 	    bu_vls_printf(&tmpname, "-0");
 	    bu_vls_incr(&tmpname, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	}
-	if (_write_bot(gedp, tbot, bu_vls_addr(&tmpname), opts) & GED_ERROR) {
+	if (_write_bot(gedp, tbot, bu_vls_addr(&tmpname), opts) & BRLCAD_ERROR) {
 	    bu_log("SPSR: could not write BoT to temporary name %s\n", bu_vls_addr(&tmpname));
 	    bu_vls_free(&tmpname);
 	    ret = GED_FACETIZE_FAILURE;
@@ -1036,7 +1036,7 @@ _ged_check_plate_mode(struct ged *gedp, struct directory *dp)
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
-	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
 	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
@@ -1058,7 +1058,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 {
     int first_run = 1;
     int fatal_error_cnt = 0;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     double avg_thickness = 0.0;
     double min_len = 0.0;
     fastf_t feature_size = 0.0;
@@ -1449,7 +1449,7 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
 
     /* Triangulate model, if requested */
     if (opts->triangulate && opts->make_nmg) {
-	if (_try_nmg_triangulate(gedp, nmg_model, opts) != GED_OK) {
+	if (_try_nmg_triangulate(gedp, nmg_model, opts) != BRLCAD_OK) {
 	    if (opts->verbosity > 1) {
 		bu_log("NMG(%s):  triangulation failed, aborting\n", newname);
 	    }
@@ -1481,7 +1481,7 @@ _ged_nmg_obj(struct ged *gedp, int argc, const char **argv, const char *newname,
     }
 
 ged_nmg_obj_memfree:
-    if (!opts->quiet && ret != GED_OK) {
+    if (!opts->quiet && ret != BRLCAD_OK) {
 	bu_log("NMG: failed to generate %s\n", newname);
     }
 
@@ -1492,7 +1492,7 @@ ged_nmg_obj_memfree:
 int
 _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
 {
-    int ret = GED_ERROR;
+    int ret = BRLCAD_ERROR;
     int done_trying = 0;
     int newobj_cnt;
     char *newname;
@@ -1504,13 +1504,13 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 
     RT_CHECK_DBI(dbip);
 
-    if (argc < 0) return GED_ERROR;
+    if (argc < 0) return BRLCAD_ERROR;
 
     dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
-    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
+    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == BRLCAD_ERROR) {
 	bu_free(dpa, "dp array");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!opts->in_place) {
@@ -1539,7 +1539,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		bu_log("Facetization aborted: non-solid objects in specified tree(s).\n");
 	    }
 	    bu_free(dpa, "dp array");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -1560,8 +1560,8 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	    }
 
-	    if (_ged_nmg_obj(gedp, argc, argv, newname, opts) == GED_OK) {
-		ret = GED_OK;
+	    if (_ged_nmg_obj(gedp, argc, argv, newname, opts) == BRLCAD_OK) {
+		ret = BRLCAD_OK;
 		break;
 	    } else {
 		flags = flags & ~(GED_FACETIZE_NMGBOOL);
@@ -1579,7 +1579,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    } else {
 		struct _ged_facetize_report_info cinfo;
 		if (_ged_continuation_obj(&cinfo, gedp, argv[0], newname, opts) == GED_FACETIZE_SUCCESS) {
-		    ret = GED_OK;
+		    ret = BRLCAD_OK;
 		    break;
 		} else {
 		    if (!opts->quiet) {
@@ -1603,7 +1603,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    } else {
 		struct _ged_facetize_report_info cinfo;
 		if (_ged_spsr_obj(&cinfo, gedp, argv[0], newname, opts) == GED_FACETIZE_SUCCESS) {
-		    ret = GED_OK;
+		    ret = BRLCAD_OK;
 		    break;
 		} else {
 		    if (!opts->quiet) {
@@ -1623,9 +1623,9 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 
     }
 
-    if ((ret == GED_OK) && opts->in_place) {
-	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != GED_OK) {
-	    return GED_ERROR;
+    if ((ret == BRLCAD_OK) && opts->in_place) {
+	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != BRLCAD_OK) {
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -1639,7 +1639,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 int
 _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts *opts)
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     struct db_i *dbip = gedp->dbip;
     struct directory *dp;
     struct rt_db_internal ointern, intern;
@@ -1649,10 +1649,10 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
 
     /* Unpack original comb to get info to duplicate in new comb */
     dp = db_lookup(dbip, o, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL || !(dp->d_flags & RT_DIR_COMB)) return GED_ERROR;
+    if (dp == RT_DIR_NULL || !(dp->d_flags & RT_DIR_COMB)) return BRLCAD_ERROR;
     bu_avs_init_empty(&avs);
-    if (db5_get_attributes(dbip, &avs, dp)) return GED_ERROR;
-    if (rt_db_get_internal(&ointern, dp, dbip, NULL, &rt_uniresource) < 0) return GED_ERROR;
+    if (db5_get_attributes(dbip, &avs, dp)) return BRLCAD_ERROR;
+    if (rt_db_get_internal(&ointern, dp, dbip, NULL, &rt_uniresource) < 0) return BRLCAD_ERROR;
     ocomb = (struct rt_comb_internal *)ointern.idb_ptr;
     RT_CK_COMB(ocomb);
     flags = dp->d_flags;
@@ -1690,9 +1690,9 @@ _ged_facetize_cpcomb(struct ged *gedp, const char *o, struct _ged_facetize_opts 
 int
 _ged_methodcomb_add(struct ged *gedp, struct _ged_facetize_opts *opts, const char *objname, int method)
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     struct bu_vls method_cname = BU_VLS_INIT_ZERO;
-    if (!objname || method == GED_FACETIZE_NULL) return GED_ERROR;
+    if (!objname || method == GED_FACETIZE_NULL) return BRLCAD_ERROR;
 
     if (method == GED_FACETIZE_NMGBOOL && !bu_vls_strlen(opts->nmg_comb)) {
 	bu_vls_sprintf(opts->nmg_comb, "%s_NMGBOOL-0", bu_vls_addr(opts->froot));
@@ -1719,7 +1719,7 @@ _ged_methodcomb_add(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 	    break;
 	default:
 	    bu_vls_free(&method_cname);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	    break;
     }
 
@@ -1741,25 +1741,25 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 	struct bg_tess_tol *tol = &(gedp->ged_wdbp->wdb_ttol);
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:nmg_abs";
 	bu_vls_sprintf(&anum, "%g", tol->abs);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:nmg_rel";
 	bu_vls_sprintf(&anum, "%g", tol->rel);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:nmg_norm";
 	bu_vls_sprintf(&anum, "%g", tol->norm);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
     }
@@ -1767,19 +1767,19 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     if (info && method == GED_FACETIZE_CONTINUATION) {
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:continuation_feature_size";
 	bu_vls_sprintf(&anum, "%g", info->feature_size);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:continuation_average_thickness";
 	bu_vls_sprintf(&anum, "%g", info->avg_thickness);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
     }
@@ -1787,25 +1787,25 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     if (method == GED_FACETIZE_SPSR) {
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:spsr_depth";
 	bu_vls_sprintf(&anum, "%d", opts->s_opts.depth);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:spsr_weight";
 	bu_vls_sprintf(&anum, "%g", opts->s_opts.point_weight);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
 	attrav[3] = "facetize:spsr_samples_per_node";
 	bu_vls_sprintf(&anum, "%g", opts->s_opts.samples_per_node);
 	attrav[4] = bu_vls_addr(&anum);
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
     }
@@ -1813,7 +1813,7 @@ _ged_methodattr_set(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     if (info && info->failure_mode == GED_FACETIZE_FAILURE_PNTGEN) {
 	attrav[3] = "facetize:EMPTY";
 	attrav[4] = "1";
-	if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+	if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 	    bu_log("Error adding attribute %s to comb %s", attrav[3], rcname);
 	}
     }
@@ -1828,7 +1828,7 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
     struct directory *dp = db_lookup(gedp->dbip, oname, LOOKUP_QUIET);
 
     if (dp == RT_DIR_NULL) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (cmethod == GED_FACETIZE_NMGBOOL) {
@@ -1847,7 +1847,7 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 	ret = _ged_nmg_obj(gedp, 1, (const char **)&oname, sname, opts);
 
 	if (ret != GED_FACETIZE_FAILURE) {
-	    if (_ged_methodcomb_add(gedp, opts, sname, GED_FACETIZE_NMGBOOL) != GED_OK && opts->verbosity > 1) {
+	    if (_ged_methodcomb_add(gedp, opts, sname, GED_FACETIZE_NMGBOOL) != BRLCAD_OK && opts->verbosity > 1) {
 		bu_log("Error adding %s to methodology combination\n", sname);
 	    }
 	}
@@ -1870,7 +1870,7 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 		bu_vls_free(&lmsg);
 	    }
 	} else {
-	    if (_ged_methodcomb_add(gedp, opts, sname, GED_FACETIZE_CONTINUATION) != GED_OK && opts->verbosity > 1) {
+	    if (_ged_methodcomb_add(gedp, opts, sname, GED_FACETIZE_CONTINUATION) != BRLCAD_OK && opts->verbosity > 1) {
 		bu_log("Error adding %s to methodology combination\n", sname);
 	    }
 	}
@@ -1897,7 +1897,7 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 		bu_vls_free(&lmsg);
 	    }
 	} else {
-	    if (_ged_methodcomb_add(gedp, opts, sname, GED_FACETIZE_SPSR) != GED_OK && opts->verbosity > 1) {
+	    if (_ged_methodcomb_add(gedp, opts, sname, GED_FACETIZE_SPSR) != BRLCAD_OK && opts->verbosity > 1) {
 		bu_log("Error adding %s to methodology combination\n", sname);
 	    }
 	}
@@ -1915,7 +1915,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     int methods = opts->method_flags;
     unsigned int i = 0;
     int newobj_cnt = 0;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     struct bu_ptbl *ar = NULL;
     struct bu_ptbl *ar2 = NULL;
     const char *resume_regions = "-attr facetize:original_region";
@@ -1924,7 +1924,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     struct bu_attribute_value_set bnames;
     struct db_i *dbip = gedp->dbip;
 
-    if (!argc) return GED_ERROR;
+    if (!argc) return BRLCAD_ERROR;
 
     bu_avs_init_empty(&bnames);
     bu_avs_init_empty(&rnames);
@@ -1940,7 +1940,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     if (newobj_cnt) {
 	bu_vls_sprintf(gedp->ged_result_str, "one or more new object names supplied to resume.");
 	bu_free(dpa, "free dpa");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     BU_ALLOC(ar, struct bu_ptbl);
@@ -1948,12 +1948,12 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	if (opts->verbosity) {
 	    bu_log("Problem searching for active regions - aborting.\n");
 	}
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_regions_resume_memfree;
     }
     if (!BU_PTBL_LEN(ar)) {
 	/* No active regions (possible), nothing to do */
-	ret = GED_OK;
+	ret = BRLCAD_OK;
 	goto ged_facetize_regions_resume_memfree;
     }
 
@@ -1982,7 +1982,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     to_convert = BU_PTBL_LEN(ar2);
     if (!to_convert) {
 	/* No regions with conversion information, nothing to do */
-	ret = GED_OK;
+	ret = BRLCAD_OK;
 	goto ged_facetize_regions_resume_memfree;
     }
 
@@ -2039,7 +2039,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 			avail_mem = bu_mem(BU_MEM_AVAIL);
 			if (avail_mem >= 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
 			    bu_log("Too little available memory to continue, aborting\n");
-			    ret = GED_ERROR;
+			    ret = BRLCAD_ERROR;
 			    goto ged_facetize_regions_resume_memfree;
 			}
 		    }
@@ -2110,7 +2110,7 @@ int
 _ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _ged_facetize_opts *opts)
 {
     int i = 0;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     struct db_i *dbip = gedp->dbip;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = NULL;
@@ -2125,13 +2125,13 @@ _ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _ged_
     RT_DB_INTERNAL_INIT(&intern);
     nparent = bu_avs_get(opts->c_map, cdp->d_namep);
     if (rt_db_get_internal(&intern, cdp, dbip, NULL, &rt_uniresource) < 0) {
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_add_children_memfree;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     child_cnt = db_comb_children(dbip, comb, &children, &bool_ops, &mats);
     if (child_cnt <= 0) {
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_add_children_memfree;
     }
 
@@ -2153,12 +2153,12 @@ _ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _ged_
 	    }
 	    if (!nc) {
 		bu_log("Error - object %s has no name mapping??\n", children[i]->d_namep);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_facetize_add_children_memfree;
 	    }
 	    m = (mats[i]) ? mats[i] : NULL;
-	    if (_ged_combadd2(gedp, (char *)nparent, 1, (const char **)&nc, 0, _int_to_opt(bool_ops[i]), 0, 0, m, 0) != GED_OK) {
-		ret = GED_ERROR;
+	    if (_ged_combadd2(gedp, (char *)nparent, 1, (const char **)&nc, 0, _int_to_opt(bool_ops[i]), 0, 0, m, 0) != BRLCAD_OK) {
+		ret = BRLCAD_ERROR;
 		goto ged_facetize_add_children_memfree;
 	    }
 	}
@@ -2172,7 +2172,7 @@ _ged_facetize_add_children(struct ged *gedp, struct directory *cdp, struct _ged_
 	    }
 	    if (!av[i]) {
 		bu_log("Error - object %s has no name mapping??\n", children[i]->d_namep);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_facetize_add_children_memfree;
 	    }
 	}
@@ -2206,7 +2206,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     int methods = opts->method_flags;
     char *newname = NULL;
     int newobj_cnt = 0;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     unsigned int i = 0;
     struct directory **dpa = NULL;
     struct db_i *dbip = gedp->dbip;
@@ -2223,13 +2223,13 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     /* Used the libged tolerances */
     opts->tol = &(gedp->ged_wdbp->wdb_ttol);
 
-    if (!argc) return GED_ERROR;
+    if (!argc) return BRLCAD_ERROR;
 
     dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
-    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
+    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == BRLCAD_ERROR) {
 	bu_free(dpa, "free dpa");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!opts->in_place) {
@@ -2260,8 +2260,8 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    }
 	    opts->nmg_log_print_header = 1;
 
-	    if (_ged_nmg_obj(gedp, 1, (const char **)&argv[i], bu_avs_get(opts->s_map, argv[i]), opts) != GED_OK) {
-		return GED_ERROR;
+	    if (_ged_nmg_obj(gedp, 1, (const char **)&argv[i], bu_avs_get(opts->s_map, argv[i]), opts) != BRLCAD_OK) {
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -2273,7 +2273,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	if (opts->verbosity) {
 	    bu_log("Problem searching for parent combs - aborting.\n");
 	}
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_regions_memfree;
     }
     BU_ALLOC(ar, struct bu_ptbl);
@@ -2281,12 +2281,12 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	if (opts->verbosity) {
 	    bu_log("Problem searching for active regions - aborting.\n");
 	}
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_regions_memfree;
     }
     if (!BU_PTBL_LEN(ar)) {
 	/* No active regions (unlikely but technically possible), nothing to do */
-	ret = GED_OK;
+	ret = BRLCAD_OK;
 	goto ged_facetize_regions_memfree;
     }
 
@@ -2338,7 +2338,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	const char *nparent;
 	struct directory *n = (struct directory *)BU_PTBL_GET(pc, i);
 
-	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
+	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != BRLCAD_OK) {
 	    if (opts->verbosity) {
 		bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
 	    }
@@ -2352,7 +2352,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	if (!opts->quiet) {
 	    bu_log("Duplicating assembly (%d of %zu) %s -> %s\n", i+1, BU_PTBL_LEN(pc), cdp->d_namep, nparent);
 	}
-	if (_ged_facetize_add_children(gedp, cdp, opts) != GED_OK) {
+	if (_ged_facetize_add_children(gedp, cdp, opts) != BRLCAD_OK) {
 	    if (!opts->quiet) {
 		bu_log("Error: duplication of assembly %s failed!\n", cdp->d_namep);
 	    }
@@ -2368,14 +2368,14 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	if (!opts->quiet) {
 	    bu_log("Copying region (%d of %d) %s -> %s\n", (int)(i+1), (int)BU_PTBL_LEN(ar), n->d_namep, bu_avs_get(opts->c_map, n->d_namep));
 	}
-	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
+	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != BRLCAD_OK) {
 	    if (opts->verbosity) {
 		bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
 	    }
 	} else {
 	    const char *rcname = bu_avs_get(opts->c_map, n->d_namep);
 	    const char *ssname = bu_avs_get(opts->s_map, n->d_namep);
-	    if (_ged_combadd2(gedp, (char *)rcname, 1, (const char **)&ssname, 0, DB_OP_UNION, 0, 0, NULL, 0) != GED_OK) {
+	    if (_ged_combadd2(gedp, (char *)rcname, 1, (const char **)&ssname, 0, DB_OP_UNION, 0, 0, NULL, 0) != BRLCAD_OK) {
 		if (opts->verbosity) {
 		    bu_log("Error adding %s to comb %s", ssname, rcname);
 		}
@@ -2387,12 +2387,12 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		attrav[2] = rcname;
 		attrav[3] = "facetize:original_region";
 		attrav[4] = n->d_namep;
-		if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+		if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 		    bu_log("Error adding attribute facetize_original_region to comb %s", rcname);
 		}
 		attrav[3] = "facetize:target_name";
 		attrav[4] = ssname;
-		if (ged_attr(gedp, 5, (const char **)&attrav) != GED_OK && opts->verbosity) {
+		if (ged_attr(gedp, 5, (const char **)&attrav) != BRLCAD_OK && opts->verbosity) {
 		    bu_log("Error adding attribute facetize_target_name to comb %s", rcname);
 		    bu_log("Error adding %s to comb %s", ssname, rcname);
 		}
@@ -2465,7 +2465,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		    avail_mem = bu_mem(BU_MEM_AVAIL);
 		    if (avail_mem >= 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
 			bu_log("Too little available memory to continue, aborting\n");
-			ret = GED_ERROR;
+			ret = BRLCAD_ERROR;
 			goto ged_facetize_regions_memfree;
 		    }
 
@@ -2503,8 +2503,8 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	}
 	for (i = 0; i < BU_PTBL_LEN(ar); i++) {
 	    struct directory *n = (struct directory *)BU_PTBL_GET(ar, i);
-	    if (_ged_facetize_obj_swap(gedp, n->d_namep, bu_avs_get(opts->c_map, n->d_namep)) != GED_OK) {
-		ret = GED_ERROR;
+	    if (_ged_facetize_obj_swap(gedp, n->d_namep, bu_avs_get(opts->c_map, n->d_namep)) != BRLCAD_OK) {
+		ret = BRLCAD_ERROR;
 		goto ged_facetize_regions_memfree;
 	    }
 	}
@@ -2564,13 +2564,13 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     cdttol.rel = opts->tol->rel;
     cdttol.norm = opts->tol->norm;
 
-    if (!argc) return GED_ERROR;
+    if (!argc) return BRLCAD_ERROR;
 
     dpa = (struct directory **)bu_calloc(argc, sizeof(struct directory *), "dp array");
     newobj_cnt = _ged_sort_existing_objs(gedp, argc, argv, dpa);
-    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == GED_ERROR) {
+    if (_ged_validate_objs_list(gedp, argc, argv, opts, newobj_cnt) == BRLCAD_ERROR) {
 	bu_free(dpa, "free dpa");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* If anything specified has subtractions or intersections, we can't facetize it with
@@ -2578,7 +2578,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     const char *non_union = "-bool + -or -bool -";
     if (db_search(NULL, DB_SEARCH_QUIET, non_union, newobj_cnt, dpa, dbip, NULL) > 0) {
 	bu_vls_printf(gedp->ged_result_str, "Found intersection or subtraction objects in specified inputs - currently unsupported. Aborting.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* If anything other than combs or breps exists in the specified inputs, we can't
@@ -2586,7 +2586,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     const char *obj_types = "! -type c -and ! -type brep";
     if (db_search(NULL, DB_SEARCH_QUIET, obj_types, newobj_cnt, dpa, dbip, NULL) > 0) {
 	bu_vls_printf(gedp->ged_result_str, "Found objects in specified inputs which are not of type comb or brep- currently unsupported. Aborting.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Find breps (need full paths to do uniqueness checking )*/
@@ -2594,13 +2594,13 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     BU_ALLOC(br, struct bu_ptbl);
     if (db_search(br, DB_SEARCH_TREE, active_breps, newobj_cnt, dpa, dbip, NULL) < 0) {
 	bu_free(br, "brep results");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (!BU_PTBL_LEN(br)) {
 	/* No active breps (unlikely but technically possible), nothing to do */
 	bu_vls_printf(gedp->ged_result_str, "No brep objects present in specified inputs - nothing to convert.\n");
 	bu_free(br, "brep results");
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* Find combs (need full paths to do uniqueness checking) */
@@ -2612,7 +2612,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	}
 	bu_free(br, "brep results");
 	bu_free(ac, "comb results");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_free(dpa, "dpa array");
@@ -2655,7 +2655,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	bu_vls_printf(gedp->ged_result_str, "Multiple object instances found - suggest using xpush command to create unique objects.\n");
 	bu_free(br, "brep results");
 	bu_free(ac, "comb results");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_free(br, "brep results");
     bu_free(ac, "comb results");
@@ -2698,7 +2698,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     for (d_it = comb_objs.begin(); d_it != comb_objs.end(); d_it++) {
 	struct directory *n = *d_it;
 
-	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != GED_OK) {
+	if (_ged_facetize_cpcomb(gedp, n->d_namep, opts) != BRLCAD_OK) {
 	    if (opts->verbosity) {
 		bu_log("Failed to creating comb %s for %s \n", bu_avs_get(opts->c_map, n->d_namep), n->d_namep);
 	    }
@@ -2707,7 +2707,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 
 	/* Add the members from the map with the settings from the original
 	 * comb */
-	if (_ged_facetize_add_children(gedp, n, opts) != GED_OK) {
+	if (_ged_facetize_add_children(gedp, n, opts) != BRLCAD_OK) {
 	    if (!opts->quiet) {
 		bu_log("Error: duplication of assembly %s failed!\n", n->d_namep);
 	    }
@@ -2719,7 +2719,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     for (d_it = brep_objs.begin(); d_it != brep_objs.end(); d_it++) {
 	struct rt_db_internal intern;
 	struct rt_brep_internal* bi;
-	GED_DB_GET_INTERNAL(gedp, &intern, *d_it, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, *d_it, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 	bi = (struct rt_brep_internal*)intern.idb_ptr;
 	if (!RT_BREP_TEST_MAGIC(bi)) {
@@ -2727,7 +2727,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	    for (size_t i = 0; i < ss_cdt.size(); i++) {
 		ON_Brep_CDT_Destroy(ss_cdt[i]);
 	    }
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep, (*d_it)->d_namep);
 	ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
@@ -2752,7 +2752,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	    ON_Brep_CDT_Destroy(ss_cdt[i]);
 	}
 	bu_free(s_a, "array of states");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 #endif
     }
 
@@ -2795,7 +2795,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	    for (size_t j = 0; j < ss_cdt.size(); j++) {
 		ON_Brep_CDT_Destroy(ss_cdt[j]);
 	    }
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -2805,14 +2805,14 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     for (size_t i = 0; i < ss_cdt.size(); i++) {
 	ON_Brep_CDT_Destroy(ss_cdt[i]);
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 extern "C" int
 ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     static const char *usage = "Usage: facetize [ -nmhT | [--NMG] [--CM] [--SPSR] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
     static const char *pusage = "Usage: facetize --SPSR [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
     static const char *busage = "Usage: facetize -B -t # [--max-time #] old_obj new_obj\n";
@@ -2851,9 +2851,9 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(pd[2], "",  "samples-per-node", "#", &bu_opt_fastf_t, &(opts->s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
     BU_OPT_NULL(pd[3]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
@@ -2866,7 +2866,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     argc = bu_opt_parse(&omsg, argc, argv, d);
     if (argc < 0) {
 	bu_vls_printf(gedp->ged_result_str, "option parsing failed: %s\n", bu_vls_cstr(&omsg));
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	bu_vls_free(&omsg);
 	goto ged_facetize_memfree;
     }
@@ -2911,7 +2911,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Screened Poisson option parsing failed\n");
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    goto ged_facetize_memfree;
 	}
     }
@@ -2919,19 +2919,19 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     /* Check for a couple of non-valid combinations */
     if ((opts->method_flags == GED_FACETIZE_SPSR || opts->method_flags == GED_FACETIZE_CONTINUATION) && opts->nmg_use_tnurbs) {
 	bu_vls_printf(gedp->ged_result_str, "Note: Specified reconstruction method(s) do not all support TNURBS output\n");
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_memfree;
     }
 
     if (opts->triangulate && opts->nmg_use_tnurbs) {
 	bu_vls_printf(gedp->ged_result_str, "both -T and -t specified!\n");
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_memfree;
     }
 
     if (opts->resume && !opts->regions) {
 	bu_vls_printf(gedp->ged_result_str, "--resume is only supported with with region (-r) mode\n");
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_memfree;
     }
 
@@ -2941,7 +2941,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     if (print_help || need_help || argc < 1) {
 	if (nonovlp_brep) {
 	    _ged_cmd_help(gedp, busage, d);
-	    ret = (need_help) ? GED_ERROR : GED_OK;
+	    ret = (need_help) ? BRLCAD_ERROR : BRLCAD_OK;
 	    goto ged_facetize_memfree;
 	}
 
@@ -2949,7 +2949,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	if (opts->method_flags & GED_FACETIZE_SPSR) {
 	    _ged_cmd_help(gedp, pusage, pd);
 	}
-	ret = (need_help) ? GED_ERROR : GED_OK;
+	ret = (need_help) ? BRLCAD_ERROR : BRLCAD_OK;
 	goto ged_facetize_memfree;
     }
 
@@ -2957,7 +2957,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     if (nonovlp_brep) {
 	if (NEAR_ZERO(opts->nonovlp_threshold, SMALL_FASTF)) {
 	    bu_vls_printf(gedp->ged_result_str, "-B option requires a specified length threshold\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	return _nonovlp_brep_facetize(gedp, argc, argv, opts);
     }

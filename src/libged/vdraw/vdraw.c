@@ -132,16 +132,16 @@ vdraw_write(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw write: no vlist is currently open.");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argc < 5) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw write: not enough args\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argv[2][0] == 'n') {
 	/* next */
@@ -169,7 +169,7 @@ vdraw_write(void *data, int argc, const char *argv[])
 	idx = vp->nused;
     } else if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: write index not an integer\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else {
 	/* uind holds user-specified index */
 	/* only allow one past the end */
@@ -188,14 +188,14 @@ vdraw_write(void *data, int argc, const char *argv[])
 	if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
 	    if (uind > 0) {
 		bu_vls_printf(gedp->ged_result_str, "vdraw: write out of range\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    BV_GET_VLIST(&RTG.rtg_vlfree, vp);
 	    BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
 	}
 	if ((size_t)uind > vp->nused) {
 	    bu_vls_printf(gedp->ged_result_str, "vdraw: write out of range\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	cp = vp;
 	idx = uind;
@@ -204,12 +204,12 @@ vdraw_write(void *data, int argc, const char *argv[])
     /* This should never happen. Adding this to silence covarity. */
     if (idx >= BV_VLIST_CHUNK) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: vlist chunk size exceeded!\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%d", &(cp->cmd[idx])) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: cmd not an integer\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argc == 7) {
 	cp->pt[idx][0] = atof(argv[4]);
@@ -219,14 +219,14 @@ vdraw_write(void *data, int argc, const char *argv[])
 	if (argc != 5 ||
 	    bn_decode_vect(cp->pt[idx], argv[4]) != 3) {
 	    bu_vls_printf(gedp->ged_result_str, "vdraw write: wrong # args, need either x y z or {x y z}\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     /* increment counter only if writing onto end */
     if (idx == cp->nused)
 	cp->nused++;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -247,20 +247,20 @@ vdraw_insert(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: no vlist is currently open.");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argc < 7) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: not enough args");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: insert index not an integer\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* uinds hold user specified index */
@@ -278,14 +278,14 @@ vdraw_insert(void *data, int argc, const char *argv[])
     if (BU_LIST_IS_HEAD(vp, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
 	if (uind > 0) {
 	    bu_vls_printf(gedp->ged_result_str, "vdraw: insert out of range\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	BV_GET_VLIST(&RTG.rtg_vlfree, vp);
 	BU_LIST_INSERT(&(gedp->ged_gdp->gd_currVHead->vdc_vhd), &(vp->l));
     }
     if ((size_t)uind > vp->nused) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: insert out of range\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
@@ -312,13 +312,13 @@ vdraw_insert(void *data, int argc, const char *argv[])
     }
     if (sscanf(argv[3], "%d", &(vp->cmd[idx])) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: cmd not an integer\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     vp->pt[idx][0] = atof(argv[4]);
     vp->pt[idx][1] = atof(argv[5]);
     vp->pt[idx][2] = atof(argv[6]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -338,23 +338,23 @@ vdraw_delete(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: not enough args\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argv[2][0] == 'a') {
 	/* delete all */
 	for (BU_LIST_FOR(vp, bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
 	    vp->nused = 0;
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (argv[2][0] == 'l') {
 	/* delete last */
@@ -364,11 +364,11 @@ vdraw_delete(void *data, int argc, const char *argv[])
 		break;
 	    }
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: delete index not an integer\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     for (BU_LIST_FOR(vp, bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
@@ -386,7 +386,7 @@ vdraw_delete(void *data, int argc, const char *argv[])
     /* make sure we start in a valid delete range */
     if ((size_t)uind >= vp->nused || uind >= BV_VLIST_CHUNK) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: delete out of range\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     for (i = (size_t)uind; i < vp->nused - 1; i++) {
@@ -418,11 +418,11 @@ vdraw_delete(void *data, int argc, const char *argv[])
     if (vp->nused <= 0) {
 	/* this shouldn't happen */
 	bu_vls_printf(gedp->ged_result_str, "%s %s: vlist corrupt", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     vp->nused--;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -442,26 +442,26 @@ vdraw_read(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: need index to read\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argv[2][0] == 'c') {
 	/* read color of current solid */
 	bu_vls_printf(gedp->ged_result_str, "%.6lx", gedp->ged_gdp->gd_currVHead->vdc_rgb);
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (argv[2][0] == 'n') {
 	/*read name of currently open solid*/
 	bu_vls_printf(gedp->ged_result_str, "%.89s", gedp->ged_gdp->gd_currVHead->vdc_name);
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (argv[2][0] == 'l') {
 	/* return length of list */
@@ -472,11 +472,11 @@ vdraw_read(void *data, int argc, const char *argv[])
 	    vp = BU_LIST_PNEXT(bv_vlist, vp);
 	}
 	bu_vls_printf(gedp->ged_result_str, "%d", length);
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (sscanf(argv[2], "%lu", &uind) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: read index not an integer\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     for (BU_LIST_FOR(vp, bv_vlist, &(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
@@ -494,14 +494,14 @@ vdraw_read(void *data, int argc, const char *argv[])
     /* The comparison to BV_VLIST_CHUNK is to silence covarity */
     if ((size_t)uind >= vp->nused || uind >= BV_VLIST_CHUNK) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: read out of range\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str, "%d %.12e %.12e %.12e",
 		  vp->cmd[uind], vp->pt[uind][0],
 		  vp->pt[uind][1], vp->pt[uind][2]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -520,12 +520,12 @@ vdraw_send(void *data, int argc, const char *argv[])
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: missing parameter after [%s]", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     snprintf(solid_name, RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1, "%s%s", RT_VDRW_PREFIX, gedp->ged_gdp->gd_currVHead->vdc_name);
@@ -538,7 +538,7 @@ vdraw_send(void *data, int argc, const char *argv[])
     if (real_flag) {
 	/* solid exists - don't kill */
 	bu_vls_printf(gedp->ged_result_str, "-1");
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* 0 means OK, -1 means conflict with real solid name */
@@ -546,7 +546,7 @@ vdraw_send(void *data, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "%d", idx);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -565,38 +565,38 @@ vdraw_params(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: need params to set\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argv[2][0] == 'c') {
 	if (sscanf(argv[3], "%lx", &rgb)>0)
 	    gedp->ged_gdp->gd_currVHead->vdc_rgb = rgb;
-	return GED_OK;
+	return BRLCAD_OK;
     }
     if (argv[2][0] == 'n') {
 	/* check for conflicts with existing vlists*/
 	for (BU_LIST_FOR(rcp, vd_curve, gedp->ged_gdp->gd_headVDraw)) {
 	    if (!bu_strncmp(rcp->vdc_name, argv[2], RT_VDRW_MAXNAME)) {
 		bu_vls_printf(gedp->ged_result_str, "%s %s: name %.40s is already in use\n", argv[0], argv[1], argv[2]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 	/* otherwise name not yet used */
 	bu_strlcpy(gedp->ged_gdp->gd_currVHead->vdc_name, argv[2], RT_VDRW_MAXNAME);
 
 	bu_vls_printf(gedp->ged_result_str, "0");
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -616,16 +616,16 @@ vdraw_open(void *data, int argc, const char *argv[])
     if (argc == 2) {
 	if (gedp->ged_gdp->gd_currVHead) {
 	    bu_vls_printf(gedp->ged_result_str, "1");
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "0");
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
     if (3 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_strlcpy(temp_name, argv[2], RT_VDRW_MAXNAME);
@@ -652,7 +652,7 @@ vdraw_open(void *data, int argc, const char *argv[])
 	gedp->ged_gdp->gd_currVHead = rcp;
 	/* 1 means new entry */
 	bu_vls_printf(gedp->ged_result_str, "1");
-	return GED_OK;
+	return BRLCAD_OK;
     } else {
 	/* entry already existed */
 	if (BU_LIST_IS_EMPTY(&(gedp->ged_gdp->gd_currVHead->vdc_vhd))) {
@@ -662,7 +662,7 @@ vdraw_open(void *data, int argc, const char *argv[])
 	gedp->ged_gdp->gd_currVHead->vdc_name[RT_VDRW_MAXNAME] = '\0'; /*safety*/
 	/* 0 means entry already existed*/
 	bu_vls_printf(gedp->ged_result_str, "0");
-	return GED_OK;
+	return BRLCAD_OK;
     }
 }
 
@@ -682,7 +682,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
     /* must be needing help */
     if (argc < 3 || argc > 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argc>0?argv[0]:"vdraw", argc>1?argv[1]:"vlist", usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     switch  (argv[2][0]) {
@@ -692,7 +692,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 		bu_vls_strcat(gedp->ged_result_str, " ");
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	case 'd':
 	    rcp2 = (struct vd_curve *)NULL;
 	    for (BU_LIST_FOR(rcp, vd_curve, gedp->ged_gdp->gd_headVDraw)) {
@@ -703,7 +703,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 	    }
 	    if (!rcp2) {
 		bu_vls_printf(gedp->ged_result_str, "%s %s: vlist %.40s not found", argv[0], argv[1], argv[3]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    BU_LIST_DEQUEUE(&(rcp2->l));
 	    if (gedp->ged_gdp->gd_currVHead == rcp2) {
@@ -715,10 +715,10 @@ vdraw_vlist(void *data, int argc, const char *argv[])
 	    }
 	    BV_FREE_VLIST(&RTG.rtg_vlfree, &(rcp2->vdc_vhd));
 	    BU_PUT(rcp2, struct vd_curve);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "%s %s: unknown option to vdraw vlist", argv[0], argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 }
 
@@ -745,9 +745,9 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 
     static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -755,7 +755,7 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
 
@@ -764,7 +764,7 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

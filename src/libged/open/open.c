@@ -38,8 +38,8 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
     struct db_i *new_dbip;
     static const char *usage = "[filename]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -47,7 +47,7 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
     /* get database filename */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", gedp->dbip->dbi_filename);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* set database filename */
@@ -64,7 +64,7 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	    rt_new_material_head(old_materp);
 
 	    bu_vls_printf(gedp->ged_result_str, "ged_reopen_core: failed to open %s\n", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	new_materp = rt_material_head();
@@ -89,11 +89,11 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	rt_new_material_head(new_materp);
 
 	bu_vls_printf(gedp->ged_result_str, "%s", gedp->dbip->dbi_filename);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

@@ -186,23 +186,23 @@ edarb_facedef(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
-    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, GED_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_type != ID_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: solid type must be ARB\n", argv[0], argv[1]);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
     if (type != 8 && type != 6 && type != 4) {
 	bu_vls_printf(gedp->ged_result_str, "ARB%d: extrusion of faces not allowed\n", type);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
@@ -213,7 +213,7 @@ edarb_facedef(void *data, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&error_msg));
 	bu_vls_free(&error_msg);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&error_msg);
 
@@ -269,7 +269,7 @@ edarb_facedef(void *data, int argc, const char *argv[])
 	    {
 		bu_vls_printf(gedp->ged_result_str, "bad face (product=%d)\n", prod);
 		rt_db_free_internal(&intern);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
     }
 
@@ -282,7 +282,7 @@ edarb_facedef(void *data, int argc, const char *argv[])
 \tq   quit\n\
 Enter form of new face definition: ");
 	rt_db_free_internal(&intern);
-	return GED_MORE;
+	return BRLCAD_MORE;
     }
 
     switch (argv[4][0]) {
@@ -292,13 +292,13 @@ Enter form of new face definition: ");
 		if (plane!=0 && plane!=3) {
 		    bu_vls_printf(gedp->ged_result_str, "facedef: can't redefine that arb7 plane\n");
 		    rt_db_free_internal(&intern);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    if (argc < 9) {
 		/* total # of args under this option */
 		bu_vls_printf(gedp->ged_result_str, "%s", p_pleqn[argc-5]);
 		rt_db_free_internal(&intern);
-		return GED_MORE;
+		return BRLCAD_MORE;
 	    }
 	    get_pleqn(gedp, planes[plane], &argv[5]);
 	    break;
@@ -308,16 +308,16 @@ Enter form of new face definition: ");
 		if (plane!=0 && plane!=3) {
 		    bu_vls_printf(gedp->ged_result_str, "facedef: can't redefine that arb7 plane\n");
 		    rt_db_free_internal(&intern);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    if (argc < 14) {
 		/* total # of args under this option */
 		bu_vls_printf(gedp->ged_result_str, "%s %d: ", p_3pts[(argc-5)%3], (argc-2)/3);
 		rt_db_free_internal(&intern);
-		return GED_MORE;
+		return BRLCAD_MORE;
 	    }
 	    if (get_3pts(gedp, planes[plane], &argv[5], &gedp->ged_wdbp->wdb_tol)) {
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    break;
 	case 'c':
@@ -326,7 +326,7 @@ Enter form of new face definition: ");
 		if (argc < 7) {
 		    bu_vls_printf(gedp->ged_result_str, "%s", p_rotfb[argc-5]);
 		    rt_db_free_internal(&intern);
-		    return GED_MORE;
+		    return BRLCAD_MORE;
 		}
 
 		argv[7] = "Release 6";
@@ -336,7 +336,7 @@ Enter form of new face definition: ");
 	    else if (argc < 10 && (argc > 7 ? argv[7][0] != 'R' : 1)) {
 		bu_vls_printf(gedp->ged_result_str, "%s", p_rotfb[argc-5]);
 		rt_db_free_internal(&intern);
-		return GED_MORE;
+		return BRLCAD_MORE;
 	    }
 	    get_rotfb(gedp, planes[plane], &argv[5], arb);
 	    break;
@@ -346,34 +346,34 @@ Enter form of new face definition: ");
 		if (plane!=0 && plane!=3) {
 		    bu_vls_printf(gedp->ged_result_str, "facedef: can't redefine that arb7 plane\n");
 		    rt_db_free_internal(&intern);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    if (argc < 8) {
 		bu_vls_printf(gedp->ged_result_str, "%s", p_nupnt[argc-5]);
 		rt_db_free_internal(&intern);
-		return GED_MORE;
+		return BRLCAD_MORE;
 	    }
 	    get_nupnt(gedp, planes[plane], &argv[5]);
 	    break;
 	case 'q':
-	    return GED_OK;
+	    return BRLCAD_OK;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "facedef: %s is not an option\n", argv[2]);
 	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     /* find all vertices from the plane equations */
     if (rt_arb_calc_points(arb, type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "facedef:  unable to find points\n");
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

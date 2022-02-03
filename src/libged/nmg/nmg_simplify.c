@@ -52,14 +52,14 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
     char *nmg_name;
     int success = 0;
     int shell_count=0;
-    int ret = GED_ERROR;
+    int ret = BRLCAD_ERROR;
     size_t i;
 
     static const char *usage = "[arb|tgc|poly] new_prim nmg_prim";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -67,7 +67,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	/* must be wanting help */
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
-	ret = GED_HELP;
+	ret = BRLCAD_HELP;
 	goto out3;
     } else if (argc == 3) {
 	/* FIXME: if you use the default but have a TGC, the cleanup
@@ -88,38 +88,38 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str,
 			  "%s is unknown or simplification is not yet supported\n", argv[1]);
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    goto out3;
 	}
 	new_name = (char *)argv[2];
 	nmg_name = (char *)argv[3];
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out3;
     }
 
     if (db_lookup(gedp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists\n", new_name);
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out3;
     }
 
     if ((dp=db_lookup(gedp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", nmg_name);
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out3;
     }
 
     if (rt_db_get_internal(&nmg_intern, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out3;
     }
 
     if (nmg_intern.idb_type != ID_NMG) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", nmg_name);
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out2;
     }
 
@@ -135,7 +135,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_ptbl_free(&faces);
 	    bu_vls_printf(gedp->ged_result_str,
 		"%s cannot be applied to \"%s\" because it has non-planar faces\n", argv[0], nmg_name);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    goto out2;
 	}
     }
@@ -151,7 +151,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 
     if (shell_count != 1) {
 	bu_vls_printf(gedp->ged_result_str, "shell count is not one\n");
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out2;
     }
 
@@ -180,7 +180,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    rt_db_free_internal(&new_intern);
 	    if (!do_all) {
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto out2;
 	    }
 	}
@@ -204,7 +204,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    rt_db_free_internal(&new_intern);
 	    if (!do_all) {
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto out2;
 	    }
 	}
@@ -228,7 +228,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    rt_db_free_internal(&new_intern);
 	    if (!do_all) {
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto out2;
 	    }
 	}
@@ -256,7 +256,7 @@ out1:
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	success = 0;
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out2;
     }
 
@@ -264,11 +264,11 @@ out1:
 	rt_db_free_internal(&new_intern);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	success = 0;
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out2;
     }
 
-    ret = GED_OK;
+    ret = BRLCAD_OK;
 
 out2:
     rt_db_free_internal(&nmg_intern);

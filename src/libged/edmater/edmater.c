@@ -48,9 +48,9 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
     char tmpfil[MAXPATHLEN];
     const char *editstring = NULL;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
@@ -74,12 +74,12 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (!fp)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
     av[0] = "wmater";
@@ -91,10 +91,10 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_wmater(gedp, argc, av) & GED_ERROR) {
+    if (ged_wmater(gedp, argc, av) & BRLCAD_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "f_edmater: av");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (_ged_editit(editstring, tmpfil)) {
@@ -102,7 +102,7 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 	av[2] = NULL;
 	status = ged_rmater(gedp, 2, av);
     } else {
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
     }
 
     bu_file_delete(tmpfil);

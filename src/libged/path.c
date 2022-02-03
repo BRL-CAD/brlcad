@@ -49,7 +49,7 @@ path_validate_recurse(struct ged *gedp, struct db_full_path *path,
     if (rt_db_get_internal(&intern, root, gedp->dbip,
 			   (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -57,7 +57,7 @@ path_validate_recurse(struct ged *gedp, struct db_full_path *path,
     if (db_find_named_leaf(comb->tree, roots_child->d_namep) != TREE_NULL) {
 	rt_db_free_internal(&intern);
 	if (!(path->fp_len > 2))
-	    return GED_OK; /* no more children */
+	    return BRLCAD_OK; /* no more children */
 	else if (roots_child->d_flags & RT_DIR_COMB) {
 	    /* remove root dir */
 	    ++(path->fp_names);
@@ -66,26 +66,26 @@ path_validate_recurse(struct ged *gedp, struct db_full_path *path,
 	    --(path->fp_names);
 	    ++(path->fp_len);
 	} else
-	    return GED_ERROR; /* non-combinations shouldn't have children */
+	    return BRLCAD_ERROR; /* non-combinations shouldn't have children */
     } else {
 	rt_db_free_internal(&intern);
-	return GED_ERROR; /* that child doesn't exist under root */
+	return BRLCAD_ERROR; /* that child doesn't exist under root */
     }
-    return GED_OK; /* for compiler */
+    return BRLCAD_OK; /* for compiler */
 }
 
 
 /**
  * Checks that each directory in the supplied path actually has the
- * subdirectories that are implied by the path. Returns GED_OK if
- * true, or GED_ERROR if false.
+ * subdirectories that are implied by the path. Returns BRLCAD_OK if
+ * true, or BRLCAD_ERROR if false.
  */
 int
 ged_path_validate(struct ged *gedp, const struct db_full_path *const path)
 {
     /* If we don't have a path, it's not valid */
     if (!gedp || !path)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     /* Since this is a db_full_path, we already know that each
      * directory exists at root, and just need to check the order */
@@ -97,11 +97,11 @@ ged_path_validate(struct ged *gedp, const struct db_full_path *const path)
     db_dup_full_path(&path_tmp, path);
 
     if (path_tmp.fp_len <= 1)
-	return GED_OK; /* TRUE; no children */
+	return BRLCAD_OK; /* TRUE; no children */
 
     root = DB_FULL_PATH_ROOT_DIR(&path_tmp);
     if (!(root->d_flags & RT_DIR_COMB))
-	return GED_ERROR; /* has children, but isn't a combination */
+	return BRLCAD_ERROR; /* has children, but isn't a combination */
 
     ret = path_validate_recurse(gedp, &path_tmp,
 				DB_FULL_PATH_GET(&path_tmp, 1));

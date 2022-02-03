@@ -265,9 +265,9 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     struct bview *v = gedp->ged_gvp;
     struct db_i *dbip = gedp->dbip;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -296,13 +296,13 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	if (!found_match) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!v->independent) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s is not an independent view, and as such does not support specifying db objects for display in only this view.  To change the view's status, he   command 'view independent %s 1' may be applied.\n", bu_vls_cstr(&cvls), bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_free(&cvls);
@@ -311,13 +311,13 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     /* Check that we have a view */
     if (!v) {
 	bu_vls_printf(gedp->ged_result_str, "No view specified and no current view defined in GED, nothing to erase from");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* skip past cmd */
@@ -449,7 +449,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
    // Sort
    bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
 
-   return GED_OK;
+   return BRLCAD_OK;
 }
 
 /*

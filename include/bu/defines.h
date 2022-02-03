@@ -46,9 +46,20 @@
 #  endif
 #endif
 
-/* NOTE: do not rely on these values */
-#define BRLCAD_OK 0
-#define BRLCAD_ERROR 1
+/** All okay return code, not a maskable result.  Callers should not rely on
+ * the numerical value. */
+#define BRLCAD_OK    0x0000
+
+/**
+ * Possible maskable return codes from BRL-CAD functions.  Callers should not
+ * rely on the actual values or exact numerical equalities but should instead
+ * test via masking.
+ */
+#define BRLCAD_ERROR   0x0001 /**< something went wrong, the action was not performed */
+#define BRLCAD_HELP    0x0002 /**< invalid specification, result contains usage */
+#define BRLCAD_MORE    0x0004 /**< incomplete specification, can specify again interactively */
+#define BRLCAD_QUIET   0x0008 /**< don't set or modify the result string */
+#define BRLCAD_UNKNOWN 0x0010 /**< argv[0] was not a known command */
 
 /**
  * @def BU_DIR_SEPARATOR

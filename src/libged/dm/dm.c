@@ -100,7 +100,7 @@ _dm_cmd_bg(void *ds, int argc, const char **argv)
     const char *usage_string = "dm [options] bg [r/g/b]";
     const char *purpose_string = "get/set dm background color";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -110,29 +110,29 @@ _dm_cmd_bg(void *ds, int argc, const char **argv)
     struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
     if (!cdmp) {
 	bu_vls_printf(gd->gedp->ged_result_str, ": no current DM set in GED\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!argc) {
 	const unsigned char *dm_bg = dm_get_bg(cdmp);
 	if (dm_bg) {
 	    bu_vls_printf(gd->gedp->ged_result_str, "%d/%d/%d\n", (short)dm_bg[0], (short)dm_bg[1], (short)dm_bg[2]);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else {
 	    bu_vls_printf(gd->gedp->ged_result_str, ": no background color available\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
     struct bu_color c;
     if (bu_opt_color(NULL, argc, argv, &c) == -1) {
 	bu_vls_printf(gd->gedp->ged_result_str, "invalid color specification\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     unsigned char n_bg[3];
     bu_color_to_rgb_chars(&c, n_bg);
     dm_set_bg(cdmp, n_bg[0], n_bg[1], n_bg[2]);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -142,7 +142,7 @@ _dm_cmd_type(void *ds, int argc, const char **argv)
     const char *usage_string = "dm [options] type [name]";
     const char *purpose_string = "report type of display manager (null, txt, ogl, etc.).";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -153,11 +153,11 @@ _dm_cmd_type(void *ds, int argc, const char **argv)
     if (!cdmp) {
 	cdmp = _dm_name_lookup(gd, argv[0]);
 	if (!cdmp) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_printf(gd->gedp->ged_result_str, "%s\n", dm_get_type(cdmp));
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -166,7 +166,7 @@ _dm_cmd_types(void *ds, int argc, const char **argv)
     const char *usage_string = "dm [options] types";
     const char *purpose_string = "list supported display manager types";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -178,7 +178,7 @@ _dm_cmd_types(void *ds, int argc, const char **argv)
     bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&list));
     bu_vls_free(&list);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -187,13 +187,13 @@ _dm_cmd_initmsg(void *ds, int argc, const char **argv)
     const char *usage_string = "dm [options] initmsg";
     const char *purpose_string = "display libdm plugin initialization messages.";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
 
     bu_vls_printf(gd->gedp->ged_result_str, "%s\n", dm_init_msgs());
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -202,7 +202,7 @@ _dm_cmd_list(void *ds, int argc, const char **argv)
     const char *usage_string = "dm [options] list";
     const char *purpose_string = "list display manager instances known to GED.";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -211,7 +211,7 @@ _dm_cmd_list(void *ds, int argc, const char **argv)
 
     if (!gd->gedp->ged_all_dmp || !BU_PTBL_LEN(gd->gedp->ged_all_dmp)) {
 	bu_vls_printf(gd->gedp->ged_result_str, ": no DMs defined in GED\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     for (size_t i = 0; i < BU_PTBL_LEN(gd->gedp->ged_all_dmp); i++) {
 	struct dm *ndmp = (struct dm *)BU_PTBL_GET(gd->gedp->ged_all_dmp, i);
@@ -226,7 +226,7 @@ _dm_cmd_list(void *ds, int argc, const char **argv)
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -235,7 +235,7 @@ _dm_cmd_get(void *ds, int argc, const char **argv)
     const char *usage_string = "dm [options] get [--dm name] [var]";
     const char *purpose_string = "report value(s) set to dm variables. With empty var, report all values.";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -253,7 +253,7 @@ _dm_cmd_get(void *ds, int argc, const char **argv)
     struct ged *gedp = gd->gedp;
     if (!gedp->ged_dmp && (!gedp->ged_all_dmp || !BU_PTBL_LEN(gedp->ged_all_dmp))) {
 	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active and none known to GED");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
@@ -262,7 +262,7 @@ _dm_cmd_get(void *ds, int argc, const char **argv)
 	cdmp = _dm_name_lookup(gd, bu_vls_cstr(&dm_name));
 	if (!cdmp) {
 	    bu_vls_free(&dm_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -276,14 +276,14 @@ _dm_cmd_get(void *ds, int argc, const char **argv)
 	    bu_vls_struct_print2(gd->gedp->ged_result_str, bu_vls_addr(&rstr), dmparse, (const char *)mvars);
 	}
 	bu_vls_free(&rstr);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct bu_structparse *dmparse = dm_get_vparse(cdmp);
     void *mvars = dm_get_mvars(cdmp);
     if (!dmparse || !mvars) {
 	// No variables to report
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     for (int i = 0; i < ac; i++) {
@@ -298,7 +298,7 @@ _dm_cmd_get(void *ds, int argc, const char **argv)
 	}
     }
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 int
@@ -307,7 +307,7 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
     const char *usage_string = "dm [options] set [--dm name] key val";
     const char *purpose_string = "assign value to dm variable, if it exists.";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -325,7 +325,7 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
     struct ged *gedp = gd->gedp;
     if (!gedp->ged_dmp && (!gedp->ged_all_dmp || !BU_PTBL_LEN(gedp->ged_all_dmp))) {
 	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active and none known to GED");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
@@ -333,13 +333,13 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
 	cdmp = _dm_name_lookup(gd, bu_vls_cstr(&dm_name));
 	if (!cdmp) {
 	    bu_vls_free(&dm_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
     if (ac != 2) {
 	bu_vls_printf(gd->gedp->ged_result_str, ": invalid argument count - need key and value");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bu_structparse *dmparse = dm_get_vparse(cdmp);
@@ -347,7 +347,7 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
     if (!dmparse || !mvars) {
 	// No variables to set
 	bu_vls_printf(gd->gedp->ged_result_str, "display manager has not associated variables\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
@@ -357,7 +357,7 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
     bu_vls_free(&tmp_vls);
     if (ret < 0) {
 	bu_vls_printf(gd->gedp->ged_result_str, ": unable to set %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (gd->verbosity) {
@@ -369,7 +369,7 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -378,7 +378,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     const char *usage_string = "dm [options] attach type [name]";
     const char *purpose_string = "create a DM of the specified type";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -389,7 +389,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 
     if (argc != 1 && argc != 2) {
 	bu_vls_printf(gd->gedp->ged_result_str, "Usage: %s", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 1) {
@@ -417,7 +417,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	if (tries == 100) {
 	    bu_vls_printf(gedp->ged_result_str, "unable to generate DM name");
 	    bu_vls_free(&dm_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } else {
 	// Have name - see if it already exists
@@ -432,14 +432,14 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	if (exists) {
 	    bu_vls_printf(gedp->ged_result_str, "DM %s already exists", bu_vls_cstr(&dm_name));
 	    bu_vls_free(&dm_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, "GED has no view defined, can't establish DM");
 	bu_vls_free(&dm_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else {
 	// Make sure the view width and height are non-zero if we're in a
 	// "headless" mode without a graphical display
@@ -459,7 +459,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     struct dm *dmp = dm_open(gedp->ged_ctx, gedp->ged_interp, argv[0], 1, &acmd);
     if (!dmp) {
 	bu_vls_printf(gedp->ged_result_str, "failed to create DM %s", bu_vls_cstr(&dm_name));
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dm_set_vp(dmp, &gedp->ged_gvp->gv_scale);
@@ -474,7 +474,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     if (!gedp->ged_dmp)
 	gedp->ged_dmp = dmp;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -483,7 +483,7 @@ _dm_cmd_width(void *ds, int argc, const char **argv)
     const char *usage_string = "dm [options] width [name]";
     const char *purpose_string = "report current width in pixels of display manager.";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -493,11 +493,11 @@ _dm_cmd_width(void *ds, int argc, const char **argv)
     if (!cdmp) {
 	cdmp = _dm_name_lookup(gd, argv[0]);
 	if (!cdmp) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_printf(gd->gedp->ged_result_str, "%d\n", dm_get_width(cdmp));
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -506,7 +506,7 @@ _dm_cmd_height(void *ds, int argc, const char **argv)
     const char *usage_string = "dm [options] height [name]";
     const char *purpose_string = "report current height in pixels of display manager.";
     if (_dm_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -516,11 +516,11 @@ _dm_cmd_height(void *ds, int argc, const char **argv)
     if (!cdmp) {
 	cdmp = _dm_name_lookup(gd, argv[0]);
 	if (!cdmp) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
     bu_vls_printf(gd->gedp->ged_result_str, "%d\n", dm_get_height(cdmp));
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 const struct bu_cmdtab _dm_cmds[] = {
@@ -548,7 +548,7 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* initialize result */
@@ -569,7 +569,7 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!ac || help) {
 	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_dm_cmds, "dm", "[options] subcommand [args]", &gd, 0, NULL);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     int ret;
@@ -579,7 +579,7 @@ ged_dm_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 #ifdef GED_PLUGIN

@@ -38,8 +38,8 @@ ged_form_core(struct ged *gedp, int argc, const char *argv[])
     const struct rt_functab *ftp;
     static const char *usage = "type";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -47,21 +47,21 @@ ged_form_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((ftp = rt_get_functab_by_label(argv[1])) == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "There is no geometric object type \"%s\".", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!ftp->ft_form) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return ftp->ft_form(gedp->ged_result_str, ftp);

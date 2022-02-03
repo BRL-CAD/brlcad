@@ -425,7 +425,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	argv[2] = bu_vls_addr(name);
 	argv[3] = (char *)0;
 	ret = ged_copy(state->gedp, 3, (const char **)argv);
-	if (ret != GED_OK)
+	if (ret != BRLCAD_OK)
 	    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n",
 			  proto->d_namep, bu_vls_addr(name));
 
@@ -957,7 +957,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		break;
 	    default:
 		print_usage(gedp->ged_result_str);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -965,24 +965,24 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     if ((argc - bu_optind) == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Need to specify an object to be cloned.\n");
 	print_usage(gedp->ged_result_str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else if (bu_optind + 1 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "clone:  Can only clone exactly one object at a time right now.\n");
 	print_usage(gedp->ged_result_str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* sanity */
     if (!argv[bu_optind])
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
-    GED_DB_LOOKUP(gedp, state->src, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
+    GED_DB_LOOKUP(gedp, state->src, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
 
     VSCALE(state->trans, state->trans, gedp->dbip->dbi_local2base);
     VSCALE(state->rpnt, state->rpnt, gedp->dbip->dbi_local2base);
     state->mirpos *= gedp->dbip->dbi_local2base;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -992,9 +992,9 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
     struct ged_clone_state state = GED_CLONE_STATE_INIT;
     struct directory *copy;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1002,12 +1002,12 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	print_usage(gedp->ged_result_str);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* validate user options */
-    if (get_args(gedp, argc, (char **)argv, &state) & GED_ERROR)
-	return GED_ERROR;
+    if (get_args(gedp, argc, (char **)argv, &state) & BRLCAD_ERROR)
+	return BRLCAD_ERROR;
 
     bu_vls_init(&state.olist);
 
@@ -1017,7 +1017,7 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, " {%s}", bu_vls_addr(&state.olist));
     bu_vls_free(&state.olist);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -34,8 +34,8 @@
 
 /*
  * Default keypoint in model space is established in "pt". Returns
- * GED_ERROR if unable to determine a keypoint, otherwise returns
- * GED_OK.
+ * BRLCAD_ERROR if unable to determine a keypoint, otherwise returns
+ * BRLCAD_OK.
  */
 int
 _ged_get_solid_keypoint(struct ged *const gedp,
@@ -477,10 +477,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    VSETALL(mpt, 0.0);
 	    bu_vls_printf(gedp->ged_result_str,
 			  "get_solid_keypoint: unrecognized solid type");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
     MAT4X3PNT(pt, mat, mpt);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

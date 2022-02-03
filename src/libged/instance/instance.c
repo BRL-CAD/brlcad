@@ -40,9 +40,9 @@ ged_instance_core(struct ged *gedp, int argc, const char *argv[])
     db_op_t oper;
     static const char *usage = "obj comb [op]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -50,16 +50,16 @@ ged_instance_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3 || 4 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     oper = WMOP_UNION;
     if (argc == 4)
@@ -67,13 +67,13 @@ ged_instance_core(struct ged *gedp, int argc, const char *argv[])
 
     if (oper == DB_OP_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "bad operation: %c (0x%x)\n", argv[3][0], argv[3][0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (_ged_combadd(gedp, dp, (char *)argv[2], 0, oper, 0, 0) == RT_DIR_NULL)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

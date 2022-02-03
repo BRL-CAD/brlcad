@@ -95,7 +95,7 @@ attr_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
 	}
     } else if (dp->d_flags & RT_DIR_SOLID) {
 	struct rt_db_internal intern;
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
 	bu_vls_printf(gedp->ged_result_str, "%s %s:\n", name, intern.idb_meth->ft_label);
 	rt_db_free_internal(&intern);
     } else {
@@ -113,7 +113,7 @@ attr_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -180,7 +180,7 @@ attr_list(struct ged *gedp, size_t path_cnt, struct directory **paths, int argc,
 {
     if (argc > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: attr list obj_pattern [key_pattern [value_pattern]]");
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
     struct bu_attribute_value_pair *avpp;
     std::set<std::pair<std::string, std::string>, avsncmp> uniq_avp;
@@ -191,7 +191,7 @@ attr_list(struct ged *gedp, size_t path_cnt, struct directory **paths, int argc,
 	if (db5_get_attributes(gedp->dbip, &lavs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	    bu_avs_free(&lavs);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	size_t j = 0;
 	for (j = 0, avpp = lavs.avp; j < lavs.count; j++, avpp++) {
@@ -234,7 +234,7 @@ attr_list(struct ged *gedp, size_t path_cnt, struct directory **paths, int argc,
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
  
 
@@ -291,7 +291,7 @@ attr_print(struct ged *gedp, struct bu_attribute_value_set *avs, int argc, const
 extern "C" int
 ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     size_t i;
     struct directory *dp;
     struct bu_attribute_value_pair *avpp;
@@ -309,7 +309,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
     const char VALUE[]        = "value";
     const char VALUE_NOCASE[] = "value-nocase";
 
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -317,7 +317,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
@@ -328,7 +328,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", opt);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -337,17 +337,17 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Verify that this wdb supports lookup operations
        (non-null dbip) */
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
     /* this is only valid for v5 databases */
     if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     scmd = attr_cmd(argv[1]);
@@ -356,7 +356,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
     if (path_cnt == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot locate objects matching %s\n", argv[2]);
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto ged_attr_core_memfree;
     }
 
@@ -373,7 +373,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -387,8 +387,8 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* pretty print */
-	    if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK) {
-		ret = GED_ERROR;
+	    if ((attr_pretty_print(gedp, dp, argv[2])) != BRLCAD_OK) {
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 	    if (argc == 3) {
@@ -419,7 +419,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -448,7 +448,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 				dp->d_namep,
 				argv[i]);
 			bu_avs_free(&avs);
-			ret = GED_ERROR;
+			ret = BRLCAD_ERROR;
 			goto ged_attr_core_memfree;
 		    }
 		    if (do_separators) {
@@ -476,7 +476,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 		if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		    ret = GED_ERROR;
+		    ret = BRLCAD_ERROR;
 		    goto ged_attr_core_memfree;
 		}
 		bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -537,7 +537,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc != 5) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	oattr = argv[3];
 	nattr = argv[4];
@@ -549,7 +549,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	    dp = paths[i];
 	    if (db5_get_attributes(gedp->dbip, &lavs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 	    val = bu_avs_get(&lavs, oattr);
@@ -560,7 +560,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str,
 			    "Error: failed to update attributes\n");
 		    bu_avs_free(&lavs);
-		    ret = GED_ERROR;
+		    ret = BRLCAD_ERROR;
 		    goto ged_attr_core_memfree;
 		}
 		/* lavs is freed by db5_update_attributes() */
@@ -570,12 +570,12 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
     } else if (scmd == ATTR_SET) {
-	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 	/* setting attribute/value pairs */
 	if ((argc - 3) % 2) {
 	    bu_vls_printf(gedp->ged_result_str,
 		    "Error: attribute names and values must be in pairs!!!\n");
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    goto ged_attr_core_memfree;
 	}
 	for (i = 0; i < path_cnt; i++) {
@@ -586,7 +586,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -602,14 +602,14 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 	    /* avs is freed by db5_update_attributes() */
 	}
 
     } else if (scmd == ATTR_RM) {
-	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 	for (i = 0; i < path_cnt; i++) {
 	    size_t j = 3;
 	    struct bu_attribute_value_set avs;
@@ -618,7 +618,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -634,18 +634,18 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 	    /* avs is freed by db5_replace_attributes() */
 	}
 
     } else if (scmd == ATTR_APPEND) {
-	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+	GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 	if ((argc-3) % 2) {
 	    bu_vls_printf(gedp->ged_result_str,
 			  "Error: attribute names and values must be in pairs!!!\n");
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    goto ged_attr_core_memfree;
 	}
 	for (i = 0; i < path_cnt; i++) {
@@ -656,7 +656,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
@@ -684,7 +684,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str,
 			"Error: failed to update attributes\n");
 		bu_avs_free(&avs);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 
@@ -702,7 +702,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 
@@ -716,8 +716,8 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* pretty print */
-	    if ((attr_pretty_print(gedp, dp, dp->d_namep)) != GED_OK) {
-		ret = GED_ERROR;
+	    if ((attr_pretty_print(gedp, dp, dp->d_namep)) != BRLCAD_OK) {
+		ret = BRLCAD_ERROR;
 		goto ged_attr_core_memfree;
 	    }
 
@@ -733,7 +733,7 @@ ged_attr_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "ERROR: unrecognized attr subcommand %s\n", argv[1]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto ged_attr_core_memfree;
     }
 

@@ -99,7 +99,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc < 1) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* parse standard options */
@@ -107,7 +107,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* Handle tolerance */
@@ -116,12 +116,12 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	    gedp->ged_gvp->gv_s->gv_snap_tol_factor = stol;
 	    if (!opt_ret) {
 		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_snap_tol_factor);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	} else {
 	    // Report current tolerance
 	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_snap_tol_factor);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
@@ -129,7 +129,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     argc = opt_ret;
     if (argc != 2 && argc != 3) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* We may get a 2D screen point or a 3D model space point.  Either
@@ -142,12 +142,12 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	if (bu_opt_fastf_t(&msg, 1, (const char **)&argv[0], (void *)&p2d[X]) == -1) {
 	    bu_vls_printf(gedp->ged_result_str, "problem reading X value %s: %s\n", argv[0], bu_vls_cstr(&msg));
 	    bu_vls_free(&msg);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (bu_opt_fastf_t(&msg, 1, (const char **)&argv[1], (void *)&p2d[Y]) == -1) {
 	    bu_vls_printf(gedp->ged_result_str, "problem reading Y value %s: %s\n", argv[1], bu_vls_cstr(&msg));
 	    bu_vls_free(&msg);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	V2MOVE(view_pt_2d, p2d);
 	VSET(vp, p[0], p[1], 0);
@@ -161,16 +161,16 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	if (bu_opt_vect_t(&msg, argc, argv, (void *)&p) <= 0) {
 	    bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&msg));
 	    bu_vls_free(&msg);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, p);
 	V2SET(view_pt_2d, vp[0], vp[1]);
 	VMOVE(view_pt, p);
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
 
     /* initialize result */
@@ -187,13 +187,13 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	// It's OK if we have no lines close enough to snap to -
 	// in that case just pass back the view pt.  If we do
 	// have a snap, update the output
-	if (bv_snap_lines_3d(&out_pt, gedp->ged_gvp, &view_pt) == GED_OK) {
+	if (bv_snap_lines_3d(&out_pt, gedp->ged_gvp, &view_pt) == BRLCAD_OK) {
 	    MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, out_pt);
 	    V2SET(view_pt_2d, vp[0], vp[1]);
 	    VMOVE(view_pt, out_pt);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "no lines close enough for snapping");
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
@@ -201,7 +201,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "%g %g\n", view_pt_2d[X], view_pt_2d[Y]);
 
     bu_vls_free(&msg);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

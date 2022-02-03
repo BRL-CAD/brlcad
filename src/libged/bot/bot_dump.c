@@ -841,7 +841,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		    output_type = OTYPE_STL;
 		else {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		break;
 	    case 'u':
@@ -854,11 +854,11 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -876,8 +876,8 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     int i;
     const char *cmd_name;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -885,28 +885,28 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     using_dbot_dump = 0;
 
-    if (bot_dump_get_args(gedp, argc, argv) & GED_ERROR)
-	return GED_ERROR;
+    if (bot_dump_get_args(gedp, argc, argv) & BRLCAD_ERROR)
+	return BRLCAD_ERROR;
 
     if (bu_optind > argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (output_file && output_directory) {
 	fprintf(stderr, "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!output_file && !output_directory) {
 	if (binary) {
 	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s\n", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	fp = stdout;
 
@@ -923,7 +923,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    if (fd < 0) {
 		perror(argv[0]);
 		bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    /* Write out STL header if output file is binary */
@@ -946,7 +946,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    if (fp == NULL) {
 		perror(argv[0]);
 		bu_vls_printf(gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    switch (output_type) {
@@ -1079,7 +1079,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1307,7 +1307,7 @@ data_dump(struct ged *gedp, FILE *fp)
 
 		if (*cp == '\0') {
 		    bu_vls_printf(gedp->ged_result_str, "data_dump: bad dirname - %s\n", output_directory);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 
 		bu_vls_printf(&filepath, "%s/%s_data.obj", output_directory, cp);
@@ -1316,7 +1316,7 @@ data_dump(struct ged *gedp, FILE *fp)
 		if (data_fp == NULL) {
 		    bu_vls_printf(gedp->ged_result_str, "data_dump: failed to open %s\n", bu_vls_addr(&filepath));
 		    bu_vls_free(&filepath);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 
 		bu_vls_free(&filepath);
@@ -1327,7 +1327,7 @@ data_dump(struct ged *gedp, FILE *fp)
 		  obj_write_data(gedp, fp);
 		} else {
 		  bu_vls_printf(gedp->ged_result_str, "data_dump: bad FILE fp\n");
-		  return GED_ERROR;
+		  return BRLCAD_ERROR;
 		}
 
 	    break;
@@ -1338,7 +1338,7 @@ data_dump(struct ged *gedp, FILE *fp)
 	    break;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 static void
@@ -1404,10 +1404,10 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
     int fd = -1;
     const char *cmd_name;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1415,28 +1415,28 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, usage, argv[0]);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     using_dbot_dump = 1;
 
-    if (bot_dump_get_args(gedp, argc, argv) == GED_ERROR)
-	return GED_ERROR;
+    if (bot_dump_get_args(gedp, argc, argv) == BRLCAD_ERROR)
+	return BRLCAD_ERROR;
 
     if (bu_optind != argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (output_file && output_directory) {
 	fprintf(stderr, "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!output_file && !output_directory) {
 	if (binary) {
 	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	fp = stdout;
 
@@ -1453,7 +1453,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    if (fd < 0) {
 		perror(argv[0]);
 		bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    /* Write out STL header if output file is binary */
@@ -1476,7 +1476,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    if (fp == NULL) {
 		perror(argv[0]);
 		bu_vls_printf(gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    switch (output_type) {
@@ -1520,7 +1520,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
 		    if (*cp == '\0') {
 			bu_vls_printf(gedp->ged_result_str, "%s: bad dirname - %s\n", cmd_name, output_directory);
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 
 		    bu_vls_trunc(&obj_materials_file, 0);
@@ -1534,7 +1534,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&filepath));
 			bu_vls_free(&obj_materials_file);
 			bu_vls_free(&filepath);
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 
 		    bu_vls_free(&filepath);
@@ -1573,7 +1573,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&obj_materials_file));
 	    bu_vls_free(&obj_materials_file);
 	    fclose(fp);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	num_obj_materials = 0;
@@ -1624,7 +1624,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	fclose(obj_materials_fp);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

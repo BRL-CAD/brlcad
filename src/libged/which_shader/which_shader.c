@@ -44,15 +44,15 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
     char **myArgv;
     static const char *usage = "[-s] args";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     myArgc = argc;
@@ -67,7 +67,7 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 
     if (myArgc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     for (j = 1; j < myArgc; j++) {
@@ -82,7 +82,7 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 
 	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -97,7 +97,7 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 	} FOR_ALL_DIRECTORY_END;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

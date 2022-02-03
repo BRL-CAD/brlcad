@@ -609,7 +609,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     free_hash_values(objects);
     bu_hash_tbl_free(objects);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -705,7 +705,7 @@ _ged_graph_positions(struct ged *gedp)
     graph_positions(gedp, dag);
     bu_free(dag, "free DAG");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -742,7 +742,7 @@ _ged_graph_show(struct ged *gedp)
     }
     bu_free(dag, "free DAG");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -757,9 +757,9 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
     const char *subcommand;
     static const char *usage = "subcommand\n";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -772,7 +772,7 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 	for (int i = 0; graph_subcmds[i].name; ++i) {
 	    bu_vls_printf(gedp->ged_result_str, "%s ", graph_subcmds[i].name);
 	}
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else if (argc == 2) {
 	/* Determine subcommand. */
 	subcommand = argv[1];
@@ -790,10 +790,10 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 	    for (int i = 0; graph_subcmds[i].name; ++i) {
 		bu_vls_printf(gedp->ged_result_str, "%s ", graph_subcmds[i].name);
 	    }
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 #define PARALLEL BRLCAD_PARALLEL
 #undef BRLCAD_PARALLEL
@@ -809,15 +809,15 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 extern "C" int
 ged_graph_core(struct ged *gedp, int argc, const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* Initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_vls_printf(gedp->ged_result_str, "%s : ERROR This command is disabled due to the absence of Adaptagrams library",
 	  argv[0]);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

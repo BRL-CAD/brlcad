@@ -46,18 +46,18 @@ ged_export_polygon(struct ged *gedp, bv_data_polygon_state *gdpsp, size_t polygo
     point_t vorigin;
     mat_t invRot;
 
-    GED_CHECK_EXISTS(gedp, sname, LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, sname, LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
     if (polygon_i >= gdpsp->gdps_polygons.num_polygons ||
 	gdpsp->gdps_polygons.polygon[polygon_i].num_contours < 1)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     for (j = 0; j < gdpsp->gdps_polygons.polygon[polygon_i].num_contours; ++j)
 	num_verts += gdpsp->gdps_polygons.polygon[polygon_i].contour[j].num_points;
 
     if (num_verts < 3)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_SKETCH;
@@ -124,10 +124,10 @@ ged_export_polygon(struct ged *gedp, bv_data_polygon_state *gdpsp, size_t polygo
     }
 
 
-    GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -158,7 +158,7 @@ ged_import_polygon(struct ged *gedp, const char *sname)
     struct contour_node *curr_cnode;
     struct bg_polygon *gpp;
 
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, gedp->ged_wdbp) & GED_ERROR)
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, gedp->ged_wdbp) & BRLCAD_ERROR)
 	return (struct bg_polygon *)0;
 
     sketch_ip = (rt_sketch_internal *)intern.idb_ptr;
@@ -288,8 +288,8 @@ typedef struct {
 int
 ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polygon *polyB)
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     return bg_polygons_overlap(polyA, polyB, gedp->ged_gvp->gv_model2view, &gedp->ged_wdbp->wdb_tol, gedp->ged_gvp->gv_scale);
 }

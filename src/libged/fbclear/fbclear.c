@@ -52,12 +52,12 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
     int ret;
     unsigned char clearColor[3] = {0.0, 0.0 ,0.0};
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if (!gedp->ged_dmp) {
 	bu_vls_printf(gedp->ged_result_str, "no display manager currently active");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct dm *dmp = (struct dm *)gedp->ged_dmp;
@@ -65,7 +65,7 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!fbp) {
 	bu_vls_printf(gedp->ged_result_str, "display manager does not have a framebuffer");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* initialize result */
@@ -76,7 +76,7 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (sscanf(argv[1], "%d %d %d", &r, &g, &b) != 3) {
 	    bu_log("fb_clear: bad color spec - %s", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	clearColor[RED] = FB_CONSTRAIN(r, 0, 255);
@@ -85,19 +85,19 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
 
     } else if (argc > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     ret = fb_clear(fbp, clearColor);
 
     if (ret)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     (void)dm_draw_begin(dmp);
     fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
     (void)dm_draw_end(dmp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

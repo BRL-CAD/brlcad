@@ -36,7 +36,7 @@ __BEGIN_DECLS
 /** Check if a database is open */
 #define GED_CHECK_DATABASE_OPEN(_gedp, _flags) \
     if ((_gedp) == GED_NULL || (_gedp)->ged_wdbp == RT_WDB_NULL || (_gedp)->ged_wdbp->dbip == DBI_NULL) { \
-	int ged_check_database_open_quiet = (_flags) & GED_QUIET; \
+	int ged_check_database_open_quiet = (_flags) & BRLCAD_QUIET; \
 	if (!ged_check_database_open_quiet) { \
 	    if ((_gedp) != GED_NULL) { \
 		bu_vls_trunc((_gedp)->ged_result_str, 0); \

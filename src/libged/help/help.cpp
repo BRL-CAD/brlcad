@@ -258,7 +258,7 @@ ged_help_core(struct ged *gedp, int argc, const char *argv[])
     words = help_tokenize(count, (const char **)entries);
 
     if (words == 0) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_free(dir, "free doc dir");

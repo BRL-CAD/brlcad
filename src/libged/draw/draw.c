@@ -207,7 +207,7 @@ plot_shaded_eval(
     av[2] = brep_name;
     ret = ged_brep(gedp, 3, av);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	int brep_made = 0;
 	struct db_tree_state ts;
 	struct rt_db_internal brep_intern;
@@ -219,7 +219,7 @@ plot_shaded_eval(
 
 	/* get brep internal */
 	ret = get_path_and_state(&ts, &brep_path, brep_name, gedp);
-	if (ret == GED_OK) {
+	if (ret == BRLCAD_OK) {
 	    struct directory *dp = DB_FULL_PATH_CUR_DIR(&brep_path);
 
 	    if (dp->d_flags & RT_DIR_COMB) {
@@ -238,7 +238,7 @@ plot_shaded_eval(
 	/* plot brep, but use the path and state of the input object */
 	if (brep_made) {
 	    ret = get_path_and_state(&ts, &input_path, path_name, gedp);
-	    if (ret == GED_OK) {
+	    if (ret == BRLCAD_OK) {
 		plot_shaded(&ts, &input_path, &brep_intern, dgcdp);
 
 		rt_db_free_internal(&brep_intern);
@@ -745,12 +745,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			    } else {
 				bu_vls_printf(gedp->ged_result_str, "invalid -L argument: %s\n", cp);
 				--drawtrees_depth;
-				return GED_ERROR;
+				return BRLCAD_ERROR;
 			    }
 			} else {
 			    bu_vls_printf(gedp->ged_result_str, "-L requires an option\n");
 			    --drawtrees_depth;
-			    return GED_ERROR;
+			    return BRLCAD_ERROR;
 			}
 		    }
 		    break;
@@ -762,7 +762,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    {
 			bu_vls_printf(gedp->ged_result_str, "unrecognized option - %c\n", c);
 			--drawtrees_depth;
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 	    }
 	}
@@ -826,7 +826,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		    if (dgcdp.vs.s_dmode == _GED_SHADED_MODE_EVAL) {
 			ret = plot_shaded_eval(gedp, argv[i], &dgcdp);
-			if (ret == GED_OK) {
+			if (ret == BRLCAD_OK) {
 			    continue;
 			}
 			/* if evaluated shading failed, fall back to "all" mode */
@@ -917,7 +917,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_s->bot_threshold = threshold_cached;
 
 			bu_vls_printf(gedp->ged_result_str, "%s: %s redraw failure\n", argv[0], argv[i]);
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 		}
 
@@ -998,9 +998,9 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     int64_t elapsedtime;
 #endif
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1008,7 +1008,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
 #ifdef DEBUG_TIMING
@@ -1080,7 +1080,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	if (remaining_args < 2 || remaining_args%2) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
 	    bu_vls_free(&vls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	bu_avs_init(&avs, (argc - last_opt)/2, "ged_draw_guts avs");
@@ -1105,12 +1105,12 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");
 	    bu_vls_free(&vls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (BU_PTBL_LEN(tbl) < 1) {
 	    /* nothing matched, just return */
 	    bu_vls_free(&vls);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;
@@ -1149,7 +1149,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	bu_vls_free(&vls);
 	bu_free((char *)new_argv, "ged_draw_guts new_argv");
 	if (drawtrees_retval) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } else {
 	int empty_display;
@@ -1202,7 +1202,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    drawtrees_retval = _ged_drawtrees(gedp, argc, argv, kind, (struct _ged_client_data *)0);
 	}
 	if (drawtrees_retval) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -1220,7 +1220,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     }
 #endif
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1253,9 +1253,9 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
     int ret;
     struct display_list *gdlp;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     RT_CHECK_DBI(gedp->dbip);
 
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1267,7 +1267,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 	    ret = dl_redraw(gdlp, gedp, 0);
 	    if (ret < 0) {
 		bu_vls_printf(gedp->ged_result_str, "%s: redraw failure\n", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     } else {
@@ -1280,7 +1280,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 	    if (ret < 0) {
 		bu_vls_printf(gedp->ged_result_str,
 			"%s: %s is not a valid path\n", argv[0], argv[i]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    found_path = 0;
@@ -1292,7 +1292,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str,
 			    "%s: %s is not a valid path\n", argv[0],
 			    bu_vls_addr(&gdlp->dl_path));
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 
 		/* this display list path matches/contains the redraw path */
@@ -1304,7 +1304,7 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 		    if (ret < 0) {
 			bu_vls_printf(gedp->ged_result_str,
 				"%s: %s redraw failure\n", argv[0], argv[i]);
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 		    break;
 		}
@@ -1316,12 +1316,12 @@ ged_redraw_core(struct ged *gedp, int argc, const char *argv[])
 	    if (!found_path) {
 		bu_vls_printf(gedp->ged_result_str,
 			"%s: %s is not being displayed\n", argv[0], argv[i]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 #ifdef GED_PLUGIN

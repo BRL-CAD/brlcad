@@ -33,7 +33,7 @@ int check_mass(struct current_state *state,
 {
     int i;
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS)) return GED_ERROR;
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_MASS)) return BRLCAD_ERROR;
 
     print_verbose_debug(options);
     bu_vls_printf(_ged_current_gedp->ged_result_str, "Mass:\n");
@@ -63,7 +63,7 @@ int check_mass(struct current_state *state,
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

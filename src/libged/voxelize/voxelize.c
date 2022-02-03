@@ -103,8 +103,8 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
     /* intentionally double for scan */
     double threshold;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialization */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -112,7 +112,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
     /* incorrect arguments */
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     sizeVoxel[0]  = 1.0;
@@ -132,7 +132,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 			   &scan[1],
 			   &scan[2]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		} else {
 		    /* convert from double to fastf_t */
 		    VMOVE(sizeVoxel, scan);
@@ -146,20 +146,20 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 	    case 'd':
 		if (sscanf(bu_optarg, "%d", &levelOfDetail) != 1) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		break;
 
 	    case 't':
 		if (sscanf(bu_optarg, "%lf", &threshold) != 1) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		break;
 
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -168,7 +168,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "error: missing argument(s)\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     voxDat.newname = (char *)argv[0];
@@ -177,7 +177,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 
     if (db_lookup(gedp->dbip, voxDat.newname, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "error: solid '%s' already exists, aborting\n", voxDat.newname);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     rtip = rt_new_rti(gedp->dbip);
@@ -189,7 +189,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
     while (argc > 0) {
 	if (rt_gettree(rtip,argv[0]) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "error: object '%s' does not exists, aborting\n", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	argc--;
@@ -215,7 +215,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
     mk_freemembers(&voxDat.content.l);
     rt_free_rti(rtip);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

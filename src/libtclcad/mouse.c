@@ -43,22 +43,22 @@ to_get_prev_mouse(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str, "%d %d", (int)gdvp->gv_prevMouseX, (int)gdvp->gv_prevMouseY);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -84,24 +84,24 @@ to_mouse_append_pnt_common(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
@@ -132,14 +132,14 @@ to_mouse_append_pnt_common(struct ged *gedp,
     ret = (*func)(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
 	to_edit_redraw(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -164,14 +164,14 @@ to_mouse_brep_selection_append(struct ged *gedp,
 
     if (argc != maxargs) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* parse args */
@@ -181,14 +181,14 @@ to_mouse_brep_selection_append(struct ged *gedp,
     if (*end != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %f\n", screen_pt[X]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     screen_pt[Y] = strtol(argv[4], &end, 10);
     if (*end != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %f\n", screen_pt[Y]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* stash point coordinates for future drag handling */
@@ -235,8 +235,8 @@ to_mouse_brep_selection_append(struct ged *gedp,
     bu_vls_free(&dir[Y]);
     bu_vls_free(&dir[Z]);
 
-    if (ret != GED_OK) {
-	return GED_ERROR;
+    if (ret != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
 
     struct bu_vls *dname = dm_get_pathname((struct dm *)gdvp->dmp);
@@ -255,7 +255,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
 
     bu_free((void *)brep_name, "brep_name");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -277,13 +277,13 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 
     if (argc != maxargs) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     brep_name = bu_path_basename(argv[2], NULL);
@@ -292,14 +292,14 @@ to_mouse_brep_selection_translate(struct ged *gedp,
     if (*end != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %f\n", screen_end[X]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     screen_end[Y] = strtol(argv[4], &end, 10);
     if (*end != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %f\n", screen_end[Y]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* convert screen-space delta to model-space delta */
@@ -333,8 +333,8 @@ to_mouse_brep_selection_translate(struct ged *gedp,
     bu_vls_free(&delta[Y]);
     bu_vls_free(&delta[Z]);
 
-    if (ret != GED_OK) {
-	return GED_ERROR;
+    if (ret != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
 
     /* need to tell front-end that we've modified the db */
@@ -377,30 +377,30 @@ to_mouse_constrain_rot(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
     if ((argv[2][0] != 'x' && argv[2][0] != 'y' && argv[2][0] != 'z') || argv[2][1] != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = x - gdvp->gv_prevMouseX;
@@ -448,7 +448,7 @@ to_mouse_constrain_rot(struct ged *gedp,
     ret = ged_rot(gedp, ac, (const char **)av);
     bu_vls_free(&rot_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
 	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback), 0, NULL);
@@ -457,7 +457,7 @@ to_mouse_constrain_rot(struct ged *gedp,
 	to_refresh_view(gdvp);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -487,29 +487,29 @@ to_mouse_constrain_trans(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((argv[2][0] != 'x' && argv[2][0] != 'y' && argv[2][0] != 'z') || argv[2][1] != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = x - gdvp->gv_prevMouseX;
@@ -559,7 +559,7 @@ to_mouse_constrain_trans(struct ged *gedp,
     ret = ged_tra(gedp, ac, (const char **)av);
     bu_vls_free(&tran_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
 	    tclcad_eval_noresult(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback), 0, NULL);
@@ -568,7 +568,7 @@ to_mouse_constrain_trans(struct ged *gedp,
 	to_refresh_view(gdvp);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -593,24 +593,24 @@ to_mouse_find_arb_edge(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 6) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
@@ -630,7 +630,7 @@ to_mouse_find_arb_edge(struct ged *gedp,
     (void)ged_find_arb_edge_nearest_pnt(gedp, 4, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -655,24 +655,24 @@ to_mouse_find_bot_edge(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
@@ -691,7 +691,7 @@ to_mouse_find_bot_edge(struct ged *gedp,
     (void)ged_find_bot_edge_nearest_pnt(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -716,24 +716,24 @@ to_mouse_find_bot_pnt(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
@@ -752,7 +752,7 @@ to_mouse_find_bot_pnt(struct ged *gedp,
     (void)ged_find_bot_pnt_nearest_pnt(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -778,24 +778,24 @@ to_mouse_find_metaball_pnt(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
@@ -815,7 +815,7 @@ to_mouse_find_metaball_pnt(struct ged *gedp,
     (void)ged_find_metaball_pnt_nearest_pnt(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -841,24 +841,24 @@ to_mouse_find_pipe_pnt(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
@@ -878,7 +878,7 @@ to_mouse_find_pipe_pnt(struct ged *gedp,
     (void)ged_find_pipe_pnt_nearest_pnt(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -904,13 +904,13 @@ to_mouse_joint_select(
 
     if (argc != maxargs) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* parse args */
@@ -920,14 +920,14 @@ to_mouse_joint_select(
     if (*end != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %f\n", screen_pt[X]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     screen_pt[Y] = strtol(argv[4], &end, 10);
     if (*end != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %f\n", screen_pt[Y]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* stash point coordinates for future drag handling */
@@ -974,8 +974,8 @@ to_mouse_joint_select(
     bu_vls_free(&dir[Y]);
     bu_vls_free(&dir[Z]);
 
-    if (ret != GED_OK) {
-	return GED_ERROR;
+    if (ret != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
 
     struct bu_vls *dname = dm_get_pathname((struct dm *)gdvp->dmp);
@@ -991,7 +991,7 @@ to_mouse_joint_select(
 
     bu_free((void *)joint_name, "joint_name");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1014,13 +1014,13 @@ to_mouse_joint_selection_translate(
 
     if (argc != maxargs) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     joint_name = bu_path_basename(argv[2], NULL);
@@ -1029,14 +1029,14 @@ to_mouse_joint_selection_translate(
     if (*end != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %f\n", screen_end[X]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     screen_end[Y] = strtol(argv[4], &end, 10);
     if (*end != '\0') {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %f\n", screen_end[Y]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* convert screen-space delta to model-space delta */
@@ -1065,12 +1065,12 @@ to_mouse_joint_selection_translate(
 
     ret = ged_joint2(gedp, cmd_argc, cmd_argv);
 
-    if (ret != GED_OK) {
+    if (ret != BRLCAD_OK) {
 	bu_free((void *)joint_name, "joint_name");
 	bu_vls_free(&delta[X]);
 	bu_vls_free(&delta[Y]);
 	bu_vls_free(&delta[Z]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* need to tell front-end that we've modified the db */
@@ -1086,7 +1086,7 @@ to_mouse_joint_selection_translate(
     cmd_argv[3] = NULL;
     ret = ged_get(gedp, cmd_argc, cmd_argv);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	char *path_name = bu_strdup(bu_vls_cstr(gedp->ged_result_str));
 	int dmode = 0;
 	struct bu_vls path_dmode = BU_VLS_INIT_ZERO;
@@ -1098,7 +1098,7 @@ to_mouse_joint_selection_translate(
 	cmd_argv[2] = NULL;
 	ret = ged_how(gedp, cmd_argc, cmd_argv);
 
-	if (ret == GED_OK) {
+	if (ret == BRLCAD_OK) {
 	    bu_sscanf(bu_vls_cstr(gedp->ged_result_str), "%d", &dmode);
 	}
 	if (dmode == 4) {
@@ -1114,7 +1114,7 @@ to_mouse_joint_selection_translate(
 	cmd_argv[2] = NULL;
 	ret = ged_erase(gedp, cmd_argc, cmd_argv);
 
-	if (ret == GED_OK) {
+	if (ret == BRLCAD_OK) {
 	    /* redraw path with its previous display mode */
 	    cmd_argc = 4;
 	    cmd_argv[0] = "draw";
@@ -1166,24 +1166,24 @@ to_mouse_move_arb_edge(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 6) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
 	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = x - gdvp->gv_prevMouseX;
@@ -1224,14 +1224,14 @@ to_mouse_move_arb_edge(struct ged *gedp,
     ret = ged_move_arb_edge(gedp, 5, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
 	to_edit_redraw(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1262,24 +1262,24 @@ to_mouse_move_arb_face(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 6) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
 	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = x - gdvp->gv_prevMouseX;
@@ -1320,14 +1320,14 @@ to_mouse_move_arb_face(struct ged *gedp,
     ret = ged_move_arb_face(gedp, 5, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
 	to_edit_redraw(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1362,13 +1362,13 @@ to_mouse_move_bot_pnt(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc == 7) {
 	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	rflag = 1;
@@ -1379,19 +1379,19 @@ to_mouse_move_bot_pnt(struct ged *gedp,
 
     if (argc != 6) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
 	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     width = dm_get_width((struct dm *)gdvp->dmp);
@@ -1433,17 +1433,17 @@ to_mouse_move_bot_pnt(struct ged *gedp,
 
 	if (last[0] == '\0') {
 	    bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", cmd, argv[2]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (bu_sscanf(argv[3], "%zu", &vertex_i) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s", cmd, argv[3]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
-	if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[2], gedp->ged_wdbp, mat) & GED_ERROR) {
+	if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[2], gedp->ged_wdbp, mat) & BRLCAD_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, argv[2]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -1451,7 +1451,7 @@ to_mouse_move_bot_pnt(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "Object is not a BOT");
 	    rt_db_free_internal(&intern);
 
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	botip = (struct rt_bot_internal *)intern.idb_ptr;
@@ -1459,7 +1459,7 @@ to_mouse_move_bot_pnt(struct ged *gedp,
 	if (vertex_i >= botip->num_vertices) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s", cmd, argv[3]);
 	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	MAT4X3PNT(view, gdvp->gv_model2view, &botip->vertices[vertex_i*3]);
@@ -1502,14 +1502,14 @@ to_mouse_move_bot_pnt(struct ged *gedp,
 
     bu_vls_free(&pt_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
 	to_edit_redraw(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1541,24 +1541,24 @@ to_mouse_move_bot_pnts(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 6) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
 	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     width = dm_get_width((struct dm *)gdvp->dmp);
@@ -1611,7 +1611,7 @@ to_mouse_move_bot_pnts(struct ged *gedp,
 	ret = ged_bot_move_pnts(gedp, ac, (const char **)av);
 	bu_vls_free(&pt_vls);
 
-	if (ret == GED_OK) {
+	if (ret == BRLCAD_OK) {
 	    av[0] = "draw";
 	    av[1] = (char *)argv[4];
 	    av[2] = (char *)0;
@@ -1621,7 +1621,7 @@ to_mouse_move_bot_pnts(struct ged *gedp,
 	bu_free((void *)av, "to_mouse_move_bot_pnts: av[]");
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1651,24 +1651,24 @@ to_mouse_move_pnt_common(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 6) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
 	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = x - gdvp->gv_prevMouseX;
@@ -1709,14 +1709,14 @@ to_mouse_move_pnt_common(struct ged *gedp,
     ret = (*func)(gedp, 5, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
 	to_edit_redraw(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1745,24 +1745,24 @@ to_mouse_orotate(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = y - gdvp->gv_prevMouseY;
@@ -1813,7 +1813,7 @@ to_mouse_orotate(struct ged *gedp,
 	av[4] = bu_vls_addr(&rot_z_vls);
 	av[5] = (char *)0;
 
-	if (ged_orotate(gedp, 5, (const char **)av) == GED_OK) {
+	if (ged_orotate(gedp, 5, (const char **)av) == BRLCAD_OK) {
 	    av[0] = "draw";
 	    av[1] = (char *)argv[2];
 	    av[2] = (char *)0;
@@ -1825,7 +1825,7 @@ to_mouse_orotate(struct ged *gedp,
     bu_vls_free(&rot_y_vls);
     bu_vls_free(&rot_z_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1852,24 +1852,24 @@ to_mouse_oscale(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = x - gdvp->gv_prevMouseX;
@@ -1918,7 +1918,7 @@ to_mouse_oscale(struct ged *gedp,
 	av[2] = bu_vls_addr(&sf_vls);
 	av[3] = (char *)0;
 
-	if (ged_oscale(gedp, 3, (const char **)av) == GED_OK) {
+	if (ged_oscale(gedp, 3, (const char **)av) == BRLCAD_OK) {
 	    av[0] = "draw";
 	    av[1] = (char *)argv[2];
 	    av[2] = (char *)0;
@@ -1928,7 +1928,7 @@ to_mouse_oscale(struct ged *gedp,
 
     bu_vls_free(&sf_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1959,24 +1959,24 @@ to_mouse_otranslate(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 	bu_sscanf(argv[4], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = x - gdvp->gv_prevMouseX;
@@ -2048,7 +2048,7 @@ to_mouse_otranslate(struct ged *gedp,
 	av[4] = bu_vls_addr(&tran_z_vls);
 	av[5] = (char *)0;
 
-	if (ged_otranslate(gedp, 5, (const char **)av) == GED_OK) {
+	if (ged_otranslate(gedp, 5, (const char **)av) == BRLCAD_OK) {
 	    av[0] = "draw";
 	    av[1] = (char *)argv[2];
 	    av[2] = (char *)0;
@@ -2060,7 +2060,7 @@ to_mouse_otranslate(struct ged *gedp,
     bu_vls_free(&tran_y_vls);
     bu_vls_free(&tran_z_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2078,12 +2078,12 @@ go_mouse_poly_circ(Tcl_Interp *interp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Don't allow go_refresh() to be called */
@@ -2112,25 +2112,25 @@ to_mouse_poly_circ(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* shift the command name to argv[1] before calling to_mouse_poly_circ_func */
     argv[1] = argv[0];
     ret = to_mouse_poly_circ_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
 #if 0
-    if (ret == GED_ERROR)
+    if (ret == BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 #endif
 
@@ -2165,7 +2165,7 @@ to_mouse_poly_circ_func(Tcl_Interp *interp,
     if (bu_sscanf(argv[1], "%d", &x) != 1 ||
 	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp->gv_prevMouseX = x;
@@ -2235,7 +2235,7 @@ to_mouse_poly_circ_func(Tcl_Interp *interp,
     bu_vls_free(&plist);
     bu_vls_free(&i_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2253,12 +2253,12 @@ go_mouse_poly_cont(Tcl_Interp *interp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Don't allow go_refresh() to be called */
@@ -2287,25 +2287,25 @@ to_mouse_poly_cont(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* shift the command name to argv[1] before calling to_mouse_poly_cont_func */
     argv[1] = argv[0];
     ret = to_mouse_poly_cont_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
 #if 0
-    if (ret == GED_ERROR)
+    if (ret == BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 #endif
 
@@ -2338,7 +2338,7 @@ to_mouse_poly_cont_func(Tcl_Interp *interp,
     if (bu_sscanf(argv[1], "%d", &x) != 1 ||
 	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp->gv_prevMouseX = x;
@@ -2376,7 +2376,7 @@ to_mouse_poly_cont_func(Tcl_Interp *interp,
 	bu_vls_free(&plist);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2394,12 +2394,12 @@ go_mouse_poly_ell(Tcl_Interp *interp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Don't allow go_refresh() to be called */
@@ -2428,25 +2428,25 @@ to_mouse_poly_ell(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* shift the command name to argv[1] before calling to_mouse_poly_ell_func */
     argv[1] = argv[0];
     ret = to_mouse_poly_ell_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
 #if 0
-    if (ret == GED_ERROR)
+    if (ret == BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 #endif
 
@@ -2481,7 +2481,7 @@ to_mouse_poly_ell_func(Tcl_Interp *interp,
     if (bu_sscanf(argv[1], "%d", &x) != 1 ||
 	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp->gv_prevMouseX = x;
@@ -2561,7 +2561,7 @@ to_mouse_poly_ell_func(Tcl_Interp *interp,
     bu_vls_free(&plist);
     bu_vls_free(&i_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2579,12 +2579,12 @@ go_mouse_poly_rect(Tcl_Interp *interp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Don't allow go_refresh() to be called */
@@ -2613,25 +2613,25 @@ to_mouse_poly_rect(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* shift the command name to argv[1] before calling to_mouse_poly_rect_func */
     argv[1] = argv[0];
     ret = to_mouse_poly_rect_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
 #if 0
-    if (ret == GED_ERROR)
+    if (ret == BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 #endif
 
@@ -2666,7 +2666,7 @@ to_mouse_poly_rect_func(Tcl_Interp *interp,
     if (bu_sscanf(argv[1], "%d", &x) != 1 ||
 	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp->gv_prevMouseX = x;
@@ -2732,7 +2732,7 @@ to_mouse_poly_rect_func(Tcl_Interp *interp,
     bu_vls_free(&plist);
     bu_vls_free(&i_vls);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2744,7 +2744,7 @@ to_mouse_ray(struct ged *UNUSED(gedp),
 	     const char *UNUSED(usage),
 	     int UNUSED(maxargs))
 {
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2770,24 +2770,24 @@ to_mouse_rect(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[2], "%d", &x) != 1 ||
 	bu_sscanf(argv[3], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = x - gdvp->gv_prevMouseX;
@@ -2807,10 +2807,10 @@ to_mouse_rect(struct ged *gedp,
     bu_vls_free(&dx_vls);
     bu_vls_free(&dy_vls);
 
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	to_refresh_view(gdvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2837,24 +2837,24 @@ to_mouse_rot(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
 	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = gdvp->gv_prevMouseY - y;
@@ -2888,7 +2888,7 @@ to_mouse_rot(struct ged *gedp,
     ret = ged_rot(gedp, ac, (const char **)av);
     bu_vls_free(&rot_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
@@ -2897,7 +2897,7 @@ to_mouse_rot(struct ged *gedp,
 	to_refresh_view(gdvp);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2926,24 +2926,24 @@ to_mouse_rotate_arb_face(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 7) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[5], "%lf", &x) != 1 ||
 	bu_sscanf(argv[6], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = y - gdvp->gv_prevMouseY;
@@ -2982,14 +2982,14 @@ to_mouse_rotate_arb_face(struct ged *gedp,
     ret = ged_rotate_arb_face(gedp, 5, (const char **)av);
     bu_vls_free(&pt_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
 	to_edit_redraw(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3008,24 +3008,24 @@ to_mouse_rotate_arb_face(struct ged *gedp,
 	/* must be wanting help */ \
 	if ((_argc) == 1) { \
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
-	    return GED_HELP; \
+	    return BRLCAD_HELP; \
 	} \
  \
 	if ((_argc) != 4) { \
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
-	    return GED_ERROR; \
+	    return BRLCAD_ERROR; \
 	} \
  \
         gdvp = ged_find_view(gedp, argv[1]); \
         if (!gdvp) { \
 	    bu_vls_printf(gedp->ged_result_str, "View not found - %s", (_argv)[1]); \
-	    return GED_ERROR; \
+	    return BRLCAD_ERROR; \
 	} \
  \
 	if (bu_sscanf((_argv)[2], "%lf", &_x) != 1 || \
 	    bu_sscanf((_argv)[3], "%lf", &_y) != 1) { \
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
-	    return GED_ERROR; \
+	    return BRLCAD_ERROR; \
 	} \
  \
 	_dx = _x - (_gdvp)->gv_prevMouseX; \
@@ -3078,23 +3078,23 @@ to_data_scale(struct ged *gedp,
     usage = "vname dtype sf";
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[2], "%lf", &sf) != 1 || sf < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid scale factor - %s", argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* scale data arrows */
@@ -3137,7 +3137,7 @@ to_data_scale(struct ged *gedp,
 
 
     to_refresh_view(gdvp);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -3191,7 +3191,7 @@ to_mouse_scale(struct ged *gedp,
     ret = ged_zoom(gedp, 2, (const char **)av);
     bu_vls_free(&zoom_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
@@ -3200,7 +3200,7 @@ to_mouse_scale(struct ged *gedp,
 	to_refresh_view(gdvp);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3229,24 +3229,24 @@ to_mouse_protate(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 6) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
 	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = y - gdvp->gv_prevMouseY;
@@ -3284,14 +3284,14 @@ to_mouse_protate(struct ged *gedp,
     ret = ged_protate(gedp, 4, (const char **)av);
     bu_vls_free(&mrot_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
 	to_edit_redraw(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3319,24 +3319,24 @@ to_mouse_pscale(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 6) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
 	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = x - gdvp->gv_prevMouseX;
@@ -3378,14 +3378,14 @@ to_mouse_pscale(struct ged *gedp,
     ret = ged_pscale(gedp, 5, (const char **)av);
     bu_vls_free(&sf_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
 	to_edit_redraw(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3415,24 +3415,24 @@ to_mouse_ptranslate(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 6) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
 	bu_sscanf(argv[5], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = x - gdvp->gv_prevMouseX;
@@ -3473,14 +3473,14 @@ to_mouse_ptranslate(struct ged *gedp,
     ret = ged_ptranslate(gedp, 5, (const char **)av);
     bu_vls_free(&tvec_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
 	to_edit_redraw(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3508,24 +3508,24 @@ to_mouse_trans(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
 	bu_sscanf(argv[3], "%lf", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dx = gdvp->gv_prevMouseX - x;
@@ -3561,7 +3561,7 @@ to_mouse_trans(struct ged *gedp,
     ret = ged_tra(gedp, ac, (const char **)av);
     bu_vls_free(&trans_vls);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tvd->gdv_callback));
@@ -3570,7 +3570,7 @@ to_mouse_trans(struct ged *gedp,
 	to_refresh_view(gdvp);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

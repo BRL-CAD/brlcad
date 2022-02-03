@@ -109,12 +109,12 @@ ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
     char usage[] = "Usage: fb-pix [-h -i -c] \n\
 	[-s squaresize] [-w width] [-n height] [file.pix]\n";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if (!gedp->ged_dmp) {
 	bu_vls_printf(gedp->ged_result_str, "no display manager currently active");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct dm *dmp = (struct dm *)gedp->ged_dmp;
@@ -122,7 +122,7 @@ ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!fbp) {
 	bu_vls_printf(gedp->ged_result_str, "display manager does not have a framebuffer");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* initialize result */
@@ -131,14 +131,14 @@ ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     screen_height = screen_width = 512;		/* Defaults */
 
     if (!get_args(argc, (char **)argv)) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     setmode(fileno(stdout), O_BINARY);
@@ -154,10 +154,10 @@ ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
 	(void)dm_draw_begin(dmp);
 	fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
 	(void)dm_draw_end(dmp);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

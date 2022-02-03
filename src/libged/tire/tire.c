@@ -1874,8 +1874,8 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[15], "t", "tread-shape",         "#",          &bu_opt_int,      &tread_type,     "Tread shape profile (integer id, range 1 - 2)");
     BU_OPT_NULL(d[16]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* Skip first arg */
     argv++; argc--;
@@ -1885,13 +1885,13 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (print_help) {
 	_tire_show_help(gedp, cmd_name, d);
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Perform overrides, if we got them */
@@ -1919,14 +1919,14 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_sprintf(gedp->ged_result_str, "unknown args supplied.\n");
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (db_lookup(gedp->dbip, bu_vls_addr(&name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s already exists.\n", bu_vls_addr(&name));
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Use name to create a suffix for other object names. */
@@ -2011,7 +2011,7 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&name);
     bu_vls_free(&dimen);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

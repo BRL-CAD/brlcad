@@ -42,16 +42,16 @@ ged_scale_core(struct ged *gedp, int argc, const char *argv[])
     fastf_t sf2;
     fastf_t sf3;
 
-    if ((ret = ged_scale_args(gedp, argc, argv, &sf1, &sf2, &sf3)) != GED_OK)
+    if ((ret = ged_scale_args(gedp, argc, argv, &sf1, &sf2, &sf3)) != BRLCAD_OK)
 	return ret;
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Can not scale xyz independently on a view.");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sf1 <= SMALL_FASTF || INFINITY < sf1)
-	return GED_OK;
+	return BRLCAD_OK;
 
     /* scale the view */
     gedp->ged_gvp->gv_scale *= sf1;
@@ -62,7 +62,7 @@ ged_scale_core(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
     bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

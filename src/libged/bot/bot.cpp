@@ -57,13 +57,13 @@ _bot_obj_setup(struct _ged_bot_info *gb, const char *name)
     gb->dp = db_lookup(gb->gedp->dbip, name, LOOKUP_NOISY);
     if (gb->dp == RT_DIR_NULL) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": %s is not a solid or does not exist in database", name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else {
 	int real_flag = (gb->dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
 	if (!real_flag) {
 	    /* solid doesn't exist */
 	    bu_vls_printf(gb->gedp->ged_result_str, ": %s is not a real solid", name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -71,15 +71,15 @@ _bot_obj_setup(struct _ged_bot_info *gb, const char *name)
 
     BU_GET(gb->intern, struct rt_db_internal);
 
-    GED_DB_GET_INTERNAL(gb->gedp, gb->intern, gb->dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gb->gedp, gb->intern, gb->dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(gb->intern);
 
     if (gb->intern->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", gb->solid_name.c_str());
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -104,7 +104,7 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
     const char *usage_string = "bot get <faces|minEdge|maxEdge|orientation|type|vertices> <objname>";
     const char *purpose_string = "Report specific information about a BoT shape";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
@@ -113,11 +113,11 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 
     if (argc != 2) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (_bot_obj_setup(gb, argv[1]) & GED_ERROR) {
-	return GED_ERROR;
+    if (_bot_obj_setup(gb, argv[1]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
@@ -169,10 +169,10 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 	}
     } else {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s is not a valid argument!", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" int
@@ -181,7 +181,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
     const char *usage_string = "bot set <orientation|type> <objname> <val>";
     const char *purpose_string = "Set BoT object properties";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
@@ -190,16 +190,16 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 
     if (argc != 3) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (_bot_obj_setup(gb, argv[1]) & GED_ERROR) {
-	return GED_ERROR;
+    if (_bot_obj_setup(gb, argv[1]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
     }
 
     if (!BU_STR_EQUAL(argv[0], "orientation") && !BU_STR_EQUAL(argv[0], "type") && !BU_STR_EQUAL(argv[0], "mode")) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(argv[0], "orientation")) {
@@ -216,7 +216,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	}
 	if (mode == INT_MAX) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Possible orientations are: none (no), ccw (rh), and cw (lh)");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	bot->orientation = mode;
     }
@@ -238,7 +238,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 	}
 	if (mode == INT_MAX) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Possible types are: surface solid plate plate_nocos");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	int old_mode = bot->mode;
 	bot->mode = mode;
@@ -261,10 +261,10 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
 
     if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Failed to update BoT");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" int
@@ -273,7 +273,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
     const char *usage_string = "bot [options] chull <objname> [output_bot]";
     const char *purpose_string = "Generate the BoT's convex hull and store it in an object";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -282,12 +282,12 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 
     if (!argc) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s\n%s\n", usage_string, purpose_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
-    if (_bot_obj_setup(gb, argv[0]) == GED_ERROR) {
-	return GED_ERROR;
+    if (_bot_obj_setup(gb, argv[0]) == BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
@@ -301,7 +301,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
     retval = bg_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)bot->vertices, (int)bot->num_vertices);
 
     if (retval != 3) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bu_vls out_name = BU_VLS_INIT_ZERO;
@@ -314,7 +314,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
     if (db_lookup(gb->gedp->dbip, bu_vls_cstr(&out_name), LOOKUP_QUIET) != RT_DIR_NULL) {
         bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&out_name));
         bu_vls_free(&out_name);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     retval = mk_bot(gb->gedp->ged_wdbp, bu_vls_cstr(&out_name), RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
@@ -324,10 +324,10 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
     bu_free(vert_array, "free verts");
 
     if (retval) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" int
@@ -336,7 +336,7 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
     const char *usage_string = "bot [options] isect <objname> <objname2>";
     const char *purpose_string = "(TODO) Test if BoT <objname> intersects with BoT <objname2>";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
@@ -345,23 +345,23 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
 
     if (argc != 2) {
         bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
-    if (_bot_obj_setup(gb, argv[0]) == GED_ERROR) {
-	return GED_ERROR;
+    if (_bot_obj_setup(gb, argv[0]) == BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)gb->intern->idb_ptr;
 
     struct directory *bot_dp_2;
     struct rt_db_internal intern_2;
-    GED_DB_LOOKUP(gb->gedp, bot_dp_2, argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gb->gedp, &intern_2, bot_dp_2, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gb->gedp, bot_dp_2, argv[1], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_GET_INTERNAL(gb->gedp, &intern_2, bot_dp_2, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
     if (intern_2.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern_2.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", argv[1]);
 	rt_db_free_internal(&intern_2);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     struct rt_bot_internal *bot_2 = (struct rt_bot_internal *)intern_2.idb_ptr;
 
@@ -379,7 +379,7 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
 
     rt_db_free_internal(&intern_2);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" int
@@ -388,7 +388,7 @@ _bot_cmd_sync(void *bs, int argc, const char **argv)
     const char *usage_string = "bot sync <objname>";
     const char *purpose_string = "Synchronize connected BoT triangle orientations";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
@@ -397,37 +397,37 @@ _bot_cmd_sync(void *bs, int argc, const char **argv)
 
     if (argc != 1) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (_bot_obj_setup(gb, argv[0]) & GED_ERROR) {
-	return GED_ERROR;
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
     int flip_cnt = bg_trimesh_sync(bot->faces, bot->faces, bot->num_faces);
     if (flip_cnt < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Failed to perform BoT sync");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Failed to update BoT");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gb->gedp->ged_result_str, "Performed %d face flipping operations", flip_cnt);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" int
 _bot_cmd_split(void *bs, int argc, const char **argv)
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     const char *usage_string = "bot split <objname>";
     const char *purpose_string = "Split BoT into objects containing topologically connected triangle subsets";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
@@ -436,11 +436,11 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
 
     if (argc != 1) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (_bot_obj_setup(gb, argv[0]) & GED_ERROR) {
-	return GED_ERROR;
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
@@ -451,7 +451,7 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
     int split_cnt = bg_trimesh_split(&fsets, &fset_cnts, bot->faces, bot->num_faces);
     if (split_cnt <= 0) {
 	bu_vls_printf(gb->gedp->ged_result_str, "BoT split unsuccessful");
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto bot_split_done;
     }
 
@@ -474,7 +474,7 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
 	int n_ofaces = bg_trimesh_3d_gc(&ofaces, &opnts, &n_opnts,
 	       	(const int *)fsets[i], fset_cnts[i], (const point_t *)bot->vertices);
 	if (n_ofaces < 0) {
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    goto bot_split_done;
 	}
 	struct rt_bot_internal *nbot;
@@ -500,7 +500,7 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
 	dp = db_diradd(gb->gedp->dbip, bu_vls_cstr(&bname), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
 	if (dp == RT_DIR_NULL) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Cannot add %s to directory\n", bu_vls_cstr(&bname));
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    bu_vls_free(&bname);
 	    goto bot_split_done;
 	}
@@ -508,7 +508,7 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
 	if (rt_db_put_internal(dp, gb->gedp->dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Failed to write %s to database\n", bu_vls_cstr(&bname));
 	    rt_db_free_internal(&intern);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    bu_vls_free(&bname);
 	    goto bot_split_done;
 	}
@@ -566,7 +566,7 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // Clear results
@@ -591,7 +591,7 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!argc) {
 	_ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // High level options are only defined prior to the subcommand
@@ -615,19 +615,19 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    _ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Must have a subcommand
     if (cmd_pos == -1) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
 	_ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (opt_ret < 0) {
 	_ged_subcmd_help(gedp, boptd, bcmds, "bot", b_args, &gb, 0, NULL);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // Jump the processing past any options specified
@@ -636,16 +636,16 @@ ged_bot_core(struct ged *gedp, int argc, const char *argv[])
     }
     argc = argc - cmd_pos;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     if (gb.visualize) {
-	GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+	GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 	gb.vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
     }
     gb.color = color;
 
-    int ret = GED_ERROR;
+    int ret = BRLCAD_ERROR;
     if (bu_cmd(_bot_cmds, argc, argv, 0, (void *)&gb, &ret) == BRLCAD_OK) {
-	ret = GED_OK;
+	ret = BRLCAD_OK;
 	goto bot_cleanup;
     }
 

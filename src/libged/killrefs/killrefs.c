@@ -43,10 +43,10 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
     int ret;
     static const char *usage = "[-n] object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if (!gedp->ged_internal_call) {
 	/* initialize result */
@@ -56,7 +56,7 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* Process the -n option */
@@ -72,7 +72,7 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 	    _dl_eraseAllNamesFromDisplay(gedp, argv[k], 1);
     }
 
-    ret = GED_OK;
+    ret = BRLCAD_OK;
 
     FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
 	if (!(dp->d_flags & RT_DIR_COMB))
@@ -80,7 +80,7 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    continue;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -96,7 +96,7 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 		continue;	/* empty tree */
 	    if (code < 0) {
 		bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[k]);
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 	    } else {
 		if (nflag)
 		    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
@@ -107,7 +107,7 @@ ged_killrefs_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Unable to write new combination into database.\n");
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    continue;
 	}
     } FOR_ALL_DIRECTORY_END;

@@ -37,8 +37,8 @@ ged_title_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls title = BU_VLS_INIT_ZERO;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -46,10 +46,10 @@ ged_title_core(struct ged *gedp, int argc, const char *argv[])
     /* get title */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", gedp->dbip->dbi_title);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* set title */
     bu_vls_from_argv(&title, argc-1, (const char **)argv+1);
@@ -57,11 +57,11 @@ ged_title_core(struct ged *gedp, int argc, const char *argv[])
     if (db_update_ident(gedp->dbip, bu_vls_addr(&title), gedp->dbip->dbi_local2base) < 0) {
 	bu_vls_free(&title);
 	bu_vls_printf(gedp->ged_result_str, "Error: unable to change database title");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_free(&title);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

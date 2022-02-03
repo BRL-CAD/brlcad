@@ -47,9 +47,9 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     int arg = 1;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -58,17 +58,17 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < arg+1) {
 	bu_vls_printf(gedp->ged_result_str, "Enter name of outside solid: ");
-	return GED_MORE;
+	return BRLCAD_MORE;
     }
     if ((outdp = db_lookup(gedp->dbip,  argv[arg], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[arg]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     ++arg;
 
     if (rt_db_get_internal(&intern, outdp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return ged_inside_internal(gedp, &intern, argc, argv, arg, outdp->d_namep);

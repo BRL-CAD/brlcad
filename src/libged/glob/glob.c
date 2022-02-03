@@ -209,7 +209,7 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Silently return */
     if (gedp == GED_NULL)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     /* Initialize result. This behavior is depended upon by mged - apparently
      * the interpretation is that if no database is open, all expressions match
@@ -218,24 +218,24 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 
     /* No database to match against, so return. */
     if (gedp->ged_wdbp == RT_WDB_NULL || gedp->dbip == DBI_NULL)
-	return GED_OK;
+	return BRLCAD_OK;
 
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
     (void)_ged_expand_str_glob(gedp->ged_result_str, argv[1], gedp->dbip, flags);
 
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

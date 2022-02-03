@@ -177,12 +177,12 @@ to_refresh(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return to_handle_refresh(gedp, argv[1]);
@@ -199,12 +199,12 @@ to_refresh_all(struct ged *gedp,
 {
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     to_refresh_all_views(current_top);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -224,24 +224,24 @@ to_refresh_on(struct ged *gedp,
 
     if (2 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Get refresh_on state */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d", tgd->go_dmv.refresh_on);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* Set refresh_on state */
     if (bu_sscanf(argv[1], "%d", &on) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     tgd->go_dmv.refresh_on = on;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -253,12 +253,12 @@ to_handle_refresh(struct ged *gedp,
     gdvp = ged_find_view(gedp, name);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     to_refresh_view(gdvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

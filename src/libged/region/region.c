@@ -42,9 +42,9 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
     db_op_t oper;
     static const char *usage = "reg_name <op obj ...>";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -52,12 +52,12 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     ident = gedp->ged_wdbp->wdb_item_default;
@@ -66,7 +66,7 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
     /* Check for even number of arguments */
     if (argc & 01) {
 	bu_vls_printf(gedp->ged_result_str, "error in number of args!");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
@@ -98,7 +98,7 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (_ged_combadd(gedp, dp, (char *)argv[1], 1, oper, ident, air) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "error in combadd");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -106,10 +106,10 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	/* failed to create region */
 	if (gedp->ged_wdbp->wdb_item_default > 1)
 	    gedp->ged_wdbp->wdb_item_default--;
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

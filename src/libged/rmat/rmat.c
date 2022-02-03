@@ -37,9 +37,9 @@ ged_rmat_core(struct ged *gedp, int argc, const char *argv[])
 {
     mat_t rotation;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -47,20 +47,20 @@ ged_rmat_core(struct ged *gedp, int argc, const char *argv[])
     /* get the rotation matrix */
     if (argc == 1) {
 	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_rotation, 1);
-	return GED_OK;
+	return BRLCAD_OK;
     } else if (argc == 2) {
 	/* set rotation matrix */
 	if (bn_decode_mat(rotation, argv[1]) != 16)
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 
 	MAT_COPY(gedp->ged_gvp->gv_rotation, rotation);
 	bv_update(gedp->ged_gvp);
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

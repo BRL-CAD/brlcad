@@ -42,7 +42,7 @@ __BEGIN_DECLS
 /** Check if a drawable exists */
 #define GED_CHECK_DRAWABLE(_gedp, _flags) \
     if (_gedp->ged_gdp == GED_DRAWABLE_NULL) { \
-	int ged_check_drawable_quiet = (_flags) & GED_QUIET; \
+	int ged_check_drawable_quiet = (_flags) & BRLCAD_QUIET; \
 	if (!ged_check_drawable_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
 	    bu_vls_printf((_gedp)->ged_result_str, "A drawable does not exist."); \
@@ -53,7 +53,7 @@ __BEGIN_DECLS
 /** Check if a view exists */
 #define GED_CHECK_VIEW(_gedp, _flags) \
     if (_gedp->ged_gvp == GED_VIEW_NULL) { \
-	int ged_check_view_quiet = (_flags) & GED_QUIET; \
+	int ged_check_view_quiet = (_flags) & BRLCAD_QUIET; \
 	if (!ged_check_view_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
 	    bu_vls_printf((_gedp)->ged_result_str, "A view does not exist."); \

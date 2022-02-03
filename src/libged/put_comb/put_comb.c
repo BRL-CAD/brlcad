@@ -65,7 +65,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 	if (db_delete(gedp->dbip, dp) || db_dirdelete(gedp->dbip, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "make_tree: Unable to delete directory entry for %s\n", comb_name);
 	    intern.idb_meth->ft_ifree(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	dp = RT_DIR_NULL;
     }
@@ -82,7 +82,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 	if (dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", dir_name);
 	    intern.idb_meth->ft_ifree(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -93,10 +93,10 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 
     if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "make_tree: Unable to write combination to database.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -279,7 +279,7 @@ put_tree_into_comb_and_export(struct ged *gedp, struct rt_comb_internal *comb, s
     union tree *tp;
 
     if (!expression)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     BU_LIST_INIT(&comb_lines.l);
 
@@ -302,7 +302,7 @@ put_tree_into_comb_and_export(struct ged *gedp, struct rt_comb_internal *comb, s
 	    bu_vls_free(&vls);
 	    bu_list_free(&comb_lines.l);
 	    bu_free(str, "dealloc bu_strdup str");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (n > 0) {
 	    BU_ALLOC(llp, struct line_list);
@@ -349,7 +349,7 @@ put_tree_into_comb_and_export(struct ged *gedp, struct rt_comb_internal *comb, s
 		    bu_free((char *)rt_tree_array, "red: tree list");
 		bu_log("no name specified\n");
 		bu_free(str, "dealloc bu_strdup str");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    name = ptr;
 
@@ -386,7 +386,7 @@ put_tree_into_comb_and_export(struct ged *gedp, struct rt_comb_internal *comb, s
 			    bu_free((char *)rt_tree_array, "red: tree list");
 			bu_list_free(&comb_lines.l);
 			bu_free(str, "dealloc bu_strdup str");
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 		    matrix[k] = atof(ptr);
 		}
@@ -489,9 +489,9 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal *comb = NULL;
     struct rt_db_internal intern;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -499,18 +499,18 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 7 || 11 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* do not attempt to read/write empty-named combinations */
     if (BU_STR_EMPTY(comb_name)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: an empty combination name is not valid\n", cmd_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     comb = (struct rt_comb_internal *)NULL;
@@ -518,12 +518,12 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a combination, so cannot be edited this way\n", cmd_name, comb_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting\n", cmd_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -551,7 +551,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 	if (argc != 11) {
 	    bu_vls_printf(gedp->ged_result_str, "region_flag is set, incorrect number of arguments supplied.\n");
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, regionusage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	comb->region_flag = 1;
@@ -576,12 +576,12 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
     else
 	dir_name = comb_name;
 
-    if (put_tree_into_comb_and_export(gedp, comb, dp, comb_name, dir_name, expression) & GED_ERROR) {
+    if (put_tree_into_comb_and_export(gedp, comb, dp, comb_name, dir_name, expression) & BRLCAD_ERROR) {
 	if (dp) {
 	    restore_comb(gedp, dp, saved_name);
 	    bu_vls_printf(gedp->ged_result_str, "%s: \toriginal restored\n", cmd_name);
 	}
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else if (save_comb_flag) {
 	/* eliminate the temporary combination */
 	const char *av[3];
@@ -592,7 +592,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 	(void)ged_kill(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

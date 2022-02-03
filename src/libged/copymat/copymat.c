@@ -49,9 +49,9 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     union tree *tp;
     static const char *usage = "a/b c/d";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -59,12 +59,12 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /*
@@ -75,7 +75,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	    || (strchr(++child, '/') != NULL))
 	{
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad arc: '%s'\n", argv[0], argv[i]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -91,7 +91,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	|| db_follow_path_for_state(&ts, &(anp.an_path), argv[1], LOOKUP_NOISY) < 0)
     {
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot follow path for arc: '%s'\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_strcat(&pvls, argv[2]);
@@ -113,7 +113,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	    /* fall through */
 	case ID_NULL:
 	    bu_vls_free(&pvls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
     comb = (struct rt_comb_internal *) intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -122,7 +122,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     if (tp == TREE_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: unable to find instance of '%s' in combination '%s'\n",
 		      argv[0], child, dp->d_namep);
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 	goto wrapup;
     }
 
@@ -141,16 +141,16 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 
     if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 	goto wrapup;
     }
 
-    status = GED_OK;
+    status = BRLCAD_OK;
 
 wrapup:
 
     bu_vls_free(&pvls);
-    if (status & GED_ERROR)
+    if (status & BRLCAD_ERROR)
 	rt_db_free_internal(&intern);
     return status;
 }

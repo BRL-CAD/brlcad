@@ -47,9 +47,9 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     int i;
     mat_t start_mat;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -57,12 +57,12 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* initialize gtd */
@@ -71,7 +71,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     gtd.gtd_prflag = 0;
 
     /* check if new solid name already exists in description */
-    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
 
     MAT_IDN(start_mat);
 
@@ -79,30 +79,30 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     if (strchr(argv[1], '/')) {
 	tok = strtok((char *)argv[1], "/");
 	while (tok) {
-	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
 	    endpos++;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
-	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
 	endpos++;
     }
 
     if (endpos < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gtd.gtd_objpos = endpos - 1;
 
-    GED_DB_GET_INTERNAL(gedp, &internal, gtd.gtd_obj[endpos - 1], bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &internal, gtd.gtd_obj[endpos - 1], bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (endpos > 1) {
 	/* Make sure that final component in path is a solid */
 	if (internal.idb_type == ID_COMBINATION) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(gedp->ged_result_str, "final component on path must be a primitive!\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* Accumulate the matrices */
@@ -116,7 +116,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 
 	    bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");
 	    rt_db_free_internal(&internal);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* Have found the desired path - wdb_xform is the transformation matrix */
@@ -127,7 +127,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 	if (rt_generic_xform(&new_int, gtd.gtd_xform, &internal, 0, gedp->dbip)) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(gedp->ged_result_str, "ged_copyeval: rt_generic_xform failed\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	ip = &new_int;
@@ -143,7 +143,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 	if (ip == &new_int)
 	    rt_db_free_internal(&new_int);
 	bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* should call GED_DB_DIRADD() but need to deal with freeing the
@@ -160,14 +160,14 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(&internal);
 
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* see previous comment */
     if (ip == &new_int)
 	rt_db_free_internal(&internal);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

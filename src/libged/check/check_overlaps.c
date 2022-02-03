@@ -297,7 +297,7 @@ int check_overlaps(struct current_state *state,
 	plot_overlaps = fopen(name, "wb");
 	if (plot_overlaps == (FILE *)NULL) {
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -329,7 +329,7 @@ int check_overlaps(struct current_state *state,
 	    BU_LIST_DEQUEUE(&(op->l));
 	    BU_PUT(op, struct overlap_list);
 	}
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     print_verbose_debug(options);
@@ -361,7 +361,7 @@ int check_overlaps(struct current_state *state,
 	BU_PUT(op, struct overlap_list);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

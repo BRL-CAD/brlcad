@@ -49,10 +49,10 @@ ged_debug_core(struct ged *gedp, int argc, const char **argv)
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (debug_cmd(gedp->ged_result_str, gedp->ged_result_str, argc, argv)) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 #ifdef GED_PLUGIN

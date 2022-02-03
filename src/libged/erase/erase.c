@@ -51,9 +51,9 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[[-r] | [[-o] -A attribute=value]] [object(s)]";
     const char *cmdName = argv[0];
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -61,7 +61,7 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* skip past cmd */
@@ -80,7 +80,7 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 	if (strchr(argv[i], 'r')) {
 		for (i = 1; i < (size_t)argc; ++i)
 		_dl_eraseAllPathsFromDisplay(gedp, argv[i], 0);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	ptr_A=strchr(argv[i], 'A');
@@ -95,7 +95,7 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (!ptr_A && !ptr_o) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (strlen(argv[i]) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {
@@ -104,7 +104,7 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (flag_A_attr) {
@@ -120,7 +120,7 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 	if (remaining_args < 2 || remaining_args%2) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
 	    bu_vls_free(&vls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	bu_avs_init(&avs, (argc - last_opt)/2, "ged_erase_core avs");
@@ -145,12 +145,12 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");
 	    bu_vls_free(&vls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (BU_PTBL_LEN(tbl) < 1) {
 	    /* nothing matched, just return */
 	    bu_vls_free(&vls);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;
@@ -178,7 +178,7 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 	    dl_erasePathFromDisplay(gedp, argv[i], 1);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

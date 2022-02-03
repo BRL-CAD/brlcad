@@ -169,7 +169,7 @@ cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
-    if (ret & GED_HELP)
+    if (ret & BRLCAD_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -202,7 +202,7 @@ cmd_ged_simulate_wrapper(ClientData clientData, Tcl_Interp *interpreter, int arg
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
-    if (ret & GED_HELP)
+    if (ret & BRLCAD_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -338,7 +338,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     bu_free(GEDP->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     GEDP->ged_gdp->gd_rt_cmd = NULL;
 
-    if (ret & GED_HELP)
+    if (ret & BRLCAD_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -391,18 +391,18 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
     argv += bu_optind-1;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
-    if (ret & GED_MORE)
+    if (ret & BRLCAD_MORE)
 	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (dont_draw) {
-	if (ret & GED_HELP || ret == GED_OK)
+	if (ret & BRLCAD_HELP || ret == BRLCAD_OK)
 	    return TCL_OK;
 
 	return TCL_ERROR;
     }
 
-    if (ret & GED_HELP)
+    if (ret & BRLCAD_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -505,11 +505,11 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	ret = ged_inside(GEDP, argc, (const char **)argv);
     }
 
-    if (ret & GED_MORE)
+    if (ret & BRLCAD_MORE)
 	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
-    if (ret & GED_HELP) {
+    if (ret & BRLCAD_HELP) {
 	(void)signal(SIGINT, SIG_IGN);
 	return TCL_OK;
     }
@@ -547,11 +547,11 @@ cmd_ged_more_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	return TCL_OK;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
-    if (ret & GED_MORE)
+    if (ret & BRLCAD_MORE)
 	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
-    if (ret & GED_HELP)
+    if (ret & BRLCAD_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -604,7 +604,7 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
     }
 #endif
 
-    if (ret & GED_MORE)
+    if (ret & BRLCAD_MORE)
 	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
@@ -618,7 +618,7 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	bu_vls_sprintf(&rcache, "%s", bu_vls_addr(GEDP->ged_result_str));
 
 	who_ret = ged_who(GEDP, 1, who_cmd);
-	if (who_ret == GED_OK) {
+	if (who_ret == BRLCAD_OK) {
 	    /* worst possible is a bunch of 1-char names, allocate and
 	     * split into an argv accordingly.
 	     */
@@ -653,7 +653,7 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	bu_vls_free(&rcache);
     }
 
-    if (ret & GED_HELP || ret == GED_OK)
+    if (ret & BRLCAD_HELP || ret == BRLCAD_OK)
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -675,7 +675,7 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
-    if (ret & GED_HELP)
+    if (ret & BRLCAD_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -711,7 +711,7 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 
     (void)signal(SIGINT, SIG_IGN);
 
-    if (ret & GED_HELP || ret == GED_OK)
+    if (ret & BRLCAD_HELP || ret == BRLCAD_OK)
 	return TCL_OK;
 
     return TCL_ERROR;

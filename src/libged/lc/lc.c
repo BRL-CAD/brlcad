@@ -184,11 +184,11 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     bu_optind = 1; /* re-init bu_getopt() */
     while ((c = bu_getopt(argc, (char * const *)argv, "dmsrz012345f:")) != -1) {
@@ -286,7 +286,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
     if (error_cnt > 0) {
 	if (outfile)
 	    fclose(outfile);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Update references once before we start all of this - db_search
@@ -301,7 +301,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
     matches = db_search(&results1, DB_SEARCH_TREE, plan, 0, NULL, gedp->dbip, NULL);
     if (matches < 1) {
 	bu_vls_printf(gedp->ged_result_str, "Error: Group '%s' does not exist.\n", group_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_free(plan, "ged_lc_core");
     db_search_free(&results1);
@@ -316,7 +316,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
     db_string_to_path(&root, gedp->dbip, path);
     matches = db_search(&results2, DB_SEARCH_TREE, plan, root.fp_len, root.fp_names, gedp->dbip, NULL);
     bu_free(path, "ged_lc_core");
-    if (matches < 1) { return GED_ERROR; }
+    if (matches < 1) { return BRLCAD_ERROR; }
     regions = (struct region_record *) bu_malloc(sizeof(struct region_record) * BU_PTBL_LEN(&results2), "ged_lc_core");
     for (i = 0; i < BU_PTBL_LEN(&results2); i++) {
 	struct db_full_path *entry = (struct db_full_path *)BU_PTBL_GET(&results2, i);
@@ -424,7 +424,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "No duplicate region_id\n");
 	    bu_vls_printf(gedp->ged_result_str, "Done.");
 	    bu_free(regions, "ged_lc_core");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    goto print_results;
 	}
@@ -470,7 +470,7 @@ print_results:
 
     bu_free(regions, "ged_lc_core");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 #ifdef GED_PLUGIN

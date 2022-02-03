@@ -76,12 +76,12 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
-    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
-    GED_CHECK_COMB(gedp, dp, GED_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
+    GED_CHECK_COMB(gedp, dp, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -123,14 +123,14 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc+offset-1]);
-	return GED_MORE;
+	return BRLCAD_MORE;
     }
 
 
     /* too much */
     if ((!offset && argc > 7) || (offset && argc > 5)) {
 	bu_vls_printf(gedp->ged_result_str, "Too many arguments.\n%s", usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Material */
@@ -146,7 +146,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Problem with shader string [%s]", argv[2]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&vls);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -168,14 +168,14 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Color is not set, cannot skip by using existing RED color value");
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	} else {
 	    if (sscanf(bu_vls_addr(&rgb), "%d", &r) != 1 || r < 0 || 255 < r) {
 		bu_vls_printf(gedp->ged_result_str, "Bad color value [%s]", argv[3]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    comb->rgb[0] = r;
 	}
@@ -188,14 +188,14 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Color is not set, cannot skip by using existing GREEN color value");
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	} else {
 	    if (sscanf(bu_vls_addr(&rgb), "%d", &g) != 1 || g < 0 || 255 < g) {
 		bu_vls_printf(gedp->ged_result_str, "Bad color value [%s]", argv[4]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    comb->rgb[1] = g;
 	}
@@ -208,14 +208,14 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Color is not set, cannot skip by using existing BLUE color value");
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	} else {
 	    if (sscanf(bu_vls_addr(&rgb), "%d", &b) != 1 || b < 0 || 255 < b) {
 		bu_vls_printf(gedp->ged_result_str, "Bad color value [%s]", argv[5]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    comb->rgb[2] = b;
 	}
@@ -229,7 +229,7 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
 	if (comb->inherit > 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Inherit value should be 0 or 1");
 	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -237,23 +237,23 @@ mater_shader(struct ged *gedp, size_t argc, const char *argv[])
     if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	bu_avs_free(&avs);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     db5_standardize_avs(&avs);
     db5_sync_comb_to_attr(&avs, comb);
     db5_standardize_avs(&avs);
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
 
     if (db5_update_attributes(dp, &avs, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: failed to update attributes\n");
 	bu_avs_free(&avs);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_avs_free(&avs);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -265,7 +265,7 @@ mater_source(struct ged *gedp)
     /* Check in priority order */
     if (db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", gedp->dbip->dbi_filename);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* Try .density file in database path first */
@@ -276,7 +276,7 @@ mater_source(struct ged *gedp)
 	if (bu_file_exists(bu_vls_cstr(&d_path_dir), NULL)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&d_path_dir));
 	    bu_vls_free(&d_path_dir);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
@@ -288,11 +288,11 @@ mater_source(struct ged *gedp)
 	if (bu_file_exists(bu_vls_cstr(&d_path_dir), NULL)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&d_path_dir));
 	    bu_vls_free(&d_path_dir);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -303,11 +303,11 @@ mater_clear(struct ged *gedp)
     if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Error removing density information from database.");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	db_update_nref(gedp->dbip, &rt_uniresource);
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -323,18 +323,18 @@ mater_validate(struct ged *gedp, size_t argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (!bu_file_exists(argv[1], NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified density file %s not found", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dfile = bu_open_mapped_file(argv[1], "densities file");
     if (!dfile) {
 	bu_vls_printf(gedp->ged_result_str, "Could not open density file - %s\n", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     buf = (char *)(dfile->buf);
@@ -347,18 +347,18 @@ mater_validate(struct ged *gedp, size_t argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "no density information found in %s:\n%s", argv[1], bu_vls_cstr(&msgs));
 	bu_vls_free(&msgs);
 	analyze_densities_destroy(a);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (ecnt) {
 	bu_vls_printf(gedp->ged_result_str, "errors parsing density file %s:\n%s", argv[1], bu_vls_cstr(&msgs));
 	analyze_densities_destroy(a);
 	bu_vls_free(&msgs);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_free(&msgs);
     analyze_densities_destroy(a);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -376,7 +376,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
     if (argc == 2) {
 	if (!bu_file_exists(argv[1], NULL)) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified density file %s not found", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    densities_filename = argv[1];
 	}
@@ -390,13 +390,13 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     // As a first cut, do a fault intolerant read - if there are any problems we want to know
-    if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 0) & GED_ERROR) {
+    if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 0) & BRLCAD_ERROR) {
 	a = NULL;
     }
 
     if (!a) {
 	// If that didn't work, do a fault tolerant read so we can proceed with the evaluation
-	if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 1) == GED_ERROR) {
+	if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 1) == BRLCAD_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "Failed to locate density data.\n");
 	    a = NULL;
 	}
@@ -438,7 +438,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	if (a) {
 	    analyze_densities_destroy(a);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Collect information about what is set in the database
@@ -546,7 +546,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 		}
 	    }
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // We've got some combination of density information and material attributes.  Now things get interesting.
@@ -639,7 +639,7 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     analyze_densities_destroy(a);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -649,7 +649,7 @@ mater_import(struct ged *gedp, size_t argc, const char *argv[])
     int validate_input = 0;
     if (argc < 2 || argc > 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "-v")) {
@@ -660,22 +660,22 @@ mater_import(struct ged *gedp, size_t argc, const char *argv[])
 
     if (!bu_file_exists(argv[1], NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "Specified density file %s not found", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (mater_clear(gedp) != GED_OK) {
-	return GED_ERROR;
+    if (mater_clear(gedp) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
 
     if (validate_input) {
-	if (mater_validate(gedp, 2, argv) != GED_OK) {
-	    return GED_ERROR;
+	if (mater_validate(gedp, 2, argv) != BRLCAD_OK) {
+	    return BRLCAD_ERROR;
 	}
     }
 
     if (rt_mk_binunif (gedp->ged_wdbp, GED_DB_DENSITY_OBJECT, argv[1], DB5_MINORTYPE_BINU_8BITINT, 0)) {
 	bu_vls_printf(gedp->ged_result_str, "Error reading density file %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Mark it hidden */
@@ -686,7 +686,7 @@ mater_import(struct ged *gedp, size_t argc, const char *argv[])
 	(void)ged_hide(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -700,30 +700,30 @@ mater_export(struct ged *gedp, size_t argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if ((dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "no density information found in database\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_file_exists(argv[1], NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "specified output density file %s already exists", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fp = fopen(argv[1], "w+b");
 
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "cannot open file %s for writing", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "error reading %s from database", dp->d_namep);
 	fclose(fp);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     RT_CK_DB_INTERNAL(&intern);
@@ -733,19 +733,19 @@ mater_export(struct ged *gedp, size_t argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s has no contents", GED_DB_DENSITY_OBJECT);
 	fclose(fp);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (fwrite(bip->u.int8, bip->count * db5_type_sizeof_h_binu(bip->type), 1, fp) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Error writing contents to file");
 	fclose(fp);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fclose(fp);
     rt_db_free_internal(&intern);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1035,7 +1035,7 @@ mater_get(struct ged *gedp, size_t argc, const char *argv[])
     delete name_patterns;
     delete greedy_patterns;
 
-    return GED_OK;
+    return BRLCAD_OK;
 
 ged_mater_get_fail:
     bu_vls_free(&tolhelp);
@@ -1044,7 +1044,7 @@ ged_mater_get_fail:
     delete dens_opt.densities;
     delete name_patterns;
     delete greedy_patterns;
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1056,13 +1056,13 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
     if (dp != RT_DIR_NULL) {
-	if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != GED_OK) {
-	    return GED_ERROR;
+	if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != BRLCAD_OK) {
+	    return BRLCAD_ERROR;
 	}
     } else {
 	/* Starting from scratch */
@@ -1099,17 +1099,17 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
 		    analyze_densities_destroy(a);
 		    bu_free((void *)name_str, "str cpy");
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
 		analyze_densities_destroy(a);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Error parsing density specifier: %s\n", argv[i]);
 	    analyze_densities_destroy(a);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -1119,12 +1119,12 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 
     if (buf_len <= 0 || !new_buf) {
 	bu_vls_printf(gedp->ged_result_str, "Error generating density buffer\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // Got through parsing, make a buffer and replace the existing density object
-    if (mater_clear(gedp) != GED_OK) {
-	return GED_ERROR;
+    if (mater_clear(gedp) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
 
     struct rt_binunif_internal *bip = NULL;
@@ -1153,7 +1153,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     if (ret != 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to export %s\n", GED_DB_DENSITY_OBJECT);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* create entire external form */
@@ -1168,7 +1168,7 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     /* make sure the database directory is initialized */
     if (gedp->dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
 	if (db_dirbuild(gedp->dbip)) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -1177,14 +1177,14 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Error while attempting to add new name (%s) to the database", GED_DB_DENSITY_OBJECT);
 	bu_free_external(&bin_ext);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* and write it to the database */
     if (db_put_external5(&bin_ext, dp, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "Error while adding new binary object (%s) to the database", GED_DB_DENSITY_OBJECT);
 	bu_free_external(&bin_ext);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_free_external(&bin_ext);
 
@@ -1196,14 +1196,14 @@ mater_set(struct ged *gedp, size_t argc, const char *argv[])
 	(void)ged_hide(gedp, 2, (const char **)av);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 static int
 _ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defined_materials, std::map<std::string, std::string> &listed_to_defined)
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     std::string mb(mbuff);
     std::istringstream ss(mb);
     std::string line;
@@ -1248,16 +1248,16 @@ _ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defi
 	}
 	if (!m1.length() || !m2.length()) {
 	    bu_vls_printf(gedp->ged_result_str, "%s -> %s: invalid specifier in mapping file", m1.c_str(), m2.c_str());
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	} else {
 	    // Have names, process
 	    if (listed_to_defined.find(m1) != listed_to_defined.end()) {
 		bu_vls_printf(gedp->ged_result_str, "%s is multiply defined in the mapping file", m1.c_str());
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 	    }
 	    if (defined_materials.find(m2) == defined_materials.end()) {
 		bu_vls_printf(gedp->ged_result_str, "%s is not known in the density file", m2.c_str());
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 	    }
 	    listed_to_defined.insert(std::pair<std::string, std::string>(m1, m2));
 	}
@@ -1281,13 +1281,13 @@ mater_try_densities_load(struct ged *gedp, struct analyze_densities **pa, std::s
 
     if (!bu_file_exists(fname, NULL)) {
 	bu_vls_printf(gedp->ged_result_str, "file %s not found", fname);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     ifile = bu_open_mapped_file(fname, "densities file");
     if (!ifile) {
 	bu_vls_printf(gedp->ged_result_str, "could not open file %s", fname);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     ibuff = (char *)(ifile->buf);
 
@@ -1428,7 +1428,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	// unless the database has density information.
 	dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
 	if (dp != RT_DIR_NULL) {
-	    if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != GED_OK) {
+	    if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != BRLCAD_OK) {
 		bu_vls_printf(gedp->ged_result_str, "No density information found and no density file specified, cannot proceed.");
 		goto ged_mater_mat_id_fail;
 	    }
@@ -1465,7 +1465,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 
 	mbuff = (char *)(mfile->buf);
 
-	if (_ged_read_msmap(gedp, mbuff, defined_materials, listed_to_defined) !=  GED_OK) {
+	if (_ged_read_msmap(gedp, mbuff, defined_materials, listed_to_defined) !=  BRLCAD_OK) {
 	    bu_vls_printf(gedp->ged_result_str, "file %s is not a valid mapping file, aborting", bu_vls_cstr(&mfilename));
 	    bu_close_mapped_file(mfile);
 	    goto ged_mater_mat_id_fail;
@@ -1537,7 +1537,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	bu_vls_free(&dfilename);
 	bu_vls_free(&mfilename);
 	analyze_densities_destroy(a);
-	return GED_OK;
+	return BRLCAD_OK;
     } else {
 	for (dp_it = ids.begin(); dp_it != ids.end(); dp_it++) {
 	    dp = *dp_it;
@@ -1598,7 +1598,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     bu_vls_free(&dfilename);
     bu_vls_free(&mfilename);
     analyze_densities_destroy(a);
-    return GED_OK;
+    return BRLCAD_OK;
 
 ged_mater_mat_id_fail:
     if (a) {
@@ -1607,7 +1607,7 @@ ged_mater_mat_id_fail:
     bu_vls_free(&msgs);
     bu_vls_free(&dfilename);
     bu_vls_free(&mfilename);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1618,7 +1618,7 @@ mater_density(struct ged *gedp, size_t argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (BU_STR_EQUAL(argv[1], "get")) {
@@ -1670,16 +1670,16 @@ mater_density(struct ged *gedp, size_t argc, const char *argv[])
 	argc--; argv++;
 	return mater_mat_id(gedp, argc, argv);
     }
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
 extern "C" int
 ged_mater_core(struct ged *gedp, int argc, const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1687,7 +1687,7 @@ ged_mater_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* The -s option allows us to do mater on an object even if the

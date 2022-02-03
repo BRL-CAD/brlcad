@@ -57,7 +57,7 @@ _view_cmd_aet(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] aet [vals]";
     const char *purpose_string = "get/set azimuth/elevation/twist of view";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     return ged_aet_core(gd->gedp, argc, argv);
@@ -70,7 +70,7 @@ _view_cmd_center(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] center [vals]";
     const char *purpose_string = "get/set view center";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     return ged_center_core(gd->gedp, argc, argv);
@@ -83,7 +83,7 @@ _view_cmd_eye(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] eye [vals]";
     const char *purpose_string = "get/set view eye point";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     return ged_eye_core(gd->gedp, argc, argv);
@@ -96,7 +96,7 @@ _view_cmd_faceplate(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] faceplate [vals]";
     const char *purpose_string = "manage faceplate view elements";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     return ged_faceplate_core(gd->gedp, argc, argv);
@@ -109,7 +109,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] independent <view> [0|1]";
     const char *purpose_string = "make a view independent (1) or part of the default view set (0)";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // We know we're the independent command - start processing args
@@ -118,7 +118,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     struct ged *gedp = gd->gedp;
     if (!argc) {
 	bu_vls_printf(gedp->ged_result_str, "no view specified\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct bview *v = NULL;
@@ -131,12 +131,12 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 
     if (!v) {
 	bu_vls_printf(gedp->ged_result_str, "view %s not found\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d\n", v->independent);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "1")) {
@@ -144,7 +144,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 	// Initialize local containers with current shared grps
 	struct bu_ptbl *sg = v->gv_db_grps;
 	if (!sg)
-	    return GED_OK;
+	    return BRLCAD_OK;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    struct bu_vls opath = BU_VLS_INIT_ZERO;
@@ -159,7 +159,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 	    ged_exec(gedp, 5, av);
 	    bu_vls_free(&opath);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "0")) {
@@ -174,11 +174,11 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 	    }
 	    bu_ptbl_reset(sg);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "invalid value supplied: %s (need 0 or 1)\n", argv[1]);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 int
@@ -188,7 +188,7 @@ _view_cmd_list(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] ";
     const char *purpose_string = "list available views";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct ged *gedp = gd->gedp;
@@ -201,7 +201,7 @@ _view_cmd_list(void *bs, int argc, const char **argv)
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -211,7 +211,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] lod [subcommand] [vals]";
     const char *purpose_string = "manage Level of Detail drawing settings";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct ged *gedp = gd->gedp;
@@ -223,9 +223,9 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			       "view lod curve_scale [factor]\n"
 			       "view lod bot_threshold [face_cnt]\n";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -242,18 +242,18 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     if (print_help) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gvp = gedp->ged_gvp;
     if (gvp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "no current view defined\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Print current state if no args are supplied */
@@ -263,88 +263,88 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", gvp->gv_s->point_scale);
 	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", gvp->gv_s->curve_scale);
 	bu_vls_printf(gedp->ged_result_str, "bot_threshold: %zd\n", gvp->gv_s->bot_threshold);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "enabled")) {
 	if (argc == 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (bu_str_true(argv[1])) {
 	    gvp->gv_s->adaptive_plot = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (bu_str_false(argv[1])) {
 	    gvp->gv_s->adaptive_plot = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "unknown argument to enabled: %s\n", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(argv[0], "redraw_on_zoom")) {
 	if (argc == 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->redraw_on_zoom);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (bu_str_true(argv[1])) {
 	    gvp->gv_s->redraw_on_zoom = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (bu_str_false(argv[1])) {
 	    gvp->gv_s->redraw_on_zoom = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "unknown argument to redraw_on_zoom: %s\n", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(argv[0], "point_scale")) {
 	if (argc == 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->point_scale);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
 	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&scale) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	gvp->gv_s->point_scale = scale;
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "curve_scale")) {
 	if (argc == 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->curve_scale);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	fastf_t scale = 1.0;
 	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&scale) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to curve_scale: %s\n", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	gvp->gv_s->curve_scale = scale;
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "bot_threshold")) {
 	if (argc == 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%zd\n", gvp->gv_s->bot_threshold);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	int bcnt = 0;
 	if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&bcnt) != 1 || bcnt < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown argument to bot_threshold: %s\n", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	gvp->gv_s->bot_threshold = bcnt;
-	return GED_OK;
+	return BRLCAD_OK;
 
     }
 
     bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n", argv[0]);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 int
@@ -354,7 +354,7 @@ _view_cmd_quat(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] quat [vals]";
     const char *purpose_string = "get/set quaternion of view";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     return ged_quat_core(gd->gedp, argc, argv);
@@ -367,7 +367,7 @@ _view_cmd_selections(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] selections [options] [args]";
     const char *purpose_string = "manipulate view selections";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -375,12 +375,12 @@ _view_cmd_selections(void *bs, int argc, const char **argv)
     struct bview *v = gd->gedp->ged_gvp;
     if (!v) {
 	bu_vls_printf(gd->gedp->ged_result_str, "no current view selected\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gd->gedp->ged_result_str, "%zd", BU_PTBL_LEN(v->gv_s->gv_selected));
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -390,7 +390,7 @@ _view_cmd_size(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] size [vals]";
     const char *purpose_string = "get/set view size";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     return ged_size_core(gd->gedp, argc, argv);
@@ -403,7 +403,7 @@ _view_cmd_snap(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] snap [vals]";
     const char *purpose_string = "snap to view elements";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     return ged_view_snap(gd->gedp, argc, argv);
@@ -416,7 +416,7 @@ _view_cmd_ypr(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] ypr [vals]";
     const char *purpose_string = "get/set yaw/pitch/roll of view";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     return ged_ypr_core(gd->gedp, argc, argv);
@@ -447,7 +447,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     const char *usage_string = "view [options] vZ [opts] [val|x y z]";
     const char *purpose_string = "get/set/calc view data vZ value";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
-	return GED_OK;
+	return BRLCAD_OK;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -469,7 +469,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 
     if (print_help || (calc_near.set && calc_far.set)) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage_string);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     int calc_mode = -1;
@@ -519,11 +519,11 @@ struct bv_scene_obj *wobj = NULL;
 	    if (wobj) {
 		fastf_t vZ = bv_vZ_calc(wobj, gedp->ged_gvp, calc_mode);
 		bu_vls_sprintf(gedp->ged_result_str, "%0.15f", vZ);
-		return GED_OK;
+		return BRLCAD_OK;
 	    } else {
 		bu_vls_sprintf(gedp->ged_result_str, "View object %s not found", bu_vls_cstr(&calc_target));
 		bu_vls_free(&calc_target);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	} else {
 	    // No specific view object to use - check all drawn
@@ -582,13 +582,13 @@ struct bv_scene_obj *wobj = NULL;
 		bu_vls_sprintf(gedp->ged_result_str, "%0.15f", vZ);
 	    }
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
 
     if (!argc) {
 	bu_vls_printf(gedp->ged_result_str, "%g\n", gedp->ged_gvp->gv_data_vZ);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // First, see if it's a direct low level view space Z value
@@ -596,7 +596,7 @@ struct bv_scene_obj *wobj = NULL;
 	fastf_t val;
 	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) == 1) {
 	    gedp->ged_gvp->gv_data_vZ = val;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
@@ -606,16 +606,16 @@ struct bv_scene_obj *wobj = NULL;
 	int acnt = bu_opt_vect_t(NULL, argc, (const char **)argv, (void *)&mpt);
 	if (acnt != 1 && acnt != 3) {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid argument %s\n", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	vect_t vpt;
 	MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, mpt);
 	gedp->ged_gvp->gv_data_vZ = vpt[Z];
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage_string);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 int
 _view_cmd_width(void *ds, int argc, const char **argv)
@@ -623,7 +623,7 @@ _view_cmd_width(void *ds, int argc, const char **argv)
     const char *usage_string = "view [options] width";
     const char *purpose_string = "report current width in pixels of view.";
     if (_view_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -632,7 +632,7 @@ _view_cmd_width(void *ds, int argc, const char **argv)
     struct ged *gedp = gd->gedp;
     struct bview *v = gedp->ged_gvp;
     bu_vls_printf(gd->gedp->ged_result_str, "%d\n", v->gv_width);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -641,7 +641,7 @@ _view_cmd_height(void *ds, int argc, const char **argv)
     const char *usage_string = "view [options] height";
     const char *purpose_string = "report current height in pixels of view.";
     if (_view_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -650,7 +650,7 @@ _view_cmd_height(void *ds, int argc, const char **argv)
     struct ged *gedp = gd->gedp;
     struct bview *v = gedp->ged_gvp;
     bu_vls_printf(gd->gedp->ged_result_str, "%d\n", v->gv_height);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -687,7 +687,7 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* initialize result */
@@ -724,19 +724,19 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    _ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, 0, NULL);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     // Must have a subcommand
     if (cmd_pos == -1) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
 	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_view_cmds, "view", "[options] subcommand [args]", &gd, 0, NULL);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no view current in GED");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int ret;
@@ -746,7 +746,7 @@ ged_view_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 int
@@ -759,9 +759,9 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
 
     static const char *usage = "quat|ypr|aet|center|eye|size [args]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -769,12 +769,12 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (6 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(argv[1], "quat")) {
@@ -814,7 +814,7 @@ ged_view_func_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

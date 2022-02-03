@@ -250,7 +250,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
     int topc;
 
     if (gedp->dbip == DBI_NULL)
-	return GED_OK;
+	return BRLCAD_OK;
 
     struct bu_list *vlfree = &RTG.rtg_vlfree;
 
@@ -313,7 +313,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 	BU_LIST_DEQUEUE(&jp->l);
 	bu_free((void *)jp, "Artic Joint");
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -331,7 +331,7 @@ joint_debug(struct ged *gedp,
     bu_vls_printb(gedp->ged_result_str, "J_DEBUG", J_DEBUG, J_DEBUG_FORMAT);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -361,7 +361,7 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
 	}
     }
 
-    return bad ? GED_ERROR : GED_OK;
+    return bad ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 
@@ -379,7 +379,7 @@ joint_usage(struct ged *gedp, int argc, const char *argv[], struct funtab *funct
 	for (ftp = functions+1; ftp->ft_name; ftp++) {
 	    bu_vls_printf(gedp->ged_result_str, "%s%s %s\n\t (%s)\n", functions->ft_name, ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
     return helpcomm(gedp, argc, argv, functions);
 }
@@ -397,7 +397,7 @@ joint_command_tab(struct ged *gedp, int argc, const char *argv[], struct funtab 
 	}
 	vls_col_eol(gedp->ged_result_str);
 	bu_vls_printf(gedp->ged_result_str, "\n");
-	return GED_OK;
+	return BRLCAD_OK;
     }
     return helpcomm(gedp, argc, argv, functions);
 }
@@ -410,10 +410,10 @@ joint_help_commands(struct ged *gedp, int argc, const char *argv[])
 
     status = joint_command_tab(gedp, argc, argv, &joint_tab[0]);
 
-    if (status == GED_OK)
-	return GED_OK;
+    if (status == BRLCAD_OK)
+	return BRLCAD_OK;
     else
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 }
 
 
@@ -424,10 +424,10 @@ joint_help(struct ged *gedp, int argc, const char *argv[])
 
     status = joint_usage(gedp, argc, argv, &joint_tab[0]);
 
-    if (status == GED_OK)
-	return GED_OK;
+    if (status == BRLCAD_OK)
+	return BRLCAD_OK;
     else
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 }
 
 
@@ -663,7 +663,7 @@ joint_unload(struct ged *gedp, int argc, const char *argv[])
 
     if (gedp->dbip == DBI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc > 1) {
@@ -697,7 +697,7 @@ joint_unload(struct ged *gedp, int argc, const char *argv[])
 		      joints, holds);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2309,7 +2309,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 
     if (gedp->dbip == DBI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_optind = 1;
@@ -2427,7 +2427,7 @@ joint_load(struct ged *gedp, int argc, const char *argv[])
 	}
     }
     if (!no_mesh) (void) joint_mesh(gedp, 0, 0);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2440,7 +2440,7 @@ joint_save(struct ged *gedp, int argc, const char *argv[])
 
     if (gedp->dbip == DBI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     --argc;
@@ -2448,12 +2448,12 @@ joint_save(struct ged *gedp, int argc, const char *argv[])
 
     if (argc <1) {
 	bu_vls_printf(gedp->ged_result_str, "joint save: missing file name");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     fop = fopen(*argv, "wb");
     if (!fop) {
 	bu_vls_printf(gedp->ged_result_str, "joint save: unable to open '%s' for writing.\n", *argv);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     fprintf(fop, "# joints and constraints for '%s'\n",
 	    gedp->dbip->dbi_title);
@@ -2512,7 +2512,7 @@ joint_save(struct ged *gedp, int argc, const char *argv[])
 	fprintf(fop, "};\n");
     }
     fclose(fop);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2551,7 +2551,7 @@ joint_accept(struct ged *gedp, int argc, const char *argv[])
 	}
     }
     if (!no_mesh) joint_mesh(gedp, 0, 0);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2592,7 +2592,7 @@ joint_reject(struct ged *gedp, int argc, const char *argv[])
 	joint_adjust(gedp, jp);
     }
     if (!no_mesh) joint_mesh(gedp, 0, 0);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3267,7 +3267,7 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
     bu_free((void *)myargv, "param pointers");
 
     if (found >= 0)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     /* solve the whole system of constraints. */
 
@@ -3351,7 +3351,7 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
 	/* refreshing the screen */
 	ged_refresh_cb(gedp);
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3374,7 +3374,7 @@ joint_hold(struct ged *gedp, int argc, const char *argv[])
 	hold_clear_flags(hp);
 	print_hold(gedp, hp);
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3388,7 +3388,7 @@ joint_list(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
     }
     vls_col_eol(gedp->ged_result_str);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3400,7 +3400,7 @@ joint_move(struct ged *gedp, int argc, const char *argv[])
     double tmp;
 
     if (gedp->dbip == DBI_NULL)
-	return GED_OK;
+	return BRLCAD_OK;
 
     /* find the joint. */
 
@@ -3410,7 +3410,7 @@ joint_move(struct ged *gedp, int argc, const char *argv[])
     jp = joint_lookup(*argv);
     if (!jp) {
 	bu_vls_printf(gedp->ged_result_str, "joint move: %s not found\n", *argv);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     argv++;
@@ -3470,7 +3470,7 @@ joint_move(struct ged *gedp, int argc, const char *argv[])
     /* refreshing the screen */
     ged_refresh_cb(gedp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3491,7 +3491,7 @@ joint_cmd(struct ged *gedp,
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: joint {command} [command_options]\n\n");
 	(void)joint_usage(gedp, argc, argv, functions);
-	return GED_HELP;	/* No command entered */
+	return BRLCAD_HELP;	/* No command entered */
     }
 
     for (ftp = &functions[1]; ftp->ft_name; ftp++) {
@@ -3504,22 +3504,22 @@ joint_cmd(struct ged *gedp,
 	     */
 
 	    switch (ftp->ft_func(gedp, argc, argv)) {
-		case GED_OK:
-		    return GED_OK;
-		case GED_ERROR:
-		    return GED_ERROR;
+		case BRLCAD_OK:
+		    return BRLCAD_OK;
+		case BRLCAD_ERROR:
+		    return BRLCAD_ERROR;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "joint_cmd: Invalid return from %s\n", ftp->ft_name);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 	    }
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s%s %s\n\t(%s)\n", functions[0].ft_name, ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str, "%s%s : no such command, type '%s?' for help\n", functions[0].ft_name, argv[0], functions[0].ft_name);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -3528,8 +3528,8 @@ ged_joint_core(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3540,10 +3540,10 @@ ged_joint_core(struct ged *gedp, int argc, const char *argv[])
 
     status = joint_cmd(gedp, argc, argv, &joint_tab[0]);
 
-    if (status == GED_OK)
-	return GED_OK;
+    if (status == BRLCAD_OK)
+	return BRLCAD_OK;
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

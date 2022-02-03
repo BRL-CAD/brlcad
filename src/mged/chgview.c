@@ -132,7 +132,7 @@ cmd_center(ClientData UNUSED(clientData),
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != GED_OK) {
+    if (ret != BRLCAD_OK) {
 	return TCL_ERROR;
     }
 
@@ -189,7 +189,7 @@ cmd_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	view_state->vs_gvp->gv_a_scale = 1.0 - view_state->vs_gvp->gv_scale / view_state->vs_gvp->gv_i_scale;
 
 	if (view_state->vs_gvp->gv_a_scale < 0.0) {
@@ -393,12 +393,12 @@ edit_com(int argc,
 
 	ret = ged_draw(GEDP, new_argc, (const char **)new_argv);
 
-	if (ret & GED_ERROR) {
+	if (ret & BRLCAD_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(GEDP->ged_result_str));
 	    bu_vls_free(&vls);
 	    bu_free((char *)new_argv, "edit_com new_argv");
 	    return ret;
-	} else if (ret & GED_HELP) {
+	} else if (ret & BRLCAD_HELP) {
 	    bu_log("%s\n", bu_vls_addr(GEDP->ged_result_str));
 	    bu_vls_free(&vls);
 	    bu_free((char *)new_argv, "edit_com new_argv");
@@ -423,10 +423,10 @@ edit_com(int argc,
 		break;
 	}
 
-	if (ret == GED_ERROR) {
+	if (ret == BRLCAD_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(GEDP->ged_result_str));
 	    return TCL_ERROR;
-	} else if (ret == GED_HELP) {
+	} else if (ret == BRLCAD_HELP) {
 	    bu_log("%s\n", bu_vls_addr(GEDP->ged_result_str));
 	    return TCL_OK;
 	}
@@ -2610,7 +2610,7 @@ mged_zoom(double val)
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(INTERP, &ds);
 
-    if (ret != GED_OK) {
+    if (ret != BRLCAD_OK) {
 	return TCL_ERROR;
     }
 
@@ -2737,7 +2737,7 @@ cmd_setview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != GED_OK) {
+    if (ret != BRLCAD_OK) {
 	return TCL_ERROR;
     }
 
@@ -2777,7 +2777,7 @@ f_slewview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != GED_OK) {
+    if (ret != BRLCAD_OK) {
 	return TCL_ERROR;
     }
 
@@ -3463,7 +3463,7 @@ cmd_mrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	}
 
 	/* We're only interested in getting rmat set */
-	if (ged_rot_args(GEDP, argc, (const char **)argv, &coord, rmat) != GED_OK) {
+	if (ged_rot_args(GEDP, argc, (const char **)argv, &coord, rmat) != BRLCAD_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
@@ -3481,7 +3481,7 @@ cmd_mrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    return TCL_ERROR;
 	}
 
@@ -3599,7 +3599,7 @@ cmd_vrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret != GED_OK) {
+    if (ret != BRLCAD_OK) {
 	return TCL_ERROR;
     }
 
@@ -3624,7 +3624,7 @@ cmd_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	char coord;
 	mat_t rmat;
 
-	if (ged_rot_args(GEDP, argc, (const char **)argv, &coord, rmat) != GED_OK) {
+	if (ged_rot_args(GEDP, argc, (const char **)argv, &coord, rmat) != BRLCAD_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
@@ -3642,7 +3642,7 @@ cmd_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    return TCL_ERROR;
 	}
 
@@ -3667,7 +3667,7 @@ cmd_arot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	mged_variables->mv_transform == 'e') {
 	mat_t rmat;
 
-	if (ged_arot_args(GEDP, argc, (const char **)argv, rmat) != GED_OK) {
+	if (ged_arot_args(GEDP, argc, (const char **)argv, rmat) != BRLCAD_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
@@ -3685,7 +3685,7 @@ cmd_arot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    return TCL_ERROR;
 	}
 
@@ -3825,7 +3825,7 @@ cmd_tra(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	char coord;
 	vect_t tvec;
 
-	if (ged_tra_args(GEDP, argc, (const char **)argv, &coord, tvec) != GED_OK) {
+	if (ged_tra_args(GEDP, argc, (const char **)argv, &coord, tvec) != BRLCAD_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
@@ -3843,7 +3843,7 @@ cmd_tra(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    return TCL_ERROR;
 	}
 
@@ -4006,7 +4006,7 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	int save_edobj;
 	int ret;
 
-	if (ged_scale_args(GEDP, argc, (const char **)argv, &sf1, &sf2, &sf3) != GED_OK) {
+	if (ged_scale_args(GEDP, argc, (const char **)argv, &sf1, &sf2, &sf3) != BRLCAD_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
@@ -4063,7 +4063,7 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    return TCL_ERROR;
 	}
 

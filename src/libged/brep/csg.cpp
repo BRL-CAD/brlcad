@@ -680,7 +680,7 @@ brep_csg_conversion_tree(struct ged *gedp, struct bu_vls *log, struct bu_attribu
 		} else {
 		    bu_vls_printf(log, "Cannot find %s.\n", oldname);
 		    newtree = NULL;
-		    ret |= GED_ERROR;
+		    ret |= BRLCAD_ERROR;
 		}
 	    } else {
 		bu_vls_printf(log, "%s already exists.\n", bu_vls_addr(&tmpname));
@@ -733,7 +733,7 @@ comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set 
 
     union tree *newtree = new_internal->tree;
 
-    if (brep_csg_conversion_tree(gedp, log, ito, oldtree, newtree, verify) & GED_ERROR)
+    if (brep_csg_conversion_tree(gedp, log, ito, oldtree, newtree, verify) & BRLCAD_ERROR)
 	bu_log("Error (brep/csg.cpp:%d) brep_csg_conversion_tree\n", __LINE__);
 
     (void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
@@ -749,12 +749,12 @@ int _ged_brep_to_csg(struct ged *gedp, const char *dp_name, int verify)
     struct bu_vls log = BU_VLS_INIT_ZERO;
     struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) return GED_ERROR;
+    if (dp == RT_DIR_NULL) return BRLCAD_ERROR;
 
     if (dp->d_flags & RT_DIR_COMB) {
-	ret = comb_to_csg(gedp, &log, &ito, dp, verify) ? GED_ERROR : GED_OK;
+	ret = comb_to_csg(gedp, &log, &ito, dp, verify) ? BRLCAD_ERROR : BRLCAD_OK;
     } else {
-	ret = _obj_brep_to_csg(gedp, &log, &ito, dp, verify, NULL) ? GED_ERROR : GED_OK;
+	ret = _obj_brep_to_csg(gedp, &log, &ito, dp, verify, NULL) ? BRLCAD_ERROR : BRLCAD_OK;
     }
 
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&log));

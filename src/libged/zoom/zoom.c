@@ -33,7 +33,7 @@ zoom(struct ged *gedp, double sf)
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
     bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -43,8 +43,8 @@ ged_zoom_core(struct ged *gedp, int argc, const char *argv[])
     int ret;
     double sf = 1.0;
 
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -52,14 +52,14 @@ ged_zoom_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s scale_factor", argv[0]);
-	return (argc == 1) ? GED_HELP : GED_ERROR;
+	return (argc == 1) ? BRLCAD_HELP : BRLCAD_ERROR;
     }
 
     /* get the scale factor */
     ret = sscanf(argv[1], "%lf", &sf);
     if (ret != 1 || sf < SMALL_FASTF || sf > INFINITY) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad scale factor [%s]", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return zoom(gedp, sf);

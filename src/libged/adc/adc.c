@@ -117,16 +117,16 @@ ged_adc_core(struct ged *gedp,
     int incr_flag;
     int i;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc < 2 || 6 < argc) {
 	adc_usage(gedp->ged_result_str, argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     command = (char *)argv[0];
@@ -134,7 +134,7 @@ ged_adc_core(struct ged *gedp,
     if (BU_STR_EQUAL(argv[1], "-i")) {
 	if (argc < 5) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: -i option specified without an op-val pair", command);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	incr_flag = 1;
@@ -151,7 +151,7 @@ ged_adc_core(struct ged *gedp,
     for (i = 0; i < argc; ++i) {
 	if (sscanf(argp[i], "%lf", &scanval) != 1) {
 	    adc_usage(gedp->ged_result_str, command);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	user_pt[i] = scanval;
     }
@@ -159,7 +159,7 @@ ged_adc_core(struct ged *gedp,
     if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_adc.draw);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
@@ -168,17 +168,17 @@ ged_adc_core(struct ged *gedp,
 	    else
 		gedp->ged_gvp->gv_s->gv_adc.draw = 0;
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s draw' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "a1")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_adc.a1);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_a1) {
 		if (incr_flag)
@@ -189,17 +189,17 @@ ged_adc_core(struct ged *gedp,
 		gedp->ged_gvp->gv_s->gv_adc.dv_a1 = (1.0 - (gedp->ged_gvp->gv_s->gv_adc.a1 / 45.0)) * GED_MAX;
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s a1' command accepts only 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "a2")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_adc.a2);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_a2) {
 		if (incr_flag)
@@ -210,17 +210,17 @@ ged_adc_core(struct ged *gedp,
 		gedp->ged_gvp->gv_s->gv_adc.dv_a2 = (1.0 - (gedp->ged_gvp->gv_s->gv_adc.a2 / 45.0)) * GED_MAX;
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s a2' command accepts only 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "dst")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_adc.dst * gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_dst) {
 		if (incr_flag)
@@ -231,17 +231,17 @@ ged_adc_core(struct ged *gedp,
 		gedp->ged_gvp->gv_s->gv_adc.dv_dist = (gedp->ged_gvp->gv_s->gv_adc.dst / M_SQRT1_2 - 1.0) * GED_MAX;
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s dst' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "odst")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_adc.dv_dist);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_dst) {
 		if (incr_flag)
@@ -252,11 +252,11 @@ ged_adc_core(struct ged *gedp,
 		gedp->ged_gvp->gv_s->gv_adc.dst = (gedp->ged_gvp->gv_s->gv_adc.dv_dist * INV_GED + 1.0) * M_SQRT1_2;
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s odst' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "dh")) {
@@ -267,11 +267,11 @@ ged_adc_core(struct ged *gedp,
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_view);
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s dh' command requires 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "dv")) {
@@ -282,11 +282,11 @@ ged_adc_core(struct ged *gedp,
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_view);
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s dv' command requires 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "hv")) {
@@ -294,7 +294,7 @@ ged_adc_core(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "%g %g",
 			  gedp->ged_gvp->gv_s->gv_adc.pos_grid[X] * gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local,
 			  gedp->ged_gvp->gv_s->gv_adc.pos_grid[Y] * gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 2) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
 		if (incr_flag) {
@@ -310,11 +310,11 @@ ged_adc_core(struct ged *gedp,
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_model);
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s hv' command requires 0 or 2 arguments\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "dx")) {
@@ -325,11 +325,11 @@ ged_adc_core(struct ged *gedp,
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s dx' command requires 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "dy")) {
@@ -340,11 +340,11 @@ ged_adc_core(struct ged *gedp,
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s dy' command requires 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "dz")) {
@@ -355,18 +355,18 @@ ged_adc_core(struct ged *gedp,
 		adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s dz' command requires 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "xyz")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->dbip->dbi_base2local);
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 3) {
 	    VSCALE(user_pt, user_pt, gedp->dbip->dbi_local2base);
 
@@ -379,17 +379,17 @@ ged_adc_core(struct ged *gedp,
 	    adc_model_to_adc_view(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view, GED_MAX);
 	    adc_view_to_adc_grid(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_model2view);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s xyz' command requires 0 or 3 arguments\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "x")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_adc.dv_x);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
 		if (incr_flag) {
@@ -404,17 +404,17 @@ ged_adc_core(struct ged *gedp,
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_view);
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s x' command requires 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "y")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_adc.dv_y);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_s->gv_adc.anchor_pos) {
 		if (incr_flag) {
@@ -429,39 +429,39 @@ ged_adc_core(struct ged *gedp,
 		MAT4X3PNT(gedp->ged_gvp->gv_s->gv_adc.pos_model, gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_s->gv_adc.pos_view);
 	    }
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s y' command requires 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchor_pos")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_adc.anchor_pos);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i < 0 || 2 < i) {
 		bu_vls_printf(gedp->ged_result_str, "The '%d anchor_pos' parameter accepts values of 0, 1, or 2.", i);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    gedp->ged_gvp->gv_s->gv_adc.anchor_pos = i;
 	    ged_calc_adc_pos(gedp->ged_gvp);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s anchor_pos' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchor_a1")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_adc.anchor_a1);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
@@ -472,11 +472,11 @@ ged_adc_core(struct ged *gedp,
 
 	    ged_calc_adc_a1(gedp->ged_gvp);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s anchor_a1' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_a1")) {
@@ -484,7 +484,7 @@ ged_adc_core(struct ged *gedp,
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_a1, gedp->dbip->dbi_base2local);
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 3) {
 	    VSCALE(user_pt, user_pt, gedp->dbip->dbi_local2base);
 
@@ -496,18 +496,18 @@ ged_adc_core(struct ged *gedp,
 
 	    ged_calc_adc_a1(gedp->ged_gvp);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s anchorpoint_a1' command accepts 0 or 3 arguments\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchor_a2")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_adc.anchor_a2);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
@@ -518,11 +518,11 @@ ged_adc_core(struct ged *gedp,
 
 	    ged_calc_adc_a2(gedp->ged_gvp);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s anchor_a2' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_a2")) {
@@ -531,7 +531,7 @@ ged_adc_core(struct ged *gedp,
 
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 3) {
 	    VSCALE(user_pt, user_pt, gedp->dbip->dbi_local2base);
 
@@ -543,18 +543,18 @@ ged_adc_core(struct ged *gedp,
 
 	    ged_calc_adc_a2(gedp->ged_gvp);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s anchorpoint_a2' command accepts 0 or 3 arguments\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchor_dst")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_adc.anchor_dst);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
@@ -565,11 +565,11 @@ ged_adc_core(struct ged *gedp,
 
 	    ged_calc_adc_dst(gedp->ged_gvp);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s anchor_dst' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_dst")) {
@@ -577,7 +577,7 @@ ged_adc_core(struct ged *gedp,
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_s->gv_adc.anchor_pt_dst, gedp->dbip->dbi_base2local);
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	} else if (argc == 3) {
 	    VSCALE(user_pt, user_pt, gedp->dbip->dbi_local2base);
 
@@ -589,38 +589,38 @@ ged_adc_core(struct ged *gedp,
 
 	    ged_calc_adc_dst(gedp->ged_gvp);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s anchorpoint_dst' command accepts 0 or 3 arguments\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "reset")) {
 	if (argc == 0) {
 	    adc_reset(&(gedp->ged_gvp->gv_s->gv_adc), gedp->ged_gvp->gv_view2model, gedp->ged_gvp->gv_model2view);
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s reset' command accepts no arguments\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "vars")) {
 	adc_vls_print(gedp->ged_gvp, gedp->dbip->dbi_base2local, gedp->ged_result_str);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(parameter, "help")) {
 	adc_usage(gedp->ged_result_str, command);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", command, parameter);
     adc_usage(gedp->ged_result_str, command);
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

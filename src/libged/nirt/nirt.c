@@ -93,7 +93,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     /* for bu_fgets space trimming */
     struct bu_vls v = BU_VLS_INIT_ZERO;
 
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -101,7 +101,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     nirt = bu_dir(nirtcmd, MAXPATHLEN, BU_DIR_BIN, argv[0], NULL);
     if (!nirt) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: Unable to find 'nirt' plugin.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* look for help */
@@ -109,11 +109,11 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	if (BU_STR_EQUAL(argv[i], "-h") || BU_STR_EQUAL(argv[i], "-?")) {
 	    /* FIXME: provide proper usage */
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s [options]\n", argv[0]);
-	    return GED_HELP;
+	    return BRLCAD_HELP;
 	}
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
     args = argc + 20 + 2 + ged_who_argc(gedp);
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
@@ -132,7 +132,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     /* Calculate point from which to fire ray */
     if (!use_input_orig) {
@@ -289,7 +289,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	bu_vls_printf(gedp->ged_result_str, "\n");
 	bu_free(gd_rt_cmd, "free gd_rt_cmd");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fp_in = bu_process_open(p, BU_PROCESS_STDIN);
@@ -421,7 +421,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
     gd_rt_cmd = NULL;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -440,10 +440,10 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
     char **av;
     static const char *usage = "vnirt options vX vY";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -451,12 +451,12 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /*
@@ -469,7 +469,7 @@ ged_vnirt_core(struct ged *gedp, int argc, const char *argv[])
      */
     if (sscanf(argv[argc-2], "%lf", &scan[X]) != 1 ||
 	sscanf(argv[argc-1], "%lf", &scan[Y]) != 1) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     scan[Z] = DG_GED_MAX;
     argc -= 2;

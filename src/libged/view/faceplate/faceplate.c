@@ -76,7 +76,7 @@ _fp_cmd_center_dot(void *ds, int argc, const char **argv)
     const char *usage_string = "faceplate [options] center_dot [0|1] [color r/g/b]";
     const char *purpose_string = "Enable/disable center dot and set its color.";
     if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -93,26 +93,26 @@ _fp_cmd_center_dot(void *ds, int argc, const char **argv)
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_center_dot.gos_draw);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
 	    v->gv_s->gv_center_dot.gos_draw = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
 	    v->gv_s->gv_center_dot.gos_draw = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc > 1) {
 	if (!BU_STR_EQUAL("color", argv[0])) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand %s\n", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	argc--; argv++;
 	struct bu_color c;
@@ -122,12 +122,12 @@ _fp_cmd_center_dot(void *ds, int argc, const char **argv)
 	}
 	int *cls = (int *)(v->gv_s->gv_center_dot.gos_line_color);
 	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "invalid command\n");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -136,7 +136,7 @@ _fp_cmd_fps(void *ds, int argc, const char **argv)
     const char *usage_string = "faceplate [options] fps [0|1]";
     const char *purpose_string = "Enable/disable frames-per-second";
     if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -153,25 +153,25 @@ _fp_cmd_fps(void *ds, int argc, const char **argv)
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_center_dot.gos_draw);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
 	    v->gv_s->gv_fps = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
 	    v->gv_s->gv_fps = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str, "invalid command\n");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -180,7 +180,7 @@ _fp_cmd_fb(void *ds, int argc, const char **argv)
     const char *usage_string = "faceplate [options] fb [0|1|2]";
     const char *purpose_string = "Report/set framebuffer mode";
     if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -191,29 +191,29 @@ _fp_cmd_fb(void *ds, int argc, const char **argv)
 
     if (!argc) {
 	bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_fb_mode);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("2", argv[0])) {
 	    v->gv_s->gv_fb_mode = 2;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("1", argv[0])) {
 	    v->gv_s->gv_fb_mode = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
 	    v->gv_s->gv_fb_mode = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0, 1 and 2\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str, "invalid command\n");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -222,7 +222,7 @@ _fp_cmd_scale(void *ds, int argc, const char **argv)
     const char *usage_string = "faceplate [options] scale [0|1] [color r/g/b]";
     const char *purpose_string = "Enable/disable scale and set its color.";
     if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -239,26 +239,26 @@ _fp_cmd_scale(void *ds, int argc, const char **argv)
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_scale.gos_draw);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
 	    v->gv_s->gv_view_scale.gos_draw = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
 	    v->gv_s->gv_view_scale.gos_draw = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc > 1) {
 	if (!BU_STR_EQUAL("color", argv[0])) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand %s\n", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	argc--; argv++;
 	struct bu_color c;
@@ -268,12 +268,12 @@ _fp_cmd_scale(void *ds, int argc, const char **argv)
 	}
 	int *cls = (int *)(v->gv_s->gv_view_scale.gos_line_color);
 	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "invalid command\n");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -282,7 +282,7 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
     const char *usage_string = "faceplate [options] params [0|1] [color r/g/b]";
     const char *purpose_string = "Enable/disable params and set its color.";
     if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     argc--; argv++;
@@ -299,26 +299,26 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.gos_draw);
 	}
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc == 1) {
 	if (BU_STR_EQUAL("1", argv[0])) {
 	    v->gv_s->gv_view_params.gos_draw = 1;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL("0", argv[0])) {
 	    v->gv_s->gv_view_params.gos_draw = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc > 1) {
 	if (!BU_STR_EQUAL("color", argv[0])) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand %s\n", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	argc--; argv++;
 	struct bu_color c;
@@ -328,12 +328,12 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 	}
 	int *cls = (int *)(v->gv_s->gv_view_params.gos_text_color);
 	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "invalid command\n");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 const struct bu_cmdtab _fp_cmds[] = {
@@ -360,7 +360,7 @@ ged_faceplate_core(struct ged *gedp, int argc, const char *argv[])
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* initialize result */
@@ -382,12 +382,12 @@ ged_faceplate_core(struct ged *gedp, int argc, const char *argv[])
     if (!ac || help) {
 	_ged_subcmd_help(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_fp_cmds,
 	       	"view faceplate", "[options] subcommand [args]", &gd, 0, NULL);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (!gedp->ged_gvp) {
 	bu_vls_printf(gedp->ged_result_str, ": no current view set");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     int ret;
@@ -397,7 +397,7 @@ ged_faceplate_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 /*

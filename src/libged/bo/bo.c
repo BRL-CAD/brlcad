@@ -49,9 +49,9 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
     const char *argv0;
     static const char *usage = "{-i major_type minor_type | -o} dest source";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -61,13 +61,13 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* check that we are using a version 5 database */
     if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "This is an older database version.\nIt does not support binary objects.Use \"dbupgrade\" to upgrade this database to the current version.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_optind = 1;		/* re-init bu_getopt() */
@@ -82,14 +82,14 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 
 	}
     }
 
     if (input_mode + output_mode != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     argc -= bu_optind;
@@ -97,7 +97,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
     if ((input_mode && argc != 4) || (output_mode && argc != 2)) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
@@ -106,7 +106,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (argv[1][1] != '\0') {
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    switch ((int)argv[1][0]) {
@@ -142,11 +142,11 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 		    break;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 	    }
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Unrecognized major type: %s", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* skip past major_type and minor_type */
@@ -155,11 +155,11 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (minor_type == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	obj_name = (char *)*argv;
-	GED_CHECK_EXISTS(gedp, obj_name, LOOKUP_QUIET, GED_ERROR);
+	GED_CHECK_EXISTS(gedp, obj_name, LOOKUP_QUIET, BRLCAD_ERROR);
 
 	argc--;
 	argv++;
@@ -169,7 +169,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	/* make a binunif of the entire file */
 	if (rt_mk_binunif (gedp->ged_wdbp, obj_name, file_name, minor_type, 0)) {
 	    bu_vls_printf(gedp->ged_result_str, "Error creating %s", obj_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
     } else if (output_mode) {
@@ -184,29 +184,29 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
 	dp = db_lookup(gedp->dbip, obj_name, LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (!(dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a binary object", obj_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (dp->d_major_type != DB5_MAJORTYPE_BINARY_UNIF) {
 	    bu_vls_printf(gedp->ged_result_str, "source must be a uniform binary object");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	fp = fopen(file_name, "w+b");
 	if (fp == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: cannot open file %s for writing", file_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL,
 			       &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Error reading %s from database", dp->d_namep);
 	    fclose(fp);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	RT_CK_DB_INTERNAL(&intern);
@@ -216,7 +216,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s has no contents", obj_name);
 	    fclose(fp);
 	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (fwrite(bip->u.int8, bip->count * db5_type_sizeof_h_binu(bip->type),
@@ -224,7 +224,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "Error writing contents to file");
 	    fclose(fp);
 	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	fclose(fp);
@@ -232,10 +232,10 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

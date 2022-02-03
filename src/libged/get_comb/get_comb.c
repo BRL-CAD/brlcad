@@ -69,9 +69,9 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
     size_t actual_count;
     static const char *usage = "comb";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -79,12 +79,12 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
@@ -92,12 +92,12 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a combination, so cannot be edited this way\n", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -106,7 +106,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    db_non_union_push(comb->tree, &rt_uniresource);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 
@@ -158,7 +158,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 		    break;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "\nIllegal op code in tree\n");
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 	    }
 
 	    bu_vls_printf(gedp->ged_result_str, " %c %s\t", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
@@ -185,7 +185,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 		      gedp->ged_wdbp->wdb_los_default);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

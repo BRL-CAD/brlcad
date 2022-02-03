@@ -52,10 +52,10 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
     int pflag = 0;
     double vminz = -1000.0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -72,9 +72,9 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    if (botip != (struct rt_bot_internal *)NULL)
 		break;
 
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) & GED_ERROR) {
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) & BRLCAD_ERROR) {
 		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -82,7 +82,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bu_optarg);
 		rt_db_free_internal(&intern);
 
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    botip = (struct rt_bot_internal *)intern.idb_ptr;
@@ -104,7 +104,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -113,7 +113,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 4 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 4) {
@@ -121,7 +121,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    sscanf(argv[2], "%lf", &vy) != 1 ||
 	    sscanf(argv[3], "%lf", &vr) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (botip != (struct rt_bot_internal *)NULL) {
@@ -143,7 +143,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    sscanf(argv[3], "%lf", &vw) != 1 ||
 	    sscanf(argv[4], "%lf", &vh) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (botip != (struct rt_bot_internal *)NULL) {
@@ -181,10 +181,10 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
     int pflag = 0;
     double vminz = -1000.0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -201,9 +201,9 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 	    if (botip != (struct rt_bot_internal *)NULL)
 		break;
 
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) == GED_ERROR) {
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) == BRLCAD_ERROR) {
 		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -211,7 +211,7 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bu_optarg);
 		rt_db_free_internal(&intern);
 
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    botip = (struct rt_bot_internal *)intern.idb_ptr;
@@ -233,7 +233,7 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -241,7 +241,7 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (botip != (struct rt_bot_internal *)NULL) {

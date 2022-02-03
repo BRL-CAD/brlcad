@@ -43,9 +43,9 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls name2 = BU_VLS_INIT_ZERO;
     static const char *usage = "a/b";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -53,12 +53,12 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     {
@@ -77,7 +77,7 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
 	    !(last_fs = strrchr(begin, '/')) ||
 	    first_fs != last_fs) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad path specification '%s'", argv[0], argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* Note: At this point first_fs == last_fs */
@@ -85,7 +85,7 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
 	end = strrchr(begin, '\0');
 	if (last_fs == end-1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad path specification '%s'", argv[0], argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	bu_vls_strncpy(&name1, begin, (size_t)(last_fs-begin));
 	bu_vls_strncpy(&name2, last_fs+1, (size_t)(end-last_fs));
@@ -95,21 +95,21 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], bu_vls_addr(&name1));
 	bu_vls_free(&name1);
 	bu_vls_free(&name2);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!(dp->d_flags & RT_DIR_COMB)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], bu_vls_addr(&name1));
 	bu_vls_free(&name1);
 	bu_vls_free(&name2);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	bu_vls_free(&name1);
 	bu_vls_free(&name2);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -131,7 +131,7 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1");
 	rt_db_free_internal(&intern);
 
-	return GED_OK;
+	return BRLCAD_OK;
     } else {
 	register int i;
 
@@ -140,14 +140,14 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
 
 	rt_db_free_internal(&intern);
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
 fail:
     bu_vls_free(&name1);
     bu_vls_free(&name2);
     rt_db_free_internal(&intern);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -176,15 +176,15 @@ fail:
 int
 ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int result = GED_OK;	/* Return code */
+    int result = BRLCAD_OK;	/* Return code */
     char *newargv[20+2];
     struct bu_vls *avp;
     int got;
     static const char *usage = "a/b I|m0 m1 ... m15";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -192,7 +192,7 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc == 2)
@@ -200,12 +200,12 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 3 || 18 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!strchr(argv[1], '/')) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad path spec '%s'\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     switch (argc) {
 	case 18:
@@ -226,7 +226,7 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "%s: error in matrix specification (wrong number of args)\n", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
     newargv[0] = "arced";
     newargv[1] = (char *)argv[1];
@@ -237,10 +237,10 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
     if (got != 16) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s:%d: bad matrix, only got %d elements\n",
 		      argv[0], __FILE__, __LINE__, got);
-	result = GED_ERROR;
+	result = BRLCAD_ERROR;
     }
 
-    if (result != GED_ERROR)
+    if (result != BRLCAD_ERROR)
 	result = ged_arced(gedp, 20, (const char **)newargv);
 
     bu_vls_vlsfree(avp);

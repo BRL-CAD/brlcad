@@ -63,7 +63,7 @@ tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, stru
 			struct rt_brep_internal *b_ip = NULL;
 			RT_DB_INTERNAL_INIT(&bintern)
 			    if (rt_db_get_internal(&bintern, dir, gedp->dbip, NULL, &rt_uniresource) < 0) {
-				return GED_ERROR;
+				return BRLCAD_ERROR;
 			    }
 			if (bintern.idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
 			    ON_String s;
@@ -160,7 +160,7 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
 	RT_DB_INTERNAL_INIT(&bintern)
 	    struct directory *d = (struct directory *)BU_PTBL_GET(&breps, i);
 	if (rt_db_get_internal(&bintern, d, wdbp->dbip, NULL, &rt_uniresource) < 0) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	b_ip = (struct rt_brep_internal *)bintern.idb_ptr;
 	b_ip->brep->GetBBox(bbox[0], bbox[1], true);
@@ -205,7 +205,7 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
 	bu_vls_free(&tikz);
     }
     bu_vls_free(&tikz);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // Local Variables:

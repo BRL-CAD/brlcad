@@ -172,15 +172,15 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     const char *usage_string = "bot [options] remesh <objname> <output_bot>";
     const char *purpose_string = "Store a remeshed version of the BoT in object <output_bot>";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
     argc--; argv++;
 
-    if (_bot_obj_setup(gb, argv[0]) & GED_ERROR) {
-	return GED_ERROR;
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
     }
 
     struct ged *gedp = gb->gedp;
@@ -190,7 +190,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     struct directory *dp_output;
     struct rt_bot_internal *input_bot;
 
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     dp_input = dp_output = RT_DIR_NULL;
 
@@ -200,7 +200,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n%s", usage_string, purpose_string);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     /* check that we are using a version 5 database */
@@ -209,13 +209,13 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 		      "ERROR: Unable to remesh the current (v%d) database.\n"
 		      "Use \"dbupgrade\" to upgrade this database to the current version.\n",
 		      db_version(gedp->dbip));
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc > 3) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: unexpected arguments encountered\n");
 	bu_vls_printf(gedp->ged_result_str, "%s\n%s", usage_string, purpose_string);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     output_bot_name = input_bot_name;
@@ -223,12 +223,12 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	output_bot_name = (char *)argv[1];
 
     if (!BU_STR_EQUAL(input_bot_name, output_bot_name)) {
-	GED_CHECK_EXISTS(gedp, output_bot_name, LOOKUP_QUIET, GED_ERROR);
+	GED_CHECK_EXISTS(gedp, output_bot_name, LOOKUP_QUIET, BRLCAD_ERROR);
     }
 
     if (gb->intern->idb_major_type != DB5_MAJORTYPE_BRLCAD || gb->intern->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT primitive\n", input_bot_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     input_bot = (struct rt_bot_internal *)gb->intern->idb_ptr;
@@ -240,7 +240,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 
     bool ok = bot_remesh(gedp, input_bot, 50);
     if (!ok) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_log("OUTPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
@@ -248,12 +248,12 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(input_bot_name, output_bot_name)) {
 	dp_output = dp_input;
     } else {
-	GED_DB_DIRADD(gedp, dp_output, output_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp_output, output_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type, BRLCAD_ERROR);
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, gedp->ged_wdbp->wdb_resp, BRLCAD_ERROR);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

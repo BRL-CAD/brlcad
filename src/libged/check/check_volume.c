@@ -43,7 +43,7 @@ int check_volume(struct current_state *state,
 	analyze_set_volume_plotfile(state, plot_volume);
     }
 
-    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_VOLUME)) return GED_ERROR;
+    if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_VOLUME)) return BRLCAD_ERROR;
 
     print_verbose_debug(options);
     bu_vls_printf(_ged_current_gedp->ged_result_str, "Volume:\n");

@@ -123,9 +123,9 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     char tmpfil[MAXPATHLEN];
     char *editstring = NULL;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
@@ -147,7 +147,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: could not create tmp file", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fprintf(fp, "%s", hdr);
@@ -161,21 +161,21 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
     if (!_ged_editit(editstring, (const char *)tmpfil)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Read file and process it */
     fp = fopen(tmpfil, "r");
     if (fp == NULL) {
 	perror(tmpfil);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_fgets(line, sizeof (line), fp) == NULL ||
 	line[0] != hdr[0]) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Header line damaged, aborting\n", argv[0]);
 	(void)fclose(fp);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (db_version(gedp->dbip) < 5) {
@@ -242,23 +242,23 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     if (gedp->ged_gdp)
 	dl_color_soltab(gedp->ged_gdp->gd_headDisplay);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 int
 ged_edcolor_core(struct ged *gedp, int argc, const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return edcolor(gedp, argc, argv);
@@ -273,9 +273,9 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     struct mater *next_mater;
     static const char *usage = "[-e] [low high r g b]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -283,12 +283,12 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc != 6 && argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* edcolor */
@@ -297,7 +297,7 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	    return edcolor(gedp, argc, argv);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -354,7 +354,7 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&colors);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

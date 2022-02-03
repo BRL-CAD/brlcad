@@ -1148,15 +1148,15 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	npush_usage(&npush_help, d);
 	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&npush_help));
 	bu_vls_free(&npush_help);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* adjust argc to match the leftovers of the options parsing */
     argc = opt_ret;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     struct db_i *dbip = gedp->dbip;
 
     /* Need nref current for db_ls to work */
@@ -1188,7 +1188,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     for (s_it = s.target_objs.begin(); s_it != s.target_objs.end(); s_it++) {
 	struct directory *dp = db_lookup(dbip, s_it->c_str(), LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	struct db_full_path *dfp;
 	BU_GET(dfp, struct db_full_path);
@@ -1201,7 +1201,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    db_free_full_path(dfp);
 	    BU_PUT(dfp, struct db_full_path);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	db_free_full_path(dfp);
 	BU_PUT(dfp, struct db_full_path);
@@ -1239,7 +1239,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    if (!bn_mat_is_equal(m, bn_mat_identity, &gedp->ged_wdbp->wdb_tol)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error - initial tree walk down %s finished with non-IDN matrix.\n", dp->d_namep);
 		bu_free(all_paths, "free db_ls output");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -1315,7 +1315,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    // immediately bail.
 	    if (!verbosity) {
 		bu_vls_printf(gedp->ged_result_str, "Operation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 	if (conflict) {
@@ -1366,7 +1366,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    bu_vls_printf(gedp->ged_result_str, "%s\nOperation failed - force not enabled and one or more solids are being moved in conflicting directions by multiple comb instances.", bu_vls_cstr(&msgs));
 	    bu_vls_free(&msgs);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	bu_vls_free(&msgs);
     }
@@ -1421,7 +1421,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    if (ilabel == INT_MAX) {
 		// Strange name generation failure...
 		bu_vls_printf(gedp->ged_result_str, "Unable to generate valid push name for %s\n", dpi.dp->d_namep);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    dbnames.insert(iname);
 	    dpi.iname = iname;
@@ -1509,7 +1509,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    BU_PUT(in, struct rt_db_internal);
 	    db_dirdelete(gedp->dbip, uf_it->first);
 	}
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* We now know everything we need.  For combs and primitives that have updates
@@ -1569,7 +1569,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	if (!s.valid_push) {
 	    bu_vls_printf(gedp->ged_result_str, "failed to generate one or more objects listed in pushed trees.");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	// Writing done - update nref again to reflect changes
@@ -1596,11 +1596,11 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (removed_tops.size() || added_tops.size()) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 extern "C" {

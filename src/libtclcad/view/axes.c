@@ -45,7 +45,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->draw);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -60,7 +60,7 @@ to_axes(struct ged *gedp,
 		gasp->draw = 0;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -69,7 +69,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "axes_size")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%lf", gasp->axes_size);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -81,7 +81,7 @@ to_axes(struct ged *gedp,
 	    gasp->axes_size = size;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -91,7 +91,7 @@ to_axes(struct ged *gedp,
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf",
 			  V3ARGS(gasp->axes_pos));
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 6) {
@@ -105,7 +105,7 @@ to_axes(struct ged *gedp,
 	    VSET(gasp->axes_pos, x, y, z);
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -115,7 +115,7 @@ to_axes(struct ged *gedp,
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->axes_color));
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 6) {
@@ -136,7 +136,7 @@ to_axes(struct ged *gedp,
 	    VSET(gasp->axes_color, r, g, b);
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -146,7 +146,7 @@ to_axes(struct ged *gedp,
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->label_color));
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 6) {
@@ -167,7 +167,7 @@ to_axes(struct ged *gedp,
 	    VSET(gasp->label_color, r, g, b);
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -176,7 +176,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->line_width);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -188,7 +188,7 @@ to_axes(struct ged *gedp,
 	    gasp->line_width = line_width;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -197,7 +197,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "pos_only")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->pos_only);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -212,7 +212,7 @@ to_axes(struct ged *gedp,
 		gasp->pos_only = 0;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -222,7 +222,7 @@ to_axes(struct ged *gedp,
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->tick_color));
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 6) {
@@ -243,7 +243,7 @@ to_axes(struct ged *gedp,
 	    VSET(gasp->tick_color, r, g, b);
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -252,7 +252,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "tick_enable")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->tick_enabled);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -267,7 +267,7 @@ to_axes(struct ged *gedp,
 		gasp->tick_enabled = 0;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -276,7 +276,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "tick_interval")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%f", gasp->tick_interval);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -288,7 +288,7 @@ to_axes(struct ged *gedp,
 	    gasp->tick_interval = tick_interval;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -297,7 +297,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "tick_length")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->tick_length);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -309,7 +309,7 @@ to_axes(struct ged *gedp,
 	    gasp->tick_length = tick_length;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -319,7 +319,7 @@ to_axes(struct ged *gedp,
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->tick_major_color));
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 6) {
@@ -340,7 +340,7 @@ to_axes(struct ged *gedp,
 	    VSET(gasp->tick_major_color, r, g, b);
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -349,7 +349,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "tick_major_length")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->tick_major_length);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -361,7 +361,7 @@ to_axes(struct ged *gedp,
 	    gasp->tick_major_length = tick_major_length;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -370,7 +370,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "ticks_per_major")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->ticks_per_major);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -382,7 +382,7 @@ to_axes(struct ged *gedp,
 	    gasp->ticks_per_major = ticks_per_major;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -391,7 +391,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "tick_threshold")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->tick_threshold);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -406,7 +406,7 @@ to_axes(struct ged *gedp,
 	    gasp->tick_threshold = tick_threshold;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -415,7 +415,7 @@ to_axes(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "triple_color")) {
 	if (argc == 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->triple_color);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 4) {
@@ -430,7 +430,7 @@ to_axes(struct ged *gedp,
 		gasp->triple_color = 0;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -438,7 +438,7 @@ to_axes(struct ged *gedp,
 
 bad:
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 int
@@ -457,12 +457,12 @@ go_data_axes(Tcl_Interp *interp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 2 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Don't allow go_refresh() to be called */
@@ -472,7 +472,7 @@ go_data_axes(Tcl_Interp *interp,
     }
 
     ret = to_data_axes_func(interp, gedp, gdvp, argc, argv);
-    if (ret & GED_ERROR)
+    if (ret & BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;
@@ -495,24 +495,24 @@ to_data_axes(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* shift the command name to argv[1] before calling to_data_axes_func */
     argv[1] = argv[0];
     ret = to_data_axes_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1);
-    if (ret == GED_ERROR)
+    if (ret == BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;
@@ -535,7 +535,7 @@ to_data_axes_func(Tcl_Interp *interp,
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->draw);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -550,7 +550,7 @@ to_data_axes_func(Tcl_Interp *interp,
 		gdasp->draw = 0;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -560,7 +560,7 @@ to_data_axes_func(Tcl_Interp *interp,
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdasp->color));
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 5) {
@@ -581,7 +581,7 @@ to_data_axes_func(Tcl_Interp *interp,
 	    VSET(gdasp->color, r, g, b);
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -590,7 +590,7 @@ to_data_axes_func(Tcl_Interp *interp,
     if (BU_STR_EQUAL(argv[1], "line_width")) {
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->line_width);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -602,7 +602,7 @@ to_data_axes_func(Tcl_Interp *interp,
 	    gdasp->line_width = line_width;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -611,7 +611,7 @@ to_data_axes_func(Tcl_Interp *interp,
     if (BU_STR_EQUAL(argv[1], "size")) {
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%lf", gdasp->size);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -623,7 +623,7 @@ to_data_axes_func(Tcl_Interp *interp,
 	    gdasp->size = size;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -637,7 +637,7 @@ to_data_axes_func(Tcl_Interp *interp,
 		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
 			      V3ARGS(gdasp->points[i]));
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -646,7 +646,7 @@ to_data_axes_func(Tcl_Interp *interp,
 
 	    if (Tcl_SplitList(interp, argv[2], &ac, &av) != TCL_OK) {
 		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    bu_free((void *)gdasp->points, "data points");
@@ -657,7 +657,7 @@ to_data_axes_func(Tcl_Interp *interp,
 	    if (ac < 1) {
 		to_refresh_view(gdvp);
 		Tcl_Free((char *)av);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 
 	    gdasp->num_points = ac;
@@ -674,7 +674,7 @@ to_data_axes_func(Tcl_Interp *interp,
 
 		    to_refresh_view(gdvp);
 		    Tcl_Free((char *)av);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		/* convert double to fastf_t */
 		VMOVE(gdasp->points[i], scan);
@@ -682,12 +682,12 @@ to_data_axes_func(Tcl_Interp *interp,
 
 	    to_refresh_view(gdvp);
 	    Tcl_Free((char *)av);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
 bad:
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 int
@@ -706,18 +706,18 @@ to_model_axes(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
         bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     return to_axes(gedp, gdvp, &gdvp->gv_s->gv_model_axes, argc, argv, usage);
@@ -736,12 +736,12 @@ go_view_axes(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return to_axes(gedp, gdvp, &gdvp->gv_s->gv_view_axes, argc, argv, usage);
@@ -764,18 +764,18 @@ to_view_axes(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     gdvp = ged_find_view(gedp, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return to_axes(gedp, gdvp, &gdvp->gv_s->gv_view_axes, argc, argv, usage);

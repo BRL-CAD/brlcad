@@ -114,7 +114,7 @@ _tree_print_node(struct ged *gedp,
 	bu_avs_init_empty(&avs);
 	if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	    /* need a bombing macro or set an error code here: return GED_ERROR; */
+	    /* need a bombing macro or set an error code here: return BRLCAD_ERROR; */
 	    bu_vls_free(&tmp_str);
 	    return;
 	}
@@ -256,9 +256,9 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
     char *whoargv[WHOARGVMAX+1] = {0};
     static const char *usage = "[-a] [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -282,7 +282,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 		fdout = fopen(bu_optarg, "w+b");
 		if (fdout == NULL) {
 		    bu_vls_printf(gedp->ged_result_str, "Failed to open output file, %d", errno);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		break;
 	    case 'd':
@@ -291,7 +291,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "Negative number supplied as depth - unsupported.");
 		    if (fdout != NULL)
 		      fclose(fdout);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		break;
 	    case 'v':
@@ -302,7 +302,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		if (fdout != NULL)
 		  fclose(fdout);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -312,7 +312,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
     /* tree of all displayed objects */
     if (argc == 1) {
 	char *whocmd[2] = {"who", NULL};
-	if (ged_who(gedp, 1, (const char **)whocmd) == GED_OK) {
+	if (ged_who(gedp, 1, (const char **)whocmd) == BRLCAD_OK) {
 	    buffer = bu_strdup(bu_vls_addr(gedp->ged_result_str));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -343,7 +343,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 	fclose(fdout);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
