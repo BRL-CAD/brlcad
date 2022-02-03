@@ -1921,6 +1921,36 @@ gridInit(struct burst_state *s)
     brst_log(s, MSG_LOG, "Initializing grid\n");
     rt_prep_timer();
 
+#if DEBUG_SHOT
+    if (TSTBIT(s->firemode, FM_BURST))
+	brst_log(s, MSG_OUT, "gridInit: reading burst points.\n");
+    else        {
+	if (TSTBIT(s->firemode, FM_SHOT))
+	    brst_log(s, MSG_OUT,"gridInit: shooting discrete shots.\n");
+	else
+	    brst_log(s, MSG_OUT,"gridInit: shooting %s.\n",
+		    TSTBIT(s->firemode, FM_PART) ?
+		    "partial envelope" : "full envelope");
+    }
+    if (TSTBIT(s->firemode, FM_BURST) || TSTBIT(s->firemode, FM_SHOT)) {
+	brst_log(s, MSG_OUT,"gridInit: reading %s coordinates from %s.\n",
+		TSTBIT(s->firemode, FM_3DIM) ? "3-d" : "2-d",
+		TSTBIT(s->firemode, FM_FILE) ? "file" : "command stream");
+
+    } else
+	if (TSTBIT(s->firemode, FM_FILE) || TSTBIT(s->firemode, FM_3DIM))
+	    brst_log(s, MSG_OUT,"BUG: insane combination of fire mode bits:0x%x\n",
+		    s->firemode);
+    if (TSTBIT(s->firemode, FM_BURST) || s->shotburst)
+	s->nriplevels = 1;
+    else
+	s->nriplevels = 0;
+    if (!s->shotburst && s->groundburst) {
+	const char *srcbuf = "Ground bursting directive ignored: only relevant if bursting along shotline.\n";
+	brst_log(s, MSG_OUT, srcbuf);
+    }
+#endif
+
     /* compute grid unit vectors */
     gridRotate(s->viewazim, s->viewelev, 0.0, s->gridhor, s->gridver);
 
@@ -1932,6 +1962,9 @@ gridInit(struct burst_state *s)
 	VSCALE(xdeltavec, s->gridhor, negsinyaw);
 	VSCALE(ydeltavec, s->gridver, sinpitch);
 	VADD2(cantdelta, xdeltavec, ydeltavec);
+#if DEBUG_SHOT
+	brst_log(s, MSG_OUT, "gridInit: canting warhead\n");
+#endif
     }
 
     /* unit vector from origin of model toward eye */
@@ -2056,6 +2089,12 @@ gridInit(struct burst_state *s)
 	s->gridyorg--;
 	s->gridyfin++;
     }
+#if DEBUG_SHOT
+    brst_log(s, MSG_OUT, "gridInit: xorg, xfin, yorg, yfin=%d, %d, %d, %d\n",
+	    s->gridxorg, s->gridxfin, s->gridyorg, s->gridyfin);
+    brst_log(s, MSG_OUT, "gridInit: left, right, down, up=%g, %g, %g, %g\n",
+	    s->gridlf, s->gridrt, s->griddn, s->gridup);
+#endif
 
     /* compute stand-off distance */
     s->standoff = FMAX(viewdir[X] * s->rtip->mdl_max[X],
