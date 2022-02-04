@@ -132,28 +132,6 @@ Tcl_Exit(0);
 
 
 
-/* Note - in its full generality, a "v5 ASCII BRL-CAD geometry file" may
- * technically be a completely arbitrary Tcl script, given the way the
- * traditional "asc2g" program is implemented.  However, the real world
- * practice is generally go use g2asc to output geometry and asc2g to read it
- * back in, rather than constructing arbitrary procedural Tcl files to be read
- * in by asc2g (such procedural routines are more properly the in the bailiwick
- * of MGED.)  For the purposes of this plugin, the set of commands considered
- * to be legal in a v5 ASCII file are those that can be written out by g2asc.
- * As of now, the known commands to handle are:
- *
- * color
- * title
- * units
- * attr
- * put
- *
- * The asc2g importer also defines the commands "find", "dbfind" and "rm" in
- * its Tcl environment, but it is not clear that these are necessary to read
- * g2asc exports - they do not appear to be written out by g2asc.  Until we
- * find a real-world use case, those commands will not be supported in this
- * plugin.
- */
 int
 asc_read_v5(
 	struct gcv_context *c,
@@ -165,6 +143,43 @@ asc_read_v5(
     bu_log("Reading v5...\n");
     if (!c)
 	return -1;
+#if 0
+    // TODO - attempting to run the libged commands corresponding to the Tcl
+    // commands exposes a limitation in the way libgcv and libged can interact.
+    // Both are using dynamically loaded plugins, and if we have a libgcv
+    // plugin call libged, at least on Linux, something about the way the
+    // libged dynamic libraries are loaded causes problems for the OS - the
+    // application ends up segfaulting on exit.  It will go through all the
+    // steps I can see in gdb (apparently) successfully, but something about
+    // the libged cleanup for the GED commands eventually results in a low
+    // level segfault in OS level process clean up code.
+    //
+    // As near as I can tell, it is the dlclose call when the application is
+    // exiting that triggers the problem.  gdb backtraces are uninformative
+    // about the actual crash, so I don't know what precisely is unhappy.  Thus
+    // far the only solution I've been able to think of is to refactor the guts
+    // of the logic for the four or five commands needed for ascv5 parsing down
+    // into librt (either as their own functions or as part of the rt_do_cmd
+    // mechanism) so we won't need to load the libged plugins at the GCV plugin
+    // level.  That's probably reasonable in this case, since the way the v5
+    // asc format has been defined those commands ARE the .g serialization
+    // format, but the problem hints at a broader issue.
+    //
+    // If this IS a general OS limitation and not some mistake on my part - no
+    // loading plugin systems via dlopen/dlclose from shared objects that are
+    // themselves loaded in via dlopen/dlclose - we should probably document
+    // that as a general rule.  If that is the case substantive logic in libged
+    // that may need to be called from gcv plugins should be moved to lower
+    // level libraries, with just the GED command superstructure living in the
+    // GED plugin itself...
+#endif
+    /* Commands to handle:
+     *
+     * title
+     * units
+     * attr
+     * put
+     */
     struct bu_vls cur_line = BU_VLS_INIT_ZERO;
     while (std::getline(fs, sline)) {
 	std::cout << sline << "\n";
@@ -176,32 +191,31 @@ asc_read_v5(
 	    continue;
 	}
 
-	if (BU_STR_EQUAL(list_v[0], "attr")) {
-	    rt_cmd_attr(NULL, c->dbip, list_c, (const char **)list_v);
-	    bu_free(list_v, "tcl argv list");
-	    continue;
-	}
-	if (BU_STR_EQUAL(list_v[0], "color")) {
-	    rt_cmd_color(NULL, c->dbip, list_c, (const char **)list_v);
-	    bu_free(list_v, "tcl argv list");
-	    continue;
-	}
-	if (BU_STR_EQUAL(list_v[0], "put")) {
-	    rt_cmd_put(NULL, c->dbip, list_c, (const char **)list_v);
-	    bu_free(list_v, "tcl argv list");
-	    continue;
-	}
 	if (BU_STR_EQUAL(list_v[0], "title")) {
-	    rt_cmd_title(NULL, c->dbip, list_c, (const char **)list_v);
+	    std::cout << "Found title\n";
+	    //rt_cmd_title(c->dbip, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
 	    continue;
 	}
 	if (BU_STR_EQUAL(list_v[0], "units")) {
-	    rt_cmd_units(NULL, c->dbip, list_c, (const char **)list_v);
+	    std::cout << "Found units\n";
+	    //rt_cmd_units(c->dbip, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
 	    continue;
 	}
-	bu_log("Unknown command: %s\n", list_v[0]);
+	if (BU_STR_EQUAL(list_v[0], "attr")) {
+	    std::cout << "Found attr\n";
+	    //rt_cmd_attr(c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    continue;
+	}
+	if (BU_STR_EQUAL(list_v[0], "put")) {
+	    std::cout << "Found put\n";
+	    //rt_cmd_put(c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    continue;
+	}
+	std::cout << "Unknown command: " << list_v[0] << "\n";
 	bu_free(list_v, "tcl argv list");
     }
     bu_vls_free(&cur_line);
