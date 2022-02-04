@@ -193,7 +193,7 @@ asc_read_v5(
 
 	if (BU_STR_EQUAL(list_v[0], "attr")) {
 	    std::cout << "Found attr\n";
-	    //rt_cmd_attr(NULL, c->dbip, list_c, (const char **)list_v);
+	    rt_cmd_attr(NULL, c->dbip, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
 	    continue;
 	}

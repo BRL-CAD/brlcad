@@ -177,7 +177,7 @@ rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
     }
 
      int i;
-     char type[16];
+     char type[16] = {0};
      for (i = 0; argv[2][i] != 0 && i < 15; i++) {
 	 type[i] = isupper((int)argv[2][i]) ? tolower((int)argv[2][i]) : argv[2][i];
      }
@@ -201,12 +201,20 @@ rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 	 rt_generic_make(ftp, &intern);
      }
 
-     if (!ftp->ft_adjust || ftp->ft_adjust(msg, &intern, argc-3, argv+3) & BRLCAD_ERROR) {
+     /* The LIBBU struct parsing commands require a non-NULL logstr to work (??) -
+      * if the caller hasn't provided us a logging buffer, make a temporary one */
+     struct bu_vls *amsg;
+     struct bu_vls tmpmsg = BU_VLS_INIT_ZERO;
+     amsg = (msg) ? msg : &tmpmsg;
+
+     if (!ftp->ft_adjust || ftp->ft_adjust(amsg, &intern, argc-3, argv+3) & BRLCAD_ERROR) {
 	 if (msg)
 	     bu_vls_printf(msg, "rt_cmd_put: error calling ft_adjust");
+	 bu_vls_free(&tmpmsg);
 	 rt_db_free_internal(&intern);
 	 return BRLCAD_ERROR;
      }
+     bu_vls_free(&tmpmsg);
 
      if (wdb_put_internal(dbip->dbi_wdbp, argv[1], &intern, 1.0) < 0) {
 	 if (msg)
