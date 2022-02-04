@@ -21,6 +21,7 @@ set(documentation_DATA
   notes/brep.txt
   notes/bu_opt_design_notes.txt
   notes/cvs.txt
+  notes/debugging_example.txt
   notes/editors.txt
   notes/history.txt
   notes/hypot.txt

@@ -1,0 +1,243 @@
+gdb and ltrace are useful tools for figuring out how logic flows changed as a
+result of a given change.  The below example documents a practical example
+using ltrace and gdb to track down a regress-solids breakage introduced by
+code refactoring.
+
+Context: after relocating logic from libged to librt, regress-solids (and only
+regress-solids) was failing.  regress-solids can be a bit difficult to debug,
+since it is a shell script that orchestrates multiple utilities and piping to
+achieve its results.  After inspecting the pixdiff image, it was clear some
+individual solids weren't being created correctly - a comparison of the g2asc
+output from the two solids.g files confirmed that part, ebm and dsp solids
+weren't present in the failing .g file.  Those solids are created by the
+solids.mged script running from the regress/solids build directory, which the
+necessary support files in place.
+
+One thing to check is to see if we have an obviously incorrect difference in
+the program execution flows - this sort of refactor, which is intended to
+simply relocate logic, shouldn't radically alter the overall flow - if it does,
+that point of departure warrants inspection. To try and identify any such
+deltas, we generate ltrace logs for both a working version and the failing
+version.  Note that it is important to use the -x option for ltrace -
+otherwise, nothing is recorded.  Also, while -C will make the output somewhat
+easier to interpret, we need to strip out explicit pointer values to keep the
+comparison interpretable.  Do the following for each build:
+
+:~/build/regress/solids $ rm -f solids.g solids.rt
+:~/build/regress/solids $ ltrace -C -o log.txt -x '*rt*+*ged*' ../../bin/mged -c < ../../../brlcad/regress/solids/solids.mged
+:~/build/regress/solids $ sed 's/0x[0-9a-zA-Z]*//g' log.txt  > out.txt
+
+The out.txt files can then be compared to identify flow differences.  To narrow in
+more specifically, more specific -x patterns such as '*ebm*' can be used.
+
+In this case, with the exception of the expected addition of one new librt
+function, the flows were consistent.  The next step was then to inspect one
+of the export processes for a failing case.  Somewhat arbitrarily, ebm was
+selected - it has specific functions for make and adjust, which are logical
+break points.  A side-by-side walk-through of both a working and non-working
+versions to find the point of departure offers the best chance of finding the
+issue.
+
+Note:  if trying to use gdb to work with a process taking input from the input pipe,
+mged needs to be launched in a particular way (otherwise the I/O piping and gdb
+don't get along).  In this case, the arguments must be supplied on the (gdb) prompt
+via the gdb "run" command:
+
+:~/build/regress/solids $ rm -f solids.g solids.rt
+:~/build/regress/solids $ gdb ../../bin/mged
+(gdb) break rt_cmd_put
+Function "rt_cmd_put" not defined.
+Make breakpoint pending on future shared library load? (y or [n]) y
+Breakpoint 1 (rt_cmd_put) pending.
+(gdb) run -c < ../../../regress/solids/solids.mged
+Starting program: /home/user/build/bin/mged -c < ../../../regress/solids/solids.mged
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+[New Thread 0x7ffff220b700 (LWP 1509529)]
+
+[snip]
+
+Thread 1 "mged" hit Breakpoint 1, rt_cmd_put (msg=0x7ebaef307236ac00, dbip=0x555555735e80, argc=21845, 
+    argv=0x7fffffffc1d0) at /home/user/brlcad/src/librt/cmd.c:322
+322	{
+(gdb)
+
+After breaking on and walking through the logic for ebm, everything seemed consistent
+up until wdb_export_external - at the wdbp->type switch, the code jumped to two different
+places.
+
+Ah hah!  Sure enough, the working code had wdbp->type == 2 and the broken code was set to 4.
+Walking back up the stack, the immediate cause was apparent - gedp->ged_wdbp and dbip->dbi_wdbp
+contain different pointers:
+
+(gdb) print gedp->ged_wdbp
+$8 = (struct rt_wdb *) 0x555555a405c0
+(gdb) print gedp->dbip->dbi_wdbp
+$9 = (struct rt_wdb *) 0x555555a40980
+
+The old logic had passed in gedp's wdbp to wdb_put_internal, but the refactored
+code (which was moved to librt and as such had no gedp to access) was using the
+dbip->dbi_wdbp pointer.
+
+The next question is WHY ged_wdbp != dbi_wdbp.  MGED is responsible for setting
+up the ged struct.  MGED manages this data as global pointers, so initially we break
+on main and set up watch points to track the key variables:
+
+(gdb) break main
+Breakpoint 1 at 0xaaa69: file /home/user/brlcad/src/mged/mged.c, line 1020.
+(gdb) run -c < ../../../brlcad/regress/solids/solids.mged
+Starting program: /home/user/build/bin/mged -c < ../../../brlcad/regress/solids/solids.mged
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+
+Breakpoint 1, main (argc=0, argv=0x0) at /home/user/brlcad/src/mged/mged.c:1020
+1020	{
+(gdb) watch GEDP
+Hardware watchpoint 2: GEDP
+(gdb) watch DBIP
+Hardware watchpoint 3: DBIP
+(gdb) c
+
+Once we get into f_opendb, DBIP is set on line 2662.  Once it is, we can start
+keeping an eye on DBIP->dbi_wdbp:
+
+Thread 1 "mged" hit Hardware watchpoint 3: DBIP
+
+Old value = (struct db_i *) 0x0
+New value = (struct db_i *) 0x555555bc0360
+0x0000555555603909 in f_opendb (clientData=0x555555678c28 <mged_cmdtab+4488>, interpreter=0x555555774c50, argc=3, 
+    argv=0x5555557790b0) at /home/user/brlcad/src/mged/mged.c:2662
+2662	    if (((DBIP = db_open(argv[1], DB_OPEN_READWRITE)) == DBI_NULL) &&
+(gdb) print DBIP->dbi_wdbp
+$1 = (struct rt_wdb *) 0x0
+(gdb) watch DBIP->dbi_wdbp
+Hardware watchpoint 5: DBIP->dbi_wdbp
+
+Line 2841 sets this variable, and stores the wdbp in a local variable, but does not yet
+assign it to GEDP->ged_wdbp:
+
+2841	    ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
+
+Thread 1 "mged" hit Hardware watchpoint 5: DBIP->dbi_wdbp
+
+Old value = (struct rt_wdb *) 0x0
+New value = (struct rt_wdb *) 0x5555558b6760
+wdb_init (wdbp=0x5555558b6760, dbip=0x555555bc0360, mode=2) at /home/user/brlcad/src/librt/wdb.c:307
+307	    wdbp->wdb_tol.magic = BN_TOL_MAGIC;
+
+GEDP is subsequently reallocated at 2846:
+
+2846	    BU_GET(GEDP, struct ged);
+(gdb) n
+
+Thread 1 "mged" hit Hardware watchpoint 4: GEDP
+
+Old value = (struct ged *) 0x0
+New value = (struct ged *) 0x555555b34a70
+f_opendb (clientData=0x555555678c28 <mged_cmdtab+4488>, interpreter=0x555555774c50, argc=3, argv=0x5555557790b0)
+    at /home/cyapp/brlcad/src/mged/mged.c:2847
+2847	    GED_INIT(GEDP, ged_wdbp);
+(gdb) print GEDP->ged_wdbp
+$2 = (struct rt_wdb *) 0x0
+
+Because the next line is intended to initialize GEDP, and uses ged_wdbp to do it, we
+start tracking GEDP->ged_wdbp first:
+
+(gdb) watch GEDP->ged_wdbp
+Hardware watchpoint 6: GEDP->ged_wdbp
+(gdb) c
+Continuing.
+
+Thread 1 "mged" hit Hardware watchpoint 6: GEDP->ged_wdbp
+
+Old value = (struct rt_wdb *) 0x0
+New value = (struct rt_wdb *) 0x5555558b6760
+0x0000555555604157 in f_opendb (clientData=0x555555678c28 <mged_cmdtab+4488>, interpreter=0x555555774c50, argc=3, 
+    argv=0x5555557790b0) at /home/cyapp/brlcad/src/mged/mged.c:2847
+2847	    GED_INIT(GEDP, ged_wdbp);
+
+At this point, DBIP->dbi_wdbp and GEDP->ged_wdbp should match:
+
+(gdb) print GEDP->ged_wdbp
+$3 = (struct rt_wdb *) 0x5555558b6760
+(gdb) print DBIP->dbi_wdbp
+$4 = (struct rt_wdb *) 0x5555558b6760
+
+Things start getting strange at 2866, where a second wdb_dbopen call changes the
+DBIP dbi_wdbp pointer (but NOT the GEDP->ged_wdbp copy):
+
+2866	    if ((WDBP = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
+(gdb) 
+
+Thread 1 "mged" hit Hardware watchpoint 5: DBIP->dbi_wdbp
+
+Old value = (struct rt_wdb *) 0x5555558b6760
+New value = (struct rt_wdb *) 0x5555557cced0
+wdb_init (wdbp=0x5555557cced0, dbip=0x555555bc0360, mode=2) at /home/user/brlcad/src/librt/wdb.c:307
+307	    wdbp->wdb_tol.magic = BN_TOL_MAGIC;
+
+The same thing happens again later in initialization, but this time triggered from a Tcl command:
+
+(gdb) c
+Continuing.
+
+Thread 1 "mged" hit Hardware watchpoint 5: DBIP->dbi_wdbp
+
+Old value = (struct rt_wdb *) 0x5555557cced0
+New value = (struct rt_wdb *) 0x5555557cd180
+wdb_init (wdbp=0x5555557cd180, dbip=0x555555bc0360, mode=4) at /home/user/brlcad/src/librt/wdb.c:307
+307	    wdbp->wdb_tol.magic = BN_TOL_MAGIC;
+(gdb) bt
+#0  wdb_init (wdbp=0x5555557cd180, dbip=0x555555bc0360, mode=4) at /home/user/brlcad/src/librt/wdb.c:307
+#1  0x00007ffff7b797d6 in wdb_dbopen (dbip=0x555555bc0360, mode=4) at /home/user/brlcad/src/librt/wdb.c:84
+#2  0x000055555564d924 in wdb_open_tcl (UNUSED_clientData=0x0, interp=0x555555774c50, argc=4, argv=0x555555779500)
+    at /home/user/brlcad/src/mged/wdb_obj.c:10534
+#3  0x00007ffff6ef877b in TclInvokeStringCommand () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#4  0x00007ffff6efa5f2 in TclNRRunCallbacks () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#5  0x00007ffff6efb924 in ?? () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#6  0x00007ffff6efb367 in Tcl_EvalEx () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#7  0x00007ffff6efc4fa in Tcl_Eval () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#8  0x0000555555604545 in f_opendb (clientData=0x555555678c28 <mged_cmdtab+4488>, interpreter=0x555555774c50, argc=3, 
+    argv=0x5555557790b0) at /home/user/brlcad/src/mged/mged.c:2906
+#9  0x00007ffff6ef877b in TclInvokeStringCommand () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#10 0x00007ffff6efa5f2 in TclNRRunCallbacks () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#11 0x00007ffff6efb924 in ?? () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#12 0x00007ffff6efb367 in Tcl_EvalEx () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#13 0x00007ffff6efc4fa in Tcl_Eval () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#14 0x000055555559bc44 in cmdline (vp=0x555555676160 <input_str_prefix>, record=1)
+    at /home/user/brlcad/src/mged/cmd.c:1063
+#15 0x0000555555600df0 in stdin_input (clientData=0x0, UNUSED_mask=2) at /home/user/brlcad/src/mged/mged.c:1815
+#16 0x00007ffff6fa7be3 in Tcl_NotifyChannel () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#17 0x00007ffff7008c1e in ?? () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#18 0x00007ffff6fc3fc9 in Tcl_ServiceEvent () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#19 0x00007ffff6fc4309 in Tcl_DoOneEvent () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#20 0x00005555556013c4 in event_check (non_blocking=0) at /home/user/brlcad/src/mged/mged.c:1995
+#21 0x0000555555600bab in main (argc=0, argv=0x7fffffffdf58) at /home/user/brlcad/src/mged/mged.c:1723
+
+A comment at mged.c:2840 indicates that the code is deliberately giving libged
+a separate wdbp instance, but it is not immediately clear why.  Following git
+blame on that line back through the history, it appears that Tcl and LIBGED
+both assume they have full ownership of wdbp, and in 2011 it proved necessary
+to establish independent wdbp instances so they wouldn't stomp each other.
+
+That suggests an immediate test that can be made - temporarily set the
+dbip->dbi_wdbp pointer to the gedp->ged_wdbp version in ged_put_core, calling
+rt_cmd_put (librt no longer use Tcl internally, so this shouldn't do anything
+surprising) and then restoring the prior configuration upon completion of the
+routines.  Making this test confirms (as expected) that using the correct wdbp
+instance succeeds.
+
+Although the functional issues is resolved by the above workaround, the
+observed behavior begs for a deeper analysis.  Questions:
+
+1.  What is it about Tcl and/or GED that assumes unique wdbp control and can a
+way be found to not require multiple wdbp instances (among other concerns,
+wondering how multi-threaded code would behave with multiple wdbps in the
+application)
+
+2.  WHY is the type was set differently on the two wdbp instances.
+
+3.  What about the Tcl wdbp state causes the put failures, and why only on
+certain primitives?  If the two wdbp instances are supposed to be separate but
+functional, this failure is unexpected?
+
