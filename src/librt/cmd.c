@@ -38,6 +38,8 @@
 
 #include "vmath.h"
 #include "bu/units.h"
+#include "rt/db4.h"
+#include "rt/mater.h"
 #include "raytrace.h"
 
 char *
@@ -150,6 +152,170 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
 }
 
 /* Note - see attr.cpp for the rt_cmd_attr implementation */
+
+/**
+ * Used to create a database record and get it written out to a granule.
+ * In some cases, storage will need to be allocated.
+ */
+static void
+_rt_color_putrec(struct bu_vls *msg, struct db_i *dbip, struct mater *mp)
+{
+    struct directory dir;
+    union record rec;
+
+    /* we get here only if database is NOT read-only */
+
+    rec.md.md_id = ID_COLORTAB;
+    rec.md.md_low = mp->mt_low;
+    rec.md.md_hi = mp->mt_high;
+    rec.md.md_r = mp->mt_r;
+    rec.md.md_g = mp->mt_g;
+    rec.md.md_b = mp->mt_b;
+
+    /* Fake up a directory entry for db_* routines */
+    RT_DIR_SET_NAMEP(&dir, "color_putrec");
+    dir.d_magic = RT_DIR_MAGIC;
+    dir.d_flags = 0;
+
+    if (mp->mt_daddr == MATER_NO_ADDR) {
+        /* Need to allocate new database space */
+        if (db_alloc(dbip, &dir, 1)) {
+	    if (msg)
+		bu_vls_printf(msg, "_rt_color_putrec: database alloc error, aborting");
+            return;
+        }
+        mp->mt_daddr = dir.d_addr;
+    } else {
+        dir.d_addr = mp->mt_daddr;
+        dir.d_len = 1;
+    }
+
+    if (db_put(dbip, &dir, &rec, 0, 1)) {
+	if (msg)
+	    bu_vls_printf(msg, "_rt_color_putrec: database write error, aborting");
+        return;
+    }
+}
+
+/**
+ * Used to release database resources occupied by a material record.
+ */
+static void
+_rt_color_zaprec(struct bu_vls *msg, struct db_i *dbip, struct mater *mp)
+{
+    struct directory dir;
+
+    /* we get here only if database is NOT read-only */
+    if (mp->mt_daddr == MATER_NO_ADDR)
+        return;
+
+    dir.d_magic = RT_DIR_MAGIC;
+    RT_DIR_SET_NAMEP(&dir, "color_zaprec");
+    dir.d_len = 1;
+    dir.d_addr = mp->mt_daddr;
+    dir.d_flags = 0;
+
+    if (db_delete(dbip, &dir) != 0) {
+	if (msg)
+	    bu_vls_printf(msg, "_rt_color_zaprec: database delete error, aborting");
+        return;
+    }
+    mp->mt_daddr = MATER_NO_ADDR;
+}
+
+int
+rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
+{
+    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || !argv)
+	return BRLCAD_ERROR;
+
+    if (dbip->dbi_read_only) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_color: database is read-only\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (argc != 6 && argc != 2)
+	return BRLCAD_ERROR | BRLCAD_HELP;
+
+    if (!BU_STR_EQUAL(argv[0], "color")) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_color: incorrect command found: %s\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    /* The -e option is not supported by this portion of the command
+     * implementation - see LIBGED's color command for how to handle the -e
+     * (edcolor) option at a higher level. */
+    if (argc == 2) {
+        if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
+	    if (msg)
+		bu_vls_printf(msg, "rt_cmd_color: -e option is unsupported\n");
+	    return BRLCAD_ERROR;
+	} else {
+	    if (msg)
+		bu_vls_printf(msg, "rt_cmd_color: unknown option: %s\n", argv[1]);
+            return BRLCAD_ERROR | BRLCAD_HELP;
+        }
+    }
+
+    if (db_version(dbip) < 5) {
+        /* Delete all color records from the database */
+        struct mater *mp = rt_material_head();
+	struct mater *newp;
+	struct mater *next_mater;
+        while (mp != MATER_NULL) {
+            next_mater = mp->mt_forw;
+            _rt_color_zaprec(msg, dbip, mp);
+            mp = next_mater;
+        }
+
+        /* construct the new color record */
+        BU_ALLOC(newp, struct mater);
+        newp->mt_low = atoi(argv[1]);
+        newp->mt_high = atoi(argv[2]);
+        newp->mt_r = atoi(argv[3]);
+        newp->mt_g = atoi(argv[4]);
+        newp->mt_b = atoi(argv[5]);
+        newp->mt_daddr = MATER_NO_ADDR;         /* not in database yet */
+
+        /* Insert new color record in the in-memory list */
+        rt_insert_color(newp);
+
+        /* Write new color records for all colors in the list */
+        mp = rt_material_head();
+        while (mp != MATER_NULL) {
+            next_mater = mp->mt_forw;
+            _rt_color_putrec(msg, dbip, mp);
+            mp = next_mater;
+        }
+    } else {
+        struct bu_vls colors = BU_VLS_INIT_ZERO;
+
+        /* construct the new color record */
+	struct mater *newp;
+        BU_ALLOC(newp, struct mater);
+        newp->mt_low = atoi(argv[1]);
+        newp->mt_high = atoi(argv[2]);
+        newp->mt_r = atoi(argv[3]);
+        newp->mt_g = atoi(argv[4]);
+        newp->mt_b = atoi(argv[5]);
+        newp->mt_daddr = MATER_NO_ADDR;         /* not in database yet */
+
+        /* Insert new color record in the in-memory list */
+        rt_insert_color(newp);
+        /*
+         * Gather color records from the in-memory list to build
+         * the _GLOBAL objects regionid_colortable attribute.
+         */
+        rt_vls_color_map(&colors);
+
+        db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), dbip);
+        bu_vls_free(&colors);
+    }
+
+    return BRLCAD_OK;
+}
 
 int
 rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)

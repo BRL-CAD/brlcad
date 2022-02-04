@@ -280,26 +280,25 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
+    /* edcolor is not part of rt_cmd_color */
+    if (argc == 2) {
+	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
+	    return edcolor(gedp, argc, argv);
+	}
+    }
+
+    int ret = rt_cmd_color(gedp->ged_result_str, gedp->dbip, argc, argv);
+
+    if (ret & BRLCAD_HELP) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_HELP;
     }
 
-    if (argc != 6 && argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (ret & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
     }
 
-    /* edcolor */
-    if (argc == 2) {
-	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
-	    return edcolor(gedp, argc, argv);
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
-	}
-    }
+    return BRLCAD_OK;
 
     if (db_version(gedp->dbip) < 5) {
 	/* Delete all color records from the database */
