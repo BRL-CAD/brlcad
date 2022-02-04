@@ -191,27 +191,27 @@ asc_read_v5(
 	    continue;
 	}
 
-	if (BU_STR_EQUAL(list_v[0], "title")) {
-	    std::cout << "Found title\n";
-	    //rt_cmd_title(c->dbip, list_c, (const char **)list_v);
-	    bu_free(list_v, "tcl argv list");
-	    continue;
-	}
-	if (BU_STR_EQUAL(list_v[0], "units")) {
-	    std::cout << "Found units\n";
-	    //rt_cmd_units(c->dbip, list_c, (const char **)list_v);
-	    bu_free(list_v, "tcl argv list");
-	    continue;
-	}
 	if (BU_STR_EQUAL(list_v[0], "attr")) {
 	    std::cout << "Found attr\n";
-	    //rt_cmd_attr(c->dbip, list_c, (const char **)list_v);
+	    //rt_cmd_attr(NULL, c->dbip, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
 	    continue;
 	}
 	if (BU_STR_EQUAL(list_v[0], "put")) {
 	    std::cout << "Found put\n";
-	    //rt_cmd_put(c->dbip, list_c, (const char **)list_v);
+	    rt_cmd_put(NULL, c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    continue;
+	}
+	if (BU_STR_EQUAL(list_v[0], "title")) {
+	    std::cout << "Found title\n";
+	    rt_cmd_title(NULL, c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    continue;
+	}
+	if (BU_STR_EQUAL(list_v[0], "units")) {
+	    std::cout << "Found units\n";
+	    rt_cmd_units(NULL, c->dbip, list_c, (const char **)list_v);
 	    bu_free(list_v, "tcl argv list");
 	    continue;
 	}

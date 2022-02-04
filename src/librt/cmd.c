@@ -148,6 +148,127 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
     return -1;			/* ERROR */
 }
 
+/* Note - see attr.cpp for the rt_cmd_attr implementation */
+
+int
+rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
+{
+    int ret = BRLCAD_ERROR;
+
+    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 3 || !argv)
+	return ret;
+
+    if (dbip->dbi_read_only) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_put: database is read-only\n");
+	return ret;
+    }
+
+    if (!BU_STR_EQUAL(argv[0], "put")) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_put: incorrect command found: %s\n", argv[0]);
+	return ret;
+    }
+
+
+    if (db_lookup(dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_put: %s already exists", argv[1]);
+	return ret;
+    }
+
+     int i;
+     char type[16];
+     for (i = 0; argv[2][i] != 0 && i < 15; i++) {
+	 type[i] = isupper((int)argv[2][i]) ? tolower((int)argv[2][i]) : argv[2][i];
+     }
+     type[i] = 0;
+
+     const struct rt_functab *ftp = rt_get_functab_by_label(type);
+     if (ftp == NULL) {
+	 if (msg)
+	     bu_vls_printf(msg, "rt_cmd_put: %s is an unknown object type.", type);
+	 return ret;
+     }
+
+     RT_CK_FUNCTAB(ftp);
+
+     struct rt_db_internal intern;
+     RT_DB_INTERNAL_INIT(&intern);
+
+     if (ftp->ft_make) {
+	 ftp->ft_make(ftp, &intern);
+     } else {
+	 rt_generic_make(ftp, &intern);
+     }
+
+     if (!ftp->ft_adjust || ftp->ft_adjust(msg, &intern, argc-3, argv+3) & BRLCAD_ERROR) {
+	 rt_db_free_internal(&intern);
+	 return ret;
+     }
+
+     if (wdb_put_internal(dbip->dbi_wdbp, argv[1], &intern, 1.0) < 0) {
+	 if (msg)
+	     bu_vls_printf(msg, "rt_cmd_put: wdb_put_internal(%s)", argv[1]);
+	 rt_db_free_internal(&intern);
+	 return ret;
+     }
+
+     rt_db_free_internal(&intern);
+
+     return BRLCAD_OK;
+}
+
+int
+rt_cmd_title(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
+{
+    int ret = BRLCAD_ERROR;
+
+    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 2 || !argv)
+	return ret;
+
+    if (dbip->dbi_read_only) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_title: database is read-only\n");
+	return ret;
+    }
+
+    if (!BU_STR_EQUAL(argv[0], "title")) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_title: incorrect command found: %s\n", argv[0]);
+	return ret;
+    }
+
+
+    return BRLCAD_OK;
+
+}
+
+int
+rt_cmd_units(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
+{
+    int ret = BRLCAD_ERROR;
+
+    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 2 || !argv)
+	return ret;
+
+    if (dbip->dbi_read_only) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_units: database is read-only\n");
+	return ret;
+    }
+
+    if (!BU_STR_EQUAL(argv[0], "units")) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_units: incorrect command found: %s\n", argv[0]);
+	return ret;
+    }
+
+
+    return BRLCAD_OK;
+
+}
+
 
 /*
  * Local Variables:

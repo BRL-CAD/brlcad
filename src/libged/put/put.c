@@ -29,17 +29,13 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "rt/cmd.h"
 #include "ged.h"
 
 
 int
 ged_put_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct rt_db_internal intern;
-    const struct rt_functab *ftp;
-    int i;
-    char *name;
-    char type[16];
     static const char *usage = "object type attrs";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -60,49 +56,7 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    name = (char *)argv[1];
-
-    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s already exists", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    RT_DB_INTERNAL_INIT(&intern);
-
-    for (i = 0; argv[2][i] != 0 && i < 15; i++) {
-	type[i] = isupper((int)argv[2][i]) ? tolower((int)argv[2][i]) :
-	    argv[2][i];
-    }
-    type[i] = 0;
-
-    ftp = rt_get_functab_by_label(type);
-    if (ftp == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s is an unknown object type.", type);
-	return BRLCAD_ERROR;
-    }
-
-    RT_CK_FUNCTAB(ftp);
-
-    if (ftp->ft_make) {
-	ftp->ft_make(ftp, &intern);
-    } else {
-	rt_generic_make(ftp, &intern);
-    }
-
-    if (!ftp->ft_adjust || ftp->ft_adjust(gedp->ged_result_str, &intern, argc-3, argv+3) & BRLCAD_ERROR) {
-	rt_db_free_internal(&intern);
-	return BRLCAD_ERROR;
-    }
-
-    if (wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
-	rt_db_free_internal(&intern);
-	return BRLCAD_ERROR;
-    }
-
-    rt_db_free_internal(&intern);
-
-    return BRLCAD_OK;
+    return rt_cmd_put(gedp->ged_result_str, gedp->dbip, argc, argv);
 }
 
 
