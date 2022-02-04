@@ -37,6 +37,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/units.h"
 #include "raytrace.h"
 
 char *
@@ -153,28 +154,26 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
 int
 rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 {
-    int ret = BRLCAD_ERROR;
-
     if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 3 || !argv)
-	return ret;
+	return BRLCAD_ERROR;
 
     if (dbip->dbi_read_only) {
 	if (msg)
 	    bu_vls_printf(msg, "rt_cmd_put: database is read-only\n");
-	return ret;
+	return BRLCAD_ERROR;
     }
 
     if (!BU_STR_EQUAL(argv[0], "put")) {
 	if (msg)
 	    bu_vls_printf(msg, "rt_cmd_put: incorrect command found: %s\n", argv[0]);
-	return ret;
+	return BRLCAD_ERROR;
     }
 
 
     if (db_lookup(dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	if (msg)
 	    bu_vls_printf(msg, "rt_cmd_put: %s already exists", argv[1]);
-	return ret;
+	return BRLCAD_ERROR;
     }
 
      int i;
@@ -188,7 +187,7 @@ rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
      if (ftp == NULL) {
 	 if (msg)
 	     bu_vls_printf(msg, "rt_cmd_put: %s is an unknown object type.", type);
-	 return ret;
+	 return BRLCAD_ERROR;
      }
 
      RT_CK_FUNCTAB(ftp);
@@ -203,15 +202,17 @@ rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
      }
 
      if (!ftp->ft_adjust || ftp->ft_adjust(msg, &intern, argc-3, argv+3) & BRLCAD_ERROR) {
+	 if (msg)
+	     bu_vls_printf(msg, "rt_cmd_put: error calling ft_adjust");
 	 rt_db_free_internal(&intern);
-	 return ret;
+	 return BRLCAD_ERROR;
      }
 
      if (wdb_put_internal(dbip->dbi_wdbp, argv[1], &intern, 1.0) < 0) {
 	 if (msg)
 	     bu_vls_printf(msg, "rt_cmd_put: wdb_put_internal(%s)", argv[1]);
 	 rt_db_free_internal(&intern);
-	 return ret;
+	 return BRLCAD_ERROR;
      }
 
      rt_db_free_internal(&intern);
@@ -222,51 +223,123 @@ rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 int
 rt_cmd_title(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 {
-    int ret = BRLCAD_ERROR;
-
     if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 2 || !argv)
-	return ret;
-
-    if (dbip->dbi_read_only) {
-	if (msg)
-	    bu_vls_printf(msg, "rt_cmd_title: database is read-only\n");
-	return ret;
-    }
+	return BRLCAD_ERROR;
 
     if (!BU_STR_EQUAL(argv[0], "title")) {
 	if (msg)
 	    bu_vls_printf(msg, "rt_cmd_title: incorrect command found: %s\n", argv[0]);
-	return ret;
+	return BRLCAD_ERROR;
     }
 
+    /* get title */
+    if (argc == 1) {
+	if (msg)
+	    bu_vls_printf(msg, "%s", dbip->dbi_title);
+	return BRLCAD_OK;
+    }
+
+    /* If doing anything other than reporting, we need to be able to write */
+    if (dbip->dbi_read_only) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_title: database is read-only\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* set title */
+    struct bu_vls title = BU_VLS_INIT_ZERO;
+    bu_vls_from_argv(&title, argc-1, (const char **)argv+1);
+    if (db_update_ident(dbip, bu_vls_addr(&title), dbip->dbi_local2base) < 0) {
+        bu_vls_free(&title);
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_title: unable to change database title");
+        return BRLCAD_ERROR;
+    }
+    bu_vls_free(&title);
 
     return BRLCAD_OK;
-
 }
 
 int
 rt_cmd_units(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 {
-    int ret = BRLCAD_ERROR;
+    int sflag = 0;
 
-    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 2 || !argv)
-	return ret;
-
-    if (dbip->dbi_read_only) {
-	if (msg)
-	    bu_vls_printf(msg, "rt_cmd_units: database is read-only\n");
-	return ret;
-    }
+    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 1 || argc > 2 || !argv)
+	return BRLCAD_ERROR;
 
     if (!BU_STR_EQUAL(argv[0], "units")) {
 	if (msg)
 	    bu_vls_printf(msg, "rt_cmd_units: incorrect command found: %s\n", argv[0]);
-	return ret;
+	return BRLCAD_ERROR;
     }
 
+    if (argc == 2) {
+        if (BU_STR_EQUAL(argv[1], "-s")) {
+            --argc;
+            ++argv;
+
+            sflag = 1;
+        } else if (BU_STR_EQUAL(argv[1], "-t")) {
+            struct bu_vls *vlsp = bu_units_strings_vls();
+
+	    if (msg)
+		bu_vls_printf(msg, "%s", bu_vls_cstr(vlsp));
+            bu_vls_free(vlsp);
+            bu_free(vlsp, "rt_cmd_units: vlsp");
+
+            return BRLCAD_OK;
+        }
+    }
+
+    /* Get units */
+    if (argc == 1) {
+	const char *str = bu_units_string(dbip->dbi_local2base);
+	if (!str) str = "Unknown_unit";
+
+	if (msg) {
+	    if (sflag)
+		bu_vls_printf(msg, "%s", str);
+	    else
+		bu_vls_printf(msg, "You are editing in '%s'.  1 %s = %g mm \n",
+			str, str, dbip->dbi_local2base);
+	}
+
+	return BRLCAD_OK;
+    }
+
+    if (dbip->dbi_read_only) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_units: database is read-only\n");
+	return BRLCAD_ERROR;
+    }
+
+    double loc2mm;
+    /* Set units */
+    /* Allow inputs of the form "25cm" or "3ft" */
+    if ((loc2mm = bu_mm_value(argv[1])) <= 0) {
+	if (msg)
+	    bu_vls_printf(msg,
+		    "%s: unrecognized unit\nvalid units: <um|mm|cm|m|km|in|ft|yd|mi>\n",
+		    argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (db_update_ident(dbip, dbip->dbi_title, loc2mm) < 0) {
+	if (msg)
+	    bu_vls_printf(msg, "rt_cmd_units:  warning - unable to stash working units into database\n");
+    }
+
+    dbip->dbi_local2base = loc2mm;
+    dbip->dbi_base2local = 1.0 / loc2mm;
+
+    const char *str = bu_units_string(dbip->dbi_local2base);
+    if (!str) str = "Unknown_unit";
+    if (msg)
+	bu_vls_printf(msg, "You are now editing in '%s'.  1 %s = %g mm \n",
+		str, str, dbip->dbi_local2base);
 
     return BRLCAD_OK;
-
 }
 
 
