@@ -32,13 +32,9 @@
 
 #include "../ged_private.h"
 
-
 int
 ged_units_core(struct ged *gedp, int argc, const char *argv[])
 {
-    double loc2mm;
-    const char *str;
-    int sflag = 0;
     static const char *usage = "[-s] [mm|cm|m|in|ft|...]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -52,61 +48,19 @@ ged_units_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (argc == 2) {
-	if (BU_STR_EQUAL(argv[1], "-s")) {
-	    --argc;
-	    ++argv;
+    /* The Tcl wdbp doesn't seem to work reliably for this purpose (the put
+     * command has issues??) so temporarily switch the dbip->dbi_wdbp pointer
+     * to the GED version. */
+    struct rt_wdb *tmp_wdbp = gedp->dbip->dbi_wdbp;
+    gedp->dbip->dbi_wdbp = gedp->ged_wdbp;
 
-	    sflag = 1;
-	} else if (BU_STR_EQUAL(argv[1], "-t")) {
-	    struct bu_vls *vlsp = bu_units_strings_vls();
+    int ret = rt_cmd_units(gedp->ged_result_str, gedp->dbip, argc, argv);
 
-	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(vlsp));
-	    bu_vls_free(vlsp);
-	    bu_free(vlsp, "ged_units_core: vlsp");
+    /* Restore default dbip->dbi_wdbp */
+    gedp->dbip->dbi_wdbp = tmp_wdbp;
 
-	    return BRLCAD_OK;
-	}
-    }
-
-    /* Get units */
-    if (argc == 1) {
-	str = bu_units_string(gedp->dbip->dbi_local2base);
-	if (!str) str = "Unknown_unit";
-
-	if (sflag)
-	    bu_vls_printf(gedp->ged_result_str, "%s", str);
-	else
-	    bu_vls_printf(gedp->ged_result_str, "You are editing in '%s'.  1 %s = %g mm \n",
-			  str, str, gedp->dbip->dbi_local2base);
-
-	return BRLCAD_OK;
-    }
-
-    /* Set units */
-    /* Allow inputs of the form "25cm" or "3ft" */
-    if ((loc2mm = bu_mm_value(argv[1])) <= 0) {
-	bu_vls_printf(gedp->ged_result_str,
-		      "%s: unrecognized unit\nvalid units: <um|mm|cm|m|km|in|ft|yd|mi>\n",
-		      argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    if (db_update_ident(gedp->dbip, gedp->dbip->dbi_title, loc2mm) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Warning: unable to stash working units into database\n");
-    }
-
-    gedp->dbip->dbi_local2base = loc2mm;
-    gedp->dbip->dbi_base2local = 1.0 / loc2mm;
-
-    str = bu_units_string(gedp->dbip->dbi_local2base);
-    if (!str) str = "Unknown_unit";
-    bu_vls_printf(gedp->ged_result_str, "You are now editing in '%s'.  1 %s = %g mm \n",
-		  str, str, gedp->dbip->dbi_local2base);
-
-    return BRLCAD_OK;
+    return ret;
 }
-
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
