@@ -544,6 +544,10 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	// Cycle complete, nref count is current.  Start analyzing.
 	QgModel *ctx = (QgModel *)u_data;
 
+	// If anybody was requesting an nref update, the fact that we're here
+	// means we've done it.
+	ctx->need_update_nref = false;
+
 	// 1.  Rebuild top instances
 	{
 	    std::unordered_map<unsigned long long, QgInstance *> obsolete = (*ctx->tops_instances);
@@ -693,8 +697,12 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	case 0:
 	    bu_log("MOD: %s\n", dp->d_namep);
 
-	    // TODO - don't know if we'll actually need this in the end...
-	    ctx->changed_dp.insert(dp);
+	    // In theory the librt callbacks should take care of this, and we
+	    // may not want to do this for all mods (updates can be
+	    // expensive)...  Need would be if a comb tree changes, and if the
+	    // backend has that covered we don't want to force the issue here
+	    // for something like a sph radius change...
+	    // ctx->need_update_nref = true;
 
 	    // Need to handle edits to comb/extrude/revolve/dsp, which have potential
 	    // implications for QgInstances.
@@ -704,14 +712,14 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	case 1:
 	    bu_log("ADD: %s\n", dp->d_namep);
 
+	    // In theory the librt callbacks should take care of this...
+	    ctx->need_update_nref = true;
+
 	    // If this is a new tops solid we'll only know to create that
 	    // instance after an update_nref pass, but if it's a new comb or
 	    // one of the other instance defining primitives create the new
 	    // instances now.
 	    ctx->add_instances(dp);
-
-	    // TODO - don't know if we'll actually need this in the end...
-	    ctx->need_update_nref = true;
 
 	    // If we have any invalid instances that are now valid, update them
 	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
@@ -724,6 +732,9 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    break;
 	case 2:
 	    bu_log("RM:  %s\n", dp->d_namep);
+
+	    // In theory the librt callbacks should take care of this...
+	    ctx->need_update_nref = true;
 
 	    // For removal, we need to 1) remove any instances where the parent is
 	    // dp, and 2) invalidate the dps in any instances where they match.
@@ -743,9 +754,6 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 		rmq.pop();
 		ctx->instances->erase(i_it->first);
 	    }
-
-	    // TODO - don't know if we'll actually need this in the end...
-	    ctx->need_update_nref = true;
 
 	    break;
 	default:
@@ -1178,8 +1186,6 @@ bool QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     if (!gedp)
 	return false;
 
-    changed_dp.clear();
-
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
     if (ged_cmd_valid(argv[0], NULL)) {
@@ -1197,10 +1203,12 @@ bool QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
 
     // If we have the need_update_nref flag set, we need to do db_update_nref
-    // ourselves - the backend logic made a dp add/remove but didn't do the
-    // nref updates.
-    if (gedp && need_update_nref)
+    // ourselves - the backend logic made a dp add/remove but didn't trigger
+    // the nref updates (can that happen?).
+    if (gedp && need_update_nref) {
+	// bu_log("missing callback in librt?\n");
 	db_update_nref(gedp->dbip, &rt_uniresource);
+    }
 
     return true;
 }
@@ -1223,8 +1231,6 @@ QgModel::closedb()
     if (tops_instances)
 	delete tops_instances;
 
-    // Clear changed dps - we're starting over
-    changed_dp.clear();
 }
 
 int
