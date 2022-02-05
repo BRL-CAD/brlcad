@@ -548,7 +548,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	{
 	    std::unordered_map<unsigned long long, QgInstance *> obsolete = (*ctx->tops_instances);
 	    struct directory **db_objects = NULL;
-	    int path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &db_objects);
+	    int path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_CYCLIC, NULL, &db_objects);
 
 	    if (path_cnt) {
 
