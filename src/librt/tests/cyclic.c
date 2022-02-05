@@ -51,8 +51,11 @@ main(int argc, char *argv[])
     int tops_cnt_expected = 3;
     int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, NULL);
 
+    int cyclic_cnt_expected = 5;
+    int cyclic_cnt = db_ls(dbip, DB_LS_CYCLIC, NULL, NULL);
+
     int ctops_cnt_expected = 8;
-    int ctops_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_TOPS_CYCLIC, NULL, NULL);
+    int ctops_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_CYCLIC, NULL, NULL);
 
     int ret = 0;
     if (tops_cnt != tops_cnt_expected) {
@@ -60,8 +63,13 @@ main(int argc, char *argv[])
 	ret = 1;
     }
 
+    if (cyclic_cnt != cyclic_cnt_expected) {
+	bu_log("Expected standard cyclic count of %d, got %d\n", cyclic_cnt_expected, cyclic_cnt);
+	ret = 1;
+    }
+
     if (ctops_cnt != ctops_cnt_expected) {
-	bu_log("Expected standard tops count of %d, got %d\n", ctops_cnt_expected, ctops_cnt);
+	bu_log("Expected cyclic tops count of %d, got %d\n", ctops_cnt_expected, ctops_cnt);
 	ret = 1;
     }
 
