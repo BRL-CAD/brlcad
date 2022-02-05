@@ -227,17 +227,168 @@ surprising) and then restoring the prior configuration upon completion of the
 routines.  Making this test confirms (as expected) that using the correct wdbp
 instance succeeds.
 
-Although the functional issues is resolved by the above workaround, the
-observed behavior begs for a deeper analysis.  Questions:
 
-1.  What is it about Tcl and/or GED that assumes unique wdbp control and can a
+Although the regression failure is avoided by the above workaround, the observed
+behavior begs for a deeper analysis.  Questions:
+
+1.  WHY is the type was set differently on the two wdbp instances.
+
+2.  What about the Tcl wdbp state causes the put failures, and why only on
+certain primitives?  If the two wdbp instances are supposed to be separate but
+functional, this failure is unexpected...
+
+3.  What is it about Tcl and/or GED that assumes unique wdbp control and can a
 way be found to not require multiple wdbp instances (among other concerns,
 wondering how multi-threaded code would behave with multiple wdbps in the
 application)
 
-2.  WHY is the type was set differently on the two wdbp instances.
+Also, this change causes another unexpected problem - the Archer graphical interface
+does not initialize or update properly.  It will launch, but many of its features
+do not work correctly.
 
-3.  What about the Tcl wdbp state causes the put failures, and why only on
-certain primitives?  If the two wdbp instances are supposed to be separate but
-functional, this failure is unexpected?
+
+To attempt to answer the first question, we look at the definition of struct rt_wdb
+in rt/wdb.h.  Unfortunately, the type entry is not documented in the header.  As a
+quick and dirty way of tracking down where it is used, we change the name in the
+struct from type to wdb_type and try a build.  Interestingly, it is used in only
+three places in a single file - src/librt/wdb.c:
+
+/home/user/brlcad/src/librt/wdb.c: In function ‘wdb_export_external’:
+/home/user/brlcad/src/librt/wdb.c:134:17: error: ‘struct rt_wdb’ has no member named ‘type’
+  134 |     switch (wdbp->type) {
+      |                 ^~
+/home/user/brlcad/src/librt/wdb.c: In function ‘wdb_init’:
+/home/user/brlcad/src/librt/wdb.c:302:9: error: ‘struct rt_wdb’ has no member named ‘type’
+  302 |     wdbp->type = mode;
+      |         ^~
+/home/user/brlcad/src/librt/wdb.c: In function ‘wdb_close’:
+/home/user/brlcad/src/librt/wdb.c:358:9: error: ‘struct rt_wdb’ has no member named ‘type’
+  358 |     wdbp->type = 0;
+      |     
+
+That's good news, since it bounds the logic we will have to examine.  Looking at
+wdb.c, we see ONLY the switch statement makes significant use of the variable (the other
+two uses are init and close).  The possible cases are:
+
+RT_WDB_TYPE_DB_DISK
+RT_WDB_TYPE_DB_DISK_APPEND_ONLY
+RT_WDB_TYPE_DB_INMEM_APPEND_ONLY
+RT_WDB_TYPE_DB_INMEM
+
+Which makes it immediately clear that "type" in this case distinguishes between an rt_wdb
+associated with an on-disk .g database and one associated with an in-memory only database.
+After adding a comment to the struct definition to help make that clearer, we can use the
+defines to decode the numerical types we saw in gdb above - 2 is RT_WDB_TYPE_DB_DISK, and
+4 is RT_WDB_TYPE_DB_INMEM.  While it's unsurprising that the working version has the type
+set to DISK, given the goal was to create objects in a solids.g database, we now have two
+new questions - why would the code use an in-mem wdbp, and why does using the INMEM wdbp
+cause problems for some primitives and not for others?
+
+For the first question, we start with the debugging info obtained above - DBIP->dbi_wdbp
+is written to multiple times, so we should restart gdb and probe more deeply into the
+wdbp setups:
+
+:~/brlcad-build/regress/solids $ gdb ../../bin/mged
+Reading symbols from ../../bin/mged...
+(gdb) break f_opendb
+Breakpoint 1 at 0xaf63c: file /home/user/brlcad/src/mged/mged.c, line 2607.
+(gdb) break wdb_dbopen
+Breakpoint 2 at 0x1b0c0
+(gdb) run -c < ../../../brlcad/regress/solids/solids.mged
+tarting program: /home/user/brlcad-build/bin/mged -c < ../../../brlcad/regress/solids/solids.mged
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+[New Thread 0x7ffff2212700 (LWP 1691608)]
+
+Thread 1 "mged" hit Breakpoint 1, f_opendb (clientData=0x7ffff6f9a2e1, interpreter=0x0, argc=0, argv=0x0)
+    at /home/user/brlcad/src/mged/mged.c:2607
+2607	{
+(gdb) n
+2608	    struct rt_wdb *ged_wdbp = RT_WDB_NULL;
+
+[snip]
+
+2841	    ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
+(gdb) 
+
+We see on 2841 that the ged_wdbp open explicitly specifies the DISK type.  Continuing on,
+the second encounter with wdb_dbopen (driven by a Tcl command) also uses DISK:
+
+(gdb) c
+Continuing.
+
+Thread 1 "mged" hit Breakpoint 2, wdb_dbopen (dbip=0x555555bc0ec0, mode=0) at /home/user/brlcad/src/librt/wdb.c:65
+65	{
+(gdb) bt
+#0  wdb_dbopen (dbip=0x555555bc0ec0, mode=0) at /home/user/brlcad/src/librt/wdb.c:65
+#1  0x00005555556042ab in f_opendb (clientData=0x555555678c28 <mged_cmdtab+4488>, interpreter=0x555555776d70, argc=3, 
+    argv=0x55555577b1d0) at /home/user/brlcad/src/mged/mged.c:2866
+#2  0x00007ffff6ef977b in TclInvokeStringCommand () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#3  0x00007ffff6efb5f2 in TclNRRunCallbacks () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#4  0x00007ffff6efc924 in ?? () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#5  0x00007ffff6efc367 in Tcl_EvalEx () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#6  0x00007ffff6efd4fa in Tcl_Eval () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#7  0x000055555559bc44 in cmdline (vp=0x555555676160 <input_str_prefix>, record=1)
+    at /home/user/brlcad/src/mged/cmd.c:1063
+#8  0x0000555555600df0 in stdin_input (clientData=0x0, UNUSED_mask=2) at /home/user/brlcad/src/mged/mged.c:1815
+#9  0x00007ffff6fa8be3 in Tcl_NotifyChannel () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#10 0x00007ffff7009c1e in ?? () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#11 0x00007ffff6fc4fc9 in Tcl_ServiceEvent () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#12 0x00007ffff6fc5309 in Tcl_DoOneEvent () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#13 0x00005555556013c4 in event_check (non_blocking=0) at /home/user/brlcad/src/mged/mged.c:1995
+#14 0x0000555555600bab in main (argc=0, argv=0x7fffffffdf58) at /home/user/brlcad/src/mged/mged.c:1723
+(gdb) n
+68	    RT_CK_DBI(dbip);
+(gdb) print mode
+$1 = 2
+(gdb)
+
+The third time we trigger web_dbopen (also from Tcl) it is the result of going through wdb_open_tcl and
+results in a mode 4 (INMEM) wdbp:
+
+(gdb) c
+Continuing.
+
+Thread 1 "mged" hit Breakpoint 2, wdb_dbopen (dbip=0x555555812430, mode=32767) at /home/user/brlcad/src/librt/wdb.c:65
+65	{
+(gdb) n
+68	    RT_CK_DBI(dbip);
+(gdb) print mode
+$2 = 4
+(gdb) bt
+#0  wdb_dbopen (dbip=0x555555bc0ec0, mode=4) at /home/user/brlcad/src/librt/wdb.c:68
+#1  0x000055555564d924 in wdb_open_tcl (UNUSED_clientData=0x0, interp=0x555555776d70, argc=4, argv=0x55555577b620)
+    at /home/user/brlcad/src/mged/wdb_obj.c:10534
+#2  0x00007ffff6ef977b in TclInvokeStringCommand () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#3  0x00007ffff6efb5f2 in TclNRRunCallbacks () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#4  0x00007ffff6efc924 in ?? () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#5  0x00007ffff6efc367 in Tcl_EvalEx () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#6  0x00007ffff6efd4fa in Tcl_Eval () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#7  0x0000555555604545 in f_opendb (clientData=0x555555678c28 <mged_cmdtab+4488>, interpreter=0x555555776d70, argc=3, 
+    argv=0x55555577b1d0) at /home/user/brlcad/src/mged/mged.c:2906
+#8  0x00007ffff6ef977b in TclInvokeStringCommand () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#9  0x00007ffff6efb5f2 in TclNRRunCallbacks () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#10 0x00007ffff6efc924 in ?? () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#11 0x00007ffff6efc367 in Tcl_EvalEx () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#12 0x00007ffff6efd4fa in Tcl_Eval () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#13 0x000055555559bc44 in cmdline (vp=0x555555676160 <input_str_prefix>, record=1)
+    at /home/user/brlcad/src/mged/cmd.c:1063
+#14 0x0000555555600df0 in stdin_input (clientData=0x0, UNUSED_mask=2) at /home/user/brlcad/src/mged/mged.c:1815
+#15 0x00007ffff6fa8be3 in Tcl_NotifyChannel () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#16 0x00007ffff7009c1e in ?? () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#17 0x00007ffff6fc4fc9 in Tcl_ServiceEvent () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#18 0x00007ffff6fc5309 in Tcl_DoOneEvent () from /lib/x86_64-linux-gnu/libtcl8.6.so
+#19 0x00005555556013c4 in event_check (non_blocking=0) at /home/user/brlcad/src/mged/mged.c:1995
+#20 0x0000555555600bab in main (argc=0, argv=0x7fffffffdf58) at /home/user/brlcad/src/mged/mged.c:1723
+(gdb) 
+
+Fortunately we don't have to dig into Tcl scripts to find the source of this
+logic, since the call stacks indicate that both of these calls originate from
+f_opendb.  Indeed, line mged.c:2905 generates the wdb_open Tcl command string.
+What is less immediately clear is why we have *both* the 2866 call and the 2905
+command - the latter evidently overrides the former.  Following the mged.c
+history back, the dbip and inmem setup has been present in one form or another
+since the late 1990s, but why do we need the inmem?  And what good does the
+initial wdb_open call do, since the inmem call is overriding it?
+
 
