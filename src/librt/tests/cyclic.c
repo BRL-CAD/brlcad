@@ -48,12 +48,24 @@ main(int argc, char *argv[])
 
     db_update_nref(dbip, &rt_uniresource);
 
+    int tops_cnt_expected = 3;
     int tops_cnt = db_ls(dbip, DB_LS_TOPS, NULL, NULL);
+
+    int ctops_cnt_expected = 8;
     int ctops_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_TOPS_CYCLIC, NULL, NULL);
 
-    bu_log("counts: %d, %d\n", tops_cnt, ctops_cnt);
+    int ret = 0;
+    if (tops_cnt != tops_cnt_expected) {
+	bu_log("Expected standard tops count of %d, got %d\n", tops_cnt_expected, tops_cnt);
+	ret = 1;
+    }
 
-    return 0;
+    if (ctops_cnt != ctops_cnt_expected) {
+	bu_log("Expected standard tops count of %d, got %d\n", ctops_cnt_expected, ctops_cnt);
+	ret = 1;
+    }
+
+    return ret;
 }
 
 /*

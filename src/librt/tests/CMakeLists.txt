@@ -39,6 +39,7 @@ BRLCAD_ADDEXEC(rt_datum rt_datum.c "librt" TEST)
 
 # cyclic path testing
 BRLCAD_ADDEXEC(rt_cyclic cyclic.c "librt" TEST)
+BRLCAD_ADD_TEST(NAME rt_cyclic_basic COMMAND rt_cyclic ${CMAKE_CURRENT_SOURCE_DIR}/cyclic_tests.g)
 
 BRLCAD_ADDEXEC(rt_cache cache.cpp "librt" TEST)
 BRLCAD_ADD_TEST(NAME rt_cache_serial_single_object COMMAND rt_cache 1)

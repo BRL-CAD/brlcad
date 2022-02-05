@@ -120,9 +120,9 @@ db_fullpath_cyclic_subtree(struct db_full_path *path, int curr_bool, union tree 
 			}
 
 			// Debugging
-			char *path_string = db_path_to_string(path);
-			bu_log("Found minimal cyclic path %s\n", path_string);
-			bu_free(path_string, "free path str");
+			//char *path_string = db_path_to_string(path);
+			//bu_log("Found minimal cyclic path %s\n", path_string);
+			//bu_free(path_string, "free path str");
 		    }
 		}
 		DB_FULL_PATH_POP(path);
