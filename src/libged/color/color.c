@@ -268,6 +268,9 @@ ged_edcolor_core(struct ged *gedp, int argc, const char *argv[])
 int
 ged_color_core(struct ged *gedp, int argc, const char *argv[])
 {
+    struct mater *newp;
+    struct mater *mp;
+    struct mater *next_mater;
     static const char *usage = "[-e] [low high r g b]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -277,31 +280,78 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* edcolor is not part of rt_cmd_color */
-    if (argc == 2) {
-	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
-	    return edcolor(gedp, argc, argv);
-	}
-    }
-
-    /* The Tcl wdbp doesn't seem to work reliably for this purpose (the put
-     * command has issues??) so temporarily switch the dbip->dbi_wdbp pointer
-     * to the GED version. */
-    struct rt_wdb *tmp_wdbp = gedp->dbip->dbi_wdbp;
-    gedp->dbip->dbi_wdbp = gedp->ged_wdbp;
-
-    int ret = rt_cmd_color(gedp->ged_result_str, gedp->dbip, argc, argv);
-
-    /* Restore default dbip->dbi_wdbp */
-    gedp->dbip->dbi_wdbp = tmp_wdbp;
-
-    if (ret & BRLCAD_HELP) {
+    /* must be wanting help */
+    if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_HELP;
     }
 
-    if (ret & BRLCAD_ERROR) {
+    if (argc != 6 && argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
+    }
+
+    /* edcolor */
+    if (argc == 2) {
+	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
+	    return edcolor(gedp, argc, argv);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    if (db_version(gedp->dbip) < 5) {
+	/* Delete all color records from the database */
+	mp = rt_material_head();
+	while (mp != MATER_NULL) {
+	    next_mater = mp->mt_forw;
+	    color_zaprec(gedp, mp);
+	    mp = next_mater;
+	}
+
+	/* construct the new color record */
+	BU_ALLOC(newp, struct mater);
+	newp->mt_low = atoi(argv[1]);
+	newp->mt_high = atoi(argv[2]);
+	newp->mt_r = atoi(argv[3]);
+	newp->mt_g = atoi(argv[4]);
+	newp->mt_b = atoi(argv[5]);
+	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
+
+	/* Insert new color record in the in-memory list */
+	rt_insert_color(newp);
+
+	/* Write new color records for all colors in the list */
+	mp = rt_material_head();
+	while (mp != MATER_NULL) {
+	    next_mater = mp->mt_forw;
+	    color_putrec(gedp, mp);
+	    mp = next_mater;
+	}
+    } else {
+	struct bu_vls colors = BU_VLS_INIT_ZERO;
+
+	/* construct the new color record */
+	BU_ALLOC(newp, struct mater);
+	newp->mt_low = atoi(argv[1]);
+	newp->mt_high = atoi(argv[2]);
+	newp->mt_r = atoi(argv[3]);
+	newp->mt_g = atoi(argv[4]);
+	newp->mt_b = atoi(argv[5]);
+	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
+
+	/* Insert new color record in the in-memory list */
+	rt_insert_color(newp);
+
+	/*
+	 * Gather color records from the in-memory list to build
+	 * the _GLOBAL objects regionid_colortable attribute.
+	 */
+	rt_vls_color_map(&colors);
+
+	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), gedp->dbip);
+	bu_vls_free(&colors);
     }
 
     return BRLCAD_OK;

@@ -37,7 +37,6 @@
 #include "rt/search.h"
 #include "bv/defines.h"
 #include "dm/fbserv.h" // for fbserv_obj
-#include "rt/wdb.h" // for struct rt_wdb
 
 __BEGIN_DECLS
 

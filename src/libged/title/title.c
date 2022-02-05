@@ -35,21 +35,33 @@
 int
 ged_title_core(struct ged *gedp, int argc, const char *argv[])
 {
+    struct bu_vls title = BU_VLS_INIT_ZERO;
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    /* The Tcl wdbp doesn't seem to work reliably for this purpose (the put
-     * command has issues??) so temporarily switch the dbip->dbi_wdbp pointer
-     * to the GED version. */
-    struct rt_wdb *tmp_wdbp = gedp->dbip->dbi_wdbp;
-    gedp->dbip->dbi_wdbp = gedp->ged_wdbp;
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
-    int ret = rt_cmd_title(gedp->ged_result_str, gedp->dbip, argc, argv);
+    /* get title */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "%s", gedp->dbip->dbi_title);
+	return BRLCAD_OK;
+    }
 
-    /* Restore default dbip->dbi_wdbp */
-    gedp->dbip->dbi_wdbp = tmp_wdbp;
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
-    return ret;
+    /* set title */
+    bu_vls_from_argv(&title, argc-1, (const char **)argv+1);
+
+    if (db_update_ident(gedp->dbip, bu_vls_addr(&title), gedp->dbip->dbi_local2base) < 0) {
+	bu_vls_free(&title);
+	bu_vls_printf(gedp->ged_result_str, "Error: unable to change database title");
+	return BRLCAD_ERROR;
+    }
+
+    bu_vls_free(&title);
+    return BRLCAD_OK;
 }
 
 
