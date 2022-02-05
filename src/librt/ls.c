@@ -31,10 +31,11 @@
 #include "bu/path.h"
 #include "vmath.h"
 #include "rt/db4.h"
+#include "rt/search.h"
 #include "raytrace.h"
 
-HIDDEN int
-dp_eval_flags(struct directory *dp, int flags)
+static int
+dp_eval_flags(struct directory *dp, const struct db_i *dbip, int flags)
 {
     int flag_eval = 0;
 
@@ -45,13 +46,22 @@ dp_eval_flags(struct directory *dp, int flags)
      * hidden flag is set */
     if (!(flags & DB_LS_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) return 0;
 
+
+    /* TOPS is a bit more complicated than many of the flags, in that there is a
+     * possible need to recognize a dp with a cyclic tree as a member of the tops
+     * set. */
+    int t_cyclic = 0;
+    if (flags & DB_LS_TOPS && flags & DB_LS_TOPS_CYCLIC) {
+       	t_cyclic = db_cyclic_paths(NULL, dbip, dp);
+    }
+
     /* For any other flags that were provided, if we don't match them we don't return
      * true.  If no flags are present, we default to true. */
     if (flags & DB_LS_PRIM)     { flag_eval += (dp->d_flags & RT_DIR_SOLID)    ? 0 : 1; }
     if (flags & DB_LS_COMB)     { flag_eval += (dp->d_flags & RT_DIR_COMB)     ? 0 : 1; }
     if (flags & DB_LS_REGION)   { flag_eval += (dp->d_flags & RT_DIR_REGION)   ? 0 : 1; }
     if (flags & DB_LS_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM) ? 0 : 1; }
-    if (flags & DB_LS_TOPS)     { flag_eval += (dp->d_nref == 0)               ? 0 : 1; }
+    if (flags & DB_LS_TOPS)     { flag_eval += ((dp->d_nref == 0) || t_cyclic) ? 0 : 1; }
     return (flag_eval) ? 0 : 1;
 }
 
@@ -66,23 +76,26 @@ db_ls(const struct db_i *dbip, int flags, const char *pattern, struct directory 
 
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    objcount += dp_eval_flags(dp, flags);
+	    objcount += dp_eval_flags(dp, dbip, flags);
 	}
     }
     if (objcount > 0) {
-	(*dpv) = (struct directory **)bu_malloc(sizeof(struct directory *) * (objcount + 1), "directory pointer array");
+	if (dpv)
+	    (*dpv) = (struct directory **)bu_malloc(sizeof(struct directory *) * (objcount + 1), "directory pointer array");
 	objcount = 0;
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (dp_eval_flags(dp,flags)) {
+		if (dp_eval_flags(dp, dbip, flags)) {
 		    if (!pattern || !bu_path_match(pattern, dp->d_namep, 0)) {
-			(*dpv)[objcount] = dp;
+			if (dpv)
+			    (*dpv)[objcount] = dp;
 			objcount++;
 		    }
 		}
 	    }
 	}
-	(*dpv)[objcount] = NULL;
+	if (dpv)
+	    (*dpv)[objcount] = NULL;
     }
     return objcount;
 }
