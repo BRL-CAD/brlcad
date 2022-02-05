@@ -46,28 +46,17 @@ dp_eval_flags(struct directory *dp, const struct db_i *dbip, int flags)
      * hidden flag is set */
     if (!(flags & DB_LS_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) return 0;
 
-    /* TOPS and CYCLIC are a bit more complicated than many of the flags, in
-     * that if the cyclic flag is on we also want to return any cyclic paths as
-     * part of the tops set.  In other words, DB_LS_CYCLIC acts as a modifier
-     * to DB_LS_TOPS if combined with it. */
-    int t_cyclic = 0;
-    if (flags & DB_LS_CYCLIC) {
-	t_cyclic = db_cyclic_paths(NULL, dbip, dp);
-    }
-    if (flags & DB_LS_TOPS) {
-	flag_eval += ((dp->d_nref == 0) || ((flags & DB_LS_CYCLIC) && t_cyclic)) ? 0 : 1;
-    }
-    if ((flags & DB_LS_CYCLIC) && !(flags & DB_LS_TOPS)) {
-	flag_eval += (t_cyclic) ? 0 : 1;
-    }
+    /* If no flags other than HIDDEN are set, match everything */
+    if (!(flags & ~DB_LS_HIDDEN))
+	return 1;
 
-    /* For any other flags that were provided, if we don't match them we don't return
-     * true.  If no flags are present, we default to true. */
-    if (flags & DB_LS_PRIM)     { flag_eval += (dp->d_flags & RT_DIR_SOLID)      ? 0 : 1; }
-    if (flags & DB_LS_COMB)     { flag_eval += (dp->d_flags & RT_DIR_COMB)       ? 0 : 1; }
-    if (flags & DB_LS_REGION)   { flag_eval += (dp->d_flags & RT_DIR_REGION)     ? 0 : 1; }
-    if (flags & DB_LS_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM)   ? 0 : 1; }
-    return (flag_eval) ? 0 : 1;
+    if (flags & DB_LS_PRIM)     { flag_eval += (dp->d_flags & RT_DIR_SOLID); }
+    if (flags & DB_LS_COMB)     { flag_eval += (dp->d_flags & RT_DIR_COMB); }
+    if (flags & DB_LS_REGION)   { flag_eval += (dp->d_flags & RT_DIR_REGION); }
+    if (flags & DB_LS_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM); }
+    if (flags & DB_LS_TOPS)     { flag_eval += (dp->d_nref == 0); }
+    if (flags & DB_LS_CYCLIC)   { flag_eval += (db_cyclic_paths(NULL, dbip, dp)); }
+    return (flag_eval) ? 1 : 0;
 }
 
 size_t
