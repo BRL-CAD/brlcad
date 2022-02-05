@@ -261,20 +261,12 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// of updates to the QgInstance containers
 	void update_instances(struct directory *dp);
 
-	// We maintain the vector above for leaf ordering, but we also build a
-	// map of QgInstance hashes to instances for easy lookup.  This is for
-	// QgInstance reuse - we in fact have to construct a temporary
+	// Build a map of QgInstance hashes to instances for easy lookup.  This
+	// is for QgInstance reuse - we in fact have to construct a temporary
 	// QgInstance during the tree walk to get the lookup hash, but in trees
 	// that heavily reuse combs avoiding the storing of duplicate
 	// QgInstances will save memory.
-	//
-	// TODO - the nested map with the parent dp as the first key mainly
-	// serves to reduce the chance of hash collisions, but if that's not a
-	// practical issue we should simplify this
-	//std::unordered_map<struct directory *, std::unordered_map<unsigned long long, QgInstance *>> ilookup;
-
 	std::unordered_map<unsigned long long, QgInstance *> *instances = NULL;
-	std::unordered_map<unsigned long long, QgInstance *> *tops_instances = NULL;
 
 	// Hierarchy items
 	//
@@ -306,50 +298,20 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// top level objects in a database.
 	//
 	// The seed set is the set of objects with no parents in the hierarchy.
-	// (What users of MGED think of as the "tops" set.)  This set may change
-	// after each database edit, but there will always be at least one object
-	// in a valid .g hierarchy that has no parent.
-	//
-	// TODO - tops does not work if we have a database with a cyclic definition
-	// of an otherwise top level comb.  There are a couple of possible options
-	// for that case:  1) fall back on a straight-up listing of all objects
-	// IFF tops is empty 2) fall back on the all-objs listing if a cyclic path
-	// is detected in the database 3) do a more sophisticated analysis of the
-	// database trees and generate a "pseudo-tops" list with the cycles broken
-	// #1 is the simplest but will result in some portion of the .g file not
-	// being visible in the tree view at all if we do have some tops objects
-	// but one or more cyclic cases.  #2 requires cyclic path detection and
-	// could result in an unusably large listing of objects for big .g files.
-	// #3 would be the best answer but has a currently unknown implementation
-	// difficulty and performance cost (remember the tops set has to be
-	// regenerated after every database edit since each edit hast the potential
-	// to alter the tops set.)
+	// (What users of MGED think of as the "tops" set, as well as objects
+	// with cyclic subtrees - the latter would be invisible in the tree
+	// view if we do not list them as top level objects.)  This set may
+	// change after each database edit, but there will always be at least
+	// one object in a valid .g hierarchy that has no parent.
+	std::unordered_map<unsigned long long, QgInstance *> *tops_instances = NULL;
 	std::vector<QgItem *> tops_items;
 
 	// Activity flags (used for relevance highlighting) need to be updated
 	// whenever a selection changes.  We define one flag per QgInstance,
 	// and update flags accordingly based on current app settings.
 	// Highlighting is then keyed in each QgItem based on the current value
-	// of these flags.
+	// of these flags. (TODO - can this be private?)
 	std::vector<int> active_flags;
-
-
-	// Qt Model interface
-	QModelIndex index(int row, int column, const QModelIndex &p) const;
-	QModelIndex parent(const QModelIndex &child) const;
-	Qt::ItemFlags flags(const QModelIndex &index) const;
-	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-	int rowCount(const QModelIndex &parent = QModelIndex()) const;
-	int columnCount(const QModelIndex &parent = QModelIndex()) const;
-
-	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-	bool setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role = Qt::EditRole);
-
-	bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex());
-	bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex());
-	bool insertColumns(int column, int count, const QModelIndex &parent = QModelIndex());
-	bool removeColumns(int column, int count, const QModelIndex &parent = QModelIndex());
 
 	// .g Db interface and containers
 	bool run_cmd(struct bu_vls *msg, int argc, const char **argv);
@@ -360,7 +322,31 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	struct ged *gedp;
 
 	bool need_update_nref = false;
+
+	/* Used by qged_view_update to identify which objects need to be
+	 * redrawn when the view is updated. */
 	std::unordered_set<struct directory *> changed_dp;
+
+	// Qt Model interface
+	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+	QModelIndex index(int row, int column, const QModelIndex &p) const override;
+	QModelIndex parent(const QModelIndex &child) const override;
+	int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+	int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+
+	Qt::ItemFlags flags(const QModelIndex &index) const override;
+	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+	bool setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role = Qt::EditRole) override;
+
+	bool insertColumns(int column, int count, const QModelIndex &parent = QModelIndex()) override;
+	bool removeColumns(int column, int count, const QModelIndex &parent = QModelIndex()) override;
+	bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+	bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+
+    private:
+	QgItem *getItem(const QModelIndex &index) const;
+	QgItem *rootItem;
 };
 
 #endif //QGMODEL_H

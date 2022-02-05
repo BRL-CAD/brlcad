@@ -697,6 +697,10 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	case 0:
 	    bu_log("MOD: %s\n", dp->d_namep);
 
+	    // The view needs to regenerate the wireframe(s) for this dp, as
+	    // it may have changed
+	    ctx->changed_dp.insert(dp);
+
 	    // In theory the librt callbacks should take care of this, and we
 	    // may not want to do this for all mods (updates can be
 	    // expensive)...  Need would be if a comb tree changes, and if the
@@ -1102,9 +1106,30 @@ QgModel::update_instances(struct directory *dp)
 //          Qt abstract model interface implementation
 ///////////////////////////////////////////////////////////////////////
 
-QModelIndex
-QgModel::index(int , int , const QModelIndex &) const
+QgItem *QgModel::getItem(const QModelIndex &index) const
 {
+    if (index.isValid()) {
+        QgItem *item = static_cast<QgItem*>(index.internalPointer());
+        if (item)
+            return item;
+    }
+    return rootItem;
+}
+
+QModelIndex
+QgModel::index(int row, int column, const QModelIndex &parent_idx) const
+{
+    if (parent_idx.isValid() && parent_idx.column() != 0)
+	return QModelIndex();
+
+    QgItem *parentItem = getItem(parent_idx);
+    if (!parentItem)
+	return QModelIndex();
+
+    QgItem *childItem = parentItem->child(row);
+    if (childItem)
+	return createIndex(row, column, childItem);
+
     return QModelIndex();
 }
 
@@ -1186,6 +1211,8 @@ bool QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     if (!gedp)
 	return false;
 
+    changed_dp.clear();
+
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
     if (ged_cmd_valid(argv[0], NULL)) {
@@ -1231,6 +1258,7 @@ QgModel::closedb()
     if (tops_instances)
 	delete tops_instances;
 
+    changed_dp.clear();
 }
 
 int
