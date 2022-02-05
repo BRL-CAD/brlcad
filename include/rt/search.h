@@ -184,32 +184,28 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 #define DB_LS_HIDDEN       0x8    /**< @brief include hidden objects in results */
 #define DB_LS_NON_GEOM     0x10   /**< @brief filter for non-geometry objects */
 #define DB_LS_TOPS         0x20   /**< @brief filter for objects un-referenced by other objects */
+#define DB_LS_TOPS_CYCLIC  0x40   /**< @brief modifier for DB_LS_TOPS to also treat cyclic objects as top-level */
 /* TODO - implement this flag
-   #define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
+   #define DB_LS_REGEX        0x80*/ /* interpret pattern using regex rules, instead of
 					globbing rules (default) */
 
 /* cyclic.c */
 /**
- * db_cyclic_paths takes a database instance pointer and searches for cyclic
- * paths in the database.
+ * db_cyclic_paths searches for cyclic paths in the database, either in all
+ * objects or checking whether a specific dp is cyclic within its subtree.
  *
- * If sdp is NULL, this routine will return the number of "minimal" paths
- * identified - a minimal path here referring to a path where the root dp in
- * the cycle matches the leaf dp. (The comb definiing that cycle may be used
- * elsewhere in the database, and hence be the source of more than one cyclic
- * path in the hierarchy, but fixing the minimal cycle will address those
- * problems as well.)  If a cyclic_paths is non-NULL it will be used to return
- * db_fullpath entries for the cyclic paths found.
+ * If sdp is NULL, ALL directory pointers in the database are checked.  This is
+ * a complete validation of the whole .g file, and the only way to
+ * comprehensively search for any cyclic paths present.  The return count will
+ * be the number of combs with a cyclic reference in their subtrees.
  *
- * If sdp is non-NULL, the search will check only the tree below sdp.  Unlike
- * the general search, the returns will be all cyclic paths found, not just
- * minimal paths.  (Client codes looking to identify cyclic paths for reporting
- * problems to users for repair are advised to use the sdp==NULL results to get
- * the minimum paths - use sdp != NULL only if it is crucial that the check be
- * confined to a specific sub-tree for performance or a specific, focused used
- * case (e.g. an explicitly user-specified lint tree check.)
+ * If sdp is non-NULL, the search will be limited to checking only the tree
+ * below sdp for a cyclic reference to sdp.
+ *
+ * If a cyclic_paths is non-NULL it will be used to return db_fullpath entries
+ * for the cyclic paths found.
  */
-RT_EXPORT extern int db_cyclic_paths(struct bu_ptbl *cyclic_paths, struct db_i *dbip, struct directory *sdp);
+RT_EXPORT extern int db_cyclic_paths(struct bu_ptbl *cyclic_paths, const struct db_i *dbip, struct directory *sdp);
 
 
 __END_DECLS

@@ -37,6 +37,8 @@ BRLCAD_ADDEXEC(db5_size db5_size.c "librt" TEST)
 # datum testing
 BRLCAD_ADDEXEC(rt_datum rt_datum.c "librt" TEST)
 
+# cyclic path testing
+BRLCAD_ADDEXEC(rt_cyclic cyclic.c "librt" TEST)
 
 BRLCAD_ADDEXEC(rt_cache cache.cpp "librt" TEST)
 BRLCAD_ADD_TEST(NAME rt_cache_serial_single_object COMMAND rt_cache 1)

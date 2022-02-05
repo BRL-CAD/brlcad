@@ -46,12 +46,10 @@
 
 /* Search client data container */
 struct cyclic_client_data_t {
-    struct db_i *dbip;
+    const struct db_i *dbip;
     struct bu_ptbl *cyclic;
     int cnt;
-    int full_search;
 };
-
 
 /**
  * A generic traversal function maintaining awareness of the full path
@@ -96,45 +94,22 @@ db_fullpath_cyclic_subtree(struct db_full_path *path, int curr_bool, union tree 
 		return;
 	    } else {
 		/* Create the new path. If doing so creates a cyclic path,
-		 * abort walk and (if path is minimally cyclic) report it -
-		 * else, keep going. */
+		 * abort walk and (if the cycle is a consequence of the root
+		 * dp) report it - else, keep going. */
 		struct db_full_path *newpath;
 		db_add_node_to_full_path(path, dp);
 		if (!db_full_path_cyclic(path, NULL, 0)) {
 		    /* Keep going */
 		    traverse_func(path, client_data);
 		} else {
-		    if (ccd->full_search) {
-			if (dp == path->fp_names[0]) {
-			    // If dp matches the root dp, the cyclic path is a
-			    // "minimal" cyclic path.  Otherwise, it is a "buried"
-			    // cyclic path - i.e., a reference by a higher level
-			    // comb to a comb with a cyclic path problem. A buried
-			    // cycle haults the tree walk, but it's not the minimal
-			    // "here's the problem to fix" path we want to report
-			    // in this case.  (Because we are doing a full database
-			    // search, we have to walk all comb trees anyway to be
-			    // sure of finding all problems, so we will eventually
-			    // find the minimal verison of the problem.)
-			    ccd->cnt++;
-			    if (ccd->cyclic) {
-				BU_ALLOC(newpath, struct db_full_path);
-				db_full_path_init(newpath);
-				db_dup_full_path(newpath, path);
-				/* Insert the path in the bu_ptbl collecting paths */
-				bu_ptbl_ins(ccd->cyclic, (long *)newpath);
-			    }
-
-			    // Debugging
-			    char *path_string = db_path_to_string(path);
-			    bu_log("Found minimal cyclic path %s\n", path_string);
-			    bu_free(path_string, "free path str");
-			}
-		    } else {
-			// We're not doing a full database search and don't
-			// have any guarantees we will find minimal paths at
-			// some point during the search; report everything we
-			// find within this tree.
+		    if (dp == path->fp_names[0]) {
+			// If dp matches the root dp, the cyclic path is a
+			// "minimal" cyclic path.  Otherwise, it is a "buried"
+			// cyclic path - i.e., a reference a comb other than
+			// that currently being tested with a cyclic path
+			// problem. A buried cycle halts the tree walk, but is
+			// not reported as it is not a cyclic instance of the
+			// root dp.
 			ccd->cnt++;
 			if (ccd->cyclic) {
 			    BU_ALLOC(newpath, struct db_full_path);
@@ -143,6 +118,11 @@ db_fullpath_cyclic_subtree(struct db_full_path *path, int curr_bool, union tree 
 			    /* Insert the path in the bu_ptbl collecting paths */
 			    bu_ptbl_ins(ccd->cyclic, (long *)newpath);
 			}
+
+			// Debugging
+			char *path_string = db_path_to_string(path);
+			bu_log("Found minimal cyclic path %s\n", path_string);
+			bu_free(path_string, "free path str");
 		    }
 		}
 		DB_FULL_PATH_POP(path);
@@ -188,7 +168,7 @@ db_fullpath_cyclic(struct db_full_path *path, void *client_data)
 }
 
 int
-db_cyclic_paths(struct bu_ptbl *cyclic_paths, struct db_i *dbip, struct directory *sdp)
+db_cyclic_paths(struct bu_ptbl *cyclic_paths, const struct db_i *dbip, struct directory *sdp)
 {
     if (!dbip)
 	return 0;
@@ -206,10 +186,10 @@ db_cyclic_paths(struct bu_ptbl *cyclic_paths, struct db_i *dbip, struct director
     ccd.cyclic = cyclic_paths;
     ccd.cnt = 0;
 
+    // If we have sdp, we're only investigating one case
     if (sdp) {
 	if (!(sdp->d_flags & RT_DIR_COMB))
 	    return 0;
-	ccd.full_search = 0;
 	struct db_full_path *start_path = NULL;
 	BU_ALLOC(start_path, struct db_full_path);
 	db_full_path_init(start_path);
@@ -217,22 +197,22 @@ db_cyclic_paths(struct bu_ptbl *cyclic_paths, struct db_i *dbip, struct director
 	db_fullpath_cyclic(start_path, (void **)&ccd);
 	db_free_full_path(start_path);
 	bu_free(start_path, "start_path");
-    } else {
-	struct directory *dp;
-	ccd.full_search = 1;
-	for (int i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (!(dp->d_flags & RT_DIR_COMB))
-		    continue;
+	return ccd.cnt;
+    }
 
-		struct db_full_path *start_path = NULL;
-		BU_ALLOC(start_path, struct db_full_path);
-		db_full_path_init(start_path);
-		db_add_node_to_full_path(start_path, dp);
-		db_fullpath_cyclic(start_path, (void **)&ccd);
-		db_free_full_path(start_path);
-		bu_free(start_path, "start_path");
-	    }
+    // No specific dp specified - check them all
+    struct directory *dp;
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & RT_DIR_COMB))
+		continue;
+	    struct db_full_path *start_path = NULL;
+	    BU_ALLOC(start_path, struct db_full_path);
+	    db_full_path_init(start_path);
+	    db_add_node_to_full_path(start_path, dp);
+	    db_fullpath_cyclic(start_path, (void **)&ccd);
+	    db_free_full_path(start_path);
+	    bu_free(start_path, "start_path");
 	}
     }
 

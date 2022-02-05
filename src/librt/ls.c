@@ -68,35 +68,44 @@ dp_eval_flags(struct directory *dp, const struct db_i *dbip, int flags)
 size_t
 db_ls(const struct db_i *dbip, int flags, const char *pattern, struct directory ***dpv)
 {
-    size_t i;
     size_t objcount = 0;
     struct directory *dp;
 
     RT_CK_DBI(dbip);
 
-    for (i = 0; i < RT_DBNHASH; i++) {
+    int max_size = 0;
+    for (int i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    objcount += dp_eval_flags(dp, dbip, flags);
+	    max_size++;
 	}
     }
-    if (objcount > 0) {
-	if (dpv)
-	    (*dpv) = (struct directory **)bu_malloc(sizeof(struct directory *) * (objcount + 1), "directory pointer array");
-	objcount = 0;
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (dp_eval_flags(dp, dbip, flags)) {
-		    if (!pattern || !bu_path_match(pattern, dp->d_namep, 0)) {
-			if (dpv)
-			    (*dpv)[objcount] = dp;
-			objcount++;
-		    }
+
+    struct directory **matches = NULL;
+    if (dpv)
+	matches = (struct directory **)bu_malloc(sizeof(struct directory *) * (max_size + 1), "directory pointer array");
+
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp_eval_flags(dp, dbip, flags)) {
+		if (!pattern || !bu_path_match(pattern, dp->d_namep, 0)) {
+		    if (matches)
+			matches[objcount] = dp;
+		    objcount++;
 		}
 	    }
 	}
-	if (dpv)
-	    (*dpv)[objcount] = NULL;
     }
+
+    if (objcount > 0 && dpv) {
+	(*dpv) = (struct directory **)bu_calloc(sizeof(struct directory *), (objcount + 1), "directory pointer array");
+	for (size_t i = 0; i < objcount; i++) {
+	    (*dpv)[i] = matches[i];
+	}
+    }
+
+    if (matches)
+	bu_free(matches, "matches array");
+
     return objcount;
 }
 
