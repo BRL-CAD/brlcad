@@ -1276,7 +1276,7 @@ QgModel::opendb(const char *npath)
     // is the analogy to Qt's hidden "root" node in a model.  To handle them,
     // we define "NULL root" instances.
     struct directory **db_objects = NULL;
-    int path_cnt = db_ls(dbip, DB_LS_TOPS, NULL, &db_objects);
+    int path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_CYCLIC , NULL, &db_objects);
 
     if (path_cnt) {
 
@@ -1313,9 +1313,6 @@ QgModel::opendb(const char *npath)
 
     // Sort tops_items according to alphanum
     std::sort(tops_items.begin(), tops_items.end(), QgItem_cmp());
-
-
-    // TODO - need to decide what to do about cyclic paths...
 
 
     // Run through the objects and crack the non-leaf objects to define
