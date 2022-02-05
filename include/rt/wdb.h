@@ -40,6 +40,13 @@ __BEGIN_DECLS
 
 struct resource;  /* forward declaration */
 
+/* struct rt_wdb database types (for wdb_type struct entry) */
+#define RT_WDB_TYPE_DB_DISK                     2
+#define RT_WDB_TYPE_DB_DISK_APPEND_ONLY         3
+#define RT_WDB_TYPE_DB_INMEM                    4
+#define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY        5
+
+
 /**
  * This data structure is at the core of the "LIBWDB" support for
  * allowing application programs to read and write BRL-CAD databases.
@@ -48,7 +55,7 @@ struct resource;  /* forward declaration */
 
 struct rt_wdb {
     struct bu_list      l;
-    int                 type;
+    int                 wdb_type; /** < @brief .g database type (RT_WDB_TYPE - disk or inmem, append-only) */
     struct db_i *       dbip;
     struct db_tree_state        wdb_initial_tree_state;
     struct bg_tess_tol  wdb_ttol;
@@ -72,16 +79,10 @@ struct rt_wdb {
     void *              wdb_interp; /**< @brief Tcl_Interp */
 };
 
-
 #define RT_CHECK_WDB(_p) BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p) RT_CHECK_WDB(_p)
 #define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, BG_TESS_TOL_INIT_ZERO, BN_TOL_INIT_ZERO, NULL, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_LIST_INIT_ZERO, NULL }
 #define RT_WDB_NULL             ((struct rt_wdb *)NULL)
-#define RT_WDB_TYPE_DB_DISK                     2
-#define RT_WDB_TYPE_DB_DISK_APPEND_ONLY         3
-#define RT_WDB_TYPE_DB_INMEM                    4
-#define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY        5
-
 
 /**
  *
