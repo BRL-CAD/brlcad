@@ -1215,26 +1215,42 @@ QgModel::data(const QModelIndex &index, int role) const
 }
 
 QVariant
-QgModel::headerData(int UNUSED(section), Qt::Orientation UNUSED(orientation), int UNUSED(role)) const
+QgModel::headerData(int section, Qt::Orientation UNUSED(orientation), int role) const
 {
+    // Until we add more columns for attributes, there is only one thing to return here
+    if (role != Qt::DisplayRole)
+	return QVariant();
+    if (section == 0)
+	return QString("Object Names");
     return QVariant();
 }
 
 int
-QgModel::rowCount(const QModelIndex &UNUSED(p)) const
+QgModel::rowCount(const QModelIndex &p) const
 {
-    return 0;
+    if (!p.isValid())
+	return 0;
+    QgItem *qi= getItem(p);
+    return (qi) ? qi->childCount() : 0;
 }
 
 int
 QgModel::columnCount(const QModelIndex &UNUSED(p)) const
 {
-    return 0;
+    // TODO - remove this guard once we're setting up the rootItem correctly
+    if (!rootItem)
+	return 1;
+    return rootItem->columnCount();
 }
 
 bool
-QgModel::setData(const QModelIndex &UNUSED(index), const QVariant &UNUSED(value), int UNUSED(role))
+QgModel::setData(const QModelIndex &index, const QVariant &UNUSED(value), int UNUSED(role))
 {
+    if (!index.isValid())
+	return false;
+
+    // TODO - study the previous CAD Tree implementation for this - there are a number of
+    // highlighting related components that need to be considered.
     return false;
 }
 
