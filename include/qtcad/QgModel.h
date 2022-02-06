@@ -189,19 +189,21 @@ class QTCAD_EXPORT QgInstance
 // QgItems using the same QgInstance as the selected QgItem (this reflects the
 // impact any changes will have on the database contents) but from the Qt
 // perspective the unique selection item is the QgItem.  If the QgItem is
-// changed (added, moved, deleted, etc.) other QgItems with the same QgInstance
-// will have to be separately handled to reflect the same changes.
+// instructed to conduct an operation with implications at the QgInstance level
+// (modification of primitive parameters, for example) other QgItems with the
+// same QgInstance will have to be separately handled to reflect the same
+// changes.
 //
 // A QgItem will store parents and children, but remember that both of those
 // relationships are informed by the QgInstance relationships rather than directly
-// representing them.  A QgItem always has a unique parent, even if its QgInstance
-// is associated with multiple active QgItems elsewhere in the tree.  The children
-// array reflects the open/closed state of the item - if it is closed, the chilren
-// array is empty even though the comb it corresponds to may have many children.
-// It is only when the QgItem is opened that the inst QgInstance is queried for
-// its children and new QgItems based on the QgInstance children are created.
-// Conversely, QgItem children are destroyed when the QgItem is closed, even
-// though the QgInstances are not.
+// representing them.  A QgItem always has a unique parent, even if its
+// QgInstance is associated with multiple active QgItems elsewhere in the tree.
+// The children array is initially empty even though the comb it corresponds to
+// may have many children.  It is only when the QgItem is opened that the
+// QgInstance is queried for its children and new QgItems based on the
+// QgInstance children are created.  Because we don't want to collapse all
+// opened/closed state in a subtree if we close a parent QgItem, the children
+// QgItems remain populated through a close to persist that state.
 class QTCAD_EXPORT QgItem
 {
     public:
@@ -223,27 +225,61 @@ class QTCAD_EXPORT QgItem
 	void appendChild(QgItem *C);
 	QgItem *child(int n);
 	int childCount() const;
-#if 0
+
+	// NOTE - for now this is 1 - the model will have to
+	// incorporate some notion of exposed attributes and
+	// their ordering before that changes
 	int columnCount() const;
+#if 0
 	QVariant data(int col) const;
 	bool insertChildren(int pos, int cnt, int col);
 	bool insertColumns(int pos, int col);
+#endif
 	QgItem *parent();
+#if 0
 	bool removeChildren(int pos, int cnt);
 	bool removeColumns(int pos, int cnt);
+#endif
 	int childNumber() const;
+#if 0
 	bool setData(int col, const QVariant &v);
 #endif
 
+	/* To a BRL-CAD developer's eyes this is rather abstract, but the
+	 * combination of the ihash and ctx points to the BRL-CAD specific data
+	 * for this item via the ability to look up its related QgInstance in
+	 * the ctx map via the hash.  The parent QgItem in turn provides the
+	 * relationship which makes this entity distinct from all other
+	 * QgInstances present in the .g file.
+	 *
+	 * Almost all information used by the views (name, icon, etc.) will come
+	 * from the QgInstance, since those properties are all shared by all QgItems
+	 * associated with that QgInstance. */
 	unsigned long long ihash = 0;
-	bool open_itm = false;
 	QgModel *ctx = NULL;
-	QgItem *parent = NULL;
+	QgItem *parentItem = NULL;
+
+	/* Flag to determine if this QgItem should be viewed as opened or closed -
+	 * in order to preserve subtree state, we don't want to obliterate the
+	 * subtree related data structures, so we can't test for an empty children
+	 * vector to make this determination. */
+	bool open_itm = false;
 
     private:
 	std::vector<QgItem *> children;
 };
 
+/* The primary expression in a Qt context of a .g database and its contents.
+ * This is an important data structure for the construction of .g graphical
+ * interfaces.
+ *
+ * The concept of "columns" in this model best maps to attributes on .g objects
+ * - by default, the only attribute data visible is implicit in boolean labels
+ * and icons, so there is only one column in the model.  That said, there is
+ * definitely interest in an ability for users to visualize and modify
+ * attributes as additional columns in a tree view, so we need to design and
+ * maintain this code with that eventual use case in mind.
+ */
 class QTCAD_EXPORT QgModel : public QAbstractItemModel
 {
     Q_OBJECT

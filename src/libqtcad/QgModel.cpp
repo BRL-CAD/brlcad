@@ -404,7 +404,7 @@ QgItem::update_children()
 	    // Previous tree did not have an appropriate QgItem -
 	    // make a new one
 	    QgItem *nitem = new QgItem();
-	    nitem->parent = this;
+	    nitem->parentItem = this;
 	    nitem->ihash = nh[i];
 	    nitem->ctx = ctx;
 	    nc.push_back(nitem);
@@ -478,6 +478,34 @@ QgItem::childCount() const
 {
     return (int)children.size();
 }
+
+int
+QgItem::columnCount() const
+{
+    return 1;
+}
+
+QgItem *
+QgItem::parent()
+{
+    return parentItem;
+}
+
+int
+QgItem::childNumber() const
+{
+    if (parentItem) {
+	for (size_t i = 0; i < parentItem->children.size(); i++) {
+	    if (parentItem->children[i] == this)
+		return i;
+	}
+	bu_log("WARNING - invalid parent/child inquiry\n");
+    }
+
+    return 0;
+}
+
+
 
 // 0 = exact, 1 = name + op, 2 = name + mat, 3 = name only, -1 name mismatch
 int
@@ -617,7 +645,7 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	    std::vector<QgItem *> ntops_items;
 	    for (i_it = ctx->tops_instances->begin(); i_it != ctx->tops_instances->end(); i_it++) {
 		QgItem *nitem = new QgItem();
-		nitem->parent = NULL;
+		nitem->parentItem = NULL;
 		nitem->ihash = i_it->first;
 		nitem->ctx = ctx;
 		ntops_items.push_back(nitem);
@@ -1337,7 +1365,7 @@ QgModel::opendb(const char *npath)
 
 	    // tops entries get a QgItem by default
 	    QgItem *nitem = new QgItem();
-	    nitem->parent = NULL;
+	    nitem->parentItem = NULL;
 	    nitem->ihash = nhash;
 	    nitem->ctx = this;
 	    tops_items.push_back(nitem);
