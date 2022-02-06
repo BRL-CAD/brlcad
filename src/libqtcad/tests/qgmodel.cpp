@@ -77,7 +77,7 @@ print_children(QgItem *itm, QgModel *s, int depth)
     if (!itm || !itm->ihash)
 	return;
 
-    QgInstance *inst;
+    gInstance *inst;
     if (depth == 0) {
 	inst = (*s->tops_instances)[itm->ihash];
     } else {
@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
     // 4. Figure out how to do the Item update pass in response to #3.  In
     // particular, how to preserve the tree's "opened/closed" state through
     // edit operations.  For each child items vector we'll build a new vector
-    // based on the QgInstances tree, comparing it as we go to the Items array
+    // based on the gInstances tree, comparing it as we go to the Items array
     // that existed previously.  For each old item, if the new item matches the
     // old (qghash comparison?) reuse the old item, otherwise create a new one.
     // This is where set_difference may be useful (not clear yet - if so it may require
