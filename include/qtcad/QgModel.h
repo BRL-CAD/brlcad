@@ -118,8 +118,6 @@
 #include "ged.h"
 #endif
 
-class QTCAD_EXPORT QgModel;
-
 class QTCAD_EXPORT gInstance
 {
     public:
@@ -204,6 +202,9 @@ class QTCAD_EXPORT gInstance
 // gInstance children are created.  Because we don't want to collapse all
 // opened/closed state in a subtree if we close a parent QgItem, the children
 // QgItems remain populated through a close to persist that state.
+
+class QTCAD_EXPORT QgModel;
+
 class QTCAD_EXPORT QgItem
 {
     public:
@@ -221,6 +222,9 @@ class QTCAD_EXPORT QgItem
 	bool update_children();
 	void remove_children();
 
+	// Return a pointer to the gInstance associated with this QgItem, or
+	// NULL if no valid instance is found.
+	gInstance *instance();
 
 	void appendChild(QgItem *C);
 	QgItem *child(int n);

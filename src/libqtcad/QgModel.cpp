@@ -326,6 +326,19 @@ QgItem::close()
     open_itm = false;
 }
 
+gInstance *
+QgItem::instance()
+{
+    if (!ctx)
+	return NULL;
+
+    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
+    g_it = ctx->instances->find(ihash);
+    if (g_it == ctx->instances->end())
+	return NULL;
+
+    return g_it->second;
+}
 
 bool
 QgItem::update_children()
@@ -1162,20 +1175,42 @@ QgModel::index(int row, int column, const QModelIndex &parent_idx) const
 }
 
 QModelIndex
-QgModel::parent(const QModelIndex &) const
+QgModel::parent(const QModelIndex &index) const
 {
-    return QModelIndex();
+    if (!index.isValid())
+	return QModelIndex();
+
+    QgItem *childItem = getItem(index);
+    QgItem *parentItem = childItem ? childItem->parent() : nullptr;
+
+    if (parentItem == rootItem || !parentItem)
+	return QModelIndex();
+
+    return createIndex(parentItem->childNumber(), 0, parentItem);
 }
 
 Qt::ItemFlags
-QgModel::flags(const QModelIndex &UNUSED(index)) const
+QgModel::flags(const QModelIndex &index) const
 {
-    return Qt::NoItemFlags;
+    if (!index.isValid())
+	return Qt::NoItemFlags;
+
+    return QAbstractItemModel::flags(index);
+    // TODO - add isEditable flag once we have support in place
+    //return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
 }
 
 QVariant
-QgModel::data(const QModelIndex &UNUSED(index), int UNUSED(role)) const
+QgModel::data(const QModelIndex &index, int role) const
 {
+    if (!index.isValid())
+	return QVariant();
+    QgItem *qi= getItem(index);
+    gInstance *gi = qi->instance();
+    if (!gi)
+	return QVariant();
+    if (role == Qt::DisplayRole)
+	return QVariant(gi->dp->d_namep);
     return QVariant();
 }
 
