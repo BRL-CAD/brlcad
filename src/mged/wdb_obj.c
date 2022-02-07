@@ -84,7 +84,7 @@ you should exit now, and resolve the I/O problem, before continuing.\n", (char *
     }
 
 
-int
+static int
 wdb_decode_dbip(const char *dbip_string, struct db_i **dbipp)
 {
     if (sscanf(dbip_string, "%p", (void **)dbipp) != 1) {
@@ -102,7 +102,7 @@ wdb_decode_dbip(const char *dbip_string, struct db_i **dbipp)
  * @brief
  * Open/Create the database and build the in memory directory.
  */
-struct db_i *
+static struct db_i *
 wdb_prep_dbip(const char *filename)
 {
     struct db_i *dbip;
@@ -137,7 +137,7 @@ wdb_prep_dbip(const char *filename)
     return dbip;
 }
 
-int
+static int
 wdb_stub_cmd(struct rt_wdb *wdbp,
 	int argc,
 	const char *argv[])
@@ -196,7 +196,7 @@ wdb_find_ref(struct db_i *UNUSED(dbip),
     Tcl_AppendElement(interp, comb_name);
 }
 
-int
+static int
 wdb_find_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     const char *argv[])
@@ -294,7 +294,7 @@ wdb_importFg4Section_tcl(void *clientData,
     return wdb_importFg4Section_cmd(wdbp, argc-1, argv+1);
 }
 
-int
+static int
 wdb_make_bb_cmd(struct rt_wdb *wdbp,
 		int argc,
 		const char *argv[])
@@ -415,7 +415,7 @@ wdb_make_bb_tcl(void *clientData,
     return wdb_make_bb_cmd(wdbp, argc-1, argv+1);
 }
 
-int
+static int
 wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 		      int argc,
 		      const char *argv[])
@@ -592,7 +592,7 @@ wdb_move_arb_edge_tcl(void *clientData,
 }
 
 
-int
+static int
 wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
 		      int argc,
 		      const char *argv[])
@@ -735,7 +735,7 @@ wdb_move_arb_face_tcl(void *clientData,
     return wdb_move_arb_face_cmd(wdbp, argc-1, argv+1);
 }
 
-int
+static int
 wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 		     int argc,
 		     const char *argv[])
@@ -865,7 +865,7 @@ wdb_nmg_collapse_tcl(void *clientData,
     return wdb_nmg_collapse_cmd(wdbp, argc-1, argv+1);
 }
 
-int
+static int
 wdb_observer_cmd(struct rt_wdb *wdbp,
 		 int argc,
 		 const char *argv[])
@@ -897,7 +897,7 @@ wdb_observer_tcl(void *clientData,
     return wdb_observer_cmd(wdbp, argc-1, argv+1);
 }
 
-int
+static int
 wdb_reopen_cmd(struct rt_wdb *wdbp,
 	       int argc,
 	       const char *argv[])
@@ -962,7 +962,7 @@ struct wdb_id_to_names {
     struct wdb_id_names headName;	/**< head of list of names */
 };
 
-int
+static int
 wdb_rmap_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     const char *argv[])
@@ -1102,7 +1102,7 @@ static short int rt_arb_vertices[5][24] = {
     { 1, 2, 3, 4, 5, 6, 7, 8, 1, 5, 8, 4, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 8 }	/* arb8 */
 };
 
-int
+static int
 wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 			int argc,
 			const char *argv[])
@@ -1323,7 +1323,7 @@ wdb_deleteProc_rt(void *clientData)
     bu_free((void *)ap, "struct application");
 }
 
-int
+static int
 wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 		    int argc,
 		    const char *argv[])
@@ -1437,7 +1437,7 @@ wdb_rt_gettrees_tcl(void *clientData,
     return wdb_rt_gettrees_cmd(wdbp, argc-1, argv+1);
 }
 
-int
+static int
 wdb_tol_cmd(struct rt_wdb *wdbp,
 	    int argc,
 	    const char *argv[])
@@ -1659,7 +1659,7 @@ wdb_tol_tcl(void *clientData,
     return wdb_tol_cmd(wdbp, argc-1, argv+1);
 }
 
-int
+static int
 wdb_track_cmd(void *data,
 	int argc,
 	const char *argv[])
@@ -1703,7 +1703,7 @@ wdb_track_tcl(void *clientData,
     return wdb_track_cmd(wdbp, argc-1, argv+1);
 }
 
-int
+static int
 wdb_units_cmd(struct rt_wdb *wdbp,
 	      int argc,
 	      const char *argv[])
@@ -1788,7 +1788,7 @@ wdb_units_tcl(void *clientData,
     return wdb_units_cmd(wdbp, argc-1, argv+1);
 }
 
-int
+static int
 wdb_version_cmd(struct rt_wdb *wdbp,
 		int argc,
 		const char *argv[])
@@ -2004,7 +2004,7 @@ wdb_deleteProc(ClientData clientData)
  * Create a command named "oname" in "interp" using "wdbp" as its state.
  *
  */
-int
+static int
 wdb_create_cmd(struct rt_wdb *wdbp,	/* pointer to object */
 	       const char *oname)	/* object name */
 {
@@ -2029,7 +2029,7 @@ wdb_create_cmd(struct rt_wdb *wdbp,	/* pointer to object */
  * Create an command/object named "oname" in "interp" using "wdbp" as
  * its state.  It is presumed that the wdbp has already been opened.
  */
-int
+static int
 wdb_init_obj(Tcl_Interp *interp,
 	     struct rt_wdb *wdbp,	/* pointer to object */
 	     const char *oname)	/* object name */
