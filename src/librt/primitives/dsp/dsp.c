@@ -3972,6 +3972,12 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     RT_DSP_CK_MAGIC(dsp_ip);
     RT_CK_DBI(dbip);
 
+    /* Don't try this if dbi_filepath isn't initialized */
+    if (!dbip->dbi_filepath) {
+	bu_log("dbip->dbi_filepath is NULL\n");
+	return -1;
+    }
+
     /* get file */
     mf = dsp_ip->dsp_mp =
 	bu_open_mapped_file_with_path(dbip->dbi_filepath,
