@@ -79,6 +79,87 @@ RT_EXPORT extern int rt_do_cmd(struct rt_i *rtip,
 			       const char *ilp,
 			       const struct command_tab *tp);
 
+
+
+
+/* TODO - libged's commands should be using the below functions in lieu of
+ * their own implementation, but even temporarily swapping gedp->ged_wdbp into
+ * dbip->dbi_wdbp before calling the librt versions (apparently a functional
+ * necessity) we're still seeing some sort of problem with Archer - the GUI is
+ * not properly interactive.  Until that's resolved, we have duplicate logic in
+ * the librt implementation of these and the libged commands.  Adding even
+ * though we've not resolved libged's use of these functions because they do
+ * allow the v5 ASCII import plugin in libgcv to succeed.
+ */
+
+/**
+ * @brief Convert an ASCII v5 "attr" command into a .g attribute
+ *
+ * Given an array of strings formatted as a BRL-CAD v5 ASCII "attr" command,
+ * translate the information in that command into an attribute setting for the
+ * dbip.
+ *
+ * The msg parameter is optional - if present, rt_cmd_attr will output
+ * diagnostic messages to the vls in the event of an error.
+ *
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR on failure.
+ */
+RT_EXPORT extern int rt_cmd_attr(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv);
+
+/**
+ * @brief Convert an ASCII v5 "color" command into a .g coloribute
+ *
+ * Given an array of strings formatted as a BRL-CAD v5 ASCII "color" command,
+ * translate the information in that command into an coloribute setting for the
+ * dbip.
+ *
+ * The msg parameter is optional - if present, rt_cmd_color will output
+ * diagnostic messages to the vls in the event of an error.
+ *
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR on failure.
+ */
+RT_EXPORT extern int rt_cmd_color(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv);
+
+/**
+ * @brief Convert an ASCII v5 "put" command into a .g object
+ *
+ * Given an array of strings formatted as a BRL-CAD v5 ASCII "put" command,
+ * translate the information in that command into an object in the dbip.
+ *
+ * The msg parameter is optional - if present, rt_cmd_put will output
+ * diagnostic messages to the vls in the event of an error.
+ *
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR on failure.
+ */
+RT_EXPORT extern int rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv);
+
+/**
+ * @brief Convert an ASCII v5 "title" command into a .g title
+ *
+ * Given an array of strings formatted as a BRL-CAD v5 ASCII "title" command,
+ * translate the information in that command into a new title for the dbip.
+ *
+ * The msg parameter is optional - if present, rt_cmd_title will output
+ * diagnostic messages to the vls in the event of an error.
+ *
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR on failure.
+ */
+RT_EXPORT extern int rt_cmd_title(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv);
+
+/**
+ * @brief Convert an ASCII v5 "units" command into a .g units
+ *
+ * Given an array of strings formatted as a BRL-CAD v5 ASCII "units" command,
+ * translate the information in that command into a new units for the dbip.
+ *
+ * The msg parameter is optional - if present, rt_cmd_units will output
+ * diagnostic messages to the vls in the event of an error.
+ *
+ * Returns BRLCAD_OK on success, BRLCAD_ERROR on failure.
+ */
+RT_EXPORT extern int rt_cmd_units(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv);
+
+
 __END_DECLS
 
 #endif /* RT_CMD_H */

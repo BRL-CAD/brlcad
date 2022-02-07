@@ -27,6 +27,7 @@ set(RT_LOCAL_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
 
 set(LIBRT_SOURCES
+  attr.cpp
   attributes.c
   bbox.c
   binunif/binunif.c

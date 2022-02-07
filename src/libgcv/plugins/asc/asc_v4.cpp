@@ -1493,7 +1493,6 @@ asc_read_v4(
     /* Read ASCII input file, each record on a line */
     std::string sline;
     while (std::getline(fs, sline)) {
-	std::cout << sline << "\n";
 	bu_vls_sprintf(s->buf, "%s", sline.c_str());
 
 after_read:
