@@ -97,7 +97,8 @@ FileUtil::storeFileInput()
     fileinput = new char[(2*size) + 1];
 
     for (i = 0; i < size; i++) {
-	fileinput[i] = infile.get();
+	int fgi = infile.get();
+	fileinput[i] = (fgi > CHAR_MAX) ? CHAR_MAX : (char)fgi;
     }
     fileinput[i] = '\0';
 
