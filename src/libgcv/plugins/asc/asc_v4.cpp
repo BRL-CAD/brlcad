@@ -2211,7 +2211,13 @@ combdump(struct ascv4_wstate *s)	/* Print out Combination record information */
      */
     while (BU_LIST_WHILE(mp, mchain, &head)) {
 	membdump(s, &mp->r);
-	BU_LIST_DEQUEUE(&mp->l);
+    }
+
+    // bu_list_free style cleanup
+    struct bu_list *p;
+    while (BU_LIST_WHILE(p, bu_list, &head)) {
+	BU_LIST_DEQUEUE(p);
+	mp = (struct mchain *)p;
 	BU_PUT(mp, struct mchain);
     }
 
