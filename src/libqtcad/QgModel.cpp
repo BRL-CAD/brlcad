@@ -715,14 +715,6 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	    itm->update_children();
 	}
 
-	// Activity flag values are selection based, but even if the
-	// selection hasn't changed since the last cycle the parent/child
-	// relationships may have, which can invalidate previously active
-	// dp flags.  We clear all flags, to present a clean slate when the
-	// selection is re-applied.
-	for (size_t i = 0; i < ctx->active_flags.size(); i++) {
-	    ctx->active_flags[i] = 0;
-	}
     }
 }
 

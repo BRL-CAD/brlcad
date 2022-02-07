@@ -353,13 +353,6 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	std::unordered_map<unsigned long long, gInstance *> *tops_instances = NULL;
 	std::vector<QgItem *> tops_items;
 
-	// Activity flags (used for relevance highlighting) need to be updated
-	// whenever a selection changes.  We define one flag per gInstance,
-	// and update flags accordingly based on current app settings.
-	// Highlighting is then keyed in each QgItem based on the current value
-	// of these flags. (TODO - can this be private?)
-	std::vector<int> active_flags;
-
 	// .g Db interface and containers
 	bool run_cmd(struct bu_vls *msg, int argc, const char **argv);
 	int opendb(QString filename);
@@ -370,8 +363,8 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 
 	bool need_update_nref = false;
 
-	/* Used by qged_view_update to identify which objects need to be
-	 * redrawn when the view is updated. */
+	/* Used by callers to identify which objects need to be redrawn when
+	 * scene views are updated. */
 	std::unordered_set<struct directory *> changed_dp;
 
 	// Qt Model interface

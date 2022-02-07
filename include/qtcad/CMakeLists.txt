@@ -5,6 +5,8 @@ set(qtcad_headers
   QKeyVal.h
   QToolPalette.h
   QgModel.h
+  QgSelectionModel.h
+  QgTreeView.h
   QtAppExecDialog.h
   QtCADQuad.h
   QtCADTree.h
