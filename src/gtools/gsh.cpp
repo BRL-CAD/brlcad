@@ -274,6 +274,7 @@ main(int argc, const char **argv)
     /* Tell the app which libged command execution mode to use */
     s.constrained_mode = constrained_mode;
 
+    /* If anything went wrong during LIBGED initialization, let the user know */
     const char *ged_init_str = ged_init_msgs();
     if (strlen(ged_init_str)) {
 	fprintf(stderr, "%s", ged_init_str);
@@ -282,32 +283,40 @@ main(int argc, const char **argv)
     /* FIXME: To draw, we need to init this LIBRT global */
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
-    /* See if we've been told to pre-load a specific .g file. */
-    if (argc) {
-	if (!bu_file_exists(argv[0], NULL)) {
-	    gsh_state_free(&s);
-	    bu_vls_free(&msg);
-	    bu_exit(EXIT_FAILURE, "File %s does not exist, expecting .g file\n", argv[0]) ;
-	}
+    /* There are basically four "conditions" we may meet when it comes to
+     * further argument processing:
+     *
+     * 1.  No further arguments.  We simply enter the interactive loop.
+     * 2.  We are provided a .g file with no other arguments.
+     * 3.  We are provided a .g file with additional arguments.
+     * 4.  We are provided arguments, but not a .g file
+     *
+     * The last case is a bit problematic, in that a geometry filename may
+     * match a GED command name.  In that situation, the interpretation of the
+     * argument as a filename will take precedence. */
+
+    /* See if we've got a viable .g file. */
+    if (argc && bu_file_exists(argv[0], NULL)) {
 	s.gedp = ged_open("db", argv[0], 1);
-	if (!s.gedp) {
-	    gsh_state_free(&s);
-	    bu_vls_free(&msg);
-	    bu_exit(EXIT_FAILURE, "Could not open %s as a .g file\n", argv[0]) ;
-	} else {
+	if (s.gedp) {
 	    s.gedp->ged_gvp = s.view;
 	    bu_vls_sprintf(&s.gfile, "%s", argv[0]);
 	}
+	/* If we reach this part of the code, argv[0] is a .g file and
+	 * has been handled - skip ahead to the commands. */
+	argv++; argc--;
+    }
+    // If we didn't get a ged struct by opening a .g file, set up an empty one.
+    if (!s.gedp) {
+	BU_GET(s.gedp, struct ged);
+	ged_init(s.gedp);
     }
 
     /* If we have been given more than a .g filename execute the provided argv
      * commands and exit. Deliberately making this case a very simple execution
      * path rather than having the linenoise interactive block deal with it, to
      * minimize the possibility of any unforeseen complications. */
-    if (argc > 1) {
-	/* If we reach this part of the code, argv[0] is a .g file and
-	 * has been handled - skip ahead to the commands. */
-	argv++; argc--;
+    if (argc) {
 	ret = geval(&s, argc, argv);
 	goto done;
     }
@@ -404,6 +413,19 @@ main(int argc, const char **argv)
 	    // The command ran, see if the display needs updating
 	    view_update(&s);
 	}
+
+	/* When we're interactive, the last line won't show in linenoise unless
+	 * we have a '\n' character at the end.  We don't reliably get that
+	 * from all commands, so check and add one if we need to in order to
+	 * finish showing the command output.
+	 *
+	 * We don't do this inside geval in case a command execution is
+	 * intentionally not appending that last character for some scripting
+	 * purpose. It will more typically be a mistake, but would have to do
+	 * some research to confirm there aren't any valid cases where this
+	 * would be a bad idea. */
+	if (bu_vls_cstr(s.gedp->ged_result_str)[bu_vls_strlen(s.gedp->ged_result_str) - 1] != '\n')
+	    printf("\n");
 
 	/* Reset GED results string */
 	bu_vls_trunc(s.gedp->ged_result_str, 0);
