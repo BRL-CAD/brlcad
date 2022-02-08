@@ -397,7 +397,7 @@ rt_cmd_put(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 int
 rt_cmd_title(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 {
-    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 2 || !argv)
+    if (dbip == DBI_NULL || dbip->dbi_wdbp == RT_WDB_NULL || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
     if (!BU_STR_EQUAL(argv[0], "title")) {
