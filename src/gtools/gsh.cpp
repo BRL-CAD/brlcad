@@ -132,6 +132,9 @@ geval(struct gsh_state *s, int argc, const char **argv)
 {
     int ret = BRLCAD_OK;
 
+    if (!s || !s->gedp)
+	return BRLCAD_ERROR;
+
     if (s->constrained_mode) {
 
 	/* Note - doing the command execution this way limits us to the "hardwired"
@@ -178,6 +181,17 @@ geval(struct gsh_state *s, int argc, const char **argv)
 }
 
 void
+view_checkpoint(struct gsh_state *s)
+{
+    if (s->gedp && s->gedp->ged_dmp) {
+	s->prev_dhash = (s->gedp->ged_dmp) ? dm_hash((struct dm *)s->gedp->ged_dmp) : 0;
+	s->prev_vhash = bv_hash(s->gedp->ged_gvp);
+	s->prev_lhash = dl_name_hash(s->gedp);
+	s->prev_ghash = ged_dl_hash((struct display_list *)s->gedp->ged_gdp->gd_headDisplay);
+    }
+}
+
+void
 view_update(struct gsh_state *s)
 {
     if (!s || !s->gedp || !s->gedp->ged_dmp)
@@ -218,6 +232,68 @@ view_update(struct gsh_state *s)
 	dm_draw_end(dmp);
     }
 }
+
+
+int
+gsh_clear(void *vs, int UNUSED(argc), const char **UNUSED(argv))
+{
+    struct gsh_state *s = (struct gsh_state *)vs;
+    if (BU_STR_EQUAL(bu_vls_cstr(&s->iline), "clear")) {
+	linenoiseClearScreen();
+	bu_vls_trunc(&s->iline, 0);
+    }
+    return BRLCAD_OK;
+}
+
+int
+gsh_close(void *vs, int UNUSED(argc), const char **UNUSED(argv))
+{
+    struct gsh_state *s = (struct gsh_state *)vs;
+    ged_close(s->gedp);
+    s->gedp = NULL;
+    printf("closed database %s\n", bu_vls_cstr(&s->gfile));
+    bu_vls_trunc(&s->gfile, 0);
+    return BRLCAD_OK;
+}
+
+int
+gsh_exit(void *UNUSED(vs), int UNUSED(argc), const char **UNUSED(argv))
+{
+    return BRLCAD_EXIT;
+}
+
+int
+gsh_open(void *vs, int argc, const char **argv)
+{
+    struct gsh_state *s = (struct gsh_state *)vs;
+    if (argc < 2) {
+	printf("Error: invalid ged_open call\n");
+	return BRLCAD_ERROR;
+    }
+    struct ged *gedp = ged_open("db", argv[1], 0);
+    if (!gedp) {
+	printf("Error: could not open %s as a .g file\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+    if (s->gedp)
+       	ged_close(s->gedp);
+    s->gedp = gedp;
+    s->gedp->ged_gvp = s->view;
+    bu_vls_sprintf(&s->gfile, "%s", argv[1]);
+    printf("Opened file %s\n", bu_vls_cstr(&s->gfile));
+    return BRLCAD_OK;
+}
+
+// TODO - an equivalent to the MGED opendb command would go here.
+static struct bu_cmdtab gsh_cmds[] = {
+    {"clear", gsh_clear},
+    {"close", gsh_close},
+    {"exit",  gsh_exit},
+    {"open",  gsh_open},
+    {"q",     gsh_exit},
+    {"quit",  gsh_exit},
+    {NULL,    BU_CMD_NULL}
+};
 
 int
 main(int argc, const char **argv)
@@ -325,91 +401,50 @@ main(int argc, const char **argv)
      * into the output if that's the mode we're in.  Check. */
     s.pmpt = (bu_interactive()) ? gpmpt : emptypmpt;
 
-    /* Start the loop */
-
+    /* Start the interactive loop */
     while ((s.line = linenoise(s.pmpt)) != NULL) {
 
+	/* Unpack and clean up the line string from linenoise */
 	bu_vls_sprintf(&s.iline, "%s", s.line);
 	free(s.line);
 	bu_vls_trimspace(&s.iline);
 	if (!bu_vls_strlen(&s.iline)) continue;
 	linenoiseHistoryAdd(bu_vls_addr(&s.iline));
 
-	/* The "clear" command is only for the shell, not
-	 * for libged */
-	if (BU_STR_EQUAL(bu_vls_addr(&s.iline), "clear")) {
-	    linenoiseClearScreen();
-	    bu_vls_trunc(&s.iline, 0);
-	    continue;
-	}
+	/* Before any BRL-CAD logic is executed, stash the state of the view
+	 * info so we can recognized changes. */
+	view_checkpoint(&s);
 
-	/* The "quit" command is also not for libged */
-	if (BU_STR_EQUAL(bu_vls_addr(&s.iline), "q")) goto done;
-	if (BU_STR_EQUAL(bu_vls_addr(&s.iline), "quit")) goto done;
-	if (BU_STR_EQUAL(bu_vls_addr(&s.iline), "exit")) goto done;
-
-	/* Looks like we'll be running a GED command - stash the state
-	 * of the view info */
-	if (s.gedp && s.gedp->ged_dmp) {
-	    s.prev_dhash = (s.gedp->ged_dmp) ? dm_hash((struct dm *)s.gedp->ged_dmp) : 0;
-	    s.prev_vhash = bv_hash(s.gedp->ged_gvp);
-	    s.prev_lhash = dl_name_hash(s.gedp);
-	    s.prev_ghash = ged_dl_hash((struct display_list *)s.gedp->ged_gdp->gd_headDisplay);
-	}
-
-	/* OK, try a GED command - make an argv array from the input line */
+	/* Make an argv array from the input line */
 	char *input = bu_strdup(bu_vls_cstr(&s.iline));
 	char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
 	int ac = bu_argv_from_string(av, strlen(input), input);
 
-	/* The "open" and close commands require a bit of
-	 * awareness at this level, since the gedp pointer
-	 * must respond to them. */
-	if (BU_STR_EQUAL(av[0], "open")) {
-	    if (ac > 1) {
-		if (s.gedp) ged_close(s.gedp);
-		s.gedp = ged_open("db", av[1], 0);
-		if (!s.gedp) {
-		    bu_vls_free(&msg);
-		    gsh_state_free(&s);
-		    bu_exit(EXIT_FAILURE, "Could not open %s as a .g file\n", av[1]) ;
-		} else {
-		    s.gedp->ged_gvp = s.view;
-		    bu_vls_sprintf(&s.gfile, "%s", av[1]);
-		    printf("Opened file %s\n", bu_vls_cstr(&s.gfile));
-		}
-	    } else {
-		printf("Error: invalid ged_open call\n");
+	/* There are a few commands which must be aware of application-specific
+	 * information and state unknown to GED.  We check first to see if the
+	 * specified input matches one of those commands. */
+	int is_gsh_cmd = 0;
+	if (bu_cmd_valid(gsh_cmds, av[0]) == BRLCAD_OK) {
+	    int cbret;
+	    int cret = bu_cmd(gsh_cmds, ac, (const char **)av, 0, (void *)&s, &cbret);
+	  
+	    // Regardless of what happened, this is not a raw GED cmd 
+	    is_gsh_cmd = 1;
+	    
+	    if (cret != BRLCAD_OK)
+		printf("Error executing command %s\n", av[0]);
+
+	    // If we are supposed to quit now, go to the cleanup section
+	    if (cbret & BRLCAD_EXIT) {
+		/* Free the temporary argv structures */
+		bu_free(input, "input copy");
+		bu_free(av, "input argv");
+		goto done;
 	    }
-	    bu_free(input, "input copy");
-	    bu_free(av, "input argv");
-	    bu_vls_trunc(&s.iline, 0);
-	    continue;
-	}
+	} 
 
-	if (!s.gedp) {
-	    printf("Error: no database is currently open.\n");
-	    bu_free(input, "input copy");
-	    bu_free(av, "input argv");
-	    bu_vls_trunc(&s.iline, 0);
-	    continue;
-	}
-
-
-	if (BU_STR_EQUAL(av[0], "close")) {
-	    ged_close(s.gedp);
-	    s.gedp = NULL;
-	    printf("closed database %s\n", bu_vls_cstr(&s.gfile));
-	    bu_vls_trunc(&s.gfile, 0);
-	    bu_free(input, "input copy");
-	    bu_free(av, "input argv");
-	    bu_vls_trunc(&s.iline, 0);
-	    continue;
-	}
-
-	/* If we're not opening or closing, and we have an active gedp,
-	 * make a standard libged call */
-	if (!(geval(&s, ac, (const char **)av) & BRLCAD_ERROR)) {
+	/* If we didn't match a gsh cmd, try a standard libged call */
+	if (!is_gsh_cmd && !(geval(&s, ac, (const char **)av) & BRLCAD_ERROR)) {
 	    // The command ran, see if the display needs updating
 	    view_update(&s);
 	}
@@ -424,14 +459,18 @@ main(int argc, const char **argv)
 	 * purpose. It will more typically be a mistake, but would have to do
 	 * some research to confirm there aren't any valid cases where this
 	 * would be a bad idea. */
-	if (bu_vls_cstr(s.gedp->ged_result_str)[bu_vls_strlen(s.gedp->ged_result_str) - 1] != '\n')
+	struct bu_vls *rstr = s.gedp->ged_result_str;
+	if (bu_vls_strlen(rstr) && bu_vls_cstr(rstr)[bu_vls_strlen(rstr) - 1] != '\n')
 	    printf("\n");
 
 	/* Reset GED results string */
-	bu_vls_trunc(s.gedp->ged_result_str, 0);
+	bu_vls_trunc(rstr, 0);
 
+	/* Free the temporary argv structures */
 	bu_free(input, "input copy");
 	bu_free(av, "input argv");
+    
+	/* Reset the linenoise line */
 	bu_vls_trunc(&s.iline, 0);
     }
 

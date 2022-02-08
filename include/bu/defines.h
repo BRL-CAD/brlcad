@@ -60,6 +60,7 @@
 #define BRLCAD_MORE    0x0004 /**< incomplete specification, can specify again interactively */
 #define BRLCAD_QUIET   0x0008 /**< don't set or modify the result string */
 #define BRLCAD_UNKNOWN 0x0010 /**< argv[0] was not a known command */
+#define BRLCAD_EXIT    0x0020 /**< command is requesting a clean application shutdown */
 
 /**
  * @def BU_DIR_SEPARATOR
