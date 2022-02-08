@@ -2171,7 +2171,10 @@ f4_do_section(struct f4g_state *s, int final)
 	if (final && s->debug) /* The ENDATA card has been found */
 	    List_names(s);
     } else if (s->bot) {
-	make_region_name(s, s->group_id, s->comp_id);
+	s->region_id = s->group_id * 1000 + s->comp_id;
+	if (!skip_region(s, s->region_id)) {
+	    make_region_name(s, s->group_id, s->comp_id);
+	}
     }
 
     if (!final) {
