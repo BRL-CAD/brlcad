@@ -65,9 +65,61 @@ extern "C" {
 
 #define DEFAULT_GSH_PROMPT "g> "
 
+struct gsh_state {
+    void *libged;
+    struct ged *gedp;
+    struct bview *view;
+    const char *pmpt;
+    struct bu_vls gfile;
+
+    /* linenoise */
+    char *line;
+    struct bu_vls iline;
+
+    /* Hash values for state tracking in the interactive loop */
+    unsigned long long prev_dhash = 0;
+    unsigned long long prev_vhash = 0;
+    unsigned long long prev_lhash = 0;
+    unsigned long long prev_ghash = 0;
+};
+
+int
+gsh_state_init(struct gsh_state *s)
+{
+    s->libged = bu_dlopen(NULL, BU_RTLD_LAZY);
+
+    if (!s->libged)
+	return BRLCAD_ERROR;
+
+    s->gedp = GED_NULL;
+    s->pmpt = NULL;
+    s->line = NULL;
+    bu_vls_init(&s->gfile);
+    bu_vls_init(&s->iline);
+
+    BU_GET(s->view, struct bview);
+    bv_init(s->view);
+    bu_vls_sprintf(&s->view->gv_name, "default");
+
+    return BRLCAD_OK;
+}
+void
+gsh_state_free(struct gsh_state *s)
+{
+    if (!s)
+	return;
+
+    bv_free(s->view);
+    BU_PUT(s->view, struct bv);
+    ged_close(s->gedp);
+    bu_dlclose(s->libged);
+    bu_vls_free(&s->gfile);
+    bu_vls_free(&s->iline);
+}
+
 /* Handle the non-interactive execution of commands here. */
 int
-geval(void *libged, struct ged *gedp, int argc, const char **argv)
+geval(struct gsh_state *s, int argc, const char **argv)
 {
     int (*func)(struct ged *, int, char *[]);
     char gedfunc[MAXPATHLEN] = {0};
@@ -79,47 +131,89 @@ geval(void *libged, struct ged *gedp, int argc, const char **argv)
 	return -1;
     }
 
-    *(void **)(&func) = bu_dlsym(libged, gedfunc);
+    /* Note - doing the command execution this way limits us to the "hardwired"
+     * functions built into the libged API.  That may or may not be what we
+     * want, depending on the application - this in effect restricts us to a
+     * "safe" command set, but also hides any user-provided plugins.  If we
+     * want to expose the latter we should be using the "ged_exec" approach. */
+    *(void **)(&func) = bu_dlsym(s->libged, gedfunc);
     if (!func) {
 	bu_log("Unrecognized command [%s]\n", argv[0]);
 	return -1;
     }
 
     /* TODO - is it ever unsafe to do this cast?  Does ged mess with argv somehow? */
-    int ret = func(gedp, argc, (char **)argv);
+    int ret = func(s->gedp, argc, (char **)argv);
 
-    fprintf(stdout, "%s", bu_vls_addr(gedp->ged_result_str));
+    fprintf(stdout, "%s", bu_vls_cstr(s->gedp->ged_result_str));
 
     return ret;
+}
+
+void
+view_update(struct gsh_state *s)
+{
+    if (!s || !s->gedp || !s->gedp->ged_dmp)
+	return;
+
+    struct ged *gedp = s->gedp;
+    struct dm *dmp = (struct dm *)gedp->ged_dmp;
+    struct bview *v = gedp->ged_gvp;
+    unsigned long long dhash = dm_hash(dmp);
+    unsigned long long vhash = bv_hash(gedp->ged_gvp);
+    unsigned long long lhash = dl_name_hash(gedp);
+    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+    unsigned long long lhash_edit = lhash;
+    if (dhash != s->prev_dhash) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (vhash != s->prev_vhash) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (lhash_edit != s->prev_lhash) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (ghash != s->prev_ghash) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (dm_get_dirty(dmp)) {
+	matp_t mat = gedp->ged_gvp->gv_model2view;
+	dm_loadmatrix(dmp, mat, 0);
+	unsigned char geometry_default_color[] = { 255, 0, 0 };
+	dm_draw_begin(dmp);
+	dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay,
+		1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
+		0, 0, geometry_default_color, 1, 0);
+
+	// Faceplate drawing
+	dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+
+	dm_draw_end(dmp);
+    }
 }
 
 int
 main(int argc, const char **argv)
 {
-    struct ged *gedp = GED_NULL;
-    void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);
-    int ret = EXIT_SUCCESS;
-    char *line = NULL;
-    int print_help = 0;
-    int console_mode = 0;  // MGED compatibility var - currently a no-op
+    if (argc == 0 || !argv)
+	return EXIT_FAILURE;
+
+    /* Misc */
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    struct bu_vls iline= BU_VLS_INIT_ZERO;
-    struct bu_vls open_gfile = BU_VLS_INIT_ZERO;
     const char *gpmpt = DEFAULT_GSH_PROMPT;
     const char *emptypmpt = "";
-    int interactive = 1;
-    /* Hash values for state tracking in the interactive loop */
-    unsigned long long prev_dhash = 0;
-    unsigned long long prev_vhash = 0;
-    unsigned long long prev_lhash = 0;
-    unsigned long long prev_ghash = 0;
+    int ret = EXIT_SUCCESS;
 
+    /* Application state */
+    struct gsh_state s;
+
+    /* Options */
+    int print_help = 0;
+    int console_mode = 0;  // MGED compatibility var - currently a no-op
     struct bu_opt_desc d[3];
     BU_OPT(d[0],  "h", "help", "",       NULL,              &print_help,     "print help and exit");
     BU_OPT(d[1],  "c", "",     "",       NULL,              &console_mode,   "console mode - MGED compatibility");
     BU_OPT_NULL(d[2]);
-
-    if (argc == 0 || !argv) return -1;
 
     /* Let libbu know where we are */
     bu_setprogname(argv[0]);
@@ -145,7 +239,7 @@ main(int argc, const char **argv)
     }
 
     /* If we can't load libged there's no point in continuing */
-    if (!libged) {
+    if (gsh_state_init(&s) != BRLCAD_OK) {
 	bu_vls_free(&msg);
 	bu_exit(EXIT_FAILURE, "ERROR, could not load libged: %s\n", bu_dlerror());
     }
@@ -158,31 +252,21 @@ main(int argc, const char **argv)
     /* FIXME: To draw, we need to init this LIBRT global */
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
-    /* Need a view for commands that expect a view */
-    struct bview *gsh_view;
-    BU_GET(gsh_view, struct bview);
-    bv_init(gsh_view);
-    bu_vls_sprintf(&gsh_view->gv_name, "default");
-
     /* See if we've been told to pre-load a specific .g file. */
     if (argc) {
 	if (!bu_file_exists(argv[0], NULL)) {
+	    gsh_state_free(&s);
 	    bu_vls_free(&msg);
-	    bv_free(gsh_view);
-	    BU_PUT(gsh_view, struct bview);
-	    bu_dlclose(libged);
 	    bu_exit(EXIT_FAILURE, "File %s does not exist, expecting .g file\n", argv[0]) ;
 	}
-	gedp = ged_open("db", argv[0], 1);
-	if (!gedp) {
+	s.gedp = ged_open("db", argv[0], 1);
+	if (!s.gedp) {
+	    gsh_state_free(&s);
 	    bu_vls_free(&msg);
-	    bv_free(gsh_view);
-	    BU_PUT(gsh_view, struct bview);
-	    bu_dlclose(libged);
 	    bu_exit(EXIT_FAILURE, "Could not open %s as a .g file\n", argv[0]) ;
 	} else {
-	    gedp->ged_gvp = gsh_view;
-	    bu_vls_sprintf(&open_gfile, "%s", argv[0]);
+	    s.gedp->ged_gvp = s.view;
+	    bu_vls_sprintf(&s.gfile, "%s", argv[0]);
 	}
     }
 
@@ -194,54 +278,48 @@ main(int argc, const char **argv)
 	/* If we reach this part of the code, argv[0] is a .g file and
 	 * has been handled - skip ahead to the commands. */
 	argv++; argc--;
-	ret = geval(libged, gedp, argc, argv);
+	ret = geval(&s, argc, argv);
 	goto done;
     }
 
     /* We can handle stdin commands, but we don't want to interject the prompt
      * into the output if that's the mode we're in.  Check. */
-    interactive = bu_interactive();
-    if (!interactive)
-	gpmpt = emptypmpt;
+    s.pmpt = (bu_interactive()) ? gpmpt : emptypmpt;
 
     /* Start the loop */
 
-    while ((line = linenoise(gpmpt)) != NULL) {
+    while ((s.line = linenoise(s.pmpt)) != NULL) {
 
-	bu_vls_sprintf(&iline, "%s", line);
-	free(line);
-	bu_vls_trimspace(&iline);
-	if (!bu_vls_strlen(&iline)) continue;
-	linenoiseHistoryAdd(bu_vls_addr(&iline));
+	bu_vls_sprintf(&s.iline, "%s", s.line);
+	free(s.line);
+	bu_vls_trimspace(&s.iline);
+	if (!bu_vls_strlen(&s.iline)) continue;
+	linenoiseHistoryAdd(bu_vls_addr(&s.iline));
 
 	/* The "clear" command is only for the shell, not
 	 * for libged */
-	if (BU_STR_EQUAL(bu_vls_addr(&iline), "clear")) {
+	if (BU_STR_EQUAL(bu_vls_addr(&s.iline), "clear")) {
 	    linenoiseClearScreen();
-	    bu_vls_trunc(&iline, 0);
+	    bu_vls_trunc(&s.iline, 0);
 	    continue;
 	}
 
 	/* The "quit" command is also not for libged */
-	if (BU_STR_EQUAL(bu_vls_addr(&iline), "q")) goto done;
-	if (BU_STR_EQUAL(bu_vls_addr(&iline), "quit")) goto done;
-	if (BU_STR_EQUAL(bu_vls_addr(&iline), "exit")) goto done;
+	if (BU_STR_EQUAL(bu_vls_addr(&s.iline), "q")) goto done;
+	if (BU_STR_EQUAL(bu_vls_addr(&s.iline), "quit")) goto done;
+	if (BU_STR_EQUAL(bu_vls_addr(&s.iline), "exit")) goto done;
 
 	/* Looks like we'll be running a GED command - stash the state
 	 * of the view info */
-	if (gedp && gedp->ged_dmp) {
-	    prev_dhash = (gedp->ged_dmp) ? dm_hash((struct dm *)gedp->ged_dmp) : 0;
-	    prev_vhash = bv_hash(gedp->ged_gvp);
-	    prev_lhash = dl_name_hash(gedp);
-	    prev_ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+	if (s.gedp && s.gedp->ged_dmp) {
+	    s.prev_dhash = (s.gedp->ged_dmp) ? dm_hash((struct dm *)s.gedp->ged_dmp) : 0;
+	    s.prev_vhash = bv_hash(s.gedp->ged_gvp);
+	    s.prev_lhash = dl_name_hash(s.gedp);
+	    s.prev_ghash = ged_dl_hash((struct display_list *)s.gedp->ged_gdp->gd_headDisplay);
 	}
 
 	/* OK, try a GED command - make an argv array from the input line */
-	struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
-	//bu_vls_sprintf(&ged_prefixed, "ged_%s", bu_vls_addr(&iline));
-	bu_vls_sprintf(&ged_prefixed, "%s", bu_vls_addr(&iline));
-	char *input = bu_strdup(bu_vls_addr(&ged_prefixed));
-	bu_vls_free(&ged_prefixed);
+	char *input = bu_strdup(bu_vls_cstr(&s.iline));
 	char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
 	int ac = bu_argv_from_string(av, strlen(input), input);
 
@@ -250,43 +328,43 @@ main(int argc, const char **argv)
 	 * must respond to them. */
 	if (BU_STR_EQUAL(av[0], "open")) {
 	    if (ac > 1) {
-		if (gedp) ged_close(gedp);
-		gedp = ged_open("db", av[1], 0);
-		if (!gedp) {
+		if (s.gedp) ged_close(s.gedp);
+		s.gedp = ged_open("db", av[1], 0);
+		if (!s.gedp) {
 		    bu_vls_free(&msg);
-		    bu_dlclose(libged);
+		    gsh_state_free(&s);
 		    bu_exit(EXIT_FAILURE, "Could not open %s as a .g file\n", av[1]) ;
 		} else {
-		    gedp->ged_gvp = gsh_view;
-		    bu_vls_sprintf(&open_gfile, "%s", av[1]);
-		    printf("Opened file %s\n", bu_vls_addr(&open_gfile));
+		    s.gedp->ged_gvp = s.view;
+		    bu_vls_sprintf(&s.gfile, "%s", av[1]);
+		    printf("Opened file %s\n", bu_vls_cstr(&s.gfile));
 		}
 	    } else {
 		printf("Error: invalid ged_open call\n");
 	    }
 	    bu_free(input, "input copy");
 	    bu_free(av, "input argv");
-	    bu_vls_trunc(&iline, 0);
+	    bu_vls_trunc(&s.iline, 0);
 	    continue;
 	}
 
-	if (!gedp) {
+	if (!s.gedp) {
 	    printf("Error: no database is currently open.\n");
 	    bu_free(input, "input copy");
 	    bu_free(av, "input argv");
-	    bu_vls_trunc(&iline, 0);
+	    bu_vls_trunc(&s.iline, 0);
 	    continue;
 	}
 
 
 	if (BU_STR_EQUAL(av[0], "close")) {
-	    ged_close(gedp);
-	    gedp = NULL;
-	    printf("closed database %s\n", bu_vls_addr(&open_gfile));
-	    bu_vls_trunc(&open_gfile, 0);
+	    ged_close(s.gedp);
+	    s.gedp = NULL;
+	    printf("closed database %s\n", bu_vls_cstr(&s.gfile));
+	    bu_vls_trunc(&s.gfile, 0);
 	    bu_free(input, "input copy");
 	    bu_free(av, "input argv");
-	    bu_vls_trunc(&iline, 0);
+	    bu_vls_trunc(&s.iline, 0);
 	    continue;
 	}
 
@@ -299,74 +377,23 @@ main(int argc, const char **argv)
 		printf("Command %s not found, did you mean %s (edit distance %d)?\n", av[0], ccmd, edist);
 	    }
 	} else {
-	    ged_exec(gedp, ac, (const char **)av);
-	    printf("%s", bu_vls_cstr(gedp->ged_result_str));
-	    bu_vls_trunc(gedp->ged_result_str, 0);
+	    ged_exec(s.gedp, ac, (const char **)av);
+	    printf("%s", bu_vls_cstr(s.gedp->ged_result_str));
+	    bu_vls_trunc(s.gedp->ged_result_str, 0);
 
 	    // The command ran, see if the display needs updating
-	    if (gedp->ged_dmp) {
-		struct dm *dmp = (struct dm *)gedp->ged_dmp;
-		struct bview *v = gedp->ged_gvp;
-		unsigned long long dhash = dm_hash(dmp);
-		unsigned long long vhash = bv_hash(gedp->ged_gvp);
-		unsigned long long lhash = dl_name_hash(gedp);
-		unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
-		unsigned long long lhash_edit = lhash;
-		//lhash_edit += dl_update(gedp);
-		if (dhash != prev_dhash) {
-		    dm_set_dirty(dmp, 1);
-		}
-		if (vhash != prev_vhash) {
-		    dm_set_dirty(dmp, 1);
-		}
-		if (lhash_edit != prev_lhash) {
-		    dm_set_dirty(dmp, 1);
-		}
-		if (ghash != prev_ghash) {
-		    dm_set_dirty(dmp, 1);
-		}
-		if (dm_get_dirty(dmp)) {
-		    matp_t mat = gedp->ged_gvp->gv_model2view;
-		    dm_loadmatrix(dmp, mat, 0);
-		    unsigned char geometry_default_color[] = { 255, 0, 0 };
-		    dm_draw_begin(dmp);
-		    dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay,
-			    1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
-			    0, 0, geometry_default_color, 1, 0);
-
-		    // Faceplate drawing
-		    dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
-
-		    dm_draw_end(dmp);
-		}
-	    }
-
+	    view_update(&s);
 	}
-#if 0
-	int (*func)(struct ged *, int, char *[]);
-	*(void **)(&func) = bu_dlsym(libged, av[0]);
-	if (!func) {
-	    printf("unrecognzied command: %s\n", av[0]);
-	} else {
-	    (void)func(gedp, ac, av);
-	    printf("%s\n", bu_vls_addr(gedp->ged_result_str));
-	}
-#endif
 
 	bu_free(input, "input copy");
 	bu_free(av, "input argv");
-	bu_vls_trunc(&iline, 0);
+	bu_vls_trunc(&s.iline, 0);
     }
 
 done:
-    bv_free(gsh_view);
-    BU_PUT(gsh_view, struct bv);
-    ged_close(gedp);
-    bu_dlclose(libged);
+    gsh_state_free(&s);
     linenoiseHistoryFree();
     bu_vls_free(&msg);
-    bu_vls_free(&open_gfile);
-    bu_vls_free(&iline);
     return ret;
 }
 
