@@ -28,6 +28,8 @@
 
 #include "common.h"
 
+#include <cerrno>
+#include <cstring>
 #include "bu/app.h"
 
 #define USE_MGL_NAMESPACE 1
@@ -43,19 +45,22 @@ extern "C" {
 extern struct fb swrast_interface;
 }
 
+#ifdef SWRAST_QT
 // NOTE - Qt is used here because we need a dm window to display the fb in
 // stand-alone mode.  There should be nothing specific to Qt in most of the
 // core swrast logic, and we should always be able to replace the Qt dm here
 // with any other dm backend to achieve the same results.
 #include <QApplication>
 #include "swrastwin.h"
+#endif
 
 struct swrastinfo {
     int ac;
     char **av;
+#ifdef SWRAST_QT
     QApplication *qapp = NULL;
     QtSWWin *mw = NULL;
-
+#endif
     int cmap_size;		/* hardware colormap size */
     int win_width;              /* actual window width */
     int win_height;             /* actual window height */
@@ -148,8 +153,7 @@ swrast_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix
 }
 
 
-
-
+#ifdef SWRAST_QT
 static void
 qt_destroy(struct swrastinfo *qi)
 {
@@ -158,6 +162,7 @@ qt_destroy(struct swrastinfo *qi)
     free(qi->av[0]);
     free(qi->av);
 }
+#endif
 
 
 HIDDEN int
@@ -296,9 +301,15 @@ swrast_configureWindow(struct fb *ifp, int width, int height)
 
 
 HIDDEN void
+#ifdef SWRAST_QT
 swrast_do_event(struct fb *ifp)
+#else
+swrast_do_event(struct fb *UNUSED(ifp))
+#endif
 {
+#ifdef SWRAST_QT
     SWRAST(ifp)->mw->update();
+#endif
 }
 
 static int
@@ -371,8 +382,8 @@ fb_swrast_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     qi->win_width = qi->vp_width = width;
     qi->win_height = qi->vp_width = height;
 
+#ifdef SWRAST_QT
     qi->qapp = new QApplication(qi->ac, qi->av);
-
     qi->mw = new QtSWWin(ifp);
 
     BU_GET(qi->mw->canvas->v, struct bview);
@@ -398,6 +409,9 @@ fb_swrast_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     fbps.data = (void *)dmp;
 
     return swrast_open_existing(ifp, width, height, &fbps);
+#else
+    return -1;
+#endif
 }
 
 HIDDEN struct fb_platform_specific *
@@ -429,15 +443,21 @@ swrast_flush(struct fb *UNUSED(ifp))
 
 
 HIDDEN int
+#ifdef SWRAST_QT
 fb_swrast_close(struct fb *ifp)
+#else
+fb_swrast_close(struct fb *UNUSED(ifp))
+#endif
 {
-    struct swrastinfo *qi = SWRAST(ifp);
 
+#ifdef SWRAST_QT
+    struct swrastinfo *qi = SWRAST(ifp);
     /* if a window was created wait for user input and process events */
     if (qi->qapp) {
 	return qi->qapp->exec();
 	qt_destroy(qi);
     }
+#endif
 
     return 0;
 }
@@ -772,8 +792,9 @@ swrast_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 	}
     }
 
+#ifdef SWRAST_QT
     SWRAST(ifp)->mw->update();
-
+#endif
     return width*height;
 }
 
@@ -813,8 +834,9 @@ swrast_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, co
 	}
     }
 
+#ifdef SWRAST_QT
     SWRAST(ifp)->mw->update();
-
+#endif
     return width*height;
 }
 
