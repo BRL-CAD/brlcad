@@ -45,10 +45,6 @@
 #  include <sys/stat.h>
 #endif
 
-#ifdef HAVE_POLL_H
-#  include <poll.h>
-#endif
-
 #ifdef HAVE_WINDOWS_H
 #  include <direct.h> /* For chdir */
 #endif
@@ -1037,7 +1033,6 @@ main(int argc, char *argv[])
     Tcl_Channel chan;
 #if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
-    fd_set exception_set;
     int result;
 #endif
 
@@ -1133,69 +1128,7 @@ main(int argc, char *argv[])
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
-#if defined(_WIN32) && !defined(CYGWIN)
-	if(!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
-	    interactive = 0;
-#else
-	struct timeval timeout;
-
-	/* wait 1/10sec for input, in case we're piped */
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 100000;
-
-	/* check if there is data on stdin, first relying on whether
-	 * there is standard input pending, second on whether there's
-	 * a controlling terminal (isatty).
-	 */
-	FD_ZERO(&read_set);
-	FD_SET(fileno(stdin), &read_set);
-	result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
-	if (bu_debug > 0)
-	    fprintf(stdout, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
-
-	if (result == 0) {
-	    if (!isatty(fileno(stdin)) || !isatty(fileno(stdout))) {
-		interactive = 0;
-	    }
-	} else if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
-	    /* stdin pending, probably not interactive */
-	    interactive = 0;
-
-	    /* check if there's an out-of-bounds exception.  sometimes
-	     * the case if mged -c is started via desktop GUI.
-	     */
-	    FD_ZERO(&exception_set);
-	    FD_SET(fileno(stdin), &exception_set);
-	    result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
-	    if (bu_debug > 0)
-		fprintf(stdout, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
-
-	    /* see if there's valid input waiting (more reliable than select) */
-	    if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {
-#ifdef HAVE_POLL_H
-		struct pollfd pfd;
-		pfd.fd = fileno(stdin);
-		pfd.events = POLLIN;
-		pfd.revents = 0;
-
-		result = poll(&pfd, 1, 100);
-		if (bu_debug > 0)
-		    fprintf(stdout, "DEBUG: poll result: %d, revents: %d\n", result, pfd.revents);
-
-		if (pfd.revents & POLLNVAL) {
-		    interactive = 1;
-		}
-#else
-		/* just in case we get input too quickly, see if it's coming from a tty */
-		if (isatty(fileno(stdin))) {
-		    interactive = 1;
-		}
-#endif /* HAVE_POLL_H */
-
-	    }
-
-	} /* read_set */
-#endif
+	interactive = bu_interactive();
     } /* argc > 1 */
 
     //bu_log("interactive: %d\n", interactive);

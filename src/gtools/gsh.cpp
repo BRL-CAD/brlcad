@@ -106,7 +106,8 @@ main(int argc, const char **argv)
     struct bu_vls iline= BU_VLS_INIT_ZERO;
     struct bu_vls open_gfile = BU_VLS_INIT_ZERO;
     const char *gpmpt = DEFAULT_GSH_PROMPT;
-
+    const char *emptypmpt = "";
+    int interactive = 1;
     /* Hash values for state tracking in the interactive loop */
     unsigned long long prev_dhash = 0;
     unsigned long long prev_vhash = 0;
@@ -185,10 +186,10 @@ main(int argc, const char **argv)
 	}
     }
 
-    /* If we have been given more than a .g filename, or we're not interactive,
-     * execute the provided argv commands (or read them off of stdin) and exit.
-     * TODO - need to detect if we're not interactive - check how MGED sets up
-     * for and handles stdin processing */
+    /* If we have been given more than a .g filename execute the provided argv
+     * commands and exit. Deliberately making this case a very simple execution
+     * path rather than having the linenoise interactive block deal with it, to
+     * minimize the possibility of any unforeseen complications. */
     if (argc > 1) {
 	/* If we reach this part of the code, argv[0] is a .g file and
 	 * has been handled - skip ahead to the commands. */
@@ -197,27 +198,13 @@ main(int argc, const char **argv)
 	goto done;
     }
 
-    /*
-     * TODO - also add non-tty mode - could make gsh a 'generic' subprocess
-     * execution mechanism for libged commands that want to do subprocess but
-     * don't have their own (1) executable.  The simplicity of gsh's bare bones
-     * argc/argv processing would be an asset in that scenario.
-     *
-     * Note that for such a scheme to work, we would also have to figure out
-     * how to have MGED et. al. deal with async return of command results
-     * when it comes to things like executing Tcl scripts on results - the
-     * full MGED Tcl prompt acts on command results as part of Tcl scripts,
-     * and if the output is delayed the script execution (anything from
-     * assigning search results to a variable on up) must also be delayed
-     * and know to act on the 'final' result rather than the return from
-     * the 'kicking off the process' initialization.
-     *
-     * Talk a look at what rt_read_cmd is doing - use that to guide an
-     * "arg reassembly" function to avoid a super-long argv entry filling
-     * up a pipe.
-     * */
+    /* We can handle stdin commands, but we don't want to interject the prompt
+     * into the output if that's the mode we're in.  Check. */
+    interactive = bu_interactive();
+    if (!interactive)
+	gpmpt = emptypmpt;
 
-    /* Start the interactive loop */
+    /* Start the loop */
 
     while ((line = linenoise(gpmpt)) != NULL) {
 
@@ -313,7 +300,7 @@ main(int argc, const char **argv)
 	    }
 	} else {
 	    ged_exec(gedp, ac, (const char **)av);
-	    printf("%s\n", bu_vls_cstr(gedp->ged_result_str));
+	    printf("%s", bu_vls_cstr(gedp->ged_result_str));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 
 	    // The command ran, see if the display needs updating

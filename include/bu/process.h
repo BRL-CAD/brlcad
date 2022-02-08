@@ -152,6 +152,13 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  */
  BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
 
+/**
+ * @brief detect whether or not a program is being run in interactive mode
+ *
+ * Returns 1 if interactive, else 0
+ */
+BU_EXPORT extern int bu_interactive();
+
 /** @} */
 
 __END_DECLS
