@@ -65,6 +65,34 @@ extern "C" {
 
 #define DEFAULT_GSH_PROMPT "g> "
 
+/* Handle the non-interactive execution of commands here. */
+int
+geval(void *libged, struct ged *gedp, int argc, const char **argv)
+{
+    int (*func)(struct ged *, int, char *[]);
+    char gedfunc[MAXPATHLEN] = {0};
+
+    bu_strlcat(gedfunc, "ged_", MAXPATHLEN);
+    bu_strlcat(gedfunc, argv[0], MAXPATHLEN - strlen(gedfunc));
+    if (strlen(gedfunc) < 1 || gedfunc[0] != 'g') {
+	bu_log("Couldn't get GED command name from [%s]\n", argv[0]);
+	return -1;
+    }
+
+    *(void **)(&func) = bu_dlsym(libged, gedfunc);
+    if (!func) {
+	bu_log("Unrecognized command [%s]\n", argv[0]);
+	return -1;
+    }
+
+    /* TODO - is it ever unsafe to do this cast?  Does ged mess with argv somehow? */
+    int ret = func(gedp, argc, (char **)argv);
+
+    fprintf(stdout, "%s", bu_vls_addr(gedp->ged_result_str));
+
+    return ret;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -73,13 +101,22 @@ main(int argc, const char **argv)
     int ret = EXIT_SUCCESS;
     char *line = NULL;
     int print_help = 0;
+    int console_mode = 0;  // MGED compatibility var - currently a no-op
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_vls iline= BU_VLS_INIT_ZERO;
     struct bu_vls open_gfile = BU_VLS_INIT_ZERO;
     const char *gpmpt = DEFAULT_GSH_PROMPT;
-    struct bu_opt_desc d[2];
+
+    /* Hash values for state tracking in the interactive loop */
+    unsigned long long prev_dhash = 0;
+    unsigned long long prev_vhash = 0;
+    unsigned long long prev_lhash = 0;
+    unsigned long long prev_ghash = 0;
+
+    struct bu_opt_desc d[3];
     BU_OPT(d[0],  "h", "help", "",       NULL,              &print_help,     "print help and exit");
-    BU_OPT_NULL(d[1]);
+    BU_OPT(d[1],  "c", "",     "",       NULL,              &console_mode,   "console mode - MGED compatibility");
+    BU_OPT_NULL(d[2]);
 
     if (argc == 0 || !argv) return -1;
 
@@ -106,7 +143,7 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    /* If we can't load libged there's not point in continuing */
+    /* If we can't load libged there's no point in continuing */
     if (!libged) {
 	bu_vls_free(&msg);
 	bu_exit(EXIT_FAILURE, "ERROR, could not load libged: %s\n", bu_dlerror());
@@ -148,38 +185,17 @@ main(int argc, const char **argv)
 	}
     }
 
-    /* Do the old geval bit - if we have more than 1 argc, eval and exit. */
+    /* If we have been given more than a .g filename, or we're not interactive,
+     * execute the provided argv commands (or read them off of stdin) and exit.
+     * TODO - need to detect if we're not interactive - check how MGED sets up
+     * for and handles stdin processing */
     if (argc > 1) {
-	int (*func)(struct ged *, int, char *[]);
-	char gedfunc[MAXPATHLEN] = {0};
-
-	/* If we got this far, argv[0] was a .g file */
+	/* If we reach this part of the code, argv[0] is a .g file and
+	 * has been handled - skip ahead to the commands. */
 	argv++; argc--;
-	bu_strlcat(gedfunc, "ged_", MAXPATHLEN);
-	bu_strlcat(gedfunc, argv[0], MAXPATHLEN - strlen(gedfunc));
-	if (strlen(gedfunc) < 1 || gedfunc[0] != 'g') {
-	    bu_vls_free(&msg);
-	    bu_dlclose(libged);
-	    bu_exit(EXIT_FAILURE, "Couldn't get GED command name from [%s]\n", argv[0]);
-	}
-
-	*(void **)(&func) = bu_dlsym(libged, gedfunc);
-	if (!func) {
-	    bu_exit(EXIT_FAILURE, "Unrecognized command [%s]\n", argv[0]);
-	}
-	/* TODO - is it ever unsafe to do this cast?  Does ged mess with argv somehow? */
-	ret = func(gedp, argc, (char **)argv);
-
-	bu_dlclose(libged);
-
-	fprintf(stdout, "%s", bu_vls_addr(gedp->ged_result_str));
-
-	ged_close(gedp);
-	bv_free(gsh_view);
-	BU_PUT(gsh_view, struct bview);
-	return ret;
+	ret = geval(libged, gedp, argc, argv);
+	goto done;
     }
-
 
     /*
      * TODO - also add non-tty mode - could make gsh a 'generic' subprocess
@@ -202,10 +218,6 @@ main(int argc, const char **argv)
      * */
 
     /* Start the interactive loop */
-    unsigned long long prev_dhash = 0;
-    unsigned long long prev_vhash = 0;
-    unsigned long long prev_lhash = 0;
-    unsigned long long prev_ghash = 0;
 
     while ((line = linenoise(gpmpt)) != NULL) {
 
