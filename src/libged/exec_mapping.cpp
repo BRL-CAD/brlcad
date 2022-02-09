@@ -29,7 +29,8 @@
 
 #include "common.h"
 
-#include "ged.h"
+#include "./include/plugin.h"
+
 
 /* For this file, we need to undefine stat if defined so the command template
  * doesn't end up being expanded with the defined version of the string.
@@ -41,25 +42,6 @@
  * functions; it should be safe to undef them here.
  */
 #undef stat
-
-
-#define GED_CMD_HELPER1(x, y) x##y
-#define GED_CMD(x) \
-	int GED_CMD_HELPER1(ged_,x)(struct ged *gedp, int argc, const char *argv[]) \
-	{ \
-	    const char *fname = #x ; \
-	    const char *argv0 = argv[0] ; \
-	    int vret = ged_cmd_valid(argv[0], fname); \
-	    if (vret) { \
-		argv[0] = fname; \
-	    }\
-	    int ret = ged_exec(gedp, argc, argv); \
-	    if (vret) { \
-		ret |= BRLCAD_UNKNOWN; \
-	    } \
-	    argv[0] = argv0; \
-	    return ret; \
-	} \
 
 
 GED_CMD(3ptarb)

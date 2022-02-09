@@ -36,6 +36,25 @@ extern void *ged_cmds;
 	const struct ged_cmd CPP_GLUE(command, _cmd) = {&CPP_GLUE(command, _cmd_impl)}; \
     }
 
+#define GED_CMD_HELPER1(x, y) x##y
+#define GED_CMD(x) \
+	int GED_CMD_HELPER1(ged_,x)(struct ged *gedp, int argc, const char *argv[]) \
+	{ \
+	    const char *fname = #x ; \
+	    const char *argv0 = argv[0] ; \
+	    int vret = ged_cmd_valid(argv[0], fname); \
+	    if (vret) { \
+		argv[0] = fname; \
+	    }\
+	    int ret = ged_exec(gedp, argc, argv); \
+	    if (vret) { \
+		ret |= BRLCAD_UNKNOWN; \
+	    } \
+	    argv[0] = argv0; \
+	    return ret; \
+	} \
+
+
 
 /* Default command behaviors when it comes to impacts on calling applications.
  * Need callback hooks in gedp so the application can tell the command what it
