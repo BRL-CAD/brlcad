@@ -49,6 +49,7 @@ PLUGIN_SETUP(dm-swrast dm)
 CMAKEFILES(
   CMakeLists.txt
   ${SWRAST_SRCS}
+  swrastwin.cpp
   dm-swrast.h
   swrastwin.h
   )
