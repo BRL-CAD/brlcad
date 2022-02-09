@@ -26,7 +26,7 @@ set(qth_names
   QPolySettings
   )
 foreach(qh ${qth_names})
-  set(polygon_moc_headers ${polygon_moc_headers} ${qh}.h)
+  set(polygon_moc_hdrs ${polygon_moc_hdrs} ${qh}.h)
 endforeach(qh ${qth_names})
 
 if(BRLCAD_ENABLE_QT)

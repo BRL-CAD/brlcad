@@ -57,7 +57,7 @@ set(qtcad_srcs
   )
 
 set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
-set(qtcad_moc_headers bindings.h)
+set(qtcad_moc_hdrs bindings.h)
 set(qth_names
   QAccordion
   QColorRGB
@@ -80,14 +80,14 @@ if (OPENGL_LIBS)
 endif (OPENGL_LIBS)
 
 foreach(qh ${qth_names})
-  set(qtcad_moc_headers ${qtcad_moc_headers} ${QTCAD_HDR_DIR}/${qh}.h)
+  set(qtcad_moc_hdrs ${qtcad_moc_hdrs} ${QTCAD_HDR_DIR}/${qh}.h)
 endforeach(qh ${qth_names})
 
 if(BRLCAD_ENABLE_QT)
 
   set(USE_OBJECT_LIBS OFF)
 
-  QT5_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_headers})
+  QT5_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_hdrs})
   QT5_ADD_RESOURCES(qtcad_qrc qtcad_resources.qrc)
   BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "libged;libdm;librt;libbu;Qt5::Core;Qt5::Widgets;${OPENGL_LIBS}")
   if (OPENGL_LIBS)
@@ -109,7 +109,7 @@ add_subdirectory(tests)
 set(qtcad_ignore_srcs
   CMakeLists.txt
   ${qtcad_srcs}
-  ${qtcad_moc_headers}
+  ${qtcad_moc_hdrs}
   qtcad_resources.qrc
   QtGL.cpp
   qt6.patch
