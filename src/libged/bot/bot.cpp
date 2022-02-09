@@ -679,9 +679,6 @@ extern "C" {
     struct ged_cmd_impl bot_decimate_cmd_impl = {"bot_decimate", ged_bot_decimate_core, GED_CMD_DEFAULT};
     const struct ged_cmd bot_decimate_cmd = { &bot_decimate_cmd_impl };
 
-    struct ged_cmd_impl bot_exterior_cmd_impl = {"bot_exterior", ged_bot_exterior, GED_CMD_DEFAULT};
-    const struct ged_cmd bot_exterior_cmd = { &bot_exterior_cmd_impl };
-
     struct ged_cmd_impl bot_dump_cmd_impl = {"bot_dump", ged_bot_dump_core, GED_CMD_DEFAULT};
     const struct ged_cmd bot_dump_cmd = { &bot_dump_cmd_impl };
 
