@@ -30,6 +30,13 @@
 
 extern void *ged_cmds;
 
+#define GED_CMD_REGISTER(command, callback, options) \
+    extern "C" { \
+	struct ged_cmd_impl CPP_GLUE(command, _cmd_impl) = {CPP_STR(command), callback, options}; \
+	const struct ged_cmd CPP_GLUE(command, _cmd) = {&CPP_GLUE(command, _cmd_impl)}; \
+    }
+
+
 /* Default command behaviors when it comes to impacts on calling applications.
  * Need callback hooks in gedp so the application can tell the command what it
  * needs in these scenarios.  For some it might be possible to have default

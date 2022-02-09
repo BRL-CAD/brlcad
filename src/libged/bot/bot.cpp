@@ -735,6 +735,7 @@ extern "C" {
 	&bot_condense_cmd,
 	&bot_decimate_cmd,
 	&bot_dump_cmd,
+	&bot_exterior_cmd,
 	&bot_face_fuse_cmd,
 	&bot_face_sort_cmd,
 	&bot_flip_cmd,
@@ -751,7 +752,7 @@ extern "C" {
 	NULL
     };
 
-    static const struct ged_plugin pinfo = { GED_API,  bot_cmds, 17 };
+    static const struct ged_plugin pinfo = { GED_API, bot_cmds, sizeof(bot_cmds)/sizeof(bot_cmds[0]) };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
     {
