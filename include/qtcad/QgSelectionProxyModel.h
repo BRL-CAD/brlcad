@@ -1,4 +1,4 @@
-/*                   Q G S E L E C T M O D E L . H
+/*             Q G S E L E C T I O N P R O X Y M O D E L . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2022 United States Government as represented by
@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QgSelectModel.h
+/** @file QgSelectionProxyModel.h
  *
- * Qt proxy model intended to sit between a QgTreeView and a QgModel
- * in order to store the necessary information to manage selection
+ * The Qg Selection Proxy model intended to sit between a QgTreeView and a
+ * QgModel in order to store the necessary information to manage selection
  * state.
  *
  * In the original QtCADTree code the selection information ended up being
@@ -56,11 +56,12 @@
 #include "qtcad/QgModel.h"
 
 
-class QTCAD_EXPORT QgSelectionModel : public QIdentityProxyModel
+class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 {
-    Q_OBJECT
-
     public:
+
+	QgSelectionProxyModel(QObject* parent = 0): QIdentityProxyModel(parent) {}
+
 	enum CADDataRoles {
 	    BoolInternalRole = Qt::UserRole + 1000,
 	    BoolDisplayRole = Qt::UserRole + 1001,

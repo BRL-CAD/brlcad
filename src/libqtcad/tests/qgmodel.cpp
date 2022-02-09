@@ -11,7 +11,7 @@
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ * Lesser General Public License for more details->
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
@@ -30,7 +30,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "../../libged/alphanum.h"
-#include "qtcad/QgModel.h"
+#include "qtcad/QgSelectionProxyModel.h"
 
 void
 open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
@@ -126,49 +126,55 @@ int main(int argc, char *argv[])
     if (argc != 1)
 	bu_exit(-1, "need to specify .g file\n");
 
-    QgModel s(NULL, argv[0]);
+    QgModel sg(NULL, argv[0]);
 
-    if (!s.IsValid())
+    if (!sg.IsValid())
 	bu_exit(-1, "failed to open .g file at %s\n", argv[0]);
 
-    bu_log("Hierarchy instance cnt: %zd\n", s.instances->size());
-    bu_log("Top instance cnt: %zd\n", s.tops_instances->size());
+    QgSelectionProxyModel sp;
+    sp.setSourceModel(&sg);
+
+    QgModel *s = (QgModel *)sp.sourceModel();
+
+
+    bu_log("Hierarchy instance cnt: %zd\n", s->instances->size());
+    bu_log("Top instance cnt: %zd\n", s->tops_instances->size());
 
     // 2.  Implement "open" and "close" routines for the items that will exercise
     // the logic to identify, populate, and clear items based on child info.
 
     // Open everything
     std::cout << "\nAll open:\n";
-    open_tops(&s, -1);
-    print_tops(&s);
+    open_tops(s, -1);
+    print_tops(s);
 
     // Close top level
     std::cout << "\nTop level closed:\n";
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
+    for (size_t i = 0; i < s->tops_items.size(); i++) {
+	QgItem *itm = s->tops_items[i];
 	itm->close();
     }
-    print_tops(&s);
+    print_tops(s);
 
 
     // Open first level
     std::cout << "\nOpen first level (remember open children):\n";
-    open_tops(&s, 1);
-    print_tops(&s);
+    open_tops(s, 1);
+    print_tops(s);
 
 
     // Close everything
     std::cout << "\nEverything closed:\n";
-    for (size_t i = 0; i < s.tops_items.size(); i++) {
-	QgItem *itm = s.tops_items[i];
+    for (size_t i = 0; i < s->tops_items.size(); i++) {
+	QgItem *itm = s->tops_items[i];
 	close_children(itm);
     }
-    print_tops(&s);
+    print_tops(s);
 
     // Open first level
     std::cout << "\nOpen first level (children closed):\n";
-    open_tops(&s, 1);
-    print_tops(&s);
+    open_tops(s, 1);
+    print_tops(s);
 
 
     // 3.  Add callback support for syncing the instance sets after a database
@@ -176,13 +182,13 @@ int main(int argc, char *argv[])
     // read/write support.
 
     std::cout << "\nInitial state:\n";
-    open_tops(&s, 2);
-    print_tops(&s);
+    open_tops(s, 2);
+    print_tops(s);
 
-    struct ged *g = s.gedp;
+    struct ged *g = s->gedp;
 
-    // Perform edit operations to trigger callbacks.  assuming
-    // moss.g example
+    // Perform edit operations to trigger callbacks->  assuming
+    // moss->g example
     int ac = 3;
     const char *av[4];
     av[0] = "rm";
@@ -192,7 +198,7 @@ int main(int argc, char *argv[])
     ged_exec(g, ac, (const char **)av);
 
     std::cout << "\nRemoved ellipse.r from all.g:\n";
-    print_tops(&s);
+    print_tops(s);
 
     av[0] = "g";
     av[1] = "all.g";
@@ -201,11 +207,11 @@ int main(int argc, char *argv[])
     ged_exec(g, ac, (const char **)av);
 
     std::cout << "\nAdded ellipse.r back to the end of all.g, no call to open:\n";
-    print_tops(&s);
+    print_tops(s);
 
     std::cout << "\nAfter additional open pass on tree:\n";
-    open_tops(&s, 2);
-    print_tops(&s);
+    open_tops(s, 2);
+    print_tops(s);
 
 
     av[0] = "rm";
@@ -214,7 +220,7 @@ int main(int argc, char *argv[])
     av[3] = NULL;
     ged_exec(g, ac, (const char **)av);
     std::cout << "\ntops tree after removing tor from tor.r:\n";
-    print_tops(&s);
+    print_tops(s);
 
     av[0] = "kill";
     av[1] = "-f";
@@ -222,11 +228,11 @@ int main(int argc, char *argv[])
     av[3] = NULL;
     ged_exec(g, ac, (const char **)av);
     std::cout << "\ntops tree after deleting all.g:\n";
-    print_tops(&s);
+    print_tops(s);
 
     std::cout << "\nexpanded tops tree after deleting all.g:\n";
-    open_tops(&s, -1);
-    print_tops(&s);
+    open_tops(s, -1);
+    print_tops(s);
 
     const char *objs[] = {"box.r", "box.s", "cone.r", "cone.s", "ellipse.r", "ellipse.s", "light.r", "LIGHT", "platform.r", "platform.s", "tor", "tor.r", NULL};
     const char *obj = objs[0];
@@ -241,18 +247,18 @@ int main(int argc, char *argv[])
 	obj = objs[i];
     }
     std::cout << "\ntops tree after deleting everything:\n";
-    print_tops(&s);
+    print_tops(s);
 
     std::cout << "\nexpanded tops tree after deleting everything:\n";
-    open_tops(&s, -1);
-    print_tops(&s);
+    open_tops(s, -1);
+    print_tops(s);
 
 
     // TODO - so the rough progression of steps here is:
     //
     // 4. Figure out how to do the Item update pass in response to #3.  In
     // particular, how to preserve the tree's "opened/closed" state through
-    // edit operations.  For each child items vector we'll build a new vector
+    // edit operations->  For each child items vector we'll build a new vector
     // based on the gInstances tree, comparing it as we go to the Items array
     // that existed previously.  For each old item, if the new item matches the
     // old (qghash comparison?) reuse the old item, otherwise create a new one.
@@ -263,7 +269,7 @@ int main(int argc, char *argv[])
     // structure to verify.
     //
 
-    return (*s.instances).size();
+    return (*s->instances).size();
 }
 
 /*
