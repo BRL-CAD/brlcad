@@ -16,6 +16,8 @@ if(BRLCAD_ENABLE_QT)
   set(SWRAST_SRCS ${SWRAST_SRCS} swrastwin.cpp)
 
   QT5_WRAP_CPP(swrast_moc_srcs swrastwin.h)
+
+  DISTCLEAN(moc_swrastwin.cpp_parameters)
 endif(BRLCAD_ENABLE_QT)
 
 include_directories(

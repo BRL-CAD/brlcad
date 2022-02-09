@@ -20,11 +20,14 @@ set(polygon_srcs
   QPolySettings.cpp
   )
 
-set(polygon_moc_hdrs
-  QPolyCreate.h
-  QPolyMod.h
-  QPolySettings.h
+set(qth_names
+  QPolyCreate
+  QPolyMod
+  QPolySettings
   )
+foreach(qh ${qth_names})
+  set(polygon_moc_headers ${polygon_moc_headers} ${qh}.h)
+endforeach(qh ${qth_names})
 
 if(BRLCAD_ENABLE_QT)
 
@@ -36,6 +39,11 @@ if(BRLCAD_ENABLE_QT)
   set_property(TARGET qged_polygon APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(qged_polygon polygon_tool.cpp polygon_control.cpp)
   PLUGIN_SETUP(qged_polygon qged)
+
+  foreach(qh ${qth_names})
+    DISTCLEAN(moc_${qh}.cpp_parameters)
+  endforeach(qh ${qth_names})
+  DISTCLEAN(icon.qrc.depends)
 
 endif(BRLCAD_ENABLE_QT)
 

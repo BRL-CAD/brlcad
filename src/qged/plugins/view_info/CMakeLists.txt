@@ -38,6 +38,11 @@ if(BRLCAD_ENABLE_QT)
   VALIDATE_STYLE(qged_view_info view_info.cpp)
   PLUGIN_SETUP(qged_view_info qged)
 
+  DISTCLEAN(
+    icon.qrc.depends
+    moc_view_model.cpp_parameters
+    )
+
 endif(BRLCAD_ENABLE_QT)
 
 set(ignore_srcs

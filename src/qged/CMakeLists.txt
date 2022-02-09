@@ -23,15 +23,19 @@ set(qged_srcs
   palettes.cpp
   )
 
-set(moc_headers
-  main_window.h
-  app.h
-  attributes.h
-  event_filter.h
-  fbserv.h
-  import.h
-  palettes.h
+set(qth_names
+  app
+  attributes
+  event_filter
+  fbserv
+  import
+  main_window
+  palettes
   )
+foreach(qh ${qth_names})
+  set(moc_headers ${moc_headers} ${qh}.h)
+endforeach(qh ${qth_names})
+
 
 if (BRLCAD_ENABLE_QT)
 
@@ -53,6 +57,11 @@ if (BRLCAD_ENABLE_QT)
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
+
+  foreach(qh ${qth_names})
+    DISTCLEAN(moc_${qh}.cpp_parameters)
+  endforeach(qh ${qth_names})
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/theme/breeze.qrc.depends)
 
 endif (BRLCAD_ENABLE_QT)
 

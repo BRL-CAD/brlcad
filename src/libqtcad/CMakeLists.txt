@@ -57,35 +57,31 @@ set(qtcad_srcs
   )
 
 set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
-set(qtcad_moc_headers
-  bindings.h
-  ${QTCAD_HDR_DIR}/QAccordion.h
-  ${QTCAD_HDR_DIR}/QColorRGB.h
-  ${QTCAD_HDR_DIR}/QFlowLayout.h
-  ${QTCAD_HDR_DIR}/QKeyVal.h
-  ${QTCAD_HDR_DIR}/QToolPalette.h
-  ${QTCAD_HDR_DIR}/QgModel.h
-  ${QTCAD_HDR_DIR}/QgTreeView.h
-  ${QTCAD_HDR_DIR}/QtAppExecDialog.h
-  ${QTCAD_HDR_DIR}/QtCADTree.h
-  ${QTCAD_HDR_DIR}/QtCADView.h
-  ${QTCAD_HDR_DIR}/QtCADQuad.h
-  ${QTCAD_HDR_DIR}/QtConsole.h
-  ${QTCAD_HDR_DIR}/QtConsoleListener.h
-  ${QTCAD_HDR_DIR}/QtSW.h
+set(qtcad_moc_headers bindings.h)
+set(qth_names
+  QAccordion
+  QColorRGB
+  QFlowLayout
+  QKeyVal
+  QToolPalette
+  QgModel
+  QgTreeView
+  QtAppExecDialog
+  QtCADTree
+  QtCADView
+  QtCADQuad
+  QtConsole
+  QtConsoleListener
+  QtSW
   )
-
 if (OPENGL_LIBS)
-  set(qtcad_srcs
-    ${qtcad_srcs}
-    QtGL.cpp
-    )
-  set(qtcad_moc_headers
-    ${qtcad_moc_headers}
-    ${QTCAD_HDR_DIR}/QtGL.h
-    )
+  set(qtcad_srcs ${qtcad_srcs} QtGL.cpp)
+  set(qth_names ${qth_names} QtGL)
 endif (OPENGL_LIBS)
 
+foreach(qh ${qth_names})
+  set(qtcad_moc_headers ${qtcad_moc_headers} ${QTCAD_HDR_DIR}/${qh}.h)
+endforeach(qh ${qth_names})
 
 if(BRLCAD_ENABLE_QT)
 
@@ -97,6 +93,15 @@ if(BRLCAD_ENABLE_QT)
   if (OPENGL_LIBS)
     set_property(TARGET libqtcad APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
   endif (OPENGL_LIBS)
+
+  DISTCLEAN(
+    moc_bindings.cpp_parameters
+    qtcad_resources.qrc.depends
+    )
+  foreach(qh ${qth_names})
+    DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/__/__/include/qtcad/moc_${qh}.cpp_parameters)
+  endforeach(qh ${qth_names})
+
 endif(BRLCAD_ENABLE_QT)
 
 add_subdirectory(tests)

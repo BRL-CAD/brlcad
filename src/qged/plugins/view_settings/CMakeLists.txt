@@ -33,6 +33,11 @@ if(BRLCAD_ENABLE_QT)
   VALIDATE_STYLE(qged_view_settings view_settings.cpp)
   PLUGIN_SETUP(qged_view_settings qged)
 
+  DISTCLEAN(
+    icon.qrc.depends
+    moc_view_widget.cpp_parameters
+    )
+
 endif(BRLCAD_ENABLE_QT)
 
 set(ignore_srcs

@@ -12,6 +12,7 @@ if (BRLCAD_ENABLE_QT)
   include_directories(${PKG_EXAMPLE_INCLUDES})
 
   QT5_WRAP_CPP(pkg_moc_srcs ncp.h)
+  DISTCLEAN(moc_ncp.cpp_parameters)
 
   BRLCAD_ADDEXEC(qt_test_server "server.cpp;${pkg_moc_srcs}" "libbu;libpkg;Qt5::Core;Qt5::Network;Qt5::Widgets" NO_INSTALL)
   BRLCAD_ADDEXEC(qt_test_client client.cpp "libbu;libpkg" NO_INSTALL)
