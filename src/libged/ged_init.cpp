@@ -231,6 +231,8 @@ libged_init(void)
 	    const struct ged_cmd **cmds = plugin->cmds;
 	    for (int c = 0; c < plugin->cmd_cnt; c++) {
 		const struct ged_cmd *cmd = cmds[c];
+		if (!cmd)
+		    break;
 		std::string key(cmd->i->cname);
 		if (ged_cmd_map.find(key) != ged_cmd_map.end()) {
 		    bu_vls_printf(&init_msgs, "Warning - plugin '%s' provides command '%s' but that command has already been loaded, skipping\n", pfile, cmd->i->cname);
