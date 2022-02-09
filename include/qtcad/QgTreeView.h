@@ -26,6 +26,8 @@
 #ifndef QGTREEVIEW_H
 #define QGTREEVIEW_H
 
+#include "common.h"
+
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -34,33 +36,21 @@
 #include <QTreeView>
 
 #include "qtcad/defines.h"
-#include "qtcad/QgSelecttionModel.h"
+#include "qtcad/QgSelectionProxyModel.h"
 
-class QTCAD_EXPORT GObjectDelegate : public QStyledItemDelegate
-{
-    Q_OBJECT
-
-    public:
-	GObjectDelegate(QgTreeView *tv = NULL, QWidget *pparent = 0) : QStyledItemDelegate(pparent) {cadtreeview = tv  ;}
-
-	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
-	QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
-
-	QgTreeView *cadtreeview = NULL;
-};
 
 class QTCAD_EXPORT QgTreeView : public QTreeView
 {
     Q_OBJECT
 
     public:
-	QgTreeView(QWidget *pparent, QgSelectionModel *treemodel);
+	QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel);
 	~QgTreeView() {};
 
 	QModelIndex selected();
 
 	void drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const;
-	QgSelectionModel *m = NULL;
+	QgSelectionProxyModel *m = NULL;
 
     protected:
 	void resizeEvent(QResizeEvent *pevent);
@@ -73,6 +63,19 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 
     private:
 	void header_state();
+};
+
+class QTCAD_EXPORT gObjDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+
+    public:
+	gObjDelegate(QgTreeView *tv = NULL, QWidget *pparent = 0) : QStyledItemDelegate(pparent) {cadtreeview = tv  ;}
+
+	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
+	QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
+
+	QgTreeView *cadtreeview = NULL;
 };
 
 #endif //QGTREEVIEW_H

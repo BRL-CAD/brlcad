@@ -45,6 +45,8 @@ set(qtcad_srcs
   QKeyVal.cpp
   QToolPalette.cpp
   QgModel.cpp
+  QgSelectionProxyModel.cpp
+  QgTreeView.cpp
   QtAppExecDialog.cpp
   QtSW.cpp
   QtCADQuad.cpp
@@ -63,6 +65,7 @@ set(qtcad_moc_headers
   ${QTCAD_HDR_DIR}/QKeyVal.h
   ${QTCAD_HDR_DIR}/QToolPalette.h
   ${QTCAD_HDR_DIR}/QgModel.h
+  ${QTCAD_HDR_DIR}/QgTreeView.h
   ${QTCAD_HDR_DIR}/QtAppExecDialog.h
   ${QTCAD_HDR_DIR}/QtCADTree.h
   ${QTCAD_HDR_DIR}/QtCADView.h
