@@ -47,6 +47,15 @@ Be specific.
   but bear in mind that these are preliminary thoughts only and not a
   finished design that is ready to be implemented.
 
+  Consider inside/on/outside subcommands that report back where a
+  given point is with respect to another object.  Could use ray
+  tracing to determine result.
+
+  Consider a subcommand that reports distance to surface from a given
+  point.  Ray tracing method similar to gqa (shooting spherically
+  through point and in a gqa-style grid) would give an approximation
+  that could be adaptively refined to a specified tolerance.
+
 * 'array' command: to create a shallow copy of geometry in a
   rectangular or polar pattern.  similar to clone, perhaps mergeable
   with clone as an option.  takes #rows+dist and #cols+dist, or
