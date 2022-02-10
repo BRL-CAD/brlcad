@@ -296,20 +296,24 @@ CADApp::opendb(QString filename)
 
     QgModel *m = NULL;
     if (!mdl) {
-	m = new QgModel();
 	mdl = new QgSelectionProxyModel();
+	m = new QgModel();
 	mdl->setSourceModel(m);
     } else {
 	m = (QgModel *)mdl->sourceModel();
     }
 
-    if (m->opendb(g_path))
+    if (m->opendb(g_path)) {
 	return 3;
+    } else {
+	// We opened something - record the full path and
+	// initialize the tree
+	char fp[MAXPATHLEN];
+	bu_file_realpath(g_path.toLocal8Bit().data(), fp);
+	db_filename = QString(fp);
 
-    // We opened something - record the full path
-    char fp[MAXPATHLEN];
-    bu_file_realpath(g_path.toLocal8Bit().data(), fp);
-    db_filename = QString(fp);
+	mdl->refresh(NULL);
+    }
 
     // Connect the wires with the view(s)
     struct ged *gedp = m->gedp;
@@ -379,7 +383,10 @@ CADApp::opendb(QString filename)
 #endif
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
-    // Inform the world the database has changed
+    // Inform the world the database has changed.  Because we just opened the
+    // .g file, we don't need to redo the gInstance passes - the update_nref
+    // callbacks have taken care of that.  Pass in the gedp pointer to let the
+    // callers know not to do that step.
     emit app_changed_db((void *)gedp);
 
     // Also have a new view...

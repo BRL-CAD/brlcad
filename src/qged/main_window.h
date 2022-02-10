@@ -70,7 +70,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	void fallback3D();
 
 	QgTreeView *treeview;
-	QgSelectionProxyModel *treemodel;
 	QtConsole *console;
 	CADPalette *vc;
 	CADPalette *ic;

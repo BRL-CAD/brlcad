@@ -53,8 +53,13 @@ QgSelectionProxyModel::NodeRow(QgItem *node) const
 }
 
 void
-QgSelectionProxyModel::refresh(void *)
+QgSelectionProxyModel::refresh(void *p)
 {
+    if (!p) {
+	std::cerr << "Full update according to .g contents\n";
+	QgModel *m = (QgModel *)sourceModel();
+	m->refresh();
+    }
 }
 
 QVariant
