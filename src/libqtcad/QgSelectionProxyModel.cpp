@@ -22,6 +22,8 @@
  */
 
 #include "common.h"
+#include <queue>
+#include <unordered_set>
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSelectionProxyModel.h"
@@ -96,10 +98,11 @@ QgSelectionProxyModel::setData(const QModelIndex & idx, const QVariant &UNUSED(v
 void
 QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx)
 {
+    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
+
     if (!idx.isValid() || interaction_mode == QgViewMode) {
 	// Clear all highlighting state - invalid selection or view mode means no related highlights
 	QgModel *m = (QgModel *)sourceModel();
-	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
 	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
 	    g_it->second->active_flag = 0;
 	}
@@ -108,8 +111,15 @@ QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx
 
     QgModel *m = (QgModel *)sourceModel();
     QgItem *snode = static_cast<QgItem *>(idx.internalPointer());
+
     gInstance *sg = snode->instance();
     sg->active_flag = 2;
+
+    std::unordered_set<gInstance *> processed;
+    processed.insert(sg);
+
+    std::queue<gInstance *> to_flag;
+    to_flag.push(sg);
 
     // If we're in QgInstanceEditMode, we key off of the exact gInstance
     // pointer that corresponds to this instance.  Since that instance is
@@ -117,9 +127,18 @@ QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx
     // those parents) so the parent QgItems know to highlight themselves if
     // their children are closed.
     if (interaction_mode == QgPrimitiveEditMode) {
-	// TODO - iterate over parents and parents of parents of any gInstance
-	// with active_flag == 2 until all parents have been assigned an
-	// active_flag of 1
+	while (!to_flag.empty()) {
+	    gInstance *curr = to_flag.front();
+	    to_flag.pop();
+	    for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
+		gInstance *cd = g_it->second;
+		if (cd->parent == curr->dp && processed.find(cd) == processed.end()) {
+		    cd->active_flag = 1;
+		    to_flag.push(cd);
+		    processed.insert(cd);
+		}
+	    }
+	}
 	return;
     }
 
@@ -129,15 +148,30 @@ QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx
     // underlying primitive may change.  We then need to flag all the parent
     // instances of all the activated gInstances (and all their parents)
     if (interaction_mode == QgPrimitiveEditMode) {
-	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
 	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
 	    gInstance *cg = g_it->second;
-	    if (cg->dp == sg->dp)
+	    if (cg->dp == sg->dp) {
 		g_it->second->active_flag = 2;
+		to_flag.push(cg);
+		processed.insert(cg);
+	    }
 	}
-	// TODO - iterate over parents and parents of parents of any gInstance
-	// with active_flag == 2 until all parents have been assigned an
-	// active_flag of 1
+	// Iterate over parents and parents of parents of any gInstance with
+	// active_flag set until all parents have been assigned an active_flag
+	// of at least 1 (or two, if they are one of the exact matches from the
+	// previous step.)
+	while (!to_flag.empty()) {
+	    gInstance *curr = to_flag.front();
+	    to_flag.pop();
+	    for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
+		gInstance *cd = g_it->second;
+		if (cd->parent == curr->dp && processed.find(cd) == processed.end()) {
+		    cd->active_flag = 1;
+		    to_flag.push(cd);
+		    processed.insert(cd);
+		}
+	    }
+	}
 	return;
     }
 
