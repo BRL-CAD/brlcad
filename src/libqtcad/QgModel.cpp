@@ -805,6 +805,8 @@ QgModel::QgModel(QObject *p, const char *npath)
     // Make sure NULL is our default.
     gedp = NULL;
 
+    rootItem = new QgItem();
+
     // If there's no path, at least for the moment we have nothing to model.
     // In the future we may want to consider setting up a default environment
     // backed by a temp file...
@@ -817,6 +819,7 @@ QgModel::QgModel(QObject *p, const char *npath)
 QgModel::~QgModel()
 {
     closedb();
+    delete rootItem;
 }
 
 bool
@@ -1227,18 +1230,23 @@ QgModel::headerData(int section, Qt::Orientation UNUSED(orientation), int role) 
 int
 QgModel::rowCount(const QModelIndex &p) const
 {
-    if (!p.isValid())
+    QgItem *pItem;
+    if (p.column() > 0)
 	return 0;
-    QgItem *qi= getItem(p);
-    return (qi) ? qi->childCount() : 0;
+
+    if (!p.isValid())
+	pItem = rootItem;
+    else
+	pItem = static_cast<QgItem*>(p.internalPointer());
+
+    return pItem->childCount();
 }
 
 int
-QgModel::columnCount(const QModelIndex &UNUSED(p)) const
+QgModel::columnCount(const QModelIndex &p) const
 {
-    // TODO - remove this guard once we're setting up the rootItem correctly
-    if (!rootItem)
-	return 1;
+    if (p.isValid())
+        return static_cast<QgItem*>(p.internalPointer())->columnCount();
     return rootItem->columnCount();
 }
 
@@ -1415,7 +1423,7 @@ QgModel::opendb(const char *npath)
 
 	    // tops entries get a QgItem by default
 	    QgItem *nitem = new QgItem();
-	    nitem->parentItem = NULL;
+	    nitem->parentItem = rootItem;
 	    nitem->ihash = nhash;
 	    nitem->ctx = this;
 	    tops_items.push_back(nitem);
@@ -1426,6 +1434,11 @@ QgModel::opendb(const char *npath)
     // Sort tops_items according to alphanum
     std::sort(tops_items.begin(), tops_items.end(), QgItem_cmp());
 
+    // Make tops items children of the rootItem
+    rootItem->children.clear();
+    for (size_t i = 0; i < tops_items.size(); i++) {
+	rootItem->appendChild(tops_items[i]);
+    }
 
     // Run through the objects and crack the non-leaf objects to define
     // non-tops instances (i.e. all comb instances and some primitive

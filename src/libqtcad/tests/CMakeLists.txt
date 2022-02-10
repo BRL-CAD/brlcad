@@ -19,12 +19,21 @@ if (BRLCAD_ENABLE_QT)
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
 
+  add_executable(qgview qgview.cpp)
+  target_link_libraries(qgview libqtcad libged librt libbu Qt5::Widgets)
+  target_compile_definitions(qgview PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+  install(TARGETS qgview
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+
 endif (BRLCAD_ENABLE_QT)
 
 
 CMAKEFILES(
   CMakeLists.txt
   qgmodel.cpp
+  qgview.cpp
   )
 
 # Local Variables:
