@@ -55,6 +55,7 @@
 #include "qtcad/defines.h"
 #include "qtcad/QgModel.h"
 
+class QgTreeView;
 
 class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 {
@@ -73,6 +74,8 @@ class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 
 	QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
 	bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
+
+	QgTreeView *treeview = NULL;
 
     public slots:
 	//void refresh(void *);

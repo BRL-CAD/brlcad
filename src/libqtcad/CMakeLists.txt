@@ -47,6 +47,7 @@ set(qtcad_srcs
   QgModel.cpp
   QgSelectionProxyModel.cpp
   QgTreeView.cpp
+  QgUtil.cpp
   QtAppExecDialog.cpp
   QtSW.cpp
   QtCADQuad.cpp

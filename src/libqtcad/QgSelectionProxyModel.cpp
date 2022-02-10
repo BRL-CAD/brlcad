@@ -22,20 +22,40 @@
  */
 
 #include "common.h"
+#include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSelectionProxyModel.h"
 
 QVariant
-QgSelectionProxyModel::data(const QModelIndex &UNUSED(idx), int UNUSED(role)) const
+QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
 {
-#if 0
     if (!idx.isValid()) return QVariant();
     QgItem *curr_node = static_cast<QgItem *>(idx.internalPointer());
+    QgModel *m = (QgModel *)sourceModel();
     gInstance *g = curr_node->instance();
-    if (role == Qt::DisplayRole) return QVariant(g->name);
-    if (role == BoolInternalRole) return QVariant(curr_node->boolean);
-    if (role == DirectoryInternalRole) return QVariant::fromValue((void *)(curr_node->node_dp));
-    if (role == TypeIconDisplayRole) return curr_node->icon;
+    if (role == Qt::DisplayRole) {
+	if (g->dp)
+	    return QVariant(g->dp->d_namep);
+	return QVariant();
+    }
+    if (role == BoolInternalRole) {
+	switch (g->op) {
+	    case DB_OP_UNION:
+		return QVariant(0);
+	    case DB_OP_SUBTRACT:
+		return QVariant(1);
+	    case DB_OP_INTERSECT:
+		return QVariant(2);
+	    default:
+		return QVariant();
+	}
+    }
+    if (role == DirectoryInternalRole)
+	return QVariant::fromValue((void *)(g->dp));
+
+    if (role == TypeIconDisplayRole)
+	return QVariant(QgIcon(g->dp, (m->gedp) ? m->gedp->dbip : NULL));
+#if 0
     if (role == RelatedHighlightDisplayRole) return curr_node->is_highlighted;
     if (role == InstanceHighlightDisplayRole) return curr_node->instance_highlight;
 #endif
