@@ -79,26 +79,20 @@ class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 	QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
 	bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
 
+	QModelIndex NodeIndex(QgItem *node) const;
+	int NodeRow(QgItem *node) const;
+
 	QgTreeView *treeview = NULL;
 
     public slots:
 	//void refresh(void *);
 	void mode_change(int i);
         void update_selected_node_relationships(const QModelIndex & index);
-        void expand_tree_node_relationships(const QModelIndex&);
-        void close_tree_node_relationships(const QModelIndex&);
 
     private:
 	// There are a number of relationships which can be used for related
 	// node highlighting - this allows a client application to select one.
 	int interaction_mode = 0;
-
-	// Activity flags (used for relevance highlighting) need to be updated
-	// whenever a selection changes.  We define one flag per gInstance,
-	// and update flags accordingly based on current app settings.
-	// Highlighting is then applied in the view based on the current value
-	// of these flags.
-	std::vector<int> active_flags;
 };
 
 #endif //QGSELECTIONMODEL_H

@@ -1139,7 +1139,14 @@ QgModel::update_instances(struct directory *dp)
 //          Qt abstract model interface implementation
 ///////////////////////////////////////////////////////////////////////
 
-QgItem *QgModel::getItem(const QModelIndex &index) const
+QgItem *
+QgModel::root()
+{
+    return rootItem;
+}
+
+QgItem *
+QgModel::getItem(const QModelIndex &index) const
 {
     if (index.isValid()) {
         QgItem *item = static_cast<QgItem*>(index.internalPointer());

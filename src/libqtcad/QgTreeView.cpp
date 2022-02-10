@@ -124,8 +124,6 @@ QgTreeView::QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel) : QTr
     QObject::connect(this, &QgTreeView::expanded, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::collapsed, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::clicked, treemodel, &QgSelectionProxyModel::update_selected_node_relationships);
-    QObject::connect(this, &QgTreeView::expanded, treemodel, &QgSelectionProxyModel::expand_tree_node_relationships);
-    QObject::connect(this, &QgTreeView::collapsed, treemodel, &QgSelectionProxyModel::close_tree_node_relationships);
     QObject::connect(this, &QgTreeView::customContextMenuRequested, (QgTreeView *)this, &QgTreeView::context_menu);
 }
 
@@ -202,9 +200,8 @@ QModelIndex QgTreeView::selected()
     }
 }
 
-void QgTreeView::expand_path(QString UNUSED(path))
+void QgTreeView::expand_path(QString path)
 {
-#if 0
     int i = 0;
 #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
     QStringList path_items = path.split("/", QString::SkipEmptyParts);
@@ -213,26 +210,30 @@ void QgTreeView::expand_path(QString UNUSED(path))
 #endif
     QgSelectionProxyModel *view_model = (QgSelectionProxyModel *)model();
     QgModel *sm = (QgModel *)view_model->sourceModel();
-    QList<QgItem*> *tree_children = &(sm->rootItem->children);
+    QgItem *r = sm->root();
     while (i < path_items.size()) {
-	for (int j = 0; j < tree_children->size(); ++j) {
-	    QgItem *test_node = tree_children->at(j);
-	    if (test_node->name == path_items.at(i)) {
-		QModelIndex path_component = view_model->NodeIndex(test_node);
-		if (i == path_items.size() - 1) {
-		    selectionModel()->clearSelection();
-		    selectionModel()->select(path_component, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-		    emit (clicked(path_component));
-		} else {
-		    expand(path_component);
-		    tree_children = &(test_node->children);
-		}
-		break;
+
+	for (int j = 0; j < r->childCount(); j++) {
+	    QgItem *c = r->child(j);
+	    gInstance *g = c->instance();
+	    if (!g)
+		continue;
+	    if (QString::fromStdString(g->dp_name) != path_items.at(i)) {
+		continue;
 	    }
+	    QModelIndex path_component = view_model->NodeIndex(c);
+	    if (i == path_items.size() - 1) {
+		selectionModel()->clearSelection();
+		selectionModel()->select(path_component, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+		emit (clicked(path_component));
+	    } else {
+		expand(path_component);
+		r = c;
+	    }
+	    break;
 	}
 	i++;
     }
-#endif
 }
 
 void QgTreeView::expand_link(const QUrl &link)

@@ -209,6 +209,7 @@ class QTCAD_EXPORT QgItem
 	void appendChild(QgItem *C);
 	QgItem *child(int n);
 	int childCount() const;
+	std::vector<QgItem *> children;
 
 	// NOTE - for now this is 1 - the model will have to
 	// incorporate some notion of exposed attributes and
@@ -256,8 +257,6 @@ class QTCAD_EXPORT QgItem
 	 * vector to make this determination. */
 	bool open_itm = false;
 
-    private:
-	std::vector<QgItem *> children;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.
@@ -278,6 +277,9 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
     public:
 	explicit QgModel(QObject *p = NULL, const char *npath = NULL);
 	~QgModel();
+
+	// Get the root QgItem
+	QgItem *root();
 
 	// Certain .g objects (comb, extrude, etc.) will define one or more
 	// implicit instances.  We need to create those instances both on

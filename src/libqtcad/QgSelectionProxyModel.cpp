@@ -22,12 +22,35 @@
  */
 
 #include "common.h"
+#include <algorithm>
 #include <queue>
 #include <unordered_set>
+#include <vector>
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSelectionProxyModel.h"
 #include "qtcad/QgTreeView.h"
+
+QModelIndex
+QgSelectionProxyModel::NodeIndex(QgItem *node) const
+{
+    QgModel *m = (QgModel *)sourceModel();
+    if (node == m->root()) return QModelIndex();
+    return createIndex(NodeRow(node), 0, node);
+}
+
+int
+QgSelectionProxyModel::NodeRow(QgItem *node) const
+{
+    if (!node->parent())
+	return 0;
+    std::vector<QgItem *> &v = node->parent()->children;
+    std::vector<QgItem *>::iterator it = std::find(v.begin(), v.end(), node);
+    if (it == v.end())
+	return 0;
+    int ind = it - v.begin();
+    return ind;
+}
 
 QVariant
 QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
@@ -175,199 +198,11 @@ QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx
 	return;
     }
 
-#if 0
-    struct directory *selected_dp = RT_DIR_NULL;
-    struct directory *instance_dp = RT_DIR_NULL;
-    current_idx = idx;
-    if (interaction_mode && idx.isValid()) {
-	if (interaction_mode == 1) {
-	    selected_dp = (struct directory *)(idx.parent().data(DirectoryInternalRole).value<void *>());
-	    instance_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
-	}
-	if (interaction_mode == 2)
-	    selected_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
-    }
-
-    if (selected_dp != RT_DIR_NULL) {
-	foreach (CADTreeNode *test_node, all_nodes) {
-	    QModelIndex test_index = NodeIndex(test_node);
-	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
-	    int is = test_index.data(InstanceHighlightDisplayRole).toInt();
-	    if (selected_dp != test_node->node_dp && instance_dp != test_node->node_dp) {
-		if (is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
-		if (test_node->node_dp != RT_DIR_NULL && test_node->node_dp->d_flags & RT_DIR_COMB) {
-		    if (!cadtreeview->isExpanded(test_index)) {
-			int depth = 0;
-			int search_results = 0;
-			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, dbip, &depth, CADTREE_RECURSION_LIMIT, &combinternals);
-			if (search_results && !hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
-			if (!search_results && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-		    } else {
-			if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-		    }
-		} else {
-		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-		}
-	    } else {
-		if (interaction_mode == 1) {
-		    int node_state = 0;
-		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-		    if (instance_dp == test_node->node_dp && IndexNode(test_index.parent())->node_dp == selected_dp) node_state = 1;
-		    if (selected_dp == test_node->node_dp) node_state = 1;
-		    if (test_index == idx) node_state = 0;
-		    if (node_state && instance_dp == test_node->node_dp && test_index.row() != idx.row()) node_state = 0;
-		    if (node_state && !is) setData(test_index, QVariant(1), InstanceHighlightDisplayRole);
-		    if (!node_state && is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
-		}
-		if (interaction_mode == 2) {
-		    if (is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
-		    if (test_index != idx) {
-			if (!hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
-		    } else {
-			if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-		    }
-		}
-	    }
-	}
-    } else {
-	foreach (CADTreeNode *test_node, all_nodes) {
-	    QModelIndex test_index = NodeIndex(test_node);
-	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
-	    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-	    int is = test_index.data(InstanceHighlightDisplayRole).toInt();
-	    if (is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
-	}
-    }
-#endif
-
     // For the case of a selection change, emit a layout change signal so the drawBranches call updates
     // the portions of the row colors not handled by the itemDelegate painting.  For expand and close
     // operations on items this is already handled by Qt, but layout updating is not a normal part of the selection
     // process in most tree views so for the customized selection drawing we do we need to call it manually.
     emit layoutChanged();
-}
-
-// When an item is expanded but the selection hasn't changed, scope for highlighting changes is more mimimal
-void
-QgSelectionProxyModel::expand_tree_node_relationships(const QModelIndex &UNUSED(idx))
-{
-#if 0
-    struct directory *selected_dp = RT_DIR_NULL;
-    struct directory *instance_dp = RT_DIR_NULL;
-    if (current_idx.isValid()) {
-	if (interaction_mode == 1) {
-	    selected_dp = (struct directory *)(current_idx.parent().data(DirectoryInternalRole).value<void *>());
-	    instance_dp = (struct directory *)(current_idx.data(DirectoryInternalRole).value<void *>());
-	}
-	if (interaction_mode == 2) {
-	    selected_dp = (struct directory *)(current_idx.data(DirectoryInternalRole).value<void *>());
-	}
-    }
-
-    if (selected_dp != RT_DIR_NULL) {
-	CADTreeNode *expanded_node = IndexNode(idx);
-
-	QQueue<CADTreeNode *> test_nodes;
-	foreach (CADTreeNode *test_node, expanded_node->children) {
-	    test_nodes.enqueue(test_node);
-	}
-
-	while (!test_nodes.isEmpty()) {
-	    CADTreeNode *test_node = test_nodes.dequeue();
-	    QModelIndex test_index = NodeIndex(test_node);
-	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
-	    int is = test_index.data(InstanceHighlightDisplayRole).toInt();
-	    if (selected_dp != test_node->node_dp && instance_dp != test_node->node_dp) {
-		if (test_node->node_dp != RT_DIR_NULL && test_node->node_dp->d_flags & RT_DIR_COMB) {
-		    if (!cadtreeview->isExpanded(test_index)) {
-			int depth = 0;
-			int search_results = 0;
-			db_find_obj(&search_results, selected_dp->d_namep, test_node->node_dp, dbip, &depth, CADTREE_RECURSION_LIMIT, &combinternals);
-			if (search_results && !hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
-			if (!search_results && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-		    } else {
-			if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-		    }
-		} else {
-		    foreach (CADTreeNode *new_node, test_node->children) {
-			test_nodes.enqueue(new_node);
-		    }
-		    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-		}
-	    } else {
-		if (interaction_mode == 1) {
-		    int node_state = 0;
-
-		    if (instance_dp == test_node->node_dp && IndexNode(test_index.parent())->node_dp == selected_dp) node_state = 1;
-		    if (selected_dp == test_node->node_dp) node_state = 1;
-		    if (node_state && instance_dp == test_node->node_dp && test_index.row() != current_idx.row()) node_state = 0;
-		    if (node_state && !is) setData(test_index, QVariant(1), InstanceHighlightDisplayRole);
-		    if (!node_state && is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
-		    if (node_state && hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-		}
-		if (interaction_mode == 2) {
-		    if (is) setData(test_index, QVariant(0), InstanceHighlightDisplayRole);
-		    if (!hs) setData(test_index, QVariant(1), RelatedHighlightDisplayRole);
-		}
-	    }
-	}
-    } else {
-	CADTreeNode *expanded_node = IndexNode(idx);
-
-	QQueue<CADTreeNode *> test_nodes;
-	foreach (CADTreeNode *test_node, expanded_node->children) {
-	    test_nodes.enqueue(test_node);
-	}
-
-	while (!test_nodes.isEmpty()) {
-	    CADTreeNode *test_node = test_nodes.dequeue();
-	    QModelIndex test_index = NodeIndex(test_node);
-	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
-	    if (hs) setData(test_index, QVariant(0), RelatedHighlightDisplayRole);
-	}
-    }
-#endif
-}
-
-
-// When an item is closed but the selection hasn't changed, the closed item is highlighted if any of its
-// children were highlighted
-void
-QgSelectionProxyModel::close_tree_node_relationships(const QModelIndex &UNUSED(idx))
-{
-#if 0
-    struct directory *selected_dp = RT_DIR_NULL;
-    if (interaction_mode && current_idx.isValid()) {
-	if (interaction_mode == 1)
-	    selected_dp = (struct directory *)(current_idx.parent().data(DirectoryInternalRole).value<void *>());
-	if (interaction_mode == 2)
-	    selected_dp = (struct directory *)(current_idx.data(DirectoryInternalRole).value<void *>());
-    }
-
-
-    if (selected_dp != RT_DIR_NULL) {
-	CADTreeNode *closed_node = IndexNode(idx);
-
-	QQueue<CADTreeNode *> test_nodes;
-	foreach (CADTreeNode *test_node, closed_node->children) {
-	    test_nodes.enqueue(test_node);
-	}
-
-	while (!test_nodes.isEmpty()) {
-	    CADTreeNode *test_node = test_nodes.dequeue();
-	    QModelIndex test_index = NodeIndex(test_node);
-	    int hs = test_index.data(RelatedHighlightDisplayRole).toInt();
-	    if (hs || selected_dp == test_node->node_dp) {
-		setData(idx, QVariant(1), RelatedHighlightDisplayRole);
-		return;
-	    } else {
-		foreach (CADTreeNode *new_node, test_node->children) {
-		    test_nodes.enqueue(new_node);
-		}
-	    }
-	}
-    }
-#endif
 }
 
 // Local Variables:
