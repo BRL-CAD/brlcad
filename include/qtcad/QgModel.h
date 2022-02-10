@@ -60,11 +60,11 @@
  * D will impact BOTH Au[M1]BuCuD and Au[M2]BuCuD. This means that .g comb
  * instances cannot, by themselves, map directly to items in a Qt model.
  *
- * Conversely, in a Qt .g model, if a Qt item which is going to express .g
- * instance editing the mode must be prepared to cope with changes having non
- * local side effects - i.e. any change to one item can potentially change an
- * arbitrary number of additional items, based on what else in the .g database
- * is referencing the object being changed.
+ * Conversely, in a Qt .g model, if a Qt item is going to express .g instance
+ * editing the mode must be prepared to cope with changes having non local side
+ * effects - i.e. any change to one item can potentially change an arbitrary
+ * number of additional items, based on what else in the .g database is
+ * referencing the object being changed.
  *
  * The approach taken to cope with these issues is to conceptually split the
  * wrapping of .g comb instances into two parts - a gInstance that corresponds
@@ -215,18 +215,17 @@ class QTCAD_EXPORT QgItem
 	// incorporate some notion of exposed attributes and
 	// their ordering before that changes
 	int columnCount() const;
+	QgItem *parent();
+	int childNumber() const;
+
 #if 0
+	// So far unneeded - the majority of these are for editable models,
+	// and it's not clear yet what form editing will take
 	QVariant data(int col) const;
 	bool insertChildren(int pos, int cnt, int col);
 	bool insertColumns(int pos, int col);
-#endif
-	QgItem *parent();
-#if 0
 	bool removeChildren(int pos, int cnt);
 	bool removeColumns(int pos, int cnt);
-#endif
-	int childNumber() const;
-#if 0
 	bool setData(int col, const QVariant &v);
 #endif
 

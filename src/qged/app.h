@@ -38,8 +38,7 @@
 #include "bv.h"
 #include "raytrace.h"
 #include "ged.h"
-#include "qtcad/QtCADTree.h"
-#include "qtcad/QgModel.h"
+#include "qtcad/QgSelectionProxyModel.h"
 
 #include "main_window.h"
 
@@ -67,7 +66,7 @@ class CADApp : public QApplication
 	int opendb(QString filename);
 	void closedb();
 
-	QgModel *mdl = NULL;
+	QgSelectionProxyModel *mdl = NULL;
 	bool ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
@@ -125,17 +124,7 @@ class CADApp : public QApplication
 	QMap<QString, app_cmd_ptr> app_cmd_map;
 };
 
-QString import_db(QString filename);
-
-enum CADDataRoles {
-    BoolInternalRole = Qt::UserRole + 1000,
-    BoolDisplayRole = Qt::UserRole + 1001,
-    DirectoryInternalRole = Qt::UserRole + 1002,
-    TypeIconDisplayRole = Qt::UserRole + 1003,
-    RelatedHighlightDisplayRole = Qt::UserRole + 1004,
-    InstanceHighlightDisplayRole = Qt::UserRole + 1005
-};
-
+QString convert_to_g(QString filename);
 
 #endif // CADAPP_H
 
