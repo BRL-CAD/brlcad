@@ -30,7 +30,7 @@
 #include "bu/app.h"
 #include "bu/log.h"
 #include "../../libged/alphanum.h"
-#include "qtcad/QgSelectionProxyModel.h"
+#include "qtcad/QgModel.h"
 
 void
 open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
@@ -126,16 +126,11 @@ int main(int argc, char *argv[])
     if (argc != 1)
 	bu_exit(-1, "need to specify .g file\n");
 
-    QgModel sg(NULL, argv[0]);
+    QgModel sm(NULL, argv[0]);
+    QgModel *s = &sm;
 
-    if (!sg.IsValid())
+    if (!s->IsValid())
 	bu_exit(-1, "failed to open .g file at %s\n", argv[0]);
-
-    QgSelectionProxyModel sp;
-    sp.setSourceModel(&sg);
-
-    QgModel *s = (QgModel *)sp.sourceModel();
-
 
     bu_log("Hierarchy instance cnt: %zd\n", s->instances->size());
     bu_log("Top instance cnt: %zd\n", s->tops_instances->size());
