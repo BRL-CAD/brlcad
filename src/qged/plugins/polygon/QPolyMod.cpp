@@ -181,14 +181,11 @@ QPolyMod::app_mod_names_reset(void *)
 void
 QPolyMod::mod_names_reset()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
+    if (!gedp) {
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
-    if (!gedp)
-	return;
+    }
 
     // Make sure the Combo box list is current.
     mod_names->blockSignals(true);
@@ -249,14 +246,11 @@ QPolyMod::poly_type_settings(struct bv_polygon *ip)
 void
 QPolyMod::polygon_update_props()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
+    if (!gedp) {
 	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
-    if (!gedp)
-	return;
+    }
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 
@@ -286,12 +280,9 @@ void
 QPolyMod::toplevel_config(bool)
 {
     // Initialize
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
     bool draw_change = false;
 
     // This function is called when a top level mode change was initiated
@@ -351,12 +342,8 @@ QPolyMod::clear_pnt_selection(bool checked)
 
     bv_update_polygon(p, BV_POLYGON_UPDATE_PROPS_ONLY);
 
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -366,12 +353,9 @@ QPolyMod::clear_pnt_selection(bool checked)
 void
 QPolyMod::select(const QString &poly)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return;
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -457,12 +441,8 @@ QPolyMod::toggle_closed_poly(bool checked)
     append_pnt->blockSignals(false);
     select_pnt->blockSignals(false);
 
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -501,13 +481,12 @@ QPolyMod::toggle_closed_poly(bool checked)
 void
 QPolyMod::apply_bool_op()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl || !p)
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
+    if (!gedp)
 	return;
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
-    if (!gedp)
+    if (!p)
 	return;
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
@@ -543,13 +522,13 @@ QPolyMod::apply_bool_op()
 void
 QPolyMod::align_to_poly()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl || !p)
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
+    if (!gedp)
 	return;
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
-    if (!gedp)
+
+    if (!p)
 	return;
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
@@ -562,13 +541,12 @@ QPolyMod::align_to_poly()
 void
 QPolyMod::delete_poly()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl || !p)
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
+    if (!gedp)
 	return;
 
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
-    if (!gedp)
+    if (!p)
 	return;
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
@@ -602,12 +580,8 @@ QPolyMod::sketch_name_edit_str(const QString &)
 void
 QPolyMod::sketch_name_edit()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp) {
 	ps->sketch_name->setPlaceholderText("No .g file open");
 	ps->sketch_name->setStyleSheet("color: rgba(200,200,200)");
@@ -681,12 +655,8 @@ QPolyMod::sketch_name_edit()
 void
 QPolyMod::sketch_name_update()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -760,12 +730,8 @@ QPolyMod::view_name_edit_str(const QString &)
 void
 QPolyMod::view_name_edit()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -796,12 +762,8 @@ QPolyMod::view_name_edit()
 void
 QPolyMod::view_name_update()
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
@@ -838,12 +800,8 @@ QPolyMod::view_name_update()
 bool
 QPolyMod::eventFilter(QObject *, QEvent *e)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return false;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return false;
 

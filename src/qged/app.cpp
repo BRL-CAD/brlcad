@@ -209,11 +209,8 @@ CADApp::initialize()
 void
 CADApp::do_quad_view_change(QtCADView *cv)
 {
-    if (mdl) {
-	QgModel *m = (QgModel *)mdl->sourceModel();
-	if (m->gedp && cv) {
-	    m->gedp->ged_gvp = cv->view();
-	}
+    if (mdl && mdl->gedp && cv) {
+	mdl->gedp->ged_gvp = cv->view();
     }
     do_gui_update_from_view_change();
 }
@@ -221,12 +218,8 @@ CADApp::do_quad_view_change(QtCADView *cv)
 void
 CADApp::do_view_update_from_gui_change(struct bview **nv)
 {
-
-    if (mdl) {
-	QgModel *m = (QgModel *)mdl->sourceModel();
-	if (m->gedp && nv) {
-	    m->gedp->ged_gvp = *nv;
-	}
+    if (mdl && mdl->gedp && nv) {
+	mdl->gedp->ged_gvp = *nv;
     }
     emit gui_changed_view(NULL);
 }
@@ -240,11 +233,9 @@ CADApp::do_db_update_from_gui_change()
 void
 CADApp::do_gui_update_from_view_change()
 {
-    if (!mdl)
-	return;
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    if (m->gedp)
-	emit view_change(&m->gedp->ged_gvp);
+    if (mdl && mdl->gedp) {
+	emit view_change(&mdl->gedp->ged_gvp);
+    }
 }
 
 void
@@ -286,7 +277,7 @@ CADApp::opendb(QString filename)
     if (!fileinfo.exists()) return 1;
 
     /* If we've got something other than a .g, run a conversion if we have it */
-    QString g_path = convert_to_g(filename);
+    QString g_path = import_db(filename);
 
     /* If we couldn't open or convert it, we're done */
     if (g_path == "") {
@@ -294,29 +285,20 @@ CADApp::opendb(QString filename)
         return 1;
     }
 
-    QgModel *m = NULL;
-    if (!mdl) {
-	mdl = new QgSelectionProxyModel();
-	m = new QgModel();
-	mdl->setSourceModel(m);
-    } else {
-	m = (QgModel *)mdl->sourceModel();
-    }
+    if (!mdl)
+	mdl = new QgModel();
 
-    if (m->opendb(g_path)) {
+
+    if (mdl->opendb(g_path))
 	return 3;
-    } else {
-	// We opened something - record the full path and
-	// initialize the tree
-	char fp[MAXPATHLEN];
-	bu_file_realpath(g_path.toLocal8Bit().data(), fp);
-	db_filename = QString(fp);
 
-	mdl->refresh(NULL);
-    }
+    // We opened something - record the full path
+    char fp[MAXPATHLEN];
+    bu_file_realpath(g_path.toLocal8Bit().data(), fp);
+    db_filename = QString(fp);
 
     // Connect the wires with the view(s)
-    struct ged *gedp = m->gedp;
+    struct ged *gedp = mdl->gedp;
     if (w->canvas) {
 	BU_GET(gedp->ged_gvp, struct bview);
 	bv_init(gedp->ged_gvp);
@@ -383,10 +365,10 @@ CADApp::opendb(QString filename)
 #endif
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
-    // Inform the world the database has changed.  Because we just opened the
-    // .g file, we don't need to redo the gInstance passes - the update_nref
-    // callbacks have taken care of that.  Pass in the gedp pointer to let the
-    // callers know not to do that step.
+    if (w && w->treeview)
+	w->treeview->m->dbip = gedp->dbip;
+
+    // Inform the world the database has changed
     emit app_changed_db((void *)gedp);
 
     // Also have a new view...
@@ -425,6 +407,8 @@ CADApp::closedb()
 {
     delete mdl;
     db_filename.clear();
+    if (w && w->treeview)
+	w->treeview->m->dbip = DBI_NULL;
 }
 
 
@@ -515,10 +499,9 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     if (!mdl)
 	return false;
-    QgModel *m = (QgModel *)mdl->sourceModel();
 
-    struct ged *prev_gedp = m->gedp;
-    struct ged *gedp = m->gedp;
+    struct ged *prev_gedp = mdl->gedp;
+    struct ged *gedp = mdl->gedp;
 
     if (gedp) {
 	gedp->ged_create_io_handler = &qt_create_io_handler;
@@ -533,12 +516,12 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 
     // Ask the model to execute the command
-    ret = m->run_cmd(msg, argc, argv);
+    ret = mdl->run_cmd(msg, argc, argv);
     if (!ret)
 	return false;
 
     // It's possible that a ged_exec will introduce a new gedp - set up accordingly
-    gedp = m->gedp;
+    gedp = mdl->gedp;
     if (gedp && prev_gedp != gedp) {
 	bu_ptbl_reset(gedp->ged_all_dmp);
 	if (w->canvas) {
@@ -566,7 +549,7 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
 	// Checks the dp edit flags and does any necessary redrawing.  If
 	// anything changed with the geometry, we also need to redraw
-	if (qged_view_update(gedp, &m->changed_dp) > 0) {
+	if (qged_view_update(gedp, &mdl->changed_dp) > 0) {
 	    if (w->canvas)
 		w->canvas->need_update(NULL);
 	    if (w->c4)
@@ -616,11 +599,6 @@ CADApp::run_cmd(const QString &command)
 	return;
     }
 
-    if (!mdl)
-	return;
-
-    QgModel *m  = (QgModel *)mdl->sourceModel();
-
     // make an argv array
     struct bu_vls ged_prefixed = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&ged_prefixed, "%s", cmd);
@@ -644,12 +622,12 @@ CADApp::run_cmd(const QString &command)
 	if (bu_vls_strlen(&msg) > 0 && console) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
-	if (ret && m->gedp)
-	    emit view_change(&m->gedp->ged_gvp);
+	if (ret && mdl && mdl->gedp)
+	    emit view_change(&mdl->gedp->ged_gvp);
     }
 
-    if (m->gedp) {
-	bu_vls_trunc(m->gedp->ged_result_str, 0);
+    if (mdl && mdl->gedp) {
+	bu_vls_trunc(mdl->gedp->ged_result_str, 0);
     }
 
     bu_vls_free(&msg);

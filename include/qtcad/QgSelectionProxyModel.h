@@ -85,7 +85,7 @@ class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 	QgTreeView *treeview = NULL;
 
     public slots:
-	void refresh(void *);
+	//void refresh(void *);
 	void mode_change(int i);
         void update_selected_node_relationships(const QModelIndex & index);
 

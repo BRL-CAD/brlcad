@@ -176,16 +176,12 @@ int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
 void
 CADAttributesModel::refresh(const QModelIndex &idx)
 {
-    QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
-    if (!mdl)
-	return;
-
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
+    QgModel *mdl = ((CADApp *)qApp)->mdl;
+    struct ged *gedp = (mdl) ? mdl->gedp : NULL;
     if (!gedp)
 	return;
 
-    current_dp = (struct directory *)(idx.data(QgSelectionProxyModel::DirectoryInternalRole).value<void *>());
+    current_dp = (struct directory *)(idx.data(DirectoryInternalRole).value<void *>());
     update(gedp->dbip, current_dp);
 }
 
