@@ -39,7 +39,8 @@
 #include <QTreeView>
 
 #include "qtcad/QtCADQuad.h"
-#include "qtcad/QtCADTree.h"
+#include "qtcad/QgSelectionProxyModel.h"
+#include "qtcad/QgTreeView.h"
 #include "qtcad/QtCADView.h"
 #include "qtcad/QtConsole.h"
 
@@ -68,8 +69,8 @@ class BRLCAD_MainWindow : public QMainWindow
 	bool isValid3D();
 	void fallback3D();
 
-	CADTreeView *treeview;
-	CADTreeModel *treemodel;
+	QgTreeView *treeview;
+	QgSelectionProxyModel *treemodel;
 	QtConsole *console;
 	CADPalette *vc;
 	CADPalette *ic;

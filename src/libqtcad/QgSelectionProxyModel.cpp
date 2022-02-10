@@ -52,6 +52,11 @@ QgSelectionProxyModel::NodeRow(QgItem *node) const
     return ind;
 }
 
+void
+QgSelectionProxyModel::refresh(void *)
+{
+}
+
 QVariant
 QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
 {

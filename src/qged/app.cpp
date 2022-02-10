@@ -379,9 +379,6 @@ CADApp::opendb(QString filename)
 #endif
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
-    if (w && w->treeview)
-	w->treeview->m->dbip = gedp->dbip;
-
     // Inform the world the database has changed
     emit app_changed_db((void *)gedp);
 
@@ -421,8 +418,6 @@ CADApp::closedb()
 {
     delete mdl;
     db_filename.clear();
-    if (w && w->treeview)
-	w->treeview->m->dbip = DBI_NULL;
 }
 
 
