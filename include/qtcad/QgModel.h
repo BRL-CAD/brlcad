@@ -146,30 +146,10 @@ class QTCAD_EXPORT gInstance
 	// Return hashes of child instances, if any
 	std::vector<unsigned long long> children();
 
-	// The following value holds the index of the active flags array to
-	// check when determining if this object is active.  I.e. activity is
-	// checked by looking at:
-	//
-	// ctx->active_flags[instance->obj->active_ind];
-	//
-	// We want to record an instance's active state in this fashion because
-	// it lets us use active_flags to iteratively set flags "up" the tree
-	// hierarchy (i.e. for each active gInstance, set its parent's
-	// gInstance flag as active.  Count currently set active_flags
-	// entries, and if that count is not equal to the prior count repeat
-	// the process.  When no new flags are set, we have identified all
-	// gInstances activated by the current selection, and thus each QgItem
-	// will know enough to be able to tell the drawing delegate how it
-	// needs to display itself.  We can also trivially clear the
-	// active_flags at the beginning of each selection action by clearing
-	// the active_flags array.
-	//
-	// Note that when doing such flag setting, it doesn't matter whether
-	// the gInstance has any associated QgItems.  Even if it doesn't,
-	// somewhere further up the tree a parent comb will need to display
-	// its state change and the assignments must take place in order to
-	// propagate the necessary awareness up to the visible level.
-	int active_ind = -1;
+	// This is a flag that may be set or unset by parent applications.
+	// Used primarily to assist in visual identification of components
+	// in hierarchical structures.
+	int active_flag = 0;
 
 	// The model context in which this instance is defined
 	void *ctx;
@@ -309,10 +289,8 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	void update_instances(struct directory *dp);
 
 	// Build a map of gInstance hashes to instances for easy lookup.  This
-	// is for gInstance reuse - we in fact have to construct a temporary
-	// gInstance during the tree walk to get the lookup hash, but in trees
-	// that heavily reuse combs avoiding the storing of duplicate
-	// gInstances will save memory.
+	// is for gInstance reuse.  In trees that heavily reuse combs avoiding
+	// the storing of duplicate gInstances will save memory.
 	std::unordered_map<unsigned long long, gInstance *> *instances = NULL;
 
 	// Hierarchy items

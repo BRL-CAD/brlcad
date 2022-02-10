@@ -57,6 +57,10 @@
 
 class QgTreeView;
 
+#define QgViewMode 0
+#define QgInstanceEditMode 1
+#define QgPrimitiveEditMode 2
+
 class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 {
     public:

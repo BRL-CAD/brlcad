@@ -25,6 +25,7 @@
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgSelectionProxyModel.h"
+#include "qtcad/QgTreeView.h"
 
 QVariant
 QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
@@ -62,53 +63,84 @@ QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
     return QVariant();
 }
 
+void QgSelectionProxyModel::mode_change(int i)
+{
+    if (i != interaction_mode && treeview) {
+	interaction_mode = i;
+	update_selected_node_relationships(treeview->selected());
+    }
+}
+
+
+// TODO - In the new setup much of the old setting here is moot - these
+// properties should be looked up from the QgItem or its entries.  The
+// implications for setData in a modifiable tree may actually be changing the
+// .g contents, which is an altogether different proposition from the old
+// logic.  It is not clear to me yet that we will actually change QgItem
+// contents via this mechanism.
 bool
 QgSelectionProxyModel::setData(const QModelIndex & idx, const QVariant &UNUSED(value), int UNUSED(role))
 {
     if (!idx.isValid()) return false;
-    bool ret = false;
-#if 0
-    QVector<int> roles;
-    QgItem *curr_node = static_cast<QgItem *>(idx.internalPointer());
-    if (role == BoolInternalRole) {
-	curr_node->boolean = value.toInt();
-	roles.append(BoolInternalRole);
-	ret = true;
-    }
-    if (role == DirectoryInternalRole) {
-	curr_node->node_dp = (struct directory *)(value.value<void *>());
-	roles.append(DirectoryInternalRole);
-	ret = true;
-    }
-    if (role == TypeIconDisplayRole) {
-	curr_node->icon = value;
-	roles.append(TypeIconDisplayRole);
-	ret = true;
-    }
-    if (role == RelatedHighlightDisplayRole) {
-	curr_node->is_highlighted = value.toInt();
-	roles.append(RelatedHighlightDisplayRole);
-	roles.append(Qt::DisplayRole);
-	ret = true;
-    }
-    if (role == InstanceHighlightDisplayRole) {
-	curr_node->instance_highlight = value.toInt();
-	roles.append(InstanceHighlightDisplayRole);
-	roles.append(Qt::DisplayRole);
-	ret = true;
-    }
-    if (ret) emit dataChanged(idx, idx, roles);
-#endif
-    return ret;
+    return false;
 }
 
-// These functions tell the related-object highlighting logic what the current status is.
-
-// This function is needed when the selected object is changed - highlighted items may change
-// anywhere in the tree view
+// These functions tell the related-object highlighting logic what the current
+// status is.  We need to do this whenever the selected object is changed -
+// highlighted items may change anywhere (or everywhere) in the tree view with
+// any operation, so we have to check everything.
+//
+// Note that we're setting flags here, not deciding whether to highlight a
+// particular QgItem.  That decision will be made later, and is a combination
+// of active_flag status and the open status of the QgItem.
 void
-QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &UNUSED(idx))
+QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx)
 {
+    if (!idx.isValid() || interaction_mode == QgViewMode) {
+	// Clear all highlighting state - invalid selection or view mode means no related highlights
+	QgModel *m = (QgModel *)sourceModel();
+	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
+	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
+	    g_it->second->active_flag = 0;
+	}
+	return;
+    }
+
+    QgModel *m = (QgModel *)sourceModel();
+    QgItem *snode = static_cast<QgItem *>(idx.internalPointer());
+    gInstance *sg = snode->instance();
+    sg->active_flag = 2;
+
+    // If we're in QgInstanceEditMode, we key off of the exact gInstance
+    // pointer that corresponds to this instance.  Since that instance is
+    // unique, we only need to flag parent instances (and all the parents of
+    // those parents) so the parent QgItems know to highlight themselves if
+    // their children are closed.
+    if (interaction_mode == QgPrimitiveEditMode) {
+	// TODO - iterate over parents and parents of parents of any gInstance
+	// with active_flag == 2 until all parents have been assigned an
+	// active_flag of 1
+	return;
+    }
+
+    // If we're in QgPrimitiveEditMode, we have more work to do - we need to
+    // check the gInstances to see if anybody else is using the same dp as sg -
+    // if so, they are also directly being altered in this mode since their
+    // underlying primitive may change.  We then need to flag all the parent
+    // instances of all the activated gInstances (and all their parents)
+    if (interaction_mode == QgPrimitiveEditMode) {
+	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
+	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
+	    gInstance *cg = g_it->second;
+	    if (cg->dp == sg->dp)
+		g_it->second->active_flag = 2;
+	}
+	// TODO - iterate over parents and parents of parents of any gInstance
+	// with active_flag == 2 until all parents have been assigned an
+	// active_flag of 1
+	return;
+    }
+
 #if 0
     struct directory *selected_dp = RT_DIR_NULL;
     struct directory *instance_dp = RT_DIR_NULL;
