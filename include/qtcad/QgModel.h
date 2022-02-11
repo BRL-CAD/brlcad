@@ -336,10 +336,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	std::vector<QgItem *> tops_items;
 
 	// .g Db interface and containers
-	bool run_cmd(struct bu_vls *msg, int argc, const char **argv);
-	int opendb(QString filename);
-	int opendb(const char *npath);
-	void closedb();
+	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
 	bool IsValid();
 	struct ged *gedp = NULL;
 
@@ -372,10 +369,14 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 	bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 
+    signals:
+	void mdl_changed_db(void *);
+
     private:
 	QgItem *getItem(const QModelIndex &index) const;
 	QgItem *rootItem;
-	struct ged *empty_gedp;
+	struct bview *empty_gvp = NULL;
+	struct db_i *model_dbip = NULL;
 };
 
 #endif //QGMODEL_H

@@ -53,6 +53,7 @@ void QBDockWidget::toWindow(bool floating)
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
     CADApp *ap = (CADApp *)qApp;
+    QgModel *m = (QgModel *)ap->mdl->sourceModel();
     ap->w = this;
 
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
@@ -255,7 +256,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		QToolPaletteElement *el = *el_it;
 		vc->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
-		QObject::connect(ap, &CADApp::app_changed_db, el, &QToolPaletteElement::do_app_changed_db);
+		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_app_changed_db);
 
 		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
 		QObject::connect(el, &QToolPaletteElement::gui_changed_db, ap, &CADApp::do_db_update_from_gui_change);
@@ -269,7 +270,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		QToolPaletteElement *el = *el_it;
 		ic->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
-		QObject::connect(ap, &CADApp::app_changed_db, el, &QToolPaletteElement::do_app_changed_db);
+		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_app_changed_db);
 		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
 	    }
 	}
@@ -280,7 +281,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		QToolPaletteElement *el = *el_it;
 		oc->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
-		QObject::connect(ap, &CADApp::app_changed_db, el, &QToolPaletteElement::do_app_changed_db);
+		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_app_changed_db);
 		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
 	    }
 	}
@@ -376,11 +377,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     view_menu->addAction(tree_dock->toggleViewAction());
     connect(tree_dock, &QBDockWidget::topLevelChanged, tree_dock, &QBDockWidget::toWindow);
     CADApp *ca = (CADApp *)qApp;
-    if (!ca->mdl) {
-	ca->mdl = new QgSelectionProxyModel();
-	QgModel *m = new QgModel();
-	ca->mdl->setSourceModel(m);
-    }
     treeview = new QgTreeView(tree_dock, ca->mdl);
     tree_dock->setWidget(treeview);
 
@@ -398,15 +394,15 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // If the database changes, we need to refresh the tree.  (Right now this is only triggered
     // if we open a new .g file, IIRC, but it needs to happen when we've editing combs or added/
     // removed solids too...)
-    QObject::connect((CADApp *)qApp, &CADApp::app_changed_db, ca->mdl, &QgSelectionProxyModel::refresh);
+    QObject::connect(m, &QgModel::mdl_changed_db, ca->mdl, &QgSelectionProxyModel::refresh);
 
     // If the database changes, we need to update our views
     if (canvas) {
-	QObject::connect((CADApp *)qApp, &CADApp::app_changed_db, canvas, &QtCADView::need_update);
+	QObject::connect(m, &QgModel::mdl_changed_db, canvas, &QtCADView::need_update);
 	QObject::connect((CADApp *)qApp, &CADApp::gui_changed_view, canvas, &QtCADView::need_update);
 	ap->curr_view = canvas;
     } else if (c4) {
-	QObject::connect((CADApp *)qApp, &CADApp::app_changed_db, c4, &QtCADQuad::need_update);
+	QObject::connect(m, &QgModel::mdl_changed_db, c4, &QtCADQuad::need_update);
 	QObject::connect((CADApp *)qApp, &CADApp::gui_changed_view, c4, &QtCADQuad::need_update);
 	// The Quad View has an additional condition in the sense that the current view may
 	// change.  Probably we won't try to track this for floating dms attached to qged,

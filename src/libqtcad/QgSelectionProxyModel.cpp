@@ -69,6 +69,8 @@ QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
     QgItem *curr_node = static_cast<QgItem *>(idx.internalPointer());
     QgModel *m = (QgModel *)sourceModel();
     gInstance *g = curr_node->instance();
+    if (!g)
+	return QVariant();
     if (role == Qt::DisplayRole) {
 	if (g->dp)
 	    return QVariant(g->dp->d_namep);

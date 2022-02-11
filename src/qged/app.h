@@ -58,23 +58,29 @@ class CADApp : public QApplication
     Q_OBJECT
 
     public:
-	CADApp(int &argc, char *argv[]) :QApplication(argc, argv) {};
+	CADApp(int &argc, char *argv[]) :QApplication(argc, argv) {
+	    QgModel *m = new QgModel();
+	    mdl = new QgSelectionProxyModel();
+	    mdl->setSourceModel(m);
+	    BU_LIST_INIT(&RTG.rtg_vlfree);
+	    connect(m, &QgModel::mdl_changed_db, this, &CADApp::view_connect);
+	};
 	~CADApp() {};
 
 	void initialize();
+
+	bool ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
 
 	int opendb(QString filename);
 	void closedb();
 
 	QgSelectionProxyModel *mdl = NULL;
-	bool ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
 	int interaction_mode = 0; // Used to control tree widget highlighting
 	int prev_interaction_mode = 0;
 
     signals:
-	void app_changed_db(void *);
 	void view_change(struct bview **);
 	void gui_changed_view(void *);
 
@@ -82,6 +88,7 @@ class CADApp : public QApplication
     public slots:
 	void open_file();
         void write_settings();
+	void view_connect();
 
 	/* GUI/View connection slots */
     public slots:

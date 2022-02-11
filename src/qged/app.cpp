@@ -108,6 +108,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	w->c4->need_update(NULL);
 }
 
+#if 0
 extern "C" int
 app_open(void *p, int argc, const char **argv)
 {
@@ -139,6 +140,7 @@ app_open(void *p, int argc, const char **argv)
 
     return 0;
 }
+#endif
 
 extern "C" int
 app_close(void *p, int UNUSED(argc), const char **UNUSED(argv))
@@ -198,14 +200,10 @@ app_man(void *ip, int argc, const char **argv)
 void
 CADApp::initialize()
 {
-    mdl = NULL;
-    BU_LIST_INIT(&RTG.rtg_vlfree);
-
     // TODO - eventually, load these as plugins
-    app_cmd_map[QString("open")] = &app_open;
+    //app_cmd_map[QString("open")] = &app_open;
     app_cmd_map[QString("close")] = &app_close;
     app_cmd_map[QString("man")] = &app_man;
-
 }
 
 void
@@ -236,7 +234,8 @@ CADApp::do_view_update_from_gui_change(struct bview **nv)
 void
 CADApp::do_db_update_from_gui_change()
 {
-    emit app_changed_db(NULL);
+    QgModel *m = (QgModel *)mdl->sourceModel();
+    emit m->mdl_changed_db(NULL);
 }
 
 void
@@ -279,45 +278,11 @@ CADApp::tree_update()
     oc->makeCurrent(v);
 }
 
-int
-CADApp::opendb(QString filename)
+void
+CADApp::view_connect()
 {
-
-    /* First, make sure the file is actually there */
-    QFileInfo fileinfo(filename);
-    if (!fileinfo.exists()) return 1;
-
-    /* If we've got something other than a .g, run a conversion if we have it */
-    QString g_path = convert_to_g(filename);
-
-    /* If we couldn't open or convert it, we're done */
-    if (g_path == "") {
-        std::cout << "unsupported file type!\n";
-        return 1;
-    }
-
-    QgModel *m = NULL;
-    if (!mdl) {
-	mdl = new QgSelectionProxyModel();
-	m = new QgModel();
-	mdl->setSourceModel(m);
-    } else {
-	m = (QgModel *)mdl->sourceModel();
-    }
-
-    if (m->opendb(g_path)) {
-	return 3;
-    } else {
-	// We opened something - record the full path and
-	// initialize the tree
-	char fp[MAXPATHLEN];
-	bu_file_realpath(g_path.toLocal8Bit().data(), fp);
-	db_filename = QString(fp);
-
-	mdl->refresh(NULL);
-    }
-
     // Connect the wires with the view(s)
+    QgModel *m = (QgModel *)mdl->sourceModel();
     struct ged *gedp = m->gedp;
     if (w->canvas) {
 	BU_GET(gedp->ged_gvp, struct bview);
@@ -385,23 +350,16 @@ CADApp::opendb(QString filename)
 #endif
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
-    // Inform the world the database has changed.  Because we just opened the
-    // .g file, we don't need to redo the gInstance passes - the update_nref
-    // callbacks have taken care of that.  Pass in the gedp pointer to let the
-    // callers know not to do that step.
-    emit app_changed_db((void *)gedp);
-
-    // Also have a new view...
+    // We have a new view...
     emit view_change(&gedp->ged_gvp);
 
     //cadaccordion->highlight_selected(cadaccordion->view_obj);
-
-    return 0;
 }
 
 void
 CADApp::open_file()
 {
+    QgModel *m = (QgModel *)mdl->sourceModel();
     const char *file_filters = "BRL-CAD (*.g *.asc);;Rhino (*.3dm);;STEP (*.stp *.step);;All Files (*)";
     QString fileName = QFileDialog::getOpenFileName((QWidget *)this->w,
 	    "Open Geometry File",
@@ -410,7 +368,13 @@ CADApp::open_file()
 	    NULL,
 	    QFileDialog::DontUseNativeDialog);
     if (!fileName.isEmpty()) {
-	int ret = opendb(fileName.toLocal8Bit());
+          int ac = 2;
+          const char *av[3];
+          av[0] = "open";
+          av[1] = fileName.toLocal8Bit();
+          av[2] = NULL;
+	  int ret = m->run_cmd(m->gedp->ged_result_str, ac, (const char **)av);
+
 	if (w) {
 	    if (ret) {
 		w->statusBar()->showMessage("open failed");
@@ -536,7 +500,7 @@ CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     // Ask the model to execute the command
     ret = m->run_cmd(msg, argc, argv);
-    if (!ret)
+    if (ret != BRLCAD_OK)
 	return false;
 
     // It's possible that a ged_exec will introduce a new gedp - set up accordingly

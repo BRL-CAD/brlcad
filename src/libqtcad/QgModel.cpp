@@ -609,17 +609,25 @@ QgModel::QgModel(QObject *p, const char *npath)
 : QAbstractItemModel(p)
 {
     // There are commands such as open that we want to work even without
-    // a database instance opened - create a default gedp that we will
-    // use when we don't have a database.
-    BU_GET(empty_gedp, struct ged);
-    ged_init(empty_gedp);
-    BU_GET(empty_gedp->ged_gvp, struct bview);
-    bv_init(empty_gedp->ged_gvp);
-
-    gedp = empty_gedp;
+    // a database instance opened - rather than using ged_open to create
+    // a gedp, we sure one is always available - callers should use the
+    // libged "open" command to open a .g file.
+    BU_GET(gedp, struct ged);
+    ged_init(gedp);
+    BU_GET(empty_gvp, struct bview);
+    bv_init(empty_gvp);
+    gedp->ged_gvp = empty_gvp;
 
     rootItem = new QgItem();
     rootItem->ctx = this;
+
+    // Initialize the instance containers
+    tops_instances = new std::unordered_map<unsigned long long, gInstance *>;
+    tops_instances->clear();
+    instances = new std::unordered_map<unsigned long long, gInstance *>;
+    instances->clear();
+
+
 
     // If there's no path, at least for the moment we have nothing to model.
     // In the future we may want to consider setting up a default environment
@@ -627,16 +635,22 @@ QgModel::QgModel(QObject *p, const char *npath)
     if (!npath)
 	return;
 
-    opendb((const char *)npath);
+    if (npath) {
+	int ac = 2;
+	const char *av[3];
+	av[0] = "open";
+	av[1] = npath;
+	av[2] = NULL;
+	run_cmd(gedp->ged_result_str, ac, (const char **)av);
+    }
 }
 
 QgModel::~QgModel()
 {
-    bv_free(empty_gedp->ged_gvp);
-    BU_PUT(empty_gedp->ged_gvp, struct bview);
-    ged_close(empty_gedp);
-    BU_PUT(empty_gedp, struct ged);
-    closedb();
+    bv_free(empty_gvp);
+    BU_PUT(empty_gvp, struct bview);
+    ged_close(gedp);
+    BU_PUT(gedp, struct ged);
     delete rootItem;
 }
 
@@ -831,8 +845,10 @@ QgModel::fetchMore(const QModelIndex &idx)
     QgItem *item = static_cast<QgItem*>(idx.internalPointer());
 
     // TODO - do we rebuild tops in this case?
-    if (item == rootItem)
+    if (item == rootItem) {
+	bu_log("rootItem fetchMore\n");
 	return;
+    }
 
     bu_log("fetchMore: %s\n", item->instance()->dp_name.c_str());
 
@@ -1429,10 +1445,9 @@ bool QgModel::removeColumns(int UNUSED(column), int UNUSED(count), const QModelI
 ///////////////////////////////////////////////////////////////////////
 //                  .g Centric Methods
 ///////////////////////////////////////////////////////////////////////
-bool QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
+int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
-    if (!gedp)
-	return false;
+    model_dbip = gedp->dbip;
 
     changed_dp.clear();
 
@@ -1445,95 +1460,80 @@ bool QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    if (msg)
 		bu_vls_sprintf(msg, "Command %s not found, did you mean %s (edit distance %d)?\n", argv[0],   ccmd, edist);
 	}
-	return false;
+	return BRLCAD_ERROR;
     }
 
-    ged_exec(gedp, argc, argv);
-    if (msg && gedp)
-	bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
+    beginResetModel();
+    int ret = ged_exec(gedp, argc, argv);
 
     // If we have the need_update_nref flag set, we need to do db_update_nref
     // ourselves - the backend logic made a dp add/remove but didn't trigger
     // the nref updates (can that happen?).
-    if (gedp && need_update_nref) {
+    if (gedp->dbip && need_update_nref) {
 	// bu_log("missing callback in librt?\n");
 	db_update_nref(gedp->dbip, &rt_uniresource);
     }
 
-    return true;
-}
+    // Assuming we're not doing a full rebuild, redo the tops list
+    if (gedp->dbip == model_dbip) {
+	// rebuild tops list
+	refresh();
+	// Make tops items children of the rootItem
+	rootItem->children.clear();
+	for (size_t i = 0; i < tops_items.size(); i++) {
+	    rootItem->appendChild(tops_items[i]);
+	}
+    }
 
-void
-QgModel::closedb()
-{
-    if (gedp)
-	ged_close(gedp);
+    endResetModel();
 
+    if (msg && gedp)
+	bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
+
+    // If it's not a whole new database, we're done
+    if (gedp->dbip == model_dbip)
+	return ret;
+
+    // If the dbip changed, we have a new database and we need to completely
+    // reset the model contents.
+
+    // Remove old instances
+    beginResetModel();
     if (instances) {
 	std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
 	for (i_it = (*instances).begin(); i_it != (*instances).end(); i_it++) {
 	    gInstance *inst = i_it->second;
 	    delete inst;
 	}
-	delete instances;
+    }
+    if (tops_items.size()) {
+	for (size_t i = 0; i < tops_items.size(); i++) {
+	    delete tops_items[i];
+	}
     }
 
-    if (tops_instances)
-	delete tops_instances;
+    // Re-initialize the containers
+    tops_instances->clear();
+    tops_items.clear();
+    instances->clear();
+
 
     changed_dp.clear();
-}
 
-int
-QgModel::opendb(QString filename)
-{
-    /* First, make sure the file is actually there */
-    QFileInfo fileinfo(filename);
-    if (!fileinfo.exists()) return 1;
-
-
-    char *npath = bu_strdup(filename.toLocal8Bit().data());
-    int ret = opendb((const char *)npath);
-    bu_free(npath, "path");
-
-    return ret;
-}
-
-int
-QgModel::opendb(const char *npath)
-{
-    closedb();
-
-    if (!npath)
-	return 1;
-
-    // See if npath is valid - if so, do model setup
-    gedp = ged_open("db", npath, 1);
-    if (!gedp)
-	return 1;
-    db_update_nref(gedp->dbip, &rt_uniresource);
-
-    struct db_i *dbip = gedp->dbip;
 
     // Primary driver of model updates is when individual objects are changed
-    db_add_changed_clbk(dbip, &qgmodel_changed_callback, (void *)this);
+    db_add_changed_clbk(gedp->dbip, &qgmodel_changed_callback, (void *)this);
 
     // If the tops list changes, we need to update that vector as well.  Unlike
     // local dp changes, we can only (re)build the tops list after an
     // update_nref pass is complete.
-    db_add_update_nref_clbk(dbip, &qgmodel_update_nref_callback, (void *)this);
-
-    // Initialize the instance containers
-    tops_instances = new std::unordered_map<unsigned long long, gInstance *>;
-    tops_instances->clear();
-    instances = new std::unordered_map<unsigned long long, gInstance *>;
-    instances->clear();
+    db_add_update_nref_clbk(gedp->dbip, &qgmodel_update_nref_callback, (void *)this);
 
     // tops objects in the .g file are "instances" beneath the .g itself, which
     // is the analogy to Qt's hidden "root" node in a model.  To handle them,
     // we define "NULL root" instances.
     struct directory **db_objects = NULL;
-    int path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_CYCLIC , NULL, &db_objects);
+    int path_cnt = db_ls(gedp->dbip, DB_LS_TOPS | DB_LS_CYCLIC , NULL, &db_objects);
 
     if (path_cnt) {
 
@@ -1582,12 +1582,17 @@ QgModel::opendb(const char *npath)
     // types that reference other objects).
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    add_instances(dp);
 	}
     }
 
-    return 0;
+    endResetModel();
+
+    // Inform the world the database has changed.
+    emit mdl_changed_db((void *)gedp);
+
+    return ret;
 }
 
 // Local Variables:

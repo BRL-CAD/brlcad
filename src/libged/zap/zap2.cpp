@@ -126,7 +126,6 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     int clear_view_objs = 0;
     int clear_solid_objs = 0;
     int clear_all_views = 0;
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     const char *usage = "zap [options]\n";

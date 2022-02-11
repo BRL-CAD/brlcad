@@ -185,9 +185,18 @@ int main(int argc, char *argv[])
     // until now in order to have the display related containers from graphical
     // initialization available - the GED structure will need to know about some
     // of them to have drawing commands connect properly to the 3D displays.
-    if (argc && app.opendb(argv[0])) {
-	bu_log("Error opening file %s\n", argv[0]);
-	return BRLCAD_ERROR;
+    if (argc) {
+	int ac = 2;
+	const char *av[3];
+	av[0] = "open";
+	av[1] = argv[0];
+	av[2] = NULL;
+	QgModel *m = (QgModel *)app.mdl->sourceModel();
+	int ret = m->run_cmd(m->gedp->ged_result_str, ac, (const char **)av);
+	if (ret != BRLCAD_OK) {
+	    bu_log("Error opening file %s\n", argv[0]);
+	    return BRLCAD_ERROR;
+	}
     }
 
     // Generally speaking if we're going to have trouble initializing, it will

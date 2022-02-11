@@ -38,7 +38,7 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
     struct db_i *new_dbip;
     static const char *usage = "[filename]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    //GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
@@ -87,6 +87,11 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	    gedp->ged_wdbp->dbip = gedp->dbip;
 	}
 	rt_new_material_head(new_materp);
+
+	gedp->ged_wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DISK);
+
+	/* New database open, need to initialize reference counts */
+	db_update_nref(gedp->dbip, &rt_uniresource);
 
 	bu_vls_printf(gedp->ged_result_str, "%s", gedp->dbip->dbi_filename);
 	return BRLCAD_OK;
