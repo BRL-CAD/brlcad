@@ -775,6 +775,8 @@ QgModel::fetchMore(const QModelIndex &idx)
     if (item == rootItem)
 	return;
 
+    bu_log("fetchMore: %s\n", item->instance()->dp_name.c_str());
+
     // We need the QgItem child array to reflect the current state of the comb
     // tree, but we also want to keep the old QgItems to minimize disturbances
     // to the model that aren't necessary due to .g changes. However, unlike
@@ -800,11 +802,16 @@ QgModel::fetchMore(const QModelIndex &idx)
     // it here.
     std::vector<unsigned long long> nh = (*instances)[item->ihash]->children();
 
-    // Since we will be popping items off the queues, to get a similar order to
-    // the original usage when we extract into the new vector we go backwards
-    // here and push the "last" child items onto the queues first.
+    // Note that the ordering is important here - when we "pop" off the queue
+    // in the next step, we need consistent ordering so repeated fetchMore
+    // calls don't end up swapping around QgItems unnecessarily.  Remember -
+    // the gInstance hashes are not unique by themselves, so they are not
+    // enough to ensure stable ordering.  When we pushed these into the oc
+    // containers the wrong way, trying to expand havoc's
+    // havoc/havoc_front/nose_skin/r.nos1 made a mess out of the model and
+    // display due to multiple instances of s.rad1 subtractions being present.
     std::unordered_map<unsigned long long, std::queue<QgItem *>> oc;
-    for (int i = item->children.size()-1; i >= 0; i--) {
+    for (size_t i = 0; i < item->children.size(); i++) {
 	QgItem *qii = item->children[i];
 	oc[qii->ihash].push(qii);
     }
@@ -839,6 +846,7 @@ QgModel::fetchMore(const QModelIndex &idx)
 	} else {
 	    // Previous tree did not have an appropriate QgItem -
 	    // make a new one
+	    bu_log("new item: %lld\n", nh[i]);
 	    QgItem *nitem = new QgItem();
 	    nitem->parentItem = item;
 	    nitem->ihash = nh[i];
@@ -867,6 +875,7 @@ QgModel::fetchMore(const QModelIndex &idx)
     // It may be that this is always triggered from a tops invocation, but I'm
     // not sure we want to depend on that...
     if (nc != item->children) {
+	bu_log("fetchMore rebuild: %s\n", item->instance()->dp_name.c_str());
 	if (item->children.size()) {
 	    beginRemoveRows(idx, 0, item->children.size() - 1);
 	    item->children.clear();
