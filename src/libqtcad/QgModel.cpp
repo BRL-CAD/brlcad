@@ -608,8 +608,15 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 QgModel::QgModel(QObject *p, const char *npath)
 : QAbstractItemModel(p)
 {
-    // Make sure NULL is our default.
-    gedp = NULL;
+    // There are commands such as open that we want to work even without
+    // a database instance opened - create a default gedp that we will
+    // use when we don't have a database.
+    BU_GET(empty_gedp, struct ged);
+    ged_init(empty_gedp);
+    BU_GET(empty_gedp->ged_gvp, struct bview);
+    bv_init(empty_gedp->ged_gvp);
+
+    gedp = empty_gedp;
 
     rootItem = new QgItem();
     rootItem->ctx = this;
@@ -625,6 +632,10 @@ QgModel::QgModel(QObject *p, const char *npath)
 
 QgModel::~QgModel()
 {
+    bv_free(empty_gedp->ged_gvp);
+    BU_PUT(empty_gedp->ged_gvp, struct bview);
+    ged_close(empty_gedp);
+    BU_PUT(empty_gedp, struct ged);
     closedb();
     delete rootItem;
 }

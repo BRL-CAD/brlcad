@@ -341,7 +341,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	int opendb(const char *npath);
 	void closedb();
 	bool IsValid();
-	struct ged *gedp;
+	struct ged *gedp = NULL;
 
 	bool need_update_nref = false;
 
@@ -375,6 +375,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
     private:
 	QgItem *getItem(const QModelIndex &index) const;
 	QgItem *rootItem;
+	struct ged *empty_gedp;
 };
 
 #endif //QGMODEL_H
