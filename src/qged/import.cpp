@@ -188,7 +188,7 @@ STEPImportDialog::options()
 
 
 QString
-import_db(QString filename) {
+convert_to_g(QString filename) {
 
     QFileInfo fileinfo(filename);
     QString g_path("");

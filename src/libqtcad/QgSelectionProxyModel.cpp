@@ -52,6 +52,16 @@ QgSelectionProxyModel::NodeRow(QgItem *node) const
     return ind;
 }
 
+void
+QgSelectionProxyModel::refresh(void *p)
+{
+    if (!p) {
+	std::cerr << "Full update according to .g contents\n";
+	QgModel *m = (QgModel *)sourceModel();
+	m->refresh();
+    }
+}
+
 QVariant
 QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
 {
@@ -59,8 +69,6 @@ QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
     QgItem *curr_node = static_cast<QgItem *>(idx.internalPointer());
     QgModel *m = (QgModel *)sourceModel();
     gInstance *g = curr_node->instance();
-    if (g->dp_name == std::string("s.nos1"))
-	bu_log("s.nos1\n");
     if (role == Qt::DisplayRole) {
 	if (g->dp)
 	    return QVariant(g->dp->d_namep);

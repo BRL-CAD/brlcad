@@ -76,6 +76,9 @@ class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 	    InstanceHighlightDisplayRole = Qt::UserRole + 1005
 	};
 
+	// After a major change (opening or re-opening) rebuild the model
+	void refresh(void *p);
+
 	QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
 	bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
 

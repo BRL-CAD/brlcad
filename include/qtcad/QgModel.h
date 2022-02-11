@@ -289,6 +289,9 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// of updates to the gInstance containers
 	void update_instances(struct directory *dp);
 
+	// After a major change (opening or re-opening) rebuild the model
+	void refresh();
+
 	// Build a map of gInstance hashes to instances for easy lookup.  This
 	// is for gInstance reuse.  In trees that heavily reuse combs avoiding
 	// the storing of duplicate gInstances will save memory.

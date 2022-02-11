@@ -375,25 +375,30 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     view_menu->addAction(tree_dock->toggleViewAction());
     connect(tree_dock, &QBDockWidget::topLevelChanged, tree_dock, &QBDockWidget::toWindow);
-    treemodel = new CADTreeModel();
-    treeview = new CADTreeView(tree_dock, treemodel);
+    CADApp *ca = (CADApp *)qApp;
+    if (!ca->mdl) {
+	ca->mdl = new QgSelectionProxyModel();
+	QgModel *m = new QgModel();
+	ca->mdl->setSourceModel(m);
+    }
+    treeview = new QgTreeView(tree_dock, ca->mdl);
     tree_dock->setWidget(treeview);
 
     // The tree's highlighting changes based on which set of tools we're using - instance editing
     // and primitive editing have different non-local implications in the hierarchy.
-    connect(vc, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
-    connect(ic, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
-    connect(oc, &CADPalette::interaction_mode, treemodel, &CADTreeModel::mode_change);
+    connect(vc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
+    connect(ic, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
+    connect(oc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
 
     // Update props if we select a new item in the tree.  TODO - these need to be updated when
     // we have a app_changed_db as well, since the change may have been to edit attributes...
-    QObject::connect(treeview, &CADTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
-    QObject::connect(treeview, &CADTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
+    QObject::connect(treeview, &QgTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
+    QObject::connect(treeview, &QgTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
 
     // If the database changes, we need to refresh the tree.  (Right now this is only triggered
     // if we open a new .g file, IIRC, but it needs to happen when we've editing combs or added/
     // removed solids too...)
-    QObject::connect((CADApp *)qApp, &CADApp::app_changed_db, treemodel, &CADTreeModel::refresh);
+    QObject::connect((CADApp *)qApp, &CADApp::app_changed_db, ca->mdl, &QgSelectionProxyModel::refresh);
 
     // If the database changes, we need to update our views
     if (canvas) {
