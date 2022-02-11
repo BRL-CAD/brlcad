@@ -283,6 +283,9 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 
 	// TODO - these need to go away - I'm virtually certain I shouldn't
 	// be using these the way I am...
+	//
+	// Take a look at https://doc.qt.io/qt-5/qtwidgets-itemviews-fetchmore-example.html
+	// instead of this...
 	void begin_reset();
 	void end_reset();
 
