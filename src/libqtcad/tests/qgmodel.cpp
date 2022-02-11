@@ -42,7 +42,8 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 	return;
 
     itm->open();
-    for (int j = 0; j < itm->childCount(); j++) {
+
+    for (size_t j = 0; j < itm->children.size(); j++) {
 	QgItem *c = itm->child(j);
 	if (s->instances->find(c->ihash) == s->instances->end())
 	    continue;
@@ -65,7 +66,7 @@ void
 close_children(QgItem *itm)
 {
     itm->close();
-    for (int j = 0; j < itm->childCount(); j++) {
+    for (size_t j = 0; j < itm->children.size(); j++) {
 	QgItem *c = itm->child(j);
 	close_children(c);
     }
@@ -92,7 +93,7 @@ print_children(QgItem *itm, QgModel *s, int depth)
 
     std::cout << inst->dp_name << "\n";
 
-    for (int j = 0; j < itm->childCount(); j++) {
+    for (size_t j = 0; j < itm->children.size(); j++) {
 	QgItem *c = itm->child(j);
 	if (s->instances->find(c->ihash) == s->instances->end())
 	    continue;

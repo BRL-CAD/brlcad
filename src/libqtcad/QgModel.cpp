@@ -307,12 +307,6 @@ QgItem::QgItem()
 
 QgItem::~QgItem()
 {
-    for (size_t i = 0; i < children.size(); i++) {
-	QgItem *qii = child(i);
-	delete qii;
-    }
-    if (ctx)
-	ctx->remove_children(this);
 }
 
 void
@@ -321,6 +315,8 @@ QgItem::open()
     if (!ctx)
 	return;
     open_itm = true;
+    QModelIndex ind = ctx->NodeIndex(this);
+    ctx->fetchMore(ind);
 }
 
 
