@@ -199,7 +199,6 @@ class QTCAD_EXPORT QgItem
 	// If a database edit has occurred, everything in
 	// the tree must be validated to see if it is still
 	// current.
-	bool update_children();
 	void remove_children();
 
 	// Return a pointer to the gInstance associated with this QgItem, or
@@ -281,14 +280,6 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// Get the root QgItem
 	QgItem *root();
 
-	// TODO - these need to go away - I'm virtually certain I shouldn't
-	// be using these the way I am...
-	//
-	// Take a look at https://doc.qt.io/qt-5/qtwidgets-itemviews-fetchmore-example.html
-	// instead of this...
-	void begin_reset();
-	void end_reset();
-
 	// Certain .g objects (comb, extrude, etc.) will define one or more
 	// implicit instances.  We need to create those instances both on
 	// initialization of an existing .g file and on database editing.
@@ -362,6 +353,12 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	QModelIndex parent(const QModelIndex &child) const override;
 	int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 	int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+
+	bool canFetchMore(const QModelIndex &idx) const override;
+	void fetchMore(const QModelIndex &idx) override;
+	void remove_children(QgItem *node);
+	QModelIndex NodeIndex(QgItem *node) const;
+	int NodeRow(QgItem *node) const;
 
 	Qt::ItemFlags flags(const QModelIndex &index) const override;
 	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;

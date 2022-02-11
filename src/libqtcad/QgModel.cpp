@@ -307,7 +307,12 @@ QgItem::QgItem()
 
 QgItem::~QgItem()
 {
-    remove_children();
+    for (size_t i = 0; i < children.size(); i++) {
+	QgItem *qii = child(i);
+	delete qii;
+    }
+    if (ctx)
+	ctx->remove_children(this);
 }
 
 void
@@ -316,7 +321,6 @@ QgItem::open()
     if (!ctx)
 	return;
     open_itm = true;
-    update_children();
 }
 
 
@@ -340,139 +344,12 @@ QgItem::instance()
     return g_it->second;
 }
 
-bool
-QgItem::update_children()
-{
-    if (!ctx)
-	return false;
-
-    // If we are trying to update a QgItem and it references an
-    // invalid instance, there's nothing to update.
-    if (ctx->instances->find(ihash) == ctx->instances->end()) {
-	return false;
-    }
-
-    // We need the QgItem child array to reflect the current state of the comb
-    // tree, but we also want to keep the old QgItems to minimize disturbances
-    // to the model that aren't necessary due to .g changes. However, unlike
-    // the tops case we can't just alphanum sort and compare old to new - we
-    // need to use the ordering derived from the comb tree.  Moreover, we have
-    // to add new QgItems for new instances *at the right point in the array*
-    // to reflect the tree ordering - we can't just tack them on at the end.
-    // To make it even more complicated, we don't have a uniqueness guarantee
-    // for instance hashes - we may have the same hash in multiple distinct
-    // QgItems.
-    //
-    // To manage this, we make a map of queues and iterate over the old QgItems
-    // array, queueing up the old items in a manner that allows us to look them
-    // up using their hash and pop the item closest to the "top" of the tree
-    // off the queue.  This way, whenever we need a particular item, we are
-    // trying to keep the ordering of the childern close to the previous
-    // positions.
-
-    // We depend on the instance's set of child hashes being current, either
-    // from initialization or from the per-object editing callback.  If this
-    // set is not current, we need to fix logic elsewhere to ensure that list
-    // IS correct before QgItem's update_children is called - we're not going
-    // to try and fix it here.
-    std::vector<unsigned long long> nh = (*ctx->instances)[ihash]->children();
-
-    // Since we will be popping items off the queues, to get a similar order to
-    // the original usage when we extract into the new vector we go backwards
-    // here and push the "last" child items onto the queues first.
-    std::unordered_map<unsigned long long, std::queue<QgItem *>> oc;
-    for (int i = children.size()-1; i >= 0; i--) {
-	QgItem *qii = children[i];
-	oc[qii->ihash].push(qii);
-    }
-
-    // Iterate the gInstance's array of child hashes, building up  the
-    // corresponding QgItems array using either the stored QgItems from the
-    // previous state or new items.  Remember, all QgItems in a queue
-    // correspond to the same gInstance (i.e. their parent, bool op, matrix
-    // and child obj are all identical) so if there are multiple QgItems in the
-    // same queue it doesn't matter what "order" the QgItems are re-added in as
-    // far as the correctness of the tree is concerned.  We are attempting to
-    // preserve the "open/closed" state of the items via the queue ordering,
-    // but that won't always be possible. "Preserving" an existing open state
-    // after a tree change isn't always well defined - if, for example, we have
-    // two QgItems that both point to the same instance and were duplicated in
-    // the same child list, but only one of them was opened, if the tree
-    // rebuild now only has one QgItem being produced you could make the case
-    // that either of the previous QgItems was the one being removed.  So if we
-    // do hit that duplicate case, the QgItems that are left over in the queues
-    // once the new state is built up are the ones removed.  This is arbitrary,
-    // but that arbitrariness is an accurate reflection of the underlying data
-    // model.
-    std::vector<QgItem *> nc;
-    for (size_t i = 0; i < nh.size(); i++) {
-	// For each new child, look up its instance in the original data to see
-	// if we have a corresponding QgItem available.
-	if (oc.find(nh[i]) != oc.end() && !oc[nh[i]].empty()) {
-	    // We have a viable QgItem from the previous state - reuse it
-	    QgItem *itm = oc[nh[i]].front();
-	    oc[nh[i]].pop();
-	    nc.push_back(itm);
-	} else {
-	    // Previous tree did not have an appropriate QgItem -
-	    // make a new one
-	    QgItem *nitem = new QgItem();
-	    nitem->parentItem = this;
-	    nitem->ihash = nh[i];
-	    nitem->ctx = ctx;
-	    nc.push_back(nitem);
-	}
-    }
-
-    // Anything still left in the queues is now obsolete - we reused or created
-    // above all the QgItems we needed for the current state, and we need to
-    // clear out whatever remains (both the items themselves and any populated
-    // QgItem subtrees they may have had populated below them, since their
-    // parent is being removed.)
-    std::unordered_map<unsigned long long, std::queue<QgItem *>>::iterator oc_it;
-    for (oc_it = oc.begin(); oc_it != oc.end(); oc_it++) {
-	while (!oc_it->second.empty()) {
-	    QgItem *itm = oc_it->second.front();
-	    oc_it->second.pop();
-	    delete itm;
-	}
-    }
-
-    // If any reused QgItems were were in the open state, propagate the
-    // update process down the tree
-    for (size_t i = 0; i < nc.size(); i++) {
-	QgItem *itm = nc[i];
-	itm->update_children();
-    }
-
-    // If anything changed, we need to replace children's contents with the new
-    // vector.  TODO - this is another point were an actual Qt model update
-    // should be triggered, so we'll have to figure out how to trigger that.
-    // It may be that this is always triggered from a tops invocation, but I'm
-    // not sure we want to depend on that...
-    if (nc != children) {
-	// TODO - I suspect this is a horrible hack - these methods are protected
-	// in the parent model, and probably with very good reason.  I think we
-	// should be doing insertRow operations to add these?
-	ctx->begin_reset();
-	children.clear();
-	children = nc;
-	ctx->end_reset();
-	return true;
-    }
-
-    // We were able to avoid any changes, so no updates were needed
-    return false;
-}
-
 void
 QgItem::remove_children()
 {
-   std::cout << "remove children: " << childCount() << "\n";
-    for (int i = 0; i < childCount(); i++) {
-	QgItem *qii = child(i);
-	std::cout << qii->ihash << "\n";
-    }
+    if (!ctx)
+	return;
+    ctx->remove_children(this);
     children.clear();
 }
 
@@ -485,13 +362,7 @@ QgItem::appendChild(QgItem *c)
 QgItem *
 QgItem::child(int n)
 {
-    if (n < 0)
-	return NULL;
-
-    if (!children.size())
-	update_children();
-
-    if (n >= (int)children.size())
+    if (n < 0 || n >= (int)children.size())
 	return NULL;
 
     return children[n];
@@ -736,7 +607,8 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	// find any that require updating vs. their assigned instances.
 	for (size_t i = 0; i < ctx->tops_items.size(); i++) {
 	    QgItem *itm = ctx->tops_items[i];
-	    itm->update_children();
+	    QModelIndex ind = ctx->NodeIndex(itm);
+	    ctx->fetchMore(ind);
 	}
 
     }
@@ -847,16 +719,180 @@ QgModel::~QgModel()
     delete rootItem;
 }
 
-void
-QgModel::begin_reset()
+int
+QgModel::NodeRow(QgItem *node) const
 {
-    beginResetModel();
+    if (!node->parent())
+	return -1;
+    for (size_t i = 0; i < node->parent()->children.size(); i++) {
+	if (node->parent()->children[i] == node)
+	    return i;
+    }
+    return -1;
+}
+
+
+QModelIndex
+QgModel::NodeIndex(QgItem *node) const
+{
+    if (node == rootItem)
+	return QModelIndex();
+    int nr = NodeRow(node);
+    if (nr == -1)
+	return QModelIndex();
+    return createIndex(nr, 0, node);
+}
+
+
+bool
+QgModel::canFetchMore(const QModelIndex &idx) const
+{
+    if (!idx.isValid())
+	return false;
+
+    QgItem *item = static_cast<QgItem*>(idx.internalPointer());
+    if (item == rootItem)
+       	return false;
+
+    // If we are trying to update a QgItem and it references an
+    // invalid instance, there's nothing to update.
+    if (instances->find(item->ihash) == instances->end()) {
+	return false;
+    }
+
+    std::vector<unsigned long long> nh = (*instances)[item->ihash]->children();
+    if (!nh.size())
+	return false;
+
+    return true;
 }
 
 void
-QgModel::end_reset()
+QgModel::fetchMore(const QModelIndex &idx)
 {
-    endResetModel();
+    if (!idx.isValid())
+	return;
+
+    QgItem *item = static_cast<QgItem*>(idx.internalPointer());
+
+    // TODO - do we rebuild tops in this case?
+    if (item == rootItem)
+	return;
+
+    // We need the QgItem child array to reflect the current state of the comb
+    // tree, but we also want to keep the old QgItems to minimize disturbances
+    // to the model that aren't necessary due to .g changes. However, unlike
+    // the tops case we can't just alphanum sort and compare old to new - we
+    // need to use the ordering derived from the comb tree.  Moreover, we have
+    // to add new QgItems for new instances *at the right point in the array*
+    // to reflect the tree ordering - we can't just tack them on at the end.
+    // To make it even more complicated, we don't have a uniqueness guarantee
+    // for instance hashes - we may have the same hash in multiple distinct
+    // QgItems.
+    //
+    // To manage this, we make a map of queues and iterate over the old QgItems
+    // array, queueing up the old items in a manner that allows us to look them
+    // up using their hash and pop the item closest to the "top" of the tree
+    // off the queue.  This way, whenever we need a particular item, we are
+    // trying to keep the ordering of the childern close to the previous
+    // positions.
+
+    // We depend on the instance's set of child hashes being current, either
+    // from initialization or from the per-object editing callback.  If this
+    // set is not current, we need to fix logic elsewhere to ensure that list
+    // IS correct before this logic is called - we're not going to try and fix
+    // it here.
+    std::vector<unsigned long long> nh = (*instances)[item->ihash]->children();
+
+    // Since we will be popping items off the queues, to get a similar order to
+    // the original usage when we extract into the new vector we go backwards
+    // here and push the "last" child items onto the queues first.
+    std::unordered_map<unsigned long long, std::queue<QgItem *>> oc;
+    for (int i = item->children.size()-1; i >= 0; i--) {
+	QgItem *qii = item->children[i];
+	oc[qii->ihash].push(qii);
+    }
+
+    // Iterate the gInstance's array of child hashes, building up  the
+    // corresponding QgItems array using either the stored QgItems from the
+    // previous state or new items.  Remember, all QgItems in a queue
+    // correspond to the same gInstance (i.e. their parent, bool op, matrix
+    // and child obj are all identical) so if there are multiple QgItems in the
+    // same queue it doesn't matter what "order" the QgItems are re-added in as
+    // far as the correctness of the tree is concerned.  We are attempting to
+    // preserve the "open/closed" state of the items via the queue ordering,
+    // but that won't always be possible. "Preserving" an existing open state
+    // after a tree change isn't always well defined - if, for example, we have
+    // two QgItems that both point to the same instance and were duplicated in
+    // the same child list, but only one of them was opened, if the tree
+    // rebuild now only has one QgItem being produced you could make the case
+    // that either of the previous QgItems was the one being removed.  So if we
+    // do hit that duplicate case, the QgItems that are left over in the queues
+    // once the new state is built up are the ones removed.  This is arbitrary,
+    // but that arbitrariness is an accurate reflection of the underlying data
+    // model.
+    std::vector<QgItem *> nc;
+    for (size_t i = 0; i < nh.size(); i++) {
+	// For each new child, look up its instance in the original data to see
+	// if we have a corresponding QgItem available.
+	if (oc.find(nh[i]) != oc.end() && !oc[nh[i]].empty()) {
+	    // We have a viable QgItem from the previous state - reuse it
+	    QgItem *itm = oc[nh[i]].front();
+	    oc[nh[i]].pop();
+	    nc.push_back(itm);
+	} else {
+	    // Previous tree did not have an appropriate QgItem -
+	    // make a new one
+	    QgItem *nitem = new QgItem();
+	    nitem->parentItem = item;
+	    nitem->ihash = nh[i];
+	    nitem->ctx = this;
+	    nc.push_back(nitem);
+	}
+    }
+
+    // Anything still left in the queues is now obsolete - we reused or created
+    // above all the QgItems we needed for the current state, and we need to
+    // clear out whatever remains (both the items themselves and any populated
+    // QgItem subtrees they may have had populated below them, since their
+    // parent is being removed.)
+    std::unordered_map<unsigned long long, std::queue<QgItem *>>::iterator oc_it;
+    for (oc_it = oc.begin(); oc_it != oc.end(); oc_it++) {
+	while (!oc_it->second.empty()) {
+	    QgItem *itm = oc_it->second.front();
+	    oc_it->second.pop();
+	    delete itm;
+	}
+    }
+
+    // If anything changed, we need to replace children's contents with the new
+    // vector.  TODO - this is another point were an actual Qt model update
+    // should be triggered, so we'll have to figure out how to trigger that.
+    // It may be that this is always triggered from a tops invocation, but I'm
+    // not sure we want to depend on that...
+    if (nc != item->children) {
+	if (item->children.size()) {
+	    beginRemoveRows(idx, 0, item->children.size() - 1);
+	    item->children.clear();
+	    endRemoveRows();
+	}
+	beginInsertRows(idx, 0, nc.size() - 1);
+	item->children = nc;
+	endInsertRows();
+    }
+}
+
+void
+QgModel::remove_children(QgItem *itm)
+{
+    if (!itm)
+	return;
+    QModelIndex idx = NodeIndex(itm);
+    if (itm->children.size()) {
+	beginRemoveRows(idx, 0, itm->children.size() - 1);
+	itm->children.clear();
+	endRemoveRows();
+    }
 }
 
 bool
@@ -1475,10 +1511,6 @@ QgModel::opendb(const char *npath)
     rootItem->children.clear();
     for (size_t i = 0; i < tops_items.size(); i++) {
 	rootItem->appendChild(tops_items[i]);
-	// We need to populate the child arrays immediately
-	// below the top level, so an open operation will
-	// have something to immediately display
-	tops_items[i]->update_children();
     }
 
     // Run through the objects and crack the non-leaf objects to define
