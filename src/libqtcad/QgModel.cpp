@@ -343,7 +343,7 @@ QgItem::instance()
 bool
 QgItem::update_children()
 {
-    if (!ctx || !open_itm)
+    if (!ctx)
 	return false;
 
     // If we are trying to update a QgItem and it references an
@@ -381,8 +381,8 @@ QgItem::update_children()
     // the original usage when we extract into the new vector we go backwards
     // here and push the "last" child items onto the queues first.
     std::unordered_map<unsigned long long, std::queue<QgItem *>> oc;
-    for (int i = childCount()-1; i >= 0; i--) {
-	QgItem *qii = child(i);
+    for (int i = children.size()-1; i >= 0; i--) {
+	QgItem *qii = children[i];
 	oc[qii->ihash].push(qii);
     }
 
@@ -451,8 +451,13 @@ QgItem::update_children()
     // It may be that this is always triggered from a tops invocation, but I'm
     // not sure we want to depend on that...
     if (nc != children) {
+	// TODO - I suspect this is a horrible hack - these methods are protected
+	// in the parent model, and probably with very good reason.  I think we
+	// should be doing insertRow operations to add these?
+	ctx->begin_reset();
 	children.clear();
 	children = nc;
+	ctx->end_reset();
 	return true;
     }
 
@@ -480,7 +485,13 @@ QgItem::appendChild(QgItem *c)
 QgItem *
 QgItem::child(int n)
 {
-    if (n < 0 || n > (int)children.size())
+    if (n < 0)
+	return NULL;
+
+    if (!children.size())
+	update_children();
+
+    if (n >= (int)children.size())
 	return NULL;
 
     return children[n];
@@ -489,7 +500,20 @@ QgItem::child(int n)
 int
 QgItem::childCount() const
 {
-    return (int)children.size();
+    if (!ctx)
+	return 0;
+
+    if (this == ctx->root())
+	return children.size();
+
+    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
+    g_it = ctx->instances->find(ihash);
+    if (g_it == ctx->instances->end())
+	return 0;
+
+    gInstance *gi = g_it->second;
+
+    return (int)gi->children().size();
 }
 
 int
@@ -806,6 +830,7 @@ QgModel::QgModel(QObject *p, const char *npath)
     gedp = NULL;
 
     rootItem = new QgItem();
+    rootItem->ctx = this;
 
     // If there's no path, at least for the moment we have nothing to model.
     // In the future we may want to consider setting up a default environment
@@ -820,6 +845,18 @@ QgModel::~QgModel()
 {
     closedb();
     delete rootItem;
+}
+
+void
+QgModel::begin_reset()
+{
+    beginResetModel();
+}
+
+void
+QgModel::end_reset()
+{
+    endResetModel();
 }
 
 bool
@@ -1438,6 +1475,10 @@ QgModel::opendb(const char *npath)
     rootItem->children.clear();
     for (size_t i = 0; i < tops_items.size(); i++) {
 	rootItem->appendChild(tops_items[i]);
+	// We need to populate the child arrays immediately
+	// below the top level, so an open operation will
+	// have something to immediately display
+	tops_items[i]->update_children();
     }
 
     // Run through the objects and crack the non-leaf objects to define

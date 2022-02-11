@@ -281,6 +281,11 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// Get the root QgItem
 	QgItem *root();
 
+	// TODO - these need to go away - I'm virtually certain I shouldn't
+	// be using these the way I am...
+	void begin_reset();
+	void end_reset();
+
 	// Certain .g objects (comb, extrude, etc.) will define one or more
 	// implicit instances.  We need to create those instances both on
 	// initialization of an existing .g file and on database editing.
