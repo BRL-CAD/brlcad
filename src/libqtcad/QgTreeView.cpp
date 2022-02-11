@@ -59,10 +59,10 @@ text_string:
     QString text = index.data().toString();
     int bool_op = index.data(QgSelectionProxyModel::BoolInternalRole).toInt();
     switch (bool_op) {
-	case OP_INTERSECT:
+	case DB_OP_INTERSECT:
 	    text.prepend("  + ");
 	    break;
-	case OP_SUBTRACT:
+	case DB_OP_SUBTRACT:
 	    text.prepend("  - ");
 	    break;
     }
@@ -93,13 +93,13 @@ QSize gObjDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelInd
     QSize bool_size;
     int bool_op = index.data(QgSelectionProxyModel::BoolInternalRole).toInt();
     switch (bool_op) {
-	case OP_UNION:
+	case DB_OP_UNION:
 	    bool_size = option.fontMetrics.size(Qt::TextSingleLine, " ");
 	    break;
-	case OP_INTERSECT:
+	case DB_OP_INTERSECT:
 	    bool_size = option.fontMetrics.size(Qt::TextSingleLine, "   + ");
 	    break;
-	case OP_SUBTRACT:
+	case DB_OP_SUBTRACT:
 	    bool_size = option.fontMetrics.size(Qt::TextSingleLine, "   - ");
 	    break;
     }

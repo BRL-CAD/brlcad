@@ -59,22 +59,15 @@ QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
     QgItem *curr_node = static_cast<QgItem *>(idx.internalPointer());
     QgModel *m = (QgModel *)sourceModel();
     gInstance *g = curr_node->instance();
+    if (g->dp_name == std::string("s.nos1"))
+	bu_log("s.nos1\n");
     if (role == Qt::DisplayRole) {
 	if (g->dp)
 	    return QVariant(g->dp->d_namep);
 	return QVariant();
     }
     if (role == BoolInternalRole) {
-	switch (g->op) {
-	    case DB_OP_UNION:
-		return QVariant(0);
-	    case DB_OP_SUBTRACT:
-		return QVariant(1);
-	    case DB_OP_INTERSECT:
-		return QVariant(2);
-	    default:
-		return QVariant();
-	}
+	return QVariant(g->op);
     }
     if (role == DirectoryInternalRole)
 	return QVariant::fromValue((void *)(g->dp));

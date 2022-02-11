@@ -53,6 +53,46 @@
 #include "raytrace.h"
 #include "qtcad/QgModel.h"
 
+/* db_tree_funcleaf is almost what we need here, but not quite - it doesn't
+ * pass quite enough information.  We need the parent op as well. */
+void
+db_tree_opleaf(
+    struct db_i *dbip,
+    struct rt_comb_internal *comb,
+    union tree *comb_tree,
+    int op,
+    void (*leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *, int,
+                      void *, void *, void *, void *),
+    void *user_ptr1,
+    void *user_ptr2,
+    void *user_ptr3,
+    void *user_ptr4)
+{
+    RT_CK_DBI(dbip);
+
+    if (!comb_tree)
+        return;
+
+    RT_CK_TREE(comb_tree);
+
+    switch (comb_tree->tr_op) {
+        case OP_DB_LEAF:
+            leaf_func(dbip, comb, comb_tree, op, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
+            break;
+        case OP_UNION:
+        case OP_INTERSECT:
+        case OP_SUBTRACT:
+        case OP_XOR:
+            db_tree_opleaf(dbip, comb, comb_tree->tr_b.tb_left, OP_UNION, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
+            db_tree_opleaf(dbip, comb, comb_tree->tr_b.tb_right, comb_tree->tr_op, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
+            break;
+        default:
+            bu_log("db_tree_opleaf: bad op %d\n", comb_tree->tr_op);
+            bu_bomb("db_tree_opleaf: bad op\n");
+            break;
+    }
+}
+
 unsigned long long
 ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, db_op_t op, mat_t c_m)
 {
@@ -145,7 +185,7 @@ struct QgItem_cmp {
 };
 
 static void
-add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *pdp, void *vctx, void *vchash, void *)
+add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *vctx, void *vchash, void *)
 {
     // Validate
     if (comb) RT_CK_COMB(comb);
@@ -159,10 +199,12 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
     // Translate the op into the db_op_t type
     struct directory *dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET);
     db_op_t op = DB_OP_UNION;
-    if (comb_leaf->tr_l.tl_op == OP_SUBTRACT) {
+    if (BU_STR_EQUAL(dp->d_namep, "s.nos1"))
+	bu_log("s.nos1\n");
+    if (tree_op == OP_SUBTRACT) {
 	op = DB_OP_SUBTRACT;
     }
-    if (comb_leaf->tr_l.tl_op == OP_INTERSECT) {
+    if (tree_op == OP_INTERSECT) {
 	op = DB_OP_INTERSECT;
     }
 
@@ -292,9 +334,9 @@ gInstance::children()
 	// stages Qt models offer enough complexity without trying to do
 	// anything cute with the librt comb data containers.  Because we are
 	// only concerned with the immediate comb's children and not the full
-	// tree, all objects are leaves and we can use db_tree_funcleaf
+	// tree, all objects are leaves and we can use db_tree_opleaf
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-	db_tree_funcleaf(dbip, comb, comb->tree, add_g_instance, (void *)dp, (void *)ctx, (void *)&chash, NULL);
+	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)ctx, (void *)&chash, NULL);
 	rt_db_free_internal(&intern);
     }
 
@@ -1017,7 +1059,7 @@ QgModel::add_instances(struct directory *dp)
 	}
 
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-	db_tree_funcleaf(dbip, comb, comb->tree, add_g_instance, (void *)dp, (void *)this, NULL, NULL);
+	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)this, NULL, NULL);
 	rt_db_free_internal(&intern);
 	return;
     }
@@ -1199,7 +1241,7 @@ QgModel::update_instances(struct directory *dp)
 	return;
     }
     struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-    db_tree_funcleaf(dbip, comb, comb->tree, add_g_instance, (void *)dp, (void *)this, (void *)&chashv, NULL);
+    db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)this, (void *)&chashv, NULL);
     rt_db_free_internal(&intern);
 
     // To clear out the old instances, we need to see if ohash contains anything
