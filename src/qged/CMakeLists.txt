@@ -70,6 +70,9 @@ if (BRLCAD_ENABLE_QT)
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
 
+  # Make sure all dm plugins are accounted for when we build qged
+  add_dependencies(qged dm_plugins)
+
   foreach(qh ${qth_names})
     DISTCLEAN(moc_${qh}.cpp_parameters)
   endforeach(qh ${qth_names})
