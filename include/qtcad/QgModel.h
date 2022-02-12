@@ -347,7 +347,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 
 	// A modification in the .g file to an object may necessitate a variety
 	// of updates to the gInstance containers
-	void update_instances(struct directory *dp);
+	void update_child_instances(struct directory *dp);
 
 
 	// Build a map of gInstance hashes to instances for easy lookup.  This
@@ -362,6 +362,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// objects.)  This set may change after each database edit, but there
 	// will always be at least one object in a valid .g hierarchy that has
 	// no parent.
+	void update_tops_instances();
 	std::unordered_map<unsigned long long, gInstance *> *tops_instances = NULL;
 
 
@@ -372,10 +373,9 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// Get the root QgItem
 	QgItem *root();
 
-	// After a major change (opening or re-opening) rebuild the model
-	void refresh();
 
 	// QgItems corresponding to the tops_instances
+	void update_tops_items();
 	std::vector<QgItem *> tops_items;
 
 	// Convenience container holding all active QgItems

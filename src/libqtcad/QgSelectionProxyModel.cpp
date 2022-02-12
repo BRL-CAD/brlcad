@@ -52,16 +52,6 @@ QgSelectionProxyModel::NodeRow(QgItem *node) const
     return ind;
 }
 
-void
-QgSelectionProxyModel::refresh(void *p)
-{
-    if (!p) {
-	std::cerr << "Full update according to .g contents\n";
-	QgModel *m = (QgModel *)sourceModel();
-	m->refresh();
-    }
-}
-
 QVariant
 QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
 {

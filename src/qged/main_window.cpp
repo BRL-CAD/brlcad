@@ -393,8 +393,8 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     // If the database changes, we need to refresh the tree.  (Right now this is only triggered
     // if we open a new .g file, IIRC, but it needs to happen when we've editing combs or added/
-    // removed solids too...)
-    QObject::connect(m, &QgModel::mdl_changed_db, ca->mdl, &QgSelectionProxyModel::refresh);
+    // removed solids too...)  TODO - do we still need this?
+    //QObject::connect(m, &QgModel::mdl_changed_db, ca->mdl, &QgSelectionProxyModel::refresh);
 
     // If the database changes, we need to update our views
     if (canvas) {
