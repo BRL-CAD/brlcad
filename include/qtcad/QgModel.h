@@ -201,7 +201,7 @@ class QTCAD_EXPORT QgModel;
 class QTCAD_EXPORT QgItem
 {
     public:
-	explicit QgItem();
+	explicit QgItem(gInstance *g = NULL);
 	~QgItem();
 
 

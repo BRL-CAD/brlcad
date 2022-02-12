@@ -342,12 +342,26 @@ gInstance::children()
     return chash;
 }
 
-QgItem::QgItem()
+QgItem::QgItem(gInstance *g)
 {
+    if (g) {
+	parentItem = NULL;
+	ctx = (QgModel *)g->ctx;
+	ihash = g->hash();
+	// TODO - these copies may be moot - the child relationship needs
+	// the gInstance, so we may have to just ensure gInstances aren't
+	// removed until after the QgItems are updated.  If that's the case,
+	// there's no point in these copies.
+	bu_vls_sprintf(&name, "%s", g->dp_name.c_str());
+	icon = QgIcon(g->dp, ctx->gedp->dbip);
+	op = g->op;
+	dp = g->dp;
+    }
 }
 
 QgItem::~QgItem()
 {
+    bu_vls_free(&name);
 }
 
 void
@@ -737,14 +751,8 @@ QgModel::update_tops_items()
     // Build up a "candidate" vector of new QgItems based on the now-updated tops_instances data.
     std::vector<QgItem *> ntops_items;
     for (i_it = tops_instances->begin(); i_it != tops_instances->end(); i_it++) {
-	QgItem *nitem = new QgItem();
+	QgItem *nitem = new QgItem(i_it->second);
 	nitem->parentItem = NULL;
-	nitem->ihash = i_it->first;
-	nitem->ctx = this;
-	bu_vls_sprintf(&nitem->name, "%s", i_it->second->dp_name.c_str());
-	nitem->icon = QgIcon(i_it->second->dp, gedp->dbip);
-	nitem->op = i_it->second->op;
-	nitem->dp = i_it->second->dp;
 	ntops_items.push_back(nitem);
     }
     std::sort(ntops_items.begin(), ntops_items.end(), QgItem_cmp());
@@ -943,15 +951,13 @@ QgModel::fetchMore(const QModelIndex &idx)
 	    // Previous tree did not have an appropriate QgItem -
 	    // make a new one
 	    bu_log("new item: %llu\n", nh[i]);
-	    QgItem *nitem = new QgItem();
+	    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
+	    gInstance *g = NULL;
+	    g_it = instances->find(nh[i]);
+	    if (g_it != instances->end())
+		g = g_it->second;
+	    QgItem *nitem = new QgItem(g);
 	    nitem->parentItem = item;
-	    nitem->ihash = nh[i];
-	    nitem->ctx = this;
-	    gInstance *g = nitem->instance();
-	    bu_vls_sprintf(&nitem->name, "%s", g->dp_name.c_str());
-	    nitem->icon = QgIcon(g->dp, gedp->dbip);
-	    nitem->op = g->op;
-	    nitem->dp = g->dp;
 	    nc.push_back(nitem);
 	    items->insert(nitem);
 	}
@@ -1575,14 +1581,8 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    (*instances)[nhash] = ninst;
 
 	    // tops entries get a QgItem by default
-	    QgItem *nitem = new QgItem();
+	    QgItem *nitem = new QgItem(ninst);
 	    nitem->parentItem = rootItem;
-	    nitem->ihash = nhash;
-	    nitem->ctx = this;
-	    bu_vls_sprintf(&nitem->name, "%s", ninst->dp_name.c_str());
-	    nitem->icon = QgIcon(ninst->dp, gedp->dbip);
-	    nitem->op = ninst->op;
-	    nitem->dp = ninst->dp;
 	    tops_items.push_back(nitem);
 	    items->insert(nitem);
 	}
