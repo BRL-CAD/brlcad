@@ -86,6 +86,18 @@
  * very large and deep hierarchies.)
  *
  *
+ * Notes:
+ * Qt is very particular about adding and removing rows into a model, and
+ * I suspect it will be necessary to alter QgItems only in very special
+ * circumstances (i.e. we will have to only alter gInstances from librt
+ * callbacks, and update the QgItems later when we can ensure it is "OK"
+ * to do so from Qt's perspective.)
+ *
+ * Among other considerations, that probably means we'll have to change the
+ * QgItem to be somewhat more "self contained" as far as its display data
+ * rather than pulling from the gInstance, since the gInstance will be altered
+ * or removed by the librt callbacks and may vanish at an inconvenient time for
+ * Qt...
  *
  *
  *
