@@ -21,6 +21,7 @@
  *
  */
 
+#include "common.h"
 #include <QLabel>
 #include <QLineEdit>
 #include <QButtonGroup>
@@ -603,9 +604,13 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 
 	gedp->ged_gvp->gv_prevMouseX = gedp->ged_gvp->gv_mouse_x;
 	gedp->ged_gvp->gv_prevMouseY = gedp->ged_gvp->gv_mouse_y;
-
+#ifdef USE_QT6
+	gedp->ged_gvp->gv_mouse_x = m_e->position().x();
+	gedp->ged_gvp->gv_mouse_y = m_e->position().y();
+#else
 	gedp->ged_gvp->gv_mouse_x = m_e->x();
 	gedp->ged_gvp->gv_mouse_y = m_e->y();
+#endif
     }
 
     if (!m_e)
@@ -634,8 +639,11 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    if (general_mode->isChecked()) {
 		ptype = BV_POLYGON_GENERAL;
 	    }
-
+#ifdef USE_QT6
+	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->position().x(), m_e->position().y(), gedp->free_scene_obj);
+#else
 	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y(), gedp->free_scene_obj);
+#endif
 	    p->s_v = gedp->ged_gvp;
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 
@@ -692,8 +700,13 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	// the initial creation
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	if (ip->type == BV_POLYGON_GENERAL) {
+#ifdef USE_QT6
+	    p->s_v->gv_mouse_x = m_e->position().x();
+	    p->s_v->gv_mouse_y = m_e->position().y();
+#else
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
+#endif
 	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_APPEND);
 
 	    emit view_updated(&gedp->ged_gvp);

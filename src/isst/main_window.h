@@ -27,8 +27,14 @@
 #ifndef ISST_MAINWINDOW_H
 #define ISST_MAINWINDOW_H
 
+#include "common.h"
+
 #include <QMainWindow>
+#ifdef USE_QT6
+#include <QOpenGLWidget>
+#else
 #include <QtWidgets/QOpenGLWidget>
+#endif
 #include <QDockWidget>
 #include <QMenu>
 #include <QMenuBar>

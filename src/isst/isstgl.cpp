@@ -337,15 +337,23 @@ void isstGL::keyPressEvent(QKeyEvent *k) {
 }
 
 
-void isstGL::mouseMoveEvent(QMouseEvent *e) {
-
+void isstGL::mouseMoveEvent(QMouseEvent *e)
+{
+#ifdef USE_QT6
+    bu_log("(%f,%f)\n", e->position().x(), e->position().y());
+    if (x_prev > -INT_MAX && y_prev > -INT_MAX) {
+	bu_log("Delta: (%f,%f)\n", e->position().x() - x_prev, e->position().y() - y_prev);
+    }
+    x_prev = e->position().x();
+    y_prev = e->position().y();
+#else
     bu_log("(%d,%d)\n", e->x(), e->y());
     if (x_prev > -INT_MAX && y_prev > -INT_MAX) {
 	bu_log("Delta: (%d,%d)\n", e->x() - x_prev, e->y() - y_prev);
     }
-
     x_prev = e->x();
     y_prev = e->y();
+#endif
 
     QOpenGLWidget::mouseMoveEvent(e);
 }

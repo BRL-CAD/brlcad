@@ -141,8 +141,13 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
 	bu_log("Right\n");
     }
 
+#ifdef USE_QT6
+    int dx = e->position().x() - x_prev;
+    int dy = e->position().y() - y_prev;
+#else
     int dx = e->x() - x_prev;
     int dy = e->y() - y_prev;
+#endif
 
     if (view_flags == BV_SCALE) {
 	int mdelta = (abs(dx) > abs(dy)) ? dx : -dy;

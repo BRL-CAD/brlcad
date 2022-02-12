@@ -208,14 +208,51 @@ option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
 if (BRLCAD_ENABLE_QT)
 
-  find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL Network)
+  # Note - to use Qt6, set Qt6_DIR to <qt_install_dir>/lib/cmake/Qt6 and CMAKE_PREFIX_PATH
+  # to <qt_install_dir>
+  if(Qt6_DIR)
+    if(BRLCAD_ENABLE_OPENGL)
+      find_package(Qt6 COMPONENTS Core Widgets Gui OpenGL OpenGLWidgets Network REQUIRED)
+    else()
+      find_package(Qt6 COMPONENTS Core Widgets Gui Network REQUIRED)
+    endif(BRLCAD_ENABLE_OPENGL)
+  else()
+    if(BRLCAD_ENABLE_OPENGL)
+      find_package(Qt6 COMPONENTS Core Widgets Gui OpenGL OpenGLWidgets Network QUIET)
+    else()
+      find_package(Qt6 COMPONENTS Core Widgets Gui Network QUIET)
+    endif(BRLCAD_ENABLE_OPENGL)
+  endif(Qt6_DIR)
 
-  if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-    message("QT interface requested, but QT5 is not found - disabling")
-    set(BRLCAD_ENABLE_QT OFF)
-  endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+  if(NOT Qt6Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
+    # We didn't find 6, try 5
+    if(BRLCAD_ENABLE_OPENGL)
+      find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL Network)
+    else()
+      find_package(Qt5 COMPONENTS Core Widgets Gui Network)
+    endif(BRLCAD_ENABLE_OPENGL)
+
+    if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
+      message("Qt requested, but Qt installation not found - disabling")
+
+      set(BRLCAD_ENABLE_QT OFF)
+
+    endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
+  endif(NOT Qt6Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
+  # There are a few source level incompatibilities between Qt6 and Qt5 - set
+  # configure flag so we know what we need to do.
+  if (Qt6Widgets_FOUND)
+    CONFIG_H_APPEND(BRLCAD "#define USE_QT6 1\n")
+  endif (Qt6Widgets_FOUND)
 
 endif (BRLCAD_ENABLE_QT)
+mark_as_advanced(Qt6Widgets_DIR)
+mark_as_advanced(Qt6Core_DIR)
+mark_as_advanced(Qt6Gui_DIR)
 mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)

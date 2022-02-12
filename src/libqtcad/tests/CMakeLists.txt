@@ -12,7 +12,11 @@ include_directories(
 if (BRLCAD_ENABLE_QT)
 
   add_executable(qgmodel qgmodel.cpp)
-  target_link_libraries(qgmodel libqtcad libged librt libbu Qt5::Widgets)
+  if (Qt6Widgets_FOUND)
+    target_link_libraries(qgmodel libqtcad libged librt libbu Qt6::Widgets)
+  else()
+    target_link_libraries(qgmodel libqtcad libged librt libbu Qt5::Widgets)
+  endif (Qt6Widgets_FOUND)
   target_compile_definitions(qgmodel PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qgmodel
     RUNTIME DESTINATION ${BIN_DIR}
@@ -20,7 +24,11 @@ if (BRLCAD_ENABLE_QT)
     ARCHIVE DESTINATION ${LIB_DIR})
 
   add_executable(qgview qgview.cpp)
-  target_link_libraries(qgview libqtcad libged librt libbu Qt5::Widgets)
+  if (Qt6Widgets_FOUND)
+    target_link_libraries(qgview libqtcad libged librt libbu Qt6::Widgets)
+  else()
+    target_link_libraries(qgview libqtcad libged librt libbu Qt5::Widgets)
+  endif (Qt6Widgets_FOUND)
   target_compile_definitions(qgview PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qgview
     RUNTIME DESTINATION ${BIN_DIR}

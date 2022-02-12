@@ -24,11 +24,19 @@ set(view_settings_moc_hdrs
 
 if(BRLCAD_ENABLE_QT)
 
-  QT5_WRAP_CPP(view_settings_moc_srcs ${view_settings_moc_hdrs})
-  QT5_ADD_RESOURCES(icon_qrc icon.qrc)
-
+  if(Qt6Widgets_FOUND)
+    QT6_WRAP_CPP(view_settings_moc_srcs ${view_settings_moc_hdrs})
+    QT6_ADD_RESOURCES(icon_qrc icon.qrc)
+  else()
+    QT5_WRAP_CPP(view_settings_moc_srcs ${view_settings_moc_hdrs})
+    QT5_ADD_RESOURCES(icon_qrc icon.qrc)
+  endif(Qt6Widgets_FOUND)
   qged_plugin(qged_view_settings SHARED ${view_settings_srcs} ${view_settings_moc_srcs} ${icon_qrc})
-  target_link_libraries(qged_view_settings libqtcad libged librt libbu Qt5::Widgets)
+  if(Qt6Widgets_FOUND)
+    target_link_libraries(qged_view_settings libqtcad libged librt libbu Qt6::Widgets)
+  else()
+    target_link_libraries(qged_view_settings libqtcad libged librt libbu Qt5::Widgets)
+  endif(Qt6Widgets_FOUND)
   set_property(TARGET qged_view_settings APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(qged_view_settings view_settings.cpp)
   PLUGIN_SETUP(qged_view_settings qged)

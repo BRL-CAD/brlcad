@@ -44,14 +44,26 @@ if (BRLCAD_ENABLE_QT)
   set_property(SOURCE main_window.cpp APPEND PROPERTY
     COMPILE_DEFINITIONS "QGED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
-  QT5_WRAP_CPP(moc_srcs ${moc_headers})
+  if(Qt6Widgets_FOUND)
+    QT6_WRAP_CPP(moc_srcs ${moc_headers})
+  else()
+    QT5_WRAP_CPP(moc_srcs ${moc_headers})
+  endif(Qt6Widgets_FOUND)
 
   # https://github.com/Alexhuszagh/BreezeStyleSheets
-  QT5_ADD_RESOURCES(theme_qrc theme/breeze.qrc)
+  if(Qt6Widgets_FOUND)
+    QT6_ADD_RESOURCES(theme_qrc theme/breeze.qrc)
+  else()
+    QT5_ADD_RESOURCES(theme_qrc theme/breeze.qrc)
+  endif(Qt6Widgets_FOUND)
 
   add_executable(qged main.cpp ${qged_srcs} ${moc_srcs} ${theme_qrc})
   # Note - Network is needed for async embedded raytracing display
-  target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::Network)
+  if(Qt6Widgets_FOUND)
+    target_link_libraries(qged libqtcad libged librt libbu Qt6::Widgets Qt6::Network)
+  else()
+    target_link_libraries(qged libqtcad libged librt libbu Qt5::Widgets Qt5::Network)
+  endif(Qt6Widgets_FOUND)
   target_compile_definitions(qged PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qged
     RUNTIME DESTINATION ${BIN_DIR}

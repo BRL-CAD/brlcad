@@ -21,6 +21,7 @@
  *
  */
 
+#include "common.h"
 #include <QLabel>
 #include <QLineEdit>
 #include <QButtonGroup>
@@ -856,8 +857,13 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 	gedp->ged_gvp->gv_prevMouseX = gedp->ged_gvp->gv_mouse_x;
 	gedp->ged_gvp->gv_prevMouseY = gedp->ged_gvp->gv_mouse_y;
 
+#ifdef USE_QT6
+	gedp->ged_gvp->gv_mouse_x = m_e->position().x();
+	gedp->ged_gvp->gv_mouse_y = m_e->position().y();
+#else
 	gedp->ged_gvp->gv_mouse_x = m_e->x();
 	gedp->ged_gvp->gv_mouse_y = m_e->y();
+#endif
     }
 
     if (!m_e)
@@ -892,8 +898,13 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	if (append_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
+#ifdef USE_QT6
+	    p->s_v->gv_mouse_x = m_e->position().x();
+	    p->s_v->gv_mouse_y = m_e->position().y();
+#else
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
+#endif
 	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_APPEND);
 
 	    emit view_updated(&gedp->ged_gvp);
@@ -901,8 +912,13 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 	}
 
 	if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
+#ifdef USE_QT6
+	    p->s_v->gv_mouse_x = m_e->position().x();
+	    p->s_v->gv_mouse_y = m_e->position().y();
+#else
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
+#endif
 	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_SELECT);
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;

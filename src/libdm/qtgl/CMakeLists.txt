@@ -6,9 +6,6 @@ set(QTGL_SRCS
 
 if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
 
-  find_package(OpenGL)
-  find_package(Qt5 COMPONENTS Core Widgets OpenGL)
-
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${BRLCAD_BINARY_DIR}/include
@@ -29,12 +26,21 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
     set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
   endif (OPENGL_gl_LIBRARY)
 
-  QT5_WRAP_CPP(qtgl_moc_srcs qtglwin.h)
+  if (Qt6Widgets_FOUND)
+    QT6_WRAP_CPP(qtgl_moc_srcs qtglwin.h)
+  else ()
+    QT5_WRAP_CPP(qtgl_moc_srcs qtglwin.h)
+  endif(Qt6Widgets_FOUND)
   set(QTGL_SRCS ${QTGL_SRCS} ${qtgl_moc_srcs})
 
   dm_plugin_library(dm-qtgl SHARED ${QTGL_SRCS})
-  target_link_libraries(dm-qtgl
-    libqtcad libdmgl libdm libbu Qt5::Core Qt5::Widgets Qt5::OpenGL ${OPENGL_LIBS})
+  if (Qt6Widgets_FOUND)
+    target_link_libraries(dm-qtgl
+      libqtcad libdmgl libdm libbu Qt6::Core Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets ${OPENGL_LIBS})
+  else()
+    target_link_libraries(dm-qtgl
+      libqtcad libdmgl libdm libbu Qt5::Core Qt5::Widgets Qt5::OpenGL ${OPENGL_LIBS})
+  endif (Qt6Widgets_FOUND)
   set_property(TARGET dm-qtgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-qtgl "${QTGL_SRCS}")
 

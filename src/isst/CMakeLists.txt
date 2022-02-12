@@ -44,8 +44,13 @@ if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_OPENGL)
     set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
   endif (OPENGL_gl_LIBRARY)
 
-  QT5_WRAP_CPP(moc_srcs ${moc_headers})
-  BRLCAD_ADDEXEC(qisst "${isst_srcs};${moc_srcs}" "libbu;librt;libgcv;librender;Qt5::Core;Qt5::Widgets;Qt5::OpenGL;${OPENGL_LIBS}")
+  if (Qt6Widgets_FOUND)
+    QT6_WRAP_CPP(moc_srcs ${moc_headers})
+    BRLCAD_ADDEXEC(qisst "${isst_srcs};${moc_srcs}" "libbu;librt;libgcv;librender;Qt6::Core;Qt6::Widgets;Qt6::OpenGL;Qt6::OpenGLWidgets;${OPENGL_LIBS}")
+  else (Qt6Widgets_FOUND)
+    QT5_WRAP_CPP(moc_srcs ${moc_headers})
+    BRLCAD_ADDEXEC(qisst "${isst_srcs};${moc_srcs}" "libbu;librt;libgcv;librender;Qt5::Core;Qt5::Widgets;Qt5::OpenGL;${OPENGL_LIBS}")
+  endif (Qt6Widgets_FOUND)
 
   DISTCLEAN(
     moc_gfile.cpp_parameters

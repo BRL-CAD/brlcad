@@ -23,6 +23,7 @@
  *
  */
 
+#include "common.h"
 #include <QPainter>
 #include <QString>
 
@@ -93,7 +94,11 @@ CADAttributesModel::add_Children(const char *name, QKeyValNode *curr_node)
 {
     if (BU_STR_EQUAL(name, "color")) {
 	QString val(bu_avs_get(avs, name));
+#ifdef USE_QT6
+	QStringList vals = val.split(QRegularExpression("/"));
+#else
 	QStringList vals = val.split(QRegExp("/"));
+#endif
 	(void)add_pair("r", vals.at(0).toLocal8Bit(), curr_node, db5_standardize_attribute(name));
 	(void)add_pair("g", vals.at(1).toLocal8Bit(), curr_node, db5_standardize_attribute(name));
 	(void)add_pair("b", vals.at(2).toLocal8Bit(), curr_node, db5_standardize_attribute(name));

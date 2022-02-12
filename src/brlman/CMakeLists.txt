@@ -25,8 +25,11 @@ endif (NOT BRLCAD_ENABLE_QT AND TARGET libtclcad)
 
 # Qt version of brlman GUI
 if (BRLCAD_ENABLE_QT)
-  find_package(Qt5 COMPONENTS Core Widgets Gui)
-  set(brlman_libs libqtcad Qt5::Widgets Qt5::Gui ${brlman_libs})
+  if (Qt6Widgets_FOUND)
+    set(brlman_libs libqtcad Qt6::Widgets Qt6::Gui ${brlman_libs})
+  else()
+    set(brlman_libs libqtcad Qt5::Widgets Qt5::Gui ${brlman_libs})
+  endif (Qt6Widgets_FOUND)
 endif (BRLCAD_ENABLE_QT)
 
 list(REMOVE_DUPLICATES BRLMAN_INCLUDE_DIRS)

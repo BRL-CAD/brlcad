@@ -9,10 +9,11 @@ if(BRLCAD_ENABLE_QT)
     endif (OPENGL_gl_LIBRARY)
   endif (BRLCAD_ENABLE_OPENGL)
   if (OPENGL_LIBS)
-    find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL)
-    set(OPENGL_LIBS "Qt5::OpenGL;${OPENGL_LIBS}")
-  else (OPENGL_LIBS)
-    find_package(Qt5 COMPONENTS Core Widgets Gui)
+    if (Qt6Widgets_FOUND)
+      set(OPENGL_LIBS "Qt6::OpenGL;Qt6::OpenGLWidgets;${OPENGL_LIBS}")
+    else()
+      set(OPENGL_LIBS "Qt5::OpenGL;${OPENGL_LIBS}")
+    endif (Qt6Widgets_FOUND)
   endif (OPENGL_LIBS)
 
   include_directories(
@@ -94,9 +95,18 @@ if(BRLCAD_ENABLE_QT)
 
   set(USE_OBJECT_LIBS OFF)
 
-  QT5_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_hdrs})
-  QT5_ADD_RESOURCES(qtcad_qrc qtcad_resources.qrc)
-  BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "libged;libdm;librt;libbu;Qt5::Core;Qt5::Widgets;${OPENGL_LIBS}")
+  if (Qt6Widgets_FOUND)
+    QT6_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_hdrs})
+    QT6_ADD_RESOURCES(qtcad_qrc qtcad_resources.qrc)
+  else()
+    QT5_WRAP_CPP(qtcad_moc_srcs ${qtcad_moc_hdrs})
+    QT5_ADD_RESOURCES(qtcad_qrc qtcad_resources.qrc)
+  endif (Qt6Widgets_FOUND)
+  if (Qt6Widgets_FOUND)
+    BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "libged;libdm;librt;libbu;Qt6::Core;Qt6::Widgets;${OPENGL_LIBS}")
+  else()
+    BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "libged;libdm;librt;libbu;Qt5::Core;Qt5::Widgets;${OPENGL_LIBS}")
+  endif (Qt6Widgets_FOUND)
   if (OPENGL_LIBS)
     set_property(TARGET libqtcad APPEND PROPERTY COMPILE_DEFINITIONS "QT_SYSTEM_OPENGL")
   endif (OPENGL_LIBS)
@@ -118,7 +128,6 @@ set(qtcad_ignore_srcs
   bindings.h
   qtcad_resources.qrc
   QtGL.cpp
-  qt6.patch
   )
 
 CMAKEFILES(${qtcad_ignore_srcs})

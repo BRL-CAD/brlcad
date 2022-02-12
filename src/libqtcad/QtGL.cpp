@@ -218,8 +218,11 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
 	update();
 	emit changed();
     }
-
+#ifdef USE_QT6
+    bu_log("X,Y: %f, %f\n", e->position().x(), e->position().y());
+#else
     bu_log("X,Y: %d, %d\n", e->x(), e->y());
+#endif
 
     QOpenGLWidget::mousePressEvent(e);
 }
@@ -243,8 +246,13 @@ void QtGL::mouseMoveEvent(QMouseEvent *e)
     }
 
     // Current positions are the new previous positions
+#ifdef USE_QT6
+    x_prev = e->position().x();
+    y_prev = e->position().y();
+#else
     x_prev = e->x();
     y_prev = e->y();
+#endif
 
     QOpenGLWidget::mouseMoveEvent(e);
 }

@@ -9,13 +9,15 @@ set(SWRAST_SRCS
 # in a "headless" configuration, with screengrab able to retrieve and save
 # images of the drawn scene.
 if(BRLCAD_ENABLE_QT)
-  find_package(Qt5 COMPONENTS Core Widgets)
 
   add_definitions(-DSWRAST_QT)
 
   set(SWRAST_SRCS ${SWRAST_SRCS} swrastwin.cpp)
-
-  QT5_WRAP_CPP(swrast_moc_srcs swrastwin.h)
+  if(Qt6Widgets_FOUND)
+    QT6_WRAP_CPP(swrast_moc_srcs swrastwin.h)
+  else()
+    QT5_WRAP_CPP(swrast_moc_srcs swrastwin.h)
+  endif(Qt6Widgets_FOUND)
 
   DISTCLEAN(moc_swrastwin.cpp_parameters)
 endif(BRLCAD_ENABLE_QT)
@@ -39,7 +41,11 @@ set(SWRAST_SRCS ${SWRAST_SRCS} ${swrast_moc_srcs})
 
 dm_plugin_library(dm-swrast SHARED ${SWRAST_SRCS})
 if(BRLCAD_ENABLE_QT)
-  target_link_libraries(dm-swrast libqtcad libdm libbu osmesa Qt5::Core Qt5::Widgets)
+  if(Qt6Widgets_FOUND)
+    target_link_libraries(dm-swrast libqtcad libdm libbu osmesa Qt6::Core Qt6::Widgets)
+  else()
+    target_link_libraries(dm-swrast libqtcad libdm libbu osmesa Qt5::Core Qt5::Widgets)
+  endif(Qt6Widgets_FOUND)
 else(BRLCAD_ENABLE_QT)
   target_link_libraries(dm-swrast libdm libbu osmesa)
 endif(BRLCAD_ENABLE_QT)

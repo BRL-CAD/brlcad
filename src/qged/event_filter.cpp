@@ -22,6 +22,7 @@
  *
  */
 
+#include "common.h"
 #include <iostream>
 #include <QTimer>
 #include <QEvent>
@@ -39,7 +40,11 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     if (!c || !c->w)
 	return false;
     QWidget *vcp = c->w->vc->tpalette;
+#ifdef USE_QT6
+    QPoint gpos = m_e->globalPosition().toPoint();
+#else
     QPoint gpos = m_e->globalPos();
+#endif
     if (vcp) {
 	QRect lrect = vcp->geometry();
 	QPoint mpos = vcp->mapFromGlobal(gpos);

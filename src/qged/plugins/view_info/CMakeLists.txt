@@ -29,11 +29,20 @@ set(view_info_moc_headers
 
 if(BRLCAD_ENABLE_QT)
 
-  QT5_WRAP_CPP(view_info_moc_srcs ${view_info_moc_headers})
-  QT5_ADD_RESOURCES(icon_qrc icon.qrc)
+  if(Qt6Widgets_FOUND)
+    QT6_WRAP_CPP(view_info_moc_srcs ${view_info_moc_headers})
+    QT6_ADD_RESOURCES(icon_qrc icon.qrc)
+  else()
+    QT5_WRAP_CPP(view_info_moc_srcs ${view_info_moc_headers})
+    QT5_ADD_RESOURCES(icon_qrc icon.qrc)
+  endif(Qt6Widgets_FOUND)
 
   qged_plugin(qged_view_info SHARED ${view_info_srcs} ${view_info_moc_srcs} ${icon_qrc})
-  target_link_libraries(qged_view_info libqtcad libged librt libbu Qt5::Widgets)
+  if(Qt6Widgets_FOUND)
+    target_link_libraries(qged_view_info libqtcad libged librt libbu Qt6::Widgets)
+  else()
+    target_link_libraries(qged_view_info libqtcad libged librt libbu Qt5::Widgets)
+  endif(Qt6Widgets_FOUND)
   set_property(TARGET qged_view_info APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(qged_view_info view_info.cpp)
   PLUGIN_SETUP(qged_view_info qged)

@@ -159,7 +159,7 @@ void
 QToolPalette::button_layout_resize()
 {
     div_t layout_dim = div(button_container->size().width()-1, icon_width);
-    div_t layout_grid = div(elements.count(), layout_dim.quot);
+    div_t layout_grid = div((int)elements.count(), (int)layout_dim.quot);
     if (layout_grid.rem > 0) {
 	button_container->setMinimumHeight((layout_grid.quot + 1) * icon_height);
 	button_container->setMaximumHeight((layout_grid.quot + 1) * icon_height);

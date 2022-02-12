@@ -38,7 +38,11 @@
 #endif
 
 #ifdef __cplusplus
-#include <QtWidgets/QOpenGLWidget>
+#  ifdef USE_QT6
+#    include <QOpenGLWidget>
+#  else
+#    include <QtWidgets/QOpenGLWidget>
+#  endif
 #endif
 
 extern "C" {
