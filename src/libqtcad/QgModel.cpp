@@ -926,7 +926,7 @@ QgModel::fetchMore(const QModelIndex &idx)
 	} else {
 	    // Previous tree did not have an appropriate QgItem -
 	    // make a new one
-	    bu_log("new item: %lld\n", nh[i]);
+	    bu_log("new item: %llu\n", nh[i]);
 	    QgItem *nitem = new QgItem();
 	    nitem->parentItem = item;
 	    nitem->ihash = nh[i];
