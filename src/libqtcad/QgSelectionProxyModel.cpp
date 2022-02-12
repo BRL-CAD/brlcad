@@ -67,23 +67,17 @@ QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
 {
     if (!idx.isValid()) return QVariant();
     QgItem *curr_node = static_cast<QgItem *>(idx.internalPointer());
-    QgModel *m = (QgModel *)sourceModel();
-    gInstance *g = curr_node->instance();
-    if (!g)
-	return QVariant();
     if (role == Qt::DisplayRole) {
-	if (g->dp)
-	    return QVariant(g->dp->d_namep);
-	return QVariant();
+	return QVariant(bu_vls_cstr(&curr_node->name));
     }
     if (role == BoolInternalRole) {
-	return QVariant(g->op);
+	return QVariant(curr_node->op);
     }
     if (role == DirectoryInternalRole)
-	return QVariant::fromValue((void *)(g->dp));
+	return QVariant::fromValue((void *)(curr_node->dp));
 
     if (role == TypeIconDisplayRole)
-	return QVariant(QgIcon(g->dp, (m->gedp) ? m->gedp->dbip : NULL));
+	return QVariant(curr_node->icon);
 #if 0
     if (role == RelatedHighlightDisplayRole) return curr_node->is_highlighted;
     if (role == InstanceHighlightDisplayRole) return curr_node->instance_highlight;

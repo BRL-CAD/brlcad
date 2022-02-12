@@ -119,6 +119,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <QAbstractItemModel>
+#include <QImage>
 #include <QModelIndex>
 
 #include "xxhash.h"
@@ -254,10 +255,7 @@ class QTCAD_EXPORT QgItem
 	 * gInstance it represents is still active in the model.  Unlike a
 	 * pointer, the ihash lookup will let us make a valid/invalid
 	 * determination with a find lookup on the model's instance map.
-	 *
-	 * Almost all information used by the views (name, icon, etc.) will come
-	 * from the gInstance, since those properties are all shared by all QgItems
-	 * associated with that gInstance. */
+	 */
 	unsigned long long ihash = 0;
 	QgModel *ctx = NULL;
 	QgItem *parentItem = NULL;
@@ -268,6 +266,12 @@ class QTCAD_EXPORT QgItem
 	 * vector to make this determination. */
 	bool open_itm = false;
 
+	// Cached data from the gInstance, so we can keep
+	// displaying while librt does work on the gInstances.
+	struct bu_vls name = BU_VLS_INIT_ZERO;
+	db_op_t op = DB_OP_UNION;
+	struct directory *dp = NULL;
+	QImage icon;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.

@@ -52,6 +52,7 @@
 #include "../libged/alphanum.h"
 #include "raytrace.h"
 #include "qtcad/QgModel.h"
+#include "qtcad/QgUtil.h"
 
 /* db_tree_funcleaf is almost what we need here, but not quite - it doesn't
  * pass quite enough information.  We need the parent op as well. */
@@ -732,6 +733,10 @@ QgModel::refresh()
 	    nitem->parentItem = NULL;
 	    nitem->ihash = i_it->first;
 	    nitem->ctx = this;
+	    bu_vls_sprintf(&nitem->name, "%s", i_it->second->dp_name.c_str());
+	    nitem->icon = QgIcon(i_it->second->dp, gedp->dbip);
+	    nitem->op = i_it->second->op;
+	    nitem->dp = i_it->second->dp;
 	    ntops_items.push_back(nitem);
 	}
 	std::sort(ntops_items.begin(), ntops_items.end(), QgItem_cmp());
@@ -926,6 +931,11 @@ QgModel::fetchMore(const QModelIndex &idx)
 	    nitem->parentItem = item;
 	    nitem->ihash = nh[i];
 	    nitem->ctx = this;
+	    gInstance *g = nitem->instance();
+	    bu_vls_sprintf(&nitem->name, "%s", g->dp_name.c_str());
+	    nitem->icon = QgIcon(g->dp, gedp->dbip);
+	    nitem->op = g->op;
+	    nitem->dp = g->dp;
 	    nc.push_back(nitem);
 	}
     }
@@ -1563,6 +1573,10 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    nitem->parentItem = rootItem;
 	    nitem->ihash = nhash;
 	    nitem->ctx = this;
+	    bu_vls_sprintf(&nitem->name, "%s", ninst->dp_name.c_str());
+	    nitem->icon = QgIcon(ninst->dp, gedp->dbip);
+	    nitem->op = ninst->op;
+	    nitem->dp = ninst->dp;
 	    tops_items.push_back(nitem);
 	}
     }
