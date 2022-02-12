@@ -130,9 +130,6 @@ int main(int argc, char *argv[])
     QgModel sm(NULL, argv[0]);
     QgModel *s = &sm;
 
-    if (!s->IsValid())
-	bu_exit(-1, "failed to open .g file at %s\n", argv[0]);
-
     bu_log("Hierarchy instance cnt: %zd\n", s->instances->size());
     bu_log("Top instance cnt: %zd\n", s->tops_instances->size());
 

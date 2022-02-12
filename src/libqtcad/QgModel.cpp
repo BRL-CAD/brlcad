@@ -628,6 +628,8 @@ QgModel::QgModel(QObject *p, const char *npath)
     instances = new std::unordered_map<unsigned long long, gInstance *>;
     instances->clear();
 
+    items = new std::unordered_set<QgItem *>;
+    items->clear();
 
 
     // If there's no path, at least for the moment we have nothing to model.
@@ -648,10 +650,13 @@ QgModel::QgModel(QObject *p, const char *npath)
 
 QgModel::~QgModel()
 {
+    delete items;
+    delete tops_instances;
+    delete instances;
+
     bv_free(empty_gvp);
     BU_PUT(empty_gvp, struct bview);
     ged_close(gedp);
-    BU_PUT(gedp, struct ged);
     delete rootItem;
 }
 
@@ -750,8 +755,9 @@ QgModel::refresh()
 	// QgItems will be reused in those cases
 	std::unordered_set<QgItem *> added_set(added.begin(), added.end());
 	for (size_t i = 0; i < ntops_items.size(); i++) {
-	    if (added_set.find(ntops_items[i]) == added_set.end())
+	    if (added_set.find(ntops_items[i]) == added_set.end()) {
 		delete ntops_items[i];
+	    }
 	}
 
 	// Assemble the new composite tops vector, combining the original
@@ -762,6 +768,7 @@ QgModel::refresh()
 		modded_tops_items.push_back(tops_items[i]);
 	}
 	for (size_t i = 0; i < added.size(); i++) {
+	    items->insert(added[i]);
 	    modded_tops_items.push_back(added[i]);
 	}
 
@@ -781,6 +788,7 @@ QgModel::refresh()
 
     // We've updated the tops array now - delete the old QgItems that were removed.
     for (size_t i = 0; i < removed.size(); i++) {
+	items->erase(removed[i]);
 	delete removed[i];
     }
 
@@ -937,6 +945,7 @@ QgModel::fetchMore(const QModelIndex &idx)
 	    nitem->op = g->op;
 	    nitem->dp = g->dp;
 	    nc.push_back(nitem);
+	    items->insert(nitem);
 	}
     }
 
@@ -950,6 +959,7 @@ QgModel::fetchMore(const QModelIndex &idx)
 	while (!oc_it->second.empty()) {
 	    QgItem *itm = oc_it->second.front();
 	    oc_it->second.pop();
+	    items->erase(itm);
 	    delete itm;
 	}
     }
@@ -983,15 +993,6 @@ QgModel::remove_children(QgItem *itm)
 	itm->children.clear();
 	endRemoveRows();
     }
-}
-
-bool
-QgModel::IsValid()
-{
-    if (gedp)
-	return true;
-
-    return false;
 }
 
 void
@@ -1578,6 +1579,7 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    nitem->op = ninst->op;
 	    nitem->dp = ninst->dp;
 	    tops_items.push_back(nitem);
+	    items->insert(nitem);
 	}
     }
     bu_free(db_objects, "tops obj list");

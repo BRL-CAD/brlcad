@@ -284,6 +284,35 @@ class QTCAD_EXPORT QgItem
  * definitely interest in an ability for users to visualize and modify
  * attributes as additional columns in a tree view, so we need to design and
  * maintain this code with that eventual use case in mind.
+ *
+ * Hierarchy items
+ *
+ * One of the subtle points of a .g hierarchy representation is that a
+ * gInstance may be locally unique, but not globally unique.  For
+ * example, if comb A has underneath it two different instances of comb
+ * B using different placement matrices, and B is defined using C:
+ *
+ * A
+ *   u [M1] B
+ *            u C
+ *                u D
+ *   u [M2] B
+ *            u C
+ *                u D
+ *
+ * D has only one unique gInstance definition in this hierarchy - IDN
+ * matrix union of D into C - but that instance has TWO manifestations
+ * in the overall tree that are NOT the same model items by virtue of
+ * having different B parent instances further up in the hierarchy:
+ * Au[M1]B and Au[M2]B.
+ *
+ * To with this the primary model hierarchy is an items hierarchy which
+ * holds QgItems that encode a reference to a gInstance and the
+ * parent/child data specific to an individual place in the hierarchy.
+ * It is a QgItem, not a gInstance, which can correspond to a row in a
+ * Qt abstract model.  Unlike gInstances, QgItems are created lazily in
+ * response to view requests, working from a seed set created from the
+ * top level objects in a database.
  */
 class QTCAD_EXPORT QgModel : public QAbstractItemModel
 {
@@ -293,8 +322,23 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	explicit QgModel(QObject *p = NULL, const char *npath = NULL);
 	~QgModel();
 
-	// Get the root QgItem
-	QgItem *root();
+
+
+	// .g Db interface and containers
+	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
+	struct ged *gedp = NULL;
+
+	bool need_update_nref = false;
+
+	/* Used by callers to identify which objects need to be redrawn when
+	 * scene views are updated. */
+	std::unordered_set<struct directory *> changed_dp;
+
+
+
+	// Functionality safe to use in librt callbacks - key point is to not
+	// alter QgItems, as doing so must be coordinated with Qt to avoid
+	// invalid data states in the model.
 
 	// Certain .g objects (comb, extrude, etc.) will define one or more
 	// implicit instances.  We need to create those instances both on
@@ -305,62 +349,38 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// of updates to the gInstance containers
 	void update_instances(struct directory *dp);
 
-	// After a major change (opening or re-opening) rebuild the model
-	void refresh();
 
 	// Build a map of gInstance hashes to instances for easy lookup.  This
 	// is for gInstance reuse.  In trees that heavily reuse combs avoiding
 	// the storing of duplicate gInstances will save memory.
 	std::unordered_map<unsigned long long, gInstance *> *instances = NULL;
 
-	// Hierarchy items
-	//
-	// One of the subtle points of a .g hierarchy representation is that a
-	// gInstance may be locally unique, but not globally unique.  For
-	// example, if comb A has underneath it two different instances of comb
-	// B using different placement matrices, and B is defined using C:
-	//
-	// A
-	//   u [M1] B
-	//            u C
-	//                u D
-	//   u [M2] B
-	//            u C
-	//                u D
-	//
-	// D has only one unique gInstance definition in this hierarchy - IDN
-	// matrix union of D into C - but that instance has TWO manifestations
-	// in the overall tree that are NOT the same model items by virtue of
-	// having different B parent instances further up in the hierarchy:
-	// Au[M1]B and Au[M2]B.
-	//
-	// To with this the primary model hierarchy is an items hierarchy which
-	// holds QgItems that encode a reference to a gInstance and the
-	// parent/child data specific to an individual place in the hierarchy.
-	// It is a QgItem, not a gInstance, which can correspond to a row in a
-	// Qt abstract model.  Unlike gInstances, QgItems are created lazily in
-	// response to view requests, working from a seed set created from the
-	// top level objects in a database.
-	//
-	// The seed set is the set of objects with no parents in the hierarchy.
-	// (What users of MGED think of as the "tops" set, as well as objects
-	// with cyclic subtrees - the latter would be invisible in the tree
-	// view if we do not list them as top level objects.)  This set may
-	// change after each database edit, but there will always be at least
-	// one object in a valid .g hierarchy that has no parent.
+	// The "seed" set for a tree view is the set of objects with no parents
+	// in the hierarchy.  (What users of MGED think of as the "tops" set,
+	// as well as objects with cyclic subtrees - the latter would be
+	// invisible in the tree view if we do not list them as top level
+	// objects.)  This set may change after each database edit, but there
+	// will always be at least one object in a valid .g hierarchy that has
+	// no parent.
 	std::unordered_map<unsigned long long, gInstance *> *tops_instances = NULL;
+
+
+
+	// Functionality that deal with QgItem manipulation - do not call from
+	// librt callbacks!
+
+	// Get the root QgItem
+	QgItem *root();
+
+	// After a major change (opening or re-opening) rebuild the model
+	void refresh();
+
+	// QgItems corresponding to the tops_instances
 	std::vector<QgItem *> tops_items;
 
-	// .g Db interface and containers
-	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
-	bool IsValid();
-	struct ged *gedp = NULL;
+	// Convenience container holding all active QgItems
+	std::unordered_set<QgItem *> *items = NULL;
 
-	bool need_update_nref = false;
-
-	/* Used by callers to identify which objects need to be redrawn when
-	 * scene views are updated. */
-	std::unordered_set<struct directory *> changed_dp;
 
 	// Qt Model interface
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;

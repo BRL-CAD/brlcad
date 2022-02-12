@@ -80,9 +80,6 @@ int main(int argc, char *argv[])
     QgModel sm(NULL, argv[0]);
     QgModel *s = &sm;
 
-    if (!s->IsValid())
-	bu_exit(-1, "failed to open .g file at %s\n", argv[0]);
-
     //open_tops(s, -1);
 
     QgSelectionProxyModel sp;
