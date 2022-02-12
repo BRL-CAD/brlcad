@@ -355,6 +355,19 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// the storing of duplicate gInstances will save memory.
 	std::unordered_map<unsigned long long, gInstance *> *instances = NULL;
 
+	// TODO - we can't delete instances until they're unreferenced by
+	// QgItems, or the item logic will become invalid.  QgItems aren't
+	// immediately updated by the librt callbacks, since we can't change
+	// the Qt model without some setup, so invalidated gInstances will need
+	// to be temporarily cached somewhere before removal.
+	//
+	// In the longer term would probably be better, rather than creating
+	// and deleting these with new and delete, to just have a reusable
+	// vector of gInstances that we index - keep a pool of currently unused
+	// instances for assignment, and only add new ones to the vector when
+	// all currently available are in use.
+	std::vector<gInstance *> obsolete_instances;
+
 	// The "seed" set for a tree view is the set of objects with no parents
 	// in the hierarchy.  (What users of MGED think of as the "tops" set,
 	// as well as objects with cyclic subtrees - the latter would be
