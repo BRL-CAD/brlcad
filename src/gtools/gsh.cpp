@@ -246,17 +246,6 @@ gsh_clear(void *vs, int UNUSED(argc), const char **UNUSED(argv))
 }
 
 int
-gsh_close(void *vs, int UNUSED(argc), const char **UNUSED(argv))
-{
-    struct gsh_state *s = (struct gsh_state *)vs;
-    ged_close(s->gedp);
-    s->gedp = NULL;
-    printf("closed database %s\n", bu_vls_cstr(&s->gfile));
-    bu_vls_trunc(&s->gfile, 0);
-    return BRLCAD_OK;
-}
-
-int
 gsh_exit(void *UNUSED(vs), int UNUSED(argc), const char **UNUSED(argv))
 {
     return BRLCAD_EXIT;
@@ -287,7 +276,6 @@ gsh_open(void *vs, int argc, const char **argv)
 // TODO - an equivalent to the MGED opendb command would go here.
 static struct bu_cmdtab gsh_cmds[] = {
     {"clear", gsh_clear},
-    {"close", gsh_close},
     {"exit",  gsh_exit},
     {"open",  gsh_open},
     {"q",     gsh_exit},
@@ -427,10 +415,10 @@ main(int argc, const char **argv)
 	if (bu_cmd_valid(gsh_cmds, av[0]) == BRLCAD_OK) {
 	    int cbret;
 	    int cret = bu_cmd(gsh_cmds, ac, (const char **)av, 0, (void *)&s, &cbret);
-	  
+
 	    // Regardless of what happened, this is not a raw GED cmd 
 	    is_gsh_cmd = 1;
-	    
+
 	    if (cret != BRLCAD_OK)
 		printf("Error executing command %s\n", av[0]);
 
@@ -448,6 +436,10 @@ main(int argc, const char **argv)
 	    // The command ran, see if the display needs updating
 	    view_update(&s);
 	}
+
+	// If we closed the dbip, clear out the gfile name
+	if (s.gedp->dbip)
+	    bu_vls_trunc(&s.gfile, 0);
 
 	/* When we're interactive, the last line won't show in linenoise unless
 	 * we have a '\n' character at the end.  We don't reliably get that
@@ -469,7 +461,7 @@ main(int argc, const char **argv)
 	/* Free the temporary argv structures */
 	bu_free(input, "input copy");
 	bu_free(av, "input argv");
-    
+
 	/* Reset the linenoise line */
 	bu_vls_trunc(&s.iline, 0);
     }

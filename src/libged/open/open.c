@@ -38,7 +38,6 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
     struct db_i *new_dbip;
     static const char *usage = "[filename]";
 
-    //GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
@@ -57,6 +56,8 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	struct mater *old_materp = rt_material_head();
 	struct mater *new_materp;
 
+	// TODO - need to look more carefully at material_head and what
+	// its expected behavior is through a dbip change...
 	rt_new_material_head(MATER_NULL);
 
 	if ((new_dbip = _ged_open_dbip(argv[1], 0)) == DBI_NULL) {
@@ -67,6 +68,10 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
+	av[0] = "zap";
+	av[1] = (char *)0;
+	ged_zap(gedp, 1, (const char **)av);
+
 	new_materp = rt_material_head();
 
 	gedp->dbip = old_dbip;
@@ -75,20 +80,34 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	rt_new_material_head(old_materp);
 
-	av[0] = "zap";
-	av[1] = (char *)0;
-	ged_zap(gedp, 1, (const char **)av);
-
 	/* close current database */
-	db_close(gedp->dbip);
+	if (gedp->ged_wdbp) {
+	    wdb_close(gedp->ged_wdbp);
+	} else {
+	    if (gedp->dbip)
+		db_close(gedp->dbip);
+	}
+	gedp->ged_wdbp = RT_WDB_NULL;
+	gedp->dbip = NULL;
+
+	/* Terminate any ged subprocesses */
+	if (gedp != GED_NULL) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
+		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
+		if (!rrp->aborted) {
+		    bu_terminate(bu_process_pid(rrp->p));
+		    rrp->aborted = 1;
+		}
+		bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
+		BU_PUT(rrp, struct ged_subprocess);
+	    }
+	    bu_ptbl_reset(&gedp->ged_subp);
+	}
 
 	gedp->dbip = new_dbip;
-	if (gedp->ged_wdbp) {
-	    gedp->ged_wdbp->dbip = gedp->dbip;
-	}
-	rt_new_material_head(new_materp);
-
 	gedp->ged_wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DISK);
+
+	rt_new_material_head(new_materp);
 
 	/* New database open, need to initialize reference counts */
 	db_update_nref(gedp->dbip, &rt_uniresource);
