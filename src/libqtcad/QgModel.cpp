@@ -441,7 +441,70 @@ QgModel::~QgModel()
     delete rootItem;
 }
 
+void
+QgModel::reset(struct db_i *n_dbip)
+{
+    // If the dbip changed, we have a new database and we need to completely
+    // reset the model contents.
+    // NOTE:  tops objects in the .g file are "instances" beneath the .g
+    // itself, which is the analogy to Qt's hidden "root" node in a model.  To
+    // handle them, we define "NULL root" instances.
 
+    beginResetModel();
+
+    // Remove old instances and re-initialize containers (clears out the Qt
+    // model data.)
+    if (items) {
+	std::unordered_set<QgItem *>::iterator i_it;
+	for (i_it = (*items).begin(); i_it != (*items).end(); i_it++) {
+	    QgItem *itm = *i_it;
+	    delete itm;
+	}
+    }
+    tops_items.clear();
+    changed_dp.clear();
+
+    // Reset and initialize the .g level data (gInstances)
+    initialize_instances(tops_instances, instances, n_dbip);
+
+    // Primary driver of model updates is when individual objects are changed
+    db_add_changed_clbk(n_dbip, &qgmodel_changed_callback, (void *)this);
+
+    // If the tops list changes, we need to update that vector as well.  Unlike
+    // local dp changes, we can only (re)build the tops list after an
+    // update_nref pass is complete.
+    db_add_update_nref_clbk(n_dbip, &qgmodel_update_nref_callback, (void *)this);
+
+    // tops entries get a QgItem by default
+    std::unordered_map<unsigned long long, gInstance *>::iterator top_it;
+    for (top_it = tops_instances->begin(); top_it != tops_instances->end(); top_it++) {
+	gInstance *ninst = top_it->second;
+	QgItem *nitem = new QgItem(ninst, this);
+	nitem->parentItem = rootItem;
+	tops_items.push_back(nitem);
+	items->insert(nitem);
+    }
+
+    // Sort tops_items according to alphanum
+    std::sort(tops_items.begin(), tops_items.end(), QgItem_cmp());
+
+    // Make tops items children of the rootItem
+    rootItem->children.clear();
+    for (size_t i = 0; i < tops_items.size(); i++) {
+	rootItem->appendChild(tops_items[i]);
+    }
+
+    endResetModel();
+
+    // Inform the world the database has changed.
+    emit mdl_changed_db((void *)gedp);
+}
+
+
+void
+QgModel::g_update()
+{
+}
 
 void
 QgModel::update_tops_items()
@@ -912,56 +975,7 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     // If the dbip changed, we have a new database and we need to completely
     // reset the model contents.
-    // NOTE:  tops objects in the .g file are "instances" beneath the .g
-    // itself, which is the analogy to Qt's hidden "root" node in a model.  To
-    // handle them, we define "NULL root" instances.
-
-    beginResetModel();
-    
-    // Remove old instances and re-initialize containers
-    if (items) {
-	std::unordered_set<QgItem *>::iterator i_it;
-	for (i_it = (*items).begin(); i_it != (*items).end(); i_it++) {
-	    QgItem *itm = *i_it;
-	    delete itm;
-	}
-    }
-    tops_items.clear();
-    changed_dp.clear();
-
-    initialize_instances(tops_instances, instances, gedp->dbip);
-
-    // Primary driver of model updates is when individual objects are changed
-    db_add_changed_clbk(gedp->dbip, &qgmodel_changed_callback, (void *)this);
-
-    // If the tops list changes, we need to update that vector as well.  Unlike
-    // local dp changes, we can only (re)build the tops list after an
-    // update_nref pass is complete.
-    db_add_update_nref_clbk(gedp->dbip, &qgmodel_update_nref_callback, (void *)this);
-
-    // tops entries get a QgItem by default
-    std::unordered_map<unsigned long long, gInstance *>::iterator top_it;
-    for (top_it = tops_instances->begin(); top_it != tops_instances->end(); top_it++) {
-	gInstance *ninst = top_it->second;
-	QgItem *nitem = new QgItem(ninst, this);
-	nitem->parentItem = rootItem;
-	tops_items.push_back(nitem);
-	items->insert(nitem);
-    }
-
-    // Sort tops_items according to alphanum
-    std::sort(tops_items.begin(), tops_items.end(), QgItem_cmp());
-
-    // Make tops items children of the rootItem
-    rootItem->children.clear();
-    for (size_t i = 0; i < tops_items.size(); i++) {
-	rootItem->appendChild(tops_items[i]);
-    }
-
-    endResetModel();
-
-    // Inform the world the database has changed.
-    emit mdl_changed_db((void *)gedp);
+    reset(gedp->dbip);
 
     return ret;
 }

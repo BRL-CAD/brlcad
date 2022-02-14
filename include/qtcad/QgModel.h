@@ -340,18 +340,51 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 
 
 	// Qt Model interface
-	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-	QModelIndex index(int row, int column, const QModelIndex &p) const override;
-	QModelIndex parent(const QModelIndex &child) const override;
-	int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-	int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
-	bool canFetchMore(const QModelIndex &idx) const override;
-	void fetchMore(const QModelIndex &idx) override;
-	void remove_children(QgItem *node);
+	// Whenever the dbip changes, we need to start over and not make any
+	// assumptions about what's in the model.
+	void reset(struct db_i *n_dbip);
+
+	// Updates to .g models are potentially far-reaching - in principle, a
+	// single GED command execution can change every item in the database.
+	// This method is intended to be run after a GED command execution to
+	// update the model.
+	void g_update();
+
+	// Qt often needs to work in terms of index values, but to manipulate
+	// data more directly we need to get the QgItem pointer itself.  These
+	// convenience functions will translate each reference type.
 	QModelIndex NodeIndex(QgItem *node) const;
 	int NodeRow(QgItem *node) const;
+
+	// Return data used for displaying each individual entry
+	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+
+	// Get data for labeling column headers (for the moment this is just
+	// the object name label - if/when we add support for attribute display
+	// in columns it will need to get more sophisticated.)
+	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+
+	// This is 1 until we add support for attribute reporting
+	int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+
+	// The number of available children.  This will correspond to the
+	// number of lines printed by the "l" command to show the immediate
+	// children of a comb (indeed, the tree view of the model can be
+	// thought of in some ways as a graphical version of the "l" command's
+	// textual output.)
+	int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+
+	// These functions tell the model and view that an entry has children
+	// to display and how to retrieve them.
+	bool canFetchMore(const QModelIndex &idx) const override;
+	void fetchMore(const QModelIndex &idx) override;
+
+	QModelIndex index(int row, int column, const QModelIndex &p) const override;
+	QModelIndex parent(const QModelIndex &child) const override;
+
+
+	void remove_children(QgItem *node);
 
 	Qt::ItemFlags flags(const QModelIndex &index) const override;
 	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
