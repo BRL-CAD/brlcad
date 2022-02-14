@@ -155,15 +155,6 @@ QgItem::instance()
 }
 
 void
-QgItem::remove_children()
-{
-    if (!ctx)
-	return;
-    ctx->remove_children(this);
-    children.clear();
-}
-
-void
 QgItem::appendChild(QgItem *c)
 {
     children.push_back(c);
@@ -751,19 +742,6 @@ QgModel::fetchMore(const QModelIndex &idx)
     }
 }
 
-void
-QgModel::remove_children(QgItem *itm)
-{
-    if (!itm)
-	return;
-    QModelIndex idx = NodeIndex(itm);
-    if (itm->children.size()) {
-	beginRemoveRows(idx, 0, itm->children.size() - 1);
-	itm->children.clear();
-	endRemoveRows();
-    }
-}
-
 
 ///////////////////////////////////////////////////////////////////////
 //          Qt abstract model interface implementation
@@ -873,45 +851,6 @@ QgModel::columnCount(const QModelIndex &p) const
     if (p.isValid())
         return static_cast<QgItem*>(p.internalPointer())->columnCount();
     return rootItem->columnCount();
-}
-
-bool
-QgModel::setData(const QModelIndex &index, const QVariant &UNUSED(value), int UNUSED(role))
-{
-    if (!index.isValid())
-	return false;
-
-    // TODO - study the previous CAD Tree implementation for this - there are a number of
-    // highlighting related components that need to be considered.
-    return false;
-}
-
-bool
-QgModel::setHeaderData(int UNUSED(section), Qt::Orientation UNUSED(orientation), const QVariant &UNUSED(value), int UNUSED(role))
-{
-    return false;
-}
-
-bool
-QgModel::insertRows(int UNUSED(row), int UNUSED(count), const QModelIndex &UNUSED(parent))
-{
-    return false;
-}
-
-bool
-QgModel::removeRows(int UNUSED(row), int UNUSED(count), const QModelIndex &UNUSED(parent))
-{
-    return false;
-}
-
-bool QgModel::insertColumns(int UNUSED(column), int UNUSED(count), const QModelIndex &UNUSED(parent))
-{
-    return false;
-}
-
-bool QgModel::removeColumns(int UNUSED(column), int UNUSED(count), const QModelIndex &UNUSED(parent))
-{
-    return false;
 }
 
 ///////////////////////////////////////////////////////////////////////

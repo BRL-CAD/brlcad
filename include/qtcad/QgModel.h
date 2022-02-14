@@ -165,43 +165,13 @@ class QTCAD_EXPORT QgItem
 	explicit QgItem(gInstance *ig, QgModel *ictx);
 	~QgItem();
 
-
 	// Testing functions to simulate GUI activities
 	void open();
 	void close();
 
-	// If a database edit has occurred, everything in
-	// the tree must be validated to see if it is still
-	// current.
-	void remove_children();
-
 	// Return a pointer to the gInstance associated with this QgItem, or
 	// NULL if no valid instance is found.
 	gInstance *instance();
-
-	void appendChild(QgItem *C);
-	QgItem *child(int n);
-	int childCount() const;
-	std::vector<QgItem *> children;
-
-	// NOTE - for now this is 1 - the model will have to
-	// incorporate some notion of exposed attributes and
-	// their ordering before that changes
-	int columnCount() const;
-#if 0
-	QVariant data(int col) const;
-	bool insertChildren(int pos, int cnt, int col);
-	bool insertColumns(int pos, int col);
-#endif
-	QgItem *parent();
-#if 0
-	bool removeChildren(int pos, int cnt);
-	bool removeColumns(int pos, int cnt);
-#endif
-	int childNumber() const;
-#if 0
-	bool setData(int col, const QVariant &v);
-#endif
 
 	/* To a BRL-CAD developer's eyes this is rather abstract, but the
 	 * combination of the ihash and ctx points to the BRL-CAD specific data
@@ -224,8 +194,29 @@ class QTCAD_EXPORT QgItem
 	/* Flag to determine if this QgItem should be viewed as opened or closed -
 	 * in order to preserve subtree state, we don't want to obliterate the
 	 * subtree related data structures, so we can't test for an empty children
-	 * vector to make this determination. */
+	 * vector to make this determination.
+	 *
+	 * This is less than ideal in that it represents a bit of a violation
+	 * of the separation between view and model, but the alternative -
+	 * storing a map in the view class or the selection proxy model
+	 * where we can set and store these flags - is a fair bit more
+	 * involved.  Give we already have some separation between this logic
+	 * and the gInstance logic which is the real wrapper around the .g
+	 * information, going with the simple approach for now. */
 	bool open_itm = false;
+
+	// Qt related elements
+	QgItem *parent();
+	int childNumber() const;
+	void appendChild(QgItem *C);
+	QgItem *child(int n);
+	int childCount() const;
+	// NOTE - for now this is 1 - the model will have to
+	// incorporate some notion of exposed attributes and
+	// their ordering before that changes
+	int columnCount() const;
+	std::vector<QgItem *> children;
+
 
 	// Cached data from the gInstance, so we can keep
 	// displaying while librt does work on the gInstances.
@@ -283,63 +274,9 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	explicit QgModel(QObject *p = NULL, const char *npath = NULL);
 	~QgModel();
 
-
-
 	// .g Db interface and containers
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
 	struct ged *gedp = NULL;
-
-	bool need_update_nref = false;
-
-	/* Used by callers to identify which objects need to be redrawn when
-	 * scene views are updated. */
-	std::unordered_set<struct directory *> changed_dp;
-
-	// Build a map of gInstance hashes to instances for easy lookup.  This
-	// is for gInstance reuse.  In trees that heavily reuse combs avoiding
-	// the storing of duplicate gInstances will save memory.
-	std::unordered_map<unsigned long long, gInstance *> *instances = NULL;
-
-	// TODO - we can't delete instances until they're unreferenced by
-	// QgItems, or the item logic will become invalid.  QgItems aren't
-	// immediately updated by the librt callbacks, since we can't change
-	// the Qt model without some setup, so invalidated gInstances will need
-	// to be temporarily cached somewhere before removal.
-	//
-	// In the longer term would probably be better, rather than creating
-	// and deleting these with new and delete, to just have a reusable
-	// vector of gInstances that we index - keep a pool of currently unused
-	// instances for assignment, and only add new ones to the vector when
-	// all currently available are in use.
-	std::vector<gInstance *> obsolete_instances;
-
-	// The "seed" set for a tree view is the set of objects with no parents
-	// in the hierarchy.  (What users of MGED think of as the "tops" set,
-	// as well as objects with cyclic subtrees - the latter would be
-	// invisible in the tree view if we do not list them as top level
-	// objects.)  This set may change after each database edit, but there
-	// will always be at least one object in a valid .g hierarchy that has
-	// no parent.
-	std::unordered_map<unsigned long long, gInstance *> *tops_instances = NULL;
-
-
-
-	// Functionality that deal with QgItem manipulation - do not call from
-	// librt callbacks!
-
-	// Get the root QgItem
-	QgItem *root();
-
-
-	// QgItems corresponding to the tops_instances
-	void update_tops_items();
-	std::vector<QgItem *> tops_items;
-
-	// Convenience container holding all active QgItems
-	std::unordered_set<QgItem *> *items = NULL;
-
-
-	// Qt Model interface
 
 	// Whenever the dbip changes, we need to start over and not make any
 	// assumptions about what's in the model.
@@ -350,6 +287,11 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// This method is intended to be run after a GED command execution to
 	// update the model.
 	void g_update();
+
+	// Qt Model interface
+
+	// Get the root QgItem
+	QgItem *root();
 
 	// Qt often needs to work in terms of index values, but to manipulate
 	// data more directly we need to get the QgItem pointer itself.  These
@@ -380,28 +322,55 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	bool canFetchMore(const QModelIndex &idx) const override;
 	void fetchMore(const QModelIndex &idx) override;
 
-	int NodeRow(QgItem *node) const;
-	QModelIndex index(int row, int column, const QModelIndex &p) const override;
-	QModelIndex parent(const QModelIndex &child) const override;
-
-
-	void remove_children(QgItem *node);
-
-	Qt::ItemFlags flags(const QModelIndex &index) const override;
-	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
-	bool setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role = Qt::EditRole) override;
-
-	bool insertColumns(int column, int count, const QModelIndex &parent = QModelIndex()) override;
-	bool removeColumns(int column, int count, const QModelIndex &parent = QModelIndex()) override;
-	bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
-	bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
-
+	// A flag for callbacks to set if they alter the database in some way.
+	// Used to determine whether to emit the mdl_changed_db signal once
+	// after a GED command processing call is complete. If emitted, the
+	// interface will know to take certain steps when updating views.
 	int changed_db_flag = 0;
 
+	// It's unclear if we need this, but allow callbacks to insist on a
+	// post-command running of update_nref - in principle this should be
+	// already handled by command and/or librt logic, but not sure if we
+	// can count on that...
+	bool need_update_nref = false;
+
+	/* Used by callers to identify which objects need to be redrawn when
+	 * scene views are updated. */
+	std::unordered_set<struct directory *> changed_dp;
+
+	// Build a map of gInstance hashes to instances for easy lookup.  This
+	// is for gInstance reuse.  In trees that heavily reuse combs avoiding
+	// the storing of duplicate gInstances will save memory.
+	std::unordered_map<unsigned long long, gInstance *> *instances = NULL;
+
+	// Convenience container holding all active QgItems
+	std::unordered_set<QgItem *> *items = NULL;
+
+	// The "seed" set for a tree view is the set of objects with no parents
+	// in the hierarchy.  (What users of MGED think of as the "tops" set,
+	// as well as objects with cyclic subtrees - the latter would be
+	// invisible in the tree view if we do not list them as top level
+	// objects.)  This set may change after each database edit, but there
+	// will always be at least one object in a valid .g hierarchy that has
+	// no parent.
+	std::unordered_map<unsigned long long, gInstance *> *tops_instances = NULL;
+
+	// Sorted QgItem pointers corresponding to the tops_instances
+	std::vector<QgItem *> tops_items;
+
     signals:
+	// Emitted if the commands think they may have changed the database
+	// structure in some way.
 	void mdl_changed_db(void *);
 
     private:
+	int NodeRow(QgItem *node) const;
+	QModelIndex index(int row, int column, const QModelIndex &p) const override;
+	QModelIndex parent(const QModelIndex &child) const override;
+	Qt::ItemFlags flags(const QModelIndex &index) const override;
+
+	void update_tops_items();
+
 	QgItem *rootItem;
 	struct bview *empty_gvp = NULL;
 	struct db_i *model_dbip = NULL;
