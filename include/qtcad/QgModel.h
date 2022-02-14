@@ -355,7 +355,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// data more directly we need to get the QgItem pointer itself.  These
 	// convenience functions will translate each reference type.
 	QModelIndex NodeIndex(QgItem *node) const;
-	int NodeRow(QgItem *node) const;
+	QgItem *getItem(const QModelIndex &index) const;
 
 	// Return data used for displaying each individual entry
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -380,6 +380,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	bool canFetchMore(const QModelIndex &idx) const override;
 	void fetchMore(const QModelIndex &idx) override;
 
+	int NodeRow(QgItem *node) const;
 	QModelIndex index(int row, int column, const QModelIndex &p) const override;
 	QModelIndex parent(const QModelIndex &child) const override;
 
@@ -395,11 +396,12 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 	bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 
+	int changed_db_flag = 0;
+
     signals:
 	void mdl_changed_db(void *);
 
     private:
-	QgItem *getItem(const QModelIndex &index) const;
 	QgItem *rootItem;
 	struct bview *empty_gvp = NULL;
 	struct db_i *model_dbip = NULL;

@@ -223,6 +223,23 @@ QModelIndex QgTreeView::selected()
     }
 }
 
+void
+QgTreeView::redo_expansions(void *)
+{
+    QgModel *sm = (QgModel *)m->sourceModel();
+    std::unordered_set<QgItem *>::iterator i_it;
+    for (i_it = sm->items->begin(); i_it != sm->items->end(); i_it++) {
+	QgItem *itm = *i_it;
+	QModelIndex idx = m->mapFromSource(sm->NodeIndex(itm));
+	if (itm->open_itm && !isExpanded(idx)) {
+	    setExpanded(idx, true);
+	}
+	if (itm->open_itm && !isExpanded(idx)) {
+	    bu_log("expansion failed?\n");
+	}
+    }
+}
+
 void QgTreeView::expand_path(QString path)
 {
     int i = 0;

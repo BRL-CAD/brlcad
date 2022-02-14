@@ -88,6 +88,9 @@ class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 	//void refresh(void *);
 	void mode_change(int i);
         void update_selected_node_relationships(const QModelIndex & index);
+	void item_collapsed(const QModelIndex &index);
+	void item_expanded(const QModelIndex &index);
+	void redo_expansions(void *);
 
     private:
 	// There are a number of relationships which can be used for related

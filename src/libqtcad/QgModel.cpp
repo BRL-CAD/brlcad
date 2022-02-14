@@ -295,11 +295,6 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 
 	// Do the major bookkeeping work of an update
 	update_tops_instances(ctx->tops_instances, ctx->instances, dbip);
-
-	// TODO - probably only need to do this here, and not in qgmodel_changed_callback?
-	// May be safer to do it in both places, but could have performance implications
-	// for large tree views...
-	emit ctx->layoutChanged();
     }
 }
 
@@ -330,7 +325,7 @@ qgmodel_changed_callback(struct db_i *dbip, struct directory *dp, int mode, void
 	    // implications for gInstances.
 	    update_child_instances(ctx->instances, dp, dbip);
 
-	    emit ctx->layoutChanged();
+	    ctx->changed_db_flag = 1;
 	    break;
 	case 1:
 	    bu_log("ADD: %s\n", dp->d_namep);
@@ -352,7 +347,7 @@ qgmodel_changed_callback(struct db_i *dbip, struct directory *dp, int mode, void
 		}
 	    }
 
-	    emit ctx->layoutChanged();
+	    ctx->changed_db_flag = 1;
 	    break;
 	case 2:
 	    bu_log("RM:  %s\n", dp->d_namep);
@@ -379,7 +374,7 @@ qgmodel_changed_callback(struct db_i *dbip, struct directory *dp, int mode, void
 		ctx->instances->erase(i_it->first);
 	    }
 
-	    emit ctx->layoutChanged();
+	    ctx->changed_db_flag = 1;
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -500,10 +495,19 @@ QgModel::reset(struct db_i *n_dbip)
     emit mdl_changed_db((void *)gedp);
 }
 
-
 void
 QgModel::g_update()
 {
+    if (changed_db_flag) {
+	beginResetModel();
+	update_tops_items();
+	endResetModel();
+    }
+    if (changed_db_flag) {
+	emit mdl_changed_db((void *)gedp);
+	emit layoutChanged();
+    }
+    changed_db_flag = 0;
 }
 
 void
@@ -574,18 +578,6 @@ QgModel::update_tops_items()
 	items->erase(removed[i]);
 	delete removed[i];
     }
-
-    // With the tops array updated, now we must walk the child items and
-    // find any that require updating vs. their assigned instances.
-    //
-    // TODO - should probably handle this as part of a separte comprehensive
-    // items survey, not part of the tops step...  also need to handle the
-    // expand() bit...
-    for (size_t i = 0; i < tops_items.size(); i++) {
-	QgItem *itm = tops_items[i];
-	QModelIndex ind = NodeIndex(itm);
-	fetchMore(ind);
-    }
 }
 
 int
@@ -636,10 +628,6 @@ QgModel::canFetchMore(const QModelIndex &idx) const
     return true;
 }
 
-// TODO - I have a feeling we're trying to make the fetchMore logic do too much here.
-// Whenever an operation tries to shrink the number of child rows, Bad Things seem to
-// happen to the model.  Trying various things just shifts around where the badness
-// manifests, which suggests something more conceptually fundamental is off...
 void
 QgModel::fetchMore(const QModelIndex &idx)
 {
@@ -754,10 +742,7 @@ QgModel::fetchMore(const QModelIndex &idx)
     }
 
     // If anything changed, we need to replace children's contents with the new
-    // vector.  TODO - this is another point were an actual Qt model update
-    // should be triggered, so we'll have to figure out how to trigger that.
-    // It may be that this is always triggered from a tops invocation, but I'm
-    // not sure we want to depend on that...
+    // vector.
     if (nc != item->children) {
 	bu_log("fetchMore rebuild: %s\n", item->instance()->dp_name.c_str());
 	beginInsertRows(idx, 0, nc.size() - 1);
@@ -960,10 +945,9 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	db_update_nref(gedp->dbip, &rt_uniresource);
     }
 
-    // Assuming we're not doing a full rebuild, redo the tops list
+    // Assuming we're not doing a full rebuild, trigger the post-cmd updates
     if (gedp->dbip == model_dbip) {
-	// rebuild tops list
-	update_tops_items();
+	g_update();
     }
 
     if (msg && gedp)

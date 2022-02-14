@@ -83,6 +83,21 @@ void QgSelectionProxyModel::mode_change(int i)
     }
 }
 
+void
+QgSelectionProxyModel::item_collapsed(const QModelIndex &index)
+{
+    QgModel *m = (QgModel *)sourceModel();
+    QgItem *itm = m->getItem(index);
+    itm->open_itm = false;
+}
+
+void
+QgSelectionProxyModel::item_expanded(const QModelIndex &index)
+{
+    QgModel *m = (QgModel *)sourceModel();
+    QgItem *itm = m->getItem(index);
+    itm->open_itm = true;
+}
 
 // TODO - In the new setup much of the old setting here is moot - these
 // properties should be looked up from the QgItem or its entries.  The

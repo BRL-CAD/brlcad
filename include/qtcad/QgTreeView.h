@@ -60,6 +60,7 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 	void context_menu(const QPoint &point);
 	void expand_path(QString path);
 	void expand_link(const QUrl &link);
+	void redo_expansions(void *);
 
     private:
 	void header_state();
