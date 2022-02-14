@@ -145,14 +145,14 @@ main(int ac, char *av[])
 	size_t idlen = 0;
 	int match = 0;
 
-	ged_tops(gedp, 2, tops_cmd);
+	ged_exec(gedp, 2, tops_cmd);
 
 	bu_vls_trimspace(gedp->ged_result_str); /* trailing newline */
 	printf("%s_tops=\"%s\"\n", base, bu_vls_cstr(gedp->ged_result_str));
 	if (!BU_STR_EQUIV(bu_vls_cstr(gedp->ged_result_str), ORIGIN_SPHERE))
 	    failures++;
 
-	ged_title(gedp, 1, title_cmd);
+	ged_exec(gedp, 1, title_cmd);
 
 	id = bu_vls_cstr(gedp->ged_result_str);
 	idlen = bu_vls_strlen(gedp->ged_result_str);

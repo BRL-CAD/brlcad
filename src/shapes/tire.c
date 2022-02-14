@@ -59,7 +59,7 @@ int main(int ac, char *av[])
     GED_INIT(&ged, db_fp);
 
     /* create the tire */
-    ret = ged_tire(&ged, ac, (const char **)av);
+    ret = ged_exec(&ged, ac, (const char **)av);
 
     /* Close database */
     wdb_close(db_fp);

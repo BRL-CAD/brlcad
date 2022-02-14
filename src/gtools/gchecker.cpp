@@ -254,8 +254,8 @@ main(int argc, const char **argv)
 		    av[5] = bu_strdup("-q");
 		    av[6] = bu_strdup(objs[i]->d_namep);
 		    bu_vls_trunc(gedp->ged_result_str, 0);
-		    if (ged_check(gedp, 7, av) != BRLCAD_OK) {
-			bu_exit(1, "error running ged_check\n");
+		    if (ged_exec(gedp, 7, av) != BRLCAD_OK) {
+			bu_exit(1, "error running ged 'check' command\n");
 		    }
 		    for (int j = 0; j < 7; j++) bu_free((void *)av[j], "str");
 		    bu_free(av, "av array");
@@ -301,8 +301,8 @@ main(int argc, const char **argv)
 		    av[3] = bu_strdup("-q");
 		    av[4] = bu_strdup(objs[i]->d_namep);
 		    bu_vls_trunc(gedp->ged_result_str, 0);
-		    if (ged_check(gedp, 5, av) != BRLCAD_OK) {
-			bu_exit(1, "error running ged_check\n");
+		    if (ged_exec(gedp, 5, av) != BRLCAD_OK) {
+			bu_exit(1, "error running ged 'check' command\n");
 		    }
 		    for (int j = 0; j < 5; j++) bu_free((void *)av[j], "str");
 		    bu_free(av, "av array");

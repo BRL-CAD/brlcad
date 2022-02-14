@@ -106,7 +106,7 @@ main(int ac, char *av[])
     }
     seconds[4] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))
-	printf("[%2d] %s: %02fs\n", i, tops_av[0], (bu_gettime() - timer) / 1000000.0);
+	printf("[%2d] tops: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     db_close(dbip);
