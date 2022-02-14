@@ -873,6 +873,10 @@ QgModel::canFetchMore(const QModelIndex &idx) const
     return true;
 }
 
+// TODO - I have a feeling we're trying to make the fetchMore logic do too much here.
+// Whenever an operation tries to shrink the number of child rows, Bad Things seem to
+// happen to the model.  Trying various things just shifts around where the badness
+// manifests, which suggests something more conceptually fundamental is off...
 void
 QgModel::fetchMore(const QModelIndex &idx)
 {

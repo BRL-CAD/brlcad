@@ -37,6 +37,29 @@ void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
     struct directory *cdp = RT_DIR_NULL;
     if (!cadtreeview)
 	return;
+
+#if 0
+    // TODO - Not sure this is a good place to do it, but testing suggests we can
+    // check the expanded state of a QgItem here and restore it if the internally
+    // stored QgItem open/closed state doesn't match.  Will probably need to define
+    // our own QgTreeView isExpanded and setExpanded to stash the bookkeeping flags
+    // in the QgItems.
+    //
+    // This appears to be necessary if we want to restore subtree expansion states
+    // after editing - if the children of a node are rebuilt, but default they will
+    // start out closed - Qt itself has no knowledge that some of them might be the
+    // same children that were there previously.  It's possible a more nuanced addition
+    // and removal of individual rows at the right place in the model might do better,
+    // but at least for now we're using the fetchMore mechanism to validate and correct
+    // the children of an item against the .g file.
+    if (cadtreeview->isExpanded(index)) {
+	bu_log("Expanded\n");
+    } else {
+	bu_log("Closed\n");
+	cadtreeview->setExpanded(index, true);
+    }
+#endif
+
     QModelIndex selected = cadtreeview->selected();
     if (selected.isValid())
 	cdp = (struct directory *)(selected.data(QgSelectionProxyModel::DirectoryInternalRole).value<void *>());
