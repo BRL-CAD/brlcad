@@ -69,7 +69,6 @@ struct gsh_state {
     /* libged */
     void *libged;
     struct ged *gedp;
-    struct bview *view;
     struct bu_vls gfile;
     int constrained_mode;
 
@@ -94,17 +93,17 @@ gsh_state_init(struct gsh_state *s)
     if (!s->libged)
 	return BRLCAD_ERROR;
 
-    /* As yet we don't have a .g file.  TODO - We may want an "empty" ged
-     * struct here to allow commands to run... */
-    s->gedp = GED_NULL;
+    BU_GET(s->gedp, struct ged);
+    ged_init(s->gedp);
+    /* We will need a view to support commands like draw */
+    BU_GET(s->gedp->ged_gvp, struct bview);
+    bv_init(s->gedp->ged_gvp);
+    bu_vls_sprintf(&s->gedp->ged_gvp->gv_name, "default");
+
+    /* As yet we don't have a .g file. */
     bu_vls_init(&s->gfile);
 
-    /* We will need a view to support commands like draw */
-    BU_GET(s->view, struct bview);
-    bv_init(s->view);
-    bu_vls_sprintf(&s->view->gv_name, "default");
-
-    /* Zero initialize linenoise data */ 
+    /* Zero initialize linenoise data */
     s->pmpt = NULL;
     s->line = NULL;
     bu_vls_init(&s->iline);
@@ -118,8 +117,9 @@ gsh_state_free(struct gsh_state *s)
     if (!s)
 	return;
 
-    bv_free(s->view);
-    BU_PUT(s->view, struct bv);
+    bv_free(s->gedp->ged_gvp);
+    BU_PUT(s->gedp->ged_gvp, struct bv);
+    s->gedp->ged_gvp = NULL;
     ged_close(s->gedp);
     bu_dlclose(s->libged);
     bu_vls_free(&s->gfile);
@@ -194,7 +194,7 @@ view_checkpoint(struct gsh_state *s)
 void
 view_update(struct gsh_state *s)
 {
-    if (!s || !s->gedp || !s->gedp->ged_dmp)
+    if (!s || !s->gedp || !s->gedp->ged_wdbp || !s->gedp->dbip || !s->gedp->ged_dmp)
 	return;
 
     struct ged *gedp = s->gedp;
@@ -251,33 +251,10 @@ gsh_exit(void *UNUSED(vs), int UNUSED(argc), const char **UNUSED(argv))
     return BRLCAD_EXIT;
 }
 
-int
-gsh_open(void *vs, int argc, const char **argv)
-{
-    struct gsh_state *s = (struct gsh_state *)vs;
-    if (argc < 2) {
-	printf("Error: invalid ged_open call\n");
-	return BRLCAD_ERROR;
-    }
-    struct ged *gedp = ged_open("db", argv[1], 0);
-    if (!gedp) {
-	printf("Error: could not open %s as a .g file\n", argv[1]);
-	return BRLCAD_ERROR;
-    }
-    if (s->gedp)
-       	ged_close(s->gedp);
-    s->gedp = gedp;
-    s->gedp->ged_gvp = s->view;
-    bu_vls_sprintf(&s->gfile, "%s", argv[1]);
-    printf("Opened file %s\n", bu_vls_cstr(&s->gfile));
-    return BRLCAD_OK;
-}
-
 // TODO - an equivalent to the MGED opendb command would go here.
 static struct bu_cmdtab gsh_cmds[] = {
     {"clear", gsh_clear},
     {"exit",  gsh_exit},
-    {"open",  gsh_open},
     {"q",     gsh_exit},
     {"quit",  gsh_exit},
     {NULL,    BU_CMD_NULL}
@@ -361,19 +338,20 @@ main(int argc, const char **argv)
 
     /* See if we've got a viable .g file. */
     if (argc && bu_file_exists(argv[0], NULL)) {
-	s.gedp = ged_open("db", argv[0], 1);
-	if (s.gedp) {
-	    s.gedp->ged_gvp = s.view;
-	    bu_vls_sprintf(&s.gfile, "%s", argv[0]);
+	int ac = 2;
+	const char *av[3];
+	av[0] = "open";
+	av[1] = argv[0];
+	av[2] = NULL;
+	ret = geval(&s, ac, (const char **)av);
+	if (ret != BRLCAD_OK) {
+	    goto done;
 	}
+	bu_vls_sprintf(&s.gfile, "%s", argv[0]);
+
 	/* If we reach this part of the code, argv[0] is a .g file and
 	 * has been handled - skip ahead to the commands. */
 	argv++; argc--;
-    }
-    // If we didn't get a ged struct by opening a .g file, set up an empty one.
-    if (!s.gedp) {
-	BU_GET(s.gedp, struct ged);
-	ged_init(s.gedp);
     }
 
     /* If we have been given more than a .g filename execute the provided argv
