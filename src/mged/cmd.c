@@ -1044,7 +1044,7 @@ cmdline(struct bu_vls *vp, int record)
 	av[1] = bu_vls_addr(vp);
 	av[2] = NULL;
 
-	(void)ged_glob(GEDP, 2, (const char **)av);
+	(void)ged_exec(GEDP, 2, (const char **)av);
 	if (bu_vls_strlen(GEDP->ged_result_str) > 0) {
 	    bu_vls_sprintf(&globbed, "%s", bu_vls_addr(GEDP->ged_result_str));
 	} else {

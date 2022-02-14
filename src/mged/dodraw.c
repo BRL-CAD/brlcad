@@ -65,13 +65,13 @@ cvt_vlblock_to_solids(struct bv_vlblock *vbp, const char *name, int copy)
 	av[0] = "erase";
 	av[1] = shortname;
 	av[2] = NULL;
-	(void)ged_erase(GEDP, 2, (const char **)av);
+	(void)ged_exec(GEDP, 2, (const char **)av);
     } else {
 	av[0] = "kill";
 	av[1] = "-f";
 	av[2] = shortname;
 	av[3] = NULL;
-	(void)ged_kill(GEDP, 3, (const char **)av);
+	(void)ged_exec(GEDP, 3, (const char **)av);
     }
 
     for (i=0; i < vbp->nused; i++) {
