@@ -536,6 +536,11 @@ qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent
 
 	// Do the major bookkeeping work of an update
 	ctx->update_tops_instances();
+
+	// TODO - probably only need to do this here, and not in qgmodel_changed_callback?
+	// May be safer to do it in both places, but could have performance implications
+	// for large tree views...
+	emit ctx->layoutChanged();
     }
 }
 
@@ -566,6 +571,7 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    // implications for gInstances.
 	    ctx->update_child_instances(dp);
 
+	    emit ctx->layoutChanged();
 	    break;
 	case 1:
 	    bu_log("ADD: %s\n", dp->d_namep);
@@ -587,6 +593,7 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 		}
 	    }
 
+	    emit ctx->layoutChanged();
 	    break;
 	case 2:
 	    bu_log("RM:  %s\n", dp->d_namep);
@@ -613,6 +620,7 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 		ctx->instances->erase(i_it->first);
 	    }
 
+	    emit ctx->layoutChanged();
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -985,11 +993,6 @@ QgModel::fetchMore(const QModelIndex &idx)
     // not sure we want to depend on that...
     if (nc != item->children) {
 	bu_log("fetchMore rebuild: %s\n", item->instance()->dp_name.c_str());
-	if (item->children.size()) {
-	    beginRemoveRows(idx, 0, item->children.size() - 1);
-	    item->children.clear();
-	    endRemoveRows();
-	}
 	beginInsertRows(idx, 0, nc.size() - 1);
 	item->children = nc;
 	endInsertRows();
@@ -1486,7 +1489,6 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    beginResetModel();
     int ret = ged_exec(gedp, argc, argv);
 
     // If we have the need_update_nref flag set, we need to do db_update_nref
@@ -1502,8 +1504,6 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// rebuild tops list
 	update_tops_items();
     }
-
-    endResetModel();
 
     if (msg && gedp)
 	bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
