@@ -502,7 +502,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	}
     } else {
 	arg = 2;
-	ret = ged_inside(GEDP, argc, (const char **)argv);
+	ret = ged_exec(GEDP, argc, (const char **)argv);
     }
 
     if (ret & BRLCAD_MORE)
@@ -557,11 +557,14 @@ cmd_ged_more_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     if (ret)
 	return TCL_ERROR;
 
-    /* draw the "inside" solid */
+    /* FIXME: this wrapper shouldn't be aware of individual commands.
+     * presently needed to draw the changed arg for a limited set of
+     * commands.
+     */
     new_cmd[0] = "draw";
-    if (ctp->ged_func == ged_3ptarb)
+    if (BU_STR_EQUAL(argv[0], "3ptarb"))
 	new_cmd[1] = argv[1];
-    else if (ctp->ged_func == ged_inside)
+    else if (BU_STR_EQUAL(argv[0], "inside"))
 	new_cmd[1] = argv[2];
     else {
 	(void)signal(SIGINT, SIG_IGN);
@@ -617,7 +620,7 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	/* Stash previous result string state so who cmd doesn't replace it */
 	bu_vls_sprintf(&rcache, "%s", bu_vls_addr(GEDP->ged_result_str));
 
-	who_ret = ged_who(GEDP, 1, who_cmd);
+	who_ret = ged_exec(GEDP, 1, who_cmd);
 	if (who_ret == BRLCAD_OK) {
 	    /* worst possible is a bunch of 1-char names, allocate and
 	     * split into an argv accordingly.
@@ -1730,7 +1733,7 @@ cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interpreter, int argc, const
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    ret = ged_nmg_collapse(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (ret)
@@ -1764,7 +1767,7 @@ cmd_units(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     }
 
     sf = DBIP->dbi_base2local;
-    ret = ged_units(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (ret)
@@ -1792,7 +1795,7 @@ cmd_search(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, con
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    ret = ged_search(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (ret)
@@ -1818,7 +1821,7 @@ cmd_tol(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    ret = ged_tol(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (ret)
@@ -1836,7 +1839,7 @@ cmd_tol(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 
 
 /* defined in chgview.c */
-extern int edit_com(int argc, const char *argv[], int kind);
+extern int edit_com(int argc, const char *argv[]);
 
 /**
  * Run ged_blast, then update the views
@@ -1850,7 +1853,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    ret = ged_blast(GEDP, argc, argv);
+    ret = ged_exec(GEDP, argc, argv);
     if (ret)
 	return TCL_ERROR;
 
@@ -1892,7 +1895,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 
 	    av[0] = "autoview";
 	    av[1] = (char *)0;
-	    ged_autoview(GEDP, 1, (const char **)av);
+	    ged_exec(GEDP, 1, (const char **)av);
 
 	    (void)mged_svbase();
 
@@ -1927,7 +1930,7 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
 	gvp->gv_height = dm_get_height(DMP);
     }
 
-    return edit_com(argc, argv, 1);
+    return edit_com(argc, argv);
 }
 
 
@@ -1940,7 +1943,7 @@ cmd_ev(ClientData UNUSED(clientData),
        int argc,
        const char *argv[])
 {
-    return edit_com(argc, argv, 3);
+    return edit_com(argc, argv);
 }
 
 
@@ -1954,7 +1957,7 @@ cmd_E(ClientData UNUSED(clientData),
       int argc,
       const char *argv[])
 {
-    return edit_com(argc, argv, 2);
+    return edit_com(argc, argv);
 }
 
 
@@ -1983,7 +1986,7 @@ cmd_shaded_mode(ClientData UNUSED(clientData),
 	++argv;
     }
 
-    ret = ged_shaded_mode(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (ret)
@@ -2017,7 +2020,7 @@ cmd_ps(ClientData UNUSED(clientData),
     av[0] = "process";
     av[1] = "list";
     av[2] = NULL;
-    ret = ged_process(GEDP, 2, (const char **)av);
+    ret = ged_exec(GEDP, 2, (const char **)av);
     /* For the next couple releases, print a rename notice */
     Tcl_AppendResult(interpreter, "(Note: former 'ps' command has been renamed to 'postscript')\n", NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
