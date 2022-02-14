@@ -780,14 +780,13 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl comb_cmd_impl = {
-    "comb",
-    ged_comb_core,
-    GED_CMD_DEFAULT
-};
+struct ged_cmd_impl comb_cmd_impl = {"comb", ged_comb_core, GED_CMD_DEFAULT};
 
 const struct ged_cmd comb_cmd = { &comb_cmd_impl };
-const struct ged_cmd *comb_cmds[] = { &comb_cmd, NULL };
+const struct ged_cmd *comb_cmds[] = {
+    &comb_cmd,
+    NULL
+};
 
 static const struct ged_plugin pinfo = { GED_API,  comb_cmds, 1 };
 
