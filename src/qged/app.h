@@ -69,7 +69,7 @@ class CADApp : public QApplication
 
 	void initialize();
 
-	bool ged_run_cmd(struct bu_vls *msg, int argc, const char **argv);
+	bool run_cmd(struct bu_vls *msg, int argc, const char **argv);
 
 	int opendb(QString filename);
 	void closedb();

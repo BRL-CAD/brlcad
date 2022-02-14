@@ -475,7 +475,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 
 
 bool
-CADApp::ged_run_cmd(struct bu_vls *msg, int argc, const char **argv)
+CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     bool ret = false;
 
@@ -606,7 +606,7 @@ CADApp::run_cmd(const QString &command)
 
     // If it wasn't an app level command, try it as a GED command.
     if (!cmd_run) {
-	bool ret = ged_run_cmd(&msg, ac, (const char **)av);
+	bool ret = run_cmd(&msg, ac, (const char **)av);
 	if (bu_vls_strlen(&msg) > 0 && console) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
