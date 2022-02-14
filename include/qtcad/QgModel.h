@@ -125,51 +125,12 @@
 #include "xxhash.h"
 
 #include "qtcad/defines.h"
+#include "qtcad/gInstance.h"
 
 #ifndef Q_MOC_RUN
 #include "raytrace.h"
 #include "ged.h"
 #endif
-
-class QTCAD_EXPORT gInstance
-{
-    public:
-	explicit gInstance();
-	~gInstance();
-
-	// Debugging function for printing out data in container
-	std::string print();
-
-	// gInstance content based hash for quick lookup/comparison of two
-	// gInstances.  By default incorporate everything into the hash -
-	// other modes are allowed for in case we want to do fuzzy matching.
-	unsigned long long hash(int mode = 3);
-
-	// dp of parent comb (NULL for tops objects)
-	struct directory *parent = NULL;
-	// dp of comb instance (NULL for instances with invalid object names)
-	struct directory *dp = NULL;
-	// instance name as string
-	std::string dp_name;
-	// instance boolean operation incorporating it into the comb tree (u/-/+)
-	db_op_t op = DB_OP_NULL;
-	// Matrix above comb instance in comb tree (default is IDN)
-	mat_t c_m;
-
-	// Return hashes of child instances, if any
-	std::vector<unsigned long long> children();
-
-	// This is a flag that may be set or unset by parent applications.
-	// Used primarily to assist in visual identification of components
-	// in hierarchical structures.
-	int active_flag = 0;
-
-	// The model context in which this instance is defined
-	void *ctx;
-
-    private:
-	XXH64_state_t *h_state;
-};
 
 // QgItems correspond to the actual Qt entries displayed in the view.  If a
 // comb is reused in multiple places in the tree a gInstance may be referenced
@@ -201,7 +162,7 @@ class QTCAD_EXPORT QgModel;
 class QTCAD_EXPORT QgItem
 {
     public:
-	explicit QgItem(gInstance *g = NULL);
+	explicit QgItem(gInstance *ig, QgModel *ictx);
 	~QgItem();
 
 
@@ -334,22 +295,6 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	 * scene views are updated. */
 	std::unordered_set<struct directory *> changed_dp;
 
-
-
-	// Functionality safe to use in librt callbacks - key point is to not
-	// alter QgItems, as doing so must be coordinated with Qt to avoid
-	// invalid data states in the model.
-
-	// Certain .g objects (comb, extrude, etc.) will define one or more
-	// implicit instances.  We need to create those instances both on
-	// initialization of an existing .g file and on database editing.
-	void add_instances(struct directory *dp);
-
-	// A modification in the .g file to an object may necessitate a variety
-	// of updates to the gInstance containers
-	void update_child_instances(struct directory *dp);
-
-
 	// Build a map of gInstance hashes to instances for easy lookup.  This
 	// is for gInstance reuse.  In trees that heavily reuse combs avoiding
 	// the storing of duplicate gInstances will save memory.
@@ -375,7 +320,6 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// objects.)  This set may change after each database edit, but there
 	// will always be at least one object in a valid .g hierarchy that has
 	// no parent.
-	void update_tops_instances();
 	std::unordered_map<unsigned long long, gInstance *> *tops_instances = NULL;
 
 

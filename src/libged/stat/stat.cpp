@@ -33,6 +33,7 @@
 
 extern "C" {
 #include "fort.h"
+#define ALPHANUM_IMPL
 #include "../alphanum.h"
 }
 

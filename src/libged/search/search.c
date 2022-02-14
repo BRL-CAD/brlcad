@@ -40,6 +40,7 @@
 #include "bu/sort.h"
 #include "bu/defines.h"
 
+#define ALPHANUM_IMPL
 #include "../alphanum.h"
 #include "../ged_private.h"
 

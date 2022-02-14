@@ -35,6 +35,7 @@
 #include "bu/opt.h"
 #include "bu/vls.h"
 
+#define ALPHANUM_IMPL
 #include "../alphanum.h"
 #include "../ged_private.h"
 

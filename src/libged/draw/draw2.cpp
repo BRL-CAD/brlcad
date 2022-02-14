@@ -40,6 +40,7 @@
 #include "rt/view.h"
 
 #include "ged/view/state.h"
+#define ALPHANUM_IMPL
 #include "../alphanum.h"
 #include "../ged_private.h"
 

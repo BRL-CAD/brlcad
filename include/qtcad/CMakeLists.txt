@@ -17,6 +17,7 @@ set(qtcad_headers
   QtGL.h
   QtSW.h
   defines.h
+  gInstance.h
   )
 BRLCAD_MANAGE_FILES(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad)
 
