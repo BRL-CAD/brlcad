@@ -102,11 +102,11 @@ main(int ac, char *av[])
       const char *tops_av[2] = {"tops", NULL};
 
       GED_INIT(&ged, dbip->dbi_wdbp);
-      (void)ged_tops(&ged, tops_ac, (const char **)tops_av);
+      (void)ged_exec(&ged, tops_ac, (const char **)tops_av);
     }
     seconds[4] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))
-	printf("[%2d] ged_tops: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);
+	printf("[%2d] %s: %02fs\n", i, tops_av[0], (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     db_close(dbip);
