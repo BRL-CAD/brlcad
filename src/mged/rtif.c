@@ -59,7 +59,6 @@ cmd_rt(ClientData UNUSED(clientData),
        int argc,
        const char *argv[])
 {
-    int doRtcheck;
     int ret;
     Tcl_DString ds;
 
@@ -70,17 +69,9 @@ cmd_rt(ClientData UNUSED(clientData),
 	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
-    if (BU_STR_EQUAL(argv[0], "rtcheck"))
-	doRtcheck = 1;
-    else
-	doRtcheck = 0;
-
     Tcl_DStringInit(&ds);
 
-    if (doRtcheck)
-	ret = ged_rtcheck(GEDP, argc, (const char **)argv);
-    else
-	ret = ged_rt(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
 
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
