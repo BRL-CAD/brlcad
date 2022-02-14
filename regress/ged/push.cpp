@@ -135,7 +135,7 @@ main(int argc, const char **argv)
 	char *gobj = bu_strdup(oname.c_str());
 	gargv[gargc-2] = gobj;
 	char **av = bu_argv_dup(gargc-1, (const char **)gargv);
-	ged_npush(gedp, gargc - 1, (const char **)av);
+	ged_exec(gedp, gargc - 1, (const char **)av);
 	bu_argv_free((size_t)gargc-1, av);
 	bu_free(gobj, "free objname");
 	gargv[gargc-2] = NULL;
@@ -153,7 +153,7 @@ main(int argc, const char **argv)
     dbcargv[1] = argv[0];
     dbcargv[2] = "ctrl_";
     dbcargv[3] = NULL;
-    ged_concat(gedp, 3, (const char **)dbcargv);
+    ged_exec(gedp, 3, (const char **)dbcargv);
 
     // object names may not be identical - what we are concerned with is that
     // the geometry shapes remain unchanged from what is expected (or, in a few
@@ -175,7 +175,7 @@ main(int argc, const char **argv)
 	gdiffargv[1] = cobj;
 	gdiffargv[2] = gobj;
 	bu_vls_trunc(gedp->ged_result_str, 0);
-	ged_gdiff(gedp, 3, (const char **)gdiffargv);
+	ged_exec(gedp, 3, (const char **)gdiffargv);
 	if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
 	    std::cout << "***VOL DIFF***\n";
 	    have_diff_vol = true;
@@ -186,7 +186,7 @@ main(int argc, const char **argv)
 	gdiffargv[2] = cobj;
 	gdiffargv[3] = gobj;
 	bu_vls_trunc(gedp->ged_result_str, 0);
-	ged_gdiff(gedp, 4, (const char **)gdiffargv);
+	ged_exec(gedp, 4, (const char **)gdiffargv);
 	if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
 	    std::cout << "***STRUCT DIFF***\n";
 	    have_diff_struct = true;
@@ -219,7 +219,7 @@ main(int argc, const char **argv)
 	gdiffargv[1] = cobj;
 	gdiffargv[2] = gobj;
 	bu_vls_trunc(gedp->ged_result_str, 0);
-	ged_gdiff(gedp, 3, (const char **)gdiffargv);
+	ged_exec(gedp, 3, (const char **)gdiffargv);
 	if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
 	    dvol = true;
 	}
@@ -227,7 +227,7 @@ main(int argc, const char **argv)
 	gdiffargv[2] = cobj;
 	gdiffargv[3] = gobj;
 	bu_vls_trunc(gedp->ged_result_str, 0);
-	ged_gdiff(gedp, 4, (const char **)gdiffargv);
+	ged_exec(gedp, 4, (const char **)gdiffargv);
 	if (!BU_STR_EQUAL(bu_vls_cstr(gedp->ged_result_str), "0")) {
 	    dstruct = true;
 	}
