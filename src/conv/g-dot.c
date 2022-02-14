@@ -334,7 +334,7 @@ main(int ac, char *av[])
 	struct bu_vls vp = BU_VLS_INIT_ZERO;
 	const char *title[2] = {"title", NULL};
 
-	ged_title(gp, 1, title);
+	ged_exec(gp, 1, title);
 	bu_vls_printf(&vp, "%s\\n", bu_vls_addr(gp->ged_result_str));
 	if (!(av[0][0] == '-' && av[0][1] == '\0')) {
 	    char base[MAXPATHLEN] = {0};
@@ -359,7 +359,7 @@ main(int ac, char *av[])
 
 	/* all top-level objects */
 
-	ged_tops(gp, 2, tops);
+	ged_exec(gp, 2, tops);
 
 	topobjs = (char **)bu_calloc(bu_vls_strlen(gp->ged_result_str) + 1, sizeof(char *), "alloc topobjs");
 	c = (int)bu_argv_from_string(topobjs, bu_vls_strlen(gp->ged_result_str), bu_vls_addr(gp->ged_result_str));

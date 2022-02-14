@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 	print_usage(argv[0]);
     }
 
-    (void)ged_bot_dump(gedp, j, av);
+    (void)ged_exec(gedp, j, av);
     if (bu_vls_strlen(gedp->ged_result_str) > 0)
 	bu_log("%s", bu_vls_addr(gedp->ged_result_str));
     ged_close(gedp);
