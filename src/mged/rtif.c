@@ -110,7 +110,7 @@ cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_rrt(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
@@ -371,10 +371,10 @@ f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	insertArgv[2] = (char *)0;
 	newArgv = bu_argv_dupinsert(1, insertArgc, (const char **)insertArgv, argc, (const char **)argv);
 	newArgc = argc + insertArgc;
-	ret = ged_nirt(GEDP, newArgc, (const char **)newArgv);
+	ret = ged_exec(GEDP, newArgc, (const char **)newArgv);
 	bu_argv_free(newArgc, newArgv);
     } else {
-	ret = ged_nirt(GEDP, argc, (const char **)argv);
+	ret = ged_exec(GEDP, argc, (const char **)argv);
     }
 
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
@@ -402,7 +402,7 @@ f_vnirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_vnirt(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
 
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);

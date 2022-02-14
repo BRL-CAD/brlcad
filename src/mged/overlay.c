@@ -46,7 +46,7 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     Tcl_DStringInit(&ds);
 
     GEDP->ged_dmp = (void *)mged_curr_dm->dm_dmp;
-    ret = ged_overlay(GEDP, argc, argv);
+    ret = ged_exec(GEDP, argc, argv);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
