@@ -492,6 +492,38 @@ QgModel::g_update()
     if (changed_db_flag) {
 	beginResetModel();
 	update_tops_items();
+	// Clear out any QgItems with invalid info
+	//
+	// 1.  If the gInstance is invalid, remove
+	std::unordered_set<QgItem *>::iterator i_it;
+	std::unordered_set<QgItem *> to_remove;
+	for (i_it = (*items).begin(); i_it != (*items).end(); i_it++) {
+	    QgItem *itm = *i_it;
+	    if (instances->find(itm->ihash) == instances->end()) {
+		to_remove.insert(itm);
+	    }
+	}
+	std::unordered_set<QgItem *>::iterator tr_it;
+	for (tr_it = to_remove.begin(); tr_it != to_remove.end(); tr_it++) {
+	    QgItem *qii = *tr_it;
+	    items->erase(qii);
+	    delete qii;
+	}
+	// 2.  Any that are left still match a gInstance, but if their
+	// children array contain any invalid references we need to clear
+	// it so they can start over.
+	for (i_it = (*items).begin(); i_it != (*items).end(); i_it++) {
+	    QgItem *itm = *i_it;
+	    std::vector<QgItem *> valid_children;
+	    for (size_t i = 0; i < itm->children.size(); i++) {
+		QgItem *qii = itm->children[i];
+		if (items->find(qii) != items->end()) {
+		    valid_children.push_back(qii);
+		}
+	    }
+	    itm->children = valid_children;
+	}
+
 	endResetModel();
     }
     if (changed_db_flag) {
