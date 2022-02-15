@@ -741,7 +741,7 @@ QPolyMod::sketch_name_update()
 	av[0] = "kill";
 	av[1] = dp->d_namep;
 	av[2] = NULL;
-	ged_kill(gedp, ac, av);
+	ged_exec(gedp, ac, av);
     }
 
     ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
