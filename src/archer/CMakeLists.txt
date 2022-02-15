@@ -25,9 +25,12 @@ if(BRLCAD_ENABLE_TK)
     set(archer_srcs ${archer_srcs} archer.rc)
   endif (HAVE_WINDOWS_H)
   BRLCAD_ADDEXEC(archer "${archer_srcs}" "${archer_libs}" GUI)
-  add_dependencies(archer archer_launch_tcl_cp)
   add_dependencies(archer rtwizard)
   ADD_TARGET_DEPS(archer Tkhtml Tktable itcl_pkgIndex itk_pkgIndex dm_plugins)
+
+  # Archer needs a lot of files to be copied into place to work - just have it
+  # depend on ALL the managed files, rather than trying to list specifics
+  add_dependencies(archer managed_files)
 
   foreach(item ${tclindex_target_list})
     add_dependencies(archer ${item})
