@@ -116,7 +116,7 @@ class CADApp : public QApplication
 
        	/* Utility slots */
     public slots:
-	void run_cmd(const QString &command);
+	void run_qcmd(const QString &command);
         void readSettings();
 	void tree_update();
 	void element_selected(QToolPaletteElement *el);

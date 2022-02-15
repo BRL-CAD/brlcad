@@ -564,7 +564,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 }
 
 void
-CADApp::run_cmd(const QString &command)
+CADApp::run_qcmd(const QString &command)
 {
     if (!w)
 	return;

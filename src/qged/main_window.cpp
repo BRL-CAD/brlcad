@@ -368,7 +368,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // application, so rather than embedding the command execution logic in the
     // widget we use a signal/slot connection to have the application's slot
     // execute the command.
-    QObject::connect(this->console, &QtConsole::executeCommand, ((CADApp *)qApp), &CADApp::run_cmd);
+    QObject::connect(this->console, &QtConsole::executeCommand, ((CADApp *)qApp), &CADApp::run_qcmd);
 
     /* Geometry Tree */
     tree_dock = new QBDockWidget("Hierarchy", this);
