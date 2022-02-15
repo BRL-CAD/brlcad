@@ -177,6 +177,7 @@ libged_init(void)
 	char pfile[MAXPATHLEN] = {0};
 	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "ged", filenames[i], NULL);
 	void *dl_handle;
+
 	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
 	if (!dl_handle) {
 	    const char * const error_msg = bu_dlerror();
@@ -186,6 +187,7 @@ libged_init(void)
 	    bu_vls_printf(&init_msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
 	    continue;
 	}
+
 	{
 	    const char *psymbol = "ged_plugin_info";
 	    void *info_val = bu_dlsym(dl_handle, psymbol);
@@ -264,6 +266,8 @@ libged_clear(void)
 	bu_dlclose(handle);
     }
     cmd_funcs.clear();
+
+    bu_vls_free(&init_msgs);
 }
 
 
@@ -275,7 +279,6 @@ struct libged_initializer {
     /* destructor */
     ~libged_initializer() {
 	libged_clear();
-	bu_vls_free(&init_msgs);
     }
 };
 
