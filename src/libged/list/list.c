@@ -86,11 +86,11 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 	    tmp_argv[0] = listeval;
 	    if (verbose) {
 		tmp_argv[1] = (char *)argv[arg];
-		ged_pathsum(gedp, 2, (const char **)tmp_argv);
+		ged_exec(gedp, 2, (const char **)tmp_argv);
 	    } else {
 		tmp_argv[1] = terse_parm;
 		tmp_argv[2] = (char *)argv[arg];
-		ged_pathsum(gedp, 3, (const char **)tmp_argv);
+		ged_exec(gedp, 3, (const char **)tmp_argv);
 	    }
 	} else if (strchr(argv[arg], '/')) {
 	    struct db_tree_state ts;

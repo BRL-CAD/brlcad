@@ -141,8 +141,8 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 
 	av[0] = "zap";
 	av[1] = NULL;
+	(void)ged_exec(_ged_current_gedp, 1, av);
 
-	(void)ged_zap(_ged_current_gedp, 1, av);
 	_ged_drawtrees(_ged_current_gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)&_ged_current_gedp->ged_gdp->gd_rt_cmd[1], preview_mode, (struct _ged_client_data *)0);
     }
 
@@ -413,7 +413,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 			   preview_currentframe, bu_vls_addr(&extension));
 	    screengrab_args[screengrab_argc++] = bu_vls_addr(&fullname);
 
-	    ged_screen_grab(gedp, screengrab_argc, screengrab_args);
+	    ged_exec(gedp, screengrab_argc, screengrab_args);
 
 	    bu_vls_free(&fullname);
 	}

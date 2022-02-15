@@ -269,7 +269,7 @@ to_edit_redraw(struct ged *gedp,
 			}
 			av[arg] = bu_vls_strdup(&gdlp->dl_path);
 
-			ret = ged_draw(gedp, arg + 1, (const char **)av);
+			ret = ged_exec(gedp, arg + 1, (const char **)av);
 
 			bu_free(av[arg], "to_edit_redraw");
 			bu_vls_free(&mflag);
@@ -341,7 +341,7 @@ to_blast(struct ged *gedp,
 {
     int ret;
 
-    ret = ged_blast(gedp, argc, argv);
+    ret = ged_exec(gedp, argc, argv);
 
     if (ret != BRLCAD_OK)
 	return ret;

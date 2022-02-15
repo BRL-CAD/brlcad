@@ -68,7 +68,7 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_internal_call = 1;
     argv[0] = "killrefs";
-    if ((ret = ged_killrefs(gedp, argc, argv)) != BRLCAD_OK) {
+    if ((ret = ged_exec(gedp, argc, argv)) != BRLCAD_OK) {
 	gedp->ged_internal_call = 0;
 	bu_vls_printf(gedp->ged_result_str, "KILL skipped because of earlier errors.\n");
 	return ret;
@@ -84,7 +84,7 @@ ged_killall_core(struct ged *gedp, int argc, const char *argv[])
     /* ALL references removed...now KILL the object[s] */
     /* reuse argv[] */
     argv[0] = "kill";
-    return ged_kill(gedp, argc, argv);
+    return ged_exec(gedp, argc, argv);
 }
 
 

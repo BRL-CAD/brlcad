@@ -903,7 +903,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	    av[0] = "kill";
 	    av[1] = bu_vls_addr(&temp_name);
 	    av[2] = NULL;
-	    (void)ged_kill(gedp, 2, (const char **)av);
+	    (void)ged_exec(gedp, 2, (const char **)av);
 
 	    /* restore ged_result_str */
 	    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
@@ -927,7 +927,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 			/* save ged_result_str */
 			bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
 
-			(void)ged_kill(gedp, 2, (const char **)av);
+			(void)ged_exec(gedp, 2, (const char **)av);
 
 			/* restore ged_result_str */
 			bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
@@ -960,7 +960,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 		/* save ged_result_str */
 		bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
 
-		(void)ged_kill(gedp, 2, (const char **)av);
+		(void)ged_exec(gedp, 2, (const char **)av);
 
 		/* restore ged_result_str */
 		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));
@@ -973,7 +973,7 @@ ged_red_core(struct ged *gedp, int argc, const char **argv)
 	/* save ged_result_str */
 	bu_vls_sprintf(&tmp_ged_result_str, "%s", bu_vls_addr(gedp->ged_result_str));
 
-	(void)ged_move(gedp, 3, (const char **)av);
+	(void)ged_exec(gedp, 3, (const char **)av);
 
 	/* restore ged_result_str */
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&tmp_ged_result_str));

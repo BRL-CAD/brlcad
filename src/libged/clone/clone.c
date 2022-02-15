@@ -424,7 +424,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	argv[1] = proto->d_namep;
 	argv[2] = bu_vls_addr(name);
 	argv[3] = (char *)0;
-	ret = ged_copy(state->gedp, 3, (const char **)argv);
+	ret = ged_exec(state->gedp, 3, (const char **)argv);
 	if (ret != BRLCAD_OK)
 	    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n",
 			  proto->d_namep, bu_vls_addr(name));

@@ -100,7 +100,7 @@ dplot_overlay(
     if (name) {
 	cmd_av[3] = name;
     }
-    ret = ged_overlay(gedp, cmd_ac, cmd_av);
+    ret = ged_exec(gedp, cmd_ac, cmd_av);
     bu_vls_free(&overlay_name);
 
     if (ret != BRLCAD_OK) {

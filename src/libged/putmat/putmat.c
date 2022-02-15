@@ -241,7 +241,7 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (result != BRLCAD_ERROR)
-	result = ged_arced(gedp, 20, (const char **)newargv);
+	result = ged_exec(gedp, 20, (const char **)newargv);
 
     bu_vls_vlsfree(avp);
     return result;

@@ -197,7 +197,7 @@ rect_rt(struct ged *gedp, int port)
 	av[12] = bu_vls_addr(&cvls);
 	av[13] = (char *)0;
 
-	ret = ged_rt(gedp, 13, (const char **)av);
+	ret = ged_exec(gedp, 13, (const char **)av);
 
 	bu_vls_free(&wvls);
 	bu_vls_free(&nvls);

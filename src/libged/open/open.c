@@ -70,7 +70,7 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 
 	av[0] = "zap";
 	av[1] = (char *)0;
-	ged_zap(gedp, 1, (const char **)av);
+	ged_exec(gedp, 1, (const char **)av);
 
 	new_materp = rt_material_head();
 

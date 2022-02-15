@@ -563,7 +563,7 @@ _brep_cmd_flip(void *bs, int argc, const char **argv)
     av[0] = "kill";
     av[1] = ncpy;
     av[2] = NULL;
-    (void)ged_kill(gb->gedp, 2, (const char **)av);
+    (void)ged_exec(gb->gedp, 2, (const char **)av);
     bu_free(ncpy, "free name cpy");
 
     // Make the new one
@@ -1024,7 +1024,7 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
     av[0] = "kill";
     av[1] = ncpy;
     av[2] = NULL;
-    (void)ged_kill(gb->gedp, 2, (const char **)av);
+    (void)ged_exec(gb->gedp, 2, (const char **)av);
     bu_free(ncpy, "free name cpy");
 
     // Make the new one

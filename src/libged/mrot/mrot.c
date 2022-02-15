@@ -65,7 +65,7 @@ ged_mrot_core(struct ged *gedp, int argc, const char *argv[])
 	av[i+1] = (char *)argv[i];
     av[i+1] = (char *)0;
 
-    return ged_rot(gedp, ac, (const char **)av);
+    return ged_exec(gedp, ac, (const char **)av);
 }
 
 

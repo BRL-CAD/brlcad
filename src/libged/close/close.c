@@ -46,7 +46,7 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 
     av[0] = "zap";
     av[1] = (char *)0;
-    ged_zap(gedp, 1, (const char **)av);
+    ged_exec(gedp, 1, (const char **)av);
 
     /* close current database */
     if (gedp->ged_wdbp) {

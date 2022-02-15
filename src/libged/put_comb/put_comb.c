@@ -187,13 +187,13 @@ restore_comb(struct ged *gedp, const struct directory *dp, const char *saved_nam
     av[1] = name;
     av[2] = NULL;
     av[3] = NULL;
-    (void)ged_kill(gedp, 2, (const char **)av);
+    (void)ged_exec(gedp, 2, (const char **)av);
 
     av[0] = "mv";
     av[1] = saved_name;
     av[2] = name;
 
-    (void)ged_move(gedp, 3, (const char **)av);
+    (void)ged_exec(gedp, 3, (const char **)av);
 
     bu_free(name, "bu_strdup'd name");
 }
@@ -589,7 +589,7 @@ ged_put_comb_core(struct ged *gedp, int argc, const char *argv[])
 	av[0] = "kill";
 	av[1] = saved_name;
 	av[2] = NULL;
-	(void)ged_kill(gedp, 2, (const char **)av);
+	(void)ged_exec(gedp, 2, (const char **)av);
     }
 
     return BRLCAD_OK;

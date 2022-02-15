@@ -665,7 +665,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	extrude_ip->keypoint = 0;
 	av[0] = "make_name";
 	av[1] = "skt_";
-	ged_make_name(gedp, 2, (const char **)av);
+	ged_exec(gedp, 2, (const char **)av);
 	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(gedp->ged_result_str));
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
 

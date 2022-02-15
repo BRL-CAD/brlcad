@@ -101,7 +101,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 	    av[3] = (char *)0;
 
 	    /* Set make_name's count to 0 */
-	    ged_make_name(gedp, ac, av);
+	    ged_exec(gedp, ac, av);
 
 	    ac = 2;
 	    av[2] = (char *)0;
@@ -109,7 +109,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 	    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
 		/* Get a unique name based on the original name */
 		av[1] = obj;
-		ged_make_name(gedp, ac, av);
+		ged_exec(gedp, ac, av);
 
 		/* Create the bot */
 		RT_DB_INTERNAL_INIT(&bot_intern);

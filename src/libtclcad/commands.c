@@ -550,277 +550,277 @@ struct to_cmdtab {
 
 
 static struct to_cmdtab ged_cmds[] = {
-    {"3ptarb",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_3ptarb},
-    {"adc",	"args", 7, to_view_func, ged_adc},
-    {"adjust",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_adjust},
-    {"ae2dir",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ae2dir},
-    {"aet",	"[[-i] az el [tw]]", 6, to_view_func_plus, ged_aet},
-    {"analyze",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_analyze},
-    {"annotate", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_annotate},
-    {"pipe_append_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pipe_append_pnt},
-    {"arb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_arb},
-    {"arced",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_arced},
-    {"arot",	"x y z angle", 6, to_view_func_plus, ged_arot},
-    {"attr",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_attr},
-    {"bb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bb},
-    {"bev",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bev},
-    {"bo",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bo},
-    {"bot",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot},
+    {"3ptarb",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_exec},
+    {"adc",	"args", 7, to_view_func, ged_exec},
+    {"adjust",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"ae2dir",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"aet",	"[[-i] az el [tw]]", 6, to_view_func_plus, ged_exec},
+    {"analyze",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"annotate", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"pipe_append_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"arb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"arced",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"arot",	"x y z angle", 6, to_view_func_plus, ged_exec},
+    {"attr",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bev",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bo",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bot",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
     {"bot_condense",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
-    {"bot_decimate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_decimate},
-    {"bot_dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_dump},
+    {"bot_decimate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bot_dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
     {"bot_exterior",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
-    {"bot_face_fuse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_face_fuse},
-    {"bot_face_sort",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_face_sort},
-    {"bot_flip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_flip},
-    {"bot_fuse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_fuse},
-    {"bot_merge",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_merge},
-    {"bot_smooth",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_smooth},
-    {"bot_split",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_split},
-    {"bot_sync",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_sync},
-    {"bot_vertex_fuse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_vertex_fuse},
-    {"brep",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_brep},
-    {"c",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_comb_std},
-    {"cat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_cat},
-    {"center",	"[x y z]", 5, to_view_func_plus, ged_center},
-    {"check",	(char *)0, TO_UNLIMITED, to_view_func, ged_check},
-    {"clear",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_zap},
-    {"clone",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_clone},
-    {"coil",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_coil},
-    {"color",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_color},
-    {"comb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_comb},
-    {"comb_color",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_comb_color},
-    {"combmem",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_combmem},
-    {"constraint", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_constraint},
-    {"copyeval",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_copyeval},
-    {"copymat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_copymat},
-    {"cpi",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_cpi},
-    {"d",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_erase},
-    {"dbconcat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_concat},
-    {"dbfind",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_find},
-    {"dbip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dbip},
-    {"dbot_dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dbot_dump},
-    {"debug", 	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debug},
-    {"debugbu", 	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debugbu},
-    {"debugdir",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debugdir},
-    {"debuglib",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debuglib},
-    {"debugnmg",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debugnmg},
-    {"decompose",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_decompose},
-    {"delay",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_delay},
-    {"dplot",	"dplot_logfile", 1, to_dplot, ged_dplot},
-    {"metaball_delete_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_metaball_delete_pnt},
-    {"pipe_delete_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pipe_delete_pnt},
-    {"dir2ae",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dir2ae},
-    {"draw",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_draw},
-    {"dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dump},
-    {"dup",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dup},
-    {"E",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_E},
-    {"e",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_draw},
-    {"eac",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_eac},
-    {"echo",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_echo},
-    {"edarb",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_edarb},
-    {"edcodes",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edcodes},
-    {"edcolor",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edcolor},
-    {"edcomb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edcomb},
-    {"edit",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edit},
-    {"edmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edmater},
-    {"env",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_env},
-    {"erase",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_erase},
-    {"ev",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_ev},
-    {"expand",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_expand},
-    {"eye",	"[x y z]", 5, to_view_func_plus, ged_eye},
-    {"eye_pos",	"[x y z]", 5, to_view_func_plus, ged_eye_pos},
-    {"eye_pt",	"[x y z]", 5, to_view_func_plus, ged_eye},
-    {"exists",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exists},
-    {"facetize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_facetize},
-    {"voxelize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_voxelize},
-    {"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", TO_UNLIMITED, to_view_func, ged_fb2pix},
-    {"fbclear",  	"[r g b]", TO_UNLIMITED, to_view_func, ged_fbclear},
-    {"find_arb_edge",	"arb vx vy ptol", 5, to_view_func, ged_find_arb_edge_nearest_pnt},
-    {"find_bot_edge",	"bot vx vy", 5, to_view_func, ged_find_bot_edge_nearest_pnt},
-    {"find_bot_pnt",	"bot vx vy", 5, to_view_func, ged_find_bot_pnt_nearest_pnt},
-    {"find_pipe_pnt",	"pipe x y z", 6, to_view_func, ged_find_pipe_pnt_nearest_pnt},
-    {"form",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_form},
-    {"fracture",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_fracture},
-    {"g",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_group},
-    {"gdiff",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_gdiff},
-    {"get",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get},
-    {"get_autoview",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get_autoview},
-    {"get_bot_edges",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get_bot_edges},
-    {"get_comb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get_comb},
-    {"get_eyemodel",	"vname", 2, to_view_func, ged_get_eyemodel},
-    {"get_type",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get_type},
-    {"glob",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_glob},
-    {"gqa",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_gqa},
-    {"graph",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_graph},
-    {"grid",	"args", 6, to_view_func, ged_grid},
-    {"grid2model_lu",	"x y", 4, to_view_func_less, ged_grid2model_lu},
-    {"grid2view_lu",	"x y", 4, to_view_func_less, ged_grid2view_lu},
-    {"heal",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_heal},
-    {"hide",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_hide},
-    {"how",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_how},
-    {"human",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_human},
-    {"i",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_instance},
-    {"idents",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tables},
-    {"illum",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_illum},
-    {"importFg4Section",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_importFg4Section},
-    {"in",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_in},
-    {"inside",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_inside},
-    {"isize",	"vname", 2, to_view_func, ged_isize},
-    {"item",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_item},
-    {"joint",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_joint},
-    {"joint2",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_joint2},
-    {"keep",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_keep},
-    {"keypoint",	"[x y z]", 5, to_view_func, ged_keypoint},
-    {"kill",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_kill},
-    {"killall",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_killall},
-    {"killrefs",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_killrefs},
-    {"killtree",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_killtree},
-    {"l",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_list},
-    {"lc",      "[-d|-s|-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {FileName}] {GroupName}", TO_UNLIMITED, to_pass_through_func, ged_lc},
-    {"listeval",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pathsum},
-    {"loadview",	"filename", 3, to_view_func, ged_loadview},
-    {"lod",	(char *)0, TO_UNLIMITED, to_lod, ged_lod},
-    {"log",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_log},
-    {"lookat",	"x y z", 5, to_view_func_plus, ged_lookat},
-    {"ls",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ls},
-    {"lt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_lt},
-    {"m2v_point",	"x y z", 5, to_view_func, ged_m2v_point},
-    {"make_name",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_make_name},
-    {"make_pnts",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_make_pnts},
-    {"mat4x3pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_mat4x3pnt},
-    {"match",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_match},
-    {"mater",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_mater},
-    {"model2grid_lu",	"x y z", 5, to_view_func_less, ged_model2grid_lu},
-    {"model2view",	"vname", 2, to_view_func, ged_model2view},
-    {"model2view_lu",	"x y z", 5, to_view_func_less, ged_model2view_lu},
-    {"move_arb_edge",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move_arb_edge},
-    {"move_arb_face",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move_arb_face},
-    {"metaball_move_pnt",	(char *)0, TO_UNLIMITED, to_move_pnt_common, ged_metaball_move_pnt},
-    {"pipe_move_pnt",	(char *)0, TO_UNLIMITED, to_move_pnt_common, ged_pipe_move_pnt},
-    {"mouse_add_metaball_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pnt_common, ged_metaball_add_pnt},
-    {"mouse_append_pipe_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pnt_common, ged_pipe_append_pnt},
-    {"mouse_move_metaball_pnt",	"obj i mx my", TO_UNLIMITED, to_mouse_move_pnt_common, ged_metaball_move_pnt},
-    {"mouse_move_pipe_pnt",	"obj i mx my", TO_UNLIMITED, to_mouse_move_pnt_common, ged_pipe_move_pnt},
-    {"mouse_prepend_pipe_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pnt_common, ged_pipe_prepend_pnt},
-    {"mv",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move},
-    {"mvall",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move_all},
-    {"nirt",	"[args]", TO_UNLIMITED, to_view_func, ged_nirt},
-    {"nmg_collapse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_collapse},
-    {"nmg_fix_normals",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_fix_normals},
-    {"nmg_simplify",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_simplify},
-    {"npush",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_npush},
-    {"ocenter",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ocenter},
-    {"open",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_reopen},
-    {"orient",	"quat", 6, to_view_func_plus, ged_orient},
-    {"orientation",	"quat", 6, to_view_func_plus, ged_orient},
-    {"orotate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_orotate},
-    {"oscale",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_oscale},
-    {"otranslate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_otranslate},
-    {"overlay",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_overlay},
-    {"pathlist",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pathlist},
-    {"paths",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pathsum},
-    {"perspective",	"[angle]", 3, to_view_func_plus, ged_perspective},
-    {"pix2fb",  	"[options] [file.pix]", TO_UNLIMITED, to_view_func, ged_pix2fb},
-    {"plot",	"[options] file.pl", 16, to_view_func, ged_plot},
-    {"pmat",	"[mat]", 3, to_view_func, ged_pmat},
-    {"pmodel2view",	"vname", 2, to_view_func, ged_pmodel2view},
-    {"png2fb",  "[options] [file.png]", TO_UNLIMITED, to_view_func, ged_png2fb},
-    {"pngwf",	"[options] file.png", 16, to_view_func, ged_png},
-    {"prcolor",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_prcolor},
-    {"prefix",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_prefix},
-    {"pipe_prepend_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pipe_prepend_pnt},
-    {"preview",	"[options] script", TO_UNLIMITED, to_dm_func, ged_preview},
-    {"protate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_protate},
-    {"postscript", "[options] file.ps", 16, to_view_func, ged_ps},
-    {"pscale",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pscale},
-    {"pset",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pset},
-    {"ptranslate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ptranslate},
-    {"push",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_push},
-    {"put",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_put},
-    {"put_comb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_put_comb},
-    {"putmat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_putmat},
-    {"qray",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_qray},
-    {"quat",	"a b c d", 6, to_view_func_plus, ged_quat},
-    {"qvrot",	"x y z angle", 6, to_view_func_plus, ged_qvrot},
-    {"r",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_region},
-    {"rcodes",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rcodes},
-    {"rect",	"args", 6, to_view_func, ged_rect},
-    {"red",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_red},
-    {"regdef",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_regdef},
-    {"regions",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tables},
-    {"solid_report",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_solid_report},
-    {"rfarb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rfarb},
-    {"rm",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_remove},
-    {"rmap",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rmap},
-    {"rmat",	"[mat]", 3, to_view_func, ged_rmat},
-    {"rmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rmater},
-    {"rot",	"[-m|-v] x y z", 6, to_view_func_plus, ged_rot},
-    {"rot_about",	"[e|k|m|v]", 3, to_view_func, ged_rotate_about},
-    {"rot_point",	"x y z", 5, to_view_func, ged_rot_point},
-    {"rotate_arb_face",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rotate_arb_face},
-    {"rrt",	"[args]", TO_UNLIMITED, to_view_func, ged_rrt},
-    {"rselect",		(char *)0, TO_UNLIMITED, to_view_func, ged_rselect},
-    {"rt",	"[args]", TO_UNLIMITED, to_view_func, ged_rt},
-    {"rtabort",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rtabort},
-    {"rtarea",	"[args]", TO_UNLIMITED, to_view_func, ged_rt},
-    {"rtcheck",	"[args]", TO_UNLIMITED, to_view_func, ged_rtcheck},
-    {"rtedge",	"[args]", TO_UNLIMITED, to_view_func, ged_rt},
-    {"rtweight", "[args]", TO_UNLIMITED, to_view_func, ged_rt},
-    {"rtwizard", "[args]", TO_UNLIMITED, to_view_func, ged_rtwizard},
-    {"savekey",	"filename", 3, to_view_func, ged_savekey},
-    {"saveview", (char *)0, TO_UNLIMITED, to_view_func, ged_saveview},
-    {"sca",	"sf", 3, to_view_func_plus, ged_scale},
-    {"screengrab",	"imagename.ext", TO_UNLIMITED, to_dm_func, ged_screen_grab},
-    {"search",		(char *)0, TO_UNLIMITED, to_pass_through_func, ged_search},
-    {"select",		(char *)0, TO_UNLIMITED, to_view_func, ged_select},
-    {"set_output_script",	"[script]", TO_UNLIMITED, to_pass_through_func, ged_set_output_script},
-    {"set_transparency",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_set_transparency},
-    {"set_uplotOutputMode",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_set_uplotOutputMode},
-    {"setview",	"x y z", 5, to_view_func_plus, ged_setview},
-    {"shaded_mode",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_shaded_mode},
-    {"shader",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_shader},
-    {"shells",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_shells},
-    {"showmats",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_showmats},
-    {"size",	"[size]", 3, to_view_func_plus, ged_size},
-    {"slew",	"x y [z]", 5, to_view_func_plus, ged_slew},
-    {"solids",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tables},
-    {"solids_on_ray",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_solids_on_ray},
-    {"summary",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_summary},
-    {"sv",	"x y [z]", 5, to_view_func_plus, ged_slew},
-    {"sync",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_sync},
-    {"t",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ls},
-    {"tire",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tire},
-    {"title",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_title},
-    {"tol",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tol},
-    {"tops",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tops},
-    {"tra",	"[-m|-v] x y z", 6, to_view_func_plus, ged_tra},
-    {"track",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_track},
-    {"tree",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tree},
-    {"unhide",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_unhide},
-    {"units",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_units},
-    {"v2m_point",	"x y z", 5, to_view_func, ged_v2m_point},
-    {"vdraw",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_vdraw},
-    {"version",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_version},
-    {"view",	"quat|ypr|aet|center|eye|size [args]", 7, to_view_func_plus, ged_view_func},
-    {"view2grid_lu",	"x y z", 5, to_view_func_less, ged_view2grid_lu},
-    {"view2model",	"", 2, to_view_func_less, ged_view2model},
-    {"view2model_lu",	"x y z", 5, to_view_func_less, ged_view2model_lu},
-    {"view2model_vec",	"x y z", 5, to_view_func_less, ged_view2model_vec},
-    {"viewdir",	"[-i]", 3, to_view_func_less, ged_viewdir},
-    {"vnirt",	"[args]", TO_UNLIMITED, to_view_func, ged_vnirt},
-    {"wcodes",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_wcodes},
-    {"whatid",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_whatid},
-    {"which_shader",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_which_shader},
-    {"whichair",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_which},
-    {"whichid",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_which},
-    {"who",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_who},
-    {"wmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_wmater},
-    {"x",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_solid_report},
-    {"xpush",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_xpush},
-    {"ypr",	"yaw pitch roll", 5, to_view_func_plus, ged_ypr},
-    {"zap",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_zap},
-    {"zoom",	"sf", 3, to_view_func_plus, ged_zoom},
+    {"bot_face_fuse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bot_face_sort",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bot_flip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bot_fuse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bot_merge",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bot_smooth",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bot_split",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bot_sync",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"bot_vertex_fuse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"brep",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"c",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"cat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"center",	"[x y z]", 5, to_view_func_plus, ged_exec},
+    {"check",	(char *)0, TO_UNLIMITED, to_view_func, ged_exec},
+    {"clear",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"clone",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"coil",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"color",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"comb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"comb_color",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"combmem",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"constraint", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"copyeval",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"copymat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"cpi",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"d",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"dbconcat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"dbfind",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"dbip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"dbot_dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"debug", 	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"debugbu", 	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"debugdir",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"debuglib",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"debugnmg",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"decompose",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"delay",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"dplot",	"dplot_logfile", 1, to_dplot, ged_exec},
+    {"metaball_delete_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"pipe_delete_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"dir2ae",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"draw",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_exec},
+    {"dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"dup",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"E",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_exec},
+    {"e",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_exec},
+    {"eac",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_exec},
+    {"echo",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"edarb",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_exec},
+    {"edcodes",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"edcolor",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"edcomb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"edit",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"edmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"env",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"erase",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"ev",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_exec},
+    {"expand",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"eye",	"[x y z]", 5, to_view_func_plus, ged_exec},
+    {"eye_pos",	"[x y z]", 5, to_view_func_plus, ged_exec},
+    {"eye_pt",	"[x y z]", 5, to_view_func_plus, ged_exec},
+    {"exists",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"facetize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"voxelize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"fbclear",  	"[r g b]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"find_arb_edge",	"arb vx vy ptol", 5, to_view_func, ged_exec},
+    {"find_bot_edge",	"bot vx vy", 5, to_view_func, ged_exec},
+    {"find_bot_pnt",	"bot vx vy", 5, to_view_func, ged_exec},
+    {"find_pipe_pnt",	"pipe x y z", 6, to_view_func, ged_exec},
+    {"form",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"fracture",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"g",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"gdiff",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"get",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"get_autoview",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"get_bot_edges",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"get_comb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"get_eyemodel",	"vname", 2, to_view_func, ged_exec},
+    {"get_type",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"glob",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"gqa",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"graph",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"grid",	"args", 6, to_view_func, ged_exec},
+    {"grid2model_lu",	"x y", 4, to_view_func_less, ged_exec},
+    {"grid2view_lu",	"x y", 4, to_view_func_less, ged_exec},
+    {"heal",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"hide",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"how",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"human",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"i",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"idents",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"illum",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"importFg4Section",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"in",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_exec},
+    {"inside",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_exec},
+    {"isize",	"vname", 2, to_view_func, ged_exec},
+    {"item",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"joint",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"joint2",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"keep",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"keypoint",	"[x y z]", 5, to_view_func, ged_exec},
+    {"kill",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"killall",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"killrefs",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"killtree",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"l",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"lc",      "[-d|-s|-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {FileName}] {GroupName}", TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"listeval",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"loadview",	"filename", 3, to_view_func, ged_exec},
+    {"lod",	(char *)0, TO_UNLIMITED, to_lod, ged_exec},
+    {"log",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"lookat",	"x y z", 5, to_view_func_plus, ged_exec},
+    {"ls",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"lt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"m2v_point",	"x y z", 5, to_view_func, ged_exec},
+    {"make_name",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"make_pnts",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_exec},
+    {"mat4x3pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"match",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"mater",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_exec},
+    {"model2grid_lu",	"x y z", 5, to_view_func_less, ged_exec},
+    {"model2view",	"vname", 2, to_view_func, ged_exec},
+    {"model2view_lu",	"x y z", 5, to_view_func_less, ged_exec},
+    {"move_arb_edge",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"move_arb_face",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"metaball_move_pnt",	(char *)0, TO_UNLIMITED, to_move_pnt_common, ged_exec},
+    {"pipe_move_pnt",	(char *)0, TO_UNLIMITED, to_move_pnt_common, ged_exec},
+    {"mouse_add_metaball_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pnt_common, ged_exec},
+    {"mouse_append_pipe_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pnt_common, ged_exec},
+    {"mouse_move_metaball_pnt",	"obj i mx my", TO_UNLIMITED, to_mouse_move_pnt_common, ged_exec},
+    {"mouse_move_pipe_pnt",	"obj i mx my", TO_UNLIMITED, to_mouse_move_pnt_common, ged_exec},
+    {"mouse_prepend_pipe_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pnt_common, ged_exec},
+    {"mv",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"mvall",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"nirt",	"[args]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"nmg_collapse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"nmg_fix_normals",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"nmg_simplify",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"npush",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"ocenter",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"open",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"orient",	"quat", 6, to_view_func_plus, ged_exec},
+    {"orientation",	"quat", 6, to_view_func_plus, ged_exec},
+    {"orotate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"oscale",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"otranslate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"overlay",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_exec},
+    {"pathlist",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"paths",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"perspective",	"[angle]", 3, to_view_func_plus, ged_exec},
+    {"pix2fb",  	"[options] [file.pix]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"plot",	"[options] file.pl", 16, to_view_func, ged_exec},
+    {"pmat",	"[mat]", 3, to_view_func, ged_exec},
+    {"pmodel2view",	"vname", 2, to_view_func, ged_exec},
+    {"png2fb",  "[options] [file.png]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"pngwf",	"[options] file.png", 16, to_view_func, ged_exec},
+    {"prcolor",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"prefix",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"pipe_prepend_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"preview",	"[options] script", TO_UNLIMITED, to_dm_func, ged_exec},
+    {"protate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"postscript", "[options] file.ps", 16, to_view_func, ged_exec},
+    {"pscale",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"pset",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"ptranslate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"push",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"put",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"put_comb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"putmat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"qray",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"quat",	"a b c d", 6, to_view_func_plus, ged_exec},
+    {"qvrot",	"x y z angle", 6, to_view_func_plus, ged_exec},
+    {"r",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"rcodes",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"rect",	"args", 6, to_view_func, ged_exec},
+    {"red",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"regdef",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"regions",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"solid_report",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"rfarb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"rm",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"rmap",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"rmat",	"[mat]", 3, to_view_func, ged_exec},
+    {"rmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"rot",	"[-m|-v] x y z", 6, to_view_func_plus, ged_exec},
+    {"rot_about",	"[e|k|m|v]", 3, to_view_func, ged_exec},
+    {"rot_point",	"x y z", 5, to_view_func, ged_exec},
+    {"rotate_arb_face",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"rrt",	"[args]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"rselect",		(char *)0, TO_UNLIMITED, to_view_func, ged_exec},
+    {"rt",	"[args]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"rtabort",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"rtarea",	"[args]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"rtcheck",	"[args]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"rtedge",	"[args]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"rtweight", "[args]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"rtwizard", "[args]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"savekey",	"filename", 3, to_view_func, ged_exec},
+    {"saveview", (char *)0, TO_UNLIMITED, to_view_func, ged_exec},
+    {"sca",	"sf", 3, to_view_func_plus, ged_exec},
+    {"screengrab",	"imagename.ext", TO_UNLIMITED, to_dm_func, ged_exec},
+    {"search",		(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"select",		(char *)0, TO_UNLIMITED, to_view_func, ged_exec},
+    {"set_output_script",	"[script]", TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"set_transparency",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"set_uplotOutputMode",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"setview",	"x y z", 5, to_view_func_plus, ged_exec},
+    {"shaded_mode",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"shader",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"shells",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"showmats",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"size",	"[size]", 3, to_view_func_plus, ged_exec},
+    {"slew",	"x y [z]", 5, to_view_func_plus, ged_exec},
+    {"solids",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"solids_on_ray",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"summary",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"sv",	"x y [z]", 5, to_view_func_plus, ged_exec},
+    {"sync",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"t",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"tire",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"title",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"tol",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"tops",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"tra",	"[-m|-v] x y z", 6, to_view_func_plus, ged_exec},
+    {"track",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"tree",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"unhide",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"units",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"v2m_point",	"x y z", 5, to_view_func, ged_exec},
+    {"vdraw",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"version",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"view",	"quat|ypr|aet|center|eye|size [args]", 7, to_view_func_plus, ged_exec},
+    {"view2grid_lu",	"x y z", 5, to_view_func_less, ged_exec},
+    {"view2model",	"", 2, to_view_func_less, ged_exec},
+    {"view2model_lu",	"x y z", 5, to_view_func_less, ged_exec},
+    {"view2model_vec",	"x y z", 5, to_view_func_less, ged_exec},
+    {"viewdir",	"[-i]", 3, to_view_func_less, ged_exec},
+    {"vnirt",	"[args]", TO_UNLIMITED, to_view_func, ged_exec},
+    {"wcodes",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"whatid",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"which_shader",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"whichair",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"whichid",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"who",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"wmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"x",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"xpush",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
+    {"ypr",	"yaw pitch roll", 5, to_view_func_plus, ged_exec},
+    {"zap",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_exec},
+    {"zoom",	"sf", 3, to_view_func_plus, ged_exec},
     {(char *)0,	(char *)0, 0, TO_WRAPPER_FUNC_PTR_NULL, GED_FUNC_PTR_NULL}
 };
 
@@ -1508,7 +1508,7 @@ to_configure(struct ged *gedp,
 	av[4] = NULL;
 
 	gedp->ged_gvp = gdvp;
-	(void)ged_rect(gedp, 4, (const char **)av);
+	(void)ged_exec(gedp, 4, (const char **)av);
     }
 
     if (status == TCL_OK) {
@@ -3154,7 +3154,7 @@ to_dplot(struct ged *gedp,
     av[ac] = (char *)0;
 
     /* check for displayed objects */
-    ret = ged_who(gedp, 2, (const char **)who_av);
+    ret = ged_exec(gedp, 2, (const char **)who_av);
     if (ret == BRLCAD_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3168,7 +3168,7 @@ to_dplot(struct ged *gedp,
 	bu_vls_substr(&result_copy, gedp->ged_result_str, 0, bu_vls_strlen(gedp->ged_result_str));
 	bu_vls_trunc(gedp->ged_result_str, 0);
 
-	ret = ged_who(gedp, 1, (const char **)who_av);
+	ret = ged_exec(gedp, 1, (const char **)who_av);
 	if (ret == BRLCAD_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	    aflag = 1;
 
@@ -3633,7 +3633,7 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 	av[0] = "how";
 	av[1] = draw_path;
 	av[2] = NULL;
-	ret = ged_how(data->gedp, 2, av);
+	ret = ged_exec(data->gedp, 2, av);
 	if (ret == BRLCAD_OK) {
 	    bu_sscanf(bu_vls_cstr(data->gedp->ged_result_str), "%d", &dmode);
 	}
@@ -3644,7 +3644,7 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 	}
 
 	av[0] = "erase";
-	ret = ged_erase(data->gedp, 2, av);
+	ret = ged_exec(data->gedp, 2, av);
 
 	if (ret == BRLCAD_OK) {
 	    av[0] = "draw";
@@ -3652,7 +3652,7 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 	    av[2] = bu_vls_cstr(&path_dmode);
 	    av[3] = draw_path;
 	    av[4] = NULL;
-	    ged_draw(data->gedp, 4, av);
+	    ged_exec(data->gedp, 4, av);
 	}
 
 	*data->need_refresh = 1;
@@ -3702,7 +3702,7 @@ to_idle_mode(struct ged *gedp,
     {
 	const char *av[] = {"redraw", NULL};
 
-	ged_redraw(gedp, 1, (const char **)av);
+	ged_exec(gedp, 1, (const char **)av);
 
 	need_refresh = 1;
     }
@@ -3733,7 +3733,7 @@ to_idle_mode(struct ged *gedp,
 	av[0] = "grid";
 	av[1] = "vsnap";
 	av[2] = NULL;
-	ged_grid(gedp, 2, (const char **)av);
+	ged_exec(gedp, 2, (const char **)av);
 
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	if (0 < bu_vls_strlen(&tvd->gdv_callback)) {
@@ -3900,13 +3900,13 @@ to_make(struct ged *gedp,
     int ret;
     const char *av[3];
 
-    ret = ged_make(gedp, argc, argv);
+    ret = ged_exec(gedp, argc, argv);
 
     if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[argc-2];
 	av[2] = (char *)0;
-	to_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, TO_UNLIMITED);
+	to_autoview_func(gedp, 2, (const char **)av, ged_exec, (char *)0, TO_UNLIMITED);
     }
 
     return ret;
@@ -3924,13 +3924,13 @@ to_mirror(struct ged *gedp,
     int ret;
     const char *av[3];
 
-    ret = ged_mirror(gedp, argc, argv);
+    ret = ged_exec(gedp, argc, argv);
 
     if (ret == BRLCAD_OK) {
 	av[0] = "draw";
 	av[1] = (char *)argv[argc-1];
 	av[2] = (char *)0;
-	to_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, TO_UNLIMITED);
+	to_autoview_func(gedp, 2, (const char **)av, ged_exec, (char *)0, TO_UNLIMITED);
     }
 
     return ret;
@@ -4148,7 +4148,7 @@ to_bot_move_pnt(struct ged *gedp,
 {
     int ret;
 
-    if ((ret = ged_bot_move_pnt(gedp, argc, argv)) == BRLCAD_OK) {
+    if ((ret = ged_exec(gedp, argc, argv)) == BRLCAD_OK) {
 	const char *av[3];
 	int i;
 
@@ -4179,7 +4179,7 @@ to_bot_move_pnts(struct ged *gedp,
 {
     int ret;
 
-    if ((ret = ged_bot_move_pnts(gedp, argc, argv)) == BRLCAD_OK) {
+    if ((ret = ged_exec(gedp, argc, argv)) == BRLCAD_OK) {
 	const char *av[3];
 
 	av[0] = "draw";
@@ -5078,14 +5078,14 @@ to_rect_mode(struct ged *gedp,
     av[2] = "0";
     av[3] = "0";
     av[4] = (char *)0;
-    (void)ged_rect(gedp, ac, (const char **)av);
+    (void)ged_exec(gedp, ac, (const char **)av);
 
     bu_vls_printf(&x_vls, "%d", (int)gdvp->gv_prevMouseX);
     bu_vls_printf(&y_vls, "%d", (int)gdvp->gv_prevMouseY);
     av[1] = "pos";
     av[2] = bu_vls_addr(&x_vls);
     av[3] = bu_vls_addr(&y_vls);
-    (void)ged_rect(gedp, ac, (const char **)av);
+    (void)ged_exec(gedp, ac, (const char **)av);
     bu_vls_free(&x_vls);
     bu_vls_free(&y_vls);
 
@@ -5094,7 +5094,7 @@ to_rect_mode(struct ged *gedp,
     av[1] = "draw";
     av[2] = "1";
     av[3] = (char *)0;
-    (void)ged_rect(gedp, ac, (const char **)av);
+    (void)ged_exec(gedp, ac, (const char **)av);
 
     struct bu_vls *pathname = dm_get_pathname((struct dm *)gdvp->dmp);
     if (pathname && bu_vls_strlen(pathname)) {
@@ -5849,7 +5849,7 @@ to_bot_edge_split(struct ged *gedp,
 {
     int ret;
 
-    if ((ret = ged_bot_edge_split(gedp, argc, argv)) == BRLCAD_OK) {
+    if ((ret = ged_exec(gedp, argc, argv)) == BRLCAD_OK) {
 	const char *av[3];
 	struct bu_vls save_result;
 
@@ -5881,7 +5881,7 @@ to_bot_face_split(struct ged *gedp,
 {
     int ret;
 
-    if ((ret = ged_bot_face_split(gedp, argc, argv)) == BRLCAD_OK) {
+    if ((ret = ged_exec(gedp, argc, argv)) == BRLCAD_OK) {
 	const char *av[3];
 	struct bu_vls save_result;
 
@@ -6216,13 +6216,13 @@ to_vmake(struct ged *gedp,
 	av[6] = (char *)argv[3];
 	av[7] = (char *)0;
 
-	ret = ged_make(gedp, 7, (const char **)av);
+	ret = ged_exec(gedp, 7, (const char **)av);
 
 	if (ret == BRLCAD_OK) {
 	    av[0] = "draw";
 	    av[1] = (char *)argv[2];
 	    av[2] = (char *)0;
-	    to_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, TO_UNLIMITED);
+	    to_autoview_func(gedp, 2, (const char **)av, ged_exec, (char *)0, TO_UNLIMITED);
 	}
 
 	return ret;
@@ -6288,7 +6288,7 @@ to_vslew(struct ged *gedp,
     av[1] = bu_vls_addr(&slew_vec);
     av[2] = (char *)0;
 
-    ret = ged_slew(gedp, ac, (const char **)av);
+    ret = ged_exec(gedp, ac, (const char **)av);
     bu_vls_free(&slew_vec);
 
     if (ret == BRLCAD_OK) {
@@ -6301,7 +6301,7 @@ to_vslew(struct ged *gedp,
 	    av[0] = "grid";
 	    av[1] = "vsnap";
 	    av[2] = NULL;
-	    ged_grid(gedp, 2, (const char **)av);
+	    ged_exec(gedp, 2, (const char **)av);
 	}
 
 	if (gedp->ged_gvp->gv_s->gv_snap_lines) {

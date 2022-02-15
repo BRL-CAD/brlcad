@@ -227,7 +227,7 @@ op_pnts_vol(
 	    av[0] = "copy";
 	    av[1] = pnts_obj;
 	    av[2] = output_pnts_obj;
-	    (void)ged_copy(gedp, 3, (const char **)av);
+	    (void)ged_exec(gedp, 3, (const char **)av);
 	}
 	rt_db_free_internal(&tpnts_intern);
 	return pnts->count;

@@ -386,7 +386,7 @@ main(int ac, char *av[]) {
 	const char *wav[2];
 	wav[0] = wav0;
 	wav[1] = NULL;
-	int ret = ged_ls(gbp, 1, (const char **)wav);
+	int ret = ged_exec(gbp, 1, (const char **)wav);
 	if (ret & BRLCAD_UNKNOWN && wav[0] != wav0) {
 	    bu_log("\nged_ls called with command name \"%s\" correctly returned with BRLCAD_UNKNOWN set\n", wav0);
 	} else {
@@ -406,7 +406,7 @@ main(int ac, char *av[]) {
 	const char *wav[2];
 	wav[0] = wav1;
 	wav[1] = NULL;
-	int ret = ged_ls(gbp, 1, (const char **)wav);
+	int ret = ged_exec(gbp, 1, (const char **)wav);
 	if (ret & BRLCAD_UNKNOWN && wav[0] != wav1) {
 	    bu_log("\nged_ls called with command name \"%s\" correctly returned with BRLCAD_UNKNOWN set\n", wav1);
 	} else {

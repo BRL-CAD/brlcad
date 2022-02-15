@@ -581,7 +581,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 		    av[1] = "-f";
 		    av[2] = bu_vls_addr(&comb_name);
 		    av[3] = (char *)0;
-		    (void)ged_killtree(gedp, ac, av);
+		    (void)ged_exec(gedp, ac, av);
 		    bu_free(av, "free av array");
 		    bu_vls_printf(log, "Error: %s did not pass diff test at tol %f, rejecting\n", bu_vls_addr(&comb_name), tol.dist);
 		    return 2;

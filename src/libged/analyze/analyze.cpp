@@ -345,7 +345,7 @@ clear_obj(struct ged *gedp, const char *name)
     av[1] = "-f";
     av[2] = "-q";
     av[3] = name;
-    ged_kill(gedp, 4, (const char **)av);
+    ged_exec(gedp, 4, (const char **)av);
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
 }
 
@@ -360,7 +360,7 @@ mv_obj(struct ged *gedp, const char *n1, const char *n2)
     av[0] = "mv";
     av[1] = n1;
     av[2] = n2;
-    ged_move(gedp, 3, (const char **)av);
+    ged_exec(gedp, 3, (const char **)av);
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
 }
 

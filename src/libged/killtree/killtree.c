@@ -234,7 +234,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 
     if (gktd.killrefs && gktd.ac > 1) {
 	gedp->ged_internal_call = 1;
-	(void)ged_killrefs(gedp, gktd.ac, (const char **)gktd.av);
+	(void)ged_exec(gedp, gktd.ac, (const char **)gktd.av);
 	gedp->ged_internal_call = 0;
 
 	for (i = 1; i < gktd.ac; i++) {

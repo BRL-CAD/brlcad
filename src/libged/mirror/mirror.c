@@ -209,7 +209,7 @@ ged_mirror_core(struct ged *gedp, int argc, const char *argv[])
 	e_argv[1] = object;
 	e_argv[2] = NULL;
 
-	(void)ged_draw(gedp, 2, e_argv);
+	(void)ged_exec(gedp, 2, e_argv);
 	bv_update(gedp->ged_gvp);
     }
 

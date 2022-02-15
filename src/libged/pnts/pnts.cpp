@@ -1347,7 +1347,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     nargv[8] = argv[2];
     nargv[9] = argv[1];
 
-    return ged_pnts(gedp, 10, (const char **)nargv);
+    return ged_exec(gedp, 10, (const char **)nargv);
 }
 
 // Local Variables:

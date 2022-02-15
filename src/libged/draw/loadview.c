@@ -157,7 +157,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 	    /* bu_log("perspective=%d\n", perspective);*/
 	    snprintf(perspective_angle, sizeof(perspective_angle), "%d", perspective);
 
-	    ged_perspective(gedp, 2, (const char **)perspective_argv);
+	    ged_exec(gedp, 2, (const char **)perspective_argv);
 
 	} else if (bu_strncmp(buffer, "$*", 2) == 0) {
 	    /* the next read is the file name, the objects come
@@ -198,7 +198,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 	     * all exist.
 	     */
 	    const char *Z_cmd = "Z";
-	    (void)ged_zap(gedp, 1, &Z_cmd);
+	    (void)ged_exec(gedp, 1, &Z_cmd);
 
 	    /* now get the objects listed */
 	    ret = fscanf(fp, "%10000s", objects);
@@ -220,7 +220,7 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 		editArgv[0] = "draw";
 		editArgv[1] = objects;
 		editArgv[2] = (char *)NULL;
-		if (ged_draw(gedp, 2, (const char **)editArgv) != BRLCAD_OK) {
+		if (ged_exec(gedp, 2, (const char **)editArgv) != BRLCAD_OK) {
 		    bu_vls_printf(gedp->ged_result_str, "Unable to load object: %s\n", objects);
 		}
 
@@ -397,7 +397,7 @@ _ged_cm_end(const int argc, const char **argv)
 
     bu_vls_printf(&eye, "%lf %lf %lf", V3ARGS(_ged_eye_model));
     bu_argv_from_string(eye_argv+1, 4, bu_vls_addr(&eye));
-    ged_eye(_ged_current_gedp, 4, (const char **)eye_argv);
+    ged_exec(_ged_current_gedp, 4, (const char **)eye_argv);
     bu_vls_free(&eye);
 
     return 0;

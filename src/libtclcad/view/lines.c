@@ -68,7 +68,7 @@ go_data_lines(Tcl_Interp *UNUSED(interp),
     struct bview *btmp = gedp->ged_gvp;
     gedp->ged_gvp = gdvp;
 
-    ret = ged_view_data_lines(gedp, argc, argv);
+    ret = ged_exec(gedp, argc, argv);
 
     gedp->ged_gvp = btmp;
 
@@ -118,7 +118,7 @@ to_data_lines(struct ged *gedp,
     struct bview *btmp = gedp->ged_gvp;
     gedp->ged_gvp = gdvp;
 
-    ret = ged_view_func(gedp, argc, argv);
+    ret = ged_exec(gedp, argc, argv);
 
     gedp->ged_gvp = btmp;
 

@@ -91,7 +91,7 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_wmater(gedp, argc, av) & BRLCAD_ERROR) {
+    if (ged_exec(gedp, argc, av) & BRLCAD_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "f_edmater: av");
 	return BRLCAD_ERROR;
@@ -100,7 +100,7 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
     if (_ged_editit(editstring, tmpfil)) {
 	av[0] = "rmater";
 	av[2] = NULL;
-	status = ged_rmater(gedp, 2, av);
+	status = ged_exec(gedp, 2, av);
     } else {
 	status = BRLCAD_ERROR;
     }
