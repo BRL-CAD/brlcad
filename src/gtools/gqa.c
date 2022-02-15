@@ -95,6 +95,7 @@ main(int argc, char *argv[])
 	av[j] = argv[i];
 	++j;
     }
+    av[0] = "gqa";
     av[j] = (char *)0;
 
     if ((gedp = ged_open("db", argv[db_index], 1)) == GED_NULL) {
