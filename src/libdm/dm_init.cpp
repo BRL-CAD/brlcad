@@ -195,7 +195,8 @@ libdm_clear(void)
 {
     dm_map.clear();
     std::set<void *>::iterator h_it;
-    for (h_it = dm_handles.begin(); h_it != dm_handles.end(); h_it++) {
+    /* unload in reverse in case symbols are referential */
+    for (h_it = dm_handles.end(); h_it != dm_handles.begin(); h_it--) {
 	void *handle = *h_it;
 	bu_dlclose(handle);
     }

@@ -257,7 +257,8 @@ libged_clear(void)
 {
     ged_cmd_map.clear();
     std::set<void *>::iterator h_it;
-    for (h_it = ged_cmd_funcs.begin(); h_it != ged_cmd_funcs.end(); h_it++) {
+    /* unload in reverse in case symbols are referential */
+    for (h_it = ged_cmd_funcs.end(); h_it != ged_cmd_funcs.begin(); h_it--) {
 	void *handle = *h_it;
 	bu_dlclose(handle);
     }
