@@ -194,14 +194,9 @@ static void
 libdm_clear(void)
 {
     dm_map.clear();
-    std::set<void *>::iterator h_it;
-#ifdef __APPLE__
+    std::set<void *>::reverse_iterator h_it;
     /* unload in reverse in case symbols are referential */
-    for (h_it = dm_handles.end(); h_it != dm_handles.begin(); h_it--) {
-#else
-    /* doing unloading in the above order crashes on Ubuntu Linux */
-    for (h_it = dm_handles.begin(); h_it != dm_handles.end(); h_it++) {
-#endif
+    for (h_it = dm_handles.rbegin(); h_it != dm_handles.rend(); h_it++) {
 	void *handle = *h_it;
 	bu_dlclose(handle);
     }

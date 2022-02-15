@@ -256,14 +256,9 @@ static void
 libged_clear(void)
 {
     ged_cmd_map.clear();
-    std::set<void *>::iterator h_it;
-#ifdef __APPLE__
+    std::set<void *>::reverse_iterator h_it;
     /* unload in reverse in case symbols are referential */
-    for (h_it = ged_cmd_funcs.end(); h_it != ged_cmd_funcs.begin(); h_it--) {
-#else
-    /* doing unloading in the above order crashes on Ubuntu Linux */
-    for (h_it = ged_cmd_funcs.begin(); h_it != ged_cmd_funcs.end(); h_it++) {
-#endif
+    for (h_it = ged_cmd_funcs.rbegin(); h_it != ged_cmd_funcs.rend(); h_it++) {
 	void *handle = *h_it;
 	bu_dlclose(handle);
     }
