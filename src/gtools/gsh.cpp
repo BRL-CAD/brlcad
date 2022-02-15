@@ -59,8 +59,10 @@ extern "C" {
 
 #include "bu.h"
 #include "bv.h"
+#ifdef USE_DM
 #define DM_WITH_RT
 #include "dm.h"
+#endif
 #include "ged.h"
 
 #define DEFAULT_GSH_PROMPT "g> "
@@ -180,6 +182,7 @@ geval(struct gsh_state *s, int argc, const char **argv)
     return ret;
 }
 
+#ifdef USE_DM
 void
 view_checkpoint(struct gsh_state *s)
 {
@@ -232,6 +235,7 @@ view_update(struct gsh_state *s)
 	dm_draw_end(dmp);
     }
 }
+#endif
 
 
 int
@@ -379,7 +383,9 @@ main(int argc, const char **argv)
 
 	/* Before any BRL-CAD logic is executed, stash the state of the view
 	 * info so we can recognized changes. */
+#ifdef USE_DM
 	view_checkpoint(&s);
+#endif
 
 	/* Make an argv array from the input line */
 	char *input = bu_strdup(bu_vls_cstr(&s.iline));
@@ -394,7 +400,7 @@ main(int argc, const char **argv)
 	    int cbret;
 	    int cret = bu_cmd(gsh_cmds, ac, (const char **)av, 0, (void *)&s, &cbret);
 
-	    // Regardless of what happened, this is not a raw GED cmd 
+	    // Regardless of what happened, this is not a raw GED cmd
 	    is_gsh_cmd = 1;
 
 	    if (cret != BRLCAD_OK)
@@ -407,12 +413,14 @@ main(int argc, const char **argv)
 		bu_free(av, "input argv");
 		goto done;
 	    }
-	} 
+	}
 
 	/* If we didn't match a gsh cmd, try a standard libged call */
 	if (!is_gsh_cmd && !(geval(&s, ac, (const char **)av) & BRLCAD_ERROR)) {
 	    // The command ran, see if the display needs updating
+#ifdef USE_DM
 	    view_update(&s);
+#endif
 	}
 
 	// If we closed the dbip, clear out the gfile name

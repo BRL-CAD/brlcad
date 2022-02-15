@@ -226,7 +226,13 @@ if (BRLCAD_ENABLE_QT)
 
   if(NOT Qt6Widgets_FOUND AND BRLCAD_ENABLE_QT)
 
-    # We didn't find 6, try 5
+    # We didn't find 6, try 5.  For non-standard install locations, you may need to set
+    # the following:
+    #
+    # Qt5_DIR=<install_dir>/lib/cmake/Qt5
+    # QT_QMAKE_EXECUTABLE=<install_dir>/bin/qmake
+    # AUTORCC_EXECUTABLE=<install_dir>/bin/rcc
+    # TODO - others?
     if(BRLCAD_ENABLE_OPENGL)
       find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL Network)
     else()

@@ -23,7 +23,8 @@ set(GSH_SRCS
   ${LDIR}/utf8.c
   ${LDIR}/linenoise.c
   )
-BRLCAD_ADDEXEC(gsh "${GSH_SRCS}"  "libged;libdm;libbu")
+#BRLCAD_ADDEXEC(gsh "${GSH_SRCS}"  "libged;libdm;libbu") commented out for sans-libdm linkage testing
+BRLCAD_ADDEXEC(gsh "${GSH_SRCS}"  "libged;libbu")
 
 BRLCAD_ADDEXEC(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
 
