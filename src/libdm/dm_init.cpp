@@ -49,39 +49,41 @@ void *dm_backends;
 void *fb_backends;
 
 static std::set<void *> dm_handles;
-struct bu_vls *dm_init_msg_str;
+struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 
 const char *
 dm_init_msgs()
 {
-    return bu_vls_cstr(dm_init_msg_str);
+    return bu_vls_cstr(&init_msgs);
 }
 
 
 static void
 libdm_init(void)
 {
-
-    BU_GET(dm_init_msg_str, struct bu_vls);
-    bu_vls_init(dm_init_msg_str);
+    bu_vls_init(&init_msgs);
 
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "dm", NULL);
     char **dm_filenames;
     struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&plugin_pattern, "*%s", DM_PLUGIN_SUFFIX);
     size_t dm_nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &dm_filenames);
+
     for (size_t i = 0; i < dm_nfiles; i++) {
 	char pfile[MAXPATHLEN] = {0};
 	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "dm", dm_filenames[i], NULL);
 	void *dl_handle;
-	if (!(dl_handle = bu_dlopen(pfile, BU_RTLD_NOW))) {
+
+	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
+	if (!dl_handle) {
 	    const char * const error_msg = bu_dlerror();
 	    if (error_msg)
-		bu_vls_printf(dm_init_msg_str, "%s\n", error_msg);
+		bu_vls_printf(&init_msgs, "%s\n", error_msg);
 
-	    bu_vls_printf(dm_init_msg_str, "Unable to dynamically load '%s' (skipping)\n", pfile);
+	    bu_vls_printf(&init_msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
 	    continue;
 	}
+
 	{
 	    const char *psymbol = "dm_plugin_info";
 	    void *info_val = bu_dlsym(dl_handle, psymbol);
@@ -90,10 +92,10 @@ libdm_init(void)
 		const char * const error_msg = bu_dlerror();
 
 		if (error_msg)
-		    bu_vls_printf(dm_init_msg_str, "%s\n", error_msg);
+		    bu_vls_printf(&init_msgs, "%s\n", error_msg);
 
-		bu_vls_printf(dm_init_msg_str, "Unable to load symbols from '%s' (skipping)\n", pfile);
-		bu_vls_printf(dm_init_msg_str, "Could not find '%s' symbol in plugin\n", psymbol);
+		bu_vls_printf(&init_msgs, "Unable to load symbols from '%s' (skipping)\n", pfile);
+		bu_vls_printf(&init_msgs, "Could not find '%s' symbol in plugin\n", psymbol);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
@@ -101,19 +103,19 @@ libdm_init(void)
 	    const struct dm_plugin *plugin = plugin_info();
 
 	    if (!plugin) {
-		bu_vls_printf(dm_init_msg_str, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
+		bu_vls_printf(&init_msgs, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
 
 	    if (*((const uint32_t *)(plugin)) != (uint32_t)(DM_API)) {
-		bu_vls_printf(dm_init_msg_str, "Plugin version %d of '%s' differs from %d (skipping)\n", *((const uint32_t *)(plugin)), pfile, DM_API);
+		bu_vls_printf(&init_msgs, "Plugin version %d of '%s' differs from %d (skipping)\n", *((const uint32_t *)(plugin)), pfile, DM_API);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
 
 	    if (!plugin->p) {
-		bu_vls_printf(dm_init_msg_str, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
+		bu_vls_printf(&init_msgs, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
@@ -121,14 +123,14 @@ libdm_init(void)
 	    const struct dm *d = plugin->p;
 	    const char *dname = dm_get_name(d);
 	    if (!dname) {
-		bu_vls_printf(dm_init_msg_str, "Warning - file '%s' does not provide a display manager name (?), skipping\n", pfile);
+		bu_vls_printf(&init_msgs, "Warning - file '%s' does not provide a display manager name (?), skipping\n", pfile);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
 	    std::string key(dname);
 	    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
 	    if (dm_map.find(key) != dm_map.end()) {
-		bu_vls_printf(dm_init_msg_str, "Warning - file '%s' provides backend '%s' but that backend has already been loaded, skipping\n", pfile, dname);
+		bu_vls_printf(&init_msgs, "Warning - file '%s' provides backend '%s' but that backend has already been loaded, skipping\n", pfile, dname);
 		bu_dlclose(dl_handle);
 		continue;
 	    }
@@ -145,17 +147,17 @@ libdm_init(void)
 		const char * const error_msg = bu_dlerror();
 
 		if (error_msg)
-		    bu_vls_printf(dm_init_msg_str, "%s\n", error_msg);
+		    bu_vls_printf(&init_msgs, "%s\n", error_msg);
 
-		bu_vls_printf(dm_init_msg_str, "Unable to load symbols from '%s' (skipping)\n", pfile);
-		bu_vls_printf(dm_init_msg_str, "Could not find '%s' symbol in plugin\n", psymbol);
+		bu_vls_printf(&init_msgs, "Unable to load symbols from '%s' (skipping)\n", pfile);
+		bu_vls_printf(&init_msgs, "Could not find '%s' symbol in plugin\n", psymbol);
 		continue;
 	    }
 
 	    const struct fb_plugin *plugin = plugin_info();
 
 	    if (!plugin || !plugin->p) {
-		bu_vls_printf(dm_init_msg_str, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
+		bu_vls_printf(&init_msgs, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
 		continue;
 	    }
 
@@ -163,7 +165,7 @@ libdm_init(void)
 	    const char *fname = fb_get_name(f);
 	    std::string key(fname);
 	    if (fb_map.find(key) != fb_map.end()) {
-		bu_vls_printf(dm_init_msg_str, "Warning - file '%s' provides framebuffer backend '%s' but that backend has already been loaded, skipping\n", pfile, fname);
+		bu_vls_printf(&init_msgs, "Warning - file '%s' provides framebuffer backend '%s' but that backend has already been loaded, skipping\n", pfile, fname);
 		continue;
 	    }
 	    fb_map[key] = f;
@@ -202,8 +204,7 @@ libdm_clear(void)
     }
     dm_handles.clear();
 
-    bu_vls_free(dm_init_msg_str);
-    BU_PUT(dm_init_msg_str, struct bu_vls);
+    bu_vls_free(&init_msgs);
 }
 
 
