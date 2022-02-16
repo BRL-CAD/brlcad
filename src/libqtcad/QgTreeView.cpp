@@ -191,10 +191,20 @@ void QgTreeView::context_menu(const QPoint &point)
     menu->exec(mapToGlobal(point));
 }
 
+void QgTreeView::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
+{
+    if (selected.indexes().size()) {
+	// Stash a valid selection for potential post-model rebuild restoration.
+	QModelIndex nindex = selected.indexes().first();
+	if (nindex.isValid())
+	    cached_selection_idx = nindex;
+    }
+    QTreeView::selectionChanged(selected, deselected);
+}
+
 QModelIndex QgTreeView::selected()
 {
     if (selectedIndexes().count() == 1) {
-	cached_selection_idx = selectedIndexes().first();
 	return selectedIndexes().first();
     } else {
 	return QModelIndex();
@@ -223,15 +233,19 @@ QgTreeView::redo_highlights()
 {
     QgSelectionProxyModel *view_model = (QgSelectionProxyModel *)model();
     QgModel *sm = (QgModel *)view_model->sourceModel();
+
+    // Restore the previous selection, if we have no replacement and its still valid
     QModelIndex selected_idx = selected();
     if (!selected_idx.isValid()) {
 	QgItem *cnode = static_cast<QgItem *>(cached_selection_idx.internalPointer());
 	if (sm->items->find(cnode) != sm->items->end()) {
 	    selected_idx = cached_selection_idx;
+	    selectionModel()->select(selected_idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
 	} else {
 	    cached_selection_idx = QModelIndex();
 	}
     }
+
     view_model->update_selected_node_relationships(selected_idx);
 }
 
