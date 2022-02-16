@@ -77,8 +77,7 @@ class CADApp : public QApplication
 	QgSelectionProxyModel *mdl = NULL;
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 
-	int interaction_mode = 0; // Used to control tree widget highlighting
-	int prev_interaction_mode = 0;
+	//int prev_interaction_mode = 0;
 
     signals:
 	void view_change(struct bview **);

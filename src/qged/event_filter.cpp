@@ -49,10 +49,8 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     if (vcp) {
 	QRect lrect = vcp->geometry();
 	QPoint mpos = vcp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && c->interaction_mode != 0) {
-	    c->prev_interaction_mode = c->interaction_mode;
-	    c->interaction_mode = 0;
-	    pm->mode_change(c->interaction_mode);
+	if (lrect.contains(mpos) && pm->interaction_mode != 0) {
+	    pm->mode_change(0);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}
@@ -61,10 +59,8 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     if (icp) {
 	QRect lrect = icp->geometry();
 	QPoint mpos = icp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && c->interaction_mode != 1) {
-	    c->prev_interaction_mode = c->interaction_mode;
-	    c->interaction_mode = 1;
-	    pm->mode_change(c->interaction_mode);
+	if (lrect.contains(mpos) && pm->interaction_mode != 1) {
+	    pm->mode_change(1);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}
@@ -73,10 +69,8 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     if (ocp) {
 	QRect lrect = ocp->geometry();
 	QPoint mpos = ocp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && c->interaction_mode != 2) {
-	    c->prev_interaction_mode = c->interaction_mode;
-	    c->interaction_mode = 2;
-	    pm->mode_change(c->interaction_mode);
+	if (lrect.contains(mpos) && pm->interaction_mode != 2) {
+	    pm->mode_change(2);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}

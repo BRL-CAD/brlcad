@@ -257,7 +257,7 @@ CADApp::tree_update()
     CADPalette *vc = w->vc;
     CADPalette *ic = w->ic;
     CADPalette *oc = w->oc;
-    switch (interaction_mode) {
+    switch (mdl->interaction_mode) {
 	case 0:
 	    v = vc;
 	    break;

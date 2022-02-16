@@ -83,6 +83,10 @@ class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 
 	QgTreeView *treeview = NULL;
 
+	// There are a number of relationships which can be used for related
+	// node highlighting - this allows a client application to select one.
+	int interaction_mode = 0;
+
     public slots:
 	//void refresh(void *);
 	void mode_change(int i);
@@ -90,11 +94,6 @@ class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 	void item_collapsed(const QModelIndex &index);
 	void item_expanded(const QModelIndex &index);
 	void redo_expansions(void *);
-
-    private:
-	// There are a number of relationships which can be used for related
-	// node highlighting - this allows a client application to select one.
-	int interaction_mode = 0;
 };
 
 #endif //QGSELECTIONMODEL_H
