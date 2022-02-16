@@ -39,6 +39,7 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
     CADApp *c = (CADApp *)qApp;
     if (!c || !c->w)
 	return false;
+    QgSelectionProxyModel *pm = c->mdl;
     QWidget *vcp = c->w->vc->tpalette;
 #ifdef USE_QT6
     QPoint gpos = m_e->globalPosition().toPoint();
@@ -51,6 +52,7 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
 	if (lrect.contains(mpos) && c->interaction_mode != 0) {
 	    c->prev_interaction_mode = c->interaction_mode;
 	    c->interaction_mode = 0;
+	    pm->mode_change(c->interaction_mode);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}
@@ -62,6 +64,7 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
 	if (lrect.contains(mpos) && c->interaction_mode != 1) {
 	    c->prev_interaction_mode = c->interaction_mode;
 	    c->interaction_mode = 1;
+	    pm->mode_change(c->interaction_mode);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}
@@ -73,6 +76,7 @@ bool EditStateFilter::eventFilter(QObject *, QEvent *e)
 	if (lrect.contains(mpos) && c->interaction_mode != 2) {
 	    c->prev_interaction_mode = c->interaction_mode;
 	    c->interaction_mode = 2;
+	    pm->mode_change(c->interaction_mode);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}

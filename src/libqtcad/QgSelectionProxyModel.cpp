@@ -68,10 +68,9 @@ QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
 
     if (role == TypeIconDisplayRole)
 	return QVariant(curr_node->icon);
-#if 0
-    if (role == RelatedHighlightDisplayRole) return curr_node->is_highlighted;
-    if (role == InstanceHighlightDisplayRole) return curr_node->instance_highlight;
-#endif
+    if (role == HighlightDisplayRole) {
+	return curr_node->instance()->active_flag;
+    }
     return QVariant();
 }
 
@@ -123,60 +122,93 @@ QgSelectionProxyModel::setData(const QModelIndex & idx, const QVariant &UNUSED(v
 void
 QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx)
 {
+    bu_log("update_selected_node_relationships: %d\n", interaction_mode);
+
     std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
 
+    // Clear all highlighting state
+    QgModel *m = (QgModel *)sourceModel();
+    for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
+	g_it->second->active_flag = 0;
+    }
+
     if (!idx.isValid() || interaction_mode == QgViewMode) {
-	// Clear all highlighting state - invalid selection or view mode means no related highlights
-	QgModel *m = (QgModel *)sourceModel();
-	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-	    g_it->second->active_flag = 0;
-	}
+	// For the case of a selection change, emit a layout change signal so the drawBranches call updates
+	// the portions of the row colors not handled by the itemDelegate painting.  For expand and close
+	// operations on items this is already handled by Qt, but layout updating is not a normal part of the selection
+	// process in most tree views so for the customized selection drawing we do we need to call it manually.
+	emit layoutChanged();
 	return;
     }
 
-    QgModel *m = (QgModel *)sourceModel();
     QgItem *snode = static_cast<QgItem *>(idx.internalPointer());
 
+    if (!snode) {
+	emit layoutChanged();
+	return;
+    }
+
     gInstance *sg = snode->instance();
-    sg->active_flag = 2;
 
     std::unordered_set<gInstance *> processed;
     processed.insert(sg);
 
     std::queue<gInstance *> to_flag;
-    to_flag.push(sg);
 
     // If we're in QgInstanceEditMode, we key off of the exact gInstance
     // pointer that corresponds to this instance.  Since that instance is
     // unique, we only need to flag parent instances (and all the parents of
     // those parents) so the parent QgItems know to highlight themselves if
     // their children are closed.
-    if (interaction_mode == QgPrimitiveEditMode) {
+    if (interaction_mode == QgInstanceEditMode) {
+
+	sg->active_flag = 3;
+
+	// For gInstances where the child dp == the parent (i.e. the comb directly
+	// containing the instance), set to 2
+	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
+	    gInstance *cd = g_it->second;
+	    if (cd->dp == sg->parent && processed.find(cd) == processed.end()) {
+		cd->active_flag = 2;
+		to_flag.push(cd);
+		processed.insert(cd);
+	    }
+	}
+	// For gInstances above the active instance, set to 1
 	while (!to_flag.empty()) {
 	    gInstance *curr = to_flag.front();
 	    to_flag.pop();
+	    if (!curr->parent)
+		continue;
 	    for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
 		gInstance *cd = g_it->second;
-		if (cd->parent == curr->dp && processed.find(cd) == processed.end()) {
+		if (cd->dp == curr->parent && processed.find(cd) == processed.end()) {
 		    cd->active_flag = 1;
 		    to_flag.push(cd);
 		    processed.insert(cd);
 		}
 	    }
 	}
+	// For the case of a selection change, emit a layout change signal so the drawBranches call updates
+	// the portions of the row colors not handled by the itemDelegate painting.  For expand and close
+	// operations on items this is already handled by Qt, but layout updating is not a normal part of the selection
+	// process in most tree views so for the customized selection drawing we do we need to call it manually.
+	emit layoutChanged();
 	return;
     }
 
-    // If we're in QgPrimitiveEditMode, we have more work to do - we need to
-    // check the gInstances to see if anybody else is using the same dp as sg -
-    // if so, they are also directly being altered in this mode since their
-    // underlying primitive may change.  We then need to flag all the parent
-    // instances of all the activated gInstances (and all their parents)
+    // If we're in QgPrimitiveEditMode, we have slightly different work to do -
+    // we need to check the gInstances to see if anybody else is using the same
+    // dp as sg - if so, they are also directly being altered in this mode
+    // since their underlying primitive may change.  We then need to flag all
+    // the parent instances of all the activated gInstances (and all their
+    // parents) so the tree will know which combs to highlight to indicate there
+    // is a relevant object in the subtree.
     if (interaction_mode == QgPrimitiveEditMode) {
 	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
 	    gInstance *cg = g_it->second;
 	    if (cg->dp == sg->dp) {
-		g_it->second->active_flag = 2;
+		cg->active_flag = 2;
 		to_flag.push(cg);
 		processed.insert(cg);
 	    }
@@ -188,23 +220,25 @@ QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx
 	while (!to_flag.empty()) {
 	    gInstance *curr = to_flag.front();
 	    to_flag.pop();
+	    if (!curr->parent)
+		continue;
 	    for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
 		gInstance *cd = g_it->second;
-		if (cd->parent == curr->dp && processed.find(cd) == processed.end()) {
+		if (curr->parent == cd->dp && processed.find(cd) == processed.end()) {
 		    cd->active_flag = 1;
 		    to_flag.push(cd);
 		    processed.insert(cd);
 		}
 	    }
 	}
+	// For the case of a selection change, emit a layout change signal so the drawBranches call updates
+	// the portions of the row colors not handled by the itemDelegate painting.  For expand and close
+	// operations on items this is already handled by Qt, but layout updating is not a normal part of the selection
+	// process in most tree views so for the customized selection drawing we do we need to call it manually.
+	emit layoutChanged();
 	return;
     }
 
-    // For the case of a selection change, emit a layout change signal so the drawBranches call updates
-    // the portions of the row colors not handled by the itemDelegate painting.  For expand and close
-    // operations on items this is already handled by Qt, but layout updating is not a normal part of the selection
-    // process in most tree views so for the customized selection drawing we do we need to call it manually.
-    emit layoutChanged();
 }
 
 // Local Variables:

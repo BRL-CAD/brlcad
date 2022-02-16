@@ -72,8 +72,7 @@ class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 	    BoolDisplayRole = Qt::UserRole + 1001,
 	    DirectoryInternalRole = Qt::UserRole + 1002,
 	    TypeIconDisplayRole = Qt::UserRole + 1003,
-	    RelatedHighlightDisplayRole = Qt::UserRole + 1004,
-	    InstanceHighlightDisplayRole = Qt::UserRole + 1005
+	    HighlightDisplayRole = Qt::UserRole + 1004,
 	};
 
 	QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;

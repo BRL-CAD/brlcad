@@ -61,9 +61,11 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 	void expand_path(QString path);
 	void expand_link(const QUrl &link);
 	void redo_expansions(void *);
+	void redo_highlights();
 
     private:
 	void header_state();
+	QModelIndex cached_selection_idx = QModelIndex();
 };
 
 class QTCAD_EXPORT gObjDelegate : public QStyledItemDelegate

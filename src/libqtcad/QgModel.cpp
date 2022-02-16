@@ -523,6 +523,7 @@ QgModel::g_update(struct db_i *n_dbip)
     if (changed_db_flag) {
 	emit mdl_changed_db((void *)gedp);
 	emit layoutChanged();
+	emit check_highlights();
     }
 
     // Reset flag - we're in sync now
@@ -786,6 +787,7 @@ QgModel::fetchMore(const QModelIndex &idx)
 	    beginInsertRows(idx, item->children.size(), nc.size() - 1);
 	    item->children = nc;
 	    endInsertRows();
+	    emit check_highlights();
 	}
     }
 }

@@ -380,11 +380,15 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     treeview = new QgTreeView(tree_dock, ca->mdl);
     tree_dock->setWidget(treeview);
 
+    // Tell the selection model we have a tree view
+    ca->mdl->treeview = treeview;
+
     // We need to record the expanded/contracted state of the tree items,
     // and restore them after a model reset
     connect(treeview, &QgTreeView::expanded, ca->mdl, &QgSelectionProxyModel::item_expanded);
     connect(treeview, &QgTreeView::collapsed, ca->mdl, &QgSelectionProxyModel::item_collapsed);
     connect(m, &QgModel::mdl_changed_db, treeview, &QgTreeView::redo_expansions);
+    connect(m, &QgModel::check_highlights, treeview, &QgTreeView::redo_highlights);
 
     // The tree's highlighting changes based on which set of tools we're using - instance editing
     // and primitive editing have different non-local implications in the hierarchy.

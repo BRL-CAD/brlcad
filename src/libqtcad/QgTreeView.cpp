@@ -34,49 +34,29 @@
 
 void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    struct directory *cdp = RT_DIR_NULL;
+    int aflag = 0;
     if (!cadtreeview)
 	return;
 
-#if 0
-    // TODO - Not sure this is a good place to do it, but testing suggests we can
-    // check the expanded state of a QgItem here and restore it if the internally
-    // stored QgItem open/closed state doesn't match.  Will probably need to define
-    // our own QgTreeView isExpanded and setExpanded to stash the bookkeeping flags
-    // in the QgItems.
-    //
-    // This appears to be necessary if we want to restore subtree expansion states
-    // after editing - if the children of a node are rebuilt, but default they will
-    // start out closed - Qt itself has no knowledge that some of them might be the
-    // same children that were there previously.  It's possible a more nuanced addition
-    // and removal of individual rows at the right place in the model might do better,
-    // but at least for now we're using the fetchMore mechanism to validate and correct
-    // the children of an item against the .g file.
-    if (cadtreeview->isExpanded(index)) {
-	bu_log("Expanded\n");
-    } else {
-	bu_log("Closed\n");
-	cadtreeview->setExpanded(index, true);
-    }
-#endif
-
-    QModelIndex selected = cadtreeview->selected();
-    if (selected.isValid())
-	cdp = (struct directory *)(selected.data(QgSelectionProxyModel::DirectoryInternalRole).value<void *>());
-    struct directory *pdp = (struct directory *)(index.data(QgSelectionProxyModel::DirectoryInternalRole).value<void *>());
     if (option.state & QStyle::State_Selected) {
 	painter->fillRect(option.rect, option.palette.highlight());
 	goto text_string;
     }
-    if ((!cadtreeview->isExpanded(index) && index.data(QgSelectionProxyModel::RelatedHighlightDisplayRole).toInt())
-	    || (cdp == pdp && index.data(QgSelectionProxyModel::RelatedHighlightDisplayRole).toInt())) {
+
+    aflag = index.data(QgSelectionProxyModel::HighlightDisplayRole).toInt();
+    if (!cadtreeview->isExpanded(index) && aflag == 1) {
 	painter->fillRect(option.rect, QBrush(QColor(220, 200, 30)));
 	goto text_string;
     }
-    if (index.data(QgSelectionProxyModel::InstanceHighlightDisplayRole).toInt()) {
+    if (aflag == 2) {
 	painter->fillRect(option.rect, QBrush(QColor(10, 10, 50)));
 	goto text_string;
     }
+    if (aflag == 3) {
+	painter->fillRect(option.rect, QBrush(QColor(10, 10, 150)));
+	goto text_string;
+    }
+
 
 text_string:
     QString text = index.data().toString();
@@ -153,20 +133,17 @@ QgTreeView::QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel) : QTr
 void
 QgTreeView::drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const
 {
-    struct directory *cdp = RT_DIR_NULL;
     QModelIndex selected_idx = ((QgTreeView *)this)->selected();
-    if (selected_idx.isValid())
-	cdp = (struct directory *)(selected_idx.data(QgSelectionProxyModel::DirectoryInternalRole).value<void *>());
-    struct directory *pdp = (struct directory *)(index.data(QgSelectionProxyModel::DirectoryInternalRole).value<void *>());
     if (!(index == selected_idx)) {
-	if (!(QgTreeView *)this->isExpanded(index) && index.data(QgSelectionProxyModel::RelatedHighlightDisplayRole).toInt()) {
+	int aflag = index.data(QgSelectionProxyModel::HighlightDisplayRole).toInt();
+	if (!(QgTreeView *)this->isExpanded(index) && aflag == 1) {
 	    painter->fillRect(rrect, QBrush(QColor(220, 200, 30)));
 	}
-	if (cdp == pdp && index.data(QgSelectionProxyModel::RelatedHighlightDisplayRole).toInt()) {
-	    painter->fillRect(rrect, QBrush(QColor(220, 200, 30)));
-	}
-	if (index.data(QgSelectionProxyModel::InstanceHighlightDisplayRole).toInt()) {
+	if (aflag == 2) {
 	    painter->fillRect(rrect, QBrush(QColor(10, 10, 50)));
+	}
+	if (aflag == 3) {
+	    painter->fillRect(rrect, QBrush(QColor(10, 10, 150)));
 	}
     }
     QTreeView::drawBranches(painter, rrect, index);
@@ -217,6 +194,7 @@ void QgTreeView::context_menu(const QPoint &point)
 QModelIndex QgTreeView::selected()
 {
     if (selectedIndexes().count() == 1) {
+	cached_selection_idx = selectedIndexes().first();
 	return selectedIndexes().first();
     } else {
 	return QModelIndex();
@@ -238,6 +216,23 @@ QgTreeView::redo_expansions(void *)
 	    bu_log("expansion failed?\n");
 	}
     }
+}
+
+void
+QgTreeView::redo_highlights()
+{
+    QgSelectionProxyModel *view_model = (QgSelectionProxyModel *)model();
+    QgModel *sm = (QgModel *)view_model->sourceModel();
+    QModelIndex selected_idx = selected();
+    if (!selected_idx.isValid()) {
+	QgItem *cnode = static_cast<QgItem *>(cached_selection_idx.internalPointer());
+	if (sm->items->find(cnode) != sm->items->end()) {
+	    selected_idx = cached_selection_idx;
+	} else {
+	    cached_selection_idx = QModelIndex();
+	}
+    }
+    view_model->update_selected_node_relationships(selected_idx);
 }
 
 void QgTreeView::expand_path(QString path)

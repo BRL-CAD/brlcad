@@ -359,6 +359,10 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	// structure in some way.
 	void mdl_changed_db(void *);
 
+	// Let the tree view know it has highlighting work to do it wouldn't
+	// otherwise see
+	void check_highlights();
+
     private:
 	int NodeRow(QgItem *node) const;
 	QModelIndex index(int row, int column, const QModelIndex &p) const override;
