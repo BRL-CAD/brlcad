@@ -59,6 +59,7 @@ extern "C" {
 
 #include "bu.h"
 #include "bv.h"
+#define USE_DM 1
 #ifdef USE_DM
 #define DM_WITH_RT
 #include "dm.h"
