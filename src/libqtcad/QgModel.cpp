@@ -394,108 +394,138 @@ QgModel::~QgModel()
 }
 
 void
-QgModel::reset(struct db_i *n_dbip)
+QgModel::g_update(struct db_i *n_dbip)
 {
-    // If the dbip changed, we have a new database and we need to completely
-    // reset the model contents.
-    // NOTE:  tops objects in the .g file are "instances" beneath the .g
-    // itself, which is the analogy to Qt's hidden "root" node in a model.  To
-    // handle them, we define "NULL root" instances.
 
-    beginResetModel();
+    // In case we have opened a completely new .g file, set the callbacks
+    if (n_dbip) {
+	// Primary driver of model updates is when individual objects are changed
+	db_add_changed_clbk(n_dbip, &qgmodel_changed_callback, (void *)this);
 
-    // Remove old instances and re-initialize containers (clears out the Qt
-    // model data.)
-    if (items) {
-	std::unordered_set<QgItem *>::iterator i_it;
-	for (i_it = (*items).begin(); i_it != (*items).end(); i_it++) {
-	    QgItem *itm = *i_it;
+	// If the tops list changes, we need to update that vector as well.  Unlike
+	// local dp changes, we can only (re)build the tops list after an
+	// update_nref pass is complete.
+	db_add_update_nref_clbk(n_dbip, &qgmodel_update_nref_callback, (void *)this);
+    } else {
+	// if we have no dbip, clear out everything
+	beginResetModel();
+	sync_instances(tops_instances, instances, n_dbip);
+	std::unordered_set<QgItem *>::iterator s_it;
+	for (s_it = items->begin(); s_it != items->end(); s_it++) {
+	    QgItem *itm = *s_it;
 	    delete itm;
 	}
-    }
-    tops_items.clear();
-    changed_dp.clear();
-
-    // Reset and initialize the .g level data (gInstances)
-    sync_instances(tops_instances, instances, n_dbip);
-
-    // Primary driver of model updates is when individual objects are changed
-    db_add_changed_clbk(n_dbip, &qgmodel_changed_callback, (void *)this);
-
-    // If the tops list changes, we need to update that vector as well.  Unlike
-    // local dp changes, we can only (re)build the tops list after an
-    // update_nref pass is complete.
-    db_add_update_nref_clbk(n_dbip, &qgmodel_update_nref_callback, (void *)this);
-
-    // tops entries get a QgItem by default
-    std::unordered_map<unsigned long long, gInstance *>::iterator top_it;
-    for (top_it = tops_instances->begin(); top_it != tops_instances->end(); top_it++) {
-	gInstance *ninst = top_it->second;
-	QgItem *nitem = new QgItem(ninst, this);
-	nitem->parentItem = rootItem;
-	tops_items.push_back(nitem);
-	items->insert(nitem);
+	items->clear();
+	tops_items.clear();
+	emit mdl_changed_db((void *)gedp);
+	emit layoutChanged();
+	changed_db_flag = 0;
+	endResetModel();
+	return;
     }
 
-    // Sort tops_items according to alphanum
-    std::sort(tops_items.begin(), tops_items.end(), QgItem_cmp());
-
-    // Make tops items children of the rootItem
-    rootItem->children.clear();
-    for (size_t i = 0; i < tops_items.size(); i++) {
-	rootItem->appendChild(tops_items[i]);
-    }
-
-    endResetModel();
-
-    // Inform the world the database has changed.
-    emit mdl_changed_db((void *)gedp);
-}
-
-void
-QgModel::g_update()
-{
+    // If we have a dbip and the changed flag is set, figure out what's different
     if (changed_db_flag) {
 	beginResetModel();
-	update_tops_items();
-	// Clear out any QgItems with invalid info
-	//
-	// 1.  If the gInstance is invalid, remove
-	std::unordered_set<QgItem *>::iterator i_it;
-	std::unordered_set<QgItem *> to_remove;
-	for (i_it = (*items).begin(); i_it != (*items).end(); i_it++) {
-	    QgItem *itm = *i_it;
+
+	// Step 1 - make sure our instances are current - i.e. they match the
+	// .g database state
+	sync_instances(tops_instances, instances, n_dbip);
+
+	// Clear out any QgItems with invalid info.  We need to be fairly
+	// aggressive here - first we find all the existing invalid ones, and
+	// then we invalidate all their children recursively - any item with an
+	// invalid parent is invalid.
+	std::queue<QgItem *> to_clear;
+	std::unordered_set<QgItem *> invalid;
+	std::unordered_set<QgItem *>::iterator s_it;
+	for (s_it = items->begin(); s_it != items->end(); s_it++) {
+	    QgItem *itm = *s_it;
 	    if (instances->find(itm->ihash) == instances->end()) {
-		to_remove.insert(itm);
+		invalid.insert(itm);
+		to_clear.push(itm);
 	    }
 	}
-	std::unordered_set<QgItem *>::iterator tr_it;
-	for (tr_it = to_remove.begin(); tr_it != to_remove.end(); tr_it++) {
-	    QgItem *qii = *tr_it;
-	    items->erase(qii);
-	    delete qii;
+	while (!to_clear.empty()) {
+	    QgItem *i_itm = to_clear.front();
+	    to_clear.pop();
+	    for (size_t i = 0; i < i_itm->children.size(); i++) {
+		QgItem *itm = i_itm->children[i];
+		invalid.insert(itm);
+		to_clear.push(itm);
+	    }
 	}
-	// 2.  Any that are left still match a gInstance, but if their
-	// children array contain any invalid references we need to clear
-	// it so they can start over.
-	for (i_it = (*items).begin(); i_it != (*items).end(); i_it++) {
-	    QgItem *itm = *i_it;
-	    std::vector<QgItem *> valid_children;
-	    for (size_t i = 0; i < itm->children.size(); i++) {
-		QgItem *qii = itm->children[i];
-		if (items->find(qii) != items->end()) {
-		    valid_children.push_back(qii);
+
+	// Remove any invalid QgItem references from the children arrays
+	for (s_it = items->begin(); s_it != items->end(); s_it++) {
+	    if (invalid.find(*s_it) != invalid.end())
+		continue;
+	    QgItem *i_itm = *s_it;
+	    std::vector<QgItem *> vchildren;
+	    for (size_t i = 0; i < i_itm->children.size(); i++) {
+		QgItem *itm = i_itm->children[i];
+		if (invalid.find(itm) == invalid.end()) {
+		    // Valid - keep it
+		    vchildren.push_back(itm);
 		}
 	    }
-	    itm->children = valid_children;
+	    i_itm->children = vchildren;
+	}
+
+	// Validate existing tops QgItems based on the now-updated tops_instances data.
+	std::unordered_map<unsigned long long, QgItem *> vtops_items;
+	for (size_t i = 0; i < tops_items.size(); i++) {
+	    QgItem *titem = tops_items[i];
+	    if (tops_instances->find(titem->ihash) != tops_instances->end()) {
+		// Still a tops item
+		vtops_items[titem->ihash] = titem;
+	    }
+	}
+
+	// Using tops_instances, construct a new tops vector.  Reuse any still valid
+	// QgItems, and make new ones 
+	std::vector<QgItem *> ntops_items;
+	std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
+	for (i_it = tops_instances->begin(); i_it != tops_instances->end(); i_it++) {
+	    std::unordered_map<unsigned long long, QgItem *>::iterator v_it;
+	    v_it = vtops_items.find(i_it->first);
+	    if (v_it != vtops_items.end()) {
+		ntops_items.push_back(v_it->second);
+	    } else {
+		gInstance *ninst = i_it->second;
+		QgItem *nitem = new QgItem(ninst, this);
+		nitem->parentItem = rootItem;
+		ntops_items.push_back(nitem);
+		items->insert(nitem);
+	    }
+	}
+
+	// Set the new tops items as children of the rootItem. 
+	std::sort(ntops_items.begin(), ntops_items.end(), QgItem_cmp());
+	tops_items = ntops_items;
+	rootItem->children.clear();
+	for (size_t i = 0; i < tops_items.size(); i++) {
+	    rootItem->appendChild(tops_items[i]);
+	}
+
+	// Finally, delete the invalid QgItems
+	std::unordered_set<QgItem *>::iterator iv_it;
+	for (iv_it = invalid.begin(); iv_it != invalid.end(); iv_it++) {
+	    QgItem *iv_itm = *iv_it;
+	    items->erase(iv_itm);
+	    delete iv_itm;
 	}
 
 	endResetModel();
     }
+
+    // If we did change something, we need to let the application know
     if (changed_db_flag) {
 	emit mdl_changed_db((void *)gedp);
 	emit layoutChanged();
     }
+
+    // Reset flag - we're in sync now
     changed_db_flag = 0;
 }
 
@@ -882,21 +912,17 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	db_update_nref(gedp->dbip, &rt_uniresource);
     }
 
+    // If we have a new .g file, set the changed flag
+    if (model_dbip != gedp->dbip)
+	changed_db_flag = 1;
+
     // Assuming we're not doing a full rebuild, trigger the post-cmd updates
-    if (gedp->dbip == model_dbip) {
-	g_update();
-    }
+    g_update(gedp->dbip);
+
+    model_dbip = gedp->dbip;
 
     if (msg && gedp)
 	bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));
-
-    // If it's not a whole new database, we're done
-    if (gedp->dbip == model_dbip)
-	return ret;
-
-    // If the dbip changed, we have a new database and we need to completely
-    // reset the model contents.
-    reset(gedp->dbip);
 
     return ret;
 }

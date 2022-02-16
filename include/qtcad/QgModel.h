@@ -278,15 +278,11 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
 	struct ged *gedp = NULL;
 
-	// Whenever the dbip changes, we need to start over and not make any
-	// assumptions about what's in the model.
-	void reset(struct db_i *n_dbip);
-
 	// Updates to .g models are potentially far-reaching - in principle, a
 	// single GED command execution can change every item in the database.
 	// This method is intended to be run after a GED command execution to
-	// update the model.
-	void g_update();
+	// update the model, or upon startup.
+	void g_update(struct db_i *n_dbip);
 
 	// Qt Model interface
 

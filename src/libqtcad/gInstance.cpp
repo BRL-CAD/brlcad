@@ -416,6 +416,16 @@ sync_instances(
 	std::unordered_map<unsigned long long, gInstance *> *instances,
 	struct db_i *dbip)
 {
+    if (!dbip) {
+	// If we don't have a dbip, our job is just to clear out everything
+	for (size_t i = 0; i < instances->size(); i++) {
+	    delete (*instances)[i];
+	}
+	instances->clear();
+	tops_instances->clear();
+	return;
+    }
+
     std::set<gInstance *> orig_instances;
     std::set<gInstance *> valid_instances;
 
@@ -441,7 +451,8 @@ sync_instances(
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    dp_instances(&valid_instances, instances, dp, dbip);
+	    if (dp->d_flags & (RT_DIR_SOLID|RT_DIR_COMB))
+		dp_instances(&valid_instances, instances, dp, dbip);
 	}
     }
 
