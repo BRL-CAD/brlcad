@@ -53,10 +53,17 @@ class QTCAD_EXPORT gInstance
 	// Debugging function for printing out data in container
 	std::string print();
 
+	// Return hashes of child instances, if any
+	std::vector<unsigned long long> children(std::unordered_map<unsigned long long, gInstance *> *instances);
+
+	// This is a flag that may be set or unset by parent applications.
+	// Used primarily to assist in visual identification of components
+	// in hierarchical structures.  Not part of any hash calculations.
+	int active_flag = 0;
+
 	// gInstance content based hash for quick lookup/comparison of two
-	// gInstances.  By default incorporate everything into the hash -
-	// other modes are allowed for in case we want to do fuzzy matching.
-	unsigned long long hash(int mode = 3);
+	// gInstances.  mode == 3 - i.e., hash of full gInstance data.
+	unsigned long long hash = 0;
 
 	// dp of parent comb (NULL for tops objects)
 	struct directory *parent = NULL;
@@ -70,43 +77,20 @@ class QTCAD_EXPORT gInstance
 	db_op_t op = DB_OP_NULL;
 	// Matrix above comb instance in comb tree (default is IDN)
 	mat_t c_m;
-
-	// Return hashes of child instances, if any
-	std::vector<unsigned long long> children(std::unordered_map<unsigned long long, gInstance *> *instances);
-
-	// This is a flag that may be set or unset by parent applications.
-	// Used primarily to assist in visual identification of components
-	// in hierarchical structures.
-	int active_flag = 0;
-
-    private:
-	XXH64_state_t *h_state;
 };
 
+/* Given gInstance data, construct its hash.  This function is public to allow
+ * for hashing of different "modes" in client codes wanting to do fuzzy matching
+ * of instances. */
 QTCAD_EXPORT extern unsigned long long
 ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, db_op_t op, mat_t c_m);
 
-// Given a dp, generate instances and add them to the map
-// Certain .g objects (comb, extrude, etc.) will define one or more
-// implicit instances.  We need to create those instances both on
-// initialization of an existing .g file and on database editing.
+// Given a dbip, construct or find the instances associated with it and add them
+// to the containers.  The instances maps may contain previous gInstances created
+// by earlier passes, and if they are still valid they will be reused.  Any gInstances
+// that are no longer valid will be removed from the maps and deleted.
 QTCAD_EXPORT extern void
-add_instances(std::unordered_map<unsigned long long, gInstance *> *instances, struct directory *dp, struct db_i *dbip);
-
-// A modification in the .g file to an object may necessitate a variety
-// of updates to the gInstance containers
-QTCAD_EXPORT extern void
-update_child_instances(std::unordered_map<unsigned long long, gInstance *> *instances, struct directory *dp, struct db_i *dbip);
-
-QTCAD_EXPORT extern void
-update_tops_instances(
-	std::unordered_map<unsigned long long, gInstance *> *tops_instances,
-	std::unordered_map<unsigned long long, gInstance *> *instances,
-	struct db_i *dbip);
-
-
-QTCAD_EXPORT extern void
-initialize_instances(
+sync_instances(
 	std::unordered_map<unsigned long long, gInstance *> *tops_instances,
 	std::unordered_map<unsigned long long, gInstance *> *instances,
 	struct db_i *dbip);

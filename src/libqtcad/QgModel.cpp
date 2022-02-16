@@ -47,6 +47,7 @@
 
 #include "bu/env.h"
 #include "bu/sort.h"
+#define ALPHANUM_IMPL
 #include "../libged/alphanum.h"
 #include "raytrace.h"
 #include "qtcad/gInstance.h"
@@ -106,7 +107,7 @@ QgItem::QgItem(gInstance *g, QgModel *ictx)
     ctx = ictx;
     if (g) {
 	parentItem = NULL;
-	ihash = g->hash();
+	ihash = g->hash;
 	// TODO - these copies may be moot - the child relationship needs
 	// the gInstance, so we may have to just ensure gInstances aren't
 	// removed until after the QgItems are updated.  If that's the case,
@@ -285,52 +286,33 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	ctx->need_update_nref = false;
 
 	// Do the major bookkeeping work of an update
-	update_tops_instances(ctx->tops_instances, ctx->instances, dbip);
+	sync_instances(ctx->tops_instances, ctx->instances, dbip);
     }
 }
 
 extern "C" void
-qgmodel_changed_callback(struct db_i *dbip, struct directory *dp, int mode, void *u_data)
+qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
     std::queue<std::unordered_map<unsigned long long, gInstance *>::iterator> rmq;
     std::unordered_map<unsigned long long, gInstance *>::iterator i_it, trm_it;
     QgModel *ctx = (QgModel *)u_data;
     gInstance *inst = NULL;
+    ctx->need_update_nref = true;
+    ctx->changed_db_flag = 1;
 
     switch(mode) {
 	case 0:
 	    bu_log("MOD: %s\n", dp->d_namep);
 
-	    // The view needs to regenerate the wireframe(s) for this dp, as
-	    // it may have changed
+	    // The view needs to regenerate the wireframe(s) for anything drawn
+	    // using this dp, as it may have changed
 	    ctx->changed_dp.insert(dp);
 
-	    // In theory the librt callbacks should take care of this, and we
-	    // may not want to do this for all mods (updates can be
-	    // expensive)...  Need would be if a comb tree changes, and if the
-	    // backend has that covered we don't want to force the issue here
-	    // for something like a sph radius change...
-	    // ctx->need_update_nref = true;
-
-	    // Need to handle edits to comb/extrude/revolve/dsp, which have potential
-	    // implications for gInstances.
-	    update_child_instances(ctx->instances, dp, dbip);
-
-	    ctx->changed_db_flag = 1;
 	    break;
 	case 1:
 	    bu_log("ADD: %s\n", dp->d_namep);
 
-	    // In theory the librt callbacks should take care of this...
-	    ctx->need_update_nref = true;
-
-	    // If this is a new tops solid we'll only know to create that
-	    // instance after an update_nref pass, but if it's a new comb or
-	    // one of the other instance defining primitives create the new
-	    // instances now.
-	    add_instances(ctx->instances, dp, dbip);
-
-	    // If we have any invalid instances that are now valid, update them
+	    // If we have any name-only references that can now point to a dp, update them
 	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
 		inst = i_it->second;
 		if (!inst->dp && inst->dp_name == std::string(dp->d_namep)) {
@@ -338,34 +320,16 @@ qgmodel_changed_callback(struct db_i *dbip, struct directory *dp, int mode, void
 		}
 	    }
 
-	    ctx->changed_db_flag = 1;
 	    break;
 	case 2:
 	    bu_log("RM:  %s\n", dp->d_namep);
 
-	    // In theory the librt callbacks should take care of this...
-	    ctx->need_update_nref = true;
-
-	    // For removal, we need to 1) remove any instances where the parent is
-	    // dp, and 2) invalidate the dps in any instances where they match.
+	    // invalidate the dps in any instances where they match.
 	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
 		inst = i_it->second;
-		// NOTE:  tops instances are handled separately in the update_nref callback.
-		if (!inst->parent)
-		    continue;
 		if (inst->dp == dp)
 		    inst->dp = NULL;
-		if (inst->parent == dp) {
-		    rmq.push(i_it);
-		}
 	    }
-	    while (!rmq.empty()) {
-		i_it = rmq.front();
-		rmq.pop();
-		ctx->instances->erase(i_it->first);
-	    }
-
-	    ctx->changed_db_flag = 1;
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -451,7 +415,7 @@ QgModel::reset(struct db_i *n_dbip)
     changed_dp.clear();
 
     // Reset and initialize the .g level data (gInstances)
-    initialize_instances(tops_instances, instances, n_dbip);
+    sync_instances(tops_instances, instances, n_dbip);
 
     // Primary driver of model updates is when individual objects are changed
     db_add_changed_clbk(n_dbip, &qgmodel_changed_callback, (void *)this);
