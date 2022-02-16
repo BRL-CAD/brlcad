@@ -41,7 +41,7 @@
 #include "qtcad/gInstance.h"
 
 unsigned long long
-ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, struct db_i *dbip, db_op_t op, mat_t c_m)
+ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, struct db_i *dbip, db_op_t op, mat_t c_m, int cnt)
 {
     if (!h_state)
 	return 0;
@@ -49,7 +49,10 @@ ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::
     XXH64_hash_t hash_val;
 
     // Make sure the hash is tied to a particular database
-    XXH64_update(h_state, dbip, sizeof(struct db_i *));
+    XXH64_update(h_state, &dbip, sizeof(struct db_i *));
+
+    // For uniqueness
+    XXH64_update(h_state, &cnt, sizeof(int));
 
     if (parent)
 	XXH64_update(h_state, parent->d_namep, strlen(parent->d_namep));
@@ -131,7 +134,7 @@ gInstance::print()
 }
 
 static void
-add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst)
+add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst, void *c_set)
 {
     std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
 
@@ -142,6 +145,7 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
     // Unpack
     std::unordered_map<unsigned long long, gInstance *> *instances = (std::unordered_map<unsigned long long, gInstance *> *)inst_map;
     std::set<gInstance *> *valid_instances = (std::set<gInstance *> *)val_inst;
+    std::unordered_set<unsigned long long> *cnt_set = (std::unordered_set<unsigned long long> *)c_set;
     struct directory *parent_dp = (struct directory *)pdp;
     std::vector<unsigned long long> *chash = (std::vector<unsigned long long> *)vchash;
 
@@ -166,7 +170,21 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
     } else {
 	MAT_IDN(c_m);
     }
-    unsigned long long nhash = ginstance_hash(&h_state, 3, parent_dp, dp_name, dbip, op, c_m);
+
+
+    // The cnt_set exists only for this tree walk, and its purpose is to ensure that all tree
+    // instances end up with their own unique hash, even if they are duplicates from a data
+    // standpoint within the tree
+    int icnt = 0;
+    unsigned long long nhash = ginstance_hash(&h_state, 3, parent_dp, dp_name, dbip, op, c_m, icnt);
+    std::unordered_set<unsigned long long>::iterator c_it;
+    c_it = cnt_set->find(nhash);
+    while (c_it != cnt_set->end()) {
+	icnt++;
+	nhash = ginstance_hash(&h_state, 3, parent_dp, dp_name, dbip, op, c_m, icnt);
+	c_it = cnt_set->find(nhash);
+    }
+    cnt_set->insert(nhash);
 
     // See if we already have this gInstance hash or not.  If not,
     // create and add a new gInstance.
@@ -201,11 +219,13 @@ db_tree_opleaf(
 	union tree *comb_tree,
 	int op,
 	void (*leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *, int,
-	    void *, void *, void *, void *),
+	    void *, void *, void *, void *, void *),
 	void *user_ptr1,
 	void *user_ptr2,
 	void *user_ptr3,
-	void *user_ptr4)
+	void *user_ptr4,
+	void *user_ptr5
+	)
 {
     RT_CK_DBI(dbip);
 
@@ -216,14 +236,14 @@ db_tree_opleaf(
 
     switch (comb_tree->tr_op) {
 	case OP_DB_LEAF:
-	    leaf_func(dbip, comb, comb_tree, op, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
+	    leaf_func(dbip, comb, comb_tree, op, user_ptr1, user_ptr2, user_ptr3, user_ptr4, user_ptr5);
 	    break;
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    db_tree_opleaf(dbip, comb, comb_tree->tr_b.tb_left, OP_UNION, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
-	    db_tree_opleaf(dbip, comb, comb_tree->tr_b.tb_right, comb_tree->tr_op, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
+	    db_tree_opleaf(dbip, comb, comb_tree->tr_b.tb_left, OP_UNION, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4, user_ptr5);
+	    db_tree_opleaf(dbip, comb, comb_tree->tr_b.tb_right, comb_tree->tr_op, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4, user_ptr5);
 	    break;
 	default:
 	    bu_log("db_tree_opleaf: bad op %d\n", comb_tree->tr_op);
@@ -260,8 +280,9 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	// anything cute with the librt comb data containers.  Because we are
 	// only concerned with the immediate comb's children and not the full
 	// tree, all objects are leaves and we can use db_tree_opleaf
+	std::unordered_set<unsigned long long> cnt_set;
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, (void *)&chash, NULL);
+	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, (void *)&chash, NULL, &cnt_set);
 	rt_db_free_internal(&intern);
     }
 
@@ -289,7 +310,7 @@ dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned
 	if (extr->sketch_name) {
 	    std::string sk_name(extr->sketch_name);
 	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m);
+	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		if (valid_instances)
@@ -319,7 +340,7 @@ dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned
 	if (bu_vls_strlen(&revolve->sketch_name) > 0) {
 	    std::string sk_name(bu_vls_cstr(&revolve->sketch_name));
 	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m);
+	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		if (valid_instances)
@@ -349,7 +370,7 @@ dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned
 	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
 	    std::string dsp_name(bu_vls_cstr(&dsp->dsp_name));
 	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, dsp_name, dbip, DB_OP_UNION, c_m);
+	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, dsp_name, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		if (valid_instances)
@@ -381,8 +402,9 @@ dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned
 	    return;
 	}
 
+	std::unordered_set<unsigned long long> cnt_set;
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, NULL, (void *)valid_instances);
+	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, NULL, (void *)valid_instances, (void *)&cnt_set);
 	rt_db_free_internal(&intern);
 	return;
     }
@@ -439,7 +461,7 @@ sync_instances(
 	    gInstance *tinst = NULL;
 	    struct directory *curr_dp = db_objects[i];
 	    std::string dname = std::string(curr_dp->d_namep);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, NULL, dname, dbip, DB_OP_UNION, c_m);
+	    unsigned long long nhash = ginstance_hash(&h_state, 3, NULL, dname, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it == instances->end()) {
 		tinst = new gInstance(curr_dp, dbip);

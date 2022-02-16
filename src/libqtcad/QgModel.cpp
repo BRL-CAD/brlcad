@@ -286,6 +286,8 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	ctx->need_update_nref = false;
 
 	// Do the major bookkeeping work of an update
+	// TODO - sync_instances probably needs to be called inside
+	// a QgModel method, inside a beginResetModel guard
 	sync_instances(ctx->tops_instances, ctx->instances, dbip);
     }
 }

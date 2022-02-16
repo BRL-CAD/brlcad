@@ -83,7 +83,7 @@ class QTCAD_EXPORT gInstance
  * for hashing of different "modes" in client codes wanting to do fuzzy matching
  * of instances. */
 QTCAD_EXPORT extern unsigned long long
-ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, db_op_t op, mat_t c_m);
+ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, db_op_t op, mat_t c_m, int cnt);
 
 // Given a dbip, construct or find the instances associated with it and add them
 // to the containers.  The instances maps may contain previous gInstances created
