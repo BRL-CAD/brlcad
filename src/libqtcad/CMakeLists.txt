@@ -53,7 +53,6 @@ set(qtcad_srcs
   QtAppExecDialog.cpp
   QtSW.cpp
   QtCADQuad.cpp
-  QtCADTree.cpp
   QtCADView.cpp
   QtConsole.cpp
   QtConsoleListener.cpp
@@ -77,7 +76,6 @@ set(qth_names
   QgModel
   QgTreeView
   QtAppExecDialog
-  QtCADTree
   QtCADView
   QtCADQuad
   QtConsole

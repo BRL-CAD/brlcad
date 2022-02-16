@@ -10,7 +10,6 @@ set(qtcad_headers
   QgUtil.h
   QtAppExecDialog.h
   QtCADQuad.h
-  QtCADTree.h
   QtCADView.h
   QtConsole.h
   QtConsoleListener.h
