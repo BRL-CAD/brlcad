@@ -760,13 +760,33 @@ QgModel::fetchMore(const QModelIndex &idx)
 	}
     }
 
-    // If anything changed, we need to replace children's contents with the new
-    // vector.
+    // If anything changed since the last time children was built, we need to
+    // replace children's contents with the new vector and (maybe) add some
+    // rows if our child count has grown.
+    //
+    // Note: we only deal with adding rows here - the removal case is taken
+    // care of by the g_update pass.  It shrinks the children array when it
+    // removes any invalid QgItems, and the rows are rebuilt at that point as
+    // part of the general model rebuild.
+    //
+    // TODO - I'm not certain any of the BRL-CAD commands would alter anything
+    // in a way that wouldn't be caught by g_update(), but if so it's not clear
+    // that the below logic would properly apply an "in place" change to a row
+    // that's not in the InsertRows range below.  We may need to do a setData
+    // operation on those to let Qt know their back-end data has changed.
+    // Again, not sure right now a non-g_update-visible case is possible with
+    // GED commands, so don't currently have a way to test it.
     if (nc != item->children) {
 	bu_log("fetchMore rebuild: %s\n", item->instance()->dp_name.c_str());
-	beginInsertRows(idx, 0, nc.size() - 1);
-	item->children = nc;
-	endInsertRows();
+	bu_log("children size: %zd\n", item->children.size());
+	bu_log("nc: %zd\n", nc.size());
+	if (nc.size() > item->children.size()) {
+	    // Note - only insert the rows we need - we're reusing any that
+	    // were already present.
+	    beginInsertRows(idx, item->children.size(), nc.size() - 1);
+	    item->children = nc;
+	    endInsertRows();
+	}
     }
 }
 
