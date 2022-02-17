@@ -222,9 +222,6 @@ QgTreeView::redo_expansions(void *)
 	if (itm->open_itm && !isExpanded(idx)) {
 	    setExpanded(idx, true);
 	}
-	if (itm->open_itm && !isExpanded(idx)) {
-	    bu_log("expansion failed?\n");
-	}
     }
 }
 

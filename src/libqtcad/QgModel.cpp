@@ -304,16 +304,12 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 
     switch(mode) {
 	case 0:
-	    bu_log("MOD: %s\n", dp->d_namep);
-
 	    // The view needs to regenerate the wireframe(s) for anything drawn
 	    // using this dp, as it may have changed
 	    ctx->changed_dp.insert(dp);
 
 	    break;
 	case 1:
-	    bu_log("ADD: %s\n", dp->d_namep);
-
 	    // If we have any name-only references that can now point to a dp, update them
 	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
 		inst = i_it->second;
@@ -324,8 +320,6 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 
 	    break;
 	case 2:
-	    bu_log("RM:  %s\n", dp->d_namep);
-
 	    // invalidate the dps in any instances where they match.
 	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
 		inst = i_it->second;
@@ -424,8 +418,6 @@ QgModel::item_rebuild(QgItem *item)
     if (!item->children.size())
 	return;
 
-    bu_log("item_rebuild: %s\n", item->instance()->dp_name.c_str());
-
     // Get the current child instances
     std::vector<unsigned long long> nh = (*instances)[item->ihash]->children(instances);
 
@@ -473,7 +465,6 @@ QgModel::item_rebuild(QgItem *item)
 	} else {
 	    // Previous tree did not have an appropriate QgItem -
 	    // make a new one
-	    bu_log("new item: %llu\n", nh[i]);
 	    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
 	    gInstance *g = NULL;
 	    g_it = instances->find(nh[i]);
@@ -501,7 +492,7 @@ QgModel::g_update(struct db_i *n_dbip)
 {
 
     // In case we have opened a completely new .g file, set the callbacks
-    if (n_dbip) {
+    if (n_dbip && !BU_PTBL_LEN(&n_dbip->dbi_changed_clbks)) {
 	// Primary driver of model updates is when individual objects are changed
 	db_add_changed_clbk(n_dbip, &qgmodel_changed_callback, (void *)this);
 
@@ -509,7 +500,9 @@ QgModel::g_update(struct db_i *n_dbip)
 	// local dp changes, we can only (re)build the tops list after an
 	// update_nref pass is complete.
 	db_add_update_nref_clbk(n_dbip, &qgmodel_update_nref_callback, (void *)this);
-    } else {
+    }
+
+    if (!n_dbip) {
 	// if we have no dbip, clear out everything
 	beginResetModel();
 	sync_instances(tops_instances, instances, n_dbip);
@@ -696,8 +689,6 @@ QgModel::fetchMore(const QModelIndex &idx)
     if (item->children.size())
 	return;
 
-    bu_log("fetchMore: %s\n", item->instance()->dp_name.c_str());
-
     // We need the QgItem child array to reflect the current state of the comb
     // tree, but we also want to keep the old QgItems to minimize disturbances
     // to the model that aren't necessary due to .g changes. However, unlike
@@ -726,7 +717,6 @@ QgModel::fetchMore(const QModelIndex &idx)
     for (size_t i = 0; i < nh.size(); i++) {
 	// For each new child, look up its instance in the original data to see
 	// if we have a corresponding QgItem available.
-	bu_log("new item: %llu\n", nh[i]);
 	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
 	gInstance *g = NULL;
 	g_it = instances->find(nh[i]);

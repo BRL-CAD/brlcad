@@ -122,8 +122,6 @@ QgSelectionProxyModel::setData(const QModelIndex & idx, const QVariant &UNUSED(v
 void
 QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx)
 {
-    bu_log("update_selected_node_relationships: %d\n", interaction_mode);
-
     std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
 
     // Clear all highlighting state
