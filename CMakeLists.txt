@@ -1614,7 +1614,7 @@ endif (HAVE_THREAD_LOCAL)
 # ends up lacking in practice.
 include(CheckCXX11Features)
 cxx11_check_feature("nullptr" HAS_CXX11_NULLPTR)
-cxx11_check_feature("lib_regex" HAS_CXX11_LIB_REGEX)
+# cxx11_check_feature("lib_regex" HAS_CXX11_LIB_REGEX)
 
 # see if the compiler supports %z as a size_t print width specifier
 BRLCAD_CHECK_PERCENT_Z()

@@ -23,7 +23,7 @@
 #include <stdlib.h> /* for strtol */
 
 #include <regex>
-#include <string>
+#include <cstring>
 
 #include "bu/log.h"
 #include "bu/malloc.h"
