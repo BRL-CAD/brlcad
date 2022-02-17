@@ -315,16 +315,66 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
 	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, (void *)&chash, NULL, &cnt_set);
 	rt_db_free_internal(&intern);
+	return chash;
     }
 
+    std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+
     if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
-	// TODO
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return chash;
+	struct rt_extrude_internal *extr = (struct rt_extrude_internal *)intern.idb_ptr;
+	RT_EXTRUDE_CK_MAGIC(extr);
+	if (extr->sketch_name) {
+	    std::string sk_name(extr->sketch_name);
+	    MAT_IDN(c_m);
+	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
+	    i_it = instances->find(nhash);
+	    if (i_it != instances->end()) {
+		chash.push_back(nhash);
+	    }
+	}
+	return chash;
     }
     if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
-	// TODO
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return chash;
+	struct rt_revolve_internal *revolve = (struct rt_revolve_internal *)intern.idb_ptr;
+	RT_REVOLVE_CK_MAGIC(revolve);
+	if (bu_vls_strlen(&revolve->sketch_name) > 0) {
+	    std::string sk_name(bu_vls_cstr(&revolve->sketch_name));
+	    MAT_IDN(c_m);
+	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
+	    i_it = instances->find(nhash);
+	    if (i_it != instances->end()) {
+		chash.push_back(nhash);
+	    }
+	}
+	return chash;
     }
     if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP) {
-	// TODO
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return chash;
+	struct rt_dsp_internal *dsp = (struct rt_dsp_internal *)intern.idb_ptr;
+	RT_DSP_CK_MAGIC(dsp);
+	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
+	    std::string dsp_name(bu_vls_cstr(&dsp->dsp_name));
+	    MAT_IDN(c_m);
+	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, dsp_name, dbip, DB_OP_UNION, c_m, 0);
+	    i_it = instances->find(nhash);
+	    if (i_it != instances->end()) {
+		chash.push_back(nhash);
+	    }
+	}
+	return chash;
     }
 
     return chash;
