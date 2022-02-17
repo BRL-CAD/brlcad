@@ -284,8 +284,9 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     int ret = BRLCAD_OK;
 
-    if (!mdl)
+    if (!mdl || !argc || !argv)
 	return BRLCAD_ERROR;
+
     QgModel *m = (QgModel *)mdl->sourceModel();
 
     struct ged *gedp = m->gedp;
@@ -385,6 +386,7 @@ CADApp::run_qcmd(const QString &command)
 
     QtConsole *console = w->console;
     const char *cmd = command.toLocal8Bit();
+
     if (BU_STR_EQUAL(cmd, "q"))
 	bu_exit(0, "exit");
 
