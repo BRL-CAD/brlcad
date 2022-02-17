@@ -311,6 +311,8 @@ QgIcon(struct directory *dp, struct db_i *dbip)
 		raw_type_icon.load(":/images/primitives/other.png");
 		break;
 	}
+    } else {
+	raw_type_icon.load(":/images/primitives/invalid.png");
     }
 
     return raw_type_icon;
