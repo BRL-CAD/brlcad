@@ -112,7 +112,6 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	/* New database open, need to initialize reference counts */
 	db_update_nref(gedp->dbip, &rt_uniresource);
 
-	bu_vls_printf(gedp->ged_result_str, "%s", gedp->dbip->dbi_filename);
 	return BRLCAD_OK;
     }
 
