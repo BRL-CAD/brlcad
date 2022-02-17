@@ -478,6 +478,11 @@ QgModel::item_rebuild(QgItem *item)
     // manage individual rows here.
      if (nc != item->children) {
 	item->children = nc;
+	// define a map for quick QgItem * -> index lookups
+	item->c_noderow.clear();
+	for (size_t i = 0; i < nc.size(); i++) {
+	    item->c_noderow[nc[i]] = i;
+	}
     }
 
 }
@@ -601,6 +606,10 @@ QgModel::g_update(struct db_i *n_dbip)
 	for (size_t i = 0; i < tops_items.size(); i++) {
 	    rootItem->appendChild(tops_items[i]);
 	}
+	rootItem->c_noderow.clear();
+	for (size_t i = 0; i < tops_items.size(); i++) {
+	    rootItem->c_noderow[tops_items[i]] = i;
+	}
 
 	// Finally, delete the invalid QgItems
 	std::unordered_set<QgItem *>::iterator iv_it;
@@ -627,13 +636,12 @@ QgModel::g_update(struct db_i *n_dbip)
 int
 QgModel::NodeRow(QgItem *node) const
 {
-    if (!node->parent())
+    QgItem *np = node->parent();
+    if (!np)
 	return -1;
-    for (size_t i = 0; i < node->parent()->children.size(); i++) {
-	if (node->parent()->children[i] == node)
-	    return i;
-    }
-    return -1;
+    if (np->c_noderow.find(node) == np->c_noderow.end())
+	return -1;
+    return np->c_noderow[node];
 }
 
 
@@ -726,6 +734,11 @@ QgModel::fetchMore(const QModelIndex &idx)
     // All done - let the Qt model know
     beginInsertRows(idx, 0, nc.size() - 1);
     item->children = nc;
+    // define a map for quick QgItem * -> index lookups
+    item->c_noderow.clear();
+    for (size_t i = 0; i < nc.size(); i++) {
+	item->c_noderow[nc[i]] = i;
+    }
     endInsertRows();
     emit check_highlights();
 }

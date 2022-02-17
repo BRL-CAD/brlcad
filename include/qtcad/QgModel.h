@@ -216,6 +216,7 @@ class QTCAD_EXPORT QgItem
 	// their ordering before that changes
 	int columnCount() const;
 	std::vector<QgItem *> children;
+	std::unordered_map<QgItem *, int> c_noderow;
 	size_t c_count = 0;
 
 	// Cached data from the gInstance, so we can keep
