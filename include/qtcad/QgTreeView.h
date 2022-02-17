@@ -49,11 +49,11 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
 
 	QModelIndex selected();
 
-	void drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const;
+	void drawBranches(QPainter* painter, const QRect& rrect, const QModelIndex& index) const override;
 	QgSelectionProxyModel *m = NULL;
 
     protected:
-	void resizeEvent(QResizeEvent *pevent);
+	void resizeEvent(QResizeEvent *pevent) override;
 
     public slots:
 	void tree_column_size(const QModelIndex &index);
