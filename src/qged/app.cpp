@@ -35,113 +35,6 @@
 #include "app.h"
 #include "fbserv.h"
 
-extern "C" void
-qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t callback, void *data)
-{
-    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
-	return;
-
-    BRLCAD_MainWindow *w = (BRLCAD_MainWindow *)p->gedp->ged_io_data;
-    QtConsole *c = w->console;
-
-    int fd = bu_process_fileno(p->p, t);
-    if (fd < 0)
-	return;
-
-    c->listen(fd, p, t, callback, data);
-
-    switch (t) {
-	case BU_PROCESS_STDIN:
-	    p->stdin_active = 1;
-	    break;
-	case BU_PROCESS_STDOUT:
-	    p->stdout_active = 1;
-	    break;
-	case BU_PROCESS_STDERR:
-	    p->stderr_active = 1;
-	    break;
-    }
-}
-
-extern "C" void
-qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
-{
-    if (!p) return;
-
-    BRLCAD_MainWindow *w = (BRLCAD_MainWindow *)p->gedp->ged_io_data;
-    QtConsole *c = w->console;
-
-    // Since these callbacks are invoked from the listener, we can't call
-    // the listener destructors directly.  We instead call a routine that
-    // emits a single that will notify the console widget it's time to
-    // detach the listener.
-    switch (t) {
-	case BU_PROCESS_STDIN:
-	    bu_log("stdin\n");
-	    if (p->stdin_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-	    }
-	    p->stdin_active = 0;
-	    break;
-	case BU_PROCESS_STDOUT:
-	    if (p->stdout_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-		bu_log("stdout: %d\n", p->stdout_active);
-	    }
-	    p->stdout_active = 0;
-	    break;
-	case BU_PROCESS_STDERR:
-	    if (p->stderr_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
-		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
-		c->listeners[std::make_pair(p, t)]->on_finished();
-		bu_log("stderr: %d\n", p->stderr_active);
-	    }
-	    p->stderr_active = 0;
-	    break;
-    }
-
-    if (w->canvas)
-	w->canvas->need_update(NULL);
-    if (w->c4)
-	w->c4->need_update(NULL);
-}
-
-#if 0
-extern "C" int
-app_open(void *p, int argc, const char **argv)
-{
-    CADApp *ap = (CADApp *)p;
-
-    QtConsole *console = ap->w->console;
-    if (argc > 1) {
-	if (ap->mdl) {
-	    delete ap->mdl;
-	    ap->mdl = NULL;
-	}
-	int ret = ap->opendb(argv[1]);
-	if (ret && console) {
-	    struct bu_vls msg = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&msg, "Could not open %s as a .g file\n", argv[1]) ;
-	    console->printString(bu_vls_cstr(&msg));
-	    bu_vls_free(&msg);
-	}
-    } else {
-	if (console) {
-	    if (ap->db_filename.length()) {
-		console->printString(ap->db_filename);
-		console->printString("\n");
-	    } else {
-		console->printString("No file specified and no file open.\n");
-	    }
-	}
-    }
-
-    return 0;
-}
-#endif
-
 extern "C" int
 app_close(void *p, int UNUSED(argc), const char **UNUSED(argv))
 {
@@ -396,19 +289,6 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     QgModel *m = (QgModel *)mdl->sourceModel();
 
     struct ged *gedp = m->gedp;
-
-    gedp->ged_create_io_handler = &qt_create_io_handler;
-    gedp->ged_delete_io_handler = &qt_delete_io_handler;
-    gedp->ged_io_data = (void *)this->w;
-
-    // The display manager must sometimes be set up later to allow
-    // for initializations - make sure gedp knows the current dmp
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
-	if (v->dmp)
-	    bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)v->dmp);
-    }
-    gedp->ged_dmp = gedp->ged_gvp->dmp;
 
     if (!tmp_av.size()) {
 

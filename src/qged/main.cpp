@@ -41,6 +41,80 @@
 #include "event_filter.h"
 #include "fbserv.h"
 
+extern "C" void
+qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t callback, void *data)
+{
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
+	return;
+
+    BRLCAD_MainWindow *w = (BRLCAD_MainWindow *)p->gedp->ged_io_data;
+    QtConsole *c = w->console;
+
+    int fd = bu_process_fileno(p->p, t);
+    if (fd < 0)
+	return;
+
+    c->listen(fd, p, t, callback, data);
+
+    switch (t) {
+	case BU_PROCESS_STDIN:
+	    p->stdin_active = 1;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    p->stdout_active = 1;
+	    break;
+	case BU_PROCESS_STDERR:
+	    p->stderr_active = 1;
+	    break;
+    }
+}
+
+extern "C" void
+qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
+{
+    if (!p) return;
+
+    BRLCAD_MainWindow *w = (BRLCAD_MainWindow *)p->gedp->ged_io_data;
+    QtConsole *c = w->console;
+
+    // Since these callbacks are invoked from the listener, we can't call
+    // the listener destructors directly.  We instead call a routine that
+    // emits a single that will notify the console widget it's time to
+    // detach the listener.
+    switch (t) {
+	case BU_PROCESS_STDIN:
+	    bu_log("stdin\n");
+	    if (p->stdin_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+	    }
+	    p->stdin_active = 0;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    if (p->stdout_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+		bu_log("stdout: %d\n", p->stdout_active);
+	    }
+	    p->stdout_active = 0;
+	    break;
+	case BU_PROCESS_STDERR:
+	    if (p->stderr_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+		bu_log("stderr: %d\n", p->stderr_active);
+	    }
+	    p->stderr_active = 0;
+	    break;
+    }
+
+    if (w->canvas)
+	w->canvas->need_update(NULL);
+    if (w->c4)
+	w->c4->need_update(NULL);
+}
+
+
 static void
 qged_usage(const char *cmd, struct bu_opt_desc *d) {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -185,19 +259,37 @@ int main(int argc, char *argv[])
     // until now in order to have the display related containers from graphical
     // initialization available - the GED structure will need to know about some
     // of them to have drawing commands connect properly to the 3D displays.
+    QgModel *m = (QgModel *)app.mdl->sourceModel();
     if (argc) {
 	int ac = 2;
 	const char *av[3];
 	av[0] = "open";
 	av[1] = argv[0];
 	av[2] = NULL;
-	QgModel *m = (QgModel *)app.mdl->sourceModel();
 	int ret = m->run_cmd(m->gedp->ged_result_str, ac, (const char **)av);
 	if (ret != BRLCAD_OK) {
 	    bu_log("Error opening file %s\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
     }
+
+    // The display manager must sometimes be set up later to allow for
+    // initializations - make sure gedp knows the current dmp
+    for (size_t i = 0; i < BU_PTBL_LEN(&m->gedp->ged_views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(&m->gedp->ged_views, i);
+	if (v->dmp)
+	    bu_ptbl_ins_unique(m->gedp->ged_all_dmp, (long int *)v->dmp);
+    }
+    m->gedp->ged_dmp = m->gedp->ged_gvp->dmp;
+
+    // Connect I/O handlers
+    m->gedp->ged_create_io_handler = &qt_create_io_handler;
+    m->gedp->ged_delete_io_handler = &qt_delete_io_handler;
+    m->gedp->ged_io_data = (void *)app.w;
+
+    // Send a view_change signal so widgets depending on view information
+    // can initialize themselves
+    emit app.view_change(&m->gedp->ged_gvp);
 
     // Generally speaking if we're going to have trouble initializing, it will
     // be with either the GED plugins or the dm plugins.  Print relevant
