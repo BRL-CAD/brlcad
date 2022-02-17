@@ -350,10 +350,20 @@ QgModel::QgModel(QObject *p, const char *npath)
     // libged "open" command to open a .g file.
     BU_GET(gedp, struct ged);
     ged_init(gedp);
+
+    // By default we will use this built-in view, to guarantee that ged_gvp is
+    // always valid.  It will usually be overridden by application provided views,
+    // but this is our hard guarantee that a QgModel will always be able to work
+    // with commands needing a view.
     BU_GET(empty_gvp, struct bview);
     bv_init(empty_gvp);
     gedp->ged_gvp = empty_gvp;
+    bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
+    gedp->ged_gvp->gv_db_grps = &gedp->ged_db_grps;
+    gedp->ged_gvp->gv_view_shared_objs = &gedp->ged_view_shared_objs;
+    gedp->ged_gvp->independent = 0;
 
+    // Set up the root item
     rootItem = new QgItem(NULL, this);
     rootItem->ctx = this;
 

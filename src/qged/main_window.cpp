@@ -30,6 +30,7 @@
 #include "app.h"
 #include "palettes.h"
 #include "attributes.h"
+#include "fbserv.h"
 
 QBDockWidget::QBDockWidget(const QString &title, QWidget *parent)
     : QDockWidget(title, parent)
@@ -54,6 +55,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
     CADApp *ap = (CADApp *)qApp;
     QgModel *m = (QgModel *)ap->mdl->sourceModel();
+    struct ged *gedp = m->gedp;
     ap->w = this;
 
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
@@ -100,11 +102,57 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 	canvas = new QtCADView(this, canvas_type);
 	canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 	setCentralWidget(canvas);
+	gedp->ged_gvp = canvas->view();
+	gedp->ged_gvp->gv_db_grps = &gedp->ged_db_grps;
+	gedp->ged_gvp->gv_view_shared_objs = &gedp->ged_view_shared_objs;
+	gedp->ged_gvp->independent = 0;
+	bu_ptbl_ins_unique(&gedp->ged_views, (long int *)gedp->ged_gvp);
     } else {
 	c4 = new QtCADQuad(this, canvas_type);
 	c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 	setCentralWidget(c4);
+	gedp->ged_gvp = c4->view();
+	for (int i = 1; i < 5; i++) {
+	    QtCADView *c = c4->get(i);
+	    c->view()->gv_db_grps = &gedp->ged_db_grps;
+	    c->view()->gv_view_shared_objs = &gedp->ged_view_shared_objs;
+	    c->view()->independent = 0;
+	    bu_ptbl_ins_unique(&gedp->ged_views, (long int *)c->view());
+	}
+	c4->default_views();
     }
+
+    // Set up the connections needed for embedded raytracing
+    gedp->fbs_is_listening = &qdm_is_listening;
+    gedp->fbs_listen_on_port = &qdm_listen_on_port;
+    gedp->fbs_open_server_handler = &qdm_open_server_handler;
+    gedp->fbs_close_server_handler = &qdm_close_server_handler;
+    if (canvas) {
+       int type = canvas->view_type();
+#ifdef BRLCAD_OPENGL
+       if (type == QtCADView_GL) {
+           gedp->fbs_open_client_handler = &qdm_open_client_handler;
+       }
+#endif
+       if (type == QtCADView_SW) {
+           gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+       }
+    }
+#ifdef BRLCAD_OPENGL
+    if (c4) {
+       int type = c4->get(0)->view_type();
+#ifdef BRLCAD_OPENGL
+       if (type == QtCADView_GL) {
+           gedp->fbs_open_client_handler = &qdm_open_client_handler;
+       }
+#endif
+       if (type == QtCADView_SW) {
+           gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+       }
+    }
+#endif
+    gedp->fbs_close_client_handler = &qdm_close_client_handler;
+
 
     // Define dock widgets - these are the console, controls, etc. that can be attached
     // and detached from the main window.  Eventually this should be a dynamic set

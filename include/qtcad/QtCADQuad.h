@@ -53,6 +53,8 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 
 	void default_views(); // Set the aet of the four quadrants to their standard defaults.
 	QtCADView *get(int quadrant_num = 0);
+	struct bview * view(int quadrant_id = 0);
+
 	void select(int quadrant_num);
 	void select(const char *id); // valid inputs: ur, ul, ll and lr
 
@@ -62,9 +64,6 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	QtCADView *lr = NULL; // Quadrant 4
 
 	QtCADView *c = NULL;
-
-	// User pointer set to current quadrant's view
-	struct bview **cv = NULL;
 
     signals:
 	void changed();

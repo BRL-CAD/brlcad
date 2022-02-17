@@ -38,8 +38,11 @@ extern "C" {
 QtSW::QtSW(QWidget *parent, struct fb *fbp)
     : QWidget(parent), ifp(fbp)
 {
-    // View is provided from the GED structure (usually gedp->ged_gvp)
-    v = NULL;
+    // Provide a view specific to this widget - set gedp->ged_gvp to v
+    // if this is the current view
+    BU_GET(v, struct bview);
+    bv_init(v);
+    bu_vls_sprintf(&v->gv_name, "swrast");
 
     // Don't dm_open until we have the view.
     dmp = NULL;
@@ -81,8 +84,7 @@ void QtSW::paintEvent(QPaintEvent *e)
     dm_set_dirty(dmp, 0);
 
     if (!m_init) {
-	if (!v)
-	    return;
+
 	if (!dmp) {
 	    // swrast will need to know the window size
 	    v->gv_width = width();
@@ -142,7 +144,7 @@ void QtSW::paintEvent(QPaintEvent *e)
 	m_init = true;
     }
 
-    if (!m_init || !v || !dmp)
+    if (!m_init || !dmp)
 	return;
 
     const unsigned char *dm_bg = dm_get_bg(dmp);
@@ -192,7 +194,7 @@ void QtSW::resizeEvent(QResizeEvent *e)
 
 void QtSW::keyPressEvent(QKeyEvent *k) {
 
-    if (!dmp || !v || !current) {
+    if (!dmp || !current) {
 	QWidget::keyPressEvent(k);
 	return;
     }
@@ -213,7 +215,7 @@ void QtSW::keyPressEvent(QKeyEvent *k) {
 
 void QtSW::mousePressEvent(QMouseEvent *e) {
 
-    if (!dmp || !v || !current) {
+    if (!dmp || !current) {
 	QWidget::mousePressEvent(e);
 	return;
     }
@@ -240,7 +242,7 @@ void QtSW::mousePressEvent(QMouseEvent *e) {
 
 void QtSW::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!dmp || !v || !current) {
+    if (!dmp || !current) {
 	QWidget::mouseMoveEvent(e);
 	return;
     }
@@ -270,7 +272,7 @@ void QtSW::mouseMoveEvent(QMouseEvent *e)
 
 void QtSW::wheelEvent(QWheelEvent *e) {
 
-    if (!dmp || !v || !current) {
+    if (!dmp || !current) {
 	QWidget::wheelEvent(e);
 	return;
     }
@@ -306,11 +308,7 @@ void QtSW::stash_hashes()
     } else {
 	prev_dhash = dm_hash(dmp);
     }
-    if (!v) {
-	prev_vhash = 0;
-    } else {
-	prev_vhash = bv_hash(v);
-    }
+    prev_vhash = bv_hash(v);
 }
 
 bool QtSW::diff_hashes()
@@ -358,9 +356,6 @@ void QtSW::save_image() {
 
 void QtSW::aet(double a, double e, double t)
 {
-    if (!v)
-	return;
-
     fastf_t aet[3];
     double aetd[3];
     aetd[0] = a;

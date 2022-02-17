@@ -46,10 +46,14 @@ extern "C" {
 QtGL::QtGL(QWidget *parent, struct fb *fbp)
     : QOpenGLWidget(parent), ifp(fbp)
 {
-    // View is provided from the GED structure (usually gedp->ged_gvp)
-    v = NULL;
+    // Provide a view specific to this widget - set gedp->ged_gvp to v
+    // if this is the current view
+    BU_GET(v, struct bview);
+    bv_init(v);
+    bu_vls_sprintf(&v->gv_name, "qtgl");
 
-    // Don't dm_open until we have the view.
+    // We can't initialize dmp successfully until more of the OpenGL
+    // initialization is complete
     dmp = NULL;
 
     // If we weren't supplied with a framebuffer, allocate one.
@@ -72,8 +76,7 @@ QtGL::~QtGL()
     if (ifp && !fb_get_standalone(ifp)) {
 	fb_close_existing(ifp);
     }
-    if (v)
-	BU_PUT(v, struct bv);
+    BU_PUT(v, struct bv);
 }
 
 
@@ -86,8 +89,6 @@ void QtGL::paintGL()
 	return;
 
     if (!m_init) {
-	if (!v)
-	    return;
 
 	if (!dmp) {
 
@@ -139,8 +140,10 @@ void QtGL::paintGL()
 	m_init = true;
     }
 
-    if (!m_init || !v || !dmp)
+    if (!m_init || !dmp)
 	return;
+
+    //v->dmp = dmp;
 
     const unsigned char *dm_bg = dm_get_bg(dmp);
     if (dm_bg) {
@@ -162,27 +165,30 @@ void QtGL::paintGL()
 
 void QtGL::resizeGL(int, int)
 {
-    if (dmp && v) {
-	dm_configure_win(dmp, 0);
-	v->gv_width = dm_get_width(dmp);
-	v->gv_height = dm_get_height(dmp);
-	if (ifp) {
-	    fb_configure_window(ifp, v->gv_width, v->gv_height);
-	}
-	dm_set_dirty(dmp, 1);
-	emit changed();
+    if (!dmp)
+	return;
+    dm_configure_win(dmp, 0);
+    v->gv_width = dm_get_width(dmp);
+    v->gv_height = dm_get_height(dmp);
+    if (ifp) {
+	fb_configure_window(ifp, v->gv_width, v->gv_height);
     }
+    if (dmp)
+	dm_set_dirty(dmp, 1);
+    emit changed();
 }
 
 void QtGL::need_update()
 {
+    if (!dmp)
+	return;
     dm_set_dirty(dmp, 1);
     update();
 }
 
 void QtGL::keyPressEvent(QKeyEvent *k) {
 
-    if (!dmp || !v || !current) {
+    if (!dmp || !current) {
 	QOpenGLWidget::keyPressEvent(k);
 	return;
     }
@@ -203,7 +209,7 @@ void QtGL::keyPressEvent(QKeyEvent *k) {
 
 void QtGL::mousePressEvent(QMouseEvent *e) {
 
-    if (!dmp || !v || !current) {
+    if (!dmp || !current) {
 	QOpenGLWidget::mousePressEvent(e);
 	return;
     }
@@ -229,7 +235,7 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
 
 void QtGL::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!dmp || !v || !current) {
+    if (!dmp || !current) {
 	QOpenGLWidget::mouseMoveEvent(e);
 	return;
     }
@@ -259,7 +265,7 @@ void QtGL::mouseMoveEvent(QMouseEvent *e)
 
 void QtGL::wheelEvent(QWheelEvent *e) {
 
-    if (!dmp || !v || !current) {
+    if (!dmp || !current) {
 	QOpenGLWidget::wheelEvent(e);
 	return;
     }
@@ -295,11 +301,7 @@ void QtGL::stash_hashes()
     } else {
 	prev_dhash = dm_hash(dmp);
     }
-    if (!v) {
-	prev_vhash = 0;
-    } else {
-	prev_vhash = bv_hash(v);
-    }
+    prev_vhash = bv_hash(v);
 }
 
 bool QtGL::diff_hashes()
@@ -308,12 +310,9 @@ bool QtGL::diff_hashes()
     unsigned long long c_dhash = 0;
     unsigned long long c_vhash = 0;
 
-    if (dmp) {
+    if (dmp)
 	c_dhash = dm_hash(dmp);
-    }
-    if (v) {
-	c_vhash = bv_hash(v);
-    }
+    c_vhash = bv_hash(v);
 
     if (prev_dhash != c_dhash) {
 	if (dmp)
@@ -341,9 +340,6 @@ void QtGL::save_image() {
 
 void QtGL::aet(double a, double e, double t)
 {
-    if (!v)
-	return;
-
     fastf_t aet[3];
     double aetd[3];
     aetd[0] = a;

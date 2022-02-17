@@ -63,7 +63,6 @@ class CADApp : public QApplication
 	    mdl = new QgSelectionProxyModel();
 	    mdl->setSourceModel(m);
 	    BU_LIST_INIT(&RTG.rtg_vlfree);
-	    connect(m, &QgModel::mdl_changed_db, this, &CADApp::view_connect);
 	};
 	~CADApp() {};
 
@@ -88,7 +87,6 @@ class CADApp : public QApplication
     public slots:
 	void open_file();
         void write_settings();
-	void view_connect();
 
 	/* GUI/View connection slots */
     public slots:

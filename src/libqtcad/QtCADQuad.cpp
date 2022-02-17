@@ -54,6 +54,12 @@ QtCADQuad::QtCADQuad(QWidget *parent, int type)
     ll = new QtCADView(this, type);
     lr = new QtCADView(this, type);
 
+    // Set quadrant appropriate names
+    bu_vls_sprintf(&ur->view()->gv_name, "Q1");
+    bu_vls_sprintf(&ul->view()->gv_name, "Q2");
+    bu_vls_sprintf(&ll->view()->gv_name, "Q3");
+    bu_vls_sprintf(&lr->view()->gv_name, "Q4");
+
     ur->set_current(0);
     ul->set_current(0);
     ll->set_current(0);
@@ -170,11 +176,8 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 	}
 
 	c->set_current(1);
-	if (cv) {
-	    (*cv) = c->view();
-	    if (c != oc)
-		emit selected(c);
-	}
+	if (c != oc)
+	    emit selected(c);
     }
     return false;
 }
@@ -186,6 +189,23 @@ QtCADQuad::default_views()
     ul->aet(0, 90, 0);
     ll->aet(0, 0, 0);
     lr->aet(90, 0, 0);
+}
+
+struct bview *
+QtCADQuad::view(int quadrant_id)
+{
+    switch (quadrant_id) {
+	case 1:
+	    return ur->view();
+	case 2:
+	    return ul->view();
+	case 3:
+	    return ll->view();
+	case 4:
+	    return lr->view();
+	default:
+	    return c->view();
+    }
 }
 
 QtCADView *
@@ -226,14 +246,10 @@ QtCADQuad::select(int quadrant_id)
 	    return;
     }
 
-    if (cv) {
-	(*cv) = c->view();
-	if (oc != c)
-	    emit selected(c);
-    }
+    if (oc != c)
+	emit selected(c);
     // TODO - update coloring of bg to
     // indicate active quadrant
-
 }
 
 void

@@ -209,12 +209,8 @@ CADApp::initialize()
 void
 CADApp::do_quad_view_change(QtCADView *cv)
 {
-    if (mdl) {
-	QgModel *m = (QgModel *)mdl->sourceModel();
-	if (m->gedp && cv) {
-	    m->gedp->ged_gvp = cv->view();
-	}
-    }
+    QgModel *m = (QgModel *)mdl->sourceModel();
+    m->gedp->ged_gvp = cv->view();
     do_gui_update_from_view_change();
 }
 
@@ -222,12 +218,9 @@ void
 CADApp::do_view_update_from_gui_change(struct bview **nv)
 {
 
-    if (mdl) {
-	QgModel *m = (QgModel *)mdl->sourceModel();
-	if (m->gedp && nv) {
-	    m->gedp->ged_gvp = *nv;
-	}
-    }
+    QgModel *m = (QgModel *)mdl->sourceModel();
+    if (nv)
+	m->gedp->ged_gvp = *nv;
     emit gui_changed_view(NULL);
 }
 
@@ -241,11 +234,8 @@ CADApp::do_db_update_from_gui_change()
 void
 CADApp::do_gui_update_from_view_change()
 {
-    if (!mdl)
-	return;
     QgModel *m = (QgModel *)mdl->sourceModel();
-    if (m->gedp)
-	emit view_change(&m->gedp->ged_gvp);
+    emit view_change(&m->gedp->ged_gvp);
 }
 
 void
@@ -276,84 +266,6 @@ CADApp::tree_update()
     vc->makeCurrent(v);
     ic->makeCurrent(v);
     oc->makeCurrent(v);
-}
-
-void
-CADApp::view_connect()
-{
-    // Connect the wires with the view(s)
-    QgModel *m = (QgModel *)mdl->sourceModel();
-    struct ged *gedp = m->gedp;
-    if (w->canvas) {
-	BU_GET(gedp->ged_gvp, struct bview);
-	bv_init(gedp->ged_gvp);
-	bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
-	gedp->ged_gvp->gv_db_grps = &gedp->ged_db_grps;
-	gedp->ged_gvp->gv_view_shared_objs = &gedp->ged_view_shared_objs;
-	gedp->ged_gvp->independent = 0;
-	bu_ptbl_ins_unique(&gedp->ged_views, (long int *)gedp->ged_gvp);
-	w->canvas->set_view(gedp->ged_gvp);
-	//w->canvas->dm_set = gedp->ged_all_dmp;
-	w->canvas->set_dm_current((struct dm **)&gedp->ged_dmp);
-	w->canvas->set_base2local(&gedp->dbip->dbi_base2local);
-	w->canvas->set_local2base(&gedp->dbip->dbi_local2base);
-	gedp->ged_gvp = w->canvas->view();
-    } else if (w->c4) {
-	for (int i = 1; i < 5; i++) {
-	    QtCADView *c = w->c4->get(i);
-	    struct bview *nv;
-	    BU_GET(nv, struct bview);
-	    bv_init(nv);
-	    bu_vls_sprintf(&nv->gv_name, "Q%d", i);
-	    nv->gv_db_grps = &gedp->ged_db_grps;
-	    nv->gv_view_shared_objs = &gedp->ged_view_shared_objs;
-	    nv->independent = 0;
-	    bu_ptbl_ins_unique(&gedp->ged_views, (long int *)nv);
-	    c->set_view(nv);
-	    //c->dm_set = gedp->ged_all_dmp;
-	    c->set_dm_current((struct dm **)&gedp->ged_dmp);
-	    c->set_base2local(&gedp->dbip->dbi_base2local);
-	    c->set_local2base(&gedp->dbip->dbi_local2base);
-	}
-	w->c4->cv = &gedp->ged_gvp;
-	w->c4->select(1);
-	w->c4->default_views();
-    }
-
-    gedp->fbs_is_listening = &qdm_is_listening;
-    gedp->fbs_listen_on_port = &qdm_listen_on_port;
-    gedp->fbs_open_server_handler = &qdm_open_server_handler;
-    gedp->fbs_close_server_handler = &qdm_close_server_handler;
-    if (w->canvas) {
-	int type = w->canvas->view_type();
-#ifdef BRLCAD_OPENGL
-	if (type == QtCADView_GL) {
-	    gedp->fbs_open_client_handler = &qdm_open_client_handler;
-	}
-#endif
-	if (type == QtCADView_SW) {
-	    gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
-	}
-    }
-#ifdef BRLCAD_OPENGL
-    if (w->c4) {
-	int type = w->c4->get(0)->view_type();
-#ifdef BRLCAD_OPENGL
-	if (type == QtCADView_GL) {
-	    gedp->fbs_open_client_handler = &qdm_open_client_handler;
-	}
-#endif
-	if (type == QtCADView_SW) {
-	    gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
-	}
-    }
-#endif
-    gedp->fbs_close_client_handler = &qdm_close_client_handler;
-
-    // We have a new view...
-    emit view_change(&gedp->ged_gvp);
-
-    //cadaccordion->highlight_selected(cadaccordion->view_obj);
 }
 
 void
@@ -485,22 +397,41 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     struct ged *gedp = m->gedp;
 
-    if (gedp) {
-	gedp->ged_create_io_handler = &qt_create_io_handler;
-	gedp->ged_delete_io_handler = &qt_delete_io_handler;
-	gedp->ged_io_data = (void *)this->w;
+    gedp->ged_create_io_handler = &qt_create_io_handler;
+    gedp->ged_delete_io_handler = &qt_delete_io_handler;
+    gedp->ged_io_data = (void *)this->w;
+
+    // The display manager must sometimes be set up later to allow
+    // for initializations - make sure gedp knows the current dmp
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (v->dmp)
+	    bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)v->dmp);
     }
+    gedp->ged_dmp = gedp->ged_gvp->dmp;
 
     if (!tmp_av.size()) {
+
 	// If we're not in the middle of an incremental command,
-	// stash the view state(s) for later comparison
-	if (w->canvas)
+	// stash the view state(s) for later comparison and make
+	// sure our unit conversions are right
+	if (w->canvas) {
 	    w->canvas->stash_hashes();
-	if (w->c4)
+	    w->canvas->set_base2local(&gedp->dbip->dbi_base2local);
+	    w->canvas->set_local2base(&gedp->dbip->dbi_local2base);
+	}
+	if (w->c4) {
 	    w->c4->stash_hashes();
+	    for (int i = 1; i < 5; i++) {
+		QtCADView *c = w->c4->get(i);
+		c->set_base2local(&gedp->dbip->dbi_base2local);
+		c->set_local2base(&gedp->dbip->dbi_local2base);
+	    }
+	}
 
 	// Ask the model to execute the command
 	ret = m->run_cmd(msg, argc, argv);
+
     } else {
 	for (int i = 0; i < argc; i++) {
 	    char *tstr = bu_strdup(argv[i]);
