@@ -507,6 +507,7 @@ done:
     gsh_state_free(&s);
     linenoiseHistoryFree();
     bu_vls_free(&msg);
+    bu_vls_free(&custom_pmpt);
     return ret;
 }
 
