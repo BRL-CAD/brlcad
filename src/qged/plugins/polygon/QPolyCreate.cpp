@@ -457,7 +457,7 @@ QPolyCreate::sketch_sync()
     struct ged *gedp = m->gedp;
     if (!gedp) {
 	ps->sketch_name->setPlaceholderText("No .g file open");
-	ps->sketch_name->setStyleSheet("color: rgba(200,200,200)");
+	ps->sketch_name->setStyleSheet("color: rgb(200,200,200)");
 	ps->sketch_name->setEnabled(false);
 	return;
     }
@@ -485,7 +485,7 @@ QPolyCreate::sketch_sync()
 
 	if (sname) {
 	    if (db_lookup(gedp->dbip, sname, LOOKUP_QUIET) != RT_DIR_NULL) {
-		ps->sketch_name->setStyleSheet("color: rgba(255,0,0)");
+		ps->sketch_name->setStyleSheet("color: rgb(255,0,0)");
 	    } else {
 		ps->sketch_name->setStyleSheet("");
 	    }
@@ -496,7 +496,7 @@ QPolyCreate::sketch_sync()
 	ps->sketch_name->setEnabled(true);
     } else {
 	ps->sketch_name->setPlaceholderText("Enable to save sketch");
-	ps->sketch_name->setStyleSheet("color: rgba(200,200,200)");
+	ps->sketch_name->setStyleSheet("color: rgb(200,200,200)");
 	ps->sketch_name->setEnabled(false);
     }
 }
@@ -537,7 +537,7 @@ QPolyCreate::view_sync()
     }
     bu_free(vname, "vname");
     if (colliding) {
-	ps->view_name->setStyleSheet("color: rgba(255,0,0)");
+	ps->view_name->setStyleSheet("color: rgb(255,0,0)");
     } else {
 	ps->view_name->setStyleSheet("");
     }

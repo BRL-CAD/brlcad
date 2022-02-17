@@ -49,7 +49,7 @@ QPolySettings::QPolySettings()
     snl->addWidget(sketch_sync);
     sketch_name = new QLineEdit();
     sketch_name->setPlaceholderText("Enable to save sketch");
-    sketch_name->setStyleSheet("color: rgba(200,200,200)");
+    sketch_name->setStyleSheet("color: rgb(200,200,200)");
     sketch_name->setEnabled(false);
     snl->addWidget(sketch_name);
     QObject::connect(sketch_sync, &QCheckBox::toggled, this, &QPolySettings::sketch_sync_toggled);
@@ -132,7 +132,7 @@ QPolySettings::sketch_sync_toggled(bool)
 	sketch_name->setEnabled(true);
     } else {
 	sketch_name->setPlaceholderText("Enable to save sketch");
-	sketch_name->setStyleSheet("color: rgba(200,200,200)");
+	sketch_name->setStyleSheet("color: rgb(200,200,200)");
 	sketch_name->setEnabled(false);
     }
 }
