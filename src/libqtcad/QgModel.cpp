@@ -260,7 +260,7 @@ find_similar_qgitem(QgItem *c, std::vector<QgItem *> &v)
 
 
 extern "C" void
-qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
+qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
 {
     // If all the input parameters other than dbip/op are NULL and op is set to
     // subtraction, the update_nref logic has completed its work and is making
@@ -278,11 +278,6 @@ qgmodel_update_nref_callback(struct db_i *dbip, struct directory *parent_dp, str
 	// If anybody was requesting an nref update, the fact that we're here
 	// means we've done it.
 	ctx->need_update_nref = false;
-
-	// Do the major bookkeeping work of an update
-	// TODO - sync_instances probably needs to be called inside
-	// a QgModel method, inside a beginResetModel guard
-	sync_instances(ctx->tops_instances, ctx->instances, dbip);
     }
 }
 
