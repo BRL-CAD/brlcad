@@ -107,6 +107,7 @@ QgItem::QgItem(gInstance *g, QgModel *ictx)
     ctx = ictx;
     if (g) {
 	parentItem = NULL;
+	c_count = g->children(ictx->instances).size();
 	ihash = g->hash;
 	// TODO - these copies may be moot - the child relationship needs
 	// the gInstance, so we may have to just ensure gInstances aren't
@@ -179,14 +180,7 @@ QgItem::childCount() const
     if (this == ctx->root())
 	return children.size();
 
-    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
-    g_it = ctx->instances->find(ihash);
-    if (g_it == ctx->instances->end())
-	return 0;
-
-    gInstance *gi = g_it->second;
-
-    return (int)gi->children(ctx->instances).size();
+    return (int)c_count;
 }
 
 int
@@ -476,6 +470,7 @@ QgModel::item_rebuild(QgItem *item)
 	    items->insert(nitem);
 	}
     }
+    item->c_count = nc.size();
 
     // If anything changed since the last time children was built, we need to
     // replace children's contents with the new vector.  This is being run

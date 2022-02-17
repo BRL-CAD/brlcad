@@ -216,7 +216,7 @@ class QTCAD_EXPORT QgItem
 	// their ordering before that changes
 	int columnCount() const;
 	std::vector<QgItem *> children;
-
+	size_t c_count = 0;
 
 	// Cached data from the gInstance, so we can keep
 	// displaying while librt does work on the gInstances.
