@@ -504,6 +504,11 @@ sync_instances(
     struct directory **db_objects = NULL;
     int path_cnt = db_ls(dbip, DB_LS_TOPS | DB_LS_CYCLIC , NULL, &db_objects);
 
+    // TODO - to do a flat, "ls" style tree, all we need to do is switch the
+    // above db_ls filters to the unfiltered version.  Need to make this a
+    // user option.
+    //int path_cnt = db_ls(dbip, 0, NULL, &db_objects);
+
     if (path_cnt) {
 	XXH64_state_t h_state;
 	XXH64_reset(&h_state, 0);
