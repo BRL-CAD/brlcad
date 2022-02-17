@@ -27,7 +27,6 @@
 
 #include "common.h"
 
-#include <algorithm> // for set_difference
 #include <set>
 #include <unordered_set>
 
@@ -144,7 +143,7 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
 
     // Unpack
     std::unordered_map<unsigned long long, gInstance *> *instances = (std::unordered_map<unsigned long long, gInstance *> *)inst_map;
-    std::set<gInstance *> *valid_instances = (std::set<gInstance *> *)val_inst;
+    std::unordered_map<unsigned long long, gInstance *> *valid_instances = (std::unordered_map<unsigned long long, gInstance *> *)val_inst;
     std::unordered_set<unsigned long long> *cnt_set = (std::unordered_set<unsigned long long> *)c_set;
     struct directory *parent_dp = (struct directory *)pdp;
     std::vector<unsigned long long> *chash = (std::vector<unsigned long long> *)vchash;
@@ -198,10 +197,10 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
 	MAT_COPY(ninst->c_m, c_m);
 	(*instances)[nhash] = ninst;
 	if (valid_instances)
-	    valid_instances->insert(ninst);
+	    (*valid_instances)[nhash] = ninst;
     } else {
 	if (valid_instances)
-	    valid_instances->insert(i_it->second);
+	    (*valid_instances)[i_it->first] = i_it->second;
     }
 
     // If we're collecting child hashes of the dp, push the hash onto the
@@ -381,7 +380,7 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 }
 
 static void
-dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned long long, gInstance *> *instances, struct directory *dp, struct db_i *dbip)
+dp_instances(std::unordered_map<unsigned long long, gInstance *> *valid_instances, std::unordered_map<unsigned long long, gInstance *> *instances, struct directory *dp, struct db_i *dbip)
 {
     mat_t c_m;
     XXH64_state_t h_state;
@@ -405,7 +404,7 @@ dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		if (valid_instances)
-		    valid_instances->insert(i_it->second);
+		    (*valid_instances)[i_it->first] = i_it->second;
 		rt_db_free_internal(&intern);
 		return;
 	    }
@@ -416,6 +415,8 @@ dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned
 	    MAT_IDN(ninst->c_m);
 	    ninst->op = DB_OP_UNION;
 	    (*instances)[nhash] = ninst;
+	    if (valid_instances)
+		(*valid_instances)[nhash] = ninst;
 	}
 	rt_db_free_internal(&intern);
 	return;
@@ -435,7 +436,7 @@ dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		if (valid_instances)
-		    valid_instances->insert(i_it->second);
+		    (*valid_instances)[i_it->first] = i_it->second;
 		rt_db_free_internal(&intern);
 		return;
 	    }
@@ -446,6 +447,8 @@ dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned
 	    MAT_IDN(ninst->c_m);
 	    ninst->op = DB_OP_UNION;
 	    (*instances)[nhash] = ninst;
+	    if (valid_instances)
+		(*valid_instances)[nhash] = ninst;
 	}
 	rt_db_free_internal(&intern);
 	return;
@@ -465,7 +468,7 @@ dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		if (valid_instances)
-		    valid_instances->insert(i_it->second);
+		    (*valid_instances)[i_it->first] = i_it->second;
 		rt_db_free_internal(&intern);
 		return;
 	    }
@@ -476,6 +479,8 @@ dp_instances(std::set<gInstance *> *valid_instances, std::unordered_map<unsigned
 	    MAT_IDN(ninst->c_m);
 	    ninst->op = DB_OP_UNION;
 	    (*instances)[nhash] = ninst;
+	    if (valid_instances)
+		(*valid_instances)[nhash] = ninst;
 	}
 	rt_db_free_internal(&intern);
 	return;
@@ -507,6 +512,7 @@ sync_instances(
 	std::unordered_map<unsigned long long, gInstance *> *instances,
 	struct db_i *dbip)
 {
+
     if (!dbip) {
 	// If we don't have a dbip, our job is just to clear out everything
 	for (size_t i = 0; i < instances->size(); i++) {
@@ -517,18 +523,8 @@ sync_instances(
 	return;
     }
 
-    std::set<gInstance *> orig_instances;
-    std::set<gInstance *> valid_instances;
-
-    // We may need to delete invalid instances - build up an initial set
-    // of what is present in instances before we go through the .g info
-    // Comparison of this set and the final set will identify anything in
-    // this set that is no longer present in the .g file
     std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
-    for (i_it = (*instances).begin(); i_it != (*instances).end(); i_it++) {
-	gInstance *inst = i_it->second;
-	orig_instances.insert(inst);
-    }
+    std::unordered_map<unsigned long long, gInstance *> valid_instances;
 
     // Run through the objects and crack the non-leaf objects to define
     // non-tops instances (i.e. all comb instances and some primitive
@@ -584,7 +580,7 @@ sync_instances(
 	    (*tops_instances)[nhash] = tinst;
 
 	    // tops instances are valid
-	    valid_instances.insert(tinst);
+	    valid_instances[nhash] = tinst;
 	}
     }
     bu_free(db_objects, "tops obj list");
@@ -592,14 +588,19 @@ sync_instances(
     // instances now holds both the invalid and the valid instances.  To identify
     // and remove the invalid ones, we do a set difference.
     std::vector<gInstance *> removed;
-    std::set_difference(orig_instances.begin(), orig_instances.end(), valid_instances.begin(), valid_instances.end(), std::back_inserter(removed));
-    for (size_t i = 0; i < removed.size(); i++) {
-	instances->erase(removed[i]->hash);
+    std::vector<unsigned long long> removed_hashes;
+    for (i_it = instances->begin(); i_it != instances->end(); i_it++) {
+	if (valid_instances.find(i_it->first) == valid_instances.end()) {
+	    removed_hashes.push_back(i_it->first);
+	    removed.push_back(i_it->second);
+	}
+    }
+    for (size_t i = 0; i < removed_hashes.size(); i++) {
+	instances->erase(removed_hashes[i]);
     }
     for (size_t i = 0; i < removed.size(); i++) {
 	delete removed[i];
     }
-
 }
 
 // Local Variables:
