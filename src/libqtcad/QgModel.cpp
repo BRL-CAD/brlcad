@@ -926,6 +926,12 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     int ret = ged_exec(gedp, argc, argv);
 
+    // If this is one of the GED commands supporting incremental input, this
+    // return code means we need more input from the application before any
+    // command can be run - no need to do the remainder of the logic below.
+    if (ret & BRLCAD_MORE)
+	return ret;
+
     // If we have the need_update_nref flag set, we need to do db_update_nref
     // ourselves - the backend logic made a dp add/remove but didn't trigger
     // the nref updates (can that happen?).

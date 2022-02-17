@@ -474,16 +474,15 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 }
 
 
-bool
+int
 CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
-    bool ret = false;
+    int ret = BRLCAD_OK;
 
     if (!mdl)
-	return false;
+	return BRLCAD_ERROR;
     QgModel *m = (QgModel *)mdl->sourceModel();
 
-    struct ged *prev_gedp = m->gedp;
     struct ged *gedp = m->gedp;
 
     if (gedp) {
@@ -500,64 +499,19 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     // Ask the model to execute the command
     ret = m->run_cmd(msg, argc, argv);
-    if (ret != BRLCAD_OK)
-	return false;
 
-    // It's possible that a ged_exec will introduce a new gedp - set up accordingly
-    gedp = m->gedp;
-    if (gedp && prev_gedp != gedp) {
-	bu_ptbl_reset(gedp->ged_all_dmp);
-	if (w->canvas) {
-	    gedp->ged_dmp = w->canvas->dmp();
-	    gedp->ged_gvp = w->canvas->view();
-	    dm_set_vp(w->canvas->dmp(), &gedp->ged_gvp->gv_scale);
-	}
-	if (w->c4) {
-	    QtCADView *c = w->c4->get();
-	    gedp->ged_dmp = c->dmp();
-	    gedp->ged_gvp = c->view();
-	    dm_set_vp(c->dmp(), &gedp->ged_gvp->gv_scale);
-	}
-	bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)gedp->ged_dmp);
-    }
-
-    if (gedp) {
-	if (w->canvas) {
-	    w->canvas->set_base2local(&gedp->dbip->dbi_base2local);
-	    w->canvas->set_local2base(&gedp->dbip->dbi_local2base);
-	}
-	if (w->c4 && w->c4->get(0)) {
-	    w->c4->get(0)->set_base2local(&gedp->dbip->dbi_base2local);
-	    w->c4->get(0)->set_local2base(&gedp->dbip->dbi_local2base);
-	}
-	// Checks the dp edit flags and does any necessary redrawing.  If
-	// anything changed with the geometry, we also need to redraw
-	if (qged_view_update(gedp, &m->changed_dp) > 0) {
-	    if (w->canvas)
-		w->canvas->need_update(NULL);
-	    if (w->c4)
-		w->c4->need_update(NULL);
-	}
-    } else {
-	// gedp == NULL - can't cheat and use the gedp pointer
-	if (prev_gedp != gedp) {
-	    if (w->canvas) {
-		w->canvas->need_update(NULL);
-	    }
-	    if (w->c4) {
-		QtCADView *c = w->c4->get();
-		c->update();
-	    }
-	}
-    }
+    // If we have an error we don't proceed, and if we need more
+    // input no command was run.
+    if (ret & BRLCAD_ERROR || ret & BRLCAD_MORE)
+	return ret;
 
     /* Check if the ged_exec call changed either the display manager or
      * the view settings - in either case we'll need to redraw */
     if (w->canvas) {
-	ret = w->canvas->diff_hashes();
+	view_dirty = w->canvas->diff_hashes();
     }
     if (w->c4) {
-	ret = w->c4->diff_hashes();
+	view_dirty = w->c4->diff_hashes();
     }
 
     return ret;
@@ -606,12 +560,16 @@ CADApp::run_qcmd(const QString &command)
 
     // If it wasn't an app level command, try it as a GED command.
     if (!cmd_run) {
-	bool ret = run_cmd(&msg, ac, (const char **)av);
+	int ret = run_cmd(&msg, ac, (const char **)av);
+	if (ret & BRLCAD_MORE)
+	    bu_log("TODO - support BRLCAD_MORE commands\n");
 	if (bu_vls_strlen(&msg) > 0 && console) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
-	if (ret && m->gedp)
+	if (view_dirty && m->gedp) {
 	    emit view_change(&m->gedp->ged_gvp);
+	    view_dirty = false;
+	}
     }
 
     if (m->gedp) {
