@@ -178,8 +178,9 @@ geval(struct gsh_state *s, int argc, const char **argv)
 	ret = ged_exec(s->gedp, argc, argv);
     }
 
-    printf("%s", bu_vls_cstr(s->gedp->ged_result_str));
-
+    if (!(ret & BRLCAD_MORE)) {
+	printf("%s", bu_vls_cstr(s->gedp->ged_result_str));
+    }
     return ret;
 }
 
@@ -272,7 +273,9 @@ main(int argc, const char **argv)
 	return EXIT_FAILURE;
 
     /* Misc */
+    std::vector<char *> tmp_av;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct bu_vls custom_pmpt = BU_VLS_INIT_ZERO;
     const char *gpmpt = DEFAULT_GSH_PROMPT;
     const char *emptypmpt = "";
     int ret = EXIT_SUCCESS;
@@ -390,42 +393,59 @@ main(int argc, const char **argv)
 
 	/* Make an argv array from the input line */
 	char *input = bu_strdup(bu_vls_cstr(&s.iline));
-	char **av = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
+	char **av = (char **)bu_calloc(strlen(input) + tmp_av.size() + 1, sizeof(char *), "argv array");
 	int ac = bu_argv_from_string(av, strlen(input), input);
-
-	/* There are a few commands which must be aware of application-specific
-	 * information and state unknown to GED.  We check first to see if the
-	 * specified input matches one of those commands. */
 	int is_gsh_cmd = 0;
-	if (bu_cmd_valid(gsh_cmds, av[0]) == BRLCAD_OK) {
-	    int cbret;
-	    int cret = bu_cmd(gsh_cmds, ac, (const char **)av, 0, (void *)&s, &cbret);
+	int gret = BRLCAD_OK;
 
-	    // Regardless of what happened, this is not a raw GED cmd
-	    is_gsh_cmd = 1;
+	/* If we are in the midst of a MORE command, the handling is different */
+	if (tmp_av.size()) {
+	    for (int i = 0; i < ac; i++) {
+		char *tstr = bu_strdup(av[i]);
+		tmp_av.push_back(tstr);
+	    }
+	    // Reassemble the full command we have thus var
+	    for (size_t i = 0; i < tmp_av.size(); i++) {
+		av[i] = tmp_av[i];
+	    }
+	    ac = (int)tmp_av.size();
+	} else {
+	    /* There are a few commands which must be aware of application-specific
+	     * information and state unknown to GED.  We check first to see if the
+	     * specified input matches one of those commands. */
+	    if (bu_cmd_valid(gsh_cmds, av[0]) == BRLCAD_OK) {
+		int cbret;
+		int cret = bu_cmd(gsh_cmds, ac, (const char **)av, 0, (void *)&s, &cbret);
 
-	    if (cret != BRLCAD_OK)
-		printf("Error executing command %s\n", av[0]);
+		// Regardless of what happened, this is not a raw GED cmd
+		is_gsh_cmd = 1;
 
-	    // If we are supposed to quit now, go to the cleanup section
-	    if (cbret & BRLCAD_EXIT) {
-		/* Free the temporary argv structures */
-		bu_free(input, "input copy");
-		bu_free(av, "input argv");
-		goto done;
+		if (cret != BRLCAD_OK)
+		    printf("Error executing command %s\n", av[0]);
+
+		// If we are supposed to quit now, go to the cleanup section
+		if (cbret & BRLCAD_EXIT) {
+		    /* Free the temporary argv structures */
+		    bu_free(input, "input copy");
+		    bu_free(av, "input argv");
+		    goto done;
+		}
 	    }
 	}
 
 	/* If we didn't match a gsh cmd, try a standard libged call */
-	if (!is_gsh_cmd && !(geval(&s, ac, (const char **)av) & BRLCAD_ERROR)) {
+	if (!is_gsh_cmd) {
+	    gret = geval(&s, ac, (const char **)av);
 	    // The command ran, see if the display needs updating
 #ifdef USE_DM
-	    view_update(&s);
+	    if (!(gret & BRLCAD_ERROR)) {
+		view_update(&s);
+	    }
 #endif
 	}
 
 	// If we closed the dbip, clear out the gfile name
-	if (s.gedp->dbip)
+	if (!s.gedp->dbip)
 	    bu_vls_trunc(&s.gfile, 0);
 
 	/* When we're interactive, the last line won't show in linenoise unless
@@ -439,8 +459,38 @@ main(int argc, const char **argv)
 	 * some research to confirm there aren't any valid cases where this
 	 * would be a bad idea. */
 	struct bu_vls *rstr = s.gedp->ged_result_str;
-	if (bu_vls_strlen(rstr) && bu_vls_cstr(rstr)[bu_vls_strlen(rstr) - 1] != '\n')
-	    printf("\n");
+	if (gret & BRLCAD_MORE) {
+	    // If we're being asked for more input, the return string holds
+	    // the prompt for the next input
+	    bu_vls_sprintf(&custom_pmpt, "%s", bu_vls_cstr(s.gedp->ged_result_str));
+	    s.pmpt = bu_vls_cstr(&custom_pmpt);
+	    if (!tmp_av.size()) {
+		// The first time through, we store the argv contents here since we
+		// didn't know to do it earlier.  Subsequent passes will handle the
+		// tmp_av appending above.
+		for (int i = 0; i < ac; i++) {
+		    char *tstr = bu_strdup(av[i]);
+		    tmp_av.push_back(tstr);
+		}
+	    }
+	} else {
+	    // Normal execution - just display the results.  Add a '\n' if not
+	    // already present so linenoise will print all the lines before
+	    // displaying the prompt
+	    if (bu_vls_strlen(rstr) && bu_vls_cstr(rstr)[bu_vls_strlen(rstr) - 1] != '\n')
+		printf("\n");
+
+	    // If we were doing a MORE command, normal execution signals the end of
+	    // the argument accumulation.  Clear out the tmp_av so the next execution
+	    // knows to proceed normally.
+	    for (size_t i = 0; i < tmp_av.size(); i++) {
+		delete tmp_av[i];
+	    }
+	    tmp_av.clear();
+
+	    // In case we had a custom prompt from MORE, restore our standard prompt
+	    s.pmpt = (bu_interactive()) ? gpmpt : emptypmpt;
+	}
 
 	/* Reset GED results string */
 	bu_vls_trunc(rstr, 0);
