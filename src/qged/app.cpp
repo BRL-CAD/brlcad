@@ -491,27 +491,57 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	gedp->ged_io_data = (void *)this->w;
     }
 
-    if (w->canvas)
-	w->canvas->stash_hashes();
-    if (w->c4)
-	w->c4->stash_hashes();
+    if (!tmp_av.size()) {
+	// If we're not in the middle of an incremental command,
+	// stash the view state(s) for later comparison
+	if (w->canvas)
+	    w->canvas->stash_hashes();
+	if (w->c4)
+	    w->c4->stash_hashes();
 
-
-    // Ask the model to execute the command
-    ret = m->run_cmd(msg, argc, argv);
-
-    // If we have an error we don't proceed, and if we need more
-    // input no command was run.
-    if (ret & BRLCAD_ERROR || ret & BRLCAD_MORE)
-	return ret;
-
-    /* Check if the ged_exec call changed either the display manager or
-     * the view settings - in either case we'll need to redraw */
-    if (w->canvas) {
-	view_dirty = w->canvas->diff_hashes();
+	// Ask the model to execute the command
+	ret = m->run_cmd(msg, argc, argv);
+    } else {
+	for (int i = 0; i < argc; i++) {
+	    char *tstr = bu_strdup(argv[i]);
+	    tmp_av.push_back(tstr);
+	}
+	char **av = (char **)bu_calloc(tmp_av.size() + 1, sizeof(char *), "argv array");
+	// Assemble the full command we have thus var
+	for (size_t i = 0; i < tmp_av.size(); i++) {
+	    av[i] = tmp_av[i];
+	}
+	int ac = (int)tmp_av.size();
+	ret = m->run_cmd(msg, ac, (const char **)av);
     }
-    if (w->c4) {
-	view_dirty = w->c4->diff_hashes();
+
+    if (!(ret & BRLCAD_MORE)) {
+	/* Check if the ged_exec call changed either the display manager or
+	 * the view settings - in either case we'll need to redraw */
+	if (w->canvas) {
+	    view_dirty = w->canvas->diff_hashes();
+	}
+	if (w->c4) {
+	    view_dirty = w->c4->diff_hashes();
+	}
+    }
+
+    if (ret & BRLCAD_MORE) {
+	// If this is the first time through stash in tmp_av, since we
+	// didn't know to do it above
+	if (!tmp_av.size()) {
+	    for (int i = 0; i < argc; i++) {
+		char *tstr = bu_strdup(argv[i]);
+		tmp_av.push_back(tstr);
+	    }
+	}
+    } else {
+	// If we were in an incremental command, we're done now -
+	// clear tmp_av
+	for (size_t i = 0; i < tmp_av.size(); i++) {
+	    delete tmp_av[i];
+	}
+	tmp_av.clear();
     }
 
     return ret;
@@ -559,16 +589,24 @@ CADApp::run_qcmd(const QString &command)
     }
 
     // If it wasn't an app level command, try it as a GED command.
+    int ret = BRLCAD_OK;
     if (!cmd_run) {
-	int ret = run_cmd(&msg, ac, (const char **)av);
-	if (ret & BRLCAD_MORE)
-	    bu_log("TODO - support BRLCAD_MORE commands\n");
+	ret = run_cmd(&msg, ac, (const char **)av);
 	if (bu_vls_strlen(&msg) > 0 && console) {
 	    console->printString(bu_vls_cstr(&msg));
 	}
 	if (view_dirty && m->gedp) {
 	    emit view_change(&m->gedp->ged_gvp);
 	    view_dirty = false;
+	}
+    }
+
+
+    if (console) {
+	if (ret & BRLCAD_MORE) {
+	    console->prompt(bu_vls_cstr(m->gedp->ged_result_str));
+	} else {
+	    console->prompt("$ ");
 	}
     }
 
@@ -579,10 +617,6 @@ CADApp::run_qcmd(const QString &command)
     bu_vls_free(&msg);
     bu_free(input, "input copy");
     bu_free(av, "input argv");
-
-    if (console)
-	console->prompt("$ ");
-
 }
 
 void

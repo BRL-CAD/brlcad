@@ -129,6 +129,7 @@ class CADApp : public QApplication
 
     private:
 	QMap<QString, app_cmd_ptr> app_cmd_map;
+	std::vector<char *> tmp_av;
 };
 
 QString convert_to_g(QString filename);
