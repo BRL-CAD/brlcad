@@ -53,6 +53,9 @@ class QTCAD_EXPORT gInstance
 	// Debugging function for printing out data in container
 	std::string print();
 
+	// Report if the instance has children
+	bool has_children();
+
 	// Return hashes of child instances, if any
 	std::vector<unsigned long long> children(std::unordered_map<unsigned long long, gInstance *> *instances);
 

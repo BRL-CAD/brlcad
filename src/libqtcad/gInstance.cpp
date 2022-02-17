@@ -252,6 +252,37 @@ db_tree_opleaf(
     }
 }
 
+bool
+gInstance::has_children()
+{
+    if (!dp)
+	return false;
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
+	struct rt_db_internal intern;
+	RT_DB_INTERNAL_INIT(&intern);
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return false;
+	if (intern.idb_type != ID_COMBINATION)
+	    return false;
+	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
+	if (!comb->tree)
+	    return false;
+	if (!db_tree_nleaves(comb->tree))
+	    return false;
+	return true;
+    }
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE)
+	return true;
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE)
+	return true;
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP)
+	return true;
+
+    return false;
+}
+
 std::vector<unsigned long long>
 gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instances)
 {
@@ -284,6 +315,16 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
 	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, (void *)&chash, NULL, &cnt_set);
 	rt_db_free_internal(&intern);
+    }
+
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+	// TODO
+    }
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
+	// TODO
+    }
+    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP) {
+	// TODO
     }
 
     return chash;

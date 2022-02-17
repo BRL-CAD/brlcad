@@ -369,7 +369,7 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	QModelIndex parent(const QModelIndex &child) const override;
 	Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-	void update_tops_items();
+	void item_rebuild(QgItem *item);
 
 	QgItem *rootItem;
 	struct bview *empty_gvp = NULL;
