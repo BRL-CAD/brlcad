@@ -516,6 +516,25 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     }
 
     if (!(ret & BRLCAD_MORE)) {
+
+	/* Set the local unit conversions */
+	if (w->canvas) {
+	    w->canvas->set_base2local(&gedp->dbip->dbi_base2local);
+	    w->canvas->set_local2base(&gedp->dbip->dbi_local2base);
+	}
+	if (w->c4 && w->c4->get(0)) {
+	    w->c4->get(0)->set_base2local(&gedp->dbip->dbi_base2local);
+	    w->c4->get(0)->set_local2base(&gedp->dbip->dbi_local2base);
+	}
+
+	// Handle any necessary redrawing.
+	if (qged_view_update(gedp, &m->changed_dp) > 0) {
+	    if (w->canvas)
+		w->canvas->need_update(NULL);
+	    if (w->c4)
+		w->c4->need_update(NULL);
+	}
+
 	/* Check if the ged_exec call changed either the display manager or
 	 * the view settings - in either case we'll need to redraw */
 	if (w->canvas) {

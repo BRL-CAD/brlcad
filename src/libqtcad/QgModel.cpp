@@ -332,6 +332,8 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 		if (inst->dp == dp)
 		    inst->dp = NULL;
 	    }
+
+	    ctx->changed_dp.insert(dp);
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
