@@ -805,7 +805,8 @@ QgModel::flags(const QModelIndex &index) const
     if (!index.isValid())
 	return Qt::NoItemFlags;
 
-    return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
+    return QAbstractItemModel::flags(index);
+    //return Qt::ItemIsEditable | QAbstractItemModel::flags(index);
 }
 
 QVariant
