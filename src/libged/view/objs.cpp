@@ -1,4 +1,4 @@
-/*                           O B J S . C
+/*                        O B J S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2022 United States Government as represented by
@@ -17,18 +17,20 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/view/polygons.c
+/** @file libged/view/objs.c
  *
- * Commands for view polygons.
+ * Commands for view objects.
  *
  */
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <ctype.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
+#include <queue>
 
+extern "C" {
 #include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/opt.h"
@@ -37,6 +39,7 @@
 
 #include "../ged_private.h"
 #include "./ged_view.h"
+}
 
 #define GET_BV_SCENE_OBJ(p, fp) { \
     if (BU_LIST_IS_EMPTY(fp)) { \
@@ -132,6 +135,14 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
 
     argc--; argv++;
 
+    int recurse = 0;
+
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0], "r", "recursive",       "",  NULL,  &recurse,  "Report (or set) color of all child objects");
+    BU_OPT_NULL(d[1]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -141,8 +152,21 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (argc == 0) {
+    if (ac == 0) {
 	bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", s->s_color[0], s->s_color[1], s->s_color[2]);
+	if (recurse) {
+	    std::queue<struct bv_scene_obj *> sobjs;
+	    sobjs.push(s);
+	    while (!sobjs.empty()) {
+		struct bv_scene_obj *sc = sobjs.front();
+		sobjs.pop();
+		bu_vls_printf(gedp->ged_result_str, "%s: %d/%d/%d\n", bu_vls_cstr(&sc->s_uuid), sc->s_color[0], sc->s_color[1], sc->s_color[2]);
+		for (size_t i = 0; i < BU_PTBL_LEN(&sc->children); i++) {
+		    struct bv_scene_obj *scn = (struct bv_scene_obj *)BU_PTBL_GET(&sc->children, i);
+		    sobjs.push(scn);
+		}
+	    }
+	}
 	return BRLCAD_OK;
     }
     struct bu_color val;
@@ -152,7 +176,21 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
     }
 
     bu_color_to_rgb_chars(&val, s->s_color);
-
+    if (recurse) {
+	if (recurse) {
+	    std::queue<struct bv_scene_obj *> sobjs;
+	    sobjs.push(s);
+	    while (!sobjs.empty()) {
+		struct bv_scene_obj *sc = sobjs.front();
+		sobjs.pop();
+		bu_color_to_rgb_chars(&val, sc->s_color);
+		for (size_t i = 0; i < BU_PTBL_LEN(&sc->children); i++) {
+		    struct bv_scene_obj *scn = (struct bv_scene_obj *)BU_PTBL_GET(&sc->children, i);
+		    sobjs.push(scn);
+		}
+	    }
+	}
+    }
     return BRLCAD_OK;
 }
 
@@ -308,7 +346,7 @@ const struct bu_cmdtab _obj_cmds[] = {
     { (char *)NULL,      NULL}
 };
 
-int
+extern "C" int
 _view_cmd_objs(void *bs, int argc, const char **argv)
 {
     int help = 0;

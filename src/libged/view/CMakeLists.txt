@@ -18,7 +18,7 @@ set(VIEW_SRCS
   gobjs.cpp
   labels.c
   lines.c
-  objs.c
+  objs.cpp
   polygons.c
   quat.c
   size.c
