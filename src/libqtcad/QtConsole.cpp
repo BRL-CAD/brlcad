@@ -95,6 +95,13 @@ public:
 	  return this->font();
   }
 
+  // TODO - figure out how to implement this...
+  bool consolidateHistory(size_t start, size_t end)
+  {
+	  if (start > end)
+		  return false;
+  }
+
   // Try to keep the scrollbar slider from getting too small to be usable
   void resizeEvent(QResizeEvent *e)
   {
