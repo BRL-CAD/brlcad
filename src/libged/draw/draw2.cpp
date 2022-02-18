@@ -221,11 +221,20 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	db_full_path_init(fp);
 	int ret = db_string_to_path(fp, dbip, argv[i]);
 	if (ret < 0) {
-	    // Invalid path
+	    // If that didn't work, there's one other thing we have to check
+	    // for - a really strange path with the "/" character in it.
 	    db_free_full_path(fp);
-	    BU_PUT(fp, struct db_full_path);
-	    bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", argv[i]);
-	    continue;
+	    struct directory *fdp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
+	    if (fdp == RT_DIR_NULL) {
+		// Invalid path
+		db_free_full_path(fp);
+		BU_PUT(fp, struct db_full_path);
+		bu_vls_printf(gedp->ged_result_str, "Invalid path: %s\n", argv[i]);
+		continue;
+	    } else {
+		// Object name contained forward slash (urk!)
+		db_add_node_to_full_path(fp, fdp);
+	    }
 	}
 	fps.insert(fp);
     }
