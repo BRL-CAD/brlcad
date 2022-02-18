@@ -322,7 +322,6 @@ _tree_color(struct directory *dp, struct draw_data_t *dd)
     // No inherit.  Do we have a region material table?
     if (rt_material_head() != MATER_NULL) {
 	// If we do, do we have a region id?
-	bu_log("material head\n");
 	int region_id = -1;
 	const char *region_id_val = bu_avs_get(&c_avs, "region_id");
 	if (region_id_val) {
