@@ -1,4 +1,4 @@
-/*                           G O B J S . C
+/*                      G O B J S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2022 United States Government as represented by
@@ -30,9 +30,10 @@
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <ctype.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
+#include <map>
 
 #include "bu/cmd.h"
 #include "bu/color.h"
@@ -58,6 +59,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
     struct db_i *dbip = gedp->dbip;
+    struct bview *v = gedp->ged_gvp;
     const char *usage_string = "view gobjs name create";
     const char *purpose_string = "create an editing view obj from a database solid/comb";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
@@ -68,9 +70,23 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    if (argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "view gobjs create g_obj_name view_obj_name\n");
+	return BRLCAD_ERROR;
+    }
+    gd->vobj = argv[0];
+
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&s->s_uuid))) {
+	    gd->s = s;
+	    break;
+	}
+    }
+
     struct bv_scene_obj *s = gd->s;
     if (s) {
-	bu_vls_printf(gedp->ged_result_str, "View object for %s already exists\n", gd->vobj);
+	bu_vls_printf(gedp->ged_result_str, "View object %s already exists\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -95,27 +111,36 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-#if 0
-    struct bview *v = gedp->ged_gvp;
+    // We will need a local copy of the internal structure to support manipulating
+    // the scene object (and generating new wireframes) without altering the on-disk
+    // .g object.
+    struct rt_db_internal *ip;
+    BU_GET(ip, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(ip);
+    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat, &rt_uniresource);
+    if (ret < 0) {
+	db_free_full_path(fp);
+	BU_PUT(fp, struct db_full_path);
+	return BRLCAD_ERROR;
+    }
 
     /* Set up the toplevel object */
     struct bv_scene_group *g;
-    BU_GET(g, struct bv_scene_group);
     GET_BV_SCENE_OBJ(g, &gedp->free_scene_obj->l);
     bv_scene_obj_init(g, gedp->free_scene_obj);
     db_path_to_vls(&g->s_name, fp);
-    db_path_to_vls(&g->s_uuid, fp);
-
+    bu_vls_sprintf(&g->s_uuid, "%s", argv[1]);
+    g->s_i_data = (void *)ip;
 
     // Set up drawing settings
     unsigned char wcolor[3] = {255,255,255};
     struct bv_obj_settings vs = BV_OBJ_SETTINGS_INIT;
-    if (v)
-	bv_obj_settings_sync(&vs, &v->gv_s->obj_s);
+    bv_obj_settings_sync(&vs, &gedp->ged_gvp->gv_s->obj_s);
     bv_obj_settings_sync(&g->s_os, &vs);
 
     // We have a tree walk ahead to populate the wireframe - set up the client
     // data structure.
+    std::map<struct directory *, fastf_t> s_size;
     struct draw_data_t dd;
     dd.dbip = gedp->dbip;
     dd.v = gedp->ged_gvp;
@@ -124,6 +149,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     dd.free_scene_obj = gedp->free_scene_obj;
     dd.color_inherit = 0;
     dd.bound_only = 0;
+    dd.s_size = &s_size;
     dd.res = &rt_uniresource;
     bu_color_from_rgb_chars(&dd.c, wcolor);
     dd.vs = &vs;
@@ -132,25 +158,13 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     // Create a wireframe from the current state of the specified object
     db_fullpath_draw(fp, &mat, (void *)&dd);
 
-    // We also need a local copy of the internal structure to edit
-    // associated with the scene object
-    struct rt_db_internal *ip;
-    BU_GET(ip, struct rt_db_internal);
-    RT_DB_INTERNAL_INIT(ip);
-    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, mat, dd.res);
-    if (ret < 0) {
-	db_free_full_path(fp);
-	BU_PUT(fp, struct db_full_path);
-	bv_scene_obj_free(g, gedp->free_scene_obj);
-	return BRLCAD_ERROR;
-    }
-    g->s_i_data = (void *)ip;
+    // Add to the scene
+    bu_ptbl_ins(v->gv_view_objs, (long *)g);
 
     // TODO - set the object callbacks
 
     // TODO - in principle, we should be sharing a lot of logic with the edit command -
     // the only difference is we won't be unpacking and writing the rt_db_internal.
-#endif
 
     return BRLCAD_OK;
 }
@@ -188,7 +202,7 @@ const struct bu_cmdtab _gobjs_cmds[] = {
     { (char *)NULL,      NULL}
 };
 
-int
+extern "C" int
 _view_cmd_gobjs(void *bs, int argc, const char **argv)
 {
     int help = 0;
@@ -246,26 +260,10 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
 
-    // We need a name, even if it doesn't exist yet.  Check if it does, since subcommands
-    // will react differently based on that status.
-    if (ac != 1) {
-	bu_vls_printf(gd->gedp->ged_result_str, "need database object name");
-	return BRLCAD_ERROR;
-    }
-    gd->vobj = argv[0];
     gd->s = NULL;
-    argc--; argv++;
-
     // TODO - if independent use gv_view_objs, else use gv_view_shared_objs
     // TODO - append gobjs:: prefix
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
-	if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
-	    gd->s = s;
-	    break;
-	}
-    }
-
+ 
     if (!gd->s) {
 	// View object doesn't already exist.  subcommands will either need to create it
 	// or handle the error case

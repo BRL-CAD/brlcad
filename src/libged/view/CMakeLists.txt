@@ -15,7 +15,7 @@ set(VIEW_SRCS
   faceplate/faceplate.c
   faceplate/grid.c
   faceplate/interactive_rect.c
-  gobjs.c
+  gobjs.cpp
   labels.c
   lines.c
   objs.c
