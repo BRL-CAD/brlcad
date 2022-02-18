@@ -632,8 +632,8 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     // Draw geometry view objects
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
-	bu_log("Draw %s\n", bu_vls_cstr(&g->g->s_name));
-	dm_draw_scene_obj(dmp, g->g);
+	bu_log("Draw %s\n", bu_vls_cstr(&g->s_name));
+	dm_draw_scene_obj(dmp, g);
     }
 
     // Draw view-only objects
@@ -730,8 +730,8 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
     struct bu_ptbl *sg = (v->independent || v->gv_s->adaptive_plot) ? v->gv_view_grps : v->gv_db_grps;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	bu_log("Draw %s\n", bu_vls_cstr(&g->g->s_name));
-	dm_draw_scene_obj(dmp, g->g);
+	bu_log("Draw %s\n", bu_vls_cstr(&g->s_name));
+	dm_draw_scene_obj(dmp, g);
     }
 
     // Draw view-only objects (shared if settings match, otherwise view-specific)

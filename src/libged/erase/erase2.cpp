@@ -112,16 +112,15 @@ path_add_children(std::set<struct bv_scene_group *> *ngrps, struct db_i *dbip, s
 	} else {
 	    struct bu_vls pvls = BU_VLS_INIT_ZERO;
 	    struct bv_scene_group *g;
-	    BU_GET(g, struct bv_scene_group);
-	    GET_BV_SCENE_OBJ(g->g, &free_scene_obj->l);
-	    BU_LIST_INIT(&(g->g->s_vlist));
-	    BU_PTBL_INIT(&g->g->children);
+	    GET_BV_SCENE_OBJ(g, &free_scene_obj->l);
+	    BU_LIST_INIT(&(g->s_vlist));
+	    BU_PTBL_INIT(&g->children);
 	    bu_vls_trunc(&pvls, 0);
 	    db_path_to_vls(&pvls, gfp);
-	    BU_VLS_INIT(&g->g->s_name);
-	    bu_vls_sprintf(&g->g->s_name, "%s", bu_vls_cstr(&pvls));
-	    BU_VLS_INIT(&g->g->s_uuid);
-	    bu_vls_sprintf(&g->g->s_uuid, "%s", bu_vls_cstr(&pvls));
+	    BU_VLS_INIT(&g->s_name);
+	    bu_vls_sprintf(&g->s_name, "%s", bu_vls_cstr(&pvls));
+	    BU_VLS_INIT(&g->s_uuid);
+	    bu_vls_sprintf(&g->s_uuid, "%s", bu_vls_cstr(&pvls));
 	    ngrps->insert(g);
 	}
 	i++;
@@ -156,13 +155,13 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
     }
 
     // Remove the children of cg from it's ptbl for later processing so we
-    // don't have to special case freeing cg->g
+    // don't have to special case freeing cg
     std::set<struct bv_scene_obj *> sobjs;
-    for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+    for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
 	sobjs.insert(s);
     }
-    bu_ptbl_reset(&cg->g->children);
+    bu_ptbl_reset(&cg->children);
 
     // Seed our group set with the top level group
     std::set<struct bv_scene_group *> ngrps;
@@ -183,7 +182,7 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
 	    struct db_full_path *gfp = NULL;
 	    BU_GET(gfp, struct db_full_path);
 	    db_full_path_init(gfp);
-	    int ret = db_string_to_path(gfp, dbip, bu_vls_cstr(&ng->g->s_name));
+	    int ret = db_string_to_path(gfp, dbip, bu_vls_cstr(&ng->s_name));
 	    if (ret < 0) {
 		// Invalid path
 		db_free_full_path(gfp);
@@ -202,7 +201,7 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
 	for (g_it = gclear.begin(); g_it != gclear.end(); g_it++) {
 	    struct bv_scene_group *ng = *g_it;
 	    ngrps.erase(ng);
-	    bv_scene_obj_free(ng->g, free_scene_obj);
+	    bv_scene_obj_free(ng, free_scene_obj);
 	    BU_PUT(ng, struct bv_scene_group);
 	}
 
@@ -225,14 +224,14 @@ new_scene_grps(std::set<struct bv_scene_group *> *all, struct db_i *dbip, struct
 	    struct db_full_path *gfp = NULL;
 	    BU_GET(gfp, struct db_full_path);
 	    db_full_path_init(gfp);
-	    int ret = db_string_to_path(gfp, dbip, bu_vls_cstr(&ng->g->s_name));
+	    int ret = db_string_to_path(gfp, dbip, bu_vls_cstr(&ng->s_name));
 	    if (ret < 0) {
 		// Invalid path
 		db_free_full_path(gfp);
 		continue;
 	    }
 	    if (db_full_path_match_top(gfp, &ud->fp)) {
-		bu_ptbl_ins(&ng->g->children, (long *)sobj);
+		bu_ptbl_ins(&ng->children, (long *)sobj);
 		break;
 	    }
 	}
@@ -249,7 +248,7 @@ static int
 alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
     struct bv_scene_group *ga = *(struct bv_scene_group **)a;
     struct bv_scene_group *gb = *(struct bv_scene_group **)b;
-    return alphanum_impl(bu_vls_cstr(&ga->g->s_name), bu_vls_cstr(&gb->g->s_name), NULL);
+    return alphanum_impl(bu_vls_cstr(&ga->s_name), bu_vls_cstr(&gb->s_name), NULL);
 }
 
 /*
@@ -357,8 +356,8 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	for (c_it = all.begin(); c_it != all.end(); c_it++) {
 	    struct bv_scene_group *cg = *c_it;
-	    if (bu_vls_strlen(&upath) > bu_vls_strlen(&cg->g->s_name)) {
-		if (bu_vls_strncmp(&upath, &cg->g->s_name, bu_vls_strlen(&cg->g->s_name)) == 0) {
+	    if (bu_vls_strlen(&upath) > bu_vls_strlen(&cg->s_name)) {
+		if (bu_vls_strncmp(&upath, &cg->s_name, bu_vls_strlen(&cg->s_name)) == 0) {
 		    // The hard case - upath matches all of sname.  We're
 		    // erasing a part of the sname group, so we need to split
 		    // it up into new groups.
@@ -370,7 +369,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 		    break;
 		}
 	    } else {
-		if (bu_vls_strncmp(&upath, &cg->g->s_name, bu_vls_strlen(&upath)) == 0) {
+		if (bu_vls_strncmp(&upath, &cg->s_name, bu_vls_strlen(&upath)) == 0) {
 		    // Easy case.  Drawn path (s_name) is equal to or below
 		    // hierarchy of specified upath, so it will be subsumed in
 		    // upath - just clear it.  This may happen to multiple
@@ -392,14 +391,13 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     for (c_it = clear.begin(); c_it != clear.end(); c_it++) {
 	struct bv_scene_group *cg = *c_it;
 	all.erase(cg);
-	bv_scene_obj_free(cg->g, free_scene_obj);
-	BU_PUT(cg, struct bv_scene_group);
+	bv_scene_obj_free(cg, free_scene_obj);
     }
 
     // Now, the splits.
 
     // First step - remove the solid children corresponding to the removed
-    // paths so cg->g->children contains only the set of solids to be drawn (it
+    // paths so cg->children contains only the set of solids to be drawn (it
     // will at that point be an invalid scene group but will be a suitable
     // input for the next stage.)
     for (g_it = split.begin(); g_it != split.end(); g_it++) {
@@ -414,9 +412,9 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    // Select the scene objects that contain upath in their hierarchy (i.e. s_name
 	    // is a full subset of upath).  These objects are removed.
-	    if (bu_vls_strncmp(&upath, &cg->g->s_name, bu_vls_strlen(&cg->g->s_name)) == 0) {
-		for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+	    if (bu_vls_strncmp(&upath, &cg->s_name, bu_vls_strlen(&cg->s_name)) == 0) {
+		for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
 		    // For the solids in cg, any that are below upath in the hierarchy
 		    // (that is, upath is a full subset of s_name) are being erased.
 		    if (bu_vls_strncmp(&upath, &s->s_name, bu_vls_strlen(&upath)) == 0) {
@@ -428,7 +426,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
 	    struct bv_scene_obj *s = *s_it;
-	    bu_ptbl_rm(&cg->g->children, (long *)s);
+	    bu_ptbl_rm(&cg->children, (long *)s);
 	    bv_scene_obj_free(s, free_scene_obj);
 	}
     }

@@ -58,7 +58,7 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->g->s_name));
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->s_name));
     }
 
     return BRLCAD_OK;

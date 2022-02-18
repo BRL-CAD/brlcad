@@ -169,12 +169,11 @@ draw_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *data)
     return ret;
 }
 
-
 static int
 alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
     struct bv_scene_group *ga = *(struct bv_scene_group **)a;
     struct bv_scene_group *gb = *(struct bv_scene_group **)b;
-    return alphanum_impl(bu_vls_cstr(&ga->g->s_name), bu_vls_cstr(&gb->g->s_name), NULL);
+    return alphanum_impl(bu_vls_cstr(&ga->s_name), bu_vls_cstr(&gb->s_name), NULL);
 }
 
 static int
@@ -282,7 +281,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    // Not already clearing, need to check
 	    struct db_full_path gfp;
 	    db_full_path_init(&gfp);
-	    int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->g->s_name));
+	    int ret = db_string_to_path(&gfp, dbip, bu_vls_cstr(&cg->s_name));
 	    if (ret < 0) {
 		// If we can't get a db_fullpath, it's invalid
 		clear.insert(cg);
@@ -315,8 +314,8 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    // rather than creating a new one.
 	    std::set<struct bv_scene_obj *> sclear;
 	    std::set<struct bv_scene_obj *>::iterator s_it;
-	    for (size_t i = 0; i < BU_PTBL_LEN(&g->g->children); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->g->children, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&g->children); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, i);
 		struct db_full_path gfp;
 		db_full_path_init(&gfp);
 		db_string_to_path(&gfp, dbip, bu_vls_cstr(&s->s_name));
@@ -326,17 +325,16 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    }
 	    for (s_it = sclear.begin(); s_it != sclear.end(); s_it++) {
 		struct bv_scene_obj *s = *s_it;
-		bu_ptbl_rm(&g->g->children, (long *)s);
+		bu_ptbl_rm(&g->children, (long *)s);
 		bv_scene_obj_free(s, free_scene_obj);
 	    }
 	} else {
 	    // Create new group
-	    BU_GET(g, struct bv_scene_group);
-	    GET_BV_SCENE_OBJ(g->g, &free_scene_obj->l);
-	    bv_scene_obj_init(g->g, free_scene_obj);
-	    db_path_to_vls(&g->g->s_name, fp);
-	    db_path_to_vls(&g->g->s_uuid, fp);
-	    bv_obj_settings_sync(&g->g->s_os, vs);
+	    GET_BV_SCENE_OBJ(g, &free_scene_obj->l);
+	    bv_scene_obj_init(g, free_scene_obj);
+	    db_path_to_vls(&g->s_name, fp);
+	    db_path_to_vls(&g->s_uuid, fp);
+	    bv_obj_settings_sync(&g->s_os, vs);
 	    bu_ptbl_ins(sg, (long *)g);
 
 	    // If we're a blank slate, we're adaptive, and autoview isn't off
@@ -358,8 +356,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    for (g_it = clear.begin(); g_it != clear.end(); g_it++) {
 		struct bv_scene_group *cg = *g_it;
 		bu_ptbl_rm(sg, (long *)cg);
-		bv_scene_obj_free(cg->g, free_scene_obj);
-		BU_PUT(cg, struct bv_scene_group);
+		bv_scene_obj_free(cg, free_scene_obj);
 	    }
 	}
     }
@@ -446,9 +443,9 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	// rather than iterating to get the solids
 	if (vs->s_dmode == 3) {
 	    if (vs->color_override) {
-		VMOVE(g->g->s_color, vs->color);
+		VMOVE(g->s_color, vs->color);
 	    } else {
-		bu_color_to_rgb_chars(&c, g->g->s_color);
+		bu_color_to_rgb_chars(&c, g->s_color);
 	    }
 	    struct draw_update_data_t *ud;
 	    BU_GET(ud, struct draw_update_data_t);
@@ -458,16 +455,16 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    ud->tol = dd.tol;
 	    ud->ttol = dd.ttol;
 	    ud->res = dd.res;
-	    g->g->s_i_data = (void *)ud;
-	    g->g->s_update_callback = &ged_update_db_path;
-	    g->g->s_free_callback = &ged_free_draw_data;
-	    g->g->s_v = dd.v;
-	    g->g->s_v->vlfree = &RTG.rtg_vlfree;
+	    g->s_i_data = (void *)ud;
+	    g->s_update_callback = &ged_update_db_path;
+	    g->s_free_callback = &ged_free_draw_data;
+	    g->s_v = dd.v;
+	    g->s_v->vlfree = &RTG.rtg_vlfree;
 
 	    if (bounds_data.s_size && bounds_data.s_size->find(DB_FULL_PATH_CUR_DIR(fp)) != bounds_data.s_size->end()) {
-		g->g->s_size = (*bounds_data.s_size)[DB_FULL_PATH_CUR_DIR(fp)];
+		g->s_size = (*bounds_data.s_size)[DB_FULL_PATH_CUR_DIR(fp)];
 	    }
-	    ged_scene_obj_geom(g->g);
+	    ged_scene_obj_geom(g);
 
 	    // Done with path
 	    db_free_full_path(fp);
@@ -706,8 +703,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 	    if (sg && !v->gv_s->adaptive_plot) {
 		for (size_t j = 0; j < BU_PTBL_LEN(sg); j++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, j);
-		    bv_scene_obj_free(cg->g, gedp->free_scene_obj);
-		    BU_PUT(cg, struct bv_scene_group);
+		    bv_scene_obj_free(cg, gedp->free_scene_obj);
 		}
 		bu_ptbl_reset(sg);
 	    }
@@ -818,7 +814,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		av[1] = "-R";
 		av[2] = "--view";
 		av[3] = bu_vls_cstr(&v->gv_name);
-		av[4] = bu_vls_cstr(&cg->g->s_name);
+		av[4] = bu_vls_cstr(&cg->s_name);
 		av[5] = NULL;
 		ged_exec(gedp, ac, (const char **)av);
 	    } else {
@@ -826,7 +822,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		const char *av[4];
 		av[0] = "draw";
 		av[1] = "-R";
-		av[2] = bu_vls_cstr(&cg->g->s_name);
+		av[2] = bu_vls_cstr(&cg->s_name);
 		av[3] = NULL;
 		ged_exec(gedp, ac, (const char **)av);
 	    }
@@ -843,7 +839,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		av[1] = "-R";
 		av[2] = "--view";
 		av[3] = bu_vls_cstr(&v->gv_name);
-		av[4] = bu_vls_cstr(&cg->g->s_name);
+		av[4] = bu_vls_cstr(&cg->s_name);
 		av[5] = NULL;
 		ged_exec(gedp, ac, (const char **)av);
 	    } else {
@@ -851,7 +847,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		const char *av[4];
 		av[0] = "draw";
 		av[1] = "-R";
-		av[2] = bu_vls_cstr(&cg->g->s_name);
+		av[2] = bu_vls_cstr(&cg->s_name);
 		av[3] = NULL;
 		ged_exec(gedp, ac, (const char **)av);
 	    }
@@ -872,7 +868,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		av[1] = "-R";
 		av[2] = "--view";
 		av[3] = bu_vls_cstr(&v->gv_name);
-		av[4] = bu_vls_cstr(&cg->g->s_name);
+		av[4] = bu_vls_cstr(&cg->s_name);
 		av[5] = NULL;
 		ged_exec(gedp, ac, (const char **)av);
 	    }
@@ -884,7 +880,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		const char *av[4];
 		av[0] = "draw";
 		av[1] = "-R";
-		av[2] = bu_vls_cstr(&cg->g->s_name);
+		av[2] = bu_vls_cstr(&cg->s_name);
 		av[3] = NULL;
 		ged_exec(gedp, ac, (const char **)av);
 	    }

@@ -225,8 +225,8 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 	// regenerated.
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	int invalid = 0;
-	for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+	for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
 	    struct draw_update_data_t *ud = (struct draw_update_data_t *)s->s_i_data;
 
 	    // First, check the root - if it is no longer present, we're
@@ -254,7 +254,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
     for (r_it = erase.begin(); r_it != erase.end(); r_it++) {
 	struct bv_scene_group *cg = *r_it;
 	struct bu_vls opath = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->g->s_name));
+	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
 	const char *av[3];
 	av[0] = "erase";
 	av[1] = bu_vls_cstr(&opath);
@@ -265,7 +265,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
     for (r_it = regen.begin(); r_it != regen.end(); r_it++) {
 	struct bv_scene_group *cg = *r_it;
 	struct bu_vls opath = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->g->s_name));
+	bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
 	const char *av[4];
 	av[0] = "draw";
 	av[1] = "-R";

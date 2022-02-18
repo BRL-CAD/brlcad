@@ -148,7 +148,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    struct bu_vls opath = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->g->s_name));
+	    bu_vls_sprintf(&opath, "%s", bu_vls_cstr(&cg->s_name));
 	    const char *av[6];
 	    av[0] = "draw";
 	    av[1] = "-R";
@@ -169,7 +169,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		bv_scene_obj_free(cg->g, gedp->free_scene_obj);
+		bv_scene_obj_free(cg, gedp->free_scene_obj);
 		BU_PUT(cg, struct bv_scene_group);
 	    }
 	    bu_ptbl_reset(sg);
@@ -500,14 +500,14 @@ struct bv_scene_obj *wobj = NULL;
 	    if (!wobj) {
 		for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
-		    if (bu_list_len(&cg->g->s_vlist)) {
-			if (!bu_vls_strcmp(&cg->g->s_name, &calc_target)) {
-			    wobj = cg->g;
+		    if (bu_list_len(&cg->s_vlist)) {
+			if (!bu_vls_strcmp(&cg->s_name, &calc_target)) {
+			    wobj = cg;
 			    break;
 			}
 		    } else {
-			for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+			for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+			    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
 			    if (!bu_vls_strcmp(&s->s_name, &calc_target)) {
 				wobj = s;
 				break;
@@ -547,8 +547,8 @@ struct bv_scene_obj *wobj = NULL;
 	    }
 	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
-		if (bu_list_len(&cg->g->s_vlist)) {
-		    fastf_t calc_val = bv_vZ_calc(cg->g, gedp->ged_gvp, calc_mode);
+		if (bu_list_len(&cg->s_vlist)) {
+		    fastf_t calc_val = bv_vZ_calc(cg, gedp->ged_gvp, calc_mode);
 		    if (calc_mode) {
 			if (calc_val > vZ) {
 			    vZ = calc_mode;
@@ -561,8 +561,8 @@ struct bv_scene_obj *wobj = NULL;
 			}
 		    }
 		} else {
-		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->g->children); j++) {
-			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->g->children, j);
+		    for (size_t j = 0; j < BU_PTBL_LEN(&cg->children); j++) {
+			struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cg->children, j);
 			fastf_t calc_val = bv_vZ_calc(s, gedp->ged_gvp, calc_mode);
 			if (calc_mode) {
 			    if (calc_val > vZ) {
