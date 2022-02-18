@@ -330,7 +330,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     // See if we have any high level options set
     struct bu_opt_desc d[4];
     BU_OPT(d[0], "h", "help",        "",  NULL,  &help,      "Print help");
-    BU_OPT(d[1], "G", "gobjs",       "",  NULL,  &list_db,   "List geometry-object-based view scene objects");
+    BU_OPT(d[1], "G", "geom_only",       "",  NULL,  &list_db,  "List view scene objects representing .g database objs");
     BU_OPT(d[2],  "", "view_only",   "",  NULL,  &list_view, "List view-only scene objects (default)");
     BU_OPT_NULL(d[3]);
 

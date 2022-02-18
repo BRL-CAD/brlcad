@@ -1,4 +1,4 @@
-/*                           G E D I T . C
+/*                           G O B J S . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2022 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/view/gedit.c
+/** @file libged/view/gobjs.c
  *
  * Create and manage transient view objects that are used to
  * interactively edit geometry parameters for database solids
@@ -53,12 +53,12 @@
     BU_LIST_INIT( &((p)->s_vlist) ); }
 
 int
-_gedit_cmd_create(void *bs, int argc, const char **argv)
+_gobjs_cmd_create(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
     struct db_i *dbip = gedp->dbip;
-    const char *usage_string = "view gedit name create";
+    const char *usage_string = "view gobjs name create";
     const char *purpose_string = "create an editing view obj from a database solid/comb";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
@@ -156,11 +156,11 @@ _gedit_cmd_create(void *bs, int argc, const char **argv)
 }
 
 int
-_gedit_cmd_delete(void *bs, int argc, const char **argv)
+_gobjs_cmd_delete(void *bs, int argc, const char **argv)
 {
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
-    const char *usage_string = "view gedit name delete";
+    const char *usage_string = "view gobjs name delete";
     const char *purpose_string = "delete view object";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
@@ -182,21 +182,21 @@ _gedit_cmd_delete(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-const struct bu_cmdtab _gedit_cmds[] = {
-    { "create",     _gedit_cmd_create},
-    { "del",        _gedit_cmd_delete},
+const struct bu_cmdtab _gobjs_cmds[] = {
+    { "create",     _gobjs_cmd_create},
+    { "del",        _gobjs_cmd_delete},
     { (char *)NULL,      NULL}
 };
 
 int
-_view_cmd_gedit(void *bs, int argc, const char **argv)
+_view_cmd_gobjs(void *bs, int argc, const char **argv)
 {
     int help = 0;
     struct _ged_view_info *gd = (struct _ged_view_info *)bs;
     struct ged *gedp = gd->gedp;
 
-    const char *usage_string = "view [options] gedit [options] [args]";
-    const char *purpose_string = "interactively edit geometry solids/combs";
+    const char *usage_string = "view [options] gobjs [options] [args]";
+    const char *purpose_string = "view-only scene objects based on geometry solids/combs";
     if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string))
 	return BRLCAD_OK;
 
@@ -212,13 +212,13 @@ _view_cmd_gedit(void *bs, int argc, const char **argv)
 
     gd->gopts = d;
 
-    // We know we're the gedit command - start processing args
+    // We know we're the gobjs command - start processing args
     argc--; argv++;
 
     // High level options are only defined prior to the subcommand
     int cmd_pos = -1;
     for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_gedit_cmds, argv[i]) == BRLCAD_OK) {
+	if (bu_cmd_valid(_gobjs_cmds, argv[i]) == BRLCAD_OK) {
 	    cmd_pos = i;
 	    break;
 	}
@@ -227,19 +227,19 @@ _view_cmd_gedit(void *bs, int argc, const char **argv)
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
     int ac = bu_opt_parse(NULL, acnt, argv, d);
 
-    // If we're not wanting help and we have no subcommand, list current gedit objects
+    // If we're not wanting help and we have no subcommand, list current gobjs objects
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
 	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_shared_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_shared_objs, i);
-	    // TODO - strip gedit:: prefix
+	    // TODO - strip gobjs:: prefix
 	    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	}
 
 	if (v->gv_view_shared_objs != v->gv_view_objs) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
-		// TODO - strip gedit:: prefix
+		// TODO - strip gobjs:: prefix
 		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	    }
 	}
@@ -257,7 +257,7 @@ _view_cmd_gedit(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     // TODO - if independent use gv_view_objs, else use gv_view_shared_objs
-    // TODO - append gedit:: prefix
+    // TODO - append gobjs:: prefix
     for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
 	if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
@@ -271,8 +271,8 @@ _view_cmd_gedit(void *bs, int argc, const char **argv)
 	// or handle the error case
     }
 
-    return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_gedit_cmds,
-	    "view gedit", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
+    return _ged_subcmd_exec(gedp, (struct bu_opt_desc *)d, (const struct bu_cmdtab *)_gobjs_cmds,
+	    "view gobjs", "[options] subcommand [args]", gd, argc, argv, help, cmd_pos);
 }
 
 /*

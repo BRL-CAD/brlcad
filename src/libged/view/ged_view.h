@@ -46,7 +46,7 @@ extern int _view_cmd_axes(void *bs, int argc, const char **argv);
 extern int _view_cmd_labels(void *bs, int argc, const char **argv);
 extern int _view_cmd_polygons(void *bs, int argc, const char **argv);
 extern int _view_cmd_objs(void *bs, int argc, const char **argv);
-extern int _view_cmd_gedit(void *bs, int argc, const char **argv);
+extern int _view_cmd_gobjs(void *bs, int argc, const char **argv);
 
 extern int ged_aet_core(struct ged *gedp, int argc, const char **argv);
 extern int ged_center_core(struct ged *gedp, int argc, const char **argv);
