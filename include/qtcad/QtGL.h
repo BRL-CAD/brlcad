@@ -67,8 +67,6 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 	struct fb *ifp = NULL;
 	struct bu_ptbl *dm_set = NULL;
 	struct dm **dm_current = NULL;
-	double *base2local = NULL;
-	double *local2base = NULL;
 
 	void (*draw_custom)(struct bview *, double, double, void *) = NULL;
 	void *draw_udata = NULL;

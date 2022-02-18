@@ -79,8 +79,8 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	void set_dmp(struct dm *, int quad = 1);
 	void set_dm_current(struct dm **, int quad = 1);
 	void set_ifp(struct fb *, int quad = 1);
-	void set_base2local(double *);
-	void set_local2base(double *);
+	void set_base2local(double);
+	void set_local2base(double);
 
 	void aet(double a, double e, double t);
 

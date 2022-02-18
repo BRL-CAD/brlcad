@@ -46,8 +46,8 @@ app_close(void *p, int UNUSED(argc), const char **UNUSED(argv))
 	canvas->set_view(NULL);
 	//canvas->dm_set = NULL;
 	canvas->set_dm_current(NULL);
-	canvas->set_base2local(NULL);
-	canvas->set_local2base(NULL);
+	canvas->set_base2local(1);
+	canvas->set_local2base(1);
     }
     if (ap->w->c4) {
 	QtCADQuad *c4= ap->w->c4;
@@ -56,8 +56,8 @@ app_close(void *p, int UNUSED(argc), const char **UNUSED(argv))
 	    //c->dm_set = NULL;
 	    c->set_view(NULL);
 	    c->set_dm_current(NULL);
-	    c->set_base2local(NULL);
-	    c->set_local2base(NULL);
+	    c->set_base2local(1);
+	    c->set_local2base(1);
 	}
     }
     if (console)
@@ -291,6 +291,19 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
     struct ged *gedp = m->gedp;
 
+    /* Set the local unit conversions */
+    if (w->canvas && gedp->dbip) {
+	w->canvas->set_base2local(gedp->dbip->dbi_base2local);
+	w->canvas->set_local2base(gedp->dbip->dbi_local2base);
+    }
+    if (w->c4 && gedp->dbip) {
+	for (int i = 1; i < 5; i++) {
+	    QtCADView *c = w->c4->get(i);
+	    c->set_base2local(gedp->dbip->dbi_base2local);
+	    c->set_local2base(gedp->dbip->dbi_local2base);
+	}
+    }
+
     if (!tmp_av.size()) {
 
 	// If we're not in the middle of an incremental command,
@@ -298,16 +311,9 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// sure our unit conversions are right
 	if (w->canvas) {
 	    w->canvas->stash_hashes();
-	    w->canvas->set_base2local(&gedp->dbip->dbi_base2local);
-	    w->canvas->set_local2base(&gedp->dbip->dbi_local2base);
 	}
 	if (w->c4) {
 	    w->c4->stash_hashes();
-	    for (int i = 1; i < 5; i++) {
-		QtCADView *c = w->c4->get(i);
-		c->set_base2local(&gedp->dbip->dbi_base2local);
-		c->set_local2base(&gedp->dbip->dbi_local2base);
-	    }
 	}
 
 	// Ask the model to execute the command
@@ -328,16 +334,6 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     }
 
     if (!(ret & BRLCAD_MORE)) {
-
-	/* Set the local unit conversions */
-	if (w->canvas) {
-	    w->canvas->set_base2local(&gedp->dbip->dbi_base2local);
-	    w->canvas->set_local2base(&gedp->dbip->dbi_local2base);
-	}
-	if (w->c4 && w->c4->get(0)) {
-	    w->c4->get(0)->set_base2local(&gedp->dbip->dbi_base2local);
-	    w->c4->get(0)->set_local2base(&gedp->dbip->dbi_local2base);
-	}
 
 	// Handle any necessary redrawing.
 	if (qged_view_update(gedp, &m->changed_dp) > 0) {

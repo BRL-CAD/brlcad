@@ -155,10 +155,6 @@ void QtSW::paintEvent(QPaintEvent *e)
     matp_t mat = v->gv_model2view;
     dm_loadmatrix(dmp, mat, 0);
     dm_draw_begin(dmp);
-    if (base2local && local2base) {
-	v->gv_local2base = *local2base;
-	v->gv_base2local = *base2local;
-    }
     dm_draw_objs(v, v->gv_base2local, v->gv_local2base, draw_custom, draw_udata);
     dm_draw_end(dmp);
 

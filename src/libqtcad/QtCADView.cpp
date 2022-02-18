@@ -208,17 +208,11 @@ double
 QtCADView::base2local()
 {
 #ifdef BRLCAD_OPENGL
-    if (canvas_gl) {
-	if (canvas_gl->base2local)
-	    return *canvas_gl->base2local;
-	return 1.0;
-    }
+    if (canvas_gl && canvas_gl->v)
+	return canvas_gl->v->gv_base2local;
 #endif
-    if (canvas_sw) {
-	if (canvas_sw->base2local)
-	    return *canvas_sw->base2local;
-	return 1.0;
-    }
+    if (canvas_sw && canvas_sw->v)
+	return canvas_sw->v->gv_base2local;
 
     return 1.0;
 }
@@ -227,17 +221,11 @@ double
 QtCADView::local2base()
 {
 #ifdef BRLCAD_OPENGL
-    if (canvas_gl) {
-	if (canvas_gl->local2base)
-	    return *canvas_gl->local2base;
-	return 1.0;
-    }
+    if (canvas_gl && canvas_gl->v)
+	return canvas_gl->v->gv_local2base;
 #endif
-    if (canvas_sw) {
-	if (canvas_sw->local2base)
-	    return *canvas_sw->local2base;
-	return 1.0;
-    }
+    if (canvas_sw && canvas_sw->v)
+	return canvas_sw->v->gv_local2base;
 
     return 1.0;
 }
@@ -306,41 +294,25 @@ QtCADView::set_ifp(struct fb *nfbp, int UNUSED(quad))
 }
 
 void
-QtCADView::set_base2local(double *nb2l)
+QtCADView::set_base2local(double nb2l)
 {
 #ifdef BRLCAD_OPENGL
-    if (canvas_gl) {
-	canvas_gl->base2local= nb2l;
-	if (canvas_gl->v && canvas_gl->base2local) {
-	    canvas_gl->v->gv_base2local = *canvas_gl->base2local;
-	}
-    }
+    if (canvas_gl && canvas_gl->v)
+	canvas_gl->v->gv_base2local = nb2l;
 #endif
-    if (canvas_sw) {
-	canvas_sw->base2local= nb2l;
-	if (canvas_sw->v && canvas_sw->base2local) {
-	    canvas_sw->v->gv_base2local = *canvas_sw->base2local;
-	}
-    }
+    if (canvas_sw && canvas_sw->v)
+	canvas_gl->v->gv_base2local = nb2l;
 }
 
 void
-QtCADView::set_local2base(double *nl2b)
+QtCADView::set_local2base(double nl2b)
 {
 #ifdef BRLCAD_OPENGL
-    if (canvas_gl) {
-	canvas_gl->local2base = nl2b;
-    	if (canvas_gl->v && canvas_gl->local2base) {
-	    canvas_gl->v->gv_local2base = *canvas_gl->local2base;
-	}
-    }
+    if (canvas_gl && canvas_gl->v)
+	canvas_gl->v->gv_local2base = nl2b;
 #endif
-    if (canvas_sw) {
-	canvas_sw->local2base = nl2b;
-	if (canvas_sw->v && canvas_sw->local2base) {
-	    canvas_sw->v->gv_local2base = *canvas_sw->local2base;
-	}
-    }
+    if (canvas_sw && canvas_sw->v)
+	canvas_sw->v->gv_local2base = nl2b;
 }
 
 void
