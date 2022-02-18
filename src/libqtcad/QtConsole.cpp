@@ -100,6 +100,25 @@ public:
   {
 	  if (start > end)
 		  return false;
+	  QString nline;
+	  for (size_t i = start; i < end; i++) {
+		  nline.append(CommandHistory.at(i));
+		  if (i != end - 1)
+			  nline.append(" ");
+	  }
+	  while (CommandHistory.count() > (int)start) {
+		  CommandHistory.pop_back();
+	  }
+	  CommandHistory.push_back(nline);
+	  CommandHistory.push_back("");
+	  CommandPosition = CommandHistory.size() - 1;
+	  return true;
+  }
+
+  std::string historyAt(size_t ind) {
+	  const char *cmd = CommandHistory.at(ind).toLocal8Bit();
+	  std::string scmd(cmd);
+	  return scmd;
   }
 
   // Try to keep the scrollbar slider from getting too small to be usable
@@ -371,6 +390,24 @@ QtConsole::~QtConsole()
 QFont QtConsole::getFont()
 {
   return this->Implementation->getFont();
+}
+
+//-----------------------------------------------------------------------------
+bool QtConsole::consolidateHistory(size_t start, size_t end)
+{
+  return this->Implementation->consolidateHistory(start, end);
+}
+
+//-----------------------------------------------------------------------------
+size_t QtConsole::historyCount()
+{
+  return this->Implementation->CommandHistory.count();
+}
+
+//-----------------------------------------------------------------------------
+std::string QtConsole::historyAt(size_t ind)
+{
+  return this->Implementation->historyAt(ind);
 }
 
 //-----------------------------------------------------------------------------

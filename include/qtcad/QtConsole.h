@@ -81,6 +81,8 @@ public:
 
   // combine multiple history lines and replace them with the combination
   bool consolidateHistory(size_t start, size_t end);
+  size_t historyCount();
+  std::string historyAt(size_t ind);
 
   void listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d);
   std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *> listeners;

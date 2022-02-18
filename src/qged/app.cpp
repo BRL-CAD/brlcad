@@ -361,14 +361,23 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		char *tstr = bu_strdup(argv[i]);
 		tmp_av.push_back(tstr);
 	    }
+	    QtConsole *console = w->console;
+	    if (console)
+		history_mark_start = console->historyCount() - 2;
 	}
     } else {
 	// If we were in an incremental command, we're done now -
-	// clear tmp_av
-	for (size_t i = 0; i < tmp_av.size(); i++) {
-	    delete tmp_av[i];
+	if (tmp_av.size()) {
+	    // clear tmp_av
+	    for (size_t i = 0; i < tmp_av.size(); i++) {
+		delete tmp_av[i];
+	    }
+	    tmp_av.clear();
+	    // let the console know that we're done with MORE
+	    QtConsole *console = w->console;
+	    if (console)
+		history_mark_end = console->historyCount() - 1;
 	}
-	tmp_av.clear();
     }
 
     return ret;
@@ -435,6 +444,11 @@ CADApp::run_qcmd(const QString &command)
 	    console->prompt(bu_vls_cstr(m->gedp->ged_result_str));
 	} else {
 	    console->prompt("$ ");
+	    if (history_mark_start >= 0 && history_mark_end >= 0) {
+		console->consolidateHistory(history_mark_start, history_mark_end);
+		history_mark_start = -1;
+		history_mark_end = -1;
+	    }
 	}
     }
 
