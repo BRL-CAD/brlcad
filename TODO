@@ -135,6 +135,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* the mged tutorials apparently do not mention the tops command (even
+  once), but really should as it's the starting point for discovering
+  what is in databases that are opened or imported.
+
 * nburst appears to be missing logging output (bounding volume lines)
   and isn't outputting units (outputs NULL).  can run regress-burst
   and regress-nburst to compare (have to manually save files).  the
