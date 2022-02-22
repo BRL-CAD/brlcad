@@ -338,13 +338,8 @@ On Linux/BSD/other systems:
 REPORTING PROBLEMS
 ------------------
 
-Please report any bugs encountered to the project bug tracker at
-http://sourceforge.net/tracker/?group_id=105292&atid=640802
-
-Similarly, please post any request for feature enhancements or support
-to http://sourceforge.net/tracker/?group_id=105292&atid=640805 and
-http://sourceforge.net/tracker/?group_id=105292&atid=640803
-respectively.
+Please report any bugs, support requests, or feature requests to:
+  https://github.com/BRL-CAD/brlcad/issues
 
 
 CONFIGURATION OPTIONS
