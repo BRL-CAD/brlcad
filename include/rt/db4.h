@@ -370,7 +370,7 @@ struct annot_rec {
     char	ant_id;			/*DBID_ANNOT */
     char	ant_pad;
     char	ant_name[NAMESIZE];
-    unsigned char	ant_V[8*3];		/* orgin map */
+    unsigned char	ant_V[8*3];		/* origin map */
     unsigned char       ant_vert_count[4];      /* number of vertices in annotation */
     unsigned char       ant_seg_count[4];       /* number of segments in annotation */
     unsigned char       ant_count[4];           /* number of additional granules */

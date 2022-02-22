@@ -9,7 +9,7 @@ set(BIN_DIR "@BIN_DIR@")
 message(BIN_DIR:  ${BIN_DIR})
 
 # Using the above two pieces of information, construct the "root" path
-# below which the standard BRL-CAD file hiearchy (binary, library, data,
+# below which the standard BRL-CAD file hierarchy (binary, library, data,
 # doc, etc.) is built.
 string(REGEX REPLACE "${BIN_DIR}$" "" ROOT_DIR "${EXEC_DIR}")
 message(ROOT_DIR: ${ROOT_DIR})

@@ -331,7 +331,7 @@ files.
 System PATH:
 
 Normally, BRL-CAD's install directories are not in system PATH lists and
-consequently BRL-CAD's executables will not be invokable without specifying
+consequently BRL-CAD's executables will not be invocable without specifying
 their full path.  This is normally handled in Unix environments by adding
 the desired BRL-CAD installation's binary directory to the user's local path:
 

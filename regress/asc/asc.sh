@@ -150,7 +150,7 @@ $DU $G4 $G5 2>&1 > $LOGFILE
 #log "$GD -v -t 0.0001 -F \"! -attr regionid_colortable\" $G3 $G5"
 #$GD -v -t 0.0001 -F "! -attr regionid_colortable" $G3 $G5 2>&1 > $LOGFILE
 #STATUS=$?
-# binary dbupdate should't have significantly altered the file.
+# binary dbupdate shouldn't have significantly altered the file.
 #if [ $STATUS -gt 0 ] ; then
 #    log "-> dbupgrade cycle FAILED, see $LOGFILE"
 #    cat "$LOGFILE"
@@ -161,7 +161,7 @@ $DU $G4 $G5 2>&1 > $LOGFILE
 # all the processing should be identical
 #
 # (Well, unchanged sans a region color table, region_id=-1 on all.g and
-# numerical differences anyway... Accomidate data changes with gdiff
+# numerical differences anyway... Accommodate data changes with gdiff
 # filtering.)
 log "$GD -v -t 0.0001 -F \"! -name _GLOBAL ! -attr region_id=-1\" $G1 $G5"
 $GD -v -t 0.0001 -F "! -name _GLOBAL ! -attr region_id=-1" $G1 $G5 2>&1 > $LOGFILE

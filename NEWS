@@ -484,7 +484,7 @@ performance ray tracing pipeline.
 * added brlman -S option to specify man page section  - Cliff Yapp
 * modified rtg3 to avoid outputting excessive LOS - Nick Gerstner
 * extended burst and rtg3 to output 5 digit ID numbers - Nick Gerstner
-* improved draw command manual page documenation - Cliff Yapp
+* improved draw command manual page documentation - Cliff Yapp
 * added lc -m option to report multi-material/los regions - Cliff Yapp
 * added new 'icv' image conversion tool w/ pix, bw, dpix, png, ppm
 	- Mohit Daga, Cliff Yapp, Sean Morrison, Erik Greenwald

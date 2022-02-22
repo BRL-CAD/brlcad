@@ -20,7 +20,7 @@ get_filename_component(BDIR "${USER_EXEC}" DIRECTORY)
 string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
 set(GFILE "${RDIR}/${DATA_DIR}/db/moss.g")
 
-# Runn the command
+# Run the command
 file(APPEND "${LOGFILE}" "Running ${USER_EXEC} ${GFILE}:\n")
 execute_process(
   COMMAND "${USER_EXEC}" "${GFILE}"

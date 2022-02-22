@@ -393,7 +393,7 @@ main(int ac, char *av[])
 	bu_log("well-known datasets into 512x512 images where performance metrics are\n");
 	bu_log("documented and fairly well understood.  The local machine's\n");
 	bu_log("performance is compared to the base system (called VGR) and a numeric\n");
-	bu_log("\"VGR\" mulitplier of performance is computed.  This number is a\n");
+	bu_log("\"VGR\" multiplier of performance is computed.  This number is a\n");
 	bu_log("simplified metric from which one may qualitatively compare cpu and\n");
 	bu_log("cache performance, versions of BRL-CAD, and different compiler\n");
 	bu_log("characteristics.\n");
@@ -433,7 +433,7 @@ main(int ac, char *av[])
 	bu_log("effectively performing a multiplier amount of work over the initial\n");
 	bu_log("frame.\n");
 	bu_log("\n");
-	bu_log("Plese send your BRL-CAD Benchmark results to the developers along with\n");
+	bu_log("Please send your BRL-CAD Benchmark results to the developers along with\n");
 	bu_log("detailed system information to <devs@brlcad.org>.  Include at least:\n");
 	bu_log("\n");
 	bu_log("  0) Compiler name and version (e.g. gcc --version)\n");

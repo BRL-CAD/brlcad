@@ -141,7 +141,7 @@ main(int argc, const char **argv)
 	gargv[gargc-2] = NULL;
     }
 
-    // To avoid problems with bu_argv_free, make very sure the last two entires
+    // To avoid problems with bu_argv_free, make very sure the last two entries
     // are not pointing to something else.
     gargv[gargc-2] = NULL;
     gargv[gargc-1] = NULL;

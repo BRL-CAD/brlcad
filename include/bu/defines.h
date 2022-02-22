@@ -180,7 +180,7 @@
 
 /**
  * shorthand declaration of a function that doesn't accept NULL
- * pointer arugments.  if a null pointer is detected during
+ * pointer arguments.  if a null pointer is detected during
  * compilation, a warning/error can be emitted.
  */
 #ifdef HAVE_NONNULL_ATTRIBUTE

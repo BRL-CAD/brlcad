@@ -114,7 +114,7 @@ list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
 # a potential source of subtle problems.  Bail with an explanation if
 # it is found to be present.
 if (EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
-  message(FATAL_ERROR "\nBRL-CAD does not use a .gitattributes file in its repository.  This is intended to prevent subtle errors from creeping in due to inadvertant pattern matches.  See ${BRLCAD_SOURCE_DIR}/doc/git/mime_types.txt for an in-depth discussion of the recommended alternatives to use for the problems .gitattributes is intended to address.\n")
+  message(FATAL_ERROR "\nBRL-CAD does not use a .gitattributes file in its repository.  This is intended to prevent subtle errors from creeping in due to inadvertent pattern matches.  See ${BRLCAD_SOURCE_DIR}/doc/git/mime_types.txt for an in-depth discussion of the recommended alternatives to use for the problems .gitattributes is intended to address.\n")
 endif (EXISTS "${BRLCAD_SOURCE_DIR}/.gitattributes")
 
 
@@ -128,7 +128,7 @@ else(NOT EXISTS ${BRLCAD_CNT_FILE})
   set(BRLCAD_PRINT_MSGS 0)
 endif(NOT EXISTS ${BRLCAD_CNT_FILE})
 
-# Now that we know whether or not we're supposed to, print the CMake verison
+# Now that we know whether or not we're supposed to, print the CMake version
 if(BRLCAD_PRINT_MSGS)
   message(STATUS "CMake version: ${CMAKE_VERSION}")
 endif(BRLCAD_PRINT_MSGS)
@@ -430,7 +430,7 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_DIR \"${DATA_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DOC_DIR \"${DOC_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
 
-# Define the ammendment count if we have one
+# Define the amendment count if we have one
 if(DEFINED BRLCAD_VERSION_AMEND)
   CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_AMEND ${BRLCAD_VERSION_AMEND}\n")
 endif(DEFINED BRLCAD_VERSION_AMEND)
@@ -2175,7 +2175,7 @@ foreach(ad ${ALL_DIRS})
   endif (DIR_TARGETS)
 endforeach(ad ${ALL_DIRS})
 
-# Now, set up the target dependencies for tiemstamp and buildtimedelta.  These
+# Now, set up the target dependencies for timestamp and buildtimedelta.  These
 # dependencies will produce a build-tool-independent ordering that gives us the
 # timing behavior we want.
 foreach(ctarget ${ALL_TARGETS})

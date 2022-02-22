@@ -105,7 +105,7 @@ NMG_EXPORT extern void nmg_je(struct edgeuse *eudst,
  * If the original edge had edge geometry, that is *not* duplicated here,
  * because it is not easy (or appropriate) for nmg_eusplit() to know whether
  * the new vertex lies on the previous edge geometry or not.  Hence having the
- * nmg_ebreak() interface, which preserves the ege geometry across a split, and
+ * nmg_ebreak() interface, which preserves the edge geometry across a split, and
  * nmg_esplit() which does not.
  */
 NMG_EXPORT extern void nmg_unglueedge(struct edgeuse *eu);

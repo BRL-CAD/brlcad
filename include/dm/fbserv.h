@@ -67,8 +67,8 @@ struct fbserv_listener {
 
 struct fbserv_client {
     int fbsc_fd;                        /**< @brief socket to send data down */
-    void *fbsc_chan;                    /**< @brief platform/tookit specific channel */
-    void *fbsc_handler;                 /**< @brief platform/tookit specific handler */
+    void *fbsc_chan;                    /**< @brief platform/toolkit specific channel */
+    void *fbsc_handler;                 /**< @brief platform/toolkit specific handler */
     struct pkg_conn *fbsc_pkg;
     struct fbserv_obj *fbsc_fbsp;       /**< @brief points to its fbserv object */
 };
@@ -82,10 +82,10 @@ struct fbserv_obj {
 
     int (*fbs_is_listening)(struct fbserv_obj *);          /**< @brief return 1 if listening, else 0 */
     int (*fbs_listen_on_port)(struct fbserv_obj *, int);  /**< @brief return 1 on success, 0 on failure */
-    void (*fbs_open_server_handler)(struct fbserv_obj *);   /**< @brief platform/tookit method to open listener handler */
-    void (*fbs_close_server_handler)(struct fbserv_obj *);   /**< @brief platform/tookit method to close handler listener */
-    void (*fbs_open_client_handler)(struct fbserv_obj *, int, void *);   /**< @brief platform/tookit specific client handler setup (called by fbs_new_client) */
-    void (*fbs_close_client_handler)(struct fbserv_obj *, int);   /**< @brief platform/tookit method to close handler for client at index client_id */
+    void (*fbs_open_server_handler)(struct fbserv_obj *);   /**< @brief platform/toolkit method to open listener handler */
+    void (*fbs_close_server_handler)(struct fbserv_obj *);   /**< @brief platform/toolkit method to close handler listener */
+    void (*fbs_open_client_handler)(struct fbserv_obj *, int, void *);   /**< @brief platform/toolkit specific client handler setup (called by fbs_new_client) */
+    void (*fbs_close_client_handler)(struct fbserv_obj *, int);   /**< @brief platform/toolkit method to close handler for client at index client_id */
 
     void (*fbs_callback)(void *);                  /**< @brief callback function */
     void *fbs_clientData;
