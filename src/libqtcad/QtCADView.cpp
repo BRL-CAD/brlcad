@@ -41,38 +41,22 @@ QtCADView::QtCADView(QWidget *parent, int type, struct fb *fbp)
     l->setSpacing(0);
     l->setContentsMargins(0, 0, 0, 0);
 
-    switch (type) {
 #ifdef BRLCAD_OPENGL
-	case QtCADView_GL:
-	    canvas_gl = new QtGL(this, fbp);
-	    canvas_gl->setMinimumSize(50,50);
-	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	    l->addWidget(canvas_gl);
-	    QObject::connect(canvas_gl, &QtGL::changed, this, &QtCADView::do_view_changed);
-	    break;
+    if (type == QtCADView_GL) {
+	canvas_gl = new QtGL(this, fbp);
+	canvas_gl->setMinimumSize(50, 50);
+	canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	l->addWidget(canvas_gl);
+	QObject::connect(canvas_gl, &QtGL::changed, this, &QtCADView::do_view_changed);
+    }
 #endif
-	case QtCADView_SW:
-	    canvas_sw = new QtSW(this, fbp);
-	    canvas_sw->setMinimumSize(50,50);
-	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	    l->addWidget(canvas_sw);
-	    QObject::connect(canvas_sw, &QtSW::changed, this, &QtCADView::do_view_changed);
-	    break;
-	default:
-#ifdef BRLCAD_OPENGL
-	    canvas_gl = new QtGL(this, fbp);
-	    canvas_gl->setMinimumSize(50,50);
-	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	    l->addWidget(canvas_gl);
-	    QObject::connect(canvas_gl, &QtGL::changed, this, &QtCADView::do_view_changed);
-#else
-	    canvas_sw = new QtSW(this, fbp);
-	    canvas_sw->setMinimumSize(50,50);
-	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	    l->addWidget(canvas_sw);
-	    QObject::connect(canvas_sw, &QtSW::changed, this, &QtCADView::do_view_changed);
-#endif
-	    return;
+
+    if (!canvas_gl) {
+	canvas_sw = new QtSW(this, fbp);
+	canvas_sw->setMinimumSize(50, 50);
+	canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	l->addWidget(canvas_sw);
+	QObject::connect(canvas_sw, &QtSW::changed, this, &QtCADView::do_view_changed);
     }
 }
 
@@ -103,9 +87,6 @@ QtCADView::isValid()
 void
 QtCADView::fallback()
 {
-    if (canvas_sw)
-	return;
-
 #ifdef BRLCAD_OPENGL
     if (canvas_gl && !canvas_gl->isValid()) {
 	bu_log("System OpenGL Canvas didn't work, falling back on Software Rasterizer\n");
@@ -117,6 +98,7 @@ QtCADView::fallback()
 	l->addWidget(canvas_sw);
     }
 #endif
+	return;
 }
 
 

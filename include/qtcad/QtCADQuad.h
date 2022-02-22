@@ -42,7 +42,7 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
     Q_OBJECT
 
     public:
-	explicit QtCADQuad(QWidget *parent = nullptr, int type = QtCADView_AUTO);
+	explicit QtCADQuad(QWidget *parent, struct ged *gedpRef, int type);
 	~QtCADQuad();
 
 	void stash_hashes(); // Store current dmp and v hash values
@@ -58,12 +58,9 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	void select(int quadrant_num);
 	void select(const char *id); // valid inputs: ur, ul, ll and lr
 
-	QtCADView *ur = NULL; // Quadrant 1
-	QtCADView *ul = NULL; // Quadrant 2
-	QtCADView *ll = NULL; // Quadrant 3
-	QtCADView *lr = NULL; // Quadrant 4
-
-	QtCADView *c = NULL;
+        void changeToSingleFrame();
+        void changeToQuadFrame();
+        void changeToResizeableQuadFrame();
 
     signals:
 	void changed();
@@ -75,6 +72,24 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 
     private:
         bool eventFilter(QObject*, QEvent*);
+        QtCADView *createView(int index);
+        QGridLayout *createLayout();
+
+        int graphicsType = QtCADView_SW;
+        // Holds up to 4 views in single view only the first view is constructed
+        // The other views are constructed if quad view mode is selected by the user
+	QtCADView *views[4] = {nullptr, nullptr, nullptr, nullptr};
+        QtCADView *currentView;
+        // We need to hang on to this because we don't create the other quad views until the user switches mode
+        struct ged *gedp;
+
+        // Hang on to thiese pointers so when we need to clean up memory we have them
+        QGridLayout *currentLayout = nullptr;
+        QSpacerItem *spacerTop = nullptr;
+        QSpacerItem *spacerBottom = nullptr;
+        QSpacerItem *spacerLeft = nullptr;
+        QSpacerItem *spacerRight = nullptr;
+        QSpacerItem *spacerCenter = nullptr;
 };
 
 #endif /* QTCADQUAD_H */

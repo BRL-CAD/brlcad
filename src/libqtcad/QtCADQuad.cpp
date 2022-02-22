@@ -43,76 +43,179 @@
 #include <QGridLayout>
 
 #include "bu/str.h"
+#include "ged/defines.h"
+#include "ged/commands.h"
 #include "qtcad/QtCADQuad.h"
 
-QtCADQuad::QtCADQuad(QWidget *parent, int type)
-    : QWidget(parent)
+static const int UPPER_RIGHT = 0;
+static const int UPPER_LEFT = 1;
+static const int LOWER_LEFT = 2;
+static const int LOWER_RIGHT = 3;
+
+static const char *VIEW_NAMES[] = {"Q1", "Q2", "Q3", "Q4"};
+
+/**
+ * @brief Construct a new Qt C A D Quad:: Qt C A D Quad object
+ *
+ * @param parent
+ * @param gedpRef
+ * @param type
+ */
+QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(parent)
 {
-    // Create the four view widgets
-    ur = new QtCADView(this, type);
-    ul = new QtCADView(this, type);
-    ll = new QtCADView(this, type);
-    lr = new QtCADView(this, type);
+    gedp = gedpRef;
+    graphicsType = type;
 
-    // Set quadrant appropriate names
-    bu_vls_sprintf(&ur->view()->gv_name, "Q1");
-    bu_vls_sprintf(&ul->view()->gv_name, "Q2");
-    bu_vls_sprintf(&ll->view()->gv_name, "Q3");
-    bu_vls_sprintf(&lr->view()->gv_name, "Q4");
-
-    ur->set_current(0);
-    ul->set_current(0);
-    ll->set_current(0);
-    lr->set_current(0);
-
-    // We'll need to do an event filter so we know which widget
-    // is current
-    ur->installEventFilter(this);
-    ul->installEventFilter(this);
-    ll->installEventFilter(this);
-    lr->installEventFilter(this);
+    views[UPPER_RIGHT] = createView(UPPER_RIGHT);
+    bu_ptbl_ins_unique(&gedp->ged_views, (long int *)views[UPPER_RIGHT]->view());
+    gedp->ged_gvp = views[UPPER_RIGHT]->view();
 
     // Define the spacers
-    QSpacerItem *s_top = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
-    QSpacerItem *s_bottom = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
-    QSpacerItem *s_left = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
-    QSpacerItem *s_right = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
-    QSpacerItem *s_center = new QSpacerItem(3, 3, QSizePolicy::Fixed, QSizePolicy::Fixed);
+    spacerTop = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
+    spacerBottom = new QSpacerItem(3, 0, QSizePolicy::Fixed, QSizePolicy::Expanding);
+    spacerLeft = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
+    spacerRight = new QSpacerItem(0, 3, QSizePolicy::Expanding, QSizePolicy::Fixed);
+    spacerCenter = new QSpacerItem(3, 3, QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-    // Default to selecting quadrant 1
-    c = ur;
-    ur->set_current(1);
+    views[UPPER_RIGHT]->set_current(1);
+    currentView = views[UPPER_RIGHT];
 
-    // Lay out the widgets and spacers in a Quad View arrangement
-    QGridLayout *gl = new QGridLayout(this);
-    gl->setSpacing(0);
-    gl->setContentsMargins(0, 0, 0, 0);
-    gl->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-    this->setLayout(gl);
-    gl->addWidget(ul,     0, 0);
-    gl->addItem(s_top,    0, 1);
-    gl->addWidget(ur,     0, 2);
-    gl->addItem(s_left,   1, 0);
-    gl->addItem(s_center, 1, 1);
-    gl->addItem(s_right,  1, 2);
-    gl->addWidget(ll,     2, 0);
-    gl->addItem(s_bottom, 2, 1);
-    gl->addWidget(lr,     2, 2);
-
-    // Hook up the wiring to detect view changes
-    QObject::connect(ur, &QtCADView::changed, this, &QtCADQuad::do_view_changed);
-    QObject::connect(ul, &QtCADView::changed, this, &QtCADQuad::do_view_changed);
-    QObject::connect(ll, &QtCADView::changed, this, &QtCADQuad::do_view_changed);
-    QObject::connect(lr, &QtCADView::changed, this, &QtCADQuad::do_view_changed);
-
+    QObject::connect(views[UPPER_RIGHT], &QtCADView::changed, this, &QtCADQuad::do_view_changed);
 }
 
 QtCADQuad::~QtCADQuad()
 {
-    delete ur;
-    delete ul;
-    delete ll;
-    delete lr;
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr) {
+	    delete views[i];
+	    views[i] = nullptr;
+	}
+    }
+
+    delete spacerTop;
+    delete spacerBottom;
+    delete spacerLeft;
+    delete spacerRight;
+    delete spacerCenter;
+}
+
+/**
+ * @brief Creates a view for the viewport. Convenience method of common things that need to be done to the view.
+ *
+ * @param index of the view names to use from the constant list of names
+ * @return QtCADView*
+ */
+QtCADView *
+QtCADQuad::createView(int index)
+{
+    QtCADView *view = new QtCADView(this, graphicsType);
+    bu_vls_sprintf(&view->view()->gv_name, "%s", VIEW_NAMES[index]);
+    view->set_current(0);
+    view->installEventFilter(this);
+
+    view->view()->gv_db_grps = &gedp->ged_db_grps;
+    view->view()->gv_view_shared_objs = &gedp->ged_view_shared_objs;
+    view->view()->independent = 0;
+
+    return view;
+}
+
+/**
+ * @brief Convenience method to create the layout and set common parameters.
+ *
+ * @return QGridLayout*
+ */
+QGridLayout *
+QtCADQuad::createLayout()
+{
+    QGridLayout *layout = new QGridLayout(this);
+    layout->setSpacing(0);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+
+    this->setLayout(layout);
+
+    if (currentLayout != nullptr) {
+	delete currentLayout;
+    }
+    currentLayout = layout;
+
+    return layout;
+}
+
+/**
+ * @brief Changes the viewport layout to only have the single view.  We destroy the other views if needed and the flag is set
+ *
+ */
+void
+QtCADQuad::changeToSingleFrame()
+{
+    QGridLayout *layout = (QGridLayout *)this->layout();
+    if (layout == nullptr) {
+	layout = createLayout();
+    }
+    while (layout->takeAt(0) != NULL);
+    layout->addWidget(views[UPPER_RIGHT], 0, 2);
+
+    for (int i = 1; i < 4; i++) {
+	// Don't want use cpu for views that are not visible
+	if (views[i] != nullptr) {
+	    views[i]->disconnect();
+	    bu_ptbl_rm(&gedp->ged_views, (long int *)(views[i]->view()));
+	    delete views[i];
+	    views[i] = nullptr;
+	}
+    }
+
+    views[UPPER_RIGHT]->set_current(1);
+    currentView = views[UPPER_RIGHT];
+
+    default_views();
+}
+
+/**
+ * @brief Changes the viewport layout to have 4 views the views will be equal size and not resizeable.  This will create the extra view if needed.
+ *
+ */
+void
+QtCADQuad::changeToQuadFrame()
+{
+    for (int i = 1; i < 4; i++) {
+	if (views[i] == nullptr) {
+	    views[i] = createView(i);
+	}
+	bu_ptbl_ins_unique(&gedp->ged_views, (long int *)views[i]->view());
+	QObject::connect(views[i], &QtCADView::changed, this, &QtCADQuad::do_view_changed);
+    }
+    QGridLayout *layout = (QGridLayout *)this->layout();
+    if (layout == nullptr) {
+	layout = createLayout();
+    }
+    while (layout->takeAt(0) != NULL);
+
+    layout->addWidget(views[UPPER_LEFT], 0, 0);
+    layout->addItem(spacerTop, 0, 1);
+    layout->addWidget(views[UPPER_RIGHT], 0, 2);
+    layout->addItem(spacerLeft, 1, 0);
+    layout->addItem(spacerCenter, 1, 1);
+    layout->addItem(spacerRight, 1, 2);
+    layout->addWidget(views[LOWER_LEFT], 2, 0);
+    layout->addItem(spacerBottom, 2, 1);
+    layout->addWidget(views[LOWER_RIGHT], 2, 2);
+
+    default_views();
+
+    // Not sure if this is the right way to do this but need to autoset each of the views
+    const char *av[2];
+    av[0] = "autoview";
+    av[1] = (char *)0;
+    for (int i = 1; i < 4; i++) {
+	gedp->ged_gvp = views[i]->view();
+	ged_exec(gedp, 1, (const char **)av);
+    }
+    gedp->ged_gvp = views[UPPER_RIGHT]->view();
+    views[UPPER_RIGHT]->set_current(1);
+    currentView = views[UPPER_RIGHT];
 }
 
 void
@@ -124,60 +227,48 @@ QtCADQuad::do_view_changed()
 bool
 QtCADQuad::isValid()
 {
-    if (!ur->isValid()) return false;
-    if (!ul->isValid()) return false;
-    if (!ll->isValid()) return false;
-    if (!lr->isValid()) return false;
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr && !views[i]->isValid())
+	    return false;
+    }
     return true;
 }
 
 void
 QtCADQuad::fallback()
 {
-    ur->fallback();
-    ul->fallback();
-    ll->fallback();
-    lr->fallback();
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr) {
+	    views[i]->fallback();
 
-    ur->set_current(0);
-    ul->set_current(0);
-    ll->set_current(0);
-    lr->set_current(0);
+	    views[i]->set_current(0);
+	}
+    }
 
     // ur is still the default current
-    ur->set_current(1);
-
+    views[UPPER_RIGHT]->set_current(1);
+    currentView = views[UPPER_RIGHT];
 }
 
 bool
 QtCADQuad::eventFilter(QObject *t, QEvent *e)
 {
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::MouseButtonPress) {
-	QtCADView *oc = c;
-	if (t == ur) {
-	    c = ur;
-	} else {
-	    ur->set_current(0);
-	}
-	if (t == ul) {
-	    c = ul;
-	} else {
-	    ul->set_current(0);
-	}
-	if (t == ll) {
-	    c = ll;
-	} else {
-	    ll->set_current(0);
-	}
-	if (t == lr) {
-	    c = lr;
-	} else {
-	    lr->set_current(0);
+	QtCADView *oc = currentView;
+	for (int i = 0; i < 4; i++) {
+	    if (views[i] != nullptr && t == views[i]) {
+		currentView = views[i];
+	    }
+	    else {
+		if (views[i] != nullptr) {
+		    views[i]->set_current(0);
+		}
+	    }
 	}
 
-	c->set_current(1);
-	if (c != oc)
-	    emit selected(c);
+	currentView->set_current(1);
+	if (currentView != oc)
+	    emit selected(currentView);
     }
     return false;
 }
@@ -185,69 +276,63 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 void
 QtCADQuad::default_views()
 {
-    ur->aet(35, 25, 0);
-    ul->aet(0, 90, 0);
-    ll->aet(0, 0, 0);
-    lr->aet(90, 0, 0);
+    if (views[UPPER_RIGHT] != nullptr) {
+	if (views[UPPER_LEFT] == nullptr) {
+	    views[UPPER_RIGHT]->aet(270, 90, 0);
+	}
+	else {
+	    views[UPPER_RIGHT]->aet(35, 25, 0);
+	}
+    }
+    if (views[UPPER_LEFT] != nullptr) {
+	views[UPPER_LEFT]->aet(0, 90, 0);
+    }
+    if (views[LOWER_LEFT] != nullptr) {
+	views[LOWER_LEFT]->aet(0, 0, 0);
+    }
+    if (views[LOWER_RIGHT] != nullptr) {
+	views[LOWER_RIGHT]->aet(90, 0, 0);
+    }
 }
 
 struct bview *
-QtCADQuad::view(int quadrant_id)
+QtCADQuad::view(int quadrantId)
 {
-    switch (quadrant_id) {
-	case 1:
-	    return ur->view();
-	case 2:
-	    return ul->view();
-	case 3:
-	    return ll->view();
-	case 4:
-	    return lr->view();
-	default:
-	    return c->view();
+    if (quadrantId > 0) quadrantId -= 1;
+
+    if (views[quadrantId] != nullptr) {
+	return views[quadrantId]->view();
     }
+
+    return currentView->view();
 }
 
 QtCADView *
-QtCADQuad::get(int quadrant_id)
+QtCADQuad::get(int quadrantId)
 {
-    switch (quadrant_id) {
-	case 1:
-	    return ur;
-	case 2:
-	    return ul;
-	case 3:
-	    return ll;
-	case 4:
-	    return lr;
-	default:
-	    return c;
+    if (quadrantId > 0) quadrantId -= 1;
+
+    if (views[quadrantId] != nullptr) {
+	return views[quadrantId];
     }
+
+    return currentView;
 }
 
 void
-QtCADQuad::select(int quadrant_id)
+QtCADQuad::select(int quadrantId)
 {
-    QtCADView *oc = c;
-    switch (quadrant_id) {
-	case 1:
-	    c = ur;
-	    break;
-	case 2:
-	    c = ul;
-	    break;
-	case 3:
-	    c = ll;
-	    break;
-	case 4:
-	    c = lr;
-	    break;
-	default:
-	    return;
+    if (quadrantId > 0) quadrantId -= 1;
+
+    QtCADView *oc = currentView;
+
+    if (views[quadrantId] != nullptr) {
+	currentView = views[quadrantId];
     }
 
-    if (oc != c)
-	emit selected(c);
+    if (oc != currentView) {
+	emit selected(currentView);
+    }
     // TODO - update coloring of bg to
     // indicate active quadrant
 }
@@ -276,33 +361,36 @@ QtCADQuad::select(const char *quadrant_id)
 void
 QtCADQuad::need_update(void *)
 {
-    ur->update();
-    ul->update();
-    ll->update();
-    lr->update();
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr) {
+	    views[i]->update();
+	}
+    }
 }
 
 void
 QtCADQuad::stash_hashes()
 {
-    ur->stash_hashes();
-    ul->stash_hashes();
-    ll->stash_hashes();
-    lr->stash_hashes();
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr) {
+	    views[i]->stash_hashes();
+	}
+    }
 }
 
 bool
 QtCADQuad::diff_hashes()
 {
-    bool ur_ret = ur->diff_hashes();
-    bool ul_ret = ul->diff_hashes();
-    bool ll_ret = ll->diff_hashes();
-    bool lr_ret = lr->diff_hashes();
+    bool ret = false;
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr) {
+	    if (views[i]->diff_hashes()) {
+		ret = true;
+	    }
+	}
+    }
 
-    if (ur_ret || ul_ret || ll_ret || lr_ret)
-	return true;
-
-    return false;
+    return ret;
 }
 
 // TODO - need to enable mouse selection
@@ -316,4 +404,3 @@ QtCADQuad::diff_hashes()
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

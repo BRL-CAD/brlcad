@@ -527,6 +527,18 @@ CADApp::write_settings()
     }
 }
 
+void
+CADApp::switch_to_single_view()
+{
+    w->c4->changeToSingleFrame();
+}
+
+void
+CADApp::switch_to_quad_view()
+{
+    w->c4->changeToQuadFrame();
+}
+
 /*
  * Local Variables:
  * mode: C++
