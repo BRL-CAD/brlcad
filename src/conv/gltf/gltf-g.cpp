@@ -37,13 +37,8 @@
 #include "tinygltf/tiny_gltf.h"
 
 #include "vmath.h"
-//#include "bu/app.h"
-//#include "raytrace.h" says no common in bu/avs.h file
+#include "bu/app.h"
 #include "wdb.h"
-//#include "rt/geom.h" same as others about no common
-
-//using namespace std;
-
 
 //print geometry (possibly)
 
