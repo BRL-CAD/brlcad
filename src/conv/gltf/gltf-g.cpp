@@ -477,7 +477,7 @@ static void insertvectorfaces(const tinygltf::Model &model, double vertices[], i
 
 }
 
-static std::string GetFilePathExtension(const std::string &FileName) 
+static std::string GetFilePathExtension(const std::string &FileName)
 {
     if (FileName.find_last_of(".") != std::string::npos)
     {
@@ -491,16 +491,17 @@ int main(int argc, char **argv)
 {
     bool store_original_json_for_extras_and_extensions = false;
 
-    if (argc < 2) 
+    if (argc < 2)
     {
 	printf("Needs input.gltf\n");
 	exit(1);
     }
 
+    bu_setprogname(argv[0]);
+
     if (argc > 2) {
 	store_original_json_for_extras_and_extensions = true;
     }
-
 
     tinygltf::Model model;
     std::string err;
