@@ -362,10 +362,11 @@ static void gathershapeinfo(const tinygltf::Model &model, int &numvert, int &num
 	}
 
 	std::cout << "Number of Faces: " << numfaces << std::endl;
+	delete[] faces;
     }
 
     {
-	int bot_pos;
+	int bot_pos = 0;
 	testingStringIntMap(model.meshes[0].primitives[0].attributes, bot_pos);
 
 	//assume 1 accessor, 1 bufferview
@@ -398,6 +399,7 @@ static void gathershapeinfo(const tinygltf::Model &model, int &numvert, int &num
 	std::cout << "Number of vertices: " << numvert << std::endl;
 	std:: cout << "Stride Count : " << byte_stride << std::endl;
 
+	delete[] vertices;
     }
     return ;
 
@@ -435,7 +437,7 @@ static void insertvectorfaces(const tinygltf::Model &model, double vertices[], i
     }
 
     {
-	int bot_pos;
+	int bot_pos = 0;
 	testingStringIntMap(model.meshes[0].primitives[0].attributes, bot_pos);
 
 	//assume 1 accessor, 1 bufferview
