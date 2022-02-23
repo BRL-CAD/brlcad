@@ -13,10 +13,6 @@ add_subdirectory(optical)
 add_subdirectory(qtcad)
 add_subdirectory(rt)
 
-set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
-SET(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
-add_subdirectory(/path/to/tinygltf)
-
 set(public_hdrs
   RtServerImpl.h
   analyze.h
