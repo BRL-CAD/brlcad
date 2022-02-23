@@ -7,8 +7,7 @@ BRLCAD_INCLUDE_DIRS(GLTF_CONV_INCLUDE_DIRS)
 
 BRLCAD_ADDEXEC(gltf-g gltf-g.cpp "libwdb;librt;libnmg;libbu" FOLDER Conv)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/tinygltf.dist)
-
+FILE(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/tinygltf.dist" tinygltf_files)
 CMAKEFILES(
   ${tinygltf_files}
   CMakeLists.txt
