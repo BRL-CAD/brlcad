@@ -10,6 +10,8 @@ BRLCAD_ADDEXEC(gltf-g gltf-g.cpp "libwdb;librt;libnmg;libbu" FOLDER Conv)
 
 CMAKEFILES(
   CMakeLists.txt
+  baseColor.png
+  blob.glb
   )
 
 # Local Variables:
