@@ -1,2 +1,0 @@
-This path needs a tinygltf folder for the importer to work. For some reason, Github was not letting me import it, an issue with Cmake? So basically just put the "tinygltf" 
-folder from github into the gltf file next to the gltf converter and it will work
