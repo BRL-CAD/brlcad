@@ -57,9 +57,9 @@ static const char *VIEW_NAMES[] = {"Q1", "Q2", "Q3", "Q4"};
 /**
  * @brief Construct a new Qt C A D Quad:: Qt C A D Quad object
  *
- * @param parent
- * @param gedpRef
- * @param type
+ * @param parent   Parent Qt widget
+ * @param gedpRef  Associated GED struct
+ * @param type     Requesting either a GL or SWRAST display mechanism
  */
 QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(parent)
 {
