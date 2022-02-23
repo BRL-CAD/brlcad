@@ -182,7 +182,6 @@ bool LoadGLTF(const std::string &filename, float scale,
               loadedMesh.faces.push_back(triangleStrip[i]);
             }
           }
-          //take from here
         case TINYGLTF_MODE_TRIANGLES:  // this is the simpliest case to handle
 
         {
