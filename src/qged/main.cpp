@@ -271,15 +271,6 @@ int main(int argc, char *argv[])
 	}
     }
 
-    // The display manager must sometimes be set up later to allow for
-    // initializations - make sure gedp knows the current dmp
-    for (size_t i = 0; i < BU_PTBL_LEN(&m->gedp->ged_views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(&m->gedp->ged_views, i);
-	if (v->dmp)
-	    bu_ptbl_ins_unique(m->gedp->ged_all_dmp, (long int *)v->dmp);
-    }
-    m->gedp->ged_dmp = m->gedp->ged_gvp->dmp;
-
     // Connect I/O handlers
     m->gedp->ged_create_io_handler = &qt_create_io_handler;
     m->gedp->ged_delete_io_handler = &qt_delete_io_handler;

@@ -143,8 +143,6 @@ void QtGL::paintGL()
     if (!m_init || !dmp)
 	return;
 
-    //v->dmp = dmp;
-
     const unsigned char *dm_bg = dm_get_bg(dmp);
     if (dm_bg) {
 	dm_set_bg(dmp, dm_bg[0], dm_bg[1], dm_bg[2]);
