@@ -104,7 +104,7 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   duplicate entries.
 
 * tree command shouldn't infinite loop when encountering a cyclic
-  path - need to print a warning and stop walking.  Requries full
+  path - need to print a warning and stop walking.  Requires full
   path awareness in tree command walk.
 
   Consider implementing a corollary to FTS instead of dirent for
@@ -236,7 +236,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * the osgl libdm backend has what appears to be an off-by-one-pixel
   error in the x and y directions with respect to mouse placement.
-  Using kmag, can see tha putting the mouse cursor over the center
+  Using kmag, can see that putting the mouse cursor over the center
   yellow dot and center clicking (which should be a no-op, and is
   with ogl) results in the scene shifting slightly.
 
@@ -1722,7 +1722,7 @@ NEW OBJECTS
   orthogonal vs perspective, ambient lighting levels, and possibly
   styling/render modes.
 
-  obviously need to be able to derive a homogenous transformation
+  obviously need to be able to derive a homogeneous transformation
   matrix, but may want to encode/preserve scale, translate, rotate
   with prescribed ordering separately for proper reversibility.
 

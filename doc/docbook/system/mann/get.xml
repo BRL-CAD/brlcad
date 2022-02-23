@@ -35,7 +35,7 @@
 
   <example><title>Elliptical Torus 'r' parameter extraction</title>
   <para>
-    Use the <command>get</command> command to exctract the
+    Use the <command>get</command> command to extract the
     r parameter value from an elliptical torus.
   </para>
 

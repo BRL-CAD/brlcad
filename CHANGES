@@ -1428,7 +1428,7 @@ s/bu_dirname\(/bu_path_dirname\(/g
 s/bu_basename\(/bu_path_basename\(/g
 s/bu_normalize\(/bu_path_normalize\(/g
 s/bu_argv_from_path\(/bu_path_to_argv\(/g
-        renamed path functons with proper group label [7.27]
+        renamed path functions with proper group label [7.27]
 s/bu_fnmatch\(/bu_path_match\(/g
 s/BU_FNMATCH_LEADING_DIR/0x0/g
 s/BU_FNMATCH_/BU_PATH_MATCH/g

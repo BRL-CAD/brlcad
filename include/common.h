@@ -27,7 +27,7 @@
  * either detected via configure or hand crafted, as is the case for
  * the win32 platform.
  *
- * NOTE: In order to use compile-time API, applicaitons need to define
+ * NOTE: In order to use compile-time API, applications need to define
  * BRLCADBUILD and HAVE_CONFIG_H before including this header.
  *
  */
@@ -215,7 +215,7 @@ typedef ptrdiff_t ssize_t;
 
 /* off_t is 32 bit size even on 64 bit Windows. In the past we have tried to
  * force off_t to be 64 bit but this is failing on newer Windows/Visual Studio
- * verions in 2020 - therefore, we instead introduce the b_off_t define to
+ * versions in 2020 - therefore, we instead introduce the b_off_t define to
  * properly substitute the correct numerical type for the correct platform.  */
 #if defined(_WIN64)
 #  include <sys/stat.h>

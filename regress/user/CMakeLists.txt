@@ -17,7 +17,7 @@ set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
 
 # We deliberately do not use any of the BRL-CAD wrapper functions such as
 # BRLCAD_ADDEXEC in order to avoid their automatic addtiion of compile
-# defintions or other magic specific to BRL-CAD's internal build.
+# definitions or other magic specific to BRL-CAD's internal build.
 add_executable(cad_user cad_user.c)
 target_link_libraries(cad_user libged)
 add_dependencies(cad_user managed_files)

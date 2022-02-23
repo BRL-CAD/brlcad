@@ -61,7 +61,7 @@
     <para>
       Creates <emphasis>new_object</emphasis> as planar primitive shape (either an NMG or a BOT)
       approximating the 3D volume bound by <emphasis>old_object</emphasis>.  The <emphasis>-r</emphasis>
-      option will operate per-region rather than on an entire object and produces a new hiearchy.
+      option will operate per-region rather than on an entire object and produces a new hierarchy.
     </para>
     <para>
       There are a number of different verbosity levels available for the facetize command.  One or mulitple specifications

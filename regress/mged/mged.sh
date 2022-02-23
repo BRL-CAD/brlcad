@@ -99,7 +99,7 @@ check_command ( ) {
     return 0
 }
 
-log "seting up an almost empty database (mged.g) to make sure mged runs"
+log "setting up an almost empty database (mged.g) to make sure mged runs"
 rm -f mged.g
 $MGED -c >> $LOGFILE 2>&1 <<EOF
 opendb mged.g y

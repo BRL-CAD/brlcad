@@ -2,7 +2,7 @@
 #-----------------------------------------------------------------------------
 # vrml_example.wrl
 #
-# Trival VRML scene based on info from
+# Trvial VRML scene based on info from
 # https://cs.lmu.edu/~ray/notes/vrmlexamples/
 #-----------------------------------------------------------------------------
 Transform {
