@@ -29,6 +29,7 @@ set(embedded_licenses
   hv3_combobox.txt
   hv3_snit.txt
   Inconsolata.txt
+  json.txt
   libtermlib.txt
   lseg_lseg.txt
   lseg_pt.txt
@@ -58,11 +59,13 @@ set(embedded_licenses
   sobolseq.txt
   SPSR.txt
   sscanf.txt
+  stb_image.txt
   stb_truetype.txt
   STIX_Font_License_2010.txt
   strnstr.txt
   tcl.txt
   tcllib.txt
+  tiny_gltf.txt
   tinythread.txt
   tkcon.txt
   tri_pt.txt
