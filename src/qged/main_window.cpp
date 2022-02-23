@@ -120,30 +120,16 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     gedp->fbs_listen_on_port = &qdm_listen_on_port;
     gedp->fbs_open_server_handler = &qdm_open_server_handler;
     gedp->fbs_close_server_handler = &qdm_close_server_handler;
-    if (canvas) {
-       int type = canvas->view_type();
+
+    int type = c4->get(0)->view_type();
 #ifdef BRLCAD_OPENGL
-       if (type == QtCADView_GL) {
-           gedp->fbs_open_client_handler = &qdm_open_client_handler;
-       }
-#endif
-       if (type == QtCADView_SW) {
-           gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
-       }
-    }
-#ifdef BRLCAD_OPENGL
-    if (c4) {
-       int type = c4->get(0)->view_type();
-#ifdef BRLCAD_OPENGL
-       if (type == QtCADView_GL) {
-           gedp->fbs_open_client_handler = &qdm_open_client_handler;
-       }
-#endif
-       if (type == QtCADView_SW) {
-           gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
-       }
+    if (type == QtCADView_GL) {
+	gedp->fbs_open_client_handler = &qdm_open_client_handler;
     }
 #endif
+    if (type == QtCADView_SW) {
+	gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+    }
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
 
 
@@ -448,11 +434,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     //QObject::connect(m, &QgModel::mdl_changed_db, ca->mdl, &QgSelectionProxyModel::refresh);
 
     // If the database changes, we need to update our views
-    if (canvas) {
-	QObject::connect(m, &QgModel::mdl_changed_db, canvas, &QtCADView::need_update);
-	QObject::connect((CADApp *)qApp, &CADApp::gui_changed_view, canvas, &QtCADView::need_update);
-	ap->curr_view = canvas;
-    } else if (c4) {
+    if (c4) {
 	QObject::connect(m, &QgModel::mdl_changed_db, c4, &QtCADQuad::need_update);
 	QObject::connect((CADApp *)qApp, &CADApp::gui_changed_view, c4, &QtCADQuad::need_update);
 	// The Quad View has an additional condition in the sense that the current view may
@@ -464,9 +446,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     // If the view changes, let the GUI know.  The ap supplied signals are used by other
     // widgets to hide the specifics of the current view implementation (single or quad).
-    if (canvas) {
-	QObject::connect(canvas, &QtCADView::changed, ap, &CADApp::do_gui_update_from_view_change);
-    } else if (c4) {
+    if (c4) {
 	QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_gui_update_from_view_change);
     }
 
@@ -478,8 +458,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 bool
 BRLCAD_MainWindow::isValid3D()
 {
-    if (canvas)
-	return canvas->isValid();
     if (c4)
 	return c4->isValid();
     return false;
@@ -488,10 +466,6 @@ BRLCAD_MainWindow::isValid3D()
 void
 BRLCAD_MainWindow::fallback3D()
 {
-    if (canvas) {
-	canvas->fallback();
-	return;
-    }
     if (c4) {
 	c4->fallback();
 	return;

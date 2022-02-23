@@ -301,7 +301,7 @@ QtCADView::set_base2local(double nb2l)
 	canvas_gl->v->gv_base2local = nb2l;
 #endif
     if (canvas_sw && canvas_sw->v)
-	canvas_gl->v->gv_base2local = nb2l;
+	canvas_sw->v->gv_base2local = nb2l;
 }
 
 void

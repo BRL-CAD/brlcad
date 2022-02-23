@@ -41,24 +41,14 @@ app_close(void *p, int UNUSED(argc), const char **UNUSED(argv))
     CADApp *ap = (CADApp *)p;
     QtConsole *console = ap->w->console;
     ap->closedb();
-    if (ap->w->canvas) {
-	QtCADView *canvas = ap->w->canvas;
-	canvas->set_view(NULL);
-	//canvas->dm_set = NULL;
-	canvas->set_dm_current(NULL);
-	canvas->set_base2local(1);
-	canvas->set_local2base(1);
-    }
-    if (ap->w->c4) {
-	QtCADQuad *c4= ap->w->c4;
-	for (int i = 1; i < 5; i++) {
-	    QtCADView *c = c4->get(i);
-	    //c->dm_set = NULL;
-	    c->set_view(NULL);
-	    c->set_dm_current(NULL);
-	    c->set_base2local(1);
-	    c->set_local2base(1);
-	}
+    QtCADQuad *c4= ap->w->c4;
+    for (int i = 1; i < 5; i++) {
+	QtCADView *c = c4->get(i);
+	//c->dm_set = NULL;
+	c->set_view(NULL);
+	c->set_dm_current(NULL);
+	c->set_base2local(1);
+	c->set_local2base(1);
     }
     if (console)
 	console->printString("closed database\n");
@@ -292,11 +282,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     struct ged *gedp = m->gedp;
 
     /* Set the local unit conversions */
-    if (w->canvas && gedp->dbip) {
-	w->canvas->set_base2local(gedp->dbip->dbi_base2local);
-	w->canvas->set_local2base(gedp->dbip->dbi_local2base);
-    }
-    if (w->c4 && gedp->dbip) {
+    if (gedp->dbip && w->c4) {
 	for (int i = 1; i < 5; i++) {
 	    QtCADView *c = w->c4->get(i);
 	    c->set_base2local(gedp->dbip->dbi_base2local);
@@ -309,12 +295,8 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// If we're not in the middle of an incremental command,
 	// stash the view state(s) for later comparison and make
 	// sure our unit conversions are right
-	if (w->canvas) {
-	    w->canvas->stash_hashes();
-	}
-	if (w->c4) {
+	if (w->c4)
 	    w->c4->stash_hashes();
-	}
 
 	// Ask the model to execute the command
 	ret = m->run_cmd(msg, argc, argv);
@@ -337,20 +319,14 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 	// Handle any necessary redrawing.
 	if (qged_view_update(gedp, &m->changed_dp) > 0) {
-	    if (w->canvas)
-		w->canvas->need_update(NULL);
 	    if (w->c4)
 		w->c4->need_update(NULL);
 	}
 
 	/* Check if the ged_exec call changed either the display manager or
 	 * the view settings - in either case we'll need to redraw */
-	if (w->canvas) {
-	    view_dirty = w->canvas->diff_hashes();
-	}
-	if (w->c4) {
+	if (w->c4)
 	    view_dirty = w->c4->diff_hashes();
-	}
     }
 
     if (ret & BRLCAD_MORE) {

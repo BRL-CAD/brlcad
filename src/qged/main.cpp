@@ -108,8 +108,6 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	    break;
     }
 
-    if (w->canvas)
-	w->canvas->need_update(NULL);
     if (w->c4)
 	w->c4->need_update(NULL);
 }

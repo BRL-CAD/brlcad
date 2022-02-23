@@ -64,7 +64,6 @@ class BRLCAD_MainWindow : public QMainWindow
     public:
 	BRLCAD_MainWindow(int canvas_type = 0, int quad_view = 0);
 
-	QtCADView *canvas = NULL;
 	QtCADQuad *c4 = NULL;
 	bool isValid3D();
 	void fallback3D();
