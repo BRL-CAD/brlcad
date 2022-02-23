@@ -442,4 +442,3 @@ QtCADView::set_draw_custom(void (*draw_custom)(struct bview *, double, double, v
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

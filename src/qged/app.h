@@ -87,6 +87,8 @@ class CADApp : public QApplication
     public slots:
 	void open_file();
         void write_settings();
+        void switch_to_single_view();
+        void switch_to_quad_view();
 
 	/* GUI/View connection slots */
     public slots:

@@ -85,6 +85,14 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     file_menu->addAction(cad_save_image);
 #endif
 
+    cad_single_view = new QAction("Single View", this);
+    connect(cad_single_view, &QAction::triggered, ((CADApp *)qApp), &CADApp::switch_to_single_view);
+    file_menu->addAction(cad_single_view);
+
+    cad_quad_view = new QAction("Quad View", this);
+    connect(cad_quad_view, &QAction::triggered, ((CADApp *)qApp), &CADApp::switch_to_quad_view);
+    file_menu->addAction(cad_quad_view);
+
     cad_exit = new QAction("Exit", this);
     QObject::connect(cad_exit, &QAction::triggered, this, &BRLCAD_MainWindow::close);
     file_menu->addAction(cad_exit);
@@ -95,31 +103,16 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     help_menu = menuBar()->addMenu("Help");
 
-     // Set up 3D display.  Unlike MGED, we don't create 4 views by default for
-     // quad view, since some drawing modes demand more memory for 4 views.
-     // Use a single canvas unless the user settings specify quad.
-    if (!quad_view) {
-	canvas = new QtCADView(this, canvas_type);
-	canvas->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-	setCentralWidget(canvas);
-	gedp->ged_gvp = canvas->view();
-	gedp->ged_gvp->gv_db_grps = &gedp->ged_db_grps;
-	gedp->ged_gvp->gv_view_shared_objs = &gedp->ged_view_shared_objs;
-	gedp->ged_gvp->independent = 0;
-	bu_ptbl_ins_unique(&gedp->ged_views, (long int *)gedp->ged_gvp);
-    } else {
-	c4 = new QtCADQuad(this, canvas_type);
-	c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-	setCentralWidget(c4);
-	gedp->ged_gvp = c4->view();
-	for (int i = 1; i < 5; i++) {
-	    QtCADView *c = c4->get(i);
-	    c->view()->gv_db_grps = &gedp->ged_db_grps;
-	    c->view()->gv_view_shared_objs = &gedp->ged_view_shared_objs;
-	    c->view()->independent = 0;
-	    bu_ptbl_ins_unique(&gedp->ged_views, (long int *)c->view());
-	}
-	c4->default_views();
+    c4 = new QtCADQuad(this, gedp, canvas_type);
+    c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    setCentralWidget(c4);
+    gedp->ged_gvp = c4->view();
+
+    if (quad_view) {
+	c4->changeToQuadFrame();
+    }
+    else {
+	c4->changeToSingleFrame();
     }
 
     // Set up the connections needed for embedded raytracing
@@ -515,4 +508,3 @@ BRLCAD_MainWindow::fallback3D()
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

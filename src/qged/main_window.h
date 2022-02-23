@@ -86,6 +86,8 @@ class BRLCAD_MainWindow : public QMainWindow
 	QAction *cad_exit;
 	QMenu *view_menu;
 	QMenu *help_menu;
+	QAction *cad_single_view;
+	QAction *cad_quad_view;
 
 	QBDockWidget *console_dock;
 	QBDockWidget *tree_dock;
