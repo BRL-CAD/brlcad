@@ -267,6 +267,7 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 	}
 
 	currentView->set_current(1);
+	gedp->ged_dmp = currentView->view()->dmp;
 	if (currentView != oc)
 	    emit selected(currentView);
     }

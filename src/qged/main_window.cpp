@@ -508,4 +508,3 @@ BRLCAD_MainWindow::fallback3D()
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
