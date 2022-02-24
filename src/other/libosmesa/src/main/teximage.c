@@ -3124,6 +3124,9 @@ compressed_subtexture_error_check(GLcontext *ctx, GLint dimensions,
 	return GL_INVALID_ENUM;
     }
 
+    if (maxLevels <= 0)
+	return GL_INVALID_ENUM;
+
     maxTextureSize = 1 << (maxLevels - 1);
 
     /* this will catch any invalid compressed format token */
