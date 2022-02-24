@@ -363,7 +363,7 @@ QtCADQuad::need_update(void *)
 {
     for (int i = 0; i < 4; i++) {
 	if (views[i] != nullptr) {
-	    views[i]->update();
+	    views[i]->need_update(NULL);
 	}
     }
 }
