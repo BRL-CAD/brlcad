@@ -590,7 +590,7 @@ static struct ureg emit_texld(struct texenv_fragment_program *p,
 
     /* Is this a texture indirection?
      */
-    if (coord.idx >= 0 && coord.idx < INT_MAX && dest.idx >= 0 && dest.idx < INT_MAX ) {
+    if (coord.idx < INT_MAX && dest.idx < INT_MAX ) {
 	if ((coord.file == PROGRAM_TEMPORARY &&
 		    (p->temps_output & (1<<coord.idx))) ||
 		(dest.file == PROGRAM_TEMPORARY &&
