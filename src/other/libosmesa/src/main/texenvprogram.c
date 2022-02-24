@@ -1328,7 +1328,7 @@ void _mesa_TexEnvProgramCacheInit(GLcontext *ctx)
     ctx->Texture.env_fp_cache.n_items = 0;
     ctx->Texture.env_fp_cache.items = (struct texenvprog_cache_item **)
 				      _mesa_calloc(ctx->Texture.env_fp_cache.size *
-					      sizeof(struct texenvprog_cache_item));
+					      sizeof(struct texenvprog_cache_item *));
 }
 
 
