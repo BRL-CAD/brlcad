@@ -40,6 +40,7 @@
 #include "context.h"
 #include "macros.h"
 #include "mtypes.h"
+#include "prog_execute.h"
 #include "prog_instruction.h"
 
 
@@ -1682,7 +1683,7 @@ parse_result_binding(GLcontext *ctx, const GLubyte **inst,
 	break;
     }
 
-    if (outputReg && *outputReg >= 0 && *outputReg < INT_MAX)
+    if (outputReg && *outputReg <= MAX_PROGRAM_OUTPUTS)
 	Program->Base.OutputsWritten |= (1 << *outputReg);
 
     return 0;
