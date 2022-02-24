@@ -1470,7 +1470,6 @@ static GLboolean
 initialize_global(slang_assemble_ctx * A, slang_variable * var)
 {
     slang_operation op_id, op_assign;
-    GLboolean result;
 
     /* Initialize */
     op_id.label = NULL;
@@ -1510,8 +1509,6 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
     op_assign.children[0] = op_id;
     op_assign.children[1] = *var->initializer;
 
-    result = 1;
-
     /* carefully destroy the operations */
     op_assign.num_children = 0;
     _slang_free(op_assign.children);
@@ -1519,9 +1516,6 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
     slang_operation_destruct(&op_assign);
     op_id.locals->num_variables = 0;
     slang_operation_destruct(&op_id);
-
-    if (!result)
-	return GL_FALSE;
 
     return GL_TRUE;
 }
