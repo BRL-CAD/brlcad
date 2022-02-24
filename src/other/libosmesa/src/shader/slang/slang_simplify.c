@@ -307,6 +307,7 @@ _slang_simplify(slang_operation *oper,
  * 2. breaking up vector/matrix types into individual components to
  *    satisfy constructors.
  */
+#define SLANG_DEBUG 0
 GLboolean
 _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
 		  const slang_name_space * space,
@@ -315,10 +316,11 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
     const GLboolean haveRetValue = _slang_function_has_return_value(fun);
     const int numParams = fun->param_count - haveRetValue;
     int i;
-    int dbg = 0;
 
-    if (dbg) printf("Adapt %d args to %d parameters\n",
-			callOper->num_children, numParams);
+#ifdef SLANG_DEBUG
+    printf("Adapt %d args to %d parameters\n",
+	    callOper->num_children, numParams);
+#endif
 
     /* Only try adapting for constructors */
     if (fun->kind != SLANG_FUNC_CONSTRUCTOR)
@@ -352,9 +354,9 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
 		if (argSz > 1) {
 		    slang_operation origArg;
 		    /* break up arg[i] into components */
-		    if (dbg)
-			printf("Break up arg %d from 1 to %d elements\n", i, argSz);
-
+#ifdef SLANG_DEBUG
+		    printf("Break up arg %d from 1 to %d elements\n", i, argSz);
+#endif
 		    slang_operation_construct(&origArg);
 		    slang_operation_copy(&origArg,
 					 &callOper->children[i]);
@@ -437,11 +439,11 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
 	slang_typeinfo_destruct(&argType);
     }
 
-    if (dbg) {
+#ifdef SLANG_DEBUG
 	printf("===== New call to %s with adapted arguments ===============\n",
 	       (char*) fun->header.a_name);
 	slang_print_tree(callOper, 5);
-    }
+#endif
 
     return GL_TRUE;
 }
