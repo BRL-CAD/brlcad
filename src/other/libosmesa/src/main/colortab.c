@@ -1120,9 +1120,9 @@ _mesa_GetColorTableParameteriv(GLenum target, GLenum pname, GLint *params)
 	    if (pname == GL_COLOR_TABLE_SCALE_SGI) {
 		GLfloat *scale = ctx->Pixel.ColorTableScale[COLORTABLE_POSTCOLORMATRIX];
 		params[0] = (GLint) scale[0];
-		params[0] = (GLint) scale[1];
-		params[0] = (GLint) scale[2];
-		params[0] = (GLint) scale[3];
+		params[1] = (GLint) scale[1];
+		params[2] = (GLint) scale[2];
+		params[3] = (GLint) scale[3];
 		return;
 	    } else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
 		GLfloat *bias = ctx->Pixel.ColorTableScale[COLORTABLE_POSTCOLORMATRIX];
