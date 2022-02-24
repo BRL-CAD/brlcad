@@ -76,7 +76,7 @@ char       *SCANcurrent;
 extern int      yylineno;
 
 #define SCAN_COMMENT_LENGTH 256
-static char     last_comment_[256] = "";
+static char     last_comment_[SCAN_COMMENT_LENGTH + 1] = "";
 static char     *last_comment = 0;
 
 /* keyword lookup table */
