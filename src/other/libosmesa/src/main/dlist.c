@@ -749,18 +749,13 @@ _mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
 	/* This block is full.  Allocate a new block and chain to it */
 	Node *newblock = NULL;
 	n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
-	if (n) {
-	    n[0].opcode = OPCODE_CONTINUE;
-	    newblock = (Node *) _mesa_malloc(sizeof(Node) * BLOCK_SIZE);
-	    if (!newblock) {
-		_mesa_error(ctx, GL_OUT_OF_MEMORY, "Building display list");
-		return NULL;
-	    }
-	    n[1].next = (Node *) newblock;
-	} else {
+	n[0].opcode = OPCODE_CONTINUE;
+	newblock = (Node *) _mesa_malloc(sizeof(Node) * BLOCK_SIZE);
+	if (!newblock) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "Building display list");
 	    return NULL;
 	}
+	n[1].next = (Node *) newblock;
 	ctx->ListState.CurrentBlock = newblock;
 	ctx->ListState.CurrentPos = 0;
     }
@@ -885,17 +880,13 @@ save_Bitmap(GLsizei width, GLsizei height,
     Node *n;
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_BITMAP, 7);
-    if (n) {
-	n[1].i = (GLint) width;
-	n[2].i = (GLint) height;
-	n[3].f = xorig;
-	n[4].f = yorig;
-	n[5].f = xmove;
-	n[6].f = ymove;
-	n[7].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].i = (GLint) width;
+    n[2].i = (GLint) height;
+    n[3].f = xorig;
+    n[4].f = yorig;
+    n[5].f = xmove;
+    n[6].f = ymove;
+    n[7].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_Bitmap(ctx->Exec, (width, height,
 				xorig, yorig, xmove, ymove, pixels));
@@ -1220,16 +1211,12 @@ save_ColorTable(GLenum target, GLenum internalFormat,
 	Node *n;
 	ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_COLOR_TABLE, 6);
-	if (n) {
-	    n[1].e = target;
-	    n[2].e = internalFormat;
-	    n[3].i = width;
-	    n[4].e = format;
-	    n[5].e = type;
-	    n[6].data = image;
-	} else if (image) {
-	    _mesa_free(image);
-	}
+	n[1].e = target;
+	n[2].e = internalFormat;
+	n[3].i = width;
+	n[4].e = format;
+	n[5].e = type;
+	n[6].data = image;
 	if (ctx->ExecuteFlag) {
 	    CALL_ColorTable(ctx->Exec, (target, internalFormat, width,
 					format, type, table));
@@ -1309,16 +1296,12 @@ save_ColorSubTable(GLenum target, GLsizei start, GLsizei count,
     Node *n;
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_COLOR_SUB_TABLE, 6);
-    if (n) {
-	n[1].e = target;
-	n[2].i = start;
-	n[3].i = count;
-	n[4].e = format;
-	n[5].e = type;
-	n[6].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].e = target;
+    n[2].i = start;
+    n[3].i = count;
+    n[4].e = format;
+    n[5].e = type;
+    n[6].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_ColorSubTable(ctx->Exec,
 			   (target, start, count, format, type, table));
@@ -1380,16 +1363,12 @@ save_ConvolutionFilter1D(GLenum target, GLenum internalFormat, GLsizei width,
     Node *n;
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_CONVOLUTION_FILTER_1D, 6);
-    if (n) {
-	n[1].e = target;
-	n[2].e = internalFormat;
-	n[3].i = width;
-	n[4].e = format;
-	n[5].e = type;
-	n[6].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].e = target;
+    n[2].e = internalFormat;
+    n[3].i = width;
+    n[4].e = format;
+    n[5].e = type;
+    n[6].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_ConvolutionFilter1D(ctx->Exec, (target, internalFormat, width,
 					     format, type, filter));
@@ -1408,17 +1387,13 @@ save_ConvolutionFilter2D(GLenum target, GLenum internalFormat,
     Node *n;
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_CONVOLUTION_FILTER_2D, 7);
-    if (n) {
-	n[1].e = target;
-	n[2].e = internalFormat;
-	n[3].i = width;
-	n[4].i = height;
-	n[5].e = format;
-	n[6].e = type;
-	n[7].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].e = target;
+    n[2].e = internalFormat;
+    n[3].i = width;
+    n[4].i = height;
+    n[5].e = format;
+    n[6].e = type;
+    n[7].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_ConvolutionFilter2D(ctx->Exec,
 				 (target, internalFormat, width, height, format,
@@ -1775,15 +1750,11 @@ save_DrawPixels(GLsizei width, GLsizei height,
     Node *n;
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_DRAW_PIXELS, 5);
-    if (n) {
-	n[1].i = width;
-	n[2].i = height;
-	n[3].e = format;
-	n[4].e = type;
-	n[5].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].i = width;
+    n[2].i = height;
+    n[3].e = format;
+    n[4].e = type;
+    n[5].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_DrawPixels(ctx->Exec, (width, height, format, type, pixels));
     }
@@ -2763,11 +2734,7 @@ save_PolygonStipple(const GLubyte * pattern)
     Node *n;
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_POLYGON_STIPPLE, 1);
-    if (n) {
-	n[1].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_PolygonStipple(ctx->Exec, ((GLubyte *) pattern));
     }
@@ -3582,19 +3549,15 @@ save_TexImage2D(GLenum target,
 	Node *n;
 	ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_TEX_IMAGE2D, 9);
-	if (n) {
-	    n[1].e = target;
-	    n[2].i = level;
-	    n[3].i = components;
-	    n[4].i = (GLint) width;
-	    n[5].i = (GLint) height;
-	    n[6].i = border;
-	    n[7].e = format;
-	    n[8].e = type;
-	    n[9].data = image;
-	} else if (image) {
-	    _mesa_free(image);
-	}
+	n[1].e = target;
+	n[2].i = level;
+	n[3].i = components;
+	n[4].i = (GLint) width;
+	n[5].i = (GLint) height;
+	n[6].i = border;
+	n[7].e = format;
+	n[8].e = type;
+	n[9].data = image;
 	if (ctx->ExecuteFlag) {
 	    CALL_TexImage2D(ctx->Exec, (target, level, components, width,
 					height, border, format, type, pixels));
@@ -3622,23 +3585,19 @@ save_TexImage3D(GLenum target,
 				     pixels, &ctx->Unpack);
 	ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_TEX_IMAGE3D, 10);
-	if (n) {
-	    n[1].e = target;
-	    n[2].i = level;
-	    n[3].i = (GLint) internalFormat;
-	    n[4].i = (GLint) width;
-	    n[5].i = (GLint) height;
-	    n[6].i = (GLint) depth;
-	    n[7].i = border;
-	    n[8].e = format;
-	    n[9].e = type;
-	    n[10].data = image;
-	} else if (image) {
-	    _mesa_free(image);
-	}
+	n[1].e = target;
+	n[2].i = level;
+	n[3].i = (GLint) internalFormat;
+	n[4].i = (GLint) width;
+	n[5].i = (GLint) height;
+	n[6].i = (GLint) depth;
+	n[7].i = border;
+	n[8].e = format;
+	n[9].e = type;
+	n[10].data = image;
 	if (ctx->ExecuteFlag) {
 	    CALL_TexImage3D(ctx->Exec, (target, level, internalFormat, width,
-					height, depth, border, format, type,
+			height, depth, border, format, type,
 					pixels));
 	}
     }
@@ -3656,17 +3615,13 @@ save_TexSubImage1D(GLenum target, GLint level, GLint xoffset,
 				 pixels, &ctx->Unpack);
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_TEX_SUB_IMAGE1D, 7);
-    if (n) {
-	n[1].e = target;
-	n[2].i = level;
-	n[3].i = xoffset;
-	n[4].i = (GLint) width;
-	n[5].e = format;
-	n[6].e = type;
-	n[7].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].e = target;
+    n[2].i = level;
+    n[3].i = xoffset;
+    n[4].i = (GLint) width;
+    n[5].e = format;
+    n[6].e = type;
+    n[7].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_TexSubImage1D(ctx->Exec, (target, level, xoffset, width,
 				       format, type, pixels));
@@ -3686,19 +3641,15 @@ save_TexSubImage2D(GLenum target, GLint level,
 				 pixels, &ctx->Unpack);
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_TEX_SUB_IMAGE2D, 9);
-    if (n) {
-	n[1].e = target;
-	n[2].i = level;
-	n[3].i = xoffset;
-	n[4].i = yoffset;
-	n[5].i = (GLint) width;
-	n[6].i = (GLint) height;
-	n[7].e = format;
-	n[8].e = type;
-	n[9].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].e = target;
+    n[2].i = level;
+    n[3].i = xoffset;
+    n[4].i = yoffset;
+    n[5].i = (GLint) width;
+    n[6].i = (GLint) height;
+    n[7].e = format;
+    n[8].e = type;
+    n[9].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_TexSubImage2D(ctx->Exec, (target, level, xoffset, yoffset,
 				       width, height, format, type, pixels));
@@ -3718,21 +3669,17 @@ save_TexSubImage3D(GLenum target, GLint level,
 				 pixels, &ctx->Unpack);
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_TEX_SUB_IMAGE3D, 11);
-    if (n) {
-	n[1].e = target;
-	n[2].i = level;
-	n[3].i = xoffset;
-	n[4].i = yoffset;
-	n[5].i = zoffset;
-	n[6].i = (GLint) width;
-	n[7].i = (GLint) height;
-	n[8].i = (GLint) depth;
-	n[9].e = format;
-	n[10].e = type;
-	n[11].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].e = target;
+    n[2].i = level;
+    n[3].i = xoffset;
+    n[4].i = yoffset;
+    n[5].i = zoffset;
+    n[6].i = (GLint) width;
+    n[7].i = (GLint) height;
+    n[8].i = (GLint) depth;
+    n[9].e = format;
+    n[10].e = type;
+    n[11].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_TexSubImage3D(ctx->Exec, (target, level,
 				       xoffset, yoffset, zoffset,
@@ -4027,17 +3974,13 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
 	}
 	MEMCPY(image, data, imageSize);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 7);
-	if (n) {
-	    n[1].e = target;
-	    n[2].i = level;
-	    n[3].e = internalFormat;
-	    n[4].i = (GLint) width;
-	    n[5].i = border;
-	    n[6].i = imageSize;
-	    n[7].data = image;
-	} else if (image) {
-	    _mesa_free(image);
-	}
+	n[1].e = target;
+	n[2].i = level;
+	n[3].e = internalFormat;
+	n[4].i = (GLint) width;
+	n[5].i = border;
+	n[6].i = imageSize;
+	n[7].data = image;
 	if (ctx->ExecuteFlag) {
 	    CALL_CompressedTexImage1DARB(ctx->Exec,
 					 (target, level, internalFormat, width,
@@ -4071,18 +4014,14 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
 	}
 	MEMCPY(image, data, imageSize);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 8);
-	if (n) {
-	    n[1].e = target;
-	    n[2].i = level;
-	    n[3].e = internalFormat;
-	    n[4].i = (GLint) width;
-	    n[5].i = (GLint) height;
-	    n[6].i = border;
-	    n[7].i = imageSize;
-	    n[8].data = image;
-	} else if (image) {
-	    _mesa_free(image);
-	}
+	n[1].e = target;
+	n[2].i = level;
+	n[3].e = internalFormat;
+	n[4].i = (GLint) width;
+	n[5].i = (GLint) height;
+	n[6].i = border;
+	n[7].i = imageSize;
+	n[8].data = image;
 	if (ctx->ExecuteFlag) {
 	    CALL_CompressedTexImage2DARB(ctx->Exec,
 					 (target, level, internalFormat, width,
@@ -4116,19 +4055,15 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
 	}
 	MEMCPY(image, data, imageSize);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 9);
-	if (n) {
-	    n[1].e = target;
-	    n[2].i = level;
-	    n[3].e = internalFormat;
-	    n[4].i = (GLint) width;
-	    n[5].i = (GLint) height;
-	    n[6].i = (GLint) depth;
-	    n[7].i = border;
-	    n[8].i = imageSize;
-	    n[9].data = image;
-	} else if (image) {
-	    _mesa_free(image);
-	}
+	n[1].e = target;
+	n[2].i = level;
+	n[3].e = internalFormat;
+	n[4].i = (GLint) width;
+	n[5].i = (GLint) height;
+	n[6].i = (GLint) depth;
+	n[7].i = border;
+	n[8].i = imageSize;
+	n[9].data = image;
 	if (ctx->ExecuteFlag) {
 	    CALL_CompressedTexImage3DARB(ctx->Exec,
 					 (target, level, internalFormat, width,
@@ -4158,17 +4093,13 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
     }
     MEMCPY(image, data, imageSize);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 7);
-    if (n) {
-	n[1].e = target;
-	n[2].i = level;
-	n[3].i = xoffset;
-	n[4].i = (GLint) width;
-	n[5].e = format;
-	n[6].i = imageSize;
-	n[7].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].e = target;
+    n[2].i = level;
+    n[3].i = xoffset;
+    n[4].i = (GLint) width;
+    n[5].e = format;
+    n[6].i = imageSize;
+    n[7].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_CompressedTexSubImage1DARB(ctx->Exec, (target, level, xoffset,
 					width, format, imageSize,
@@ -4197,19 +4128,15 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
     }
     MEMCPY(image, data, imageSize);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 9);
-    if (n) {
-	n[1].e = target;
-	n[2].i = level;
-	n[3].i = xoffset;
-	n[4].i = yoffset;
-	n[5].i = (GLint) width;
-	n[6].i = (GLint) height;
-	n[7].e = format;
-	n[8].i = imageSize;
-	n[9].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].e = target;
+    n[2].i = level;
+    n[3].i = xoffset;
+    n[4].i = yoffset;
+    n[5].i = (GLint) width;
+    n[6].i = (GLint) height;
+    n[7].e = format;
+    n[8].i = imageSize;
+    n[9].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_CompressedTexSubImage2DARB(ctx->Exec,
 					(target, level, xoffset, yoffset, width,
@@ -4238,21 +4165,17 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
     }
     MEMCPY(image, data, imageSize);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 11);
-    if (n) {
-	n[1].e = target;
-	n[2].i = level;
-	n[3].i = xoffset;
-	n[4].i = yoffset;
-	n[5].i = zoffset;
-	n[6].i = (GLint) width;
-	n[7].i = (GLint) height;
-	n[8].i = (GLint) depth;
-	n[9].e = format;
-	n[10].i = imageSize;
-	n[11].data = image;
-    } else if (image) {
-	_mesa_free(image);
-    }
+    n[1].e = target;
+    n[2].i = level;
+    n[3].i = xoffset;
+    n[4].i = yoffset;
+    n[5].i = zoffset;
+    n[6].i = (GLint) width;
+    n[7].i = (GLint) height;
+    n[8].i = (GLint) depth;
+    n[9].e = format;
+    n[10].i = imageSize;
+    n[11].data = image;
     if (ctx->ExecuteFlag) {
 	CALL_CompressedTexSubImage3DARB(ctx->Exec,
 					(target, level, xoffset, yoffset,
