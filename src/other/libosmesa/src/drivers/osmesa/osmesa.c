@@ -624,19 +624,21 @@ osmesa_choose_line_function(GLcontext *ctx)
 #define RENDER_SPAN( span ) {					\
    GLuint i;							\
    GLchan *img = PIXELADDR4(span.x, span.y); 			\
-   for (i = 0; i < span.end; i++, img += 4) {			\
-      const GLuint z = FixedToDepth(span.z);			\
-      if (z < zRow[i]) {					\
-         PACK_RGBA(img, FixedToChan(span.red),			\
-            FixedToChan(span.green), FixedToChan(span.blue),	\
-            FixedToChan(span.alpha));				\
-         zRow[i] = z;						\
-      }								\
-      span.red += span.redStep;					\
-      span.green += span.greenStep;				\
-      span.blue += span.blueStep;				\
-      span.alpha += span.alphaStep;				\
-      span.z += span.zStep;					\
+   if (zRow) {							\
+      for (i = 0; i < span.end; i++, img += 4) {		\
+         const GLuint z = FixedToDepth(span.z);			\
+         if (z < zRow[i]) {					\
+            PACK_RGBA(img, FixedToChan(span.red),		\
+               FixedToChan(span.green), FixedToChan(span.blue),	\
+               FixedToChan(span.alpha));			\
+            zRow[i] = z;					\
+         }							\
+         span.red += span.redStep;				\
+         span.green += span.greenStep;				\
+         span.blue += span.blueStep;				\
+         span.alpha += span.alphaStep;				\
+         span.z += span.zStep;					\
+      }                                                         \
    }                                                            \
 }
 #ifdef WIN32
