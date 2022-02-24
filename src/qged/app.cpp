@@ -290,16 +290,6 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	}
     }
 
-    // The display manager must sometimes be set up later to allow for
-    // initializations - make sure gedp knows the current dmp before we
-    // try to run a command.
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
-	if (v->dmp)
-	    bu_ptbl_ins_unique(gedp->ged_all_dmp, (long int *)v->dmp);
-    }
-    gedp->ged_dmp = curr_view->view()->dmp;
-
     if (!tmp_av.size()) {
 
 	// If we're not in the middle of an incremental command,
