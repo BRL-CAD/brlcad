@@ -3068,16 +3068,6 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
     if (expectedSize != imageSize)
 	return GL_INVALID_VALUE;
 
-#if FEATURE_EXT_texture_sRGB
-    if ((internalFormat == GL_COMPRESSED_SRGB_S3TC_DXT1_EXT ||
-	 internalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT ||
-	 internalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT ||
-	 internalFormat == GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT)
-	&& border != 0) {
-	return GL_INVALID_OPERATION;
-    }
-#endif
-
     return GL_NO_ERROR;
 }
 
