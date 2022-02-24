@@ -856,10 +856,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 			    GLfloat tmp = (z0 * FIXED_SCALE
 					   + span.attrStepX[FRAG_ATTRIB_WPOS][2] * adjx
 					   + span.attrStepY[FRAG_ATTRIB_WPOS][2] * adjy) + FIXED_HALF;
-			    if (tmp < MAX_GLUINT / 2)
+			    GLuint hmax = MAX_GLUINT / 2;
+			    if (tmp < (GLfloat)hmax)
 				zLeft = (GLfixed) tmp;
 			    else
-				zLeft = MAX_GLUINT / 2;
+				zLeft = hmax;
 			    fdzOuter = SignedFloatToFixed(span.attrStepY[FRAG_ATTRIB_WPOS][2] + dxOuter * span.attrStepX[FRAG_ATTRIB_WPOS][2]);
 			} else {
 			    /* interpolate depth values w/out scaling */
