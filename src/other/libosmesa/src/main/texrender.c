@@ -400,7 +400,7 @@ _mesa_render_texture(GLcontext *ctx,
     if (!att->Renderbuffer) {
 	err_check = wrap_texture(ctx, att);
     }
-    if (!err_check) {
+    if (!err_check && att->Renderbuffer) {
 	update_wrapper(ctx, att);
     }
 }
