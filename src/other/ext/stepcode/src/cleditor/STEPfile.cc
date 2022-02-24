@@ -828,7 +828,7 @@ SDAI_Application_instance *STEPfile::CreateInstance(istream &in, ostream &out)
     if(c == '&') {   // TODO check this out
         Severity s = CreateScopeInstances(in, &scopelist);
         if(s < SEVERITY_WARNING) {
-	    delete scopelist;
+	    delete[] scopelist;
             return ENTITY_NULL;
         }
         ReadTokenSeparator(in);
