@@ -1201,11 +1201,7 @@ const char *TYPEget_idl_type(const Type t)
     /*    case TYPE_ENUM:   */
     /*    case TYPE_SELECT: */
     if(class == enumeration_) {
-        strncpy(retval, EnumName(TYPEget_name(t)), BUFSIZ - 2);
-
-        strcat(retval, " /*");
-        strcat(retval, IdlEntityTypeName(t));
-        strcat(retval, "*/ ");
+	snprintf(retval, BUFSIZ - 2, "%s /*%s*/ ", EnumName(TYPEget_name(t)), IdlEntityTypeName(t));
         return retval;
     }
     if(class == select_)  {
