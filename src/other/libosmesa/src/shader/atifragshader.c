@@ -172,11 +172,6 @@ static int check_arith_arg(struct ati_fragment_shader *curProg,
 	_mesa_error(ctx, GL_INVALID_OPERATION, "C/AFragmentOpATI(sec_interp)");
 	return 0;
     }
-    if ((arg == GL_SECONDARY_INTERPOLATOR_ATI) && (((optype == 0) && (argRep == GL_ALPHA)) ||
-	    ((optype == 1) && ((arg == GL_ALPHA) || (argRep == GL_NONE))))) {
-	_mesa_error(ctx, GL_INVALID_OPERATION, "C/AFragmentOpATI(sec_interp)");
-	return 0;
-    }
     if ((curProg->cur_pass == 1) &&
 	((arg == GL_PRIMARY_COLOR_ARB) || (arg == GL_SECONDARY_INTERPOLATOR_ATI))) {
 	curProg->interpinp1 = GL_TRUE;
