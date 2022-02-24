@@ -561,7 +561,7 @@ static struct ureg emit_arith(struct texenv_fragment_program *p,
     if (!is_undef(src2) && src2.file == PROGRAM_TEMPORARY)
 	p->alu_temps |= 1 << src2.idx;
 
-    if (dest.idx >= 0 && dest.idx < INT_MAX && dest.file == PROGRAM_TEMPORARY)
+    if (dest.idx < INT_MAX && dest.file == PROGRAM_TEMPORARY)
 	p->alu_temps |= 1 << dest.idx;
 
     p->program->Base.NumAluInstructions++;
