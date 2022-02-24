@@ -3549,18 +3549,14 @@ save_TexImage1D(GLenum target,
 	Node *n;
 	ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, image);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_TEX_IMAGE1D, 8);
-	if (n) {
-	    n[1].e = target;
-	    n[2].i = level;
-	    n[3].i = components;
-	    n[4].i = (GLint) width;
-	    n[5].i = border;
-	    n[6].e = format;
-	    n[7].e = type;
-	    n[8].data = image;
-	} else if (image) {
-	    _mesa_free(image);
-	}
+	n[1].e = target;
+	n[2].i = level;
+	n[3].i = components;
+	n[4].i = (GLint) width;
+	n[5].i = border;
+	n[6].e = format;
+	n[7].e = type;
+	n[8].data = image;
 	if (ctx->ExecuteFlag) {
 	    CALL_TexImage1D(ctx->Exec, (target, level, components, width,
 					border, format, type, pixels));
