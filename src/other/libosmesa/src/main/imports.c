@@ -684,11 +684,6 @@ _mesa_float_to_half(float val)
 	    unsigned int exp_val = (unsigned int)(-14 - new_exp);  /* 2^-exp_val*/
 	    e = 0;
 	    switch (exp_val) {
-		case 0:
-		    _mesa_warning(NULL,
-				  "float_to_half: logical error in denorm creation!\n");
-		    /* m = 0; - already set */
-		    break;
 		case 1:
 		    m = 512 + (flt_m >> 14);
 		    break;
@@ -718,6 +713,10 @@ _mesa_float_to_half(float val)
 		    break;
 		case 10:
 		    m = 1;
+		    break;
+		default:
+		    _mesa_warning(NULL,
+				  "float_to_half: logical error in denorm creation!\n");
 		    break;
 	    }
 	} else if (new_exp > 15) {
