@@ -1595,10 +1595,13 @@ _mesa_add_color_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
 		rb->_ActualFormat = GL_RGB8;
 	} else {
 	    assert(rgbBits <= 16);
+#if 0
 	    if (alphaBits)
 		rb->_ActualFormat = GL_RGBA16;
 	    else
-		rb->_ActualFormat = GL_RGBA16; /* don't really have RGB16 yet */
+		rb->_ActualFormat = GL_RGB16; /* don't really have RGB16 yet */
+#endif
+	    rb->_ActualFormat = GL_RGBA16;
 	}
 	rb->InternalFormat = rb->_ActualFormat;
 
