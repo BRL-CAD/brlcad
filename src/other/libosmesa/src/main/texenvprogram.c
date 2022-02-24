@@ -532,7 +532,7 @@ emit_op(struct texenv_fragment_program *p,
 
     /* Accounting for indirection tracking:
      */
-    if (dest.file == PROGRAM_TEMPORARY && dest.idx >= 0 && dest.idx < INT_MAX)
+    if (dest.file == PROGRAM_TEMPORARY && dest.idx < INT_MAX)
 	p->temps_output |= 1 << dest.idx;
 
     return inst;
