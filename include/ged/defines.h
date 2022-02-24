@@ -257,11 +257,6 @@ struct ged {
 
     struct bu_ptbl		ged_subp; /**< @brief  forked sub-processes */
 
-    /* Interface to LIBDM */
-    struct bu_ptbl *ged_all_dmp;
-    void *ged_dmp;
-
-
     /* Callbacks */
 
     struct ged_callback_state    *ged_cbs;

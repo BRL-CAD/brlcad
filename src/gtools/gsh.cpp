@@ -188,8 +188,9 @@ geval(struct gsh_state *s, int argc, const char **argv)
 void
 view_checkpoint(struct gsh_state *s)
 {
-    if (s->gedp && s->gedp->ged_dmp) {
-	s->prev_dhash = (s->gedp->ged_dmp) ? dm_hash((struct dm *)s->gedp->ged_dmp) : 0;
+    if (s->gedp && s->gedp->ged_gvp && s->gedp->ged_gvp->dmp) {
+	struct dm *dmp = (struct dm *)s->gedp->ged_gvp->dmp;
+	s->prev_dhash = (dmp) ? dm_hash(dmp) : 0;
 	s->prev_vhash = bv_hash(s->gedp->ged_gvp);
 	s->prev_lhash = dl_name_hash(s->gedp);
 	s->prev_ghash = ged_dl_hash((struct display_list *)s->gedp->ged_gdp->gd_headDisplay);
@@ -199,12 +200,19 @@ view_checkpoint(struct gsh_state *s)
 void
 view_update(struct gsh_state *s)
 {
-    if (!s || !s->gedp || !s->gedp->ged_wdbp || !s->gedp->dbip || !s->gedp->ged_dmp)
+    if (!s || !s->gedp || !s->gedp->ged_wdbp || !s->gedp->dbip)
 	return;
 
     struct ged *gedp = s->gedp;
-    struct dm *dmp = (struct dm *)gedp->ged_dmp;
     struct bview *v = gedp->ged_gvp;
+
+    if (!v)
+	return;
+
+    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
+    if (!dmp)
+	return;
+
     unsigned long long dhash = dm_hash(dmp);
     unsigned long long vhash = bv_hash(gedp->ged_gvp);
     unsigned long long lhash = dl_name_hash(gedp);

@@ -197,14 +197,6 @@ ged_free(struct ged *gedp)
     }
     BU_PUT(gedp->free_scene_obj, struct bv_scene_obj);
 
-    /* Since libged does not link libdm, it's also the responsibility of the
-     * caller to close any display managers.  Client also frees the display
-     * managers - we just take care of the table.  If the caller is not
-     * otherwise tracking the dmp instances, they need to clean them up before
-     * calling ged_free */
-    bu_ptbl_free(gedp->ged_all_dmp);
-    BU_PUT(gedp->ged_all_dmp, struct bu_ptbl);
-
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->free_solids); i++) {
@@ -288,12 +280,6 @@ ged_init(struct ged *gedp)
     /* In principle we should be establishing an initial view here,
      * but Archer won't tolerate it. */
     gedp->ged_gvp = GED_VIEW_NULL;
-
-    /* Out of the gate we don't have display managers*/
-    gedp->ged_dmp = NULL;
-    gedp->ged_all_dmp = NULL;
-    BU_GET(gedp->ged_all_dmp, struct bu_ptbl);
-    bu_ptbl_init(gedp->ged_all_dmp, 8, "display managers");
 
     /* Create a non-opened fbserv */
     BU_GET(gedp->ged_fbs, struct fbserv_obj);

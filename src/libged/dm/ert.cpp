@@ -59,7 +59,12 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct dm *dmp = (struct dm *)gedp->ged_dmp;
+    if (!gedp->ged_gvp) {
+	bu_vls_printf(gedp->ged_result_str, "no current view set\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
     if (!dmp) {
 	bu_vls_printf(gedp->ged_result_str, "no current display manager set\n");
 	return BRLCAD_ERROR;
@@ -102,8 +107,8 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     args.push_back(std::to_string(fbs->fbs_listener.fbsl_port));
     args.push_back(std::string("-M"));
 
-    int width = dm_get_width((struct dm *)gedp->ged_dmp);
-    int height = dm_get_height((struct dm *)gedp->ged_dmp);
+    int width = dm_get_width(dmp);
+    int height = dm_get_height(dmp);
 
     args.push_back(std::string("-w"));
     args.push_back(std::to_string(width));

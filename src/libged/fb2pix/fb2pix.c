@@ -112,12 +112,17 @@ ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    if (!gedp->ged_dmp) {
-	bu_vls_printf(gedp->ged_result_str, "no display manager currently active");
+    if (!gedp->ged_gvp) {
+	bu_vls_printf(gedp->ged_result_str, ": no current view set\n");
 	return BRLCAD_ERROR;
     }
 
-    struct dm *dmp = (struct dm *)gedp->ged_dmp;
+    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
+    if (!dmp) {
+	bu_vls_printf(gedp->ged_result_str, ": no current display manager set\n");
+	return BRLCAD_ERROR;
+    }
+
     struct fb *fbp = dm_get_fb(dmp);
 
     if (!fbp) {

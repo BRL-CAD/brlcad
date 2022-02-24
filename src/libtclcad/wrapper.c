@@ -270,8 +270,6 @@ to_view_func_common(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gedp->ged_dmp = (struct dm *)gdvp->dmp;
-
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp;
     gedp->ged_refresh_clientdata = (void *)gdvp;
@@ -392,7 +390,6 @@ to_dm_func(struct ged *gedp,
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp;
-    gedp->ged_dmp = (void *)gdvp->dmp;
     gedp->ged_refresh_clientdata = (void *)gdvp;
     av[0] = (char *)argv[0];
     ac = argc-1;

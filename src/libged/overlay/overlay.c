@@ -103,12 +103,16 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (!gedp->ged_dmp) {
-	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
+    if (!gedp->ged_gvp) {
+	bu_vls_printf(gedp->ged_result_str, ": no current view set\n");
 	return BRLCAD_ERROR;
     }
 
-    dmp = (struct dm *)gedp->ged_dmp;
+    dmp = (struct dm *)gedp->ged_gvp->dmp;
+    if (!dmp) {
+	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
+	return BRLCAD_ERROR;
+    }
 
     /* must be wanting help */
     if (argc == 1) {

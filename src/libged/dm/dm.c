@@ -35,6 +35,8 @@
 
 #include "../ged_private.h"
 
+#define DM_MAX_TRIES 100
+
 #ifndef COMMA
 #  define COMMA ','
 #endif
@@ -68,6 +70,9 @@ struct dm *
 _dm_name_lookup(struct _ged_dm_info *gd, const char *dm_name)
 {
     struct dm *cdmp = NULL;
+    struct bview *gdvp = NULL;
+    struct dm *ndmp = NULL;
+
     if (!gd) {
 	return NULL;
     }
@@ -75,13 +80,28 @@ _dm_name_lookup(struct _ged_dm_info *gd, const char *dm_name)
 	bu_vls_printf(gd->gedp->ged_result_str, ": no DM specified and no current DM set in GED\n");
 	return NULL;
     }
-    if (!gd->gedp->ged_all_dmp || !BU_PTBL_LEN(gd->gedp->ged_all_dmp)) {
-	bu_vls_printf(gd->gedp->ged_result_str, ": no DMs defined in GED\n");
+
+    struct ged *gedp = gd->gedp;
+    if (!BU_PTBL_LEN(&gedp->ged_views)) {
+	bu_vls_printf(gedp->ged_result_str, ": no views defined in GED\n");
 	return NULL;
     }
-    for (size_t i = 0; i < BU_PTBL_LEN(gd->gedp->ged_all_dmp); i++) {
-	struct dm *ndmp = (struct dm *)BU_PTBL_GET(gd->gedp->ged_all_dmp, i);
-	if (BU_STR_EQUAL(dm_name, bu_vls_cstr(dm_get_pathname(ndmp)))) {
+    int dm_cnt = 0;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (!gdvp->dmp)
+	    continue;
+	dm_cnt++;
+    }
+    if (!dm_cnt) {
+	bu_vls_printf(gedp->ged_result_str, ": no views have associated DMs defined\n");
+	return NULL;
+    }
+
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	ndmp = (struct dm *)gdvp->dmp;
+	if (ndmp && BU_STR_EQUAL(dm_name, bu_vls_cstr(dm_get_pathname(ndmp)))) {
 	    cdmp = ndmp;
 	    break;
 	}
@@ -93,6 +113,34 @@ _dm_name_lookup(struct _ged_dm_info *gd, const char *dm_name)
     return cdmp;
 }
 
+static struct dm *
+_dm_find(struct _ged_dm_info *gd, struct bu_vls *name)
+{
+    if (!gd)
+	return NULL;
+
+    struct ged *gedp = gd->gedp;
+    if (!name) {
+	if (!gedp->ged_gvp) {
+	    bu_vls_printf(gedp->ged_result_str, ": no current view is set in GED\n");
+	    return NULL;
+	} else {
+	    if (!gedp->ged_gvp->dmp) {
+		bu_vls_printf(gedp->ged_result_str, ": no current DM is set in GED's current view\n");
+		return NULL;
+	    } else {
+		return (struct dm *)gedp->ged_gvp->dmp;
+	    }
+	}
+    }
+    if (name && gedp->ged_gvp && gedp->ged_gvp->dmp) {
+	struct dm *cdmp = (struct dm *)gedp->ged_gvp->dmp;
+	if (BU_STR_EQUAL(bu_vls_cstr(name), bu_vls_cstr(dm_get_pathname(cdmp))))
+	    return cdmp;
+    }
+
+    return _dm_name_lookup(gd, bu_vls_cstr(name));
+}
 
 int
 _dm_cmd_bg(void *ds, int argc, const char **argv)
@@ -106,27 +154,25 @@ _dm_cmd_bg(void *ds, int argc, const char **argv)
     argc--; argv++;
 
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
-
-    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
-    if (!cdmp) {
-	bu_vls_printf(gd->gedp->ged_result_str, ": no current DM set in GED\n");
+    struct ged *gedp = gd->gedp;
+    struct dm *cdmp = _dm_find(gd, NULL);
+    if (!cdmp)
 	return BRLCAD_ERROR;
-    }
 
     if (!argc) {
 	const unsigned char *dm_bg = dm_get_bg(cdmp);
 	if (dm_bg) {
-	    bu_vls_printf(gd->gedp->ged_result_str, "%d/%d/%d\n", (short)dm_bg[0], (short)dm_bg[1], (short)dm_bg[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%d/%d/%d\n", (short)dm_bg[0], (short)dm_bg[1], (short)dm_bg[2]);
 	    return BRLCAD_OK;
 	} else {
-	    bu_vls_printf(gd->gedp->ged_result_str, ": no background color available\n");
+	    bu_vls_printf(gedp->ged_result_str, ": no background color available\n");
 	    return BRLCAD_ERROR;
 	}
     }
 
     struct bu_color c;
     if (bu_opt_color(NULL, argc, argv, &c) == -1) {
-	bu_vls_printf(gd->gedp->ged_result_str, "invalid color specification\n");
+	bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
 	return BRLCAD_ERROR;
     }
     unsigned char n_bg[3];
@@ -148,14 +194,11 @@ _dm_cmd_type(void *ds, int argc, const char **argv)
     argc--; argv++;
 
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
-
-    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
+    struct dm *cdmp = _dm_find(gd, NULL);
     if (!cdmp) {
-	cdmp = _dm_name_lookup(gd, argv[0]);
-	if (!cdmp) {
-	    return BRLCAD_ERROR;
-	}
+	return BRLCAD_ERROR;
     }
+
     bu_vls_printf(gd->gedp->ged_result_str, "%s\n", dm_get_type(cdmp));
     return BRLCAD_OK;
 }
@@ -208,21 +251,44 @@ _dm_cmd_list(void *ds, int argc, const char **argv)
     argc--; argv++;
 
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
+    struct ged *gedp = gd->gedp;
 
-    if (!gd->gedp->ged_all_dmp || !BU_PTBL_LEN(gd->gedp->ged_all_dmp)) {
-	bu_vls_printf(gd->gedp->ged_result_str, ": no DMs defined in GED\n");
+    struct bview *cv = gedp->ged_gvp;
+    struct dm *cdmp = (struct dm *)cv->dmp;
+    if (cdmp) {
+	// Current dmp first, if we have a current instance
+	if (gd->verbosity) {
+	    bu_vls_printf(gedp->ged_result_str, " %s (%s)\n", bu_vls_cstr(dm_get_pathname(cdmp)), dm_get_type(cdmp));
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(dm_get_pathname(cdmp)));
+	}
+    }
+
+    if (!BU_PTBL_LEN(&gedp->ged_views) && !cdmp) {
+	bu_vls_printf(gedp->ged_result_str, ": no views defined in GED\n");
 	return BRLCAD_ERROR;
     }
-    for (size_t i = 0; i < BU_PTBL_LEN(gd->gedp->ged_all_dmp); i++) {
-	struct dm *ndmp = (struct dm *)BU_PTBL_GET(gd->gedp->ged_all_dmp, i);
+    int dm_cnt = 0;
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	if (!gdvp->dmp)
+	    continue;
+	dm_cnt++;
+    }
+    if (!dm_cnt && !cdmp) {
+	bu_vls_printf(gedp->ged_result_str, ": no views have associated DMs defined\n");
+	return BRLCAD_ERROR;
+    }
+
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	struct dm *ndmp = (struct dm *)gdvp->dmp;
+	if (!ndmp || ndmp == cdmp)
+	    continue;
 	if (gd->verbosity) {
-	    if (ndmp == (struct dm *)gd->gedp->ged_dmp) {
-		bu_vls_printf(gd->gedp->ged_result_str, "*%s (%s)\n", bu_vls_cstr(dm_get_pathname(ndmp)), dm_get_type(ndmp));
-	    } else {
-		bu_vls_printf(gd->gedp->ged_result_str, " %s (%s)\n", bu_vls_cstr(dm_get_pathname(ndmp)), dm_get_type(ndmp));
-	    }
+	    bu_vls_printf(gedp->ged_result_str, " %s (%s)\n", bu_vls_cstr(dm_get_pathname(ndmp)), dm_get_type(ndmp));
 	} else {
-	    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(dm_get_pathname(ndmp)));
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(dm_get_pathname(ndmp)));
 	}
     }
 
@@ -249,21 +315,10 @@ _dm_cmd_get(void *ds, int argc, const char **argv)
     int ac = bu_opt_parse(NULL, argc, argv, d);
 
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
-
-    struct ged *gedp = gd->gedp;
-    if (!gedp->ged_dmp && (!gedp->ged_all_dmp || !BU_PTBL_LEN(gedp->ged_all_dmp))) {
-	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active and none known to GED");
-	return BRLCAD_ERROR;
-    }
-
-
-    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
+    struct dm *cdmp = _dm_find(gd, &dm_name);
     if (!cdmp) {
-	cdmp = _dm_name_lookup(gd, bu_vls_cstr(&dm_name));
-	if (!cdmp) {
-	    bu_vls_free(&dm_name);
-	    return BRLCAD_ERROR;
-	}
+	bu_vls_free(&dm_name);
+	return BRLCAD_ERROR;
     }
 
     if (!ac) {
@@ -321,20 +376,10 @@ _dm_cmd_set(void *ds, int argc, const char **argv)
     int ac = bu_opt_parse(NULL, argc, argv, d);
 
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
-
-    struct ged *gedp = gd->gedp;
-    if (!gedp->ged_dmp && (!gedp->ged_all_dmp || !BU_PTBL_LEN(gedp->ged_all_dmp))) {
-	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active and none known to GED");
-	return BRLCAD_ERROR;
-    }
-
-    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
+    struct dm *cdmp = _dm_find(gd, &dm_name);
     if (!cdmp) {
-	cdmp = _dm_name_lookup(gd, bu_vls_cstr(&dm_name));
-	if (!cdmp) {
-	    bu_vls_free(&dm_name);
-	    return BRLCAD_ERROR;
-	}
+	bu_vls_free(&dm_name);
+	return BRLCAD_ERROR;
     }
 
     if (ac != 2) {
@@ -388,7 +433,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     struct bu_vls dm_name = BU_VLS_INIT_ZERO;
 
     if (argc != 1 && argc != 2) {
-	bu_vls_printf(gd->gedp->ged_result_str, "Usage: %s", usage_string);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", usage_string);
 	return BRLCAD_ERROR;
     }
 
@@ -396,25 +441,33 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	// No name - generate one
 	bu_vls_sprintf(&dm_name, "%s-0", argv[0]);
 	int exists = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_all_dmp); i++) {
-	    struct dm *ndmp = (struct dm *)BU_PTBL_GET(gedp->ged_all_dmp, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    struct dm *ndmp = (struct dm *)gdvp->dmp;
+	    if (!ndmp)
+		continue;
 	    if (BU_STR_EQUAL(bu_vls_cstr(dm_get_pathname(ndmp)), bu_vls_cstr(&dm_name))) {
 		exists = 1;
+		break;
 	    }
 	}
 	int tries = 0;
-	while (exists && tries < 100) {
+	while (exists && tries < DM_MAX_TRIES) {
 	    bu_vls_incr(&dm_name, NULL, "0:0:0:0:-", NULL, NULL);
 	    exists = 0;
-	    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_all_dmp); i++) {
-		struct dm *ndmp = (struct dm *)BU_PTBL_GET(gedp->ged_all_dmp, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+		struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+		struct dm *ndmp = (struct dm *)gdvp->dmp;
+		if (!ndmp)
+		    continue;
 		if (BU_STR_EQUAL(bu_vls_cstr(dm_get_pathname(ndmp)), bu_vls_cstr(&dm_name))) {
 		    exists = 1;
+		    break;
 		}
 	    }
 	    tries++;
 	}
-	if (tries == 100) {
+	if (tries == DM_MAX_TRIES) {
 	    bu_vls_printf(gedp->ged_result_str, "unable to generate DM name");
 	    bu_vls_free(&dm_name);
 	    return BRLCAD_ERROR;
@@ -423,10 +476,14 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	// Have name - see if it already exists
 	bu_vls_sprintf(&dm_name, "%s", argv[1]);
 	int exists = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_all_dmp); i++) {
-	    struct dm *ndmp = (struct dm *)BU_PTBL_GET(gedp->ged_all_dmp, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
+	    struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    struct dm *ndmp = (struct dm *)gdvp->dmp;
+	    if (!ndmp)
+		continue;
 	    if (BU_STR_EQUAL(bu_vls_cstr(dm_get_pathname(ndmp)), bu_vls_cstr(&dm_name))) {
 		exists = 1;
+		break;
 	    }
 	}
 	if (exists) {
@@ -436,23 +493,24 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	}
     }
 
-    if (!gedp->ged_gvp) {
-	bu_vls_printf(gedp->ged_result_str, "GED has no view defined, can't establish DM");
-	bu_vls_free(&dm_name);
-	return BRLCAD_ERROR;
-    } else {
-	// Make sure the view width and height are non-zero if we're in a
-	// "headless" mode without a graphical display
-	if (!gedp->ged_gvp->gv_width) {
-	    gedp->ged_gvp->gv_width = 512;
-	}
-	if (!gedp->ged_gvp->gv_height) {
-	    gedp->ged_gvp->gv_height = 512;
-	}
+    struct bview *target_view = (gedp->ged_gvp->dmp) ? NULL : gedp->ged_gvp;
+    if (!target_view) {
+	BU_GET(target_view, struct bview);
+	bv_init(target_view);
+	bu_ptbl_ins(&gedp->ged_views, (long *)target_view);
+    }
+
+    // Make sure the view width and height are non-zero if we're in a
+    // "headless" mode without a graphical display
+    if (!target_view->gv_width) {
+	target_view->gv_width = 512;
+    }
+    if (!target_view->gv_height) {
+	target_view->gv_height = 512;
     }
 
     if (!gedp->ged_ctx) {
-	gedp->ged_ctx = (void *)gedp->ged_gvp;
+	gedp->ged_ctx = (void *)target_view;
     }
 
     const char *acmd = "attach";
@@ -466,13 +524,11 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     dm_configure_win(dmp, 0);
     dm_set_pathname(dmp, bu_vls_cstr(&dm_name));
     dm_set_zbuffer(dmp, 1);
-    gedp->ged_gvp->dmp = dmp;
     fastf_t windowbounds[6] = { -1, 1, -1, 1, (int)GED_MIN, (int)GED_MAX };
     dm_set_win_bounds(dmp, windowbounds);
 
-    bu_ptbl_ins(gedp->ged_all_dmp, (long *)dmp);
-    if (!gedp->ged_dmp)
-	gedp->ged_dmp = dmp;
+    // We have the dmp - let the view know
+    target_view->dmp = dmp;
 
     return BRLCAD_OK;
 }
@@ -488,13 +544,13 @@ _dm_cmd_width(void *ds, int argc, const char **argv)
 
     argc--; argv++;
 
+    struct bu_vls tmpname = BU_VLS_INIT_ZERO;
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
-    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
+    bu_vls_sprintf(&tmpname, "%s", argv[0]);
+    struct dm *cdmp = _dm_find(gd, &tmpname);
+    bu_vls_free(&tmpname);
     if (!cdmp) {
-	cdmp = _dm_name_lookup(gd, argv[0]);
-	if (!cdmp) {
-	    return BRLCAD_ERROR;
-	}
+	return BRLCAD_ERROR;
     }
     bu_vls_printf(gd->gedp->ged_result_str, "%d\n", dm_get_width(cdmp));
     return BRLCAD_OK;
@@ -511,14 +567,15 @@ _dm_cmd_height(void *ds, int argc, const char **argv)
 
     argc--; argv++;
 
+    struct bu_vls tmpname = BU_VLS_INIT_ZERO;
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
-    struct dm *cdmp = (struct dm *)gd->gedp->ged_dmp;
+    bu_vls_sprintf(&tmpname, "%s", argv[0]);
+    struct dm *cdmp = _dm_find(gd, &tmpname);
+    bu_vls_free(&tmpname);
     if (!cdmp) {
-	cdmp = _dm_name_lookup(gd, argv[0]);
-	if (!cdmp) {
-	    return BRLCAD_ERROR;
-	}
+	return BRLCAD_ERROR;
     }
+
     bu_vls_printf(gd->gedp->ged_result_str, "%d\n", dm_get_height(cdmp));
     return BRLCAD_OK;
 }

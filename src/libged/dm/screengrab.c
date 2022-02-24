@@ -68,7 +68,6 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     unsigned char **rows = NULL;
     unsigned char *idata = NULL;
     struct icv_image *bif = NULL;	/**< icv image container for saving images */
-    struct dm *dmp = NULL;
     struct fb *fbp = NULL;
     bu_mime_image_t type = BU_MIME_IMAGE_AUTO;
     static char usage[] = "Usage: screengrab [-h] [-F] [--format fmt] [file.img]\n";
@@ -87,12 +86,16 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (!gedp->ged_dmp) {
-	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
+    if (!gedp->ged_gvp) {
+	bu_vls_printf(gedp->ged_result_str, ": no current view set\n");
 	return BRLCAD_ERROR;
     }
 
-    dmp = (struct dm *)gedp->ged_dmp;
+    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
+    if (!dmp) {
+	bu_vls_printf(gedp->ged_result_str, ": no current display manager set\n");
+	return BRLCAD_ERROR;
+    }
 
     /* must be wanting help */
     if (argc == 1) {

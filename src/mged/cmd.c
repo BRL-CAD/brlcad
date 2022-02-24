@@ -707,7 +707,7 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 
     if (!GEDP->ged_gvp)
 	GEDP->ged_gvp = view_state->vs_gvp;
-    GEDP->ged_dmp = (void *)mged_curr_dm->dm_dmp;
+    GEDP->ged_gvp->dmp = (void *)mged_curr_dm->dm_dmp;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);

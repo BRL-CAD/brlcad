@@ -55,12 +55,12 @@ ged_fbclear_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    if (!gedp->ged_dmp) {
+    if (!gedp->ged_gvp || !gedp->ged_gvp->dmp) {
 	bu_vls_printf(gedp->ged_result_str, "no display manager currently active");
 	return BRLCAD_ERROR;
     }
 
-    struct dm *dmp = (struct dm *)gedp->ged_dmp;
+    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
     struct fb *fbp = dm_get_fb(dmp);
 
     if (!fbp) {
