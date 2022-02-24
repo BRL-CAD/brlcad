@@ -21,7 +21,7 @@
 
 char *exppp_output_filename = (char *)0;    /* if this is set, override default output filename */
 #define EXPPP_FILENAME_LENGTH 1000
-char exppp_filename_buffer[EXPPP_FILENAME_LENGTH];           /* output file name */
+char exppp_filename_buffer[EXPPP_FILENAME_LENGTH + 1];           /* output file name */
 
 /* Only the first line is compared to an existing file, so putting a
  * version number in here won't cause problems. The actual version must
