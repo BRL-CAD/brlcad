@@ -32,8 +32,12 @@ add_definitions(-DUSE_MGL_NAMESPACE)
 
 # If we have a stripped down source tree, need to default
 # to off for extras
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/glu)
-  set(GLU_OPT_DEFAULT ON)
+if (NOT DEFINED OSMESA_BUNDLE_GLU OR OSMESA_BUNDLE_GLU)
+  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/glu)
+    set(GLU_OPT_DEFAULT ON)
+  else()
+    set(GLU_OPT_DEFAULT OFF)
+  endif()
 else()
   set(GLU_OPT_DEFAULT OFF)
 endif()
