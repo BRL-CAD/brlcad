@@ -37,8 +37,13 @@
 #include "tinygltf/tiny_gltf.h"
 
 #include "vmath.h"
-#include "bu/app.h"
+//#include "bu/app.h"
+//#include "raytrace.h" says no common in bu/avs.h file
 #include "wdb.h"
+//#include "rt/geom.h" same as others about no common
+
+//using namespace std;
+
 
 //print geometry (possibly)
 
@@ -362,11 +367,10 @@ static void gathershapeinfo(const tinygltf::Model &model, int &numvert, int &num
 	}
 
 	std::cout << "Number of Faces: " << numfaces << std::endl;
-	delete[] faces;
     }
 
     {
-	int bot_pos = 0;
+	int bot_pos;
 	testingStringIntMap(model.meshes[0].primitives[0].attributes, bot_pos);
 
 	//assume 1 accessor, 1 bufferview
@@ -399,7 +403,6 @@ static void gathershapeinfo(const tinygltf::Model &model, int &numvert, int &num
 	std::cout << "Number of vertices: " << numvert << std::endl;
 	std:: cout << "Stride Count : " << byte_stride << std::endl;
 
-	delete[] vertices;
     }
     return ;
 
@@ -437,7 +440,7 @@ static void insertvectorfaces(const tinygltf::Model &model, double vertices[], i
     }
 
     {
-	int bot_pos = 0;
+	int bot_pos;
 	testingStringIntMap(model.meshes[0].primitives[0].attributes, bot_pos);
 
 	//assume 1 accessor, 1 bufferview
@@ -474,7 +477,7 @@ static void insertvectorfaces(const tinygltf::Model &model, double vertices[], i
 
 }
 
-static std::string GetFilePathExtension(const std::string &FileName)
+static std::string GetFilePathExtension(const std::string &FileName) 
 {
     if (FileName.find_last_of(".") != std::string::npos)
     {
@@ -488,17 +491,16 @@ int main(int argc, char **argv)
 {
     bool store_original_json_for_extras_and_extensions = false;
 
-    if (argc < 2)
+    if (argc < 2) 
     {
 	printf("Needs input.gltf\n");
 	exit(1);
     }
 
-    bu_setprogname(argv[0]);
-
     if (argc > 2) {
 	store_original_json_for_extras_and_extensions = true;
     }
+
 
     tinygltf::Model model;
     std::string err;
