@@ -206,6 +206,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
     span.x = 0;
     span.y = 0;
     span.z = 0;
+    span.zStep = 0;
 
     if (!ctx->ReadBuffer->_ColorReadBuffer) {
 	/* no readbuffer - OK */

@@ -602,9 +602,9 @@ texture_combine(const GLcontext *ctx, GLuint unit, GLuint n,
 #if CHAN_TYPE == GL_FLOAT
 		    GLchan a = arg0[i][ACOMP] * Amult;
 #else
-		    GLuint a = (arg0[i] && arg0[i][ACOMP]) ? (GLuint) arg0[i][ACOMP] << Ashift : 0;
+		    GLuint a = (arg0[i][ACOMP]) ? (GLuint) arg0[i][ACOMP] << Ashift : 0;
 #endif
-		    if (rgba[i] && rgba[i][ACOMP])
+		    if (rgba[i][ACOMP])
 			rgba[i][ACOMP] = (GLchan) MIN2(a, CHAN_MAX);
 		}
 	    } else {
