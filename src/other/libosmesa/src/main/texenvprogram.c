@@ -535,7 +535,7 @@ emit_op(struct texenv_fragment_program *p,
 #ifdef __clang_analyzer__
     if (dest.file == PROGRAM_TEMPORARY && dest.idx >= 0 && dest.idx < INT_MAX)
 #else
-    if (dest.file == PROGRAM_TEMPORARY && dest.idx < INT_MAX)
+    if (dest.file == PROGRAM_TEMPORARY)
 #endif
 	p->temps_output |= 1 << dest.idx;
 
