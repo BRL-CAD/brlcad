@@ -52,6 +52,13 @@
     GLfloat majDx, majDy;  /* major (i.e. long) edge dx and dy */
 
     SWspan span;
+    for (int i = 0; i < FRAG_ATTRIB_MAX; i++) {
+	for (int j = 0; j < 4; j++) {
+	    span.attrStart[i][j] = 0;
+	    span.attrStepX[i][j] = 0;
+	    span.attrStepY[i][j] = 0;
+	}
+    }
 
 #ifdef DO_Z
     GLfloat zPlane[4];

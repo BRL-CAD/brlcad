@@ -568,7 +568,7 @@ static struct ureg emit_arith(struct texenv_fragment_program *p,
 #ifdef __clang_analyzer__
     if (dest.idx >= 0 && dest.idx < INT_MAX && dest.file == PROGRAM_TEMPORARY)
 #else
-    if (dest.idx < INT_MAX && dest.file == PROGRAM_TEMPORARY)
+    if (dest.file == PROGRAM_TEMPORARY)
 #endif
 	p->alu_temps |= 1 << dest.idx;
 
@@ -597,18 +597,22 @@ static struct ureg emit_texld(struct texenv_fragment_program *p,
     p->program->Base.NumTexInstructions++;
 
     /* Is this a texture indirection?
-     */
+    */
+#ifdef __clang_analyzer__
     if (coord.idx < INT_MAX && dest.idx < INT_MAX ) {
-	if ((coord.file == PROGRAM_TEMPORARY &&
-		    (p->temps_output & (1<<coord.idx))) ||
-		(dest.file == PROGRAM_TEMPORARY &&
-		 (p->alu_temps & (1<<dest.idx)))) {
-	    p->program->Base.NumTexIndirections++;
-	    p->temps_output = 1<<coord.idx;
-	    p->alu_temps = 0;
-	    assert(0);		/* KW: texture env crossbar */
-	}
+#endif
+    if ((coord.file == PROGRAM_TEMPORARY &&
+		(p->temps_output & (1<<coord.idx))) ||
+	    (dest.file == PROGRAM_TEMPORARY &&
+	     (p->alu_temps & (1<<dest.idx)))) {
+	p->program->Base.NumTexIndirections++;
+	p->temps_output = 1<<coord.idx;
+	p->alu_temps = 0;
+	assert(0);		/* KW: texture env crossbar */
     }
+#ifdef __clang_analyzer__
+    }
+#endif
 
     return dest;
 }

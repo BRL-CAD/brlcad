@@ -609,7 +609,7 @@ texture_combine(const GLcontext *ctx, GLuint unit, GLuint n,
 		}
 	    } else {
 		for (i = 0; i < n; i++) {
-		    if (rgba[i] && arg0[i] && rgba[i][ACOMP] && arg0[i][ACOMP])
+		    if (rgba[i][ACOMP] && arg0[i][ACOMP])
 			rgba[i][ACOMP] = arg0[i][ACOMP];
 		}
 	    }

@@ -71,6 +71,9 @@ NAME(GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1)
 {
     const SWcontext *swrast = SWRAST_CONTEXT(ctx);
     SWspan span;
+    span.x = 0;
+    span.y = 0;
+    span.z = 0;
     GLuint interpFlags = 0;
     GLint x0 = (GLint) vert0->win[0];
     GLint x1 = (GLint) vert1->win[0];

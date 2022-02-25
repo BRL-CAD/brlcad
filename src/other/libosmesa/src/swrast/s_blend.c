@@ -791,7 +791,7 @@ static void
 blend_general(GLcontext *ctx, GLuint n, const GLubyte mask[],
 	      void *src, const void *dst, GLenum chanType)
 {
-    GLfloat rgbaF[MAX_WIDTH][4], destF[MAX_WIDTH][4];
+    GLfloat rgbaF[MAX_WIDTH][4] = {0.0}, destF[MAX_WIDTH][4] = {0.0};
 
     if (chanType == GL_UNSIGNED_BYTE) {
 	GLubyte(*rgba)[4] = (GLubyte(*)[4]) src;

@@ -196,6 +196,16 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
     GLint overlapping;
     GLuint transferOps = ctx->_ImageTransferState;
     SWspan span;
+    for (int i = 0; i < FRAG_ATTRIB_MAX; i++) {
+	for (int j = 0; j < 4; j++) {
+	    span.attrStart[i][j] = 0;
+	    span.attrStepX[i][j] = 0;
+	    span.attrStepY[i][j] = 0;
+	}
+    }
+    span.x = 0;
+    span.y = 0;
+    span.z = 0;
 
     if (!ctx->ReadBuffer->_ColorReadBuffer) {
 	/* no readbuffer - OK */
@@ -441,6 +451,13 @@ copy_depth_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
     const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
     GLint overlapping;
     SWspan span;
+    for (int i = 0; i < FRAG_ATTRIB_MAX; i++) {
+	for (int j = 0; j < 4; j++) {
+	    span.attrStart[i][j] = 0;
+	    span.attrStepX[i][j] = 0;
+	    span.attrStepY[i][j] = 0;
+	}
+    }
 
     if (!readRb) {
 	/* no readbuffer - OK */

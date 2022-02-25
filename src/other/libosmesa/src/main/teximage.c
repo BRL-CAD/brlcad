@@ -3050,11 +3050,6 @@ compressed_texture_error_check(GLcontext *ctx, GLint dimensions,
 	&& dimensions > 1)
 	return GL_INVALID_VALUE;
 
-    if ((depth < 1 || depth > maxTextureSize ||
-	 (!ctx->Extensions.ARB_texture_non_power_of_two && _mesa_bitcount(depth) != 1))
-	&& dimensions > 2)
-	return GL_INVALID_VALUE;
-
     /* For cube map, width must equal height */
     if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
 	target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB && width != height)

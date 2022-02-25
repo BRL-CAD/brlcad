@@ -749,6 +749,10 @@ _mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
 	/* This block is full.  Allocate a new block and chain to it */
 	Node *newblock = NULL;
 	n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
+#ifdef __clang_analyzer__
+	if (!n)
+	    return NULL;
+#endif
 	n[0].opcode = OPCODE_CONTINUE;
 	newblock = (Node *) _mesa_malloc(sizeof(Node) * BLOCK_SIZE);
 	if (!newblock) {
@@ -761,6 +765,10 @@ _mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
     }
 
     n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
+#ifdef __clang_analyzer__
+    if (!n)
+	return NULL;
+#endif
     ctx->ListState.CurrentPos += numNodes;
     n[0].opcode = (OpCode) opcode;
     return (void *)(n + 1);      /* return ptr to node following opcode */

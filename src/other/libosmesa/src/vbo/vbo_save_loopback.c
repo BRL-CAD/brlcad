@@ -164,7 +164,7 @@ void vbo_loopback_vertex_list(GLcontext *ctx,
 			      GLuint wrap_count,
 			      GLuint vertex_size)
 {
-    struct loopback_attr la[VBO_ATTRIB_MAX];
+    struct loopback_attr la[VBO_ATTRIB_MAX] = {0};
     GLuint i, nr = 0;
 
     /* All Legacy, NV, ARB and Material attributes are routed through
