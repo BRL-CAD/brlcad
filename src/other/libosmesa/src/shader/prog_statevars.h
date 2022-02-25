@@ -45,7 +45,7 @@
  * always be the array index.
  */
 typedef enum gl_state_index_ {
-    STATE_MATERIAL = 100,  /* start at 100 so small ints are seen as ints */
+    STATE_MATERIAL = 0,
 
     STATE_LIGHT,
     STATE_LIGHTMODEL_AMBIENT,
