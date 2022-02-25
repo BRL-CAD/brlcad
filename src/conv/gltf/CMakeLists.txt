@@ -7,16 +7,13 @@ BRLCAD_INCLUDE_DIRS(GLTF_CONV_INCLUDE_DIRS)
 
 BRLCAD_ADDEXEC(gltf-g gltf-g.cpp "libwdb;librt;libnmg;libbu" FOLDER Conv)
 
+FILE(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/tinygltf.dist" tinygltf_files)
 CMAKEFILES(
+  ${tinygltf_files}
   CMakeLists.txt
   baseColor.png
   blob.glb
-  tinygltf/LICENSE
-  tinygltf/README.md
-  tinygltf/json.hpp
-  tinygltf/stb_image.h
-  tinygltf/stb_image_write.h
-  tinygltf/tiny_gltf.h
+  tinygltf.dist
   )
 
 # Local Variables:
