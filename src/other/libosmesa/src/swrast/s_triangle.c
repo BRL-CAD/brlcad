@@ -203,25 +203,27 @@ _swrast_culltriangle(GLcontext *ctx,
    GLchan rgb[MAX_WIDTH][3];						\
    span.intTex[0] -= FIXED_HALF; /* off-by-one error? */		\
    span.intTex[1] -= FIXED_HALF;					\
-   for (i = 0; i < span.end; i++) {					\
-      const GLuint z = FixedToDepth(span.z);				\
-      if (z < zRow[i]) {						\
-         GLint s = FixedToInt(span.intTex[0]) & smask;			\
-         GLint t = FixedToInt(span.intTex[1]) & tmask;			\
-         GLint pos = (t << twidth_log2) + s;				\
-         pos = pos + pos + pos;  /* multiply by 3 */			\
-         rgb[i][RCOMP] = texture[pos];					\
-         rgb[i][GCOMP] = texture[pos+1];				\
-         rgb[i][BCOMP] = texture[pos+2];				\
-         zRow[i] = z;							\
-         span.array->mask[i] = 1;					\
+   if (zRow) {								\
+      for (i = 0; i < span.end; i++) {					\
+         const GLuint z = FixedToDepth(span.z);				\
+         if (z < zRow[i]) {						\
+            GLint s = FixedToInt(span.intTex[0]) & smask;		\
+            GLint t = FixedToInt(span.intTex[1]) & tmask;		\
+            GLint pos = (t << twidth_log2) + s;				\
+            pos = pos + pos + pos;  /* multiply by 3 */			\
+            rgb[i][RCOMP] = texture[pos];				\
+            rgb[i][GCOMP] = texture[pos+1];				\
+            rgb[i][BCOMP] = texture[pos+2];				\
+            zRow[i] = z;						\
+            span.array->mask[i] = 1;					\
+         }								\
+         else {								\
+            span.array->mask[i] = 0;					\
+         }								\
+         span.intTex[0] += span.intTexStep[0];				\
+         span.intTex[1] += span.intTexStep[1];				\
+         span.z += span.zStep;						\
       }									\
-      else {								\
-         span.array->mask[i] = 0;					\
-      }									\
-      span.intTex[0] += span.intTexStep[0];				\
-      span.intTex[1] += span.intTexStep[1];				\
-      span.z += span.zStep;						\
    }									\
    rb->PutRowRGB(ctx, rb, span.end, span.x, span.y, rgb, span.array->mask);
 
@@ -884,23 +886,27 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
       GLuint i;								\
       const GLushort *zRow = (const GLushort *)				\
          rb->GetPointer(ctx, rb, span.x, span.y);			\
-      for (i = 0; i < span.end; i++) {					\
-         GLuint z = FixedToDepth(span.z);				\
-         if (z < zRow[i]) {						\
-            q->Result++;						\
+      if (zRow) {							\
+         for (i = 0; i < span.end; i++) {				\
+            GLuint z = FixedToDepth(span.z);				\
+            if (z < zRow[i]) {						\
+               q->Result++;						\
+            }								\
+            span.z += span.zStep;					\
          }								\
-         span.z += span.zStep;						\
       }									\
    }									\
    else {								\
       GLuint i;								\
       const GLuint *zRow = (const GLuint *)				\
          rb->GetPointer(ctx, rb, span.x, span.y);			\
-      for (i = 0; i < span.end; i++) {					\
-         if ((GLuint)span.z < zRow[i]) {				\
-            q->Result++;						\
+      if (zRow) {							\
+         for (i = 0; i < span.end; i++) {				\
+            if ((GLuint)span.z < zRow[i]) {				\
+               q->Result++;						\
+            }								\
+            span.z += span.zStep;					\
          }								\
-         span.z += span.zStep;						\
       }									\
    }
 #include "s_tritemp.h"
