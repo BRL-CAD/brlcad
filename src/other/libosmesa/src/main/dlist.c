@@ -762,14 +762,8 @@ _mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
 
     n = ctx->ListState.CurrentBlock + ctx->ListState.CurrentPos;
     ctx->ListState.CurrentPos += numNodes;
-
-    if (n) {
-	n[0].opcode = (OpCode) opcode;
-
-	return (void *)(n + 1);      /* return ptr to node following opcode */
-    }
-
-    return NULL;
+    n[0].opcode = (OpCode) opcode;
+    return (void *)(n + 1);      /* return ptr to node following opcode */
 }
 
 
