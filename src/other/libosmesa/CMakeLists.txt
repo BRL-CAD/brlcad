@@ -16,7 +16,7 @@ endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
 
 find_package(Threads REQUIRED)
 if (CMAKE_USE_PTHREADS_INIT)
-  add_definitions(-DHAVE_PTHREAD)
+  add_definitions(-DPTHREADS)
 endif (CMAKE_USE_PTHREADS_INIT)
 
 include(CheckLibraryExists)
@@ -24,12 +24,6 @@ check_library_exists(m cos "" HAVE_M_LIBRARY)
 if (HAVE_M_LIBRARY)
   set(M_LIBRARY m)
 endif (HAVE_M_LIBRARY)
-
-include(CheckIncludeFiles)
-check_include_files(endian.h HAVE_ENDIAN_H)
-if (HAVE_ENDIAN_H)
-  add_definitions(-DPTHREADS)
-endif (HAVE_ENDIAN_H)
 
 # The point is to be separate from system OpenGL,
 # so define the mangling headers to produce mgl_
