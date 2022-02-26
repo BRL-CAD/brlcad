@@ -154,6 +154,7 @@ main(int argc, const char *argv[])
 	std::regex rw_regex(".*[\\/]misc/repowork[\\/].*");
 	std::regex d_regex(".*[\\/]doc[\\/].*");
 	std::regex l_regex(".*[\\/]embedded_check.cpp");
+	std::regex gltf_regex(".*[\\/]tinygltf[\\/].*");
 	std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
 	std::regex svn_regex(".*[\\/][.]svn[\\/].*");
 	std::string root_path(argv[3]);
@@ -221,7 +222,7 @@ main(int argc, const char *argv[])
 	    if (std::regex_match(sfile, o_regex) || std::regex_match(sfile, t_regex)
 		    || std::regex_match(sfile, r_regex) || std::regex_match(sfile, c_regex)
 		    || std::regex_match(sfile, d_regex) ||  std::regex_match(sfile, l_regex)
-		    || std::regex_match(sfile, rw_regex)) {
+		    || std::regex_match(sfile, rw_regex) || std::regex_match(sfile, gltf_regex)) {
 		continue;
 	    }
 	    if (!std::regex_match(std::string(sfile), srcfile_regex)) {
