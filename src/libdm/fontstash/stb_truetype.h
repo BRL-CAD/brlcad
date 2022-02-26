@@ -3149,11 +3149,13 @@ static void stbtt__fill_active_edges_new(float *scanline, float *scanline_fill, 
                   t = sy0, sy0 = sy1, sy1 = t;
                   t = x_bottom, x_bottom = x_top, x_top = t;
                   //dx = -dx;
-                  //dy = -dy;
-                  //t = x0, x0 = xb, xb = t;
+                  dy = -dy;
+                  //t = x0;
+                  x0 = xb;
+                  //xb = t;
                }
                STBTT_assert(dy >= 0);
-               STBTT_assert(dx >= 0);
+               //STBTT_assert(dx >= 0);
 
                x1 = (int) x_top;
                x2 = (int) x_bottom;
