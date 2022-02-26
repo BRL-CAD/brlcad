@@ -26,7 +26,6 @@ cmake/schema_scanner/CMakeLists.txt
 cmake/schema_scanner/README
 cmake/schema_scanner/schemaScanner.cc
 cmake/schema_scanner/schemaScanner.cmake
-cmake/sync_generated.cmake.in
 cmake/test_srcs/sys_wait_test.c
 ctest_matrix.cmake
 data/CMakeLists.txt
@@ -133,7 +132,6 @@ example/ap203min/CMakeLists.txt
 example/ap203min/ExternalProjectBuild/CMakeLists.txt
 example/ap203min/ExternalProjectBuild/cmake/External_STEPCode.cmake
 example/ap203min/ap203min.cpp
-example/ap203min/include/sc_cf.h.in
 include/CMakeLists.txt
 include/exppp/exppp.h
 include/express/alg.h
@@ -173,7 +171,6 @@ misc/astyle.cfg
 misc/flawfinder
 misc/kate-syntax-highlighting-express.xml
 misc/notepad++-syntax-highlighting-express.xml
-misc/summarize-appveyor-log.go
 misc/wiki-scripts/build_all.sh
 misc/wiki-scripts/update-matrix.py
 run_ctest.cmake
