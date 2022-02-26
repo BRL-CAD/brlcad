@@ -86,7 +86,7 @@ if (BUILD_STATIC_LIBS)
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
-endif (BUILD_STATIC_LIBS)
+endif()
 
 # TODO
 # Currently, fedex.c provides the main() for multiple programs. These programs
@@ -107,7 +107,6 @@ install(TARGETS check-express
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
-
 
 if(SC_ENABLE_TESTING)
   add_subdirectory(test)

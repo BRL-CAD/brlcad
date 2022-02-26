@@ -138,12 +138,6 @@ if(SC_ENABLE_TESTING)
   include(CTest)
 endif(SC_ENABLE_TESTING)
 
-# TODO - BRL-CAD is the only known user of this option, and it will be
-# transitioning to a new setup that won't need it - once that's done,
-# we should just remove this option.
-option(SC_SKIP_EXEC_INSTALL "Skip installing executables" OFF)
-mark_as_advanced(SC_SKIP_EXEC_INSTALL)
-
 # SC_ADDEXEC and SC_ADDLIB macros, dllimport/export, etc
 include(SC_Targets)
 
@@ -156,7 +150,7 @@ include(SC_Locale)
 # logic related to regenerating the lexer and parser source code
 include(SC_Regenerate)
 
-# create config headers sc_cf.h and sc_version_string.h
+# create config header sc_cf.h
 include(SC_Config_Headers)
 
 if(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS)
@@ -165,11 +159,10 @@ endif(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS)
 
 if(NOT DEFINED SC_BUILD_SCHEMAS)
   list(APPEND CONFIG_END_MESSAGES
-    "** CMake variable SC_BUILD_SCHEMAS was not set. Defaults to building ALL schemas, which will take a"
-    "     while; see http://stepcode.org/mw/index.php?title=STEPcode_CMake_variables#SC_BUILD_SCHEMAS")
+    "** Note: CMake variable SC_BUILD_SCHEMAS was not set - defaults to building ALL schemas")
 #this makes SC_BUILD_SCHEMAS show up in cmake-gui
   set(SC_BUILD_SCHEMAS "ALL" CACHE STRING "Semicolon-separated list of paths to EXPRESS schemas to be built")
-endif(NOT DEFINED SC_BUILD_SCHEMAS)
+endif()
 
 if(NOT SC_IS_SUBBUILD)
   list(APPEND CONFIG_END_MESSAGES
