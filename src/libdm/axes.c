@@ -272,16 +272,13 @@ dm_draw_hud_axes(struct dm		        *dmp,
 	    fastf_t czly = zly + bnasp->axes_pos[Y];
 	    // If we're not within the -1:1 range, OpenGL won't accept the
 	    // raster position as valid, glRasterPos will silently fail, and
-	    // odd things happen - clamp.
-	    cxlx = (cxlx > 1) ? 1 : (cxlx < -1) ? -1 : cxlx;
-	    cxly = (cxly > 1) ? 1 : (cxly < -1) ? -1 : cxly;
-	    cylx = (cylx > 1) ? 1 : (cylx < -1) ? -1 : cylx;
-	    cyly = (cyly > 1) ? 1 : (cyly < -1) ? -1 : cyly;
-	    czlx = (czlx > 1) ? 1 : (czlx < -1) ? -1 : czlx;
-	    czly = (czly > 1) ? 1 : (czly < -1) ? -1 : czly;
-	    dm_draw_string_2d(dmp, "X", cxlx, cxly, 1, 1);
-	    dm_draw_string_2d(dmp, "Y", cylx, cyly, 1, 1);
-	    dm_draw_string_2d(dmp, "Z", czlx, czly, 1, 1);
+	    // odd things happen.  Only draw when we're valid.
+	    if ((cxlx >= -1 && cxlx <= 1) && (cxly >= -1 && cxly <= 1))
+		dm_draw_string_2d(dmp, "X", cxlx, cxly, 1, 1);
+	    if ((cylx >= -1 && cylx <= 1) && (cyly >= -1 && cyly <= 1))
+		dm_draw_string_2d(dmp, "Y", cylx, cyly, 1, 1);
+	    if ((czlx >= -1 && czlx <= 1) && (czly >= -1 && czly <= 1))
+		dm_draw_string_2d(dmp, "Z", czlx, czly, 1, 1);
 	}
     }
 
