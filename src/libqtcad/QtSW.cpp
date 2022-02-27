@@ -363,7 +363,7 @@ void QtSW::aet(double a, double e, double t)
 
     VMOVE(v->gv_aet, aet);
 
-    /* TODO - based on the suspect _ged_mat_aet... */
+    /* TODO - based on the suspect bv_mat_aet... */
     mat_t tmat;
     fastf_t twist;
     fastf_t c_twist;

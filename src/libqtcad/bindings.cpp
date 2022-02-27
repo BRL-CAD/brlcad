@@ -26,37 +26,93 @@
 #include "common.h"
 
 extern "C" {
+#include "bn/str.h"
 #include "bv/defines.h"
 #include "bv/util.h"
 }
 
 #include "bindings.h"
 
-int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyEvent *UNUSED(k))
+int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyEvent *k)
 {
-
     if (!v)
 	return 0;
-    //QString kstr = QKeySequence(k->key()).toString();
-    //bu_log("%s\n", kstr.toStdString().c_str());
-#if 0
+    QString kstr = QKeySequence(k->key()).toString();
+    bu_log("%s\n", kstr.toStdString().c_str());
+
     switch (k->key()) {
-	case '=':
-	    m_renderer->res_incr();
-	    emit renderRequested();
-	    update();
-	    return;
-	    break;
-	case '-':
-	    m_renderer->res_decr();
-	    emit renderRequested();
-	    update();
-	    return;
+	case 'A':
+	    v->gv_s->gv_adc.draw = !v->gv_s->gv_adc.draw;
+	    return 1;
+	case 'M':
+	    v->gv_s->gv_model_axes.draw = !v->gv_s->gv_model_axes.draw;
+	    return 1;
+	case 'V':
+	    v->gv_s->gv_view_axes.draw = !v->gv_s->gv_view_axes.draw;
+	    return 1;
+	case '2':
+	    bn_decode_vect(v->gv_aet, "35 -25 0");
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	case '3':
+	    bn_decode_vect(v->gv_aet, "35 25 0");
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	case '4':
+	    bn_decode_vect(v->gv_aet, "45 45 0");
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	case '5':
+	    bn_decode_vect(v->gv_aet, "145 25 0");
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	case '6':
+	    bn_decode_vect(v->gv_aet, "215 25 0");
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	case '7':
+	    bn_decode_vect(v->gv_aet, "325 25 0");
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	case 'F':
+	    bn_decode_vect(v->gv_aet, "0 0 0");
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	case 'T':
+	    bn_decode_vect(v->gv_aet, "270 90 0");
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	case 'B':
+	    bn_decode_vect(v->gv_aet, "270 -90 0");
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	case 'L':
+	    bn_decode_vect(v->gv_aet, "90 0 0");
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	case 'R':
+	    if (k->modifiers().testFlag(Qt::ShiftModifier) == true) {
+		bn_decode_vect(v->gv_aet, "180 0 0");
+	    } else {
+		bn_decode_vect(v->gv_aet, "270 0 0");
+	    }
+	    bv_mat_aet(v);
+	    bv_update(v);
+	    return 1;
+	default:
 	    break;
     }
-#endif
     return 0;
-
 }
 
 int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e)

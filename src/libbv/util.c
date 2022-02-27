@@ -81,7 +81,7 @@ bv_init(struct bview *gvp)
     gvp->gv_s = &gvp->gv_ls;
 
     /* FIXME: this causes the shaders.sh regression to fail */
-    /* _ged_mat_aet(gvp); */
+    /* bv_mat_aet(gvp); */
 
     gvp->gv_tcl.gv_prim_labels.gos_draw = 0;
     VSET(gvp->gv_tcl.gv_prim_labels.gos_text_color, 255, 255, 0);
@@ -127,6 +127,31 @@ bv_free(struct bview *gvp)
 	BU_PUT(gvp->gv_ls.gv_selected, struct bu_ptbl);
 	gvp->gv_ls.gv_selected = NULL;
     }
+}
+
+
+/**
+ * FIXME: this routine is suspect and needs investigating.  if run
+ * during view initialization, the shaders regression test fails.
+ */
+void
+bv_mat_aet(struct bview *v)
+{
+    mat_t tmat;
+    fastf_t twist;
+    fastf_t c_twist;
+    fastf_t s_twist;
+
+    bn_mat_angles(v->gv_rotation,
+                  270.0 + v->gv_aet[1],
+                  0.0,
+                  270.0 - v->gv_aet[0]);
+
+    twist = -v->gv_aet[2] * DEG2RAD;
+    c_twist = cos(twist);
+    s_twist = sin(twist);
+    bn_mat_zrot(tmat, s_twist, c_twist);
+    bn_mat_mul2(tmat, v->gv_rotation);
 }
 
 void

@@ -37,6 +37,12 @@ __BEGIN_DECLS
 BV_EXPORT extern void bv_init(struct bview *v);
 BV_EXPORT extern void bv_free(struct bview *v);
 
+/**
+ * FIXME: this routine is suspect and needs investigating.  if run
+ * during view initialization, the shaders regression test fails.
+ */
+BV_EXPORT void bv_mat_aet(struct bview *v);
+
 BV_EXPORT extern void bv_settings_init(struct bview_settings *s);
 
 /* Copy the size and camera info (deliberately not a full copy of all view state) */

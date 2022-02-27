@@ -97,7 +97,7 @@ ged_lookat_core(struct ged *gedp, int argc, const char *argv[])
     bn_ae_vec(&new_az, &new_el, dir);
 
     VSET(gedp->ged_gvp->gv_aet, new_az, new_el, gedp->ged_gvp->gv_aet[Z]);
-    _ged_mat_aet(gedp->ged_gvp);
+    bv_mat_aet(gedp->ged_gvp);
 
     VJOIN1(new_center, eye, -gedp->ged_gvp->gv_scale, dir);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_center);

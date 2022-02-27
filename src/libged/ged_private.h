@@ -525,7 +525,6 @@ GED_EXPORT extern int _ged_translate_tgc(struct ged *gedp,
 			      int rflag);
 
 /* defined in vutil.c */
-GED_EXPORT extern void _ged_mat_aet(struct bview *gvp);
 GED_EXPORT extern int _ged_do_rot(struct ged *gedp,
 		       char coord,
 		       mat_t rmat,
