@@ -75,7 +75,7 @@ static int
 swrast_makeCurrent(struct dm *dmp)
 {
     struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
- 
+
     if (!pv || !pv->ctx || !pv->v) {
 	bu_log("swrast_configureWin: Couldn't make context current\n");
 	return BRLCAD_ERROR;
@@ -325,25 +325,32 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
  * The starting position of the beam is as specified.
  */
 static int
-swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+swrast_drawString2D(struct dm *dmp, const char *str, fastf_t ix, fastf_t iy, int UNUSED(size), int use_aspect)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     struct swrast_vars *privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel)
 	bu_log("swrast_drawString2D()\n");
 
-    // If we're given coordinates out of the view bounds that's OK, but we're
-    // not going to do any drawing - just return.
-    if (!(x >= -1 && x <= 1) || !(y >= -1 && y <= 1))
-	return BRLCAD_OK;
+    // If the positions are out of range on the positive side, just don't draw -
+    // text will go to the right and not be visible
+    fastf_t x = ix;
+    fastf_t y = (use_aspect) ? iy * dmp->i->dm_aspect : iy;
+    if (x > 1 || y > 1)
+       return BRLCAD_OK;
+
+    // If we're given coordinates out of the view bounds to the left we need to do
+    // some shifting so the gl raster position routines can work - we may need to do
+    // partial drawing if the text is long enough.
+    int nxc = (x < -1) ? 1 : 0;
+    int nyc = (y < -1) ? 1 : 0;
+    x = (nxc) ? x + 2 : x;
+    y = (nyc) ? y + 2 : y;
 
     if (privars->fontNormal != FONS_INVALID) {
 
 	/* First, we set the position using glRasterPos2f like ogl does */
-	if (use_aspect)
-	    glRasterPos2f(x, y * dmp->i->dm_aspect);
-	else
-	    glRasterPos2f(x, y);
+	glRasterPos2f(x, y);
 
 	/* Next, we set up for fontstash */
 	fastf_t font_size = dm_get_fontsize(dmp);
@@ -369,7 +376,8 @@ swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int U
 	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
 	fastf_t coord_x = pos[0];
 	fastf_t coord_y = (fastf_t)dm_get_height(dmp)-pos[1];
-	//printf("%f:%f,%f:%f\n",x, coord_x, y, coord_y);
+	coord_x = (nxc) ? -1*(dm_get_width(dmp) - coord_x) : coord_x;
+	coord_y = (nyc) ? coord_y + (fastf_t)dm_get_height(dmp) : coord_y;
 
 	// Have info and OpenGL state, do the text drawing
 	fonsSetFont(privars->fs, privars->fontNormal);
@@ -395,16 +403,26 @@ swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int U
 }
 
 static int
-swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *str, fastf_t ix, fastf_t iy, int UNUSED(size), int use_aspect)
 {
     struct swrast_vars *privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel)
 	bu_log("qtgl_drawString2D()\n");
 
-    // If we're given coordinates out of the view bounds we're not going to do
-    // any drawing - no bounds to return.
-    if (!(x >= -1 && x <= 1) || !(y >= -1 && y <= 1))
+    // If the positions are out of range on the positive side, just don't draw -
+    // text will go to the right and not be visible
+    fastf_t x = ix;
+    fastf_t y = (use_aspect) ? iy * dmp->i->dm_aspect : iy;
+    if (x > 1 || y > 1)
 	return BRLCAD_ERROR;
+
+    // If we're given coordinates out of the view bounds to the left we need to do
+    // some shifting so the gl raster position routines can work - we may need to do
+    // partial drawing if the text is long enough.
+    int nxc = (x < -1) ? 1 : 0;
+    int nyc = (y < -1) ? 1 : 0;
+    x = (nxc) ? x + 2 : x;
+    y = (nyc) ? y + 2 : y;
 
     if (privars->fontNormal != FONS_INVALID) {
 
@@ -412,20 +430,8 @@ swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *
 	GLfloat rasterpos[4];
 	glGetFloatv(GL_CURRENT_RASTER_POSITION, rasterpos);
 
-	/* Try to set the new position using glRasterPos2f like ogl does */
-	if (use_aspect)
-	    glRasterPos2f(x, y * dmp->i->dm_aspect);
-	else
-	    glRasterPos2f(x, y);
-
-	/* Check if this position is valid.  If it is not, no text
-	 * will be drawn and there are no bounds to return */
-	GLboolean valid = 1;
-	glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
-	if (!valid) {
-	    glRasterPos3f(rasterpos[0], rasterpos[1], rasterpos[2]);
-	    return BRLCAD_ERROR;
-	}
+	/* First, we set the position using glRasterPos2f like ogl does */
+	glRasterPos2f(x, y);
 
 	/* Next, we set up for fontstash */
 	fastf_t font_size = dm_get_fontsize(dmp);
@@ -441,6 +447,8 @@ swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *
 	glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
 	fastf_t coord_x = pos[0];
 	fastf_t coord_y = (fastf_t)dm_get_height(dmp)-pos[1];
+	coord_x = (nxc) ? -1*(dm_get_width(dmp) - coord_x) : coord_x;
+	coord_y = (nyc) ? coord_y + (fastf_t)dm_get_height(dmp) : coord_y;
 
 	// Have info and OpenGL state, proceed
 	fonsSetFont(privars->fs, privars->fontNormal);
