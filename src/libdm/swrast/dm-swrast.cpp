@@ -332,6 +332,11 @@ swrast_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int U
     if (dmp->i->dm_debugLevel)
 	bu_log("swrast_drawString2D()\n");
 
+    // If we're given coordinates out of the view bounds that's OK, but we're
+    // not going to do any drawing - just return.
+    if (!(x >= -1 && x <= 1) || !(y >= -1 && y <= 1))
+	return BRLCAD_OK;
+
     if (privars->fontNormal != FONS_INVALID) {
 
 	/* First, we set the position using glRasterPos2f like ogl does */
@@ -395,6 +400,11 @@ swrast_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *
     struct swrast_vars *privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel)
 	bu_log("qtgl_drawString2D()\n");
+
+    // If we're given coordinates out of the view bounds we're not going to do
+    // any drawing - no bounds to return.
+    if (!(x >= -1 && x <= 1) || !(y >= -1 && y <= 1))
+	return BRLCAD_ERROR;
 
     if (privars->fontNormal != FONS_INVALID) {
 

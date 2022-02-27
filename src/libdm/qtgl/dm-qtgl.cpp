@@ -303,6 +303,11 @@ qtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 
     gl_debug_print(dmp, "qtgl_drawString2D", dmp->i->dm_debugLevel);
 
+    // If we're given coordinates out of the view bounds that's OK, but we're
+    // not going to do any drawing - just return.
+    if (!(x >= -1 && x <= 1) || !(y >= -1 && y <= 1))
+	return BRLCAD_OK;
+
     if (privars->fontNormal != FONS_INVALID) {
 
 	/* First, we set the position using glRasterPos2f like ogl does */
@@ -385,6 +390,11 @@ qtgl_String2DBBox(struct dm *dmp, vect2d_t *bmin, vect2d_t *bmax, const char *st
     struct qtgl_vars *privars = (struct qtgl_vars *)dmp->i->dm_vars.priv_vars;
 
     gl_debug_print(dmp, "qtgl_String2DBBox", dmp->i->dm_debugLevel);
+
+    // If we're given coordinates out of the view bounds we're not going to do
+    // any drawing - no bounds to return.
+    if (!(x >= -1 && x <= 1) || !(y >= -1 && y <= 1))
+	return BRLCAD_ERROR;
 
     // TODO - match the state management here to the actual drawing of text in
     // the function above.
