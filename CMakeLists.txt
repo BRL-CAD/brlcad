@@ -1063,7 +1063,7 @@ if(NOT MSVC)
   # verbose warning flags.  we intentionally try to turn on as many as
   # possible.  adding more is encouraged (as long as all issues are
   # fixed first).
-  if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
+  if(BRLCAD_ENABLE_WARNINGS OR BRLCAD_ENABLE_STRICT)
     # also of interest:
     # -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
     # -Wformat=2 (after bu_fopen_uniq() is obsolete)
@@ -1149,7 +1149,7 @@ if(NOT MSVC)
     CHECK_C_FLAG(Wdocumentation)
     CHECK_CXX_FLAG(Wdocumentation)
 
-  endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
+  endif(BRLCAD_ENABLE_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
   if(BRLCAD_ENABLE_COVERAGE)
     # TODO: These seem to GCC specific flags - should probably set up for clang

@@ -371,14 +371,14 @@ if(BRLCAD_FLAGS_DEBUG)
 endif(BRLCAD_FLAGS_DEBUG)
 
 # Build with compiler warning flags
-set(BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION "
-Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
+set(BRLCAD_ENABLE_WARNINGS_DESCRIPTION "
+Use extra warning flags when compiling C/C++ code.  Defaults to ON.
 ")
-BRLCAD_OPTION(BRLCAD_ENABLE_COMPILER_WARNINGS ON
+BRLCAD_OPTION(BRLCAD_ENABLE_WARNINGS ON
   TYPE BOOL
   ALIASES ENABLE_WARNINGS ENABLE_COMPILER_WARNINGS
   DESCRIPTION BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
-mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
+mark_as_advanced(BRLCAD_ENABLE_WARNINGS)
 
 # Enable/disable strict compiler settings - these are used for building BRL-CAD
 # by default, but not src/other code.  Always used for BRL-CAD code unless the

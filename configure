@@ -46,13 +46,13 @@ do
                                   shift;;
      --disable-debug-flags)                options="$options -DBRLCAD_FLAGS_DEBUG=OFF";
                                   shift;;
-     --enable-warnings)                options="$options -DBRLCAD_ENABLE_COMPILER_WARNINGS=ON";
+     --enable-warnings)                options="$options -DBRLCAD_ENABLE_WARNINGS=ON";
                                   shift;;
-     --disable-warnings)                options="$options -DBRLCAD_ENABLE_COMPILER_WARNINGS=OFF";
+     --disable-warnings)                options="$options -DBRLCAD_ENABLE_WARNINGS=OFF";
                                   shift;;
-     --enable-compiler-warnings)                options="$options -DBRLCAD_ENABLE_COMPILER_WARNINGS=ON";
+     --enable-compiler-warnings)                options="$options -DBRLCAD_ENABLE_WARNINGS=ON";
                                   shift;;
-     --disable-compiler-warnings)                options="$options -DBRLCAD_ENABLE_COMPILER_WARNINGS=OFF";
+     --disable-compiler-warnings)                options="$options -DBRLCAD_ENABLE_WARNINGS=OFF";
                                   shift;;
      --enable-strict)                options="$options -DBRLCAD_ENABLE_STRICT=ON";
                                   shift;;

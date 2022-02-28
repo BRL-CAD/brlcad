@@ -386,9 +386,7 @@ Add compiler flags to aid in program debugging.  Defaults to ON.
 Aliases:  ENABLE_DEBUG, ENABLE_FLAGS_DEBUG, ENABLE_DEBUG_FLAGS
 
 
---- BRLCAD_ENABLE_COMPILER_WARNINGS ---
-
-Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
+--- BRLCAD_ENABLE_WARNINGS ---
 
 Aliases:  ENABLE_WARNINGS, ENABLE_COMPILER_WARNINGS
 
