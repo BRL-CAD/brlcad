@@ -62,6 +62,12 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
         void changeToQuadFrame();
         void changeToResizeableQuadFrame();
 
+	void enableDefaultKeyBindings();
+	void disableDefaultKeyBindings();
+
+	void enableDefaultMouseBindings();
+	void disableDefaultMouseBindings();
+
     signals:
 	void changed();
 	void selected(QtCADView *);

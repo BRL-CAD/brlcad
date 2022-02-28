@@ -190,7 +190,7 @@ void QtSW::resizeEvent(QResizeEvent *e)
 
 void QtSW::keyPressEvent(QKeyEvent *k) {
 
-    if (!dmp || !current) {
+    if (!dmp || !current || !use_default_keybindings) {
 	QWidget::keyPressEvent(k);
 	return;
     }
@@ -211,7 +211,7 @@ void QtSW::keyPressEvent(QKeyEvent *k) {
 
 void QtSW::mousePressEvent(QMouseEvent *e) {
 
-    if (!dmp || !current) {
+    if (!dmp || !current || !use_default_mousebindings) {
 	QWidget::mousePressEvent(e);
 	return;
     }
@@ -238,7 +238,7 @@ void QtSW::mousePressEvent(QMouseEvent *e) {
 
 void QtSW::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!dmp || !current) {
+    if (!dmp || !current || !use_default_mousebindings) {
 	QWidget::mouseMoveEvent(e);
 	return;
     }
@@ -268,7 +268,7 @@ void QtSW::mouseMoveEvent(QMouseEvent *e)
 
 void QtSW::wheelEvent(QWheelEvent *e) {
 
-    if (!dmp || !current) {
+    if (!dmp || !current || !use_default_mousebindings) {
 	QWidget::wheelEvent(e);
 	return;
     }
@@ -377,6 +377,31 @@ void QtSW::aet(double a, double e, double t)
 
     bv_update(v);
 }
+
+void
+QtSW::enableDefaultKeyBindings()
+{
+    use_default_keybindings = true;
+}
+
+void
+QtSW::disableDefaultKeyBindings()
+{
+    use_default_keybindings = false;
+}
+
+void
+QtSW::enableDefaultMouseBindings()
+{
+    use_default_mousebindings = true;
+}
+
+void
+QtSW::disableDefaultMouseBindings()
+{
+    use_default_mousebindings = false;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

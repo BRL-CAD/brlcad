@@ -71,6 +71,12 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 	void (*draw_custom)(struct bview *, double, double, void *) = NULL;
 	void *draw_udata = NULL;
 
+	void enableDefaultKeyBindings();
+	void disableDefaultKeyBindings();
+
+	void enableDefaultMouseBindings();
+	void disableDefaultMouseBindings();
+
     signals:
 	void changed();
 
@@ -90,6 +96,9 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
     private:
 	unsigned long long prev_dhash = 0;
 	unsigned long long prev_vhash = 0;
+
+	bool use_default_keybindings = true;
+	bool use_default_mousebindings = true;
 
 	bool m_init = false;
 	int x_prev = -INT_MAX;

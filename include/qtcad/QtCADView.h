@@ -90,6 +90,12 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	void add_event_filter(QObject *);
 	void clear_event_filter(QObject *);
 
+	void enableDefaultKeyBindings();
+	void disableDefaultKeyBindings();
+
+	void enableDefaultMouseBindings();
+	void disableDefaultMouseBindings();
+
     signals:
 	void changed();
 

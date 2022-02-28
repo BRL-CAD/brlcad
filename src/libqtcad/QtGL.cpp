@@ -181,7 +181,7 @@ void QtGL::need_update()
 
 void QtGL::keyPressEvent(QKeyEvent *k) {
 
-    if (!dmp || !current) {
+    if (!dmp || !current || !use_default_keybindings) {
 	QOpenGLWidget::keyPressEvent(k);
 	return;
     }
@@ -202,7 +202,7 @@ void QtGL::keyPressEvent(QKeyEvent *k) {
 
 void QtGL::mousePressEvent(QMouseEvent *e) {
 
-    if (!dmp || !current) {
+    if (!dmp || !current || !use_default_mousebindings) {
 	QOpenGLWidget::mousePressEvent(e);
 	return;
     }
@@ -228,7 +228,7 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
 
 void QtGL::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!dmp || !current) {
+    if (!dmp || !current || !use_default_mousebindings) {
 	QOpenGLWidget::mouseMoveEvent(e);
 	return;
     }
@@ -258,7 +258,7 @@ void QtGL::mouseMoveEvent(QMouseEvent *e)
 
 void QtGL::wheelEvent(QWheelEvent *e) {
 
-    if (!dmp || !current) {
+    if (!dmp || !current || !use_default_mousebindings) {
 	QOpenGLWidget::wheelEvent(e);
 	return;
     }
@@ -359,6 +359,29 @@ void QtGL::aet(double a, double e, double t)
     bv_update(v);
 }
 
+void
+QtGL::enableDefaultKeyBindings()
+{
+    use_default_keybindings = true;
+}
+
+void
+QtGL::disableDefaultKeyBindings()
+{
+    use_default_keybindings = false;
+}
+
+void
+QtGL::enableDefaultMouseBindings()
+{
+    use_default_mousebindings = true;
+}
+
+void
+QtGL::disableDefaultMouseBindings()
+{
+    use_default_mousebindings = false;
+}
 
 // Local Variables:
 // tab-width: 8

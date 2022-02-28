@@ -434,6 +434,68 @@ QtCADView::set_draw_custom(void (*draw_custom)(struct bview *, double, double, v
     }
 }
 
+void
+QtCADView::enableDefaultKeyBindings()
+{
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->enableDefaultKeyBindings();
+	return;
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->enableDefaultKeyBindings();
+	return;
+    }
+}
+
+void
+QtCADView::disableDefaultKeyBindings()
+{
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->disableDefaultKeyBindings();
+	return;
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->disableDefaultKeyBindings();
+	return;
+    }
+}
+
+void
+QtCADView::enableDefaultMouseBindings()
+{
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->enableDefaultMouseBindings();
+	return;
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->enableDefaultMouseBindings();
+	return;
+    }
+
+
+}
+
+void
+QtCADView::disableDefaultMouseBindings()
+{
+#ifdef BRLCAD_OPENGL
+    if (canvas_gl) {
+	canvas_gl->disableDefaultMouseBindings();
+	return;
+    }
+#endif
+    if (canvas_sw) {
+	canvas_sw->disableDefaultMouseBindings();
+	return;
+    }
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
