@@ -379,16 +379,20 @@ Aliases:  ENABLE_RUNTIME_DEBUG, ENABLE_RUN_TIME_DEBUG, ENABLE_RUNTIME_DEBUGGING
           ENABLE_RUN_TIME_DEBUGGING
 
 
---- BRLCAD_FLAGS_DEBUG ---
+--- BRLCAD_DEBUGGING ---
 
 Add compiler flags to aid in program debugging.  Defaults to ON.
 
 Aliases:  ENABLE_DEBUG, ENABLE_FLAGS_DEBUG, ENABLE_DEBUG_FLAGS
+          BRLCAD_FLAGS_DEBUG
 
 
---- BRLCAD_ENABLE_WARNINGS ---
+--- BRLCAD_WARNINGS ---
+
+Use extra warning flags when compiling C/C++ code.  Defaults to ON.
 
 Aliases:  ENABLE_WARNINGS, ENABLE_COMPILER_WARNINGS
+          BRLCAD_ENABLE_COMPILER_WARNINGS
 
 
 --- BRLCAD_ENABLE_STRICT ---

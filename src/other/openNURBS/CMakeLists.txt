@@ -41,9 +41,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 include(CMakeDependentOption)
 cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT MSVC" OFF)
 
-if(BRLCAD_FLAGS_DEBUG)
+if(BRLCAD_DEBUG)
   add_definitions(${DEBUG_CXX_FLAGS})
-endif(BRLCAD_FLAGS_DEBUG)
+endif(BRLCAD_DEBUG)
 
 # build shared libs by default
 if(NOT DEFINED BUILD_SHARED_LIBS)

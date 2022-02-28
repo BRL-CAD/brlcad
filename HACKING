@@ -899,7 +899,7 @@ binaries in the path/to/builddir/src/libbu/tests build directory.
 A profile build, useful for some types of performance inspection
 (e.g., gprof) but not enabled by default, may be specified via:
 
-   cmake .. -DBRLCAD_ENABLE_PROFILING=ON
+   cmake .. -DBRLCAD_PROFILING=ON
 
 Debug symbols are enabled by default, even for installation, for all
 libraries and binaries in order to facilitate diagnosing and

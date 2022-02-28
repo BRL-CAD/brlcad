@@ -356,29 +356,29 @@ endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
 # Enable debug flags during compilation - we always want to use these unless
 # explicitly told not to.
-set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
+set(BRLCAD_DEBUGGING_DESCRIPTION "
 Add compiler flags to aid in program debugging.  Defaults to ON.
 ")
-BRLCAD_OPTION(BRLCAD_FLAGS_DEBUG ON
+BRLCAD_OPTION(BRLCAD_DEBUGGING ON
   TYPE BOOL
-  ALIASES ENABLE_DEBUG ENABLE_FLAGS_DEBUG ENABLE_DEBUG_FLAGS
-  DESCRIPTION BRLCAD_FLAGS_DEBUG_DESCRIPTION)
+  ALIASES ENABLE_DEBUG ENABLE_FLAGS_DEBUG ENABLE_DEBUG_FLAGS BRLCAD_FLAGS_DEBUG
+  DESCRIPTION BRLCAD_DEBUGGING_DESCRIPTION)
 
 # A variety of debugging messages in the code key off of the DEBUG definition -
 # set it according to whether we're using debug flags.
-if(BRLCAD_FLAGS_DEBUG)
+if(BRLCAD_DEBUGGING)
   CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
-endif(BRLCAD_FLAGS_DEBUG)
+endif(BRLCAD_DEBUGGING)
 
 # Build with compiler warning flags
-set(BRLCAD_ENABLE_WARNINGS_DESCRIPTION "
+set(BRLCAD_WARNINGS_DESCRIPTION "
 Use extra warning flags when compiling C/C++ code.  Defaults to ON.
 ")
-BRLCAD_OPTION(BRLCAD_ENABLE_WARNINGS ON
+BRLCAD_OPTION(BRLCAD_WARNINGS ON
   TYPE BOOL
   ALIASES ENABLE_WARNINGS ENABLE_COMPILER_WARNINGS BRLCAD_ENABLE_COMPILER_WARNINGS
-  DESCRIPTION BRLCAD_ENABLE_WARNINGS_DESCRIPTION)
-mark_as_advanced(BRLCAD_ENABLE_WARNINGS)
+  DESCRIPTION BRLCAD_WARNINGS_DESCRIPTION)
+mark_as_advanced(BRLCAD_WARNINGS)
 
 # Enable/disable strict compiler settings - these are used for building BRL-CAD
 # by default, but not src/other code.  Always used for BRL-CAD code unless the
@@ -403,20 +403,20 @@ endif(BRLCAD_ENABLE_STRICT)
 # release builds and off otherwise, unless the user specifically enables it.
 # For multi-config build tools, this is managed on a per-configuration basis.
 if(CMAKE_BUILD_TYPE)
-  cmake_dependent_option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" ON "${CMAKE_BUILD_TYPE} STREQUAL Release" OFF)
+  cmake_dependent_option(BRLCAD_OPTIMIZED "Enable optimized compilation" ON "${CMAKE_BUILD_TYPE} STREQUAL Release" OFF)
 else(CMAKE_BUILD_TYPE)
   # Note: the cmake_dependent_option test doesn't work if CMAKE_BUILD_TYPE isn't set.
-  option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" OFF)
+  option(BRLCAD_OPTIMIZED "Enable optimized compilation" OFF)
 endif(CMAKE_BUILD_TYPE)
-mark_as_advanced(BRLCAD_OPTIMIZED_BUILD)
+mark_as_advanced(BRLCAD_OPTIMIZED)
 
 # Build with full compiler lines visible by default (won't need make VERBOSE=1)
 # on command line
-option(BRLCAD_ENABLE_VERBOSE "verbose output" OFF)
-mark_as_advanced(BRLCAD_ENABLE_VERBOSE)
-if(BRLCAD_ENABLE_VERBOSE)
+option(BRLCAD_VERBOSE "verbose output" OFF)
+mark_as_advanced(BRLCAD_VERBOSE)
+if(BRLCAD_VERBOSE)
   set(CMAKE_VERBOSE_MAKEFILE ON)
-endif(BRLCAD_ENABLE_VERBOSE)
+endif(BRLCAD_VERBOSE)
 
 # Build with profile-guided optimization support.  this requires a two-pass
 # compile, once with BRLCAD_PGO=ON on a location that did not exist beforehand
@@ -455,11 +455,11 @@ if(BRLCAD_ENABLE_DTRACE)
 endif(BRLCAD_ENABLE_DTRACE)
 
 # Take advantage of parallel processors if available - highly recommended
-option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
-mark_as_advanced(BRLCAD_ENABLE_SMP)
-if(BRLCAD_ENABLE_SMP)
+option(BRLCAD_SMP "Enable SMP architecture parallel computation support" ON)
+mark_as_advanced(BRLCAD_SMP)
+if(BRLCAD_SMP)
   CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
-endif(BRLCAD_ENABLE_SMP)
+endif(BRLCAD_SMP)
 
 if(BRLCAD_HEADERS_OLD_COMPAT)
   add_definitions(-DEXPOSE_FB_HEADER)

@@ -646,7 +646,7 @@ if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO"
 endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO" AND NOT MSVC)
 
 # Debugging flags
-if(BRLCAD_FLAGS_DEBUG)
+if(BRLCAD_DEBUGGING)
   CHECK_C_FLAG(g GROUPS DEBUG_C_FLAGS)
   CHECK_CXX_FLAG(g GROUPS DEBUG_CXX_FLAGS)
   if(APPLE)
@@ -675,7 +675,7 @@ if(BRLCAD_FLAGS_DEBUG)
   ADD_NEW_FLAG(SHARED_LINKER DEBUG_C_FLAGS "${debug_config_list}")
   ADD_NEW_FLAG(EXE_LINKER DEBUG_C_FLAGS "${debug_config_list}")
   mark_as_advanced(DEBUG_FLAGS)
-endif(BRLCAD_FLAGS_DEBUG)
+endif(BRLCAD_DEBUGGING)
 
 
 # Warn if no minimum compilation linkage is set for Mac systems
@@ -702,15 +702,15 @@ elseif(HAVE_INLINE_KEYWORD)
   CONFIG_H_APPEND(BRLCAD "#endif /* !inline && !__cplusplus */\n")
 endif(NOT HAVE_INLINE_KEYWORD AND HAVE___INLINE_KEYWORD)
 
-# If doing an optimized build, set _FORTIFY_SOURCE to 2.  Provides
+# If building optimized, set _FORTIFY_SOURCE to 2.  Provides
 # compile-time best-practice error checking on certain libc functions
 # (e.g., memcpy), and provides run-time checks on buffer lengths and
 # memory regions.  Unfortunately, glibc-1.6 made _FORTIFY_SOURCE spew
 # an unquellable warning if optimization is disabled so we can't tie
 # the flag to debug builds.
-if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
+if(${BRLCAD_OPTIMIZED} MATCHES "ON")
   CONFIG_H_APPEND(BRLCAD "#ifndef _FORTIFY_SOURCE\n#  define _FORTIFY_SOURCE 2\n#endif\n")
-endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
+endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 
 # Enable this flag for additional reporting of undefined symbols.
 # TODO: Fixing these is a work in progress.
@@ -993,19 +993,18 @@ if(NOT MSVC)
   # only omit the frame pointer if we have no interest in profiling or
   # debugging.
 
-  if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
-    if(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
+  if(${BRLCAD_OPTIMIZED} MATCHES "ON")
+    if(NOT BRLCAD_PROFILING AND NOT BRLCAD_DEBUGGING)
       CHECK_C_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
       CHECK_CXX_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_CXX_FLAGS)
-    else(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
+    else(NOT BRLCAD_PROFILING AND NOT BRLCAD_DEBUGGING)
       CHECK_C_FLAG(fno-omit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
       CHECK_CXX_FLAG(fno-omit-frame-pointer GROUPS OPTIMIZE_CXX_FLAGS)
-    endif(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
-  endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
+    endif(NOT BRLCAD_PROFILING AND NOT BRLCAD_DEBUGGING)
+  endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 
   # Add optimization flags. If we're a multiconfig build, set up based
-  # on build type.  If not, check if BRLCAD_FLAGS_OPTIMIZATION is enabled
-  # or if BRLCAD_OPTIMIZED_BUILD is on.
+  # on build type.  If not, check if BRLCAD_OPTIMIZED is on.
   if(CMAKE_CONFIGURATION_TYPES)
     if(NOT ENABLE_ALL_CONFIG_TYPES)
       set(opt_conf_list "Release")
@@ -1013,12 +1012,9 @@ if(NOT MSVC)
       set(opt_conf_list "Release;RelWithDebInfo;MinSizeRel")
     endif(NOT ENABLE_ALL_CONFIG_TYPES)
   else(CMAKE_CONFIGURATION_TYPES)
-    if(${BRLCAD_FLAGS_OPTIMIZATION} MATCHES "ON")
+    if(${BRLCAD_OPTIMIZED} MATCHES "ON")
       set(opt_conf_list "ALL")
-    endif(${BRLCAD_FLAGS_OPTIMIZATION} MATCHES "ON")
-    if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
-      set(opt_conf_list "ALL")
-    endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
+    endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
   endif(CMAKE_CONFIGURATION_TYPES)
   if(opt_conf_list)
     ADD_NEW_FLAG(C OPTIMIZE_C_FLAGS "${opt_conf_list}")
@@ -1029,18 +1025,18 @@ if(NOT MSVC)
   # intended to help make it easier to identify problematic code but
   # only when compiling unoptimized (because the extra barrier checks
   # can affect the memory footprint and runtime performance.
-  if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
+  if(${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
     CHECK_C_FLAG(fstack-protector-all)
     CHECK_CXX_FLAG(fstack-protector-all)
     # checking both in case compiling c/c++ with different compilers
     CHECK_C_FLAG(qstackprotect)
     CHECK_CXX_FLAG(qstackprotect)
-  endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
+  endif(${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
 
   # Similarly, enable the AddressSanitizer memory address sanitizer.
   # See https://code.google.com/p/address-sanitizer/ for more info.
   # This typically is reported to cause a 2x slowdown.
-  if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
+  if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
     set(CMAKE_REQUIRED_LINK_OPTIONS "${CMAKE_REQUIRED_LINK_OPTIONS};-lasan")
     CHECK_C_FLAG(fsanitize=address)
     CHECK_C_FLAG(fsanitize-address-use-after-return=always)
@@ -1050,7 +1046,7 @@ if(NOT MSVC)
     CHECK_CXX_FLAG(fsanitize-address-use-after-return=always)
     CHECK_CXX_FLAG(fsanitize-address-use-after-scope)
     CHECK_CXX_FLAG(fno-omit-frame-pointer)
-  endif(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
+  endif(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUGGING)
 
   # Differently, enable the ThreadSanitizer race condition detector
   # only as requested since it can incur a 5x-15x slowdown.  See
@@ -1063,7 +1059,7 @@ if(NOT MSVC)
   # verbose warning flags.  we intentionally try to turn on as many as
   # possible.  adding more is encouraged (as long as all issues are
   # fixed first).
-  if(BRLCAD_ENABLE_WARNINGS OR BRLCAD_ENABLE_STRICT)
+  if(BRLCAD_WARNINGS OR BRLCAD_ENABLE_STRICT)
     # also of interest:
     # -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
     # -Wformat=2 (after bu_fopen_uniq() is obsolete)
@@ -1149,7 +1145,7 @@ if(NOT MSVC)
     CHECK_C_FLAG(Wdocumentation)
     CHECK_CXX_FLAG(Wdocumentation)
 
-  endif(BRLCAD_ENABLE_WARNINGS OR BRLCAD_ENABLE_STRICT)
+  endif(BRLCAD_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
   if(BRLCAD_ENABLE_COVERAGE)
     # TODO: These seem to GCC specific flags - should probably set up for clang
