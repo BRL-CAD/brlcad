@@ -53,6 +53,7 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
     if (!c || !c->w)
 	return false;
 
+    // TODO - look into QShortcut, see if it might be a better way to manage this
     if (e->type() == QEvent::KeyPress) {
 	// If we want to have key bindings that run GED commands, we will need
 	// application level information - the view widget doesn't know about

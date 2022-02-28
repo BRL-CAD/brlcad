@@ -33,6 +33,8 @@ extern "C" {
 
 #include "bindings.h"
 
+// TODO - look into QShortcut, see if it might be a better way
+// to manage this
 int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyEvent *k)
 {
     if (!v)
