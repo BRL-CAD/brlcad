@@ -140,8 +140,15 @@ QtCADView::save_image(int UNUSED(quad))
 }
 
 void
-QtCADView::select(int UNUSED(quad))
+QtCADView::select(int quad)
 {
+    if (quad) {
+	// TODO This spacing needs to be configurable
+	l->setContentsMargins(5, 5, 5, 5);
+    }
+    else {
+	l->setContentsMargins(0, 0, 0, 0);
+    }
 }
 
 void
@@ -430,68 +437,6 @@ QtCADView::set_draw_custom(void (*draw_custom)(struct bview *, double, double, v
     if (canvas_sw) {
 	canvas_sw->draw_custom = draw_custom;
 	canvas_sw->draw_udata = draw_udata;
-	return;
-    }
-}
-
-void
-QtCADView::enableDefaultKeyBindings()
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl) {
-	canvas_gl->enableDefaultKeyBindings();
-	return;
-    }
-#endif
-    if (canvas_sw) {
-	canvas_sw->enableDefaultKeyBindings();
-	return;
-    }
-}
-
-void
-QtCADView::disableDefaultKeyBindings()
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl) {
-	canvas_gl->disableDefaultKeyBindings();
-	return;
-    }
-#endif
-    if (canvas_sw) {
-	canvas_sw->disableDefaultKeyBindings();
-	return;
-    }
-}
-
-void
-QtCADView::enableDefaultMouseBindings()
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl) {
-	canvas_gl->enableDefaultMouseBindings();
-	return;
-    }
-#endif
-    if (canvas_sw) {
-	canvas_sw->enableDefaultMouseBindings();
-	return;
-    }
-
-
-}
-
-void
-QtCADView::disableDefaultMouseBindings()
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl) {
-	canvas_gl->disableDefaultMouseBindings();
-	return;
-    }
-#endif
-    if (canvas_sw) {
-	canvas_sw->disableDefaultMouseBindings();
 	return;
     }
 }

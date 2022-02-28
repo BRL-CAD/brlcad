@@ -169,6 +169,8 @@ QtCADQuad::changeToSingleFrame()
 
     views[UPPER_RIGHT]->set_current(1);
     currentView = views[UPPER_RIGHT];
+    // This is only used in quad mode
+    currentView->select(0);
 
     default_views();
 }
@@ -216,6 +218,8 @@ QtCADQuad::changeToQuadFrame()
     gedp->ged_gvp = views[UPPER_RIGHT]->view();
     views[UPPER_RIGHT]->set_current(1);
     currentView = views[UPPER_RIGHT];
+    // This is only used in quad mode
+    currentView->select(1);
 }
 
 void
@@ -258,10 +262,15 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 	for (int i = 0; i < 4; i++) {
 	    if (views[i] != nullptr && t == views[i]) {
 		currentView = views[i];
+		// Make sure we are in quad mode
+		if (views[1] != nullptr) {
+		    views[i]->select(1);
+		}
 	    }
 	    else {
 		if (views[i] != nullptr) {
 		    views[i]->set_current(0);
+		    views[i]->select(0);
 		}
 	    }
 	}
@@ -393,45 +402,8 @@ QtCADQuad::diff_hashes()
     return ret;
 }
 
-void
-QtCADQuad::enableDefaultKeyBindings()
-{
-    for (int i = 0; i < 4; i++) {
-	if (views[i] != nullptr) {
-	    views[i]->enableDefaultKeyBindings();
-	}
-    }
-}
-
-void
-QtCADQuad::disableDefaultKeyBindings()
-{
-    for (int i = 0; i < 4; i++) {
-	if (views[i] != nullptr) {
-	    views[i]->disableDefaultKeyBindings();
-	}
-    }
-}
-
-void
-QtCADQuad::enableDefaultMouseBindings()
-{
-    for (int i = 0; i < 4; i++) {
-	if (views[i] != nullptr) {
-	    views[i]->enableDefaultMouseBindings();
-	}
-    }
-}
-
-void
-QtCADQuad::disableDefaultMouseBindings()
-{
-    for (int i = 0; i < 4; i++) {
-	if (views[i] != nullptr) {
-	    views[i]->disableDefaultMouseBindings();
-	}
-    }
-}
+// TODO - need to enable mouse selection
+// of a quadrant as current
 
 // Local Variables:
 // tab-width: 8

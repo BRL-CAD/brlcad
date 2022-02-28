@@ -182,7 +182,7 @@ bv_settings_init(struct bview_settings *s)
     VSET(s->gv_rect.color, 255, 255, 255);
 
     s->gv_view_axes.draw = 0;
-    VSET(s->gv_view_axes.axes_pos, 0.85, -0.85, 0.0);
+    VSET(s->gv_view_axes.axes_pos, 0.80, -0.80, 0.0);
     s->gv_view_axes.axes_size = 0.2;
     s->gv_view_axes.line_width = 0;
     s->gv_view_axes.pos_only = 1;
