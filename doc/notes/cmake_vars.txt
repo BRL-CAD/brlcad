@@ -12,7 +12,7 @@
 
 CMAKE_BUILD_TYPE := Release | Debug
 
-BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF
+BRLCAD_ENABLE_VERBOSE "verbose output" OFF
 BRLCAD_ENABLE_COVERAGE "Build with coverage enabled" OFF
 
 ENABLE_ALL_CXX_COMPILE "Build all C and C++ files with a C++ compiler." OFF

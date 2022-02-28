@@ -412,11 +412,11 @@ mark_as_advanced(BRLCAD_OPTIMIZED_BUILD)
 
 # Build with full compiler lines visible by default (won't need make VERBOSE=1)
 # on command line
-option(BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF)
-mark_as_advanced(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
+option(BRLCAD_ENABLE_VERBOSE "verbose output" OFF)
+mark_as_advanced(BRLCAD_ENABLE_VERBOSE)
+if(BRLCAD_ENABLE_VERBOSE)
   set(CMAKE_VERBOSE_MAKEFILE ON)
-endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
+endif(BRLCAD_ENABLE_VERBOSE)
 
 # Build with profile-guided optimization support.  this requires a two-pass
 # compile, once with BRLCAD_PGO=ON on a location that did not exist beforehand

@@ -262,7 +262,7 @@ function(BRLCAD_Summary)
   set(BUILD_STATIC_LIBS_LABEL "Build static libraries ")
   set(BUILD_SHARED_LIBS_LABEL "Build dynamic libraries ")
   set(BRLCAD_ENABLE_COMPILER_WARNINGS_LABEL "Print verbose compilation warnings ")
-  set(BRLCAD_ENABLE_VERBOSE_PROGRESS_LABEL "Print verbose compilation progress ")
+  set(BRLCAD_ENABLE_VERBOSE_LABEL "Print verbose compilation progress ")
   set(BRLCAD_INSTALL_EXAMPLE_GEOMETRY_LABEL "Install example geometry models ")
   set(BRLCAD_DOCBOOK_BUILD_LABEL "Generate extra docs ")
   set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_LABEL "Build with strict ISO C compliance checking ")
@@ -292,7 +292,7 @@ function(BRLCAD_Summary)
       BRLCAD_ENABLE_SMP
       BRLCAD_ENABLE_PROFILING
       BRLCAD_ENABLE_WARNINGS
-      BRLCAD_ENABLE_VERBOSE_PROGRESS
+      BRLCAD_ENABLE_VERBOSE
       ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE
       ENABLE_POSIX_COMPLIANCE ENABLE_ALL_CXX_COMPILE
       )
