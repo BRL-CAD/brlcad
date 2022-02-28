@@ -38,7 +38,11 @@ x 7.  color controls (background in particular) settable in MGED...
 
 x 8.  Fix fps meter drawing - should either be lower left, or appended to status line if that's enabled
 
-9.  Implement more key bindings for dm widgets.
+9.  Implement more key bindings for dm widgets.  (NOTE - for both bindings and colors/fonts, need to
+look into setting up Qt models that will hold this data, so we can use the standard Qt view widgets
+to display it and interact with it.  Ideally we'll have the libqtcad lib provide standard models with
+pre-populated arrays of standard settings, with a way to allow applications to register additional
+app level settings/actions.  For bindings, need to figure out how or if QShortcut should be used.)
 
 12.  Qt dialogues for color setting and fonts
 
