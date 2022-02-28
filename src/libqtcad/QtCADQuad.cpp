@@ -402,8 +402,45 @@ QtCADQuad::diff_hashes()
     return ret;
 }
 
-// TODO - need to enable mouse selection
-// of a quadrant as current
+void
+QtCADQuad::enableDefaultKeyBindings()
+{
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr) {
+	    views[i]->enableDefaultKeyBindings();
+	}
+    }
+}
+
+void
+QtCADQuad::disableDefaultKeyBindings()
+{
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr) {
+	    views[i]->disableDefaultKeyBindings();
+	}
+    }
+}
+
+void
+QtCADQuad::enableDefaultMouseBindings()
+{
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr) {
+	    views[i]->enableDefaultMouseBindings();
+	}
+    }
+}
+
+void
+QtCADQuad::disableDefaultMouseBindings()
+{
+    for (int i = 0; i < 4; i++) {
+	if (views[i] != nullptr) {
+	    views[i]->disableDefaultMouseBindings();
+	}
+    }
+}
 
 // Local Variables:
 // tab-width: 8
