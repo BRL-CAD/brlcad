@@ -30,15 +30,60 @@
 #include "app.h"
 #include "event_filter.h"
 
-bool EditStateFilter::eventFilter(QObject *, QEvent *e)
+/* We base conditionals on whether the target widget w is active.  Usually the
+ * actual focus widget is a child of the widget in question, so we walk up the
+ * parents to see if the focusWidget is underneath the target widget. */
+static bool
+widget_active(QWidget *w)
 {
+    QWidget *fw = c->focusWidget();
+    QWidget *cw = fw;
+    while (cw) {
+	if (cw == w) {
+	    return true;
+	}
+	cw = (QWidget *)cw->parent();
+    }
+    return false;
+}
+
+bool QGEDFilter::eventFilter(QObject *, QEvent *e)
+{
+    CADApp *c = (CADApp *)qApp;
+    if (!c || !c->w)
+	return false;
+
+    if (e->type() == QEvent::KeyPress) {
+	// If we want to have key bindings that run GED commands, we will need
+	// application level information - the view widget doesn't know about
+	// the gedp.  To do this, we check if the central widget or one of its
+	// children has the focus, and check if the key event is one of our
+	// bound events.  If so, we may perform the bound action.
+	QKeyEvent *k = (QKeyEvent *)e;
+	if (k->modifiers().testFlag(Qt::ShiftModifier) == true && k->key() == 'N') {
+	    if (!widget_active(c->w->c4))
+		return false;
+	    c->run_qcmd(QString("nirt -b"));
+	    return true;
+	}
+	return false;
+    }
+
+    // All key binding handling should be above this point - anything below here is
+    // mouse event only.
+    //
+    // Note:  It MIGHT be possible to use the above widget_active test approach
+    // for the view/instance/primitive switching below, but it's not clear if
+    // the tree highlighting updates would occur immediately or if we'd end up
+    // needing two mouse events - one to change the focused widget, and another
+    // event after the focus change to trigger this logic properly.  Don't know
+    // without testing, not clear if it would be a better approach or just a
+    // different one, and the below logic was rather tricky to get working -
+    // given those factors, keeping the geometry based approach for this code.
     if (e->type() != QEvent::MouseButtonPress) {
 	return false;
     }
     QMouseEvent *m_e = (QMouseEvent *)e;
-    CADApp *c = (CADApp *)qApp;
-    if (!c || !c->w)
-	return false;
     QgSelectionProxyModel *pm = c->mdl;
     QWidget *vcp = c->w->vc->tpalette;
 #ifdef USE_QT6

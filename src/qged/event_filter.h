@@ -23,7 +23,7 @@
 #include <QObject>
 #include "qtcad/defines.h"
 
-class EditStateFilter : public QObject
+class QGEDFilter : public QObject
 {
     Q_OBJECT
 

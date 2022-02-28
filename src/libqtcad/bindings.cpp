@@ -37,9 +37,10 @@ int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QK
 {
     if (!v)
 	return 0;
+#if 0
     QString kstr = QKeySequence(k->key()).toString();
     bu_log("%s\n", kstr.toStdString().c_str());
-
+#endif
     switch (k->key()) {
 	case 'A':
 	    v->gv_s->gv_adc.draw = !v->gv_s->gv_adc.draw;

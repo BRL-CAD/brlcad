@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
     app.setApplicationVersion(brlcad_version());
     app.initialize();
 
-    EditStateFilter *efilter = new EditStateFilter();
+    QGEDFilter *efilter = new QGEDFilter();
     app.installEventFilter(efilter);
 
     // Use the dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets
