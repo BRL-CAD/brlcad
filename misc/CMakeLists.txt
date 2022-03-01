@@ -80,6 +80,22 @@ set(misc_ignore_files
   check/gap.sh
   clang-static-analyzer-run.sh
   coverity_model.cpp
+  docker/docker-compose.yaml
+  docker/Dockerfile
+  docker/Makefile
+  docker/user/docker-compose.yaml
+  docker/user/Dockerfile
+  docker/user/xinit
+  docker/user/README.md
+  docker/user/startup
+  docker/user/build-user.sh
+  docker/README.md
+  docker/build-common.sh
+  docker/dev/docker-compose.yaml
+  docker/dev/build-dev.sh
+  docker/dev/Dockerfile
+  docker/dev/README.md
+  docker/dev/startup
   flawfinder
   hawaii_islands.sh
   jove.emacs
