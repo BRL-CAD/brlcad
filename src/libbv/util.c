@@ -107,6 +107,10 @@ bv_init(struct bview *gvp)
     BU_LIST_INIT(&gvp->gv_vlfree);
     gvp->vlfree = &gvp->gv_vlfree;
 
+    // Out of the gate we don't have callbacks
+    gvp->callbacks = NULL;
+    gvp->gv_callback = NULL;
+
     bv_update(gvp);
 }
 

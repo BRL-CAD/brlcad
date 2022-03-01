@@ -458,9 +458,9 @@ mged_setup(Tcl_Interp **interpreter)
     bu_vls_free(&tlog);
 
     BU_ALLOC(view_state->vs_gvp, struct bview);
+    bv_init(view_state->vs_gvp);
     BU_GET(view_state->vs_gvp->callbacks, struct bu_ptbl);
     bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bv callbacks");
-    bv_init(view_state->vs_gvp);
 
     view_state->vs_gvp->gv_callback = mged_view_callback;
     view_state->vs_gvp->gv_clientData = (void *)view_state;

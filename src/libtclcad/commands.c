@@ -4525,8 +4525,9 @@ to_new_view(struct ged *gedp,
     }
 
     BU_ALLOC(new_gdvp, struct bview);
-    BU_GET(new_gdvp->callbacks, struct bu_ptbl);
-    bu_ptbl_init(new_gdvp->callbacks, 8, "bv callbacks");
+    struct bu_ptbl *callbacks;
+    BU_GET(callbacks, struct bu_ptbl);
+    bu_ptbl_init(callbacks, 8, "bv callbacks");
 
     {
 	int i;
@@ -4552,8 +4553,8 @@ to_new_view(struct ged *gedp,
 
 	new_gdvp->dmp = (void *)dm_open(NULL, (void *)current_top->to_interp, type, ac, av);
 	if ((struct dm *)new_gdvp->dmp == DM_NULL) {
-	    bu_ptbl_free(new_gdvp->callbacks);
-	    BU_PUT(new_gdvp->callbacks, struct bu_ptbl);
+	    bu_ptbl_free(callbacks);
+	    BU_PUT(callbacks, struct bu_ptbl);
 	    bu_free((void *)new_gdvp, "ged_view");
 	    bu_free((void *)av, "to_new_view: av");
 
@@ -4578,6 +4579,7 @@ to_new_view(struct ged *gedp,
 
     bu_vls_printf(&new_gdvp->gv_name, "%s", argv[name_index]);
     bv_init(new_gdvp);
+    new_gdvp->callbacks = callbacks;
     bu_ptbl_ins(&current_top->to_gedp->ged_views, (long *)new_gdvp);
 
     new_gdvp->gv_s->point_scale = 1.0;
