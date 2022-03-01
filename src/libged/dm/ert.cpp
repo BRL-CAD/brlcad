@@ -81,6 +81,13 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    // If the framebuffer is not displayed, enable it in underlay mode so the
+    // output is visible.  TODO - we can support a -Q option or some such to
+    // suppress this behavior, but since the fb isn't up in default usage the
+    // behavior of ert is a bit too cryptic without doing this...
+    if (!gedp->ged_gvp->gv_s->gv_fb_mode)
+	gedp->ged_gvp->gv_s->gv_fb_mode = 2;
+
     // Have a framebuffer to target and objects to raytrace.  Next we need a
     // framebuffer server.
     struct fbserv_obj *fbs = gedp->ged_fbs;
