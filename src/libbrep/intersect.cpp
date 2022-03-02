@@ -3002,12 +3002,13 @@ get_overlap_intersection_parameters(
     params.SetCount(params.Capacity());
 
     for (int i = 0; i < count_before; i++) {
+
 	// split the curves from the intersection points between them
-	int count = params[i].Count();
 	for (int j = i + 1; j < count_before; j++) {
+
 	    ON_SimpleArray<ON_X_EVENT> x_event;
 	    ON_Intersect(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d, x_event, isect_tol);
-	    count += x_event.Count();
+
 	    for (int k = 0; k < x_event.Count(); k++) {
 		ON_3dPoint param;
 		ON_2dPoint uvA, uvB;
