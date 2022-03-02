@@ -1,15 +1,45 @@
+# declare all files regardless of compilation
+set(art_ignore_files
+  CMakeLists.txt
+  art.h
+  art.cpp
+  brlcadplugin.h
+  brlcadplugin.cpp
+  )
+CMAKEFILES(${art_ignore_files})
+
+find_package(Appleseed)
+if(NOT Appleseed_FOUND)
+  message("'art' appleseed ray tracing is DISABLED")
+  return()
+endif(NOT Appleseed_FOUND)
+message("Found Appleseed: ${Appleseed_LIBRARIES}")
+
+find_package(Boost COMPONENTS atomic chrono date_time python regex serialization system thread wave)
+if(NOT Boost_FOUND)
+  message("'art' appleseed ray tracing is DISABLED")
+  return()
+endif(NOT Boost_FOUND)
+message("Found Boost: ${Boost_LIBRARIES}")
+
+
 set(ART_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
   ${OPTICAL_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${Appleseed_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
   )
-
 list(REMOVE_DUPLICATES ART_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ART_INCLUDE_DIRS)
 
-set(RT_STD_LIBS
+get_filename_component(Appleseed_LIB_DIR "${Appleseed_LIBRARY}" DIRECTORY)
+file(GLOB Appleseed_BOOST_SYSTEM_LIBS "${Appleseed_LIB_DIR}/libboost_system-*")
+file(GLOB Appleseed_OPENIMAGEIO_LIBS "${Appleseed_LIB_DIR}/libOpenImageIO.*")
+
+set(ART_LIBS
   Threads::Threads
   libged
   librt
@@ -17,50 +47,21 @@ set(RT_STD_LIBS
   libdm
   liboptical
   libicv
+  ${Appleseed_LIBRARIES}
+  ${Appleseed_BOOST_SYSTEM_LIBS}
+  ${Appleseed_OPENIMAGEIO_LIBS}
   ${M_LIBRARY}
   )
+#  ${Boost_LIBRARIES}
 
-find_package(Appleseed)
-if(Appleseed_FOUND)
-  message("Found Appleseed: ${Appleseed_LIBRARIES}")
-
-  # For some reason GCC won't suppress this warning with an in-src pragma push
-  include(CheckCXXCompilerFlag)
-  check_cxx_compiler_flag(-Wno-unknown-pragmas HAVE_WNO_UNKNOWN_PRAGMAS)
-  if(HAVE_WNO_UNKNOWN_PRAGMAS)
-    set_property(SOURCE art.cpp APPEND PROPERTY COMPILE_FLAGS "-Wno-unknown-pragmas")
-    set_property(SOURCE brlcadplugin.cpp APPEND PROPERTY COMPILE_FLAGS "-Wno-unknown-pragmas")
-  endif(HAVE_WNO_UNKNOWN_PRAGMAS)
-
-  # Using the binary version of appleseed on Linux, we need a couple specific additional
-  # libraries linked in
-  get_filename_component(Appleseed_LIB_DIR "${Appleseed_LIBRARY}" DIRECTORY)
-  file(GLOB Appleseed_BOOST_SYSTEM_LIB "${Appleseed_LIB_DIR}/libboost_system-*")
-  file(GLOB Appleseed_OPENIMAGEIO_LIB "${Appleseed_LIB_DIR}/libOpenImageIO.*")
-
-  include_directories(
-    ${Appleseed_INCLUDE_DIRS}
-    )
-
-  set(ART_SRCS
-    art.cpp
-    brlcadplugin.cpp
-    ../rt/opt.c
-    ../rt/usage.cpp
-    )
-
-  BRLCAD_ADDEXEC(art "${ART_SRCS}" "${RT_STD_LIBS};${Appleseed_LIBRARIES};${Appleseed_BOOST_SYSTEM_LIB};${Appleseed_OPENIMAGEIO_LIB}" TEST_USESDATA)
-  ADD_TARGET_DEPS(art dm_plugins)
-endif(Appleseed_FOUND)
-
-set(art_ignore_files
-  CMakeLists.txt
+set(ART_SRCS
   art.cpp
-  art.h
   brlcadplugin.cpp
-  brlcadplugin.h
+  ../rt/opt.c
+  ../rt/usage.cpp
   )
-CMAKEFILES(${art_ignore_files})
+
+BRLCAD_ADDEXEC(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
 
 # Local Variables:
 # tab-width: 8
