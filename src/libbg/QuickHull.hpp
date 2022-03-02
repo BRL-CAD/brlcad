@@ -299,6 +299,8 @@ namespace quickhull {
 
 	    }
 
+	    VertexDataSource(const VertexDataSource &) = default;
+
 	    VertexDataSource& operator=(const VertexDataSource& other) = default;
 
 	    size_t size() const {
