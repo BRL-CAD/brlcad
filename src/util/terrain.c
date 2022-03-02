@@ -365,7 +365,7 @@ lunar2(point_t point, double h, double lacunarity, double octaves)
 {
     int i = 0;
     point_t pt;
-    double weight, sig, freq, result;
+    double sig, freq, result;
     static double lo = 10.0;
     static double hi = -10.0;
 
@@ -373,7 +373,6 @@ lunar2(point_t point, double h, double lacunarity, double octaves)
 
     PCOPY(pt, point);
     freq =  1.0;
-    weight = 1.0;
     result = 0.0;
 
     do {
@@ -390,7 +389,6 @@ lunar2(point_t point, double h, double lacunarity, double octaves)
 	}
 
 	result += sig * pow(freq, -h);
-	weight -= sig;
 	freq *= lacunarity;
 	PSCALE(pt, lacunarity);
     } while (++i < octaves);
