@@ -24,6 +24,7 @@ set(GSH_SRCS
   ${LDIR}/linenoise.c
   )
 BRLCAD_ADDEXEC(gsh "${GSH_SRCS}"  "libged;libdm;libbu")
+add_dependencies(gsh dm_plugins)
 
 BRLCAD_ADDEXEC(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
 
