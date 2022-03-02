@@ -121,7 +121,6 @@ stxt_read(register struct stxt_specific *stp)
     int frame = 0;
     int ln = 0;
     int rd = 0;
-    int rdd = 0;
 
     /*** MEMORY HOG ***/
     stp->stx_pixels = (char *)bu_malloc(
@@ -150,7 +149,6 @@ stxt_read(register struct stxt_specific *stp)
 	    }
 	    memcpy(stp->stx_pixels + ln*stp->stx_w*3, linebuf, stp->stx_w*3);
 	    ln++;
-	    rdd += rd;
 	}
 	(void)fclose(fp);
 	bu_free(linebuf, "texture file line");
