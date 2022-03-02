@@ -34,14 +34,6 @@
 #ifndef  __GDIAM__H
 #define  __GDIAM__H
 
-/* for g++ to quell warnings */
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push /* start new diagnostic pragma */
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#elif defined(__clang__)
-#  pragma clang diagnostic push /* start new diagnostic pragma */
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
 
 #define GDIAM_FLOAT_ZERO(val) (((val) > -1.0e-37) && ((val) < 1.0e-37))
 
@@ -710,12 +702,6 @@ gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, int  size,
 void  gdiam_generate_orthonormal_base( gdiam_point  in,
 	gdiam_point  out1,
 	gdiam_point  out2 );
-
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop /* end ignoring warnings */
-#elif defined(__clang__)
-#  pragma clang diagnostic pop /* end ignoring warnings */
-#endif
 
 #endif  /* __GDIAM__H */
 
