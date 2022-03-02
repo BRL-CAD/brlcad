@@ -116,6 +116,8 @@ main(int argc, char** argv)
 	    total += lh[7];
 	}
 	printf("dvec<8> time: %3.4g\n", (double)(clock()-start)/(double)CLOCKS_PER_SEC);
+	if (!(total > 0))
+	    return 1;
     }
 
 /* test correctness */
