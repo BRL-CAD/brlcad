@@ -399,6 +399,7 @@ class   GBBox {
 	// Note that the following is an overestaime - the diameter of
 	// projection of a cube, is bounded by the length of projections
 	// of its edges....
+#if 0
 	gdiam_real   get_diam_proj( gdiam_point  dir ) const
 	{
 	    gdiam_real  sum, coord;
@@ -419,7 +420,9 @@ class   GBBox {
 	    // sum = squard diameter of the bounding box
 	    // prod = length of projection of the diameter of cube on the
 	    //      direction.
-
+#endif
+	gdiam_real   get_diam_proj( gdiam_point ) const
+	{
 	    return  get_diam();
 	}
 
