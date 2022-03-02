@@ -223,7 +223,7 @@ static void	 swapfunc(char *, char *, size_t, int);
 #define SWAPTYPE_LONG	5
 
 #define TYPE_ALIGNED(TYPE, a, es)			\
-    (((char *)a - (char *)0) % sizeof(TYPE) == 0 && es % sizeof(TYPE) == 0)
+    ((uintptr_t)a % sizeof(TYPE) == 0 && es % sizeof(TYPE) == 0)
 
 #define swapcode(TYPE, parmi, parmj, n) { 		\
     size_t i = (n) / sizeof (TYPE); 		\
