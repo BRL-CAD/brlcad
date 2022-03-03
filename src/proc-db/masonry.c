@@ -930,7 +930,6 @@ brick(struct rt_wdb *fd)
     struct wmember wm_hd = WMEMBER_INIT_ZERO;
     int horiz_bricks = 0;
     double mortar_height = 0.0;
-    double mortar_width = 0.0;
     point_t pts[8] = {VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO,VINIT_ZERO};
     char proto_brick[64] = {'\0'};
 
@@ -940,9 +939,6 @@ brick(struct rt_wdb *fd)
 	color = brick_color;
 
     horiz_bricks = (WALL_WIDTH-brick_depth) / brick_width;
-
-    mortar_width = WALL_WIDTH - horiz_bricks * brick_width;
-    mortar_width /= horiz_bricks;
 
     mortar_height = 0.0;
 
