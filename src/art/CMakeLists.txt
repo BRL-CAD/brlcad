@@ -50,9 +50,9 @@ set(ART_LIBS
   ${Appleseed_LIBRARIES}
   ${Appleseed_BOOST_SYSTEM_LIBS}
   ${Appleseed_OPENIMAGEIO_LIBS}
+  ${Boost_LIBRARIES}
   ${M_LIBRARY}
   )
-#  ${Boost_LIBRARIES}
 
 set(ART_SRCS
   art.cpp
