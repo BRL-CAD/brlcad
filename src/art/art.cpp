@@ -164,12 +164,11 @@ extern "C" {
  * extract that functionality into a library... */
 
 extern "C" {
-    // struct command_tab rt_do_tab[] = { {NULL, NULL, NULL, 0, 0, 0} };
     void option(const char *cat, const char *opt, const char *des, int verbose);
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
 
-
+    extern struct command_tab rt_do_tab[];
     extern char* outputfile;
     extern int objc;
     extern char** objv;
