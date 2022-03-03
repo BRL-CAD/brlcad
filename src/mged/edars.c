@@ -50,13 +50,11 @@ find_ars_nearest_pnt(
     vect_t dir)
 {
     size_t i, j;
-    int pt_no;
     int closest_i=0, closest_j=0;
     fastf_t min_dist_sq=MAX_FASTF;
 
     RT_ARS_CK_MAGIC(ars);
 
-    pt_no = 0;
     for (i=0; i<ars->ncurves; i++) {
 	for (j=0; j<ars->pts_per_curve; j++) {
 	    fastf_t dist_sq;
@@ -67,7 +65,6 @@ find_ars_nearest_pnt(
 		closest_i = i;
 		closest_j = j;
 	    }
-	    pt_no += 3;
 	}
     }
     *crv = closest_i;
