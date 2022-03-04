@@ -189,7 +189,7 @@ foreach(g_input ${G_SAMPLE_MODELS})
 endforeach(g_input ${G_SAMPLE_MODELS})
 
 if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-   BRLCAD_ADDDATA(terra.dsp db)
+   BRLCAD_ADDDATA(terra.bin db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 
 if(SH_EXEC)
@@ -254,6 +254,7 @@ CMAKEFILES(
   db.php
   include/ctype.inc
   include/debug.inc
+  terra.bin
   )
 
 # Local Variables:
