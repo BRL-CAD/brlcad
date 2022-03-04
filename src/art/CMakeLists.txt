@@ -15,7 +15,7 @@ if(NOT Appleseed_FOUND)
 endif(NOT Appleseed_FOUND)
 message("Found Appleseed: ${Appleseed_LIBRARIES}")
 
-find_package(Boost COMPONENTS atomic chrono date_time python regex serialization system thread wave)
+find_package(Boost COMPONENTS chrono date_time filesystem regex system thread wave)
 if(NOT Boost_FOUND)
   message("'art' appleseed ray tracing is DISABLED")
   return()
