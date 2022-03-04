@@ -35,9 +35,9 @@ set(ART_INCLUDE_DIRS
 list(REMOVE_DUPLICATES ART_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ART_INCLUDE_DIRS)
 
-get_filename_component(Appleseed_LIB_DIR "${Appleseed_LIBRARY}" DIRECTORY)
-file(GLOB Appleseed_BOOST_SYSTEM_LIBS "${Appleseed_LIB_DIR}/libboost_system-*")
-file(GLOB Appleseed_OPENIMAGEIO_LIBS "${Appleseed_LIB_DIR}/libOpenImageIO.*")
+#get_filename_component(Appleseed_LIB_DIR "${Appleseed_LIBRARY}" DIRECTORY)
+#file(GLOB Appleseed_BOOST_SYSTEM_LIBS "${Appleseed_LIB_DIR}/libboost_system-*")
+#file(GLOB Appleseed_OPENIMAGEIO_LIBS "${Appleseed_LIB_DIR}/libOpenImageIO.*")
 
 set(ART_LIBS
   Threads::Threads
@@ -48,11 +48,11 @@ set(ART_LIBS
   liboptical
   libicv
   ${Appleseed_LIBRARIES}
-  ${Appleseed_BOOST_SYSTEM_LIBS}
-  ${Appleseed_OPENIMAGEIO_LIBS}
   ${Boost_LIBRARIES}
   ${M_LIBRARY}
   )
+#  ${Appleseed_BOOST_SYSTEM_LIBS}
+#  ${Appleseed_OPENIMAGEIO_LIBS}
 
 set(ART_SRCS
   art.cpp
