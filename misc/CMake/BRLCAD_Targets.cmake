@@ -356,13 +356,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     set_target_properties(${libstatic} PROPERTIES FOLDER "BRL-CAD Static Libraries${SUBFOLDER}")
     VALIDATE_STYLE("${libstatic}" "${srcslist};${L_STATIC_SRCS}")
 
-    # We still need the target_link_libraries link in case we have imported targets in
-    # the libraries list - they can carry include directories, compile definitions, etc.
-    # that are also necessary for static compilation
-    if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-      target_link_libraries(${libstatic} ${libslist})
-    endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
-
     if(NOT L_NO_INSTALL)
       install(TARGETS ${libstatic}
 	RUNTIME DESTINATION ${BIN_DIR}
