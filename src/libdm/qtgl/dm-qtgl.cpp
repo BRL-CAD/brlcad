@@ -166,6 +166,13 @@ qtgl_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     struct dm_qtvars *pubvars = NULL;
     struct qtgl_vars *privars = NULL;
 
+    /* Make sure we have a ctx - if not, we can't proceed.  struct bview
+     * gets passed in as a "default" context when the application hasn't
+     * supplied anything else, so we check the magic value to catch it. */
+    struct bview *vctx = (struct bview *)ctx;
+    if (!ctx || vctx->magic == BV_MAGIC)
+	return NULL;
+
     BU_GET(dmp, struct dm);
     dmp->magic = DM_MAGIC;
     dmp->start_time = 0;
