@@ -303,7 +303,17 @@ struct ged {
     // bv.h gv_callback (only used by MGED?)
     // db_search_callback_t
 
+    // TODO - this probably should be handled with a registration function of some kind
+    // that assigns contexts based on dm type - right now the dms more or less have to
+    // assume that whatever is in here is intended for their initialization, and if a
+    // program wants to attach multiple types of DMs a single pointer is not a great way
+    // to manage things.  A map would be better, but that's a C++ construct so we can't
+    // expose it directly here - need some sort of means to manage the setting and getting,
+    // maybe with functions like:
+    // ged_ctx_set(const char *dm_type, void *ctx)
+    // ged_ctx_get(const char *dm_type)
     void *ged_ctx; /* Temporary - do not rely on when designing new functionality */
+
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
     db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
 
