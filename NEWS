@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2021-XX-XX  Release 7.32.6                                     ---
 ----------------------------------------------------------------------
 
+* reduced mged & archer max image size and memory use - Sean MOrrison
 * fixed librt handling of object names with '/' chars - Cliff Yapp
 * changed fast4-g to not make references to empty regions - Cliff Yapp
 * fixed gcv option handling - Cliff Yapp
