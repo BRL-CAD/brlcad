@@ -1,512 +1,1508 @@
-commit 8044ec9252cb3db0b51ce1e51bb5f392dc965c29
+commit f80c3fd129560714f92ef7e7d3df5de9495061d9
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Jul 26 14:29:31 2021 -0400
+Date:   Wed Mar 9 09:47:11 2022 -0500
 
-    Bump version numbers
+    Bump version number
 
-commit e19aaa465cb7cc14941b9ec46d4ba0f308e5904f
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Jul 26 14:15:00 2021 -0400
+commit 4ee6e7f8443efb354198935fd7a521977429e8a6
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Mar 9 03:12:51 2022 -0500
 
-    Archer will need the full directory, at least at the moment.
+    fixed an issue with excessive memory use by mged and fb-friends.
     
-    (cherry picked from commit 0839fb52b6a6b324fba54b036419f384231ef3c3)
-
-commit 291532123056e3ad4dfc424d7b0fff6633994477
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Jul 26 12:35:54 2021 -0400
-
-    Initial working directory is in /home/cyapp - adjust mged test example.
+    the maximum image size is a hard-coded limit for most framebuffer
+    implementations and it was bumped up a long time ago to 20480x20480 in
+    order to support large rendering.  however, this resulted in 1.6GB
+    memory use per framebuffer which, at the time was thought to be the
+    usage limit.  turns out mged allocates at least two plus one for each
+    rt window, which can quickly exhausting available memory on lower-end
+    systems or simply launching mged multiple times. prior to this change,
+    simply launching mged once resulted in over 5GB memory utilization.
     
-    (cherry picked from commit deec305c837f7a33dc0c4364e912a12e7b24d328)
-
-commit 63edcadd4952444c7adfcea462dd7d425c0d746a
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Jul 26 13:55:29 2021 -0400
-
-    Don't define this at all (even to empty) when building bundled.
-
-commit 5c95a06ef9696e730e9d9109cf850ca7ca6c1e53
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Jul 23 10:04:41 2021 -0400
-
-    Apply memory leak fix from upstream commit eb6767
+    in order to reinstate usability on systems with <4GB memory, this
+    change bumps the maximum image size down to 8192x8192.  that results
+    in 256MB per fb and mged+rt launching in under <1GB.
     
-    Fix memory leak if eXIf has incorrect crc
-
-commit aa62a3d87b484812f6825e8cb66c09e3598f66ea
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Jul 23 09:24:32 2021 -0400
-
-    Sigh.  Apparently C++ clocks don't have what we need.  Put back the previous code.
-
-commit 8a61b9422af2eec0b17a51d695007acac34d8274
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Jul 22 17:47:31 2021 -0400
-
-    Mark some vars as advanced.
-
-commit 76e6503dea614a192931e993c07b16a74c34a674
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Jul 22 17:03:31 2021 -0400
-
-    Replace -idn search opt with more general -matrix
+    another unintended result: application launch is now noticeably
+    faster.  mged having to allocate and initialize 5GB on launch may be
+    related to startup application stalls observed, as they could be
+    explained by the VMM having to occasionally swap out on first
+    invocation.
     
-    Per suggestion from Sean, replace the -idn option (which was limited to
-    identity matrices) with a more general -matrix filter.  IDN is supported
-    as a way to specify the identity matrix ("-idn" is now "-matrix IDN")
-    but the new logic also allows specification of a full 16 number matrix
-    as an alternative.
-
-commit 1f1a662ae8c349789ff3f4d6f8a8ebd654c960e6
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Jul 22 15:18:59 2021 -0400
-
-    Add a function for reading in matrices via the bu_opt mechanism.
-
-commit d4ecd86137fa5dd37f6941593b13d08f0b3b54fc
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Jul 22 11:34:12 2021 -0400
-
-    Remove PNG_FILTER_OPTIMIZATIONS - we're not using it for this build and we don't want it accidentally defined.
-
-commit 44cdb2e41573aceb4174fac624b620fa739d10bb
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Jul 21 18:33:59 2021 -0400
-
-    Apply changes from https://github.com/tcltk commit 4705dbdde2f for CVE-2021-35331
-
-commit 9ffd2f5747d3c7cd6609529bd46bd2ecac22ff33
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Jul 19 21:45:16 2021 -0400
-
-    Upgrade included libtiff in GDAL to latest from https://github.com/OSGeo/gdal
-
-commit 9b0da13ab58ab6d3cd9a2c862e255c2ce1da6e6a
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Jul 19 21:32:14 2021 -0400
-
-    Backport OSGeo/gdal double free fix from 148115fcc40f at https://github.com/OSGeo/gdal
-
-commit de6381d829a024749686484eb1da3ae3308dafd8
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Jul 13 13:42:37 2021 -0400
-
-    Whoops - don't need the sc_cf.h.in change without the other changes.
-
-commit 0994492ca437fae2a6aa7508820049d649a4ed17
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Jun 24 11:13:47 2021 -0400
-
-    Add richer example gource launching line.
-
-commit d711195ef0cda954bb2988d2ea5782e068eeecb3
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Jun 24 11:12:35 2021 -0400
-
-    Correct spacing on initial setup data.
-
-commit 6e56e184cc0a5326f116a7d545f7a7786c68b08c
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Jun 24 10:49:33 2021 -0400
-
-    exec is local
-
-commit e03f978f8ff144b2ebb78bbafe93f9f88e3b7d09
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Jun 24 10:48:00 2021 -0400
-
-    Stash a solution to visualizing a subset of the history with gource starting with the full tree (as opposed to its default mode of just the changed files).
-
-commit bc5ff11154f0187a2cc180ff015d157066cc2fa0
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Jun 23 18:06:19 2021 -0400
-
-    Document -idn search option - lets us find comb instances with IDN (and non-IDN) matrices.
-
-commit 77b73f61481c500b5676351f3c69cc9c137581fc
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Jun 23 17:10:57 2021 -0400
-
-    More focused search on just the local matrix, rather than the cumulative matrix along the path.
-
-commit fa39a518508d82896ccda50eb9044152295753f5
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Jun 23 16:36:53 2021 -0400
-
-    First quick stab at a way to filter paths based on IDN or non-IDN matrices.
-
-commit beb794176337fa91341bfe85c6f121b297660024
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Jun 23 15:57:13 2021 -0400
-
-    If we're reusing dps, don't delete them in try runs.
-
-commit 22fb5e6a72c6244b1ee56fbfc252b569e2aca707
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Jun 14 10:29:30 2021 -0400
-
-    Stash some notes about using gource source code visualizer.
-
-commit a52eb7b6323856577e555ef381bf4d877fcb39ff
-Author: Jade <software@lfcode.ca>
-Date:   Sat Jun 12 01:54:17 2021 -0700
-
-    Fix missing includes of <limits>
+    work is needed to eliminate this hard-coded limit.  framebuffers and
+    display managers should only dynamically allocate memory that is
+    actually needed based on specified use.
     
-    Example compile error from gcc-11.1.0 on archlinux:
-    /home/jade/builds/brlcad/src/brlcad/src/libged/brep/brep.cpp: In function ‘int _brep_cmd_plate_mode(void*, int, const char*
-    *)’:
-    /home/jade/builds/brlcad/src/brlcad/src/libged/brep/brep.cpp:810:48: error: ‘numeric_limits’ is not a member of ‘std’
-      810 |     ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
-          |                                                ^~~~~~~~~~~~~~
+    (cherry picked from commit 15596228551e6475b5f55915d83eca12182e1083)
 
-commit df2ce0ec39c604a4644ce40f9ef321bdd85f19da
+commit ad388f52cfc17840cd142ffaa6351f745e79243c
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Jun 8 21:48:28 2021 -0400
+Date:   Wed Aug 25 13:40:45 2021 -0400
 
-    Put back the note about git_stats for reference, at least until we find a better solution.
-
-commit d3c7b1d6e9b3f85d95372a5d842e78cc519a0be6
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu May 20 13:12:25 2021 -0400
-
-    I think SVN commit r76847 fixed this
-
-commit 0b4974d1fcfa2abe13291495e0a7252c86b1e4a1
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Jul 13 11:54:31 2021 -0400
-
-    Note MGED script mode fix in NEWS file.
-
-commit 063f3cc47938d334e7ac864d79e89db019bd1866
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu May 20 11:44:29 2021 -0400
-
-    Wait for subprocesses in non-interactive mode
+    That definition of SSIZE_MAX seems really small... looking around at other approaches taken, let's see if this works.
     
-    Report from user that a script doing a raytrace wasn't producing a file.
-    Sean suspected that MGED was quitting too early and killing the
-    processes run by the script, it looks like that was correct.
+    (cherry picked from commit b78fc07e8f052f12aebb5a16db5d647db31abc76)
+
+commit 228415721477b96a2bb428a29c1fb18209735370
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Aug 25 13:32:07 2021 -0400
+
+    Try a common.h definition of SSIZE_MAX
     
-    If we're in script mode, wait for subprocesses to finish up before we
-    quit MGED.
+    (cherry picked from commit 01d3ac0264f59672ca3c842df6b752be39f606df)
 
-commit ac62105e196cea5f7fa025c81ba408d8d691800c
+commit 12f52ffbe0b63a6f485b3ee4cbca800119e53ff0
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Sat May 8 15:10:18 2021 -0400
+Date:   Wed Aug 25 09:14:13 2021 -0400
 
-    Don't crash if bu_ptbl_free is passed NULL.
-
-commit f6725bca40e26f204aed54afaa30cdd587d4a9b8
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed May 5 15:16:51 2021 -0400
-
-    Add missing paren
-
-commit 160803c054afb5e8a558a3a12ea4cf52fad003e3
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed May 5 13:31:54 2021 -0400
-
-    Note documentation changes for bot/seach listing the mode values.
-
-commit 83025aab9cd802df519d665ebd5e89b7f18fab8a
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed May 5 13:21:42 2021 -0400
-
-    Have bot set orientation support param strings as well as cw/ccw forms.
-
-commit 7e1da993d685dbebace9b8ab42d4ef44ee72c2dc
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed May 5 13:30:44 2021 -0400
-
-    List possible values for mode and orient
-
-commit e0c7216bd054be8a2df4335a16a24104757642cd
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Apr 29 11:06:11 2021 -0400
-
-    Add -o output option to GED stat command
+    Windows is getting a SSIZE_MAX undefined error - see if limits.h will do the trick.
     
-    For user convenience, add an option to allow for capturing stat command
-    output to a file rather than just printing it.
+    (cherry picked from commit 01c134cbcb6a78f18a935dffac5f0ad0a9f5949d)
 
-commit 611814b8c39d8a027f00d08500bad615d4a1dee5
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Apr 23 09:37:08 2021 -0400
+commit 777b4b8d5d5145fd2a90eb4df889a54ebc1e4fbe
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 15 14:36:39 2022 -0500
 
-    Probably want the diff the other way
-
-commit 7e427d87c306fb60438081d45c6b4677f427e4ad
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Apr 23 09:35:35 2021 -0400
-
-    Add an alias for seeing what the changes in a sha1 were relative to its parent
-
-commit 537e213703af63c688666eafdb9697144cb9aee0
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Apr 22 08:44:14 2021 -0400
-
-    Unbreak overlay command's support for pattern matching.
-
-commit 4a551eb685c3a4a5b58555a28a85896e79af212c
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Apr 19 11:49:09 2021 -0400
-
-    Feeding a full path to ged_exec will work, but generates a GED_UNKNOWN return code since the full path doesn't correspond to a GED command name.  This is fine, except we were checking for any non-zero return from ged_tire and considering it an error, so the output file got deleted.  Check instead if the return code has GED_ERROR set.
-
-commit 2a86a5fc229130752584f1e49e8eb7ea5110fb3a
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Sat Apr 3 11:37:28 2021 -0400
-
-    Properly expose redraw as a ged_exec command.
-
-commit df033a02b185fdadb4cf0225204c0028c7719960
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Apr 1 21:11:28 2021 -0400
-
-    Add some notes about following file history in Git.
-
-commit 131a748ba0400d9ad4194f10f30497e52d3f2b44
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 19 00:44:26 2021 -0400
-
-    Add documentation for BRL-CAD + Git
+    remove the top-level fuzzer flag test, unused. we have a regress test
     
-    Going through the notes accumulated over the course of the conversion
-    effort, this commit tries to collect the interesting/relevant pieces
-    into some new files for preservation going forward.  (Much of the NOTES
-    file from repoconv is now obsolete, since we have shifted to a
-    conversion approach that does not use the git notes mechanism.)
+    (cherry picked from commit 806c6f924b85b55eaf5d5c797f5fc9401ea96fef)
 
-commit 692c97e253806caa693906f64e6a60357f781a75
+commit c561ce0d80f4e8d2d2f3f715a0a94440f0406389
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Mar 25 14:02:42 2021 -0400
+Date:   Tue Mar 8 18:01:57 2022 -0500
 
-    libgvm in geomcore uses the external->internal unpacker
+    For now, don't build Qt in the RELEASE branch.
 
-commit 1c115e4dc5e6b7b62debc72eda369bc6c1d830d3
+commit abb7829a25968877fc609fe1297fcc80426345df
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Mar 23 09:03:56 2021 -0400
+Date:   Tue Feb 15 17:09:01 2022 -0500
 
-    Just go with basic porcelain without ignored files
-
-commit de26f5a96cb30c60b10bdfb8842aff340ca1b13a
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Sat Mar 20 14:17:20 2021 -0400
-
-    Check for a .gitattributes file in the source dir
+    Remove VS2022 problematic (and used) FirstElement
     
-    Be proactive about making sure a .gitattributes file doesn't introduce
-    problems into the source tree.  Use the error message to direct devs to
-    the discussion file with more details.
-
-commit 7e009398784d24b7a4edefc32b2b48ad6627fa82
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Sat Mar 20 14:02:04 2021 -0400
-
-    Set up .gitignore with common problem cases
+    Unless I'm missing something, FirstElement is currently unused by both
+    the openNURBS code itself and our code - disable to avoid a VS2022
+    compiler bug.
     
-    This requires some care since patterns here that are too broad will
-    cause problems, but the chances of inadvertently adding these files is
-    high.  Also (unlike .gitattributes) nothing here alters files on
-    checkout or commit so it's safer to have this file in place.
-
-commit ab288d672c94cf7175123a994cd1eac9c3198ada
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Sat Mar 20 13:53:14 2021 -0400
-
-    Handle more git status --porcelain cases
-
-commit b2a80207875080588eb2f721c6143017308e87f9
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 19 17:39:24 2021 -0400
-
-    Update some links in the Hacking BRL-CAD book.
-
-commit 6c6fa87ef5918bc667d25b8da7445805d7dad52e
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 19 13:50:16 2021 -0400
-
-    Make a couple updates to INSTALL
-
-commit 23250550e257afee025d4eff9e86c5ae454eeb4f
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 19 12:47:19 2021 -0400
-
-    Fix parsing for modified file checking with Git
+    Keep an eye on the following links to see if there is more progress on
+    this, but in the meantime it looks like we can just dodge the issue
+    completely:
     
-    Previously we weren't breaking the output string down properly into
-    individual entries.  Also, be a little more nuanced when Git reports a
-    file is staged for deletion.
+    https://discourse.mcneel.com/t/building-opennurbs-public-with-visualstudio2022-results-in-compiler-error/137817
+    
+    https://github.com/microsoft/vcpkg/issues/19561
+    (cherry picked from commit 68d49db88388add7924c1f6586ee80c1352950df)
 
-commit d88f039945b8a379dc1973d1cd7a482f56e5cfbe
+commit 7b9f94eec70a478342a1b87b425f1a75e400d4ce
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 19 11:47:36 2021 -0400
+Date:   Sun Nov 28 15:06:37 2021 -0500
 
-    First cut at updating HACKING, COPYING, README
+    Fix distclean name.
     
-    Undoubtedly a lot more to do here, but make an attempt to update the
-    HACKING workflow and other references to the SVN repository.
-    
-    Note that the binary and source file hosting were not updated yet, and
-    the mailing lists are also unchanged as yet.  Those will be updated as
-    new solutions come online.
+    (cherry picked from commit 79ff1d3fcb1024e975a5ef6c3828a17b8a8b2e12)
 
-commit 08cf6f487cd13dd58b34398ef8dbab5a9a6f5961
+commit be08cd7aabe511f4b08dee18675b469690f42c76
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 19 09:30:08 2021 -0400
+Date:   Thu Dec 16 09:08:29 2021 -0500
 
-    Remove SVN portions of CMake distcheck logic
+    Newer CMake versions are a bit verbose about setting this to old - it's not a functional necessity for us to do so; go ahead and remove it.
+    
+    (cherry picked from commit 05678ae1ebb3618b8afcd56b46612ec3d5e95d4b)
 
-commit a04d80fccaa7cfd2ca369243f4db44b1cf96ff6a
+commit 94e456b5f9bb2cccd35a7e71da72b1ab8335d7b4
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 19 08:24:02 2021 -0400
+Date:   Thu Dec 16 09:40:22 2021 -0500
 
-    Don't zap sc_cf.h.in if src dir == bin dir
+    Newest CMake dev is looing for CMP0127
+    
+    (cherry picked from commit ba08e11d9da41e28293e420b6671224a31d96a3d)
 
-commit b744b36afb307e2470f76972d912f116dcb76989
+commit 6a8f8364e3ed55f4e29fc04e8a722af34c4496f9
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 19 00:49:01 2021 -0400
+Date:   Thu Mar 4 16:32:48 2021 +0000
 
-    Remove repoconv files from working tree
+    Experiment with a 'gdal' type to force triggering of the gdal plugin.
     
-    Removed in main - remove as well in RELEASE for patch release.
-    Migration is complete and there is no point in keeping these.
-
-commit 7ad5dece315115b881833cf04e9e449c723622c4
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 19 00:37:29 2021 -0400
-
-    Update fastgen regression LF/CRLF test handling
-    
-    fast4 files classify as text files to VCS, so their line endings get
-    updated on checkout.  Normally this won't matter, but this particular
-    regression test is intended to make sure that it in fact does *not*
-    matter.  For that, we need to preserve the LF (UNIX) or CLRF (DOS) line
-    endings in the files upon checkout.
-    
-    Rather than use .gitattributes (which invite mishaps if pattern matches
-    produce unintentional matches elsewhere in the tree or get stale as
-    files change) we instead compress the LF and CRLF versions of the files
-    to be checked out as tbz2 archives.  They are then decompressed when
-    needed.  We can do this since CMake itself is able to do the
-    decompression, and we are guaranteed to have CMake on any platform where
-    building is possible in the first place.
-    
-    As an extra check, the regression script also verifies that the LF and
-    CRLF versions of the input are in fact different after being unpacked.
-
-commit d7c1fcb60d1fcc1ac3acb4e80c56834ce77180a8
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 19 01:13:59 2021 -0400
-
-    Set CMAKE_RC_FLAGS for Windows Ninja build
-    
-    This setting was reported to be a problem for users building with Visual
-    Studio, but it appears to be a necessity when building with Ninja.
-
-commit 534b0e9591fc08f246db80a9a755f2f7a5a5b4df
-Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Mar 5 03:35:36 2021 +0000
-
-    User report that setting this flag caused a compilation failure, with RC complaining about 'invalid usage'.  Removing the definition produced a successful build.
-    
-    svn:revision:78379
+    svn:revision:78377
     svn:branch:trunk
     svn:account:starseeker
+    (cherry picked from commit 120bd726294a85f8dbd2559eca8e928dab716539)
 
-commit 50f91d17aa94a91daedb411a4e5bd9a09baac2f9
+commit 6c89d9b6d0b6f8c329422472b6cd740cf6a602ee
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Feb 24 18:11:55 2021 +0000
+Date:   Thu Feb 3 14:36:46 2022 -0500
 
-    If we're switching back and forth between full and object searches, the UNIQ_DB flag may be set incorrectly.  Make sure the flag for unique path returns is unset before invoking a full path db_search.  Reported by Sean.
+    Free vls strings.
     
-    svn:revision:78317
-    svn:branch:trunk
-    svn:account:starseeker
+    (cherry picked from commit 82a6a542e3ca70ea473207c9319b54e944704b4a)
 
-commit 37211066a6fb8bb993713ad300e4d03e960fd037
+commit 996feb632cf331a8c675a45832fe95f340314ae8
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Feb 24 16:45:51 2021 +0000
+Date:   Mon Mar 7 16:24:53 2022 -0500
 
-    Add a search example finding regions contining a specific object included using a specific boolean operation.
-    
-    svn:revision:78316
-    svn:branch:trunk
-    svn:account:starseeker
+    Update Eigen to 3.4.0
 
-commit b072086186eb348bd8c81ff01508ab179ead5405
+commit 84ea346ff0f0a439487613450e5d60bc6baee930
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Thu Feb 18 14:56:08 2021 +0000
+Date:   Wed Dec 8 11:02:05 2021 -0500
 
-    Fix infinite looping of isst on initialization.
+    This is user visible - bot_merge won't segfault now when handed bots of different types (like bot_merge merged.bot *.t0 in the FAA Generic_Twin example.)
     
-    svn:revision:78260
-    svn:branch:trunk
-    svn:account:starseeker
+    (cherry picked from commit dea11d20f8a3e7ce552d9d9e2449849545b14114)
 
-commit e82e6f481a71f6d34f499470de37bb779d7e3936
+commit 65df8278178f21ab03397769741f7412c2326444
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Feb 16 03:33:41 2021 +0000
+Date:   Wed Dec 8 10:30:18 2021 -0500
 
-    extern C for BU_SEM_DATETIME
+    Make sure we have thickness and face_mode before assigning.
     
-    svn:revision:78245
-    svn:branch:trunk
-    svn:account:starseeker
+    (cherry picked from commit 82003f4dafb55fda371eabb61439a03b025602e2)
 
-commit aacdc38fccfea788aa0719931dde2c5c12d1c622
+commit 742ea14d694341a2788e9aabddc221729cf6918b
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Feb 10 19:46:13 2021 +0000
+Date:   Mon Dec 13 15:39:35 2021 -0500
 
-    Hmm.  high_resolution_clock on BSD isn't returning the correct epoch answer.
+    Fix gcv option handling, get regress-dem working
     
-    svn:revision:78232
-    svn:branch:trunk
-    svn:account:starseeker
+    Option handling was broken in gcv, and the target name was wrong for
+    enabling the GDAL test for converting a dem file.
+    
+    (cherry picked from commit ea1607c4bbba1153e65005afe8a011ce2746a0e2)
 
-commit d65d06f717bec79a7302f3041a798829b88fcf4f
+commit ba288544517a13828c9ec5e949770af9c3d090e3
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Feb 10 17:42:38 2021 +0000
+Date:   Fri Feb 18 16:30:50 2022 -0500
 
-    Shouldn't need this declaration with the C++11 approach.
+    This one is user visible - corrected librt to again allow lookup of object names containing forward slashes.
     
-    svn:revision:78231
-    svn:branch:trunk
-    svn:account:starseeker
+    (cherry picked from commit c79d468531c97bb77d3b8f6efef523168743066a)
 
-commit 4bbabb64f69076bfc9993058d69f394b3f8e3101
+commit fb8061a5bfbe3677c50936b0cb2dd53ef4fe0a77
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Feb 10 14:36:17 2021 +0000
+Date:   Fri Feb 18 16:16:55 2022 -0500
 
-    Use C++11 high_resolution_clock instead of platform specific APIs.
+    Correct db_lookup logic for name with '/' char
     
-    svn:revision:78230
-    svn:branch:trunk
-    svn:account:starseeker
+    Back in 2018, when I added SVN commit r71281 I asserted that it wasn't
+    valid to have the forward slash '/' in an object name, and consequently
+    its presence indicated we have a path.  Unfortunately, while that
+    probably *should* be true, it turns out there exist examples in the wild
+    that do define their names with forward slashes.  It is possible to
+    create an example of this in MGED with: make "test.s/" sph
+    
+    Accordingly, adjust db_lookup to first try a normal lookup on the
+    provided string without doing anything path related.  If that doesn't
+    work, we can then go ahead and try and interpret the supplied string as
+    a path, but if we don't first try the literal string we simply can't get
+    the correct directory pointer to manipulate in the "test.s/" case.
+    
+    The presence of such a name does probably indicate either a mistake or
+    some sort of automated conversion naming, but regardless of how it got
+    there we have to be able to work with it to fix it.  Since it *can*
+    exist, correct the librt logic accordingly.
+    
+    (cherry picked from commit c299266b31344db1ceca492cdbb635051cfbe281)
 
-commit 5b3190d4ebc394f6e6ff4d9b442372d9134cf6e5
+commit b8434425a3bde2b7c79b9360e6076e22c4f70f04
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Feb 10 12:57:41 2021 +0000
+Date:   Tue Feb 8 16:56:15 2022 -0500
 
-    C->C++
+    Don't make fast4-g region names for skipped bots
     
-    svn:revision:78229
-    svn:branch:trunk
-    svn:account:starseeker
+    Customer report of spurious high level groups in fast4-g conversions
+    using the -c option to constrain the conversion to a particular subset
+    of the model.  One of the make_region_name calls was getting triggered
+    even when the region_id was in a skipped range, which was artificially
+    increasing the maximum active region_id and resulting in empty region
+    combs being activated for higher level component numbers.
+    
+    Fix is to guard the bot make_region_name call with a skip_region check.
+    
+    (cherry picked from commit 90d9e34c5f689c7944ee7b0bd032415557b32cec)
 
-commit c4b8d16ff5480b4f8c8fbb90a0a55c007243f5e2
+commit b36b51af9a4aa85a310415188ebe967e2f2b82c1
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Jul 13 10:16:25 2021 -0400
+Date:   Wed Dec 8 14:36:48 2021 -0500
 
-    Note the last pre-cherrypicking commit to RELEASE
+    Free vls in comgeom and bot arrays in fast4-g
     
-    Not really sure where to put this yet, or even if it is truly necessary,
-    but we will need to do a cherry-pick patch release to pull some main
-    changes into RELEASE without a full merge, and I'm seeing warnings that
-    this will complicate eventual full merges of main into release.
+    (cherry picked from commit f9e7b285b7018081bada6db1128ddf83ff3ce86c)
+
+commit b7b91e76ad263b743b3c6140b20f54400e552d27
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Nov 19 16:57:57 2021 -0500
+
+    Make sure we didn't enter based on the group_head == NULL condition before we do this bit.
     
-    To make sure it's clear where the cherry picking process started, make
-    an explicit record of the last RELEASE commit made prior to the start of
-    the process.
+    (cherry picked from commit c9268c1377859ebb6bdca1db24a42f3ac30d7547)
+
+commit 19e9bdb5357539140bc6358264656f526d0c7544
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Nov 19 16:31:24 2021 -0500
+
+    Eliminate a swath of globals from fast4-g
+    
+    (cherry picked from commit e67597983091e8ccbf9ca5ecde7917adbe41ce23)
+
+commit dc69a6b0210c003a0d70c98586b0abbe5d2b3c07
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Nov 19 14:28:45 2021 -0500
+
+    Verify memory allocation succeeded.
+    
+    (cherry picked from commit 372dd05c4673bbbf9f39c42e6d483ed9ff748947)
+
+commit 05e3690ef8399a819de235d3779ebfea1e24c816
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Nov 12 13:45:04 2021 -0500
+
+    r1a and r2a are local only - scope accordingly.
+    
+    (cherry picked from commit f233344da2d49ea99d8a6953aad02657a7542f0b)
+
+commit 65dac8482fdb3643052b0846c38be05a76d3548f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Nov 12 13:42:33 2021 -0500
+
+    Report on dup vert count.
+    
+    (cherry picked from commit 27269cf77efd5935fb3fb74a267a897beeb696c8)
+
+commit 80f9f2fc8c474acd843bcc1574b4fed39b6f4e54
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Nov 5 16:43:16 2021 -0400
+
+    This looks like a straight up bug.  Feed test_name into the cyclic_path test, not lname.
+    
+    (cherry picked from commit cbca6c6a1add4a9f0e609e8741b6b160ebe6d256)
+
+commit 6231f33187dc079e1d1de6f80c894dc5239d2ad7
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 4 15:04:26 2022 -0500
+
+    Update terra data name in CMakeLists.txt
+    
+    (cherry picked from commit bc35441eb50d18ea90721f9bc5fd0afa7f3b7c78)
+
+commit 27cef262e4ea8e7149ac36a770ef763f6d233c5b
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Fri Mar 4 13:19:33 2022 -0500
+
+    rename terra's data file with .bin suffix instead of .dsp
+    
+    been a longstanding headache since that is more commonly associated as being an msvc project file.  bin is commonly associated with raw binary data, so switching to it.  there is no standard expectation or requirement that dsp data files utilize any convention.
+    
+    (cherry picked from commit 52139ad3f4e2cf9d6152d8ffc7a9dd7e64befc7b)
+
+commit 18139d5e51b5b11fbeaaf5242f6cc9e628c3efd6
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Mar 3 04:35:31 2022 -0500
+
+    unused var
+    
+    (cherry picked from commit cc4bed4e90a65c3337819d4b78f06cf6a5400f14)
+
+commit c31784135edfcd0172776573f1572d821b3254dc
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Mar 3 01:47:47 2022 -0500
+
+    mortar_width is used in the brick+mortar func, but unused in the brick func
+    
+    (cherry picked from commit 542cf7428874a3e4ea48ddadbfd3a6e53aef8791)
+
+commit 1888c9e91f614e5b2b518fc6d8e6e5d84531eba7
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 2 16:03:11 2022 -0500
+
+    Use rd, make the if test a bit more readable
+    
+    (cherry picked from commit 1fa7f93abb0f55091eba99eca0bc6502fde60678)
+
+commit 063268694e723786cbb2eb413048c49644ee184e
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Mar 2 15:07:35 2022 -0500
+
+    stop chasing. turn off gdiam warnings as it's a 3rd party external code.
+    
+    (cherry picked from commit 2b9682adcde6eb316620cbce111d7e0110138dd9)
+
+commit cb2895bc796a3d76979e89acae3c6bb9ad5a30cd
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 2 13:42:07 2022 -0500
+
+    As far as I can tell, this has always been unused
+    
+    (cherry picked from commit f233b04585cf74cde5b0267055c8378060b8ca40)
+
+commit e531dd318e205d7c7294002bd5d9ef9d377a8009
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 2 13:37:53 2022 -0500
+
+    This gdiam block looks to be used for debug printing - comment out so clang doesn't see the set-but-unused variables.
+    
+    (cherry picked from commit 6c2c3bc546ebc23801bb4704bb0a9c9ed27f0b55)
+
+commit daa5cc0df0e529a5b9a210b2ecc84c761c1a7c1a
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Mar 2 10:21:32 2022 -0500
+
+    smells fishy, but count is unused since at least 2309d136de2
+    
+    (cherry picked from commit 8bdec337e490b31b16b638838f429160d6b877e8)
+
+commit 0d3201c66bcb35bdfb0b43fb38b3cb2ffd5274c3
+Author: Christopher Sean Morrison <brlcad@mac.com>
+Date:   Wed Mar 2 04:56:09 2022 -0500
+
+    compiler and standard are adhering to the rule of three even stronger.  if we're going to define an equal operator, then we probably need a copy constructor too.  declaring 'default' since the intention is not obvious here.
+    
+    (cherry picked from commit 5277fd29a464c69e1ced994a3719cfc6ede911ef)
+
+commit b07401e2ab277b121a1da56b31887ba0367718b0
+Author: Christopher Sean Morrison <brlcad@mac.com>
+Date:   Wed Mar 2 04:54:26 2022 -0500
+
+    more unused
+    
+    (cherry picked from commit c00d115a1ebd9ed547baaba7154951354628d4d6)
+
+commit 82b5962215256416cf82e1bbec33cf332f0070ea
+Author: Christopher Sean Morrison <brlcad@mac.com>
+Date:   Wed Mar 2 04:42:52 2022 -0500
+
+    compilers getn' smarter.  these bean counters are unused, always have been.
+    
+    (cherry picked from commit bde9ca1cd50251e19908cc14f57a0ac1d58aceb2)
+
+commit 55a659f57fc6854d23dcf97976cd8e71abcde1a8
+Author: Christopher Sean Morrison <brlcad@mac.com>
+Date:   Wed Mar 2 04:00:05 2022 -0500
+
+    fix a null-pointer-subtraction warning/error being issued on qsort.
+    
+    Turns out the OpenBSD implementaiton we're using has optimizations for
+    sorting by different byte alignments (int and long in addition to
+    char) and the method employed for determining alignment relied on
+    offsetting the pointer address from address zero in order to modulo
+    the element size.  This can cause particular havoc with link time
+    optimization (LTO) and other strategies that assume strict aliasing.
+    
+    These optimizations are very similar to other optimized qsort
+    implementations and came up in a lengthy discussion in the SPEC
+    benchmark (which has a qsort test based on BSD and lots of other tests
+    that use that qsort implementation).  Their "fix" was to degrade
+    everything to char swaps (i.e., eliminate the optimization) which SPEC
+    rejected on simple principle of the benchmark already being published,
+    but to my eye it would have negatively affected the benchmark anyways,
+    so good call...
+    
+    A better fix I think is the one proposed here where we keep the
+    optimization, and simply rely on casting the pointer through to a
+    uintptr_t instead of subtracting null.  Since we're solely dealing
+    with long/int/char alignments, it should be a safe enough assumption
+    (at least insofar as being as reliable as subtracting null) and a fix
+    that will keep LTO optimization happy.
+    
+    Original error was:
+    
+    error: performing pointer subtraction with a null pointer has undefined behavior [-Werror,-Wnull-pointer-subtraction]
+    
+    While a different qsort variant, relevant summary at:
+    https://www.spec.org/cpu2017/Docs/benchmarks/605.mcf_s.html
+    
+    (cherry picked from commit 4abd9d0fec60827123e3f06ad6d92c129362b999)
+
+commit ac5a29bc557f7bb81c1dfcab6fb53c956cec9e8b
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Mar 2 00:12:22 2022 -0500
+
+    ignore header warnings more aggressively.  might need a macro
+    
+    (cherry picked from commit 8d5f577c01d290a8a96c49dd8fb45cafb7102159)
+
+commit e40ebe287e9c31c3f721dcf14368abfd75e0f910
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 22 13:29:45 2022 -0500
+
+    github issues ftw
+    
+    (cherry picked from commit fcd17b95220095fd4e4dd2b45468a846f40de4e0)
+
+commit 433c4e1b54ad71e741051a62b9f56adc4f226d4f
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 22 13:28:08 2022 -0500
+
+    tighten up instructions.
+    
+    make quick-install section in particular egregiously concise, but still include what should be universally helpful/essential.  added minimum versions, previously missing.  shift to git cloning, and try not to assume non-Windows quite so much.
+    
+    (cherry picked from commit 71099b3ee075c79a45cf570ab431523b26345c19)
+
+commit dccf78ea8b81ca437851c5d127b42b2dcda60237
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 17 18:45:23 2022 +0000
+
+    need <cstring> for strchr, not <string>
+    
+    (cherry picked from commit 10db47d5e91ef64c865b91f626ccdc1fb2d17e7d)
+
+commit 42f8fda5a679723fccc8a0d50c9f25af1395626e
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 15 14:49:04 2022 -0500
+
+    rework dynamic library closing, now deferred to avoid racing.
+    
+    closing dynamically opened libraries on demand was causing a problem
+    (segfault) on Mac due to our use of C++ constructors/destructors to
+    load and unload plugins.  when dynamically loading a library that
+    causes its dependencies to also be dynamically loaded (e.g., loading
+    libged-dm loads libdm which loads all the dm plugins), there was a
+    problem when the libraries were closed.  libraries (libdm in this
+    case) were being unloaded while we were still in that library's
+    destructor. the plugin that caused that library to be loaded,
+    libged-dm, was already unloaded so it would crash while still in the
+    destructor in the process of unloading that library's plugins.
+    
+    the solution employed here is to defer closing so that the constructor
+    can complete, and introduce an explicit purge function bu_dlunload()
+    that actually unloads all the libraries.  this only happens when libbu
+    is unloaded (again using the destructor method), or bu_dlunload() can
+    be manually called to force it.
+    
+    (cherry picked from commit 9af0c3356c2bac728990a5c1f6d3e4bbd6116ee3)
+
+commit e754f0787d95cbc4bfd9f03b50ff0f4040993015
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 2 13:21:58 2022 -0500
+
+    Ubuntu reports a long int here - go with that for printf purposes.
+    
+    (cherry picked from commit 31bb9e27446ced3fb5aa2acdc358d95b58281904)
+
+commit 9e067588dc0ed00ad02960efb71177ce8e0b7c2c
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 15 14:48:37 2022 -0500
+
+    avoid dynamic string, shorten for consistency
+    
+    (cherry picked from commit ce6ff9134272adf2d003500d353a032c3a5833e6)
+
+commit 0c3503fc6b23879d62af95da9b3f45f2bad79241
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 15 14:47:03 2022 -0500
+
+    consistency with libdm, free our string in the clear() call
+    
+    (cherry picked from commit fb305e67650c4e0480f9f788f1872fa2792e824f)
+
+commit a98d97b11e600f7c241bcf42ce9dc46a3d6eedb7
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 9 04:03:23 2022 -0500
+
+    don't dereference null in case the array size is passed and/or has a null entry
+    
+    (cherry picked from commit 009396054f0bd216c11d64dba2d093458969d365)
+
+commit 2b3a6cbe82598568abe8daa45804c6c613c2715b
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Feb 3 11:29:23 2022 -0500
+
+    Ignore empty lines in input burst file
+    
+    (cherry picked from commit 3656356b6479e543885a5bfeb5bac301c1186e6a)
+
+commit 2409e165661d6798212ee7facd1cd1b78ed9b43e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Feb 3 10:07:58 2022 -0500
+
+    List out currently untested (n)burst commands from man page.  Note that since they were untested in both new and old configurations, it's not clear how many of these were ever in a working state... error-file, at least, I'm pretty sure did not work on Windows in the old code.
+    
+    (cherry picked from commit fba9adc10ab152142c6cf2c3480bb006230905ba)
+
+commit fb6a345ac142b036be9ce9546bb1709d1eab4deb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Feb 3 09:51:30 2022 -0500
+
+    Apparently DEBUG_SHOT is defined by default (??) - restore debug printing lines in nburst.
+    
+    (cherry picked from commit ded93b22b850c5eea5dab5059a8a051a0c131101)
+
+commit 463f008dfc1cdb5f9592346e5d1a77f481d486ab
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Feb 3 09:38:05 2022 -0500
+
+    Use the original burst units in both output files, not just shotlnfile
+    
+    (cherry picked from commit f4c9c37a114f90b8227902611970f95aa7edfe86)
+
+commit 66153d6d64a888cacc7862707d7bb9fcd26090c3
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 3 00:51:29 2022 -0500
+
+    nburst is close, but does have a couple issues to resolve
+    
+    (cherry picked from commit 68e41235e85c7634b6d496b00bfc69b0ed915820)
+
+commit 60d41d63e5c78e7a6686394ed2312396073fd4fa
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 3 00:46:56 2022 -0500
+
+    derp, these are generated distclean files, not cmakefiles
+    
+    (cherry picked from commit b066aaf7324fd6813a59d2e353b1557803692f91)
+
+commit 7127572b0aa36eb39f8e52022bbf184bfb193bd3
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Feb 3 00:45:50 2022 -0500
+
+    enable separate tests for burst and nburst so they can be compared.
+    
+    currently writes to same outputs, but running tests one ad a time and diffing, there do appear to be a couple inconsistencies that might affect downstream.  not printing units and not logging a few lines of output that includes bounding info.
+    
+    (cherry picked from commit 9029fb82191b347f547c3a5a56115961293df23b)
+
+commit 7b248e460ff116006d15a38b838c595b80856bb7
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 2 16:10:30 2022 -0500
+
+    try reverting to cmake's FindX11.
+    
+    appears to work on mac, needs testing on linux/bsd next.  motivation is loads of blather and inconsistent library finding on mac (getting mixture).
+    
+    (cherry picked from commit 8b92dd82601006bb940763780f9e23f1229031c0)
+
+commit 8c3274c3d654da609369da78c3fe12288cb3ae5c
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 2 14:17:49 2022 -0500
+
+    add couple files generated by tests for distclean
+    
+    (cherry picked from commit 85d8dd20dcc1104b98e24986a648efc8335daba6)
+
+commit bac399a1d7026cf7051fe569d1e5888c9e8adfbc
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Feb 2 13:21:20 2022 -0500
+
+    Correct target dirs for images.
+    
+    (cherry picked from commit 7dac8d312cb96098cc8b7e206483923f46a11c0c)
+
+commit 85a8dede768f9f70e0254d66325693915eeb8311
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Feb 2 16:39:41 2022 +0000
+
+    expand project() and silence an annoying MPI warning about Fortran
+    
+    (cherry picked from commit 9026cf7670943799081339db53305222e8ef3abc)
+
+commit 9bc06a336754da149d4d2994ce03b1f942e37e36
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Jan 30 04:52:01 2022 +0000
+
+    need forward function decls despite the includes.  few more size specifiers too.
+    
+    (cherry picked from commit d6e5bb1da0e34abaa4f21dbb746337e98552991d)
+
+commit 1e51248463fcd7e5f241a082391522814157fdcf
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Feb 1 03:13:31 2022 -0500
+
+    enable get_type command.
+    
+    when converted from edmater and refactored into libged, get_type was never properly enabled as a command (only exists as db subcommand)
+    
+    (cherry picked from commit 8be035327c61e0a45ed53e6e1861257c700b9a36)
+
+commit e91d7b24f0d592e54c1018120b246febd94098b8
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 14:00:50 2022 -0500
+
+    more bu_free() cleanup
+    
+    (cherry picked from commit 733f0f7532b8f938e2a0386ab143401079807185)
+
+commit 30cb043c47909ffc30876b1a738a886a1ce47dbf
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 13:00:55 2022 -0500
+
+    ahh, need cast because these are an array of points
+    
+    (cherry picked from commit 12be71b56b5a5bd74b1eb469f8b09790c96e12bf)
+
+commit ab3fafff608b4d85210d8233bd734b9694f51b6d
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 12:59:21 2022 -0500
+
+    need str.h for bu_argv_free (oof, wrong header)
+    
+    (cherry picked from commit 524ddfa950b6e842e0c1b249d8ff804a8244a913)
+
+commit 0afb3dc0a70ca12936bd8251a20f14a1ebaf3b71
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 12:45:46 2022 -0500
+
+    more bu_free() cleanup to avoid null prechecking
+    
+    (cherry picked from commit 0670cb2bb671f68b8f92cd547b9d4a743b62149f)
+
+commit 5f74ec2074d97a43a2a2724a95cc66107ab2c195
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 12:43:38 2022 -0500
+
+    super harsh to bomb on teardown, just be happy with it
+    
+    (cherry picked from commit 617ad53a37b953c5ddf6145b7e503ea457f1edbc)
+
+commit 175cd83f955ab2124a6ec3d972c12340c11ea726
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 12:21:02 2022 -0500
+
+    ws
+    
+    (cherry picked from commit 13a6e15ccc2d99d2d0d889d56fb3a4c50b96f76e)
+
+commit 8affd35572679cf0c9d64b80a79d31c47ecb6846
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 12:14:41 2022 -0500
+
+    more bu_free() cleanup
+    
+    (cherry picked from commit 93dc5de1965188cb1f08d01e4aee27b3655ef300)
+
+commit 292bc929e50e3cb4f088f708a167e42c01656c22
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 12:14:20 2022 -0500
+
+    another more interesting use of bu_argv_free().
+    
+    might need casts, but worked on mac without.
+    
+    (cherry picked from commit afcbbbbae97ad33f03b769154a552a45edbf5d75)
+
+commit d8dc7c4d0f0e8f58142c3c85633b1a2350880fe0
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 11:52:30 2022 -0500
+
+    replace loop release with bu_argv_free
+    
+    (cherry picked from commit 79719b63a7e170f9198dc1297acd29be84330635)
+
+commit e0893bf58770f1b187b33854943b61b5e8288a3a
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 11:26:52 2022 -0500
+
+    don't need to check, harmless if already null.
+    
+    (cherry picked from commit 69da63a5d3c97b9acc0a8d6b610706ab9291f88b)
+
+commit e100ad221aa694e1bc8e9522d395cc802ddaf92b
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 11:14:35 2022 -0500
+
+    undo antipattern of checking for null before calling free.
+    
+    this was done just to avoid bu_free() blathering about NULL, intended to catch bad book-keeping, but was more typically just if-checked as the pointer being released often came from a different context.  now that bu_free() handles NULL silently like stdlib, these checks can be removed.  care is just needed to keep post-santify logic intact that sets NULL after free.
+    
+    (cherry picked from commit b47cf22cfcc2c8f5eb640f0801d19165918dd132)
+
+commit 0407523cce05c511affe8309ed5c770410c6c635
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 11:00:13 2022 -0500
+
+    no longer make bu_free() blather on NULL free, instead matching stdlib's silent handling.
+    
+    keeping the -1L test as a way for callers to detect corruption in their book-keeping, though.  malloc's bu debugging interace was removed, otherwise that'd be an alternative to print NULLs when debugging is enabled -- might make sense to ressurrect it, but hopefully not.
+    
+    (cherry picked from commit 8fb45718daf7200ee0dfa283f3aa38cae757f8a1)
+
+commit 06de1c80135f0439a986162f9ad698d75a2c9422
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 10:56:13 2022 -0500
+
+    document bu_free()
+    
+    (cherry picked from commit 7b99a095307190a0acc074828d570b35e484f6e5)
+
+commit 63d10d4013aadf6d7bc8c46d753424b1866634b4
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Jan 27 08:53:25 2022 +0000
+
+    more print specifier size_t matching
+    
+    (cherry picked from commit 698e28d3dc17559abebba0a71ac325d94b68f066)
+
+commit cd9d12b9b63a0d13e479fa381f69caf1218bdf58
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Jan 26 07:12:56 2022 +0000
+
+    gdal is apparently compiling with Werror... which seems wrong. this fixes a switch sign conversion issue.
+    
+    (cherry picked from commit e30581f738719a79506eec77288bcb34a18ae843)
+
+commit 6373128dabc0f56d1711d412aec6343ec0ea3bc9
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Jan 26 07:10:55 2022 +0000
+
+    quell size_t conversions
+    
+    (cherry picked from commit 028b93984842812b803a269688a9f1286c6de53e)
+
+commit 092fb8e64366844213d617b7562d0e5bf671e8c0
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Jan 26 01:32:24 2022 +0000
+
+    size_t mismatch
+    
+    (cherry picked from commit 740c0ccc2f8a99cd1e03c0409e39b38c727f9832)
+
+commit f4fb199e8e8113d1ca46524eb3c51c5e793354ac
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Jan 25 22:56:37 2022 +0000
+
+    remainder of libbu size and sign quellage
+    
+    (Also pulls in try/catch wrapping of std::regex from a later commit)
+    
+    (cherry picked from commit f7d8e5032c4b6ef33a473fec6be4b49fdc45318e)
+
+commit e93359d607e62d5dbaa3e97247874662ef60b09a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Jan 25 22:21:55 2022 +0000
+
+    remove temp debugging logic
+    
+    introduced a new environment variable and encountered a maintenance cost.  also,
+    shouldn't be needed as a breakpoint can be set on the error statement instead of
+    adding a manual pause.  alternatively, we could dump a stacktrace (with or without
+    bombing) to catch them or do what libc does and simply ignore them if they are no
+    longer useful to us.
+    
+    (cherry picked from commit 092a8e66e270d0cfd82b17c89e35ca635caabfe6)
+
+commit 12f310a5d674a9ce60c6f753699060338eafb1cd
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Jan 25 22:15:29 2022 +0000
+
+    quell sign mismatch
+    
+    (cherry picked from commit da9e925b8bb47fb0be15b94ccf65372bfcadfeff)
+
+commit 94aae5cea883f995b09065173bb3b5924ef3921c
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Jan 25 21:57:41 2022 +0000
+
+    fix size_t issues on gcc11
+    
+    (cherry picked from commit 32ccbfdeefbc5f2d97d1cf96c62d2efb6881320a)
+
+commit 242dde86fa3ce4a997cfbb1d488d7fdda1554306
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Jan 25 21:31:11 2022 +0000
+
+    size_t specifier needed
+    
+    (cherry picked from commit 0cfc0e18ea0e678e47cc81bc0cb0c29dc8997d07)
+
+commit c3450f73811da67477890e285507e5ebaf830790
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Jan 25 21:26:45 2022 +0000
+
+    remove register as these instances no longer have performance bearing
+    
+    (cherry picked from commit 43b6cbd2841696b244019e766df839123d0ae895)
+
+commit f9eb23f2bc5f1455a8e7244ba1d2fea7766267e2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Oct 22 13:13:58 2021 -0400
+
+    Suppress std::cout printing.
+    
+    (cherry picked from commit cc09110f3c46ce180e70e0ab5a26f2b7a22dfc95)
+
+commit 4de8b4efdb58270eefeba3d0e9dd50175b327b0f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Oct 8 16:39:32 2021 -0400
+
+    Ah hah!  Tab characters don't work in DocBook literallayout in HTML output - we need spaces.
+    
+    (cherry picked from commit 9b53b02521f9e51b30c7b4e86b42795462ed587f)
+
+commit ab8a294605079b50298bd94f1cb45769f0548e2e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Oct 8 15:51:02 2021 -0400
+
+    Start working on a test case for npush -x -s
+    
+    (cherry picked from commit 37a9e5a357d705427f983c8bc53655427da38e0e)
+
+commit d75938661584747235acac5029996a05b583069a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Oct 8 11:29:12 2021 -0400
+
+    Push the axis-aligned bbox routine for triangle meshes down into libbg - no need for this to be tied to librt data types.
+    
+    (cherry picked from commit e56b346071464798bd73b318b4394725d556d8f8)
+
+commit 586c0e1ed0ed73c9b0d5d89c99c6256fb7404f3d
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sat Oct 2 13:26:05 2021 -0400
+
+    apparently unused, these are leftovers from libpc
+    
+    (cherry picked from commit 8223f3931775f17713ded19318cfb297e622313b)
+
+commit 94fe8e76ba5b47996b7b0a9554daea210c92d72e
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Fri Oct 1 16:02:34 2021 -0400
+
+    security is a responsibility (part of quality)
+    
+    (cherry picked from commit 41dcd11a88d60898d0178d96a5ab2f008be426c3)
+
+commit e8fb0ae4234fc9c61ed50a50ede25025840d594a
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Mon Sep 27 01:58:30 2021 -0400
+
+    remove superfluous densityfile vls, use buffers instead
+    
+    (cherry picked from commit 21c3a0354289c1748dc030a987ddab7beee3e289)
+
+commit f04df8cd73c515c7f671e995db00d2c0cb8ca17d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Sep 25 18:22:32 2021 -0400
+
+    Adjust a few more argv lengths for bu_argv_to_string
+    
+    (cherry picked from commit 5b18c10fb65cb6eb83bd908a868482ee616b2b81)
+
+commit cc13ab4b5b3dc9db390ff56f468f8ec539f3ebac
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Sep 25 18:03:54 2021 -0400
+
+    Thank you, Windows and valgrind - need one more slot in the av array.
+    
+    (cherry picked from commit 8f291c4d88170d63b97ecf035c9e8d117b930c88)
+
+commit 391545ccd9844117c57fad8fe10114dd0324087e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Sep 25 12:37:26 2021 -0400
+
+    Add a note to somday look into what locality sensitivie hashing might be able to do to spot similar geometric objects...
+    
+    (cherry picked from commit 1a5cc91b827b3f250e23198b2ca75691e36f60c4)
+
+commit 96f9ec666ad026f6362367d7d7d7b692d8d9a570
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Sep 25 11:59:15 2021 -0400
+
+    Update the shapelib files we use to the latest.
+    
+    (cherry picked from commit 7bae22841afef8702f1eb2c75f6f6ecec4b5c4b0)
+
+commit dd0eedfed6052490ae5164d2873bd66f24e94728
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Sep 25 11:42:02 2021 -0400
+
+    Explicitly list librt for npush to see if it helps with dependency setup.
+    
+    (cherry picked from commit 72ff4fb666721f3476aed889be6f28d8efff2198)
+
+commit 229409470129d10707d4ee5d15bedd31b3b08a43
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Sep 25 11:41:32 2021 -0400
+
+    Hopefully we don't need this realpath copy any more - if we do, VCS has it.
+    
+    (cherry picked from commit 03e52c4830312cf56227f98903e240a37403501d)
+
+commit b1900b03bf6a62e5f936eb18a8d24e822788725c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 24 21:14:04 2021 -0400
+
+    Windows wants the **argv form.
+    
+    (cherry picked from commit 78a2ed5083dfbb2d4d27c620048a8e45431214be)
+
+commit 8bab69cf541dd86e3cf69f6b9f8fb710ba7d18a4
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 24 19:47:50 2021 -0400
+
+    List file for distcheck.
+    
+    (cherry picked from commit 4b364981b11596f49ef19d820cbdff6de3daf7ce)
+
+commit aa49fb7905164a5d36bba337b9555c116f0e00a6
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 24 16:52:29 2021 -0400
+
+    Update bu_sort to use the latest OpenBSD qsort implementation.
+    
+    (cherry picked from commit 9ca63d2fe59b8d477195276aaf38fa72cf9b6c7f)
+
+commit ba32988f36c8e4c6f7edfbf4d755161989503310
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 24 15:18:48 2021 -0400
+
+    Just use the libfort files in the libbu directory rather than keeping two copies.
+    
+    (cherry picked from commit 771d9ee06531adc945da4eebe017d7a4468a6b81)
+
+commit b5b2740f98d0b7375fb9c077fbaac872ffd2b246
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 24 14:49:30 2021 -0400
+
+    Update fnmatch code to the latest from OpenBSD
+    
+    While we're at it, also hook up the regressions tests from their repo to
+    test the functionality on an ongoing basis.  Reworked bu_test a bit in
+    the process to be a C++ app, so we can use either C or C++ in setting up
+    tests.  UUID code really doesn't get along with C++, so give it its own
+    executable.
+    
+    (cherry picked from commit b986c39fb88f75e033c22b3faabaeda26f312b82)
+
+commit d50c06043ecb9a4e427494a3b4c8c203c9674046
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 24 11:50:12 2021 -0400
+
+    Match latest earcut.hpp includes.
+    
+    (cherry picked from commit 15f4b7a011aedc4a4e8cdd5a0b2218c09f0580ce)
+
+commit c1114d64ef1800cbfc382519f57b516e8fb7516a
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 24 11:42:12 2021 -0400
+
+    Update humanize code (and tests) to latest FreeBSD version.
+    
+    (cherry picked from commit 7c37703f27e6afd134823410f20b3d8118cf8984)
+
+commit e1a84eac57ac9ff9ed96f65fdcfb5c6496bb7254
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 24 09:49:23 2021 -0400
+
+    Adapt FreeBSD change from r316766
+    
+    Correct an out of bounds read with very large numbers.
+    https://svnweb.freebsd.org/base?view=revision&revision=316766
+    
+    (cherry picked from commit 35fa9da1bc72b8695af380c3336d61b10448e011)
+
+commit 7f51c99a32596e3a1dd2fe04f60b1a167a6ad320
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 23 19:39:47 2021 -0400
+
+    Adapt upstream change to dynamic allocation
+    
+    Merge in memory management changes from
+    https://github.com/akuukka/quickhull commit 834cf6c
+    
+    (cherry picked from commit ab73fa6e4f16a1acd182491d8c2bd5df0e2b7b84)
+
+commit 78af581aeef71f97ab03576c06bb517e2b39b639
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Sep 23 09:51:41 2021 -0400
+
+    Merge a couple of upstream commits from quickhull
+    
+    Merged part of 4193fa0 and c05e5c8 from upstream repository
+    at https://github.com/akuukka/quickhull/
+    
+    (cherry picked from commit 18351d478d442f42f09247322a7d5190fd6215a2)
+
+commit d389a1c8f37d88d13c75e3e36695eda2077d2fdb
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Sep 21 22:22:49 2021 -0400
+
+    mention a couple killtree issues
+    
+    (cherry picked from commit 6aaf84c1a42128943c80b8a14b217afa9aee1002)
+
+commit 4abf4949f3641f8dab310a20472a82f0d63b82c0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Sep 21 13:41:43 2021 -0400
+
+    Note a potential refinement.
+    
+    (cherry picked from commit 7588b7d43e2a22455be3d5225e350ad651cda4a4)
+
+commit 4a9a0ddc34c6b8572fcef7303373e8e8ccbbaa8b
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Sep 21 13:32:47 2021 -0400
+
+    Whoops - only do the fallback if the quick lookup fails.
+    
+    (cherry picked from commit b4f7e343b86e2eb292975676fd37fbe022360083)
+
+commit 91633b8ed457fd8312076f59ee2af5fd84f1235d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Sep 21 13:27:03 2021 -0400
+
+    Looking like this might work - try making the fallback 'live' in the logic.
+    
+    (cherry picked from commit e4d95ff3e4eee5a94957ef691b23f58129c40d41)
+
+commit 1bf32d3491923e70b73aa76291f364a84b067ef3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Sep 21 12:52:12 2021 -0400
+
+    Experimenting with a different fallback check, currently for debugging.
+    
+    (cherry picked from commit 387491187294ed316413d49e8b2e28b3200eac92)
+
+commit 28d2a024184fe05c30fe8e29d4271129d5f185c2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 13 23:38:02 2021 -0400
+
+    Working on matrix comparison
+    
+    As usual, this is trickier than it would first appear.  Multiple
+    tolerances is a bad idea because we may get different sorting answers
+    depending on how different one number is from other numbers.
+    
+    (cherry picked from commit daed4a72e41da7c5ad5c9f8726bbce44f0c77262)
+
+commit 997b3bd3991403b793bbb9db412caf1aa195fb70
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 13 18:10:44 2021 -0400
+
+    Use vls so we don't have an arbitrary length cap.
+    
+    (cherry picked from commit 09bf9399015d0d13420fdbd975f7d2b84a6ae614)
+
+commit 5bda5af9c135d79da89bb59130e69807956c147c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 13 16:53:50 2021 -0400
+
+    Try an adjustment to the matrix number-based sorting to see if we can avoid inconsistent find results between the two tree walks.  Not 100% sure this is the issue we're seeing, but see if we can rule it out.
+    
+    (cherry picked from commit 6af01d8ced45801ac4526b674f4fb0a1bfe4d5e8)
+
+commit 156094647e56bf4ade4570240ea57eead6e289d3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 13 13:12:56 2021 -0400
+
+    tweak printing
+    
+    (cherry picked from commit 50eaa4adc5634cf4f69f04e02c0139adf2dcabd6)
+
+commit 5d0b25157908fbe7ee226102a18dc9b7c0d5a968
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Sep 13 09:22:15 2021 -0400
+
+    Don't use bu_log here unless s->msgs is empty - getting verbose output in the wrong order if we use bu_log for this and the vls for everything else.
+    
+    (cherry picked from commit 7d17e4491ab82ff5f73aed6dc207490bdef9ba5f)
+
+commit 551a031e2b033b49dee3fbda8223ebac9e5bb633
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 10 16:27:09 2021 -0400
+
+    Put back matrix in depth limiting, add more debug printing.
+    
+    (cherry picked from commit fdd661250308029811765e208be874bf1f4d3064)
+
+commit 3f08151a6d7d1f8ac4782a847a9954dd852b9c0d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 10 15:43:40 2021 -0400
+
+    Copy/paste typo.
+    
+    (cherry picked from commit 4687405dc4f77f5559d877d8bad0bf592672f03f)
+
+commit 345a56dff63b542a8e9ae50331266f28d8eb2827
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Sep 10 13:07:13 2021 -0400
+
+    Don't try to print if dpii is not found
+    
+    (cherry picked from commit 977bd18f1427f72e4506a3e989ad71858c556c0c)
+
+commit ca6ba62eb418da929ef8e50f3621dc10c0c845d5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Sep 8 14:43:13 2021 -0400
+
+    Fix the Bullet based simulate command build
+    
+    Looks like at least part of the reason this was off was the build system
+    and code were in a non-compilable state.  Leave off by default, but fix
+    the obvious issues.  This lets the hello world example from the wiki
+    work on Linux.
+    
+    (cherry picked from commit 7b32272df4c15f4f5ccef5d6d84fd6b6a3b2637a)
+
+commit 553d7c1737354088d63a4683f0eb778ba1893926
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Fri Sep 3 23:24:01 2021 -0400
+
+    DisplayString, WidthOfScreen, and such are all X11 functions
+    
+    so instead call a Tk facility to avoid crashing.  alas, Tk_GetPixmap
+    may need more then pubvars->win, but that appears to be the window
+    that is being drawn into.
+    
+    (cherry picked from commit 87ba8e188c30e778cbd23b438871261daf2c737a)
+
+commit 7d855ecfe948ab5cece90f51e64fb926b20a1df1
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Fri Sep 3 22:37:33 2021 -0400
+
+    these don't appear to actually use Tk
+    
+    (cherry picked from commit c627dd3155a199cb3d70606d9de3e9d976ec19af)
+
+commit 6cb9502786efc40b38b31de4e5c23c8bdcc2932e
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Sep 2 00:11:59 2021 -0400
+
+    clear out stale nirt issues.
+    
+    the issue with changing units is a deep and not likely to get fixed anytime soon.
+    was unable to reproduce the nirt -e parsing issue inside/outside mged. perhaps
+    it's platform specific.  the sf bug report need not be replicated here, and that
+    issue hasn't been observed.  uninstalled behavior is a nicety, but not necessary.
+    
+    (cherry picked from commit 81c81e45035f0151873b1ac8834ee3d38f2b83d8)
+
+commit 5281f7448dbdd4960b3118638d0a9acb373c3495
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Sep 1 22:22:49 2021 -0400
+
+    technically user vis, nirt -L no longer requires db args
+    
+    (cherry picked from commit 6a49c319da14ac096ecca71dc3ba0c9e909239d4)
+
+commit 5b1671e587e79eee627281bad76822c66e5ec72d
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Sep 1 22:21:15 2021 -0400
+
+    clarify that -L pertains to predefined formats
+    
+    (cherry picked from commit d80b470bd63f1034e7f6f37efd7b743e256d02ee)
+
+commit 35a67e6fc1e747897b4869bb4164bf16cea686b4
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Sep 1 22:17:04 2021 -0400
+
+    don't need to be fancy, zero is zero
+    
+    (cherry picked from commit a0d6d5a932915bf06673da26c76b18766c1f8f6a)
+
+commit 4c7cb8be233d41bfc072aa14cbbd629339ab6c6d
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Sep 1 22:15:49 2021 -0400
+
+    -L does not need a db or obj, so run it first
+    
+    (cherry picked from commit 2bc1b38ae86e49b42542e36cf492c833c022792a)
+
+commit fa22f6a32236a79690fc20b15eecc03ef40a1d8a
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Sep 1 00:05:47 2021 -0400
+
+    don't print bad LOS incessantly one per ray
+    
+    just print a handful and let the user sort it out as it's probably
+    just a non-region primitive.
+    
+    (cherry picked from commit 724c8b1a85432ecfb72b7fd5bee4e9cd05338d7c)
+
+commit fba50275a4c44564b9bed2bee5313bbbb28ed462
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Aug 24 12:04:08 2021 -0400
+
+    include sizes equal to the limit
+    
+    (cherry picked from commit 3292d1e7a0d74e3f7660834faec9747bcf543e48)
+
+commit 3edd98cffae79a97f162c23a803cea492a7a4ae5
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Aug 24 11:59:13 2021 -0400
+
+    limit large memory allocation to prevent maliciousness
+    
+    CID 1489217 found tainted allocations.  since pkg sizes are
+    potentially very large (e.g., sending a large file as a single
+    package), we do want to allow large sizes, but still need to impose
+    some upper limit.  using the max size of ssize_t (i.e., max int) minus
+    the two bytes being added during malloc() since that's nominally what
+    a valid caller might maximally send.
+    
+    (cherry picked from commit 40c394bc54ab78282bc2ab8e8604601483609057)
+
+commit 22714b7d9c1a5a2cb33796e79d6c7bfb4664d540
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Aug 18 18:02:31 2021 -0400
+
+    fix math lib NOTFOUND cmake error
+    
+    not sure how we're handling mods to third party code under
+    src/other/ext, but feels like this should be in a patch or
+    something.
+    
+    (cherry picked from commit 792cd543872942c4781adf064a1af6a6292506bf)
+
+commit 9182bd1a29c5b9cad3cbd5e9d50eca64a942aafe
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Mon Aug 16 01:56:28 2021 -0400
+
+    densityfile shouldn't be mutable, so mark it const
+    
+    (cherry picked from commit cffc8467e1653b8d619ca2ef86056b1070b3a925)
+
+commit 93beb18d891be01be0f0e1362cfd5b505b8d5e39
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Aug 9 14:46:46 2021 -0400
+
+    Implemented in SVN commit r77995
+    
+    (cherry picked from commit 4fcc35c1e4325d81ae49306b7fe6a541d762a807)
+
+commit ffaef60f4d4daec6d930a38860bfc2d4e5617f1d
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Mon Aug 9 01:17:50 2021 -0400
+
+    update docs from old notes.  note more bu_hash changes that happened in 7.26, need to add the metaball scaling feature proper, and would be good for gcv to append.
+    
+    (cherry picked from commit 24dccc92d9d1b3527d56cd83dcf0a2f7f291292f)
+
+commit a12bfa3892a8e127713000c081eda57eea6ac1cc
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Mon Aug 9 00:30:03 2021 -0400
+
+    typo
+    
+    (cherry picked from commit d5966fddddc3904bd114855c288ef40eed050aef)
+
+commit 96859137f52b2feb9acb6d0092f427953b7810c3
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sun Aug 8 23:33:35 2021 -0400
+
+    need to declare gethostbyname for c99 on bsd
+    
+    (cherry picked from commit fbbd217989973492349e6de1db248379362f9e6c)
+
+commit 8b2348ed625dea4289faa30e1381a8c9f600eed2
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sun Aug 8 19:01:24 2021 -0400
+
+    unused IDENT variable
+    
+    (cherry picked from commit 331e5cb51b889334b5d3938e3ea2f84fe07e2847)
+
+commit 32b01d957d787fa8723fba3a69bef152d03a8aa8
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sun Aug 8 12:01:08 2021 -0400
+
+    annotate librt's five most expensive functions with _BU_ATTR_FLATTEN
+    
+    tested extensively on mac, this change gives a consistent 3-5%
+    performance improvement by providing a more aggressive inlining hint
+    on our hotest functions.  the file size of rt and librt did not
+    increase appreciably nor did binary loading / startup times.
+    
+    (cherry picked from commit bed91b4c7d5024e6529520c1a3b9718a76a9f0fe)
+
+commit 293226be2fff3449921340e1c74cfecc586651f2
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sat Aug 7 21:25:16 2021 -0400
+
+    fix up headers & decls, remove dupes, add labels, use wrappers
+    
+    (cherry picked from commit b6e06c79d6dcc36304d690b98b1ffd2876086b80)
+
+commit 316421a018ae655305b3afaea2d5546cc57e6c97
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sat Aug 7 20:53:00 2021 -0400
+
+    need unistd.h for gethostbyname() on some platforms
+    
+    (cherry picked from commit 4022502e728e3a3f34cee4b5ab90f1ab17a76348)
+
+commit 2b4c24ed01ad362b30cbb5be79b2a668c7a74914
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sat Aug 7 16:07:31 2021 -0400
+
+    remove unused wlen var
+    
+    (cherry picked from commit 1b0f1de447f77cbfc79fde8eca7c1c8427423720)
+
+commit 315e28c6ea9c82f4d917662bbcc7c0cc2922f73d
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sat Aug 7 15:30:59 2021 -0400
+
+    enable and update the code for adrt_slave so it will be maintained
+    
+    (cherry picked from commit 5ebc60da2f2d279db78369ae07cb2ce321c8b840)
+
+commit 42a39f87c4574a42bd5e12bda44c8ca1e75e4464
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Aug 5 13:59:29 2021 -0400
+
+    remove temp debugging aid on fort.c
+    
+    (cherry picked from commit 0671cafcedc51495123ea61bed09d9988373210d)
+
+commit 5c13f2b70ac4b3a68a0d8df441b22c081bb47213
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Aug 5 03:52:44 2021 -0400
+
+    fixed a VOL regression
+    
+    make sure we initialize the data source to file so when
+    we read an older VOL (predating in-db data vols), it
+    correctly defaults to file source.
+    
+    (cherry picked from commit 13f05b1f0ce6159f2798eeea7962dbffa88097e3)
+
+commit aad5c093e523c29940d0aec67657a2a7156f1d92
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Thu Aug 5 03:28:00 2021 -0400
+
+    add cliff's 2020 paper on nurbs conversion
+    
+    (cherry picked from commit 00fab7f65cd85b274c657bb6a22824ad4e015692)
+
+commit 8a95007957d1a9c739a39f78e8e86f9993289463
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Aug 4 03:33:29 2021 -0400
+
+    address slew of new type mismatches gcc 11 detects
+    
+    lastest gcc is much better at tracking typedef types and noticing
+    when functions are declared with one type and defined with other
+    type-compatible parameters.
+    
+    used to be a problem long ago with some compilers not working well
+    with typedef types as parameters (e.g., vect_t vs fastf_t *) but
+    this forunately/hopefully is a vestige.  updates tested on linux
+    and mac, so hopefully windows behaves.
+    
+    (cherry picked from commit dcc244c306e8adc7eb1ac3ca868d2797f9165c6b)
+
+commit 4058cee491fc45ccdac650b40307904dd09e2ccb
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Aug 4 03:29:45 2021 -0400
+
+    fix out-of-bounds read
+    
+    likely resulted in corruption as we read past the end of 2D vectors after losing
+    track of its size when passed to bg_isect_line2_lseg2() and isect_line_earc()
+    which both expect 3D vectors.  fix employed is to simply pack them into a 3D
+    vector with zero Z value.
+    
+    (cherry picked from commit da3b33b29cbc184cd8a356a5b4a5341646bf310d)
+
+commit f9e5d4889f3413cab93ec7c1aec3ce4e639d7c32
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Aug 4 03:14:21 2021 -0400
+
+    re-address locale_t header issue
+    
+    need to be more specific to accommodate linux and mac simultaneously.
+    don't include xlocale.h with older glibc (pre 2.26) but do include it
+    for non-glibc environments since we don't know (and it fits prior).
+    
+    (cherry picked from commit 35ef5de7de37af98ea66164363c26266bb03c59b)
+
+commit b6d613891cf95879f0a9c3695e3470f9b7eae664
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Aug 4 02:01:23 2021 -0400
+
+    missing string header
+    
+    (cherry picked from commit f039de31a855784e15dfa5989cfb9c47f0c1be8e)
+
+commit 758266200fa2a87d4ff08456341b032d446c53bf
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Wed Aug 4 01:03:58 2021 -0400
+
+    fix font corruption.
+    
+    something at some point added a trailing newline to the binary file.
+    
+    (cherry picked from commit 4025484bcf549ac31fecce1d27d4f78b4f5035aa)
+
+commit c6f2ca9fc0a705d69b68534616cec7780df28a4c
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Aug 3 01:49:18 2021 -0400
+
+    add some notes on metaballs and aliases
+    
+    (cherry picked from commit e11baff46ebf1ca4a3dfcaf13eb6debabb898091)
+
+commit 5c70b984d40c8b0d3c2fb5e932025e363afff135
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Aug 3 01:43:51 2021 -0400
+
+    note some search exec issues and a bug with 'ls' command
+    
+    (cherry picked from commit 097adeac9f072a1c0e1eed81619a61bb894bb00e)
+
+commit d755456c75761a934386e077651260c65856d4f5
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Aug 3 01:41:09 2021 -0400
+
+    fixed pixscale inappropriate ioctl for device fread bug
+    
+    (cherry picked from commit 111abdd600332c6f1abf3d4a6ab9df11b94519c7)
+
+commit 261f125422d8770d3ca55f8a3a34d8e0bffb1ac9
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Tue Aug 3 01:35:18 2021 -0400
+
+    fix apparent pixscale off-by-1 when downsampling
+    
+    was causing a confusing/useless fread ioctl error to get printed due
+    to short read.  while the buflines fix makes the fread go away,
+    distinguish and print a more useful message when reading less than
+    expected.
+    
+    (cherry picked from commit ec6ff79f7d935ae680908970ec323ae66c65a07d)
+
+commit a4fdb71d8ce0d7352bf9355705514857497d53ad
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sun Aug 1 04:20:42 2021 -0400
+
+    oof, mac needs both. trigger on something that works for linux and mac
+    
+    (cherry picked from commit 7fb21363d6dd4ad51844a7934532c54b4b9665c2)
+
+commit 4b0bbf07dd514db2e68b8f0416a7cb88132c0720
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sun Aug 1 03:08:06 2021 -0400
+
+    need X11 include paths for Tk
+    
+    (cherry picked from commit 3ec58ad8f7bcd2c95d4388ec4a8a93c10e3241af)
+
+commit fe503c6bb2ae840a594bb1956d808f9f785eb4b6
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sun Aug 1 02:53:48 2021 -0400
+
+    zero-init var
+    
+    (cherry picked from commit 2a0646bc09c899be09ef944d2c421f2abd753162)
+
+commit 1f7c8537c0946f578d418617bb33fb0e36f06582
+Author: Sean Morrison <brlcad@gmail.com>
+Date:   Sun Aug 1 06:07:17 2021 +0000
+
+    xlocale.h is deprecated (on linux), conflicts if included with locale.h
+    
+    (cherry picked from commit b507fda34764605f10e5f3e48d4c6b163c4ee69e)
+
+commit c285fa74fdb35ab7a4276ecdf8efbe8ad6a00489
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 28 16:35:39 2021 -0400
+
+    Get as far as importing geometry - probably not the final form, but worth checkpointing.
+    
+    (cherry picked from commit b9d9d99f760102d922891c3de3f499b4c8b7d411)
+
+commit 85fdeae24424d773fb70cbaf074cdfc8463fec40
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 27 18:47:12 2021 -0400
+
+    Start working on figuring out what is needed to import the OpenVSP exported STEP files.
+    
+    (cherry picked from commit b712d230e4455515add1b10301898d84cf9f4012)
