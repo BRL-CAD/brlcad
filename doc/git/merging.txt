@@ -1,0 +1,29 @@
+When performing merges, you may see a message similar to the following:
+
+warning: inexact rename detection was skipped due to too many files.
+warning: you may want to set your merge.renamelimit variable to at least 6953 and retry the command.
+
+Git will attempt to find where files have been both moved and changed (an
+"inexact rename") in order to apply the proposed set of changes, but because
+git does not store explicit rename information in its history when files are
+moved that detection is an expensive operation.  Consequently, if you have a
+large repository (such as BRL-CAD) the time for individual merge operations can
+be significantly increased (how much will depend on factors like your
+computer's I/O speed and processing power.)
+
+The "best" merge outcomes will generally be produced by upping the renamelimit:
+
+git config merge.renamelimit 7000
+
+However, if the patch can be applied successfully without having to hunt for
+renamed files, this will slow the process unnecessarily - it pays to have a
+sense of whether you might run into renamed files when attempting merges.
+
+Generally speaking, I will not increase this limit if I know that the commits I
+intend to merge in will apply cleanly, without having to worry about renames.
+However, when doing more extensive applications or pulling changes to a tree
+that is known to have diverged significantly from the source tree (the typical
+scenario is merging to RELEASE from a main which has accumulated a lot of
+additional changes) then it is hard to be sure there won't be renaming issues.
+In those scenarios it is worth upping the limit and paying the cost of slower
+merges.

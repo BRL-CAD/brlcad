@@ -214,13 +214,14 @@ CMAKEFILES(
   STRATEGY
   git/check.yml
   git/diffing.txt
+  git/git2gource.cpp
   git/gitconfig
   git/gitk
-  git/git2gource.cpp
-  git/gource.txt
-  git/gource.sh
-  git/history.txt
   git/gitstats.txt
+  git/gource.sh
+  git/gource.txt
+  git/history.txt
+  git/merging.txt
   git/mime_types.txt
   notes/bsd_semaphore_bug.txt
   notes/cmake_paths/CMakeLists.txt
