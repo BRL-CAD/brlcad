@@ -206,7 +206,6 @@ __BEGIN_DECLS
 #define FB_MEMORY_MAGIC			0x4d454642 /**< MEFB */
 #define FB_REMOTE_MAGIC			0x524d4642 /**< MEFB */
 #define FB_NULL_MAGIC			0x4e554642 /**< NUFB */
-#define FB_OSGL_MAGIC			0x4f474642 /**< OGFB */
 #define FB_SWFB_MAGIC			0x51474642 /**< SWFB */
 
 /* misc */

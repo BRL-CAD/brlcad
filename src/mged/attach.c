@@ -91,7 +91,13 @@ mged_dm_init(struct mged_dm *o_dm,
     /* register application provided routines */
     cmd_hook = dm_commands;
 
-    if ((DMP = dm_open(NULL, (void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
+    /* In case the user wants swrast in headless mode, set ged_ctx to the view.
+     * Other dms will either not use the ctx argument or will catch the
+     * BV_MAGIC value and not initialize (such as qtgl, which needs a context
+     * from a parent Qt widget and won't work in MGED.) */
+    GEDP->ged_ctx = view_state->vs_gvp;
+
+    if ((DMP = dm_open(GEDP->ged_ctx, (void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
@@ -99,7 +105,7 @@ mged_dm_init(struct mged_dm *o_dm,
     dm_set_perspective(DMP, mged_variables->mv_perspective_mode);
 
 #ifdef HAVE_TK
-    if (dm_graphical(DMP)) {
+    if (dm_graphical(DMP) && !BU_STR_EQUAL(dm_get_dm_name(DMP), "swrast")) {
 	Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 	Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
     }

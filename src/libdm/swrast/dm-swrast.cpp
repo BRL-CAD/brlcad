@@ -214,6 +214,8 @@ swrast_open(void *ctx, void *UNUSED(interp), int argc, const char **argv)
     privars->ctx = OSMesaCreateContextExt(OSMESA_RGBA, 16, 0, 0, NULL);
     int width = (!privars->v->gv_width) ? 512 : privars->v->gv_width;
     int height = (!privars->v->gv_height) ? 512 : privars->v->gv_height;
+    privars->v->gv_width = width;
+    privars->v->gv_height = height;
     privars->os_b = bu_realloc(privars->os_b, width * height * sizeof(GLubyte)*4, "OSMesa rendering buffer");
     if (!OSMesaMakeCurrent(privars->ctx, privars->os_b, GL_UNSIGNED_BYTE, width, height)) {
 	bu_log("OSMesaMakeCurrent failed!\n");
@@ -480,7 +482,7 @@ swrast_openFb(struct dm *dmp)
     //struct swrast_fb_info *ofb_ps;
     //struct swrast_vars *privars = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
 
-    fb_ps = fb_get_platform_specific(FB_OSGL_MAGIC);
+    fb_ps = fb_get_platform_specific(FB_SWFB_MAGIC);
     //ofb_ps = (struct swrast_fb_info *)fb_ps->data;
     //ofb_ps->glc = privars->qw;
     dmp->i->fbp = fb_open_existing("swrast", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
