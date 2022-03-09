@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2021-XX-XX  Release 7.32.6                                     ---
+--- 2022-03-11  Release 7.32.6                                     ---
 ----------------------------------------------------------------------
 
 * reduced mged & archer max image size and memory use - Sean MOrrison
