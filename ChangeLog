@@ -1,3 +1,43 @@
+commit 9a140a414694c95c2e3c0137094b38f066207fab
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 9 10:40:51 2022 -0500
+
+    Remove set-but-unused tnd variable
+
+commit 6735dbb6f183c2dbe84f3e213ab9848385b0264f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 2 14:12:38 2022 -0500
+
+    Verify non-zero total here the way we do at the end.
+    
+    (cherry picked from commit 38e2aaa815be8e41e5b9691e2806ae28c9a1d82a)
+
+commit 0bf2e37c8db92317d28ebb8dc544d04bd8a4dfdc
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 9 10:33:46 2022 -0500
+
+    BSD clang 13 build fix - unused count var
+
+commit bf859e6fb2d9ca7dd017c5ab217e50e8aa8e10bb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 9 10:22:00 2022 -0500
+
+    Set a release date in NEWS
+
+commit 616d70a7b9455b1bd46803501b8f0248bb749c26
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 9 10:18:49 2022 -0500
+
+    Update ChangeLog
+    
+    Note that because of the cherry-picking, I used an explicit commit range
+    rather than the --since option to make sure the different dates on the
+    cherry-picked commits wouldn't be an issue (not sure how that option
+    interacts - some of the cherry-picked commits are older than the last
+    commit put into the previous release):
+    
+    git log 0ddc0e3eca1accac37dc476cdb2418292daa622e..HEAD > ChangeLog
+
 commit f80c3fd129560714f92ef7e7d3df5de9495061d9
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Wed Mar 9 09:47:11 2022 -0500
