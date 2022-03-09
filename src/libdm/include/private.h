@@ -125,9 +125,14 @@ extern struct fb memory_interface, fb_null_interface;
  * allocation that can have an impact on performance or minimum system
  * requirements.  For example, 20*1024 results in a 20480x20480 buffer
  * and a 1.6GB allocation.  Using 32*1024 results in a 4GB allocation.
+ * Also, note that mged and rt do not share contexts, so normal
+ * operation can default allocate 2 framebuffers plus 1 for each
+ * render to a window.
+ *
+ * FIXME: this should be dynamic.
  */
-#define FB_XMAXSCREEN 20*1024 /* 1.6GB */
-#define FB_YMAXSCREEN 20*1024 /* 1.6GB */
+#define FB_XMAXSCREEN 8*1024 /* 268MB */
+#define FB_YMAXSCREEN 8*1024 /* 268MB */
 
 /* setting to 1 turns on general intrface debugging for all fb types */
 #define FB_DEBUG 0
