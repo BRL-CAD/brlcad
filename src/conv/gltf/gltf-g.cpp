@@ -36,7 +36,8 @@
 #include "wdb.h"
 
 
-static std::string Indent(const int indent) {
+static std::string
+Indent(const int indent) {
     std::string s;
     for (int i = 0; i < indent; i++) {
 	s += "  ";
@@ -46,13 +47,13 @@ static std::string Indent(const int indent) {
 }
 
 
-static void testingStringIntMap(const std::map<std::string, int> &m, int &pos) {
+static void
+testingStringIntMap(const std::map<std::string, int> &m, int &pos) {
     std::map<std::string, int>::const_iterator it(m.begin());
     std::map<std::string, int>::const_iterator itEnd(m.end());
     for (; it != itEnd; it++) {
 	//std::cout << Indent(indent) << it->first << ": " << it->second << std::endl;
-	if(it->first =="POSITION")
-	{
+	if(it->first =="POSITION") {
 	    pos = it->second;
 	    std::cout << "BOT position: " << pos << std::endl;
 	}
@@ -61,23 +62,25 @@ static void testingStringIntMap(const std::map<std::string, int> &m, int &pos) {
 }
 
 
-static void getshapename(const tinygltf::Model &model, std::string &name)
+static void
+getshapename(const tinygltf::Model &model, std::string &name)
 {
 
-    std::cout << Indent(1) << "name     : " << model.meshes[0].name
-	<< std::endl;
+    std::cout << Indent(1) << "name     : " << model.meshes[0].name << std::endl;
     std::string temp = model.meshes[0].name;
     name.append(model.meshes[0].name);
 
 
 }
 
-static void gathershapeinfo(const tinygltf::Model &model, int &numvert, int &numfaces)
+
+static void
+gathershapeinfo(const tinygltf::Model &model, int &numvert, int &numfaces)
 {
     //buffer if needed
     std::cout << "Mesh size: " << model.meshes.size() << std::endl;
-    {
 
+    {
 	int indices_pos = model.meshes[0].primitives[0].indices;
 
 	//assume 1 accessor, 1 bufferview
@@ -96,8 +99,7 @@ static void gathershapeinfo(const tinygltf::Model &model, int &numvert, int &num
 	//int faces[bufferView.byteLength / byte_stride] ;
 	numfaces = bufferView.byteLength / byte_stride;
 
-	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++)
-	{
+	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++) {
 	    //std::cout << "i : " << i  << " = " << indices[i] << std::endl;
 	    faces[i] = indices[i];
 
@@ -123,21 +125,19 @@ static void gathershapeinfo(const tinygltf::Model &model, int &numvert, int &num
 
 	float* positions = (float*) dataPtr;
 	//change double to fast_f for mk_bot
-	double *vertices = new double[(bufferView.byteLength / byte_stride) * 3]; 
+	double *vertices = new double[(bufferView.byteLength / byte_stride) * 3];
 	//double vertices[(bufferView.byteLength / byte_stride) * 3] ;
 	numvert = (bufferView.byteLength / byte_stride) * 3;
 
-	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++)
-	{
+	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++) {
 	    std::cout << "i : " << i  << " = " << positions[i*3] << " , "
-		<< positions[(i*3) + 1] << " , " << positions[(i*3) + 2] << std::endl;
+		      << positions[(i*3) + 1] << " , " << positions[(i*3) + 2] << std::endl;
 
 	    vertices[i*3] = positions[i*3];
 	    vertices[(i*3)+1] = positions[(i*3)+1];
 	    vertices[(i*3)+2] = positions[(i*3)+2];
-
-
 	}
+
 	std::cout << "Number of vertices: " << numvert << std::endl;
 	std:: cout << "Stride Count : " << byte_stride << std::endl;
 
@@ -147,36 +147,32 @@ static void gathershapeinfo(const tinygltf::Model &model, int &numvert, int &num
 
 }
 
-static void insertvectorfaces(const tinygltf::Model &model, double vertices[], int faces[])
+
+static void
+insertvectorfaces(const tinygltf::Model &model, double vertices[], int faces[])
 {
+    int indices_pos = model.meshes[0].primitives[0].indices;
 
-    {
+    //assume 1 accessor, 1 bufferview
+    const tinygltf::Accessor &accessor = model.accessors[indices_pos];
+    const tinygltf::BufferView &bufferView = model.bufferViews[indices_pos];
+    const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
+    //unsigned char to short int arr
+    const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
+	accessor.byteOffset;
+    const int byte_stride = accessor.ByteStride(bufferView);
+    //const size_t count = accessor.count;
 
-	int indices_pos = model.meshes[0].primitives[0].indices;
+    unsigned short* indices = (unsigned short*) dataPtr;
+    //int faces[bufferView.byteLength / byte_stride] ;
+    int numfaces = bufferView.byteLength / byte_stride;
 
-	//assume 1 accessor, 1 bufferview
-	const tinygltf::Accessor &accessor = model.accessors[indices_pos];
-	const tinygltf::BufferView &bufferView = model.bufferViews[indices_pos];
-	const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
-	//unsigned char to short int arr
-	const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
-	    accessor.byteOffset;
-	const int byte_stride = accessor.ByteStride(bufferView);
-	//const size_t count = accessor.count;
-
-	unsigned short* indices = (unsigned short*) dataPtr;
-	//int faces[bufferView.byteLength / byte_stride] ;
-	int numfaces = bufferView.byteLength / byte_stride;
-
-	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++)
-	{
-	    //std::cout << "i : " << i  << " = " << indices[i] << std::endl;
-	    faces[i] = indices[i];
-
-	}
-
-	std::cout << "Number of Faces: " << numfaces << std::endl;
+    for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++) {
+	//std::cout << "i : " << i  << " = " << indices[i] << std::endl;
+	faces[i] = indices[i];
     }
+
+    std::cout << "Number of Faces: " << numfaces << std::endl;
 
     {
 	int bot_pos = 0;
@@ -197,17 +193,15 @@ static void insertvectorfaces(const tinygltf::Model &model, double vertices[], i
 	//double vertices[(bufferView.byteLength / byte_stride) * 3] ;
 	int numvert = (bufferView.byteLength / byte_stride) * 3;
 
-	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++)
-	{
+	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++) {
 	    std::cout << "i : " << i  << " = " << positions[i*3] << " , "
-		<< positions[(i*3) + 1] << " , " << positions[(i*3) + 2] << std::endl;
+		      << positions[(i*3) + 1] << " , " << positions[(i*3) + 2] << std::endl;
 
 	    vertices[i*3] = positions[i*3];
 	    vertices[(i*3)+1] = positions[(i*3)+1];
 	    vertices[(i*3)+2] = positions[(i*3)+2];
-
-
 	}
+
 	std::cout << "Number of vertices: " << numvert << std::endl;
 	std:: cout << "Stride Count : " << byte_stride << std::endl;
 
@@ -216,10 +210,10 @@ static void insertvectorfaces(const tinygltf::Model &model, double vertices[], i
 
 }
 
+
 static std::string GetFilePathExtension(const std::string &FileName)
 {
-    if (FileName.find_last_of(".") != std::string::npos)
-    {
+    if (FileName.find_last_of(".") != std::string::npos) {
 	return FileName.substr(FileName.find_last_of(".") + 1);
     }
     return "";
@@ -230,8 +224,7 @@ int main(int argc, char **argv)
 {
     bool store_original_json_for_extras_and_extensions = false;
 
-    if (argc < 2)
-    {
+    if (argc < 2) {
 	printf("Needs input.gltf\n");
 	exit(1);
     }
@@ -255,14 +248,14 @@ int main(int argc, char **argv)
     tinygltf::TinyGLTF gltf_ctx;
 
     gltf_ctx.SetStoreOriginalJSONForExtrasAndExtensions(
-	    store_original_json_for_extras_and_extensions);
+	store_original_json_for_extras_and_extensions);
 
 
     if (ext.compare("glb") == 0) {
 	std::cout << "File type: binary glTF" << std::endl;
 	// assume binary glTF.
 	ret = gltf_ctx.LoadBinaryFromFile(&model, &err, &warn,
-		input_filename);
+					  input_filename);
     } else {
 	std::cout << "File type: ASCII glTF" << std::endl;
 	// assume ascii glTF.
@@ -307,14 +300,12 @@ int main(int argc, char **argv)
 
     insertvectorfaces(model, vertices, faces);
 
-    for(int i = 0; i < num_vert_values; i = i + 3)
-    {
-	//std::cout << vertices[i] << "," << vertices[i+1] << "," << vertices[i+2] << std::endl;
+    for(int i = 0; i < num_vert_values; i = i + 3) {
+	//std::cout << vertices[i] << ", " << vertices[i+1] << ", " << vertices[i+2] << std::endl;
     }
 
-    for(int i = 0; i < num_face_values; i = i + 3)
-    {
-	//std::cout << faces[i] << "," << faces[i+1] << "," << faces[i+2] << std::endl;
+    for(int i = 0; i < num_face_values; i = i + 3) {
+	//std::cout << faces[i] << ", " << faces[i+1] << ", " << faces[i+2] << std::endl;
     }
 
     // mk_Bot needs file, name, num vert, num face, verts, faces
@@ -330,11 +321,9 @@ int main(int argc, char **argv)
 
     mk_id(outfp, title.c_str());
 
-    mk_bot(outfp, shape_name.c_str(), RT_BOT_SURFACE, RT_BOT_UNORIENTED,0, num_vert_values / 3, num_face_values / 3, vertices, faces, (fastf_t *)NULL,(struct bu_bitv *)NULL);
-
+    mk_bot(outfp, shape_name.c_str(), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, num_vert_values / 3, num_face_values / 3, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 
     wdb_close(outfp);
-
 
     return 0;
 }
