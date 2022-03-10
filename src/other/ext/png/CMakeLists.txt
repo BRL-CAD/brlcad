@@ -156,6 +156,12 @@ if(NOT AWK OR MSVC)
   add_custom_target(genfiles) # Dummy
 else()
   include(CMakeParseArguments)
+
+  # copy awk scripts to ensure unix line endings
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/checksym.awk ${CMAKE_CURRENT_BINARY_DIR}/scripts/checksym.awk @ONLY NEWLINE_STYLE LF)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/options.awk  ${CMAKE_CURRENT_BINARY_DIR}/scripts/options.awk @ONLY NEWLINE_STYLE LF)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/dfn.awk      ${CMAKE_CURRENT_BINARY_DIR}/scripts/dfn.awk @ONLY NEWLINE_STYLE LF)
+
   # Generate .chk from .out with awk
   # generate_chk(INPUT inputfile OUTPUT outputfile [DEPENDS dep1 [dep2...]])
   function(generate_chk)
@@ -233,13 +239,13 @@ else()
   # Generate scripts/pnglibconf.h
   generate_source(OUTPUT "scripts/pnglibconf.c"
                   DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.dfa"
-                          "${CMAKE_CURRENT_SOURCE_DIR}/scripts/options.awk"
+                          "${CMAKE_CURRENT_BINARY_DIR}/scripts/options.awk"
                           "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h")
 
   # Generate pnglibconf.c
   generate_source(OUTPUT "pnglibconf.c"
                   DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.dfa"
-                          "${CMAKE_CURRENT_SOURCE_DIR}/scripts/options.awk"
+                          "${CMAKE_CURRENT_BINARY_DIR}/scripts/options.awk"
                           "${CMAKE_CURRENT_SOURCE_DIR}/pngconf.h")
 
   if(PNG_PREFIX)
@@ -290,7 +296,7 @@ else()
 
   generate_chk(INPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.out"
                OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/symbols.chk"
-               DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/checksym.awk"
+               DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/scripts/checksym.awk"
                        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/symbols.def")
 
   add_custom_target(symbol-check DEPENDS
