@@ -2252,22 +2252,17 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # only, we add CMakeLists.txt (others are handled
   # by add_subdirectory wrapper
   set(toplevel_ignore_files
+    .github/workflows/analysis.yml
+    .github/workflows/check.yml
+    .github/workflows/codeql-analysis.yml
+    .gitignore
     BUGS
+    CMakeLists.txt
     ChangeLog
     TODO
     configure
-    CMakeLists.txt
     )
   CMAKEFILES(${toplevel_ignore_files})
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
-    CMAKEFILES(.gitignore)
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
-
-  # List any files which may exist for CI testing for distcheck.  TODO -
-  # this should be a fixed list, but until we go live with the Git repo
-  # use file(GLOB_RECURSE) instead
-  file(GLOB_RECURSE GITHUB_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ".github/*")
-  CMAKEFILES(${GITHUB_FILES})
 
   # Handle some toplevel distclean listings
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeCache.txt")
