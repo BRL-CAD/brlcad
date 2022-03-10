@@ -21,12 +21,16 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vds
   ${CMAKE_CURRENT_SOURCE_DIR}/gdiam
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
   ${REGEX_INCLUDE_DIRS}
   )
+# FIXME: needs materialX
+#  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
+
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
 
+# FIXME: needs materialX
+#  material/materialX.cpp
 set(LIBRT_SOURCES
   attr.cpp
   attributes.c
