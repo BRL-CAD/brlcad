@@ -151,28 +151,30 @@ gathershapeinfo(const tinygltf::Model &model, int &numvert, int &numfaces)
 static void
 insertvectorfaces(const tinygltf::Model &model, double vertices[], int faces[])
 {
-    int indices_pos = model.meshes[0].primitives[0].indices;
+    {
+	int indices_pos = model.meshes[0].primitives[0].indices;
 
-    //assume 1 accessor, 1 bufferview
-    const tinygltf::Accessor &accessor = model.accessors[indices_pos];
-    const tinygltf::BufferView &bufferView = model.bufferViews[indices_pos];
-    const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
-    //unsigned char to short int arr
-    const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
-	accessor.byteOffset;
-    const int byte_stride = accessor.ByteStride(bufferView);
-    //const size_t count = accessor.count;
+	//assume 1 accessor, 1 bufferview
+	const tinygltf::Accessor &accessor = model.accessors[indices_pos];
+	const tinygltf::BufferView &bufferView = model.bufferViews[indices_pos];
+	const tinygltf::Buffer &buffer = model.buffers[bufferView.buffer];
+	//unsigned char to short int arr
+	const unsigned char * dataPtr = buffer.data.data() + bufferView.byteOffset +
+	    accessor.byteOffset;
+	const int byte_stride = accessor.ByteStride(bufferView);
+	//const size_t count = accessor.count;
 
-    unsigned short* indices = (unsigned short*) dataPtr;
-    //int faces[bufferView.byteLength / byte_stride] ;
-    int numfaces = bufferView.byteLength / byte_stride;
+	unsigned short* indices = (unsigned short*) dataPtr;
+	//int faces[bufferView.byteLength / byte_stride] ;
+	int numfaces = bufferView.byteLength / byte_stride;
 
-    for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++) {
-	//std::cout << "i : " << i  << " = " << indices[i] << std::endl;
-	faces[i] = indices[i];
+	for(long unsigned int i = 0; i < bufferView.byteLength / byte_stride; i++) {
+	    //std::cout << "i : " << i  << " = " << indices[i] << std::endl;
+	    faces[i] = indices[i];
+	}
+
+	std::cout << "Number of Faces: " << numfaces << std::endl;
     }
-
-    std::cout << "Number of Faces: " << numfaces << std::endl;
 
     {
 	int bot_pos = 0;
