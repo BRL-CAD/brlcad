@@ -1,7 +1,7 @@
 /*                      M A T E R I A L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,6 @@
  *
  * Various functions associated with material object database I/O
  *
- * Todo: 
- *
  */
 
 #include "common.h"
@@ -37,6 +35,7 @@
 #include "pc.h"
 #include "raytrace.h"
 
+
 const char *
 get_all_avs_keys(const struct bu_attribute_value_set *avsp, const char *title)
 {
@@ -46,15 +45,13 @@ get_all_avs_keys(const struct bu_attribute_value_set *avsp, const char *title)
     size_t i;
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
-    if (title)
-    {
+    if (title) {
         bu_vls_strcat(&str, title);
         bu_vls_strcat(&str, "=\"");
     }
 
     avpp = avsp->avp;
-    for (i = 0; i < avsp->count; i++, avpp++)
-    {
+    for (i = 0; i < avsp->count; i++, avpp++) {
         bu_vls_strcat(&str, "        ");
         bu_vls_strcat(&str, avpp->name ? avpp->name : "NULL");
         bu_vls_strcat(&str, ":");
@@ -62,8 +59,7 @@ get_all_avs_keys(const struct bu_attribute_value_set *avsp, const char *title)
         bu_vls_strcat(&str, "\n");
     }
 
-    if (title)
-    {
+    if (title) {
         bu_vls_strcat(&str, "\"");
     }
 
@@ -71,6 +67,7 @@ get_all_avs_keys(const struct bu_attribute_value_set *avsp, const char *title)
 
     return attributes;
 }
+
 
 /**
  * Free the storage associated with the rt_db_internal version of
@@ -83,8 +80,7 @@ void rt_material_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
     material = (struct rt_material_internal *)ip->idb_ptr;
 
-    if (material)
-    {
+    if (material) {
         material->magic = 0; /* sanity */
         bu_vls_free(&material->name);
         bu_vls_free(&material->parent);
@@ -98,6 +94,7 @@ void rt_material_ifree(struct rt_db_internal *ip)
     }
     ip->idb_ptr = ((void *)0); /* sanity */
 }
+
 
 /**
  * Import a material from the database format to the internal format.
@@ -154,12 +151,9 @@ int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
     physical_ep.ext_nbytes = size;
     physical_ep.ext_buf = cp;
-    if (size > 0)
-    {
+    if (size > 0) {
         db5_import_attributes(&material_ip->physicalProperties, &physical_ep);
-    }
-    else
-    {
+    } else {
         bu_avs_init_empty(&material_ip->physicalProperties);
     }
     cp += size;
@@ -170,12 +164,9 @@ int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
     mechanical_ep.ext_nbytes = size;
     mechanical_ep.ext_buf = cp;
-    if (size > 0)
-    {
+    if (size > 0) {
         db5_import_attributes(&material_ip->mechanicalProperties, &mechanical_ep);
-    }
-    else
-    {
+    } else {
         bu_avs_init_empty(&material_ip->mechanicalProperties);
     }
     cp += size;
@@ -186,12 +177,9 @@ int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
     optical_ep.ext_nbytes = size;
     optical_ep.ext_buf = cp;
-    if (size > 0)
-    {
+    if (size > 0) {
         db5_import_attributes(&material_ip->opticalProperties, &optical_ep);
-    }
-    else
-    {
+    } else {
         bu_avs_init_empty(&material_ip->opticalProperties);
     }
     cp += size;
@@ -202,17 +190,15 @@ int rt_material_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
     thermal_ep.ext_nbytes = size;
     thermal_ep.ext_buf = cp;
-    if (size > 0)
-    {
+    if (size > 0) {
         db5_import_attributes(&material_ip->thermalProperties, &thermal_ep);
-    }
-    else
-    {
+    } else {
         bu_avs_init_empty(&material_ip->thermalProperties);
     }
 
     return 0; /* OK */
 }
+
 
 /**
  * Export a material from the internal format to the database format.
@@ -295,6 +281,7 @@ int rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip,
     return 0; /* OK */
 }
 
+
 /**
  * Make human-readable formatted presentation of this object.  First
  * line describes type of object.  Additional lines are indented one
@@ -313,8 +300,7 @@ int rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, in
     bu_vls_printf(&buf, "    parent: %s\n", material_ip->parent.vls_str);
     bu_vls_printf(&buf, "    source: %s\n", material_ip->source.vls_str);
 
-    if (!verbose)
-    {
+    if (!verbose) {
         bu_vls_vlscat(str, &buf);
         bu_vls_free(&buf);
         return 0;
@@ -335,6 +321,7 @@ int rt_material_describe(struct bu_vls *str, const struct rt_db_internal *ip, in
 
     return 0;
 }
+
 
 /** @} */
 /*

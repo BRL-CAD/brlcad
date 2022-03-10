@@ -1,3 +1,23 @@
+/*                  M A T E R I A L X . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2022 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
 #include "materialX.h"
 
 #include <iostream>
@@ -25,9 +45,13 @@
 #include "bu/str.h"
 #include "bu/log.h"
 
+
 namespace mx = MaterialX;
 
-void rt_material_mtlx_to_osl(const rt_material_internal material_ip, struct bu_vls* vp) {
+
+void
+rt_material_mtlx_to_osl(const rt_material_internal material_ip, struct bu_vls* vp)
+{
 
     // get the desired node definition from material_ip's optical properties
     const char* desiredNodeDef = (char*) "ND_standard_surface_surfaceshader";
@@ -59,7 +83,6 @@ void rt_material_mtlx_to_osl(const rt_material_internal material_ip, struct bu_v
         std::cout << "ERROR: NODE INSTANCE POINTER IS NULL" << std::endl;
     }
 
-
     mx::ShaderGeneratorPtr sgp = mx::OslShaderGenerator::create();
     mx::GenContext context(mx::OslShaderGenerator::create());
     context.registerSourceCodeSearchPath(searchPath);
@@ -76,3 +99,13 @@ void rt_material_mtlx_to_osl(const rt_material_internal material_ip, struct bu_v
     bu_vls_strcpy(vp, filepath.c_str());
 
 }
+
+/*
+ * Local Variables:
+ * mode: C++
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
