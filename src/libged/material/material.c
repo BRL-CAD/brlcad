@@ -109,20 +109,20 @@ int assign_material(struct ged *gedp, int argc, const char *argv[]) {
 
     if (argc < 4) {
         bu_vls_printf(gedp->ged_result_str, "you must provide at least four arguments.");
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
         bu_avs_init_empty(&avs);
 
         if (db5_get_attributes(gedp->dbip, &avs, dp)) {
             bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-            return GED_ERROR;
+            return BRLCAD_ERROR;
         } else {
             bu_avs_add(&avs, "material_name", argv[3]);
             bu_avs_add(&avs, "material_id", "1");
@@ -130,14 +130,14 @@ int assign_material(struct ged *gedp, int argc, const char *argv[]) {
 
         if (db5_update_attributes(dp, &avs, gedp->dbip)) {
             bu_vls_printf(gedp->ged_result_str, "Error: failed to update attributes\n");
-            return GED_ERROR;
+            return BRLCAD_ERROR;
         }
     } else {
         bu_vls_printf(gedp->ged_result_str, "Cannot get object %s\n", argv[2]);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // Routine handles the import of a density table
@@ -188,30 +188,30 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
                     bu_free(buffer, "free buffer copy");
                     bu_free(name, "free name copy");
                     bu_vls_printf(gedp->ged_result_str, "Error processing: Extra content after density entry\n");
-                    return GED_ERROR;
+                    return BRLCAD_ERROR;
                 }
                 idx = strtol(p, &q, 10);
                 if(idx < 0){
                     bu_free(buffer, "free buffer copy");
                     bu_vls_printf(gedp->ged_result_str, "Error processing: Bad density index\n");
-                    return GED_ERROR;
+                    return BRLCAD_ERROR;
                 }
                 density = strtod(q, &p);
                 if(q == p){
                     bu_free(buffer, "free buffer copy");
                     bu_vls_printf(gedp->ged_result_str, "Error processing: Could not convert density\n");
-                    return GED_ERROR;
+                    return BRLCAD_ERROR;
                 }
 
                 if(density < 0.0){
                     bu_free(buffer, "Free buffer copy");
                     bu_vls_printf(gedp->ged_result_str, "Error processing: Bad Density\n");
-                    return GED_ERROR;
+                    return BRLCAD_ERROR;
                 }
                 while (*p && (*p == '\t' || *p == ' ')) p++;
                 if(!*p){
                     bu_vls_printf(gedp->ged_result_str, "Error processing: Missing name\n");
-                    return GED_ERROR;
+                    return BRLCAD_ERROR;
                 }
                 int len = 0;
                 while(*(p + len) && !(*(p + len) == '\n' || *(p+len) == '#')){
@@ -273,7 +273,7 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
 	}
     else{
         bu_vls_printf(gedp->ged_result_str, "ERROR: File does not exist.\n");
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
     return 0;
 }
@@ -307,7 +307,7 @@ int create_material(struct ged *gedp, int argc, const char *argv[]){
 
     if (argc < 4){
         bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     db_name = argv[2];
@@ -331,14 +331,14 @@ int create_material(struct ged *gedp, int argc, const char *argv[]){
 // Routine handles the deletion of a material
 int destroy_material(struct ged *gedp, int argc, const char *argv[]){
     struct directory *dp;
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if (argc != 3){
         bu_vls_printf(gedp->ged_result_str, "ERROR, incorrect number of arguments.");
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     /* initialize result */
@@ -349,20 +349,20 @@ int destroy_material(struct ged *gedp, int argc, const char *argv[]){
     if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
 	    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
             bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[2]);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 	    }
 
         if (db_delete(gedp->dbip, dp) != 0 || db_dirdelete(gedp->dbip, dp) != 0) {
 		/* Abort kill processing on first error */
             bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", argv[2]);
-            return GED_ERROR;
+            return BRLCAD_ERROR;
 	    }
     }
 
     /* Update references. */
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // routine handles getting individual properties of the material
@@ -372,16 +372,16 @@ int get_material(struct ged *gedp, int argc, const char *argv[]){
 
     if (argc < 4){
         bu_vls_printf(gedp->ged_result_str, "you must provide at least four arguments.");
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
-        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
 
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
@@ -394,7 +394,7 @@ int get_material(struct ged *gedp, int argc, const char *argv[]){
         } else {
             if (argc == 4){
                 bu_vls_printf(gedp->ged_result_str, "the property you requested: %s, could not be found.", argv[3]);
-                return GED_ERROR;
+                return BRLCAD_ERROR;
             } else if (BU_STR_EQUAL(argv[3], "physical")) {
                 print_avs_value(gedp, &material->physicalProperties, argv[4], argv[3]);
             }  else if (BU_STR_EQUAL(argv[3], "mechanical")) {
@@ -405,15 +405,15 @@ int get_material(struct ged *gedp, int argc, const char *argv[]){
                 print_avs_value(gedp, &material->thermalProperties, argv[4], argv[3]);
             } else {
                 bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
-                return GED_ERROR;
+                return BRLCAD_ERROR;
             }
         }
     } else {
         bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[2]);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // Routine handles the setting of a material property to a value
@@ -423,16 +423,16 @@ int set_material(struct ged *gedp, int argc, const char *argv[]){
 
     if (argc < 5){
         bu_vls_printf(gedp->ged_result_str, "you must provide at least five arguments.");
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
-        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
 
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
@@ -460,12 +460,12 @@ int set_material(struct ged *gedp, int argc, const char *argv[]){
                 bu_avs_add(&material->thermalProperties, argv[4], argv[5]);
             } else {
                 bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
-                return GED_ERROR;
+                return BRLCAD_ERROR;
             }
         }
     } else {
         bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[2]);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     return wdb_put_internal(gedp->ged_wdbp, argv[2], &intern, mk_conv2mm);
@@ -478,16 +478,16 @@ int remove_material(struct ged *gedp, int argc, const char *argv[]){
 
     if (argc < 4){
         bu_vls_printf(gedp->ged_result_str, "you must provide at least four arguments.");
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if ((dp = db_lookup(gedp->dbip,  argv[2], 0)) != RT_DIR_NULL) {
-        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+        GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
 
         struct rt_material_internal *material = (struct rt_material_internal *)intern.idb_ptr;
 
@@ -511,12 +511,12 @@ int remove_material(struct ged *gedp, int argc, const char *argv[]){
                 bu_avs_remove(&material->thermalProperties, argv[4]);
             } else {
                 bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material property group:  %s", argv[3]);
-                return GED_ERROR;
+                return BRLCAD_ERROR;
             }
         }
     } else {
         bu_vls_printf(gedp->ged_result_str, "an error occurred finding the material:  %s", argv[2]);
-        return GED_ERROR;
+        return BRLCAD_ERROR;
     }
 
     return wdb_put_internal(gedp->ged_wdbp, argv[2], &intern, mk_conv2mm);
@@ -526,8 +526,8 @@ int
 ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     material_cmd_t scmd;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialization */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -535,7 +535,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     /* incorrect arguments */
     if (argc < 2) {
         bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-        return GED_HELP;
+        return BRLCAD_HELP;
     }
 
     scmd = get_material_cmd(argv[1]);

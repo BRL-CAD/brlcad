@@ -1705,12 +1705,12 @@ densities_prep(struct rt_i *rtip)
     if (analysis_flags & ANALYSIS_WEIGHTS) {
 		if (densityFileName) {
 			DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
-			if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) == GED_OK) {
+			if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) == BRLCAD_OK) {
 				found_densities = 1;
 			}
 		} else {
 			DLOG(_ged_current_gedp->ged_result_str, "density from db\n");
-			if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) == GED_OK) {
+			if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) == BRLCAD_OK) {
 				found_densities = 1;
 			}
 		}
@@ -1755,7 +1755,7 @@ densities_prep(struct rt_i *rtip)
 							if (analyze_densities_set(_gd_densities, id, density_double, density_table_name, _ged_current_gedp->ged_result_str) < 0) {
 								bu_vls_printf(_ged_current_gedp->ged_result_str, "Error inserting density %d,%g,%s\n", id, density_double, density_table_name);
 								analyze_densities_clear(_gd_densities);
-								return GED_ERROR;
+								return BRLCAD_ERROR;
 							}
 						}
 					}
@@ -1766,7 +1766,7 @@ densities_prep(struct rt_i *rtip)
 		if (!found_densities) {
 			bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not find any density information.\n");
 			analyze_densities_clear(_gd_densities);
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		}
 
 		// look for objects with material_name set and set the material_id
@@ -1820,14 +1820,14 @@ densities_prep(struct rt_i *rtip)
 					} else {
 						bu_vls_printf(_ged_current_gedp->ged_result_str, "Error: failed to load attributes for %s\n", dp->d_namep);
 						analyze_densities_clear(_gd_densities);
-						return GED_ERROR;
+						return BRLCAD_ERROR;
 					}
 				}
 			}
 		}
 	}
 
-	return GED_OK;
+	return BRLCAD_OK;
 }
 
 
@@ -2554,7 +2554,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-	if (densities_prep(rtip) != GED_OK) return GED_ERROR;
+	if (densities_prep(rtip) != BRLCAD_OK) return BRLCAD_ERROR;
 
     /* This gets the database ready for ray tracing.  (it precomputes
      * some values, sets up space partitioning, etc.)
