@@ -2218,9 +2218,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # only, we add CMakeLists.txt (others are handled
   # by add_subdirectory wrapper
   set(toplevel_ignore_files
-    .github/workflows/analysis.yml
     .github/workflows/check.yml
-    .github/workflows/codeql-analysis.yml
     .gitignore
     BUGS
     CMakeLists.txt
