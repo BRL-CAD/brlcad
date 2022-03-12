@@ -90,6 +90,13 @@ project(BRLCAD VERSION ${BRLCAD_VERSION} DESCRIPTION "Open Source Solid Modeling
 #######
 
 
+# Policy CMP0074 allows CMake to search
+# "prefixes specified by the <PackageName>_ROOT in find_package"
+# https://cmake.org/cmake/help/git-stage/policy/CMP0074.html
+if (POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
+endif (POLICY CMP0074)
+
 # Test name character check - need to look into this one...
 if (POLICY CMP0110)
   cmake_policy(SET CMP0110 OLD)
@@ -99,6 +106,7 @@ endif (POLICY CMP0110)
 if (POLICY CMP0127)
   cmake_policy(SET CMP0127 NEW)
 endif (POLICY CMP0127)
+
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
