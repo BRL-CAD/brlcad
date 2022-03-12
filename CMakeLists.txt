@@ -457,17 +457,6 @@ if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
   CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 64\n#endif\n")
 endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
 
-# Auto-reconfiguration - by default, a CMake generated build system
-# will re-run CMake if it detects that build system logic has changed.
-# This is normally a good thing, but becomes problematic when using
-# Visual Studio - recent versions of MSVC will individually prompt for
-# a re-loading of generated solution files one at a time.  Since
-# BRL-CAD has over a thousand such files in a default build, the only
-# viable approach is to close Visual Studio, re-run CMake manually,
-# and re-open the project in Visual Studio.
-if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
-  set(CMAKE_SUPPRESS_REGENERATION ON)
-endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
@@ -491,6 +480,26 @@ file(RENAME "${CMAKE_BINARY_DIR}/CMakeFiles/configure.new.tmp"
   "${CMAKE_BINARY_DIR}/configure.new")
 
 include(BRLCAD_User_Options)
+
+# global msvc-specific configuration setup
+if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
+  # Auto-reconfiguration - by default, a CMake generated build system
+  # will re-run CMake if it detects that build system logic has
+  # changed.  This is normally a good thing, but becomes problematic
+  # when using Visual Studio - recent versions of MSVC will
+  # individually prompt for a re-loading of generated solution files
+  # one at a time.  Since BRL-CAD has over a thousand such files in a
+  # default build, the only viable approach is to close Visual Studio,
+  # re-run CMake manually, and re-open the project in Visual Studio.
+  set(CMAKE_SUPPRESS_REGENERATION ON)
+
+  # make visual studio default to a more useful output summary instead
+  # of minimal lines with no compilation context.
+  if (NOT DEFINED CMAKE_VERBOSE_MAKEFILE)
+    set(CMAKE_VERBOSE_MAKEFILE ON)
+  endif (NOT DEFINED CMAKE_VERBOSE_MAKEFILE)
+endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
+
 
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
