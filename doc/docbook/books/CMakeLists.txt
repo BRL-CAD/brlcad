@@ -79,7 +79,7 @@ set(books_EN_IMAGES
   images/v4-image011.jpg
   )
 if(BRLCAD_EXTRADOCS)
-  ADD_DOC(books_EN_IMAGES html/books/images)
+  ADD_DOC(books_EN_IMAGES books/images)
 else(BRLCAD_EXTRADOCS)
   CMAKEFILES(${books_EN_IMAGES})
 endif(BRLCAD_EXTRADOCS)
