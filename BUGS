@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* ogl display manager still crashes on attach in mged on Mac OS X 10.5
+
+* in mged, running the 'attach' command (confirmed issues with X and
+  ogl), closing the window, and then issuing a 'draw' results in mged
+  crashing.
+
 * killtree / crashes
 
 * killtree reports spurious db_lookup failures saying object does not
@@ -344,8 +350,6 @@ Recent Bugs
 
 * Detailed BoT model ray trace image had incorrect background pixel
   values in framebuffer, off slightly by one.
-
-* ogl display manager still crashes on attach in mged on Mac OS X 10.5
 
 * rt is consuming 100% CPU in fb_close() on a lingering ogl
   framebuffer waiting to close.  needs to sleep or select for a while.
