@@ -11,6 +11,9 @@ if(MSVC)
     )
 endif(MSVC)
 
+# globally consider anything in an 'ext' path a warning-free system header
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} ext CACHE STRING "Bundled system include dirs" FORCE)
+
 # We need to define a number of "components" to allow for easy building of
 # subsets of BRL-CAD.  We will control this process with an advanced
 # variable named BRLCAD_ENABLE_TARGETS - if set to 0 (default) everything
