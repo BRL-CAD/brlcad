@@ -351,7 +351,6 @@ endif (COMMAND CONFIG_H_APPEND)
 # for building.  Hence, the only question we need to answer for these are
 # whether we are using a system version or we need to define the variables for
 # local including.
-Third_Party_Headers(Eigen EIGEN FIND_NAME Eigen3)
 include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
 CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
 set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
