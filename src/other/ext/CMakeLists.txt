@@ -61,10 +61,6 @@ set(CMAKE_MODULE_PATH "${BDEPS_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 # and mess up the results...
 set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_INSTALL_PREFIX}")
 
-# We will build up a list of all include dirs coming from 3rd party
-# projects, so we can include them with -isystem
-unset(SYS_INCLUDE_PATTERNS CACHE)
-
 # For the individual builds to be done here, we need to place their outputs to
 # standard locations in the CMAKE_BINARY_DIR.  However, that target is not
 # always unique - for multiconfig build systems, we need to define per-config
@@ -226,7 +222,6 @@ set(LOG_OPTS)
 # Load some CMake macros to handle the special case of third party libraries.
 include(ThirdParty)
 include(ThirdPartyExecutable)
-include(ThirdPartyHeaders)
 
 # In case we need to pass some sort of reasonable parallel
 # flag to a build system, check our processor count
@@ -345,15 +340,12 @@ if (COMMAND CONFIG_H_APPEND)
 endif (COMMAND CONFIG_H_APPEND)
 
 
-# The above libraries are all compilation targets with libraries, and so have
-# build outputs that must be distributed with BRL-CAD.  The following are
-# header-only libraries, and as such may remain in place - they are needed only
-# for building.  Hence, the only question we need to answer for these are
-# whether we are using a system version or we need to define the variables for
-# local including.
+# The above libraries are all compilation targets with libraries, and
+# so have build outputs that must be distributed with BRL-CAD.  The
+# following are header-only libraries, and as such may remain in place
+# and are needed only for building.
 include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
 CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
-set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
 
 
 std_build_rpath()
@@ -379,7 +371,6 @@ if (COMMAND CMAKEFILES)
     CMake/RPath_Setup.cmake
     CMake/ThirdParty.cmake
     CMake/ThirdPartyExecutable.cmake
-    CMake/ThirdPartyHeaders.cmake
     CMake/buildpath_replace.cxx.in
     CMake/rpath_replace.cxx.in
     CMake/tcl_replace.cxx.in
