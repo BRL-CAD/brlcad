@@ -850,16 +850,11 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
     add_dependencies(${testname} ${depends_list})
   endif (depends_list)
 
-  # Make sure we at least get this into the regression test folder -
-  # local subdirectories may override this if they have more specific
-  # locations they want to use.
-  if (${testname}_STAND_ALONE)
-    set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
-  else (${testname}_STAND_ALONE)
-    # Set the default folder based on the relative file path
-    get_filename_component(TDIR "${CMAKE_CURRENT_SOURCE_DIR}" NAME_WE)
-    set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/${TDIR}")
-  endif (${testname}_STAND_ALONE)
+  # Make sure we at least get this into the regression test folder - local
+  # subdirectories may override this if they have more specific locations they
+  # want to use. We set the default folder based on the relative file path
+  get_filename_component(TDIR "${CMAKE_CURRENT_SOURCE_DIR}" NAME_WE)
+  set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/${TDIR}")
 
   # In Visual Studio, none of the regress build targets are added to
   # the default build.
