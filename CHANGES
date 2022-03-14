@@ -7,7 +7,9 @@ potentially impacts developers or users.  The scope is limited to
 public interfaces including developer application programming
 interfaces (APIs), user application command-line interfaces (CLIs),
 and graphical user interfaces (GUIs).  The policy aims to balance
-developer agility with interface stability.
+developer agility with interface stability.  Note that renaming an
+application is NOT considered minimally impacting, since that name
+is the primary means by which users locate the application.
 
 All changes to BRL-CAD are expected to conform to this change policy.
 Changes MUST either be:
