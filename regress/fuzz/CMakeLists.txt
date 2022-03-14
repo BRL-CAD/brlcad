@@ -14,7 +14,7 @@ if (HAVE_FUZZER)
   target_link_libraries(fuzz_test PUBLIC libbu librt libged)
   target_compile_options(fuzz_test PRIVATE -fsanitize=fuzzer)
   target_link_options(fuzz_test PRIVATE -fsanitize=fuzzer)
-  set_target_properties(fuzz_test PROPERTIES FOLDER "BRL-CAD Regression Tests")
+  set_target_properties(fuzz_test PROPERTIES FOLDER "BRL-CAD Regression Tests/fuzz")
 
   configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/fuzz" COPYONLY)
   install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/fuzz" DESTINATION ${BIN_DIR})
@@ -25,7 +25,7 @@ if (HAVE_FUZZER)
   add_custom_target(fuzz
     COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run
     )
-  set_target_properties(fuzz PROPERTIES FOLDER "BRL-CAD Regression Tests")
+  set_target_properties(fuzz PROPERTIES FOLDER "BRL-CAD Regression Tests/fuzz")
 
 endif (HAVE_FUZZER)
 
