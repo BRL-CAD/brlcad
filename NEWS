@@ -13,7 +13,6 @@ changes made.  See document footer for additional details.
 --- 2022-03-11  Release 7.32.6                                     ---
 ----------------------------------------------------------------------
 
-* renamed old implementation of burst command to oburst - Cliff Yapp
 * reduced mged & archer max image size and memory use - Sean MOrrison
 * fixed librt handling of object names with '/' chars - Cliff Yapp
 * changed fast4-g to not make references to empty regions - Cliff Yapp
