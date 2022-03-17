@@ -36,7 +36,8 @@ class QtGLWin : public QMainWindow
     public:
       QtGLWin(struct fb *fbp);
 
-      QtGL *getCanvas() { return canvas; }
+      inline QtGL *getCanvas() { return canvas; }
+
     private:
 	QtGL *canvas = NULL;
 };
