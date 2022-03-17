@@ -34,7 +34,10 @@ class QtGLWin : public QMainWindow
 {
     Q_OBJECT
     public:
-	QtGLWin(struct fb *fbp);
+      QtGLWin(struct fb *fbp);
+
+      QtGL *getCanvas() { return canvas; }
+    private:
 	QtGL *canvas = NULL;
 };
 

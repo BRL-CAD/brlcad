@@ -396,17 +396,17 @@ fb_qtgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     QSurfaceFormat::setDefaultFormat(fmt);
 
     qi->mw = new QtGLWin(ifp);
-    qi->mw->canvas->setFixedSize(width, height);
+    qi->mw->getCanvas()->setFixedSize(width, height);
     qi->mw->adjustSize();
     qi->mw->setFixedSize(qi->mw->size());
     qi->mw->show();
 
     // Do the standard libdm attach to get our rendering backend.
     const char *acmd = "attach";
-    struct dm *dmp = dm_open((void *)qi->mw->canvas, NULL, "qtgl", 1, &acmd);
+    struct dm *dmp = dm_open((void *)qi->mw->getCanvas(), NULL, "qtgl", 1, &acmd);
     if (!dmp)
 	return -1;
-    qi->mw->canvas->v->gv_s->gv_fb_mode = 1;
+    qi->mw->getCanvas()->v->gv_s->gv_fb_mode = 1;
 
     struct fb_platform_specific fbps;
     fbps.magic = FB_QTGL_MAGIC;
