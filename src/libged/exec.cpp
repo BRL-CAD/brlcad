@@ -29,6 +29,8 @@
 #include <string>
 
 #include "bu/time.h"
+#include "bu/path.h"
+#include "bu/vls.h"
 #include "ged.h"
 #include "./include/plugin.h"
 
@@ -69,9 +71,17 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
 	libged_init();
     }
 
-    std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap->find(std::string(argv[0]));
+    /* libged is only concerned with the basename in order for
+     * command-line applications to pass an argv[0].
+     */
+    struct bu_vls cmdvls = BU_VLS_INIT_ZERO;
+    bu_path_component(&cmdvls, argv[0], BU_PATH_BASENAME);
+    std::string cmdname = bu_vls_cstr(&cmdvls);
+    bu_vls_free(&cmdvls);
+
+    std::map<std::string, const struct ged_cmd *>::iterator c_it = cmap->find(cmdname);
     if (c_it == cmap->end()) {
-	bu_vls_printf(gedp->ged_result_str, "unknown command: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "unknown command: %s", cmdname.c_str());
 	return (BRLCAD_ERROR | BRLCAD_UNKNOWN);
     }
 
@@ -83,7 +93,7 @@ ged_exec(struct ged *gedp, int argc, const char *argv[])
     int cret = (*cmd->i->cmd)(gedp, argc, argv);
 
     if (tstr) {
-	bu_log("%s time: %g\n", argv[0], (bu_gettime() - start)/1e6);
+	bu_log("%s time: %g\n", cmdname.c_str(), (bu_gettime() - start)/1e6);
     }
 
     return cret;
