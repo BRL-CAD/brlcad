@@ -67,8 +67,8 @@ if (NOT TARGET check)
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
     COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD\\'s unit, system, integration, benchmark \\(performance\\), and"
-    COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
-    COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
+    COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  These tests must pass to consider a build viable"
+    COMMAND ${CMAKE_COMMAND} -E echo "      for production use."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|STAND_ALONE\" -E \"^regress-|NOTE|benchmark|slow-\" --output-on-failure ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -R \"benchmark\" --output-on-failure ${JFLAG}
@@ -80,10 +80,8 @@ endif (NOT TARGET check)
 if (NOT TARGET unit)
   add_custom_target(unit
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"unit\\\" a.k.a. \\\"BRL-CAD Unit Testing\\\" target runs the"
-    COMMAND ${CMAKE_COMMAND} -E echo "      subset of BRL-CAD\\'s API unit tests that are expected to work \\(i.e.,"
-    COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development\\).  All dependencies required"
-    COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"unit\\\" a.k.a. \\\"BRL-CAD Unit Testing\\\" target runs all"
+    COMMAND ${CMAKE_COMMAND} -E echo "      the BRL-CAD API unit tests that are expected to pass."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|slow-\" ${JFLAG}
     )
@@ -140,58 +138,58 @@ function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
     list(GET matches 0 empty)
     if ("${empty}" EQUAL 4)
       foreach (i 1)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
+        if (ARGN)
+          list(REMOVE_AT ARGN 0)
+        endif (ARGN)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} "" ${ARGN})
     elseif ("${empty}" EQUAL 5)
       foreach (i 1 2)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
+        if (ARGN)
+          list(REMOVE_AT ARGN 0)
+        endif (ARGN)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} "" ${ARGN})
     elseif ("${empty}" EQUAL 6)
       foreach (i 1 2 3)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
+        if (ARGN)
+          list(REMOVE_AT ARGN 0)
+        endif (ARGN)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} "" ${ARGN})
     elseif ("${empty}" EQUAL 7)
       foreach (i 1 2 3 4)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
+        if (ARGN)
+          list(REMOVE_AT ARGN 0)
+        endif (ARGN)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} "" ${ARGN})
     elseif ("${empty}" EQUAL 8)
       foreach (i 1 2 3 4 5)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
+        if (ARGN)
+          list(REMOVE_AT ARGN 0)
+        endif (ARGN)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} "" ${ARGN})
     elseif ("${empty}" EQUAL 9)
       foreach (i 1 2 3 4 5 6)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
+        if (ARGN)
+          list(REMOVE_AT ARGN 0)
+        endif (ARGN)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
     elseif ("${empty}" EQUAL 10)
       foreach (i 1 2 3 4 5 6 7)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
+        if (ARGN)
+          list(REMOVE_AT ARGN 0)
+        endif (ARGN)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
     elseif ("${empty}" EQUAL 11)
       foreach (i 1 2 3 4 5 6 7 8)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
+        if (ARGN)
+          list(REMOVE_AT ARGN 0)
+        endif (ARGN)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
 
@@ -240,8 +238,8 @@ endfunction(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
 
 
 # Local Variables:
-# tab-width: 8
 # mode: cmake
-# indent-tabs-mode: t
+# tab-width: 2
+# indent-tabs-mode: nil
 # End:
 # ex: shiftwidth=2 tabstop=8
