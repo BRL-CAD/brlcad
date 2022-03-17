@@ -15,8 +15,6 @@ on-going issues.
 Recent Bugs
 -----------
 
-* ged_exec needs to handle full paths, e.g., for standalone comands
-
 * ogl display manager still crashes on attach in mged on Mac OS X 10.5
 
 * in mged, running the 'attach' command (confirmed issues with X and
