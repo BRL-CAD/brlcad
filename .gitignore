@@ -17,3 +17,4 @@
 
 .vscode
 .clang-format
+CMakeLists.txt.user
