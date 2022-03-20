@@ -106,7 +106,6 @@ get_material_cmd(const char* arg)
 int assign_material(struct ged *gedp, int argc, const char *argv[]) {
     struct directory *dp;
     struct bu_attribute_value_set avs;
-    const char * material_name_prop = "material_name";
 
     if (argc < 4) {
         bu_vls_printf(gedp->ged_result_str, "you must provide at least four arguments.");
@@ -125,8 +124,8 @@ int assign_material(struct ged *gedp, int argc, const char *argv[]) {
             bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
             return GED_ERROR;
         } else {
-            bu_avs_remove(&avs, material_name_prop);
-            bu_avs_add(&avs, material_name_prop, argv[3]);
+            bu_avs_add(&avs, "material_name", argv[3]);
+            bu_avs_add(&avs, "material_id", "1");
         }
 
         if (db5_update_attributes(dp, &avs, gedp->dbip)) {
@@ -544,8 +543,7 @@ ged_material_core(struct ged *gedp, int argc, const char *argv[]){
     if (scmd == MATERIAL_ASSIGN) {
         // assign routine
         assign_material(gedp, argc, argv);
-    }
-    else if (scmd == MATERIAL_CREATE) {
+    } else if (scmd == MATERIAL_CREATE) {
         // create routine
         create_material(gedp, argc, argv);
     } else if (scmd == MATERIAL_DESTROY) {
