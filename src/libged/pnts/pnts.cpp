@@ -1350,7 +1350,6 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     return ged_exec(gedp, 10, (const char **)nargv);
 }
 
-// Local Variables:
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
