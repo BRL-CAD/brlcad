@@ -1,4 +1,4 @@
-/*                         M A T E R . C
+/*                       M A T E R . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2022 United States Government as represented by
@@ -362,9 +362,11 @@ mater_validate(struct ged *gedp, size_t argc, const char *argv[])
 }
 
 
-/*TODO - need --json option to this to get information in machine readable form - don't
-  want anyone parsing the textual output...  Probably some specific options too, like
-  report just all material names without ids or vice versa. */
+/* TODO - need --json or --csv or --output=fmt option(s) to this to
+ * get information in machine readable form.  don't want people
+ * parsing textual output...  Probably some specific options too, like
+ * reporting all material names without ids or vice versa.
+ */
 static int
 mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 {
@@ -384,18 +386,20 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
     gddp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
 
     if (densities_filename && gddp != RT_DIR_NULL) {
-	// This is OK, but let the user know if we are doing a file based run but there is a
-	// density database present.
+	// This is OK, but let the user know if we are doing a file based
+	// run but there is a density database present.
 	bu_vls_printf(gedp->ged_result_str, "\nNote: using specified density file %s for audit, but database contains imported density information.\nThe imported data will be the default for most tools unless a density file is explicitly specified.\n\n", densities_filename);
     }
 
-    // As a first cut, do a fault intolerant read - if there are any problems we want to know
+    // As a first cut, do a fault intolerant read - if there are any
+    // problems we want to know
     if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 0) & BRLCAD_ERROR) {
 	a = NULL;
     }
 
     if (!a) {
-	// If that didn't work, do a fault tolerant read so we can proceed with the evaluation
+	// If that didn't work, do a fault tolerant read so we can proceed
+	// with the evaluation
 	if (_ged_read_densities(&a, &dsource, gedp, densities_filename, 1) == BRLCAD_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "Failed to locate density data.\n");
 	    a = NULL;
@@ -407,7 +411,8 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	bu_free(dsource, "free dsource");
     }
 
-    // Now, find out if anything in the database is interested in material information
+    // Now, find out if anything in the database is interested in
+    // material information
     struct bu_ptbl mn_objs = BU_PTBL_INIT_ZERO;
     struct bu_ptbl id_objs = BU_PTBL_INIT_ZERO;
     std::set<struct directory *> mns, ids;
@@ -478,8 +483,9 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	bu_avs_free(&avs);
     }
 
-    // If the database has material_name or material_id information but we don't have any density info, we
-    // are pretty limited in what we can validate.
+    // If the database has material_name or material_id information but
+    // we don't have any density info, we are pretty limited in what we
+    // can validate.
     if (!a) {
 	if (mat_names.size()) {
 	    std::set<std::string>::iterator n_it;
@@ -511,11 +517,13 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	if (ids_to_mats.size()) {
 	    std::set<long int>::iterator l_it;
 	    std::set<std::string>::iterator s_it;
-	    // If we have id numbers and names matched up, we can at least audit to be sure the
-	    // database is internally consistent - report any collisions
+	    // If we have id numbers and names matched up, we can at least
+	    // audit to be sure the database is internally consistent -
+	    // report any collisions
 	    for (l_it = mat_ids.begin(); l_it != mat_ids.end(); l_it++) {
 		if (ids_to_mats.find(*l_it) != ids_to_mats.end() && ids_to_mats[*l_it].size() > 1) {
-		    // For each pair type, report the pair and which objects have it assigned.
+		    // For each pair type, report the pair and which objects
+		    // have it assigned.
 		    long int active_id = *l_it;
 		    bu_vls_printf(gedp->ged_result_str, "Material ID %ld has multiple associated material_name attributes:\n", active_id);
 		    for (s_it = ids_to_mats[*l_it].begin(); s_it != ids_to_mats[*l_it].end(); s_it++) {
@@ -549,11 +557,13 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    // We've got some combination of density information and material attributes.  Now things get interesting.
+    // We've got some combination of density information and material
+    // attributes.  Now things get interesting.
 
     if (mns.size()) {
-	// Check for any names that aren't present in the database and report.  If there is an associated
-	// material id with object that corresponds to a known name, report that as well.
+	// Check for any names that aren't present in the database and
+	// report.  If there is an associated material id with object that
+	// corresponds to a known name, report that as well.
 	for (dp_it = mns.begin(); dp_it != mns.end(); dp_it++) {
 	    struct bu_vls msg = BU_VLS_INIT_ZERO;
 	    const char *mat_id = NULL;
@@ -597,8 +607,9 @@ mater_audit(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     if (ids.size()) {
-	// Check for any material ids that aren't present in the database and report.  If there is an associated
-	// material name that corresponds to a known id, report that as well.
+	// Check for any material ids that aren't present in the database
+	// and report.  If there is an associated material name that
+	// corresponds to a known id, report that as well.
 	for (dp_it = ids.begin(); dp_it != ids.end(); dp_it++) {
 	    struct bu_vls msg = BU_VLS_INIT_ZERO;
 	    const char *mat_id = NULL;
@@ -863,8 +874,10 @@ _ged_name_opt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 static int
 mater_get(struct ged *gedp, size_t argc, const char *argv[])
 {
-    /* BN_TOL_DIST doesn't really make sense here, but SMALL_FASTF is too small
-     * to be a useful density tolerance for searching purposes. */
+    /* BN_TOL_DIST doesn't really make sense here, but SMALL_FASTF is
+     * too small to be a useful density tolerance for searching
+     * purposes.
+     */
     double dtol = BN_TOL_DIST;
     struct bu_vls msgs = BU_VLS_INIT_ZERO;
     struct bu_vls tolhelp = BU_VLS_INIT_ZERO;
@@ -1268,7 +1281,7 @@ _ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defi
 
 static int
 mater_try_densities_load(struct ged *gedp, struct analyze_densities **pa, std::set<std::string> &defined_materials,
-			      std::map<std::string, std::string> &listed_to_defined, const char *fname)
+                         std::map<std::string, std::string> &listed_to_defined, const char *fname)
 {
     long int curr_id = -1;
     long int id_cnt = 0;
@@ -1407,7 +1420,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "density file %s did not load successfully", argv[0]);
 		goto ged_mater_mat_id_fail;
 	    } else {
-		// May be a mapping file, but we can't try loading it until we have the density information
+		// May be a mapping file, but we can't try loading it until we
+		// have the density information
 	    }
 	} else {
 	    bu_vls_sprintf(&dfilename, "%s", argv[0]);
@@ -1424,8 +1438,8 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     }
 
     if (!bu_vls_strlen(&dfilename)) {
-	// If we don't have a density file, we can't proceed
-	// unless the database has density information.
+	// If we don't have a density file, we can't proceed unless the
+	// database has density information.
 	dp = db_lookup(gedp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
 	if (dp != RT_DIR_NULL) {
 	    if (_ged_read_densities(&a, NULL, gedp, NULL, 0) != BRLCAD_OK) {
@@ -1546,7 +1560,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	    }
 	}
 	if (ids_wo_names.size()) {
-	    bu_vls_printf(gedp->ged_result_str, "Warning - the following object(s) have a material_id attribute but no material_name attribute (use the \"--names_from_ids\" option to assign them names using a density file):\n");
+	    bu_vls_printf(gedp->ged_result_str, "WARNING: the following object(s) have a material_id attribute but no material_name attribute (use the \"--names_from_ids\" option to assign names using a density file):\n");
 	    for (dp_it = ids_wo_names.begin(); dp_it != ids_wo_names.end(); dp_it++) {
 		bu_vls_printf(gedp->ged_result_str, "%s\n", (*dp_it)->d_namep);
 	    }
@@ -1567,7 +1581,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	mat_id = bu_avs_get(avs, "material_id");
 	oname = bu_avs_get(avs, "material_name");
 	if (listed_to_defined.find(std::string(oname)) == listed_to_defined.end()) {
-	    bu_vls_printf(gedp->ged_result_str, "Warning - unknown material %s found on object %s\n", oname, dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "WARNING: unknown material %s found on object %s\n", oname, dp->d_namep);
 	    bu_avs_free(avs);
 	    BU_PUT(avs, struct bu_attribute_value_set);
 	    continue;
@@ -1575,14 +1589,14 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 
 	id_found_cnt = analyze_densities_id((long int *)wids, 1, a, listed_to_defined[std::string(oname)].c_str());
 	if (!id_found_cnt) {
-	    bu_vls_printf(gedp->ged_result_str, "Error: failed to find ID for %s\n", oname);
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: failed to find ID for %s\n", oname);
 	    goto ged_mater_mat_id_fail;
 	}
 	nid = wids[0];
 	if (!mat_id || std::stoi(mat_id) != nid) {
 	    (void)bu_avs_add(avs, "material_id", std::to_string(nid).c_str());
 	    if (db5_update_attributes(dp, avs, gedp->dbip)) {
-		bu_vls_printf(gedp->ged_result_str, "Error: failed to update object %s attributes\n", dp->d_namep);
+		bu_vls_printf(gedp->ged_result_str, "ERROR: failed to update object %s attributes\n", dp->d_namep);
 		bu_avs_free(avs);
 		BU_PUT(avs, struct bu_attribute_value_set);
 		goto ged_mater_mat_id_fail;
@@ -1704,12 +1718,10 @@ ged_mater_core(struct ged *gedp, int argc, const char *argv[])
 	return mater_density(gedp, argc, argv);
     }
 
-    /* If we aren't instructed to do a mapping, proceed with normal behavior */
+    /* If we aren't doing a mapping, proceed with normal behavior */
     return mater_shader(gedp, argc, argv);
 }
 
-
-// Local Variables:
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
@@ -1727,12 +1739,11 @@ extern "C" {
 }
 #endif
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
