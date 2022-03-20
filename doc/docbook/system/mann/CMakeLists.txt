@@ -123,6 +123,7 @@ set(mann_EN
   make_pnts.xml
   man.xml
   mater.xml
+  material.xml
   matpick.xml
   mirface.xml
   mrot.xml

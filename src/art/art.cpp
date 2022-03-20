@@ -60,6 +60,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *
+ * SHADER IMPLEMENTATION NOTES:
+ * default shader "as_disney_material" is pathed from appleseed root specified
+ * when building and pulled from default .oso folder
+ * user specified shaders are pathed from build/output/shaders
  */
 
 #include "common.h"
@@ -142,10 +146,12 @@
 #include "ged.h"
 #include "ged/commands.h"
 #include "ged/defines.h"
+#include "rt/db_fullpath.h"
 
 struct application APP;
 struct resource* resources;
 size_t samples = 25;
+size_t light_intensity = 30.0;
 
 extern "C" {
     FILE* outfp = NULL;
@@ -158,17 +164,12 @@ extern "C" {
     struct icv_image* bif = NULL;
 }
 
-/* NOTE: stub in empty rt_do_tab to satisfy ../rt/opt.c - this means
- * we can't run the commands, but they are tied deeply into the various
- * src/rt files and a significant refactor is in order to properly
- * extract that functionality into a library... */
 
 extern "C" {
     void option(const char *cat, const char *opt, const char *des, int verbose);
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
 
-    extern struct command_tab rt_do_tab[];
     extern char* outputfile;
     extern int objc;
     extern char** objv;
@@ -185,10 +186,32 @@ extern "C" {
     void grid_setup();
 }
 
+void
+color_hook(const struct bu_structparse *sp, const char *name, void *UNUSED(base), const char *value, void *UNUSED(data))
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+
+    BU_CK_STRUCTPARSE(sp);
+
+    if (!sp || !name || !value || sp->sp_count != 3 || bu_strcmp("%f", sp->sp_fmt))
+	bu_bomb("color_hook(): invalid arguments");
+
+    if (!bu_color_from_str(&color, value)) {
+	bu_log("ERROR: invalid color string: '%s'\n", value);
+	VSETALL(color.buc_rgb, 0.0);
+    }
+
+    VMOVE(background, color.buc_rgb);
+}
+
 // holds application specific paramaters
 struct bu_structparse view_parse[] = {
     {"%d", 1, "samples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "s", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "background", 0, color_hook, NULL, NULL},
+    {"%f", 3, "bg", 0, color_hook, NULL, NULL},
+    {"%d", 1, "light_intensity", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "li", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -232,26 +255,35 @@ struct command_tab rt_do_tab[] = {
  * NOTE: to have an accurate usage() menu, we overwrite the indexes of all the
  * options from rt/usage.cpp which we don't support
  */
-void init_options(void) {
+void init_defaults(void) {
   /* Set the byte offsets at run time */
-  view_parse[ 0].sp_offset = bu_byteoffset(samples);
-  view_parse[ 1].sp_offset = bu_byteoffset(samples);
+  view_parse[0].sp_offset = bu_byteoffset(samples);
+  view_parse[1].sp_offset = bu_byteoffset(samples);
+  view_parse[2].sp_offset = bu_byteoffset(background[0]);
+  view_parse[3].sp_offset = bu_byteoffset(background[0]);
+  view_parse[4].sp_offset = bu_byteoffset(light_intensity);
+  view_parse[5].sp_offset = bu_byteoffset(light_intensity);
 
+  // default output file name
+  outputfile = (char*)"art.png";
 
-  // for now, just support -c set samples=x
-  // TODO: update to support more options
-  option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
+  // blue background of scene
+  background[0] = 0.75;
+  background[1] = 0.80;
+  background[2] = 1.0;
+
+  // option("", "-o filename", "Render to specified image file (e.g., image.png or image.pix)", 0);
   option("", "-F framebuffer", "Render to a framebuffer (defaults to a window)", 100);
-  option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
-  option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
-  // option("", "-C #/#/#", "Set background image color to R/G/B values (default: 0/0/1)", 0);
+  // option("", "-s #", "Square image size (default: 512 - implies 512x512 image)", 100);
+  // option("", "-w # -n #", "Image pixel dimensions as width and height", 100);
+  option("", "-C #/#/#", "Set background image color to R/G/B values (default: 191/204/255)", 0);
   // option("", "-W", "Set background image color to white", 0);
   option("", "-R", "Disable reporting of overlaps", 100);
-  option("", "-? or -h", "Display help", 1);
+  // option("", "-? or -h", "Display help", 1);
 
-  option("Raytrace", "-a # -e #", "Azimuth and elevation in degrees (default: -a 35 -e 25)", 100);
+  option("Raytrace", "-a # -e #", "Azimuth and elevation in degrees (default: -a 0 -e 0)", 0);
   option("Raytrace", "-p #", "Perspective angle, degrees side to side (0 <= # < 180)", 100);
-  option("Raytrace", "-E #", "Set perspective eye distance from model (default: 1.414)", 100);
+  // option("Raytrace", "-E #", "Set perspective eye distance from model (default: 1.414)", 100);
   option("Raytrace", "-H #", "Specify number of hypersample rays per pixel (default: 0)", 100);
   option("Raytrace", "-J #", "Specify a \"jitter\" pattern (default: 0 - no jitter)", 100);
   option("Raytrace", "-P #", "Specify number of processors to use (default: all available)", 100);
@@ -285,63 +317,58 @@ namespace asf = foundation;
 namespace asr = renderer;
 
 /* db_walk_tree() callback to register all regions within the scene
- * using either legacy rgb sets and phong shaders or specified material OSL
- * optical shader
+ * using either a disney shader with rgb color set on combination regions
+ * or specified material OSL optical shader
  */
 int register_region(struct db_tree_state* tsp __attribute__((unused)),
-                const struct db_full_path* pathp __attribute__((unused)),
-                const struct rt_comb_internal* combp __attribute__((unused)),
+                const struct db_full_path* pathp,
+                const struct rt_comb_internal* combp,
                 void* data)
 {
   // We open the db using the region path to get objects name
   struct directory* dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-  char* name;
+  const char* name;
   name = dp->d_namep;
 
-  /*
-  this is for testing bounding box with the parent directory - using build/share/db/moss.g
-  eventually all comments using this will be deleted
-  */
-  // const char* name_char;
-  // std::string name_test = "all.g/" + std::string(name);
-  // name_char = name_test.c_str();
-  // bu_log("name: %s\n", APP.a_rt_i->rti_dbip->dbi_filename);
+  // Strip the objects name to get correct bounding box
+  struct bu_vls path = BU_VLS_INIT_ZERO;
+  db_path_to_vls(&path, pathp);
+  const char* name_full;
+  std::string conversion_temp = bu_vls_cstr(&path);
+  bu_vls_free(&path);
+  name_full = conversion_temp.c_str();
+  bu_log("name: %s\n", conversion_temp.c_str());
 
   // get objects bounding box
   struct ged* ged;
   ged = ged_open("db", APP.a_rt_i->rti_dbip->dbi_filename, 1);
   point_t min;
   point_t max;
-  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
-  // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name_char, 1, min, max);
+  // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
+  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name_full, 1, min, max);
 
   bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
 
-  VMOVE(APP.a_uvec, min);
-  VMOVE(APP.a_vvec, max);
-
-
   /*
   create object paramArray to pass to constructor
-  NOTE: we can likely remove min/max values from here if the above bounding box calculation works
+  NOTE: we will need to eventually match brl geometry to appleseed plugin
   */
   renderer::ParamArray geometry_parameters = asr::ParamArray()
                .insert("database_path", name)
-               // .insert("database_path", name_char)
+               .insert("object_path", name_full)
                .insert("object_count", objc)
-               .insert("minX", min[0])
-               .insert("minY", min[1])
-               .insert("minZ", min[2])
-               .insert("maxX", max[0])
-               .insert("maxY", max[1])
-               .insert("maxZ", max[2]);
+               .insert("minX", min[X])
+               .insert("minY", min[Y])
+               .insert("minZ", min[Z])
+               .insert("maxX", max[X])
+               .insert("maxY", max[Y])
+               .insert("maxZ", max[Z]);
 
 
   asf::auto_release_ptr<renderer::Object> brlcad_object(
   new BrlcadObject{
      name,
-     // name_char,
      geometry_parameters,
      &APP, resources});
 
@@ -350,7 +377,6 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
 
   // create assembly for current object
   std::string assembly_name = std::string(name) + "_object_assembly";
-  // std::string assembly_name = std::string(name_test) + "_object_assembly";
   asf::auto_release_ptr<asr::Assembly> assembly(
     asr::AssemblyFactory().create(
       assembly_name.c_str(),
@@ -358,29 +384,94 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
 
   // create a shader group
   std::string shader_name = std::string(name) + "_shader";
-  // std::string shader_name = std::string(name_test) + "_shader";
   asf::auto_release_ptr<asr::ShaderGroup> shader_grp(
       asr::ShaderGroupFactory().create(
           shader_name.c_str(),
           asr::ParamArray()));
 
-  // THIS IS OUR INPUT SHADER - add to shader group
-  /* This uses an already created appleseed .oso shader
-  in the form of
+  // choose input shader
+  // we use disney material as default
+  const char* shader = (char*)"as_disney_material";
+  asr::ParamArray shader_params = asr::ParamArray();
+
+  // check if shader was set new way
+  // extract material if set and check for shader in optical properties
+  struct directory* dp1;
+  char* mat_name = bu_vls_strdup(&combp->material);
+  dp1 = db_lookup(APP.a_rt_i->rti_dbip, mat_name, LOOKUP_QUIET);
+  struct bu_vls m = BU_VLS_INIT_ZERO;
+  struct rt_db_internal intern;
+  struct rt_material_internal* material_ip;
+  if (dp1 != RT_DIR_NULL) {
+    if (rt_db_get_internal(&intern, dp1, APP.a_rt_i->rti_dbip, NULL, &rt_uniresource) >= 0) {
+      if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+        material_ip = (struct rt_material_internal*)intern.idb_ptr;
+        bu_vls_printf(&m, "%s", bu_avs_get(&material_ip->opticalProperties, "OSL"));
+        if (!BU_STR_EQUAL(bu_vls_cstr(&m), "(null)")) {
+          shader = bu_vls_cstr(&m);
+          bu_log("material->optical->OSL: %s\n", shader);
+        }
+      }
+    }
+  }
+
+  // check for color assignment, if set add to param array
+  struct bu_vls v=BU_VLS_INIT_ZERO;
+  if (combp->rgb_valid) {
+    bu_vls_printf(&v, "color %f %f %f\n", combp->rgb[0]/255.0, combp->rgb[1]/255.0, combp->rgb[2]/255.0);
+    const char* color = bu_vls_cstr(&v);
+    shader_params.insert("in_color", color);
+  }
+
+  // check if shader was set old way
+  // send this to mapping function -> disney params
+  /* values acceptable with phong implementation:
+   * specular reflectance sp
+   * diffuse reflectance di
+   * roughness rms
+   * transparency tr
+   * transmission re
+   * refraction index ri
+   * extinction ex
+   */
+  // char* ptr;
+  // char* temp_in = (char*)"   ";
+  // if (bu_vls_strlen(&combp->shader) > 0) {
+  //   if ((ptr=strstr(bu_vls_addr(&combp->shader), "plastic")) != NULL) {
+	//     // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
+  //     shader = "as_plastic";
+  //   }
+  //   if ((ptr=strstr(bu_vls_addr(&combp->shader), "glass")) != NULL) {
+	//     // bu_log("shader: %s\n", bu_vls_addr(&combp->shader));
+  //     shader = "as_glass";
+  //   }
+  //   // check for override paramaters
+  //   if (((ptr=strstr(bu_vls_addr(&combp->shader), "{")) != NULL)) {
+  //     if (((ptr=strstr(bu_vls_addr(&combp->shader), "tr")) != NULL)) {
+  //       int i = 3;
+  // 	    while (ptr != NULL && ptr[i] != ' ') {
+  //         temp_in[i-3] = ptr[i];
+  //         i++;
+  //       }
+  //       struct bu_vls t=BU_VLS_INIT_ZERO;
+  //       bu_vls_printf(&t, "tr %s\n", temp_in);
+  //       const char* tr = bu_vls_cstr(&t);
+  //       shader_params.insert("in_tr", tr);
+  //     }
+  //   }
+	// }
+
+  /* This uses an already compiled .oso shader in the form of
   type
   shader name
   layer
   paramArray
   */
-  struct bu_vls v=BU_VLS_INIT_ZERO;
-  bu_vls_printf(&v, "color %f %f %f", combp->rgb[0]/255.0, combp->rgb[1]/255.0, combp->rgb[2]/255.0);
-  const char* color = bu_vls_cstr(&v);
   shader_grp->add_shader(
       "shader",
-      "as_disney_material",
+      shader,
       "shader_in",
-      asr::ParamArray()
-        .insert("in_color", color)
+      shader_params
   );
   bu_vls_free(&v);
 
@@ -452,7 +543,6 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
     instance_name.c_str(),
     asr::ParamArray(),
     name,
-    // name_char,
     asf::Transformd::identity(),
     asf::StringDictionary()
     .insert("default", material_mat.c_str())
@@ -566,10 +656,12 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     // Create an empty project.
     asf::auto_release_ptr<asr::Project> project(asr::ProjectFactory::create("test project"));
     project->search_paths().push_back_explicit_path("build/Debug");
-    // ***** add precompiled shaders from appleseed
+    // add precompiled shaders from appleseed
     char root[MAXPATHLEN];
     project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/appleseed", NULL));
     project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, APPLESEED_ROOT, "shaders/max", NULL));
+    // add path for materialX converted shaders
+    project->search_paths().push_back_explicit_path(bu_dir(root, MAXPATHLEN, BU_DIR_INIT, "output/shaders", NULL));
 
     // Add default configurations to the project.
     project->add_default_configurations();
@@ -613,12 +705,13 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
 
     // Create a color called "light_intensity" and insert it into the assembly.
     static const float LightRadiance[] = { 1.0f, 1.0f, 1.0f };
+    // FIXME
     assembly->colors().insert(
 	asr::ColorEntityFactory::create(
 	    "light_intensity",
 	    asr::ParamArray()
 	    .insert("color_space", "srgb")
-	    .insert("multiplier", "30.0"),
+	    .insert("multiplier", light_intensity),
 	    asr::ColorValueArray(3, LightRadiance)));
 
     // Create a point light called "light" and insert it into the assembly.
@@ -656,18 +749,17 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     // Environment
     //------------------------------------------------------------------------
 
-    // OPTIONAL: this creates a background color
-    // static const float SkyRadiance[] = { 0.75f, 0.80f, 1.0f };
-    // statically making this 'white' for now so we don't blue wash the image
-    // Create a color called "sky_radiance" and insert it into the scene.
-    static const float SkyRadiance[] = { 1.0f, 1.0f, 1.0f };
+    // Create a color called "sky_radiance" and insert it into the scene
+    // to set the background color. By default we use a blue
+    // background { 0.75f, 0.80f, 1.0f } *see line 153*. This can be
+    // updated while running using -C and -W
     scene->colors().insert(
 	asr::ColorEntityFactory::create(
 	    "sky_radiance",
 	    asr::ParamArray()
 	    .insert("color_space", "srgb")
 	    .insert("multiplier", "0.5"),
-	    asr::ColorValueArray(3, SkyRadiance)));
+	    asr::ColorValueArray(3, background)));
 
     // Create an environment EDF called "sky_edf" and insert it into the scene.
     scene->environment_edfs().insert(
@@ -709,10 +801,15 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     camera->transform_sequence().set_transform(
 	0.0f,
 	asf::Transformd::from_local_to_parent(
-	    asf::Matrix4d::make_translation(asf::Vector3d(eye_model[0], eye_model[2], -eye_model[1])) * /* camera location */
+	    asf::Matrix4d::make_translation(asf::Vector3d(eye_model[0], eye_model[1], eye_model[2])) * /* camera location */
 	    asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(azimuth - 270)) * /* azimuth */
 	    asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-elevation)) /* elevation */
 	));
+  // camera->transform_sequence().set_transform(
+  //     0.0f,
+  //     asf::Transformd::from_local_to_parent(
+  //         asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-20.0)) *
+  //         asf::Matrix4d::make_translation(asf::Vector3d(0.0, 0.8, 11.0))));
 
     // Bind the camera to the scene.
     scene->cameras().insert(camera);
@@ -758,7 +855,7 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
 
     // initialize options and overload menu before parsing
-    init_options();
+    init_defaults();
 
     /* Process command line options */
     int i = get_args(argc, (const char**)argv);
@@ -842,7 +939,7 @@ main(int argc, char **argv)
     APP.a_miss = brlcad_miss;
 
     do_ae(azimuth, elevation);
-    RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], -eye_model[2], eye_model[1]);
+    // RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
 
     // Build the project.
     asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
@@ -860,11 +957,10 @@ main(int argc, char **argv)
     // Render the frame.
     renderer->render(renderer_controller);
 
-    // Save the frame to disk.
-    char *default_out = bu_strdup("output/art.png");
-    outputfile = default_out;
-    project->get_frame()->write_main_image(outputfile);
-    bu_free(default_out, "default name");
+    // Save the frame to disk using outputfile name
+    // we append output/ directory to it for sorting
+    std::string add_base = "output/" + std::string(outputfile);
+    project->get_frame()->write_main_image(add_base.c_str());
 
     // Save the project to disk.
     asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");

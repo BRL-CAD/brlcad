@@ -691,6 +691,7 @@ static struct to_cmdtab ged_cmds[] = {
     {"mat4x3pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
     {"match",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
     {"mater",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_exec},
+    {"material",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exec},
     {"model2grid_lu",	"x y z", 5, to_view_func_less, ged_exec},
     {"model2view",	"vname", 2, to_view_func, ged_exec},
     {"model2view_lu",	"x y z", 5, to_view_func_less, ged_exec},

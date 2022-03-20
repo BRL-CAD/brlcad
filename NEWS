@@ -10,10 +10,18 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2021-XX-XX  Release 7.34.X                                     ---
+----------------------------------------------------------------------
+
+* new 'material' command and material object infrastructure
+        - Dinges, Connelly, Olivarez, McGregor, Studwell, Wilson
+
+
+----------------------------------------------------------------------
 --- 2021-XX-XX  Release 7.32.6                                     ---
 ----------------------------------------------------------------------
 
-* reduced mged & archer max image size and memory use - Sean MOrrison
+* reduced mged & archer max image size and memory use - Sean Morrison
 * fixed librt handling of object names with '/' chars - Cliff Yapp
 * changed fast4-g to not make references to empty regions - Cliff Yapp
 * replaced original burst implementation with nburst - Cliff Yapp

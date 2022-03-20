@@ -455,42 +455,23 @@ int main(int argc, char *argv[])
     memory_summary();
 
     /* Copy values from command line options into rtip */
-    rtip->rti_space_partition = space_partition;
-    rtip->useair = use_air;
-    rtip->rti_save_overlaps = save_overlaps;
+    APP.a_rt_i->rti_space_partition = space_partition;
+    APP.a_rt_i->useair = use_air;
+    APP.a_rt_i->rti_save_overlaps = save_overlaps;
     if (rt_dist_tol > 0)  {
-	rtip->rti_tol.dist = rt_dist_tol;
-	rtip->rti_tol.dist_sq = rt_dist_tol * rt_dist_tol;
+	APP.a_rt_i->rti_tol.dist = rt_dist_tol;
+	APP.a_rt_i->rti_tol.dist_sq = rt_dist_tol * rt_dist_tol;
     }
     if (rt_perp_tol > 0)  {
-	rtip->rti_tol.perp = rt_perp_tol;
-	rtip->rti_tol.para = 1 - rt_perp_tol;
+	APP.a_rt_i->rti_tol.perp = rt_perp_tol;
+	APP.a_rt_i->rti_tol.para = 1 - rt_perp_tol;
     }
     if (rt_verbosity & VERBOSE_TOLERANCE)
-	rt_pr_tol( &rtip->rti_tol);
+	rt_pr_tol(&APP.a_rt_i->rti_tol);
 
     /* before view_init */
     if (outputfile && BU_STR_EQUAL(outputfile, "-"))
 	outputfile = (char *)0;
-
-    /*
-     *  Initialize application.
-     *  Note that width & height may not have been set yet,
-     *  since they may change from frame to frame.
-     */
-    need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
-    if ((outputfile == (char *)0) && !need_fb) {
-	/* If not going to framebuffer, or to a file, then use stdout */
-	if (outfp == NULL) outfp = stdout;
-	/* output_is_binary is changed by view_init, as appropriate */
-	if (output_is_binary && isatty(fileno(outfp))) {
-	    fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
-#ifdef MPI_ENABLED
-	    MPI_Finalize();
-#endif
-	    return 14;
-	}
-    }
 
     /*
      *  Initialize all the per-CPU memory resources.
@@ -498,7 +479,7 @@ int main(int argc, char *argv[])
      */
     memset(resource, 0, sizeof(resource));
     for (i = 0; i < MAX_PSW; i++) {
-	rt_init_resource(&resource[i], i, rtip);
+	rt_init_resource(&resource[i], i, APP.a_rt_i);
     }
     memory_summary();
 
@@ -526,7 +507,28 @@ int main(int argc, char *argv[])
     if (objv && !matflag) {
 	int frame_retval;
 
-#ifndef RT_TXT_OUTPUT
+	def_tree(APP.a_rt_i);		/* Load the default trees */
+	
+	/*
+     *  Initialize application.
+     *  Note that width & height may not have been set yet,
+     *  since they may change from frame to frame.
+     */
+    need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
+    if ((outputfile == (char *)0) && !need_fb) {
+	/* If not going to framebuffer, or to a file, then use stdout */
+	if (outfp == NULL) outfp = stdout;
+	/* output_is_binary is changed by view_init, as appropriate */
+	if (output_is_binary && isatty(fileno(outfp))) {
+	    fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
+#ifdef MPI_ENABLED
+	    MPI_Finalize();
+#endif
+	    return 14;
+	}
+    }
+
+	#ifndef RT_TXT_OUTPUT
 	if (need_fb != 0 && !fbp)  {
 	    int fb_status = fb_setup();
 	    if (fb_status) {
@@ -538,7 +540,6 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	def_tree(rtip);		/* Load the default trees */
 	/* orientation command has not been used */
 	if (!orientflag)
 	    do_ae(azimuth, elevation);
@@ -556,6 +557,26 @@ int main(int argc, char *argv[])
     } else {
 	register char	*buf;
 	register int	nret;
+
+	/*
+     *  Initialize application.
+     *  Note that width & height may not have been set yet,
+     *  since they may change from frame to frame.
+     */
+    need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
+    if ((outputfile == (char *)0) && !need_fb) {
+	/* If not going to framebuffer, or to a file, then use stdout */
+	if (outfp == NULL) outfp = stdout;
+	/* output_is_binary is changed by view_init, as appropriate */
+	if (output_is_binary && isatty(fileno(outfp))) {
+	    fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
+#ifdef MPI_ENABLED
+	    MPI_Finalize();
+#endif
+	    return 14;
+	}
+    }
+
 	/*
 	 * New way - command driven.
 	 * Process sequence of input commands.
@@ -596,7 +617,7 @@ int main(int argc, char *argv[])
 #endif
 	    }
 
-	    nret = rt_do_cmd( rtip, buf, rt_do_tab);
+	    nret = rt_do_cmd( APP.a_rt_i, buf, rt_do_tab);
 	    bu_free( buf, "rt_read_cmd command buffer");
 	    if (nret < 0)
 		break;
@@ -634,8 +655,8 @@ rt_cleanup:
     }
 
     /* Release the ray-tracer instance */
-    rt_free_rti(rtip);
-    rtip = NULL;
+    rt_free_rti(APP.a_rt_i);
+    APP.a_rt_i = NULL;
 
 #ifdef MPI_ENABLED
     MPI_Finalize();

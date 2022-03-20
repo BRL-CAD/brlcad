@@ -7,7 +7,7 @@ set(BURST_INPUT_FILES
   )
 
 if (TARGET ktank.g)
-  BRLCAD_REGRESSION_TEST(regress-burst "burst;ktank.g" EXEC burst)
+  BRLCAD_REGRESSION_TEST(regress-oburst "oburst;ktank.g" EXEC oburst)
   BRLCAD_REGRESSION_TEST(regress-nburst "nburst;ktank.g" EXEC nburst)
 
   set(BURST_CLEAN_FILES
@@ -31,7 +31,7 @@ endif (TARGET ktank.g)
 CMAKEFILES(
   CMakeLists.txt
   echo.b
-  regress-burst.cmake.in
+  regress-oburst.cmake.in
   regress-nburst.cmake.in
   ${BURST_INPUT_FILES}
   )
