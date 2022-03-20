@@ -50,14 +50,14 @@ typedef enum {
 static const char *usage = " help \n\n"
     "material create {objectName} {materialName}\n\n"
     "material destroy {object}\n\n"
-    "material import [--id | --name] {fileName}\n\n"
     "material assign {object} {materialName}\n\n"
     "material get {object} [propertyGroupName] {propertyName}\n\n"
     "material set {object} [propertyGroupName] {propertyName} [newPropertyValue]\n\n"
     "material remove {object} [propertyGroupName] {propertyName}\n\n"
-    "--id       - Specifies the id the material will be imported with\n\n"
-    "--name     - Specifies the name the material will be imported with\n\n"
-    "* Property arguments passed to the material commands are case sensitive.";
+    "material import [--id | --name] {fileName}\n\n"
+    "  --id       - Specifies the id the material will be imported with\n\n"
+    "  --name     - Specifies the name the material will be imported with\n\n"
+    "Note: Object, property, and group names are case sensitive.";
 
 static const char *possibleProperties = "The following are properties of material objects that can be set/modified: \n"
     "- name\n"
