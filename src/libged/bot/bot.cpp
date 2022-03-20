@@ -98,6 +98,7 @@ _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char 
     return 0;
 }
 
+
 extern "C" int
 _bot_cmd_get(void *bs, int argc, const char **argv)
 {
@@ -145,7 +146,7 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 			bu_vls_printf(gb->gedp->ged_result_str, "cw");
 			break;
 		}
-	    } else if (BU_STR_EQUAL(argv[0], "type") || BU_STR_EQUAL(argv[0], "mode")){
+	    } else if (BU_STR_EQUAL(argv[0], "type") || BU_STR_EQUAL(argv[0], "mode")) {
 		switch (intprop) {
 		    case RT_BOT_SURFACE:
 			bu_vls_printf(gb->gedp->ged_result_str, "surface");
@@ -174,6 +175,7 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 
     return BRLCAD_OK;
 }
+
 
 extern "C" int
 _bot_cmd_set(void *bs, int argc, const char **argv)
@@ -267,6 +269,7 @@ _bot_cmd_set(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+
 extern "C" int
 _bot_cmd_chull(void *bs, int argc, const char **argv)
 {
@@ -306,15 +309,15 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 
     struct bu_vls out_name = BU_VLS_INIT_ZERO;
     if (argc > 1) {
-        bu_vls_sprintf(&out_name, "%s", argv[1]);
+	bu_vls_sprintf(&out_name, "%s", argv[1]);
     } else {
-        bu_vls_sprintf(&out_name, "%s.hull", gb->dp->d_namep);
+	bu_vls_sprintf(&out_name, "%s.hull", gb->dp->d_namep);
     }
 
     if (db_lookup(gb->gedp->dbip, bu_vls_cstr(&out_name), LOOKUP_QUIET) != RT_DIR_NULL) {
-        bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&out_name));
-        bu_vls_free(&out_name);
-        return BRLCAD_ERROR;
+	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&out_name));
+	bu_vls_free(&out_name);
+	return BRLCAD_ERROR;
     }
 
     retval = mk_bot(gb->gedp->ged_wdbp, bu_vls_cstr(&out_name), RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
@@ -330,6 +333,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+
 extern "C" int
 _bot_cmd_isect(void *bs, int argc, const char **argv)
 {
@@ -344,8 +348,8 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     if (argc != 2) {
-        bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
-        return BRLCAD_ERROR;
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return BRLCAD_ERROR;
     }
 
     if (_bot_obj_setup(gb, argv[0]) == BRLCAD_ERROR) {
@@ -375,12 +379,13 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
     int *faces_2 = bot_2->faces;
 
     (void)bg_trimesh_isect(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	    faces_1, fc_1, verts_1, vc_1, faces_2, fc_2, verts_2, vc_2);
+			   faces_1, fc_1, verts_1, vc_1, faces_2, fc_2, verts_2, vc_2);
 
     rt_db_free_internal(&intern_2);
 
     return BRLCAD_OK;
 }
+
 
 extern "C" int
 _bot_cmd_sync(void *bs, int argc, const char **argv)
@@ -419,6 +424,7 @@ _bot_cmd_sync(void *bs, int argc, const char **argv)
     bu_vls_printf(gb->gedp->ged_result_str, "Performed %d face flipping operations", flip_cnt);
     return BRLCAD_OK;
 }
+
 
 extern "C" int
 _bot_cmd_split(void *bs, int argc, const char **argv)
@@ -472,7 +478,7 @@ _bot_cmd_split(void *bs, int argc, const char **argv)
 	point_t *opnts = NULL;
 	int n_opnts = 0;
 	int n_ofaces = bg_trimesh_3d_gc(&ofaces, &opnts, &n_opnts,
-	       	(const int *)fsets[i], fset_cnts[i], (const point_t *)bot->vertices);
+					(const int *)fsets[i], fset_cnts[i], (const point_t *)bot->vertices);
 	if (n_ofaces < 0) {
 	    ret = BRLCAD_ERROR;
 	    goto bot_split_done;
@@ -531,6 +537,7 @@ bot_split_done:
     return ret;
 }
 
+
 const struct bu_cmdtab _bot_cmds[] = {
     { "extrude",    _bot_cmd_extrude},
     { "get",        _bot_cmd_get},
@@ -552,6 +559,7 @@ _ged_bot_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set
     BU_GET(*set_color, struct bu_color);
     return bu_opt_color(msg, argc, argv, (void *)(*set_color));
 }
+
 
 extern "C" int
 ged_bot_core(struct ged *gedp, int argc, const char *argv[])
@@ -724,14 +732,14 @@ extern "C" {
     struct ged_cmd_impl get_bot_edges_cmd_impl = {"get_bot_edges", ged_get_bot_edges_core, GED_CMD_DEFAULT};
     const struct ged_cmd get_bot_edges_cmd = { &get_bot_edges_cmd_impl };
 
-    /*
-       struct ged_cmd_impl _cmd_impl = {"", , GED_CMD_DEFAULT};
-       const struct ged_cmd _cmd = { &_cmd_impl };
-       */
+/*
+  struct ged_cmd_impl _cmd_impl = {"", , GED_CMD_DEFAULT};
+  const struct ged_cmd _cmd = { &_cmd_impl };
+*/
 
 
     const struct ged_cmd *bot_cmds[] = {
-       	&bot_cmd,
+	&bot_cmd,
 	&bot_condense_cmd,
 	&bot_decimate_cmd,
 	&bot_dump_cmd,
@@ -752,6 +760,7 @@ extern "C" {
 	NULL
     };
 
+
     static const struct ged_plugin pinfo = { GED_API, bot_cmds, sizeof(bot_cmds)/sizeof(bot_cmds[0]) };
 
     COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
@@ -769,4 +778,3 @@ extern "C" {
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

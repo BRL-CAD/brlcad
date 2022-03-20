@@ -396,8 +396,8 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
 	} else {
 	    char hlen[6] = { '\0' };
 	    (void)bu_humanize_number(hlen, 5, (int64_t)dp->d_len, "",
-		    BU_HN_AUTOSCALE,
-		    BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
+				     BU_HN_AUTOSCALE,
+				     BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
 	    bu_vls_printf(&str,  "%s", hlen);
 	}
 	ft_write(table, bu_vls_cstr(&str));

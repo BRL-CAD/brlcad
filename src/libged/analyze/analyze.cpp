@@ -279,11 +279,11 @@ analyze_do_summary(struct ged *gedp, const struct rt_db_internal *ip)
 	    analyze_general(gedp, ip);
 	    break;
 
-	 case ID_EXTRUDE:
+	case ID_EXTRUDE:
 	    analyze_general(gedp, ip);
 	    break;
 
-	 case ID_RHC:
+	case ID_RHC:
 	    analyze_general(gedp, ip);
 	    break;
 
@@ -629,11 +629,11 @@ _analyze_cmd_help(void *bs, int argc, const char **argv)
 
 
 const struct bu_cmdtab _analyze_cmds[] = {
-      { "summarize",           _analyze_cmd_summarize},
-      { "intersect",           _analyze_cmd_intersect},
-      { "subtract",            _analyze_cmd_subtract},
-      { (char *)NULL,      NULL}
-  };
+    { "summarize",           _analyze_cmd_summarize},
+    { "intersect",           _analyze_cmd_intersect},
+    { "subtract",            _analyze_cmd_subtract},
+    { (char *)NULL,      NULL}
+};
 
 
 extern "C" int
@@ -722,17 +722,17 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl analyze_cmd_impl = { "analyze", ged_analyze_core, GED_CMD_DEFAULT };
-    const struct ged_cmd analyze_cmd = { &analyze_cmd_impl };
+struct ged_cmd_impl analyze_cmd_impl = { "analyze", ged_analyze_core, GED_CMD_DEFAULT };
+const struct ged_cmd analyze_cmd = { &analyze_cmd_impl };
 
-    const struct ged_cmd *analyze_cmds[] = { &analyze_cmd, NULL };
+const struct ged_cmd *analyze_cmds[] = { &analyze_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  analyze_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  analyze_cmds, 1 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 

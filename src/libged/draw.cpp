@@ -44,13 +44,13 @@
 #include "./ged_private.h"
 
 #define GET_BV_SCENE_OBJ(p, fp) { \
-        if (BU_LIST_IS_EMPTY(fp)) { \
-            BU_ALLOC((p), struct bv_scene_obj); \
-        } else { \
-            p = BU_LIST_NEXT(bv_scene_obj, fp); \
-            BU_LIST_DEQUEUE(&((p)->l)); \
-        } \
-        BU_LIST_INIT( &((p)->s_vlist) ); }
+	if (BU_LIST_IS_EMPTY(fp)) { \
+	    BU_ALLOC((p), struct bv_scene_obj); \
+	} else { \
+	    p = BU_LIST_NEXT(bv_scene_obj, fp); \
+	    BU_LIST_DEQUEUE(&((p)->l)); \
+	} \
+	BU_LIST_INIT( &((p)->s_vlist) ); }
 
 static int
 _prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
@@ -266,7 +266,7 @@ ged_update_db_path(struct bv_scene_obj *s, int UNUSED(flag))
     // Process children - right now we have no view dependent child
     // drawing, but in principle we could...
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-        struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	if (s_c->s_update_callback)
 	    (*s_c->s_update_callback)(s_c, 0);
     }
@@ -383,8 +383,8 @@ _tree_color(struct directory *dp, struct draw_data_t *dd)
 
 void
 db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
-	void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
-	void *client_data)
+			 void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
+			 void *client_data)
 {
     mat_t om, nm;
     struct directory *dp;

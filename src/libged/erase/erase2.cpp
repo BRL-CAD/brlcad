@@ -38,13 +38,13 @@
 #include "../ged_private.h"
 
 #define GET_BV_SCENE_OBJ(p, fp) { \
-    if (BU_LIST_IS_EMPTY(fp)) { \
-	BU_ALLOC((p), struct bv_scene_obj); \
-    } else { \
-	p = BU_LIST_NEXT(bv_scene_obj, fp); \
-	BU_LIST_DEQUEUE(&((p)->l)); \
-    } \
-    BU_LIST_INIT( &((p)->s_vlist) ); }
+	if (BU_LIST_IS_EMPTY(fp)) { \
+	    BU_ALLOC((p), struct bv_scene_obj); \
+	} else { \
+	    p = BU_LIST_NEXT(bv_scene_obj, fp); \
+	    BU_LIST_DEQUEUE(&((p)->l)); \
+	} \
+	BU_LIST_INIT( &((p)->s_vlist) ); }
 
 // Need to process shallowest to deepest, so we properly split new scene groups
 // generated from higher level paths that are in turn split by other deeper
@@ -432,23 +432,23 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Now, generate the new scene groups and assign the still-active solids to them.
-   for (g_it = split.begin(); g_it != split.end(); g_it++) {
+    for (g_it = split.begin(); g_it != split.end(); g_it++) {
 	struct bv_scene_group *cg = g_it->first;
 	std::set<std::string> &spaths = g_it->second;
 	all.erase(cg);
 	new_scene_grps(&all, dbip, cg, spaths, free_scene_obj);
-   }
+    }
 
-   // Repopulate the sg tbl with the final results
-   for (c_it = all.begin(); c_it != all.end(); c_it++) {
-       struct bv_scene_group *ng = *c_it;
-       bu_ptbl_ins(sg, (long *)ng);
-   }
+    // Repopulate the sg tbl with the final results
+    for (c_it = all.begin(); c_it != all.end(); c_it++) {
+	struct bv_scene_group *ng = *c_it;
+	bu_ptbl_ins(sg, (long *)ng);
+    }
 
-   // Sort
-   bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
+    // Sort
+    bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
 
-   return BRLCAD_OK;
+    return BRLCAD_OK;
 }
 
 // Local Variables:

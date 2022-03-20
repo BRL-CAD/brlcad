@@ -51,11 +51,11 @@ bullet_dimensions_valid(const btVector3 &extents)
 	bullet_limits.second * tolerance_factor);
 
     if (extents.getX() < bounds.first || extents.getY() < bounds.first
-	|| extents.getZ() < bounds.first)
+       || extents.getZ() < bounds.first)
 	return false;
 
     if (extents.getX() > bounds.second || extents.getY() > bounds.second
-	|| extents.getZ() > bounds.second)
+       || extents.getZ() > bounds.second)
 	return false;
 
     return true;
@@ -80,7 +80,7 @@ RtCollisionShape::RtCollisionShape(const btVector3 &aabb_extents,
 
     if (!bullet_dimensions_valid(aabb_extents))
 	throw InvalidSimulationError("dimensions are too extreme for Bullet at '"
-				     + m_name + "'");
+				    + m_name + "'");
 }
 
 

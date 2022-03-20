@@ -904,13 +904,13 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 	fprintf(fp, "property double y\n");
 	fprintf(fp, "property double z\n");
 	if (pnts->type == RT_PNT_TYPE_NRM || pnts->type == RT_PNT_TYPE_SCA_NRM
-		|| pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
 	    fprintf(fp, "property double nx\n");
 	    fprintf(fp, "property double ny\n");
 	    fprintf(fp, "property double nz\n");
 	}
 	if (pnts->type == RT_PNT_TYPE_COL || pnts->type == RT_PNT_TYPE_COL_SCA
-		|| pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
 	    fprintf(fp, "property uchar red\n");
 	    fprintf(fp, "property uchar green\n");
 	    fprintf(fp, "property uchar blue\n");
@@ -1354,20 +1354,20 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts_core, GED_CMD_DEFAULT };
-    const struct ged_cmd pnts_cmd = { &pnts_cmd_impl };
+struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts_core, GED_CMD_DEFAULT };
+const struct ged_cmd pnts_cmd = { &pnts_cmd_impl };
 
-    struct ged_cmd_impl make_pnts_cmd_impl = { "make_pnts", ged_make_pnts_core, GED_CMD_DEFAULT };
-    const struct ged_cmd make_pnts_cmd = { &make_pnts_cmd_impl };
+struct ged_cmd_impl make_pnts_cmd_impl = { "make_pnts", ged_make_pnts_core, GED_CMD_DEFAULT };
+const struct ged_cmd make_pnts_cmd = { &make_pnts_cmd_impl };
 
-    const struct ged_cmd *pnts_cmds[] = { &make_pnts_cmd,  &pnts_cmd, NULL };
+const struct ged_cmd *pnts_cmds[] = { &make_pnts_cmd,  &pnts_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  pnts_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  pnts_cmds, 2 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 

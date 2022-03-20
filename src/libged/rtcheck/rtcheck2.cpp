@@ -152,11 +152,11 @@ rtcheck_vector_handler(void *clientData, int type)
 
     if (!rtcp->draw_read_failed) {
 	(void)rt_process_uplot_value(&rtcp->vhead,
-		rtcp->vbp,
-		rtcp->fp,
-		value,
-		rtcp->csize,
-		gedp->ged_gdp->gd_uplotOutputMode);
+				     rtcp->vbp,
+				     rtcp->fp,
+				     value,
+				     rtcp->csize,
+				     gedp->ged_gdp->gd_uplotOutputMode);
     }
 }
 

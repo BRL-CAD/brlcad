@@ -56,7 +56,7 @@
  * directly and export what we need from brep_debug.cpp which sucks.
  */
 extern "C" {
-    RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
+RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 }
 
 // Indices are specified for info and plot commands - parsing logic is common to both
@@ -494,11 +494,11 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
     int ret = brep_conversion(&gb->intern, &brep_db_internal, gedp->dbip);
     if (ret == -1) {
 	bu_vls_printf(gedp->ged_result_str, "%s doesn't have a "
-		"brep-conversion function yet. Type: %s", gb->solid_name.c_str(),
-		gb->intern.idb_meth->ft_label);
+		      "brep-conversion function yet. Type: %s", gb->solid_name.c_str(),
+		      gb->intern.idb_meth->ft_label);
     } else if (ret == -2) {
 	bu_vls_printf(gedp->ged_result_str, "%s cannot be converted "
-		"to brep correctly.", gb->solid_name.c_str());
+		      "to brep correctly.", gb->solid_name.c_str());
     } else {
 	brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 	ret = mk_brep(gedp->ged_wdbp, bu_vls_cstr(&bname), brep);
@@ -962,7 +962,7 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
 	    operation.parameters.tran.dz = atof(argv[4]);
 
 	    ret = ip->idb_meth->ft_process_selection(ip, gedp->dbip,
-		    (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
+						     (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
 
 	    if (ret != 0) {
 		return BRLCAD_ERROR;
@@ -1444,18 +1444,18 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl brep_cmd_impl = { "brep", ged_brep_core, GED_CMD_DEFAULT };
-    const struct ged_cmd brep_cmd = { &brep_cmd_impl };
-    struct ged_cmd_impl dplot_cmd_impl = { "dplot", ged_dplot_core, GED_CMD_DEFAULT };
-    const struct ged_cmd dplot_cmd = { &dplot_cmd_impl };
-    const struct ged_cmd *brep_cmds[] = { &brep_cmd, &dplot_cmd, NULL };
+struct ged_cmd_impl brep_cmd_impl = { "brep", ged_brep_core, GED_CMD_DEFAULT };
+const struct ged_cmd brep_cmd = { &brep_cmd_impl };
+struct ged_cmd_impl dplot_cmd_impl = { "dplot", ged_dplot_core, GED_CMD_DEFAULT };
+const struct ged_cmd dplot_cmd = { &dplot_cmd_impl };
+const struct ged_cmd *brep_cmds[] = { &brep_cmd, &dplot_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  brep_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  brep_cmds, 2 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 

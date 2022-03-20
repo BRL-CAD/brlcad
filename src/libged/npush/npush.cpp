@@ -57,98 +57,98 @@
  * sorting and a uniqueness guarantee.)
  */
 class dp_i {
-    public:
-	struct directory *dp;              // Instance database object
-	struct directory *parent_dp;       // Parent object
-	mat_t mat;                         // Instance matrix
-	size_t ind;                        // Used for debugging
-	std::string iname = std::string(); // Container to hold instance name, if needed
-	const struct bn_tol *tol;       // Tolerance to use for matrix comparisons
+public:
+    struct directory *dp;              // Instance database object
+    struct directory *parent_dp;       // Parent object
+    mat_t mat;                         // Instance matrix
+    size_t ind;                        // Used for debugging
+    std::string iname = std::string(); // Container to hold instance name, if needed
+    const struct bn_tol *tol;       // Tolerance to use for matrix comparisons
 
-	bool push_obj = true;  // Flag to determine if this instance is being pushed
-	bool is_leaf = false;  // Flag to determine if this instance is a push leaf
+    bool push_obj = true;  // Flag to determine if this instance is being pushed
+    bool is_leaf = false;  // Flag to determine if this instance is a push leaf
 
-	// If an instance is being pushed, there is one step that can be taken
-	// beyond simply propagating the matrix down the tree - the solid
-	// associated with the instance can have its parameters updated to
-	// reflect the application of the matrix.  This completely "clears" all
-	// matrix applications from the comb tree instance.
-	bool apply_to_solid = false;
+    // If an instance is being pushed, there is one step that can be taken
+    // beyond simply propagating the matrix down the tree - the solid
+    // associated with the instance can have its parameters updated to
+    // reflect the application of the matrix.  This completely "clears" all
+    // matrix applications from the comb tree instance.
+    bool apply_to_solid = false;
 
-	// The key to the dp_i class is the less than operator, which is what
-	// allows C++ sets to distinguish between separate instances with the
-	// same dp pointer.  The first check is that dp pointer - if the current
-	// and other dp do not match, the sorting criteria is obvious.  Likewise,
-	// if one instance is instructed in the push to apply the matrix to a
-	// solid and another is not, even if they would otherwise be identical
-	// instances, it is necessary to distinguish them since those two
-	// definitions require different comb tree instances to represent.
-	//
-	// If instance definitions DO match in other respects, the uniqueness
-	// rests on the similarity of their matrices.  If they are equal within
-	// tolerance, the instances are equal as well.
-	//
-	// One additional refinement is made to the sorting for processing
-	// convenience - we make sure that any IDN instance is less than any
-	// non-IDN matrix in sorting behavior, even if the numerics of the
-	// matrices wouldn't otherwise reach that determination.
-	bool operator<(const dp_i &o) const {
+    // The key to the dp_i class is the less than operator, which is what
+    // allows C++ sets to distinguish between separate instances with the
+    // same dp pointer.  The first check is that dp pointer - if the current
+    // and other dp do not match, the sorting criteria is obvious.  Likewise,
+    // if one instance is instructed in the push to apply the matrix to a
+    // solid and another is not, even if they would otherwise be identical
+    // instances, it is necessary to distinguish them since those two
+    // definitions require different comb tree instances to represent.
+    //
+    // If instance definitions DO match in other respects, the uniqueness
+    // rests on the similarity of their matrices.  If they are equal within
+    // tolerance, the instances are equal as well.
+    //
+    // One additional refinement is made to the sorting for processing
+    // convenience - we make sure that any IDN instance is less than any
+    // non-IDN matrix in sorting behavior, even if the numerics of the
+    // matrices wouldn't otherwise reach that determination.
+    bool operator<(const dp_i &o) const {
 
-	    // First, check dp
-	    if (dp < o.dp) return true;
-	    if (o.dp < dp) return false;
+	// First, check dp
+	if (dp < o.dp) return true;
+	if (o.dp < dp) return false;
 
-	    // Important for multiple tests to know if matrices are IDN
-	    int tidn = bn_mat_is_equal(mat, bn_mat_identity, tol);
-	    int oidn = bn_mat_is_equal(o.mat, bn_mat_identity, tol);
+	// Important for multiple tests to know if matrices are IDN
+	int tidn = bn_mat_is_equal(mat, bn_mat_identity, tol);
+	int oidn = bn_mat_is_equal(o.mat, bn_mat_identity, tol);
 
-	    /* If the dp didn't resolve the question, check the matrix. */
-	    if (!bn_mat_is_equal(mat, o.mat, tol)) {
-		// We want IDN matrices to be less than any others, regardless
-		// of the numerics.
-		if (tidn && !oidn) return true;
-		if (oidn && !tidn) return false;
+	/* If the dp didn't resolve the question, check the matrix. */
+	if (!bn_mat_is_equal(mat, o.mat, tol)) {
+	    // We want IDN matrices to be less than any others, regardless
+	    // of the numerics.
+	    if (tidn && !oidn) return true;
+	    if (oidn && !tidn) return false;
 
-		// If we don't have an IDN matrix involved, fall back on
-		// numerical sorting to order the instances.  We want this to
-		// be consistent, so avoid comparing numbers that are closer
-		// than SMALL_FASTF in size
-		for (int i = 0; i < 16; i++) {
-		    if (NEAR_EQUAL(mat[i], o.mat[i], SMALL_FASTF))
-			continue;
-		    if (mat[i] < o.mat[i]) {
-			return true;
-		    }
-		    if (mat[i] > o.mat[i]) {
-			return false;
-		    }
+	    // If we don't have an IDN matrix involved, fall back on
+	    // numerical sorting to order the instances.  We want this to
+	    // be consistent, so avoid comparing numbers that are closer
+	    // than SMALL_FASTF in size
+	    for (int i = 0; i < 16; i++) {
+		if (NEAR_EQUAL(mat[i], o.mat[i], SMALL_FASTF))
+		    continue;
+		if (mat[i] < o.mat[i]) {
+		    return true;
+		}
+		if (mat[i] > o.mat[i]) {
+		    return false;
 		}
 	    }
-
-	    // The application of the matrix to the solid may matter
-	    // when distinguishing dp_i instances, but only if one
-	    // of the matrices involved is non-IDN - otherwise, the
-	    // matrix applications are no-ops and we don't want them
-	    // to prompt multiple instances of objects.
-	    if (!(dp->d_flags & RT_DIR_COMB)) {
-		if ((!tidn || !oidn) && (apply_to_solid && !o.apply_to_solid))
-		    return true;
-	    }
-
-	    /* All attempt to find non-equalities failed */
-	    return false;
 	}
 
-	/* For convenience, we also define an equality operator */
-	bool operator==(const dp_i &o) const {
-	    if (dp != o.dp) return false;
-	    if (apply_to_solid != o.apply_to_solid) {
-		if (!bn_mat_is_equal(mat, bn_mat_identity, tol) ||
-		       	!bn_mat_is_equal(o.mat, bn_mat_identity, tol))
-		    return false;
-	    }
-	    return bn_mat_is_equal(mat, o.mat, tol);
+	// The application of the matrix to the solid may matter
+	// when distinguishing dp_i instances, but only if one
+	// of the matrices involved is non-IDN - otherwise, the
+	// matrix applications are no-ops and we don't want them
+	// to prompt multiple instances of objects.
+	if (!(dp->d_flags & RT_DIR_COMB)) {
+	    if ((!tidn || !oidn) && (apply_to_solid && !o.apply_to_solid))
+		return true;
 	}
+
+	/* All attempt to find non-equalities failed */
+	return false;
+    }
+
+    /* For convenience, we also define an equality operator */
+    bool operator==(const dp_i &o) const {
+	if (dp != o.dp) return false;
+	if (apply_to_solid != o.apply_to_solid) {
+	    if (!bn_mat_is_equal(mat, bn_mat_identity, tol) ||
+		!bn_mat_is_equal(o.mat, bn_mat_identity, tol))
+		return false;
+	}
+	return bn_mat_is_equal(mat, o.mat, tol);
+    }
 };
 
 // Slightly "looser" search operator, for use IFF a direct find lookup fails
@@ -159,48 +159,48 @@ class dp_i {
 // from https://stackoverflow.com/a/8054223/2037687
 struct mat_lfind
 {
-  mat_lfind( class dp_i *tdpi ) : test_dpi(tdpi) {}
-  bool operator()( const class dp_i& c ) const
-  {
-      // First, check dp
-      if (c.dp != test_dpi->dp) return false;
+    mat_lfind( class dp_i *tdpi ) : test_dpi(tdpi) {}
+    bool operator()( const class dp_i& c ) const
+    {
+	// First, check dp
+	if (c.dp != test_dpi->dp) return false;
 
-      // Important for multiple tests to know if matrices are IDN
-      int oidn = bn_mat_is_equal(c.mat, bn_mat_identity, c.tol);
-      int tidn = bn_mat_is_equal(test_dpi->mat, bn_mat_identity, test_dpi->tol);
-      if (oidn && tidn)
-	  return true;
+	// Important for multiple tests to know if matrices are IDN
+	int oidn = bn_mat_is_equal(c.mat, bn_mat_identity, c.tol);
+	int tidn = bn_mat_is_equal(test_dpi->mat, bn_mat_identity, test_dpi->tol);
+	if (oidn && tidn)
+	    return true;
 
-      /* If the dp didn't resolve the question, check the matrix. */
-      if (!bn_mat_is_equal(test_dpi->mat, c.mat, test_dpi->tol)) {
-	  // We want IDN matrices to be less than any others, regardless
-	  // of the numerics.
-	  if (tidn && !oidn) return true;
-	  if (oidn && !tidn) return false;
+	/* If the dp didn't resolve the question, check the matrix. */
+	if (!bn_mat_is_equal(test_dpi->mat, c.mat, test_dpi->tol)) {
+	    // We want IDN matrices to be less than any others, regardless
+	    // of the numerics.
+	    if (tidn && !oidn) return true;
+	    if (oidn && !tidn) return false;
 
-	  // If we don't have an IDN matrix involved, fall back on
-	  // numerical comparisons
-	  for (int i = 0; i < 16; i++) {
-	      if (!NEAR_EQUAL(test_dpi->mat[i], c.mat[i], VUNITIZE_TOL))
-		  return false;
-	  }
-      }
+	    // If we don't have an IDN matrix involved, fall back on
+	    // numerical comparisons
+	    for (int i = 0; i < 16; i++) {
+		if (!NEAR_EQUAL(test_dpi->mat[i], c.mat[i], VUNITIZE_TOL))
+		    return false;
+	    }
+	}
 
-      // The application of the matrix to the solid may matter
-      // when distinguishing dp_i instances, but only if one
-      // of the matrices involved is non-IDN - otherwise, the
-      // matrix applications are no-ops and we don't want them
-      // to prompt multiple instances of objects.
-      if (!(c.dp->d_flags & RT_DIR_COMB)) {
-	  if (test_dpi->apply_to_solid && !c.apply_to_solid)
-	      return false;
-      }
+	// The application of the matrix to the solid may matter
+	// when distinguishing dp_i instances, but only if one
+	// of the matrices involved is non-IDN - otherwise, the
+	// matrix applications are no-ops and we don't want them
+	// to prompt multiple instances of objects.
+	if (!(c.dp->d_flags & RT_DIR_COMB)) {
+	    if (test_dpi->apply_to_solid && !c.apply_to_solid)
+		return false;
+	}
 
-      // All tests pass, looks equal
-      return true;
-  }
+	// All tests pass, looks equal
+	return true;
+    }
 private:
-  class dp_i *test_dpi;
+    class dp_i *test_dpi;
 };
 
 
@@ -306,14 +306,14 @@ is_push_leaf(struct directory *dp, int depth, struct push_state *s, bool survey)
  * do a more comprehensive review if that proves worthwhile. */
 static void
 validate_walk(struct db_i *dbip,
-	struct db_full_path *dfp,
-	void *client_data);
+	      struct db_full_path *dfp,
+	      void *client_data);
 
 static void
 validate_walk_subtree(struct db_i *dbip,
-	            struct db_full_path *dfp,
-		    union tree *tp,
-		    void *client_data)
+		      struct db_full_path *dfp,
+		      union tree *tp,
+		      void *client_data)
 {
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
@@ -352,7 +352,7 @@ validate_walk_subtree(struct db_i *dbip,
 			struct directory *ldp = DB_FULL_PATH_CUR_DIR(dfp);
 			struct directory *rdp = dfp->fp_names[0];
 			if (ldp && rdp)
-			bu_vls_printf(s->msgs, "W1[%s]: user specified push object %s is below user specified push object %s\n", ps, ldp->d_namep, rdp->d_namep);
+			    bu_vls_printf(s->msgs, "W1[%s]: user specified push object %s is below user specified push object %s\n", ps, ldp->d_namep, rdp->d_namep);
 			bu_free(ps, "path string");
 		    }
 		    s->problem_obj = std::string(dp->d_namep);
@@ -386,8 +386,8 @@ validate_walk_subtree(struct db_i *dbip,
 
 static void
 validate_walk(struct db_i *dbip,
-	    struct db_full_path *dfp,
-	    void *client_data)
+	      struct db_full_path *dfp,
+	      void *client_data)
 {
     struct push_state *s = (struct push_state *)client_data;
     RT_CK_DBI(dbip);
@@ -434,19 +434,19 @@ validate_walk(struct db_i *dbip,
  */
 static void
 push_walk(struct db_full_path *dfp,
-	int depth,
-	mat_t *curr_mat,
-	bool survey,
-	void *client_data);
+	  int depth,
+	  mat_t *curr_mat,
+	  bool survey,
+	  void *client_data);
 
 static void
 push_walk_subtree(
-	struct db_full_path *dfp,
-	union tree *tp,
-	int depth,
-	mat_t *curr_mat,
-	bool survey,
-	void *client_data)
+    struct db_full_path *dfp,
+    union tree *tp,
+    int depth,
+    mat_t *curr_mat,
+    bool survey,
+    void *client_data)
 {
     mat_t om, nm;
     struct push_state *s = (struct push_state *)client_data;
@@ -536,7 +536,7 @@ push_walk_subtree(
 		// the matrix to the primitive itself.  The comb reference will
 		// use the IDN matrix.
 		if (!survey && !(dp->d_flags & RT_DIR_COMB) &&
-			(!s->max_depth || depth+1 <= s->max_depth) && !s->stop_at_shapes) {
+		    (!s->max_depth || depth+1 <= s->max_depth) && !s->stop_at_shapes) {
 		    if (s->verbosity > 2 && s->msgs) {
 			char *ps = db_path_to_string(dfp);
 			bu_vls_printf(s->msgs, "W2[%s]: push leaf (finalize matrix or solid params): %s\n", ps, dp->d_namep);
@@ -640,10 +640,10 @@ push_walk_subtree(
 
 static void
 push_walk(struct db_full_path *dfp,
-	int depth,
-	mat_t *curr_mat,
-	bool survey,
-	void *client_data)
+	  int depth,
+	  mat_t *curr_mat,
+	  bool survey,
+	  void *client_data)
 {
     struct push_state *s = (struct push_state *)client_data;
 
@@ -676,22 +676,22 @@ push_walk(struct db_full_path *dfp,
  * updated and/or created to finalize the proper comb tree references. */
 static void
 tree_update_walk(
-	const dp_i &dpi,
-	struct db_full_path *dfp,
-	int depth,
-	mat_t *curr_mat,
-	void *client_data);
+    const dp_i &dpi,
+    struct db_full_path *dfp,
+    int depth,
+    mat_t *curr_mat,
+    void *client_data);
 
 static void
 tree_update_walk_subtree(
-	            const dp_i &parent_dpi,
-		    struct db_full_path *dfp,
-		    union tree *tp,
-		    union tree *wtp,
-		    int depth,
-		    mat_t *curr_mat,
-		    bool *tree_altered,
-		    void *client_data)
+    const dp_i &parent_dpi,
+    struct db_full_path *dfp,
+    union tree *tp,
+    union tree *wtp,
+    int depth,
+    mat_t *curr_mat,
+    bool *tree_altered,
+    void *client_data)
 {
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
@@ -902,11 +902,11 @@ tree_update_walk_subtree(
 
 static void
 tree_update_walk(
-	const dp_i &dpi,
-	struct db_full_path *dfp,
-	int depth,
-	mat_t *curr_mat,
-	void *client_data)
+    const dp_i &dpi,
+    struct db_full_path *dfp,
+    int depth,
+    mat_t *curr_mat,
+    void *client_data)
 {
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;

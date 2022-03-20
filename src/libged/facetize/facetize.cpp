@@ -546,15 +546,15 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     if (!BU_SETJUMP) {
 	/* try */
 	i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
-	    1,
-	    &init_state,
-	    0,			/* take all regions */
-	    facetize_region_end,
-	    nmg_use_tnurbs ?
-	    nmg_booltree_leaf_tnurb :
-	    nmg_booltree_leaf_tess,
-	    (void *)&facetize_tree
-	    );
+			 1,
+			&init_state,
+			 0,			/* take all regions */
+			 facetize_region_end,
+			 nmg_use_tnurbs ?
+			 nmg_booltree_leaf_tnurb :
+			 nmg_booltree_leaf_tess,
+			 (void *)&facetize_tree
+			);
     } else {
 	/* catch */
 	BU_UNSETJUMP;
@@ -850,11 +850,11 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     bot->face_mode = (struct bu_bitv *)NULL;
 
     if (bg_3d_spsr(&(bot->faces), (int *)&(bot->num_faces),
-		(point_t **)&(bot->vertices),
-		(int *)&(bot->num_vertices),
-		(const point_t *)input_points_3d,
-		(const vect_t *)input_normals_3d,
-		pnts->count, &(opts->s_opts)) ) {
+		   (point_t **)&(bot->vertices),
+		   (int *)&(bot->num_vertices),
+		   (const point_t *)input_points_3d,
+		   (const vect_t *)input_normals_3d,
+		   pnts->count, &(opts->s_opts)) ) {
 	r->failure_mode = GED_FACETIZE_FAILURE_SPSR_SURFACE;
 	ret = GED_FACETIZE_FAILURE;
 	goto ged_facetize_spsr_memfree;
@@ -864,7 +864,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     {
 	struct rt_bot_internal *obot = bot;
 	fastf_t feature_size = 0.0;
-        if (opts->feature_size > 0) {
+	if (opts->feature_size > 0) {
 	    feature_size = opts->feature_size;
 	} else {
 	    fastf_t xlen = fabs(rpp_max[X] - rpp_min[X]);
@@ -1221,9 +1221,9 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 	bot->vertices = NULL;
 	bot->faces = NULL;
 	polygonize_failure = analyze_polygonize(&(bot->faces), (int *)&(bot->num_faces),
-		    (point_t **)&(bot->vertices),
-		    (int *)&(bot->num_vertices),
-		    feature_size, pn->v, objname, gedp->dbip, &params);
+						(point_t **)&(bot->vertices),
+						(int *)&(bot->num_vertices),
+						feature_size, pn->v, objname, gedp->dbip, &params);
 	delta = (int)((bu_gettime() - timestamp)/1e6);
 	if (polygonize_failure || bot->num_faces < successful_bot_count || delta < 2) {
 	    if (polygonize_failure == 3) {
@@ -2976,7 +2976,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 ged_facetize_memfree:
     _ged_facetize_opts_destroy(opts);
 
-     return ret;
+    return ret;
 }
 
 
@@ -2985,16 +2985,16 @@ ged_facetize_memfree:
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl facetize_cmd_impl = { "facetize", ged_facetize_core, GED_CMD_DEFAULT };
-    const struct ged_cmd facetize_cmd = { &facetize_cmd_impl };
-    const struct ged_cmd *facetize_cmds[] = { &facetize_cmd,  NULL };
+struct ged_cmd_impl facetize_cmd_impl = { "facetize", ged_facetize_core, GED_CMD_DEFAULT };
+const struct ged_cmd facetize_cmd = { &facetize_cmd_impl };
+const struct ged_cmd *facetize_cmds[] = { &facetize_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  facetize_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  facetize_cmds, 1 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 

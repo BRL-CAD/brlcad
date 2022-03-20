@@ -45,23 +45,23 @@
 #include "../ged_private.h"
 
 #define GET_BV_SCENE_OBJ(p, fp) { \
-        if (BU_LIST_IS_EMPTY(fp)) { \
-            BU_ALLOC((p), struct bv_scene_obj); \
-        } else { \
-            p = BU_LIST_NEXT(bv_scene_obj, fp); \
-            BU_LIST_DEQUEUE(&((p)->l)); \
-        } \
-        BU_LIST_INIT( &((p)->s_vlist) ); }
+	if (BU_LIST_IS_EMPTY(fp)) { \
+	    BU_ALLOC((p), struct bv_scene_obj); \
+	} else { \
+	    p = BU_LIST_NEXT(bv_scene_obj, fp); \
+	    BU_LIST_DEQUEUE(&((p)->l)); \
+	} \
+	BU_LIST_INIT( &((p)->s_vlist) ); }
 
 static int
 _fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
-	struct db_full_path *fp,
-	struct db_i *dbip,
-	const struct bg_tess_tol *ttol,
-	const struct bn_tol *tol,
-	mat_t *s_mat,
-	struct resource *res,
-	struct bview *v
+	 struct db_full_path *fp,
+	 struct db_i *dbip,
+	 const struct bg_tess_tol *ttol,
+	 const struct bn_tol *tol,
+	 mat_t *s_mat,
+	 struct resource *res,
+	 struct bview *v
 	)
 {
     VSET(*bmin, INFINITY, INFINITY, INFINITY);

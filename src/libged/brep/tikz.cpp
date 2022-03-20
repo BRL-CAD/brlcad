@@ -62,9 +62,9 @@ tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, stru
 			struct rt_db_internal bintern;
 			struct rt_brep_internal *b_ip = NULL;
 			RT_DB_INTERNAL_INIT(&bintern)
-			    if (rt_db_get_internal(&bintern, dir, gedp->dbip, NULL, &rt_uniresource) < 0) {
-				return BRLCAD_ERROR;
-			    }
+			if (rt_db_get_internal(&bintern, dir, gedp->dbip, NULL, &rt_uniresource) < 0) {
+			    return BRLCAD_ERROR;
+			}
 			if (bintern.idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
 			    ON_String s;
 			    struct bu_vls cntstr = BU_VLS_INIT_ZERO;
@@ -99,9 +99,9 @@ tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu
 
     RT_DB_INTERNAL_INIT(&intern)
 
-	if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
-	    return;
-	}
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	return;
+    }
 
     RT_CK_COMB(intern.idb_ptr);
     comb_internal = (struct rt_comb_internal *)intern.idb_ptr;
@@ -158,7 +158,7 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
 	struct rt_db_internal bintern;
 	struct rt_brep_internal *b_ip = NULL;
 	RT_DB_INTERNAL_INIT(&bintern)
-	    struct directory *d = (struct directory *)BU_PTBL_GET(&breps, i);
+	struct directory *d = (struct directory *)BU_PTBL_GET(&breps, i);
 	if (rt_db_get_internal(&bintern, d, wdbp->dbip, NULL, &rt_uniresource) < 0) {
 	    return BRLCAD_ERROR;
 	}

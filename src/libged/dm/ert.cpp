@@ -72,7 +72,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 
     struct fb *fbp = dm_get_fb(dmp);
     if (!fbp) {
-    	bu_vls_printf(gedp->ged_result_str, "attached display manager has no embedded framebuffer\n");
+	bu_vls_printf(gedp->ged_result_str, "attached display manager has no embedded framebuffer\n");
 	return BRLCAD_ERROR;
     }
 
@@ -99,7 +99,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     fbs->fbs_open_client_handler = gedp->fbs_open_client_handler;
     fbs->fbs_close_client_handler = gedp->fbs_close_client_handler;
     if (!fbs->fbs_is_listening || fbs_open(fbs, 0) != BRLCAD_OK) {
-    	bu_vls_printf(gedp->ged_result_str, "could not open fb server\n");
+	bu_vls_printf(gedp->ged_result_str, "could not open fb server\n");
 	return BRLCAD_ERROR;
     }
 

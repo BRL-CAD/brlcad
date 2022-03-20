@@ -373,8 +373,8 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 	pt_2d[Y] = vy;
 
     try_y_tweak:
-        ecount = 0;
-        icount = 0;
+	ecount = 0;
+	icount = 0;
 	for (i = 0; i < poly_2d.p_num_contours; ++i) {
 	    for (begin = 0; begin < poly_2d.p_contour[i].pc_num_points; ++begin) {
 		vect2d_t distvec;
@@ -392,7 +392,7 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 		if ((ret = bg_isect_line2_lseg2(distvec,
 						pt_2d, vfilldir,
 						poly_2d.p_contour[i].pc_point[begin], pdir,
-						&gedp->ged_wdbp->wdb_tol)) >= 0) {
+					       &gedp->ged_wdbp->wdb_tol)) >= 0) {
 		    /* We have an intersection */
 		    V2JOIN1(pt, poly_2d.p_contour[i].pc_point[begin], distvec[1], pdir);
 
@@ -461,8 +461,8 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 	pt_2d[X] = vx;
 
     try_x_tweak:
-        ecount = 0;
-        icount = 0;
+	ecount = 0;
+	icount = 0;
 	for (i = 0; i < poly_2d.p_num_contours; ++i) {
 	    for (begin = 0; begin < poly_2d.p_contour[i].pc_num_points; ++begin) {
 		vect2d_t distvec;
@@ -481,7 +481,7 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 		if ((ret = bg_isect_line2_lseg2(distvec,
 						pt_2d, vfilldir,
 						poly_2d.p_contour[i].pc_point[begin], pdir,
-						&gedp->ged_wdbp->wdb_tol)) >= 0) {
+					       &gedp->ged_wdbp->wdb_tol)) >= 0) {
 		    /* We have an intersection */
 		    V2JOIN1(pt, poly_2d.p_contour[i].pc_point[begin], distvec[1], pdir);
 

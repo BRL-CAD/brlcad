@@ -41,16 +41,16 @@
 
 
 static const char *usage = "Usage: mater [-s] object_name shader r [g b] inherit\n"
-    "              -d  source\n"
-    "              -d  clear\n"
-    "              -d  import [-v] file.density\n"
-    "              -d  export file.density\n"
-    "              -d  audit [file.density]\n"
-    "              -d  validate file.density\n"
-    "              -d  get [--tol <tolerance>] [[--id <pattern>] [--density <val>] [--name <pattern>] ...] [key]\n"
-    "              -d  set <id, density, name> [<id, density, name>] ...\n"
-    "              -d  map --ids-from-names [-d density_file] [-m map_file] [density_file] [map_file]\n"
-    "              -d  map --names-from-ids [density_file]\n";
+"              -d  source\n"
+"              -d  clear\n"
+"              -d  import [-v] file.density\n"
+"              -d  export file.density\n"
+"              -d  audit [file.density]\n"
+"              -d  validate file.density\n"
+"              -d  get [--tol <tolerance>] [[--id <pattern>] [--density <val>] [--name <pattern>] ...] [key]\n"
+"              -d  set <id, density, name> [<id, density, name>] ...\n"
+"              -d  map --ids-from-names [-d density_file] [-m map_file] [density_file] [map_file]\n"
+"              -d  map --names-from-ids [density_file]\n";
 
 
 static int
@@ -1018,7 +1018,7 @@ mater_get(struct ged *gedp, size_t argc, const char *argv[])
 	for (f_it = dens_opt.densities->begin(); f_it != dens_opt.densities->end(); f_it++) {
 	    have_den_match = 0;
 	    if ((dens_opt.lflag && (curr_d < *f_it)) || (dens_opt.gflag && (curr_d > *f_it)) ||
-	       	(dens_opt.eflag && NEAR_EQUAL(*f_it, curr_d, dtol))) {
+		(dens_opt.eflag && NEAR_EQUAL(*f_it, curr_d, dtol))) {
 		have_den_match = 1;
 		break;
 	    }
@@ -1031,7 +1031,7 @@ mater_get(struct ged *gedp, size_t argc, const char *argv[])
 	    }
 	}
 	if (((have_id_match && have_den_match && have_name_match) && (have_id_match > 0 || have_den_match > 0 || have_name_match > 0))
-	    || (have_greedy_match && (have_id_match != 0 && have_den_match != 0 && have_name_match != 0))) {
+	   || (have_greedy_match && (have_id_match != 0 && have_den_match != 0 && have_name_match != 0))) {
 	    bu_vls_printf(gedp->ged_result_str, "%ld\t%g\t%s\n", curr_id, curr_d, curr_n);
 	}
 	bu_free(curr_n, "name copy");
@@ -1281,7 +1281,7 @@ _ged_read_msmap(struct ged *gedp, const char *mbuff, std::set<std::string> &defi
 
 static int
 mater_try_densities_load(struct ged *gedp, struct analyze_densities **pa, std::set<std::string> &defined_materials,
-                         std::map<std::string, std::string> &listed_to_defined, const char *fname)
+			 std::map<std::string, std::string> &listed_to_defined, const char *fname)
 {
     long int curr_id = -1;
     long int id_cnt = 0;
@@ -1726,16 +1726,16 @@ ged_mater_core(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl mater_cmd_impl = { "mater", ged_mater_core, GED_CMD_DEFAULT };
-    const struct ged_cmd mater_cmd = { &mater_cmd_impl };
-    const struct ged_cmd *mater_cmds[] = { &mater_cmd,  NULL };
+struct ged_cmd_impl mater_cmd_impl = { "mater", ged_mater_core, GED_CMD_DEFAULT };
+const struct ged_cmd mater_cmd = { &mater_cmd_impl };
+const struct ged_cmd *mater_cmds[] = { &mater_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  mater_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  mater_cmds, 1 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 

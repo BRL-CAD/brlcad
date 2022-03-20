@@ -67,7 +67,7 @@ get_normal_world_on_b(const btRigidBody &body_a, const btRigidBody &body_b)
 	// objects are nearly motionless and may be either near each other or overlapping
 
 	result = body_b.getWorldTransform().getOrigin()
-		 - body_a.getWorldTransform().getOrigin();
+	- body_a.getWorldTransform().getOrigin();
 
 	if (!result.fuzzyZero())
 	    result.normalize();
@@ -83,7 +83,7 @@ HIDDEN std::pair<btVector3, btVector3>
 get_aabb_overlap(const btRigidBody &body_a, const btRigidBody &body_b)
 {
     std::pair<btVector3, btVector3> result(btVector3(0.0, 0.0, 0.0), btVector3(0.0,
-					   0.0, 0.0));
+									       0.0, 0.0));
     body_a.getAabb(result.first, result.second);
 
     btVector3 body_b_aabb_min(0.0, 0.0, 0.0), body_b_aabb_max(0.0, 0.0, 0.0);
@@ -156,13 +156,13 @@ get_rays(const btRigidBody &body_a, const btRigidBody &body_b,
 {
     const btVector3 normal_world_on_b = get_normal_world_on_b(body_a, body_b);
     const std::pair<btVector3, btVector3> aabb_overlap = get_aabb_overlap(body_a,
-	    body_b);
+									  body_b);
 
     // radius of the circle of rays
     // half of the diagonal of the AABB overlap so that rays will cover
     // the entire volume from all orientations
     const btScalar radius = (aabb_overlap.second - aabb_overlap.first).length() /
-			    2.0;
+    2.0;
 
     if (NEAR_ZERO(radius, RT_LEN_TOL))
 	bu_bomb("zero radius");
@@ -170,7 +170,7 @@ get_rays(const btRigidBody &body_a, const btRigidBody &body_b,
     // step back from the overlap center, along the normal by `radius`,
     // to ensure that rays start from outside of the overlap region
     const btVector3 center = (aabb_overlap.first + aabb_overlap.second) / 2.0 -
-			     radius * normal_world_on_b;
+    radius * normal_world_on_b;
 
     return generate_ray_grid(center, radius, normal_world_on_b, grid_radius);
 }
@@ -185,22 +185,22 @@ calculate_contact_points(btManifoldResult &result,
 			 btIDebugDraw &debug_draw)
 {
     const btRigidBody &body_a = *btRigidBody::upcast(
-				    body_a_wrap.getCollisionObject());
+	body_a_wrap.getCollisionObject());
     const btRigidBody &body_b = *btRigidBody::upcast(
-				    body_b_wrap.getCollisionObject());
+	body_b_wrap.getCollisionObject());
     const db_full_path &body_a_path = static_cast<const simulate::RtMotionState *>
-				      (body_a.getMotionState())->get_path();
+    (body_a.getMotionState())->get_path();
     const db_full_path &body_b_path = static_cast<const simulate::RtMotionState *>
-				      (body_b.getMotionState())->get_path();
+    (body_b.getMotionState())->get_path();
 
     const simulate::AutoPtr<xrays, free_xrays> rays(get_rays(body_a, body_b,
-	    grid_radius));
+							     grid_radius));
     const std::vector<std::pair<btVector3, btVector3> > overlaps =
-	rt_instance.get_overlaps(body_a_path, body_b_path, *rays.ptr);
+    rt_instance.get_overlaps(body_a_path, body_b_path, *rays.ptr);
     const btVector3 normal_world_on_b(V3ARGS(rays.ptr->ray.r_dir));
 
     for (std::vector<std::pair<btVector3, btVector3> >::const_iterator it =
-	     overlaps.begin(); it != overlaps.end(); ++it) {
+	 overlaps.begin(); it != overlaps.end(); ++it) {
 	const btScalar depth = -(it->first - it->second).length();
 	result.addContactPoint(normal_world_on_b,
 			       it->second / simulate::world_to_application,
@@ -230,7 +230,7 @@ namespace simulate
 
 
 RtCollisionAlgorithm::CreateFunc::CreateFunc(const RtInstance &rt_instance,
-	const unsigned grid_radius, btIDebugDraw &debug_draw) :
+					     const unsigned grid_radius, btIDebugDraw &debug_draw) :
     m_rt_instance(rt_instance),
     m_grid_radius(grid_radius),
     m_debug_draw(debug_draw)
@@ -247,18 +247,18 @@ RtCollisionAlgorithm::CreateFunc::CreateCollisionAlgorithm(
 	bu_bomb("missing argument");
 
     void * const ptr = cinfo.m_dispatcher1->allocateCollisionAlgorithm(sizeof(
-			   RtCollisionAlgorithm));
+									   RtCollisionAlgorithm));
     return new(ptr) RtCollisionAlgorithm(NULL, cinfo, body_a_wrap, body_b_wrap,
 					 m_rt_instance, m_grid_radius, m_debug_draw);
 }
 
 
 RtCollisionAlgorithm::RtCollisionAlgorithm(btPersistentManifold * const
-	manifold, const btCollisionAlgorithmConstructionInfo &cinfo,
-	const btCollisionObjectWrapper * const body_a_wrap,
-	const btCollisionObjectWrapper * const body_b_wrap,
-	const RtInstance &rt_instance, const unsigned grid_radius,
-	btIDebugDraw &debug_draw) :
+					   manifold, const btCollisionAlgorithmConstructionInfo &cinfo,
+					   const btCollisionObjectWrapper * const body_a_wrap,
+					   const btCollisionObjectWrapper * const body_b_wrap,
+					   const RtInstance &rt_instance, const unsigned grid_radius,
+					   btIDebugDraw &debug_draw) :
     btCollisionAlgorithm(cinfo),
     m_owns_manifold(false),
     m_manifold(manifold),
@@ -313,8 +313,8 @@ RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper * const
 
 btScalar
 RtCollisionAlgorithm::calculateTimeOfImpact(btCollisionObject * const body_a,
-	btCollisionObject * const body_b, const btDispatcherInfo &UNUSED(dispatch_info),
-	btManifoldResult * const result)
+					    btCollisionObject * const body_b, const btDispatcherInfo &UNUSED(dispatch_info),
+					    btManifoldResult * const result)
 {
     if (!body_a || !body_b || !result)
 	bu_bomb("missing argument");
