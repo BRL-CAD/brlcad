@@ -27,7 +27,7 @@ QtGLWin::QtGLWin(struct fb *fbp)
 {
     canvas = new QtGL(this, fbp);
     this->setCentralWidget(canvas);
-    canvas->setMinimumSize(1,1);
+    canvas->setMinimumSize(1, 1);
 }
 
 /*

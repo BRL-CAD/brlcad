@@ -26,20 +26,21 @@
 #ifndef QTGLWIN_H
 #define QTGLWIN_H
 
-#include <QMainWindow>
 #include "dm.h"
 #include "qtcad/QtGL.h"
+#include <QMainWindow>
 
 class QtGLWin : public QMainWindow
 {
     Q_OBJECT
-    public:
-      QtGLWin(struct fb *fbp);
 
-      inline QtGL *getCanvas() { return canvas; }
+  public:
+    QtGLWin(struct fb *fbp);
 
-    private:
-	QtGL *canvas = NULL;
+    inline QtGL *getCanvas() { return canvas; }
+
+  private:
+    QtGL *canvas = NULL;
 };
 
 #endif /* QTGLWIN_H */
@@ -54,4 +55,3 @@ class QtGLWin : public QMainWindow
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

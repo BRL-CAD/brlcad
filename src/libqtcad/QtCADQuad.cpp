@@ -43,8 +43,8 @@
 #include <QGridLayout>
 
 #include "bu/str.h"
-#include "ged/defines.h"
 #include "ged/commands.h"
+#include "ged/defines.h"
 #include "qtcad/QtCADQuad.h"
 
 static const int UPPER_RIGHT = 0;
@@ -67,7 +67,7 @@ QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(p
     graphicsType = type;
 
     views[UPPER_RIGHT] = createView(UPPER_RIGHT);
-    bu_ptbl_ins_unique(&gedp->ged_views, (long int *)views[UPPER_RIGHT]->view());
+    bu_ptbl_ins_unique(&gedp->ged_views, (long int *) views[UPPER_RIGHT]->view());
     gedp->ged_gvp = views[UPPER_RIGHT]->view();
 
     // Define the spacers
@@ -105,8 +105,7 @@ QtCADQuad::~QtCADQuad()
  * @param index of the view names to use from the constant list of names
  * @return QtCADView*
  */
-QtCADView *
-QtCADQuad::createView(int index)
+QtCADView *QtCADQuad::createView(int index)
 {
     QtCADView *view = new QtCADView(this, graphicsType);
     bu_vls_sprintf(&view->view()->gv_name, "%s", VIEW_NAMES[index]);
@@ -125,8 +124,7 @@ QtCADQuad::createView(int index)
  *
  * @return QGridLayout*
  */
-QGridLayout *
-QtCADQuad::createLayout()
+QGridLayout *QtCADQuad::createLayout()
 {
     QGridLayout *layout = new QGridLayout(this);
     layout->setSpacing(0);
@@ -147,21 +145,21 @@ QtCADQuad::createLayout()
  * @brief Changes the viewport layout to only have the single view.  We destroy the other views if needed and the flag is set
  *
  */
-void
-QtCADQuad::changeToSingleFrame()
+void QtCADQuad::changeToSingleFrame()
 {
-    QGridLayout *layout = (QGridLayout *)this->layout();
+    QGridLayout *layout = (QGridLayout *) this->layout();
     if (layout == nullptr) {
 	layout = createLayout();
     }
-    while (layout->takeAt(0) != NULL);
+    while (layout->takeAt(0) != NULL)
+        ;
     layout->addWidget(views[UPPER_RIGHT], 0, 2);
 
     for (int i = 1; i < 4; i++) {
 	// Don't want use cpu for views that are not visible
 	if (views[i] != nullptr) {
 	    views[i]->disconnect();
-	    bu_ptbl_rm(&gedp->ged_views, (long int *)(views[i]->view()));
+	    bu_ptbl_rm(&gedp->ged_views, (long int *) (views[i]->view()));
 	    delete views[i];
 	    views[i] = nullptr;
 	}
@@ -179,21 +177,21 @@ QtCADQuad::changeToSingleFrame()
  * @brief Changes the viewport layout to have 4 views the views will be equal size and not resizeable.  This will create the extra view if needed.
  *
  */
-void
-QtCADQuad::changeToQuadFrame()
+void QtCADQuad::changeToQuadFrame()
 {
     for (int i = 1; i < 4; i++) {
 	if (views[i] == nullptr) {
 	    views[i] = createView(i);
 	}
-	bu_ptbl_ins_unique(&gedp->ged_views, (long int *)views[i]->view());
+	bu_ptbl_ins_unique(&gedp->ged_views, (long int *) views[i]->view());
 	QObject::connect(views[i], &QtCADView::changed, this, &QtCADQuad::do_view_changed);
     }
-    QGridLayout *layout = (QGridLayout *)this->layout();
+    QGridLayout *layout = (QGridLayout *) this->layout();
     if (layout == nullptr) {
 	layout = createLayout();
     }
-    while (layout->takeAt(0) != NULL);
+    while (layout->takeAt(0) != NULL)
+        ;
 
     layout->addWidget(views[UPPER_LEFT], 0, 0);
     layout->addItem(spacerTop, 0, 1);
@@ -210,10 +208,10 @@ QtCADQuad::changeToQuadFrame()
     // Not sure if this is the right way to do this but need to autoset each of the views
     const char *av[2];
     av[0] = "autoview";
-    av[1] = (char *)0;
+    av[1] = (char *) 0;
     for (int i = 1; i < 4; i++) {
 	gedp->ged_gvp = views[i]->view();
-	ged_exec(gedp, 1, (const char **)av);
+	ged_exec(gedp, 1, (const char **) av);
     }
     gedp->ged_gvp = views[UPPER_RIGHT]->view();
     views[UPPER_RIGHT]->set_current(1);
@@ -222,24 +220,20 @@ QtCADQuad::changeToQuadFrame()
     currentView->select(1);
 }
 
-void
-QtCADQuad::do_view_changed()
+void QtCADQuad::do_view_changed()
 {
     emit changed();
 }
 
-bool
-QtCADQuad::isValid()
+bool QtCADQuad::isValid()
 {
     for (int i = 0; i < 4; i++) {
-	if (views[i] != nullptr && !views[i]->isValid())
-	    return false;
+        if (views[i] != nullptr && !views[i]->isValid()) return false;
     }
     return true;
 }
 
-void
-QtCADQuad::fallback()
+void QtCADQuad::fallback()
 {
     for (int i = 0; i < 4; i++) {
 	if (views[i] != nullptr) {
@@ -254,8 +248,7 @@ QtCADQuad::fallback()
     currentView = views[UPPER_RIGHT];
 }
 
-bool
-QtCADQuad::eventFilter(QObject *t, QEvent *e)
+bool QtCADQuad::eventFilter(QObject *t, QEvent *e)
 {
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::MouseButtonPress) {
 	QtCADView *oc = currentView;
@@ -266,8 +259,7 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 		if (views[1] != nullptr) {
 		    views[i]->select(1);
 		}
-	    }
-	    else {
+	    } else {
 		if (views[i] != nullptr) {
 		    views[i]->set_current(0);
 		    views[i]->select(0);
@@ -276,20 +268,17 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 	}
 
 	currentView->set_current(1);
-	if (currentView != oc)
-	    emit selected(currentView);
+	if (currentView != oc) emit selected(currentView);
     }
     return false;
 }
 
-void
-QtCADQuad::default_views()
+void QtCADQuad::default_views()
 {
     if (views[UPPER_RIGHT] != nullptr) {
 	if (views[UPPER_LEFT] == nullptr) {
 	    views[UPPER_RIGHT]->aet(270, 90, 0);
-	}
-	else {
+	} else {
 	    views[UPPER_RIGHT]->aet(35, 25, 0);
 	}
     }
@@ -304,8 +293,7 @@ QtCADQuad::default_views()
     }
 }
 
-struct bview *
-QtCADQuad::view(int quadrantId)
+struct bview *QtCADQuad::view(int quadrantId)
 {
     if (quadrantId > 0) quadrantId -= 1;
 
@@ -316,8 +304,7 @@ QtCADQuad::view(int quadrantId)
     return currentView->view();
 }
 
-QtCADView *
-QtCADQuad::get(int quadrantId)
+QtCADView *QtCADQuad::get(int quadrantId)
 {
     if (quadrantId > 0) quadrantId -= 1;
 
@@ -328,8 +315,7 @@ QtCADQuad::get(int quadrantId)
     return currentView;
 }
 
-void
-QtCADQuad::select(int quadrantId)
+void QtCADQuad::select(int quadrantId)
 {
     if (quadrantId > 0) quadrantId -= 1;
 
@@ -346,8 +332,7 @@ QtCADQuad::select(int quadrantId)
     // indicate active quadrant
 }
 
-void
-QtCADQuad::select(const char *quadrant_id)
+void QtCADQuad::select(const char *quadrant_id)
 {
     if (BU_STR_EQUIV(quadrant_id, "ur")) {
 	select(1);
@@ -367,8 +352,7 @@ QtCADQuad::select(const char *quadrant_id)
     }
 }
 
-void
-QtCADQuad::need_update(void *)
+void QtCADQuad::need_update(void *)
 {
     for (int i = 0; i < 4; i++) {
 	if (views[i] != nullptr) {
@@ -377,8 +361,7 @@ QtCADQuad::need_update(void *)
     }
 }
 
-void
-QtCADQuad::stash_hashes()
+void QtCADQuad::stash_hashes()
 {
     for (int i = 0; i < 4; i++) {
 	if (views[i] != nullptr) {
@@ -387,8 +370,7 @@ QtCADQuad::stash_hashes()
     }
 }
 
-bool
-QtCADQuad::diff_hashes()
+bool QtCADQuad::diff_hashes()
 {
     bool ret = false;
     for (int i = 0; i < 4; i++) {
@@ -402,8 +384,7 @@ QtCADQuad::diff_hashes()
     return ret;
 }
 
-void
-QtCADQuad::enableDefaultKeyBindings()
+void QtCADQuad::enableDefaultKeyBindings()
 {
     for (int i = 0; i < 4; i++) {
 	if (views[i] != nullptr) {
@@ -412,8 +393,7 @@ QtCADQuad::enableDefaultKeyBindings()
     }
 }
 
-void
-QtCADQuad::disableDefaultKeyBindings()
+void QtCADQuad::disableDefaultKeyBindings()
 {
     for (int i = 0; i < 4; i++) {
 	if (views[i] != nullptr) {
@@ -422,8 +402,7 @@ QtCADQuad::disableDefaultKeyBindings()
     }
 }
 
-void
-QtCADQuad::enableDefaultMouseBindings()
+void QtCADQuad::enableDefaultMouseBindings()
 {
     for (int i = 0; i < 4; i++) {
 	if (views[i] != nullptr) {
@@ -432,8 +411,7 @@ QtCADQuad::enableDefaultMouseBindings()
     }
 }
 
-void
-QtCADQuad::disableDefaultMouseBindings()
+void QtCADQuad::disableDefaultMouseBindings()
 {
     for (int i = 0; i < 4; i++) {
 	if (views[i] != nullptr) {

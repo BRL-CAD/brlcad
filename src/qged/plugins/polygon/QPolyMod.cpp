@@ -262,8 +262,8 @@ QPolyMod::polygon_update_props()
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 
     // Pull settings
-    bu_color_to_rgb_chars(&ps->edge_color->bc, p->s_color);
-    BU_COLOR_CPY(&ip->fill_color, &ps->fill_color->bc);
+    bu_color_to_rgb_chars(ps->edge_color->getBackgroundColor(), p->s_color);
+    BU_COLOR_CPY(&ip->fill_color, ps->fill_color->getBackgroundColor());
 
     vect2d_t vdir = V2INIT_ZERO;
     vdir[0] = (fastf_t)(ps->fill_slope_x->text().toDouble());

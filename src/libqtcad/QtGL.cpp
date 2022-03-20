@@ -191,7 +191,7 @@ void QtGL::keyPressEvent(QKeyEvent *k) {
     v->gv_width = width();
     v->gv_height = height();
 
-    if (CADkeyPressEvent(v, x_prev, y_prev, k)) {
+    if (cadkey_press_event(v, x_prev, y_prev, k)) {
 	dm_set_dirty(dmp, 1);
 	update();
 	emit changed();
@@ -212,7 +212,7 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
     v->gv_width = width();
     v->gv_height = height();
 
-    if (CADmousePressEvent(v, x_prev, y_prev, e)) {
+    if (cad_mouse_press_event(v, x_prev, y_prev, e)) {
 	dm_set_dirty(dmp, 1);
 	update();
 	emit changed();
@@ -238,7 +238,7 @@ void QtGL::mouseMoveEvent(QMouseEvent *e)
     v->gv_width = width();
     v->gv_height = height();
 
-    if (CADmouseMoveEvent(v, x_prev, y_prev, e)) {
+    if (cad_mouse_move_event(v, x_prev, y_prev, e)) {
 	dm_set_dirty(dmp, 1);
 	update();
 	emit changed();
@@ -268,7 +268,7 @@ void QtGL::wheelEvent(QWheelEvent *e) {
     v->gv_width = width();
     v->gv_height = height();
 
-    if (CADwheelEvent(v, e)) {
+    if (cad_wheel_event(v, e)) {
 	dm_set_dirty(dmp, 1);
 	update();
 	emit changed();

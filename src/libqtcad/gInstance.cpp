@@ -89,18 +89,18 @@ ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::
 }
 
 
-gInstance::gInstance(struct directory *idp, struct db_i *idbip)
+GInstance::GInstance(struct directory *idp, struct db_i *idbip)
 {
     dp = idp;
     dbip = idbip;
 }
 
-gInstance::~gInstance()
+GInstance::~GInstance()
 {
 }
 
 std::string
-gInstance::print()
+GInstance::print()
 {
     std::string s;
     if (parent) {
@@ -121,10 +121,10 @@ gInstance::print()
 	    bu_log("Warning - unknown op");
 	    break;
     }
-    if (!bn_mat_is_identity(c_m)) {
+    if (!bn_mat_is_identity(cM)) {
 	s.append(std::string("[M]"));
     }
-    s.append(dp_name);
+    s.append(dpName);
     if (!dp) {
 	s.append(std::string("[missing]"));
     }
@@ -132,18 +132,18 @@ gInstance::print()
     return s;
 }
 
-static void
-add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst, void *c_set)
+void
+GInstance::add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst, void *c_set)
 {
-    std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
+    std::unordered_map<unsigned long long, GInstance *>::iterator i_it;
 
     // Validate
     if (comb) RT_CK_COMB(comb);
     RT_CK_TREE(comb_leaf);
 
     // Unpack
-    std::unordered_map<unsigned long long, gInstance *> *instances = (std::unordered_map<unsigned long long, gInstance *> *)inst_map;
-    std::unordered_map<unsigned long long, gInstance *> *valid_instances = (std::unordered_map<unsigned long long, gInstance *> *)val_inst;
+    std::unordered_map<unsigned long long, GInstance *> *instances = (std::unordered_map<unsigned long long, GInstance *> *)inst_map;
+    std::unordered_map<unsigned long long, GInstance *> *valid_instances = (std::unordered_map<unsigned long long, GInstance *> *)val_inst;
     std::unordered_set<unsigned long long> *cnt_set = (std::unordered_set<unsigned long long> *)c_set;
     struct directory *parent_dp = (struct directory *)pdp;
     std::vector<unsigned long long> *chash = (std::vector<unsigned long long> *)vchash;
@@ -189,12 +189,12 @@ add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *com
     // create and add a new gInstance.
     i_it = instances->find(nhash);
     if (i_it == instances->end()) {
-	gInstance *ninst = new gInstance(dp, dbip);
+        GInstance *ninst = new GInstance(dp, dbip);
 	ninst->parent = parent_dp;
 	ninst->hash = nhash;
-	ninst->dp_name = std::string(comb_leaf->tr_l.tl_name);
+	ninst->dpName = std::string(comb_leaf->tr_l.tl_name);
 	ninst->op = op;
-	MAT_COPY(ninst->c_m, c_m);
+	MAT_COPY(ninst->cM, c_m);
 	(*instances)[nhash] = ninst;
 	if (valid_instances)
 	    (*valid_instances)[nhash] = ninst;
@@ -252,7 +252,7 @@ db_tree_opleaf(
 }
 
 bool
-gInstance::has_children()
+GInstance::hasChildren()
 {
     if (!dp)
 	return false;
@@ -283,7 +283,7 @@ gInstance::has_children()
 }
 
 std::vector<unsigned long long>
-gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instances)
+GInstance::children(std::unordered_map<unsigned long long, GInstance *> *instances)
 {
     std::vector<unsigned long long> chash;
     if (!dp)
@@ -317,7 +317,7 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	return chash;
     }
 
-    std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
+    std::unordered_map<unsigned long long, GInstance *>::iterator i_it;
     XXH64_state_t h_state;
     XXH64_reset(&h_state, 0);
 
@@ -330,8 +330,8 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	RT_EXTRUDE_CK_MAGIC(extr);
 	if (extr->sketch_name) {
 	    std::string sk_name(extr->sketch_name);
-	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
+	    MAT_IDN(cM);
+	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, cM, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		chash.push_back(nhash);
@@ -348,8 +348,8 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	RT_REVOLVE_CK_MAGIC(revolve);
 	if (bu_vls_strlen(&revolve->sketch_name) > 0) {
 	    std::string sk_name(bu_vls_cstr(&revolve->sketch_name));
-	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, c_m, 0);
+	    MAT_IDN(cM);
+	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, sk_name, dbip, DB_OP_UNION, cM, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		chash.push_back(nhash);
@@ -366,8 +366,8 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
 	RT_DSP_CK_MAGIC(dsp);
 	if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ && bu_vls_strlen(&dsp->dsp_name) > 0) {
 	    std::string dsp_name(bu_vls_cstr(&dsp->dsp_name));
-	    MAT_IDN(c_m);
-	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, dsp_name, dbip, DB_OP_UNION, c_m, 0);
+	    MAT_IDN(cM);
+	    unsigned long long nhash = ginstance_hash(&h_state, 3, dp, dsp_name, dbip, DB_OP_UNION, cM, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it != instances->end()) {
 		chash.push_back(nhash);
@@ -379,13 +379,13 @@ gInstance::children(std::unordered_map<unsigned long long, gInstance *> *instanc
     return chash;
 }
 
-static void
-dp_instances(std::unordered_map<unsigned long long, gInstance *> *valid_instances, std::unordered_map<unsigned long long, gInstance *> *instances, struct directory *dp, struct db_i *dbip)
+void
+GInstance::dp_instances(std::unordered_map<unsigned long long, GInstance *> *valid_instances, std::unordered_map<unsigned long long, GInstance *> *instances, struct directory *dp, struct db_i *dbip)
 {
     mat_t c_m;
     XXH64_state_t h_state;
     XXH64_reset(&h_state, 0);
-    std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
+    std::unordered_map<unsigned long long, GInstance *>::iterator i_it;
 
     if (dp->d_flags & RT_DIR_HIDDEN)
 	return;
@@ -408,11 +408,11 @@ dp_instances(std::unordered_map<unsigned long long, gInstance *> *valid_instance
 		rt_db_free_internal(&intern);
 		return;
 	    }
-	    gInstance *ninst = new gInstance(db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET), dbip);
+	    GInstance *ninst = new GInstance(db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET), dbip);
 	    ninst->parent = dp;
 	    ninst->hash = nhash;
-	    ninst->dp_name = std::string(extr->sketch_name);
-	    MAT_IDN(ninst->c_m);
+	    ninst->dpName = std::string(extr->sketch_name);
+	    MAT_IDN(ninst->cM);
 	    ninst->op = DB_OP_UNION;
 	    (*instances)[nhash] = ninst;
 	    if (valid_instances)
@@ -440,11 +440,11 @@ dp_instances(std::unordered_map<unsigned long long, gInstance *> *valid_instance
 		rt_db_free_internal(&intern);
 		return;
 	    }
-	    gInstance *ninst = new gInstance(db_lookup(dbip, bu_vls_cstr(&revolve->sketch_name), LOOKUP_QUIET), dbip);
+	    GInstance *ninst = new GInstance(db_lookup(dbip, bu_vls_cstr(&revolve->sketch_name), LOOKUP_QUIET), dbip);
 	    ninst->parent = dp;
 	    ninst->hash = nhash;
-	    ninst->dp_name = std::string(bu_vls_cstr(&revolve->sketch_name));
-	    MAT_IDN(ninst->c_m);
+	    ninst->dpName = std::string(bu_vls_cstr(&revolve->sketch_name));
+	    MAT_IDN(ninst->cM);
 	    ninst->op = DB_OP_UNION;
 	    (*instances)[nhash] = ninst;
 	    if (valid_instances)
@@ -472,11 +472,11 @@ dp_instances(std::unordered_map<unsigned long long, gInstance *> *valid_instance
 		rt_db_free_internal(&intern);
 		return;
 	    }
-	    gInstance *ninst = new gInstance(db_lookup(dbip, bu_vls_cstr(&dsp->dsp_name), LOOKUP_QUIET), dbip);
+	    GInstance *ninst = new GInstance(db_lookup(dbip, bu_vls_cstr(&dsp->dsp_name), LOOKUP_QUIET), dbip);
 	    ninst->parent = dp;
 	    ninst->hash = nhash;
-	    ninst->dp_name = std::string(bu_vls_cstr(&dsp->dsp_name));
-	    MAT_IDN(ninst->c_m);
+	    ninst->dpName = std::string(bu_vls_cstr(&dsp->dsp_name));
+	    MAT_IDN(ninst->cM);
 	    ninst->op = DB_OP_UNION;
 	    (*instances)[nhash] = ninst;
 	    if (valid_instances)
@@ -507,9 +507,9 @@ dp_instances(std::unordered_map<unsigned long long, gInstance *> *valid_instance
 }
 
 void
-sync_instances(
-	std::unordered_map<unsigned long long, gInstance *> *tops_instances,
-	std::unordered_map<unsigned long long, gInstance *> *instances,
+GInstance::sync_instances(
+	std::unordered_map<unsigned long long, GInstance *> *tops_instances,
+	std::unordered_map<unsigned long long, GInstance *> *instances,
 	struct db_i *dbip)
 {
 
@@ -523,8 +523,8 @@ sync_instances(
 	return;
     }
 
-    std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
-    std::unordered_map<unsigned long long, gInstance *> valid_instances;
+    std::unordered_map<unsigned long long, GInstance *>::iterator i_it;
+    std::unordered_map<unsigned long long, GInstance *> valid_instances;
 
     // Run through the objects and crack the non-leaf objects to define
     // non-tops instances (i.e. all comb instances and some primitive
@@ -561,18 +561,18 @@ sync_instances(
 	mat_t c_m;
 	MAT_IDN(c_m);
 	for (int i = 0; i < path_cnt; i++) {
-	    gInstance *tinst = NULL;
+	    GInstance *tinst = NULL;
 	    struct directory *curr_dp = db_objects[i];
 	    std::string dname = std::string(curr_dp->d_namep);
 	    unsigned long long nhash = ginstance_hash(&h_state, 3, NULL, dname, dbip, DB_OP_UNION, c_m, 0);
 	    i_it = instances->find(nhash);
 	    if (i_it == instances->end()) {
-		tinst = new gInstance(curr_dp, dbip);
+		tinst = new GInstance(curr_dp, dbip);
 		tinst->parent = NULL;
 		tinst->hash = nhash;
-		tinst->dp_name = std::string(curr_dp->d_namep);
+		tinst->dpName = std::string(curr_dp->d_namep);
 		tinst->op = DB_OP_UNION;
-		MAT_IDN(tinst->c_m);
+		MAT_IDN(tinst->cM);
 		(*instances)[nhash] = tinst;
 	    } else {
 		tinst = i_it->second;
@@ -587,7 +587,7 @@ sync_instances(
 
     // instances now holds both the invalid and the valid instances.  To identify
     // and remove the invalid ones, we do a set difference.
-    std::vector<gInstance *> removed;
+    std::vector<GInstance *> removed;
     std::vector<unsigned long long> removed_hashes;
     for (i_it = instances->begin(); i_it != instances->end(); i_it++) {
 	if (valid_instances.find(i_it->first) == valid_instances.end()) {

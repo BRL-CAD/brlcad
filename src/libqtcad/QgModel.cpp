@@ -70,8 +70,8 @@ struct QgItem_cmp {
 	if (i1->ihash && !i2->ihash)
 	    return false;
 
-	gInstance *inst1 = NULL;
-	gInstance *inst2 = NULL;
+	GInstance *inst1 = NULL;
+	GInstance *inst2 = NULL;
 	if (i1->ctx->instances->find(i1->ihash) != i1->ctx->instances->end()) {
 	    inst1 = (*i1->ctx->instances)[i1->ihash];
 	}
@@ -86,15 +86,15 @@ struct QgItem_cmp {
 	if (inst1 && !inst2)
 	    return false;
 
-	if (!inst1->dp_name.length() && !inst2->dp_name.length())
+	if (!inst1->getDpName().length() && !inst2->getDpName().length())
 	    return false;
-	if (!inst1->dp_name.length() && inst2->dp_name.length())
+	if (!inst1->getDpName().length() && inst2->getDpName().length())
 	    return true;
-	if (inst1->dp_name.length() && !inst2->dp_name.length())
+	if (inst1->getDpName().length() && !inst2->getDpName().length())
 	    return false;
 
-	const char *n1 = inst1->dp_name.c_str();
-	const char *n2 = inst2->dp_name.c_str();
+	const char *n1 = inst1->getDpNameStr();
+	const char *n2 = inst2->getDpNameStr();
 	if (alphanum_impl(n1, n2, NULL) < 0)
 	    return true;
 
@@ -102,21 +102,21 @@ struct QgItem_cmp {
     }
 };
 
-QgItem::QgItem(gInstance *g, QgModel *ictx)
+QgItem::QgItem(GInstance *g, QgModel *ictx)
 {
     ctx = ictx;
     if (g) {
 	parentItem = NULL;
 	c_count = g->children(ictx->instances).size();
-	ihash = g->hash;
+	ihash = g->getHash();
 	// TODO - these copies may be moot - the child relationship needs
 	// the gInstance, so we may have to just ensure gInstances aren't
 	// removed until after the QgItems are updated.  If that's the case,
 	// there's no point in these copies.
-	bu_vls_sprintf(&name, "%s", g->dp_name.c_str());
-	icon = QgIcon(g->dp, g->dbip);
-	op = g->op;
-	dp = g->dp;
+	bu_vls_sprintf(&name, "%s", g->getDpNameStr());
+	icon = QgIcon(g->getDP(), g->getDbip());
+	op = g->getOp();
+	dp = g->getDP();
     }
 }
 
@@ -142,13 +142,13 @@ QgItem::close()
     open_itm = false;
 }
 
-gInstance *
+GInstance *
 QgItem::instance()
 {
     if (!ctx)
 	return NULL;
 
-    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
+    std::unordered_map<unsigned long long, GInstance *>::iterator g_it;
     g_it = ctx->instances->find(ihash);
     if (g_it == ctx->instances->end())
 	return NULL;
@@ -219,9 +219,9 @@ qgitem_cmp_score(QgItem *i1, QgItem *i2)
     if (!i1 || !i2 || !i1->ihash || !i2->ihash)
 	return ret;
 
-    gInstance *inst1 = (*i1->ctx->instances)[i1->ihash];
-    gInstance *inst2 = (*i2->ctx->instances)[i2->ihash];
-    if (inst1->dp_name != inst2->dp_name)
+    GInstance *inst1 = (*i1->ctx->instances)[i1->ihash];
+    GInstance *inst2 = (*i2->ctx->instances)[i2->ihash];
+    if (inst1->getDpName() != inst2->getDpName())
 	return ret;
 
     // Names match
@@ -229,11 +229,11 @@ qgitem_cmp_score(QgItem *i1, QgItem *i2)
 
     // Look for a matrix match
     struct bn_tol mtol = BG_TOL_INIT;
-    if (bn_mat_is_equal(inst1->c_m, inst2->c_m, &mtol))
+    if (bn_mat_is_equal(inst1->getCombMatrix(), inst2->getCombMatrix(), &mtol))
 	ret = 2;
 
     // Look for a boolean op match
-    if (inst1->op == inst2->op)
+    if (inst1->getOp() == inst2->getOp())
 	ret = (ret == 2) ? 0 : 1;
 
     return ret;
@@ -284,10 +284,10 @@ qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent
 extern "C" void
 qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
-    std::queue<std::unordered_map<unsigned long long, gInstance *>::iterator> rmq;
-    std::unordered_map<unsigned long long, gInstance *>::iterator i_it, trm_it;
+    std::queue<std::unordered_map<unsigned long long, GInstance *>::iterator> rmq;
+    std::unordered_map<unsigned long long, GInstance *>::iterator i_it, trm_it;
     QgModel *ctx = (QgModel *)u_data;
-    gInstance *inst = NULL;
+    GInstance *inst = NULL;
     ctx->need_update_nref = true;
     ctx->changed_db_flag = 1;
 
@@ -302,8 +302,8 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    // If we have any name-only references that can now point to a dp, update them
 	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
 		inst = i_it->second;
-		if (!inst->dp && inst->dp_name == std::string(dp->d_namep)) {
-		    inst->dp = dp;
+		if (!inst->getDP() && inst->getDpName() == std::string(dp->d_namep)) {
+		    inst->setDP(dp);
 		}
 	    }
 
@@ -312,8 +312,8 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 	    // invalidate the dps in any instances where they match.
 	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
 		inst = i_it->second;
-		if (inst->dp == dp)
-		    inst->dp = NULL;
+		if (inst->getDP() == dp)
+		    inst->setDP(NULL);
 	    }
 
 	    ctx->changed_dp.insert(dp);
@@ -351,9 +351,9 @@ QgModel::QgModel(QObject *p, const char *npath)
     rootItem->ctx = this;
 
     // Initialize the instance containers
-    tops_instances = new std::unordered_map<unsigned long long, gInstance *>;
+    tops_instances = new std::unordered_map<unsigned long long, GInstance *>;
     tops_instances->clear();
-    instances = new std::unordered_map<unsigned long long, gInstance *>;
+    instances = new std::unordered_map<unsigned long long, GInstance *>;
     instances->clear();
 
     items = new std::unordered_set<QgItem *>;
@@ -454,8 +454,8 @@ QgModel::item_rebuild(QgItem *item)
 	} else {
 	    // Previous tree did not have an appropriate QgItem -
 	    // make a new one
-	    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
-	    gInstance *g = NULL;
+	    std::unordered_map<unsigned long long, GInstance *>::iterator g_it;
+	    GInstance *g = NULL;
 	    g_it = instances->find(nh[i]);
 	    if (g_it != instances->end())
 		g = g_it->second;
@@ -500,7 +500,7 @@ QgModel::g_update(struct db_i *n_dbip)
     if (!n_dbip) {
 	// if we have no dbip, clear out everything
 	beginResetModel();
-	sync_instances(tops_instances, instances, n_dbip);
+	GInstance::sync_instances(tops_instances, instances, n_dbip);
 	std::unordered_set<QgItem *>::iterator s_it;
 	for (s_it = items->begin(); s_it != items->end(); s_it++) {
 	    QgItem *itm = *s_it;
@@ -521,7 +521,7 @@ QgModel::g_update(struct db_i *n_dbip)
 
 	// Step 1 - make sure our instances are current - i.e. they match the
 	// .g database state
-	sync_instances(tops_instances, instances, n_dbip);
+	GInstance::sync_instances(tops_instances, instances, n_dbip);
 
 	// Clear out any QgItems with invalid info.  We need to be fairly
 	// aggressive here - first we find all the existing invalid ones, and
@@ -579,14 +579,14 @@ QgModel::g_update(struct db_i *n_dbip)
 	// Using tops_instances, construct a new tops vector.  Reuse any still valid
 	// QgItems, and make new ones 
 	std::vector<QgItem *> ntops_items;
-	std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
+	std::unordered_map<unsigned long long, GInstance *>::iterator i_it;
 	for (i_it = tops_instances->begin(); i_it != tops_instances->end(); i_it++) {
 	    std::unordered_map<unsigned long long, QgItem *>::iterator v_it;
 	    v_it = vtops_items.find(i_it->first);
 	    if (v_it != vtops_items.end()) {
 		ntops_items.push_back(v_it->second);
 	    } else {
-		gInstance *ninst = i_it->second;
+		GInstance *ninst = i_it->second;
 		QgItem *nitem = new QgItem(ninst, this);
 		nitem->parentItem = rootItem;
 		ntops_items.push_back(nitem);
@@ -668,7 +668,7 @@ QgModel::canFetchMore(const QModelIndex &idx) const
 	return false;
     }
 
-    return (*instances)[item->ihash]->has_children();
+    return (*instances)[item->ihash]->hasChildren();
 }
 
 void
@@ -715,8 +715,8 @@ QgModel::fetchMore(const QModelIndex &idx)
     for (size_t i = 0; i < nh.size(); i++) {
 	// For each new child, look up its instance in the original data to see
 	// if we have a corresponding QgItem available.
-	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
-	gInstance *g = NULL;
+	std::unordered_map<unsigned long long, GInstance *>::iterator g_it;
+	GInstance *g = NULL;
 	g_it = instances->find(nh[i]);
 	if (g_it != instances->end())
 	    g = g_it->second;
@@ -808,11 +808,11 @@ QgModel::data(const QModelIndex &index, int role) const
     if (!index.isValid())
 	return QVariant();
     QgItem *qi= getItem(index);
-    gInstance *gi = qi->instance();
+    GInstance *gi = qi->instance();
     if (!gi)
 	return QVariant();
     if (role == Qt::DisplayRole)
-	return QVariant(gi->dp->d_namep);
+        return QVariant(gi->getDP()->d_namep);
     return QVariant();
 }
 

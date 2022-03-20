@@ -35,7 +35,7 @@ extern "C" {
 
 // TODO - look into QShortcut, see if it might be a better way
 // to manage this
-int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyEvent *k)
+int cadkey_press_event(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyEvent *k)
 {
     if (!v)
 	return 0;
@@ -118,7 +118,7 @@ int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QK
     return 0;
 }
 
-int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e)
+int cad_mouse_press_event(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e)
 {
 
     if (!v)
@@ -159,7 +159,7 @@ int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), 
 
 }
 
-int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
+int cad_mouse_move_event(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
 {
 
     if (!v)
@@ -226,7 +226,7 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e)
 
 }
 
-int CADwheelEvent(struct bview *v, QWheelEvent *e)
+int cad_wheel_event(struct bview *v, QWheelEvent *e)
 {
 
     if (!v)

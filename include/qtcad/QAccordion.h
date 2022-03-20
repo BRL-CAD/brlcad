@@ -43,8 +43,6 @@ class QTCAD_EXPORT QAccordionObject : public QWidget
     public:
 	QAccordionObject(QWidget *pparent = 0, QWidget *object = 0, QString header_title = QString(""));
 	~QAccordionObject();
-	QPushButton *toggle;
-	QScrollArea *objscrollarea;
 
     signals:
 	void select(QAccordionObject *);
@@ -53,8 +51,12 @@ class QTCAD_EXPORT QAccordionObject : public QWidget
 	void toggleVisibility();
 
     private:
-	QVBoxLayout *objlayout;
-	QString title;
+        QPushButton *toggle;
+        QScrollArea *objscrollarea;
+        QVBoxLayout *objlayout;
+        QString title;
+
+        friend class QAccordion;
 };
 
 class QTCAD_EXPORT QAccordion : public QWidget

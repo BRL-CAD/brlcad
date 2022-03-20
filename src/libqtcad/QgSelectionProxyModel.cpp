@@ -69,7 +69,7 @@ QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
     if (role == TypeIconDisplayRole)
 	return QVariant(curr_node->icon);
     if (role == HighlightDisplayRole) {
-	return curr_node->instance()->active_flag;
+        return curr_node->instance()->getActiveFlag();
     }
     return QVariant();
 }
@@ -122,12 +122,12 @@ QgSelectionProxyModel::setData(const QModelIndex & idx, const QVariant &UNUSED(v
 void
 QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx)
 {
-    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
+    std::unordered_map<unsigned long long, GInstance *>::iterator g_it;
 
     // Clear all highlighting state
     QgModel *m = (QgModel *)sourceModel();
     for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-	g_it->second->active_flag = 0;
+        g_it->second->setActiveFlag(0);
     }
 
     if (!idx.isValid() || interaction_mode == QgViewMode) {
@@ -146,12 +146,12 @@ QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx
 	return;
     }
 
-    gInstance *sg = snode->instance();
+    GInstance *sg = snode->instance();
 
-    std::unordered_set<gInstance *> processed;
+    std::unordered_set<GInstance *> processed;
     processed.insert(sg);
 
-    std::queue<gInstance *> to_flag;
+    std::queue<GInstance *> to_flag;
 
     // If we're in QgInstanceEditMode, we key off of the exact gInstance
     // pointer that corresponds to this instance.  Since that instance is
@@ -160,28 +160,28 @@ QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx
     // their children are closed.
     if (interaction_mode == QgInstanceEditMode) {
 
-	sg->active_flag = 3;
+        sg->setActiveFlag(3);
 
 	// For gInstances where the child dp == the parent (i.e. the comb directly
 	// containing the instance), set to 2
 	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-	    gInstance *cd = g_it->second;
-	    if (cd->dp == sg->parent && processed.find(cd) == processed.end()) {
-		cd->active_flag = 2;
+	    GInstance *cd = g_it->second;
+	    if (cd->getDP() == sg->getParent() && processed.find(cd) == processed.end()) {
+		cd->setActiveFlag(2);
 		to_flag.push(cd);
 		processed.insert(cd);
 	    }
 	}
 	// For gInstances above the active instance, set to 1
 	while (!to_flag.empty()) {
-	    gInstance *curr = to_flag.front();
+	    GInstance *curr = to_flag.front();
 	    to_flag.pop();
-	    if (!curr->parent)
+	    if (!curr->getParent())
 		continue;
 	    for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-		gInstance *cd = g_it->second;
-		if (cd->dp == curr->parent && processed.find(cd) == processed.end()) {
-		    cd->active_flag = 1;
+		GInstance *cd = g_it->second;
+		if (cd->getDP() == curr->getParent() && processed.find(cd) == processed.end()) {
+		    cd->setActiveFlag(1);
 		    to_flag.push(cd);
 		    processed.insert(cd);
 		}
@@ -204,9 +204,9 @@ QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx
     // is a relevant object in the subtree.
     if (interaction_mode == QgPrimitiveEditMode) {
 	for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-	    gInstance *cg = g_it->second;
-	    if (cg->dp == sg->dp) {
-		cg->active_flag = 2;
+	    GInstance *cg = g_it->second;
+	    if (cg->getDP() == sg->getDP()) {
+		cg->setActiveFlag(2);
 		to_flag.push(cg);
 		processed.insert(cg);
 	    }
@@ -216,14 +216,14 @@ QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx
 	// of at least 1 (or two, if they are one of the exact matches from the
 	// previous step.)
 	while (!to_flag.empty()) {
-	    gInstance *curr = to_flag.front();
+	    GInstance *curr = to_flag.front();
 	    to_flag.pop();
-	    if (!curr->parent)
+	    if (!curr->getParent())
 		continue;
 	    for (g_it = m->instances->begin(); g_it != m->instances->end(); g_it++) {
-		gInstance *cd = g_it->second;
-		if (curr->parent == cd->dp && processed.find(cd) == processed.end()) {
-		    cd->active_flag = 1;
+		GInstance *cd = g_it->second;
+		if (curr->getParent() == cd->getDP() && processed.find(cd) == processed.end()) {
+		    cd->setActiveFlag(1);
 		    to_flag.push(cd);
 		    processed.insert(cd);
 		}

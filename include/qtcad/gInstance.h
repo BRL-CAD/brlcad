@@ -44,28 +44,58 @@
 #include "ged.h"
 #endif
 
-class QTCAD_EXPORT gInstance
+class QTCAD_EXPORT GInstance
 {
     public:
-	explicit gInstance(struct directory *idp, struct db_i *idbip);
-	~gInstance();
+        explicit GInstance(struct directory *idp, struct db_i *idbip);
+        ~GInstance();
 
 	// Debugging function for printing out data in container
 	std::string print();
 
 	// Report if the instance has children
-	bool has_children();
+	bool hasChildren();
 
-	// Return hashes of child instances, if any
-	std::vector<unsigned long long> children(std::unordered_map<unsigned long long, gInstance *> *instances);
+        // Return hashes of child instances, if any
+        std::vector<unsigned long long> children(std::unordered_map<unsigned long long, GInstance *> *instances);
+
+        // Given a dbip, construct or find the instances associated with it and add them
+        // to the containers.  The instances maps may contain previous GInstances created
+        // by earlier passes, and if they are still valid they will be reused.  Any GInstances
+        // that are no longer valid will be removed from the maps and deleted.
+        static void sync_instances(std::unordered_map<unsigned long long, GInstance *> *tops_instances, std::unordered_map<unsigned long long, GInstance *> *instances, struct db_i *dbip);
+
+        inline int getActiveFlag() { return activeFlag; }
+        inline void setActiveFlag(int flag) { activeFlag = flag; }
+
+        inline unsigned long long getHash() { return hash; }
+
+        inline directory *getParent() { return parent; }
+
+        inline directory *getDP() { return dp; };
+        inline void setDP(directory *newDP) { dp = newDP; }
+
+        inline db_i *getDbip() { return dbip; }
+
+        inline std::string getDpName() { return dpName; }
+
+        inline const char *getDpNameStr() { return dpName.c_str();  }
+
+        inline db_op_t getOp() { return op; }
+
+        inline fastf_t *getCombMatrix() { return cM; }
+
+    private:
+        static void add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst, void *c_set);
+        static void dp_instances(std::unordered_map<unsigned long long, GInstance *> *valid_instances, std::unordered_map<unsigned long long, GInstance *> *instances, struct directory *dp, struct db_i *dbip);
 
 	// This is a flag that may be set or unset by parent applications.
 	// Used primarily to assist in visual identification of components
 	// in hierarchical structures.  Not part of any hash calculations.
-	int active_flag = 0;
+	int activeFlag = 0;
 
-	// gInstance content based hash for quick lookup/comparison of two
-	// gInstances.  mode == 3 - i.e., hash of full gInstance data.
+	// GInstance content based hash for quick lookup/comparison of two
+	// GInstance.  mode == 3 - i.e., hash of full GInstance data.
 	unsigned long long hash = 0;
 
 	// dp of parent comb (NULL for tops objects)
@@ -75,29 +105,18 @@ class QTCAD_EXPORT gInstance
 	// dbip associated with this instance
 	struct db_i *dbip = NULL;
 	// instance name as string
-	std::string dp_name;
+	std::string dpName;
 	// instance boolean operation incorporating it into the comb tree (u/-/+)
 	db_op_t op = DB_OP_NULL;
 	// Matrix above comb instance in comb tree (default is IDN)
-	mat_t c_m;
+	mat_t cM;
 };
 
-/* Given gInstance data, construct its hash.  This function is public to allow
+/* Given GInstance data, construct its hash.  This function is public to allow
  * for hashing of different "modes" in client codes wanting to do fuzzy matching
  * of instances. */
 QTCAD_EXPORT extern unsigned long long
 ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, db_op_t op, mat_t c_m, int cnt);
-
-// Given a dbip, construct or find the instances associated with it and add them
-// to the containers.  The instances maps may contain previous gInstances created
-// by earlier passes, and if they are still valid they will be reused.  Any gInstances
-// that are no longer valid will be removed from the maps and deleted.
-QTCAD_EXPORT extern void
-sync_instances(
-	std::unordered_map<unsigned long long, gInstance *> *tops_instances,
-	std::unordered_map<unsigned long long, gInstance *> *instances,
-	struct db_i *dbip);
-
 
 #endif //GINSTANCE_H
 

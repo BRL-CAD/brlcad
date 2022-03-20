@@ -78,7 +78,7 @@ print_children(QgItem *itm, QgModel *s, int depth)
     if (!itm || !itm->ihash)
 	return;
 
-    gInstance *inst;
+    GInstance *inst;
     if (depth == 0) {
 	inst = (*s->tops_instances)[itm->ihash];
     } else {
@@ -91,7 +91,7 @@ print_children(QgItem *itm, QgModel *s, int depth)
     if (depth)
 	std::cout << "* ";
 
-    std::cout << inst->dp_name << "\n";
+    std::cout << inst->getDpName() << "\n";
 
     for (size_t j = 0; j < itm->children.size(); j++) {
 	QgItem *c = itm->child(j);

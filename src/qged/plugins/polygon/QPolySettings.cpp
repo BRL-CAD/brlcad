@@ -58,13 +58,13 @@ QPolySettings::QPolySettings()
 
     edge_color = new QColorRGB(this, "Edge:", QColor(Qt::yellow));
     l->addWidget(edge_color);
-    QObject::connect(edge_color, &QColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
+    QObject::connect(edge_color, &QColorRGB::colorChanged, this, &QPolySettings::do_settings_changed);
     fill_poly = new QCheckBox("Shade polygon interiors");
     l->addWidget(fill_poly);
     QObject::connect(fill_poly, &QCheckBox::toggled, this, &QPolySettings::do_settings_changed);
     fill_color = new QColorRGB(this, "Fill:", QColor(Qt::blue));
     l->addWidget(fill_color);
-    QObject::connect(fill_color, &QColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
+    QObject::connect(fill_color, &QColorRGB::colorChanged, this, &QPolySettings::do_settings_changed);
 
     QFont f("");
     f.setStyleHint(QFont::Monospace);
@@ -153,13 +153,13 @@ QPolySettings::settings_sync(struct bv_scene_obj *p)
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 
     edge_color->blockSignals(true);
-    edge_color->rgbtext->setText(QString("%1/%2/%3").arg(p->s_color[0]).arg(p->s_color[1]).arg(p->s_color[2]));
+    edge_color->setText(QString("%1/%2/%3").arg(p->s_color[0]).arg(p->s_color[1]).arg(p->s_color[2]));
     edge_color->blockSignals(false);
 
     unsigned char frgb[3];
     bu_color_to_rgb_chars(&ip->fill_color, frgb);
     fill_color->blockSignals(true);
-    fill_color->rgbtext->setText(QString("%1/%2/%3").arg(frgb[0]).arg(frgb[1]).arg(frgb[2]));
+    fill_color->setText(QString("%1/%2/%3").arg(frgb[0]).arg(frgb[1]).arg(frgb[2]));
     fill_color->blockSignals(false);
 
     fill_slope_x->blockSignals(true);
@@ -184,8 +184,8 @@ QPolySettings::settings_sync(struct bv_scene_obj *p)
 
     // Values set, now update the button colors
     this->blockSignals(true);
-    edge_color->set_color_from_text();
-    fill_color->set_color_from_text();
+    edge_color->setColorFromText();
+    fill_color->setColorFromText();
     this->blockSignals(false);
 }
 

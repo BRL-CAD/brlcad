@@ -261,10 +261,10 @@ void QgTreeView::expand_path(QString path)
 
 	for (int j = 0; j < r->childCount(); j++) {
 	    QgItem *c = r->child(j);
-	    gInstance *g = c->instance();
+	    GInstance *g = c->instance();
 	    if (!g)
 		continue;
-	    if (QString::fromStdString(g->dp_name) != path_items.at(i)) {
+	    if (QString::fromStdString(g->getDpName()) != path_items.at(i)) {
 		continue;
 	    }
 	    QModelIndex path_component = view_model->NodeIndex(c);

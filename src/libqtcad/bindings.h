@@ -29,11 +29,11 @@
 
 #include "bv/defines.h"
 
-int CADkeyPressEvent(struct bview *v, int x_prev, int y_prev, QKeyEvent *k);
+int cadkey_press_event(struct bview *v, int x_prev, int y_prev, QKeyEvent *k);
 
-int CADmousePressEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e);
+int cad_mouse_press_event(struct bview *v, int x_prev, int y_prev, QMouseEvent *e);
 
-int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e);
+int cad_mouse_move_event(struct bview *v, int x_prev, int y_prev, QMouseEvent *e);
 
-int CADwheelEvent(struct bview *v, QWheelEvent *e);
+int cad_wheel_event(struct bview *v, QWheelEvent *e);
 

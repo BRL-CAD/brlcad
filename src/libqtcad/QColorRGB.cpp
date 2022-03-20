@@ -54,7 +54,7 @@ QColorRGB::QColorRGB(QWidget *p, QString lstr, QColor dcolor) : QWidget(p)
     QString rgbstr = QString("%1/%2/%3").arg(qc.red()).arg(qc.green()).arg(qc.blue());
     rgbtext = new QLineEdit(rgbstr);
     rgbtext->setFont(f);
-    set_color_from_text();
+    setColorFromText();
 
     mlayout->addWidget(clbl);
     mlayout->addWidget(rgbtext);
@@ -62,8 +62,8 @@ QColorRGB::QColorRGB(QWidget *p, QString lstr, QColor dcolor) : QWidget(p)
 
     this->setLayout(mlayout);
 
-    QObject::connect(rgbcolor, &QPushButton::clicked, this, &QColorRGB::set_color_from_button);
-    QObject::connect(rgbtext, &QLineEdit::returnPressed, this, &QColorRGB::set_color_from_text);
+    QObject::connect(rgbcolor, &QPushButton::clicked, this, &QColorRGB::setColorFromButton);
+    QObject::connect(rgbtext, &QLineEdit::returnPressed, this, &QColorRGB::setColorFromText);
 }
 
 QColorRGB::~QColorRGB()
@@ -71,7 +71,7 @@ QColorRGB::~QColorRGB()
 }
 
 void
-QColorRGB::set_color_from_button()
+QColorRGB::setColorFromButton()
 {
     QColor nc = QColorDialog::getColor(qc);
     if (nc.isValid() && nc != qc) {
@@ -87,12 +87,12 @@ QColorRGB::set_color_from_button()
 	bu_opt_color(NULL, 1, (const char **)&ccstr, (void *)&bc);
 	bu_free(ccstr, "ccstr");
 
-	emit color_changed();
+        emit colorChanged();
     }
 }
 
 void
-QColorRGB::set_color_from_text()
+QColorRGB::setColorFromText()
 {
     QString colstr = rgbtext->text();
     if (!colstr.length())
@@ -121,7 +121,7 @@ QColorRGB::set_color_from_text()
 	QString qss = QString("background-color: rgb(%1, %2, %3);").arg(qc.red()).arg(qc.green()).arg(qc.blue());
 	rgbcolor->setStyleSheet(qss);
 
-	emit color_changed();
+        emit colorChanged();
     }
 }
 

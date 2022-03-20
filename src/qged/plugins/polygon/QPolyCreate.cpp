@@ -665,10 +665,10 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    }
 
 	    // Get edge color
-	    bu_color_to_rgb_chars(&ps->edge_color->bc, p->s_color);
+	    bu_color_to_rgb_chars(ps->edge_color->getBackgroundColor(), p->s_color);
 
 	    // fill color
-	    BU_COLOR_CPY(&ip->fill_color, &ps->fill_color->bc);
+	    BU_COLOR_CPY(&ip->fill_color, ps->fill_color->getBackgroundColor());
 
 	    // fill settings
 	    vect2d_t vdir = V2INIT_ZERO;

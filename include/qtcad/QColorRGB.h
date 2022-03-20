@@ -43,24 +43,29 @@ class QTCAD_EXPORT QColorRGB: public QWidget
     Q_OBJECT
 
     public:
-	QColorRGB(QWidget *p = NULL, QString lstr = QString("Color:"), QColor dcolor = QColor(Qt::red));
-	~QColorRGB();
+      QColorRGB(QWidget *p = NULL, QString lstr = QString("Color:"), QColor dcolor = QColor(Qt::red));
+      ~QColorRGB();
 
-	QLineEdit *rgbtext;
-	QPushButton *rgbcolor;
-	struct bu_color bc;
+      inline void setText(const QString &string) { rgbtext->setText(string); }
+
+      // NOTE: Not sure if bc = background color but I'm going to take a chance
+      inline struct bu_color *getBackgroundColor() { return &bc;  }
 
     signals:
-	void color_changed();
+        void colorChanged();
 
     public slots:
-	void set_color_from_text();
+        void setColorFromText();
 
     private slots:
-	void set_color_from_button();
+        void setColorFromButton();
 
     private:
-	QColorDialog *d;
+        QLineEdit *rgbtext;
+        QPushButton *rgbcolor;
+        struct bu_color bc;
+
+        QColorDialog *d;
         QHBoxLayout *mlayout;
 	QColor qc;
 };
