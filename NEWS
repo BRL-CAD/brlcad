@@ -10,6 +10,14 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2021-XX-XX  Release 7.34.X                                     ---
+----------------------------------------------------------------------
+
+* new 'material' command and material object infrastructure
+        - Dinges, Connelly, Olivarez, McGregor, Studwell, Wilson
+
+
+----------------------------------------------------------------------
 --- 2021-XX-XX  Release 7.32.6                                     ---
 ----------------------------------------------------------------------
 
