@@ -171,6 +171,7 @@ extern "C" {
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
 
+    extern struct command_tab rt_do_tab[];
     extern char* outputfile;
     extern int objc;
     extern char** objv;
