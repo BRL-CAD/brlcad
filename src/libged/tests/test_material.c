@@ -105,6 +105,7 @@ material_import_test(struct ged *ged){
     printf("%s\n", bu_vls_cstr(ged->ged_result_str));
 }
 
+
 int
 main(int ac, char* av[]) {
     struct ged *g;
@@ -113,7 +114,7 @@ main(int ac, char* av[]) {
 	return 1;
     }
     bu_setprogname(av[0]);
-    g = ged_open("db", av[1], 1);
+    g = ged_open("db", av[1], 0);
     material_creation_test(g);
     property_set_test(g);
     property_get_test(g);
