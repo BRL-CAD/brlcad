@@ -154,7 +154,7 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
     FILE *densityTable = fopen(fileName, "r");
 	if(densityTable != NULL){
 		char buffer[256];
-		while(fgets(buffer, 256, densityTable)){
+		while(bu_fgets(buffer, 256, densityTable)){
             char *p = buffer;
             char *q;
             buffer[strlen(buffer)] = '\0';
