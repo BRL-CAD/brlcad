@@ -170,6 +170,7 @@ extern "C" {
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
 
+    extern vect_t background;
     extern char* outputfile;
     extern int objc;
     extern char** objv;
@@ -749,17 +750,21 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     // Environment
     //------------------------------------------------------------------------
 
+    float float_bgcolor[ELEMENTS_PER_VECT] = {0};
+    VMOVE(float_bgcolor, background);
+
     // Create a color called "sky_radiance" and insert it into the scene
     // to set the background color. By default we use a blue
     // background { 0.75f, 0.80f, 1.0f } *see line 153*. This can be
     // updated while running using -C and -W
+
     scene->colors().insert(
 	asr::ColorEntityFactory::create(
 	    "sky_radiance",
 	    asr::ParamArray()
 	    .insert("color_space", "srgb")
 	    .insert("multiplier", "0.5"),
-	    asr::ColorValueArray(3, background)));
+	    asr::ColorValueArray(3, float_bgcolor)));
 
     // Create an environment EDF called "sky_edf" and insert it into the scene.
     scene->environment_edfs().insert(
