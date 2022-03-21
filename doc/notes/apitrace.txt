@@ -24,3 +24,9 @@ to manage OpenGL, which will manifest in OpenGL calls not visible in an
 MGED trace.  It is necessary to identify the common logic blocks between
 the two programs corresponding to similar operations and look in those
 areas for significant differences.
+
+
+Note that if a dm issue involves digging in to memory usage, there are a number
+of profiling tools to use for introspection.  See, for example:
+
+https://wiki.qt.io/Profiling_and_Memory_Checking_Tools

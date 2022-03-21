@@ -897,6 +897,11 @@ rt_bot_adaptive_plot(struct bu_list *vhead, struct rt_db_internal *ip, const str
             BOT_BBOX_ARB_FACE(pt, 1, 5, 6, 2);      \
         }
 
+// TODO - while this routine makes the vlists per the standard librt API, BoTs
+// are a case where we probably should be passing the data directly to the
+// drawing routines as face and vert arrays for the hot drawing paths WITHOUT
+// making the vlist copies... this duplication results in massive additional
+// memory usage for large BoTs.
 int
 rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct bview *info)
 {
