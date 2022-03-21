@@ -147,6 +147,7 @@
 #include "ged/commands.h"
 #include "ged/defines.h"
 #include "rt/db_fullpath.h"
+#include "optical/defines.h"
 
 struct application APP;
 struct resource* resources;
@@ -170,7 +171,6 @@ extern "C" {
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
 
-    extern vect_t background;
     extern char* outputfile;
     extern int objc;
     extern char** objv;
@@ -924,8 +924,7 @@ main(int argc, char **argv)
     }
 
     /* include objects from database */
-    if (rt_gettrees(rtip, objc, (const char**)objv, npsw) < 0)
-    {
+    if (rt_gettrees(rtip, objc, (const char**)objv, (int)npsw) < 0) {
 	RENDERER_LOG_INFO("loading the geometry for [%s...] FAILED\n", objv[0]);
 	return -1;
     }

@@ -102,7 +102,7 @@
 /* brlcad headers */
 
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <vector>
 #include <stdio.h>
 
