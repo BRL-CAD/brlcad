@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* material infrastructure has regressions due to attr sync code that
+  needs to be resolved.
+
 * document user-visible changes
 
   - a1773fc2bf02f59eafbcf56e3170be22be986260 changed brep command, and
