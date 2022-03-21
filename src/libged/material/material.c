@@ -158,7 +158,6 @@ int import_materials(struct ged *gedp, int argc, const char *argv[]){
             char *p = buffer;
             char *q;
             buffer[strlen(buffer)] = '\0';
-            char *last __attribute((unused)) = &buffer[strlen(buffer)];
             char name[30];
             double density = -1;
             int have_density = 0;
