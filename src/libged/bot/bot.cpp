@@ -40,6 +40,10 @@
 #include <string>
 #include <vector>
 
+extern "C" {
+#include "fort.h"
+}
+
 #include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/opt.h"
@@ -537,6 +541,160 @@ bot_split_done:
     return ret;
 }
 
+static void
+bot_output(ft_table_t *table, struct db_i *dbip, struct directory *dp)
+{
+    if (!table)
+	return;
+    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+	return;
+    struct rt_db_internal intern;
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
+    RT_DB_INTERNAL_INIT(&intern);
+    RT_CK_RESOURCE(&rt_uniresource);
+    if (db_get_external(&ext, dp, dbip) < 0)
+	return;
+    if (rt_db_external5_to_internal5(&intern, &ext, dp->d_namep, dbip, NULL, &rt_uniresource) < 0) {
+	bu_free_external(&ext);
+	return;
+    }
+    if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	bu_free_external(&ext);
+	return;
+    }
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
+
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+
+    // Object Path
+    //db_path_to_vls(&str, fp);
+    ft_write(table, dp->d_namep);
+
+    // Disk Size
+    bu_vls_sprintf(&str, "%zd", dp->d_len);
+    ft_write(table, bu_vls_cstr(&str));
+
+    // Number of vertices
+    bu_vls_sprintf(&str, "%zd", bot->num_vertices);
+    ft_write(table, bu_vls_cstr(&str));
+
+    // Number of faces
+    bu_vls_sprintf(&str, "%zd", bot->num_faces);
+    ft_write(table, bu_vls_cstr(&str));
+
+    // Number of face normals
+    bu_vls_sprintf(&str, "%zd", bot->num_face_normals);
+    ft_write(table, bu_vls_cstr(&str));
+
+    // Number of unit surface normals
+    bu_vls_sprintf(&str, "%zd", bot->num_normals);
+    ft_write(table, bu_vls_cstr(&str));
+
+    // Orientation
+    switch (bot->orientation) {
+	case RT_BOT_CW:
+	    bu_vls_sprintf(&str, "CW");
+	    break;
+	case RT_BOT_CCW:
+	    bu_vls_sprintf(&str, "CCW");
+	    break;
+	default:
+	    bu_vls_sprintf(&str, "NONE");
+    }
+    ft_write(table, bu_vls_cstr(&str));
+
+    // Mode
+    switch (bot->mode) {
+	case RT_BOT_SOLID:
+	    bu_vls_sprintf(&str, "SOLID");
+	    break;
+	case RT_BOT_SURFACE:
+	    bu_vls_sprintf(&str, "SURFACE");
+	    break;
+	case RT_BOT_PLATE:
+	    bu_vls_sprintf(&str, "PLATE");
+	    break;
+	case RT_BOT_PLATE_NOCOS:
+	    bu_vls_sprintf(&str, "PLATE_NOCOS");
+	    break;
+	default:
+	    bu_vls_trunc(&str, 0);
+    }
+    ft_write(table, bu_vls_cstr(&str));
+
+    // UV Vert Cnt
+    bu_vls_sprintf(&str, "%zd", bot->num_uvs);
+    ft_write(table, bu_vls_cstr(&str));
+
+    // UV Face Cnt
+    bu_vls_sprintf(&str, "%zd", bot->num_face_uvs);
+    ft_write(table, bu_vls_cstr(&str));
+
+    // Attribute size
+    struct db5_raw_internal raw;
+    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) != NULL) {
+	bu_vls_sprintf(&str, "%zd", raw.attributes.ext_nbytes);
+    } else {
+	bu_vls_trunc(&str, 0);
+    }
+    ft_write(table, bu_vls_cstr(&str));
+
+    ft_ln(table);
+
+    // Have what we need - clean up
+    bu_free_external(&ext);
+}
+
+extern "C" int
+_bot_cmd_stat(void *bs, int argc, const char **argv)
+{
+    int ret = BRLCAD_OK;
+    const char *usage_string = "bot stat <pattern>";
+    const char *purpose_string = "Report information about bot object(s)";
+    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+
+    argc--; argv++;
+
+    if (argc != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    // Collect full path objects from search pattern
+    struct directory **paths;
+    int path_cnt = db_ls(gb->gedp->dbip, DB_LS_HIDDEN, argv[0], &paths);
+
+    // Set up table
+    ft_table_t *table = ft_create_table();
+    ft_set_border_style(table, FT_SIMPLE_STYLE);
+
+    ft_write(table, "Object Path");
+    ft_write(table, "Disk Size");
+    ft_write(table, "Verts");
+    ft_write(table, "Faces");
+    ft_write(table, "Face Normals");
+    ft_write(table, "Surf Normals");
+    ft_write(table, "Orientation");
+    ft_write(table, "Mode");
+    ft_write(table, "UV Vert Cnt");
+    ft_write(table, "UV Face Cnt");
+    ft_write(table, "Attr Size");
+    ft_ln(table);
+    ft_add_separator(table);
+
+    for (int i = 0; i < path_cnt; i++) {
+	bot_output(table, gb->gedp->dbip, paths[i]);
+    }
+
+    bu_vls_printf(gb->gedp->ged_result_str, "%s\n", ft_to_string(table));
+    ft_destroy_table(table);
+    bu_free(paths, "paths");
+    return ret;
+}
 
 const struct bu_cmdtab _bot_cmds[] = {
     { "extrude",    _bot_cmd_extrude},
@@ -547,6 +705,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "remesh",     _bot_cmd_remesh},
     { "set",        _bot_cmd_set},
     { "split",      _bot_cmd_split},
+    { "stat",       _bot_cmd_stat},
     { "sync",       _bot_cmd_sync},
     { (char *)NULL,      NULL}
 };
