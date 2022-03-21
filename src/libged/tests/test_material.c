@@ -21,11 +21,14 @@
 #include "common.h"
 
 #include <stdio.h>
-#include <bu.h>
+
+#include "bu.h"
 #include "ged.h"
 
+
 void
-material_creation_test(struct ged *ged){
+material_creation_test(struct ged *ged)
+{
     //Create test material with whatever you want it called.
     printf("Testing creating a material using the material command...");
     char* material_name = "Material";
@@ -41,28 +44,31 @@ material_creation_test(struct ged *ged){
     printf("%s\n", bu_vls_cstr(ged->ged_result_str));
 }
 
-void
-property_set_test(struct ged *ged){
-   printf("Testing setting a property in a material object...\n");
-   char* object_name = "TestMaterial";
-   char* property_group = "physical";
-   char* property_name = "density";
-   char* property_value = "12.5";
-   const char* argv[] = {"material", "set", object_name, property_group, property_name, property_value};
-   ged_exec(ged, 6, argv);
-   printf("Testing when there is not enough arguments (property group is not inputted):\n");
-   const char* argv2[] = {"material", "set", object_name, property_name, property_value};
-   ged_exec(ged, 5, argv2);
-   printf("%s\n\n", bu_vls_cstr(ged->ged_result_str));
-   printf("Testing when property group is incorrect:\n");
-   char* incorrect_property_group = "opticalProperties";
-   const char* argv3[] = {"material", "set", object_name, incorrect_property_group, property_name, property_value};
-   ged_exec(ged, 6, argv3);
-   printf("%s\n\n", bu_vls_cstr(ged->ged_result_str));
-}
 
 void
-property_get_test(struct ged *ged){
+property_set_test(struct ged *ged)
+{
+    printf("Testing setting a property in a material object...\n");
+    char* object_name = "TestMaterial";
+    char* property_group = "physical";
+    char* property_name = "density";
+    char* property_value = "12.5";
+    const char* argv[] = {"material", "set", object_name, property_group, property_name, property_value};
+    ged_exec(ged, 6, argv);
+    printf("Testing when there is not enough arguments (property group is not inputted):\n");
+    const char* argv2[] = {"material", "set", object_name, property_name, property_value};
+    ged_exec(ged, 5, argv2);
+    printf("%s\n\n", bu_vls_cstr(ged->ged_result_str));
+    printf("Testing when property group is incorrect:\n");
+    char* incorrect_property_group = "opticalProperties";
+    const char* argv3[] = {"material", "set", object_name, incorrect_property_group, property_name, property_value};
+    ged_exec(ged, 6, argv3);
+    printf("%s\n\n", bu_vls_cstr(ged->ged_result_str));
+}
+
+
+void
+property_get_test(struct ged *ged) {
     printf("Testing retrieving a material property...\n");
     char* object_name = "TestMaterial";
     char* property_group = "physical";
@@ -77,8 +83,9 @@ property_get_test(struct ged *ged){
     printf("%s\n\n", bu_vls_cstr(ged->ged_result_str));
 }
 
+
 void
-material_destroy_test(struct ged *ged){
+material_destroy_test(struct ged *ged) {
     printf("Testing destroying a material object...\n");
     char* object_name = "TestMaterial";
     const char* argv[] = {"material", "destroy", object_name};
@@ -89,8 +96,10 @@ material_destroy_test(struct ged *ged){
     printf("%s\n\n", bu_vls_cstr(ged->ged_result_str));
 }
 
+
 void
-material_import_test(struct ged *ged){
+material_import_test(struct ged *ged)
+{
     printf("Testing importing a density table...\n");
     char* file_name = "TEST_DENSITIES";
     const char* argv[] = {"material", "import", "--id", file_name};
@@ -107,7 +116,8 @@ material_import_test(struct ged *ged){
 
 
 int
-main(int ac, char* av[]) {
+main(int ac, char* av[])
+{
     struct ged *g;
     if (ac != 2) {
 	printf("Usage: %s file.g\n", av[0]);
@@ -115,13 +125,17 @@ main(int ac, char* av[]) {
     }
     bu_setprogname(av[0]);
     g = ged_open("db", av[1], 0);
+
+    /* FIXME: needs to actually return an error when tests fail. */
     material_creation_test(g);
     property_set_test(g);
     property_get_test(g);
     material_destroy_test(g);
     material_import_test(g);
+
     return 0;
 }
+
 
 /*
  * Local Variables:
