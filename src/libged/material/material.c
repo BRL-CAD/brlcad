@@ -74,31 +74,21 @@ static material_cmd_t
 get_material_cmd(const char* arg)
 {
     /* sub-commands */
-    const char ASSIGN[]   = "assign";
-    const char CREATE[]   = "create";
-    const char DESTROY[]  = "destroy";
-    const char GET[]      = "get";
-    const char HELP[]     = "help";
-    const char IMPORT[]   = "import";
-    const char REMOVE[]   = "remove";
-    const char SET[]      = "set";
-
-    /* alphabetical order */
-    if (BU_STR_EQUIV(ASSIGN, arg))
+    if (BU_STR_EQUIV("assign", arg))
 	return MATERIAL_ASSIGN;
-    else if (BU_STR_EQUIV(CREATE, arg))
+    else if (BU_STR_EQUIV("create", arg))
 	return MATERIAL_CREATE;
-    else if (BU_STR_EQUIV(DESTROY, arg))
+    else if (BU_STR_EQUIV("destroy", arg))
 	return MATERIAL_DESTROY;
-    else if (BU_STR_EQUIV(SET, arg))
+    else if (BU_STR_EQUIV("set", arg))
 	return MATERIAL_SET;
-    else if (BU_STR_EQUIV(GET, arg))
+    else if (BU_STR_EQUIV("get", arg))
 	return MATERIAL_GET;
-    else if (BU_STR_EQUIV(HELP, arg))
+    else if (BU_STR_EQUIV("help", arg))
 	return MATERIAL_HELP;
-    else if (BU_STR_EQUIV(IMPORT, arg))
+    else if (BU_STR_EQUIV("import", arg))
 	return MATERIAL_IMPORT;
-    else if (BU_STR_EQUIV(REMOVE, arg))
+    else if (BU_STR_EQUIV("remove", arg))
 	return MATERIAL_REMOVE;
     else
 	return ATTR_UNKNOWN;
