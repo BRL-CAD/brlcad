@@ -30,9 +30,6 @@
 #include "analyze.h"
 
 
-/* the largest material ID value that can be used in a density table */
-#define MAX_MATERIAL_ID 32768
-
 /* arbitrary upper limit just to prevent out-of-control behavior */
 #define MAX_MATERIAL_CNT 1000000
 
@@ -102,13 +99,6 @@ analyze_densities_set(struct analyze_densities *a, long int id, fastf_t density,
 
     if (id < 0 || density < 0 || !name)
 	return -1;
-
-    if (id > MAX_MATERIAL_ID) {
-	if (msgs) {
-	    bu_vls_printf(msgs, "ERROR: material ID %ld is larger than MAX_MATERIAL_ID (%d)\n", id, MAX_MATERIAL_ID);
-	}
-	return -1;
-    }
 
     if (a->i->id2density.size() >= MAX_MATERIAL_CNT) {
 	if (msgs) {
