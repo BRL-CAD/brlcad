@@ -820,7 +820,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	    return BRLCAD_ERROR;
     } else {
 	BU_ASSERT(d->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
-	if (ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
+	if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&d->d_namep, 1,
 				rpp_min, rpp_max) == BRLCAD_ERROR)
 	    return BRLCAD_ERROR;
     }
@@ -1408,7 +1408,7 @@ edit_translate(struct ged *gedp, const vect_t *from,
 				 &gtd, rpp_min, rpp_max) == BRLCAD_ERROR)
 	    return BRLCAD_ERROR;
 	if (!(d_to_modify->d_flags & RT_DIR_SOLID) &&
-	    (ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
+	    (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&d_to_modify->d_namep,
 				 1, rpp_min, rpp_max) == BRLCAD_ERROR))
 	    return BRLCAD_ERROR;
 

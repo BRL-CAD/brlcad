@@ -84,7 +84,7 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
     bot_ip->faces[pntcnt*3+2] = pntcnt*3+2;
 }
 
-/* TODO - need some generic version of this logic in libbn - 
+/* TODO - need some generic version of this logic in libbn -
  * used in libanalyze's NIRT as well */
 void _pnts_fastf_t_to_vls(struct bu_vls *o, fastf_t d, int p)
 {
@@ -580,7 +580,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 	point_t obj_min, obj_max;
 	VSETALL(rpp_min, INFINITY);
 	VSETALL(rpp_max, -INFINITY);
-	ged_get_obj_bounds(gedp, 1, (const char **)&obj_name, 0, obj_min, obj_max);
+	rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&obj_name, 0, obj_min, obj_max);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 	len_tol = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;

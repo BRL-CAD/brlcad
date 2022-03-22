@@ -347,8 +347,8 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   ged = ged_open("db", APP.a_rt_i->rti_dbip->dbi_filename, 1);
   point_t min;
   point_t max;
-  // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
-  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name_full, 1, min, max);
+  // int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name, 1, min, max);
+  int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name_full, 1, min, max);
 
   bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
 

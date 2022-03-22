@@ -803,7 +803,7 @@ _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char 
     }
 
     /* Key some settings off the bbox size */
-    ged_get_obj_bounds(gedp, 1, (const char **)&objname, 0, obj_min, obj_max);
+    rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&objname, 0, obj_min, obj_max);
     VMINMAX(rpp_min, rpp_max, (double *)obj_min);
     VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 
@@ -1120,7 +1120,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
     free_pnts = 1;
 
     /* Key some settings off the bbox size */
-    ged_get_obj_bounds(gedp, 1, (const char **)&objname, 0, obj_min, obj_max);
+    rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&objname, 0, obj_min, obj_max);
     VMINMAX(rpp_min, rpp_max, (double *)obj_min);
     VMINMAX(rpp_min, rpp_max, (double *)obj_max);
     xlen = fabs(rpp_max[X] - rpp_min[X]);

@@ -126,7 +126,7 @@ ged_bb_core(struct ged *gedp, int argc, const char *argv[])
 	VSETALL(rpp_min, INFINITY);
 	VSETALL(rpp_max, -INFINITY);
 	for (i = 0; i < argc; i++) {
-	    if (ged_get_obj_bounds(gedp, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) & BRLCAD_ERROR)
+	    if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) & BRLCAD_ERROR)
 		return BRLCAD_ERROR;
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
