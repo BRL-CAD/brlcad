@@ -59,6 +59,7 @@ set(LIBBG_SOURCES
   chull3d.cpp
   clip.c
   clipper.cpp
+  lod.cpp
   lseg_lseg.c
   lseg_pt.c
   obr.c
