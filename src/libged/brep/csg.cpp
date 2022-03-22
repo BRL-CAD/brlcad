@@ -399,7 +399,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    bu_vls_trunc(&shoal_name, 0);
 	    subbrep_obj_name(d->shoal_type, d->shoal_id, rname, &shoal_name);
 	    //if (*n_bool_op == 'u') {
-		//bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
+	    //bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
 	    //}
 	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
 	    /* FIXME: should this be WMOP_SUBTRACT */
@@ -553,15 +553,15 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 		// avoid an unnecessary level of hierarchy.
 		//bu_log("only one level... - %s\n", ((struct wmember *)pcomb.l.forw)->wm_name);
 		/*
-		int ac = 3;
-		const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
-		av[0] = "mv";
-		av[1] = ((struct wmember *)pcomb.l.forw)->wm_name;
-		av[2] = bu_vls_addr(&comb_name);
-		av[3] = (char *)0;
-		(void)ged_move(gedp, ac, av);
-		bu_free(av, "free av array");
-		bu_vls_sprintf(&comb_name, "%s", ((struct wmember *)pcomb.l.forw)->wm_name);
+		  int ac = 3;
+		  const char **av = (const char **)bu_calloc(4, sizeof(char *), "killtree argv");
+		  av[0] = "mv";
+		  av[1] = ((struct wmember *)pcomb.l.forw)->wm_name;
+		  av[2] = bu_vls_addr(&comb_name);
+		  av[3] = (char *)0;
+		  (void)ged_move(gedp, ac, av);
+		  bu_free(av, "free av array");
+		  bu_vls_sprintf(&comb_name, "%s", ((struct wmember *)pcomb.l.forw)->wm_name);
 		*/
 		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 	    }

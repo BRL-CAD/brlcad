@@ -187,14 +187,14 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 
     print_volume_table(gedp,
 		       tot_vol
-		       * gedp->dbip->dbi_base2local
-		       * gedp->dbip->dbi_base2local
-		       * gedp->dbip->dbi_base2local,
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local,
 		       tot_area
-		       * gedp->dbip->dbi_base2local
-		       * gedp->dbip->dbi_base2local,
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local,
 		       tot_vol/GALLONS_TO_MM3
-	);
+		      );
 
     bu_free((char *)face.pts, "analyze_arb8: pts");
     bu_free((char *)table.rows, "analyze_arb8: rows");

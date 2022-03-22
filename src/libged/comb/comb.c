@@ -497,7 +497,7 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
-	ged_get_obj_bounds(gedp, 1, (const char **)&bot_dp->d_namep, 0, obj_min, obj_max);
+	rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&bot_dp->d_namep, 0, obj_min, obj_max);
 	bbox_diag = DIST_PNT_PNT(obj_min, obj_max);
 
 	/* Get avg thickness from raytracer */

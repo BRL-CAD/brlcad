@@ -62,19 +62,19 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 
     /* sanity */
     if (!n || !bot || i < 0 || (size_t)i > bot->num_faces ||
-	    bot->faces[i*3+2] < 0 || (size_t)bot->faces[i*3+2] > bot->num_vertices) {
+	bot->faces[i*3+2] < 0 || (size_t)bot->faces[i*3+2] > bot->num_vertices) {
 	return false;
     }
 
-     VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
-     VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
-     VCROSS(*n, a, b);
-     VUNITIZE(*n);
-     if (bot->orientation == RT_BOT_CW) {
-	 VREVERSE(*n, *n);
-     }
+    VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
+    VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
+    VCROSS(*n, a, b);
+    VUNITIZE(*n);
+    if (bot->orientation == RT_BOT_CW) {
+	VREVERSE(*n, *n);
+    }
 
-     return true;
+    return true;
 }
 
 // The "correct" way to do this unfortunately requires an implementation of a
@@ -106,7 +106,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
     if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-        bu_vls_printf(gb->gedp->ged_result_str, "Object %s is not a plate mode bot\n", gb->solid_name.c_str());
+	bu_vls_printf(gb->gedp->ged_result_str, "Object %s is not a plate mode bot\n", gb->solid_name.c_str());
 	return BRLCAD_ERROR;
     }
 
@@ -118,7 +118,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	}
     }
     if (!have_solid) {
-        bu_vls_printf(gb->gedp->ged_result_str, "bot %s does not have any non-degenerate face thicknesses\n", gb->solid_name.c_str());
+	bu_vls_printf(gb->gedp->ged_result_str, "bot %s does not have any non-degenerate face thicknesses\n", gb->solid_name.c_str());
 	return BRLCAD_OK;
     }
 
@@ -149,14 +149,14 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     // from the surface.
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
     for (size_t i = 0; i < bot->num_faces; i++) {
-        point_t pnts[6];
-        point_t pf[3];
-        vect_t pv1[3], pv2[3];
+	point_t pnts[6];
+	point_t pf[3];
+	vect_t pv1[3], pv2[3];
 	vect_t n = VINIT_ZERO;
 	bot_face_normal(&n, bot, i);
 
 	for (int j = 0; j < 3; j++) {
-            VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
+	    VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
 	    if (BU_BITTEST(bot->face_mode, i)) {
 		VSCALE(pv1[j], n, bot->thickness[i]);
 		VSCALE(pv2[j], n, -1*bot->thickness[i]);
@@ -166,31 +166,31 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 		VSCALE(pv1[j], n, 0.51*bot->thickness[i]);
 		VSCALE(pv2[j], n, -0.51*bot->thickness[i]);
 	    }
-        }
-        for (int j = 0; j < 3; j++) {
-            point_t npnt1;
-            point_t npnt2;
-            VADD2(npnt1, pf[j], pv1[j]);
-            VADD2(npnt2, pf[j], pv2[j]);
-            VMOVE(pnts[j], npnt1);
-            VMOVE(pnts[j+3], npnt2);
-        }
+	}
+	for (int j = 0; j < 3; j++) {
+	    point_t npnt1;
+	    point_t npnt2;
+	    VADD2(npnt1, pf[j], pv1[j]);
+	    VADD2(npnt2, pf[j], pv2[j]);
+	    VMOVE(pnts[j], npnt1);
+	    VMOVE(pnts[j+3], npnt2);
+	}
 
-        // For arb6 creation, we need a specific point order
-        fastf_t pnts_array[3*6];
-        /* 1 */ pnts_array[0] = pnts[4][X]; pnts_array[1] = pnts[4][Y]; pnts_array[2] = pnts[4][Z];
-        /* 2 */ pnts_array[3] = pnts[3][X]; pnts_array[4] = pnts[3][Y]; pnts_array[5] = pnts[3][Z];
-        /* 3 */ pnts_array[6] = pnts[0][X]; pnts_array[7] = pnts[0][Y]; pnts_array[8] = pnts[0][Z];
-        /* 4 */ pnts_array[9] = pnts[1][X]; pnts_array[10] = pnts[1][Y]; pnts_array[11] = pnts[1][Z];
-        /* 5 */ pnts_array[12] = pnts[5][X]; pnts_array[13] = pnts[5][Y]; pnts_array[14] = pnts[5][Z];
-        /* 6 */ pnts_array[15] = pnts[2][X]; pnts_array[16] = pnts[2][Y]; pnts_array[17] = pnts[2][Z];
+	// For arb6 creation, we need a specific point order
+	fastf_t pnts_array[3*6];
+	/* 1 */ pnts_array[0] = pnts[4][X]; pnts_array[1] = pnts[4][Y]; pnts_array[2] = pnts[4][Z];
+	/* 2 */ pnts_array[3] = pnts[3][X]; pnts_array[4] = pnts[3][Y]; pnts_array[5] = pnts[3][Z];
+	/* 3 */ pnts_array[6] = pnts[0][X]; pnts_array[7] = pnts[0][Y]; pnts_array[8] = pnts[0][Z];
+	/* 4 */ pnts_array[9] = pnts[1][X]; pnts_array[10] = pnts[1][Y]; pnts_array[11] = pnts[1][Z];
+	/* 5 */ pnts_array[12] = pnts[5][X]; pnts_array[13] = pnts[5][Y]; pnts_array[14] = pnts[5][Z];
+	/* 6 */ pnts_array[15] = pnts[2][X]; pnts_array[16] = pnts[2][Y]; pnts_array[17] = pnts[2][Z];
 
-        bu_vls_sprintf(&prim_name, "%s.arb6.%zd", gb->dp->d_namep, i);
+	bu_vls_sprintf(&prim_name, "%s.arb6.%zd", gb->dp->d_namep, i);
 
-        // For arb6 creation we need to move a couple points the array.
+	// For arb6 creation we need to move a couple points the array.
 
-        mk_arb6(gb->gedp->ged_wdbp, bu_vls_cstr(&prim_name), pnts_array);
-        (void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
+	mk_arb6(gb->gedp->ged_wdbp, bu_vls_cstr(&prim_name), pnts_array);
+	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
     }
 
     // Write the comb

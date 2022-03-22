@@ -480,15 +480,15 @@ parse_args(int ac, char *av[])
 			    case 'A' :
 				multiple_analyses = 1;
 				analysis_flags = analysis_flags \
-				    | ANALYSIS_ADJ_AIR \
-				    | ANALYSIS_BBOX \
-				    | ANALYSIS_CENTROIDS \
-				    | ANALYSIS_EXP_AIR \
-				    | ANALYSIS_GAPS \
-				    | ANALYSIS_MOMENTS \
-				    | ANALYSIS_OVERLAPS \
-				    | ANALYSIS_VOLUMES \
-				    | ANALYSIS_WEIGHTS;
+				| ANALYSIS_ADJ_AIR \
+				| ANALYSIS_BBOX \
+				| ANALYSIS_CENTROIDS \
+				| ANALYSIS_EXP_AIR \
+				| ANALYSIS_GAPS \
+				| ANALYSIS_MOMENTS \
+				| ANALYSIS_OVERLAPS \
+				| ANALYSIS_VOLUMES \
+				| ANALYSIS_WEIGHTS;
 				break;
 			    case 'a' :
 				if (analysis_flags)
@@ -764,10 +764,10 @@ parse_args(int ac, char *av[])
  */
 int
 _gqa_overlap(struct application *ap,
-	struct partition *pp,
-	struct region *reg1,
-	struct region *reg2,
-	struct partition *hp)
+	     struct partition *pp,
+	     struct region *reg1,
+	     struct region *reg2,
+	     struct partition *hp)
 {
     struct cstate *state = (struct cstate *)ap->A_STATE;
     struct xray *rp = &ap->a_ray;
@@ -866,10 +866,10 @@ void _gqa_exposed_air(struct application *ap,
 
     bu_semaphore_acquire(state->sem_lists);
     add_unique_pair(&exposedAirList,
-	    pp->pt_regionp,
-	    (struct region *)NULL,
-	    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist, /* thickness */
-	    last_out_point); /* location */
+		    pp->pt_regionp,
+		    (struct region *)NULL,
+		    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist, /* thickness */
+		    last_out_point); /* location */
     bu_semaphore_release(state->sem_lists);
 
     if (plot_expair) {
@@ -959,10 +959,10 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		    /* like overlaps, we only want to report unique pairs */
 		    bu_semaphore_acquire(state->sem_lists);
 		    add_unique_pair(&gapList,
-			    pp->pt_regionp,
-			    pp->pt_back->pt_regionp,
-			    gap_dist,
-			    pt);
+				    pp->pt_regionp,
+				    pp->pt_back->pt_regionp,
+				    gap_dist,
+				    pt);
 		    bu_semaphore_release(state->sem_lists);
 
 		    /* like overlaps, let's plot */
@@ -1529,42 +1529,42 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 	    }
 	}
 	// iterate through the db and find all materials
-    for (int i = 0; i < RT_DBNHASH; i++) {
-        struct directory *dp = _ged_current_gedp->ged_wdbp->dbip->dbi_Head[i];
-        if (dp != NULL) {
-            struct rt_db_internal intern;
-            struct rt_material_internal *material_ip;
-            if (rt_db_get_internal(&intern, dp, _ged_current_gedp->ged_wdbp->dbip, NULL, &rt_uniresource) >= 0) {
-                if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
-                    // if the material has an id and density, add it to the density table
-                    material_ip = (struct rt_material_internal *)intern.idb_ptr;
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    struct directory *dp = _ged_current_gedp->ged_wdbp->dbip->dbi_Head[i];
+	    if (dp != NULL) {
+		struct rt_db_internal intern;
+		struct rt_material_internal *material_ip;
+		if (rt_db_get_internal(&intern, dp, _ged_current_gedp->ged_wdbp->dbip, NULL, &rt_uniresource) >= 0) {
+		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+			// if the material has an id and density, add it to the density table
+			material_ip = (struct rt_material_internal *)intern.idb_ptr;
 
-                    const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
-                    if (id_string == NULL) {
-                        continue;
-                    }
-                    int id = strtol(id_string, NULL, 10);
+			const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
+			if (id_string == NULL) {
+			    continue;
+			}
+			int id = strtol(id_string, NULL, 10);
 
-                    const char *density_string = bu_avs_get(&material_ip->physicalProperties, "density");
-                    if (density_string == NULL) {
-                        continue;
-                    }
-                    double density_double = strtod(density_string, NULL);
-                    /* since BRL-CAD does computation in mm, but the table is in
-                    * grams / (cm^3) we convert the table on input
-                    */
-                    density_double = density_double / 1000.0;
+			const char *density_string = bu_avs_get(&material_ip->physicalProperties, "density");
+			if (density_string == NULL) {
+			    continue;
+			}
+			double density_double = strtod(density_string, NULL);
+			/* since BRL-CAD does computation in mm, but the table is in
+			 * grams / (cm^3) we convert the table on input
+			 */
+			density_double = density_double / 1000.0;
 
-                    char *name = bu_vls_strdup(&material_ip->name);
-                    struct bu_vls result_str = BU_VLS_INIT_ZERO;
-                    if (analyze_densities_set(_gd_densities, id, density_double, name, &result_str) < 0) {
-                        bu_vls_printf(&result_str, "Error inserting density %d,%g,%s\n", id, density_double, name);
-                    }
-                    bu_vls_free(&result_str);
-                }
-            }
-        }
-    }
+			char *name = bu_vls_strdup(&material_ip->name);
+			struct bu_vls result_str = BU_VLS_INIT_ZERO;
+			if (analyze_densities_set(_gd_densities, id, density_double, name, &result_str) < 0) {
+			    bu_vls_printf(&result_str, "Error inserting density %d,%g,%s\n", id, density_double, name);
+			}
+			bu_vls_free(&result_str);
+		    }
+		}
+	    }
+	}
     }
     /* refine the grid spacing if the user has set a lower bound on
      * the number of rays per model axis
@@ -1580,10 +1580,10 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 
     if (!ZERO(newGridSpacing - gridSpacing)) {
 	bu_log("Initial grid spacing %g %s does not allow %g samples per axis.\n",
-		      gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
+	       gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
 
 	bu_log("Adjusted initial grid spacing to %g %s to get %g samples per model axis.\n",
-		      newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
+	       newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
 
 	gridSpacing = newGridSpacing;
     }
@@ -1696,138 +1696,138 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 int
 densities_prep(struct rt_i *rtip)
 {
-	analyze_densities_create(&_gd_densities);
-	int found_densities = 0;
+    analyze_densities_create(&_gd_densities);
+    int found_densities = 0;
 
-	/* figure out where the density values are coming from and get
+    /* figure out where the density values are coming from and get
      * them.
      */
     if (analysis_flags & ANALYSIS_WEIGHTS) {
-		if (densityFileName) {
-			DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
-			if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) == BRLCAD_OK) {
-				found_densities = 1;
-			}
-		} else {
-			DLOG(_ged_current_gedp->ged_result_str, "density from db\n");
-			if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) == BRLCAD_OK) {
-				found_densities = 1;
-			}
-		}
-
-		// iterate through the db and find all materials
-		int next_available_id = MAX_MATERIAL_ID - 1;
-		for (int i = 0; i < RT_DBNHASH; i++) {
-			struct directory *dp = rtip->rti_dbip->dbi_Head[i];
-			if (dp != NULL) {
-				struct rt_db_internal intern;
-				struct rt_material_internal *material_ip;
-				if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
-					if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
-						if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
-							// if the material has a density, add it to the density table
-							material_ip = (struct rt_material_internal *) intern.idb_ptr;
-
-							const char *density_string = bu_avs_get(&material_ip->physicalProperties, "density");
-							if (density_string == NULL) {
-								continue;
-							}
-
-							double density_double = strtod(density_string, NULL);
-							/* since BRL-CAD does computation in mm, but the table is in
-							* grams / (cm^3) we convert the table on input
-							*/
-							density_double = density_double / 1000.0;
-							found_densities = 1;
-
-							const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
-							int id;
-							if (id_string == NULL) {
-								// assign id for materials without ids in the density table
-								// start from the max material id and work backwards
-								id = next_available_id;
-								next_available_id--;
-							} else {
-								id = strtol(id_string, NULL, 10);
-							}
-
-							char *density_table_name = bu_vls_strdup(&material_ip->name);
-							if (analyze_densities_set(_gd_densities, id, density_double, density_table_name, _ged_current_gedp->ged_result_str) < 0) {
-								bu_vls_printf(_ged_current_gedp->ged_result_str, "Error inserting density %d,%g,%s\n", id, density_double, density_table_name);
-								analyze_densities_clear(_gd_densities);
-								return BRLCAD_ERROR;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if (!found_densities) {
-			bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not find any density information.\n");
-			analyze_densities_clear(_gd_densities);
-			return BRLCAD_ERROR;
-		}
-
-		// look for objects with material_name set and set the material_id
-		// analyze_densities_get
-		for (int i = 0; i < RT_DBNHASH; i++) {
-			struct directory *dp = rtip->rti_dbip->dbi_Head[i];
-			if (dp != NULL) {
-				if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
-					struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
-
-					if (db5_get_attributes(rtip->rti_dbip, &avs, dp) == 0) {
-						const char *material_name = bu_avs_get(&avs, "material_name");
-
-						if (material_name != NULL && !BU_STR_EQUAL(material_name, "(null)") && !BU_STR_EQUAL(material_name, "del")) {
-							struct directory *material_dp = db_lookup(rtip->rti_dbip, material_name, LOOKUP_QUIET);
-
-							if (material_dp != NULL) {
-								struct rt_db_internal material_intern;
-								struct rt_material_internal *material_ip;
-								if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
-									if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
-										// the material_ip->name field is the name in the density table
-										// not just the material_name (they could be different)
-										material_ip = (struct rt_material_internal *) material_intern.idb_ptr;
-										char *density_table_name = bu_vls_strdup(&material_ip->name);
-										long int wids[1];
-
-										// get the id from the density table
-										analyze_densities_id((long int *)wids, 1, _gd_densities, density_table_name);
-
-										// update the region->reg_mater field for the given region
-										struct region *regp = REGION_NULL;
-										for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-											RT_CK_REGION(regp);
-
-											// by default the regp->reg_name holds the path to the region
-											// we just want the name so we remove the path before the name
-											const char *reg_name = strrchr(regp->reg_name, '/') + 1;
-
-											// if its the region we're looking for, set teh reg_mater field
-											if (BU_STR_EQUAL(reg_name, dp->d_namep)) {
-												regp->reg_gmater = wids[0];
-											}
-										}
-									}
-								}
-							} else {
-								bu_vls_printf(_ged_current_gedp->ged_result_str, "WARNING: material_name %s is not in the database\n", material_name);
-							}
-						}
-					} else {
-						bu_vls_printf(_ged_current_gedp->ged_result_str, "Error: failed to load attributes for %s\n", dp->d_namep);
-						analyze_densities_clear(_gd_densities);
-						return BRLCAD_ERROR;
-					}
-				}
-			}
-		}
+	if (densityFileName) {
+	    DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
+	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) == BRLCAD_OK) {
+		found_densities = 1;
+	    }
+	} else {
+	    DLOG(_ged_current_gedp->ged_result_str, "density from db\n");
+	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) == BRLCAD_OK) {
+		found_densities = 1;
+	    }
 	}
 
-	return BRLCAD_OK;
+	// iterate through the db and find all materials
+	int next_available_id = MAX_MATERIAL_ID - 1;
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    struct directory *dp = rtip->rti_dbip->dbi_Head[i];
+	    if (dp != NULL) {
+		struct rt_db_internal intern;
+		struct rt_material_internal *material_ip;
+		if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
+		    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+			if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+			    // if the material has a density, add it to the density table
+			    material_ip = (struct rt_material_internal *) intern.idb_ptr;
+
+			    const char *density_string = bu_avs_get(&material_ip->physicalProperties, "density");
+			    if (density_string == NULL) {
+				continue;
+			    }
+
+			    double density_double = strtod(density_string, NULL);
+			    /* since BRL-CAD does computation in mm, but the table is in
+			     * grams / (cm^3) we convert the table on input
+			     */
+			    density_double = density_double / 1000.0;
+			    found_densities = 1;
+
+			    const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
+			    int id;
+			    if (id_string == NULL) {
+				// assign id for materials without ids in the density table
+				// start from the max material id and work backwards
+				id = next_available_id;
+				next_available_id--;
+			    } else {
+				id = strtol(id_string, NULL, 10);
+			    }
+
+			    char *density_table_name = bu_vls_strdup(&material_ip->name);
+			    if (analyze_densities_set(_gd_densities, id, density_double, density_table_name, _ged_current_gedp->ged_result_str) < 0) {
+				bu_vls_printf(_ged_current_gedp->ged_result_str, "Error inserting density %d,%g,%s\n", id, density_double, density_table_name);
+				analyze_densities_clear(_gd_densities);
+				return BRLCAD_ERROR;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+
+	if (!found_densities) {
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not find any density information.\n");
+	    analyze_densities_clear(_gd_densities);
+	    return BRLCAD_ERROR;
+	}
+
+	// look for objects with material_name set and set the material_id
+	// analyze_densities_get
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    struct directory *dp = rtip->rti_dbip->dbi_Head[i];
+	    if (dp != NULL) {
+		if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
+		    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+
+		    if (db5_get_attributes(rtip->rti_dbip, &avs, dp) == 0) {
+			const char *material_name = bu_avs_get(&avs, "material_name");
+
+			if (material_name != NULL && !BU_STR_EQUAL(material_name, "(null)") && !BU_STR_EQUAL(material_name, "del")) {
+			    struct directory *material_dp = db_lookup(rtip->rti_dbip, material_name, LOOKUP_QUIET);
+
+			    if (material_dp != NULL) {
+				struct rt_db_internal material_intern;
+				struct rt_material_internal *material_ip;
+				if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+				    if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+					// the material_ip->name field is the name in the density table
+					// not just the material_name (they could be different)
+					material_ip = (struct rt_material_internal *) material_intern.idb_ptr;
+					char *density_table_name = bu_vls_strdup(&material_ip->name);
+					long int wids[1];
+
+					// get the id from the density table
+					analyze_densities_id((long int *)wids, 1, _gd_densities, density_table_name);
+
+					// update the region->reg_mater field for the given region
+					struct region *regp = REGION_NULL;
+					for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+					    RT_CK_REGION(regp);
+
+					    // by default the regp->reg_name holds the path to the region
+					    // we just want the name so we remove the path before the name
+					    const char *reg_name = strrchr(regp->reg_name, '/') + 1;
+
+					    // if its the region we're looking for, set teh reg_mater field
+					    if (BU_STR_EQUAL(reg_name, dp->d_namep)) {
+						regp->reg_gmater = wids[0];
+					    }
+					}
+				    }
+				}
+			    } else {
+				bu_vls_printf(_ged_current_gedp->ged_result_str, "WARNING: material_name %s is not in the database\n", material_name);
+			    }
+			}
+		    } else {
+			bu_vls_printf(_ged_current_gedp->ged_result_str, "Error: failed to load attributes for %s\n", dp->d_namep);
+			analyze_densities_clear(_gd_densities);
+			return BRLCAD_ERROR;
+		    }
+		}
+	    }
+	}
+    }
+
+    return BRLCAD_OK;
 }
 
 
@@ -1848,7 +1848,7 @@ view_reports(struct cstate *state)
 
 	    if (state->shots[view] > 0) {
 		val = obj_tbl[obj].o_volume[view] =
-		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
+		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
 
 		if (verbose)
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s volume %g %s\n",
@@ -1864,7 +1864,7 @@ view_reports(struct cstate *state)
 
 	for (obj = 0; obj < num_objects; obj++) {
 	    double grams_per_cu_mm = obj_tbl[obj].o_lenDensity[view] *
-		(state->area[view] / state->shots[view]);
+	    (state->area[view] / state->shots[view]);
 
 
 	    if (verbose)
@@ -1917,7 +1917,7 @@ weight_volume_terminate(struct cstate *state)
 	    tmp = 0.0;
 	    for (view = 0; view < num_views; view++) {
 		val = obj_tbl[obj].o_weight[view] =
-		    obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
+		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -1926,12 +1926,12 @@ weight_volume_terminate(struct cstate *state)
 
 	    if (verbose)
 		bu_vls_printf(_ged_current_gedp->ged_result_str,
-		    "\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
-		    obj_tbl[obj].o_name,
-		    (tmp / num_views) / units[WGT]->val,
-		    units[WGT]->name,
-		    hi / units[WGT]->val,
-		    low / units[WGT]->val);
+			      "\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
+			      obj_tbl[obj].o_name,
+			      (tmp / num_views) / units[WGT]->val,
+			      units[WGT]->name,
+			      hi / units[WGT]->val,
+			      low / units[WGT]->val);
 
 	    if (delta > weight_tolerance) {
 		/* this object differs too much in each view, so we
@@ -1965,7 +1965,7 @@ weight_volume_terminate(struct cstate *state)
 	    tmp = 0.0;
 	    for (view = 0; view < num_views; view++) {
 		val = obj_tbl[obj].o_volume[view] =
-		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
+		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -1974,11 +1974,11 @@ weight_volume_terminate(struct cstate *state)
 
 	    if (verbose)
 		bu_vls_printf(_ged_current_gedp->ged_result_str,
-		    "\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
-		    obj_tbl[obj].o_name,
-		    (tmp / num_views) / units[VOL]->val, units[VOL]->name,
-		    hi / units[VOL]->val,
-		    low / units[VOL]->val);
+			      "\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
+			      obj_tbl[obj].o_name,
+			      (tmp / num_views) / units[VOL]->val, units[VOL]->name,
+			      hi / units[VOL]->val,
+			      low / units[VOL]->val);
 
 	    if (delta > volume_tolerance) {
 		/* this object differs too much in each view, so we
@@ -2034,7 +2034,7 @@ terminate_check(struct cstate *state)
     /* if we've reached the grid limit, we're done, no matter what */
     if (gridSpacing < gridSpacingLimit) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "NOTE: Stopped, grid spacing refined to %g (below lower limit %g).\n",
-	    gridSpacing, gridSpacingLimit);
+		      gridSpacing, gridSpacingLimit);
 	return 0;
     }
 
@@ -2241,7 +2241,7 @@ summary_reports(struct cstate *state)
 		    wv = &((struct per_region_data *)regp->reg_udata)->r_weight[view];
 
 		    *wv = ((struct per_region_data *)regp->reg_udata)->r_lenDensity[view] *
-			(state->area[view]/state->shots[view]);
+		    (state->area[view]/state->shots[view]);
 
 		    *wv /= units[WGT]->val;
 
@@ -2265,8 +2265,8 @@ summary_reports(struct cstate *state)
 	avg_mass = 0.0;
 	for (view=0; view < num_views; view++) {
 	    avg_mass += state->m_weight[view] =
-		state->m_lenDensity[view] *
-		(state->area[view] / state->shots[view]);
+	    state->m_lenDensity[view] *
+	    (state->area[view] / state->shots[view]);
 	}
 
 	avg_mass /= num_views;
@@ -2368,7 +2368,7 @@ summary_reports(struct cstate *state)
 
 		    /* convert view length to a volume */
 		    *vv = ((struct per_region_data *)regp->reg_udata)->r_len[view] *
-			(state->area[view] / state->shots[view]);
+		    (state->area[view] / state->shots[view]);
 
 		    /* convert to user's units */
 		    *vv /= units[VOL]->val;
@@ -2396,7 +2396,7 @@ summary_reports(struct cstate *state)
 	avg_mass = 0.0;
 	for (view=0; view < num_views; view++) {
 	    avg_mass += state->m_volume[view] =
-		state->m_len[view] * (state->area[view] / state->shots[view]);
+	    state->m_len[view] * (state->area[view] / state->shots[view]);
 	}
 
 	avg_mass /= num_views;
@@ -2475,7 +2475,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     _ged_current_gedp = gedp;
 
     analysis_flags = ANALYSIS_VOLUMES | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHTS |
-	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAPS | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
+    ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAPS | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
     multiple_analyses = 1;
     azimuth_deg = 0.0;
     elevation_deg = 0.0;
@@ -2554,7 +2554,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-	if (densities_prep(rtip) != BRLCAD_OK) return BRLCAD_ERROR;
+    if (densities_prep(rtip) != BRLCAD_OK) return BRLCAD_ERROR;
 
     /* This gets the database ready for ray tracing.  (it precomputes
      * some values, sets up space partitioning, etc.)
@@ -2596,14 +2596,14 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	V_MAX(gridSpacing, gridSpacingLimit);
 
 	bu_log("Trying estimated initial grid spacing: %g %s\n",
-	    gridSpacing / units[LINE]->val, units[LINE]->name);
+	       gridSpacing / units[LINE]->val, units[LINE]->name);
     } else {
 	bu_log("Trying initial grid spacing: %g %s\n",
-	    gridSpacing / units[LINE]->val, units[LINE]->name);
+	       gridSpacing / units[LINE]->val, units[LINE]->name);
     }
 
     bu_log("Using grid spacing lower limit: %g %s\n",
-	    gridSpacingLimit / units[LINE]->val, units[LINE]->name);
+	   gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 
     if (options_prep(rtip, state.span) != BRLCAD_OK) return BRLCAD_ERROR;
 
@@ -2624,11 +2624,11 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	VSCALE(state.steps, state.span, inv_spacing);
 
 	bu_log("Processing with grid spacing %g %s %ld x %ld x %ld\n",
-		      gridSpacing / units[LINE]->val,
-		      units[LINE]->name,
-		      state.steps[0]-1,
-		      state.steps[1]-1,
-		      state.steps[2]-1);
+	       gridSpacing / units[LINE]->val,
+	       units[LINE]->name,
+	       state.steps[0]-1,
+	       state.steps[1]-1,
+	       state.steps[2]-1);
 
 
 	for (view=0; view < num_views; view++) {
@@ -2765,30 +2765,30 @@ aborted:
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl gqa_cmd_impl = {
-	"gqa",
-	ged_gqa_core,
-	GED_CMD_DEFAULT
-    };
+struct ged_cmd_impl gqa_cmd_impl = {
+    "gqa",
+    ged_gqa_core,
+    GED_CMD_DEFAULT
+};
 
-    const struct ged_cmd gqa_cmd = { &gqa_cmd_impl };
-    const struct ged_cmd *gqa_cmds[] = { &gqa_cmd, NULL };
+const struct ged_cmd gqa_cmd = { &gqa_cmd_impl };
+const struct ged_cmd *gqa_cmds[] = { &gqa_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  gqa_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  gqa_cmds, 1 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif /* GED_PLUGIN */
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

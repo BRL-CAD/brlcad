@@ -402,7 +402,7 @@ _brep_cmd_trim_valid(void *bs, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 	const ON_BrepTrim &trim = brep->m_T[ti];
-    	ON_wString wstr;
+	ON_wString wstr;
 	ON_TextLog dump(wstr);
 	dump.Print("m_T[%d] invalid:\n", ti);
 	if (!trim.IsValid(&dump) || !brep->IsValidTrim(ti, &dump)) {

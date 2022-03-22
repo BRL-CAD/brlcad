@@ -84,7 +84,7 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
     bot_ip->faces[pntcnt*3+2] = pntcnt*3+2;
 }
 
-/* TODO - need some generic version of this logic in libbn - 
+/* TODO - need some generic version of this logic in libbn -
  * used in libanalyze's NIRT as well */
 void _pnts_fastf_t_to_vls(struct bu_vls *o, fastf_t d, int p)
 {
@@ -580,7 +580,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 	point_t obj_min, obj_max;
 	VSETALL(rpp_min, INFINITY);
 	VSETALL(rpp_max, -INFINITY);
-	ged_get_obj_bounds(gedp, 1, (const char **)&obj_name, 0, obj_min, obj_max);
+	rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&obj_name, 0, obj_min, obj_max);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 	len_tol = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;
@@ -904,13 +904,13 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 	fprintf(fp, "property double y\n");
 	fprintf(fp, "property double z\n");
 	if (pnts->type == RT_PNT_TYPE_NRM || pnts->type == RT_PNT_TYPE_SCA_NRM
-		|| pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
 	    fprintf(fp, "property double nx\n");
 	    fprintf(fp, "property double ny\n");
 	    fprintf(fp, "property double nz\n");
 	}
 	if (pnts->type == RT_PNT_TYPE_COL || pnts->type == RT_PNT_TYPE_COL_SCA
-		|| pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
 	    fprintf(fp, "property uchar red\n");
 	    fprintf(fp, "property uchar green\n");
 	    fprintf(fp, "property uchar blue\n");
@@ -1350,34 +1350,33 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     return ged_exec(gedp, 10, (const char **)nargv);
 }
 
-// Local Variables:
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts_core, GED_CMD_DEFAULT };
-    const struct ged_cmd pnts_cmd = { &pnts_cmd_impl };
+struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts_core, GED_CMD_DEFAULT };
+const struct ged_cmd pnts_cmd = { &pnts_cmd_impl };
 
-    struct ged_cmd_impl make_pnts_cmd_impl = { "make_pnts", ged_make_pnts_core, GED_CMD_DEFAULT };
-    const struct ged_cmd make_pnts_cmd = { &make_pnts_cmd_impl };
+struct ged_cmd_impl make_pnts_cmd_impl = { "make_pnts", ged_make_pnts_core, GED_CMD_DEFAULT };
+const struct ged_cmd make_pnts_cmd = { &make_pnts_cmd_impl };
 
-    const struct ged_cmd *pnts_cmds[] = { &make_pnts_cmd,  &pnts_cmd, NULL };
+const struct ged_cmd *pnts_cmds[] = { &make_pnts_cmd,  &pnts_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  pnts_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  pnts_cmds, 2 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

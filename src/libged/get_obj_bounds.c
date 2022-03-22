@@ -38,131 +38,16 @@
 
 #include "./ged_private.h"
 
-
 int
 ged_get_obj_bounds(struct ged *gedp,
-		    int argc,
-		    const char *argv[],
-		    int use_air,
-		    point_t rpp_min,
-		    point_t rpp_max)
+                   int argc,
+                   const char *argv[],
+                   int use_air,
+                   point_t rpp_min,
+                   point_t rpp_max)
 {
-    int i;
-    struct rt_i *rtip;
-    struct db_full_path path;
-    struct region *regp;
-
-    /* Make a new rt_i instance from the existing db_i structure */
-    rtip = rt_new_rti(gedp->dbip);
-    if (rtip == RTI_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s\n", gedp->dbip->dbi_filename);
-	return BRLCAD_ERROR;
-    }
-
-    rtip->useair = use_air;
-
-    /* Get trees for list of objects/paths */
-    for (i = 0; i < argc; i++) {
-	int gottree;
-
-	/* Get full_path structure for argument */
-	db_full_path_init(&path);
-	if (db_string_to_path(&path,  rtip->rti_dbip, argv[i])) {
-	    bu_vls_printf(gedp->ged_result_str, "db_string_to_path failed for %s\n", argv[i]);
-	    rt_free_rti(rtip);
-	    return BRLCAD_ERROR;
-	}
-
-	/* check if we already got this tree */
-	gottree = 0;
-	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-	    struct db_full_path tmp_path;
-
-	    db_full_path_init(&tmp_path);
-	    if (db_string_to_path(&tmp_path, rtip->rti_dbip, regp->reg_name)) {
-		bu_vls_printf(gedp->ged_result_str, "db_string_to_path failed for %s\n", regp->reg_name);
-		rt_free_rti(rtip);
-		db_free_full_path(&path);
-		return BRLCAD_ERROR;
-	    }
-	    if (path.fp_names[0] == tmp_path.fp_names[0])
-		gottree = 1;
-	    db_free_full_path(&tmp_path);
-	    if (gottree)
-		break;
-	}
-
-	/* if we don't already have it, get it */
-	if (!gottree && rt_gettree(rtip, argv[i])) {
-	    bu_vls_printf(gedp->ged_result_str, "rt_gettree failed for %s\n", argv[i]);
-	    rt_free_rti(rtip);
-	    db_free_full_path(&path);
-	    return BRLCAD_ERROR;
-	}
-	db_free_full_path(&path);
-    }
-
-    /* prep calculates bounding boxes of solids */
-    rt_prep(rtip);
-
-    /* initialize RPP bounds */
-    VSETALL(rpp_min, INFINITY);
-    VSETALL(rpp_max, -INFINITY);
-    for (i = 0; i < argc; i++) {
-	vect_t reg_min, reg_max;
-	const char *reg_name;
-	size_t name_len;
-
-	/* check if input name is a region */
-	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-	    reg_name = regp->reg_name;
-	    if (*argv[i] != '/' && *reg_name == '/')
-		reg_name++;
-
-	    if (BU_STR_EQUAL(reg_name, argv[i])) {
-		/* input name was a region */
-		if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
-		    bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
-		    rt_free_rti(rtip);
-		    return BRLCAD_ERROR;
-		}
-		VMINMAX(rpp_min, rpp_max, reg_min);
-		VMINMAX(rpp_min, rpp_max, reg_max);
-
-		goto found;
-	    }
-	}
-
-	/* input name may be a group, need to check all regions under
-	 * that group
-	 */
-	name_len = strlen(argv[i]);
-	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-	    reg_name = regp->reg_name;
-	    if (*argv[i] != '/' && *reg_name == '/')
-		reg_name++;
-
-	    if (bu_strncmp(argv[i], reg_name, name_len))
-		continue;
-
-	    /* This is part of the group */
-	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
-		bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
-		rt_free_rti(rtip);
-		return BRLCAD_ERROR;
-	    }
-	    VMINMAX(rpp_min, rpp_max, reg_min);
-	    VMINMAX(rpp_min, rpp_max, reg_max);
-	}
-
-    found:;
-    }
-
-    rt_free_rti(rtip);
-
-    return BRLCAD_OK;
+    return rt_obj_bounds(gedp->ged_result_str, gedp->dbip, argc, argv, use_air, rpp_min, rpp_max);
 }
-
 
 static int
 get_objpath_mat(struct ged *gedp,

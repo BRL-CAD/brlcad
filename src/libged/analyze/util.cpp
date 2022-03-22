@@ -66,8 +66,8 @@ print_edges_table(struct ged *gedp, table_t *table)
     int i;
     int tcol, nd, nrow, nrows;
     int maxwidth[] = {0, 0, 0,
-		      0, 0, 0,
-		      0, 0};
+	0, 0, 0,
+	0, 0};
     int indent = 2;
     field_t dashes;
     char EDGE[] = {"EDGE"};
@@ -267,8 +267,8 @@ print_faces_table(struct ged *gedp, table_t *table)
     /* track actual table column widths */
     /* this table has 8 columns */
     int maxwidth[8] = {0, 0, 0,
-		       0, 0, 0,
-		       0, 0};
+	0, 0, 0,
+	0, 0};
     int i, j;
     int c0, h1a, h1b, h1c;
     int h2a, h2b, h2c;
@@ -460,11 +460,11 @@ print_faces_table(struct ged *gedp, table_t *table)
 
 void
 print_volume_table(
-	struct ged *gedp,
-	const fastf_t tot_vol,
-	const fastf_t tot_area,
-	const fastf_t tot_gallons
-	)
+    struct ged *gedp,
+    const fastf_t tot_vol,
+    const fastf_t tot_area,
+    const fastf_t tot_gallons
+		  )
 {
 
 /* table format
@@ -675,14 +675,14 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 
     print_volume_table(gedp,
 		       vol
-		       * gedp->dbip->dbi_base2local
-		       * gedp->dbip->dbi_base2local
-		       * gedp->dbip->dbi_base2local,
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local,
 		       area
-		       * gedp->dbip->dbi_base2local
-		       * gedp->dbip->dbi_base2local,
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local,
 		       vol/GALLONS_TO_MM3
-	);
+		      );
 }
 
 

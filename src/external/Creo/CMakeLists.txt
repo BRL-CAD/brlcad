@@ -38,7 +38,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO_DEFS "-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK71_")
 
   # BRL-CAD definitions
-  set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS -DNMG_DLL_IMPORTS -DBG_DLL_IMPORTS -DBREP_DLL_IMPORTS -DRT_DLL_IMPORTS -DWDB_DLL_IMPORTS -DTIE_DLL_IMPORTS -DDB5_DLL_IMPORTS -DOPENNURBS_IMPORTS")
+  set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS -DBV_DLL_IMPORTS -DNMG_DLL_IMPORTS -DBG_DLL_IMPORTS -DBREP_DLL_IMPORTS -DRT_DLL_IMPORTS -DWDB_DLL_IMPORTS -DTIE_DLL_IMPORTS -DDB5_DLL_IMPORTS -DOPENNURBS_IMPORTS")
 
   # These settings are global to all the configs.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CREO_DEFS} ${BRLCAD_DEFS}" CACHE STRING "" FORCE)
@@ -204,6 +204,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     libbn
     libbrep
     libbu
+    libbv
     libnmg
     librt
     libwdb
@@ -357,11 +358,12 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(creo_brl_srcs ${creo_brl_srcs} shim.cpp)
   add_definitions(-DTEST_BUILD)
   add_library(creo-brl ${creo_brl_srcs})
-  target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbn libbu)
+  target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbv libbn libbu)
   set_target_properties(creo-brl PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
   if(HIDE_INTERNAL_SYMBOLS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BN_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BV_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "NMG_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BG_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BREP_DLL_IMPORTS")

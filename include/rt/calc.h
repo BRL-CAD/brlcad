@@ -118,6 +118,18 @@ RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
 				       point_t rpp_max);
 
 /**
+ * Given an argc/argv list of objects, calculate their collective
+ * bounding box */
+RT_EXPORT extern int
+rt_obj_bounds(struct bu_vls *msgs,
+                    struct db_i *dbip,
+                    int argc,
+                    const char *argv[],
+                    int use_air,
+                    point_t rpp_min,
+                    point_t rpp_max);
+
+/**
  *
  * Given a region, return a matrix which maps model coordinates into
  * region "shader space".  This is a space where points in the model

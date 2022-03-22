@@ -38,8 +38,8 @@ extern "C" int
 ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "lod (on|off|enabled)\n"
-			       "lod scale (points|curves) <factor>\n"
-			       "lod redraw (off|onzoom)\n";
+    "lod scale (points|curves) <factor>\n"
+    "lod redraw (off|onzoom)\n";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -234,12 +234,12 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

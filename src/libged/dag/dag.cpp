@@ -130,8 +130,8 @@ position_node(_ged_dag_data *dag, bool has_parent, Avoid::ShapeRef *parent, Avoi
 
 #define LIBAVOID_LATEST_API
 #if defined LIBAVOID_LATEST_API
-    #define LIBX 0
-    #define LIBY 1
+#define LIBX 0
+#define LIBY 1
     Box bbox = child->polygon().offsetBoundingBox(0);
     new_x  = bbox.min[LIBX];
     new_y  = bbox.min[LIBY];
@@ -307,7 +307,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
     const unsigned int CENTRE = 1;
 
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-    bu_log("ERROR: Database read error, skipping %s\n", dp->d_namep);
+	bu_log("ERROR: Database read error, skipping %s\n", dp->d_namep);
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -344,96 +344,96 @@ dag_comb(struct db_i *dbip, struct directory *dp, void *out, struct _ged_dag_dat
      * gets a list of comb members.  needs to return tabular data.
      */
     if (comb->tree) {
-    size_t node_count = 0;
-    size_t actual_count = 0;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-    struct rt_tree_array *rt_tree_array = NULL;
+	size_t node_count = 0;
+	size_t actual_count = 0;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	struct rt_tree_array *rt_tree_array = NULL;
 
-    if (db_ck_v4gift_tree(comb->tree) < 0) {
-	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
-	    bu_log("INTERNAL_ERROR: Cannot flatten tree of [%s] for listing", dp->d_namep);
-	    return;
-	}
-    }
-
-    node_count = db_tree_nleaves(comb->tree);
-    if (node_count > 0) {
-	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
-	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1, &rt_uniresource) - rt_tree_array;
-	BU_ASSERT(actual_count == node_count);
-	comb->tree = TREE_NULL;
-    } else {
-	actual_count = 0;
-	rt_tree_array = NULL;
-    }
-
-    bu_log("%d subnode(s)\n", actual_count);
-
-    for (i = 0; i < actual_count; i++) {
-	char op;
-
-	switch (rt_tree_array[i].tl_op) {
-	    case OP_UNION:
-		op = DB_OP_UNION;
-		break;
-	    case OP_INTERSECT:
-		op = DB_OP_INTERSECT;
-		break;
-	    case OP_SUBTRACT:
-		op = DB_OP_SUBTRACT;
-		break;
-	    default:
-		op = '?';
-		break;
+	    db_non_union_push(comb->tree, &rt_uniresource);
+	    if (db_ck_v4gift_tree(comb->tree) < 0) {
+		bu_log("INTERNAL_ERROR: Cannot flatten tree of [%s] for listing", dp->d_namep);
+		return;
+	    }
 	}
 
-	bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
-	struct bu_hash_entry *hsh_entry;
-	hsh_entry = bu_hash_tbl_find(objects, (uint8_t *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &prev, &idx);
+	node_count = db_tree_nleaves(comb->tree);
+	if (node_count > 0) {
+	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+	    actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1, &rt_uniresource) - rt_tree_array;
+	    BU_ASSERT(actual_count == node_count);
+	    comb->tree = TREE_NULL;
+	} else {
+	    actual_count = 0;
+	    rt_tree_array = NULL;
+	}
 
-	if (hsh_entry) {
-	    subnode_id = atoi((const char*)hsh_entry->value);
+	bu_log("%d subnode(s)\n", actual_count);
 
-	    /* Check if a shape was already created for this subnode. */
-	    shape_exists = false;
-	    finish = dag->router->m_obstacles.end();
-	    for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-		if ((*it)->id() == subnode_id) {
-		    /* Don't create another shape because it already exists a corresponding one.
-		     * Get a reference to the shape that corresponds to the current node of the subtree.
-		     */
-		    shapeRef2 = dynamic_cast<ShapeRef *>(*it);
-		    shape_exists = true;
+	for (i = 0; i < actual_count; i++) {
+	    char op;
+
+	    switch (rt_tree_array[i].tl_op) {
+		case OP_UNION:
+		    op = DB_OP_UNION;
 		    break;
+		case OP_INTERSECT:
+		    op = DB_OP_INTERSECT;
+		    break;
+		case OP_SUBTRACT:
+		    op = DB_OP_SUBTRACT;
+		    break;
+		default:
+		    op = '?';
+		    break;
+	    }
+
+	    bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
+	    struct bu_hash_entry *hsh_entry;
+	    hsh_entry = bu_hash_tbl_find(objects, (uint8_t *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &prev, &idx);
+
+	    if (hsh_entry) {
+		subnode_id = atoi((const char*)hsh_entry->value);
+
+		/* Check if a shape was already created for this subnode. */
+		shape_exists = false;
+		finish = dag->router->m_obstacles.end();
+		for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+		    if ((*it)->id() == subnode_id) {
+			/* Don't create another shape because it already exists a corresponding one.
+			 * Get a reference to the shape that corresponds to the current node of the subtree.
+			 */
+			shapeRef2 = dynamic_cast<ShapeRef *>(*it);
+			shape_exists = true;
+			break;
+		    }
 		}
+		if (!shape_exists) {
+		    /* Create a shape for the current node of the subtree */
+		    dag->object_nr++;
+		    shapeRef2 = add_object(dag, subnode_id);
+		}
+
+		/* Create connection pins on shapes for linking the parent node with the subnode. */
+		new Avoid::ShapeConnectionPin(shapeRef1, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
+		new Avoid::ShapeConnectionPin(shapeRef2, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
+
+		/* Create connector from each shape shapeRef2 to the input pin on shapeRef1. */
+		Avoid::ConnEnd dstEnd(shapeRef1, CENTRE);
+		Avoid::ConnEnd srcEnd(shapeRef2, CENTRE);
+		dag->last_connref_id++;
+		Avoid::ConnRef *connRef = new Avoid::ConnRef(dag->router, srcEnd, dstEnd, dag->last_connref_id);
+
+		connRef->setCallback(conn_callback, connRef);
+		dag->router->processTransaction();
 	    }
-	    if (!shape_exists) {
-		/* Create a shape for the current node of the subtree */
-		dag->object_nr++;
-		shapeRef2 = add_object(dag, subnode_id);
-	    }
 
-	    /* Create connection pins on shapes for linking the parent node with the subnode. */
-	    new Avoid::ShapeConnectionPin(shapeRef1, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
-	    new Avoid::ShapeConnectionPin(shapeRef2, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
-
-	    /* Create connector from each shape shapeRef2 to the input pin on shapeRef1. */
-	    Avoid::ConnEnd dstEnd(shapeRef1, CENTRE);
-	    Avoid::ConnEnd srcEnd(shapeRef2, CENTRE);
-	    dag->last_connref_id++;
-	    Avoid::ConnRef *connRef = new Avoid::ConnRef(dag->router, srcEnd, dstEnd, dag->last_connref_id);
-
-	    connRef->setCallback(conn_callback, connRef);
-	    dag->router->processTransaction();
+	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
+	bu_vls_free(&vls);
 
-	db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
-    }
-    bu_vls_free(&vls);
-
-    if (rt_tree_array)
-	bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
+	if (rt_tree_array)
+	    bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
     }
 
     rt_db_free_internal(&intern);
@@ -668,17 +668,17 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 	struct bu_hash_entry *hsh_entry = bu_hash_tbl_find(dag->ids, (uint8_t *)id, strlen(id) + 1, &prev, &idx);
 	if (hsh_entry) {
 #if defined LIBAVOID_LATEST_API
-	  Box bbox = (*it)->polygon().offsetBoundingBox(0);
-	  minX = bbox.min[LIBX];
-	  minY = bbox.min[LIBY];
-	  maxX = bbox.max[LIBX];
-	  maxY = bbox.max[LIBY];
+	    Box bbox = (*it)->polygon().offsetBoundingBox(0);
+	    minX = bbox.min[LIBX];
+	    minY = bbox.min[LIBY];
+	    maxX = bbox.max[LIBX];
+	    maxY = bbox.max[LIBY];
 #else
 	    (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
 #endif
 	    prev = NULL;
 	    struct bu_hash_entry *hsh_entry_type = bu_hash_tbl_find(dag->object_types, hsh_entry->value,
-								      strlen((char *)hsh_entry->value) + 1, &prev, &idx);
+								    strlen((char *)hsh_entry->value) + 1, &prev, &idx);
 	    if (hsh_entry_type) {
 		bu_vls_printf(gedp->ged_result_str, "%s %s %f %f %f %f\n", hsh_entry->value, hsh_entry_type->value, minX,
 			      minY, maxX, maxY);
@@ -816,7 +816,7 @@ ged_graph_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_vls_printf(gedp->ged_result_str, "%s : ERROR This command is disabled due to the absence of Adaptagrams library",
-	  argv[0]);
+		  argv[0]);
     return BRLCAD_ERROR;
 }
 
@@ -827,25 +827,25 @@ ged_graph_core(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl dag_cmd_impl = { "graph", ged_graph_core, GED_CMD_DEFAULT };
-    const struct ged_cmd dag_cmd = { &dag_cmd_impl };
-    const struct ged_cmd *dag_cmds[] = { &dag_cmd,  NULL };
+struct ged_cmd_impl dag_cmd_impl = { "graph", ged_graph_core, GED_CMD_DEFAULT };
+const struct ged_cmd dag_cmd = { &dag_cmd_impl };
+const struct ged_cmd *dag_cmds[] = { &dag_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  dag_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  dag_cmds, 1 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

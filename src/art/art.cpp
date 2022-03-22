@@ -147,6 +147,7 @@
 #include "ged/commands.h"
 #include "ged/defines.h"
 #include "rt/db_fullpath.h"
+#include "optical/defines.h"
 
 struct application APP;
 struct resource* resources;
@@ -170,6 +171,7 @@ extern "C" {
     void usage(const char* argv0, int verbose);
     int get_args(int argc, const char* argv[]);
 
+    extern struct command_tab rt_do_tab[];
     extern char* outputfile;
     extern int objc;
     extern char** objv;
@@ -345,8 +347,8 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   ged = ged_open("db", APP.a_rt_i->rti_dbip->dbi_filename, 1);
   point_t min;
   point_t max;
-  // int ret = ged_get_obj_bounds(ged, 1, (const char**)&name, 1, min, max);
-  int ret = ged_get_obj_bounds(ged, 1, (const char**)&name_full, 1, min, max);
+  // int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name, 1, min, max);
+  int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name_full, 1, min, max);
 
   bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
 
@@ -749,17 +751,21 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     // Environment
     //------------------------------------------------------------------------
 
+    float float_bgcolor[ELEMENTS_PER_VECT] = {0};
+    VMOVE(float_bgcolor, background);
+
     // Create a color called "sky_radiance" and insert it into the scene
     // to set the background color. By default we use a blue
     // background { 0.75f, 0.80f, 1.0f } *see line 153*. This can be
     // updated while running using -C and -W
+
     scene->colors().insert(
 	asr::ColorEntityFactory::create(
 	    "sky_radiance",
 	    asr::ParamArray()
 	    .insert("color_space", "srgb")
 	    .insert("multiplier", "0.5"),
-	    asr::ColorValueArray(3, background)));
+	    asr::ColorValueArray(3, float_bgcolor)));
 
     // Create an environment EDF called "sky_edf" and insert it into the scene.
     scene->environment_edfs().insert(
@@ -919,8 +925,7 @@ main(int argc, char **argv)
     }
 
     /* include objects from database */
-    if (rt_gettrees(rtip, objc, (const char**)objv, npsw) < 0)
-    {
+    if (rt_gettrees(rtip, objc, (const char**)objv, (int)npsw) < 0) {
 	RENDERER_LOG_INFO("loading the geometry for [%s...] FAILED\n", objv[0]);
 	return -1;
     }

@@ -45,23 +45,23 @@
 #include "../ged_private.h"
 
 #define GET_BV_SCENE_OBJ(p, fp) { \
-        if (BU_LIST_IS_EMPTY(fp)) { \
-            BU_ALLOC((p), struct bv_scene_obj); \
-        } else { \
-            p = BU_LIST_NEXT(bv_scene_obj, fp); \
-            BU_LIST_DEQUEUE(&((p)->l)); \
-        } \
-        BU_LIST_INIT( &((p)->s_vlist) ); }
+	if (BU_LIST_IS_EMPTY(fp)) { \
+	    BU_ALLOC((p), struct bv_scene_obj); \
+	} else { \
+	    p = BU_LIST_NEXT(bv_scene_obj, fp); \
+	    BU_LIST_DEQUEUE(&((p)->l)); \
+	} \
+	BU_LIST_INIT( &((p)->s_vlist) ); }
 
 static int
 _fp_bbox(fastf_t *s_size, point_t *bmin, point_t *bmax,
-	struct db_full_path *fp,
-	struct db_i *dbip,
-	const struct bg_tess_tol *ttol,
-	const struct bn_tol *tol,
-	mat_t *s_mat,
-	struct resource *res,
-	struct bview *v
+	 struct db_full_path *fp,
+	 struct db_i *dbip,
+	 const struct bg_tess_tol *ttol,
+	 const struct bn_tol *tol,
+	 mat_t *s_mat,
+	 struct resource *res,
+	 struct bview *v
 	)
 {
     VSET(*bmin, INFINITY, INFINITY, INFINITY);
@@ -448,9 +448,9 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	dd.vs = vs;
 	dd.g = g;
 
-	// In drawing mode 3 (bigE) we are producing an evaluated shape,
-	// rather than iterating to get the solids
-	if (vs->s_dmode == 3) {
+	// In drawing modes 3 (bigE) and 5 (points) we are producing an
+	// evaluated shape, rather than iterating to get the solids
+	if (vs->s_dmode == 3 || vs->s_dmode == 5) {
 	    if (vs->color_override) {
 		VMOVE(g->s_color, vs->color);
 	    } else {
@@ -480,6 +480,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    BU_PUT(fp, struct db_full_path);
 	    continue;
 	}
+
 	// Walk the tree to build up the set of scene objects
 	db_fullpath_draw(fp, &mat, (void *)&dd);
 
@@ -984,12 +985,12 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
     return ret;
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

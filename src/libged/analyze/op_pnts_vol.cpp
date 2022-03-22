@@ -51,13 +51,13 @@ _tgc_hack_fix(struct partition *part, struct soltab *stp) {
     /* hack fix for bad tgc surfaces - avoids a logging crash, which is probably something else altogether... */
     if (bu_strncmp("rec", stp->st_meth->ft_label, 3) == 0 || bu_strncmp("tgc", stp->st_meth->ft_label, 3) == 0) {
 
-        /* correct invalid surface number */
-        if (part->pt_inhit->hit_surfno < 1 || part->pt_inhit->hit_surfno > 3) {
-            part->pt_inhit->hit_surfno = 2;
-        }
-        if (part->pt_outhit->hit_surfno < 1 || part->pt_outhit->hit_surfno > 3) {
-            part->pt_outhit->hit_surfno = 2;
-        }
+	/* correct invalid surface number */
+	if (part->pt_inhit->hit_surfno < 1 || part->pt_inhit->hit_surfno > 3) {
+	    part->pt_inhit->hit_surfno = 2;
+	}
+	if (part->pt_outhit->hit_surfno < 1 || part->pt_outhit->hit_surfno > 3) {
+	    part->pt_outhit->hit_surfno = 2;
+	}
     }
 }
 
@@ -79,7 +79,7 @@ in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(s
     bool t1 = ((part->pt_inhit->hit_dist < r->dist_test_pt) || NEAR_EQUAL(part->pt_inhit->hit_dist, r->dist_test_pt, VUNITIZE_TOL));
     bool t2 = ((part->pt_outhit->hit_dist > r->dist_test_pt) || NEAR_EQUAL(part->pt_outhit->hit_dist, r->dist_test_pt, VUNITIZE_TOL));
     if (t1 && t2) {
-        r->flag = -1;
+	r->flag = -1;
     }
 
     // Test point not on the partition
@@ -172,12 +172,12 @@ _pnt_in_vol(point_t *p, struct application *ap)
 
 extern "C" long
 op_pnts_vol(
-	const char *output_pnts_obj,
-	struct ged *gedp,
-	db_op_t op,
-	const char *pnts_obj,
-	const char *vol_obj
-	)
+    const char *output_pnts_obj,
+    struct ged *gedp,
+    db_op_t op,
+    const char *pnts_obj,
+    const char *vol_obj
+	   )
 {
     struct pnt *pstd, *pstdl = NULL;
     struct pnt_color *pc, *pcl = NULL;

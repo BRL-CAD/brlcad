@@ -197,16 +197,16 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
 	if ((s->s_type_flags & BV_DBOBJ_BASED) ||
-		(s->s_type_flags & BV_POLYGONS) ||
-		(s->s_type_flags & BV_LABELS))
+	    (s->s_type_flags & BV_POLYGONS) ||
+	    (s->s_type_flags & BV_LABELS))
 	    have_geom_objs = 1;
     }
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
 	if (have_geom_objs && !all_view_objs) {
 	    if (!(s->s_type_flags & BV_DBOBJ_BASED) &&
-		    !(s->s_type_flags & BV_POLYGONS) &&
-		    !(s->s_type_flags & BV_LABELS))
+		!(s->s_type_flags & BV_POLYGONS) &&
+		!(s->s_type_flags & BV_LABELS))
 		continue;
 	}
 	bv_scene_obj_bound(s);
@@ -263,12 +263,12 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

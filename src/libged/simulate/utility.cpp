@@ -86,7 +86,7 @@ namespace simulate
 
 
 TemporaryRegionHandle::TemporaryRegionHandle(db_i &db,
-	const db_full_path &path) :
+					     const db_full_path &path) :
     m_db(db),
     m_dir(*DB_FULL_PATH_CUR_DIR(&path)),
     m_dir_modified(false),

@@ -4,6 +4,7 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
+  ${BRLCAD_SOURCE_DIR}/src/libbu # for fort.h
   )
 
 set(BOT_SRCS
@@ -25,6 +26,7 @@ set(BOT_SRCS
   check.cpp
   extrude.cpp
   remesh.cpp
+  ../../libbu/fort.c
   )
 
 add_definitions(-DGED_PLUGIN)

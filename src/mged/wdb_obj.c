@@ -351,7 +351,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (ged_get_obj_bounds(&ged, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR) {
+    if (rt_obj_bounds(ged.ged_result_str, ged.dbip, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR) {
 	/* release any allocated memory */
 	ged_free(&ged);
 

@@ -44,9 +44,9 @@ analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
     if (area > 0.0) {
 	bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
 		      area
-		      * gedp->dbip->dbi_local2base
-		      * gedp->dbip->dbi_local2base
-	    );
+		     * gedp->dbip->dbi_local2base
+		     * gedp->dbip->dbi_local2base
+		     );
     }
 
     if (OBJ[ID_SKETCH].ft_centroid) {

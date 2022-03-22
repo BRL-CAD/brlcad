@@ -237,7 +237,6 @@ set(LIBRT_SOURCES
   vshoot.c
   wdb.c
   )
-# material/materialX.cpp
 
 set_source_files_properties(gdiam/gdiam.cpp PROPERTIES COMPILE_FLAGS -w)
 
@@ -254,6 +253,8 @@ endif(BRLCAD_ENABLE_GCT)
 set(librt_ignored_files
   cache.h
   librt_private.h
+  material/materialX.cpp
+  material/materialX.h
   prcomb.c
   primitives/bot/bot_edge.h
   primitives/bot/bot_wireframe.cpp

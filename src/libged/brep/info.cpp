@@ -490,10 +490,10 @@ _brep_cmd_surface_info(void *bs, int argc, const char **argv)
 	    if (!s)
 		s = "";
 	    bu_vls_printf(gib->vls, "surface[%2d]: %s u(%g, %g) v(%g, %g)\n",
-		    si, s,
-		    udom[0], udom[1],
-		    vdom[0], vdom[1]
-		    );
+			  si, s,
+			  udom[0], udom[1],
+			  vdom[0], vdom[1]
+			 );
 	    bu_vls_printf(gib->vls, "NURBS form of Surface:\n");
 	    ON_NurbsSurface *nsrf = ON_NurbsSurface::New();
 	    srf->GetNurbForm(*nsrf, 0.0);
@@ -555,10 +555,10 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 		s = "";
 	    }
 	    bu_vls_printf(gib->vls, "surface[%2d]: %s u(%g, %g) v(%g, %g)\n",
-		    si, s,
-		    udom[0], udom[1],
-		    vdom[0], vdom[1]
-		    );
+			  si, s,
+			  udom[0], udom[1],
+			  vdom[0], vdom[1]
+			 );
 	    ON_NurbsSurface *nsrf = ON_NurbsSurface::New();
 	    srf->GetNurbForm(*nsrf, 0.0);
 	    int knotlength0 = nsrf->m_order[0] + nsrf->m_cv_count[0] - 2;

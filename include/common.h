@@ -450,6 +450,15 @@ typedef _TCHAR TCHAR;
  */
 #  pragma warning( disable : 4351 )
 
+/* warning C5105: macro expansion producing 'defined' has undefined behavior
+ *
+ * this appears to be an erronous issue in the latest msvc
+ * pre-processor that has support for the new C17 standard, which
+ * triggers warnings in Windows SDK headers (e.g., winbase.h) that
+ * use the defined operator in certain macros.
+ */
+#  pragma warning( disable : 5105 )
+
 /* dubious warnings that are not yet intentionally disabled:
  *
  * /W3 warning C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)

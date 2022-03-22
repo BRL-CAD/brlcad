@@ -110,7 +110,7 @@ struct _ged_invalid_data {
  * a search result set (which has checks to filter out cyclic paths.) */
 HIDDEN void
 _ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
-	void (*traverse_func) (struct db_full_path *path, void *), void *client_data)
+			   void (*traverse_func) (struct db_full_path *path, void *), void *client_data)
 {
     struct directory *dp;
     struct _ged_cyclic_data *cdata = (struct _ged_cyclic_data *)client_data;
@@ -273,7 +273,7 @@ _ged_lint_shape_find_missing(struct _ged_missing_data *mdata, struct db_i *dbip,
     if (!mdata || !dbip || !dp) return;
 
     switch (dp->d_minor_type) {
-   	case DB5_MINORTYPE_BRLCAD_DSP:
+	case DB5_MINORTYPE_BRLCAD_DSP:
 	    /* For DSP we can't do a full import up front, since the potential invalidity we're looking to detect will cause
 	     * the import to fail.  Partially crack it, enough to where we can get what we need */
 	    if (db_get_external(&ext, dp, dbip) < 0) return;
@@ -305,11 +305,11 @@ _ged_lint_shape_find_missing(struct _ged_missing_data *mdata, struct db_i *dbip,
 	    /* For EXTRUDE we can't do a full import up front, since the potential invalidity we're looking to detect will cause
 	     * the import to fail.  Partially crack it, enough to where we can get what we need */
 	    if (db_get_external(&ext, dp, dbip) < 0) return;
-            if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
-                bu_free_external(&ext);
-                return;
-            }
-            cp = (unsigned char *)raw.body.ext_buf;
+	    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
+		bu_free_external(&ext);
+		return;
+	    }
+	    cp = (unsigned char *)raw.body.ext_buf;
 	    sketch_name = (char *)cp + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
 	    if (db_lookup(dbip, sketch_name, LOOKUP_QUIET) == RT_DIR_NULL) {
 		std::string inst = std::string(dp->d_namep) + std::string("/") + std::string(sketch_name);
@@ -609,25 +609,25 @@ ged_lint_memfree:
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl lint_cmd_impl = { "lint", ged_lint_core, GED_CMD_DEFAULT };
-    const struct ged_cmd lint_cmd = { &lint_cmd_impl };
-    const struct ged_cmd *lint_cmds[] = { &lint_cmd,  NULL };
+struct ged_cmd_impl lint_cmd_impl = { "lint", ged_lint_core, GED_CMD_DEFAULT };
+const struct ged_cmd lint_cmd = { &lint_cmd_impl };
+const struct ged_cmd *lint_cmds[] = { &lint_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  lint_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  lint_cmds, 1 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

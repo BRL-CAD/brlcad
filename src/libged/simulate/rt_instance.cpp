@@ -61,7 +61,7 @@ multioverlap_handler(application * const app, partition * const partition1,
     RT_CK_PT_HD(partition_list);
 
     MultiOverlapHandlerArgs &args = *static_cast<MultiOverlapHandlerArgs *>
-	(app->a_uptr);
+    (app->a_uptr);
 
     if (BU_PTBL_LEN(region_table) != 2)
 	bu_bomb("unexpected region table length");

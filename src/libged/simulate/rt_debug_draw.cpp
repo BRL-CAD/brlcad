@@ -55,7 +55,7 @@ make_name(const db_i &db, const std::string &base)
     stream.exceptions(std::ostream::failbit | std::ostream::badbit);
 
     unsigned long object_number = static_cast<unsigned long>
-				  (drand48() * std::numeric_limits<unsigned long>::max() + 0.5);
+    (drand48() * std::numeric_limits<unsigned long>::max() + 0.5);
 
     do {
 	stream.str("");

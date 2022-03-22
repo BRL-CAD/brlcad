@@ -31,13 +31,13 @@
 #include "../ged_private.h"
 
 #define GET_BV_SCENE_OBJ(p, fp) { \
-    if (BU_LIST_IS_EMPTY(fp)) { \
-	BU_ALLOC((p), struct bv_scene_obj); \
-    } else { \
-	p = BU_LIST_NEXT(bv_scene_obj, fp); \
-	BU_LIST_DEQUEUE(&((p)->l)); \
-    } \
-    BU_LIST_INIT( &((p)->s_vlist) ); }
+	if (BU_LIST_IS_EMPTY(fp)) { \
+	    BU_ALLOC((p), struct bv_scene_obj); \
+	} else { \
+	    p = BU_LIST_NEXT(bv_scene_obj, fp); \
+	    BU_LIST_DEQUEUE(&((p)->l)); \
+	} \
+	BU_LIST_INIT( &((p)->s_vlist) ); }
 
 static int
 ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clear_view_objs)
@@ -204,12 +204,11 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     return ret;
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

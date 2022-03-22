@@ -111,12 +111,12 @@ plotcurve(const ON_Curve &curve, struct bu_list *vlfree, struct bv_vlblock *vbp,
 
     if (curve.IsLinear()) {
 	/*
-	   ON_BrepVertex& v1 = face.Brep()->m_V[trim.m_vi[0]];
-	   ON_BrepVertex& v2 = face.Brep()->m_V[trim.m_vi[1]];
-	   VMOVE(pt1, v1.Point());
-	   VMOVE(pt2, v2.Point());
-	   LINE_PLOT(pt1, pt2);
-	   */
+	  ON_BrepVertex& v1 = face.Brep()->m_V[trim.m_vi[0]];
+	  ON_BrepVertex& v2 = face.Brep()->m_V[trim.m_vi[1]];
+	  VMOVE(pt1, v1.Point());
+	  VMOVE(pt2, v2.Point());
+	  LINE_PLOT(pt1, pt2);
+	*/
 
 	int knotcnt = curve.SpanCount();
 	fastf_t *knots = new fastf_t[knotcnt + 1];
@@ -136,7 +136,7 @@ plotcurve(const ON_Curve &curve, struct bu_list *vlfree, struct bv_vlblock *vbp,
 	// XXX todo: dynamically sample the curve
 	for (int i = 1; i <= plotres; i++) {
 	    ON_3dPoint p = curve.PointAt(dom.ParameterAt((double) (i - 1)
-			/ (double)plotres));
+							/ (double)plotres));
 	    VMOVE(pt1, p);
 	    p = curve.PointAt(dom.ParameterAt((double) i / (double)plotres));
 	    VMOVE(pt2, p);
@@ -150,13 +150,13 @@ plotcurve(const ON_Curve &curve, struct bu_list *vlfree, struct bv_vlblock *vbp,
 
 
 void plotcurveonsurface(const ON_Curve *curve,
-	const ON_Surface *surface,
-	struct bu_list *vlfree,
-	struct bv_vlblock *vbp,
-	int plotres,
-	const int red = 255,
-	const int green = 255,
-	const int blue = 0)
+			const ON_Surface *surface,
+			struct bu_list *vlfree,
+			struct bv_vlblock *vbp,
+			int plotres,
+			const int red = 255,
+			const int green = 255,
+			const int blue = 0)
 {
     if (curve->Dimension() != 2)
 	return;
@@ -386,42 +386,42 @@ drawisoUCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
 
     if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
 	/*
-	   if ((hit_cnt % 2) != 0) {
-	//bu_log("V - %f\n", pt.y);
-	if (!trim_hits.empty()) {
-	fastf_t end = trim_hits.front();
-	trim_hits.pop_front();
-	//bu_log("\tfrom - %f, to - %f\n", from, to);
-	fastf_t deltax = (end - from) / 50.0;
-	if (deltax > 0.001) {
-	for (fastf_t x = from; x < end && x < to; x = x + deltax) {
-	ON_3dPoint p = surf->PointAt(x, pt.y);
-	VMOVE(pt1, p);
-	if (x + deltax > end) {
-	if (x + deltax > to) {
-	p = surf->PointAt(to, pt.y);
-	} else {
-	p = surf->PointAt(end, pt.y);
-	}
-	} else {
-	if (x + deltax > to) {
-	p = surf->PointAt(to, pt.y);
-	} else {
-	p = surf->PointAt(x + deltax, pt.y);
-	}
-	}
-	VMOVE(pt2, p);
+	  if ((hit_cnt % 2) != 0) {
+	  //bu_log("V - %f\n", pt.y);
+	  if (!trim_hits.empty()) {
+	  fastf_t end = trim_hits.front();
+	  trim_hits.pop_front();
+	  //bu_log("\tfrom - %f, to - %f\n", from, to);
+	  fastf_t deltax = (end - from) / 50.0;
+	  if (deltax > 0.001) {
+	  for (fastf_t x = from; x < end && x < to; x = x + deltax) {
+	  ON_3dPoint p = surf->PointAt(x, pt.y);
+	  VMOVE(pt1, p);
+	  if (x + deltax > end) {
+	  if (x + deltax > to) {
+	  p = surf->PointAt(to, pt.y);
+	  } else {
+	  p = surf->PointAt(end, pt.y);
+	  }
+	  } else {
+	  if (x + deltax > to) {
+	  p = surf->PointAt(to, pt.y);
+	  } else {
+	  p = surf->PointAt(x + deltax, pt.y);
+	  }
+	  }
+	  VMOVE(pt2, p);
 
-	//bu_log(
-	//		"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-	//		cnt++, x, v, x + deltax, v);
+	  //bu_log(
+	  //		"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
+	  //		cnt++, x, v, x + deltax, v);
 
-	BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
-	}
-	}
-	}
-	}
+	  BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+	  BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
+	  }
+	  }
+	  }
+	  }
 	*/
 	while (!trim_hits.empty()) {
 	    fastf_t start = trim_hits.front();
@@ -514,43 +514,43 @@ drawisoVCheckForTrim(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vl
 
     if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
 	/*
-	   if ((hit_cnt % 2) != 0) { //odd starting inside
-	//bu_log("V - %f\n", pt.y);
-	if (!trim_hits.empty()) {
-	fastf_t end = trim_hits.front();
-	trim_hits.pop_front();
-	//bu_log("\tfrom - %f, to - %f\n", from, to);
-	fastf_t deltay = (end - from) / 50.0;
-	if (deltay > 0.001) {
-	for (fastf_t y = from; y < end && y < to; y = y + deltay) {
-	ON_3dPoint p = surf->PointAt(pt.x, y);
-	VMOVE(pt1, p);
-	if (y + deltay > end) {
-	if (y + deltay > to) {
-	p = surf->PointAt(pt.x, to);
-	} else {
-	p = surf->PointAt(pt.x, end);
-	}
-	} else {
-	if (y + deltay > to) {
-	p = surf->PointAt(pt.x, to);
-	} else {
-	p = surf->PointAt(pt.x, y + deltay);
-	}
-	}
-	VMOVE(pt2, p);
+	  if ((hit_cnt % 2) != 0) { //odd starting inside
+	  //bu_log("V - %f\n", pt.y);
+	  if (!trim_hits.empty()) {
+	  fastf_t end = trim_hits.front();
+	  trim_hits.pop_front();
+	  //bu_log("\tfrom - %f, to - %f\n", from, to);
+	  fastf_t deltay = (end - from) / 50.0;
+	  if (deltay > 0.001) {
+	  for (fastf_t y = from; y < end && y < to; y = y + deltay) {
+	  ON_3dPoint p = surf->PointAt(pt.x, y);
+	  VMOVE(pt1, p);
+	  if (y + deltay > end) {
+	  if (y + deltay > to) {
+	  p = surf->PointAt(pt.x, to);
+	  } else {
+	  p = surf->PointAt(pt.x, end);
+	  }
+	  } else {
+	  if (y + deltay > to) {
+	  p = surf->PointAt(pt.x, to);
+	  } else {
+	  p = surf->PointAt(pt.x, y + deltay);
+	  }
+	  }
+	  VMOVE(pt2, p);
 
-	//bu_log(
-	//		"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-	//		cnt++, u, y, u, y + deltay);
+	  //bu_log(
+	  //		"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
+	  //		cnt++, u, y, u, y + deltay);
 
-	BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
-	}
-	}
+	  BV_ADD_VLIST(vlfree, vhead, pt1, BV_VLIST_LINE_MOVE);
+	  BV_ADD_VLIST(vlfree, vhead, pt2, BV_VLIST_LINE_DRAW);
+	  }
+	  }
 
-	}
-	}
+	  }
+	  }
 	*/
 	while (!trim_hits.empty()) {
 	    fastf_t start = trim_hits.front();
@@ -680,7 +680,7 @@ drawBBNode(const SurfaceTree* st, struct bu_list *vlfree, struct bv_vlblock *vbp
     } else {
 	if (!node->get_children().empty()) {
 	    for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode
-		    != node->get_children().end(); childnode++) {
+		 != node->get_children().end(); childnode++) {
 		drawBBNode(st, vlfree, vbp, *childnode);
 	    }
 	}
@@ -722,20 +722,20 @@ brep_plot_file(const char *pname = NULL)
     BV_ADD_VLIST(vlfree, vhead, valp[d], BV_VLIST_LINE_DRAW);
 
 #define BB_PLOT(min, max) {		\
-    fastf_t pt[8][3];			\
-    VSET(pt[0], max[X], min[Y], min[Z]);	\
-    VSET(pt[1], max[X], max[Y], min[Z]);	\
-    VSET(pt[2], max[X], max[Y], max[Z]);	\
-    VSET(pt[3], max[X], min[Y], max[Z]);	\
-    VSET(pt[4], min[X], min[Y], min[Z]);	\
-    VSET(pt[5], min[X], max[Y], min[Z]);	\
-    VSET(pt[6], min[X], max[Y], max[Z]);	\
-    VSET(pt[7], min[X], min[Y], max[Z]);	\
-    ARB_FACE(pt, 0, 1, 2, 3);		\
-    ARB_FACE(pt, 4, 0, 3, 7);		\
-    ARB_FACE(pt, 5, 4, 7, 6);		\
-    ARB_FACE(pt, 1, 5, 6, 2);		\
-}
+	fastf_t pt[8][3];			\
+	VSET(pt[0], max[X], min[Y], min[Z]);	\
+	VSET(pt[1], max[X], max[Y], min[Z]);	\
+	VSET(pt[2], max[X], max[Y], max[Z]);	\
+	VSET(pt[3], max[X], min[Y], max[Z]);	\
+	VSET(pt[4], min[X], min[Y], min[Z]);	\
+	VSET(pt[5], min[X], max[Y], min[Z]);	\
+	VSET(pt[6], min[X], max[Y], max[Z]);	\
+	VSET(pt[7], min[X], min[Y], max[Z]);	\
+	ARB_FACE(pt, 0, 1, 2, 3);		\
+	ARB_FACE(pt, 4, 0, 3, 7);		\
+	ARB_FACE(pt, 5, 4, 7, 6);		\
+	ARB_FACE(pt, 1, 5, 6, 2);		\
+    }
 
 static unsigned int
 plotsurfaceleafs(const SurfaceTree* surf, struct bu_list *vlfree, struct bv_vlblock *vbp, bool dim3d)

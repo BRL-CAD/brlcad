@@ -72,7 +72,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 
     struct fb *fbp = dm_get_fb(dmp);
     if (!fbp) {
-    	bu_vls_printf(gedp->ged_result_str, "attached display manager has no embedded framebuffer\n");
+	bu_vls_printf(gedp->ged_result_str, "attached display manager has no embedded framebuffer\n");
 	return BRLCAD_ERROR;
     }
 
@@ -99,7 +99,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     fbs->fbs_open_client_handler = gedp->fbs_open_client_handler;
     fbs->fbs_close_client_handler = gedp->fbs_close_client_handler;
     if (!fbs->fbs_is_listening || fbs_open(fbs, 0) != BRLCAD_OK) {
-    	bu_vls_printf(gedp->ged_result_str, "could not open fb server\n");
+	bu_vls_printf(gedp->ged_result_str, "could not open fb server\n");
 	return BRLCAD_ERROR;
     }
 
@@ -170,12 +170,12 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
     return ret;
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+
