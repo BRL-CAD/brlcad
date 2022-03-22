@@ -30,8 +30,8 @@
 #include "analyze.h"
 
 
-/* arbitrary upper limit just to prevent out-of-control behavior */
-#define MAX_MATERIAL_CNT 1000000
+/* extreme upper limit just to prevent overflow */
+#define MAX_MATERIAL_CNT (size_t)(LONG_MAX - 1L)
 
 
 struct analyze_densities_impl {
@@ -102,7 +102,7 @@ analyze_densities_set(struct analyze_densities *a, long int id, fastf_t density,
 
     if (a->i->id2density.size() >= MAX_MATERIAL_CNT) {
 	if (msgs) {
-	    bu_vls_printf(msgs, "ERROR: Maximum materials (%d) exceeded in density table.\n", MAX_MATERIAL_CNT);
+	    bu_vls_printf(msgs, "ERROR: Maximum materials (%zd) exceeded in density table.\n", MAX_MATERIAL_CNT);
 	}
 	return -1;
     }
