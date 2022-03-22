@@ -118,7 +118,7 @@ ged_scene_obj_geom(struct bv_scene_obj *s)
 	return;
     }
 
-    /* Mode 4 draws a point cloud in lieu of wireframes */
+    /* Mode 5 draws a point cloud in lieu of wireframes */
     if (s->s_os.s_dmode == 5) {
 	draw_points(s);
 	bv_scene_obj_bound(s);
