@@ -39,6 +39,7 @@ set(LIBGED_SOURCES
   path.c
   pipe.c
   pnts_util.c
+  points_eval.c
   polyclip.cpp
   qray.c
   rotate_eto.c

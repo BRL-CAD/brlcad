@@ -99,6 +99,7 @@ _wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
 
 
 extern "C" int draw_m3(struct bv_scene_obj *s);
+extern "C" int draw_points(struct bv_scene_obj *s);
 
 void
 ged_scene_obj_geom(struct bv_scene_obj *s)
@@ -109,10 +110,17 @@ ged_scene_obj_geom(struct bv_scene_obj *s)
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
 
-    /* Mode 3 is unique - it evaluates an object rather than visualizing
-     * its solids */
+    /* Mode 3 generates an evaluated wireframe rather than drawing
+     * the individual solid wireframes */
     if (s->s_os.s_dmode == 3) {
 	draw_m3(s);
+	bv_scene_obj_bound(s);
+	return;
+    }
+
+    /* Mode 4 draws a point cloud in lieu of wireframes */
+    if (s->s_os.s_dmode == 5) {
+	draw_points(s);
 	bv_scene_obj_bound(s);
 	return;
     }

@@ -448,9 +448,9 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	dd.vs = vs;
 	dd.g = g;
 
-	// In drawing mode 3 (bigE) we are producing an evaluated shape,
-	// rather than iterating to get the solids
-	if (vs->s_dmode == 3) {
+	// In drawing modes 3 (bigE) and 5 (points) we are producing an
+	// evaluated shape, rather than iterating to get the solids
+	if (vs->s_dmode == 3 || vs->s_dmode == 5) {
 	    if (vs->color_override) {
 		VMOVE(g->s_color, vs->color);
 	    } else {
@@ -480,6 +480,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    BU_PUT(fp, struct db_full_path);
 	    continue;
 	}
+
 	// Walk the tree to build up the set of scene objects
 	db_fullpath_draw(fp, &mat, (void *)&dd);
 
