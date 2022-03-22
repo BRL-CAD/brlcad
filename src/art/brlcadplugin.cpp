@@ -203,7 +203,7 @@ BrlcadObject::BrlcadObject(
     // VMOVE(min, ap->a_uvec);
     // VMOVE(max, ap->a_vvec);
 
-    this->name = m_params.get_required<std::string>("object_path");
+    this->name = new std::string(m_params.get_required<std::string>("object_path"));
     fprintf(output, "appleseed const: Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
     fflush(output);
 }
@@ -222,7 +222,7 @@ BrlcadObject:: BrlcadObject(
     // VMOVE(this->min, ap->a_uvec);
     // VMOVE(this->max, ap->a_vvec);
 
-    this->name = m_params.get_required<std::string>("object_path");
+    this->name = new std::string(m_params.get_required<std::string>("object_path"));
     VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
     VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
 
@@ -241,6 +241,7 @@ BrlcadObject::release()
 {
     // bu_free(resources, "appleseed");
     // bu_free(ap, "appleseed");
+    delete this->name;
     delete this;
 }
 
@@ -321,7 +322,7 @@ BrlcadObject::intersect(
     VSET(ap->a_ray.r_dir, dir[0], dir[1], dir[2]);
     VSET(ap->a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
 
-    ap->a_uptr = (void*)this->name.c_str();
+    ap->a_uptr = (void*)this->name->c_str();
 
     if (rt_shootray(ap) == 0)
     {
@@ -456,7 +457,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
 
     for (size_t i = 0; i < MAX_PSW; i++)
     {
-	rt_init_resource(&resources[i], i, rtip);
+	rt_init_resource(&resources[i], (int)i, rtip);
 	RT_CK_RESOURCE(&resources[i]);
     }
 
@@ -475,7 +476,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
     }
 
     /* include objects from database */
-    if (rt_gettrees(rtip, objc, objv, npsw) < 0)
+    if (rt_gettrees(rtip, objc, objv, (int)npsw) < 0)
     {
 	fprintf(output, "Loading the geometry for [%s] FAILED\n", objects[0].c_str());
 	fflush(output);

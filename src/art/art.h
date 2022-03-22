@@ -120,7 +120,7 @@ class APPLESEED_DLL_EXPORT BrlcadObject : public asr::ProceduralObject
 public:
     BrlcadObject(const char* name, const asr::ParamArray& params);
     BrlcadObject(const char* name, const asr::ParamArray& params, struct application* ap, struct resource* resources);
-    std::string name;
+    std::string *name = nullptr;
     void release() override;
     const char* get_model() const override;
     bool on_frame_begin(const asr::Project& project, const asr::BaseGroup* parent, asr::OnFrameBeginRecorder& recorder, asf::IAbortSwitch* abort_switch) override;
