@@ -2,7 +2,7 @@
 #                         A R T . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2021 United States Government as represented by
+# Copyright (c) 2021-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -123,7 +123,7 @@ rm `pwd`/output/test.png
 #   material create plastic
 #   material set plastic optical.shader path/to/adobe.mtlx
 #   material set tor.r plastic
-# q
+#   q
 # $ART -o test3.pix test.g tor.r
 # EOF
 
