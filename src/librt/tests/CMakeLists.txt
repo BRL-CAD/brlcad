@@ -27,8 +27,10 @@ BRLCAD_ADDEXEC(rt_nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" TEST)
 #set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
 set(USING_MATERIALX NO)
 if(USING_MATERIALX)
-BRLCAD_ADDEXEC(materialx_test materialx_test.cpp "librt;" TEST)
-BRLCAD_ADD_TEST(NAME rt_mtlx_test COMMAND materialx_test)
+  BRLCAD_ADDEXEC(materialx_test materialx_test.cpp "librt;" TEST)
+  BRLCAD_ADD_TEST(NAME rt_mtlx_test COMMAND materialx_test)
+else(USING_MATERIALX)
+  CMAKEFILES(materialx_test.cpp)
 endif(USING_MATERIALX)
 
 
