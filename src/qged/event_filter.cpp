@@ -33,16 +33,22 @@
 /* We base conditionals on whether the target widget w is active.  Usually the
  * actual focus widget is a child of the widget in question, so we walk up the
  * parents to see if the focusWidget is underneath the target widget. */
+// TODO - this is not correct - it is always returning true.  My guess is some
+// of the widgets aren't establishing the correct parent relationships...
 static bool
 widget_active(QWidget *w)
 {
+    bu_log("w: %p\n", (void *)w);
     QWidget *fw = w->focusWidget();
-    QWidget *cw = fw;
+    bu_log("fw: %p\n", (void *)fw);
+    QWidget *cw = w;
     while (cw) {
-	if (cw == w) {
-	    return true;
+	if (cw == fw) {
+	    //return true;
+	    return false;  // Disable until parent/child relationships are fixed...
 	}
 	cw = (QWidget *)cw->parent();
+	bu_log("cw: %p\n", (void *)fw);
     }
     return false;
 }
