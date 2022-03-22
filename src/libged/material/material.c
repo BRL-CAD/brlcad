@@ -135,7 +135,12 @@ assign_material(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-// Routine handles the import of a density table
+/* Routine handles the import of a density table.
+ *
+ * FIXME: this routine is derived from libanalyze, but it would be
+ * better to call analyze_densities_load() to ensure consistent
+ * density file parsing and reduced code.
+ */
 static int
 import_materials(struct ged *gedp, int argc, const char *argv[])
 {
