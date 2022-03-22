@@ -126,7 +126,7 @@ QgTreeView::QgTreeView(QWidget *pparent, QgSelectionProxyModel *treemodel) : QTr
     header()->setStretchLastSection(true);
     QObject::connect(this, &QgTreeView::expanded, this, &QgTreeView::tree_column_size);
     QObject::connect(this, &QgTreeView::collapsed, this, &QgTreeView::tree_column_size);
-    QObject::connect(this, &QgTreeView::clicked, treemodel, &QgSelectionProxyModel::update_selected_node_relationships);
+    QObject::connect(this, &QgTreeView::clicked, treemodel, &QgSelectionProxyModel::updateSelectedNodeRelationships);
     QObject::connect(this, &QgTreeView::customContextMenuRequested, (QgTreeView *)this, &QgTreeView::context_menu);
 }
 
@@ -243,7 +243,7 @@ QgTreeView::redo_highlights()
 	}
     }
 
-    view_model->update_selected_node_relationships(selected_idx);
+    view_model->updateSelectedNodeRelationships(selected_idx);
 }
 
 void QgTreeView::expand_path(QString path)

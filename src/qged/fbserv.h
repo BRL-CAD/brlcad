@@ -42,19 +42,31 @@ class QFBSocket : public QObject
 {
     Q_OBJECT
 
-    public:
-	QTcpSocket *s;
-	int ind;
-	struct fbserv_obj *fbsp;
+  public:
+#ifdef BRLCAD_OPENGL
+    static void qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data);
+#endif
+    static void qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data);
+    static int qdm_is_listening(struct fbserv_obj *fbsp);
+    static int qdm_listen_on_port(struct fbserv_obj *fbsp, int available_port);
+    static void qdm_open_server_handler(struct fbserv_obj *fbsp);
+    static void qdm_close_server_handler(struct fbserv_obj *fbsp);
+    static void qdm_close_client_handler(struct fbserv_obj *fbsp, int sub);
 
     signals:
 	void updated();
 
     public slots:
-	void client_handler();
+        void client_handler();
 
-    private:
+      private:
+        QTcpSocket *s;
+        int ind;
+        struct fbserv_obj *fbsp;
+
         QByteArray buff;
+
+        friend class QFBServer;
 };
 
 // Overall server that sets up clients
@@ -74,27 +86,6 @@ class QFBServer : public QTcpServer
 	void on_Connect();
 };
 
-
-__BEGIN_DECLS
-
-extern int
-qdm_is_listening(struct fbserv_obj *fbsp);
-extern int
-qdm_listen_on_port(struct fbserv_obj *fbsp, int available_port);
-extern void
-qdm_open_server_handler(struct fbserv_obj *fbsp);
-extern void
-qdm_close_server_handler(struct fbserv_obj *fbsp);
-#ifdef BRLCAD_OPENGL
-extern void
-qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data);
-#endif
-extern void
-qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data);
-extern void
-qdm_close_client_handler(struct fbserv_obj *fbsp, int sub);
-
-__END_DECLS
 
 #endif /* QDM_FBSERV_H */
 

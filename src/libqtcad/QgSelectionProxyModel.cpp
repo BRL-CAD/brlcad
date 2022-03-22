@@ -74,16 +74,16 @@ QgSelectionProxyModel::data(const QModelIndex &idx, int role) const
     return QVariant();
 }
 
-void QgSelectionProxyModel::mode_change(int i)
+void QgSelectionProxyModel::modeChange(int i)
 {
     if (i != interaction_mode && treeview) {
 	interaction_mode = i;
-	update_selected_node_relationships(treeview->selected());
+	updateSelectedNodeRelationships(treeview->selected());
     }
 }
 
 void
-QgSelectionProxyModel::item_collapsed(const QModelIndex &index)
+QgSelectionProxyModel::itemCollapsed(const QModelIndex &index)
 {
     QgModel *m = (QgModel *)sourceModel();
     QgItem *itm = m->getItem(index);
@@ -120,7 +120,7 @@ QgSelectionProxyModel::setData(const QModelIndex & idx, const QVariant &UNUSED(v
 // particular QgItem.  That decision will be made later, and is a combination
 // of active_flag status and the open status of the QgItem.
 void
-QgSelectionProxyModel::update_selected_node_relationships(const QModelIndex &idx)
+QgSelectionProxyModel::updateSelectedNodeRelationships(const QModelIndex &idx)
 {
     std::unordered_map<unsigned long long, GInstance *>::iterator g_it;
 

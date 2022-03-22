@@ -44,7 +44,7 @@
 #include "ged.h"
 #endif
 
-class QTCAD_EXPORT GInstance
+class GInstance
 {
     public:
         explicit GInstance(struct directory *idp, struct db_i *idbip);
@@ -65,29 +65,16 @@ class QTCAD_EXPORT GInstance
         // that are no longer valid will be removed from the maps and deleted.
         static void sync_instances(std::unordered_map<unsigned long long, GInstance *> *tops_instances, std::unordered_map<unsigned long long, GInstance *> *instances, struct db_i *dbip);
 
-        inline int getActiveFlag() { return activeFlag; }
-        inline void setActiveFlag(int flag) { activeFlag = flag; }
-
-        inline unsigned long long getHash() { return hash; }
-
-        inline directory *getParent() { return parent; }
-
-        inline directory *getDP() { return dp; };
-        inline void setDP(directory *newDP) { dp = newDP; }
-
-        inline db_i *getDbip() { return dbip; }
-
         inline std::string getDpName() { return dpName; }
 
-        inline const char *getDpNameStr() { return dpName.c_str();  }
+      private:
+        static void addGInstance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst, void *c_set);
+        static void dpInstances(std::unordered_map<unsigned long long, GInstance *> *valid_instances, std::unordered_map<unsigned long long, GInstance *> *instances, struct directory *dp, struct db_i *dbip);
 
-        inline db_op_t getOp() { return op; }
-
-        inline fastf_t *getCombMatrix() { return cM; }
-
-    private:
-        static void add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst, void *c_set);
-        static void dp_instances(std::unordered_map<unsigned long long, GInstance *> *valid_instances, std::unordered_map<unsigned long long, GInstance *> *instances, struct directory *dp, struct db_i *dbip);
+        /* Given GInstance data, construct its hash.  This function is public to allow
+         * for hashing of different "modes" in client codes wanting to do fuzzy matching
+         * of instances. */
+        static unsigned long long ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, struct db_i *dbip, db_op_t op, mat_t c_m, int cnt);
 
 	// This is a flag that may be set or unset by parent applications.
 	// Used primarily to assist in visual identification of components
@@ -110,13 +97,24 @@ class QTCAD_EXPORT GInstance
 	db_op_t op = DB_OP_NULL;
 	// Matrix above comb instance in comb tree (default is IDN)
 	mat_t cM;
-};
 
-/* Given GInstance data, construct its hash.  This function is public to allow
- * for hashing of different "modes" in client codes wanting to do fuzzy matching
- * of instances. */
-QTCAD_EXPORT extern unsigned long long
-ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, db_op_t op, mat_t c_m, int cnt);
+        inline const char *getDpNameStr() { return dpName.c_str(); }
+        inline int getActiveFlag() { return activeFlag; }
+        inline void setActiveFlag(int flag) { activeFlag = flag; }
+        inline unsigned long long getHash() { return hash; }
+        inline directory *getParent() { return parent; }
+        inline directory *getDP() { return dp; };
+        inline void setDP(directory *newDP) { dp = newDP; }
+        inline db_i *getDbip() { return dbip; }
+        inline db_op_t getOp() { return op; }
+        inline fastf_t *getCombMatrix() { return cM; }
+
+        friend class QgModel;
+        friend class QgItem;
+        friend class QgSelectionProxyModel;
+        friend class QgTreeView;
+        friend struct QgItemCmp;
+};
 
 #endif //GINSTANCE_H
 

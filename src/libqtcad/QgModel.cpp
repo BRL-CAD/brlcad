@@ -54,7 +54,7 @@
 #include "qtcad/QgModel.h"
 #include "qtcad/QgUtil.h"
 
-struct QgItem_cmp {
+struct QgItemCmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
     {
 	if (!i1 && !i2)
@@ -107,7 +107,7 @@ QgItem::QgItem(GInstance *g, QgModel *ictx)
     ctx = ictx;
     if (g) {
 	parentItem = NULL;
-	c_count = g->children(ictx->instances).size();
+	cCount = g->children(ictx->instances).size();
 	ihash = g->getHash();
 	// TODO - these copies may be moot - the child relationship needs
 	// the gInstance, so we may have to just ensure gInstances aren't
@@ -180,7 +180,7 @@ QgItem::childCount() const
     if (this == ctx->root())
 	return children.size();
 
-    return (int)c_count;
+    return (int)cCount;
 }
 
 int
@@ -213,7 +213,7 @@ QgItem::childNumber() const
 
 // 0 = exact, 1 = name + op, 2 = name + mat, 3 = name only, -1 name mismatch
 int
-qgitem_cmp_score(QgItem *i1, QgItem *i2)
+QgItem::cmp_score(QgItem *i1, QgItem *i2)
 {
     int ret = -1;
     if (!i1 || !i2 || !i1->ihash || !i2->ihash)
@@ -241,12 +241,12 @@ qgitem_cmp_score(QgItem *i1, QgItem *i2)
 
 
 QgItem *
-find_similar_qgitem(QgItem *c, std::vector<QgItem *> &v)
+QgItem::find_similar(QgItem *c, std::vector<QgItem *> &v)
 {
     QgItem *m = NULL;
     int lret = INT_MAX;
     for (size_t i = 0; i < v.size(); i++) {
-	int score = qgitem_cmp_score(c, v[i]);
+        int score = QgItem::cmp_score(c, v[i]);
 	if (score < 0)
 	    continue;
 	m = (score < lret) ? v[i] : m;
@@ -257,10 +257,7 @@ find_similar_qgitem(QgItem *c, std::vector<QgItem *> &v)
     return m;
 }
 
-
-
-extern "C" void
-qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
+void QgModel::update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
 {
     // If all the input parameters other than dbip/op are NULL and op is set to
     // subtraction, the update_nref logic has completed its work and is making
@@ -277,25 +274,24 @@ qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent
 
 	// If anybody was requesting an nref update, the fact that we're here
 	// means we've done it.
-	ctx->need_update_nref = false;
+	ctx->needUpdateNref = false;
     }
 }
 
-extern "C" void
-qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
+void QgModel::changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
     std::queue<std::unordered_map<unsigned long long, GInstance *>::iterator> rmq;
     std::unordered_map<unsigned long long, GInstance *>::iterator i_it, trm_it;
     QgModel *ctx = (QgModel *)u_data;
     GInstance *inst = NULL;
-    ctx->need_update_nref = true;
-    ctx->changed_db_flag = 1;
+    ctx->needUpdateNref = true;
+    ctx->changedDbFlag = 1;
 
     switch(mode) {
 	case 0:
 	    // The view needs to regenerate the wireframe(s) for anything drawn
 	    // using this dp, as it may have changed
-	    ctx->changed_dp.insert(dp);
+	    ctx->changedDp.insert(dp);
 
 	    break;
 	case 1:
@@ -316,7 +312,7 @@ qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mo
 		    inst->setDP(NULL);
 	    }
 
-	    ctx->changed_dp.insert(dp);
+	    ctx->changedDp.insert(dp);
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -338,9 +334,9 @@ QgModel::QgModel(QObject *p, const char *npath)
     // always valid.  It will usually be overridden by application provided views,
     // but this is our hard guarantee that a QgModel will always be able to work
     // with commands needing a view.
-    BU_GET(empty_gvp, struct bview);
-    bv_init(empty_gvp);
-    gedp->ged_gvp = empty_gvp;
+    BU_GET(emptyGvp, struct bview);
+    bv_init(emptyGvp);
+    gedp->ged_gvp = emptyGvp;
     bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
     gedp->ged_gvp->gv_db_grps = &gedp->ged_db_grps;
     gedp->ged_gvp->gv_view_shared_objs = &gedp->ged_view_shared_objs;
@@ -351,8 +347,8 @@ QgModel::QgModel(QObject *p, const char *npath)
     rootItem->ctx = this;
 
     // Initialize the instance containers
-    tops_instances = new std::unordered_map<unsigned long long, GInstance *>;
-    tops_instances->clear();
+    topsInstances = new std::unordered_map<unsigned long long, GInstance *>;
+    topsInstances->clear();
     instances = new std::unordered_map<unsigned long long, GInstance *>;
     instances->clear();
 
@@ -372,18 +368,18 @@ QgModel::QgModel(QObject *p, const char *npath)
 	av[0] = "open";
 	av[1] = npath;
 	av[2] = NULL;
-	run_cmd(gedp->ged_result_str, ac, (const char **)av);
+	runCmd(gedp->ged_result_str, ac, (const char **)av);
     }
 }
 
 QgModel::~QgModel()
 {
     delete items;
-    delete tops_instances;
+    delete topsInstances;
     delete instances;
 
-    bv_free(empty_gvp);
-    BU_PUT(empty_gvp, struct bview);
+    bv_free(emptyGvp);
+    BU_PUT(emptyGvp, struct bview);
     ged_close(gedp);
     delete rootItem;
 }
@@ -394,7 +390,7 @@ QgModel::~QgModel()
 // invalid QgItem is defined at that level - we don't want to re-create it
 // here.)
 void
-QgModel::item_rebuild(QgItem *item)
+QgModel::itemRebuild(QgItem *item)
 {
     // Top level is a special case and is handled separately
     if (item == rootItem) {
@@ -465,7 +461,7 @@ QgModel::item_rebuild(QgItem *item)
 	    items->insert(nitem);
 	}
     }
-    item->c_count = nc.size();
+    item->cCount = nc.size();
 
     // If anything changed since the last time children was built, we need to
     // replace children's contents with the new vector.  This is being run
@@ -483,45 +479,45 @@ QgModel::item_rebuild(QgItem *item)
 }
 
 void
-QgModel::g_update(struct db_i *n_dbip)
+QgModel::gUpdate(struct db_i *n_dbip)
 {
 
     // In case we have opened a completely new .g file, set the callbacks
     if (n_dbip && !BU_PTBL_LEN(&n_dbip->dbi_changed_clbks)) {
 	// Primary driver of model updates is when individual objects are changed
-	db_add_changed_clbk(n_dbip, &qgmodel_changed_callback, (void *)this);
+	db_add_changed_clbk(n_dbip, &QgModel::changed_callback, (void *)this);
 
 	// If the tops list changes, we need to update that vector as well.  Unlike
 	// local dp changes, we can only (re)build the tops list after an
 	// update_nref pass is complete.
-	db_add_update_nref_clbk(n_dbip, &qgmodel_update_nref_callback, (void *)this);
+	db_add_update_nref_clbk(n_dbip, &QgModel::update_nref_callback, (void *)this);
     }
 
     if (!n_dbip) {
 	// if we have no dbip, clear out everything
 	beginResetModel();
-	GInstance::sync_instances(tops_instances, instances, n_dbip);
+	GInstance::sync_instances(topsInstances, instances, n_dbip);
 	std::unordered_set<QgItem *>::iterator s_it;
 	for (s_it = items->begin(); s_it != items->end(); s_it++) {
 	    QgItem *itm = *s_it;
 	    delete itm;
 	}
 	items->clear();
-	tops_items.clear();
-	emit mdl_changed_db((void *)gedp);
+	topsItems.clear();
+	emit mdlChangedDb((void *)gedp);
 	emit layoutChanged();
-	changed_db_flag = 0;
+	changedDbFlag = 0;
 	endResetModel();
 	return;
     }
 
     // If we have a dbip and the changed flag is set, figure out what's different
-    if (changed_db_flag) {
+    if (changedDbFlag) {
 	beginResetModel();
 
 	// Step 1 - make sure our instances are current - i.e. they match the
 	// .g database state
-	GInstance::sync_instances(tops_instances, instances, n_dbip);
+	GInstance::sync_instances(topsInstances, instances, n_dbip);
 
 	// Clear out any QgItems with invalid info.  We need to be fairly
 	// aggressive here - first we find all the existing invalid ones, and
@@ -563,14 +559,14 @@ QgModel::g_update(struct db_i *n_dbip)
 	    i_itm->children = vchildren;
 	    // Child QgItem pointers are now all valid - rebuild full children
 	    // array to match current .g state
-	    item_rebuild(i_itm);
+	    itemRebuild(i_itm);
 	}
 
 	// Validate existing tops QgItems based on the now-updated tops_instances data.
 	std::unordered_map<unsigned long long, QgItem *> vtops_items;
-	for (size_t i = 0; i < tops_items.size(); i++) {
-	    QgItem *titem = tops_items[i];
-	    if (tops_instances->find(titem->ihash) != tops_instances->end()) {
+	for (size_t i = 0; i < topsItems.size(); i++) {
+	    QgItem *titem = topsItems[i];
+	    if (topsInstances->find(titem->ihash) != topsInstances->end()) {
 		// Still a tops item
 		vtops_items[titem->ihash] = titem;
 	    }
@@ -580,7 +576,7 @@ QgModel::g_update(struct db_i *n_dbip)
 	// QgItems, and make new ones 
 	std::vector<QgItem *> ntops_items;
 	std::unordered_map<unsigned long long, GInstance *>::iterator i_it;
-	for (i_it = tops_instances->begin(); i_it != tops_instances->end(); i_it++) {
+	for (i_it = topsInstances->begin(); i_it != topsInstances->end(); i_it++) {
 	    std::unordered_map<unsigned long long, QgItem *>::iterator v_it;
 	    v_it = vtops_items.find(i_it->first);
 	    if (v_it != vtops_items.end()) {
@@ -595,15 +591,15 @@ QgModel::g_update(struct db_i *n_dbip)
 	}
 
 	// Set the new tops items as children of the rootItem.
-	std::sort(ntops_items.begin(), ntops_items.end(), QgItem_cmp());
-	tops_items = ntops_items;
+	std::sort(ntops_items.begin(), ntops_items.end(), QgItemCmp());
+	topsItems = ntops_items;
 	rootItem->children.clear();
-	for (size_t i = 0; i < tops_items.size(); i++) {
-	    rootItem->appendChild(tops_items[i]);
+	for (size_t i = 0; i < topsItems.size(); i++) {
+	    rootItem->appendChild(topsItems[i]);
 	}
 	rootItem->c_noderow.clear();
-	for (size_t i = 0; i < tops_items.size(); i++) {
-	    rootItem->c_noderow[tops_items[i]] = i;
+	for (size_t i = 0; i < topsItems.size(); i++) {
+	    rootItem->c_noderow[topsItems[i]] = i;
 	}
 
 	// Finally, delete the invalid QgItems
@@ -618,14 +614,14 @@ QgModel::g_update(struct db_i *n_dbip)
     }
 
     // If we did change something, we need to let the application know
-    if (changed_db_flag) {
-	emit mdl_changed_db((void *)gedp);
+    if (changedDbFlag) {
+        emit mdlChangedDb((void *)gedp);
 	emit layoutChanged();
-	emit check_highlights();
+	emit checkHighlights();
     }
 
     // Reset flag - we're in sync now
-    changed_db_flag = 0;
+    changedDbFlag = 0;
 }
 
 int
@@ -735,7 +731,7 @@ QgModel::fetchMore(const QModelIndex &idx)
 	item->c_noderow[nc[i]] = i;
     }
     endInsertRows();
-    emit check_highlights();
+    emit checkHighlights();
 }
 
 
@@ -853,11 +849,11 @@ QgModel::columnCount(const QModelIndex &p) const
 ///////////////////////////////////////////////////////////////////////
 //                  .g Centric Methods
 ///////////////////////////////////////////////////////////////////////
-int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
+int QgModel::runCmd(struct bu_vls *msg, int argc, const char **argv)
 {
-    model_dbip = gedp->dbip;
+    modelDbip = gedp->dbip;
 
-    changed_dp.clear();
+    changedDp.clear();
 
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
@@ -882,19 +878,19 @@ int QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     // If we have the need_update_nref flag set, we need to do db_update_nref
     // ourselves - the backend logic made a dp add/remove but didn't trigger
     // the nref updates (can that happen?).
-    if (gedp->dbip && need_update_nref) {
+    if (gedp->dbip && needUpdateNref) {
 	// bu_log("missing callback in librt?\n");
 	db_update_nref(gedp->dbip, &rt_uniresource);
     }
 
     // If we have a new .g file, set the changed flag
-    if (model_dbip != gedp->dbip)
-	changed_db_flag = 1;
+    if (modelDbip != gedp->dbip)
+        changedDbFlag = 1;
 
     // Assuming we're not doing a full rebuild, trigger the post-cmd updates
-    g_update(gedp->dbip);
+    gUpdate(gedp->dbip);
 
-    model_dbip = gedp->dbip;
+    modelDbip = gedp->dbip;
 
     if (msg && gedp)
 	bu_vls_printf(msg, "%s", bu_vls_cstr(gedp->ged_result_str));

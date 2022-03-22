@@ -116,21 +116,21 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     }
 
     // Set up the connections needed for embedded raytracing
-    gedp->fbs_is_listening = &qdm_is_listening;
-    gedp->fbs_listen_on_port = &qdm_listen_on_port;
-    gedp->fbs_open_server_handler = &qdm_open_server_handler;
-    gedp->fbs_close_server_handler = &qdm_close_server_handler;
+    gedp->fbs_is_listening = &QFBSocket::qdm_is_listening;
+    gedp->fbs_listen_on_port = &QFBSocket::qdm_listen_on_port;
+    gedp->fbs_open_server_handler = &QFBSocket::qdm_open_server_handler;
+    gedp->fbs_close_server_handler = &QFBSocket::qdm_close_server_handler;
 
     int type = c4->get(0)->view_type();
 #ifdef BRLCAD_OPENGL
     if (type == QtCADView_GL) {
-	gedp->fbs_open_client_handler = &qdm_open_client_handler;
+        gedp->fbs_open_client_handler = &QFBSocket::qdm_open_client_handler;
     }
 #endif
     if (type == QtCADView_SW) {
-	gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
+        gedp->fbs_open_client_handler = &QFBSocket::qdm_open_sw_client_handler;
     }
-    gedp->fbs_close_client_handler = &qdm_close_client_handler;
+    gedp->fbs_close_client_handler = &QFBSocket::qdm_close_client_handler;
 
 
     // Define dock widgets - these are the console, controls, etc. that can be attached
@@ -283,7 +283,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		QToolPaletteElement *el = *el_it;
 		vc->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
-		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_app_changed_db);
+		QObject::connect(m, &QgModel::mdlChangedDb, el, &QToolPaletteElement::do_app_changed_db);
 
 		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
 		QObject::connect(el, &QToolPaletteElement::gui_changed_db, ap, &CADApp::do_db_update_from_gui_change);
@@ -297,7 +297,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		QToolPaletteElement *el = *el_it;
 		ic->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
-		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_app_changed_db);
+		QObject::connect(m, &QgModel::mdlChangedDb, el, &QToolPaletteElement::do_app_changed_db);
 		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
 	    }
 	}
@@ -308,7 +308,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 		QToolPaletteElement *el = *el_it;
 		oc->addTool(el);
 		QObject::connect(ap, &CADApp::view_change, el, &QToolPaletteElement::do_app_changed_view);
-		QObject::connect(m, &QgModel::mdl_changed_db, el, &QToolPaletteElement::do_app_changed_db);
+		QObject::connect(m, &QgModel::mdlChangedDb, el, &QToolPaletteElement::do_app_changed_db);
 		QObject::connect(el, &QToolPaletteElement::gui_changed_view, ap, &CADApp::do_view_update_from_gui_change);
 	    }
 	}
@@ -408,20 +408,20 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     tree_dock->setWidget(treeview);
 
     // Tell the selection model we have a tree view
-    ca->mdl->treeview = treeview;
+    ca->mdl->setTreeview(treeview);
 
     // We need to record the expanded/contracted state of the tree items,
     // and restore them after a model reset
     connect(treeview, &QgTreeView::expanded, ca->mdl, &QgSelectionProxyModel::item_expanded);
-    connect(treeview, &QgTreeView::collapsed, ca->mdl, &QgSelectionProxyModel::item_collapsed);
-    connect(m, &QgModel::mdl_changed_db, treeview, &QgTreeView::redo_expansions);
-    connect(m, &QgModel::check_highlights, treeview, &QgTreeView::redo_highlights);
+    connect(treeview, &QgTreeView::collapsed, ca->mdl, &QgSelectionProxyModel::itemCollapsed);
+    connect(m, &QgModel::mdlChangedDb, treeview, &QgTreeView::redo_expansions);
+    connect(m, &QgModel::checkHighlights, treeview, &QgTreeView::redo_highlights);
 
     // The tree's highlighting changes based on which set of tools we're using - instance editing
     // and primitive editing have different non-local implications in the hierarchy.
-    connect(vc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
-    connect(ic, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
-    connect(oc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::mode_change);
+    connect(vc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::modeChange);
+    connect(ic, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::modeChange);
+    connect(oc, &CADPalette::interaction_mode, ca->mdl, &QgSelectionProxyModel::modeChange);
 
     // Update props if we select a new item in the tree.  TODO - these need to be updated when
     // we have a app_changed_db as well, since the change may have been to edit attributes...
@@ -435,7 +435,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     // If the database changes, we need to update our views
     if (c4) {
-	QObject::connect(m, &QgModel::mdl_changed_db, c4, &QtCADQuad::need_update);
+	QObject::connect(m, &QgModel::mdlChangedDb, c4, &QtCADQuad::need_update);
 	QObject::connect((CADApp *)qApp, &CADApp::gui_changed_view, c4, &QtCADQuad::need_update);
 	// The Quad View has an additional condition in the sense that the current view may
 	// change.  Probably we won't try to track this for floating dms attached to qged,

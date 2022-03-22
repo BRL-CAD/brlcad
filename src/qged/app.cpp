@@ -111,7 +111,7 @@ void
 CADApp::do_db_update_from_gui_change()
 {
     QgModel *m = (QgModel *)mdl->sourceModel();
-    emit m->mdl_changed_db(NULL);
+    emit m->mdlChangedDb(NULL);
 }
 
 void
@@ -130,7 +130,7 @@ CADApp::tree_update()
     CADPalette *vc = w->vc;
     CADPalette *ic = w->ic;
     CADPalette *oc = w->oc;
-    switch (mdl->interaction_mode) {
+    switch (mdl->getInterationMode()) {
 	case 0:
 	    v = vc;
 	    break;
@@ -168,7 +168,7 @@ CADApp::open_file()
           av[0] = "open";
           av[1] = fileName.toLocal8Bit();
           av[2] = NULL;
-	  int ret = m->run_cmd(m->gedp->ged_result_str, ac, (const char **)av);
+          int ret = m->runCmd(m->gedp->ged_result_str, ac, (const char **)av);
 
 	if (w) {
 	    if (ret) {
@@ -187,16 +187,6 @@ CADApp::closedb()
     delete mdl;
     db_filename.clear();
 }
-
-
-extern "C" void
-qged_db_changed(struct db_i *UNUSED(dbip), struct directory *dp, int ctype, void *ctx)
-{
-    std::unordered_set<struct directory *> *changed = (std::unordered_set<struct directory *> *)ctx;
-    if (ctype == 0)
-	changed->insert(dp);
-}
-
 
 int
 qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *changed)
@@ -299,7 +289,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    w->c4->stash_hashes();
 
 	// Ask the model to execute the command
-	ret = m->run_cmd(msg, argc, argv);
+	ret = m->runCmd(msg, argc, argv);
 
     } else {
 	for (int i = 0; i < argc; i++) {
@@ -312,13 +302,13 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    av[i] = tmp_av[i];
 	}
 	int ac = (int)tmp_av.size();
-	ret = m->run_cmd(msg, ac, (const char **)av);
+	ret = m->runCmd(msg, ac, (const char **)av);
     }
 
     if (!(ret & BRLCAD_MORE)) {
 
 	// Handle any necessary redrawing.
-	if (qged_view_update(gedp, &m->changed_dp) > 0) {
+	if (qged_view_update(gedp, m->getChangedDp()) > 0) {
 	    if (w->c4)
 		w->c4->need_update(NULL);
 	}

@@ -32,8 +32,20 @@
 #include "../../libged/alphanum.h"
 #include "qtcad/QgModel.h"
 
-void
-open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
+class qgmodel
+{
+  public:
+    static int execute_test(int argc, char *argv[]);
+
+  private:
+    static void open_children(QgItem *itm, QgModel *s, int depth, int max_depth);
+    static void open_tops(QgModel *s, int depth);
+    static void close_children(QgItem *itm);
+    static void print_children(QgItem *itm, QgModel *s, int depth);
+    static void print_tops(QgModel *s);
+};
+
+void qgmodel::open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 {
     if (!itm || !itm->ihash)
 	return;
@@ -51,19 +63,17 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
     }
 }
 
-void
-open_tops(QgModel *s, int depth)
+void qgmodel::open_tops(QgModel *s, int depth)
 {
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
+    for (size_t i = 0; i < s->topsItems.size(); i++) {
+        QgItem *itm = s->topsItems[i];
 	if (!itm->ihash)
 	    continue;
 	open_children(itm, s, 0, depth);
     }
 }
 
-void
-close_children(QgItem *itm)
+void qgmodel::close_children(QgItem *itm)
 {
     itm->close();
     for (size_t j = 0; j < itm->children.size(); j++) {
@@ -72,15 +82,14 @@ close_children(QgItem *itm)
     }
 }
 
-void
-print_children(QgItem *itm, QgModel *s, int depth)
+void qgmodel::print_children(QgItem *itm, QgModel *s, int depth)
 {
     if (!itm || !itm->ihash)
 	return;
 
     GInstance *inst;
     if (depth == 0) {
-	inst = (*s->tops_instances)[itm->ihash];
+        inst = (*s->topsInstances)[itm->ihash];
     } else {
 	inst = (*s->instances)[itm->ihash];
     }
@@ -106,18 +115,17 @@ print_children(QgItem *itm, QgModel *s, int depth)
     }
 }
 
-void
-print_tops(QgModel *s)
+void qgmodel::print_tops(QgModel *s)
 {
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
+    for (size_t i = 0; i < s->topsItems.size(); i++) {
+        QgItem *itm = s->topsItems[i];
 	if (!itm->ihash)
 	    continue;
 	print_children(itm, s, 0);
     }
 }
 
-int main(int argc, char *argv[])
+int qgmodel::execute_test(int argc, char *argv[])
 {
 
     bu_setprogname(argv[0]);
@@ -125,49 +133,49 @@ int main(int argc, char *argv[])
     argc--; argv++;
 
     if (argc != 1)
-	bu_exit(-1, "need to specify .g file\n");
+        bu_exit(-1, "need to specify .g file\n");
 
     QgModel sm(NULL, argv[0]);
     QgModel *s = &sm;
 
     bu_log("Hierarchy instance cnt: %zd\n", s->instances->size());
-    bu_log("Top instance cnt: %zd\n", s->tops_instances->size());
+    bu_log("Top instance cnt: %zd\n", s->topsInstances->size());
 
     // 2.  Implement "open" and "close" routines for the items that will exercise
     // the logic to identify, populate, and clear items based on child info.
 
     // Open everything
     std::cout << "\nAll open:\n";
-    open_tops(s, -1);
-    print_tops(s);
+    qgmodel::open_tops(s, -1);
+    qgmodel::print_tops(s);
 
     // Close top level
     std::cout << "\nTop level closed:\n";
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
-	itm->close();
+    for (size_t i = 0; i < s->topsItems.size(); i++) {
+        QgItem *itm = s->topsItems[i];
+        itm->close();
     }
-    print_tops(s);
+    qgmodel::print_tops(s);
 
 
     // Open first level
     std::cout << "\nOpen first level (remember open children):\n";
-    open_tops(s, 1);
-    print_tops(s);
+    qgmodel::open_tops(s, 1);
+    qgmodel::print_tops(s);
 
 
     // Close everything
     std::cout << "\nEverything closed:\n";
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
-	close_children(itm);
+    for (size_t i = 0; i < s->topsItems.size(); i++) {
+        QgItem *itm = s->topsItems[i];
+        qgmodel::close_children(itm);
     }
-    print_tops(s);
+    qgmodel::print_tops(s);
 
     // Open first level
     std::cout << "\nOpen first level (children closed):\n";
-    open_tops(s, 1);
-    print_tops(s);
+    qgmodel::open_tops(s, 1);
+    qgmodel::print_tops(s);
 
 
     // 3.  Add callback support for syncing the instance sets after a database
@@ -175,8 +183,8 @@ int main(int argc, char *argv[])
     // read/write support.
 
     std::cout << "\nInitial state:\n";
-    open_tops(s, 2);
-    print_tops(s);
+    qgmodel::open_tops(s, 2);
+    qgmodel:: print_tops(s);
 
     struct ged *g = s->gedp;
 
@@ -191,7 +199,7 @@ int main(int argc, char *argv[])
     ged_exec(g, ac, (const char **)av);
 
     std::cout << "\nRemoved ellipse.r from all.g:\n";
-    print_tops(s);
+    qgmodel::print_tops(s);
 
     av[0] = "g";
     av[1] = "all.g";
@@ -200,11 +208,11 @@ int main(int argc, char *argv[])
     ged_exec(g, ac, (const char **)av);
 
     std::cout << "\nAdded ellipse.r back to the end of all.g, no call to open:\n";
-    print_tops(s);
+    qgmodel::print_tops(s);
 
     std::cout << "\nAfter additional open pass on tree:\n";
-    open_tops(s, 2);
-    print_tops(s);
+    qgmodel::open_tops(s, 2);
+    qgmodel::print_tops(s);
 
 
     av[0] = "rm";
@@ -213,7 +221,7 @@ int main(int argc, char *argv[])
     av[3] = NULL;
     ged_exec(g, ac, (const char **)av);
     std::cout << "\ntops tree after removing tor from tor.r:\n";
-    print_tops(s);
+    qgmodel::print_tops(s);
 
     av[0] = "kill";
     av[1] = "-f";
@@ -221,30 +229,30 @@ int main(int argc, char *argv[])
     av[3] = NULL;
     ged_exec(g, ac, (const char **)av);
     std::cout << "\ntops tree after deleting all.g:\n";
-    print_tops(s);
+    qgmodel::print_tops(s);
 
     std::cout << "\nexpanded tops tree after deleting all.g:\n";
-    open_tops(s, -1);
-    print_tops(s);
+    qgmodel::open_tops(s, -1);
+    qgmodel::print_tops(s);
 
     const char *objs[] = {"box.r", "box.s", "cone.r", "cone.s", "ellipse.r", "ellipse.s", "light.r", "LIGHT", "platform.r", "platform.s", "tor", "tor.r", NULL};
     const char *obj = objs[0];
     int i = 0;
     while (obj) {
-	av[0] = "kill";
-	av[1] = "-f";
-	av[2] = obj;
-	av[3] = NULL;
-	ged_exec(g, ac, (const char **)av);
-	i++;
-	obj = objs[i];
+        av[0] = "kill";
+        av[1] = "-f";
+        av[2] = obj;
+        av[3] = NULL;
+        ged_exec(g, ac, (const char **)av);
+        i++;
+        obj = objs[i];
     }
     std::cout << "\ntops tree after deleting everything:\n";
-    print_tops(s);
+    qgmodel::print_tops(s);
 
     std::cout << "\nexpanded tops tree after deleting everything:\n";
-    open_tops(s, -1);
-    print_tops(s);
+    qgmodel::open_tops(s, -1);
+    qgmodel::print_tops(s);
 
 
     // TODO - so the rough progression of steps here is:
@@ -263,6 +271,11 @@ int main(int argc, char *argv[])
     //
 
     return (*s->instances).size();
+}
+
+int main(int argc, char *argv[])
+{
+    return qgmodel::execute_test(argc, argv);
 }
 
 /*

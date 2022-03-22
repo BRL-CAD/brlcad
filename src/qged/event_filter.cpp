@@ -95,8 +95,8 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
     if (vcp) {
 	QRect lrect = vcp->geometry();
 	QPoint mpos = vcp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && pm->interaction_mode != 0) {
-	    pm->mode_change(0);
+	if (lrect.contains(mpos) && pm->getInterationMode() != 0) {
+	    pm->modeChange(0);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}
@@ -105,8 +105,8 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
     if (icp) {
 	QRect lrect = icp->geometry();
 	QPoint mpos = icp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && pm->interaction_mode != 1) {
-	    pm->mode_change(1);
+	if (lrect.contains(mpos) && pm->getInterationMode() != 1) {
+	    pm->modeChange(1);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}
@@ -115,8 +115,8 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
     if (ocp) {
 	QRect lrect = ocp->geometry();
 	QPoint mpos = ocp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && pm->interaction_mode != 2) {
-	    pm->mode_change(2);
+	if (lrect.contains(mpos) && pm->getInterationMode() != 2) {
+	    pm->modeChange(2);
 	    QTimer::singleShot(0, c, &CADApp::tree_update);
 	    return false;
 	}

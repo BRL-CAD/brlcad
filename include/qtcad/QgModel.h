@@ -169,6 +169,8 @@ class QTCAD_EXPORT QgItem
 	void open();
 	void close();
 
+      private:
+
 	// Return a pointer to the GInstance associated with this QgItem, or
 	// NULL if no valid instance is found.
 	GInstance *instance();
@@ -217,14 +219,25 @@ class QTCAD_EXPORT QgItem
 	int columnCount() const;
 	std::vector<QgItem *> children;
 	std::unordered_map<QgItem *, int> c_noderow;
-	size_t c_count = 0;
+	size_t cCount = 0;
 
-	// Cached data from the GInstance, so we can keep
-	// displaying while librt does work on the GInstances.
-	struct bu_vls name = BU_VLS_INIT_ZERO;
-	db_op_t op = DB_OP_UNION;
-	struct directory *dp = NULL;
-	QImage icon;
+        // Cached data from the GInstance, so we can keep
+        // displaying while librt does work on the GInstances.
+        struct bu_vls name = BU_VLS_INIT_ZERO;
+        db_op_t op = DB_OP_UNION;
+        struct directory *dp = NULL;
+        QImage icon;
+
+        static int cmp_score(QgItem *i1, QgItem *i2);
+        static QgItem *find_similar(QgItem *c, std::vector<QgItem *> &v);
+
+        friend class QgModel;
+        friend struct QgItemCmp;
+        friend class QgSelectionProxyModel;
+        friend class QgTreeView;
+
+        friend class qgmodel;
+        friend class qgview;
 };
 
 /* The primary expression in a Qt context of a .g database and its contents.
@@ -276,14 +289,14 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	~QgModel();
 
 	// .g Db interface and containers
-	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
+	int runCmd(struct bu_vls *msg, int argc, const char **argv);
 	struct ged *gedp = NULL;
 
 	// Updates to .g models are potentially far-reaching - in principle, a
 	// single GED command execution can change every item in the database.
 	// This method is intended to be run after a GED command execution to
 	// update the model, or upon startup.
-	void g_update(struct db_i *n_dbip);
+	void gUpdate(struct db_i *n_dbip);
 
 	// Qt Model interface
 
@@ -319,62 +332,76 @@ class QTCAD_EXPORT QgModel : public QAbstractItemModel
 	bool canFetchMore(const QModelIndex &idx) const override;
 	void fetchMore(const QModelIndex &idx) override;
 
-	// A flag for callbacks to set if they alter the database in some way.
-	// Used to determine whether to emit the mdl_changed_db signal once
-	// after a GED command processing call is complete. If emitted, the
-	// interface will know to take certain steps when updating views.
-	int changed_db_flag = 0;
-
-	// It's unclear if we need this, but allow callbacks to insist on a
-	// post-command running of update_nref - in principle this should be
-	// already handled by command and/or librt logic, but not sure if we
-	// can count on that...
-	bool need_update_nref = false;
-
 	/* Used by callers to identify which objects need to be redrawn when
 	 * scene views are updated. */
-	std::unordered_set<struct directory *> changed_dp;
-
-	// Build a map of GInstance hashes to instances for easy lookup.  This
-	// is for GInstance reuse.  In trees that heavily reuse combs avoiding
-	// the storing of duplicate GInstances will save memory.
-	std::unordered_map<unsigned long long, GInstance *> *instances = NULL;
-
-	// Convenience container holding all active QgItems
-	std::unordered_set<QgItem *> *items = NULL;
-
-	// The "seed" set for a tree view is the set of objects with no parents
-	// in the hierarchy.  (What users of MGED think of as the "tops" set,
-	// as well as objects with cyclic subtrees - the latter would be
-	// invisible in the tree view if we do not list them as top level
-	// objects.)  This set may change after each database edit, but there
-	// will always be at least one object in a valid .g hierarchy that has
-	// no parent.
-	std::unordered_map<unsigned long long, GInstance *> *tops_instances = NULL;
-
-	// Sorted QgItem pointers corresponding to the tops_instances
-	std::vector<QgItem *> tops_items;
+	inline std::unordered_set<struct directory *> *getChangedDp() { return &changedDp; }
 
     signals:
 	// Emitted if the commands think they may have changed the database
 	// structure in some way.
-	void mdl_changed_db(void *);
+	void mdlChangedDb(void *);
 
 	// Let the tree view know it has highlighting work to do it wouldn't
 	// otherwise see
-	void check_highlights();
+	void checkHighlights();
 
     private:
+        // A flag for callbacks to set if they alter the database in some way.
+        // Used to determine whether to emit the mdl_changed_db signal once
+        // after a GED command processing call is complete. If emitted, the
+        // interface will know to take certain steps when updating views.
+        int changedDbFlag = 0;
+
+        // It's unclear if we need this, but allow callbacks to insist on a
+        // post-command running of update_nref - in principle this should be
+        // already handled by command and/or librt logic, but not sure if we
+        // can count on that...
+        bool needUpdateNref = false;
+
+        // Build a map of GInstance hashes to instances for easy lookup.  This
+        // is for GInstance reuse.  In trees that heavily reuse combs avoiding
+        // the storing of duplicate GInstances will save memory.
+        std::unordered_map<unsigned long long, GInstance *> *instances = NULL;
+
+	/* Used by callers to identify which objects need to be redrawn when
+	 * scene views are updated. */
+	std::unordered_set<struct directory *> changedDp;
+
+        // Convenience container holding all active QgItems
+        std::unordered_set<QgItem *> *items = NULL;
+
+        // The "seed" set for a tree view is the set of objects with no parents
+        // in the hierarchy.  (What users of MGED think of as the "tops" set,
+        // as well as objects with cyclic subtrees - the latter would be
+        // invisible in the tree view if we do not list them as top level
+        // objects.)  This set may change after each database edit, but there
+        // will always be at least one object in a valid .g hierarchy that has
+        // no parent.
+        std::unordered_map<unsigned long long, GInstance *> *topsInstances = NULL;
+
+        // Sorted QgItem pointers corresponding to the tops_instances
+        std::vector<QgItem *> topsItems;
+
 	int NodeRow(QgItem *node) const;
 	QModelIndex index(int row, int column, const QModelIndex &p) const override;
 	QModelIndex parent(const QModelIndex &child) const override;
 	Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-	void item_rebuild(QgItem *item);
+	void itemRebuild(QgItem *item);
 
-	QgItem *rootItem;
-	struct bview *empty_gvp = NULL;
-	struct db_i *model_dbip = NULL;
+        QgItem *rootItem;
+        struct bview *emptyGvp = NULL;
+        struct db_i *modelDbip = NULL;
+        static void update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data);
+        static void changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data);
+
+        friend class QgItem;
+        friend struct QgItemCmp;
+        friend class QgSelectionProxyModel;
+        friend class QgTreeView;
+
+        friend class qgmodel;
+        friend class qgview;
 };
 
 #endif //QGMODEL_H

@@ -40,7 +40,7 @@
 #include "qtcad/gInstance.h"
 
 unsigned long long
-ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, struct db_i *dbip, db_op_t op, mat_t c_m, int cnt)
+GInstance::ginstance_hash(XXH64_state_t *h_state, int mode, struct directory *parent, std::string &dp_name, struct db_i *dbip, db_op_t op, mat_t c_m, int cnt)
 {
     if (!h_state)
 	return 0;
@@ -133,7 +133,7 @@ GInstance::print()
 }
 
 void
-GInstance::add_g_instance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst, void *c_set)
+GInstance::addGInstance(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, int tree_op, void *pdp, void *inst_map, void *vchash, void *val_inst, void *c_set)
 {
     std::unordered_map<unsigned long long, GInstance *>::iterator i_it;
 
@@ -312,7 +312,7 @@ GInstance::children(std::unordered_map<unsigned long long, GInstance *> *instanc
 	// tree, all objects are leaves and we can use db_tree_opleaf
 	std::unordered_set<unsigned long long> cnt_set;
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, (void *)&chash, NULL, &cnt_set);
+	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, addGInstance, (void *)dp, (void *)instances, (void *)&chash, NULL, &cnt_set);
 	rt_db_free_internal(&intern);
 	return chash;
     }
@@ -380,7 +380,7 @@ GInstance::children(std::unordered_map<unsigned long long, GInstance *> *instanc
 }
 
 void
-GInstance::dp_instances(std::unordered_map<unsigned long long, GInstance *> *valid_instances, std::unordered_map<unsigned long long, GInstance *> *instances, struct directory *dp, struct db_i *dbip)
+GInstance::dpInstances(std::unordered_map<unsigned long long, GInstance *> *valid_instances, std::unordered_map<unsigned long long, GInstance *> *instances, struct directory *dp, struct db_i *dbip)
 {
     mat_t c_m;
     XXH64_state_t h_state;
@@ -500,7 +500,7 @@ GInstance::dp_instances(std::unordered_map<unsigned long long, GInstance *> *val
 
 	std::unordered_set<unsigned long long> cnt_set;
 	struct rt_comb_internal *comb = (struct rt_comb_internal *)intern.idb_ptr;
-	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, add_g_instance, (void *)dp, (void *)instances, NULL, (void *)valid_instances, (void *)&cnt_set);
+	db_tree_opleaf(dbip, comb, comb->tree, OP_UNION, addGInstance, (void *)dp, (void *)instances, NULL, (void *)valid_instances, (void *)&cnt_set);
 	rt_db_free_internal(&intern);
 	return;
     }
@@ -539,7 +539,7 @@ GInstance::sync_instances(
 	struct directory *dp;
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & (RT_DIR_SOLID|RT_DIR_COMB))
-		dp_instances(&valid_instances, instances, dp, dbip);
+		dpInstances(&valid_instances, instances, dp, dbip);
 	}
     }
 

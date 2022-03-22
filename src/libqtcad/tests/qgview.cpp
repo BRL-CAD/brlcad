@@ -35,8 +35,17 @@
 #include "qtcad/QgSelectionProxyModel.h"
 #include "qtcad/QgTreeView.h"
 
-void
-open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
+class qgview
+{
+  public:
+    static int executeTest(int argc, char *argv[]);
+
+  private:
+    static void open_children(QgItem *itm, QgModel *s, int depth, int max_depth);
+    static void open_tops(QgModel *s, int depth);
+};
+
+void qgview::open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
 {
     if (!itm || !itm->ihash)
 	return;
@@ -53,21 +62,18 @@ open_children(QgItem *itm, QgModel *s, int depth, int max_depth)
     }
 }
 
-void
-open_tops(QgModel *s, int depth)
+void qgview::open_tops(QgModel *s, int depth)
 {
-    for (size_t i = 0; i < s->tops_items.size(); i++) {
-	QgItem *itm = s->tops_items[i];
+    for (size_t i = 0; i < s->topsItems.size(); i++) {
+        QgItem *itm = s->topsItems[i];
 	if (!itm->ihash)
 	    continue;
 	open_children(itm, s, 0, depth);
     }
 }
 
-
-int main(int argc, char *argv[])
+int qgview::executeTest(int argc, char *argv[])
 {
-
     QApplication app(argc, argv);
 
     bu_setprogname(argv[0]);
@@ -75,7 +81,8 @@ int main(int argc, char *argv[])
     argc--; argv++;
 
     if (argc != 1)
-	bu_exit(-1, "need to specify .g file\n");
+        bu_exit(-1, "need to specify .g file\n");
+
 
     QgModel sm(NULL, argv[0]);
     QgModel *s = &sm;
@@ -91,6 +98,12 @@ int main(int argc, char *argv[])
 
 
     return app.exec();
+}
+
+
+int main(int argc, char *argv[])
+{
+    return qgview::executeTest(argc, argv);
 }
 
 /*

@@ -149,7 +149,7 @@ QFBServer::on_Connect()
 
 /* Check if we're already listening. */
 int
-qdm_is_listening(struct fbserv_obj *fbsp)
+QFBSocket::qdm_is_listening(struct fbserv_obj *fbsp)
 {
     bu_log("is_listening\n");
     if (fbsp->fbs_listener.fbsl_fd >= 0) {
@@ -159,7 +159,7 @@ qdm_is_listening(struct fbserv_obj *fbsp)
 }
 
 int
-qdm_listen_on_port(struct fbserv_obj *fbsp, int available_port)
+QFBSocket::qdm_listen_on_port(struct fbserv_obj *fbsp, int available_port)
 {
     bu_log("listen on port\n");
     QFBServer *nl = new QFBServer(fbsp);
@@ -177,7 +177,7 @@ qdm_listen_on_port(struct fbserv_obj *fbsp, int available_port)
 }
 
 void
-qdm_open_server_handler(struct fbserv_obj *fbsp)
+QFBSocket::qdm_open_server_handler(struct fbserv_obj *fbsp)
 {
     bu_log("open_server_handler\n");
     QFBServer *nl = (QFBServer *)fbsp->fbs_listener.fbsl_chan;
@@ -187,7 +187,7 @@ qdm_open_server_handler(struct fbserv_obj *fbsp)
 }
 
 void
-qdm_close_server_handler(struct fbserv_obj *fbsp)
+QFBSocket::qdm_close_server_handler(struct fbserv_obj *fbsp)
 {
     bu_log("close_server_handler\n");
     QFBServer *nl = (QFBServer *)fbsp->fbs_listener.fbsl_chan;
@@ -196,7 +196,7 @@ qdm_close_server_handler(struct fbserv_obj *fbsp)
 
 #ifdef BRLCAD_OPENGL
 void
-qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
+QFBSocket::qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 {
     bu_log("open_client_handler\n");
     fbsp->fbs_clients[i].fbsc_chan = data;
@@ -213,7 +213,7 @@ qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 // Because swrast uses a bview as its context pointer, we need to unpack the app data
 // when using that display method
 void
-qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data)
+QFBSocket::qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 {
     bu_log("open_client_handler\n");
     fbsp->fbs_clients[i].fbsc_chan = data;
@@ -227,7 +227,7 @@ qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 }
 
 void
-qdm_close_client_handler(struct fbserv_obj *fbsp, int i)
+QFBSocket::qdm_close_client_handler(struct fbserv_obj *fbsp, int i)
 {
     bu_log("close_client_handler\n");
     QFBSocket *s = (QFBSocket *)fbsp->fbs_clients[i].fbsc_chan;

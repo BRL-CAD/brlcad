@@ -78,22 +78,26 @@ class QTCAD_EXPORT QgSelectionProxyModel : public QIdentityProxyModel
 	QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
 	bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
 
-	QModelIndex NodeIndex(QgItem *node) const;
-	int NodeRow(QgItem *node) const;
+        QModelIndex NodeIndex(QgItem *node) const;
+        int NodeRow(QgItem *node) const;
 
-	QgTreeView *treeview = NULL;
-
-	// There are a number of relationships which can be used for related
-	// node highlighting - this allows a client application to select one.
-	int interaction_mode = 0;
+        inline void setTreeview(QgTreeView *newTreeview) { treeview = newTreeview; }
+        inline int getInterationMode() { return interaction_mode; }
 
     public slots:
 	//void refresh(void *);
-	void mode_change(int i);
-        void update_selected_node_relationships(const QModelIndex & index);
-	void item_collapsed(const QModelIndex &index);
+	void modeChange(int i);
+	void updateSelectedNodeRelationships(const QModelIndex & index);
+	void itemCollapsed(const QModelIndex &index);
 	void item_expanded(const QModelIndex &index);
 	void redo_expansions(void *);
+
+      private:
+        QgTreeView *treeview = NULL;
+
+        // There are a number of relationships which can be used for related
+        // node highlighting - this allows a client application to select one.
+        int interaction_mode = 0;
 };
 
 #endif //QGSELECTIONMODEL_H

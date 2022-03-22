@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
 	av[0] = "open";
 	av[1] = argv[0];
 	av[2] = NULL;
-	int ret = m->run_cmd(m->gedp->ged_result_str, ac, (const char **)av);
+	int ret = m->runCmd(m->gedp->ged_result_str, ac, (const char **)av);
 	if (ret != BRLCAD_OK) {
 	    bu_log("Error opening file %s\n", argv[0]);
 	    return BRLCAD_ERROR;
