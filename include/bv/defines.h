@@ -201,7 +201,7 @@ struct bv_scene_obj  {
 
     /* Actual 3D geometry data and information */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
-    int s_vlen;			/**< @brief  Number of actual cmd[] entries in vlist */
+    size_t s_vlen;			/**< @brief  Number of actual cmd[] entries in vlist */
     unsigned int s_dlist;	/**< @brief  display list index */
     fastf_t s_size;		/**< @brief  Distance across solid, in model space */
     fastf_t s_csize;		/**< @brief  Dist across clipped solid (model space) */

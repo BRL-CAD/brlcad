@@ -1193,7 +1193,7 @@ Eplot(union E_tree *eptr,
 		continue;
 	    inv_len = 1.0/edge_len;
 	    VSCALE(dir, dir, inv_len);
-	    shoot_and_plot(vg->coord, dir, vlfree, vhead, edge_len, leaf_no, -1, eptr, ON_SURF, dgcdp);
+	    shoot_and_plot(vg->coord, dir, vlfree, vhead, edge_len, (int)leaf_no, -1, eptr, ON_SURF, dgcdp);
 
 	}
     }
@@ -1466,7 +1466,7 @@ Eplot(union E_tree *eptr,
 			VJOIN1(ray_start, start_pt, aseg->seg_in.hit_dist, dir);
 			shoot_and_plot(ray_start, dir, vlfree, vhead,
 				       aseg->seg_out.hit_dist - aseg->seg_in.hit_dist,
-				       leaf_no, leaf2, eptr, ON_INT, dgcdp);
+				       (int)leaf_no, (int)leaf2, eptr, ON_INT, dgcdp);
 		    }
 		    BIGE_FREE_SEG_LIST(result, dgcdp->ap->a_resource);
 

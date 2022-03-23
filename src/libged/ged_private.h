@@ -508,7 +508,7 @@ GED_EXPORT extern int _ged_scale_tor(struct ged *gedp,
 /* defined in tops.c */
 GED_EXPORT struct directory **
 _ged_dir_getspace(struct db_i *dbip,
-		  int num_entries);
+		  size_t num_entries);
 
 /* defined in translate_extrude.c */
 GED_EXPORT extern int _ged_translate_extrude(struct ged *gedp,

@@ -123,7 +123,7 @@ free_selection_set(struct bu_hash_tbl *t)
 	free_selection = selection_set->free_selection;
 
 	/* free all selection objects and containing items */
-	for (i = BU_PTBL_LEN(selections) - 1; i >= 0; --i) {
+	for (i = (int)BU_PTBL_LEN(selections) - 1; i >= 0; --i) {
 	    long *s = BU_PTBL_GET(selections, i);
 	    free_selection((struct rt_selection *)s);
 	    bu_ptbl_rm(selections, s);

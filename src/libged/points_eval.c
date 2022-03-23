@@ -42,11 +42,23 @@
 int
 draw_points(struct bv_scene_obj *s)
 {
+    if (!s)
+	return BRLCAD_OK; /* nothing to do is fine */
+
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-    struct bn_tol btol = BG_TOL_INIT;
-    struct db_i *dbip = d->dbip;
+    if (!d)
+	return BRLCAD_OK; /* nothing to do is fine */
+
     struct db_full_path *fp = &d->fp;
+    if (!fp)
+	return BRLCAD_OK; /* nothing to do is fine */
+
+    /* there's a path to draw */
+    struct bn_tol btol = BG_TOL_INIT;
+    struct db_i* dbip = d->dbip;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
+    if (!dbip || !dp)
+	return BRLCAD_ERROR;
 
     const char *oav[2] = {NULL};
     oav[0] = dp->d_namep;

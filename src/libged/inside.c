@@ -173,7 +173,7 @@ arbin(struct ged *gedp,
 
     /* find the new vertices by intersecting the new face planes */
     for (i = 0; i < num_pts; i++) {
-	if (rt_arb_3face_intersect(arb->pt[i], (const plane_t *)planes, cgtype, i*3) < 0) {
+	if (rt_arb_3face_intersect(arb->pt[i], (const plane_t *)planes, cgtype, (int)i*3) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "cannot find inside arb\n");
 	    return BRLCAD_ERROR;
 	}
