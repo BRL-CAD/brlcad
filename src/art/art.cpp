@@ -137,10 +137,11 @@
 
 
 #include "vmath.h"	/* vector math macros */
-#include "raytrace.h"	    /* librt interface definitions */
+#include "raytrace.h"	/* librt interface definitions */
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/vls.h"
+#include "bu/version.h"
 #include "art.h"
 #include "rt/tree.h"
 #include "ged.h"
@@ -149,6 +150,9 @@
 #include "rt/db_fullpath.h"
 #include "rt/calc.h"
 #include "optical/defines.h"
+
+#include "brlcad_ident.h"
+
 
 struct application APP;
 struct resource* resources;
@@ -847,14 +851,24 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
 int
 main(int argc, char **argv)
 {
+    bu_setlinebuf(stdout);
+    bu_setlinebuf(stderr);
+
+    bu_log("%s%s%s%s\n",
+	brlcad_ident("BRL-CAD Appleseed Ray Tracing (ART)"),
+	rt_version(),
+	bn_version(),
+	bu_version()
+    );
+
     // Create a log target that outputs to stderr, and binds it to the renderer's global logger.
     // Eventually you will probably want to redirect log messages to your own target. For this
     // you will need to implement foundation::ILogTarget (foundation/utility/log/ilogtarget.h).
-    std::unique_ptr<asf::ILogTarget> log_target(asf::create_console_log_target(stderr));
-    asr::global_logger().add_target(log_target.get());
+    asf::ILogTarget* log_target(asf::create_console_log_target(stderr));
+    asr::global_logger().add_target(log_target);
 
     // Print appleseed's version string.
-    RENDERER_LOG_INFO("%s", asf::Appleseed::get_synthetic_version_string());
+    RENDERER_LOG_INFO("%s\n", asf::Appleseed::get_synthetic_version_string());
 
     struct rt_i* rtip;
     const char *title_file = NULL;
