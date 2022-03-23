@@ -147,6 +147,7 @@
 #include "ged/commands.h"
 #include "ged/defines.h"
 #include "rt/db_fullpath.h"
+#include "rt/calc.h"
 #include "optical/defines.h"
 
 struct application APP;
@@ -327,8 +328,12 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
                 const struct rt_comb_internal* combp,
                 void* data)
 {
-  // We open the db using the region path to get objects name
-  struct directory* dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!pathp || !combp || !data)
+	return 1;
+    // We open the db using the region path to get objects name
+    struct directory* dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp)
+	return 1;
 
   const char* name;
   name = dp->d_namep;
@@ -343,11 +348,10 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   bu_log("name: %s\n", conversion_temp.c_str());
 
   // get objects bounding box
-  struct ged* ged;
-  ged = ged_open("db", APP.a_rt_i->rti_dbip->dbi_filename, 1);
+  struct ged* gedp;
+  gedp = ged_open("db", APP.a_rt_i->rti_dbip->dbi_filename, 1);
   point_t min;
   point_t max;
-  // int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name, 1, min, max);
   int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name_full, 1, min, max);
 
   bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
