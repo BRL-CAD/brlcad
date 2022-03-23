@@ -71,7 +71,7 @@ class rec {
 
 class POPState {
     public:
-	POPState(int mlevel, const point_t *v, int vcnt, int *faces, int fcnt);
+	POPState(int mlevel, const char *oname, const point_t *v, int vcnt, int *faces, int fcnt);
 
 	// Load POP state from cache data, up through level mlevel
 	POPState(int mlevel, const char *oname);
@@ -103,7 +103,7 @@ class POPState {
 	// If reading cached data, this is where we store the points - 
 	// nfaces will index into this vector.  If verts_array is non-null,
 	// ind_map is used to reference into that array instead.
-	std::vector<point_t> npnts;
+	std::vector<fastf_t> npnts;
 
 	// Number of discrete levels of detail defined
 	int max_level;
@@ -124,21 +124,77 @@ class POPState {
 	std::vector<unsigned short> PRECOMPUTED_MASKS;
 };
 
-POPState::POPState(int mlevel, const point_t *v, int vcnt, int *faces, int fcnt)
+POPState::POPState(int mlevel, const char *odir, const point_t *v, int vcnt, int *faces, int fcnt)
 {
     // Store the number of active levels
     max_level = mlevel;
+
+    // Precompute precision masks for each level
+    for (int i = 0; i < POP_MAXLEVEL; i++) {
+	PRECOMPUTED_MASKS.push_back(pow(2, (POP_MAXLEVEL - i - 1)));
+    }
+
+    // If we have cached data, use that
+    if (odir) {
+	char dir[MAXPATHLEN];
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, odir, NULL);
+	if (!bu_file_exists(dir, NULL)) {
+	    return;
+	}
+
+	// Read in the level vertices
+	for (int i = 0; i < max_level; i++) {
+	    struct bu_vls vfile = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&vfile, "verts_level_%d", i);
+	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, odir, bu_vls_cstr(&vfile), NULL);
+	    if (!bu_file_exists(dir, NULL))
+		continue;
+
+	    std::ifstream vifile(dir, std::ios::in | std::ofstream::binary);
+	    int vicnt = 0;
+	    vifile.read(reinterpret_cast<char *>(&vicnt), sizeof(vicnt));
+	    for (int j = 0; j < vicnt; j++) {
+		point_t nv;
+		vifile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
+		for (int k = 0; k < 3; k++) {
+		    npnts.push_back(nv[k]);
+		}
+	    }
+	    vifile.close();
+	    bu_vls_free(&vfile);
+	}
+
+	// Read in the level triangles
+	for (int i = 0; i < max_level; i++) {
+	    struct bu_vls tfile = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&tfile, "tris_level_%d", i);
+	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, odir, bu_vls_cstr(&tfile), NULL);
+	    if (!bu_file_exists(dir, NULL))
+		continue;
+
+	    std::ifstream tifile(dir, std::ios::in | std::ofstream::binary);
+	    int ticnt = 0;
+	    tifile.read(reinterpret_cast<char *>(&ticnt), sizeof(ticnt));
+	    for (int j = 0; j < ticnt; j++) {
+		int vf[3];
+		tifile.read(reinterpret_cast<char *>(&vf), sizeof(int));
+		for (int k = 0; k < 3; k++) {
+		    nfaces.push_back(vf[k]);
+		}
+		level_tris[i].insert(nfaces.size() / 3 - 1);
+	    }
+	    tifile.close();
+	    bu_vls_free(&tfile);
+	}
+    }
+
+    // No cache - we're initializing from the original data
 
     // Store source data info
     vert_cnt = vcnt;
     verts_array = v;
     faces_cnt = fcnt;
     faces_array = faces;
-
-    // Precompute precision masks for each level
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	PRECOMPUTED_MASKS.push_back(pow(2, (POP_MAXLEVEL - i - 1)));
-    }
 
     // Find our min and max values, initialize levels
     for (int i = 0; i < vcnt; i++) {
@@ -288,7 +344,7 @@ POPState::cache(const char *odir)
 	for (s_it = level_verts[i].begin(); s_it != level_verts[i].end(); s_it++) {
 	    point_t v;
 	    VMOVE(v, verts_array[*s_it]);
-	    vofile.write(reinterpret_cast<const char *>(&v[0]), 3*sizeof(fastf_t));
+	    vofile.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
 	}
 
 	vofile.close();
@@ -402,7 +458,7 @@ bg_mesh_lod_create(const point_t *v, int vcnt, int *faces, int fcnt)
     BU_GET(l, struct bg_mesh_lod);
     BU_GET(l->i, struct bg_mesh_lod_internal);
 
-    l->i->s = new POPState(POP_MAXLEVEL, v, vcnt, faces, fcnt);
+    l->i->s = new POPState(POP_MAXLEVEL, NULL, v, vcnt, faces, fcnt);
 
     return l;
 }
