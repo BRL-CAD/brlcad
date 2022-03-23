@@ -146,7 +146,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 {
     const char* fileName;
     const char* flag;
-    char buffer[256] = {0};
+    char buffer[BUFSIZ] = {0};
 
     if (argc < 3) {
         bu_vls_printf(gedp->ged_result_str, "ERROR, not enough arguments!\n");
@@ -161,7 +161,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
         return BRLCAD_ERROR;
     }
 
-    while (bu_fgets(buffer, 256, densityTable)) {
+    while (bu_fgets(buffer, BUFSIZ, densityTable)) {
 	char *p = buffer;
 	char *q;
 	buffer[strlen(buffer)] = '\0';
@@ -295,7 +295,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&idxChar);
 	bu_vls_free(&densityChar);
 
-	memset(buffer, 0, 256);
+	memset(buffer, 0, BUFSIZ);
 	memset(name, 0, 30);
     }
 
