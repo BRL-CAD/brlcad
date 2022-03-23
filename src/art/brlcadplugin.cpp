@@ -470,7 +470,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
     }
 
     /* parse object arguments */
-    const char** objv = (const char**)bu_calloc(objc + 1L, sizeof(char*), "obj array");
+    const char** objv = (const char**)bu_calloc((size_t)objc + 1, sizeof(char*), "obj array");
     for (int i = 0; i < objc; i++)
     {
         objv[i] = objects.at(i).c_str();
