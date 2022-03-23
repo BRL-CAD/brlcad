@@ -595,9 +595,8 @@ bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
     struct bv_vlist *tvp;
     for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s->s_vlist))->l)) {
 	size_t nused = tvp->nused;
-	int* cmd = tvp->cmd;/*!!!*/
 	point_t *lpt = tvp->pt;
-	for (size_t l = 0; l < nused; l++, cmd++, lpt++) {
+	for (size_t l = 0; l < nused; l++, lpt++) {
 	    vect_t vpt;
 	    MAT4X3PNT(vpt, v->gv_model2view, *lpt);
 	    if (calc_mode) {
