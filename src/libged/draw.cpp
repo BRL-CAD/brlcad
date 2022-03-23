@@ -53,7 +53,7 @@
 	BU_LIST_INIT( &((p)->s_vlist) ); }
 
 static int
-_prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
+prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_full_path *fp = &d->fp;
@@ -84,7 +84,7 @@ _prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 
 /* Wrapper to handle adaptive vs non-adaptive wireframes */
 static void
-_wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
+wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     const struct bn_tol *tol = d->tol;
@@ -134,13 +134,13 @@ ged_scene_obj_geom(struct bv_scene_obj *s)
 
     // If we don't have a BRL-CAD type, see if we've got a plot routine
     if (ip->idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-	_wireframe_plot(s, ip);
+	wireframe_plot(s, ip);
 	goto geom_done;
     }
 
     // At least for the moment, we don't try anything fancy with pipes
     if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_PIPE) {
-	_wireframe_plot(s, ip);
+	wireframe_plot(s, ip);
 	goto geom_done;
     }
 
@@ -171,14 +171,14 @@ ged_scene_obj_geom(struct bv_scene_obj *s)
 	case 1:
 	    // Get wireframe (for mode 1, all the non-wireframes are handled
 	    // by the above BOT/POLY/BREP cases
-	    _wireframe_plot(s, ip);
+	    wireframe_plot(s, ip);
 	    s->s_os.s_dmode = 0;
 	    break;
 	case 2:
 	    // Shade everything except pipe, don't evaluate, fall
 	    // back to wireframe in case of failure
-	    if (_prim_tess(s, ip) < 0) {
-		_wireframe_plot(s, ip);
+	    if (prim_tess(s, ip) < 0) {
+		wireframe_plot(s, ip);
 		s->s_os.s_dmode = 0;
 	    }
 	    break;
@@ -190,14 +190,14 @@ ged_scene_obj_geom(struct bv_scene_obj *s)
 	case 4:
 	    // Hidden line - generate polygonal forms, fall back to
 	    // un-hidden wireframe in case of failure
-	    if (_prim_tess(s, ip) < 0) {
-		_wireframe_plot(s, ip);
+	    if (prim_tess(s, ip) < 0) {
+		wireframe_plot(s, ip);
 		s->s_os.s_dmode = 0;
 	    }
 	    break;
 	default:
 	    // Default to wireframe
-	    _wireframe_plot(s, ip);
+	    wireframe_plot(s, ip);
 	    break;
     }
 
@@ -311,7 +311,7 @@ ged_free_draw_data(struct bv_scene_obj *s)
 }
 
 static void
-_tree_color(struct directory *dp, struct draw_data_t *dd)
+tree_color(struct directory *dp, struct draw_data_t *dd)
 {
     struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
 
@@ -442,7 +442,7 @@ db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_
 		int inherit_old = dd->color_inherit;
 		HSET(oc.buc_rgb, dd->c.buc_rgb[0], dd->c.buc_rgb[1], dd->c.buc_rgb[2], dd->c.buc_rgb[3]);
 		if (!dd->bound_only) {
-		    _tree_color(dp, dd);
+		    tree_color(dp, dd);
 		}
 
 		// Two things may prevent further processing - a hidden dp, or
