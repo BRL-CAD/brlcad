@@ -136,12 +136,13 @@ POPState::POPState(int mlevel, const point_t *v, int vcnt, int *faces, int fcnt)
 
     // Bump out the min and max bounds slightly so none of our actual
     // points are too close to these limits
-    minx = 1.01*minx;
-    miny = 1.01*miny;
-    minz = 1.01*minz;
-    maxx = 1.01*maxx;
-    maxy = 1.01*maxy;
-    maxz = 1.01*maxz;
+#define MBUMP 1.01
+    minx = minx-fabs(MBUMP*minx);
+    miny = miny-fabs(MBUMP*miny);
+    minz = minz-fabs(MBUMP*minz);
+    maxx = maxx+fabs(MBUMP*maxx);
+    maxy = maxy+fabs(MBUMP*maxy);
+    maxz = maxz+fabs(MBUMP*maxz);
 
     for (int i = 0; i < fcnt; i++) {
 	rec triangle[3];
@@ -221,42 +222,29 @@ POPState::to_level(int val, int level)
 void
 POPState::level_pnt(point_t *p, int level)
 {
-    point_t in_pt, tpnt, tp2;
+    point_t in_pt;
     VMOVE(in_pt, *p);
-    VSET(tp2, -525.313020, -986.268997, -15.707999);
-    VSET(tpnt, -530.952, 971.509, -22.6845);
-    if (VNEAR_EQUAL(*p, tp2, 0.1)) {
-	bu_log("input(%d): %f, %f, %f\n", level, V3ARGS(in_pt));
-    }
     unsigned int x,y,z;
     x = floor(((*p)[X] - minx) / (maxx - minx) * USHRT_MAX);
     y = floor(((*p)[Y] - miny) / (maxy - miny) * USHRT_MAX);
     z = floor(((*p)[Z] - minz) / (maxz - minz) * USHRT_MAX);
-    if (VNEAR_EQUAL(*p, tp2, 0.1)) {
-	bu_log("xyz(%d): %d, %d, %d\n", level, x, y, z);
-    }
     int lx = floor(x/double(PRECOMPUTED_MASKS[level]));
     int ly = floor(y/double(PRECOMPUTED_MASKS[level]));
     int lz = floor(z/double(PRECOMPUTED_MASKS[level]));
-    if (VNEAR_EQUAL(*p, tp2, 0.1)) {
-	bu_log("lxyz(%d): %d, %d, %d\n", level, lx, ly, lz);
-    }
     // Back to point values
     fastf_t x1 = lx * double(PRECOMPUTED_MASKS[level]);
     fastf_t y1 = ly * double(PRECOMPUTED_MASKS[level]);
     fastf_t z1 = lz * double(PRECOMPUTED_MASKS[level]);
-    if (VNEAR_EQUAL(*p, tp2, 0.1)) {
-	bu_log("xyz1(%d): %f, %f, %f\n", level, x1, y1, z1);
-    }
     fastf_t nx = ((x1 / USHRT_MAX) * (maxx - minx)) + minx;
     fastf_t ny = ((y1 / USHRT_MAX) * (maxy - miny)) + miny;
     fastf_t nz = ((z1 / USHRT_MAX) * (maxz - minz)) + minz;
-    if (VNEAR_EQUAL(*p, tp2, 0.1)) {
-	bu_log("xyzn(%d): %f, %f, %f\n", level, nx, ny, nz);
-    }
     VSET(*p, nx, ny, nz);
-    if (VNEAR_EQUAL(*p, tpnt, 0.1)) {
-	bu_log("output: %f, %f, %f\n", V3ARGS(*p));
+
+    double poffset = DIST_PNT_PNT(*p, in_pt);
+    if (poffset > (maxx - minx) && poffset > (maxy - miny) && poffset > (maxz - minz)) {
+	bu_log("Error: %f %f %f -> %f %f %f\n", V3ARGS(in_pt), V3ARGS(*p));
+	bu_log("bound: %f %f %f -> %f %f %f\n", minx, miny, minz, maxx, maxy, maxz);
+	bu_log("  xyz: %d %d %d -> %d %d %d -> %f %f %f -> %f %f %f\n", x, y, z, lx, ly, lz, x1, y1, z1, nx, ny, nz);
     }
 }
 
@@ -321,23 +309,27 @@ void plot_level(POPState *s, int l)
     plot_file = fopen(bu_vls_addr(&name), "wb");
     pl_color(plot_file, 0, 255, 0);
 
-    std::unordered_set<int>::iterator s_it;
-    for (s_it = s->level_tris[l].begin(); s_it != s->level_tris[l].end(); s_it++) {
-	int f_ind = *s_it;
-	int v1ind = s->faces_array[3*f_ind+0];
-	int v2ind = s->faces_array[3*f_ind+1];
-	int v3ind = s->faces_array[3*f_ind+2];
-	point_t p1, p2, p3;
-	VMOVE(p1, s->verts_array[v1ind]);
-	VMOVE(p2, s->verts_array[v2ind]);
-	VMOVE(p3, s->verts_array[v3ind]);
-	s->level_pnt(&p1, l);
-	s->level_pnt(&p2, l);
-	s->level_pnt(&p3, l);
-	pdv_3move(plot_file, p1);
-	pdv_3cont(plot_file, p2);
-	pdv_3cont(plot_file, p3);
-	pdv_3cont(plot_file, p1);
+    for (int i = 0; i <= l; i++) {
+	std::unordered_set<int>::iterator s_it;
+	for (s_it = s->level_tris[i].begin(); s_it != s->level_tris[i].end(); s_it++) {
+	    int f_ind = *s_it;
+	    int v1ind = s->faces_array[3*f_ind+0];
+	    int v2ind = s->faces_array[3*f_ind+1];
+	    int v3ind = s->faces_array[3*f_ind+2];
+	    point_t p1, p2, p3;
+	    VMOVE(p1, s->verts_array[v1ind]);
+	    VMOVE(p2, s->verts_array[v2ind]);
+	    VMOVE(p3, s->verts_array[v3ind]);
+	    // We iterate over the level i triangles, but our target level
+	    // is l so we "decode" the points to that level, NOT i
+	    s->level_pnt(&p1, l);
+	    s->level_pnt(&p2, l);
+	    s->level_pnt(&p3, l);
+	    pdv_3move(plot_file, p1);
+	    pdv_3cont(plot_file, p2);
+	    pdv_3cont(plot_file, p3);
+	    pdv_3cont(plot_file, p1);
+	}
     }
 
     fclose(plot_file);
