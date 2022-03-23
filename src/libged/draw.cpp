@@ -101,7 +101,7 @@ _wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
 extern "C" int draw_m3(struct bv_scene_obj *s);
 extern "C" int draw_points(struct bv_scene_obj *s);
 
-void
+extern "C" void
 ged_scene_obj_geom(struct bv_scene_obj *s)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
@@ -227,7 +227,7 @@ geom_done:
 // account higher level hierarchy level changes.  If such higher level changes
 // are made, the subtrees should be redrawn to properly repopulate the scene
 // objects.
-int
+extern "C" int
 ged_update_db_path(struct bv_scene_obj *s, int UNUSED(flag))
 {
     /* Validate */
@@ -294,7 +294,7 @@ ged_update_db_path(struct bv_scene_obj *s, int UNUSED(flag))
     return 1;
 }
 
-void
+extern "C" void
 ged_free_draw_data(struct bv_scene_obj *s)
 {
     /* Validate */
