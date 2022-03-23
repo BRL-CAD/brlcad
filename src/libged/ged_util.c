@@ -2069,7 +2069,7 @@ _ged_dir_getspace(struct db_i *dbip,
     struct directory **dir_basep;
 
     if (num_entries < 0) {
-	bu_log("dir_getspace: was passed %d, used 0\n",
+	bu_log("dir_getspace: was passed %zd, used 0\n",
 	       num_entries);
 	num_entries = 0;
     }
