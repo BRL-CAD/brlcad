@@ -214,13 +214,13 @@ struct draw_data_t {
     std::map<struct directory *, fastf_t> *s_size;
 #endif
 };
-GED_EXPORT int ged_update_db_path(struct bv_scene_obj *s, int);
-GED_EXPORT void ged_free_draw_data(struct bv_scene_obj *s);
-GED_EXPORT void ged_scene_obj_geom(struct bv_scene_obj *s);
-GED_EXPORT void db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
+GED_EXPORT int draw_update(struct bv_scene_obj *s, int);
+GED_EXPORT void draw_free_data(struct bv_scene_obj *s);
+GED_EXPORT void draw_scene(struct bv_scene_obj *s);
+GED_EXPORT void draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
           void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
           void *client_data);
-GED_EXPORT void db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data);
+GED_EXPORT void draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data);
 
 GED_EXPORT void vls_col_item(struct bu_vls *str, const char *cp);
 GED_EXPORT void vls_col_eol(struct bu_vls *str);

@@ -156,7 +156,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     dd.g = g;
 
     // Create a wireframe from the current state of the specified object
-    db_fullpath_draw(fp, &mat, (void *)&dd);
+    draw_gather_paths(fp, &mat, (void *)&dd);
 
     // Add to the scene
     bu_ptbl_ins(v->gv_view_objs, (long *)g);
