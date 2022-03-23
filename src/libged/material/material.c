@@ -163,12 +163,15 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 
     while (bu_fgets(buffer, BUFSIZ, densityTable)) {
 	char *p;
-	char name[30];
 	double density = -1;
 	int have_density = 0;
 	int idx = 0;
+	int aborted;
+	struct bu_vls name = BU_VLS_INIT_ZERO;
 
+	/* reset every pass */
 	p = buffer;
+	aborted = 0;
 
 	/* Skip initial whitespace */
 	while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r'))
@@ -201,33 +204,33 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    if (have_density) {
-		bu_free(buffer, "free buffer copy");
-		bu_free(name, "free name copy");
-		bu_vls_printf(gedp->ged_result_str, "Error processing: Extra content after density entry\n");
-		return BRLCAD_ERROR;
+		aborted = 1;
+		bu_vls_printf(gedp->ged_result_str, "ERROR: Extra content after density entry\n");
+		break;
 	    }
 	    idx = strtol(p, &q, 10);
 	    if (idx < 0) {
-		bu_free(buffer, "free buffer copy");
-		bu_vls_printf(gedp->ged_result_str, "Error processing: Bad density index\n");
-		return BRLCAD_ERROR;
+		aborted = 1;
+		bu_vls_printf(gedp->ged_result_str, "ERROR: Bad density index\n");
+		break;
 	    }
 	    density = strtod(q, &p);
 	    if (q == p) {
-		bu_free(buffer, "free buffer copy");
-		bu_vls_printf(gedp->ged_result_str, "Error processing: Could not convert density\n");
-		return BRLCAD_ERROR;
+		aborted = 1;
+		bu_vls_printf(gedp->ged_result_str, "ERROR: Could not convert density\n");
+		break;
 	    }
 
 	    if (density < 0.0) {
-		bu_free(buffer, "Free buffer copy");
-		bu_vls_printf(gedp->ged_result_str, "Error processing: Bad Density\n");
-		return BRLCAD_ERROR;
+		aborted = 1;
+		bu_vls_printf(gedp->ged_result_str, "ERROR: Bad Density\n");
+		break;
 	    }
 	    while (*p && (*p == '\t' || *p == ' ')) p++;
 	    if (!*p) {
-		bu_vls_printf(gedp->ged_result_str, "Error processing: Missing name\n");
-		return BRLCAD_ERROR;
+		aborted = 1;
+		bu_vls_printf(gedp->ged_result_str, "ERROR: Missing name\n");
+		break;
 	    }
 
 	    while (*(p + len) && !(*(p + len) == '\n' || *(p+len) == '#')) {
@@ -237,9 +240,15 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 	    while (!((*(p + len) >= 'A' && *(p + len) <= 'Z') ||  (*(p + len) >= 'a' && *(p + len) <= 'z') || (*(p + len) >= '1' && *(p + len) <= '9'))) {
 		len--;
 	    }
-	    strncpy(name, p, len+1);
-	    break;
 
+	    bu_vls_strncpy(&name, p, len+1);
+	    break;
+	}
+
+	if (aborted) {
+	    bu_free(buffer, "free buffer copy");
+	    bu_vls_free(&name);
+	    return BRLCAD_ERROR;
 	}
 
 	if (idx == 0) {
@@ -273,7 +282,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 
 	    mk_material(gedp->ged_wdbp,
 			bu_vls_cstr(&mat_with_id),
-			name,
+			bu_vls_cstr(&name),
 			"",
 			"",
 			&physicalProperties,
@@ -283,8 +292,8 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_free(&mat_with_id);
 	} else {
 	    mk_material(gedp->ged_wdbp,
-			name,
-			name,
+			bu_vls_cstr(&name),
+			bu_vls_cstr(&name),
 			"",
 			"",
 			&physicalProperties,
@@ -294,9 +303,9 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 	}
 	bu_vls_free(&idxChar);
 	bu_vls_free(&densityChar);
+	bu_vls_free(&name);
 
 	memset(buffer, 0, BUFSIZ);
-	memset(name, 0, 30);
     }
 
     return 0;
