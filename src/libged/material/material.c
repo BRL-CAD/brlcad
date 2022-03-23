@@ -162,13 +162,12 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
     }
 
     while (bu_fgets(buffer, BUFSIZ, densityTable)) {
-	char *p = buffer;
-	char *q;
-	buffer[strlen(buffer)] = '\0';
+	char *p;
 	char name[30];
 	double density = -1;
 	int have_density = 0;
 	int idx = 0;
+
 	p = buffer;
 
 	/* Skip initial whitespace */
@@ -189,6 +188,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 
 	while (*p) {
 	    int len = 0;
+	    char *q = NULL;
 
 	    if (*p == '#') {
 		while (*p && *p != '\n')
