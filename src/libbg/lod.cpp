@@ -49,13 +49,19 @@
 #include <math.h>
 #include <iomanip>
 #include <iostream>
+#include <fstream>
 
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h> /* for mkdir */
+#endif
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bv/plot3.h"
 #include "bg/lod.h"
 #include "bg/trimesh.h"
 
 #define POP_MAXLEVEL 16
+#define POP_CACHEDIR ".POPLoD"
 
 // Output record
 class rec {
@@ -66,9 +72,17 @@ class rec {
 class POPState {
     public:
 	POPState(int mlevel, const point_t *v, int vcnt, int *faces, int fcnt);
+
+	// Load POP state from cache data, up through level mlevel
+	POPState(int mlevel, const char *oname);
+
 	~POPState() {};
 
 	void level_pnt(point_t *p, int level);
+
+	bool cache(const char *odir);
+
+	bool is_valid = false;
 
 	// When we characterize the levels of the verts,
 	// we will need to reorder them so we can load only
@@ -82,16 +96,22 @@ class POPState {
 	std::unordered_map<int, std::unordered_set<int>> level_tris;
 
 	// When the vertices are reordered, we need to create a new faces
-	// array which uses the new indices from the ind_map;
-	int *nfaces;
+	// array which uses the new indices from the ind_map.  If we are
+	// reading cached data, this is the primary faces array
+	std::vector<int> nfaces;
+
+	// If reading cached data, this is where we store the points - 
+	// nfaces will index into this vector.  If verts_array is non-null,
+	// ind_map is used to reference into that array instead.
+	std::vector<point_t> npnts;
 
 	// Number of discrete levels of detail defined
 	int max_level;
 
-	int vert_cnt;
-	const point_t *verts_array;
-	int faces_cnt;
-	int *faces_array;
+	int vert_cnt = 0;
+	const point_t *verts_array = NULL;
+	int faces_cnt = 0;
+	int *faces_array = NULL;
 
     private:
 	int to_level(int val, int level);
@@ -106,7 +126,7 @@ class POPState {
 
 POPState::POPState(int mlevel, const point_t *v, int vcnt, int *faces, int fcnt)
 {
-    // Store the number of levels
+    // Store the number of active levels
     max_level = mlevel;
 
     // Store source data info
@@ -116,8 +136,8 @@ POPState::POPState(int mlevel, const point_t *v, int vcnt, int *faces, int fcnt)
     faces_array = faces;
 
     // Precompute precision masks for each level
-    for (int i = 0; i < mlevel; i++) {
-	PRECOMPUTED_MASKS.push_back(pow(2, (mlevel - i - 1)));
+    for (int i = 0; i < POP_MAXLEVEL; i++) {
+	PRECOMPUTED_MASKS.push_back(pow(2, (POP_MAXLEVEL - i - 1)));
     }
 
     // Find our min and max values, initialize levels
@@ -193,12 +213,6 @@ POPState::POPState(int mlevel, const point_t *v, int vcnt, int *faces, int fcnt)
 	}
     }
 
-    // A new faces array referencing the level sorted vertices is now needed
-    nfaces = (int *)bu_calloc(fcnt, 3*sizeof(int), "update faces");
-    for (int i = 0; i < fcnt * 3; i++) {
-	nfaces[i] = ind_map[faces[i]];
-    }
-
     for (int i = 0; i < POP_MAXLEVEL; i++) {
 	bu_log("bucket %d count: %zd\n", i, level_tris[i].size());
     }
@@ -207,6 +221,114 @@ POPState::POPState(int mlevel, const point_t *v, int vcnt, int *faces, int fcnt)
 	bu_log("vert %d count: %zd\n", i, level_verts[i].size());
     }
 
+    is_valid = true;
+}
+
+POPState::POPState(int mlevel, const char *oname)
+{
+    if (!oname)
+	return;
+
+    // Store the number of levels we are supposed to load
+    max_level = mlevel;
+}
+
+// Write out the generated LoD data to the BRL-CAD cache
+bool
+POPState::cache(const char *odir)
+{
+    if (!is_valid)
+	return false;
+
+    char dir[MAXPATHLEN];
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
+    if (!bu_file_exists(dir, NULL)) {
+#ifdef HAVE_WINDOWS_H
+	CreateDirectory(dir, NULL);
+#else
+	/* mode: 775 */
+	mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
+    }
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, odir, NULL);
+    if (!bu_file_exists(dir, NULL)) {
+#ifdef HAVE_WINDOWS_H
+	CreateDirectory(dir, NULL);
+#else
+	/* mode: 775 */
+	mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
+    }
+
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, odir, "format", NULL);
+    FILE *fp = fopen(dir, "w");
+    if (!fp)
+	return false;
+    fprintf(fp, "1\n");
+    fclose(fp);
+
+    // Write out the level vertices
+    for (int i = 0; i < max_level; i++) {
+	if (level_verts.find(i) == level_verts.end())
+	    continue;
+	if (!level_verts[i].size())
+	    continue;
+	struct bu_vls vfile = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&vfile, "verts_level_%d", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, odir, bu_vls_cstr(&vfile), NULL);
+
+	std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
+
+	// Store the size of the level vert vector
+	int sv = level_verts[i].size();
+	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
+
+	// Write out the vertex points
+	std::set<int>::iterator s_it;
+	for (s_it = level_verts[i].begin(); s_it != level_verts[i].end(); s_it++) {
+	    point_t v;
+	    VMOVE(v, verts_array[*s_it]);
+	    vofile.write(reinterpret_cast<const char *>(&v[0]), 3*sizeof(fastf_t));
+	}
+
+	vofile.close();
+	bu_vls_free(&vfile);
+    }
+
+
+    // Write out the level triangles
+    for (int i = 0; i < max_level; i++) {
+	if (level_tris.find(i) == level_tris.end())
+	    continue;
+	if (!level_tris[i].size())
+	    continue;
+	struct bu_vls tfile = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&tfile, "tris_level_%d", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, odir, bu_vls_cstr(&tfile), NULL);
+
+	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
+
+	// Store the size of the level tri vector
+	int st = level_tris[i].size();
+	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
+
+	// Write out the mapped triangle indices
+	std::unordered_set<int>::iterator s_it;
+	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
+	    int v[3];
+	    v[0] = ind_map[faces_array[3*(*s_it)+0]];
+	    v[1] = ind_map[faces_array[3*(*s_it)+1]];
+	    v[2] = ind_map[faces_array[3*(*s_it)+2]];
+	    tofile.write(reinterpret_cast<const char *>(&v[0]), 3*sizeof(int));
+	}
+
+	tofile.close();
+	bu_vls_free(&tfile);
+    }
+
+
+
+    return true;
 }
 
 // Transfer coordinate into level precision
@@ -349,6 +471,7 @@ bg_lod_elist(struct bu_list *elist, struct bview *v, struct bg_mesh_lod *l)
 
     // For debugging purposes, write out plot files of each level
     POPState *s = l->i->s;
+    s->cache("testdir");
     for (int i = 0; i < s->max_level; i++) {
 	plot_level(s, i);
     }
