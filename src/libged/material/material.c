@@ -256,23 +256,23 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 	bu_avs_init_empty(&opticalProperties);
 	bu_avs_init_empty(&thermalProperties);
 
-	char idxChar[6];
-	sprintf(idxChar, "%d", idx);
+	struct bu_vls idxChar = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&idxChar, "%d", idx);
 
-	char densityChar[50];
-	sprintf(densityChar, "%.3f", density);
+	struct bu_vls densityChar = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&densityChar, "%.3f", density);
 
-	bu_avs_add(&physicalProperties, "density", densityChar);
-	bu_avs_add(&physicalProperties, "id", idxChar);
+	bu_avs_add(&physicalProperties, "density", bu_vls_cstr(&densityChar));
+	bu_avs_add(&physicalProperties, "id", bu_vls_cstr(&idxChar));
 
 	if (BU_STR_EQUAL("--id", flag)) {
-	    char mat_with_id[40];
+	    struct bu_vls mat_with_id = BU_VLS_INIT_ZERO;
 
-	    strcat(mat_with_id, "matl");
-	    strcat(mat_with_id, idxChar);
+	    bu_vls_strcat(&mat_with_id, "matl");
+	    bu_vls_vlscat(&mat_with_id, &idxChar);
 
 	    mk_material(gedp->ged_wdbp,
-			mat_with_id,
+			bu_vls_cstr(&mat_with_id),
 			name,
 			"",
 			"",
@@ -280,7 +280,7 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 			&mechanicalProperties,
 			&opticalProperties,
 			&thermalProperties);
-	    memset(mat_with_id, 0x00, 40);
+	    bu_vls_free(&mat_with_id);
 	} else {
 	    mk_material(gedp->ged_wdbp,
 			name,
@@ -292,6 +292,9 @@ import_materials(struct ged *gedp, int argc, const char *argv[])
 			&opticalProperties,
 			&thermalProperties);
 	}
+	bu_vls_free(&idxChar);
+	bu_vls_free(&densityChar);
+
 	memset(buffer, 0, 256);
 	memset(name, 0, 30);
     }
