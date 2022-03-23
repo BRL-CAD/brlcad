@@ -89,8 +89,8 @@ main(int argc, char *argv[])
     start = bu_gettime();
 
     // TODO - lod testing
-    struct bu_list elist;
-    int ecnt = bg_lod_elist(&elist, NULL, NULL);
+    // struct bu_list elist;
+    int ecnt = bg_lod_elist(NULL, NULL, mlod);
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;

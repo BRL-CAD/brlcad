@@ -33,12 +33,17 @@
  * wrappers around more sophisticated algorithms, but for now its purpose is to
  * hold logic intended to help with edge-only wireframe displays of large
  * meshes.
+ *
+ * Useful discussion of applying POP buffers here:
+ * https://medium.com/@petroskataras/the-ayotzinapa-case-447a72d89e58
  */
 
 #include "common.h"
 #include <stdlib.h>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
+#include <map>
+#include <set>
 #include <vector>
 #include <limits>
 #include <math.h>
@@ -46,6 +51,7 @@
 #include <iostream>
 
 #include "bu/malloc.h"
+#include "bv/plot3.h"
 #include "bg/lod.h"
 #include "bg/trimesh.h"
 
@@ -57,16 +63,35 @@ class rec {
 	unsigned short x = 0, y = 0, z = 0;
 };
 
-// Structure to hold a vertex entry that is not transformed yet
-class entry {
-    public:
-	float vx = 0.0, vy = 0.0, vz = 0.0;
-};
-
 class POPState {
     public:
-	POPState(int mlevel);
+	POPState(int mlevel, const point_t *v, int vcnt, int *faces, int fcnt);
 	~POPState() {};
+
+	// When we characterize the levels of the verts,
+	// we will need to reorder them so we can load only
+	// subsets at need.
+	std::unordered_map<int, int> ind_map;
+
+	// Once we have characterized the triangles, we can
+	// determine which vertices are active at which levels
+	std::unordered_map<int, int> vert_minlevel;
+	std::map<int, std::set<int>> level_verts;
+	std::unordered_map<int, std::unordered_set<int>> level_tris;
+
+	// When the vertices are reordered, we need to create a new faces
+	// array which uses the new indices from the ind_map;
+	int *nfaces;
+
+	// Number of discrete levels of detail defined
+	int max_level;
+
+	int vert_cnt;
+	const point_t *verts_array;
+	int faces_cnt;
+	int *faces_array;
+
+    private:
 	int to_level(int val, int level);
 	bool is_equal(rec r1, rec r2, int level);
 	bool is_degenerate(rec r0, rec r1, rec r2, int level);
@@ -74,23 +99,102 @@ class POPState {
 	float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
 	float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
 
-	std::vector<entry> entries;
-	std::vector<std::vector<rec> *> buckets;
-    private:
 	std::vector<unsigned short> PRECOMPUTED_MASKS;
 };
 
-POPState::POPState(int mlevel)
+POPState::POPState(int mlevel, const point_t *v, int vcnt, int *faces, int fcnt)
 {
-    // Precompute precision masks
+    // Store the number of levels
+    max_level = mlevel;
+
+    // Store source data info
+    vert_cnt = vcnt;
+    verts_array = v;
+    faces_cnt = fcnt;
+    faces_array = faces;
+
+    // Precompute precision masks for each level
     for (int i = 0; i < mlevel; i++) {
 	PRECOMPUTED_MASKS.push_back(pow(2, (mlevel - i - 1)));
     }
 
-    // Create buckets for every level
-    for (int i = 0; i < mlevel; i++) {
-	buckets.push_back(new std::vector<rec>);
+    // Find our min and max values, initialize levels
+    for (int i = 0; i < vcnt; i++) {
+	minx = (v[i][X] < minx) ? v[i][X] : minx;
+	miny = (v[i][Y] < miny) ? v[i][Y] : miny;
+	minz = (v[i][Z] < minz) ? v[i][Z] : minz;
+	maxx = (v[i][X] > maxx) ? v[i][X] : maxx;
+	maxy = (v[i][Y] > maxy) ? v[i][Y] : maxy;
+	maxz = (v[i][Z] > maxz) ? v[i][Z] : maxz;
+	// Until we prove otherwise, all triangles are assumed to appear only
+	// at the last level (and consequently, their vertices are only needed
+	// then).  Set the level accordingly.
+	vert_minlevel[i] = mlevel - 1;
     }
+
+    for (int i = 0; i < fcnt; i++) {
+	rec triangle[3];
+	// Transform triangle vertices
+	for (int j = 0; j < 3; j++) {
+	    triangle[j].x = floor((v[faces[3*i+j]][X] - minx) / (maxx - minx) * USHRT_MAX);
+	    triangle[j].y = floor((v[faces[3*i+j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
+	    triangle[j].z = floor((v[faces[3*i+j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
+	}
+
+	// Find the pop up level for this triangle (i.e., when it will first
+	// appear as we step up the zoom levels.)
+	int level = mlevel - 1;
+	for (int j = 0; j < mlevel; j++) {
+	    if (!is_degenerate(triangle[0], triangle[1], triangle[2], j)) {
+		level = j;
+		break;
+	    }
+	}
+	// Add this triangle to its "pop" level
+	level_tris[level].insert(i);
+
+	// Let the vertices know they will be needed at this level, if another
+	// triangle doesn't already need them sooner
+	for (int j = 0; j < 3; j++) {
+	    if (vert_minlevel[faces[3*i+j]] > level) {
+		vert_minlevel[faces[3*i+j]] = level;
+	    }
+	}
+    }
+
+    // The vertices now know when they will first need to appear.  Build level
+    // sets of vertices
+    std::unordered_map<int, int>::iterator v_it;
+    for (v_it = vert_minlevel.begin(); v_it != vert_minlevel.end(); v_it++) {
+	level_verts[v_it->second].insert(v_it->first);
+    }
+
+    // Having sorted the vertices into level sets, we may now define a new global
+    // vertex ordering that respects the needs of the levels.
+    int vind = 0;
+    std::map<int, std::set<int>>::iterator l_it;
+    std::set<int>::iterator s_it;
+    for (l_it = level_verts.begin(); l_it != level_verts.end(); l_it++) {
+	for (s_it = l_it->second.begin(); s_it != l_it->second.end(); s_it++) {
+	    ind_map[*s_it] = vind;
+	    vind++;
+	}
+    }
+
+    // A new faces array referencing the level sorted vertices is now needed
+    nfaces = (int *)bu_calloc(fcnt, 3*sizeof(int), "update faces");
+    for (int i = 0; i < fcnt * 3; i++) {
+	nfaces[i] = ind_map[faces[i]];
+    }
+
+    for (int i = 0; i < POP_MAXLEVEL; i++) {
+	bu_log("bucket %d count: %zd\n", i, level_tris[i].size());
+    }
+
+    for (int i = 0; i < POP_MAXLEVEL; i++) {
+	bu_log("vert %d count: %zd\n", i, level_verts[i].size());
+    }
+
 }
 
 // Transfer coordinate into level precision
@@ -134,52 +238,7 @@ bg_mesh_lod_create(const point_t *v, int vcnt, int *faces, int fcnt)
     BU_GET(l, struct bg_mesh_lod);
     BU_GET(l->i, struct bg_mesh_lod_internal);
 
-    l->i->s = new POPState(POP_MAXLEVEL);
-
-    POPState *s = l->i->s;
-
-    for (int i = 0; i < vcnt; i++) {
-	entry e;
-	e.vx = v[i][X];
-	e.vy = v[i][Y];
-	e.vz = v[i][Z];
-	s->minx = (e.vx < s->minx) ? e.vx : s->minx;
-	s->miny = (e.vy < s->miny) ? e.vy : s->miny;
-	s->minz = (e.vz < s->minz) ? e.vz : s->minz;
-	s->maxx = (e.vx > s->maxx) ? e.vx : s->maxx;
-	s->maxy = (e.vy > s->maxy) ? e.vy : s->maxy;
-	s->maxz = (e.vz > s->maxz) ? e.vz : s->maxz;
-	s->entries.push_back(e);
-    }
-
-    for (int i = 0; i < fcnt; i++) {
-	rec triangle[3];
-	// Transform triangle vertices
-	for (int j = 0; j < 3; j++) {
-	    entry &e = s->entries[faces[3*i+j]];
-	    triangle[j].x = floor((e.vx - s->minx) / (s->maxx - s->minx) * USHRT_MAX);
-	    triangle[j].y = floor((e.vy - s->miny) / (s->maxy - s->miny) * USHRT_MAX);
-	    triangle[j].z = floor((e.vz - s->minz) / (s->maxz - s->minz) * USHRT_MAX);
-	}
-
-	// Find the pop up level for this triangle
-	int level = POP_MAXLEVEL - 1;
-	for (int j = 0; j < POP_MAXLEVEL; j++) {
-	    if (!s->is_degenerate(triangle[0], triangle[1], triangle[2], j)) {
-		level = j;
-		break;
-	    }
-	}
-
-	// Store in the correct bucket
-	for (int k = 0; k < 3; k++) {
-	    s->buckets[level]->push_back(triangle[k]);
-	}
-    }
-
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	bu_log("bucket %d count: %zd\n", i, s->buckets[i]->size());
-    }
+    l->i->s = new POPState(POP_MAXLEVEL, v, vcnt, faces, fcnt);
 
     return l;
 }
@@ -195,13 +254,51 @@ bg_mesh_lod_destroy(struct bg_mesh_lod *l)
     BU_PUT(l, struct bg_mesh_lod);
 }
 
+static
+void plot_level(POPState *s, int l)
+{
+    if (!s || l < 0 || l > s->max_level - 1)
+	return;
+
+    struct bu_vls name;
+    FILE *plot_file = NULL;
+    bu_vls_init(&name);
+    bu_vls_printf(&name, "pop_level_%.2d.plot3", l);
+    plot_file = fopen(bu_vls_addr(&name), "wb");
+    pl_color(plot_file, 0, 255, 0);
+
+    std::unordered_set<int>::iterator s_it;
+    for (s_it = s->level_tris[l].begin(); s_it != s->level_tris[l].end(); s_it++) {
+	int f_ind = *s_it;
+	int v1ind = s->faces_array[3*f_ind+0];
+	int v2ind = s->faces_array[3*f_ind+1];
+	int v3ind = s->faces_array[3*f_ind+2];
+	pdv_3move(plot_file, s->verts_array[v1ind]);
+	pdv_3cont(plot_file, s->verts_array[v2ind]);
+	pdv_3cont(plot_file, s->verts_array[v3ind]);
+	pdv_3cont(plot_file, s->verts_array[v1ind]);
+    }
+
+    fclose(plot_file);
+    bu_vls_free(&name);
+}
+
 extern "C" int
 bg_lod_elist(struct bu_list *elist, struct bview *v, struct bg_mesh_lod *l)
 {
     int ecnt = 0;
-    if (!elist || !v || !l)
+    if (!l)
 	return -1;
 
+    // TODO
+    if (elist || v)
+	return -1;
+
+    // For debugging purposes, write out plot files of each level
+    POPState *s = l->i->s;
+    for (int i = 0; i < s->max_level; i++) {
+	plot_level(s, i);
+    }
 
     return ecnt;
 }
