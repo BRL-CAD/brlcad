@@ -348,6 +348,8 @@ POPState::POPState(unsigned long long key)
     is_valid = 1;
 }
 
+// NOTE: at some point it may be worth investigating using bu_open_mapped_file
+// and friends for this, depending on what profiling shows in real-world usage.
 void
 POPState::set_level(int level)
 {
@@ -414,7 +416,26 @@ POPState::set_level(int level)
 	bu_vls_free(&vkey);
 
     } else {
-	// TODO - downsize the data
+	// Clear the level_tris info for everything above the target level - it will be reloaded
+	// if we need it again
+	for (size_t i = level+1; i < POP_MAXLEVEL; i++) {
+	    level_tris[i].clear();
+	    level_tris[i].shrink_to_fit();
+	}
+	// Tally all the lower level verts and tris - those are the ones we need to keep
+	size_t vkeep_cnt = 0;
+	size_t fkeep_cnt = 0;
+	for (size_t i = 0; i <= (size_t)level; i++) {
+	    vkeep_cnt += level_verts[i].size();
+	    fkeep_cnt += level_tris[i].size();
+	}
+
+	// Shrink the main arrays (note that in C++11 shrink_to_fit may or may
+	// not actually shrink memory usage on any given call.)
+	npnts.resize(vkeep_cnt*3);
+	npnts.shrink_to_fit();
+	nfaces.resize(fkeep_cnt*3);
+	nfaces.shrink_to_fit();
     }
 
     elapsed = bu_gettime() - start;
@@ -769,6 +790,11 @@ bg_lod_elist(struct bu_list *elist, struct bview *v, struct bg_mesh_lod *l, cons
     for (int i = 0; i < POP_MAXLEVEL; i++) {
 	s->set_level(i);
 	s->plot(pname);
+    }
+
+    for (int i = POP_MAXLEVEL - 1; i >= 0; i--) {
+	s->set_level(i);
+	s->plot("shrunk");
     }
 
     return ecnt;
