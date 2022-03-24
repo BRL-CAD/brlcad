@@ -76,6 +76,7 @@
 #endif
 #include "bu/app.h"
 #include "bu/malloc.h"
+#include "bu/time.h"
 #include "bv/plot3.h"
 #include "bg/lod.h"
 #include "bg/trimesh.h"
@@ -92,19 +93,21 @@ class rec {
 
 class POPState {
     public:
+
+	// Create cached data (doesn't create a usable container)
 	POPState(const point_t *v, int vcnt, int *faces, int fcnt);
+
+	// Load cached data (DOES create a usable container)
 	POPState(unsigned long long key);
 
+	// Cleanup
 	~POPState() {};
 
-	// Content based hash key
-	unsigned long long hash;
+	// Load/unload data level
+	void set_level(int level);
 
-
-	bool is_valid = false;
-	void plot_level(int l, const char *root);
-	bool cache();
-
+	// Debugging
+	void plot(const char *root);
 
 	// Active faces needed by the current LoD (indexes into npnts).
 	std::vector<int> nfaces;
@@ -119,35 +122,42 @@ class POPState {
 	// Current level of detail information loaded into nfaces/npnts
 	int curr_level;
 
-	int vert_cnt = 0;
-	const point_t *verts_array = NULL;
-	int faces_cnt = 0;
-	int *faces_array = NULL;
+	// Used by calling functions to detect initialization errors
+	bool is_valid = false;
+
+	// Content based hash key
+	unsigned long long hash;
 
     private:
+	// Functions related to characterizing and calculating geometry
+	// information at various LoD levels
 	int to_level(int val, int level);
 	bool is_equal(rec r1, rec r2, int level);
 	bool is_degenerate(rec r0, rec r1, rec r2, int level);
-
 	void level_pnt(point_t *p, int level);
-
-
-	// When we characterize the levels of the verts,
-	// we will need to reorder them so we can load only
-	// subsets at need.
-	std::unordered_map<int, int> ind_map;
-
-	// Once we have characterized the triangles, we can
-	// determine which vertices are active at which levels
-	std::unordered_map<int, int> vert_minlevel;
-	std::map<int, std::set<int>> level_verts;
-	std::unordered_map<int, std::unordered_set<int>> level_tris;
-
 
 	float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
 	float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
 
 	std::vector<unsigned short> PRECOMPUTED_MASKS;
+
+	// Write data out to cache (only used during initialization from
+	// external data)
+	void cache();
+
+	// Management containers used for loading/unloading LoD info
+	std::unordered_map<int, int> level_vcnt;
+	std::unordered_map<int, int> level_fcnt;
+
+	// Processing containers used for initial data characterization
+	std::unordered_map<int, int> ind_map;
+	std::unordered_map<int, int> vert_minlevel;
+	std::map<int, std::set<int>> level_verts;
+	std::unordered_map<int, std::unordered_set<int>> level_tris;
+	int vert_cnt = 0;
+	const point_t *verts_array = NULL;
+	int faces_cnt = 0;
+	int *faces_array = NULL;
 };
 
 POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
@@ -263,6 +273,13 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
 	}
     }
 
+    // We're now ready to write out the data
+    is_valid = true;
+    cache();
+
+    if (!is_valid)
+	return;
+
     for (int i = 0; i < POP_MAXLEVEL; i++) {
 	bu_log("bucket %d count: %zd\n", i, level_tris[i].size());
     }
@@ -270,8 +287,6 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     for (int i = 0; i < POP_MAXLEVEL; i++) {
 	bu_log("vert %d count: %zd\n", i, level_verts[i].size());
     }
-
-    is_valid = true;
 }
 
 POPState::POPState(unsigned long long key)
@@ -279,8 +294,8 @@ POPState::POPState(unsigned long long key)
     if (!key)
 	return;
 
-    // TODO - once we get incremental loading working this will start at zero...
-    curr_level = POP_MAXLEVEL - 1;
+    // Initialize so set_level will read in the first level of triangles
+    curr_level = - 1;
 
     // Precompute precision masks for each level
     for (int i = 0; i < POP_MAXLEVEL; i++) {
@@ -289,93 +304,120 @@ POPState::POPState(unsigned long long key)
 
     struct bu_vls vkey = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&vkey, "%llu", key);
-
-    // If we have cached data, use that
     char dir[MAXPATHLEN];
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), NULL);
     if (!bu_file_exists(dir, NULL)) {
 	bu_vls_free(&vkey);
 	return;
     }
+    hash = key;
 
-    // Read in the level vertices
-    // TODO - once we have incremental loading, load only the first level
-    for (int i = 0; i < curr_level; i++) {
-	struct bu_vls vfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&vfile, "verts_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
-	if (!bu_file_exists(dir, NULL))
-	    continue;
-
-	std::ifstream vifile(dir, std::ios::in | std::ofstream::binary);
-	int vicnt = 0;
-	vifile.read(reinterpret_cast<char *>(&vicnt), sizeof(vicnt));
-	for (int j = 0; j < vicnt; j++) {
-	    point_t nv;
-	    vifile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
-	    for (int k = 0; k < 3; k++) {
-		npnts.push_back(nv[k]);
-	    }
-	    level_verts[i].insert(npnts.size() - 1);
-	}
-	vifile.close();
-	bu_vls_free(&vfile);
+    // Read in min/max bounds
+    {
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "minmax", NULL);
+	std::ifstream minmaxfile(dir, std::ios::in | std::ofstream::binary);
+	float minmax[6];
+	minmaxfile.read(reinterpret_cast<char *>(&minmax), sizeof(minmax));
+	minx = minmax[0];
+	miny = minmax[1];
+	minz = minmax[2];
+	maxx = minmax[3];
+	maxy = minmax[4];
+	maxz = minmax[5];
     }
 
-    // Calculate min and max so we can do the level snapping for vertices
-    // TODO - this needs to be written out to the cache so we don't have to
-    // read all points to recalc it
-    for (size_t i = 0; i < npnts.size()/3; i++) {
-	minx = (npnts[i*3+0] < minx) ? npnts[i*3+0] : minx;
-	miny = (npnts[i*3+1] < miny) ? npnts[i*3+1] : miny;
-	minz = (npnts[i*3+2] < minz) ? npnts[i*3+2] : minz;
-	maxx = (npnts[i*3+0] > maxx) ? npnts[i*3+0] : maxx;
-	maxy = (npnts[i*3+1] > maxy) ? npnts[i*3+1] : maxy;
-	maxz = (npnts[i*3+2] > maxz) ? npnts[i*3+2] : maxz;
-    }
-    // Bump out the min and max bounds slightly so none of our actual
-    // points are too close to these limits
-    minx = minx-fabs(MBUMP*minx);
-    miny = miny-fabs(MBUMP*miny);
-    minz = minz-fabs(MBUMP*minz);
-    maxx = maxx+fabs(MBUMP*maxx);
-    maxy = maxy+fabs(MBUMP*maxy);
-    maxz = maxz+fabs(MBUMP*maxz);
+    // Read in the zero level vertices and triangles
+    set_level(0);
 
-    // Read in the level triangles
-    // TODO - once we have incremental loading, load only the first level
-    for (int i = 0; i < curr_level; i++) {
-	struct bu_vls tfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&tfile, "tris_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&tfile), NULL);
-	if (!bu_file_exists(dir, NULL))
-	    continue;
-
-	std::ifstream tifile(dir, std::ios::in | std::ofstream::binary);
-	int ticnt = 0;
-	tifile.read(reinterpret_cast<char *>(&ticnt), sizeof(ticnt));
-	for (int j = 0; j < ticnt; j++) {
-	    int vf[3];
-	    tifile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
-	    for (int k = 0; k < 3; k++) {
-		nfaces.push_back(vf[k]);
-	    }
-	    level_tris[i].insert(nfaces.size() / 3 - 1);
-	}
-	tifile.close();
-	bu_vls_free(&tfile);
-    }
-
+    // All set - ready for LoD
     bu_vls_free(&vkey);
     is_valid = 1;
 }
 
+void
+POPState::set_level(int level)
+{
+    // If we're already there, no work to do
+    if (level == curr_level)
+	return;
+
+    int64_t start, elapsed;
+    fastf_t seconds;
+    start = bu_gettime();
+
+    // If we need to pull more data, do so
+    if (level > curr_level) {
+	char dir[MAXPATHLEN];
+	struct bu_vls vkey = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&vkey, "%llu", hash);
+
+	// Read in the level vertices
+	for (int i = curr_level+1; i <= level; i++) {
+	    struct bu_vls vfile = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&vfile, "verts_level_%d", i);
+	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
+	    if (!bu_file_exists(dir, NULL))
+		continue;
+
+	    std::ifstream vifile(dir, std::ios::in | std::ofstream::binary);
+	    int vicnt = 0;
+	    vifile.read(reinterpret_cast<char *>(&vicnt), sizeof(vicnt));
+	    for (int j = 0; j < vicnt; j++) {
+		point_t nv;
+		vifile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
+		for (int k = 0; k < 3; k++) {
+		    npnts.push_back(nv[k]);
+		}
+		level_verts[i].insert(npnts.size() - 1);
+	    }
+	    vifile.close();
+	    bu_vls_free(&vfile);
+	}
+
+	// Read in the level triangles
+	for (int i = curr_level+1; i <= level; i++) {
+	    struct bu_vls tfile = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&tfile, "tris_level_%d", i);
+	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&tfile), NULL);
+	    if (!bu_file_exists(dir, NULL))
+		continue;
+
+	    std::ifstream tifile(dir, std::ios::in | std::ofstream::binary);
+	    int ticnt = 0;
+	    tifile.read(reinterpret_cast<char *>(&ticnt), sizeof(ticnt));
+	    for (int j = 0; j < ticnt; j++) {
+		int vf[3];
+		tifile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
+		for (int k = 0; k < 3; k++) {
+		    nfaces.push_back(vf[k]);
+		}
+		level_tris[i].insert(nfaces.size() / 3 - 1);
+	    }
+	    tifile.close();
+	    bu_vls_free(&tfile);
+	}
+
+	bu_vls_free(&vkey);
+
+    } else {
+	// TODO - downsize the data
+    }
+
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("lod set_level(%d): %f sec\n", level, seconds);
+
+    curr_level = level;
+}
+
 // Write out the generated LoD data to the BRL-CAD cache
-bool
+void
 POPState::cache()
 {
-    if (!is_valid || !hash)
-	return false;
+    if (!hash) {
+	is_valid = false;
+	return;
+    }
 
     char dir[MAXPATHLEN];
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
@@ -393,7 +435,8 @@ POPState::cache()
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), NULL);
     if (bu_file_exists(dir, NULL)) {
 	// If the directory already exists, we should already be good to go
-	return true;
+	is_valid = true;
+	return;
     } else {
 #ifdef HAVE_WINDOWS_H
 	CreateDirectory(dir, NULL);
@@ -403,15 +446,31 @@ POPState::cache()
 #endif
     }
 
+    // Note a format, so we can detect if what's there isn't compatible
+    // with what this logic expects (in anticipation of future changes
+    // to the on-disk format).
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "format", NULL);
     FILE *fp = fopen(dir, "w");
     if (!fp) {
 	bu_vls_free(&vkey);
 	is_valid = false;
-	return false;
+	return;
     }
     fprintf(fp, "1\n");
     fclose(fp);
+
+    // Stash the min and max bounds, which will be used in decoding
+    {
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "minmax", NULL);
+	std::ofstream minmaxfile(dir, std::ios::out | std::ofstream::binary);
+	minmaxfile.write(reinterpret_cast<const char *>(&minx), sizeof(minx));
+	minmaxfile.write(reinterpret_cast<const char *>(&miny), sizeof(miny));
+	minmaxfile.write(reinterpret_cast<const char *>(&minz), sizeof(minz));
+	minmaxfile.write(reinterpret_cast<const char *>(&maxx), sizeof(maxx));
+	minmaxfile.write(reinterpret_cast<const char *>(&maxy), sizeof(maxy));
+	minmaxfile.write(reinterpret_cast<const char *>(&maxz), sizeof(maxz));
+	minmaxfile.close();
+    }
 
     // Write out the level vertices
     for (int i = 0; i < curr_level; i++) {
@@ -474,7 +533,7 @@ POPState::cache()
 
     bu_vls_free(&vkey);
 
-    return true;
+    is_valid = true;
 }
 
 // Transfer coordinate into level precision
@@ -535,23 +594,23 @@ POPState::is_degenerate(rec r0, rec r1, rec r2, int level)
 }
 
 void
-POPState::plot_level(int l, const char *root)
+POPState::plot(const char *root)
 {
-    if (l < 0 || l > curr_level - 1)
+    if (curr_level < 0)
 	return;
 
     struct bu_vls name;
     FILE *plot_file = NULL;
     bu_vls_init(&name);
     if (!root) {
-	bu_vls_printf(&name, "init_level_%.2d.plot3", l);
+	bu_vls_printf(&name, "init_level_%.2d.plot3", curr_level);
     } else {
-	bu_vls_printf(&name, "%s_level_%.2d.plot3", root, l);
+	bu_vls_printf(&name, "%s_level_%.2d.plot3", root, curr_level);
     }
     plot_file = fopen(bu_vls_addr(&name), "wb");
     pl_color(plot_file, 0, 255, 0);
 
-    for (int i = 0; i <= l; i++) {
+    for (int i = 0; i <= curr_level; i++) {
 	std::unordered_set<int>::iterator s_it;
 	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
 	    int f_ind = *s_it;
@@ -575,11 +634,11 @@ POPState::plot_level(int l, const char *root)
 		VSET(p2, npnts[3*v2ind+0], npnts[3*v2ind+1], npnts[3*v2ind+2]);
 		VSET(p3, npnts[3*v3ind+0], npnts[3*v3ind+1], npnts[3*v3ind+2]);
 	    }
-	    // We iterate over the level i triangles, but our target level
-	    // is l so we "decode" the points to that level, NOT i
-	    level_pnt(&p1, l);
-	    level_pnt(&p2, l);
-	    level_pnt(&p3, l);
+	    // We iterate over the level i triangles, but our target level is
+	    // curr_level so we "decode" the points to that level, NOT level i
+	    level_pnt(&p1, curr_level);
+	    level_pnt(&p2, curr_level);
+	    level_pnt(&p3, curr_level);
 	    pdv_3move(plot_file, p1);
 	    pdv_3cont(plot_file, p2);
 	    pdv_3cont(plot_file, p3);
@@ -605,7 +664,7 @@ bg_mesh_lod_cache(const point_t *v, int vcnt, int *faces, int fcnt)
 	return 0;
 
     POPState p(v, vcnt, faces, fcnt);
-    if (!p.cache() || !p.is_valid)
+    if (!p.is_valid)
 	return 0;
 
     key = p.hash;
@@ -690,8 +749,9 @@ bg_lod_elist(struct bu_list *elist, struct bview *v, struct bg_mesh_lod *l, cons
 
     // For debugging purposes, write out plot files of each level
     POPState *s = l->i->s;
-    for (int i = 0; i < s->curr_level; i++) {
-	s->plot_level(i, pname);
+    for (int i = 0; i < POP_MAXLEVEL; i++) {
+	s->set_level(i);
+	s->plot(pname);
     }
 
     return ecnt;
