@@ -169,6 +169,16 @@ POPState::POPState(int mlevel, const char *odir, const point_t *v, int vcnt, int
 	    bu_vls_free(&vfile);
 	}
 
+	// Calculate min and max so we can do the level snapping for vertices
+	for (size_t i = 0; i < npnts.size()/3; i++) {
+	    minx = (npnts[i*3+0] < minx) ? npnts[i*3+0] : minx;
+	    miny = (npnts[i*3+1] < miny) ? npnts[i*3+1] : miny;
+	    minz = (npnts[i*3+2] < minz) ? npnts[i*3+2] : minz;
+	    maxx = (npnts[i*3+0] > maxx) ? npnts[i*3+0] : maxx;
+	    maxy = (npnts[i*3+1] > maxy) ? npnts[i*3+1] : maxy;
+	    maxz = (npnts[i*3+2] > maxz) ? npnts[i*3+2] : maxz;
+	}
+
 	// Read in the level triangles
 	for (int i = 0; i < curr_level; i++) {
 	    struct bu_vls tfile = BU_VLS_INIT_ZERO;
@@ -370,14 +380,17 @@ POPState::cache(const char *odir)
 	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
 
 	// Store the size of the level tri vector
-	int st = level_tris[i].size() / 3;
+	int st = level_tris[i].size();
 	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
 
 	// Write out the mapped triangle indices
 	std::unordered_set<int>::iterator s_it;
 	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-	    int tv = ind_map[faces_array[3*(*s_it)]];
-	    tofile.write(reinterpret_cast<const char *>(&tv), sizeof(tv));
+	    int vt[3];
+	    vt[0] = ind_map[faces_array[3*(*s_it)+0]];
+	    vt[1] = ind_map[faces_array[3*(*s_it)+1]];
+	    vt[2] = ind_map[faces_array[3*(*s_it)+2]];
+	    tofile.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
 	}
 
 	tofile.close();
@@ -500,7 +513,11 @@ POPState::plot_level(int l, const char *root)
     struct bu_vls name;
     FILE *plot_file = NULL;
     bu_vls_init(&name);
-    bu_vls_printf(&name, "%s_level_%.2d.plot3", root, l);
+    if (!root) {
+	bu_vls_printf(&name, "init_level_%.2d.plot3", l);
+    } else {
+	bu_vls_printf(&name, "%s_level_%.2d.plot3", root, l);
+    }
     plot_file = fopen(bu_vls_addr(&name), "wb");
     pl_color(plot_file, 0, 255, 0);
 
@@ -508,13 +525,26 @@ POPState::plot_level(int l, const char *root)
 	std::unordered_set<int>::iterator s_it;
 	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
 	    int f_ind = *s_it;
-	    int v1ind = faces_array[3*f_ind+0];
-	    int v2ind = faces_array[3*f_ind+1];
-	    int v3ind = faces_array[3*f_ind+2];
+	    int v1ind, v2ind, v3ind;
+	    if (faces_array) {
+		v1ind = faces_array[3*f_ind+0];
+		v2ind = faces_array[3*f_ind+1];
+		v3ind = faces_array[3*f_ind+2];
+	    } else {
+		v1ind = nfaces[3*f_ind+0];
+		v2ind = nfaces[3*f_ind+1];
+		v3ind = nfaces[3*f_ind+2];
+	    }
 	    point_t p1, p2, p3;
-	    VMOVE(p1, verts_array[v1ind]);
-	    VMOVE(p2, verts_array[v2ind]);
-	    VMOVE(p3, verts_array[v3ind]);
+	    if (verts_array) {
+		VMOVE(p1, verts_array[v1ind]);
+		VMOVE(p2, verts_array[v2ind]);
+		VMOVE(p3, verts_array[v3ind]);
+	    } else {
+		VSET(p1, npnts[3*v1ind+0], npnts[3*v1ind+1], npnts[3*v1ind+2]);
+		VSET(p2, npnts[3*v2ind+0], npnts[3*v2ind+1], npnts[3*v2ind+2]);
+		VSET(p3, npnts[3*v3ind+0], npnts[3*v3ind+1], npnts[3*v3ind+2]);
+	    }
 	    // We iterate over the level i triangles, but our target level
 	    // is l so we "decode" the points to that level, NOT i
 	    level_pnt(&p1, l);
