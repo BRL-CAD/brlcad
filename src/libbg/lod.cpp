@@ -154,7 +154,7 @@ class POPState {
 	std::vector<int> ind_map;
 	std::vector<int> vert_minlevel;
 	std::map<int, std::set<int>> level_verts;
-	std::unordered_map<int, std::vector<int>> level_tris;
+	std::vector<std::vector<int>> level_tris;
 	int vert_cnt = 0;
 	const point_t *verts_array = NULL;
 	int faces_cnt = 0;
@@ -207,6 +207,12 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     vert_minlevel.reserve(vcnt);
     for (int i = 0; i < vcnt; i++) {
 	vert_minlevel.push_back(POP_MAXLEVEL - 1);
+    }
+
+    // Reserve memory for level containers
+    level_tris.reserve(POP_MAXLEVEL);
+    for (int i = 0; i < POP_MAXLEVEL; i++) {
+	level_tris.push_back(std::vector<int>(0));
     }
 
     // Find our min and max values, initialize levels
@@ -318,6 +324,12 @@ POPState::POPState(unsigned long long key)
 	return;
     }
     hash = key;
+
+    // Reserve memory for level containers
+    level_tris.reserve(POP_MAXLEVEL);
+    for (int i = 0; i < POP_MAXLEVEL; i++) {
+	level_tris.push_back(std::vector<int>(0));
+    }
 
     // Read in min/max bounds
     {
@@ -510,8 +522,6 @@ POPState::cache()
 
     // Write out the level triangles
     for (int i = 0; i < curr_level; i++) {
-	if (level_tris.find(i) == level_tris.end())
-	    continue;
 	if (!level_tris[i].size())
 	    continue;
 	struct bu_vls tfile = BU_VLS_INIT_ZERO;
