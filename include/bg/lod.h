@@ -52,6 +52,9 @@ struct bg_mesh_lod {
 BG_EXPORT struct bg_mesh_lod *
 bg_mesh_lod_create(const point_t *v, int vcnt, int *f, int fcnt);
 
+BG_EXPORT struct bg_mesh_lod *
+bg_mesh_lod_load(const char *name);
+
 /* Clean up the lod container. */
 BG_EXPORT void
 bg_mesh_lod_destroy(struct bg_mesh_lod *lod);
@@ -69,7 +72,7 @@ bg_mesh_lod_destroy(struct bg_mesh_lod *lod);
  * views.
  */
 BG_EXPORT int
-bg_lod_elist(struct bu_list *elist, struct bview *v, struct bg_mesh_lod *l);
+bg_lod_elist(struct bu_list *elist, struct bview *v, struct bg_mesh_lod *l, const char *pname);
 
 __END_DECLS
 

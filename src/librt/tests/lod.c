@@ -87,11 +87,27 @@ main(int argc, char *argv[])
 
     // TODO - lod testing
     // struct bu_list elist;
-    int ecnt = bg_lod_elist(NULL, NULL, mlod);
+    int ecnt = bg_lod_elist(NULL, NULL, mlod, "bot");
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("lod, view 1 edge cnt(%f sec): %d\n", seconds, ecnt);
+
+    // Test cache
+
+    start = bu_gettime();
+
+    struct bg_mesh_lod *cmlod = NULL;
+    cmlod = bg_mesh_lod_load("testdir");
+    if (!cmlod)
+	bu_exit(1, "ERROR: %s - lod cache load failed\n", argv[2]);
+
+
+    int ccnt = bg_lod_elist(NULL, NULL, cmlod, "cache");
+
+    elapsed = bu_gettime() - start;
+    seconds = elapsed / 1000000.0;
+    bu_log("lod, view 1 edge cnt(%f sec): %d\n", seconds, ccnt);
 
     return 0;
 }
