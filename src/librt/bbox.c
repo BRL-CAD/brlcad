@@ -47,27 +47,26 @@ rt_bound_tree(const union tree *tp, vect_t tree_min, vect_t tree_max)
 
     switch (tp->tr_op) {
 
-	case OP_SOLID:
-	    {
-		const struct soltab *stp;
+	case OP_SOLID: {
+	    const struct soltab *stp;
 
-		stp = tp->tr_a.tu_stp;
-		RT_CK_SOLTAB(stp);
-		if (stp->st_aradius <= 0) {
-		    bu_log("rt_bound_tree: encountered dead solid '%s'\n",
-			   stp->st_dp->d_namep);
-		    return -1;	/* ERROR */
-		}
+	    stp = tp->tr_a.tu_stp;
+	    RT_CK_SOLTAB(stp);
+	    if (stp->st_aradius <= 0) {
+		bu_log("rt_bound_tree: encountered dead solid '%s'\n",
+		       stp->st_dp->d_namep);
+		return -1;	/* ERROR */
+	    }
 
-		if (stp->st_aradius >= INFINITY) {
-		    VSETALL(tree_min, -INFINITY);
-		    VSETALL(tree_max,  INFINITY);
-		    return 0;
-		}
-		VMOVE(tree_min, stp->st_min);
-		VMOVE(tree_max, stp->st_max);
+	    if (stp->st_aradius >= INFINITY) {
+		VSETALL(tree_min, -INFINITY);
+		VSETALL(tree_max,  INFINITY);
 		return 0;
 	    }
+	    VMOVE(tree_min, stp->st_min);
+	    VMOVE(tree_max, stp->st_max);
+	    return 0;
+	}
 
 	default:
 	    bu_log("rt_bound_tree(%p): unknown op=x%x\n",
@@ -482,14 +481,15 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
     return 0;
 }
 
+
 int
 rt_obj_bounds(struct bu_vls *msgs,
-	            struct db_i *dbip,
-		    int argc,
-		    const char *argv[],
-		    int use_air,
-		    point_t rpp_min,
-		    point_t rpp_max)
+	      struct db_i *dbip,
+	      int argc,
+	      const char *argv[],
+	      int use_air,
+	      point_t rpp_min,
+	      point_t rpp_max)
 {
     int i;
     struct rt_i *rtip;
@@ -613,6 +613,7 @@ rt_obj_bounds(struct bu_vls *msgs,
 
     return BRLCAD_OK;
 }
+
 
 /*
  * Local Variables:
