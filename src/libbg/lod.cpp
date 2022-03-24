@@ -73,6 +73,8 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h> /* for mkdir */
 #endif
+#include "bio.h"
+
 #include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/time.h"
