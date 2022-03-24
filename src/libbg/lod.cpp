@@ -34,6 +34,9 @@
  * hold logic intended to help with edge-only wireframe displays of large
  * meshes.
  *
+ * The POP Buffer: Rapid Progressive Clustering by Geometry Quantization
+ * https://x3dom.org/pop/files/popbuffer2013.pdf
+ *
  * Useful discussion of applying POP buffers here:
  * https://medium.com/@petroskataras/the-ayotzinapa-case-447a72d89e58
  */
