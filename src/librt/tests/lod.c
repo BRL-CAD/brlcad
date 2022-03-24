@@ -60,9 +60,6 @@ main(int argc, char *argv[])
 	bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
     }
 
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-
     // Unpack bot
     struct rt_db_internal intern;
     if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
