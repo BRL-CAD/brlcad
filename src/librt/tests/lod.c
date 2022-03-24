@@ -71,8 +71,11 @@ main(int argc, char *argv[])
     if (!bot->num_faces)
 	bu_exit(1, "ERROR: %s - no faces found\n", argv[2]);
 
-    struct bg_mesh_lod *mlod = NULL;
-    mlod = bg_mesh_lod_create((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+    unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+    if (!key)
+	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
+
+    struct bg_mesh_lod *mlod = bg_mesh_lod_init(key);
     if (!mlod)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
 
@@ -92,22 +95,6 @@ main(int argc, char *argv[])
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("lod, view 1 edge cnt(%f sec): %d\n", seconds, ecnt);
-
-    // Test cache
-
-    start = bu_gettime();
-
-    struct bg_mesh_lod *cmlod = NULL;
-    cmlod = bg_mesh_lod_load("testdir");
-    if (!cmlod)
-	bu_exit(1, "ERROR: %s - lod cache load failed\n", argv[2]);
-
-
-    int ccnt = bg_lod_elist(NULL, NULL, cmlod, "cache");
-
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    bu_log("lod, view 1 edge cnt(%f sec): %d\n", seconds, ccnt);
 
     return 0;
 }
