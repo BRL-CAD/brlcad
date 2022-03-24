@@ -2064,15 +2064,10 @@ struct directory **
 _ged_dir_getspace(struct db_i *dbip,
 		  size_t num_entries)
 {
-    struct directory *dp;
     size_t i;
     struct directory **dir_basep;
+    struct directory *dp;
 
-    if (num_entries < 0) {
-	bu_log("dir_getspace: was passed %zd, used 0\n",
-	       num_entries);
-	num_entries = 0;
-    }
     if (num_entries == 0) {
 	/* Set num_entries to the number of entries */
 	for (i = 0; i < RT_DBNHASH; i++)
