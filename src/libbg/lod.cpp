@@ -150,7 +150,7 @@ class POPState {
 
 	// Processing containers used for initial data characterization
 	std::unordered_map<int, int> ind_map;
-	std::unordered_map<int, int> vert_minlevel;
+	std::vector<int> vert_minlevel;
 	std::map<int, std::set<int>> level_verts;
 	std::unordered_map<int, std::vector<int>> level_tris;
 	int vert_cnt = 0;
@@ -199,6 +199,13 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     faces_cnt = fcnt;
     faces_array = faces;
 
+    // Until we prove otherwise, all triangles are assumed to appear only
+    // at the last level (and consequently, their vertices are only needed
+    // then).  Set the level accordingly.
+    vert_minlevel.reserve(vcnt);
+    for (int i = 0; i < vcnt; i++) {
+	vert_minlevel.push_back(POP_MAXLEVEL - 1);
+    }
 
     // Find our min and max values, initialize levels
     for (int i = 0; i < vcnt; i++) {
@@ -208,10 +215,6 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
 	maxx = (v[i][X] > maxx) ? v[i][X] : maxx;
 	maxy = (v[i][Y] > maxy) ? v[i][Y] : maxy;
 	maxz = (v[i][Z] > maxz) ? v[i][Z] : maxz;
-	// Until we prove otherwise, all triangles are assumed to appear only
-	// at the last level (and consequently, their vertices are only needed
-	// then).  Set the level accordingly.
-	vert_minlevel[i] = POP_MAXLEVEL - 1;
     }
 
     // Bump out the min and max bounds slightly so none of our actual
@@ -255,9 +258,8 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
 
     // The vertices now know when they will first need to appear.  Build level
     // sets of vertices
-    std::unordered_map<int, int>::iterator v_it;
-    for (v_it = vert_minlevel.begin(); v_it != vert_minlevel.end(); v_it++) {
-	level_verts[v_it->second].insert(v_it->first);
+    for (size_t i = 0; i < vert_minlevel.size(); i++) {
+	level_verts[vert_minlevel[i]].insert(i);
     }
 
     // Having sorted the vertices into level sets, we may now define a new global
