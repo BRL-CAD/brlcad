@@ -151,7 +151,7 @@ class POPState {
 	std::unordered_map<int, int> level_fcnt;
 
 	// Processing containers used for initial data characterization
-	std::unordered_map<int, int> ind_map;
+	std::vector<int> ind_map;
 	std::vector<int> vert_minlevel;
 	std::map<int, std::set<int>> level_verts;
 	std::unordered_map<int, std::vector<int>> level_tris;
@@ -266,6 +266,10 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
 
     // Having sorted the vertices into level sets, we may now define a new global
     // vertex ordering that respects the needs of the levels.
+    ind_map.reserve(vcnt);
+    for (int i = 0; i < vcnt; i++) {
+	ind_map.push_back(i);
+    }
     int vind = 0;
     std::map<int, std::set<int>>::iterator l_it;
     std::set<int>::iterator s_it;
