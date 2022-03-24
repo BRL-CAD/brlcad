@@ -161,10 +161,21 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     hash_val = XXH64_digest(&h_state);
     hash = (unsigned long long)hash_val;
 
-
-    // TODO - first make sure there's no cache before performing the full
-    // initializing from the original data...
-
+    // Make sure there's no cache before performing the full initializing from
+    // the original data.  In this mode the POPState creation is used to
+    // initialize the cache, not to create a workable data state from that
+    // data.  The hash is set, which is all we really need - loading data from
+    // the cache is handled elsewhere.
+    char dir[MAXPATHLEN];
+    struct bu_vls vkey = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&vkey, "%llu", hash);
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), NULL);
+    if (bu_file_exists(dir, NULL)) {
+	bu_vls_free(&vkey);
+	is_valid = true;
+	return;
+    }
+    bu_vls_free(&vkey);
 
     curr_level = POP_MAXLEVEL - 1;
 
@@ -380,7 +391,10 @@ POPState::cache()
     struct bu_vls vkey = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&vkey, "%llu", hash);
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), NULL);
-    if (!bu_file_exists(dir, NULL)) {
+    if (bu_file_exists(dir, NULL)) {
+	// If the directory already exists, we should already be good to go
+	return true;
+    } else {
 #ifdef HAVE_WINDOWS_H
 	CreateDirectory(dir, NULL);
 #else
@@ -591,12 +605,7 @@ bg_mesh_lod_cache(const point_t *v, int vcnt, int *faces, int fcnt)
 	return 0;
 
     POPState p(v, vcnt, faces, fcnt);
-
-    // TODO - this should just use the key, not a name str...
-    // TODO - a failed cache write should set is_valid to false...
-    p.cache();
-
-    if (!p.is_valid)
+    if (!p.cache() || !p.is_valid)
 	return 0;
 
     key = p.hash;
