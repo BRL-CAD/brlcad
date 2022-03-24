@@ -115,8 +115,8 @@ rt_bound_tree(const union tree *tp, vect_t tree_min, vect_t tree_max)
  * specified and that region has been referenced multiple time in the
  * tree, then this routine will simply return the first one.
  */
-HIDDEN struct region *
-_rt_getregion(struct rt_i *rtip, const char *reg_name)
+static struct region *
+get_region(struct rt_i *rtip, const char *reg_name)
 {
     struct region *regp;
     char *reg_base = bu_path_basename(reg_name, NULL);
@@ -151,7 +151,7 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
 
     RT_CHECK_RTI(rtip);
 
-    regp = _rt_getregion(rtip, reg_name);
+    regp = get_region(rtip, reg_name);
     if (regp == REGION_NULL) return 0;
     if (rt_bound_tree(regp->reg_treetop, min_rpp, max_rpp) < 0)
 	return 0;
