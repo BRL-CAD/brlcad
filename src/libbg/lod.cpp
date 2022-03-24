@@ -57,7 +57,6 @@
 #include "common.h"
 #include <stdlib.h>
 #include <unordered_map>
-#include <unordered_set>
 #include <map>
 #include <set>
 #include <vector>
@@ -153,7 +152,7 @@ class POPState {
 	std::unordered_map<int, int> ind_map;
 	std::unordered_map<int, int> vert_minlevel;
 	std::map<int, std::set<int>> level_verts;
-	std::unordered_map<int, std::unordered_set<int>> level_tris;
+	std::unordered_map<int, std::vector<int>> level_tris;
 	int vert_cnt = 0;
 	const point_t *verts_array = NULL;
 	int faces_cnt = 0;
@@ -243,7 +242,7 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
 	    }
 	}
 	// Add this triangle to its "pop" level
-	level_tris[level].insert(i);
+	level_tris[level].push_back(i);
 
 	// Let the vertices know they will be needed at this level, if another
 	// triangle doesn't already need them sooner
@@ -391,7 +390,7 @@ POPState::set_level(int level)
 		for (int k = 0; k < 3; k++) {
 		    nfaces.push_back(vf[k]);
 		}
-		level_tris[i].insert(nfaces.size() / 3 - 1);
+		level_tris[i].push_back(nfaces.size() / 3 - 1);
 	    }
 	    tifile.close();
 	    bu_vls_free(&tfile);
@@ -518,7 +517,7 @@ POPState::cache()
 	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
 
 	// Write out the mapped triangle indices
-	std::unordered_set<int>::iterator s_it;
+	std::vector<int>::iterator s_it;
 	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
 	    int vt[3];
 	    vt[0] = ind_map[faces_array[3*(*s_it)+0]];
@@ -611,7 +610,7 @@ POPState::plot(const char *root)
     pl_color(plot_file, 0, 255, 0);
 
     for (int i = 0; i <= curr_level; i++) {
-	std::unordered_set<int>::iterator s_it;
+	std::vector<int>::iterator s_it;
 	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
 	    int f_ind = *s_it;
 	    int v1ind, v2ind, v3ind;
