@@ -89,16 +89,17 @@ rt_material_mtlx_to_osl(const rt_material_internal material_ip, struct bu_vls* v
 
     // generate the OSL shader source code and write it to a file
     mx::ShaderPtr shader = sgp->generate(nodeInstance->getName(), nodeInstance, context);
-    const std::string fileType = ".osl";
-    const std::string filepath = mx::FilePath::getCurrentPath() / mx::FilePath(strcat((char*) desiredNodeDef, fileType.c_str()));
+    std::string nodefile(desiredNodeDef) += ".osl";
+    const std::string filepath = mx::FilePath::getCurrentPath() / mx::FilePath(nodefile);
+
     std::ofstream file;
     file.open(filepath);
     file << shader->getSourceCode();
 
     // save the newly generated file's path
     bu_vls_strcpy(vp, filepath.c_str());
-
 }
+
 
 /*
  * Local Variables:
