@@ -557,9 +557,10 @@ rt_obj_bounds(struct bu_vls *msgs,
     VSETALL(rpp_min, INFINITY);
     VSETALL(rpp_max, -INFINITY);
     for (i = 0; i < argc; i++) {
-	vect_t reg_min, reg_max;
-	const char *reg_name;
-	size_t name_len;
+	vect_t reg_min = VINIT_ZERO;
+	vect_t reg_max = VINIT_ZERO;
+	const char *reg_name = NULL;
+	size_t name_len = 0;
 
 	/* check if input name is a region */
 	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
