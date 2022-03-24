@@ -77,12 +77,17 @@ bg_mesh_lod_init(unsigned long long key);
 
 /**
  * Given a bview, load the appropriate level of detail for displaying the mesh
- * in that view.
+ * in that view.  A scale factor may also be supplied to adjust the default
+ * level assignments (say, for example, if a parent application wants to drive
+ * detail down to increase frame rates.)  Negative values will be removed from
+ * the view-based selected level, reducing detail (for example, if the view
+ * selection is level 8, and the scale is -2, the mesh will be rendered using
+ * level 6.)  Likewise, positive values will be added to increase detail.
  *
  * Returns the level selected.  If v == NULL, return current level of l.  If
  * there is an error or l == NULL, return -1; */
 BG_EXPORT int
-bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v);
+bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale);
 
 /**
  * Given a detail level, load the appropriate data.

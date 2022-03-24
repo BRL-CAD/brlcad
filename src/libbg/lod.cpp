@@ -695,14 +695,19 @@ bg_mesh_lod_init(unsigned long long key)
 }
 
 extern "C" int
-bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v)
+bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
 {
+
     if (!l)
 	return -1;
     if (!v)
 	return l->i->s->curr_level;
 
-    return -1;
+    int vscale = l->i->s->curr_level + scale;
+    vscale = (vscale < 0) ? 0 : vscale;
+    vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
+
+    return vscale;
 }
 
 extern "C" int
