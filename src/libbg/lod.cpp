@@ -56,7 +56,6 @@
 
 #include "common.h"
 #include <stdlib.h>
-#include <unordered_map>
 #include <map>
 #include <set>
 #include <vector>
@@ -145,10 +144,6 @@ class POPState {
 	// Write data out to cache (only used during initialization from
 	// external data)
 	void cache();
-
-	// Management containers used for loading/unloading LoD info
-	std::unordered_map<int, int> level_vcnt;
-	std::unordered_map<int, int> level_fcnt;
 
 	// Processing containers used for initial data characterization
 	std::vector<int> ind_map;
