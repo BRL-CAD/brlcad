@@ -29,13 +29,19 @@
 #include "rt/nongeom.h"
 #include "material/materialX.h"
 
-// this is a unit test for the rt_material_internal function in material/material.cpp
 
-int main()
+// this is a unit test for the rt_material_internal function in
+// material/material.cpp
+int
+main(int UNUSED(argc), char **argv)
 {
-    // construct new rt_material_internal object and assign a node definition to its optical properties
-    struct rt_material_internal material_ip = { RT_MATERIAL_MAGIC, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO,
-        BU_AVS_INIT_ZERO, BU_AVS_INIT_ZERO, BU_AVS_INIT_ZERO, BU_AVS_INIT_ZERO };
+    bu_setprogname(argv[0]);
+    // construct new rt_material_internal object and assign a node
+    // definition to its optical properties
+    struct rt_material_internal material_ip = {
+	RT_MATERIAL_MAGIC, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO,
+        BU_AVS_INIT_ZERO, BU_AVS_INIT_ZERO, BU_AVS_INIT_ZERO, BU_AVS_INIT_ZERO
+    };
     bu_avs_add(&material_ip.opticalProperties, "MTLX", "ND_standard_surface_surfaceshader");
 
     // call the function for testing
