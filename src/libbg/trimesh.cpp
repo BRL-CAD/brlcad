@@ -798,7 +798,7 @@ int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, fastf_t *vertices,
 
 
 int
-bg_trimesh_aabb(point_t *min, point_t *max, int *faces, int num_faces, point_t *p, int num_pnts)
+bg_trimesh_aabb(point_t *min, point_t *max, const int *faces, int num_faces, const point_t *p, int num_pnts)
 {
     /* If we can't produce any output, there's no point in continuing */
     if (!min || !max)
