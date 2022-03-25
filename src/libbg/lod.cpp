@@ -76,6 +76,7 @@
 #include "bio.h"
 
 #include "bu/app.h"
+#include "bu/bitv.h"
 #include "bu/malloc.h"
 #include "bu/time.h"
 #include "bv/plot3.h"
@@ -85,6 +86,64 @@
 #define POP_MAXLEVEL 16
 #define POP_CACHEDIR ".POPLoD"
 #define MBUMP 1.01
+
+
+static int
+lod_trimesh_aabb(point_t *min, point_t *max, std::vector<int> &afaces, int *faces, int num_faces, const point_t *p, int num_pnts)
+{
+    /* If we can't produce any output, there's no point in continuing */
+    if (!min || !max)
+        return -1;
+
+    /* If something goes wrong with any bbox logic, we want to know it as soon
+     * as possible.  Make sure as soon as we can that the bbox output is set to
+     * invalid defaults, so we don't end up with something that accidentally
+     * looks reasonable if things fail. */
+    VSETALL((*min), INFINITY);
+    VSETALL((*max), -INFINITY);
+
+    /* If inputs are insufficient, we can't produce a bbox */
+    if (!faces || num_faces <= 0 || !p || num_pnts <= 0)
+        return -1;
+
+    /* First Pass: coherently iterate through all active faces of the BoT and
+     * mark vertices in a bit-vector that are referenced by a face. */
+    struct bu_bitv *visit_vert = bu_bitv_new(num_pnts);
+    for (size_t i = 0; i < afaces.size(); i++) {
+	int tri_index = afaces[i];
+        BU_BITSET(visit_vert, faces[tri_index*3 + X]);
+        BU_BITSET(visit_vert, faces[tri_index*3 + Y]);
+        BU_BITSET(visit_vert, faces[tri_index*3 + Z]);
+    }
+
+    /* Second Pass: check max and min of vertices marked */
+    for(size_t vert_index = 0; vert_index < (size_t)num_pnts; vert_index++){
+        if(BU_BITTEST(visit_vert,vert_index)){
+            VMINMAX((*min), (*max), p[vert_index]);
+        }
+    }
+
+    /* Done with bitv */
+    bu_bitv_free(visit_vert);
+
+    /* Make sure the RPP created is not of zero volume */
+    if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
+        (*min)[X] -= SMALL_FASTF;
+        (*max)[X] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Y], (*max)[Y], SMALL_FASTF)) {
+        (*min)[Y] -= SMALL_FASTF;
+        (*max)[Y] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Z], (*max)[Z], SMALL_FASTF)) {
+        (*min)[Z] -= SMALL_FASTF;
+        (*max)[Z] += SMALL_FASTF;
+    }
+
+    /* Success */
+    return 0;
+}
+
 
 // Output record
 class rec {
@@ -123,6 +182,11 @@ class POPState {
 	// into npnts.
 	std::vector<fastf_t> npnts;
 
+	// Temporary testing containers - will eventually be replaced by use
+	// of above
+	std::vector<int> all_faces;
+	std::vector<fastf_t> all_pnts;
+
 	// Current level of detail information loaded into nfaces/npnts
 	int curr_level;
 
@@ -147,6 +211,13 @@ class POPState {
 	// Write data out to cache (only used during initialization from
 	// external data)
 	void cache(size_t threshold);
+
+	// Triangle sets for sub-mesh grouping
+	std::vector<std::vector<int>> tri_sets;
+	std::vector<fastf_t> triset_bboxes;
+
+	// Global binning of vertices for sub-mesh drawing data
+	std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>> boxes;
 
 	// Processing containers used for initial data characterization
 	std::vector<int> ind_map;
@@ -290,7 +361,6 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     size_t threshold = 0;
     size_t trisum = 0;
     size_t fcnt2 = (size_t)((fastf_t)fcnt/2.0);
-    bu_log("fcnt2: %zd\n", fcnt2);
     for (size_t i = 0; i < level_tris.size(); i++) {
 	trisum += level_tris[i].size();
 	if (trisum > fcnt2) {
@@ -298,24 +368,21 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
 	    break;
 	}
     }
-    bu_log("Threshold level: %zd\n", threshold);
-
-    // We're now ready to write out the data
-    is_valid = true;
-    cache(threshold);
-
+    //bu_log("Threshold level: %zd\n", threshold);
 
     // At the point when most tris are active, we do better recognizing what
     // parts of the mesh are in the view and only drawing those, rather than
     // doing the LoD point snapping.  Bin the triangles into discrete volumes
-    // (non-uniquely - the only concern here is to make sure we draw all the
-    // triangles we need to draw.) Once we shift to this mode we have to load
-    // all the vertices into memory, but when we switch to this mode we would
-    // have had comparable data in memory from the LoD data anyway. 
-    std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>> boxes;
+    // (non-uniquely - the main concern here is to make sure we draw all the
+    // triangles we need to draw in a given area.) Once we shift to this mode
+    // we have to load all the vertices and faces into memory, but by the time
+    // we make that switch we would have had comparable data in memory from the
+    // LoD info anyway. 
     for (int i = 0; i < fcnt; i++) {
 	short tri[3][3];
-	int factor = 64;
+	// TODO: This is a tradeoff - smaller means fewer boxes but more tris
+	// per box.  Will have to see what a practical value is with real data.
+	int factor = 32;
 	// Transform tri vertices
 	for (int j = 0; j < 3; j++) {
 	    tri[j][0] = floor((v[faces[3*i+j]][X] - minx) / (maxx - minx) * factor);
@@ -327,25 +394,10 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
 	boxes[tri[1][0]][tri[1][1]][tri[1][2]].push_back(i);
 	boxes[tri[2][0]][tri[2][1]][tri[2][2]].push_back(i);
     }
-    std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>>::iterator b1_it;
-    std::unordered_map<short, std::unordered_map<short, std::vector<int>>>::iterator b2_it;
-    std::unordered_map<short, std::vector<int>>::iterator b3_it;
-    int bcnt = 0;
-    size_t tcnt = 0;
-    for (b1_it = boxes.begin(); b1_it != boxes.end(); b1_it++) {
-	for (b2_it = b1_it->second.begin(); b2_it != b1_it->second.end(); b2_it++) {
-	    for (b3_it = b2_it->second.begin(); b3_it != b2_it->second.end(); b3_it++) {
-		//bu_log("box %d cnt: %zd\n", bcnt, b3_it->second.size());
-		bcnt++;
-		tcnt += b3_it->second.size();
-	    }
-	}
-    }
-    bu_log("bcnt: %d\n", bcnt);
-    bu_log("tricnt: %d faces, %zd box tris\n", fcnt, tcnt);
-    bu_log("avg tris/box: %f\n", (double)tcnt/(double)bcnt);
 
-    return;
+    // We're now ready to write out the data
+    is_valid = true;
+    cache(threshold);
 
     if (!is_valid)
 	return;
@@ -404,6 +456,69 @@ POPState::POPState(unsigned long long key)
 
     // Read in the zero level vertices and triangles
     set_level(0);
+
+    // TODO - for now we're loading this up front for testing, but we should
+    // only do so if our curr_level is greater than any of the cached levels
+    {
+	size_t ecnt = 0;
+
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_verts", NULL);
+	std::ifstream avfile(dir, std::ios::in | std::ofstream::binary);
+	avfile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
+	for (size_t i = 0; i < ecnt; i++) {
+	    point_t nv;
+	    avfile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
+	    for (int k = 0; k < 3; k++) {
+		all_pnts.push_back(nv[k]);
+	    }
+	}
+
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_faces", NULL);
+	std::ifstream affile(dir, std::ios::in | std::ofstream::binary);
+	affile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
+	for (size_t i = 0; i < ecnt; i++) {
+	    int vf[3];
+	    affile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
+	    for (int k = 0; k < 3; k++) {
+		all_faces.push_back(vf[k]);
+	    }
+	}
+
+
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "tri_sets", NULL);
+	std::ifstream tset_file(dir, std::ios::in | std::ofstream::binary);
+	tset_file.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
+	tri_sets.reserve(ecnt);
+	for (size_t i = 0; i < ecnt; i++) {
+	    tri_sets.push_back(std::vector<int>(0));
+	}
+	triset_bboxes.reserve(6*ecnt);
+	for (size_t i = 0; i < 6*ecnt; i++) {
+	    triset_bboxes.push_back(MAX_FASTF);
+	}
+	for (size_t i = 0; i < ecnt; i++) {
+	    point_t bbox[2] = {VINIT_ZERO, VINIT_ZERO};
+	    tset_file.read(reinterpret_cast<char *>(&(bbox[0][0])), sizeof(point_t));
+	    tset_file.read(reinterpret_cast<char *>(&(bbox[1][0])), sizeof(point_t));
+	    triset_bboxes[i*6+0] = bbox[0][X];
+	    triset_bboxes[i*6+1] = bbox[0][Y];
+	    triset_bboxes[i*6+2] = bbox[0][Z];
+	    triset_bboxes[i*6+3] = bbox[1][X];
+	    triset_bboxes[i*6+4] = bbox[1][Y];
+	    triset_bboxes[i*6+5] = bbox[1][Z];
+
+	    size_t tcnt = 0;
+	    tset_file.read(reinterpret_cast<char *>(&tcnt), sizeof(tcnt));
+	    tri_sets[i].reserve(tcnt);
+	    for (size_t j = 0; j < tcnt; j++) {
+		int tind;
+		tset_file.read(reinterpret_cast<char *>(&tind), sizeof(int));
+		tri_sets[i].push_back(tind);
+	    }
+	}
+    }
+
+
 
     // All set - ready for LoD
     bu_vls_free(&vkey);
@@ -626,6 +741,82 @@ POPState::cache(size_t threshold)
 	bu_vls_free(&tfile);
     }
 
+    // Write out the boxes and their face sets.  We calculate and write out the
+    // bounding boxes of each set so the loading code need only read the values
+    // to prepare an RTree
+    {
+	std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>>::iterator b1_it;
+	std::unordered_map<short, std::unordered_map<short, std::vector<int>>>::iterator b2_it;
+	std::unordered_map<short, std::vector<int>>::iterator b3_it;
+	size_t bcnt = 0;
+	size_t tcnt = 0;
+	{
+	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "tri_sets", NULL);
+	    std::ofstream tsfile(dir, std::ios::out | std::ofstream::binary);
+	    if (!tsfile.is_open())
+		return;
+
+	    for (b1_it = boxes.begin(); b1_it != boxes.end(); b1_it++) {
+		for (b2_it = b1_it->second.begin(); b2_it != b1_it->second.end(); b2_it++) {
+		    for (b3_it = b2_it->second.begin(); b3_it != b2_it->second.end(); b3_it++) {
+			bcnt++;
+		    }
+		}
+	    }
+	    tsfile.write(reinterpret_cast<const char *>(&bcnt), sizeof(bcnt));
+
+	    for (b1_it = boxes.begin(); b1_it != boxes.end(); b1_it++) {
+		for (b2_it = b1_it->second.begin(); b2_it != b1_it->second.end(); b2_it++) {
+		    for (b3_it = b2_it->second.begin(); b3_it != b2_it->second.end(); b3_it++) {
+			// This shouldn't happen, but if the logic changes to somehow
+			// clear a triangle set we don't want an empty set
+			if (!b3_it->second.size())
+			    continue;
+
+			// Calculate the bbox
+			point_t min, max;
+			if (lod_trimesh_aabb(&min, &max, b3_it->second, faces_array, faces_cnt, verts_array, vert_cnt) < 0) {
+			    bu_log("Error - tri bbox calculation failed\n");
+			    tsfile.close();
+			    continue;
+			}
+			tsfile.write(reinterpret_cast<const char *>(&min[0]), sizeof(point_t));
+			tsfile.write(reinterpret_cast<const char *>(&max[0]), sizeof(point_t));
+
+			// Record how many triangles we've got, and then write the triangle
+			// indices themselves
+			tcnt = b3_it->second.size();
+			tsfile.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
+			tsfile.write(reinterpret_cast<const char *>(&b3_it->second[0]), b3_it->second.size() * sizeof(int));
+
+		    }
+		}
+	    }
+
+	    tsfile.close();
+	}
+
+	{
+	    size_t ecnt;
+	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_verts", NULL);
+	    std::ofstream vfile(dir, std::ios::out | std::ofstream::binary);
+	    ecnt = vert_cnt;
+	    vfile.write(reinterpret_cast<const char *>(&ecnt), sizeof(ecnt));
+	    vfile.write(reinterpret_cast<const char *>(&verts_array[0]), vert_cnt * sizeof(point_t));
+	    vfile.close();
+	}
+
+	{
+	    size_t ecnt;
+	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_faces", NULL);
+	    std::ofstream ffile(dir, std::ios::out | std::ofstream::binary);
+	    ecnt = faces_cnt;
+	    ffile.write(reinterpret_cast<const char *>(&ecnt), sizeof(ecnt));
+	    ffile.write(reinterpret_cast<const char *>(&faces_array[0]), faces_cnt * 3 * sizeof(int));
+	    ffile.close();
+	}
+    }
+
     bu_vls_free(&vkey);
 
     is_valid = true;
@@ -742,6 +933,30 @@ POPState::plot(const char *root)
     }
 
     fclose(plot_file);
+
+    if (!curr_level) {
+	for (size_t i = 0; i < tri_sets.size(); i++) {
+	    bu_vls_sprintf(&name, "triset_%.5zd.plot3", i);
+	    plot_file = fopen(bu_vls_addr(&name), "wb");
+	    pl_color(plot_file, 0, 255, 0);
+	    for (size_t j = 0; j < tri_sets[i].size(); j++) {
+		int v1ind, v2ind, v3ind;
+		point_t p1, p2, p3;
+		v1ind = all_faces[3*tri_sets[i][j]+0];
+		v2ind = all_faces[3*tri_sets[i][j]+1];
+		v3ind = all_faces[3*tri_sets[i][j]+2];
+		VSET(p1, all_pnts[3*v1ind+0], all_pnts[3*v1ind+1], all_pnts[3*v1ind+2]);
+		VSET(p2, all_pnts[3*v2ind+0], all_pnts[3*v2ind+1], all_pnts[3*v2ind+2]);
+		VSET(p3, all_pnts[3*v3ind+0], all_pnts[3*v3ind+1], all_pnts[3*v3ind+2]);
+		pdv_3move(plot_file, p1);
+		pdv_3cont(plot_file, p2);
+		pdv_3cont(plot_file, p3);
+		pdv_3cont(plot_file, p1);
+	    }
+	    fclose(plot_file);
+	}
+    }
+
     bu_vls_free(&name);
 }
 
