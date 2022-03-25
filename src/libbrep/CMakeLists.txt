@@ -64,7 +64,6 @@ CMAKEFILES(
   PullbackCurve.h
   brep_defines.h
   brep_except.h
-  cdt/RTree.h
   cdt/cdt.h
   cdt/mesh.h
   debug_plot.h
