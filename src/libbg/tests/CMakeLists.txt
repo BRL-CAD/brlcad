@@ -372,6 +372,12 @@ BRLCAD_ADDEXEC(bg_polygon_op polygon_op.c "libbg;libbn;libbu" TEST)
 
 BRLCAD_ADD_TEST(NAME bg_polygon_op_basic   COMMAND bg_polygon_op)
 
+#  ************ sat.cpp Oriented Bounding Box intersection tests ***********
+
+BRLCAD_ADDEXEC(bg_sat sat.c "libbg;libbn;libbu" TEST)
+
+BRLCAD_ADD_TEST(NAME bg_sat_basic   COMMAND bg_sat)
+
 
 #  ************ trimesh_sync.cpp tests ***********
 
