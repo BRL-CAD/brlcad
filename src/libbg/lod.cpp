@@ -59,6 +59,7 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <unordered_map>
 #include <limits>
 #include <math.h>
 #include <iomanip>
@@ -145,7 +146,7 @@ class POPState {
 
 	// Write data out to cache (only used during initialization from
 	// external data)
-	void cache();
+	void cache(size_t threshold);
 
 	// Processing containers used for initial data characterization
 	std::vector<int> ind_map;
@@ -283,9 +284,68 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
 	}
     }
 
+    // Beyond a certain depth, there is little benefit to the POP process.  If
+    // we check the count of level_tris, we will find a level at which the
+    // majority of the triangles are active.
+    size_t threshold = 0;
+    size_t trisum = 0;
+    size_t fcnt2 = (size_t)((fastf_t)fcnt/2.0);
+    bu_log("fcnt2: %zd\n", fcnt2);
+    for (size_t i = 0; i < level_tris.size(); i++) {
+	trisum += level_tris[i].size();
+	if (trisum > fcnt2) {
+	    threshold = i;
+	    break;
+	}
+    }
+    bu_log("Threshold level: %zd\n", threshold);
+
     // We're now ready to write out the data
     is_valid = true;
-    cache();
+    cache(threshold);
+
+
+    // At the point when most tris are active, we do better recognizing what
+    // parts of the mesh are in the view and only drawing those, rather than
+    // doing the LoD point snapping.  Bin the triangles into discrete volumes
+    // (non-uniquely - the only concern here is to make sure we draw all the
+    // triangles we need to draw.) Once we shift to this mode we have to load
+    // all the vertices into memory, but when we switch to this mode we would
+    // have had comparable data in memory from the LoD data anyway. 
+    std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>> boxes;
+    for (int i = 0; i < fcnt; i++) {
+	short tri[3][3];
+	int factor = 64;
+	// Transform tri vertices
+	for (int j = 0; j < 3; j++) {
+	    tri[j][0] = floor((v[faces[3*i+j]][X] - minx) / (maxx - minx) * factor);
+	    tri[j][1] = floor((v[faces[3*i+j]][Y] - miny) / (maxy - miny) * factor);
+	    tri[j][2] = floor((v[faces[3*i+j]][Z] - minz) / (maxz - minz) * factor);
+	}
+	//bu_log("tri: %d %d %d -> %d %d %d -> %d %d %d\n", V3ARGS(tri[0]), V3ARGS(tri[1]), V3ARGS(tri[2]));
+	boxes[tri[0][0]][tri[0][1]][tri[0][2]].push_back(i);
+	boxes[tri[1][0]][tri[1][1]][tri[1][2]].push_back(i);
+	boxes[tri[2][0]][tri[2][1]][tri[2][2]].push_back(i);
+    }
+    std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>>::iterator b1_it;
+    std::unordered_map<short, std::unordered_map<short, std::vector<int>>>::iterator b2_it;
+    std::unordered_map<short, std::vector<int>>::iterator b3_it;
+    int bcnt = 0;
+    size_t tcnt = 0;
+    for (b1_it = boxes.begin(); b1_it != boxes.end(); b1_it++) {
+	for (b2_it = b1_it->second.begin(); b2_it != b1_it->second.end(); b2_it++) {
+	    for (b3_it = b2_it->second.begin(); b3_it != b2_it->second.end(); b3_it++) {
+		//bu_log("box %d cnt: %zd\n", bcnt, b3_it->second.size());
+		bcnt++;
+		tcnt += b3_it->second.size();
+	    }
+	}
+    }
+    bu_log("bcnt: %d\n", bcnt);
+    bu_log("tricnt: %d faces, %zd box tris\n", fcnt, tcnt);
+    bu_log("avg tris/box: %f\n", (double)tcnt/(double)bcnt);
+
+    return;
 
     if (!is_valid)
 	return;
@@ -449,7 +509,7 @@ POPState::set_level(int level)
 
 // Write out the generated LoD data to the BRL-CAD cache
 void
-POPState::cache()
+POPState::cache(size_t threshold)
 {
     if (!hash) {
 	is_valid = false;
@@ -510,13 +570,13 @@ POPState::cache()
     }
 
     // Write out the level vertices
-    for (int i = 0; i < curr_level; i++) {
+    for (size_t i = 0; i <= threshold; i++) {
 	if (level_verts.find(i) == level_verts.end())
 	    continue;
 	if (!level_verts[i].size())
 	    continue;
 	struct bu_vls vfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&vfile, "verts_level_%d", i);
+	bu_vls_sprintf(&vfile, "verts_level_%zd", i);
 	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
 
 	std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
@@ -539,11 +599,11 @@ POPState::cache()
 
 
     // Write out the level triangles
-    for (int i = 0; i < curr_level; i++) {
+    for (size_t i = 0; i <= threshold; i++) {
 	if (!level_tris[i].size())
 	    continue;
 	struct bu_vls tfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&tfile, "tris_level_%d", i);
+	bu_vls_sprintf(&tfile, "tris_level_%zd", i);
 	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&tfile), NULL);
 
 	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
