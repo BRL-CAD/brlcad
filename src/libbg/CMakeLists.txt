@@ -70,6 +70,7 @@ set(LIBBG_SOURCES
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
+  sat.c
   snap.c
   spsr.c
   ${SPSR_srcs}

@@ -53,6 +53,7 @@ set(embedded_licenses
   QuickHull.txt
   rply.txt
   RTree.txt
+  sat.txt
   search.txt
   sha1.txt
   shapelib.txt
