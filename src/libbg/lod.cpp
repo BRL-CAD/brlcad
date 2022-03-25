@@ -66,13 +66,16 @@
 #include <iostream>
 #include <fstream>
 
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h> /* for mkdir */
+#endif
+
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
 #include "xxhash.h"
 
-#ifdef HAVE_SYS_STAT_H
-#  include <sys/stat.h> /* for mkdir */
-#endif
+#include "RTree.h"
+
 #include "bio.h"
 
 #include "bu/app.h"
@@ -183,6 +186,11 @@ class POPState {
 	// into npnts.
 	std::vector<fastf_t> npnts;
 
+	// Containers for sub-mesh grouping
+	RTree<size_t, double, 3> rtree;
+	std::vector<std::vector<int>> tri_sets;
+	std::vector<fastf_t> triset_bboxes;
+
 	// Current level of detail information loaded into nfaces/npnts
 	int curr_level = -1;
 
@@ -211,10 +219,6 @@ class POPState {
 	// Write data out to cache (only used during initialization from
 	// external data)
 	void cache(size_t threshold);
-
-	// Triangle sets for sub-mesh grouping
-	std::vector<std::vector<int>> tri_sets;
-	std::vector<fastf_t> triset_bboxes;
 
 	// Global binning of vertices for sub-mesh drawing data
 	std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>> boxes;
@@ -538,7 +542,7 @@ POPState::set_level(int level)
 	}
 
 	bu_vls_free(&vkey);
-    } 
+    }
 
 
     if (level < curr_level && level <= max_pop_level && curr_level <= max_pop_level) {
@@ -687,6 +691,8 @@ POPState::set_level(int level)
 		triset_bboxes[i*6+3] = bbox[1][X];
 		triset_bboxes[i*6+4] = bbox[1][Y];
 		triset_bboxes[i*6+5] = bbox[1][Z];
+
+		rtree.Insert(bbox[0], bbox[1], i);
 
 		size_t tcnt = 0;
 		tset_file.read(reinterpret_cast<char *>(&tcnt), sizeof(tcnt));
@@ -1020,7 +1026,10 @@ POPState::plot(const char *root)
 	}
 
     } else {
-	for (size_t i = 0; i < tri_sets.size(); i++) {
+	RTree<size_t, double, 3>::Iterator tree_it;
+	rtree.GetFirst(tree_it);
+	while (!tree_it.IsNull()) {
+	    size_t i = *tree_it;
 	    struct bu_color c = BU_COLOR_INIT_ZERO;
 	    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
 	    pl_color_buc(plot_file, &c);
@@ -1038,6 +1047,7 @@ POPState::plot(const char *root)
 		pdv_3cont(plot_file, p3);
 		pdv_3cont(plot_file, p1);
 	    }
+	    ++tree_it;
 	}
     }
 
