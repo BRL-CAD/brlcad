@@ -106,6 +106,9 @@ class POPState {
 	// Load/unload data level
 	void set_level(int level);
 
+	// Get the "current" position of a point, given its level
+	void level_pnt(point_t *o, const point_t *p, int level);
+
 	// Debugging
 	void plot(const char *root);
 
@@ -134,7 +137,6 @@ class POPState {
 	int to_level(int val, int level);
 	bool is_equal(rec r1, rec r2, int level);
 	bool is_degenerate(rec r0, rec r1, rec r2, int level);
-	void level_pnt(point_t *p, int level);
 
 	float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
 	float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
@@ -580,7 +582,7 @@ POPState::to_level(int val, int level)
 
 // Transfer coordinate into level-appropriate value
 void
-POPState::level_pnt(point_t *p, int level)
+POPState::level_pnt(point_t *o, const point_t *p, int level)
 {
     point_t in_pt;
     VMOVE(in_pt, *p);
@@ -598,9 +600,9 @@ POPState::level_pnt(point_t *p, int level)
     fastf_t nx = ((x1 / USHRT_MAX) * (maxx - minx)) + minx;
     fastf_t ny = ((y1 / USHRT_MAX) * (maxy - miny)) + miny;
     fastf_t nz = ((z1 / USHRT_MAX) * (maxz - minz)) + minz;
-    VSET(*p, nx, ny, nz);
+    VSET(*o, nx, ny, nz);
 
-    double poffset = DIST_PNT_PNT(*p, in_pt);
+    double poffset = DIST_PNT_PNT(*o, in_pt);
     if (poffset > (maxx - minx) && poffset > (maxy - miny) && poffset > (maxz - minz)) {
 	bu_log("Error: %f %f %f -> %f %f %f\n", V3ARGS(in_pt), V3ARGS(*p));
 	bu_log("bound: %f %f %f -> %f %f %f\n", minx, miny, minz, maxx, maxy, maxz);
@@ -657,7 +659,7 @@ POPState::plot(const char *root)
 		v2ind = nfaces[3*f_ind+1];
 		v3ind = nfaces[3*f_ind+2];
 	    }
-	    point_t p1, p2, p3;
+	    point_t p1, p2, p3, o1, o2, o3;
 	    if (verts_array) {
 		VMOVE(p1, verts_array[v1ind]);
 		VMOVE(p2, verts_array[v2ind]);
@@ -669,13 +671,13 @@ POPState::plot(const char *root)
 	    }
 	    // We iterate over the level i triangles, but our target level is
 	    // curr_level so we "decode" the points to that level, NOT level i
-	    level_pnt(&p1, curr_level);
-	    level_pnt(&p2, curr_level);
-	    level_pnt(&p3, curr_level);
-	    pdv_3move(plot_file, p1);
-	    pdv_3cont(plot_file, p2);
-	    pdv_3cont(plot_file, p3);
-	    pdv_3cont(plot_file, p1);
+	    level_pnt(&o1, &p1, curr_level);
+	    level_pnt(&o2, &p2, curr_level);
+	    level_pnt(&o3, &p3, curr_level);
+	    pdv_3move(plot_file, o1);
+	    pdv_3cont(plot_file, o2);
+	    pdv_3cont(plot_file, o3);
+	    pdv_3cont(plot_file, o1);
 	}
     }
 
@@ -753,6 +755,39 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
 	return l->i->s->curr_level;
 
     return -1;
+}
+
+extern "C" size_t
+bg_mesh_lod_verts(const point_t **v, struct bg_mesh_lod *l)
+{
+    if (!l)
+	return 0;
+    if (!v)
+	return l->i->s->npnts.size();
+
+    (*v) = (const point_t *)l->i->s->npnts.data();
+    return l->i->s->npnts.size();
+}
+
+extern "C" void
+bg_mesh_lod_vsnap(point_t *o, const point_t *v, struct bg_mesh_lod *l)
+{
+    if (!l || !v || !o)
+	return;
+
+    l->i->s->level_pnt(o, v, l->i->s->curr_level);
+}
+
+extern "C" size_t
+bg_mesh_lod_faces(const int **f, struct bg_mesh_lod *l)
+{
+    if (!l)
+	return 0;
+    if (!f)
+	return l->i->s->nfaces.size();
+
+    (*f) = (const int *)l->i->s->nfaces.data();
+    return l->i->s->npnts.size();
 }
 
 extern "C" void

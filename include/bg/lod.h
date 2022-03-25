@@ -97,6 +97,36 @@ bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale);
 BG_EXPORT int
 bg_mesh_lod_level(struct bg_mesh_lod *l, int level);
 
+/**
+ * Get a pointer to the current vertex array.  Returns the count of vertices
+ * defined, and a pointer to the vertex array in v.
+ *
+ * This info (both pointer and count) become invalid if lod_view or lod_level
+ * are used to change the current detail level.
+ */
+BG_EXPORT size_t
+bg_mesh_lod_verts(const point_t **v, struct bg_mesh_lod *l);
+
+/**
+ * The "raw" vertices stored in bg_mesh_lod are not necessarily the final
+ * positions a given LoD level setting expects - to calculate the current
+ * position for the active level, call vsnap on a point from the verts array
+ * retrieved above.  (Drawing using the original points rather than applying
+ * this transformation will typically draw a subset of the original mesh
+ * triangles in their "final" positions, leaving significant holes in the
+ * visible mesh.)
+ */
+BG_EXPORT void
+bg_mesh_lod_vsnap(point_t *o, const point_t *v, struct bg_mesh_lod *l);
+
+/**
+ * Get a pointer to the current faces array.  Returns the count
+ * of faces defined, and a pointer to the faces array in f.
+ */
+BG_EXPORT size_t
+bg_mesh_lod_faces(const int **f, struct bg_mesh_lod *l);
+
+
 /* Clean up the lod container. */
 BG_EXPORT void
 bg_mesh_lod_destroy(struct bg_mesh_lod *lod);
