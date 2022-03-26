@@ -30,6 +30,9 @@ set(qged_srcs
   fbserv.cpp
   import.cpp
   palettes.cpp
+  Application.cpp
+  GeometryModel.cpp
+  MainWindow.cpp
   )
 
 set(qth_names
@@ -40,6 +43,9 @@ set(qth_names
   import
   main_window
   palettes
+  Application
+  GeometryModel
+  MainWindow
   )
 foreach(qh ${qth_names})
   set(moc_headers ${moc_headers} ${qh}.h)
@@ -113,6 +119,7 @@ set(qged_ignore_srcs
   fonts/Inconsolata-LICENSE.txt
   fonts/Inconsolata.otf
   main.cpp
+  main_orig.cpp
   qdm_tests.txt
   theme/LICENSE.md
   theme/breeze.qrc

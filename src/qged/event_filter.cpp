@@ -36,16 +36,16 @@
 // TODO - this is not correct - it is always returning true.  My guess is some
 // of the widgets aren't establishing the correct parent relationships...
 static bool
-widget_active(QWidget *w)
+widget_active(QApplication *app, QWidget *checkWidget)
 {
-    bu_log("w: %p\n", (void *)w);
-    QWidget *fw = w->focusWidget();
+    bu_log("w: %p\n", (void *)app);
+    QWidget *fw = app->focusWidget();
     bu_log("fw: %p\n", (void *)fw);
-    QWidget *cw = w;
+    QWidget *cw = fw;
     while (cw) {
-	if (cw == fw) {
-	    //return true;
-	    return false;  // Disable until parent/child relationships are fixed...
+        if (cw == checkWidget) {
+            return true;
+            //return false;  // Disable until parent/child relationships are fixed...
 	}
 	cw = (QWidget *)cw->parent();
 	bu_log("cw: %p\n", (void *)fw);
@@ -68,7 +68,7 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
 	// bound events.  If so, we may perform the bound action.
 	QKeyEvent *k = (QKeyEvent *)e;
 	if (k->modifiers().testFlag(Qt::ShiftModifier) == true && k->key() == 'N') {
-	    if (!widget_active(c->w->c4))
+	    if (!widget_active(c, c->w->c4))
 		return false;
 	    c->run_qcmd(QString("nirt -b"));
 	    return true;
