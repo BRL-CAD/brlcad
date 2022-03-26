@@ -25,6 +25,14 @@
 #include "bu.h"
 #include "bg.h"
 
+#define EXPECT_NO_ISECT(_x, _y, _z) {\
+    VSET(obb_c, _x, _y, _z);\
+    if (bg_sat_abb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3)) {\
+	bu_log("Unexpected intersection at center pt: %f %f %f\n", V3ARGS(obb_c)); \
+    } \
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -50,17 +58,27 @@ main(int argc, char **argv)
     if (!bg_sat_abb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3))
 	return -1;
 
-    VSET(obb_c, 0, 0, 0);
-    if (!bg_sat_abb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3))
-	return -1;
+    for (int i = -2; i < 3; i++) {
+	for (int j = -2; j < 3; j++) {
+	    for (int k = -3; k < 4; k++) {
+		VSET(obb_c, i, j, k);
+		if (!bg_sat_abb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3)) {
+		    bu_log("Didn't find expected intersection at center pt: %f %f %f\n", V3ARGS(obb_c));
+		    return -1;
+		}
+	    }
+	}
+    }
 
-    VSET(obb_c, 2, 0, 0);
-    if (!bg_sat_abb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3))
-	return -1;
+    EXPECT_NO_ISECT(-5, 0, 0);
+    EXPECT_NO_ISECT(0, -5, 0);
+    EXPECT_NO_ISECT(0, 0, -5);
+    EXPECT_NO_ISECT(5, 0, 0);
+    EXPECT_NO_ISECT(0, 5, 0);
+    EXPECT_NO_ISECT(0, 0, 5);
 
-    VSET(obb_c, 5, 0, 0);
-    if (bg_sat_abb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3))
-	return -1;
+    // TODO - rotate obb vectors for non-trivial testing
+
 
     bu_log("OK\n");
     return 0;
