@@ -61,6 +61,9 @@ BRLCAD_ADD_TEST(NAME rt_cache_serial_multiple_different_objects COMMAND rt_cache
 BRLCAD_ADD_TEST(NAME rt_cache_parallel_multiple_different_objects  COMMAND rt_cache 6 10)
 BRLCAD_ADD_TEST(NAME rt_cache_parallel_multiple_different_objects_hierarchy_1  COMMAND rt_cache 7 10)
 
+# lod testing
+BRLCAD_ADDEXEC(rt_lod lod.c "librt;libbg" TEST)
+
 set(distcheck_files
   CMakeLists.txt
   arb_intersect.g

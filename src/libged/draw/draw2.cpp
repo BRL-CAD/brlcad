@@ -130,7 +130,7 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	if (rt_db_get_internal(&in, dp, dd->dbip, NULL, &rt_uniresource) < 0)
 	    return;
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-	db_fullpath_draw_subtree(path, comb->tree, curr_mat, _bound_fp, client_data);
+	draw_walk_tree(path, comb->tree, curr_mat, _bound_fp, client_data);
 	rt_db_free_internal(&in);
     } else {
 	// If we're skipping subtractions there's no
@@ -465,15 +465,15 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	    ud->ttol = dd.ttol;
 	    ud->res = dd.res;
 	    g->s_i_data = (void *)ud;
-	    g->s_update_callback = &ged_update_db_path;
-	    g->s_free_callback = &ged_free_draw_data;
+	    g->s_update_callback = &draw_update;
+	    g->s_free_callback = &draw_free_data;
 	    g->s_v = dd.v;
 	    g->s_v->vlfree = &RTG.rtg_vlfree;
 
 	    if (bounds_data.s_size && bounds_data.s_size->find(DB_FULL_PATH_CUR_DIR(fp)) != bounds_data.s_size->end()) {
 		g->s_size = (*bounds_data.s_size)[DB_FULL_PATH_CUR_DIR(fp)];
 	    }
-	    ged_scene_obj_geom(g);
+	    draw_scene(g);
 
 	    // Done with path
 	    db_free_full_path(fp);
@@ -482,7 +482,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	}
 
 	// Walk the tree to build up the set of scene objects
-	db_fullpath_draw(fp, &mat, (void *)&dd);
+	draw_gather_paths(fp, &mat, (void *)&dd);
 
 	// Done with path
 	db_free_full_path(fp);

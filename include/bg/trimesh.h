@@ -137,7 +137,7 @@ BG_EXPORT extern struct bg_trimesh_halfedge * bg_trimesh_generate_edge_list(int 
  * @param[in] num_pnts size of pnts array
  */
 BG_EXPORT extern int
-bg_trimesh_aabb(point_t *min, point_t *max, int *faces, int num_faces, point_t *p, int num_pnts);
+bg_trimesh_aabb(point_t *min, point_t *max, const int *faces, int num_faces, const point_t *p, int num_pnts);
 
 
 

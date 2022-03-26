@@ -3,6 +3,7 @@ set(bg_headers
   chull.h
   clip.h
   defines.h
+  lod.h
   lseg.h
   obr.h
   plane.h

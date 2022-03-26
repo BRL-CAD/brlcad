@@ -88,14 +88,14 @@ _ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
 	}
     } else {
 	int ret;
-	const char **helpargv = (const char **)bu_calloc(argc+1, sizeof(char *), "help argv");
+	const char **helpargv = (const char **)bu_calloc((size_t)argc+1, sizeof(char *), "help argv");
 	helpargv[0] = argv[0];
 	helpargv[1] = HELPFLAG;
 	for (int i = 1; i < argc; i++) {
 	    helpargv[i+1] = argv[i];
 	}
 	bu_cmd(cmds, argc+1, helpargv, 0, gd, &ret);
-	bu_free(helpargv, "help argv");
+	bu_free((void *)helpargv, "help argv");
 	return ret;
     }
 
@@ -506,8 +506,8 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct d
 	argv[i + exist_cnt] = nonexists[i];
     }
 
-    bu_free(exists, "exists array");
-    bu_free(nonexists, "nonexists array");
+    bu_free((void *)exists, "exists array");
+    bu_free((void *)nonexists, "nonexists array");
 
     return nonexist_cnt;
 }
@@ -1294,7 +1294,7 @@ _ged_editit(const char *editstring, const char *filename)
      * editor before the application will come back to life.
      */
     {
-	int length;
+	size_t length;
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 	struct bu_vls sep = BU_VLS_INIT_ZERO;
 	char *editor_basename;
@@ -2032,7 +2032,7 @@ _ged_build_dpp(struct ged *gedp,
      * Next, we build an array of directory pointers that
      * correspond to the object's path.
      */
-    dpp = (struct directory **)bu_calloc(ac+1, sizeof(struct directory *), "_ged_build_dpp: directory pointers");
+    dpp = (struct directory **)bu_calloc((size_t)ac+1, sizeof(struct directory *), "_ged_build_dpp: directory pointers");
     for (i = 0; i < ac; ++i) {
 	if ((dp = db_lookup(gedp->dbip, av[i], 0)) != RT_DIR_NULL)
 	    dpp[i] = dp;
@@ -2062,17 +2062,12 @@ _ged_build_dpp(struct ged *gedp,
  */
 struct directory **
 _ged_dir_getspace(struct db_i *dbip,
-		  int num_entries)
+		  size_t num_entries)
 {
-    struct directory *dp;
-    int i;
+    size_t i;
     struct directory **dir_basep;
+    struct directory *dp;
 
-    if (num_entries < 0) {
-	bu_log("dir_getspace: was passed %d, used 0\n",
-	       num_entries);
-	num_entries = 0;
-    }
     if (num_entries == 0) {
 	/* Set num_entries to the number of entries */
 	for (i = 0; i < RT_DBNHASH; i++)
@@ -2081,7 +2076,7 @@ _ged_dir_getspace(struct db_i *dbip,
     }
 
     /* Allocate and cast num_entries worth of pointers */
-    dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
+    dir_basep = (struct directory **) bu_malloc(num_entries+1 * sizeof(struct directory *),
 						"dir_getspace *dir[]");
     return dir_basep;
 }

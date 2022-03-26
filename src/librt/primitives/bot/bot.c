@@ -429,7 +429,7 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    return bg_trimesh_aabb(min, max, bot_ip->faces, bot_ip->num_faces, (point_t *)bot_ip->vertices, bot_ip->num_vertices);
+    return bg_trimesh_aabb(min, max, bot_ip->faces, bot_ip->num_faces, (const point_t *)bot_ip->vertices, bot_ip->num_vertices);
 
 }
 

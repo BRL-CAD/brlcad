@@ -318,16 +318,16 @@ bv_update(struct bview *gvp)
     if (gvp->gv_callback) {
 
 	if (gvp->callbacks) {
-	    if (bu_ptbl_locate(gvp->callbacks, (long *)(long)gvp->gv_callback) != -1) {
+	    if (bu_ptbl_locate(gvp->callbacks, (long *)(uintptr_t)gvp->gv_callback) != -1) {
 		bu_log("Recursive callback (bv_update and gvp->gv_callback)");
 	    }
-	    bu_ptbl_ins_unique(gvp->callbacks, (long *)(long)gvp->gv_callback);
+	    bu_ptbl_ins_unique(gvp->callbacks, (long *)(uintptr_t)gvp->gv_callback);
 	}
 
 	(*gvp->gv_callback)(gvp, gvp->gv_clientData);
 
 	if (gvp->callbacks) {
-	    bu_ptbl_rm(gvp->callbacks, (long *)(long)gvp->gv_callback);
+	    bu_ptbl_rm(gvp->callbacks, (long *)(uintptr_t)gvp->gv_callback);
 	}
 
     }
@@ -594,10 +594,9 @@ bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
     int have_val = 0;
     struct bv_vlist *tvp;
     for (BU_LIST_FOR(tvp, bv_vlist, &((struct bv_vlist *)(&s->s_vlist))->l)) {
-	int nused = tvp->nused;
-	int *cmd = tvp->cmd;
+	size_t nused = tvp->nused;
 	point_t *lpt = tvp->pt;
-	for (int l = 0; l < nused; l++, cmd++, lpt++) {
+	for (size_t l = 0; l < nused; l++, lpt++) {
 	    vect_t vpt;
 	    MAT4X3PNT(vpt, v->gv_model2view, *lpt);
 	    if (calc_mode) {

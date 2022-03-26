@@ -53,7 +53,7 @@
 	BU_LIST_INIT( &((p)->s_vlist) ); }
 
 static int
-_prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
+prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_full_path *fp = &d->fp;
@@ -84,7 +84,7 @@ _prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 
 /* Wrapper to handle adaptive vs non-adaptive wireframes */
 static void
-_wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
+wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     const struct bn_tol *tol = d->tol;
@@ -101,8 +101,8 @@ _wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
 extern "C" int draw_m3(struct bv_scene_obj *s);
 extern "C" int draw_points(struct bv_scene_obj *s);
 
-void
-ged_scene_obj_geom(struct bv_scene_obj *s)
+extern "C" void
+draw_scene(struct bv_scene_obj *s)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_i *dbip = d->dbip;
@@ -118,7 +118,7 @@ ged_scene_obj_geom(struct bv_scene_obj *s)
 	return;
     }
 
-    /* Mode 4 draws a point cloud in lieu of wireframes */
+    /* Mode 5 draws a point cloud in lieu of wireframes */
     if (s->s_os.s_dmode == 5) {
 	draw_points(s);
 	bv_scene_obj_bound(s);
@@ -134,13 +134,13 @@ ged_scene_obj_geom(struct bv_scene_obj *s)
 
     // If we don't have a BRL-CAD type, see if we've got a plot routine
     if (ip->idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-	_wireframe_plot(s, ip);
+	wireframe_plot(s, ip);
 	goto geom_done;
     }
 
     // At least for the moment, we don't try anything fancy with pipes
     if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_PIPE) {
-	_wireframe_plot(s, ip);
+	wireframe_plot(s, ip);
 	goto geom_done;
     }
 
@@ -171,14 +171,14 @@ ged_scene_obj_geom(struct bv_scene_obj *s)
 	case 1:
 	    // Get wireframe (for mode 1, all the non-wireframes are handled
 	    // by the above BOT/POLY/BREP cases
-	    _wireframe_plot(s, ip);
+	    wireframe_plot(s, ip);
 	    s->s_os.s_dmode = 0;
 	    break;
 	case 2:
 	    // Shade everything except pipe, don't evaluate, fall
 	    // back to wireframe in case of failure
-	    if (_prim_tess(s, ip) < 0) {
-		_wireframe_plot(s, ip);
+	    if (prim_tess(s, ip) < 0) {
+		wireframe_plot(s, ip);
 		s->s_os.s_dmode = 0;
 	    }
 	    break;
@@ -190,14 +190,14 @@ ged_scene_obj_geom(struct bv_scene_obj *s)
 	case 4:
 	    // Hidden line - generate polygonal forms, fall back to
 	    // un-hidden wireframe in case of failure
-	    if (_prim_tess(s, ip) < 0) {
-		_wireframe_plot(s, ip);
+	    if (prim_tess(s, ip) < 0) {
+		wireframe_plot(s, ip);
 		s->s_os.s_dmode = 0;
 	    }
 	    break;
 	default:
 	    // Default to wireframe
-	    _wireframe_plot(s, ip);
+	    wireframe_plot(s, ip);
 	    break;
     }
 
@@ -227,8 +227,8 @@ geom_done:
 // account higher level hierarchy level changes.  If such higher level changes
 // are made, the subtrees should be redrawn to properly repopulate the scene
 // objects.
-int
-ged_update_db_path(struct bv_scene_obj *s, int UNUSED(flag))
+extern "C" int
+draw_update(struct bv_scene_obj *s, int UNUSED(flag))
 {
     /* Validate */
     if (!s)
@@ -283,7 +283,7 @@ ged_update_db_path(struct bv_scene_obj *s, int UNUSED(flag))
     BV_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
 
     // Get the new geometry
-    ged_scene_obj_geom(s);
+    draw_scene(s);
 
 #if 0
     // Draw label
@@ -294,8 +294,8 @@ ged_update_db_path(struct bv_scene_obj *s, int UNUSED(flag))
     return 1;
 }
 
-void
-ged_free_draw_data(struct bv_scene_obj *s)
+extern "C" void
+draw_free_data(struct bv_scene_obj *s)
 {
     /* Validate */
     if (!s)
@@ -311,7 +311,7 @@ ged_free_draw_data(struct bv_scene_obj *s)
 }
 
 static void
-_tree_color(struct directory *dp, struct draw_data_t *dd)
+tree_color(struct directory *dp, struct draw_data_t *dd)
 {
     struct bu_attribute_value_set c_avs = BU_AVS_INIT_ZERO;
 
@@ -389,8 +389,8 @@ _tree_color(struct directory *dp, struct draw_data_t *dd)
 
 ******************************************************************************/
 
-void
-db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
+extern "C" void
+draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
 			 void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
 			 void *client_data)
 {
@@ -413,13 +413,13 @@ db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_
 	case OP_XOR:
 	    if (tp->tr_op == OP_SUBTRACT)
 		dd->bool_op = 4;
-	    db_fullpath_draw_subtree(path, tp->tr_b.tb_right, curr_mat, traverse_func, client_data);
+	    draw_walk_tree(path, tp->tr_b.tb_right, curr_mat, traverse_func, client_data);
 	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
 	    dd->bool_op = prev_bool_op;
-	    db_fullpath_draw_subtree(path, tp->tr_b.tb_left, curr_mat, traverse_func, client_data);
+	    draw_walk_tree(path, tp->tr_b.tb_left, curr_mat, traverse_func, client_data);
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(dd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -442,7 +442,7 @@ db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_
 		int inherit_old = dd->color_inherit;
 		HSET(oc.buc_rgb, dd->c.buc_rgb[0], dd->c.buc_rgb[1], dd->c.buc_rgb[2], dd->c.buc_rgb[3]);
 		if (!dd->bound_only) {
-		    _tree_color(dp, dd);
+		    tree_color(dp, dd);
 		}
 
 		// Two things may prevent further processing - a hidden dp, or
@@ -482,8 +482,8 @@ db_fullpath_draw_subtree(struct db_full_path *path, union tree *tp, mat_t *curr_
  * db_full_path structure.  This list is then used for further
  * processing and filtering by the search routines.
  */
-void
-db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
+extern "C" void
+draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 {
     struct directory *dp;
     struct draw_data_t *dd= (struct draw_data_t *)client_data;
@@ -504,7 +504,7 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 
-	db_fullpath_draw_subtree(path, comb->tree, curr_mat, db_fullpath_draw, client_data);
+	draw_walk_tree(path, comb->tree, curr_mat, draw_gather_paths, client_data);
 	rt_db_free_internal(&in);
 
     } else {
@@ -556,14 +556,14 @@ db_fullpath_draw(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	s->s_i_data = (void *)ud;
 
 	// set up callback functions
-	s->s_update_callback = &ged_update_db_path;
-	s->s_free_callback = &ged_free_draw_data;
+	s->s_update_callback = &draw_update;
+	s->s_free_callback = &draw_free_data;
 
 	if (dd->s_size && dd->s_size->find(DB_FULL_PATH_CUR_DIR(path)) != dd->s_size->end()) {
 	    s->s_size = (*dd->s_size)[DB_FULL_PATH_CUR_DIR(path)];
 	}
 	// Call correct vlist method based on mode
-	ged_scene_obj_geom(s);
+	draw_scene(s);
 
 	// Add object to scene group
 	bu_ptbl_ins(&dd->g->children, (long *)s);

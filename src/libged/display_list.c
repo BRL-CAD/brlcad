@@ -132,7 +132,7 @@ end:
 void
 headsolid_split(struct bu_list *hdlp, struct db_i *dbip, struct bv_scene_obj *sp, int newlen)
 {
-    int savelen;
+    size_t savelen;
     struct display_list *new_gdlp;
     char *pathname;
 
@@ -159,7 +159,7 @@ headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list 
 {
     struct bv_scene_obj *sp;
     struct bv_scene_obj *nsp;
-    int newlen = path->fp_len + 1;
+    size_t newlen = path->fp_len + 1;
 
     if (BU_LIST_IS_EMPTY(&gdlp->dl_head_scene_obj)) return 0;
 
@@ -456,7 +456,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 	nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	if (db_full_path_subset(&bdata->s_fullpath, subpath, skip_first)) {
 	    int ret;
-	    int full_len = bdata->s_fullpath.fp_len;
+	    size_t full_len = bdata->s_fullpath.fp_len;
 
 	    ged_destroy_vlist_cb(gedp, sp->s_dlist, 1);
 
@@ -1349,8 +1349,8 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
                 Dashing = sp->s_soldash;
             }
             for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
-                int i;
-                int nused = vp->nused;
+                size_t i;
+                size_t nused = vp->nused;
                 int *cmd = vp->cmd;
                 point_t *pt = vp->pt;
                 for (i = 0; i < nused; i++, cmd++, pt++) {
@@ -1531,8 +1531,8 @@ draw_png_solid(fastf_t perspective, unsigned char **image, struct bv_scene_obj *
         delta = SQRT_SMALL_FASTF;
 
     for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
-        int i;
-        int nused = tvp->nused;
+        size_t i;
+        size_t nused = tvp->nused;
         int *cmd = tvp->cmd;
         point_t *pt = tvp->pt;
         for (i = 0; i < nused; i++, cmd++, pt++) {
@@ -2002,8 +2002,8 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 		    nvlist = 0;
 		    npts = 0;
 		    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
-			int i;
-			int nused = vp->nused;
+			size_t i;
+			size_t nused = vp->nused;
 			int *cmd = vp->cmd;
 			point_t *pt = vp->pt;
 
@@ -2049,8 +2049,8 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
 		/* Print the actual vector list */
 		for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
-		    int i;
-		    int nused = vp->nused;
+		    size_t i;
+		    size_t nused = vp->nused;
 		    int *cmd = vp->cmd;
 		    point_t *pt = vp->pt;
 
@@ -2176,8 +2176,8 @@ dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx,
 	    vmin[X] = vmin[Y] = vmin[Z] =  INFINITY;
 
 	    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
-		int j;
-		int nused = vp->nused;
+		size_t j;
+		size_t nused = vp->nused;
 		int *cmd = vp->cmd;
 		point_t *pt = vp->pt;
 		point_t vpt;
@@ -2295,8 +2295,8 @@ dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, do
 	    struct bv_vlist *vp;
 
 	    for (BU_LIST_FOR(vp, bv_vlist, &(sp->s_vlist))) {
-		int j;
-		int nused = vp->nused;
+		size_t j;
+		size_t nused = vp->nused;
 		int *cmd = vp->cmd;
 		point_t *pt = vp->pt;
 		point_t vpt;

@@ -4542,7 +4542,7 @@ XXH3_64bits_withSecret(const void* input, size_t len, const void* secret, size_t
 XXH_PUBLIC_API XXH64_hash_t
 XXH3_64bits_withSeed(const void* input, size_t len, XXH64_hash_t seed)
 {
-    return XXH3_64bits_internal(input, len, seed, XXH3_kSecret, sizeof(XXH3_kSecret), XXH3_hashLong_64b_withSeed);
+    return XXH3_64bits_internal(input, len, seed, XXH3_kSecret, sizeof(XXH3_kSecret), (XXH3_hashLong64_f)XXH3_hashLong_64b_withSeed);
 }
 
 

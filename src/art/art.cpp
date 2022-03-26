@@ -137,17 +137,22 @@
 
 
 #include "vmath.h"	/* vector math macros */
-#include "raytrace.h"	    /* librt interface definitions */
+#include "raytrace.h"	/* librt interface definitions */
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/vls.h"
+#include "bu/version.h"
 #include "art.h"
 #include "rt/tree.h"
 #include "ged.h"
 #include "ged/commands.h"
 #include "ged/defines.h"
 #include "rt/db_fullpath.h"
+#include "rt/calc.h"
 #include "optical/defines.h"
+
+#include "brlcad_ident.h"
+
 
 struct application APP;
 struct resource* resources;
@@ -327,8 +332,12 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
                 const struct rt_comb_internal* combp,
                 void* data)
 {
-  // We open the db using the region path to get objects name
-  struct directory* dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!pathp || !combp || !data)
+	return 1;
+    // We open the db using the region path to get objects name
+    struct directory* dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp)
+	return 1;
 
   const char* name;
   name = dp->d_namep;
@@ -343,11 +352,10 @@ int register_region(struct db_tree_state* tsp __attribute__((unused)),
   bu_log("name: %s\n", conversion_temp.c_str());
 
   // get objects bounding box
-  struct ged* ged;
-  ged = ged_open("db", APP.a_rt_i->rti_dbip->dbi_filename, 1);
+  struct ged* gedp;
+  gedp = ged_open("db", APP.a_rt_i->rti_dbip->dbi_filename, 1);
   point_t min;
   point_t max;
-  // int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name, 1, min, max);
   int ret = rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char**)&name_full, 1, min, max);
 
   bu_log("ged: %i | min: %f %f %f | max: %f %f %f\n", ret, V3ARGS(min), V3ARGS(max));
@@ -843,14 +851,24 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
 int
 main(int argc, char **argv)
 {
+    bu_setlinebuf(stdout);
+    bu_setlinebuf(stderr);
+
+    bu_log("%s%s%s%s\n",
+	brlcad_ident("BRL-CAD Appleseed Ray Tracing (ART)"),
+	rt_version(),
+	bn_version(),
+	bu_version()
+    );
+
     // Create a log target that outputs to stderr, and binds it to the renderer's global logger.
     // Eventually you will probably want to redirect log messages to your own target. For this
     // you will need to implement foundation::ILogTarget (foundation/utility/log/ilogtarget.h).
-    std::unique_ptr<asf::ILogTarget> log_target(asf::create_console_log_target(stderr));
-    asr::global_logger().add_target(log_target.get());
+    asf::ILogTarget* log_target(asf::create_console_log_target(stderr));
+    asr::global_logger().add_target(log_target);
 
     // Print appleseed's version string.
-    RENDERER_LOG_INFO("%s", asf::Appleseed::get_synthetic_version_string());
+    RENDERER_LOG_INFO("%s\n", asf::Appleseed::get_synthetic_version_string());
 
     struct rt_i* rtip;
     const char *title_file = NULL;

@@ -47,27 +47,26 @@ rt_bound_tree(const union tree *tp, vect_t tree_min, vect_t tree_max)
 
     switch (tp->tr_op) {
 
-	case OP_SOLID:
-	    {
-		const struct soltab *stp;
+	case OP_SOLID: {
+	    const struct soltab *stp;
 
-		stp = tp->tr_a.tu_stp;
-		RT_CK_SOLTAB(stp);
-		if (stp->st_aradius <= 0) {
-		    bu_log("rt_bound_tree: encountered dead solid '%s'\n",
-			   stp->st_dp->d_namep);
-		    return -1;	/* ERROR */
-		}
+	    stp = tp->tr_a.tu_stp;
+	    RT_CK_SOLTAB(stp);
+	    if (stp->st_aradius <= 0) {
+		bu_log("rt_bound_tree: encountered dead solid '%s'\n",
+		       stp->st_dp->d_namep);
+		return -1;	/* ERROR */
+	    }
 
-		if (stp->st_aradius >= INFINITY) {
-		    VSETALL(tree_min, -INFINITY);
-		    VSETALL(tree_max,  INFINITY);
-		    return 0;
-		}
-		VMOVE(tree_min, stp->st_min);
-		VMOVE(tree_max, stp->st_max);
+	    if (stp->st_aradius >= INFINITY) {
+		VSETALL(tree_min, -INFINITY);
+		VSETALL(tree_max,  INFINITY);
 		return 0;
 	    }
+	    VMOVE(tree_min, stp->st_min);
+	    VMOVE(tree_max, stp->st_max);
+	    return 0;
+	}
 
 	default:
 	    bu_log("rt_bound_tree(%p): unknown op=x%x\n",
@@ -116,8 +115,8 @@ rt_bound_tree(const union tree *tp, vect_t tree_min, vect_t tree_max)
  * specified and that region has been referenced multiple time in the
  * tree, then this routine will simply return the first one.
  */
-HIDDEN struct region *
-_rt_getregion(struct rt_i *rtip, const char *reg_name)
+static struct region *
+get_region(struct rt_i *rtip, const char *reg_name)
 {
     struct region *regp;
     char *reg_base = bu_path_basename(reg_name, NULL);
@@ -152,7 +151,7 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
 
     RT_CHECK_RTI(rtip);
 
-    regp = _rt_getregion(rtip, reg_name);
+    regp = get_region(rtip, reg_name);
     if (regp == REGION_NULL) return 0;
     if (rt_bound_tree(regp->reg_treetop, min_rpp, max_rpp) < 0)
 	return 0;
@@ -482,14 +481,15 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
     return 0;
 }
 
+
 int
 rt_obj_bounds(struct bu_vls *msgs,
-	            struct db_i *dbip,
-		    int argc,
-		    const char *argv[],
-		    int use_air,
-		    point_t rpp_min,
-		    point_t rpp_max)
+	      struct db_i *dbip,
+	      int argc,
+	      const char *argv[],
+	      int use_air,
+	      point_t rpp_min,
+	      point_t rpp_max)
 {
     int i;
     struct rt_i *rtip;
@@ -557,9 +557,10 @@ rt_obj_bounds(struct bu_vls *msgs,
     VSETALL(rpp_min, INFINITY);
     VSETALL(rpp_max, -INFINITY);
     for (i = 0; i < argc; i++) {
-	vect_t reg_min, reg_max;
-	const char *reg_name;
-	size_t name_len;
+	vect_t reg_min = VINIT_ZERO;
+	vect_t reg_max = VINIT_ZERO;
+	const char *reg_name = NULL;
+	size_t name_len = 0;
 
 	/* check if input name is a region */
 	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
@@ -612,6 +613,7 @@ rt_obj_bounds(struct bu_vls *msgs,
 
     return BRLCAD_OK;
 }
+
 
 /*
  * Local Variables:
