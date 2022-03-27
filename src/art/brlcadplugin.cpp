@@ -273,6 +273,9 @@ BrlcadObject::on_frame_begin(
 asr::GAABB3
 BrlcadObject::compute_local_bbox() const
 {
+    if (!ap || !ap->a_rt_i)
+	return asr::GAABB3(asr::GVector3(0,0,0), asr::GVector3(0,0,0));
+
     // const auto r = static_cast<asr::GScalar>(get_uncached_radius());
     struct rt_i* l_rtip = ap->a_rt_i;
     if (l_rtip->needprep)
