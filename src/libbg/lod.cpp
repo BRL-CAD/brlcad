@@ -518,6 +518,10 @@ POPState::edge_process()
 	    edge[j][1] = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * factor);
 	    edge[j][2] = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * factor);
 	}
+	// TODO - this is inadequate - an edge long compared to the box
+	// sizes might need to be drawn even if none of the vertices are on
+	// the screen.  Need to intersect the triangle with the set of boxes
+	// within the tri xyz range.
 	edge_boxes[edge[0][0]][edge[0][1]][edge[0][2]].push_back(i);
 	if (edge[0][0] != edge[1][0] || edge[0][1] != edge[1][1] || edge[0][2] != edge[1][2])
 	    edge_boxes[edge[1][0]][edge[1][1]][edge[1][2]].push_back(i);
@@ -628,6 +632,10 @@ POPState::tri_process()
 	    tri[j][2] = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * factor);
 	}
 	//bu_log("tri: %d %d %d -> %d %d %d -> %d %d %d\n", V3ARGS(tri[0]), V3ARGS(tri[1]), V3ARGS(tri[2]));
+	// TODO - this is inadequate - a triangle large compared to the box
+	// sizes might need to be drawn even if none of the vertices are on
+	// the screen.  Need to intersect the triangle with the set of boxes
+	// within the tri xyz range.
 	tri_boxes[tri[0][0]][tri[0][1]][tri[0][2]].push_back(i);
 	if (tri[0][0] != tri[1][0] || tri[0][1] != tri[1][1] || tri[0][2] != tri[1][2])
 	    tri_boxes[tri[1][0]][tri[1][1]][tri[1][2]].push_back(i);
@@ -835,12 +843,12 @@ POPState::edge_pop_load(int start_level, int level)
 	int ticnt = 0;
 	tifile.read(reinterpret_cast<char *>(&ticnt), sizeof(ticnt));
 	for (int j = 0; j < ticnt; j++) {
-	    int vf[3];
-	    tifile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
-	    for (int k = 0; k < 3; k++) {
+	    int vf[2];
+	    tifile.read(reinterpret_cast<char *>(&vf), 2*sizeof(int));
+	    for (int k = 0; k < 2; k++) {
 		lod_edges.push_back(vf[k]);
 	    }
-	    level_edges[i].push_back(lod_edges.size() / 3 - 1);
+	    level_edges[i].push_back(lod_edges.size() / 2 - 1);
 	}
 	tifile.close();
 	bu_vls_free(&tfile);
@@ -870,7 +878,7 @@ POPState::edge_pop_trim(int level)
     // not actually shrink memory usage on any given call.)
     lod_edge_pnts.resize(vkeep_cnt*3);
     lod_edge_pnts.shrink_to_fit();
-    lod_edges.resize(fkeep_cnt*3);
+    lod_edges.resize(fkeep_cnt*2);
     lod_edges.shrink_to_fit();
 
 }
@@ -896,18 +904,6 @@ POPState::edge_rtree_load()
 	    lod_edge_pnts.push_back(nv[k]);
 	}
     }
-
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_faces", NULL);
-    std::ifstream affile(dir, std::ios::in | std::ofstream::binary);
-    affile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
-    for (size_t i = 0; i < ecnt; i++) {
-	int vf[3];
-	affile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
-	for (int k = 0; k < 3; k++) {
-	    lod_edges.push_back(vf[k]);
-	}
-    }
-
 
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "edge_sets", NULL);
     std::ifstream tset_file(dir, std::ios::in | std::ofstream::binary);
