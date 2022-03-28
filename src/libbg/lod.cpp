@@ -100,6 +100,16 @@
 #define POP_CACHEDIR ".POPLoD"
 #define MBUMP 1.01
 
+static void
+lod_dir(char *dir)
+{
+#ifdef HAVE_WINDOWS_H
+    CreateDirectory(*dir, NULL);
+#else
+    /* mode: 775 */
+    mkdir(*dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
+}
 
 static int
 lod_trimesh_aabb(point_t *min, point_t *max, std::vector<int> &afaces, int *faces, int num_faces, const point_t *p, int num_pnts)
@@ -282,6 +292,8 @@ class POPState {
 	// Write data out to cache (only used during initialization from
 	// external data)
 	void cache();
+	void cache_edge(struct bu_vls *vkey);
+	void cache_tri(struct bu_vls *vkey);
 
 	// Specific loading and unloading methods
 	void tri_pop_load(int start_level, int level);
@@ -891,6 +903,205 @@ POPState::set_level(int level)
     curr_level = level;
 }
 
+void
+POPState::cache_edge(struct bu_vls *vkey)
+{
+    char dir[MAXPATHLEN];
+
+    // Write out the level vertices
+    for (size_t i = 0; i <= edge_threshold; i++) {
+	if (level_edge_verts.find(i) == level_edge_verts.end())
+	    continue;
+	if (!level_edge_verts[i].size())
+	    continue;
+	struct bu_vls vfile = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&vfile, "edge_verts_level_%zd", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), bu_vls_cstr(&vfile), NULL);
+
+	std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
+
+	// Store the size of the level vert vector
+	int sv = level_edge_verts[i].size();
+	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
+
+	// Write out the vertex points
+	std::set<int>::iterator s_it;
+	for (s_it = level_edge_verts[i].begin(); s_it != level_edge_verts[i].end(); s_it++) {
+	    point_t v;
+	    VMOVE(v, verts_array[*s_it]);
+	    vofile.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
+	}
+
+	vofile.close();
+	bu_vls_free(&vfile);
+    }
+
+
+    // Write out the level edges
+    for (size_t i = 0; i <= edge_threshold; i++) {
+	if (!level_edges[i].size())
+	    continue;
+	struct bu_vls tfile = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&tfile, "edges_level_%zd", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), bu_vls_cstr(&tfile), NULL);
+
+	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
+
+	// Store the size of the level edge vector
+	int st = level_edges[i].size();
+	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
+
+	// Write out the mapped edge vertex indices
+	std::vector<int>::iterator s_it;
+	for (s_it = level_edges[i].begin(); s_it != level_edges[i].end(); s_it++) {
+	    int ev[2];
+	    ev[0] = edge_ind_map[edges[*s_it].v[0]];
+	    ev[1] = edge_ind_map[edges[*s_it].v[1]];
+	    tofile.write(reinterpret_cast<const char *>(&ev[0]), sizeof(ev));
+	}
+
+	tofile.close();
+	bu_vls_free(&tfile);
+    }
+}
+
+void
+POPState::cache_tri(struct bu_vls *vkey)
+{
+    char dir[MAXPATHLEN];
+
+    // Write out the level vertices
+    for (size_t i = 0; i <= tri_threshold; i++) {
+	if (level_tri_verts.find(i) == level_tri_verts.end())
+	    continue;
+	if (!level_tri_verts[i].size())
+	    continue;
+	struct bu_vls vfile = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&vfile, "tri_verts_level_%zd", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), bu_vls_cstr(&vfile), NULL);
+
+	std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
+
+	// Store the size of the level vert vector
+	int sv = level_tri_verts[i].size();
+	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
+
+	// Write out the vertex points
+	std::set<int>::iterator s_it;
+	for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
+	    point_t v;
+	    VMOVE(v, verts_array[*s_it]);
+	    vofile.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
+	}
+
+	vofile.close();
+	bu_vls_free(&vfile);
+    }
+
+
+    // Write out the level triangles
+    for (size_t i = 0; i <= tri_threshold; i++) {
+	if (!level_tris[i].size())
+	    continue;
+	struct bu_vls tfile = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&tfile, "tris_level_%zd", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), bu_vls_cstr(&tfile), NULL);
+
+	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
+
+	// Store the size of the level tri vector
+	int st = level_tris[i].size();
+	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
+
+	// Write out the mapped triangle indices
+	std::vector<int>::iterator s_it;
+	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
+	    int vt[3];
+	    vt[0] = tri_ind_map[faces_array[3*(*s_it)+0]];
+	    vt[1] = tri_ind_map[faces_array[3*(*s_it)+1]];
+	    vt[2] = tri_ind_map[faces_array[3*(*s_it)+2]];
+	    tofile.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
+	}
+
+	tofile.close();
+	bu_vls_free(&tfile);
+    }
+
+    // Write out the boxes and their face sets.  We calculate and write out the
+    // bounding boxes of each set so the loading code need only read the values
+    // to prepare an RTree
+    std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>>::iterator b1_it;
+    std::unordered_map<short, std::unordered_map<short, std::vector<int>>>::iterator b2_it;
+    std::unordered_map<short, std::vector<int>>::iterator b3_it;
+    size_t bcnt = 0;
+    size_t tcnt = 0;
+    {
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), "tri_sets", NULL);
+	std::ofstream tsfile(dir, std::ios::out | std::ofstream::binary);
+	if (!tsfile.is_open())
+	    return;
+
+	for (b1_it = boxes.begin(); b1_it != boxes.end(); b1_it++) {
+	    for (b2_it = b1_it->second.begin(); b2_it != b1_it->second.end(); b2_it++) {
+		for (b3_it = b2_it->second.begin(); b3_it != b2_it->second.end(); b3_it++) {
+		    bcnt++;
+		}
+	    }
+	}
+	tsfile.write(reinterpret_cast<const char *>(&bcnt), sizeof(bcnt));
+
+	for (b1_it = boxes.begin(); b1_it != boxes.end(); b1_it++) {
+	    for (b2_it = b1_it->second.begin(); b2_it != b1_it->second.end(); b2_it++) {
+		for (b3_it = b2_it->second.begin(); b3_it != b2_it->second.end(); b3_it++) {
+		    // This shouldn't happen, but if the logic changes to somehow
+		    // clear a triangle set we don't want an empty set
+		    if (!b3_it->second.size())
+			continue;
+
+		    // Calculate the bbox
+		    point_t min, max;
+		    if (lod_trimesh_aabb(&min, &max, b3_it->second, faces_array, faces_cnt, verts_array, vert_cnt) < 0) {
+			bu_log("Error - tri bbox calculation failed\n");
+			tsfile.close();
+			continue;
+		    }
+		    tsfile.write(reinterpret_cast<const char *>(&min[0]), sizeof(point_t));
+		    tsfile.write(reinterpret_cast<const char *>(&max[0]), sizeof(point_t));
+
+		    // Record how many triangles we've got, and then write the triangle
+		    // indices themselves
+		    tcnt = b3_it->second.size();
+		    tsfile.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
+		    tsfile.write(reinterpret_cast<const char *>(&b3_it->second[0]), b3_it->second.size() * sizeof(int));
+
+		}
+	    }
+	}
+
+	tsfile.close();
+    }
+
+    {
+	size_t ecnt;
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), "all_verts", NULL);
+	std::ofstream vfile(dir, std::ios::out | std::ofstream::binary);
+	ecnt = vert_cnt;
+	vfile.write(reinterpret_cast<const char *>(&ecnt), sizeof(ecnt));
+	vfile.write(reinterpret_cast<const char *>(&verts_array[0]), vert_cnt * sizeof(point_t));
+	vfile.close();
+    }
+
+    {
+	size_t ecnt;
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), "all_faces", NULL);
+	std::ofstream ffile(dir, std::ios::out | std::ofstream::binary);
+	ecnt = faces_cnt;
+	ffile.write(reinterpret_cast<const char *>(&ecnt), sizeof(ecnt));
+	ffile.write(reinterpret_cast<const char *>(&faces_array[0]), faces_cnt * 3 * sizeof(int));
+	ffile.close();
+    }
+}
+
 // Write out the generated LoD data to the BRL-CAD cache
 void
 POPState::cache()
@@ -903,12 +1114,7 @@ POPState::cache()
     char dir[MAXPATHLEN];
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
     if (!bu_file_exists(dir, NULL)) {
-#ifdef HAVE_WINDOWS_H
-	CreateDirectory(dir, NULL);
-#else
-	/* mode: 775 */
-	mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
+	lod_dir(dir);
     }
 
     struct bu_vls vkey = BU_VLS_INIT_ZERO;
@@ -919,12 +1125,7 @@ POPState::cache()
 	is_valid = true;
 	return;
     } else {
-#ifdef HAVE_WINDOWS_H
-	CreateDirectory(dir, NULL);
-#else
-	/* mode: 775 */
-	mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
+	lod_dir(dir);
     }
 
     // Note a format, so we can detect if what's there isn't compatible
@@ -953,200 +1154,11 @@ POPState::cache()
 	minmaxfile.close();
     }
 
-    // Edge data
-    {
-	// Write out the level vertices
-	for (size_t i = 0; i <= edge_threshold; i++) {
-	    if (level_edge_verts.find(i) == level_edge_verts.end())
-		continue;
-	    if (!level_edge_verts[i].size())
-		continue;
-	    struct bu_vls vfile = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&vfile, "edge_verts_level_%zd", i);
-	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
+    // Write edge-specific data
+    cache_edge(&vkey);
 
-	    std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
-
-	    // Store the size of the level vert vector
-	    int sv = level_edge_verts[i].size();
-	    vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
-
-	    // Write out the vertex points
-	    std::set<int>::iterator s_it;
-	    for (s_it = level_edge_verts[i].begin(); s_it != level_edge_verts[i].end(); s_it++) {
-		point_t v;
-		VMOVE(v, verts_array[*s_it]);
-		vofile.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
-	    }
-
-	    vofile.close();
-	    bu_vls_free(&vfile);
-	}
-
-
-	// Write out the level edges
-	for (size_t i = 0; i <= edge_threshold; i++) {
-	    if (!level_edges[i].size())
-		continue;
-	    struct bu_vls tfile = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&tfile, "edges_level_%zd", i);
-	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&tfile), NULL);
-
-	    std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
-
-	    // Store the size of the level edge vector
-	    int st = level_edges[i].size();
-	    tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
-
-	    // Write out the mapped edge vertex indices
-	    std::vector<int>::iterator s_it;
-	    for (s_it = level_edges[i].begin(); s_it != level_edges[i].end(); s_it++) {
-		int ev[2];
-		ev[0] = edge_ind_map[edges[*s_it].v[0]];
-		ev[1] = edge_ind_map[edges[*s_it].v[1]];
-		tofile.write(reinterpret_cast<const char *>(&ev[0]), sizeof(ev));
-	    }
-
-	    tofile.close();
-	    bu_vls_free(&tfile);
-	}
-    }
-
-    // Triangle data
-    {
-	// Write out the level vertices
-	for (size_t i = 0; i <= tri_threshold; i++) {
-	    if (level_tri_verts.find(i) == level_tri_verts.end())
-		continue;
-	    if (!level_tri_verts[i].size())
-		continue;
-	    struct bu_vls vfile = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&vfile, "tri_verts_level_%zd", i);
-	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
-
-	    std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
-
-	    // Store the size of the level vert vector
-	    int sv = level_tri_verts[i].size();
-	    vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
-
-	    // Write out the vertex points
-	    std::set<int>::iterator s_it;
-	    for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
-		point_t v;
-		VMOVE(v, verts_array[*s_it]);
-		vofile.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
-	    }
-
-	    vofile.close();
-	    bu_vls_free(&vfile);
-	}
-
-
-	// Write out the level triangles
-	for (size_t i = 0; i <= tri_threshold; i++) {
-	    if (!level_tris[i].size())
-		continue;
-	    struct bu_vls tfile = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&tfile, "tris_level_%zd", i);
-	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&tfile), NULL);
-
-	    std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
-
-	    // Store the size of the level tri vector
-	    int st = level_tris[i].size();
-	    tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
-
-	    // Write out the mapped triangle indices
-	    std::vector<int>::iterator s_it;
-	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-		int vt[3];
-		vt[0] = tri_ind_map[faces_array[3*(*s_it)+0]];
-		vt[1] = tri_ind_map[faces_array[3*(*s_it)+1]];
-		vt[2] = tri_ind_map[faces_array[3*(*s_it)+2]];
-		tofile.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
-	    }
-
-	    tofile.close();
-	    bu_vls_free(&tfile);
-	}
-
-	// Write out the boxes and their face sets.  We calculate and write out the
-	// bounding boxes of each set so the loading code need only read the values
-	// to prepare an RTree
-	{
-	    std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>>::iterator b1_it;
-	    std::unordered_map<short, std::unordered_map<short, std::vector<int>>>::iterator b2_it;
-	    std::unordered_map<short, std::vector<int>>::iterator b3_it;
-	    size_t bcnt = 0;
-	    size_t tcnt = 0;
-	    {
-		bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "tri_sets", NULL);
-		std::ofstream tsfile(dir, std::ios::out | std::ofstream::binary);
-		if (!tsfile.is_open())
-		    return;
-
-		for (b1_it = boxes.begin(); b1_it != boxes.end(); b1_it++) {
-		    for (b2_it = b1_it->second.begin(); b2_it != b1_it->second.end(); b2_it++) {
-			for (b3_it = b2_it->second.begin(); b3_it != b2_it->second.end(); b3_it++) {
-			    bcnt++;
-			}
-		    }
-		}
-		tsfile.write(reinterpret_cast<const char *>(&bcnt), sizeof(bcnt));
-
-		for (b1_it = boxes.begin(); b1_it != boxes.end(); b1_it++) {
-		    for (b2_it = b1_it->second.begin(); b2_it != b1_it->second.end(); b2_it++) {
-			for (b3_it = b2_it->second.begin(); b3_it != b2_it->second.end(); b3_it++) {
-			    // This shouldn't happen, but if the logic changes to somehow
-			    // clear a triangle set we don't want an empty set
-			    if (!b3_it->second.size())
-				continue;
-
-			    // Calculate the bbox
-			    point_t min, max;
-			    if (lod_trimesh_aabb(&min, &max, b3_it->second, faces_array, faces_cnt, verts_array, vert_cnt) < 0) {
-				bu_log("Error - tri bbox calculation failed\n");
-				tsfile.close();
-				continue;
-			    }
-			    tsfile.write(reinterpret_cast<const char *>(&min[0]), sizeof(point_t));
-			    tsfile.write(reinterpret_cast<const char *>(&max[0]), sizeof(point_t));
-
-			    // Record how many triangles we've got, and then write the triangle
-			    // indices themselves
-			    tcnt = b3_it->second.size();
-			    tsfile.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
-			    tsfile.write(reinterpret_cast<const char *>(&b3_it->second[0]), b3_it->second.size() * sizeof(int));
-
-			}
-		    }
-		}
-
-		tsfile.close();
-	    }
-
-	    {
-		size_t ecnt;
-		bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_verts", NULL);
-		std::ofstream vfile(dir, std::ios::out | std::ofstream::binary);
-		ecnt = vert_cnt;
-		vfile.write(reinterpret_cast<const char *>(&ecnt), sizeof(ecnt));
-		vfile.write(reinterpret_cast<const char *>(&verts_array[0]), vert_cnt * sizeof(point_t));
-		vfile.close();
-	    }
-
-	    {
-		size_t ecnt;
-		bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_faces", NULL);
-		std::ofstream ffile(dir, std::ios::out | std::ofstream::binary);
-		ecnt = faces_cnt;
-		ffile.write(reinterpret_cast<const char *>(&ecnt), sizeof(ecnt));
-		ffile.write(reinterpret_cast<const char *>(&faces_array[0]), faces_cnt * 3 * sizeof(int));
-		ffile.close();
-	    }
-	}
-    }
+    // Write triangle-specific data
+    cache_tri(&vkey);
 
     bu_vls_free(&vkey);
 
