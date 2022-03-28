@@ -71,6 +71,19 @@ bg_sat_abb_obb(
 	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
 	);
 
+/**
+ * Test for an intersection between two Oriented Bounding Boxes (OBBs). The
+ * boxes are defined by a center point and three perpendicular vectors from the
+ * center to the centers of the various faces.
+ *
+ * Returns 1 if they intersect, 0 otherwise.
+ */
+BG_EXPORT extern int
+bg_sat_obb_obb(
+	point_t obb1_center, vect_t obb1_extent1, vect_t obb1_extent2, vect_t obb1_extent3,
+	point_t obb2_center, vect_t obb2_extent1, vect_t obb2_extent2, vect_t obb2_extent3
+	);
+
 __END_DECLS
 
 #endif  /* BG_SAT_H */
