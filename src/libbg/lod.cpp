@@ -104,10 +104,10 @@ static void
 lod_dir(char *dir)
 {
 #ifdef HAVE_WINDOWS_H
-    CreateDirectory(*dir, NULL);
+    CreateDirectory(dir, NULL);
 #else
     /* mode: 775 */
-    mkdir(*dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 #endif
 }
 
@@ -240,14 +240,18 @@ class POPState {
 	void plot(const char *root);
 
 	// Active faces needed by the current LoD (indexes into npnts).
-	std::vector<int> nfaces;
+	std::vector<int> lod_tris;
 
 	// This is where we store the active points - i.e., those needed for
 	// the current LoD.  When initially creating the breakout from BoT data
 	// we calculate all levels, but the goal is to not hold in memory any
 	// more than we need to support the LoD drawing.  nfaces will index
 	// into npnts.
-	std::vector<fastf_t> npnts;
+	std::vector<fastf_t> lod_tri_pnts;
+
+	// Similar containers for edges
+	std::vector<int> lod_edges;
+	std::vector<fastf_t> lod_edge_pnts;
 
 	// Containers for sub-mesh grouping
 	RTree<size_t, double, 3> rtree;
@@ -258,8 +262,9 @@ class POPState {
 	int curr_level = -1;
 
 	// Maximum level for which POP info is defined.  Above that level,
-	// need to shift to full mesh rendering
-	int max_pop_level = 0;
+	// need to shift to full rendering
+	int max_tri_pop_level = 0;
+	int max_edge_pop_level = 0;
 
 	// Used by calling functions to detect initialization errors
 	bool is_valid = false;
@@ -679,7 +684,12 @@ POPState::POPState(unsigned long long key)
 	bu_vls_sprintf(&vfile, "tris_level_%d", i);
 	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
 	if (bu_file_exists(dir, NULL)) {
-	    max_pop_level = i;
+	    max_tri_pop_level = i;
+	}
+	bu_vls_sprintf(&vfile, "edges_level_%d", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
+	if (bu_file_exists(dir, NULL)) {
+	    max_edge_pop_level = i;
 	}
     }
 
@@ -714,9 +724,9 @@ POPState::tri_pop_load(int start_level, int level)
 	    point_t nv;
 	    vifile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
 	    for (int k = 0; k < 3; k++) {
-		npnts.push_back(nv[k]);
+		lod_tri_pnts.push_back(nv[k]);
 	    }
-	    level_tri_verts[i].insert(npnts.size() - 1);
+	    level_tri_verts[i].insert(lod_tri_pnts.size() - 1);
 	}
 	vifile.close();
 	bu_vls_free(&vfile);
@@ -737,9 +747,9 @@ POPState::tri_pop_load(int start_level, int level)
 	    int vf[3];
 	    tifile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
 	    for (int k = 0; k < 3; k++) {
-		nfaces.push_back(vf[k]);
+		lod_tris.push_back(vf[k]);
 	    }
-	    level_tris[i].push_back(nfaces.size() / 3 - 1);
+	    level_tris[i].push_back(lod_tris.size() / 3 - 1);
 	}
 	tifile.close();
 	bu_vls_free(&tfile);
@@ -767,18 +777,18 @@ POPState::tri_pop_trim(int level)
 
     // Shrink the main arrays (note that in C++11 shrink_to_fit may or may
     // not actually shrink memory usage on any given call.)
-    npnts.resize(vkeep_cnt*3);
-    npnts.shrink_to_fit();
-    nfaces.resize(fkeep_cnt*3);
-    nfaces.shrink_to_fit();
+    lod_tri_pnts.resize(vkeep_cnt*3);
+    lod_tri_pnts.shrink_to_fit();
+    lod_tris.resize(fkeep_cnt*3);
+    lod_tris.shrink_to_fit();
 
 }
 
 void
 POPState::tri_rtree_load()
 {
-    npnts.clear();
-    nfaces.clear();
+    lod_tri_pnts.clear();
+    lod_tris.clear();
 
     size_t ecnt = 0;
     char dir[MAXPATHLEN];
@@ -792,7 +802,7 @@ POPState::tri_rtree_load()
 	point_t nv;
 	avfile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
 	for (int k = 0; k < 3; k++) {
-	    npnts.push_back(nv[k]);
+	    lod_tri_pnts.push_back(nv[k]);
 	}
     }
 
@@ -803,7 +813,7 @@ POPState::tri_rtree_load()
 	int vf[3];
 	affile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
 	for (int k = 0; k < 3; k++) {
-	    nfaces.push_back(vf[k]);
+	    lod_tris.push_back(vf[k]);
 	}
     }
 
@@ -857,36 +867,38 @@ POPState::set_level(int level)
     fastf_t seconds;
     start = bu_gettime();
 
+    // Triangles
+
     // If we need to pull more data, do so
-    if (level > curr_level && level <= max_pop_level) {
+    if (level > curr_level && level <= max_tri_pop_level) {
 	tri_pop_load(curr_level, level);
     }
 
     // If we need to trim back the POP data, do that
-    if (level < curr_level && level <= max_pop_level && curr_level <= max_pop_level) {
+    if (level < curr_level && level <= max_tri_pop_level && curr_level <= max_tri_pop_level) {
 	tri_pop_trim(level);
     }
 
     // If we were operating beyond POP detail levels (i.e. using RTree
     // management) we need to reset our POP data and clear the more detailed
     // info from the containers to free up memory.
-    if (level < curr_level && level <= max_pop_level && curr_level > max_pop_level) {
+    if (level < curr_level && level <= max_tri_pop_level && curr_level > max_tri_pop_level) {
 	// We're (re)entering the POP range - clear the high detail data and start over
-	nfaces.clear();
-	npnts.clear();
+	lod_tris.clear();
+	lod_tri_pnts.clear();
 
 	// Full reset, not an incremental load.
 	tri_pop_load(-1, level);
 
 	// We may have substantially shrunk these arrays - see if we can open
 	// up the memory
-	nfaces.shrink_to_fit();
-	npnts.shrink_to_fit();
+	lod_tris.shrink_to_fit();
+	lod_tri_pnts.shrink_to_fit();
     }
 
     // If we're jumping into details levels beyond POP range, clear the POP containers
     // and load the more detailed data management info
-    if (level > curr_level && level > max_pop_level && curr_level <= max_pop_level) {
+    if (level > curr_level && level > max_tri_pop_level && curr_level <= max_tri_pop_level) {
 	for (size_t i = 0; i < POP_MAXLEVEL; i++) {
 	    level_tris[i].clear();
 	    level_tris[i].shrink_to_fit();
@@ -895,6 +907,43 @@ POPState::set_level(int level)
 	// Load data for managing more detailed rendering
 	tri_rtree_load();
     }
+
+    // Edges
+
+#if 0
+    // If we need to pull more data, do so
+    if (level > curr_level && level <= max_tri_pop_level) {
+	edge_pop_load(curr_level, level);
+    }
+
+    // If we need to trim back the POP data, do that
+    if (level < curr_level && level <= max_tri_pop_level && curr_level <= max_tri_pop_level) {
+	edge_pop_trim(curr_level, level);
+    }
+
+    // If we were operating beyond POP detail levels (i.e. using RTree
+    // management) we need to reset our POP data and clear the more detailed
+    // info from the containers to free up memory.
+    if (level < curr_level && level <= max_tri_pop_level && curr_level > max_tri_pop_level) {
+	// We're (re)entering the POP range - clear the high detail data and start over
+	lod_edges.clear();
+	lod_edge_pnts.clear();
+
+	// Full reset, not an incremental load.
+	edge_pop_load(-1, level);
+
+	// We may have substantially shrunk these arrays - see if we can open
+	// up the memory
+	lod_edges.shrink_to_fit();
+	lod_edge_pnts.shrink_to_fit();
+    }
+
+    // If we're jumping into details levels beyond POP range, clear the POP containers
+    // and load the more detailed data management info
+    if (level > curr_level && level > max_edge_pop_level && curr_level <= max_edge_pop_level) {
+	// TODO - straight-up all edges, no snapping drawing
+    }
+#endif
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
@@ -1240,13 +1289,88 @@ POPState::plot(const char *root)
     FILE *plot_file = NULL;
     bu_vls_init(&name);
     if (!root) {
-	bu_vls_printf(&name, "init_level_%.2d.plot3", curr_level);
+	bu_vls_printf(&name, "init_tris_level_%.2d.plot3", curr_level);
     } else {
-	bu_vls_printf(&name, "%s_level_%.2d.plot3", root, curr_level);
+	bu_vls_printf(&name, "%s_tris_level_%.2d.plot3", root, curr_level);
     }
     plot_file = fopen(bu_vls_addr(&name), "wb");
 
-    if (curr_level <= max_pop_level) {
+    if (curr_level <= max_tri_pop_level) {
+	pl_color(plot_file, 0, 255, 0);
+
+	for (int i = 0; i <= curr_level; i++) {
+	    std::vector<int>::iterator s_it;
+	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
+		int f_ind = *s_it;
+		int v1ind, v2ind, v3ind;
+		if (faces_array) {
+		    v1ind = faces_array[3*f_ind+0];
+		    v2ind = faces_array[3*f_ind+1];
+		    v3ind = faces_array[3*f_ind+2];
+		} else {
+		    v1ind = lod_tris[3*f_ind+0];
+		    v2ind = lod_tris[3*f_ind+1];
+		    v3ind = lod_tris[3*f_ind+2];
+		}
+		point_t p1, p2, p3, o1, o2, o3;
+		if (verts_array) {
+		    VMOVE(p1, verts_array[v1ind]);
+		    VMOVE(p2, verts_array[v2ind]);
+		    VMOVE(p3, verts_array[v3ind]);
+		} else {
+		    VSET(p1, lod_tri_pnts[3*v1ind+0], lod_tri_pnts[3*v1ind+1], lod_tri_pnts[3*v1ind+2]);
+		    VSET(p2, lod_tri_pnts[3*v2ind+0], lod_tri_pnts[3*v2ind+1], lod_tri_pnts[3*v2ind+2]);
+		    VSET(p3, lod_tri_pnts[3*v3ind+0], lod_tri_pnts[3*v3ind+1], lod_tri_pnts[3*v3ind+2]);
+		}
+		// We iterate over the level i triangles, but our target level is
+		// curr_level so we "decode" the points to that level, NOT level i
+		level_pnt(&o1, &p1, curr_level);
+		level_pnt(&o2, &p2, curr_level);
+		level_pnt(&o3, &p3, curr_level);
+		pdv_3move(plot_file, o1);
+		pdv_3cont(plot_file, o2);
+		pdv_3cont(plot_file, o3);
+		pdv_3cont(plot_file, o1);
+	    }
+	}
+
+    } else {
+	RTree<size_t, double, 3>::Iterator tree_it;
+	rtree.GetFirst(tree_it);
+	while (!tree_it.IsNull()) {
+	    size_t i = *tree_it;
+	    struct bu_color c = BU_COLOR_INIT_ZERO;
+	    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+	    pl_color_buc(plot_file, &c);
+	    for (size_t j = 0; j < tri_sets[i].size(); j++) {
+		int v1ind, v2ind, v3ind;
+		point_t p1, p2, p3;
+		v1ind = lod_tris[3*tri_sets[i][j]+0];
+		v2ind = lod_tris[3*tri_sets[i][j]+1];
+		v3ind = lod_tris[3*tri_sets[i][j]+2];
+		VSET(p1, lod_tri_pnts[3*v1ind+0], lod_tri_pnts[3*v1ind+1], lod_tri_pnts[3*v1ind+2]);
+		VSET(p2, lod_tri_pnts[3*v2ind+0], lod_tri_pnts[3*v2ind+1], lod_tri_pnts[3*v2ind+2]);
+		VSET(p3, lod_tri_pnts[3*v3ind+0], lod_tri_pnts[3*v3ind+1], lod_tri_pnts[3*v3ind+2]);
+		pdv_3move(plot_file, p1);
+		pdv_3cont(plot_file, p2);
+		pdv_3cont(plot_file, p3);
+		pdv_3cont(plot_file, p1);
+	    }
+	    ++tree_it;
+	}
+    }
+
+    fclose(plot_file);
+
+#if 0
+    if (!root) {
+	bu_vls_printf(&name, "init_edges_level_%.2d.plot3", curr_level);
+    } else {
+	bu_vls_printf(&name, "%s_edges_level_%.2d.plot3", root, curr_level);
+    }
+    plot_file = fopen(bu_vls_addr(&name), "wb");
+
+    if (curr_level <= max_edge_pop_level) {
 	pl_color(plot_file, 0, 255, 0);
 
 	for (int i = 0; i <= curr_level; i++) {
@@ -1284,34 +1408,9 @@ POPState::plot(const char *root)
 		pdv_3cont(plot_file, o1);
 	    }
 	}
-
-    } else {
-	RTree<size_t, double, 3>::Iterator tree_it;
-	rtree.GetFirst(tree_it);
-	while (!tree_it.IsNull()) {
-	    size_t i = *tree_it;
-	    struct bu_color c = BU_COLOR_INIT_ZERO;
-	    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-	    pl_color_buc(plot_file, &c);
-	    for (size_t j = 0; j < tri_sets[i].size(); j++) {
-		int v1ind, v2ind, v3ind;
-		point_t p1, p2, p3;
-		v1ind = nfaces[3*tri_sets[i][j]+0];
-		v2ind = nfaces[3*tri_sets[i][j]+1];
-		v3ind = nfaces[3*tri_sets[i][j]+2];
-		VSET(p1, npnts[3*v1ind+0], npnts[3*v1ind+1], npnts[3*v1ind+2]);
-		VSET(p2, npnts[3*v2ind+0], npnts[3*v2ind+1], npnts[3*v2ind+2]);
-		VSET(p3, npnts[3*v3ind+0], npnts[3*v3ind+1], npnts[3*v3ind+2]);
-		pdv_3move(plot_file, p1);
-		pdv_3cont(plot_file, p2);
-		pdv_3cont(plot_file, p3);
-		pdv_3cont(plot_file, p1);
-	    }
-	    ++tree_it;
-	}
     }
+#endif
 
-    fclose(plot_file);
     bu_vls_free(&name);
 }
 
@@ -1387,16 +1486,21 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
     return -1;
 }
 
+// TODO - need to have awareness of whether we're in wireframe
+// or shaded data mode - we ideally don't want to load both, since
+// it's a waste of memory, but some of these functions will need
+// to know to handle that.  In particular, lod_faces will be a
+// no-op if the lod container has wireframe data.
 extern "C" size_t
 bg_mesh_lod_verts(const point_t **v, struct bg_mesh_lod *l)
 {
     if (!l)
 	return 0;
     if (!v)
-	return l->i->s->npnts.size();
+	return l->i->s->lod_tri_pnts.size();
 
-    (*v) = (const point_t *)l->i->s->npnts.data();
-    return l->i->s->npnts.size();
+    (*v) = (const point_t *)l->i->s->lod_tri_pnts.data();
+    return l->i->s->lod_tri_pnts.size();
 }
 
 extern "C" void
@@ -1414,10 +1518,10 @@ bg_mesh_lod_faces(const int **f, struct bg_mesh_lod *l)
     if (!l)
 	return 0;
     if (!f)
-	return l->i->s->nfaces.size();
+	return l->i->s->lod_tris.size();
 
-    (*f) = (const int *)l->i->s->nfaces.data();
-    return l->i->s->npnts.size();
+    (*f) = (const int *)l->i->s->lod_tris.data();
+    return l->i->s->lod_tris.size();
 }
 
 extern "C" void
