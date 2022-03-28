@@ -389,6 +389,8 @@ BrlcadObject::refine_and_offset(
 int
 BrlcadObject::get_id()
 {
+    //original
+    /*
     static std::unordered_map<std::thread::id, int> ids = { { std::this_thread::get_id(), 0 } };
     static int next = 0;
     static std::mutex m;
@@ -402,9 +404,41 @@ BrlcadObject::get_id()
 	ids[thread] = id;
     }
 
-    m.unlock();
+    m.unlock();*/
 
-    return id - 1;
+    //round robin
+    /*
+    static int id = 1;
+
+    static std::mutex m;
+
+    m.lock();
+
+    if (id == 0) id = 1;
+    else id = 0;
+
+
+    m.unlock();*/
+
+    //fix
+    static std::unordered_map<std::thread::id, int> ids;
+    static int next = 0;
+    static std::mutex m;
+
+    auto thread = std::this_thread::get_id();
+    std::unordered_map<std::thread::id, int>::const_iterator iterator = ids.find(thread);
+
+    if (iterator == ids.end())
+    {
+	m.lock();
+	std::pair<std::thread::id, int> pair(thread, next++);
+	ids.insert(pair);
+	m.unlock();
+    }
+
+    auto id = ids[thread];
+
+    return id;
 }
 
 
