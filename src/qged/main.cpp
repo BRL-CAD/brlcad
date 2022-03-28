@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	std::cout << "Reading settings from " << dmsettings.fileName().toStdString() << "\n";
     }
 
-    qged::Application application = qged::Application(argc, argv, consoleMode, swrastMode, quadMode);
+    qtcad::Application application = qtcad::Application(argc, argv, consoleMode, swrastMode, quadMode);
 
     // Setup complete - time to enter the interactive event loop
     return application.exec();

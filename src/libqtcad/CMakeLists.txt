@@ -56,6 +56,8 @@ set(qtcad_srcs
   QtCADView.cpp
   QtConsole.cpp
   QtConsoleListener.cpp
+  Application.cpp
+  MainWindow.cpp
   )
 if (OPENGL_LIBS)
   set(qtcad_srcs ${qtcad_srcs} QtGL.cpp)
@@ -81,6 +83,8 @@ set(qth_names
   QtConsole
   QtConsoleListener
   QtSW
+  Application
+  MainWindow
   )
 if (OPENGL_LIBS)
   set(qth_names ${qth_names} QtGL)

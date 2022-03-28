@@ -1,14 +1,12 @@
-#ifndef QGED_APPLICATION_H
-#define QGED_APPLICATION_H
+#ifndef QTCAD_APPLICATION_H
+#define QTCAD_APPLICATION_H
 
-#include "MainWindow.h"
+#include "qtcad/MainWindow.h"
 #include <QApplication>
 #include <QMap>
 
-/* Command type for application level commands */
-typedef int (*appCommandFunc)(void *, int, const char **);
-
 namespace qtcad {
+
 
 class Application : public QApplication
 {
@@ -28,6 +26,6 @@ class Application : public QApplication
     MainWindow *mainWindow;
 };
 
-} // namespace qged
+} // namespace qtcad
 
-#endif // QGED_APPLICATION_H
+#endif // QTCAD_APPLICATION_H

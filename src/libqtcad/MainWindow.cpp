@@ -3,7 +3,7 @@
 #include <QMenuBar>
 #include <QSettings>
 
-namespace qged {
+namespace qtcad {
 
 MainWindow::MainWindow(QWidget *parent, int pSwrastMode, int pQuadMode)
     : QMainWindow{parent}
@@ -25,32 +25,7 @@ MainWindow::MainWindow(QWidget *parent, int pSwrastMode, int pQuadMode)
 
     }
     // Create Menus
-    fileMenu = menuBar()->addMenu("File");
-    cadOpen = new QAction("Open", this);
-    connect(cadOpen, &QAction::triggered, this, &MainWindow::openFile);
-    fileMenu->addAction(cadOpen);
-
-    cadSaveSettings = new QAction("Save Settings", this);
-    connect(cadSaveSettings, &QAction::triggered, this, &MainWindow::writeSettings);
-    fileMenu->addAction(cadSaveSettings);
-
-    cadSingleView = new QAction("Single View", this);
-    connect(cadSingleView, &QAction::triggered, this, &MainWindow::switchToSingleView);
-    fileMenu->addAction(cadSingleView);
-
-    cadQuadView = new QAction("Quad View", this);
-    connect(cadQuadView, &QAction::triggered, this, &MainWindow::switchToQuadView);
-    fileMenu->addAction(cadQuadView);
-
-    cadExit = new QAction("Exit", this);
-    QObject::connect(cadExit, &QAction::triggered, this, &MainWindow::close);
-    fileMenu->addAction(cadExit);
-
-    viewMenu = menuBar()->addMenu("View");
-
-    menuBar()->addSeparator();
-
-    helpMenu = menuBar()->addMenu("Help");
+    buildMenus();
 
     setAnimated(false);
     show();
@@ -73,23 +48,36 @@ void MainWindow::switchToQuadView() {}
 
 void MainWindow::switchToSingleView() {}
 
-bool MainWindow::close()
+void MainWindow::buildMenus()
 {
-    emit closing();
-    return QMainWindow::close();
+    fileMenu = menuBar()->addMenu("File");
+    cadOpen = new QAction("Open", this);
+    connect(cadOpen, &QAction::triggered, this, &MainWindow::openFile);
+    fileMenu->addAction(cadOpen);
+
+    cadSaveSettings = new QAction("Save Settings", this);
+    connect(cadSaveSettings, &QAction::triggered, this, &MainWindow::writeSettings);
+    fileMenu->addAction(cadSaveSettings);
+
+    cadSingleView = new QAction("Single View", this);
+    connect(cadSingleView, &QAction::triggered, this, &MainWindow::switchToSingleView);
+    fileMenu->addAction(cadSingleView);
+
+    cadQuadView = new QAction("Quad View", this);
+    connect(cadQuadView, &QAction::triggered, this, &MainWindow::switchToQuadView);
+    fileMenu->addAction(cadQuadView);
+
+    cadExit = new QAction("Exit", this);
+    QObject::connect(cadExit, &QAction::triggered, this, &MainWindow::closing);
+    QObject::connect(cadExit, &QAction::triggered, this, &MainWindow::close);
+    fileMenu->addAction(cadExit);
+
+    viewMenu = menuBar()->addMenu("View");
+
+    menuBar()->addSeparator();
+
+    helpMenu = menuBar()->addMenu("Help");
+
 }
 
-void MainWindow::FloatableDock::toWindow(bool floating)
-{
-    if (floating) {
-        setWindowFlags(
-            Qt::CustomizeWindowHint |
-            Qt::Window |
-            Qt::WindowMinimizeButtonHint |
-            Qt::WindowMaximizeButtonHint |
-            Qt::WindowCloseButtonHint
-            );
-        show();
-    }}
-
-} // namespace ged
+} // namespace qtcad

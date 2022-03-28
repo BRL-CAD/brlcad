@@ -10,7 +10,8 @@
 
 #include "brlcad_version.h"
 
-namespace qged {
+namespace qtcad {
+
 
 Application::Application(int argc, char **argv, int pConsoleMode, int pSwrastMode, int pQuadMode)
     : QApplication(argc, argv)
@@ -51,4 +52,4 @@ void Application::mainWindowClosing()
     emit closing();
 }
 
-} // namespace qged
+} // namespace qtcad
