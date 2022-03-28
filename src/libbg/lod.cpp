@@ -258,6 +258,10 @@ class POPState {
 	unsigned long long hash;
 
     private:
+
+	void edge_process();
+	void tri_process();
+
 	// Clamping of points to various detail levels
 	int to_level(int val, int level);
 
@@ -310,6 +314,226 @@ class POPState {
 	int *faces_array = NULL;
 };
 
+void
+POPState::edge_process()
+{
+    // Build the set of unique edges for wireframe optimization
+    std::unordered_set<uedge_t, uedge_t::hash> eset;
+    for (int i = 0; i < faces_cnt; i++) {
+	int v1 = faces_array[3*i+0];
+	int v2 = faces_array[3*i+1];
+	int v3 = faces_array[3*i+2];
+	uedge_t e1(v1, v2);
+	uedge_t e2(v2, v3);
+	uedge_t e3(v3, v1);
+	eset.insert(e1);
+	eset.insert(e2);
+	eset.insert(e3);
+    }
+
+    // Make a vector of the unique edges so we can reference by index
+    std::unordered_set<uedge_t, uedge_t::hash>::iterator e_it;
+    for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
+	edges.push_back(*e_it);
+    }
+    // Having ensured edge uniqueness and assigned indices, we are now done
+    // with the unordered set - let the program know it can have the memory
+    eset = std::unordered_set<uedge_t, uedge_t::hash>();
+
+    // Until we prove otherwise, all edges are assumed to appear only at the
+    // last level (and consequently, their vertices are only needed then).  Set
+    // the level accordingly.
+    vert_edge_minlevel.reserve(vert_cnt);
+    for (int i = 0; i < vert_cnt; i++) {
+	vert_edge_minlevel.push_back(POP_MAXLEVEL - 1);
+    }
+
+    // Reserve memory for level containers
+    level_edges.reserve(POP_MAXLEVEL);
+    for (int i = 0; i < POP_MAXLEVEL; i++) {
+	level_edges.push_back(std::vector<int>(0));
+    }
+
+    // Walk the edges and perform the LoD characterization
+    for (size_t i = 0; i < edges.size(); i++) {
+	rec edge[2];
+	// Transform edge vertices
+	for (int j = 0; j < 2; j++) {
+	    edge[j].x = floor((verts_array[faces_array[3*i+j]][X] - minx) / (maxx - minx) * USHRT_MAX);
+	    edge[j].y = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
+	    edge[j].z = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
+	}
+
+	// Find the pop up level for this edgeangle (i.e., when it will first
+	// appear as we step up the zoom levels.)
+	int level = POP_MAXLEVEL - 1;
+	for (int j = 0; j < POP_MAXLEVEL; j++) {
+	    if (!edge_degenerate(edge[0], edge[1], j)) {
+		level = j;
+		break;
+	    }
+	}
+	// Add this edge to its "pop" level
+	level_edges[level].push_back(i);
+
+	// Let the vertices know they will be needed at this level, if another
+	// edge doesn't already need them sooner
+	for (int j = 0; j < 3; j++) {
+	    if (vert_edge_minlevel[faces_array[3*i+j]] > level) {
+		vert_edge_minlevel[faces_array[3*i+j]] = level;
+	    }
+	}
+    }
+
+    // The edge vertices now know when they will first need to appear.  Build level
+    // sets of vertices
+    for (size_t i = 0; i < vert_edge_minlevel.size(); i++) {
+	level_edge_verts[vert_edge_minlevel[i]].insert(i);
+    }
+
+    // Having sorted the vertices into level sets, we may now define a new global
+    // vertex ordering that respects the needs of the levels.
+    edge_ind_map.reserve(vert_cnt);
+    for (int i = 0; i < vert_cnt; i++) {
+	edge_ind_map.push_back(i);
+    }
+    int vind = 0;
+    std::map<int, std::set<int>>::iterator l_it;
+    std::set<int>::iterator s_it;
+    for (l_it = level_edge_verts.begin(); l_it != level_edge_verts.end(); l_it++) {
+	for (s_it = l_it->second.begin(); s_it != l_it->second.end(); s_it++) {
+	    edge_ind_map[*s_it] = vind;
+	    vind++;
+	}
+    }
+
+    // Beyond a certain depth, there is little benefit to the POP process.  If
+    // we check the count of level_edges, we will find a level at which the
+    // majority of the edges are active.  For the level above that, we will
+    // simply draw all edges.  TODO - it may be worth using the RTree scheme
+    // for wireframes as well - we'll have to see first if it helps with tris...
+    size_t edgesum = 0;
+    size_t fcnt2 = (size_t)((fastf_t)faces_cnt/2.0);
+    for (size_t i = 0; i < level_edges.size(); i++) {
+	edgesum += level_edges[i].size();
+	if (edgesum > fcnt2) {
+	    edge_threshold = i;
+	    break;
+	}
+    }
+    //bu_log("Edge threshold level: %zd\n", edge_threshold);
+}
+
+void
+POPState::tri_process()
+{
+    // Until we prove otherwise, all edges are assumed to appear only at the
+    // last level (and consequently, their vertices are only needed then).  Set
+    // the level accordingly.
+    vert_tri_minlevel.reserve(vert_cnt);
+    for (int i = 0; i < vert_cnt; i++) {
+	vert_tri_minlevel.push_back(POP_MAXLEVEL - 1);
+    }
+
+    // Reserve memory for level containers
+    level_tris.reserve(POP_MAXLEVEL);
+    for (int i = 0; i < POP_MAXLEVEL; i++) {
+	level_tris.push_back(std::vector<int>(0));
+    }
+
+    // Walk the triangles and perform the LoD characterization
+    for (int i = 0; i < faces_cnt; i++) {
+	rec triangle[3];
+	// Transform triangle vertices
+	for (int j = 0; j < 3; j++) {
+	    triangle[j].x = floor((verts_array[faces_array[3*i+j]][X] - minx) / (maxx - minx) * USHRT_MAX);
+	    triangle[j].y = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
+	    triangle[j].z = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
+	}
+
+	// Find the pop up level for this triangle (i.e., when it will first
+	// appear as we step up the zoom levels.)
+	int level = POP_MAXLEVEL - 1;
+	for (int j = 0; j < POP_MAXLEVEL; j++) {
+	    if (!tri_degenerate(triangle[0], triangle[1], triangle[2], j)) {
+		level = j;
+		break;
+	    }
+	}
+	// Add this triangle to its "pop" level
+	level_tris[level].push_back(i);
+
+	// Let the vertices know they will be needed at this level, if another
+	// triangle doesn't already need them sooner
+	for (int j = 0; j < 3; j++) {
+	    if (vert_tri_minlevel[faces_array[3*i+j]] > level) {
+		vert_tri_minlevel[faces_array[3*i+j]] = level;
+	    }
+	}
+    }
+
+    // The vertices now know when they will first need to appear.  Build level
+    // sets of vertices
+    for (size_t i = 0; i < vert_tri_minlevel.size(); i++) {
+	level_tri_verts[vert_tri_minlevel[i]].insert(i);
+    }
+
+    // Having sorted the vertices into level sets, we may now define a new global
+    // vertex ordering that respects the needs of the levels.
+    tri_ind_map.reserve(vert_cnt);
+    for (int i = 0; i < vert_cnt; i++) {
+	tri_ind_map.push_back(i);
+    }
+    int vind = 0;
+    std::map<int, std::set<int>>::iterator l_it;
+    std::set<int>::iterator s_it;
+    for (l_it = level_tri_verts.begin(); l_it != level_tri_verts.end(); l_it++) {
+	for (s_it = l_it->second.begin(); s_it != l_it->second.end(); s_it++) {
+	    tri_ind_map[*s_it] = vind;
+	    vind++;
+	}
+    }
+
+    // Beyond a certain depth, there is little benefit to the POP process.  If
+    // we check the count of level_tris, we will find a level at which the
+    // majority of the triangles are active.
+    size_t trisum = 0;
+    size_t faces_array_cnt2 = (size_t)((fastf_t)faces_cnt/2.0);
+    for (size_t i = 0; i < level_tris.size(); i++) {
+	trisum += level_tris[i].size();
+	if (trisum > faces_array_cnt2) {
+	    tri_threshold = i;
+	    break;
+	}
+    }
+    //bu_log("Triangle threshold level: %zd\n", tri_threshold);
+
+    // At the point when most tris are active, we do better recognizing what
+    // parts of the mesh are in the view and only drawing those, rather than
+    // doing the LoD point snapping.  Bin the triangles into discrete volumes
+    // (non-uniquely - the main concern here is to make sure we draw all the
+    // triangles we need to draw in a given area.) Once we shift to this mode
+    // we have to load all the vertices and faces_array into memory, but by the time
+    // we make that switch we would have had comparable data in memory from the
+    // LoD info anyway.
+	for (int i = 0; i < faces_cnt; i++) {
+	    short tri[3][3];
+	    // TODO: This is a tradeoff - smaller means fewer boxes but more tris
+	    // per box.  Will have to see what a practical value is with real data.
+	    int factor = 32;
+	    // Transform tri vertices
+	    for (int j = 0; j < 3; j++) {
+		tri[j][0] = floor((verts_array[faces_array[3*i+j]][X] - minx) / (maxx - minx) * factor);
+		tri[j][1] = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * factor);
+		tri[j][2] = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * factor);
+	    }
+	    //bu_log("tri: %d %d %d -> %d %d %d -> %d %d %d\n", V3ARGS(tri[0]), V3ARGS(tri[1]), V3ARGS(tri[2]));
+	    boxes[tri[0][0]][tri[0][1]][tri[0][2]].push_back(i);
+	    boxes[tri[1][0]][tri[1][1]][tri[1][2]].push_back(i);
+	    boxes[tri[2][0]][tri[2][1]][tri[2][2]].push_back(i);
+	}
+}
+
 POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
 {
     // Hash the data to generate a key
@@ -350,47 +574,6 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     faces_cnt = fcnt;
     faces_array = faces;
 
-    // Build the set of unique edges for wireframe optimization
-    std::unordered_set<uedge_t, uedge_t::hash> eset;
-    for (int i = 0; i < fcnt; i++) {
-	int v1 = faces[3*i+0];
-	int v2 = faces[3*i+1];
-	int v3 = faces[3*i+2];
-	uedge_t e1(v1, v2);
-	uedge_t e2(v2, v3);
-	uedge_t e3(v3, v1);
-	eset.insert(e1);
-	eset.insert(e2);
-	eset.insert(e3);
-    }
-
-    // Make a vector of the unique edges so we can reference by index
-    std::unordered_set<uedge_t, uedge_t::hash>::iterator e_it;
-    for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
-	edges.push_back(*e_it);
-    }
-    // Having ensured edge uniqueness and assigned indices, we are now done
-    // with the unordered set - let the program know it can have the memory
-    eset = std::unordered_set<uedge_t, uedge_t::hash>();
-
-    // Until we prove otherwise, all triangles and edges are assumed to appear
-    // only at the last level (and consequently, their vertices are only needed
-    // then).  Set the level accordingly.
-    vert_edge_minlevel.reserve(vcnt);
-    vert_tri_minlevel.reserve(vcnt);
-    for (int i = 0; i < vcnt; i++) {
-	vert_edge_minlevel.push_back(POP_MAXLEVEL - 1);
-	vert_tri_minlevel.push_back(POP_MAXLEVEL - 1);
-    }
-
-    // Reserve memory for level containers
-    level_edges.reserve(POP_MAXLEVEL);
-    level_tris.reserve(POP_MAXLEVEL);
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	level_edges.push_back(std::vector<int>(0));
-	level_tris.push_back(std::vector<int>(0));
-    }
-
     // Find our min and max values, initialize levels
     for (int i = 0; i < vcnt; i++) {
 	minx = (v[i][X] < minx) ? v[i][X] : minx;
@@ -410,177 +593,14 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     maxy = maxy+fabs(MBUMP*maxy);
     maxz = maxz+fabs(MBUMP*maxz);
 
-    // Walk the edges and perform the LoD characterization
-    for (size_t i = 0; i < edges.size(); i++) {
-	rec edge[2];
-	// Transform edge vertices
-	for (int j = 0; j < 2; j++) {
-	    edge[j].x = floor((v[faces[3*i+j]][X] - minx) / (maxx - minx) * USHRT_MAX);
-	    edge[j].y = floor((v[faces[3*i+j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
-	    edge[j].z = floor((v[faces[3*i+j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
-	}
 
-	// Find the pop up level for this edgeangle (i.e., when it will first
-	// appear as we step up the zoom levels.)
-	int level = POP_MAXLEVEL - 1;
-	for (int j = 0; j < POP_MAXLEVEL; j++) {
-	    if (!edge_degenerate(edge[0], edge[1], j)) {
-		level = j;
-		break;
-	    }
-	}
-	// Add this edge to its "pop" level
-	level_edges[level].push_back(i);
-
-	// Let the vertices know they will be needed at this level, if another
-	// edge doesn't already need them sooner
-	for (int j = 0; j < 3; j++) {
-	    if (vert_edge_minlevel[faces[3*i+j]] > level) {
-		vert_edge_minlevel[faces[3*i+j]] = level;
-	    }
-	}
-    }
-
-    {
-	// The edge vertices now know when they will first need to appear.  Build level
-	// sets of vertices
-	for (size_t i = 0; i < vert_edge_minlevel.size(); i++) {
-	    level_edge_verts[vert_edge_minlevel[i]].insert(i);
-	}
-
-	// Having sorted the vertices into level sets, we may now define a new global
-	// vertex ordering that respects the needs of the levels.
-	edge_ind_map.reserve(vcnt);
-	for (int i = 0; i < vcnt; i++) {
-	    edge_ind_map.push_back(i);
-	}
-	int vind = 0;
-	std::map<int, std::set<int>>::iterator l_it;
-	std::set<int>::iterator s_it;
-	for (l_it = level_edge_verts.begin(); l_it != level_edge_verts.end(); l_it++) {
-	    for (s_it = l_it->second.begin(); s_it != l_it->second.end(); s_it++) {
-		edge_ind_map[*s_it] = vind;
-		vind++;
-	    }
-	}
-
-	// Beyond a certain depth, there is little benefit to the POP process.  If
-	// we check the count of level_edges, we will find a level at which the
-	// majority of the edges are active.  For the level above that, we will
-	// simply draw all edges.  TODO - it may be worth using the RTree scheme
-	// for wireframes as well - we'll have to see first if it helps with tris...
-	size_t edgesum = 0;
-	size_t fcnt2 = (size_t)((fastf_t)fcnt/2.0);
-	for (size_t i = 0; i < level_edges.size(); i++) {
-	    edgesum += level_edges[i].size();
-	    if (edgesum > fcnt2) {
-		edge_threshold = i;
-		break;
-	    }
-	}
-	//bu_log("Edge threshold level: %zd\n", edge_threshold);
-    }
+    // Characterize triangle edges (wireframe drawing)
+    edge_process();
 
 
+    // Characterize triangle faces (solid drawing)
+    tri_process();
 
-
-
-
-    // Walk the triangles and perform the LoD characterization
-    for (int i = 0; i < fcnt; i++) {
-	rec triangle[3];
-	// Transform triangle vertices
-	for (int j = 0; j < 3; j++) {
-	    triangle[j].x = floor((v[faces[3*i+j]][X] - minx) / (maxx - minx) * USHRT_MAX);
-	    triangle[j].y = floor((v[faces[3*i+j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
-	    triangle[j].z = floor((v[faces[3*i+j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
-	}
-
-	// Find the pop up level for this triangle (i.e., when it will first
-	// appear as we step up the zoom levels.)
-	int level = POP_MAXLEVEL - 1;
-	for (int j = 0; j < POP_MAXLEVEL; j++) {
-	    if (!tri_degenerate(triangle[0], triangle[1], triangle[2], j)) {
-		level = j;
-		break;
-	    }
-	}
-	// Add this triangle to its "pop" level
-	level_tris[level].push_back(i);
-
-	// Let the vertices know they will be needed at this level, if another
-	// triangle doesn't already need them sooner
-	for (int j = 0; j < 3; j++) {
-	    if (vert_tri_minlevel[faces[3*i+j]] > level) {
-		vert_tri_minlevel[faces[3*i+j]] = level;
-	    }
-	}
-    }
-
-    {
-	// The vertices now know when they will first need to appear.  Build level
-	// sets of vertices
-	for (size_t i = 0; i < vert_tri_minlevel.size(); i++) {
-	    level_tri_verts[vert_tri_minlevel[i]].insert(i);
-	}
-
-	// Having sorted the vertices into level sets, we may now define a new global
-	// vertex ordering that respects the needs of the levels.
-	tri_ind_map.reserve(vcnt);
-	for (int i = 0; i < vcnt; i++) {
-	    tri_ind_map.push_back(i);
-	}
-	int vind = 0;
-	std::map<int, std::set<int>>::iterator l_it;
-	std::set<int>::iterator s_it;
-	for (l_it = level_tri_verts.begin(); l_it != level_tri_verts.end(); l_it++) {
-	    for (s_it = l_it->second.begin(); s_it != l_it->second.end(); s_it++) {
-		tri_ind_map[*s_it] = vind;
-		vind++;
-	    }
-	}
-
-	// Beyond a certain depth, there is little benefit to the POP process.  If
-	// we check the count of level_tris, we will find a level at which the
-	// majority of the triangles are active.
-	size_t trisum = 0;
-	size_t fcnt2 = (size_t)((fastf_t)fcnt/2.0);
-	for (size_t i = 0; i < level_tris.size(); i++) {
-	    trisum += level_tris[i].size();
-	    if (trisum > fcnt2) {
-		tri_threshold = i;
-		break;
-	    }
-	}
-	//bu_log("Triangle threshold level: %zd\n", tri_threshold);
-    }
-
-    // At the point when most tris are active, we do better recognizing what
-    // parts of the mesh are in the view and only drawing those, rather than
-    // doing the LoD point snapping.  Bin the triangles into discrete volumes
-    // (non-uniquely - the main concern here is to make sure we draw all the
-    // triangles we need to draw in a given area.) Once we shift to this mode
-    // we have to load all the vertices and faces into memory, but by the time
-    // we make that switch we would have had comparable data in memory from the
-    // LoD info anyway.
-    {
-	for (int i = 0; i < fcnt; i++) {
-	    short tri[3][3];
-	    // TODO: This is a tradeoff - smaller means fewer boxes but more tris
-	    // per box.  Will have to see what a practical value is with real data.
-	    int factor = 32;
-	    // Transform tri vertices
-	    for (int j = 0; j < 3; j++) {
-		tri[j][0] = floor((v[faces[3*i+j]][X] - minx) / (maxx - minx) * factor);
-		tri[j][1] = floor((v[faces[3*i+j]][Y] - miny) / (maxy - miny) * factor);
-		tri[j][2] = floor((v[faces[3*i+j]][Z] - minz) / (maxz - minz) * factor);
-	    }
-	    //bu_log("tri: %d %d %d -> %d %d %d -> %d %d %d\n", V3ARGS(tri[0]), V3ARGS(tri[1]), V3ARGS(tri[2]));
-	    boxes[tri[0][0]][tri[0][1]][tri[0][2]].push_back(i);
-	    boxes[tri[1][0]][tri[1][1]][tri[1][2]].push_back(i);
-	    boxes[tri[2][0]][tri[2][1]][tri[2][2]].push_back(i);
-	}
-    }
 
     // We're now ready to write out the data
     is_valid = true;
