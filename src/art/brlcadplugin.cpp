@@ -132,6 +132,8 @@
 namespace asf = foundation;
 namespace asr = renderer;
 
+thread_local struct BRLCAD_to_ASR brlcad_ray_info;
+
 FILE* output = fopen("print_statements.txt", "wb");
 
 /* brlcad raytrace hit callback */
@@ -314,17 +316,19 @@ BrlcadObject::intersect(
 	const asr::ShadingRay& ray,
 	IntersectionResult& result) const
 {
+    struct application app;
+    app = *ap; /* struct copy */
     /* brlcad raytracing */
     int cpu = get_id();
-    ap->a_resource = &resources[cpu];
+    app.a_resource = &resources[cpu];
 
     const asf::Vector3d dir = asf::normalize(ray.m_dir);
-    VSET(ap->a_ray.r_dir, dir[0], dir[1], dir[2]);
-    VSET(ap->a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
+    VSET(app.a_ray.r_dir, dir[0], dir[1], dir[2]);
+    VSET(app.a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
 
-    ap->a_uptr = (void*)this->name->c_str();
+    app.a_uptr = (void*)this->name->c_str();
 
-    if (rt_shootray(ap) == 0)
+    if (rt_shootray(&app) == 0)
     {
 	result.m_hit = false;
 	return;
@@ -359,15 +363,17 @@ BrlcadObject::intersect(
 bool
 BrlcadObject::intersect(const asr::ShadingRay& ray) const
 {
+    struct application app;
+    app = *ap; /* struct copy */
     /* brlcad raytracing */
     int cpu = get_id();
-    ap->a_resource = &resources[cpu];
+    app.a_resource = &resources[cpu];
 
     const asf::Vector3d dir = asf::normalize(ray.m_dir);
-    VSET(ap->a_ray.r_dir, dir[0], dir[1], dir[2]);
-    VSET(ap->a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
+    VSET(app.a_ray.r_dir, dir[0], dir[1], dir[2]);
+    VSET(app.a_ray.r_pt, ray.m_org[0], ray.m_org[1], ray.m_org[2]);
 
-    return (rt_shootray(ap) == 1);
+    return (rt_shootray(&app) == 1);
 }
 
 
@@ -386,58 +392,12 @@ BrlcadObject::refine_and_offset(
 }
 
 
+static std::atomic<int> counter;
+
 int
 BrlcadObject::get_id()
 {
-    //original
-    /*
-    static std::unordered_map<std::thread::id, int> ids = { { std::this_thread::get_id(), 0 } };
-    static int next = 0;
-    static std::mutex m;
-    auto thread = std::this_thread::get_id();
-    auto id = ids[thread];
-    m.lock();
-
-    if (id == 0)
-    {
-	id = ++next;
-	ids[thread] = id;
-    }
-
-    m.unlock();*/
-
-    //round robin
-    /*
-    static int id = 1;
-
-    static std::mutex m;
-
-    m.lock();
-
-    if (id == 0) id = 1;
-    else id = 0;
-
-
-    m.unlock();*/
-
-    //fix
-    static std::unordered_map<std::thread::id, int> ids;
-    static int next = 0;
-    static std::mutex m;
-
-    auto thread = std::this_thread::get_id();
-    std::unordered_map<std::thread::id, int>::const_iterator iterator = ids.find(thread);
-
-    if (iterator == ids.end())
-    {
-	m.lock();
-	std::pair<std::thread::id, int> pair(thread, next++);
-	ids.insert(pair);
-	m.unlock();
-    }
-
-    auto id = ids[thread];
-
+    thread_local int id = counter++;
     return id;
 }
 
