@@ -88,6 +88,102 @@ bg_sat_abb_line(point_t aabb_center, vect_t aabb_extent, point_t origin, vect_t 
     return 1;
 }
 
+static void
+GetProjectionOBB(fastf_t *imin, fastf_t *imax,
+	vect_t axis, point_t center, vect_t extent, vect_t A0, vect_t A1, vect_t A2)
+{
+    fastf_t origin = VDOT(axis, center);
+    fastf_t maximumExtent =
+	fabs(extent[0] * VDOT(axis, A0)) +
+	fabs(extent[1] * VDOT(axis, A1)) +
+	fabs(extent[2] * VDOT(axis, A2));
+
+    (*imin) = origin - maximumExtent;
+    (*imax) = origin + maximumExtent;
+}
+
+static void
+GetProjectionTri(fastf_t *imin, fastf_t *imax, vect_t axis, point_t v1, point_t v2, point_t v3)
+{
+    fastf_t dot[3];
+    dot[0] = VDOT(axis, v1);
+    dot[1] = VDOT(axis, v2);
+    dot[2] = VDOT(axis, v3);
+
+    (*imin) = dot[0];
+    (*imax) = (*imin);
+
+    if (dot[1] < (*imin)) {
+	(*imin) = dot[1];
+    } else if (dot[1] > (*imax)) {
+	(*imax) = dot[1];
+    }
+
+    if (dot[2] < (*imin)) {
+	(*imin) = dot[2];
+    } else if (dot[2] > (*imax)) {
+	(*imax) = dot[2];
+    }
+}
+
+/* Check OBB against a triangle.
+ *
+ * See GTE/Mathematics/IntrTriangle3OrientedBox3.h.h
+ */
+int
+bg_sat_tri_obb(
+	point_t v1, point_t v2, point_t v3,
+	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
+	)
+{
+    fastf_t min0 = 0.0, max0 = 0.0, min1 = 0.0, max1 = 0.0;
+    vect_t D, edge[3];
+    vect_t extent, A[3];
+    VSET(extent, MAGNITUDE(obb_extent1), MAGNITUDE(obb_extent2), MAGNITUDE(obb_extent3));
+    VMOVE(A[0], obb_extent1);
+    VUNITIZE(A[0]);
+    VMOVE(A[1], obb_extent2);
+    VUNITIZE(A[1]);
+    VMOVE(A[2], obb_extent3);
+    VUNITIZE(A[2]);
+
+    // Test direction of triangle normal.
+    VSUB2(edge[0], v2, v1);
+    VSUB2(edge[1], v3, v1);
+    VCROSS(D, edge[0], edge[1]);
+    min0 = VDOT(D, v1);
+    max0 = min0;
+
+    GetProjectionOBB(&min1, &max1, D, obb_center, extent, A[0], A[1], A[2]);
+    if (max1 < min0 || max0 < min1)
+	return 0;
+
+    // Test direction of box faces.
+    for (int32_t i = 0; i < 3; ++i) {
+	VMOVE(D, A[i]);
+	GetProjectionTri(&min0, &max0, D, v1, v2, v3);
+	fastf_t DdC = VDOT(D, obb_center);
+	min1 = DdC - extent[i];
+	max1 = DdC + extent[i];
+	if (max1 < min0 || max0 < min1)
+	    return 0;
+    }
+
+    // Test direction of triangle-box edge cross products.
+    VSUB2(edge[2], edge[1], edge[0]);
+    for (int32_t i0 = 0; i0 < 3; ++i0) {
+	for (int32_t i1 = 0; i1 < 3; ++i1) {
+	    VCROSS(D, edge[i0], A[i1]);
+	    GetProjectionTri(&min0, &max0, D, v1, v2, v3);
+	    GetProjectionOBB(&min1, &max1, D, obb_center, extent, A[0], A[1], A[2]);
+	    if (max1 < min0 || max0 < min1)
+		return 0;
+	}
+    }
+
+    return 1;
+}
+
 /* Check OBB against an ABB.
  *
  * See GTE/Mathematics/IntrAlignedBox3OrientedBox3.h

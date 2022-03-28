@@ -43,8 +43,7 @@
 /**
  * @brief
  *
- * Implementation of Separating Axis Theorem test for collision between
- * oriented bounding boxes
+ * Implementation of Separating Axis Theorem intersection tests
  *
  */
 
@@ -64,6 +63,17 @@ __BEGIN_DECLS
  */
 BG_EXPORT extern int
 bg_sat_abb_line(point_t aabb_center, vect_t aabb_extent, point_t origin, vect_t ldir);
+
+/**
+ * Test for an intersection between a triangle and an Oriented Bounding Box (OBB).
+ *
+ * Returns 1 if they intersect, 0 otherwise.
+ */
+BG_EXPORT extern int
+bg_sat_tri_obb(
+	point_t v1, point_t v2, point_t v3,
+	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
+	);
 
 /**
  * Test for an intersection between an Axis-Aligned Bounding Box (AABB) and an
