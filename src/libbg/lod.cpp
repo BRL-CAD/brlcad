@@ -94,6 +94,7 @@
 #include "bu/time.h"
 #include "bv/plot3.h"
 #include "bg/lod.h"
+#include "bg/sat.h"
 #include "bg/trimesh.h"
 
 #define POP_MAXLEVEL 16
@@ -509,7 +510,7 @@ POPState::edge_process()
     // data in memory from the LoD info anyway.
     for (size_t i = 0; i < edges.size(); i++) {
 	short edge[2][3];
-	// TODO: This is a tradeoff - smaller means fewer boxes but more tris
+	// This is a tradeoff - smaller means fewer boxes but more tris
 	// per box.  Will have to see what a practical value is with real data.
 	int factor = 32;
 	// Transform edge vertices
@@ -518,13 +519,59 @@ POPState::edge_process()
 	    edge[j][1] = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * factor);
 	    edge[j][2] = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * factor);
 	}
-	// TODO - this is inadequate - an edge long compared to the box
-	// sizes might need to be drawn even if none of the vertices are on
-	// the screen.  Need to intersect the triangle with the set of boxes
-	// within the tri xyz range.
+
+	// The end points are trivially active.
 	edge_boxes[edge[0][0]][edge[0][1]][edge[0][2]].push_back(i);
-	if (edge[0][0] != edge[1][0] || edge[0][1] != edge[1][1] || edge[0][2] != edge[1][2])
+
+	// If the edge is fully inside the first box, we're done.  If not,
+	// we have to figure out which other boxes it intersects.  The other
+	// end point box is trivially active, but there may also be intermediate
+	// boxes which intersect the line.
+	if (edge[0][0] != edge[1][0] || edge[0][1] != edge[1][1] || edge[0][2] != edge[1][2]) {
+
+	    // Other end point is trivially active
 	    edge_boxes[edge[1][0]][edge[1][1]][edge[1][2]].push_back(i);
+
+	    // Will be doing ray box test
+	    point_t lorigin, bcenter;
+	    vect_t dir, bextent;
+	    VSET(lorigin, edge[0][0], edge[0][1], edge[0][2]);
+	    VSET(dir, edge[1][0] - edge[0][0], edge[1][1] - edge[0][1], edge[1][2] - edge[0][2]);
+	    VSET(bextent, 0.51, 0.51, 0.51);
+	  
+	    // Iterate over boxes other than the end points
+	    int start[3], end[3];
+	    start[0] = edge[0][0] > edge[1][0] ? edge[1][0] : edge[0][0];
+	    start[1] = edge[0][1] > edge[1][1] ? edge[1][1] : edge[0][1];
+	    start[2] = edge[0][2] > edge[1][2] ? edge[1][2] : edge[0][2];
+	    end[0] = edge[0][0] < edge[1][0] ? edge[1][0] : edge[0][0];
+	    end[1] = edge[0][1] < edge[1][1] ? edge[1][1] : edge[0][1];
+	    end[2] = edge[0][2] < edge[1][2] ? edge[1][2] : edge[0][2];
+	    for (int e = start[0]; e <= end[0]; e++) {
+		for (int j = start[1]; j <= end[1]; j++) {
+		    for (int k = start[2]; k <= end[2]; k++) {
+			bool endpt = false;
+			for (int l = 0; l < 2; l++) {
+			    if (edge[l][0] == e && edge[l][1] == j && edge[l][2] == k) {
+				endpt = true;
+				break;
+			    }
+			}
+			if (endpt)
+			    continue;
+			VSET(bcenter, (fastf_t)e+0.5, (fastf_t)j+0.5, (fastf_t)k+0.5);
+			if (bg_sat_abb_line(bcenter, bextent, lorigin, dir)) {
+			    edge_boxes[e][j][k].push_back(i);
+			    //bu_log("line hit: %d %d %d\n", e, j ,k);
+			//} else {
+			    //bu_log("MISS: %d %d %d\n", e, j ,k);
+			}
+		    }
+		}
+	    }
+	    //bu_log("edge: %d,%d,%d -> %d,%d,%d\n", V3ARGS(edge[0]), V3ARGS(edge[1]));
+	    //bu_log("edge range: %d,%d,%d -> %d,%d,%d\n", V3ARGS(start), V3ARGS(end));
+	}
     }
 }
 

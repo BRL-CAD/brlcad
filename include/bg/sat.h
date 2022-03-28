@@ -58,6 +58,14 @@
 __BEGIN_DECLS
 
 /**
+ * Test for an intersection between a line and an Axis-Aligned Bounding Box (AABB).
+ *
+ * Returns 1 if they intersect, 0 otherwise.
+ */
+BG_EXPORT extern int
+bg_sat_abb_line(point_t aabb_center, vect_t aabb_extent, point_t origin, vect_t ldir);
+
+/**
  * Test for an intersection between an Axis-Aligned Bounding Box (AABB) and an
  * Oriented Bounding Box (OBB). The latter is defined by a center point and
  * three perpendicular vectors from the center to the centers of the various

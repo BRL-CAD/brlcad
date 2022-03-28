@@ -57,6 +57,37 @@
 #include "vmath.h"
 #include "bg/sat.h"
 
+/* Check line against ABB
+ *
+ * See GTE/Mathematics/IntrLine3AlignedBox3.h
+ */
+int
+bg_sat_abb_line(point_t aabb_center, vect_t aabb_extent, point_t origin, vect_t ldir)
+{
+    vect_t lineOrigin, dir;
+
+    // Transform the line to the aligned-box coordinate system.
+    VSUB2(lineOrigin, origin, aabb_center);
+
+    VMOVE(dir, ldir);
+    VUNITIZE(dir);
+
+    vect_t WxD, absWdU;
+    VCROSS(WxD, dir, lineOrigin);
+    VSET(absWdU, fabs(WxD[0]), fabs(WxD[1]), fabs(WxD[2]));
+
+    if (fabs(WxD[0]) > aabb_extent[1] * absWdU[2] + aabb_extent[2] * absWdU[1])
+	return 0;
+
+    if (fabs(WxD[1]) > aabb_extent[0] * absWdU[2] + aabb_extent[2] * absWdU[0])
+	return 0;
+
+    if (fabs(WxD[2]) > aabb_extent[0] * absWdU[1] + aabb_extent[1] * absWdU[0])
+	return 0;
+
+    return 1;
+}
+
 /* Check OBB against an ABB.
  *
  * See GTE/Mathematics/IntrAlignedBox3OrientedBox3.h
