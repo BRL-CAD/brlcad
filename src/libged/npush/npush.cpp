@@ -31,6 +31,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <iterator>
 
 #include "bu/cmd.h"
 #include "bu/opt.h"
