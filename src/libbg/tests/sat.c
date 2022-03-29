@@ -278,7 +278,36 @@ tri_aabb_run_tests()
 void
 tri_obb_run_tests()
 {
+    point_t v[3];
+    vect_t c, AE[3], E[3];
 
+
+    VSET(c, 0, 0, 0);
+    VSET(AE[0], 2, 0, 0);
+    VSET(AE[1], 0, 2, 0);
+    VSET(AE[2], 0, 0, 2);
+
+    mat_t rmat;
+    bn_mat_angles(rmat, 20, 50, 30);
+    MAT3X3VEC(E[0], rmat, AE[0]);
+    MAT3X3VEC(E[1], rmat, AE[1]);
+    MAT3X3VEC(E[2], rmat, AE[2]);
+
+    obb_arb(c, E);
+
+    VSET(v[0], 0, 0, 0);
+    VSET(v[1], 1, 0, 0);
+    VSET(v[2], 0, 0, 1);
+
+
+    tri_obb_test(ISECT, v[0], v[1], v[2], c, E[0], E[1], E[2]);
+
+
+    VSET(v[0], 5, 0, 0);
+    VSET(v[1], 8, 0, 0);
+    VSET(v[2], 0, 0, 10);
+
+    tri_obb_test(NO_ISECT, v[0], v[1], v[2], c, E[0], E[1], E[2]);
 }
 
 void
@@ -540,6 +569,8 @@ main(int argc, char **argv)
 
     line_abb_run_tests();
     line_obb_run_tests();
+
+    tri_obb_run_tests();
     aabb_obb_run_tests();
     obb_obb_run_tests();
 
