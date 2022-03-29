@@ -25,13 +25,6 @@
 #include "bu.h"
 #include "bg.h"
 
-#define EXPECT_NO_ISECT(_x, _y, _z) {\
-    VSET(obb_c, _x, _y, _z);\
-    if (bg_sat_abb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3)) {\
-	bu_log("Unexpected intersection at center pt: %f %f %f\n", V3ARGS(obb_c)); \
-    } \
-}
-
 int
 line_abb_test(int expected, point_t origin, vect_t ldir, point_t aabb_c, vect_t aabb_e)
 {
@@ -43,7 +36,7 @@ line_abb_test(int expected, point_t origin, vect_t ldir, point_t aabb_c, vect_t 
 	}
 	bu_log("LINE - origin: %f %f %f  dir: %f %f %f\n", V3ARGS(origin), V3ARGS(ldir));
 	bu_log("AABB - c: %f %f %f  ext: %f %f %f\n", V3ARGS(aabb_c), V3ARGS(aabb_e));
-	return 1;
+	bu_exit(1, "test failure\n");
     }
     return 0;
 }
@@ -56,7 +49,14 @@ tri_obb_test(
         )
 {
     if (bg_sat_tri_obb(v1, v2, v3, obb_c, obb_e1, obb_e2, obb_e3) != expected) {
-	return 1;
+	if (expected) {
+	    bu_log("Failed to detect intersection:\n");
+	} else {
+	    bu_log("Unexpected intersection:\n");
+	}
+	bu_log("TRI - v1: %f %f %f  v2: %f %f %f v3: %f %f %f\n", V3ARGS(v1), V3ARGS(v2), V3ARGS(v3));
+	bu_log("OBB - c: %f %f %f  ext1: %f %f %f ext2: %f %f %f ext3: %f %f %f\n", V3ARGS(obb_c), V3ARGS(obb_e1), V3ARGS(obb_e2), V3ARGS(obb_e3));
+	bu_exit(1, "test failure\n");
     }
     return 0;
 }
@@ -70,7 +70,14 @@ abb_obb_test(
 {
 
     if (bg_sat_abb_obb(abb_min, abb_max, obb_c, obb_e1, obb_e2, obb_e3) != expected) {
-	return 1;
+	if (expected) {
+	    bu_log("Failed to detect intersection:\n");
+	} else {
+	    bu_log("Unexpected intersection:\n");
+	}
+	bu_log("ABB - min: %f %f %f  max: %f %f %f\n", V3ARGS(abb_min), V3ARGS(abb_max));
+	bu_log("OBB - c: %f %f %f  ext1: %f %f %f ext2: %f %f %f ext3: %f %f %f\n", V3ARGS(obb_c), V3ARGS(obb_e1), V3ARGS(obb_e2), V3ARGS(obb_e3));
+	bu_exit(1, "test failure\n");
     }
     return 0;
 }
@@ -83,10 +90,20 @@ obb_obb_test(
         )
 {
     if (bg_sat_obb_obb(obb1_c, obb1_e1, obb1_e2, obb1_e3, obb2_c, obb2_e1, obb2_e2, obb2_e3) != expected) {
-	return 1;
+	if (expected) {
+	    bu_log("Failed to detect intersection:\n");
+	} else {
+	    bu_log("Unexpected intersection:\n");
+	}
+	bu_log("OBB1 - c: %f %f %f  ext1: %f %f %f ext2: %f %f %f ext3: %f %f %f\n", V3ARGS(obb1_c), V3ARGS(obb1_e1), V3ARGS(obb1_e2), V3ARGS(obb1_e3));
+	bu_log("OBB2 - c: %f %f %f  ext1: %f %f %f ext2: %f %f %f ext3: %f %f %f\n", V3ARGS(obb2_c), V3ARGS(obb2_e1), V3ARGS(obb2_e2), V3ARGS(obb2_e3));
+	bu_exit(1, "test failure\n");
     }
     return 0;
 }
+
+#define NO_ISECT 0
+#define ISECT 1
 
 int
 main(int argc, char **argv)
@@ -110,27 +127,30 @@ main(int argc, char **argv)
     VSET(obb_e3, 0, 0, 2);
 
     VSET(obb_c, 0, 0, 0);
-    if (!bg_sat_abb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3))
+    if (abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3))
 	return -1;
 
     for (int i = -2; i < 3; i++) {
 	for (int j = -2; j < 3; j++) {
 	    for (int k = -3; k < 4; k++) {
 		VSET(obb_c, i, j, k);
-		if (!bg_sat_abb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3)) {
-		    bu_log("Didn't find expected intersection at center pt: %f %f %f\n", V3ARGS(obb_c));
-		    return -1;
-		}
+		abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
 	    }
 	}
     }
 
-    EXPECT_NO_ISECT(-5, 0, 0);
-    EXPECT_NO_ISECT(0, -5, 0);
-    EXPECT_NO_ISECT(0, 0, -5);
-    EXPECT_NO_ISECT(5, 0, 0);
-    EXPECT_NO_ISECT(0, 5, 0);
-    EXPECT_NO_ISECT(0, 0, 5);
+    VSET(obb_c, -5, 0, 0);
+    abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
+    VSET(obb_c, 0, -5, 0);
+    abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
+    VSET(obb_c, 0, 0, -5);
+    abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
+    VSET(obb_c, 5, 0, 0);
+    abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
+    VSET(obb_c, 0, 5, 0);
+    abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
+    VSET(obb_c, 0, 0, 5);
+    abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
 
     // TODO - rotate obb vectors for non-trivial testing
 
