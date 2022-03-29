@@ -105,14 +105,9 @@ obb_obb_test(
 #define NO_ISECT 0
 #define ISECT 1
 
-int
-main(int argc, char **argv)
+void
+aab_obb_run_tests()
 {
-    bu_setprogname(argv[0]);
-
-    if (argc != 1)
-	bu_exit(1, "ERROR: %s does not accept arguments\n", argv[0]);
-
     point_t aabb_min, aabb_max;
     vect_t obb_c, obb_e1, obb_e2, obb_e3;
 
@@ -127,12 +122,11 @@ main(int argc, char **argv)
     VSET(obb_e3, 0, 0, 2);
 
     VSET(obb_c, 0, 0, 0);
-    if (abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3))
-	return -1;
+    abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
 
-    for (int i = -2; i < 3; i++) {
-	for (int j = -2; j < 3; j++) {
-	    for (int k = -3; k < 4; k++) {
+    for (int i = -2; i <= 2; i++) {
+	for (int j = -2; j <= 2; j++) {
+	    for (int k = -3; k <= 3; k++) {
 		VSET(obb_c, i, j, k);
 		abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
 	    }
@@ -153,7 +147,17 @@ main(int argc, char **argv)
     abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
 
     // TODO - rotate obb vectors for non-trivial testing
+}
 
+int
+main(int argc, char **argv)
+{
+    bu_setprogname(argv[0]);
+
+    if (argc != 1)
+	bu_exit(1, "ERROR: %s does not accept arguments\n", argv[0]);
+
+    aab_obb_run_tests();
 
     bu_log("OK\n");
     return 0;
