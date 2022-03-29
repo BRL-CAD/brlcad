@@ -25,6 +25,32 @@
 #include "bu.h"
 #include "bg.h"
 
+void
+obb_arb(point_t c, vect_t E[3]) {
+    point_t arb[8];
+    vect_t NE[3];
+    VSCALE(NE[0], E[0], -1);
+    VSCALE(NE[1], E[1], -1);
+    VSCALE(NE[2], E[2], -1);
+    VADD4(arb[0], c, E[0], E[1], E[2]);
+    VADD4(arb[1], c, E[0], NE[1], E[2]);
+    VADD4(arb[2], c, E[0], NE[1], NE[2]);
+    VADD4(arb[3], c, E[0], E[1], NE[2]);
+    VADD4(arb[4], c, NE[0], E[1], E[2]);
+    VADD4(arb[5], c, NE[0], NE[1], E[2]);
+    VADD4(arb[6], c, NE[0], NE[1], NE[2]);
+    VADD4(arb[7], c, NE[0], E[1], NE[2]);
+    bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb[6]), V3ARGS(arb[7]));
+}
+
+void
+line_pts(point_t origin, vect_t dir)
+{
+    point_t p;
+    VADD2(p, origin, dir);
+    bu_log("in p1.s sph %f %f %f 0.01\nin p2.s sph %f %f %f 0.01\n", V3ARGS(origin), V3ARGS(p));
+}
+
 int
 line_aabb_test(int expected, point_t origin, vect_t ldir,
 	point_t aabb_c, vect_t aabb_e)
@@ -226,22 +252,7 @@ line_obb_run_tests()
     MAT3X3VEC(E[1], rmat, AE[1]);
     MAT3X3VEC(E[2], rmat, AE[2]);
 
-#if 0
-    point_t arb[8];
-    vect_t NE[3];
-    VSCALE(NE[0], E[0], -1);
-    VSCALE(NE[1], E[1], -1);
-    VSCALE(NE[2], E[2], -1);
-    VADD3(arb[0], E[0], E[1], E[2]);
-    VADD3(arb[1], E[0], NE[1], E[2]);
-    VADD3(arb[2], E[0], NE[1], NE[2]);
-    VADD3(arb[3], E[0], E[1], NE[2]);
-    VADD3(arb[4], NE[0], E[1], E[2]);
-    VADD3(arb[5], NE[0], NE[1], E[2]);
-    VADD3(arb[6], NE[0], NE[1], NE[2]);
-    VADD3(arb[7], NE[0], E[1], NE[2]);
-bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb[6]), V3ARGS(arb[7]));
-#endif
+    //obb_arb(bcenter, E);
 
     vect_t r;
     bn_mat_angles(rmat, 10, 10, 10);
@@ -252,12 +263,23 @@ bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %
     VSET(origin, -3, 0, -2.80);
     line_obb_test(ISECT, origin, r, bcenter, E[0], E[1], E[2]);
     VSET(origin, -3, 0, -2.81);
-    //point_t p2;
-    //VADD2(p2, origin, r);
-    //bu_log("in p1.s sph %f %f %f 0.01\nin p2.s sph %f %f %f 0.01\n", V3ARGS(origin), V3ARGS(p2));
+    //line_pts(origin, r);
     line_obb_test(NO_ISECT, origin, r, bcenter, E[0], E[1], E[2]);
 }
 
+// Under the hood this is the obb test - just run it here to make sure the
+// wires stay connected.  Heavy duty testing in the obb version.
+void
+tri_aabb_run_tests()
+{
+
+}
+
+void
+tri_obb_run_tests()
+{
+
+}
 
 void
 aabb_obb_run_tests()
