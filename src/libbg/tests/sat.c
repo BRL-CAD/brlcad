@@ -111,42 +111,110 @@ aab_obb_run_tests()
     point_t aabb_min, aabb_max;
     vect_t obb_c, obb_e1, obb_e2, obb_e3;
 
-    // Start simple - unit box at origin
-    VSET(aabb_min, -1, -1, -1);
-    VSET(aabb_max, 1, 1, 1);
+    // Start simple - box at origin
+    VSET(aabb_min, -2, -2, -2);
+    VSET(aabb_max, 2, 2, 2);
+    VSET(obb_e1, 2, 0, 0);
+    VSET(obb_e2, 0, 2, 0);
+    VSET(obb_e3, 0, 0, 2);
 
     // Start out with some trivial checks - an axis-aligned test box, and move
     // the center point to trigger different responses
-    VSET(obb_e1, -1, 0, 0);
-    VSET(obb_e2, 0, 1, 0);
-    VSET(obb_e3, 0, 0, 2);
-
     VSET(obb_c, 0, 0, 0);
     abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
 
-    for (int i = -2; i <= 2; i++) {
-	for (int j = -2; j <= 2; j++) {
-	    for (int k = -3; k <= 3; k++) {
+    for (int i = -4; i <= 4; i++) {
+	for (int j = -4; j <= 4; j++) {
+	    for (int k = -4; k <= 4; k++) {
 		VSET(obb_c, i, j, k);
 		abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
 	    }
 	}
     }
 
-    VSET(obb_c, -5, 0, 0);
+    // Check no-isect on all sides
+    VSET(obb_c, -9, 0, 0);
     abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
-    VSET(obb_c, 0, -5, 0);
+    VSET(obb_c, 0, -9, 0);
     abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
-    VSET(obb_c, 0, 0, -5);
+    VSET(obb_c, 0, 0, -9);
     abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
-    VSET(obb_c, 5, 0, 0);
+    VSET(obb_c, 9, 0, 0);
     abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
-    VSET(obb_c, 0, 5, 0);
+    VSET(obb_c, 0, 9, 0);
     abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
-    VSET(obb_c, 0, 0, 5);
+    VSET(obb_c, 0, 0, 9);
     abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
 
-    // TODO - rotate obb vectors for non-trivial testing
+    // Rotate obb vectors.  First, check that intersection is detected at
+    // a variety of rotation angles.
+    mat_t rmat;
+    VSET(obb_c, 0, 0, 0);
+    for (int alpha = 0; alpha < 90; alpha++) {
+	for (int beta = 0; beta < 90; beta++) {
+	    for (int gamma = 0; gamma < 90; gamma++) {
+		vect_t r1, r2, r3;
+		bn_mat_angles(rmat, (double)alpha, (double)beta, (double)gamma);
+		MAT3X3VEC(r1, rmat, obb_e1);
+		MAT3X3VEC(r2, rmat, obb_e2);
+		MAT3X3VEC(r3, rmat, obb_e3);
+		abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+	    }
+	}
+    }
+    // Check that non-intersection is detected at a variety of rotation angles.
+    VSET(obb_c, 0, 0, 10);
+    for (int alpha = 0; alpha < 90; alpha++) {
+	for (int beta = 0; beta < 90; beta++) {
+	    for (int gamma = 0; gamma < 90; gamma++) {
+		vect_t r1, r2, r3;
+		bn_mat_angles(rmat, (double)alpha, (double)beta, (double)gamma);
+		MAT3X3VEC(r1, rmat, obb_e1);
+		MAT3X3VEC(r2, rmat, obb_e2);
+		MAT3X3VEC(r3, rmat, obb_e3);
+		abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+	    }
+	}
+    }
+
+    // Check no-isect detection with a rotated obb on all sides
+    {
+	vect_t r1, r2, r3;
+	bn_mat_angles(rmat, 30, 10, 50);
+	MAT3X3VEC(r1, rmat, obb_e1);
+	MAT3X3VEC(r2, rmat, obb_e2);
+	MAT3X3VEC(r3, rmat, obb_e3);
+	VSET(obb_c, -9, 0, 0);
+	abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+	VSET(obb_c, 0, -9, 0);
+	abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+	VSET(obb_c, 0, 0, -9);
+	abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+	VSET(obb_c, 9, 0, 0);
+	abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+	VSET(obb_c, 0, 9, 0);
+	abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+	VSET(obb_c, 0, 0, 9);
+	abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+    }
+
+
+    // Hand-constructed tests
+    {
+	vect_t r1, r2, r3;
+	bn_mat_angles(rmat, 30, 50, 10);
+	MAT3X3VEC(r1, rmat, obb_e1);
+	MAT3X3VEC(r2, rmat, obb_e2);
+	MAT3X3VEC(r3, rmat, obb_e3);
+	VSET(obb_c, 4, 0, 0);
+	abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+	VSET(obb_c, 5, 0, 0);
+	abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+	VSET(obb_c, 5.02, 0, 0);
+	abb_obb_test(ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+	VSET(obb_c, 5.022, 0, 0);
+	abb_obb_test(NO_ISECT, aabb_min, aabb_max, obb_c, r1, r2, r3);
+    }
 }
 
 int
