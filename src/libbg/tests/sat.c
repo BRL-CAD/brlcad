@@ -32,6 +32,61 @@
     } \
 }
 
+int
+line_abb_test(int expected, point_t origin, vect_t ldir, point_t aabb_c, vect_t aabb_e)
+{
+    if (bg_sat_line_abb(origin, ldir, aabb_c, aabb_e) != expected) {
+	if (expected) {
+	    bu_log("Failed to detect intersection:\n");
+	} else {
+	    bu_log("Unexpected intersection:\n");
+	}
+	bu_log("LINE - origin: %f %f %f  dir: %f %f %f\n", V3ARGS(origin), V3ARGS(ldir));
+	bu_log("AABB - c: %f %f %f  ext: %f %f %f\n", V3ARGS(aabb_c), V3ARGS(aabb_e));
+	return 1;
+    }
+    return 0;
+}
+
+int
+tri_obb_test(
+	int expected,
+	point_t v1, point_t v2, point_t v3,
+        point_t obb_c, vect_t obb_e1, vect_t obb_e2, vect_t obb_e3
+        )
+{
+    if (bg_sat_tri_obb(v1, v2, v3, obb_c, obb_e1, obb_e2, obb_e3) != expected) {
+	return 1;
+    }
+    return 0;
+}
+
+int
+abb_obb_test(
+	int expected,
+        point_t abb_min, point_t abb_max,
+        point_t obb_c, vect_t obb_e1, vect_t obb_e2, vect_t obb_e3
+        )
+{
+
+    if (bg_sat_abb_obb(abb_min, abb_max, obb_c, obb_e1, obb_e2, obb_e3) != expected) {
+	return 1;
+    }
+    return 0;
+}
+
+int
+obb_obb_test(
+	int expected,
+        point_t obb1_c, vect_t obb1_e1, vect_t obb1_e2, vect_t obb1_e3,
+        point_t obb2_c, vect_t obb2_e1, vect_t obb2_e2, vect_t obb2_e3
+        )
+{
+    if (bg_sat_obb_obb(obb1_c, obb1_e1, obb1_e2, obb1_e3, obb2_c, obb2_e1, obb2_e2, obb2_e3) != expected) {
+	return 1;
+    }
+    return 0;
+}
 
 int
 main(int argc, char **argv)
