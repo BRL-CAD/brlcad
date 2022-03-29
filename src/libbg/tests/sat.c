@@ -28,16 +28,16 @@
 int
 line_abb_test(int expected, point_t origin, vect_t ldir, point_t aabb_c, vect_t aabb_e)
 {
-    if (bg_sat_line_abb(origin, ldir, aabb_c, aabb_e) != expected) {
+    if (bg_sat_line_aabb(origin, ldir, aabb_c, aabb_e) != expected) {
 	if (expected) {
 	    bu_log("Failed to detect intersection:\n");
 	} else {
 	    bu_log("Unexpected intersection:\n");
 	}
 	bu_log("LINE - origin: %f %f %f  dir: %f %f %f\n", V3ARGS(origin), V3ARGS(ldir));
-	bu_log("AABB - c: %f %f %f  ext: %f %f %f\n", V3ARGS(aabb_c), V3ARGS(aabb_e));
+	bu_log("AABB -      c: %f %f %f  ext: %f %f %f\n", V3ARGS(aabb_c), V3ARGS(aabb_e));
 	// Repeat the operation so an attached debugger can follow what happened
-	bg_sat_line_abb(origin, ldir, aabb_c, aabb_e);
+	bg_sat_line_aabb(origin, ldir, aabb_c, aabb_e);
 	bu_exit(1, "test failure\n");
     }
     return 0;
@@ -57,7 +57,7 @@ tri_obb_test(
 	    bu_log("Unexpected intersection:\n");
 	}
 	bu_log("TRI - v1: %f %f %f  v2: %f %f %f v3: %f %f %f\n", V3ARGS(v1), V3ARGS(v2), V3ARGS(v3));
-	bu_log("OBB - c: %f %f %f  ext1: %f %f %f ext2: %f %f %f ext3: %f %f %f\n", V3ARGS(obb_c), V3ARGS(obb_e1), V3ARGS(obb_e2), V3ARGS(obb_e3));
+	bu_log("OBB -  c: %f %f %f  ext1: %f %f %f ext2: %f %f %f ext3: %f %f %f\n", V3ARGS(obb_c), V3ARGS(obb_e1), V3ARGS(obb_e2), V3ARGS(obb_e3));
 	// Repeat the operation so an attached debugger can follow what happened
 	bg_sat_tri_obb(v1, v2, v3, obb_c, obb_e1, obb_e2, obb_e3);
 	bu_exit(1, "test failure\n");
@@ -68,21 +68,21 @@ tri_obb_test(
 int
 abb_obb_test(
 	int expected,
-        point_t abb_min, point_t abb_max,
+        point_t aabb_min, point_t aabb_max,
         point_t obb_c, vect_t obb_e1, vect_t obb_e2, vect_t obb_e3
         )
 {
 
-    if (bg_sat_abb_obb(abb_min, abb_max, obb_c, obb_e1, obb_e2, obb_e3) != expected) {
+    if (bg_sat_aabb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3) != expected) {
 	if (expected) {
 	    bu_log("Failed to detect intersection:\n");
 	} else {
 	    bu_log("Unexpected intersection:\n");
 	}
-	bu_log("ABB - min: %f %f %f  max: %f %f %f\n", V3ARGS(abb_min), V3ARGS(abb_max));
-	bu_log("OBB - c: %f %f %f  ext1: %f %f %f ext2: %f %f %f ext3: %f %f %f\n", V3ARGS(obb_c), V3ARGS(obb_e1), V3ARGS(obb_e2), V3ARGS(obb_e3));
+	bu_log("AABB - min: %f %f %f  max: %f %f %f\n", V3ARGS(aabb_min), V3ARGS(aabb_max));
+	bu_log(" OBB -   c: %f %f %f  ext1: %f %f %f ext2: %f %f %f ext3: %f %f %f\n", V3ARGS(obb_c), V3ARGS(obb_e1), V3ARGS(obb_e2), V3ARGS(obb_e3));
 	// Repeat the operation so an attached debugger can follow what happened
-	bg_sat_abb_obb(abb_min, abb_max, obb_c, obb_e1, obb_e2, obb_e3);
+	bg_sat_aabb_obb(aabb_min, aabb_max, obb_c, obb_e1, obb_e2, obb_e3);
 	bu_exit(1, "test failure\n");
     }
     return 0;
@@ -114,7 +114,7 @@ obb_obb_test(
 #define ISECT 1
 
 void
-aab_obb_run_tests()
+aabb_obb_run_tests()
 {
     point_t aabb_min, aabb_max;
     vect_t obb_c, obb_e1, obb_e2, obb_e3;
@@ -370,7 +370,7 @@ main(int argc, char **argv)
     if (argc != 1)
 	bu_exit(1, "ERROR: %s does not accept arguments\n", argv[0]);
 
-    aab_obb_run_tests();
+    aabb_obb_run_tests();
     obb_obb_run_tests();
 
     bu_log("OK\n");

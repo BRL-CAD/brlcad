@@ -55,24 +55,20 @@
 #include "vmath.h"
 #include "bg/sat.h"
 
-/* Check line against ABB
+/* Check line against ABB and OBB
  *
- * See GTE/Mathematics/IntrLine3AlignedBox3.h
+ * See GTE/Mathematics/IntrLine3AlignedBox3.h and IntrLine3OrientedBox3.h
  */
-int
-bg_sat_line_abb(point_t origin, vect_t ldir, point_t aabb_center, vect_t aabb_extent)
+static int
+line_aabb_query(point_t origin, vect_t ldir, vect_t aabb_extent)
 {
-    vect_t lineOrigin, dir;
+    vect_t WxD;
+    fastf_t absWdU[3];
 
-    // Transform the line to the aligned-box coordinate system.
-    VSUB2(lineOrigin, origin, aabb_center);
-
-    VMOVE(dir, ldir);
-    VUNITIZE(dir);
-
-    vect_t WxD, absWdU;
-    VCROSS(WxD, dir, lineOrigin);
-    VSET(absWdU, fabs(WxD[0]), fabs(WxD[1]), fabs(WxD[2]));
+    VCROSS(WxD, ldir, origin);
+    absWdU[0] = fabs(ldir[0]);
+    absWdU[1] = fabs(ldir[1]);
+    absWdU[2] = fabs(ldir[2]);
 
     if (fabs(WxD[0]) > aabb_extent[1] * absWdU[2] + aabb_extent[2] * absWdU[1])
 	return 0;
@@ -84,6 +80,33 @@ bg_sat_line_abb(point_t origin, vect_t ldir, point_t aabb_center, vect_t aabb_ex
 	return 0;
 
     return 1;
+}
+
+int
+bg_sat_line_aabb(point_t origin, vect_t ldir, point_t aabb_center, vect_t aabb_extent)
+{
+    vect_t lineOrigin;
+    // Transform the line to the aligned-box coordinate system.
+    VSUB2(lineOrigin, origin, aabb_center);
+    return line_aabb_query(lineOrigin, ldir, aabb_extent);
+}
+
+int
+bg_sat_line_obb(point_t origin, vect_t ldir, point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3)
+{
+    vect_t diff, lineOrigin, lineDirection, aabb_extent;
+    vect_t A[3];
+    VSUB2(diff, origin, obb_center);
+    VMOVE(A[0], obb_extent1);
+    VMOVE(A[1], obb_extent2);
+    VMOVE(A[2], obb_extent3);
+    VUNITIZE(A[0]);
+    VUNITIZE(A[1]);
+    VUNITIZE(A[2]);
+    VSET(lineOrigin, VDOT(diff, A[0]), VDOT(diff, A[1]), VDOT(diff, A[2]));
+    VSET(lineDirection, VDOT(ldir, A[0]), VDOT(ldir, A[1]), VDOT(ldir, A[2]));
+    VSET(aabb_extent, MAGNITUDE(obb_extent1), MAGNITUDE(obb_extent2), MAGNITUDE(obb_extent3));
+    return line_aabb_query(lineOrigin, lineDirection, aabb_extent);
 }
 
 static void
@@ -122,6 +145,23 @@ GetProjectionTri(fastf_t *imin, fastf_t *imax, vect_t axis, point_t v1, point_t 
     } else if (dot[2] > (*imax)) {
 	(*imax) = dot[2];
     }
+}
+
+/* Check AABB against a triangle.
+ *
+ * See GTE/Mathematics/IntrTriangle3OrientedBox3.h.h
+ */
+int
+bg_sat_tri_aabb(
+	point_t v1, point_t v2, point_t v3,
+	point_t center, vect_t extent
+	)
+{
+    vect_t extents[3];
+    VSET(extents[0], extent[0], 0, 0);
+    VSET(extents[1], 0, extent[1], 0);
+    VSET(extents[2], 0, 0, extent[2]);
+    return bg_sat_tri_obb(v1, v2, v3, center, extents[0], extents[1], extents[2]);
 }
 
 /* Check OBB against a triangle.
@@ -187,8 +227,8 @@ bg_sat_tri_obb(
  * See GTE/Mathematics/IntrAlignedBox3OrientedBox3.h
  */
 int
-bg_sat_abb_obb(
-	point_t abb_min, point_t abb_max,
+bg_sat_aabb_obb(
+	point_t aabb_min, point_t aabb_max,
 	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
 	)
 {
@@ -196,8 +236,8 @@ bg_sat_abb_obb(
     // implicitly A0[0] = (1,0,0), A0[1] = (0,1,0) and
     // A0[2] = (0,0,1).
     vect_t C0, E0;
-    VADD2SCALE(C0, abb_max, abb_min, 0.5);
-    VSUB2SCALE(E0, abb_max, abb_min, 0.5);
+    VADD2SCALE(C0, aabb_max, aabb_min, 0.5);
+    VSUB2SCALE(E0, aabb_max, aabb_min, 0.5);
 
     // Convenience variables.
     vect_t C1, E1;

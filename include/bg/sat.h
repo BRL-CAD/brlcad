@@ -62,7 +62,32 @@ __BEGIN_DECLS
  * Returns 1 if they intersect, 0 otherwise.
  */
 BG_EXPORT extern int
-bg_sat_line_abb(point_t aabb_center, vect_t aabb_extent, point_t origin, vect_t ldir);
+bg_sat_line_aabb(
+	point_t origin, vect_t ldir,
+	point_t aabb_center, vect_t aabb_extent
+	);
+
+/**
+ * Test for an intersection between a line and an Oriented Bounding Box (OBB).
+ *
+ * Returns 1 if they intersect, 0 otherwise.
+ */
+BG_EXPORT extern int
+bg_sat_line_obb(
+	point_t origin, vect_t ldir,
+	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
+	);
+
+/**
+ * Test for an intersection between a triangle and an Axis-Aligned Bounding Box (AABB).
+ *
+ * Returns 1 if they intersect, 0 otherwise.
+ */
+BG_EXPORT extern int
+bg_sat_tri_aabb(
+	point_t v1, point_t v2, point_t v3,
+	point_t aabb_center, vect_t aabb_extent
+	);
 
 /**
  * Test for an intersection between a triangle and an Oriented Bounding Box (OBB).
@@ -84,8 +109,8 @@ bg_sat_tri_obb(
  * Returns 1 if they intersect, 0 otherwise.
  */
 BG_EXPORT extern int
-bg_sat_abb_obb(
-	point_t abb_min, point_t abb_max,
+bg_sat_aabb_obb(
+	point_t aabb_min, point_t aabb_max,
 	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
 	);
 

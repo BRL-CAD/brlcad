@@ -538,7 +538,7 @@ POPState::edge_process()
 	    VSET(lorigin, edge[0][0], edge[0][1], edge[0][2]);
 	    VSET(dir, edge[1][0] - edge[0][0], edge[1][1] - edge[0][1], edge[1][2] - edge[0][2]);
 	    VSET(bextent, 0.51, 0.51, 0.51);
-	  
+
 	    // Iterate over boxes other than the end points
 	    int start[3], end[3];
 	    start[0] = edge[0][0] > edge[1][0] ? edge[1][0] : edge[0][0];
@@ -560,7 +560,7 @@ POPState::edge_process()
 			if (endpt)
 			    continue;
 			VSET(bcenter, (fastf_t)e+0.5, (fastf_t)j+0.5, (fastf_t)k+0.5);
-			if (bg_sat_line_abb(lorigin, dir, bcenter, bextent)) {
+			if (bg_sat_line_aabb(lorigin, dir, bcenter, bextent)) {
 			    edge_boxes[e][j][k].push_back(i);
 			    //bu_log("line hit: %d %d %d\n", e, j ,k);
 			//} else {
