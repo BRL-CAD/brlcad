@@ -560,7 +560,7 @@ POPState::edge_process()
 			if (endpt)
 			    continue;
 			VSET(bcenter, (fastf_t)e+0.5, (fastf_t)j+0.5, (fastf_t)k+0.5);
-			if (bg_sat_abb_line(bcenter, bextent, lorigin, dir)) {
+			if (bg_sat_line_abb(lorigin, dir, bcenter, bextent)) {
 			    edge_boxes[e][j][k].push_back(i);
 			    //bu_log("line hit: %d %d %d\n", e, j ,k);
 			//} else {

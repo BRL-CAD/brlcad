@@ -37,7 +37,8 @@
 /** @file sat.c
  *
  * Implementations of various Separating Axis Theorem algorithms for detecting
- * collisions.
+ * collisions between various types of objects (detection only, no calculations
+ * to find points or shapes.)
  *
  * OBBTree: A Hierarchical Structure for Rapid Interference Detection
  * http://www.cs.unc.edu/techreports/96-013.pdf
@@ -48,9 +49,6 @@
  * The test-intersection implementations use the method of separating axes.
  * https://www.geometrictools.com/Documentation/MethodOfSeparatingAxes.pdf
  *
- * The set of potential separating directions includes the 3 face normals of
- * the first box, the 3 face normals of the second box, and 9 directions, each
- * of which is the cross product of an edge of box #1 and an edge of box #2.
  */
 
 #include "common.h"
@@ -62,7 +60,7 @@
  * See GTE/Mathematics/IntrLine3AlignedBox3.h
  */
 int
-bg_sat_abb_line(point_t aabb_center, vect_t aabb_extent, point_t origin, vect_t ldir)
+bg_sat_line_abb(point_t origin, vect_t ldir, point_t aabb_center, vect_t aabb_extent)
 {
     vect_t lineOrigin, dir;
 

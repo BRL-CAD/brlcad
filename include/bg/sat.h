@@ -62,7 +62,7 @@ __BEGIN_DECLS
  * Returns 1 if they intersect, 0 otherwise.
  */
 BG_EXPORT extern int
-bg_sat_abb_line(point_t aabb_center, vect_t aabb_extent, point_t origin, vect_t ldir);
+bg_sat_line_abb(point_t aabb_center, vect_t aabb_extent, point_t origin, vect_t ldir);
 
 /**
  * Test for an intersection between a triangle and an Oriented Bounding Box (OBB).
