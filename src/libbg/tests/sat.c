@@ -51,6 +51,12 @@ line_pts(point_t origin, vect_t dir)
     bu_log("in p1.s sph %f %f %f 0.01\nin p2.s sph %f %f %f 0.01\n", V3ARGS(origin), V3ARGS(p));
 }
 
+void
+tri_bot(vect_t v[3])
+{
+    bu_log("in tri.s bot 3 1 1 1 %f %f %f %f %f %f %f %f %f 0 1 2\n", V3ARGS(v[0]), V3ARGS(v[1]), V3ARGS(v[2]));
+}
+
 int
 line_aabb_test(int expected, point_t origin, vect_t ldir,
 	point_t aabb_c, vect_t aabb_e)
@@ -272,7 +278,16 @@ line_obb_run_tests()
 void
 tri_aabb_run_tests()
 {
+    point_t c, v[3];
+    vect_t e;
+    VSET(c, 0, 0, 0);
+    VSET(e, 2, 2, 2);
 
+
+    VSET(v[0], 0, 0, 0);
+    VSET(v[1], 3, 0, 0);
+    VSET(v[2], 0, 0, 1);
+    tri_aabb_test(ISECT, v[0], v[1], v[2], c, e);
 }
 
 void
@@ -298,16 +313,20 @@ tri_obb_run_tests()
     VSET(v[0], 0, 0, 0);
     VSET(v[1], 1, 0, 0);
     VSET(v[2], 0, 0, 1);
-
-
     tri_obb_test(ISECT, v[0], v[1], v[2], c, E[0], E[1], E[2]);
 
 
     VSET(v[0], 5, 0, 0);
     VSET(v[1], 8, 0, 0);
     VSET(v[2], 0, 0, 10);
-
     tri_obb_test(NO_ISECT, v[0], v[1], v[2], c, E[0], E[1], E[2]);
+
+    VSET(v[0], 1.22285, 1.29543, -3.6791);
+    VSET(v[1], 4.22285, 1.29543, -3.6791);
+    VSET(v[2], -3.77715, 1.29543, 6.3209);
+    tri_obb_test(ISECT, v[0], v[1], v[2], c, E[0], E[1], E[2]);
+
+    tri_bot(v);
 }
 
 void
