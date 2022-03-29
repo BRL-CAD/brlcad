@@ -308,8 +308,6 @@ tri_obb_run_tests()
     MAT3X3VEC(E[1], rmat, AE[1]);
     MAT3X3VEC(E[2], rmat, AE[2]);
 
-    obb_arb(c, E);
-
     VSET(v[0], 0, 0, 0);
     VSET(v[1], 1, 0, 0);
     VSET(v[2], 0, 0, 1);
@@ -325,8 +323,6 @@ tri_obb_run_tests()
     VSET(v[1], 4.22285, 1.29543, -3.6791);
     VSET(v[2], -3.77715, 1.29543, 6.3209);
     tri_obb_test(ISECT, v[0], v[1], v[2], c, E[0], E[1], E[2]);
-
-    tri_bot(v);
 }
 
 void
@@ -588,7 +584,7 @@ main(int argc, char **argv)
 
     line_abb_run_tests();
     line_obb_run_tests();
-
+    tri_aabb_run_tests();
     tri_obb_run_tests();
     aabb_obb_run_tests();
     obb_obb_run_tests();
