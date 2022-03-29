@@ -222,7 +222,7 @@ bg_sat_tri_obb(
     return 1;
 }
 
-/* Check OBB against an ABB.
+/* Check AABB against an OBB.
  *
  * See GTE/Mathematics/IntrAlignedBox3OrientedBox3.h
  */
