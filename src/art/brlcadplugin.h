@@ -85,7 +85,7 @@ struct BRLCAD_to_ASR
     asf::Vector3d normal;
 };
 
-struct BRLCAD_to_ASR brlcad_ray_info;
+
 
 class APPLESEED_DLL_EXPORT BrlcadObjectFactory : public asr::IObjectFactory
 {
