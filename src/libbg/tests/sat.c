@@ -155,6 +155,111 @@ obb_obb_test(
 #define ISECT 1
 
 void
+line_abb_run_tests()
+{
+    point_t bcenter;
+    point_t origin;
+    vect_t dir, bextent;
+
+    VSET(bcenter, 0, 0, 0);
+    VSET(bextent, 2, 2, 2);
+    VSET(origin, 0, 0, 0);
+
+    VSET(dir, 1, 0, 0);
+    line_aabb_test(ISECT, origin, dir, bcenter, bextent);
+    VSET(dir, 0, 1, 0);
+    line_aabb_test(ISECT, origin, dir, bcenter, bextent);
+    VSET(dir, 0, 0, 1);
+    line_aabb_test(ISECT, origin, dir, bcenter, bextent);
+
+    VSET(dir, 1, 1, 1);
+    VUNITIZE(dir);
+    line_aabb_test(ISECT, origin, dir, bcenter, bextent);
+    VSET(dir, 0.5, 0.5, 2);
+    VUNITIZE(dir);
+    line_aabb_test(ISECT, origin, dir, bcenter, bextent);
+
+
+    VSET(origin, -2, 0, 0);
+    VSET(dir, 1, 0, 0);
+    line_aabb_test(ISECT, origin, dir, bcenter, bextent);
+    VSET(dir, 0, 1, 0);
+    line_aabb_test(ISECT, origin, dir, bcenter, bextent);
+    VSET(dir, 0, 0, 1);
+    line_aabb_test(ISECT, origin, dir, bcenter, bextent);
+
+    VSET(origin, -2.1, 0, 0);
+
+    VSET(dir, 1, 0, 0);
+    line_aabb_test(ISECT, origin, dir, bcenter, bextent);
+    VSET(dir, 0, 1, 0);
+    line_aabb_test(NO_ISECT, origin, dir, bcenter, bextent);
+    VSET(dir, 0, 0, 1);
+    line_aabb_test(NO_ISECT, origin, dir, bcenter, bextent);
+
+    mat_t rmat;
+    vect_t r;
+    bn_mat_angles(rmat, 20, 50, 30);
+    VSET(dir, 1, 0, 0);
+    MAT3X3VEC(r, rmat, dir);
+    VSET(origin, -3.597, 0, 0);
+    line_aabb_test(ISECT, origin, r, bcenter, bextent);
+    VSET(origin, -3.598, 0, 0);
+    line_aabb_test(NO_ISECT, origin, r, bcenter, bextent);
+}
+
+void
+line_obb_run_tests()
+{
+    point_t bcenter;
+    point_t origin;
+    vect_t dir, AE[3], E[3];
+
+    VSET(bcenter, 0, 0, 0);
+    VSET(AE[0], 2, 0, 0);
+    VSET(AE[1], 0, 2, 0);
+    VSET(AE[2], 0, 0, 2);
+
+    mat_t rmat;
+    bn_mat_angles(rmat, 20, 50, 30);
+    MAT3X3VEC(E[0], rmat, AE[0]);
+    MAT3X3VEC(E[1], rmat, AE[1]);
+    MAT3X3VEC(E[2], rmat, AE[2]);
+
+#if 0
+    point_t arb[8];
+    vect_t NE[3];
+    VSCALE(NE[0], E[0], -1);
+    VSCALE(NE[1], E[1], -1);
+    VSCALE(NE[2], E[2], -1);
+    VADD3(arb[0], E[0], E[1], E[2]);
+    VADD3(arb[1], E[0], NE[1], E[2]);
+    VADD3(arb[2], E[0], NE[1], NE[2]);
+    VADD3(arb[3], E[0], E[1], NE[2]);
+    VADD3(arb[4], NE[0], E[1], E[2]);
+    VADD3(arb[5], NE[0], NE[1], E[2]);
+    VADD3(arb[6], NE[0], NE[1], NE[2]);
+    VADD3(arb[7], NE[0], E[1], NE[2]);
+bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb[6]), V3ARGS(arb[7]));
+#endif
+
+    vect_t r;
+    bn_mat_angles(rmat, 10, 10, 10);
+    VSET(dir, 1, 0, 0);
+    MAT3X3VEC(r, rmat, dir);
+    VSET(origin, -3, 0, 0);
+    line_obb_test(ISECT, origin, r, bcenter, E[0], E[1], E[2]);
+    VSET(origin, -3, 0, -2.80);
+    line_obb_test(ISECT, origin, r, bcenter, E[0], E[1], E[2]);
+    VSET(origin, -3, 0, -2.81);
+    //point_t p2;
+    //VADD2(p2, origin, r);
+    //bu_log("in p1.s sph %f %f %f 0.01\nin p2.s sph %f %f %f 0.01\n", V3ARGS(origin), V3ARGS(p2));
+    line_obb_test(NO_ISECT, origin, r, bcenter, E[0], E[1], E[2]);
+}
+
+
+void
 aabb_obb_run_tests()
 {
     point_t aabb_min, aabb_max;
@@ -411,6 +516,8 @@ main(int argc, char **argv)
     if (argc != 1)
 	bu_exit(1, "ERROR: %s does not accept arguments\n", argv[0]);
 
+    line_abb_run_tests();
+    line_obb_run_tests();
     aabb_obb_run_tests();
     obb_obb_run_tests();
 
