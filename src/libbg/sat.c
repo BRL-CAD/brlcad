@@ -219,7 +219,7 @@ bg_sat_abb_obb(
     vect_t D;
     VSUB2(D, C1, C0);
 
-    // dot01[i][j] = Dot(A0[i],A1[j]) = A1[j][i]
+    // dot01[i][j] = VDOT(A0[i],A1[j]) = A1[j][i]
     fastf_t dot01[3][3];
 
     // |dot01[i][j]|
@@ -258,14 +258,11 @@ bg_sat_abb_obb(
 	return 0;
 
     // Test for separation on the axis C0 + t*A0[2].
-    for (int i = 0; i < 3; ++i)
-    {
+    for (int i = 0; i < 3; ++i) {
 	dot01[2][i] = A1[i][2];
 	absDot01[2][i] = fabs(A1[i][2]);
 	if (absDot01[2][i] >= cutoff)
-	{
 	    existsParallelPair = 1;
-	}
     }
     r = fabs(D[2]);
     r1 = E1[0] * absDot01[2][0] + E1[1] * absDot01[2][1] + E1[2] * absDot01[2][2];
@@ -427,7 +424,7 @@ bg_sat_obb_obb(
     fastf_t absDot01[3][3];
 
     // Dot(D, A0[i])
-    vect_t dotDA0;
+    fastf_t dotDA0[3];
 
     // interval radii and distance between centers
     fastf_t r0, r1, r;
@@ -439,7 +436,7 @@ bg_sat_obb_obb(
     for (int i = 0; i < 3; ++i) {
 	dot01[0][i] = VDOT(A0[0], A1[i]);
 	absDot01[0][i] = fabs(dot01[0][i]);
-	if (absDot01[0][i] >= cutoff)
+	if (absDot01[0][i] > cutoff)
 	    existsParallelPair = 1;
     }
     dotDA0[0] = VDOT(D, A0[0]);
