@@ -438,7 +438,7 @@ bg_sat_obb_obb(
     // Test for separation on the axis C0 + t*A0[0].
     for (int i = 0; i < 3; ++i) {
 	dot01[0][i] = VDOT(A0[0], A1[i]);
-	absDot01[0][i] = fabs(A1[i][0]);
+	absDot01[0][i] = fabs(dot01[0][i]);
 	if (absDot01[0][i] >= cutoff)
 	    existsParallelPair = 1;
     }
@@ -575,8 +575,7 @@ bg_sat_obb_obb(
     if (r > r01)
 	return 0;
 
-    // The result.separating[] values are invalid because there is no
-    // separation.
+    // There is no separation.
     return 1;
 }
 
