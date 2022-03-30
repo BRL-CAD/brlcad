@@ -515,9 +515,9 @@ POPState::edge_process()
 	int factor = 32;
 	// Transform edge vertices
 	for (int j = 0; j < 2; j++) {
-	    edge[j][0] = floor((verts_array[faces_array[3*i+j]][X] - minx) / (maxx - minx) * factor);
-	    edge[j][1] = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * factor);
-	    edge[j][2] = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * factor);
+	    edge[j][0] = floor((verts_array[edges[i].v[j]][X] - minx) / (maxx - minx) * factor);
+	    edge[j][1] = floor((verts_array[edges[i].v[j]][Y] - miny) / (maxy - miny) * factor);
+	    edge[j][2] = floor((verts_array[edges[i].v[j]][Z] - minz) / (maxz - minz) * factor);
 	}
 
 	// The end points are trivially active.
@@ -1749,26 +1749,18 @@ POPState::plot(const char *root)
 
 	for (int i = 0; i <= curr_level; i++) {
 	    std::vector<int>::iterator s_it;
-	    if (i == 0) {
-		bu_log("edge cnt: %zd\n", level_edges[i].size());
-	    }
 	    for (s_it = level_edges[i].begin(); s_it != level_edges[i].end(); s_it++) {
 		int v1ind = lod_edges[2*(*s_it)+0];
 		int v2ind = lod_edges[2*(*s_it)+1];
 		point_t p1, p2, o1, o2;
 		VSET(p1, lod_edge_pnts[3*v1ind+0], lod_edge_pnts[3*v1ind+1], lod_edge_pnts[3*v1ind+2]);
 		VSET(p2, lod_edge_pnts[3*v2ind+0], lod_edge_pnts[3*v2ind+1], lod_edge_pnts[3*v2ind+2]);
-		if (i == 0) {
-		    bu_log("Edge_pts: %f %f %f -> %f %f %f\n", V3ARGS(p1), V3ARGS(p2));
-		}
 
 		// We iterate over the level i edges, but our target level is
 		// curr_level so we "decode" the points to that level, NOT level i
 		level_pnt(&o1, &p1, curr_level);
 		level_pnt(&o2, &p2, curr_level);
-		if (i == 0) {
-		    bu_log("snapped edge_pts: %f %f %f -> %f %f %f\n", V3ARGS(o1), V3ARGS(o2));
-		}
+
 		pdv_3move(plot_file, o1);
 		pdv_3cont(plot_file, o2);
 	    }
@@ -1785,8 +1777,8 @@ POPState::plot(const char *root)
 	    for (size_t j = 0; j < edge_sets[i].size(); j++) {
 		int v1ind, v2ind;
 		point_t p1, p2;
-		v1ind = edges[j].v[0];
-		v2ind = edges[j].v[1];
+		v1ind = edges[edge_sets[i][j]].v[0];
+		v2ind = edges[edge_sets[i][j]].v[1];
 		VSET(p1, lod_edge_pnts[3*v1ind+0], lod_edge_pnts[3*v1ind+1], lod_edge_pnts[3*v1ind+2]);
 		VSET(p2, lod_edge_pnts[3*v2ind+0], lod_edge_pnts[3*v2ind+1], lod_edge_pnts[3*v2ind+2]);
 		pdv_3move(plot_file, p1);
@@ -1794,7 +1786,6 @@ POPState::plot(const char *root)
 	    }
 	    ++tree_it;
 	}
- 
     }
 
     bu_vls_free(&name);
