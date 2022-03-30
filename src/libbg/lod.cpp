@@ -419,6 +419,29 @@ POPState::edge_process()
     // with the unordered set - let the program know it can have the memory
     eset = std::unordered_set<uedge_t, uedge_t::hash>();
 
+    // Multiple edges may collapse to the same snapped edge in lower levels
+    // (and so not need to be drawn).  For each level, establish a vertex that
+    // will "own" its snapped bin
+    std::map<int, std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, int>>>> vmaps;
+    for (int i = 0; i < POP_MAXLEVEL; i++) {
+	vmaps[i] = std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, int>>>();
+    }
+    for (int i = 0; i < vert_cnt; i++) {
+	rec v;
+	// Transform vertex
+	v.x = floor((verts_array[i][X] - minx) / (maxx - minx) * USHRT_MAX);
+	v.y = floor((verts_array[i][Y] - miny) / (maxy - miny) * USHRT_MAX);
+	v.z = floor((verts_array[i][Z] - minz) / (maxz - minz) * USHRT_MAX);
+	// Unless there's a reason not to, go with "last wins"
+	for (int j = 0; j < POP_MAXLEVEL; j++) {
+	    int key[3];
+	    key[0] = to_level(v.x, j);
+	    key[1] = to_level(v.y, j);
+	    key[2] = to_level(v.z, j);
+	    vmaps[j][key[0]][key[1]][key[2]] = i;
+	}
+    }
+
     // Until we prove otherwise, all edges are assumed to appear only at the
     // last level (and consequently, their vertices are only needed then).  Set
     // the level accordingly.
@@ -434,6 +457,8 @@ POPState::edge_process()
     }
 
     // Walk the edges and perform the LoD characterization
+    std::map<int, std::unordered_set<uedge_t, uedge_t::hash>> uedges;
+    bu_log("edge cnt: %zd\n", edges.size());
     for (size_t i = 0; i < edges.size(); i++) {
 	rec edge[2];
 	// Transform edge vertices
@@ -448,12 +473,27 @@ POPState::edge_process()
 	int level = POP_MAXLEVEL - 1;
 	for (int j = 0; j < POP_MAXLEVEL; j++) {
 	    if (!edge_degenerate(edge[0], edge[1], j)) {
-		level = j;
+		// For edges, we check not only for degeneracy but for level uniqueness
+		// If an edge is already accounted for by another edge at this level it
+		// does not "pop" until a deeper level is reached
+		int key1[3], key2[3];
+		key1[0] = to_level(edge[0].x, j);
+		key1[1] = to_level(edge[0].y, j);
+		key1[2] = to_level(edge[0].z, j);
+		key2[0] = to_level(edge[1].x, j);
+		key2[1] = to_level(edge[1].y, j);
+		key2[2] = to_level(edge[1].z, j);
+    		uedge_t ue(vmaps[j][key1[0]][key1[1]][key1[2]], vmaps[j][key2[0]][key2[1]][key2[2]]);
+		if (uedges[j].find(ue) == uedges[j].end()) {
+		    level = j;
+		    uedges[j].insert(ue);
+		}
 		break;
 	    }
 	}
 	// Add this edge to its "pop" level
 	level_edges[level].push_back(i);
+	//bu_log("edge %zd (%d): %d %d %d -> %d %d %d\n", i, level, edge[0].x, edge[0].y, edge[0].z, edge[1].x, edge[1].y, edge[1].z);
 
 	// Let the vertices know they will be needed at this level, if another
 	// edge doesn't already need them sooner
@@ -1747,8 +1787,11 @@ POPState::plot(const char *root)
     if (curr_level <= max_edge_pop_level) {
     	pl_color(plot_file, 0, 255, 0);
 
+	bu_log("curr_level: %d\n", curr_level);
+
 	for (int i = 0; i <= curr_level; i++) {
 	    std::vector<int>::iterator s_it;
+	    bu_log("(%d)(%d): %zd\n", curr_level, i, level_edges[i].size());
 	    for (s_it = level_edges[i].begin(); s_it != level_edges[i].end(); s_it++) {
 		int v1ind = lod_edges[2*(*s_it)+0];
 		int v2ind = lod_edges[2*(*s_it)+1];
