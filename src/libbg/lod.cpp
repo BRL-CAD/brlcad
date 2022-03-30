@@ -438,9 +438,9 @@ POPState::edge_process()
 	rec edge[2];
 	// Transform edge vertices
 	for (int j = 0; j < 2; j++) {
-	    edge[j].x = floor((verts_array[faces_array[3*i+j]][X] - minx) / (maxx - minx) * USHRT_MAX);
-	    edge[j].y = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
-	    edge[j].z = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
+	    edge[j].x = floor((verts_array[edges[i].v[j]][X] - minx) / (maxx - minx) * USHRT_MAX);
+	    edge[j].y = floor((verts_array[edges[i].v[j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
+	    edge[j].z = floor((verts_array[edges[i].v[j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
 	}
 
 	// Find the pop up level for this edge (i.e., when it will first
@@ -1749,16 +1749,26 @@ POPState::plot(const char *root)
 
 	for (int i = 0; i <= curr_level; i++) {
 	    std::vector<int>::iterator s_it;
+	    if (i == 0) {
+		bu_log("edge cnt: %zd\n", level_edges[i].size());
+	    }
 	    for (s_it = level_edges[i].begin(); s_it != level_edges[i].end(); s_it++) {
 		int v1ind = lod_edges[2*(*s_it)+0];
 		int v2ind = lod_edges[2*(*s_it)+1];
 		point_t p1, p2, o1, o2;
 		VSET(p1, lod_edge_pnts[3*v1ind+0], lod_edge_pnts[3*v1ind+1], lod_edge_pnts[3*v1ind+2]);
 		VSET(p2, lod_edge_pnts[3*v2ind+0], lod_edge_pnts[3*v2ind+1], lod_edge_pnts[3*v2ind+2]);
+		if (i == 0) {
+		    bu_log("Edge_pts: %f %f %f -> %f %f %f\n", V3ARGS(p1), V3ARGS(p2));
+		}
+
 		// We iterate over the level i edges, but our target level is
 		// curr_level so we "decode" the points to that level, NOT level i
 		level_pnt(&o1, &p1, curr_level);
 		level_pnt(&o2, &p2, curr_level);
+		if (i == 0) {
+		    bu_log("snapped edge_pts: %f %f %f -> %f %f %f\n", V3ARGS(o1), V3ARGS(o2));
+		}
 		pdv_3move(plot_file, o1);
 		pdv_3cont(plot_file, o2);
 	    }
