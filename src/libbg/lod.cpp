@@ -38,14 +38,6 @@
  * Useful discussion of applying POP buffers here:
  * https://medium.com/@petroskataras/the-ayotzinapa-case-447a72d89e58
  *
- * TODO - if we're doing the pre-processing work, we should go ahead and prepare
- * a separate set of information for triangle edges.  Getting wireframes from
- * the triangles for every draw operation is inefficient - we end up drawing all
- * internal edges twice.  We should be able to adjust the degenerate test of POP
- * to check if the edge length is degenerate, rather than the triangle, and prepare
- * a wireframe/edge only version of the mesh data for drawing that is more efficient.
- * Then we can tailor the loaded data to the drawing mode.
- *
  * Notes on caching:
  *
  * Management of LoD cached data is actually a bit of a challenge.  A full
@@ -112,50 +104,6 @@ lod_dir(char *dir)
 #endif
 }
 
-// Unordered edge container
-struct uedge_t {
-    long v[2];
-
-    uedge_t()
-    {
-	v[0] = v[1] = -1;
-    }
-
-    uedge_t(long i, long j)
-    {
-	v[0] = (i <= j) ? i : j;
-	v[1] = (i > j) ? i : j;
-    }
-
-    uedge_t(const uedge_t &other) {
-	v[0] = other.v[0];
-	v[1] = other.v[1];
-    }
-
-    bool operator<(uedge_t other) const
-    {
-	bool c1 = (v[0] < other.v[0]);
-	bool c1e = (v[0] == other.v[0]);
-	bool c2 = (v[1] < other.v[1]);
-	return (c1 || (c1e && c2));
-    }
-    bool operator==(uedge_t other) const
-    {
-	bool c1 = (v[0] == other.v[0]);
-	bool c2 = (v[1] == other.v[1]);
-	return (c1 && c2);
-    }
-    struct hash
-    {
-	size_t operator()(const uedge_t& uedge) const
-	{
-	    size_t v1 = std::hash<int>()(uedge.v[0]);
-	    size_t v2 = std::hash<int>()(uedge.v[1]) << 1;
-	    return v1 ^ v2;
-	}
-    };
-};
-
 static int
 lod_trimesh_aabb(point_t *min, point_t *max, std::vector<int> &afaces, int *faces, int num_faces, const point_t *p, int num_pnts)
 {
@@ -182,60 +130,6 @@ lod_trimesh_aabb(point_t *min, point_t *max, std::vector<int> &afaces, int *face
 	BU_BITSET(visit_vert, faces[tri_index*3 + X]);
 	BU_BITSET(visit_vert, faces[tri_index*3 + Y]);
 	BU_BITSET(visit_vert, faces[tri_index*3 + Z]);
-    }
-
-    /* Second Pass: check max and min of vertices marked */
-    for(size_t vert_index = 0; vert_index < (size_t)num_pnts; vert_index++){
-	if(BU_BITTEST(visit_vert,vert_index)){
-	    VMINMAX((*min), (*max), p[vert_index]);
-	}
-    }
-
-    /* Done with bitv */
-    bu_bitv_free(visit_vert);
-
-    /* Make sure the RPP created is not of zero volume */
-    if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
-	(*min)[X] -= SMALL_FASTF;
-	(*max)[X] += SMALL_FASTF;
-    }
-    if (NEAR_EQUAL((*min)[Y], (*max)[Y], SMALL_FASTF)) {
-	(*min)[Y] -= SMALL_FASTF;
-	(*max)[Y] += SMALL_FASTF;
-    }
-    if (NEAR_EQUAL((*min)[Z], (*max)[Z], SMALL_FASTF)) {
-	(*min)[Z] -= SMALL_FASTF;
-	(*max)[Z] += SMALL_FASTF;
-    }
-
-    /* Success */
-    return 0;
-}
-
-static int
-lod_edges_aabb(point_t *min, point_t *max, std::vector<int> &einds, std::vector<uedge_t> &edges, const point_t *p, int num_pnts)
-{
-    /* If we can't produce any output, there's no point in continuing */
-    if (!min || !max)
-	return -1;
-
-    /* If something goes wrong with any bbox logic, we want to know it as soon
-     * as possible.  Make sure as soon as we can that the bbox output is set to
-     * invalid defaults, so we don't end up with something that accidentally
-     * looks reasonable if things fail. */
-    VSETALL((*min), INFINITY);
-    VSETALL((*max), -INFINITY);
-
-    /* If inputs are insufficient, we can't produce a bbox */
-    if (einds.size() == 0 || edges.size() == 0 || !p || num_pnts <= 0)
-	return -1;
-
-    /* First Pass: coherently iterate through all edges and mark vertices in a
-     * bit-vector that are referenced by an edge. */
-    struct bu_bitv *visit_vert = bu_bitv_new(num_pnts);
-    for (size_t i = 0; i < einds.size(); i++) {
-	BU_BITSET(visit_vert, edges[einds[i]].v[0]);
-	BU_BITSET(visit_vert, edges[einds[i]].v[1]);
     }
 
     /* Second Pass: check max and min of vertices marked */
@@ -303,18 +197,10 @@ class POPState {
 	// into npnts.
 	std::vector<fastf_t> lod_tri_pnts;
 
-	// Similar containers for edges
-	std::vector<int> lod_edges;
-	std::vector<fastf_t> lod_edge_pnts;
-
 	// Containers for sub-mesh grouping
 	RTree<size_t, double, 3> tri_rtree;
 	std::vector<std::vector<int>> tri_sets;
 	std::vector<fastf_t> triset_bboxes;
-
-	RTree<size_t, double, 3> edge_rtree;
-	std::vector<std::vector<int>> edge_sets;
-	std::vector<fastf_t> edgeset_bboxes;
 
 	// Current level of detail information loaded into nfaces/npnts
 	int curr_level = -1;
@@ -322,7 +208,6 @@ class POPState {
 	// Maximum level for which POP info is defined.  Above that level,
 	// need to shift to full rendering
 	int max_tri_pop_level = 0;
-	int max_edge_pop_level = 0;
 
 	// Used by calling functions to detect initialization errors
 	bool is_valid = false;
@@ -332,7 +217,6 @@ class POPState {
 
     private:
 
-	void edge_process();
 	void tri_process();
 
 	// Clamping of points to various detail levels
@@ -340,9 +224,6 @@ class POPState {
 
 	// Check if two points are equal at a clamped level
 	bool is_equal(rec r1, rec r2, int level);
-
-	// Degeneracy test for edges
-	bool edge_degenerate(rec r0, rec r1, int level);
 
 	// Degeneracy test for triangles
 	bool tri_degenerate(rec r0, rec r1, rec r2, int level);
@@ -355,7 +236,6 @@ class POPState {
 	// Write data out to cache (only used during initialization from
 	// external data)
 	void cache();
-	void cache_edge(struct bu_vls *vkey);
 	void cache_tri(struct bu_vls *vkey);
 
 	// Specific loading and unloading methods
@@ -363,13 +243,8 @@ class POPState {
 	void tri_pop_trim(int level);
 	void tri_rtree_load();
 
-	void edge_pop_load(int start_level, int level);
-	void edge_pop_trim(int level);
-	void edge_rtree_load();
-
 	// Global binning of vertices for sub-mesh drawing data
 	std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>> tri_boxes;
-	std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>> edge_boxes;
 
 	// Processing containers used for initial triangle data characterization
 	std::vector<int> tri_ind_map;
@@ -378,247 +253,12 @@ class POPState {
 	std::vector<std::vector<int>> level_tris;
 	size_t tri_threshold = 0;
 
-	// Processing containers used for initial edge data characterization
-	std::vector<int> edge_ind_map;
-	std::vector<int> vert_edge_minlevel;
-	std::vector<uedge_t> edges;
-	std::map<int, std::set<int>> level_edge_verts;
-	std::vector<std::vector<int>> level_edges;
-	size_t edge_threshold = 0;
-
 	// Pointers to original input data
 	int vert_cnt = 0;
 	const point_t *verts_array = NULL;
 	int faces_cnt = 0;
 	int *faces_array = NULL;
 };
-
-void
-POPState::edge_process()
-{
-    // Build the set of unique edges for wireframe optimization
-    std::unordered_set<uedge_t, uedge_t::hash> eset;
-    for (int i = 0; i < faces_cnt; i++) {
-	int v1 = faces_array[3*i+0];
-	int v2 = faces_array[3*i+1];
-	int v3 = faces_array[3*i+2];
-	uedge_t e1(v1, v2);
-	uedge_t e2(v2, v3);
-	uedge_t e3(v3, v1);
-	eset.insert(e1);
-	eset.insert(e2);
-	eset.insert(e3);
-    }
-
-    // Make a vector of the unique edges so we can reference by index
-    std::unordered_set<uedge_t, uedge_t::hash>::iterator e_it;
-    for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
-	edges.push_back(*e_it);
-    }
-    // Having ensured edge uniqueness and assigned indices, we are now done
-    // with the unordered set - let the program know it can have the memory
-    eset = std::unordered_set<uedge_t, uedge_t::hash>();
-
-    // Multiple edges may collapse to the same snapped edge in lower levels
-    // (and so not need to be drawn).  For each level, establish a vertex that
-    // will "own" its snapped bin
-    std::map<int, std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, int>>>> vmaps;
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	vmaps[i] = std::unordered_map<int, std::unordered_map<int, std::unordered_map<int, int>>>();
-    }
-    for (int i = 0; i < vert_cnt; i++) {
-	rec v;
-	// Transform vertex
-	v.x = floor((verts_array[i][X] - minx) / (maxx - minx) * USHRT_MAX);
-	v.y = floor((verts_array[i][Y] - miny) / (maxy - miny) * USHRT_MAX);
-	v.z = floor((verts_array[i][Z] - minz) / (maxz - minz) * USHRT_MAX);
-	// Unless there's a reason not to, go with "last wins"
-	for (int j = 0; j < POP_MAXLEVEL; j++) {
-	    int key[3];
-	    key[0] = to_level(v.x, j);
-	    key[1] = to_level(v.y, j);
-	    key[2] = to_level(v.z, j);
-	    vmaps[j][key[0]][key[1]][key[2]] = i;
-	}
-    }
-
-    // Until we prove otherwise, all edges are assumed to appear only at the
-    // last level (and consequently, their vertices are only needed then).  Set
-    // the level accordingly.
-    vert_edge_minlevel.reserve(vert_cnt);
-    for (int i = 0; i < vert_cnt; i++) {
-	vert_edge_minlevel.push_back(POP_MAXLEVEL - 1);
-    }
-
-    // Reserve memory for level containers
-    level_edges.reserve(POP_MAXLEVEL);
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	level_edges.push_back(std::vector<int>(0));
-    }
-
-    // Walk the edges and perform the LoD characterization
-    std::map<int, std::unordered_set<uedge_t, uedge_t::hash>> uedges;
-    std::map<int, int> ecnts;
-    bu_log("edge cnt: %zd\n", edges.size());
-    for (size_t i = 0; i < edges.size(); i++) {
-	rec edge[2];
-	// Transform edge vertices
-	for (int j = 0; j < 2; j++) {
-	    edge[j].x = floor((verts_array[edges[i].v[j]][X] - minx) / (maxx - minx) * USHRT_MAX);
-	    edge[j].y = floor((verts_array[edges[i].v[j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
-	    edge[j].z = floor((verts_array[edges[i].v[j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
-	}
-
-	// Find the pop up level for this edge (i.e., when it will first
-	// appear as we step up the zoom levels.)
-	int level = POP_MAXLEVEL - 1;
-	for (int j = 0; j < POP_MAXLEVEL-1; j++) {
-	    if (!edge_degenerate(edge[0], edge[1], j)) {
-		// For edges, we check not only for degeneracy but for level uniqueness
-		// If an edge is already accounted for by another edge at this level it
-		// does not "pop" until a deeper level is reached
-		int key1[3], key2[3];
-		key1[0] = to_level(edge[0].x, j+1);
-		key1[1] = to_level(edge[0].y, j+1);
-		key1[2] = to_level(edge[0].z, j+1);
-		key2[0] = to_level(edge[1].x, j+1);
-		key2[1] = to_level(edge[1].y, j+1);
-		key2[2] = to_level(edge[1].z, j+1);
-    		uedge_t ue(vmaps[j+1][key1[0]][key1[1]][key1[2]], vmaps[j+1][key2[0]][key2[1]][key2[2]]);
-		if (uedges[j].find(ue) == uedges[j].end()) {
-		    uedges[j].insert(ue);
-		}
-		ecnts[j]++;
-		    level = j;
-		break;
-	    }
-	}
-	// Add this edge to its "pop" level
-	level_edges[level].push_back(i);
-	//bu_log("edge %zd (%d): %d %d %d -> %d %d %d\n", i, level, edge[0].x, edge[0].y, edge[0].z, edge[1].x, edge[1].y, edge[1].z);
-
-	// Let the vertices know they will be needed at this level, if another
-	// edge doesn't already need them sooner
-	for (int j = 0; j < 2; j++) {
-	    if (vert_edge_minlevel[edges[i].v[j]] > level)
-		vert_edge_minlevel[edges[i].v[j]] = level;
-	}
-    }
-    for (size_t i = 0; i < POP_MAXLEVEL;i++) {
-	bu_log("ecnt: %d, ue: %zd\n", ecnts[i], uedges[i].size());
-    }
-
-    // The edge vertices now know when they will first need to appear.  Build level
-    // sets of vertices
-    for (size_t i = 0; i < vert_edge_minlevel.size(); i++) {
-	level_edge_verts[vert_edge_minlevel[i]].insert(i);
-    }
-
-    // Having sorted the vertices into level sets, we may now define a new global
-    // vertex ordering that respects the needs of the levels.
-    edge_ind_map.reserve(vert_cnt);
-    for (int i = 0; i < vert_cnt; i++) {
-	edge_ind_map.push_back(i);
-    }
-    int vind = 0;
-    std::map<int, std::set<int>>::iterator l_it;
-    std::set<int>::iterator s_it;
-    for (l_it = level_edge_verts.begin(); l_it != level_edge_verts.end(); l_it++) {
-	for (s_it = l_it->second.begin(); s_it != l_it->second.end(); s_it++) {
-	    edge_ind_map[*s_it] = vind;
-	    vind++;
-	}
-    }
-
-    // Beyond a certain depth, there is little benefit to the POP process.  If
-    // we check the count of level_edges, we will find a level at which the
-    // majority of the edges are active. Above that level, we change how we are
-    // managing the data.
-    size_t edgesum = 0;
-    size_t fcnt2 = (size_t)((fastf_t)faces_cnt/2.0);
-    for (size_t i = 0; i < level_edges.size(); i++) {
-	edgesum += level_edges[i].size();
-	if (edgesum > fcnt2) {
-	    edge_threshold = i;
-	    break;
-	}
-    }
-    //bu_log("Edge threshold level: %zd\n", edge_threshold);
-
-    // At the point when most edges are active, we switch to trying to
-    // recognize what parts of the mesh are in the view and only drawing those
-    // edges, rather than doing the LoD point snapping.  Bin the edges into
-    // discrete volumes (non-uniquely - the main concern here is to make sure
-    // we draw all the edges we need to draw in a given area.) Once we shift to
-    // this mode we have to load all the vertices and faces_array into memory,
-    // but by the time we make that switch we would have had comparable data in
-    // memory from the LoD info anyway.
-    for (size_t i = 0; i < edges.size(); i++) {
-	short edge[2][3];
-	// This is a tradeoff - smaller means fewer boxes but more edges
-	// per box.  Will have to see what a practical value is with real data.
-	int factor = 32;
-	// Transform edge vertices
-	for (int j = 0; j < 2; j++) {
-	    edge[j][0] = floor((verts_array[edges[i].v[j]][X] - minx) / (maxx - minx) * factor);
-	    edge[j][1] = floor((verts_array[edges[i].v[j]][Y] - miny) / (maxy - miny) * factor);
-	    edge[j][2] = floor((verts_array[edges[i].v[j]][Z] - minz) / (maxz - minz) * factor);
-	}
-
-	// The end points are trivially active.
-	edge_boxes[edge[0][0]][edge[0][1]][edge[0][2]].push_back(i);
-
-	// If the edge is fully inside the first box, we're done.  If not,
-	// we have to figure out which other boxes it intersects.  The other
-	// end point box is trivially active, but there may also be intermediate
-	// boxes which intersect the line.
-	if (edge[0][0] != edge[1][0] || edge[0][1] != edge[1][1] || edge[0][2] != edge[1][2]) {
-
-	    // Other end point is trivially active
-	    edge_boxes[edge[1][0]][edge[1][1]][edge[1][2]].push_back(i);
-
-	    // Will be doing ray box test
-	    point_t lorigin, bcenter;
-	    vect_t dir, bextent;
-	    VSET(lorigin, edge[0][0], edge[0][1], edge[0][2]);
-	    VSET(dir, edge[1][0] - edge[0][0], edge[1][1] - edge[0][1], edge[1][2] - edge[0][2]);
-	    VSET(bextent, 0.51, 0.51, 0.51);
-
-	    // Iterate over boxes other than the end points
-	    int start[3], end[3];
-	    start[0] = edge[0][0] > edge[1][0] ? edge[1][0] : edge[0][0];
-	    start[1] = edge[0][1] > edge[1][1] ? edge[1][1] : edge[0][1];
-	    start[2] = edge[0][2] > edge[1][2] ? edge[1][2] : edge[0][2];
-	    end[0] = edge[0][0] < edge[1][0] ? edge[1][0] : edge[0][0];
-	    end[1] = edge[0][1] < edge[1][1] ? edge[1][1] : edge[0][1];
-	    end[2] = edge[0][2] < edge[1][2] ? edge[1][2] : edge[0][2];
-	    for (int e = start[0]; e <= end[0]; e++) {
-		for (int j = start[1]; j <= end[1]; j++) {
-		    for (int k = start[2]; k <= end[2]; k++) {
-			bool endpt = false;
-			for (int l = 0; l < 2; l++) {
-			    if (edge[l][0] == e && edge[l][1] == j && edge[l][2] == k) {
-				endpt = true;
-				break;
-			    }
-			}
-			if (endpt)
-			    continue;
-			VSET(bcenter, (fastf_t)e+0.5, (fastf_t)j+0.5, (fastf_t)k+0.5);
-			if (bg_sat_line_aabb(lorigin, dir, bcenter, bextent)) {
-			    edge_boxes[e][j][k].push_back(i);
-			    //bu_log("line hit: %d %d %d\n", e, j ,k);
-			} else {
-			    //bu_log("MISS: %d %d %d\n", e, j ,k);
-			}
-		    }
-		}
-	    }
-	    //bu_log("edge: %d,%d,%d -> %d,%d,%d\n", V3ARGS(edge[0]), V3ARGS(edge[1]));
-	    //bu_log("edge range: %d,%d,%d -> %d,%d,%d\n", V3ARGS(start), V3ARGS(end));
-	}
-    }
-}
 
 void
 POPState::tri_process()
@@ -796,14 +436,8 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     maxy = maxy+fabs(MBUMP*maxy);
     maxz = maxz+fabs(MBUMP*maxz);
 
-
-    // Characterize triangle edges (wireframe drawing)
-    edge_process();
-
-
-    // Characterize triangle faces (solid drawing)
+    // Characterize triangle faces
     tri_process();
-
 
     // We're now ready to write out the data
     is_valid = true;
@@ -845,12 +479,6 @@ POPState::POPState(unsigned long long key)
     hash = key;
 
     // Reserve memory for level containers
-    level_edges.reserve(POP_MAXLEVEL);
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	level_edges.push_back(std::vector<int>(0));
-    }
-
-    // Reserve memory for level containers
     level_tris.reserve(POP_MAXLEVEL);
     for (int i = 0; i < POP_MAXLEVEL; i++) {
 	level_tris.push_back(std::vector<int>(0));
@@ -878,11 +506,6 @@ POPState::POPState(unsigned long long key)
 	if (bu_file_exists(dir, NULL)) {
 	    max_tri_pop_level = i;
 	}
-	bu_vls_sprintf(&vfile, "edges_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
-	if (bu_file_exists(dir, NULL)) {
-	    max_edge_pop_level = i;
-	}
     }
 
     // Read in the zero level vertices and triangles
@@ -891,155 +514,6 @@ POPState::POPState(unsigned long long key)
     // All set - ready for LoD
     bu_vls_free(&vkey);
     is_valid = 1;
-}
-
-void
-POPState::edge_pop_load(int start_level, int level)
-{
-    char dir[MAXPATHLEN];
-    struct bu_vls vkey = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&vkey, "%llu", hash);
-
-    // Read in the level vertices
-    for (int i = start_level+1; i <= level; i++) {
-	struct bu_vls vfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&vfile, "edge_verts_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
-	if (!bu_file_exists(dir, NULL))
-	    continue;
-
-	std::ifstream vifile(dir, std::ios::in | std::ofstream::binary);
-	int vicnt = 0;
-	vifile.read(reinterpret_cast<char *>(&vicnt), sizeof(vicnt));
-	for (int j = 0; j < vicnt; j++) {
-	    point_t nv;
-	    vifile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
-	    for (int k = 0; k < 3; k++) {
-		lod_edge_pnts.push_back(nv[k]);
-	    }
-	    level_edge_verts[i].insert(lod_edge_pnts.size() - 1);
-	}
-	vifile.close();
-	bu_vls_free(&vfile);
-    }
-
-    // Read in the level edge sets
-    for (int i = start_level+1; i <= level; i++) {
-	struct bu_vls tfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&tfile, "edges_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&tfile), NULL);
-	if (!bu_file_exists(dir, NULL))
-	    continue;
-
-	std::ifstream tifile(dir, std::ios::in | std::ofstream::binary);
-	int ticnt = 0;
-	tifile.read(reinterpret_cast<char *>(&ticnt), sizeof(ticnt));
-	for (int j = 0; j < ticnt; j++) {
-	    int vf[2];
-	    tifile.read(reinterpret_cast<char *>(&vf), 2*sizeof(int));
-	    for (int k = 0; k < 2; k++) {
-		lod_edges.push_back(vf[k]);
-	    }
-	    level_edges[i].push_back(lod_edges.size() / 2 - 1);
-	}
-	tifile.close();
-	bu_vls_free(&tfile);
-    }
-
-    bu_vls_free(&vkey);
-}
-
-void
-POPState::edge_pop_trim(int level)
-{
-    // Clear the level_edges info for everything above the target level - it will be reloaded
-    // if we need it again
-    for (size_t i = level+1; i < POP_MAXLEVEL; i++) {
-	level_edges[i].clear();
-	level_edges[i].shrink_to_fit();
-    }
-    // Tally all the lower level verts and edges - those are the ones we need to keep
-    size_t vkeep_cnt = 0;
-    size_t fkeep_cnt = 0;
-    for (size_t i = 0; i <= (size_t)level; i++) {
-	vkeep_cnt += level_edge_verts[i].size();
-	fkeep_cnt += level_edges[i].size();
-    }
-
-    // Shrink the main arrays (note that in C++11 shrink_to_fit may or may
-    // not actually shrink memory usage on any given call.)
-    lod_edge_pnts.resize(vkeep_cnt*3);
-    lod_edge_pnts.shrink_to_fit();
-    lod_edges.resize(fkeep_cnt*2);
-    lod_edges.shrink_to_fit();
-
-}
-
-void
-POPState::edge_rtree_load()
-{
-    lod_edge_pnts.clear();
-    lod_edges.clear();
-    edges.clear();
-
-    size_t ecnt = 0;
-    char dir[MAXPATHLEN];
-    struct bu_vls vkey = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&vkey, "%llu", hash);
-
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_verts", NULL);
-    std::ifstream avfile(dir, std::ios::in | std::ofstream::binary);
-    avfile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
-    for (size_t i = 0; i < ecnt; i++) {
-	point_t nv;
-	avfile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
-	for (int k = 0; k < 3; k++) {
-	    lod_edge_pnts.push_back(nv[k]);
-	}
-    }
-
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_edges", NULL);
-    std::ifstream aefile(dir, std::ios::in | std::ofstream::binary);
-    aefile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
-    for (size_t i = 0; i < ecnt; i++) {
-	uedge_t e;
-	aefile.read(reinterpret_cast<char *>(&e.v), sizeof(e.v));
-	edges.push_back(e);
-    }
-
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "edge_sets", NULL);
-    std::ifstream tset_file(dir, std::ios::in | std::ofstream::binary);
-    tset_file.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
-    edge_sets.reserve(ecnt);
-    for (size_t i = 0; i < ecnt; i++) {
-	edge_sets.push_back(std::vector<int>(0));
-    }
-    edgeset_bboxes.reserve(6*ecnt);
-    for (size_t i = 0; i < 6*ecnt; i++) {
-	edgeset_bboxes.push_back(MAX_FASTF);
-    }
-    for (size_t i = 0; i < ecnt; i++) {
-	point_t bbox[2] = {VINIT_ZERO, VINIT_ZERO};
-	tset_file.read(reinterpret_cast<char *>(&(bbox[0][0])), sizeof(point_t));
-	tset_file.read(reinterpret_cast<char *>(&(bbox[1][0])), sizeof(point_t));
-	edgeset_bboxes[i*6+0] = bbox[0][X];
-	edgeset_bboxes[i*6+1] = bbox[0][Y];
-	edgeset_bboxes[i*6+2] = bbox[0][Z];
-	edgeset_bboxes[i*6+3] = bbox[1][X];
-	edgeset_bboxes[i*6+4] = bbox[1][Y];
-	edgeset_bboxes[i*6+5] = bbox[1][Z];
-
-	edge_rtree.Insert(bbox[0], bbox[1], i);
-
-	size_t tcnt = 0;
-	tset_file.read(reinterpret_cast<char *>(&tcnt), sizeof(tcnt));
-	edge_sets[i].reserve(tcnt);
-	for (size_t j = 0; j < tcnt; j++) {
-	    int tind;
-	    tset_file.read(reinterpret_cast<char *>(&tind), sizeof(int));
-	    edge_sets[i].push_back(tind);
-	}
-    }
 }
 
 void
@@ -1248,190 +722,11 @@ POPState::set_level(int level)
 	tri_rtree_load();
     }
 
-    // Edges
-
-    // If we need to pull more data, do so
-    if (level > curr_level && level <= max_edge_pop_level) {
-	edge_pop_load(curr_level, level);
-    }
-
-    // If we need to trim back the POP data, do that
-    if (level < curr_level && level <= max_edge_pop_level && curr_level <= max_tri_pop_level) {
-	edge_pop_trim(level);
-    }
-
-    // If we were operating beyond POP detail levels (i.e. using RTree
-    // management) we need to reset our POP data and clear the more detailed
-    // info from the containers to free up memory.
-    if (level < curr_level && level <= max_edge_pop_level && curr_level > max_edge_pop_level) {
-	// We're (re)entering the POP range - clear the high detail data and start over
-	lod_edges.clear();
-	lod_edge_pnts.clear();
-	edges.clear();
-
-	// Full reset, not an incremental load.
-	edge_pop_load(-1, level);
-
-	// We may have substantially shrunk these arrays - see if we can open
-	// up the memory
-	lod_edges.shrink_to_fit();
-	lod_edge_pnts.shrink_to_fit();
-	edges.shrink_to_fit();
-    }
-
-    // If we're jumping into details levels beyond POP range, clear the POP containers
-    // and load the more detailed data management info
-    if (level > curr_level && level > max_edge_pop_level && curr_level <= max_edge_pop_level) {
-	edge_rtree_load();
-    }
-
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("lod set_level(%d): %f sec\n", level, seconds);
 
     curr_level = level;
-}
-
-void
-POPState::cache_edge(struct bu_vls *vkey)
-{
-    char dir[MAXPATHLEN];
-
-    // Write out the level vertices
-    for (size_t i = 0; i <= edge_threshold; i++) {
-	if (level_edge_verts.find(i) == level_edge_verts.end())
-	    continue;
-	if (!level_edge_verts[i].size())
-	    continue;
-	struct bu_vls vfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&vfile, "edge_verts_level_%zd", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), bu_vls_cstr(&vfile), NULL);
-
-	std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
-
-	// Store the size of the level vert vector
-	int sv = level_edge_verts[i].size();
-	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
-
-	// Write out the vertex points
-	std::set<int>::iterator s_it;
-	for (s_it = level_edge_verts[i].begin(); s_it != level_edge_verts[i].end(); s_it++) {
-	    point_t v;
-	    VMOVE(v, verts_array[*s_it]);
-	    vofile.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
-	}
-
-	vofile.close();
-	bu_vls_free(&vfile);
-    }
-
-
-    // Write out the level edges
-    for (size_t i = 0; i <= edge_threshold; i++) {
-	if (!level_edges[i].size())
-	    continue;
-	struct bu_vls tfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&tfile, "edges_level_%zd", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), bu_vls_cstr(&tfile), NULL);
-
-	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
-
-	// Store the size of the level edge vector
-	int st = level_edges[i].size();
-	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
-
-	// Write out the mapped edge vertex indices
-	std::vector<int>::iterator s_it;
-	for (s_it = level_edges[i].begin(); s_it != level_edges[i].end(); s_it++) {
-	    int ev[2];
-	    ev[0] = edge_ind_map[edges[*s_it].v[0]];
-	    ev[1] = edge_ind_map[edges[*s_it].v[1]];
-	    tofile.write(reinterpret_cast<const char *>(&ev[0]), sizeof(ev));
-	}
-
-	tofile.close();
-	bu_vls_free(&tfile);
-    }
-
-    // The edges array is saved, so the boxes may reference only a single
-    // integer index rather than having to store two vertex indices.  This is
-    // also intended to facilitate uniqueness operations in loading code - if
-    // an OBB from a view intersects many leaf nodes, to avoid multiple drawing
-    // of the same edge from multiple leaf box sources an initial uniqueness
-    // pass is needed.
-    //
-    // NOTE:  The high fidelity data, unlike the POP levels, just uses the
-    // original vertex ordering written out in all_verts.   The reason that the
-    // POP edge data uses one vertex ordering and the all_edges another is to
-    // avoid storing multiple copies of the full vertex set for faces and
-    // edges.  The vertex sorting for faces and edges is not guaranteed to be
-    // the same, and rather than involve the POP sorting in a scheme that
-    // doesn't use it we stick to the original orderings for clarity and
-    // simplicity.
-    {
-	size_t ecnt;
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), "all_edges", NULL);
-	std::ofstream efile(dir, std::ios::out | std::ofstream::binary);
-	ecnt = edges.size();
-	efile.write(reinterpret_cast<const char *>(&ecnt), sizeof(ecnt));
-	for (size_t i = 0; i < edges.size(); i++) {
-	    efile.write(reinterpret_cast<const char *>(&edges[i].v[0]), sizeof(edges[i].v));
-	}
-	efile.close();
-    }
-
-    // Write out the edge sets.  We calculate and write out the bounding boxes
-    // of each set so the loading code need only read the values to prepare an
-    // RTree.  These edge indices are based on the all_verts array.
-    std::unordered_map<short, std::unordered_map<short, std::unordered_map<short, std::vector<int>>>>::iterator b1_it;
-    std::unordered_map<short, std::unordered_map<short, std::vector<int>>>::iterator b2_it;
-    std::unordered_map<short, std::vector<int>>::iterator b3_it;
-    size_t bcnt = 0;
-    size_t ecnt = 0;
-    {
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), "edge_sets", NULL);
-	std::ofstream esfile(dir, std::ios::out | std::ofstream::binary);
-	if (!esfile.is_open())
-	    return;
-
-	for (b1_it = edge_boxes.begin(); b1_it != edge_boxes.end(); b1_it++) {
-	    for (b2_it = b1_it->second.begin(); b2_it != b1_it->second.end(); b2_it++) {
-		for (b3_it = b2_it->second.begin(); b3_it != b2_it->second.end(); b3_it++) {
-		    bcnt++;
-		}
-	    }
-	}
-	esfile.write(reinterpret_cast<const char *>(&bcnt), sizeof(bcnt));
-
-	for (b1_it = edge_boxes.begin(); b1_it != edge_boxes.end(); b1_it++) {
-	    for (b2_it = b1_it->second.begin(); b2_it != b1_it->second.end(); b2_it++) {
-		for (b3_it = b2_it->second.begin(); b3_it != b2_it->second.end(); b3_it++) {
-		    // This shouldn't happen, but if the logic changes to
-		    // somehow clear a set we don't want an empty set
-		    if (!b3_it->second.size())
-			continue;
-
-		    // Calculate the bbox
-		    point_t min, max;
-		    if (lod_edges_aabb(&min, &max, b3_it->second, edges, verts_array, vert_cnt) < 0) {
-			bu_log("Error - edge set bbox calculation failed\n");
-			esfile.close();
-			continue;
-		    }
-		    esfile.write(reinterpret_cast<const char *>(&min[0]), sizeof(point_t));
-		    esfile.write(reinterpret_cast<const char *>(&max[0]), sizeof(point_t));
-
-		    // Record how many edges we've got, and then write the edge
-		    // indices themselves
-		    ecnt = b3_it->second.size();
-		    esfile.write(reinterpret_cast<const char *>(&ecnt), sizeof(ecnt));
-		    esfile.write(reinterpret_cast<const char *>(&b3_it->second[0]), b3_it->second.size() * sizeof(int));
-		}
-	    }
-	}
-
-	esfile.close();
-    }
 }
 
 void
@@ -1623,9 +918,6 @@ POPState::cache()
 	vfile.close();
     }
 
-    // Write edge-specific data
-    cache_edge(&vkey);
-
     // Write triangle-specific data
     cache_tri(&vkey);
 
@@ -1681,14 +973,6 @@ POPState::is_equal(rec r1, rec r2, int level)
     bool tl_y = (to_level(r1.y, level) == to_level(r2.y, level));
     bool tl_z = (to_level(r1.z, level) == to_level(r2.z, level));
     return (tl_x && tl_y && tl_z);
-}
-
-// Checks whether an edge is degenerate (coordinates are the same on the given
-// precision level)
-bool
-POPState::edge_degenerate(rec r0, rec r1, int level)
-{
-    return is_equal(r0, r1, level);
 }
 
 // Checks whether a triangle is degenerate (at least two coordinates are the
@@ -1782,60 +1066,6 @@ POPState::plot(const char *root)
 
     fclose(plot_file);
 
-    if (!root) {
-	bu_vls_sprintf(&name, "init_edges_level_%.2d.plot3", curr_level);
-    } else {
-	bu_vls_sprintf(&name, "%s_edges_level_%.2d.plot3", root, curr_level);
-    }
-    plot_file = fopen(bu_vls_addr(&name), "wb");
-
-    if (curr_level <= max_edge_pop_level) {
-    	pl_color(plot_file, 0, 255, 0);
-
-	bu_log("curr_level: %d\n", curr_level);
-
-	for (int i = 0; i <= curr_level; i++) {
-	    std::vector<int>::iterator s_it;
-	    bu_log("(%d)(%d): %zd\n", curr_level, i, level_edges[i].size());
-	    for (s_it = level_edges[i].begin(); s_it != level_edges[i].end(); s_it++) {
-		int v1ind = lod_edges[2*(*s_it)+0];
-		int v2ind = lod_edges[2*(*s_it)+1];
-		point_t p1, p2, o1, o2;
-		VSET(p1, lod_edge_pnts[3*v1ind+0], lod_edge_pnts[3*v1ind+1], lod_edge_pnts[3*v1ind+2]);
-		VSET(p2, lod_edge_pnts[3*v2ind+0], lod_edge_pnts[3*v2ind+1], lod_edge_pnts[3*v2ind+2]);
-
-		// We iterate over the level i edges, but our target level is
-		// curr_level so we "decode" the points to that level, NOT level i
-		level_pnt(&o1, &p1, curr_level);
-		level_pnt(&o2, &p2, curr_level);
-
-		pdv_3move(plot_file, o1);
-		pdv_3cont(plot_file, o2);
-	    }
-	}
-
-    } else {
-	RTree<size_t, double, 3>::Iterator tree_it;
-	edge_rtree.GetFirst(tree_it);
-	while (!tree_it.IsNull()) {
-	    size_t i = *tree_it;
-	    struct bu_color c = BU_COLOR_INIT_ZERO;
-	    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-	    pl_color_buc(plot_file, &c);
-	    for (size_t j = 0; j < edge_sets[i].size(); j++) {
-		int v1ind, v2ind;
-		point_t p1, p2;
-		v1ind = edges[edge_sets[i][j]].v[0];
-		v2ind = edges[edge_sets[i][j]].v[1];
-		VSET(p1, lod_edge_pnts[3*v1ind+0], lod_edge_pnts[3*v1ind+1], lod_edge_pnts[3*v1ind+2]);
-		VSET(p2, lod_edge_pnts[3*v2ind+0], lod_edge_pnts[3*v2ind+1], lod_edge_pnts[3*v2ind+2]);
-		pdv_3move(plot_file, p1);
-		pdv_3cont(plot_file, p2);
-	    }
-	    ++tree_it;
-	}
-    }
-
     bu_vls_free(&name);
 }
 
@@ -1911,11 +1141,6 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
     return -1;
 }
 
-// TODO - need to have awareness of whether we're in wireframe
-// or shaded data mode - we ideally don't want to load both, since
-// it's a waste of memory, but some of these functions will need
-// to know to handle that.  In particular, lod_faces will be a
-// no-op if the lod container has wireframe data.
 extern "C" size_t
 bg_mesh_lod_verts(const point_t **v, struct bg_mesh_lod *l)
 {
