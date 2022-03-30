@@ -207,7 +207,7 @@ get_args(int argc, const char *argv[])
     struct bu_vls oline = BU_VLS_INIT_ZERO;
     int oid = 0;
     bu_optind = 1;                /* restart */
-
+    npsw = bu_avail_cpus();
 
 #define GETOPT_STR	\
     ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v::w:x:z:A:BC:D:E:F:G:H:I:J:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"

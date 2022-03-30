@@ -682,8 +682,8 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     project->configurations()
     .get_by_name("final")->get_parameters()
     .insert_path("uniform_pixel_renderer.samples", samples)
-    .insert_path("rendering_threads", "1"); /* multithreading not supported yet */
-
+    .insert_path("rendering_threads", npsw); /* multithreading not supported yet */
+    
     project->configurations()
 	.get_by_name("interactive")->get_parameters()
 	.insert_path("rendering_threads", "1"); /* no multithreading - for debug rendering on appleseed */
