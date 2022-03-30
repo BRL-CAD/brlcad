@@ -504,13 +504,13 @@ POPState::edge_process()
     // recognize what parts of the mesh are in the view and only drawing those
     // edges, rather than doing the LoD point snapping.  Bin the edges into
     // discrete volumes (non-uniquely - the main concern here is to make sure
-    // we draw all the triangles we need to draw in a given area.) Once we
-    // shift to this mode we have to load all the vertices and faces_array into
-    // memory, but by the time we make that switch we would have had comparable
-    // data in memory from the LoD info anyway.
+    // we draw all the edges we need to draw in a given area.) Once we shift to
+    // this mode we have to load all the vertices and faces_array into memory,
+    // but by the time we make that switch we would have had comparable data in
+    // memory from the LoD info anyway.
     for (size_t i = 0; i < edges.size(); i++) {
 	short edge[2][3];
-	// This is a tradeoff - smaller means fewer boxes but more tris
+	// This is a tradeoff - smaller means fewer boxes but more edges
 	// per box.  Will have to see what a practical value is with real data.
 	int factor = 32;
 	// Transform edge vertices
@@ -563,7 +563,7 @@ POPState::edge_process()
 			if (bg_sat_line_aabb(lorigin, dir, bcenter, bextent)) {
 			    edge_boxes[e][j][k].push_back(i);
 			    //bu_log("line hit: %d %d %d\n", e, j ,k);
-			//} else {
+			} else {
 			    //bu_log("MISS: %d %d %d\n", e, j ,k);
 			}
 		    }
@@ -935,6 +935,7 @@ POPState::edge_rtree_load()
 {
     lod_edge_pnts.clear();
     lod_edges.clear();
+    edges.clear();
 
     size_t ecnt = 0;
     char dir[MAXPATHLEN];
@@ -950,6 +951,15 @@ POPState::edge_rtree_load()
 	for (int k = 0; k < 3; k++) {
 	    lod_edge_pnts.push_back(nv[k]);
 	}
+    }
+
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_edges", NULL);
+    std::ifstream aefile(dir, std::ios::in | std::ofstream::binary);
+    aefile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
+    for (size_t i = 0; i < ecnt; i++) {
+	uedge_t e;
+	aefile.read(reinterpret_cast<char *>(&e.v), sizeof(e.v));
+	edges.push_back(e);
     }
 
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "edge_sets", NULL);
@@ -1212,6 +1222,7 @@ POPState::set_level(int level)
 	// We're (re)entering the POP range - clear the high detail data and start over
 	lod_edges.clear();
 	lod_edge_pnts.clear();
+	edges.clear();
 
 	// Full reset, not an incremental load.
 	edge_pop_load(-1, level);
@@ -1220,6 +1231,7 @@ POPState::set_level(int level)
 	// up the memory
 	lod_edges.shrink_to_fit();
 	lod_edge_pnts.shrink_to_fit();
+	edges.shrink_to_fit();
     }
 
     // If we're jumping into details levels beyond POP range, clear the POP containers
@@ -1294,6 +1306,33 @@ POPState::cache_edge(struct bu_vls *vkey)
 
 	tofile.close();
 	bu_vls_free(&tfile);
+    }
+
+    // The edges array is saved, so the boxes may reference only a single
+    // integer index rather than having to store two vertex indices.  This is
+    // also intended to facilitate uniqueness operations in loading code - if
+    // an OBB from a view intersects many leaf nodes, to avoid multiple drawing
+    // of the same edge from multiple leaf box sources an initial uniqueness
+    // pass is needed.
+    //
+    // NOTE:  The high fidelity data, unlike the POP levels, just uses the
+    // original vertex ordering written out in all_verts.   The reason that the
+    // POP edge data uses one vertex ordering and the all_edges another is to
+    // avoid storing multiple copies of the full vertex set for faces and
+    // edges.  The vertex sorting for faces and edges is not guaranteed to be
+    // the same, and rather than involve the POP sorting in a scheme that
+    // doesn't use it we stick to the original orderings for clarity and
+    // simplicity.
+    {
+	size_t ecnt;
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), "all_edges", NULL);
+	std::ofstream efile(dir, std::ios::out | std::ofstream::binary);
+	ecnt = edges.size();
+	efile.write(reinterpret_cast<const char *>(&ecnt), sizeof(ecnt));
+	for (size_t i = 0; i < edges.size(); i++) {
+	    efile.write(reinterpret_cast<const char *>(&edges[i].v[0]), sizeof(edges[i].v));
+	}
+	efile.close();
     }
 
     // Write out the edge sets.  We calculate and write out the bounding boxes
@@ -1528,7 +1567,7 @@ POPState::cache()
 	minmaxfile.close();
     }
 
-    // Both edges and faces use the all_verts array for high detail scenarios
+    // Write out the set of all vertices
     {
 	size_t ecnt;
 	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_verts", NULL);
@@ -1625,9 +1664,9 @@ POPState::plot(const char *root)
     FILE *plot_file = NULL;
     bu_vls_init(&name);
     if (!root) {
-	bu_vls_printf(&name, "init_tris_level_%.2d.plot3", curr_level);
+	bu_vls_sprintf(&name, "init_tris_level_%.2d.plot3", curr_level);
     } else {
-	bu_vls_printf(&name, "%s_tris_level_%.2d.plot3", root, curr_level);
+	bu_vls_sprintf(&name, "%s_tris_level_%.2d.plot3", root, curr_level);
     }
     plot_file = fopen(bu_vls_addr(&name), "wb");
 
@@ -1698,54 +1737,55 @@ POPState::plot(const char *root)
 
     fclose(plot_file);
 
-#if 0
     if (!root) {
-	bu_vls_printf(&name, "init_edges_level_%.2d.plot3", curr_level);
+	bu_vls_sprintf(&name, "init_edges_level_%.2d.plot3", curr_level);
     } else {
-	bu_vls_printf(&name, "%s_edges_level_%.2d.plot3", root, curr_level);
+	bu_vls_sprintf(&name, "%s_edges_level_%.2d.plot3", root, curr_level);
     }
     plot_file = fopen(bu_vls_addr(&name), "wb");
 
     if (curr_level <= max_edge_pop_level) {
-	pl_color(plot_file, 0, 255, 0);
+    	pl_color(plot_file, 0, 255, 0);
 
 	for (int i = 0; i <= curr_level; i++) {
 	    std::vector<int>::iterator s_it;
-	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-		int f_ind = *s_it;
-		int v1ind, v2ind, v3ind;
-		if (faces_array) {
-		    v1ind = faces_array[3*f_ind+0];
-		    v2ind = faces_array[3*f_ind+1];
-		    v3ind = faces_array[3*f_ind+2];
-		} else {
-		    v1ind = nfaces[3*f_ind+0];
-		    v2ind = nfaces[3*f_ind+1];
-		    v3ind = nfaces[3*f_ind+2];
-		}
-		point_t p1, p2, p3, o1, o2, o3;
-		if (verts_array) {
-		    VMOVE(p1, verts_array[v1ind]);
-		    VMOVE(p2, verts_array[v2ind]);
-		    VMOVE(p3, verts_array[v3ind]);
-		} else {
-		    VSET(p1, npnts[3*v1ind+0], npnts[3*v1ind+1], npnts[3*v1ind+2]);
-		    VSET(p2, npnts[3*v2ind+0], npnts[3*v2ind+1], npnts[3*v2ind+2]);
-		    VSET(p3, npnts[3*v3ind+0], npnts[3*v3ind+1], npnts[3*v3ind+2]);
-		}
-		// We iterate over the level i triangles, but our target level is
+	    for (s_it = level_edges[i].begin(); s_it != level_edges[i].end(); s_it++) {
+		int v1ind = lod_edges[2*(*s_it)+0];
+		int v2ind = lod_edges[2*(*s_it)+1];
+		point_t p1, p2, o1, o2;
+		VSET(p1, lod_edge_pnts[3*v1ind+0], lod_edge_pnts[3*v1ind+1], lod_edge_pnts[3*v1ind+2]);
+		VSET(p2, lod_edge_pnts[3*v2ind+0], lod_edge_pnts[3*v2ind+1], lod_edge_pnts[3*v2ind+2]);
+		// We iterate over the level i edges, but our target level is
 		// curr_level so we "decode" the points to that level, NOT level i
 		level_pnt(&o1, &p1, curr_level);
 		level_pnt(&o2, &p2, curr_level);
-		level_pnt(&o3, &p3, curr_level);
 		pdv_3move(plot_file, o1);
 		pdv_3cont(plot_file, o2);
-		pdv_3cont(plot_file, o3);
-		pdv_3cont(plot_file, o1);
 	    }
 	}
+
+    } else {
+	RTree<size_t, double, 3>::Iterator tree_it;
+	edge_rtree.GetFirst(tree_it);
+	while (!tree_it.IsNull()) {
+	    size_t i = *tree_it;
+	    struct bu_color c = BU_COLOR_INIT_ZERO;
+	    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+	    pl_color_buc(plot_file, &c);
+	    for (size_t j = 0; j < edge_sets[i].size(); j++) {
+		int v1ind, v2ind;
+		point_t p1, p2;
+		v1ind = edges[j].v[0];
+		v2ind = edges[j].v[1];
+		VSET(p1, lod_edge_pnts[3*v1ind+0], lod_edge_pnts[3*v1ind+1], lod_edge_pnts[3*v1ind+2]);
+		VSET(p2, lod_edge_pnts[3*v2ind+0], lod_edge_pnts[3*v2ind+1], lod_edge_pnts[3*v2ind+2]);
+		pdv_3move(plot_file, p1);
+		pdv_3cont(plot_file, p2);
+	    }
+	    ++tree_it;
+	}
+ 
     }
-#endif
 
     bu_vls_free(&name);
 }
