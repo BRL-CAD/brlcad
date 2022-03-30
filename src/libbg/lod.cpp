@@ -458,6 +458,7 @@ POPState::edge_process()
 
     // Walk the edges and perform the LoD characterization
     std::map<int, std::unordered_set<uedge_t, uedge_t::hash>> uedges;
+    std::map<int, int> ecnts;
     bu_log("edge cnt: %zd\n", edges.size());
     for (size_t i = 0; i < edges.size(); i++) {
 	rec edge[2];
@@ -471,23 +472,24 @@ POPState::edge_process()
 	// Find the pop up level for this edge (i.e., when it will first
 	// appear as we step up the zoom levels.)
 	int level = POP_MAXLEVEL - 1;
-	for (int j = 0; j < POP_MAXLEVEL; j++) {
+	for (int j = 0; j < POP_MAXLEVEL-1; j++) {
 	    if (!edge_degenerate(edge[0], edge[1], j)) {
 		// For edges, we check not only for degeneracy but for level uniqueness
 		// If an edge is already accounted for by another edge at this level it
 		// does not "pop" until a deeper level is reached
 		int key1[3], key2[3];
-		key1[0] = to_level(edge[0].x, j);
-		key1[1] = to_level(edge[0].y, j);
-		key1[2] = to_level(edge[0].z, j);
-		key2[0] = to_level(edge[1].x, j);
-		key2[1] = to_level(edge[1].y, j);
-		key2[2] = to_level(edge[1].z, j);
-    		uedge_t ue(vmaps[j][key1[0]][key1[1]][key1[2]], vmaps[j][key2[0]][key2[1]][key2[2]]);
+		key1[0] = to_level(edge[0].x, j+1);
+		key1[1] = to_level(edge[0].y, j+1);
+		key1[2] = to_level(edge[0].z, j+1);
+		key2[0] = to_level(edge[1].x, j+1);
+		key2[1] = to_level(edge[1].y, j+1);
+		key2[2] = to_level(edge[1].z, j+1);
+    		uedge_t ue(vmaps[j+1][key1[0]][key1[1]][key1[2]], vmaps[j+1][key2[0]][key2[1]][key2[2]]);
 		if (uedges[j].find(ue) == uedges[j].end()) {
-		    level = j;
 		    uedges[j].insert(ue);
 		}
+		ecnts[j]++;
+		    level = j;
 		break;
 	    }
 	}
@@ -501,6 +503,9 @@ POPState::edge_process()
 	    if (vert_edge_minlevel[edges[i].v[j]] > level)
 		vert_edge_minlevel[edges[i].v[j]] = level;
 	}
+    }
+    for (size_t i = 0; i < POP_MAXLEVEL;i++) {
+	bu_log("ecnt: %d, ue: %zd\n", ecnts[i], uedges[i].size());
     }
 
     // The edge vertices now know when they will first need to appear.  Build level
