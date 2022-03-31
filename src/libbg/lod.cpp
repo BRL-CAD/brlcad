@@ -1293,10 +1293,15 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
 {
     if (!l)
 	return -1;
-    if (level == -1)
-	return l->i->s->curr_level;
+    POPState *s = l->i->s;
+    if (!s)
+	return -1;
+    if (level < 0)
+	return s->curr_level;
 
-    return -1;
+    s->set_level(level);
+
+    return s->curr_level;
 }
 
 extern "C" size_t
