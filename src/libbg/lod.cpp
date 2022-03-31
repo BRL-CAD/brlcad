@@ -996,23 +996,20 @@ POPState::level_pnt(point_t *o, const point_t *p, int level)
     int hy = ceil(y/double(PRECOMPUTED_MASKS[level]));
     int hz = ceil(z/double(PRECOMPUTED_MASKS[level]));
     // Back to point values
-    fastf_t lx1 = lx * double(PRECOMPUTED_MASKS[level]);
-    fastf_t ly1 = ly * double(PRECOMPUTED_MASKS[level]);
-    fastf_t lz1 = lz * double(PRECOMPUTED_MASKS[level]);
-    fastf_t hx1 = hx * double(PRECOMPUTED_MASKS[level]);
-    fastf_t hy1 = hy * double(PRECOMPUTED_MASKS[level]);
-    fastf_t hz1 = hz * double(PRECOMPUTED_MASKS[level]);
+    fastf_t x1 = ((fastf_t)lx + (fastf_t)hx)*0.5 * double(PRECOMPUTED_MASKS[level]);
+    fastf_t y1 = ((fastf_t)ly + (fastf_t)hy)*0.5 * double(PRECOMPUTED_MASKS[level]);
+    fastf_t z1 = ((fastf_t)lz + (fastf_t)hz)*0.5 * double(PRECOMPUTED_MASKS[level]);
  
-    fastf_t nx = (((lx1+hx1)*0.5 / USHRT_MAX) * (maxx - minx)) + minx;
-    fastf_t ny = (((ly1+hy1)*0.5 / USHRT_MAX) * (maxy - miny)) + miny;
-    fastf_t nz = (((lz1+hz1)*0.5 / USHRT_MAX) * (maxz - minz)) + minz;
+    fastf_t nx = ((x1 / USHRT_MAX) * (maxx - minx)) + minx;
+    fastf_t ny = ((y1 / USHRT_MAX) * (maxy - miny)) + miny;
+    fastf_t nz = ((z1 / USHRT_MAX) * (maxz - minz)) + minz;
     VSET(*o, nx, ny, nz);
 
     double poffset = DIST_PNT_PNT(*o, in_pt);
     if (poffset > (maxx - minx) && poffset > (maxy - miny) && poffset > (maxz - minz)) {
 	bu_log("Error: %f %f %f -> %f %f %f\n", V3ARGS(in_pt), V3ARGS(*p));
 	bu_log("bound: %f %f %f -> %f %f %f\n", minx, miny, minz, maxx, maxy, maxz);
-	bu_log("  xyz: %d %d %d -> %d %d %d -> %f %f %f -> %f %f %f\n", x, y, z, lx, ly, lz, lx1, ly1, lz1, nx, ny, nz);
+	bu_log("  xyz: %d %d %d -> %d %d %d,%d %d %d -> %f %f %f -> %f %f %f\n", x, y, z, lx, ly, lz, hx, hy, hz, x1, y1, z1, nx, ny, nz);
     }
 }
 
