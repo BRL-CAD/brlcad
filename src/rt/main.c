@@ -106,7 +106,7 @@ extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern char	*framebuffer;		/* desired framebuffer */
 
-extern struct command_tab	rt_do_tab[];
+extern struct command_tab rt_do_tab[];
 
 int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
 
@@ -116,10 +116,10 @@ siginfo_handler(int UNUSED(arg))
 {
     report_progress = 1;
 #ifdef SIGUSR1
-    (void)signal( SIGUSR1, siginfo_handler );
+    (void)signal(SIGUSR1, siginfo_handler);
 #endif
 #ifdef SIGINFO
-    (void)signal( SIGINFO, siginfo_handler );
+    (void)signal(SIGINFO, siginfo_handler);
 #endif
 }
 
@@ -127,7 +127,7 @@ siginfo_handler(int UNUSED(arg))
 void
 memory_summary(void)
 {
-    if (rt_verbosity & VERBOSE_STATS)  {
+    if (rt_verbosity & VERBOSE_STATS) {
 	size_t mdelta = bu_n_malloc - n_malloc;
 	size_t fdelta = bu_n_free - n_free;
 	bu_log("Additional #malloc=%zu, #free=%zu, #realloc=%zu (%zu retained)\n",
@@ -141,14 +141,17 @@ memory_summary(void)
     n_realloc = bu_n_realloc;
 }
 
+
 #ifndef RT_TXT_OUTPUT
 int fb_setup() {
     /* Framebuffer is desired */
     size_t xx, yy;
-    int	zoom;
+    int zoom;
 
     /* Ask for a fb big enough to hold the image, at least 512. */
-    /* This is so MGED-invoked "postage stamps" get zoomed up big enough to see */
+    /* This is so MGED-invoked "postage stamps" get zoomed up big
+     * enough to see.
+     */
     xx = yy = 512;
     if (width > xx || height > yy) {
 	xx = width;
@@ -178,7 +181,7 @@ int fb_setup() {
 	zoom = 1;
     }
     (void)fb_view(fbp, width/2, height/2,
-	    zoom, zoom);
+		  zoom, zoom);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
 #ifdef USE_OPENCL
@@ -211,8 +214,8 @@ int main(int argc, char *argv[])
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
-    bu_setlinebuf( stdout );
-    bu_setlinebuf( stderr );
+    bu_setlinebuf(stdout);
+    bu_setlinebuf(stderr);
 
     azimuth = 35.0;			/* GIFT defaults */
     elevation = 25.0;
@@ -223,10 +226,10 @@ int main(int argc, char *argv[])
 
     /* Before option processing, get default number of processors */
     npsw = bu_avail_cpus();		/* Use all that are present */
-    if (npsw > MAX_PSW)  npsw = MAX_PSW;
+    if (npsw > MAX_PSW) npsw = MAX_PSW;
 
     /* Before option processing, do application-specific initialization */
-    RT_APPLICATION_INIT( &APP );
+    RT_APPLICATION_INIT(&APP);
     application_init();
 
 #ifdef MPI_ENABLED
@@ -238,7 +241,7 @@ int main(int argc, char *argv[])
 
     /* Process command line options */
     i = get_args(argc, (const char **)argv);
-    if (i < 0)  {
+    if (i < 0) {
 	usage(argv[0], 0);
 #ifdef MPI_ENABLED
 	MPI_Finalize();
@@ -256,10 +259,10 @@ int main(int argc, char *argv[])
     /* Identify the versions of the libraries we are using. */
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 	fprintf(stderr, "%s%s%s%s\n",
-		      brlcad_ident(title),
-		      rt_version(),
-		      bn_version(),
-		      bu_version()
+		brlcad_ident(title),
+		rt_version(),
+		bn_version(),
+		bu_version()
 	    );
     }
 #if defined(DEBUG)
@@ -306,10 +309,10 @@ int main(int argc, char *argv[])
     if (sub_grid_mode) {
 	/* check that we have a legal subgrid */
 	if ((size_t)sub_xmax >= width || (size_t)sub_ymax >= height) {
-	    fprintf(stderr, "rt: illegal values for subgrid %d,%d,%d,%d\n",
-		     sub_xmin, sub_ymin, sub_xmax, sub_ymax);
-	    fprintf(stderr, "\tFor a %lu X %lu image, the subgrid must be within 0, 0,%lu,%lu\n",
-		     (unsigned long)width, (unsigned long)height, (unsigned long)width-1, (unsigned long)height-1 );
+	    fprintf(stderr, "rt: illegal values for subgrid %d, %d, %d, %d\n",
+		    sub_xmin, sub_ymin, sub_xmax, sub_ymax);
+	    fprintf(stderr, "\tFor a %lu X %lu image, the subgrid must be within 0, 0, %lu, %lu\n",
+		    (unsigned long)width, (unsigned long)height, (unsigned long)width-1, (unsigned long)height-1);
 #ifdef MPI_ENABLED
 	    MPI_Finalize();
 #endif
@@ -317,11 +320,11 @@ int main(int argc, char *argv[])
 	}
     }
 
-    if ( incr_mode )  {
+    if (incr_mode) {
 	size_t x = height;
 	if (x < width) x = width;
 	incr_nlevel = 1;
-	while ((size_t)(1ULL << incr_nlevel) < x )
+	while ((size_t)(1ULL << incr_nlevel) < x)
 	    incr_nlevel++;
 	height = width = 1ULL << incr_nlevel;
 	if (rt_verbosity & VERBOSE_INCREMENTAL)
@@ -331,7 +334,7 @@ int main(int argc, char *argv[])
     }
 
     /*
-     *  Handle parallel initialization, if applicable.
+     * Handle parallel initialization, if applicable.
      */
 #ifndef PARALLEL
     npsw = 1;			/* force serial */
@@ -355,13 +358,13 @@ int main(int argc, char *argv[])
     if (npsw > 1) {
 	RTG.rtg_parallel = 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
-	    fprintf(stderr, "Planning to run with %lu processors\n", (unsigned long)npsw );
+	    fprintf(stderr, "Planning to run with %lu processors\n", (unsigned long)npsw);
     } else {
 	RTG.rtg_parallel = 0;
     }
 
     /*
-     *  Do not use bu_log() or bu_malloc() before this point!
+     * Do not use bu_log() or bu_malloc() before this point!
      */
 
     if (bu_debug) {
@@ -385,8 +388,9 @@ int main(int argc, char *argv[])
 	if (objc) {
 	    objv = (char **)&(argv[bu_optind+1]);
 	} else {
-	    /* No objects in either input file or argv - try getting objs from
-	     * command processing.  Initialize the table. */
+	    /* No objects in either input file or argv - try getting
+	     * objs from command processing.  Initialize the table.
+	     */
 	    BU_GET(cmd_objs, struct bu_ptbl);
 	    bu_ptbl_init(cmd_objs, 8, "initialize cmdobjs table");
 	}
@@ -395,25 +399,27 @@ int main(int argc, char *argv[])
     }
 
 #ifdef USE_OPENCL
-     if (opencl_mode) {
+    if (opencl_mode) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	 bu_vls_strcat(&str, "\ncompiling OpenCL programs... ");
-	 bu_log("%s\n", bu_vls_addr(&str));
-	 bu_vls_free(&str);
+	bu_vls_strcat(&str, "\ncompiling OpenCL programs... ");
+	bu_log("%s\n", bu_vls_addr(&str));
+	bu_vls_free(&str);
 
-	 rt_prep_timer();
+	rt_prep_timer();
 
-	 clt_init();
+	clt_init();
 
-	 (void)rt_get_timer(&times, NULL);
-	 if (rt_verbosity & VERBOSE_STATS)
-	     bu_log("OCLINIT: %s\n", bu_vls_addr(&times));
-	 bu_vls_free(&times);
-     }
+	(void)rt_get_timer(&times, NULL);
+	if (rt_verbosity & VERBOSE_STATS)
+	    bu_log("OCLINIT: %s\n", bu_vls_addr(&times));
+	bu_vls_free(&times);
+    }
 #endif
 
-    /* Echo back the command line arguments as given, in 3 Tcl commands */
+    /* Echo back the command line arguments as given, in 3 Tcl
+     * commands.
+     */
     if (rt_verbosity & VERBOSE_MODELTITLE) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
@@ -425,9 +431,9 @@ int main(int argc, char *argv[])
 	/* arbitrarily limit the number of command-line objects being
 	 * echo'd back for log printing, followed by ellipses.
 	 */
-	bu_vls_from_argv( &str,
-			  objc <= 16 ? objc : 16,
-			  (const char **)argv+bu_optind+1);
+	bu_vls_from_argv(&str,
+			 objc <= 16 ? objc : 16,
+			 (const char **)argv+bu_optind+1);
 	if (objc > 16)
 	    bu_vls_strcat(&str, " ...");
 	else
@@ -458,11 +464,11 @@ int main(int argc, char *argv[])
     APP.a_rt_i->rti_space_partition = space_partition;
     APP.a_rt_i->useair = use_air;
     APP.a_rt_i->rti_save_overlaps = save_overlaps;
-    if (rt_dist_tol > 0)  {
+    if (rt_dist_tol > 0) {
 	APP.a_rt_i->rti_tol.dist = rt_dist_tol;
 	APP.a_rt_i->rti_tol.dist_sq = rt_dist_tol * rt_dist_tol;
     }
-    if (rt_perp_tol > 0)  {
+    if (rt_perp_tol > 0) {
 	APP.a_rt_i->rti_tol.perp = rt_perp_tol;
 	APP.a_rt_i->rti_tol.para = 1 - rt_perp_tol;
     }
@@ -474,8 +480,8 @@ int main(int argc, char *argv[])
 	outputfile = (char *)0;
 
     /*
-     *  Initialize all the per-CPU memory resources.
-     *  The number of processors can change at runtime, init them all.
+     * Initialize all the per-CPU memory resources.
+     * The number of processors can change at runtime, init them all.
      */
     memset(resource, 0, sizeof(resource));
     for (i = 0; i < MAX_PSW; i++) {
@@ -508,28 +514,28 @@ int main(int argc, char *argv[])
 	int frame_retval;
 
 	def_tree(APP.a_rt_i);		/* Load the default trees */
-	
-	/*
-     *  Initialize application.
-     *  Note that width & height may not have been set yet,
-     *  since they may change from frame to frame.
-     */
-    need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
-    if ((outputfile == (char *)0) && !need_fb) {
-	/* If not going to framebuffer, or to a file, then use stdout */
-	if (outfp == NULL) outfp = stdout;
-	/* output_is_binary is changed by view_init, as appropriate */
-	if (output_is_binary && isatty(fileno(outfp))) {
-	    fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
-#ifdef MPI_ENABLED
-	    MPI_Finalize();
-#endif
-	    return 14;
-	}
-    }
 
-	#ifndef RT_TXT_OUTPUT
-	if (need_fb != 0 && !fbp)  {
+	/*
+	 * Initialize application.
+	 * Note that width & height may not have been set yet,
+	 * since they may change from frame to frame.
+	 */
+	need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
+	if ((outputfile == (char *)0) && !need_fb) {
+	    /* If not going to framebuffer, or to a file, then use stdout */
+	    if (outfp == NULL) outfp = stdout;
+	    /* output_is_binary is changed by view_init, as appropriate */
+	    if (output_is_binary && isatty(fileno(outfp))) {
+		fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
+#ifdef MPI_ENABLED
+		MPI_Finalize();
+#endif
+		return 14;
+	    }
+	}
+
+#ifndef RT_TXT_OUTPUT
+	if (need_fb != 0 && !fbp) {
 	    int fb_status = fb_setup();
 	    if (fb_status) {
 #ifdef MPI_ENABLED
@@ -555,27 +561,27 @@ int main(int argc, char *argv[])
 	    goto rt_cleanup;
 	}
     } else {
-	register char	*buf;
-	register int	nret;
+	register char *buf;
+	register int nret;
 
 	/*
-     *  Initialize application.
-     *  Note that width & height may not have been set yet,
-     *  since they may change from frame to frame.
-     */
-    need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
-    if ((outputfile == (char *)0) && !need_fb) {
-	/* If not going to framebuffer, or to a file, then use stdout */
-	if (outfp == NULL) outfp = stdout;
-	/* output_is_binary is changed by view_init, as appropriate */
-	if (output_is_binary && isatty(fileno(outfp))) {
-	    fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
+	 * Initialize application.
+	 * Note that width & height may not have been set yet,
+	 * since they may change from frame to frame.
+	 */
+	need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
+	if ((outputfile == (char *)0) && !need_fb) {
+	    /* If not going to framebuffer, or to a file, then use stdout */
+	    if (outfp == NULL) outfp = stdout;
+	    /* output_is_binary is changed by view_init, as appropriate */
+	    if (output_is_binary && isatty(fileno(outfp))) {
+		fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
 #ifdef MPI_ENABLED
-	    MPI_Finalize();
+		MPI_Finalize();
 #endif
-	    return 14;
+		return 14;
+	    }
 	}
-    }
 
 	/*
 	 * New way - command driven.
@@ -590,22 +596,25 @@ int main(int argc, char *argv[])
 	    goto rt_cleanup;
 	}
 
-	while ((buf = rt_read_cmd( stdin )) != (char *)0) {
+	while ((buf = rt_read_cmd(stdin)) != (char *)0) {
 	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_PARSE) {
 		fprintf(stderr, "cmd: %s\n", buf);
 	    }
 
-	    /* Right now, the framebuffer setup blocks processing of stdin.
-	     * Consequently when rt is being run as a subprocess by libged the
-	     * stdin pipe can get full on some platforms, which in turn results
-	     * in everything hanging while the calling program waits for rt to
-	     * process stdin before continuing to write down the pipe and rt
-	     * waits for fbserv info along the libpkg channel before getting to
-	     * the logic for processing stdin.  Postpone fb setup until we're
-	     * ready to render something to avoid backing up stdin's pipe. */
+	    /* Right now, the framebuffer setup blocks processing of
+	     * stdin.  Consequently when rt is being run as a
+	     * subprocess by libged the stdin pipe can get full on
+	     * some platforms, which in turn results in everything
+	     * hanging while the calling program waits for rt to
+	     * process stdin before continuing to write down the pipe
+	     * and rt waits for fbserv info along the libpkg channel
+	     * before getting to the logic for processing stdin.
+	     * Postpone fb setup until we're ready to render something
+	     * to avoid backing up stdin's pipe.
+	     */
 	    if (!bu_strncmp(buf, "end", 3) || !bu_strncmp(buf, "multiview", 8)) {
 #ifndef RT_TXT_OUTPUT
-		if (need_fb != 0 && !fbp)  {
+		if (need_fb != 0 && !fbp) {
 		    int fb_status = fb_setup();
 		    if (fb_status) {
 #ifdef MPI_ENABLED
@@ -617,8 +626,8 @@ int main(int argc, char *argv[])
 #endif
 	    }
 
-	    nret = rt_do_cmd( APP.a_rt_i, buf, rt_do_tab);
-	    bu_free( buf, "rt_read_cmd command buffer");
+	    nret = rt_do_cmd(APP.a_rt_i, buf, rt_do_tab);
+	    bu_free(buf, "rt_read_cmd command buffer");
 	    if (nret < 0)
 		break;
 	}
@@ -664,6 +673,7 @@ rt_cleanup:
 
     return ret;
 }
+
 
 /*
  * Local Variables:
