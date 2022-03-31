@@ -245,6 +245,10 @@ struct bv_scene_obj  {
     /* Container for reusing bv_scene_obj allocations */
     struct bv_scene_obj *free_scene_obj;
 
+    /* For more specialized routines not using vlists, we may need
+     * additional drawing data associated with a scene object */
+    void *draw_data;
+
     /* User data to associate with this view object */
     void *s_u_data;
 };

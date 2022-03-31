@@ -183,6 +183,9 @@ class POPState {
 	// Cleanup
 	~POPState() {};
 
+	// Based on a view size, recommend a level
+	int get_level(fastf_t len);
+
 	// Load/unload data level
 	void set_level(int level);
 
@@ -712,6 +715,28 @@ POPState::tri_rtree_load()
     }
 }
 #endif
+
+int
+POPState::get_level(fastf_t vlen)
+{
+    fastf_t delta = 0.01*vlen;
+    bu_log("len: %f\n", vlen);
+    bu_log("delta: %f\n", delta);
+    point_t bmin, bmax;
+    VSET(bmin, minx, miny, minz);
+    VSET(bmax, maxx, maxy, maxz);
+    fastf_t bdiag = DIST_PNT_PNT(bmin, bmax);
+    bu_log("box: %f\n", bdiag);
+    for (int lev = 0; lev < POP_MAXLEVEL; lev++) {
+	fastf_t diag_slice = bdiag/pow(2,lev);
+	bu_log("diag_slice: %f\n", diag_slice);
+	if (diag_slice < delta) {
+	    bu_log("Suggest level %d\n", lev);
+	    return lev;
+	}
+    }
+    return POP_MAXLEVEL - 1;
+}
 
 // NOTE: at some point it may be worth investigating using bu_open_mapped_file
 // and friends for this, depending on what profiling shows in real-world usage.
@@ -1256,10 +1281,10 @@ bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
     if (!v)
 	return l->i->s->curr_level;
 
-    int vscale = l->i->s->curr_level + scale;
+    POPState *s = l->i->s;
+    int vscale = s->get_level(v->gv_size) + scale;
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
-
     return vscale;
 }
 

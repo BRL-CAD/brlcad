@@ -36,6 +36,7 @@
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
+#include "bg/lod.h"
 #include "nmg.h"
 #include "rt/view.h"
 
@@ -90,10 +91,27 @@ wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
 
-    if (s->s_v->gv_s->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
+    // Adaptive BoTs have specialized routines
+    if (s->s_v->gv_s->adaptive_plot && ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+	RT_BOT_CK_MAGIC(bot);
+	unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+	s->draw_data = (void *)bg_mesh_lod_init(key);
+	int level = bg_mesh_lod_view((struct bg_mesh_lod *)s->draw_data, s->s_v, 0);
+	bu_log("level: %d\n", level);
+	return;
+    }
+
+    // If we're adaptive but it's not a special case, see what the primitive has
+    if (ip->idb_meth->ft_adaptive_plot) {
 	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, s->s_v, s->s_size);
-    } else if (ip->idb_meth->ft_plot) {
+	return;
+    }
+
+    // Standard wireframe
+    if (ip->idb_meth->ft_plot) {
 	ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
+	return;
     }
 }
 
