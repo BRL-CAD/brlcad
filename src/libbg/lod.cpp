@@ -331,14 +331,25 @@ POPState::tri_process()
     }
 
     // Beyond a certain depth, there is little benefit to the POP process.  If
-    // we check the count of level_tris, we will find a level at which the
-    // majority of the triangles are active.
+    // we check the count of level_tris, we will find a level at which most of
+    // the triangles are active. 
+    // TODO: Not clear yet when the tradeoff between memory and the work of LoD
+    // point snapping trades off - 0.66 is just a guess.
     size_t trisum = 0;
-    size_t faces_array_cnt2 = (size_t)((fastf_t)faces_cnt/2.0);
+    size_t faces_array_cnt2 = (size_t)((fastf_t)faces_cnt * 0.66);
     for (size_t i = 0; i < level_tris.size(); i++) {
 	trisum += level_tris[i].size();
 	if (trisum > faces_array_cnt2) {
-	    tri_threshold = i;
+	    // If we're in the 80-100% range of triangles, this is our
+	    // threshold level.  If we've got ALL the triangles, back
+	    // down one level.
+	    if (trisum < (size_t)faces_cnt) {
+		tri_threshold = i;
+	    } else {
+		// It shouldn't happen, but to be sure handle the case where we
+		// get here with i == 0
+		tri_threshold = (i) ? i - 1 : 0;
+	    }
 	    break;
 	}
     }
@@ -352,6 +363,9 @@ POPState::tri_process()
     // the vertices and faces_array into memory, but by the time we make that
     // switch we would have had comparable data in memory from the LoD info
     // anyway.
+    //
+    // TODO - if this is useful (not clear yet) we may want to do it for more than
+    // just the final stage...
     for (int i = 0; i < faces_cnt; i++) {
 	short tri[3][3];
 	// TODO: This is a tradeoff - smaller means fewer boxes but more tris
@@ -364,16 +378,37 @@ POPState::tri_process()
 	    tri[j][2] = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * factor);
 	}
 	//bu_log("tri: %d %d %d -> %d %d %d -> %d %d %d\n", V3ARGS(tri[0]), V3ARGS(tri[1]), V3ARGS(tri[2]));
-	// TODO - this is inadequate - a triangle large compared to the box
-	// sizes might need to be drawn even if none of the vertices are on
-	// the screen.  Need to intersect the triangle with the set of boxes
-	// within the tri xyz range.
-	tri_boxes[tri[0][0]][tri[0][1]][tri[0][2]].push_back(i);
-	if (tri[0][0] != tri[1][0] || tri[0][1] != tri[1][1] || tri[0][2] != tri[1][2])
-	    tri_boxes[tri[1][0]][tri[1][1]][tri[1][2]].push_back(i);
-	if ((tri[0][0] != tri[2][0] || tri[0][1] != tri[2][1] || tri[0][2] != tri[2][2]) ||
-		(tri[1][0] != tri[2][0] || tri[1][1] != tri[2][1] || tri[1][2] != tri[2][2]))
-	    tri_boxes[tri[2][0]][tri[2][1]][tri[2][2]].push_back(i);
+
+	// Need to intersect the triangle with the set of boxes
+	// within the tri xyz range - any box that intersects needs
+	// to know to draw this triangle.
+	point_t v[3], bcenter;
+	vect_t bextent;
+	int start[3] = {INT_MAX, INT_MAX, INT_MAX}, end[3] = {-INT_MAX, -INT_MAX, -INT_MAX};
+	for (int j = 0; j < 3; j++) {
+	    start[0] = (start[0] > tri[j][0]) ? tri[j][0] : start[0];
+	    start[1] = (start[1] > tri[j][1]) ? tri[j][1] : start[1];
+	    start[2] = (start[2] > tri[j][2]) ? tri[j][2] : start[2];
+	    end[0] = (end[0] < tri[j][0]) ? tri[j][0] : end[0];
+	    end[1] = (end[1] < tri[j][1]) ? tri[j][1] : end[1];
+	    end[2] = (end[2] < tri[j][2]) ? tri[j][2] : end[2];
+	}
+	VSET(bextent, 0.51, 0.51, 0.51);
+	VSET(v[0], tri[0][0], tri[0][1], tri[0][2]);
+	VSET(v[1], tri[1][0], tri[1][1], tri[1][2]);
+	VSET(v[2], tri[2][0], tri[2][1], tri[2][2]);
+	for (int bx = start[0]; bx <= end[0]; bx++) {
+	    for (int by = start[1]; by <= end[1]; by++) {
+		for (int bz = start[2]; bz <= end[2]; bz++) {
+		    VSET(bcenter, (fastf_t)bx+0.5, (fastf_t)by+0.5, (fastf_t)bz+0.5);
+		    if (bg_sat_tri_aabb(v[0], v[1], v[2], bcenter, bextent)) {
+			tri_boxes[bx][by][bz].push_back(i);
+		    } else {
+			bu_log("MISS: %d %d %d\n", bx, by, bz);
+		    }
+		}
+	    }
+	}
     }
 }
 
@@ -794,6 +829,15 @@ POPState::cache_tri(struct bu_vls *vkey)
     // Now the high-fidelity mode data - Write out all faces, the boxes and
     // their face sets.  We calculate and write out the bounding boxes of each
     // set so the loading code need only read the values to prepare an RTree
+    //
+    // TODO - in an ideal world, if this RTree hierarchy is useful (which isn't
+    // clear yet) we would do it not simply for the full scale mesh but
+    // whenever we're having to deal with an active triangle set large enough
+    // that there are benefits to not holding the whole thing in memory and
+    // processing it (for sufficiently large meshes some of the deeper LoD
+    // levels will cause problems similar to the big mesh itself.)  If that
+    // proves desirable we'll need to recast this in terms of a "per-level"
+    // setup and have an active tri count trigger.
     {
 	size_t fcnt;
 	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), "all_faces", NULL);
@@ -1041,6 +1085,8 @@ POPState::plot(const char *root)
     } else {
 	RTree<size_t, double, 3>::Iterator tree_it;
 	tri_rtree.GetFirst(tree_it);
+
+#if 1
 	while (!tree_it.IsNull()) {
 	    size_t i = *tree_it;
 	    struct bu_color c = BU_COLOR_INIT_ZERO;
@@ -1062,6 +1108,38 @@ POPState::plot(const char *root)
 	    }
 	    ++tree_it;
 	}
+#else
+	// Constructing the unique triangle set slows down the plotting
+	// considerably.  Looking like it may be better to just redraw some
+	// triangles than do this sorting.
+	std::unordered_set<size_t> utris;
+	while (!tree_it.IsNull()) {
+	    size_t i = *tree_it;
+	    for (size_t j = 0; j < tri_sets[i].size(); j++) {
+		utris.insert(tri_sets[i][j]);
+	    }
+	    ++tree_it;
+	}
+	std::unordered_set<size_t>::iterator u_it;
+    	for (u_it = utris.begin(); u_it != utris.end(); u_it++) {
+	    struct bu_color c = BU_COLOR_INIT_ZERO;
+	    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+	    pl_color_buc(plot_file, &c);
+	    int v1ind, v2ind, v3ind;
+	    point_t p1, p2, p3;
+	    size_t ind = *u_it;
+	    v1ind = lod_tris[3*ind+0];
+	    v2ind = lod_tris[3*ind+1];
+	    v3ind = lod_tris[3*ind+2];
+	    VSET(p1, lod_tri_pnts[3*v1ind+0], lod_tri_pnts[3*v1ind+1], lod_tri_pnts[3*v1ind+2]);
+	    VSET(p2, lod_tri_pnts[3*v2ind+0], lod_tri_pnts[3*v2ind+1], lod_tri_pnts[3*v2ind+2]);
+	    VSET(p3, lod_tri_pnts[3*v3ind+0], lod_tri_pnts[3*v3ind+1], lod_tri_pnts[3*v3ind+2]);
+	    pdv_3move(plot_file, p1);
+	    pdv_3cont(plot_file, p2);
+	    pdv_3cont(plot_file, p3);
+	    pdv_3cont(plot_file, p1);
+	}
+#endif
     }
 
     fclose(plot_file);
