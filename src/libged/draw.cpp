@@ -98,12 +98,15 @@ wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
 	unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
 	s->draw_data = (void *)bg_mesh_lod_init(key);
 	int level = bg_mesh_lod_view((struct bg_mesh_lod *)s->draw_data, s->s_v, 0);
+	if (bg_mesh_lod_level((struct bg_mesh_lod *)s->draw_data, level) != level) {
+	    bu_log("Error loading info for level %d\n", level);
+	}
 	bu_log("level: %d\n", level);
 	return;
     }
 
     // If we're adaptive but it's not a special case, see what the primitive has
-    if (ip->idb_meth->ft_adaptive_plot) {
+    if (s->s_v->gv_s->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, s->s_v, s->s_size);
 	return;
     }
