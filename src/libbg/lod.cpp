@@ -187,14 +187,14 @@ class POPState {
 	// Debugging
 	void plot(const char *root);
 
-	// Active faces needed by the current LoD (indexes into npnts).
+	// Active faces needed by the current LoD (indexes into lod_tri_pnts).
 	std::vector<int> lod_tris;
 
 	// This is where we store the active points - i.e., those needed for
 	// the current LoD.  When initially creating the breakout from BoT data
 	// we calculate all levels, but the goal is to not hold in memory any
-	// more than we need to support the LoD drawing.  nfaces will index
-	// into npnts.
+	// more than we need to support the LoD drawing.  lod_tris will index
+	// into lod_tri_pnts.
 	std::vector<fastf_t> lod_tri_pnts;
 
 	// Containers for sub-mesh grouping
@@ -1083,10 +1083,16 @@ POPState::plot(const char *root)
 	}
 
     } else {
+	// TODO - right now this is an iteration, for testing.  Eventually it needs to become
+	// an OBB test of the view box against the RTree.  If most or all the boxes are visible
+	// we should just draw all the triangles, but if we can only draw a subset we can save
+	// some work (which is likely to be especially apparent in software rendering)
+	//
+	// If there is no benefit to this we should simplify and just draw all the triangles
+	// once we reach this stage, but for large meshes that's potentially punishing on slow
+	// hardware so worth finding out if this can help.
 	RTree<size_t, double, 3>::Iterator tree_it;
 	tri_rtree.GetFirst(tree_it);
-
-#if 1
 	while (!tree_it.IsNull()) {
 	    size_t i = *tree_it;
 	    struct bu_color c = BU_COLOR_INIT_ZERO;
@@ -1108,38 +1114,6 @@ POPState::plot(const char *root)
 	    }
 	    ++tree_it;
 	}
-#else
-	// Constructing the unique triangle set slows down the plotting
-	// considerably.  Looking like it may be better to just redraw some
-	// triangles than do this sorting.
-	std::unordered_set<size_t> utris;
-	while (!tree_it.IsNull()) {
-	    size_t i = *tree_it;
-	    for (size_t j = 0; j < tri_sets[i].size(); j++) {
-		utris.insert(tri_sets[i][j]);
-	    }
-	    ++tree_it;
-	}
-	std::unordered_set<size_t>::iterator u_it;
-    	for (u_it = utris.begin(); u_it != utris.end(); u_it++) {
-	    struct bu_color c = BU_COLOR_INIT_ZERO;
-	    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-	    pl_color_buc(plot_file, &c);
-	    int v1ind, v2ind, v3ind;
-	    point_t p1, p2, p3;
-	    size_t ind = *u_it;
-	    v1ind = lod_tris[3*ind+0];
-	    v2ind = lod_tris[3*ind+1];
-	    v3ind = lod_tris[3*ind+2];
-	    VSET(p1, lod_tri_pnts[3*v1ind+0], lod_tri_pnts[3*v1ind+1], lod_tri_pnts[3*v1ind+2]);
-	    VSET(p2, lod_tri_pnts[3*v2ind+0], lod_tri_pnts[3*v2ind+1], lod_tri_pnts[3*v2ind+2]);
-	    VSET(p3, lod_tri_pnts[3*v3ind+0], lod_tri_pnts[3*v3ind+1], lod_tri_pnts[3*v3ind+2]);
-	    pdv_3move(plot_file, p1);
-	    pdv_3cont(plot_file, p2);
-	    pdv_3cont(plot_file, p3);
-	    pdv_3cont(plot_file, p1);
-	}
-#endif
     }
 
     fclose(plot_file);
