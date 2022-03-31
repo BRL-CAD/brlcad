@@ -992,20 +992,27 @@ POPState::level_pnt(point_t *o, const point_t *p, int level)
     int lx = floor(x/double(PRECOMPUTED_MASKS[level]));
     int ly = floor(y/double(PRECOMPUTED_MASKS[level]));
     int lz = floor(z/double(PRECOMPUTED_MASKS[level]));
+    int hx = ceil(x/double(PRECOMPUTED_MASKS[level]));
+    int hy = ceil(y/double(PRECOMPUTED_MASKS[level]));
+    int hz = ceil(z/double(PRECOMPUTED_MASKS[level]));
     // Back to point values
-    fastf_t x1 = lx * double(PRECOMPUTED_MASKS[level]);
-    fastf_t y1 = ly * double(PRECOMPUTED_MASKS[level]);
-    fastf_t z1 = lz * double(PRECOMPUTED_MASKS[level]);
-    fastf_t nx = ((x1 / USHRT_MAX) * (maxx - minx)) + minx;
-    fastf_t ny = ((y1 / USHRT_MAX) * (maxy - miny)) + miny;
-    fastf_t nz = ((z1 / USHRT_MAX) * (maxz - minz)) + minz;
+    fastf_t lx1 = lx * double(PRECOMPUTED_MASKS[level]);
+    fastf_t ly1 = ly * double(PRECOMPUTED_MASKS[level]);
+    fastf_t lz1 = lz * double(PRECOMPUTED_MASKS[level]);
+    fastf_t hx1 = hx * double(PRECOMPUTED_MASKS[level]);
+    fastf_t hy1 = hy * double(PRECOMPUTED_MASKS[level]);
+    fastf_t hz1 = hz * double(PRECOMPUTED_MASKS[level]);
+ 
+    fastf_t nx = (((lx1+hx1)*0.5 / USHRT_MAX) * (maxx - minx)) + minx;
+    fastf_t ny = (((ly1+hy1)*0.5 / USHRT_MAX) * (maxy - miny)) + miny;
+    fastf_t nz = (((lz1+hz1)*0.5 / USHRT_MAX) * (maxz - minz)) + minz;
     VSET(*o, nx, ny, nz);
 
     double poffset = DIST_PNT_PNT(*o, in_pt);
     if (poffset > (maxx - minx) && poffset > (maxy - miny) && poffset > (maxz - minz)) {
 	bu_log("Error: %f %f %f -> %f %f %f\n", V3ARGS(in_pt), V3ARGS(*p));
 	bu_log("bound: %f %f %f -> %f %f %f\n", minx, miny, minz, maxx, maxy, maxz);
-	bu_log("  xyz: %d %d %d -> %d %d %d -> %f %f %f -> %f %f %f\n", x, y, z, lx, ly, lz, x1, y1, z1, nx, ny, nz);
+	bu_log("  xyz: %d %d %d -> %d %d %d -> %f %f %f -> %f %f %f\n", x, y, z, lx, ly, lz, lx1, ly1, lz1, nx, ny, nz);
     }
 }
 
@@ -1091,6 +1098,16 @@ POPState::plot(const char *root)
 	// If there is no benefit to this we should simplify and just draw all the triangles
 	// once we reach this stage, but for large meshes that's potentially punishing on slow
 	// hardware so worth finding out if this can help.
+	//
+	// This idea current won't save any memory, as the RTree triangle indices are into the
+	// full faces array.  In principle we can write out "per box" triangle sets that are
+	// loaded and unloaded as needed by the view, but there are two potential drawbacks
+	// to that approach - increased complexity, and a fairly large number of small files
+	// on the filesystem (with it's attendant constant I/O as leaf sets are swapped into
+	// and out of memory while the view changes.)  A possible middle ground would be to
+	// also break out the various LoD data into the same boxes, to give the app something
+	// to keep in memory and quickly draw if the I/O is bogging down, but there again we
+	// will pay a complexity price.
 	RTree<size_t, double, 3>::Iterator tree_it;
 	tri_rtree.GetFirst(tree_it);
 	while (!tree_it.IsNull()) {
