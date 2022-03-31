@@ -222,6 +222,9 @@ class POPState {
 	// Clamping of points to various detail levels
 	int to_level(int val, int level);
 
+	// Snap value to level value
+	fastf_t snap(fastf_t val, fastf_t min, fastf_t max, int level);
+
 	// Check if two points are equal at a clamped level
 	bool is_equal(rec r1, rec r2, int level);
 
@@ -979,37 +982,32 @@ POPState::to_level(int val, int level)
     return ret;
 }
 
+fastf_t
+POPState::snap(fastf_t val, fastf_t min, fastf_t max, int level)
+{
+    unsigned int x;
+    x = floor((val - min) / (max - min) * USHRT_MAX);
+    int lx = floor(x/double(PRECOMPUTED_MASKS[level]));
+    int hx = ceil(x/double(PRECOMPUTED_MASKS[level]));
+    fastf_t x1 = ((fastf_t)lx + (fastf_t)hx)*0.5 * double(PRECOMPUTED_MASKS[level]);
+    fastf_t nx = ((x1 / USHRT_MAX) * (max - min)) + min;
+    return nx;
+}
+
 // Transfer coordinate into level-appropriate value
 void
 POPState::level_pnt(point_t *o, const point_t *p, int level)
 {
-    point_t in_pt;
-    VMOVE(in_pt, *p);
-    unsigned int x,y,z;
-    x = floor(((*p)[X] - minx) / (maxx - minx) * USHRT_MAX);
-    y = floor(((*p)[Y] - miny) / (maxy - miny) * USHRT_MAX);
-    z = floor(((*p)[Z] - minz) / (maxz - minz) * USHRT_MAX);
-    int lx = floor(x/double(PRECOMPUTED_MASKS[level]));
-    int ly = floor(y/double(PRECOMPUTED_MASKS[level]));
-    int lz = floor(z/double(PRECOMPUTED_MASKS[level]));
-    int hx = ceil(x/double(PRECOMPUTED_MASKS[level]));
-    int hy = ceil(y/double(PRECOMPUTED_MASKS[level]));
-    int hz = ceil(z/double(PRECOMPUTED_MASKS[level]));
-    // Back to point values
-    fastf_t x1 = ((fastf_t)lx + (fastf_t)hx)*0.5 * double(PRECOMPUTED_MASKS[level]);
-    fastf_t y1 = ((fastf_t)ly + (fastf_t)hy)*0.5 * double(PRECOMPUTED_MASKS[level]);
-    fastf_t z1 = ((fastf_t)lz + (fastf_t)hz)*0.5 * double(PRECOMPUTED_MASKS[level]);
- 
-    fastf_t nx = ((x1 / USHRT_MAX) * (maxx - minx)) + minx;
-    fastf_t ny = ((y1 / USHRT_MAX) * (maxy - miny)) + miny;
-    fastf_t nz = ((z1 / USHRT_MAX) * (maxz - minz)) + minz;
+    fastf_t nx = snap((*p)[X], minx, maxx, level);
+    fastf_t ny = snap((*p)[Y], miny, maxy, level);
+    fastf_t nz = snap((*p)[Z], minz, maxz, level);
+
     VSET(*o, nx, ny, nz);
 
-    double poffset = DIST_PNT_PNT(*o, in_pt);
+    double poffset = DIST_PNT_PNT(*o, *p);
     if (poffset > (maxx - minx) && poffset > (maxy - miny) && poffset > (maxz - minz)) {
-	bu_log("Error: %f %f %f -> %f %f %f\n", V3ARGS(in_pt), V3ARGS(*p));
+	bu_log("Error: %f %f %f -> %f %f %f\n", V3ARGS(*p), V3ARGS(*o));
 	bu_log("bound: %f %f %f -> %f %f %f\n", minx, miny, minz, maxx, maxy, maxz);
-	bu_log("  xyz: %d %d %d -> %d %d %d,%d %d %d -> %f %f %f -> %f %f %f\n", x, y, z, lx, ly, lz, hx, hy, hz, x1, y1, z1, nx, ny, nz);
     }
 }
 
