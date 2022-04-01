@@ -181,6 +181,31 @@ draw_scene(struct bv_scene_obj *s)
     if (s->s_os.s_dmode > 0) {
 	switch (ip->idb_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_BOT:
+		// Adaptive BoTs have specialized routines
+		if (s->s_v->gv_s->adaptive_plot && s->s_os.s_dmode == 1) {
+		    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+		    RT_BOT_CK_MAGIC(bot);
+
+		    // Basic setup (TODO - make sure we don't rebuild cache every time - just if the key
+		    // lookup fails...)
+		    unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+		    s->draw_data = (void *)bg_mesh_lod_init(key);
+		    // Initialize the LoD data to the current view
+		    int level = bg_mesh_lod_view((struct bg_mesh_lod *)s->draw_data, s->s_v, 0);
+		    if (bg_mesh_lod_level((struct bg_mesh_lod *)s->draw_data, level) != level) {
+			bu_log("Error loading info for level %d\n", level);
+		    }
+
+		    // LoD will need to re-check its level settings whenever the view changes
+		    s->s_update_callback = &bg_mesh_lod_update;
+
+		    // Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
+		    s->s_type_flags |= BV_MESH_LOD;
+
+		    bu_log("level: %d\n", level);
+		    return;
+		}
+
 		(void)rt_bot_plot_poly(&s->s_vlist, ip, ttol, tol);
 		goto geom_done;
 		break;

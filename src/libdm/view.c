@@ -573,8 +573,13 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s)
 	// Tell the mesh lod structure what callback method to use to draw
 	bg_mesh_lod_set_draw_callback(l, &dm_draw_tri_callback);
 
-	// For now start with wireframe, but will need to pass wireframe or shaded as second arg
-	bg_mesh_lod_draw(l, (void *)dmp, 0);
+	// Trigger the drawing operation.  Because we don't expose the
+	// internals of struct bg_mesh_lod, preparing the drawing-ready data is
+	// handled by an internal bg_mesh_lod method.  Consequently, the
+	// dm_draw_tri_callback must be invoked from that method - hence the
+	// above callback assignment.  This keeps any awareness of libdm and the
+	// specifics of drawing out of the other libs.
+	bg_mesh_lod_draw(l, (void *)dmp, s->s_os.s_dmode);
     } else {
 	if (bu_list_len(&s->s_vlist)) {
 	    // Draw primary wireframe.
