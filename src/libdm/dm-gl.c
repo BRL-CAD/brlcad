@@ -811,31 +811,32 @@ int gl_draw_tri(struct dm *dmp, int fset_cnt, int *fset, int fcnt, const int *fa
 		glDisable(GL_BLEND);
 	}
 
-	glBegin(GL_LINE_STRIP);
 	if (!fset) {
 	    // Draw all the triangles in faces array
 	    for (int i = 0; i < fcnt; i++) {
+		glBegin(GL_LINE_STRIP);
 		VMOVE(dpt, points[faces[3*i+0]]);
 		glVertex3dv(dpt);
 		VMOVE(dpt, points[faces[3*i+1]]);
 		glVertex3dv(dpt);
 		VMOVE(dpt, points[faces[3*i+2]]);
 		glVertex3dv(dpt);
-
+		glEnd();
 	    }
 	} else {
 	    // Draw the specified triangles
 	    for (int i = 0; i < fset_cnt; i++) {
+		glBegin(GL_LINE_STRIP);
 		VMOVE(dpt, points[faces[3*fset[i]+0]]);
 		glVertex3dv(dpt);
 		VMOVE(dpt, points[faces[3*fset[i]+1]]);
 		glVertex3dv(dpt);
 		VMOVE(dpt, points[faces[3*fset[i]+2]]);
 		glVertex3dv(dpt);
+		glEnd();
 	    }
 	}
 
-	glEnd();
 	if (dmp->i->dm_light && dmp->i->dm_transparency)
 	    glDisable(GL_BLEND);
 
@@ -870,6 +871,7 @@ int gl_draw_tri(struct dm *dmp, int fset_cnt, int *fset, int fcnt, const int *fa
 	    if (dmp->i->dm_transparency)
 		glEnable(GL_BLEND);
 	}
+
 	glBegin(GL_TRIANGLES);
 
 	if (!fset) {
