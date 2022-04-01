@@ -111,7 +111,7 @@ null_drawVListHiddenLine(struct dm *dmp, struct bv_vlist *vp);
 
 
 DM_NULL_EXPORT extern int
-null_draw_tri(struct dm *dmp, int tri_ind, int fcnt, const int *faces, const point_t *points, const int *face_normals, const point_t *normals, int mode);
+null_draw_tri(struct dm *dmp, int fset_cnt, int *fset, int fcnt, const int *faces, const point_t *points, const int *face_normals, const vect_t *normals, int mode);
 
 
 DM_NULL_EXPORT extern int

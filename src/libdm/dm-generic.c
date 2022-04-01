@@ -600,6 +600,13 @@ dm_draw_vlist_hidden_line(struct dm *dmp, struct bv_vlist *vp)
     if (UNLIKELY(!dmp)) return 0;
     return dmp->i->dm_drawVListHiddenLine(dmp, vp);
 }
+
+int
+dm_draw_tri(struct dm *dmp, int fset_cnt, int *fset, int fcnt, const int *faces, const point_t *points, const int *face_normals, const vect_t *normals, int mode){
+    if (UNLIKELY(!dmp)) return -1;
+    return dmp->i->dm_draw_tri(dmp, fset_cnt, fset, fcnt, faces, points, face_normals, normals, mode);
+}
+
 int
 dm_draw_begin(struct dm *dmp)
 {

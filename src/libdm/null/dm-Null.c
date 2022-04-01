@@ -189,7 +189,7 @@ null_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
 
 
 int
-null_draw_tri(struct dm *UNUSED(dmp), int UNUSED(tri_ind), int UNUSED(fcnt), const int *UNUSED(faces), const point_t *UNUSED(points), const int *UNUSED(face_normals), const point_t *UNUSED(normals), int UNUSED(mode)) {
+null_draw_tri(struct dm *UNUSED(dmp), int UNUSED(fset_cnt), int *UNUSED(fset), int UNUSED(fcnt), const int *UNUSED(faces), const point_t *UNUSED(points), const int *UNUSED(face_normals), const vect_t *UNUSED(normals), int UNUSED(mode)) {
     return 0;
 }
 

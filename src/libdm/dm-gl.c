@@ -785,16 +785,15 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
     return BRLCAD_OK;
 }
 
-int gl_draw_tri(struct dm *dmp, int tri_ind, int fcnt, int *faces, point_t *points, int *face_normals, point_t *normals, int mode)
+int gl_draw_tri(struct dm *dmp, int fset_cnt, int *fset, int fcnt, const int *faces, const point_t *points, const int *face_normals, const vect_t *normals, int mode)
 {
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     GLdouble dpt[3];
-    int ret = -1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLfloat originalLineWidth;
 
     if (mode < 0 || mode > 1)
-	return -1;
+	return BRLCAD_ERROR;
 
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
 
@@ -813,7 +812,7 @@ int gl_draw_tri(struct dm *dmp, int tri_ind, int fcnt, int *faces, point_t *poin
 	}
 
 	glBegin(GL_LINE_STRIP);
-	if (tri_ind < 0) {
+	if (!fset) {
 	    // Draw all the triangles in faces array
 	    for (int i = 0; i < fcnt; i++) {
 		VMOVE(dpt, points[faces[3*i+0]]);
@@ -824,16 +823,16 @@ int gl_draw_tri(struct dm *dmp, int tri_ind, int fcnt, int *faces, point_t *poin
 		glVertex3dv(dpt);
 
 	    }
-	    ret = fcnt;
 	} else {
-	    // Draw the tri_ind triangle
-	    VMOVE(dpt, points[faces[3*tri_ind+0]]);
-	    glVertex3dv(dpt);
-	    VMOVE(dpt, points[faces[3*tri_ind+1]]);
-	    glVertex3dv(dpt);
-	    VMOVE(dpt, points[faces[3*tri_ind+2]]);
-	    glVertex3dv(dpt);
-	    ret = tri_ind;
+	    // Draw the specified triangles
+	    for (int i = 0; i < fset_cnt; i++) {
+		VMOVE(dpt, points[faces[3*fset[i]+0]]);
+		glVertex3dv(dpt);
+		VMOVE(dpt, points[faces[3*fset[i]+1]]);
+		glVertex3dv(dpt);
+		VMOVE(dpt, points[faces[3*fset[i]+2]]);
+		glVertex3dv(dpt);
+	    }
 	}
 
 	glEnd();
@@ -842,7 +841,7 @@ int gl_draw_tri(struct dm *dmp, int tri_ind, int fcnt, int *faces, point_t *poin
 
 	glLineWidth(originalLineWidth);
 
-	return ret;
+	return BRLCAD_OK;
     }
 
     // Shaded
@@ -873,7 +872,7 @@ int gl_draw_tri(struct dm *dmp, int tri_ind, int fcnt, int *faces, point_t *poin
 	}
 	glBegin(GL_TRIANGLES);
 
-	if (tri_ind < 0) {
+	if (!fset) {
 	    // Draw all the triangles in faces array
 	    for (int i = 0; i < fcnt; i++) {
 
@@ -902,34 +901,33 @@ int gl_draw_tri(struct dm *dmp, int tri_ind, int fcnt, int *faces, point_t *poin
 		glVertex3dv(dpt);
 
 	    }
-	    ret = fcnt;
 	} else {
-	    // Draw the tri_ind triangle
+	    // Draw the specified triangles
+	    for (int i = 0; i < fset_cnt; i++) {
+		// Set surface normal
+		vect_t ab, ac, norm;
+		VSUB2(ab, points[faces[3*fset[i]+0]], points[faces[3*fset[i]+1]]);
+		VSUB2(ac, points[faces[3*fset[i]+0]], points[faces[3*fset[i]+2]]);
+		VCROSS(norm, ab, ac);
+		VUNITIZE(norm);
+		glNormal3dv(norm);
 
-	    // Set surface normal
-	    vect_t ab, ac, norm;
-	    VSUB2(ab, points[faces[3*tri_ind+0]], points[faces[3*tri_ind+1]]);
-	    VSUB2(ac, points[faces[3*tri_ind+0]], points[faces[3*tri_ind+2]]);
-	    VCROSS(norm, ab, ac);
-	    VUNITIZE(norm);
-	    glNormal3dv(norm);
-
-	    if (face_normals && normals) {
-		bu_log("todo - per-vertex normals\n");
+		if (face_normals && normals) {
+		    bu_log("todo - per-vertex normals\n");
+		}
+		VMOVE(dpt, points[faces[3*fset[i]+0]]);
+		glVertex3dv(dpt);
+		if (face_normals && normals) {
+		    bu_log("todo - per-vertex normals\n");
+		}
+		VMOVE(dpt, points[faces[3*fset[i]+1]]);
+		glVertex3dv(dpt);
+		if (face_normals && normals) {
+		    bu_log("todo - per-vertex normals\n");
+		}
+		VMOVE(dpt, points[faces[3*fset[i]+2]]);
+		glVertex3dv(dpt);
 	    }
-	    VMOVE(dpt, points[faces[3*tri_ind+0]]);
-	    glVertex3dv(dpt);
-	    if (face_normals && normals) {
-		bu_log("todo - per-vertex normals\n");
-	    }
-	    VMOVE(dpt, points[faces[3*tri_ind+1]]);
-	    glVertex3dv(dpt);
-	    if (face_normals && normals) {
-		bu_log("todo - per-vertex normals\n");
-	    }
-	    VMOVE(dpt, points[faces[3*tri_ind+2]]);
-	    glVertex3dv(dpt);
-	    ret = tri_ind;
 	}
 
 	glEnd();
@@ -939,10 +937,10 @@ int gl_draw_tri(struct dm *dmp, int tri_ind, int fcnt, int *faces, point_t *poin
 
 	glLineWidth(originalLineWidth);
 
-	return ret;
+	return BRLCAD_OK;
     }
 
-    return -1;
+    return BRLCAD_ERROR;
 }
 
 
