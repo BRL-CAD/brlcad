@@ -602,16 +602,16 @@ dm_draw_vlist_hidden_line(struct dm *dmp, struct bv_vlist *vp)
 }
 
 int
-dm_draw_tri_callback(void *ctx, int fset_cnt, int *fset, int fcnt, const int *faces, const point_t *points, const int *face_normals, const vect_t *normals, int mode){
+dm_draw_tri_callback(void *ctx, struct bv_mesh_lod_info *i){
     if (UNLIKELY(!ctx)) return -1;
     struct dm *dmp = (struct dm *)ctx;
-    return dm_draw_tri(dmp, fset_cnt, fset, fcnt, faces, points, face_normals, normals, mode);
+    return dm_draw_tri(dmp, i);
 }
 
 int
-dm_draw_tri(struct dm *dmp, int fset_cnt, int *fset, int fcnt, const int *faces, const point_t *points, const int *face_normals, const vect_t *normals, int mode){
+dm_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *i){
     if (UNLIKELY(!dmp)) return -1;
-    return dmp->i->dm_draw_tri(dmp, fset_cnt, fset, fcnt, faces, points, face_normals, normals, mode);
+    return dmp->i->dm_draw_tri(dmp, i);
 }
 
 int

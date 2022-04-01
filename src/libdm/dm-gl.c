@@ -785,8 +785,17 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
     return BRLCAD_OK;
 }
 
-int gl_draw_tri(struct dm *dmp, int fset_cnt, int *fset, int fcnt, const int *faces, const point_t *points, const int *face_normals, const vect_t *normals, int mode)
+int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 {
+    int fset_cnt = info->fset_cnt;
+    int *fset = info->fset;
+    int fcnt = info->fcnt;
+    const int *faces = info->faces;
+    const point_t *points = info->points;
+    const int *face_normals = info->face_normals;
+    const vect_t *normals = info->normals;
+    int mode = info->mode;
+
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     GLdouble dpt[3];
     static float black[4] = {0.0, 0.0, 0.0, 0.0};

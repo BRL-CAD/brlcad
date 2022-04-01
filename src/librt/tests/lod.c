@@ -88,13 +88,15 @@ main(int argc, char *argv[])
 
     start = bu_gettime();
 
-    // TODO - lod testing
-    // struct bu_list elist;
-    int ecnt = bg_lod_elist(NULL, NULL, mlod, NULL);
+    for (int i = 0; i < 16; i++) {
+	bg_mesh_lod_level(mlod, i);
+    }
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
-    bu_log("lod, view 1 edge cnt(%f sec): %d\n", seconds, ecnt);
+    bu_log("lod level setting: %f sec\n", seconds);
+
+    bg_mesh_lod_destroy(mlod);
 
     return 0;
 }

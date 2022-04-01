@@ -90,42 +90,14 @@ BG_EXPORT int
 bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale);
 
 /**
- * Given a detail level, load the appropriate data.
+ * Given a detail level, load the appropriate data.  This is not normally used
+ * by client codes directly, but may be needed if an app needs  manipulate
+ * the level of detail without a view.
  *
  * Returns the level selected.  If level == -1, return current level of l.  If
  * there is an error, return -1; */
 BG_EXPORT int
 bg_mesh_lod_level(struct bg_mesh_lod *l, int level);
-
-/**
- * Get a pointer to the current vertex array.  Returns the count of vertices
- * defined, and a pointer to the vertex array in v.
- *
- * This info (both pointer and count) become invalid if lod_view or lod_level
- * are used to change the current detail level.
- */
-BG_EXPORT size_t
-bg_mesh_lod_verts(const point_t **v, struct bg_mesh_lod *l);
-
-/**
- * The "raw" vertices stored in bg_mesh_lod are not necessarily the final
- * positions a given LoD level setting expects - to calculate the current
- * position for the active level, call vsnap on a point from the verts array
- * retrieved above.  (Drawing using the original points rather than applying
- * this transformation will typically draw a subset of the original mesh
- * triangles in their "final" positions, leaving significant holes in the
- * visible mesh.)
- */
-BG_EXPORT void
-bg_mesh_lod_vsnap(point_t *o, const point_t *v, struct bg_mesh_lod *l);
-
-/**
- * Get a pointer to the current faces array.  Returns the count
- * of faces defined, and a pointer to the faces array in f.
- */
-BG_EXPORT size_t
-bg_mesh_lod_faces(const int **f, struct bg_mesh_lod *l);
-
 
 /* Clean up the lod container. */
 BG_EXPORT void
@@ -138,10 +110,7 @@ bg_mesh_lod_clear(unsigned long long key);
 
 /* Set drawing function callback */
 BG_EXPORT void
-bg_mesh_lod_set_draw_callback(
-	struct bg_mesh_lod *lod,
-	int (*clbk)(void *ctx, int fset_cnt, int *fset, int fcnt, const int *faces, const point_t *points, const int *face_normals, const vect_t *normals, int mode)
-	);
+bg_mesh_lod_set_draw_callback(struct bg_mesh_lod *lod, int (*clbk)(void *ctx, struct bv_mesh_lod_info *info));
 
 /* Trigger a triangle drawing operation. */
 BG_EXPORT void
@@ -150,21 +119,6 @@ bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode);
 /* Callback for updating level settings on an object. */
 BG_EXPORT int
 bg_mesh_lod_update(struct bv_scene_obj *s, int offset);
-
-/* Given a view and a bg_mesh_lod container, return the appropriate vlist of
- * edges for display.  This is the core of the LoD functionality.  The vlist
- * components are managed using the vlfree list supplied by the bview struct,
- * so the caller should treat them like other scene object vlists.
- *
- * Note that this routine and the LoD container behind it are focused only on
- * wireframes - visual artifacts that would be problematic if we were returning
- * a triangle vlist (flipped faces, mesh topology, etc.) are not considered.
- * The focus of this routine is to produce fast, reasonable quality edge
- * visualizations for large meshes to support classic BRL-CAD wireframe mesh
- * views.
- */
-BG_EXPORT int
-bg_lod_elist(struct bu_list *elist, struct bview *v, struct bg_mesh_lod *l, const char *pname);
 
 __END_DECLS
 

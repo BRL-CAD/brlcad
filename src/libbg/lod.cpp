@@ -96,7 +96,7 @@
 #define POP_CACHEDIR ".POPLoD"
 #define MBUMP 1.01
 
-typedef int (*draw_clbk_t)(void *, int, int *, int, const int *, const point_t *, const int *, const vect_t *, int);
+typedef int (*draw_clbk_t)(void *, struct bv_mesh_lod_info *);
 
 static void
 lod_dir(char *dir)
@@ -729,18 +729,13 @@ int
 POPState::get_level(fastf_t vlen)
 {
     fastf_t delta = 0.01*vlen;
-    bu_log("len: %f\n", vlen);
-    bu_log("delta: %f\n", delta);
     point_t bmin, bmax;
     VSET(bmin, minx, miny, minz);
     VSET(bmax, maxx, maxy, maxz);
     fastf_t bdiag = DIST_PNT_PNT(bmin, bmax);
-    bu_log("box: %f\n", bdiag);
     for (int lev = 0; lev < POP_MAXLEVEL; lev++) {
 	fastf_t diag_slice = bdiag/pow(2,lev);
-	bu_log("diag_slice: %f\n", diag_slice);
 	if (diag_slice < delta) {
-	    bu_log("Suggest level %d\n", lev);
 	    return lev;
 	}
     }
@@ -1118,8 +1113,18 @@ POPState::tri_degenerate(rec r0, rec r1, rec r2, int level)
 void
 POPState::draw(void *ctx, int mode)
 {
-    if (draw_clbk)
-	(*draw_clbk)(ctx, 0, NULL, lod_tris.size()/3, lod_tris.data(), (const point_t *)lod_tri_pnts.data(), NULL, NULL, mode);
+    if (draw_clbk) {
+	struct bv_mesh_lod_info info;
+	info.fset_cnt = 0;
+	info.fset = NULL;
+	info.fcnt = lod_tris.size()/3;
+	info.faces = lod_tris.data();
+	info.points = (const point_t *)lod_tri_pnts.data();
+	info.face_normals = NULL;
+	info.normals = NULL;
+	info.mode = mode;
+	(*draw_clbk)(ctx, &info);
+    }
 }
 
 void
@@ -1295,6 +1300,17 @@ bg_mesh_lod_init(unsigned long long key)
     return l;
 }
 
+extern "C" void
+bg_mesh_lod_destroy(struct bg_mesh_lod *l)
+{
+    if (!l)
+	return;
+
+    delete l->i->s;
+    BU_PUT(l->i, struct bg_mesh_lod_internal);
+    BU_PUT(l, struct bg_mesh_lod);
+}
+
 extern "C" int
 bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
 {
@@ -1328,50 +1344,12 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
     return s->curr_level;
 }
 
-extern "C" size_t
-bg_mesh_lod_verts(const point_t **v, struct bg_mesh_lod *l)
+extern "C" int
+bg_mesh_lod_update(struct bv_scene_obj *s, int offset)
 {
-    if (!l)
-	return 0;
-    if (!v)
-	return l->i->s->lod_tri_pnts.size();
-
-    (*v) = (const point_t *)l->i->s->lod_tri_pnts.data();
-    return l->i->s->lod_tri_pnts.size();
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)s->draw_data;
+    return bg_mesh_lod_view(l, s->s_v, offset);
 }
-
-extern "C" void
-bg_mesh_lod_vsnap(point_t *o, const point_t *v, struct bg_mesh_lod *l)
-{
-    if (!l || !v || !o)
-	return;
-
-    l->i->s->level_pnt(o, v, l->i->s->curr_level);
-}
-
-extern "C" size_t
-bg_mesh_lod_faces(const int **f, struct bg_mesh_lod *l)
-{
-    if (!l)
-	return 0;
-    if (!f)
-	return l->i->s->lod_tris.size();
-
-    (*f) = (const int *)l->i->s->lod_tris.data();
-    return l->i->s->lod_tris.size();
-}
-
-extern "C" void
-bg_mesh_lod_destroy(struct bg_mesh_lod *l)
-{
-    if (!l)
-	return;
-
-    delete l->i->s;
-    BU_PUT(l->i, struct bg_mesh_lod_internal);
-    BU_PUT(l, struct bg_mesh_lod);
-}
-
 
 extern "C" void
 bg_mesh_lod_clear(unsigned long long key)
@@ -1383,7 +1361,7 @@ bg_mesh_lod_clear(unsigned long long key)
 extern "C" void
 bg_mesh_lod_set_draw_callback(
 	struct bg_mesh_lod *lod,
-	int (*clbk)(void *ctx, int fset_cnt, int *fset, int fcnt, const int *faces, const point_t *points, const int *face_normals, const vect_t *normals, int mode)
+	int (*clbk)(void *ctx, struct bv_mesh_lod_info *info)
 	)
 {
     if (!lod || !clbk)
@@ -1403,38 +1381,6 @@ bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode)
     s->draw(ctx, mode);
 }
 
-extern "C" int 
-bg_mesh_lod_update(struct bv_scene_obj *s, int offset)
-{
-    struct bg_mesh_lod *l = (struct bg_mesh_lod *)s->draw_data;
-    return bg_mesh_lod_view(l, s->s_v, offset);
-}
-
-extern "C" int
-bg_lod_elist(struct bu_list *elist, struct bview *v, struct bg_mesh_lod *l, const char *pname)
-{
-    int ecnt = 0;
-    if (!l)
-	return -1;
-
-    // TODO
-    if (elist || v)
-	return -1;
-
-    // For debugging purposes, write out plot files of each level
-    POPState *s = l->i->s;
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	s->set_level(i);
-	s->plot(pname);
-    }
-
-    for (int i = POP_MAXLEVEL - 1; i >= 0; i--) {
-	s->set_level(i);
-	s->plot("shrunk");
-    }
-
-    return ecnt;
-}
 
 // Local Variables:
 // tab-width: 8

@@ -121,6 +121,32 @@ struct bv_axes {
     int       tick_major_color[3];
 };
 
+// Mesh LoD drawing doesn't use vlists, but instead directly processes triangle
+// data to minimize memory usage.  Although the primary logic for LoD lives in
+// libbg, the drawing data is basic in nature. We define a struct container
+// that can be used by the multiple libraries which must interact with it to
+// make information passing simpler.
+struct bv_mesh_lod_info {
+    // The set of triangle faces to be used when drawing
+    int fcnt;
+    const int *faces;
+
+    // The vertices used by the faces array
+    const point_t *points;
+
+    // Optional: an "active subset" of faces in the faces array may be passed
+    // in as an index array in fset.  If fset is NULL, all will be drawn.
+    int fset_cnt;
+    int *fset;
+
+    // Optional: per-face-vertex normals
+    const int *face_normals;
+    const vect_t *normals;
+
+    // Drawing mode: 0 = wireframe, 1 = shaded
+    int mode;
+};
+
 
 // Many settings have defaults at the view level, and may be overridden for
 // individual scene objects.
