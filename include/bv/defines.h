@@ -145,6 +145,9 @@ struct bv_mesh_lod_info {
 
     // Drawing mode: 0 = wireframe, 1 = shaded
     int mode;
+
+    // Pointer to LoD container
+    void *lod;
 };
 
 

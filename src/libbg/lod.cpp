@@ -231,6 +231,9 @@ class POPState {
 	void draw(void *ctx, int mode);
 	void set_callback(draw_clbk_t clbk);
 
+	// Parent container
+	struct bg_mesh_lod *lod;
+
     private:
 
 	void tri_process();
@@ -1123,6 +1126,7 @@ POPState::draw(void *ctx, int mode)
 	info.face_normals = NULL;
 	info.normals = NULL;
 	info.mode = mode;
+	info.lod = lod;
 	(*draw_clbk)(ctx, &info);
     }
 }
@@ -1296,6 +1300,7 @@ bg_mesh_lod_init(unsigned long long key)
     BU_GET(l, struct bg_mesh_lod);
     BU_GET(l->i, struct bg_mesh_lod_internal);
     l->i->s = p;
+    p->lod = l;
 
     return l;
 }
@@ -1342,6 +1347,15 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
     s->set_level(level);
 
     return s->curr_level;
+}
+
+extern "C" void
+bg_mesh_lod_vsnap(point_t *o, const point_t *v, struct bg_mesh_lod *l)
+{
+    if (!l || !v || !o)
+	return;
+
+    l->i->s->level_pnt(o, v, l->i->s->curr_level);
 }
 
 extern "C" int
