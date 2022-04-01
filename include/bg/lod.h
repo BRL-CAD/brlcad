@@ -147,6 +147,9 @@ bg_mesh_lod_set_draw_callback(
 BG_EXPORT void
 bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode);
 
+/* Callback for updating level settings on an object. */
+BG_EXPORT int
+bg_mesh_lod_update(struct bv_scene_obj *s, int offset);
 
 /* Given a view and a bg_mesh_lod container, return the appropriate vlist of
  * edges for display.  This is the core of the LoD functionality.  The vlist

@@ -106,6 +106,9 @@ wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
 	    bu_log("Error loading info for level %d\n", level);
 	}
 
+	// LoD will need to re-check its level settings whenever the view changes
+	s->s_update_callback = &bg_mesh_lod_update;
+
 	// Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
 	s->s_type_flags |= BV_MESH_LOD;
 

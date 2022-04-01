@@ -1308,6 +1308,7 @@ bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
     int vscale = s->get_level(v->gv_size) + scale;
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
+    bg_mesh_lod_level(l, vscale);
     return vscale;
 }
 
@@ -1400,6 +1401,13 @@ bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode)
 
     POPState *s = lod->i->s;
     s->draw(ctx, mode);
+}
+
+extern "C" int 
+bg_mesh_lod_update(struct bv_scene_obj *s, int offset)
+{
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)s->draw_data;
+    return bg_mesh_lod_view(l, s->s_v, offset);
 }
 
 extern "C" int
