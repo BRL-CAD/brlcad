@@ -785,6 +785,167 @@ int gl_drawVList(struct dm *dmp, struct bv_vlist *vp)
     return BRLCAD_OK;
 }
 
+int gl_draw_tri(struct dm *dmp, int tri_ind, int fcnt, int *faces, point_t *points, int *face_normals, point_t *normals, int mode)
+{
+    struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
+    GLdouble dpt[3];
+    int ret = -1;
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
+    GLfloat originalLineWidth;
+
+    if (mode < 0 || mode > 1)
+	return -1;
+
+    glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
+
+    gl_debug_print(dmp, "gl_draw_tri", dmp->i->dm_debugLevel);
+
+    // Wireframe
+    if (mode == 0) {
+
+	if (dmp->i->dm_light) {
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mvars->i.wireColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+	    if (dmp->i->dm_transparency)
+		glDisable(GL_BLEND);
+	}
+
+	glBegin(GL_LINE_STRIP);
+	if (tri_ind < 0) {
+	    // Draw all the triangles in faces array
+	    for (int i = 0; i < fcnt; i++) {
+		VMOVE(dpt, points[faces[3*i+0]]);
+		glVertex3dv(dpt);
+		VMOVE(dpt, points[faces[3*i+1]]);
+		glVertex3dv(dpt);
+		VMOVE(dpt, points[faces[3*i+2]]);
+		glVertex3dv(dpt);
+
+	    }
+	    ret = fcnt;
+	} else {
+	    // Draw the tri_ind triangle
+	    VMOVE(dpt, points[faces[3*tri_ind+0]]);
+	    glVertex3dv(dpt);
+	    VMOVE(dpt, points[faces[3*tri_ind+1]]);
+	    glVertex3dv(dpt);
+	    VMOVE(dpt, points[faces[3*tri_ind+2]]);
+	    glVertex3dv(dpt);
+	    ret = tri_ind;
+	}
+
+	glEnd();
+	if (dmp->i->dm_light && dmp->i->dm_transparency)
+	    glDisable(GL_BLEND);
+
+	glLineWidth(originalLineWidth);
+
+	return ret;
+    }
+
+    // Shaded
+    if (mode == 1) {
+	if (dmp->i->dm_light) {
+
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mvars->i.specularColor);
+	    glMaterialfv(GL_FRONT, GL_DIFFUSE, mvars->i.diffuseColor);
+
+	    switch (dmp->i->dm_light) {
+		case 1:
+		    break;
+		case 2:
+		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.diffuseColor);
+		    break;
+		case 3:
+		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorDark);
+		    break;
+		default:
+		    glMaterialfv(GL_BACK, GL_DIFFUSE, mvars->i.backDiffuseColorLight);
+		    break;
+	    }
+
+	    if (dmp->i->dm_transparency)
+		glEnable(GL_BLEND);
+	}
+	glBegin(GL_TRIANGLES);
+
+	if (tri_ind < 0) {
+	    // Draw all the triangles in faces array
+	    for (int i = 0; i < fcnt; i++) {
+
+		// Set surface normal
+		vect_t ab, ac, norm;
+		VSUB2(ab, points[faces[3*i+0]], points[faces[3*i+1]]);
+		VSUB2(ac, points[faces[3*i+0]], points[faces[3*i+2]]);
+		VCROSS(norm, ab, ac);
+		VUNITIZE(norm);
+		glNormal3dv(norm);
+
+		if (face_normals && normals) {
+		    bu_log("todo - per-vertex normals\n");
+		}
+		VMOVE(dpt, points[faces[3*i+0]]);
+		glVertex3dv(dpt);
+		if (face_normals && normals) {
+		    bu_log("todo - per-vertex normals\n");
+		}
+		VMOVE(dpt, points[faces[3*i+1]]);
+		glVertex3dv(dpt);
+		if (face_normals && normals) {
+		    bu_log("todo - per-vertex normals\n");
+		}
+		VMOVE(dpt, points[faces[3*i+2]]);
+		glVertex3dv(dpt);
+
+	    }
+	    ret = fcnt;
+	} else {
+	    // Draw the tri_ind triangle
+
+	    // Set surface normal
+	    vect_t ab, ac, norm;
+	    VSUB2(ab, points[faces[3*tri_ind+0]], points[faces[3*tri_ind+1]]);
+	    VSUB2(ac, points[faces[3*tri_ind+0]], points[faces[3*tri_ind+2]]);
+	    VCROSS(norm, ab, ac);
+	    VUNITIZE(norm);
+	    glNormal3dv(norm);
+
+	    if (face_normals && normals) {
+		bu_log("todo - per-vertex normals\n");
+	    }
+	    VMOVE(dpt, points[faces[3*tri_ind+0]]);
+	    glVertex3dv(dpt);
+	    if (face_normals && normals) {
+		bu_log("todo - per-vertex normals\n");
+	    }
+	    VMOVE(dpt, points[faces[3*tri_ind+1]]);
+	    glVertex3dv(dpt);
+	    if (face_normals && normals) {
+		bu_log("todo - per-vertex normals\n");
+	    }
+	    VMOVE(dpt, points[faces[3*tri_ind+2]]);
+	    glVertex3dv(dpt);
+	    ret = tri_ind;
+	}
+
+	glEnd();
+
+	if (dmp->i->dm_light && dmp->i->dm_transparency)
+	    glDisable(GL_BLEND);
+
+	glLineWidth(originalLineWidth);
+
+	return ret;
+    }
+
+    return -1;
+}
+
+
 int gl_draw_data_axes(struct dm *dmp,
                   fastf_t sf,
                   struct bv_data_axes_state *bndasp)

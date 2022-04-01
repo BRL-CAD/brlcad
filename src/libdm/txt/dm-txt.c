@@ -201,7 +201,7 @@ txt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
 
 
 HIDDEN int
-txt_draw_tri(struct dm *UNUSED(dmp), int UNUSED(tri_ind), int UNUSED(fcnt), int *UNUSED(faces), point_t *UNUSED(points), int UNUSED(mode), int UNUSED(state))
+txt_draw_tri(struct dm *UNUSED(dmp), int UNUSED(tri_ind), int UNUSED(fcnt), const int *UNUSED(faces), const point_t *UNUSED(points), const int *UNUSED(face_normals), const point_t *UNUSED(normals), int UNUSED(mode))
 {
     bu_log("draw_tri called\n");
     return 0;
