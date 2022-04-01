@@ -25,6 +25,7 @@
 #include "bu/vls.h"
 #include "bv/defines.h"
 #include "bv/util.h"
+#include "bg/lod.h"
 #define DM_WITH_RT
 #include "dm.h"
 
@@ -566,19 +567,29 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s)
 	dm_draw_scene_obj(dmp, s_c);
     }
 
-    if (bu_list_len(&s->s_vlist)) {
-	// Draw primary wireframe.
-	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
+    if (s->s_type_flags & BV_MESH_LOD) {
+	struct bg_mesh_lod *l = (struct bg_mesh_lod *)s->draw_data;
 
-	dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
+	// Tell the mesh lod structure what callback method to use to draw
+	bg_mesh_lod_set_draw_callback(l, &dm_draw_tri_callback);
 
-	if (s->s_os.s_dmode == 4) {
-	    dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&s->s_vlist);
-	} else {
-	    dm_draw_vlist(dmp, (struct bv_vlist *)&s->s_vlist);
+	// For now start with wireframe, but will need to pass wireframe or shaded as second arg
+	bg_mesh_lod_draw(l, (void *)dmp, 0);
+    } else {
+	if (bu_list_len(&s->s_vlist)) {
+	    // Draw primary wireframe.
+	    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
+
+	    dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
+
+	    if (s->s_os.s_dmode == 4) {
+		dm_draw_vlist_hidden_line(dmp, (struct bv_vlist *)&s->s_vlist);
+	    } else {
+		dm_draw_vlist(dmp, (struct bv_vlist *)&s->s_vlist);
+	    }
+
+	    dm_add_arrows(dmp, s);
 	}
-
-	dm_add_arrows(dmp, s);
     }
 
     if (s->s_type_flags & BV_AXES) {

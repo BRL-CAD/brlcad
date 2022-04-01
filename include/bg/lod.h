@@ -136,6 +136,17 @@ bg_mesh_lod_destroy(struct bg_mesh_lod *lod);
 BG_EXPORT void
 bg_mesh_lod_clear(unsigned long long key);
 
+/* Set drawing function callback */
+BG_EXPORT void
+bg_mesh_lod_set_draw_callback(
+	struct bg_mesh_lod *lod,
+	int (*clbk)(void *ctx, int fset_cnt, int *fset, int fcnt, const int *faces, const point_t *points, const int *face_normals, const vect_t *normals, int mode)
+	);
+
+/* Trigger a triangle drawing operation. */
+BG_EXPORT void
+bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode);
+
 
 /* Given a view and a bg_mesh_lod container, return the appropriate vlist of
  * edges for display.  This is the core of the LoD functionality.  The vlist

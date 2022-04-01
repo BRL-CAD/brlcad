@@ -96,6 +96,8 @@
 #define POP_CACHEDIR ".POPLoD"
 #define MBUMP 1.01
 
+typedef int (*draw_clbk_t)(void *, int, int *, int, const int *, const point_t *, const int *, const vect_t *, int);
+
 static void
 lod_dir(char *dir)
 {
@@ -225,6 +227,10 @@ class POPState {
 	// Content based hash key
 	unsigned long long hash;
 
+	// Drawing trigger
+	void draw(void *ctx, int mode);
+	void set_callback(draw_clbk_t clbk);
+
     private:
 
 	void tri_process();
@@ -273,6 +279,9 @@ class POPState {
 	const point_t *verts_array = NULL;
 	int faces_cnt = 0;
 	int *faces_array = NULL;
+
+	// Function to use when doing draw operations
+	draw_clbk_t draw_clbk;
 };
 
 void
@@ -1107,6 +1116,20 @@ POPState::tri_degenerate(rec r0, rec r1, rec r2, int level)
 }
 
 void
+POPState::draw(void *ctx, int mode)
+{
+    if (draw_clbk)
+	(*draw_clbk)(ctx, 0, NULL, lod_tris.size()/3, lod_tris.data(), (const point_t *)lod_tri_pnts.data(), NULL, NULL, mode);
+}
+
+void
+POPState::set_callback(draw_clbk_t clbk)
+{
+    draw_clbk = clbk;
+}
+
+
+void
 POPState::plot(const char *root)
 {
     if (curr_level < 0)
@@ -1354,6 +1377,29 @@ bg_mesh_lod_clear(unsigned long long key)
 {
     if (key == 0)
 	bu_log("Remove all\n");
+}
+
+extern "C" void
+bg_mesh_lod_set_draw_callback(
+	struct bg_mesh_lod *lod,
+	int (*clbk)(void *ctx, int fset_cnt, int *fset, int fcnt, const int *faces, const point_t *points, const int *face_normals, const vect_t *normals, int mode)
+	)
+{
+    if (!lod || !clbk)
+	return;
+
+    POPState *s = lod->i->s;
+    s->set_callback(clbk);
+}
+
+extern "C" void
+bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode)
+{
+    if (!lod || !ctx)
+	return;
+
+    POPState *s = lod->i->s;
+    s->draw(ctx, mode);
 }
 
 extern "C" int

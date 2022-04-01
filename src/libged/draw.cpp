@@ -95,12 +95,20 @@ wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
     if (s->s_v->gv_s->adaptive_plot && ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
+
+	// Basic setup (TODO - make sure we don't rebuild cache every time - just if the key
+	// lookup fails...)
 	unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
 	s->draw_data = (void *)bg_mesh_lod_init(key);
+	// Initialize the LoD data to the current view
 	int level = bg_mesh_lod_view((struct bg_mesh_lod *)s->draw_data, s->s_v, 0);
 	if (bg_mesh_lod_level((struct bg_mesh_lod *)s->draw_data, level) != level) {
 	    bu_log("Error loading info for level %d\n", level);
 	}
+
+	// Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
+	s->s_type_flags |= BV_MESH_LOD;
+
 	bu_log("level: %d\n", level);
 	return;
     }
