@@ -77,6 +77,7 @@ struct dm_impl {
     int (*dm_drawPoints3D)(struct dm *dmp, int npoints, point_t *points);
     int (*dm_drawVList)(struct dm *dmp, struct bv_vlist *vp);
     int (*dm_drawVListHiddenLine)(struct dm *dmp, struct bv_vlist *vp);
+    int (*dm_draw_tri)(struct dm *dmp, int tri_ind, int fcnt, int *faces, point_t *points, int mode, int state);
     int (*dm_draw_data_axes)(struct dm *dmp, fastf_t sf, struct bv_data_axes_state *bndasp);
     int (*dm_draw)(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data);	/**< @brief formerly dmr_object */
     int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);

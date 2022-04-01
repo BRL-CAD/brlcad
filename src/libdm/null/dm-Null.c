@@ -189,6 +189,12 @@ null_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
 
 
 int
+null_draw_tri(struct dm *UNUSED(dmp), int UNUSED(tri_ind), int UNUSED(fcnt), int *UNUSED(faces), point_t *UNUSED(points), int UNUSED(mode), int UNUSED(state)){
+    return 0;
+}
+
+
+int
 null_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
 {
     return dmp == NULL && callback_function == NULL && data == NULL;
@@ -364,6 +370,7 @@ struct dm_impl dm_null_impl = {
     null_drawPoints3D,
     null_drawVList,
     null_drawVListHiddenLine,
+    null_draw_tri,
     NULL,
     null_draw,
     null_setFGColor,
