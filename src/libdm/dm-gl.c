@@ -796,7 +796,7 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
     const int *face_normals = info->face_normals;
     const vect_t *normals = info->normals;
     int mode = info->mode;
-    struct bg_mesh_lod *lod = (struct bg_mesh_lod *)info->lod;
+    //struct bg_mesh_lod *lod = (struct bg_mesh_lod *)info->lod;
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     point_t snap_pt;
@@ -827,13 +827,16 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 	    // Draw all the triangles in faces array
 	    for (int i = 0; i < fcnt; i++) {
 		glBegin(GL_LINE_STRIP);
-		bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+0]], lod);
+		VMOVE(snap_pt, points[faces[3*i+0]]);
+		//bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+0]], lod);
 		VMOVE(dpt, snap_pt);
 		glVertex3dv(dpt);
-		bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+1]], lod);
+		VMOVE(snap_pt, points[faces[3*i+1]]);
+		//bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+1]], lod);
 		VMOVE(dpt, snap_pt);
 		glVertex3dv(dpt);
-		bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+2]], lod);
+		VMOVE(snap_pt, points[faces[3*i+2]]);
+		//bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+2]], lod);
 		VMOVE(dpt, snap_pt);
 		glVertex3dv(dpt);
 		VMOVE(dpt, snap_pt);
@@ -905,19 +908,22 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 		if (face_normals && normals) {
 		    bu_log("todo - per-vertex normals\n");
 		}
-		bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+0]], lod);
+		VMOVE(snap_pt, points[faces[3*i+0]]);
+		//bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+0]], lod);
 		VMOVE(dpt, snap_pt);
 		glVertex3dv(dpt);
 		if (face_normals && normals) {
 		    bu_log("todo - per-vertex normals\n");
 		}
-		bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+1]], lod);
+		VMOVE(snap_pt, points[faces[3*i+1]]);
+		//bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+1]], lod);
 		VMOVE(dpt, snap_pt);
 		glVertex3dv(dpt);
 		if (face_normals && normals) {
 		    bu_log("todo - per-vertex normals\n");
 		}
-		bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+2]], lod);
+		VMOVE(snap_pt, points[faces[3*i+2]]);
+		//bg_mesh_lod_vsnap(&snap_pt, &points[faces[3*i+2]], lod);
 		VMOVE(dpt, snap_pt);
 		glVertex3dv(dpt);
 

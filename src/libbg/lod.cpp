@@ -206,6 +206,7 @@ class POPState {
 	// more than we need to support the LoD drawing.  lod_tris will index
 	// into lod_tri_pnts.
 	std::vector<fastf_t> lod_tri_pnts;
+	std::vector<fastf_t> lod_tri_pnts_snapped;
 
 	// Containers for sub-mesh grouping
 #ifdef USE_RTREE
@@ -604,6 +605,17 @@ POPState::tri_pop_load(int start_level, int level)
 	vifile.close();
 	bu_vls_free(&vfile);
     }
+    // Re-snap all vertices loaded at the new level
+    lod_tri_pnts_snapped.clear();
+    lod_tri_pnts_snapped.reserve(lod_tri_pnts.size());
+    for (size_t i = 0; i < lod_tri_pnts.size()/3; i++) {
+	point_t p, sp;
+	VSET(p, lod_tri_pnts[3*i+0], lod_tri_pnts[3*i+1], lod_tri_pnts[3*i+2]);
+	level_pnt(&sp, &p, level);
+	for (int k = 0; k < 3; k++) {
+	    lod_tri_pnts_snapped.push_back(sp[k]);
+	}
+    }
 
     // Read in the level triangles
     for (int i = start_level+1; i <= level; i++) {
@@ -655,6 +667,17 @@ POPState::tri_pop_trim(int level)
     lod_tris.resize(fkeep_cnt*3);
     lod_tris.shrink_to_fit();
 
+    // Re-snap all vertices loaded at the new level
+    lod_tri_pnts_snapped.clear();
+    lod_tri_pnts_snapped.reserve(lod_tri_pnts.size());
+    for (size_t i = 0; i < lod_tri_pnts.size()/3; i++) {
+	point_t p, sp;
+	VSET(p, lod_tri_pnts[3*i+0], lod_tri_pnts[3*i+1], lod_tri_pnts[3*i+2]);
+	level_pnt(&sp, &p, level);
+	for (int k = 0; k < 3; k++) {
+	    lod_tri_pnts_snapped.push_back(sp[k]);
+	}
+    }
 }
 
 #ifdef USE_RTREE
@@ -799,6 +822,7 @@ POPState::set_level(int level)
 	tri_rtree_load();
 #else
 	// Read the complete tris and verts for full drawing
+	lod_tri_pnts_snapped.clear();
 	lod_tri_pnts.clear();
 	lod_tris.clear();
 	{
@@ -1122,7 +1146,11 @@ POPState::draw(void *ctx, int mode)
 	info.fset = NULL;
 	info.fcnt = lod_tris.size()/3;
 	info.faces = lod_tris.data();
-	info.points = (const point_t *)lod_tri_pnts.data();
+	if (curr_level <= max_tri_pop_level) {
+	    info.points = (const point_t *)lod_tri_pnts_snapped.data();
+	} else {
+	    info.points = (const point_t *)lod_tri_pnts.data();
+	}
 	info.face_normals = NULL;
 	info.normals = NULL;
 	info.mode = mode;
