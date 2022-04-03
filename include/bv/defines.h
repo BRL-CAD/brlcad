@@ -133,6 +133,7 @@ struct bv_mesh_lod_info {
 
     // The vertices used by the faces array
     const point_t *points;
+    const point_t *points_orig;
 
     // Optional: an "active subset" of faces in the faces array may be passed
     // in as an index array in fset.  If fset is NULL, all will be drawn.

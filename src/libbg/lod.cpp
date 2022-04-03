@@ -1146,6 +1146,7 @@ POPState::draw(void *ctx, int mode)
 	info.fset = NULL;
 	info.fcnt = lod_tris.size()/3;
 	info.faces = lod_tris.data();
+	info.points_orig = (const point_t *)lod_tri_pnts.data();
 	if (curr_level <= max_tri_pop_level) {
 	    info.points = (const point_t *)lod_tri_pnts_snapped.data();
 	} else {

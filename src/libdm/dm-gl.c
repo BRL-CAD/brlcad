@@ -793,6 +793,7 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
     int fcnt = info->fcnt;
     const int *faces = info->faces;
     const point_t *points = info->points;
+    const point_t *points_orig = info->points_orig;
     const int *face_normals = info->face_normals;
     const vect_t *normals = info->normals;
     int mode = info->mode;
@@ -899,8 +900,8 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 
 		// Set surface normal
 		vect_t ab, ac, norm;
-		VSUB2(ab, points[faces[3*i+0]], points[faces[3*i+1]]);
-		VSUB2(ac, points[faces[3*i+0]], points[faces[3*i+2]]);
+		VSUB2(ab, points_orig[faces[3*i+0]], points_orig[faces[3*i+1]]);
+		VSUB2(ac, points_orig[faces[3*i+0]], points_orig[faces[3*i+2]]);
 		VCROSS(norm, ab, ac);
 		VUNITIZE(norm);
 		glNormal3dv(norm);
