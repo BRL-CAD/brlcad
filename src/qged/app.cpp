@@ -366,7 +366,7 @@ CADApp::run_qcmd(const QString &command)
 	return;
 
     QtConsole *console = w->console;
-    const char *cmd = command.toLocal8Bit();
+    const char *cmd = bu_strdup(command.toLocal8Bit());
 
     if (BU_STR_EQUAL(cmd, "q"))
 	bu_exit(0, "exit");
@@ -376,11 +376,14 @@ CADApp::run_qcmd(const QString &command)
 	    console->clear();
 	    console->prompt("$ ");
 	}
+	bu_free((void *)cmd, "cmd");
 	return;
     }
 
-    if (!mdl)
+    if (!mdl) {
+	bu_free((void *)cmd, "cmd");
 	return;
+    }
 
     QgModel *m  = (QgModel *)mdl->sourceModel();
 
@@ -432,6 +435,7 @@ CADApp::run_qcmd(const QString &command)
 	bu_vls_trunc(m->gedp->ged_result_str, 0);
     }
 
+    bu_free((void *)cmd, "cmd");
     bu_vls_free(&msg);
     bu_free(input, "input copy");
     bu_free(av, "input argv");
