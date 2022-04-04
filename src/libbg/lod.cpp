@@ -368,7 +368,7 @@ POPState::tri_process()
     for (size_t i = 0; i < level_tris.size(); i++) {
 	trisum += level_tris[i].size();
 	if (trisum > faces_array_cnt2) {
-	    // If we're in the 80-100% range of triangles, this is our
+	    // If we're using two thirds of the triangles, this is our
 	    // threshold level.  If we've got ALL the triangles, back
 	    // down one level.
 	    if (trisum < (size_t)faces_cnt) {
@@ -1093,13 +1093,13 @@ POPState::to_level(int val, int level)
 fastf_t
 POPState::snap(fastf_t val, fastf_t min, fastf_t max, int level)
 {
-    unsigned int x;
-    x = floor((val - min) / (max - min) * USHRT_MAX);
-    int lx = floor(x/double(PRECOMPUTED_MASKS[level]));
-    int hx = ceil(x/double(PRECOMPUTED_MASKS[level]));
-    fastf_t x1 = ((fastf_t)lx + (fastf_t)hx)*0.5 * double(PRECOMPUTED_MASKS[level]);
-    fastf_t nx = ((x1 / USHRT_MAX) * (max - min)) + min;
-    return nx;
+    unsigned int vf = floor((val - min) / (max - min) * USHRT_MAX);
+    int lv = floor(vf/double(PRECOMPUTED_MASKS[level]));
+    unsigned int vc = ceil((val - min) / (max - min) * USHRT_MAX);
+    int hc = ceil(vc/double(PRECOMPUTED_MASKS[level]));
+    fastf_t v = ((fastf_t)lv + (fastf_t)hc)*0.5 * double(PRECOMPUTED_MASKS[level]);
+    fastf_t vs = ((v / USHRT_MAX) * (max - min)) + min;
+    return vs;
 }
 
 // Transfer coordinate into level-appropriate value
