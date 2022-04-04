@@ -165,12 +165,15 @@ class POPState {
 	// Parent container
 	struct bg_mesh_lod *lod;
 
-	float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
-	float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
+	// Bounding box of original mesh
+	point_t bbmin, bbmax;
 
     private:
 
 	void tri_process();
+
+	float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
+	float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
 
 	// Clamping of points to various detail levels
 	int to_level(int val, int level);
@@ -348,6 +351,9 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     faces_cnt = fcnt;
     faces_array = faces;
 
+    // Calculate the full mesh bounding box for later use
+    bg_trimesh_aabb(&bbmin, &bbmax, faces_array, faces_cnt, verts_array, vert_cnt);
+
     // Find our min and max values, initialize levels
     for (int i = 0; i < vcnt; i++) {
 	minx = (v[i][X] < minx) ? v[i][X] : minx;
@@ -419,6 +425,8 @@ POPState::POPState(unsigned long long key)
     {
 	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "minmax", NULL);
 	std::ifstream minmaxfile(dir, std::ios::in | std::ofstream::binary);
+	minmaxfile.read(reinterpret_cast<char *>(&bbmin), sizeof(bbmin));
+	minmaxfile.read(reinterpret_cast<char *>(&bbmax), sizeof(bbmax));
 	float minmax[6];
 	minmaxfile.read(reinterpret_cast<char *>(&minmax), sizeof(minmax));
 	minx = minmax[0];
@@ -799,10 +807,12 @@ POPState::cache()
     fprintf(fp, "1\n");
     fclose(fp);
 
-    // Stash the min and max bounds, which will be used in decoding
+    // Stash the original mesh bbox and the min and max bounds, which will be used in decoding
     {
 	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "minmax", NULL);
 	std::ofstream minmaxfile(dir, std::ios::out | std::ofstream::binary);
+	minmaxfile.write(reinterpret_cast<const char *>(&bbmin), sizeof(bbmin));
+	minmaxfile.write(reinterpret_cast<const char *>(&bbmax), sizeof(bbmax));
 	minmaxfile.write(reinterpret_cast<const char *>(&minx), sizeof(minx));
 	minmaxfile.write(reinterpret_cast<const char *>(&miny), sizeof(miny));
 	minmaxfile.write(reinterpret_cast<const char *>(&minz), sizeof(minz));
@@ -1027,8 +1037,8 @@ bg_mesh_lod_init(unsigned long long key)
     ((struct bg_mesh_lod *)i->lod)->i->s = p;
     p->lod = (struct bg_mesh_lod *)i->lod;
 
-    VSET(i->bmin, p->minx, p->miny, p->minz);
-    VSET(i->bmax, p->maxx, p->maxy, p->maxz);
+    VMOVE(i->bmin, p->bbmin);
+    VMOVE(i->bmax, p->bbmax);
 
     return i;
 }
