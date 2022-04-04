@@ -2076,7 +2076,7 @@ _ged_dir_getspace(struct db_i *dbip,
     }
 
     /* Allocate and cast num_entries worth of pointers */
-    dir_basep = (struct directory **) bu_malloc(num_entries+1 * sizeof(struct directory *),
+    dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
 						"dir_getspace *dir[]");
     return dir_basep;
 }
