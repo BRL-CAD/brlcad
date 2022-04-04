@@ -555,7 +555,7 @@ bv_scene_obj_free(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj)
     FREE_BV_SCENE_OBJ(s, &free_scene_obj->l);
 }
 
-void
+int
 bv_scene_obj_bound(struct bv_scene_obj *sp)
 {
     point_t bmin, bmax;
@@ -563,18 +563,31 @@ bv_scene_obj_bound(struct bv_scene_obj *sp)
     int dispmode;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
-    cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL, &dispmode);
-    if (cmd) {
-	bu_log("unknown vlist op %d\n", cmd);
+    int calc = 0;
+    if (sp->s_type_flags & BV_MESH_LOD) {
+	struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)sp->draw_data;
+	VMOVE(bmin, i->bmin);
+	VMOVE(bmax, i->bmax);
+	calc = 1;
+    } else if (bu_list_len(&sp->s_vlist)) {
+	cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL, &dispmode);
+	if (cmd) {
+	    bu_log("unknown vlist op %d\n", cmd);
+	}
+	calc = 1;
     }
-    sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
-    sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
-    sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
+    if (calc) {
+	sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
+	sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
+	sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
 
-    sp->s_size = bmax[X] - bmin[X];
-    V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
-    V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
-    sp->s_displayobj = dispmode;
+	sp->s_size = bmax[X] - bmin[X];
+	V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
+	V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
+	sp->s_displayobj = dispmode;
+	return 1;
+    }
+    return 0;
 }
 
 fastf_t

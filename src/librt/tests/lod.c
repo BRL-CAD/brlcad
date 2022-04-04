@@ -75,10 +75,10 @@ main(int argc, char *argv[])
     if (!key)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
 
-    struct bg_mesh_lod *mlod = bg_mesh_lod_init(key);
-    if (!mlod)
+    struct bv_mesh_lod_info *linfo = bg_mesh_lod_init(key);
+    if (!linfo)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
-
+    struct bg_mesh_lod *mlod = (struct bg_mesh_lod *)linfo->lod;
 
     // TODO Set up initial view
 
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
     seconds = elapsed / 1000000.0;
     bu_log("lod level setting: %f sec\n", seconds);
 
-    bg_mesh_lod_destroy(mlod);
+    bg_mesh_lod_destroy(linfo);
 
     return 0;
 }

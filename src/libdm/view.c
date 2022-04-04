@@ -568,7 +568,8 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s)
     }
 
     if (s->s_type_flags & BV_MESH_LOD) {
-	struct bg_mesh_lod *l = (struct bg_mesh_lod *)s->draw_data;
+	struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)s->draw_data;
+	struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
 
 	// Tell the mesh lod structure what callback method to use to draw
 	bg_mesh_lod_set_draw_callback(l, &dm_draw_tri_callback);

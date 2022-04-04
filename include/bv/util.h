@@ -103,8 +103,9 @@ BV_EXPORT extern void bv_scene_obj_init(struct bv_scene_obj *s, struct bv_scene_
 /* Free the object contents, including all child objects */
 BV_EXPORT extern void bv_scene_obj_free(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj);
 
-/* Compute the min, max, and center points of the scene object. */
-BV_EXPORT extern void bv_scene_obj_bound(struct bv_scene_obj *s);
+/* Compute the min, max, and center points of the scene object.
+ * Return 1 if a bound was computed, else 0 */
+BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s);
 
 /* Find the nearest (mode == 0) or farthest (mode == 1) data_vZ value from
  * the vlist points in s in the context of view v */

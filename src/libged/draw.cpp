@@ -101,8 +101,10 @@ wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
 	unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
 	s->draw_data = (void *)bg_mesh_lod_init(key);
 	// Initialize the LoD data to the current view
-	int level = bg_mesh_lod_view((struct bg_mesh_lod *)s->draw_data, s->s_v, 0);
-	if (bg_mesh_lod_level((struct bg_mesh_lod *)s->draw_data, level) != level) {
+	struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)s->draw_data;
+	struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
+	int level = bg_mesh_lod_view(l, s->s_v, 0);
+	if (bg_mesh_lod_level(l, level) != level) {
 	    bu_log("Error loading info for level %d\n", level);
 	}
 

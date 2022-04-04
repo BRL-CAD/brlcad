@@ -72,7 +72,7 @@ bg_mesh_lod_cache(const point_t *v, int vcnt, int *f, int fcnt);
  * manipulate the loaded LoD (usually used for debugging, but also useful if an
  * application wishes to visualize levels explicitly.)
  */
-BG_EXPORT struct bg_mesh_lod *
+BG_EXPORT struct bv_mesh_lod_info *
 bg_mesh_lod_init(unsigned long long key);
 
 /**
@@ -99,21 +99,9 @@ bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale);
 BG_EXPORT int
 bg_mesh_lod_level(struct bg_mesh_lod *l, int level);
 
-/**
- * The "raw" vertices stored in bg_mesh_lod are not necessarily the final
- * positions a given LoD level setting expects - to calculate the current
- * position for the active level, call vsnap on a point from the verts array
- * retrieved above.  (Drawing using the original points rather than applying
- * this transformation will typically draw a subset of the original mesh
- * triangles in their "final" positions, leaving significant holes in the
- * visible mesh.)
- */
-BG_EXPORT void
-bg_mesh_lod_vsnap(point_t *o, const point_t *v, struct bg_mesh_lod *l);
-
 /* Clean up the lod container. */
 BG_EXPORT void
-bg_mesh_lod_destroy(struct bg_mesh_lod *lod);
+bg_mesh_lod_destroy(struct bv_mesh_lod_info *i);
 
 /* Remove cache data associated with key.  If key == 0, remove ALL cache data
  * associated with all LoD objects (i.e. a full LoD cache reset). */

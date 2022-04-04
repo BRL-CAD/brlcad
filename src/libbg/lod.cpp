@@ -165,6 +165,9 @@ class POPState {
 	// Parent container
 	struct bg_mesh_lod *lod;
 
+	float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
+	float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
+
     private:
 
 	void tri_process();
@@ -180,9 +183,6 @@ class POPState {
 
 	// Degeneracy test for triangles
 	bool tri_degenerate(rec r0, rec r1, rec r2, int level);
-
-	float minx = FLT_MAX, miny = FLT_MAX, minz = FLT_MAX;
-	float maxx = -FLT_MAX, maxy = -FLT_MAX, maxz = -FLT_MAX;
 
 	std::vector<unsigned short> PRECOMPUTED_MASKS;
 
@@ -1005,7 +1005,7 @@ bg_mesh_lod_cache(const point_t *v, int vcnt, int *faces, int fcnt)
     return key;
 }
 
-extern "C" struct bg_mesh_lod *
+extern "C" struct bv_mesh_lod_info *
 bg_mesh_lod_init(unsigned long long key)
 {
     if (!key)
@@ -1020,24 +1020,30 @@ bg_mesh_lod_init(unsigned long long key)
 	return NULL;
     }
 
-    struct bg_mesh_lod *l = NULL;
-    BU_GET(l, struct bg_mesh_lod);
-    BU_GET(l->i, struct bg_mesh_lod_internal);
-    l->i->s = p;
-    p->lod = l;
+    struct bv_mesh_lod_info *i = NULL;
+    BU_GET(i, struct bv_mesh_lod_info);
+    BU_GET(i->lod, struct bg_mesh_lod);
+    BU_GET(((struct bg_mesh_lod *)i->lod)->i, struct bg_mesh_lod_internal);
+    ((struct bg_mesh_lod *)i->lod)->i->s = p;
+    p->lod = (struct bg_mesh_lod *)i->lod;
 
-    return l;
+    VSET(i->bmin, p->minx, p->miny, p->minz);
+    VSET(i->bmax, p->maxx, p->maxy, p->maxz);
+
+    return i;
 }
 
 extern "C" void
-bg_mesh_lod_destroy(struct bg_mesh_lod *l)
+bg_mesh_lod_destroy(struct bv_mesh_lod_info *i)
 {
-    if (!l)
+    if (!i)
 	return;
 
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
     delete l->i->s;
     BU_PUT(l->i, struct bg_mesh_lod_internal);
     BU_PUT(l, struct bg_mesh_lod);
+    BU_PUT(i, struct bg_mesh_lod_info);
 }
 
 extern "C" int
@@ -1073,19 +1079,11 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
     return s->curr_level;
 }
 
-extern "C" void
-bg_mesh_lod_vsnap(point_t *o, const point_t *v, struct bg_mesh_lod *l)
-{
-    if (!l || !v || !o)
-	return;
-
-    l->i->s->level_pnt(o, v, l->i->s->curr_level);
-}
-
 extern "C" int
 bg_mesh_lod_update(struct bv_scene_obj *s, int offset)
 {
-    struct bg_mesh_lod *l = (struct bg_mesh_lod *)s->draw_data;
+    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
     return bg_mesh_lod_view(l, s->s_v, offset);
 }
 
