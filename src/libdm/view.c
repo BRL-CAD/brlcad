@@ -568,6 +568,11 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s)
     }
 
     if (s->s_type_flags & BV_MESH_LOD) {
+	// Draw primary wireframe.
+	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
+
+	dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
+
 	struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)s->draw_data;
 	struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
 
