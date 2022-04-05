@@ -23,13 +23,15 @@
 #include <cstdlib>
 #include <cstdint>
 
+#include "bu/app.h"
+
 
 extern "C" int LLVMFuzzerTestOneInput(const int8_t *data, size_t size);
 
 int
 main(int UNUSED(ac), char *av[])
 {
-    bu_setprogname(av);
+    bu_setprogname(av[0]);
     return LLVMFuzzerTestOneInput(NULL, 0);
 }
 
