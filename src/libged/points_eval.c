@@ -110,7 +110,7 @@ draw_points(struct bv_scene_obj *s)
 
     struct pnt_normal *pn = NULL;
     struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
-    struct bu_list *vlfree = s->s_v->vlfree;
+    struct bu_list *vlfree = s->s_v->gv_objs.vlfree;
     struct bu_list *vhead = &s->s_vlist;
     for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
 	vect_t v1pp, v2pp, v3pp = {0.0, 0.0, 0.0};

@@ -195,8 +195,8 @@ QPolyMod::mod_names_reset()
     mod_names->blockSignals(true);
     mod_names->clear();
     if (gedp) {
-	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_objs.view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_objs.view_objs, i);
 	    if (s->s_type_flags & BV_POLYGONS) {
 		mod_names->addItem(bu_vls_cstr(&s->s_uuid));
 	    }
@@ -300,8 +300,8 @@ QPolyMod::toplevel_config(bool)
     // when we're switching modes at this level, we always start with a
     // blank slate for points.
     if (gedp) {
-	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_objs.view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_objs.view_objs, i);
 	    if (s->s_type_flags & BV_POLYGONS) {
 		// clear any selected points in non-current polygons
 		struct bv_polygon *ip = (struct bv_polygon *)s->s_i_data;
@@ -377,8 +377,8 @@ QPolyMod::select(const QString &poly)
 	return;
 
     p = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_objs.view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_objs.view_objs, i);
 	if (s->s_type_flags & BV_POLYGONS) {
 	    QString pname(bu_vls_cstr(&s->s_uuid));
 	    if (pname == poly) {
@@ -479,11 +479,11 @@ QPolyMod::toggle_closed_poly(bool checked)
 	}
 	// If we're closing a general polygon and we're in boolean op mode,
 	// that's our signal to complete the operation
-	int pcnt = bv_polygon_csg(gedp->ged_gvp->gv_view_objs, p, op, 1);
+	int pcnt = bv_polygon_csg(gedp->ged_gvp->gv_objs.view_objs, p, op, 1);
 	if (pcnt || op != bg_Union) {
 	    bg_polygon_free(&ip->polygon);
 	    BU_PUT(ip, struct bv_polygon);
-	    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)p);
+	    bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
 	    FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
 	    p = NULL;
 	}
@@ -524,11 +524,11 @@ QPolyMod::apply_bool_op()
 	op = bg_Intersection;
     }
 
-    int pcnt = bv_polygon_csg(gedp->ged_gvp->gv_view_objs, p, op, 1);
+    int pcnt = bv_polygon_csg(gedp->ged_gvp->gv_objs.view_objs, p, op, 1);
     if (pcnt || op != bg_Union) {
 	bg_polygon_free(&ip->polygon);
 	BU_PUT(ip, struct bv_polygon);
-	bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)p);
+	bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
 	FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
 	mod_names->setCurrentIndex(0);
 	if (mod_names->currentText().length()) {
@@ -575,7 +575,7 @@ QPolyMod::delete_poly()
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
     bg_polygon_free(&ip->polygon);
     BU_PUT(ip, struct bv_polygon);
-    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)p);
+    bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
     FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
     mod_names->setCurrentIndex(0);
     if (mod_names->currentText().length()) {
@@ -779,8 +779,8 @@ QPolyMod::view_name_edit()
 	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
     }
     bool colliding = false;
-    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_objs.view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_objs.view_objs, i);
 	if (p != s && BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
 	    colliding = true;
 	}
@@ -819,8 +819,8 @@ QPolyMod::view_name_update()
 	return;
 
     bool colliding = false;
-    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_view_objs, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(gedp->ged_gvp->gv_objs.view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(gedp->ged_gvp->gv_objs.view_objs, i);
 	if (p != s && BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
 	    colliding = true;
 	}
@@ -874,7 +874,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 
 	if (select_mode->isChecked()) {
-	    p = bv_select_polygon(gedp->ged_gvp->gv_view_objs, gedp->ged_gvp);
+	    p = bv_select_polygon(gedp->ged_gvp->gv_objs.view_objs, gedp->ged_gvp);
 	    if (p) {
 		int cind = mod_names->findText(bu_vls_cstr(&p->s_uuid));
 		mod_names->blockSignals(true);

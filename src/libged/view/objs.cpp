@@ -117,7 +117,7 @@ _objs_cmd_delete(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "View object %s is associated with a database object - use 'erase' cmd to clear\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
+    bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)s);
     bv_scene_obj_free(s, gedp->free_scene_obj);
 
     return BRLCAD_OK;
@@ -396,8 +396,8 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
 	if (list_db) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_grps); i++) {
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.db_grps, i);
 		if (bu_list_len(&cg->s_vlist)) {
 		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->s_name));
 		} else {
@@ -409,14 +409,14 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	    }
 	}
 	if (list_view) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_shared_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_shared_objs, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_shared_objs); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_shared_objs, i);
 		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	    }
 
-	    if (v->gv_view_shared_objs != v->gv_view_objs) {
-		for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	    if (v->gv_objs.view_shared_objs != v->gv_objs.view_objs) {
+		for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
 		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 		}
 	    }
@@ -436,8 +436,8 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 
     // View-only objects come first, unless we're explicitly excluding them by only specifying -G
     if (list_view) {
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
 	    if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
 		gd->s = s;
 		break;
@@ -446,8 +446,8 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     }
 
     if (!gd->s) {
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_db_grps); i++) {
-	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_db_grps, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_grps); i++) {
+	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.db_grps, i);
 	    if (bu_list_len(&cg->s_vlist)) {
 		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&cg->s_name))) {
 		    gd->s = cg;

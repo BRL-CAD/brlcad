@@ -400,6 +400,44 @@ struct bview_settings {
     struct bu_ptbl                      *gv_selected;
 };
 
+/* A view needs to know what objects are active within it, but this is a
+ * function not just of adding and removing objects via commands like
+ * "draw" and "erase" but also what settings are active.  Shared objects
+ * are common to multiple views, but if adaptive plotting is enabled the
+ * scene objects cannot also be common - the representations of the objects
+ * may be different in each view, even though the object list is shared.
+ */
+struct bview_objs {
+
+    // Container for db object groups unique to this view (typical use case is
+    // adaptive plotting, where geometry wireframes may differ from view to
+    // view and thus need unique vlists.)
+    struct bu_ptbl  *view_grps;
+    // Container for storing bv_scene_obj elements unique to this view.
+    struct bu_ptbl  *view_objs;
+
+
+    // Container for shared db object groups (usually comes from the app and is
+    // owned by gedp - if not, defaults to the same container as gv_view_grps)
+    struct bu_ptbl  *db_grps;
+    // Shared view objects common to multiple views. Defaults to gv_view_objs
+    // unless/until the app supplies a container.
+    struct bu_ptbl  *view_shared_objs;
+
+
+    // bv_vlist entities to recycle for shared objects
+    struct bu_list  *vlfree;
+
+    // Available bv_vlist entities to recycle before allocating new for local
+    // view objects. This is used only if the app doesn't supply a vlfree -
+    // normally the app should do so, so memory from one view can be reused for
+    // other views.
+    struct bu_list  gv_vlfree;
+
+    /* Container for reusing bv_scene_obj allocations */
+    struct bv_scene_obj *free_scene_obj;
+};
+
 struct bview {
     uint32_t	  magic;             /**< @brief magic number */
     struct bu_vls gv_name;
@@ -451,33 +489,11 @@ struct bview {
      * if multiple views draw the same objects. */
     int independent;
 
-    // Container for db object groups unique to this view (typical use case is
-    // adaptive plotting, where geometry wireframes may differ from view to
-    // view and thus need unique vlists.)
-    struct bu_ptbl  *gv_view_grps;
-    // Container for storing bv_scene_obj elements unique to this view.
-    struct bu_ptbl  *gv_view_objs;
-
-
-    // Container for shared db object groups (usually comes from the app and is
-    // owned by gedp - if not, defaults to the same container as gv_view_grps)
-    struct bu_ptbl  *gv_db_grps;
-    // Shared view objects common to multiple views. Defaults to gv_view_objs
-    // unless/until the app supplies a container.
-    struct bu_ptbl  *gv_view_shared_objs;
-
-
-    // bv_vlist entities to recycle for shared objects
-    struct bu_list  *vlfree;
-
-    // Available bv_vlist entities to recycle before allocating new for local
-    // view objects. This is used only if the app doesn't supply a vlfree -
-    // normally the app should do so, so memory from one view can be reused for
-    // other views.
-    struct bu_list  gv_vlfree;
-
-    /* Container for reusing bv_scene_obj allocations */
-    struct bv_scene_obj *free_scene_obj;
+    /* Scene objects active in a view.  Managing these is a relatively complex
+     * topic and depends on whether a view is shared, independent or adaptive.
+     * Shared objects are common across views to make more efficient use of
+     * system memory. */
+    struct bview_objs gv_objs;
 
     /*
      * gv_data_vZ is an internal parameter used by commands creating and

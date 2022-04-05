@@ -78,7 +78,7 @@ prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
     }
 
     NMG_CK_REGION(r);
-    nmg_r_to_vlist(&s->s_vlist, r, NMG_VLIST_STYLE_POLYGON, &s->s_v->gv_vlfree);
+    nmg_r_to_vlist(&s->s_vlist, r, NMG_VLIST_STYLE_POLYGON, &s->s_v->gv_objs.gv_vlfree);
     nmg_km(m);
     return 0;
 }
@@ -340,7 +340,7 @@ draw_update(struct bv_scene_obj *s, int UNUSED(flag))
     }
 
     // Clear out existing vlist, if any...
-    BV_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
 
     // Get the new geometry
     draw_scene(s);

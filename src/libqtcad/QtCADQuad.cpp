@@ -113,8 +113,8 @@ QtCADQuad::createView(int index)
     view->set_current(0);
     view->installEventFilter(this);
 
-    view->view()->gv_db_grps = &gedp->ged_db_grps;
-    view->view()->gv_view_shared_objs = &gedp->ged_view_shared_objs;
+    view->view()->gv_objs.db_grps = &gedp->ged_db_grps;
+    view->view()->gv_objs.view_shared_objs = &gedp->ged_view_shared_objs;
     view->view()->independent = 0;
 
     return view;

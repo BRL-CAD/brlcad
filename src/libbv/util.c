@@ -87,25 +87,25 @@ bv_init(struct bview *gvp)
     VSET(gvp->gv_tcl.gv_prim_labels.gos_text_color, 255, 255, 0);
 
 
-    // gv_view_grps is local to this view and thus is controlled
+    // gv_objs.view_grps is local to this view and thus is controlled
     // by the bv init and free routines.
-    BU_GET(gvp->gv_view_grps, struct bu_ptbl);
-    bu_ptbl_init(gvp->gv_view_grps, 8, "view_objs init");
+    BU_GET(gvp->gv_objs.view_grps, struct bu_ptbl);
+    bu_ptbl_init(gvp->gv_objs.view_grps, 8, "view_objs init");
 
-    // gv_view_objs is local to this view and thus is controlled
+    // gv_objs.view_objs is local to this view and thus is controlled
     // by the bv init and free routines.
-    BU_GET(gvp->gv_view_objs, struct bu_ptbl);
-    bu_ptbl_init(gvp->gv_view_objs, 8, "view_objs init");
+    BU_GET(gvp->gv_objs.view_objs, struct bu_ptbl);
+    bu_ptbl_init(gvp->gv_objs.view_objs, 8, "view_objs init");
 
     // These should come from the app (usually ged_db_grps and ged_view_shared_objs).
     // Initialize to the local containers until we get the shared ones from the app.
-    gvp->gv_db_grps = gvp->gv_view_grps;
-    gvp->gv_view_shared_objs = gvp->gv_view_objs;
+    gvp->gv_objs.db_grps = gvp->gv_objs.view_grps;
+    gvp->gv_objs.view_shared_objs = gvp->gv_objs.view_objs;
 
     // Until the app tells us differently, we need to use our local vlist
     // container
-    BU_LIST_INIT(&gvp->gv_vlfree);
-    gvp->vlfree = &gvp->gv_vlfree;
+    BU_LIST_INIT(&gvp->gv_objs.gv_vlfree);
+    gvp->gv_objs.vlfree = &gvp->gv_objs.gv_vlfree;
 
     // Out of the gate we don't have callbacks
     gvp->callbacks = NULL;
@@ -121,10 +121,10 @@ bv_free(struct bview *gvp)
 	return;
 
     bu_vls_free(&gvp->gv_name);
-    bu_ptbl_free(gvp->gv_view_grps);
-    BU_PUT(gvp->gv_view_grps, struct bu_ptbl);
-    bu_ptbl_free(gvp->gv_view_objs);
-    BU_PUT(gvp->gv_view_objs, struct bu_ptbl);
+    bu_ptbl_free(gvp->gv_objs.view_grps);
+    BU_PUT(gvp->gv_objs.view_grps, struct bu_ptbl);
+    bu_ptbl_free(gvp->gv_objs.view_objs);
+    BU_PUT(gvp->gv_objs.view_objs, struct bu_ptbl);
 
     if (gvp->gv_ls.gv_selected) {
 	bu_ptbl_free(gvp->gv_ls.gv_selected);
@@ -548,7 +548,7 @@ bv_scene_obj_free(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj)
 
     // free vlist
     if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
-	BV_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+	BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
     }
 
     bv_scene_obj_init(s, free_scene_obj);

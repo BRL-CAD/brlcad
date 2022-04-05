@@ -687,7 +687,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
     const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
     if (BU_STR_EQUAL(nview, "1")) {
 	struct bview *view = gedp->ged_gvp;
-	struct bu_ptbl *vobjs = (view->independent) ? view->gv_view_objs : view->gv_view_shared_objs;
+	struct bu_ptbl *vobjs = (view->independent) ? view->gv_objs.view_objs : view->gv_objs.view_shared_objs;
 	bv_vlblock_to_objs(vobjs, "brep_intersect::", gb->vbp, view, gedp->free_scene_obj, &gedp->vlfree);
     } else {
 	char namebuf[65];

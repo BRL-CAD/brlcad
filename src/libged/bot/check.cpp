@@ -255,7 +255,7 @@ draw_edges(struct ged *gedp, struct rt_bot_internal *bot, int num_edges, int edg
 	struct bu_vls nroot = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&nroot, "bot_check::%s", draw_name);
 	struct bview *view = gedp->ged_gvp;
-	struct bu_ptbl *vobjs = (view->independent) ? view->gv_view_objs : view->gv_view_shared_objs;
+	struct bu_ptbl *vobjs = (view->independent) ? view->gv_objs.view_objs : view->gv_objs.view_shared_objs;
 	bv_vlblock_to_objs(vobjs, bu_vls_cstr(&nroot), vbp, view, gedp->free_scene_obj, &gedp->vlfree);
 	bu_vls_free(&nroot);
     } else {
