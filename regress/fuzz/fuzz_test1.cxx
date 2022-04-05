@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fuzz_test1.cxx
- *
- * Brief description
- *
- */
 
 #include "common.h"
 
@@ -32,7 +27,7 @@
 #include <unistd.h>
 
 
-int
+static int
 fhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     /* iterating over partitions, this will keep track of the current
@@ -51,7 +46,6 @@ fhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(seg
 
     /* will contain our hit point coordinate */
     point_t pt;
-   
 
     /* will contain normal vector where ray enters geometry */
     vect_t inormal;
@@ -119,14 +113,16 @@ fhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(seg
 }
 
 
-int
-miss(struct application *UNUSED(ap))
+static int
+fmiss(struct application *UNUSED(ap))
 {
     return 0;
 }
 
 
-extern "C" int LLVMFuzzerTestOneInput(const int8_t *data, size_t size) {
+extern "C" int
+LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
+{
     if(data == NULL){}
     if(size == 0){}
     struct application ap;
@@ -165,7 +161,7 @@ extern "C" int LLVMFuzzerTestOneInput(const int8_t *data, size_t size) {
     ap.a_rt_i = rtip;
     ap.a_onehit = 0;
     ap.a_hit = fhit;
-    ap.a_miss = miss;
+    ap.a_miss = fmiss;
 
     VSET(ap.a_ray.r_pt, 0.0, 0.0, 10000.0);
     VSET(ap.a_ray.r_dir, 0.0, 0.0, -1.0);
