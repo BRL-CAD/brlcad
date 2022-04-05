@@ -62,6 +62,11 @@ set(ART_SRCS
   )
 
 BRLCAD_ADDEXEC(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
+# must copy appleseed.dll and boost libs into same dir as art.exe;
+# allegedly evaluates to empty on non-DLL platforms.
+if(CMAKE_VERSION >= "3.21")
+  add_custom_command(TARGET art POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:art> $<TARGET_FILE_DIR:art> COMMAND_EXPAND_LISTS)
+endif(CMAKE_VERSION >= "3.21")
 
 # Local Variables:
 # tab-width: 8
