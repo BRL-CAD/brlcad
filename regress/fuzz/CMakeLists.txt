@@ -6,6 +6,7 @@ include_directories(
 
 # First check whether fuzzing support is available.
 include(CheckCXXCompilerFlag)
+set(CMAKE_REQUIRED_FLAGS -fsanitize=fuzzer)
 check_cxx_compiler_flag(-fsanitize=fuzzer HAVE_FUZZER)
 
 if (HAVE_FUZZER)
