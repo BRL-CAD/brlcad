@@ -1,4 +1,4 @@
-/*                  F U Z Z _ T E S T 1 . C X X
+/*               F U Z Z _ S H O O T R A Y . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020-2022 United States Government as represented by
