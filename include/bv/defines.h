@@ -36,17 +36,14 @@
  * objects...
  *
  */
-#ifndef DM_BV_H
-#define DM_BV_H
+#ifndef BV_DEFINES_H
+#define BV_DEFINES_H
 
 #include "common.h"
+#include "vmath.h"
 #include "bu/list.h"
 #include "bu/vls.h"
 #include "bu/ptbl.h"
-#include "bg/polygon_types.h"
-#include "bv/tcl_data.h"
-#include "bv/faceplate.h"
-#include "vmath.h"
 
 /** @{ */
 /** @file bv.h */
@@ -62,6 +59,10 @@
 #    define BV_EXPORT
 #  endif
 #endif
+
+#include "bg/polygon_types.h"
+#include "bv/tcl_data.h"
+#include "bv/faceplate.h"
 
 #define BV_MINVIEWSIZE 0.0001
 #define BV_MINVIEWSCALE 0.00005
@@ -438,6 +439,8 @@ struct bview_objs {
     struct bv_scene_obj *free_scene_obj;
 };
 
+struct bview_set;
+
 struct bview {
     uint32_t	  magic;             /**< @brief magic number */
     struct bu_vls gv_name;
@@ -489,6 +492,9 @@ struct bview {
      * if multiple views draw the same objects. */
     int independent;
 
+    /* Set containing this view */
+    struct bview_set *vset;
+
     /* Scene objects active in a view.  Managing these is a relatively complex
      * topic and depends on whether a view is shared, independent or adaptive.
      * Shared objects are common across views to make more efficient use of
@@ -528,7 +534,23 @@ struct bview {
     void           *u_data;          /* Caller data associated with this view */
 };
 
-#endif /* DM_BV_H */
+// Because bview instances frequently share objects in applications, they are
+// not always fully independent - we define a container and some basic
+// operations to manage this.
+struct bview_set {
+    struct bu_ptbl              views;
+    struct bu_ptbl		db_objs;
+    struct bu_ptbl		view_objs;
+    struct bview_settings       settings;
+
+    struct bv_scene_obj         *free_scene_obj;
+    struct bu_ptbl              free_solids;
+    struct bu_list              vlfree;
+};
+BV_EXPORT void
+bview_add(struct bview_set *s, struct bview *v);
+
+#endif /* BV_DEFINES_H */
 
 /** @} */
 /*
