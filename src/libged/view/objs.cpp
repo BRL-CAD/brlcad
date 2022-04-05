@@ -118,7 +118,7 @@ _objs_cmd_delete(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)s);
-    bv_scene_obj_free(s, gedp->free_scene_obj);
+    bv_scene_obj_free(s, gedp->ged_views.free_scene_obj);
 
     return BRLCAD_OK;
 }

@@ -341,7 +341,7 @@ int check_overlaps(struct current_state *state,
 	if (BU_STR_EQUAL(nview, "1")) {
 	    struct bview *view = _ged_current_gedp->ged_gvp;
 	    struct bu_ptbl *vobjs = (view->independent) ? view->gv_objs.view_objs : view->gv_objs.view_shared_objs;
-	    bv_vlblock_to_objs(vobjs, "check::overlaps_", check_plot.vbp, view, _ged_current_gedp->free_scene_obj, &_ged_current_gedp->vlfree);
+	    bv_vlblock_to_objs(vobjs, "check::overlaps_", check_plot.vbp, view, _ged_current_gedp->ged_views.free_scene_obj, &_ged_current_gedp->ged_views.vlfree);
 	} else {
 	    _ged_cvt_vlblock_to_solids(_ged_current_gedp, check_plot.vbp, "OVERLAPS", 0);
 	}

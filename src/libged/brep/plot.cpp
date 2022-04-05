@@ -999,7 +999,7 @@ _brep_vlblock_plot(struct ged *gedp, struct bv_vlblock *vbp, const char *sname)
     struct bu_ptbl *vobjs = (view->independent) ? view->gv_objs.view_objs : view->gv_objs.view_shared_objs;
     if (BU_STR_EQUAL(nview, "1")) {
 	bu_vls_sprintf(&nroot, "brep::%s", sname);
-	bv_vlblock_to_objs(vobjs, bu_vls_cstr(&nroot), vbp, view, gedp->free_scene_obj, &gedp->vlfree);
+	bv_vlblock_to_objs(vobjs, bu_vls_cstr(&nroot), vbp, view, gedp->ged_views.free_scene_obj, &gedp->ged_views.vlfree);
     } else {
 	_ged_cvt_vlblock_to_solids(gedp, vbp, sname, 0);
     }

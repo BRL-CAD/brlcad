@@ -126,8 +126,8 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
 
     /* Set up the toplevel object */
     struct bv_scene_group *g;
-    GET_BV_SCENE_OBJ(g, &gedp->free_scene_obj->l);
-    bv_scene_obj_init(g, gedp->free_scene_obj);
+    GET_BV_SCENE_OBJ(g, &gedp->ged_views.free_scene_obj->l);
+    bv_scene_obj_init(g, gedp->ged_views.free_scene_obj);
     db_path_to_vls(&g->s_name, fp);
     bu_vls_sprintf(&g->s_uuid, "%s", argv[1]);
     g->s_i_data = (void *)ip;
@@ -146,7 +146,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     dd.v = gedp->ged_gvp;
     dd.tol = &gedp->ged_wdbp->wdb_tol;
     dd.ttol = &gedp->ged_wdbp->wdb_ttol;
-    dd.free_scene_obj = gedp->free_scene_obj;
+    dd.free_scene_obj = gedp->ged_views.free_scene_obj;
     dd.color_inherit = 0;
     dd.bound_only = 0;
     dd.s_size = &s_size;
@@ -191,7 +191,7 @@ _gobjs_cmd_delete(void *bs, int argc, const char **argv)
     }
     // TODO may need gv_objs.view_shared_objs depending on view type
     bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)s);
-    bv_scene_obj_free(s, gedp->free_scene_obj);
+    bv_scene_obj_free(s, gedp->ged_views.free_scene_obj);
 
     return BRLCAD_OK;
 }

@@ -181,7 +181,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 {
     // Abbreviations for convenience
     struct db_i *dbip = gedp->dbip;
-    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
     struct bu_ptbl *sg;
 
     // Where the groups get stored depends on our mode
@@ -434,7 +434,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 	dd.v = v;
 	dd.tol = &gedp->ged_wdbp->wdb_tol;
 	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
-	dd.free_scene_obj = gedp->free_scene_obj;
+	dd.free_scene_obj = gedp->ged_views.free_scene_obj;
 	dd.color_inherit = 0;
 	dd.bound_only = 0;
 	dd.res = &rt_uniresource;
@@ -524,8 +524,8 @@ static void
 _ged_shared_autoview(struct ged *gedp, struct bview *cv, int shared_blank_slate, int no_autoview)
 {
     if (shared_blank_slate && !no_autoview) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (v->independent || v == cv || v->gv_s->adaptive_plot) {
 		continue;
 	    }
@@ -583,8 +583,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     argc = opt_ret;
     if (bu_vls_strlen(&cvls)) {
 	int found_match = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
 		cv = tv;
 		found_match = 1;
@@ -705,15 +705,15 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // gv_objs.view_grps for both non-adaptive and adaptive plotting.  (I.e. in
     // independent drawing any contents from gv_objs.db_grps are ignored.)
     if (!cv->independent) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (v->independent)
 		continue;
 	    struct bu_ptbl *sg = cv->gv_objs.view_grps;
 	    if (sg && !v->gv_s->adaptive_plot) {
 		for (size_t j = 0; j < BU_PTBL_LEN(sg); j++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, j);
-		    bv_scene_obj_free(cg, gedp->free_scene_obj);
+		    bv_scene_obj_free(cg, gedp->ged_views.free_scene_obj);
 		}
 		bu_ptbl_reset(sg);
 	    }
@@ -743,8 +743,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // views have adaptive plotting enabled, we need only process the current
     // view.  If we do have adaptive plotting on, it gets more complicated.
     int have_adaptive = 0;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	if (v->independent) {
 	    // Independent views are handled individually by the above case -
 	    // this logic doesn't reference them.
@@ -772,8 +772,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
      * do not consider independent views here. */
     std::vector<struct bview *> adaptive_views;
     struct bview *non_adaptive_view = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	if (v->independent)
 	    continue;
 	if (v->gv_s->adaptive_plot) {
@@ -947,8 +947,8 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
     argc = opt_ret;
     if (bu_vls_strlen(&cvls)) {
 	int found_match = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
 		cv = tv;
 		found_match = 1;
@@ -967,12 +967,12 @@ ged_redraw2_core(struct ged *gedp, int argc, const char *argv[])
     if (cv) {
 	return _ged_redraw_view(gedp, cv, argc, argv);
     } else {
-	if (!BU_PTBL_LEN(&gedp->ged_views)) {
+	if (!BU_PTBL_LEN(&gedp->ged_views.views)) {
 	    bu_vls_printf(gedp->ged_result_str, "No views defined\n");
 	    return BRLCAD_OK;
 	}
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (!v) {
 		bu_log("WARNING, draw2.cpp:%d - null view stored in ged_views index %zu, skipping\n", __LINE__, i);
 		continue;

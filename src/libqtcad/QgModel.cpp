@@ -342,8 +342,8 @@ QgModel::QgModel(QObject *p, const char *npath)
     bv_init(empty_gvp);
     gedp->ged_gvp = empty_gvp;
     bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
-    gedp->ged_gvp->gv_objs.db_grps = &gedp->ged_db_grps;
-    gedp->ged_gvp->gv_objs.view_shared_objs = &gedp->ged_view_shared_objs;
+    gedp->ged_gvp->gv_objs.db_grps = &gedp->ged_views.db_objs;
+    gedp->ged_gvp->gv_objs.view_shared_objs = &gedp->ged_views.view_objs;
     gedp->ged_gvp->independent = 0;
 
     // Set up the root item

@@ -133,7 +133,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 	    bu_vls_sprintf(&nroot, "bot_fuse::%s", name);
 	    struct bview *view = gedp->ged_gvp;
 	    struct bu_ptbl *vobjs = (view->independent) ? view->gv_objs.view_objs : view->gv_objs.view_shared_objs;
-	    bv_vlblock_to_objs(vobjs, bu_vls_cstr(&nroot), vbp, view, gedp->free_scene_obj, &gedp->vlfree);
+	    bv_vlblock_to_objs(vobjs, bu_vls_cstr(&nroot), vbp, view, gedp->ged_views.free_scene_obj, &gedp->ged_views.vlfree);
 	    bu_vls_free(&nroot);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);

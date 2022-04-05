@@ -34,10 +34,10 @@
     for (size_t c_i = 0; c_i < BU_PTBL_LEN(&p->children); c_i++) { \
 	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&p->children, c_i); \
 	BU_LIST_APPEND(fp, &((s_c)->l)); \
-	BV_FREE_VLIST(&gedp->vlfree, &((s_c)->s_vlist)); \
+	BV_FREE_VLIST(&gedp->ged_views.vlfree, &((s_c)->s_vlist)); \
     } \
     BU_LIST_APPEND(fp, &((p)->l)); \
-    BV_FREE_VLIST(&gedp->vlfree, &((p)->s_vlist)); \
+    BV_FREE_VLIST(&gedp->ged_views.vlfree, &((p)->s_vlist)); \
 }
 
 QPolyMod::QPolyMod()
@@ -484,7 +484,7 @@ QPolyMod::toggle_closed_poly(bool checked)
 	    bg_polygon_free(&ip->polygon);
 	    BU_PUT(ip, struct bv_polygon);
 	    bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
-	    FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
+	    FREE_BV_SCENE_OBJ(p, &gedp->ged_views.free_scene_obj->l);
 	    p = NULL;
 	}
 	do_bool = false;
@@ -529,7 +529,7 @@ QPolyMod::apply_bool_op()
 	bg_polygon_free(&ip->polygon);
 	BU_PUT(ip, struct bv_polygon);
 	bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
-	FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
+	FREE_BV_SCENE_OBJ(p, &gedp->ged_views.free_scene_obj->l);
 	mod_names->setCurrentIndex(0);
 	if (mod_names->currentText().length()) {
 	    select(mod_names->currentText());
@@ -576,7 +576,7 @@ QPolyMod::delete_poly()
     bg_polygon_free(&ip->polygon);
     BU_PUT(ip, struct bv_polygon);
     bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
-    FREE_BV_SCENE_OBJ(p, &gedp->free_scene_obj->l);
+    FREE_BV_SCENE_OBJ(p, &gedp->ged_views.free_scene_obj->l);
     mod_names->setCurrentIndex(0);
     if (mod_names->currentText().length()) {
 	select(mod_names->currentText());

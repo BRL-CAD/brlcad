@@ -141,8 +141,8 @@ struct bview *
 ged_find_view(struct ged *gedp, const char *key)
 {
     struct bview *gdvp = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), key))
 	    break;
 	gdvp = NULL;

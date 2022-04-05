@@ -189,26 +189,12 @@ struct ged {
     /*************************************************************/
     /* Information pertaining to views and view objects .        */
     /*************************************************************/
-    // The full set of views associated with this ged object
-    struct bu_ptbl              ged_views;
     /* The current view */
     struct bview		*ged_gvp;
 
-    /* bv group objects corresponding to drawn .g solids and combs.  Shared
-     * across multiple views */
-    struct bu_ptbl              ged_db_grps;
+    // The full set of views associated with this ged object
+    struct bview_set            ged_views;
 
-    /* View objects intended to be shared across multiple views (rtcheck
-     * overlap visualizations, for example.) */
-    struct bu_ptbl              ged_view_shared_objs;
-
-
-    /* Containers holding reusable view related structures.  These
-     * are important for performance, since drawing routines regularly
-     * create and discard lots of these. */
-    struct bv_scene_obj         *free_scene_obj;
-    struct bu_ptbl              free_solids;
-    struct bu_list              vlfree;
 
 
     void                        *u_data; /**< @brief User data associated with this ged instance */
@@ -231,6 +217,7 @@ struct ged {
     struct ged_results          *ged_results;
 
     struct ged_drawable		*ged_gdp;
+    struct bu_ptbl              free_solids;
     struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */

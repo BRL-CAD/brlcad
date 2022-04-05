@@ -157,45 +157,14 @@ free_object_selections(struct bu_hash_tbl *t)
 void
 ged_free(struct ged *gedp)
 {
-    struct bv_scene_obj *sp;
-
     if (gedp == GED_NULL)
 	return;
 
     bu_vls_free(&gedp->go_name);
 
-    // Note - it is the caller's responsibility to have freed any data
-    // associated with the ged or its views in the u_data pointers.
-    struct bview *gdvp;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
-	bu_vls_free(&gdvp->gv_name);
-	if (gdvp->callbacks) {
-	    bu_ptbl_free(gdvp->callbacks);
-	    BU_PUT(gdvp->callbacks, struct bu_ptbl);
-	}
-	bu_free((void *)gdvp, "bv");
-    }
-    bu_ptbl_free(&gedp->ged_views);
     gedp->ged_gvp = NULL;
+    bv_set_free(&gedp->ged_views);
 
-    bu_ptbl_free(&gedp->ged_db_grps);
-    bu_ptbl_free(&gedp->ged_view_shared_objs);
-
-    // TODO - replace free_scene_obj with free_solids ptbl
-    {
-	if (gedp && gedp->ged_wdbp && gedp->dbip) {
-	    struct bv_scene_obj *nsp;
-	    sp = BU_LIST_NEXT(bv_scene_obj, &gedp->free_scene_obj->l);
-	    while (BU_LIST_NOT_HEAD(sp, &gedp->free_scene_obj->l)) {
-		nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
-		BU_LIST_DEQUEUE(&((sp)->l));
-		FREE_BV_SCENE_OBJ(sp, &gedp->free_scene_obj->l);
-		sp = nsp;
-	    }
-	}
-    }
-    BU_PUT(gedp->free_scene_obj, struct bv_scene_obj);
 
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 
@@ -204,7 +173,7 @@ ged_free(struct ged *gedp)
 	    // BU_PUT-ing the solid objects themselves - is that what we expect
 	    // when doing ged_free?  I.e., is ownership of the free solid list
 	    // with the struct ged or with the application as a whole?  We're
-	    // BU_PUT-ing gedp->free_scene_obj - above why just that one?
+	    // BU_PUT-ing gedp->ged_views.free_scene_obj - above why just that one?
 #if 0
 	    struct bv_scene_obj *sp = (struct bv_scene_obj *)BU_PTBL_GET(&gedp->free_solids, i);
 	    RT_FREE_VLIST(&(sp->s_vlist));
@@ -260,16 +229,7 @@ ged_init(struct ged *gedp)
     bu_vls_init(&gedp->go_name);
 
     // View related containers
-    BU_PTBL_INIT(&gedp->ged_views);
-    bu_ptbl_init(&gedp->ged_db_grps, 8, "db_objs init");
-    bu_ptbl_init(&gedp->ged_view_shared_objs, 8, "view_objs init");
-    BU_LIST_INIT(&gedp->vlfree);
-
-    /* init the solid list */
-    struct bv_scene_obj *free_scene_obj;
-    BU_GET(free_scene_obj, struct bv_scene_obj);
-    BU_LIST_INIT(&free_scene_obj->l);
-    gedp->free_scene_obj = free_scene_obj;
+    bv_set_init(&gedp->ged_views);
 
     /* TODO: If we're init-ing the list here, does that mean the gedp has
      * ownership of all solid objects created and stored here, and should we

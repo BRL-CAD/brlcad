@@ -622,7 +622,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	dgcdp.vs.transparency = 1.0;
 
 	/* free_scene_obj */
-	dgcdp.free_scene_obj = gedp->free_scene_obj;
+	dgcdp.free_scene_obj = gedp->ged_views.free_scene_obj;
 
 	enable_fastpath = 0;
 
@@ -865,7 +865,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    bv_data.wireframe_color[2]= dgcdp.vs.color[2];
 		    bv_data.transparency= dgcdp.vs.transparency;
 		    bv_data.dmode = dgcdp.vs.s_dmode;
-		    bv_data.free_scene_obj = (void *)gedp->free_scene_obj;
+		    bv_data.free_scene_obj = (void *)gedp->ged_views.free_scene_obj;
 
 		    dgcdp.gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 		    bv_data.gdlp = dgcdp.gdlp;

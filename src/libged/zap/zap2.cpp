@@ -52,7 +52,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		bv_scene_obj_free(cg, gedp->free_scene_obj);
+		bv_scene_obj_free(cg, gedp->ged_views.free_scene_obj);
 	    }
 	    bu_ptbl_reset(sg);
 	}
@@ -65,7 +65,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	    if (sg) {
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		    bv_scene_obj_free(cg, gedp->free_scene_obj);
+		    bv_scene_obj_free(cg, gedp->ged_views.free_scene_obj);
 		}
 		bu_ptbl_reset(sg);
 	    }
@@ -82,7 +82,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
 	    bu_ptbl_rm(sv, (long *)s);
-	    bv_scene_obj_free(s, gedp->free_scene_obj);
+	    bv_scene_obj_free(s, gedp->ged_views.free_scene_obj);
 	}
     }
     if (!v->independent) {
@@ -91,7 +91,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
 		bu_ptbl_rm(sv, (long *)s);
-		bv_scene_obj_free(s, gedp->free_scene_obj);
+		bv_scene_obj_free(s, gedp->ged_views.free_scene_obj);
 	    }
 	}
     }
@@ -158,8 +158,8 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!clear_all_views && bu_vls_strlen(&cvls)) {
 	int found_match = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
 		v = tv;
 		found_match = 1;
@@ -192,8 +192,8 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 
     // Clear everything
     int ret = BRLCAD_OK;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	if (v->independent && !clear_all_views)
 	    continue;
 	int nret = ged_clear_view(gedp, v, clear_solid_objs, clear_view_objs);

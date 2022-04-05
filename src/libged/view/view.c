@@ -122,8 +122,8 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     }
 
     struct bview *v = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	if (BU_STR_EQUAL(bu_vls_cstr(&v->gv_name), argv[0])) {
 	    break;
 	}
@@ -169,7 +169,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		bv_scene_obj_free(cg, gedp->free_scene_obj);
+		bv_scene_obj_free(cg, gedp->ged_views.free_scene_obj);
 		BU_PUT(cg, struct bv_scene_group);
 	    }
 	    bu_ptbl_reset(sg);
@@ -192,8 +192,8 @@ _view_cmd_list(void *bs, int argc, const char **argv)
     }
 
     struct ged *gedp = gd->gedp;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	if (v != gedp->ged_gvp) {
 	    bu_vls_printf(gedp->ged_result_str, "  %s\n", bu_vls_cstr(&v->gv_name));
 	} else {

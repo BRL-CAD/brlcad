@@ -351,7 +351,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	if (BU_STR_EQUAL(nview, "1")) {
 	    struct bview *view = gedp->ged_gvp;
 	    struct bu_ptbl *vobjs = (view->independent) ? view->gv_objs.view_objs : view->gv_objs.view_shared_objs;
-	    bv_vlblock_to_objs(vobjs, "nirt::", vbp, view, gedp->free_scene_obj, &gedp->vlfree);
+	    bv_vlblock_to_objs(vobjs, "nirt::", vbp, view, gedp->ged_views.free_scene_obj, &gedp->ged_views.vlfree);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	}

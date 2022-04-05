@@ -157,8 +157,8 @@ to_refresh_all_views(struct tclcad_obj *top)
 {
     struct bview *gdvp;
 
-    for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views.views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views.views, i);
 	to_refresh_view(gdvp);
     }
 }

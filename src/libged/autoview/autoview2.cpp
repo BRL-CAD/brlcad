@@ -89,8 +89,8 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     if (bu_vls_strlen(&cvls)) {
 	int found_match = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
 		v = tv;
 		found_match = 1;

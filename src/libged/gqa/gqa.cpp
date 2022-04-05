@@ -2686,7 +2686,7 @@ aborted:
 	    if (BU_STR_EQUAL(nview, "1")) {
 		struct bview *view = gedp->ged_gvp;
 		struct bu_ptbl *vobjs = (view->independent) ? view->gv_objs.view_objs : view->gv_objs.view_shared_objs;
-		bv_vlblock_to_objs(vobjs, "gqa::overlaps_", ged_gqa_plot.vbp, view, gedp->free_scene_obj, &gedp->vlfree);
+		bv_vlblock_to_objs(vobjs, "gqa::overlaps_", ged_gqa_plot.vbp, view, gedp->ged_views.free_scene_obj, &gedp->ged_views.vlfree);
 	    } else {
 		_ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
 	    }

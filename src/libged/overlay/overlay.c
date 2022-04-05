@@ -221,7 +221,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	if (BU_STR_EQUAL(nview, "1")) {
 	    struct bview *v = gedp->ged_gvp;
 	    struct bu_ptbl *vobjs = (v->independent) ? v->gv_objs.view_objs : v->gv_objs.view_shared_objs;
-	    bv_vlblock_to_objs(vobjs, bu_vls_cstr(&nroot), vbp, gedp->ged_gvp, gedp->free_scene_obj, &gedp->vlfree);
+	    bv_vlblock_to_objs(vobjs, bu_vls_cstr(&nroot), vbp, gedp->ged_gvp, gedp->ged_views.free_scene_obj, &gedp->ged_views.vlfree);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
 	}

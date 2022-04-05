@@ -61,8 +61,8 @@ to_autoview_func(struct ged *gedp,
     if (!rflag && ret == BRLCAD_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
 
-    for (i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+    for (i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views.views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views.views, i);
 	if (to_is_viewable(gdvp)) {
 	    gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
 	    gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
