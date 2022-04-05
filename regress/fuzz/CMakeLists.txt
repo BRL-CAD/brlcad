@@ -32,7 +32,6 @@ CMAKEFILES(
   fuzz_ged.cpp
   fuzz_stub.cpp
   fuzz_test1.cxx
-  run.sh
   )
 
 # Local Variables:
