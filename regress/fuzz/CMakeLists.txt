@@ -31,7 +31,7 @@ CMAKEFILES(
   CMakeLists.txt
   fuzz_ged.cpp
   fuzz_stub.cpp
-  fuzz_test1.cxx
+  fuzz_shootray.cpp
   )
 
 # Local Variables:
