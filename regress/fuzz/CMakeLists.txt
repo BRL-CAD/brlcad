@@ -4,8 +4,13 @@ include_directories(
   ${GED_INCLUDE_DIRS}
   )
 
-# First check whether fuzzing support is available.
 include(CheckCXXCompilerFlag)
+
+# We're fuzzing, so let the compiler know it doesn't matter if we're doing
+# anything with the results of computations
+check_cxx_compiler_flag(-Wno-unused-but-set-variable HAVE_NO_UNUSED_BUT_SET_VARIABLE)
+
+# Check whether fuzzing support is available.
 set(CMAKE_REQUIRED_FLAGS -fsanitize=fuzzer)
 check_cxx_compiler_flag(-fsanitize=fuzzer HAVE_FUZZER)
 
@@ -34,6 +39,9 @@ BRLCAD_ADD_TEST(NAME fuzz_ged COMMAND fuzz_ged_test)
 
 BRLCAD_ADDEXEC(fuzz_shootray_test "${FUZZ_SHOOTRAY_SRCS}" "libbu;librt;libged" TEST)
 BRLCAD_ADD_TEST(NAME fuzz_shootray COMMAND fuzz_shootray_test)
+if (HAVE_NO_UNUSED_BUT_SET_VARIABLE)
+  target_compile_options(fuzz_shootray_test PRIVATE -Wno-unused-but-set-variable)
+endif (HAVE_NO_UNUSED_BUT_SET_VARIABLE)
 
 
 CMAKEFILES(
