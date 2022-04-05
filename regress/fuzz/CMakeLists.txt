@@ -15,7 +15,6 @@ if (HAVE_FUZZER)
 
   target_compile_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
   target_link_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
-  set_target_properties(fuzz_ged_test PROPERTIES FOLDER "BRL-CAD Regression Tests/fuzz")
 
 else (HAVE_FUZZER)
 
@@ -24,16 +23,8 @@ else (HAVE_FUZZER)
 endif (HAVE_FUZZER)
 
 
-add_executable(fuzz_ged_test ${FUZZ_GED_SRCS})
-target_link_libraries(fuzz_ged_test PUBLIC libbu librt libged)
-
-
-#BRLCAD_ADD_TEST(NAME fuzz COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run)
-
-#add_custom_target(fuzz
-#  COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run
-#  )
-#set_target_properties(fuzz PROPERTIES FOLDER "BRL-CAD Regression Tests/fuzz")
+BRLCAD_ADDEXEC(fuzz_ged_test "${FUZZ_GED_SRCS}" "libbu;librt;libged" TEST)
+BRLCAD_ADD_TEST(NAME fuzz_ged COMMAND fuzz_ged_test)
 
 
 CMAKEFILES(
