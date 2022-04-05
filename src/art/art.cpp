@@ -692,10 +692,9 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     // number of samples, the smoother the image but the longer the rendering time.
     // we overwrite via command line -c "set"
     project->configurations()
-	.get_by_name("final")->get_parameters()
-	.insert_path("uniform_pixel_renderer.samples", samples)
-	.insert_path("rendering_threads", "1"); /* multithreading not supported yet */
-
+    .get_by_name("final")->get_parameters()
+    .insert_path("uniform_pixel_renderer.samples", samples)
+    .insert_path("rendering_threads", npsw);
     project->configurations()
 	.get_by_name("interactive")->get_parameters()
 	.insert_path("rendering_threads", "1"); /* no multithreading - for debug rendering on appleseed */
