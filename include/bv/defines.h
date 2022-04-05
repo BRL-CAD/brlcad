@@ -417,18 +417,6 @@ struct bview_objs {
     // Container for storing bv_scene_obj elements unique to this view.
     struct bu_ptbl  *view_objs;
 
-
-    // Container for shared db object groups (usually comes from the app and is
-    // owned by gedp - if not, defaults to the same container as gv_view_grps)
-    struct bu_ptbl  *db_grps;
-    // Shared view objects common to multiple views. Defaults to gv_view_objs
-    // unless/until the app supplies a container.
-    struct bu_ptbl  *view_shared_objs;
-
-
-    // bv_vlist entities to recycle for shared objects
-    struct bu_list  *vlfree;
-
     // Available bv_vlist entities to recycle before allocating new for local
     // view objects. This is used only if the app doesn't supply a vlfree -
     // normally the app should do so, so memory from one view can be reused for
@@ -492,7 +480,8 @@ struct bview {
      * if multiple views draw the same objects. */
     int independent;
 
-    /* Set containing this view */
+    /* Set containing this view.  Also holds pointers to resources shared
+     * across multiple views */
     struct bview_set *vset;
 
     /* Scene objects active in a view.  Managing these is a relatively complex
@@ -539,8 +528,8 @@ struct bview {
 // operations to manage this.
 struct bview_set {
     struct bu_ptbl              views;
-    struct bu_ptbl		db_objs;
-    struct bu_ptbl		view_objs;
+    struct bu_ptbl		shared_db_objs;
+    struct bu_ptbl		shared_view_objs;
     struct bview_settings       settings;
 
     struct bv_scene_obj         *free_scene_obj;

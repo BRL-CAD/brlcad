@@ -396,8 +396,8 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
 	if (list_db) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_grps); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.db_grps, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_db_objs); i++) {
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&v->vset->shared_db_objs, i);
 		if (bu_list_len(&cg->s_vlist)) {
 		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&cg->s_name));
 		} else {
@@ -409,12 +409,12 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	    }
 	}
 	if (list_view) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_shared_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_shared_objs, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_view_objs); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->shared_view_objs, i);
 		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	    }
 
-	    if (v->gv_objs.view_shared_objs != v->gv_objs.view_objs) {
+	    if (&v->vset->shared_view_objs != v->gv_objs.view_objs) {
 		for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
 		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
@@ -446,8 +446,8 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     }
 
     if (!gd->s) {
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_grps); i++) {
-	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.db_grps, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_db_objs); i++) {
+	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&v->vset->shared_db_objs, i);
 	    if (bu_list_len(&cg->s_vlist)) {
 		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&cg->s_name))) {
 		    gd->s = cg;

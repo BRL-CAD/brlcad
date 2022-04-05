@@ -57,7 +57,7 @@ bv_polygon_contour(struct bv_scene_obj *s, struct bg_poly_contour *c, int curr_c
 	return;
 
     if (do_pnt) {
-	BV_ADD_VLIST(s->s_v->gv_objs.vlfree, &s->s_vlist, c->point[0], BV_VLIST_POINT_DRAW);
+	BV_ADD_VLIST(&s->s_v->vset->vlfree, &s->s_vlist, c->point[0], BV_VLIST_POINT_DRAW);
 	return;
     }
 
@@ -891,7 +891,9 @@ bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
     // Since we want to create our copy using s's original creation frame and
     // not (necessarily) the current s_v, make sure the s_v's vlfree list is
     // set in the internal polygon's stored view.
-    ip->v.gv_objs.vlfree = s->s_v->gv_objs.vlfree;
+    //
+    // TODO - fix this...
+    // ip->v.gv_objs.vlfree = &s->s_v->vset->vlfree;
 
     struct bv_scene_obj *np = bv_create_polygon(&ip->v, ip->type, ip->v.gv_prevMouseX, ip->v.gv_prevMouseY, s->free_scene_obj);
 

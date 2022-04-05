@@ -34,7 +34,7 @@
 __BEGIN_DECLS
 
 /* Set default values for a bv. */
-BV_EXPORT extern void bv_init(struct bview *v);
+BV_EXPORT extern void bv_init(struct bview *v, struct bview_set *s);
 BV_EXPORT extern void bv_free(struct bview *v);
 
 /**

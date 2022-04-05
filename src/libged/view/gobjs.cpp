@@ -244,13 +244,13 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     // If we're not wanting help and we have no subcommand, list current gobjs objects
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_shared_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_shared_objs, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->shared_view_objs, i);
 	    // TODO - strip gobjs:: prefix
 	    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	}
 
-	if (v->gv_objs.view_shared_objs != v->gv_objs.view_objs) {
+	if (&v->vset->shared_view_objs != v->gv_objs.view_objs) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
 		// TODO - strip gobjs:: prefix

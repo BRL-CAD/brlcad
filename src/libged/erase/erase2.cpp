@@ -336,7 +336,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     // user supplies a name without the path prefix.
     //
     struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
-    struct bu_ptbl *sg = (v->independent || v->gv_s->adaptive_plot) ? v->gv_objs.view_grps : v->gv_objs.db_grps;
+    struct bu_ptbl *sg = (v->independent || v->gv_s->adaptive_plot) ? v->gv_objs.view_grps : &v->vset->shared_db_objs;
     std::set<struct bv_scene_group *> all;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);

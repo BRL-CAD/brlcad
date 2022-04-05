@@ -339,11 +339,9 @@ QgModel::QgModel(QObject *p, const char *npath)
     // but this is our hard guarantee that a QgModel will always be able to work
     // with commands needing a view.
     BU_GET(empty_gvp, struct bview);
-    bv_init(empty_gvp);
+    bv_init(empty_gvp, &gedp->ged_views);
     gedp->ged_gvp = empty_gvp;
     bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
-    gedp->ged_gvp->gv_objs.db_grps = &gedp->ged_views.db_objs;
-    gedp->ged_gvp->gv_objs.view_shared_objs = &gedp->ged_views.view_objs;
     gedp->ged_gvp->independent = 0;
 
     // Set up the root item

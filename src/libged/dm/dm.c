@@ -496,7 +496,7 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     struct bview *target_view = (gedp->ged_gvp->dmp) ? NULL : gedp->ged_gvp;
     if (!target_view) {
 	BU_GET(target_view, struct bview);
-	bv_init(target_view);
+	bv_init(target_view, &gedp->ged_views);
 	bu_ptbl_ins(&gedp->ged_views.views, (long *)target_view);
     }
 

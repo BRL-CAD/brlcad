@@ -36,12 +36,14 @@
 #include "bv/util.h"
 
 void
-bv_init(struct bview *gvp)
+bv_init(struct bview *gvp, struct bview_set *s)
 {
     if (!gvp)
 	return;
 
     gvp->magic = BV_MAGIC;
+
+    gvp->vset = s;
 
     if (!BU_VLS_IS_INITIALIZED(&gvp->gv_name)) {
 	bu_vls_init(&gvp->gv_name);
@@ -97,15 +99,9 @@ bv_init(struct bview *gvp)
     BU_GET(gvp->gv_objs.view_objs, struct bu_ptbl);
     bu_ptbl_init(gvp->gv_objs.view_objs, 8, "view_objs init");
 
-    // These should come from the app (usually ged_db_grps and ged_view_shared_objs).
-    // Initialize to the local containers until we get the shared ones from the app.
-    gvp->gv_objs.db_grps = gvp->gv_objs.view_grps;
-    gvp->gv_objs.view_shared_objs = gvp->gv_objs.view_objs;
-
     // Until the app tells us differently, we need to use our local vlist
     // container
     BU_LIST_INIT(&gvp->gv_objs.gv_vlfree);
-    gvp->gv_objs.vlfree = &gvp->gv_objs.gv_vlfree;
 
     // Out of the gate we don't have callbacks
     gvp->callbacks = NULL;
@@ -635,8 +631,8 @@ void
 bv_set_init(struct bview_set *s)
 {
     BU_PTBL_INIT(&s->views);
-    bu_ptbl_init(&s->db_objs, 8, "db_objs init");
-    bu_ptbl_init(&s->view_objs, 8, "view_objs init");
+    bu_ptbl_init(&s->shared_db_objs, 8, "db_objs init");
+    bu_ptbl_init(&s->shared_view_objs, 8, "view_objs init");
     BU_LIST_INIT(&s->vlfree);
     /* init the solid list */
     BU_GET(s->free_scene_obj, struct bv_scene_obj);
@@ -659,8 +655,8 @@ bv_set_free(struct bview_set *s)
     }
     bu_ptbl_free(&s->views);
 
-    bu_ptbl_free(&s->db_objs);
-    bu_ptbl_free(&s->view_objs);
+    bu_ptbl_free(&s->shared_db_objs);
+    bu_ptbl_free(&s->shared_view_objs);
 
     // TODO - replace free_scene_obj with bu_ptbl
     struct bv_scene_obj *sp, *nsp;

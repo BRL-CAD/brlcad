@@ -334,7 +334,7 @@ end:
      * needs improvement... */
     if (!have_view) {
 	struct bview *v = &p->v;
-	bv_init(v);
+	bv_init(v, NULL);
 	vect_t center = VINIT_ZERO;
 	vect_t min, max;
 	VSETALL(min, -dmax);

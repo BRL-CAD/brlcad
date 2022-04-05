@@ -61,7 +61,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	// beyond just this view, so it is only done when the caller
 	// specifically requests it.)
 	if (!v->independent) {
-	    sg = v->gv_objs.db_grps;
+	    sg = &v->vset->shared_db_objs;
 	    if (sg) {
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
@@ -86,7 +86,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	}
     }
     if (!v->independent) {
-	sv = v->gv_objs.view_shared_objs;
+	sv = &v->vset->shared_view_objs;
 	if (sv) {
 	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
@@ -101,7 +101,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
      * display list, we set a flag in the view to inform the app a zap
      * operation has taken place. */
     if (!BU_PTBL_LEN(v->gv_objs.view_objs) && !BU_PTBL_LEN(v->gv_objs.view_grps)) {
-	if (v->independent || (!BU_PTBL_LEN(v->gv_objs.view_shared_objs) && !BU_PTBL_LEN(v->gv_objs.db_grps))) {
+	if (v->independent || (!BU_PTBL_LEN(&v->vset->shared_view_objs) && !BU_PTBL_LEN(&v->vset->shared_db_objs))) {
 	    v->gv_s->gv_cleared = 1;
 	}
     }

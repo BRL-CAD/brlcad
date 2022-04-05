@@ -142,7 +142,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "1")) {
 	v->independent = 1;
 	// Initialize local containers with current shared grps
-	struct bu_ptbl *sg = v->gv_objs.db_grps;
+	struct bu_ptbl *sg = &v->vset->shared_db_objs;
 	if (!sg)
 	    return BRLCAD_OK;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
@@ -498,8 +498,8 @@ struct bv_scene_obj *wobj = NULL;
 		}
 	    }
 	    if (!wobj) {
-		for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_grps); i++) {
-		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.db_grps, i);
+		for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_db_objs); i++) {
+		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&v->vset->shared_db_objs, i);
 		    if (bu_list_len(&cg->s_vlist)) {
 			if (!bu_vls_strcmp(&cg->s_name, &calc_target)) {
 			    wobj = cg;
@@ -545,8 +545,8 @@ struct bv_scene_obj *wobj = NULL;
 		    }
 		}
 	    }
-	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_grps); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.db_grps, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_db_objs); i++) {
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&v->vset->shared_db_objs, i);
 		if (bu_list_len(&cg->s_vlist)) {
 		    fastf_t calc_val = bv_vZ_calc(cg, gedp->ged_gvp, calc_mode);
 		    if (calc_mode) {

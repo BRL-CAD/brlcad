@@ -4579,7 +4579,7 @@ to_new_view(struct ged *gedp,
     new_gdvp->u_data = (void *)tvd;
 
     bu_vls_printf(&new_gdvp->gv_name, "%s", argv[name_index]);
-    bv_init(new_gdvp);
+    bv_init(new_gdvp, &current_top->to_gedp->ged_views);
     new_gdvp->callbacks = callbacks;
     bu_ptbl_ins(&current_top->to_gedp->ged_views.views, (long *)new_gdvp);
 
