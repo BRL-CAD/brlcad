@@ -57,23 +57,23 @@ bv_polygon_contour(struct bv_scene_obj *s, struct bg_poly_contour *c, int curr_c
 	return;
 
     if (do_pnt) {
-	BV_ADD_VLIST(s->s_v->vlfree, &s->s_vlist, c->point[0], BV_VLIST_POINT_DRAW);
+	BV_ADD_VLIST(&s->s_v->vset->vlfree, &s->s_vlist, c->point[0], BV_VLIST_POINT_DRAW);
 	return;
     }
 
-    BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, c->point[0], BV_VLIST_LINE_MOVE);
     for (size_t i = 0; i < c->num_points; i++) {
-	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[i], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, c->point[i], BV_VLIST_LINE_DRAW);
     }
     if (!c->open)
-	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[0], BV_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, c->point[0], BV_VLIST_LINE_DRAW);
 
     if (curr_c && curr_i >= 0) {
 	point_t psize;
 	VSET(psize, 10, 0, 0);
-	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[curr_i], BV_VLIST_LINE_MOVE);
-	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, psize, BV_VLIST_POINT_SIZE);
-	BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, c->point[curr_i], BV_VLIST_POINT_DRAW);
+	BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, c->point[curr_i], BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, psize, BV_VLIST_POINT_SIZE);
+	BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, c->point[curr_i], BV_VLIST_POINT_DRAW);
     }
 }
 
@@ -89,7 +89,7 @@ bv_fill_polygon(struct bv_scene_obj *s)
 	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
 	    fobj = s_c;
-	    BV_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
+	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s_c->s_vlist);
 	    break;
 	}
     }
@@ -132,10 +132,10 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 	return;
 
     // free old s->s_vlist
-    BV_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	BV_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
+	BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s_c->s_vlist);
 	// TODO - free bv_scene_obj itself (ptbls, etc.)
     }
 
@@ -858,7 +858,7 @@ bv_update_polygon(struct bv_scene_obj *s, int utype)
 		if (!s_c)
 		    continue;
 		if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
-		    BV_FREE_VLIST(&s->s_v->gv_vlfree, &s_c->s_vlist);
+		    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s_c->s_vlist);
 		    break;
 		}
 	    }
@@ -891,7 +891,9 @@ bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
     // Since we want to create our copy using s's original creation frame and
     // not (necessarily) the current s_v, make sure the s_v's vlfree list is
     // set in the internal polygon's stored view.
-    ip->v.vlfree = s->s_v->vlfree;
+    //
+    // TODO - fix this...
+    // ip->v.gv_objs.vlfree = &s->s_v->vset->vlfree;
 
     struct bv_scene_obj *np = bv_create_polygon(&ip->v, ip->type, ip->v.gv_prevMouseX, ip->v.gv_prevMouseY, s->free_scene_obj);
 

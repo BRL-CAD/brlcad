@@ -57,8 +57,8 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
     argc = opt_ret;
     if (bu_vls_strlen(&cvls)) {
 	int found_match = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
 		cv = tv;
 		found_match = 1;
@@ -73,7 +73,7 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_vls_free(&cvls);
 
-    if (!cv && !BU_PTBL_LEN(&gedp->ged_views)) {
+    if (!cv && !BU_PTBL_LEN(&gedp->ged_views.views)) {
 	return BRLCAD_OK;
     }
 
@@ -87,7 +87,7 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	struct bview *gvp = cv;
 	if (!gvp)
-	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
+	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, 0);
 	if (!gvp)
 	    return BRLCAD_ERROR;
 	if (gvp->gv_s->adaptive_plot) {
@@ -119,8 +119,8 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	} else {
 	    int delta = 0;
-	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-		struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 		if (!v)
 		    continue;
 		if (!v->gv_s->adaptive_plot) {
@@ -143,8 +143,8 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	} else {
 	    int delta = 0;
-	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-		struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 		if (!v)
 		    continue;
 		if (v->gv_s->adaptive_plot) {
@@ -163,14 +163,14 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	/* lod enabled - return on state */
 	struct bview *gvp = cv;
 	if (!gvp)
-	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
+	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, 0);
 	if (!gvp)
 	    return BRLCAD_ERROR;
 	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_s->adaptive_plot);
     } else if (BU_STR_EQUAL(argv[0], "scale")) {
 	struct bview *gvp = cv;
 	if (!gvp)
-	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
+	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, 0);
 	if (!gvp)
 	    return BRLCAD_ERROR;
 	if (argc == 2 || argc == 3) {
@@ -199,7 +199,7 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[0], "redraw")) {
 	struct bview *gvp = cv;
 	if (!gvp)
-	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, 0);
+	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, 0);
 	if (!gvp)
 	    return BRLCAD_ERROR;
 	printUsage = 1;

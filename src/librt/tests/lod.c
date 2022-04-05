@@ -75,10 +75,10 @@ main(int argc, char *argv[])
     if (!key)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
 
-    struct bg_mesh_lod *mlod = bg_mesh_lod_init(key);
-    if (!mlod)
+    struct bv_mesh_lod_info *linfo = bg_mesh_lod_init(key);
+    if (!linfo)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
-
+    struct bg_mesh_lod *mlod = (struct bg_mesh_lod *)linfo->lod;
 
     // TODO Set up initial view
 
@@ -88,13 +88,15 @@ main(int argc, char *argv[])
 
     start = bu_gettime();
 
-    // TODO - lod testing
-    // struct bu_list elist;
-    int ecnt = bg_lod_elist(NULL, NULL, mlod, NULL);
+    for (int i = 0; i < 16; i++) {
+	bg_mesh_lod_level(mlod, i);
+    }
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
-    bu_log("lod, view 1 edge cnt(%f sec): %d\n", seconds, ecnt);
+    bu_log("lod level setting: %f sec\n", seconds);
+
+    bg_mesh_lod_destroy(linfo);
 
     return 0;
 }

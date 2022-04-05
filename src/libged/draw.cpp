@@ -36,6 +36,7 @@
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
+#include "bg/lod.h"
 #include "nmg.h"
 #include "rt/view.h"
 
@@ -77,7 +78,7 @@ prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
     }
 
     NMG_CK_REGION(r);
-    nmg_r_to_vlist(&s->s_vlist, r, NMG_VLIST_STYLE_POLYGON, &s->s_v->gv_vlfree);
+    nmg_r_to_vlist(&s->s_vlist, r, NMG_VLIST_STYLE_POLYGON, &s->s_v->gv_objs.gv_vlfree);
     nmg_km(m);
     return 0;
 }
@@ -90,10 +91,43 @@ wireframe_plot(struct bv_scene_obj *s, struct rt_db_internal *ip)
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
 
+    // Adaptive BoTs have specialized routines
+    if (s->s_v->gv_s->adaptive_plot && ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+	RT_BOT_CK_MAGIC(bot);
+
+	// Basic setup (TODO - make sure we don't rebuild cache every time - just if the key
+	// lookup fails...)
+	unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+	s->draw_data = (void *)bg_mesh_lod_init(key);
+	// Initialize the LoD data to the current view
+	struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)s->draw_data;
+	struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
+	int level = bg_mesh_lod_view(l, s->s_v, 0);
+	if (bg_mesh_lod_level(l, level) != level) {
+	    bu_log("Error loading info for level %d\n", level);
+	}
+
+	// LoD will need to re-check its level settings whenever the view changes
+	s->s_update_callback = &bg_mesh_lod_update;
+
+	// Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
+	s->s_type_flags |= BV_MESH_LOD;
+
+	bu_log("level: %d\n", level);
+	return;
+    }
+
+    // If we're adaptive but it's not a special case, see what the primitive has
     if (s->s_v->gv_s->adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
 	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, s->s_v, s->s_size);
-    } else if (ip->idb_meth->ft_plot) {
+	return;
+    }
+
+    // Standard wireframe
+    if (ip->idb_meth->ft_plot) {
 	ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
+	return;
     }
 }
 
@@ -149,6 +183,32 @@ draw_scene(struct bv_scene_obj *s)
     if (s->s_os.s_dmode > 0) {
 	switch (ip->idb_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_BOT:
+		// Adaptive BoTs have specialized routines
+		if (s->s_v->gv_s->adaptive_plot && s->s_os.s_dmode == 1) {
+		    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+		    RT_BOT_CK_MAGIC(bot);
+
+		    // Basic setup - build cache if we don't have it and return key
+		    unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+		    s->draw_data = (void *)bg_mesh_lod_init(key);
+		    // Initialize the LoD data to the current view
+		    struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)s->draw_data;
+		    struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
+		    int level = bg_mesh_lod_view(l, s->s_v, 0);
+		    if (bg_mesh_lod_level(l, level) != level) {
+			bu_log("Error loading info for level %d\n", level);
+		    }
+
+		    // LoD will need to re-check its level settings whenever the view changes
+		    s->s_update_callback = &bg_mesh_lod_update;
+
+		    // Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
+		    s->s_type_flags |= BV_MESH_LOD;
+
+		    bu_log("level: %d\n", level);
+		    return;
+		}
+
 		(void)rt_bot_plot_poly(&s->s_vlist, ip, ttol, tol);
 		goto geom_done;
 		break;
@@ -280,7 +340,7 @@ draw_update(struct bv_scene_obj *s, int UNUSED(flag))
     }
 
     // Clear out existing vlist, if any...
-    BV_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
 
     // Get the new geometry
     draw_scene(s);

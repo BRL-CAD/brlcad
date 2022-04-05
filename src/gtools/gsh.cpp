@@ -100,7 +100,7 @@ gsh_state_init(struct gsh_state *s)
     ged_init(s->gedp);
     /* We will need a view to support commands like draw */
     BU_GET(s->gedp->ged_gvp, struct bview);
-    bv_init(s->gedp->ged_gvp);
+    bv_init(s->gedp->ged_gvp, &s->gedp->ged_views);
     bu_vls_sprintf(&s->gedp->ged_gvp->gv_name, "default");
 
     /* As yet we don't have a .g file. */

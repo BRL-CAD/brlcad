@@ -27,7 +27,7 @@
 
 #include <set>
 
-#include "../../libbrep/cdt/RTree.h"
+#include "RTree.h"
 #include "opennurbs.h"
 #include "bu/cmd.h"
 #include "./ged_brep.h"

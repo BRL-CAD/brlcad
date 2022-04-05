@@ -41,7 +41,7 @@ QtSW::QtSW(QWidget *parent, struct fb *fbp)
     // Provide a view specific to this widget - set gedp->ged_gvp to v
     // if this is the current view
     BU_GET(v, struct bview);
-    bv_init(v);
+    bv_init(v, NULL);
     bu_vls_sprintf(&v->gv_name, "swrast");
 
     // Don't dm_open until we have the view.

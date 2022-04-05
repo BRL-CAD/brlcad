@@ -17,50 +17,33 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @file art/artplugin.cpp
-  *
-  * Once you have appleseed installed, run BRL-CAD's CMake with APPLESEED_ROOT
-  * set to enable this program:
-  *
-  * cmake .. -DAPPLESEED_ROOT=/path/to/appleseed -DBRLCAD_PNG=SYSTEM -DBRLCAD_ZLIB=SYSTEM
-  *
-  * (the appleseed root path should contain bin, lib and include directories)
-  *
-  * On Linux, if using the prebuilt binary you'll need to set LD_LIBRARY_PATH:
-  * export LD_LIBRARY_PATH=/path/to/appleseed/lib
-  *
-  *
-  * The example scene object used by helloworld is found at:
-  * https://raw.githubusercontent.com/appleseedhq/appleseed/master/sandbox/examples/cpp/helloworld/data/scene.obj
-  *
-  * basic example helloworld code from
-  * https://github.com/appleseedhq/appleseed/blob/master/sandbox/examples/cpp/helloworld/helloworld.cpp
-  * has the following license:
-  *
-  * This software is released under the MIT license.
-  *
-  * Copyright (c) 2010-2013 Francois Beaune, Jupiter Jazz Limited
-  * Copyright (c) 2014-2018 Francois Beaune, The appleseedhq Organization
-  *
-  * Permission is hereby granted, free of charge, to any person obtaining a copy
-  * of this software and associated documentation files (the "Software"), to deal
-  * in the Software without restriction, including without limitation the rights
-  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  * copies of the Software, and to permit persons to whom the Software is
-  * furnished to do so, subject to the following conditions:
-  *
-  * The above copyright notice and this permission notice shall be included in
-  * all copies or substantial portions of the Software.
-  *
-  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-  * THE SOFTWARE.
-  *
-  */
+/*********************************************************************
+ *
+ * This software is released under the MIT license.
+ *
+ * Copyright (c) 2010-2013 Francois Beaune, Jupiter Jazz Limited
+ * Copyright (c) 2014-2018 Francois Beaune, The appleseedhq Organization
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ */
+
 
 #include "common.h"
 
@@ -159,13 +142,13 @@ brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUS
     // fprintf(output, "names: %s | %s\n", (const char*)ap->a_uptr, pp->pt_regionp->reg_name);
     // fflush(output);
 
-    if(!BU_STR_EQUAL((const char*)ap->a_uptr, pp->pt_regionp->reg_name)) {
-      return 0;
+    if (!BU_STR_EQUAL((const char*)ap->a_uptr, pp->pt_regionp->reg_name)) {
+	return 0;
     }
 
     /* construct the actual (entry) hit-point from the ray and the
-	* distance to the intersection point (i.e., the 't' value).
-	*/
+     * distance to the intersection point (i.e., the 't' value).
+     */
     //VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
     brlcad_ray_info.distance = hitp->hit_dist;
 
@@ -173,8 +156,8 @@ brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUS
     stp = pp->pt_inseg->seg_stp;
 
     /* compute the normal vector at the entry point, flipping the
-	* normal if necessary.
-	*/
+     * normal if necessary.
+     */
     RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 
     brlcad_ray_info.normal[0] = inormal[0];
@@ -259,10 +242,10 @@ BrlcadObject::get_model() const
 /* Called before rendering each frame */
 bool
 BrlcadObject::on_frame_begin(
-	const asr::Project& project,
-	const asr::BaseGroup* parent,
-	asr::OnFrameBeginRecorder& recorder,
-	asf::IAbortSwitch* abort_switch)
+    const asr::Project& project,
+    const asr::BaseGroup* parent,
+    asr::OnFrameBeginRecorder& recorder,
+    asf::IAbortSwitch* abort_switch)
 {
     if (!asr::ProceduralObject::on_frame_begin(project, parent, recorder, abort_switch))
 	return false;
@@ -275,6 +258,9 @@ BrlcadObject::on_frame_begin(
 asr::GAABB3
 BrlcadObject::compute_local_bbox() const
 {
+    if (!ap || !ap->a_rt_i)
+	return asr::GAABB3(asr::GVector3(0, 0, 0), asr::GVector3(0, 0, 0));
+
     // const auto r = static_cast<asr::GScalar>(get_uncached_radius());
     struct rt_i* l_rtip = ap->a_rt_i;
     if (l_rtip->needprep)
@@ -313,8 +299,8 @@ BrlcadObject::get_material_slot(const size_t UNUSED(index)) const
 /* Compute intersection between ray and object surface (DETAILED) */
 void
 BrlcadObject::intersect(
-	const asr::ShadingRay& ray,
-	IntersectionResult& result) const
+    const asr::ShadingRay& ray,
+    IntersectionResult& result) const
 {
     struct application app;
     app = *ap; /* struct copy */
@@ -328,24 +314,21 @@ BrlcadObject::intersect(
 
     app.a_uptr = (void*)this->name->c_str();
 
-    if (rt_shootray(&app) == 0)
-    {
+    if (rt_shootray(&app) == 0) {
 	result.m_hit = false;
 	return;
-    }
-    else
-    {
+    } else {
 	result.m_hit = true;
 	result.m_distance = brlcad_ray_info.distance;
 
 	const asf::Vector3d n = asf::normalize(brlcad_ray_info.normal);
 	result.m_geometric_normal = n;
 
-  // const asf::Vector3d n_flip (n[0], n[2], n[1]);
-  // double temp;
-  // temp = n_flip[2];
-  // n_flip.set(2) = n_flip[1];
-  // n_flip.set(1) = temp;
+	// const asf::Vector3d n_flip (n[0], n[2], n[1]);
+	// double temp;
+	// temp = n_flip[2];
+	// n_flip.set(2) = n_flip[1];
+	// n_flip.set(1) = temp;
 	result.m_shading_normal = n;
 
 	// const asf::Vector3f p(brlcad_ray_info.normal * m_rcp_radius);
@@ -421,10 +404,10 @@ BrlcadObject::get_objects() const
 {
     std::vector<std::string> objects;
     int count = get_object_count();
-    for (char i = 0; i < count; i++)
-    {
-        std::string obj_num = "object." + std::to_string(i + 1);
-        objects.push_back(m_params.get_path_required<std::string>(obj_num.c_str(), ""));
+
+    for (char i = 0; i < count; i++) {
+	std::string obj_num = "object." + std::to_string(i + 1);
+	objects.push_back(m_params.get_path_required<std::string>(obj_num.c_str(), ""));
     }
 
     return objects;
@@ -443,36 +426,31 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
 
     /* load the specified geometry database */
     rtip = rt_dirbuild(path, title, sizeof(title));
-    if (rtip == RTI_NULL)
-    {
+    if (rtip == RTI_NULL) {
 	fprintf(output, "Building the database directory for [%s] FAILED\n", path);
 	fflush(output);
 	return;
     }
 
-    for (size_t i = 0; i < MAX_PSW; i++)
-    {
+    for (size_t i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&resources[i], (int)i, rtip);
 	RT_CK_RESOURCE(&resources[i]);
     }
 
     /* display optional database title */
-    if (title[0])
-    {
+    if (title[0]) {
 	fprintf(output, "Database title: %s\n", title);
 	fflush(output);
     }
 
     /* parse object arguments */
     const char** objv = (const char**)bu_calloc((size_t)objc + 1, sizeof(char*), "obj array");
-    for (int i = 0; i < objc; i++)
-    {
-        objv[i] = objects.at(i).c_str();
+    for (int i = 0; i < objc; i++) {
+	objv[i] = objects.at(i).c_str();
     }
 
     /* include objects from database */
-    if (rt_gettrees(rtip, objc, objv, (int)npsw) < 0)
-    {
+    if (rt_gettrees(rtip, objc, objv, (int)npsw) < 0) {
 	fprintf(output, "Loading the geometry for [%s] FAILED\n", objects[0].c_str());
 	fflush(output);
     }
@@ -531,13 +509,13 @@ BrlcadObjectFactory::get_input_metadata() const
 	.insert("label", "Radius")
 	.insert("type", "numeric")
 	.insert("min",
-	    asf::Dictionary()
-	    .insert("value", "0.0")
-	    .insert("type", "hard"))
+		asf::Dictionary()
+		.insert("value", "0.0")
+		.insert("type", "hard"))
 	.insert("max",
-	    asf::Dictionary()
-	    .insert("value", "10.0")
-	    .insert("type", "soft"))
+		asf::Dictionary()
+		.insert("value", "10.0")
+		.insert("type", "soft"))
 	.insert("use", "optional")
 	.insert("default", "1.0"));
 
@@ -577,3 +555,13 @@ extern "C"
 	return new BrlcadObjectFactory();
     }
 }
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

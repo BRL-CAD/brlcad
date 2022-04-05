@@ -48,11 +48,11 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	// Always make sure the view's specified local containers are cleared.  We
 	// may be skipping the shared objects depending on the settings, but a zap
 	// on a view always clears the local versions.
-	struct bu_ptbl *sg = v->gv_view_grps;
+	struct bu_ptbl *sg = v->gv_objs.view_grps;
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		bv_scene_obj_free(cg, gedp->free_scene_obj);
+		bv_scene_obj_free(cg, gedp->ged_views.free_scene_obj);
 	    }
 	    bu_ptbl_reset(sg);
 	}
@@ -61,11 +61,11 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	// beyond just this view, so it is only done when the caller
 	// specifically requests it.)
 	if (!v->independent) {
-	    sg = v->gv_db_grps;
+	    sg = &v->vset->shared_db_objs;
 	    if (sg) {
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		    bv_scene_obj_free(cg, gedp->free_scene_obj);
+		    bv_scene_obj_free(cg, gedp->ged_views.free_scene_obj);
 		}
 		bu_ptbl_reset(sg);
 	    }
@@ -77,21 +77,21 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	return BRLCAD_OK;
 
     // If the options indicate it, clear view objects as well
-    sv = v->gv_view_objs;
+    sv = v->gv_objs.view_objs;
     if (sv) {
 	for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
 	    bu_ptbl_rm(sv, (long *)s);
-	    bv_scene_obj_free(s, gedp->free_scene_obj);
+	    bv_scene_obj_free(s, gedp->ged_views.free_scene_obj);
 	}
     }
     if (!v->independent) {
-	sv = v->gv_view_shared_objs;
+	sv = &v->vset->shared_view_objs;
 	if (sv) {
 	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
 		bu_ptbl_rm(sv, (long *)s);
-		bv_scene_obj_free(s, gedp->free_scene_obj);
+		bv_scene_obj_free(s, gedp->ged_views.free_scene_obj);
 	    }
 	}
     }
@@ -100,8 +100,8 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
      * cleared.  Since the blast command may immediately re-populate the
      * display list, we set a flag in the view to inform the app a zap
      * operation has taken place. */
-    if (!BU_PTBL_LEN(v->gv_view_objs) && !BU_PTBL_LEN(v->gv_view_grps)) {
-	if (v->independent || (!BU_PTBL_LEN(v->gv_view_shared_objs) && !BU_PTBL_LEN(v->gv_db_grps))) {
+    if (!BU_PTBL_LEN(v->gv_objs.view_objs) && !BU_PTBL_LEN(v->gv_objs.view_grps)) {
+	if (v->independent || (!BU_PTBL_LEN(&v->vset->shared_view_objs) && !BU_PTBL_LEN(&v->vset->shared_db_objs))) {
 	    v->gv_s->gv_cleared = 1;
 	}
     }
@@ -158,8 +158,8 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 
     if (!clear_all_views && bu_vls_strlen(&cvls)) {
 	int found_match = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
 		v = tv;
 		found_match = 1;
@@ -192,8 +192,8 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 
     // Clear everything
     int ret = BRLCAD_OK;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	if (v->independent && !clear_all_views)
 	    continue;
 	int nret = ged_clear_view(gedp, v, clear_solid_objs, clear_view_objs);

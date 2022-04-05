@@ -32,12 +32,14 @@
 #include <type_traits>
 #include <cmath>
 #include <set>
-#include "opennurbs.h"
 #include "vmath.h"
 #include "bv/plot3.h"
 #include "bg/aabb_ray.h"
 
 #define RTreeAssert assert // RTree uses RTreeAssert( condition )
+
+// From opennurbs
+#define RTREE_ZERO_TOLERANCE 2.3283064365386962890625e-10
 
 //
 // RTree.h
@@ -1140,7 +1142,7 @@ int RTREE_QUAL::PickBranch(const Rect* a_rect, Node* a_node)
 	    bestArea = area;
 	    bestIncr = increase;
 	    firstTime = false;
-	} else if (NEAR_EQUAL(increase, bestIncr, ON_ZERO_TOLERANCE) && (area < bestArea)) {
+	} else if (NEAR_EQUAL(increase, bestIncr, RTREE_ZERO_TOLERANCE) && (area < bestArea)) {
 	    best = index;
 	    bestArea = area;
 	    bestIncr = increase;
@@ -1326,7 +1328,7 @@ void RTREE_QUAL::ChoosePartition(PartitionVars* a_parVars, int a_minFill)
 		    biggestDiff = diff;
 		    chosen = index;
 		    betterGroup = group;
-		} else if (NEAR_EQUAL(diff, biggestDiff, ON_ZERO_TOLERANCE) && (a_parVars->m_count[group] < a_parVars->m_count[betterGroup])) {
+		} else if (NEAR_EQUAL(diff, biggestDiff, RTREE_ZERO_TOLERANCE) && (a_parVars->m_count[group] < a_parVars->m_count[betterGroup])) {
 		    chosen = index;
 		    betterGroup = group;
 		}

@@ -82,13 +82,13 @@ _dm_name_lookup(struct _ged_dm_info *gd, const char *dm_name)
     }
 
     struct ged *gedp = gd->gedp;
-    if (!BU_PTBL_LEN(&gedp->ged_views)) {
+    if (!BU_PTBL_LEN(&gedp->ged_views.views)) {
 	bu_vls_printf(gedp->ged_result_str, ": no views defined in GED\n");
 	return NULL;
     }
     int dm_cnt = 0;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	if (!gdvp->dmp)
 	    continue;
 	dm_cnt++;
@@ -98,8 +98,8 @@ _dm_name_lookup(struct _ged_dm_info *gd, const char *dm_name)
 	return NULL;
     }
 
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	ndmp = (struct dm *)gdvp->dmp;
 	if (ndmp && BU_STR_EQUAL(dm_name, bu_vls_cstr(dm_get_pathname(ndmp)))) {
 	    cdmp = ndmp;
@@ -264,13 +264,13 @@ _dm_cmd_list(void *ds, int argc, const char **argv)
 	}
     }
 
-    if (!BU_PTBL_LEN(&gedp->ged_views) && !cdmp) {
+    if (!BU_PTBL_LEN(&gedp->ged_views.views) && !cdmp) {
 	bu_vls_printf(gedp->ged_result_str, ": no views defined in GED\n");
 	return BRLCAD_ERROR;
     }
     int dm_cnt = 0;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	if (!gdvp->dmp)
 	    continue;
 	dm_cnt++;
@@ -280,8 +280,8 @@ _dm_cmd_list(void *ds, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	struct dm *ndmp = (struct dm *)gdvp->dmp;
 	if (!ndmp || ndmp == cdmp)
 	    continue;
@@ -441,8 +441,8 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	// No name - generate one
 	bu_vls_sprintf(&dm_name, "%s-0", argv[0]);
 	int exists = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    struct dm *ndmp = (struct dm *)gdvp->dmp;
 	    if (!ndmp)
 		continue;
@@ -455,8 +455,8 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	while (exists && tries < DM_MAX_TRIES) {
 	    bu_vls_incr(&dm_name, NULL, "0:0:0:0:-", NULL, NULL);
 	    exists = 0;
-	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-		struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+		struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 		struct dm *ndmp = (struct dm *)gdvp->dmp;
 		if (!ndmp)
 		    continue;
@@ -476,8 +476,8 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	// Have name - see if it already exists
 	bu_vls_sprintf(&dm_name, "%s", argv[1]);
 	int exists = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    struct dm *ndmp = (struct dm *)gdvp->dmp;
 	    if (!ndmp)
 		continue;
@@ -496,8 +496,8 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     struct bview *target_view = (gedp->ged_gvp->dmp) ? NULL : gedp->ged_gvp;
     if (!target_view) {
 	BU_GET(target_view, struct bview);
-	bv_init(target_view);
-	bu_ptbl_ins(&gedp->ged_views, (long *)target_view);
+	bv_init(target_view, &gedp->ged_views);
+	bu_ptbl_ins(&gedp->ged_views.views, (long *)target_view);
     }
 
     // Make sure the view width and height are non-zero if we're in a

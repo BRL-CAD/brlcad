@@ -76,7 +76,7 @@ _axes_cmd_create(void *bs, int argc, const char **argv)
     BU_GET(s, struct bv_scene_obj);
     s->s_v = gedp->ged_gvp;
     BU_LIST_INIT(&(s->s_vlist));
-    BV_ADD_VLIST(&s->s_v->gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist, p, BV_VLIST_LINE_MOVE);
     VSET(s->s_color, 255, 255, 0);
 
     struct bv_axes *l;
@@ -92,7 +92,7 @@ _axes_cmd_create(void *bs, int argc, const char **argv)
 
     bu_vls_init(&s->s_uuid);
     bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
-    bu_ptbl_ins(gedp->ged_gvp->gv_view_objs, (long *)s);
+    bu_ptbl_ins(gedp->ged_gvp->gv_objs.view_objs, (long *)s);
 
     return BRLCAD_OK;
 }

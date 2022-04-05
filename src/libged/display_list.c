@@ -244,7 +244,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
-    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct display_list *last_gdlp;
@@ -352,7 +352,7 @@ eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 {
     struct bv_scene_obj *sp;
     struct bv_scene_obj *nsp;
-    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
 
     sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
     while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
@@ -440,7 +440,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
-    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
     struct bv_scene_obj *sp;
     struct bv_scene_obj *nsp;
     struct db_full_path dup_path;
@@ -544,7 +544,7 @@ void
 _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 {
     struct db_i *dbip = gedp->dbip;
-    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
     struct bv_scene_obj *sp;
     struct directory *dp;
 
@@ -1004,7 +1004,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
-    struct bv_scene_obj *free_scene_obj = gedp->free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
     struct directory *dp;
     struct bv_scene_obj *sp;
     struct display_list *gdlp;

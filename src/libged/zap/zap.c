@@ -58,7 +58,7 @@ ged_zap_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    dl_zap(gedp, gedp->free_scene_obj);
+    dl_zap(gedp, gedp->ged_views.free_scene_obj);
 
     return BRLCAD_OK;
 }

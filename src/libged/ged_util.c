@@ -141,8 +141,8 @@ struct bview *
 ged_find_view(struct ged *gedp, const char *key)
 {
     struct bview *gdvp = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gv_name), key))
 	    break;
 	gdvp = NULL;
@@ -1014,7 +1014,7 @@ ged_who_argc(struct ged *gedp)
     if (BU_STR_EQUAL(cmd2, "1")) {
 	if (!gedp || !gedp->ged_gvp)
 	    return 0;
-	struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+	struct bu_ptbl *sg = &gedp->ged_gvp->vset->shared_db_objs;
 	return BU_PTBL_LEN(sg);
     }
 
@@ -1048,7 +1048,7 @@ ged_who_argv(struct ged *gedp, char **start, const char **end)
     if (BU_STR_EQUAL(cmd2, "1")) {
 	if (!gedp || !gedp->ged_gvp)
 	    return 0;
-	struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+	struct bu_ptbl *sg = &gedp->ged_gvp->vset->shared_db_objs;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    if ((vp != NULL) && ((const char **)vp < end)) {
@@ -1436,7 +1436,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 
 	const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
 	if (BU_STR_EQUAL(cmd2, "1")) {
-	    (void)scene_bounding_sph(gedp->ged_gvp->gv_db_grps, &(extremum[0]), &(extremum[1]), 1);
+	    (void)scene_bounding_sph(&gedp->ged_gvp->vset->shared_db_objs, &(extremum[0]), &(extremum[1]), 1);
 	} else {
 	    (void)dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &(extremum[0]), &(extremum[1]), 1);
 	}
@@ -1648,7 +1648,7 @@ _ged_rt_write(struct ged *gedp,
 	if (!argc) {
 	    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
 	    if (BU_STR_EQUAL(cmd2, "1")) {
-		struct bu_ptbl *sg = gedp->ged_gvp->gv_db_grps;
+		struct bu_ptbl *sg = &gedp->ged_gvp->vset->shared_db_objs;
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		    fprintf(fp, "draw %s;\n", bu_vls_cstr(&g->s_name));
@@ -2076,7 +2076,7 @@ _ged_dir_getspace(struct db_i *dbip,
     }
 
     /* Allocate and cast num_entries worth of pointers */
-    dir_basep = (struct directory **) bu_malloc(num_entries+1 * sizeof(struct directory *),
+    dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
 						"dir_getspace *dir[]");
     return dir_basep;
 }

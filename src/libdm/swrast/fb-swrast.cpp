@@ -387,7 +387,7 @@ fb_swrast_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
     qi->mw = new QtSWWin(ifp);
 
     BU_GET(qi->mw->canvas->v, struct bview);
-    bv_init(qi->mw->canvas->v);
+    bv_init(qi->mw->canvas->v, NULL);
     qi->mw->canvas->v->gv_s->gv_fb_mode = 1;
     qi->mw->canvas->v->gv_width = width;
     qi->mw->canvas->v->gv_height = height;

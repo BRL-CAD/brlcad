@@ -41,4 +41,4 @@ CMAKEFILES(
 # mode: cmake
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=2 tabstop=8 textwidth=0 wrapmargin=0
+# ex: shiftwidth=2 tabstop=8

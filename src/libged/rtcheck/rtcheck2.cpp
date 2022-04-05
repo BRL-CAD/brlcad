@@ -113,7 +113,7 @@ rtcheck_vector_handler(void *clientData, int type)
 	// overlaps to draw, we're eliminating all the old objects
 	const char *sname = "rtcheck::";
 	struct bview *v = gedp->ged_gvp;
-	struct bu_ptbl *vobjs = (v->independent) ? v->gv_view_objs : v->gv_view_shared_objs;
+	struct bu_ptbl *vobjs = (v->independent) ? v->gv_objs.view_objs : &v->vset->shared_view_objs;
 	std::set<struct bv_scene_obj *> robjs;
 	for (i = 0; i < BU_PTBL_LEN(vobjs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(vobjs, i);
@@ -124,7 +124,7 @@ rtcheck_vector_handler(void *clientData, int type)
 	std::set<struct bv_scene_obj *>::iterator r_it;
 	for (r_it = robjs.begin(); r_it != robjs.end(); r_it++) {
 	    struct bv_scene_obj *s = *r_it;
-	    bv_scene_obj_free(s, gedp->free_scene_obj);
+	    bv_scene_obj_free(s, gedp->ged_views.free_scene_obj);
 	    bu_ptbl_rm(vobjs, (long *)s);
 	}
 
@@ -140,7 +140,7 @@ rtcheck_vector_handler(void *clientData, int type)
 
 	    if (have_visual) {
 		bu_log("final nused: %zu\n", rtcp->vbp->nused);
-		bv_vlblock_to_objs(vobjs, sname, rtcp->vbp, gedp->ged_gvp, gedp->free_scene_obj, &gedp->vlfree);
+		bv_vlblock_to_objs(vobjs, sname, rtcp->vbp, gedp->ged_gvp, gedp->ged_views.free_scene_obj, &gedp->ged_views.vlfree);
 	    }
 	}
     }

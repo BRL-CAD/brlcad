@@ -89,8 +89,8 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     if (bu_vls_strlen(&cvls)) {
 	int found_match = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views); i++) {
-	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
+	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
 		v = tv;
 		found_match = 1;
@@ -131,17 +131,16 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     VSETALL(max, -INFINITY);
 
     struct bu_ptbl *so;
-    if (v->independent) {
-	so = v->gv_view_grps;
+    if (v->gv_s->adaptive_plot || v->independent) {
+	so = v->gv_objs.view_grps;
     } else {
-	so = v->gv_db_grps;
+	so = &v->vset->shared_db_objs;
     }
     vect_t minus, plus;
     int have_geom_objs = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
-	if (bu_list_len(&g->s_vlist)) {
-	    bv_scene_obj_bound(g);
+	if (bv_scene_obj_bound(g)) {
 	    is_empty = 0;
 	    have_geom_objs = 1;
 	    minus[X] = g->s_center[X] - g->s_size;
@@ -155,17 +154,17 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	for (size_t j = 0; j < BU_PTBL_LEN(&g->children); j++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, j);
-	    bv_scene_obj_bound(s);
-	    is_empty = 0;
-	    minus[X] = s->s_center[X] - s->s_size;
-	    minus[Y] = s->s_center[Y] - s->s_size;
-	    minus[Z] = s->s_center[Z] - s->s_size;
-	    VMIN(min, minus);
-	    plus[X] = s->s_center[X] + s->s_size;
-	    plus[Y] = s->s_center[Y] + s->s_size;
-	    plus[Z] = s->s_center[Z] + s->s_size;
-	    VMAX(max, plus);
-
+	    if (bv_scene_obj_bound(s)) {
+		is_empty = 0;
+		minus[X] = s->s_center[X] - s->s_size;
+		minus[Y] = s->s_center[Y] - s->s_size;
+		minus[Z] = s->s_center[Z] - s->s_size;
+		VMIN(min, minus);
+		plus[X] = s->s_center[X] + s->s_size;
+		plus[Y] = s->s_center[Y] + s->s_size;
+		plus[Z] = s->s_center[Z] + s->s_size;
+		VMAX(max, plus);
+	    }
 	    for (size_t k = 0; k < BU_PTBL_LEN(&s->children); k++) {
 		struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, k);
 		struct bv_vlist *tvp;
@@ -178,7 +177,6 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 		    }
 		}
 	    }
-
 	}
     }
 
@@ -190,9 +188,9 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     // then basing autoview on the view-only objs is more intuitive than just
     // using the default view settings.
     if (v->independent) {
-	so = v->gv_view_objs;
+	so = v->gv_objs.view_objs;
     } else {
-	so = v->gv_view_shared_objs;
+	so = &v->vset->shared_view_objs;
     }
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
@@ -209,17 +207,17 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 		!(s->s_type_flags & BV_LABELS))
 		continue;
 	}
-	bv_scene_obj_bound(s);
-	is_empty = 0;
-	minus[X] = s->s_center[X] - s->s_size;
-	minus[Y] = s->s_center[Y] - s->s_size;
-	minus[Z] = s->s_center[Z] - s->s_size;
-	VMIN(min, minus);
-	plus[X] = s->s_center[X] + s->s_size;
-	plus[Y] = s->s_center[Y] + s->s_size;
-	plus[Z] = s->s_center[Z] + s->s_size;
-	VMAX(max, plus);
-
+	if (bv_scene_obj_bound(s)) {
+	    is_empty = 0;
+	    minus[X] = s->s_center[X] - s->s_size;
+	    minus[Y] = s->s_center[Y] - s->s_size;
+	    minus[Z] = s->s_center[Z] - s->s_size;
+	    VMIN(min, minus);
+	    plus[X] = s->s_center[X] + s->s_size;
+	    plus[Y] = s->s_center[Y] + s->s_size;
+	    plus[Z] = s->s_center[Z] + s->s_size;
+	    VMAX(max, plus);
+	}
 	for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
 	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, j);
 	    struct bv_vlist *tvp;

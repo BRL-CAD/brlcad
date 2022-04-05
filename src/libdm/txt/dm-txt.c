@@ -201,6 +201,14 @@ txt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
 
 
 HIDDEN int
+txt_draw_tri(struct dm *UNUSED(dmp), struct bv_mesh_lod_info *UNUSED(i))
+{
+    bu_log("draw_tri called\n");
+    return 0;
+}
+
+
+HIDDEN int
 txt_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
 {
     bu_log("draw called\n");
@@ -401,6 +409,7 @@ struct dm_impl dm_txt_impl = {
     txt_drawPoints3D,
     txt_drawVList,
     txt_drawVListHiddenLine,
+    txt_draw_tri,
     NULL,
     txt_draw,
     txt_setFGColor,

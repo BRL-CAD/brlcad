@@ -76,8 +76,8 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     }
     gd->vobj = argv[0];
 
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
 	if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&s->s_uuid))) {
 	    gd->s = s;
 	    break;
@@ -126,8 +126,8 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
 
     /* Set up the toplevel object */
     struct bv_scene_group *g;
-    GET_BV_SCENE_OBJ(g, &gedp->free_scene_obj->l);
-    bv_scene_obj_init(g, gedp->free_scene_obj);
+    GET_BV_SCENE_OBJ(g, &gedp->ged_views.free_scene_obj->l);
+    bv_scene_obj_init(g, gedp->ged_views.free_scene_obj);
     db_path_to_vls(&g->s_name, fp);
     bu_vls_sprintf(&g->s_uuid, "%s", argv[1]);
     g->s_i_data = (void *)ip;
@@ -146,7 +146,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     dd.v = gedp->ged_gvp;
     dd.tol = &gedp->ged_wdbp->wdb_tol;
     dd.ttol = &gedp->ged_wdbp->wdb_ttol;
-    dd.free_scene_obj = gedp->free_scene_obj;
+    dd.free_scene_obj = gedp->ged_views.free_scene_obj;
     dd.color_inherit = 0;
     dd.bound_only = 0;
     dd.s_size = &s_size;
@@ -159,7 +159,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     draw_gather_paths(fp, &mat, (void *)&dd);
 
     // Add to the scene
-    bu_ptbl_ins(v->gv_view_objs, (long *)g);
+    bu_ptbl_ins(v->gv_objs.view_objs, (long *)g);
 
     // TODO - set the object callbacks
 
@@ -189,9 +189,9 @@ _gobjs_cmd_delete(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "No view object named %s\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    // TODO may need gv_view_shared_objs depending on view type
-    bu_ptbl_rm(gedp->ged_gvp->gv_view_objs, (long *)s);
-    bv_scene_obj_free(s, gedp->free_scene_obj);
+    // TODO may need gv_objs.view_shared_objs depending on view type
+    bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)s);
+    bv_scene_obj_free(s, gedp->ged_views.free_scene_obj);
 
     return BRLCAD_OK;
 }
@@ -244,15 +244,15 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     // If we're not wanting help and we have no subcommand, list current gobjs objects
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_shared_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_shared_objs, i);
+	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->shared_view_objs, i);
 	    // TODO - strip gobjs:: prefix
 	    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	}
 
-	if (v->gv_view_shared_objs != v->gv_view_objs) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_view_objs); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_view_objs, i);
+	if (&v->vset->shared_view_objs != v->gv_objs.view_objs) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
 		// TODO - strip gobjs:: prefix
 		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
 	    }
@@ -261,7 +261,7 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     }
 
     gd->s = NULL;
-    // TODO - if independent use gv_view_objs, else use gv_view_shared_objs
+    // TODO - if independent use gv_objs.view_objs, else use gv_objs.view_shared_objs
     // TODO - append gobjs:: prefix
  
     if (!gd->s) {

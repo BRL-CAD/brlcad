@@ -244,6 +244,8 @@ DM_EXPORT extern int dm_end_dlist(struct dm *dmp);
 DM_EXPORT extern int dm_free_dlists(struct dm *dmp, unsigned int list, int range);
 DM_EXPORT extern int dm_draw_vlist(struct dm *dmp, struct bv_vlist *vp);
 DM_EXPORT extern int dm_draw_vlist_hidden_line(struct dm *dmp, struct bv_vlist *vp);
+DM_EXPORT extern int dm_draw_tri_callback(void *ctx, struct bv_mesh_lod_info *i);
+DM_EXPORT extern int dm_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *i);
 DM_EXPORT extern int dm_set_line_attr(struct dm *dmp, int width, int style);
 DM_EXPORT extern int dm_draw_begin(struct dm *dmp);
 DM_EXPORT extern int dm_draw_end(struct dm *dmp);

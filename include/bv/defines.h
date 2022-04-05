@@ -36,17 +36,14 @@
  * objects...
  *
  */
-#ifndef DM_BV_H
-#define DM_BV_H
+#ifndef BV_DEFINES_H
+#define BV_DEFINES_H
 
 #include "common.h"
+#include "vmath.h"
 #include "bu/list.h"
 #include "bu/vls.h"
 #include "bu/ptbl.h"
-#include "bg/polygon_types.h"
-#include "bv/tcl_data.h"
-#include "bv/faceplate.h"
-#include "vmath.h"
 
 /** @{ */
 /** @file bv.h */
@@ -62,6 +59,10 @@
 #    define BV_EXPORT
 #  endif
 #endif
+
+#include "bg/polygon_types.h"
+#include "bv/tcl_data.h"
+#include "bv/faceplate.h"
 
 #define BV_MINVIEWSIZE 0.0001
 #define BV_MINVIEWSCALE 0.00005
@@ -121,6 +122,40 @@ struct bv_axes {
     int       tick_major_color[3];
 };
 
+// Mesh LoD drawing doesn't use vlists, but instead directly processes triangle
+// data to minimize memory usage.  Although the primary logic for LoD lives in
+// libbg, the drawing data is basic in nature. We define a struct container
+// that can be used by the multiple libraries which must interact with it to
+// make information passing simpler.
+struct bv_mesh_lod_info {
+    // The set of triangle faces to be used when drawing
+    int fcnt;
+    const int *faces;
+
+    // The vertices used by the faces array
+    const point_t *points;
+    const point_t *points_orig;
+
+    // Optional: an "active subset" of faces in the faces array may be passed
+    // in as an index array in fset.  If fset is NULL, all will be drawn.
+    int fset_cnt;
+    int *fset;
+
+    // Optional: per-face-vertex normals
+    const int *face_normals;
+    const vect_t *normals;
+
+    // Drawing mode: 0 = wireframe, 1 = shaded
+    int mode;
+
+    // BBox
+    point_t bmin;
+    point_t bmax;
+
+    // Pointer to LoD container
+    void *lod;
+};
+
 
 // Many settings have defaults at the view level, and may be overridden for
 // individual scene objects.
@@ -173,6 +208,7 @@ struct bv_obj_settings {
 #define BV_LABELS         0x08
 #define BV_AXES           0x10
 #define BV_POLYGONS       0x20
+#define BV_MESH_LOD       0x40
 
 struct bview;
 
@@ -244,6 +280,10 @@ struct bv_scene_obj  {
 
     /* Container for reusing bv_scene_obj allocations */
     struct bv_scene_obj *free_scene_obj;
+
+    /* For more specialized routines not using vlists, we may need
+     * additional drawing data associated with a scene object */
+    void *draw_data;
 
     /* User data to associate with this view object */
     void *s_u_data;
@@ -361,6 +401,34 @@ struct bview_settings {
     struct bu_ptbl                      *gv_selected;
 };
 
+/* A view needs to know what objects are active within it, but this is a
+ * function not just of adding and removing objects via commands like
+ * "draw" and "erase" but also what settings are active.  Shared objects
+ * are common to multiple views, but if adaptive plotting is enabled the
+ * scene objects cannot also be common - the representations of the objects
+ * may be different in each view, even though the object list is shared.
+ */
+struct bview_objs {
+
+    // Container for db object groups unique to this view (typical use case is
+    // adaptive plotting, where geometry wireframes may differ from view to
+    // view and thus need unique vlists.)
+    struct bu_ptbl  *view_grps;
+    // Container for storing bv_scene_obj elements unique to this view.
+    struct bu_ptbl  *view_objs;
+
+    // Available bv_vlist entities to recycle before allocating new for local
+    // view objects. This is used only if the app doesn't supply a vlfree -
+    // normally the app should do so, so memory from one view can be reused for
+    // other views.
+    struct bu_list  gv_vlfree;
+
+    /* Container for reusing bv_scene_obj allocations */
+    struct bv_scene_obj *free_scene_obj;
+};
+
+struct bview_set;
+
 struct bview {
     uint32_t	  magic;             /**< @brief magic number */
     struct bu_vls gv_name;
@@ -412,33 +480,15 @@ struct bview {
      * if multiple views draw the same objects. */
     int independent;
 
-    // Container for db object groups unique to this view (typical use case is
-    // adaptive plotting, where geometry wireframes may differ from view to
-    // view and thus need unique vlists.)
-    struct bu_ptbl  *gv_view_grps;
-    // Container for storing bv_scene_obj elements unique to this view.
-    struct bu_ptbl  *gv_view_objs;
+    /* Set containing this view.  Also holds pointers to resources shared
+     * across multiple views */
+    struct bview_set *vset;
 
-
-    // Container for shared db object groups (usually comes from the app and is
-    // owned by gedp - if not, defaults to the same container as gv_view_grps)
-    struct bu_ptbl  *gv_db_grps;
-    // Shared view objects common to multiple views. Defaults to gv_view_objs
-    // unless/until the app supplies a container.
-    struct bu_ptbl  *gv_view_shared_objs;
-
-
-    // bv_vlist entities to recycle for shared objects
-    struct bu_list  *vlfree;
-
-    // Available bv_vlist entities to recycle before allocating new for local
-    // view objects. This is used only if the app doesn't supply a vlfree -
-    // normally the app should do so, so memory from one view can be reused for
-    // other views.
-    struct bu_list  gv_vlfree;
-
-    /* Container for reusing bv_scene_obj allocations */
-    struct bv_scene_obj *free_scene_obj;
+    /* Scene objects active in a view.  Managing these is a relatively complex
+     * topic and depends on whether a view is shared, independent or adaptive.
+     * Shared objects are common across views to make more efficient use of
+     * system memory. */
+    struct bview_objs gv_objs;
 
     /*
      * gv_data_vZ is an internal parameter used by commands creating and
@@ -473,7 +523,27 @@ struct bview {
     void           *u_data;          /* Caller data associated with this view */
 };
 
-#endif /* DM_BV_H */
+// Because bview instances frequently share objects in applications, they are
+// not always fully independent - we define a container and some basic
+// operations to manage this.
+struct bview_set {
+    struct bu_ptbl              views;
+    struct bu_ptbl		shared_db_objs;
+    struct bu_ptbl		shared_view_objs;
+    struct bview_settings       settings;
+
+    struct bv_scene_obj         *free_scene_obj;
+    struct bu_list              vlfree;
+};
+BV_EXPORT void
+bv_set_init(struct bview_set *s);
+BV_EXPORT void
+bv_set_free(struct bview_set *s);
+
+BV_EXPORT void
+bv_set_add(struct bview_set *s, struct bview *v);
+
+#endif /* BV_DEFINES_H */
 
 /** @} */
 /*

@@ -36,12 +36,14 @@
 #include "bv/util.h"
 
 void
-bv_init(struct bview *gvp)
+bv_init(struct bview *gvp, struct bview_set *s)
 {
     if (!gvp)
 	return;
 
     gvp->magic = BV_MAGIC;
+
+    gvp->vset = s;
 
     if (!BU_VLS_IS_INITIALIZED(&gvp->gv_name)) {
 	bu_vls_init(&gvp->gv_name);
@@ -87,25 +89,19 @@ bv_init(struct bview *gvp)
     VSET(gvp->gv_tcl.gv_prim_labels.gos_text_color, 255, 255, 0);
 
 
-    // gv_view_grps is local to this view and thus is controlled
+    // gv_objs.view_grps is local to this view and thus is controlled
     // by the bv init and free routines.
-    BU_GET(gvp->gv_view_grps, struct bu_ptbl);
-    bu_ptbl_init(gvp->gv_view_grps, 8, "view_objs init");
+    BU_GET(gvp->gv_objs.view_grps, struct bu_ptbl);
+    bu_ptbl_init(gvp->gv_objs.view_grps, 8, "view_objs init");
 
-    // gv_view_objs is local to this view and thus is controlled
+    // gv_objs.view_objs is local to this view and thus is controlled
     // by the bv init and free routines.
-    BU_GET(gvp->gv_view_objs, struct bu_ptbl);
-    bu_ptbl_init(gvp->gv_view_objs, 8, "view_objs init");
-
-    // These should come from the app (usually ged_db_grps and ged_view_shared_objs).
-    // Initialize to the local containers until we get the shared ones from the app.
-    gvp->gv_db_grps = gvp->gv_view_grps;
-    gvp->gv_view_shared_objs = gvp->gv_view_objs;
+    BU_GET(gvp->gv_objs.view_objs, struct bu_ptbl);
+    bu_ptbl_init(gvp->gv_objs.view_objs, 8, "view_objs init");
 
     // Until the app tells us differently, we need to use our local vlist
     // container
-    BU_LIST_INIT(&gvp->gv_vlfree);
-    gvp->vlfree = &gvp->gv_vlfree;
+    BU_LIST_INIT(&gvp->gv_objs.gv_vlfree);
 
     // Out of the gate we don't have callbacks
     gvp->callbacks = NULL;
@@ -121,10 +117,10 @@ bv_free(struct bview *gvp)
 	return;
 
     bu_vls_free(&gvp->gv_name);
-    bu_ptbl_free(gvp->gv_view_grps);
-    BU_PUT(gvp->gv_view_grps, struct bu_ptbl);
-    bu_ptbl_free(gvp->gv_view_objs);
-    BU_PUT(gvp->gv_view_objs, struct bu_ptbl);
+    bu_ptbl_free(gvp->gv_objs.view_grps);
+    BU_PUT(gvp->gv_objs.view_grps, struct bu_ptbl);
+    bu_ptbl_free(gvp->gv_objs.view_objs);
+    BU_PUT(gvp->gv_objs.view_objs, struct bu_ptbl);
 
     if (gvp->gv_ls.gv_selected) {
 	bu_ptbl_free(gvp->gv_ls.gv_selected);
@@ -548,14 +544,14 @@ bv_scene_obj_free(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj)
 
     // free vlist
     if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
-	BV_FREE_VLIST(&s->s_v->gv_vlfree, &s->s_vlist);
+	BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
     }
 
     bv_scene_obj_init(s, free_scene_obj);
     FREE_BV_SCENE_OBJ(s, &free_scene_obj->l);
 }
 
-void
+int
 bv_scene_obj_bound(struct bv_scene_obj *sp)
 {
     point_t bmin, bmax;
@@ -563,18 +559,31 @@ bv_scene_obj_bound(struct bv_scene_obj *sp)
     int dispmode;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
-    cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL, &dispmode);
-    if (cmd) {
-	bu_log("unknown vlist op %d\n", cmd);
+    int calc = 0;
+    if (sp->s_type_flags & BV_MESH_LOD) {
+	struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)sp->draw_data;
+	VMOVE(bmin, i->bmin);
+	VMOVE(bmax, i->bmax);
+	calc = 1;
+    } else if (bu_list_len(&sp->s_vlist)) {
+	cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL, &dispmode);
+	if (cmd) {
+	    bu_log("unknown vlist op %d\n", cmd);
+	}
+	calc = 1;
     }
-    sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
-    sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
-    sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
+    if (calc) {
+	sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
+	sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
+	sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
 
-    sp->s_size = bmax[X] - bmin[X];
-    V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
-    V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
-    sp->s_displayobj = dispmode;
+	sp->s_size = bmax[X] - bmin[X];
+	V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
+	V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
+	sp->s_displayobj = dispmode;
+	return 1;
+    }
+    return 0;
 }
 
 fastf_t
@@ -616,6 +625,57 @@ bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
 	vZ = calc_val;
     }
     return vZ;
+}
+
+void
+bv_set_init(struct bview_set *s)
+{
+    BU_PTBL_INIT(&s->views);
+    bu_ptbl_init(&s->shared_db_objs, 8, "db_objs init");
+    bu_ptbl_init(&s->shared_view_objs, 8, "view_objs init");
+    BU_LIST_INIT(&s->vlfree);
+    /* init the solid list */
+    BU_GET(s->free_scene_obj, struct bv_scene_obj);
+    BU_LIST_INIT(&s->free_scene_obj->l);
+}
+void
+bv_set_free(struct bview_set *s)
+{
+       // Note - it is the caller's responsibility to have freed any data
+    // associated with the ged or its views in the u_data pointers.
+    struct bview *gdvp;
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->views); i++) {
+        gdvp = (struct bview *)BU_PTBL_GET(&s->views, i);
+        bu_vls_free(&gdvp->gv_name);
+        if (gdvp->callbacks) {
+            bu_ptbl_free(gdvp->callbacks);
+            BU_PUT(gdvp->callbacks, struct bu_ptbl);
+        }
+        bu_free((void *)gdvp, "bv");
+    }
+    bu_ptbl_free(&s->views);
+
+    bu_ptbl_free(&s->shared_db_objs);
+    bu_ptbl_free(&s->shared_view_objs);
+
+    // TODO - replace free_scene_obj with bu_ptbl
+    struct bv_scene_obj *sp, *nsp;
+    sp = BU_LIST_NEXT(bv_scene_obj, &s->free_scene_obj->l);
+    while (BU_LIST_NOT_HEAD(sp, &s->free_scene_obj->l)) {
+	nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
+	BU_LIST_DEQUEUE(&((sp)->l));
+	FREE_BV_SCENE_OBJ(sp, &s->free_scene_obj->l);
+	sp = nsp;
+    }
+    BU_PUT(s->free_scene_obj, struct bv_scene_obj);
+
+    // TODO - clean up vlfree
+}
+
+void
+bv_set_add(struct bview_set *s, struct bview *v){
+    if (!s || !v)
+	return;
 }
 
 /*
