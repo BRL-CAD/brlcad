@@ -9,30 +9,37 @@ include(CheckCXXCompilerFlag)
 set(CMAKE_REQUIRED_FLAGS -fsanitize=fuzzer)
 check_cxx_compiler_flag(-fsanitize=fuzzer HAVE_FUZZER)
 
+set(FUZZ_GED_SRCS fuzz_ged.cpp)
+
 if (HAVE_FUZZER)
 
-  add_executable(fuzz_test fuzz_ged.cpp)
-  target_link_libraries(fuzz_test PUBLIC libbu librt libged)
-  target_compile_options(fuzz_test PRIVATE -fsanitize=fuzzer)
-  target_link_options(fuzz_test PRIVATE -fsanitize=fuzzer)
-  set_target_properties(fuzz_test PROPERTIES FOLDER "BRL-CAD Regression Tests/fuzz")
+  target_compile_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
+  target_link_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
+  set_target_properties(fuzz_ged_test PROPERTIES FOLDER "BRL-CAD Regression Tests/fuzz")
 
-  configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/fuzz" COPYONLY)
-  install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/fuzz" DESTINATION ${BIN_DIR})
-  configure_file(run.sh ${CMAKE_BINARY_DIR}/bin/fuzz COPYONLY)
+else (HAVE_FUZZER)
 
-  #BRLCAD_ADD_TEST(NAME fuzz COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run)
-
-  add_custom_target(fuzz
-    COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run
-    )
-  set_target_properties(fuzz PROPERTIES FOLDER "BRL-CAD Regression Tests/fuzz")
+  set(FUZZ_GED_SRCS ${FUZZ_GED_SRCS} fuzz_stub.cpp)
 
 endif (HAVE_FUZZER)
+
+
+add_executable(fuzz_ged_test ${FUZZ_GED_SRCS})
+target_link_libraries(fuzz_ged_test PUBLIC libbu librt libged)
+
+
+#BRLCAD_ADD_TEST(NAME fuzz COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run)
+
+#add_custom_target(fuzz
+#  COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/fuzz run
+#  )
+#set_target_properties(fuzz PROPERTIES FOLDER "BRL-CAD Regression Tests/fuzz")
+
 
 CMAKEFILES(
   CMakeLists.txt
   fuzz_ged.cpp
+  fuzz_stub.cpp
   fuzz_test1.cxx
   run.sh
   )
