@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fuzz_ged.cpp
- *
- * Brief description
- *
- */
 
 #include "common.h"
 
@@ -38,12 +33,16 @@ const size_t MAX_ARGS = 5;
 //const std::string OUTPUT = "fuzz_ged.g";
 
 
-static size_t getArgc(uint8_t byte) {
+static size_t
+getArgc(uint8_t byte)
+{
     return (byte % MAX_ARGS) + 1;
 }
 
 
-static const std::string& getCommand(uint8_t byte) {
+static const std::string&
+getCommand(uint8_t byte)
+{
     static const std::vector<std::string> commands = {
 	"help",
 	"in",
@@ -55,7 +54,9 @@ static const std::string& getCommand(uint8_t byte) {
 }
 
 
-static const std::string& getArg(uint8_t byte) {
+static const std::string&
+getArg(uint8_t byte)
+{
     static const std::vector<std::string> args = {
 	"COMMAND",
 
@@ -179,7 +180,9 @@ static const std::string& getArg(uint8_t byte) {
 }
 
 
-static void printCommand(std::vector<const char *> & argv) {
+static void
+printCommand(std::vector<const char *> & argv)
+{
     std::cout << "Running";
     for (size_t j = 0; j < argv.size(); j++)
 	std::cout << " " << argv[j];
@@ -187,8 +190,9 @@ static void printCommand(std::vector<const char *> & argv) {
 }
 
 
-extern "C" int LLVMFuzzerTestOneInput(const int8_t *data, size_t size) {
-
+extern "C" int
+LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
+{
     if (size == 0)
 	return 0;
 
