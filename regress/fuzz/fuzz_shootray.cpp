@@ -22,7 +22,8 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <unistd.h>
+
+#include "bio.h"
 
 #include "bu/app.h"
 #include "bu/file.h"
