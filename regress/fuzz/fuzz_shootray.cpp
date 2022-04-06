@@ -102,11 +102,10 @@ fhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(seg
 	RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
     }
 
-    /* A more complicated application would probably fill in a new
-     * local application structure and describe, for example, a
-     * reflected or refracted ray, and then call rt_shootray() for
-     * those rays.
-     */
+    VPRINT("hit point: ", pt);
+    VPRINT("outnormal: ", onormal);
+    VPRINT("in normal: ", inormal);
+    VPRINT("curvature: ", cur.crv_pdir);
 
     /* Hit routine callbacks generally return 1 on hit or 0 on miss.
      * This value is returned by rt_shootray().
