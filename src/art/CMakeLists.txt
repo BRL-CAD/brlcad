@@ -35,9 +35,6 @@ set(ART_INCLUDE_DIRS
 list(REMOVE_DUPLICATES ART_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ART_INCLUDE_DIRS)
 
-#get_filename_component(Appleseed_LIB_DIR "${Appleseed_LIBRARY}" DIRECTORY)
-#file(GLOB Appleseed_BOOST_SYSTEM_LIBS "${Appleseed_LIB_DIR}/libboost_system-*")
-#file(GLOB Appleseed_OPENIMAGEIO_LIBS "${Appleseed_LIB_DIR}/libOpenImageIO.*")
 
 set(ART_LIBS
   Threads::Threads
@@ -51,8 +48,9 @@ set(ART_LIBS
   ${Boost_LIBRARIES}
   ${M_LIBRARY}
   )
-#  ${Appleseed_BOOST_SYSTEM_LIBS}
-#  ${Appleseed_OPENIMAGEIO_LIBS}
+link_directories(${Boost_LIBRARY_DIR})
+link_directories(${Appleseed_LIBRARY_DIR})
+
 
 set(ART_SRCS
   art.cpp
@@ -62,11 +60,10 @@ set(ART_SRCS
   )
 
 BRLCAD_ADDEXEC(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
-# must copy appleseed.dll and boost libs into same dir as art.exe;
-# allegedly evaluates to empty on non-DLL platforms.
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.21")
-  add_custom_command(TARGET art POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:art> $<TARGET_FILE_DIR:art> COMMAND_EXPAND_LISTS)
-endif(CMAKE_VERSION VERSION_GREATER_EQUAL "3.21")
+
+# copy precompiled appleseed and boost libs to same dir as art.exe
+#file(COPY ${Appleseed_LIBRARIES} DESTINATION ${PROJECT_BINARY_DIR}/bin)
+#file(COPY ${Boost_LIBRARIES} DESTINATION ${PROJECT_BINARY_DIR}/bin)
 
 # Local Variables:
 # tab-width: 8
