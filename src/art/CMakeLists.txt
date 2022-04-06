@@ -62,9 +62,9 @@ set(ART_SRCS
 BRLCAD_ADDEXEC(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
 
 # copy precompiled appleseed.dll into same dir as art.exe
-if (MSVC)
+if (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
   add_custom_command(TARGET art POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${Appleseed_LIBRARY}" $<TARGET_FILE_DIR:art>)
-endif (MSVC)
+endif (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
 
 
 # Local Variables:
