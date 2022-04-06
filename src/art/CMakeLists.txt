@@ -61,8 +61,6 @@ set(ART_SRCS
 
 BRLCAD_ADDEXEC(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
 
-message("appleseed library is ${Appleseed_LIBRARY}")
-
 # copy precompiled appleseed.dll into same dir as art.exe
 if (MSVC)
   add_custom_command(TARGET art POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${Appleseed_LIBRARY}" $<TARGET_FILE_DIR:art>)
