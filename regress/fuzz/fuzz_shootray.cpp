@@ -22,9 +22,11 @@
 
 #include <stdint.h>
 #include <stddef.h>
-
-#include "raytrace.h"
 #include <unistd.h>
+
+#include "bu/app.h"
+#include "bu/file.h"
+#include "raytrace.h"
 
 
 static int
@@ -127,27 +129,21 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
     if(size == 0){}
     struct application ap;
     static struct rt_i *rtip = NULL;
-    struct resource res = RT_RESOURCE_INIT_ZERO;
+//    struct resource res = RT_RESOURCE_INIT_ZERO;
     char title[1024] = {0};
-    char cwd[PATH_MAX];
-   if (getcwd(cwd, sizeof(cwd)) != NULL) {
-       printf("Current working dir: %s\n", cwd);
-   } else {
-       perror("getcwd() error");
-       return 1;
-   }
-    const char *file = "../../share/db/moss.g";
+
+    const char *file = bu_dir(NULL, 0, BU_DIR_DATA, "..", "..", "share", "db", "moss.g", NULL);
     const char *objs = "all.g";
 
-    rt_init_resource(&res, 1, rtip);
+    if (!bu_file_exists(file, NULL))
+	return 1;
 
     rtip = rt_dirbuild(file, title, sizeof(title));
     if (rtip == RTI_NULL) {
 	bu_exit(2, "Building the database directory for [%s] FAILED\n", file);
     }
-    rt_clean(rtip);
 
-    return 0;
+   rt_init_resource(&rt_uniresource, 0, rtip);
 
     if (title[0]) {
 	bu_log("Title:\n%s\n", title);
@@ -157,7 +153,7 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
 
     rt_prep_parallel(rtip, 1);
     RT_APPLICATION_INIT(&ap);
-    ap.a_resource = &res;
+    ap.a_resource = &rt_uniresource;
     ap.a_rt_i = rtip;
     ap.a_onehit = 0;
     ap.a_hit = fhit;
@@ -168,8 +164,8 @@ LLVMFuzzerTestOneInput(const int8_t *data, size_t size)
 
     rt_shootray(&ap);
 
-    rt_clean_resource_complete(rtip, &res);
     rt_clean(rtip);
+    rt_clean_resource_complete(rtip, &rt_uniresource);
 
     return 0;
 }
