@@ -924,6 +924,9 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
     if (rtip) {
 	RT_CK_RTI(rtip);
     }
+    if (resp->re_magic != RESOURCE_MAGIC)
+	return;
+
     RT_CK_RESOURCE(resp);
 
     /* The 'struct seg' guys are malloc()ed in blocks, not
@@ -1010,8 +1013,9 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
     /* Release the state variables for 'solid pieces' */
     rt_res_pieces_clean(resp, rtip);
 
-    resp->re_magic = 0;
-
+    /* invalidate the resource */
+    if (resp != &rt_uniresource)
+	resp->re_magic = 0;
 }
 
 
@@ -1026,8 +1030,6 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 void
 rt_clean_resource_complete(struct rt_i *rtip, struct resource *resp)
 {
-    rt_clean_resource_basic(rtip, resp);
-
     if (BU_LIST_IS_INITIALIZED(&resp->re_directory_blocks.l)) {
 	struct directory **dpp;
 	BU_CK_PTBL(&resp->re_directory_blocks);
@@ -1039,6 +1041,9 @@ rt_clean_resource_complete(struct rt_i *rtip, struct resource *resp)
 	resp->re_directory_blocks.l.forw = BU_LIST_NULL;
 	resp->re_directory_hd = NULL;
     }
+
+    /* invalidates the resource */
+    rt_clean_resource_basic(rtip, resp);
 }
 
 
@@ -1144,7 +1149,7 @@ rt_clean(register struct rt_i *rtip)
     while (BU_LIST_WHILE(regp, region, &rtip->HeadRegion)) {
 	RT_CK_REGION(regp);
 	BU_LIST_DEQUEUE(&(regp->l));
-	db_free_tree(regp->reg_treetop, &rt_uniresource);
+	db_free_tree(regp->reg_treetop, NULL);
 	bu_free((void *)regp->reg_name, "region name str");
 	regp->reg_name = (char *)0;
 	if (regp->reg_mater.ma_shader) {
@@ -1218,7 +1223,7 @@ rt_clean(register struct rt_i *rtip)
 	     */
 	    if (*rpp == NULL)
 		continue;
-	    RT_CK_RESOURCE(*rpp);
+
 	    /* Clean but do not free the resource struct */
 	    rt_clean_resource(rtip, *rpp);
 #if 0
