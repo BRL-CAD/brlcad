@@ -37,7 +37,8 @@
 void
 bv_set_init(struct bview_set *s)
 {
-    BU_PTBL_INIT(&s->views);
+    BU_GET(s->i, struct bview_set_internal);
+    BU_PTBL_INIT(&s->i->views);
     bu_ptbl_init(&s->shared_db_objs, 8, "db_objs init");
     bu_ptbl_init(&s->shared_view_objs, 8, "view_objs init");
     BU_LIST_INIT(&s->vlfree);
@@ -53,19 +54,21 @@ bv_set_init(struct bview_set *s)
 void
 bv_set_free(struct bview_set *s)
 {
-    // Note - it is the caller's responsibility to have freed any data
-    // associated with the ged or its views in the u_data pointers.
-    struct bview *gdvp;
-    for (size_t i = 0; i < BU_PTBL_LEN(&s->views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&s->views, i);
-	bu_vls_free(&gdvp->gv_name);
-	if (gdvp->callbacks) {
-	    bu_ptbl_free(gdvp->callbacks);
-	    BU_PUT(gdvp->callbacks, struct bu_ptbl);
+    if (s->i) {
+	// Note - it is the caller's responsibility to have freed any data
+	// associated with the ged or its i->views in the u_data pointers.
+	struct bview *gdvp;
+	for (size_t i = 0; i < BU_PTBL_LEN(&s->i->views); i++) {
+	    gdvp = (struct bview *)BU_PTBL_GET(&s->i->views, i);
+	    bu_vls_free(&gdvp->gv_name);
+	    if (gdvp->callbacks) {
+		bu_ptbl_free(gdvp->callbacks);
+		BU_PUT(gdvp->callbacks, struct bu_ptbl);
+	    }
+	    bu_free((void *)gdvp, "bv");
 	}
-	bu_free((void *)gdvp, "bv");
+	bu_ptbl_free(&s->i->views);
     }
-    bu_ptbl_free(&s->views);
 
     bu_ptbl_free(&s->shared_db_objs);
     bu_ptbl_free(&s->shared_view_objs);
@@ -108,6 +111,34 @@ bv_set_views(struct bview_set *s){
 
     return &s->i->views;
 }
+
+struct bu_ptbl *
+bv_set_view_db_objs(struct bview *v)
+{
+    return &v->vset->i->shared_db_objs;
+}
+
+struct bu_ptbl *
+bv_set_view_objs(struct bview *v)
+{
+    return &v->vset->i->shared_view_objs;
+}
+
+struct bview *
+bv_set_find_view(struct bview_set *s, const char *vname)
+{
+    struct bview *v = NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->i->views); i++) {
+	struct bview *tv = (struct bview *)BU_PTBL_GET(&s->i->views, i);
+	if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), vname)) {
+	    v = tv;
+	    break;
+	}
+    }
+
+    return v;
+}
+
 
 /*
  * Local Variables:

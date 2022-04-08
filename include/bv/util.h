@@ -111,6 +111,28 @@ BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s);
  * the vlist points in s in the context of view v */
 BV_EXPORT extern fastf_t bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode);
 
+
+// Return number of objects defined in any object container
+// known to this view (0 if completely cleared).
+BV_EXPORT size_t
+bv_clear(struct bview *v, int flags);
+
+// Given a view, create an object of the specified type.  Issues such as memory
+// management as a function of view settings are handled internally, so client
+// codes don't need to manage it.
+BV_EXPORT struct bv_scene_obj *
+bv_obj_get(struct bview *v, int type);
+
+// Given an object, create an object that is a child of that object.  Issues
+// such as memory management as a function of view settings are handled
+// internally, so client codes don't need to manage it.
+BV_EXPORT struct bv_scene_obj *
+bv_obj_get_child(struct bv_scene_obj *s);
+
+// Release an object to the internal pools.
+BV_EXPORT void
+bv_obj_put(struct bv_scene_obj *o);
+
 __END_DECLS
 
 /** @} */

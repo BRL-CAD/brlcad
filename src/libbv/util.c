@@ -28,12 +28,14 @@
 #include "vmath.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/path.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bn/mat.h"
 #include "bv/defines.h"
 #include "bv/vlist.h"
 #include "bv/util.h"
+#include "bv/view_sets.h"
 #include "./bv_private.h"
 
 void
@@ -144,9 +146,9 @@ bv_mat_aet(struct bview *v)
     fastf_t s_twist;
 
     bn_mat_angles(v->gv_rotation,
-	    270.0 + v->gv_aet[1],
-	    0.0,
-	    270.0 - v->gv_aet[0]);
+                  270.0 + v->gv_aet[1],
+                  0.0,
+                  270.0 - v->gv_aet[0]);
 
     twist = -v->gv_aet[2] * DEG2RAD;
     c_twist = cos(twist);
@@ -279,11 +281,11 @@ bv_update(struct bview *gvp)
     vect_t temp, temp1;
 
     if (!gvp)
-	return;
+        return;
 
     bn_mat_mul(gvp->gv_model2view,
-	    gvp->gv_rotation,
-	    gvp->gv_center);
+               gvp->gv_rotation,
+               gvp->gv_center);
     gvp->gv_model2view[15] = gvp->gv_scale;
     bn_mat_inv(gvp->gv_view2model, gvp->gv_model2view);
 
@@ -296,18 +298,18 @@ bv_update(struct bview *gvp)
     /* calculate angles using accuracy of 0.005, since display
      * shows 2 digits right of decimal point */
     bn_aet_vec(&gvp->gv_aet[0],
-	    &gvp->gv_aet[1],
-	    &gvp->gv_aet[2],
-	    temp, temp1, (fastf_t)0.005);
+               &gvp->gv_aet[1],
+               &gvp->gv_aet[2],
+               temp, temp1, (fastf_t)0.005);
 
     /* Force azimuth range to be [0, 360] */
     if ((NEAR_EQUAL(gvp->gv_aet[1], 90.0, (fastf_t)0.005) ||
-		NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
-	    gvp->gv_aet[0] < 0 &&
-	    !NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-	gvp->gv_aet[0] += 360.0;
+         NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
+        gvp->gv_aet[0] < 0 &&
+        !NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
+        gvp->gv_aet[0] += 360.0;
     else if (NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-	gvp->gv_aet[0] = 0.0;
+        gvp->gv_aet[0] = 0.0;
 
     /* apply the perspective angle to model2view */
     bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
@@ -487,18 +489,138 @@ bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t 
     return 0;
 }
 
-void
-bv_scene_obj_init(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj)
+size_t
+bv_clear(struct bview *v, int flags)
 {
+    struct bu_ptbl *sg = NULL;
+    struct bu_ptbl *sv = NULL;
+    if (!flags || flags & BV_DB_OBJS) {
+	sg = v->gv_objs.db_objs;
+	if (sg) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+		bv_obj_put(cg);
+	    }
+	    bu_ptbl_reset(sg);
+	}
+	if ((!flags && !v->independent) || flags & BV_SHARED_OBJS) {
+	    sg = bv_set_view_db_objs(v);
+	    if (sg) {
+		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+		    bv_obj_put(cg);
+		}
+		bu_ptbl_reset(sg);
+	    }
+	}
+    }
+    if (!flags || flags & BV_VIEW_OBJS) {
+	sv = v->gv_objs.view_objs;
+	if (sv) {
+	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
+		bv_obj_put(s);
+	    }
+	}
+	if ((!flags && !v->independent) || flags & BV_SHARED_OBJS) {
+	    sv = bv_set_view_objs(v);
+	    if (sv) {
+		for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
+		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
+		    bv_obj_put(s);
+		}
+		bu_ptbl_reset(sv);
+	    }
+	}
+    }
+
+   size_t ocnt = BU_PTBL_LEN(v->gv_objs.db_objs) + BU_PTBL_LEN(v->gv_objs.view_objs);
+   if (!v->independent) {
+       sg = bv_set_view_db_objs(v);
+       if (sg)
+	   ocnt += BU_PTBL_LEN(sg);
+       sv = bv_set_view_objs(v);
+       if (sv)
+	   ocnt += BU_PTBL_LEN(sv);
+   }
+   return ocnt ;
+
+}
+
+struct bv_scene_obj *
+bv_obj_get(struct bview *v, int type)
+{
+    if (!v)
+	return NULL;
+
+    struct bv_scene_obj *s = NULL;
+    struct bu_ptbl *otbl = NULL;
+
+    // What we get and from where is based on the requested obj type and the
+    // view type.  If the caller is not asking for a local object, we will try
+    // to get a shared object.  If the view has no associated set then the only
+    // available storage is the local storage, and that will be used instead.
+    // If a local object is requested, then the local storage is used
+    // regardless of whether or not a shared repository is available.
+    struct bv_scene_obj *free_scene_obj = NULL;
+    struct bu_list *vlfree = NULL;
+    if (type == BV_SCENE_OBJ_DB || type == BV_SCENE_OBJ_VIEW)  {
+	if (v->vset) {
+	    free_scene_obj = v->vset->i->free_scene_obj;
+	    if (type == BV_SCENE_OBJ_DB) {
+		otbl = &v->vset->i->shared_db_objs;
+	    } else {
+		otbl = &v->vset->i->shared_view_objs;
+	    }
+	    vlfree = &v->vset->vlfree;
+	} else {
+	    free_scene_obj = v->gv_objs.free_scene_obj;
+	    if (type == BV_SCENE_OBJ_DB) {
+		otbl = v->gv_objs.db_objs;
+	    } else {
+		otbl = v->gv_objs.view_objs;
+	    }
+	    vlfree = &v->gv_objs.gv_vlfree;
+	}
+    }
+    if (type == BV_SCENE_OBJ_DB_LOCAL || type == BV_SCENE_OBJ_VIEW_LOCAL)  {
+	free_scene_obj = v->gv_objs.free_scene_obj;
+	if (type == BV_SCENE_OBJ_DB_LOCAL) {
+	    otbl = v->gv_objs.db_objs;
+	} else {
+	    otbl = v->gv_objs.view_objs;
+	}
+    }
+    if (!free_scene_obj)
+	return NULL;
+
+    // We know where we're going to get the object from - get it
+    if (BU_LIST_IS_EMPTY(&free_scene_obj->l)) {
+	BU_ALLOC((s), struct bv_scene_obj);
+    } else {
+	s = BU_LIST_NEXT(bv_scene_obj, &free_scene_obj->l);
+	BU_LIST_DEQUEUE(&((s)->l));
+    }
+    BU_LIST_INIT( &((s)->s_vlist) );
+
+    // Do the initializations
     s->s_type_flags = 0;
     BU_LIST_INIT(&(s->s_vlist));
     BU_VLS_INIT(&s->s_name);
     bu_vls_trunc(&s->s_name, 0);
     BU_VLS_INIT(&s->s_uuid);
+    if (type == BV_SCENE_OBJ_DB && v->vset)
+	bu_vls_sprintf(&s->s_uuid, "s:%zd", BU_PTBL_LEN(otbl));
+    if (type == BV_SCENE_OBJ_DB_LOCAL)
+	bu_vls_sprintf(&s->s_uuid, "sl:%zd", BU_PTBL_LEN(otbl));
+    if (type == BV_SCENE_OBJ_VIEW && v->vset)
+	bu_vls_sprintf(&s->s_uuid, "v:%zd", BU_PTBL_LEN(otbl));
+    if (type == BV_SCENE_OBJ_VIEW_LOCAL)
+	bu_vls_sprintf(&s->s_uuid, "vl:%zd", BU_PTBL_LEN(otbl));
     bu_vls_trunc(&s->s_uuid, 0);
     MAT_IDN(s->s_mat);
 
-    s->s_v = NULL;
+    s->s_v = v;
 
     s->s_i_data = NULL;
     s->s_update_callback = NULL;
@@ -522,19 +644,82 @@ bv_scene_obj_init(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj)
     bu_ptbl_reset(&s->children);
 
     s->free_scene_obj = free_scene_obj;
+    s->vlfree = vlfree;
+    s->otbl = otbl;
+
+    bu_ptbl_ins(otbl, (long *)s);
+
+    return s;
 }
 
-#define FREE_BV_SCENE_OBJ(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); }
+struct bv_scene_obj *
+bv_obj_get_child(struct bv_scene_obj *sp)
+{
+    if (!sp)
+	return NULL;
+
+    struct bv_scene_obj *s = NULL;
+
+    // Children use their parent's info
+    if (BU_LIST_IS_EMPTY(&sp->free_scene_obj->l)) {
+	BU_ALLOC((s), struct bv_scene_obj);
+    } else {
+	s = BU_LIST_NEXT(bv_scene_obj, &sp->free_scene_obj->l);
+	BU_LIST_DEQUEUE(&((s)->l));
+    }
+    BU_LIST_INIT( &((s)->s_vlist) );
+
+    // Do the initializations
+    s->s_type_flags = 0;
+    BU_LIST_INIT(&(s->s_vlist));
+    if (!BU_VLS_IS_INITIALIZED(&s->s_name))
+	BU_VLS_INIT(&s->s_name);
+    bu_vls_trunc(&s->s_name, 0);
+    if (!BU_VLS_IS_INITIALIZED(&s->s_uuid))
+	BU_VLS_INIT(&s->s_uuid);
+    bu_vls_sprintf(&s->s_uuid, "child:%s:%zd", bu_vls_cstr(&sp->s_uuid), BU_PTBL_LEN(&sp->children));
+    MAT_IDN(s->s_mat);
+
+    s->s_v = sp->s_v;
+
+    s->s_i_data = NULL;
+    s->s_update_callback = NULL;
+    s->s_free_callback = NULL;
+
+    s->adaptive_wireframe = 0;
+    s->view_scale = 0.0;
+
+    s->s_flag = UP;
+    s->s_iflag = DOWN;
+    VSET(s->s_color, 255, 0, 0);
+    s->s_soldash = 0;
+    s->s_arrow = 0;
+
+    struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
+    bv_obj_settings_sync(&s->s_os, &defaults);
+
+    if (!BU_PTBL_IS_INITIALIZED(&s->children)) {
+	BU_PTBL_INIT(&s->children);
+    }
+    bu_ptbl_reset(&s->children);
+
+    s->free_scene_obj = sp->free_scene_obj;
+    s->vlfree = sp->vlfree;
+    s->otbl = &sp->children;
+
+    bu_ptbl_ins(&sp->children, (long *)s);
+
+    return s;
+}
 
 void
-bv_scene_obj_free(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj)
+bv_obj_reset(struct bv_scene_obj *s)
 {
     // handle children
     if (BU_PTBL_IS_INITIALIZED(&s->children)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	    bv_scene_obj_free(s_c, free_scene_obj);
+	    bv_obj_put(s_c);
 	}
 	bu_ptbl_reset(&s->children);
     }
@@ -545,11 +730,105 @@ bv_scene_obj_free(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj)
 
     // free vlist
     if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
-	BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
+	BV_FREE_VLIST(s->vlfree, &s->s_vlist);
+    }
+    BU_LIST_INIT(&(s->s_vlist));
+}
+
+#define FREE_BV_SCENE_OBJ(p, fp) { \
+    BU_LIST_APPEND(fp, &((p)->l)); }
+
+void
+bv_obj_put(struct bv_scene_obj *s)
+{
+    bv_obj_reset(s);
+
+    // Clear names
+    bu_vls_trunc(&s->s_uuid, 0);
+    bu_vls_trunc(&s->s_name, 0);
+
+    bu_ptbl_rm(s->otbl, (long *)s);
+
+    FREE_BV_SCENE_OBJ(s, &s->free_scene_obj->l);
+}
+
+struct bv_scene_obj *
+bv_find_obj(struct bview *v, const char *name)
+{
+    if (!v || !name)
+	return NULL;
+
+    // First look for matches in shared sets, if any are defined
+    if (!v->independent && v->vset) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_db_objs); i++) {
+	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_db_objs, i);
+	    if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
+		return s_c;
+	}
+	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_view_objs); i++) {
+	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_view_objs, i);
+	    if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
+		return s_c;
+	}
     }
 
-    bv_scene_obj_init(s, free_scene_obj);
-    FREE_BV_SCENE_OBJ(s, &free_scene_obj->l);
+    // Next look locally
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_objs); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.db_objs, i);
+	if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
+	    return s_c;
+    }
+
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
+	if (!bu_path_match(name, bu_vls_cstr(&s_c->s_name), 0))
+	    return s_c;
+    }
+
+    // If none of the names matched, check uuids
+    if (!v->independent && v->vset) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_db_objs); i++) {
+	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_db_objs, i);
+	    if (!bu_path_match(name, bu_vls_cstr(&s_c->s_uuid), 0))
+		return s_c;
+	}
+	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_view_objs); i++) {
+	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_view_objs, i);
+	    if (!bu_path_match(name, bu_vls_cstr(&s_c->s_uuid), 0))
+		return s_c;
+	}
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_objs); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.db_objs, i);
+	if (!bu_path_match(name, bu_vls_cstr(&s_c->s_uuid), 0))
+	    return s_c;
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
+	if (!bu_path_match(name, bu_vls_cstr(&s_c->s_uuid), 0))
+	    return s_c;
+    }
+
+    return NULL;
+}
+
+struct bv_scene_obj *
+bv_find_child(struct bv_scene_obj *s, const char *vname)
+{
+    if (!s || !vname || !BU_PTBL_IS_INITIALIZED(&s->children))
+	return NULL;
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	if (!bu_path_match(vname, bu_vls_cstr(&s_c->s_name), 0))
+	    return s_c;
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	if (!bu_path_match(vname, bu_vls_cstr(&s_c->s_uuid), 0))
+	    return s_c;
+    }
+
+    return NULL;
 }
 
 int
@@ -627,6 +906,76 @@ bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
     }
     return vZ;
 }
+
+struct bv_scene_obj *
+bv_set_fsos(struct bview_set *s)
+{
+    return s->i->free_scene_obj;
+}
+
+void
+bv_scene_obj_init(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj)
+{
+    s->s_type_flags = 0;
+    BU_LIST_INIT(&(s->s_vlist));
+    BU_VLS_INIT(&s->s_name);
+    bu_vls_trunc(&s->s_name, 0);
+    BU_VLS_INIT(&s->s_uuid);
+    bu_vls_trunc(&s->s_uuid, 0);
+    MAT_IDN(s->s_mat);
+
+    s->s_v = NULL;
+
+    s->s_i_data = NULL;
+    s->s_update_callback = NULL;
+    s->s_free_callback = NULL;
+
+    s->adaptive_wireframe = 0;
+    s->view_scale = 0.0;
+
+    s->s_flag = UP;
+    s->s_iflag = DOWN;
+    VSET(s->s_color, 255, 0, 0);
+    s->s_soldash = 0;
+    s->s_arrow = 0;
+
+    struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
+    bv_obj_settings_sync(&s->s_os, &defaults);
+
+    if (!BU_PTBL_IS_INITIALIZED(&s->children)) {
+	BU_PTBL_INIT(&s->children);
+    }
+    bu_ptbl_reset(&s->children);
+
+    s->free_scene_obj = free_scene_obj;
+}
+
+void
+bv_scene_obj_free(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj)
+{
+    // handle children
+    if (BU_PTBL_IS_INITIALIZED(&s->children)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	    bv_scene_obj_free(s_c, free_scene_obj);
+	}
+	bu_ptbl_reset(&s->children);
+    }
+
+    // If we have a callback for the internal data, use it
+    if (s->s_free_callback)
+	(*s->s_free_callback)(s);
+
+    // free vlist
+    if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
+	BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
+    }
+
+    bv_scene_obj_init(s, free_scene_obj);
+    FREE_BV_SCENE_OBJ(s, &free_scene_obj->l);
+}
+
+
 
 /*
  * Local Variables:
