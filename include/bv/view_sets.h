@@ -55,6 +55,11 @@ bv_set_view_objs(struct bview *v);
 BV_EXPORT struct bview *
 bv_set_find_view(struct bview_set *s, const char *vname);
 
+// Expose free_scene_obj for older codes
+BV_EXPORT struct bv_scene_obj *
+bv_set_fsos(struct bview_set *s);
+
+
 __END_DECLS
 
 /** @} */

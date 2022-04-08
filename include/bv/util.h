@@ -97,12 +97,6 @@ BV_EXPORT extern int bv_adjust(struct bview *v, int dx, int dy, point_t keypoint
  * calculation is impossible), else 0. */
 BV_EXPORT extern int bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
 
-/* Initialize a scene object to standard default settings */
-BV_EXPORT extern void bv_scene_obj_init(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj);
-
-/* Free the object contents, including all child objects */
-BV_EXPORT extern void bv_scene_obj_free(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj);
-
 /* Compute the min, max, and center points of the scene object.
  * Return 1 if a bound was computed, else 0 */
 BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s);
@@ -132,6 +126,17 @@ bv_obj_get_child(struct bv_scene_obj *s);
 // Release an object to the internal pools.
 BV_EXPORT void
 bv_obj_put(struct bv_scene_obj *o);
+
+
+BV_EXPORT struct bv_scene_obj *
+bv_find_obj(struct bview *v, const char *vname);
+
+BV_EXPORT struct bv_scene_obj *
+bv_find_child(struct bv_scene_obj *s, const char *vname);
+
+BV_EXPORT void
+bv_obj_reset(struct bv_scene_obj *s);
+
 
 __END_DECLS
 

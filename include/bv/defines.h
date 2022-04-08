@@ -548,12 +548,8 @@ struct bview {
 struct bview_set_internal;
 struct bview_set {
     struct bview_set_internal   *i;
-    struct bu_ptbl              views;
-    struct bu_ptbl		shared_db_objs;
-    struct bu_ptbl		shared_view_objs;
     struct bview_settings       settings;
 
-    struct bv_scene_obj         *free_scene_obj;
     struct bu_list              vlfree;
 };
 

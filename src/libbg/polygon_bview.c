@@ -38,18 +38,6 @@
 #include "bg/plane.h"
 #include "bg/polygon.h"
 
-#define GET_BV_SCENE_OBJ(p, fp) { \
-    if (BU_LIST_IS_EMPTY(fp)) { \
-	BU_ALLOC((p), struct bv_scene_obj); \
-    } else { \
-	p = BU_LIST_NEXT(bv_scene_obj, fp); \
-	BU_LIST_DEQUEUE(&((p)->l)); \
-    } \
-    BU_LIST_INIT( &((p)->s_vlist) ); }
-
-#define FREE_BV_SCENE_OBJ(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); }
-
 void
 bv_polygon_contour(struct bv_scene_obj *s, struct bg_poly_contour *c, int curr_c, int curr_i, int do_pnt)
 {
@@ -84,15 +72,9 @@ bv_fill_polygon(struct bv_scene_obj *s)
 	return;
 
     // free old fill, if present
-    struct bv_scene_obj *fobj = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
-	    fobj = s_c;
-	    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s_c->s_vlist);
-	    break;
-	}
-    }
+    struct bv_scene_obj *fobj = bv_find_child(s, "*fill*");
+    if (fobj)
+	bv_obj_put(fobj);
 
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
@@ -108,17 +90,10 @@ bv_fill_polygon(struct bv_scene_obj *s)
 	return;
 
     // Got fill, create lines
-    if (!fobj) {
-	GET_BV_SCENE_OBJ(fobj, &s->free_scene_obj->l);
-	fobj->free_scene_obj = s->free_scene_obj;
-	BU_LIST_INIT(&(fobj->s_vlist));
-	bu_vls_init(&fobj->s_uuid);
-	bu_vls_sprintf(&fobj->s_uuid, "fill");
-	fobj->s_os.s_line_width = 1;
-	fobj->s_soldash = 0;
-	fobj->s_v = s->s_v;
-	bu_ptbl_ins(&s->children, (long *)fobj);
-    }
+    fobj = bv_obj_get_child(s);
+    bu_vls_printf(&fobj->s_uuid, ":fill");
+    fobj->s_os.s_line_width = 1;
+    fobj->s_soldash = 0;
     bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
     for (size_t i = 0; i < fill->num_contours; i++) {
 	bv_polygon_contour(fobj, &fill->contour[i], 0, -1, 0);
@@ -131,19 +106,11 @@ bv_polygon_vlist(struct bv_scene_obj *s)
     if (!s)
 	return;
 
-    // free old s->s_vlist
-    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
-    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s_c->s_vlist);
-	// TODO - free bv_scene_obj itself (ptbls, etc.)
-    }
-
+    // Reset obj drawing data
+    bv_obj_reset(s);
 
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     int type = p->type;
-
-    BU_LIST_INIT(&(s->s_vlist));
 
     for (size_t i = 0; i < p->polygon.num_contours; ++i) {
 	/* Draw holes using segmented lines.  Since vlists don't have a style
@@ -168,11 +135,7 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 	}
 
 	if (p->polygon.hole[i]) {
-	    struct bv_scene_obj *s_c;
-	    GET_BV_SCENE_OBJ(s_c, &s->free_scene_obj->l);
-	    s_c->free_scene_obj = s->free_scene_obj;
-	    BU_LIST_INIT(&(s_c->s_vlist));
-	    BU_VLS_INIT(&(s_c->s_uuid));
+	    struct bv_scene_obj *s_c = bv_obj_get_child(s);
 	    s_c->s_soldash = 1;
 	    s_c->s_color[0] = s->s_color[0];
 	    s_c->s_color[1] = s->s_color[1];
@@ -193,16 +156,10 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 }
 
 struct bv_scene_obj *
-bv_create_polygon(struct bview *v, int type, int x, int y, struct bv_scene_obj *free_scene_obj)
+bv_create_polygon(struct bview *v, int type, int x, int y)
 {
-    struct bv_scene_obj *s;
-    GET_BV_SCENE_OBJ(s, &free_scene_obj->l);
-    s->free_scene_obj = free_scene_obj;
-    s->s_v = v;
-    s->s_type_flags |= BV_VIEWONLY;
+    struct bv_scene_obj *s = bv_obj_get(v, BV_SCENE_OBJ_VIEW);
     s->s_type_flags |= BV_POLYGONS;
-    BU_LIST_INIT(&(s->s_vlist));
-    BU_PTBL_INIT(&s->children);
 
     struct bv_polygon *p;
     BU_GET(p, struct bv_polygon);
@@ -895,7 +852,7 @@ bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
     // TODO - fix this...
     // ip->v.gv_objs.vlfree = &s->s_v->vset->vlfree;
 
-    struct bv_scene_obj *np = bv_create_polygon(&ip->v, ip->type, ip->v.gv_prevMouseX, ip->v.gv_prevMouseY, s->free_scene_obj);
+    struct bv_scene_obj *np = bv_create_polygon(&ip->v, ip->type, ip->v.gv_prevMouseX, ip->v.gv_prevMouseY);
 
     // Internal "creation" view is defined - now set the working view that s is
     // using for normal operations.

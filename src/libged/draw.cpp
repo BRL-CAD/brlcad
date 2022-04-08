@@ -547,7 +547,6 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 {
     struct directory *dp;
     struct draw_data_t *dd= (struct draw_data_t *)client_data;
-    struct bv_scene_obj *free_scene_obj = dd->free_scene_obj;
     RT_CK_FULL_PATH(path);
     RT_CK_DBI(dd->dbip);
 
@@ -588,13 +587,9 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// find it) we create it instead.
 
 	// Have database object, make scene object
-	struct bv_scene_obj *s;
-	GET_BV_SCENE_OBJ(s, &free_scene_obj->l);
-	bv_scene_obj_init(s, free_scene_obj);
+	struct bv_scene_obj *s = bv_obj_get(dd->v, BV_SCENE_OBJ_DB);
 	db_path_to_vls(&s->s_name, path);
 	db_path_to_vls(&s->s_uuid, path);
-	// TODO - append hash of matrix and op to uuid to make it properly unique...
-	s->s_v = dd->v;
 	MAT_COPY(s->s_mat, *curr_mat);
 	bv_obj_settings_sync(&s->s_os, &dd->g->s_os);
 	s->s_type_flags = BV_DBOBJ_BASED;

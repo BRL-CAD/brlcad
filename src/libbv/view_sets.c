@@ -39,12 +39,12 @@ bv_set_init(struct bview_set *s)
 {
     BU_GET(s->i, struct bview_set_internal);
     BU_PTBL_INIT(&s->i->views);
-    bu_ptbl_init(&s->shared_db_objs, 8, "db_objs init");
-    bu_ptbl_init(&s->shared_view_objs, 8, "view_objs init");
+    bu_ptbl_init(&s->i->shared_db_objs, 8, "db_objs init");
+    bu_ptbl_init(&s->i->shared_view_objs, 8, "view_objs init");
     BU_LIST_INIT(&s->vlfree);
     /* init the solid list */
-    BU_GET(s->free_scene_obj, struct bv_scene_obj);
-    BU_LIST_INIT(&s->free_scene_obj->l);
+    BU_GET(s->i->free_scene_obj, struct bv_scene_obj);
+    BU_LIST_INIT(&s->i->free_scene_obj->l);
 }
 
 
@@ -68,21 +68,21 @@ bv_set_free(struct bview_set *s)
 	    bu_free((void *)gdvp, "bv");
 	}
 	bu_ptbl_free(&s->i->views);
-    }
 
-    bu_ptbl_free(&s->shared_db_objs);
-    bu_ptbl_free(&s->shared_view_objs);
+	bu_ptbl_free(&s->i->shared_db_objs);
+	bu_ptbl_free(&s->i->shared_view_objs);
 
-    // TODO - replace free_scene_obj with bu_ptbl
-    struct bv_scene_obj *sp, *nsp;
-    sp = BU_LIST_NEXT(bv_scene_obj, &s->free_scene_obj->l);
-    while (BU_LIST_NOT_HEAD(sp, &s->free_scene_obj->l)) {
-	nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
-	BU_LIST_DEQUEUE(&((sp)->l));
-	FREE_BV_SCENE_OBJ(sp, &s->free_scene_obj->l);
-	sp = nsp;
+	// TODO - replace free_scene_obj with bu_ptbl
+	struct bv_scene_obj *sp, *nsp;
+	sp = BU_LIST_NEXT(bv_scene_obj, &s->i->free_scene_obj->l);
+	while (BU_LIST_NOT_HEAD(sp, &s->i->free_scene_obj->l)) {
+	    nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
+	    BU_LIST_DEQUEUE(&((sp)->l));
+	    FREE_BV_SCENE_OBJ(sp, &s->i->free_scene_obj->l);
+	    sp = nsp;
+	}
+	BU_PUT(s->i->free_scene_obj, struct bv_scene_obj);
     }
-    BU_PUT(s->free_scene_obj, struct bv_scene_obj);
 
     // TODO - clean up vlfree
 }
@@ -139,6 +139,11 @@ bv_set_find_view(struct bview_set *s, const char *vname)
     return v;
 }
 
+struct bv_scene_obj *
+bv_set_fsos(struct bview_set *s)
+{
+    return s->i->free_scene_obj;
+}
 
 /*
  * Local Variables:

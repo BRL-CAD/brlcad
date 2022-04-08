@@ -88,16 +88,8 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (bu_vls_strlen(&cvls)) {
-	int found_match = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
-	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
-	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
-		v = tv;
-		found_match = 1;
-		break;
-	    }
-	}
-	if (!found_match) {
+	v = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+	if (!v) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
@@ -134,7 +126,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     if (v->gv_s->adaptive_plot || v->independent) {
 	so = v->gv_objs.db_objs;
     } else {
-	so = &v->vset->shared_db_objs;
+	so = bv_set_view_db_objs(v);
     }
     vect_t minus, plus;
     int have_geom_objs = 0;
@@ -190,7 +182,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     if (v->independent) {
 	so = v->gv_objs.view_objs;
     } else {
-	so = &v->vset->shared_view_objs;
+	so = bv_set_view_objs(v);
     }
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);

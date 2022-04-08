@@ -61,8 +61,9 @@ to_autoview_func(struct ged *gedp,
     if (!rflag && ret == BRLCAD_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
 
-    for (i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views.views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views.views, i);
+    struct bu_ptbl *views = bv_set_views(&current_top->to_gedp->ged_views);
+    for (i = 0; i < BU_PTBL_LEN(views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(views, i);
 	if (to_is_viewable(gdvp)) {
 	    gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
 	    gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
@@ -264,7 +265,7 @@ to_view_func_common(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gdvp = ged_find_view(gedp, argv[1]);
+    gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return BRLCAD_ERROR;
@@ -382,7 +383,7 @@ to_dm_func(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gdvp = ged_find_view(gedp, argv[1]);
+    gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return BRLCAD_ERROR;
