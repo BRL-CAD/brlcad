@@ -55,7 +55,7 @@ struct bg_mesh_lod {
  * returns the lookup key calculated from the data, which is used in subsequent
  * lookups of the cached data. */
 BG_EXPORT unsigned long long
-bg_mesh_lod_cache(const point_t *v, int vcnt, int *f, int fcnt);
+bg_mesh_lod_cache(const point_t *v, size_t vcnt, int *f, size_t fcnt);
 
 /**
  * Set up the bg_mesh_lod data using cached LoD information associated with

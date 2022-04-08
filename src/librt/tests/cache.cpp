@@ -130,10 +130,10 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
     }
 }
 
-static int
+static size_t
 cache_count(const char *cache_dir, int ignore_temp)
 {
-    int cache_objects = 0;
+    size_t cache_objects = 0;
     struct bu_vls wpath = BU_VLS_INIT_ZERO;
 
     /* We need to find all cache objects */
@@ -283,19 +283,19 @@ test_subprocess(int ac, char *av[])
 
     bu_setenv("LIBRT_CACHE", bu_dir(NULL, 0, BU_DIR_CURR, cache_dir, NULL), 1);
 
-    rtip_stage_1 = build_rtip(test_num, gfile, cname, process_num*1000 + 1, 1, ncpus);
+    rtip_stage_1 = build_rtip(test_num, gfile, cname, process_num*1000 + 1, 1, (int)ncpus);
 
     // Confirm the presence of the expected number of file(s) in the cache
-    int cc = cache_count(cache_dir, 1);
-    if (cc != expected) {
-	bu_exit(1, "Test %ld(process %ld): expected %ld cache object(s), found %d\n", test_num, process_num, expected, cc);
+    size_t cc = cache_count(cache_dir, 1);
+    if (cc != (size_t)expected) {
+	bu_exit(1, "Test %ld(process %ld): expected %ld cache object(s), found %zu\n", test_num, process_num, expected, cc);
     }
 
     rt_clean(rtip_stage_1);
     rt_free_rti(rtip_stage_1);
 
     /*** Now, do it again with the cache definitely in place */
-    rtip_stage_2 = build_rtip(test_num, gfile, cname, process_num*1000 + 2, 1, ncpus);
+    rtip_stage_2 = build_rtip(test_num, gfile, cname, process_num*1000 + 2, 1, (int)ncpus);
     rt_clean(rtip_stage_2);
     rt_free_rti(rtip_stage_2);
 
@@ -458,20 +458,20 @@ test_cache(char *rp, long int test_num, long int obj_cnt, int do_parallel, int d
     db_close(dbip);
 
     if (!subprocess_cnt) {
-	rtip_stage_1 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 1, do_parallel, ncpus);
+	rtip_stage_1 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 1, do_parallel, (int)ncpus);
 
 	// Confirm the presence of the expected number of file(s) in the cache
-	int cc = cache_count(bu_vls_cstr(&cache_dir), 0);
+	size_t cc = cache_count(bu_vls_cstr(&cache_dir), 0);
 	long int expected = (different_content) ? obj_cnt : 1;
-	if (cc != expected) {
-	    bu_exit(1, "Test %ld: expected %ld cache object(s), found %d\n", test_num, expected, cc);
+	if (cc != (size_t)expected) {
+	    bu_exit(1, "Test %ld: expected %ld cache object(s), found %zu\n", test_num, expected, cc);
 	}
 
 	rt_clean(rtip_stage_1);
 	rt_free_rti(rtip_stage_1);
 
 	/*** Now, do it again with the cache in place */
-	rtip_stage_2 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 2, do_parallel, ncpus);
+	rtip_stage_2 = build_rtip(test_num, bu_vls_cstr(&gfile), bu_vls_cstr(&cname), 2, do_parallel, (int)ncpus);
 	rt_clean(rtip_stage_2);
 	rt_free_rti(rtip_stage_2);
     } else {

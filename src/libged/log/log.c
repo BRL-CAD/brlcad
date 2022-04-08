@@ -38,14 +38,14 @@ log_hook(void *clientdata,
 	 void *str)
 {
     struct bu_vls *vp = (struct bu_vls *)clientdata;
-    int len;
+    size_t len;
 
     BU_CK_VLS(vp);
     len = bu_vls_strlen(vp);
     bu_vls_strcat(vp, (const char *)str);
     len = bu_vls_strlen(vp) - len;
 
-    return len;
+    return (int)len;
 }
 
 

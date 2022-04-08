@@ -442,7 +442,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 
     for (std::size_t i = 0; i < mesh.m_FN.UnsignedCount(); ++i) {
 	int * const dest_face_normal = &face_normals.at(3 * i);
-	VSETALL(dest_face_normal, i);
+	VSETALL(dest_face_normal, (int)i);
     }
 
     if (mk_bot_w_normals(&wdb, name.c_str(), mode, orientation,

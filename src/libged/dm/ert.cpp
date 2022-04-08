@@ -153,7 +153,7 @@ ged_ert_core(struct ged *gedp, int argc, const char *argv[])
 
     args.push_back(std::string(gedp->dbip->dbi_filename));
 
-    int gd_rt_cmd_len = args.size();
+    int gd_rt_cmd_len = (int)args.size();
     char **gd_rt_cmd = (char **)bu_calloc(gd_rt_cmd_len + ged_who_argc(gedp), sizeof(char *), "alloc gd_rt_cmd");
     for (size_t j = 0; j < args.size(); j++) {
 	gd_rt_cmd[j] = bu_strdup(args[j].c_str());
