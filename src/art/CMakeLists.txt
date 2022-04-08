@@ -59,7 +59,9 @@ set(ART_SRCS
   ../rt/usage.cpp
   )
 
+add_definitions(-DBOOST_ALL_DYN_LINK)
 BRLCAD_ADDEXEC(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
+
 
 # copy precompiled appleseed.dll into same dir as art.exe
 if (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
