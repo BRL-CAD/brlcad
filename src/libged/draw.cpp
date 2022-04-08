@@ -587,7 +587,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// find it) we create it instead.
 
 	// Have database object, make scene object
-	struct bv_scene_obj *s = bv_obj_get(dd->v, BV_SCENE_OBJ_DB);
+	struct bv_scene_obj *s = bv_obj_get_child(dd->g);
 	db_path_to_vls(&s->s_name, path);
 	db_path_to_vls(&s->s_uuid, path);
 	MAT_COPY(s->s_mat, *curr_mat);
