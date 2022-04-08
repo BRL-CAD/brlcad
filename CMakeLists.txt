@@ -1078,6 +1078,14 @@ if(NOT MSVC)
     # also of interest:
     # -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
     # -Wformat=2 (after bu_fopen_uniq() is obsolete)
+    #
+    # -Werror=implicit-function-declaration -Werror=implicit-fallthrough=3 
+    # -Werror=maybe-uninitialized -Werror=missing-field-initializers 
+    # -Werror=incompatible-pointer-types -Werror=int-conversion 
+    # -Werror=redundant-decls -Werror=parentheses -Wformat-nonliteral 
+    # -Wformat-security -Winit-self -Wmaybe-uninitialized 
+    # -Wold-style-definition -Wredundant-decls -Wstrict-prototypes
+
     CHECK_C_FLAG(pedantic)
     CHECK_CXX_FLAG(pedantic)
 
