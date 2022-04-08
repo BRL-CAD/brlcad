@@ -1,6 +1,7 @@
 # Common build directories used in the source tree
 /build
 /.build
+/out
 
 # Temporary files
 *~
@@ -18,3 +19,5 @@
 .vscode
 .clang-format
 CMakeLists.txt.user
+/.vs
+/CMakeSettings.json
