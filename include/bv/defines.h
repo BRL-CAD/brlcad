@@ -278,8 +278,18 @@ struct bv_scene_obj  {
     /* Child objects of this object */
     struct bu_ptbl children;
 
+    /* Object level pointers to parent containers.  These are stored so
+     * that the object itself knows everything needed for data manipulation
+     * and it is unnecessary to explicitly pass other parameters. */
+
+    /* Reusable vlists */
+    struct bu_list *vlfree;
+
     /* Container for reusing bv_scene_obj allocations */
     struct bv_scene_obj *free_scene_obj;
+
+    /* View container containing this object */
+    struct bu_ptbl *otbl;
 
     /* For more specialized routines not using vlists, we may need
      * additional drawing data associated with a scene object */
