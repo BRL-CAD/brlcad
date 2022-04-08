@@ -186,7 +186,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 
     // Where the groups get stored depends on our mode
     if (v->gv_s->adaptive_plot || v->independent) {
-	sg = v->gv_objs.view_grps;
+	sg = v->gv_objs.db_objs;
     } else {
 	sg = &v->vset->shared_db_objs;
     }
@@ -701,14 +701,14 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // do the cleanup.  Additionally, if cv is a shared view any additional
     // shared views whose plotting status has changed also needs the clear
     // operation.  Independent views do not need this operation, since they use
-    // gv_objs.view_grps for both non-adaptive and adaptive plotting.  (I.e. in
+    // gv_objs.db_objs for both non-adaptive and adaptive plotting.  (I.e. in
     // independent drawing any contents from gv_objs.db_grps are ignored.)
     if (!cv->independent) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
 	    struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
 	    if (v->independent)
 		continue;
-	    struct bu_ptbl *sg = cv->gv_objs.view_grps;
+	    struct bu_ptbl *sg = cv->gv_objs.db_objs;
 	    if (sg && !v->gv_s->adaptive_plot) {
 		for (size_t j = 0; j < BU_PTBL_LEN(sg); j++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, j);
@@ -813,7 +813,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
     // If going from adaptive to shared we only need to do so once, but when going
     // from shared to adaptive each view needs its own copy.  Check for the transition
     // states, and handle accordingly.
-    if (v->gv_s->adaptive_plot && BU_PTBL_LEN(&v->vset->shared_db_objs) && !BU_PTBL_LEN(v->gv_objs.view_grps)) {
+    if (v->gv_s->adaptive_plot && BU_PTBL_LEN(&v->vset->shared_db_objs) && !BU_PTBL_LEN(v->gv_objs.db_objs)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_db_objs); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&v->vset->shared_db_objs, i);
 	    if (v->independent) {
@@ -838,9 +838,9 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 	}
 	return BRLCAD_OK;
     }
-    if (!v->gv_s->adaptive_plot && !BU_PTBL_LEN(&v->vset->shared_db_objs) && BU_PTBL_LEN(v->gv_objs.view_grps)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_grps); i++) {
-	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.view_grps, i);
+    if (!v->gv_s->adaptive_plot && !BU_PTBL_LEN(&v->vset->shared_db_objs) && BU_PTBL_LEN(v->gv_objs.db_objs)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_objs); i++) {
+	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.db_objs, i);
 	    if (v->independent) {
 		int ac = 5;
 		const char *av[6];
@@ -868,7 +868,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
     if (!argc) {
 	struct bu_ptbl *sg;
 	if (v->independent) {
-	    sg = v->gv_objs.view_grps;
+	    sg = v->gv_objs.db_objs;
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		int ac = 5;

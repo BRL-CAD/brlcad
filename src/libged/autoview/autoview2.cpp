@@ -132,7 +132,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
 
     struct bu_ptbl *so;
     if (v->gv_s->adaptive_plot || v->independent) {
-	so = v->gv_objs.view_grps;
+	so = v->gv_objs.db_objs;
     } else {
 	so = &v->vset->shared_db_objs;
     }

@@ -332,8 +332,8 @@ bv_hash(struct bview *v)
 	}
     }
 
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_grps); i++) {
-	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.view_grps, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_objs); i++) {
+	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.db_objs, i);
 	if (BU_PTBL_IS_INITIALIZED(&g->children)) {
 	    for (size_t j = 0; j < BU_PTBL_LEN(&g->children); j++) {
 		struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, j);

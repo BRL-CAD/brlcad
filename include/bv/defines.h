@@ -423,7 +423,7 @@ struct bview_objs {
     // Container for db object groups unique to this view (typical use case is
     // adaptive plotting, where geometry wireframes may differ from view to
     // view and thus need unique vlists.)
-    struct bu_ptbl  *view_grps;
+    struct bu_ptbl  *db_objs;
     // Container for storing bv_scene_obj elements unique to this view.
     struct bu_ptbl  *view_objs;
 

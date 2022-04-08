@@ -89,10 +89,10 @@ bv_init(struct bview *gvp, struct bview_set *s)
     VSET(gvp->gv_tcl.gv_prim_labels.gos_text_color, 255, 255, 0);
 
 
-    // gv_objs.view_grps is local to this view and thus is controlled
+    // gv_objs.db_objs is local to this view and thus is controlled
     // by the bv init and free routines.
-    BU_GET(gvp->gv_objs.view_grps, struct bu_ptbl);
-    bu_ptbl_init(gvp->gv_objs.view_grps, 8, "view_objs init");
+    BU_GET(gvp->gv_objs.db_objs, struct bu_ptbl);
+    bu_ptbl_init(gvp->gv_objs.db_objs, 8, "view_objs init");
 
     // gv_objs.view_objs is local to this view and thus is controlled
     // by the bv init and free routines.
@@ -117,8 +117,8 @@ bv_free(struct bview *gvp)
 	return;
 
     bu_vls_free(&gvp->gv_name);
-    bu_ptbl_free(gvp->gv_objs.view_grps);
-    BU_PUT(gvp->gv_objs.view_grps, struct bu_ptbl);
+    bu_ptbl_free(gvp->gv_objs.db_objs);
+    BU_PUT(gvp->gv_objs.db_objs, struct bu_ptbl);
     bu_ptbl_free(gvp->gv_objs.view_objs);
     BU_PUT(gvp->gv_objs.view_objs, struct bu_ptbl);
 

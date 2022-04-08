@@ -48,7 +48,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
 	// Always make sure the view's specified local containers are cleared.  We
 	// may be skipping the shared objects depending on the settings, but a zap
 	// on a view always clears the local versions.
-	struct bu_ptbl *sg = v->gv_objs.view_grps;
+	struct bu_ptbl *sg = v->gv_objs.db_objs;
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
@@ -100,7 +100,7 @@ ged_clear_view(struct ged *gedp, struct bview *v, int clear_solid_objs, int clea
      * cleared.  Since the blast command may immediately re-populate the
      * display list, we set a flag in the view to inform the app a zap
      * operation has taken place. */
-    if (!BU_PTBL_LEN(v->gv_objs.view_objs) && !BU_PTBL_LEN(v->gv_objs.view_grps)) {
+    if (!BU_PTBL_LEN(v->gv_objs.view_objs) && !BU_PTBL_LEN(v->gv_objs.db_objs)) {
 	if (v->independent || (!BU_PTBL_LEN(&v->vset->shared_view_objs) && !BU_PTBL_LEN(&v->vset->shared_db_objs))) {
 	    v->gv_s->gv_cleared = 1;
 	}
