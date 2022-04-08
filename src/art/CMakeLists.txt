@@ -15,6 +15,7 @@ if(NOT Appleseed_FOUND)
 endif(NOT Appleseed_FOUND)
 message("Found Appleseed: ${Appleseed_LIBRARIES}")
 
+set(Boost_USE_STATIC_LIBS OFF)
 find_package(Boost COMPONENTS chrono date_time filesystem regex system thread wave)
 if(NOT Boost_FOUND)
   message("'art' appleseed ray tracing is DISABLED")
