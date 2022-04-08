@@ -1,7 +1,7 @@
-/*                        B V . H
+/*                    B V _ P R I V A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2022 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,42 +17,32 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-// TODO - bv currently conflates scene and camera concepts - for example,
-// data axes and polygons are properly scene objects being viewed by the
-// camera, but at the moment they're directly part of the bv struct.
-//
-// The plan is to address this, so until this notice is removed the bv data
-// structure and related data structures should be considered in flux.
-
-/** @addtogroup libbv */
-/** @{ */
-/** @file bv.h
+/** @file bv_private.h
+ *
+ * Internal shared data structures
  *
  */
 
-#ifndef BV_H
-#define BV_H
-
 #include "common.h"
+#include "bu/ptbl.h"
+#include "bv/defines.h"
 
-#include "vmath.h"
-#include "bu/vls.h"
-#include "bn.h"
+__BEGIN_DECLS
 
-#include "./bv/defines.h"
-#include "./bv/adc.h"
-#include "./bv/util.h"
-#include "./bv/vlist.h"
-#include "./bv/view_sets.h"
+struct bview_set_internal {
+    struct bu_ptbl views;
+    struct bu_ptbl shared_db_objs;
+    struct bu_ptbl shared_view_objs;
 
-#endif /* BV_H */
+    struct bv_scene_obj  *free_scene_obj;
+};
 
-/** @} */
+__END_DECLS
+
 /*
  * Local Variables:
- * mode: C
  * tab-width: 8
+ * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

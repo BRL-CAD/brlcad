@@ -1,4 +1,4 @@
-/*                        B V . H
+/*                      V I E W _ S E T S . H
  * BRL-CAD
  *
  * Copyright (c) 1993-2022 United States Government as represented by
@@ -17,38 +17,50 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-// TODO - bv currently conflates scene and camera concepts - for example,
-// data axes and polygons are properly scene objects being viewed by the
-// camera, but at the moment they're directly part of the bv struct.
-//
-// The plan is to address this, so until this notice is removed the bv data
-// structure and related data structures should be considered in flux.
-
-/** @addtogroup libbv */
-/** @{ */
-/** @file bv.h
+/** @addtogroup bv_util
  *
  */
+/** @{ */
+/** @file bv/view_sets.h */
 
-#ifndef BV_H
-#define BV_H
+#ifndef BV_VIEW_SETS_H
+#define BV_VIEW_SETS_H
 
 #include "common.h"
+#include "bv/defines.h"
 
-#include "vmath.h"
-#include "bu/vls.h"
-#include "bn.h"
+__BEGIN_DECLS
 
-#include "./bv/defines.h"
-#include "./bv/adc.h"
-#include "./bv/util.h"
-#include "./bv/vlist.h"
-#include "./bv/view_sets.h"
+BV_EXPORT void
+bv_set_init(struct bview_set *s);
 
-#endif /* BV_H */
+BV_EXPORT void
+bv_set_free(struct bview_set *s);
+
+BV_EXPORT void
+bv_set_add_view(struct bview_set *s, struct bview *v);
+
+BV_EXPORT void
+bv_set_rm_view(struct bview_set *s, struct bview *v);
+
+BV_EXPORT struct bu_ptbl *
+bv_set_views(struct bview_set *s);
+
+BV_EXPORT struct bu_ptbl *
+bv_set_view_db_objs(struct bview *v);
+
+BV_EXPORT struct bu_ptbl *
+bv_set_view_objs(struct bview *v);
+
+BV_EXPORT struct bview *
+bv_set_find_view(struct bview_set *s, const char *vname);
+
+__END_DECLS
 
 /** @} */
+
+#endif /* BV_VIEW_SETS_H */
+
 /*
  * Local Variables:
  * mode: C

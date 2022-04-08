@@ -547,13 +547,6 @@ struct bview_set {
     struct bv_scene_obj         *free_scene_obj;
     struct bu_list              vlfree;
 };
-BV_EXPORT void
-bv_set_init(struct bview_set *s);
-BV_EXPORT void
-bv_set_free(struct bview_set *s);
-
-BV_EXPORT void
-bv_set_add(struct bview_set *s, struct bview *v);
 
 #endif /* BV_DEFINES_H */
 
