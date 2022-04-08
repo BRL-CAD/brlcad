@@ -31,9 +31,17 @@
 #include "bu/ptbl.h"
 #include "bu/str.h"
 #include "bn/mat.h"
-#include "bv/vlist.h"
 #include "bv/defines.h"
+#include "bv/vlist.h"
 #include "bv/util.h"
+
+struct bview_set_internal {
+    struct bu_ptbl views;
+    struct bu_ptbl shared_db_objs;
+    struct bu_ptbl shared_view_objs;
+
+    struct bv_scene_obj  *free_scene_obj;
+};
 
 void
 bv_init(struct bview *gvp, struct bview_set *s)
@@ -143,9 +151,9 @@ bv_mat_aet(struct bview *v)
     fastf_t s_twist;
 
     bn_mat_angles(v->gv_rotation,
-                  270.0 + v->gv_aet[1],
-                  0.0,
-                  270.0 - v->gv_aet[0]);
+	    270.0 + v->gv_aet[1],
+	    0.0,
+	    270.0 - v->gv_aet[0]);
 
     twist = -v->gv_aet[2] * DEG2RAD;
     c_twist = cos(twist);
@@ -278,11 +286,11 @@ bv_update(struct bview *gvp)
     vect_t temp, temp1;
 
     if (!gvp)
-        return;
+	return;
 
     bn_mat_mul(gvp->gv_model2view,
-               gvp->gv_rotation,
-               gvp->gv_center);
+	    gvp->gv_rotation,
+	    gvp->gv_center);
     gvp->gv_model2view[15] = gvp->gv_scale;
     bn_mat_inv(gvp->gv_view2model, gvp->gv_model2view);
 
@@ -295,18 +303,18 @@ bv_update(struct bview *gvp)
     /* calculate angles using accuracy of 0.005, since display
      * shows 2 digits right of decimal point */
     bn_aet_vec(&gvp->gv_aet[0],
-               &gvp->gv_aet[1],
-               &gvp->gv_aet[2],
-               temp, temp1, (fastf_t)0.005);
+	    &gvp->gv_aet[1],
+	    &gvp->gv_aet[2],
+	    temp, temp1, (fastf_t)0.005);
 
     /* Force azimuth range to be [0, 360] */
     if ((NEAR_EQUAL(gvp->gv_aet[1], 90.0, (fastf_t)0.005) ||
-         NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
-        gvp->gv_aet[0] < 0 &&
-        !NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-        gvp->gv_aet[0] += 360.0;
+		NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
+	    gvp->gv_aet[0] < 0 &&
+	    !NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
+	gvp->gv_aet[0] += 360.0;
     else if (NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
-        gvp->gv_aet[0] = 0.0;
+	gvp->gv_aet[0] = 0.0;
 
     /* apply the perspective angle to model2view */
     bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
@@ -641,17 +649,17 @@ bv_set_init(struct bview_set *s)
 void
 bv_set_free(struct bview_set *s)
 {
-       // Note - it is the caller's responsibility to have freed any data
+    // Note - it is the caller's responsibility to have freed any data
     // associated with the ged or its views in the u_data pointers.
     struct bview *gdvp;
     for (size_t i = 0; i < BU_PTBL_LEN(&s->views); i++) {
-        gdvp = (struct bview *)BU_PTBL_GET(&s->views, i);
-        bu_vls_free(&gdvp->gv_name);
-        if (gdvp->callbacks) {
-            bu_ptbl_free(gdvp->callbacks);
-            BU_PUT(gdvp->callbacks, struct bu_ptbl);
-        }
-        bu_free((void *)gdvp, "bv");
+	gdvp = (struct bview *)BU_PTBL_GET(&s->views, i);
+	bu_vls_free(&gdvp->gv_name);
+	if (gdvp->callbacks) {
+	    bu_ptbl_free(gdvp->callbacks);
+	    BU_PUT(gdvp->callbacks, struct bu_ptbl);
+	}
+	bu_free((void *)gdvp, "bv");
     }
     bu_ptbl_free(&s->views);
 

@@ -536,7 +536,9 @@ struct bview {
 // Because bview instances frequently share objects in applications, they are
 // not always fully independent - we define a container and some basic
 // operations to manage this.
+struct bview_set_internal;
 struct bview_set {
+    struct bview_set_internal   *i;
     struct bu_ptbl              views;
     struct bu_ptbl		shared_db_objs;
     struct bu_ptbl		shared_view_objs;
