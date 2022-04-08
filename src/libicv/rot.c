@@ -137,7 +137,7 @@ get_args(size_t argc, const char **argv, FILE **ifp, FILE **ofp, double *angle)
 
     if (BU_STR_EQUAL(in_file_name, "-")) {
 	*ifp = stdin;
-	setmode(fileno(ifp), O_BINARY);
+	setmode(fileno(*ifp), O_BINARY);
     } else {
 	*ifp = fopen(in_file_name, "rb");
 	if (*ifp == NULL) {
