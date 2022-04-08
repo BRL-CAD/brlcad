@@ -685,9 +685,16 @@ void
 dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
 {
     struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_SCENE_OBJ_DB);
+    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
+    if (!bdata) {
+	BU_GET(bdata, struct ged_bv_data);
+	db_full_path_init(&bdata->s_fullpath);
+	sp->s_u_data = (void *)bdata;
+    } else {
+	bdata->s_fullpath.fp_len = 0;
+    }
     if (!sp->s_u_data)
 	return;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     solid_append_vlist(sp, (struct bv_vlist *)vhead);
 
@@ -826,9 +833,16 @@ append_solid_to_display_list(
 
     /* create solid */
     struct bv_scene_obj *sp = bv_obj_get(bv_data->v, BV_SCENE_OBJ_DB);
+    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
+    if (!bdata) {
+	BU_GET(bdata, struct ged_bv_data);
+	db_full_path_init(&bdata->s_fullpath);
+	sp->s_u_data = (void *)bdata;
+    } else {
+	bdata->s_fullpath.fp_len = 0;
+    }
     if (!sp->s_u_data)
 	return TREE_NULL;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     sp->s_size = 0;
     VSETALL(sp->s_center, 0.0);
@@ -1008,9 +1022,16 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 
     /* Obtain a fresh solid structure, and fill it in */
     sp = bv_obj_get(gedp->ged_gvp, BV_SCENE_OBJ_DB);
+    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
+    if (!bdata) {
+	BU_GET(bdata, struct ged_bv_data);
+	db_full_path_init(&bdata->s_fullpath);
+	sp->s_u_data = (void *)bdata;
+    } else {
+	bdata->s_fullpath.fp_len = 0;
+    }
     if (!sp->s_u_data)
 	return -1;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     /* Need to enter phony name in directory structure */
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
