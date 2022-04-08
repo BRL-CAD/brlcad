@@ -222,21 +222,21 @@ POPState::tri_process()
     // last level (and consequently, their vertices are only needed then).  Set
     // the level accordingly.
     vert_tri_minlevel.reserve(vert_cnt);
-    for (int i = 0; i < vert_cnt; i++) {
+    for (size_t i = 0; i < vert_cnt; i++) {
 	vert_tri_minlevel.push_back(POP_MAXLEVEL - 1);
     }
 
     // Reserve memory for level containers
     level_tris.reserve(POP_MAXLEVEL);
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
+    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
 	level_tris.push_back(std::vector<int>(0));
     }
 
     // Walk the triangles and perform the LoD characterization
-    for (int i = 0; i < faces_cnt; i++) {
+    for (size_t i = 0; i < faces_cnt; i++) {
 	rec triangle[3];
 	// Transform triangle vertices
-	for (int j = 0; j < 3; j++) {
+	for (size_t j = 0; j < 3; j++) {
 	    triangle[j].x = floor((verts_array[faces_array[3*i+j]][X] - minx) / (maxx - minx) * USHRT_MAX);
 	    triangle[j].y = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
 	    triangle[j].z = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
@@ -272,7 +272,7 @@ POPState::tri_process()
     // Having sorted the vertices into level sets, we may now define a new global
     // vertex ordering that respects the needs of the levels.
     tri_ind_map.reserve(vert_cnt);
-    for (int i = 0; i < vert_cnt; i++) {
+    for (size_t i = 0; i < vert_cnt; i++) {
 	tri_ind_map.push_back(i);
     }
     int vind = 0;
@@ -352,10 +352,10 @@ POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
     faces_array = faces;
 
     // Calculate the full mesh bounding box for later use
-    bg_trimesh_aabb(&bbmin, &bbmax, faces_array, faces_cnt, verts_array, vert_cnt);
+    bg_trimesh_aabb(&bbmin, &bbmax, faces_array, faces_cnt, verts_array, (int)vert_cnt);
 
     // Find our min and max values, initialize levels
-    for (int i = 0; i < vcnt; i++) {
+    for (size_t i = 0; i < vcnt; i++) {
 	minx = (v[i][X] < minx) ? v[i][X] : minx;
 	miny = (v[i][Y] < miny) ? v[i][Y] : miny;
 	minz = (v[i][Z] < minz) ? v[i][Z] : minz;
