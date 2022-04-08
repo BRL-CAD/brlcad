@@ -211,6 +211,25 @@ BrlcadObject:: BrlcadObject(
     VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
     VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
 
+    std::string db_file = m_params.get_required<std::string>("database_path");
+    this->rtip = rt_dirbuild(db_file.c_str(), NULL, 0);//rt_new_rti(dbip);
+    this->ap->a_rt_i = rtip;
+    if (rtip == RTI_NULL) {
+        RENDERER_LOG_INFO("building the database directory for [%s] FAILED\n", db_file);
+        bu_exit(BRLCAD_ERROR, "building the database directory for [%s] FAILED\n", db_file);
+    }
+
+    for (int ic = 0; ic < MAX_PSW; ic++) {
+        rt_init_resource(&p_resources[ic], ic, rtip);
+        RT_CK_RESOURCE(&p_resources[ic]);
+    }
+
+    rt_gettree(rtip, this->name->c_str());
+    if (rtip->needprep)
+        rt_prep_parallel(rtip, 1);
+    //printf("name: [%s]\n", name);
+    //this->rtip = rt_dirbuild();
+    //this->rtip = p_ap->a_rt_i;
 
     // VSETALL(ap->a_uvec, 0);
     // VSETALL(ap->a_vvec, 0);
