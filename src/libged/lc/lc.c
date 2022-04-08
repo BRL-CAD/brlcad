@@ -314,7 +314,7 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
     path = (char *) bu_malloc(sizeof(char) * (strlen(group_name) + 2), "ged_lc_core");
     sprintf(path, "/%s", group_name);
     db_string_to_path(&root, gedp->dbip, path);
-    matches = db_search(&results2, DB_SEARCH_TREE, plan, root.fp_len, root.fp_names, gedp->dbip, NULL);
+    matches = db_search(&results2, DB_SEARCH_TREE, plan, (int)root.fp_len, root.fp_names, gedp->dbip, NULL);
     bu_free(path, "ged_lc_core");
     if (matches < 1) { return BRLCAD_ERROR; }
     regions = (struct region_record *) bu_malloc(sizeof(struct region_record) * BU_PTBL_LEN(&results2), "ged_lc_core");

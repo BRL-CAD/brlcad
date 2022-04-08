@@ -114,7 +114,7 @@ class POPState {
     public:
 
 	// Create cached data (doesn't create a usable container)
-	POPState(const point_t *v, int vcnt, int *faces, int fcnt);
+	POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt);
 
 	// Load cached data (DOES create a usable container)
 	POPState(unsigned long long key);
@@ -206,9 +206,9 @@ class POPState {
 	size_t tri_threshold = 0;
 
 	// Pointers to original input data
-	int vert_cnt = 0;
+	size_t vert_cnt = 0;
 	const point_t *verts_array = NULL;
-	int faces_cnt = 0;
+	size_t faces_cnt = 0;
 	int *faces_array = NULL;
 
 	// Function to use when doing draw operations
@@ -266,7 +266,7 @@ POPState::tri_process()
     // The vertices now know when they will first need to appear.  Build level
     // sets of vertices
     for (size_t i = 0; i < vert_tri_minlevel.size(); i++) {
-	level_tri_verts[vert_tri_minlevel[i]].insert(i);
+	level_tri_verts[vert_tri_minlevel[i]].insert((int)i);
     }
 
     // Having sorted the vertices into level sets, we may now define a new global
@@ -311,7 +311,7 @@ POPState::tri_process()
     //bu_log("Triangle threshold level: %zd\n", tri_threshold);
 }
 
-POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
+POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
 {
     // Hash the data to generate a key
     XXH64_state_t h_state;
@@ -479,7 +479,7 @@ POPState::tri_pop_load(int start_level, int level)
 	    for (int k = 0; k < 3; k++) {
 		lod_tri_pnts.push_back(nv[k]);
 	    }
-	    level_tri_verts[i].insert(lod_tri_pnts.size() - 1);
+	    level_tri_verts[i].insert((int)(lod_tri_pnts.size() - 1));
 	}
 	vifile.close();
 	bu_vls_free(&vfile);
@@ -513,7 +513,7 @@ POPState::tri_pop_load(int start_level, int level)
 	    for (int k = 0; k < 3; k++) {
 		lod_tris.push_back(vf[k]);
 	    }
-	    level_tris[i].push_back(lod_tris.size() / 3 - 1);
+	    level_tris[i].push_back((int)(lod_tris.size() / 3 - 1));
 	}
 	tifile.close();
 	bu_vls_free(&tfile);
@@ -676,7 +676,7 @@ POPState::cache_tri(struct bu_vls *vkey)
 
     // Write out the level vertices
     for (size_t i = 0; i <= tri_threshold; i++) {
-	if (level_tri_verts.find(i) == level_tri_verts.end())
+	if (level_tri_verts.find((int)i) == level_tri_verts.end())
 	    continue;
 	if (!level_tri_verts[i].size())
 	    continue;
@@ -687,7 +687,7 @@ POPState::cache_tri(struct bu_vls *vkey)
 	std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
 
 	// Store the size of the level vert vector
-	int sv = level_tri_verts[i].size();
+	int sv = (int)level_tri_verts[i].size();
 	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
 
 	// Write out the vertex points
@@ -714,7 +714,7 @@ POPState::cache_tri(struct bu_vls *vkey)
 	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
 
 	// Store the size of the level tri vector
-	int st = level_tris[i].size();
+	int st = (int)level_tris[i].size();
 	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
 
 	// Write out the mapped triangle indices
@@ -999,7 +999,7 @@ struct bg_mesh_lod_internal {
 };
 
 extern "C" unsigned long long
-bg_mesh_lod_cache(const point_t *v, int vcnt, int *faces, int fcnt)
+bg_mesh_lod_cache(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
 {
     unsigned long long key = 0;
 

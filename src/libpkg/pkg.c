@@ -1059,10 +1059,10 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 		_pkg_perror(pc->pkc_errlog, "pkg_send: tbuf write");
 		return -1;
 	    }
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send of %d, wrote %d\n",
-		     len, i-(int)sizeof(hdr));
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send of %zu, wrote %zd\n",
+		     len, i-(ssize_t)sizeof(hdr));
 	    (pc->pkc_errlog)(_pkg_errbuf);
-	    return i-sizeof(hdr);	/* amount of user data sent */
+	    return (int)(i-sizeof(hdr));	/* amount of user data sent */
 	}
 	return (int)len;
     }
@@ -1080,7 +1080,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	    _pkg_perror(pc->pkc_errlog, "pkg_send: header write");
 	    return -1;
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send header of %llu, wrote %d\n",
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send header of %llu, wrote %zd\n",
 		 (unsigned long long)sizeof(hdr), i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return -1;		/* amount of user data sent */
@@ -1100,7 +1100,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	    _pkg_perror(pc->pkc_errlog, "pkg_send: write");
 	    return -1;
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send of %d, wrote %d\n", len, i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send of %zu, wrote %zd\n", len, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return i;		/* amount of user data sent */
     }
@@ -1203,10 +1203,10 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 		_pkg_perror(pc->pkc_errlog, "pkg_2send: tbuf write");
 		return -1;
 	    }
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu, wrote %d\n",
-		     (unsigned long long)len1, (unsigned long long)len2, i-(int)sizeof(hdr));
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu, wrote %zd\n",
+		     (unsigned long long)len1, (unsigned long long)len2, i-(ssize_t)sizeof(hdr));
 	    (pc->pkc_errlog)(_pkg_errbuf);
-	    return i-sizeof(hdr);	/* amount of user data sent */
+	    return (int)(i-sizeof(hdr));	/* amount of user data sent */
 	}
 	return (int)(len1+len2);
     }
@@ -1222,13 +1222,13 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	    if (errno == EBADF)
 		return -1;
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: header write");
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, %p, %llu) ret=%d\n",
-		     pc->pkc_fd, (void *)&hdr, (unsigned long long)sizeof(hdr), i);
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, %p, %zu) ret=%zd\n",
+		     pc->pkc_fd, (void *)&hdr, sizeof(hdr), i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return -1;
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %d+%d+%d, wrote header=%d\n",
-		 (int)sizeof(hdr), len1, len2, i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %zu+%zu+%zu, wrote header=%zd\n",
+		 sizeof(hdr), len1, len2, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return -1;		/* amount of user data sent */
     }
@@ -1244,13 +1244,13 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	    if (errno == EBADF)
 		return -1;
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: write buf1");
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, %p, %llu) ret=%d\n",
-		     pc->pkc_fd, (void *)buf1, (unsigned long long)len1, i);
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, %p, %zu) ret=%zd\n",
+		     pc->pkc_fd, (void *)buf1, len1, i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return -1;
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu+%llu, wrote len1=%d\n",
-		 (unsigned long long)sizeof(hdr), (unsigned long long)len1, (unsigned long long)len2, i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %zu+%zu+%zu, wrote len1=%zd\n",
+		 sizeof(hdr), len1, len2, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return i;		/* amount of user data sent */
     }
@@ -1268,13 +1268,13 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	    if (errno == EBADF)
 		return -1;
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: write buf2");
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, %p, %llu) ret=%d\n",
-		     pc->pkc_fd, (void *)buf2, (unsigned long long)len2, i);
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, %p, %zu) ret=%zd\n",
+		     pc->pkc_fd, (void *)buf2, len2, i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return -1;
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu+%llu, wrote len2=%d\n",
-		 (unsigned long long)sizeof(hdr), (unsigned long long)len1, (unsigned long long)len2, i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %zu+%zu+%zu, wrote len2=%zd\n",
+		 sizeof(hdr), len1, len2, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return (int)(len1+i);		/* amount of user data sent */
     }

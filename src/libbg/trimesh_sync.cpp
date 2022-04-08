@@ -109,7 +109,7 @@ class tm_sync_sface {
 	size_t e[3];
 	void flip()
 	{
-	    int tmp = v2;
+	    size_t tmp = v2;
 	    v2 = v1;
 	    v1 = tmp;
 	}

@@ -5036,7 +5036,7 @@ struct rt_bot_internal *
 rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 {
     struct rt_bot_internal *result;
-    int avail_vert, avail_face;
+    size_t avail_vert, avail_face;
     size_t i, face;
     int *reverse_flags;
 

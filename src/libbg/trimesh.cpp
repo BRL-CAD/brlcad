@@ -798,7 +798,7 @@ int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, fastf_t *vertices,
 
 
 int
-bg_trimesh_aabb(point_t *min, point_t *max, const int *faces, int num_faces, const point_t *p, int num_pnts)
+bg_trimesh_aabb(point_t *min, point_t *max, const int *faces, size_t num_faces, const point_t *p, size_t num_pnts)
 {
     /* If we can't produce any output, there's no point in continuing */
     if (!min || !max)
@@ -812,20 +812,20 @@ bg_trimesh_aabb(point_t *min, point_t *max, const int *faces, int num_faces, con
     VSETALL((*max), -INFINITY);
 
     /* If inputs are insufficient, we can't produce a bbox */
-    if (!faces || num_faces <= 0 || !p || num_pnts <= 0)
+    if (!faces || num_faces == 0 || !p || num_pnts == 0)
 	return -1;
 
     /* First Pass: coherently iterate through all faces of the BoT and
      * mark vertices in a bit-vector that are referenced by a face. */
     struct bu_bitv *visit_vert = bu_bitv_new(num_pnts);
-    for (size_t tri_index = 0; tri_index < (size_t)num_faces; tri_index++) {
+    for (size_t tri_index = 0; tri_index < num_faces; tri_index++) {
 	BU_BITSET(visit_vert, faces[tri_index*3 + X]);
 	BU_BITSET(visit_vert, faces[tri_index*3 + Y]);
 	BU_BITSET(visit_vert, faces[tri_index*3 + Z]);
     }
 
     /* Second Pass: check max and min of vertices marked */
-    for(size_t vert_index = 0; vert_index < (size_t)num_pnts; vert_index++){
+    for(size_t vert_index = 0; vert_index < num_pnts; vert_index++){
 	if(BU_BITTEST(visit_vert,vert_index)){
 	    VMINMAX((*min), (*max), p[vert_index]);
 	}

@@ -2017,7 +2017,7 @@ static void
 rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
 {
     struct bu_ptbl nmg_faces;
-    unsigned int num_faces, i;
+    size_t num_faces, i;
     size_t *npts;
     point_t **tmp_pts;
     plane_t *eqs;
@@ -2060,7 +2060,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    struct bu_ptbl nmg_faces;
-	    unsigned int num_faces, i;
+	    size_t num_faces, i;
 	    struct poly_face *faces;
 
 	    /*get faces of this shell*/
@@ -2167,7 +2167,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    struct bu_ptbl nmg_faces;
-	    unsigned int num_faces, i;
+	    size_t num_faces, i;
 	    struct poly_face *faces;
 
 	    /*get faces of this shell*/
@@ -2945,7 +2945,7 @@ Shell_is_arb(struct shell *s, struct bu_ptbl *tab, struct bu_list *vlfree)
 	    break;
     }
 
-    return BU_PTBL_LEN(tab);
+    return (int)BU_PTBL_LEN(tab);
 
 
 not_arb:
@@ -3601,12 +3601,12 @@ nmg_to_poly(const struct model *m, struct rt_pg_internal *poly_int, struct bu_li
 
 
 static int
-_nmg_shell_append(struct rt_bot_internal *bot, struct bu_ptbl *nmg_vertices, struct bu_ptbl *nmg_faces, int *voffset, int *foffset)
+_nmg_shell_append(struct rt_bot_internal *bot, struct bu_ptbl *nmg_vertices, struct bu_ptbl *nmg_faces, size_t *voffset, size_t *foffset)
 {
-    unsigned int i;
-    unsigned int vo = (voffset) ? (unsigned int)*voffset : 0;
-    unsigned int fo = (foffset) ? (unsigned int)*foffset : 0;
-    int face_no;
+    size_t i;
+    size_t vo = (voffset) ? (unsigned int)*voffset : 0;
+    size_t fo = (foffset) ? (unsigned int)*foffset : 0;
+    size_t face_no;
     struct vertex *v;
 
     /* fill in the vertices */
@@ -3791,8 +3791,8 @@ nmg_mdl_to_bot(struct model *m, struct bu_list *vlfree, const struct bn_tol *tol
     struct rt_bot_internal *bot;
     struct bu_ptbl vert_arrays = BU_PTBL_INIT_ZERO;
     struct bu_ptbl face_arrays = BU_PTBL_INIT_ZERO;
-    int vert_cnt = 0;
-    int face_cnt = 0;
+    size_t vert_cnt = 0;
+    size_t face_cnt = 0;
 
     BN_CK_TOL(tol);
     NMG_CK_MODEL(m);
