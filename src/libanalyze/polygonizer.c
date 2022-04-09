@@ -737,7 +737,7 @@ analyze_polygonize(
 	)
 {
     int ret = 0;
-    int ncpus = bu_avail_cpus();
+    size_t ncpus = bu_avail_cpus();
     struct pnt_normal *rtpnt;
     PROCESS p;
     int i, n;
@@ -798,7 +798,7 @@ analyze_polygonize(
 	ret = -1;
 	goto analyze_polygonizer_memfree;
     }
-    rt_prep_parallel(rtip, ncpus);
+    rt_prep_parallel(rtip, (int)ncpus);
     p.ap = ap;
     p.d = ap;
 

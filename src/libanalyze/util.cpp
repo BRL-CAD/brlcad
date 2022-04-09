@@ -619,13 +619,13 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 	    /* standard */
 	    state[i].rtip = rtip;
 	    state[i].resp = &resp[i];
-	    rt_init_resource(state[i].resp, i, rtip);
+	    rt_init_resource(state[i].resp, (int)i, rtip);
 	}
 	if (rt_gettree(rtip, obj) < 0) {
 	    ret = -1;
 	    goto memfree;
 	}
-	rt_prep_parallel(rtip, ncpus);
+	rt_prep_parallel(rtip, (int)ncpus);
     }
 
     for (i = 0; i < ncpus+1; i++) {
@@ -656,7 +656,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 	}
     }
     if (filter) {
-	analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5, ncpus);
+	analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5, (int)ncpus);
     } else {
 	for (j = 0; j < BU_PTBL_LEN(&temp_results); j++) {
 	    struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(&temp_results, j);
@@ -671,7 +671,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 	}
     }
 
-    ret = BU_PTBL_LEN(results);
+    ret = (int)BU_PTBL_LEN(results);
 memfree:
 
     bu_free(ray_results, "free state");
