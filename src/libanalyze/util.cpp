@@ -39,7 +39,7 @@ analyze_gen_worker(int cpu, void *ptr)
 {
     struct application ap;
     struct rt_gen_worker_vars *state = &(((struct rt_gen_worker_vars *)ptr)[cpu]);
-    int start_ind, end_ind, i;
+    size_t start_ind, end_ind, i;
     int state_jmp = 0;
 
     RT_APPLICATION_INIT(&ap);

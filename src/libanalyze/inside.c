@@ -139,7 +139,7 @@ int
 analyze_obj_inside(struct db_i *dbip, const char *outside_candidate, const char *inside_candidate, fastf_t in_tol)
 {
     int ret = 1;
-    int count = 0;
+    size_t count = 0;
     struct rt_i *rtip;
     size_t ncpus = bu_avail_cpus();
     point_t min, mid, max;

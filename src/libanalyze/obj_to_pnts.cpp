@@ -174,7 +174,7 @@ analyze_prand_pnt_worker(int cpu, void *ptr)
 {
     struct application ap;
     struct rt_gen_worker_vars *state = &(((struct rt_gen_worker_vars *)ptr)[cpu]);
-    int i;
+    size_t i;
 
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = state->rtip;
@@ -338,8 +338,8 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 
 	/* We now know enough to get the max ray count.  Try up to 10x the number of max
 	 * points of rays, or up to 2 million. */
-	long int mrc = ((max_pnts * 10) > 2000000 || !max_pnts) ? 2000000 : max_pnts * 10;
-	long int craynum = mrc/((long)ncpus+1);
+	size_t mrc = ((max_pnts * 10) > 2000000 || !max_pnts) ? 2000000 : max_pnts * 10;
+	size_t craynum = mrc/((long)ncpus+1);
 	fastf_t mt = (max_time > 0) ? (fastf_t)max_time : (fastf_t)INT_MAX;
 
 	point_t center;

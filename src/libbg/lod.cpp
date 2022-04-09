@@ -244,7 +244,7 @@ POPState::tri_process()
 
 	// Find the pop up level for this triangle (i.e., when it will first
 	// appear as we step up the zoom levels.)
-	int level = POP_MAXLEVEL - 1;
+	size_t level = POP_MAXLEVEL - 1;
 	for (int j = 0; j < POP_MAXLEVEL; j++) {
 	    if (!tri_degenerate(triangle[0], triangle[1], triangle[2], j)) {
 		level = j;
@@ -256,7 +256,7 @@ POPState::tri_process()
 
 	// Let the vertices know they will be needed at this level, if another
 	// triangle doesn't already need them sooner
-	for (int j = 0; j < 3; j++) {
+	for (size_t j = 0; j < 3; j++) {
 	    if (vert_tri_minlevel[faces_array[3*i+j]] > level) {
 		vert_tri_minlevel[faces_array[3*i+j]] = level;
 	    }
