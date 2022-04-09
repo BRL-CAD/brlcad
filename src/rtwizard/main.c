@@ -401,9 +401,9 @@ int
 opt_objs(struct bu_vls *msg, size_t argc, const char **argv, void *obj_tbl)
 {
     /* argv[0] should be either an object or a list. */
-    int i = 0;
+    size_t i = 0;
     char *objs = NULL;
-    int acnum = 0;
+    size_t acnum = 0;
     char **avnum;
     struct bu_ptbl *t = (struct bu_ptbl *)obj_tbl;
 
@@ -469,7 +469,7 @@ int
 opt_quat(struct bu_vls *msg, size_t argc, const char **argv, void *inq)
 {
     size_t i = 0;
-    int acnum = 0;
+    size_t acnum = 0;
     char *str1 = NULL;
     char *avnum[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 
@@ -1121,7 +1121,7 @@ main(int argc, char **argv)
 	 * in Tcl scripts */
 	if (bu_vls_strlen(s->input_file) > 0) {
 	    Tcl_Obj *initPath, *normalPath;
-	    initPath = Tcl_NewStringObj(bu_vls_addr(s->input_file), bu_vls_strlen(s->input_file));
+	    initPath = Tcl_NewStringObj(bu_vls_addr(s->input_file), (int)bu_vls_strlen(s->input_file));
 	    Tcl_IncrRefCount(initPath);
 	    normalPath = Tcl_FSGetNormalizedPath(interp, initPath);
 	    bu_vls_sprintf(s->input_file, "%s", Tcl_GetString(normalPath));
@@ -1129,7 +1129,7 @@ main(int argc, char **argv)
 	}
 	if (bu_vls_strlen(s->output_file) > 0) {
 	    Tcl_Obj *initPath, *normalPath;
-	    initPath = Tcl_NewStringObj(bu_vls_addr(s->output_file), bu_vls_strlen(s->output_file));
+	    initPath = Tcl_NewStringObj(bu_vls_addr(s->output_file), (int)bu_vls_strlen(s->output_file));
 	    Tcl_IncrRefCount(initPath);
 	    normalPath = Tcl_FSGetNormalizedPath(interp, initPath);
 	    bu_vls_sprintf(s->output_file, "%s", Tcl_GetString(normalPath));
