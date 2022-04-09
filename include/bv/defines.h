@@ -549,8 +549,6 @@ struct bview_set_internal;
 struct bview_set {
     struct bview_set_internal   *i;
     struct bview_settings       settings;
-
-    struct bu_list              vlfree;
 };
 
 #endif /* BV_DEFINES_H */

@@ -572,7 +572,7 @@ bv_obj_get(struct bview *v, int type)
 	    } else {
 		otbl = &v->vset->i->shared_view_objs;
 	    }
-	    vlfree = &v->vset->vlfree;
+	    vlfree = &v->vset->i->vlfree;
 	} else {
 	    free_scene_obj = v->gv_objs.free_scene_obj;
 	    if (type == BV_SCENE_OBJ_DB) {

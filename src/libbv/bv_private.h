@@ -24,6 +24,7 @@
  */
 
 #include "common.h"
+#include "bu/list.h"
 #include "bu/ptbl.h"
 #include "bv/defines.h"
 
@@ -35,6 +36,7 @@ struct bview_set_internal {
     struct bu_ptbl shared_view_objs;
 
     struct bv_scene_obj  *free_scene_obj;
+    struct bu_list vlfree;
 };
 
 __END_DECLS

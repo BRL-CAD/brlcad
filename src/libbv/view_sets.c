@@ -41,7 +41,7 @@ bv_set_init(struct bview_set *s)
     BU_PTBL_INIT(&s->i->views);
     bu_ptbl_init(&s->i->shared_db_objs, 8, "db_objs init");
     bu_ptbl_init(&s->i->shared_view_objs, 8, "view_objs init");
-    BU_LIST_INIT(&s->vlfree);
+    BU_LIST_INIT(&s->i->vlfree);
     /* init the solid list */
     BU_GET(s->i->free_scene_obj, struct bv_scene_obj);
     BU_LIST_INIT(&s->i->free_scene_obj->l);

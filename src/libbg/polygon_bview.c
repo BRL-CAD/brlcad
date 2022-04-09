@@ -45,7 +45,7 @@ bv_polygon_contour(struct bv_scene_obj *s, struct bg_poly_contour *c, int curr_c
 	return;
 
     if (do_pnt) {
-	BV_ADD_VLIST(&s->s_v->vset->vlfree, &s->s_vlist, c->point[0], BV_VLIST_POINT_DRAW);
+	BV_ADD_VLIST(s->vlfree, &s->s_vlist, c->point[0], BV_VLIST_POINT_DRAW);
 	return;
     }
 
