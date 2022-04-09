@@ -157,9 +157,9 @@ void ndbg(struct nirt_state *nss, int flag, const char *fmt, ...)
 }
 
 size_t
-_nirt_find_first_unescaped(std::string &s, const char *keys, int offset)
+_nirt_find_first_unescaped(std::string &s, const char *keys, size_t offset)
 {
-    int off = offset;
+    size_t off = offset;
     int done = 0;
     size_t candidate = std::string::npos;
     while (!done) {
@@ -2114,17 +2114,22 @@ _nirt_cmd_quit(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 extern "C" int
 _nirt_cmd_show_menu(void *ns, int UNUSED(argc), const char **UNUSED(argv))
 {
-    int longest = 0;
+    int longest = 0; // must be int for $*
     const struct nirt_cmd_desc *d;
     struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
+
+    if (!ns)
+	return -1;
+
     for (d = nirt_descs; d->cmd != NULL; d++) {
-	int l = strlen(d->cmd);
-	if (l > longest) longest = l;
+	size_t l = strlen(d->cmd);
+	if (l > (size_t)longest)
+	    longest = (int)l;
     }
     for (d = nirt_descs; d->cmd != NULL; d++) {
 	nout(nss, "%*s %s\n", longest, d->cmd, d->desc);
     }
+
     return 0;
 }
 
@@ -2384,8 +2389,10 @@ _nirt_exec_cmd(struct nirt_state *ns, const char *cmdstr)
     if (!ns || !cmdstr || strlen(cmdstr) > entry.max_size()) return -1;
     std::string s(cmdstr);
     std::stringstream ss(s);
+
     // get an upper limit on the size of argv
-    while (std::getline(ss, entry, ' ')) ac_max++;
+    while (std::getline(ss, entry, ' '))
+	ac_max++;
     ss.clear();
     ss.seekg(0, ss.beg);
 
@@ -2396,7 +2403,8 @@ _nirt_exec_cmd(struct nirt_state *ns, const char *cmdstr)
     }
 
     _nirt_trim_whitespace(s);
-    if (!s.length()) return 0;
+    if (!s.length())
+	return 0;
 
     /* Start by initializing the position markers for quoted substrings. */
     q_start = _nirt_find_first_unescaped(s, "\"", 0);
