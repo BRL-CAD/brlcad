@@ -504,7 +504,7 @@ bv_clear(struct bview *v, int flags)
 	    bu_ptbl_reset(sg);
 	}
 	if ((!flags && !v->independent) || flags & BV_SHARED_OBJS) {
-	    sg = bv_set_view_db_objs(v);
+	    sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
 	    if (sg) {
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
@@ -523,7 +523,7 @@ bv_clear(struct bview *v, int flags)
 	    }
 	}
 	if ((!flags && !v->independent) || flags & BV_SHARED_OBJS) {
-	    sv = bv_set_view_objs(v);
+	    sv = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
 	    if (sv) {
 		for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
@@ -536,10 +536,10 @@ bv_clear(struct bview *v, int flags)
 
    size_t ocnt = BU_PTBL_LEN(v->gv_objs.db_objs) + BU_PTBL_LEN(v->gv_objs.view_objs);
    if (!v->independent) {
-       sg = bv_set_view_db_objs(v);
+       sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
        if (sg)
 	   ocnt += BU_PTBL_LEN(sg);
-       sv = bv_set_view_objs(v);
+       sv = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
        if (sv)
 	   ocnt += BU_PTBL_LEN(sv);
    }
@@ -905,6 +905,19 @@ bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
 	vZ = calc_val;
     }
     return vZ;
+}
+
+
+struct bu_ptbl *
+bv_view_objs(struct bview *v, int type)
+{
+    if (type == BV_SCENE_OBJ_DB)
+	return &v->vset->i->shared_db_objs;
+
+    if (type == BV_SCENE_OBJ_VIEW)
+	return &v->vset->i->shared_view_objs;
+
+    return NULL;
 }
 
 /*

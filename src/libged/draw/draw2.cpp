@@ -178,7 +178,7 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
     if (v->gv_s->adaptive_plot || v->independent) {
 	sg = v->gv_objs.db_objs;
     } else {
-	sg = bv_set_view_db_objs(v);
+	sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
     }
 
     // If we have no active groups and no view objects, we are drawing into a
@@ -669,8 +669,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // first pass, but we still need to size the other views (if any).
     int shared_blank_slate = 0;
 
-    struct bu_ptbl *sg = bv_set_view_db_objs(cv);
-    struct bu_ptbl *view_objs = bv_set_view_objs(cv);
+    struct bu_ptbl *sg = bv_view_objs(cv, BV_SCENE_OBJ_DB);
+    struct bu_ptbl *view_objs = bv_view_objs(cv, BV_SCENE_OBJ_VIEW);
     if (!BU_PTBL_LEN(sg) && !BU_PTBL_LEN(view_objs)) {
 	shared_blank_slate = 1;
     }
@@ -796,7 +796,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
     // If going from adaptive to shared we only need to do so once, but when going
     // from shared to adaptive each view needs its own copy.  Check for the transition
     // states, and handle accordingly.
-    struct bu_ptbl *sg = bv_set_view_db_objs(v);
+    struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
     if (v->gv_s->adaptive_plot && BU_PTBL_LEN(sg) && !BU_PTBL_LEN(v->gv_objs.db_objs)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
@@ -865,7 +865,7 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 		ged_exec(gedp, ac, (const char **)av);
 	    }
 	} else {
-	    sg = bv_set_view_db_objs(v);
+	    sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		int ac = 3;

@@ -135,7 +135,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "1")) {
 	v->independent = 1;
 	// Initialize local containers with current shared grps
-	struct bu_ptbl *sg = bv_set_view_db_objs(v);
+	struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
 	if (!sg)
 	    return BRLCAD_OK;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
@@ -491,7 +491,7 @@ struct bv_scene_obj *wobj = NULL;
 		}
 	    }
 	    if (!wobj) {
-		struct bu_ptbl *sg = bv_set_view_db_objs(v);
+		struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		    if (bu_list_len(&cg->s_vlist)) {
@@ -539,7 +539,7 @@ struct bv_scene_obj *wobj = NULL;
 		    }
 		}
 	    }
-	    struct bu_ptbl *sg = bv_set_view_db_objs(v);
+	    struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		if (bu_list_len(&cg->s_vlist)) {

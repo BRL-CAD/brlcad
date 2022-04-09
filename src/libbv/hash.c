@@ -311,7 +311,7 @@ bv_hash(struct bview *v)
     _bv_other_state_hash(state, &v->gv_tcl.gv_prim_labels);
 
     if (v->vset) {
-	struct bu_ptbl *db_objs = bv_set_view_db_objs(v);
+	struct bu_ptbl *db_objs = bv_view_objs(v, BV_SCENE_OBJ_DB);
 	for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
 	    if (BU_PTBL_IS_INITIALIZED(&g->children)) {
@@ -322,7 +322,7 @@ bv_hash(struct bview *v)
 	    }
 	    bv_scene_obj_hash(state, g);
 	}
-	struct bu_ptbl *view_objs = bv_set_view_objs(v);
+	struct bu_ptbl *view_objs = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	    if (BU_PTBL_IS_INITIALIZED(&s->children)) {

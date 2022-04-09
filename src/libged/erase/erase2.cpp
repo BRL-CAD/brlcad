@@ -320,7 +320,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     // bu_vls_strncmp function, and prepend a "/" character in the case whare a
     // user supplies a name without the path prefix.
     //
-    struct bu_ptbl *sg = (v->independent || v->gv_s->adaptive_plot) ? v->gv_objs.db_objs : bv_set_view_db_objs(v);
+    struct bu_ptbl *sg = (v->independent || v->gv_s->adaptive_plot) ? v->gv_objs.db_objs : bv_view_objs(v, BV_SCENE_OBJ_DB);
     std::set<struct bv_scene_group *> all;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);

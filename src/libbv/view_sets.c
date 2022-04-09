@@ -112,18 +112,6 @@ bv_set_views(struct bview_set *s){
     return &s->i->views;
 }
 
-struct bu_ptbl *
-bv_set_view_db_objs(struct bview *v)
-{
-    return &v->vset->i->shared_db_objs;
-}
-
-struct bu_ptbl *
-bv_set_view_objs(struct bview *v)
-{
-    return &v->vset->i->shared_view_objs;
-}
-
 struct bview *
 bv_set_find_view(struct bview_set *s, const char *vname)
 {

@@ -241,7 +241,7 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     // If we're not wanting help and we have no subcommand, list current gobjs objects
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
-	struct bu_ptbl *view_objs = bv_set_view_objs(v);
+	struct bu_ptbl *view_objs = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	    // TODO - strip gobjs:: prefix

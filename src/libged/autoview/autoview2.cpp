@@ -126,7 +126,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     if (v->gv_s->adaptive_plot || v->independent) {
 	so = v->gv_objs.db_objs;
     } else {
-	so = bv_set_view_db_objs(v);
+	so = bv_view_objs(v, BV_SCENE_OBJ_DB);
     }
     vect_t minus, plus;
     int have_geom_objs = 0;
@@ -182,7 +182,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     if (v->independent) {
 	so = v->gv_objs.view_objs;
     } else {
-	so = bv_set_view_objs(v);
+	so = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
     }
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);

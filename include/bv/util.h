@@ -106,11 +106,6 @@ BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s);
 BV_EXPORT extern fastf_t bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode);
 
 
-// Return number of objects defined in any object container
-// known to this view (0 if completely cleared).
-BV_EXPORT size_t
-bv_clear(struct bview *v, int flags);
-
 // Given a view, create an object of the specified type.  Issues such as memory
 // management as a function of view settings are handled internally, so client
 // codes don't need to manage it.
@@ -129,14 +124,21 @@ bv_obj_put(struct bv_scene_obj *o);
 
 
 BV_EXPORT struct bv_scene_obj *
-bv_find_obj(struct bview *v, const char *vname);
-
-BV_EXPORT struct bv_scene_obj *
 bv_find_child(struct bv_scene_obj *s, const char *vname);
 
 BV_EXPORT void
 bv_obj_reset(struct bv_scene_obj *s);
 
+// Return number of objects defined in any object container
+// known to this view (0 if completely cleared).
+BV_EXPORT size_t
+bv_clear(struct bview *v, int flags);
+
+BV_EXPORT struct bv_scene_obj *
+bv_find_obj(struct bview *v, const char *vname);
+
+BV_EXPORT struct bu_ptbl *
+bv_view_objs(struct bview *v, int type);
 
 __END_DECLS
 

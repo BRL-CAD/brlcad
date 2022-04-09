@@ -46,12 +46,6 @@ bv_set_rm_view(struct bview_set *s, struct bview *v);
 BV_EXPORT struct bu_ptbl *
 bv_set_views(struct bview_set *s);
 
-BV_EXPORT struct bu_ptbl *
-bv_set_view_db_objs(struct bview *v);
-
-BV_EXPORT struct bu_ptbl *
-bv_set_view_objs(struct bview *v);
-
 BV_EXPORT struct bview *
 bv_set_find_view(struct bview_set *s, const char *vname);
 
