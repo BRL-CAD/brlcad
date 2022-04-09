@@ -19,6 +19,8 @@
  */
 /** @addtogroup bv_util
  *
+ * In applications with multiple views, those views typically share common
+ * scene objects and memory.  To manage this sharing, we define view sets.
  */
 /** @{ */
 /** @file bv/view_sets.h */
@@ -31,25 +33,45 @@
 
 __BEGIN_DECLS
 
+/**
+ * Initialize an empty view set
+ */
 BV_EXPORT void
 bv_set_init(struct bview_set *s);
 
+/**
+ * Free view set
+ */
 BV_EXPORT void
 bv_set_free(struct bview_set *s);
 
+/**
+ * Add view v to set s, handling shared memory assignments.
+ */
 BV_EXPORT void
 bv_set_add_view(struct bview_set *s, struct bview *v);
 
+/**
+ * Remove view v from set s
+ */
 BV_EXPORT void
 bv_set_rm_view(struct bview_set *s, struct bview *v);
 
+/**
+ * Return a bu_ptbl holding pointers to all views in set s
+ */
 BV_EXPORT struct bu_ptbl *
 bv_set_views(struct bview_set *s);
 
+/**
+ * Return a pointer to the view with name vname, if it is present in s.  If not
+ * found, returns NULL
+ */
 BV_EXPORT struct bview *
 bv_set_find_view(struct bview_set *s, const char *vname);
 
-// Expose free_scene_obj for older codes
+
+// Expose free_scene_obj for older codes - do not use in new coding
 BV_EXPORT struct bv_scene_obj *
 bv_set_fsos(struct bview_set *s);
 
