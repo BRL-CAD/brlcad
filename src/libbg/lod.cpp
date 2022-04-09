@@ -199,10 +199,10 @@ class POPState {
 	void tri_pop_trim(int level);
 
 	// Processing containers used for initial triangle data characterization
-	std::vector<int> tri_ind_map;
-	std::vector<int> vert_tri_minlevel;
-	std::map<int, std::set<int>> level_tri_verts;
-	std::vector<std::vector<int>> level_tris;
+	std::vector<size_t> tri_ind_map;
+	std::vector<size_t> vert_tri_minlevel;
+	std::map<size_t, std::set<size_t>> level_tri_verts;
+	std::vector<std::vector<size_t>> level_tris;
 	size_t tri_threshold = 0;
 
 	// Pointers to original input data
@@ -229,7 +229,7 @@ POPState::tri_process()
     // Reserve memory for level containers
     level_tris.reserve(POP_MAXLEVEL);
     for (size_t i = 0; i < POP_MAXLEVEL; i++) {
-	level_tris.push_back(std::vector<int>(0));
+	level_tris.push_back(std::vector<size_t>(0));
     }
 
     // Walk the triangles and perform the LoD characterization
@@ -266,7 +266,7 @@ POPState::tri_process()
     // The vertices now know when they will first need to appear.  Build level
     // sets of vertices
     for (size_t i = 0; i < vert_tri_minlevel.size(); i++) {
-	level_tri_verts[vert_tri_minlevel[i]].insert((int)i);
+	level_tri_verts[vert_tri_minlevel[i]].insert(i);
     }
 
     // Having sorted the vertices into level sets, we may now define a new global
@@ -275,9 +275,9 @@ POPState::tri_process()
     for (size_t i = 0; i < vert_cnt; i++) {
 	tri_ind_map.push_back(i);
     }
-    int vind = 0;
-    std::map<int, std::set<int>>::iterator l_it;
-    std::set<int>::iterator s_it;
+    size_t vind = 0;
+    std::map<size_t, std::set<size_t>>::iterator l_it;
+    std::set<size_t>::iterator s_it;
     for (l_it = level_tri_verts.begin(); l_it != level_tri_verts.end(); l_it++) {
 	for (s_it = l_it->second.begin(); s_it != l_it->second.end(); s_it++) {
 	    tri_ind_map[*s_it] = vind;
@@ -352,7 +352,7 @@ POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
     faces_array = faces;
 
     // Calculate the full mesh bounding box for later use
-    bg_trimesh_aabb(&bbmin, &bbmax, faces_array, faces_cnt, verts_array, (int)vert_cnt);
+    bg_trimesh_aabb(&bbmin, &bbmax, faces_array, faces_cnt, verts_array, vert_cnt);
 
     // Find our min and max values, initialize levels
     for (size_t i = 0; i < vcnt; i++) {
@@ -383,12 +383,12 @@ POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
     if (!is_valid)
 	return;
 
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	bu_log("bucket %d count: %zd\n", i, level_tris[i].size());
+    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
+	bu_log("bucket %zu count: %zu\n", i, level_tris[i].size());
     }
 
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	bu_log("vert %d count: %zd\n", i, level_tri_verts[i].size());
+    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
+	bu_log("vert %zu count: %zu\n", i, level_tri_verts[i].size());
     }
 }
 
@@ -417,8 +417,8 @@ POPState::POPState(unsigned long long key)
 
     // Reserve memory for level containers
     level_tris.reserve(POP_MAXLEVEL);
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	level_tris.push_back(std::vector<int>(0));
+    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
+	level_tris.push_back(std::vector<size_t>(0));
     }
 
     // Read in min/max bounds
@@ -471,15 +471,15 @@ POPState::tri_pop_load(int start_level, int level)
 	    continue;
 
 	std::ifstream vifile(dir, std::ios::in | std::ofstream::binary);
-	int vicnt = 0;
+	size_t vicnt = 0;
 	vifile.read(reinterpret_cast<char *>(&vicnt), sizeof(vicnt));
-	for (int j = 0; j < vicnt; j++) {
+	for (size_t j = 0; j < vicnt; j++) {
 	    point_t nv;
 	    vifile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
-	    for (int k = 0; k < 3; k++) {
+	    for (size_t k = 0; k < 3; k++) {
 		lod_tri_pnts.push_back(nv[k]);
 	    }
-	    level_tri_verts[i].insert((int)(lod_tri_pnts.size() - 1));
+	    level_tri_verts[i].insert(lod_tri_pnts.size() - 1);
 	}
 	vifile.close();
 	bu_vls_free(&vfile);
@@ -513,7 +513,7 @@ POPState::tri_pop_load(int start_level, int level)
 	    for (int k = 0; k < 3; k++) {
 		lod_tris.push_back(vf[k]);
 	    }
-	    level_tris[i].push_back((int)(lod_tris.size() / 3 - 1));
+	    level_tris[i].push_back(lod_tris.size() / 3 - 1);
 	}
 	tifile.close();
 	bu_vls_free(&tfile);
@@ -676,7 +676,7 @@ POPState::cache_tri(struct bu_vls *vkey)
 
     // Write out the level vertices
     for (size_t i = 0; i <= tri_threshold; i++) {
-	if (level_tri_verts.find((int)i) == level_tri_verts.end())
+	if (level_tri_verts.find(i) == level_tri_verts.end())
 	    continue;
 	if (!level_tri_verts[i].size())
 	    continue;
@@ -691,7 +691,7 @@ POPState::cache_tri(struct bu_vls *vkey)
 	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
 
 	// Write out the vertex points
-	std::set<int>::iterator s_it;
+	std::set<size_t>::iterator s_it;
 	for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
 	    point_t v;
 	    VMOVE(v, verts_array[*s_it]);
@@ -718,12 +718,12 @@ POPState::cache_tri(struct bu_vls *vkey)
 	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
 
 	// Write out the mapped triangle indices
-	std::vector<int>::iterator s_it;
+	std::vector<size_t>::iterator s_it;
 	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
 	    int vt[3];
-	    vt[0] = tri_ind_map[faces_array[3*(*s_it)+0]];
-	    vt[1] = tri_ind_map[faces_array[3*(*s_it)+1]];
-	    vt[2] = tri_ind_map[faces_array[3*(*s_it)+2]];
+	    vt[0] = (int)tri_ind_map[faces_array[3*(*s_it)+0]];
+	    vt[1] = (int)tri_ind_map[faces_array[3*(*s_it)+1]];
+	    vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
 	    tofile.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
 	}
 
@@ -893,7 +893,7 @@ POPState::draw(void *ctx, int mode)
 	struct bv_mesh_lod_info info;
 	info.fset_cnt = 0;
 	info.fset = NULL;
-	info.fcnt = lod_tris.size()/3;
+	info.fcnt = (int)lod_tris.size()/3;
 	info.faces = lod_tris.data();
 	info.points_orig = (const point_t *)lod_tri_pnts.data();
 	if (curr_level <= max_tri_pop_level) {
@@ -936,9 +936,9 @@ POPState::plot(const char *root)
 	pl_color(plot_file, 0, 255, 0);
 
 	for (int i = 0; i <= curr_level; i++) {
-	    std::vector<int>::iterator s_it;
+	    std::vector<size_t>::iterator s_it;
 	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-		int f_ind = *s_it;
+		size_t f_ind = *s_it;
 		int v1ind, v2ind, v3ind;
 		if (faces_array) {
 		    v1ind = faces_array[3*f_ind+0];
