@@ -9,6 +9,7 @@ set(bv_headers
   util.h
   vectfont.h
   vlist.h
+  view_sets.h
   )
 BRLCAD_MANAGE_FILES(bv_headers ${INCLUDE_DIR}/brlcad/bv)
 

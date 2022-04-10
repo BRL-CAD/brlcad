@@ -32,6 +32,7 @@
 #include "bv/vlist.h"
 #include "bv/defines.h"
 #include "bv/util.h"
+#include "bv/view_sets.h"
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
 #include "xxhash.h"
@@ -310,8 +311,9 @@ bv_hash(struct bview *v)
     _bv_other_state_hash(state, &v->gv_tcl.gv_prim_labels);
 
     if (v->vset) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_db_objs); i++) {
-	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(&v->vset->shared_db_objs, i);
+	struct bu_ptbl *db_objs = bv_view_objs(v, BV_SCENE_OBJ_DB);
+	for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
+	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
 	    if (BU_PTBL_IS_INITIALIZED(&g->children)) {
 		for (size_t j = 0; j < BU_PTBL_LEN(&g->children); j++) {
 		    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, j);
@@ -320,8 +322,9 @@ bv_hash(struct bview *v)
 	    }
 	    bv_scene_obj_hash(state, g);
 	}
-	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->shared_view_objs, i);
+	struct bu_ptbl *view_objs = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	    if (BU_PTBL_IS_INITIALIZED(&s->children)) {
 		for (size_t j = 0; j < BU_PTBL_LEN(&s->children); j++) {
 		    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, j);
@@ -332,8 +335,8 @@ bv_hash(struct bview *v)
 	}
     }
 
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_grps); i++) {
-	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.view_grps, i);
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_objs); i++) {
+	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.db_objs, i);
 	if (BU_PTBL_IS_INITIALIZED(&g->children)) {
 	    for (size_t j = 0; j < BU_PTBL_LEN(&g->children); j++) {
 		struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, j);

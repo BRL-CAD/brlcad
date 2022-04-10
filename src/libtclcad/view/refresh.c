@@ -157,8 +157,9 @@ to_refresh_all_views(struct tclcad_obj *top)
 {
     struct bview *gdvp;
 
-    for (size_t i = 0; i < BU_PTBL_LEN(&top->to_gedp->ged_views.views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&top->to_gedp->ged_views.views, i);
+    struct bu_ptbl *views = bv_set_views(&top->to_gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(views, i);
 	to_refresh_view(gdvp);
     }
 }
@@ -250,7 +251,7 @@ to_handle_refresh(struct ged *gedp,
 {
     struct bview *gdvp;
 
-    gdvp = ged_find_view(gedp, name);
+    gdvp = bv_set_find_view(&gedp->ged_views, name);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", name);
 	return BRLCAD_ERROR;

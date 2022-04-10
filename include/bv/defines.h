@@ -212,6 +212,15 @@ struct bv_obj_settings {
 
 struct bview;
 
+#define BV_SCENE_OBJ_DB 0
+#define BV_SCENE_OBJ_VIEW 1
+#define BV_SCENE_OBJ_DB_LOCAL 2
+#define BV_SCENE_OBJ_VIEW_LOCAL 3
+
+#define BV_DB_OBJS 0x01
+#define BV_VIEW_OBJS 0x02
+#define BV_SHARED_OBJS 0x04
+
 struct bv_scene_obj  {
     struct bu_list l;
 
@@ -278,8 +287,18 @@ struct bv_scene_obj  {
     /* Child objects of this object */
     struct bu_ptbl children;
 
+    /* Object level pointers to parent containers.  These are stored so
+     * that the object itself knows everything needed for data manipulation
+     * and it is unnecessary to explicitly pass other parameters. */
+
+    /* Reusable vlists */
+    struct bu_list *vlfree;
+
     /* Container for reusing bv_scene_obj allocations */
     struct bv_scene_obj *free_scene_obj;
+
+    /* View container containing this object */
+    struct bu_ptbl *otbl;
 
     /* For more specialized routines not using vlists, we may need
      * additional drawing data associated with a scene object */
@@ -413,7 +432,7 @@ struct bview_objs {
     // Container for db object groups unique to this view (typical use case is
     // adaptive plotting, where geometry wireframes may differ from view to
     // view and thus need unique vlists.)
-    struct bu_ptbl  *view_grps;
+    struct bu_ptbl  *db_objs;
     // Container for storing bv_scene_obj elements unique to this view.
     struct bu_ptbl  *view_objs;
 
@@ -526,22 +545,11 @@ struct bview {
 // Because bview instances frequently share objects in applications, they are
 // not always fully independent - we define a container and some basic
 // operations to manage this.
+struct bview_set_internal;
 struct bview_set {
-    struct bu_ptbl              views;
-    struct bu_ptbl		shared_db_objs;
-    struct bu_ptbl		shared_view_objs;
+    struct bview_set_internal   *i;
     struct bview_settings       settings;
-
-    struct bv_scene_obj         *free_scene_obj;
-    struct bu_list              vlfree;
 };
-BV_EXPORT void
-bv_set_init(struct bview_set *s);
-BV_EXPORT void
-bv_set_free(struct bview_set *s);
-
-BV_EXPORT void
-bv_set_add(struct bview_set *s, struct bview *v);
 
 #endif /* BV_DEFINES_H */
 

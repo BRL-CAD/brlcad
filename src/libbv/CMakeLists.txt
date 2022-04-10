@@ -29,6 +29,7 @@ set(LIBBV_SRCS
   tig/vector.c
   util.c
   vlist.c
+  view_sets.c
   )
 
 BRLCAD_ADDLIB(libbv "${LIBBV_SRCS}" "libbn;libbu")
@@ -39,6 +40,7 @@ add_subdirectory(tests)
 CMAKEFILES(
   CMakeLists.txt
   TODO
+  bv_private.h
   )
 
 # Local Variables:

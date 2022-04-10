@@ -41,23 +41,6 @@
 
 #define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
 #define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
-#define GET_BV_SCENE_OBJ(p, fp) { \
-        if (BU_LIST_IS_EMPTY(fp)) { \
-            BU_ALLOC((p), struct bv_scene_obj); \
-	    struct ged_bv_data *bdata; \
-	    BU_GET(bdata, struct ged_bv_data); \
-	    db_full_path_init(&bdata->s_fullpath); \
-	    (p)->s_u_data = (void *)bdata; \
-        } else { \
-            p = BU_LIST_NEXT(bv_scene_obj, fp); \
-            BU_LIST_DEQUEUE(&((p)->l)); \
-	    if ((p)->s_u_data) { \
-		struct ged_bv_data *bdata = (struct ged_bv_data *)(p)->s_u_data; \
-		bdata->s_fullpath.fp_len = 0; \
-	    } \
-        } \
-        BU_LIST_INIT( &((p)->s_vlist) ); }
-
 #define FREE_BV_SCENE_OBJ(p, fp) { \
         BU_LIST_APPEND(fp, &((p)->l)); \
         BV_FREE_VLIST(&RTG.rtg_vlfree, &((p)->s_vlist)); }
@@ -244,7 +227,6 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
-    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct display_list *last_gdlp;
@@ -252,6 +234,7 @@ dl_erasePathFromDisplay(struct ged *gedp, const char *path, int allow_split)
     struct directory *dp;
     struct db_full_path subpath;
     int found_subpath;
+    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
 
     if (db_string_to_path(&subpath, dbip, path) == 0)
 	found_subpath = 1;
@@ -352,7 +335,7 @@ eraseAllSubpathsFromSolidList(struct ged *gedp, struct display_list *gdlp,
 {
     struct bv_scene_obj *sp;
     struct bv_scene_obj *nsp;
-    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
 
     sp = BU_LIST_NEXT(bv_scene_obj, &gdlp->dl_head_scene_obj);
     while (BU_LIST_NOT_HEAD(sp, &gdlp->dl_head_scene_obj)) {
@@ -440,7 +423,7 @@ _dl_eraseFirstSubpath(struct ged *gedp,
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
-    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
     struct bv_scene_obj *sp;
     struct bv_scene_obj *nsp;
     struct db_full_path dup_path;
@@ -544,7 +527,7 @@ void
 _dl_freeDisplayListItem (struct ged *gedp, struct display_list *gdlp)
 {
     struct db_i *dbip = gedp->dbip;
-    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
+    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
     struct bv_scene_obj *sp;
     struct directory *dp;
 
@@ -701,11 +684,17 @@ solid_append_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
 void
 dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
 {
-    struct bv_scene_obj *sp;
-    GET_BV_SCENE_OBJ(sp, &dgcdp->free_scene_obj->l);
+    struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_SCENE_OBJ_DB);
+    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
+    if (!bdata) {
+	BU_GET(bdata, struct ged_bv_data);
+	db_full_path_init(&bdata->s_fullpath);
+	sp->s_u_data = (void *)bdata;
+    } else {
+	bdata->s_fullpath.fp_len = 0;
+    }
     if (!sp->s_u_data)
 	return;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     solid_append_vlist(sp, (struct bv_vlist *)vhead);
 
@@ -819,7 +808,6 @@ append_solid_to_display_list(
         void *client_data)
 {
     point_t min, max;
-    struct bv_scene_obj *sp;
     union tree *curtree;
     struct ged_solid_data *bv_data = (struct ged_solid_data *)client_data;
 
@@ -844,10 +832,17 @@ append_solid_to_display_list(
     }
 
     /* create solid */
-    GET_BV_SCENE_OBJ(sp, &(((struct bv_scene_obj *)bv_data->free_scene_obj)->l));
+    struct bv_scene_obj *sp = bv_obj_get(bv_data->v, BV_SCENE_OBJ_DB);
+    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
+    if (!bdata) {
+	BU_GET(bdata, struct ged_bv_data);
+	db_full_path_init(&bdata->s_fullpath);
+	sp->s_u_data = (void *)bdata;
+    } else {
+	bdata->s_fullpath.fp_len = 0;
+    }
     if (!sp->s_u_data)
 	return TREE_NULL;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     sp->s_size = 0;
     VSETALL(sp->s_center, 0.0);
@@ -1004,7 +999,6 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
-    struct bv_scene_obj *free_scene_obj = gedp->ged_views.free_scene_obj;
     struct directory *dp;
     struct bv_scene_obj *sp;
     struct display_list *gdlp;
@@ -1027,10 +1021,17 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     }
 
     /* Obtain a fresh solid structure, and fill it in */
-    GET_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+    sp = bv_obj_get(gedp->ged_gvp, BV_SCENE_OBJ_DB);
+    struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
+    if (!bdata) {
+	BU_GET(bdata, struct ged_bv_data);
+	db_full_path_init(&bdata->s_fullpath);
+	sp->s_u_data = (void *)bdata;
+    } else {
+	bdata->s_fullpath.fp_len = 0;
+    }
     if (!sp->s_u_data)
 	return -1;
-    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
     /* Need to enter phony name in directory structure */
     dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&type);
@@ -1161,7 +1162,7 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
 }
 
 void
-dl_zap(struct ged *gedp, struct bv_scene_obj *free_scene_obj)
+dl_zap(struct ged *gedp)
 {
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
@@ -1170,6 +1171,7 @@ dl_zap(struct ged *gedp, struct bv_scene_obj *free_scene_obj)
     struct bu_ptbl dls = BU_PTBL_INIT_ZERO;
     struct directory *dp = RT_DIR_NULL;
     size_t i = 0;
+    struct bv_scene_obj *free_scene_obj = bv_set_fsos(&gedp->ged_views);
 
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
 
