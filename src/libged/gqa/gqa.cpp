@@ -2685,7 +2685,8 @@ aborted:
 	    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
 	    if (BU_STR_EQUAL(nview, "1")) {
 		struct bview *view = gedp->ged_gvp;
-		bv_vlblock_obj(ged_gqa_plot.vbp, view, "gqa::overlaps");
+		struct bu_ptbl *vobjs = (view->independent) ? view->gv_objs.view_objs : &view->vset->shared_view_objs;
+		bv_vlblock_to_objs(vobjs, "gqa::overlaps_", ged_gqa_plot.vbp, view, gedp->ged_views.free_scene_obj, &gedp->ged_views.vlfree);
 	    } else {
 		_ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
 	    }

@@ -29,6 +29,9 @@
 #include "../../app.h"
 #include "QPolyCreate.h"
 
+#define FREE_BV_SCENE_OBJ(p, fp) { \
+    BU_LIST_APPEND(fp, &((p)->l)); }
+
 QPolyCreate::QPolyCreate()
     : QWidget()
 {
@@ -170,7 +173,8 @@ QPolyCreate::finalize(bool)
 	    // to make a closed polygon.
 	    bg_polygon_free(&ip->polygon);
 	    BU_PUT(ip, struct bv_polygon);
-	    bv_obj_put(p);
+	    bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
+	    FREE_BV_SCENE_OBJ(p, &gedp->ged_views.free_scene_obj->l);
 	    do_bool = false;
 	    p = NULL;
 	    emit view_updated(&gedp->ged_gvp);
@@ -206,7 +210,8 @@ QPolyCreate::finalize(bool)
     if (pcnt || op != bg_Union) {
 	bg_polygon_free(&ip->polygon);
 	BU_PUT(ip, struct bv_polygon);
-	bv_obj_put(p);
+	bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
+	FREE_BV_SCENE_OBJ(p, &gedp->ged_views.free_scene_obj->l);
     } else {
 
 	// Check if we have a name collision - if we do, it's no go
@@ -229,7 +234,8 @@ QPolyCreate::finalize(bool)
 	if (colliding) {
 	    bg_polygon_free(&ip->polygon);
 	    BU_PUT(ip, struct bv_polygon);
-	    bv_obj_put(p);
+	    bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
+	    FREE_BV_SCENE_OBJ(p, &gedp->ged_views.free_scene_obj->l);
 	    do_bool = false;
 	    p = NULL;
 	    emit view_updated(&gedp->ged_gvp);
@@ -405,7 +411,7 @@ QPolyCreate::do_import_sketch()
     }
 
     // Names are valid, dp is ready - try the sketch import
-    p = db_sketch_to_scene_obj(vname, gedp->dbip, dp, gedp->ged_gvp);
+    p = db_sketch_to_scene_obj(vname, gedp->dbip, dp, gedp->ged_gvp, gedp->ged_views.free_scene_obj);
     bu_free(vname, "name cpy");
     if (!p) {
 	return;
@@ -634,9 +640,9 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 		ptype = BV_POLYGON_GENERAL;
 	    }
 #ifdef USE_QT6
-	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->position().x(), m_e->position().y());
+	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->position().x(), m_e->position().y(), gedp->ged_views.free_scene_obj);
 #else
-	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y());
+	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y(), gedp->ged_views.free_scene_obj);
 #endif
 	    p->s_v = gedp->ged_gvp;
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;

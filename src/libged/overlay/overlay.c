@@ -220,7 +220,8 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
 	if (BU_STR_EQUAL(nview, "1")) {
 	    struct bview *v = gedp->ged_gvp;
-	    bv_vlblock_obj(vbp, v, bu_vls_cstr(&nroot));
+	    struct bu_ptbl *vobjs = (v->independent) ? v->gv_objs.view_objs : &v->vset->shared_view_objs;
+	    bv_vlblock_to_objs(vobjs, bu_vls_cstr(&nroot), vbp, gedp->ged_gvp, gedp->ged_views.free_scene_obj, &gedp->ged_views.vlfree);
 	} else {
 	    _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
 	}

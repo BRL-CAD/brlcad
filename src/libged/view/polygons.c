@@ -92,7 +92,7 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 	}
     }
 
-    s = bv_create_polygon(gedp->ged_gvp, type, x, y);
+    s = bv_create_polygon(gedp->ged_gvp, type, x, y, gedp->ged_views.free_scene_obj);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;
@@ -640,7 +640,7 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    s = db_sketch_to_scene_obj(gd->vobj, gedp->dbip, dp, gedp->ged_gvp);
+    s = db_sketch_to_scene_obj(gd->vobj, gedp->dbip, dp, gedp->ged_gvp, gedp->ged_views.free_scene_obj);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;

@@ -123,7 +123,7 @@ struct ged_solid_data {
     int wireframe_color[3];
     fastf_t transparency;
     int dmode;
-    struct bview *v;
+    void *free_scene_obj;
 };
 
 struct _ged_funtab {
@@ -156,7 +156,7 @@ struct _ged_client_data {
     struct display_list *gdlp;
     int fastpath_count;			/* statistics */
     struct bv_vlblock *draw_edge_uses_vbp;
-    struct bview *v;
+    struct bv_scene_obj *free_scene_obj;
 
 
 
@@ -196,6 +196,7 @@ struct draw_data_t {
     struct bv_obj_settings *vs;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
+    struct bv_scene_obj *free_scene_obj;
     struct bu_color c;
     int color_inherit;
     int bool_op;
@@ -266,7 +267,7 @@ GED_EXPORT extern union tree * append_solid_to_display_list(struct db_tree_state
 GED_EXPORT int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
 GED_EXPORT void dl_set_flag(struct bu_list *hdlp, int flag);
 GED_EXPORT void dl_set_wflag(struct bu_list *hdlp, int wflag);
-GED_EXPORT void dl_zap(struct ged *gedp);
+GED_EXPORT void dl_zap(struct ged *gedp, struct bv_scene_obj *free_scene_obj);
 GED_EXPORT int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
 GED_EXPORT void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 GED_EXPORT void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);

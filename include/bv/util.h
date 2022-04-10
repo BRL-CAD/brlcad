@@ -70,10 +70,6 @@ BV_EXPORT extern unsigned long long bv_hash(struct bview *v);
 /* Return a hash of the contents of a display list.  Returns 0 on failure. */
 BV_EXPORT extern unsigned long long bv_dl_hash(struct display_list *dl);
 
-/* Return number of objects defined in any object container
- * known to this view (0 if completely cleared). */
-BV_EXPORT size_t
-bv_clear(struct bview *v, int flags);
 
 /* Note that some of these are mutually exclusive as far as producing any
  * changes - a simultaneous constraint in X and Y, for example, results in a
@@ -101,6 +97,12 @@ BV_EXPORT extern int bv_adjust(struct bview *v, int dx, int dy, point_t keypoint
  * calculation is impossible), else 0. */
 BV_EXPORT extern int bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
 
+/* Initialize a scene object to standard default settings */
+BV_EXPORT extern void bv_scene_obj_init(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj);
+
+/* Free the object contents, including all child objects */
+BV_EXPORT extern void bv_scene_obj_free(struct bv_scene_obj *s, struct bv_scene_obj *free_scene_obj);
+
 /* Compute the min, max, and center points of the scene object.
  * Return 1 if a bound was computed, else 0 */
 BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s);
@@ -108,47 +110,6 @@ BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s);
 /* Find the nearest (mode == 0) or farthest (mode == 1) data_vZ value from
  * the vlist points in s in the context of view v */
 BV_EXPORT extern fastf_t bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode);
-
-
-/* Given a view, create an object of the specified type.  Issues such as memory
- * management as a function of view settings are handled internally, so client
- * codes don't need to manage it. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_get(struct bview *v, int type);
-
-/* Given an object, create an object that is a child of that object.  Issues
- * such as memory management as a function of view settings are handled
- * internally, so client codes don't need to manage it. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_get_child(struct bv_scene_obj *s);
-
-/* Clear the contents of an object (including releasing its children), but keep
- * it active in the view.  Generally used when redrawing an object */
-BV_EXPORT void
-bv_obj_reset(struct bv_scene_obj *s);
-
-/* Release an object to the internal pools. */
-BV_EXPORT void
-bv_obj_put(struct bv_scene_obj *o);
-
-/* Given a scene object and a name vname, glob match child names and uuids to
- * attempt to locate a child of s that matches vname */
-BV_EXPORT struct bv_scene_obj *
-bv_find_child(struct bv_scene_obj *s, const char *vname);
-
-/* Given a view and a name vname, glob match names and uuids to attempt to
- * locate a scene object in v that matches vname.
- *
- * NOTE - currently this is searching the top level objects, but does not walk
- * down into their children.  May want to support that in the future... */
-BV_EXPORT struct bv_scene_obj *
-bv_find_obj(struct bview *v, const char *vname);
-
-/* For the given view, return a pointer to the bu_ptbl holding active scene
- * objects with the specified type */
-BV_EXPORT struct bu_ptbl *
-bv_view_objs(struct bview *v, int type);
-
 
 __END_DECLS
 

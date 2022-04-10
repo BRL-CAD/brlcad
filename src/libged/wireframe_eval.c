@@ -1803,7 +1803,7 @@ draw_m3(struct bv_scene_obj *s)
     dgcdp.fp = &d->fp;
     dgcdp.tol = d->tol;
     dgcdp.ttol = d->ttol;
-    dgcdp.vlfree = s->vlfree;
+    dgcdp.vlfree = &s->s_v->vset->vlfree;
 
     BU_ALLOC(dgcdp.ap, struct application);
     RT_APPLICATION_INIT(dgcdp.ap);
