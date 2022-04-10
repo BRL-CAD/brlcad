@@ -44,15 +44,6 @@
 #include "./alphanum.h"
 #include "./ged_private.h"
 
-#define GET_BV_SCENE_OBJ(p, fp) { \
-	if (BU_LIST_IS_EMPTY(fp)) { \
-	    BU_ALLOC((p), struct bv_scene_obj); \
-	} else { \
-	    p = BU_LIST_NEXT(bv_scene_obj, fp); \
-	    BU_LIST_DEQUEUE(&((p)->l)); \
-	} \
-	BU_LIST_INIT( &((p)->s_vlist) ); }
-
 static int
 prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
 {
