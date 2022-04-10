@@ -458,6 +458,9 @@ mged_setup(Tcl_Interp **interpreter)
     }
     bu_vls_free(&tlog);
 
+    BU_GET(GEDP, struct ged);
+    GED_INIT(GEDP, NULL);
+
     BU_ALLOC(view_state->vs_gvp, struct bview);
     bv_init(view_state->vs_gvp, NULL);
     BU_GET(view_state->vs_gvp->callbacks, struct bu_ptbl);
@@ -467,15 +470,10 @@ mged_setup(Tcl_Interp **interpreter)
     view_state->vs_gvp->gv_clientData = (void *)view_state;
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
 
-    if (GEDP) {
-	/* release any allocated memory */
-	ged_free(GEDP);
-	BU_PUT(GEDP, struct ged);
-    }
-    BU_GET(GEDP, struct ged);
-    GED_INIT(GEDP, NULL);
-
     view_state->vs_gvp->vset = &GEDP->ged_views;
+
+    bv_set_add(&GEDP->ged_views, view_state->vs_gvp);
+    GEDP->ged_gvp = view_state->vs_gvp;
 
     /* register commands */
     cmd_setup();

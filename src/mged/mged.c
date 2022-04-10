@@ -2538,8 +2538,6 @@ mged_refresh_handler(void *UNUSED(clientdata))
 int
 f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct rt_wdb *ged_wdbp = RT_WDB_NULL;
-    struct ged *save_gedp;
     struct db_i *save_dbip = DBI_NULL;
     struct mater *save_materp = MATER_NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;	/* use this to hold returned message */
@@ -2585,7 +2583,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	return TCL_ERROR;
     }
 
-    save_gedp = GEDP;
     save_dbip = DBIP;
     DBIP = DBI_NULL;
     save_materp = rt_material_head();
@@ -2601,7 +2598,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	 */
 	if (bu_file_exists(argv[1], NULL)) {
 	    /* need to reset things before returning */
-	    GEDP = save_gedp;
 	    DBIP = save_dbip;
 	    rt_new_material_head(save_materp);
 
@@ -2657,7 +2653,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 		/* not initializing mged */
 		if (argc == 2) {
 		    /* need to reset this before returning */
-		    GEDP = save_gedp;
 		    DBIP = save_dbip;
 		    rt_new_material_head(save_materp);
 		    Tcl_AppendResult(interpreter, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
@@ -2672,7 +2667,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* did the caller specify not creating a new database? */
 	if (argc >= 3 && bu_str_false(argv[2])) {
-	    GEDP = save_gedp;
 	    DBIP = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&msg);
@@ -2681,7 +2675,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* File does not exist, and should be created */
 	if ((DBIP = db_create(argv[1], mged_db_version)) == DBI_NULL) {
-	    GEDP = save_gedp;
 	    DBIP = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&msg);
@@ -2727,7 +2720,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	new_materp = rt_material_head();
 
 	/* activate the 'saved' values so we can cleanly close the previous db */
-	GEDP = save_gedp;
 	DBIP = save_dbip;
 	rt_new_material_head(save_materp);
 
@@ -2766,18 +2758,9 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
      * one we fed tcl.  must occur before the call to [get_dbip] since
      * that hooks into a libged callback.
      */
-    if (!GEDP) {
-	BU_ALLOC(GEDP, struct ged);
-    }
-
-    /* initialize a separate wdbp for libged to manage */
-    ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
-    if (GEDP) {
-	ged_free(GEDP);
-	BU_PUT(GEDP, struct ged);
-    }
-    BU_GET(GEDP, struct ged);
-    GED_INIT(GEDP, ged_wdbp);
+    GEDP->ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
+    if (GEDP->ged_wdbp)
+	GEDP->dbip = GEDP->ged_wdbp->dbip;
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
     GEDP->ged_create_vlist_scene_obj_callback = createDListSolid;
@@ -2798,12 +2781,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     /* Provide LIBWDB C access to the on-disk database */
     if ((WDBP = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
-
-	/* release any allocated memory */
-	ged_free(GEDP);
-	bu_free((void *)GEDP, "struct ged");
-	GEDP = NULL;
-
 	return TCL_ERROR;
     }
 
@@ -2841,12 +2818,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
 	    bu_vls_free(&msg);
 	    bu_vls_free(&cmd);
-
-	    /* release any allocated memory */
-	    ged_free(GEDP);
-	    bu_free((void *)GEDP, "struct ged");
-	    GEDP = NULL;
-
 	    return TCL_ERROR;
 	}
 
@@ -2933,28 +2904,9 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
-    if (GEDP->ged_io_data) {
-	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
-    }
-    ged_close(GEDP);
-
-    // initialize a new blank ged structure
-    BU_GET(GEDP, struct ged);
-    ged_init(GEDP);
-    GEDP->ged_output_handler = mged_output_handler;
-    GEDP->ged_refresh_handler = mged_refresh_handler;
-    GEDP->ged_create_vlist_scene_obj_callback = createDListSolid;
-    GEDP->ged_create_vlist_display_list_callback = createDListAll;
-    GEDP->ged_destroy_vlist_callback = freeDListsAll;
-    GEDP->ged_create_io_handler = &tclcad_create_io_handler;
-    GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
-    GEDP->ged_interp = (void *)interpreter;
-    GEDP->ged_interp_eval = &mged_db_search_callback;
-    struct tclcad_io_data *t_iod = tclcad_create_io_data();
-    t_iod->io_mode = TCL_READABLE;
-    t_iod->interp = interpreter;
-    GEDP->ged_io_data = t_iod;
-
+    wdb_close(GEDP->ged_wdbp);
+    GEDP->ged_wdbp = RT_WDB_NULL;
+    GEDP->dbip = NULL;
 
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;
