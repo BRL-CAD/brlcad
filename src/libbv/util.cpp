@@ -1,4 +1,4 @@
-/*                    B V I E W _ U T I L . C
+/*                      U T I L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020-2022 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bv_util.c
+/** @file util.cpp
  *
  * Utility functions for operating on BRL-CAD views
  *
@@ -596,7 +596,8 @@ bv_obj_get(struct bview *v, int type)
 
     // We know where we're going to get the object from - get it
     if (BU_LIST_IS_EMPTY(&free_scene_obj->l)) {
-	BU_ALLOC((s), struct bv_scene_obj);
+	BU_ALLOC(s, struct bv_scene_obj);
+	s->i = new bv_scene_obj_internal;
     } else {
 	s = BU_LIST_NEXT(bv_scene_obj, &free_scene_obj->l);
 	BU_LIST_DEQUEUE(&((s)->l));
@@ -748,6 +749,12 @@ bv_obj_put(struct bv_scene_obj *s)
     bu_vls_trunc(&s->s_name, 0);
 
     bu_ptbl_rm(s->otbl, (long *)s);
+
+    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+    for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
+	bv_obj_put(vo_it->second);
+    }
+    s->i->vobjs.clear();
 
     FREE_BV_SCENE_OBJ(s, &s->free_scene_obj->l);
 }
@@ -920,12 +927,13 @@ bv_view_objs(struct bview *v, int type)
     return NULL;
 }
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

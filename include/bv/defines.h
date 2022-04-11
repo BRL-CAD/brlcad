@@ -64,6 +64,8 @@
 #include "bv/tcl_data.h"
 #include "bv/faceplate.h"
 
+__BEGIN_DECLS
+
 #define BV_MINVIEWSIZE 0.0001
 #define BV_MINVIEWSCALE 0.00005
 
@@ -221,8 +223,13 @@ struct bview;
 #define BV_VIEW_OBJS 0x02
 #define BV_SHARED_OBJS 0x04
 
+struct bv_scene_obj_internal;
+
 struct bv_scene_obj  {
     struct bu_list l;
+
+    /* Internal implementation storage */
+    struct bv_scene_obj_internal *i;
 
     /* View object name and type id */
     unsigned long long s_type_flags;
@@ -535,7 +542,7 @@ struct bview {
     struct bv_data_tclcad gv_tcl;
 
     /* Callback, external data */
-    void          (*gv_callback)();  /**< @brief  called in ged_view_update with gvp and gv_clientData */
+    void          (*gv_callback)(struct bview *, void *);  /**< @brief  called in ged_view_update with gvp and gv_clientData */
     void           *gv_clientData;   /**< @brief  passed to gv_callback */
     struct bu_ptbl *callbacks;
     void           *dmp;             /* Display manager pointer, if one is associated with this view */
@@ -550,6 +557,8 @@ struct bview_set {
     struct bview_set_internal   *i;
     struct bview_settings       settings;
 };
+
+__END_DECLS
 
 #endif /* BV_DEFINES_H */
 
