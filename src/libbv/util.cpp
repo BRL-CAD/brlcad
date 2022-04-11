@@ -820,6 +820,19 @@ bv_find_obj(struct bview *v, const char *name)
 }
 
 struct bv_scene_obj *
+bv_obj_for_view(struct bv_scene_obj *s, struct bview *v)
+{
+    if (!v || !s || !s->i)
+	return s;
+
+    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+    vo_it = s->i->vobjs.find(v);
+    if (vo_it == s->i->vobjs.end())
+	return s;
+    return vo_it->second;
+}
+
+struct bv_scene_obj *
 bv_find_child(struct bv_scene_obj *s, const char *vname)
 {
     if (!s || !vname || !BU_PTBL_IS_INITIALIZED(&s->children))

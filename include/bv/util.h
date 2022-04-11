@@ -144,6 +144,13 @@ bv_find_child(struct bv_scene_obj *s, const char *vname);
 BV_EXPORT struct bv_scene_obj *
 bv_find_obj(struct bview *v, const char *vname);
 
+/* For the specified object/view pairing, return the appropriate scene object
+ * to use with that view.  Usually this will return s, but if a Level of Detail
+ * scheme or some other view-aware rendering of the object is active, that object
+ * will be returned instead. */
+BV_EXPORT struct bv_scene_obj *
+bv_obj_for_view(struct bv_scene_obj *s, struct bview *v);
+
 /* For the given view, return a pointer to the bu_ptbl holding active scene
  * objects with the specified type */
 BV_EXPORT struct bu_ptbl *
