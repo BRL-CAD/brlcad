@@ -472,7 +472,7 @@ mged_setup(Tcl_Interp **interpreter)
 
     view_state->vs_gvp->vset = &GEDP->ged_views;
 
-    bv_set_add(&GEDP->ged_views, view_state->vs_gvp);
+    bv_set_add_view(&GEDP->ged_views, view_state->vs_gvp);
     GEDP->ged_gvp = view_state->vs_gvp;
 
     /* register commands */
