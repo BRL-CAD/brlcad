@@ -505,9 +505,9 @@ POPState::tri_pop_load(int start_level, int level)
 	    continue;
 
 	std::ifstream tifile(dir, std::ios::in | std::ofstream::binary);
-	int ticnt = 0;
+	size_t ticnt = 0;
 	tifile.read(reinterpret_cast<char *>(&ticnt), sizeof(ticnt));
-	for (int j = 0; j < ticnt; j++) {
+	for (size_t j = 0; j < ticnt; j++) {
 	    int vf[3];
 	    tifile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
 	    for (int k = 0; k < 3; k++) {
@@ -687,7 +687,7 @@ POPState::cache_tri(struct bu_vls *vkey)
 	std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
 
 	// Store the size of the level vert vector
-	int sv = (int)level_tri_verts[i].size();
+	size_t sv = level_tri_verts[i].size();
 	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
 
 	// Write out the vertex points
@@ -714,7 +714,7 @@ POPState::cache_tri(struct bu_vls *vkey)
 	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
 
 	// Store the size of the level tri vector
-	int st = (int)level_tris[i].size();
+	size_t st = level_tris[i].size();
 	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
 
 	// Write out the mapped triangle indices
