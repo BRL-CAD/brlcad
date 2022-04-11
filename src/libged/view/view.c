@@ -121,14 +121,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct bview *v = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
-	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&v->gv_name), argv[0])) {
-	    break;
-	}
-    }
-
+    struct bview *v = bv_set_find_view(&gedp->ged_views, argv[0]);
     if (!v) {
 	bu_vls_printf(gedp->ged_result_str, "view %s not found\n", argv[0]);
 	return BRLCAD_ERROR;
@@ -142,7 +135,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "1")) {
 	v->independent = 1;
 	// Initialize local containers with current shared grps
-	struct bu_ptbl *sg = &v->vset->shared_db_objs;
+	struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
 	if (!sg)
 	    return BRLCAD_OK;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
@@ -165,12 +158,11 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "0")) {
 	v->independent = 0;
 	// Clear local containers
-	struct bu_ptbl *sg = v->gv_objs.view_grps;
+	struct bu_ptbl *sg = v->gv_objs.db_objs;
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		bv_scene_obj_free(cg, gedp->ged_views.free_scene_obj);
-		BU_PUT(cg, struct bv_scene_group);
+		bv_obj_put(cg);
 	    }
 	    bu_ptbl_reset(sg);
 	}
@@ -192,8 +184,9 @@ _view_cmd_list(void *bs, int argc, const char **argv)
     }
 
     struct ged *gedp = gd->gedp;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
+    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 	if (v != gedp->ged_gvp) {
 	    bu_vls_printf(gedp->ged_result_str, "  %s\n", bu_vls_cstr(&v->gv_name));
 	} else {
@@ -498,8 +491,9 @@ struct bv_scene_obj *wobj = NULL;
 		}
 	    }
 	    if (!wobj) {
-		for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_db_objs); i++) {
-		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&v->vset->shared_db_objs, i);
+		struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
+		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		    if (bu_list_len(&cg->s_vlist)) {
 			if (!bu_vls_strcmp(&cg->s_name, &calc_target)) {
 			    wobj = cg;
@@ -545,8 +539,9 @@ struct bv_scene_obj *wobj = NULL;
 		    }
 		}
 	    }
-	    for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_db_objs); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&v->vset->shared_db_objs, i);
+	    struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
+	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		if (bu_list_len(&cg->s_vlist)) {
 		    fastf_t calc_val = bv_vZ_calc(cg, gedp->ged_gvp, calc_mode);
 		    if (calc_mode) {

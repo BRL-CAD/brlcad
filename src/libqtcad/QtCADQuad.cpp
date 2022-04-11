@@ -43,6 +43,7 @@
 #include <QGridLayout>
 
 #include "bu/str.h"
+#include "bv.h"
 #include "ged/defines.h"
 #include "ged/commands.h"
 #include "qtcad/QtCADQuad.h"
@@ -67,7 +68,7 @@ QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(p
     graphicsType = type;
 
     views[UPPER_RIGHT] = createView(UPPER_RIGHT);
-    bu_ptbl_ins_unique(&gedp->ged_views.views, (long int *)views[UPPER_RIGHT]->view());
+    bv_set_add_view(&gedp->ged_views, views[UPPER_RIGHT]->view());
     gedp->ged_gvp = views[UPPER_RIGHT]->view();
 
     // Define the spacers
@@ -160,7 +161,7 @@ QtCADQuad::changeToSingleFrame()
 	// Don't want use cpu for views that are not visible
 	if (views[i] != nullptr) {
 	    views[i]->disconnect();
-	    bu_ptbl_rm(&gedp->ged_views.views, (long int *)(views[i]->view()));
+	    bv_set_rm_view(&gedp->ged_views, views[i]->view());
 	    delete views[i];
 	    views[i] = nullptr;
 	}
@@ -185,7 +186,7 @@ QtCADQuad::changeToQuadFrame()
 	if (views[i] == nullptr) {
 	    views[i] = createView(i);
 	}
-	bu_ptbl_ins_unique(&gedp->ged_views.views, (long int *)views[i]->view());
+	bv_set_add_view(&gedp->ged_views, views[i]->view());
 	QObject::connect(views[i], &QtCADView::changed, this, &QtCADQuad::do_view_changed);
     }
     QGridLayout *layout = (QGridLayout *)this->layout();
