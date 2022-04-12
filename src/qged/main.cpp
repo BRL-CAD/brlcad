@@ -35,7 +35,7 @@
 #include "bu/opt.h"
 #include "brlcad_version.h"
 
-#include "Application.h"
+#include "qtcad/Application.h"
 
 #ifndef Q_MOC_RUN
 #include "bu/malloc.h" // for struct rt_wdb

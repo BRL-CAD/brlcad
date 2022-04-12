@@ -1,14 +1,15 @@
-#ifndef QGED_MAINWINDOW_H
-#define QGED_MAINWINDOW_H
+#ifndef QTCAD_MAINWINDOW_H
+#define QTCAD_MAINWINDOW_H
 
+#include "qtcad/defines.h"
 #include <QMainWindow>
 #include <QMenu>
 #include <QAction>
 #include <QDockWidget>
 
-namespace qged {
+namespace qtcad {
 
-class MainWindow : public QMainWindow
+class QTCAD_EXPORT MainWindow : public QMainWindow
 {
     Q_OBJECT
   public:
@@ -23,11 +24,13 @@ class MainWindow : public QMainWindow
   signals:
     void closing();
 
-  public:
-    bool close();
+  private:
+    void buildMenus();
+
+  private slots:
+    void close();
 
   private:
-    class FloatableDock;
 
     QMenu *fileMenu;
     QAction *cadOpen;
@@ -39,21 +42,8 @@ class MainWindow : public QMainWindow
     QMenu *helpMenu;
     QAction *cadSingleView;
     QAction *cadQuadView;
-
-    FloatableDock *consoleDock;
-    FloatableDock *treeDock;
 };
 
-class MainWindow::FloatableDock : public QDockWidget
-{
-    Q_OBJECT
+} // namespace qtcad
 
-  public:
-    FloatableDock(const QString &title, QWidget *parent) : QDockWidget(title, parent) {}
-  public slots:
-    void toWindow(bool floating);
-};
-
-} // namespace ged
-
-#endif // GED_MAINWINDOW_H
+#endif // QTCAD_MAINWINDOW_H

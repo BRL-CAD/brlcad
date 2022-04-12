@@ -29,6 +29,7 @@ CMAKEFILES(${plugin_ignore_files})
 add_subdirectory(polygon)
 add_subdirectory(view_info)
 add_subdirectory(view_settings)
+add_subdirectory(hierarchy)
 
 # TODO - look into primitive editing plugins.  Things to check include:
 #

@@ -30,7 +30,6 @@ set(qged_srcs
   fbserv.cpp
   import.cpp
   palettes.cpp
-  GeometryModel.cpp
   )
 
 set(qth_names
@@ -41,7 +40,6 @@ set(qth_names
   import
   main_window
   palettes
-  GeometryModel
   )
 foreach(qh ${qth_names})
   set(moc_headers ${moc_headers} ${qh}.h)

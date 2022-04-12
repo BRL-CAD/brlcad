@@ -58,6 +58,9 @@ set(qtcad_srcs
   QtConsoleListener.cpp
   Application.cpp
   MainWindow.cpp
+  GeometryModel.cpp
+  GeometryItem.cpp
+  ImageCache.cpp
   )
 if (OPENGL_LIBS)
   set(qtcad_srcs ${qtcad_srcs} QtGL.cpp)
@@ -85,6 +88,7 @@ set(qth_names
   QtSW
   Application
   MainWindow
+  GeometryModel
   )
 if (OPENGL_LIBS)
   set(qth_names ${qth_names} QtGL)

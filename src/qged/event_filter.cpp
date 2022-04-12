@@ -30,19 +30,15 @@
 #include "app.h"
 #include "event_filter.h"
 
-/* We base conditionals on whether the target widget w is active.  Usually the
- * actual focus widget is a child of the widget in question, so we walk up the
- * parents to see if the focusWidget is underneath the target widget. */
-static bool
-widget_active(QApplication *app, QWidget *checkWidget)
+static bool widget_active(QWidget *w)
 {
     QWidget *fw = qApp->focusWidget();
     QWidget *cw = fw;
     while (cw) {
-	if (cw == w) {
-	    return true;
-	}
-	cw = (QWidget *)cw->parent();
+        if (cw == w) {
+            return true;
+        }
+        cw = (QWidget *)cw->parent();
     }
     return false;
 }
@@ -62,7 +58,7 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
 	// bound events.  If so, we may perform the bound action.
 	QKeyEvent *k = (QKeyEvent *)e;
 	if (k->modifiers().testFlag(Qt::ShiftModifier) == true && k->key() == 'N') {
-	    if (!widget_active(c, c->w->c4))
+	    if (!widget_active(c->w->c4))
 		return false;
 	    c->run_qcmd(QString("nirt -b"));
 	    return true;

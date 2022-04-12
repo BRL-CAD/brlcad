@@ -1,4 +1,4 @@
-#include "MainWindow.h"
+#include "qtcad/MainWindow.h"
 
 #include <QMenuBar>
 #include <QSettings>
@@ -68,7 +68,6 @@ void MainWindow::buildMenus()
     fileMenu->addAction(cadQuadView);
 
     cadExit = new QAction("Exit", this);
-    QObject::connect(cadExit, &QAction::triggered, this, &MainWindow::closing);
     QObject::connect(cadExit, &QAction::triggered, this, &MainWindow::close);
     fileMenu->addAction(cadExit);
 
@@ -78,6 +77,12 @@ void MainWindow::buildMenus()
 
     helpMenu = menuBar()->addMenu("Help");
 
+}
+
+void MainWindow::close()
+{
+    emit closing();
+    QMainWindow::close();
 }
 
 } // namespace qtcad
