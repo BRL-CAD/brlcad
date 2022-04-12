@@ -55,7 +55,7 @@ ged_who2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    struct bu_ptbl *sg = bv_view_objs(gedp->ged_gvp, BV_SCENE_OBJ_DB);
+    struct bu_ptbl *sg = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
     if (!sg)
 	return BRLCAD_ERROR;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {

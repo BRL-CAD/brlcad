@@ -492,10 +492,8 @@ bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t 
 size_t
 bv_clear(struct bview *v, int flags)
 {
-    struct bu_ptbl *sg = NULL;
-    struct bu_ptbl *sv = NULL;
     if (!flags || flags & BV_DB_OBJS) {
-	sg = v->gv_objs.db_objs;
+	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS | (flags & ~BV_VIEW_OBJS));
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
@@ -503,8 +501,21 @@ bv_clear(struct bview *v, int flags)
 	    }
 	    bu_ptbl_reset(sg);
 	}
-	if ((!flags && !v->independent) || flags & BV_SHARED_OBJS) {
-	    sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
+    }
+    if (!flags || flags & BV_VIEW_OBJS) {
+	struct bu_ptbl *sv = bv_view_objs(v, BV_VIEW_OBJS | (flags & ~BV_DB_OBJS));
+	sv = v->gv_objs.view_objs;
+	if (sv) {
+	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
+		bv_obj_put(s);
+	    }
+	}
+    }
+
+    if (!flags || flags & BV_LOCAL_OBJS || v->independent) {
+	if (!flags || flags & BV_DB_OBJS) {
+	    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS | (flags & ~BV_VIEW_OBJS) | BV_LOCAL_OBJS);
 	    if (sg) {
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
@@ -513,38 +524,30 @@ bv_clear(struct bview *v, int flags)
 		bu_ptbl_reset(sg);
 	    }
 	}
-    }
-    if (!flags || flags & BV_VIEW_OBJS) {
-	sv = v->gv_objs.view_objs;
-	if (sv) {
-	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
-		bv_obj_put(s);
-	    }
-	}
-	if ((!flags && !v->independent) || flags & BV_SHARED_OBJS) {
-	    sv = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
+	if (!flags || flags & BV_VIEW_OBJS) {
+	    struct bu_ptbl *sv = bv_view_objs(v, BV_VIEW_OBJS | (flags & ~BV_DB_OBJS) | BV_LOCAL_OBJS);
+	    sv = v->gv_objs.view_objs;
 	    if (sv) {
 		for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
 		    bv_obj_put(s);
 		}
-		bu_ptbl_reset(sv);
 	    }
 	}
     }
 
-   size_t ocnt = BU_PTBL_LEN(v->gv_objs.db_objs) + BU_PTBL_LEN(v->gv_objs.view_objs);
-   if (!v->independent) {
-       sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
-       if (sg)
-	   ocnt += BU_PTBL_LEN(sg);
-       sv = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
-       if (sv)
-	   ocnt += BU_PTBL_LEN(sv);
-   }
-   return ocnt ;
+    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
+    struct bu_ptbl *sgl = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
 
+    struct bu_ptbl *sv = bv_view_objs(v, BV_VIEW_OBJS);
+    struct bu_ptbl *svl = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
+
+    size_t ocnt = 0;
+    ocnt += (sg) ? BU_PTBL_LEN(sg) : 0;
+    ocnt += (sgl && sgl != sg) ? BU_PTBL_LEN(sgl) : 0;
+    ocnt += (sv) ? BU_PTBL_LEN(sv) : 0;
+    ocnt += (svl && svl != sv) ? BU_PTBL_LEN(svl) : 0;
+    return ocnt ;
 }
 
 struct bv_scene_obj *
@@ -564,32 +567,22 @@ bv_obj_get(struct bview *v, int type)
     // regardless of whether or not a shared repository is available.
     struct bv_scene_obj *free_scene_obj = NULL;
     struct bu_list *vlfree = NULL;
-    if (type == BV_SCENE_OBJ_DB || type == BV_SCENE_OBJ_VIEW)  {
-	if (v->vset) {
-	    free_scene_obj = v->vset->i->free_scene_obj;
-	    if (type == BV_SCENE_OBJ_DB) {
-		otbl = &v->vset->i->shared_db_objs;
-	    } else {
-		otbl = &v->vset->i->shared_view_objs;
-	    }
-	    vlfree = &v->vset->i->vlfree;
-	} else {
-	    free_scene_obj = v->gv_objs.free_scene_obj;
-	    if (type == BV_SCENE_OBJ_DB) {
-		otbl = v->gv_objs.db_objs;
-	    } else {
-		otbl = v->gv_objs.view_objs;
-	    }
-	    vlfree = &v->gv_objs.gv_vlfree;
-	}
-    }
-    if (type == BV_SCENE_OBJ_DB_LOCAL || type == BV_SCENE_OBJ_VIEW_LOCAL)  {
+    if (type & BV_LOCAL_OBJS || v->independent || !v->vset)  {
 	free_scene_obj = v->gv_objs.free_scene_obj;
-	if (type == BV_SCENE_OBJ_DB_LOCAL) {
+	if (type & BV_DB_OBJS) {
 	    otbl = v->gv_objs.db_objs;
 	} else {
 	    otbl = v->gv_objs.view_objs;
 	}
+	vlfree = &v->gv_objs.gv_vlfree;
+    } else {
+	free_scene_obj = v->vset->i->free_scene_obj;
+	if (type & BV_DB_OBJS) {
+	    otbl = &v->vset->i->shared_db_objs;
+	} else {
+	    otbl = &v->vset->i->shared_view_objs;
+	}
+	vlfree = &v->vset->i->vlfree;
     }
     if (!free_scene_obj)
 	return NULL;
@@ -610,15 +603,19 @@ bv_obj_get(struct bview *v, int type)
     BU_VLS_INIT(&s->s_name);
     bu_vls_trunc(&s->s_name, 0);
     BU_VLS_INIT(&s->s_uuid);
-    if (type == BV_SCENE_OBJ_DB && v->vset)
-	bu_vls_sprintf(&s->s_uuid, "s:%zd", BU_PTBL_LEN(otbl));
-    if (type == BV_SCENE_OBJ_DB_LOCAL)
-	bu_vls_sprintf(&s->s_uuid, "sl:%zd", BU_PTBL_LEN(otbl));
-    if (type == BV_SCENE_OBJ_VIEW && v->vset)
-	bu_vls_sprintf(&s->s_uuid, "v:%zd", BU_PTBL_LEN(otbl));
-    if (type == BV_SCENE_OBJ_VIEW_LOCAL)
-	bu_vls_sprintf(&s->s_uuid, "vl:%zd", BU_PTBL_LEN(otbl));
-    bu_vls_trunc(&s->s_uuid, 0);
+    if (type & BV_LOCAL_OBJS) {
+	if (type & BV_DB_OBJS) {
+	    bu_vls_sprintf(&s->s_uuid, "sl:%zd", BU_PTBL_LEN(otbl));
+	} else {
+	    bu_vls_sprintf(&s->s_uuid, "vl:%zd", BU_PTBL_LEN(otbl));
+	}
+    } else {
+	if (type & BV_DB_OBJS) {
+	    bu_vls_sprintf(&s->s_uuid, "s:%zd", BU_PTBL_LEN(otbl));
+	} else {
+	    bu_vls_sprintf(&s->s_uuid, "v:%zd", BU_PTBL_LEN(otbl));
+	}
+    }
     MAT_IDN(s->s_mat);
 
     s->s_v = v;
@@ -933,11 +930,21 @@ bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode)
 struct bu_ptbl *
 bv_view_objs(struct bview *v, int type)
 {
-    if (type == BV_SCENE_OBJ_DB)
-	return &v->vset->i->shared_db_objs;
+    if (type & BV_DB_OBJS) {
+	if (v->independent || type & BV_LOCAL_OBJS || !v->vset) {
+	    return v->gv_objs.db_objs;
+	} else {
+	    return &v->vset->i->shared_db_objs;
+	}
+    }
 
-    if (type == BV_SCENE_OBJ_VIEW)
-	return &v->vset->i->shared_view_objs;
+    if (type & BV_VIEW_OBJS) {
+	if (v->independent || type & BV_LOCAL_OBJS || !v->vset) {
+	    return v->gv_objs.view_objs;
+	} else {
+	    return &v->vset->i->shared_view_objs;
+	}
+    }
 
     return NULL;
 }

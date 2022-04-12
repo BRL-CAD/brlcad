@@ -158,7 +158,7 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 struct bv_scene_obj *
 bv_create_polygon(struct bview *v, int type, int x, int y)
 {
-    struct bv_scene_obj *s = bv_obj_get(v, BV_SCENE_OBJ_VIEW);
+    struct bv_scene_obj *s = bv_obj_get(v, BV_VIEW_OBJS);
     s->s_type_flags |= BV_POLYGONS;
 
     struct bv_polygon *p;

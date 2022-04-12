@@ -214,14 +214,9 @@ struct bv_obj_settings {
 
 struct bview;
 
-#define BV_SCENE_OBJ_DB 0
-#define BV_SCENE_OBJ_VIEW 1
-#define BV_SCENE_OBJ_DB_LOCAL 2
-#define BV_SCENE_OBJ_VIEW_LOCAL 3
-
 #define BV_DB_OBJS 0x01
 #define BV_VIEW_OBJS 0x02
-#define BV_SHARED_OBJS 0x04
+#define BV_LOCAL_OBJS 0x04
 
 struct bv_scene_obj_internal;
 

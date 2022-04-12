@@ -122,12 +122,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
 
-    struct bu_ptbl *so;
-    if (v->gv_s->adaptive_plot || v->independent) {
-	so = v->gv_objs.db_objs;
-    } else {
-	so = bv_view_objs(v, BV_SCENE_OBJ_DB);
-    }
+    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
     vect_t minus, plus;
     int have_geom_objs = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
@@ -179,11 +174,7 @@ ged_autoview2_core(struct ged *gedp, int argc, const char *argv[])
     // view objs (for example, when overlaying a plot file on an empty view)
     // then basing autoview on the view-only objs is more intuitive than just
     // using the default view settings.
-    if (v->independent) {
-	so = v->gv_objs.view_objs;
-    } else {
-	so = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
-    }
+    so = bv_view_objs(v, BV_VIEW_OBJS);
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
 	if ((s->s_type_flags & BV_DBOBJ_BASED) ||

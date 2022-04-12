@@ -102,6 +102,24 @@ _view_cmd_faceplate(void *bs, int argc, const char **argv)
     return ged_faceplate_core(gd->gedp, argc, argv);
 }
 
+/* When a view is "independent", it displays only those objects when have been
+ * added to its individual scene storage - the shared objects common to all
+ * views will not be drawn.  When shifting a view from shared to independent
+ * its local storage is populated with copies of the shared objects to prevent
+ * an abrupt change of displayed contents, but once this setup is complete
+ * further draw or erase operations in shared views will no longer alter the
+ * scene object lists in the independent view.  To modify the independent
+ * view's scene, it must be specifically set as the current view in libged.
+ * Note also that when a view ceases to be independent, it's local object set
+ * is compared to the shared object set and any objects in both are removed
+ * from the local set.  However, any object in the independent list that are
+ * not present in the shared set will remain, since there is no way for the
+ * library to know if the intent is to preserve or remove such objects from the
+ * scene.  Removal, as the destructive option, is the responsibility of the
+ * application.
+ *
+ * Note that views may have localized scene objects even when not independent,
+ * but they must be defined as view objects rather than database objects. */
 int
 _view_cmd_independent(void *bs, int argc, const char **argv)
 {
@@ -135,7 +153,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "1")) {
 	v->independent = 1;
 	// Initialize local containers with current shared grps
-	struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
+	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
 	if (!sg)
 	    return BRLCAD_OK;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
@@ -491,7 +509,7 @@ struct bv_scene_obj *wobj = NULL;
 		}
 	    }
 	    if (!wobj) {
-		struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
+		struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		    if (bu_list_len(&cg->s_vlist)) {
@@ -539,7 +557,7 @@ struct bv_scene_obj *wobj = NULL;
 		    }
 		}
 	    }
-	    struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
+	    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		if (bu_list_len(&cg->s_vlist)) {

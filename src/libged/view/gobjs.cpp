@@ -116,7 +116,7 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     }
 
     /* Set up the toplevel object */
-    struct bv_scene_group *g = bv_obj_get(v, BV_SCENE_OBJ_DB);
+    struct bv_scene_group *g = bv_obj_get(v, BV_DB_OBJS);
     if (!g)
 	return BRLCAD_ERROR;
     db_path_to_vls(&g->s_name, fp);
@@ -232,7 +232,7 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
     // If we're not wanting help and we have no subcommand, list current gobjs objects
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
-	struct bu_ptbl *view_objs = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
+	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	    // TODO - strip gobjs:: prefix
