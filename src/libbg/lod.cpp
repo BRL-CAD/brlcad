@@ -1090,11 +1090,11 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
 }
 
 extern "C" int
-bg_mesh_lod_update(struct bv_scene_obj *s, int offset)
+bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int offset)
 {
     struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
     struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
-    return bg_mesh_lod_view(l, s->s_v, offset);
+    return bg_mesh_lod_view(l, v, offset);
 }
 
 extern "C" void

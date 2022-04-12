@@ -756,7 +756,7 @@ bv_obj_get(struct bview *v, int type)
 	}
     }
     MAT_IDN(s->s_mat);
-
+    s->s_size = 0;
     s->s_v = v;
 
     s->s_i_data = NULL;
@@ -783,6 +783,7 @@ bv_obj_get(struct bview *v, int type)
     s->free_scene_obj = free_scene_obj;
     s->vlfree = vlfree;
     s->otbl = otbl;
+    s->current = 0;
 
     bu_ptbl_ins(otbl, (long *)s);
 
@@ -870,6 +871,8 @@ bv_obj_reset(struct bv_scene_obj *s)
 	BV_FREE_VLIST(s->vlfree, &s->s_vlist);
     }
     BU_LIST_INIT(&(s->s_vlist));
+
+    s->current = 0;
 }
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \
@@ -968,6 +971,19 @@ bv_obj_for_view(struct bv_scene_obj *s, struct bview *v)
     if (vo_it == s->i->vobjs.end())
 	return s;
     return vo_it->second;
+}
+
+void
+bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *sv)
+{
+    if (!v || !s || !s->i || !sv)
+	return;
+
+    std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+    vo_it = s->i->vobjs.find(v);
+    if (vo_it != s->i->vobjs.end())
+	bv_obj_put(vo_it->second);
+    s->i->vobjs[v] = sv;
 }
 
 struct bv_scene_obj *

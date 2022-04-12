@@ -316,7 +316,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 
     s->s_changed = 0;
     s->s_v = v;
-    (*s->s_update_callback)(s, 0);
+    (*s->s_update_callback)(s, v, 0);
 
     return BRLCAD_OK;
 }

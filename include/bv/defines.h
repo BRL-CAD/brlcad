@@ -243,7 +243,7 @@ struct bv_scene_obj  {
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data, as well as
      * manage any custom data specific to this object */
     void *s_i_data;  /**< @brief custom view data (bv_line_seg, bv_label, bv_polyon, etc) */
-    int (*s_update_callback)(struct bv_scene_obj *, int);  /**< @brief custom update/generator for s_vlist */
+    int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
     void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data */
 
     /* Actual 3D geometry data and information */
@@ -262,6 +262,7 @@ struct bv_scene_obj  {
     int s_soldash;		/**< @brief  solid/dashed line flag: 0 = solid, 1 = dashed*/
     int s_arrow;		/**< @brief  arrow flag for view object drawing routines */
     int s_changed;		/**< @brief  changed flag - set by s_update_callback if a change occurred */
+    int current;
 
     /* Adaptive plotting info.
      *
@@ -288,6 +289,9 @@ struct bv_scene_obj  {
 
     /* Child objects of this object */
     struct bu_ptbl children;
+
+    /* Parent object of this object */
+    struct bv_scene_ob *parent;
 
     /* Object level pointers to parent containers.  These are stored so
      * that the object itself knows everything needed for data manipulation

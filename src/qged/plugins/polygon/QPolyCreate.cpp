@@ -178,7 +178,7 @@ QPolyCreate::finalize(bool)
 	}
 
 	ip->polygon.contour[0].open = 0;
-	bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
+	bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
     }
 
     close_general_poly->blockSignals(true);
@@ -568,7 +568,7 @@ QPolyCreate::toplevel_config(bool)
 		    draw_change = true;
 		    ip->curr_point_i = -1;
 		    ip->curr_contour_i = 0;
-		    bv_update_polygon(s, BV_POLYGON_UPDATE_PROPS_ONLY);
+		    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
 		}
 	    }
 	}
@@ -674,7 +674,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    // Set fill
 	    if (ps->fill_poly->isChecked()) {
 		ip->fill_flag = 1;
-		bv_update_polygon(p, BV_POLYGON_UPDATE_PROPS_ONLY);
+		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
 	    }
 
 	    // Let the view know the polygon is there
@@ -701,7 +701,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
 #endif
-	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_APPEND);
+	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
 
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
@@ -749,7 +749,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	// For every other polygon type, call the libbv update routine
 	// with the view's x,y coordinates
 	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
-	    bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
+	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}

@@ -156,6 +156,11 @@ bv_find_obj(struct bview *v, const char *vname);
 BV_EXPORT struct bv_scene_obj *
 bv_obj_for_view(struct bv_scene_obj *s, struct bview *v);
 
+/* Stash a view-specific object vobj for view v on object s.  If vobj is NULL,
+ * this will clear the object for that particular view.  */
+BV_EXPORT void
+bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *vobj);
+
 /* For the given view, return a pointer to the bu_ptbl holding active scene
  * objects with the specified type.  Note that view-specific db objects are not
  * part of these sets - they should be retrieved from the scene objects in this
