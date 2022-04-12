@@ -45,6 +45,11 @@ BV_EXPORT void bv_mat_aet(struct bview *v);
 
 BV_EXPORT extern void bv_settings_init(struct bview_settings *s);
 
+/**
+ * Automatically set up the view to make the scene objects visible
+ */
+BV_EXPORT extern void bv_autoview(struct bview *v, fastf_t scale, int all_view_objs);
+
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
 
@@ -152,7 +157,9 @@ BV_EXPORT struct bv_scene_obj *
 bv_obj_for_view(struct bv_scene_obj *s, struct bview *v);
 
 /* For the given view, return a pointer to the bu_ptbl holding active scene
- * objects with the specified type */
+ * objects with the specified type.  Note that view-specific db objects are not
+ * part of these sets - they should be retrieved from the scene objects in this
+ * set with bv_obj_for_view. */
 BV_EXPORT struct bu_ptbl *
 bv_view_objs(struct bview *v, int type);
 
