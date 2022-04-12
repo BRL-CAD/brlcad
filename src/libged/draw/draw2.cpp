@@ -319,7 +319,12 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 		bv_obj_put(s);
 	    }
 	} else {
-	    // Create new group
+	    // Create new scene object.  Typically this will be a "parent"
+	    // object and the actual per-solid wireframes or triangles will
+	    // live in child objects below this object.  However, in
+	    // "evaluated" drawing modes the visualization in the scene is
+	    // unique to this object and in those cases drawing information
+	    // will be stored in this object directly.
 	    g = bv_obj_get(v, BV_DB_OBJS);
 	    db_path_to_vls(&g->s_name, fp);
 	    db_path_to_vls(&g->s_uuid, fp);
@@ -467,7 +472,6 @@ ged_draw_view(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int
 
     // Sort
     bu_sort(BU_PTBL_BASEADDR(sg), BU_PTBL_LEN(sg), sizeof(struct bv_scene_group *), alphanum_cmp, NULL);
-
 
     // If we're starting from scratch and we're not being told to leave the
     // view alone, make sure what we've drawn is visible.

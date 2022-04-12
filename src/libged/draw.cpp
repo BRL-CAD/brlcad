@@ -33,6 +33,8 @@
 #include <time.h>
 #include "bsocket.h"
 
+#include "xxhash.h"
+
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
@@ -577,11 +579,21 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// existing view object and update it, in the former (where we can't
 	// find it) we create it instead.
 
-	// Have database object, make scene object
-	struct bv_scene_obj *s = bv_obj_get_child(dd->g);
-	db_path_to_vls(&s->s_name, path);
-	db_path_to_vls(&s->s_uuid, path);
-	MAT_COPY(s->s_mat, *curr_mat);
+	// Have database object, find or make the appropriate child scene object
+	struct bu_vls iname = BU_VLS_INIT_ZERO;
+	XXH64_state_t *state = XXH64_createState();
+	XXH64_reset(state, 0);
+	XXH64_update(state, *curr_mat, sizeof(mat_t));
+	XXH64_hash_t hash_val = XXH64_digest(state);
+	XXH64_freeState(state);
+	db_path_to_vls(&iname, path);
+	bu_vls_printf(&iname, "_%llu_%d", (unsigned long long)hash_val, (dd->bool_op == 4) ? 1 : 0);
+	struct bv_scene_obj *s = bv_find_child(dd->g, bu_vls_cstr(&iname));
+	if (!s) {
+	    s = bv_obj_get_child(dd->g);
+	    bu_vls_sprintf(&s->s_name, "%s", bu_vls_cstr(&iname));
+	    MAT_COPY(s->s_mat, *curr_mat);
+	}
 	bv_obj_settings_sync(&s->s_os, &dd->g->s_os);
 	s->s_type_flags = BV_DBOBJ_BASED;
 	s->s_changed++;
@@ -589,6 +601,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	    s->s_soldash = (dd->bool_op == 4) ? 1 : 0;
 	}
 	bu_color_to_rgb_chars(&dd->c, s->s_color);
+	bu_vls_free(&iname);
 
 	// Stash the information needed for a draw update callback
 	struct draw_update_data_t *ud;
@@ -610,9 +623,6 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	}
 	// Call correct vlist method based on mode
 	draw_scene(s);
-
-	// Add object to scene group
-	bu_ptbl_ins(&dd->g->children, (long *)s);
     }
 }
 
