@@ -212,7 +212,7 @@ BrlcadObject:: BrlcadObject(
     VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
 
     std::string db_file = m_params.get_required<std::string>("database_path");
-    this->rtip = rt_dirbuild(db_file.c_str(), NULL, 0);//rt_new_rti(dbip);
+    this->rtip = rt_new_rti(this->ap->a_rt_i->rti_dbip);//rt_dirbuild(db_file.c_str(), NULL, 0);
     this->ap->a_rt_i = rtip;
     if (rtip == RTI_NULL) {
         RENDERER_LOG_INFO("building the database directory for [%s] FAILED\n", db_file);
