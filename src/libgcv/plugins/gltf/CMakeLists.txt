@@ -1,5 +1,9 @@
 set(GLTF_SRCS
-  gltf_read.c
+  gltf_read.cpp
+  tinygltf_headers/json.hpp
+  tinygltf_headers/stb_image.h
+  tinygltf_headers/stb_image_write.h
+  tinygltf_headers/tiny_gltf.h
   )
 
 gcv_plugin_library(gcv-gltf SHARED ${GLTF_SRCS})
