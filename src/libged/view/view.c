@@ -282,12 +282,16 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot);
 	    return BRLCAD_OK;
 	}
+	int rac = 1;
+	const char *rav[2] = {"redraw", NULL};
 	if (bu_str_true(argv[1])) {
 	    gvp->gv_s->adaptive_plot = 1;
+	    ged_exec(gedp, rac, (const char **)rav);
 	    return BRLCAD_OK;
 	}
 	if (bu_str_false(argv[1])) {
 	    gvp->gv_s->adaptive_plot = 0;
+	    ged_exec(gedp, rac, (const char **)rav);
 	    return BRLCAD_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "unknown argument to enabled: %s\n", argv[1]);

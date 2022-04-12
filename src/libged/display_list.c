@@ -698,7 +698,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 
     solid_append_vlist(sp, (struct bv_vlist *)vhead);
 
-    bv_scene_obj_bound(sp);
+    bv_scene_obj_bound(sp, dgcdp->v);
 
     db_dup_full_path(&bdata->s_fullpath, pathp);
 
@@ -891,7 +891,7 @@ append_solid_to_display_list(
 
         solid_append_vlist(sp, (struct bv_vlist *)&vhead);
 
-        bv_scene_obj_bound(sp);
+        bv_scene_obj_bound(sp, bv_data->v);
 
         while (BU_LIST_WHILE(vp, bv_vlist, &(sp->s_vlist))) {
             BU_LIST_DEQUEUE(&vp->l);
@@ -1042,7 +1042,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 	solid_append_vlist(sp, (struct bv_vlist *)vhead);
 	BU_LIST_INIT(vhead);
     }
-    bv_scene_obj_bound(sp);
+    bv_scene_obj_bound(sp, gedp->ged_gvp);
 
     /* set path information -- this is a top level node */
     db_add_node_to_full_path(&bdata->s_fullpath, dp);

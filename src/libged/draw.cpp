@@ -73,6 +73,9 @@ prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
     NMG_CK_REGION(r);
     nmg_r_to_vlist(&s->s_vlist, r, NMG_VLIST_STYLE_POLYGON, &s->s_v->gv_objs.gv_vlfree);
     nmg_km(m);
+
+    s->current = 1;
+
     return 0;
 }
 
@@ -166,14 +169,16 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
      * the individual solid wireframes */
     if (s->s_os.s_dmode == 3) {
 	draw_m3(s);
-	bv_scene_obj_bound(s);
+	bv_scene_obj_bound(s, v);
+	s->current = 1;
 	return;
     }
 
     /* Mode 5 draws a point cloud in lieu of wireframes */
     if (s->s_os.s_dmode == 5) {
 	draw_points(s);
-	bv_scene_obj_bound(s);
+	bv_scene_obj_bound(s, v);
+	s->current = 1;
 	return;
     }
 
@@ -282,7 +287,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 geom_done:
 
     // Update s_size and s_center
-    bv_scene_obj_bound(s);
+    bv_scene_obj_bound(s, v);
 
     // Store current view info, in case of adaptive plotting
     s->adaptive_wireframe = s->s_v->gv_s->adaptive_plot;
@@ -313,12 +318,8 @@ draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     if (!s)
 	return 0;
 
-    // Normally this is a no-op, but there is one case where
-    // we do potentially change.  If the view indicates adaptive
-    // plotting, the current view scale does not match the
-    // scale documented in s for its vlist generation, we need
-    // a new vlist for the current conditions.
-
+    // Normally this is a no-op, but in adaptive plotting view changes
+    // may result in a need to redo the visuals.
     bool rework = false;
     if (s->s_v->gv_s->adaptive_plot != s->adaptive_wireframe) {
 	rework = true;
@@ -344,14 +345,13 @@ draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 	fastf_t delta = s->view_scale * 0.1/s->view_scale;
 	if (!rework && !NEAR_EQUAL(s->view_scale, s->s_v->gv_scale, delta)) {
 	    rework = true;
-	} 
+	}
     }
 
     if (!rework)
 	return 0;
 
-    // Process children - right now we have no view dependent child
-    // drawing, but in principle we could...
+    // Process children
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
 	if (s_c->s_update_callback)
@@ -606,6 +606,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// find it) we create it instead.
 
 	// Have database object, find or make the appropriate child scene object
+#if 0
 	struct bu_vls iname = BU_VLS_INIT_ZERO;
 	XXH64_state_t *state = XXH64_createState();
 	XXH64_reset(state, 0);
@@ -620,6 +621,16 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	    bu_vls_sprintf(&s->s_name, "%s", bu_vls_cstr(&iname));
 	    MAT_COPY(s->s_mat, *curr_mat);
 	}
+	bu_vls_free(&iname);
+#endif
+	// s_name is how the draw commands convert a user specified path into
+	// the scene object.  It is potentially ambiguous, but so too are the
+	// user specified paths.  Until we have a command line convention for
+	// unique specification, the above attempt at naming uniqueness is
+	// counterproductive.
+	struct bv_scene_obj *s = bv_obj_get_child(dd->g);
+	db_path_to_vls(&s->s_name, path);
+	MAT_COPY(s->s_mat, *curr_mat);
 	bv_obj_settings_sync(&s->s_os, &dd->g->s_os);
 	s->s_type_flags = BV_DBOBJ_BASED;
 	s->current = 0;
@@ -628,7 +639,6 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	    s->s_soldash = (dd->bool_op == 4) ? 1 : 0;
 	}
 	bu_color_to_rgb_chars(&dd->c, s->s_color);
-	bu_vls_free(&iname);
 
 	// Stash the information needed for a draw update callback
 	struct draw_update_data_t *ud;

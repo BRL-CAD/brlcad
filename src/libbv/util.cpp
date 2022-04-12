@@ -157,7 +157,7 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
     int have_geom_objs = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(so, i);
-	if (bv_scene_obj_bound(g)) {
+	if (bv_scene_obj_bound(g, v)) {
 	    is_empty = 0;
 	    have_geom_objs = 1;
 	    minus[X] = g->s_center[X] - g->s_size;
@@ -171,7 +171,7 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
 	}
 	for (size_t j = 0; j < BU_PTBL_LEN(&g->children); j++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&g->children, j);
-	    if (bv_scene_obj_bound(s)) {
+	    if (bv_scene_obj_bound(s, v)) {
 		is_empty = 0;
 		minus[X] = s->s_center[X] - s->s_size;
 		minus[Y] = s->s_center[Y] - s->s_size;
@@ -220,7 +220,7 @@ bv_autoview(struct bview *v, double factor, int all_view_objs)
 		!(s->s_type_flags & BV_LABELS))
 		continue;
 	}
-	if (bv_scene_obj_bound(s)) {
+	if (bv_scene_obj_bound(s, v)) {
 	    is_empty = 0;
 	    minus[X] = s->s_center[X] - s->s_size;
 	    minus[Y] = s->s_center[Y] - s->s_size;
@@ -1006,7 +1006,7 @@ bv_find_child(struct bv_scene_obj *s, const char *vname)
 }
 
 int
-bv_scene_obj_bound(struct bv_scene_obj *sp)
+bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 {
     point_t bmin, bmax;
     int cmd;
@@ -1015,10 +1015,13 @@ bv_scene_obj_bound(struct bv_scene_obj *sp)
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
     int calc = 0;
     if (sp->s_type_flags & BV_MESH_LOD) {
-	struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)sp->draw_data;
-	VMOVE(bmin, i->bmin);
-	VMOVE(bmax, i->bmax);
-	calc = 1;
+	struct bv_scene_obj *sv = bv_obj_for_view(sp, v);
+	struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)sv->draw_data;
+	if (i) {
+	    VMOVE(bmin, i->bmin);
+	    VMOVE(bmax, i->bmax);
+	    calc = 1;
+	}
     } else if (bu_list_len(&sp->s_vlist)) {
 	cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL, &dispmode);
 	if (cmd) {

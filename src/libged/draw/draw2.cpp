@@ -647,117 +647,28 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 static int
 _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[])
 {
-    // Whether we have a specified set of paths or not, if we're switching from
-    // adaptive to non-adaptive plotting or vice versa we need to transition objects
-    // from local to shared containers or vice versa.
-    //
-    // If going from adaptive to shared we only need to do so once, but when going
-    // from shared to adaptive each view needs its own copy.  Check for the transition
-    // states, and handle accordingly.
-    struct bu_ptbl *sg = bv_view_objs(v, BV_VIEW_OBJS);
-    if (v->gv_s->adaptive_plot && BU_PTBL_LEN(sg) && !BU_PTBL_LEN(v->gv_objs.db_objs)) {
+    if (!gedp || !v)
+	return BRLCAD_ERROR;
+
+    int ac = (v->independent) ? 5 : 3;
+    const char *av[6] = {NULL};
+    av[0] = "draw";
+    av[1] = "-R";
+    av[2] = (v->independent) ? "--view" : NULL;
+    av[3] = (v->independent) ? bu_vls_cstr(&v->gv_name) : NULL;
+    int oind = (v->independent) ? 4 : 2;
+    if (!argc) {
+	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-	    if (v->independent) {
-		int ac = 5;
-		const char *av[6];
-		av[0] = "draw";
-		av[1] = "-R";
-		av[2] = "--view";
-		av[3] = bu_vls_cstr(&v->gv_name);
-		av[4] = bu_vls_cstr(&cg->s_name);
-		av[5] = NULL;
-		ged_exec(gedp, ac, (const char **)av);
-	    } else {
-		int ac = 3;
-		const char *av[4];
-		av[0] = "draw";
-		av[1] = "-R";
-		av[2] = bu_vls_cstr(&cg->s_name);
-		av[3] = NULL;
-		ged_exec(gedp, ac, (const char **)av);
-	    }
-	}
-	return BRLCAD_OK;
-    }
-    if (!v->gv_s->adaptive_plot && !BU_PTBL_LEN(sg) && BU_PTBL_LEN(v->gv_objs.db_objs)) {
-	for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_objs); i++) {
-	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(v->gv_objs.db_objs, i);
-	    if (v->independent) {
-		int ac = 5;
-		const char *av[6];
-		av[0] = "draw";
-		av[1] = "-R";
-		av[2] = "--view";
-		av[3] = bu_vls_cstr(&v->gv_name);
-		av[4] = bu_vls_cstr(&cg->s_name);
-		av[5] = NULL;
-		ged_exec(gedp, ac, (const char **)av);
-	    } else {
-		int ac = 3;
-		const char *av[4];
-		av[0] = "draw";
-		av[1] = "-R";
-		av[2] = bu_vls_cstr(&cg->s_name);
-		av[3] = NULL;
-		ged_exec(gedp, ac, (const char **)av);
-	    }
-	}
-	return BRLCAD_OK;
-    }
-
-    // If we're not transitioning, it's a garden variety redraw.
-    if (!argc) {
-	sg = bv_view_objs(v, BV_DB_OBJS);
-	if (v->independent) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		int ac = 5;
-		const char *av[6];
-		av[0] = "draw";
-		av[1] = "-R";
-		av[2] = "--view";
-		av[3] = bu_vls_cstr(&v->gv_name);
-		av[4] = bu_vls_cstr(&cg->s_name);
-		av[5] = NULL;
-		ged_exec(gedp, ac, (const char **)av);
-	    }
-	} else {
-	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		int ac = 3;
-		const char *av[4];
-		av[0] = "draw";
-		av[1] = "-R";
-		av[2] = bu_vls_cstr(&cg->s_name);
-		av[3] = NULL;
-		ged_exec(gedp, ac, (const char **)av);
-	    }
+	    av[oind] = bu_vls_cstr(&cg->s_name);
+	    ged_exec(gedp, ac, (const char **)av);
 	}
 	return BRLCAD_OK;
     } else {
-	if (v->independent) {
-	    for (int i = 0; i < argc; i++) {
-		int ac = 5;
-		const char *av[6];
-		av[0] = "draw";
-		av[1] = "-R";
-		av[2] = "--view";
-		av[3] = bu_vls_cstr(&v->gv_name);
-		av[4] = argv[i];
-		av[5] = NULL;
-		ged_exec(gedp, ac, (const char **)av);
-	    }
-	} else {
-	    for (int i = 0; i < argc; i++) {
-		int ac = 3;
-		const char *av[4];
-		av[0] = "draw";
-		av[1] = "-R";
-		av[2] = argv[i];
-		av[3] = NULL;
-		ged_exec(gedp, ac, (const char **)av);
-	    }
+	for (int i = 0; i < argc; i++) {
+	    av[oind] = argv[i];
+	    ged_exec(gedp, ac, (const char **)av);
 	}
 	return BRLCAD_OK;
     }
