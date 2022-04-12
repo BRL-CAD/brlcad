@@ -826,10 +826,13 @@ asf::auto_release_ptr<asr::Project> build_project(const char* UNUSED(file), cons
     camera->transform_sequence().set_transform(
 	0.0f,
 	asf::Transformd::from_local_to_parent(
-	    asf::Matrix4d::make_translation(asf::Vector3d(eye_model[0], eye_model[1], eye_model[2])) * /* camera location */
-	    asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(azimuth - 270)) * /* azimuth */
-	    asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-elevation)) /* elevation */
-	    ));
+        asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(-90.0)) *
+        asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 0.0, 1.0), asf::deg_to_rad(90.0)) *
+        asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(180.0)) *
+        asf::Matrix4d::make_translation(asf::Vector3d(eye_model[1], eye_model[2], eye_model[0])) * /* camera location */
+        asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(azimuth)) * /* rotate azimuth */
+        asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-elevation)) /* rotate elevation */
+	));
     // camera->transform_sequence().set_transform(
     //     0.0f,
     //     asf::Transformd::from_local_to_parent(
