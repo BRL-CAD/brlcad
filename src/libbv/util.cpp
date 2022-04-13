@@ -862,6 +862,14 @@ bv_obj_reset(struct bv_scene_obj *s)
 	bu_ptbl_reset(&s->children);
     }
 
+    if (s->i) {
+	std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
+	for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
+	    bv_obj_put(vo_it->second);
+	}
+	s->i->vobjs.clear();
+    }
+
     // If we have a callback for the internal data, use it
     if (s->s_free_callback)
 	(*s->s_free_callback)(s);
@@ -889,13 +897,6 @@ bv_obj_put(struct bv_scene_obj *s)
 
     bu_ptbl_rm(s->otbl, (long *)s);
 
-    if (s->i) {
-	std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
-	for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
-	    bv_obj_put(vo_it->second);
-	}
-	s->i->vobjs.clear();
-    }
 
     FREE_BV_SCENE_OBJ(s, &s->free_scene_obj->l);
 }

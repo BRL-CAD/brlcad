@@ -172,7 +172,7 @@ alphanum_cmp(const void *a, const void *b, void *UNUSED(data)) {
  * the routines that will actually produce the scene geometry and add it to the
  * scene objects - it only prepares the inputs to be used for that process. */
 static int
-ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int argc, const char *argv[])
+ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, int refresh, int argc, const char *argv[])
 {
     struct db_i *dbip = gedp->dbip;
     struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
@@ -226,6 +226,32 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	}
 	return BRLCAD_ERROR;
     }
+    // If we had no args, we're refreshing all drawn objects
+    if (!argc) {
+	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
+	    struct db_full_path *fp;
+	    BU_GET(fp, struct db_full_path);
+	    db_full_path_init(fp);
+	    int ret = db_string_to_path(fp, dbip, bu_vls_cstr(&s->s_name));
+	    if (ret < 0) {
+		// If that didn't work, there's one other thing we have to check
+		// for - a really strange path with the "/" character in it.
+		db_free_full_path(fp);
+		struct directory *fdp = db_lookup(dbip, bu_vls_cstr(&s->s_name), LOOKUP_QUIET);
+		if (fdp == RT_DIR_NULL) {
+		    // Invalid path
+		    db_free_full_path(fp);
+		    BU_PUT(fp, struct db_full_path);
+		    continue;
+		} else {
+		    // Object name contained forward slash (urk!)
+		    db_add_node_to_full_path(fp, fdp);
+		}
+	    }
+	    fps.insert(fp);
+	}
+    }
 
     // As a preliminary step, check the already drawn paths to see if the
     // proposed new path impacts them.  If we need to set up for adaptive
@@ -253,6 +279,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	// Check all the current groups against the candidate.
 	std::set<struct bv_scene_group *> clear;
 	std::set<struct bv_scene_group *>::iterator g_it;
+	struct bv_obj_settings fpvs;
+	bv_obj_settings_sync(&fpvs, vs);
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 	    // If we already know we're clearing this one, don't check
@@ -277,6 +305,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		// New path will replace this path - clear it
 		clear.insert(cg);
 		db_free_full_path(&gfp);
+		if (refresh)
+		    bv_obj_settings_sync(&fpvs, &cg->s_os);
 		continue;
 	    }
 	    // 2.  existing path is a top match encompassing the proposed path
@@ -285,6 +315,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 		// path to update their contents
 		g = cg;
 		db_free_full_path(&gfp);
+		if (refresh)
+		    bv_obj_settings_sync(&fpvs, &cg->s_os);
 		// We continue to weed out any other invalid paths in sg, even
 		// though cg should be the only path in sg that matches in this
 		// condition...
@@ -319,7 +351,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    // will be stored in this object directly.
 	    g = bv_obj_get(v, BV_DB_OBJS);
 	    db_path_to_vls(&g->s_name, fp);
-	    bv_obj_settings_sync(&g->s_os, vs);
+	    bv_obj_settings_sync(&g->s_os, &fpvs);
 
 	    // If we're a blank slate, we're adaptive, and autoview isn't off
 	    // we need to be building up some sense of the view and object
@@ -536,7 +568,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
 
 
     int drawing_modes[6] = {-1, 0, 0, 0, 0, 0};
-    struct bu_opt_desc d[17];
+    int refresh = 0;
+    struct bu_opt_desc d[18];
     BU_OPT(d[0],  "h", "help",          "",                 NULL, &print_help,         "Print help and exit");
     BU_OPT(d[1],  "?", "",              "",                 NULL, &print_help,         "");
     BU_OPT(d[2],  "m", "mode",         "#",          &bu_opt_int, &drawing_modes[0],  "0=wireframe;1=shaded bots;2=shaded;3=evaluated");
@@ -553,7 +586,8 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[13], "C", "color",         "r/g/b", &draw_opt_color, &vs,                "Override object colors");
     BU_OPT(d[14],  "", "line-width",   "#",          &bu_opt_int, &vs.s_line_width,   "Override default line width");
     BU_OPT(d[15], "R", "no-autoview",   "",                 NULL, &no_autoview,       "Do not calculate automatic view, even if initial scene is empty.");
-    BU_OPT_NULL(d[16]);
+    BU_OPT(d[16], "",  "refresh",       "",                 NULL, &refresh,       "Try to keep properties of existing drawn objects when updating.");
+    BU_OPT_NULL(d[17]);
 
     /* If no args, must be wanting help */
     if (!argc) {
@@ -617,7 +651,7 @@ ged_draw2_core(struct ged *gedp, int argc, const char *argv[])
     // update the geometries of the objects.  Once we have the scene obj set,
     // we must process it on a per-view basis in case the objects have view
     // specific visualizations (such as in adaptive plotting.)
-    ged_update_objs(gedp, cv, &vs, argc, argv);
+    ged_update_objs(gedp, cv, &vs, refresh, argc, argv);
 
     // Drawing can get complicated when we have multiple active views with
     // different settings. The simplest case is when the current or specified
@@ -651,12 +685,13 @@ _ged_redraw_view(struct ged *gedp, struct bview *v, int argc, const char *argv[]
 	return BRLCAD_ERROR;
 
     int ac = (v->independent) ? 5 : 3;
-    const char *av[6] = {NULL};
+    const char *av[7] = {NULL};
     av[0] = "draw";
     av[1] = "-R";
-    av[2] = (v->independent) ? "--view" : NULL;
-    av[3] = (v->independent) ? bu_vls_cstr(&v->gv_name) : NULL;
-    int oind = (v->independent) ? 4 : 2;
+    av[2] = "--refresh";
+    av[3] = (v->independent) ? "--view" : NULL;
+    av[4] = (v->independent) ? bu_vls_cstr(&v->gv_name) : NULL;
+    int oind = (v->independent) ? 5 : 3;
     if (!argc) {
 	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
