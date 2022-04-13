@@ -106,7 +106,7 @@ static void
 _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 {
     struct directory *dp;
-    struct draw_data_t *dd= (struct draw_data_t *)client_data;
+    struct draw_data_t *dd = (struct draw_data_t *)client_data;
     RT_CK_FULL_PATH(path);
     RT_CK_DBI(dd->dbip);
 
@@ -187,6 +187,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
     bounds_data.have_bbox = 0;
     bounds_data.dbip = dbip;
     bounds_data.skip_subtractions = 1;
+    bounds_data.bool_op = 2;
+    bounds_data.v = v;
     VSET(bounds_data.min, INFINITY, INFINITY, INFINITY);
     VSET(bounds_data.max, -INFINITY, -INFINITY, -INFINITY);
     bounds_data.s_size = &s_size;
