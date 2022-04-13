@@ -803,7 +803,11 @@ bv_obj_get_child(struct bv_scene_obj *sp)
 	BU_ALLOC((s), struct bv_scene_obj);
     } else {
 	s = BU_LIST_NEXT(bv_scene_obj, &sp->free_scene_obj->l);
-	BU_LIST_DEQUEUE(&((s)->l));
+	if (!s) {
+	    BU_ALLOC((s), struct bv_scene_obj);
+	} else {
+	    BU_LIST_DEQUEUE(&((s)->l));
+	}
     }
     BU_LIST_INIT( &((s)->s_vlist) );
 

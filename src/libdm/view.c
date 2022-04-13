@@ -575,6 +575,7 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 	dm_set_line_attr(dmp, s->s_os.s_line_width, s->s_soldash);
 
 	struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)s->draw_data;
+	if (linfo) {
 	struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
 
 	// Tell the mesh lod structure what callback method to use to draw
@@ -587,6 +588,9 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 	// above callback assignment.  This keeps any awareness of libdm and the
 	// specifics of drawing out of the other libs.
 	bg_mesh_lod_draw(l, (void *)dmp, s->s_os.s_dmode);
+	} else {
+	    bu_log("Error - no LoD data for %s\n", bu_vls_cstr(&s->s_name));
+	}
     } else {
 	if (bu_list_len(&s->s_vlist)) {
 	    // Draw primary wireframe.
