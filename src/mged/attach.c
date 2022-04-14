@@ -698,6 +698,16 @@ dm_var_init(struct mged_dm *target_dm)
     bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bv callbacks");
 
     *view_state->vs_gvp = *target_dm->dm_view_state->vs_gvp;	/* struct copy */
+
+    BU_GET(view_state->vs_gvp->gv_objs.db_objs, struct bu_ptbl);
+    bu_ptbl_init(view_state->vs_gvp->gv_objs.db_objs, 8, "view_objs init");
+
+    BU_GET(view_state->vs_gvp->gv_objs.view_objs, struct bu_ptbl);
+    bu_ptbl_init(view_state->vs_gvp->gv_objs.view_objs, 8, "view_objs init");
+
+    view_state->vs_gvp->vset = &GEDP->ged_views;
+    view_state->vs_gvp->independent = 0;
+
     view_state->vs_gvp->gv_clientData = (void *)view_state;
     view_state->vs_gvp->gv_s->adaptive_plot = 0;
     view_state->vs_gvp->gv_s->redraw_on_zoom = 0;
