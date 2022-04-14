@@ -569,6 +569,11 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
     }
 
     if (s->s_type_flags & BV_MESH_LOD) {
+
+	// Make sure the mesh is correct for the current view
+	if (s->s_update_callback)
+	    (*s->s_update_callback)(s, v, 0);
+
 	// Draw primary wireframe.
 	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os.transparency);
 
