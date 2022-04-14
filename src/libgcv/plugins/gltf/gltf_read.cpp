@@ -282,7 +282,10 @@ handle_node(struct conversion_state *state, tinygltf::Model &model, int node_ind
 	if (node.mesh || node.mesh == 0)
 	{
 		//std::cout << "getting here" << std::endl;
-		std::string shape_name = "shape";
+		//tinygltf::Mesh mesh = model.meshes[node.mesh];
+		std::string shape_name = "Shape " + std::to_string(node.mesh);
+			//mesh.name.empty() ? mesh.name : "Shape " + std::to_string(node.mesh);
+		//tinygltf::Material material = model.materials[mesh.primitives.]
 		unsigned char color[3] = { 255, 0, 0 };
 
 		state->bot_fcurr = 0;
