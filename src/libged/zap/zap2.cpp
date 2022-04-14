@@ -117,16 +117,12 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 	v = (struct bview *)BU_PTBL_GET(views, i);
 	if (v->independent && !clear_all_views)
 	    continue;
-	int flags = 0;
+	int flags = BV_SHARED_OBJS;
 	if (clear_solid_objs)
 	    flags |= BV_DB_OBJS;
 	if (clear_view_objs)
 	    flags |= BV_VIEW_OBJS;
 	int nret = bv_clear(v, flags);
-	if (nret) {
-	    flags |= BV_LOCAL_OBJS;
-	    nret = bv_clear(v, flags);
-	}
 	if (!nret)
 	    v->gv_s->gv_cleared = 1;
 	ret = BRLCAD_OK;

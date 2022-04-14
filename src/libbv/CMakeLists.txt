@@ -27,9 +27,9 @@ set(LIBBV_SRCS
   tig/tplot.c
   tig/vectfont.c
   tig/vector.c
-  util.cpp
+  util.c
   vlist.c
-  view_sets.cpp
+  view_sets.c
   )
 
 BRLCAD_ADDLIB(libbv "${LIBBV_SRCS}" "libbn;libbu")

@@ -158,7 +158,7 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 struct bv_scene_obj *
 bv_create_polygon(struct bview *v, int type, int x, int y)
 {
-    struct bv_scene_obj *s = bv_obj_get(v, BV_VIEW_OBJS);
+    struct bv_scene_obj *s = bv_obj_get(v, BV_SCENE_OBJ_VIEW);
     s->s_type_flags |= BV_POLYGONS;
 
     struct bv_polygon *p;
@@ -485,7 +485,7 @@ bv_move_polygon_pt(struct bv_scene_obj *s)
  * all the pieces needed to seed a circle at an XY point. */
 
 int
-bv_update_polygon_circle(struct bv_scene_obj *s, struct bview *v)
+bv_update_polygon_circle(struct bv_scene_obj *s)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
@@ -496,6 +496,7 @@ bv_update_polygon_circle(struct bv_scene_obj *s, struct bview *v)
     point_t v_pt;
     vect_t vdiff;
 
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
@@ -560,12 +561,13 @@ bv_update_polygon_circle(struct bv_scene_obj *s, struct bview *v)
 }
 
 int
-bv_update_polygon_ellipse(struct bv_scene_obj *s, struct bview *v)
+bv_update_polygon_ellipse(struct bv_scene_obj *s)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     fastf_t fx, fy;
 
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
@@ -651,12 +653,13 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, struct bview *v)
 }
 
 int
-bv_update_polygon_rectangle(struct bv_scene_obj *s, struct bview *v)
+bv_update_polygon_rectangle(struct bv_scene_obj *s)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     fastf_t fx, fy;
 
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
@@ -689,12 +692,14 @@ bv_update_polygon_rectangle(struct bv_scene_obj *s, struct bview *v)
 }
 
 int
-bv_update_polygon_square(struct bv_scene_obj *s, struct bview *v)
+bv_update_polygon_square(struct bv_scene_obj *s)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     fastf_t fx, fy;
 
+    // Use the polygon's view context
+    struct bview *v = s->s_v;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
@@ -770,7 +775,7 @@ bv_update_general_polygon(struct bv_scene_obj *s, int utype)
 }
 
 int
-bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype)
+bv_update_polygon(struct bv_scene_obj *s, int utype)
 {
     if (!s)
 	return 0;
@@ -820,13 +825,13 @@ bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype)
     }
 
     if (p->type == BV_POLYGON_CIRCLE)
-	return bv_update_polygon_circle(s, v);
+	return bv_update_polygon_circle(s);
     if (p->type == BV_POLYGON_ELLIPSE)
-	return bv_update_polygon_ellipse(s, v);
+	return bv_update_polygon_ellipse(s);
     if (p->type == BV_POLYGON_RECTANGLE)
-	return bv_update_polygon_rectangle(s, v);
+	return bv_update_polygon_rectangle(s);
     if (p->type == BV_POLYGON_SQUARE)
-	return bv_update_polygon_square(s, v);
+	return bv_update_polygon_square(s);
     if (p->type != BV_POLYGON_GENERAL)
 	return 0;
     return bv_update_general_polygon(s, utype);

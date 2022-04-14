@@ -269,7 +269,7 @@ QPolyMod::polygon_update_props()
     }
 
     // TODO - this should be a visual-properties-only update, but libbg doesn't support that yet.
-    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
+    bv_update_polygon(p, BV_POLYGON_UPDATE_PROPS_ONLY);
     emit view_updated(&gedp->ged_gvp);
 }
 
@@ -300,7 +300,7 @@ QPolyMod::toplevel_config(bool)
 		    draw_change = true;
 		    ip->curr_point_i = -1;
 		    ip->curr_contour_i = 0;
-		    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
+		    bv_update_polygon(p, BV_POLYGON_UPDATE_PROPS_ONLY);
 		}
 	    }
 	}
@@ -340,7 +340,7 @@ QPolyMod::clear_pnt_selection(bool checked)
     ip->curr_point_i = -1;
     ip->curr_contour_i = 0;
 
-    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
+    bv_update_polygon(p, BV_POLYGON_UPDATE_PROPS_ONLY);
 
     QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
     if (!mdl)
@@ -480,7 +480,7 @@ QPolyMod::toggle_closed_poly(bool checked)
     }
 
     if (p) {
-	bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
+	bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
     }
 
     toplevel_config(false);
@@ -892,7 +892,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
 #endif
-	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
+	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_APPEND);
 
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
@@ -906,7 +906,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
 #endif
-	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_SELECT);
+	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_SELECT);
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}
@@ -931,7 +931,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	    if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
-		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_MOVE);
+		bv_update_polygon(p, BV_POLYGON_UPDATE_PT_MOVE);
 		emit view_updated(&gedp->ged_gvp);
 	    } else if (move_mode->isChecked()) {
 		bu_log("move polygon mode\n");
@@ -939,7 +939,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 		bv_move_polygon(p);
 		emit view_updated(&gedp->ged_gvp);
 	    } else {
-		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
+		bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
 		emit view_updated(&gedp->ged_gvp);
 	    }
 	    return true;

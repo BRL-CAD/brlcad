@@ -64,8 +64,6 @@
 #include "bv/tcl_data.h"
 #include "bv/faceplate.h"
 
-__BEGIN_DECLS
-
 #define BV_MINVIEWSIZE 0.0001
 #define BV_MINVIEWSCALE 0.00005
 
@@ -214,17 +212,17 @@ struct bv_obj_settings {
 
 struct bview;
 
+#define BV_SCENE_OBJ_DB 0
+#define BV_SCENE_OBJ_VIEW 1
+#define BV_SCENE_OBJ_DB_LOCAL 2
+#define BV_SCENE_OBJ_VIEW_LOCAL 3
+
 #define BV_DB_OBJS 0x01
 #define BV_VIEW_OBJS 0x02
-#define BV_LOCAL_OBJS 0x04
-
-struct bv_scene_obj_internal;
+#define BV_SHARED_OBJS 0x04
 
 struct bv_scene_obj  {
     struct bu_list l;
-
-    /* Internal implementation storage */
-    struct bv_scene_obj_internal *i;
 
     /* View object name and type id */
     unsigned long long s_type_flags;
@@ -243,7 +241,7 @@ struct bv_scene_obj  {
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data, as well as
      * manage any custom data specific to this object */
     void *s_i_data;  /**< @brief custom view data (bv_line_seg, bv_label, bv_polyon, etc) */
-    int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
+    int (*s_update_callback)(struct bv_scene_obj *, int);  /**< @brief custom update/generator for s_vlist */
     void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data */
 
     /* Actual 3D geometry data and information */
@@ -262,7 +260,6 @@ struct bv_scene_obj  {
     int s_soldash;		/**< @brief  solid/dashed line flag: 0 = solid, 1 = dashed*/
     int s_arrow;		/**< @brief  arrow flag for view object drawing routines */
     int s_changed;		/**< @brief  changed flag - set by s_update_callback if a change occurred */
-    int current;
 
     /* Adaptive plotting info.
      *
@@ -289,9 +286,6 @@ struct bv_scene_obj  {
 
     /* Child objects of this object */
     struct bu_ptbl children;
-
-    /* Parent object of this object */
-    struct bv_scene_ob *parent;
 
     /* Object level pointers to parent containers.  These are stored so
      * that the object itself knows everything needed for data manipulation
@@ -541,7 +535,7 @@ struct bview {
     struct bv_data_tclcad gv_tcl;
 
     /* Callback, external data */
-    void          (*gv_callback)(struct bview *, void *);  /**< @brief  called in ged_view_update with gvp and gv_clientData */
+    void          (*gv_callback)();  /**< @brief  called in ged_view_update with gvp and gv_clientData */
     void           *gv_clientData;   /**< @brief  passed to gv_callback */
     struct bu_ptbl *callbacks;
     void           *dmp;             /* Display manager pointer, if one is associated with this view */
@@ -556,8 +550,6 @@ struct bview_set {
     struct bview_set_internal   *i;
     struct bview_settings       settings;
 };
-
-__END_DECLS
 
 #endif /* BV_DEFINES_H */
 

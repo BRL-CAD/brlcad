@@ -316,7 +316,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 
     s->s_changed = 0;
     s->s_v = v;
-    (*s->s_update_callback)(s, v, 0);
+    (*s->s_update_callback)(s, 0);
 
     return BRLCAD_OK;
 }
@@ -386,7 +386,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
 	if (list_db) {
-	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
+	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_SCENE_OBJ_DB);
 	    for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
 		if (bu_list_len(&cg->s_vlist)) {
@@ -400,7 +400,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	    }
 	}
 	if (list_view) {
-	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
+	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
@@ -438,7 +438,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     }
 
     if (!gd->s) {
-	struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
+	struct bu_ptbl *db_objs = bv_view_objs(v, BV_SCENE_OBJ_DB);
 	for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
 	    if (bu_list_len(&cg->s_vlist)) {

@@ -1,4 +1,4 @@
-/*                   V I E W _ S E T S . C P P
+/*                    V I E W _ S E T S . C
  * BRL-CAD
  *
  * Copyright (c) 2020-2022 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_sets.cpp
+/** @file bv_util.c
  *
  * Utility functions for operating on BRL-CAD view sets
  *
@@ -133,13 +133,12 @@ bv_set_fsos(struct bview_set *s)
     return s->i->free_scene_obj;
 }
 
-
-
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

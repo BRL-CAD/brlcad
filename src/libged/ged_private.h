@@ -213,9 +213,9 @@ struct draw_data_t {
     std::map<struct directory *, fastf_t> *s_size;
 #endif
 };
-GED_EXPORT int draw_update(struct bv_scene_obj *s, struct bview *v, int);
+GED_EXPORT int draw_update(struct bv_scene_obj *s, int);
 GED_EXPORT void draw_free_data(struct bv_scene_obj *s);
-GED_EXPORT void draw_scene(struct bv_scene_obj *s, struct bview *v);
+GED_EXPORT void draw_scene(struct bv_scene_obj *s);
 GED_EXPORT void draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
           void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
           void *client_data);

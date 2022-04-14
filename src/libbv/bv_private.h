@@ -1,4 +1,4 @@
-/*                    B V _ P R I V A T E . h
+/*                    B V _ P R I V A T E . C
  * BRL-CAD
  *
  * Copyright (c) 2020-2022 United States Government as represented by
@@ -27,7 +27,8 @@
 #include "bu/list.h"
 #include "bu/ptbl.h"
 #include "bv/defines.h"
-#include <unordered_map>
+
+__BEGIN_DECLS
 
 struct bview_set_internal {
     struct bu_ptbl views;
@@ -38,15 +39,14 @@ struct bview_set_internal {
     struct bu_list vlfree;
 };
 
-struct bv_scene_obj_internal {
-    std::unordered_map<struct bview *, struct bv_scene_obj *> vobjs;
-};
+__END_DECLS
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

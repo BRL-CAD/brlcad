@@ -102,7 +102,7 @@ path_add_children(std::set<struct bv_scene_group *> *ngrps, struct db_i *dbip, s
 		path_add_children(ngrps, dbip, gfp, fp, v);
 	} else {
 	    struct bu_vls pvls = BU_VLS_INIT_ZERO;
-	    struct bv_scene_group *g = bv_obj_get(v, BV_DB_OBJS);
+	    struct bv_scene_group *g = bv_obj_get(v, BV_SCENE_OBJ_DB);
 	    bu_vls_trunc(&pvls, 0);
 	    db_path_to_vls(&pvls, gfp);
 	    bu_vls_sprintf(&g->s_name, "%s", bu_vls_cstr(&pvls));
@@ -311,7 +311,7 @@ ged_erase2_core(struct ged *gedp, int argc, const char *argv[])
     // bu_vls_strncmp function, and prepend a "/" character in the case whare a
     // user supplies a name without the path prefix.
     //
-    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
+    struct bu_ptbl *sg = (v->independent || v->gv_s->adaptive_plot) ? v->gv_objs.db_objs : bv_view_objs(v, BV_SCENE_OBJ_DB);
     std::set<struct bv_scene_group *> all;
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);

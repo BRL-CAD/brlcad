@@ -684,7 +684,7 @@ solid_append_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
 void
 dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
 {
-    struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_DB_OBJS);
+    struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_SCENE_OBJ_DB);
     struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
     if (!bdata) {
 	BU_GET(bdata, struct ged_bv_data);
@@ -698,7 +698,7 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 
     solid_append_vlist(sp, (struct bv_vlist *)vhead);
 
-    bv_scene_obj_bound(sp, dgcdp->v);
+    bv_scene_obj_bound(sp);
 
     db_dup_full_path(&bdata->s_fullpath, pathp);
 
@@ -832,7 +832,7 @@ append_solid_to_display_list(
     }
 
     /* create solid */
-    struct bv_scene_obj *sp = bv_obj_get(bv_data->v, BV_DB_OBJS);
+    struct bv_scene_obj *sp = bv_obj_get(bv_data->v, BV_SCENE_OBJ_DB);
     struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
     if (!bdata) {
 	BU_GET(bdata, struct ged_bv_data);
@@ -891,7 +891,7 @@ append_solid_to_display_list(
 
         solid_append_vlist(sp, (struct bv_vlist *)&vhead);
 
-        bv_scene_obj_bound(sp, bv_data->v);
+        bv_scene_obj_bound(sp);
 
         while (BU_LIST_WHILE(vp, bv_vlist, &(sp->s_vlist))) {
             BU_LIST_DEQUEUE(&vp->l);
@@ -1021,7 +1021,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
     }
 
     /* Obtain a fresh solid structure, and fill it in */
-    sp = bv_obj_get(gedp->ged_gvp, BV_DB_OBJS);
+    sp = bv_obj_get(gedp->ged_gvp, BV_SCENE_OBJ_DB);
     struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
     if (!bdata) {
 	BU_GET(bdata, struct ged_bv_data);
@@ -1042,7 +1042,7 @@ int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int r
 	solid_append_vlist(sp, (struct bv_vlist *)vhead);
 	BU_LIST_INIT(vhead);
     }
-    bv_scene_obj_bound(sp, gedp->ged_gvp);
+    bv_scene_obj_bound(sp);
 
     /* set path information -- this is a top level node */
     db_add_node_to_full_path(&bdata->s_fullpath, dp);

@@ -45,11 +45,6 @@ BV_EXPORT void bv_mat_aet(struct bview *v);
 
 BV_EXPORT extern void bv_settings_init(struct bview_settings *s);
 
-/**
- * Automatically set up the view to make the scene objects visible
- */
-BV_EXPORT extern void bv_autoview(struct bview *v, fastf_t scale, int all_view_objs);
-
 /* Copy the size and camera info (deliberately not a full copy of all view state) */
 BV_EXPORT extern void bv_sync(struct bview *dest, struct bview *src);
 
@@ -108,7 +103,7 @@ BV_EXPORT extern int bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy
 
 /* Compute the min, max, and center points of the scene object.
  * Return 1 if a bound was computed, else 0 */
-BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s, struct bview *v);
+BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s);
 
 /* Find the nearest (mode == 0) or farthest (mode == 1) data_vZ value from
  * the vlist points in s in the context of view v */
@@ -149,22 +144,8 @@ bv_find_child(struct bv_scene_obj *s, const char *vname);
 BV_EXPORT struct bv_scene_obj *
 bv_find_obj(struct bview *v, const char *vname);
 
-/* For the specified object/view pairing, return the appropriate scene object
- * to use with that view.  Usually this will return s, but if a Level of Detail
- * scheme or some other view-aware rendering of the object is active, that object
- * will be returned instead. */
-BV_EXPORT struct bv_scene_obj *
-bv_obj_for_view(struct bv_scene_obj *s, struct bview *v);
-
-/* Stash a view-specific object vobj for view v on object s.  If vobj is NULL,
- * this will clear the object for that particular view.  */
-BV_EXPORT void
-bv_set_view_obj(struct bv_scene_obj *s, struct bview *v, struct bv_scene_obj *vobj);
-
 /* For the given view, return a pointer to the bu_ptbl holding active scene
- * objects with the specified type.  Note that view-specific db objects are not
- * part of these sets - they should be retrieved from the scene objects in this
- * set with bv_obj_for_view. */
+ * objects with the specified type */
 BV_EXPORT struct bu_ptbl *
 bv_view_objs(struct bview *v, int type);
 
