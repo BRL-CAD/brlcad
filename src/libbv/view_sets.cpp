@@ -93,6 +93,12 @@ bv_set_add_view(struct bview_set *s, struct bview *v){
 	return;
 
     bu_ptbl_ins(&s->i->views, (long *)v);
+
+    v->vset = s;
+
+    // By default, when we add a view to a set it is no longer considered
+    // independent
+    v->independent = 0;
 }
 
 void
@@ -101,6 +107,12 @@ bv_set_rm_view(struct bview_set *s, struct bview *v){
 	return;
 
     bu_ptbl_rm(&s->i->views, (long int *)v);
+
+    v->vset = NULL;
+
+    // By default, when we remove a view from a set it is considered
+    // independent
+    v->independent = 1;
 }
 
 
