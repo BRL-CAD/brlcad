@@ -628,6 +628,16 @@ bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t 
     return 0;
 }
 
+static void
+put_recurse(struct bv_scene_obj *s)
+{
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&s->children, i);
+	put_recurse(cg);
+    }
+    bv_obj_put(s);
+}
+
 size_t
 bv_clear(struct bview *v, int flags)
 {
@@ -635,8 +645,8 @@ bv_clear(struct bview *v, int flags)
 	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS | (flags & ~BV_VIEW_OBJS));
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		bv_obj_put(cg);
+		struct bv_scene_obj *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+		put_recurse(cg);
 	    }
 	    bu_ptbl_reset(sg);
 	}
@@ -647,8 +657,9 @@ bv_clear(struct bview *v, int flags)
 	if (sv) {
 	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
-		bv_obj_put(s);
+		put_recurse(s);
 	    }
+	    bu_ptbl_reset(sv);
 	}
     }
 
@@ -658,7 +669,7 @@ bv_clear(struct bview *v, int flags)
 	    if (sg) {
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		    bv_obj_put(cg);
+		    put_recurse(cg);
 		}
 		bu_ptbl_reset(sg);
 	    }
@@ -669,8 +680,9 @@ bv_clear(struct bview *v, int flags)
 	    if (sv) {
 		for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
-		    bv_obj_put(s);
+		    put_recurse(s);
 		}
+		bu_ptbl_reset(sv);
 	    }
 	}
     }
@@ -869,10 +881,6 @@ bv_obj_reset(struct bv_scene_obj *s)
     }
 
     if (s->i) {
-	std::unordered_map<struct bview *, struct bv_scene_obj *>::iterator vo_it;
-	for (vo_it = s->i->vobjs.begin(); vo_it != s->i->vobjs.end(); vo_it++) {
-	    bv_obj_put(vo_it->second);
-	}
 	s->i->vobjs.clear();
     }
 
@@ -886,7 +894,20 @@ bv_obj_reset(struct bv_scene_obj *s)
     }
     BU_LIST_INIT(&(s->s_vlist));
 
+    s->s_v = NULL;
     s->current = 0;
+    VSETALL(s->bmin, INFINITY);
+    VSETALL(s->bmax, -INFINITY);
+    s->s_size = 0;
+    s->s_csize = 0;
+    VSETALL(s->s_center, 0);
+    s->adaptive_wireframe = 0;
+    s->view_scale = 0;
+    s->bot_threshold = 0;
+    s->curve_scale = 0;
+    s->point_scale = 0;
+
+    s->draw_data = NULL;
 }
 
 #define FREE_BV_SCENE_OBJ(p, fp) { \
@@ -903,8 +924,11 @@ bv_obj_put(struct bv_scene_obj *s)
 
     bu_ptbl_rm(s->otbl, (long *)s);
 
+    s->otbl = NULL;
 
-    FREE_BV_SCENE_OBJ(s, &s->free_scene_obj->l);
+    struct bv_scene_obj *fs = s->free_scene_obj;
+    s->free_scene_obj = NULL;
+    FREE_BV_SCENE_OBJ(s, &fs->l);
 }
 
 struct bv_scene_obj *
