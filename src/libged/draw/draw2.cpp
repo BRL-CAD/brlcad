@@ -122,6 +122,12 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	draw_walk_tree(path, comb->tree, curr_mat, _bound_fp, client_data);
 	rt_db_free_internal(&in);
+	// Use bbox to update sizing
+	if (dd->have_bbox) {
+	    dd->g->s_size = dd->g->bmax[X] - dd->g->bmin[X];
+	    V_MAX(dd->g->s_size, dd->g->bmax[Y] - dd->g->bmin[Y]);
+	    V_MAX(dd->g->s_size, dd->g->bmax[Z] - dd->g->bmin[Z]);
+	}
     } else {
 	// If we're skipping subtractions there's no
 	// point in going further.
@@ -141,6 +147,9 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	    (*dd->s_size)[dp] = s_size;
 	    VMINMAX(dd->min, dd->max, bmin);
 	    VMINMAX(dd->min, dd->max, bmax);
+	    VMINMAX(dd->g->bmin, dd->g->bmax, bmin);
+	    VMINMAX(dd->g->bmin, dd->g->bmax, bmax);
+	    dd->g->s_size = s_size;
 	    dd->have_bbox = 1;
 	}
     }
@@ -354,17 +363,21 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    g = bv_obj_get(v, BV_DB_OBJS);
 	    db_path_to_vls(&g->s_name, fp);
 	    bv_obj_settings_sync(&g->s_os, &fpvs);
-
-	    // If we're a blank slate, we're adaptive, and autoview isn't off
-	    // we need to be building up some sense of the view and object
-	    // sizes as we go, ahead of trying to draw anything.  That means
-	    // for each group we're going to be using mat and walking the tree
-	    // of fp (or getting its box directly if fp is a solid with no
-	    // parents) to build up bounding info.
-	    mat_t cmat;
-	    MAT_COPY(cmat, mat);
-	    _bound_fp(fp, &cmat, (void *)&bounds_data);
 	}
+
+	// If we're a blank slate, we're adaptive, and autoview isn't off
+	// we need to be building up some sense of the view and object
+	// sizes as we go, ahead of trying to draw anything.  That means
+	// for each group we're going to be using mat and walking the tree
+	// of fp (or getting its box directly if fp is a solid with no
+	// parents) to build up bounding info.
+	mat_t cmat;
+	MAT_COPY(cmat, mat);
+	VSETALL(g->bmin, INFINITY);
+	VSETALL(g->bmax, -INFINITY);
+	bounds_data.g = g;
+	_bound_fp(fp, &cmat, (void *)&bounds_data);
+
 	fp_g[fp] = g;
 
 	if (clear.size()) {
@@ -441,12 +454,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    ud->res = dd.res;
 	    g->s_i_data = (void *)ud;
 	    g->s_v = dd.v;
-
-	    // Let the object know about its size
-	    if (bounds_data.s_size && bounds_data.s_size->find(DB_FULL_PATH_CUR_DIR(fp)) != bounds_data.s_size->end()) {
-		g->s_size = (*bounds_data.s_size)[DB_FULL_PATH_CUR_DIR(fp)];
-	    }
-
 	    // Done with path
 	    db_free_full_path(fp);
 	    BU_PUT(fp, struct db_full_path);
@@ -481,17 +488,44 @@ ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_sla
 	v->gv_s->bot_threshold = bot_threshold;
     }
 
-    // Do an initial autoview so adaptive routines will have approximate
+    // Do an initial autoview so adaptive routines will have approximately
     // the right starting point
     if (blank_slate && !no_autoview) {
-	bv_autoview(v, 1, 0);
+	point_t center, radial;
+	point_t bmin, bmax;
+	VSETALL(bmin, INFINITY);
+	VSETALL(bmax, -INFINITY);
+	if (BU_PTBL_LEN(sg)) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
+		VMINMAX(bmin, bmax, s->bmin);
+		VMINMAX(bmin, bmax, s->bmax);
+	    }
+	} else {
+	    VSETALL(bmin, -1000);
+	    VSETALL(bmax, 1000);
+	}
+	VADD2SCALE(center, bmax, bmin, 0.5);
+	VSUB2(radial, bmax, center);
+	vect_t sqrt_small;
+	VSETALL(sqrt_small, SQRT_SMALL_FASTF);
+	VMAX(radial, sqrt_small);
+	if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
+	    VSETALL(radial, 1.0);
+	MAT_IDN(v->gv_center);
+	MAT_DELTAS_VEC_NEG(v->gv_center, center);
+	v->gv_scale = radial[X];
+	V_MAX(v->gv_scale, radial[Y]);
+	V_MAX(v->gv_scale, radial[Z]);
+	v->gv_isize = 1.0 / v->gv_size;
+	bv_update(v);
     }
 
     // Do the actual drawing
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sg, i);
 	draw_scene(s, v);
-    }	
+    }
 
     // Make sure what we've drawn is visible, unless we've a reason not to.
     if (blank_slate && !no_autoview) {

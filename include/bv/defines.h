@@ -254,6 +254,8 @@ struct bv_scene_obj  {
     fastf_t s_csize;		/**< @brief  Dist across clipped solid (model space) */
     vect_t s_center;		/**< @brief  Center point of solid, in model space */
     int s_displayobj;		/**< @brief  Vector list contains vertices in display context flag */
+    point_t bmin;
+    point_t bmax;
 
     /* Display properties */
     char s_flag;		/**< @brief  UP = object visible, DOWN = obj invis */

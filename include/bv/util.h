@@ -114,6 +114,8 @@ BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s, struct bview *v)
  * the vlist points in s in the context of view v */
 BV_EXPORT extern fastf_t bv_vZ_calc(struct bv_scene_obj *s, struct bview *v, int mode);
 
+/* Copy object attributes (but not geometry) from src to dest */
+BV_EXPORT extern void bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src);
 
 /* Given a view, create an object of the specified type.  Issues such as memory
  * management as a function of view settings are handled internally, so client

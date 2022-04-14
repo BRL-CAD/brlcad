@@ -1115,6 +1115,23 @@ bv_view_objs(struct bview *v, int type)
 }
 
 
+void
+bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src)
+{
+    bv_obj_settings_sync(&dest->s_os, &src->s_os);
+    VMOVE(dest->s_center, src->s_center);
+    VMOVE(dest->s_color, src->s_color);
+    VMOVE(dest->bmin, src->bmin);
+    VMOVE(dest->bmax, src->bmax);
+    dest->s_size = src->s_size;
+    dest->s_soldash = src->s_soldash;
+    dest->s_arrow = src->s_arrow;
+    dest->adaptive_wireframe = src->adaptive_wireframe;
+    dest->view_scale = src->view_scale;
+    dest->bot_threshold = src->bot_threshold;
+    dest->curve_scale = src->curve_scale;
+    dest->point_scale = src->point_scale;
+}
 
 // Local Variables:
 // tab-width: 8

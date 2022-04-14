@@ -100,14 +100,16 @@ draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     if (!rework) {
 	// Check view scale
 	fastf_t delta = s->view_scale * 0.1/s->view_scale;
-	if (!NEAR_EQUAL(s->view_scale, s->s_v->gv_scale, delta))
+	if (!NEAR_EQUAL(s->view_scale, v->gv_scale, delta)) {
+	    s->view_scale = v->gv_scale;
 	    rework = true;
+	}
     }
     if (!rework)
 	return 0;
 
     // Clear out existing vlist, if any...
-    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
+    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
 
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     struct db_i *dbip = d->dbip;
@@ -120,7 +122,7 @@ draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
 	return 0;
 
     if (ip->idb_meth->ft_adaptive_plot)
-	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, s->s_v, s->s_size);
+	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, v, s->s_size);
 
 #if 0
     // Draw label
@@ -197,6 +199,14 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	s->s_type_flags |= BV_MESH_LOD;
 	vo->s_type_flags |= BV_MESH_LOD;
 
+	// Most of the view properties (color, size, etc.) are inherited from
+	// the parent
+	bv_obj_sync(vo, s);
+
+	// Make the names unique
+	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
+	bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
+
 	bu_log("level: %d\n", level);
 	return;
     }
@@ -219,6 +229,15 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 
 	vo->s_update_callback = &draw_update;
 	vo->s_free_callback = &draw_free_data;
+
+	// Most of the view properties (color, size, etc.) are inherited from
+	// the parent
+	bv_obj_sync(vo, s);
+
+	// Make the names unique
+	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
+	bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
+
 	return;
     }
 
@@ -660,6 +679,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	if (dd->s_size && dd->s_size->find(DB_FULL_PATH_CUR_DIR(path)) != dd->s_size->end()) {
 	    s->s_size = (*dd->s_size)[DB_FULL_PATH_CUR_DIR(path)];
 	}
+
     }
 }
 
