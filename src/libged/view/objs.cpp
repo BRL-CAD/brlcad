@@ -272,6 +272,19 @@ _objs_cmd_lcnt(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+static void
+update_recurse(struct bv_scene_obj *s, struct bview *v, int flags)
+{
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	update_recurse(sc, v, flags);
+    }
+    s->s_changed = 0;
+    s->s_v = v;
+    if (s->s_update_callback)
+	(*s->s_update_callback)(s, v, 0);
+}
+
 int
 _objs_cmd_update(void *bs, int argc, const char **argv)
 {
@@ -314,9 +327,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 	v->gv_mouse_y = y;
     }
 
-    s->s_changed = 0;
-    s->s_v = v;
-    (*s->s_update_callback)(s, v, 0);
+    update_recurse(s, v, 0);
 
     return BRLCAD_OK;
 }

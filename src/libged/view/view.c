@@ -229,7 +229,6 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     struct bview *gvp;
     int print_help = 0;
     static const char *usage = "view lod enabled [0|1]\n"
-			       "view lod redraw_on_zoom [0|1]>\n"
 			       "view lod point_scale [factor]\n"
 			       "view lod curve_scale [factor]\n"
 			       "view lod bot_threshold [face_cnt]\n";
@@ -270,10 +269,28 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     /* Print current state if no args are supplied */
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "enabled: %d\n", gvp->gv_s->adaptive_plot);
-	bu_vls_printf(gedp->ged_result_str, "redraw_on_zoom: %d\n", gvp->gv_s->redraw_on_zoom);
 	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", gvp->gv_s->point_scale);
 	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", gvp->gv_s->curve_scale);
 	bu_vls_printf(gedp->ged_result_str, "bot_threshold: %zd\n", gvp->gv_s->bot_threshold);
+	return BRLCAD_OK;
+    }
+
+    if (BU_STR_EQUIV(argv[0], "1")) {
+	if (!gvp->gv_s->adaptive_plot) {
+	    gvp->gv_s->adaptive_plot = 1;
+	    int rac = 1;
+	    const char *rav[2] = {"redraw", NULL};
+	    ged_exec(gedp, rac, (const char **)rav);
+	}
+	return BRLCAD_OK;
+    }
+    if (BU_STR_EQUIV(argv[0], "0")) {
+	if (gvp->gv_s->adaptive_plot) {
+	    gvp->gv_s->adaptive_plot = 0;
+	    int rac = 1;
+	    const char *rav[2] = {"redraw", NULL};
+	    ged_exec(gedp, rac, (const char **)rav);
+	}
 	return BRLCAD_OK;
     }
 
@@ -295,23 +312,6 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    return BRLCAD_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "unknown argument to enabled: %s\n", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "redraw_on_zoom")) {
-	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->redraw_on_zoom);
-	    return BRLCAD_OK;
-	}
-	if (bu_str_true(argv[1])) {
-	    gvp->gv_s->redraw_on_zoom = 1;
-	    return BRLCAD_OK;
-	}
-	if (bu_str_false(argv[1])) {
-	    gvp->gv_s->redraw_on_zoom = 0;
-	    return BRLCAD_OK;
-	}
-	bu_vls_printf(gedp->ged_result_str, "unknown argument to redraw_on_zoom: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 

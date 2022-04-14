@@ -440,8 +440,6 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    ud->ttol = dd.ttol;
 	    ud->res = dd.res;
 	    g->s_i_data = (void *)ud;
-	    g->s_update_callback = &draw_update;
-	    g->s_free_callback = &draw_free_data;
 	    g->s_v = dd.v;
 
 	    // Let the object know about its size

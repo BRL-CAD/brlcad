@@ -79,6 +79,75 @@ prim_tess(struct bv_scene_obj *s, struct rt_db_internal *ip)
     return 0;
 }
 
+static int
+draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
+{
+    /* Validate */
+    if (!s || !v)
+	return 0;
+
+    bool rework = false;
+    // Check bot threshold
+    //if (s->bot_threshold != s->s_v->gv_s->bot_threshold)
+    //	rework = true;
+
+    // Check point scale
+    if (!rework && !NEAR_EQUAL(s->curve_scale, s->s_v->gv_s->curve_scale, SMALL_FASTF))
+	rework = true;
+    // Check point scale
+    if (!rework && !NEAR_EQUAL(s->point_scale, s->s_v->gv_s->point_scale, SMALL_FASTF))
+	rework = true;
+    if (!rework) {
+	// Check view scale
+	fastf_t delta = s->view_scale * 0.1/s->view_scale;
+	if (!NEAR_EQUAL(s->view_scale, s->s_v->gv_scale, delta))
+	    rework = true;
+    }
+    if (!rework)
+	return 0;
+
+    // Clear out existing vlist, if any...
+    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
+
+    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    struct db_i *dbip = d->dbip;
+    struct db_full_path *fp = &d->fp;
+    struct rt_db_internal dbintern;
+    RT_DB_INTERNAL_INIT(&dbintern);
+    struct rt_db_internal *ip = &dbintern;
+    int ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, s->s_mat, d->res);
+    if (ret < 0)
+	return 0;
+
+    if (ip->idb_meth->ft_adaptive_plot)
+	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, s->s_v, s->s_size);
+
+#if 0
+    // Draw label
+    if (ip->idb_meth->ft_labels)
+	ip->idb_meth->ft_labels(&s->children, ip, s->s_v);
+#endif
+
+    return 1;
+}
+
+static void
+draw_free_data(struct bv_scene_obj *s)
+{
+    /* Validate */
+    if (!s)
+	return;
+
+    /* free drawing info */
+    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
+    if (!d)
+	return;
+    db_free_full_path(&d->fp);
+    BU_PUT(d, struct draw_update_data_t);
+    s->s_i_data = NULL;
+}
+
+
 /* Wrapper to handle adaptive vs non-adaptive wireframes */
 static void
 wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *ip)
@@ -122,6 +191,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 
 	// LoD will need to re-check its level settings whenever the view changes
 	vo->s_update_callback = &bg_mesh_lod_update;
+	// TODO - need free callback
 
 	// Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
 	s->s_type_flags |= BV_MESH_LOD;
@@ -131,10 +201,34 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	return;
     }
 
-    // If we're adaptive but it's not a special case, see what the primitive has
+    // If we're adaptive but it's not a special case, we fall back on the primitive's
+    // adaptive plotting, if any.
     if (ip->idb_meth->ft_adaptive_plot) {
-	ip->idb_meth->ft_adaptive_plot(&s->s_vlist, ip, d->tol, s->s_v, s->s_size);
+	struct bv_scene_obj *vo = bv_obj_get_child(s);
+
+	// Make a copy of the draw info for vo.
+	struct draw_update_data_t *ld;
+	BU_GET(ld, struct draw_update_data_t);
+	db_full_path_init(&ld->fp);
+	db_dup_full_path(&ld->fp, &d->fp);
+	ld->dbip = d->dbip;
+	ld->tol = d->tol;
+	ld->ttol = d->ttol;
+	ld->res = d->res;
+	vo->s_i_data= (void *)ld;
+
+	vo->s_update_callback = &draw_update;
+	vo->s_free_callback = &draw_free_data;
 	return;
+    }
+
+    // If we've got this far, we have no adaptive plotting capability for this
+    // object.  Do the normal plot rather than show nothing.
+    if (ip->idb_meth->ft_plot) {
+	ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
+	// Because this data is view independent, it only needs to be
+	// generated once rather than per-view.
+	s->current = 1;
     }
 }
 
@@ -298,95 +392,6 @@ geom_done:
 
     s->current = 1;
     rt_db_free_internal(&dbintern);
-}
-
-
-// This is the generic "just create/update the view geometry" logic - for
-// editing operations, which will have custom visuals and updating behavior,
-// we'll need primitive specific callbacks (which really will almost certainly
-// belong (like the labels logic) in the rt functab...)
-//
-// Note that this function shouldn't be called when doing tree walks.  It
-// operates locally on the solid wireframe using s_mat, and won't take into
-// account higher level hierarchy level changes.  If such higher level changes
-// are made, the subtrees should be redrawn to properly repopulate the scene
-// objects.
-extern "C" int
-draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
-{
-    /* Validate */
-    if (!s)
-	return 0;
-
-    // Normally this is a no-op, but in adaptive plotting view changes
-    // may result in a need to redo the visuals.
-    bool rework = false;
-    if (s->s_v->gv_s->adaptive_plot != s->adaptive_wireframe) {
-	rework = true;
-    }
-    if (!rework && s->s_v->gv_s->adaptive_plot) {
-	// Check bot threshold
-	if (s->bot_threshold != s->s_v->gv_s->bot_threshold) {
-	    rework = true;
-	}
-	// Check point scale
-	if (!rework && !NEAR_EQUAL(s->curve_scale, s->s_v->gv_s->curve_scale, SMALL_FASTF)) {
-	    rework = true;
-	}
-	// Check point scale
-	if (!rework && !NEAR_EQUAL(s->point_scale, s->s_v->gv_s->point_scale, SMALL_FASTF)) {
-	    rework = true;
-	}
-    }
-
-    // If redraw-on-zoom is set, check the scale
-    if (!rework && s->s_v->gv_s->adaptive_plot && s->s_v->gv_s->redraw_on_zoom) {
-	// Check view scale
-	fastf_t delta = s->view_scale * 0.1/s->view_scale;
-	if (!rework && !NEAR_EQUAL(s->view_scale, s->s_v->gv_scale, delta)) {
-	    rework = true;
-	}
-    }
-
-    if (!rework)
-	return 0;
-
-    // Process children
-    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	if (s_c->s_update_callback)
-	    (*s_c->s_update_callback)(s_c, v, 0);
-    }
-
-    // Clear out existing vlist, if any...
-    BV_FREE_VLIST(&s->s_v->gv_objs.gv_vlfree, &s->s_vlist);
-
-    // Get the new geometry
-    draw_scene(s, v);
-
-#if 0
-    // Draw label
-    if (ip->idb_meth->ft_labels)
-	ip->idb_meth->ft_labels(&s->children, ip, s->s_v);
-#endif
-
-    return 1;
-}
-
-extern "C" void
-draw_free_data(struct bv_scene_obj *s)
-{
-    /* Validate */
-    if (!s)
-	return;
-
-    /* free drawing info */
-    struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-    if (!d)
-	return;
-    db_free_full_path(&d->fp);
-    BU_PUT(d, struct draw_update_data_t);
-    s->s_i_data = NULL;
 }
 
 static void
@@ -650,10 +655,6 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	ud->ttol = dd->ttol;
 	ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view...
 	s->s_i_data = (void *)ud;
-
-	// set up callback functions
-	s->s_update_callback = &draw_update;
-	s->s_free_callback = &draw_free_data;
 
 	// Let the object know about its size
 	if (dd->s_size && dd->s_size->find(DB_FULL_PATH_CUR_DIR(path)) != dd->s_size->end()) {

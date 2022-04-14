@@ -38,8 +38,7 @@ extern "C" int
 ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "lod (on|off|enabled)\n"
-    "lod scale (points|curves) <factor>\n"
-    "lod redraw (off|onzoom)\n";
+    "lod scale (points|curves) <factor>\n";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -81,11 +80,6 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: enabled\n");
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: disabled\n");
-	}
-	if (cv->gv_s->redraw_on_zoom) {
-	    bu_vls_printf(gedp->ged_result_str, "Redraw on zoom: enabled\n");
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "Redraw on zoom: disabled\n");
 	}
 	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", cv->gv_s->point_scale);
 	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", cv->gv_s->curve_scale);
@@ -174,27 +168,6 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	} else {
 	    printUsage = 1;
-	}
-    } else if (BU_STR_EQUAL(argv[0], "redraw")) {
-	printUsage = 1;
-	if (argc == 1) {
-	    /* lod redraw - return current value */
-	    if (cv->gv_s->redraw_on_zoom) {
-		bu_vls_printf(gedp->ged_result_str, "onzoom");
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "off");
-	    }
-	    printUsage = 0;
-	} else if (argc == 2) {
-	    if (BU_STR_EQUAL(argv[1], "off")) {
-		/* lod redraw off */
-		cv->gv_s->redraw_on_zoom = 0;
-		printUsage = 0;
-	    } else if (BU_STR_EQUAL(argv[1], "onzoom")) {
-		/* lod redraw onzoom */
-		cv->gv_s->redraw_on_zoom = 1;
-		printUsage = 0;
-	    }
 	}
     } else {
 	printUsage = 1;
