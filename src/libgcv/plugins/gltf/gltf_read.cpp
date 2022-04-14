@@ -56,9 +56,15 @@ struct conversion_state
 	FILE *fd_in;		/* input file */
 	struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
 
+	struct wmember scene;
+
 	int num_vert_values;
 	int num_face_values;
 	int num_norm_values;
+
+	int bot_fcurr; //current face
+	int id_no; //????
+	int mat_code;
 };
 
 static void testingStringIntMap(const std::map<std::string, int> &m, int &pos) {
@@ -265,6 +271,48 @@ output_to_bot(struct rt_wdb *outfp, unsigned char bot_output_mode, char bot_orie
 }
 
 void
+handle_node(struct conversion_state *state, tinygltf::Model &model, int node_index, struct wmember &regions)
+{
+	tinygltf::Node node = model.nodes[node_index];
+	std::string region_name = "Region_" + std::to_string(node_index);
+	
+	struct wmember region;
+	BU_LIST_INIT(&region.l);
+
+	if (node.mesh || node.mesh == 0)
+	{
+		//std::cout << "getting here" << std::endl;
+		std::string shape_name = "shape";
+		unsigned char color[3] = { 255, 0, 0 };
+
+		state->bot_fcurr = 0;
+		state->id_no = 0;
+
+		set_array_sizes(model, state->num_vert_values, state->num_face_values, state->num_norm_values);
+		int *faces = new int[state->num_face_values];
+		double *vertices = new double[state->num_vert_values * 3];
+		double *normals = new double[state->num_norm_values * 3];
+		insert_vector_faces(model, vertices, faces, normals);
+
+		mk_bot(state->fd_out, shape_name.c_str(), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, state->num_vert_values / 3, state->num_face_values / 3, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+		(void)mk_addmember(shape_name.c_str(), &region.l, NULL, WMOP_UNION);
+		mk_lrcomb(state->fd_out, region_name.c_str(), &region, 1, (char *)NULL, (char *)NULL, color, state->id_no, 0, 0, 100, 0);
+		state->id_no++;
+	}
+
+	(void)mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION);
+
+	for (int i = 0; i < node.children.size(); i++)
+	{
+		handle_node(state, model, node.children[i], region);
+	}
+	if (node.children.size() > 0)
+	{
+		mk_lrcomb(state->fd_out, region_name.c_str(), &region, 1, (char *)NULL, (char *)NULL, NULL, state->id_no, 0, 0, 100, 0);
+	}
+}
+
+void
 convert_from_gltf(struct conversion_state *state, tinygltf::Model &model)
 {
 	const tinygltf::Scene &scene = model.scenes[0];
@@ -272,20 +320,10 @@ convert_from_gltf(struct conversion_state *state, tinygltf::Model &model)
 	for (int i = 0; i < scene.nodes.size(); i++)
 	{
 		node = model.nodes[scene.nodes[i]];
-		std::cout << node.children[0] << std::endl;
+		//std::cout << node.children[0] << std::endl;
+		handle_node(state, model, scene.nodes[i], state->scene);
 
 	}
-
-	set_array_sizes(model, state->num_vert_values, state->num_face_values, state->num_norm_values);
-	int *faces = new int[state->num_face_values];
-	double *vertices = new double[state->num_vert_values * 3];
-	double *normals = new double[state->num_norm_values * 3];
-	insert_vector_faces(model, vertices, faces, normals);
-	
-	rt_wdb *outfp = state->fd_out;
-	std::string title = "gltf conversion from" + state->input_file;
-	mk_id(outfp, title.c_str());
-	mk_bot(outfp, "Mesh", RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, state->num_vert_values / 3, state->num_face_values / 3, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 }
 
 HIDDEN int
@@ -355,15 +393,21 @@ gltf_read(struct gcv_context *context, const struct gcv_opts *UNUSED(gcv_options
 	struct conversion_state state;
 
 	memset(&state, 0, sizeof(state));
-
+	
+	BU_LIST_INIT(&state.scene.l);
 	//state.gcv_options = gcv_options;
 	//state.stl_read_options = (struct stl_read_options *)options_data;
 	//state.id_no = state.stl_read_options->starting_id;
 	state.input_file = input_filename;
 	state.fd_out = context->dbip->dbi_wdbp;
 
+	std::string title = "gltf conversion from" + state.input_file;
+	mk_id(state.fd_out, title.c_str());
+
 	convert_from_gltf(&state, model);
 
+	mk_lcomb(context->dbip->dbi_wdbp, "all", &state.scene, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+	
 	return 1;
 }
 
