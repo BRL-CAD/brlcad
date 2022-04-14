@@ -801,10 +801,12 @@ bv_obj_get_child(struct bv_scene_obj *sp)
     // Children use their parent's info
     if (BU_LIST_IS_EMPTY(&sp->free_scene_obj->l)) {
 	BU_ALLOC((s), struct bv_scene_obj);
+	s->i = new bv_scene_obj_internal;
     } else {
 	s = BU_LIST_NEXT(bv_scene_obj, &sp->free_scene_obj->l);
 	if (!s) {
 	    BU_ALLOC((s), struct bv_scene_obj);
+	    s->i = new bv_scene_obj_internal;
 	} else {
 	    BU_LIST_DEQUEUE(&((s)->l));
 	}
