@@ -592,6 +592,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	dgcdp.gedp = gedp;
 
 	gvp = gedp->ged_gvp;
+	dgcdp.v = gvp;
 
 	if (gedp && gedp->ged_gvp) threshold_cached = gvp->gv_s->bot_threshold;
 
