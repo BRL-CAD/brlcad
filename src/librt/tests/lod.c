@@ -62,7 +62,9 @@ main(int argc, char *argv[])
 
     // Unpack bot
     struct rt_db_internal intern;
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0)
+    mat_t s_mat;
+    MAT_IDN(s_mat);
+    if (rt_db_get_internal(&intern, dp, dbip, s_mat, &rt_uniresource) < 0)
 	bu_exit(1, "ERROR: %s internal get failed\n", argv[2]);
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
