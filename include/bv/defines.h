@@ -130,6 +130,10 @@ struct bv_axes {
 // that can be used by the multiple libraries which must interact with it to
 // make information passing simpler.
 struct bv_mesh_lod_info {
+
+    // The scene object
+    struct bv_scene_obj *s;
+
     // The set of triangle faces to be used when drawing
     int fcnt;
     const int *faces;
@@ -147,15 +151,13 @@ struct bv_mesh_lod_info {
     const int *face_normals;
     const vect_t *normals;
 
-    // Drawing mode: 0 = wireframe, 1 = shaded
-    int mode;
-
     // BBox
     point_t bmin;
     point_t bmax;
 
     // Pointer to LoD container
     void *lod;
+
 };
 
 

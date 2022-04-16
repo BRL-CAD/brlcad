@@ -159,7 +159,7 @@ class POPState {
 	unsigned long long hash;
 
 	// Drawing trigger
-	void draw(void *ctx, int mode);
+	void draw(void *ctx, struct bv_scene_obj *s);
 	void set_callback(draw_clbk_t clbk);
 
 	// Parent container
@@ -892,10 +892,11 @@ POPState::tri_degenerate(rec r0, rec r1, rec r2, int level)
 }
 
 void
-POPState::draw(void *ctx, int mode)
+POPState::draw(void *ctx, struct bv_scene_obj *s)
 {
     if (draw_clbk) {
 	struct bv_mesh_lod_info info;
+	info.s = s;
 	info.fset_cnt = 0;
 	info.fset = NULL;
 	info.fcnt = (int)lod_tris.size()/3;
@@ -908,7 +909,6 @@ POPState::draw(void *ctx, int mode)
 	}
 	info.face_normals = NULL;
 	info.normals = NULL;
-	info.mode = mode;
 	info.lod = lod;
 	(*draw_clbk)(ctx, &info);
     }
@@ -1123,13 +1123,15 @@ bg_mesh_lod_set_draw_callback(
 }
 
 extern "C" void
-bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode)
+bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s)
 {
-    if (!lod || !ctx)
+    if (!s || !ctx)
 	return;
 
-    POPState *s = lod->i->s;
-    s->draw(ctx, mode);
+    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
+    POPState *ps = l->i->s;
+    ps->draw(ctx, s);
 }
 
 

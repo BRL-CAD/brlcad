@@ -114,7 +114,7 @@ bg_mesh_lod_set_draw_callback(struct bg_mesh_lod *lod, int (*clbk)(void *ctx, st
 
 /* Trigger a triangle drawing operation. */
 BG_EXPORT void
-bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode);
+bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s);
 
 /* Callback for updating level settings on an object. */
 BG_EXPORT int

@@ -796,7 +796,7 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
     const point_t *points_orig = info->points_orig;
     const int *face_normals = info->face_normals;
     const vect_t *normals = info->normals;
-    int mode = info->mode;
+    int mode = info->s->s_os.s_dmode;
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     GLdouble dpt[3];

@@ -586,7 +586,7 @@ dm_draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 	// dm_draw_tri_callback must be invoked from that method - hence the
 	// above callback assignment.  This keeps any awareness of libdm and the
 	// specifics of drawing out of the other libs.
-	bg_mesh_lod_draw(l, (void *)dmp, s->s_os.s_dmode);
+	bg_mesh_lod_draw((void *)dmp, s);
 	} else {
 	    bu_log("Error - no LoD data for %s\n", bu_vls_cstr(&s->s_name));
 	}
