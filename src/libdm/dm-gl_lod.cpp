@@ -40,6 +40,16 @@ extern "C" {
 #include "./include/private.h"
 }
 
+// TODO - if the mesh is small enough, we can "compile" it into an
+// OpenGL Display List and dispense with the other data (although
+// if we switch mode we'll have to be sure and re-load).  We don't
+// want to do this for sufficiently large meshes, as we won't be
+// able to hold both the original data and the compiled display
+// list in memory at the same time.  For that scenario, we would
+// first need to break down the big mesh into smaller pieces as
+// in the earlier LoD experiments in order to keep using display
+// lists...
+
 extern "C"
 int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 {
