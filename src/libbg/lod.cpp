@@ -155,6 +155,10 @@ class POPState {
 	// Used by calling functions to detect initialization errors
 	bool is_valid = false;
 
+	// If dlists are being used, we may need to re-load the data
+	// for a mode change even if the level is current.
+	bool force_reload = false;
+
 	// Content based hash key
 	unsigned long long hash;
 
@@ -582,7 +586,7 @@ void
 POPState::set_level(int level)
 {
     // If we're already there, no work to do
-    if (level == curr_level)
+    if (level == curr_level && !force_reload)
 	return;
 
     int64_t start, elapsed;
@@ -593,12 +597,20 @@ POPState::set_level(int level)
 
     // If we need to pull more data, do so
     if (level > curr_level && level <= max_tri_pop_level) {
-	tri_pop_load(curr_level, level);
+	if (force_reload) {
+	    tri_pop_load(-1, level);
+	} else {
+	    tri_pop_load(curr_level, level);
+	}
     }
 
     // If we need to trim back the POP data, do that
     if (level < curr_level && level <= max_tri_pop_level && curr_level <= max_tri_pop_level) {
-	tri_pop_trim(level);
+	if (!force_reload) {
+	    tri_pop_trim(level);
+	} else {
+	    tri_pop_load(-1, level);
+	}
     }
 
     // If we were operating beyond POP detail levels (i.e. using RTree
@@ -666,6 +678,7 @@ POPState::set_level(int level)
     seconds = elapsed / 1000000.0;
     bu_log("lod set_level(%d): %f sec\n", level, seconds);
 
+    force_reload = false;
     curr_level = level;
 }
 
@@ -1074,6 +1087,8 @@ bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
     int vscale = s->get_level(v->gv_size) + scale;
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
+    if (s->curr_level != vscale && !s->lod_tri_pnts.size())
+	s->force_reload = 1;
     bg_mesh_lod_level(l, vscale);
     return vscale;
 }
@@ -1097,8 +1112,19 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
 extern "C" int
 bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int offset)
 {
+    if (!s || !v)
+	return -1;
     struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    if (!i)
+	return -1;
     struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
+    if (!l)
+	return -1;
+
+    POPState *sp = l->i->s;
+    if (s->s_dlist && (s->s_os.s_dmode != s->s_dlist_mode) && !sp->lod_tri_pnts.size())
+	sp->force_reload = 1;
+
     return bg_mesh_lod_view(l, v, offset);
 }
 
