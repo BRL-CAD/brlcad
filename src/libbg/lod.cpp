@@ -597,7 +597,7 @@ POPState::set_level(int level)
 
     // If we need to pull more data, do so
     if (level > curr_level && level <= max_tri_pop_level) {
-	if (force_reload) {
+	if (!lod_tri_pnts.size()) {
 	    tri_pop_load(-1, level);
 	} else {
 	    tri_pop_load(curr_level, level);
@@ -606,10 +606,10 @@ POPState::set_level(int level)
 
     // If we need to trim back the POP data, do that
     if (level < curr_level && level <= max_tri_pop_level && curr_level <= max_tri_pop_level) {
-	if (!force_reload) {
-	    tri_pop_trim(level);
-	} else {
+	if (!lod_tri_pnts.size()) {
 	    tri_pop_load(-1, level);
+	} else {
+	    tri_pop_trim(level);
 	}
     }
 
@@ -1087,8 +1087,6 @@ bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
     int vscale = s->get_level(v->gv_size) + scale;
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
-    if (s->curr_level != vscale && !s->lod_tri_pnts.size())
-	s->force_reload = 1;
     bg_mesh_lod_level(l, vscale);
     return vscale;
 }
