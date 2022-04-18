@@ -1075,7 +1075,7 @@ bg_mesh_lod_destroy(struct bv_mesh_lod_info *i)
 }
 
 extern "C" int
-bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
+bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int UNUSED(scale))
 {
 
     if (!l)
@@ -1084,7 +1084,7 @@ bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
 	return l->i->s->curr_level;
 
     POPState *s = l->i->s;
-    int vscale = s->get_level(v->gv_size) + scale;
+    int vscale = (int)((double)s->get_level(v->gv_size) * v->gv_s->lod_scale);
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
     bg_mesh_lod_level(l, vscale);
@@ -1108,7 +1108,7 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
 }
 
 extern "C" int
-bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int offset)
+bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(offset))
 {
     if (!s || !v)
 	return -1;
@@ -1123,7 +1123,7 @@ bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int offset)
     if (s->s_dlist && (s->s_os.s_dmode != s->s_dlist_mode) && !sp->lod_tri_pnts.size())
 	sp->force_reload = 1;
 
-    return bg_mesh_lod_view(l, v, offset);
+    return bg_mesh_lod_view(l, v, 0);
 }
 
 extern "C" void

@@ -400,6 +400,7 @@ struct bview_settings {
     fastf_t       curve_scale;
     fastf_t       point_scale;
     int           redraw_on_zoom;
+    fastf_t 	  lod_scale;
 
     // Faceplate elements fall into two general categories: those which are
     // interactively adjusted (in a geometric sense) and those which are not.

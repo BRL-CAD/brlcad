@@ -372,6 +372,7 @@ bv_settings_init(struct bview_settings *s)
     s->point_scale = 1;
     s->curve_scale = 1;
     s->bot_threshold = 0;
+    s->lod_scale = 1.0;
 
     // Higher values indicate more aggressive behavior (i.e. points further away will be snapped).
     s->gv_snap_tol_factor = 10;

@@ -229,6 +229,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     struct bview *gvp;
     int print_help = 0;
     static const char *usage = "view lod enabled [0|1]\n"
+			       "view lod scale [factor]\n"
 			       "view lod point_scale [factor]\n"
 			       "view lod curve_scale [factor]\n"
 			       "view lod bot_threshold [face_cnt]\n";
@@ -269,6 +270,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     /* Print current state if no args are supplied */
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "enabled: %d\n", gvp->gv_s->adaptive_plot);
+	bu_vls_printf(gedp->ged_result_str, "scale: %g\n", gvp->gv_s->lod_scale);
 	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", gvp->gv_s->point_scale);
 	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", gvp->gv_s->curve_scale);
 	bu_vls_printf(gedp->ged_result_str, "bot_threshold: %zd\n", gvp->gv_s->bot_threshold);
@@ -313,6 +315,20 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	}
 	bu_vls_printf(gedp->ged_result_str, "unknown argument to enabled: %s\n", argv[1]);
 	return BRLCAD_ERROR;
+    }
+
+    if (BU_STR_EQUAL(argv[0], "scale")) {
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->lod_scale);
+	    return BRLCAD_OK;
+	}
+	fastf_t scale = 1.0;
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&scale) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
+	    return BRLCAD_ERROR;
+	}
+	gvp->gv_s->lod_scale = scale;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(argv[0], "point_scale")) {
