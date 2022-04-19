@@ -248,11 +248,17 @@ struct bv_scene_obj  {
     int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
     void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data and draw_data */
 
-    /* Actual 3D geometry data and information */
+    /* 3D vector list geometry data */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
     size_t s_vlen;			/**< @brief  Number of actual cmd[] entries in vlist */
+
+    /* Display lists accelerate drawing when we can use them */
     unsigned int s_dlist;	/**< @brief  display list index */
     int s_dlist_mode;		/**< @brief  drawing mode in which display list was generated (if it doesn't match s_os.s_dmode, dlist is out of date.) */
+    int s_dlist_stale;		/**< @brief  set by client codes when dlist is out of date - dm must update. */
+    void (*s_dlist_free_callback)(struct bv_scene_obj *);  /**< @brief free any dlist specific data */
+
+    /* 3D geometry metadata */
     fastf_t s_size;		/**< @brief  Distance across solid, in model space */
     fastf_t s_csize;		/**< @brief  Dist across clipped solid (model space) */
     vect_t s_center;		/**< @brief  Center point of solid, in model space */

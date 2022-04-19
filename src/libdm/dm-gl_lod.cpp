@@ -40,15 +40,25 @@ extern "C" {
 #include "./include/private.h"
 }
 
-// TODO - if the mesh is small enough, we can "compile" it into an
-// OpenGL Display List and dispense with the other data (although
-// if we switch mode we'll have to be sure and re-load).  We don't
-// want to do this for sufficiently large meshes, as we won't be
-// able to hold both the original data and the compiled display
-// list in memory at the same time.  For that scenario, we would
-// first need to break down the big mesh into smaller pieces as
-// in the earlier LoD experiments in order to keep using display
-// lists...
+extern "C"
+void dlist_free_callback(struct bv_scene_obj *s)
+{
+    if (!s)
+	return;
+    bu_log("dlist cleanup\n");
+    if (s->s_dlist) {
+	glDeleteLists(s->s_dlist, 1);
+	s->s_dlist = 0;
+    }
+    s->s_dlist_stale = 0;
+    s->s_dlist_mode = 0;
+}
+
+// TODO - We can't currently use display lists for really large meshes, as we
+// won't be able to hold both the original data and the compiled display list
+// in memory at the same time.  For that scenario, we would first need to break
+// down the big mesh into smaller pieces as in the earlier LoD experiments in
+// order to keep using display lists...
 
 extern "C"
 int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
@@ -71,9 +81,49 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
     if (mode < 0 || mode > 1)
 	return BRLCAD_ERROR;
 
+
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
 
     gl_debug_print(dmp, "gl_draw_tri", dmp->i->dm_debugLevel);
+
+    // If the dlist is stale, clear it
+    if (info->s->s_dlist_stale) {
+	glDeleteLists(info->s->s_dlist, 1);
+	info->s->s_dlist = 0;
+    }
+
+    // If we have a dlist in the correct mode, use it
+    if (info->s->s_dlist) {
+	if (mode == info->s->s_dlist_mode) {
+	    //bu_log("use dlist %d\n", info->s->s_dlist);
+	    glCallList(info->s->s_dlist);
+	    glLineWidth(originalLineWidth);
+	    return BRLCAD_OK;
+	} else {
+	    glDeleteLists(info->s->s_dlist, 1);
+	    info->s->s_dlist = 0;
+	}
+    }
+
+    // Figure out if we need a new dlist (and if so whether this triangle set
+    // is a candidate.)  OpenGL Display Lists are faster than immediate
+    // triangle drawing when we can use them, but they require more memory
+    // usage while they are being generated.  If we're tight on memory and the
+    // triangle set is large, accept the slower drawing to avoid memory stress
+    // - otherwise, we want the list
+    long int avail_mem = 0.5*bu_mem(BU_MEM_AVAIL);
+    long int size_est = (long int)(fcnt*3*sizeof(point_t));
+    bool gen_dlist = false;
+    if ((!info->s->s_dlist || info->s->s_dlist_stale) && size_est < avail_mem) {
+	gen_dlist = true;
+	info->s->s_dlist = glGenLists(1);
+	info->s->s_dlist_mode = mode;
+	bu_log("gen_dlist: %d\n", info->s->s_dlist);
+	info->s->s_dlist_free_callback = &dlist_free_callback;
+	glNewList(info->s->s_dlist, GL_COMPILE_AND_EXECUTE);
+    } else {
+	bu_log("Not using dlist\n");
+    }
 
     // Wireframe
     if (mode == 0) {
@@ -115,6 +165,17 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 
 	if (dmp->i->dm_light && dmp->i->dm_transparency)
 	    glDisable(GL_BLEND);
+
+	if (gen_dlist) {
+	    glEndList();
+	    info->s->s_dlist_stale = 0;
+	    if (size_est > (avail_mem * 0.01)) {
+		// If the original data is sizable, clear it to save system memory.
+		// The dlist has what it needs, and the LoD code will re-load info
+		// as needed for updates.
+		bg_mesh_lod_memshrink(info->s);
+	    }
+	}
 
 	glLineWidth(originalLineWidth);
 
@@ -223,11 +284,21 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 	if (dmp->i->dm_light && dmp->i->dm_transparency)
 	    glDisable(GL_BLEND);
 
-	glLineWidth(originalLineWidth);
-
 	// Put the lighting model back where it was prior to this operation
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, two_sided);
 
+	if (gen_dlist) {
+	    glEndList();
+	    info->s->s_dlist_stale = 0;
+	    if (size_est > (avail_mem * 0.01)) {
+		// If the original data is sizable, clear it to save system memory.
+		// The dlist has what it needs, and the LoD code will re-load info
+		// as needed for updates.
+		bg_mesh_lod_memshrink(info->s);
+	    }
+	}
+
+	glLineWidth(originalLineWidth);
 	return BRLCAD_OK;
     }
 

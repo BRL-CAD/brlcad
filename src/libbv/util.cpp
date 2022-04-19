@@ -879,6 +879,10 @@ bv_obj_reset(struct bv_scene_obj *s)
     if (s->s_free_callback)
 	(*s->s_free_callback)(s);
 
+    // If we have a callback for the display list data, use it
+    if (s->s_dlist_free_callback)
+	(*s->s_dlist_free_callback)(s);
+
     // free vlist
     if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
 	BV_FREE_VLIST(s->vlfree, &s->s_vlist);

@@ -128,6 +128,12 @@ class POPState {
 	// Load/unload data level
 	void set_level(int level);
 
+	// Shrink memory usage (level set routines will have to do more work
+	// after this is run, but the POPState is still viable).  Used after a
+	// client code has done all that is needed with the level data, such as
+	// generating an OpenGL display list, but isn't done with the object.
+	void shrink_memory();
+
 	// Get the "current" position of a point, given its level
 	void level_pnt(point_t *o, const point_t *p, int level);
 
@@ -154,10 +160,6 @@ class POPState {
 
 	// Used by calling functions to detect initialization errors
 	bool is_valid = false;
-
-	// If dlists are being used, we may need to re-load the data
-	// for a mode change even if the level is current.
-	bool force_reload = false;
 
 	// Content based hash key
 	unsigned long long hash;
@@ -529,6 +531,21 @@ POPState::tri_pop_load(int start_level, int level)
 }
 
 void
+POPState::shrink_memory()
+{
+    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
+	level_tris[i].clear();
+	level_tris[i].shrink_to_fit();
+    }
+    lod_tri_pnts.clear();
+    lod_tri_pnts.shrink_to_fit();
+    lod_tris.clear();
+    lod_tris.shrink_to_fit();
+    lod_tri_pnts_snapped.clear();
+    lod_tri_pnts_snapped.shrink_to_fit();
+}
+
+void
 POPState::tri_pop_trim(int level)
 {
     // Clear the level_tris info for everything above the target level - it will be reloaded
@@ -588,7 +605,7 @@ void
 POPState::set_level(int level)
 {
     // If we're already there, no work to do
-    if (level == curr_level && !force_reload)
+    if (level == curr_level)
 	return;
 
 //    int64_t start, elapsed;
@@ -680,7 +697,6 @@ POPState::set_level(int level)
     //seconds = elapsed / 1000000.0;
     //bu_log("lod set_level(%d): %f sec\n", level, seconds);
 
-    force_reload = false;
     curr_level = level;
 }
 
@@ -1109,6 +1125,16 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
     return s->curr_level;
 }
 
+static void
+dlist_stale(struct bv_scene_obj *s)
+{
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&s->children, i);
+	dlist_stale(cg);
+    }
+    s->s_dlist_stale = 1;
+}
+
 extern "C" int
 bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(offset))
 {
@@ -1122,10 +1148,30 @@ bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(offset))
 	return -1;
 
     POPState *sp = l->i->s;
-    if (s->s_dlist && (s->s_os.s_dmode != s->s_dlist_mode) && !sp->lod_tri_pnts.size())
-	sp->force_reload = 1;
+    int old_level = sp->curr_level;
+    int new_level = bg_mesh_lod_view(l, v, 0);
+    if (old_level != new_level) {
+	dlist_stale(s);
+    }
 
-    return bg_mesh_lod_view(l, v, 0);
+    return new_level;
+}
+
+extern "C" void
+bg_mesh_lod_memshrink(struct bv_scene_obj *s)
+{
+    if (!s)
+	return;
+    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    if (!i)
+	return;
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
+    if (!l)
+	return;
+
+    POPState *sp = l->i->s;
+    sp->shrink_memory();
+    bu_log("memshrink\n");
 }
 
 extern "C" void
