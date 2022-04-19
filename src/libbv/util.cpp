@@ -629,16 +629,6 @@ bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t 
     return 0;
 }
 
-static void
-put_recurse(struct bv_scene_obj *s)
-{
-    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&s->children, i);
-	put_recurse(cg);
-    }
-    bv_obj_put(s);
-}
-
 size_t
 bv_clear(struct bview *v, int flags)
 {
@@ -647,7 +637,7 @@ bv_clear(struct bview *v, int flags)
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_obj *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		put_recurse(cg);
+		bv_obj_put(cg);
 	    }
 	    bu_ptbl_reset(sg);
 	}
@@ -658,7 +648,7 @@ bv_clear(struct bview *v, int flags)
 	if (sv) {
 	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
-		put_recurse(s);
+		bv_obj_put(s);
 	    }
 	    bu_ptbl_reset(sv);
 	}
@@ -670,7 +660,7 @@ bv_clear(struct bview *v, int flags)
 	    if (sg) {
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		    put_recurse(cg);
+		    bv_obj_put(cg);
 		}
 		bu_ptbl_reset(sg);
 	    }
@@ -681,7 +671,7 @@ bv_clear(struct bview *v, int flags)
 	    if (sv) {
 		for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
-		    put_recurse(s);
+		    bv_obj_put(s);
 		}
 		bu_ptbl_reset(sv);
 	    }
@@ -917,6 +907,11 @@ bv_obj_reset(struct bv_scene_obj *s)
 void
 bv_obj_put(struct bv_scene_obj *s)
 {
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&s->children, i);
+	bv_obj_put(cg);
+    }
+
     bv_obj_reset(s);
 
     // Clear names
