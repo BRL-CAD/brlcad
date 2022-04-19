@@ -87,6 +87,69 @@ struct gsh_state {
     unsigned long long prev_ghash = 0;
 };
 
+#ifdef USE_DM
+void
+view_checkpoint(struct gsh_state *s)
+{
+    if (s->gedp && s->gedp->ged_gvp && s->gedp->ged_gvp->dmp) {
+	struct dm *dmp = (struct dm *)s->gedp->ged_gvp->dmp;
+	s->prev_dhash = (dmp) ? dm_hash(dmp) : 0;
+	s->prev_vhash = bv_hash(s->gedp->ged_gvp);
+	s->prev_lhash = dl_name_hash(s->gedp);
+	s->prev_ghash = ged_dl_hash((struct display_list *)s->gedp->ged_gdp->gd_headDisplay);
+    }
+}
+
+void
+view_update(struct gsh_state *s)
+{
+    if (!s || !s->gedp || !s->gedp->ged_wdbp || !s->gedp->dbip)
+	return;
+
+    struct ged *gedp = s->gedp;
+    struct bview *v = gedp->ged_gvp;
+
+    if (!v)
+	return;
+
+    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
+    if (!dmp)
+	return;
+
+    unsigned long long dhash = dm_hash(dmp);
+    unsigned long long vhash = bv_hash(gedp->ged_gvp);
+    unsigned long long lhash = dl_name_hash(gedp);
+    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
+    unsigned long long lhash_edit = lhash;
+    if (dhash != s->prev_dhash) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (vhash != s->prev_vhash) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (lhash_edit != s->prev_lhash) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (ghash != s->prev_ghash) {
+	dm_set_dirty(dmp, 1);
+    }
+    if (dm_get_dirty(dmp)) {
+	matp_t mat = gedp->ged_gvp->gv_model2view;
+	dm_loadmatrix(dmp, mat, 0);
+	unsigned char geometry_default_color[] = { 255, 0, 0 };
+	dm_draw_begin(dmp);
+	dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay,
+		1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
+		0, 0, geometry_default_color, 1, 0);
+
+	// Faceplate drawing
+	dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+
+	dm_draw_end(dmp);
+    }
+}
+#endif
+
 int
 gsh_state_init(struct gsh_state *s)
 {
@@ -103,7 +166,9 @@ gsh_state_init(struct gsh_state *s)
     bv_init(s->gedp->ged_gvp, &s->gedp->ged_views);
     bu_vls_sprintf(&s->gedp->ged_gvp->gv_name, "default");
     bv_set_add_view(&s->gedp->ged_views, s->gedp->ged_gvp);
-
+#ifdef USE_DM
+    view_checkpoint(struct gsh_state *s)
+#endif
     /* As yet we don't have a .g file. */
     bu_vls_init(&s->gfile);
 
@@ -192,69 +257,6 @@ geval(struct gsh_state *s, int argc, const char **argv)
     }
     return ret;
 }
-
-#ifdef USE_DM
-void
-view_checkpoint(struct gsh_state *s)
-{
-    if (s->gedp && s->gedp->ged_gvp && s->gedp->ged_gvp->dmp) {
-	struct dm *dmp = (struct dm *)s->gedp->ged_gvp->dmp;
-	s->prev_dhash = (dmp) ? dm_hash(dmp) : 0;
-	s->prev_vhash = bv_hash(s->gedp->ged_gvp);
-	s->prev_lhash = dl_name_hash(s->gedp);
-	s->prev_ghash = ged_dl_hash((struct display_list *)s->gedp->ged_gdp->gd_headDisplay);
-    }
-}
-
-void
-view_update(struct gsh_state *s)
-{
-    if (!s || !s->gedp || !s->gedp->ged_wdbp || !s->gedp->dbip)
-	return;
-
-    struct ged *gedp = s->gedp;
-    struct bview *v = gedp->ged_gvp;
-
-    if (!v)
-	return;
-
-    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
-    if (!dmp)
-	return;
-
-    unsigned long long dhash = dm_hash(dmp);
-    unsigned long long vhash = bv_hash(gedp->ged_gvp);
-    unsigned long long lhash = dl_name_hash(gedp);
-    unsigned long long ghash = ged_dl_hash((struct display_list *)gedp->ged_gdp->gd_headDisplay);
-    unsigned long long lhash_edit = lhash;
-    if (dhash != s->prev_dhash) {
-	dm_set_dirty(dmp, 1);
-    }
-    if (vhash != s->prev_vhash) {
-	dm_set_dirty(dmp, 1);
-    }
-    if (lhash_edit != s->prev_lhash) {
-	dm_set_dirty(dmp, 1);
-    }
-    if (ghash != s->prev_ghash) {
-	dm_set_dirty(dmp, 1);
-    }
-    if (dm_get_dirty(dmp)) {
-	matp_t mat = gedp->ged_gvp->gv_model2view;
-	dm_loadmatrix(dmp, mat, 0);
-	unsigned char geometry_default_color[] = { 255, 0, 0 };
-	dm_draw_begin(dmp);
-	dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay,
-		1.0, gedp->ged_gvp->gv_isize, -1, -1, -1, 1,
-		0, 0, geometry_default_color, 1, 0);
-
-	// Faceplate drawing
-	dm_draw_viewobjs(gedp->ged_wdbp, v, NULL, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
-
-	dm_draw_end(dmp);
-    }
-}
-#endif
 
 
 int
