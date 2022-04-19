@@ -210,8 +210,6 @@ geval(struct gsh_state *s, int argc, const char **argv)
     if (!s || !s->gedp)
 	return BRLCAD_ERROR;
 
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
-
     if (s->constrained_mode) {
 
 	/* Note - doing the command execution this way limits us to the "hardwired"
