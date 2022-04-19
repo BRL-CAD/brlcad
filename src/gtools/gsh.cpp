@@ -167,7 +167,7 @@ gsh_state_init(struct gsh_state *s)
     bu_vls_sprintf(&s->gedp->ged_gvp->gv_name, "default");
     bv_set_add_view(&s->gedp->ged_views, s->gedp->ged_gvp);
 #ifdef USE_DM
-    view_checkpoint(struct gsh_state *s)
+    view_checkpoint(s);
 #endif
     /* As yet we don't have a .g file. */
     bu_vls_init(&s->gfile);
