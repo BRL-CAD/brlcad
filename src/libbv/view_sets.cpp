@@ -31,6 +31,7 @@
 #include "bu/str.h"
 #include "bn/mat.h"
 #include "bv/defines.h"
+#include "bv/util.h"
 #include "bv/view_sets.h"
 #include "./bv_private.h"
 
@@ -60,11 +61,7 @@ bv_set_free(struct bview_set *s)
 	struct bview *gdvp;
 	for (size_t i = 0; i < BU_PTBL_LEN(&s->i->views); i++) {
 	    gdvp = (struct bview *)BU_PTBL_GET(&s->i->views, i);
-	    bu_vls_free(&gdvp->gv_name);
-	    if (gdvp->callbacks) {
-		bu_ptbl_free(gdvp->callbacks);
-		BU_PUT(gdvp->callbacks, struct bu_ptbl);
-	    }
+	    bv_free(gdvp);
 	    bu_free((void *)gdvp, "bv");
 	}
 	bu_ptbl_free(&s->i->views);
@@ -83,6 +80,7 @@ bv_set_free(struct bview_set *s)
 	}
 	BU_PUT(s->i->free_scene_obj, struct bv_scene_obj);
     }
+    BU_PUT(s->i, struct bview_set_internal);
 
     // TODO - clean up vlfree
 }

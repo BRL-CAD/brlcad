@@ -102,6 +102,7 @@ gsh_state_init(struct gsh_state *s)
     BU_GET(s->gedp->ged_gvp, struct bview);
     bv_init(s->gedp->ged_gvp, &s->gedp->ged_views);
     bu_vls_sprintf(&s->gedp->ged_gvp->gv_name, "default");
+    bv_set_add_view(&s->gedp->ged_views, s->gedp->ged_gvp);
 
     /* As yet we don't have a .g file. */
     bu_vls_init(&s->gfile);
@@ -120,9 +121,6 @@ gsh_state_free(struct gsh_state *s)
     if (!s)
 	return;
 
-    bv_free(s->gedp->ged_gvp);
-    BU_PUT(s->gedp->ged_gvp, struct bv);
-    s->gedp->ged_gvp = NULL;
     ged_close(s->gedp);
     bu_dlclose(s->libged);
     bu_vls_free(&s->gfile);
@@ -137,6 +135,8 @@ geval(struct gsh_state *s, int argc, const char **argv)
 
     if (!s || !s->gedp)
 	return BRLCAD_ERROR;
+
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
     if (s->constrained_mode) {
 

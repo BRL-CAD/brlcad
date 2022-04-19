@@ -340,6 +340,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 		    // Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
 		    s->s_type_flags |= BV_MESH_LOD;
 
+		    rt_db_free_internal(&dbintern);
 		    return;
 		}
 

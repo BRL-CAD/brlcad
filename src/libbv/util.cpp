@@ -130,6 +130,11 @@ bv_free(struct bview *gvp)
 	BU_PUT(gvp->gv_ls.gv_selected, struct bu_ptbl);
 	gvp->gv_ls.gv_selected = NULL;
     }
+
+    if (gvp->callbacks) {
+	bu_ptbl_free(gvp->callbacks);
+	BU_PUT(gvp->callbacks, struct bu_ptbl);
+    }
 }
 
 void
