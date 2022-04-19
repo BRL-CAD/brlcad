@@ -46,6 +46,10 @@ void dlist_free_callback(struct bv_scene_obj *s)
     if (!s)
 	return;
     bu_log("dlist cleanup\n");
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&s->children, i);
+	dlist_free_callback(cg);
+    }
     if (s->s_dlist) {
 	glDeleteLists(s->s_dlist, 1);
 	s->s_dlist = 0;
