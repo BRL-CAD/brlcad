@@ -100,6 +100,8 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 	    glLineWidth(originalLineWidth);
 	    return BRLCAD_OK;
 	} else {
+	    // Display list mode is incorrect (wireframe when we
+	    // want shaded, or vice versa.)
 	    glDeleteLists(info->s->s_dlist, 1);
 	    info->s->s_dlist = 0;
 	}
@@ -114,7 +116,7 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
     long int avail_mem = 0.5*bu_mem(BU_MEM_AVAIL);
     long int size_est = (long int)(fcnt*3*sizeof(point_t));
     bool gen_dlist = false;
-    if ((!info->s->s_dlist || info->s->s_dlist_stale) && size_est < avail_mem) {
+    if (!info->s->s_dlist && size_est < avail_mem) {
 	gen_dlist = true;
 	info->s->s_dlist = glGenLists(1);
 	info->s->s_dlist_mode = mode;
