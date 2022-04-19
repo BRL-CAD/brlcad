@@ -22,7 +22,7 @@
 #	Widget for raytracing MGED's current view.
 #
 
-check_externs "_mged_opendb _mged_rt"
+check_externs "_mged_opendb _mged_rt _mged_art"
 
 set rt_control(has_embedded_fb) [_mged_has_embedded_fb]
 
@@ -348,12 +348,19 @@ that is used when clearing the framebuffer." } }
     hoc_register_data $top.advancedB "Advanced Settings"\
 	    { { summary "Pop up another GUI for advanced settings." } }
     button $top.raytraceB -relief raised -text "Raytrace" \
-	    -command "do_Raytrace $id" \
+	    -command "do_Raytrace $id _mged_rt" \
 	    -padx 0.5m -pady 0.5m
     hoc_register_data $top.raytraceB "Raytrace"\
 	    { { summary "Begin raytracing the view of the source pane.
 The results of the raytrace will go to the place
 specified by the destination." } }
+	button $top.artB -relief raised -text "Art" \
+			-command "do_Raytrace $id _mged_art" \
+			-padx 0.5m -pady 0.5m
+		hoc_register_data $top.artB "Art"\
+			{ { summary "Begin raytracing the view of the source pane.
+	The results of the raytrace will go to the place
+	specified by the destination." } }
     button $top.clearB -relief raised -text "fbclear" \
 	    -command "do_fbclear $id" \
 	    -padx 0.5m -pady 0.5m
@@ -399,7 +406,7 @@ destination to the background color." } }
     grid $top.sizeL $top.sizeF - - - -pady 1 -sticky nsew -in $top.gridF1
     grid $top.colorL $top.colorF - - - -pady 1 -sticky nsew -in $top.gridF1
     grid $top.fbtoggle - - - - -pady 1 -sticky nsew -in $top.gridF1
-    grid $top.raytraceB $top.abortB $top.clearB x $top.advancedB -sticky "ew" -in $top.gridF1
+    grid $top.raytraceB $top.artB $top.abortB $top.clearB x $top.advancedB -sticky "ew" -in $top.gridF1
     grid columnconfigure $top.gridF1 3 -weight 1
     grid rowconfigure $top.gridF1 0 -weight 1
     grid rowconfigure $top.gridF1 1 -weight 1
@@ -430,7 +437,7 @@ proc rt_ok { id top } {
     rt_dismiss $id
 }
 
-proc do_Raytrace { id } {
+proc do_Raytrace {id prog_name} {
     global mged_gui
     global port
     global fb_all
@@ -446,7 +453,7 @@ proc do_Raytrace { id } {
     }
 
     winset $rt_control($id,cooked_src)
-    set rt_cmd "_mged_rt"
+    set rt_cmd $prog_name
 
     if {$rt_control($id,cooked_dest) != ""} {
 	append rt_cmd " -F$rt_control($id,cooked_dest)"
