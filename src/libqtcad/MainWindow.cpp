@@ -3,9 +3,11 @@
 #include <QMenuBar>
 #include <QSettings>
 
+#include <iostream>
+
 namespace qtcad {
 
-MainWindow::MainWindow(QWidget *parent, int pSwrastMode, int pQuadMode)
+MainWindow::MainWindow(QWidget *parent)
     : QMainWindow{parent}
 {
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
@@ -18,12 +20,7 @@ MainWindow::MainWindow(QWidget *parent, int pSwrastMode, int pQuadMode)
     // disable animation to minimize window drawing operations:
     // https://stackoverflow.com/a/17885699/2037687
     setAnimated(false);
-    if (pSwrastMode) {
 
-    }
-    if (pQuadMode) {
-
-    }
     // Create Menus
     buildMenus();
 

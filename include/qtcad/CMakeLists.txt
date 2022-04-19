@@ -17,6 +17,7 @@ set(qtcad_headers
   QtSW.h
   defines.h
   gInstance.h
+  IView.h
   )
 BRLCAD_MANAGE_FILES(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad)
 

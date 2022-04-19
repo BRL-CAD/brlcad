@@ -16,18 +16,42 @@
 #include <QSettings>
 #include <QFileInfo>
 
-#include <QDockWidget>
 #include <QTreeView>
 #include <QHeaderView>
 #include <QPalette>
+
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QMargins>
 
 #include "brlcad_version.h"
 
 namespace qtcad {
 
+TestWindow::TestWindow(QWidget *parent) : QWidget(parent)
+{
+    setAttribute(Qt::WA_TranslucentBackground);
+    QLabel *label = new QLabel("This is a test");
+    label->setStyleSheet("background-color: rgba(128, 0, 0, 32); border-width: 1px; border-color: white");
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(label);
+    setLayout(layout);
+
+}
+
+bool Application::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::Move) {
+        //QMoveEvent *moveEvent = static_cast<QMoveEvent *>(event);
+        testWindow->move(mainWindow->pos());
+    }
+    return mainWindow->eventFilter(obj, event);
+}
+
 ImageCache *Application::imageCache = nullptr;
 
-Application::Application(int argc, char **argv, int pConsoleMode, int pSwrastMode, int pQuadMode)
+Application::Application(int argc, char **argv)
     : QApplication(argc, argv)
 {
     setOrganizationName("BRL-CAD");
@@ -45,9 +69,18 @@ Application::Application(int argc, char **argv, int pConsoleMode, int pSwrastMod
     QTextStream stream(&file);
     setStyleSheet(stream.readAll());
 
-    mainWindow = new MainWindow(nullptr, pSwrastMode, pQuadMode);
+    mainWindow = new MainWindow();
 
     connect(mainWindow, &MainWindow::closing, this, &Application::closing);
+
+    mainWindow->resize(800, 600);
+
+    mainWindow->installEventFilter(this);
+
+    testWindow = new TestWindow(mainWindow);
+    testWindow->setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    testWindow->move(100, 100);
+    testWindow->show();
 
     // (Debugging) Report settings filename
     QSettings dmsettings("BRL-CAD", "QGED");
@@ -55,19 +88,13 @@ Application::Application(int argc, char **argv, int pConsoleMode, int pSwrastMod
         std::cout << "Reading settings from " << dmsettings.fileName().toStdString() << "\n";
     }
 
-    if (pConsoleMode) {
-    }
-
     initGedp();
 
     // This is just a test
 
-    QDockWidget *hierarchy = new QDockWidget("Hierarchy", mainWindow);
-    mainWindow->addDockWidget(Qt::LeftDockWidgetArea, hierarchy);
-    hierarchy->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    QTreeView *treeView = new QTreeView(hierarchy);
+    treeView = new QTreeView(mainWindow);
     treeView->header()->hide();
-    hierarchy->setWidget(treeView);
+    mainWindow->setCentralWidget(treeView);
 
     int ac = 2;
     const char *av[3];
@@ -84,6 +111,11 @@ Application::Application(int argc, char **argv, int pConsoleMode, int pSwrastMod
     bu_free(db_objects, "tops obj list");
 
     std::cout << "Msg: " << bu_vls_cstr(gedp->ged_result_str) << "<<" << std::endl;
+}
+
+void Application::addView(IView *view)
+{
+    views[view->getName()] = view;
 }
 
 ImageCache *Application::getImageCache()

@@ -6,6 +6,8 @@
 #include <QMenu>
 #include <QAction>
 #include <QDockWidget>
+#include <QEvent>
+#include <QMoveEvent>
 
 namespace qtcad {
 
@@ -13,7 +15,7 @@ class QTCAD_EXPORT MainWindow : public QMainWindow
 {
     Q_OBJECT
   public:
-    explicit MainWindow(QWidget *parent = nullptr, int pSwrastMode = 0, int pQuadMode = 0);
+    explicit MainWindow(QWidget *parent = nullptr);
 
   public slots:
     void openFile();

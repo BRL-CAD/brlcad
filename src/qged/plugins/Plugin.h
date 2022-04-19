@@ -11,10 +11,10 @@
 
 namespace plugin {
 
-class IPlugin
+class Plugin
 {
   public:
-    virtual ~IPlugin() = default;
+    virtual ~Plugin() = default;
 
     virtual const QString getName() const = 0;
     virtual const QString getDescription() const = 0;

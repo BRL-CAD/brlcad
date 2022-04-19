@@ -19,13 +19,11 @@ endif(BRLCAD_ENABLE_QT)
 # want to run the automatic moc logic for all of them.
 
 set(hierarchy_srcs
-  TreeView.cpp
   Hierarchy.cpp
+  HierarchyView.cpp
   )
 
 set(hierarchy_moc_headers
-  TreeView.h
-  Hierarchy.h
   )
 
 if(BRLCAD_ENABLE_QT)

@@ -1,19 +1,26 @@
-#ifndef HIERARCHY_HIERARCHY_H
-#define HIERARCHY_HIERARCHY_H
+#ifndef PLUGIN_HIERARCHY_HIERARCHY_H
+#define PLUGIN_HIERARCHY_HIERARCHY_H
 
-#include <QWidget>
+#include "../Plugin.h"
 
-namespace hierarchy {
+namespace plugin::hierarchy {
 
-class Hierarchy: public QWidget
+class Hierarchy : public Plugin
 {
-    Q_OBJECT
   public:
-    explicit Hierarchy(QWidget *parent = nullptr);
+    explicit Hierarchy();
 
-  signals:
+    const QString getName() const override;
+    const QString getDescription() const override;
+    int getLoadOrder() const override;
+    void load(qtcad::Application *app) override;
+
+  private:
+    static QString *name;
+    static QString *description;
+    static int loadOrder;
 };
 
-} // namespace hierarchy
+} // namespace plugin_hierarchy
 
-#endif // HIERARCHY_HIERARCHY_H
+#endif // PLUGIN_HIERARCHY_HIERARCHY_H
