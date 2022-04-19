@@ -121,6 +121,15 @@ gsh_state_free(struct gsh_state *s)
     if (!s)
 	return;
 
+    struct bu_ptbl *views = bv_set_views(&s->gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	if (v->dmp) {
+	    dm_close((struct dm *)v->dmp);
+	    v->dmp = NULL;
+	}
+    }
+
     ged_close(s->gedp);
     bu_dlclose(s->libged);
     bu_vls_free(&s->gfile);
