@@ -4,7 +4,6 @@
 #include "qtcad/defines.h"
 #include "qtcad/MainWindow.h"
 #include "qtcad/ImageCache.h"
-#include "qtcad/IView.h"
 #include "brlcad/ged/defines.h"
 
 #include <QApplication>
@@ -34,8 +33,6 @@ class QTCAD_EXPORT Application : public QApplication
   public:
     Application(int argc, char **argv);
 
-    void addView(IView *view);
-
     static ImageCache *getImageCache();
 
   public slots:
@@ -58,7 +55,6 @@ class QTCAD_EXPORT Application : public QApplication
     MainWindow *mainWindow;
     struct ged *gedp = NULL;
     struct bview *emptyGvp = NULL;
-    QMap<QString, IView *> views;
 
     static ImageCache *imageCache;
 };

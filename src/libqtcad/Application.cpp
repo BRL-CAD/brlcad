@@ -113,11 +113,6 @@ Application::Application(int argc, char **argv)
     std::cout << "Msg: " << bu_vls_cstr(gedp->ged_result_str) << "<<" << std::endl;
 }
 
-void Application::addView(IView *view)
-{
-    views[view->getName()] = view;
-}
-
 ImageCache *Application::getImageCache()
 {
     if (Application::imageCache == (ImageCache *) 0) {
