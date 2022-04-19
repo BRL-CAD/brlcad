@@ -203,7 +203,7 @@ qged_view_update(struct ged *gedp, std::unordered_set<struct directory *> *chang
 {
     struct db_i *dbip = gedp->dbip;
     struct bview *v = gedp->ged_gvp;
-    struct bu_ptbl *sg = bv_view_objs(v, BV_SCENE_OBJ_DB);
+    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
     std::set<struct bv_scene_group *> regen;
     std::set<struct bv_scene_group *> erase;
     std::set<struct bv_scene_group *>::iterator r_it;

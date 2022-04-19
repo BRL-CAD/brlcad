@@ -37,7 +37,20 @@ main(int UNUSED(ac), char *av[])
     long int avail_mem = bu_mem(BU_MEM_AVAIL);
     long int page_mem = bu_mem(BU_MEM_PAGE_SIZE);
 
-    bu_log("MEM report: all(%ld) avail(%ld) page_size(%ld)\n", all_mem, avail_mem, page_mem);
+    char all_buf[6] = {'\0'};
+    char avail_buf[6] = {'\0'};
+    char p_buf[6] = {'\0'};
+    int64_t alm = all_mem;
+    int64_t avm = avail_mem;
+    int64_t pm = page_mem;
+    bu_humanize_number(all_buf, 5, alm, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
+    bu_humanize_number(avail_buf, 5, avm, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
+    bu_humanize_number(p_buf, 5, pm, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
+
+    bu_log("MEM report: all: %s(%ld) avail: %s(%ld) page_size: %s(%ld)\n",
+	    all_buf, all_mem,
+	    avail_buf, avail_mem,
+	    p_buf, page_mem);
 
     if (all_mem < 0 || avail_mem < 0 || page_mem < 0)
 	return -1;

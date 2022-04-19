@@ -592,7 +592,7 @@ bv_vlblock_obj(struct bv_vlblock *vbp, struct bview *v, const char *name)
     if (s) {
 	bv_obj_reset(s);
     } else {
-	s = bv_obj_get(v, BV_SCENE_OBJ_VIEW);
+	s = bv_obj_get(v, BV_VIEW_OBJS);
     }
 
     for (size_t i = 0; i < vbp->nused; i++) {

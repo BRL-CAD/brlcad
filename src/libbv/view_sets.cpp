@@ -1,4 +1,4 @@
-/*                    V I E W _ S E T S . C
+/*                   V I E W _ S E T S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020-2022 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bv_util.c
+/** @file view_sets.cpp
  *
  * Utility functions for operating on BRL-CAD view sets
  *
@@ -93,6 +93,12 @@ bv_set_add_view(struct bview_set *s, struct bview *v){
 	return;
 
     bu_ptbl_ins(&s->i->views, (long *)v);
+
+    v->vset = s;
+
+    // By default, when we add a view to a set it is no longer considered
+    // independent
+    v->independent = 0;
 }
 
 void
@@ -101,6 +107,12 @@ bv_set_rm_view(struct bview_set *s, struct bview *v){
 	return;
 
     bu_ptbl_rm(&s->i->views, (long int *)v);
+
+    v->vset = NULL;
+
+    // By default, when we remove a view from a set it is considered
+    // independent
+    v->independent = 1;
 }
 
 
@@ -133,12 +145,13 @@ bv_set_fsos(struct bview_set *s)
     return s->i->free_scene_obj;
 }
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

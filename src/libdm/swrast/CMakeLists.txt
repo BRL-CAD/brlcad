@@ -2,6 +2,7 @@ set(SWRAST_SRCS
   dm-swrast.cpp
   fb-swrast.cpp
   ../dm-gl.c
+  ../dm-gl_lod.cpp
   )
 
 # Qt is used for the stand-alone FB window, but other than that should not be

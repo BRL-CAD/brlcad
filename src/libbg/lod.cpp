@@ -155,11 +155,15 @@ class POPState {
 	// Used by calling functions to detect initialization errors
 	bool is_valid = false;
 
+	// If dlists are being used, we may need to re-load the data
+	// for a mode change even if the level is current.
+	bool force_reload = false;
+
 	// Content based hash key
 	unsigned long long hash;
 
 	// Drawing trigger
-	void draw(void *ctx, int mode);
+	void draw(void *ctx, struct bv_scene_obj *s);
 	void set_callback(draw_clbk_t clbk);
 
 	// Parent container
@@ -383,6 +387,7 @@ POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
     if (!is_valid)
 	return;
 
+#if 0
     for (size_t i = 0; i < POP_MAXLEVEL; i++) {
 	bu_log("bucket %zu count: %zu\n", i, level_tris[i].size());
     }
@@ -390,6 +395,7 @@ POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
     for (size_t i = 0; i < POP_MAXLEVEL; i++) {
 	bu_log("vert %zu count: %zu\n", i, level_tri_verts[i].size());
     }
+#endif
 }
 
 POPState::POPState(unsigned long long key)
@@ -505,9 +511,9 @@ POPState::tri_pop_load(int start_level, int level)
 	    continue;
 
 	std::ifstream tifile(dir, std::ios::in | std::ofstream::binary);
-	int ticnt = 0;
+	size_t ticnt = 0;
 	tifile.read(reinterpret_cast<char *>(&ticnt), sizeof(ticnt));
-	for (int j = 0; j < ticnt; j++) {
+	for (size_t j = 0; j < ticnt; j++) {
 	    int vf[3];
 	    tifile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
 	    for (int k = 0; k < 3; k++) {
@@ -582,23 +588,31 @@ void
 POPState::set_level(int level)
 {
     // If we're already there, no work to do
-    if (level == curr_level)
+    if (level == curr_level && !force_reload)
 	return;
 
-    int64_t start, elapsed;
-    fastf_t seconds;
-    start = bu_gettime();
+//    int64_t start, elapsed;
+//    fastf_t seconds;
+//    start = bu_gettime();
 
     // Triangles
 
     // If we need to pull more data, do so
     if (level > curr_level && level <= max_tri_pop_level) {
-	tri_pop_load(curr_level, level);
+	if (!lod_tri_pnts.size()) {
+	    tri_pop_load(-1, level);
+	} else {
+	    tri_pop_load(curr_level, level);
+	}
     }
 
     // If we need to trim back the POP data, do that
     if (level < curr_level && level <= max_tri_pop_level && curr_level <= max_tri_pop_level) {
-	tri_pop_trim(level);
+	if (!lod_tri_pnts.size()) {
+	    tri_pop_load(-1, level);
+	} else {
+	    tri_pop_trim(level);
+	}
     }
 
     // If we were operating beyond POP detail levels (i.e. using RTree
@@ -662,10 +676,11 @@ POPState::set_level(int level)
 
     }
 
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    bu_log("lod set_level(%d): %f sec\n", level, seconds);
+    //elapsed = bu_gettime() - start;
+    //seconds = elapsed / 1000000.0;
+    //bu_log("lod set_level(%d): %f sec\n", level, seconds);
 
+    force_reload = false;
     curr_level = level;
 }
 
@@ -687,7 +702,7 @@ POPState::cache_tri(struct bu_vls *vkey)
 	std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
 
 	// Store the size of the level vert vector
-	int sv = (int)level_tri_verts[i].size();
+	size_t sv = level_tri_verts[i].size();
 	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
 
 	// Write out the vertex points
@@ -714,7 +729,7 @@ POPState::cache_tri(struct bu_vls *vkey)
 	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
 
 	// Store the size of the level tri vector
-	int st = (int)level_tris[i].size();
+	size_t st = level_tris[i].size();
 	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
 
 	// Write out the mapped triangle indices
@@ -778,6 +793,11 @@ POPState::cache()
     }
 
     char dir[MAXPATHLEN];
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
+    if (!bu_file_exists(dir, NULL)) {
+	lod_dir(dir);
+    }
+
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
     if (!bu_file_exists(dir, NULL)) {
 	lod_dir(dir);
@@ -887,10 +907,11 @@ POPState::tri_degenerate(rec r0, rec r1, rec r2, int level)
 }
 
 void
-POPState::draw(void *ctx, int mode)
+POPState::draw(void *ctx, struct bv_scene_obj *s)
 {
     if (draw_clbk) {
 	struct bv_mesh_lod_info info;
+	info.s = s;
 	info.fset_cnt = 0;
 	info.fset = NULL;
 	info.fcnt = (int)lod_tris.size()/3;
@@ -903,7 +924,6 @@ POPState::draw(void *ctx, int mode)
 	}
 	info.face_normals = NULL;
 	info.normals = NULL;
-	info.mode = mode;
 	info.lod = lod;
 	(*draw_clbk)(ctx, &info);
     }
@@ -1057,7 +1077,7 @@ bg_mesh_lod_destroy(struct bv_mesh_lod_info *i)
 }
 
 extern "C" int
-bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
+bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int UNUSED(scale))
 {
 
     if (!l)
@@ -1066,7 +1086,7 @@ bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
 	return l->i->s->curr_level;
 
     POPState *s = l->i->s;
-    int vscale = s->get_level(v->gv_size) + scale;
+    int vscale = (int)((double)s->get_level(v->gv_size) * v->gv_s->lod_scale);
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
     bg_mesh_lod_level(l, vscale);
@@ -1090,18 +1110,29 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
 }
 
 extern "C" int
-bg_mesh_lod_update(struct bv_scene_obj *s, int offset)
+bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(offset))
 {
+    if (!s || !v)
+	return -1;
     struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    if (!i)
+	return -1;
     struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
-    return bg_mesh_lod_view(l, s->s_v, offset);
+    if (!l)
+	return -1;
+
+    POPState *sp = l->i->s;
+    if (s->s_dlist && (s->s_os.s_dmode != s->s_dlist_mode) && !sp->lod_tri_pnts.size())
+	sp->force_reload = 1;
+
+    return bg_mesh_lod_view(l, v, 0);
 }
 
 extern "C" void
 bg_mesh_lod_clear(unsigned long long key)
 {
     if (key == 0)
-	bu_log("Remove all\n");
+	bu_log("TODO: Remove all\n");
 }
 
 extern "C" void
@@ -1118,13 +1149,15 @@ bg_mesh_lod_set_draw_callback(
 }
 
 extern "C" void
-bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode)
+bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s)
 {
-    if (!lod || !ctx)
+    if (!s || !ctx)
 	return;
 
-    POPState *s = lod->i->s;
-    s->draw(ctx, mode);
+    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
+    POPState *ps = l->i->s;
+    ps->draw(ctx, s);
 }
 
 

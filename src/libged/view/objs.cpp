@@ -272,6 +272,19 @@ _objs_cmd_lcnt(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+static void
+update_recurse(struct bv_scene_obj *s, struct bview *v, int flags)
+{
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	update_recurse(sc, v, flags);
+    }
+    s->s_changed = 0;
+    s->s_v = v;
+    if (s->s_update_callback)
+	(*s->s_update_callback)(s, v, 0);
+}
+
 int
 _objs_cmd_update(void *bs, int argc, const char **argv)
 {
@@ -314,9 +327,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 	v->gv_mouse_y = y;
     }
 
-    s->s_changed = 0;
-    s->s_v = v;
-    (*s->s_update_callback)(s, 0);
+    update_recurse(s, v, 0);
 
     return BRLCAD_OK;
 }
@@ -386,7 +397,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     struct bview *v = gedp->ged_gvp;
     if (!ac && cmd_pos < 0 && !help) {
 	if (list_db) {
-	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_SCENE_OBJ_DB);
+	    struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
 	    for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
 		if (bu_list_len(&cg->s_vlist)) {
@@ -400,7 +411,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	    }
 	}
 	if (list_view) {
-	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_SCENE_OBJ_VIEW);
+	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
@@ -438,7 +449,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
     }
 
     if (!gd->s) {
-	struct bu_ptbl *db_objs = bv_view_objs(v, BV_SCENE_OBJ_DB);
+	struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
 	for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
 	    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
 	    if (bu_list_len(&cg->s_vlist)) {
