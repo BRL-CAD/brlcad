@@ -123,7 +123,17 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 
     // Shaded
     if (mode == 1) {
+
+	// For LoD drawing, we need to use two sided shading - thin objects or
+	// very low detail triangle objects will sometimes draw multiple
+	// triangles in the same position, which can result in the wrong "side"
+	// being visible from some views.
+	GLint two_sided;
+	glGetIntegerv(GL_LIGHT_MODEL_TWO_SIDE, &two_sided);
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
 	if (dmp->i->dm_light) {
+
 
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mvars->i.ambientColor);
@@ -214,6 +224,9 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 	    glDisable(GL_BLEND);
 
 	glLineWidth(originalLineWidth);
+
+	// Put the lighting model back where it was prior to this operation
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, two_sided);
 
 	return BRLCAD_OK;
     }
