@@ -154,6 +154,10 @@ class POPState {
 	// Current level of detail information loaded into nfaces/npnts
 	int curr_level = -1;
 
+	// Force a data reload even if the level hasn't changed (i.e. undo a
+	// shrink memory operation when level is set.)
+	bool force_update = false;
+
 	// Maximum level for which POP info is defined.  Above that level,
 	// need to shift to full rendering
 	int max_tri_pop_level = 0;
@@ -604,9 +608,17 @@ POPState::get_level(fastf_t vlen)
 void
 POPState::set_level(int level)
 {
-    // If we're already there, no work to do
-    if (level == curr_level)
+    // If we're already there and we're not undoing a memshrink, no work to do
+    if (level == curr_level && !force_update)
 	return;
+
+    // If we're doing a forced update, it's like starting from
+    // scratch - reset to 0
+    if (force_update) {
+	force_update = false;
+	set_level(0);
+	set_level(level);
+    }
 
 //    int64_t start, elapsed;
 //    fastf_t seconds;
@@ -1093,7 +1105,7 @@ bg_mesh_lod_destroy(struct bv_mesh_lod_info *i)
 }
 
 extern "C" int
-bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int UNUSED(scale))
+bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int reset)
 {
 
     if (!l)
@@ -1105,12 +1117,12 @@ bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int UNUSED(scale))
     int vscale = (int)((double)s->get_level(v->gv_size) * v->gv_s->lod_scale);
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
-    bg_mesh_lod_level(l, vscale);
+    bg_mesh_lod_level(l, vscale, reset);
     return vscale;
 }
 
 extern "C" int
-bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
+bg_mesh_lod_level(struct bg_mesh_lod *l, int level, int reset)
 {
     if (!l)
 	return -1;
@@ -1119,6 +1131,8 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
 	return -1;
     if (level < 0)
 	return s->curr_level;
+
+    s->force_update = (reset) ? true : false;
 
     s->set_level(level);
 

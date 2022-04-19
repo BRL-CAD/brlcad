@@ -77,27 +77,25 @@ bg_mesh_lod_init(unsigned long long key);
 
 /**
  * Given a bview, load the appropriate level of detail for displaying the mesh
- * in that view.  A scale factor may also be supplied to adjust the default
- * level assignments (say, for example, if a parent application wants to drive
- * detail down to increase frame rates.)  Negative values will be removed from
- * the view-based selected level, reducing detail (for example, if the view
- * selection is level 8, and the scale is -2, the mesh will be rendered using
- * level 6.)  Likewise, positive values will be added to increase detail.
+ * in that view. Set reset == 1 if the caller wants to undo a memshrink
+ * operation even if the level isn't changed by the current view settings.
  *
  * Returns the level selected.  If v == NULL, return current level of l.  If
  * there is an error or l == NULL, return -1; */
 BG_EXPORT int
-bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale);
+bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int reset);
 
 /**
  * Given a detail level, load the appropriate data.  This is not normally used
  * by client codes directly, but may be needed if an app needs  manipulate
- * the level of detail without a view.
+ * the level of detail without a view.  Set reset == 1 if the caller wants to
+ * undo a memshrink operation even if the level isn't changed by the current
+ * view settings.
  *
  * Returns the level selected.  If level == -1, return current level of l.  If
  * there is an error, return -1; */
 BG_EXPORT int
-bg_mesh_lod_level(struct bg_mesh_lod *l, int level);
+bg_mesh_lod_level(struct bg_mesh_lod *l, int level, int reset);
 
 /* Clean up the lod container. */
 BG_EXPORT void
@@ -125,9 +123,11 @@ bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s);
 BG_EXPORT void
 bg_mesh_lod_memshrink(struct bv_scene_obj *s);
 
-/* Callback for updating level settings on an object. */
+/* Callback for updating level settings on an object.  Set reset == 1 if the
+ * caller wants to undo a memshrink operation even if the level isn't
+ * changed by the current view settings. */
 BG_EXPORT int
-bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int offset);
+bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int reset);
 
 __END_DECLS
 

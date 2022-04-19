@@ -91,7 +91,7 @@ main(int argc, char *argv[])
     start = bu_gettime();
 
     for (int i = 0; i < 16; i++) {
-	bg_mesh_lod_level(mlod, i);
+	bg_mesh_lod_level(mlod, i, 0);
     }
 
     elapsed = bu_gettime() - start;

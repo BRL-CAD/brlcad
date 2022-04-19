@@ -187,7 +187,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)vo->draw_data;
 	struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
 	int level = bg_mesh_lod_view(l, s->s_v, 0);
-	if (bg_mesh_lod_level(l, level) != level) {
+	if (bg_mesh_lod_level(l, level, 0) != level) {
 	    bu_log("Error loading info for level %d\n", level);
 	}
 
@@ -330,7 +330,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 		    struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)s->draw_data;
 		    struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
 		    int level = bg_mesh_lod_view(l, s->s_v, 0);
-		    if (bg_mesh_lod_level(l, level) != level) {
+		    if (bg_mesh_lod_level(l, level, 0) != level) {
 			bu_log("Error loading info for level %d\n", level);
 		    }
 
