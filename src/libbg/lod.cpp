@@ -387,6 +387,7 @@ POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
     if (!is_valid)
 	return;
 
+#if 0
     for (size_t i = 0; i < POP_MAXLEVEL; i++) {
 	bu_log("bucket %zu count: %zu\n", i, level_tris[i].size());
     }
@@ -394,6 +395,7 @@ POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
     for (size_t i = 0; i < POP_MAXLEVEL; i++) {
 	bu_log("vert %zu count: %zu\n", i, level_tri_verts[i].size());
     }
+#endif
 }
 
 POPState::POPState(unsigned long long key)
@@ -589,9 +591,9 @@ POPState::set_level(int level)
     if (level == curr_level && !force_reload)
 	return;
 
-    int64_t start, elapsed;
-    fastf_t seconds;
-    start = bu_gettime();
+//    int64_t start, elapsed;
+//    fastf_t seconds;
+//    start = bu_gettime();
 
     // Triangles
 
@@ -674,9 +676,9 @@ POPState::set_level(int level)
 
     }
 
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    bu_log("lod set_level(%d): %f sec\n", level, seconds);
+    //elapsed = bu_gettime() - start;
+    //seconds = elapsed / 1000000.0;
+    //bu_log("lod set_level(%d): %f sec\n", level, seconds);
 
     force_reload = false;
     curr_level = level;
@@ -1130,7 +1132,7 @@ extern "C" void
 bg_mesh_lod_clear(unsigned long long key)
 {
     if (key == 0)
-	bu_log("Remove all\n");
+	bu_log("TODO: Remove all\n");
 }
 
 extern "C" void

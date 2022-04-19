@@ -207,7 +207,6 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));
 	bu_vls_sprintf(&vo->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_uuid));
 
-	bu_log("level: %d\n", level);
 	return;
     }
 
@@ -341,7 +340,6 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 		    // Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
 		    s->s_type_flags |= BV_MESH_LOD;
 
-		    bu_log("level: %d\n", level);
 		    return;
 		}
 

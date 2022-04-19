@@ -761,7 +761,7 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
     for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
 	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sobjs, i);
 	struct bv_scene_obj *s = bv_obj_for_view(g, v);
-	bu_log("dm_draw_objs %s\n", bu_vls_cstr(&g->s_name));
+	//bu_log("dm_draw_objs %s\n", bu_vls_cstr(&g->s_name));
 	dm_draw_scene_obj(dmp, s, v);
     }
     struct bu_ptbl *iobjs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
@@ -769,7 +769,7 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
 	for (size_t i = 0; i < BU_PTBL_LEN(iobjs); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(iobjs, i);
 	    struct bv_scene_obj *s = bv_obj_for_view(g, v);
-	    bu_log("dm_draw_objs(i) %s\n", bu_vls_cstr(&g->s_name));
+	    //bu_log("dm_draw_objs(i) %s\n", bu_vls_cstr(&g->s_name));
 	    dm_draw_scene_obj(dmp, s, v);
 	}
     }
