@@ -1189,10 +1189,28 @@ bg_mesh_lod_memshrink(struct bv_scene_obj *s)
 }
 
 extern "C" void
-bg_mesh_lod_clear(unsigned long long key)
+bg_mesh_lod_clear_cache(unsigned long long key)
 {
-    if (key == 0)
-	bu_log("TODO: Remove all\n");
+    char dir[MAXPATHLEN];
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
+    if (!bu_file_exists(dir, NULL))
+	return;
+    if (key == 0) {
+	char **filenames;
+	size_t nfiles = bu_file_list(dir, "*", &filenames);
+	for (size_t i = 0; i < nfiles; i++) {
+	    char cdir[MAXPATHLEN] = {0};
+	    bu_dir(cdir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, filenames[i], NULL);
+	    char **cfilenames;
+	    size_t ncfiles = bu_file_list(cdir, "*", &cfilenames);
+	    for (size_t j = 0; j < ncfiles; j++) {
+		char cfile[MAXPATHLEN] = {0};
+		bu_dir(cfile, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, filenames[i], cfilenames[j], NULL);
+		bu_file_delete(cfile);
+	    }
+	    bu_file_delete(cdir);
+	}
+    }
 }
 
 extern "C" void

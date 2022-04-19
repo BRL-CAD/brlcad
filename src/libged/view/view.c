@@ -31,6 +31,7 @@
 
 #include "bu/cmd.h"
 #include "bu/vls.h"
+#include "bg/lod.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
@@ -228,7 +229,9 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     struct ged *gedp = gd->gedp;
     struct bview *gvp;
     int print_help = 0;
-    static const char *usage = "view lod enabled [0|1]\n"
+    static const char *usage = "view lod [0|1]\n"
+			       "view lod cache [clear]\n"
+			       "view lod enabled [0|1]\n"
 			       "view lod scale [factor]\n"
 			       "view lod point_scale [factor]\n"
 			       "view lod curve_scale [factor]\n"
@@ -295,6 +298,21 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	}
 	return BRLCAD_OK;
     }
+
+
+    if (BU_STR_EQUAL(argv[0], "cache")) {
+	if (argc == 1) {
+	    bu_vls_printf(gedp->ged_result_str, "TODO - generate cache for all objects in .g\n");
+	    return BRLCAD_OK;
+	}
+	if (BU_STR_EQUAL(argv[1], "clear")) {
+	    bg_mesh_lod_clear_cache(0);
+	    return BRLCAD_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "unknown argument to cache: %s\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
 
     if (BU_STR_EQUAL(argv[0], "enabled")) {
 	if (argc == 1) {

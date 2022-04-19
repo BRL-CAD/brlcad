@@ -50,7 +50,7 @@ struct bg_mesh_lod {
  * once per un-cached data set, but is potentially an expensive operation.
  *
  * If pre-existing cached data is found, the key is just returned - to clear
- * pre-existing cached data, run bg_mesh_lod_clear();
+ * pre-existing cached data, run bg_mesh_lod_clear_cache();
  *
  * returns the lookup key calculated from the data, which is used in subsequent
  * lookups of the cached data. */
@@ -104,7 +104,7 @@ bg_mesh_lod_destroy(struct bv_mesh_lod_info *i);
 /* Remove cache data associated with key.  If key == 0, remove ALL cache data
  * associated with all LoD objects (i.e. a full LoD cache reset). */
 BG_EXPORT void
-bg_mesh_lod_clear(unsigned long long key);
+bg_mesh_lod_clear_cache(unsigned long long key);
 
 /* Set drawing function callback */
 BG_EXPORT void
