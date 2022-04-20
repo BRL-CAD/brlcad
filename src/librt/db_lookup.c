@@ -314,6 +314,9 @@ db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int fl
 
     bu_vls_free(&local);
 
+    for (int i = 0; i < DP_HASH_CNT; i++) {
+	dp->hashes[i] = 0;
+    }
     if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
 	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
@@ -352,6 +355,9 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 		(*cb->f)(dbip, dp, 2, cb->u_data);
 	    }
 	}
+	for (int i = 0; i < DP_HASH_CNT; i++) {
+	    dp->hashes[i] = 0;
+	}
 
 	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
 	*headp = dp->d_forw;
@@ -373,6 +379,9 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 		struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
 		(*cb->f)(dbip, dp, 2, cb->u_data);
 	    }
+	}
+	for (int i = 0; i < DP_HASH_CNT; i++) {
+	    dp->hashes[i] = 0;
 	}
 
 	RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */

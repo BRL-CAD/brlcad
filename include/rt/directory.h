@@ -31,6 +31,8 @@
 
 __BEGIN_DECLS
 
+#define DP_HASH_CNT 2
+
 /**
  * One of these structures is allocated in memory to represent each
  * named object in the database.
@@ -73,6 +75,7 @@ struct directory {
     unsigned char d_minor_type; /**< @brief object minor type */
     struct bu_list d_use_hd;    /**< @brief heads list of uses (struct soltab l2) */
     char d_shortname[16];       /**< @brief Stash short names locally */
+    unsigned long long hashes[DP_HASH_CNT]; /**< @brief Hash lookup keys */
     void *u_data;		/**< @brief void pointer hook for user data. user is responsible for freeing. */
 };
 #define RT_DIR_NULL     ((struct directory *)0)

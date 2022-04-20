@@ -782,6 +782,10 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	return -1;
     }
 
+    /* Made a change for real - zero hashes */
+    for (int i = 0; i < DP_HASH_CNT; i++) {
+	dp->hashes[i] = 0;
+    }
     /* Made a change for real - do callback */
     if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
@@ -837,6 +841,10 @@ rt_db_put_internal5(
 	goto fail;
     }
 
+    /* Made a change for real - zero hashes */
+    for (int i = 0; i < DP_HASH_CNT; i++) {
+	dp->hashes[i] = 0;
+    }
     /* Made a change for real - do callback */
     if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
