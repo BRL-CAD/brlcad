@@ -1054,8 +1054,14 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 	struct bv_scene_obj *sv = bv_obj_for_view(sp, v);
 	struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)sv->draw_data;
 	if (i) {
-	    VMOVE(bmin, i->bmin);
-	    VMOVE(bmax, i->bmax);
+	    point_t obmin, obmax;
+	    VMOVE(obmin, i->bmin);
+	    VMOVE(obmax, i->bmax);
+	    // Apply the scene matrix to the bounding box values to bound this
+	    // instance, since the BV_MESH_LOD data is based on the
+	    // non-instanced mesh.
+	    MAT4X3PNT(bmin, sp->s_mat, obmin);
+	    MAT4X3PNT(bmax, sp->s_mat, obmax);
 	    calc = 1;
 	}
     } else if (bu_list_len(&sp->s_vlist)) {
