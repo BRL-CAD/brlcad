@@ -32,6 +32,9 @@
 
 #include <math.h>
 #include <string.h>
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
 #include "bio.h"
 
 #include "bu/debug.h"
@@ -1555,6 +1558,19 @@ bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 
     // Nope, no matrix
     return 0;
+}
+
+unsigned long long
+bn_mat_hash(mat_t m)
+{
+    XXH64_state_t *state = XXH64_createState();
+    if (!state)
+	return 0;
+    XXH64_reset(state, 0);
+    XXH64_update(state, m, sizeof(mat_t));
+    XXH64_hash_t hash_val = XXH64_digest(state);
+    XXH64_freeState(state);
+    return (unsigned long long)hash_val;
 }
 
 /** @} */
