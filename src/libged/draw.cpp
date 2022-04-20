@@ -193,7 +193,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 
 	// LoD will need to re-check its level settings whenever the view changes
 	vo->s_update_callback = &bg_mesh_lod_update;
-	// TODO - need free callback
+	vo->s_free_callback = &bg_mesh_lod_free;
 
 	// Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
 	s->s_type_flags |= BV_MESH_LOD;
@@ -346,10 +346,13 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 
 		    // LoD will need to re-check its level settings whenever the view changes
 		    s->s_update_callback = &bg_mesh_lod_update;
+		    s->s_free_callback = &bg_mesh_lod_free;
 
 		    // Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
 		    s->s_type_flags |= BV_MESH_LOD;
 
+		    // Cleanup
+		    rt_db_free_internal(&botintern);
 		    return;
 		}
 

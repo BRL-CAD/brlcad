@@ -129,6 +129,11 @@ bg_mesh_lod_memshrink(struct bv_scene_obj *s);
 BG_EXPORT int
 bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int reset);
 
+/* Free a scene object's LoD data.  Suitable as a s_free_callback function
+ * for a bv_scene_obj */
+BG_EXPORT void
+bg_mesh_lod_free(struct bv_scene_obj *s);
+
 __END_DECLS
 
 #endif  /* BG_LOD_H */

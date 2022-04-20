@@ -120,7 +120,7 @@ class POPState {
 	POPState(unsigned long long key);
 
 	// Cleanup
-	~POPState() {};
+	~POPState();
 
 	// Based on a view size, recommend a level
 	int get_level(fastf_t len);
@@ -457,6 +457,7 @@ POPState::POPState(unsigned long long key)
 	if (bu_file_exists(dir, NULL)) {
 	    max_tri_pop_level = i;
 	}
+	bu_vls_free(&vfile);
     }
 
     // Read in the zero level vertices and triangles
@@ -465,6 +466,11 @@ POPState::POPState(unsigned long long key)
     // All set - ready for LoD
     bu_vls_free(&vkey);
     is_valid = 1;
+}
+
+POPState::~POPState()
+{
+
 }
 
 void
@@ -1238,6 +1244,20 @@ bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s)
     ps->draw(ctx, s);
 }
 
+void
+bg_mesh_lod_free(struct bv_scene_obj *s)
+{
+    if (!s || !s->draw_data)
+	return;
+    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
+    POPState *ps = l->i->s;
+    delete ps;
+    BU_PUT(l->i, struct bg_mesh_lod_internal);
+    BU_PUT(l, struct bg_mesh_lod);
+    BU_PUT(i, struct bg_mesh_lod_info);
+    s->draw_data = NULL;
+}
 
 // Local Variables:
 // tab-width: 8
