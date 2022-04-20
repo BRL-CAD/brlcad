@@ -111,7 +111,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			}
 
 			// Do callbacks
-			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
 			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
 				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
 				(*cb->f)(dbip, dp, dp2, extr->sketch_name, DB_OP_UNION, NULL, cb->u_data);
