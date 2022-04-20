@@ -29,6 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include <unordered_map>
+
 #include "bu/cmd.h"
 #include "bu/vls.h"
 #include "bg/lod.h"
@@ -36,7 +38,11 @@
 #include "../ged_private.h"
 #include "./ged_view.h"
 
-void gen_cache(struct db_full_path *path, struct db_i *dbip, mat_t *curr_mat, void *client_data);
+struct cache_data {
+    int total;
+    int done;
+    std::unordered_map<unsigned long long, unsigned long long> hmap;
+};
 
 void
 gen_cache_tree(struct db_full_path *path, struct db_i *dbip, union tree *tp, mat_t *curr_mat,
@@ -101,6 +107,42 @@ gen_cache_tree(struct db_full_path *path, struct db_i *dbip, union tree *tp, mat
     bu_log("gen_cache_tree: unrecognized operator %d\n", tp->tr_op);
     bu_bomb("gen_cache_tree: unrecognized operator\n");
 }
+/* To prepare a cache for all mesh instances in the tree, we need to walk it
+ * and track the matrix */
+void
+gen_cache_cnt(struct db_full_path *path, struct db_i *dbip, mat_t *curr_mat, void *client_data)
+{
+    RT_CK_DBI(dbip);
+    RT_CK_FULL_PATH(path);
+    struct directory *dp = DB_FULL_PATH_CUR_DIR(path);
+    if (!dp)
+	return;
+    if (dp->d_flags & RT_DIR_COMB) {
+	struct rt_db_internal in;
+	struct rt_comb_internal *comb;
+
+	if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0)
+	    return;
+
+	comb = (struct rt_comb_internal *)in.idb_ptr;
+
+	gen_cache_tree(path, dbip, comb->tree, curr_mat, gen_cache_cnt, client_data);
+	rt_db_free_internal(&in);
+    } else {
+	// If we have a bot, it's cache time
+	struct rt_db_internal dbintern;
+	RT_DB_INTERNAL_INIT(&dbintern);
+	struct rt_db_internal *ip = &dbintern;
+	int ret = rt_db_get_internal(ip, dp, dbip, *curr_mat, &rt_uniresource);
+	if (ret < 0)
+	    return;
+	if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+	    struct cache_data *d= (struct cache_data *)client_data;
+	    d->total++;
+	}
+	rt_db_free_internal(&dbintern);
+    }
+}
 
 /* To prepare a cache for all mesh instances in the tree, we need to walk it
  * and track the matrix */
@@ -132,9 +174,11 @@ gen_cache(struct db_full_path *path, struct db_i *dbip, mat_t *curr_mat, void *c
 	if (ret < 0)
 	    return;
 	if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+	    struct cache_data *d= (struct cache_data *)client_data;
+	    d->done++;
 	    struct bu_vls pname = BU_VLS_INIT_ZERO;
 	    db_path_to_vls(&pname, path);
-	    bu_log("Caching %s\n", bu_vls_cstr(&pname));
+	    bu_log("Caching %s (%d of %d)\n", bu_vls_cstr(&pname), d->done, d->total);
 	    bu_vls_free(&pname);
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 	    RT_BOT_CK_MAGIC(bot);
@@ -232,6 +276,12 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	if (argc == 1) {
 	    struct directory **all_paths;
 	    int tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
+
+	    // Count how many paths we're going to cache, so we can give
+	    // the user at least some idea of progress
+	    struct cache_data cache_data;
+	    cache_data.done = 0;
+	    cache_data.total = 0;
 	    for (int i = 0; i < tops_cnt; i++) {
 		mat_t mat;
 		MAT_IDN(mat);
@@ -239,10 +289,23 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 		BU_GET(fp, struct db_full_path);
 		db_full_path_init(fp);
 		db_add_node_to_full_path(fp, all_paths[i]);
-		gen_cache(fp, gedp->dbip, &mat, NULL);
+		gen_cache_cnt(fp, gedp->dbip, &mat, &cache_data);
 		db_free_full_path(fp);
 		BU_PUT(fp, struct db_full_path);
 	    }
+
+	    for (int i = 0; i < tops_cnt; i++) {
+		mat_t mat;
+		MAT_IDN(mat);
+		struct db_full_path *fp;
+		BU_GET(fp, struct db_full_path);
+		db_full_path_init(fp);
+		db_add_node_to_full_path(fp, all_paths[i]);
+		gen_cache(fp, gedp->dbip, &mat, &cache_data);
+		db_free_full_path(fp);
+		BU_PUT(fp, struct db_full_path);
+	    }
+
 	    bu_free(all_paths, "all_paths");
 	    bu_vls_printf(gedp->ged_result_str, "Caching complete");
 	    return BRLCAD_OK;
