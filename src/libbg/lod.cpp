@@ -84,8 +84,156 @@
 #include "bu/time.h"
 #include "bv/plot3.h"
 #include "bg/lod.h"
+#include "bg/plane.h"
 #include "bg/sat.h"
 #include "bg/trimesh.h"
+
+static void
+obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct bview *v)
+{
+    vect_t minus, plus;
+    if (bv_scene_obj_bound(s, v)) {
+	*have_objs = 1;
+	minus[X] = s->s_center[X] - s->s_size;
+	minus[Y] = s->s_center[Y] - s->s_size;
+	minus[Z] = s->s_center[Z] - s->s_size;
+	VMIN(*min, minus);
+	plus[X] = s->s_center[X] + s->s_size;
+	plus[Y] = s->s_center[Y] + s->s_size;
+	plus[Z] = s->s_center[Z] + s->s_size;
+	VMAX(*max, plus);
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	obj_bb(have_objs, min, max, sc, v);
+    }
+}
+
+void
+bg_view_obb(struct bview *v)
+{
+    if (!v || !v->gv_width || !v->gv_height)
+	return;
+
+    // Get the radius of the scene.
+    plane_t p;
+    point_t sbbc = VINIT_ZERO;
+    fastf_t radius = 1.0;
+    vect_t min, max, work;
+    VSETALL(min,  INFINITY);
+    VSETALL(max, -INFINITY);
+    int have_objs = 0;
+    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	obj_bb(&have_objs, &min, &max, g, v);
+    }
+    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+    if (so != sol) {
+	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
+	    struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
+	    obj_bb(&have_objs, &min, &max, g, v);
+	}
+    }
+    if (have_objs) {
+	VADD2SCALE(sbbc, max, min, 0.5);
+	VSUB2SCALE(work, max, min, 0.5);
+	radius = MAGNITUDE(work);
+    }
+
+    // Get the model space points for the mid points of the top and right edges
+    // of the view.  If we don't have a width or height, we will use the
+    // existing min and max since we don't have a "screen" to base the box on
+    int w = v->gv_width;
+    int h = v->gv_height;
+    int x = (int)(w * 0.5);
+    int y = (int)(h * 0.5);
+    //bu_log("w,h,x,y: %d %d %d %d\n", w,h, x, y);
+    fastf_t x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0, xc = 0.0, yc = 0.0;
+    bv_screen_to_view(v, &x1, &y1, x, h);
+    bv_screen_to_view(v, &x2, &y2, w, y);
+    bv_screen_to_view(v, &xc, &yc, x, y);
+    //bu_log("x1,y1: %f %f\n", x1, y1);
+    //bu_log("x2,y2: %f %f\n", x2, y2);
+    //bu_log("xc,yc: %f %f\n", xc, yc);
+    point_t vp1, vp2, vc, ep1, ep2, ec;
+    VSET(vp1, x1, y1, 0);
+    VSET(vp2, x2, y2, 0);
+    VSET(vc, xc, yc, 0);
+    MAT4X3PNT(ep1, v->gv_view2model, vp1);
+    MAT4X3PNT(ep2, v->gv_view2model, vp2);
+    MAT4X3PNT(ec, v->gv_view2model, vc);
+    //bu_log("view center: %f %f %f\n", V3ARGS(ec));
+    //bu_log("edge point 1: %f %f %f\n", V3ARGS(ep1));
+    //bu_log("edge point 2: %f %f %f\n", V3ARGS(ep2));
+
+    // Need the direction vector - i.e., where the camera is looking.  Got this
+    // trick from the libged nirt code...
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, -1.0);
+
+    // Box center is the closest point to the view center on the plane defined
+    // by the scene's center and the view dir
+    bg_plane_pt_nrml(&p, sbbc, dir);
+    fastf_t pu, pv;
+    bg_plane_closest_pt(&pu, &pv, p, ec);
+    bg_plane_pt_at(&v->obb_center, p, pu, pv);
+
+    // The first extent is just the scene radius in the lookat direction
+    VSCALE(dir, dir, radius);
+    VMOVE(v->obb_extent1, dir);
+
+    // The other two extents we find by subtracting the view center from the edge points
+    VSUB2(v->obb_extent2, ep1, ec);
+    VSUB2(v->obb_extent3, ep2, ec);
+
+#if 0
+    // For debugging purposes, construct an arb
+    point_t arb[8];
+    // 1 - c - e1 - e2 - e3
+    VSUB2(arb[0], v->obb_center, v->obb_extent1);
+    VSUB2(arb[0], arb[0], v->obb_extent2);
+    VSUB2(arb[0], arb[0], v->obb_extent3);
+    // 2 - c - e1 - e2 + e3
+    VSUB2(arb[1], v->obb_center, v->obb_extent1);
+    VSUB2(arb[1], arb[1], v->obb_extent2);
+    VADD2(arb[1], arb[1], v->obb_extent3);
+    // 3 - c - e1 + e2 + e3
+    VSUB2(arb[2], v->obb_center, v->obb_extent1);
+    VADD2(arb[2], arb[2], v->obb_extent2);
+    VADD2(arb[2], arb[2], v->obb_extent3);
+    // 4 - c - e1 + e2 - e3
+    VSUB2(arb[3], v->obb_center, v->obb_extent1);
+    VADD2(arb[3], arb[3], v->obb_extent2);
+    VSUB2(arb[3], arb[3], v->obb_extent3);
+    // 1 - c + e1 - e2 - e3
+    VADD2(arb[4], v->obb_center, v->obb_extent1);
+    VSUB2(arb[4], arb[4], v->obb_extent2);
+    VSUB2(arb[4], arb[4], v->obb_extent3);
+    // 2 - c + e1 - e2 + e3
+    VADD2(arb[5], v->obb_center, v->obb_extent1);
+    VSUB2(arb[5], arb[5], v->obb_extent2);
+    VADD2(arb[5], arb[5], v->obb_extent3);
+    // 3 - c + e1 + e2 + e3
+    VADD2(arb[6], v->obb_center, v->obb_extent1);
+    VADD2(arb[6], arb[6], v->obb_extent2);
+    VADD2(arb[6], arb[6], v->obb_extent3);
+    // 4 - c + e1 + e2 - e3
+    VADD2(arb[7], v->obb_center, v->obb_extent1);
+    VADD2(arb[7], arb[7], v->obb_extent2);
+    VSUB2(arb[7], arb[7], v->obb_extent3);
+
+    bu_log("center: %f %f %f\n", V3ARGS(v->obb_center));
+    bu_log("e1: %f %f %f\n", V3ARGS(v->obb_extent1));
+    bu_log("e2: %f %f %f\n", V3ARGS(v->obb_extent2));
+    bu_log("e3: %f %f %f\n", V3ARGS(v->obb_extent3));
+
+    bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
+#endif
+}
 
 #define POP_MAXLEVEL 16
 #define POP_CACHEDIR ".POPLoD"
@@ -1168,8 +1316,19 @@ bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(offset))
 	return -1;
 
     POPState *sp = l->i->s;
+
+    VMOVE(s->bmin, sp->bbmin);
+    VMOVE(s->bmax, sp->bbmax);
+
     int old_level = sp->curr_level;
-    int new_level = bg_mesh_lod_view(l, v, 0);
+    int new_level = old_level;
+
+    // If the object is not visible in the scene, don't change the data
+    //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(s->bmin), V3ARGS(s->bmax));
+    if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3)) {
+	new_level = bg_mesh_lod_view(l, v, 0);
+    }
+
     if (old_level != new_level) {
 	dlist_stale(s);
     }

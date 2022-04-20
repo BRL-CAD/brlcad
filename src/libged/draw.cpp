@@ -39,6 +39,7 @@
 #include "bu/opt.h"
 #include "bu/sort.h"
 #include "bg/lod.h"
+#include "bg/sat.h"
 #include "nmg.h"
 #include "rt/view.h"
 

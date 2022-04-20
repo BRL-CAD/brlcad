@@ -38,6 +38,15 @@
 
 __BEGIN_DECLS
 
+/* Given a view, construct an oriented bounding box extruded to contain scene
+ * objects visible in the view.  Conceptually, think of it as a framebuffer
+ * pane pushed through the scene in the direction the camera is looking.  If
+ * the view width and height are not set or there is some other problem, no box
+ * is computed. */
+BG_EXPORT extern void
+bg_view_obb(struct bview *v);
+
+
 /* We hide the details of the internal LoD structures. */
 struct bg_mesh_lod_internal;
 struct bg_mesh_lod {

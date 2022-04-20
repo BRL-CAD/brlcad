@@ -109,6 +109,7 @@ bv_init(struct bview *gvp, struct bview_set *s)
     // Out of the gate we don't have callbacks
     gvp->callbacks = NULL;
     gvp->gv_callback = NULL;
+    gvp->gv_obb_update= NULL;
 
     bv_update(gvp);
 }
@@ -458,6 +459,11 @@ bv_update(struct bview *gvp)
 
     /* apply the perspective angle to model2view */
     bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
+
+    /* Update obb, if the caller has told us how to */
+    if (gvp->gv_obb_update) {
+	(*gvp->gv_obb_update)(gvp);
+    }
 
     if (gvp->gv_callback) {
 
@@ -1167,6 +1173,7 @@ bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src)
     dest->curve_scale = src->curve_scale;
     dest->point_scale = src->point_scale;
 }
+
 
 // Local Variables:
 // tab-width: 8

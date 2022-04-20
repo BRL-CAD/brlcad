@@ -86,7 +86,6 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
     if (mode < 0 || mode > 1)
 	return BRLCAD_ERROR;
 
-
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
 
     gl_debug_print(dmp, "gl_draw_tri", dmp->i->dm_debugLevel);
@@ -129,7 +128,7 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 	gen_dlist = true;
 	info->s->s_dlist = glGenLists(1);
 	info->s->s_dlist_mode = mode;
-	bu_log("gen_dlist: %d\n", info->s->s_dlist);
+	//bu_log("gen_dlist: %d\n", info->s->s_dlist);
 	info->s->s_dlist_free_callback = &dlist_free_callback;
 	glNewList(info->s->s_dlist, GL_COMPILE);
     } else {

@@ -527,6 +527,17 @@ struct bview {
      * system memory. */
     struct bview_objs gv_objs;
 
+    /* Oriented bounding box extruded to contain scene objects visible in the
+     * view.  Conceptually, think of it as a framebuffer pane pushed through
+     * the scene in the direction the camera is looking. The app must set the
+     * bg_view_obb callback to update these values.*/
+    point_t obb_center;
+    vect_t obb_extent1;
+    vect_t obb_extent2;
+    vect_t obb_extent3;
+    void (*gv_obb_update)(struct bview *);
+
+
     /*
      * gv_data_vZ is an internal parameter used by commands creating and
      * manipulating data objects.  Geometrically, it is a magnitude in the
