@@ -49,7 +49,7 @@ db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb
 	++dp->d_nref;
     }
 
-    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
 	db_op_t op = DB_OP_UNION;
 	if (comb_leaf->tr_l.tl_op == OP_SUBTRACT) {
 	    op = DB_OP_SUBTRACT;
@@ -133,7 +133,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			}
 
 			// Do callbacks
-			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
 			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
 				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
 				(*cb->f)(dbip, dp, dp2, bu_vls_cstr(&revolve->sketch_name), DB_OP_UNION, NULL, cb->u_data);
@@ -154,7 +154,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 			    dp2->d_nref++;
 			}
 			// Do callbacks
-			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+			if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_update_nref_clbks)) {
 			    for (size_t j = 0; j < BU_PTBL_LEN(&dbip->dbi_update_nref_clbks); j++) {
 				struct dbi_update_nref_clbk *cb = (struct dbi_update_nref_clbk *)BU_PTBL_GET(&dbip->dbi_update_nref_clbks, j);
 				(*cb->f)(dbip, dp, dp2, bu_vls_cstr(&dsp->dsp_name), DB_OP_UNION, NULL, cb->u_data);
