@@ -76,6 +76,7 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
     const int *face_normals = info->face_normals;
     const vect_t *normals = info->normals;
     int mode = info->s->s_os.s_dmode;
+    mat_t save_mat, draw_mat;
 
     struct gl_vars *mvars = (struct gl_vars *)dmp->i->m_vars;
     GLdouble dpt[3];
@@ -100,7 +101,11 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
     if (info->s->s_dlist) {
 	if (mode == info->s->s_dlist_mode) {
 	    //bu_log("use dlist %d\n", info->s->s_dlist);
+	    MAT_COPY(save_mat, info->s->s_v->gv_model2view);
+	    bn_mat_mul(draw_mat, info->s->s_v->gv_model2view, info->s->s_mat);
+	    dm_loadmatrix(dmp, draw_mat, 0);
 	    glCallList(info->s->s_dlist);
+	    dm_loadmatrix(dmp, save_mat, 0);
 	    glLineWidth(originalLineWidth);
 	    return BRLCAD_OK;
 	} else {
@@ -126,7 +131,7 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 	info->s->s_dlist_mode = mode;
 	bu_log("gen_dlist: %d\n", info->s->s_dlist);
 	info->s->s_dlist_free_callback = &dlist_free_callback;
-	glNewList(info->s->s_dlist, GL_COMPILE_AND_EXECUTE);
+	glNewList(info->s->s_dlist, GL_COMPILE);
     } else {
 	bu_log("Not using dlist\n");
     }
@@ -182,6 +187,12 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 		bg_mesh_lod_memshrink(info->s);
 	    }
 	}
+
+	MAT_COPY(save_mat, info->s->s_v->gv_model2view);
+	bn_mat_mul(draw_mat, info->s->s_v->gv_model2view, info->s->s_mat);
+	dm_loadmatrix(dmp, draw_mat, 0);
+	glCallList(info->s->s_dlist);
+	dm_loadmatrix(dmp, save_mat, 0);
 
 	glLineWidth(originalLineWidth);
 
@@ -303,6 +314,12 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
 		bg_mesh_lod_memshrink(info->s);
 	    }
 	}
+
+	MAT_COPY(save_mat, info->s->s_v->gv_model2view);
+	bn_mat_mul(draw_mat, info->s->s_v->gv_model2view, info->s->s_mat);
+	dm_loadmatrix(dmp, draw_mat, 0);
+	glCallList(info->s->s_dlist);
+	dm_loadmatrix(dmp, save_mat, 0);
 
 	glLineWidth(originalLineWidth);
 	return BRLCAD_OK;

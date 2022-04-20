@@ -320,6 +320,16 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 	    case DB5_MINORTYPE_BRLCAD_BOT:
 		// Adaptive BoTs have specialized routines
 		if (s->s_v->gv_s->adaptive_plot && s->s_os.s_dmode == 1) {
+
+		    // For BoTs, we want to apply the matrix at draw time, rather than
+		    // when loading the data - that way, we only need to hash one mesh
+		    rt_db_free_internal(&dbintern);
+		    struct rt_db_internal botintern;
+		    RT_DB_INTERNAL_INIT(&botintern);
+		    ip = &botintern;
+		    ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(fp), dbip, NULL, d->res);
+		    if (ret < 0)
+			return;
 		    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 		    RT_BOT_CK_MAGIC(bot);
 
@@ -340,7 +350,6 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 		    // Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
 		    s->s_type_flags |= BV_MESH_LOD;
 
-		    rt_db_free_internal(&dbintern);
 		    return;
 		}
 

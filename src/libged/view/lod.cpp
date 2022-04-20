@@ -29,164 +29,12 @@
 #include <ctype.h>
 #include <string.h>
 
-#include <unordered_map>
-
 #include "bu/cmd.h"
 #include "bu/vls.h"
 #include "bg/lod.h"
 
 #include "../ged_private.h"
 #include "./ged_view.h"
-
-struct cache_data {
-    int total;
-    int done;
-    std::unordered_map<unsigned long long, unsigned long long> hmap;
-};
-
-void
-gen_cache_tree(struct db_full_path *path, struct db_i *dbip, union tree *tp, mat_t *curr_mat,
-	void (*traverse_func) (struct db_full_path *, struct db_i *, mat_t *, void *), void *client_data)
-{
-    mat_t om, nm;
-    struct directory *dp;
-
-    if (!tp)
-	return;
-
-    RT_CK_FULL_PATH(path);
-    RT_CHECK_DBI(dbip);
-    RT_CK_TREE(tp);
-
-    switch (tp->tr_op) {
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    gen_cache_tree(path, dbip, tp->tr_b.tb_right, curr_mat, traverse_func, client_data);
-	    /* fall through */
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    gen_cache_tree(path, dbip, tp->tr_b.tb_left, curr_mat, traverse_func, client_data);
-	    return;
-	case OP_DB_LEAF:
-	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
-		return;
-	    } else {
-		/* Update current matrix state to reflect the new branch of
-		 * the tree. Either we have a local matrix, or we have an
-		 * implicit IDN matrix. */
-		MAT_COPY(om, *curr_mat);
-		if (tp->tr_l.tl_mat) {
-		    MAT_COPY(nm, tp->tr_l.tl_mat);
-		} else {
-		    MAT_IDN(nm);
-		}
-		bn_mat_mul(*curr_mat, om, nm);
-
-		// Two things may prevent further processing - a hidden dp, or
-		// a cyclic path.  Can check either here or in traverse_func -
-		// just do it here since otherwise the logic would have to be
-		// duplicated in all traverse functions.
-		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
-		    db_add_node_to_full_path(path, dp);
-		    if (!db_full_path_cyclic(path, NULL, 0)) {
-			/* Keep going */
-			traverse_func(path, dbip, curr_mat, client_data);
-		    }
-		}
-
-		/* Done with branch - restore path, put back the old matrix state,
-		 * and restore previous color settings */
-		DB_FULL_PATH_POP(path);
-		MAT_COPY(*curr_mat, om);
-		return;
-	    }
-    }
-    bu_log("gen_cache_tree: unrecognized operator %d\n", tp->tr_op);
-    bu_bomb("gen_cache_tree: unrecognized operator\n");
-}
-/* To prepare a cache for all mesh instances in the tree, we need to walk it
- * and track the matrix */
-void
-gen_cache_cnt(struct db_full_path *path, struct db_i *dbip, mat_t *curr_mat, void *client_data)
-{
-    RT_CK_DBI(dbip);
-    RT_CK_FULL_PATH(path);
-    struct directory *dp = DB_FULL_PATH_CUR_DIR(path);
-    if (!dp)
-	return;
-    if (dp->d_flags & RT_DIR_COMB) {
-	struct rt_db_internal in;
-	struct rt_comb_internal *comb;
-
-	if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0)
-	    return;
-
-	comb = (struct rt_comb_internal *)in.idb_ptr;
-
-	gen_cache_tree(path, dbip, comb->tree, curr_mat, gen_cache_cnt, client_data);
-	rt_db_free_internal(&in);
-    } else {
-	// If we have a bot, it's cache time
-	struct rt_db_internal dbintern;
-	RT_DB_INTERNAL_INIT(&dbintern);
-	struct rt_db_internal *ip = &dbintern;
-	int ret = rt_db_get_internal(ip, dp, dbip, *curr_mat, &rt_uniresource);
-	if (ret < 0)
-	    return;
-	if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
-	    struct cache_data *d= (struct cache_data *)client_data;
-	    d->total++;
-	}
-	rt_db_free_internal(&dbintern);
-    }
-}
-
-/* To prepare a cache for all mesh instances in the tree, we need to walk it
- * and track the matrix */
-void
-gen_cache(struct db_full_path *path, struct db_i *dbip, mat_t *curr_mat, void *client_data)
-{
-    RT_CK_DBI(dbip);
-    RT_CK_FULL_PATH(path);
-    struct directory *dp = DB_FULL_PATH_CUR_DIR(path);
-    if (!dp)
-	return;
-    if (dp->d_flags & RT_DIR_COMB) {
-	struct rt_db_internal in;
-	struct rt_comb_internal *comb;
-
-	if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0)
-	    return;
-
-	comb = (struct rt_comb_internal *)in.idb_ptr;
-
-	gen_cache_tree(path, dbip, comb->tree, curr_mat, gen_cache, client_data);
-	rt_db_free_internal(&in);
-    } else {
-	// If we have a bot, it's cache time
-	struct rt_db_internal dbintern;
-	RT_DB_INTERNAL_INIT(&dbintern);
-	struct rt_db_internal *ip = &dbintern;
-	int ret = rt_db_get_internal(ip, dp, dbip, *curr_mat, &rt_uniresource);
-	if (ret < 0)
-	    return;
-	if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
-	    struct cache_data *d= (struct cache_data *)client_data;
-	    d->done++;
-	    struct bu_vls pname = BU_VLS_INIT_ZERO;
-	    db_path_to_vls(&pname, path);
-	    bu_log("Caching %s (%d of %d)\n", bu_vls_cstr(&pname), d->done, d->total);
-	    bu_vls_free(&pname);
-	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-	    RT_BOT_CK_MAGIC(bot);
-	    bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
-	}
-	rt_db_free_internal(&dbintern);
-    }
-}
 
 int
 _view_cmd_lod(void *bs, int argc, const char **argv)
@@ -274,39 +122,47 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUAL(argv[0], "cache")) {
 	if (argc == 1) {
-	    struct directory **all_paths;
-	    int tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
 
-	    // Count how many paths we're going to cache, so we can give
-	    // the user at least some idea of progress
-	    struct cache_data cache_data;
-	    cache_data.done = 0;
-	    cache_data.total = 0;
-	    for (int i = 0; i < tops_cnt; i++) {
-		mat_t mat;
-		MAT_IDN(mat);
-		struct db_full_path *fp;
-		BU_GET(fp, struct db_full_path);
-		db_full_path_init(fp);
-		db_add_node_to_full_path(fp, all_paths[i]);
-		gen_cache_cnt(fp, gedp->dbip, &mat, &cache_data);
-		db_free_full_path(fp);
-		BU_PUT(fp, struct db_full_path);
+	    int done = 0;
+	    int total = 0;
+	    for (int i = 0; i < RT_DBNHASH; i++) {
+		struct directory *dp;
+		for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    if (dp->d_addr == RT_DIR_PHONY_ADDR || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+			continue;
+		    }
+		    total++;
+		}
 	    }
 
-	    for (int i = 0; i < tops_cnt; i++) {
-		mat_t mat;
-		MAT_IDN(mat);
-		struct db_full_path *fp;
-		BU_GET(fp, struct db_full_path);
-		db_full_path_init(fp);
-		db_add_node_to_full_path(fp, all_paths[i]);
-		gen_cache(fp, gedp->dbip, &mat, &cache_data);
-		db_free_full_path(fp);
-		BU_PUT(fp, struct db_full_path);
-	    }
+	    for (int i = 0; i < RT_DBNHASH; i++) {
+		struct directory *dp;
+		for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    if (dp->d_addr == RT_DIR_PHONY_ADDR || dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+			continue;
+		    }
 
-	    bu_free(all_paths, "all_paths");
+		    struct rt_db_internal dbintern;
+		    RT_DB_INTERNAL_INIT(&dbintern);
+		    struct rt_db_internal *ip = &dbintern;
+		    int ret = rt_db_get_internal(ip, dp, gedp->dbip, NULL, &rt_uniresource);
+		    if (ret < 0)
+			continue;
+
+		    if (ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+			rt_db_free_internal(&dbintern);
+			continue;
+		    }
+		    done++;
+		    struct bu_vls pname = BU_VLS_INIT_ZERO;
+		    bu_log("Caching %s (%d of %d)\n", dp->d_namep, done, total);
+		    bu_vls_free(&pname);
+		    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+		    RT_BOT_CK_MAGIC(bot);
+		    bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+		    rt_db_free_internal(&dbintern);
+		}
+	    }
 	    bu_vls_printf(gedp->ged_result_str, "Caching complete");
 	    return BRLCAD_OK;
 	}

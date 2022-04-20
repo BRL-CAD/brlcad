@@ -232,7 +232,7 @@ struct bv_scene_obj  {
     unsigned long long s_type_flags;
     struct bu_vls s_name;       /**< @brief object name (may not be unique, used for activities like path lookup) */
     struct bu_vls s_uuid;       /**< @brief object name (unique, may be less immediately clear to user) */
-    mat_t s_mat;		/**< @brief mat to use for internal lookup */
+    mat_t s_mat;		/**< @brief mat to use for internal lookup and mesh LoD drawing */
 
     /* Associated bv.  Note that scene objects are not assigned uniquely to
      * one view.  This value may be changed by the application in a multi-view
