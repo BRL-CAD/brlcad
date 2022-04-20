@@ -152,7 +152,7 @@ draw_free_data(struct bv_scene_obj *s)
 
 /* Wrapper to handle adaptive vs non-adaptive wireframes */
 static void
-wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct directory *dp, struct rt_db_internal *ip)
+wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *ip)
 {
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     const struct bn_tol *tol = d->tol;
@@ -181,11 +181,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct directory *dp, st
 	// Basic setup (TODO - this still loads the data to characterize it.  Ideally,
 	// the app would do this once, stash the keys on a per-obj basis, and
 	// store that so we can just look up these keys...)
-	unsigned long long key = dp->hashes[0];
-	if (!key) {
-	    key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
-	    dp->hashes[0] = key;
-	}
+	unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
 	vo->draw_data = (void *)bg_mesh_lod_init(key);
 	// Initialize the LoD data to the current view
 	struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)vo->draw_data;
@@ -307,13 +303,13 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 
     // If we don't have a BRL-CAD type, see if we've got a plot routine
     if (ip->idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-	wireframe_plot(s, v, DB_FULL_PATH_CUR_DIR(fp), ip);
+	wireframe_plot(s, v, ip);
 	goto geom_done;
     }
 
     // At least for the moment, we don't try anything fancy with pipes
     if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_PIPE) {
-	wireframe_plot(s, v, DB_FULL_PATH_CUR_DIR(fp), ip);
+	wireframe_plot(s, v, ip);
 	goto geom_done;
     }
 
@@ -338,12 +334,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 		    RT_BOT_CK_MAGIC(bot);
 
 		    // Basic setup - build cache if we don't have it and return key
-		    struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
-		    unsigned long long key = dp->hashes[0];
-		    if (!key) {
-			key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
-			dp->hashes[0] = key;
-		    }
+		    unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
 		    s->draw_data = (void *)bg_mesh_lod_init(key);
 		    // Initialize the LoD data to the current view
 		    struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)s->draw_data;
@@ -387,14 +378,14 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 	case 1:
 	    // Get wireframe (for mode 1, all the non-wireframes are handled
 	    // by the above BOT/POLY/BREP cases
-	    wireframe_plot(s, v, DB_FULL_PATH_CUR_DIR(fp), ip);
+	    wireframe_plot(s, v, ip);
 	    s->s_os.s_dmode = 0;
 	    break;
 	case 2:
 	    // Shade everything except pipe, don't evaluate, fall
 	    // back to wireframe in case of failure
 	    if (prim_tess(s, ip) < 0) {
-		wireframe_plot(s, v, DB_FULL_PATH_CUR_DIR(fp), ip);
+		wireframe_plot(s, v, ip);
 		s->s_os.s_dmode = 0;
 	    }
 	    break;
@@ -407,13 +398,13 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 	    // Hidden line - generate polygonal forms, fall back to
 	    // un-hidden wireframe in case of failure
 	    if (prim_tess(s, ip) < 0) {
-		wireframe_plot(s, v, DB_FULL_PATH_CUR_DIR(fp), ip);
+		wireframe_plot(s, v, ip);
 		s->s_os.s_dmode = 0;
 	    }
 	    break;
 	default:
 	    // Default to wireframe
-	    wireframe_plot(s, v, DB_FULL_PATH_CUR_DIR(fp), ip);
+	    wireframe_plot(s, v, ip);
 	    break;
     }
 

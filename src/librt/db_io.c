@@ -309,9 +309,6 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
     if (db_version(dbip) < 5) {
 	size_t ngran;
 
-	for (int i = 0; i < DP_HASH_CNT; i++) {
-	    dp->hashes[i] = 0;
-	}
 	// db_put_external5 can't do it, so do the callbacks here
 	if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {

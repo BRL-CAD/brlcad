@@ -231,9 +231,6 @@ db_diradd5(
     dp->d_forw = *headp;
     *headp = dp;
 
-    for (int i = 0; i < DP_HASH_CNT; i++) {
-	dp->hashes[i] = 0;
-    }
     if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
 	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
@@ -324,9 +321,6 @@ db5_diradd(struct db_i *dbip,
     dp->d_forw = *headp;
     *headp = dp;
 
-    for (int i = 0; i < DP_HASH_CNT; i++) {
-	dp->hashes[i] = 0;
-    }
     if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
 	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
