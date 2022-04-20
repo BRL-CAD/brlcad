@@ -493,10 +493,6 @@ BN_EXPORT extern void deering_persp_mat(fastf_t *m, const fastf_t *l, const fast
  * libbn - hence it is defined as part of that API. */
 BN_EXPORT extern int bn_opt_mat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
-/* Generate a hash of a matrix */
-BN_EXPORT extern unsigned long long
-bn_mat_hash(mat_t m);
-
 __END_DECLS
 
 #endif  /* BN_MAT_H */
