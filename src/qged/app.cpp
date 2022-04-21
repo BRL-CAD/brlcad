@@ -163,13 +163,13 @@ CADApp::open_file()
 	    NULL,
 	    QFileDialog::DontUseNativeDialog);
     if (!fileName.isEmpty()) {
-          int ac = 2;
-          const char *av[3];
-          av[0] = "open";
-          av[1] = fileName.toLocal8Bit();
-          av[2] = NULL;
-	  int ret = m->run_cmd(m->gedp->ged_result_str, ac, (const char **)av);
-
+	int ac = 2;
+	const char *av[3];
+	av[0] = "open";
+	av[1] = bu_strdup(fileName.toLocal8Bit().data());
+	av[2] = NULL;
+	int ret = m->run_cmd(m->gedp->ged_result_str, ac, (const char **)av);
+	bu_free((void *)av[1], "filename cpy");
 	if (w) {
 	    if (ret) {
 		w->statusBar()->showMessage("open failed");
@@ -366,7 +366,7 @@ CADApp::run_qcmd(const QString &command)
 	return;
 
     QtConsole *console = w->console;
-    const char *cmd = bu_strdup(command.toLocal8Bit());
+    const char *cmd = bu_strdup(command.toLocal8Bit().data());
 
     if (BU_STR_EQUAL(cmd, "q"))
 	bu_exit(0, "exit");
