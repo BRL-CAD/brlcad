@@ -48,10 +48,6 @@ bv_set_init(struct bview_set *s)
     BU_LIST_INIT(&s->i->free_scene_obj->l);
 }
 
-
-#define FREE_BV_SCENE_OBJ(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); }
-
 void
 bv_set_free(struct bview_set *s)
 {
@@ -75,7 +71,12 @@ bv_set_free(struct bview_set *s)
 	while (BU_LIST_NOT_HEAD(sp, &s->i->free_scene_obj->l)) {
 	    nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	    BU_LIST_DEQUEUE(&((sp)->l));
-	    FREE_BV_SCENE_OBJ(sp, &s->i->free_scene_obj->l);
+	    if (sp->s_free_callback)
+		(*sp->s_free_callback)(sp);
+	    if (sp->s_dlist_free_callback)
+		(*sp->s_dlist_free_callback)(sp);
+	    bu_ptbl_free(&sp->children);
+	    BU_PUT(sp, struct bv_scene_obj);
 	    sp = nsp;
 	}
 	BU_PUT(s->i->free_scene_obj, struct bv_scene_obj);

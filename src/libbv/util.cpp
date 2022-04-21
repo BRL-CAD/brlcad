@@ -134,6 +134,11 @@ bv_free(struct bview *gvp)
     while (BU_LIST_NOT_HEAD(sp, &gvp->gv_objs.free_scene_obj->l)) {
 	nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	BU_LIST_DEQUEUE(&((sp)->l));
+	if (sp->s_free_callback)
+	    (*sp->s_free_callback)(sp);
+	if (sp->s_dlist_free_callback)
+	    (*sp->s_dlist_free_callback)(sp);
+	bu_ptbl_free(&sp->children);
 	BU_PUT(sp, struct bv_scene_obj);
 	sp = nsp;
     }
