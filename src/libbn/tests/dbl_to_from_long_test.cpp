@@ -29,7 +29,9 @@
  * as possible due to the type conversion.
  */
 
+#ifdef BUILD_BRLCAD
 #include "common.h"
+#endif
 #include <limits>
 #include <iomanip>
 #include <iostream>
