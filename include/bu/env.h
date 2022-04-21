@@ -45,9 +45,10 @@ BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrit
 #define BU_MEM_AVAIL 1
 #define BU_MEM_PAGE_SIZE 2
 
-/* Report information about system memory.  Returns value in bytes (>= 0) if
- * requested information is available, otherwise error. */
-BU_EXPORT extern long int bu_mem(int type);
+/* Report information about system memory.  Returns value in bytes. If ec
+ * is non-zero, information retrieval was unsuccessful and the return value
+ * is not meaningful. */
+BU_EXPORT extern unsigned long long bu_mem(int type, int *ec);
 
 /** @} */
 

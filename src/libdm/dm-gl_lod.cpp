@@ -121,8 +121,9 @@ int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *info)
     // usage while they are being generated.  If we're tight on memory and the
     // triangle set is large, accept the slower drawing to avoid memory stress
     // - otherwise, we want the list
-    long int avail_mem = 0.5*bu_mem(BU_MEM_AVAIL);
-    long int size_est = (long int)(fcnt*3*sizeof(point_t));
+    int ec;
+    unsigned long long avail_mem = 0.5*bu_mem(BU_MEM_AVAIL, &ec);
+    unsigned long long size_est = (unsigned long long)(fcnt*3*sizeof(point_t));
     bool gen_dlist = false;
     if (!info->s->s_dlist && size_est < avail_mem) {
 	gen_dlist = true;

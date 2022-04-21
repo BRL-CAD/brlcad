@@ -477,9 +477,10 @@ main(int argc, const char *argv[])
 	ofile << "    }\n";
 	ofile << "\n";
 	ofile << "    if (report_mem) {\n";
-	ofile << "	 int64_t all_mem = bu_mem(BU_MEM_ALL);\n";
-	ofile << "	 int64_t avail_mem = bu_mem(BU_MEM_AVAIL);\n";
-	ofile << "	 int64_t page_mem = bu_mem(BU_MEM_PAGE_SIZE);\n";
+	ofile << "	 int ec = 0;\n";
+	ofile << "	 unsigned long long all_mem = bu_mem(BU_MEM_ALL, &ec);\n";
+	ofile << "	 unsigned long long avail_mem = bu_mem(BU_MEM_AVAIL, &ec);\n";
+	ofile << "	 unsigned long long page_mem = bu_mem(BU_MEM_PAGE_SIZE, &ec);\n";
 	ofile << "\n";
 	ofile << "   	 char all_buf[6] = {'\\0'};\n";
 	ofile << "	 char avail_buf[6] = {'\\0'};\n";
@@ -488,7 +489,7 @@ main(int argc, const char *argv[])
 	ofile << "	 bu_humanize_number(avail_buf, 5, avail_mem, \"\", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);\n";
 	ofile << "	 bu_humanize_number(p_buf, 5, page_mem, \"\", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);\n";
 	ofile << "\n";
-	ofile << "	 bu_vls_printf(s_out, \"MEM: all: %s(%ld) avail: %s(%ld) page_size: %s(%ld)\\n\",\n";
+	ofile << "	 bu_vls_printf(s_out, \"MEM: all: %s(%llu) avail: %s(%llu) page_size: %s(%llu)\\n\",\n";
 	ofile << "			      all_buf, all_mem,\n";
 	ofile << "			      avail_buf, avail_mem,\n";
 	ofile << "			      p_buf, page_mem);\n";
