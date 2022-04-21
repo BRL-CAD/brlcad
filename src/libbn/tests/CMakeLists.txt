@@ -937,6 +937,7 @@ CMAKEFILES(
   CMakeLists.txt
   bntester.dat
   bn_test.c.in
+  dbl_to_from_long_test.cpp
   poly_cubic_roots.c
   poly_quartic_roots.c
   )
