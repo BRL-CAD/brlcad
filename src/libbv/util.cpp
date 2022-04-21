@@ -102,8 +102,10 @@ bv_init(struct bview *gvp, struct bview_set *s)
     BU_GET(gvp->gv_objs.view_objs, struct bu_ptbl);
     bu_ptbl_init(gvp->gv_objs.view_objs, 8, "view_objs init");
 
-    // Until the app tells us differently, we need to use our local vlist
-    // container
+    // Until the app tells us differently, we need to use our local
+    // containers
+    BU_GET(gvp->gv_objs.free_scene_obj, struct bv_scene_obj);
+    BU_LIST_INIT(&gvp->gv_objs.free_scene_obj->l);
     BU_LIST_INIT(&gvp->gv_objs.gv_vlfree);
 
     // Out of the gate we don't have callbacks
@@ -125,6 +127,17 @@ bv_free(struct bview *gvp)
     BU_PUT(gvp->gv_objs.db_objs, struct bu_ptbl);
     bu_ptbl_free(gvp->gv_objs.view_objs);
     BU_PUT(gvp->gv_objs.view_objs, struct bu_ptbl);
+
+    // TODO - clean up local vlfree list contents
+    struct bv_scene_obj *sp, *nsp;
+    sp = BU_LIST_NEXT(bv_scene_obj, &gvp->gv_objs.free_scene_obj->l);
+    while (BU_LIST_NOT_HEAD(sp, &gvp->gv_objs.free_scene_obj->l)) {
+	nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
+	BU_LIST_DEQUEUE(&((sp)->l));
+	BU_PUT(sp, struct bv_scene_obj);
+	sp = nsp;
+    }
+    BU_PUT(gvp->gv_objs.free_scene_obj, struct bv_scene_obj);
 
     if (gvp->gv_ls.gv_selected) {
 	bu_ptbl_free(gvp->gv_ls.gv_selected);
