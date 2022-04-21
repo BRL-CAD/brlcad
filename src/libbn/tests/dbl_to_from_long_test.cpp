@@ -29,13 +29,20 @@
  * as possible due to the type conversion.
  */
 
+#include "common.h"
 #include <limits>
 #include <iomanip>
 #include <iostream>
 #include <math.h>
+#ifdef BUILD_BRLCAD
+#include "bu/app.h"
+#endif
 
-int main()
+int main(int ac, const char **av)
 {
+#ifdef BUILD_BRLCAD
+    bu_setprogname(av[0]);
+#endif
     long log2max = log2(std::numeric_limits<long>::max());
     std::cout << "log2 of long max: " << log2max << "\n";
     double test_num = -23423423.234211111;
