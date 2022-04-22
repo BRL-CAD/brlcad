@@ -355,11 +355,13 @@ class POPState {
 	// Specific loading and unloading methods
 	void tri_pop_load(int start_level, int level);
 	void tri_pop_trim(int level);
+	std::vector<size_t> level_vcnt;
+	std::vector<size_t> level_tricnt;
 
 	// Processing containers used for initial triangle data characterization
 	std::vector<size_t> tri_ind_map;
 	std::vector<size_t> vert_tri_minlevel;
-	std::map<size_t, std::set<size_t>> level_tri_verts;
+	std::map<size_t, std::unordered_set<size_t>> level_tri_verts;
 	std::vector<std::vector<size_t>> level_tris;
 	size_t tri_threshold = 0;
 
@@ -434,8 +436,8 @@ POPState::tri_process()
 	tri_ind_map.push_back(i);
     }
     size_t vind = 0;
-    std::map<size_t, std::set<size_t>>::iterator l_it;
-    std::set<size_t>::iterator s_it;
+    std::map<size_t, std::unordered_set<size_t>>::iterator l_it;
+    std::unordered_set<size_t>::iterator s_it;
     for (l_it = level_tri_verts.begin(); l_it != level_tri_verts.end(); l_it++) {
 	for (s_it = l_it->second.begin(); s_it != l_it->second.end(); s_it++) {
 	    tri_ind_map[*s_it] = vind;
@@ -575,10 +577,12 @@ POPState::POPState(unsigned long long key)
     }
     hash = key;
 
-    // Reserve memory for level containers
-    level_tris.reserve(POP_MAXLEVEL);
+    // Reserve memory for level counting containers
+    level_vcnt.reserve(POP_MAXLEVEL);
+    level_tricnt.reserve(POP_MAXLEVEL);
     for (size_t i = 0; i < POP_MAXLEVEL; i++) {
-	level_tris.push_back(std::vector<size_t>(0));
+	level_vcnt[i] = 0;
+	level_tricnt[i] = 0;
     }
 
     // Read in min/max bounds
@@ -639,18 +643,19 @@ POPState::tri_pop_load(int start_level, int level)
 	std::ifstream vifile(dir, std::ios::in | std::ofstream::binary);
 	size_t vicnt = 0;
 	vifile.read(reinterpret_cast<char *>(&vicnt), sizeof(vicnt));
+	lod_tri_pnts.reserve(lod_tri_pnts.size() + vicnt*3);
 	for (size_t j = 0; j < vicnt; j++) {
 	    point_t nv;
 	    vifile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
 	    for (size_t k = 0; k < 3; k++) {
 		lod_tri_pnts.push_back(nv[k]);
 	    }
-	    level_tri_verts[i].insert(lod_tri_pnts.size() - 1);
 	}
+	level_vcnt[i] = vicnt;
 	vifile.close();
 	bu_vls_free(&vfile);
     }
-    // Re-snap all vertices loaded at the new level
+    // Re-snap all vertices currently loaded at the new level
     lod_tri_pnts_snapped.clear();
     lod_tri_pnts_snapped.reserve(lod_tri_pnts.size());
     for (size_t i = 0; i < lod_tri_pnts.size()/3; i++) {
@@ -673,14 +678,15 @@ POPState::tri_pop_load(int start_level, int level)
 	std::ifstream tifile(dir, std::ios::in | std::ofstream::binary);
 	size_t ticnt = 0;
 	tifile.read(reinterpret_cast<char *>(&ticnt), sizeof(ticnt));
+	lod_tris.reserve(lod_tris.size() + ticnt*3);
 	for (size_t j = 0; j < ticnt; j++) {
 	    int vf[3];
 	    tifile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
 	    for (int k = 0; k < 3; k++) {
 		lod_tris.push_back(vf[k]);
 	    }
-	    level_tris[i].push_back(lod_tris.size() / 3 - 1);
 	}
+	level_tricnt[i] = ticnt;
 	tifile.close();
 	bu_vls_free(&tfile);
     }
@@ -691,10 +697,6 @@ POPState::tri_pop_load(int start_level, int level)
 void
 POPState::shrink_memory()
 {
-    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
-	level_tris[i].clear();
-	level_tris[i].shrink_to_fit();
-    }
     lod_tri_pnts.clear();
     lod_tri_pnts.shrink_to_fit();
     lod_tris.clear();
@@ -706,18 +708,12 @@ POPState::shrink_memory()
 void
 POPState::tri_pop_trim(int level)
 {
-    // Clear the level_tris info for everything above the target level - it will be reloaded
-    // if we need it again
-    for (size_t i = level+1; i < POP_MAXLEVEL; i++) {
-	level_tris[i].clear();
-	level_tris[i].shrink_to_fit();
-    }
     // Tally all the lower level verts and tris - those are the ones we need to keep
     size_t vkeep_cnt = 0;
     size_t fkeep_cnt = 0;
     for (size_t i = 0; i <= (size_t)level; i++) {
-	vkeep_cnt += level_tri_verts[i].size();
-	fkeep_cnt += level_tris[i].size();
+	vkeep_cnt += level_vcnt[i];
+	fkeep_cnt += level_tricnt[i];
     }
 
     // Shrink the main arrays (note that in C++11 shrink_to_fit may or may
@@ -818,13 +814,10 @@ POPState::set_level(int level)
     // If we're jumping into details levels beyond POP range, clear the POP containers
     // and load the more detailed data management info
     if (level > curr_level && level > max_tri_pop_level && curr_level <= max_tri_pop_level) {
-	for (size_t i = 0; i < POP_MAXLEVEL; i++) {
-	    level_tris[i].clear();
-	    level_tris[i].shrink_to_fit();
-	}
 
 	// Read the complete tris and verts for full drawing
 	lod_tri_pnts_snapped.clear();
+	lod_tri_pnts_snapped.shrink_to_fit();
 	lod_tri_pnts.clear();
 	lod_tris.clear();
 	{
@@ -836,6 +829,7 @@ POPState::set_level(int level)
 	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_verts", NULL);
 	    std::ifstream avfile(dir, std::ios::in | std::ofstream::binary);
 	    avfile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
+	    lod_tri_pnts.reserve(3*ecnt);
 	    for (size_t i = 0; i < ecnt; i++) {
 		point_t nv;
 		avfile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
@@ -847,6 +841,7 @@ POPState::set_level(int level)
 	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_faces", NULL);
 	    std::ifstream affile(dir, std::ios::in | std::ofstream::binary);
 	    affile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
+	    lod_tris.reserve(3*ecnt);
 	    for (size_t i = 0; i < ecnt; i++) {
 		int vf[3];
 		affile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
@@ -888,7 +883,7 @@ POPState::cache_tri(struct bu_vls *vkey)
 	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
 
 	// Write out the vertex points
-	std::set<size_t>::iterator s_it;
+	std::unordered_set<size_t>::iterator s_it;
 	for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
 	    point_t v;
 	    VMOVE(v, verts_array[*s_it]);
