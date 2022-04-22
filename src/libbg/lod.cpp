@@ -633,12 +633,13 @@ POPState::tri_pop_load(int start_level, int level)
     bu_vls_sprintf(&vkey, "%llu", hash);
 
     // Read in the level vertices
+    struct bu_vls lfile = BU_VLS_INIT_ZERO;
     for (int i = start_level+1; i <= level; i++) {
-	struct bu_vls vfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&vfile, "tri_verts_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
-	if (!bu_file_exists(dir, NULL))
+	bu_vls_sprintf(&lfile, "tri_verts_level_%d", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&lfile), NULL);
+	if (!bu_file_exists(dir, NULL)) {
 	    continue;
+	}
 
 	std::ifstream vifile(dir, std::ios::in | std::ofstream::binary);
 	size_t vicnt = 0;
@@ -653,7 +654,6 @@ POPState::tri_pop_load(int start_level, int level)
 	}
 	level_vcnt[i] = vicnt;
 	vifile.close();
-	bu_vls_free(&vfile);
     }
     // Re-snap all vertices currently loaded at the new level
     lod_tri_pnts_snapped.clear();
@@ -669,11 +669,12 @@ POPState::tri_pop_load(int start_level, int level)
 
     // Read in the level triangles
     for (int i = start_level+1; i <= level; i++) {
-	struct bu_vls tfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&tfile, "tris_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&tfile), NULL);
-	if (!bu_file_exists(dir, NULL))
+	bu_vls_sprintf(&lfile, "tris_level_%d", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&lfile), NULL);
+	if (!bu_file_exists(dir, NULL)) {
+	    bu_vls_free(&lfile);
 	    continue;
+	}
 
 	std::ifstream tifile(dir, std::ios::in | std::ofstream::binary);
 	size_t ticnt = 0;
@@ -688,10 +689,10 @@ POPState::tri_pop_load(int start_level, int level)
 	}
 	level_tricnt[i] = ticnt;
 	tifile.close();
-	bu_vls_free(&tfile);
     }
 
     bu_vls_free(&vkey);
+    bu_vls_free(&lfile);
 }
 
 void
