@@ -159,7 +159,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 		    bu_vls_free(&pname);
 		    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 		    RT_BOT_CK_MAGIC(bot);
-		    bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+		    bg_mesh_lod_cache(gedp->ged_lod, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
 		    rt_db_free_internal(&dbintern);
 		}
 	    }
@@ -167,7 +167,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    return BRLCAD_OK;
 	}
 	if (BU_STR_EQUAL(argv[1], "clear")) {
-	    bg_mesh_lod_clear_cache(0);
+	    bg_mesh_lod_clear_cache(gedp->ged_lod, 0);
 	    return BRLCAD_OK;
 	}
 	bu_vls_printf(gedp->ged_result_str, "unknown argument to cache: %s\n", argv[1]);

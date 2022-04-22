@@ -182,8 +182,8 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	// Basic setup (TODO - this still loads the data to characterize it.  Ideally,
 	// the app would do this once, stash the keys on a per-obj basis, and
 	// store that so we can just look up these keys...)
-	unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
-	vo->draw_data = (void *)bg_mesh_lod_init(key);
+	unsigned long long key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+	vo->draw_data = (void *)bg_mesh_lod_init(d->mesh_c, key);
 	// Initialize the LoD data to the current view
 	struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)vo->draw_data;
 	struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
@@ -224,6 +224,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	ld->dbip = d->dbip;
 	ld->tol = d->tol;
 	ld->ttol = d->ttol;
+	ld->mesh_c = d->mesh_c;
 	ld->res = d->res;
 	vo->s_i_data= (void *)ld;
 
@@ -335,8 +336,8 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 		    RT_BOT_CK_MAGIC(bot);
 
 		    // Basic setup - build cache if we don't have it and return key
-		    unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
-		    s->draw_data = (void *)bg_mesh_lod_init(key);
+		    unsigned long long key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+		    s->draw_data = (void *)bg_mesh_lod_init(d->mesh_c, key);
 		    // Initialize the LoD data to the current view
 		    struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)s->draw_data;
 		    struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
@@ -684,6 +685,7 @@ draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	ud->dbip = dd->dbip;
 	ud->tol = dd->tol;
 	ud->ttol = dd->ttol;
+	ud->mesh_c = dd->mesh_c;
 	ud->res = &rt_uniresource; // TODO - at some point this may be from the app or view...
 	s->s_i_data = (void *)ud;
 

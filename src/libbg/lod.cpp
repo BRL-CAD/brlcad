@@ -371,10 +371,10 @@ class POPState {
     public:
 
 	// Create cached data (doesn't create a usable container)
-	POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt);
+	POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, int *faces, size_t fcnt);
 
 	// Load cached data (DOES create a usable container)
-	POPState(unsigned long long key);
+	POPState(struct bg_mesh_lod_context *ctx, unsigned long long key);
 
 	// Cleanup
 	~POPState();
@@ -486,6 +486,9 @@ class POPState {
 	// Function to use when doing draw operations
 	draw_clbk_t draw_clbk;
 	full_detail_clbk_t full_detail_clbk;
+
+	// Context
+	struct bg_mesh_lod_context *c;
 };
 
 void
@@ -584,7 +587,7 @@ POPState::tri_process()
     //bu_log("Triangle threshold level: %zd\n", tri_threshold);
 }
 
-POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
+POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, int *faces, size_t fcnt)
 {
     // Hash the data to generate a key
     XXH64_state_t h_state;
@@ -594,6 +597,8 @@ POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
     XXH64_hash_t hash_val;
     hash_val = XXH64_digest(&h_state);
     hash = (unsigned long long)hash_val;
+
+    c = ctx;
 
     // Make sure there's no cache before performing the full initializing from
     // the original data.  In this mode the POPState creation is used to
@@ -667,8 +672,10 @@ POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
 #endif
 }
 
-POPState::POPState(unsigned long long key)
+POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 {
+    c = ctx;
+
     if (!key)
 	return;
 
@@ -1316,14 +1323,14 @@ struct bg_mesh_lod_internal {
 };
 
 extern "C" unsigned long long
-bg_mesh_lod_cache(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
+bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, int *faces, size_t fcnt)
 {
     unsigned long long key = 0;
 
     if (!v || !vcnt || !faces || !fcnt)
 	return 0;
 
-    POPState p(v, vcnt, faces, fcnt);
+    POPState p(c, v, vcnt, faces, fcnt);
     if (!p.is_valid)
 	return 0;
 
@@ -1333,12 +1340,12 @@ bg_mesh_lod_cache(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
 }
 
 extern "C" struct bv_mesh_lod_info *
-bg_mesh_lod_init(unsigned long long key)
+bg_mesh_lod_init(struct bg_mesh_lod_context *c, unsigned long long key)
 {
     if (!key)
 	return NULL;
 
-    POPState *p = new POPState(key);
+    POPState *p = new POPState(c, key);
     if (!p)
 	return NULL;
 
@@ -1469,8 +1476,11 @@ bg_mesh_lod_memshrink(struct bv_scene_obj *s)
 }
 
 extern "C" void
-bg_mesh_lod_clear_cache(unsigned long long key)
+bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 {
+    if (!c)
+	return;
+
     char dir[MAXPATHLEN];
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
     if (!bu_file_exists(dir, NULL))

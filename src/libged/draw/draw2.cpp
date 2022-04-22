@@ -424,6 +424,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	dd.v = v;
 	dd.tol = &gedp->ged_wdbp->wdb_tol;
 	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
+	dd.mesh_c = gedp->ged_lod;
 	dd.color_inherit = 0;
 	dd.bound_only = 0;
 	dd.res = &rt_uniresource;
@@ -453,6 +454,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    ud->tol = dd.tol;
 	    ud->ttol = dd.ttol;
 	    ud->res = dd.res;
+	    ud->mesh_c = dd.mesh_c;
 	    g->s_i_data = (void *)ud;
 	    g->s_v = dd.v;
 	    // Done with path

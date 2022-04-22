@@ -73,11 +73,13 @@ main(int argc, char *argv[])
     if (!bot->num_faces)
 	bu_exit(1, "ERROR: %s - no faces found\n", argv[2]);
 
-    unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+    struct bg_mesh_lod_context *c = bg_mesh_lod_context_create(argv[1]);
+
+    unsigned long long key = bg_mesh_lod_cache(c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
     if (!key)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
 
-    struct bv_mesh_lod_info *linfo = bg_mesh_lod_init(key);
+    struct bv_mesh_lod_info *linfo = bg_mesh_lod_init(c, key);
     if (!linfo)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
     struct bg_mesh_lod *mlod = (struct bg_mesh_lod *)linfo->lod;
@@ -99,6 +101,7 @@ main(int argc, char *argv[])
     bu_log("lod level setting: %f sec\n", seconds);
 
     bg_mesh_lod_destroy(linfo);
+    bg_mesh_lod_context_destroy(c);
 
     return 0;
 }

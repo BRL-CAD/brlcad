@@ -73,6 +73,11 @@ bg_mesh_lod_context_create(const char *name);
 BG_EXPORT void
 bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c);
 
+/* Remove cache data associated with key.  If key == 0, remove ALL cache data
+ * associated with all LoD objects (i.e. a full LoD cache reset). */
+BG_EXPORT void
+bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key);
+
 
 /* We hide the details of the internal LoD structures. */
 struct bg_mesh_lod_internal;
@@ -91,7 +96,7 @@ struct bg_mesh_lod {
  * returns the lookup key calculated from the data, which is used in subsequent
  * lookups of the cached data. */
 BG_EXPORT unsigned long long
-bg_mesh_lod_cache(const point_t *v, size_t vcnt, int *f, size_t fcnt);
+bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, int *f, size_t fcnt);
 
 /**
  * Set up the bg_mesh_lod data using cached LoD information associated with
@@ -109,7 +114,7 @@ bg_mesh_lod_cache(const point_t *v, size_t vcnt, int *f, size_t fcnt);
  * application wishes to visualize levels explicitly.)
  */
 BG_EXPORT struct bv_mesh_lod_info *
-bg_mesh_lod_init(unsigned long long key);
+bg_mesh_lod_init(struct bg_mesh_lod_context *c, unsigned long long key);
 
 /**
  * Given a bview, load the appropriate level of detail for displaying the mesh
@@ -136,11 +141,6 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level, int reset);
 /* Clean up the lod container. */
 BG_EXPORT void
 bg_mesh_lod_destroy(struct bv_mesh_lod_info *i);
-
-/* Remove cache data associated with key.  If key == 0, remove ALL cache data
- * associated with all LoD objects (i.e. a full LoD cache reset). */
-BG_EXPORT void
-bg_mesh_lod_clear_cache(unsigned long long key);
 
 /* Set drawing function callback */
 BG_EXPORT void
