@@ -453,6 +453,11 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
 endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
 
 #----------------------------------------------------------------------
+# Let our code know what the minimum active C++ standard is - behavior
+# of some C++ functionality differs at runtime based on version.
+CONFIG_H_APPEND(BRLCAD "#define CXX_STANDARD ${CMAKE_CXX_STANDARD}\n")
+
+#----------------------------------------------------------------------
 # Let config.h know whether we're doing a 32 or a 64 bit build.
 
 CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
