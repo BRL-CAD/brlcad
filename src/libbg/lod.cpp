@@ -1096,10 +1096,12 @@ POPState::cache_tri()
 	    return false;
     }
 
-    // Write out the vertices in LoD order
+    struct bu_vls kbuf = BU_VLS_INIT_ZERO;
+
+    // Write out the vertices in LoD order for each level
     {
-	std::stringstream s;
 	for (size_t i = 0; i <= tri_threshold; i++) {
+	    std::stringstream s;
 	    if (level_tri_verts.find(i) == level_tri_verts.end())
 		continue;
 	    if (!level_tri_verts[i].size())
@@ -1111,15 +1113,16 @@ POPState::cache_tri()
 		VMOVE(v, verts_array[*s_it]);
 		s.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
 	    }
+	    bu_vls_sprintf(&kbuf, "v%zd", i);
+	    if (!commit(bu_vls_cstr(&kbuf), s))
+		return false;
 	}
-	if (!commit("v", s))
-	    return false;
     }
 
-    // Write out the triangles in LoD order
+    // Write out the triangles in LoD order for each level
     {
-	std::stringstream s;
 	for (size_t i = 0; i <= tri_threshold; i++) {
+	    std::stringstream s;
 	    if (!level_tris[i].size())
 		continue;
 	    // Write out the mapped triangle indices
@@ -1131,9 +1134,10 @@ POPState::cache_tri()
 		vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
 		s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
 	    }
+	    bu_vls_sprintf(&kbuf, "t%zd", i);
+	    if (!commit(bu_vls_cstr(&kbuf), s))
+		return false;
 	}
-	if (!commit("t", s))
-	    return false;
     }
 
     return true;
