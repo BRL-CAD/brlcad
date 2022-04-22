@@ -47,6 +47,34 @@ BG_EXPORT extern void
 bg_view_obb(struct bview *v);
 
 
+/* Storing and reading from a lot of small, individual files doesn't work very
+ * well on some platforms.  We provide a "context" to manage bookkeeping of data
+ * across objects. The details are implementation internal - the application
+ * will simply create a context with a file name and provide it to the various
+ * LoD calls. */
+struct bg_mesh_lod_context_internal;
+struct bg_mesh_lod_context {
+    struct bg_mesh_lod_context_internal *i;
+};
+
+/* Create an LoD context using "name". If data is already present associated
+ * with that name it will be loaded, otherwise a new storage structure will be
+ * initialized.  If creation or loading fails for any reason the return value
+ * NULL.
+ *
+ * Note that "name" should be a single name, usually corresponding to a .g
+ * database, and not a full path.  libbu will manage where the context data is
+ * cached.
+*/
+BG_EXPORT struct bg_mesh_lod_context *
+bg_mesh_lod_context_create(const char *name);
+
+/* Free all memory associated with context c.  Does not destroy the on-disk
+ * data. */
+BG_EXPORT void
+bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c);
+
+
 /* We hide the details of the internal LoD structures. */
 struct bg_mesh_lod_internal;
 struct bg_mesh_lod {
@@ -118,6 +146,12 @@ bg_mesh_lod_clear_cache(unsigned long long key);
 /* Set drawing function callback */
 BG_EXPORT void
 bg_mesh_lod_set_draw_callback(struct bg_mesh_lod *lod, int (*clbk)(void *ctx, struct bv_mesh_lod_info *info));
+
+
+/* Set function callback for retrieving full mesh detail */
+BG_EXPORT void
+bg_mesh_lod_set_detail_callback(struct bg_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod_info *, void *, void *));
+
 
 /* Trigger a triangle drawing operation. */
 BG_EXPORT void

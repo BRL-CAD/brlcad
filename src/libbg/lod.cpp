@@ -57,7 +57,7 @@
 #include "common.h"
 #include <stdlib.h>
 #include <map>
-#include <set>
+#include <thread>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -75,18 +75,34 @@
 #define XXH_IMPLEMENTATION
 #include "xxhash.h"
 
+#include "lmdb.h"
+
 #include "bio.h"
 
 #include "bu/app.h"
 #include "bu/bitv.h"
 #include "bu/color.h"
 #include "bu/malloc.h"
+#include "bu/parallel.h"
 #include "bu/time.h"
 #include "bv/plot3.h"
 #include "bg/lod.h"
 #include "bg/plane.h"
 #include "bg/sat.h"
 #include "bg/trimesh.h"
+
+// Maximum database size.  For detailed views we fall back on just
+// displaying the full data set, and we need to be able to memory map the
+// file, so go with a 4Gb per file limit.
+#define POP_MAX_DB_SIZE 4294967296
+
+#define POP_MAXLEVEL 16
+#define POP_CACHEDIR ".POPLoD"
+#define MBUMP 1.01
+
+typedef int (*draw_clbk_t)(void *, struct bv_mesh_lod_info *);
+typedef int (*full_detail_clbk_t)(struct bv_mesh_lod_info *, void *, void *);
+
 
 static void
 obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct bview *v)
@@ -235,11 +251,73 @@ bg_view_obb(struct bview *v)
 #endif
 }
 
-#define POP_MAXLEVEL 16
-#define POP_CACHEDIR ".POPLoD"
-#define MBUMP 1.01
+struct bg_mesh_lod_context_internal {
+    MDB_env *lod_env;
+    MDB_txn *lod_txn;
+    MDB_dbi lod_dbi;
+};
 
-typedef int (*draw_clbk_t)(void *, struct bv_mesh_lod_info *);
+struct bg_mesh_lod_context *
+bg_mesh_lod_context_create(const char *name)
+{
+    size_t mreaders = 0;
+    int ncpus = 0;
+    if (!name)
+	return NULL;
+
+    struct bg_mesh_lod_context *c;
+    BU_GET(c, struct bg_mesh_lod_context);
+    BU_GET(c->i, struct bg_mesh_lod_context_internal);
+    struct bg_mesh_lod_context_internal *i = c->i;
+
+    if (mdb_env_create(&i->lod_env))
+	goto lod_context_fail;
+
+    // Base maximum readers on an estimate of how many threads
+    // we might want to fire off
+    mreaders = std::thread::hardware_concurrency();
+    if (!mreaders)
+	mreaders = 1;
+    ncpus = bu_avail_cpus();
+    if (ncpus > 0 && (size_t)ncpus > mreaders)
+	mreaders = (size_t)ncpus + 2;
+
+    if (mdb_env_set_maxreaders(i->lod_env, mreaders))
+	goto lod_context_close_fail;
+
+    // TODO - the "failure" mode if this limit is ever hit is to back down
+    // the maximum stored LoD on larger objects, but that will take some
+    // doing to implement...
+    if (mdb_env_set_mapsize(i->lod_env, POP_MAX_DB_SIZE))
+	goto lod_context_close_fail;
+
+    // Need to call mdb_env_sync() at appropriate points.
+    char cache_file[MAXPATHLEN];
+    bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, name, NULL);
+    if (mdb_env_open(i->lod_env, cache_file, MDB_NOSYNC, 0664))
+	goto lod_context_close_fail;
+
+    // Success - return the context
+    return c;
+
+    // If something went wrong, clean up and return NULL
+lod_context_close_fail:
+    mdb_env_close(i->lod_env);
+lod_context_fail:
+    BU_PUT(c->i, struct bg_mesh_lod_context_internal);
+    BU_PUT(c, struct bg_mesh_lod_context);
+    return NULL;
+}
+
+void
+bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c)
+{
+    if (!c)
+	return;
+    mdb_env_close(c->i->lod_env);
+    BU_PUT(c->i, struct bg_mesh_lod_context_internal);
+    BU_PUT(c, struct bg_mesh_lod_context);
+}
 
 static void
 lod_dir(char *dir)
@@ -318,7 +396,10 @@ class POPState {
 
 	// Drawing trigger
 	void draw(void *ctx, struct bv_scene_obj *s);
-	void set_callback(draw_clbk_t clbk);
+	void set_draw_callback(draw_clbk_t clbk);
+
+	// Retrieval method for full detail
+	void set_full_detail_callback(full_detail_clbk_t clbk);
 
 	// Parent container
 	struct bg_mesh_lod *lod;
@@ -373,6 +454,7 @@ class POPState {
 
 	// Function to use when doing draw operations
 	draw_clbk_t draw_clbk;
+	full_detail_clbk_t full_detail_clbk;
 };
 
 void
@@ -771,9 +853,9 @@ POPState::set_level(int level)
 	set_level(level);
     }
 
-//    int64_t start, elapsed;
-//    fastf_t seconds;
-//    start = bu_gettime();
+    //    int64_t start, elapsed;
+    //    fastf_t seconds;
+    //    start = bu_gettime();
 
     // Triangles
 
@@ -1108,11 +1190,17 @@ POPState::draw(void *ctx, struct bv_scene_obj *s)
 }
 
 void
-POPState::set_callback(draw_clbk_t clbk)
+POPState::set_draw_callback(draw_clbk_t clbk)
 {
     draw_clbk = clbk;
 }
 
+
+void
+POPState::set_full_detail_callback(full_detail_clbk_t clbk)
+{
+    full_detail_clbk = clbk;
+}
 
 void
 POPState::plot(const char *root)
@@ -1384,8 +1472,22 @@ bg_mesh_lod_set_draw_callback(
 	return;
 
     POPState *s = lod->i->s;
-    s->set_callback(clbk);
+    s->set_draw_callback(clbk);
 }
+
+extern "C" void
+bg_mesh_lod_set_detail_callback(
+	struct bg_mesh_lod *lod,
+	int (*clbk)(struct bv_mesh_lod_info *, void *, void *)
+	)
+{
+    if (!lod || !clbk)
+	return;
+
+    POPState *s = lod->i->s;
+    s->set_full_detail_callback(clbk);
+}
+
 
 extern "C" void
 bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s)
