@@ -191,10 +191,10 @@ struct ged {
     /*************************************************************/
     /* The current view */
     struct bview		*ged_gvp;
-
-    // The full set of views associated with this ged object
+    /* The full set of views associated with this ged object */
     struct bview_set            ged_views;
-
+    /* Drawing data associated with this .g file */
+    struct bg_mesh_lod_context  *ged_lod;
 
 
     void                        *u_data; /**< @brief User data associated with this ged instance */

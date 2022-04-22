@@ -84,6 +84,7 @@
 #include "bu/color.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/path.h"
 #include "bu/time.h"
 #include "bv/plot3.h"
 #include "bg/lod.h"
@@ -103,6 +104,16 @@
 typedef int (*draw_clbk_t)(void *, struct bv_mesh_lod_info *);
 typedef int (*full_detail_clbk_t)(struct bv_mesh_lod_info *, void *, void *);
 
+static void
+lod_dir(char *dir)
+{
+#ifdef HAVE_WINDOWS_H
+    CreateDirectory(dir, NULL);
+#else
+    /* mode: 775 */
+    mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
+}
 
 static void
 obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct bview *v)
@@ -265,6 +276,23 @@ bg_mesh_lod_context_create(const char *name)
     if (!name)
 	return NULL;
 
+    // Hash the input filename to generate a key for uniqueness
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fname, "%s", bu_path_normalize(name));
+    // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
+    if (bu_vls_strlen(&fname) < 10) {
+	bu_vls_printf(&fname, "GGGGGGGGGGGGG");
+    }
+    XXH64_update(&h_state, bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    bu_path_component(&fname, bu_path_normalize(name), BU_PATH_BASENAME_EXTLESS);
+    bu_vls_printf(&fname, "_%llu", hash);
+
+    // Create the context
     struct bg_mesh_lod_context *c;
     BU_GET(c, struct bg_mesh_lod_context);
     BU_GET(c->i, struct bg_mesh_lod_context_internal);
@@ -291,10 +319,23 @@ bg_mesh_lod_context_create(const char *name)
     if (mdb_env_set_mapsize(i->lod_env, POP_MAX_DB_SIZE))
 	goto lod_context_close_fail;
 
+
+    // Ensure the necessary top level dirs are present
+    char dir[MAXPATHLEN];
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
+    if (!bu_file_exists(dir, NULL))
+	lod_dir(dir);
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
+    if (!bu_file_exists(dir, NULL))
+	lod_dir(dir);
+
+    // Create this cache dir, if not already present
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
+    if (!bu_file_exists(dir, NULL))
+	lod_dir(dir);
+
     // Need to call mdb_env_sync() at appropriate points.
-    char cache_file[MAXPATHLEN];
-    bu_dir(cache_file, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, name, NULL);
-    if (mdb_env_open(i->lod_env, cache_file, MDB_NOSYNC, 0664))
+    if (mdb_env_open(i->lod_env, dir, MDB_NOSYNC, 0664))
 	goto lod_context_close_fail;
 
     // Success - return the context
@@ -304,6 +345,7 @@ bg_mesh_lod_context_create(const char *name)
 lod_context_close_fail:
     mdb_env_close(i->lod_env);
 lod_context_fail:
+    bu_vls_free(&fname);
     BU_PUT(c->i, struct bg_mesh_lod_context_internal);
     BU_PUT(c, struct bg_mesh_lod_context);
     return NULL;
@@ -317,17 +359,6 @@ bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c)
     mdb_env_close(c->i->lod_env);
     BU_PUT(c->i, struct bg_mesh_lod_context_internal);
     BU_PUT(c, struct bg_mesh_lod_context);
-}
-
-static void
-lod_dir(char *dir)
-{
-#ifdef HAVE_WINDOWS_H
-    CreateDirectory(dir, NULL);
-#else
-    /* mode: 775 */
-    mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-#endif
 }
 
 // Output record

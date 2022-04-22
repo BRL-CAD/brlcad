@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bg/lod.h"
 
 #include "../ged_private.h"
 
@@ -111,6 +112,12 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* New database open, need to initialize reference counts */
 	db_update_nref(gedp->dbip, &rt_uniresource);
+
+
+	// Test LoD context creation
+	if (gedp->ged_lod)
+	    bg_mesh_lod_context_destroy(gedp->ged_lod);
+	gedp->ged_lod = bg_mesh_lod_context_create(argv[1]);
 
 	return BRLCAD_OK;
     }

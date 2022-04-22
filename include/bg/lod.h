@@ -62,9 +62,8 @@ struct bg_mesh_lod_context {
  * initialized.  If creation or loading fails for any reason the return value
  * NULL.
  *
- * Note that "name" should be a single name, usually corresponding to a .g
- * database, and not a full path.  libbu will manage where the context data is
- * cached.
+ * Note that "name" should be a full, unique path associated with the source
+ * database.  libbu will manage where the context data is cached.
 */
 BG_EXPORT struct bg_mesh_lod_context *
 bg_mesh_lod_context_create(const char *name);
