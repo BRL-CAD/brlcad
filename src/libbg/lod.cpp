@@ -95,7 +95,11 @@
 // Maximum database size.  For detailed views we fall back on just
 // displaying the full data set, and we need to be able to memory map the
 // file, so go with a 4Gb per file limit.
-#define POP_MAX_DB_SIZE 4294967296
+#define CACHE_MAX_DB_SIZE 4294967296
+
+// Define what format of the cache is current - if it doesn't match, we need
+// to wipe and redo.
+#define CACHE_CURRENT_FORMAT 1
 
 #define POP_MAXLEVEL 16
 #define POP_CACHEDIR ".POPLoD"
@@ -316,7 +320,7 @@ bg_mesh_lod_context_create(const char *name)
     // TODO - the "failure" mode if this limit is ever hit is to back down
     // the maximum stored LoD on larger objects, but that will take some
     // doing to implement...
-    if (mdb_env_set_mapsize(i->lod_env, POP_MAX_DB_SIZE))
+    if (mdb_env_set_mapsize(i->lod_env, CACHE_MAX_DB_SIZE))
 	goto lod_context_close_fail;
 
 
@@ -326,10 +330,35 @@ bg_mesh_lod_context_create(const char *name)
     if (!bu_file_exists(dir, NULL))
 	lod_dir(dir);
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
-    if (!bu_file_exists(dir, NULL))
+    if (!bu_file_exists(dir, NULL)) {
 	lod_dir(dir);
+    }
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, "format", NULL);
+    if (!bu_file_exists(dir, NULL)) {
+	// Note a format, so we can detect if what's there isn't compatible
+	// with what this logic expects (in anticipation of future changes
+	// to the on-disk format).
+	FILE *fp = fopen(dir, "w");
+	if (!fp)
+	    goto lod_context_close_fail;
+	fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
+	fclose(fp);
+    } else {
+	std::ifstream format_file(dir, std::ios::in | std::ofstream::binary);
+	size_t disk_format_version = 0;
+	format_file.read(reinterpret_cast<char *>(&disk_format_version), sizeof(disk_format_version));
+	if (disk_format_version	!= CACHE_CURRENT_FORMAT) {
+	    bu_log("Old mesh lod cache found - clearing\n");
+	    bg_mesh_lod_clear_cache(NULL, 0);
+	}
+	FILE *fp = fopen(dir, "w");
+	if (!fp)
+	    goto lod_context_close_fail;
+	fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
+	fclose(fp);
+    }
 
-    // Create this cache dir, if not already present
+    // Create the specific LMDB cache dir, if not already present
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
     if (!bu_file_exists(dir, NULL))
 	lod_dir(dir);
@@ -462,7 +491,7 @@ class POPState {
 	// Write data out to cache (only used during initialization from
 	// external data)
 	void cache();
-	void cache_tri(struct bu_vls *vkey);
+	void cache_tri(std::stringstream &s);
 
 	// Specific loading and unloading methods
 	void tri_pop_load(int start_level, int level);
@@ -983,53 +1012,58 @@ POPState::set_level(int level)
 }
 
 void
-POPState::cache_tri(struct bu_vls *vkey)
+POPState::cache_tri(std::stringstream &s)
 {
-    char dir[MAXPATHLEN];
+    // Write out the threshold level - above this level,
+    // we need to switch to full-detail drawing
+    s.write(reinterpret_cast<const char *>(&tri_threshold), sizeof(tri_threshold));
 
-    // Write out the level vertices
+    // Write out the vertex counts for all active levels
+    for (size_t i = 0; i <= tri_threshold; i++) {
+	size_t icnt = 0;
+	if (level_tri_verts.find(i) == level_tri_verts.end()) {
+	    s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
+	    continue;
+	}
+	if (!level_tri_verts[i].size()) {
+	    s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
+	    continue;
+	}
+	icnt = level_tri_verts[i].size();
+	s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
+    }
+
+    // Write out the triangle counts for all active levels
+    for (size_t i = 0; i <= tri_threshold; i++) {
+	size_t tcnt = 0;
+	if (!level_tris[i].size()) {
+	    s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
+	    continue;
+	}
+	// Store the size of the level tri vector
+	tcnt = level_tris[i].size();
+	s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
+    }
+
+    // Write out the vertices in LoD order
     for (size_t i = 0; i <= tri_threshold; i++) {
 	if (level_tri_verts.find(i) == level_tri_verts.end())
 	    continue;
 	if (!level_tri_verts[i].size())
 	    continue;
-	struct bu_vls vfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&vfile, "tri_verts_level_%zd", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), bu_vls_cstr(&vfile), NULL);
-
-	std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
-
-	// Store the size of the level vert vector
-	size_t sv = level_tri_verts[i].size();
-	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
-
 	// Write out the vertex points
 	std::unordered_set<size_t>::iterator s_it;
 	for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
 	    point_t v;
 	    VMOVE(v, verts_array[*s_it]);
-	    vofile.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
+	    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
 	}
-
-	vofile.close();
-	bu_vls_free(&vfile);
     }
 
-
-    // Write out the level triangles
+    // Write out the triangles in LoD order
     for (size_t i = 0; i <= tri_threshold; i++) {
 	if (!level_tris[i].size())
 	    continue;
-	struct bu_vls tfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&tfile, "tris_level_%zd", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), bu_vls_cstr(&tfile), NULL);
-
-	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
-
-	// Store the size of the level tri vector
-	size_t st = level_tris[i].size();
-	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
-
 	// Write out the mapped triangle indices
 	std::vector<size_t>::iterator s_it;
 	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
@@ -1037,47 +1071,8 @@ POPState::cache_tri(struct bu_vls *vkey)
 	    vt[0] = (int)tri_ind_map[faces_array[3*(*s_it)+0]];
 	    vt[1] = (int)tri_ind_map[faces_array[3*(*s_it)+1]];
 	    vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
-	    tofile.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
+	    s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
 	}
-
-	tofile.close();
-	bu_vls_free(&tfile);
-    }
-
-    // Now the high-fidelity mode data - Write out all vertices, faces, the
-    // boxes and their face sets.  We calculate and write out the bounding
-    // boxes of each set so the loading code need only read the values to
-    // prepare an RTree
-    //
-    // TODO - in an ideal world, if this RTree hierarchy is useful (which isn't
-    // clear yet) we would do it not simply for the full scale mesh but
-    // whenever we're having to deal with an active triangle set large enough
-    // that there are benefits to not holding the whole thing in memory and
-    // processing it (for sufficiently large meshes some of the deeper LoD
-    // levels will cause problems similar to the big mesh itself.)  If that
-    // proves desirable we'll need to recast this in terms of a "per-level"
-    // setup and have an active tri count trigger.
-
-    // Write out the set of all vertices
-    {
-	size_t ecnt;
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), "all_verts", NULL);
-	std::ofstream vfile(dir, std::ios::out | std::ofstream::binary);
-	ecnt = vert_cnt;
-	vfile.write(reinterpret_cast<const char *>(&ecnt), sizeof(ecnt));
-	vfile.write(reinterpret_cast<const char *>(&verts_array[0]), vert_cnt * sizeof(point_t));
-	vfile.close();
-    }
-
-    // Write out the set of all triangles
-    {
-	size_t fcnt;
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(vkey), "all_faces", NULL);
-	std::ofstream ffile(dir, std::ios::out | std::ofstream::binary);
-	fcnt = faces_cnt;
-	ffile.write(reinterpret_cast<const char *>(&fcnt), sizeof(fcnt));
-	ffile.write(reinterpret_cast<const char *>(&faces_array[0]), faces_cnt * 3 * sizeof(int));
-	ffile.close();
     }
 }
 
@@ -1090,62 +1085,40 @@ POPState::cache()
 	return;
     }
 
-    char dir[MAXPATHLEN];
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
-    if (!bu_file_exists(dir, NULL)) {
-	lod_dir(dir);
-    }
-
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
-    if (!bu_file_exists(dir, NULL)) {
-	lod_dir(dir);
-    }
-
-    struct bu_vls vkey = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&vkey, "%llu", hash);
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), NULL);
-    if (bu_file_exists(dir, NULL)) {
-	// If the directory already exists, we should already be good to go
-	is_valid = true;
-	return;
-    } else {
-	lod_dir(dir);
-    }
-
-    // Note a format, so we can detect if what's there isn't compatible
-    // with what this logic expects (in anticipation of future changes
-    // to the on-disk format).
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "format", NULL);
-    FILE *fp = fopen(dir, "w");
-    if (!fp) {
-	bu_vls_free(&vkey);
-	is_valid = false;
-	return;
-    }
-    fprintf(fp, "1\n");
-    fclose(fp);
+    // First, we serialize the information to be cached
+    std::stringstream s;
 
     // Stash the original mesh bbox and the min and max bounds, which will be used in decoding
-    {
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "minmax", NULL);
-	std::ofstream minmaxfile(dir, std::ios::out | std::ofstream::binary);
-	minmaxfile.write(reinterpret_cast<const char *>(&bbmin), sizeof(bbmin));
-	minmaxfile.write(reinterpret_cast<const char *>(&bbmax), sizeof(bbmax));
-	minmaxfile.write(reinterpret_cast<const char *>(&minx), sizeof(minx));
-	minmaxfile.write(reinterpret_cast<const char *>(&miny), sizeof(miny));
-	minmaxfile.write(reinterpret_cast<const char *>(&minz), sizeof(minz));
-	minmaxfile.write(reinterpret_cast<const char *>(&maxx), sizeof(maxx));
-	minmaxfile.write(reinterpret_cast<const char *>(&maxy), sizeof(maxy));
-	minmaxfile.write(reinterpret_cast<const char *>(&maxz), sizeof(maxz));
-	minmaxfile.close();
-    }
+    s.write(reinterpret_cast<const char *>(&bbmin), sizeof(bbmin));
+    s.write(reinterpret_cast<const char *>(&bbmax), sizeof(bbmax));
+    s.write(reinterpret_cast<const char *>(&minx), sizeof(minx));
+    s.write(reinterpret_cast<const char *>(&miny), sizeof(miny));
+    s.write(reinterpret_cast<const char *>(&minz), sizeof(minz));
+    s.write(reinterpret_cast<const char *>(&maxx), sizeof(maxx));
+    s.write(reinterpret_cast<const char *>(&maxy), sizeof(maxy));
+    s.write(reinterpret_cast<const char *>(&maxz), sizeof(maxz));
 
-    // Write triangle-specific data
-    cache_tri(&vkey);
+    // Serialize triangle-specific data
+    cache_tri(s);
 
-    bu_vls_free(&vkey);
+    // Now prepare data for writing (TODO - there is undoubtedly a better
+    // way to do this that doesn't copy the data so much...)
+    std::string keystr = std::to_string(hash);
+    std::string buffer = s.str();
 
-    is_valid = true;
+    // Write out key/value to LMDB database, where the key is the hash
+    // and the value is the serialized LoD data
+    mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
+    mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
+    MDB_val key, data;
+    key.mv_size = keystr.length();
+    key.mv_data = (void *)keystr.c_str();
+    data.mv_size = buffer.length();
+    data.mv_data = (void *)buffer.c_str();
+    int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &key, &data, 0);
+    mdb_txn_commit(c->i->lod_txn);
+
+    is_valid = (!rc) ? true : false;
 }
 
 // Transfer coordinate into level precision
@@ -1478,9 +1451,6 @@ bg_mesh_lod_memshrink(struct bv_scene_obj *s)
 extern "C" void
 bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 {
-    if (!c)
-	return;
-
     char dir[MAXPATHLEN];
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
     if (!bu_file_exists(dir, NULL))
@@ -1500,6 +1470,10 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 	    }
 	    bu_file_delete(cdir);
 	}
+    } else {
+	if (!c)
+	    return;
+	// TODO - remove specific cache entry
     }
 }
 
