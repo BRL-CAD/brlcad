@@ -491,7 +491,8 @@ class POPState {
 	// Write data out to cache (only used during initialization from
 	// external data)
 	void cache();
-	void cache_tri(std::stringstream &s);
+	bool cache_tri();
+	bool commit(const char *component, std::stringstream &s);
 
 	// Specific loading and unloading methods
 	void tri_pop_load(int start_level, int level);
@@ -594,7 +595,13 @@ POPState::tri_process()
     // we check the count of level_tris, we will find a level at which most of
     // the triangles are active. 
     // TODO: Not clear yet when the tradeoff between memory and the work of LoD
-    // point snapping trades off - 0.66 is just a guess.
+    // point snapping trades off - 0.66 is just a guess.  We also need to
+    // calculate this maximum size ratio as a function of the overall database
+    // mesh data size, which will need to be passed in as a parameter - if the
+    // original is too large, we may not be able to fit higher LoD levels in
+    // the database and need to make this ratio smaller - probably a maximum of
+    // 0.66(?) and drop it lower of the original database is very large (i.e.
+    // we need to hold a lot of mesh data).
     size_t trisum = 0;
     size_t faces_array_cnt2 = (size_t)((fastf_t)faces_cnt * 0.66);
     for (size_t i = 0; i < level_tris.size(); i++) {
@@ -1011,69 +1018,125 @@ POPState::set_level(int level)
     curr_level = level;
 }
 
-void
-POPState::cache_tri(std::stringstream &s)
+// Rather than committing all data to LMDB in one transaction, use keys with
+// appended strings to the hash to denote the individual pieces - basically
+// what we were doing with files, but in the db instead
+//
+// This will also allow easier removal of larger subcomponents if we need to
+// back off on saved LoD.
+bool
+POPState::commit(const char *component, std::stringstream &s)
+{
+    // Prepare inputs for writing
+    std::string keystr = std::to_string(hash) + std::string(":") + std::string(component);
+    std::string buffer = s.str();
+
+    // Write out key/value to LMDB database, where the key is the hash
+    // and the value is the serialized LoD data
+    //
+    mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
+    mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
+    MDB_val key, data;
+    key.mv_size = keystr.length();
+    key.mv_data = (void *)keystr.c_str();
+    data.mv_size = buffer.length();
+    data.mv_data = (void *)buffer.c_str();
+    int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &key, &data, 0);
+    mdb_txn_commit(c->i->lod_txn);
+
+    return (!rc) ? true : false;
+}
+
+bool
+POPState::cache_tri()
 {
     // Write out the threshold level - above this level,
     // we need to switch to full-detail drawing
-    s.write(reinterpret_cast<const char *>(&tri_threshold), sizeof(tri_threshold));
+    {
+	std::stringstream s;
+	s.write(reinterpret_cast<const char *>(&tri_threshold), sizeof(tri_threshold));
+	if (!commit("th", s))
+	    return false;
+    }
 
     // Write out the vertex counts for all active levels
-    for (size_t i = 0; i <= tri_threshold; i++) {
-	size_t icnt = 0;
-	if (level_tri_verts.find(i) == level_tri_verts.end()) {
+    {
+	std::stringstream s;
+	for (size_t i = 0; i <= tri_threshold; i++) {
+	    size_t icnt = 0;
+	    if (level_tri_verts.find(i) == level_tri_verts.end()) {
+		s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
+		continue;
+	    }
+	    if (!level_tri_verts[i].size()) {
+		s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
+		continue;
+	    }
+	    icnt = level_tri_verts[i].size();
 	    s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
-	    continue;
 	}
-	if (!level_tri_verts[i].size()) {
-	    s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
-	    continue;
-	}
-	icnt = level_tri_verts[i].size();
-	s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
+	if (!commit("vc", s))
+	    return false;
     }
 
     // Write out the triangle counts for all active levels
-    for (size_t i = 0; i <= tri_threshold; i++) {
-	size_t tcnt = 0;
-	if (!level_tris[i].size()) {
+    {
+	std::stringstream s;
+	for (size_t i = 0; i <= tri_threshold; i++) {
+	    size_t tcnt = 0;
+	    if (!level_tris[i].size()) {
+		s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
+		continue;
+	    }
+	    // Store the size of the level tri vector
+	    tcnt = level_tris[i].size();
 	    s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
-	    continue;
 	}
-	// Store the size of the level tri vector
-	tcnt = level_tris[i].size();
-	s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
+	if (!commit("tc", s))
+	    return false;
     }
 
     // Write out the vertices in LoD order
-    for (size_t i = 0; i <= tri_threshold; i++) {
-	if (level_tri_verts.find(i) == level_tri_verts.end())
-	    continue;
-	if (!level_tri_verts[i].size())
-	    continue;
-	// Write out the vertex points
-	std::unordered_set<size_t>::iterator s_it;
-	for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
-	    point_t v;
-	    VMOVE(v, verts_array[*s_it]);
-	    s.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
+    {
+	std::stringstream s;
+	for (size_t i = 0; i <= tri_threshold; i++) {
+	    if (level_tri_verts.find(i) == level_tri_verts.end())
+		continue;
+	    if (!level_tri_verts[i].size())
+		continue;
+	    // Write out the vertex points
+	    std::unordered_set<size_t>::iterator s_it;
+	    for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
+		point_t v;
+		VMOVE(v, verts_array[*s_it]);
+		s.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
+	    }
 	}
+	if (!commit("v", s))
+	    return false;
     }
 
     // Write out the triangles in LoD order
-    for (size_t i = 0; i <= tri_threshold; i++) {
-	if (!level_tris[i].size())
-	    continue;
-	// Write out the mapped triangle indices
-	std::vector<size_t>::iterator s_it;
-	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-	    int vt[3];
-	    vt[0] = (int)tri_ind_map[faces_array[3*(*s_it)+0]];
-	    vt[1] = (int)tri_ind_map[faces_array[3*(*s_it)+1]];
-	    vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
-	    s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
+    {
+	std::stringstream s;
+	for (size_t i = 0; i <= tri_threshold; i++) {
+	    if (!level_tris[i].size())
+		continue;
+	    // Write out the mapped triangle indices
+	    std::vector<size_t>::iterator s_it;
+	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
+		int vt[3];
+		vt[0] = (int)tri_ind_map[faces_array[3*(*s_it)+0]];
+		vt[1] = (int)tri_ind_map[faces_array[3*(*s_it)+1]];
+		vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
+		s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
+	    }
 	}
+	if (!commit("t", s))
+	    return false;
     }
+
+    return true;
 }
 
 // Write out the generated LoD data to the BRL-CAD cache
@@ -1085,40 +1148,25 @@ POPState::cache()
 	return;
     }
 
-    // First, we serialize the information to be cached
-    std::stringstream s;
-
     // Stash the original mesh bbox and the min and max bounds, which will be used in decoding
-    s.write(reinterpret_cast<const char *>(&bbmin), sizeof(bbmin));
-    s.write(reinterpret_cast<const char *>(&bbmax), sizeof(bbmax));
-    s.write(reinterpret_cast<const char *>(&minx), sizeof(minx));
-    s.write(reinterpret_cast<const char *>(&miny), sizeof(miny));
-    s.write(reinterpret_cast<const char *>(&minz), sizeof(minz));
-    s.write(reinterpret_cast<const char *>(&maxx), sizeof(maxx));
-    s.write(reinterpret_cast<const char *>(&maxy), sizeof(maxy));
-    s.write(reinterpret_cast<const char *>(&maxz), sizeof(maxz));
+    {
+	std::stringstream s;
+	s.write(reinterpret_cast<const char *>(&bbmin), sizeof(bbmin));
+	s.write(reinterpret_cast<const char *>(&bbmax), sizeof(bbmax));
+	s.write(reinterpret_cast<const char *>(&minx), sizeof(minx));
+	s.write(reinterpret_cast<const char *>(&miny), sizeof(miny));
+	s.write(reinterpret_cast<const char *>(&minz), sizeof(minz));
+	s.write(reinterpret_cast<const char *>(&maxx), sizeof(maxx));
+	s.write(reinterpret_cast<const char *>(&maxy), sizeof(maxy));
+	s.write(reinterpret_cast<const char *>(&maxz), sizeof(maxz));
+	is_valid = commit("bb", s);
+    }
+
+    if (!is_valid)
+	return;
 
     // Serialize triangle-specific data
-    cache_tri(s);
-
-    // Now prepare data for writing (TODO - there is undoubtedly a better
-    // way to do this that doesn't copy the data so much...)
-    std::string keystr = std::to_string(hash);
-    std::string buffer = s.str();
-
-    // Write out key/value to LMDB database, where the key is the hash
-    // and the value is the serialized LoD data
-    mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
-    mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
-    MDB_val key, data;
-    key.mv_size = keystr.length();
-    key.mv_data = (void *)keystr.c_str();
-    data.mv_size = buffer.length();
-    data.mv_data = (void *)buffer.c_str();
-    int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &key, &data, 0);
-    mdb_txn_commit(c->i->lod_txn);
-
-    is_valid = (!rc) ? true : false;
+    is_valid = cache_tri();
 }
 
 // Transfer coordinate into level precision
