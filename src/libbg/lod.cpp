@@ -344,11 +344,12 @@ bg_mesh_lod_context_create(const char *name)
 	fprintf(fp, "%d\n", CACHE_CURRENT_FORMAT);
 	fclose(fp);
     } else {
-	std::ifstream format_file(dir, std::ios::in | std::ofstream::binary);
+	std::ifstream format_file(dir);
 	size_t disk_format_version = 0;
-	format_file.read(reinterpret_cast<char *>(&disk_format_version), sizeof(disk_format_version));
+	format_file >> disk_format_version;
+	format_file.close();
 	if (disk_format_version	!= CACHE_CURRENT_FORMAT) {
-	    bu_log("Old mesh lod cache found - clearing\n");
+	    bu_log("Old mesh lod cache (%zd) found - clearing\n", disk_format_version);
 	    bg_mesh_lod_clear_cache(NULL, 0);
 	}
 	FILE *fp = fopen(dir, "w");
@@ -446,7 +447,7 @@ class POPState {
 
 	// Maximum level for which POP info is defined.  Above that level,
 	// need to shift to full rendering
-	int max_tri_pop_level = 0;
+	int max_pop_threshold_level = 0;
 
 	// Used by calling functions to detect initialization errors
 	bool is_valid = false;
@@ -467,6 +468,8 @@ class POPState {
 	// Bounding box of original mesh
 	point_t bbmin, bbmax;
 
+	// libbv info for drawing
+	struct bv_mesh_lod_info *info = NULL;
     private:
 
 	void tri_process();
@@ -492,20 +495,22 @@ class POPState {
 	// external data)
 	void cache();
 	bool cache_tri();
-	bool commit(const char *component, std::stringstream &s);
+	bool cache_write(const char *component, std::stringstream &s);
+	size_t cache_get(void **data, const char *component);
+	void cache_done();
+	MDB_val mdb_key, mdb_data;
 
 	// Specific loading and unloading methods
 	void tri_pop_load(int start_level, int level);
 	void tri_pop_trim(int level);
-	std::vector<size_t> level_vcnt;
-	std::vector<size_t> level_tricnt;
+	size_t level_vcnt[POP_MAXLEVEL+1] = {0};
+	size_t level_tricnt[POP_MAXLEVEL+1] = {0};
 
 	// Processing containers used for initial triangle data characterization
 	std::vector<size_t> tri_ind_map;
 	std::vector<size_t> vert_tri_minlevel;
 	std::map<size_t, std::unordered_set<size_t>> level_tri_verts;
 	std::vector<std::vector<size_t>> level_tris;
-	size_t tri_threshold = 0;
 
 	// Pointers to original input data
 	size_t vert_cnt = 0;
@@ -611,16 +616,16 @@ POPState::tri_process()
 	    // threshold level.  If we've got ALL the triangles, back
 	    // down one level.
 	    if (trisum < (size_t)faces_cnt) {
-		tri_threshold = i;
+		max_pop_threshold_level = i;
 	    } else {
 		// It shouldn't happen, but to be sure handle the case where we
 		// get here with i == 0
-		tri_threshold = (i) ? i - 1 : 0;
+		max_pop_threshold_level = (i) ? i - 1 : 0;
 	    }
 	    break;
 	}
     }
-    //bu_log("Triangle threshold level: %zd\n", tri_threshold);
+    //bu_log("Max LoD POP level: %zd\n", max_pop_threshold_level);
 }
 
 POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, int *faces, size_t fcnt)
@@ -723,93 +728,100 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	PRECOMPUTED_MASKS.push_back(pow(2, (POP_MAXLEVEL - i - 1)));
     }
 
-    struct bu_vls vkey = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&vkey, "%llu", key);
-    char dir[MAXPATHLEN];
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), NULL);
-    if (!bu_file_exists(dir, NULL)) {
-	bu_vls_free(&vkey);
-	return;
-    }
     hash = key;
 
-    // Reserve memory for level counting containers
-    level_vcnt.reserve(POP_MAXLEVEL);
-    level_tricnt.reserve(POP_MAXLEVEL);
-    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
-	level_vcnt[i] = 0;
-	level_tricnt[i] = 0;
+    // Set up info container
+    BU_GET(info, struct bv_mesh_lod_info);
+
+    // Find the maximum POP level
+    {
+	const char *b = NULL;
+	size_t bsize = cache_get((void **)&b, "th");
+	if (bsize != sizeof(max_pop_threshold_level)) {
+	    bu_log("Incorrect data size found loading max LoD POP threshold\n");
+	    return;
+	}
+	memcpy(&max_pop_threshold_level, b, sizeof(max_pop_threshold_level));
+	cache_done();
+    }
+ 
+    // Load level counts for vectors and tris
+    {
+	const char *b = NULL;
+	size_t bsize = cache_get((void **)&b, "vc");
+	if (bsize != sizeof(level_vcnt)) {
+	    bu_log("Incorrect data size found loading level vertex counts\n");
+	    return;
+	}
+	memcpy(&level_vcnt, b, sizeof(level_vcnt));
+	cache_done();
+    }
+    {
+	const char *b = NULL;
+	size_t bsize = cache_get((void **)&b, "tc");
+	if (bsize != sizeof(level_tricnt)) {
+	    bu_log("Incorrect data size found loading level triangle counts\n");
+	    return;
+	}
+	memcpy(&level_tricnt, b, sizeof(level_tricnt));
+	cache_done();
     }
 
     // Read in min/max bounds
     {
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "minmax", NULL);
-	std::ifstream minmaxfile(dir, std::ios::in | std::ofstream::binary);
-	minmaxfile.read(reinterpret_cast<char *>(&bbmin), sizeof(bbmin));
-	minmaxfile.read(reinterpret_cast<char *>(&bbmax), sizeof(bbmax));
 	float minmax[6];
-	minmaxfile.read(reinterpret_cast<char *>(&minmax), sizeof(minmax));
+	const char *b = NULL;
+	size_t bsize = cache_get((void **)&b, "bb");
+	if (bsize != (sizeof(bbmin) + sizeof(bbmax) + sizeof(minmax))) {
+	    bu_log("Incorrect data size found loading cached bounds data\n");
+	    return;
+	}
+	memcpy(&bbmin, b, sizeof(bbmin));
+	b += sizeof(bbmin);
+	memcpy(&bbmax, b, sizeof(bbmax));
+	b += sizeof(bbmax);
+	bu_log("bbmin: %f %f %f bbmax: %f %f %f\n", V3ARGS(bbmin), V3ARGS(bbmax));
+	memcpy(&minmax, b, sizeof(minmax));
 	minx = minmax[0];
 	miny = minmax[1];
 	minz = minmax[2];
 	maxx = minmax[3];
 	maxy = minmax[4];
 	maxz = minmax[5];
-    }
-
-    // Find the maximum POP level
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	struct bu_vls vfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&vfile, "tris_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
-	if (bu_file_exists(dir, NULL)) {
-	    max_tri_pop_level = i;
-	}
-	bu_vls_free(&vfile);
+	cache_done();
     }
 
     // Read in the zero level vertices and triangles
     set_level(0);
 
     // All set - ready for LoD
-    bu_vls_free(&vkey);
     is_valid = 1;
 }
 
 POPState::~POPState()
 {
-
+    if (info)
+	BU_PUT(info, struct bv_mesh_lod_info);
 }
 
 void
 POPState::tri_pop_load(int start_level, int level)
 {
-    char dir[MAXPATHLEN];
-    struct bu_vls vkey = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&vkey, "%llu", hash);
+    struct bu_vls kbuf = BU_VLS_INIT_ZERO;
 
     // Read in the level vertices
-    struct bu_vls lfile = BU_VLS_INIT_ZERO;
     for (int i = start_level+1; i <= level; i++) {
-	bu_vls_sprintf(&lfile, "tri_verts_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&lfile), NULL);
-	if (!bu_file_exists(dir, NULL)) {
+	if (!level_vcnt[i])
 	    continue;
+	bu_vls_sprintf(&kbuf, "v%d", i);
+	fastf_t *b = NULL;
+	size_t bsize = cache_get((void **)&b, bu_vls_cstr(&kbuf));
+	if (bsize != level_vcnt[i]*3*sizeof(fastf_t)) {
+	    bu_log("Incorrect data size found loading level %d point data\n", i);
+	    return;
 	}
-
-	std::ifstream vifile(dir, std::ios::in | std::ofstream::binary);
-	size_t vicnt = 0;
-	vifile.read(reinterpret_cast<char *>(&vicnt), sizeof(vicnt));
-	lod_tri_pnts.reserve(lod_tri_pnts.size() + vicnt*3);
-	for (size_t j = 0; j < vicnt; j++) {
-	    point_t nv;
-	    vifile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
-	    for (size_t k = 0; k < 3; k++) {
-		lod_tri_pnts.push_back(nv[k]);
-	    }
-	}
-	level_vcnt[i] = vicnt;
-	vifile.close();
+	lod_tri_pnts.insert(lod_tri_pnts.end(), &b[0], &b[level_vcnt[i]*3]);
+	cache_done();
     }
     // Re-snap all vertices currently loaded at the new level
     lod_tri_pnts_snapped.clear();
@@ -825,30 +837,18 @@ POPState::tri_pop_load(int start_level, int level)
 
     // Read in the level triangles
     for (int i = start_level+1; i <= level; i++) {
-	bu_vls_sprintf(&lfile, "tris_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&lfile), NULL);
-	if (!bu_file_exists(dir, NULL)) {
-	    bu_vls_free(&lfile);
+	if (!level_tricnt[i])
 	    continue;
+	bu_vls_sprintf(&kbuf, "t%d", i);
+	int *b = NULL;
+	size_t bsize = cache_get((void **)&b, bu_vls_cstr(&kbuf));
+	if (bsize != level_tricnt[i]*3*sizeof(int)) {
+	    bu_log("Incorrect data size found loading level %d tri data\n", i);
+	    return;
 	}
-
-	std::ifstream tifile(dir, std::ios::in | std::ofstream::binary);
-	size_t ticnt = 0;
-	tifile.read(reinterpret_cast<char *>(&ticnt), sizeof(ticnt));
-	lod_tris.reserve(lod_tris.size() + ticnt*3);
-	for (size_t j = 0; j < ticnt; j++) {
-	    int vf[3];
-	    tifile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
-	    for (int k = 0; k < 3; k++) {
-		lod_tris.push_back(vf[k]);
-	    }
-	}
-	level_tricnt[i] = ticnt;
-	tifile.close();
+	lod_tris.insert(lod_tris.end(), &b[0], &b[level_tricnt[i]*3]);
+	cache_done();
     }
-
-    bu_vls_free(&vkey);
-    bu_vls_free(&lfile);
 }
 
 void
@@ -934,7 +934,7 @@ POPState::set_level(int level)
     // Triangles
 
     // If we need to pull more data, do so
-    if (level > curr_level && level <= max_tri_pop_level) {
+    if (level > curr_level && level <= max_pop_threshold_level) {
 	if (!lod_tri_pnts.size()) {
 	    tri_pop_load(-1, level);
 	} else {
@@ -943,7 +943,7 @@ POPState::set_level(int level)
     }
 
     // If we need to trim back the POP data, do that
-    if (level < curr_level && level <= max_tri_pop_level && curr_level <= max_tri_pop_level) {
+    if (level < curr_level && level <= max_pop_threshold_level && curr_level <= max_pop_threshold_level) {
 	if (!lod_tri_pnts.size()) {
 	    tri_pop_load(-1, level);
 	} else {
@@ -954,7 +954,7 @@ POPState::set_level(int level)
     // If we were operating beyond POP detail levels (i.e. using RTree
     // management) we need to reset our POP data and clear the more detailed
     // info from the containers to free up memory.
-    if (level < curr_level && level <= max_tri_pop_level && curr_level > max_tri_pop_level) {
+    if (level < curr_level && level <= max_pop_threshold_level && curr_level > max_pop_threshold_level) {
 	// We're (re)entering the POP range - clear the high detail data and start over
 	lod_tris.clear();
 	lod_tri_pnts.clear();
@@ -970,45 +970,19 @@ POPState::set_level(int level)
 
     // If we're jumping into details levels beyond POP range, clear the POP containers
     // and load the more detailed data management info
-    if (level > curr_level && level > max_tri_pop_level && curr_level <= max_tri_pop_level) {
+    if (level > curr_level && level > max_pop_threshold_level && curr_level <= max_pop_threshold_level) {
 
-	// Read the complete tris and verts for full drawing
+	// Clear the LoD data - we need the full set now
 	lod_tri_pnts_snapped.clear();
 	lod_tri_pnts_snapped.shrink_to_fit();
 	lod_tri_pnts.clear();
+	lod_tri_pnts.shrink_to_fit();
 	lod_tris.clear();
-	{
-	    size_t ecnt = 0;
-	    char dir[MAXPATHLEN];
-	    struct bu_vls vkey = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&vkey, "%llu", hash);
+	lod_tris.shrink_to_fit();
 
-	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_verts", NULL);
-	    std::ifstream avfile(dir, std::ios::in | std::ofstream::binary);
-	    avfile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
-	    lod_tri_pnts.reserve(3*ecnt);
-	    for (size_t i = 0; i < ecnt; i++) {
-		point_t nv;
-		avfile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
-		for (int k = 0; k < 3; k++) {
-		    lod_tri_pnts.push_back(nv[k]);
-		}
-	    }
-
-	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_faces", NULL);
-	    std::ifstream affile(dir, std::ios::in | std::ofstream::binary);
-	    affile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
-	    lod_tris.reserve(3*ecnt);
-	    for (size_t i = 0; i < ecnt; i++) {
-		int vf[3];
-		affile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
-		for (int k = 0; k < 3; k++) {
-		    lod_tris.push_back(vf[k]);
-		}
-	    }
-	    bu_vls_free(&vkey);
-	}
-
+	// Use the callback to set up the full data pointers
+	if (full_detail_clbk)
+	    (*full_detail_clbk)(info, NULL, NULL);
     }
 
     //elapsed = bu_gettime() - start;
@@ -1025,26 +999,65 @@ POPState::set_level(int level)
 // This will also allow easier removal of larger subcomponents if we need to
 // back off on saved LoD.
 bool
-POPState::commit(const char *component, std::stringstream &s)
+POPState::cache_write(const char *component, std::stringstream &s)
 {
     // Prepare inputs for writing
     std::string keystr = std::to_string(hash) + std::string(":") + std::string(component);
     std::string buffer = s.str();
+
+    // As implemented this shouldn't be necessary, since all our keys are below
+    // the default size limit (511)
+    //if (keystr.length()*sizeof(char) > mdb_env_get_maxkeysize(c->i->lod_env))
+    //	return false;
 
     // Write out key/value to LMDB database, where the key is the hash
     // and the value is the serialized LoD data
     //
     mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
     mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
-    MDB_val key, data;
-    key.mv_size = keystr.length();
-    key.mv_data = (void *)keystr.c_str();
-    data.mv_size = buffer.length();
-    data.mv_data = (void *)buffer.c_str();
-    int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &key, &data, 0);
+    mdb_key.mv_size = keystr.length()*sizeof(char);
+    mdb_key.mv_data = (void *)keystr.c_str();
+    mdb_data.mv_size = buffer.length();
+    mdb_data.mv_data = (void *)buffer.c_str();
+    int rc = mdb_put(c->i->lod_txn, c->i->lod_dbi, &mdb_key, &mdb_data, 0);
     mdb_txn_commit(c->i->lod_txn);
 
     return (!rc) ? true : false;
+}
+
+// This pulls the data, but doesn't close the transaction because the
+// calling code will want to manipulate the data.  After that process
+// is complete, cache_done() should be called to prepare for subsequent
+// operations.
+size_t
+POPState::cache_get(void **data, const char *component)
+{
+    // Construct lookup key
+    std::string keystr = std::to_string(hash) + std::string(":") + std::string(component);
+
+    // As implemented this shouldn't be necessary, since all our keys are below
+    // the default size limit (511)
+    //if (keystr.length()*sizeof(char) > mdb_env_get_maxkeysize(c->i->lod_env))
+    //	return 0;
+
+    mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
+    mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
+    mdb_key.mv_size = keystr.length()*sizeof(char);
+    mdb_key.mv_data = (void *)keystr.c_str();
+    int rc = mdb_get(c->i->lod_txn, c->i->lod_dbi, &mdb_key, &mdb_data);
+    if (rc) {
+	(*data) = NULL;
+	return 0;
+    }
+    (*data) = mdb_data.mv_data;
+
+    return mdb_data.mv_size;
+}
+
+void
+POPState::cache_done()
+{
+    mdb_txn_commit(c->i->lod_txn);
 }
 
 bool
@@ -1054,37 +1067,37 @@ POPState::cache_tri()
     // we need to switch to full-detail drawing
     {
 	std::stringstream s;
-	s.write(reinterpret_cast<const char *>(&tri_threshold), sizeof(tri_threshold));
-	if (!commit("th", s))
+	s.write(reinterpret_cast<const char *>(&max_pop_threshold_level), sizeof(max_pop_threshold_level));
+	if (!cache_write("th", s))
 	    return false;
     }
 
     // Write out the vertex counts for all active levels
     {
 	std::stringstream s;
-	for (size_t i = 0; i <= tri_threshold; i++) {
+	for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
 	    size_t icnt = 0;
 	    if (level_tri_verts.find(i) == level_tri_verts.end()) {
 		s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
 		continue;
 	    }
-	    if (!level_tri_verts[i].size()) {
+	    if ((int)i > max_pop_threshold_level || !level_tri_verts[i].size()) {
 		s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
 		continue;
 	    }
 	    icnt = level_tri_verts[i].size();
 	    s.write(reinterpret_cast<const char *>(&icnt), sizeof(icnt));
 	}
-	if (!commit("vc", s))
+	if (!cache_write("vc", s))
 	    return false;
     }
 
     // Write out the triangle counts for all active levels
     {
 	std::stringstream s;
-	for (size_t i = 0; i <= tri_threshold; i++) {
+	for (size_t i = 0; i <= POP_MAXLEVEL; i++) {
 	    size_t tcnt = 0;
-	    if (!level_tris[i].size()) {
+	    if ((int)i > max_pop_threshold_level || !level_tris[i].size()) {
 		s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
 		continue;
 	    }
@@ -1092,7 +1105,7 @@ POPState::cache_tri()
 	    tcnt = level_tris[i].size();
 	    s.write(reinterpret_cast<const char *>(&tcnt), sizeof(tcnt));
 	}
-	if (!commit("tc", s))
+	if (!cache_write("tc", s))
 	    return false;
     }
 
@@ -1100,7 +1113,7 @@ POPState::cache_tri()
 
     // Write out the vertices in LoD order for each level
     {
-	for (size_t i = 0; i <= tri_threshold; i++) {
+	for (int i = 0; i <= max_pop_threshold_level; i++) {
 	    std::stringstream s;
 	    if (level_tri_verts.find(i) == level_tri_verts.end())
 		continue;
@@ -1113,15 +1126,15 @@ POPState::cache_tri()
 		VMOVE(v, verts_array[*s_it]);
 		s.write(reinterpret_cast<const char *>(&v[0]), sizeof(point_t));
 	    }
-	    bu_vls_sprintf(&kbuf, "v%zd", i);
-	    if (!commit(bu_vls_cstr(&kbuf), s))
+	    bu_vls_sprintf(&kbuf, "v%d", i);
+	    if (!cache_write(bu_vls_cstr(&kbuf), s))
 		return false;
 	}
     }
 
     // Write out the triangles in LoD order for each level
     {
-	for (size_t i = 0; i <= tri_threshold; i++) {
+	for (int i = 0; i <= max_pop_threshold_level; i++) {
 	    std::stringstream s;
 	    if (!level_tris[i].size())
 		continue;
@@ -1134,8 +1147,8 @@ POPState::cache_tri()
 		vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
 		s.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
 	    }
-	    bu_vls_sprintf(&kbuf, "t%zd", i);
-	    if (!commit(bu_vls_cstr(&kbuf), s))
+	    bu_vls_sprintf(&kbuf, "t%d", i);
+	    if (!cache_write(bu_vls_cstr(&kbuf), s))
 		return false;
 	}
     }
@@ -1163,7 +1176,7 @@ POPState::cache()
 	s.write(reinterpret_cast<const char *>(&maxx), sizeof(maxx));
 	s.write(reinterpret_cast<const char *>(&maxy), sizeof(maxy));
 	s.write(reinterpret_cast<const char *>(&maxz), sizeof(maxz));
-	is_valid = commit("bb", s);
+	is_valid = cache_write("bb", s);
     }
 
     if (!is_valid)
@@ -1233,22 +1246,23 @@ void
 POPState::draw(void *ctx, struct bv_scene_obj *s)
 {
     if (draw_clbk) {
-	struct bv_mesh_lod_info info;
-	info.s = s;
-	info.fset_cnt = 0;
-	info.fset = NULL;
-	info.fcnt = (int)lod_tris.size()/3;
-	info.faces = lod_tris.data();
-	info.points_orig = (const point_t *)lod_tri_pnts.data();
-	if (curr_level <= max_tri_pop_level) {
-	    info.points = (const point_t *)lod_tri_pnts_snapped.data();
-	} else {
-	    info.points = (const point_t *)lod_tri_pnts.data();
+	info->s = s;
+	info->fset_cnt = 0;
+	info->fset = NULL;
+	if (curr_level <= max_pop_threshold_level) {
+	    info->fcnt = (int)lod_tris.size()/3;
+	    info->faces = lod_tris.data();
+	    info->points_orig = (const point_t *)lod_tri_pnts.data();
+	    if (curr_level <= max_pop_threshold_level) {
+		info->points = (const point_t *)lod_tri_pnts_snapped.data();
+	    } else {
+		info->points = (const point_t *)lod_tri_pnts.data();
+	    }
 	}
-	info.face_normals = NULL;
-	info.normals = NULL;
-	info.lod = lod;
-	(*draw_clbk)(ctx, &info);
+	info->face_normals = NULL;
+	info->normals = NULL;
+	info->lod = lod;
+	(*draw_clbk)(ctx, info);
     }
 }
 
@@ -1281,7 +1295,7 @@ POPState::plot(const char *root)
     }
     plot_file = fopen(bu_vls_addr(&name), "wb");
 
-    if (curr_level <= max_tri_pop_level) {
+    if (curr_level <= max_pop_threshold_level) {
 	pl_color(plot_file, 0, 255, 0);
 
 	for (int i = 0; i <= curr_level; i++) {
