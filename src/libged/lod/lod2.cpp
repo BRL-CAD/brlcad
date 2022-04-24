@@ -38,8 +38,7 @@ extern "C" int
 ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "lod (on|off|enabled)\n"
-    "lod scale (points|curves) <factor>\n"
-    "lod redraw (off|onzoom)\n";
+    "lod scale (points|curves) <factor>\n";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -48,7 +47,7 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    struct bview *cv = NULL;
+    struct bview *cv = gedp->ged_gvp;
     struct bu_vls cvls = BU_VLS_INIT_ZERO;
     struct bu_opt_desc vd[2];
     BU_OPT(vd[0],  "V", "view",    "name",      &bu_opt_vls, &cvls,   "specify view to change lod setting on");
@@ -56,16 +55,8 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
     int opt_ret = bu_opt_parse(NULL, argc, argv, vd);
     argc = opt_ret;
     if (bu_vls_strlen(&cvls)) {
-	int found_match = 0;
-	for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
-	    struct bview *tv = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
-	    if (BU_STR_EQUAL(bu_vls_cstr(&tv->gv_name), bu_vls_cstr(&cvls))) {
-		cv = tv;
-		found_match = 1;
-		break;
-	    }
-	}
-	if (!found_match) {
+	cv = bv_set_find_view(&gedp->ged_views, bu_vls_cstr(&cvls));
+	if (!cv) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified view %s not found\n", bu_vls_cstr(&cvls));
 	    bu_vls_free(&cvls);
 	    return BRLCAD_ERROR;
@@ -73,7 +64,7 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_vls_free(&cvls);
 
-    if (!cv && !BU_PTBL_LEN(&gedp->ged_views.views)) {
+    if (!cv) {
 	return BRLCAD_OK;
     }
 
@@ -85,24 +76,14 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Print current state if no args are supplied */
     if (argc == 1) {
-	struct bview *gvp = cv;
-	if (!gvp)
-	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, 0);
-	if (!gvp)
-	    return BRLCAD_ERROR;
-	if (gvp->gv_s->adaptive_plot) {
+	if (cv->gv_s->adaptive_plot) {
 	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: enabled\n");
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: disabled\n");
 	}
-	if (gvp->gv_s->redraw_on_zoom) {
-	    bu_vls_printf(gedp->ged_result_str, "Redraw on zoom: enabled\n");
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "Redraw on zoom: disabled\n");
-	}
-	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", gvp->gv_s->point_scale);
-	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", gvp->gv_s->curve_scale);
-	bu_vls_printf(gedp->ged_result_str, "BoT face threshold: %zd\n", gvp->gv_s->bot_threshold);
+	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", cv->gv_s->point_scale);
+	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", cv->gv_s->curve_scale);
+	bu_vls_printf(gedp->ged_result_str, "BoT face threshold: %zd\n", cv->gv_s->bot_threshold);
 	return BRLCAD_OK;
     }
 
@@ -119,8 +100,9 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	} else {
 	    int delta = 0;
-	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
-		struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
+	    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 		if (!v)
 		    continue;
 		if (!v->gv_s->adaptive_plot) {
@@ -143,8 +125,9 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 	} else {
 	    int delta = 0;
-	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
-		struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
+	    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+		struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 		if (!v)
 		    continue;
 		if (v->gv_s->adaptive_plot) {
@@ -161,66 +144,30 @@ ged_lod2_core(struct ged *gedp, int argc, const char *argv[])
 	}
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "enabled")) {
 	/* lod enabled - return on state */
-	struct bview *gvp = cv;
-	if (!gvp)
-	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, 0);
-	if (!gvp)
-	    return BRLCAD_ERROR;
-	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_s->adaptive_plot);
+	bu_vls_printf(gedp->ged_result_str, "%d", cv->gv_s->adaptive_plot);
     } else if (BU_STR_EQUAL(argv[0], "scale")) {
-	struct bview *gvp = cv;
-	if (!gvp)
-	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, 0);
-	if (!gvp)
-	    return BRLCAD_ERROR;
 	if (argc == 2 || argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "points")) {
 		if (argc == 2) {
 		    /* lod scale points - return current value */
-		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_s->point_scale);
+		    bu_vls_printf(gedp->ged_result_str, "%f", cv->gv_s->point_scale);
 		} else {
 		    /* lod scale points f - set value */
-		    gvp->gv_s->point_scale = atof(argv[2]);
+		    cv->gv_s->point_scale = atof(argv[2]);
 		}
 	    } else if (BU_STR_EQUAL(argv[1], "curves")) {
 		if (argc == 2) {
 		    /* lod scale curves - return current value */
-		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_s->curve_scale);
+		    bu_vls_printf(gedp->ged_result_str, "%f", cv->gv_s->curve_scale);
 		} else {
 		    /* lod scale curves f - set value */
-		    gvp->gv_s->curve_scale = atof(argv[2]);
+		    cv->gv_s->curve_scale = atof(argv[2]);
 		}
 	    } else {
 		printUsage = 1;
 	    }
 	} else {
 	    printUsage = 1;
-	}
-    } else if (BU_STR_EQUAL(argv[0], "redraw")) {
-	struct bview *gvp = cv;
-	if (!gvp)
-	    gvp = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, 0);
-	if (!gvp)
-	    return BRLCAD_ERROR;
-	printUsage = 1;
-	if (argc == 1) {
-	    /* lod redraw - return current value */
-	    if (gvp->gv_s->redraw_on_zoom) {
-		bu_vls_printf(gedp->ged_result_str, "onzoom");
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "off");
-	    }
-	    printUsage = 0;
-	} else if (argc == 2) {
-	    if (BU_STR_EQUAL(argv[1], "off")) {
-		/* lod redraw off */
-		gvp->gv_s->redraw_on_zoom = 0;
-		printUsage = 0;
-	    } else if (BU_STR_EQUAL(argv[1], "onzoom")) {
-		/* lod redraw onzoom */
-		gvp->gv_s->redraw_on_zoom = 1;
-		printUsage = 0;
-	    }
 	}
     } else {
 	printUsage = 1;

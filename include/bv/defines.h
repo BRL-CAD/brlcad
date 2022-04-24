@@ -64,6 +64,8 @@
 #include "bv/tcl_data.h"
 #include "bv/faceplate.h"
 
+__BEGIN_DECLS
+
 #define BV_MINVIEWSIZE 0.0001
 #define BV_MINVIEWSCALE 0.00005
 
@@ -128,6 +130,10 @@ struct bv_axes {
 // that can be used by the multiple libraries which must interact with it to
 // make information passing simpler.
 struct bv_mesh_lod_info {
+
+    // The scene object
+    struct bv_scene_obj *s;
+
     // The set of triangle faces to be used when drawing
     int fcnt;
     const int *faces;
@@ -145,15 +151,13 @@ struct bv_mesh_lod_info {
     const int *face_normals;
     const vect_t *normals;
 
-    // Drawing mode: 0 = wireframe, 1 = shaded
-    int mode;
-
     // BBox
     point_t bmin;
     point_t bmax;
 
     // Pointer to LoD container
     void *lod;
+
 };
 
 
@@ -212,14 +216,23 @@ struct bv_obj_settings {
 
 struct bview;
 
+#define BV_DB_OBJS 0x01
+#define BV_VIEW_OBJS 0x02
+#define BV_LOCAL_OBJS 0x04
+
+struct bv_scene_obj_internal;
+
 struct bv_scene_obj  {
     struct bu_list l;
+
+    /* Internal implementation storage */
+    struct bv_scene_obj_internal *i;
 
     /* View object name and type id */
     unsigned long long s_type_flags;
     struct bu_vls s_name;       /**< @brief object name (may not be unique, used for activities like path lookup) */
     struct bu_vls s_uuid;       /**< @brief object name (unique, may be less immediately clear to user) */
-    mat_t s_mat;		/**< @brief mat to use for internal lookup */
+    mat_t s_mat;		/**< @brief mat to use for internal lookup and mesh LoD drawing */
 
     /* Associated bv.  Note that scene objects are not assigned uniquely to
      * one view.  This value may be changed by the application in a multi-view
@@ -232,17 +245,26 @@ struct bv_scene_obj  {
     /* Knowledge of how to create/update s_vlist and the other 3D geometry data, as well as
      * manage any custom data specific to this object */
     void *s_i_data;  /**< @brief custom view data (bv_line_seg, bv_label, bv_polyon, etc) */
-    int (*s_update_callback)(struct bv_scene_obj *, int);  /**< @brief custom update/generator for s_vlist */
-    void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data */
+    int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
+    void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data and draw_data */
 
-    /* Actual 3D geometry data and information */
+    /* 3D vector list geometry data */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
     size_t s_vlen;			/**< @brief  Number of actual cmd[] entries in vlist */
+
+    /* Display lists accelerate drawing when we can use them */
     unsigned int s_dlist;	/**< @brief  display list index */
+    int s_dlist_mode;		/**< @brief  drawing mode in which display list was generated (if it doesn't match s_os.s_dmode, dlist is out of date.) */
+    int s_dlist_stale;		/**< @brief  set by client codes when dlist is out of date - dm must update. */
+    void (*s_dlist_free_callback)(struct bv_scene_obj *);  /**< @brief free any dlist specific data */
+
+    /* 3D geometry metadata */
     fastf_t s_size;		/**< @brief  Distance across solid, in model space */
     fastf_t s_csize;		/**< @brief  Dist across clipped solid (model space) */
     vect_t s_center;		/**< @brief  Center point of solid, in model space */
     int s_displayobj;		/**< @brief  Vector list contains vertices in display context flag */
+    point_t bmin;
+    point_t bmax;
 
     /* Display properties */
     char s_flag;		/**< @brief  UP = object visible, DOWN = obj invis */
@@ -251,6 +273,7 @@ struct bv_scene_obj  {
     int s_soldash;		/**< @brief  solid/dashed line flag: 0 = solid, 1 = dashed*/
     int s_arrow;		/**< @brief  arrow flag for view object drawing routines */
     int s_changed;		/**< @brief  changed flag - set by s_update_callback if a change occurred */
+    int current;
 
     /* Adaptive plotting info.
      *
@@ -278,8 +301,21 @@ struct bv_scene_obj  {
     /* Child objects of this object */
     struct bu_ptbl children;
 
+    /* Parent object of this object */
+    struct bv_scene_ob *parent;
+
+    /* Object level pointers to parent containers.  These are stored so
+     * that the object itself knows everything needed for data manipulation
+     * and it is unnecessary to explicitly pass other parameters. */
+
+    /* Reusable vlists */
+    struct bu_list *vlfree;
+
     /* Container for reusing bv_scene_obj allocations */
     struct bv_scene_obj *free_scene_obj;
+
+    /* View container containing this object */
+    struct bu_ptbl *otbl;
 
     /* For more specialized routines not using vlists, we may need
      * additional drawing data associated with a scene object */
@@ -370,6 +406,7 @@ struct bview_settings {
     fastf_t       curve_scale;
     fastf_t       point_scale;
     int           redraw_on_zoom;
+    fastf_t 	  lod_scale;
 
     // Faceplate elements fall into two general categories: those which are
     // interactively adjusted (in a geometric sense) and those which are not.
@@ -413,7 +450,7 @@ struct bview_objs {
     // Container for db object groups unique to this view (typical use case is
     // adaptive plotting, where geometry wireframes may differ from view to
     // view and thus need unique vlists.)
-    struct bu_ptbl  *view_grps;
+    struct bu_ptbl  *db_objs;
     // Container for storing bv_scene_obj elements unique to this view.
     struct bu_ptbl  *view_objs;
 
@@ -490,6 +527,17 @@ struct bview {
      * system memory. */
     struct bview_objs gv_objs;
 
+    /* Oriented bounding box extruded to contain scene objects visible in the
+     * view.  Conceptually, think of it as a framebuffer pane pushed through
+     * the scene in the direction the camera is looking. The app must set the
+     * bg_view_obb callback to update these values.*/
+    point_t obb_center;
+    vect_t obb_extent1;
+    vect_t obb_extent2;
+    vect_t obb_extent3;
+    void (*gv_obb_update)(struct bview *);
+
+
     /*
      * gv_data_vZ is an internal parameter used by commands creating and
      * manipulating data objects.  Geometrically, it is a magnitude in the
@@ -516,7 +564,7 @@ struct bview {
     struct bv_data_tclcad gv_tcl;
 
     /* Callback, external data */
-    void          (*gv_callback)();  /**< @brief  called in ged_view_update with gvp and gv_clientData */
+    void          (*gv_callback)(struct bview *, void *);  /**< @brief  called in ged_view_update with gvp and gv_clientData */
     void           *gv_clientData;   /**< @brief  passed to gv_callback */
     struct bu_ptbl *callbacks;
     void           *dmp;             /* Display manager pointer, if one is associated with this view */
@@ -526,22 +574,13 @@ struct bview {
 // Because bview instances frequently share objects in applications, they are
 // not always fully independent - we define a container and some basic
 // operations to manage this.
+struct bview_set_internal;
 struct bview_set {
-    struct bu_ptbl              views;
-    struct bu_ptbl		shared_db_objs;
-    struct bu_ptbl		shared_view_objs;
+    struct bview_set_internal   *i;
     struct bview_settings       settings;
-
-    struct bv_scene_obj         *free_scene_obj;
-    struct bu_list              vlfree;
 };
-BV_EXPORT void
-bv_set_init(struct bview_set *s);
-BV_EXPORT void
-bv_set_free(struct bview_set *s);
 
-BV_EXPORT void
-bv_set_add(struct bview_set *s, struct bview *v);
+__END_DECLS
 
 #endif /* BV_DEFINES_H */
 

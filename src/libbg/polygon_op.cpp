@@ -687,7 +687,7 @@ bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op, int m
 	    // operation eliminated polyA - stash for removal from view
 	    bu_ptbl_ins_unique(&null_polys, (long *)vp);
 	} else {
-	    bv_update_polygon(vp, BV_POLYGON_UPDATE_DEFAULT);
+	    bv_update_polygon(vp, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
 	}
 
 	BU_PUT(cp, struct bg_polygon);

@@ -34,12 +34,14 @@
 CADViewModel::CADViewModel(QObject *parentobj, struct bview **v)
     : QKeyValModel(parentobj)
 {
-    m_root = new QKeyValNode();
+    m_root = NULL;
     refresh(v);
 }
 
 CADViewModel::~CADViewModel()
 {
+    if (m_root)
+	delete m_root;
 }
 
 void
@@ -59,6 +61,8 @@ CADViewModel::refresh(struct bview **nv)
 	struct bu_vls val = BU_VLS_INIT_ZERO;
 	QMap<QString, QKeyValNode*> standard_nodes;
 	int i = 0;
+	if (m_root)
+	    delete m_root;
 	m_root = new QKeyValNode();
 	beginResetModel();
 
@@ -80,6 +84,8 @@ CADViewModel::refresh(struct bview **nv)
 
 	bu_vls_free(&val);
     } else {
+	if (m_root)
+	    delete m_root;
 	m_root = new QKeyValNode();
 	beginResetModel();
 	endResetModel();

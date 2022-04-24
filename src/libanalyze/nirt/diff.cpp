@@ -752,7 +752,7 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 
 	if (substrs.size() != 15) {
 	    nerr(nds->nss, "Error processing hit line \"%s\"!\nExpected 15 elements, found %zu\n", hit_data.c_str(), substrs.size());
-	    return -1;
+	    return false;
 	}
 
 	nirt_seg *segp = new nirt_seg;

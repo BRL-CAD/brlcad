@@ -44,6 +44,7 @@ extern int _view_cmd_msgs(void *bs, int argc, const char **argv, const char *us,
 extern int _view_cmd_lines(void *bs, int argc, const char **argv);
 extern int _view_cmd_axes(void *bs, int argc, const char **argv);
 extern int _view_cmd_labels(void *bs, int argc, const char **argv);
+extern int _view_cmd_lod(void *bs, int argc, const char **argv);
 extern int _view_cmd_polygons(void *bs, int argc, const char **argv);
 extern int _view_cmd_objs(void *bs, int argc, const char **argv);
 extern int _view_cmd_gobjs(void *bs, int argc, const char **argv);

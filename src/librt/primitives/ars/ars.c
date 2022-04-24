@@ -70,14 +70,14 @@ extern void rt_bot_ifree(struct rt_db_internal *ip);
  * allocated for holding the curve's fastf_t values.
  */
 HIDDEN fastf_t *
-ars_rd_curve(union record *rp, int npts, int flip)
+ars_rd_curve(union record *rp, size_t npts, int flip)
 {
-    int lim;
+    size_t lim;
     fastf_t *base;
     register fastf_t *fp;		/* pointer to temp vector */
-    register int i;
+    size_t i;
     union record *rr;
-    int rec;
+    size_t rec;
 
     /* Leave room for first point to be repeated */
     base = fp = (fastf_t *)bu_malloc(
@@ -88,7 +88,7 @@ ars_rd_curve(union record *rp, int npts, int flip)
     for (; npts > 0; npts -= 8) {
 	rr = &rp[rec++];
 	if (rr->b.b_id != ID_ARS_B) {
-	    bu_log("ars_rd_curve(npts=%d):  non-ARS_B record [%d]!\n", npts, rr->b.b_id);
+	    bu_log("ars_rd_curve(npts=%zu):  non-ARS_B record [%d]!\n", npts, rr->b.b_id);
 	    break;
 	}
 	lim = (npts>8) ? 8 : npts;
@@ -120,7 +120,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     union record *rp;
     register size_t i, j;
     vect_t base_vect;
-    int currec;
+    size_t currec;
 
     VSETALL(base_vect, 0);
 
@@ -233,13 +233,13 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     for (cur = 0; cur < arip->ncurves; cur++) {
 	register fastf_t *fp;
 	size_t npts;
-	int left;
+	size_t left;
 
 	fp = arip->curves[cur];
 	left = arip->pts_per_curve;
 	for (npts = 0; npts < arip->pts_per_curve; npts+=8, left -= 8) {
-	    register int el;
-	    register int lim;
+	    size_t el;
+	    size_t lim;
 	    register struct ars_ext *bp = &rec[gno].b;
 
 	    bp->b_id = ID_ARS_B;
@@ -350,9 +350,9 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ars external");
     cp = (unsigned char *)ep->ext_buf;
 
-    *(uint32_t *)cp = htonl(arip->ncurves);
+    *(uint32_t *)cp = htonl((unsigned long)arip->ncurves);
     cp += SIZEOF_NETWORK_LONG;
-    *(uint32_t *)cp = htonl(arip->pts_per_curve);
+    *(uint32_t *)cp = htonl((unsigned long)arip->pts_per_curve);
     cp += SIZEOF_NETWORK_LONG;
 
     for (cur = 0; cur < arip->ncurves; cur++) {
@@ -926,7 +926,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
 		    /* one complete curve */
 		    i = atoi(&argv[0][1]);
-		    len = ars->pts_per_curve * 3;
+		    len = (int)ars->pts_per_curve * 3;
 		    dupstr = bu_strdup(argv[1]);
 		    ptr2 = dupstr;
 		    while (*ptr2) {

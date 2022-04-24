@@ -92,7 +92,7 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 	}
     }
 
-    s = bv_create_polygon(gedp->ged_gvp, type, x, y, gedp->ged_views.free_scene_obj);
+    s = bv_create_polygon(gedp->ged_gvp, type, x, y);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;
@@ -165,7 +165,7 @@ _poly_cmd_select(void *bs, int argc, const char **argv)
     p->curr_contour_i = contour_ind;
     s->s_v->gv_mouse_x = x;
     s->s_v->gv_mouse_y = y;
-    bv_update_polygon(s, BV_POLYGON_UPDATE_PT_SELECT);
+    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_PT_SELECT);
 
     return BRLCAD_OK;
 }
@@ -230,7 +230,7 @@ _poly_cmd_append(void *bs, int argc, const char **argv)
 
     s->s_v->gv_mouse_x = x;
     s->s_v->gv_mouse_y = y;
-    bv_update_polygon(s, BV_POLYGON_UPDATE_PT_APPEND);
+    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_PT_APPEND);
 
     return BRLCAD_OK;
 }
@@ -282,7 +282,7 @@ _poly_cmd_move(void *bs, int argc, const char **argv)
 
     s->s_v->gv_mouse_x = x;
     s->s_v->gv_mouse_y = y;
-    bv_update_polygon(s, BV_POLYGON_UPDATE_PT_MOVE);
+    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_PT_MOVE);
 
     return BRLCAD_OK;
 }
@@ -315,7 +315,7 @@ _poly_cmd_clear(void *bs, int argc, const char **argv)
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     p->curr_contour_i = 0;
     p->curr_point_i = -1;
-    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
+    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_DEFAULT);
 
     return BRLCAD_OK;
 }
@@ -371,7 +371,7 @@ _poly_cmd_close(void *bs, int argc, const char **argv)
        p->polygon.contour[ind].open = 0;
    }
 
-    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
+    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_DEFAULT);
 
     return BRLCAD_OK;
 }
@@ -428,7 +428,7 @@ _poly_cmd_open(void *bs, int argc, const char **argv)
        p->polygon.contour[ind].open = 1;
    }
 
-    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
+    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_DEFAULT);
 
     return BRLCAD_OK;
 }
@@ -494,7 +494,7 @@ _poly_cmd_to_curr_view(void *bs, int argc, const char **argv)
     // Set view info
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     bv_sync(&p->v, gedp->ged_gvp);
-    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
+    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_DEFAULT);
     bv_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
@@ -640,7 +640,7 @@ _poly_cmd_import(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    s = db_sketch_to_scene_obj(gd->vobj, gedp->dbip, dp, gedp->ged_gvp, gedp->ged_views.free_scene_obj);
+    s = db_sketch_to_scene_obj(gd->vobj, gedp->dbip, dp, gedp->ged_gvp);
     if (!s) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;
@@ -721,7 +721,7 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
     if (argc == 1 && BU_STR_EQUAL(argv[0], "0")) {
 	struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 	p->fill_flag = 0;
-	bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
+	bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_DEFAULT);
 	return BRLCAD_OK;
     }
 
@@ -748,7 +748,7 @@ _poly_cmd_fill(void *bs, int argc, const char **argv)
     p->fill_flag = 1;
     V2MOVE(p->fill_dir, vdir);
     p->fill_delta = vdelta;
-    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
+    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_DEFAULT);
 
     return BRLCAD_OK;
 }
@@ -895,7 +895,7 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     polyA->type = BV_POLYGON_GENERAL;
 
     BU_PUT(cp, struct bg_polygon);
-    bv_update_polygon(s, BV_POLYGON_UPDATE_DEFAULT);
+    bv_update_polygon(s, s->s_v, BV_POLYGON_UPDATE_DEFAULT);
 
     return BRLCAD_OK;
 }

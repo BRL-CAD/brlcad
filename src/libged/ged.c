@@ -389,6 +389,8 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     BU_GET(gedp, struct ged);
     GED_INIT(gedp, wdbp);
+    BU_ALLOC(gedp->ged_gvp, struct bview);
+    bv_init(gedp->ged_gvp, &gedp->ged_views);
 
     return gedp;
 }

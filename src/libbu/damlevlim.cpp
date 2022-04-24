@@ -66,6 +66,11 @@ bu_editdist(const char *s1, const char *s2)
 	    return strlen(s1);
     }
 
+    // We need std::mismatch to handle any length string in either argument -
+    // prior to C++14, it did not. That case fails hard on some platforms
+    // (Windows) at runtime.
+#if CXX_STANDARD >= 14
+
     // Set up buffer
     char *ptr = (char *)new(std::nothrow) std::vector<size_t>(DAMLEVLIM_MAX_EDIT_DIST);
     std::vector<size_t> &buffer = *(std::vector<size_t> *)ptr;
@@ -167,6 +172,12 @@ bu_editdist(const char *s1, const char *s2)
     unsigned long ret = buffer[end_j-1];
     delete ptr;
     return ret;
+
+#else
+
+    return LONG_MAX;
+
+#endif
 }
 
 // Local Variables:

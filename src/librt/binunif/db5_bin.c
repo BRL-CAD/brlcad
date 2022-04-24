@@ -631,7 +631,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	    const char **obj_array;
 	    unsigned char *buf, *d;
 	    const char *s;
-	    int hexlen;
+	    size_t hexlen;
 	    unsigned int h;
 
 	    /* split initial list */

@@ -38,6 +38,15 @@
 
 __BEGIN_DECLS
 
+/* Given a view, construct an oriented bounding box extruded to contain scene
+ * objects visible in the view.  Conceptually, think of it as a framebuffer
+ * pane pushed through the scene in the direction the camera is looking.  If
+ * the view width and height are not set or there is some other problem, no box
+ * is computed. */
+BG_EXPORT extern void
+bg_view_obb(struct bview *v);
+
+
 /* We hide the details of the internal LoD structures. */
 struct bg_mesh_lod_internal;
 struct bg_mesh_lod {
@@ -50,12 +59,12 @@ struct bg_mesh_lod {
  * once per un-cached data set, but is potentially an expensive operation.
  *
  * If pre-existing cached data is found, the key is just returned - to clear
- * pre-existing cached data, run bg_mesh_lod_clear();
+ * pre-existing cached data, run bg_mesh_lod_clear_cache();
  *
  * returns the lookup key calculated from the data, which is used in subsequent
  * lookups of the cached data. */
 BG_EXPORT unsigned long long
-bg_mesh_lod_cache(const point_t *v, int vcnt, int *f, int fcnt);
+bg_mesh_lod_cache(const point_t *v, size_t vcnt, int *f, size_t fcnt);
 
 /**
  * Set up the bg_mesh_lod data using cached LoD information associated with
@@ -77,27 +86,25 @@ bg_mesh_lod_init(unsigned long long key);
 
 /**
  * Given a bview, load the appropriate level of detail for displaying the mesh
- * in that view.  A scale factor may also be supplied to adjust the default
- * level assignments (say, for example, if a parent application wants to drive
- * detail down to increase frame rates.)  Negative values will be removed from
- * the view-based selected level, reducing detail (for example, if the view
- * selection is level 8, and the scale is -2, the mesh will be rendered using
- * level 6.)  Likewise, positive values will be added to increase detail.
+ * in that view. Set reset == 1 if the caller wants to undo a memshrink
+ * operation even if the level isn't changed by the current view settings.
  *
  * Returns the level selected.  If v == NULL, return current level of l.  If
  * there is an error or l == NULL, return -1; */
 BG_EXPORT int
-bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale);
+bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int reset);
 
 /**
  * Given a detail level, load the appropriate data.  This is not normally used
  * by client codes directly, but may be needed if an app needs  manipulate
- * the level of detail without a view.
+ * the level of detail without a view.  Set reset == 1 if the caller wants to
+ * undo a memshrink operation even if the level isn't changed by the current
+ * view settings.
  *
  * Returns the level selected.  If level == -1, return current level of l.  If
  * there is an error, return -1; */
 BG_EXPORT int
-bg_mesh_lod_level(struct bg_mesh_lod *l, int level);
+bg_mesh_lod_level(struct bg_mesh_lod *l, int level, int reset);
 
 /* Clean up the lod container. */
 BG_EXPORT void
@@ -106,7 +113,7 @@ bg_mesh_lod_destroy(struct bv_mesh_lod_info *i);
 /* Remove cache data associated with key.  If key == 0, remove ALL cache data
  * associated with all LoD objects (i.e. a full LoD cache reset). */
 BG_EXPORT void
-bg_mesh_lod_clear(unsigned long long key);
+bg_mesh_lod_clear_cache(unsigned long long key);
 
 /* Set drawing function callback */
 BG_EXPORT void
@@ -114,11 +121,27 @@ bg_mesh_lod_set_draw_callback(struct bg_mesh_lod *lod, int (*clbk)(void *ctx, st
 
 /* Trigger a triangle drawing operation. */
 BG_EXPORT void
-bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode);
+bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s);
 
-/* Callback for updating level settings on an object. */
+/* Reduce memory footprint (for use after client codes have completed
+ * use of a particular level's info, but aren't done with the object.
+ * Main use case currently is OpenGL display lists - once generated,
+ * we can clear the internally stored LoD data until the level changes.
+ * Note that there is a re-loading performance penalty as a trade-off
+ * to the memory savings. */
+BG_EXPORT void
+bg_mesh_lod_memshrink(struct bv_scene_obj *s);
+
+/* Callback for updating level settings on an object.  Set reset == 1 if the
+ * caller wants to undo a memshrink operation even if the level isn't
+ * changed by the current view settings. */
 BG_EXPORT int
-bg_mesh_lod_update(struct bv_scene_obj *s, int offset);
+bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int reset);
+
+/* Free a scene object's LoD data.  Suitable as a s_free_callback function
+ * for a bv_scene_obj */
+BG_EXPORT void
+bg_mesh_lod_free(struct bv_scene_obj *s);
 
 __END_DECLS
 

@@ -316,7 +316,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 	    buffer = bu_strdup(bu_vls_addr(gedp->ged_result_str));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 
-	    argc += bu_argv_from_string(whoargv, WHOARGVMAX, buffer);
+	    argc += (int)bu_argv_from_string(whoargv, WHOARGVMAX, buffer);
 	}
     }
 

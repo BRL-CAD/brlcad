@@ -69,6 +69,7 @@ endif (TARGET profont_ProFont_ttf_cp)
 # elements of this logic in a libdmgl library used by those plugins.
 set(LIBDMGL_SRCS
   dm-gl.c
+  dm-gl_lod.cpp
   )
 if (BRLCAD_ENABLE_OPENGL)
   find_package(OpenGL)

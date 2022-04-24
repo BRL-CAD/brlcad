@@ -749,6 +749,8 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 		char *o = (char *)BU_PTBL_GET(&opts, j);
 		bu_free(o, "free arg cpy");
 	    }
+	    bu_ptbl_free(&unknown_args);
+	    bu_ptbl_free(&known_args);
 	    bu_ptbl_free(&opts);
 	    return -1;
 	}
@@ -809,6 +811,14 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 		 * intact. */
 		bu_ptbl_ins(&unknown_args, (long *)argv[i]);
 		i++;
+
+		/* Do the opts cleanup that would otherwise be done at the end */
+		for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
+		    char *o = (char *)BU_PTBL_GET(&opts, j);
+		    bu_free(o, "free arg cpy");
+		}
+		bu_ptbl_free(&opts);
+
 		continue;
 	    }
 
@@ -856,6 +866,14 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 		    if (msgs) {
 			bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - halting.\n", argv[i-1], argv[i]);
 		    }
+		    bu_ptbl_free(&unknown_args);
+		    bu_ptbl_free(&known_args);
+
+		    for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
+			char *o = (char *)BU_PTBL_GET(&opts, j);
+			bu_free(o, "free arg cpy");
+		    }
+		    bu_ptbl_free(&opts);
 		    return -1;
 		}
 		/* Put the original opt back and adjust the
@@ -874,6 +892,13 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 			if (msgs) {
 			    bu_vls_printf(msgs, "Option %s did not successfully use the supplied argument %s - halting.\n", argv[i-1], eq_arg);
 			}
+			bu_ptbl_free(&unknown_args);
+			bu_ptbl_free(&known_args);
+			for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
+			    char *o = (char *)BU_PTBL_GET(&opts, j);
+			    bu_free(o, "free arg cpy");
+			}
+			bu_ptbl_free(&opts);
 			return -1;
 		    }
 
@@ -902,10 +927,18 @@ bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct b
 		    if (msgs) {
 			bu_vls_printf(msgs, "Option %s does not take an argument, but %s was supplied - halting.\n", argv[i-1], eq_arg);
 		    }
+		    bu_ptbl_free(&unknown_args);
+		    bu_ptbl_free(&known_args);
+		    for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
+			char *o = (char *)BU_PTBL_GET(&opts, j);
+			bu_free(o, "free arg cpy");
+		    }
+		    bu_ptbl_free(&opts);
 		    return -1;
 		}
 	    }
 	}
+
 	for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
 	    char *o = (char *)BU_PTBL_GET(&opts, j);
 	    bu_free(o, "free arg cpy");

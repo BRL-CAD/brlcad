@@ -59,7 +59,7 @@ CPP_XGLUE(bot_face_w_normals_, TRI_TYPE)(struct soltab *stp,
     VSUB2(trip->tri_BA, bp, ap);
     VSUB2(trip->tri_CA, cp, ap);
     VCROSS(trip->tri_wn, trip->tri_BA, trip->tri_CA);
-    trip->tri_surfno = face_no;
+    trip->tri_surfno = (int)face_no;
 
     /* Check to see if this plane is a line or pnt */
     m1 = MAGSQ(trip->tri_BA);
@@ -129,15 +129,16 @@ CPP_XGLUE(bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
     vect_t offset;
     fastf_t los;
     size_t surfno;
-    long num_rpps;
+    size_t num_rpps;
     size_t tri_per_piece, tpp_m1;
 
     tri_per_piece = bot->bot_tri_per_piece = rt_bot_tri_per_piece;
 
     num_rpps = ntri / tri_per_piece;
-    if (ntri % tri_per_piece) num_rpps++;
+    if (ntri % tri_per_piece)
+	num_rpps++;
 
-    stp->st_npieces = num_rpps;
+    stp->st_npieces = (long)num_rpps;
 
     fap = (CPP_XGLUE(tri_specific_, TRI_TYPE) **)
 	bu_malloc(sizeof(CPP_XGLUE(tri_specific_, TRI_TYPE) *) * ntri,
@@ -288,7 +289,7 @@ CPP_XGLUE(bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_i
 
 		idx = bot_ip->face_normals[tri_index*3 + i];
 		if (idx < bot_ip->num_normals) {
-		    default_normal = idx;
+		    default_normal = (long)idx;
 		}
 	    }
 	    if (default_normal < 0) {

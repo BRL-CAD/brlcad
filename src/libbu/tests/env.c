@@ -33,14 +33,28 @@ main(int UNUSED(ac), char *av[])
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(av[0]);
 
-    long int all_mem = bu_mem(BU_MEM_ALL);
-    long int avail_mem = bu_mem(BU_MEM_AVAIL);
-    long int page_mem = bu_mem(BU_MEM_PAGE_SIZE);
-
-    bu_log("MEM report: all(%ld) avail(%ld) page_size(%ld)\n", all_mem, avail_mem, page_mem);
-
-    if (all_mem < 0 || avail_mem < 0 || page_mem < 0)
+    int ec = 0;
+    unsigned long long all_mem = bu_mem(BU_MEM_ALL, &ec);
+    if (ec)
 	return -1;
+    unsigned long long avail_mem = bu_mem(BU_MEM_AVAIL, &ec);
+    if (ec)
+	return -1;
+    unsigned long long page_mem = bu_mem(BU_MEM_PAGE_SIZE, &ec);
+    if (ec)
+	return -1;
+
+    char all_buf[6] = {'\0'};
+    char avail_buf[6] = {'\0'};
+    char p_buf[6] = {'\0'};
+    bu_humanize_number(all_buf, 5, all_mem, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
+    bu_humanize_number(avail_buf, 5, avail_mem, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
+    bu_humanize_number(p_buf, 5, page_mem, "", BU_HN_AUTOSCALE, BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
+
+    bu_log("MEM report: all: %s(%llu) avail: %s(%llu) page_size: %s(%llu)\n",
+	    all_buf, all_mem,
+	    avail_buf, avail_mem,
+	    p_buf, page_mem);
 
     return 0;
 }

@@ -364,7 +364,7 @@ string(STRIP "${C_STANDARD_FLAGS}" C_STANDARD_FLAGS)
 # C++
 unset(CXX_STANDARD_FLAGS)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CXX_STANDARD_FLAGS "${CMAKE_CXX_FLAGS_DEFAULT} ${CMAKE_CXX${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION} ${API_FLAGS}")
 string(STRIP "${CXX_STANDARD_FLAGS}" CXX_STANDARD_FLAGS)
@@ -451,6 +451,11 @@ endif(DEFINED BRLCAD_VERSION_AMEND)
 if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
   CONFIG_H_APPEND(BRLCAD "#define NDEBUG 1\n")
 endif(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT CMAKE_CONFIGURATION_TYPES)
+
+#----------------------------------------------------------------------
+# Let our code know what the minimum active C++ standard is - behavior
+# of some C++ functionality differs at runtime based on version.
+CONFIG_H_APPEND(BRLCAD "#define CXX_STANDARD ${CMAKE_CXX_STANDARD}\n")
 
 #----------------------------------------------------------------------
 # Let config.h know whether we're doing a 32 or a 64 bit build.
@@ -1078,6 +1083,14 @@ if(NOT MSVC)
     # also of interest:
     # -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
     # -Wformat=2 (after bu_fopen_uniq() is obsolete)
+    #
+    # -Werror=implicit-function-declaration -Werror=implicit-fallthrough=3 
+    # -Werror=maybe-uninitialized -Werror=missing-field-initializers 
+    # -Werror=incompatible-pointer-types -Werror=int-conversion 
+    # -Werror=redundant-decls -Werror=parentheses -Wformat-nonliteral 
+    # -Wformat-security -Winit-self -Wmaybe-uninitialized 
+    # -Wold-style-definition -Wredundant-decls -Wstrict-prototypes
+
     CHECK_C_FLAG(pedantic)
     CHECK_CXX_FLAG(pedantic)
 

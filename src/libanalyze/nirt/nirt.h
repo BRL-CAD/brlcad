@@ -389,7 +389,7 @@ void nout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
 void nerr(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
 void ndbg(struct nirt_state *nss, int flag, const char *fmt, ...);
 
-size_t _nirt_find_first_unescaped(std::string &s, const char *keys, int offset);
+size_t _nirt_find_first_unescaped(std::string &s, const char *keys, size_t offset);
 size_t _nirt_find_first_unquoted(std::string &ts, const char *key, size_t offset);
 void _nirt_trim_whitespace(std::string &s);
 std::vector<std::string> _nirt_string_split(std::string s);

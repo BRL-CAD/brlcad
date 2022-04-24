@@ -102,6 +102,24 @@ _view_cmd_faceplate(void *bs, int argc, const char **argv)
     return ged_faceplate_core(gd->gedp, argc, argv);
 }
 
+/* When a view is "independent", it displays only those objects when have been
+ * added to its individual scene storage - the shared objects common to all
+ * views will not be drawn.  When shifting a view from shared to independent
+ * its local storage is populated with copies of the shared objects to prevent
+ * an abrupt change of displayed contents, but once this setup is complete
+ * further draw or erase operations in shared views will no longer alter the
+ * scene object lists in the independent view.  To modify the independent
+ * view's scene, it must be specifically set as the current view in libged.
+ * Note also that when a view ceases to be independent, it's local object set
+ * is compared to the shared object set and any objects in both are removed
+ * from the local set.  However, any object in the independent list that are
+ * not present in the shared set will remain, since there is no way for the
+ * library to know if the intent is to preserve or remove such objects from the
+ * scene.  Removal, as the destructive option, is the responsibility of the
+ * application.
+ *
+ * Note that views may have localized scene objects even when not independent,
+ * but they must be defined as view objects rather than database objects. */
 int
 _view_cmd_independent(void *bs, int argc, const char **argv)
 {
@@ -121,14 +139,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct bview *v = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
-	v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&v->gv_name), argv[0])) {
-	    break;
-	}
-    }
-
+    struct bview *v = bv_set_find_view(&gedp->ged_views, argv[0]);
     if (!v) {
 	bu_vls_printf(gedp->ged_result_str, "view %s not found\n", argv[0]);
 	return BRLCAD_ERROR;
@@ -142,7 +153,7 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "1")) {
 	v->independent = 1;
 	// Initialize local containers with current shared grps
-	struct bu_ptbl *sg = &v->vset->shared_db_objs;
+	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
 	if (!sg)
 	    return BRLCAD_OK;
 	for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
@@ -165,12 +176,11 @@ _view_cmd_independent(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[1], "0")) {
 	v->independent = 0;
 	// Clear local containers
-	struct bu_ptbl *sg = v->gv_objs.view_grps;
+	struct bu_ptbl *sg = v->gv_objs.db_objs;
 	if (sg) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		bv_scene_obj_free(cg, gedp->ged_views.free_scene_obj);
-		BU_PUT(cg, struct bv_scene_group);
+		bv_obj_put(cg);
 	    }
 	    bu_ptbl_reset(sg);
 	}
@@ -192,8 +202,9 @@ _view_cmd_list(void *bs, int argc, const char **argv)
     }
 
     struct ged *gedp = gd->gedp;
-    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_views.views); i++) {
-	struct bview *v = (struct bview *)BU_PTBL_GET(&gedp->ged_views.views, i);
+    struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
 	if (v != gedp->ged_gvp) {
 	    bu_vls_printf(gedp->ged_result_str, "  %s\n", bu_vls_cstr(&v->gv_name));
 	} else {
@@ -202,149 +213,6 @@ _view_cmd_list(void *bs, int argc, const char **argv)
     }
 
     return BRLCAD_OK;
-}
-
-int
-_view_cmd_lod(void *bs, int argc, const char **argv)
-{
-    struct _ged_view_info *gd = (struct _ged_view_info *)bs;
-    const char *usage_string = "view [options] lod [subcommand] [vals]";
-    const char *purpose_string = "manage Level of Detail drawing settings";
-    if (_view_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return BRLCAD_OK;
-    }
-
-    struct ged *gedp = gd->gedp;
-    struct bview *gvp;
-    int print_help = 0;
-    static const char *usage = "view lod enabled [0|1]\n"
-			       "view lod redraw_on_zoom [0|1]>\n"
-			       "view lod point_scale [factor]\n"
-			       "view lod curve_scale [factor]\n"
-			       "view lod bot_threshold [face_cnt]\n";
-
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    struct bu_opt_desc d[2];
-    BU_OPT(d[0], "h", "help",        "",  NULL,  &print_help,      "Print help");
-    BU_OPT_NULL(d[1]);
-
-    // We know we're the lod command - start processing args
-    argc--; argv++;
-
-    int ac = bu_opt_parse(NULL, argc, argv, d);
-    argc = ac;
-
-    if (print_help) {
-	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return BRLCAD_HELP;
-    }
-
-    if (argc > 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return BRLCAD_ERROR;
-    }
-
-    gvp = gedp->ged_gvp;
-    if (gvp == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "no current view defined\n");
-	return BRLCAD_ERROR;
-    }
-
-    /* Print current state if no args are supplied */
-    if (argc == 0) {
-	bu_vls_printf(gedp->ged_result_str, "enabled: %d\n", gvp->gv_s->adaptive_plot);
-	bu_vls_printf(gedp->ged_result_str, "redraw_on_zoom: %d\n", gvp->gv_s->redraw_on_zoom);
-	bu_vls_printf(gedp->ged_result_str, "point_scale: %g\n", gvp->gv_s->point_scale);
-	bu_vls_printf(gedp->ged_result_str, "curve_scale: %g\n", gvp->gv_s->curve_scale);
-	bu_vls_printf(gedp->ged_result_str, "bot_threshold: %zd\n", gvp->gv_s->bot_threshold);
-	return BRLCAD_OK;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "enabled")) {
-	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->adaptive_plot);
-	    return BRLCAD_OK;
-	}
-	if (bu_str_true(argv[1])) {
-	    gvp->gv_s->adaptive_plot = 1;
-	    return BRLCAD_OK;
-	}
-	if (bu_str_false(argv[1])) {
-	    gvp->gv_s->adaptive_plot = 0;
-	    return BRLCAD_OK;
-	}
-	bu_vls_printf(gedp->ged_result_str, "unknown argument to enabled: %s\n", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "redraw_on_zoom")) {
-	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%d\n", gvp->gv_s->redraw_on_zoom);
-	    return BRLCAD_OK;
-	}
-	if (bu_str_true(argv[1])) {
-	    gvp->gv_s->redraw_on_zoom = 1;
-	    return BRLCAD_OK;
-	}
-	if (bu_str_false(argv[1])) {
-	    gvp->gv_s->redraw_on_zoom = 0;
-	    return BRLCAD_OK;
-	}
-	bu_vls_printf(gedp->ged_result_str, "unknown argument to redraw_on_zoom: %s\n", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "point_scale")) {
-	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->point_scale);
-	    return BRLCAD_OK;
-	}
-	fastf_t scale = 1.0;
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&scale) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "unknown argument to point_scale: %s\n", argv[1]);
-	    return BRLCAD_ERROR;
-	}
-	gvp->gv_s->point_scale = scale;
-	return BRLCAD_OK;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "curve_scale")) {
-	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%g\n", gvp->gv_s->curve_scale);
-	    return BRLCAD_OK;
-	}
-	fastf_t scale = 1.0;
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&scale) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "unknown argument to curve_scale: %s\n", argv[1]);
-	    return BRLCAD_ERROR;
-	}
-	gvp->gv_s->curve_scale = scale;
-	return BRLCAD_OK;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "bot_threshold")) {
-	if (argc == 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%zd\n", gvp->gv_s->bot_threshold);
-	    return BRLCAD_OK;
-	}
-	int bcnt = 0;
-	if (bu_opt_int(NULL, 1, (const char **)&argv[1], (void *)&bcnt) != 1 || bcnt < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "unknown argument to bot_threshold: %s\n", argv[1]);
-	    return BRLCAD_ERROR;
-	}
-	gvp->gv_s->bot_threshold = bcnt;
-	return BRLCAD_OK;
-
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n", argv[0]);
-    return BRLCAD_ERROR;
 }
 
 int
@@ -498,8 +366,9 @@ struct bv_scene_obj *wobj = NULL;
 		}
 	    }
 	    if (!wobj) {
-		for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_db_objs); i++) {
-		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&v->vset->shared_db_objs, i);
+		struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
+		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		    if (bu_list_len(&cg->s_vlist)) {
 			if (!bu_vls_strcmp(&cg->s_name, &calc_target)) {
 			    wobj = cg;
@@ -545,8 +414,9 @@ struct bv_scene_obj *wobj = NULL;
 		    }
 		}
 	    }
-	    for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->shared_db_objs); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&v->vset->shared_db_objs, i);
+	    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
+	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
+		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
 		if (bu_list_len(&cg->s_vlist)) {
 		    fastf_t calc_val = bv_vZ_calc(cg, gedp->ged_gvp, calc_mode);
 		    if (calc_mode) {

@@ -131,8 +131,9 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 
     if (!existing_sp) {
 	/* Handling a new solid */
-	GET_BV_SCENE_OBJ(sp, &GEDP->ged_views.free_scene_obj->l);
-	BU_LIST_APPEND(&GEDP->ged_views.free_scene_obj->l, &((sp)->l) );
+	struct bv_scene_obj *free_scene_obj = bv_set_fsos(&GEDP->ged_views);
+	GET_BV_SCENE_OBJ(sp, &free_scene_obj->l);
+	BU_LIST_APPEND(&free_scene_obj->l, &((sp)->l) );
 	sp->s_dlist = 0;
     } else {
 	/* Just updating an existing solid.

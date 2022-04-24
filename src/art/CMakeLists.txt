@@ -15,6 +15,7 @@ if(NOT Appleseed_FOUND)
 endif(NOT Appleseed_FOUND)
 message("Found Appleseed: ${Appleseed_LIBRARIES}")
 
+set(Boost_USE_STATIC_LIBS OFF)
 find_package(Boost COMPONENTS chrono date_time filesystem regex system thread wave)
 if(NOT Boost_FOUND)
   message("'art' appleseed ray tracing is DISABLED")
@@ -22,6 +23,8 @@ if(NOT Boost_FOUND)
 endif(NOT Boost_FOUND)
 message("Found Boost: ${Boost_LIBRARIES}")
 
+string(REPLACE "\\" "/" APPLESEED_CONF_ROOT ${Appleseed_ROOT}) # use forward slashes
+CONFIG_H_APPEND(BRLCAD "#define APPLESEED_ROOT \"${APPLESEED_CONF_ROOT}\"\n")
 
 set(ART_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -48,8 +51,6 @@ set(ART_LIBS
   ${Boost_LIBRARIES}
   ${M_LIBRARY}
   )
-link_directories(${Boost_LIBRARY_DIR})
-link_directories(${Appleseed_LIBRARY_DIR})
 
 
 set(ART_SRCS
@@ -59,11 +60,18 @@ set(ART_SRCS
   ../rt/usage.cpp
   )
 
+add_definitions(-DBOOST_ALL_DYN_LINK)
 BRLCAD_ADDEXEC(art "${ART_SRCS}" "${ART_LIBS}" FOLDER Rt)
 
+
 # copy precompiled appleseed.dll into same dir as art.exe
+
 if (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
-  add_custom_command(TARGET art POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${Appleseed_LIBRARY}" $<TARGET_FILE_DIR:art>)
+  # assume the dll is in appleseed's bin dir
+  string(REPLACE ".lib" ".dll" Appleseed_DLL ${Appleseed_LIBRARY})
+  string(REPLACE "lib" "bin" Appleseed_DLL ${Appleseed_DLL})
+  add_custom_command(TARGET art	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E echo "Installing appleseed.dll to $<TARGET_FILE_DIR:art>")
+  add_custom_command(TARGET art PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${Appleseed_DLL}" $<TARGET_FILE_DIR:art>)
 endif (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
 
 

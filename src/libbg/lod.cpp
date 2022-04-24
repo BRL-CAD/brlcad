@@ -84,8 +84,156 @@
 #include "bu/time.h"
 #include "bv/plot3.h"
 #include "bg/lod.h"
+#include "bg/plane.h"
 #include "bg/sat.h"
 #include "bg/trimesh.h"
+
+static void
+obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct bview *v)
+{
+    vect_t minus, plus;
+    if (bv_scene_obj_bound(s, v)) {
+	*have_objs = 1;
+	minus[X] = s->s_center[X] - s->s_size;
+	minus[Y] = s->s_center[Y] - s->s_size;
+	minus[Z] = s->s_center[Z] - s->s_size;
+	VMIN(*min, minus);
+	plus[X] = s->s_center[X] + s->s_size;
+	plus[Y] = s->s_center[Y] + s->s_size;
+	plus[Z] = s->s_center[Z] + s->s_size;
+	VMAX(*max, plus);
+    }
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_obj *sc = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
+	obj_bb(have_objs, min, max, sc, v);
+    }
+}
+
+void
+bg_view_obb(struct bview *v)
+{
+    if (!v || !v->gv_width || !v->gv_height)
+	return;
+
+    // Get the radius of the scene.
+    plane_t p;
+    point_t sbbc = VINIT_ZERO;
+    fastf_t radius = 1.0;
+    vect_t min, max, work;
+    VSETALL(min,  INFINITY);
+    VSETALL(max, -INFINITY);
+    int have_objs = 0;
+    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	obj_bb(&have_objs, &min, &max, g, v);
+    }
+    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+    if (so != sol) {
+	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
+	    struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
+	    obj_bb(&have_objs, &min, &max, g, v);
+	}
+    }
+    if (have_objs) {
+	VADD2SCALE(sbbc, max, min, 0.5);
+	VSUB2SCALE(work, max, min, 0.5);
+	radius = MAGNITUDE(work);
+    }
+
+    // Get the model space points for the mid points of the top and right edges
+    // of the view.  If we don't have a width or height, we will use the
+    // existing min and max since we don't have a "screen" to base the box on
+    int w = v->gv_width;
+    int h = v->gv_height;
+    int x = (int)(w * 0.5);
+    int y = (int)(h * 0.5);
+    //bu_log("w,h,x,y: %d %d %d %d\n", w,h, x, y);
+    fastf_t x1 = 0.0, y1 = 0.0, x2 = 0.0, y2 = 0.0, xc = 0.0, yc = 0.0;
+    bv_screen_to_view(v, &x1, &y1, x, h);
+    bv_screen_to_view(v, &x2, &y2, w, y);
+    bv_screen_to_view(v, &xc, &yc, x, y);
+    //bu_log("x1,y1: %f %f\n", x1, y1);
+    //bu_log("x2,y2: %f %f\n", x2, y2);
+    //bu_log("xc,yc: %f %f\n", xc, yc);
+    point_t vp1, vp2, vc, ep1, ep2, ec;
+    VSET(vp1, x1, y1, 0);
+    VSET(vp2, x2, y2, 0);
+    VSET(vc, xc, yc, 0);
+    MAT4X3PNT(ep1, v->gv_view2model, vp1);
+    MAT4X3PNT(ep2, v->gv_view2model, vp2);
+    MAT4X3PNT(ec, v->gv_view2model, vc);
+    //bu_log("view center: %f %f %f\n", V3ARGS(ec));
+    //bu_log("edge point 1: %f %f %f\n", V3ARGS(ep1));
+    //bu_log("edge point 2: %f %f %f\n", V3ARGS(ep2));
+
+    // Need the direction vector - i.e., where the camera is looking.  Got this
+    // trick from the libged nirt code...
+    vect_t dir;
+    VMOVEN(dir, v->gv_rotation + 8, 3);
+    VUNITIZE(dir);
+    VSCALE(dir, dir, -1.0);
+
+    // Box center is the closest point to the view center on the plane defined
+    // by the scene's center and the view dir
+    bg_plane_pt_nrml(&p, sbbc, dir);
+    fastf_t pu, pv;
+    bg_plane_closest_pt(&pu, &pv, p, ec);
+    bg_plane_pt_at(&v->obb_center, p, pu, pv);
+
+    // The first extent is just the scene radius in the lookat direction
+    VSCALE(dir, dir, radius);
+    VMOVE(v->obb_extent1, dir);
+
+    // The other two extents we find by subtracting the view center from the edge points
+    VSUB2(v->obb_extent2, ep1, ec);
+    VSUB2(v->obb_extent3, ep2, ec);
+
+#if 0
+    // For debugging purposes, construct an arb
+    point_t arb[8];
+    // 1 - c - e1 - e2 - e3
+    VSUB2(arb[0], v->obb_center, v->obb_extent1);
+    VSUB2(arb[0], arb[0], v->obb_extent2);
+    VSUB2(arb[0], arb[0], v->obb_extent3);
+    // 2 - c - e1 - e2 + e3
+    VSUB2(arb[1], v->obb_center, v->obb_extent1);
+    VSUB2(arb[1], arb[1], v->obb_extent2);
+    VADD2(arb[1], arb[1], v->obb_extent3);
+    // 3 - c - e1 + e2 + e3
+    VSUB2(arb[2], v->obb_center, v->obb_extent1);
+    VADD2(arb[2], arb[2], v->obb_extent2);
+    VADD2(arb[2], arb[2], v->obb_extent3);
+    // 4 - c - e1 + e2 - e3
+    VSUB2(arb[3], v->obb_center, v->obb_extent1);
+    VADD2(arb[3], arb[3], v->obb_extent2);
+    VSUB2(arb[3], arb[3], v->obb_extent3);
+    // 1 - c + e1 - e2 - e3
+    VADD2(arb[4], v->obb_center, v->obb_extent1);
+    VSUB2(arb[4], arb[4], v->obb_extent2);
+    VSUB2(arb[4], arb[4], v->obb_extent3);
+    // 2 - c + e1 - e2 + e3
+    VADD2(arb[5], v->obb_center, v->obb_extent1);
+    VSUB2(arb[5], arb[5], v->obb_extent2);
+    VADD2(arb[5], arb[5], v->obb_extent3);
+    // 3 - c + e1 + e2 + e3
+    VADD2(arb[6], v->obb_center, v->obb_extent1);
+    VADD2(arb[6], arb[6], v->obb_extent2);
+    VADD2(arb[6], arb[6], v->obb_extent3);
+    // 4 - c + e1 + e2 - e3
+    VADD2(arb[7], v->obb_center, v->obb_extent1);
+    VADD2(arb[7], arb[7], v->obb_extent2);
+    VSUB2(arb[7], arb[7], v->obb_extent3);
+
+    bu_log("center: %f %f %f\n", V3ARGS(v->obb_center));
+    bu_log("e1: %f %f %f\n", V3ARGS(v->obb_extent1));
+    bu_log("e2: %f %f %f\n", V3ARGS(v->obb_extent2));
+    bu_log("e3: %f %f %f\n", V3ARGS(v->obb_extent3));
+
+    bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
+#endif
+}
 
 #define POP_MAXLEVEL 16
 #define POP_CACHEDIR ".POPLoD"
@@ -114,19 +262,25 @@ class POPState {
     public:
 
 	// Create cached data (doesn't create a usable container)
-	POPState(const point_t *v, int vcnt, int *faces, int fcnt);
+	POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt);
 
 	// Load cached data (DOES create a usable container)
 	POPState(unsigned long long key);
 
 	// Cleanup
-	~POPState() {};
+	~POPState();
 
 	// Based on a view size, recommend a level
 	int get_level(fastf_t len);
 
 	// Load/unload data level
 	void set_level(int level);
+
+	// Shrink memory usage (level set routines will have to do more work
+	// after this is run, but the POPState is still viable).  Used after a
+	// client code has done all that is needed with the level data, such as
+	// generating an OpenGL display list, but isn't done with the object.
+	void shrink_memory();
 
 	// Get the "current" position of a point, given its level
 	void level_pnt(point_t *o, const point_t *p, int level);
@@ -148,6 +302,10 @@ class POPState {
 	// Current level of detail information loaded into nfaces/npnts
 	int curr_level = -1;
 
+	// Force a data reload even if the level hasn't changed (i.e. undo a
+	// shrink memory operation when level is set.)
+	bool force_update = false;
+
 	// Maximum level for which POP info is defined.  Above that level,
 	// need to shift to full rendering
 	int max_tri_pop_level = 0;
@@ -159,7 +317,7 @@ class POPState {
 	unsigned long long hash;
 
 	// Drawing trigger
-	void draw(void *ctx, int mode);
+	void draw(void *ctx, struct bv_scene_obj *s);
 	void set_callback(draw_clbk_t clbk);
 
 	// Parent container
@@ -197,18 +355,20 @@ class POPState {
 	// Specific loading and unloading methods
 	void tri_pop_load(int start_level, int level);
 	void tri_pop_trim(int level);
+	std::vector<size_t> level_vcnt;
+	std::vector<size_t> level_tricnt;
 
 	// Processing containers used for initial triangle data characterization
-	std::vector<int> tri_ind_map;
-	std::vector<int> vert_tri_minlevel;
-	std::map<int, std::set<int>> level_tri_verts;
-	std::vector<std::vector<int>> level_tris;
+	std::vector<size_t> tri_ind_map;
+	std::vector<size_t> vert_tri_minlevel;
+	std::map<size_t, std::unordered_set<size_t>> level_tri_verts;
+	std::vector<std::vector<size_t>> level_tris;
 	size_t tri_threshold = 0;
 
 	// Pointers to original input data
-	int vert_cnt = 0;
+	size_t vert_cnt = 0;
 	const point_t *verts_array = NULL;
-	int faces_cnt = 0;
+	size_t faces_cnt = 0;
 	int *faces_array = NULL;
 
 	// Function to use when doing draw operations
@@ -222,21 +382,21 @@ POPState::tri_process()
     // last level (and consequently, their vertices are only needed then).  Set
     // the level accordingly.
     vert_tri_minlevel.reserve(vert_cnt);
-    for (int i = 0; i < vert_cnt; i++) {
+    for (size_t i = 0; i < vert_cnt; i++) {
 	vert_tri_minlevel.push_back(POP_MAXLEVEL - 1);
     }
 
     // Reserve memory for level containers
     level_tris.reserve(POP_MAXLEVEL);
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	level_tris.push_back(std::vector<int>(0));
+    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
+	level_tris.push_back(std::vector<size_t>(0));
     }
 
     // Walk the triangles and perform the LoD characterization
-    for (int i = 0; i < faces_cnt; i++) {
+    for (size_t i = 0; i < faces_cnt; i++) {
 	rec triangle[3];
 	// Transform triangle vertices
-	for (int j = 0; j < 3; j++) {
+	for (size_t j = 0; j < 3; j++) {
 	    triangle[j].x = floor((verts_array[faces_array[3*i+j]][X] - minx) / (maxx - minx) * USHRT_MAX);
 	    triangle[j].y = floor((verts_array[faces_array[3*i+j]][Y] - miny) / (maxy - miny) * USHRT_MAX);
 	    triangle[j].z = floor((verts_array[faces_array[3*i+j]][Z] - minz) / (maxz - minz) * USHRT_MAX);
@@ -244,7 +404,7 @@ POPState::tri_process()
 
 	// Find the pop up level for this triangle (i.e., when it will first
 	// appear as we step up the zoom levels.)
-	int level = POP_MAXLEVEL - 1;
+	size_t level = POP_MAXLEVEL - 1;
 	for (int j = 0; j < POP_MAXLEVEL; j++) {
 	    if (!tri_degenerate(triangle[0], triangle[1], triangle[2], j)) {
 		level = j;
@@ -256,7 +416,7 @@ POPState::tri_process()
 
 	// Let the vertices know they will be needed at this level, if another
 	// triangle doesn't already need them sooner
-	for (int j = 0; j < 3; j++) {
+	for (size_t j = 0; j < 3; j++) {
 	    if (vert_tri_minlevel[faces_array[3*i+j]] > level) {
 		vert_tri_minlevel[faces_array[3*i+j]] = level;
 	    }
@@ -272,12 +432,12 @@ POPState::tri_process()
     // Having sorted the vertices into level sets, we may now define a new global
     // vertex ordering that respects the needs of the levels.
     tri_ind_map.reserve(vert_cnt);
-    for (int i = 0; i < vert_cnt; i++) {
+    for (size_t i = 0; i < vert_cnt; i++) {
 	tri_ind_map.push_back(i);
     }
-    int vind = 0;
-    std::map<int, std::set<int>>::iterator l_it;
-    std::set<int>::iterator s_it;
+    size_t vind = 0;
+    std::map<size_t, std::unordered_set<size_t>>::iterator l_it;
+    std::unordered_set<size_t>::iterator s_it;
     for (l_it = level_tri_verts.begin(); l_it != level_tri_verts.end(); l_it++) {
 	for (s_it = l_it->second.begin(); s_it != l_it->second.end(); s_it++) {
 	    tri_ind_map[*s_it] = vind;
@@ -311,7 +471,7 @@ POPState::tri_process()
     //bu_log("Triangle threshold level: %zd\n", tri_threshold);
 }
 
-POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
+POPState::POPState(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
 {
     // Hash the data to generate a key
     XXH64_state_t h_state;
@@ -355,7 +515,7 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     bg_trimesh_aabb(&bbmin, &bbmax, faces_array, faces_cnt, verts_array, vert_cnt);
 
     // Find our min and max values, initialize levels
-    for (int i = 0; i < vcnt; i++) {
+    for (size_t i = 0; i < vcnt; i++) {
 	minx = (v[i][X] < minx) ? v[i][X] : minx;
 	miny = (v[i][Y] < miny) ? v[i][Y] : miny;
 	minz = (v[i][Z] < minz) ? v[i][Z] : minz;
@@ -383,13 +543,15 @@ POPState::POPState(const point_t *v, int vcnt, int *faces, int fcnt)
     if (!is_valid)
 	return;
 
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	bu_log("bucket %d count: %zd\n", i, level_tris[i].size());
+#if 0
+    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
+	bu_log("bucket %zu count: %zu\n", i, level_tris[i].size());
     }
 
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	bu_log("vert %d count: %zd\n", i, level_tri_verts[i].size());
+    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
+	bu_log("vert %zu count: %zu\n", i, level_tri_verts[i].size());
     }
+#endif
 }
 
 POPState::POPState(unsigned long long key)
@@ -415,10 +577,12 @@ POPState::POPState(unsigned long long key)
     }
     hash = key;
 
-    // Reserve memory for level containers
-    level_tris.reserve(POP_MAXLEVEL);
-    for (int i = 0; i < POP_MAXLEVEL; i++) {
-	level_tris.push_back(std::vector<int>(0));
+    // Reserve memory for level counting containers
+    level_vcnt.reserve(POP_MAXLEVEL);
+    level_tricnt.reserve(POP_MAXLEVEL);
+    for (size_t i = 0; i < POP_MAXLEVEL; i++) {
+	level_vcnt[i] = 0;
+	level_tricnt[i] = 0;
     }
 
     // Read in min/max bounds
@@ -445,6 +609,7 @@ POPState::POPState(unsigned long long key)
 	if (bu_file_exists(dir, NULL)) {
 	    max_tri_pop_level = i;
 	}
+	bu_vls_free(&vfile);
     }
 
     // Read in the zero level vertices and triangles
@@ -455,6 +620,11 @@ POPState::POPState(unsigned long long key)
     is_valid = 1;
 }
 
+POPState::~POPState()
+{
+
+}
+
 void
 POPState::tri_pop_load(int start_level, int level)
 {
@@ -463,28 +633,29 @@ POPState::tri_pop_load(int start_level, int level)
     bu_vls_sprintf(&vkey, "%llu", hash);
 
     // Read in the level vertices
+    struct bu_vls lfile = BU_VLS_INIT_ZERO;
     for (int i = start_level+1; i <= level; i++) {
-	struct bu_vls vfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&vfile, "tri_verts_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&vfile), NULL);
-	if (!bu_file_exists(dir, NULL))
+	bu_vls_sprintf(&lfile, "tri_verts_level_%d", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&lfile), NULL);
+	if (!bu_file_exists(dir, NULL)) {
 	    continue;
+	}
 
 	std::ifstream vifile(dir, std::ios::in | std::ofstream::binary);
-	int vicnt = 0;
+	size_t vicnt = 0;
 	vifile.read(reinterpret_cast<char *>(&vicnt), sizeof(vicnt));
-	for (int j = 0; j < vicnt; j++) {
+	lod_tri_pnts.reserve(lod_tri_pnts.size() + vicnt*3);
+	for (size_t j = 0; j < vicnt; j++) {
 	    point_t nv;
 	    vifile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
-	    for (int k = 0; k < 3; k++) {
+	    for (size_t k = 0; k < 3; k++) {
 		lod_tri_pnts.push_back(nv[k]);
 	    }
-	    level_tri_verts[i].insert(lod_tri_pnts.size() - 1);
 	}
+	level_vcnt[i] = vicnt;
 	vifile.close();
-	bu_vls_free(&vfile);
     }
-    // Re-snap all vertices loaded at the new level
+    // Re-snap all vertices currently loaded at the new level
     lod_tri_pnts_snapped.clear();
     lod_tri_pnts_snapped.reserve(lod_tri_pnts.size());
     for (size_t i = 0; i < lod_tri_pnts.size()/3; i++) {
@@ -498,45 +669,52 @@ POPState::tri_pop_load(int start_level, int level)
 
     // Read in the level triangles
     for (int i = start_level+1; i <= level; i++) {
-	struct bu_vls tfile = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&tfile, "tris_level_%d", i);
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&tfile), NULL);
-	if (!bu_file_exists(dir, NULL))
+	bu_vls_sprintf(&lfile, "tris_level_%d", i);
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), bu_vls_cstr(&lfile), NULL);
+	if (!bu_file_exists(dir, NULL)) {
+	    bu_vls_free(&lfile);
 	    continue;
+	}
 
 	std::ifstream tifile(dir, std::ios::in | std::ofstream::binary);
-	int ticnt = 0;
+	size_t ticnt = 0;
 	tifile.read(reinterpret_cast<char *>(&ticnt), sizeof(ticnt));
-	for (int j = 0; j < ticnt; j++) {
+	lod_tris.reserve(lod_tris.size() + ticnt*3);
+	for (size_t j = 0; j < ticnt; j++) {
 	    int vf[3];
 	    tifile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
 	    for (int k = 0; k < 3; k++) {
 		lod_tris.push_back(vf[k]);
 	    }
-	    level_tris[i].push_back(lod_tris.size() / 3 - 1);
 	}
+	level_tricnt[i] = ticnt;
 	tifile.close();
-	bu_vls_free(&tfile);
     }
 
     bu_vls_free(&vkey);
+    bu_vls_free(&lfile);
+}
+
+void
+POPState::shrink_memory()
+{
+    lod_tri_pnts.clear();
+    lod_tri_pnts.shrink_to_fit();
+    lod_tris.clear();
+    lod_tris.shrink_to_fit();
+    lod_tri_pnts_snapped.clear();
+    lod_tri_pnts_snapped.shrink_to_fit();
 }
 
 void
 POPState::tri_pop_trim(int level)
 {
-    // Clear the level_tris info for everything above the target level - it will be reloaded
-    // if we need it again
-    for (size_t i = level+1; i < POP_MAXLEVEL; i++) {
-	level_tris[i].clear();
-	level_tris[i].shrink_to_fit();
-    }
     // Tally all the lower level verts and tris - those are the ones we need to keep
     size_t vkeep_cnt = 0;
     size_t fkeep_cnt = 0;
     for (size_t i = 0; i <= (size_t)level; i++) {
-	vkeep_cnt += level_tri_verts[i].size();
-	fkeep_cnt += level_tris[i].size();
+	vkeep_cnt += level_vcnt[i];
+	fkeep_cnt += level_tricnt[i];
     }
 
     // Shrink the main arrays (note that in C++11 shrink_to_fit may or may
@@ -581,24 +759,40 @@ POPState::get_level(fastf_t vlen)
 void
 POPState::set_level(int level)
 {
-    // If we're already there, no work to do
-    if (level == curr_level)
+    // If we're already there and we're not undoing a memshrink, no work to do
+    if (level == curr_level && !force_update)
 	return;
 
-    int64_t start, elapsed;
-    fastf_t seconds;
-    start = bu_gettime();
+    // If we're doing a forced update, it's like starting from
+    // scratch - reset to 0
+    if (force_update) {
+	force_update = false;
+	set_level(0);
+	set_level(level);
+    }
+
+//    int64_t start, elapsed;
+//    fastf_t seconds;
+//    start = bu_gettime();
 
     // Triangles
 
     // If we need to pull more data, do so
     if (level > curr_level && level <= max_tri_pop_level) {
-	tri_pop_load(curr_level, level);
+	if (!lod_tri_pnts.size()) {
+	    tri_pop_load(-1, level);
+	} else {
+	    tri_pop_load(curr_level, level);
+	}
     }
 
     // If we need to trim back the POP data, do that
     if (level < curr_level && level <= max_tri_pop_level && curr_level <= max_tri_pop_level) {
-	tri_pop_trim(level);
+	if (!lod_tri_pnts.size()) {
+	    tri_pop_load(-1, level);
+	} else {
+	    tri_pop_trim(level);
+	}
     }
 
     // If we were operating beyond POP detail levels (i.e. using RTree
@@ -621,13 +815,10 @@ POPState::set_level(int level)
     // If we're jumping into details levels beyond POP range, clear the POP containers
     // and load the more detailed data management info
     if (level > curr_level && level > max_tri_pop_level && curr_level <= max_tri_pop_level) {
-	for (size_t i = 0; i < POP_MAXLEVEL; i++) {
-	    level_tris[i].clear();
-	    level_tris[i].shrink_to_fit();
-	}
 
 	// Read the complete tris and verts for full drawing
 	lod_tri_pnts_snapped.clear();
+	lod_tri_pnts_snapped.shrink_to_fit();
 	lod_tri_pnts.clear();
 	lod_tris.clear();
 	{
@@ -639,6 +830,7 @@ POPState::set_level(int level)
 	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_verts", NULL);
 	    std::ifstream avfile(dir, std::ios::in | std::ofstream::binary);
 	    avfile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
+	    lod_tri_pnts.reserve(3*ecnt);
 	    for (size_t i = 0; i < ecnt; i++) {
 		point_t nv;
 		avfile.read(reinterpret_cast<char *>(&nv), sizeof(point_t));
@@ -650,6 +842,7 @@ POPState::set_level(int level)
 	    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), "all_faces", NULL);
 	    std::ifstream affile(dir, std::ios::in | std::ofstream::binary);
 	    affile.read(reinterpret_cast<char *>(&ecnt), sizeof(ecnt));
+	    lod_tris.reserve(3*ecnt);
 	    for (size_t i = 0; i < ecnt; i++) {
 		int vf[3];
 		affile.read(reinterpret_cast<char *>(&vf), 3*sizeof(int));
@@ -662,9 +855,9 @@ POPState::set_level(int level)
 
     }
 
-    elapsed = bu_gettime() - start;
-    seconds = elapsed / 1000000.0;
-    bu_log("lod set_level(%d): %f sec\n", level, seconds);
+    //elapsed = bu_gettime() - start;
+    //seconds = elapsed / 1000000.0;
+    //bu_log("lod set_level(%d): %f sec\n", level, seconds);
 
     curr_level = level;
 }
@@ -687,11 +880,11 @@ POPState::cache_tri(struct bu_vls *vkey)
 	std::ofstream vofile(dir, std::ios::out | std::ofstream::binary);
 
 	// Store the size of the level vert vector
-	int sv = level_tri_verts[i].size();
+	size_t sv = level_tri_verts[i].size();
 	vofile.write(reinterpret_cast<const char *>(&sv), sizeof(sv));
 
 	// Write out the vertex points
-	std::set<int>::iterator s_it;
+	std::unordered_set<size_t>::iterator s_it;
 	for (s_it = level_tri_verts[i].begin(); s_it != level_tri_verts[i].end(); s_it++) {
 	    point_t v;
 	    VMOVE(v, verts_array[*s_it]);
@@ -714,16 +907,16 @@ POPState::cache_tri(struct bu_vls *vkey)
 	std::ofstream tofile(dir, std::ios::out | std::ofstream::binary);
 
 	// Store the size of the level tri vector
-	int st = level_tris[i].size();
+	size_t st = level_tris[i].size();
 	tofile.write(reinterpret_cast<const char *>(&st), sizeof(st));
 
 	// Write out the mapped triangle indices
-	std::vector<int>::iterator s_it;
+	std::vector<size_t>::iterator s_it;
 	for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
 	    int vt[3];
-	    vt[0] = tri_ind_map[faces_array[3*(*s_it)+0]];
-	    vt[1] = tri_ind_map[faces_array[3*(*s_it)+1]];
-	    vt[2] = tri_ind_map[faces_array[3*(*s_it)+2]];
+	    vt[0] = (int)tri_ind_map[faces_array[3*(*s_it)+0]];
+	    vt[1] = (int)tri_ind_map[faces_array[3*(*s_it)+1]];
+	    vt[2] = (int)tri_ind_map[faces_array[3*(*s_it)+2]];
 	    tofile.write(reinterpret_cast<const char *>(&vt[0]), sizeof(vt));
 	}
 
@@ -778,6 +971,11 @@ POPState::cache()
     }
 
     char dir[MAXPATHLEN];
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, NULL);
+    if (!bu_file_exists(dir, NULL)) {
+	lod_dir(dir);
+    }
+
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
     if (!bu_file_exists(dir, NULL)) {
 	lod_dir(dir);
@@ -887,13 +1085,14 @@ POPState::tri_degenerate(rec r0, rec r1, rec r2, int level)
 }
 
 void
-POPState::draw(void *ctx, int mode)
+POPState::draw(void *ctx, struct bv_scene_obj *s)
 {
     if (draw_clbk) {
 	struct bv_mesh_lod_info info;
+	info.s = s;
 	info.fset_cnt = 0;
 	info.fset = NULL;
-	info.fcnt = lod_tris.size()/3;
+	info.fcnt = (int)lod_tris.size()/3;
 	info.faces = lod_tris.data();
 	info.points_orig = (const point_t *)lod_tri_pnts.data();
 	if (curr_level <= max_tri_pop_level) {
@@ -903,7 +1102,6 @@ POPState::draw(void *ctx, int mode)
 	}
 	info.face_normals = NULL;
 	info.normals = NULL;
-	info.mode = mode;
 	info.lod = lod;
 	(*draw_clbk)(ctx, &info);
     }
@@ -936,9 +1134,9 @@ POPState::plot(const char *root)
 	pl_color(plot_file, 0, 255, 0);
 
 	for (int i = 0; i <= curr_level; i++) {
-	    std::vector<int>::iterator s_it;
+	    std::vector<size_t>::iterator s_it;
 	    for (s_it = level_tris[i].begin(); s_it != level_tris[i].end(); s_it++) {
-		int f_ind = *s_it;
+		size_t f_ind = *s_it;
 		int v1ind, v2ind, v3ind;
 		if (faces_array) {
 		    v1ind = faces_array[3*f_ind+0];
@@ -999,7 +1197,7 @@ struct bg_mesh_lod_internal {
 };
 
 extern "C" unsigned long long
-bg_mesh_lod_cache(const point_t *v, int vcnt, int *faces, int fcnt)
+bg_mesh_lod_cache(const point_t *v, size_t vcnt, int *faces, size_t fcnt)
 {
     unsigned long long key = 0;
 
@@ -1057,7 +1255,7 @@ bg_mesh_lod_destroy(struct bv_mesh_lod_info *i)
 }
 
 extern "C" int
-bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
+bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int reset)
 {
 
     if (!l)
@@ -1066,15 +1264,15 @@ bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int scale)
 	return l->i->s->curr_level;
 
     POPState *s = l->i->s;
-    int vscale = s->get_level(v->gv_size) + scale;
+    int vscale = (int)((double)s->get_level(v->gv_size) * v->gv_s->lod_scale);
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
-    bg_mesh_lod_level(l, vscale);
+    bg_mesh_lod_level(l, vscale, reset);
     return vscale;
 }
 
 extern "C" int
-bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
+bg_mesh_lod_level(struct bg_mesh_lod *l, int level, int reset)
 {
     if (!l)
 	return -1;
@@ -1084,24 +1282,96 @@ bg_mesh_lod_level(struct bg_mesh_lod *l, int level)
     if (level < 0)
 	return s->curr_level;
 
+    s->force_update = (reset) ? true : false;
+
     s->set_level(level);
 
     return s->curr_level;
 }
 
-extern "C" int
-bg_mesh_lod_update(struct bv_scene_obj *s, int offset)
+static void
+dlist_stale(struct bv_scene_obj *s)
 {
+    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
+	struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(&s->children, i);
+	dlist_stale(cg);
+    }
+    s->s_dlist_stale = 1;
+}
+
+extern "C" int
+bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(offset))
+{
+    if (!s || !v)
+	return -1;
     struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    if (!i)
+	return -1;
     struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
-    return bg_mesh_lod_view(l, s->s_v, offset);
+    if (!l)
+	return -1;
+
+    POPState *sp = l->i->s;
+
+    VMOVE(s->bmin, sp->bbmin);
+    VMOVE(s->bmax, sp->bbmax);
+
+    int old_level = sp->curr_level;
+    int new_level = old_level;
+
+    // If the object is not visible in the scene, don't change the data
+    //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(s->bmin), V3ARGS(s->bmax));
+    if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3)) {
+	new_level = bg_mesh_lod_view(l, v, 0);
+    }
+
+    if (old_level != new_level) {
+	dlist_stale(s);
+    }
+
+    return new_level;
 }
 
 extern "C" void
-bg_mesh_lod_clear(unsigned long long key)
+bg_mesh_lod_memshrink(struct bv_scene_obj *s)
 {
-    if (key == 0)
-	bu_log("Remove all\n");
+    if (!s)
+	return;
+    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    if (!i)
+	return;
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
+    if (!l)
+	return;
+
+    POPState *sp = l->i->s;
+    sp->shrink_memory();
+    bu_log("memshrink\n");
+}
+
+extern "C" void
+bg_mesh_lod_clear_cache(unsigned long long key)
+{
+    char dir[MAXPATHLEN];
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
+    if (!bu_file_exists(dir, NULL))
+	return;
+    if (key == 0) {
+	char **filenames;
+	size_t nfiles = bu_file_list(dir, "*", &filenames);
+	for (size_t i = 0; i < nfiles; i++) {
+	    char cdir[MAXPATHLEN] = {0};
+	    bu_dir(cdir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, filenames[i], NULL);
+	    char **cfilenames;
+	    size_t ncfiles = bu_file_list(cdir, "*", &cfilenames);
+	    for (size_t j = 0; j < ncfiles; j++) {
+		char cfile[MAXPATHLEN] = {0};
+		bu_dir(cfile, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, filenames[i], cfilenames[j], NULL);
+		bu_file_delete(cfile);
+	    }
+	    bu_file_delete(cdir);
+	}
+    }
 }
 
 extern "C" void
@@ -1118,15 +1388,31 @@ bg_mesh_lod_set_draw_callback(
 }
 
 extern "C" void
-bg_mesh_lod_draw(struct bg_mesh_lod *lod, void *ctx, int mode)
+bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s)
 {
-    if (!lod || !ctx)
+    if (!s || !ctx)
 	return;
 
-    POPState *s = lod->i->s;
-    s->draw(ctx, mode);
+    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
+    POPState *ps = l->i->s;
+    ps->draw(ctx, s);
 }
 
+void
+bg_mesh_lod_free(struct bv_scene_obj *s)
+{
+    if (!s || !s->draw_data)
+	return;
+    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
+    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
+    POPState *ps = l->i->s;
+    delete ps;
+    BU_PUT(l->i, struct bg_mesh_lod_internal);
+    BU_PUT(l, struct bg_mesh_lod);
+    BU_PUT(i, struct bg_mesh_lod_info);
+    s->draw_data = NULL;
+}
 
 // Local Variables:
 // tab-width: 8

@@ -30,16 +30,6 @@
 #include "QPolyCreate.h"
 #include "QPolyMod.h"
 
-#define FREE_BV_SCENE_OBJ(p, fp) { \
-    for (size_t c_i = 0; c_i < BU_PTBL_LEN(&p->children); c_i++) { \
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&p->children, c_i); \
-	BU_LIST_APPEND(fp, &((s_c)->l)); \
-	BV_FREE_VLIST(&gedp->ged_views.vlfree, &((s_c)->s_vlist)); \
-    } \
-    BU_LIST_APPEND(fp, &((p)->l)); \
-    BV_FREE_VLIST(&gedp->ged_views.vlfree, &((p)->s_vlist)); \
-}
-
 QPolyMod::QPolyMod()
     : QWidget()
 {
@@ -279,7 +269,7 @@ QPolyMod::polygon_update_props()
     }
 
     // TODO - this should be a visual-properties-only update, but libbg doesn't support that yet.
-    bv_update_polygon(p, BV_POLYGON_UPDATE_PROPS_ONLY);
+    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
     emit view_updated(&gedp->ged_gvp);
 }
 
@@ -310,7 +300,7 @@ QPolyMod::toplevel_config(bool)
 		    draw_change = true;
 		    ip->curr_point_i = -1;
 		    ip->curr_contour_i = 0;
-		    bv_update_polygon(p, BV_POLYGON_UPDATE_PROPS_ONLY);
+		    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
 		}
 	    }
 	}
@@ -350,7 +340,7 @@ QPolyMod::clear_pnt_selection(bool checked)
     ip->curr_point_i = -1;
     ip->curr_contour_i = 0;
 
-    bv_update_polygon(p, BV_POLYGON_UPDATE_PROPS_ONLY);
+    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
 
     QgSelectionProxyModel *mdl = ((CADApp *)qApp)->mdl;
     if (!mdl)
@@ -483,15 +473,14 @@ QPolyMod::toggle_closed_poly(bool checked)
 	if (pcnt || op != bg_Union) {
 	    bg_polygon_free(&ip->polygon);
 	    BU_PUT(ip, struct bv_polygon);
-	    bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
-	    FREE_BV_SCENE_OBJ(p, &gedp->ged_views.free_scene_obj->l);
+	    bv_obj_put(p);
 	    p = NULL;
 	}
 	do_bool = false;
     }
 
     if (p) {
-	bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
+	bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
     }
 
     toplevel_config(false);
@@ -528,8 +517,7 @@ QPolyMod::apply_bool_op()
     if (pcnt || op != bg_Union) {
 	bg_polygon_free(&ip->polygon);
 	BU_PUT(ip, struct bv_polygon);
-	bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
-	FREE_BV_SCENE_OBJ(p, &gedp->ged_views.free_scene_obj->l);
+	bv_obj_put(p);
 	mod_names->setCurrentIndex(0);
 	if (mod_names->currentText().length()) {
 	    select(mod_names->currentText());
@@ -575,8 +563,7 @@ QPolyMod::delete_poly()
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
     bg_polygon_free(&ip->polygon);
     BU_PUT(ip, struct bv_polygon);
-    bu_ptbl_rm(gedp->ged_gvp->gv_objs.view_objs, (long *)p);
-    FREE_BV_SCENE_OBJ(p, &gedp->ged_views.free_scene_obj->l);
+    bv_obj_put(p);
     mod_names->setCurrentIndex(0);
     if (mod_names->currentText().length()) {
 	select(mod_names->currentText());
@@ -905,7 +892,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
 #endif
-	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_APPEND);
+	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
 
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
@@ -919,7 +906,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 	    p->s_v->gv_mouse_x = m_e->x();
 	    p->s_v->gv_mouse_y = m_e->y();
 #endif
-	    bv_update_polygon(p, BV_POLYGON_UPDATE_PT_SELECT);
+	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_SELECT);
 	    emit view_updated(&gedp->ged_gvp);
 	    return true;
 	}
@@ -944,7 +931,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	    if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
-		bv_update_polygon(p, BV_POLYGON_UPDATE_PT_MOVE);
+		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_MOVE);
 		emit view_updated(&gedp->ged_gvp);
 	    } else if (move_mode->isChecked()) {
 		bu_log("move polygon mode\n");
@@ -952,7 +939,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 		bv_move_polygon(p);
 		emit view_updated(&gedp->ged_gvp);
 	    } else {
-		bv_update_polygon(p, BV_POLYGON_UPDATE_DEFAULT);
+		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
 		emit view_updated(&gedp->ged_gvp);
 	    }
 	    return true;
