@@ -142,10 +142,6 @@ brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUS
     // fprintf(output, "names: %s | %s\n", (const char*)ap->a_uptr, pp->pt_regionp->reg_name);
     // fflush(output);
 
-    if (!BU_STR_EQUAL((const char*)ap->a_uptr, pp->pt_regionp->reg_name)) {
-	return 0;
-    }
-
     /* construct the actual (entry) hit-point from the ray and the
      * distance to the intersection point (i.e., the 't' value).
      */
@@ -201,8 +197,7 @@ BrlcadObject:: BrlcadObject(
     struct application* p_ap, struct resource* p_resources)
     : asr::ProceduralObject(name, params)
 {
-    this->ap = p_ap;
-    this->rtip = p_ap->a_rt_i;
+    // this->rtip = p_ap->a_rt_i;
     this->resources = p_resources;
     // VMOVE(this->min, ap->a_uvec);
     // VMOVE(this->max, ap->a_vvec);
@@ -212,21 +207,20 @@ BrlcadObject:: BrlcadObject(
     VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
 
     std::string db_file = m_params.get_required<std::string>("database_path");
-    this->rtip = rt_new_rti(this->ap->a_rt_i->rti_dbip);//rt_dirbuild(db_file.c_str(), NULL, 0);
-    this->ap->a_rt_i = rtip;
-    if (rtip == RTI_NULL) {
+    this->rtip = rt_new_rti(p_ap->a_rt_i->rti_dbip);
+    if (this->rtip == RTI_NULL) {
         RENDERER_LOG_INFO("building the database directory for [%s] FAILED\n", db_file);
         bu_exit(BRLCAD_ERROR, "building the database directory for [%s] FAILED\n", db_file);
     }
 
     for (int ic = 0; ic < MAX_PSW; ic++) {
-        rt_init_resource(&p_resources[ic], ic, rtip);
+	rt_init_resource(&p_resources[ic], ic, this->rtip);
         RT_CK_RESOURCE(&p_resources[ic]);
     }
 
-    rt_gettree(rtip, this->name->c_str());
-    if (rtip->needprep)
-        rt_prep_parallel(rtip, 1);
+    rt_gettree(this->rtip, this->name->c_str());
+    if (this->rtip->needprep)
+        rt_prep_parallel(this->rtip, 1);
     //printf("name: [%s]\n", name);
     //this->rtip = rt_dirbuild();
     //this->rtip = p_ap->a_rt_i;
@@ -234,8 +228,16 @@ BrlcadObject:: BrlcadObject(
     // VSETALL(ap->a_uvec, 0);
     // VSETALL(ap->a_vvec, 0);
 
-    fprintf(output, "art.cpp const: Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
-    fflush(output);
+    // fprintf(output, "art.cpp const: Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
+    // fflush(output);
+
+    RT_APPLICATION_INIT(&ap);
+
+    /* configure raytrace application */
+    ap.a_rt_i = this->rtip;
+    ap.a_onehit = 1;
+    ap.a_hit = brlcad_hit;
+    ap.a_miss = brlcad_miss;
 }
 
 
@@ -277,13 +279,12 @@ BrlcadObject::on_frame_begin(
 asr::GAABB3
 BrlcadObject::compute_local_bbox() const
 {
-    if (!ap || !ap->a_rt_i)
+    if (!this->rtip)
 	return asr::GAABB3(asr::GVector3(0, 0, 0), asr::GVector3(0, 0, 0));
 
     // const auto r = static_cast<asr::GScalar>(get_uncached_radius());
-    struct rt_i* l_rtip = ap->a_rt_i;
-    if (l_rtip->needprep)
-	rt_prep_parallel(l_rtip, 1);
+    if (this->rtip->needprep)
+	rt_prep_parallel(this->rtip, 1);
 
     // point_t min;
     // VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
@@ -292,8 +293,8 @@ BrlcadObject::compute_local_bbox() const
     // VMOVE(max, ap->a_vvec);
     // VSET(max, m_params.get_required<double>("maxX"), m_params.get_required<double>("maxY"), m_params.get_required<double>("maxZ"));
 
-    fprintf(output, "Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
-    fflush(output);
+    // fprintf(output, "Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", V3ARGS(min), V3ARGS(max));
+    // fflush(output);
 
     return asr::GAABB3(asr::GVector3(V3ARGS(min)), asr::GVector3(V3ARGS(max)));
     // return asr::GAABB3(asr::GVector3(-r), asr::GVector3(r));
@@ -322,7 +323,7 @@ BrlcadObject::intersect(
     IntersectionResult& result) const
 {
     struct application app;
-    app = *ap; /* struct copy */
+    app = ap;  /*struct copy*/
     /* brlcad raytracing */
     int cpu = get_id();
     app.a_resource = &resources[cpu];
@@ -366,7 +367,7 @@ bool
 BrlcadObject::intersect(const asr::ShadingRay& ray) const
 {
     struct application app;
-    app = *ap; /* struct copy */
+    app = ap; /* struct copy */
     /* brlcad raytracing */
     int cpu = get_id();
     app.a_resource = &resources[cpu];
@@ -437,7 +438,17 @@ BrlcadObject::get_objects() const
 void
 BrlcadObject::configure_raytrace_application(const char* path, int objc, std::vector<std::string> objects)
 {
-    ap = static_cast<application*>(bu_calloc(1, sizeof(application), "appleseed"));
+    // FIXME: This current implementation below is untested and likely out of sync. It needs to be reworked for plugin use.
+
+    struct application ap;
+    RT_APPLICATION_INIT(&ap);
+
+    /* configure raytrace application */
+    ap.a_rt_i = this->rtip;
+    ap.a_onehit = 1;
+    ap.a_hit = brlcad_hit;
+    ap.a_miss = brlcad_miss;
+    //ap = static_cast<application*>(bu_calloc(1, sizeof(application), "appleseed"));
     resources = static_cast<resource*>(bu_calloc(1, sizeof(resource) * MAX_PSW, "appleseed"));
 
     char title[1024] = { 0 }; /* optional database title */
@@ -479,13 +490,13 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
 	rt_prep_parallel(rtip, 1);
 
     /* Initialize values in application struct */
-    RT_APPLICATION_INIT(ap);
+    //RT_APPLICATION_INIT(ap);
 
     /* configure raytrace application */
-    ap->a_onehit = -1;
-    ap->a_rt_i = rtip;
-    ap->a_hit = brlcad_hit;
-    ap->a_miss = brlcad_miss;
+    //ap->a_onehit = -1;
+    //ap->a_rt_i = rtip;
+    //ap->a_hit = brlcad_hit;
+    //ap->a_miss = brlcad_miss;
 }
 
 

@@ -972,8 +972,6 @@ main(int argc, char **argv)
     APP.a_miss = brlcad_miss;
 
     do_ae(azimuth, elevation);
-    rt_clean(rtip);
-    APP.a_rt_i = NULL;
     // RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], eye_model[2], -eye_model[1]);
 
     // Build the project.
