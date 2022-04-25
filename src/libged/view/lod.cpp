@@ -50,7 +50,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     struct bview *gvp;
     int print_help = 0;
     static const char *usage = "view lod [0|1]\n"
-	"view lod cache [clear]\n"
+	"view lod cache [clear] [all_files]\n"
 	"view lod enabled [0|1]\n"
 	"view lod scale [factor]\n"
 	"view lod point_scale [factor]\n"
@@ -79,7 +79,7 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	return BRLCAD_HELP;
     }
 
-    if (argc > 2) {
+    if (argc > 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
 	return BRLCAD_ERROR;
     }
@@ -166,9 +166,17 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gedp->ged_result_str, "Caching complete");
 	    return BRLCAD_OK;
 	}
-	if (BU_STR_EQUAL(argv[1], "clear")) {
-	    bg_mesh_lod_clear_cache(gedp->ged_lod, 0);
-	    return BRLCAD_OK;
+	if (argc == 2) {
+	    if (BU_STR_EQUAL(argv[1], "clear")) {
+		bg_mesh_lod_clear_cache(gedp->ged_lod, 0);
+		return BRLCAD_OK;
+	    }
+	}
+	if (argc == 3) {
+	    if (BU_STR_EQUAL(argv[1], "clear") && BU_STR_EQUAL(argv[2], "all_files")) {
+		bg_mesh_lod_clear_cache(NULL, 0);
+		return BRLCAD_OK;
+	    }
 	}
 	bu_vls_printf(gedp->ged_result_str, "unknown argument to cache: %s\n", argv[1]);
 	return BRLCAD_ERROR;

@@ -85,12 +85,22 @@
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/path.h"
+#include "bu/str.h"
 #include "bu/time.h"
 #include "bv/plot3.h"
 #include "bg/lod.h"
 #include "bg/plane.h"
 #include "bg/sat.h"
 #include "bg/trimesh.h"
+
+// Number of levels of detail to define
+#define POP_MAXLEVEL 16
+
+// Subdirectory in BRL-CAD cache to hold this type of LoD data
+#define POP_CACHEDIR ".POPLoD"
+
+// Factor by which to bump out bounds to avoid points on box edges
+#define MBUMP 1.01
 
 // Maximum database size.  For detailed views we fall back on just
 // displaying the full data set, and we need to be able to memory map the
@@ -101,9 +111,18 @@
 // to wipe and redo.
 #define CACHE_CURRENT_FORMAT 1
 
-#define POP_MAXLEVEL 16
-#define POP_CACHEDIR ".POPLoD"
-#define MBUMP 1.01
+/* There are various individual pieces of data in the cache associated with
+ * each object key.  For lookup they use short suffix strings to distinguish
+ * them - we define those strings here to have consistent definitions for use
+ * in multiple functions.
+ *
+ * Changing any of these requires incrementing CACHE_CURRENT_FORMAT. */
+#define CACHE_POP_MAX_LEVEL "th"
+#define CACHE_VERTEX_COUNT "vc"
+#define CACHE_TRI_COUNT "tc"
+#define CACHE_OBJ_BOUNDS "bb"
+#define CACHE_VERT_LEVEL "v"
+#define CACHE_TRI_LEVEL "t"
 
 typedef int (*draw_clbk_t)(void *, struct bv_mesh_lod *);
 typedef int (*full_detail_clbk_t)(struct bv_mesh_lod *, void *);
@@ -270,6 +289,7 @@ struct bg_mesh_lod_context_internal {
     MDB_env *lod_env;
     MDB_txn *lod_txn;
     MDB_dbi lod_dbi;
+    struct bu_vls *fname;
 };
 
 struct bg_mesh_lod_context *
@@ -301,6 +321,9 @@ bg_mesh_lod_context_create(const char *name)
     BU_GET(c, struct bg_mesh_lod_context);
     BU_GET(c->i, struct bg_mesh_lod_context_internal);
     struct bg_mesh_lod_context_internal *i = c->i;
+    BU_GET(i->fname, struct bu_vls);
+    bu_vls_init(i->fname);
+    bu_vls_sprintf(i->fname, "%s", bu_vls_cstr(&fname));
 
     if (mdb_env_create(&i->lod_env))
 	goto lod_context_fail;
@@ -387,6 +410,8 @@ bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c)
     if (!c)
 	return;
     mdb_env_close(c->i->lod_env);
+    bu_vls_free(c->i->fname);
+    BU_PUT(c->i->fname, struct bu_vls);
     BU_PUT(c->i, struct bg_mesh_lod_context_internal);
     BU_PUT(c, struct bg_mesh_lod_context);
 }
@@ -505,6 +530,7 @@ class POPState {
 	bool cache_write(const char *component, std::stringstream &s);
 	size_t cache_get(void **data, const char *component);
 	void cache_done();
+	void cache_del(const char *component);
 	MDB_val mdb_key, mdb_data;
 
 	// Specific loading and unloading methods
@@ -652,7 +678,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcn
     // data.  The hash is set, which is all we really need - loading data from
     // the cache is handled elsewhere.
     void *cdata = NULL;
-    size_t csize = cache_get(&cdata, "th");
+    size_t csize = cache_get(&cdata, CACHE_POP_MAX_LEVEL);
     if (csize && cdata) {
 	cache_done();
 	is_valid = true;
@@ -739,7 +765,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
     // Find the maximum POP level
     {
 	const char *b = NULL;
-	size_t bsize = cache_get((void **)&b, "th");
+	size_t bsize = cache_get((void **)&b, CACHE_POP_MAX_LEVEL);
 	if (bsize != sizeof(max_pop_threshold_level)) {
 	    bu_log("Incorrect data size found loading max LoD POP threshold\n");
 	    return;
@@ -751,7 +777,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
     // Load level counts for vectors and tris
     {
 	const char *b = NULL;
-	size_t bsize = cache_get((void **)&b, "vc");
+	size_t bsize = cache_get((void **)&b, CACHE_VERTEX_COUNT);
 	if (bsize != sizeof(level_vcnt)) {
 	    bu_log("Incorrect data size found loading level vertex counts\n");
 	    return;
@@ -761,7 +787,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
     }
     {
 	const char *b = NULL;
-	size_t bsize = cache_get((void **)&b, "tc");
+	size_t bsize = cache_get((void **)&b, CACHE_TRI_COUNT);
 	if (bsize != sizeof(level_tricnt)) {
 	    bu_log("Incorrect data size found loading level triangle counts\n");
 	    return;
@@ -774,7 +800,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
     {
 	float minmax[6];
 	const char *b = NULL;
-	size_t bsize = cache_get((void **)&b, "bb");
+	size_t bsize = cache_get((void **)&b, CACHE_OBJ_BOUNDS);
 	if (bsize != (sizeof(bbmin) + sizeof(bbmax) + sizeof(minmax))) {
 	    bu_log("Incorrect data size found loading cached bounds data\n");
 	    return;
@@ -818,7 +844,7 @@ POPState::tri_pop_load(int start_level, int level)
     for (int i = start_level+1; i <= level; i++) {
 	if (!level_vcnt[i])
 	    continue;
-	bu_vls_sprintf(&kbuf, "v%d", i);
+	bu_vls_sprintf(&kbuf, "%s%d", CACHE_VERT_LEVEL, i);
 	fastf_t *b = NULL;
 	size_t bsize = cache_get((void **)&b, bu_vls_cstr(&kbuf));
 	if (bsize != level_vcnt[i]*3*sizeof(fastf_t)) {
@@ -844,7 +870,7 @@ POPState::tri_pop_load(int start_level, int level)
     for (int i = start_level+1; i <= level; i++) {
 	if (!level_tricnt[i])
 	    continue;
-	bu_vls_sprintf(&kbuf, "t%d", i);
+	bu_vls_sprintf(&kbuf, "%s%d", CACHE_TRI_LEVEL, i);
 	int *b = NULL;
 	size_t bsize = cache_get((void **)&b, bu_vls_cstr(&kbuf));
 	if (bsize != level_tricnt[i]*3*sizeof(int)) {
@@ -1176,7 +1202,7 @@ POPState::cache()
 	s.write(reinterpret_cast<const char *>(&maxx), sizeof(maxx));
 	s.write(reinterpret_cast<const char *>(&maxy), sizeof(maxy));
 	s.write(reinterpret_cast<const char *>(&maxz), sizeof(maxz));
-	is_valid = cache_write("bb", s);
+	is_valid = cache_write(CACHE_OBJ_BOUNDS, s);
     }
 
     if (!is_valid)
@@ -1480,33 +1506,69 @@ bg_mesh_lod_memshrink(struct bv_scene_obj *s)
     bu_log("memshrink\n");
 }
 
+static void
+bg_clear(const char *d)
+{
+    if (bu_file_directory(d)) {
+	char **filenames;
+	size_t nfiles = bu_file_list(d, "*", &filenames);
+	for (size_t i = 0; i < nfiles; i++) {
+	    if (BU_STR_EQUAL(filenames[i], "."))
+		continue;
+	    if (BU_STR_EQUAL(filenames[i], ".."))
+		continue;
+	    char cdir[MAXPATHLEN] = {0};
+	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
+	    bg_clear((const char *)cdir);
+	}
+	bu_argv_free(nfiles, filenames);
+    }
+    bu_file_delete(d);
+}
+
+static void
+cache_del(struct bg_mesh_lod_context *c, unsigned long long hash, const char *component)
+{
+    // Construct lookup key
+    MDB_val mdb_key;
+    std::string keystr = std::to_string(hash) + std::string(":") + std::string(component);
+
+    mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
+    mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
+    mdb_key.mv_size = keystr.length()*sizeof(char);
+    mdb_key.mv_data = (void *)keystr.c_str();
+    mdb_del(c->i->lod_txn, c->i->lod_dbi, &mdb_key, NULL);
+    mdb_txn_commit(c->i->lod_txn);
+}
+
+
 extern "C" void
 bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 {
     char dir[MAXPATHLEN];
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
-    if (!bu_file_exists(dir, NULL))
+
+    if (c && key) {
+	// For this case, we're clearing the data associated with a
+	// specific key (for example, if we're about to edit a BoT but
+	// don't want to redo the whole database's cache.
+	cache_del(c, key, CACHE_POP_MAX_LEVEL);
+	cache_del(c, key, CACHE_VERTEX_COUNT);
+	cache_del(c, key, CACHE_TRI_COUNT);
+	cache_del(c, key, CACHE_OBJ_BOUNDS);
+	cache_del(c, key, CACHE_VERT_LEVEL);
+	cache_del(c, key, CACHE_TRI_LEVEL);
 	return;
-    if (key == 0) {
-	char **filenames;
-	size_t nfiles = bu_file_list(dir, "*", &filenames);
-	for (size_t i = 0; i < nfiles; i++) {
-	    char cdir[MAXPATHLEN] = {0};
-	    bu_dir(cdir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, filenames[i], NULL);
-	    char **cfilenames;
-	    size_t ncfiles = bu_file_list(cdir, "*", &cfilenames);
-	    for (size_t j = 0; j < ncfiles; j++) {
-		char cfile[MAXPATHLEN] = {0};
-		bu_dir(cfile, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, filenames[i], cfilenames[j], NULL);
-		bu_file_delete(cfile);
-	    }
-	    bu_file_delete(cdir);
-	}
-    } else {
-	if (!c)
-	    return;
-	// TODO - remove specific cache entry
     }
+
+    if (c && !key) {
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(c->i->fname), NULL);
+	bg_clear((const char *)dir);
+	return;
+    }
+
+    // Clear everything
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
+    bg_clear((const char *)dir);
 }
 
 extern "C" void
