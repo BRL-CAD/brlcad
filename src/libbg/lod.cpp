@@ -651,16 +651,16 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcn
     // initialize the cache, not to create a workable data state from that
     // data.  The hash is set, which is all we really need - loading data from
     // the cache is handled elsewhere.
-    char dir[MAXPATHLEN];
-    struct bu_vls vkey = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&vkey, "%llu", hash);
-    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&vkey), NULL);
-    if (bu_file_exists(dir, NULL)) {
-	bu_vls_free(&vkey);
+    void *cdata = NULL;
+    size_t csize = cache_get(&cdata, "th");
+    if (csize && cdata) {
+	cache_done();
 	is_valid = true;
 	return;
     }
-    bu_vls_free(&vkey);
+
+    // Cache isn't already populated - go to work.
+    cache_done();
 
     curr_level = POP_MAXLEVEL - 1;
 
