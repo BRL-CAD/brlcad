@@ -150,6 +150,73 @@ draw_free_data(struct bv_scene_obj *s)
     s->s_i_data = NULL;
 }
 
+struct ged_full_detail_clbk_data {
+    struct db_i *dbip;
+    struct directory *dp;
+    struct resource *res;
+    struct rt_db_internal *intern;
+    struct ged_full_detail_clbk_data *cbd;
+};
+
+/* Set up the data for drawing */
+static int
+bot_mesh_info_clbk(struct bv_mesh_lod *lod, void *cb_data)
+{
+    if (!lod || !cb_data)
+	return -1;
+
+    struct ged_full_detail_clbk_data *cd = (struct ged_full_detail_clbk_data *)cb_data;
+    struct db_i *dbip = cd->dbip;
+    struct directory *dp = cd->dp;
+
+    BU_GET(cd->intern, struct rt_db_internal);
+    RT_DB_INTERNAL_INIT(cd->intern);
+    struct rt_db_internal *ip = cd->intern;
+    int ret = rt_db_get_internal(ip, dp, dbip, NULL, cd->res);
+    if (ret < 0) {
+	BU_PUT(cd->intern, struct rt_db_internal);
+	return -1;
+    }
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    lod->faces = bot->faces;
+    lod->fcnt = bot->num_faces;
+    lod->points = (const point_t *)bot->vertices;
+    lod->points_orig = (const point_t *)bot->vertices;
+
+    return 0;
+}
+
+/* Free up the drawing data, but not (yet) done with ged_full_detail_clbk_data */
+static int
+bot_mesh_info_clear_clbk(struct bv_mesh_lod *lod, void *cb_data)
+{
+    struct ged_full_detail_clbk_data *cd = (struct ged_full_detail_clbk_data *)cb_data;
+    if (cd->intern) {
+	rt_db_free_internal(cd->intern);
+	BU_PUT(cd->intern, struct rt_db_internal);
+    }
+    cd->intern = NULL;
+
+    lod->faces = NULL;
+    lod->fcnt = 0;
+    lod->points = NULL;
+    lod->points_orig = NULL;
+
+    return 0;
+}
+
+/* Done - free up everything */
+static int
+bot_mesh_info_free_clbk(struct bv_mesh_lod *lod, void *cb_data)
+{
+    bot_mesh_info_clear_clbk(lod, cb_data);
+    struct ged_full_detail_clbk_data *cd = (struct ged_full_detail_clbk_data *)cb_data;
+    BU_PUT(cd->cbd, struct ged_full_detail_clbk_data);
+    return 0;
+}
+
 
 /* Wrapper to handle adaptive vs non-adaptive wireframes */
 static void
@@ -158,6 +225,9 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
     const struct bn_tol *tol = d->tol;
     const struct bg_tess_tol *ttol = d->ttol;
+    struct db_i *dbip = d->dbip;
+    struct db_full_path *fp = &d->fp;
+
 
     // Standard (view independent) wireframe
     if (!v || !v->gv_s->adaptive_plot) {
@@ -183,17 +253,34 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	// the app would do this once, stash the keys on a per-obj basis, and
 	// store that so we can just look up these keys...)
 	unsigned long long key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
-	vo->draw_data = (void *)bg_mesh_lod_init(d->mesh_c, key);
+	struct bv_mesh_lod *lod = bg_mesh_lod_create(d->mesh_c, key);
+	vo->draw_data = (void *)lod;
+	VMOVE(vo->bmin, lod->bmin);
+	VMOVE(vo->bmax, lod->bmax);
+	VMOVE(s->bmin, lod->bmin);
+	VMOVE(s->bmax, lod->bmax);
+
 	// Initialize the LoD data to the current view
-	struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)vo->draw_data;
-	struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
-	int level = bg_mesh_lod_view(l, s->s_v, 0);
-	if (bg_mesh_lod_level(l, level, 0) != level) {
-	    bu_log("Error loading info for level %d\n", level);
+	int level = bg_mesh_lod_view(s, s->s_v, 0);
+	if (level < 0) {
+	    bu_log("Error loading info for initial LoD view\n");
 	}
 
+	// The free callback will clean this up, but need to initialize it here were we
+	// know the information it needs.
+	struct ged_full_detail_clbk_data *cbd;
+	BU_GET(cbd, ged_full_detail_clbk_data);
+	cbd->dbip = dbip;
+	cbd->dp = DB_FULL_PATH_CUR_DIR(fp);
+	cbd->res = &rt_uniresource;
+	cbd->intern = NULL;
+	cbd->cbd = cbd;
+	bg_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
+	bg_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
+	bg_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
+
 	// LoD will need to re-check its level settings whenever the view changes
-	vo->s_update_callback = &bg_mesh_lod_update;
+	vo->s_update_callback = &bg_mesh_lod_view;
 	vo->s_free_callback = &bg_mesh_lod_free;
 
 	// Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
@@ -337,21 +424,36 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
 
 		    // Basic setup - build cache if we don't have it and return key
 		    unsigned long long key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
-		    s->draw_data = (void *)bg_mesh_lod_init(d->mesh_c, key);
-		    // Initialize the LoD data to the current view
-		    struct bv_mesh_lod_info *linfo = (struct bv_mesh_lod_info *)s->draw_data;
-		    struct bg_mesh_lod *l = (struct bg_mesh_lod *)linfo->lod;
-		    int level = bg_mesh_lod_view(l, s->s_v, 0);
-		    if (bg_mesh_lod_level(l, level, 0) != level) {
-			bu_log("Error loading info for level %d\n", level);
-		    }
+		    struct bv_mesh_lod *lod = bg_mesh_lod_create(d->mesh_c, key);
+		    s->draw_data = (void *)lod;
+		    VMOVE(s->bmin, lod->bmin);
+		    VMOVE(s->bmax, lod->bmax);
 
 		    // LoD will need to re-check its level settings whenever the view changes
-		    s->s_update_callback = &bg_mesh_lod_update;
+		    s->s_update_callback = &bg_mesh_lod_view;
 		    s->s_free_callback = &bg_mesh_lod_free;
 
 		    // Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
 		    s->s_type_flags |= BV_MESH_LOD;
+
+		    // Initialize the LoD data to the current view
+		    int level = bg_mesh_lod_view(s, s->s_v, 0);
+		    if (level < 0) {
+			bu_log("Error loading info for initial LoD view\n");
+		    }
+
+		    // The free callback will clean this up, but need to initialize it here were we
+		    // know the information it needs.
+		    struct ged_full_detail_clbk_data *cbd;
+		    BU_GET(cbd, ged_full_detail_clbk_data);
+		    cbd->dbip = dbip;
+		    cbd->dp = DB_FULL_PATH_CUR_DIR(fp);
+		    cbd->res = &rt_uniresource;
+		    cbd->intern = NULL;
+		    cbd->cbd = cbd;
+		    bg_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
+		    bg_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
+		    bg_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
 
 		    // Cleanup
 		    rt_db_free_internal(&botintern);

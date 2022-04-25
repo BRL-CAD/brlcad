@@ -105,8 +105,8 @@
 #define POP_CACHEDIR ".POPLoD"
 #define MBUMP 1.01
 
-typedef int (*draw_clbk_t)(void *, struct bv_mesh_lod_info *);
-typedef int (*full_detail_clbk_t)(struct bv_mesh_lod_info *, void *, void *);
+typedef int (*draw_clbk_t)(void *, struct bv_mesh_lod *);
+typedef int (*full_detail_clbk_t)(struct bv_mesh_lod *, void *);
 
 static void
 lod_dir(char *dir)
@@ -397,6 +397,12 @@ class rec {
 	unsigned short x = 0, y = 0, z = 0;
 };
 
+
+class POPState;
+struct bg_mesh_lod_internal {
+    POPState *s;
+};
+
 class POPState {
     public:
 
@@ -457,19 +463,20 @@ class POPState {
 
 	// Drawing trigger
 	void draw(void *ctx, struct bv_scene_obj *s);
-	void set_draw_callback(draw_clbk_t clbk);
+	draw_clbk_t draw_clbk;
 
-	// Retrieval method for full detail
-	void set_full_detail_callback(full_detail_clbk_t clbk);
-
-	// Parent container
-	struct bg_mesh_lod *lod;
+	// Methods for full detail
+	full_detail_clbk_t full_detail_setup_clbk = NULL;
+	full_detail_clbk_t full_detail_clear_clbk = NULL;
+	full_detail_clbk_t full_detail_free_clbk = NULL;
+	void *detail_clbk_data = NULL;
 
 	// Bounding box of original mesh
 	point_t bbmin, bbmax;
 
-	// libbv info for drawing
-	struct bv_mesh_lod_info *info = NULL;
+	// Info for drawing
+	struct bv_mesh_lod *lod = NULL;
+
     private:
 
 	void tri_process();
@@ -518,9 +525,6 @@ class POPState {
 	size_t faces_cnt = 0;
 	int *faces_array = NULL;
 
-	// Function to use when doing draw operations
-	draw_clbk_t draw_clbk;
-	full_detail_clbk_t full_detail_clbk;
 
 	// Context
 	struct bg_mesh_lod_context *c;
@@ -630,6 +634,9 @@ POPState::tri_process()
 
 POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, int *faces, size_t fcnt)
 {
+    // Store the context
+    c = ctx;
+
     // Hash the data to generate a key
     XXH64_state_t h_state;
     XXH64_reset(&h_state, 0);
@@ -638,8 +645,6 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcn
     XXH64_hash_t hash_val;
     hash_val = XXH64_digest(&h_state);
     hash = (unsigned long long)hash_val;
-
-    c = ctx;
 
     // Make sure there's no cache before performing the full initializing from
     // the original data.  In this mode the POPState creation is used to
@@ -715,6 +720,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcn
 
 POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 {
+    // Store the context
     c = ctx;
 
     if (!key)
@@ -730,9 +736,6 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 
     hash = key;
 
-    // Set up info container
-    BU_GET(info, struct bv_mesh_lod_info);
-
     // Find the maximum POP level
     {
 	const char *b = NULL;
@@ -744,7 +747,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	memcpy(&max_pop_threshold_level, b, sizeof(max_pop_threshold_level));
 	cache_done();
     }
- 
+
     // Load level counts for vectors and tris
     {
 	const char *b = NULL;
@@ -780,7 +783,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 	b += sizeof(bbmin);
 	memcpy(&bbmax, b, sizeof(bbmax));
 	b += sizeof(bbmax);
-	bu_log("bbmin: %f %f %f bbmax: %f %f %f\n", V3ARGS(bbmin), V3ARGS(bbmax));
+	//bu_log("bbmin: %f %f %f bbmax: %f %f %f\n", V3ARGS(bbmin), V3ARGS(bbmax));
 	memcpy(&minmax, b, sizeof(minmax));
 	minx = minmax[0];
 	miny = minmax[1];
@@ -800,8 +803,10 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
 
 POPState::~POPState()
 {
-    if (info)
-	BU_PUT(info, struct bv_mesh_lod_info);
+    if (full_detail_free_clbk) {
+	(*full_detail_free_clbk)(lod, detail_clbk_data);
+	detail_clbk_data = NULL;
+    }
 }
 
 void
@@ -956,16 +961,11 @@ POPState::set_level(int level)
     // info from the containers to free up memory.
     if (level < curr_level && level <= max_pop_threshold_level && curr_level > max_pop_threshold_level) {
 	// We're (re)entering the POP range - clear the high detail data and start over
-	lod_tris.clear();
-	lod_tri_pnts.clear();
+	if (full_detail_clear_clbk)
+	    (*full_detail_clear_clbk)(lod, detail_clbk_data);
 
 	// Full reset, not an incremental load.
 	tri_pop_load(-1, level);
-
-	// We may have substantially shrunk these arrays - see if we can open
-	// up the memory
-	lod_tris.shrink_to_fit();
-	lod_tri_pnts.shrink_to_fit();
     }
 
     // If we're jumping into details levels beyond POP range, clear the POP containers
@@ -981,8 +981,8 @@ POPState::set_level(int level)
 	lod_tris.shrink_to_fit();
 
 	// Use the callback to set up the full data pointers
-	if (full_detail_clbk)
-	    (*full_detail_clbk)(info, NULL, NULL);
+	if (full_detail_setup_clbk)
+	    (*full_detail_setup_clbk)(lod, detail_clbk_data);
     }
 
     //elapsed = bu_gettime() - start;
@@ -1246,37 +1246,20 @@ void
 POPState::draw(void *ctx, struct bv_scene_obj *s)
 {
     if (draw_clbk) {
-	info->s = s;
-	info->fset_cnt = 0;
-	info->fset = NULL;
+	lod->s = s;
+	// If we're in POP territory use the local arrays - otherwise, they
+	// were already set by the full detail callback.
 	if (curr_level <= max_pop_threshold_level) {
-	    info->fcnt = (int)lod_tris.size()/3;
-	    info->faces = lod_tris.data();
-	    info->points_orig = (const point_t *)lod_tri_pnts.data();
-	    if (curr_level <= max_pop_threshold_level) {
-		info->points = (const point_t *)lod_tri_pnts_snapped.data();
-	    } else {
-		info->points = (const point_t *)lod_tri_pnts.data();
-	    }
+	    lod->fcnt = (int)lod_tris.size()/3;
+	    lod->faces = lod_tris.data();
+	    lod->points_orig = (const point_t *)lod_tri_pnts.data();
+	    lod->points = (const point_t *)lod_tri_pnts_snapped.data();
 	}
-	info->face_normals = NULL;
-	info->normals = NULL;
-	info->lod = lod;
-	(*draw_clbk)(ctx, info);
+	// TODO...
+	lod->face_normals = NULL;
+	lod->normals = NULL;
+	(*draw_clbk)(ctx, lod);
     }
-}
-
-void
-POPState::set_draw_callback(draw_clbk_t clbk)
-{
-    draw_clbk = clbk;
-}
-
-
-void
-POPState::set_full_detail_callback(full_detail_clbk_t clbk)
-{
-    full_detail_clbk = clbk;
 }
 
 void
@@ -1357,10 +1340,6 @@ POPState::plot(const char *root)
 }
 
 
-struct bg_mesh_lod_internal {
-    POPState *s;
-};
-
 extern "C" unsigned long long
 bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, int *faces, size_t fcnt)
 {
@@ -1378,8 +1357,8 @@ bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, 
     return key;
 }
 
-extern "C" struct bv_mesh_lod_info *
-bg_mesh_lod_init(struct bg_mesh_lod_context *c, unsigned long long key)
+extern "C" struct bv_mesh_lod *
+bg_mesh_lod_create(struct bg_mesh_lod_context *c, unsigned long long key)
 {
     if (!key)
 	return NULL;
@@ -1393,65 +1372,36 @@ bg_mesh_lod_init(struct bg_mesh_lod_context *c, unsigned long long key)
 	return NULL;
     }
 
-    struct bv_mesh_lod_info *i = NULL;
-    BU_GET(i, struct bv_mesh_lod_info);
-    BU_GET(i->lod, struct bg_mesh_lod);
-    BU_GET(((struct bg_mesh_lod *)i->lod)->i, struct bg_mesh_lod_internal);
-    ((struct bg_mesh_lod *)i->lod)->i->s = p;
-    p->lod = (struct bg_mesh_lod *)i->lod;
+    // Set up info container
+    struct bv_mesh_lod *lod;
+    BU_GET(lod, struct bv_mesh_lod);
+    BU_GET(lod->i, struct bg_mesh_lod_internal);
+    ((struct bg_mesh_lod_internal *)lod->i)->s = p;
+    lod->c = (void *)c;
+    p->lod = lod;
 
-    VMOVE(i->bmin, p->bbmin);
-    VMOVE(i->bmax, p->bbmax);
+    // Important - parent codes need to have a sense of the size of
+    // the object, and we want that size to be consistent regardless
+    // of the LoD actually in use.  Set the bbox dimensions at a level
+    // where external codes can see and use them.
+    VMOVE(lod->bmin, p->bbmin);
+    VMOVE(lod->bmax, p->bbmax);
 
-    return i;
+    return lod;
 }
 
 extern "C" void
-bg_mesh_lod_destroy(struct bv_mesh_lod_info *i)
+bg_mesh_lod_destroy(struct bv_mesh_lod *lod)
 {
-    if (!i)
+    if (!lod)
 	return;
 
-    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
-    delete l->i->s;
-    BU_PUT(l->i, struct bg_mesh_lod_internal);
-    BU_PUT(l, struct bg_mesh_lod);
-    BU_PUT(i, struct bg_mesh_lod_info);
-}
-
-extern "C" int
-bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int reset)
-{
-
-    if (!l)
-	return -1;
-    if (!v)
-	return l->i->s->curr_level;
-
-    POPState *s = l->i->s;
-    int vscale = (int)((double)s->get_level(v->gv_size) * v->gv_s->lod_scale);
-    vscale = (vscale < 0) ? 0 : vscale;
-    vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
-    bg_mesh_lod_level(l, vscale, reset);
-    return vscale;
-}
-
-extern "C" int
-bg_mesh_lod_level(struct bg_mesh_lod *l, int level, int reset)
-{
-    if (!l)
-	return -1;
-    POPState *s = l->i->s;
-    if (!s)
-	return -1;
-    if (level < 0)
-	return s->curr_level;
-
-    s->force_update = (reset) ? true : false;
-
-    s->set_level(level);
-
-    return s->curr_level;
+    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
+    delete i->s;
+    i->s = NULL;
+    BU_PUT(i, struct bg_mesh_lod_internal);
+    lod->i = NULL;
+    BU_PUT(lod, struct bv_mesh_lod);
 }
 
 static void
@@ -1465,36 +1415,54 @@ dlist_stale(struct bv_scene_obj *s)
 }
 
 extern "C" int
-bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(offset))
+bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
+{
+    if (!s)
+	return -1;
+
+    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
+    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)l->i;
+    POPState *sp = i->s;
+    if (level < 0)
+	return sp->curr_level;
+
+
+    int old_level = sp->curr_level;
+
+    sp->force_update = (reset) ? true : false;
+    sp->set_level(level);
+
+    // If the data changed, any Display List we may have previously generated
+    // is now obsolete
+    if (old_level != sp->curr_level)
+	dlist_stale(s);
+
+    return sp->curr_level;
+}
+
+
+extern "C" int
+bg_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset)
 {
     if (!s || !v)
 	return -1;
-    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
-    if (!i)
-	return -1;
-    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
+    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
     if (!l)
 	return -1;
 
-    POPState *sp = l->i->s;
-
-    VMOVE(s->bmin, sp->bbmin);
-    VMOVE(s->bmax, sp->bbmax);
-
-    int old_level = sp->curr_level;
-    int new_level = old_level;
+    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)l->i;
+    POPState *sp = i->s;
+    int ret = sp->curr_level;
+    int vscale = (int)((double)sp->get_level(v->gv_size) * v->gv_s->lod_scale);
+    vscale = (vscale < 0) ? 0 : vscale;
+    vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
 
     // If the object is not visible in the scene, don't change the data
     //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(s->bmin), V3ARGS(s->bmax));
-    if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3)) {
-	new_level = bg_mesh_lod_view(l, v, 0);
-    }
+    if (bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
+	ret = bg_mesh_lod_level(s, vscale, reset);
 
-    if (old_level != new_level) {
-	dlist_stale(s);
-    }
-
-    return new_level;
+    return ret;
 }
 
 extern "C" void
@@ -1502,14 +1470,12 @@ bg_mesh_lod_memshrink(struct bv_scene_obj *s)
 {
     if (!s)
 	return;
-    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
-    if (!i)
-	return;
-    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
+    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
     if (!l)
 	return;
 
-    POPState *sp = l->i->s;
+    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)l->i;
+    POPState *sp = i->s;
     sp->shrink_memory();
     bu_log("memshrink\n");
 }
@@ -1544,31 +1510,62 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 }
 
 extern "C" void
-bg_mesh_lod_set_draw_callback(
-	struct bg_mesh_lod *lod,
-	int (*clbk)(void *ctx, struct bv_mesh_lod_info *info)
+bg_mesh_lod_draw_clbk(
+	struct bv_mesh_lod *lod,
+	int (*clbk)(void *, struct bv_mesh_lod *)
 	)
 {
     if (!lod || !clbk)
 	return;
 
-    POPState *s = lod->i->s;
-    s->set_draw_callback(clbk);
+    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
+    POPState *s = i->s;
+    s->draw_clbk = clbk;
 }
 
 extern "C" void
-bg_mesh_lod_set_detail_callback(
-	struct bg_mesh_lod *lod,
-	int (*clbk)(struct bv_mesh_lod_info *, void *, void *)
+bg_mesh_lod_detail_setup_clbk(
+	struct bv_mesh_lod *lod,
+	int (*clbk)(struct bv_mesh_lod *, void *),
+	void *clbk_data
 	)
 {
     if (!lod || !clbk)
 	return;
 
-    POPState *s = lod->i->s;
-    s->set_full_detail_callback(clbk);
+    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
+    POPState *s = i->s;
+    s->full_detail_setup_clbk = clbk;
+    s->detail_clbk_data = clbk_data;
 }
 
+extern "C" void
+bg_mesh_lod_detail_clear_clbk(
+	struct bv_mesh_lod *lod,
+	int (*clbk)(struct bv_mesh_lod *, void *)
+	)
+{
+    if (!lod || !clbk)
+	return;
+
+    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
+    POPState *s = i->s;
+    s->full_detail_clear_clbk = clbk;
+}
+
+extern "C" void
+bg_mesh_lod_detail_free_clbk(
+	struct bv_mesh_lod *lod,
+	int (*clbk)(struct bv_mesh_lod *, void *)
+	)
+{
+    if (!lod || !clbk)
+	return;
+
+    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
+    POPState *s = i->s;
+    s->full_detail_free_clbk = clbk;
+}
 
 extern "C" void
 bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s)
@@ -1576,9 +1573,9 @@ bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s)
     if (!s || !ctx)
 	return;
 
-    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
-    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
-    POPState *ps = l->i->s;
+    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
+    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)l->i;
+    POPState *ps = i->s;
     ps->draw(ctx, s);
 }
 
@@ -1587,13 +1584,9 @@ bg_mesh_lod_free(struct bv_scene_obj *s)
 {
     if (!s || !s->draw_data)
 	return;
-    struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)s->draw_data;
-    struct bg_mesh_lod *l = (struct bg_mesh_lod *)i->lod;
-    POPState *ps = l->i->s;
-    delete ps;
-    BU_PUT(l->i, struct bg_mesh_lod_internal);
-    BU_PUT(l, struct bg_mesh_lod);
-    BU_PUT(i, struct bg_mesh_lod_info);
+    struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
+    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)l->i;
+    delete i->s;
     s->draw_data = NULL;
 }
 

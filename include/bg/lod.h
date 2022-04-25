@@ -42,7 +42,8 @@ __BEGIN_DECLS
  * objects visible in the view.  Conceptually, think of it as a framebuffer
  * pane pushed through the scene in the direction the camera is looking.  If
  * the view width and height are not set or there is some other problem, no box
- * is computed. */
+ * is computed. This function is intended primarily to be set as an OBB
+ * updating callback for the bview structure. */
 BG_EXPORT extern void
 bg_view_obb(struct bview *v);
 
@@ -68,39 +69,40 @@ struct bg_mesh_lod_context {
 BG_EXPORT struct bg_mesh_lod_context *
 bg_mesh_lod_context_create(const char *name);
 
-/* Free all memory associated with context c.  Does not destroy the on-disk
- * data. */
+/* Free all memory associated with context c.  Note that this call does NOT
+ * remove the on-disk data. */
 BG_EXPORT void
 bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c);
 
 /* Remove cache data associated with key.  If key == 0, remove ALL cache data
- * associated with all LoD objects (i.e. a full LoD cache reset). */
+ * associated with all LoD objects in c. (i.e. a full LoD cache reset for that
+ * .g database).  If key == 0 AND c == NULL, clear all LoD cache data for all
+ * .g databases associated with the current user's cache. */
 BG_EXPORT void
 bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key);
 
-
-/* We hide the details of the internal LoD structures. */
-struct bg_mesh_lod_internal;
-struct bg_mesh_lod {
-    struct bg_mesh_lod_internal *i;
-};
-
 /**
- * Given a set of points and faces, do the initial calculations to generate the
- * cached LoD data needed for subsequent lookups.  This only needs to be done
- * once per un-cached data set, but is potentially an expensive operation.
+ * Given a set of points and faces, calculate a lookup key and determine if the
+ * cache has the LoD data for this particular mesh.  If it does not, do the
+ * initial calculations to generate the cached LoD data needed for subsequent
+ * lookups, otherwise just return the calculated key.
  *
- * If pre-existing cached data is found, the key is just returned - to clear
- * pre-existing cached data, run bg_mesh_lod_clear_cache();
+ * This is potentially an expensive operation, particularly if the LoD data set
+ * must be generated for the mesh.
  *
- * returns the lookup key calculated from the data, which is used in subsequent
- * lookups of the cached data. */
+ * Note: to clear pre-existing cached data, run bg_mesh_lod_clear_cache();
+ *
+ * @return the lookup key calculated from the data */
 BG_EXPORT unsigned long long
 bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, int *f, size_t fcnt);
 
 /**
- * Set up the bg_mesh_lod data using cached LoD information associated with
- * key.  If no cached data has been prepared, a NULL container is returned.
+ * Set up the bg_mesh_lod container using cached LoD information associated
+ * with key.  If no cached data has been prepared, a NULL container is
+ * returned - to prepare cached data, call bg_mesh_lod_cache with the original
+ * mesh input data.  This call is intended to be usable in situations where
+ * we don't want to pull the full mesh data set into memory, so we can't assume
+ * the original data is present.
  *
  * Note: bg_mesh_lod assumes a non-changing mesh - if the mesh is changed after
  * it is created, the internal container does *NOT* automatically update.  In
@@ -113,68 +115,75 @@ bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, 
  * manipulate the loaded LoD (usually used for debugging, but also useful if an
  * application wishes to visualize levels explicitly.)
  */
-BG_EXPORT struct bv_mesh_lod_info *
-bg_mesh_lod_init(struct bg_mesh_lod_context *c, unsigned long long key);
+BG_EXPORT struct bv_mesh_lod *
+bg_mesh_lod_create(struct bg_mesh_lod_context *c, unsigned long long key);
+
+/* Clean up the lod container. */
+BG_EXPORT void
+bg_mesh_lod_destroy(struct bv_mesh_lod *l);
+
+/* Given a drawing context (typically a display manager), a scene object with
+ * mesh LoD data stored in s->draw_data and a LoD drawing callback set with
+ * bg_mesh_lod_draw_clbk, trigger a triangle drawing operation. */
+BG_EXPORT void
+bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s);
 
 /**
- * Given a bview, load the appropriate level of detail for displaying the mesh
- * in that view. Set reset == 1 if the caller wants to undo a memshrink
- * operation even if the level isn't changed by the current view settings.
+ * Given a scene object with mesh LoD data stored in s->draw_data, reduce
+ * memory footprint (for use after client codes have completed use of a
+ * particular level's info, but aren't done with the object.  Main use case
+ * currently is OpenGL display lists - once generated, we can clear the
+ * internally stored LoD data until the level changes.  Note that there is a
+ * re-loading performance penalty as a trade-off to the memory savings. */
+BG_EXPORT void
+bg_mesh_lod_memshrink(struct bv_scene_obj *s);
+
+/**
+ * Given a scene object with mesh LoD data stored in s->draw_data and a bview,
+ * load the appropriate level of detail for displaying the mesh in that view.
+ * Set reset == 1 if the caller wants to undo a memshrink operation even if the
+ * level isn't changed by the current view settings.
  *
  * Returns the level selected.  If v == NULL, return current level of l.  If
  * there is an error or l == NULL, return -1; */
 BG_EXPORT int
-bg_mesh_lod_view(struct bg_mesh_lod *l, struct bview *v, int reset);
+bg_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset);
 
 /**
- * Given a detail level, load the appropriate data.  This is not normally used
- * by client codes directly, but may be needed if an app needs  manipulate
- * the level of detail without a view.  Set reset == 1 if the caller wants to
- * undo a memshrink operation even if the level isn't changed by the current
- * view settings.
+ * Given a scene object with mesh LoD data stored in s->draw_data and a detail
+ * level, load the appropriate data.  This is not normally used by client codes
+ * directly, but may be needed if an app needs  manipulate the level of detail
+ * without a view.  Set reset == 1 if the caller wants to undo a memshrink
+ * operation even if the level isn't changed by the current view settings.
  *
  * Returns the level selected.  If level == -1, return current level of l.  If
  * there is an error, return -1; */
 BG_EXPORT int
-bg_mesh_lod_level(struct bg_mesh_lod *l, int level, int reset);
+bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset);
 
-/* Clean up the lod container. */
+/* Free a scene object's LoD data.  Suitable as a s_free_callback function
+ * for a bv_scene_obj.  This function will also trigger any additional
+ * "free" callback functions which might be defined for the LoD container. */
 BG_EXPORT void
-bg_mesh_lod_destroy(struct bv_mesh_lod_info *i);
+bg_mesh_lod_free(struct bv_scene_obj *s);
+
+
+
+/* In order to preserve library barriers, a number of operations needed to
+ * realize LoD drawing are defined at other library layers and made available
+ * to the core LoD management logic with callbacks */
 
 /* Set drawing function callback */
 BG_EXPORT void
-bg_mesh_lod_set_draw_callback(struct bg_mesh_lod *lod, int (*clbk)(void *ctx, struct bv_mesh_lod_info *info));
+bg_mesh_lod_draw_clbk(struct bv_mesh_lod *lod, int (*clbk)(void *, struct bv_mesh_lod *));
 
-
-/* Set function callback for retrieving full mesh detail */
+/* Set function callbacks for retrieving and freeing high levels of mesh detail */
 BG_EXPORT void
-bg_mesh_lod_set_detail_callback(struct bg_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod_info *, void *, void *));
-
-
-/* Trigger a triangle drawing operation. */
+bg_mesh_lod_detail_setup_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod *, void *), void *cb_data);
 BG_EXPORT void
-bg_mesh_lod_draw(void *ctx, struct bv_scene_obj *s);
-
-/* Reduce memory footprint (for use after client codes have completed
- * use of a particular level's info, but aren't done with the object.
- * Main use case currently is OpenGL display lists - once generated,
- * we can clear the internally stored LoD data until the level changes.
- * Note that there is a re-loading performance penalty as a trade-off
- * to the memory savings. */
+bg_mesh_lod_detail_clear_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod *, void *));
 BG_EXPORT void
-bg_mesh_lod_memshrink(struct bv_scene_obj *s);
-
-/* Callback for updating level settings on an object.  Set reset == 1 if the
- * caller wants to undo a memshrink operation even if the level isn't
- * changed by the current view settings. */
-BG_EXPORT int
-bg_mesh_lod_update(struct bv_scene_obj *s, struct bview *v, int reset);
-
-/* Free a scene object's LoD data.  Suitable as a s_free_callback function
- * for a bv_scene_obj */
-BG_EXPORT void
-bg_mesh_lod_free(struct bv_scene_obj *s);
+bg_mesh_lod_detail_free_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod *, void *));
 
 __END_DECLS
 
