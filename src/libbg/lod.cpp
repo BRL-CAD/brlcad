@@ -293,6 +293,11 @@ struct bg_mesh_lod_context_internal {
     MDB_env *lod_env;
     MDB_txn *lod_txn;
     MDB_dbi lod_dbi;
+
+    MDB_env *name_env;
+    MDB_txn *name_txn;
+    MDB_dbi name_dbi;
+
     struct bu_vls *fname;
 };
 
@@ -329,9 +334,6 @@ bg_mesh_lod_context_create(const char *name)
     bu_vls_init(i->fname);
     bu_vls_sprintf(i->fname, "%s", bu_vls_cstr(&fname));
 
-    if (mdb_env_create(&i->lod_env))
-	goto lod_context_fail;
-
     // Base maximum readers on an estimate of how many threads
     // we might want to fire off
     mreaders = std::thread::hardware_concurrency();
@@ -341,13 +343,25 @@ bg_mesh_lod_context_create(const char *name)
     if (ncpus > 0 && (size_t)ncpus > mreaders)
 	mreaders = (size_t)ncpus + 2;
 
+
+    // Set up LMDB environments
+    if (mdb_env_create(&i->lod_env))
+	goto lod_context_fail;
+    if (mdb_env_create(&i->name_env))
+	goto lod_context_close_lod_fail;
+
     if (mdb_env_set_maxreaders(i->lod_env, mreaders))
+	goto lod_context_close_fail;
+    if (mdb_env_set_maxreaders(i->name_env, mreaders))
 	goto lod_context_close_fail;
 
     // TODO - the "failure" mode if this limit is ever hit is to back down
     // the maximum stored LoD on larger objects, but that will take some
     // doing to implement...
     if (mdb_env_set_mapsize(i->lod_env, CACHE_MAX_DB_SIZE))
+	goto lod_context_close_fail;
+    
+    if (mdb_env_set_mapsize(i->name_env, CACHE_MAX_DB_SIZE))
 	goto lod_context_close_fail;
 
 
@@ -386,7 +400,7 @@ bg_mesh_lod_context_create(const char *name)
 	fclose(fp);
     }
 
-    // Create the specific LMDB cache dir, if not already present
+    // Create the specific LoD LMDB cache dir, if not already present
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
     if (!bu_file_exists(dir, NULL))
 	lod_dir(dir);
@@ -395,11 +409,23 @@ bg_mesh_lod_context_create(const char *name)
     if (mdb_env_open(i->lod_env, dir, MDB_NOSYNC, 0664))
 	goto lod_context_close_fail;
 
+    // Create the specific name/key LMDB mapping dir, if not already present
+    bu_vls_printf(&fname, "_namekey");
+    bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&fname), NULL);
+    if (!bu_file_exists(dir, NULL))
+	lod_dir(dir);
+
+    // Need to call mdb_env_sync() at appropriate points.
+    if (mdb_env_open(i->name_env, dir, MDB_NOSYNC, 0664))
+	goto lod_context_close_fail;
+
     // Success - return the context
     return c;
 
     // If something went wrong, clean up and return NULL
 lod_context_close_fail:
+    mdb_env_close(i->name_env);
+lod_context_close_lod_fail:
     mdb_env_close(i->lod_env);
 lod_context_fail:
     bu_vls_free(&fname);
@@ -413,11 +439,85 @@ bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c)
 {
     if (!c)
 	return;
+    mdb_env_close(c->i->name_env);
     mdb_env_close(c->i->lod_env);
     bu_vls_free(c->i->fname);
     BU_PUT(c->i->fname, struct bu_vls);
     BU_PUT(c->i, struct bg_mesh_lod_context_internal);
     BU_PUT(c, struct bg_mesh_lod_context);
+}
+
+unsigned long long
+bg_mesh_lod_key_get(struct bg_mesh_lod_context *c, const char *name)
+{
+    MDB_val mdb_key, mdb_data;
+
+    // Database object names may be of arbitrary length - hash
+    // to get the lookup key
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    struct bu_vls keystr = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&keystr, "%s", name);
+    // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
+    if (bu_vls_strlen(&keystr) < 10) {
+	bu_vls_printf(&keystr, "GGGGGGGGGGGGG");
+    }
+    XXH64_update(&h_state, bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    bu_vls_sprintf(&keystr, "%llu", hash);
+
+    mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
+    mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
+    mdb_key.mv_size = bu_vls_strlen(&keystr)*sizeof(char);
+    mdb_key.mv_data = (void *)bu_vls_cstr(&keystr);
+    int rc = mdb_get(c->i->name_txn, c->i->name_dbi, &mdb_key, &mdb_data);
+    if (rc) {
+	mdb_txn_commit(c->i->name_txn);
+	return 0;
+    }
+    unsigned long long *fkeyp = (unsigned long long *)mdb_data.mv_data;
+    unsigned long long fkey = *fkeyp;
+    mdb_txn_commit(c->i->name_txn);
+
+    bu_vls_free(&keystr);
+    //bu_log("GOT %s: %llu\n", name, fkey);
+    return fkey;
+}
+
+int
+bg_mesh_lod_key_put(struct bg_mesh_lod_context *c, const char *name, unsigned long long key)
+{
+    // Database object names may be of arbitrary length - hash
+    // to get something appropriate for a lookup key
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    struct bu_vls keystr = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&keystr, "%s", name);
+    // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
+    if (bu_vls_strlen(&keystr) < 10) {
+	bu_vls_printf(&keystr, "GGGGGGGGGGGGG");
+    }
+    XXH64_update(&h_state, bu_vls_cstr(&keystr), bu_vls_strlen(&keystr)*sizeof(char));
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    bu_vls_sprintf(&keystr, "%llu", hash);
+
+    MDB_val mdb_key, mdb_data;
+    mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
+    mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
+    mdb_key.mv_size = bu_vls_strlen(&keystr)*sizeof(char);
+    mdb_key.mv_data = (void *)bu_vls_cstr(&keystr);
+    mdb_data.mv_size = sizeof(key);
+    mdb_data.mv_data = (void *)&key;
+    int rc = mdb_put(c->i->name_txn, c->i->name_dbi, &mdb_key, &mdb_data, 0);
+    mdb_txn_commit(c->i->name_txn);
+
+    bu_vls_free(&keystr);
+    //bu_log("PUT %s: %llu\n", name, key);
+    return rc;
 }
 
 // Output record

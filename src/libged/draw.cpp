@@ -251,17 +251,24 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
     // Adaptive BoTs have specialized routines and produce view specific
     // containers.
     if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
-	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-	RT_BOT_CK_MAGIC(bot);
-
+	struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
+	unsigned long long key = bg_mesh_lod_key_get(d->mesh_c, dp->d_namep);
+	if (!key) {
+	    // We don't have a key associated with the name.  Get and check the BoT
+	    // data itself, creating the LoD data if we don't already have it
+	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+	    RT_BOT_CK_MAGIC(bot);
+	    key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+	    bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
+	}
+	struct bv_mesh_lod *lod = bg_mesh_lod_create(d->mesh_c, key);
 	struct bv_scene_obj *vo = bv_obj_get_child(s);
 	bv_set_view_obj(s, v, vo);
 
-	// Basic setup (TODO - this still loads the data to characterize it.  Ideally,
-	// the app would do this once, stash the keys on a per-obj basis, and
-	// store that so we can just look up these keys...)
-	unsigned long long key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
-	struct bv_mesh_lod *lod = bg_mesh_lod_create(d->mesh_c, key);
+	// Most of the view properties (color, size, etc.) are inherited from
+	// the parent
+	bv_obj_sync(vo, s);
+
 	vo->draw_data = (void *)lod;
 	VMOVE(vo->bmin, lod->bmin);
 	VMOVE(vo->bmax, lod->bmax);
@@ -269,7 +276,7 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	VMOVE(s->bmax, lod->bmax);
 
 	// Initialize the LoD data to the current view
-	int level = bg_mesh_lod_view(s, s->s_v, 0);
+	int level = bg_mesh_lod_view(vo, vo->s_v, 0);
 	if (level < 0) {
 	    bu_log("Error loading info for initial LoD view\n");
 	}
@@ -294,10 +301,6 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 	// Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
 	s->s_type_flags |= BV_MESH_LOD;
 	vo->s_type_flags |= BV_MESH_LOD;
-
-	// Most of the view properties (color, size, etc.) are inherited from
-	// the parent
-	bv_obj_sync(vo, s);
 
 	// Make the names unique
 	bu_vls_sprintf(&vo->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&s->s_name));

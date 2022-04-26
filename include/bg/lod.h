@@ -97,6 +97,33 @@ BG_EXPORT unsigned long long
 bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, int *f, size_t fcnt);
 
 /**
+ * Given a name, see if the context has a key associated with that name.
+ * If so return it, else return zero.
+ *
+ * Users of this feature need to be aware that it is the responsibility
+ * of the application to maintain the LoD cache data and keep it current -
+ * it is quite possible, in a data sense, for the LoD data to be out of
+ * date if something has changed the named geometry object and not updated
+ * the cache.
+ *
+ * The advantage of this feature, if the application does maintain the
+ * data correctly, is to make it possible to load a high level view of
+ * a large model without having to hash the full mesh data of the model
+ * to retrieve the data.
+ */
+BG_EXPORT unsigned long long
+bg_mesh_lod_key_get(struct bg_mesh_lod_context *c, const char *name);
+
+/**
+ * Given a name and a key, instruct the context to associate that name with
+ * the key.
+ *
+ * Returns 0 if successful, else error
+ */
+BG_EXPORT int
+bg_mesh_lod_key_put(struct bg_mesh_lod_context *c, const char *name, unsigned long long key);
+
+/**
  * Set up the bg_mesh_lod container using cached LoD information associated
  * with key.  If no cached data has been prepared, a NULL container is
  * returned - to prepare cached data, call bg_mesh_lod_cache with the original
