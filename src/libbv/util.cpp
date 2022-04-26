@@ -1182,6 +1182,7 @@ bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src)
     VMOVE(dest->s_color, src->s_color);
     VMOVE(dest->bmin, src->bmin);
     VMOVE(dest->bmax, src->bmax);
+    MAT_COPY(dest->s_mat, src->s_mat);
     dest->s_size = src->s_size;
     dest->s_soldash = src->s_soldash;
     dest->s_arrow = src->s_arrow;
