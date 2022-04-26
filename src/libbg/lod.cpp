@@ -66,6 +66,8 @@
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <sstream>
+#include <string>
 
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h> /* for mkdir */
