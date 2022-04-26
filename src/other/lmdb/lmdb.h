@@ -1036,7 +1036,7 @@ LMDB_EXPORT int  mdb_env_set_assert(MDB_env *env, MDB_assert_func *func);
 	 *	<li>ENOMEM - out of memory.
 	 * </ul>
 	 */
-int  mdb_txn_begin(MDB_env *env, MDB_txn *parent, unsigned int flags, MDB_txn **txn);
+LMDB_EXPORT int  mdb_txn_begin(MDB_env *env, MDB_txn *parent, unsigned int flags, MDB_txn **txn);
 
 	/** @brief Returns the transaction's #MDB_env
 	 *
