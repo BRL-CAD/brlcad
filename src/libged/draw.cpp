@@ -92,6 +92,11 @@ draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     //if (s->bot_threshold != s->s_v->gv_s->bot_threshold)
     //	rework = true;
 
+    // If the object is not visible in the scene, don't change the data
+    //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(s->bmin), V3ARGS(s->bmax));
+    if (!bg_sat_aabb_obb(s->bmin, s->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
+	return 0;
+
     // Check point scale
     if (!rework && !NEAR_EQUAL(s->curve_scale, s->s_v->gv_s->curve_scale, SMALL_FASTF))
 	rework = true;
