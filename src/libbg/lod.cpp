@@ -1667,6 +1667,12 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
     if (c && !key) {
 	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(c->i->fname), NULL);
 	bg_clear((const char *)dir);
+
+	struct bu_vls nkdir = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&nkdir, "%s_namekey", bu_vls_cstr(c->i->fname));
+	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&nkdir), NULL);
+	bg_clear((const char *)dir);
+	bu_vls_free(&nkdir);
 	return;
     }
 
