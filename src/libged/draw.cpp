@@ -279,12 +279,6 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     VMOVE(s->bmin, lod->bmin);
     VMOVE(s->bmax, lod->bmax);
 
-    // Initialize the LoD data to the current view
-    int level = bg_mesh_lod_view(vo, vo->s_v, 0);
-    if (level < 0) {
-	bu_log("Error loading info for initial LoD view\n");
-    }
-
     // The free callback will clean this up, but need to initialize it here were we
     // know the information it needs.
     struct ged_full_detail_clbk_data *cbd;
@@ -301,6 +295,12 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     // LoD will need to re-check its level settings whenever the view changes
     vo->s_update_callback = &bg_mesh_lod_view;
     vo->s_free_callback = &bg_mesh_lod_free;
+
+    // Initialize the LoD data to the current view
+    int level = bg_mesh_lod_view(vo, vo->s_v, 0);
+    if (level < 0) {
+	bu_log("Error loading info for initial LoD view\n");
+    }
 
     // Make the object as a Mesh LoD object so the drawing routine knows to handle it differently
     s->s_type_flags |= BV_MESH_LOD;
@@ -433,6 +433,8 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     struct db_i *dbip = d->dbip;
     struct db_full_path *fp = &d->fp;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
+
+    bu_log("drawing: %s\n", dp->d_namep);
 
     // Adaptive BoTs have specialized LoD routines to help cope with very large
     // data sets, both for wireframe and shaded mode.
