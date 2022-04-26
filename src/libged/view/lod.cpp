@@ -123,6 +123,9 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(argv[0], "cache")) {
 	if (argc == 1) {
 
+	    // Clear any old cache in memory
+	    bg_mesh_lod_clear_cache(gedp->ged_lod, 0);
+
 	    int done = 0;
 	    int total = 0;
 	    for (int i = 0; i < RT_DBNHASH; i++) {

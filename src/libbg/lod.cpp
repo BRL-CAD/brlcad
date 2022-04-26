@@ -1671,9 +1671,15 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 	mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
 	MDB_cursor *cursor;
 	int rc = mdb_cursor_open(c->i->name_txn, c->i->name_dbi, &cursor);
-	rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_FIRST);
-	if (rc)
+	if (rc) {
+	    mdb_txn_commit(c->i->name_txn);
 	    return;
+	}
+	rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_FIRST);
+	if (rc) {
+	    mdb_txn_commit(c->i->name_txn);
+	    return;
+	}
 	fkeyp = (unsigned long long *)mdb_data.mv_data;
 	fkey = *fkeyp;
 	if (fkey == key)
@@ -1689,14 +1695,49 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
     }
 
     if (c && !key) {
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(c->i->fname), NULL);
-	bg_clear((const char *)dir);
 
-	struct bu_vls nkdir = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&nkdir, "%s_namekey", bu_vls_cstr(c->i->fname));
-	bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, bu_vls_cstr(&nkdir), NULL);
-	bg_clear((const char *)dir);
-	bu_vls_free(&nkdir);
+	MDB_val mdb_key, mdb_data;
+	MDB_cursor *cursor;
+	int rc;
+
+	// Clear the actual LoD data
+	mdb_txn_begin(c->i->lod_env, NULL, 0, &c->i->lod_txn);
+	mdb_dbi_open(c->i->lod_txn, NULL, 0, &c->i->lod_dbi);
+	rc = mdb_cursor_open(c->i->lod_txn, c->i->lod_dbi, &cursor);
+	if (rc) {
+	    mdb_txn_commit(c->i->lod_txn);
+	    return;
+	}
+	rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_FIRST);
+	if (rc) {
+	    mdb_txn_commit(c->i->lod_txn);
+	    return;
+	}
+	mdb_cursor_del(cursor, 0);
+	while ((rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) == 0)
+	    mdb_cursor_del(cursor, 0);
+	mdb_txn_commit(c->i->lod_txn);
+
+	// Iterate over the name/key mapper, removing anything with a value
+	// of key
+	mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
+	mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
+	rc = mdb_cursor_open(c->i->name_txn, c->i->name_dbi, &cursor);
+	if (rc) {
+	    mdb_txn_commit(c->i->name_txn);
+	    return;
+	}
+	rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_FIRST);
+	if (rc) {
+	    mdb_txn_commit(c->i->name_txn);
+	    return;
+	}
+	mdb_cursor_del(cursor, 0);
+	while ((rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) == 0)
+	    mdb_cursor_del(cursor, 0);
+	mdb_txn_commit(c->i->name_txn);
+
+
 	return;
     }
 
