@@ -251,7 +251,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	struct rt_db_internal dbintern;
 	RT_DB_INTERNAL_INIT(&dbintern);
 	struct rt_db_internal *ip = &dbintern;
-	int ret = rt_db_get_internal(ip, dp, dbip, s->s_mat, d->res);
+	int ret = rt_db_get_internal(ip, dp, dbip, NULL, d->res);
 	if (ret < 0)
 	    return;
 	struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
