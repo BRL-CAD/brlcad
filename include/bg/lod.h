@@ -77,7 +77,8 @@ bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c);
 /* Remove cache data associated with key.  If key == 0, remove ALL cache data
  * associated with all LoD objects in c. (i.e. a full LoD cache reset for that
  * .g database).  If key == 0 AND c == NULL, clear all LoD cache data for all
- * .g databases associated with the current user's cache. */
+ * .g databases associated with the current user's cache.
+ */
 BG_EXPORT void
 bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key);
 

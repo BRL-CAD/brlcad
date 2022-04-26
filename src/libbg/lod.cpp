@@ -1661,6 +1661,30 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 	cache_del(c, key, CACHE_OBJ_BOUNDS);
 	cache_del(c, key, CACHE_VERT_LEVEL);
 	cache_del(c, key, CACHE_TRI_LEVEL);
+
+	// Iterate over the name/key mapper, removing anything with a value
+	// of key
+	MDB_val mdb_key, mdb_data;
+	unsigned long long *fkeyp = NULL;
+	unsigned long long fkey = 0;
+	mdb_txn_begin(c->i->name_env, NULL, 0, &c->i->name_txn);
+	mdb_dbi_open(c->i->name_txn, NULL, 0, &c->i->name_dbi);
+	MDB_cursor *cursor;
+	int rc = mdb_cursor_open(c->i->name_txn, c->i->name_dbi, &cursor);
+	rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_FIRST);
+	if (rc)
+	    return;
+	fkeyp = (unsigned long long *)mdb_data.mv_data;
+	fkey = *fkeyp;
+	if (fkey == key)
+	    mdb_cursor_del(cursor, 0);
+	while ((rc = mdb_cursor_get(cursor, &mdb_key, &mdb_data, MDB_NEXT)) == 0) {
+	    fkeyp = (unsigned long long *)mdb_data.mv_data;
+	    fkey = *fkeyp;
+	    if (fkey == key)
+		mdb_cursor_del(cursor, 0);
+	}
+	mdb_txn_commit(c->i->name_txn);
 	return;
     }
 
