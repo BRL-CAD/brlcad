@@ -101,15 +101,23 @@ draw_update(struct bv_scene_obj *s, struct bview *v, int UNUSED(flag))
     if (!rework) {
 	// Check view scale
 	fastf_t delta = s->view_scale * 0.1/s->view_scale;
-	if (!NEAR_EQUAL(s->view_scale, v->gv_scale, delta)) {
-	    s->view_scale = v->gv_scale;
+	if (!NEAR_EQUAL(s->view_scale, v->gv_scale, delta))
 	    rework = true;
-	}
     }
     if (!rework)
 	return 0;
 
+    // We're going to redraw - sync with view
+    s->curve_scale = s->s_v->gv_s->curve_scale;
+    s->point_scale = s->s_v->gv_s->point_scale;
+    s->view_scale = v->gv_scale;
+
     // Clear out existing vlist, if any...
+    // TODO - stashing the vlists like this doesn't scale when we're zooming in
+    // deeply on large CSG models.  We need something similar to the mesh
+    // handling that can free up memory if things get too extreme.  We probably
+    // also want to compile dlists for these wireframes as well, and only zoom
+    // in when we can actually see the object...
     BV_FREE_VLIST(s->vlfree, &s->s_vlist);
 
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
