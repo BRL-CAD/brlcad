@@ -73,11 +73,13 @@
 #  include <sys/stat.h> /* for mkdir */
 #endif
 
+extern "C" {
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_IMPLEMENTATION
 #include "xxhash.h"
 
 #include "lmdb.h"
+}
 
 #include "bio.h"
 
