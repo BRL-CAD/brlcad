@@ -124,43 +124,6 @@ struct bv_axes {
     int       tick_major_color[3];
 };
 
-// Mesh LoD drawing doesn't use vlists, but instead directly processes triangle
-// data to minimize memory usage.  Although the primary logic for LoD lives in
-// libbg, the drawing data is basic in nature. We define a struct container
-// that can be used by the multiple libraries which must interact with it to
-// make information passing simpler.
-struct bv_mesh_lod_info {
-
-    // The scene object
-    struct bv_scene_obj *s;
-
-    // The set of triangle faces to be used when drawing
-    int fcnt;
-    const int *faces;
-
-    // The vertices used by the faces array
-    const point_t *points;
-    const point_t *points_orig;
-
-    // Optional: an "active subset" of faces in the faces array may be passed
-    // in as an index array in fset.  If fset is NULL, all will be drawn.
-    int fset_cnt;
-    int *fset;
-
-    // Optional: per-face-vertex normals
-    const int *face_normals;
-    const vect_t *normals;
-
-    // BBox
-    point_t bmin;
-    point_t bmax;
-
-    // Pointer to LoD container
-    void *lod;
-
-};
-
-
 // Many settings have defaults at the view level, and may be overridden for
 // individual scene objects.
 //
@@ -386,6 +349,43 @@ struct bv_scene_obj  {
  * code what is a conceptually a group and what is an individual scene object.
  */
 #define bv_scene_group bv_scene_obj
+
+
+/* The primary "working" data for mesh Level-of-Detail (LoD) drawing is stored
+ * in a bv_mesh_lod container.
+ *
+ * Most LoD information is deliberately hidden in the internal, but the key
+ * data needed for drawing routines and view setup is exposed. Although this
+ * data structure is primarily managed in libbg, the public data in this struct
+ * is needed at many levels of the software stack, including libbv. */
+struct bv_mesh_lod {
+
+    // The set of triangle faces to be used when drawing
+    int fcnt;
+    const int *faces;
+
+    // The vertices used by the faces array
+    const point_t *points;      // If using snapped points, that's this array.  Else, points == points_orig.
+    const point_t *points_orig;
+
+    // Optional: per-face-vertex normals
+    const int *face_normals;
+    const vect_t *normals;
+
+    // Bounding box of the original full-detail data
+    point_t bmin;
+    point_t bmax;
+
+    // The scene object using this LoD structure
+    struct bv_scene_obj *s;
+
+    // Pointer to the higher level LoD context associated with this LoD data
+    void *c;
+
+    // Pointer to internal LoD implementation information specific to this object
+    void *i;
+};
+
 
 /* We encapsulate non-camera settings into a container mainly to allow for
  * easier re-use of the same settings between different views - if a common

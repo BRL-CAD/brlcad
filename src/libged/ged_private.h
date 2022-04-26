@@ -200,6 +200,7 @@ struct draw_data_t {
     int color_inherit;
     int bool_op;
     struct resource *res;
+    struct bg_mesh_lod_context *mesh_c;
 
     /* To avoid the need for multiple subtree walking
      * functions, we also set up to support a bounding

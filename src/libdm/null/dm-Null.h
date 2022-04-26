@@ -111,7 +111,7 @@ null_drawVListHiddenLine(struct dm *dmp, struct bv_vlist *vp);
 
 
 DM_NULL_EXPORT extern int
-null_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *i);
+null_draw_tri(struct dm *dmp, struct bv_mesh_lod *i);
 
 
 DM_NULL_EXPORT extern int

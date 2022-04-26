@@ -1075,7 +1075,7 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
     int calc = 0;
     if (sp->s_type_flags & BV_MESH_LOD) {
 	struct bv_scene_obj *sv = bv_obj_for_view(sp, v);
-	struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)sv->draw_data;
+	struct bv_mesh_lod *i = (struct bv_mesh_lod *)sv->draw_data;
 	if (i) {
 	    point_t obmin, obmax;
 	    VMOVE(obmin, i->bmin);

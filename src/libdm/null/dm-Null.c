@@ -189,7 +189,7 @@ null_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bv_vlist *UNUSED(vp))
 
 
 int
-null_draw_tri(struct dm *UNUSED(dmp), struct bv_mesh_lod_info *UNUSED(i)) {
+null_draw_tri(struct dm *UNUSED(dmp), struct bv_mesh_lod *UNUSED(i)) {
     return 0;
 }
 

@@ -43,6 +43,7 @@ struct draw_update_data_t {
     struct db_full_path fp;
     const struct bn_tol *tol;
     const struct bg_tess_tol *ttol;
+    struct bg_mesh_lod_context *mesh_c;
     struct resource *res;
 };
 
