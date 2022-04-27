@@ -145,6 +145,10 @@ _view_cmd_lod(void *bs, int argc, const char **argv)
 			continue;
 		    }
 
+		    // No need to open up the internal unless it's a BoT
+		    if (dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT)
+			continue;
+
 		    struct rt_db_internal dbintern;
 		    RT_DB_INTERNAL_INIT(&dbintern);
 		    struct rt_db_internal *ip = &dbintern;
