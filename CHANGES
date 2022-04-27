@@ -129,6 +129,12 @@ removed at any time.
 
 7.32
 ----
+burst,nburst
+	Point Burst Damage Assessment Model (PDAM) input preparation
+	tool.  Obsolete, no longer in use by upstream tools,
+	scheduling for removal (both the original and the newer
+	nburst implementation.)
+
 include/bu/app.h
         bu_brlcad_root: replaced by bu_dir
         bu_brlcad_dir:  replaced by bu_dir
