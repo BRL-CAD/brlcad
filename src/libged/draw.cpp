@@ -434,7 +434,6 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     struct db_full_path *fp = &d->fp;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
 
-    bu_log("drawing: %s\n", dp->d_namep);
 
     // Adaptive BoTs have specialized LoD routines to help cope with very large
     // data sets, both for wireframe and shaded mode.
