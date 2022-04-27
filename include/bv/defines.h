@@ -124,43 +124,6 @@ struct bv_axes {
     int       tick_major_color[3];
 };
 
-// Mesh LoD drawing doesn't use vlists, but instead directly processes triangle
-// data to minimize memory usage.  Although the primary logic for LoD lives in
-// libbg, the drawing data is basic in nature. We define a struct container
-// that can be used by the multiple libraries which must interact with it to
-// make information passing simpler.
-struct bv_mesh_lod_info {
-
-    // The scene object
-    struct bv_scene_obj *s;
-
-    // The set of triangle faces to be used when drawing
-    int fcnt;
-    const int *faces;
-
-    // The vertices used by the faces array
-    const point_t *points;
-    const point_t *points_orig;
-
-    // Optional: an "active subset" of faces in the faces array may be passed
-    // in as an index array in fset.  If fset is NULL, all will be drawn.
-    int fset_cnt;
-    int *fset;
-
-    // Optional: per-face-vertex normals
-    const int *face_normals;
-    const vect_t *normals;
-
-    // BBox
-    point_t bmin;
-    point_t bmax;
-
-    // Pointer to LoD container
-    void *lod;
-
-};
-
-
 // Many settings have defaults at the view level, and may be overridden for
 // individual scene objects.
 //
@@ -232,7 +195,7 @@ struct bv_scene_obj  {
     unsigned long long s_type_flags;
     struct bu_vls s_name;       /**< @brief object name (may not be unique, used for activities like path lookup) */
     struct bu_vls s_uuid;       /**< @brief object name (unique, may be less immediately clear to user) */
-    mat_t s_mat;		/**< @brief mat to use for internal lookup */
+    mat_t s_mat;		/**< @brief mat to use for internal lookup and mesh LoD drawing */
 
     /* Associated bv.  Note that scene objects are not assigned uniquely to
      * one view.  This value may be changed by the application in a multi-view
@@ -248,11 +211,17 @@ struct bv_scene_obj  {
     int (*s_update_callback)(struct bv_scene_obj *, struct bview *, int);  /**< @brief custom update/generator for s_vlist */
     void (*s_free_callback)(struct bv_scene_obj *);  /**< @brief free any info stored in s_i_data and draw_data */
 
-    /* Actual 3D geometry data and information */
+    /* 3D vector list geometry data */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
     size_t s_vlen;			/**< @brief  Number of actual cmd[] entries in vlist */
+
+    /* Display lists accelerate drawing when we can use them */
     unsigned int s_dlist;	/**< @brief  display list index */
     int s_dlist_mode;		/**< @brief  drawing mode in which display list was generated (if it doesn't match s_os.s_dmode, dlist is out of date.) */
+    int s_dlist_stale;		/**< @brief  set by client codes when dlist is out of date - dm must update. */
+    void (*s_dlist_free_callback)(struct bv_scene_obj *);  /**< @brief free any dlist specific data */
+
+    /* 3D geometry metadata */
     fastf_t s_size;		/**< @brief  Distance across solid, in model space */
     fastf_t s_csize;		/**< @brief  Dist across clipped solid (model space) */
     vect_t s_center;		/**< @brief  Center point of solid, in model space */
@@ -380,6 +349,43 @@ struct bv_scene_obj  {
  * code what is a conceptually a group and what is an individual scene object.
  */
 #define bv_scene_group bv_scene_obj
+
+
+/* The primary "working" data for mesh Level-of-Detail (LoD) drawing is stored
+ * in a bv_mesh_lod container.
+ *
+ * Most LoD information is deliberately hidden in the internal, but the key
+ * data needed for drawing routines and view setup is exposed. Although this
+ * data structure is primarily managed in libbg, the public data in this struct
+ * is needed at many levels of the software stack, including libbv. */
+struct bv_mesh_lod {
+
+    // The set of triangle faces to be used when drawing
+    int fcnt;
+    const int *faces;
+
+    // The vertices used by the faces array
+    const point_t *points;      // If using snapped points, that's this array.  Else, points == points_orig.
+    const point_t *points_orig;
+
+    // Optional: per-face-vertex normals
+    const int *face_normals;
+    const vect_t *normals;
+
+    // Bounding box of the original full-detail data
+    point_t bmin;
+    point_t bmax;
+
+    // The scene object using this LoD structure
+    struct bv_scene_obj *s;
+
+    // Pointer to the higher level LoD context associated with this LoD data
+    void *c;
+
+    // Pointer to internal LoD implementation information specific to this object
+    void *i;
+};
+
 
 /* We encapsulate non-camera settings into a container mainly to allow for
  * easier re-use of the same settings between different views - if a common
@@ -520,6 +526,17 @@ struct bview {
      * Shared objects are common across views to make more efficient use of
      * system memory. */
     struct bview_objs gv_objs;
+
+    /* Oriented bounding box extruded to contain scene objects visible in the
+     * view.  Conceptually, think of it as a framebuffer pane pushed through
+     * the scene in the direction the camera is looking. The app must set the
+     * bg_view_obb callback to update these values.*/
+    point_t obb_center;
+    vect_t obb_extent1;
+    vect_t obb_extent2;
+    vect_t obb_extent3;
+    void (*gv_obb_update)(struct bview *);
+
 
     /*
      * gv_data_vZ is an internal parameter used by commands creating and

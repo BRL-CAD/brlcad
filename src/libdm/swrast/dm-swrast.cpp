@@ -155,11 +155,13 @@ swrast_close(struct dm *dmp)
 {
     struct swrast_vars *pv = (struct swrast_vars *)dmp->i->dm_vars.priv_vars;
     bu_free(pv->os_b, "OSMesa rendering buffer");
-    bu_vls_free(&dmp->i->dm_pathName);
-    bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);
+    bu_vls_free(&dmp->i->dm_tkName);
+    bu_vls_free(&dmp->i->dm_pathName);
+    OSMesaDestroyContext((OSMesaContext)pv->ctx);
     bu_free(dmp->i->dm_vars.priv_vars, "swrast_close: swrast_vars");
     bu_free(dmp->i->dm_vars.pub_vars, "swrast_close: dm_swvars");
+    bu_vls_free(&(dmp->i->dm_log));
     BU_PUT(dmp->i, struct dm_impl);
     BU_PUT(dmp, struct dm);
 

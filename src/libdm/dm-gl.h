@@ -156,7 +156,7 @@ DMGL_EXPORT extern int gl_drawPoint3D(struct dm *dmp, point_t point);
 DMGL_EXPORT extern int gl_drawPoints3D(struct dm *dmp, int npoints, point_t *points);
 DMGL_EXPORT extern int gl_drawVList(struct dm *dmp, struct bv_vlist *vp);
 DMGL_EXPORT extern int gl_drawVListHiddenLine(struct dm *dmp, struct bv_vlist *vp);
-DMGL_EXPORT extern int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod_info *i);
+DMGL_EXPORT extern int gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *i);
 DMGL_EXPORT extern int gl_draw_data_axes(struct dm *dmp, fastf_t sf,  struct bv_data_axes_state *bndasp);
 DMGL_EXPORT extern int gl_draw_obj(struct dm *dmp, struct display_list *obj);
 DMGL_EXPORT extern int gl_endDList(struct dm *dmp);

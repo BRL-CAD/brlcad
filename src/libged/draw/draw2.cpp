@@ -36,6 +36,7 @@
 #include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
+#include "bg/lod.h"
 #include "nmg.h"
 #include "rt/view.h"
 
@@ -423,6 +424,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	dd.v = v;
 	dd.tol = &gedp->ged_wdbp->wdb_tol;
 	dd.ttol = &gedp->ged_wdbp->wdb_ttol;
+	dd.mesh_c = gedp->ged_lod;
 	dd.color_inherit = 0;
 	dd.bound_only = 0;
 	dd.res = &rt_uniresource;
@@ -452,6 +454,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	    ud->tol = dd.tol;
 	    ud->ttol = dd.ttol;
 	    ud->res = dd.res;
+	    ud->mesh_c = dd.mesh_c;
 	    g->s_i_data = (void *)ud;
 	    g->s_v = dd.v;
 	    // Done with path
@@ -488,6 +491,9 @@ ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_sla
 	v->gv_s->bot_threshold = bot_threshold;
     }
 
+    // Make sure the view knows how to update the obb
+    v->gv_obb_update = &bg_view_obb;
+
     // Do an initial autoview so adaptive routines will have approximately
     // the right starting point
     if (blank_slate && !no_autoview) {
@@ -520,6 +526,7 @@ ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_sla
 	v->gv_isize = 1.0 / v->gv_size;
 	bv_update(v);
     }
+
 
     // Do the actual drawing
     for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {

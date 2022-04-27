@@ -102,13 +102,16 @@ bv_init(struct bview *gvp, struct bview_set *s)
     BU_GET(gvp->gv_objs.view_objs, struct bu_ptbl);
     bu_ptbl_init(gvp->gv_objs.view_objs, 8, "view_objs init");
 
-    // Until the app tells us differently, we need to use our local vlist
-    // container
+    // Until the app tells us differently, we need to use our local
+    // containers
+    BU_GET(gvp->gv_objs.free_scene_obj, struct bv_scene_obj);
+    BU_LIST_INIT(&gvp->gv_objs.free_scene_obj->l);
     BU_LIST_INIT(&gvp->gv_objs.gv_vlfree);
 
     // Out of the gate we don't have callbacks
     gvp->callbacks = NULL;
     gvp->gv_callback = NULL;
+    gvp->gv_obb_update= NULL;
 
     bv_update(gvp);
 }
@@ -125,10 +128,31 @@ bv_free(struct bview *gvp)
     bu_ptbl_free(gvp->gv_objs.view_objs);
     BU_PUT(gvp->gv_objs.view_objs, struct bu_ptbl);
 
+    // TODO - clean up local vlfree list contents
+    struct bv_scene_obj *sp, *nsp;
+    sp = BU_LIST_NEXT(bv_scene_obj, &gvp->gv_objs.free_scene_obj->l);
+    while (BU_LIST_NOT_HEAD(sp, &gvp->gv_objs.free_scene_obj->l)) {
+	nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
+	BU_LIST_DEQUEUE(&((sp)->l));
+	if (sp->s_free_callback)
+	    (*sp->s_free_callback)(sp);
+	if (sp->s_dlist_free_callback)
+	    (*sp->s_dlist_free_callback)(sp);
+	bu_ptbl_free(&sp->children);
+	BU_PUT(sp, struct bv_scene_obj);
+	sp = nsp;
+    }
+    BU_PUT(gvp->gv_objs.free_scene_obj, struct bv_scene_obj);
+
     if (gvp->gv_ls.gv_selected) {
 	bu_ptbl_free(gvp->gv_ls.gv_selected);
 	BU_PUT(gvp->gv_ls.gv_selected, struct bu_ptbl);
 	gvp->gv_ls.gv_selected = NULL;
+    }
+
+    if (gvp->callbacks) {
+	bu_ptbl_free(gvp->callbacks);
+	BU_PUT(gvp->callbacks, struct bu_ptbl);
     }
 }
 
@@ -453,6 +477,11 @@ bv_update(struct bview *gvp)
 
     /* apply the perspective angle to model2view */
     bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
+
+    /* Update obb, if the caller has told us how to */
+    if (gvp->gv_obb_update) {
+	(*gvp->gv_obb_update)(gvp);
+    }
 
     if (gvp->gv_callback) {
 
@@ -879,6 +908,10 @@ bv_obj_reset(struct bv_scene_obj *s)
     if (s->s_free_callback)
 	(*s->s_free_callback)(s);
 
+    // If we have a callback for the display list data, use it
+    if (s->s_dlist_free_callback)
+	(*s->s_dlist_free_callback)(s);
+
     // free vlist
     if (BU_LIST_IS_INITIALIZED(&s->s_vlist)) {
 	BV_FREE_VLIST(s->vlfree, &s->s_vlist);
@@ -1037,23 +1070,30 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 {
     point_t bmin, bmax;
     int cmd;
-    int dispmode;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
     int calc = 0;
     if (sp->s_type_flags & BV_MESH_LOD) {
 	struct bv_scene_obj *sv = bv_obj_for_view(sp, v);
-	struct bv_mesh_lod_info *i = (struct bv_mesh_lod_info *)sv->draw_data;
+	struct bv_mesh_lod *i = (struct bv_mesh_lod *)sv->draw_data;
 	if (i) {
-	    VMOVE(bmin, i->bmin);
-	    VMOVE(bmax, i->bmax);
+	    point_t obmin, obmax;
+	    VMOVE(obmin, i->bmin);
+	    VMOVE(obmax, i->bmax);
+	    // Apply the scene matrix to the bounding box values to bound this
+	    // instance, since the BV_MESH_LOD data is based on the
+	    // non-instanced mesh.
+	    MAT4X3PNT(bmin, sp->s_mat, obmin);
+	    MAT4X3PNT(bmax, sp->s_mat, obmax);
 	    calc = 1;
 	}
     } else if (bu_list_len(&sp->s_vlist)) {
+	int dispmode;
 	cmd = bv_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL, &dispmode);
 	if (cmd) {
 	    bu_log("unknown vlist op %d\n", cmd);
 	}
+	sp->s_displayobj = dispmode;
 	calc = 1;
     }
     if (calc) {
@@ -1064,7 +1104,6 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 	sp->s_size = bmax[X] - bmin[X];
 	V_MAX(sp->s_size, bmax[Y] - bmin[Y]);
 	V_MAX(sp->s_size, bmax[Z] - bmin[Z]);
-	sp->s_displayobj = dispmode;
 	return 1;
     }
     return 0;
@@ -1143,6 +1182,7 @@ bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src)
     VMOVE(dest->s_color, src->s_color);
     VMOVE(dest->bmin, src->bmin);
     VMOVE(dest->bmax, src->bmax);
+    MAT_COPY(dest->s_mat, src->s_mat);
     dest->s_size = src->s_size;
     dest->s_soldash = src->s_soldash;
     dest->s_arrow = src->s_arrow;
@@ -1152,6 +1192,7 @@ bv_obj_sync(struct bv_scene_obj *dest, struct bv_scene_obj *src)
     dest->curve_scale = src->curve_scale;
     dest->point_scale = src->point_scale;
 }
+
 
 // Local Variables:
 // tab-width: 8

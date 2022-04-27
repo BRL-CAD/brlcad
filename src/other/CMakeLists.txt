@@ -168,6 +168,23 @@ mark_as_advanced(POLY2TRI_INCLUDE_DIR)
 mark_as_advanced(POLY2TRI_INCLUDE_DIRS)
 
 
+# Lightning Memory-Mapped Database (LMDB)
+# Fast key-value store database from OpenLDAP Project.
+add_subdirectory(lmdb)
+include("${CMAKE_CURRENT_SOURCE_DIR}/lmdb.dist")
+CMAKEFILES_IN_DIR(lmdb_ignore_files lmdb)
+DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/lmdb/Makefile")
+set(LMDB_LIBRARY "lmdb" CACHE STRING "Lightning Memory-Mapped Database library" FORCE)
+set(LMDB_LIBRARIES "lmdb" CACHE STRING "Lightning Memory-Mapped Database library" FORCE)
+set(LMDB_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lmdb" CACHE STRING "Directory containing lmdb header" FORCE)
+set(LMDB_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/lmdb" CACHE STRING "Directory containing lmdb header" FORCE)
+SetTargetFolder(lmdb "Third Party Libraries")
+mark_as_advanced(LMDB_LIBRARY)
+mark_as_advanced(LMDB_LIBRARIES)
+mark_as_advanced(LMDB_INCLUDE_DIR)
+mark_as_advanced(LMDB_INCLUDE_DIRS)
+
+
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)
 include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")

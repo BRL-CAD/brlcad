@@ -31,6 +31,7 @@
 #include "bu/str.h"
 #include "bn/mat.h"
 #include "bv/defines.h"
+#include "bv/util.h"
 #include "bv/view_sets.h"
 #include "./bv_private.h"
 
@@ -47,10 +48,6 @@ bv_set_init(struct bview_set *s)
     BU_LIST_INIT(&s->i->free_scene_obj->l);
 }
 
-
-#define FREE_BV_SCENE_OBJ(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); }
-
 void
 bv_set_free(struct bview_set *s)
 {
@@ -60,11 +57,7 @@ bv_set_free(struct bview_set *s)
 	struct bview *gdvp;
 	for (size_t i = 0; i < BU_PTBL_LEN(&s->i->views); i++) {
 	    gdvp = (struct bview *)BU_PTBL_GET(&s->i->views, i);
-	    bu_vls_free(&gdvp->gv_name);
-	    if (gdvp->callbacks) {
-		bu_ptbl_free(gdvp->callbacks);
-		BU_PUT(gdvp->callbacks, struct bu_ptbl);
-	    }
+	    bv_free(gdvp);
 	    bu_free((void *)gdvp, "bv");
 	}
 	bu_ptbl_free(&s->i->views);
@@ -78,11 +71,17 @@ bv_set_free(struct bview_set *s)
 	while (BU_LIST_NOT_HEAD(sp, &s->i->free_scene_obj->l)) {
 	    nsp = BU_LIST_PNEXT(bv_scene_obj, sp);
 	    BU_LIST_DEQUEUE(&((sp)->l));
-	    FREE_BV_SCENE_OBJ(sp, &s->i->free_scene_obj->l);
+	    if (sp->s_free_callback)
+		(*sp->s_free_callback)(sp);
+	    if (sp->s_dlist_free_callback)
+		(*sp->s_dlist_free_callback)(sp);
+	    bu_ptbl_free(&sp->children);
+	    BU_PUT(sp, struct bv_scene_obj);
 	    sp = nsp;
 	}
 	BU_PUT(s->i->free_scene_obj, struct bv_scene_obj);
     }
+    BU_PUT(s->i, struct bview_set_internal);
 
     // TODO - clean up vlfree
 }

@@ -1989,7 +1989,7 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
     while (methods && BU_PTBL_LEN(ar2) > 0) {
 	struct bu_ptbl *tmp;
 	int cmethod = 0;
-	long int avail_mem = -1;
+	unsigned long long avail_mem = 0;
 	bu_ptbl_reset(ar);
 
 
@@ -2036,8 +2036,9 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 		    if (_ged_facetize_region_obj(gedp, oname, sname, opts, i+1, (int)BU_PTBL_LEN(ar2), cmethod, &cinfo) == GED_FACETIZE_FAILURE) {
 			bu_ptbl_ins(ar, (long *)n);
 
-			avail_mem = bu_mem(BU_MEM_AVAIL);
-			if (avail_mem >= 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
+			int ec = 0;
+			avail_mem = bu_mem(BU_MEM_AVAIL, &ec);
+			if (!ec && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
 			    bu_log("Too little available memory to continue, aborting\n");
 			    ret = BRLCAD_ERROR;
 			    goto ged_facetize_regions_resume_memfree;
@@ -2413,7 +2414,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
     while (methods && BU_PTBL_LEN(ar) > 0) {
 	struct bu_ptbl *tmp;
 	int cmethod = 0;
-	long int avail_mem = -1;
+	unsigned long long avail_mem = 0;
 	bu_ptbl_reset(ar2);
 
 	if (!cmethod && (methods & GED_FACETIZE_NMGBOOL)) {
@@ -2462,8 +2463,9 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 		if (_ged_facetize_region_obj(gedp, oname, sname, opts, i+1, (int)BU_PTBL_LEN(ar), cmethod, &cinfo) == GED_FACETIZE_FAILURE) {
 		    bu_ptbl_ins(ar2, (long *)n);
 
-		    avail_mem = bu_mem(BU_MEM_AVAIL);
-		    if (avail_mem >= 0 && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
+		    int ec = 0;
+		    avail_mem = bu_mem(BU_MEM_AVAIL, &ec);
+		    if (!ec && avail_mem < GED_FACETIZE_MEMORY_THRESHOLD) {
 			bu_log("Too little available memory to continue, aborting\n");
 			ret = BRLCAD_ERROR;
 			goto ged_facetize_regions_memfree;

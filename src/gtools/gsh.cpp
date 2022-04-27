@@ -87,103 +87,6 @@ struct gsh_state {
     unsigned long long prev_ghash = 0;
 };
 
-int
-gsh_state_init(struct gsh_state *s)
-{
-    s->libged = bu_dlopen(NULL, BU_RTLD_LAZY);
-
-    /* Without a libged library, we're done */
-    if (!s->libged)
-	return BRLCAD_ERROR;
-
-    BU_GET(s->gedp, struct ged);
-    ged_init(s->gedp);
-    /* We will need a view to support commands like draw */
-    BU_GET(s->gedp->ged_gvp, struct bview);
-    bv_init(s->gedp->ged_gvp, &s->gedp->ged_views);
-    bu_vls_sprintf(&s->gedp->ged_gvp->gv_name, "default");
-
-    /* As yet we don't have a .g file. */
-    bu_vls_init(&s->gfile);
-
-    /* Zero initialize linenoise data */
-    s->pmpt = NULL;
-    s->line = NULL;
-    bu_vls_init(&s->iline);
-
-    return BRLCAD_OK;
-}
-
-void
-gsh_state_free(struct gsh_state *s)
-{
-    if (!s)
-	return;
-
-    bv_free(s->gedp->ged_gvp);
-    BU_PUT(s->gedp->ged_gvp, struct bv);
-    s->gedp->ged_gvp = NULL;
-    ged_close(s->gedp);
-    bu_dlclose(s->libged);
-    bu_vls_free(&s->gfile);
-    bu_vls_free(&s->iline);
-}
-
-/* Handle the non-interactive execution of commands here. */
-int
-geval(struct gsh_state *s, int argc, const char **argv)
-{
-    int ret = BRLCAD_OK;
-
-    if (!s || !s->gedp)
-	return BRLCAD_ERROR;
-
-    if (s->constrained_mode) {
-
-	/* Note - doing the command execution this way limits us to the "hardwired"
-	 * functions built into the libged API.  That may or may not be what we
-	 * want, depending on the application - this in effect restricts us to a
-	 * "safe" command set, but also hides any user-provided plugins.  */
-
-	int (*func)(struct ged *, int, char *[]);
-	char gedfunc[MAXPATHLEN] = {0};
-
-	bu_strlcat(gedfunc, "ged_", MAXPATHLEN);
-	bu_strlcat(gedfunc, argv[0], MAXPATHLEN - strlen(gedfunc));
-	if (strlen(gedfunc) < 1 || gedfunc[0] != 'g') {
-	    bu_log("Couldn't get GED command name from [%s]\n", argv[0]);
-	    return BRLCAD_ERROR;
-	}
-
-	*(void **)(&func) = bu_dlsym(s->libged, gedfunc);
-	if (!func) {
-	    bu_log("Unrecognized command [%s]\n", argv[0]);
-	    return BRLCAD_ERROR;
-	}
-
-	/* TODO - is it ever unsafe to do this cast?  Does ged mess with argv somehow? */
-	ret = func(s->gedp, argc, (char **)argv);
-
-    } else {
-
-	if (ged_cmd_valid(argv[0], NULL)) {
-	    const char *ccmd = NULL;
-	    int edist = ged_cmd_lookup(&ccmd, argv[0]);
-	    if (edist) {
-		printf("Command %s not found, did you mean %s (edit distance %d)?\n", argv[0], ccmd, edist);
-	    }
-	    return BRLCAD_ERROR;
-	}
-
-	ret = ged_exec(s->gedp, argc, argv);
-    }
-
-    if (!(ret & BRLCAD_MORE)) {
-	printf("%s", bu_vls_cstr(s->gedp->ged_result_str));
-    }
-    return ret;
-}
-
 #ifdef USE_DM
 void
 view_checkpoint(struct gsh_state *s)
@@ -246,6 +149,112 @@ view_update(struct gsh_state *s)
     }
 }
 #endif
+
+int
+gsh_state_init(struct gsh_state *s)
+{
+    s->libged = bu_dlopen(NULL, BU_RTLD_LAZY);
+
+    /* Without a libged library, we're done */
+    if (!s->libged)
+	return BRLCAD_ERROR;
+
+    BU_GET(s->gedp, struct ged);
+    ged_init(s->gedp);
+    /* We will need a view to support commands like draw */
+    BU_GET(s->gedp->ged_gvp, struct bview);
+    bv_init(s->gedp->ged_gvp, &s->gedp->ged_views);
+    bu_vls_sprintf(&s->gedp->ged_gvp->gv_name, "default");
+    bv_set_add_view(&s->gedp->ged_views, s->gedp->ged_gvp);
+#ifdef USE_DM
+    view_checkpoint(s);
+#endif
+    /* As yet we don't have a .g file. */
+    bu_vls_init(&s->gfile);
+
+    /* Zero initialize linenoise data */
+    s->pmpt = NULL;
+    s->line = NULL;
+    bu_vls_init(&s->iline);
+
+    return BRLCAD_OK;
+}
+
+void
+gsh_state_free(struct gsh_state *s)
+{
+    if (!s)
+	return;
+
+    struct bu_ptbl *views = bv_set_views(&s->gedp->ged_views);
+    for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	struct bview *v = (struct bview *)BU_PTBL_GET(views, i);
+	if (v->dmp) {
+	    dm_close((struct dm *)v->dmp);
+	    v->dmp = NULL;
+	}
+    }
+
+    ged_close(s->gedp);
+    bu_dlclose(s->libged);
+    bu_vls_free(&s->gfile);
+    bu_vls_free(&s->iline);
+}
+
+/* Handle the non-interactive execution of commands here. */
+int
+geval(struct gsh_state *s, int argc, const char **argv)
+{
+    int ret = BRLCAD_OK;
+
+    if (!s || !s->gedp)
+	return BRLCAD_ERROR;
+
+    if (s->constrained_mode) {
+
+	/* Note - doing the command execution this way limits us to the "hardwired"
+	 * functions built into the libged API.  That may or may not be what we
+	 * want, depending on the application - this in effect restricts us to a
+	 * "safe" command set, but also hides any user-provided plugins.  */
+
+	int (*func)(struct ged *, int, char *[]);
+	char gedfunc[MAXPATHLEN] = {0};
+
+	bu_strlcat(gedfunc, "ged_", MAXPATHLEN);
+	bu_strlcat(gedfunc, argv[0], MAXPATHLEN - strlen(gedfunc));
+	if (strlen(gedfunc) < 1 || gedfunc[0] != 'g') {
+	    bu_log("Couldn't get GED command name from [%s]\n", argv[0]);
+	    return BRLCAD_ERROR;
+	}
+
+	*(void **)(&func) = bu_dlsym(s->libged, gedfunc);
+	if (!func) {
+	    bu_log("Unrecognized command [%s]\n", argv[0]);
+	    return BRLCAD_ERROR;
+	}
+
+	/* TODO - is it ever unsafe to do this cast?  Does ged mess with argv somehow? */
+	ret = func(s->gedp, argc, (char **)argv);
+
+    } else {
+
+	if (ged_cmd_valid(argv[0], NULL)) {
+	    const char *ccmd = NULL;
+	    int edist = ged_cmd_lookup(&ccmd, argv[0]);
+	    if (edist) {
+		printf("Command %s not found, did you mean %s (edit distance %d)?\n", argv[0], ccmd, edist);
+	    }
+	    return BRLCAD_ERROR;
+	}
+
+	ret = ged_exec(s->gedp, argc, argv);
+    }
+
+    if (!(ret & BRLCAD_MORE)) {
+	printf("%s", bu_vls_cstr(s->gedp->ged_result_str));
+    }
+    return ret;
+}
 
 
 int

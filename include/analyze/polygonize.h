@@ -35,7 +35,7 @@
 __BEGIN_DECLS
 struct analyze_polygonize_params {
     int max_time;
-    long int minimum_free_mem;
+    unsigned long long minimum_free_mem;
     int verbosity;
 };
 #define ANALYZE_POLYGONIZE_PARAMS_DEFAULT { 30, 150000000, 0 }

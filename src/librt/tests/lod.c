@@ -73,14 +73,19 @@ main(int argc, char *argv[])
     if (!bot->num_faces)
 	bu_exit(1, "ERROR: %s - no faces found\n", argv[2]);
 
-    unsigned long long key = bg_mesh_lod_cache((const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
+    struct bg_mesh_lod_context *c = bg_mesh_lod_context_create(argv[1]);
+
+    unsigned long long key = bg_mesh_lod_cache(c, (const point_t *)bot->vertices, bot->num_vertices, bot->faces, bot->num_faces);
     if (!key)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
 
-    struct bv_mesh_lod_info *linfo = bg_mesh_lod_init(key);
-    if (!linfo)
+    struct bv_mesh_lod *mlod = bg_mesh_lod_create(c, key);
+    if (!mlod)
 	bu_exit(1, "ERROR: %s - lod creation failed\n", argv[2]);
-    struct bg_mesh_lod *mlod = (struct bg_mesh_lod *)linfo->lod;
+
+    struct bv_scene_obj *s;
+    BU_GET(s, struct bv_scene_obj);
+    s->draw_data = (void *)mlod;
 
     // TODO Set up initial view
 
@@ -91,14 +96,16 @@ main(int argc, char *argv[])
     start = bu_gettime();
 
     for (int i = 0; i < 16; i++) {
-	bg_mesh_lod_level(mlod, i);
+	bg_mesh_lod_level(s, i, 0);
     }
 
     elapsed = bu_gettime() - start;
     seconds = elapsed / 1000000.0;
     bu_log("lod level setting: %f sec\n", seconds);
 
-    bg_mesh_lod_destroy(linfo);
+    BU_PUT(s, struct bv_scene_obj);
+    bg_mesh_lod_destroy(mlod);
+    bg_mesh_lod_context_destroy(c);
 
     return 0;
 }

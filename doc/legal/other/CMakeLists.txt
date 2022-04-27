@@ -9,6 +9,7 @@ set(other_licenses
   libosmesa.txt
   libutahrle.txt
   linenoise.txt
+  lmdb.txt
   netpbm.txt
   openNURBS.txt
   png.txt
