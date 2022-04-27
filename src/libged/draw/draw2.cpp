@@ -492,7 +492,7 @@ ged_draw_view(struct bview *v, int bot_threshold, int no_autoview, int blank_sla
     }
 
     // Make sure the view knows how to update the obb
-    v->gv_obb_update = &bg_view_obb;
+    v->gv_bounds_update = &bg_view_bounds;
 
     // Do an initial autoview so adaptive routines will have approximately
     // the right starting point

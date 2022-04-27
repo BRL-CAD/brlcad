@@ -111,7 +111,7 @@ bv_init(struct bview *gvp, struct bview_set *s)
     // Out of the gate we don't have callbacks
     gvp->callbacks = NULL;
     gvp->gv_callback = NULL;
-    gvp->gv_obb_update= NULL;
+    gvp->gv_bounds_update= NULL;
 
     bv_update(gvp);
 }
@@ -479,8 +479,8 @@ bv_update(struct bview *gvp)
     bn_mat_mul(gvp->gv_pmodel2view, gvp->gv_pmat, gvp->gv_model2view);
 
     /* Update obb, if the caller has told us how to */
-    if (gvp->gv_obb_update) {
-	(*gvp->gv_obb_update)(gvp);
+    if (gvp->gv_bounds_update) {
+	(*gvp->gv_bounds_update)(gvp);
     }
 
     if (gvp->gv_callback) {

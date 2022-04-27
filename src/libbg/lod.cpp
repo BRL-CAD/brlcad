@@ -164,7 +164,7 @@ obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct 
 }
 
 void
-bg_view_obb(struct bview *v)
+bg_view_bounds(struct bview *v)
 {
     if (!v || !v->gv_width || !v->gv_height)
 	return;

@@ -38,14 +38,14 @@
 
 __BEGIN_DECLS
 
-/* Given a view, construct an oriented bounding box extruded to contain scene
- * objects visible in the view.  Conceptually, think of it as a framebuffer
- * pane pushed through the scene in the direction the camera is looking.  If
- * the view width and height are not set or there is some other problem, no box
- * is computed. This function is intended primarily to be set as an OBB
- * updating callback for the bview structure. */
+/* Given a view, construct either an oriented bounding box or a view frustum
+ * extruded to contain scene objects visible in the view.  Conceptually, think
+ * of it as a framebuffer pane pushed through the scene in the direction the
+ * camera is looking.  If the view width and height are not set or there is
+ * some other problem, no volume is computed. This function is intended
+ * primarily to be set as an updating callback for the bview structure. */
 BG_EXPORT extern void
-bg_view_obb(struct bview *v);
+bg_view_bounds(struct bview *v);
 
 
 /* Storing and reading from a lot of small, individual files doesn't work very
