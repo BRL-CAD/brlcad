@@ -49,10 +49,14 @@
  * The test-intersection implementations use the method of separating axes.
  * https://www.geometrictools.com/Documentation/MethodOfSeparatingAxes.pdf
  *
+ * Intersection of Orthogonal View Frustum and Oriented Bounding Box using
+ * Separation Axis Testing
+ * https://www.geometrictools.com/Documentation/IntersectionBox3Frustum3.pdf
  */
 
 #include "common.h"
 #include "vmath.h"
+#include "bv/defines.h"
 #include "bg/sat.h"
 
 /* Check line against ABB and OBB
@@ -613,6 +617,287 @@ bg_sat_obb_obb(
 	return 0;
 
     // There is no separation.
+    return 1;
+}
+
+/* Check AABB against view frustum.
+ *
+ * See GTE/Mathematics/IntrOrientedBox3Frustum3.h
+ */
+int
+bg_sat_frustum_aabb(
+	struct bv_frustum *v,
+	point_t aabb_min, point_t aabb_max
+	)
+{
+    point_t E;
+    point_t aabb_center;
+    vect_t aabb_extent1, aabb_extent2, aabb_extent3;
+    VADD2SCALE(aabb_center, aabb_max, aabb_min, 0.5);
+    VSUB2SCALE(E, aabb_max, aabb_min, 0.5);
+    VSET(aabb_extent1, 1, 0, 0);
+    VSET(aabb_extent2, 0, 1, 0);
+    VSET(aabb_extent3, 0, 0, 1);
+    VSCALE(aabb_extent1, aabb_extent1, E[0]);
+    VSCALE(aabb_extent2, aabb_extent2, E[1]);
+    VSCALE(aabb_extent3, aabb_extent3, E[2]);
+
+    return bg_sat_frustum_obb(v, aabb_center, aabb_extent1, aabb_extent2, aabb_extent3);
+}
+
+/* Check OBB against view frustum.
+ *
+ * See GTE/Mathematics/IntrOrientedBox3Frustum3.h
+ */
+int
+bg_sat_frustum_obb(
+	struct bv_frustum *vf,
+	point_t obb_center, vect_t obb_extent1, vect_t obb_extent2, vect_t obb_extent3
+	)
+{
+    // Convenience variables.
+    vect_t axis[3];
+    vect_t extent;
+    VMOVE(axis[0], obb_extent1);
+    VMOVE(axis[1], obb_extent2);
+    VMOVE(axis[2], obb_extent3);
+    VUNITIZE(axis[0]);
+    VUNITIZE(axis[1]);
+    VUNITIZE(axis[2]);
+    VSET(extent, MAGNITUDE(obb_extent1), MAGNITUDE(obb_extent2), MAGNITUDE(obb_extent3));
+
+    vect_t diff;
+    VSUB2(diff, obb_center, vf->origin);  // C-E
+
+    fastf_t f_DRatio = vf->far/vf->near;
+
+    fastf_t A[3];      // Dot(R,A[i])
+    fastf_t B[3];      // Dot(U,A[i])
+    fastf_t C[3];      // Dot(D,A[i])
+    fastf_t D[3];      // (Dot(R,C-E),Dot(U,C-E),Dot(D,C-E))
+    fastf_t NA[3];     // dmin*Dot(R,A[i])
+    fastf_t NB[3];     // dmin*Dot(U,A[i])
+    fastf_t NC[3];     // dmin*Dot(D,A[i])
+    fastf_t ND[3];     // dmin*(Dot(R,C-E),Dot(U,C-E),?)
+    fastf_t RC[3];     // rmax*Dot(D,A[i])
+    fastf_t RD[3];     // rmax*(?,?,Dot(D,C-E))
+    fastf_t UC[3];     // umax*Dot(D,A[i])
+    fastf_t UD[3];     // umax*(?,?,Dot(D,C-E))
+    fastf_t NApRC[3];  // dmin*Dot(R,A[i]) + rmax*Dot(D,A[i])
+    fastf_t NAmRC[3];  // dmin*Dot(R,A[i]) - rmax*Dot(D,A[i])
+    fastf_t NBpUC[3];  // dmin*Dot(U,A[i]) + umax*Dot(D,A[i])
+    fastf_t NBmUC[3];  // dmin*Dot(U,A[i]) - umax*Dot(D,A[i])
+    fastf_t RBpUA[3];  // rmax*Dot(U,A[i]) + umax*Dot(R,A[i])
+    fastf_t RBmUA[3];  // rmax*Dot(U,A[i]) - umax*Dot(R,A[i])
+    fastf_t DdD, radius, p, fmin, fmax, MTwoUF, MTwoRF, tmp;
+
+    // M = D
+    D[2] = VDOT(diff, vf->dir);
+    for (int32_t i = 0; i < 3; ++i) {
+	C[i] = VDOT(axis[i], vf->dir);
+    }
+    radius = extent[0] * fabs(C[0]) + extent[1] * fabs(C[1]) + extent[2] * fabs(C[2]);
+    if (D[2] + radius < vf->near || D[2] - radius > vf->far)
+	return 0;
+
+    // M = n*R - r*D
+    for (int32_t i = 0; i < 3; ++i) {
+	A[i] = VDOT(axis[i], vf->right);
+	RC[i] = vf->r_extent * C[i];
+	NA[i] = vf->near * A[i];
+	NAmRC[i] = NA[i] - RC[i];
+    }
+    D[0] = VDOT(diff, vf->right);
+    radius = extent[0] * fabs(NAmRC[0]) + extent[1] * fabs(NAmRC[1]) + extent[2] * fabs(NAmRC[2]);
+    ND[0] = vf->near * D[0];
+    RD[2] = vf->r_extent * D[2];
+    DdD = ND[0] - RD[2];
+    MTwoRF = -2*vf->r_extent*vf->far;
+    if (DdD + radius < MTwoRF || DdD > radius)
+	return 0;
+
+    // M = -n*R - r*D
+    for (int32_t i = 0; i < 3; ++i) {
+	NApRC[i] = NA[i] + RC[i];
+    }
+    radius = extent[0] * fabs(NApRC[0]) + extent[1] * fabs(NApRC[1]) + extent[2] * fabs(NApRC[2]);
+    DdD = -(ND[0] + RD[2]);
+    if (DdD + radius < MTwoRF || DdD > radius)
+	return 0;
+
+    // M = n*U - u*D
+    for (int32_t i = 0; i < 3; ++i) {
+	B[i] = VDOT(axis[i], vf->up);
+	UC[i] = vf->u_extent * C[i];
+	NB[i] = vf->near * B[i];
+	NBmUC[i] = NB[i] - UC[i];
+    }
+    D[1] = VDOT(diff, vf->up);
+    radius = extent[0] * fabs(NBmUC[0]) + extent[1] * fabs(NBmUC[1]) + extent[2] * fabs(NBmUC[2]);
+    ND[1] = vf->near * D[1];
+    UD[2] = vf->u_extent * D[2];
+    DdD = ND[1] - UD[2];
+    MTwoUF = -2*vf->u_extent*vf->far;
+    if (DdD + radius < MTwoUF || DdD > radius)
+	return 0;
+
+    // M = -n*U - u*D
+    for (int32_t i = 0; i < 3; ++i) {
+	NBpUC[i] = NB[i] + UC[i];
+    }
+    radius =
+	extent[0] * fabs(NBpUC[0]) +
+	extent[1] * fabs(NBpUC[1]) +
+	extent[2] * fabs(NBpUC[2]);
+    DdD = -(ND[1] + UD[2]);
+    if (DdD + radius < MTwoUF || DdD > radius)
+	return 0;
+
+    // M = A[i]
+    for (int32_t i = 0; i < 3; ++i) {
+	p = vf->r_extent * fabs(A[i]) + vf->u_extent * fabs(B[i]);
+	NC[i] = vf->near * C[i];
+	fmin = NC[i] - p;
+	if (fmin < 0)
+	    fmin *= f_DRatio;
+	fmax = NC[i] + p;
+	if (fmax > 0)
+	    fmax *= f_DRatio;
+	DdD = A[i] * D[0] + B[i] * D[1] + C[i] * D[2];
+	if (DdD + extent[i] < fmin || DdD - extent[i] > fmax)
+	    return 0;
+    }
+
+    // M = Cross(R,A[i])
+    for (int32_t i = 0; i < 3; ++i) {
+	p = vf->u_extent * fabs(C[i]);
+	fmin = -NB[i] - p;
+	if (fmin < 0)
+	    fmin *= f_DRatio;
+	fmax = -NB[i] + p;
+	if (fmax > 0)
+	    fmax *= f_DRatio;
+	DdD = C[i] * D[1] - B[i] * D[2];
+	radius =
+	    extent[0] * fabs(B[i] * C[0] - B[0] * C[i]) +
+	    extent[1] * fabs(B[i] * C[1] - B[1] * C[i]) +
+	    extent[2] * fabs(B[i] * C[2] - B[2] * C[i]);
+	if (DdD + radius < fmin || DdD - radius > fmax)
+	    return 0;
+    }
+
+    // M = Cross(U,A[i])
+    for (int32_t i = 0; i < 3; ++i) {
+	p = vf->r_extent * fabs(C[i]);
+	fmin = NA[i] - p;
+	if (fmin < 0)
+	    fmin *= f_DRatio;
+	fmax = NA[i] + p;
+	if (fmax > 0)
+	    fmax *= f_DRatio;
+	DdD = -C[i] * D[0] + A[i] * D[2];
+	radius =
+	    extent[0] * fabs(A[i] * C[0] - A[0] * C[i]) +
+	    extent[1] * fabs(A[i] * C[1] - A[1] * C[i]) +
+	    extent[2] * fabs(A[i] * C[2] - A[2] * C[i]);
+	if (DdD + radius < fmin || DdD - radius > fmax)
+	    return 0;
+    }
+
+    // M = Cross(n*D+r*R+u*U,A[i])
+    for (int32_t i = 0; i < 3; ++i) {
+	fastf_t fRB = vf->r_extent * B[i];
+	fastf_t fUA = vf->u_extent * A[i];
+	RBpUA[i] = fRB + fUA;
+	RBmUA[i] = fRB - fUA;
+    }
+    for (int32_t i = 0; i < 3; ++i)
+    {
+	p = vf->r_extent * fabs(NBmUC[i]) +
+	    vf->u_extent * fabs(NAmRC[i]);
+	tmp = -vf->near * RBmUA[i];
+	fmin = tmp - p;
+	if (fmin < 0)
+	    fmin *= f_DRatio;
+	fmax = tmp + p;
+	if (fmax > 0)
+	    fmax *= f_DRatio;
+	DdD = D[0] * NBmUC[i] - D[1] * NAmRC[i] - D[2] * RBmUA[i];
+	radius = 0;
+	for (int32_t j = 0; j < 3; j++) {
+	    radius += extent[j] * fabs(A[j] * NBmUC[i] -
+		    B[j] * NAmRC[i] - C[j] * RBmUA[i]);
+	}
+	if (DdD + radius < fmin || DdD - radius > fmax)
+	    return 0;
+    }
+
+    // M = Cross(n*D+r*R-u*U,A[i])
+    for (int32_t i = 0; i < 3; ++i)
+    {
+	p = vf->r_extent * fabs(NBpUC[i]) +
+	    vf->u_extent * fabs(NAmRC[i]);
+	tmp = -vf->near * RBpUA[i];
+	fmin = tmp - p;
+	if (fmin < 0)
+	    fmin *= f_DRatio;
+	fmax = tmp + p;
+	if (fmax > 0)
+	    fmax *= f_DRatio;
+	DdD = D[0] * NBpUC[i] - D[1] * NAmRC[i] - D[2] * RBpUA[i];
+	radius = 0;
+	for (int32_t j = 0; j < 3; ++j) {
+	    radius += extent[j] * fabs(A[j] * NBpUC[i] -
+		    B[j] * NAmRC[i] - C[j] * RBpUA[i]);
+	}
+	if (DdD + radius < fmin || DdD - radius > fmax)
+	    return 0;
+    }
+
+    // M = Cross(n*D-r*R+u*U,A[i])
+    for (int32_t i = 0; i < 3; ++i)
+    {
+	p = vf->r_extent * fabs(NBmUC[i]) +
+	    vf->u_extent * fabs(NApRC[i]);
+	tmp = vf->near * RBpUA[i];
+	fmin = tmp - p;
+	if (fmin < 0)
+	    fmin *= f_DRatio;
+	fmax = tmp + p;
+	if (fmax > 0)
+	    fmax *= f_DRatio;
+	DdD = D[0] * NBmUC[i] - D[1] * NApRC[i] + D[2] * RBpUA[i];
+	radius = 0;
+	for (int32_t j = 0; j < 3; ++j) {
+	    radius += extent[j] * fabs(A[j] * NBmUC[i] -
+		    B[j] * NApRC[i] + C[j] * RBpUA[i]);
+	}
+	if (DdD + radius < fmin || DdD - radius > fmax)
+	    return 0;
+    }
+
+    // M = Cross(n*D-r*R-u*U,A[i])
+    for (int32_t i = 0; i < 3; ++i)
+    {
+	p = vf->r_extent * fabs(NBpUC[i]) +
+	    vf->u_extent * fabs(NApRC[i]);
+	tmp = vf->near * RBmUA[i];
+	fmin = tmp - p;
+	if (fmin < 0)
+	    fmin *= f_DRatio;
+	fmax = tmp + p;
+	if (fmax > 0)
+	    fmax *= f_DRatio;
+	DdD = D[0] * NBpUC[i] - D[1] * NApRC[i] + D[2] * RBmUA[i];
+	radius = 0;
+	for (int32_t j = 0; j < 3; ++j) {
+	    radius += extent[j] * fabs(A[j] * NBpUC[i] -
+		    B[j] * NApRC[i] + C[j] * RBmUA[i]);
+	}
+	if (DdD + radius < fmin || DdD - radius > fmax)
+	    return 0;
+    }
+
     return 1;
 }
 
