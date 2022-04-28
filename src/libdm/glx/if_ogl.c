@@ -94,7 +94,7 @@ HIDDEN int ogl_nwindows = 0; 	/* number of open windows */
 HIDDEN XColor color_cell[256];		/* used to set colormap */
 
 #if 0
-static  void gl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
+static void gl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
     bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[0], m[4], m[8], m[12]);
     bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[1], m[5], m[9], m[13]);
     bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[2], m[6], m[10], m[14]);
@@ -359,15 +359,15 @@ ogl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, in
 
 	    /* Blank out area right of image */
 	    if (clp->xscrmax >= ifp->i->if_width) glRecti(ifp->i->if_width - CLIP_XTRA,
-						       clp->yscrmin - CLIP_XTRA,
-						       clp->xscrmax + CLIP_XTRA,
-						       clp->yscrmax + CLIP_XTRA);
+							  clp->yscrmin - CLIP_XTRA,
+							  clp->xscrmax + CLIP_XTRA,
+							  clp->yscrmax + CLIP_XTRA);
 
 	    /* Blank out area above image */
 	    if (clp->yscrmax >= ifp->i->if_height) glRecti(clp->xscrmin - CLIP_XTRA,
-							ifp->i->if_height- CLIP_XTRA,
-							clp->xscrmax + CLIP_XTRA,
-							clp->yscrmax + CLIP_XTRA);
+							   ifp->i->if_height- CLIP_XTRA,
+							   clp->xscrmax + CLIP_XTRA,
+							   clp->yscrmax + CLIP_XTRA);
 
 	} else if (OGL(ifp)->front_flag) {
 	    /* in COPY mode, always draw full sized image into backbuffer.
@@ -398,7 +398,7 @@ ogl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, in
 
 	/* Perform software color mapping into temp scanline */
 	scanline = (struct fb_pixel *)calloc(ifp->i->if_width, sizeof(struct fb_pixel));
-	if (scanline == NULL) {
+	if (!scanline) {
 	    fb_log("ogl_getmem: scanline memory malloc failed\n");
 	    return;
 	}
@@ -504,7 +504,7 @@ ogl_getmem(struct fb *ifp)
 	size = pixsize + sizeof(struct fb_cmap);
 
 	sp = (char *)calloc(1, size);
-	if (sp == NULL) {
+	if (!sp) {
 	    fb_log("ogl_getmem: frame buffer memory malloc failed\n");
 	    return -1;
 	}
@@ -526,7 +526,8 @@ ogl_getmem(struct fb *ifp)
 	} else if (shm_result == 1) {
 	    ifp->i->if_mode |= MODE_1MALLOC;
 	    fb_log("ogl_getmem:  Unable to attach to shared memory, using private\n");
-	    if ((sp = (char *)calloc(1, size)) == NULL) {
+	    sp = (char *)calloc(1, size);
+	    if (!sp) {
 		fb_log("ogl_getmem:  malloc failure\n");
 		return -1;
 	    }
@@ -555,7 +556,8 @@ ogl_zapmem(void)
 
     errno = 0;
 
-    if ((shmid = shmget(SHMEM_KEY, 0, 0)) < 0) {
+    shmid = shmget(SHMEM_KEY, 0, 0);
+    if (shmid < 0) {
 	if (errno != ENOENT) {
 	    fb_log("ogl_zapmem shmget failed, errno=%d\n", errno);
 	    perror("shmget");
@@ -844,9 +846,8 @@ ogl_do_event(struct fb *ifp)
 				    break;
 				}
 
-				oglp = (struct fb_pixel *)&ifp->i->if_mem[
-				    (y*WIN(ifp)->mi_pixwidth)*
-				    sizeof(struct fb_pixel) ];
+				size_t memidx = (y * WIN(ifp)->mi_pixwidth) * sizeof(struct fb_pixel);
+				oglp = (struct fb_pixel *)&ifp->i->if_mem[memidx];
 
 				fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
 				       x, y, (int)oglp[x].red, (int)oglp[x].green, (int)oglp[x].blue);
@@ -1112,12 +1113,14 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
      */
 
     struct wininfo *winfo = (struct wininfo *)calloc(1, sizeof(struct wininfo));
-    if ((WINL(ifp) = (char *)winfo) == NULL) {
+    WINL(ifp) = (char *)winfo;
+    if (!WINL(ifp)) {
 	fb_log("fb_ogl_open:  wininfo malloc failed\n");
 	return -1;
     }
     struct oglinfo *oinfo = (struct oglinfo *)calloc(1, sizeof(struct oglinfo));
-    if ((OGLL(ifp) = (char *)oinfo) == NULL) {
+    OGLL(ifp) = (char *)oinfo;
+    if (!OGL(ifp)) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }
@@ -1163,7 +1166,8 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 
     /* Open an X connection to the display.  Sending NULL to XOpenDisplay
        tells it to use the DISPLAY environment variable. */
-    if ((OGL(ifp)->dispp = XOpenDisplay(NULL)) == NULL) {
+    OGL(ifp)->dispp = XOpenDisplay(NULL);
+    if (!OGL(ifp)->dispp) {
 	fb_log("fb_ogl_open: Failed to open display.  Check DISPLAY environment variable.\n");
 	return -1;
     }
@@ -1172,14 +1176,15 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 	printf("Connection opened to X display on fd %d.\n", ConnectionNumber(OGL(ifp)->dispp));
 
     /* Choose an appropriate visual. */
-    if ((OGL(ifp)->vip = fb_ogl_choose_visual(ifp)) == NULL) {
+    OGL(ifp)->vip = fb_ogl_choose_visual(ifp);
+    if (!OGL(ifp)->vip) {
 	fb_log("fb_ogl_open: Couldn't find an appropriate visual.  Exiting.\n");
 	return -1;
     }
 
     /* Open an OpenGL context with this visual*/
     OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp, OGL(ifp)->vip, 0, GL_TRUE /* direct context */);
-    if (OGL(ifp)->glxc == NULL) {
+    if (!OGL(ifp)->glxc) {
 	fb_log("ERROR: Couldn't create an OpenGL context!\n");
 	return -1;
     }
@@ -1315,12 +1320,14 @@ open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
      */
 
     struct wininfo *winfo = (struct wininfo *)calloc(1, sizeof(struct wininfo));
-    if ((WINL(ifp) = (char *)winfo) == NULL) {
+    WINL(ifp) = (char *)winfo;
+    if (!WINL(ifp)) {
 	fb_log("fb_ogl_open:  wininfo malloc failed\n");
 	return -1;
     }
     struct oglinfo *oinfo = (struct oglinfo *)calloc(1, sizeof(struct oglinfo));
-    if ((OGLL(ifp) = (char *)oinfo) == NULL) {
+    OGLL(ifp) = (char *)oinfo;
+    if (!OGL(ifp)) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }
@@ -1413,7 +1420,7 @@ ogl_close_existing(struct fb *ifp)
     if (OGL(ifp)->cursor)
 	XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
 
-    if (WINL(ifp) != NULL) {
+    if (WINL(ifp)) {
 
 	/* free up memory associated with image */
 	if (WIN(ifp)->mi_shmid != -1) {
@@ -1436,7 +1443,7 @@ ogl_close_existing(struct fb *ifp)
 	WINL(ifp) = NULL;
     }
 
-    if (OGLL(ifp) != NULL) {
+    if (OGL(ifp)) {
 	(void)free((char *)OGLL(ifp));
 	OGLL(ifp) = NULL;
     }
