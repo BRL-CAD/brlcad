@@ -163,12 +163,9 @@ obj_bb(int *have_objs, vect_t *min, vect_t *max, struct bv_scene_obj *s, struct 
     }
 }
 
-void
-bg_view_bounds(struct bview *v)
+static void
+view_obb(struct bview *v)
 {
-    if (!v || !v->gv_width || !v->gv_height)
-	return;
-
     // Get the radius of the scene.
     plane_t p;
     point_t sbbc = VINIT_ZERO;
@@ -287,6 +284,53 @@ bg_view_bounds(struct bview *v)
     bu_log("in obb.s arb8 %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
 	    V3ARGS(arb[0]), V3ARGS(arb[1]), V3ARGS(arb[2]), V3ARGS(arb[3]), V3ARGS(arb[4]), V3ARGS(arb[5]), V3ARGS(arb  [6]), V3ARGS(arb[7]));
 #endif
+}
+
+#if 0
+static void
+view_frustum(struct bview *v)
+{
+    // Get the radius of the scene - we want our back plane to be beyond all
+    // visible geometry.
+    fastf_t radius = 1.0;
+    vect_t min, max, work;
+    VSETALL(min,  INFINITY);
+    VSETALL(max, -INFINITY);
+    int have_objs = 0;
+    struct bu_ptbl *so = bv_view_objs(v, BV_DB_OBJS);
+    for (size_t i = 0; i < BU_PTBL_LEN(so); i++) {
+	struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(so, i);
+	obj_bb(&have_objs, &min, &max, g, v);
+    }
+    struct bu_ptbl *sol = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+    if (so != sol) {
+	for (size_t i = 0; i < BU_PTBL_LEN(sol); i++) {
+	    struct bv_scene_obj *g = (struct bv_scene_obj *)BU_PTBL_GET(sol, i);
+	    obj_bb(&have_objs, &min, &max, g, v);
+	}
+    }
+    if (have_objs) {
+	VSUB2SCALE(work, max, min, 0.5);
+	radius = MAGNITUDE(work);
+    }
+
+    // TODO - calculate frustum info from perspective angle/matrix
+
+}
+#endif
+
+void
+bg_view_bounds(struct bview *v)
+{
+    if (!v || !v->gv_width || !v->gv_height)
+	return;
+
+    //if (!(v->gv_perspective > SMALL_FASTF)) {
+	view_obb(v);
+	//return;
+    //}
+
+    //view_frustum(v);
 }
 
 struct bg_mesh_lod_context_internal {
